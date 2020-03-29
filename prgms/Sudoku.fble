@@ -1,7 +1,24 @@
-{ /Bool%; @(Bool@, True, False, And); };
-{ /List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
-{ /Maybe%; @(Maybe@, Just, Nothing, For); };
-{ /Unit%; @(Unit@, Unit); };
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+
+<@>@ S@ = /List%.S@;
+<@>% S0 = /List%.S0;
+<@>% S = /List%.S;
+<@>% ConsS = /List%.ConsS;
+<@>% Append = /List%.Append;
+<@>% Concat = /List%.Concat;
+<@,@>@ List@ = /List%.List@;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing; 
+<@,@>% For = /Maybe%.For; 
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 # The 9 symbols used in sudoku: 1 through 9.
 @ Symbol@ = +(

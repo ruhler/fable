@@ -1,10 +1,10 @@
-fble-test-error 2:8 {
-  { /Unit%; @(True); };
+fble-test-error 2:16 {
+  % True = /Unit%.True;
 
   True.true;
 } {
   Bool {
-    { /Unit%; @(Unit@); };
+    @ Unit@ = /Unit%.Unit@;
     @ Bool@ = +(Unit@ true, Unit@ false);
     @(Bool@);
   } {}
@@ -13,7 +13,7 @@ fble-test-error 2:8 {
     # Recursive module dependencies are not allowed.
     @ Unit@ = *();
 
-    { /Bool%; @(Bool@); };
+    @ Bool@ = /Bool%.Bool@;
     Bool@ True = Bool@(True: Unit@());
 
     @(Unit@, True);

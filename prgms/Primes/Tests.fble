@@ -1,13 +1,36 @@
-{ /Unit%; @(Unit@, Unit); };
-{ /Bool%; @(Bool@); };
-{ /Char%; @(Char@, Chars); };
-{ /List%; @(S@, P@, ConsS, S, Append, Concat); };
-{ /String%; @(Str@, Str); };
-{ /Int/IntP%; @(IntP@, 1, 3, 10, Lit2); };
-{ /Int/IntP/Eq%; @(Eq); };
-{ /Int/IntS%; @(IntS@); };
-{ /Primes%; @(NthPrime); };
-{ /Test%; @(TestResult@, Test@); };
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Bool@ = /Bool%.Bool@;
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+<@>@ S@ = /List%.S@;
+<@>@ P@ = /List%.P@;
+<@>% ConsS = /List%.ConsS;
+<@>% S = /List%.S;
+<@>% Append = /List%.Append;
+<@>% Concat = /List%.Concat;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+@ IntP@ = /Int/IntP%.IntP@;
+% 1 = /Int/IntP%.1;
+% 3 = /Int/IntP%.3;
+% 10 = /Int/IntP%.10;
+% Lit2 = /Int/IntP%.Lit2;
+
+% Eq = /Int/IntP/Eq%.Eq;
+
+@ IntS@ = /Int/IntS%.IntS@;
+
+% NthPrime = /Primes%.NthPrime;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
 
 (Str@, IntP@, IntP@){Test@;} TEq = (Str@ name, IntP@ a, IntP@ b) {
   Test@(Append<Char@>(Str(Chars|'Primes.'), name), $({

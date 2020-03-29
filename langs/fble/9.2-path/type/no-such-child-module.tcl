@@ -1,6 +1,6 @@
-fble-test-error 3:6 {
+fble-test-error 3:13 {
   # The module /Unit/Foo% does not exist.
-  { /Unit/Foo%; @(Unit); };
+  % Unit = /Unit/Foo%.Unit;
 
   Unit;
 }

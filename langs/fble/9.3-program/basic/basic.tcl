@@ -1,6 +1,6 @@
 fble-test {
   # A basic program making use of modules.
-  { /Bool%; @(Bool@, True, False); };
+  % True = /Bool%.True;
 
   True.true;
 } {

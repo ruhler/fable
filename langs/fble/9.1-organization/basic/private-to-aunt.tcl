@@ -1,10 +1,10 @@
-fble-test-error 2:8 {
+fble-test-error 2:12 {
   # A private module X is not visible to its aunt.
   #
   # . -> P -> X*
   #  \-> A
 
-  { /A%; @(); };
+  % _ = /A%;
 
   @();
 } {
@@ -17,7 +17,7 @@ fble-test-error 2:8 {
   }
 } {
   A {
-    { /P/X%; @(); };
+    % _ = /P/X%;
     @();
   }
 }

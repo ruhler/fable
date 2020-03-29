@@ -1,6 +1,12 @@
 
-{ /Int/IntP%; @(IntP@, 1, 2P0, 2P1); };
-{ /Int/IntS%; @(IntS@, 0, IntP); };
+@ IntP@ = /Int/IntP%.IntP@;
+% 1 = /Int/IntP%.1;
+% 2P0 = /Int/IntP%.2P0;
+% 2P1 = /Int/IntP%.2P1;
+
+@ IntS@ = /Int/IntS%.IntS@;
+% 0 = /Int/IntS%.0;
+% IntP = /Int/IntS%.IntP;
 
 # Sub1(x) = x - 1
 (IntP@) { IntS@; } Sub1 = (IntP@ x) {

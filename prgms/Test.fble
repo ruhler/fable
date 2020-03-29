@@ -1,9 +1,29 @@
-{ /Bool%; @(Bool@, True, False, AndMonoid); };
-{ /Char%; @(Char@, Chars); };
-{ /List%; @(S@, P@, S0, S, Append, Concat, MapS, SeqS, AndS); };
-{ /Process%; @(Put@); };
-{ /String%; @(Str@, Str); };
-{ /Unit%; @(Unit@, Unit); };
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% AndMonoid = /Bool%.AndMonoid;
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+<@>@ S@ = /List%.S@;
+<@>@ P@ = /List%.P@;
+<@>% S0 = /List%.S0;
+<@>% S = /List%.S;
+<@>% Append = /List%.Append;
+<@>% Concat = /List%.Concat;
+<@,@>% MapS = /List%.MapS;
+<@>% SeqS = /List%.SeqS;
+% AndS = /List%.AndS;
+
+<@>@ Put@ = /Process%.Put@;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 @ TestResult@ = +(Unit@ pass, Str@ fail);
 @ Test@ = *(Str@ name, TestResult@! test);

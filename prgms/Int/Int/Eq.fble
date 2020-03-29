@@ -1,9 +1,15 @@
 
-{ /Bool%; @(Bool@, True, False); };
-{ /Int/Int%; @(Int@); };
-{ /Int/IntP/Eq%;
-  @(EqP: Eq, LtP: Lt, LeP: Le, GtP: Gt, GeP: Ge);
-};
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+@ Int@ = /Int/Int%.Int@;
+
+% EqP = /Int/IntP/Eq%.Eq;
+% LtP = /Int/IntP/Eq%.Lt;
+% LeP = /Int/IntP/Eq%.Le;
+% GtP = /Int/IntP/Eq%.Gt;
+% GeP = /Int/IntP/Eq%.Ge;
 
 (Int@) { Bool@; } IsZero = (Int@ x) {
   ?(x; 0: True, : False);

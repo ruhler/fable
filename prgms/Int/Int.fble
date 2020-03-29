@@ -1,10 +1,13 @@
 
-{ /Int/IntP%; @(IntP@); };
-{ /Int/IntP/Sub%; @(Sub1); };
-{ /Int/IntP%; @(IntP@); };
-@(IntP: /Int/IntP%);
-{ /Int/IntS%; @(IntS@); };
-{ /Unit%; @(Unit@, Unit); };
+% IntP = /Int/IntP%;
+@ IntP@ = IntP.IntP@;
+
+% Sub1 = /Int/IntP/Sub%.Sub1;
+
+@ IntS@ = /Int/IntS%.IntS@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 @ Int@ = +(
   IntP@ n,   # Negative integers

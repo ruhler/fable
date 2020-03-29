@@ -1,13 +1,21 @@
 
-{ /List%; @(S@, S, Concat); };
-{ /Maybe%; @(Maybe@); };
-{ /Process%; @(Get@, Put@); };
-{ /Stdio%; @(Stdio@); };
-{ /String%; @(Str@); };
-{ /Test%; @(Test@); };
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+<@>% Concat = /List%.Concat;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Stdio@ = /Stdio%.Stdio@;
+
+@ Str@ = /String%.Str@;
+
+@ Test@ = /Test%.Test@;
 
 # Import to test compilation.
-{ @(x: /Snake%); @(); };
+% _ = /Snake%;
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   /GameOfLife/Tests%.Tests,

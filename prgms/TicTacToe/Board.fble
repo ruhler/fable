@@ -1,6 +1,10 @@
 
-{ /Maybe%; @(Maybe@, Just, Nothing); };
-{ /Unit%; @(Unit@, Unit); };
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 # A square is either filled with an 'X', filled with an 'O', 
 # or is 'E'mpty.

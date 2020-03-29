@@ -1,18 +1,31 @@
 
-{ /Char%; @(Char@, Chars); };
-{ /List%; @(S@, S); };
-{ /String%; @(Str); };
-{ /Test%; @(Test@, TestResult@); };
-{ /Unit%; @(Unit@, Unit); };
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
 
-{ /TicTacToe/AI%; @(AI@, WithAI); };
-{ /TicTacToe/Board%;
-  @(Board@, Player@, Position@, Square@, Status@,
-    BoardStatus, EmptyBoard);
-};
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ AI@ = /TicTacToe/AI%.AI@;
+<@>% WithAI = /TicTacToe/AI%.WithAI;
+
+@ Board@ = /TicTacToe/Board%.Board@;
+@ Player@ = /TicTacToe/Board%.Player@;
+@ Position@ = /TicTacToe/Board%.Position@;
+@ Square@ = /TicTacToe/Board%.Square@;
+@ Status@ = /TicTacToe/Board%.Status@;
+% BoardStatus = /TicTacToe/Board%.BoardStatus;
+% EmptyBoard = /TicTacToe/Board%.EmptyBoard;
 
 # Import to test compilation.
-{ @(x: /TicTacToe/Stdio%); @(); };
+% _ = /TicTacToe/Stdio%;
 
 TestResult@! TestBoardStatus = {
   Unit@ _ := $(Unit); # Delay the test until we execute the process

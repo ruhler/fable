@@ -1,14 +1,22 @@
-{ /Unit%; @(Unit@, Unit); };
-{ /Hex%; @(Hex@, 0: Hex.0, 1: Hex.1); };
 
-{ /Bits/BitN%; @(Bit@, BitN@); };
-{ /Bits/Bit2XN%; @(Bit2XN, Bit2X@); };
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Hex@ = /Hex%.Hex@;
+% 0 = /Hex%.Hex.0;
+% 1 = /Hex%.Hex.1;
+
+@ Bit@ = /Bits/BitN%.Bit@;
+<@>@ BitN@ = /Bits/BitN%.BitN@;
+
+<@>@ Bit2X@ = /Bits/Bit2XN%.Bit2X@;
+<@>% Bit2XN = /Bits/Bit2XN%.Bit2XN;
 
 % Bit = @(Bit@);
 % Bit1 = /Bits/Bit1%;
 % Bit2 = @(Bit2@: Bit2X@<Bit@>, BitN: Bit2XN<Bit@>(Bit1.BitN));
 
-{
+% Bit4 = {
   @ Bit2@ = Bit2.Bit2@;
   @ Bit4@ = Bit2X@<Bit2@>;
   (Hex@){Bit4@;} H1 = (Hex@ x) {
@@ -31,10 +39,10 @@
          E: Bit4@(Bit2@(1, 1), Bit2@(1, 0)),
          F: Bit4@(Bit2@(1, 1), Bit2@(1, 1)));
   };
-  @(Bit4: @(Bit4@, BitN: Bit2XN<Bit2@>(Bit2.BitN), H1));
+  @(Bit4@, BitN: Bit2XN<Bit2@>(Bit2.BitN), H1);
 };
 
-{
+% Bit8 = {
   @ Bit8@ = Bit2X@<Bit4.Bit4@>;
 
   (Hex@, Hex@){Bit8@;} H2 = (Hex@ hi, Hex@ lo) {
@@ -45,7 +53,7 @@
     H2(0, x);
   };
 
-  @(Bit8: @(Bit8@, BitN: Bit2XN<Bit4.Bit4@>(Bit4.BitN), H1, H2));
+  @(Bit8@, BitN: Bit2XN<Bit4.Bit4@>(Bit4.BitN), H1, H2);
 };
 
 % Bit16 = @(Bit16@: Bit2X@<Bit8.Bit8@>, BitN: Bit2XN<Bit8.Bit8@>(Bit8.BitN));

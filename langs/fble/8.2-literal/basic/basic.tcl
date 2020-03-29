@@ -3,7 +3,7 @@ fble-test {
   Unit@ Unit = Unit@();
 
   @ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
-  @(Enums: @(A: Enum@(A: Unit), B: Enum@(B: Unit), C: Enum@(C: Unit)));
+  % Enums = @(A: Enum@(A: Unit), B: Enum@(B: Unit), C: Enum@(C: Unit));
 
   # Basic use of a literal expression.
   <@ L@>((Enum@, L@){L@;}, L@){L@;} f = Enums|BAC; 

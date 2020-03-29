@@ -1,6 +1,10 @@
 
-{ /Bool%; @(Bool@, True, False); };
-{ /Int/IntS%; @(IntS@); };
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+@ IntS@ = /Int/IntS%.IntS@;
+
 % P = /Int/IntP/Eq%;
 
 (IntS@) { Bool@; } IsZero = (IntS@ a) {

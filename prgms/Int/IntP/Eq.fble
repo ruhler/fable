@@ -1,6 +1,9 @@
 
-{ /Bool%; @(Bool@, True, False); };
-{ /Int/IntP%; @(IntP@); };
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+@ IntP@ = /Int/IntP%.IntP@;
 
 (IntP@, IntP@) { Bool@; } Eq = (IntP@ a, IntP@ b) {
   ?(a; 1: ?(b; 1: True, 2p0: False, 2p1: False),

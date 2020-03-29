@@ -1,7 +1,9 @@
 
-{ /Int/IntP%; @(IntP@); };
 % P = /Int/IntP%;
-{ /Unit%; @(Unit@, Unit); };
+@ IntP@ = P.IntP@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 # Non-negative Integers.
 @ IntS@ = +(

@@ -1,4 +1,5 @@
-{ /Unit%; @(Unit@); };
+
+@ Unit@ = /Unit%.Unit@;
 
 <@>@ Get@ = <@ T@>{ T@!; };
 <@>@ Put@ = <@ T@>{ (T@){Unit@!;}; };

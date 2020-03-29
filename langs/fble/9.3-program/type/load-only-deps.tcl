@@ -1,5 +1,5 @@
 fble-test {
-  { /Unit%; @(Unit@, Unit); };
+  % Unit = /Unit%.Unit;
 
   Unit;
 } {

@@ -1,11 +1,26 @@
 
-{ /Bool%; @(Bool@, True, False); };
-{ /Maybe%; @(Maybe@); };
-{ /Process%; @(Get@, Put@); };
-{ /Unit%; @(Unit@, Unit); };
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
 
-{ /TicTacToe/AI%; @(AI@, WithAI); };
-{ /TicTacToe/Board%; @(Board@, Position@, Player@, BoardStatus, EmptyBoard, Move); };
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ AI@ = /TicTacToe/AI%.AI@;
+<@>% WithAI = /TicTacToe/AI%.WithAI;
+
+@ Board@ = /TicTacToe/Board%.Board@;
+@ Position@ = /TicTacToe/Board%.Position@;
+@ Player@ = /TicTacToe/Board%.Player@;
+% BoardStatus = /TicTacToe/Board%.BoardStatus;
+% EmptyBoard = /TicTacToe/Board%.EmptyBoard;
+% Move = /TicTacToe/Board%.Move;
+
 
 @ GameResult@ = +(Player@ win, Unit@ draw);
 @ GameStatus@ = +(Player@ playing, GameResult@ ended); 

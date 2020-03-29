@@ -1,8 +1,12 @@
 
-{ /Drawing%; @(Drawing@); };
-{ /Int/Int%; @(Int@); };
-{ /Process%; @(Get@, Put@); };
-{ /Unit%; @(Unit@); };
+@ Drawing@ = /Drawing%.Drawing@;
+
+@ Int@ = /Int/Int%.Int@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
 
 @ Key@ = +(Unit@ H, Unit@ J, Unit@ K, Unit@ L, Unit@ Q);
 @ Event@ = +(Unit@ tick, Key@ key);

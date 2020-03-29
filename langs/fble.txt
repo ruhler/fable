@@ -1430,6 +1430,35 @@ Notes:
   I would say, it the very least, it is definitely worth a try. Use it for a
   while. See if I get used to it. If not, we can make improvements from there
   more easily than we can from the existing struct import.
+
+  Reactions from trying it out on existing programs:
+  * I like the syntax better. We get rid of this { ... }; stuff, which is
+    nice.
+  * Loss of alignment on modules being imported is a little sad. For example,
+    the '/' is in a different column for almost every line of:
+      <@>@ S@ = /List%.S@;
+      <@>% S = /List%.S;
+      <@>% S = /List%.Concat;
+      <@>@ Maybe@ = /Maybe%.Maybe@;
+      <@>@ Get@ = /Process%.Get@;
+      <@>@ Put@ = /Process%.Put@;
+    I think it helps to separate imports from different modules by a blank
+    line, as in:
+      <@>@ S@ = /List%.S@;
+      <@>% S = /List%.S;
+      <@>% S = /List%.Concat;
+
+      <@>@ Maybe@ = /Maybe%.Maybe@;
+
+      <@>@ Get@ = /Process%.Get@;
+      <@>@ Put@ = /Process%.Put@;
+  * I feel like this encourages not bringing some things into local scope. But
+    rather accessing directly from modules. That may make it harder to see
+    which modules are being imported from. Not sure if that's good or bad.
+  * This new form of import requires us to write the kinds of everything
+    imported. I don't know if that's a bad thing. Just a little more strict.
+    It also allows us to put types if we know them, which I guess is a good
+    thing.
   
 * There's no good support for abstract data types. You can't export a union or
   struct type abstractly without also exporting the fields and constructors

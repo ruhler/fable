@@ -1,13 +1,33 @@
 
-{ /Bool%; @(Bool@, True, False); };
-{ /Data%; @(Data@, Left, Right, DUnit: Unit, Product); };
-{ /Int/IntP%; @(IntP@); };
-{ /Int/Int%; @(Int@, Inc, Dec); };
-{ /Int/Int/Eq%; @(IsZero); };
-{ /List%; @(S@, List@, S, ForS); };
-{ /Map%; @(Map); };
-{ /Maybe%; @(Maybe@); };
-{ /Unit%; @(Unit@, Unit); };
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+@ Data@ = /Data%.Data@;
+% Left = /Data%.Left;
+% Right = /Data%.Right;
+% DUnit = /Data%.Unit;
+% Product = /Data%.Product;
+
+@ IntP@ = /Int/IntP%.IntP@;
+
+@ Int@ = /Int/Int%.Int@;
+% Inc = /Int/Int%.Inc;
+% Dec = /Int/Int%.Dec;
+
+% IsZero = /Int/Int/Eq%.IsZero;
+
+<@>@ S@ = /List%.S@;
+<@,@>@ List@ = /List%.List@;
+<@>% S = /List%.S;
+<@,@>% ForS = /List%.ForS;
+
+<@>% Map = /Map%.Map;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 @ Coord@ = *(Int@ row, Int@ col);
 
@@ -24,13 +44,14 @@
 };
 
 # The world is a set of Coord@ where there are live cells.
-{ Map<Coord@>(DCoord);
-  @(World@: Map@<Unit@>,
-    EqWorld: Equals<Unit@>((Unit@ a, Unit@ b) { True; }),
-    W: @(Empty: Empty<Unit@>,
-         Insert: Insert<Unit@>,
-         For: For<Unit@>));
-};
+% MapCoord = Map<Coord@>(DCoord);
+@ World@ = MapCoord.Map@<Unit@>;
+% EqWorld = MapCoord.Equals<Unit@>((Unit@ a, Unit@ b) { True; });
+% W = @(
+  Empty: MapCoord.Empty<Unit@>,
+  Insert: MapCoord.Insert<Unit@>,
+  For: MapCoord.For<Unit@>
+);
 
 # Create a world from a list of coordinates of live cells.
 (List@<Coord@>){ World@; } World = (List@<Coord@> mkCells) {
@@ -64,12 +85,12 @@
 };
 
 # Map from Coord to the status of the cell.
-{ Map<Coord@>(DCoord);
-  @(Cand@: Map@<Status@>,
-    C: @(Empty: Empty<Status@>,
-         InsertWith: InsertWith<Status@>,
-         For: For<Status@>));
-};
+@ Cand@ = MapCoord.Map@<Status@>;
+% C = @(
+  Empty: MapCoord.Empty<Status@>,
+  InsertWith: MapCoord.InsertWith<Status@>,
+  For: MapCoord.For<Status@>
+);
 
 # Advance the world by one unit of time.
 (World@) { World@; } Step = (World@ w) {

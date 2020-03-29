@@ -1,5 +1,6 @@
 
-{ /Unit%; @(Unit@, Unit); };
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 Unit@ _ := /GameOfLife/Bench%.Bench;
 Unit@ _ := /Md5/Tests%.Bench;

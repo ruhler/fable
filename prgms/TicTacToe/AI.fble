@@ -1,12 +1,34 @@
 
-{ /Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
-{ /Map%; @(Map); };
-{ /List%; @(S@, S, ForS); };
-{ /Maybe%; @(Maybe@, For, Just, Nothing); };
-{ /Process%; @(Get@, Put@); };
-{ /Unit%; @(Unit@, Unit); };
+@ Data@ = /Data%.Data@;
+% DUnit = /Data%.Unit;
+% Left = /Data%.Left;
+% Right = /Data%.Right;
+% Product = /Data%.Product;
 
-{ /TicTacToe/Board%; @(Board@, Player@, Position@, Result@, Square@, BoardStatus, Move); };
+<@>% Map = /Map%.Map;
+
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+<@,@>% ForS = /List%.ForS;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@,@>% For = /Maybe%.For;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Board@ = /TicTacToe/Board%.Board@;
+@ Player@ = /TicTacToe/Board%.Player@;
+@ Position@ = /TicTacToe/Board%.Position@;
+@ Result@ = /TicTacToe/Board%.Result@;
+@ Square@ = /TicTacToe/Board%.Square@;
+% BoardStatus = /TicTacToe/Board%.BoardStatus;
+% Move = /TicTacToe/Board%.Move;
 
 (Square@) { Data@; } DSquare = {
   Data@ x = Left(Left(DUnit));
@@ -130,12 +152,11 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-{ Map<Board@>(DBoard);
-  @(MemoTable@: Map@<PositionResult@>,
-    Empty: Empty<PositionResult@>,
-    Lookup: Lookup<PositionResult@>,
-    Insert: Insert<PositionResult@>);
-};
+% BoardMap = Map<Board@>(DBoard);
+@ MemoTable@ = BoardMap.Map@<PositionResult@>;
+% Empty = BoardMap.Empty<PositionResult@>;
+% Lookup = BoardMap.Lookup<PositionResult@>;
+% Insert = BoardMap.Insert<PositionResult@>;
 
 <@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 

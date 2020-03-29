@@ -1,5 +1,6 @@
 fble-test {
-  { /Bool%; @(Unit@, Bool@); };
+  @ Unit@ = /Bool%.Unit@;
+  @ Bool@ = /Bool%.Bool@;
 
   # Regression test for a bug we had where we were not properly capturing
   # module refs in function values.

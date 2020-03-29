@@ -1,10 +1,23 @@
-{ /Bool%; @(Bool@, True, False); };
-{ /Int/IntP%; @(IntP@, 2, Add1, Mul); };
-{ /Int/IntP/Div%; @(Mod); };
-{ /Int/IntP/Eq%; @(Lt, Gt); };
-{ /Int/IntP/Sub%; @(Sub1); };
-{ /Int/IntS%; @(IntS@); };
-{ /Int/IntS/Eq%; @(IsZero); };
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+@ IntP@ = /Int/IntP%.IntP@;
+% 2 = /Int/IntP%.2;
+% Add1 = /Int/IntP%.Add1;
+% Mul = /Int/IntP%.Mul;
+
+% Mod = /Int/IntP/Div%.Mod;
+
+% Lt = /Int/IntP/Eq%.Lt;
+% Gt = /Int/IntP/Eq%.Gt;
+
+% Sub1 = /Int/IntP/Sub%.Sub1;
+
+@ IntS@ = /Int/IntS%.IntS@;
+
+% IsZero = /Int/IntS/Eq%.IsZero;
 
 # Returns true if f evenly divides x.
 (IntP@, IntP@){Bool@;} Divides = (IntP@ x, IntP@ f) {

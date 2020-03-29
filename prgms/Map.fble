@@ -1,8 +1,21 @@
 
-{ /Bool%; @(Bool@, True, False, And); };
-{ /Data%; @(Data@, DUnit: Unit, Left, Right, Product); };
-{ /Unit%; @(Unit@, Unit); };
-{ /Maybe%; @(Maybe@, Nothing, Just); };
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+
+@ Data@ = /Data%.Data@;
+% DUnit = /Data%.Unit;
+% Left = /Data%.Left;
+% Right = /Data%.Right;
+% Product = /Data%.Product;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Nothing = /Maybe%.Nothing;
+<@>% Just = /Maybe%.Just;
 
 <@,@>@ Entry@ = <@ K@, @ V@> { *(K@ key, V@ value); };
 

@@ -1,6 +1,12 @@
-{ /Unit%; @(Unit@, Unit); };
-{ /Bool%; @(Bool@, True, And); };
-{ /Monoid%; @(Monoid@); };
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% And = /Bool%.And;
+
+<@>@ Monoid@ = /Monoid%.Monoid@;
 
 # P - A list of 1 or more elements: T+
 # S - A list of 0 or more elements: T*

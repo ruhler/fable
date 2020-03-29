@@ -1,6 +1,13 @@
-{ /Unit%; @(Unit@, Unit); };
-{ /Bool%; @(Bool@, True, False); };
-{ /Bits/BitN%; @(Bit@, BitN@); };
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+@ Bit@ = /Bits/BitN%.Bit@;
+<@>@ BitN@ = /Bits/BitN%.BitN@;
 
 @ Result@ = *(Bit@ z, Bit@ cout);
 

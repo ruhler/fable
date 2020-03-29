@@ -1,14 +1,57 @@
 
-{ /App%; @(App@, Event@, Effect@); };
-{ /Bool%; @(Bool@, True, False, And, Or); };
-{ /Drawing%; @(Color@, Drawing@, Point@, Blank, Rect, Over, Transform); };
-{ /List%; @(P@, S@, InitP, LastP); };
-{ /Process%; @(Get@, Put@); };
-{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 6, Inc, Dec, Add, Mul, Neg, Sub); };
-{ /Int/Int/Eq%; @(Eq, Gt, Lt, Abs); };
-{ /Int/Int/Lit%; @(I, D); };
-{ /Int/Int/Div%; @(Div, Mod); };
-{ /Unit%; @(Unit@, Unit); };
+@ App@ = /App%.App@;
+@ Event@ = /App%.Event@;
+@ Effect@ = /App%.Effect@;
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+% Or = /Bool%.Or;
+
+@ Color@ = /Drawing%.Color@;
+@ Drawing@ = /Drawing%.Drawing@;
+@ Point@ = /Drawing%.Point@;
+% Blank = /Drawing%.Blank;
+% Rect = /Drawing%.Rect;
+% Over = /Drawing%.Over;
+% Transform = /Drawing%.Transform;
+
+<@>@ P@ = /List%.P@;
+<@>@ S@ = /List%.S@;
+<@>% InitP = /List%.InitP;
+<@>% LastP = /List%.LastP;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Int@ = /Int/Int%.Int@;
+% 0 = /Int/Int%.0;
+% 1 = /Int/Int%.1;
+% 2 = /Int/Int%.2;
+% 3 = /Int/Int%.3;
+% 4 = /Int/Int%.4;
+% 6 = /Int/Int%.6;
+% Inc = /Int/Int%.Inc;
+% Dec = /Int/Int%.Dec;
+% Add = /Int/Int%.Add;
+% Mul = /Int/Int%.Mul;
+% Neg = /Int/Int%.Neg;
+% Sub = /Int/Int%.Sub;
+
+% Eq = /Int/Int/Eq%.Eq;
+% Gt = /Int/Int/Eq%.Gt;
+% Lt = /Int/Int/Eq%.Lt;
+% Abs = /Int/Int/Eq%.Abs;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+% Div = /Int/Int/Div%.Div;
+% Mod = /Int/Int/Div%.Mod;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 Int@ MinRow = 0;
 Int@ MaxRow = I(D|20);

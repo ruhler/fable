@@ -1,17 +1,45 @@
-{ /Unit%; @(Unit@, Unit); };
-{ /Maybe%; @(Maybe@); };
-{ /Bool%; @(Bool@, True, False, And); };
-{ /List%; @(SL@: S@, PL@: P@, List@, SL: S); };
-{ /Bits%.Bit; @(Bit@); };
-{ /Bits%.Bit2; @(Bit2@); };
-{ /Bits%.Bit4; @(Bit4@); };
-{ /Bits%.Bit8; @(Bit8@, H2); };
-{ /Bits%.Bit16; @(Bit16@); };
-{ /Bits%.Bit32; @(Bit32@); };
-{ /Bits%.Bit32.BitN; @(eq, and, or, not, xor, add); };
-{ /Bits%.Bit64; @(Bit64@); };
-{ /Hex%; @(Hex@, Hex); }; Hex;
-{ /Process%; @(Get@, Put@); };
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+
+<@>@ SL@ = /List%.S@;
+<@>@ PL@ = /List%.P@;
+<@,@>@ List@ = /List%.List@;
+<@>% SL = /List%.S;
+
+@ Bit@ = /Bits%.Bit.Bit@;
+@ Bit2@ = /Bits%.Bit2.Bit2@;
+@ Bit4@ = /Bits%.Bit4.Bit4@;
+@ Bit8@ = /Bits%.Bit8.Bit8@;
+@ Bit16@ = /Bits%.Bit16.Bit16@;
+@ Bit32@ = /Bits%.Bit32.Bit32@;
+@ Bit64@ = /Bits%.Bit64.Bit64@;
+
+% H2 = /Bits%.Bit8.H2;
+
+% eq = /Bits%.Bit32.BitN.eq;
+% and = /Bits%.Bit32.BitN.and;
+% or = /Bits%.Bit32.BitN.or;
+% not = /Bits%.Bit32.BitN.not;
+% xor = /Bits%.Bit32.BitN.xor;
+% add = /Bits%.Bit32.BitN.add;
+
+@ Hex@ = /Hex%.Hex@;
+% Hex = /Hex%.Hex;
+% 0 = Hex.0; % 1 = Hex.1; % 2 = Hex.2; % 3 = Hex.3;
+% 4 = Hex.4; % 5 = Hex.5; % 6 = Hex.6; % 7 = Hex.7;
+% 8 = Hex.8; % 9 = Hex.9; % A = Hex.A; % B = Hex.B;
+% C = Hex.C; % D = Hex.D; % E = Hex.E; % F = Hex.F;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
 
 # Construct a Bit32 in hex, with high-order byte first.
 (List@<Hex@>){Bit32@;} H8 = (List@<Hex@> list) {

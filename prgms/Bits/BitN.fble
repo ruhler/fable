@@ -1,5 +1,8 @@
-{ /Unit%; @(Unit@, Unit); };
-{ /Bool%; @(Bool@); };
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Bool@ = /Bool%.Bool@;
 
 @ Bit@ = +(Unit@ 0, Unit@ 1);
 

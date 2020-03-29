@@ -1,8 +1,12 @@
 
-{ /Bool%; @(Bool@); };
-{ /Maybe%; @(Maybe@); };
-{ /Process%; @(Get@, Put@); };
-{ /String%; @(Str@); };
+@ Bool@ = /Bool%.Bool@;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Str@ = /String%.Str@;
 
 # The Stdio Interface.
 # Inputs:

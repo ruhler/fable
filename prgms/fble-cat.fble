@@ -1,10 +1,17 @@
 
-{ /Unit%; @(Unit@); };
-{ /Bool%; @(Bool@, True); };
-{ /Maybe%; @(Maybe@); };
-{ /Process%; @(Get@, Put@); };
-{ /Stdio%; @(Stdio@); };
-{ /String%; @(Str@); };
+@ Unit@ = /Unit%.Unit@;
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Stdio@ = /Stdio%.Stdio@;
+
+@ Str@ = /String%.Str@;
 
 # The 'cat' program to cat stdin.
 Stdio@ Cat = (Get@<Maybe@<Str@>> stdin, Put@<Str@> stdout) {

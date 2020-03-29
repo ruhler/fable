@@ -1,16 +1,48 @@
-{ /Bool%; @(Bool@, True, False, And); };
-{ /Char%; @(Char@, Chars); };
-{ /List%; @(S@, S0, S, ConsS, Append, Concat, List@); };
-{ /Maybe%; @(Maybe@, Just, Nothing, For); };
-{ /String%; @(Str@, Str); };
-{ /Test%; @(Test@, TestResult@); };
-{ /Unit%; @(Unit@, Unit); };
 
-{ /Sudoku%; @(
-    Symbol@, 1, 2, 3, 4, 5, 6, 7, 8, 9, IterateSymbol,
-    Input@, Solved@, Solve
-  );
-};
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+<@>@ S@ = /List%.S@;
+<@>% S0 = /List%.S0;
+<@>% S = /List%.S;
+<@>% ConsS = /List%.ConsS;
+<@>% Append = /List%.Append;
+<@>% Concat = /List%.Concat;
+<@,@>@ List@ = /List%.List@;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+<@,@>% For = /Maybe%.For;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Symbol@ = /Sudoku%.Symbol@;
+@ Input@ = /Sudoku%.Input@;
+@ Solved@ = /Sudoku%.Solved@;
+% 1 = /Sudoku%.1;
+% 2 = /Sudoku%.2;
+% 3 = /Sudoku%.3;
+% 4 = /Sudoku%.4;
+% 5 = /Sudoku%.5;
+% 6 = /Sudoku%.6;
+% 7 = /Sudoku%.7;
+% 8 = /Sudoku%.8;
+% 9 = /Sudoku%.9;
+% IterateSymbol = /Sudoku%.IterateSymbol;
+% Solve = /Sudoku%.Solve;
 
 (Symbol@, Symbol@) { Bool@; } EqSymbol = (Symbol@ a, Symbol@ b) {
   ?(a; 1: ?(b; 1: True, : False),
@@ -65,13 +97,13 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
   };
 };
 
-@(MaybeSymbols: {
+% MS = {
   (Symbol@){ Maybe@<Symbol@>; } J = Just<Symbol@>;
   @(1: J(1), 2: J(2), 3: J(3),
     4: J(4), 5: J(5), 6: J(6),
     7: J(7), 8: J(8), 9: J(9),
     _: Nothing<Symbol@>);
-});
+};
 
 <@ T@>(T@, T@, T@, T@, T@, T@, T@, T@, T@){ Array@<T@>; }
 Array = <@ T@>(T@ 1, T@ 2, T@ 3, T@ 4, T@ 5, T@ 6, T@ 7, T@ 8, T@ 9) {
@@ -82,7 +114,10 @@ Array = <@ T@>(T@ 1, T@ 2, T@ 3, T@ 4, T@ 5, T@ 6, T@ 7, T@ 8, T@ 9) {
 
 Input@ SampleInput = {
   @ S@ = Maybe@<Symbol@>;
-  MaybeSymbols;
+  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
+  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
+  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
+  % _ = MS._;
   Array<Array@<S@>>(
     Array<S@>(8,_,_,  _,9,_,  _,_,2),
     Array<S@>(7,2,_,  _,_,_,  _,4,9),
@@ -115,7 +150,10 @@ Solved@ SampleSolved = {
 
 Input@ EasyInput = {
   @ S@ = Maybe@<Symbol@>;
-  MaybeSymbols;
+  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
+  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
+  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
+  % _ = MS._;
   Array<Array@<S@>>(
     Array<S@>(5,3,6,  _,_,_,  4,_,7),
     Array<S@>(_,_,8,  _,_,5,  _,_,_),
@@ -132,7 +170,10 @@ Input@ EasyInput = {
 
 Input@ MediumInput = {
   @ S@ = Maybe@<Symbol@>;
-  MaybeSymbols;
+  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
+  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
+  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
+  % _ = MS._;
   Array<Array@<S@>>(
     Array<S@>(8,_,_,  _,_,_,  _,_,9),
     Array<S@>(9,_,2,  _,6,3,  _,_,_),
@@ -149,7 +190,10 @@ Input@ MediumInput = {
 
 Input@ HardInput = {
   @ S@ = Maybe@<Symbol@>;
-  MaybeSymbols;
+  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
+  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
+  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
+  % _ = MS._;
   Array<Array@<S@>>(
     Array<S@>(_,_,_,  _,3,1,  _,_,_),
     Array<S@>(_,_,6,  2,4,_,  7,_,_),
@@ -166,7 +210,10 @@ Input@ HardInput = {
 
 Input@ ExpertInput = {
   @ S@ = Maybe@<Symbol@>;
-  MaybeSymbols;
+  % 1 = MS.1; % 2 = MS.2; % 3 = MS.3;
+  % 4 = MS.4; % 5 = MS.5; % 6 = MS.6;
+  % 7 = MS.7; % 8 = MS.8; % 9 = MS.9;
+  % _ = MS._;
   Array<Array@<S@>>(
     Array<S@>(_,_,_,  _,_,9,  _,2,1),
     Array<S@>(_,8,_,  _,_,_,  _,6,_),

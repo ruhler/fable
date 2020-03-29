@@ -1,5 +1,9 @@
-{ /Char%; @(Char@); };
-{ /List%; @(S@, List@, S); };
+
+@ Char@ = /Char%.Char@;
+
+<@>@ S@ = /List%.S@;
+<@,@>@ List@ = /List%.List@;
+<@>% S = /List%.S;
 
 @ Str@ = S@<Char@>;
 <@>@ CharLit@ = List@<Char@>;

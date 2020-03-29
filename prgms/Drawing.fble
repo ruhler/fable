@@ -1,7 +1,17 @@
-{ /Unit%; @(Unit@, Unit); };
-{ /Int/Int%; @(Int@, Add, Sub); };
-{ /Int/Int/Eq%; @(Min, Abs); };
-{ /List%; @(S@, S, MapS); };
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+
+% Min = /Int/Int/Eq%.Min;
+% Abs = /Int/Int/Eq%.Abs;
+
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+<@,@>% MapS = /List%.MapS;
 
 @ Color@ = +(
     Unit@ black,
@@ -57,8 +67,7 @@ Transform = ((Point@) { Point@; } f, Drawing@ d) {
            points: MapS<Point@, Point@>(d.path.points, f),
            color: d.path.color)),
        over: {
-         d.over;
-         Over(Transform(f, below), Transform(f, above));
+         Over(Transform(f, d.over.below), Transform(f, d.over.above));
        });
 };
 

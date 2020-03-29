@@ -1,14 +1,37 @@
 
-{ /Bool%; @(Bool@, True, False, And, Not); };
-{ /Char%; @(Char@, Chars); };
-{ /List%; @(S@, S, S0, ConsS, Append); };
-{ /Maybe%; @(Maybe@); };
-{ /String%; @(Str@, Str); };
-{ /Test%; @(Test@, TestResult@); };
-{ /Unit%; @(Unit@, Unit); };
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+% Not = /Bool%.Not;
 
-{ /Data%; @(Data@, Product, Left, Right, DUnit: Unit); };
-{ /Map%; @(Map); };
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+<@>% S0 = /List%.S0;
+<@>% ConsS = /List%.ConsS;
+<@>% Append = /List%.Append;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Data@ = /Data%.Data@;
+% Product = /Data%.Product;
+% Left = /Data%.Left;
+% Right = /Data%.Right;
+% DUnit = /Data%.Unit;
+
+<@>% Map = /Map%.Map;
 
 @ Bit1@ = +(Unit@ 0, Unit@ 1);
 @ Bit2@ = *(Bit1@ h, Bit1@ l);
@@ -27,12 +50,18 @@ Bit2@ D = Bit2@(Bit1@(1: Unit), Bit1@(1: Unit));
   And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
 };
 
-# Imports Map@, Empty, Lookup, InsertWith, Insert, For
-Map<Bit2@>((Bit2@ x) {
+% MapBit2 = Map<Bit2@>((Bit2@ x) {
   Product(
     ?(x.h; 0: Left(DUnit), 1: Right(DUnit)),
     ?(x.l; 0: Left(DUnit), 1: Right(DUnit)));
 });
+<@>@ Map@ = MapBit2.Map@;
+<@>% Empty = MapBit2.Empty;
+<@>% Lookup = MapBit2.Lookup;
+<@>% InsertWith = MapBit2.InsertWith;
+<@>% Insert = MapBit2.Insert;
+<@, @>% For = MapBit2.For;
+
 
 S@<Test@> Tests = {
   (Str@){Str@;} name = (Str@ nm) {
@@ -109,13 +138,13 @@ S@<Test@> Tests = {
               ?(entries.cons.tail.cons.tail;
                 cons: TestResult@(fail: Str(Chars|'Too many entries.')),
                 nil: {
-                  ?(EqBit2(A, entries.cons.head.key);
+                  % _ = ?(EqBit2(A, entries.cons.head.key);
                     true: @(a: entries.cons.head, 
                             b: entries.cons.tail.cons.head),
                     false: @(a: entries.cons.tail.cons.head, 
                              b: entries.cons.head));
-                  ?(And(And(EqBit2(A, a.key), EqBit2(B, b.key)),
-                        And(a.value, Not(b.value)));
+                  ?(And(And(EqBit2(A, _.a.key), EqBit2(B, _.b.key)),
+                        And(_.a.value, Not(_.b.value)));
                     true: TestResult@(pass: Unit),
                     false: TestResult@(fail: Str(Chars|'key/value mismatch'))
                   );

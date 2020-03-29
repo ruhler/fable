@@ -392,14 +392,6 @@ stmt:
       let_expr->body = $3;
       $$ = &let_expr->_base;
     }  
-  | expr ';' stmt {
-      FbleStructImportExpr* expr = FbleAlloc(arena, FbleStructImportExpr);
-      expr->_base.tag = FBLE_STRUCT_IMPORT_EXPR;
-      expr->_base.loc = @$;
-      expr->nspace = $1;
-      expr->body = $3;
-      $$ = &expr->_base;
-    }
   | field_p '<' '-' expr ';' stmt {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;

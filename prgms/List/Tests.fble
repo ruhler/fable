@@ -1,9 +1,27 @@
-{ /Unit%; @(Unit@, Unit); };
-{ /Bool%; @(Bool@, True, False, And); };
-{ /Char%; @(Char@, Chars); };
-{ /List%; @(S@, P@, S0, S, Append, SortS); };
-{ /String%; @(Str@, Str); };
-{ /Test%; @(TestResult@, Test@); };
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+<@>@ S@ = /List%.S@;
+<@>@ P@ = /List%.P@;
+<@>% S0 = /List%.S0;
+<@>% S = /List%.S;
+<@>% Append = /List%.Append;
+<@>% SortS = /List%.SortS;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
 
 @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 

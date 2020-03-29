@@ -1,16 +1,35 @@
 
-{ /Char%; @(Char@, Chars); };
-{ /Int/Int%; @(Int@, 0, 1, 2, 3, 4, 5, 6); };
-{ /List%; @(S@, S); };
-{ /String%; @(Str); };
-{ /Test%; @(Test@, TestResult@); };
-{ /Unit%; @(Unit); };
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
 
-{ /GameOfLife%; @(Coord@, World@, World, EqWorld, Step); };
+@ Int@ = /Int/Int%.Int@;
+% 0 = /Int/Int%.0;
+% 1 = /Int/Int%.1;
+% 2 = /Int/Int%.2;
+% 3 = /Int/Int%.3;
+% 4 = /Int/Int%.4;
+% 5 = /Int/Int%.5;
+% 6 = /Int/Int%.6;
+
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
+
+% Unit = /Unit%.Unit;
+
+@ Coord@ = /GameOfLife%.Coord@;
+@ World@ = /GameOfLife%.World@;
+% World = /GameOfLife%.World;
+% EqWorld = /GameOfLife%.EqWorld;
+% Step = /GameOfLife%.Step;
 
 # Imports to test compilation.
-{ @(x: /GameOfLife/App%); @(); };
-{ @(x: /GameOfLife/Bench%); @(); };
+% _ = /GameOfLife/App%;
+% _ = /GameOfLife/Bench%;
 
 # Do a sigle step of the acorn configuration.
 # Generation 0:

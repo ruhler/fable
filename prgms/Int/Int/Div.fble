@@ -1,6 +1,10 @@
 
-{ /Int/Int%; @(Int@, Neg, 0); };
-{ /Int/IntS%; @(IntS@); };
+@ Int@ = /Int/Int%.Int@;
+% Neg = /Int/Int%.Neg;
+% 0 = /Int/Int%.0;
+
+@ IntS@ = /Int/IntS%.IntS@;
+
 % P = /Int/IntP/Div%;
 
 (IntS@) { Int@; } IntS = (IntS@ s) {

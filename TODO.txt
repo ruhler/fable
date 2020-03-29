@@ -1,5 +1,9 @@
 
 * [lang] Remove struct import.
+* [lang] Syntax highlighting for kinds?
+
+* Rename fble-bench, and fble-cat so we can import them as modules in
+  fble-tests to ensure they stay compiling.
 
 * [compile] Warn about unused variables?
  - Add to spec? Use '_' to distinguish intended unused variables?
@@ -17,6 +21,7 @@
  - In particular, test Div and Mod.
 * [lib] Separate Map from DataMap and EqMap.
 * [lib] Add unit tests for /Map%.Equals.
+* [lib] Separate List@ from S@ and P@ module wise.
 
 * [api] Can fble-stdio check that the function has the right type?
 
@@ -51,6 +56,8 @@
 
 * [release] Better error messages on types that have the same name but different values?
 * [release] Write man pages for fble and friends?
+* [release] Better error message for importing something from a module that
+  is not defined in the module?
 
 * [ref] Change reference counting to be incrementally done on allocation.
   Maybe write a test that shows how something that should take no time gets
