@@ -76,34 +76,48 @@ value for types may exist at runtime when using an fble native interface.
 
 2.2 Kinds
 ---------
-To describe polymorphic expressions, we want a way to refer to an abstract
-type. For this purpose we introduce the notion of a kind. Kinds are analogous
-to types in that they describe what operations are supported by a particular
-value, but they are much more restricted in the operations they allow.
-Specifically, the kind of a value tells you if it is a normal value or a type
-value. Type values can be used anywhere an abstract type is expected. Unlike
-types, kinds do not act as values and cannot be described using expressions.
+Abstract Syntax:
+  Kind ::= normal_kind
+  Kind ::= type_kind
+
+Concrete Syntax:
+  kind ::= '%'    (* normal_kind *)
+  kind ::= '@'    (* type_kind *)
+
+Examples:
+  %
+  @
+
+Kinds are used to classify whether a value is a normal value, a type value, or
+something else. Using the example in the previous section:
+
+* True is a normal value. It is of normal kind.
+* Bool@ is a type value. It is of type kind.
+* @<Bool@> is a type of a type value. It is of higher kind.
+* @<@<Bool@>> is also of higher kind.
+
+Kinds are analogous to types in that they describe what operations are
+supported by a particular value, but they are much more restricted in the
+operations they allow. A value of normal kind cannot be used where a type is
+expected, for example. Unlike types, kinds do not act as values and cannot be
+described using expressions.
 
 The kind of a value is uniquely determined by the type of the value.
 
-To help distinguish between types and normal values syntactically, we
-distinguish between type names and normal names for variable names and field
-names. Type names must be used for any variables or fields that take on type
-values, and normal names must be used for any variables or fields that take on
-normal values. In the concrete syntax, names ending with the character '@' are
-type names. So, for example, 'True' is a normal value, and 'Bool@' is a type
-value.
+It is useful to be able to recognize immediately whether a variable refers to
+a normal value, a type value, or something else. For that reason, we require
+different namespaces be used for different kinds of values. In the concrete
+syntax, names of normal variables are unadorned, while names of type variables
+must end with the character '@'. So, for example, 'True' is a normal value,
+and 'Bool@' is a type value.
 
-A polymorphic expression that results in a normal value is considered a
-normal value, and a polymorphic expression that results in a type value is
-considered a type value. So, for example, the polymorphic type 'Maybe@' is a
-type, and its constructor 'Just' is a normal value.
-
-You are not allowed to use a variable to refer to a type of a type, because
-then using '@' to distinguish between normal variables and type variables
-would be insufficient. In practice this should not be a significant limitation
-because you should be able to use a variable for the value of the type and use
-the typeof operator to get the type of the type as needed.
+You are not allowed to use a variable to refer to a higher kinded value, because
+then using '@' in variable names to distinguish between normal variables and
+type variables would be insufficient. In practice this should not be a
+significant limitation because you should be able to use a type variable for
+the value of the type and use the typeof operator to get the type of the type
+as needed. For this reason, there is no syntax for describing a higher
+kind, though it is possible to describe types and expressions of higher kind.
 
 2.3 Typeof
 ----------
@@ -161,18 +175,18 @@ process when it is created.
 2.5 Let
 -------
 Abstract Syntax:
-  MType ::= implicit_type (kind :: Kind)
-  MType ::= explicit_type (type :: Type) ;
-  Expr ::= let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+  Spec ::= kind_spec (kind :: Kind)
+  Spec ::= type_spec (type :: Type) ;
+  Expr ::= let (bindings :: [(Spec, Name, Expr)]) (body :: Expr)
 
 Concrete Syntax:
-  mtype ::= kind ;
-  mtype ::= type ;
-  stmt ::= mtype name '=' expr [',' mtype name = expr [...]] ';' stmt
+  spec ::= kind ;
+  spec ::= type ;
+  stmt ::= spec name '=' expr [',' spec name = expr [...]] ';' stmt
 
 Example:
-  Int@ x = mul[3][3]; mul[x][x]
-  <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+  Int@ x = mul(3, 3); mul(x, x)
+  @ Bool@ = +(Unit@ true, Unit@ false); ...
 
 Let expressions can be used to define local variables that allow values to be
 reused in multiple places in a program. Let expressions support recursive
@@ -192,12 +206,17 @@ expressions have completed evaluation.
 
 The value of the let expression is the value of its body.
 
-When defining type variables, in place of the type of the type variable the
-kind of the type variable can be used. The type of the type variable will be
-inferred automatically in that case. This way you can define a type variable
-without having to duplicate the definition in its own type. If a kind is
-provided for a type variable, the type variable will behave as an abstract
-type in the bindings, and a concrete type in the body of the let.
+When defining a variable, ether a kind or a type can be used to specify
+the operations supported by the value of the variable. If a kind is used, the
+type of the variable is abstract in the bindings expressions. The actual type
+of the variable will be inferred from its definition for use in the body of
+the let expression. If a type is used when defining a variable, that type is
+used for the type of the variable in the binding expressions. It must match
+the type of the variable inferred from the variable's definition.
+
+It is recommended that a type specifications be preferred over kind
+specifications for normal values whose types are relatively easy to describe,
+to better document types for readers of the code.
 
 Recursively defined values must not be vacuously recursive. For example, the
 following definitions are not allowed:
@@ -746,24 +765,22 @@ Polymorphism allows expressions to be parameterized by abstract types.
 7.1 Poly Kind
 -------------
 Abstract Syntax:
-  Kind ::= type_kind
   Kind ::= poly_kind (arg :: Kind) (return :: Kind)
 
 Concrete Syntax:
-  kind ::= '@'
   kind ::= '<' kind [',' kind [...]] '>' kind
 
 Examples:
   <@>@
+  <@, @>%
 
-A poly kind describes the kind of a polymorphic type, analogous to the way
-function types describe the type of functions.
+A poly kind describes the kind of a polymorphic value. It describes what kinds
+of values can be used as arguments to polymorphic values.
 
 Two poly kinds are equal if they have the same argument and return kinds.
 
-There is no syntax to describe the kind of a normal value, because there is no
-need. You can use normal functions with polymorphic types in that case, rather
-than use polymorphic expressions with normal kinds.
+A poly kind is considered a normal kind if its result kind is a normal kind,
+and a type kind of its result kind is a type kind.
 
 The concrete syntax allows you to specify multiple arguments in a poly kind.
 This is syntactic sugar for nested single argument poly kinds. For
@@ -774,16 +791,33 @@ example, the following two expressions describe the same kind:
 7.2 Poly Value
 --------------
 Abstract Syntax:
-  Expr ::= poly_value (arg :: (Kind, Name)) (body :: Expr)
+  Expr ::= poly_value (arg :: (Kind, TypeName)) (body :: Expr)
 
 Concrete Syntax:
-  block ::= '<' kind name [',' kind name [...] '>' block
+  block ::= '<' kind type_name [',' kind type_name [...] '>' block
  
 Examples:
   <@ T@> { +(T@ just, Unit@ nothing); }
-  <@ T@> { \(T@ x; Maybe@<T@>) { Maybe@<T@>(just: x); }; }
+  <@ T@>(T@ x){ Maybe@<T@>(just: x); }
 
-Runtime is the runtime of the body.
+A polymorphic value is a value that is parameterized by one or more abstract
+types. Poly arguments must be of type kind, not normal kind. The type of a
+polymorphic value depends on the value of the poly arguments, but
+the runtime value does not. Use a function instead of a poly if you want a
+runtime value that changes depending on the value of its arguments.
+
+The type of a poly value is a poly type value with the same arguments as the
+poly value whose body describes the type of the poly body. For example, the
+type of the poly value:
+
+  <@ T@> { Maybe@<T@>(nothing: Unit@); }
+
+Is the poly type:
+
+  <@ T@> { Maybe@<T@>; }
+
+The body of a poly is evaluated as part of evaluation of the poly value. The
+runtime is the runtime of the body.
 
 7.3 Poly Application
 --------------------
@@ -797,7 +831,15 @@ Examples:
   Maybe@<Int@>
   fromJust<Int@>(3)
 
-Runtime is the runtime of the poly.
+Poly application is used to specialize a poly value for a specific type.
+
+The type of a poly application is the type of the body of the poly value, with
+the abstract type variables substituted for the corresponding concrete type
+values provided as argument to the poly application.
+
+The runtime of a poly application is linear in the number of arguments plus
+the runtime of the poly. Unlike function application, poly application does
+not cause the body of the poly to be re-evaluated.
 
 8. Literals
 -----------
@@ -1039,21 +1081,22 @@ Path ::=
  ;
 
 Kind ::=
-   type_kind
+   basic_normal_kind
+ | basic_type_kind
  | poly_kind (arg :: Kind) (result :: Kind)
  ;
 
 Type ::= (* synonym for Expr where a type is expected *)
 
-MType ::=
-   implicit_type (kind :: Kind)
- | explicit_type (type :: Type)
+Spec ::=
+   kind_spec (kind :: Kind)
+ | type_spec (type :: Type)
  ;
      
 Expr ::=
    typeof (expr :: Expr)
  | var (name :: Name)
- | let (bindings :: [(MType, Name, Expr)]) (body :: Expr)
+ | let (bindings :: [(Spec, Name, Expr)]) (body :: Expr)
  | module_ref (ref :: Path)
 
  | struct_type (fields :: [(Type, Name)])
@@ -1134,15 +1177,16 @@ name ::=
 path ::= '/' name ['/' name [...]] '%' ;
 
 kind ::=
-   '@'                                (* type_kind *)
- | '<' kind [',' kind [...]] '>' kind (* poly_kind *)
+   '%'                                             (* normal_kind *)
+ | '@'                                             (* type_kind *)
+ | '<' kind [',' kind [...]] '>' kind              (* poly_kind *)
  ;
 
 type ::= expr ;
 
-mtype ::= 
-   kind   (* implicit_type *)
- | type   (* explicit_type *)
+spec ::= 
+   kind                                            (* kind_spec *)
+ | type                                            (* type_spec *)
  ;
 
 expr ::= 
@@ -1177,14 +1221,14 @@ expr ::=
 
 block ::=
    '{' stmt '}'
- | '(' type [',' type [...]] ')' block             (* func_type *)
- | '(' type name [',' type name [...]] ')' block   (* func_value *)
- | '<' kind name [',' kind name [...]] '>' block   (* poly_value *)
+ | '(' type [',' type [...]] ')' block               (* func_type *)
+ | '(' type name [',' type name [...]] ')' block     (* func_value *)
+ | '<' tkind name [',' tkind name [...]] '>' block   (* poly_value *)
  ;
 
 stmt ::=
    expr ';'
- | mtype name '=' expr [',' mtype name '=' expr [...]] ';' stmt      (* let *)
+ | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
  | expr ';' stmt                                                     (* struct_import *)
  | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
  | type '~' name ',' name ';' stmt                                   (* proc_link *)
@@ -1199,9 +1243,10 @@ Notes:
   to distinguish between the two kinds of expressions.
 * explicit type struct value and function apply share the same form. The type
   of the expr is used to distinguish between the two kinds of expressions.
-* The module value for module Foo is stored in Foo.fble. Public child modules
-  of module Foo are stored in subdirectory Foo/ Private child modules are not
-  yet supported in the abstract syntax.
+* The module value for module Foo is stored in Foo.fble for a public module
+  and Foo*.fble for private module. Child modules of module Foo are stored in
+  subdirectory Foo/ if Foo is a public module and Foo*/ if Foo is a private
+  module.
 
 12. Thoughts
 ------------
@@ -1250,7 +1295,8 @@ Notes:
   avoided.
 
 - Static analysis to detect obvious invalid union accesses might be nice. I've
-  already run into that kind of bug.
+  already run into that kind of bug multiple times. Though to be honest,
+  comprehensive test coverage makes it really easy to spot and fix these bugs.
 
 - Fairness
   I think it would be cool if children were executed fairly. In particular,
@@ -1354,25 +1400,4 @@ Notes:
 
   Where the '?=' means Foo@ is abstract outside the body of the type let.
   Easy. Does it let you split things across submodules?
-
-* We need a more general way to support implicit type variable declarations.
-  Proposal:
-    @<> Foo = ...
-
-  Means Foo has any type. But this also means we probably shouldn't be allowed
-  to use Foo in the binding because its type is not known?
-
-  For example, defining literals is a pain if we have to give an explicit type
-  for the enum struct value:
-
-  @ Unit@ = *();
-  Unit@ Unit = Unit@();
-
-  @ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
-  @(Enums: @(A: Enum@(A: Unit), B: Enum@(B: Unit), C: Enum@(C: Unit)));
-
-  Note: we don't have to give an explicit type for modules. It would be bad if
-  that was a special case and people started using modules to get around
-  having to specify an explicit type for things. Better to have a supported,
-  if discouraged syntax for not having to specify a type.
 

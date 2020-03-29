@@ -1,3 +1,9 @@
+
+* [test] Test use of '%'.
+ - In let expression.
+ - As poly arg.
+ - As poly kind arg for poly arg.
+
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.
 * [snake] Keep track of and report score.
@@ -38,8 +44,6 @@
   to spend evaluating should be independent of the number of children in the
   family.
 
-* [lang] Add anonymous type let support.
- - Try '&' for kind level 0 in syntax?
 * [lang] Remove struct import syntax in favor of let or a new multi-import format.
 * [lang] Add support for abstract types?
 * [lang] Document the runtime memory model,
