@@ -1,7 +1,6 @@
 fble-test {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
-  Bool@ true = Bool@(true: Unit@());
   @ X@ = *(Unit@ x);
 
   # The type of a link port is the type of it's body. The type of the get port
@@ -10,8 +9,8 @@ fble-test {
   # process.
   X@! x = {
     Bool@ ~ get, put;
-    Bool@! g = get;
-    (Bool@){ Unit@!; } p = put;
+    Bool@! _g = get;
+    (Bool@){ Unit@!; } _p = put;
     $(X@(Unit@()));
   }; x;
 }

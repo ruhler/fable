@@ -7,6 +7,7 @@ fble-test {
   # nested single argument function type.
   @ A@ = (Unit@, Bool@) { Bool@; };
   @ B@ = (Unit@) { (Bool@) { Bool@;}; };
-  A@ z = (Unit@ x) { (Bool@ y) { true; }; };
-  z;
+  A@ a = (Unit@ x) { (Bool@ y) { true; }; };
+  B@ b = a;
+  b;
 }

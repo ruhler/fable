@@ -9,9 +9,9 @@ fble-test {
   };
 
   # Function application of multiple arguments.
-  Unit@ w = Snd(true, true).true;
-  Unit@ x = Snd(true, false).false;
-  Unit@ y = Snd(false, true).true;
-  Unit@ z = Snd(false, false).false;
+  Unit@ _w = Snd(true, true).true;
+  Unit@ _x = Snd(true, false).false;
+  Unit@ _y = Snd(false, true).true;
+  Unit@ _z = Snd(false, false).false;
   Unit@();
 }

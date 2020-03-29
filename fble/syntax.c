@@ -9,6 +9,16 @@
 #include "fble-syntax.h"
 
 
+// FbleReportWarning -- see documentation in fble-syntax.h
+void FbleReportWarning(const char* format, FbleLoc* loc, ...)
+{
+  va_list ap;
+  va_start(ap, loc);
+  fprintf(stderr, "%s:%d:%d: warning: ", loc->source, loc->line, loc->col);
+  vfprintf(stderr, format, ap);
+  va_end(ap);
+}
+
 // FbleReportError -- see documentation in fble-syntax.h
 void FbleReportError(const char* format, FbleLoc* loc, ...)
 {

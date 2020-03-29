@@ -10,10 +10,8 @@
 <@>@ S@ = /List%.S@;
 <@>% S0 = /List%.S0;
 <@>% S = /List%.S;
-<@>% ConsS = /List%.ConsS;
 <@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
-<@,@>@ List@ = /List%.List@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
@@ -253,11 +251,11 @@ S@<Test@> Tests = {
 };
 
 Unit@! Bench = $({
-  Solved@ sample = Solve(SampleInput).just;
-  Solved@ easy = Solve(EasyInput).just;
-  Solved@ medium = Solve(MediumInput).just;
-  Solved@ hard = Solve(HardInput).just;
-  Solved@ expert = Solve(ExpertInput).just;
+  Solved@ _sample = Solve(SampleInput).just;
+  Solved@ _easy = Solve(EasyInput).just;
+  Solved@ _medium = Solve(MediumInput).just;
+  Solved@ _hard = Solve(HardInput).just;
+  Solved@ _expert = Solve(ExpertInput).just;
   Unit;
 });
 

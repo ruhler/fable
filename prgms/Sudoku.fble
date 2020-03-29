@@ -2,14 +2,7 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
-% And = /Bool%.And;
 
-<@>@ S@ = /List%.S@;
-<@>% S0 = /List%.S0;
-<@>% S = /List%.S;
-<@>% ConsS = /List%.ConsS;
-<@>% Append = /List%.Append;
-<@>% Concat = /List%.Concat;
 <@,@>@ List@ = /List%.List@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
@@ -25,18 +18,6 @@
   Unit@ 1, Unit@ 2, Unit@ 3,
   Unit@ 4, Unit@ 5, Unit@ 6,
   Unit@ 7, Unit@ 8, Unit@ 9);
-
-(Symbol@, Symbol@) { Bool@; } EqSymbol = (Symbol@ a, Symbol@ b) {
-  ?(a; 1: ?(b; 1: True, : False),
-       2: ?(b; 2: True, : False),
-       3: ?(b; 3: True, : False),
-       4: ?(b; 4: True, : False),
-       5: ?(b; 5: True, : False),
-       6: ?(b; 6: True, : False),
-       7: ?(b; 7: True, : False),
-       8: ?(b; 8: True, : False),
-       9: ?(b; 9: True, : False));
-};
 
 Symbol@ 1 = Symbol@(1: Unit);
 Symbol@ 2 = Symbol@(2: Unit);
@@ -87,14 +68,6 @@ BoxIndex@ B3 = BoxIndex@(3: Unit);
 
 # An array of elements of type T@, indexed by symbol.
 <@>@ Array@ = <@ T@>(Symbol@){ T@; };
-
-<@ T@>((T@, T@) { Bool@; }, Array@<T@>, Array@<T@>) { Bool@; }
-EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
-  For<Symbol@, Bool@>(1, True, IterateSymbol,
-    (Symbol@ s, Bool@ p) {
-      And(p, eq(a(s), b(s)));
-  });
-};
 
 # Set the value of a single element of an array.
 #   a[s] = x

@@ -5,7 +5,7 @@ fble-test {
 
   # Proc exec is non-strict: the bindings are not evaluated until we run the
   # process itself.
-  Unit@! mku = {
+  Unit@! _mku = {
     Unit@ u := nothing.just;
     $(u);
   };

@@ -11,7 +11,7 @@ fble-test {
   @ BoolPair@ = *(@<Bool@> Bool@, Bool@ x, Bool@ y);
   BoolPair@ value = @(Bool@, x, y);
 
-  Unit@ tt = value.x.true;
-  Unit@ ff = value.y.false;
+  Unit@ _tt = value.x.true;
+  Unit@ _ff = value.y.false;
   value;
 }

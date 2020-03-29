@@ -46,7 +46,9 @@ bool FbleDecompile(FILE* fout, FbleProgram* program);
 //
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
-//   use. Prints an error message to stderr in case of error.
+//   use.
+//   Prints warning messages to stderr.
+//   Prints an error message to stderr in case of error.
 //   Sets blocks to the info about all blocks in the program. This must be
 //   freed when no longer in use.
 //   Sets profile to the profile for the evaluation. This must be freed with
@@ -67,7 +69,9 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* bloc
 //
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
-//   use. Prints an error message to stderr in case of error.
+//   use.
+//   Prints warning messages to stderr.
+//   Prints an error message to stderr in case of error.
 //   Updates the profile with stats from the evaluation.
 FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args, FbleProfile* profile);
 
@@ -134,6 +138,7 @@ typedef struct FbleIO {
 //   error could be an undefined union field access.
 //
 // Side effects:
+//   Prints warning messages to stderr.
 //   Prints an error message to stderr in case of error.
 //   Updates the profile with stats from the evaluation.
 FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc, FbleProfile* profile);

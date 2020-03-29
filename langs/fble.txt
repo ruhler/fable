@@ -204,7 +204,8 @@ While a variable can be referenced in the bindings where the variable is
 defined, the value of the variable is undefined until after the binding
 expressions have completed evaluation.
 
-The value of the let expression is the value of its body.
+The value of the let expression is the value of its body. The type of the let
+expression is the type of its body.
 
 When defining a variable, ether a kind or a type can be used to specify
 the operations supported by the value of the variable. If a kind is used, the
@@ -233,6 +234,11 @@ somewhere, such as:
 Bindings are allowed to defined variables with the same name as variables
 already in scope, thus shadowing the variable already in scope. Except that
 the variables defined in a single let expression must have distinct names.
+
+Implementations are encouraged to emit warnings for unused variables, with the
+convention that no warnings should be produced for variables starting with '_'
+in their name. This allows the programmer to annotate a variable as
+intentionally unused, which is occasionally useful in practice.
 
 Runtime is O(N log(M)) plus the runtimes of the bindings and the runtime of
 the body, where N is the number of bindings and M is the number of variables
@@ -1197,11 +1203,6 @@ Notes:
   the resulting function will be a description of a hardware circuit.
 
 * Issues that came up when switching to the new unit test format
- - Should it be an error to import or define an unused variable?
-    Otherwise it's easy to make a change to what's used without updating an
-    import list. But it's super annoying when editing or commenting out code
-    to have to delete things that are not referenced.
-
  - For writing tests, it would be really useful if common data types all had
    function to convert them to strings.
 

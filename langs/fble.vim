@@ -12,9 +12,9 @@ syn match Comment "#.*"
 syn match Type "\w\+@"
 
 " Highlight kinds as special, to distinguish from types.
-" But make sure we don't highlight the opening of @(...) as a kind.
-syn match xImplicitStructStart "@("
-syn match Special "[<@, >]*[@%]" contains=xImplicitStructStart
+syn match xNotKind "@("
+syn match xNotKind "@<"
+syn match Special "\(<[<@, >]*>\)\?[@%]" contains=xNotKind
 
 
 " Highlight fields used in union select and implicit type struct values as

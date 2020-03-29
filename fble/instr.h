@@ -378,6 +378,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //   The compiled program, or NULL if the program is not well typed.
 //
 // Side effects:
+//   Prints warning messages to stderr.
 //   Prints a message to stderr if the program fails to compile. Allocates
 //   memory for the instructions which must be freed with FbleFreeInstrBlock when
 //   it is no longer needed.

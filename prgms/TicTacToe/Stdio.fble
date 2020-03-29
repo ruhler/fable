@@ -1,5 +1,4 @@
 
-@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 
 @ Char@ = /Char%.Char@;

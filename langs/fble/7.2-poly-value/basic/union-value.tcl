@@ -5,7 +5,6 @@ fble-test {
   Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
 
   @ Bool@ = +(Unit@ true, Unit@ false);
-  Bool@ true = Bool@(true: Unit@());
 
   Nothing<Bool@>.nothing;
 }

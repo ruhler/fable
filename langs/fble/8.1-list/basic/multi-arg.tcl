@@ -19,9 +19,9 @@ fble-test {
 
   S@ l = f<S@>(Cons, Nil);
 
-  Unit@ b = l.cons.head.B;
-  Unit@ a = l.cons.tail.cons.head.A;
-  Unit@ c = l.cons.tail.cons.tail.cons.head.C;
-  Unit@ e = l.cons.tail.cons.tail.cons.tail.nil;
+  Unit@ _b = l.cons.head.B;
+  Unit@ _a = l.cons.tail.cons.head.A;
+  Unit@ _c = l.cons.tail.cons.tail.cons.head.C;
+  Unit@ _e = l.cons.tail.cons.tail.cons.tail.nil;
   Unit@();
 }

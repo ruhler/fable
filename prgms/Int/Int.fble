@@ -25,9 +25,6 @@ Int@ 0 = Int@(0: Unit);
   Int@(p: x);
 };
 
-# The integer (-1)
-Int@ Minus1 = N(IntP.1);
-
 Int@ 1 = P(IntP.1);
 Int@ 2 = P(IntP.2);
 Int@ 3 = P(IntP.3);

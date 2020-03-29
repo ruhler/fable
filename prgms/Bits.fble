@@ -1,13 +1,10 @@
 
-@ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
 @ Hex@ = /Hex%.Hex@;
 % 0 = /Hex%.Hex.0;
-% 1 = /Hex%.Hex.1;
 
 @ Bit@ = /Bits/BitN%.Bit@;
-<@>@ BitN@ = /Bits/BitN%.BitN@;
 
 <@>@ Bit2X@ = /Bits/Bit2XN%.Bit2X@;
 <@>% Bit2XN = /Bits/Bit2XN%.Bit2XN;

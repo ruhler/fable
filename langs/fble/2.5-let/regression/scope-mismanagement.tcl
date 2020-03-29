@@ -7,7 +7,7 @@ fble-test {
   # the total number of slots when we really wanted to iterate over the total
   # number of variables in scope.
   (Unit@ _) {
-    Unit@ a = {
+    Unit@ _a = {
       Unit@ b = Unit@();
       Unit@ c = b;
       c;

@@ -9,7 +9,6 @@
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
 
-@ Str@ = /String%.Str@;
 <@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
@@ -40,8 +39,6 @@
 
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
-
-@ TestFailure@ = *(Str@ name, Int@ a, Int@ b);
 
 (CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
   Test@(Append<Char@>(Str(Chars|'Int.'), Str(name)), {

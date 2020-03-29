@@ -7,17 +7,13 @@
 % False = /Bool%.False;
 % And = /Bool%.And;
 
-@ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
 <@>@ S@ = /List%.S@;
 <@>@ P@ = /List%.P@;
-<@>% S0 = /List%.S0;
 <@>% S = /List%.S;
-<@>% Append = /List%.Append;
 <@>% SortS = /List%.SortS;
 
-@ Str@ = /String%.Str@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;

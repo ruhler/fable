@@ -11,7 +11,7 @@ fble-test {
   # Partial application.
   (Bool@) { Bool@; } Id = And(true);
 
-  Unit@ tt = Id(true).true;
-  Unit@ ff = Id(false).false;
+  Unit@ _tt = Id(true).true;
+  Unit@ _ff = Id(false).false;
   Unit@();
 }

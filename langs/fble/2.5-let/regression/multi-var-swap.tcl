@@ -10,7 +10,7 @@ fble-test {
   # got mixed up here: x was set to False and y to True by mistake.
   Bool@ x = True, Bool@ y = False;
 
-  Unit@ tt = x.true;
-  Unit@ ff = y.false;
+  Unit@ _tt = x.true;
+  Unit@ _ff = y.false;
   Unit;
 }

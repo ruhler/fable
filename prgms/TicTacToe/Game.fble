@@ -1,8 +1,4 @@
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
-
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
 <@>@ Get@ = /Process%.Get@;

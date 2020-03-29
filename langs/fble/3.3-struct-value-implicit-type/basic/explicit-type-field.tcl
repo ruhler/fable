@@ -8,7 +8,7 @@ fble-test {
   @ BoolPair@ = *(@<Bool@> B@, Bool@ x, Bool@ y);
   BoolPair@ value = @(B@: Bool@, x: true, y: false);
 
-  Unit@ tt = value.x.true;
-  Unit@ ff = value.y.false;
+  Unit@ _tt = value.x.true;
+  Unit@ _ff = value.y.false;
   value;
 }

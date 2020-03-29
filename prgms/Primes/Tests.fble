@@ -1,18 +1,12 @@
 
-@ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
-
-@ Bool@ = /Bool%.Bool@;
 
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
 <@>@ S@ = /List%.S@;
-<@>@ P@ = /List%.P@;
-<@>% ConsS = /List%.ConsS;
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
-<@>% Concat = /List%.Concat;
 
 @ Str@ = /String%.Str@;
 % Str = /String%.Str;

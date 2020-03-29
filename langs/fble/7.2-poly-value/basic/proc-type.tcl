@@ -6,6 +6,6 @@ fble-test {
   <@>@ Get@ = <@ T@>{ T@!; };
 
   Bool@ ~ get, put;
-  Get@<Bool@> g = get;
+  Get@<Bool@> _g = get;
   $(Unit@());
 }

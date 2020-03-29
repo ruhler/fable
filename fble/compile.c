@@ -37,12 +37,14 @@ typedef struct {
 //   A reference to the type is owned by this Var.
 // local - the type and location of the variable in the stack frame.
 //   A reference to the local is owned by this Var.
-// used  - true if the variable is used anywhere, false otherwise.
+// used  - true if the variable is used anywhere at runtime, false otherwise.
+// accessed - true if the variable is referenced anywhere, false otherwise.
 typedef struct {
   FbleName name;
   FbleType* type;
   Local* local;
   bool used;
+  bool accessed;
 } Var;
 
 // VarV --
@@ -236,6 +238,7 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
   var->type = type;
   var->local = local;
   var->used = false;
+  var->accessed = false;
   FbleVectorAppend(arena, scope->vars, var);
   return var;
 }
@@ -286,6 +289,7 @@ static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phant
     size_t j = scope->vars.size - i - 1;
     Var* var = scope->vars.xs[j];
     if (FbleNamesEqual(&name, &var->name)) {
+      var->accessed = true;
       if (!phantom) {
         var->used = true;
       }
@@ -296,6 +300,7 @@ static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phant
   for (size_t i = 0; i < scope->statics.size; ++i) {
     Var* var = scope->statics.xs[i];
     if (FbleNamesEqual(&name, &var->name)) {
+      var->accessed = true;
       if (!phantom) {
         var->used = true;
       }
@@ -323,6 +328,7 @@ static Var* GetVar(FbleTypeArena* arena, Scope* scope, FbleName name, bool phant
       captured->type = FbleTypeRetain(arena, var->type);
       captured->local = local;
       captured->used = !phantom;
+      captured->accessed = true;
 
       FbleVectorAppend(arena_, scope->statics, captured);
       if (scope->statics.size > scope->code->statics) {
@@ -752,6 +758,7 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result
 //   * Appends instructions to the scope for executing the given expression.
 //     There is no gaurentee about what instructions have been appended to
 //     the scope if the expression fails to compile.
+//   * Prints warning messages to stderr.
 //   * Prints a message to stderr if the expression fails to compile.
 //   * The caller should call FbleTypeRelease and LocalRelease when the
 //     returned results are no longer needed. Note that FreeScope calls
@@ -1837,6 +1844,14 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (!vars[i]->accessed && vars[i]->name.name[0] != '_') {
+          FbleReportWarning("variable '", &vars[i]->name.loc);
+          FblePrintName(stderr, &vars[i]->name);
+          fprintf(stderr, "' defined but not used\n");
+        }
+      }
+
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         PopVar(arena, scope);
       }
 
@@ -2478,6 +2493,7 @@ static FbleType* CompileType(FbleTypeArena* arena, Scope* scope, FbleTypeExpr* t
 //   Appends instructions to scope for executing the given program.
 //   There is no gaurentee about what instructions have been appended to
 //   scope if the program fails to compile.
+//   Prints warning messages to stderr.
 //   Prints a message to stderr if the program fails to compile.
 static bool CompileProgram(FbleTypeArena* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm)
 {

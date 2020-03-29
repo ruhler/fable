@@ -25,7 +25,6 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-@ Data@ = /Data%.Data@;
 % Product = /Data%.Product;
 % Left = /Data%.Left;
 % Right = /Data%.Right;
@@ -39,7 +38,6 @@
 Bit2@ A = Bit2@(Bit1@(0: Unit), Bit1@(0: Unit));
 Bit2@ B = Bit2@(Bit1@(0: Unit), Bit1@(1: Unit));
 Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
-Bit2@ D = Bit2@(Bit1@(1: Unit), Bit1@(1: Unit));
 
 (Bit1@, Bit1@) { Bool@; } EqBit1 = (Bit1@ a, Bit1@ b) {
   ?(a; 0: ?(b; 0: True, 1: False),
@@ -58,7 +56,6 @@ Bit2@ D = Bit2@(Bit1@(1: Unit), Bit1@(1: Unit));
 <@>@ Map@ = MapBit2.Map@;
 <@>% Empty = MapBit2.Empty;
 <@>% Lookup = MapBit2.Lookup;
-<@>% InsertWith = MapBit2.InsertWith;
 <@>% Insert = MapBit2.Insert;
 <@, @>% For = MapBit2.For;
 

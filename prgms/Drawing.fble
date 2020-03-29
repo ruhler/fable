@@ -4,10 +4,6 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
-
-% Min = /Int/Int/Eq%.Min;
-% Abs = /Int/Int/Eq%.Abs;
 
 <@>@ S@ = /List%.S@;
 <@>% S = /List%.S;

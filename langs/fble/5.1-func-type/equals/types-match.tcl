@@ -6,6 +6,7 @@ fble-test {
   # Two function types with the arguments and return types match.
   @ A@ = (Unit@) { Bool@; };
   @ B@ = (Unit@) { Bool@; };
-  A@ x = (Unit@ x) { true; };
-  x;
+  A@ a = (Unit@ x) { true; };
+  B@ b = a;
+  b;
 }

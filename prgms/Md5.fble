@@ -10,7 +10,6 @@
 % And = /Bool%.And;
 
 <@>@ SL@ = /List%.S@;
-<@>@ PL@ = /List%.P@;
 <@,@>@ List@ = /List%.List@;
 <@>% SL = /List%.S;
 
@@ -24,7 +23,6 @@
 
 % H2 = /Bits%.Bit8.H2;
 
-% eq = /Bits%.Bit32.BitN.eq;
 % and = /Bits%.Bit32.BitN.and;
 % or = /Bits%.Bit32.BitN.or;
 % not = /Bits%.Bit32.BitN.not;
@@ -36,7 +34,7 @@
 % 0 = Hex.0; % 1 = Hex.1; % 2 = Hex.2; % 3 = Hex.3;
 % 4 = Hex.4; % 5 = Hex.5; % 6 = Hex.6; % 7 = Hex.7;
 % 8 = Hex.8; % 9 = Hex.9; % A = Hex.A; % B = Hex.B;
-% C = Hex.C; % D = Hex.D; % E = Hex.E; % F = Hex.F;
+% C = Hex.C; % D = Hex.D; % E = Hex.E;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;

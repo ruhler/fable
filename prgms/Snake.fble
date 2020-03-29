@@ -31,7 +31,6 @@
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
 % 4 = /Int/Int%.4;
-% 6 = /Int/Int%.6;
 % Inc = /Int/Int%.Inc;
 % Dec = /Int/Int%.Dec;
 % Add = /Int/Int%.Add;
@@ -40,7 +39,6 @@
 % Sub = /Int/Int%.Sub;
 
 % Eq = /Int/Int/Eq%.Eq;
-% Gt = /Int/Int/Eq%.Gt;
 % Lt = /Int/Int/Eq%.Lt;
 % Abs = /Int/Int/Eq%.Abs;
 

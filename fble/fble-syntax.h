@@ -24,6 +24,21 @@ typedef struct {
   int col;
 } FbleLoc;
 
+// FbleReportWarning --
+//   Report a warning message associated with a location in a source file.
+//
+// Inputs:
+//   format - A printf format string for the warning message.
+//   loc - The location of the warning message to report.
+//   ... - printf arguments as specified by the format string.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Prints a warning message to stderr with error location.
+void FbleReportWarning(const char* format, FbleLoc* loc, ...);
+
 // FbleReportError --
 //   Report an error message associated with a location in a source file.
 //

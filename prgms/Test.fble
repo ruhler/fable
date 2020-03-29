@@ -8,14 +8,12 @@
 % Chars = /Char%.Chars;
 
 <@>@ S@ = /List%.S@;
-<@>@ P@ = /List%.P@;
 <@>% S0 = /List%.S0;
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
 <@,@>% MapS = /List%.MapS;
 <@>% SeqS = /List%.SeqS;
-% AndS = /List%.AndS;
 
 <@>@ Put@ = /Process%.Put@;
 
@@ -63,7 +61,7 @@ S@<Test@> Tests = {
   };
 
   Test@ pass = Test@(name(Str(Chars|pass)), $(TestResult@(pass: Unit)));
-  Test@ fail = Test@(name(Str(Chars|fail)), $(TestResult@(fail: Str(Chars|FAILED))));
+  Test@ _fail = Test@(name(Str(Chars|fail)), $(TestResult@(fail: Str(Chars|FAILED))));
 
   S<Test@>([pass]);
 };

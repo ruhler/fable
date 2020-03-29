@@ -9,7 +9,7 @@ fble-test {
   };
 
   # Function application of a single argument.
-  Unit@ ff = Not(true).false;
-  Unit@ tt = Not(false).true;
+  Unit@ _ff = Not(true).false;
+  Unit@ _tt = Not(false).true;
   Unit@();
 }

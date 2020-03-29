@@ -8,5 +8,5 @@ fble-test {
   Unit@ a := put(true);
   Bool@ b := get;
   Unit@ bt = b.true;
-  $(Unit@());
+  $(bt);
 }

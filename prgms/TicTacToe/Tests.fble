@@ -1,5 +1,4 @@
 
-@ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
 <@>@ S@ = /List%.S@;

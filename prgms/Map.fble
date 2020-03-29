@@ -5,10 +5,6 @@
 % And = /Bool%.And;
 
 @ Data@ = /Data%.Data@;
-% DUnit = /Data%.Unit;
-% Left = /Data%.Left;
-% Right = /Data%.Right;
-% Product = /Data%.Product;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;

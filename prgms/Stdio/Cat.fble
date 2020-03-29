@@ -1,7 +1,6 @@
 
 @ Unit@ = /Unit%.Unit@;
 
-@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;

@@ -5,8 +5,9 @@ fble-test {
   # It is legal to shadow variables that are in scope, including when they
   # have different types.
   Unit@ a = Unit@();
-  {
+  Unit@ _ = {
     Bool@ a = Bool@(false: Unit@());
     a;
   }.false;
+  a;
 }
