@@ -181,3 +181,7 @@ IntP, IntS, and Int types that constrain the data type, or is it better to use
 a generic Int type? It's certainly proving inconvenient to keep track of which
 types all the functions are used for and converting between them when I have
 IntP, IntS, and Int types.
+
+Or: is it better to define these across a bunch of modules to avoid false
+dependencies, or better to just define them all in one module and avoid the
+headache of splitting them up?

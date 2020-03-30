@@ -1,11 +1,11 @@
 
-* [test] Track down memory leak when running /Snake/Bench%.Bench
+* [test] Figure out how to fix the link memory leak.
+* [test] Verify /Snake/Bench% memory leak goes away once link memory leak is
+  fixed.
 
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.
 * [snake] Keep track of and report score.
-* [snake] Figure out why it leaks memory some times.
-  - Maybe a bug in reference counting?
 * [snake] Figure out why the background box gets lost some times.
 * [pingpong] Render a static 3D table tennis scene.
 * [invaders] Implement space invaders game.
