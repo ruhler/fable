@@ -37,11 +37,54 @@ Drawing@ Ship = Path(
   Color@(green: Unit)
 );
 
+Drawing@ Base = Path(
+  S<Point@>([
+    Point@(I(D|0), I(D|0)),
+    Point@(I(D|0), I(D|24)),
+    Point@(I(D|2), I(D|24)),
+    Point@(I(D|2), I(D|26)),
+    Point@(I(D|4), I(D|26)),
+    Point@(I(D|4), I(D|28)),
+    Point@(I(D|6), I(D|28)),
+    Point@(I(D|6), I(D|30)),
+    Point@(I(D|8), I(D|30)),
+    Point@(I(D|8), I(D|32)),
+    Point@(I(D|40), I(D|32)),
+    Point@(I(D|40), I(D|30)),
+    Point@(I(D|42), I(D|30)),
+    Point@(I(D|42), I(D|28)),
+    Point@(I(D|44), I(D|28)),
+    Point@(I(D|44), I(D|26)),
+    Point@(I(D|46), I(D|26)),
+    Point@(I(D|46), I(D|24)),
+    Point@(I(D|48), I(D|24)),
+    Point@(I(D|48), I(D|0)),
+    Point@(I(D|38), I(D|0)),
+    Point@(I(D|38), I(D|4)),
+    Point@(I(D|36), I(D|4)),
+    Point@(I(D|36), I(D|6)),
+    Point@(I(D|34), I(D|6)),
+    Point@(I(D|34), I(D|8)),
+    Point@(I(D|14), I(D|8)),
+    Point@(I(D|14), I(D|6)),
+    Point@(I(D|12), I(D|6)),
+    Point@(I(D|12), I(D|4)),
+    Point@(I(D|10), I(D|4)),
+    Point@(I(D|10), I(D|0))]),
+  Color@(green: Unit)
+);
+
 Drawing@ Ground = Rect(I(D|80), I(D|0), I(D|480), I(D|4), Color@(green: Unit));
 
 Drawing@ Screenshot = {
   ForS<Drawing@, Drawing@>(S<Drawing@>([
-    Translate(I(D|96), I(D|40), Ship),
+    Translate(I(D|137), I(D|72), Base),
+    Translate(I(D|243), I(D|72), Base),
+    Translate(I(D|349), I(D|72), Base),
+    Translate(I(D|455), I(D|72), Base),
+
+    Translate(I(D|96), I(D|22), Ship),
+
     Ground
   ]), Blank, Over);
 };
