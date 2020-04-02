@@ -129,9 +129,63 @@ Drawing@ Alien1A = Path(
   Color@(white: Unit)
 );
 
+Drawing@ Alien1B = Path(
+  S<Point@>([
+    Point@(I(D|4), I(D|0)),
+    Point@(I(D|0), I(D|0)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|4), I(D|2)),
+    Point@(I(D|4), I(D|4)),
+    Point@(I(D|6), I(D|4)),
+    Point@(I(D|6), I(D|6)),
+    Point@(I(D|0), I(D|6)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|16)),
+    Point@(I(D|16), I(D|16)),
+    Point@(I(D|16), I(D|14)),
+    Point@(I(D|22), I(D|14)),
+    Point@(I(D|22), I(D|12)),
+    Point@(I(D|24), I(D|12)),
+    Point@(I(D|24), I(D|6)),
+    Point@(I(D|18), I(D|6)),
+    Point@(I(D|18), I(D|4)),
+    Point@(I(D|20), I(D|4)),
+    Point@(I(D|20), I(D|2)),
+    Point@(I(D|24), I(D|2)),
+    Point@(I(D|24), I(D|0)),
+    Point@(I(D|20), I(D|0)),
+    Point@(I(D|20), I(D|2)),
+    Point@(I(D|16), I(D|2)),
+    Point@(I(D|16), I(D|4)),
+    Point@(I(D|14), I(D|4)),
+    Point@(I(D|14), I(D|8)),
+    Point@(I(D|18), I(D|8)),
+    Point@(I(D|18), I(D|10)),
+    Point@(I(D|14), I(D|10)),
+    Point@(I(D|14), I(D|6)),
+    Point@(I(D|10), I(D|6)),
+    Point@(I(D|10), I(D|10)),
+    Point@(I(D|6), I(D|10)),
+    Point@(I(D|6), I(D|8)),
+    Point@(I(D|10), I(D|8)),
+    Point@(I(D|10), I(D|4)),
+    Point@(I(D|14), I(D|4)),
+    Point@(I(D|14), I(D|2)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|10), I(D|4)),
+    Point@(I(D|8), I(D|4)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|4), I(D|2))]),
+  Color@(white: Unit)
+);
+
 Drawing@ Screenshot = {
   ForS<Drawing@, Drawing@>(S<Drawing@>([
     Translate(I(D|92), I(D|256), Alien1A),
+    Translate(I(D|92), I(D|224), Alien1B),
 
     Translate(I(D|137), I(D|72), Base),
     Translate(I(D|243), I(D|72), Base),
