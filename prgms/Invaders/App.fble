@@ -1,0 +1,48 @@
+
+@ App@ = /App%.App@;
+@ Event@ = /App%.Event@;
+@ Effect@ = /App%.Effect@;
+
+@ Drawing@ = /Drawing%.Drawing@;
+@ Point@ = /Drawing%.Point@;
+% Transform = /Drawing%.Transform;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Mul = /Int/Int%.Mul;
+% Neg = /Int/Int%.Neg;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+% Screenshot = /Invaders/Graphics%.Screenshot;
+
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+  # Map game coordinates into screen coordinate.
+  Int@ ax = I(D|1);
+  Int@ bx = I(D|100);
+  Int@ ay = Neg(I(D|1));
+  Int@ by = height;
+
+  (Point@) { Point@; } f = (Point@ p) {
+    @(x: Add(Mul(ax, p.x), bx), 
+      y: Add(Mul(ay, p.y), by));
+  };
+
+  Drawing@ screenshot = Screenshot;
+  Unit@ _ := out(Effect@(draw: Transform(f, screenshot)));
+
+  Unit@! WaitForKeyPress = {
+    Event@ e := in;
+    ?(e; tick: WaitForKeyPress, key: $(Unit));
+  };
+  WaitForKeyPress;
+};
+
+Main;

@@ -38,6 +38,14 @@
 
 Drawing@ Blank = Drawing@(blank: Unit);
 
+# Draw a path filled solid with the given color.
+#
+# The path is implicitly closed. For example, to draw a rectangle, give the
+# four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
+(S@<Point@>, Color@) { Drawing@; } Path = (S@<Point@> points, Color@ color) {
+  Drawing@(path: @(points, color));
+};
+
 # Draw a rectangle filled solid with the given color.
 (Int@, Int@, Int@, Int@, Color@) { Drawing@; }
 Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
@@ -67,4 +75,10 @@ Transform = ((Point@) { Point@; } f, Drawing@ d) {
        });
 };
 
-@(Color@, Drawing@, Point@, Blank, Rect, Over, Transform);
+# Translate the drawing by the given x and y amounts.
+(Int@, Int@, Drawing@) { Drawing@; }
+Translate = (Int@ dx, Int@ dy) {
+  Transform((Point@ p) { Point@(Add(dx, p.x), Add(dy, p.y)); }); 
+};
+
+@(Color@, Drawing@, Point@, Blank, Path, Rect, Over, Transform, Translate);

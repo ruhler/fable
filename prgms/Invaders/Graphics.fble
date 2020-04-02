@@ -1,0 +1,39 @@
+
+@ Color@ = /Drawing%.Color@;
+@ Drawing@ = /Drawing%.Drawing@;
+@ Point@ = /Drawing%.Point@;
+% Path = /Drawing%.Path;
+% Translate = /Drawing%.Translate;
+
+% D = /Int/Int/Lit%.D;
+% I = /Int/Int/Lit%.I;
+
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+
+% Unit = /Unit%.Unit;
+
+S@<Point@> ShipPath = S<Point@>([
+  Point@(I(D|0), I(D|0)),
+  Point@(I(D|0), I(D|10)),
+  Point@(I(D|2), I(D|10)),
+  Point@(I(D|2), I(D|12)),
+  Point@(I(D|12), I(D|12)),
+  Point@(I(D|12), I(D|16)),
+  Point@(I(D|14), I(D|16)),
+  Point@(I(D|14), I(D|18)),
+  Point@(I(D|16), I(D|18)),
+  Point@(I(D|16), I(D|16)),
+  Point@(I(D|18), I(D|16)),
+  Point@(I(D|18), I(D|12)),
+  Point@(I(D|28), I(D|12)),
+  Point@(I(D|28), I(D|10)),
+  Point@(I(D|30), I(D|10)),
+  Point@(I(D|30), I(D|0))
+]);
+
+Drawing@ Screenshot = {
+  Translate(I(D|96), I(D|40), Path(ShipPath, Color@(green: Unit)));
+};
+
+@(Screenshot);

@@ -1843,11 +1843,13 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
         body = CompileExpr(arena, blocks, exit, scope, let_expr->body);
       }
 
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        if (!vars[i]->accessed && vars[i]->name.name[0] != '_') {
-          FbleReportWarning("variable '", &vars[i]->name.loc);
-          FblePrintName(stderr, &vars[i]->name);
-          fprintf(stderr, "' defined but not used\n");
+      if (body.type != NULL) {
+        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+          if (!vars[i]->accessed && vars[i]->name.name[0] != '_') {
+            FbleReportWarning("variable '", &vars[i]->name.loc);
+            FblePrintName(stderr, &vars[i]->name);
+            fprintf(stderr, "' defined but not used\n");
+          }
         }
       }
 
