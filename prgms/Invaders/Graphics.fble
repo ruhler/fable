@@ -74,7 +74,7 @@ Drawing@ Base = Path(
   Color@(green: Unit)
 );
 
-Drawing@ Ground = Rect(I(D|80), I(D|0), I(D|480), I(D|4), Color@(green: Unit));
+Drawing@ Ground = Rect(I(D|0), I(D|0), I(D|480), I(D|4), Color@(green: Unit));
 
 Drawing@ Alien1A = Path(
   S<Point@>([
@@ -243,9 +243,71 @@ Drawing@ Alien2A = Path(
   Color@(white: Unit)
 );
 
+Drawing@ Alien2B = Path(
+  S<Point@>([
+    Point@(I(D|4), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|4), I(D|2)),
+    Point@(I(D|4), I(D|4)),
+    Point@(I(D|2), I(D|4)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|0), I(D|6)),
+    Point@(I(D|0), I(D|14)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|2), I(D|10)),
+    Point@(I(D|4), I(D|10)),
+    Point@(I(D|4), I(D|12)),
+    Point@(I(D|6), I(D|12)),
+    Point@(I(D|6), I(D|14)),
+    Point@(I(D|4), I(D|14)),
+    Point@(I(D|4), I(D|16)),
+    Point@(I(D|6), I(D|16)),
+    Point@(I(D|6), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|14), I(D|12)),
+    Point@(I(D|14), I(D|14)),
+    Point@(I(D|16), I(D|14)),
+    Point@(I(D|16), I(D|16)),
+    Point@(I(D|18), I(D|16)),
+    Point@(I(D|18), I(D|14)),
+    Point@(I(D|16), I(D|14)),
+    Point@(I(D|16), I(D|12)),
+    Point@(I(D|18), I(D|12)),
+    Point@(I(D|18), I(D|10)),
+    Point@(I(D|20), I(D|10)),
+    Point@(I(D|20), I(D|14)),
+    Point@(I(D|22), I(D|14)),
+    Point@(I(D|22), I(D|6)),
+    Point@(I(D|20), I(D|6)),
+    Point@(I(D|20), I(D|4)),
+    Point@(I(D|18), I(D|4)),
+    Point@(I(D|18), I(D|2)),
+    Point@(I(D|20), I(D|2)),
+    Point@(I(D|20), I(D|0)),
+    Point@(I(D|18), I(D|0)),
+    Point@(I(D|18), I(D|2)),
+    Point@(I(D|16), I(D|2)),
+    Point@(I(D|16), I(D|10)),
+    Point@(I(D|14), I(D|10)),
+    Point@(I(D|14), I(D|8)),
+    Point@(I(D|16), I(D|8)),
+    Point@(I(D|16), I(D|4)),
+    Point@(I(D|6), I(D|4)),
+    Point@(I(D|6), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|6), I(D|10)),
+    Point@(I(D|6), I(D|2)),
+    Point@(I(D|4), I(D|2))]),
+  Color@(white: Unit)
+);
+
 Drawing@ Screenshot = {
   ForS<Drawing@, Drawing@>(S<Drawing@>([
-    Translate(I(D|92), I(D|288), Alien2A),
+    Translate(I(D|92), I(D|320), Alien2A),
+    Translate(I(D|92), I(D|288), Alien2B),
     Translate(I(D|92), I(D|256), Alien1A),
     Translate(I(D|92), I(D|224), Alien1B),
 
@@ -256,7 +318,7 @@ Drawing@ Screenshot = {
 
     Translate(I(D|96), I(D|22), Ship),
 
-    Ground
+    Translate(I(D|80), I(D|0), Ground)
   ]), Blank, Over);
 };
 
