@@ -26,9 +26,9 @@
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
   Int@ ax = I(D|1);
-  Int@ bx = I(D|100);
+  Int@ bx = I(D|0);
   Int@ ay = Neg(I(D|1));
-  Int@ by = height;
+  Int@ by = I(D|480);
 
   (Point@) { Point@; } f = (Point@ p) {
     @(x: Add(Mul(ax, p.x), bx), 
