@@ -1,6 +1,7 @@
 
 * [test] Implement support for FbleRefDelete of cycles.
 * [test] Figure out source of /Snake/Bench% memory leak.
+  - looks like we are leaking a proc put value that's holding on to a link.
 
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.

@@ -398,6 +398,7 @@ FbleArena* FbleRefArenaArena(FbleRefArena* arena)
 // FbleRefInit -- see documentation in ref.h
 void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
 {
+  assert(arena->next_id != NULL_REF_ID);
   ref->id = arena->next_id++;
   ref->refcount = 1;
   ref->cycle = NULL;
@@ -408,6 +409,7 @@ void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
 {
   ref = CycleHead(ref);
   ref->refcount++;
+  assert(ref->refcount != 0);
 }
 
 // FbleRefRelease -- see documentation in ref.h
