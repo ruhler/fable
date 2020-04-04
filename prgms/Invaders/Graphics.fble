@@ -487,8 +487,286 @@ Drawing@ UFO = Path(
   Color@(red: Unit)
 );
 
+Drawing@ Digit0 = Path(
+  S<Point@>([
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|4), I(D|6)),
+    Point@(I(D|4), I(D|8)),
+    Point@(I(D|6), I(D|8)),
+    Point@(I(D|6), I(D|10)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|6), I(D|8)),
+    Point@(I(D|6), I(D|6)),
+    Point@(I(D|4), I(D|6)),
+    Point@(I(D|4), I(D|4)),
+    Point@(I(D|2), I(D|4)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit1 = Path(
+  S<Point@>([
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|4), I(D|2)),
+    Point@(I(D|4), I(D|10)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|4), I(D|12)),
+    Point@(I(D|4), I(D|14)),
+    Point@(I(D|6), I(D|14)),
+    Point@(I(D|6), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|0))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit2 = Path(
+  S<Point@>([
+    Point@(I(D|10), I(D|0)),
+    Point@(I(D|0), I(D|0)),
+    Point@(I(D|0), I(D|6)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|10)),
+    Point@(I(D|0), I(D|10)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|10), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|10), I(D|2))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit3 = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|0), I(D|4)),
+    Point@(I(D|2), I(D|4)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|4), I(D|6)),
+    Point@(I(D|4), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|10)),
+    Point@(I(D|0), I(D|10)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|10), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|10), I(D|6)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit4 = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|6), I(D|0)),
+    Point@(I(D|6), I(D|6)),
+    Point@(I(D|0), I(D|6)),
+    Point@(I(D|0), I(D|14)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|6), I(D|8)),
+    Point@(I(D|6), I(D|10)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|10), I(D|8)),
+    Point@(I(D|10), I(D|6)),
+    Point@(I(D|8), I(D|6))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit5 = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|0), I(D|4)),
+    Point@(I(D|2), I(D|4)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|0), I(D|8)),
+    Point@(I(D|0), I(D|14)),
+    Point@(I(D|10), I(D|14)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|10)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|10), I(D|8)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit6 = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|10), I(D|10)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|10), I(D|6)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit7 = Path(
+  S<Point@>([
+    Point@(I(D|4), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|4), I(D|6)),
+    Point@(I(D|4), I(D|8)),
+    Point@(I(D|6), I(D|8)),
+    Point@(I(D|6), I(D|10)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|0), I(D|14)),
+    Point@(I(D|10), I(D|14)),
+    Point@(I(D|10), I(D|10)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|6), I(D|8)),
+    Point@(I(D|6), I(D|6)),
+    Point@(I(D|4), I(D|6))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit8 = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|0), I(D|6)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|0), I(D|8)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|10), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|10), I(D|6)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
+Drawing@ Digit9 = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|0), I(D|4)),
+    Point@(I(D|2), I(D|4)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|0), I(D|8)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
 Drawing@ Screenshot = {
   ForS<Drawing@, Drawing@>(S<Drawing@>([
+    Translate(I(D|80), I(D|444), Digit0),
+    Translate(I(D|96), I(D|444), Digit1),
+    Translate(I(D|112), I(D|444), Digit2),
+    Translate(I(D|128), I(D|444), Digit3),
+    Translate(I(D|144), I(D|444), Digit4),
+    Translate(I(D|160), I(D|444), Digit5),
+    Translate(I(D|176), I(D|444), Digit6),
+    Translate(I(D|192), I(D|444), Digit7),
+    Translate(I(D|208), I(D|444), Digit8),
+    Translate(I(D|224), I(D|444), Digit9),
+
     Translate(I(D|200), I(D|400), UFO),
 
     Translate(I(D|92), I(D|352), Alien3A),
