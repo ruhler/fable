@@ -177,4 +177,27 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref);
 // 'added' does include the reference.
 void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst);
 
+// FbleRefDelete --
+//   Delete an existing reference from src to dst.
+//
+// Inputs:
+//   arena - the reference arena.
+//   src - the source node.
+//   dst - the destination node.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   Deletes a reference from the src node to the dst node that was previously
+//   added with FbleRefAdd, so that dst is no longer retained at least as long
+//   as src is retained.
+//
+//   Behavior is undefined if there is not a reference from src to dst from a
+//   previous call to FbleRefAdd.
+//
+// TODO: Clarify whether 'added' should include this reference from src to dst
+// at the time of this call or not.
+void FbleRefDelete(FbleRefArena* arena, FbleRef* src, FbleRef* dst);
+
 #endif // FBLE_REF_H_

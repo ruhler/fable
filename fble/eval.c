@@ -545,8 +545,9 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
             link->tail = NULL;
           }
 
+          *thread->stack->frame.result = FbleValueRetain(arena, head->value);
+          FbleRefDelete(arena, &link->_base.ref, &head->value->ref);
 
-          *thread->stack->frame.result = head->value;
           thread->stack = PopFrame(arena, thread->stack);
           FbleFree(arena_, head);
           break;
@@ -583,7 +584,7 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
           FbleLinkValue* link = (FbleLinkValue*)put_port;
 
           FbleValues* tail = FbleAlloc(arena_, FbleValues);
-          tail->value = FbleValueRetain(arena, arg);
+          tail->value = arg;
           tail->next = NULL;
 
           if (link->head == NULL) {
@@ -594,6 +595,8 @@ static bool RunThread(FbleValueArena* arena, FbleIO* io, FbleProfile* profile, T
             link->tail->next = tail;
             link->tail = tail;
           }
+
+          Add(arena, &link->_base, tail->value);
 
           *thread->stack->frame.result = unit;
           thread->stack = PopFrame(arena, thread->stack);

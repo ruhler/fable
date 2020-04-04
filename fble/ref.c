@@ -562,3 +562,12 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   FbleFree(arena->arena, cycle.refs.xs);
   FbleFree(arena->arena, cycle.rmap.xs);
 }
+
+// FbleRefDelete -- see documentation in ref.h
+void FbleRefDelete(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
+{
+  src = CycleHead(src);
+  dst = CycleHead(dst);
+  assert (src != dst && "TODO: RefDelete inside of cycles");
+  FbleRefRelease(arena, dst);
+}

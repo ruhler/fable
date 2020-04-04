@@ -1,0 +1,221 @@
+Fble Garbage Collection Challenge
+---------------------------------
+Recently a memory leak was discovered: if you put a reference to a link onto
+the link itself, we never reclaim the memory for the link.
+
+There are a few issues raised by this.
+
+1. We need a way to deal with cycles that go through links.
+
+2. Links seem to be special kinds of objects in fble. In particular, they are
+a kind of object where the primary use case supports adding references from
+older allocated objects (the link) to new allocated objects (the objects on
+the links). Having this be a primary use case, instead of a limited rare use
+case for recursive cycles, causes problems for performance assumptions in the
+current reference counting garbage collector implementation.
+
+Cycles Through Links
+--------------------
+The current implementation does not support cycles through links because it
+uses Retain and Release for link values instead of Add. That means cycles are
+not detected. The link retains a value on it, which retains the link.
+
+Some ideas for how to resolve this:
+
+1. Switch to using Add to track references on links, so we use the built in
+support for cycle recognition in refs. The problem is, we don't currently have
+a way to un-Add a reference like we can release a value.
+
+If we can't un-Add the reference when we remove the value from the link, we'll
+retain the value for as long as the link is retained. That is not acceptable
+from a specification point of view.
+
+So we would need support for un-Add in the (complicated) reference cycle
+detection code. I think it's doable. But it will require some figuring out.
+
+2. We only leak the link if we fail to drain all of the elements of the link.
+Could we arrange somehow to require everything put to the link is taken off
+the link?
+
+Somehow I doubt it. Periodically move elements from the link to another link?
+But how do we know when to do that?
+
+3. Don't allow cycles on the link in the first place.
+For example, require values put onto links to be serialized, or to be limited
+to data structures. This kind of goes with the idea of links being used to
+transfer data across machines. But honestly, it feels like a false limitation
+to place on the language.
+
+4. Do some magic to avoid leaking the link.
+For example, there's no need for the put port to retain values on the link.
+Maybe we could have the get port be self updating any time you get so that it
+is a new object that doesn't reference the original link.
+
+But I've thought a fair amount, and I don't believe there is a solution here.
+
+5. Switch to traditional garbage collection.
+So we don't have to update the reference counting implementation with un-Add.
+The fact that we can do this suggests we should not change the language to
+limit cycles on links.
+
+6. Define a clear lifetime for links in the language spec. Then if it leaks,
+it's the programmers fault. That sounds like a bad idea to me.
+
+Link Time Warp
+--------------
+The cycle issue for links is relatively straight forward to solve. I'm
+confident I could switch to a different gc or add un-Add support to the
+current reference counting scheme.
+
+The real concern is the realization that links make it common practice put
+reference newer allocated objects from older allocated objects. And I see no
+way around this.
+
+Allocate a link.
+Capture a reference to that from some or more objects, like functions.
+Allocate a ton of new objects.
+Put one of those new objects on the link.
+
+We have to keep that new object alive as long as we can get it from the link.
+Anyone who keeps the get port of the link alive has to keep the new object
+alive.
+There are a bunch of older objects that keep the get port alive. And a bunch
+of older objects that keep those older objects alive. As soon as we put the
+object on the link, we've violated our standard assumption about old objects
+rarely referencing new objects.
+
+This assumption is purely used for performance reasons. Reference counting
+takes advantage of it. It's really tempting to take advantage of it for other
+forms of garbage collection. We've already had pathological performance cases
+when we failed to preserve this assumption as much as possible in the
+implementation.
+
+Unless there is some way to mark the reference as temporary. But in general
+you can't, because there's no guarantee the user will flush the link, and I
+think that's a bad thing to ask of the user.
+
+The key challenge, then, is to come up with an efficient garbage collection
+algorithm that does not rely on the assumption that older objects almost never
+retain newer objects for performance.
+
+How this assumption is used today: for reference counting, we need to quickly
+tell, if you add a reference from A to B, whether there exists a path from B
+to A. If you know B is older than A and older objects never retain newer
+objects, you can answer this question immediately. Otherwise we have to
+traverse all objects reachable from B to see if A is in that set. That's bad
+for large B. That's particularly bad for some pathological cases we were
+seeing in practice.
+
+One way to generalize this assumption is to think about an abstraction
+refinement garbage collection approach.
+
+For any collection of objects, I can create an collection of abstract objects.
+Each abstract object in the new collection represents some number of objects
+in the original collection. There is a reference between abstract objects A
+and B if there is a reference between any object a in A and b in B.
+
+We can make the abstract collection of objects significantly smaller than the
+original collection of objects. Now to answer the question is there a path
+from 'b' to 'a', we can first ask the easier question: is there a path from
+'B' to 'A'. If there is no path from 'B' to 'A', we know there is no path from
+'b' to 'a'. If there is a path from 'B' to 'A', we need to do some refinement
+to know if there is a path from 'b' to 'a', but maybe that's easier than a
+full graph traversal, because we don't have to worry about objects that don't
+belong to some abstract object on the path from B to A.
+
+We can have multiple layers of abstraction. Each layer of abstraction adds
+some overhead for tracking references, but it probably isn't too bad. A more
+interesting question is how to pick our abstraction to be effective.
+
+I would guess than an effect abstraction is one where there is a lot of
+connectivity within objects of an abstract group, and little connectivity
+between objects of different abstract groups.
+
+An important question is: what are the requirements for our garbage collector?
+From the language spec point of view, what is allowed? For example, if we
+don't care about memory use, then don't do anything for garbage collection.
+Super fast. But we do care about memory use.
+
+Proposed GC API
+---------------
+
+Traverse :: Ref -> (Ref -> M ()) -> M ()
+  A callback function provided to the GC to traverse a reference.
+
+FreeHeap :: M ()
+  A function to call when there are no more retained objects, to force
+  reclamation of all memory at the end of a program.
+
+Alloc :: Int -> Ref
+  Allocate a new object of given size (not including overhead). The returned
+  object is retained.
+
+Retain :: Ref -> M ()
+  Retain the object until a corresponding call to Release has been made.
+
+Release :: Ref -> M ()
+  Release an object.
+
+Add :: Ref -> Ref -> M ()
+  Add a reference from the given source to the given destination.
+  The destination object is retained at least as long as the source object.
+
+Del :: Ref -> Ref -> M ()
+  Remove a reference between the given source and destination objects.
+  Behavior is undefined if there is not a reference between the source and
+  destination objects.
+
+
+I claim there is a clear notion of ideal memory use at any point of time: The
+total size of allocated objects that are retained.
+
+Performance Requirements:
+* Retain, Release, Add, and Del take constant time.
+ - That is, the cost of garbage collection should be paid in allocation.
+   Because a caller has no control over whether they are the last person to
+   retain an object, but they do have control over what objects they allocate
+   ("performance modularity")
+* Total memory use is amortized O(ideal memory use).
+ - If you allocate then free objects in a loop, it should use constant space
+   over time.
+ - I'm thinking that GC should be able to reclaim at least one free object per
+   newly allocated object to meet this, while giving time for GC to do
+   incremental work.
+* Alloc should be O(size), but with the intention that if anything needs to
+  slow down to keep up with memory requirements, it should be Alloc.
+
+I'm not sure if these are entirely well specified performance requirements.
+
+Question: how many operations do we have to amortize over? For example, I
+would expect a saw tooth memory profile for repeated alloc/free is reasonable.
+But how big can that saw tooth be before it looks too much like linear growth?
+This matters for testing purposes.
+
+I want to say: you can have constant memory overhead per object, and you have
+to free at least 2 free objects per allocated object (amortized).
+
+And the next step would be to write some tests. Things like:
+* loop of alloc/free uses constant space (amortized N).
+* instant free of N objects, followed by loop of alloc/free takes no more than
+  (amortized) N alloc/free cycles to reclaim all N objects.
+
+I guess memory use is more important than runtime to start. Maybe I should
+experiment with some simple implementations:
+
+* basic incremental mark sweep.
+* ... ?
+
+I wonder if you could evaluate an implementation as follows. Come up with an
+arbitrary pattern of allocations. Run the pattern in a loop, starting back
+from zero at each iteration. Confirm that memory use is O(1), where N is the
+number of loop iterations. Measure the overhead memory area between actual
+memory use and ideal memory use. The total overhead memory averaged per loop
+iteration is the quality of the GC. And we worry about runtime separately.
+Perhaps we could measure runtime of all the different kinds of operations at
+50% and 95%? Or as a histogram?
+
+That sounds like fun. It would be cool to make a separate test harness and be
+able to evaluate a bunch of different GC implementations, including the one I
+have currently.
+
+

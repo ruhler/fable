@@ -1,7 +1,6 @@
 
-* [test] Figure out how to fix the link memory leak.
-* [test] Verify /Snake/Bench% memory leak goes away once link memory leak is
-  fixed.
+* [test] Implement support for FbleRefDelete of cycles.
+* [test] Figure out source of /Snake/Bench% memory leak.
 
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.
@@ -36,6 +35,8 @@
  - How to maintain the profile stack when forking new threads?
 * [profile] Label blocks in exec process bindings by binding name?
 
+* [eval] Experiment with alternate garbage collection implementations.
+ - For the purpose of improving memory and runtime performance.
 * [eval] Make child thread execution fair.
   Children should be time multiplexed, where priority is assigned based on how
   far down the family tree the child belongs. The amount of time a family gets
@@ -45,6 +46,7 @@
 * [lang] Add support for abstract types?
 * [lang] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
+* [lang] Document and test that put ports don't retain link values.
 
 * [release] Better error messages on types that have the same name but different values?
 * [release] Write man pages for fble and friends?
