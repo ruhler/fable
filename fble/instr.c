@@ -176,7 +176,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
           fprintf(fout, "fork [");
           const char* comma = "";
           for (size_t j = 0; j < fork_instr->dests.size; ++j) {
-            fprintf(fout, "%s%zi = %s[%zi]",
+            fprintf(fout, "%sl[%zi] := %s[%zi]",
                 comma, fork_instr->dests.xs[j],
                 sections[fork_instr->args.xs[j].section],
                 fork_instr->args.xs[j].index);

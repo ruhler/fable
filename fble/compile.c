@@ -1645,13 +1645,17 @@ static Compiled CompileExpr(FbleTypeArena* arena, Blocks* blocks, bool exit, Sco
       AppendInstr(arena_, &body_scope, &fork->_base);
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        FbleVectorAppend(arena_, fork->args, args[i]->index);
-        // TODO: Does this hold on to the bindings longer than we want to?
-        LocalRelease(arena_, &body_scope, args[i]);
-
+        // Note: Make sure we call NewLocal before calling LocalRelease on any
+        // of the arguments.
         Local* local = NewLocal(arena_, &body_scope);
         fork->dests.xs[i] = local->index.index;
         PushVar(arena_, &body_scope, exec_expr->bindings.xs[i].name, types[i], local);
+      }
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        // TODO: Does this hold on to the bindings longer than we want to?
+        FbleVectorAppend(arena_, fork->args, args[i]->index);
+        LocalRelease(arena_, &body_scope, args[i]);
       }
 
       FbleJoinInstr* join = FbleAlloc(arena_, FbleJoinInstr);
