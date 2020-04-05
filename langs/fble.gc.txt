@@ -218,4 +218,48 @@ That sounds like fun. It would be cool to make a separate test harness and be
 able to evaluate a bunch of different GC implementations, including the one I
 have currently.
 
+Ref Counting With Delete
+------------------------
+Proposal to add support for Delete to the reference counting scheme.
+
+Maintain individual reference counts for objects.
+
+Instead of pointing to another object to track cycles, point to a special
+Cycle thing. The cycle keeps track of external references to any objects in
+the cycle. Actually, it doesn't necessarily have to correspond to a cycle. Any
+group of objects is fine.
+
+So we say an object can belong to a Group. The Group keeps track of how many
+references there are to the Group, not including internal references. You do
+reference counting like normal, except whenever you add or delete a reference,
+you update the reference count for the Group in addition to the object. And
+groups can themselves belong to groups, so you update the reference count for
+the chain of groups that an object belongs to.
+
+Whenever the reference count for a Group drops to zero, due to removal of a
+reference to some object X, then the object X is unreachable. Drop all
+references going out of X. That should be enough to clean up the group.
+
+To be correct, all we have to do is ensure that all objects in the same cycle
+belong to a common group. Then, as soon as the group becomes unreachable, the
+cycle will be reclaimed.
+
+In the extreme case, you could just have a single giant group. But that could
+fail to reclaim until the very end. That suggests we would like our groups to
+be as small as possible to cover a cycle. Otherwise you could end up with the
+following case:
+
+  A, B, C, and D belong to a group.
+  A, B, C form a cycle.
+  D is separate.
+  We drop an external reference to A, but leave an external reference to D.
+  Now A, B, C all retain themselves, and the group is retained by the
+  reference to D, even though we could reclaim the A, B, C cycle.
+
+Let's say Groups are reference counted, but no cycles allowed in groups. When
+the refcount for a Group goes to 1, the group can be removed.
+
+I think this should work great. My guess is it leads to cleaner code, better
+performance, and proper support for Delete. Though there may be some tricky
+details to get right.
 

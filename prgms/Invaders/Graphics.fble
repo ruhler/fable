@@ -783,6 +783,31 @@ Drawing@ LetterA = Path(
   Color@(white: Unit)
 );
 
+Drawing@ LetterC = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|10), I(D|10)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|4)),
+    Point@(I(D|10), I(D|4)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
 Drawing@ LetterE = Path(
   S<Point@>([
     Point@(I(D|10), I(D|0)),
@@ -824,6 +849,34 @@ Drawing@ LetterG = Path(
     Point@(I(D|10), I(D|8)),
     Point@(I(D|10), I(D|2)),
     Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
+Drawing@ LetterI = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|4), I(D|2)),
+    Point@(I(D|4), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|6), I(D|12)),
+    Point@(I(D|6), I(D|2)),
+    Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
+Drawing@ LetterL = Path(
+  S<Point@>([
+    Point@(I(D|10), I(D|0)),
+    Point@(I(D|0), I(D|0)),
+    Point@(I(D|0), I(D|14)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|10), I(D|2))]),
   Color@(white: Unit)
 );
 
@@ -904,6 +957,39 @@ Drawing@ LetterR = Path(
   Color@(white: Unit)
 );
 
+Drawing@ LetterS = Path(
+  S<Point@>([
+    Point@(I(D|8), I(D|0)),
+    Point@(I(D|2), I(D|0)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|0), I(D|2)),
+    Point@(I(D|0), I(D|4)),
+    Point@(I(D|2), I(D|4)),
+    Point@(I(D|2), I(D|2)),
+    Point@(I(D|8), I(D|2)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|2), I(D|6)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|0), I(D|8)),
+    Point@(I(D|0), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|14)),
+    Point@(I(D|8), I(D|14)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|10), I(D|12)),
+    Point@(I(D|10), I(D|10)),
+    Point@(I(D|8), I(D|10)),
+    Point@(I(D|8), I(D|12)),
+    Point@(I(D|2), I(D|12)),
+    Point@(I(D|2), I(D|8)),
+    Point@(I(D|8), I(D|8)),
+    Point@(I(D|8), I(D|6)),
+    Point@(I(D|10), I(D|6)),
+    Point@(I(D|10), I(D|2)),
+    Point@(I(D|8), I(D|2))]),
+  Color@(white: Unit)
+);
+
 Drawing@ LetterV = Path(
   S<Point@>([
     Point@(I(D|6), I(D|0)),
@@ -931,6 +1017,18 @@ Drawing@ LetterV = Path(
 
 Drawing@ Screenshot = {
   ForS<Drawing@, Drawing@>(S<Drawing@>([
+    Translate(I(D|80), I(D|464), LetterS),
+    Translate(I(D|96), I(D|464), LetterC),
+    Translate(I(D|112), I(D|464), LetterO),
+    Translate(I(D|128), I(D|464), LetterR),
+    Translate(I(D|144), I(D|464), LetterE),
+
+    Translate(I(D|320), I(D|464), LetterL),
+    Translate(I(D|336), I(D|464), LetterI),
+    Translate(I(D|352), I(D|464), LetterV),
+    Translate(I(D|368), I(D|464), LetterE),
+    Translate(I(D|384), I(D|464), LetterS),
+
     Translate(I(D|80), I(D|444), Digit0),
     Translate(I(D|96), I(D|444), Digit1),
     Translate(I(D|112), I(D|444), Digit2),
@@ -948,10 +1046,10 @@ Drawing@ Screenshot = {
     Translate(I(D|272), I(D|370), LetterA),
     Translate(I(D|288), I(D|370), LetterM),
     Translate(I(D|304), I(D|370), LetterE),
-    Translate(I(D|326), I(D|370), LetterO),
-    Translate(I(D|342), I(D|370), LetterV),
-    Translate(I(D|358), I(D|370), LetterE),
-    Translate(I(D|374), I(D|370), LetterR),
+    Translate(I(D|336), I(D|370), LetterO),
+    Translate(I(D|352), I(D|370), LetterV),
+    Translate(I(D|368), I(D|370), LetterE),
+    Translate(I(D|384), I(D|370), LetterR),
 
     Translate(I(D|92), I(D|352), Alien3A),
     Translate(I(D|92), I(D|320), Alien2A),
