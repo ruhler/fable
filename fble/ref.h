@@ -10,6 +10,8 @@
 #include "fble-alloc.h"
 #include "fble-vector.h"
 
+typedef struct FbleCycle FbleCycle;
+
 // FbleRef --
 //   A reference to an object that will be automatically freed when no longer
 //   accessible. Extend FbleRef to create a automatically memory managed data
@@ -19,7 +21,7 @@
 typedef struct FbleRef {
   size_t id;
   size_t refcount;
-  struct FbleRef* cycle;
+  struct FbleCycle* cycle;
 } FbleRef;
 
 // FbleRefV --

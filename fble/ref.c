@@ -10,6 +10,18 @@
 // This can be used as a sentinel value.
 #define NULL_REF_ID 0
 
+// FbleCycle --
+//   Represents a set of objects that form a cycle.
+//
+// Fields:
+//   refcount - the total number of references from objects outside this cycle
+//              to objects inside this cycle.
+//   size - the number of objects inside this cycle.
+struct FbleCycle {
+  size_t refcount;
+  size_t size;
+};
+
 // FbleRef -- see definition and documentation in ref.h
 //
 // Fields:
@@ -56,6 +68,14 @@ typedef struct RefStack {
   struct RefStack* tail;
 } RefStack;
 
+// AddCallback --
+//   Callback structure used for Add
+typedef struct {
+  FbleRefCallback _base;
+  FbleArena* arena;
+  FbleRefV* vector;
+} AddCallback;
+
 // RefReleaseCallback --
 //   Callback structure used for RefRelease.
 typedef struct {
@@ -66,10 +86,6 @@ typedef struct {
   // explicit stack to revert to in case the recursion depth is reached.
   size_t depth;
   RefStack** stack;
-
-  // Singly linked list through cycle field of nodes in the cycle being
-  // released. A node is on this list iff it has its id set to NULL_REF_ID.
-  FbleRef* cycle;
 } RefReleaseCallback;
 
 static void RMapInit(FbleArena* arena, RMap* rmap, size_t capacity);
@@ -77,6 +93,7 @@ static size_t* RMapIndex(FbleRef** refs, RMap* rmap, FbleRef* ref);
 static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref);
 static bool Contains(Set* set, FbleRef* ref);
 
+static void AddChild(AddCallback* data, FbleRef* child);
 static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child);
 static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack);
 
@@ -188,26 +205,18 @@ static bool Contains(Set* map, FbleRef* ref)
   return *RMapIndex(map->refs.xs, &map->rmap, ref) != RMAP_EMPTY;
 }
 
+// AddChild --
+//   Callback function used when collecting child references.
+static void AddChild(AddCallback* data, FbleRef* child)
+{
+  FbleVectorAppend(data->arena, *data->vector, child);
+}
+
 // RefReleaseChild --
 //   Callback function used when releasing references.
 static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
 {
-  // If child->id is NULL_REF_ID, we have already processed the child and
-  // there is nothing more to do.
-  if (child->id != NULL_REF_ID) {
-    if (CycleHead(child)->id == NULL_REF_ID) {
-      // This child belongs to the cycle being released.
-      child->id = NULL_REF_ID;
-      child->cycle = data->cycle;
-      data->cycle = child;
-
-      // TODO: Could this smash the stack?
-      data->arena->added(&data->_base, child);
-    } else {
-      // This child is outside of the cycle being released.
-      RefRelease(data->arena, child, data->depth, data->stack);
-    }
-  }
+  RefRelease(data->arena, child, data->depth, data->stack);
 }
 
 // RefRelease --
@@ -234,29 +243,32 @@ static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack
     return;
   }
 
-  ref = CycleHead(ref);
-  assert(ref->cycle == NULL);
   assert(ref->refcount > 0);
   ref->refcount--;
 
+  if (ref->cycle != NULL) {
+    assert(ref->cycle->refcount > 0);
+    ref->cycle->refcount--;
+  }
+
   if (ref->refcount == 0) {
-    ref->id = NULL_REF_ID;
-    ref->cycle = NULL;
+    if (ref->cycle != NULL) {
+      assert(false && "TODO");
+    }
 
     RefReleaseCallback callback = {
       ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefReleaseChild },
       .arena = arena,
       .depth = depth - 1,
       .stack = stack,
-      .cycle = ref,
     };
 
     arena->added(&callback._base, ref);
-    while (callback.cycle != NULL) {
-      FbleRef* r = callback.cycle;
-      callback.cycle = r->cycle;
-      arena->free(arena, r);
-    }
+    arena->free(arena, ref);
+  }
+
+  if (ref->cycle != NULL && ref->cycle->refcount == 0) {
+    assert(false && "TODO");
   }
 }
 
@@ -298,10 +310,13 @@ void FbleRefInit(FbleRefArena* arena, FbleRef* ref)
 // FbleRefRetain -- see documentation in ref.h
 void FbleRefRetain(FbleRefArena* arena, FbleRef* ref)
 {
-  while (ref != NULL) {
+  if (ref != NULL) {
     ref->refcount++;
     assert(ref->refcount != 0);
-    ref = ref->cycle;
+    if (ref->cycle != NULL) {
+      ref->cycle->refcount++;
+      assert(ref->cycle->refcount != 0);
+    }
   }
 }
 
@@ -322,23 +337,29 @@ void FbleRefRelease(FbleRefArena* arena, FbleRef* ref)
 // FbleRefAdd -- see documentation in ref.h
 void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 {
-  if (CycleHead(src) == CycleHead(dst)) {
-    // Ignore new references within the same cycle.
-    return;
-  }
-
   FbleRefRetain(arena, dst);
-  if (src->id > dst->id) {
+  if (dst->cycle != NULL) {
+    if (src->cycle != dst->cycle) {
+      dst->cycle->refcount++;
+    }
+  }
+
+  if (dst->cycle != NULL && src->cycle == dst->cycle) {
+    // src and dst already belong to the same cycle. No need to check if this
+    // new edge introduces a new cycle.
     return;
   }
 
-  src = CycleHead(src);
-  dst = CycleHead(dst);
+  if (src->id > dst->id) {
+    // src is unreachable from dst. No way this new edge could introduce a
+    // cycle.
+    return;
+  }
 
   // There is potentially a cycle from dst --*--> src --> dst
   // Change all nodes with ids between src->id and dst->id to src->id.
-  // If any subset of those nodes form a path between dst and src, set dst as
-  // their cycle and transfer their external refcount to dst.
+  // If any subset of those nodes form a path between dst and src, put them
+  // all together in the same cycle.
   FbleRefV stack;
   FbleVectorInit(arena->arena, stack);
 
@@ -368,7 +389,12 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
-    CycleAdded(arena, ref, &children);
+    AddCallback callback = {
+      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddChild },
+      .arena = arena->arena,
+      .vector = &children
+    };
+    arena->added(&callback._base, ref);
 
     for (size_t i = 0; i < children.size; ++i) {
       FbleRef* child = children.xs[i];
@@ -422,36 +448,42 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   FbleFree(arena->arena, reverse.xs);
 
   if (cycle.refs.size > 0) {
-    // Fix up refcounts for the cycle by moving any refs from nodes outside the
-    // cycle to the head node of the cycle and removing all refs from nodes
-    // inside the cycle.
-    size_t total = 0;
-    size_t internal = 0;
+    // Compute refcounts for the cycle.
+    FbleCycle* new_cycle = FbleAlloc(arena->arena, FbleCycle);
+    new_cycle->refcount = 0;
+    new_cycle->size = 0;
 
     for (size_t i = 0; i < cycle.refs.size; ++i) {
       FbleRef* ref = cycle.refs.xs[i];
-      total += ref->refcount;
+      if (ref->cycle != NULL) {
+        assert(ref->cycle->size > 0);
+        ref->cycle->size--;
+        if (ref->cycle->size == 0) {
+          FbleFree(arena->arena, ref->cycle);
+        }
+      }
+      ref->cycle = new_cycle;
+      new_cycle->size++;
+
+      new_cycle->refcount += ref->refcount;
 
       FbleRefV children;
       FbleVectorInit(arena->arena, children);
-      CycleAdded(arena, ref, &children);
+      AddCallback callback = {
+        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddChild },
+        .arena = arena->arena,
+        .vector = &children
+      };
+      arena->added(&callback._base, ref);
 
       for (size_t j = 0; j < children.size; ++j) {
         if (Contains(&cycle, children.xs[j])) {
-          internal++;
+          new_cycle->refcount--;
         }
       }
 
       FbleFree(arena->arena, children.xs);
     }
-    
-    for (size_t i = 0; i < cycle.refs.size; ++i) {
-      cycle.refs.xs[i]->refcount = 0;
-      cycle.refs.xs[i]->cycle = dst;
-    }
-
-    dst->refcount = total - internal;
-    dst->cycle = NULL;
   }
 
   FbleFree(arena->arena, cycle.refs.xs);
@@ -461,8 +493,11 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 // FbleRefDelete -- see documentation in ref.h
 void FbleRefDelete(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 {
-  src = CycleHead(src);
-  dst = CycleHead(dst);
-  assert (src != dst && "TODO: RefDelete inside of cycles");
+  if (dst->cycle != NULL) {
+    if (src->cycle != dst->cycle) {
+      dst->cycle->refcount--;
+      assert(dst->cycle->refcount != 0 && "TODO");
+    }
+  }
   FbleRefRelease(arena, dst);
 }
