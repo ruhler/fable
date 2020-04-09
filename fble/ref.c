@@ -88,6 +88,13 @@ typedef struct {
   RefStack** stack;
 } RefReleaseCallback;
 
+// RefReleaseCallback --
+//   Callback structure used for RefDeleteRelease.
+typedef struct {
+  RefReleaseCallback _base;
+  FbleCycle* cycle;
+} RefDeleteCallback;
+
 static void RMapInit(FbleArena* arena, RMap* rmap, size_t capacity);
 static size_t* RMapIndex(FbleRef** refs, RMap* rmap, FbleRef* ref);
 static size_t Insert(FbleArena* arena, Set* set, FbleRef* ref);
@@ -95,6 +102,7 @@ static bool Contains(Set* set, FbleRef* ref);
 
 static void AddChild(AddCallback* data, FbleRef* child);
 static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child);
+static void RefDeleteChild(RefDeleteCallback* data, FbleRef* child);
 static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack);
 
 // RMapInit --
@@ -219,6 +227,20 @@ static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
   RefRelease(data->arena, child, data->depth, data->stack);
 }
 
+//
+// RefDeleteChild --
+//   Callback function used when deleting references.
+static void RefDeleteChild(RefDeleteCallback* data, FbleRef* child)
+{
+  if (child->cycle != NULL && child->cycle == data->cycle) {
+    // src and dst belong to the same cycle. Do a fake increment on the
+    // refcount for the destination cycle, because the subsequent call to
+    // FbleRefRelease is going to do a decrement on the cycle refcount.
+    child->cycle->refcount++;
+  }
+  RefReleaseChild(&data->_base, child);
+}
+
 // RefRelease --
 //   Release a reference recursively.
 //
@@ -253,6 +275,8 @@ static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack
     if (ref->refcount == 0) {
       // It is safe to remove this reference from the cycle, because nobody
       // points to this reference anymore.
+      // TODO: But only if we increment the cycle's external references by the
+      // number of outgoing references from this cycle!
       assert(ref->cycle->size > 0);
       ref->cycle->size--;
       if (ref->cycle->size == 0) {
@@ -260,16 +284,6 @@ static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack
       }
       ref->cycle = NULL;
     }
-  }
-
-  if (ref->cycle != NULL && ref->cycle->refcount == 0) {
-    assert(ref->refcount > 0);
-
-    // TODO: Break the cycle here. We need some way to annotate ref to
-    // indicate that we've broken the cycle so that we don't traverse its
-    // children again next time we see it. Then delete references to all
-    // children. That should be enough to unravel the cycle.
-    assert(false && "TODO");
   }
 
   if (ref->refcount == 0) {
@@ -282,8 +296,31 @@ static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack
       .stack = stack,
     };
 
-    arena->added(&callback._base, ref);
+    if (ref->id != NULL_REF_ID) {
+      arena->added(&callback._base, ref);
+    }
     arena->free(arena, ref);
+  } else if (ref->cycle != NULL && ref->cycle->refcount == 0) {
+    // The cycle is unreachable, though there are still other objects in
+    // the cycle refering to this reference. To break the cycle, we drop all
+    // references out of this reference. That should be enough to naturally
+    // unravel the cycle. Because we can't effect what arena->added will
+    // traverse, we mark the reference specially by changing its id to
+    // NULL_REF_ID.
+    assert(ref->id != NULL_REF_ID);
+    ref->id = NULL_REF_ID;
+
+    RefDeleteCallback callback = {
+      ._base = {
+        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefDeleteChild },
+        .arena = arena,
+        .depth = depth - 1,
+        .stack = stack,
+      },
+      .cycle = ref->cycle,
+    };
+
+    arena->added(&callback._base._base, ref);
   }
 }
 
