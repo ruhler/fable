@@ -6,7 +6,6 @@
 * [ref] Cleanup ref.c as reasonable
  - Avoid duplicate traversals.
  - Use direct callbacks where possible instead of adding to vectors.
- - Reorganize code to what makes sense.
 
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.
