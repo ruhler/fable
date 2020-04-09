@@ -77,7 +77,7 @@ typedef struct {
 } AddCallback;
 
 // RefReleaseCallback --
-//   Callback structure used for RefRelease.
+//   Callback structure used for RefReleaseChild.
 typedef struct {
   FbleRefCallback _base;
   FbleRefArena* arena;
@@ -88,12 +88,12 @@ typedef struct {
   RefStack** stack;
 } RefReleaseCallback;
 
-// RefReleaseCallback --
-//   Callback structure used for RefDeleteRelease.
+// CycleRefAddCallback --
+//   Callback structure used for CycleRefAdd
 typedef struct {
-  RefReleaseCallback _base;
+  FbleRefCallback _base;
   FbleCycle* cycle;
-} RefDeleteCallback;
+} CycleRefAddCallback;
 
 static void RMapInit(FbleArena* arena, RMap* rmap, size_t capacity);
 static size_t* RMapIndex(FbleRef** refs, RMap* rmap, FbleRef* ref);
@@ -102,7 +102,7 @@ static bool Contains(Set* set, FbleRef* ref);
 
 static void AddChild(AddCallback* data, FbleRef* child);
 static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child);
-static void RefDeleteChild(RefDeleteCallback* data, FbleRef* child);
+static void CycleRefAdd(CycleRefAddCallback* data, FbleRef* child);
 static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack);
 
 // RMapInit --
@@ -227,18 +227,28 @@ static void RefReleaseChild(RefReleaseCallback* data, FbleRef* child)
   RefRelease(data->arena, child, data->depth, data->stack);
 }
 
+// CycleRefAdd --
+//   Increment the refcount for a cycle if the child belongs to the cycle.
 //
-// RefDeleteChild --
-//   Callback function used when deleting references.
-static void RefDeleteChild(RefDeleteCallback* data, FbleRef* child)
+//   Used when removing an object from a cycle, at which point all references
+//   from the object to children in the cycle go from being internal
+//   references to external references.
+//
+// Inputs:
+//   data - information about which cycle to look for.
+//   child - the child to increment based on.
+//
+// Results:
+//   None.
+//
+// Side effects:
+//   If the child belongs to the target cycle, increment the refcount on the
+//   cycle.
+static void CycleRefAdd(CycleRefAddCallback* data, FbleRef* child)
 {
   if (child->cycle != NULL && child->cycle == data->cycle) {
-    // src and dst belong to the same cycle. Do a fake increment on the
-    // refcount for the destination cycle, because the subsequent call to
-    // FbleRefRelease is going to do a decrement on the cycle refcount.
-    child->cycle->refcount++;
+    data->cycle->refcount++;
   }
-  RefReleaseChild(&data->_base, child);
 }
 
 // RefRelease --
@@ -275,8 +285,15 @@ static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack
     if (ref->refcount == 0) {
       // It is safe to remove this reference from the cycle, because nobody
       // points to this reference anymore.
-      // TODO: But only if we increment the cycle's external references by the
-      // number of outgoing references from this cycle!
+
+      // Change outgoing internal references to external references.
+      CycleRefAddCallback callback = {
+        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleRefAdd },
+        .cycle = ref->cycle,
+      };
+      arena->added(&callback._base, ref);
+
+      // Remove the object from the cycle.
       assert(ref->cycle->size > 0);
       ref->cycle->size--;
       if (ref->cycle->size == 0) {
@@ -287,6 +304,7 @@ static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack
   }
 
   if (ref->refcount == 0) {
+    // We should already have removed the reference from its cycle.
     assert(ref->cycle == NULL);
 
     RefReleaseCallback callback = {
@@ -310,17 +328,35 @@ static void RefRelease(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack
     assert(ref->id != NULL_REF_ID);
     ref->id = NULL_REF_ID;
 
-    RefDeleteCallback callback = {
-      ._base = {
-        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&RefDeleteChild },
-        .arena = arena,
-        .depth = depth - 1,
-        .stack = stack,
-      },
+    // TODO: Consider optimizing the callbacks here to reduce number of
+    // traversals.
+
+    // Increment the cycle refcount for each child in the cycle to make up for
+    // the decrement that will come when we release those references.
+    CycleRefAddCallback callback1 = {
+      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleRefAdd },
       .cycle = ref->cycle,
     };
+    arena->added(&callback1._base, ref);
 
-    arena->added(&callback._base._base, ref);
+    // Release all child references.
+    // We collect the child references into a vector first instead of
+    // releasing them directly, because we expect ref to be freed as a result
+    // of this. It would be bad if we freed ref in the middle of doing the
+    // release callback.
+    FbleRefV children;
+    FbleVectorInit(arena->arena, children);
+    AddCallback callback2 = {
+      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddChild },
+      .arena = arena->arena,
+      .vector = &children
+    };
+    arena->added(&callback2._base, ref);
+
+    for (size_t i = 0; i < children.size; ++i) {
+      RefRelease(arena, children.xs[i], depth - 1, stack);
+    }
+    FbleFree(arena->arena, children.xs);
   }
 }
 
