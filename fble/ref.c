@@ -78,30 +78,9 @@ typedef struct RefStack {
   struct RefStack* tail;
 } RefStack;
 
-// ReleaseChildCallback --
-//   Callback structure used for ReleaseChild, which recursively releases
-//   child references.
-typedef struct {
-  FbleRefCallback _base;
-  FbleRefArena* arena;
-
-  // Maximum recursion depth allowed, to avoid smashing the stack, and the
-  // explicit stack to revert to in case the recursion depth is reached.
-  size_t depth;
-  RefStack** stack;
-} ReleaseChildCallback;
-
-static void ReleaseChild(ReleaseChildCallback* data, FbleRef* child);
-
-// CycleRefAddChildCallback --
-//   Callback structure used for CycleRefAddChild, which increments the cycle
-//   refcount for each child in the cycle.
-typedef struct {
-  FbleRefCallback _base;
-  FbleCycle* cycle;
-} CycleRefAddChildCallback;
-
-static void CycleRefAddChild(CycleRefAddChildCallback* data, FbleRef* child);
+static void CollectChildren(FbleRefArena* arena, FbleRef* parent, FbleRefV* children);
+static void ReleaseChildren(FbleRefArena* arena, FbleRef* parent, size_t depth, RefStack** stack);
+static void CycleRefAddChildren(FbleRefArena* arena, FbleRef* parent);
 
 static void Release(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack);
 
@@ -247,45 +226,82 @@ static void CollectChildren(FbleRefArena* arena, FbleRef* parent, FbleRefV* chil
     arena->added(&callback._base, parent);
 }
 
-// RefReleaseChild --
-//   Callback function used when releasing references.
+// ReleaseChildren --
+//   Call Release on all children of the given node.
 //
 // Inputs:
-//   data - arguments to pass to Release.
-//   child - the child to release.
+//   arena - the reference arena.
+//   parent - the node whose children to release.
+//   depth - the maximum depth of recursion allowed.
+//   stack - stack to add objects to incase the recursion depth is reached.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   Releases the child.
+//   Calls Release on all children of the parent object.
+
+typedef struct {
+  FbleRefCallback _base;
+  FbleRefArena* arena;
+  size_t depth;
+  RefStack** stack;
+} ReleaseChildCallback;
+
 static void ReleaseChild(ReleaseChildCallback* data, FbleRef* child)
 {
   Release(data->arena, child, data->depth, data->stack);
 }
+
+static void ReleaseChildren(FbleRefArena* arena, FbleRef* parent, size_t depth, RefStack** stack)
+{
+  ReleaseChildCallback callback = {
+    ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&ReleaseChild },
+    .arena = arena,
+    .depth = depth,
+    .stack = stack,
+  };
+  arena->added(&callback._base, parent);
+}
 
-// CycleRefAddChild --
-//   Increment the refcount for a cycle if the child belongs to the cycle.
+// CycleRefAddChildren --
+//   Increment the refcount of a cycle by the number of child nodes that
+//   belong to the cycle.
 //
 //   Used when removing an object from a cycle, at which point all references
 //   from the object to children in the cycle go from being internal
 //   references to external references.
 //
 // Inputs:
-//   data - information about which cycle to look for.
-//   child - the child to increment based on.
+//   arena - the reference arena
+//   parent - the parent node whose children to traverse.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   If the child belongs to the target cycle, increment the refcount on the
-//   cycle.
+//   For each child of the parent that belongs to the same cycle as the
+//   parent, increment the refcount on the parent's cycle.
+
+typedef struct {
+  FbleRefCallback _base;
+  FbleCycle* cycle;
+} CycleRefAddChildCallback;
+
 static void CycleRefAddChild(CycleRefAddChildCallback* data, FbleRef* child)
 {
   if (child->cycle != NULL && child->cycle == data->cycle) {
     data->cycle->refcount++;
   }
+}
+
+static void CycleRefAddChildren(FbleRefArena* arena, FbleRef* parent)
+{
+  CycleRefAddChildCallback callback = {
+    ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleRefAddChild },
+    .cycle = parent->cycle,
+  };
+  arena->added(&callback._base, parent);
 }
 
 // Release --
@@ -324,11 +340,7 @@ static void Release(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** 
       // points to this reference anymore.
 
       // Change outgoing internal references to external references.
-      CycleRefAddChildCallback callback = {
-        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleRefAddChild },
-        .cycle = ref->cycle,
-      };
-      arena->added(&callback._base, ref);
+      CycleRefAddChildren(arena, ref);
 
       // Remove the object from the cycle.
       assert(ref->cycle->size > 0);
@@ -344,15 +356,8 @@ static void Release(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** 
     // We should already have removed the reference from its cycle.
     assert(ref->cycle == NULL);
 
-    ReleaseChildCallback callback = {
-      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&ReleaseChild },
-      .arena = arena,
-      .depth = depth - 1,
-      .stack = stack,
-    };
-
     if (ref->id != NULL_REF_ID) {
-      arena->added(&callback._base, ref);
+      ReleaseChildren(arena, ref, depth - 1, stack);
     }
     arena->free(arena, ref);
   } else if (ref->cycle != NULL && ref->cycle->refcount == 0) {
@@ -370,11 +375,7 @@ static void Release(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** 
 
     // Increment the cycle refcount for each child in the cycle to make up for
     // the decrement that will come when we release those references.
-    CycleRefAddChildCallback callback1 = {
-      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CycleRefAddChild },
-      .cycle = ref->cycle,
-    };
-    arena->added(&callback1._base, ref);
+    CycleRefAddChildren(arena, ref);
 
     // Release all child references.
     // We collect the child references into a vector first instead of
