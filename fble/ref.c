@@ -370,9 +370,6 @@ static void Release(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** 
     assert(ref->id != NULL_REF_ID);
     ref->id = NULL_REF_ID;
 
-    // TODO: Consider optimizing the callbacks here to reduce number of
-    // traversals.
-
     // Increment the cycle refcount for each child in the cycle to make up for
     // the decrement that will come when we release those references.
     CycleRefAddChildren(arena, ref);
@@ -507,8 +504,6 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
     FbleRef* ref = stack.xs[--stack.size];
     ref->id = src->id;
 
-    // TODO: Can we avoid use of a CollectChildren here, to avoid
-    // allocating and retraversing the children vector?
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
     CollectChildren(arena, ref, &children);
@@ -587,8 +582,6 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
       new_cycle->refcount += ref->refcount;
 
-      // TODO: Can we avoid use of a CollectChildren here, to avoid
-      // allocating and retraversing the children vector?
       FbleRefV children;
       FbleVectorInit(arena->arena, children);
       CollectChildren(arena, ref, &children);
