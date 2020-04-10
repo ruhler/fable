@@ -78,9 +78,17 @@ typedef struct RefStack {
   struct RefStack* tail;
 } RefStack;
 
+// FbleRefVV --
+//   A vector of vectors of references.
+typedef struct {
+  size_t size;
+  FbleRefV* xs;
+} FbleRefVV;
+
 static void CollectChildren(FbleRefArena* arena, FbleRef* parent, FbleRefV* children);
 static void ReleaseChildren(FbleRefArena* arena, FbleRef* parent, size_t depth, RefStack** stack);
 static void CycleRefAddChildren(FbleRefArena* arena, FbleRef* parent);
+static void AddTraverseChildren(FbleRefArena* arena, FbleRef* parent, size_t id, Set* visited, FbleRefVV* reverse, FbleRefV* stack);
 
 static void Release(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** stack);
 
@@ -304,6 +312,67 @@ static void CycleRefAddChildren(FbleRefArena* arena, FbleRef* parent)
   arena->added(&callback._base, parent);
 }
 
+// AddTraverseChildren --
+//   Child traversal used in FbleAddReference.
+//
+// Inputs:
+//   arena - the reference arena.
+//   parent - the reference whose children to traverse.
+//   id - limit children visited to those with id greater than this id.
+//   visited - the set of nodes visited to add to.
+//   reverse - map from child node back to parent node, as keyed by the
+//             visited set.
+//   stack - stack to add new child nodes to.
+//
+// Results: 
+//   None.
+//
+// Side effects:
+//   Traverse (non-recursively) over the child nodes of the given parent.
+//   Insert children into the visited set. If the child was not already in the
+//   visited set, add it to the stack. Update the reverse mapping from parent
+//   node to child.
+
+typedef struct {
+  FbleRefCallback _base;
+  FbleArena* arena;
+  FbleRef* parent;
+  size_t id;
+  Set* visited;
+  FbleRefVV* reverse;
+  FbleRefV* stack;
+} AddTraverseChildCallback;
+
+static void AddTraverseChild(AddTraverseChildCallback* data, FbleRef* child)
+{
+  if (child->id >= data->id) {
+    FbleRefV* parents = NULL;
+    size_t j = Insert(data->arena, data->visited, child);
+    if (j < data->reverse->size) {
+      parents = data->reverse->xs + j;
+    } else {
+      FbleVectorAppend(data->arena, *data->stack, child);
+      parents = FbleVectorExtend(data->arena, *data->reverse);
+      FbleVectorInit(data->arena, *parents);
+    }
+    FbleVectorAppend(data->arena, *parents, data->parent);
+  }
+}
+
+static void AddTraverseChildren(FbleRefArena* arena, FbleRef* parent, size_t id, Set* visited, FbleRefVV* reverse, FbleRefV* stack)
+{
+  AddTraverseChildCallback callback = {
+    ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&AddTraverseChild },
+    .arena = arena->arena,
+    .parent = parent,
+    .id = id,
+    .visited = visited,
+    .reverse = reverse,
+    .stack = stack,
+  };
+  arena->added(&callback._base, parent);
+}
+
 // Release --
 //   Release a reference recursively.
 //
@@ -490,7 +559,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
   // Keep track of a reverse mapping from child to parent nodes. The child
   // node at index i is visited.refs[i].
-  struct { size_t size; FbleRefV* xs; } reverse;
+  FbleRefVV reverse;
   FbleVectorInit(arena->arena, reverse);
 
   FbleVectorAppend(arena->arena, stack, dst);
@@ -506,28 +575,7 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
   while (stack.size > 0) {
     FbleRef* ref = stack.xs[--stack.size];
     ref->id = src->id;
-
-    // TODO: Can we avoid use of a CollectChildren here, to avoid
-    // allocating and retraversing the children vector?
-    FbleRefV children;
-    FbleVectorInit(arena->arena, children);
-    CollectChildren(arena, ref, &children);
-    for (size_t i = 0; i < children.size; ++i) {
-      FbleRef* child = children.xs[i];
-      if (child->id >= src->id) {
-        FbleRefV* parents = NULL;
-        size_t j = Insert(arena->arena, &visited, child);
-        if (j < reverse.size) {
-          parents = reverse.xs + j;
-        } else {
-          FbleVectorAppend(arena->arena, stack, child);
-          parents = FbleVectorExtend(arena->arena, reverse);
-          FbleVectorInit(arena->arena, *parents);
-        }
-        FbleVectorAppend(arena->arena, *parents, ref);
-      }
-    }
-    FbleFree(arena->arena, children.xs);
+    AddTraverseChildren(arena, ref, src->id, &visited, &reverse, &stack);
   }
 
   // Traverse backwards from src (if reached) to identify all nodes in a newly
