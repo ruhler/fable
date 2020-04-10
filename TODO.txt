@@ -4,8 +4,10 @@
    d that used to be in the cycle a->b->c->d.
 
 * [ref] Cleanup ref.c as reasonable
- - Avoid duplicate traversals.
+ - Avoid duplicate traversals as reasonable.
  - Use direct callbacks where possible instead of adding to vectors.
+ - Consider making arena->added a vararg callback that takes vararg callbacks?
+   Might be more convenient than defining structs for all the callbacks.
 
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.

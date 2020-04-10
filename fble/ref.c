@@ -78,17 +78,6 @@ typedef struct RefStack {
   struct RefStack* tail;
 } RefStack;
 
-// CollectChildCallback --
-//   Callback structure used for CollectChild, which collects child references
-//   into a vector.
-typedef struct {
-  FbleRefCallback _base;
-  FbleArena* arena;
-  FbleRefV* vector;
-} CollectChildCallback;
-
-static void CollectChild(CollectChildCallback* data, FbleRef* child);
-
 // ReleaseChildCallback --
 //   Callback structure used for ReleaseChild, which recursively releases
 //   child references.
@@ -224,21 +213,38 @@ static bool Contains(Set* map, FbleRef* ref)
   return *RMapIndex(map->refs.xs, &map->rmap, ref) != RMAP_EMPTY;
 }
 
-// CollectChild --
-//   Callback function used when collecting child references.
+// CollectChildren --
+//   Collect the children of a reference into a vector.
 //
 // Inputs:
-//   data - the vector to add the child to.
-//   child - the child to add to the vector.
+//   arena - the reference arena
+//   parent - the reference to get the children of
+//   children - a preinitialized vector to add the children to.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   Adds the child to the vector.
+//   Adds child references of the parent to the children vector.
+typedef struct {
+  FbleRefCallback _base;
+  FbleArena* arena;
+  FbleRefV* children;
+} CollectChildCallback;
+
 static void CollectChild(CollectChildCallback* data, FbleRef* child)
 {
-  FbleVectorAppend(data->arena, *data->vector, child);
+  FbleVectorAppend(data->arena, *data->children, child);
+}
+
+static void CollectChildren(FbleRefArena* arena, FbleRef* parent, FbleRefV* children)
+{
+    CollectChildCallback callback = {
+      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CollectChild },
+      .arena = arena->arena,
+      .children = children
+    };
+    arena->added(&callback._base, parent);
 }
 
 // RefReleaseChild --
@@ -377,13 +383,7 @@ static void Release(FbleRefArena* arena, FbleRef* ref, size_t depth, RefStack** 
     // release callback.
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
-    CollectChildCallback callback2 = {
-      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CollectChild },
-      .arena = arena->arena,
-      .vector = &children
-    };
-    arena->added(&callback2._base, ref);
-
+    CollectChildren(arena, ref, &children);
     for (size_t i = 0; i < children.size; ++i) {
       Release(arena, children.xs[i], depth - 1, stack);
     }
@@ -506,17 +506,11 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
     FbleRef* ref = stack.xs[--stack.size];
     ref->id = src->id;
 
-    // TODO: Can we avoid use of a CollectChildCallback here, to avoid
+    // TODO: Can we avoid use of a CollectChildren here, to avoid
     // allocating and retraversing the children vector?
     FbleRefV children;
     FbleVectorInit(arena->arena, children);
-    CollectChildCallback callback = {
-      ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CollectChild },
-      .arena = arena->arena,
-      .vector = &children
-    };
-    arena->added(&callback._base, ref);
-
+    CollectChildren(arena, ref, &children);
     for (size_t i = 0; i < children.size; ++i) {
       FbleRef* child = children.xs[i];
       if (child->id >= src->id) {
@@ -592,17 +586,11 @@ void FbleRefAdd(FbleRefArena* arena, FbleRef* src, FbleRef* dst)
 
       new_cycle->refcount += ref->refcount;
 
-      // TODO: Can we avoid use of a CollectChildCallback here, to avoid
+      // TODO: Can we avoid use of a CollectChildren here, to avoid
       // allocating and retraversing the children vector?
       FbleRefV children;
       FbleVectorInit(arena->arena, children);
-      CollectChildCallback callback = {
-        ._base = { .callback = (void(*)(struct FbleRefCallback*, FbleRef*))&CollectChild },
-        .arena = arena->arena,
-        .vector = &children
-      };
-      arena->added(&callback._base, ref);
-
+      CollectChildren(arena, ref, &children);
       for (size_t j = 0; j < children.size; ++j) {
         if (Contains(&cycle, children.xs[j])) {
           new_cycle->refcount--;
