@@ -1,7 +1,23 @@
 
+* [perf] See if we can avoid making extra copies of args in function
+  application. It shows up pretty high on gcov.
+
 * [cleanup] Rename FbleDeleteRefCountingHeap to FbleFreeRefCountingHeap?
   And similar for other delete/destroy things? Use common naming?
   Maybe: New/Free? Preferred over Alloc,Create/Delete,Destroy.
+ - rename FbleDeleteRefCountingHeap to FbleFreeRefCountingHeap
+ - rename FbleDeleteValueHeap to FbleFreeValueHeap
+ - rename FbleDeleteArena to FbleFreeArena
+
+* [perf] profile investigation? Suggests
+ - Eval instruction fetch and decode, which is called a ton.
+ - Profile GetCallData, which does a linear search that could be more
+   efficient.
+ - ValueRetain and the underlying Retain, which gets called a ton.
+ - Note: using -O3 makes the program run more than twice as fast, but the perf
+   profile report still highlights the same hot spots. Recommendation: figure
+   out how to address those hot spots using high level improvements - don't
+   worry about fiddling with low level optimizations.
 
 * [test] Add fble-heap-test for splitting cycles
    Test that we don't retain a cycle a->b->c by referencing a separate object
@@ -31,6 +47,8 @@
 * [compile] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute
    'recursive' ahead of time?
+ - gcov suggests this could have a noticable performance impact, both in terms
+   of fewer REF_VALUE_INSTRs and spending less time unpeeling ref values.
 
 * [compile] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced

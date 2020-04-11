@@ -79,6 +79,7 @@
 // Fields:
 //   caller - the caller for this particular call
 //   callee - the callee for this particular call
+//   call - cached result of GetCallData(caller, callee)
 //   new_block - true if this block was called recursively from itself.
 //   new_call - true if this call was called recursively from another
 //                    caller -> callee call.
@@ -86,6 +87,7 @@
 typedef struct CallList {
   FbleBlockId caller;
   FbleBlockId callee;
+  FbleCallData* call;
   bool new_block;
   bool new_call;
   struct CallList* tail;
@@ -463,7 +465,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     // invariant that we will advance all auto_exit calls by the same amount
     // of time when we eventually do exit from them.
     for (CallList* c = thread->stack->exit_calls; c != NULL; c = c->tail) {
-      FbleCallData* exit_call = GetCallData(arena, thread->profile, c->caller, c->callee);
+      FbleCallData* exit_call = c->call;
       for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
         uint64_t advance = thread->stack->time[clock];
         if (c->new_block) {
@@ -507,6 +509,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     c = FbleAlloc(arena, CallList);
     c->caller = caller;
     c->callee = callee;
+    c->call = call;
     c->new_block = !thread->profile->xs[callee]->block.running;
     c->new_call = !call->running;
     c->tail = thread->stack->exit_calls;
@@ -529,7 +532,7 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
   CallEvent(thread);
   while (thread->stack->exit_calls != NULL) {
     CallList* c = thread->stack->exit_calls;
-    FbleCallData* call = GetCallData(arena, thread->profile, c->caller, c->callee);
+    FbleCallData* call = c->call;
     for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
       uint64_t advance = thread->stack->time[clock];
       if (c->new_block) {
