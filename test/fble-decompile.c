@@ -73,6 +73,6 @@ int main(int argc, char* argv[])
   FbleArena* arena = FbleNewArena();
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
   bool ok = FbleDecompile(stdout, prgm);
-  FbleDeleteArena(arena);
+  FbleFreeArena(arena);
   return ok ? EX_SUCCESS : EX_FAIL;
 }

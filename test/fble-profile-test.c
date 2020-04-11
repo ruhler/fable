@@ -56,7 +56,7 @@ static size_t AutoExitMaxMem(size_t n)
   FbleFreeProfile(arena, profile);
   FbleAssertEmptyArena(arena);
   size_t memory = FbleArenaMaxSize(arena);
-  FbleDeleteArena(arena);
+  FbleFreeArena(arena);
   return memory;
 }
 
@@ -463,7 +463,7 @@ int main(int argc, char* argv[])
     assert(mem_100 == mem_200);
   }
 
-  FbleDeleteArena(arena);
+  FbleFreeArena(arena);
   return 0;
 }
 

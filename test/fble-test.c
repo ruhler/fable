@@ -136,9 +136,9 @@ int main(int argc, char* argv[])
     FbleFreeProfile(eval_arena, profile);
 
     FbleAssertEmptyArena(eval_arena);
-    FbleDeleteArena(eval_arena);
+    FbleFreeArena(eval_arena);
   }
-  FbleDeleteArena(prgm_arena);
+  FbleFreeArena(prgm_arena);
 
   if (result == NULL) {
     return expect_error ? EX_SUCCESS : EX_FAIL;

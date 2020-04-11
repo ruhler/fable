@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
   FbleArena* prgm_arena = FbleNewArena();
   FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
   if (prgm == NULL) {
-    FbleDeleteArena(prgm_arena);
+    FbleFreeArena(prgm_arena);
     return 1;
   }
 
@@ -153,8 +153,8 @@ int main(int argc, char* argv[])
     FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
-    FbleDeleteArena(eval_arena);
-    FbleDeleteArena(prgm_arena);
+    FbleFreeArena(eval_arena);
+    FbleFreeArena(prgm_arena);
     return 1;
   }
 
@@ -171,8 +171,8 @@ int main(int argc, char* argv[])
     FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
-    FbleDeleteArena(eval_arena);
-    FbleDeleteArena(prgm_arena);
+    FbleFreeArena(eval_arena);
+    FbleFreeArena(prgm_arena);
     return 1;
   }
 
@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
   FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeProfile(eval_arena, profile);
   FbleAssertEmptyArena(eval_arena);
-  FbleDeleteArena(eval_arena);
-  FbleDeleteArena(prgm_arena);
+  FbleFreeArena(eval_arena);
+  FbleFreeArena(prgm_arena);
   return 0;
 }

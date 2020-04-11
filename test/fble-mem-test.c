@@ -110,7 +110,7 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
 
   *max_bytes = FbleArenaMaxSize(eval_arena);
   FbleAssertEmptyArena(eval_arena);
-  FbleDeleteArena(eval_arena);
+  FbleFreeArena(eval_arena);
   return success;
 }
 
@@ -160,34 +160,34 @@ int main(int argc, char* argv[])
   FbleArena* prgm_arena = FbleNewArena();
   FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
   if (prgm == NULL) {
-    FbleDeleteArena(prgm_arena);
+    FbleFreeArena(prgm_arena);
     return EX_FAIL;
   }
 
   size_t max_small_n = 0;
   if (!Run(prgm, false, &max_small_n)) {
-    FbleDeleteArena(prgm_arena);
+    FbleFreeArena(prgm_arena);
     return EX_FAIL;
   }
 
   size_t max_large_n = 0;
   if (!Run(prgm, true, &max_large_n)) {
-    FbleDeleteArena(prgm_arena);
+    FbleFreeArena(prgm_arena);
     return EX_FAIL;
   }
 
   if (!growth && max_large_n > max_small_n) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
-    FbleDeleteArena(prgm_arena);
+    FbleFreeArena(prgm_arena);
     return EX_FAIL;
   }
 
   if (growth && max_large_n == max_small_n) {
     fprintf(stderr, "memory constant\n");
-    FbleDeleteArena(prgm_arena);
+    FbleFreeArena(prgm_arena);
     return EX_FAIL;
   }
 
-  FbleDeleteArena(prgm_arena);
+  FbleFreeArena(prgm_arena);
   return EX_SUCCESS;
 }

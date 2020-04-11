@@ -254,7 +254,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
   FbleFree(arena, blocks.xs);
   FbleAssertEmptyArena(arena);
-  FbleDeleteArena(arena);
+  FbleFreeArena(arena);
 }
 
 // FbleFreeInstr -- see documentation in instr.h
@@ -351,6 +351,6 @@ bool FbleDecompile(FILE* fout, FbleProgram* program)
   }
   FbleFreeBlockNames(arena, &blocks);
   FbleAssertEmptyArena(arena);
-  FbleDeleteArena(arena);
+  FbleFreeArena(arena);
   return code != NULL;
 }

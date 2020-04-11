@@ -95,8 +95,8 @@ FbleArena* FbleNewArena()
   return arena;
 }
 
-// FbleDeleteArena -- see documentation in fble-alloc.h
-void FbleDeleteArena(FbleArena* arena)
+// FbleFreeArena -- see documentation in fble-alloc.h
+void FbleFreeArena(FbleArena* arena)
 {
   while (arena->allocs->next != arena->allocs) {
     FbleFree(arena, arena->allocs->next->data);

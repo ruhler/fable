@@ -89,11 +89,11 @@ void FbleFree(FbleArena* arena, void* ptr);
 //   The newly allocated arena.
 //
 // Side effects:
-//   Allocates a new arena which must be freed using FbleDeleteArena.
+//   Allocates a new arena which must be freed using FbleFreeArena.
 FbleArena* FbleNewArena();
 
-// FbleDeleteArena --
-//   Delete an arena created with FbleNewArena.
+// FbleFreeArena --
+//   Free an arena created with FbleNewArena.
 //
 // Inputs:
 //   arena - the arena to delete.
@@ -104,7 +104,7 @@ FbleArena* FbleNewArena();
 // Side effects:
 //   Frees memory associated with the arena, including the arena itself and
 //   all outstanding allocations made by the arena.
-void FbleDeleteArena(FbleArena* arena);
+void FbleFreeArena(FbleArena* arena);
 
 // FbleAssertEmptyArena
 //   Check that there are no outstanding allocations in the given arena. Used

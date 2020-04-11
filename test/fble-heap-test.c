@@ -388,6 +388,6 @@ int main(int argc, char* argv[])
 
   FbleDeleteRefCountingHeap(heap);
   FbleAssertEmptyArena(arena);
-  FbleDeleteArena(arena);
+  FbleFreeArena(arena);
   return 0;
 }

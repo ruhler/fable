@@ -7,7 +7,6 @@
   Maybe: New/Free? Preferred over Alloc,Create/Delete,Destroy.
  - rename FbleDeleteRefCountingHeap to FbleFreeRefCountingHeap
  - rename FbleDeleteValueHeap to FbleFreeValueHeap
- - rename FbleDeleteArena to FbleFreeArena
 
 * [perf] profile investigation? Suggests
  - Eval instruction fetch and decode, which is called a ton.

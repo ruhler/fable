@@ -673,7 +673,7 @@ void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   }
   fprintf(fout, "\n");
   FbleAssertEmptyArena(arena);
-  FbleDeleteArena(arena);
+  FbleFreeArena(arena);
 
   // Locations
   fprintf(fout, "Block Locations\n");
