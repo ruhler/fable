@@ -104,7 +104,7 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
   }
 
   FbleValueRelease(heap, func);
-  FbleDeleteValueHeap(heap);
+  FbleFreeValueHeap(heap);
   FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeProfile(eval_arena, profile);
 

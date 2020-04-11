@@ -386,7 +386,7 @@ int main(int argc, char* argv[])
     assert(sObjsAlive == 0);
   }
 
-  FbleDeleteRefCountingHeap(heap);
+  FbleFreeRefCountingHeap(heap);
   FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
   return 0;

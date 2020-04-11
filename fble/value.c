@@ -31,10 +31,10 @@ FbleValueHeap* FbleNewValueHeap(FbleArena* arena)
       (void (*)(FbleHeap*, void*))&OnFree);
 }
 
-// FbleDeleteValueArena -- see documentation in fble.h
-void FbleDeleteValueHeap(FbleValueHeap* heap)
+// FbleFreeValueHeap -- see documentation in fble.h
+void FbleFreeValueHeap(FbleValueHeap* heap)
 {
-  FbleDeleteRefCountingHeap(heap);
+  FbleFreeRefCountingHeap(heap);
 }
 
 // FbleValueRetain -- see documentation in fble.h

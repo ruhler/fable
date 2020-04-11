@@ -426,7 +426,7 @@ int main(int argc, char* argv[])
 
   FbleValue* func = FbleEval(heap, prgm, &blocks, &profile);
   if (func == NULL) {
-    FbleDeleteValueHeap(heap);
+    FbleFreeValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleFreeArena(eval_arena);
@@ -436,7 +436,7 @@ int main(int argc, char* argv[])
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-    FbleDeleteValueHeap(heap);
+    FbleFreeValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleFreeArena(eval_arena);
@@ -481,7 +481,7 @@ int main(int argc, char* argv[])
   FbleValueRelease(heap, args[3]);
 
   if (proc == NULL) {
-    FbleDeleteValueHeap(heap);
+    FbleFreeValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleFreeArena(eval_arena);
@@ -508,7 +508,7 @@ int main(int argc, char* argv[])
   FbleValueRelease(heap, ports[1]);
 
   FbleValueRelease(heap, value);
-  FbleDeleteValueHeap(heap);
+  FbleFreeValueHeap(heap);
   FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeProfile(eval_arena, profile);
   FbleAssertEmptyArena(eval_arena);

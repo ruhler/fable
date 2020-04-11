@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
     }
 
     FbleValueRelease(heap, result);
-    FbleDeleteValueHeap(heap);
+    FbleFreeValueHeap(heap);
 
     if (report_profile) {
       printf("max memory eval: %zi (bytes)\n\n", FbleArenaMaxSize(eval_arena));

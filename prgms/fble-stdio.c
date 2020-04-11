@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
 
   FbleValue* func = FbleEval(heap, prgm, &blocks, &profile);
   if (func == NULL) {
-    FbleDeleteValueHeap(heap);
+    FbleFreeValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleFreeArena(eval_arena);
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
   FbleValueRelease(heap, args[1]);
 
   if (proc == NULL) {
-    FbleDeleteValueHeap(heap);
+    FbleFreeValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleFreeArena(eval_arena);
@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
   size_t result = FbleUnionValueTag(value);
 
   FbleValueRelease(heap, value);
-  FbleDeleteValueHeap(heap);
+  FbleFreeValueHeap(heap);
 
   if (fprofile != NULL) {
     FbleProfileReport(fprofile, &blocks, profile);

@@ -183,14 +183,14 @@ typedef struct FbleHeap {
 //
 //  Side effects:
 //    Allocates a new reference counting heap. The caller is resposible for
-//    calling FbleDeleteRefCountingHeap when the heap is no longer needed.
+//    calling FbleFreeRefCountingHeap when the heap is no longer needed.
 FbleHeap* FbleNewRefCountingHeap(
     FbleArena* arena, 
     void (*refs)(FbleHeapCallback*, void*),
     void (*on_free)(FbleHeap*, void*));
 
-// FbleDeleteRefCountingHeap --
-//   Delete a reference counting heap that is no longer in use.
+// FbleFreeRefCountingHeap --
+//   Free a reference counting heap that is no longer in use.
 //
 // Inputs:
 //   heap - the heap to delete.
@@ -200,6 +200,6 @@ FbleHeap* FbleNewRefCountingHeap(
 //
 // Side effects:
 //   Frees resources associated with the given heap.
-void FbleDeleteRefCountingHeap(FbleHeap* heap);
+void FbleFreeRefCountingHeap(FbleHeap* heap);
 
 #endif // FBLE_HEAP_H_

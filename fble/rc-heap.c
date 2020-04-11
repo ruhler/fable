@@ -667,8 +667,8 @@ FbleHeap* FbleNewRefCountingHeap(
   return &heap->_base;
 }
 
-// FbleDeleteRefCountingHeap -- see documentation in fble-heap.h
-void FbleDeleteRefCountingHeap(FbleHeap* heap)
+// FbleFreeRefCountingHeap -- see documentation in fble-heap.h
+void FbleFreeRefCountingHeap(FbleHeap* heap)
 {
   FbleFree(heap->arena, heap);
 }

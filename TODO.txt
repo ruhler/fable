@@ -2,12 +2,6 @@
 * [perf] See if we can avoid making extra copies of args in function
   application. It shows up pretty high on gcov.
 
-* [cleanup] Rename FbleDeleteRefCountingHeap to FbleFreeRefCountingHeap?
-  And similar for other delete/destroy things? Use common naming?
-  Maybe: New/Free? Preferred over Alloc,Create/Delete,Destroy.
- - rename FbleDeleteRefCountingHeap to FbleFreeRefCountingHeap
- - rename FbleDeleteValueHeap to FbleFreeValueHeap
-
 * [perf] profile investigation? Suggests
  - Eval instruction fetch and decode, which is called a ton.
  - Profile GetCallData, which does a linear search that could be more

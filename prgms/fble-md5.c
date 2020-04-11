@@ -150,7 +150,7 @@ int main(int argc, char* argv[])
 
   FbleValue* func = FbleEval(heap, prgm, &blocks, &profile);
   if (func == NULL) {
-    FbleDeleteValueHeap(heap);
+    FbleFreeValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleFreeArena(eval_arena);
@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
   FbleValueRelease(heap, input);
 
   if (proc == NULL) {
-    FbleDeleteValueHeap(heap);
+    FbleFreeValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleFreeArena(eval_arena);
@@ -204,7 +204,7 @@ int main(int argc, char* argv[])
   printf("\n");
 
   FbleValueRelease(heap, value);
-  FbleDeleteValueHeap(heap);
+  FbleFreeValueHeap(heap);
   FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeProfile(eval_arena, profile);
   FbleAssertEmptyArena(eval_arena);

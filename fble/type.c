@@ -903,7 +903,7 @@ FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
 // FbleFreeTypeHeap -- see documentation in fble-types.h
 void FbleFreeTypeHeap(FbleTypeHeap* heap)
 {
-  FbleDeleteRefCountingHeap(heap);
+  FbleFreeRefCountingHeap(heap);
 }
 
 // FbleNewType -- see documentation in fble-type.h
