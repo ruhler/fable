@@ -69,9 +69,9 @@
 //
 // To properly track time in case of tail calls, we record the set of calls
 // that should exit when we exit the next call. Because of the above rule, we
-// only need to count time for one occurence of each of the calls in the set,
-// because subsequent occurences in a deeply nested stack would not have their
-// time counted anyway.
+// only need to keep track of one occurence of each of the calls in the set;
+// subsequent occurences in a deeply nested stack would not have their time
+// counted anyway.
 
 // CallList --
 //   A set of calls represented as a singly linked list.
@@ -80,16 +80,13 @@
 //   caller - the caller for this particular call
 //   callee - the callee for this particular call
 //   call - cached result of GetCallData(caller, callee)
-//   new_block - true if this block was called recursively from itself.
-//   new_call - true if this call was called recursively from another
-//                    caller -> callee call.
+//   new_block - false if this block was called recursively from itself.
 //   tail - the rest of the calls in the set.
 typedef struct CallList {
   FbleBlockId caller;
   FbleBlockId callee;
   FbleCallData* call;
   bool new_block;
-  bool new_call;
   struct CallList* tail;
 } CallList;
 
@@ -100,7 +97,7 @@ typedef struct CallList {
 //   id - the id of the block at the top of the stack.
 //   time - the amount of time spent at the top of the stack.
 //   auto_exit - true if we should automatically exit from this block.
-//   exit_calls - the set of calls that should be exited when this call exits.
+//   exit_calls - calls that should be exited when block exits.
 //   tail - the rest of the stack.
 typedef struct ProfileStack {
   FbleBlockId id;
@@ -438,21 +435,12 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     thread->stack = stack;
   }
 
-  // TODO: Surely we using something better than linear search here?
-  CallList* c = thread->stack->exit_calls;
-  for (; c != NULL; c = c->tail) {
-    if (c->caller == caller && c->callee == callee) {
-      break;
-    }
-  }
-
-  if (c == NULL) {
-    c = FbleAlloc(arena, CallList);
+  if (!call->running) {
+    CallList* c = FbleAlloc(arena, CallList);
     c->caller = caller;
     c->callee = callee;
     c->call = call;
     c->new_block = !thread->profile->xs[callee]->block.running;
-    c->new_call = !call->running;
     c->tail = thread->stack->exit_calls;
     thread->stack->exit_calls = c;
   }
@@ -481,10 +469,8 @@ void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
         thread->profile->xs[c->callee]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
         thread->profile->xs[c->callee]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
       }
-      if (c->new_call) {
-        call->time[FBLE_PROFILE_WALL_CLOCK] += wall;
-        call->time[FBLE_PROFILE_TIME_CLOCK] += time;
-      }
+      call->time[FBLE_PROFILE_WALL_CLOCK] += wall;
+      call->time[FBLE_PROFILE_TIME_CLOCK] += time;
     }
   }
 
@@ -503,9 +489,7 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
     if (c->new_block) {
       thread->profile->xs[c->callee]->block.running = false;
     }
-    if (c->new_call) {
-      call->running = false;
-    }
+    call->running = false;
 
     thread->stack->exit_calls = c->tail;
     FbleFree(arena, c);

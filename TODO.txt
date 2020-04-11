@@ -1,4 +1,8 @@
 
+* [profile] Add test for multithreaded profiling
+ - The current way we track whether a block/call is in progress only works if
+   we have a single thread. Add a test for that and fix it.
+
 * [perf] See if we can avoid making extra copies of args in function
   application. It shows up pretty high on gcov.
   - Part of the problem is we need to traverse over the args to reach the base
