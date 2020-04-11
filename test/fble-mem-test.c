@@ -11,14 +11,14 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
+static bool NoIO(FbleIO* io, FbleValueHeap* heap, bool block);
 static void PrintUsage(FILE* stream);
 int main(int argc, char* argv[]);
 
 // NoIO --
 //   An IO function that does no IO.
 //   See documentation in fble.h
-static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
+static bool NoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   assert(!block && "blocked indefinately on no IO");
   return false;
@@ -65,19 +65,19 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
 {
   bool success = false;
   FbleArena* eval_arena = FbleNewArena();
-  FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
+  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
   FbleNameV blocks;
   FbleProfile* profile = NULL;
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
+  FbleValue* func = FbleEval(heap, prgm, &blocks, &profile);
   if (func != NULL) {
     // Number type is: @ Nat@ = +(Nat@ S, Unit@ Z);
     FbleValueV args = { .size = 0, .xs = NULL };
-    FbleValue* unit = FbleNewStructValue(value_arena, args);
-    FbleValue* zero = FbleNewUnionValue(value_arena, 1, unit);
+    FbleValue* unit = FbleNewStructValue(heap, args);
+    FbleValue* zero = FbleNewUnionValue(heap, 1, unit);
     FbleValue* large_n = zero;
     FbleValue* small_n = NULL;
     for (size_t i = 0; i < 200; i++) {
-      large_n = FbleNewUnionValue(value_arena, 0, large_n);
+      large_n = FbleNewUnionValue(heap, 0, large_n);
       if (i == 100) {
         small_n = large_n;
       }
@@ -87,24 +87,24 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
       .xs = (use_large_n ? &large_n : &small_n),
       .size = 1
     };
-    FbleValue* result = FbleApply(value_arena, func, argv, profile);
+    FbleValue* result = FbleApply(heap, func, argv, profile);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
     if (result != NULL && FbleIsProcValue(result)) {
       FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL } };
-      FbleValue* exec_result = FbleExec(value_arena, &io, result, profile);
-      FbleValueRelease(value_arena, result);
+      FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+      FbleValueRelease(heap, result);
       result = exec_result;
     }
 
     success = (result != NULL);
-    FbleValueRelease(value_arena, result);
-    FbleValueRelease(value_arena, large_n);
+    FbleValueRelease(heap, result);
+    FbleValueRelease(heap, large_n);
   }
 
-  FbleValueRelease(value_arena, func);
-  FbleDeleteValueArena(value_arena);
+  FbleValueRelease(heap, func);
+  FbleDeleteValueHeap(heap);
   FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeProfile(eval_arena, profile);
 

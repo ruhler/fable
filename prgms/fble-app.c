@@ -28,9 +28,9 @@ static int ReadIntP(FbleValue* num);
 static int ReadInt(FbleValue* num);
 static void FillPath(SDL_Window* window, size_t n, SDL_Point* points, Uint32 color);
 static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors);
-static FbleValue* MakeIntP(FbleValueArena* arena, int x);
-static FbleValue* MakeInt(FbleValueArena* arena, int x);
-static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
+static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
+static FbleValue* MakeInt(FbleValueHeap* heap, int x);
+static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
 int main(int argc, char* argv[]);
 
@@ -234,7 +234,7 @@ static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
 //   Make an FbleValue of type /Int/IntP%.IntP@ for the given integer.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to use for allocations.
 //   x - the integer value. Must be greater than 0.
 //
 // Results:
@@ -243,22 +243,22 @@ static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
 // Side effects:
 //   Allocates a value that should be freed with FbleValueRelease when no
 //   longer needed. Behavior is undefined if x is not positive.
-static FbleValue* MakeIntP(FbleValueArena* arena, int x)
+static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 {
   assert(x > 0);
   if (x == 1) {
     FbleValueV args = { .size = 0, .xs = NULL };
-    return FbleNewUnionValue(arena, 0, FbleNewStructValue(arena, args));
+    return FbleNewUnionValue(heap, 0, FbleNewStructValue(heap, args));
   }
 
-  return FbleNewUnionValue(arena, 1 + (x % 2), MakeIntP(arena, x / 2));
+  return FbleNewUnionValue(heap, 1 + (x % 2), MakeIntP(heap, x / 2));
 }
 
 // MakeInt -- 
 //   Make an FbleValue of type /Int/Int%.Int@ for the given integer.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to use for allocations.
 //   x - the integer value.
 //
 // Results:
@@ -267,24 +267,24 @@ static FbleValue* MakeIntP(FbleValueArena* arena, int x)
 // Side effects:
 //   Allocates a value that should be freed with FbleValueRelease when no
 //   longer needed.
-static FbleValue* MakeInt(FbleValueArena* arena, int x)
+static FbleValue* MakeInt(FbleValueHeap* heap, int x)
 {
   if (x < 0) {
-    return FbleNewUnionValue(arena, 0, MakeIntP(arena, -x));
+    return FbleNewUnionValue(heap, 0, MakeIntP(heap, -x));
   }
 
   if (x == 0) {
     FbleValueV args = { .size = 0, .xs = NULL };
-    return FbleNewUnionValue(arena, 1, FbleNewStructValue(arena, args));
+    return FbleNewUnionValue(heap, 1, FbleNewStructValue(heap, args));
   }
 
-  return FbleNewUnionValue(arena, 2, MakeIntP(arena, x));
+  return FbleNewUnionValue(heap, 2, MakeIntP(heap, x));
 }
 
 // IO --
 //   io function for external ports.
 //   See the corresponding documentation in fble.h.
-static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
+static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   AppIO* app = (AppIO*)io;
 
@@ -314,7 +314,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
       }
     }
 
-    FbleValueRelease(arena, io->ports.xs[1]);
+    FbleValueRelease(heap, io->ports.xs[1]);
     io->ports.xs[1] = NULL;
     change = true;
   }
@@ -337,7 +337,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 
           if (k >= 0) {
             FbleValueV args = { .size = 0, .xs = NULL };
-            io->ports.xs[0] = FbleNewUnionValue(arena, 1, FbleNewUnionValue(arena, k, FbleNewStructValue(arena, args)));
+            io->ports.xs[0] = FbleNewUnionValue(heap, 1, FbleNewUnionValue(heap, k, FbleNewStructValue(heap, args)));
             change = true;
           }
           break;
@@ -345,7 +345,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
 
         case SDL_USEREVENT: {
           FbleValueV args = { .size = 0, .xs = NULL };
-          io->ports.xs[0] = FbleNewUnionValue(arena, 0, FbleNewStructValue(arena, args));
+          io->ports.xs[0] = FbleNewUnionValue(heap, 0, FbleNewStructValue(heap, args));
           change = true;
           break;
         }
@@ -420,13 +420,13 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* eval_arena = FbleNewArena();
-  FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
+  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
   FbleNameV blocks;
   FbleProfile* profile = NULL;
 
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
+  FbleValue* func = FbleEval(heap, prgm, &blocks, &profile);
   if (func == NULL) {
-    FbleDeleteValueArena(value_arena);
+    FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
@@ -436,7 +436,7 @@ int main(int argc, char* argv[])
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-    FbleDeleteValueArena(value_arena);
+    FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
@@ -468,20 +468,20 @@ int main(int argc, char* argv[])
   SDL_GetWindowSize(window, &width, &height);
 
   FbleValue* args[4];
-  args[0] = MakeInt(value_arena, width);
-  args[1] = MakeInt(value_arena, height);
-  args[2] = FbleNewInputPortValue(value_arena, 0);
-  args[3] = FbleNewOutputPortValue(value_arena, 1);
+  args[0] = MakeInt(heap, width);
+  args[1] = MakeInt(heap, height);
+  args[2] = FbleNewInputPortValue(heap, 0);
+  args[3] = FbleNewOutputPortValue(heap, 1);
   FbleValueV argsv = { .xs = args, .size = 4 };
-  FbleValue* proc = FbleApply(value_arena, func, argsv, profile);
-  FbleValueRelease(value_arena, func);
-  FbleValueRelease(value_arena, args[0]);
-  FbleValueRelease(value_arena, args[1]);
-  FbleValueRelease(value_arena, args[2]);
-  FbleValueRelease(value_arena, args[3]);
+  FbleValue* proc = FbleApply(heap, func, argsv, profile);
+  FbleValueRelease(heap, func);
+  FbleValueRelease(heap, args[0]);
+  FbleValueRelease(heap, args[1]);
+  FbleValueRelease(heap, args[2]);
+  FbleValueRelease(heap, args[3]);
 
   if (proc == NULL) {
-    FbleDeleteValueArena(value_arena);
+    FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
@@ -501,14 +501,14 @@ int main(int argc, char* argv[])
     .time = SDL_GetTicks(),
   };
 
-  FbleValue* value = FbleExec(value_arena, &io._base, proc, profile);
+  FbleValue* value = FbleExec(heap, &io._base, proc, profile);
 
-  FbleValueRelease(value_arena, proc);
-  FbleValueRelease(value_arena, ports[0]);
-  FbleValueRelease(value_arena, ports[1]);
+  FbleValueRelease(heap, proc);
+  FbleValueRelease(heap, ports[0]);
+  FbleValueRelease(heap, ports[1]);
 
-  FbleValueRelease(value_arena, value);
-  FbleDeleteValueArena(value_arena);
+  FbleValueRelease(heap, value);
+  FbleDeleteValueHeap(heap);
   FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeProfile(eval_arena, profile);
   FbleAssertEmptyArena(eval_arena);

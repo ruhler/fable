@@ -23,7 +23,7 @@
 
 static void PrintUsage(FILE* stream);
 static char ReadChar(FbleValue* c);
-static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
+static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -80,7 +80,7 @@ static char ReadChar(FbleValue* c)
 //   the StdLib.Char@ type.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to use for allocations.
 //   c - the value of the character to write.
 //
 // Results:
@@ -88,17 +88,17 @@ static char ReadChar(FbleValue* c)
 //
 // Side effects:
 //   Allocates a value that must be freed when no longer required.
-static FbleValue* WriteChar(FbleValueArena* arena, char c)
+static FbleValue* WriteChar(FbleValueHeap* heap, char c)
 {
   char* p = strchr(gStdLibChars, c);
   if (p == NULL || c == '\0') {
     assert(c != '?');
-    return WriteChar(arena, '?');
+    return WriteChar(heap, '?');
   }
   assert(p >= gStdLibChars);
   size_t tag = p - gStdLibChars;
   FbleValueV args = { .size = 0, .xs = NULL };
-  return FbleNewUnionValue(arena, tag, FbleNewStructValue(arena, args));
+  return FbleNewUnionValue(heap, tag, FbleNewStructValue(heap, args));
 }
 
 // IO --
@@ -108,7 +108,7 @@ static FbleValue* WriteChar(FbleValueArena* arena, char c)
 // Ports:
 //  0: Maybe@<Str@>-  Read a line from stdin. Nothing on end of file.
 //  1: Str@+          Output a line to stdout.
-static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
+static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   bool change = false;
   if (io->ports.xs[1] != NULL) {
@@ -124,7 +124,7 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
     }
     fflush(stdout);
 
-    FbleValueRelease(arena, io->ports.xs[1]);
+    FbleValueRelease(heap, io->ports.xs[1]);
     io->ports.xs[1] = NULL;
     change = true;
   }
@@ -135,19 +135,19 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
     size_t len = 0;
     ssize_t read = getline(&line, &len, stdin);
     FbleValueV emptyArgs = { .size = 0, .xs = NULL };
-    FbleValue* unit = FbleNewStructValue(arena, emptyArgs);
+    FbleValue* unit = FbleNewStructValue(heap, emptyArgs);
     if (read < 0) {
-      io->ports.xs[0] = FbleNewUnionValue(arena, 1, unit);
+      io->ports.xs[0] = FbleNewUnionValue(heap, 1, unit);
     } else {
-      FbleValue* charS = FbleNewUnionValue(arena, 1, unit);
+      FbleValue* charS = FbleNewUnionValue(heap, 1, unit);
       for (size_t i = 0; i < read; ++i) {
-        FbleValue* charV = WriteChar(arena, line[read - i - 1]);
+        FbleValue* charV = WriteChar(heap, line[read - i - 1]);
         FbleValue* xs[] = { charV, charS };
         FbleValueV args = { .size = 2, .xs = xs };
-        FbleValue* charP = FbleNewStructValue(arena, args);
-        charS = FbleNewUnionValue(arena, 0, charP);
+        FbleValue* charP = FbleNewStructValue(heap, args);
+        charS = FbleNewUnionValue(heap, 0, charP);
       }
-      io->ports.xs[0] = FbleNewUnionValue(arena, 0, charS);
+      io->ports.xs[0] = FbleNewUnionValue(heap, 0, charS);
     }
     free(line);
     change = true;
@@ -204,13 +204,13 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* eval_arena = FbleNewArena();
-  FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
+  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
   FbleNameV blocks;
   FbleProfile* profile = NULL;
 
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
+  FbleValue* func = FbleEval(heap, prgm, &blocks, &profile);
   if (func == NULL) {
-    FbleDeleteValueArena(value_arena);
+    FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
@@ -219,16 +219,16 @@ int main(int argc, char* argv[])
   }
 
   FbleValue* args[2];
-  args[0] = FbleNewInputPortValue(value_arena, 0);
-  args[1] = FbleNewOutputPortValue(value_arena, 1);
+  args[0] = FbleNewInputPortValue(heap, 0);
+  args[1] = FbleNewOutputPortValue(heap, 1);
   FbleValueV argsv = { .xs = args, .size = 2 };
-  FbleValue* proc = FbleApply(value_arena, func, argsv, profile);
-  FbleValueRelease(value_arena, func);
-  FbleValueRelease(value_arena, args[0]);
-  FbleValueRelease(value_arena, args[1]);
+  FbleValue* proc = FbleApply(heap, func, argsv, profile);
+  FbleValueRelease(heap, func);
+  FbleValueRelease(heap, args[0]);
+  FbleValueRelease(heap, args[1]);
 
   if (proc == NULL) {
-    FbleDeleteValueArena(value_arena);
+    FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
@@ -239,16 +239,16 @@ int main(int argc, char* argv[])
   FbleValue* ports[2] = {NULL, NULL};
   FbleIO io = { .io = &IO, .ports = { .size = 2, .xs = ports} };
 
-  FbleValue* value = FbleExec(value_arena, &io, proc, profile);
+  FbleValue* value = FbleExec(heap, &io, proc, profile);
 
-  FbleValueRelease(value_arena, proc);
-  FbleValueRelease(value_arena, ports[0]);
-  FbleValueRelease(value_arena, ports[1]);
+  FbleValueRelease(heap, proc);
+  FbleValueRelease(heap, ports[0]);
+  FbleValueRelease(heap, ports[1]);
 
   size_t result = FbleUnionValueTag(value);
 
-  FbleValueRelease(value_arena, value);
-  FbleDeleteValueArena(value_arena);
+  FbleValueRelease(heap, value);
+  FbleDeleteValueHeap(heap);
 
   if (fprofile != NULL) {
     FbleProfileReport(fprofile, &blocks, profile);

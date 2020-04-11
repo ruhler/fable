@@ -8,7 +8,6 @@
 
 #include "fble.h"
 #include "instr.h"
-#include "ref.h"
 
 // FbleValueTag --
 //   A tag used to distinguish among different kinds of values.
@@ -29,7 +28,6 @@ typedef enum {
 //   value this is to get access to additional fields of the value
 //   by first casting to that specific type of value.
 struct FbleValue {
-  FbleRef ref;
   FbleValueTag tag;
 };
 
@@ -163,7 +161,7 @@ typedef struct FbleTypeValue {
 //   Create a new get proc value for the given link.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to allocate the value on.
 //   port - the port value to get from.
 //
 // Results:
@@ -173,6 +171,6 @@ typedef struct FbleTypeValue {
 //   The returned get value must be freed using FbleValueRelease when no
 //   longer in use. This function does not take ownership of the port value.
 //   argument.
-FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleValue* port);
+FbleValue* FbleNewGetProcValue(FbleValueHeap* heap, FbleValue* port);
 
 #endif // FBLE_INTERNAL_VALUE_H_

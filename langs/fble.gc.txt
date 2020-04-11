@@ -263,3 +263,86 @@ I think this should work great. My guess is it leads to cleaner code, better
 performance, and proper support for Delete. Though there may be some tricky
 details to get right.
 
+Update
+------
+Ref counting with delete is now implemented. It doesn't handle the case where
+you have nested cycles, then delete causes those to break up into separate
+cycles, then you hold a reference to only one of those cycles and want the
+other cycle to be reclaimed. But honestly, it doesn't feel worth it right now
+to make this better. Not before I know the specs on gc and have tests in
+place.
+
+Estimating GC Overheads
+-----------------------
+Is there a way to estimate the cost of GC? In other words, give an upper bound
+on the performance improvements we can expect from a better GC?
+
+One idea is to turn off GC entirely. Leak memory. See how fast it goes. As
+long as it doesn't start putting pressure on the kernel allocator, this should
+give a good upper bound.
+
+I was thinking of an easy way to set this up, thinking we could have a generic
+GC interface. Something like:
+
+typedef struct FbleHeap {
+  FbleArena* arena;
+  void (*roots)(FbleHeapCallback* callback);
+  void (*refs)(FbleHeapCallback* callback, void* ptr);
+  void (*free)(struct FbleHeap* heap, void* ptr);
+
+  void* (*new)(struct FbleHeap* heap, size_t size);
+  void (*retain)(struct FbleHeap* heap, void* ptr);
+  void (*release)(struct FbleHeap* heap, void* ptr);
+  void (*add_ref)(struct FbleHeap* heap, void* src, void* dst);
+  void (*del_ref)(struct FbleHeap* heap, void* src, void* dst);
+};
+
+We could wrap around that for each kind of heap we have (e.g. Type and Value)
+to get type safety. We could provide different implementations of NewHeap and
+FreeHeap to give different instances of FbleHeap for the different gc
+implementations.
+
+But I'm not sure that's fair. I think it still assumes stuff about the gc
+implementation. For example:
+* A traditional GC maybe doesn't need to know about add_ref or del_ref. What's
+  the overhead of making calls to those functions?
+* A traditional GC knows how to traverse to find roots, rather than using
+  retain and release functions to mark roots. Is there a way to support both
+  methods?
+* If we model roots using a super root and replace retain/release with add and
+  del, what does that mean for the id optimization we use?
+
+Maybe a traditional GC needs to know about add_ref and del_ref anyway, for
+write barriers and such? Maybe we want to distinguish between retain and
+add_ref for the root, because the root is special in that no other object is
+allowed to point to the root. Maybe we can traverse over root objects using
+another special callback: roots.
+
+What do you think? Is this worth a try? And then we can make fble-heap public,
+and have some fancy test and performance suites for it? And we can easily swap
+out different implementations?
+
+A couple notes:
+* We could #define away calls to add_ref and del_ref if we want, assuming we
+  have wrapper functions for them. For example, set add_ref and del_ref to
+  NULL if they don't do anything, to force someone to #define them away for
+  those heap implementations where they should not be called.
+* We probably should have a way to traverse roots, but maybe hold off on
+  implementing that until I implement a gc that uses it.
+* Maybe we want a force_gc option too? Maybe not.
+
+It would be nice if a heap implementation that leaks all memory could be
+considered a valid implementation. We just say it doesn't perform well. The
+issue is, it doesn't satisfy the complexity spec requirements I want from the
+language. Is that okay? Perhaps we could measure the performance of an
+implementation with a few metrics:
+* runtime
+* overhead compared to ideal
+* growth factor. Which ought to be almost 0 if complexity is not violated.
+
+Cool. I think this is worth pursuing.
+
+Should we treat NULL as equivalent to the root? Then add_ref could be used
+instead of retain, and del_ref could be used instead of ... no. I don't think
+so. Better to keep them separate.
+

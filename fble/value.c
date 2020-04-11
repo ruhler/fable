@@ -18,81 +18,88 @@ static FbleInstrBlock g_get_block = {
   .instrs = { .size = 1, .xs = g_get_block_instrs }
 };
 
-static void ValueFree(FbleValueArena* arena, FbleRef* ref);
-static void Add(FbleRefCallback* add, FbleValue* value);
-static void ValueAdded(FbleRefCallback* add, FbleRef* ref);
+static void OnFree(FbleValueHeap* heap, FbleValue* value);
+static void Ref(FbleHeapCallback* callback, FbleValue* value);
+static void Refs(FbleHeapCallback* callback, FbleValue* value);
 
 
-// FbleNewValueArena -- see documentation in fble-.h
-FbleValueArena* FbleNewValueArena(FbleArena* arena)
+// FbleNewValueHeap -- see documentation in fble-.h
+FbleValueHeap* FbleNewValueHeap(FbleArena* arena)
 {
-  return FbleNewRefArena(arena, &ValueFree, &ValueAdded);
+  return FbleNewRefCountingHeap(arena,
+      (void (*)(FbleHeapCallback*, void*))&Refs,
+      (void (*)(FbleHeap*, void*))&OnFree);
 }
 
 // FbleDeleteValueArena -- see documentation in fble.h
-void FbleDeleteValueArena(FbleValueArena* arena)
+void FbleDeleteValueHeap(FbleValueHeap* heap)
 {
-  FbleDeleteRefArena(arena);
+  FbleDeleteRefCountingHeap(heap);
 }
 
 // FbleValueRetain -- see documentation in fble.h
-FbleValue* FbleValueRetain(FbleValueArena* arena, FbleValue* value)
+FbleValue* FbleValueRetain(FbleValueHeap* heap, FbleValue* value)
 {
   if (value != NULL) {
-    FbleRefRetain(arena, &value->ref);
+    heap->retain(heap, value);
   }
   return value;
 }
 
 // FbleValueRelease -- see documentation in fble.h
-void FbleValueRelease(FbleValueArena* arena, FbleValue* value)
+void FbleValueRelease(FbleValueHeap* heap, FbleValue* value)
 {
   if (value != NULL) {
-    FbleRefRelease(arena, &value->ref);
+    heap->release(heap, value);
   }
 }
 
-// ValueFree --
-//   The 'free' function for values. See documentation in ref.h
-static void ValueFree(FbleValueArena* arena, FbleRef* ref)
+// FbleValueAddRef -- see documentation in fble-value.h
+void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  FbleValue* value = (FbleValue*)ref;
-  FbleArena* arena_ = FbleRefArenaArena(arena);
+  heap->add_ref(heap, src, dst);
+}
+
+// FbleValueDelRef -- see documentation in fble-value.h
+void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
+{
+  heap->del_ref(heap, src, dst);
+}
+
+// OnFree --
+//   The 'on_free' function for values. See documentation in fble-heap.h
+static void OnFree(FbleValueHeap* heap, FbleValue* value)
+{
+  FbleArena* arena = heap->arena;
   switch (value->tag) {
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;
-      FbleFree(arena_, sv->fields.xs);
-      FbleFree(arena_, value);
+      FbleFree(arena, sv->fields.xs);
       return;
     }
 
-    case FBLE_UNION_VALUE: {
-      FbleFree(arena_, value);
-      return;
-    }
+    case FBLE_UNION_VALUE: return;
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* fv = (FbleFuncValue*)value;
       switch (fv->tag) {
         case FBLE_BASIC_FUNC_VALUE: {
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
-          FbleFree(arena_, basic->scope.xs);
-          FbleFreeInstrBlock(arena_, basic->code);
+          FbleFree(arena, basic->scope.xs);
+          FbleFreeInstrBlock(arena, basic->code);
           break;
         }
 
         case FBLE_THUNK_FUNC_VALUE: break;
         case FBLE_PUT_FUNC_VALUE: break;
       }
-      FbleFree(arena_, value);
       return;
     }
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* v = (FbleProcValue*)value;
-      FbleFree(arena_, v->scope.xs);
-      FbleFreeInstrBlock(arena_, v->code);
-      FbleFree(arena_, value);
+      FbleFree(arena, v->scope.xs);
+      FbleFreeInstrBlock(arena, v->code);
       return;
     }
 
@@ -102,68 +109,55 @@ static void ValueFree(FbleValueArena* arena, FbleRef* ref)
       while (curr != NULL) {
         FbleValues* tmp = curr;
         curr = curr->next;
-        FbleFree(arena_, tmp);
+        FbleFree(arena, tmp);
       }
-      FbleFree(arena_, value);
       return;
     }
 
-    case FBLE_PORT_VALUE: {
-      FbleFree(arena_, value);
-      return;
-    }
-
-    case FBLE_REF_VALUE: {
-      FbleFree(arena_, value);
-      return;
-    }
-
-    case FBLE_TYPE_VALUE: {
-      FbleFree(arena_, value);
-      return;
-    }
+    case FBLE_PORT_VALUE: return;
+    case FBLE_REF_VALUE: return;
+    case FBLE_TYPE_VALUE: return;
   }
 
   UNREACHABLE("Should not get here");
 }
 
-// Add --
-//   Helper function for implementing ValueAdded. Call the add callback
-//   if the value is not null.
+// Ref --
+//   Helper function for implementing Refs. Call the callback if the value is
+//   not null.
 //
 // Inputs:
-//   add - the ref callback.
+//   callback - the refs callback.
 //   value - the value to add.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   If value is non-null, the add callback is called for it.
-static void Add(FbleRefCallback* add, FbleValue* value)
+//   If value is non-null, the callback is called for it.
+static void Ref(FbleHeapCallback* callback, FbleValue* value)
 {
   if (value != NULL) {
-    add->callback(add, &value->ref);
+    callback->callback(callback, value);
   }
 }
 
-// ValueAdded --
-//   The 'added' function for values. See documentation in ref.h
-static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
+// Refs --
+//   The 'refs' function for values. See documentation in fble-heap.h
+static void Refs(FbleHeapCallback* callback, FbleValue* value)
 {
-  FbleValue* value = (FbleValue*)ref;
   switch (value->tag) {
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;
       for (size_t i = 0; i < sv->fields.size; ++i) {
-        Add(add, sv->fields.xs[i]);
+        Ref(callback, sv->fields.xs[i]);
       }
       break;
     }
 
     case FBLE_UNION_VALUE: {
       FbleUnionValue* uv = (FbleUnionValue*)value;
-      Add(add, uv->arg);
+      Ref(callback, uv->arg);
       break;
     }
 
@@ -173,21 +167,21 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
         case FBLE_BASIC_FUNC_VALUE: {
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
           for (size_t i = 0; i < basic->scope.size; ++i) {
-            Add(add, basic->scope.xs[i]);
+            Ref(callback, basic->scope.xs[i]);
           }
           break;
         }
 
         case FBLE_THUNK_FUNC_VALUE: {
           FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)fv;
-          Add(add, &thunk->func->_base);
-          Add(add, thunk->arg);
+          Ref(callback, &thunk->func->_base);
+          Ref(callback, thunk->arg);
           break;
         }
 
         case FBLE_PUT_FUNC_VALUE: {
           FblePutFuncValue* put = (FblePutFuncValue*)fv;
-          Add(add, put->port);
+          Ref(callback, put->port);
           break;
         }
       }
@@ -197,7 +191,7 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
     case FBLE_PROC_VALUE: {
       FbleProcValue* v = (FbleProcValue*)value;
       for (size_t i = 0; i < v->scope.size; ++i) {
-        Add(add, v->scope.xs[i]);
+        Ref(callback, v->scope.xs[i]);
       }
       break;
     }
@@ -205,7 +199,7 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
     case FBLE_LINK_VALUE: {
       FbleLinkValue* v = (FbleLinkValue*)value;
       for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
-        Add(add, elem->value);
+        Ref(callback, elem->value);
       }
       break;
     }
@@ -216,7 +210,7 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
 
     case FBLE_REF_VALUE: {
       FbleRefValue* rv = (FbleRefValue*)value;
-      Add(add, rv->value);
+      Ref(callback, rv->value);
       break;
     }
 
@@ -227,19 +221,18 @@ static void ValueAdded(FbleRefCallback* add, FbleRef* ref)
 }
 
 // FbleNewStructValue -- see documentation in fble.h
-FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV args)
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args)
 {
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleStructValue* value = FbleAlloc(arena_, FbleStructValue);
-  FbleRefInit(arena, &value->_base.ref);
+  FbleArena* arena = heap->arena;
+  FbleStructValue* value = FbleNewValue(heap, FbleStructValue);
   value->_base.tag = FBLE_STRUCT_VALUE;
   value->fields.size = args.size;
-  value->fields.xs = FbleArrayAlloc(arena_, FbleValue*, value->fields.size);
+  value->fields.xs = FbleArrayAlloc(arena, FbleValue*, value->fields.size);
 
   for (size_t i = 0; i < args.size; ++i) {
     value->fields.xs[i] = args.xs[i];
-    FbleRefAdd(arena, &value->_base.ref, &args.xs[i]->ref);
-    FbleValueRelease(arena, args.xs[i]);
+    FbleValueAddRef(heap, &value->_base, args.xs[i]);
+    FbleValueRelease(heap, args.xs[i]);
   }
   return &value->_base;
 }
@@ -254,15 +247,14 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 }
 
 // FbleNewUnionValue -- see documentation in fble-value.h
-FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg)
+FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 {
-  FbleUnionValue* union_value = FbleAlloc(FbleRefArenaArena(arena), FbleUnionValue);
-  FbleRefInit(arena, &union_value->_base.ref);
+  FbleUnionValue* union_value = FbleNewValue(heap, FbleUnionValue);
   union_value->_base.tag = FBLE_UNION_VALUE;
   union_value->tag = tag;
   union_value->arg = arg;
-  FbleRefAdd(arena, &union_value->_base.ref, &arg->ref);
-  FbleValueRelease(arena, arg);
+  FbleValueAddRef(heap, &union_value->_base, arg);
+  FbleValueRelease(heap, arg);
   return &union_value->_base;
 }
 
@@ -289,52 +281,46 @@ bool FbleIsProcValue(FbleValue* value)
 }
 
 // FbleNewGetProcValue -- see documentation in value.h
-FbleValue* FbleNewGetProcValue(FbleValueArena* arena, FbleValue* port)
+FbleValue* FbleNewGetProcValue(FbleValueHeap* heap, FbleValue* port)
 {
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  FbleProcValue* get = FbleAlloc(arena_, FbleProcValue);
-  FbleRefInit(arena, &get->_base.ref);
+  FbleArena* arena = heap->arena;
+  FbleProcValue* get = FbleNewValue(heap, FbleProcValue);
   get->_base.tag = FBLE_PROC_VALUE;
-  FbleVectorInit(arena_, get->scope);
-  FbleVectorAppend(arena_, get->scope, port);
-  FbleRefAdd(arena, &get->_base.ref, &port->ref);
+  FbleVectorInit(arena, get->scope);
+  FbleVectorAppend(arena, get->scope, port);
+  FbleValueAddRef(heap, &get->_base, port);
   get->code = &g_get_block;
   get->code->refcount++;
   return &get->_base;
 }
 
 // FbleNewInputPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewInputPortValue(FbleValueArena* arena, size_t id)
+FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, size_t id)
 {
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  FblePortValue* get_port = FbleAlloc(arena_, FblePortValue);
-  FbleRefInit(arena, &get_port->_base.ref);
+  FblePortValue* get_port = FbleNewValue(heap, FblePortValue);
   get_port->_base.tag = FBLE_PORT_VALUE;
   get_port->id = id;
 
-  FbleValue* get = FbleNewGetProcValue(arena, &get_port->_base);
-  FbleValueRelease(arena, &get_port->_base);
+  FbleValue* get = FbleNewGetProcValue(heap, &get_port->_base);
+  FbleValueRelease(heap, &get_port->_base);
   return get;
 }
 
 // FbleNewOutputPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewOutputPortValue(FbleValueArena* arena, size_t id)
+FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, size_t id)
 {
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-  FblePortValue* port_value = FbleAlloc(arena_, FblePortValue);
-  FbleRefInit(arena, &port_value->_base.ref);
+  FblePortValue* port_value = FbleNewValue(heap, FblePortValue);
   port_value->_base.tag = FBLE_PORT_VALUE;
   port_value->id = id;
 
-  FblePutFuncValue* put = FbleAlloc(arena_, FblePutFuncValue);
-  FbleRefInit(arena, &put->_base._base.ref);
+  FblePutFuncValue* put = FbleNewValue(heap, FblePutFuncValue);
   put->_base._base.tag = FBLE_FUNC_VALUE;
   put->_base.tag = FBLE_PUT_FUNC_VALUE;
   put->_base.argc = 1;
   put->port = &port_value->_base;
-  FbleRefAdd(arena, &put->_base._base.ref, &put->port->ref);
-  FbleValueRelease(arena, put->port);
+  FbleValueAddRef(heap, &put->_base._base, put->port);
+  FbleValueRelease(heap, put->port);
   return &put->_base._base;
 }

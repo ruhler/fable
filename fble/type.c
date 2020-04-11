@@ -1,6 +1,7 @@
 
 #include <assert.h>   // for assert
 
+#include "fble-vector.h"
 #include "fble-type.h"
 
 #define UNREACHABLE(x) assert(false && x)
@@ -48,14 +49,14 @@ typedef struct TypeIdPairs {
 
 static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increment);
 
-static void Add(FbleRefCallback* add, FbleType* type);
-static void TypeAdded(FbleRefCallback* add, FbleRef* ref);
-static void TypeFree(FbleTypeArena* arena, FbleRef* ref);
+static void Ref(FbleHeapCallback* callback, FbleType* type);
+static void Refs(FbleHeapCallback* callback, FbleType* type);
+static void OnFree(FbleTypeHeap* heap, FbleType* type);
 
-static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normalizing);
+static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normalizing);
 static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
-static FbleType* Subst(FbleTypeArena* arena, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
-static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPairs* eq);
+static FbleType* Subst(FbleTypeHeap* heap, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
+static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs* eq);
 
 // LevelAdjustedKind --
 //   Construct a kind that is a level adjusted version of the given kind.
@@ -109,35 +110,34 @@ static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increme
 
 
 
-// Add --
-//   Helper function for adding types to a vector of refs.
+// Ref --
+//   Helper function for traversing references.
 //
 // Inputs:
-//   add - the add callback.
-//   type - the type to add.
+//   callback - the refs callback.
+//   type - the type to traverse.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   If type is not null, the add callback is called on it.
-static void Add(FbleRefCallback* add, FbleType* type)
+//   If type is not null, the callback is called on it.
+static void Ref(FbleHeapCallback* callback, FbleType* type)
 {
   if (type != NULL) {
-    add->callback(add, &type->ref);
+    callback->callback(callback, type);
   }
 }
 
-// TypeAdded --
-//   The added function for types. See documentation in ref.h
-static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
+// Refs --
+//   The refs function for types. See documentation in fble-heap.h
+static void Refs(FbleHeapCallback* callback, FbleType* type)
 {
-  FbleType* type = (FbleType*)ref;
   switch (type->tag) {
     case FBLE_STRUCT_TYPE: {
       FbleStructType* st = (FbleStructType*)type;
       for (size_t i = 0; i < st->fields.size; ++i) {
-        Add(add, st->fields.xs[i].type);
+        Ref(callback, st->fields.xs[i].type);
       }
       break;
     }
@@ -145,99 +145,91 @@ static void TypeAdded(FbleRefCallback* add, FbleRef* ref)
     case FBLE_UNION_TYPE: {
       FbleUnionType* ut = (FbleUnionType*)type;
       for (size_t i = 0; i < ut->fields.size; ++i) {
-        Add(add, ut->fields.xs[i].type);
+        Ref(callback, ut->fields.xs[i].type);
       }
       break;
     }
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
-      Add(add, ft->arg);
-      Add(add, ft->rtype);
+      Ref(callback, ft->arg);
+      Ref(callback, ft->rtype);
       break;
     }
 
     case FBLE_PROC_TYPE: {
       FbleProcType* pt = (FbleProcType*)type;
-      Add(add, pt->type);
+      Ref(callback, pt->type);
       break;
     }
 
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
-      Add(add, pt->arg);
-      Add(add, pt->body);
+      Ref(callback, pt->arg);
+      Ref(callback, pt->body);
       break;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      Add(add, pat->poly);
-      Add(add, pat->arg);
+      Ref(callback, pat->poly);
+      Ref(callback, pat->arg);
       break;
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      Add(add, var->value);
+      Ref(callback, var->value);
       break;
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* t = (FbleTypeType*)type;
-      Add(add, t->type);
+      Ref(callback, t->type);
       break;
     }
   }
 }
 
-//   The free function for types. See documentation in ref.h
-static void TypeFree(FbleTypeArena* arena, FbleRef* ref)
+//   The on_free function for types. See documentation in fble-heap.h
+static void OnFree(FbleTypeHeap* heap, FbleType* type)
 {
-  FbleType* type = (FbleType*)ref;
-  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleArena* arena = heap->arena;
   switch (type->tag) {
     case FBLE_STRUCT_TYPE: {
       FbleStructType* st = (FbleStructType*)type;
-      FbleFree(arena_, st->fields.xs);
-      FbleFree(arena_, st);
-      break;
+      FbleFree(arena, st->fields.xs);
+      return;
     }
 
     case FBLE_UNION_TYPE: {
       FbleUnionType* ut = (FbleUnionType*)type;
-      FbleFree(arena_, ut->fields.xs);
-      FbleFree(arena_, ut);
-      break;
+      FbleFree(arena, ut->fields.xs);
+      return;
     }
 
-    case FBLE_FUNC_TYPE:
-    case FBLE_PROC_TYPE:
-    case FBLE_POLY_TYPE:
-    case FBLE_POLY_APPLY_TYPE: {
-      FbleFree(arena_, type);
-      break;
-    }
+    case FBLE_FUNC_TYPE: return;
+    case FBLE_PROC_TYPE: return;
+    case FBLE_POLY_TYPE: return;
+    case FBLE_POLY_APPLY_TYPE: return;
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      FbleKindRelease(arena_, var->kind);
-      FbleFree(arena_, var);
-      break;
+      FbleKindRelease(arena, var->kind);
+      return;
     }
 
-    case FBLE_TYPE_TYPE: {
-      FbleFree(arena_, type);
-      break;
-    }
+    case FBLE_TYPE_TYPE: return;
   }
+
+  UNREACHABLE("should never get here");
 }
 
 // Normal --
 //   Compute the normal form of a type.
 //
 // Inputs: 
-//   arena - arena to use for allocations.
+//   heap - heap to use for allocations.
 //   type - the type to reduce.
 //   normalizing - the set of types currently being normalized.
 //
@@ -248,7 +240,7 @@ static void TypeFree(FbleTypeArena* arena, FbleRef* ref)
 // Side effects:
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed.
-static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normalizing)
+static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normalizing)
 {
   for (TypeIdList* n = normalizing; n != NULL; n = n->next) {
     if (type->id == n->id) {
@@ -262,59 +254,59 @@ static FbleType* Normal(FbleTypeArena* arena, FbleType* type, TypeIdList* normal
   };
 
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE: return FbleTypeRetain(arena, type);
-    case FBLE_UNION_TYPE: return FbleTypeRetain(arena, type);
-    case FBLE_FUNC_TYPE: return FbleTypeRetain(arena, type);
-    case FBLE_PROC_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_STRUCT_TYPE: return FbleTypeRetain(heap, type);
+    case FBLE_UNION_TYPE: return FbleTypeRetain(heap, type);
+    case FBLE_FUNC_TYPE: return FbleTypeRetain(heap, type);
+    case FBLE_PROC_TYPE: return FbleTypeRetain(heap, type);
 
     case FBLE_POLY_TYPE: {
       FblePolyType* poly = (FblePolyType*)type;
 
       // eta-reduce (\x -> f x) ==> f
-      FblePolyApplyType* pat = (FblePolyApplyType*)Normal(arena, poly->body, &nn);
+      FblePolyApplyType* pat = (FblePolyApplyType*)Normal(heap, poly->body, &nn);
       if (pat == NULL) {
         return NULL;
       }
 
       if (pat->_base.tag == FBLE_POLY_APPLY_TYPE && pat->arg == poly->arg) {
-        FbleType* normal = FbleTypeRetain(arena, pat->poly);
-        FbleTypeRelease(arena, &pat->_base);
+        FbleType* normal = FbleTypeRetain(heap, pat->poly);
+        FbleTypeRelease(heap, &pat->_base);
         return normal;
       }
 
-      FbleTypeRelease(arena, &pat->_base);
-      return FbleTypeRetain(arena, type);
+      FbleTypeRelease(heap, &pat->_base);
+      return FbleTypeRetain(heap, type);
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      FblePolyType* poly = (FblePolyType*)Normal(arena, pat->poly, &nn);
+      FblePolyType* poly = (FblePolyType*)Normal(heap, pat->poly, &nn);
       if (poly == NULL) {
         return NULL;
       }
 
       if (poly->_base.tag == FBLE_POLY_TYPE) {
-        FbleType* subst = Subst(arena, poly->body, poly->arg, pat->arg, NULL);
-        FbleType* result = Normal(arena, subst, &nn);
-        FbleTypeRelease(arena, &poly->_base);
-        FbleTypeRelease(arena, subst);
+        FbleType* subst = Subst(heap, poly->body, poly->arg, pat->arg, NULL);
+        FbleType* result = Normal(heap, subst, &nn);
+        FbleTypeRelease(heap, &poly->_base);
+        FbleTypeRelease(heap, subst);
         return result;
       }
 
       // Don't bother simplifying at all if we can't do a substituion.
-      FbleTypeRelease(arena, &poly->_base);
-      return FbleTypeRetain(arena, type);
+      FbleTypeRelease(heap, &poly->_base);
+      return FbleTypeRetain(heap, type);
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       if (var->value == NULL) {
-        return FbleTypeRetain(arena, type);
+        return FbleTypeRetain(heap, type);
       }
-      return Normal(arena, var->value, &nn);
+      return Normal(heap, var->value, &nn);
     }
 
-    case FBLE_TYPE_TYPE: return FbleTypeRetain(arena, type);
+    case FBLE_TYPE_TYPE: return FbleTypeRetain(heap, type);
   }
 
   UNREACHABLE("Should never get here");
@@ -412,7 +404,7 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
 //   of the substitution.
 //
 // Inputs:
-//   arena - arena to use for allocations.
+//   heap - heap to use for allocations.
 //   type - the type to substitute into.
 //   param - the abstract type to substitute out.
 //   arg - the concrete type to substitute in.
@@ -437,126 +429,120 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
 //
 //   To prevent infinite recursion, we use tps to record that we have already
 //   substituted Unit@ for T@ in X@ when traversing into field 'b' of X@.
-static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, FbleType* arg, TypePairs* tps)
+static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, FbleType* arg, TypePairs* tps)
 {
   if (!HasParam(type, param, NULL)) {
-    return FbleTypeRetain(arena, type);
+    return FbleTypeRetain(heap, type);
   }
 
-  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleArena* arena = heap->arena;
 
   switch (type->tag) {
     case FBLE_STRUCT_TYPE: {
       FbleStructType* st = (FbleStructType*)type;
-      FbleStructType* sst = FbleAlloc(arena_, FbleStructType);
-      FbleTypeInit(arena, &sst->_base, FBLE_STRUCT_TYPE, st->_base.loc);
+      FbleStructType* sst = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, st->_base.loc);
       sst->_base.id = st->_base.id;
 
-      FbleVectorInit(arena_, sst->fields);
+      FbleVectorInit(arena, sst->fields);
       for (size_t i = 0; i < st->fields.size; ++i) {
-        FbleTaggedType* field = FbleVectorExtend(arena_, sst->fields);
+        FbleTaggedType* field = FbleVectorExtend(arena, sst->fields);
         field->name = st->fields.xs[i].name;
-        field->type = Subst(arena, st->fields.xs[i].type, param, arg, tps);
-        FbleRefAdd(arena, &sst->_base.ref, &field->type->ref);
-        FbleTypeRelease(arena, field->type);
+        field->type = Subst(heap, st->fields.xs[i].type, param, arg, tps);
+        FbleTypeAddRef(heap, &sst->_base, field->type);
+        FbleTypeRelease(heap, field->type);
       }
       return &sst->_base;
     }
 
     case FBLE_UNION_TYPE: {
       FbleUnionType* ut = (FbleUnionType*)type;
-      FbleUnionType* sut = FbleAlloc(arena_, FbleUnionType);
-      FbleTypeInit(arena, &sut->_base, FBLE_UNION_TYPE, ut->_base.loc);
+      FbleUnionType* sut = FbleNewType(heap, FbleUnionType, FBLE_UNION_TYPE, ut->_base.loc);
       sut->_base.id = ut->_base.id;
-      FbleVectorInit(arena_, sut->fields);
+      FbleVectorInit(arena, sut->fields);
       for (size_t i = 0; i < ut->fields.size; ++i) {
-        FbleTaggedType* field = FbleVectorExtend(arena_, sut->fields);
+        FbleTaggedType* field = FbleVectorExtend(arena, sut->fields);
         field->name = ut->fields.xs[i].name;
-        field->type = Subst(arena, ut->fields.xs[i].type, param, arg, tps);
-        FbleRefAdd(arena, &sut->_base.ref, &field->type->ref);
-        FbleTypeRelease(arena, field->type);
+        field->type = Subst(heap, ut->fields.xs[i].type, param, arg, tps);
+        FbleTypeAddRef(heap, &sut->_base, field->type);
+        FbleTypeRelease(heap, field->type);
       }
       return &sut->_base;
     }
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
-      FbleFuncType* sft = FbleAlloc(arena_, FbleFuncType);
-      FbleTypeInit(arena, &sft->_base, FBLE_FUNC_TYPE, ft->_base.loc);
+      FbleFuncType* sft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, ft->_base.loc);
       sft->_base.id = ft->_base.id;
 
-      sft->arg = Subst(arena, ft->arg, param, arg, tps);
-      FbleRefAdd(arena, &sft->_base.ref, &sft->arg->ref);
-      FbleTypeRelease(arena, sft->arg);
+      sft->arg = Subst(heap, ft->arg, param, arg, tps);
+      FbleTypeAddRef(heap, &sft->_base, sft->arg);
+      FbleTypeRelease(heap, sft->arg);
 
-      sft->rtype = Subst(arena, ft->rtype, param, arg, tps);
-      FbleRefAdd(arena, &sft->_base.ref, &sft->rtype->ref);
-      FbleTypeRelease(arena, sft->rtype);
+      sft->rtype = Subst(heap, ft->rtype, param, arg, tps);
+      FbleTypeAddRef(heap, &sft->_base, sft->rtype);
+      FbleTypeRelease(heap, sft->rtype);
       return &sft->_base;
     }
 
     case FBLE_PROC_TYPE: {
       FbleProcType* ut = (FbleProcType*)type;
-      FbleProcType* sut = FbleAlloc(arena_, FbleProcType);
-      FbleTypeInit(arena, &sut->_base, FBLE_PROC_TYPE, ut->_base.loc);
+      FbleProcType* sut = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, ut->_base.loc);
       sut->_base.id = ut->_base.id;
-      sut->type = Subst(arena, ut->type, param, arg, tps);
-      FbleRefAdd(arena, &sut->_base.ref, &sut->type->ref);
-      FbleTypeRelease(arena, sut->type);
+      sut->type = Subst(heap, ut->type, param, arg, tps);
+      FbleTypeAddRef(heap, &sut->_base, sut->type);
+      FbleTypeRelease(heap, sut->type);
       return &sut->_base;
     }
 
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
-      FbleType* body = Subst(arena, pt->body, param, arg, tps); 
+      FbleType* body = Subst(heap, pt->body, param, arg, tps); 
 
-      FblePolyType* spt = FbleAlloc(arena_, FblePolyType);
-      FbleTypeInit(arena, &spt->_base, FBLE_POLY_TYPE, pt->_base.loc);
+      FblePolyType* spt = FbleNewType(heap, FblePolyType, FBLE_POLY_TYPE, pt->_base.loc);
       spt->_base.id = pt->_base.id;
       spt->arg = pt->arg;
-      FbleRefAdd(arena, &spt->_base.ref, &spt->arg->ref);
+      FbleTypeAddRef(heap, &spt->_base, spt->arg);
       spt->body = body;
-      FbleRefAdd(arena, &spt->_base.ref, &spt->body->ref);
+      FbleTypeAddRef(heap, &spt->_base, spt->body);
       assert(spt->body->tag != FBLE_TYPE_TYPE);
 
-      FbleTypeRelease(arena, body);
+      FbleTypeRelease(heap, body);
       return &spt->_base;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      FbleType* poly = Subst(arena, pat->poly, param, arg, tps);
-      FbleType* sarg = Subst(arena, pat->arg, param, arg, tps);
+      FbleType* poly = Subst(heap, pat->poly, param, arg, tps);
+      FbleType* sarg = Subst(heap, pat->arg, param, arg, tps);
 
-      FblePolyApplyType* spat = FbleAlloc(arena_, FblePolyApplyType);
-      FbleTypeInit(arena, &spat->_base, FBLE_POLY_APPLY_TYPE, pat->_base.loc);
+      FblePolyApplyType* spat = FbleNewType(heap, FblePolyApplyType, FBLE_POLY_APPLY_TYPE, pat->_base.loc);
       spat->_base.id = pat->_base.id;
       spat->poly = poly;
-      FbleRefAdd(arena, &spat->_base.ref, &spat->poly->ref);
+      FbleTypeAddRef(heap, &spat->_base, spat->poly);
       spat->arg = sarg;
-      FbleRefAdd(arena, &spat->_base.ref, &spat->arg->ref);
+      FbleTypeAddRef(heap, &spat->_base, spat->arg);
       assert(spat->poly->tag != FBLE_TYPE_TYPE);
 
-      FbleTypeRelease(arena, poly);
-      FbleTypeRelease(arena, sarg);
+      FbleTypeRelease(heap, poly);
+      FbleTypeRelease(heap, sarg);
       return &spat->_base;
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       if (var->value == NULL) {
-        return FbleTypeRetain(arena, (type == param ? arg : type));
+        return FbleTypeRetain(heap, (type == param ? arg : type));
       }
 
       // Check to see if we've already done substitution on the value pointed
       // to by this ref.
       for (TypePairs* tp = tps; tp != NULL; tp = tp->next) {
         if (tp->a == var->value) {
-          return FbleTypeRetain(arena, tp->b);
+          return FbleTypeRetain(heap, tp->b);
         }
       }
 
-      FbleType* svar = FbleNewVarType(arena, type->loc, var->kind, var->name);
+      FbleType* svar = FbleNewVarType(heap, type->loc, var->kind, var->name);
 
       TypePairs ntp = {
         .a = var->value,
@@ -564,20 +550,19 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
         .next = tps
       };
 
-      FbleType* value = Subst(arena, var->value, param, arg, &ntp);
-      FbleAssignVarType(arena, svar, value);
-      FbleTypeRelease(arena, svar);
+      FbleType* value = Subst(heap, var->value, param, arg, &ntp);
+      FbleAssignVarType(heap, svar, value);
+      FbleTypeRelease(heap, svar);
       return value;
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tt = (FbleTypeType*)type;
-      FbleTypeType* stt = FbleAlloc(arena_, FbleTypeType);
-      FbleTypeInit(arena, &stt->_base, FBLE_TYPE_TYPE, tt->_base.loc);
+      FbleTypeType* stt = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, tt->_base.loc);
       stt->_base.id = tt->_base.id;
-      stt->type = Subst(arena, tt->type, param, arg, tps);
-      FbleRefAdd(arena, &stt->_base.ref, &stt->type->ref);
-      FbleTypeRelease(arena, stt->type);
+      stt->type = Subst(heap, tt->type, param, arg, tps);
+      FbleTypeAddRef(heap, &stt->_base, stt->type);
+      FbleTypeRelease(heap, stt->type);
       return &stt->_base;
     }
   }
@@ -590,7 +575,7 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
 //   Test whether the two given evaluated types are equal.
 //
 // Inputs:
-//   arena - arena to use for allocations
+//   heap - heap to use for allocations
 //   a - the first type
 //   b - the second type
 //   eq - A set of pairs of type ids that should be assumed to be equal
@@ -600,15 +585,15 @@ static FbleType* Subst(FbleTypeArena* arena, FbleType* type, FbleType* param, Fb
 //
 // Side effects:
 //   None.
-static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPairs* eq)
+static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs* eq)
 {
-  a = FbleNormalType(arena, a);
-  b = FbleNormalType(arena, b);
+  a = FbleNormalType(heap, a);
+  b = FbleNormalType(heap, b);
 
   for (TypeIdPairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
     if (a->id == pairs->a && b->id == pairs->b) {
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return true;
     }
   }
@@ -620,8 +605,8 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
   };
 
   if (a->tag != b->tag) {
-    FbleTypeRelease(arena, a);
-    FbleTypeRelease(arena, b);
+    FbleTypeRelease(heap, a);
+    FbleTypeRelease(heap, b);
     return false;
   }
 
@@ -631,27 +616,27 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
       FbleStructType* stb = (FbleStructType*)b;
 
       if (sta->fields.size != stb->fields.size) {
-        FbleTypeRelease(arena, a);
-        FbleTypeRelease(arena, b);
+        FbleTypeRelease(heap, a);
+        FbleTypeRelease(heap, b);
         return false;
       }
 
       for (size_t i = 0; i < sta->fields.size; ++i) {
         if (!FbleNamesEqual(&sta->fields.xs[i].name, &stb->fields.xs[i].name)) {
-          FbleTypeRelease(arena, a);
-          FbleTypeRelease(arena, b);
+          FbleTypeRelease(heap, a);
+          FbleTypeRelease(heap, b);
           return false;
         }
 
-        if (!TypesEqual(arena, sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
-          FbleTypeRelease(arena, a);
-          FbleTypeRelease(arena, b);
+        if (!TypesEqual(heap, sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
+          FbleTypeRelease(heap, a);
+          FbleTypeRelease(heap, b);
           return false;
         }
       }
 
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return true;
     }
 
@@ -659,46 +644,46 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
       FbleUnionType* uta = (FbleUnionType*)a;
       FbleUnionType* utb = (FbleUnionType*)b;
       if (uta->fields.size != utb->fields.size) {
-        FbleTypeRelease(arena, a);
-        FbleTypeRelease(arena, b);
+        FbleTypeRelease(heap, a);
+        FbleTypeRelease(heap, b);
         return false;
       }
 
       for (size_t i = 0; i < uta->fields.size; ++i) {
         if (!FbleNamesEqual(&uta->fields.xs[i].name, &utb->fields.xs[i].name)) {
-          FbleTypeRelease(arena, a);
-          FbleTypeRelease(arena, b);
+          FbleTypeRelease(heap, a);
+          FbleTypeRelease(heap, b);
           return false;
         }
 
-        if (!TypesEqual(arena, uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
-          FbleTypeRelease(arena, a);
-          FbleTypeRelease(arena, b);
+        if (!TypesEqual(heap, uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
+          FbleTypeRelease(heap, a);
+          FbleTypeRelease(heap, b);
           return false;
         }
       }
 
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return true;
     }
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* fta = (FbleFuncType*)a;
       FbleFuncType* ftb = (FbleFuncType*)b;
-      bool result = TypesEqual(arena, fta->arg, ftb->arg, &neq)
-                 && TypesEqual(arena, fta->rtype, ftb->rtype, &neq);
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      bool result = TypesEqual(heap, fta->arg, ftb->arg, &neq)
+                 && TypesEqual(heap, fta->rtype, ftb->rtype, &neq);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return result;
     }
 
     case FBLE_PROC_TYPE: {
       FbleProcType* uta = (FbleProcType*)a;
       FbleProcType* utb = (FbleProcType*)b;
-      bool result = TypesEqual(arena, uta->type, utb->type, &neq);
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      bool result = TypesEqual(heap, uta->type, utb->type, &neq);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return result;
     }
 
@@ -706,34 +691,34 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
       FblePolyType* pta = (FblePolyType*)a;
       FblePolyType* ptb = (FblePolyType*)b;
 
-      FbleArena* arena_ = FbleRefArenaArena(arena);
-      FbleKind* ka = FbleGetKind(arena_, pta->arg);
-      FbleKind* kb = FbleGetKind(arena_, ptb->arg);
+      FbleArena* arena = heap->arena;
+      FbleKind* ka = FbleGetKind(arena, pta->arg);
+      FbleKind* kb = FbleGetKind(arena, ptb->arg);
       if (!FbleKindsEqual(ka, kb)) {
-        FbleKindRelease(arena_, ka);
-        FbleKindRelease(arena_, kb);
-        FbleTypeRelease(arena, a);
-        FbleTypeRelease(arena, b);
+        FbleKindRelease(arena, ka);
+        FbleKindRelease(arena, kb);
+        FbleTypeRelease(heap, a);
+        FbleTypeRelease(heap, b);
         return false;
       }
-      FbleKindRelease(arena_, ka);
-      FbleKindRelease(arena_, kb);
+      FbleKindRelease(arena, ka);
+      FbleKindRelease(arena, kb);
   
       TypeIdPairs pneq = {
         .a = pta->arg->id,
         .b = ptb->arg->id,
         .next = &neq
       };
-      bool result = TypesEqual(arena, pta->body, ptb->body, &pneq);
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      bool result = TypesEqual(heap, pta->body, ptb->body, &pneq);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return result;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       UNREACHABLE("poly apply type is not Normal");
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return false;
     }
 
@@ -742,24 +727,24 @@ static bool TypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b, TypeIdPai
       FbleVarType* vb = (FbleVarType*)b;
 
       assert(va->value == NULL && vb->value == NULL);
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return a == b;
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tta = (FbleTypeType*)a;
       FbleTypeType* ttb = (FbleTypeType*)b;
-      bool result = TypesEqual(arena, tta->type, ttb->type, &neq);
-      FbleTypeRelease(arena, a);
-      FbleTypeRelease(arena, b);
+      bool result = TypesEqual(heap, tta->type, ttb->type, &neq);
+      FbleTypeRelease(heap, a);
+      FbleTypeRelease(heap, b);
       return result;
     }
   }
 
   UNREACHABLE("Should never get here");
-  FbleTypeRelease(arena, a);
-  FbleTypeRelease(arena, b);
+  FbleTypeRelease(heap, a);
+  FbleTypeRelease(heap, b);
   return false;
 }
 
@@ -907,66 +892,76 @@ void FblePrintKind(FbleKind* kind)
   }
 }
 
-// FbleNewTypeArena -- see documentation in fble-types.h
-FbleTypeArena* FbleNewTypeArena(FbleArena* arena)
+// FbleNewTypeHeap -- see documentation in fble-types.h
+FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
 {
-  return FbleNewRefArena(arena, &TypeFree, &TypeAdded);
+  return FbleNewRefCountingHeap(arena,
+      (void (*)(FbleHeapCallback*, void*))&Refs,
+      (void (*)(FbleHeap*, void*))&OnFree);
 }
 
-// FbleFreeTypeArena -- see documentation in fble-types.h
-void FbleFreeTypeArena(FbleTypeArena* arena)
+// FbleFreeTypeHeap -- see documentation in fble-types.h
+void FbleFreeTypeHeap(FbleTypeHeap* heap)
 {
-  FbleDeleteRefArena(arena);
+  FbleDeleteRefCountingHeap(heap);
 }
 
-// FbleTypeInit -- see documentation in fble-type.h
-void FbleTypeInit(FbleTypeArena* arena, FbleType* type, FbleTypeTag tag, FbleLoc loc)
+// FbleNewType -- see documentation in fble-type.h
+FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleLoc loc)
 {
-  FbleRefInit(arena, &type->ref);
+  FbleType* type = (FbleType*)heap->new(heap, size);
   type->tag = tag;
   type->loc = loc;
-  type->id = type->ref.id;
+
+  // TODO: Don't use a static variable for this. Static variables are bad.
+  // What am I thinking? Surely there is a better way to do this.
+  static uintptr_t s_id = 1;
+  type->id = s_id++;
+  return type;
 }
 
 // FbleTypeRetain -- see documentation in fble-type.h
-FbleType* FbleTypeRetain(FbleTypeArena* arena, FbleType* type)
+FbleType* FbleTypeRetain(FbleTypeHeap* heap, FbleType* type)
 {
   if (type != NULL) {
-    FbleRefRetain(arena, &type->ref);
+    heap->retain(heap, type);
   }
   return type;
 }
 
 // FbleTypeRelease -- see documentation in fble-type.h
-void FbleTypeRelease(FbleTypeArena* arena, FbleType* type)
+void FbleTypeRelease(FbleTypeHeap* heap, FbleType* type)
 {
   if (type != NULL) {
-    FbleRefRelease(arena, &type->ref);
+    heap->release(heap, type);
   }
+}
+// FbleTypeAddRef -- see documentation in fble-type.h
+void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
+{
+  heap->add_ref(heap, src, dst);
 }
 
 // FbleNewVarType -- see documentation in fble-type.h
-FbleType* FbleNewVarType(FbleTypeArena* arena, FbleLoc loc, FbleKind* kind, FbleName name)
+FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name)
 {
   assert(name.space == FBLE_TYPE_NAME_SPACE && "bad namespace for var type");
 
-  FbleArena* arena_ = FbleRefArenaArena(arena);
+  FbleArena* arena = heap->arena;
 
   size_t level = FbleGetKindLevel(kind);
 
-  FbleVarType* var = FbleAlloc(arena_, FbleVarType);
-  FbleTypeInit(arena, &var->_base, FBLE_VAR_TYPE, loc);
+  FbleVarType* var = FbleNewType(heap, FbleVarType, FBLE_VAR_TYPE, loc);
   var->name = name;
-  var->kind = LevelAdjustedKind(arena_, kind, -(int)level);
+  var->kind = LevelAdjustedKind(arena, kind, -(int)level);
   var->value = NULL;
 
   FbleType* type = &var->_base;
   for (size_t i = 0; i < level; ++i) {
-    FbleTypeType* type_type = FbleAlloc(arena_, FbleTypeType);
-    FbleTypeInit(arena, &type_type->_base, FBLE_TYPE_TYPE, loc);
+    FbleTypeType* type_type = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, loc);
     type_type->type = type;
-    FbleRefAdd(arena, &type_type->_base.ref, &type->ref);
-    FbleTypeRelease(arena, type);
+    FbleTypeAddRef(heap, &type_type->_base, type);
+    FbleTypeRelease(heap, type);
     type = &type_type->_base;
   }
 
@@ -974,7 +969,7 @@ FbleType* FbleNewVarType(FbleTypeArena* arena, FbleLoc loc, FbleKind* kind, Fble
 }
 
 // FbleAssignVarType -- see documentation in fble-type.h
-void FbleAssignVarType(FbleTypeArena* arena, FbleType* var, FbleType* value)
+void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value)
 {
   while (var->tag == FBLE_TYPE_TYPE) {
     assert(value->tag == FBLE_TYPE_TYPE && "Kind mismatch");
@@ -985,100 +980,92 @@ void FbleAssignVarType(FbleTypeArena* arena, FbleType* var, FbleType* value)
   assert(var->tag == FBLE_VAR_TYPE && "non-var type passed to FbleAssignVarType");
   FbleVarType* var_type = (FbleVarType*)var;
   var_type->value = value;
-  FbleRefAdd(arena, &var_type->_base.ref, &var_type->value->ref);
+  FbleTypeAddRef(heap, &var_type->_base, var_type->value);
 }
 
 // FbleNewPolyType -- see documentation in fble-type.h
-FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, FbleType* body)
+FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleType* body)
 {
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-
   if (body->tag == FBLE_TYPE_TYPE) {
     // \arg -> typeof(body) = typeof(\arg -> body)
     FbleTypeType* ttbody = (FbleTypeType*)body;
-    FbleTypeType* tt = FbleAlloc(arena_, FbleTypeType);
-    FbleTypeInit(arena, &tt->_base, FBLE_TYPE_TYPE, loc);
-    tt->type = FbleNewPolyType(arena, loc, arg, ttbody->type);
-    FbleRefAdd(arena, &tt->_base.ref, &tt->type->ref);
-    FbleTypeRelease(arena, tt->type);
+    FbleTypeType* tt = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, loc);
+    tt->type = FbleNewPolyType(heap, loc, arg, ttbody->type);
+    FbleTypeAddRef(heap, &tt->_base, tt->type);
+    FbleTypeRelease(heap, tt->type);
     return &tt->_base;
   }
 
-  FblePolyType* pt = FbleAlloc(arena_, FblePolyType);
-  FbleTypeInit(arena, &pt->_base, FBLE_POLY_TYPE, loc);
+  FblePolyType* pt = FbleNewType(heap, FblePolyType, FBLE_POLY_TYPE, loc);
   pt->arg = arg;
-  FbleRefAdd(arena, &pt->_base.ref, &pt->arg->ref);
+  FbleTypeAddRef(heap, &pt->_base, pt->arg);
   pt->body = body;
-  FbleRefAdd(arena, &pt->_base.ref, &pt->body->ref);
+  FbleTypeAddRef(heap, &pt->_base, pt->body);
 
   assert(pt->body->tag != FBLE_TYPE_TYPE);
   return &pt->_base;
 }
 
 // FbleNewPolyApplyType -- see documentation in fble-type.h
-FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly, FbleType* arg)
+FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg)
 {
-  FbleArena* arena_ = FbleRefArenaArena(arena);
-
   if (poly->tag == FBLE_TYPE_TYPE) {
     // typeof(poly)<arg> == typeof(poly<arg>)
     FbleTypeType* ttpoly = (FbleTypeType*)poly;
-    FbleTypeType* tt = FbleAlloc(arena_, FbleTypeType);
-    FbleTypeInit(arena, &tt->_base, FBLE_TYPE_TYPE, loc);
-    tt->type = FbleNewPolyApplyType(arena, loc, ttpoly->type, arg);
-    FbleRefAdd(arena, &tt->_base.ref, &tt->type->ref);
-    FbleTypeRelease(arena, tt->type);
+    FbleTypeType* tt = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, loc);
+    tt->type = FbleNewPolyApplyType(heap, loc, ttpoly->type, arg);
+    FbleTypeAddRef(heap, &tt->_base, tt->type);
+    FbleTypeRelease(heap, tt->type);
     return &tt->_base;
   }
 
-  FblePolyApplyType* pat = FbleAlloc(arena_, FblePolyApplyType);
-  FbleTypeInit(arena, &pat->_base, FBLE_POLY_APPLY_TYPE, loc);
+  FblePolyApplyType* pat = FbleNewType(heap, FblePolyApplyType, FBLE_POLY_APPLY_TYPE, loc);
   pat->poly = poly;
-  FbleRefAdd(arena, &pat->_base.ref, &pat->poly->ref);
+  FbleTypeAddRef(heap, &pat->_base, pat->poly);
   pat->arg = arg;
-  FbleRefAdd(arena, &pat->_base.ref, &pat->arg->ref);
+  FbleTypeAddRef(heap, &pat->_base, pat->arg);
 
   assert(pat->poly->tag != FBLE_TYPE_TYPE);
   return &pat->_base;
 }
 
 // FbleTypeIsVacuous -- see documentation in fble-type.h
-bool FbleTypeIsVacuous(FbleTypeArena* arena, FbleType* type)
+bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 {
-  FbleType* normal = Normal(arena, type, NULL);
+  FbleType* normal = Normal(heap, type, NULL);
   while (normal != NULL && normal->tag == FBLE_POLY_TYPE) {
     FblePolyType* poly = (FblePolyType*)normal;
     FbleType* tmp = normal;
-    normal = Normal(arena, poly->body, NULL);
-    FbleTypeRelease(arena, tmp);
+    normal = Normal(heap, poly->body, NULL);
+    FbleTypeRelease(heap, tmp);
   }
-  FbleTypeRelease(arena, normal);
+  FbleTypeRelease(heap, normal);
   return normal == NULL;
 }
 
 // FbleNormalType -- see documentation in fble-type.h
-FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type)
+FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
 {
-  FbleType* normal = Normal(arena, type, NULL);
+  FbleType* normal = Normal(heap, type, NULL);
   assert(normal != NULL && "vacuous type does not have a normal form");
   return normal;
 }
 
 // FbleValueOfType -- see documentation in fble-type.h
-FbleType* FbleValueOfType(FbleTypeArena* arena, FbleType* typeof)
+FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof)
 {
   if (typeof->tag == FBLE_TYPE_TYPE) {
     FbleTypeType* tt = (FbleTypeType*)typeof;
-    FbleTypeRetain(arena, tt->type);
+    FbleTypeRetain(heap, tt->type);
     return tt->type;
   }
   return NULL;
 }
 
 // FbleTypesEqual -- see documentation in fble-types.h
-bool FbleTypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b)
+bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 {
-  return TypesEqual(arena, a, b, NULL);
+  return TypesEqual(heap, a, b, NULL);
 }
 
 // FblePrintType -- see documentation in fble-type.h

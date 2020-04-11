@@ -1225,6 +1225,10 @@ Notes:
 
    This seems like a subtle trap to get caught with.
 
+   I think it's fine to require $({ a = ...; b = ...; TestResult@(a, b); }).
+   Just so long as it is clearly specified what runs when and we have tests to
+   ensure the implementation obeys the spec.
+
 - Should we have some form of relative reference?
   It seems bad that every time you import a module, you have to duplicate a
   potentially long path from the root. Any change you make in module hierarchy
@@ -1235,6 +1239,8 @@ Notes:
 - Static analysis to detect obvious invalid union accesses might be nice. I've
   already run into that kind of bug multiple times. Though to be honest,
   comprehensive test coverage makes it really easy to spot and fix these bugs.
+
+  And there is now precedent for emitting warnings from the compiler.
 
 - Fairness
   I think it would be cool if children were executed fairly. In particular,
@@ -1268,4 +1274,14 @@ Notes:
 
   Where the '?=' means Foo@ is abstract outside the body of the type let.
   Easy. Does it let you split things across submodules?
+
+* How can we make a fast implementation of the language?
+  Like, really fast? This, to me, feels like the single most major fundamental
+  problem with the language. Can we make it fast.
+
+  Some particular disadvantages we face, compared to, say, c:
+  - no primitive types or operations
+  - automatic reference vs. value
+  - automatic memory management
+  - closures that capture variables from local scope
 

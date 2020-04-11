@@ -1,5 +1,9 @@
 
-* [test] Add fble-ref-test for splitting cycles
+* [cleanup] Rename FbleDeleteRefCountingHeap to FbleFreeRefCountingHeap?
+  And similar for other delete/destroy things? Use common naming?
+  Maybe: New/Free? Preferred over Alloc,Create/Delete,Destroy.
+
+* [test] Add fble-heap-test for splitting cycles
    Test that we don't retain a cycle a->b->c by referencing a separate object
    d that used to be in the cycle a->b->c->d.
 
@@ -9,6 +13,9 @@
 * [snake] Figure out why the background box gets lost some times.
 * [pingpong] Render a static 3D table tennis scene.
 * [invaders] Implement space invaders game.
+ - Implement and test Ship simulation
+ - Implement and test Alien simulation
+ - etc...
 
 * [lib] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
@@ -54,7 +61,7 @@
 * [release] Better error message for importing something from a module that
   is not defined in the module?
 
-* [ref] Change reference counting to be incrementally done on allocation.
+* [heap] Change reference counting to be incrementally done on allocation.
   Maybe write a test that shows how something that should take no time gets
   charged for a big deallocation time today?
 

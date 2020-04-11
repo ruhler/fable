@@ -11,14 +11,14 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block);
+static bool NoIO(FbleIO* io, FbleValueHeap* heap, bool block);
 static void PrintUsage(FILE* stream);
 int main(int argc, char* argv[]);
 
 // NoIO --
 //   An IO function that does no IO.
 //   See documentation in fble.h
-static bool NoIO(FbleIO* io, FbleValueArena* arena, bool block)
+static bool NoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   assert(!block && "blocked indefinately on no IO");
   return false;
@@ -110,22 +110,22 @@ int main(int argc, char* argv[])
   FbleValue* result = NULL;
   if (prgm != NULL) {
     FbleArena* eval_arena = FbleNewArena();
-    FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
+    FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
     FbleNameV blocks;
     FbleProfile* profile = NULL;
-    result = FbleEval(value_arena, prgm, &blocks, &profile);
+    result = FbleEval(heap, prgm, &blocks, &profile);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
     if (result != NULL && FbleIsProcValue(result)) {
       FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL } };
-      FbleValue* exec_result = FbleExec(value_arena, &io, result, profile);
-      FbleValueRelease(value_arena, result);
+      FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+      FbleValueRelease(heap, result);
       result = exec_result;
     }
 
-    FbleValueRelease(value_arena, result);
-    FbleDeleteValueArena(value_arena);
+    FbleValueRelease(heap, result);
+    FbleDeleteValueHeap(heap);
 
     if (report_profile) {
       printf("max memory eval: %zi (bytes)\n\n", FbleArenaMaxSize(eval_arena));

@@ -10,6 +10,7 @@
 
 #include "fble-alloc.h"
 #include "fble-vector.h"
+#include "fble-heap.h"
 #include "fble-syntax.h"
 #include "fble-value.h"
 #include "fble-profile.h"
@@ -35,7 +36,7 @@ bool FbleDecompile(FILE* fout, FbleProgram* program);
 //   Type check and evaluate a program.
 //
 // Inputs:
-//   arena - The arena to use for allocating values.
+//   heap - The heap to use for allocating values.
 //   program - The program to evaluate.
 //   blocks - Output info about blocks in the program.
 //   profile - Output profile for the evaluation.
@@ -53,13 +54,13 @@ bool FbleDecompile(FILE* fout, FbleProgram* program);
 //   freed when no longer in use.
 //   Sets profile to the profile for the evaluation. This must be freed with
 //   FbleFreeProfile when no longer in use.
-FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile);
+FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile);
 
 // FbleApply --
 //   Apply a function to the given arguments.
 //
 // Inputs:
-//   arena - the arena to use for allocating values.
+//   heap - the heap to use for allocating values.
 //   func - the function to apply.
 //   args - the arguments to apply the function to.
 //   profile - the profile to update.
@@ -73,7 +74,7 @@ FbleValue* FbleEval(FbleValueArena* arena, FbleProgram* program, FbleNameV* bloc
 //   Prints warning messages to stderr.
 //   Prints an error message to stderr in case of error.
 //   Updates the profile with stats from the evaluation.
-FbleValue* FbleApply(FbleValueArena* arena, FbleValue* func, FbleValueV args, FbleProfile* profile);
+FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, FbleProfile* profile);
 
 // FbleIO --
 //   An interface for reading or writing values over external ports.
@@ -106,7 +107,7 @@ typedef struct FbleIO {
   //
   // Inputs:
   //   io - The FbleIO associated with this io.
-  //   arena - The arena to use for allocating and freeing values.
+  //   heap - The heap to use for allocating values.
   //   block - true if io should be blocking, false if it should be
   //           non-blocking.
   //
@@ -117,7 +118,7 @@ typedef struct FbleIO {
   //   Reads or writes values to external ports depending on the provided
   //   arguments and may block.
   //   
-  bool (*io)(struct FbleIO* io, FbleValueArena* arena, bool block);
+  bool (*io)(struct FbleIO* io, FbleValueHeap* heap, bool block);
 
   // Vector of port values to read from and write to. The caller must
   // initialize and clear this vector.
@@ -128,7 +129,7 @@ typedef struct FbleIO {
 //   Execute a process.
 //
 // Inputs:
-//   arena - The arena to use for allocating values.
+//   heap - The heap to use for allocating values.
 //   io - The io to use for external ports.
 //   proc - The process to execute.
 //   profile - the profile to update.
@@ -141,6 +142,6 @@ typedef struct FbleIO {
 //   Prints warning messages to stderr.
 //   Prints an error message to stderr in case of error.
 //   Updates the profile with stats from the evaluation.
-FbleValue* FbleExec(FbleValueArena* arena, FbleIO* io, FbleValue* proc, FbleProfile* profile);
+FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile);
 
 #endif // FBLE_H_

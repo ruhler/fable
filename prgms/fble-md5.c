@@ -17,8 +17,8 @@ typedef struct {
 } Md5IO;
 
 static void PrintUsage(FILE* stream);
-static FbleValue* MkBitN(FbleValueArena* arena, size_t n, uint64_t data);
-static bool IO(FbleIO* io, FbleValueArena* arena, bool block);
+static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data);
+static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -46,7 +46,7 @@ static void PrintUsage(FILE* stream)
 //  Construct a BitN fble value.
 //
 // Inputs:
-//   arena - the arena to use for allocating the value.
+//   heap - the heap to use for allocating the value.
 //   n - the number of bits value to create. Must be a power of 2.
 //   data - the raw data to use for the bits.
 //
@@ -55,26 +55,26 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   Allocates fblc values.
-static FbleValue* MkBitN(FbleValueArena* arena, size_t n, uint64_t data)
+static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 {
   if (n == 1) {
     FbleValueV args = { .size = 0, .xs = NULL };
-    return FbleNewUnionValue(arena, data & 0x1, FbleNewStructValue(arena, args));
+    return FbleNewUnionValue(heap, data & 0x1, FbleNewStructValue(heap, args));
   }
 
   assert(n % 2 == 0 && "Invalid n supplied");
   int halfn = n / 2;
   FbleValue* xs[2];
-  xs[1] = MkBitN(arena, halfn, data);
-  xs[0] = MkBitN(arena, halfn, (data >> halfn));
+  xs[1] = MkBitN(heap, halfn, data);
+  xs[0] = MkBitN(heap, halfn, (data >> halfn));
   FbleValueV args = { .size = 2, .xs = xs };
-  return FbleNewStructValue(arena, args);
+  return FbleNewStructValue(heap, args);
 }
 
 // IO --
 //   io function for external ports.
 //   See the corresponding documentation in fble.h.
-static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
+static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   if (block && io->ports.xs[0] == NULL) {
     // Read the next byte from the file.
@@ -83,12 +83,12 @@ static bool IO(FbleIO* io, FbleValueArena* arena, bool block)
     if (c == EOF) {
       // Maybe<Bit8>:nothing(Unit())
       FbleValueV args = { .size = 0, .xs = NULL };
-      FbleValue* unit = FbleNewStructValue(arena, args);
-      io->ports.xs[0] = FbleNewUnionValue(arena, 1, unit);
+      FbleValue* unit = FbleNewStructValue(heap, args);
+      io->ports.xs[0] = FbleNewUnionValue(heap, 1, unit);
     } else {
       // Maybe<Bit8>:just(c)
-      FbleValue* byte = MkBitN(arena, 8, c);
-      io->ports.xs[0] = FbleNewUnionValue(arena, 0, byte);
+      FbleValue* byte = MkBitN(heap, 8, c);
+      io->ports.xs[0] = FbleNewUnionValue(heap, 0, byte);
     }
     return true;
   }
@@ -144,13 +144,13 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* eval_arena = FbleNewArena();
-  FbleValueArena* value_arena = FbleNewValueArena(eval_arena);
+  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
   FbleNameV blocks;
   FbleProfile* profile = NULL;
 
-  FbleValue* func = FbleEval(value_arena, prgm, &blocks, &profile);
+  FbleValue* func = FbleEval(heap, prgm, &blocks, &profile);
   if (func == NULL) {
-    FbleDeleteValueArena(value_arena);
+    FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
@@ -158,17 +158,17 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValue* input = FbleNewInputPortValue(value_arena, 0);
+  FbleValue* input = FbleNewInputPortValue(heap, 0);
   FbleValueV args = {
     .xs = &input,
     .size = 1,
   };
-  FbleValue* proc = FbleApply(value_arena, func, args, profile);
-  FbleValueRelease(value_arena, func);
-  FbleValueRelease(value_arena, input);
+  FbleValue* proc = FbleApply(heap, func, args, profile);
+  FbleValueRelease(heap, func);
+  FbleValueRelease(heap, input);
 
   if (proc == NULL) {
-    FbleDeleteValueArena(value_arena);
+    FbleDeleteValueHeap(heap);
     FbleFreeBlockNames(eval_arena, &blocks);
     FbleFreeProfile(eval_arena, profile);
     FbleDeleteArena(eval_arena);
@@ -188,9 +188,9 @@ int main(int argc, char* argv[])
     .fin = fin
   };
 
-  FbleValue* value = FbleExec(value_arena, &mio.io, proc, profile);
+  FbleValue* value = FbleExec(heap, &mio.io, proc, profile);
 
-  FbleValueRelease(value_arena, proc);
+  FbleValueRelease(heap, proc);
   assert(ports[0] == NULL);
 
   // Print the md5 hash
@@ -203,8 +203,8 @@ int main(int argc, char* argv[])
   }
   printf("\n");
 
-  FbleValueRelease(value_arena, value);
-  FbleDeleteValueArena(value_arena);
+  FbleValueRelease(heap, value);
+  FbleDeleteValueHeap(heap);
   FbleFreeBlockNames(eval_arena, &blocks);
   FbleFreeProfile(eval_arena, profile);
   FbleAssertEmptyArena(eval_arena);

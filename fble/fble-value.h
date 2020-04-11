@@ -7,7 +7,7 @@
 #include "fble-alloc.h"
 #include "fble-vector.h"
 
-typedef struct FbleRefArena FbleValueArena;
+typedef struct FbleHeap FbleValueHeap;
 
 // FbleValue --
 //   An fble value.
@@ -20,39 +20,53 @@ typedef struct {
   FbleValue** xs;
 } FbleValueV;
 
-// FbleNewValueArena --
-//   Create a new arena for allocation of values.
+// FbleNewValueHeap --
+//   Create a new heap for allocation of values.
 // 
 // Inputs: 
 //   arena - the arena to use for underlying allocations.
 //
 // Results:
-//   A value arena that can be used to allocate values.
+//   A heap that can be used to allocate values.
 //
 // Side effects:
-//   Allocates a value arena that should be freed using FbleDeleteValueArena.
-FbleValueArena* FbleNewValueArena(FbleArena* arena);
+//   Allocates a heap that should be freed using FbleDeleteValueHeap.
+FbleValueHeap* FbleNewValueHeap(FbleArena* arena);
 
-// FbleDeleteValueArena --
-//   Reclaim resources associated with a value arena.
+// FbleDeleteValueHeap --
+//   Reclaim resources associated with a value heap.
 //
 // Inputs:
-//   arena - the arena to free.
+//   heap - the heap to free.
 //
 // Results:
 //   None.
 //
 // Side effects:
-//   The resources associated with the given arena are freed. The arena should
+//   The resources associated with the given heap are freed. The heap should
 //   not be used after this call.
-void FbleDeleteValueArena(FbleValueArena* arena);
+void FbleDeleteValueHeap(FbleValueHeap* heap);
+
+// FbleNewValue --
+//   Allocate a new value of the given type.
+//
+// Inputs:
+//   heap - the heap to allocate the value on
+//   T - the type of the value
+//
+// Results:
+//   The newly allocated value.
+//
+// Side effects:
+//   Allocates a value that should be released when it is no longer needed.
+#define FbleNewValue(heap, T) ((T*) heap->new(heap, sizeof(T)))
 
 // FbleValueRetain --
 //   Keep the given value alive until a corresponding FbleValueRelease is
 //   called.
 //
 // Inputs:
-//   arena - The arena used to allocate the value.
+//   arena - The heap used to allocate the value.
 //   value - The value to retain. The value may be NULL, in which case nothing
 //           is done.
 //
@@ -64,7 +78,7 @@ void FbleDeleteValueArena(FbleValueArena* arena);
 //   Causes the value to be retained until a corresponding FbleValueRelease
 //   calls is made on the value. FbleValueRelease must be called when the
 //   value is no longer needed.
-FbleValue* FbleValueRetain(FbleValueArena* arena, FbleValue* src);
+FbleValue* FbleValueRetain(FbleValueHeap* heap, FbleValue* src);
 
 // FbleValueRelease --
 //
@@ -72,7 +86,7 @@ FbleValue* FbleValueRetain(FbleValueArena* arena, FbleValue* src);
 //   associated with that value if it has no more references.
 //
 // Inputs:
-//   arena - The value arena the value was allocated with.
+//   heap - The heap the value was allocated with.
 //   value - The value to decrement the strong reference count of. The value
 //           may be NULL, in which case no action is performed.
 //
@@ -82,13 +96,37 @@ FbleValue* FbleValueRetain(FbleValueArena* arena, FbleValue* src);
 // Side effect:
 //   Decrements the strong reference count of the value and frees resources
 //   associated with the value if there are no more references to it.
-void FbleValueRelease(FbleValueArena* arena, FbleValue* value);
+void FbleValueRelease(FbleValueHeap* heap, FbleValue* value);
+
+// FbleValueAddRef --
+//   Notify the value heap of a new reference from src to dst.
+//
+// Inputs:
+//   heap - the heap the values are allocated on.
+//   src - the source of the reference.
+//   dst - the destination of the reference.
+//
+// Side effects:
+//   Causes the dst value to be retained for at least as long as the src value.
+void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
+
+// FbleValueDelRef --
+//   Notify the value heap of a deleted reference from src to dst.
+//
+// Inputs:
+//   heap - the heap the values are allocated on.
+//   src - the source of the reference.
+//   dst - the destination of the reference.
+//
+// Side effects:
+//   Causes the dst value to no longer be retained by src.
+void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 
 // FbleNewStructValue --
 //   Create a new struct value with given arguments.
 //
 // Inputs:
-//   arena - The arena to use for allocations.
+//   heap - The heap to allocate the value on.
 //   args - The arguments to the struct value.
 //
 // Results:
@@ -99,7 +137,7 @@ void FbleValueRelease(FbleValueArena* arena, FbleValue* value);
 //   longer in use. The args are freed using FbleValueRelease as part of
 //   calling this function. The function does not take ownership of the args
 //   array.
-FbleValue* FbleNewStructValue(FbleValueArena* arena, FbleValueV args);
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args);
 
 // FbleStructValueAccess --
 //   Gets the given field value of a struct value.
@@ -121,7 +159,7 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 //   Create a new union value with given tag and argument.
 //
 // Inputs:
-//   arena - The arena to use for allocations.
+//   heap - The heap to allocate the value on.
 //   tag - The tag of the union value.
 //   arg - The argument of the union value.
 //
@@ -132,7 +170,7 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 //   The returned union value must be freed using FbleValueRelease when no
 //   longer in use. The arg is freed using FbleValueRelease as part of calling
 //   this function.
-FbleValue* FbleNewUnionValue(FbleValueArena* arena, size_t tag, FbleValue* arg);
+FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
 
 // FbleUnionValueTag --
 //   Gets the tag of a union value.
@@ -179,7 +217,7 @@ bool FbleIsProcValue(FbleValue* value);
 //   Create a new input port value with given id.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to allocate the value on.
 //   id - the id of the port for use with FbleIO.
 //
 // Results:
@@ -188,13 +226,13 @@ bool FbleIsProcValue(FbleValue* value);
 // Side effects:
 //   The returned port value must be freed using FbleValueRelease when no
 //   longer in use.
-FbleValue* FbleNewInputPortValue(FbleValueArena* arena, size_t id);
+FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, size_t id);
 
 // FbleNewOutputPortValue --
 //   Create a new output port value with given id.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to allocate the value on.
 //   id - the id of the port for use with FbleIO.
 //
 // Results:
@@ -203,6 +241,6 @@ FbleValue* FbleNewInputPortValue(FbleValueArena* arena, size_t id);
 // Side effects:
 //   The returned port value must be freed using FbleValueRelease when no
 //   longer in use.
-FbleValue* FbleNewOutputPortValue(FbleValueArena* arena, size_t id);
+FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, size_t id);
 
 #endif // FBLE_VALUE_H_

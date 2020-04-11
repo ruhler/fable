@@ -41,11 +41,8 @@ exec mkdir -p out/lib out/include
 run ar rcs out/lib/libfble.a {*}$fble_objs
 exec cp {*}[glob fble/fble*.h] out/include
 
-# Compile the ref test, which has special access to fble/ref.h
-gcc_prgm -c -I fble -o $::obj/fble-ref-test.o test/fble-ref-test.c
-
 # Compile the remaining executables
-foreach {x} [glob test/fble-decompile.c test/fble-test.c test/fble-mem-test.c test/fble-profile-test.c prgms/*.c] {
+foreach {x} [glob test/*.c prgms/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
   gcc_prgm -c -o $object $x
 }
@@ -54,7 +51,7 @@ set ::bin out/bin
 exec mkdir -p $::bin
 gcc_prgm -o $::bin/fble-decompile $::obj/fble-decompile.o -lfble -lm
 gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble -lm
-gcc_prgm -o $::bin/fble-ref-test $::obj/fble-ref-test.o -lfble -lm
+gcc_prgm -o $::bin/fble-heap-test $::obj/fble-heap-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble -lm
 gcc_prgm -o $::bin/fble-app $::obj/fble-app.o -lfble -lSDL2 -lm
@@ -150,7 +147,7 @@ run -ignorestderr gcov {*}$::fble_objs > out/cov/spec/fble.gcov
 exec mv {*}[glob *.gcov] out/cov/spec
 
 exec mkdir -p out/test
-testn fble-ref-test exec $::bin/fble-ref-test
+testn fble-heap-test exec $::bin/fble-heap-test
 testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-test.txt
 testn fble-decompile exec $::bin/fble-decompile prgms/Fble/Tests.fble prgms > out/test/FbleTests.fble.s
 testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/Fble/Tests.fble prgms >@ stdout

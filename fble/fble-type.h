@@ -5,7 +5,7 @@
 #include <stdint.h>   // for uintptr_t
 
 #include "fble-syntax.h"
-#include "ref.h"
+#include "fble-heap.h"
 
 // FbleTypeTag --
 //   A tag used to dinstinguish among different kinds of compiled types.
@@ -30,7 +30,6 @@ typedef enum {
 //   id - a unique id for this type that is preserved across type level
 //        substitution. For internal use in type.c.
 typedef struct FbleType {
-  FbleRef ref;
   FbleTypeTag tag;
   FbleLoc loc;
   uintptr_t id;
@@ -194,42 +193,42 @@ bool FbleKindsEqual(FbleKind* a, FbleKind* b);
 //   Prints the given kind in human readable form to stderr.
 void FblePrintKind(FbleKind* type);
 
-typedef FbleRefArena FbleTypeArena;
+typedef FbleHeap FbleTypeHeap;
 
-// FbleNewTypeArena --
-//   Creates a new type arena backed by the given arena.
+// FbleNewTypeHeap --
+//   Creates a new type heap backed by the given arena.
 //
 // Inputs:
-//   arena - the arena to back the type arena.
+//   arena - the arena to back the type heap.
 //
 // Results:
-//   A newly allocated type arena.
+//   A newly allocated type heap.
 //
 // Side effects:
-//   Allocates a new type arena that should be freed with FbleFreeTypeArena
+//   Allocates a new type heap that should be freed with FbleFreeTypeHeap
 //   when no longer in use.
-FbleTypeArena* FbleNewTypeArena(FbleArena* arena);
+FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena);
 
-// FbleFreeTypeArena --
-//   Frees resources associated with the given type arena.
+// FbleFreeTypeHeap --
+//   Frees resources associated with the given type heap.
 //
 // Inputs:
-//   arena - the arena to free
+//   heap - the heap to free
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   Frees resources associated with the given type arena. The type arena must
+//   Frees resources associated with the given type heap. The type heap must
 //   not be accessed after this call.
-void FbleFreeTypeArena(FbleTypeArena* arena);
+void FbleFreeTypeHeap(FbleTypeHeap* heap);
 
-// FbleTypeInit --
-//   Initialize a newly allocated type.
+// FbleNewType --
+//   Allocate a new type. This function is not type safe.
 //
 // Inputs:
-//   arena - arena to use for allocations
-//   type - the newly allocated type to initialize
+//   heap - heap to use for allocations
+//   T - the type of the type to allocate.
 //   tag - the tag of the type
 //   loc - the source loc of the type
 //
@@ -237,14 +236,15 @@ void FbleFreeTypeArena(FbleTypeArena* arena);
 //   None.
 //
 // Side effects:
-//   Initializes common fields of the type.
-void FbleTypeInit(FbleTypeArena* arena, FbleType* type, FbleTypeTag tag, FbleLoc loc);
+//   Allocates a new type that should be released when no longer needed.
+#define FbleNewType(heap, T, tag, loc) ((T*) FbleNewTypeRaw(heap, sizeof(T), tag, loc))
+FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleLoc loc);
 
 // FbleTypeRetain --
 //   Takes a reference to a compiled type.
 //
 // Inputs:
-//   arena - the arena the type was allocated with.
+//   heap - the heap the type was allocated on.
 //   type - the type to take the reference for.
 //
 // Results:
@@ -253,13 +253,13 @@ void FbleTypeInit(FbleTypeArena* arena, FbleType* type, FbleTypeTag tag, FbleLoc
 // Side effects:
 //   The returned type must be freed using FbleTypeRelease when no longer in
 //   use.
-FbleType* FbleTypeRetain(FbleTypeArena* arena, FbleType* type);
+FbleType* FbleTypeRetain(FbleTypeHeap* heap, FbleType* type);
 
 // FbleTypeRelease --
 //   Drop a reference to a compiled type.
 //
 // Inputs:
-//   arena - for deallocations.
+//   heap - the heap the type was allocated on.
 //   type - the type to drop the refcount for. May be NULL.
 //
 // Results:
@@ -268,14 +268,26 @@ FbleType* FbleTypeRetain(FbleTypeArena* arena, FbleType* type);
 // Side effects:
 //   Decrements the strong refcount for the type and frees it if there are no
 //   more references to it.
-void FbleTypeRelease(FbleTypeArena* arena, FbleType* type);
+void FbleTypeRelease(FbleTypeHeap* heap, FbleType* type);
+
+// FbleTypeAddRef --
+//   Notify the type heap of a new reference from src to dst.
+//
+// Inputs:
+//   heap - the heap the types are allocated on.
+//   src - the source of the reference.
+//   dst - the destination of the reference.
+//
+// Side effects:
+//   Causes the dst type to be retained for at least as long as the src type.
+void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 
 // FbleNewVarType --
 //   Construct a VarType. Maintains the invariant the that a higher kinded var
 //   types is constructed as typeof a lower kinded var type.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to allocate the type on.
 //   loc - the location for the type.
 //   kind - the kind of a value of this type.
 //   name - the name of the type variable.
@@ -290,13 +302,13 @@ void FbleTypeRelease(FbleTypeArena* arena, FbleType* type);
 //   The caller is responsible for calling FbleTypeRelease on the returned
 //   type when it is no longer needed. This function does not take ownership
 //   of passed kind.
-FbleType* FbleNewVarType(FbleTypeArena* arena, FbleLoc loc, FbleKind* kind, FbleName name);
+FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name);
 
 // FbleAssignVarType --
 //   Assign a value to the given abstract type.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   arena - the heap to use for allocations.
 //   var - the type to assign the value of. This type should have been created
 //         with FbleNewVarTYpe.
 //   value - the value to assign to the type.
@@ -309,14 +321,14 @@ FbleType* FbleNewVarType(FbleTypeArena* arena, FbleLoc loc, FbleKind* kind, Fble
 //   This function does not take ownership of either var or value types. 
 //   Behavior is undefined if var is not a type constructed with
 //   FbleNewVarType or the kind of value does not match the kind of var.
-void FbleAssignVarType(FbleTypeArena* arena, FbleType* var, FbleType* value);
+void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value);
 
 // FbleNewPolyType --
 //   Construct a PolyType. Maintains the invariant that poly of a typeof
 //   should be constructed as a typeof a poly.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to use for allocations.
 //   loc - the location for the type.
 //   arg - the poly arg.
 //   body - the poly body.
@@ -328,14 +340,14 @@ void FbleAssignVarType(FbleTypeArena* arena, FbleType* var, FbleType* value);
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed. This function does not take ownership of the
 //   passed arg or body types.
-FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, FbleType* body);
+FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleType* body);
 
 // FbleNewPolyApplyType --
 //   Construct a PolyApplyType. Maintains the invariant that poly apply of a
 //   typeof should be constructed as a typeof a poly apply.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
+//   heap - the heap to use for allocations.
 //   loc - the location for the type.
 //   poly - the poly apply poly.
 //   arg - the poly apply arg.
@@ -347,13 +359,13 @@ FbleType* FbleNewPolyType(FbleTypeArena* arena, FbleLoc loc, FbleType* arg, Fble
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed. This function does not take ownership of the
 //   passed poly or arg types.
-FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly, FbleType* arg);
+FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg);
 
 // FbleTypeIsVacuous --
 //   Check if a type will reduce to normal form.
 //
 // Inputs:
-//   arena - arena to use for allocations.
+//   heap - heap to use for allocations.
 //   type - the type to check.
 //
 // Results:
@@ -362,14 +374,14 @@ FbleType* FbleNewPolyApplyType(FbleTypeArena* arena, FbleLoc loc, FbleType* poly
 //
 // Side effects:
 //   None.
-bool FbleTypeIsVacuous(FbleTypeArena* arena, FbleType* type);
+bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type);
 
 // FbleNormalType --
 //   Reduce an evaluated type to normal form. Normal form types are struct,
 //   union, and func types, but not var types, for example.
 //
 // Inputs:
-//   arena - arena to use for allocations.
+//   heap - heap to use for allocations.
 //   type - the type to reduce.
 //
 // Results:
@@ -379,13 +391,13 @@ bool FbleTypeIsVacuous(FbleTypeArena* arena, FbleType* type);
 //   The caller is responsible for calling FbleTypeRelease on the returned type
 //   when it is no longer needed. The behavior is undefined if the type is
 //   vacuous.
-FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type);
+FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type);
 
 // FbleValueOfType --
 //   Returns the value of a type given the type of the type.
 //
 // Inputs:
-//   arena - type arena for allocations.
+//   heap - the heap to use for allocations.
 //   typeof - the type of the type to get the value of.
 //
 // Results:
@@ -395,13 +407,13 @@ FbleType* FbleNormalType(FbleTypeArena* arena, FbleType* type);
 // Side effects:
 //   The returned type must be released using FbleTypeRelease when no longer
 //   needed.
-FbleType* FbleValueOfType(FbleTypeArena* arena, FbleType* typeof);
+FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof);
 
 // FbleTypesEqual --
 //   Test whether the two given evaluated types are equal.
 //
 // Inputs:
-//   arena - arena to use for allocations. TODO: Remove this.
+//   heap - heap to use for allocations.
 //   a - the first type
 //   b - the second type
 //
@@ -410,13 +422,13 @@ FbleType* FbleValueOfType(FbleTypeArena* arena, FbleType* typeof);
 //
 // Side effects:
 //   None.
-bool FbleTypesEqual(FbleTypeArena* arena, FbleType* a, FbleType* b);
+bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
 
 // FblePrintType --
 //   Print the given compiled type in human readable form to stderr.
 //
 // Inputs:
-//   arena - arena to use for internal allocations.
+//   heap - arena to use for internal allocations.
 //   type - the type to print.
 //
 // Result:

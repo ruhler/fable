@@ -6,6 +6,8 @@
 
 #include <sys/types.h>    // for size_t
 
+#include "fble-alloc.h"
+
 // FbleVector --
 //   A common data structure in fble is an array of elements with a size. By
 //   convention, fble uses the same data structure layout and naming for all
