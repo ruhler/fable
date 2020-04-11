@@ -104,7 +104,6 @@ typedef struct CallList {
 //   tail - the rest of the stack.
 typedef struct ProfileStack {
   FbleBlockId id;
-  uint64_t time[FBLE_PROFILE_NUM_CLOCKS];
   bool auto_exit;
   CallList* exit_calls;
   struct ProfileStack* tail;
@@ -376,9 +375,6 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
   thread->profile = profile;
   thread->stack = FbleAlloc(arena, ProfileStack);
   thread->stack->id = 0;
-  for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-    thread->stack->time[clock] = 0;
-  }
   thread->stack->auto_exit = false;
   thread->stack->exit_calls = NULL;
   thread->stack->tail = NULL;
@@ -396,11 +392,6 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
   assert(thread->stack != NULL);
   while (thread->stack->tail != NULL) {
     FbleProfileExitBlock(arena, thread);
-  }
-
-  // Special case for block 0, which is assumed to be the entry block.
-  for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-    thread->profile->xs[0]->block.time[clock] += thread->stack->time[clock];
   }
 
   assert(thread->stack->exit_calls == NULL);
@@ -436,43 +427,18 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   call->count++;
 
   if (thread->stack->auto_exit) {
-    // Update the times for all the auto_exit calls now to maintain the
-    // invariant that we will advance all auto_exit calls by the same amount
-    // of time when we eventually do exit from them.
-    for (CallList* c = thread->stack->exit_calls; c != NULL; c = c->tail) {
-      FbleCallData* exit_call = c->call;
-      for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-        uint64_t advance = thread->stack->time[clock];
-        if (c->new_block) {
-          thread->profile->xs[c->callee]->block.time[clock] += advance;
-        }
-
-        if (c->new_call) {
-          exit_call->time[clock] += advance;
-        }
-      }
-    }
-
-    assert(thread->stack->tail != NULL);
-    for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      thread->stack->tail->time[clock] += thread->stack->time[clock];
-      thread->stack->time[clock] = 0;
-    }
-
     thread->stack->id = callee;
     thread->stack->auto_exit = false;
   } else {
     ProfileStack* stack = FbleAlloc(arena, ProfileStack);
     stack->id = callee;
-    for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      stack->time[clock] = 0;
-    }
     stack->auto_exit = false;
     stack->exit_calls = NULL;
     stack->tail = thread->stack;
     thread->stack = stack;
   }
 
+  // TODO: Surely we using something better than linear search here?
   CallList* c = thread->stack->exit_calls;
   for (; c != NULL; c = c->tail) {
     if (c->caller == caller && c->callee == callee) {
@@ -497,18 +463,34 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 // FbleProfileTime -- see documentation in fble-profile.h
 void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
 {
-  thread->stack->time[FBLE_PROFILE_TIME_CLOCK] += time;
-
   // Approximate the wall time as the time since the last time FbleProfileTime
   // was called.
   // TODO: Rename FbleProfileTime to something more suggestive of it being a
   // profiling sample.
   uint64_t now = GetTimeMillis();
+  uint64_t wall = 0;
   if (thread->start != THREAD_SUSPENDED) {
-    thread->stack->time[FBLE_PROFILE_WALL_CLOCK] += (now - thread->start);
+    wall = now - thread->start;
+  }
+  thread->start = now;
+
+  for (ProfileStack* s = thread->stack; s != NULL; s = s->tail) {
+    for (CallList* c = s->exit_calls; c != NULL; c = c->tail) {
+      FbleCallData* call = c->call;
+      if (c->new_block) {
+        thread->profile->xs[c->callee]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
+        thread->profile->xs[c->callee]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
+      }
+      if (c->new_call) {
+        call->time[FBLE_PROFILE_WALL_CLOCK] += wall;
+        call->time[FBLE_PROFILE_TIME_CLOCK] += time;
+      }
+    }
   }
 
-  thread->start = now;
+  // Special case for block 0, which is assumed to be the entry block.
+  thread->profile->xs[0]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
+  thread->profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
 }
 
 // FbleProfileExitBlock -- see documentation in fble-profile.h
@@ -518,25 +500,15 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
   while (thread->stack->exit_calls != NULL) {
     CallList* c = thread->stack->exit_calls;
     FbleCallData* call = c->call;
-    for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      uint64_t advance = thread->stack->time[clock];
-      if (c->new_block) {
-        thread->profile->xs[c->callee]->block.time[clock] += advance;
-        thread->profile->xs[c->callee]->block.running = false;
-      }
-      if (c->new_call) {
-        call->time[clock] += advance;
-        call->running = false;
-      }
+    if (c->new_block) {
+      thread->profile->xs[c->callee]->block.running = false;
+    }
+    if (c->new_call) {
+      call->running = false;
     }
 
     thread->stack->exit_calls = c->tail;
     FbleFree(arena, c);
-  }
-
-  assert(thread->stack->tail != NULL);
-  for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-    thread->stack->tail->time[clock] += thread->stack->time[clock];
   }
 
   ProfileStack* stack = thread->stack;
