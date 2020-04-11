@@ -134,7 +134,6 @@ static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id);
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call);
 
 static uint64_t GetTimeMillis();
-static void CallEvent(FbleProfileThread* thread);
 
 // GetCallData --
 //   Get the call data associated with the given caller/callee pair in the
@@ -334,27 +333,6 @@ static uint64_t GetTimeMillis()
   return time;
 }
 
-// CallEvent --
-//   Record wall clock time spent in the current frame.
-//
-// Inputs:
-//   thread - the current profile thread.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Increments recorded time spent in the current call. Updates the start
-//   counter for the current thread.
-static void CallEvent(FbleProfileThread* thread)
-{
-  uint64_t now = GetTimeMillis();
-  if (thread->start != THREAD_SUSPENDED) {
-    thread->stack->time[FBLE_PROFILE_WALL_CLOCK] += (now - thread->start);
-  }
-  thread->start = now;
-}
-
 // FbleNewProfile -- see documentation in fble-profile.h
 FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc)
 {
@@ -434,7 +412,6 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 void FbleSuspendProfileThread(FbleProfileThread* thread)
 {
   if (thread) {
-    CallEvent(thread);
     thread->start = THREAD_SUSPENDED;
   }
 }
@@ -451,8 +428,6 @@ void FbleResumeProfileThread(FbleProfileThread* thread)
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block)
 {
   assert(thread->stack != NULL);
-
-  CallEvent(thread);
 
   FbleBlockId caller = thread->stack->id;
   FbleBlockId callee = block;
@@ -523,13 +498,23 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
 {
   thread->stack->time[FBLE_PROFILE_TIME_CLOCK] += time;
+
+  // Approximate the wall time as the time since the last time FbleProfileTime
+  // was called.
+  // TODO: Rename FbleProfileTime to something more suggestive of it being a
+  // profiling sample.
+  uint64_t now = GetTimeMillis();
+  if (thread->start != THREAD_SUSPENDED) {
+    thread->stack->time[FBLE_PROFILE_WALL_CLOCK] += (now - thread->start);
+  }
+
+  thread->start = now;
 }
 
 // FbleProfileExitBlock -- see documentation in fble-profile.h
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
   assert(thread->stack != NULL);
-  CallEvent(thread);
   while (thread->stack->exit_calls != NULL) {
     CallList* c = thread->stack->exit_calls;
     FbleCallData* call = c->call;

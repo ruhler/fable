@@ -1,0 +1,41 @@
+Fble Compilation Challenge
+--------------------------
+Should we compile fble to machine code before evaluating it, or should we
+continue to use an interpreter?
+
+Advantage of compilation:
+* Potential for substantial performance improvements.
+
+Disadvantage of compilation:
+* It's more tedious to run a program if you have to invoke a c compiler, for
+  example.
+
+What about AOT vs JIT vs ...?
+
+That's more a question of what representation a program should be distributed
+in. The tradeoff is: too high level a representation requires compilation /
+interpretation to be done somewhere. too low level a representation takes up
+more space and is limited in where it can be run.
+
+I guess today the representation is .fble, which is relatively compact, but
+takes some time to compile and is slow to interpret. If we compile, the
+representation would be .o, which may or may not be as compact, but is much
+faster to run.
+
+Regardless, we need to go to well specified formats (.fble, .c, .o, etc.), and
+in general it's good for the framework to support separate pre-processing
+passes, so I think this is worth introducing.
+
+This is an end user API change. Instead of loading a .fble program, you want
+to load a .o file. Or maybe you want to link against a compiled .o program.
+
+Proposal: given a .fble program, compile to an object file that exposes the
+following API:
+
+FbleValue* Eval(FbleValueHeap* heap);
+
+And in general, once you have an FbleValue, you can run it efficiently with
+the existing FbleApply and FbleExec APIs, it just that code will be
+represented as pointers to machine code instead of pointers to instruction
+blocks.
+

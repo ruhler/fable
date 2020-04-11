@@ -346,3 +346,11 @@ Should we treat NULL as equivalent to the root? Then add_ref could be used
 instead of retain, and del_ref could be used instead of ... no. I don't think
 so. Better to keep them separate.
 
+------
+
+Experimenting with #defining away the calls to retain/release/add/del, a
+reduced fble bench that fits in memory takes 87 seconds without any gc versus
+120 seconds with gc. That's about 28% GC overhead, which represents an upper
+bound on how much we can save by switching to a more efficient garbage
+collector.
+

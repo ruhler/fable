@@ -1,0 +1,110 @@
+Fble Profiling Challenge
+------------------------
+Experiments show that profiling currently adds significant overhead to fble
+runtime. The fble benchmark takes 4 minutes to run, 1.5 minutes of which is
+entirely profiling overhead.
+
+The challenge is this: can we support useful profiling efficiently?
+
+Remember the goals of profiling:
+* Identify areas of opportunity to improve fble programs at a high level.
+
+Note this is different from how I mainly use it today, which is to measure
+wall clock performance improvements to the implementation of fble.
+
+One key idea for reducing the cost of profiling is to use a sampling
+profiler.
+
+I claim that:
+* A 100% sampling profiler is equivalent to the current profiler.
+* A < 100% sampling profiler is just as useful as the current profiler.
+* A 0% sampling profiler can be much more efficient than the current profiler.
+
+Thus I propose changing the current profiler into a sampling profiler.
+
+I claim that:
+* virtual time is as useful as wall clock time
+ - if you are optimizing for wall clock time, your optimizations will only
+   work for the exact environment you are running on when you do the
+   optimizations.
+* it's better if we can have deterministic sampling, to make things
+  repeatable. In other words, sample based on instruction counts instead of
+  wall clock time.
+* for the purposes of high level program optimization, it's probably fine to
+  say each basic block has equal cost. Maybe? Not sure.
+
+Anyway, let's switch the current profiler to a sampling profiler to see how
+well it works out (for optimizing fble programs, not fble implementations).
+
+It's interesting to note that when doing sampling profiling, the cost of a
+basic block is tied to the sampling rate. For example, if you sample based on
+instructions, the cost of a basic block is proportional to the number of
+instructions it has. If you sample based on wall clock time, the cost of a
+basic block is proportional to the wall clock time it takes. It's actually
+pretty cool that you can get a different interpretation by changing the
+sampling clock independent of any compiled code.
+
+Cool. How do we switch the current profiler to be a sampling profiler?
+
+1. We need to use a sampler instead of a tracer.
+We can use two kinds of samplers. One based on instructions executed (which
+should be deterministic) and one based on wall clock time (which should be
+realistic).
+
+It's pretty easy I think. In eval, call FbleProfileTime every N instructions,
+instead of when we enter a block.
+
+For the wall clock profiler... do we need a separate thread?
+No, we just have to check the time periodically. That kind of sucks though,
+because it will skew the samples to when we check the times.
+
+We can do it all in the same place for now. Wall clock time will be slightly
+skewed, but I think still meaningful as long as we check it often enough.
+
+Today we check the current time 50 million times in fble bench. There are 200
+million instructions executed. So as long as we check it fewer than once every
+4 instructions, we should be fine. I suppose we could dynamically adapt it,
+with the goal of sampling it, say, 10 times faster than the desired time
+sampling rate? Or maybe it's cheap enough to sample it doesn't matter. Maybe
+what matters is we don't update profile time except on the sample? Not sure.
+
+I'm starting to fear that the bulk of the cost of profiling is not taking
+samples, it's maintaining enough state to be able to take a sample.
+
+Proposal:
+
+* Sample once every 100 instructions.
+* Sample wall clock time once every millisecond.
+
+Hmm... Two ways we could do wall clock time sampling.
+
+1. After the next X milliseconds have passed, charge 1 unit of time for
+whatever the currently executing thing is. That's as if the currently
+executing thing has been executing for the last 1 unit of time.
+
+2. Whenever we take a sample, change however much time since the last sample
+to whatever the currently executing thing is.
+
+Does it make a difference?
+
+(2) should at least have total sample time add up to wall clock time, which is
+nice. (2) is also much easier to implement. It feels like it could assign
+blame to the wrong person, but no more than (1) already does?
+
+Let's start with (2), give it a try, and see how it compares to what we get
+today with full tracing.
+
+And see how it improves (or doesn't) performance as we change the sampling
+rate.
+
+Note: using (2) to sample the time gives a very strong correlation with the
+current non-sampling based approach to wall clock time. I would be happy to
+use that instead of the non-sampling based approach for wall clock time.
+
+Okay. The trouble is, the cost isn't taking the sample.
+
+Assuming we use sampling for wall clock and profile time... is there any way
+we can make it much more efficient to enter and exit a profile block?
+
+Oh, an important point about the sampling profiler: we loose accurate
+information about the number of times a block is called... or do we?
