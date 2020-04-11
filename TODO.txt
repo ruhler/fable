@@ -3,6 +3,8 @@
   And similar for other delete/destroy things? Use common naming?
   Maybe: New/Free? Preferred over Alloc,Create/Delete,Destroy.
 
+* [rc-heap] reorganize functions in rc-heap.c.
+
 * [test] Add fble-heap-test for splitting cycles
    Test that we don't retain a cycle a->b->c by referencing a separate object
    d that used to be in the cycle a->b->c->d.

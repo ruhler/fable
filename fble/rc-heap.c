@@ -419,19 +419,15 @@ static void ReleaseInternal(Heap* heap, Obj* obj, size_t depth, ObjStack** stack
 //   Get the Obj* corresponding to a void* obj pointer.
 //
 // Inputs:
-//   obj_ - the void* obj pointer. May be NULL.
+//   obj_ - the void* obj pointer.
 //
 // Results:
-//   The corresponding Obj* pointer, or NULL if the provided object is NULL.
+//   The corresponding Obj* pointer.
 //
 // Side effects:
 //   None.
 static Obj* ToObj(void* obj_)
 {
-  if (obj_ == NULL) {
-    return NULL;
-  }
-
   Obj* obj = ((Obj*)obj_) - 1;
   assert(obj->obj == obj_);
   return obj;
@@ -456,13 +452,11 @@ static void* New(FbleHeap* heap_, size_t size)
 static void Retain(FbleHeap* heap, void* obj_)
 {
   Obj* obj = ToObj(obj_);
-  if (obj != NULL) {
-    obj->refcount++;
-    assert(obj->refcount != 0);
-    if (obj->cycle != NULL) {
-      obj->cycle->refcount++;
-      assert(obj->cycle->refcount != 0);
-    }
+  obj->refcount++;
+  assert(obj->refcount != 0);
+  if (obj->cycle != NULL) {
+    obj->cycle->refcount++;
+    assert(obj->cycle->refcount != 0);
   }
 }
 
