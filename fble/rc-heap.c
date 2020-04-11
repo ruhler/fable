@@ -53,7 +53,12 @@ typedef struct {
   Obj** xs;
 } ObjV;
 
-static Obj* ToObj(void* obj_);
+// ObjStack -- 
+//   A stack of objects implemented as a singly linked list.
+typedef struct ObjStack {
+  Obj* obj;
+  struct ObjStack* tail;
+} ObjStack;
 
 // Heap --
 //   The FbleHeap for the reference counting heap.
@@ -64,7 +69,7 @@ typedef struct {
   FbleHeap _base;
   size_t next_id;
 } Heap;
-
+
 // Map --
 //   A hash based mapping from key to index.
 typedef struct {
@@ -91,19 +96,14 @@ static void MapInit(FbleArena* arena, Map* map, size_t capacity);
 static size_t* MapIndex(Obj** objs, Map* map, Obj* obj);
 static size_t Insert(FbleArena* arena, Set* set, Obj* obj);
 static bool Contains(Set* set, Obj* obj);
-
-// ObjStack -- 
-//   A stack of objects implemented as a singly linked list.
-typedef struct ObjStack {
-  Obj* obj;
-  struct ObjStack* tail;
-} ObjStack;
+
+static Obj* ToObj(void* obj_);
 
 static void CollectRefs(Heap* heap, Obj* obj, ObjV* refs);
 static void ReleaseRefs(Heap* heap, Obj* obj, size_t depth, ObjStack** stack);
 static void CycleRefAddRefs(Heap* heap, Obj* obj);
 
-static void ReleaseInternal(Heap* heap, Obj* obj, size_t depth, ObjStack** stack);
+static void ReleaseSome(Heap* heap, Obj* obj, size_t depth, ObjStack** stack);
 
 // MapInit --
 //   Initialize a Map.
@@ -213,6 +213,24 @@ static bool Contains(Set* map, Obj* obj)
   return *MapIndex(map->objs.xs, &map->map, obj) != MAP_EMPTY;
 }
 
+// ToObj --
+//   Get the Obj* corresponding to a void* obj pointer.
+//
+// Inputs:
+//   obj_ - the void* obj pointer.
+//
+// Results:
+//   The corresponding Obj* pointer.
+//
+// Side effects:
+//   None.
+static Obj* ToObj(void* obj_)
+{
+  Obj* obj = ((Obj*)obj_) - 1;
+  assert(obj->obj == obj_);
+  return obj;
+}
+
 // CollectRefs --
 //   Collect the references of an object into a vector.
 //
@@ -249,7 +267,7 @@ static void CollectRefs(Heap* heap, Obj* obj, ObjV* refs)
 }
 
 // ReleaseRefs --
-//   Call ReleaseInternal on all objects referenced by the given object.
+//   Call ReleaseSome on all objects referenced by the given object.
 //
 // Inputs:
 //   heap - the heap
@@ -261,7 +279,7 @@ static void CollectRefs(Heap* heap, Obj* obj, ObjV* refs)
 //   None.
 //
 // Side effects:
-//   Calls ReleaseInternal on all objects referenced by obj.
+//   Calls ReleaseSome on all objects referenced by obj.
 
 typedef struct {
   FbleHeapCallback _base;
@@ -272,7 +290,7 @@ typedef struct {
 
 static void ReleaseRef(ReleaseRefCallback* this, void* obj_)
 {
-  ReleaseInternal(this->heap, ToObj(obj_), this->depth, this->stack);
+  ReleaseSome(this->heap, ToObj(obj_), this->depth, this->stack);
 }
 
 static void ReleaseRefs(Heap* heap, Obj* obj, size_t depth, ObjStack** stack)
@@ -327,8 +345,8 @@ static void CycleRefAddRefs(Heap* heap, Obj* obj)
   heap->_base.refs(&callback._base, obj->obj);
 }
 
-// Release --
-//   Release an object recursively.
+// ReleaseSome --
+//   Release an object recursively, but to a limited recursion depth.
 //
 // Inputs:
 //   heap - the heap
@@ -340,8 +358,9 @@ static void CycleRefAddRefs(Heap* heap, Obj* obj)
 //   none.
 //
 // Side effect:
-//   Recursively releases an object.
-static void ReleaseInternal(Heap* heap, Obj* obj, size_t depth, ObjStack** stack)
+//   Recursively releases an object. Adds more objects to release to the stack
+//   if the maximum recursion depth is reached.
+static void ReleaseSome(Heap* heap, Obj* obj, size_t depth, ObjStack** stack)
 {
   FbleArena* arena = heap->_base.arena;
 
@@ -409,28 +428,10 @@ static void ReleaseInternal(Heap* heap, Obj* obj, size_t depth, ObjStack** stack
     FbleVectorInit(arena, children);
     CollectRefs(heap, obj, &children);
     for (size_t i = 0; i < children.size; ++i) {
-      ReleaseInternal(heap, children.xs[i], depth - 1, stack);
+      ReleaseSome(heap, children.xs[i], depth - 1, stack);
     }
     FbleFree(arena, children.xs);
   }
-}
-
-// ToObj --
-//   Get the Obj* corresponding to a void* obj pointer.
-//
-// Inputs:
-//   obj_ - the void* obj pointer.
-//
-// Results:
-//   The corresponding Obj* pointer.
-//
-// Side effects:
-//   None.
-static Obj* ToObj(void* obj_)
-{
-  Obj* obj = ((Obj*)obj_) - 1;
-  assert(obj->obj == obj_);
-  return obj;
 }
 
 // New -- see documentation for FbleHeap.new in fble-heap.h
@@ -467,13 +468,13 @@ static void Release(FbleHeap* heap_, void* obj_)
   Heap* heap = (Heap*)heap_;
 
   ObjStack* stack = NULL;
-  ReleaseInternal(heap, obj, 10000, &stack);
+  ReleaseSome(heap, obj, 10000, &stack);
   while (stack != NULL) {
     ObjStack* ostack = stack;
     obj = stack->obj;
     stack = stack->tail;
     FbleFree(heap->_base.arena, ostack);
-    ReleaseInternal(heap, obj, 10000, &stack);
+    ReleaseSome(heap, obj, 10000, &stack);
   }
 }
 
