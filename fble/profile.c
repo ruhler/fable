@@ -79,12 +79,10 @@
 //
 // Fields:
 //   id - the id of the current block.
-//   auto_exit - true if we should automatically exit from this block.
 //   exit - the number of elements to pop from the sample stack when exiting
 //          this call.
 typedef struct {
   FbleBlockId id;
-  bool auto_exit;
   size_t exit;
 } Call;
 
@@ -132,6 +130,8 @@ struct FbleProfileThread {
   // * Bit caller % 64 of running[callee][caller / 64] is set if a call from
   //   caller to callee is running.
   uint64_t** running;
+
+  bool auto_exit;
 
   FbleProfile* profile;
 };
@@ -411,6 +411,7 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* parent, FbleProfile* profile)
 {
   FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
+  thread->auto_exit = false;
   thread->profile = profile;
   FbleVectorInit(arena, thread->calls);
   FbleVectorInit(arena, thread->sample);
@@ -420,7 +421,7 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
   memset(thread->running, 0, n * sizeof(uint64_t*));
 
   if (parent == NULL) {
-    Call call = { .id = FBLE_ROOT_BLOCK_ID, .auto_exit = false, .exit = 0 };
+    Call call = { .id = FBLE_ROOT_BLOCK_ID, .exit = 0 };
     FbleVectorAppend(arena, thread->calls, call);
 
     thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
@@ -476,12 +477,12 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   FbleCallData* data = GetCallData(arena, thread->profile, caller, callee);
   data->count++;
 
-  if (!call->auto_exit) {
+  if (!thread->auto_exit) {
     call = FbleVectorExtend(arena, thread->calls);
     call->exit = 0;
   }
   call->id = callee;
-  call->auto_exit = false;
+  thread->auto_exit = false;
 
   bool block_running = true;
   if (thread->running[callee] == NULL) {
@@ -563,7 +564,7 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 // FbleProfileAutoExitBlock -- see documentation in fble-profile.h
 void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
-  thread->calls.xs[thread->calls.size - 1].auto_exit = true;
+  thread->auto_exit = true;
 }
 
 // FbleProfileReport -- see documentation in fble-profile.h
