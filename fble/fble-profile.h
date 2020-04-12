@@ -87,8 +87,15 @@ typedef struct {
 // FbleProfile --
 //   Profiling information for a program.
 //
-// profile.xs[i] contains block and callee information for block i.
-typedef FbleBlockProfileV FbleProfile;
+// Fields:
+//   ticks - the number of ticks that have occured in this profile.
+//   period - the numper of ticks per sample.
+//   blocks - blocks.xs[i] contains block and callee information for block i.
+typedef struct {
+  uint64_t ticks;
+  size_t period;
+  FbleBlockProfileV blocks;
+} FbleProfile;
 
 // FbleNewProfile --
 //   Creates a new, empty profile for the given number of blocks.
@@ -98,6 +105,7 @@ typedef FbleBlockProfileV FbleProfile;
 //   blockc - the number of blocks in the program being profiled. Must be
 //            greater than 0, because FBLE_ROOT_BLOCK_ID should be a valid
 //            block.
+//   period - the sampling period in number of ticks per sample.
 //
 // Results:
 //   A new empty profile.
@@ -105,7 +113,7 @@ typedef FbleBlockProfileV FbleProfile;
 // Side effects:
 //   Allocates a new call that should be freed with FbleFreeProfile when
 //   no longer in use.
-FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc);
+FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc, size_t period);
 
 // FbleFreeProfile --
 //   Free a profile.
@@ -208,16 +216,28 @@ void FbleResumeProfileThread(FbleProfileThread* thread);
 //   management.
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block);
 
+// FbleProfileTick --
+//   Advance the profile by a single tick, triggering a sample as appropriate
+//   based on the sampling period.
+// 
+// Inputs:
+//   arena - arena to use for allocations.
+//   thread - the thread to sample, if sampling is required.
+//
+// Side effects:
+//   Advances the profiling ticks by one. Takes a profiling sample if
+//   appropriate.
+void FbleProfileTick(FbleArena* arena, FbleProfileThread* thread);
+
 // FbleProfileSample --
-//   Take a profiling sample.
+//   Take an explicit profiling sample.
+//
+// See FbleProfileTick for an alternate method of triggering samples.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //   thread - the profile thread to sample.
 //   time - the amount of profile time to advance.
-//
-// Results:
-//   none.
 //
 // Side effects:
 //   Charges calls on the current thread with the given explicit time and

@@ -17,6 +17,11 @@
 //   another thread.
 #define TIME_SLICE 1024
 
+// PROFILE_SAMPLE_PERIOD --
+//   The profiling sample period in number of instructions executed.
+// TODO: This should probably a parameter exposed to the user.
+#define PROFILE_SAMPLE_PERIOD 1024
+
 // Frame --
 //   An execution frame.
 //
@@ -308,6 +313,8 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
   FbleArena* arena = heap->arena;
   bool progress = false;
   for (size_t i = 0; i < TIME_SLICE && thread->stack != NULL; ++i) {
+    FbleProfileTick(arena, thread->profile);
+
     assert(thread->stack->frame.pc < thread->stack->frame.code->instrs.size);
     FbleInstr* instr = thread->stack->frame.code->instrs.xs[thread->stack->frame.pc++];
     switch (instr->tag) {
@@ -754,7 +761,6 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
       case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
         FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
         FbleProfileEnterBlock(arena, thread->profile, enter->block);
-        FbleProfileSample(arena, thread->profile, enter->time);
         break;
       }
 
@@ -925,7 +931,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleNameV* blocks
   FbleArena* arena = heap->arena;
 
   FbleInstrBlock* code = FbleCompile(arena, blocks, program);
-  *profile = FbleNewProfile(arena, blocks->size);
+  *profile = FbleNewProfile(arena, blocks->size, PROFILE_SAMPLE_PERIOD);
   if (code == NULL) {
     return NULL;
   }

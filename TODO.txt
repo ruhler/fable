@@ -1,13 +1,14 @@
 
+* [compile] remove instruction block 'time' field
+ - now that we use executed instructions at runtime instead.
+
+* [profile] Label blocks in exec process bindings by binding name.
+
 * [profile] Optimize profiling.
  - Introduce per-thread set tracking of current calls
    caller -> callee / 64 -> uint64_t, where callee % 64th bit is 1 if the call
    is on the stack, false otherwise. And the whole array is NULL if there are
    no calls to the block. ?
-
-* [profile] Make the profiler a sampling profiler.
- - Sample every N instructions, where N can be configured somehow.
- - Clock and N is associated with the profile.
 
 * [cc] Implement .fble -> .o compiler
  - Goal is to significantly increase performance by removing the instruction
@@ -51,7 +52,6 @@
  - The type should be the computed type for the value, not the introduced
    abstract type?
 
-* [profile] Label blocks in exec process bindings by binding name?
 * [profile] I suspect there are still bugs around block id 0
  - test that calling into block 0 does the right thing. Though I'm not sure it
    makes much sense.
