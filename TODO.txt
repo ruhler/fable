@@ -2,6 +2,14 @@
 * [profile] Add test for multithreaded profiling
  - The current way we track whether a block/call is in progress only works if
    we have a single thread. Add a test for that and fix it.
+ - Introduce per-thread set tracking of current calls
+   caller -> callee / 64 -> uint64_t, where callee % 64th bit is 1 if the call
+   is on the stack, false otherwise. And the whole array is NULL if there are
+   no calls to the block.
+
+* [profile] Optimizations
+ - Keep call data sorted and change GetCallData to use binary search and
+   sorted insertion.
 
 * [profile] Make the profiler a sampling profiler.
  - Sample every N instructions, where N can be configured somehow.

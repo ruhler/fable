@@ -2,9 +2,16 @@
 //   This file implements the main entry point for the fble-profile-test
 //   program.
 
-#include <assert.h>   // for assert
-
 #include "fble-profile.h"
+
+static bool sTestsFailed = false;
+
+#define ASSERT(p) { \
+  if (!(p)) { \
+    fprintf(stderr, "%s:%i: assert failure: %s\n", __FILE__, __LINE__, #p); \
+    sTestsFailed = true; \
+  } \
+}
 
 // AutoExitMaxMem --
 //   Returns the maximum memory required for an n deep auto exit self
@@ -36,22 +43,22 @@ static size_t AutoExitMaxMem(size_t n)
   FbleProfileExitBlock(arena, thread);
   FbleFreeProfileThread(arena, thread);
 
-  assert(profile->size == 2);
-  assert(profile->xs[0]->block.id == 0);
-  assert(profile->xs[0]->block.count == 1);
-  assert(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 10 * (n + 1));
-  assert(profile->xs[0]->callees.size == 1);
-  assert(profile->xs[0]->callees.xs[0]->id == 1);
-  assert(profile->xs[0]->callees.xs[0]->count == 1);
-  assert(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 10 * (n + 1));
+  ASSERT(profile->size == 2);
+  ASSERT(profile->xs[0]->block.id == 0);
+  ASSERT(profile->xs[0]->block.count == 1);
+  ASSERT(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 10 * (n + 1));
+  ASSERT(profile->xs[0]->callees.size == 1);
+  ASSERT(profile->xs[0]->callees.xs[0]->id == 1);
+  ASSERT(profile->xs[0]->callees.xs[0]->count == 1);
+  ASSERT(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 10 * (n + 1));
 
-  assert(profile->xs[1]->block.id == 1);
-  assert(profile->xs[1]->block.count == n + 1);
-  assert(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 10 * (n + 1));
-  assert(profile->xs[1]->callees.size == 1);
-  assert(profile->xs[1]->callees.xs[0]->id == 1);
-  assert(profile->xs[1]->callees.xs[0]->count == n);
-  assert(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 10 * n);
+  ASSERT(profile->xs[1]->block.id == 1);
+  ASSERT(profile->xs[1]->block.count == n + 1);
+  ASSERT(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 10 * (n + 1));
+  ASSERT(profile->xs[1]->callees.size == 1);
+  ASSERT(profile->xs[1]->callees.xs[0]->id == 1);
+  ASSERT(profile->xs[1]->callees.xs[0]->count == n);
+  ASSERT(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 10 * n);
 
   FbleFreeProfile(arena, profile);
   FbleAssertEmptyArena(arena);
@@ -100,46 +107,46 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
 
-    assert(profile->size == 5);
-    assert(profile->xs[0]->block.id == 0);
-    assert(profile->xs[0]->block.count == 1);
-    assert(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 131);
-    assert(profile->xs[0]->callees.size == 1);
-    assert(profile->xs[0]->callees.xs[0]->id == 1);
-    assert(profile->xs[0]->callees.xs[0]->count == 1);
-    assert(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 131);
+    ASSERT(profile->size == 5);
+    ASSERT(profile->xs[0]->block.id == 0);
+    ASSERT(profile->xs[0]->block.count == 1);
+    ASSERT(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 131);
+    ASSERT(profile->xs[0]->callees.size == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->id == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 131);
 
-    assert(profile->xs[1]->block.id == 1);
-    assert(profile->xs[1]->block.count == 1);
-    assert(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 131);
-    assert(profile->xs[1]->callees.size == 2);
-    assert(profile->xs[1]->callees.xs[0]->id == 2);
-    assert(profile->xs[1]->callees.xs[0]->count == 1);
-    assert(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
-    assert(profile->xs[1]->callees.xs[1]->id == 3);
-    assert(profile->xs[1]->callees.xs[1]->count == 1);
-    assert(profile->xs[1]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 31);
+    ASSERT(profile->xs[1]->block.id == 1);
+    ASSERT(profile->xs[1]->block.count == 1);
+    ASSERT(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 131);
+    ASSERT(profile->xs[1]->callees.size == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
+    ASSERT(profile->xs[1]->callees.xs[1]->id == 3);
+    ASSERT(profile->xs[1]->callees.xs[1]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 31);
 
-    assert(profile->xs[2]->block.id == 2);
-    assert(profile->xs[2]->block.count == 1);
-    assert(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 90);
-    assert(profile->xs[2]->callees.size == 2);
-    assert(profile->xs[2]->callees.xs[0]->id == 3);
-    assert(profile->xs[2]->callees.xs[0]->count == 1);
-    assert(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 30);
-    assert(profile->xs[2]->callees.xs[1]->id == 4);
-    assert(profile->xs[2]->callees.xs[1]->count == 1);
-    assert(profile->xs[2]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 40);
+    ASSERT(profile->xs[2]->block.id == 2);
+    ASSERT(profile->xs[2]->block.count == 1);
+    ASSERT(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 90);
+    ASSERT(profile->xs[2]->callees.size == 2);
+    ASSERT(profile->xs[2]->callees.xs[0]->id == 3);
+    ASSERT(profile->xs[2]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 30);
+    ASSERT(profile->xs[2]->callees.xs[1]->id == 4);
+    ASSERT(profile->xs[2]->callees.xs[1]->count == 1);
+    ASSERT(profile->xs[2]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 40);
 
-    assert(profile->xs[3]->block.id == 3);
-    assert(profile->xs[3]->block.count == 2);
-    assert(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 61);
-    assert(profile->xs[3]->callees.size == 0);
+    ASSERT(profile->xs[3]->block.id == 3);
+    ASSERT(profile->xs[3]->block.count == 2);
+    ASSERT(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 61);
+    ASSERT(profile->xs[3]->callees.size == 0);
 
-    assert(profile->xs[4]->block.id == 4);
-    assert(profile->xs[4]->block.count == 1);
-    assert(profile->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
-    assert(profile->xs[4]->callees.size == 0);
+    ASSERT(profile->xs[4]->block.id == 4);
+    ASSERT(profile->xs[4]->block.count == 1);
+    ASSERT(profile->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
+    ASSERT(profile->xs[4]->callees.size == 0);
 
     FbleName names[] = {
         { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
@@ -182,59 +189,59 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
 
-    assert(profile->size == 7);
-    assert(profile->xs[0]->block.id == 0);
-    assert(profile->xs[0]->block.count == 1);
-    assert(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 210);
-    assert(profile->xs[0]->callees.size == 1);
-    assert(profile->xs[0]->callees.xs[0]->id == 1);
-    assert(profile->xs[0]->callees.xs[0]->count == 1);
-    assert(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 210);
+    ASSERT(profile->size == 7);
+    ASSERT(profile->xs[0]->block.id == 0);
+    ASSERT(profile->xs[0]->block.count == 1);
+    ASSERT(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 210);
+    ASSERT(profile->xs[0]->callees.size == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->id == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 210);
 
-    assert(profile->xs[1]->block.id == 1);
-    assert(profile->xs[1]->block.count == 1);
-    assert(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 210);
-    assert(profile->xs[1]->callees.size == 2);
-    assert(profile->xs[1]->callees.xs[0]->id == 2);
-    assert(profile->xs[1]->callees.xs[0]->count == 1);
-    assert(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 140);
-    assert(profile->xs[1]->callees.xs[1]->id == 6);
-    assert(profile->xs[1]->callees.xs[1]->count == 1);
-    assert(profile->xs[1]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 60);
+    ASSERT(profile->xs[1]->block.id == 1);
+    ASSERT(profile->xs[1]->block.count == 1);
+    ASSERT(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 210);
+    ASSERT(profile->xs[1]->callees.size == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 140);
+    ASSERT(profile->xs[1]->callees.xs[1]->id == 6);
+    ASSERT(profile->xs[1]->callees.xs[1]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 60);
 
-    assert(profile->xs[2]->block.id == 2);
-    assert(profile->xs[2]->block.count == 1);
-    assert(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 140);
-    assert(profile->xs[2]->callees.size == 1);
-    assert(profile->xs[2]->callees.xs[0]->id == 3);
-    assert(profile->xs[2]->callees.xs[0]->count == 1);
-    assert(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 120);
+    ASSERT(profile->xs[2]->block.id == 2);
+    ASSERT(profile->xs[2]->block.count == 1);
+    ASSERT(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 140);
+    ASSERT(profile->xs[2]->callees.size == 1);
+    ASSERT(profile->xs[2]->callees.xs[0]->id == 3);
+    ASSERT(profile->xs[2]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 120);
 
-    assert(profile->xs[3]->block.id == 3);
-    assert(profile->xs[3]->block.count == 1);
-    assert(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 120);
-    assert(profile->xs[3]->callees.size == 2);
-    assert(profile->xs[3]->callees.xs[0]->id == 4);
-    assert(profile->xs[3]->callees.xs[0]->count == 1);
-    assert(profile->xs[3]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 40);
-    assert(profile->xs[3]->callees.xs[1]->id == 5);
-    assert(profile->xs[3]->callees.xs[1]->count == 1);
-    assert(profile->xs[3]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 50);
+    ASSERT(profile->xs[3]->block.id == 3);
+    ASSERT(profile->xs[3]->block.count == 1);
+    ASSERT(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 120);
+    ASSERT(profile->xs[3]->callees.size == 2);
+    ASSERT(profile->xs[3]->callees.xs[0]->id == 4);
+    ASSERT(profile->xs[3]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[3]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 40);
+    ASSERT(profile->xs[3]->callees.xs[1]->id == 5);
+    ASSERT(profile->xs[3]->callees.xs[1]->count == 1);
+    ASSERT(profile->xs[3]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 50);
 
-    assert(profile->xs[4]->block.id == 4);
-    assert(profile->xs[4]->block.count == 1);
-    assert(profile->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
-    assert(profile->xs[4]->callees.size == 0);
+    ASSERT(profile->xs[4]->block.id == 4);
+    ASSERT(profile->xs[4]->block.count == 1);
+    ASSERT(profile->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
+    ASSERT(profile->xs[4]->callees.size == 0);
 
-    assert(profile->xs[5]->block.id == 5);
-    assert(profile->xs[5]->block.count == 1);
-    assert(profile->xs[5]->block.time[FBLE_PROFILE_TIME_CLOCK] == 50);
-    assert(profile->xs[5]->callees.size == 0);
+    ASSERT(profile->xs[5]->block.id == 5);
+    ASSERT(profile->xs[5]->block.count == 1);
+    ASSERT(profile->xs[5]->block.time[FBLE_PROFILE_TIME_CLOCK] == 50);
+    ASSERT(profile->xs[5]->callees.size == 0);
 
-    assert(profile->xs[6]->block.id == 6);
-    assert(profile->xs[6]->block.count == 1);
-    assert(profile->xs[6]->block.time[FBLE_PROFILE_TIME_CLOCK] == 60);
-    assert(profile->xs[6]->callees.size == 0);
+    ASSERT(profile->xs[6]->block.id == 6);
+    ASSERT(profile->xs[6]->block.count == 1);
+    ASSERT(profile->xs[6]->block.time[FBLE_PROFILE_TIME_CLOCK] == 60);
+    ASSERT(profile->xs[6]->callees.size == 0);
 
     FbleFreeProfile(arena, profile);
     FbleAssertEmptyArena(arena);
@@ -263,38 +270,38 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
 
-    assert(profile->size == 4);
-    assert(profile->xs[0]->block.id == 0);
-    assert(profile->xs[0]->block.count == 1);
-    assert(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
-    assert(profile->xs[0]->callees.size == 1);
-    assert(profile->xs[0]->callees.xs[0]->id == 1);
-    assert(profile->xs[0]->callees.xs[0]->count == 1);
-    assert(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 100);
+    ASSERT(profile->size == 4);
+    ASSERT(profile->xs[0]->block.id == 0);
+    ASSERT(profile->xs[0]->block.count == 1);
+    ASSERT(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
+    ASSERT(profile->xs[0]->callees.size == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->id == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 100);
 
-    assert(profile->xs[1]->block.id == 1);
-    assert(profile->xs[1]->block.count == 1);
-    assert(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
-    assert(profile->xs[1]->callees.size == 1);
-    assert(profile->xs[1]->callees.xs[0]->id == 2);
-    assert(profile->xs[1]->callees.xs[0]->count == 1);
-    assert(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
+    ASSERT(profile->xs[1]->block.id == 1);
+    ASSERT(profile->xs[1]->block.count == 1);
+    ASSERT(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
+    ASSERT(profile->xs[1]->callees.size == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
 
-    assert(profile->xs[2]->block.id == 2);
-    assert(profile->xs[2]->block.count == 3);
-    assert(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 90);
-    assert(profile->xs[2]->callees.size == 2);
-    assert(profile->xs[2]->callees.xs[0]->id == 2);
-    assert(profile->xs[2]->callees.xs[0]->count == 2);
-    assert(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 70);
-    assert(profile->xs[2]->callees.xs[1]->id == 3);
-    assert(profile->xs[2]->callees.xs[1]->count == 1);
-    assert(profile->xs[2]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 30);
+    ASSERT(profile->xs[2]->block.id == 2);
+    ASSERT(profile->xs[2]->block.count == 3);
+    ASSERT(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 90);
+    ASSERT(profile->xs[2]->callees.size == 2);
+    ASSERT(profile->xs[2]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[2]->callees.xs[0]->count == 2);
+    ASSERT(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 70);
+    ASSERT(profile->xs[2]->callees.xs[1]->id == 3);
+    ASSERT(profile->xs[2]->callees.xs[1]->count == 1);
+    ASSERT(profile->xs[2]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 30);
 
-    assert(profile->xs[3]->block.id == 3);
-    assert(profile->xs[3]->block.count == 1);
-    assert(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
-    assert(profile->xs[3]->callees.size == 0);
+    ASSERT(profile->xs[3]->block.id == 3);
+    ASSERT(profile->xs[3]->block.count == 1);
+    ASSERT(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
+    ASSERT(profile->xs[3]->callees.size == 0);
 
     FbleName names[] = {
         { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
@@ -331,38 +338,38 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(arena, thread); // 3
     FbleFreeProfileThread(arena, thread);
 
-    assert(profile->size == 4);
-    assert(profile->xs[0]->block.id == 0);
-    assert(profile->xs[0]->block.count == 1);
-    assert(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
-    assert(profile->xs[0]->callees.size == 1);
-    assert(profile->xs[0]->callees.xs[0]->id == 1);
-    assert(profile->xs[0]->callees.xs[0]->count == 1);
-    assert(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 100);
+    ASSERT(profile->size == 4);
+    ASSERT(profile->xs[0]->block.id == 0);
+    ASSERT(profile->xs[0]->block.count == 1);
+    ASSERT(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
+    ASSERT(profile->xs[0]->callees.size == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->id == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 100);
 
-    assert(profile->xs[1]->block.id == 1);
-    assert(profile->xs[1]->block.count == 1);
-    assert(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
-    assert(profile->xs[1]->callees.size == 1);
-    assert(profile->xs[1]->callees.xs[0]->id == 2);
-    assert(profile->xs[1]->callees.xs[0]->count == 1);
-    assert(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
+    ASSERT(profile->xs[1]->block.id == 1);
+    ASSERT(profile->xs[1]->block.count == 1);
+    ASSERT(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 100);
+    ASSERT(profile->xs[1]->callees.size == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
 
-    assert(profile->xs[2]->block.id == 2);
-    assert(profile->xs[2]->block.count == 3);
-    assert(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 90);
-    assert(profile->xs[2]->callees.size == 2);
-    assert(profile->xs[2]->callees.xs[0]->id == 2);
-    assert(profile->xs[2]->callees.xs[0]->count == 2);
-    assert(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 70);
-    assert(profile->xs[2]->callees.xs[1]->id == 3);
-    assert(profile->xs[2]->callees.xs[1]->count == 1);
-    assert(profile->xs[2]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 30);
+    ASSERT(profile->xs[2]->block.id == 2);
+    ASSERT(profile->xs[2]->block.count == 3);
+    ASSERT(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 90);
+    ASSERT(profile->xs[2]->callees.size == 2);
+    ASSERT(profile->xs[2]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[2]->callees.xs[0]->count == 2);
+    ASSERT(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 70);
+    ASSERT(profile->xs[2]->callees.xs[1]->id == 3);
+    ASSERT(profile->xs[2]->callees.xs[1]->count == 1);
+    ASSERT(profile->xs[2]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 30);
 
-    assert(profile->xs[3]->block.id == 3);
-    assert(profile->xs[3]->block.count == 1);
-    assert(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
-    assert(profile->xs[3]->callees.size == 0);
+    ASSERT(profile->xs[3]->block.id == 3);
+    ASSERT(profile->xs[3]->block.count == 1);
+    ASSERT(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
+    ASSERT(profile->xs[3]->callees.size == 0);
 
     FbleName names[] = {
         { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
@@ -402,46 +409,46 @@ int main(int argc, char* argv[])
     FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
 
-    assert(profile->size == 5);
-    assert(profile->xs[0]->block.id == 0);
-    assert(profile->xs[0]->block.count == 1);
-    assert(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 150);
-    assert(profile->xs[0]->callees.size == 1);
-    assert(profile->xs[0]->callees.xs[0]->id == 1);
-    assert(profile->xs[0]->callees.xs[0]->count == 1);
-    assert(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 150);
+    ASSERT(profile->size == 5);
+    ASSERT(profile->xs[0]->block.id == 0);
+    ASSERT(profile->xs[0]->block.count == 1);
+    ASSERT(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 150);
+    ASSERT(profile->xs[0]->callees.size == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->id == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 150);
 
-    assert(profile->xs[1]->block.id == 1);
-    assert(profile->xs[1]->block.count == 1);
-    assert(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 150);
-    assert(profile->xs[1]->callees.size == 1);
-    assert(profile->xs[1]->callees.xs[0]->id == 2);
-    assert(profile->xs[1]->callees.xs[0]->count == 1);
-    assert(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 140);
+    ASSERT(profile->xs[1]->block.id == 1);
+    ASSERT(profile->xs[1]->block.count == 1);
+    ASSERT(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 150);
+    ASSERT(profile->xs[1]->callees.size == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 140);
 
-    assert(profile->xs[2]->block.id == 2);
-    assert(profile->xs[2]->block.count == 2);
-    assert(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 140);
-    assert(profile->xs[2]->callees.size == 1);
-    assert(profile->xs[2]->callees.xs[0]->id == 3);
-    assert(profile->xs[2]->callees.xs[0]->count == 2);
-    assert(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 120);
+    ASSERT(profile->xs[2]->block.id == 2);
+    ASSERT(profile->xs[2]->block.count == 2);
+    ASSERT(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 140);
+    ASSERT(profile->xs[2]->callees.size == 1);
+    ASSERT(profile->xs[2]->callees.xs[0]->id == 3);
+    ASSERT(profile->xs[2]->callees.xs[0]->count == 2);
+    ASSERT(profile->xs[2]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 120);
 
-    assert(profile->xs[3]->block.id == 3);
-    assert(profile->xs[3]->block.count == 2);
-    assert(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 120);
-    assert(profile->xs[3]->callees.size == 2);
-    assert(profile->xs[3]->callees.xs[0]->id == 2);
-    assert(profile->xs[3]->callees.xs[0]->count == 1);
-    assert(profile->xs[3]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
-    assert(profile->xs[3]->callees.xs[1]->id == 4);
-    assert(profile->xs[3]->callees.xs[1]->count == 1);
-    assert(profile->xs[3]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 40);
+    ASSERT(profile->xs[3]->block.id == 3);
+    ASSERT(profile->xs[3]->block.count == 2);
+    ASSERT(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 120);
+    ASSERT(profile->xs[3]->callees.size == 2);
+    ASSERT(profile->xs[3]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[3]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[3]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 90);
+    ASSERT(profile->xs[3]->callees.xs[1]->id == 4);
+    ASSERT(profile->xs[3]->callees.xs[1]->count == 1);
+    ASSERT(profile->xs[3]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 40);
 
-    assert(profile->xs[4]->block.id == 4);
-    assert(profile->xs[4]->block.count == 1);
-    assert(profile->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
-    assert(profile->xs[4]->callees.size == 0);
+    ASSERT(profile->xs[4]->block.id == 4);
+    ASSERT(profile->xs[4]->block.count == 1);
+    ASSERT(profile->xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
+    ASSERT(profile->xs[4]->callees.size == 0);
 
     FbleName names[] = {
         { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
@@ -460,10 +467,10 @@ int main(int argc, char* argv[])
     // Test that tail calls have O(1) memory.
     size_t mem_100 = AutoExitMaxMem(100);
     size_t mem_200 = AutoExitMaxMem(200);
-    assert(mem_100 == mem_200);
+    ASSERT(mem_100 == mem_200);
   }
 
   FbleFreeArena(arena);
-  return 0;
+  return sTestsFailed ? 1 : 0;
 }
 
