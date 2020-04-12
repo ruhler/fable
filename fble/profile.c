@@ -118,8 +118,6 @@ typedef struct {
   Sample* xs;
 } SampleV;
 
-#define THREAD_SUSPENDED 0
-
 // FbleProfileThread -- see documentation in fble-profile.h
 struct FbleProfileThread {
   CallV calls;
@@ -365,7 +363,6 @@ static uint64_t GetTimeMillis()
   uint64_t seconds = tv.tv_sec;
   uint64_t millis = tv.tv_usec / 1000;
   uint64_t time = 1000 * seconds + millis;
-  assert(time != THREAD_SUSPENDED && "uh oh. It's thread suspended time. :(");
   return time;
 }
 
