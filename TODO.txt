@@ -1,7 +1,5 @@
 
-* [profile] Add test for multithreaded profiling
- - The current way we track whether a block/call is in progress only works if
-   we have a single thread. Add a test for that and fix it.
+* [profile] Fix multithreaded profiling bug.
  - Introduce per-thread set tracking of current calls
    caller -> callee / 64 -> uint64_t, where callee % 64th bit is 1 if the call
    is on the stack, false otherwise. And the whole array is NULL if there are
@@ -14,30 +12,12 @@
 * [profile] Make the profiler a sampling profiler.
  - Sample every N instructions, where N can be configured somehow.
 
-* [perf] See if we can avoid making extra copies of args in function
-  application. It shows up pretty high on gcov.
-  - Part of the problem is we need to traverse over the args to reach the base
-    function before we know how big a frame to allocate to store the args on.
-  - Perhaps we could cache the frame size with the thunk to avoid that extra
-    traversal?
-  - Do you really think this has a noticeable impact on performance?
+* [cc] Implement .fble -> .o compiler
+ - Goal is to significantly increase performance but removing the instruction
+   fetch decode logic.
 
-* [perf] profile investigation? Suggests
- - Eval instruction fetch and decode, which is called a ton.
-
- - Profile GetCallData, which does a linear search that could be more
-   efficient.
-   With profiling disabled, fble bench takes: 2m30 seconds
-   With profiling enabled, fble bench takes:  4m01 seconds
-   That suggests 37% overhead from profiling, or 1m30 seconds of fble bench.
-
- - ValueRetain and the underlying Retain, which gets called a ton.
-   Experiments suggest 28% overhead from gc, or about 60 seconds of fble bench.
-
- - Note: using -O3 makes the program run more than twice as fast, but the perf
-   profile report still highlights the same hot spots. Recommendation: figure
-   out how to address those hot spots using high level improvements - don't
-   worry about fiddling with low level optimizations.
+* [gc] Optimize gc. 
+ - Experiments suggest gc is 28% overhead for fble bench today.
 
 * [test] Add fble-heap-test for splitting cycles
    Test that we don't retain a cycle a->b->c by referencing a separate object

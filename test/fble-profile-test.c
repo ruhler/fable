@@ -8,9 +8,16 @@ static bool sTestsFailed = false;
 
 #define ASSERT(p) { \
   if (!(p)) { \
-    fprintf(stderr, "%s:%i: assert failure: %s\n", __FILE__, __LINE__, #p); \
-    sTestsFailed = true; \
+    Fail(__FILE__, __LINE__, #p); \
   } \
+}
+
+// Fail --
+//   Report a test failure.
+static void Fail(const char* file, int line, const char* msg)
+{
+  fprintf(stderr, "%s:%i: assert failure: %s\n", file, line, msg);
+  sTestsFailed = true;
 }
 
 // AutoExitMaxMem --
@@ -468,6 +475,61 @@ int main(int argc, char* argv[])
     size_t mem_100 = AutoExitMaxMem(100);
     size_t mem_200 = AutoExitMaxMem(200);
     ASSERT(mem_100 == mem_200);
+  }
+
+  {
+    // Test multithreaded profiling.
+    // a: 0 -> 1 -> 2
+    // b: 0 -> 1 -> 2
+    FbleAssertEmptyArena(arena);
+    FbleProfile* profile = FbleNewProfile(arena, 3);
+    FbleProfileThread* a = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* b = FbleNewProfileThread(arena, profile);
+
+    FbleProfileEnterBlock(arena, a, 1);
+    FbleProfileSample(arena, a, 1);
+    FbleProfileEnterBlock(arena, a, 2);
+    FbleProfileSample(arena, a, 2);
+
+    // We had a bug in the past where this sample wouldn't count everything
+    // because it thought it was nested under the sample from thread a.
+    FbleProfileEnterBlock(arena, b, 1);
+    FbleProfileSample(arena, b, 10);
+    FbleProfileEnterBlock(arena, b, 2);
+    FbleProfileSample(arena, b, 20);
+
+    FbleProfileExitBlock(arena, a); // 2
+    FbleProfileExitBlock(arena, a); // 1
+    FbleFreeProfileThread(arena, a);
+
+    FbleProfileExitBlock(arena, b); // 2
+    FbleProfileExitBlock(arena, b); // 1
+    FbleFreeProfileThread(arena, b);
+
+    ASSERT(profile->size == 3);
+    ASSERT(profile->xs[0]->block.id == 0);
+    ASSERT(profile->xs[0]->block.count == 2);
+    ASSERT(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 33);
+    ASSERT(profile->xs[0]->callees.size == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->id == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->count == 2);
+    ASSERT(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 33);
+
+    ASSERT(profile->xs[1]->block.id == 1);
+    ASSERT(profile->xs[1]->block.count == 2);
+    ASSERT(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 33);
+    ASSERT(profile->xs[1]->callees.size == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->count == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 22);
+
+    ASSERT(profile->xs[2]->block.id == 2);
+    ASSERT(profile->xs[2]->block.count == 2);
+    ASSERT(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 22);
+    ASSERT(profile->xs[2]->callees.size == 0);
+
+    FbleFreeProfile(arena, profile);
+    FbleAssertEmptyArena(arena);
   }
 
   FbleFreeArena(arena);
