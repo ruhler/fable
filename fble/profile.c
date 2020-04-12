@@ -165,12 +165,25 @@ static uint64_t GetTimeMillis();
 static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
     FbleBlockId caller, FbleBlockId callee)
 {
-  for (size_t i = 0; i < profile->xs[caller]->callees.size; ++i) {
-    if (profile->xs[caller]->callees.xs[i]->id == callee) {
-      return profile->xs[caller]->callees.xs[i];
+  FbleCallDataV* callees = &profile->xs[caller]->callees;
+  FbleCallData** xs = callees->xs;
+
+  // Binary search for the call data.
+  size_t lo = 0;
+  size_t hi = callees->size;
+  while (lo < hi) {
+    size_t mid = (lo + hi) / 2;
+    FbleBlockId here = xs[mid]->id;
+    if (here < callee) {
+      lo = mid + 1;
+    } else if (here == callee) {
+      return xs[mid];
+    } else {
+      hi = mid;
     }
   }
 
+  // Nothing was found. Allocate new call data for this callee.
   FbleCallData* call = FbleAlloc(arena, FbleCallData);
   call->id = callee;
   for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
@@ -178,7 +191,17 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
   }
   call->count = 0;
   call->running = false;
-  FbleVectorAppend(arena, profile->xs[caller]->callees, call);
+
+  // Insert the new call data into the callee list, preserving the sort by
+  // callee id.
+  FbleCallData* data = call;
+  for (size_t i = lo; i < callees->size; ++i) {
+    FbleCallData* tmp = xs[i];
+    xs[i] = data;
+    data = tmp;
+  }
+  FbleVectorAppend(arena, *callees, data);
+
   return call;
 }
 

@@ -67,7 +67,9 @@ typedef struct {
 //
 // Fields:
 //   call - the id, summary count and time spent in this block.
-//   callers - info about calls from this block into other blocks.
+//   callees - info about calls from this block into other blocks, sorted in
+//             increasing order of callee. Only callees that have been called
+//             from this block are included.
 typedef struct {
   FbleCallData block;
   FbleCallDataV callees;

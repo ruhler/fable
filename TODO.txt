@@ -5,10 +5,6 @@
    is on the stack, false otherwise. And the whole array is NULL if there are
    no calls to the block.
 
-* [profile] Optimizations
- - Keep call data sorted and change GetCallData to use binary search and
-   sorted insertion.
-
 * [profile] Make the profiler a sampling profiler.
  - Sample every N instructions, where N can be configured somehow.
 
