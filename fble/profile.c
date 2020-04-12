@@ -90,7 +90,7 @@ typedef struct CallList {
   struct CallList* tail;
 } CallList;
 
-// ProfileStack -- 
+// CallStack -- 
 //   Stack representing the current call stack for profiling purposes.
 //
 // Fields:
@@ -99,18 +99,18 @@ typedef struct CallList {
 //   auto_exit - true if we should automatically exit from this block.
 //   exit_calls - calls that should be exited when block exits.
 //   tail - the rest of the stack.
-typedef struct ProfileStack {
+typedef struct CallStack {
   FbleBlockId id;
   bool auto_exit;
   CallList* exit_calls;
-  struct ProfileStack* tail;
-} ProfileStack;
+  struct CallStack* tail;
+} CallStack;
 
 #define THREAD_SUSPENDED 0
 
 // FbleProfileThread -- see documentation in fble-profile.h
 struct FbleProfileThread {
-  ProfileStack* stack;
+  CallStack* calls;
   FbleProfile* profile;
   
   // The GetTimeMillis of the last call event for this thread. Set to
@@ -370,11 +370,11 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
 {
   FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
   thread->profile = profile;
-  thread->stack = FbleAlloc(arena, ProfileStack);
-  thread->stack->id = 0;
-  thread->stack->auto_exit = false;
-  thread->stack->exit_calls = NULL;
-  thread->stack->tail = NULL;
+  thread->calls = FbleAlloc(arena, CallStack);
+  thread->calls->id = 0;
+  thread->calls->auto_exit = false;
+  thread->calls->exit_calls = NULL;
+  thread->calls->tail = NULL;
   thread->start = THREAD_SUSPENDED;
 
   // Special case for block 0, which is assumed to be the entry block.
@@ -386,13 +386,13 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
 // FbleFreeProfileThread -- see documentation in fble-profile.h
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 {
-  assert(thread->stack != NULL);
-  while (thread->stack->tail != NULL) {
+  assert(thread->calls != NULL);
+  while (thread->calls->tail != NULL) {
     FbleProfileExitBlock(arena, thread);
   }
 
-  assert(thread->stack->exit_calls == NULL);
-  FbleFree(arena, thread->stack);
+  assert(thread->calls->exit_calls == NULL);
+  FbleFree(arena, thread->calls);
   FbleFree(arena, thread);
 }
 
@@ -415,24 +415,24 @@ void FbleResumeProfileThread(FbleProfileThread* thread)
 // FbleProfileEnterBlock -- see documentation in fble-profile.h
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block)
 {
-  assert(thread->stack != NULL);
+  assert(thread->calls != NULL);
 
-  FbleBlockId caller = thread->stack->id;
+  FbleBlockId caller = thread->calls->id;
   FbleBlockId callee = block;
   thread->profile->xs[callee]->block.count++;
   FbleCallData* call = GetCallData(arena, thread->profile, caller, callee);
   call->count++;
 
-  if (thread->stack->auto_exit) {
-    thread->stack->id = callee;
-    thread->stack->auto_exit = false;
+  if (thread->calls->auto_exit) {
+    thread->calls->id = callee;
+    thread->calls->auto_exit = false;
   } else {
-    ProfileStack* stack = FbleAlloc(arena, ProfileStack);
-    stack->id = callee;
-    stack->auto_exit = false;
-    stack->exit_calls = NULL;
-    stack->tail = thread->stack;
-    thread->stack = stack;
+    CallStack* calls = FbleAlloc(arena, CallStack);
+    calls->id = callee;
+    calls->auto_exit = false;
+    calls->exit_calls = NULL;
+    calls->tail = thread->calls;
+    thread->calls = calls;
   }
 
   // TODO: This is wrong if call is running on some other thread but not on
@@ -443,8 +443,8 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     c->callee = callee;
     c->call = call;
     c->new_block = !thread->profile->xs[callee]->block.running;
-    c->tail = thread->stack->exit_calls;
-    thread->stack->exit_calls = c;
+    c->tail = thread->calls->exit_calls;
+    thread->calls->exit_calls = c;
   }
   thread->profile->xs[callee]->block.running = true;
   call->running = true;
@@ -462,7 +462,7 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
   thread->start = now;
 
   // Charge calls in the stack for their time.
-  for (ProfileStack* s = thread->stack; s != NULL; s = s->tail) {
+  for (CallStack* s = thread->calls; s != NULL; s = s->tail) {
     for (CallList* c = s->exit_calls; c != NULL; c = c->tail) {
       FbleCallData* call = c->call;
       if (c->new_block) {
@@ -482,8 +482,8 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
 // FbleProfileExitBlock -- see documentation in fble-profile.h
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
-  assert(thread->stack != NULL);
-  CallList* c = thread->stack->exit_calls;
+  assert(thread->calls != NULL);
+  CallList* c = thread->calls->exit_calls;
   while (c != NULL) {
     if (c->new_block) {
       thread->profile->xs[c->callee]->block.running = false;
@@ -495,15 +495,15 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
     c = tail;
   }
 
-  ProfileStack* stack = thread->stack;
-  thread->stack = thread->stack->tail;
-  FbleFree(arena, stack);
+  CallStack* calls = thread->calls;
+  thread->calls = thread->calls->tail;
+  FbleFree(arena, calls);
 }
 
 // FbleProfileAutoExitBlock -- see documentation in fble-profile.h
 void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
-  thread->stack->auto_exit = true;
+  thread->calls->auto_exit = true;
 }
 
 // FbleProfileReport -- see documentation in fble-profile.h
