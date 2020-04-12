@@ -19,8 +19,10 @@
 
 // PROFILE_SAMPLE_PERIOD --
 //   The profiling sample period in number of instructions executed.
+// Pick something coprime to TIME_SLICE to avoid biasing the sampling around
+// context switches.
 // TODO: This should probably a parameter exposed to the user.
-#define PROFILE_SAMPLE_PERIOD 1024
+#define PROFILE_SAMPLE_PERIOD 997
 
 // Frame --
 //   An execution frame.
@@ -849,9 +851,7 @@ static bool RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Th
   // running the parent thread, because it's probably blocked on a child
   // thread anyway.
   if (!progress) {
-    FbleResumeProfileThread(thread->profile);
     progress = RunThread(heap, io, profile, thread);
-    FbleSuspendProfileThread(thread->profile);
   }
   return progress;
 }

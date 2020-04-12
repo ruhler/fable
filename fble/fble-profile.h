@@ -89,10 +89,12 @@ typedef struct {
 //
 // Fields:
 //   ticks - the number of ticks that have occured in this profile.
+//   last - the wall clock time of the last sample.
 //   period - the numper of ticks per sample.
 //   blocks - blocks.xs[i] contains block and callee information for block i.
 typedef struct {
   uint64_t ticks;
+  uint64_t wall;
   size_t period;
   FbleBlockProfileV blocks;
 } FbleProfile;
@@ -136,9 +138,6 @@ typedef struct FbleProfileThread FbleProfileThread;
 // FbleNewProfileThread --
 //   Allocate a new profile thread.
 //
-//   The thread is allocated in a suspended state. FbleResumeProfileThread
-//   should be called before making any calls or sampling the thread.
-//
 //   If a parent thread is provided, the new thread starts with a copy of the
 //   parent thread's call stack. Otherwise the new thread starts in the
 //   FBLE_ROOT_BLOCK_ID block. The profile provided must be the same as the
@@ -171,33 +170,6 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
 // Side effects:
 //   Frees resources associated with the given profile thread.
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread);
-
-// FbleSuspendProfileThread --
-//   This pauses the wall clock time on the thread, to avoid double counting
-//   wall clock time for interleaved execution of threads.
-//
-// Inputs:
-//   thread - the thread to suspend. May be NULL.
-//
-// Results:
-//   none
-//
-// Side effects:
-//   Pauses the wall clock time on the thread.
-void FbleSuspendProfileThread(FbleProfileThread* thread);
-
-// FbleResumeProfileThread --
-//   Resumes wall clock time on the thread.
-//
-// Inputs:
-//   thread - the thread to resume. May be NULL.
-//
-// Results:
-//   none
-//
-// Side effects: 
-//   Resumes wall clock time on the thread.
-void FbleResumeProfileThread(FbleProfileThread* thread);
 
 // FbleProfileEnterBlock -- 
 //   Enter a block on the given profile thread.

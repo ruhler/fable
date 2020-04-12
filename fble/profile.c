@@ -126,10 +126,6 @@ struct FbleProfileThread {
   CallV calls;
   SampleV sample;
   FbleProfile* profile;
-
-  // The GetTimeMillis of the last call event for this thread. Set to
-  // THREAD_SUSPENDED to indicate the thread is suspended.
-  uint64_t start;
 };
 
 typedef enum {
@@ -370,6 +366,7 @@ FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc, size_t period)
 {
   FbleProfile* profile = FbleAlloc(arena, FbleProfile);
   profile->ticks = 0;
+  profile->wall = 0;
   profile->period = period;
   profile->blocks.size = blockc;
   profile->blocks.xs = FbleArrayAlloc(arena, FbleBlockProfile*, blockc);
@@ -429,8 +426,6 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
       FbleVectorAppend(arena, thread->sample, parent->sample.xs[i]);
     }
   }
-
-  thread->start = THREAD_SUSPENDED;
   return thread;
 }
 
@@ -440,22 +435,6 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
   FbleFree(arena, thread->calls.xs);
   FbleFree(arena, thread->sample.xs);
   FbleFree(arena, thread);
-}
-
-// FbleSuspendProfileThread -- see documentation in fble-profile.h
-void FbleSuspendProfileThread(FbleProfileThread* thread)
-{
-  if (thread) {
-    thread->start = THREAD_SUSPENDED;
-  }
-}
-
-// FbleResumeProfileThread -- see documentation in fble-profile.h
-void FbleResumeProfileThread(FbleProfileThread* thread)
-{
-  if (thread && thread->start != THREAD_SUSPENDED) {
-    thread->start = GetTimeMillis();
-  }
 }
 
 // FbleProfileEnterBlock -- see documentation in fble-profile.h
@@ -510,12 +489,13 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
 {
   // Get the wall clock time since the last sample on this thread.
   uint64_t now = GetTimeMillis();
-  uint64_t wall = 0;
-  if (thread->start != THREAD_SUSPENDED) {
-    wall = now - thread->start;
+  if (thread->profile->wall == 0) {
+    thread->profile->wall = now;
   }
-  thread->start = now;
 
+  uint64_t wall = now - thread->profile->wall;
+  thread->profile->wall = now;
+  
   // Charge calls in the stack for their time.
   for (size_t i = 0; i < thread->sample.size; ++i) {
     Sample* c = thread->sample.xs + i;

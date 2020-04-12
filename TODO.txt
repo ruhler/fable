@@ -9,6 +9,9 @@
    caller -> callee / 64 -> uint64_t, where callee % 64th bit is 1 if the call
    is on the stack, false otherwise. And the whole array is NULL if there are
    no calls to the block. ?
+ - Idea: if forking is expensive, double check we avoid forking the profile
+   thread if there is only one child of exec? Or only fork the profile thread
+   for secondary children, not the primary child?
 
 * [cc] Implement .fble -> .o compiler
  - Goal is to significantly increase performance by removing the instruction
@@ -51,6 +54,10 @@
 * [compile] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced
    abstract type?
+
+* [profile] Come up with a way to deal with irregular ticks.
+ - For example, what if we block on user data. Then the ticks stop. Then the
+   first sample afterwards gets charged a huge amount unfairly.
 
 * [profile] I suspect there are still bugs around block id 0
  - test that calling into block 0 does the right thing. Though I'm not sure it
