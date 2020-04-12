@@ -126,7 +126,7 @@ struct FbleProfileThread {
   CallV calls;
   SampleV sample;
   FbleProfile* profile;
-  
+
   // The GetTimeMillis of the last call event for this thread. Set to
   // THREAD_SUSPENDED to indicate the thread is suspended.
   uint64_t start;
@@ -190,7 +190,6 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
     call->time[clock] = 0;
   }
   call->count = 0;
-  call->running = false;
 
   // Insert the new call data into the callee list, preserving the sort by
   // callee id.
@@ -376,7 +375,6 @@ FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc)
     profile->xs[i] = FbleAlloc(arena, FbleBlockProfile);
     profile->xs[i]->block.id = i;
     profile->xs[i]->block.count = 0;
-    profile->xs[i]->block.running = false;
     for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
       profile->xs[i]->block.time[clock] = 0;
     }
@@ -477,18 +475,24 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   call->id = callee;
   call->auto_exit = false;
 
-  // TODO: This is wrong if call is running on some other thread but not on
-  // this thread. Test and fix that somehow.
-  if (!data->running) {
+  // TODO: Surely we can do a more efficient search here?
+  bool call_running = false;
+  bool block_running = false;
+  for (size_t i = 0; !call_running && i < thread->sample.size; ++i) {
+    bool callee_matches = thread->sample.xs[i].callee == callee;
+    call_running = call_running 
+      || (thread->sample.xs[i].caller == caller && callee_matches);
+    block_running = block_running || callee_matches;
+  }
+
+  if (!call_running) {
     Sample* c = FbleVectorExtend(arena, thread->sample);
     c->caller = caller;
     c->callee = callee;
     c->call = data;
-    c->new_block = !thread->profile->xs[callee]->block.running;
+    c->new_block = !block_running;
     call->exit++;
   }
-  thread->profile->xs[callee]->block.running = true;
-  data->running = true;
 }
 
 // FbleProfileSample -- see documentation in fble-profile.h
@@ -525,13 +529,7 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
   size_t exit = thread->calls.xs[thread->calls.size - 1].exit;
   for (size_t i = 0; i < exit; ++i) {
     thread->sample.size--;
-    Sample* c = thread->sample.xs + thread->sample.size;
-    if (c->new_block) {
-      thread->profile->xs[c->callee]->block.running = false;
-    }
-    c->call->running = false;
   }
-
   thread->calls.size--;
 }
 
