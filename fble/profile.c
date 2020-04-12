@@ -118,6 +118,12 @@ typedef struct {
   Sample* xs;
 } SampleV;
 
+typedef struct {
+  size_t sample;
+  FbleCallData* data;
+} TableEntry;
+
+
 // FbleProfileThread -- see documentation in fble-profile.h
 struct FbleProfileThread {
   CallV calls;
@@ -524,10 +530,13 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
   thread->profile->wall = now;
   
   // Charge calls in the stack for their time.
+  bool block_seen[thread->profile->blocks.size];
+  memset(block_seen, 0, thread->profile->blocks.size * sizeof(bool));
   for (size_t i = 0; i < thread->sample.size; ++i) {
     Sample* c = thread->sample.xs + i;
     FbleCallData* data = c->call;
-    if (c->new_block) {
+    if (!block_seen[c->callee]) {
+      block_seen[c->callee] = true;
       thread->profile->blocks.xs[c->callee]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
       thread->profile->blocks.xs[c->callee]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
     }
