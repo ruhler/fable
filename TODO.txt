@@ -2,12 +2,6 @@
 * [profile] Label blocks in exec process bindings by binding name.
 
 * [profile] Optimize profiling.
- - Introduce per-thread set tracking of current calls
-   caller -> callee / 64 -> uint64_t, where callee % 64th bit is 1 if the call
-   is on the stack, false otherwise. And the whole array is NULL if there are
-   no calls to the block. ?
- - Idea: sample stack duplicates callee with subsequent caller. Maybe only
-   store it once to save memory and presumably be a little faster?
  - Idea: if forking is expensive, double check we avoid forking the profile
    thread if there is only one child of exec? Or only fork the profile thread
    for secondary children, not the primary child?

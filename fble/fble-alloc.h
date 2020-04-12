@@ -58,7 +58,7 @@ void* FbleRawAlloc(FbleArena* arena, size_t size, const char* msg);
 // Side effects:
 //   Allocates from the arena. The allocation should be freed by calling
 //   FbleFree when no longer in use.
-#define FbleArrayAlloc(arena, T, count) ((T*) FbleRawAlloc(arena, count * sizeof(T), FbleAllocMsg(__FILE__, __LINE__)))
+#define FbleArrayAlloc(arena, T, count) ((T*) FbleRawAlloc(arena, (count) * sizeof(T), FbleAllocMsg(__FILE__, __LINE__)))
 
 // FbleFree --
 //   Free a memory allocation.

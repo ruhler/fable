@@ -5,6 +5,7 @@
 #include <inttypes.h> // for PRIu64
 #include <math.h>     // for sqrt
 #include <stdbool.h>  // for bool
+#include <string.h>   // for memset
 #include <sys/time.h> // for gettimeofday
 
 #include "fble-alloc.h"
@@ -125,6 +126,13 @@ typedef struct {
 struct FbleProfileThread {
   CallV calls;
   SampleV sample;
+
+  // Set of currently running calls.
+  // * running[x] is non-null if block x is running.
+  // * Bit caller % 64 of running[callee][caller / 64] is set if a call from
+  //   caller to callee is running.
+  uint64_t** running;
+
   FbleProfile* profile;
 };
 
@@ -407,6 +415,10 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
   FbleVectorInit(arena, thread->calls);
   FbleVectorInit(arena, thread->sample);
 
+  size_t n = profile->blocks.size;
+  thread->running = FbleArrayAlloc(arena, uint64_t*, n);
+  memset(thread->running, 0, n * sizeof(uint64_t*));
+
   if (parent == NULL) {
     Call call = { .id = FBLE_ROOT_BLOCK_ID, .auto_exit = false, .exit = 0 };
     FbleVectorAppend(arena, thread->calls, call);
@@ -423,6 +435,13 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
       FbleVectorAppend(arena, thread->calls, parent->calls.xs[i]);
     }
     for (size_t i = 0; i < parent->sample.size; ++i) {
+      Sample s = parent->sample.xs[i];
+      if (thread->running[s.callee] == NULL) {
+        thread->running[s.callee] = FbleArrayAlloc(arena, uint64_t, (n/64) + 1);
+        memset(thread->running[s.callee], 0, ((n/64)+1) * sizeof(uint64_t));
+      }
+      thread->running[s.callee][s.caller / 64] |= (1 << (s.caller % 64));
+
       FbleVectorAppend(arena, thread->sample, parent->sample.xs[i]);
     }
   }
@@ -432,6 +451,14 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
 // FbleFreeProfileThread -- see documentation in fble-profile.h
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 {
+  for (size_t i = 0; i < thread->sample.size; ++i) {
+    Sample s = thread->sample.xs[i];
+    if (s.new_block) {
+      FbleFree(arena, thread->running[s.callee]);
+      thread->running[s.callee] = NULL;
+    }
+  }
+  FbleFree(arena, thread->running);
   FbleFree(arena, thread->calls.xs);
   FbleFree(arena, thread->sample.xs);
   FbleFree(arena, thread);
@@ -456,17 +483,19 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   call->id = callee;
   call->auto_exit = false;
 
-  // TODO: Surely we can do a more efficient search here?
-  bool call_running = false;
-  bool block_running = false;
-  for (size_t i = 0; !call_running && i < thread->sample.size; ++i) {
-    bool callee_matches = thread->sample.xs[i].callee == callee;
-    call_running = call_running 
-      || (thread->sample.xs[i].caller == caller && callee_matches);
-    block_running = block_running || callee_matches;
+  bool block_running = true;
+  if (thread->running[callee] == NULL) {
+    block_running = false;
+    size_t n = thread->profile->blocks.size;
+    thread->running[callee] = FbleArrayAlloc(arena, uint64_t, (n/64) + 1);
+    memset(thread->running[callee], 0, ((n/64)+1) * sizeof(uint64_t));
   }
 
+  uint64_t mask = 1 << (caller % 64);
+  bool call_running = (thread->running[callee][caller / 64] & mask) != 0;
   if (!call_running) {
+    thread->running[callee][caller / 64] |= mask;
+
     Sample* c = FbleVectorExtend(arena, thread->sample);
     c->caller = caller;
     c->callee = callee;
@@ -516,11 +545,19 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
   assert(thread->calls.size > 0);
-  size_t exit = thread->calls.xs[thread->calls.size - 1].exit;
-  for (size_t i = 0; i < exit; ++i) {
-    thread->sample.size--;
-  }
   thread->calls.size--;
+  size_t exit = thread->calls.xs[thread->calls.size].exit;
+  thread->sample.size -= exit;
+
+  for (size_t i = 0; i < exit; ++i) {
+    Sample s = thread->sample.xs[thread->sample.size + exit - i - 1];
+    if (s.new_block) {
+      FbleFree(arena, thread->running[s.callee]);
+      thread->running[s.callee] = NULL;
+    } else if (thread->running[s.callee] != NULL) {
+      thread->running[s.callee][s.caller / 64] &= ~(1 << (s.caller % 64));
+    }
+  }
 }
 
 // FbleProfileAutoExitBlock -- see documentation in fble-profile.h
