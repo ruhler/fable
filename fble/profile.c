@@ -73,23 +73,6 @@
 // subsequent occurences in a deeply nested stack would not have their time
 // counted anyway.
 
-// CallList --
-//   A set of calls represented as a singly linked list.
-//
-// Fields:
-//   caller - the caller for this particular call
-//   callee - the callee for this particular call
-//   call - cached result of GetCallData(caller, callee)
-//   new_block - false if this block was called recursively from itself.
-//   tail - the rest of the calls in the set.
-typedef struct CallList {
-  FbleBlockId caller;
-  FbleBlockId callee;
-  FbleCallData* call;
-  bool new_block;
-  struct CallList* tail;
-} CallList;
-
 // CallStack -- 
 //   Stack representing the current call stack for profiling purposes.
 //
@@ -97,20 +80,42 @@ typedef struct CallList {
 //   id - the id of the block at the top of the stack.
 //   time - the amount of time spent at the top of the stack.
 //   auto_exit - true if we should automatically exit from this block.
-//   exit_calls - calls that should be exited when block exits.
+//   exit - the number of elements to pop from the sample stack when exiting
+//          this call.
 //   tail - the rest of the stack.
 typedef struct CallStack {
   FbleBlockId id;
   bool auto_exit;
-  CallList* exit_calls;
+  size_t exit;
   struct CallStack* tail;
 } CallStack;
+
+// SampleStack --
+//   The set of calls that make up a profile sample. This is different from
+//   CallStack in that it contains at most one of each call and includes tail
+//   calls.
+//
+// Fields:
+//   caller - the caller for this particular call
+//   callee - the callee for this particular call
+//   call - cached result of GetCallData(caller, callee)
+//   new_block - false if this block was called recursively from itself.
+//   tail - the rest of the calls in the set.
+typedef struct SampleStack {
+  FbleBlockId caller;
+  FbleBlockId callee;
+  FbleCallData* call;
+  bool new_block;
+  struct SampleStack* tail;
+} SampleStack;
+
 
 #define THREAD_SUSPENDED 0
 
 // FbleProfileThread -- see documentation in fble-profile.h
 struct FbleProfileThread {
   CallStack* calls;
+  SampleStack* sample;
   FbleProfile* profile;
   
   // The GetTimeMillis of the last call event for this thread. Set to
@@ -373,8 +378,9 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
   thread->calls = FbleAlloc(arena, CallStack);
   thread->calls->id = 0;
   thread->calls->auto_exit = false;
-  thread->calls->exit_calls = NULL;
+  thread->calls->exit = 0;
   thread->calls->tail = NULL;
+  thread->sample = NULL;
   thread->start = THREAD_SUSPENDED;
 
   // Special case for block 0, which is assumed to be the entry block.
@@ -386,13 +392,17 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
 // FbleFreeProfileThread -- see documentation in fble-profile.h
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 {
-  assert(thread->calls != NULL);
-  while (thread->calls->tail != NULL) {
-    FbleProfileExitBlock(arena, thread);
+  while (thread->calls != NULL) {
+    CallStack* calls = thread->calls;
+    thread->calls = calls->tail;
+    FbleFree(arena, calls);
+  }
+  while (thread->sample != NULL) {
+    SampleStack* sample = thread->sample;
+    thread->sample = sample->tail;
+    FbleFree(arena, sample);
   }
 
-  assert(thread->calls->exit_calls == NULL);
-  FbleFree(arena, thread->calls);
   FbleFree(arena, thread);
 }
 
@@ -430,7 +440,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     CallStack* calls = FbleAlloc(arena, CallStack);
     calls->id = callee;
     calls->auto_exit = false;
-    calls->exit_calls = NULL;
+    calls->exit = 0;
     calls->tail = thread->calls;
     thread->calls = calls;
   }
@@ -438,13 +448,14 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   // TODO: This is wrong if call is running on some other thread but not on
   // this thread. Test and fix that somehow.
   if (!call->running) {
-    CallList* c = FbleAlloc(arena, CallList);
+    SampleStack* c = FbleAlloc(arena, SampleStack);
     c->caller = caller;
     c->callee = callee;
     c->call = call;
     c->new_block = !thread->profile->xs[callee]->block.running;
-    c->tail = thread->calls->exit_calls;
-    thread->calls->exit_calls = c;
+    c->tail = thread->sample;
+    thread->calls->exit++;
+    thread->sample = c;
   }
   thread->profile->xs[callee]->block.running = true;
   call->running = true;
@@ -462,16 +473,14 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
   thread->start = now;
 
   // Charge calls in the stack for their time.
-  for (CallStack* s = thread->calls; s != NULL; s = s->tail) {
-    for (CallList* c = s->exit_calls; c != NULL; c = c->tail) {
-      FbleCallData* call = c->call;
-      if (c->new_block) {
-        thread->profile->xs[c->callee]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
-        thread->profile->xs[c->callee]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
-      }
-      call->time[FBLE_PROFILE_WALL_CLOCK] += wall;
-      call->time[FBLE_PROFILE_TIME_CLOCK] += time;
+  for (SampleStack* c = thread->sample; c != NULL; c = c->tail) {
+    FbleCallData* call = c->call;
+    if (c->new_block) {
+      thread->profile->xs[c->callee]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
+      thread->profile->xs[c->callee]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
     }
+    call->time[FBLE_PROFILE_WALL_CLOCK] += wall;
+    call->time[FBLE_PROFILE_TIME_CLOCK] += time;
   }
 
   // Special case for block 0, which is assumed to be the entry block.
@@ -483,17 +492,18 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
   assert(thread->calls != NULL);
-  CallList* c = thread->calls->exit_calls;
-  while (c != NULL) {
+  SampleStack* c = thread->sample;
+  for (size_t i = 0; i < thread->calls->exit; ++i) {
     if (c->new_block) {
       thread->profile->xs[c->callee]->block.running = false;
     }
     c->call->running = false;
 
-    CallList* tail = c->tail;
+    SampleStack* tail = c->tail;
     FbleFree(arena, c);
     c = tail;
   }
+  thread->sample = c;
 
   CallStack* calls = thread->calls;
   thread->calls = thread->calls->tail;
