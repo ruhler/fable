@@ -1,4 +1,7 @@
 
+* [profile] Add parent thread to FbleNewThread.
+ - In order to maintain the profile stack when forking new threads
+
 * [profile] Fix multithreaded profiling bug.
  - Introduce per-thread set tracking of current calls
    caller -> callee / 64 -> uint64_t, where callee % 64th bit is 1 if the call
@@ -7,6 +10,7 @@
 
 * [profile] Make the profiler a sampling profiler.
  - Sample every N instructions, where N can be configured somehow.
+ - Clock and N is associated with the profile.
 
 * [cc] Implement .fble -> .o compiler
  - Goal is to significantly increase performance but removing the instruction
@@ -50,11 +54,6 @@
  - The type should be the computed type for the value, not the introduced
    abstract type?
 
-* [profile] Figure out how to handle profiling threads better
- - Separate EXIT_BLOCK from EXIT_SCOPE to remove spurious calls to enter block
-   0 in fble/eval?
- - Remove special case handling of block 0 in fble/profile?
- - How to maintain the profile stack when forking new threads?
 * [profile] Label blocks in exec process bindings by binding name?
 
 * [eval] Experiment with alternate garbage collection implementations.

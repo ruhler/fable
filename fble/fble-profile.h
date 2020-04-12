@@ -31,6 +31,11 @@ typedef enum {
 //  An identifier for a program block
 typedef size_t FbleBlockId;
 
+// FBLE_ROOT_BLOCK_ID --
+//   The block id for the "root" block, which is assumed to be the entry block
+//   for all threads.
+#define FBLE_ROOT_BLOCK_ID 0
+
 // FbleBlockIdV --
 //   A vector of BlockId
 typedef struct {
@@ -93,7 +98,9 @@ typedef FbleBlockProfileV FbleProfile;
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blockc - the number of blocks in the program being profiled.
+//   blockc - the number of blocks in the program being profiled. Must be
+//            greater than 0, because FBLE_ROOT_BLOCK_ID should be a valid
+//            block.
 //
 // Results:
 //   A new empty profile.

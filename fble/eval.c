@@ -72,12 +72,6 @@ struct Thread {
   FbleProfileThread* profile;
 };
 
-static FbleProfileEnterBlockInstr g_enter_instr = {
-  ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
-  .block = 0,
-  .time = 1,
-};
-
 static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
 static FbleInstr* g_put_block_instrs[] = { &g_put_instr };
 static FbleInstrBlock g_put_block = {
@@ -948,8 +942,14 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, Fble
   assert(args.size > 0);
   assert(func->tag == FBLE_FUNC_VALUE);
 
+  FbleProfileEnterBlockInstr enter = {
+    ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
+    .block = FBLE_ROOT_BLOCK_ID,
+    .time = 1,
+  };
+
   FbleInstr* instrs[1 + args.size];
-  instrs[0] = &g_enter_instr._base;
+  instrs[0] = &enter._base;
 
   FbleValue* xs[1 + args.size];
   xs[0] = func;

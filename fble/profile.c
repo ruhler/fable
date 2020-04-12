@@ -409,17 +409,13 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
   thread->profile = profile;
   FbleVectorInit(arena, thread->calls);
   Call* call = FbleVectorExtend(arena, thread->calls);
-  call->id = 0;
+  call->id = FBLE_ROOT_BLOCK_ID;
   call->auto_exit = false;
   call->exit = 0;
 
   FbleVectorInit(arena, thread->sample);
-
   thread->start = THREAD_SUSPENDED;
-
-  // Special case for block 0, which is assumed to be the entry block.
-  thread->profile->xs[0]->block.count++;
-
+  thread->profile->xs[FBLE_ROOT_BLOCK_ID]->block.count++;
   return thread;
 }
 
@@ -503,9 +499,8 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
     data->time[FBLE_PROFILE_TIME_CLOCK] += time;
   }
 
-  // Special case for block 0, which is assumed to be the entry block.
-  thread->profile->xs[0]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
-  thread->profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
+  thread->profile->xs[FBLE_ROOT_BLOCK_ID]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
+  thread->profile->xs[FBLE_ROOT_BLOCK_ID]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
 }
 
 // FbleProfileExitBlock -- see documentation in fble-profile.h
