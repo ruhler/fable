@@ -448,13 +448,10 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   call->running = true;
 }
 
-// FbleProfileTime -- see documentation in fble-profile.h
-void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
+// FbleProfileSample -- see documentation in fble-profile.h
+void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
 {
-  // Approximate the wall time as the time since the last time FbleProfileTime
-  // was called.
-  // TODO: Rename FbleProfileTime to something more suggestive of it being a
-  // profiling sample.
+  // Get the wall clock time since the last sample on this thread.
   uint64_t now = GetTimeMillis();
   uint64_t wall = 0;
   if (thread->start != THREAD_SUSPENDED) {
@@ -462,6 +459,7 @@ void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
   }
   thread->start = now;
 
+  // Charge calls in the stack for their time.
   for (ProfileStack* s = thread->stack; s != NULL; s = s->tail) {
     for (CallList* c = s->exit_calls; c != NULL; c = c->tail) {
       FbleCallData* call = c->call;

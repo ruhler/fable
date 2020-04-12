@@ -14,13 +14,13 @@
 // FbleProfileClock --
 //   The clocks used for profiling.
 typedef enum {
-  // The profile time clock is advanced with explicit calls to FbleProfileTime.
-  // This should give a consistent result for every run, but is only as
-  // accurate as the calls to FbleProfileTime.
+  // The profile time clock is advanced explicitly based on the time argument
+  // to FbleProfileSample. It gives deterministic timing results.
   FBLE_PROFILE_TIME_CLOCK,
 
-  // Wall clock. This should give a reasonably accurate wall clock time, but
-  // will vary from run to run.
+  // The profile wall clock is advanced implicitly based on wall clock time
+  // that has passed since the previous sample. It is not deterministic, but
+  // should give a reasonable approximation of real wall clock time.
   FBLE_PROFILE_WALL_CLOCK,
 
   // Enum whose value is the number of profiling clocks.
@@ -197,20 +197,21 @@ void FbleResumeProfileThread(FbleProfileThread* thread);
 //   management.
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block);
 
-// FbleProfileTime --
-//   Advances the FBLE_PROFILE_TIME_CLOCK for this thread.
+// FbleProfileSample --
+//   Take a profiling sample.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   thread - the profile thread to spend time on
-//   time - the amount of time to advance.
+//   thread - the profile thread to sample.
+//   time - the amount of profile time to advance.
 //
 // Results:
 //   none.
 //
 // Side effects:
-//   Increments recorded time spent in the current call.
-void FbleProfileTime(FbleArena* arena, FbleProfileThread* thread, uint64_t time);
+//   Charges calls on the current thread with the given explicit time and
+//   implicit wall clock time since the last sample on the thread.
+void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t time);
 
 // FbleProfileExitBlock --
 //   Exits the current block on the given profile thread.

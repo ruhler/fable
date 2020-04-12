@@ -26,12 +26,12 @@ static size_t AutoExitMaxMem(size_t n)
   FbleProfile* profile = FbleNewProfile(arena, 2);
   FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
   FbleProfileEnterBlock(arena, thread, 1);
-  FbleProfileTime(arena, thread, 10);
+  FbleProfileSample(arena, thread, 10);
 
   for (size_t i = 0; i < n; ++i) {
     FbleProfileAutoExitBlock(arena, thread);
     FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileTime(arena, thread, 10);
+    FbleProfileSample(arena, thread, 10);
   }
   FbleProfileExitBlock(arena, thread);
   FbleFreeProfileThread(arena, thread);
@@ -84,18 +84,18 @@ int main(int argc, char* argv[])
     FbleProfile* profile = FbleNewProfile(arena, 5);
     FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileTime(arena, thread, 10);
+    FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileTime(arena, thread, 30);
+    FbleProfileSample(arena, thread, 30);
     FbleProfileExitBlock(arena, thread); // 3
     FbleProfileEnterBlock(arena, thread, 4);
-    FbleProfileTime(arena, thread, 40);
+    FbleProfileSample(arena, thread, 40);
     FbleProfileExitBlock(arena, thread); // 4
     FbleProfileExitBlock(arena, thread); // 2
     FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileTime(arena, thread, 31);
+    FbleProfileSample(arena, thread, 31);
     FbleProfileExitBlock(arena, thread); // 3
     FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
@@ -163,21 +163,21 @@ int main(int argc, char* argv[])
     FbleProfile* profile = FbleNewProfile(arena, 7);
     FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileTime(arena, thread, 10);
+    FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileAutoExitBlock(arena, thread);  // 2
     FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileTime(arena, thread, 30);
+    FbleProfileSample(arena, thread, 30);
     FbleProfileEnterBlock(arena, thread, 4);
-    FbleProfileTime(arena, thread, 40);
+    FbleProfileSample(arena, thread, 40);
     FbleProfileExitBlock(arena, thread); // 4
     FbleProfileAutoExitBlock(arena, thread);  // 3
     FbleProfileEnterBlock(arena, thread, 5);
-    FbleProfileTime(arena, thread, 50);
+    FbleProfileSample(arena, thread, 50);
     FbleProfileExitBlock(arena, thread); // 5
     FbleProfileEnterBlock(arena, thread, 6);
-    FbleProfileTime(arena, thread, 60);
+    FbleProfileSample(arena, thread, 60);
     FbleProfileExitBlock(arena, thread); // 6
     FbleProfileExitBlock(arena, thread); // 1
     FbleFreeProfileThread(arena, thread);
@@ -247,15 +247,15 @@ int main(int argc, char* argv[])
     FbleProfile* profile = FbleNewProfile(arena, 4);
     FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileTime(arena, thread, 10);
+    FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileTime(arena, thread, 30);
+    FbleProfileSample(arena, thread, 30);
     FbleProfileExitBlock(arena, thread); // 3
     FbleProfileExitBlock(arena, thread); // 2
     FbleProfileExitBlock(arena, thread); // 2
@@ -315,19 +315,19 @@ int main(int argc, char* argv[])
     FbleProfile* profile = FbleNewProfile(arena, 4);
     FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileTime(arena, thread, 10);
+    FbleProfileSample(arena, thread, 10);
     FbleProfileAutoExitBlock(arena, thread);  // 1
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileAutoExitBlock(arena, thread); // 2
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileAutoExitBlock(arena, thread); // 2
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileAutoExitBlock(arena, thread); // 2
     FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileTime(arena, thread, 30);
+    FbleProfileSample(arena, thread, 30);
     FbleProfileExitBlock(arena, thread); // 3
     FbleFreeProfileThread(arena, thread);
 
@@ -383,17 +383,17 @@ int main(int argc, char* argv[])
     FbleProfile* profile = FbleNewProfile(arena, 5);
     FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileTime(arena, thread, 10);
+    FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileTime(arena, thread, 30);
+    FbleProfileSample(arena, thread, 30);
     FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileTime(arena, thread, 20);
+    FbleProfileSample(arena, thread, 20);
     FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileTime(arena, thread, 30);
+    FbleProfileSample(arena, thread, 30);
     FbleProfileEnterBlock(arena, thread, 4);
-    FbleProfileTime(arena, thread, 40);
+    FbleProfileSample(arena, thread, 40);
     FbleProfileExitBlock(arena, thread); // 4
     FbleProfileExitBlock(arena, thread); // 3
     FbleProfileExitBlock(arena, thread); // 2

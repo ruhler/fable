@@ -760,7 +760,7 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
       case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
         FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
         FbleProfileEnterBlock(arena, thread->profile, enter->block);
-        FbleProfileTime(arena, thread->profile, enter->time);
+        FbleProfileSample(arena, thread->profile, enter->time);
         break;
       }
 
