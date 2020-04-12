@@ -2526,7 +2526,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
 
   // The entry associated with FBLE_ROOT_BLOCK_ID.
   FbleName entry_name = {
-    .name = "<main>",
+    .name = "",
     .loc = program->main->loc,
     .space = FBLE_NORMAL_NAME_SPACE
   };

@@ -132,11 +132,16 @@ typedef struct FbleProfileThread FbleProfileThread;
 //   Allocate a new profile thread.
 //
 //   The thread is allocated in a suspended state. FbleResumeProfileThread
-//   must be called before making any calls or advancing profile time in the
-//   thread.
+//   should be called before making any calls or sampling the thread.
+//
+//   If a parent thread is provided, the new thread starts with a copy of the
+//   parent thread's call stack. Otherwise the new thread starts in the
+//   FBLE_ROOT_BLOCK_ID block. The profile provided must be the same as the
+//   profile associated with the parent thread.
 //
 // Inputs:
 //   arena - arena to use for allocations.
+//   parent - the parent thread to fork from. May be NULL.
 //   profile - the profile to save profiling data to.
 //
 // Results:
@@ -145,7 +150,7 @@ typedef struct FbleProfileThread FbleProfileThread;
 // Side effects:
 //   Allocates a new profile thread that should be freed with
 //   FreeProfileThread when no longer in use.
-FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile);
+FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* parent, FbleProfile* profile);
 
 // FbleFreeProfileThread --
 //   Free resources associated with the given profile thread. Does not free

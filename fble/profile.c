@@ -403,19 +403,34 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 }
 
 // FbleNewProfileThread -- see documentation in fble-profile.h
-FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
+FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* parent, FbleProfile* profile)
 {
   FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
   thread->profile = profile;
   FbleVectorInit(arena, thread->calls);
-  Call* call = FbleVectorExtend(arena, thread->calls);
-  call->id = FBLE_ROOT_BLOCK_ID;
-  call->auto_exit = false;
-  call->exit = 0;
-
   FbleVectorInit(arena, thread->sample);
+
+  if (parent == NULL) {
+    Call call = { .id = FBLE_ROOT_BLOCK_ID, .auto_exit = false, .exit = 0 };
+    FbleVectorAppend(arena, thread->calls, call);
+
+    thread->profile->xs[FBLE_ROOT_BLOCK_ID]->block.count++;
+  } else {
+    assert(parent->profile == profile);
+
+    // TODO: We could make these copies more efficient if they are a
+    // performance issue, by pre-allocated the array of the vector. Just make
+    // sure to preallocate it to a power of two (or add a library function to
+    // fble-alloc.h to take care of this for us).
+    for (size_t i = 0; i < parent->calls.size; ++i) {
+      FbleVectorAppend(arena, thread->calls, parent->calls.xs[i]);
+    }
+    for (size_t i = 0; i < parent->sample.size; ++i) {
+      FbleVectorAppend(arena, thread->sample, parent->sample.xs[i]);
+    }
+  }
+
   thread->start = THREAD_SUSPENDED;
-  thread->profile->xs[FBLE_ROOT_BLOCK_ID]->block.count++;
   return thread;
 }
 

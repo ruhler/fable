@@ -660,7 +660,7 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
           child->aborted = false;
           child->children.size = 0;
           child->children.xs = NULL;
-          child->profile = FbleNewProfileThread(arena, profile);
+          child->profile = FbleNewProfileThread(arena, thread->profile, profile);
           FbleVectorAppend(arena, thread->children, child);
         }
         break;
@@ -875,7 +875,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, Fbl
     .stack = PushFrame(arena, NULL, statics, code, &final_result, NULL),
     .children = {0, NULL},
     .aborted = false,
-    .profile = FbleNewProfileThread(arena, profile),
+    .profile = FbleNewProfileThread(arena, NULL, profile),
   };
 
   // Run the main thread repeatedly until it no longer makes any forward

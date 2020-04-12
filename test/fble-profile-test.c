@@ -38,7 +38,7 @@ static size_t AutoExitMaxMem(size_t n)
   // 0 -> 1 -> 1 -> ... -> 1
   FbleArena* arena = FbleNewArena();
   FbleProfile* profile = FbleNewProfile(arena, 2);
-  FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
+  FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
   FbleProfileEnterBlock(arena, thread, 1);
   FbleProfileSample(arena, thread, 10);
 
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
     //             -> 4
     //        -> 3
     FbleProfile* profile = FbleNewProfile(arena, 5);
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
     //        -> 6
     FbleAssertEmptyArena(arena);
     FbleProfile* profile = FbleNewProfile(arena, 7);
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
     // 0 -> 1 -> 2 -> 2 -> 2 -> 3
     FbleAssertEmptyArena(arena);
     FbleProfile* profile = FbleNewProfile(arena, 4);
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
@@ -327,7 +327,7 @@ int main(int argc, char* argv[])
     // 0 -> 1 => 2 => 2 => 2 => 3
     FbleAssertEmptyArena(arena);
     FbleProfile* profile = FbleNewProfile(arena, 4);
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileAutoExitBlock(arena, thread);  // 1
@@ -395,7 +395,7 @@ int main(int argc, char* argv[])
     // 0 -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
     FbleAssertEmptyArena(arena);
     FbleProfile* profile = FbleNewProfile(arena, 5);
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
@@ -483,8 +483,8 @@ int main(int argc, char* argv[])
     // b: 0 -> 1 -> 2
     FbleAssertEmptyArena(arena);
     FbleProfile* profile = FbleNewProfile(arena, 3);
-    FbleProfileThread* a = FbleNewProfileThread(arena, profile);
-    FbleProfileThread* b = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* a = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileThread* b = FbleNewProfileThread(arena, NULL, profile);
 
     FbleProfileEnterBlock(arena, a, 1);
     FbleProfileSample(arena, a, 1);
@@ -532,7 +532,66 @@ int main(int argc, char* argv[])
     FbleAssertEmptyArena(arena);
   }
 
+  {
+    // Test forking of threads.
+    // parent: 0 -> 1 -> 2
+    // child:       \--> 3
+    FbleAssertEmptyArena(arena);
+    FbleProfile* profile = FbleNewProfile(arena, 4);
+
+    FbleProfileThread* parent = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileEnterBlock(arena, parent, 1);
+    FbleProfileSample(arena, parent, 1);
+
+    FbleProfileThread* child = FbleNewProfileThread(arena, parent, profile);
+
+    FbleProfileEnterBlock(arena, parent, 2);
+    FbleProfileSample(arena, parent, 2);
+
+    FbleProfileEnterBlock(arena, child, 3);
+    FbleProfileSample(arena, child, 30);
+
+    FbleProfileExitBlock(arena, parent); // 2
+    FbleProfileExitBlock(arena, parent); // 1
+    FbleFreeProfileThread(arena, parent);
+
+    FbleProfileExitBlock(arena, child); // 3
+    FbleFreeProfileThread(arena, child);
+
+    ASSERT(profile->size == 4);
+    ASSERT(profile->xs[0]->block.id == 0);
+    ASSERT(profile->xs[0]->block.count == 1);
+    ASSERT(profile->xs[0]->block.time[FBLE_PROFILE_TIME_CLOCK] == 33);
+    ASSERT(profile->xs[0]->callees.size == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->id == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[0]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 33);
+
+    ASSERT(profile->xs[1]->block.id == 1);
+    ASSERT(profile->xs[1]->block.count == 1);
+    ASSERT(profile->xs[1]->block.time[FBLE_PROFILE_TIME_CLOCK] == 33);
+    ASSERT(profile->xs[1]->callees.size == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->id == 2);
+    ASSERT(profile->xs[1]->callees.xs[0]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[0]->time[FBLE_PROFILE_TIME_CLOCK] == 2);
+    ASSERT(profile->xs[1]->callees.xs[1]->id == 3);
+    ASSERT(profile->xs[1]->callees.xs[1]->count == 1);
+    ASSERT(profile->xs[1]->callees.xs[1]->time[FBLE_PROFILE_TIME_CLOCK] == 30);
+
+    ASSERT(profile->xs[2]->block.id == 2);
+    ASSERT(profile->xs[2]->block.count == 1);
+    ASSERT(profile->xs[2]->block.time[FBLE_PROFILE_TIME_CLOCK] == 2);
+    ASSERT(profile->xs[2]->callees.size == 0);
+
+    ASSERT(profile->xs[3]->block.id == 3);
+    ASSERT(profile->xs[3]->block.count == 1);
+    ASSERT(profile->xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
+    ASSERT(profile->xs[3]->callees.size == 0);
+
+    FbleFreeProfile(arena, profile);
+    FbleAssertEmptyArena(arena);
+  }
+
   FbleFreeArena(arena);
   return sTestsFailed ? 1 : 0;
 }
-
