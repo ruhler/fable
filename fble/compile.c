@@ -90,24 +90,6 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Fble
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 
-// BlockFrame --
-//   Represents a profiling block.
-//
-// Fields:
-//   id - the id of the block.
-//   time - pointer to the static shallow profile time for the block.
-typedef struct {
-  size_t id;
-  size_t* time;
-} BlockFrame;
-
-// BlockFrameV --
-//   A stack of block frames.
-typedef struct {
-  size_t size;
-  BlockFrame* xs;
-} BlockFrameV;
-
 // Blocks --
 //   A stack of block frames tracking the current block for profiling.
 //
@@ -116,14 +98,13 @@ typedef struct {
 //   blocks - Mapping from block id to block name and location, which is an
 //            output of compilation.
 typedef struct {
-  BlockFrameV stack;
+  FbleBlockIdV stack;
   FbleNameV blocks;
 } Blocks;
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
 static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
 static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope);
-static void AddBlockTime(Blocks* blocks, size_t time);
 
 // Compiled --
 //   A pair of type and local returned from compilation.
@@ -480,7 +461,7 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   const char* curr = NULL;
   size_t currlen = 0;
   if (blocks->stack.size > 0) {
-    size_t curr_id = blocks->stack.xs[blocks->stack.size-1].id;
+    size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
     curr = blocks->blocks.xs[curr_id].name;
     currlen = strlen(curr);
   }
@@ -490,12 +471,9 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
   enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
   enter->block = id;
-  enter->time = 0;
   AppendInstr(arena, scope, &enter->_base);
 
-  BlockFrame* frame = FbleVectorExtend(arena, blocks->stack);
-  frame->id = id;
-  frame->time = &enter->time;
+  FbleVectorAppend(arena, blocks->stack, id);
 
   // Append ".name" to the current block name to figure out the new block
   // name.
@@ -540,7 +518,7 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 {
   const char* curr = "";
   if (blocks->stack.size > 0) {
-    size_t curr_id = blocks->stack.xs[blocks->stack.size-1].id;
+    size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
     curr = blocks->blocks.xs[curr_id].name;
   }
 
@@ -549,12 +527,9 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
   FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
   enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
   enter->block = id;
-  enter->time = 0;
   AppendInstr(arena, scope, &enter->_base);
 
-  BlockFrame* frame = FbleVectorExtend(arena, blocks->stack);
-  frame->id = id;
-  frame->time = &enter->time;
+  FbleVectorAppend(arena, blocks->stack, id);
 
   // Append "!" to the current block name to figure out the new block name.
   char* str = FbleArrayAlloc(arena, char, strlen(curr) + 2);
@@ -591,25 +566,6 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope)
     FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileExitBlockInstr);
     exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
     AppendInstr(arena, scope, &exit_instr->_base);
-  }
-}
-
-// AddBlockTime --
-//   Adds profile time to the current block frame.
-//
-// Inputs:
-//   blocks - the blocks stack.
-//   time - the amount of time to add to the current block frame.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Adds 'time' profile time to the current block frame.
-static void AddBlockTime(Blocks* blocks, size_t time)
-{
-  if (blocks->stack.size > 0) {
-    *(blocks->stack.xs[blocks->stack.size-1].time) += time;
   }
 }
 
@@ -773,8 +729,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_FUNC_TYPE_EXPR:
     case FBLE_PROC_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR: {
-      AddBlockTime(blocks, 1);
-
       FbleType* type = CompileType(heap, scope, expr);
       if (type == NULL) {
         return COMPILE_FAILED;
@@ -806,7 +760,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       bool error = (misc.type == NULL);
 
       size_t argc = misc_apply_expr->args.size;
-      AddBlockTime(blocks, 1 + argc);
       Compiled args[argc];
       for (size_t i = 0; i < argc; ++i) {
         args[i] = CompileExpr(heap, blocks, false, scope, misc_apply_expr->args.xs[i]);
@@ -965,8 +918,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
-      AddBlockTime(blocks, 1);
-
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
       FbleStructType* struct_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
       FbleVectorInit(arena, struct_type->fields);
@@ -1031,7 +982,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_UNION_VALUE_EXPR: {
-      AddBlockTime(blocks, 1);
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       FbleType* type = CompileType(heap, scope, union_value_expr->type);
       if (type == NULL) {
@@ -1101,10 +1051,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_MISC_ACCESS_EXPR: {
-      // TODO: Should time be O(lg(N)) instead of O(1), where N is the number
-      // of fields in the union/struct?
-      AddBlockTime(blocks, 1);
-
       FbleMiscAccessExpr* access_expr = (FbleMiscAccessExpr*)expr;
 
       Compiled obj = CompileExpr(heap, blocks, false, scope, access_expr->object);
@@ -1162,10 +1108,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_UNION_SELECT_EXPR: {
-      // TODO: Should time be O(lg(N)) instead of O(1), where N is the number
-      // of fields in the union/struct?
-      AddBlockTime(blocks, 1);
-
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
       Compiled condition = CompileExpr(heap, blocks, false, scope, select_expr->condition);
@@ -1251,7 +1193,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
               select_expr->choices.xs[choice].name,
               select_expr->choices.xs[choice].expr->loc,
               scope);
-          AddBlockTime(blocks, 1);
           Compiled result = CompileExpr(heap, blocks, exit, scope, select_expr->choices.xs[choice].expr);
 
           if (result.type == NULL) {
@@ -1407,10 +1348,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FreeScope(heap, &func_scope);
 
-      // TODO: Is it right for time to be proportional to number of captured
-      // variables?
-      AddBlockTime(blocks, instr->code->statics);
-
       Compiled c;
       c.type = type;
       c.local = NewLocal(arena, scope);
@@ -1421,7 +1358,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_EVAL_EXPR: {
-      AddBlockTime(blocks, 1);
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
 
       FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
@@ -1459,7 +1395,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_LINK_EXPR: {
-      AddBlockTime(blocks, 1);
       FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
       if (FbleNamesEqual(&link_expr->get, &link_expr->put)) {
         ReportError(arena, &link_expr->put.loc,
@@ -1560,8 +1495,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_EXEC_EXPR: {
       FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
       bool error = false;
-
-      AddBlockTime(blocks, 1 + exec_expr->bindings.size);
 
       // Evaluate the types of the bindings and set up the new vars.
       FbleType* types[exec_expr->bindings.size];
@@ -1694,7 +1627,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_VAR_EXPR: {
-      AddBlockTime(blocks, 1);
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
       Var* var = GetVar(heap, scope, var_expr->var, false);
       if (var == NULL) {
@@ -1714,7 +1646,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_LET_EXPR: {
       FbleLetExpr* let_expr = (FbleLetExpr*)expr;
       bool error = false;
-      AddBlockTime(blocks, 1 + let_expr->bindings.size);
 
       // Evaluate the types of the bindings and set up the new vars.
       FbleType* types[let_expr->bindings.size];
@@ -1857,7 +1788,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_MODULE_REF_EXPR: {
-      AddBlockTime(blocks, 1);
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
       Var* var = GetVar(heap, scope, module_ref_expr->ref.resolved, false);
@@ -1897,7 +1827,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       // TODO: It's a little silly that we are pushing an empty type value
       // here. Oh well. Maybe in the future we'll optimize those away or
       // add support for non-type poly args too.
-      AddBlockTime(blocks, 1);
 
       Local* local = NewLocal(arena, scope);
       FbleTypeInstr* type_instr = FbleAlloc(arena, FbleTypeInstr);
@@ -2491,8 +2420,6 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
 //   Prints a message to stderr if the program fails to compile.
 static bool CompileProgram(FbleTypeHeap* heap, Blocks* blocks, Scope* scope, FbleProgram* prgm)
 {
-  AddBlockTime(blocks, 1 + prgm->modules.size);
-
   FbleArena* arena = heap->arena;
   for (size_t i = 0; i < prgm->modules.size; ++i) {
     EnterBlock(arena, blocks, prgm->modules.xs[i].name, prgm->modules.xs[i].value->loc, scope);

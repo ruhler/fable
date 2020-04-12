@@ -231,7 +231,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
         case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
           FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
           FbleName* name = profile_blocks->xs + enter->block;
-          fprintf(fout, "enter [%04x] for %zi; ", enter->block, enter->time);
+          fprintf(fout, "enter [%04x]; ", enter->block);
           fprintf(fout, "// %s[%04x]: %s:%d:%d\n",
               name->name, enter->block,
               name->loc.source, name->loc.line, name->loc.col);

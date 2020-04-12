@@ -951,7 +951,6 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, Fble
   FbleProfileEnterBlockInstr enter = {
     ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
     .block = FBLE_ROOT_BLOCK_ID,
-    .time = 1,
   };
 
   FbleInstr* instrs[1 + args.size];
