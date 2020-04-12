@@ -435,6 +435,8 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     thread->stack = stack;
   }
 
+  // TODO: This is wrong if call is running on some other thread but not on
+  // this thread. Test and fix that somehow.
   if (!call->running) {
     CallList* c = FbleAlloc(arena, CallList);
     c->caller = caller;
@@ -481,16 +483,16 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
   assert(thread->stack != NULL);
-  while (thread->stack->exit_calls != NULL) {
-    CallList* c = thread->stack->exit_calls;
-    FbleCallData* call = c->call;
+  CallList* c = thread->stack->exit_calls;
+  while (c != NULL) {
     if (c->new_block) {
       thread->profile->xs[c->callee]->block.running = false;
     }
-    call->running = false;
+    c->call->running = false;
 
-    thread->stack->exit_calls = c->tail;
+    CallList* tail = c->tail;
     FbleFree(arena, c);
+    c = tail;
   }
 
   ProfileStack* stack = thread->stack;
