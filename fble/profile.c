@@ -5,7 +5,7 @@
 #include <inttypes.h> // for PRIu64
 #include <math.h>     // for sqrt
 #include <stdbool.h>  // for bool
-#include <string.h>   // for memset
+#include <string.h>   // for memset, memcpy
 #include <sys/time.h> // for gettimeofday
 
 #include "fble-alloc.h"
@@ -100,12 +100,10 @@ typedef struct {
 //   caller - the caller for this particular call
 //   callee - the callee for this particular call
 //   call - cached result of GetCallData(caller, callee)
-//   new_block - false if this block was called recursively from itself.
 typedef struct {
   FbleBlockId caller;
   FbleBlockId callee;
   FbleCallData* call;
-  bool new_block;
 } Sample;
 
 // SampleV --
@@ -118,26 +116,41 @@ typedef struct {
   Sample* xs;
 } SampleV;
 
+// Entry --
+//   Table entry used in a hash map from (caller,callee) pair.
+//
+// Fields:
+//   sample - the index into the sample stack where we most recently stored a
+//            call from caller to callee.
+//   caller - the caller in the (caller, callee) pair.
+//   data - cached FbleCallData for caller to callee. NULL to indicate invalid
+//          entry.
 typedef struct {
   size_t sample;
+  size_t caller;
   FbleCallData* data;
-} TableEntry;
+} Entry;
 
+// Table --
+//   Hash map whose values are Entrys.
+typedef struct {
+  size_t capacity;
+  size_t size;
+  Entry* xs;
+} Table;
 
 // FbleProfileThread -- see documentation in fble-profile.h
 struct FbleProfileThread {
-  CallV calls;
-  SampleV sample;
-
-  // Set of currently running calls.
-  // * running[x] is non-null if block x is running.
-  // * Bit caller % 64 of running[callee][caller / 64] is set if a call from
-  //   caller to callee is running.
-  uint64_t** running;
-
+  FbleProfile* profile;
   bool auto_exit;
 
-  FbleProfile* profile;
+  // Hash map from (caller,callee) to (sample, data).
+  // Where sample is the index into sample.xs where we last had a sample call
+  // from caller to callee.
+  Table table;
+
+  CallV calls;
+  SampleV sample;
 };
 
 typedef enum {
@@ -152,6 +165,7 @@ static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id);
 static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call);
 
 static uint64_t GetTimeMillis();
+static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, size_t blockc);
 
 // GetCallData --
 //   Get the call data associated with the given caller/callee pair in the
@@ -372,6 +386,33 @@ static uint64_t GetTimeMillis()
   return time;
 }
 
+// TableEntry --
+//   Look up the entry for the given (caller,callee) pair.
+//
+// Inputs:
+//   table - the table to look up in.
+//   caller - the caller to look up.
+//   callee - the callee to look up.
+//   blockc - the number of blocks in the profile, for the purposes of
+//            computing a hash.
+//
+// Results:
+//   The entry that contains the (caller, callee) pair, or the entry where
+//   the (caller,callee) pair should be inserted into the table if it is not
+//   in the table.
+static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, size_t blockc)
+{
+  size_t hash = caller * blockc + callee;
+  size_t bucket = hash % table->capacity;
+  Entry* entry = table->xs + bucket;
+  while (entry->data != NULL
+      && (entry->caller != caller || entry->data->id != callee)) {
+    bucket = (bucket + 1) % table->capacity;
+    entry = table->xs + bucket;
+  }
+  return entry;
+}
+
 // FbleNewProfile -- see documentation in fble-profile.h
 FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc, size_t period)
 {
@@ -414,16 +455,18 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* parent, FbleProfile* profile)
 {
   FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
-  thread->auto_exit = false;
   thread->profile = profile;
+  thread->auto_exit = false;
+
   FbleVectorInit(arena, thread->calls);
   FbleVectorInit(arena, thread->sample);
 
-  size_t n = profile->blocks.size;
-  thread->running = FbleArrayAlloc(arena, uint64_t*, n);
-  memset(thread->running, 0, n * sizeof(uint64_t*));
-
   if (parent == NULL) {
+    thread->table.capacity = 10;
+    thread->table.size = 0;
+    thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
+    memset(thread->table.xs, 0, thread->table.capacity * sizeof(Entry));
+
     Call call = { .id = FBLE_ROOT_BLOCK_ID, .exit = 0 };
     FbleVectorAppend(arena, thread->calls, call);
 
@@ -431,21 +474,17 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
   } else {
     assert(parent->profile == profile);
 
-    // TODO: We could make these copies more efficient if they are a
-    // performance issue, by pre-allocated the array of the vector. Just make
-    // sure to preallocate it to a power of two (or add a library function to
-    // fble-alloc.h to take care of this for us).
+    thread->table.capacity = parent->table.capacity;
+    thread->table.size = parent->table.size;
+    thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
+    memcpy(thread->table.xs, parent->table.xs, thread->table.capacity * sizeof(Entry));
+
+    // TODO: We could make these copies more efficient with memcpy. We just
+    // need to figure out the right power of two to allocate for them.
     for (size_t i = 0; i < parent->calls.size; ++i) {
       FbleVectorAppend(arena, thread->calls, parent->calls.xs[i]);
     }
     for (size_t i = 0; i < parent->sample.size; ++i) {
-      Sample s = parent->sample.xs[i];
-      if (thread->running[s.callee] == NULL) {
-        thread->running[s.callee] = FbleArrayAlloc(arena, uint64_t, (n/64) + 1);
-        memset(thread->running[s.callee], 0, ((n/64)+1) * sizeof(uint64_t));
-      }
-      thread->running[s.callee][s.caller / 64] |= (1 << (s.caller % 64));
-
       FbleVectorAppend(arena, thread->sample, parent->sample.xs[i]);
     }
   }
@@ -455,14 +494,7 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
 // FbleFreeProfileThread -- see documentation in fble-profile.h
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 {
-  for (size_t i = 0; i < thread->sample.size; ++i) {
-    Sample s = thread->sample.xs[i];
-    if (s.new_block) {
-      FbleFree(arena, thread->running[s.callee]);
-      thread->running[s.callee] = NULL;
-    }
-  }
-  FbleFree(arena, thread->running);
+  FbleFree(arena, thread->table.xs);
   FbleFree(arena, thread->calls.xs);
   FbleFree(arena, thread->sample.xs);
   FbleFree(arena, thread);
@@ -477,8 +509,24 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   FbleBlockId caller = call->id;
   FbleBlockId callee = block;
   thread->profile->blocks.xs[callee]->block.count++;
-  FbleCallData* data = GetCallData(arena, thread->profile, caller, callee);
-  data->count++;
+
+  // Lookup the entry for this (caller,callee) in our table.
+  Entry* entry = TableEntry(&thread->table, caller, callee, thread->profile->blocks.size);
+
+  bool resize = false;
+  if (entry->data == NULL) {
+    // Entry not found. Insert it now.
+    entry->sample = thread->sample.size;
+    entry->caller = caller;
+    entry->data = GetCallData(arena, thread->profile, caller, callee);
+    thread->table.size++;
+
+    // Check now if we should resize after this insertion. We won't resize
+    // until after we're done updating the entry though.
+    resize = (3 * thread->table.size > thread->table.capacity);
+  }
+
+  entry->data->count++;
 
   if (!thread->auto_exit) {
     call = FbleVectorExtend(arena, thread->calls);
@@ -487,25 +535,38 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   call->id = callee;
   thread->auto_exit = false;
 
-  bool block_running = true;
-  if (thread->running[callee] == NULL) {
-    block_running = false;
-    size_t n = thread->profile->blocks.size;
-    thread->running[callee] = FbleArrayAlloc(arena, uint64_t, (n/64) + 1);
-    memset(thread->running[callee], 0, ((n/64)+1) * sizeof(uint64_t));
+  // If the call was already running, we will find it on the sample stack
+  // where our hash table says it should be.
+  bool call_running = 
+    entry->sample < thread->sample.size
+    && entry->data == thread->sample.xs[entry->sample].call;
+
+  if (!call_running) {
+    entry->sample = thread->sample.size;
+
+    Sample* sample = FbleVectorExtend(arena, thread->sample);
+    sample->caller = caller;
+    sample->callee = callee;
+    sample->call = entry->data;
+    call->exit++;
   }
 
-  uint64_t mask = 1 << (caller % 64);
-  bool call_running = (thread->running[callee][caller / 64] & mask) != 0;
-  if (!call_running) {
-    thread->running[callee][caller / 64] |= mask;
+  if (resize) {
+    Table new_table;
+    new_table.capacity = 2 * thread->table.capacity - 1;
+    new_table.size = thread->table.size;
+    new_table.xs = FbleArrayAlloc(arena, Entry, new_table.capacity);
+    memset(new_table.xs, 0, new_table.capacity * sizeof(Entry));
 
-    Sample* c = FbleVectorExtend(arena, thread->sample);
-    c->caller = caller;
-    c->callee = callee;
-    c->call = data;
-    c->new_block = !block_running;
-    call->exit++;
+    for (size_t i = 0; i < thread->table.capacity; ++i) {
+      Entry e = thread->table.xs[i];
+      if (e.data != NULL) {
+        *TableEntry(&new_table, e.caller, e.data->id, thread->profile->blocks.size) = e;
+      }
+    }
+
+    FbleFree(arena, thread->table.xs);
+    thread->table = new_table;
   }
 }
 
@@ -533,12 +594,12 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
   bool block_seen[thread->profile->blocks.size];
   memset(block_seen, 0, thread->profile->blocks.size * sizeof(bool));
   for (size_t i = 0; i < thread->sample.size; ++i) {
-    Sample* c = thread->sample.xs + i;
-    FbleCallData* data = c->call;
-    if (!block_seen[c->callee]) {
-      block_seen[c->callee] = true;
-      thread->profile->blocks.xs[c->callee]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
-      thread->profile->blocks.xs[c->callee]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
+    Sample* sample = thread->sample.xs + i;
+    FbleCallData* data = sample->call;
+    if (!block_seen[sample->callee]) {
+      block_seen[sample->callee] = true;
+      thread->profile->blocks.xs[sample->callee]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
+      thread->profile->blocks.xs[sample->callee]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
     }
     data->time[FBLE_PROFILE_WALL_CLOCK] += wall;
     data->time[FBLE_PROFILE_TIME_CLOCK] += time;
@@ -553,18 +614,7 @@ void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
   assert(thread->calls.size > 0);
   thread->calls.size--;
-  size_t exit = thread->calls.xs[thread->calls.size].exit;
-  thread->sample.size -= exit;
-
-  for (size_t i = 0; i < exit; ++i) {
-    Sample s = thread->sample.xs[thread->sample.size + exit - i - 1];
-    if (s.new_block) {
-      FbleFree(arena, thread->running[s.callee]);
-      thread->running[s.callee] = NULL;
-    } else if (thread->running[s.callee] != NULL) {
-      thread->running[s.callee][s.caller / 64] &= ~(1 << (s.caller % 64));
-    }
-  }
+  thread->sample.size -= thread->calls.xs[thread->calls.size].exit;
 }
 
 // FbleProfileAutoExitBlock -- see documentation in fble-profile.h
