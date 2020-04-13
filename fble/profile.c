@@ -458,14 +458,14 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
   thread->profile = profile;
   thread->auto_exit = false;
 
-  FbleVectorInit(arena, thread->calls);
-  FbleVectorInit(arena, thread->sample);
-
   if (parent == NULL) {
     thread->table.capacity = 10;
     thread->table.size = 0;
     thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
     memset(thread->table.xs, 0, thread->table.capacity * sizeof(Entry));
+
+    FbleVectorInit(arena, thread->calls);
+    FbleVectorInit(arena, thread->sample);
 
     Call call = { .id = FBLE_ROOT_BLOCK_ID, .exit = 0 };
     FbleVectorAppend(arena, thread->calls, call);
@@ -479,14 +479,17 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
     thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
     memcpy(thread->table.xs, parent->table.xs, thread->table.capacity * sizeof(Entry));
 
-    // TODO: We could make these copies more efficient with memcpy. We just
-    // need to figure out the right power of two to allocate for them.
-    for (size_t i = 0; i < parent->calls.size; ++i) {
-      FbleVectorAppend(arena, thread->calls, parent->calls.xs[i]);
-    }
-    for (size_t i = 0; i < parent->sample.size; ++i) {
-      FbleVectorAppend(arena, thread->sample, parent->sample.xs[i]);
-    }
+    // Copy the calls and sample vectors directly.
+    // Allocate new vectors twice the size of the previous to ensure the
+    // underlying allocation is at least as large as the power of two greater
+    // than the size.
+    thread->calls.size = parent->calls.size;
+    thread->calls.xs = FbleArrayAlloc(arena, Call, 2 * parent->calls.size);
+    memcpy(thread->calls.xs, parent->calls.xs, parent->calls.size * sizeof(Call));
+
+    thread->sample.size = parent->sample.size;
+    thread->sample.xs = FbleArrayAlloc(arena, Sample, 2 * parent->sample.size);
+    memcpy(thread->sample.xs, parent->sample.xs, parent->sample.size * sizeof(Sample));
   }
   return thread;
 }
