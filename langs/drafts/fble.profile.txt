@@ -108,3 +108,37 @@ we can make it much more efficient to enter and exit a profile block?
 
 Oh, an important point about the sampling profiler: we loose accurate
 information about the number of times a block is called... or do we?
+
+----
+
+The sampling profiler is implemented now. After a whole bunch of effort, we
+ended up saving maybe 30 seconds on the 4 minute benchmark time. The trouble
+is we have to do book keeping for every call to track the calls made. There
+are two reasons for this:
+* If we don't track calls specially for profiling, we will not see the elided
+  tail recursive calls, which will mess up the profile.
+* If we don't track calls specially for profiling, we only get blocks at the
+  frame level. We can't track sub-blocks of a frame.
+
+Perhaps the real solution is to go higher level still: significantly reduce
+the number of block transitions? Maybe by getting rid of all the useless
+blocks in the profile somehow?
+
+I don't know. Anyway, I think I'm done with this profiling challenge for now.
+30 seconds saved, a few profiling bugs fixed, a better understanding of the
+problem, cleaner code, not having to model runtime in the compiler, having
+profile time be identical to number of instructions executed. All seems like a
+worthwhile outcome.
+
+Just some closing stats:
+
+3m35 seconds to run fble bench - sampling every 997 instructions.
+3m05 seconds if we remove all calls to enter/exit block.
+2m48 seconds if we up the sampling period to practically infinity.
+2m24 seconds if we remove profile ticking.
+
+Perhaps a different option is to tell the compiler not to emit enter/exit
+blocks, and turn the profiling sample rate way up? I'm not sure how I feel
+about that philosophically. It would be nice if you could profile without
+changing the generated code.
+
