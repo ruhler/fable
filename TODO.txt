@@ -1,5 +1,8 @@
 
-* [profile] Label blocks in exec process bindings by binding name.
+* [profile] don't introduce an extra ! for bodies of expressions.
+ - Maybe in general we want to support a CompileProcExpr that evaluates and
+   compiles the expression in place. That would fix the extra !, save some
+   instructions, and generally make some more sense.
 
 * [profile] Optimize profiling.
  - Idea: if forking is expensive, double check we avoid forking the profile

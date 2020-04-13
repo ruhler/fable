@@ -1509,7 +1509,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       Scope body_scope;
       InitScope(arena, &body_scope, instr->code, &instr->scope, scope);
-      EnterBodyBlock(arena, blocks, exec_expr->body->loc, &body_scope);
+      EnterBodyBlock(arena, blocks, expr->loc, &body_scope);
 
       Local* args[exec_expr->bindings.size];
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
@@ -1519,7 +1519,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
         Scope binding_scope;
         InitScope(arena, &binding_scope, binstr->code, &binstr->scope, &body_scope);
-        EnterBodyBlock(arena, blocks, exec_expr->bindings.xs[i].expr->loc, &binding_scope);
+        EnterBlock(arena, blocks, exec_expr->bindings.xs[i].name, exec_expr->bindings.xs[i].expr->loc, &binding_scope);
 
         Compiled binding =  CompileExpr(heap, blocks, false, &binding_scope, exec_expr->bindings.xs[i].expr);
         if (binding.type == NULL) {
@@ -2454,8 +2454,8 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   // The entry associated with FBLE_ROOT_BLOCK_ID.
   FbleName entry_name = {
     .name = "",
-    .loc = program->main->loc,
-    .space = FBLE_NORMAL_NAME_SPACE
+    .loc = { .source = __FILE__, .line = __LINE__, .col = 0, },
+    .space = FBLE_NORMAL_NAME_SPACE,
   };
 
   Scope scope;
