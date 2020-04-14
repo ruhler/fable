@@ -30,6 +30,7 @@ static void FillPath(SDL_Window* window, size_t n, SDL_Point* points, Uint32 col
 static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
+static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
 int main(int argc, char* argv[]);
@@ -281,6 +282,41 @@ static FbleValue* MakeInt(FbleValueHeap* heap, int x)
   return FbleNewUnionValue(heap, 2, MakeIntP(heap, x));
 }
 
+// MakeKey -- 
+//   Make an FbleValue of type /App%.Key@ for the given scancode.
+//
+// Inputs:
+//   heap - the heap to use for allocations.
+//   scancode - the scan code.
+//
+// Results:
+//   An FbleValue for the scancode, or NULL if there is corresponding Key@ for
+//   that scan code.
+//
+// Side effects:
+//   Allocates a value that should be freed with FbleValueRelease when no
+//   longer needed.
+static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
+{
+  int k = -1;
+  switch (scancode) {
+    case SDL_SCANCODE_H: k = 0; break;
+    case SDL_SCANCODE_J: k = 1; break;
+    case SDL_SCANCODE_K: k = 2; break;
+    case SDL_SCANCODE_L: k = 3; break;
+    case SDL_SCANCODE_Q: k = 4; break;
+    case SDL_SCANCODE_LEFT: k = 5; break;
+    case SDL_SCANCODE_RIGHT: k = 6; break;
+    default: break;
+  }
+
+  if (k >= 0) {
+    FbleValueV args = { .size = 0, .xs = NULL };
+    return FbleNewUnionValue(heap, k, FbleNewStructValue(heap, args));
+  }
+  return NULL;
+}
+
 // IO --
 //   io function for external ports.
 //   See the corresponding documentation in fble.h.
@@ -325,38 +361,18 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       SDL_WaitEvent(&event);
       switch (event.type) {
         case SDL_KEYDOWN: {
-          int k = -1;
-          switch (event.key.keysym.scancode) {
-            case SDL_SCANCODE_H: k = 0; break;
-            case SDL_SCANCODE_J: k = 1; break;
-            case SDL_SCANCODE_K: k = 2; break;
-            case SDL_SCANCODE_L: k = 3; break;
-            case SDL_SCANCODE_Q: k = 4; break;
-            default: break;
-          }
-
-          if (k >= 0) {
-            FbleValueV args = { .size = 0, .xs = NULL };
-            io->ports.xs[0] = FbleNewUnionValue(heap, 1, FbleNewUnionValue(heap, k, FbleNewStructValue(heap, args)));
+          FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
+          if (key != NULL) {
+            io->ports.xs[0] = FbleNewUnionValue(heap, 1, key);
             change = true;
           }
           break;
         }
 
         case SDL_KEYUP: {
-          int k = -1;
-          switch (event.key.keysym.scancode) {
-            case SDL_SCANCODE_H: k = 0; break;
-            case SDL_SCANCODE_J: k = 1; break;
-            case SDL_SCANCODE_K: k = 2; break;
-            case SDL_SCANCODE_L: k = 3; break;
-            case SDL_SCANCODE_Q: k = 4; break;
-            default: break;
-          }
-
-          if (k >= 0) {
-            FbleValueV args = { .size = 0, .xs = NULL };
-            io->ports.xs[0] = FbleNewUnionValue(heap, 2, FbleNewUnionValue(heap, k, FbleNewStructValue(heap, args)));
+          FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
+          if (key != NULL) {
+            io->ports.xs[0] = FbleNewUnionValue(heap, 2, key);
             change = true;
           }
           break;

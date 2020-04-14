@@ -285,11 +285,11 @@ Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   ?(e;
     tick: $(Input@(tick: Unit)),
     key_down: ?(e.key_down;
-      H: $(Input@(dir: Dir@(left: Unit))),
-      J: $(Input@(dir: Dir@(down: Unit))),
-      K: $(Input@(dir: Dir@(up: Unit))),
-      L: $(Input@(dir: Dir@(right: Unit))),
-      Q: $(Input@(quit: Unit)),
+      h: $(Input@(dir: Dir@(left: Unit))),
+      j: $(Input@(dir: Dir@(down: Unit))),
+      k: $(Input@(dir: Dir@(up: Unit))),
+      l: $(Input@(dir: Dir@(right: Unit))),
+      q: $(Input@(quit: Unit)),
       : GetInput(in)),
     key_up: GetInput(in)
   );

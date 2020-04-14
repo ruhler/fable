@@ -36,10 +36,10 @@
   ?(e;
       tick: $(Input@(tick: Unit)),
       key: ?(e.key_down;
-        H: $(Input@(left: Unit)),
-        L: $(Input@(right: Unit)),
-        Q: $(Input@(quit: Unit)),
-         : GetInput(in)));
+        q: $(Input@(quit: Unit)),
+        left: $(Input@(left: Unit)),
+        right: $(Input@(right: Unit)),
+        : GetInput(in)));
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {

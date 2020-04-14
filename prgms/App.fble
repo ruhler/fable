@@ -8,7 +8,11 @@
 
 @ Unit@ = /Unit%.Unit@;
 
-@ Key@ = +(Unit@ H, Unit@ J, Unit@ K, Unit@ L, Unit@ Q);
+@ Key@ = +(
+  Unit@ h, Unit@ j, Unit@ k, Unit@ l,
+  Unit@ q,
+  Unit@ left, Unit@ right
+);
 @ Event@ = +(Unit@ tick, Key@ key_down, Key@ key_up);
 
 @ Effect@ = +(

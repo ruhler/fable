@@ -1282,6 +1282,7 @@ Notes:
   Some particular disadvantages we face, compared to, say, c:
   - no primitive types or operations
   - automatic reference vs. value
+  - immutable data types
   - automatic memory management
   - closures that capture variables from local scope
 
