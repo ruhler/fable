@@ -1,8 +1,18 @@
 
+@ Drawing@ = /Drawing%.Drawing@;
+% Translate = /Drawing%.Translate;
+
 @ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+
+% Lt = /Int/Int/Eq%.Lt;
+% Gt = /Int/Int/Eq%.Gt;
 
 % I = /Int/Int/Lit%.I;
 % D = /Int/Int/Lit%.D;
+
+% Graphics = /Invaders/Graphics%;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -14,10 +24,9 @@ Int@ ShipY = I(D|22);
 # The velocity of the ship when it is moving, in pixels per tick.
 Int@ ShipV = I(D|2);
 
-Int@ ShipWidth = I(D|30);
-
+# The range of values allowed for the left edge of the ship.
 Int@ MinX = I(D|96);
-Int@ MaxX = I(D|514);   # Max value for the left edge of the ship.
+Int@ MaxX = I(D|514);
 
 @ Dir@ = +(
   Unit@ left,
@@ -26,7 +35,7 @@ Int@ MaxX = I(D|514);   # Max value for the left edge of the ship.
 );
 
 @ Status@ = +(
-  Dir@ alive,       # Which direction it is going.
+  Dir@ alive        # Which direction it is going.
 );
 
 @ Ship@ = *(
@@ -49,7 +58,7 @@ Ship@ Initial = @(
 
 # Advance the ship one unit of game time.
 (Ship@) { Ship@; } Tick = (Ship@ s) {
-  ?(s.dir;
+  ?(s.status.alive;
       left: {
         Int@ nx = Sub(s.x, ShipV);
         ?(Lt(nx, MinX);
@@ -59,7 +68,7 @@ Ship@ Initial = @(
       right: {
         Int@ nx = Add(s.x, ShipV);
         ?(Gt(nx, MaxX);
-           true: @(x: ManX, status: Status@(alive: Dir@(stopped: Unit))),
+           true: @(x: MaxX, status: Status@(alive: Dir@(stopped: Unit))),
            false: @(x: nx, status: s.status));
       },
       stopped: s);
@@ -70,4 +79,4 @@ Ship@ Initial = @(
   Translate(s.x, ShipY, Graphics.Ship);
 };
 
-@(Initial, Input, Tick, Draw);
+@(Ship@, Dir@, Initial, Input, Tick, Draw);

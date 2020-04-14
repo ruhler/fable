@@ -45,6 +45,8 @@
 
 * [api] Can fble-stdio check that the function has the right type?
 
+* [compile] Optimize the compiler
+  - Compiler times are started to get annoyingly long.
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * [compile] Is there a way to avoid emitting instructions after a return/exit instruction?

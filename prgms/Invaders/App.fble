@@ -3,11 +3,14 @@
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
-@ Drawing@ = /Drawing%.Drawing@;
+@ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
+% Over = /Drawing%.Over;
+% Rect = /Drawing%.Rect;
 % Transform = /Drawing%.Transform;
 
 @ Int@ = /Int/Int%.Int@;
+% 0 = /Int/Int%.0;
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
@@ -22,24 +25,43 @@
 % Unit = /Unit%.Unit;
 
 % Ship = /Invaders/Ship%;
+@ Dir@ = Ship.Dir@;
+@ Ship@ = Ship.Ship@;
 
 @ Input@ = +(
-  Unit@ tick;
-  Unit@ quit;
-  Unit@ left;
-  Unit@ right;
-  Unit@ stop;
+  Unit@ tick,
+  Unit@ quit,
+  Dir@ dir
 );
 
-(Get@<Event@>) { Input@; } GetInput = (Get@<Event@> in) {
+(Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
   ?(e;
       tick: $(Input@(tick: Unit)),
-      key: ?(e.key_down;
+      key_down: ?(e.key_down;
         q: $(Input@(quit: Unit)),
-        left: $(Input@(left: Unit)),
-        right: $(Input@(right: Unit)),
-        : GetInput(in)));
+        left: $(Input@(dir: Dir@(left: Unit))),
+        right: $(Input@(dir: Dir@(right: Unit))),
+        : GetInput(in)),
+      key_up: ?(e.key_up;
+        left: $(Input@(dir: Dir@(stopped: Unit))),
+        right: $(Input@(dir: Dir@(stopped: Unit))),
+        : GetInput(in))
+   );
+};
+
+(Get@<Input@>, Put@<Ship@>, Unit@!, Ship@) { Unit@!; }
+Run = (Get@<Input@> in, Put@<Ship@> draw, Unit@! tick, Ship@ ship) {
+  Input@ i := in;
+  ?(i;
+      tick: {
+        Unit@ _ := tick;
+        Ship@ nship = Ship.Tick(ship);
+        Unit@ _ := draw(nship);
+        Run(in, draw, tick, nship);
+      },
+      quit: $(Unit),
+      dir: Run(in, draw, tick, Ship.Input(ship, i.dir)));
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
@@ -54,14 +76,19 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
       y: Add(Mul(ay, p.y), by));
   };
 
-  Drawing@ screenshot = Screenshot;
-  Unit@ _ := out(Effect@(draw: Transform(f, screenshot)));
+  # The target is 60 FPS, or 16 millseconds per frame.
+  Int@ frame_period = I(D|16);
+  Unit@! tick = out(Effect@(tick: frame_period));
 
-  Unit@! WaitForKeyPress = {
-    Event@ e := in;
-    ?(e; tick: WaitForKeyPress, key: $(Unit));
+  (Ship@) { Unit@!; } draw = (Ship@ s) {
+    out(Effect@(draw: Over(
+      Rect(0, 0, width, height, Color@(black: Unit)),
+      Transform(f, Ship.Draw(s)))));
   };
-  WaitForKeyPress;
+
+  Ship@ ship = Ship.Initial;
+  Unit@ _ := out(Effect@(tick: I(D|0)));
+  Run(GetInput(in), draw, tick, ship); 
 };
 
 Main;
