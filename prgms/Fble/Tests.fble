@@ -17,7 +17,7 @@
 # Import to test compilation.
 % _ = /Fble/Bench%;
 % _ = /Fble/StackSmasher%;
-% _ = /Invaders/App%;
+% _ = /Invaders/ScreenshotApp%;
 % _ = /Snake%;
 % _ = /Stdio/Cat%;
 

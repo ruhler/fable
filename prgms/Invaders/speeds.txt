@@ -1,0 +1,49 @@
+
+Reference Implementation
+------------------------
+"px" means pixel
+"f" means step, aka loop count.
+"ms" milliseconds
+
+ship: 1px / 3f          (111 pixels per second)
+bullet: 1px / 1f        (333 pixels per second)
+ufo: 1px / 5f,          enters every 10000f   (66 pixels per second)
+alien: 4px / (55 * [2-8])f     aliens walk across the screen, not slide (3 - 12 pixels per second)
+bomb: 1px / 3f          (111 pixels per second)
+squiggle: 1px / 1f      (1000 pixels per second)
+alien dead: 100f
+ship death: 5ms * 300ms,
+cleared level: 1000ms
+screen filled: 1000ms
+ufo points displayed: 1000ms
+game over: 300ms per letter
+frame: 1f = 3ms 
+
+Proposed Implementation
+-----------------------
+Target 60 frames per second. Arbitrary, but seems achievable and I don't
+expect my monitor to display faster than that anyway.
+
+Round to integer frame time for ease of implementation: target 16 ms per frame.
+
+To get approximately what the reference implementation had, sticking to mostly
+integer pixels per frame:
+
+ship: 2px / f       (120 pixels per second)
+bullet: 6px / f     (360 pixels per second)
+ufo: 1 px / f       (60 pixels per second)
+alien: ???
+bomb: 2px / f       (120 pixels per second)
+squiggle: 16px / f  (960 pixels per second)
+
+Uh... can that be right?
+
+Well, yeah. You can't see the squiggle in practice any way, it's just a blur.
+The point is, try to have some integer number of pixels traveled per frame.
+The slowest thing being the ufo, which runs at 1 pixel per second. That
+defines the step size.
+
+Hmm... I messed up the math. Aliens go much slower. They take turns moving. oh
+well. In general, we want a rational number: an integer number of pixels to
+move every integer number of frames.
+

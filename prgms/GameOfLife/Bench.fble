@@ -22,8 +22,8 @@
 (Int@, Put@<Event@>, Get@<Effect@>) { Unit@!; }
 Feed = (Int@ n, Put@<Event@> in, Get@<Effect@> out) {
   ?(n; n: {
-       Unit@ _ := in(Event@(key: Key@(Q: Unit)));
-       Unit@ _ := in(Event@(key: Key@(Q: Unit)));
+       Unit@ _ := in(Event@(key_down: Key@(Q: Unit)));
+       Unit@ _ := in(Event@(key_down: Key@(Q: Unit)));
        $(Unit);
      }, : {
        # TODO: This will deadlock if the game ends earlier than we expect.

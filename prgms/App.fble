@@ -9,7 +9,7 @@
 @ Unit@ = /Unit%.Unit@;
 
 @ Key@ = +(Unit@ H, Unit@ J, Unit@ K, Unit@ L, Unit@ Q);
-@ Event@ = +(Unit@ tick, Key@ key);
+@ Event@ = +(Unit@ tick, Key@ key_down, Key@ key_up);
 
 @ Effect@ = +(
   # Request for a tick Event@ to occur after the given number of milliseconds.

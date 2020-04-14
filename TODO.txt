@@ -1,4 +1,11 @@
 
+* [bench] Optimize
+ - game of life:
+    40s step,
+    14s transform draw, calling back into 'f'.
+        x: 5s add, 3s mul, y: 3s add, 1s mul.
+        Looks like add, mul the only opportunity for improvement?
+
 * [profile] don't introduce an extra ! for bodies of expressions.
  - Maybe in general we want to support a CompileProcExpr that evaluates and
    compiles the expression in place. That would fix the extra !, save some

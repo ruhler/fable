@@ -81,7 +81,8 @@ World@ acorn = World([
 (Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
   ?(e; tick: $(Input@(step: Unit)),
-       key: ?(e.key; Q: $(Input@(quit: Unit)), : GetInput(in)));
+       key_down: ?(e.key_down; Q: $(Input@(quit: Unit)), : GetInput(in)),
+       key_up: GetInput(in));
 };
 
 (Get@<Input@>, Put@<Effect@>, Int@, World@) { Unit@!; }
@@ -118,7 +119,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;
-    ?(e; tick: WaitForKeyPress, key: $(Unit));
+    ?(e; tick: WaitForKeyPress, key_down: $(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
 };

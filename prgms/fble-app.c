@@ -343,6 +343,25 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           break;
         }
 
+        case SDL_KEYUP: {
+          int k = -1;
+          switch (event.key.keysym.scancode) {
+            case SDL_SCANCODE_H: k = 0; break;
+            case SDL_SCANCODE_J: k = 1; break;
+            case SDL_SCANCODE_K: k = 2; break;
+            case SDL_SCANCODE_L: k = 3; break;
+            case SDL_SCANCODE_Q: k = 4; break;
+            default: break;
+          }
+
+          if (k >= 0) {
+            FbleValueV args = { .size = 0, .xs = NULL };
+            io->ports.xs[0] = FbleNewUnionValue(heap, 2, FbleNewUnionValue(heap, k, FbleNewStructValue(heap, args)));
+            change = true;
+          }
+          break;
+        }
+
         case SDL_USEREVENT: {
           FbleValueV args = { .size = 0, .xs = NULL };
           io->ports.xs[0] = FbleNewUnionValue(heap, 0, FbleNewStructValue(heap, args));

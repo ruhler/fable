@@ -1,0 +1,73 @@
+
+@ Int@ = /Int/Int%.Int@;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# The ships moves side to side, but not forward or backwards.
+# This is the Y coordinate of the bottom edge of the ship.
+Int@ ShipY = I(D|22);
+
+# The velocity of the ship when it is moving, in pixels per tick.
+Int@ ShipV = I(D|2);
+
+Int@ ShipWidth = I(D|30);
+
+Int@ MinX = I(D|96);
+Int@ MaxX = I(D|514);   # Max value for the left edge of the ship.
+
+@ Dir@ = +(
+  Unit@ left,
+  Unit@ right,
+  Unit@ stopped
+);
+
+@ Status@ = +(
+  Dir@ alive,       # Which direction it is going.
+);
+
+@ Ship@ = *(
+  Int@ x,           # The left edge of the ship
+  Status@ status
+);
+  
+# The initial state of the ship.
+Ship@ Initial = @(
+  x: MinX,
+  status: Status@(alive: Dir@(stopped: Unit))
+);
+
+# Set the direction of the ship to match the given direction.
+(Ship@, Dir@) { Ship@; } Input = (Ship@ s, Dir@ d) {
+  @(
+    x: s.x,
+    status: Status@(alive: d));
+};
+
+# Advance the ship one unit of game time.
+(Ship@) { Ship@; } Tick = (Ship@ s) {
+  ?(s.dir;
+      left: {
+        Int@ nx = Sub(s.x, ShipV);
+        ?(Lt(nx, MinX);
+           true: @(x: MinX, status: Status@(alive: Dir@(stopped: Unit))),
+           false: @(x: nx, status: s.status));
+      },
+      right: {
+        Int@ nx = Add(s.x, ShipV);
+        ?(Gt(nx, MaxX);
+           true: @(x: ManX, status: Status@(alive: Dir@(stopped: Unit))),
+           false: @(x: nx, status: s.status));
+      },
+      stopped: s);
+};
+
+# Make a drawing of the ship in its current location.
+(Ship@) { Drawing@; } Draw = (Ship@ s) {
+  Translate(s.x, ShipY, Graphics.Ship);
+};
+
+@(Initial, Input, Tick, Draw);

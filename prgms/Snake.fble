@@ -284,13 +284,15 @@ Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   Event@ e := in;
   ?(e;
     tick: $(Input@(tick: Unit)),
-    key: ?(e.key;
+    key_down: ?(e.key_down;
       H: $(Input@(dir: Dir@(left: Unit))),
       J: $(Input@(dir: Dir@(down: Unit))),
       K: $(Input@(dir: Dir@(up: Unit))),
       L: $(Input@(dir: Dir@(right: Unit))),
       Q: $(Input@(quit: Unit)),
-      : GetInput(in)));
+      : GetInput(in)),
+    key_up: GetInput(in)
+  );
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
@@ -321,7 +323,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;
-    ?(e; tick: WaitForKeyPress, key: $(Unit));
+    ?(e; tick: WaitForKeyPress, key_down: $(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
 };

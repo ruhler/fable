@@ -11,11 +11,9 @@ clean:
 checkerr:
 	cat `find out -name *.err`
 
-.PHONY: foo
-foo:
-	#./out/bin/fble-stdio prgms/Fble/Tests.fble prgms
-	#./out/bin/fble-test prgms/Fble/Bench.fble prgms
-	#./out/bin/fble-test foo.fble prgms
+.PHONY: test
+test:
+	./out/bin/fble-stdio prgms/Fble/Tests.fble prgms
 
 .PHONY: bench
 bench:
