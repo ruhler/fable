@@ -346,6 +346,23 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       case 1: {
         Draw(app->window, FbleUnionValueAccess(effect), app->colors);
         SDL_UpdateWindowSurface(app->window);
+
+        // Estimate frame rate, just for the fun of it.
+        static Uint32 last = 0;
+        static Uint32 frames = 0;
+        frames++;
+
+        Uint32 now = SDL_GetTicks();
+        if (last == 0) {
+          last = now;
+        }
+        Uint32 elapsed = now - last;
+        if (elapsed > 1000) {
+          Uint32 fps = 1000 * frames / elapsed;
+          fprintf(stderr, "%i FPS\n", fps);
+          last = now;
+          frames = 0;
+        }
         break;
       }
     }

@@ -1,4 +1,6 @@
 
+* [fble-app] Fix segfault when you forget to specify prgms/ directory.
+
 * [bench] Optimize
  - game of life:
     40s step,
