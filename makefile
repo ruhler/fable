@@ -11,6 +11,10 @@ clean:
 checkerr:
 	cat `find out -name *.err`
 
+.PHONY: foo
+foo:
+	./out/bin/fble-test foo.fble
+
 .PHONY: test
 test:
 	./out/bin/fble-stdio prgms/Fble/Tests.fble prgms
@@ -31,11 +35,10 @@ perf:
 
 .PHONY: prof
 prof:
-	rm -f gmon.out out/fble/obj/*.gcda
-	./out/bin/fble-test --profile prgms/fble-bench.fble prgms
+	./out/bin/fble-test --profile prgms/Fble/Bench.fble prgms
 	mkdir -p prof
 	gprof out/bin/fble-test > prof/gprof.txt
-	gcov out/obj/eval.o out/obj/compile.o out/obj/ref.o out/obj/value.o> prof/fble.gcov
+	gcov out/obj/*.o > prof/fble.gcov
 	mv *.gcov prof/
 	rm gmon.out
 

@@ -1,5 +1,28 @@
 
+* [compile] Add code coverage for "%n is vacuous\n" case.
+ - Test added. We need to say that @<T@> is vacuous if T@ is vacuous, similar
+   to how we do for poly.
 * [fble-app] Fix segfault when you forget to specify prgms/ directory.
+* [compile] Optimize the compiler
+  - Compiler times are started to get annoyingly long.
+  - NewLocal looks expensive from code coverage. Maybe keep a
+    free list to do O(1) allocation instead of O(N)?
+  - GetVar looks expensive from code coverage. Maybe use a more efficient data
+    structure mapping name to var instead of linear search?
+  - Cache evaluated types to avoid allocating so many types over and over
+    again?
+  - Optimize or remove apparently uncovered case in Normal that returns NULL
+    if the value isn't normalizing?
+  - Optimize HasParam visited lookup.
+
+
+* [fble-app] Switch to a Renderer so we can have vsync?
+
+* [compile] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
+ - Maybe have a way to list free vars in an expression and use that to compute
+   'recursive' ahead of time? Not sure.
+ - gcov suggests we'll save on the order of 4 million instructions and 4
+   million allocations in fble bench. Surely that's good for something.
 
 * [bench] Optimize
  - game of life:
@@ -12,11 +35,15 @@
  - Maybe in general we want to support a CompileProcExpr that evaluates and
    compiles the expression in place. That would fix the extra !, save some
    instructions, and generally make some more sense.
+ - Otherwise, for exec args, we actually want the extra ! to distinguish
+   between what's executed on the parent thread versus what's executed on the
+   child thread.
 
 * [profile] Optimize profiling.
- - Idea: if forking is expensive, double check we avoid forking the profile
-   thread if there is only one child of exec? Or only fork the profile thread
-   for secondary children, not the primary child?
+ - 30 seconds spent in enter/exit processing
+ - 17 seconds spent in FbleProfileSample
+ - 24 seconds spent in FbleProfileTick (without sampling)
+ I'm not sure how to make it better though, besides turning it off.
 
 * [cc] Implement .fble -> .o compiler
  - Goal is to significantly increase performance by removing the instruction
@@ -29,14 +56,19 @@
    Test that we don't retain a cycle a->b->c by referencing a separate object
    d that used to be in the cycle a->b->c->d.
 
+* [snake] Switch to a target 60 FPS?
 * [snake] Test and fix bug when snake eats its tail.
 * [snake] Ignore moves that aren't orthogonal to current snake direction.
 * [snake] Keep track of and report score.
 * [snake] Figure out why the background box gets lost some times.
 * [pingpong] Render a static 3D table tennis scene.
+* [gameoflife] Switch to a target 60 FPS?
 * [invaders] Implement space invaders game.
- - Implement and test Ship simulation
+ - Include background in drawing.
+ - Figure out how I'm going to get to 60 FPS.
+   Maybe try getting 60 FPS on the C implementation to see if it's reasonable?
  - Implement and test Alien simulation
+   Figure out how they know when to move forward as a group.
  - etc...
 
 * [lib] Add test coverage for the Int routines.
@@ -47,16 +79,14 @@
 
 * [api] Can fble-stdio check that the function has the right type?
 
-* [compile] Optimize the compiler
-  - Compiler times are started to get annoyingly long.
+* [parse] Consider tracking memory for proper cleanup?
+  I wonder how much of what we allocate ends up unused. If we could track and
+  clean up allocations when we are done with them, maybe we can save some
+  memory.
+
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
 * [compile] Is there a way to avoid emitting instructions after a return/exit instruction?
-* [compile] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
- - Maybe have a way to list free vars in an expression and use that to compute
-   'recursive' ahead of time?
- - gcov suggests this could have a noticable performance impact, both in terms
-   of fewer REF_VALUE_INSTRs and spending less time unpeeling ref values.
 
 * [compile] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced
@@ -78,6 +108,7 @@
   to spend evaluating should be independent of the number of children in the
   family.
 
+* [lang] Can a module reference itself? Clarify in the spec and test this case.
 * [lang] Add support for abstract types?
 * [lang] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
