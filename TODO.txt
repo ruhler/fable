@@ -3,8 +3,6 @@
  - See if we can fix that to reduce the now annoyingly long compile times.
  - Profiling said its all in TypeEquals. Maybe something pathological?
 
-* [fble-app] Switch to a Renderer so we can have vsync?
-
 * [lang] Set up cindent properly for fble.vim
  - For example, so you can do newline in a comment block and have it auto add
    the comment character.
