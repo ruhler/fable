@@ -22,13 +22,15 @@
   # previous tick event then requested.
   Int@ tick,
 
-  # Draw to the screen on top of whatever was there before.
+  # Draw to the screen.
   #
   # Coordinate (0, 0) is the upper left of the screen, with the positive x
   # access going towards the right edge of the screen and the positive y
   # access going towards the bottom edge of the screen.
   # 
   # The drawing is clipped to fit in the screen area.
+  #
+  # It is undefined how pixels not specified in the drawing will be displayed.
   Drawing@ draw
 );
 

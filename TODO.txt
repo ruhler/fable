@@ -1,18 +1,13 @@
 
-* [compile] Optimize the compiler
-  - Compiler times are started to get annoyingly long.
-  - NewLocal looks expensive from code coverage. Maybe keep a
-    free list to do O(1) allocation instead of O(N)?
-  - GetVar looks expensive from code coverage. Maybe use a more efficient data
-    structure mapping name to var instead of linear search?
-  - Cache evaluated types to avoid allocating so many types over and over
-    again?
-  - Optimize or remove apparently uncovered case in Normal that returns NULL
-    if the value isn't normalizing?
-  - Optimize HasParam visited lookup.
-
+* [compile] Figure out why Normal is called so often
+ - See if we can fix that to reduce the now annoyingly long compile times.
+ - Profiling said its all in TypeEquals. Maybe something pathological?
 
 * [fble-app] Switch to a Renderer so we can have vsync?
+
+* [lang] Set up cindent properly for fble.vim
+ - For example, so you can do newline in a comment block and have it auto add
+   the comment character.
 
 * [compile] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
  - Maybe have a way to list free vars in an expression and use that to compute
