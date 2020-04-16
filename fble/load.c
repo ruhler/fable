@@ -211,7 +211,7 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 // Inputs:
 //   load_arena - arena to use for allocations local to loading.
 //   program_arena - arena to use for allocations returned from loading.
-//   root - file path to the root of the module search path
+//   root - file path to the root of the module search path. May be NULL.
 //   tree - the module hierarchy known so far
 //   path - the resolved module path to parse
 //   module_refs - Output param: A list of the module references in the parsed
@@ -232,6 +232,13 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 //   size of the returned program if there is no error.
 static FbleExpr* Parse(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs)
 {
+  if (root == NULL) {
+    FbleReportError("module ", &path.xs[0].loc);
+    PrintModuleName(stderr, path);
+    fprintf(stderr, " not found\n");
+    return NULL;
+  }
+
   // Compute an upper bound on the length of the filename for the module.
   size_t len = strlen(root) + strlen(".fble") + 1;
   for (size_t i = 0; i < path.size; ++i) {

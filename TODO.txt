@@ -2,7 +2,6 @@
 * [compile] Add code coverage for "%n is vacuous\n" case.
  - Test added. We need to say that @<T@> is vacuous if T@ is vacuous, similar
    to how we do for poly.
-* [fble-app] Fix segfault when you forget to specify prgms/ directory.
 * [compile] Optimize the compiler
   - Compiler times are started to get annoyingly long.
   - NewLocal looks expensive from code coverage. Maybe keep a
