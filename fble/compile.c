@@ -1741,13 +1741,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         if (defs[i].type != NULL) {
-          if (let_expr->bindings.xs[i].type == NULL && FbleTypeIsVacuous(heap, types[i])) {
-            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
-                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
-            error = true;
-          }
-
-          if (vars[i]->local == defs[i].local) {
+          if (FbleTypeIsVacuous(heap, types[i])
+              || vars[i]->local == defs[i].local) {
             ReportError(arena, &let_expr->bindings.xs[i].name.loc,
                 "%n is vacuous\n", &let_expr->bindings.xs[i].name);
             error = true;

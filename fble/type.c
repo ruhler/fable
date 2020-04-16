@@ -1033,6 +1033,13 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
 bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 {
   FbleType* normal = Normal(heap, type, NULL);
+  while (normal != NULL && normal->tag == FBLE_TYPE_TYPE) {
+    FbleTypeType* type_type = (FbleTypeType*)normal;
+    FbleType* tmp = normal;
+    normal = Normal(heap, type_type->type, NULL);
+    FbleTypeRelease(heap, tmp);
+  }
+
   while (normal != NULL && normal->tag == FBLE_POLY_TYPE) {
     FblePolyType* poly = (FblePolyType*)normal;
     FbleType* tmp = normal;
