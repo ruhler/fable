@@ -13,14 +13,13 @@
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
 % Blank = /Drawing%.Blank;
+% Drawings = /Drawing%.Drawings;
 % Rect = /Drawing%.Rect;
 % Over = /Drawing%.Over;
 % Transform = /Drawing%.Transform;
 
 <@>@ P@ = /List%.P@;
 <@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
-<@,@>% ForS = /List%.ForS;
 <@>% InitP = /List%.InitP;
 
 <@>@ Get@ = /Process%.Get@;
@@ -109,11 +108,11 @@ Int@ MaxCol = I(D|60);
 };
 
 (State@){Drawing@;} Draw = (State@ s) {
-  ForS<Drawing@, Drawing@>(S<Drawing@>([
-    DrawCell(s.food, Cell@(food: Unit)),
+  Drawings([
+    Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit)),
     DrawSnakeP(s.snake),
-    Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit))
-  ]), Blank, Over);
+    DrawCell(s.food, Cell@(food: Unit))
+  ]);
 };
 
 State@ InitialState = {

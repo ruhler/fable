@@ -68,7 +68,7 @@
 
 * [api] Can fble-stdio check that the function has the right type?
 
-* [parse] Consider tracking memory for proper cleanup?
+* [compile] Consider tracking memory for proper cleanup?
   I wonder how much of what we allocate ends up unused. If we could track and
   clean up allocations when we are done with them, maybe we can save some
   memory.

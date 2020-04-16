@@ -6,6 +6,7 @@
 % Add = /Int/Int%.Add;
 
 <@>@ S@ = /List%.S@;
+<@,@>@ List@ = /List%.List@;
 <@>% S = /List%.S;
 <@,@>% MapS = /List%.MapS;
 
@@ -63,6 +64,12 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
   Drawing@(over: @(below, above));
 };
 
+# Combing a list of drawings into a single drawing by drawing each subsequent
+# drawing on top of the previous drawing.
+(List@<Drawing@>) { Drawing@; } Drawings = (List@<Drawing@> drawings) {
+  drawings<Drawing@>(Over, Blank);
+};
+
 # Transform all of the coordinates in the given drawing.
 ((Point@) { Point@; }, Drawing@) { Drawing@; }
 Transform = ((Point@) { Point@; } f, Drawing@ d) {
@@ -81,4 +88,5 @@ Translate = (Int@ dx, Int@ dy) {
   Transform((Point@ p) { Point@(Add(dx, p.x), Add(dy, p.y)); }); 
 };
 
-@(Color@, Drawing@, Point@, Blank, Path, Rect, Over, Transform, Translate);
+@(Color@, Drawing@, Point@,
+  Blank, Path, Rect, Over, Drawings, Transform, Translate);

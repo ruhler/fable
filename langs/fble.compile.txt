@@ -39,3 +39,31 @@ the existing FbleApply and FbleExec APIs, it just that code will be
 represented as pointers to machine code instead of pointers to instruction
 blocks.
 
+---------
+
+It seems worth doing some more detailed research and up front design for this.
+Consider the following options to start:
+* Generate c code.
+* Use llvm.
+* Use c--.
+* Generate a custom, compact, efficient bytecode.
+
+C-- looks obsolete now, and I'm not inspired by Haskell's performance.
+
+llvm looks like a very complex entity I'll have to learn a lot more about if I
+want to use it.
+
+C code will be pretty clunky.
+
+My vote is to experiment with llvm to start, and maybe spend some time
+thinking about a custom bytecode.
+
+Things to figure out how to do in particular in llvm:
+* call into an fble runtime library
+* tail call behavior - calling into a function as if by goto instead of
+  pushing something on the stack
+* storing pointers to code
+
+Perhaps a nice way to avoid a direct dependency on llvm would be to generate
+llvm's text format assembly language. Not sure. We'll have to see.
+

@@ -2,8 +2,7 @@
 @ Color@ = /Drawing%.Color@;
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
-% Blank = /Drawing%.Blank;
-% Over = /Drawing%.Over;
+% Drawings = /Drawing%.Drawings;
 % Path = /Drawing%.Path;
 % Rect = /Drawing%.Rect;
 % Translate = /Drawing%.Translate;
@@ -12,7 +11,6 @@
 % I = /Int/Int/Lit%.I;
 
 <@>% S = /List%.S;
-<@,@>% ForS = /List%.ForS;
 
 % Unit = /Unit%.Unit;
 
@@ -1066,7 +1064,7 @@ Drawing@ TheirSquiggle = Path(
   Color@(white: Unit)
 );
 
-Drawing@ DeadAlien = ForS<Drawing@, Drawing@>(S<Drawing@>([
+Drawing@ DeadAlien = Drawings([
   Path(
     S<Point@>([
       Point@(I(D|14), I(D|0)),
@@ -1159,9 +1157,9 @@ Drawing@ DeadAlien = ForS<Drawing@, Drawing@>(S<Drawing@>([
       Point@(I(D|22), I(D|2))]),
     Color@(white: Unit)
   )
-]), Blank, Over);
+]);
 
-Drawing@ DeadShipA = ForS<Drawing@, Drawing@>(S<Drawing@>([
+Drawing@ DeadShipA = Drawings([
   Path(
     S<Point@>([
       Point@(I(D|28), I(D|0)),
@@ -1218,9 +1216,9 @@ Drawing@ DeadShipA = ForS<Drawing@, Drawing@>(S<Drawing@>([
       Point@(I(D|22), I(D|10))]),
     Color@(green: Unit)
   )
-]), Blank, Over);
+]);
 
-Drawing@ DeadShipB = ForS<Drawing@, Drawing@>(S<Drawing@>([
+Drawing@ DeadShipB = Drawings([
   Path(
     S<Point@>([
       Point@(I(D|28), I(D|0)),
@@ -1277,72 +1275,70 @@ Drawing@ DeadShipB = ForS<Drawing@, Drawing@>(S<Drawing@>([
       Point@(I(D|26), I(D|8))]),
     Color@(green: Unit)
   )
-]), Blank, Over);
+]);
 
-Drawing@ Screenshot = {
-  ForS<Drawing@, Drawing@>(S<Drawing@>([
-    Translate(I(D|80), I(D|464), LetterS),
-    Translate(I(D|96), I(D|464), LetterC),
-    Translate(I(D|112), I(D|464), LetterO),
-    Translate(I(D|128), I(D|464), LetterR),
-    Translate(I(D|144), I(D|464), LetterE),
+Drawing@ Screenshot = Drawings([
+  Translate(I(D|80), I(D|464), LetterS),
+  Translate(I(D|96), I(D|464), LetterC),
+  Translate(I(D|112), I(D|464), LetterO),
+  Translate(I(D|128), I(D|464), LetterR),
+  Translate(I(D|144), I(D|464), LetterE),
 
-    Translate(I(D|320), I(D|464), LetterL),
-    Translate(I(D|336), I(D|464), LetterI),
-    Translate(I(D|352), I(D|464), LetterV),
-    Translate(I(D|368), I(D|464), LetterE),
-    Translate(I(D|384), I(D|464), LetterS),
+  Translate(I(D|320), I(D|464), LetterL),
+  Translate(I(D|336), I(D|464), LetterI),
+  Translate(I(D|352), I(D|464), LetterV),
+  Translate(I(D|368), I(D|464), LetterE),
+  Translate(I(D|384), I(D|464), LetterS),
 
-    Translate(I(D|80), I(D|444), Digit0),
-    Translate(I(D|96), I(D|444), Digit1),
-    Translate(I(D|112), I(D|444), Digit2),
-    Translate(I(D|128), I(D|444), Digit3),
-    Translate(I(D|144), I(D|444), Digit4),
-    Translate(I(D|160), I(D|444), Digit5),
-    Translate(I(D|176), I(D|444), Digit6),
-    Translate(I(D|192), I(D|444), Digit7),
-    Translate(I(D|208), I(D|444), Digit8),
-    Translate(I(D|224), I(D|444), Digit9),
+  Translate(I(D|80), I(D|444), Digit0),
+  Translate(I(D|96), I(D|444), Digit1),
+  Translate(I(D|112), I(D|444), Digit2),
+  Translate(I(D|128), I(D|444), Digit3),
+  Translate(I(D|144), I(D|444), Digit4),
+  Translate(I(D|160), I(D|444), Digit5),
+  Translate(I(D|176), I(D|444), Digit6),
+  Translate(I(D|192), I(D|444), Digit7),
+  Translate(I(D|208), I(D|444), Digit8),
+  Translate(I(D|224), I(D|444), Digit9),
 
-    Translate(I(D|200), I(D|400), UFO),
+  Translate(I(D|200), I(D|400), UFO),
 
-    Translate(I(D|256), I(D|370), LetterG),
-    Translate(I(D|272), I(D|370), LetterA),
-    Translate(I(D|288), I(D|370), LetterM),
-    Translate(I(D|304), I(D|370), LetterE),
-    Translate(I(D|336), I(D|370), LetterO),
-    Translate(I(D|352), I(D|370), LetterV),
-    Translate(I(D|368), I(D|370), LetterE),
-    Translate(I(D|384), I(D|370), LetterR),
+  Translate(I(D|256), I(D|370), LetterG),
+  Translate(I(D|272), I(D|370), LetterA),
+  Translate(I(D|288), I(D|370), LetterM),
+  Translate(I(D|304), I(D|370), LetterE),
+  Translate(I(D|336), I(D|370), LetterO),
+  Translate(I(D|352), I(D|370), LetterV),
+  Translate(I(D|368), I(D|370), LetterE),
+  Translate(I(D|384), I(D|370), LetterR),
 
-    Translate(I(D|92), I(D|352), Alien3A),
-    Translate(I(D|92), I(D|320), Alien2A),
-    Translate(I(D|92), I(D|288), Alien2B),
-    Translate(I(D|92), I(D|256), Alien1A),
-    Translate(I(D|92), I(D|224), Alien1B),
+  Translate(I(D|92), I(D|352), Alien3A),
+  Translate(I(D|92), I(D|320), Alien2A),
+  Translate(I(D|92), I(D|288), Alien2B),
+  Translate(I(D|92), I(D|256), Alien1A),
+  Translate(I(D|92), I(D|224), Alien1B),
 
-    Translate(I(D|122), I(D|352), Alien3B),
-    Translate(I(D|122), I(D|320), Alien2A),
-    Translate(I(D|122), I(D|288), Alien2B),
-    Translate(I(D|122), I(D|256), Alien1A),
-    Translate(I(D|122), I(D|224), DeadAlien),
+  Translate(I(D|122), I(D|352), Alien3B),
+  Translate(I(D|122), I(D|320), Alien2A),
+  Translate(I(D|122), I(D|288), Alien2B),
+  Translate(I(D|122), I(D|256), Alien1A),
+  Translate(I(D|122), I(D|224), DeadAlien),
 
-    Translate(I(D|111), I(D|200), TheirBullet),
-    Translate(I(D|121), I(D|130), TheirSquiggle),
+  Translate(I(D|111), I(D|200), TheirBullet),
+  Translate(I(D|121), I(D|130), TheirSquiggle),
 
-    Translate(I(D|137), I(D|72), Base),
-    Translate(I(D|243), I(D|72), Base),
-    Translate(I(D|349), I(D|72), Base),
-    Translate(I(D|455), I(D|72), Base),
+  Translate(I(D|137), I(D|72), Base),
+  Translate(I(D|243), I(D|72), Base),
+  Translate(I(D|349), I(D|72), Base),
+  Translate(I(D|455), I(D|72), Base),
 
-    Translate(I(D|111), I(D|62), YourBullet),
+  Translate(I(D|111), I(D|62), YourBullet),
 
-    Translate(I(D|96), I(D|22), Ship),
-    Translate(I(D|196), I(D|22), DeadShipA),
-    Translate(I(D|296), I(D|22), DeadShipB),
+  Translate(I(D|96), I(D|22), Ship),
+  Translate(I(D|196), I(D|22), DeadShipA),
+  Translate(I(D|296), I(D|22), DeadShipB),
 
-    Translate(I(D|80), I(D|0), Ground)
-  ]), Blank, Over);
-};
+  Translate(I(D|80), I(D|0), Ground)
+]);
 
 @(Ship, Screenshot);
