@@ -24,9 +24,10 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-% Ship = /Invaders/Ship%;
-@ Dir@ = Ship.Dir@;
-@ Ship@ = Ship.Ship@;
+% Game = /Invaders/Game%;
+@ Game@ = Game.Game@;
+
+@ Dir@ = /Invaders/Ship%.Dir@;
 
 @ Input@ = +(
   Unit@ tick,
@@ -50,18 +51,18 @@
    );
 };
 
-(Get@<Input@>, Put@<Ship@>, Unit@!, Ship@) { Unit@!; }
-Run = (Get@<Input@> in, Put@<Ship@> draw, Unit@! tick, Ship@ ship) {
+(Get@<Input@>, Put@<Game@>, Unit@!, Game@) { Unit@!; }
+Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
   Input@ i := in;
   ?(i;
       tick: {
         Unit@ _ := tick;
-        Ship@ nship = Ship.Tick(ship);
-        Unit@ _ := draw(nship);
-        Run(in, draw, tick, nship);
+        Game@ ngame = Game.Tick(game);
+        Unit@ _ := draw(ngame);
+        Run(in, draw, tick, ngame);
       },
       quit: $(Unit),
-      dir: Run(in, draw, tick, Ship.Input(ship, i.dir)));
+      dir: Run(in, draw, tick, Game.Input(game, i.dir)));
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
@@ -80,15 +81,15 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   Int@ frame_period = I(D|16);
   Unit@! tick = out(Effect@(tick: frame_period));
 
-  (Ship@) { Unit@!; } draw = (Ship@ s) {
+  (Game@) { Unit@!; } draw = (Game@ g) {
     out(Effect@(draw: Over(
       Rect(0, 0, width, height, Color@(black: Unit)),
-      Transform(f, Ship.Draw(s)))));
+      Transform(f, Game.Draw(g)))));
   };
 
-  Ship@ ship = Ship.Initial;
+  Game@ game = Game.Initial;
   Unit@ _ := out(Effect@(tick: I(D|0)));
-  Run(GetInput(in), draw, tick, ship); 
+  Run(GetInput(in), draw, tick, game); 
 };
 
 Main;

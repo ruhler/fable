@@ -67,3 +67,33 @@ Things to figure out how to do in particular in llvm:
 Perhaps a nice way to avoid a direct dependency on llvm would be to generate
 llvm's text format assembly language. Not sure. We'll have to see.
 
+---
+
+It seems fine to use llvm as the bytecode instead of a custom bytecode. It's
+presumably just as compressible as whatever I come up with, but has the
+advantage that there is existing technology to convert it to machine code.
+
+We still want to have control over threading, however. Which means llvm isn't
+at the bottom of the execution stack, it's in the middle, between the thread
+scheduler and the actual computation.
+
+Let me start calling llvm native code. The value of using native code over an
+interpreted bytecode is you get hardware support for incrementing the pc,
+fetching the next instruction, predicting branches. That could easily give you
+10x improvement over interpreting instructions.
+
+The concern is that the thread scheduler, or interaction with it, may start to
+dominate performance overhead. I expect the native code would be a function
+you could call that would do some finite amount of work on a thread and then
+return a continuation. This means we can't use the native stack, unless the OS
+supports some form of voluntary context switching we could leverage. And it
+means we'll end up with a scheduling loop on top things that doesn't take
+advantage of hardware support for fast pc incrementing, etc. If the amount of
+work that gets run on a thread is small, that would be bad. Which suggests we
+want to inline as much as we can to get decent size chunks of uninterrupted
+native code.
+
+In summary, some things to think about:
+* Inlining to get decent size chunks of interrupted thread execution.
+* See if llvm has any support for cooperative multithreading, or manipulation
+  of the thread.

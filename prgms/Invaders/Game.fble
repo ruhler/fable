@@ -1,0 +1,52 @@
+
+@ Drawing@ = /Drawing%.Drawing@;
+% Drawings = /Drawing%.Drawings;
+
+@ Int@ = /Int/Int%.Int@;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+% Graphics = /Invaders/Graphics%;
+
+% Ship = /Invaders/Ship%;
+@ Dir@ = Ship.Dir@;
+@ Ship@ = Ship.Ship@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+
+@ Lives@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
+
+@ Game@ = *(
+  Int@ score,
+  Lives@ lives,
+  Ship@ ship
+);
+
+Game@ Initial = @(
+  score: I(D|0),
+  lives: Lives@(3: Unit),
+  ship: Ship.Initial
+);
+
+(Game@) { Game@; } Tick = (Game@ g) {
+  Game@(g.score, g.lives, Ship.Tick(g.ship));
+};
+
+(Game@, Dir@) { Game@; } Input = (Game@ g, Dir@ d) {
+  Game@(g.score, g.lives, Ship.Input(g.ship, d));
+};
+
+(Game@) { Drawing@; } Draw = (Game@ g) {
+  Drawings([
+    # TODO: Print the score.
+    # TODO: Print the lives.
+    Graphics.Background,
+    Ship.Draw(g.ship)
+  ]);
+};
+
+@(Game@, Initial, Input, Tick, Draw);
+

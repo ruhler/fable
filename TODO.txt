@@ -1,3 +1,5 @@
+* [invaders] Implement space invaders game.
+ - Figure out how they know when to move forward as a group.
 
 * [compile] Figure out why Normal is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
@@ -52,13 +54,10 @@
 * [snake] Figure out why the background box gets lost some times.
 * [pingpong] Render a static 3D table tennis scene.
 * [gameoflife] Switch to a target 60 FPS?
-* [invaders] Implement space invaders game.
- - Include background in drawing.
+* [invaders] Optimize space invaders game.
  - Figure out how I'm going to get to 60 FPS.
    Maybe try getting 60 FPS on the C implementation to see if it's reasonable?
  - Implement and test Alien simulation
-   Figure out how they know when to move forward as a group.
- - etc...
 
 * [lib] Add test coverage for the Int routines.
  - In particular, test Div and Mod.

@@ -1277,18 +1277,24 @@ Drawing@ DeadShipB = Drawings([
   )
 ]);
 
-Drawing@ Screenshot = Drawings([
-  Translate(I(D|80), I(D|464), LetterS),
-  Translate(I(D|96), I(D|464), LetterC),
-  Translate(I(D|112), I(D|464), LetterO),
-  Translate(I(D|128), I(D|464), LetterR),
-  Translate(I(D|144), I(D|464), LetterE),
+Drawing@ Background = Drawings([
+    Translate(I(D|80), I(D|464), LetterS),
+    Translate(I(D|96), I(D|464), LetterC),
+    Translate(I(D|112), I(D|464), LetterO),
+    Translate(I(D|128), I(D|464), LetterR),
+    Translate(I(D|144), I(D|464), LetterE),
 
-  Translate(I(D|320), I(D|464), LetterL),
-  Translate(I(D|336), I(D|464), LetterI),
-  Translate(I(D|352), I(D|464), LetterV),
-  Translate(I(D|368), I(D|464), LetterE),
-  Translate(I(D|384), I(D|464), LetterS),
+    Translate(I(D|320), I(D|464), LetterL),
+    Translate(I(D|336), I(D|464), LetterI),
+    Translate(I(D|352), I(D|464), LetterV),
+    Translate(I(D|368), I(D|464), LetterE),
+    Translate(I(D|384), I(D|464), LetterS),
+
+    Translate(I(D|80), I(D|0), Ground)
+]);
+
+Drawing@ Screenshot = Drawings([
+  Background,
 
   Translate(I(D|80), I(D|444), Digit0),
   Translate(I(D|96), I(D|444), Digit1),
@@ -1336,9 +1342,7 @@ Drawing@ Screenshot = Drawings([
 
   Translate(I(D|96), I(D|22), Ship),
   Translate(I(D|196), I(D|22), DeadShipA),
-  Translate(I(D|296), I(D|22), DeadShipB),
-
-  Translate(I(D|80), I(D|0), Ground)
+  Translate(I(D|296), I(D|22), DeadShipB)
 ]);
 
-@(Ship, Screenshot);
+@(Ship, Background, Screenshot);

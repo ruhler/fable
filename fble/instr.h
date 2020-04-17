@@ -314,7 +314,7 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
-}  FbleTypeInstr;
+} FbleTypeInstr;
 
 // FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR
 // 
@@ -323,17 +323,17 @@ typedef struct {
 typedef struct {
   FbleInstr _base;
   FbleBlockId block;
-}  FbleProfileEnterBlockInstr;
+} FbleProfileEnterBlockInstr;
 
 // FbleProfileExitBlockInstr -- FBLE_PROFILE_EXIT_BLOCK_INSTR
 typedef struct {
   FbleInstr _base;
-}  FbleProfileExitBlockInstr;
+} FbleProfileExitBlockInstr;
 
 // FbleProfileAutoExitBlockInstr -- FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR
 typedef struct {
   FbleInstr _base;
-}  FbleProfileAutoExitBlockInstr;
+} FbleProfileAutoExitBlockInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.
