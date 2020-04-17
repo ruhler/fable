@@ -97,3 +97,24 @@ In summary, some things to think about:
 * Inlining to get decent size chunks of interrupted thread execution.
 * See if llvm has any support for cooperative multithreading, or manipulation
   of the thread.
+
+---
+
+In terms of a custom bytecode. If we wanted all instructions to have the same
+size, we could do it with:
+
+FbleInstrTag tag;
+bool exit;
+FbleLoc loc;
+size_t tag; // or blockid, or pc.
+FbleFrameIndexV args;
+FbleLocalIndexV dests;
+FbleInstrBlock* code;
+
+Notes
+* exit could be incorportated into tag
+* args is a vector for struct, otherwise it could be 2.
+* dests is a vector for fork, otherwise it could be 1.
+* code could be a pc in theory, if all the instructions were saved into one
+  big array.
+

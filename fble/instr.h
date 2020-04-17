@@ -253,8 +253,7 @@ typedef struct {
 } FbleForkInstr;
 
 // FbleJoinInstr -- FBLE_JOIN_INSTR
-//   If all child threads are done executing, move their results to the top of
-//   the variable stack and free the child thread resources.
+//   Wait until all child threads are done executing.
 typedef struct {
   FbleInstr _base;
 } FbleJoinInstr;
@@ -266,7 +265,6 @@ typedef struct {
 // return proc!
 typedef struct {
   FbleInstr _base;
-  bool exit;
   FbleFrameIndex proc;
 } FbleProcInstr;
 
