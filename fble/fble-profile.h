@@ -88,14 +88,10 @@ typedef struct {
 //   Profiling information for a program.
 //
 // Fields:
-//   ticks - the number of ticks that have occured in this profile.
 //   last - the wall clock time of the last sample.
-//   period - the numper of ticks per sample.
 //   blocks - blocks.xs[i] contains block and callee information for block i.
 typedef struct {
-  uint64_t ticks;
   uint64_t wall;
-  size_t period;
   FbleBlockProfileV blocks;
 } FbleProfile;
 
@@ -107,7 +103,6 @@ typedef struct {
 //   blockc - the number of blocks in the program being profiled. Must be
 //            greater than 0, because FBLE_ROOT_BLOCK_ID should be a valid
 //            block.
-//   period - the sampling period in number of ticks per sample.
 //
 // Results:
 //   A new empty profile.
@@ -115,7 +110,7 @@ typedef struct {
 // Side effects:
 //   Allocates a new call that should be freed with FbleFreeProfile when
 //   no longer in use.
-FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc, size_t period);
+FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc);
 
 // FbleFreeProfile --
 //   Free a profile.
@@ -187,19 +182,6 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread);
 //   should be made when the call leaves, for proper accounting and resource
 //   management.
 void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block);
-
-// FbleProfileTick --
-//   Advance the profile by a single tick, triggering a sample as appropriate
-//   based on the sampling period.
-// 
-// Inputs:
-//   arena - arena to use for allocations.
-//   thread - the thread to sample, if sampling is required.
-//
-// Side effects:
-//   Advances the profiling ticks by one. Takes a profiling sample if
-//   appropriate.
-void FbleProfileTick(FbleArena* arena, FbleProfileThread* thread);
 
 // FbleProfileSample --
 //   Take an explicit profiling sample.

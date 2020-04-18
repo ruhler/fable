@@ -414,12 +414,10 @@ static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, s
 }
 
 // FbleNewProfile -- see documentation in fble-profile.h
-FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc, size_t period)
+FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc)
 {
   FbleProfile* profile = FbleAlloc(arena, FbleProfile);
-  profile->ticks = 0;
   profile->wall = 0;
-  profile->period = period;
   profile->blocks.size = blockc;
   profile->blocks.xs = FbleArrayAlloc(arena, FbleBlockProfile*, blockc);
   for (size_t i = 0; i < blockc; ++i) {
@@ -570,14 +568,6 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 
     FbleFree(arena, thread->table.xs);
     thread->table = new_table;
-  }
-}
-
-// FbleProfileTick -- see documentation in fble-profile.h
-void FbleProfileTick(FbleArena* arena, FbleProfileThread* thread)
-{
-  if (thread->profile->ticks++ % thread->profile->period == 0) {
-    FbleProfileSample(arena, thread, thread->profile->period);
   }
 }
 

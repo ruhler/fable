@@ -3,7 +3,7 @@
 
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
-#include <stdlib.h>   // for NULL, abort
+#include <stdlib.h>   // for NULL, abort, rand
 #include <string.h>   // for memset
 
 #include "fble.h"
@@ -19,10 +19,8 @@
 
 // PROFILE_SAMPLE_PERIOD --
 //   The profiling sample period in number of instructions executed.
-// Pick something coprime to TIME_SLICE to avoid biasing the sampling around
-// context switches.
 // TODO: This should probably a parameter exposed to the user.
-#define PROFILE_SAMPLE_PERIOD 997
+#define PROFILE_SAMPLE_PERIOD 1000
 
 // Frame --
 //   An execution frame.
@@ -315,7 +313,9 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
   FbleArena* arena = heap->arena;
   bool progress = false;
   for (size_t i = 0; i < TIME_SLICE && thread->stack != NULL; ++i) {
-    FbleProfileTick(arena, thread->profile);
+    if (rand() % PROFILE_SAMPLE_PERIOD == 0) {
+      FbleProfileSample(arena, thread->profile, 1);
+    }
 
     assert(thread->stack->frame.pc < thread->stack->frame.code->instrs.size);
     FbleInstr* instr = thread->stack->frame.code->instrs.xs[thread->stack->frame.pc++];
@@ -931,7 +931,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleNameV* blocks
   FbleArena* arena = heap->arena;
 
   FbleInstrBlock* code = FbleCompile(arena, blocks, program);
-  *profile = FbleNewProfile(arena, blocks->size, PROFILE_SAMPLE_PERIOD);
+  *profile = FbleNewProfile(arena, blocks->size);
   if (code == NULL) {
     return NULL;
   }

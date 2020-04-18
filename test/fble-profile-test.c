@@ -37,7 +37,7 @@ static size_t AutoExitMaxMem(size_t n)
 {
   // 0 -> 1 -> 1 -> ... -> 1
   FbleArena* arena = FbleNewArena();
-  FbleProfile* profile = FbleNewProfile(arena, 2, 1);
+  FbleProfile* profile = FbleNewProfile(arena, 2);
   FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
   FbleProfileEnterBlock(arena, thread, 1);
   FbleProfileSample(arena, thread, 10);
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
     // 0 -> 1 -> 2 -> 3
     //             -> 4
     //        -> 3
-    FbleProfile* profile = FbleNewProfile(arena, 5, 1);
+    FbleProfile* profile = FbleNewProfile(arena, 5);
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -174,7 +174,7 @@ int main(int argc, char* argv[])
     //                  => 5
     //        -> 6
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 7, 1);
+    FbleProfile* profile = FbleNewProfile(arena, 7);
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -258,7 +258,7 @@ int main(int argc, char* argv[])
     // Test a profile with self recursion
     // 0 -> 1 -> 2 -> 2 -> 2 -> 3
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 4, 1);
+    FbleProfile* profile = FbleNewProfile(arena, 4);
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -326,7 +326,7 @@ int main(int argc, char* argv[])
     // Test a profile with self recursion and tail calls
     // 0 -> 1 => 2 => 2 => 2 => 3
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 4, 1);
+    FbleProfile* profile = FbleNewProfile(arena, 4);
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -394,7 +394,7 @@ int main(int argc, char* argv[])
     // Test a profile with mutual recursion
     // 0 -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 5, 1);
+    FbleProfile* profile = FbleNewProfile(arena, 5);
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -482,7 +482,7 @@ int main(int argc, char* argv[])
     // a: 0 -> 1 -> 2
     // b: 0 -> 1 -> 2
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 3, 1);
+    FbleProfile* profile = FbleNewProfile(arena, 3);
     FbleProfileThread* a = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileThread* b = FbleNewProfileThread(arena, NULL, profile);
 
@@ -537,7 +537,7 @@ int main(int argc, char* argv[])
     // parent: 0 -> 1 -> 2
     // child:       \--> 3
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 4, 1);
+    FbleProfile* profile = FbleNewProfile(arena, 4);
 
     FbleProfileThread* parent = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, parent, 1);
