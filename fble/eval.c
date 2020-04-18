@@ -14,13 +14,9 @@
 
 // TIME_SLICE --
 //   The number of instructions a thread is allowed to run before switching to
-//   another thread.
+//   another thread. Also used as the profiling sample period in number of
+//   instructions executed.
 #define TIME_SLICE 1024
-
-// PROFILE_SAMPLE_PERIOD --
-//   The profiling sample period in number of instructions executed.
-// TODO: This should probably a parameter exposed to the user.
-#define PROFILE_SAMPLE_PERIOD 1000
 
 // Frame --
 //   An execution frame.
@@ -312,9 +308,10 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
 {
   FbleArena* arena = heap->arena;
   bool progress = false;
-  for (size_t i = 0; i < TIME_SLICE && thread->stack != NULL; ++i) {
-    if (rand() % PROFILE_SAMPLE_PERIOD == 0) {
+  while (thread->stack != NULL) {
+    if (rand() % TIME_SLICE == 0) {
       FbleProfileSample(arena, thread->profile, 1);
+      return true;
     }
 
     assert(thread->stack->frame.pc < thread->stack->frame.code->instrs.size);
@@ -348,7 +345,7 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", &access_instr->loc);
           AbortThread(heap, thread);
-          return progress;
+          return true;
         }
         assert(access_instr->tag < sv->fields.size);
         thread->stack->frame.locals[access_instr->dest] = FbleValueRetain(heap, sv->fields.xs[access_instr->tag]);
@@ -362,13 +359,13 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", &access_instr->loc);
           AbortThread(heap, thread);
-          return progress;
+          return true;
         }
 
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
           AbortThread(heap, thread);
-          return progress;
+          return true;
         }
 
         thread->stack->frame.locals[access_instr->dest] = FbleValueRetain(heap, uv->arg);
@@ -381,7 +378,7 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", &select_instr->loc);
           AbortThread(heap, thread);
-          return progress;
+          return true;
         }
         thread->stack->frame.pc += uv->tag;
         break;
@@ -425,7 +422,7 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
         if (func == NULL) {
           FbleReportError("undefined function value apply\n", &func_apply_instr->loc);
           AbortThread(heap, thread);
-          return progress;
+          return true;
         };
         FbleValue* arg = FrameGet(&thread->stack->frame, func_apply_instr->arg);
 
@@ -680,7 +677,7 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
         for (size_t i = 0; i < thread->children.size; ++i) {
           if (thread->children.xs[i]->aborted) {
             AbortThread(heap, thread);
-            return progress;
+            return true;
           }
         }
 

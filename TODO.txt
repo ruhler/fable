@@ -83,6 +83,10 @@
 * [profile] Come up with a way to deal with irregular ticks.
  - For example, what if we block on user data. Then the ticks stop. Then the
    first sample afterwards gets charged a huge amount unfairly.
+ - I think this is solved fine for 'profile time', it's only wall time now
+   that suffers from this problem. Maybe we just need to take an explicit
+   sample whenever we come back after blocking on I/O? The only question is...
+   who do we charge that time against? Have a separate category?
 
 * [profile] I suspect there are still bugs around block id 0
  - test that calling into block 0 does the right thing. Though I'm not sure it

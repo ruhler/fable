@@ -125,3 +125,37 @@ tail calls. Good.
 
 It doesn't look like llvm has any general support for multithreading.
 
+Let's see if we can implement our own multithreading mechanism. The idea is to
+separate execution into three parts:
+
+1. thread scheduling. Decides which thread to execute next.
+2. cooperative multithreading. A way to run a computation for a fixed amount
+of time (in terms of instructions executed probably), then snapshot the thread
+state in a way that can be later restored.
+3. running computation for a single thread.
+
+(1) is easy enough, assuming we have a way to represent thread state.
+(3) is easy enough. Just compile to native machine code. Take full advantage
+of hardware support for pc, instruction fetch, stack manipulation.
+
+(2) may be doable. Here's what I envision: at the start of each block, we add
+a 'yield' instruction. The yield instruction says how many instructions are in
+the block. It checks to see if the current time slice is up, and if so,
+magically calls into the thread scheduler. For example, maybe it causes
+registers to be saved to the stack, records the stack pointer and pc
+somewhere, then switch out the stack pointer and pc for another thread to
+resume.
+
+I expect thread scheduling to be low overhead, because switching threads
+happens so rarely. The big cost here is having to keep track of how many
+instructions we have executed and whether we need to yield or not. Because
+that needs to be run very often.
+
+I wonder if there's any value to yielding randomly instead of strictly by
+count. That way we don't have to pass the count around everywhere. We would
+still need to compute a random number, but we could use a global variable for
+that? We could use the same random number as we do for profile sampling? As
+long as it is pseudo-random, it will be deterministic. Is that meaningful? At
+least is is runtime environment agnostic, if not agnostic to the generated
+instructions.
+

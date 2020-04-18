@@ -1285,4 +1285,5 @@ Notes:
   - immutable data types
   - automatic memory management
   - closures that capture variables from local scope
+  - light weight multithreading
 
