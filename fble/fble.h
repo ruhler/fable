@@ -125,6 +125,12 @@ typedef struct FbleIO {
   FbleValueV ports;
 } FbleIO;
 
+// FbleNoIO --
+//   An IO function that does no IO.
+//
+// See documentation of FbleIO.io.
+bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block);
+
 // FbleExec --
 //   Execute a process.
 //

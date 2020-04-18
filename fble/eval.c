@@ -95,8 +95,6 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
 static void AbortThread(FbleValueHeap* heap, Thread* thread);
 static bool RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, FbleInstrBlock* code, FbleProfile* profile);
-
-static bool NoIO(FbleIO* io, FbleValueHeap* heap, bool block);
 
 // Add --
 //   Helper function for tracking ref value assignments.
@@ -897,10 +895,9 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, Fbl
   if (thread.stack != NULL) {
     // We have instructions to run still, but we stopped making forward
     // progress. This must be a deadlock.
-    // TODO: Handle this more gracefully.
-    FbleFreeProfileThread(arena, thread.profile);
-    fprintf(stderr, "Deadlock detected\n");
-    abort();
+    FbleLoc loc = { .source = __FILE__, .line = 0, .col = 0 };
+    FbleReportError("deadlock\n", &loc);
+    AbortThread(heap, &thread);
     return NULL;
   }
 
@@ -911,15 +908,6 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, Fbl
   assert(thread.children.xs == NULL);
   FbleFreeProfileThread(arena, thread.profile);
   return final_result;
-}
-
-// NoIO --
-//   An IO function that does no IO.
-//   See documentation in fble.h
-static bool NoIO(FbleIO* io, FbleValueHeap* heap, bool block)
-{
-  assert(!block && "blocked indefinately on no IO");
-  return false;
 }
 
 // FbleEval -- see documentation in fble.h
@@ -933,7 +921,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleNameV* blocks
     return NULL;
   }
 
-  FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
+  FbleIO io = { .io = &FbleNoIO, .ports = { .size = 0, .xs = NULL} };
   FbleValue* result = Eval(heap, &io, NULL, code, *profile);
   FbleFreeInstrBlock(arena, code);
   return result;
@@ -986,9 +974,15 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, Fble
     .locals = args.size,
     .instrs = { .size = 1 + args.size, .xs = instrs }
   };
-  FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL} };
+  FbleIO io = { .io = &FbleNoIO, .ports = { .size = 0, .xs = NULL} };
   FbleValue* result = Eval(heap, &io, xs, &code, profile);
   return result;
+}
+
+// FbleNoIO -- See documentation in fble.h
+bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
+{
+  return false;
 }
 
 // FbleExec -- see documentation in fble.h

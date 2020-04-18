@@ -11,18 +11,8 @@
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static bool NoIO(FbleIO* io, FbleValueHeap* heap, bool block);
 static void PrintUsage(FILE* stream);
 int main(int argc, char* argv[]);
-
-// NoIO --
-//   An IO function that does no IO.
-//   See documentation in fble.h
-static bool NoIO(FbleIO* io, FbleValueHeap* heap, bool block)
-{
-  assert(!block && "blocked indefinately on no IO");
-  return false;
-}
 
 // PrintUsage --
 //   Prints help info to the given output stream.
@@ -92,7 +82,7 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
     if (result != NULL && FbleIsProcValue(result)) {
-      FbleIO io = { .io = &NoIO, .ports = { .size = 0, .xs = NULL } };
+      FbleIO io = { .io = &FbleNoIO, .ports = { .size = 0, .xs = NULL } };
       FbleValue* exec_result = FbleExec(heap, &io, result, profile);
       FbleValueRelease(heap, result);
       result = exec_result;
