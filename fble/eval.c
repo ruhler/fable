@@ -24,21 +24,21 @@
 // Fields:
 //   scope - A value that owns the statics array. May be NULL.
 //   statics - Variables captured from the parent scope.
-//   locals - Space allocated for local variables.
-//      Has length code->locals values. Takes ownership of all non-NULL
-//      entries.
 //   code - The currently executing instruction block.
 //   pc - The location of the next instruction in the code to execute.
 //   result - Where to store the result when exiting the stack frame.
 //   tail - The next frame down in the stack.
+//   locals - Space allocated for local variables.
+//      Has length at least code->locals values. Takes ownership of all
+//      non-NULL entries.
 typedef struct Stack {
   FbleValue* scope;
   FbleValue** statics;
-  FbleValue** locals;
   FbleInstrBlock* code;
   size_t pc;
   FbleValue** result;
   struct Stack* tail;
+  FbleValue* locals[];
 } Stack;
 
 typedef struct Thread Thread;
@@ -181,17 +181,15 @@ static Stack* PushFrame(FbleArena* arena, FbleValue* scope, FbleValue** statics,
 {
   code->refcount++;
 
-  Stack* stack = FbleAlloc(arena, Stack);
+  Stack* stack = (Stack*)FbleRawAlloc(arena, sizeof(Stack) + code->locals * sizeof(FbleValue*),
+      FbleAllocMsg(__FILE__, __LINE__));
   stack->scope = scope;
   stack->statics = statics;
-
-  stack->locals = FbleArrayAlloc(arena, FbleValue*, code->locals);
-  memset(stack->locals, 0, code->locals * sizeof(FbleValue*));
-
   stack->code = code;
   stack->pc = 0;
   stack->result = result;
   stack->tail = tail;
+  memset(stack->locals, 0, code->locals * sizeof(FbleValue*));
   return stack;
 }
 
@@ -212,12 +210,9 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
   FbleArena* arena = heap->arena;
 
   FbleValueRelease(heap, stack->scope);
-
   for (size_t i = 0; i < stack->code->locals; ++i) {
     FbleValueRelease(heap, stack->locals[i]);
   }
-  FbleFree(arena, stack->locals);
-
   FbleFreeInstrBlock(arena, stack->code);
 
   Stack* tail = stack->tail;
@@ -245,26 +240,30 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 //   belonging to that frame.
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleValue* scope, FbleValue** statics, FbleInstrBlock* code, Stack* stack)
 {
-  code->refcount++;
-
   FbleArena* arena = heap->arena;
-  FbleValueRelease(heap, stack->scope);
-  stack->scope = scope;
-  stack->statics = statics;
 
+  FbleValueRelease(heap, stack->scope);
   for (size_t i = 0; i < stack->code->locals; ++i) {
     FbleValueRelease(heap, stack->locals[i]);
   }
+  FbleFreeInstrBlock(arena, stack->code);
 
   if (code->locals > stack->code->locals) {
-    FbleFree(arena, stack->locals);
-    stack->locals = FbleArrayAlloc(arena, FbleValue*, code->locals);
-  }
-  memset(stack->locals, 0, code->locals * sizeof(FbleValue*));
+    Stack* nstack = (Stack*)FbleRawAlloc(arena, sizeof(Stack) + code->locals * sizeof(FbleValue*),
+        FbleAllocMsg(__FILE__, __LINE__));
+    nstack->tail = stack->tail;
+    nstack->result = stack->result;
 
-  FbleFreeInstrBlock(arena, stack->code);
+    FbleFree(arena, stack);
+    stack = nstack;
+  }
+
+  code->refcount++;
+  stack->scope = scope;
+  stack->statics = statics;
   stack->code = code;
   stack->pc = 0;
+  memset(stack->locals, 0, code->locals * sizeof(FbleValue*));
   return stack;
 }
 
