@@ -61,16 +61,21 @@ typedef struct {
 //
 // Fields:
 //   stack - the execution stack.
+//   profile - the profile thread associated with this thread.
+//   aborted - true if the thread has been aborted.
 //   children - child threads that this thread is potentially blocked on.
 //      This vector is {0, NULL} when there are no child threads.
-//   aborted - true if the thread has been aborted due to undefined union
-//             field access.
-//   profile - the profile thread associated with this thread.
+//   next_child - the child of this thread to execute next.
+//   parent - the parent of this thread.
 struct Thread {
   Stack* stack;
-  ThreadV children;
-  bool aborted;
   FbleProfileThread* profile;
+  bool aborted;
+
+  ThreadV children;
+  size_t next_child;
+
+  Thread* parent;
 };
 
 static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
@@ -661,12 +666,15 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
 
           Thread* child = FbleAlloc(arena, Thread);
           child->stack = PushFrame(arena, &arg->_base, arg->scope.xs, arg->code, result, NULL);
+          child->profile = FbleNewProfileThread(arena, thread->profile, profile);
           child->aborted = false;
           child->children.size = 0;
           child->children.xs = NULL;
-          child->profile = FbleNewProfileThread(arena, thread->profile, profile);
+          child->next_child = 0;
+          child->parent = thread;
           FbleVectorAppend(arena, thread->children, child);
         }
+        thread->next_child = 0;
         break;
       }
 
@@ -691,6 +699,8 @@ static bool RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thr
         for (size_t i = 0; i < thread->children.size; ++i) {
           Thread* child = thread->children.xs[i];
           assert(child->stack == NULL);
+          assert(child->children.size == 0);
+          assert(child->children.xs == NULL);
           FbleFreeProfileThread(arena, child->profile);
           FbleFree(arena, child);
         }
@@ -832,21 +842,25 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 //   Updates the profile based on the execution.
 static bool RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread)
 {
-  // Note: It's possible we smash the stack with this recursive implementation
-  // of RunThreads, but the amount of stack space we need for each frame is so
-  // small it doesn't seem worth worrying about for the time being.
-
   bool progress = false;
-  for (size_t i = 0; i < thread->children.size; ++i) {
-    Thread* child = thread->children.xs[i];
-    progress = RunThreads(heap, io, profile, child) || progress;
-  }
-
-  // If we have child threads and they made some progress, don't bother
-  // running the parent thread, because it's probably blocked on a child
-  // thread anyway.
-  if (!progress) {
-    progress = RunThread(heap, io, profile, thread);
+  while (thread != NULL) {
+    if (thread->children.size > 0) {
+      if (thread->next_child == thread->children.size) {
+        // We've run through all the child threads, spent some time running
+        // code on this thread before going back up to the parent.
+        thread->next_child = 0;
+        progress = RunThread(heap, io, profile, thread) || progress;
+        thread = thread->parent;
+      } else {
+        // RunThreads on the next child thread.
+        thread = thread->children.xs[thread->next_child++];
+      }
+    } else {
+      // Run the leaf thread, then go back up to the parent for the rest of
+      // the threads to process.
+      progress = RunThread(heap, io, profile, thread) || progress;
+      thread = thread->parent;
+    }
   }
   return progress;
 }
@@ -874,9 +888,11 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, Fbl
   FbleValue* final_result = NULL;
   Thread thread = {
     .stack = PushFrame(arena, NULL, statics, code, &final_result, NULL),
-    .children = {0, NULL},
-    .aborted = false,
     .profile = FbleNewProfileThread(arena, NULL, profile),
+    .aborted = false,
+    .children = {0, NULL},
+    .next_child = 0,
+    .parent = NULL,
   };
 
   // Run the main thread repeatedly until it no longer makes any forward
