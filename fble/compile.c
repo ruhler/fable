@@ -1358,7 +1358,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       return c;
     }
 
-    case FBLE_EVAL_EXPR: {
+    case FBLE_EVAL_EXPR:
+    case FBLE_LINK_EXPR: {
       FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->code = NewInstrBlock(arena);
@@ -1387,88 +1388,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       instr->dest = c.local->index.index;
 
       FreeScope(heap, &body_scope);
-      AppendInstr(arena, scope, &instr->_base);
-      CompileExit(arena, exit, scope, c.local);
-      return c;
-    }
-
-    case FBLE_LINK_EXPR: {
-      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
-      if (FbleNamesEqual(&link_expr->get, &link_expr->put)) {
-        ReportError(arena, &link_expr->put.loc,
-            "duplicate port name '%n'\n",
-            &link_expr->put);
-        return COMPILE_FAILED;
-      }
-
-      FbleType* port_type = CompileType(heap, scope, link_expr->type);
-      if (port_type == NULL) {
-        return COMPILE_FAILED;
-      }
-
-      FbleProcType* get_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
-      get_type->type = port_type;
-      FbleTypeAddRef(heap, &get_type->_base, get_type->type);
-
-      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
-      FbleVectorInit(arena, unit_type->fields);
-
-      FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-      unit_proc_type->type = &unit_type->_base;
-      FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
-      FbleTypeRelease(heap, &unit_type->_base);
-
-      FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-      put_type->arg = port_type;
-      FbleTypeAddRef(heap, &put_type->_base, put_type->arg);
-      FbleTypeRelease(heap, port_type);
-      put_type->rtype = &unit_proc_type->_base;
-      FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
-      FbleTypeRelease(heap, &unit_proc_type->_base);
-
-      FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
-      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->code = NewInstrBlock(arena);
-
-      Scope body_scope;
-      InitScope(arena, &body_scope, instr->code, &instr->scope, scope);
-      EnterBodyBlock(arena, blocks, link_expr->body->loc, &body_scope);
-
-      FbleLinkInstr* link = FbleAlloc(arena, FbleLinkInstr);
-      link->_base.tag = FBLE_LINK_INSTR;
-
-      Local* get_local = NewLocal(arena, &body_scope);
-      link->get = get_local->index.index;
-      PushVar(arena, &body_scope, link_expr->get, &get_type->_base, get_local);
-
-      Local* put_local = NewLocal(arena, &body_scope);
-      link->put = put_local->index.index;
-      PushVar(arena, &body_scope, link_expr->put, &put_type->_base, put_local);
-
-      AppendInstr(arena, &body_scope, &link->_base);
-
-      Compiled body = CompileExec(heap, blocks, true, &body_scope, link_expr->body);
-      FbleType* type = NULL;
-      if (body.type != NULL) {
-        type = body.type;
-      }
-      ExitBlock(arena, blocks, NULL);
-      FreeScope(heap, &body_scope);
-
-      if (type == NULL) {
-        FbleFreeInstr(arena, &instr->_base);
-        return COMPILE_FAILED;
-      }
-
-      FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, link_expr->body->loc);
-      proc_type->type = body.type;
-      FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
-      FbleTypeRelease(heap, body.type);
-
-      Compiled c;
-      c.type = &proc_type->_base;
-      c.local = NewLocal(arena, scope);
-      instr->dest = c.local->index.index;
       AppendInstr(arena, scope, &instr->_base);
       CompileExit(arena, exit, scope, c.local);
       return c;
@@ -2215,7 +2134,6 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
-    case FBLE_LINK_EXPR:
     case FBLE_EXEC_EXPR:
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
@@ -2260,6 +2178,56 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_EVAL_EXPR: {
       FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
       return CompileExpr(heap, blocks, exit, scope, eval_expr->body);
+    }
+
+    case FBLE_LINK_EXPR: {
+      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
+      if (FbleNamesEqual(&link_expr->get, &link_expr->put)) {
+        ReportError(arena, &link_expr->put.loc,
+            "duplicate port name '%n'\n",
+            &link_expr->put);
+        return COMPILE_FAILED;
+      }
+
+      FbleType* port_type = CompileType(heap, scope, link_expr->type);
+      if (port_type == NULL) {
+        return COMPILE_FAILED;
+      }
+
+      FbleProcType* get_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
+      get_type->type = port_type;
+      FbleTypeAddRef(heap, &get_type->_base, get_type->type);
+
+      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
+      FbleVectorInit(arena, unit_type->fields);
+
+      FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
+      unit_proc_type->type = &unit_type->_base;
+      FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
+      FbleTypeRelease(heap, &unit_type->_base);
+
+      FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+      put_type->arg = port_type;
+      FbleTypeAddRef(heap, &put_type->_base, put_type->arg);
+      FbleTypeRelease(heap, port_type);
+      put_type->rtype = &unit_proc_type->_base;
+      FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
+      FbleTypeRelease(heap, &unit_proc_type->_base);
+
+      FbleLinkInstr* link = FbleAlloc(arena, FbleLinkInstr);
+      link->_base.tag = FBLE_LINK_INSTR;
+
+      Local* get_local = NewLocal(arena, scope);
+      link->get = get_local->index.index;
+      PushVar(arena, scope, link_expr->get, &get_type->_base, get_local);
+
+      Local* put_local = NewLocal(arena, scope);
+      link->put = put_local->index.index;
+      PushVar(arena, scope, link_expr->put, &put_type->_base, put_local);
+
+      AppendInstr(arena, scope, &link->_base);
+
+      return CompileExec(heap, blocks, exit, scope, link_expr->body);
     }
   }
 
