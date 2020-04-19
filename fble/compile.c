@@ -121,6 +121,7 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type);
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result);
 static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
 static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args);
+static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr);
 static FbleType* CompileExprNoInstrs(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleType* CompileType(FbleTypeHeap* arena, Scope* scope, FbleTypeExpr* type);
 static bool CompileProgram(FbleTypeHeap* arena, Blocks* blocks, Scope* scope, FbleProgram* prgm);
@@ -1449,23 +1450,11 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       AppendInstr(arena, &body_scope, &link->_base);
 
-      Compiled body = CompileExpr(heap, blocks, false, &body_scope, link_expr->body);
+      Compiled body = CompileExec(heap, blocks, true, &body_scope, link_expr->body);
       FbleType* type = NULL;
       if (body.type != NULL) {
         type = body.type;
       }
-
-      FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
-      proc->_base.tag = FBLE_PROC_INSTR;
-      proc->exit = true;
-      proc->dest = 0;     // don't care, because exit is true.
-      AppendInstr(arena, &body_scope, &proc->_base);
-
-      if (body.type != NULL) {
-        proc->proc = body.local->index;
-        LocalRelease(arena, &body_scope, body.local);
-      }
-
       ExitBlock(arena, blocks, NULL);
       FreeScope(heap, &body_scope);
 
@@ -1474,22 +1463,16 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         return COMPILE_FAILED;
       }
 
+      FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, link_expr->body->loc);
+      proc_type->type = body.type;
+      FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
+      FbleTypeRelease(heap, body.type);
+
       Compiled c;
-      c.type = type;
+      c.type = &proc_type->_base;
       c.local = NewLocal(arena, scope);
       instr->dest = c.local->index.index;
       AppendInstr(arena, scope, &instr->_base);
-
-      FbleType* proc_type = FbleNormalType(heap, type);
-      if (proc_type->tag != FBLE_PROC_TYPE) {
-        ReportError(arena, &link_expr->body->loc,
-            "expected a value of type proc, but found %t\n",
-            type);
-        FbleTypeRelease(heap, proc_type);
-        FbleTypeRelease(heap, c.type);
-        return COMPILE_FAILED;
-      }
-      FbleTypeRelease(heap, proc_type);
       CompileExit(arena, exit, scope, c.local);
       return c;
     }
@@ -2189,6 +2172,72 @@ static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     FbleFree(arena, (void*)arg_names[i].name);
   }
   return result;
+}
+
+// CompileExec --
+//   Type check and compile the given process expression. Returns the local
+//   variable that will hold the result of executing the process expression
+//   and generates instructions to compute the value of that result at
+//   runtime.
+//
+// Inputs:
+//   heap - heap to use for type allocations.
+//   blocks - the blocks stack.
+//   exit - if true, generate instructions to exit the current scope.
+//   scope - the list of variables in scope.
+//   expr - the expression to compile.
+//
+// Results:
+//   The type and local of the result of executing the process expression.
+//   The type is NULL if the expression is not well typed or is not a process
+//   expression.
+//
+// Side effects:
+//   * Updates the blocks stack with with compiled block information.
+//   * Appends instructions to the scope for executing the given expression.
+//     There is no gaurentee about what instructions have been appended to
+//     the scope if the expression fails to compile.
+//   * Prints warning messages to stderr.
+//   * Prints a message to stderr if the expression fails to compile.
+//   * The caller should call FbleTypeRelease and LocalRelease when the
+//     returned results are no longer needed. Note that FreeScope calls
+//     LocalRelease for all locals allocated to the scope, so that can also be
+//     used to clean up the local, but not the type.
+static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr)
+{
+  FbleArena* arena = heap->arena;
+
+  Compiled proc = CompileExpr(heap, blocks, false, scope, expr);
+  if (proc.type == NULL) {
+    return COMPILE_FAILED;
+  }
+
+  FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc.type);
+  if (normal->_base.tag != FBLE_PROC_TYPE) {
+    ReportError(arena, &expr->loc,
+        "expected process, but found expression of type %t\n",
+        proc.type);
+    FbleTypeRelease(heap, &normal->_base);
+    FbleTypeRelease(heap, proc.type);
+    return COMPILE_FAILED;
+  }
+
+  Compiled c;
+  c.type = FbleTypeRetain(heap, normal->type);
+  c.local = NewLocal(arena, scope);
+
+  FbleProcInstr* instr = FbleAlloc(arena, FbleProcInstr);
+  instr->_base.tag = FBLE_PROC_INSTR;
+  instr->exit = exit;
+  instr->dest = c.local->index.index;
+  instr->proc = proc.local->index;
+  AppendInstr(arena, scope, &instr->_base);
+
+  LocalRelease(arena, scope, proc.local);
+  FbleTypeRelease(heap, &normal->_base);
+  FbleTypeRelease(heap, proc.type);
+
+  return c;
 }
 
 // CompileExprNoInstrs --
