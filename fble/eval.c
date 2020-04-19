@@ -485,16 +485,14 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
             thread->stack->frame.locals[func_apply_instr->dest] = &value->_base;
           }
         } else {
-          FbleFuncValue* f = func;
-
-          FbleValueV args;
-          FbleVectorInit(arena, args);
+          FbleValueRetain(heap, &func->_base);
           FbleValueRetain(heap, arg);
-          FbleVectorAppend(arena, args, arg);
+
+          size_t argc = 1;
+          FbleFuncValue* f = func;
           while (f->tag == FBLE_THUNK_FUNC_VALUE) {
+            argc++;
             FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
-            FbleValueRetain(heap, thunk->arg);
-            FbleVectorAppend(arena, args, thunk->arg);
             f = thunk->func;
           }
 
@@ -509,11 +507,14 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
             thread->stack = PushFrame(arena, &basic->_base._base, basic->scope.xs, basic->code, result, thread->stack);
           }
 
-          for (size_t i = 0; i < args.size; ++i) {
-            size_t j = args.size - i - 1;
-            thread->stack->frame.locals[i] = args.xs[j];
+          f = func;
+          thread->stack->frame.locals[--argc] = arg;
+          while (f->tag == FBLE_THUNK_FUNC_VALUE) {
+            FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
+            thread->stack->frame.locals[--argc] = FbleValueRetain(heap, thunk->arg);
+            f = thunk->func;
           }
-          FbleFree(arena, args.xs);
+          FbleValueRelease(heap, &func->_base);
         }
         break;
       }

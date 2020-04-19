@@ -1,3 +1,8 @@
+* [eval] gprof profiling based improvements.
+  - Little things that are cleanup are worth doing.
+  - Things the compiler could easily fix itself are not worth doing if they
+    are not clean.
+
 * [test] Check if 6.4-proc-exec/eval/propagate-abort-blocking test fails when
   unused 'true' variable definition is removed.
 
