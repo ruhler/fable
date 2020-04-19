@@ -1,5 +1,3 @@
-* [compile] Optimize single thread fork.
-
 * [eval] Thread management cleanup
  - Clarify for FORK instruction whether the main thread continues to run until
    join, or if the main thread waits until all children are done. If the
@@ -80,7 +78,6 @@
 
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
-* [compile] Is there a way to avoid emitting instructions after a return/exit instruction?
 
 * [compile] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced

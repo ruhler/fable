@@ -80,14 +80,14 @@ typedef struct Scope {
 } Scope;
 
 static Local* NewLocal(FbleArena* arena, Scope* scope);
-static void LocalRelease(FbleArena* arena, Scope* scope, Local* local);
+static void LocalRelease(FbleArena* arena, Scope* scope, Local* local, bool exit);
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type, Local* local);
-static void PopVar(FbleTypeHeap* heap, Scope* scope);
+static void PopVar(FbleTypeHeap* heap, Scope* scope, bool exit);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
 
 static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent);
-static void FreeScope(FbleTypeHeap* heap, Scope* scope);
+static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 
 // Blocks --
@@ -170,6 +170,7 @@ static Local* NewLocal(FbleArena* arena, Scope* scope)
 //   arena - the arena for allocations
 //   scope - the scope that the local belongs to
 //   local - the local to release.
+//   exit - whether the frame has already been exited
 //
 // Results:
 //   none
@@ -178,15 +179,18 @@ static Local* NewLocal(FbleArena* arena, Scope* scope)
 //   Decrements the reference count on the local and frees it if the refcount
 //   drops to 0. Generates instructions to free the value at runtime as
 //   appropriate.
-static void LocalRelease(FbleArena* arena, Scope* scope, Local* local)
+static void LocalRelease(FbleArena* arena, Scope* scope, Local* local, bool exit)
 {
   local->refcount--;
   if (local->refcount == 0) {
     assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
-    FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
-    release->_base.tag = FBLE_RELEASE_INSTR;
-    release->value = local->index.index;
-    AppendInstr(arena, scope, &release->_base);
+
+    if (!exit) {
+      FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
+      release->_base.tag = FBLE_RELEASE_INSTR;
+      release->value = local->index.index;
+      AppendInstr(arena, scope, &release->_base);
+    }
 
     assert(scope->locals.xs[local->index.index] == local);
     scope->locals.xs[local->index.index] = NULL;
@@ -231,6 +235,7 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
 // Inputs:
 //   heap - heap to use for allocations.
 //   scope - the scope to pop from.
+//   exit - whether the frame has already been exited.
 //
 // Results:
 //   none.
@@ -238,14 +243,14 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
 // Side effects:
 //   Pops the top var off the scope. Invalidates the pointer to the variable
 //   originally returned in PushVar.
-static void PopVar(FbleTypeHeap* heap, Scope* scope)
+static void PopVar(FbleTypeHeap* heap, Scope* scope, bool exit)
 {
   FbleArena* arena = heap->arena;
 
   scope->vars.size--;
   Var* var = scope->vars.xs[scope->vars.size];
   FbleTypeRelease(heap, var->type);
-  LocalRelease(arena, scope, var->local);
+  LocalRelease(arena, scope, var->local, exit);
   FbleFree(arena, var);
 }
 
@@ -392,13 +397,14 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Fble
 // Inputs:
 //   heap - heap to use for allocations
 //   scope - the scope to finish.
+//   exit - whether the frame has already been exited.
 //
 // Results:
 //   None.
 //
 // Side effects:
 //   * Frees memory associated with scope.
-static void FreeScope(FbleTypeHeap* heap, Scope* scope)
+static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit)
 {
   FbleArena* arena = heap->arena;
   for (size_t i = 0; i < scope->statics.size; ++i) {
@@ -409,7 +415,7 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
   FbleFree(arena, scope->statics.xs);
 
   while (scope->vars.size > 0) {
-    PopVar(heap, scope);
+    PopVar(heap, scope, exit);
   }
   FbleFree(arena, scope->vars.xs);
 
@@ -813,8 +819,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             apply_instr->arg = args[i].local->index;
             apply_instr->dest = dest->index.index;
             AppendInstr(arena, scope, &apply_instr->_base);
-            LocalRelease(arena, scope, misc.local);
-            LocalRelease(arena, scope, args[i].local);
+            LocalRelease(arena, scope, misc.local, apply_instr->exit);
+            LocalRelease(arena, scope, args[i].local, apply_instr->exit);
 
             FbleTypeRelease(heap, misc.type);
             misc.type = FbleTypeRetain(heap, func_type->rtype);
@@ -834,7 +840,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           FbleTypeRelease(heap, normal);
 
           FbleTypeRelease(heap, misc.type);
-          LocalRelease(arena, scope, misc.local);
+          LocalRelease(arena, scope, misc.local, false);
 
           FbleStructType* struct_type = (FbleStructType*)FbleNormalType(heap, vtype);
           if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
@@ -895,7 +901,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
           for (size_t i = 0; i < argc; ++i) {
             FbleVectorAppend(arena, struct_instr->args, args[i].local->index);
-            LocalRelease(arena, scope, args[i].local);
+            LocalRelease(arena, scope, args[i].local, exit);
           }
 
           return c;
@@ -977,7 +983,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleVectorInit(arena, struct_instr->args);
       for (size_t i = 0; i < argc; ++i) {
         FbleVectorAppend(arena, struct_instr->args, args[i].local->index);
-        LocalRelease(arena, scope, args[i].local);
+        LocalRelease(arena, scope, args[i].local, exit);
       }
       return c;
     }
@@ -1046,8 +1052,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       union_instr->arg = arg.local->index;
       union_instr->dest = c.local->index.index;
       AppendInstr(arena, scope, &union_instr->_base);
-      LocalRelease(arena, scope, arg.local);
       CompileExit(arena, exit, scope, c.local);
+      LocalRelease(arena, scope, arg.local, exit);
       return c;
     }
 
@@ -1095,7 +1101,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           access->dest = c.local->index.index;
           CompileExit(arena, exit, scope, c.local);
           FbleTypeRelease(heap, obj.type);
-          LocalRelease(arena, scope, obj.local);
+          LocalRelease(arena, scope, obj.local, exit);
           return c;
         }
       }
@@ -1173,7 +1179,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           copy->source = result.local->index;
           copy->dest = target.local->index.index;
           AppendInstr(arena, scope, &copy->_base);
-          LocalRelease(arena, scope, result.local);
+          LocalRelease(arena, scope, result.local, false);
         }
         ExitBlock(arena, blocks, exit ? NULL : scope);
 
@@ -1230,7 +1236,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           }
 
           ExitBlock(arena, blocks, exit ? NULL : scope);
-          LocalRelease(arena, scope, result.local);
+          LocalRelease(arena, scope, result.local, exit);
 
           if (!exit) {
             exit_gotos[choice] = FbleAlloc(arena, FbleGotoInstr);
@@ -1280,7 +1286,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       // duration of the block. Technically this doesn't appear to be a
       // violation of the language spec, because it only effects constants in
       // runtime. But we probably ought to fix it anyway.
-      LocalRelease(arena, scope, condition.local);
+      LocalRelease(arena, scope, condition.local, exit);
       return target;
     }
 
@@ -1328,12 +1334,12 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       Compiled func_result = CompileExpr(heap, blocks, true, &func_scope, func_value_expr->body);
       ExitBlock(arena, blocks, NULL);
       if (func_result.type == NULL) {
-        FreeScope(heap, &func_scope);
+        FreeScope(heap, &func_scope, true);
         FbleFreeInstr(arena, &instr->_base);
         return COMPILE_FAILED;
       }
       FbleType* type = func_result.type;
-      LocalRelease(arena, &func_scope, func_result.local);
+      LocalRelease(arena, &func_scope, func_result.local, true);
 
       for (size_t i = 0; i < argc; ++i) {
         FbleType* arg_type = arg_types[argc - 1 - i];
@@ -1347,7 +1353,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         type = &ft->_base;
       }
 
-      FreeScope(heap, &func_scope);
+      FreeScope(heap, &func_scope, true);
 
       Compiled c;
       c.type = type;
@@ -1373,7 +1379,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       ExitBlock(arena, blocks, NULL);
 
       if (body.type == NULL) {
-        FreeScope(heap, &body_scope);
+        FreeScope(heap, &body_scope, true);
         FbleFreeInstr(arena, &instr->_base);
         return COMPILE_FAILED;
       }
@@ -1388,7 +1394,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       c.local = NewLocal(arena, scope);
       instr->dest = c.local->index.index;
 
-      FreeScope(heap, &body_scope);
+      FreeScope(heap, &body_scope, true);
       AppendInstr(arena, scope, &instr->_base);
       CompileExit(arena, exit, scope, c.local);
       return c;
@@ -1523,7 +1529,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             ref_def_instr->value = defs[i].local->index;
             AppendInstr(arena, scope, &ref_def_instr->_base);
           }
-          LocalRelease(arena, scope, vars[i]->local);
+          LocalRelease(arena, scope, vars[i]->local, false);
           vars[i]->local = defs[i].local;
         }
       }
@@ -1544,7 +1550,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        PopVar(heap, scope);
+        PopVar(heap, scope, exit);
       }
 
       return body;
@@ -1599,7 +1605,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       PushVar(arena, scope, poly->arg.name, arg_type, local);
       Compiled body = CompileExpr(heap, blocks, exit, scope, poly->body);
-      PopVar(heap, scope);
+      PopVar(heap, scope, exit);
 
       if (body.type == NULL) {
         FbleTypeRelease(heap, arg);
@@ -1736,7 +1742,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleExprV args = { .size = n, .xs = xs, };
       Compiled result = CompileList(heap, blocks, exit, scope, literal->word_loc, args);
-      PopVar(heap, scope);
+      PopVar(heap, scope, exit);
       return result;
     }
   }
@@ -2030,7 +2036,7 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       instr->proc = proc.local->index;
       AppendInstr(arena, scope, &instr->_base);
 
-      LocalRelease(arena, scope, proc.local);
+      LocalRelease(arena, scope, proc.local, exit);
       FbleTypeRelease(heap, &normal->_base);
       FbleTypeRelease(heap, proc.type);
 
@@ -2148,7 +2154,7 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         // TODO: Does this hold on to the bindings longer than we want to?
         if (args[i] != NULL) {
           FbleVectorAppend(arena, fork->args, args[i]->index);
-          LocalRelease(arena, scope, args[i]);
+          LocalRelease(arena, scope, args[i], false);
         }
       }
 
@@ -2161,9 +2167,8 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         c = CompileExec(heap, blocks, exit, scope, exec_expr->body);
       }
 
-      // TODO: only pop vars if not exit?
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        PopVar(heap, scope);
+        PopVar(heap, scope, exit);
       }
 
       return c;
@@ -2204,7 +2209,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeHeap* heap, Scope* scope, FbleExpr*
   Compiled result = CompileExpr(heap, &blocks, true, &nscope, expr);
   FbleFree(arena, blocks.stack.xs);
   FbleFreeBlockNames(arena, &blocks.blocks);
-  FreeScope(heap, &nscope);
+  FreeScope(heap, &nscope, true);
   FbleFreeInstrBlock(arena, code);
   return result.type;
 }
@@ -2419,7 +2424,7 @@ static bool CompileProgram(FbleTypeHeap* heap, Blocks* blocks, Scope* scope, Fbl
 
   Compiled result = CompileExpr(heap, blocks, true, scope, prgm->main);
   for (size_t i = 0; i < prgm->modules.size; ++i) {
-    PopVar(heap, scope);
+    PopVar(heap, scope, true);
   }
 
   FbleTypeRelease(heap, result.type);
@@ -2449,7 +2454,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
   bool ok = CompileProgram(heap, &block_stack, &scope, program);
   ExitBlock(arena, &block_stack, NULL);
-  FreeScope(heap, &scope);
+  FreeScope(heap, &scope, true);
   FbleFreeTypeHeap(heap);
 
   assert(block_stack.stack.size == 0);
