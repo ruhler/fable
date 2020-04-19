@@ -45,11 +45,11 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
       switch (instr->tag) {
         case FBLE_STRUCT_VALUE_INSTR: {
           FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-          fprintf(fout, "l[%zi] = struct(", struct_value_instr->dest);
+          fprintf(fout, "l%zi = struct(", struct_value_instr->dest);
           const char* comma = "";
           for (size_t j = 0; j < struct_value_instr->args.size; ++j) {
             FbleFrameIndex arg = struct_value_instr->args.xs[j];
-            fprintf(fout, "%s%s[%zi]", comma, sections[arg.section], arg.index);
+            fprintf(fout, "%s%s%zi", comma, sections[arg.section], arg.index);
             comma = ", ";
           }
           fprintf(fout, ");\n");
@@ -58,7 +58,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_UNION_VALUE_INSTR: {
           FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-          fprintf(fout, "l[%zi] = union(%zi: %s[%zi]);\n",
+          fprintf(fout, "l%zi = union(%zi: %s%zi);\n",
               union_value_instr->dest,
               union_value_instr->tag,
               sections[union_value_instr->arg.section],
@@ -69,7 +69,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
         case FBLE_STRUCT_ACCESS_INSTR:
         case FBLE_UNION_ACCESS_INSTR: {
           FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-          fprintf(fout, "l[%zi] = %s[%zi].%zi; // %s:%i:%i\n",
+          fprintf(fout, "l%zi = %s%zi.%zi; // %s:%i:%i\n",
               access_instr->dest, sections[access_instr->obj.section],
               access_instr->obj.index,
               access_instr->tag, access_instr->loc.source,
@@ -79,7 +79,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-          fprintf(fout, "goto +%s[%zi].tag; // %s:%i:%i\n",
+          fprintf(fout, "goto +%s%zi.tag; // %s:%i:%i\n",
               sections[select_instr->condition.section],
               select_instr->condition.index,
               select_instr->loc.source, select_instr->loc.line,
@@ -95,12 +95,12 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_FUNC_VALUE_INSTR: {
           FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-          fprintf(fout, "l[%zi] = func %p [",
+          fprintf(fout, "l%zi = func %p [",
               func_value_instr->dest,
               (void*)func_value_instr->code);
           const char* comma = "";
           for (size_t j = 0; j < func_value_instr->scope.size; ++j) {
-            fprintf(fout, "%s%s[%zi]",
+            fprintf(fout, "%s%s%zi",
                 comma, sections[func_value_instr->scope.xs[j].section],
                 func_value_instr->scope.xs[j].index);
             comma = ", ";
@@ -112,7 +112,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_RELEASE_INSTR: {
           FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-          fprintf(fout, "release l[%zi];\n", release->value);
+          fprintf(fout, "release l%zi;\n", release->value);
           break;
         }
 
@@ -121,10 +121,10 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
           if (func_apply_instr->exit) {
             fprintf(fout, "$");
           } else {
-            fprintf(fout, "l[%zi]", func_apply_instr->dest);
+            fprintf(fout, "l%zi", func_apply_instr->dest);
           }
 
-          fprintf(fout, " = %s[%zi](%s[%zi]); // %s:%i:%i\n",
+          fprintf(fout, " = %s%zi(%s%zi); // %s:%i:%i\n",
               sections[func_apply_instr->func.section],
               func_apply_instr->func.index,
               sections[func_apply_instr->arg.section],
@@ -136,12 +136,12 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_PROC_VALUE_INSTR: {
           FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-          fprintf(fout, "l[%zi] = proc %p [",
+          fprintf(fout, "l%zi = proc %p [",
               proc_value_instr->dest,
               (void*)proc_value_instr->code);
           const char* comma = "";
           for (size_t j = 0; j < proc_value_instr->scope.size; ++j) {
-            fprintf(fout, "%s%s[%zi]",
+            fprintf(fout, "%s%s%zi",
                 comma, sections[proc_value_instr->scope.xs[j].section],
                 proc_value_instr->scope.xs[j].index);
             comma = ", ";
@@ -153,7 +153,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_COPY_INSTR: {
           FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-          fprintf(fout, "l[%zi] = %s[%zi];\n",
+          fprintf(fout, "l%zi = %s%zi;\n",
               copy_instr->dest,
               sections[copy_instr->source.section],
               copy_instr->source.index);
@@ -172,7 +172,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_LINK_INSTR: {
           FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-          fprintf(fout, "l[%zi], l[%zi] = link;\n", link_instr->get, link_instr->put);
+          fprintf(fout, "l%zi, l%zi = link;\n", link_instr->get, link_instr->put);
           break;
         }
 
@@ -181,7 +181,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
           fprintf(fout, "fork [");
           const char* comma = "";
           for (size_t j = 0; j < fork_instr->dests.size; ++j) {
-            fprintf(fout, "%sl[%zi] := %s[%zi]",
+            fprintf(fout, "%sl%zi := %s%zi",
                 comma, fork_instr->dests.xs[j],
                 sections[fork_instr->args.xs[j].section],
                 fork_instr->args.xs[j].index);
@@ -201,9 +201,9 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
           if (proc_instr->exit) {
             fprintf(fout, "$");
           } else {
-            fprintf(fout, "l[%zi]", proc_instr->dest);
+            fprintf(fout, "l%zi", proc_instr->dest);
           }
-          fprintf(fout, " := %s[%zi];\n",
+          fprintf(fout, " := %s%zi;\n",
               sections[proc_instr->proc.section],
               proc_instr->proc.index);
           break;
@@ -211,13 +211,13 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_REF_VALUE_INSTR: {
           FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-          fprintf(fout, "l[%zi] = ref;\n", ref_instr->dest);
+          fprintf(fout, "l%zi = ref;\n", ref_instr->dest);
           break;
         }
 
         case FBLE_REF_DEF_INSTR: {
           FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-          fprintf(fout, "l[%zi] ~= %s[%zi];\n",
+          fprintf(fout, "l%zi ~= %s%zi;\n",
               ref_def_instr->ref,
               sections[ref_def_instr->value.section],
               ref_def_instr->value.index);
@@ -226,7 +226,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_RETURN_INSTR: {
           FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-          fprintf(fout, "$ = %s[%zi];\n",
+          fprintf(fout, "$ = %s%zi;\n",
               sections[return_instr->result.section],
               return_instr->result.index);
           break;
@@ -234,7 +234,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_TYPE_INSTR: {
           FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-          fprintf(fout, "l[%zi] = type;\n", type_instr->dest);
+          fprintf(fout, "l%zi = type;\n", type_instr->dest);
           break;
         }
 

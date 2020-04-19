@@ -159,3 +159,8 @@ long as it is pseudo-random, it will be deterministic. Is that meaningful? At
 least is is runtime environment agnostic, if not agnostic to the generated
 instructions.
 
+---
+
+gprof suggests there isn't that much to gain from compiling. Because the
+execution time is dominated by allocations and memory management work.
+
