@@ -1359,7 +1359,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_EVAL_EXPR:
-    case FBLE_LINK_EXPR: {
+    case FBLE_LINK_EXPR:
+    case FBLE_EXEC_EXPR: {
       FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->code = NewInstrBlock(arena);
@@ -1391,144 +1392,6 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       AppendInstr(arena, scope, &instr->_base);
       CompileExit(arena, exit, scope, c.local);
       return c;
-    }
-
-    case FBLE_EXEC_EXPR: {
-      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
-      bool error = false;
-
-      // Evaluate the types of the bindings and set up the new vars.
-      FbleType* types[exec_expr->bindings.size];
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        types[i] = CompileType(heap, scope, exec_expr->bindings.xs[i].type);
-        error = error || (types[i] == NULL);
-      }
-
-      FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
-      instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->code = NewInstrBlock(arena);
-
-      Scope body_scope;
-      InitScope(arena, &body_scope, instr->code, &instr->scope, scope);
-      EnterBodyBlock(arena, blocks, expr->loc, &body_scope);
-
-      Local* args[exec_expr->bindings.size];
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        FbleProcValueInstr* binstr = FbleAlloc(arena, FbleProcValueInstr);
-        binstr->_base.tag = FBLE_PROC_VALUE_INSTR;
-        binstr->code = NewInstrBlock(arena);
-
-        Scope binding_scope;
-        InitScope(arena, &binding_scope, binstr->code, &binstr->scope, &body_scope);
-        EnterBlock(arena, blocks, exec_expr->bindings.xs[i].name, exec_expr->bindings.xs[i].expr->loc, &binding_scope);
-
-        Compiled binding =  CompileExpr(heap, blocks, false, &binding_scope, exec_expr->bindings.xs[i].expr);
-        if (binding.type == NULL) {
-          error = true;
-        }
-
-        FbleProcInstr* bproc = FbleAlloc(arena, FbleProcInstr);
-        bproc->_base.tag = FBLE_PROC_INSTR;
-        bproc->exit = true;
-        bproc->dest = 0;    // don't care because exit is true.
-
-        AppendInstr(arena, &binding_scope, &bproc->_base);
-        if (binding.type != NULL) {
-          bproc->proc = binding.local->index;
-          LocalRelease(arena, &binding_scope, binding.local);
-        }
-
-        ExitBlock(arena, blocks, NULL);
-        FreeScope(heap, &binding_scope);
-
-        args[i] = NewLocal(arena, &body_scope);
-        binstr->dest = args[i]->index.index;
-        AppendInstr(arena, &body_scope, &binstr->_base);
-
-        if (binding.type != NULL) {
-          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(heap, binding.type);
-          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
-            if (types[i] != NULL && !FbleTypesEqual(heap, types[i], proc_type->type)) {
-              error = true;
-              ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
-                  "expected type %t!, but found %t\n",
-                  types[i], binding.type);
-            }
-          } else {
-            error = true;
-            ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
-                "expected process, but found expression of type %t\n",
-                binding.type);
-          }
-          FbleTypeRelease(heap, &proc_type->_base);
-        }
-        FbleTypeRelease(heap, binding.type);
-      }
-
-      FbleForkInstr* fork = FbleAlloc(arena, FbleForkInstr);
-      fork->_base.tag = FBLE_FORK_INSTR;
-      FbleVectorInit(arena, fork->args);
-      fork->dests.xs = FbleArrayAlloc(arena, FbleLocalIndex, exec_expr->bindings.size);
-      fork->dests.size = exec_expr->bindings.size;
-      AppendInstr(arena, &body_scope, &fork->_base);
-
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        // Note: Make sure we call NewLocal before calling LocalRelease on any
-        // of the arguments.
-        Local* local = NewLocal(arena, &body_scope);
-        fork->dests.xs[i] = local->index.index;
-        PushVar(arena, &body_scope, exec_expr->bindings.xs[i].name, types[i], local);
-      }
-
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        // TODO: Does this hold on to the bindings longer than we want to?
-        FbleVectorAppend(arena, fork->args, args[i]->index);
-        LocalRelease(arena, &body_scope, args[i]);
-      }
-
-      FbleJoinInstr* join = FbleAlloc(arena, FbleJoinInstr);
-      join->_base.tag = FBLE_JOIN_INSTR;
-      AppendInstr(arena, &body_scope, &join->_base);
-
-      Compiled body = COMPILE_FAILED;
-      if (!error) {
-        body = CompileExpr(heap, blocks, false, &body_scope, exec_expr->body);
-        error = (body.type == NULL);
-      }
-
-      if (body.type != NULL) {
-        FbleType* normal = FbleNormalType(heap, body.type);
-        if (normal->tag != FBLE_PROC_TYPE) {
-          error = true;
-          ReportError(arena, &exec_expr->body->loc,
-              "expected a value of type proc, but found %t\n",
-              body.type);
-        }
-        FbleTypeRelease(heap, normal);
-      }
-
-      FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
-      proc->_base.tag = FBLE_PROC_INSTR;
-      proc->exit = true;
-      proc->dest = 0;   // don't care because exit is true.
-      AppendInstr(arena, &body_scope, &proc->_base);
-      if (body.type != NULL) {
-        proc->proc = body.local->index;
-        LocalRelease(arena, &body_scope, body.local);
-      }
-      ExitBlock(arena, blocks, NULL);
-
-      body.local = NewLocal(arena, scope);
-      FreeScope(heap, &body_scope);
-
-      instr->dest = body.local->index.index;
-      AppendInstr(arena, scope, &instr->_base);
-      CompileExit(arena, exit, scope, body.local);
-      if (error) {
-        FbleTypeRelease(heap, body.type);
-        return COMPILE_FAILED;
-      }
-      return body;
     }
 
     case FBLE_VAR_EXPR: {
@@ -2134,7 +1997,6 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
-    case FBLE_EXEC_EXPR:
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
     case FBLE_MODULE_REF_EXPR:
@@ -2228,6 +2090,83 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       AppendInstr(arena, scope, &link->_base);
 
       return CompileExec(heap, blocks, exit, scope, link_expr->body);
+    }
+
+    case FBLE_EXEC_EXPR: {
+      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
+      bool error = false;
+
+      // Evaluate the types of the bindings and set up the new vars.
+      FbleType* types[exec_expr->bindings.size];
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        types[i] = CompileType(heap, scope, exec_expr->bindings.xs[i].type);
+        error = error || (types[i] == NULL);
+      }
+
+      Local* args[exec_expr->bindings.size];
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        Compiled binding = CompileExpr(heap, blocks, false, scope, exec_expr->bindings.xs[i].expr);
+        args[i] = binding.local;
+        if (binding.type != NULL) {
+          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(heap, binding.type);
+          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
+            if (types[i] != NULL && !FbleTypesEqual(heap, types[i], proc_type->type)) {
+              error = true;
+              ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
+                  "expected type %t!, but found %t\n",
+                  types[i], binding.type);
+            }
+          } else {
+            error = true;
+            ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
+                "expected process, but found expression of type %t\n",
+                binding.type);
+          }
+          FbleTypeRelease(heap, &proc_type->_base);
+        } else {
+          error = true;
+        }
+        FbleTypeRelease(heap, binding.type);
+      }
+
+      FbleForkInstr* fork = FbleAlloc(arena, FbleForkInstr);
+      fork->_base.tag = FBLE_FORK_INSTR;
+      FbleVectorInit(arena, fork->args);
+      fork->dests.xs = FbleArrayAlloc(arena, FbleLocalIndex, exec_expr->bindings.size);
+      fork->dests.size = exec_expr->bindings.size;
+      AppendInstr(arena, scope, &fork->_base);
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        // Note: Make sure we call NewLocal before calling LocalRelease on any
+        // of the arguments.
+        Local* local = NewLocal(arena, scope);
+        fork->dests.xs[i] = local->index.index;
+        PushVar(arena, scope, exec_expr->bindings.xs[i].name, types[i], local);
+      }
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        // TODO: Does this hold on to the bindings longer than we want to?
+        if (args[i] != NULL) {
+          FbleVectorAppend(arena, fork->args, args[i]->index);
+          LocalRelease(arena, scope, args[i]);
+        }
+      }
+
+      FbleJoinInstr* join = FbleAlloc(arena, FbleJoinInstr);
+      join->_base.tag = FBLE_JOIN_INSTR;
+      AppendInstr(arena, scope, &join->_base);
+
+      Compiled c = COMPILE_FAILED;
+      if (!error) {
+        c = CompileExec(heap, blocks, exit, scope, exec_expr->body);
+      }
+
+      // TODO: only pop vars if not exit?
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        PopVar(heap, scope);
+      }
+
+      return c;
     }
   }
 

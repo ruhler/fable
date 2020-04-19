@@ -1,3 +1,5 @@
+* [compile] Optimize single thread fork.
+
 * [eval] Thread management cleanup
  - Clarify for FORK instruction whether the main thread continues to run until
    join, or if the main thread waits until all children are done. If the
@@ -12,15 +14,6 @@
 * [invaders] Implement space invaders game.
  - Add lives indicators to display.
  - Figure out how they know when to move forward as a group.
-
-* [compile] Optimize single thread fork.
- - Maybe wait to hear about the details of the FORK instruction first?
- - We may want to separate PROC_INSTR from exiting.
-
-* [compile] Have CompileProcExpr that knows how to exec a proc in place?
- - Then we could avoid allocating a proc value in the body of an exec, which
-   probably saves as a decent amount on runtime, because we essentially get to
-   inline the body of the process for free.
 
 * [compile] Figure out why Normal is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
@@ -42,14 +35,6 @@
     14s transform draw, calling back into 'f'.
         x: 5s add, 3s mul, y: 3s add, 1s mul.
         Looks like add, mul the only opportunity for improvement?
-
-* [profile] don't introduce an extra ! for bodies of expressions.
- - Maybe in general we want to support a CompileProcExpr that evaluates and
-   compiles the expression in place. That would fix the extra !, save some
-   instructions, and generally make some more sense.
- - Otherwise, for exec args, we actually want the extra ! to distinguish
-   between what's executed on the parent thread versus what's executed on the
-   child thread.
 
 * [profile] Optimize profiling.
  - 30 seconds spent in enter/exit processing

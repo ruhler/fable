@@ -838,6 +838,7 @@ static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, 
       Status status = RunThread(heap, io, profile, thread);
       switch (status) {
         case FINISHED: {
+          progress = true;
           if (thread->parent == NULL) {
             return FINISHED;
           }

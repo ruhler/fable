@@ -58,8 +58,9 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_UNION_VALUE_INSTR: {
           FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-          fprintf(fout, "l[%zi] = union(%s[%zi]);\n",
+          fprintf(fout, "l[%zi] = union(%zi: %s[%zi]);\n",
               union_value_instr->dest,
+              union_value_instr->tag,
               sections[union_value_instr->arg.section],
               union_value_instr->arg.index);
           break;
