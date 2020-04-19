@@ -2206,38 +2206,64 @@ static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = heap->arena;
+  switch (expr->tag) {
+    case FBLE_STRUCT_TYPE_EXPR:
+    case FBLE_UNION_TYPE_EXPR:
+    case FBLE_FUNC_TYPE_EXPR:
+    case FBLE_PROC_TYPE_EXPR:
+    case FBLE_TYPEOF_EXPR:
+    case FBLE_MISC_APPLY_EXPR:
+    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
+    case FBLE_UNION_VALUE_EXPR:
+    case FBLE_MISC_ACCESS_EXPR:
+    case FBLE_UNION_SELECT_EXPR:
+    case FBLE_FUNC_VALUE_EXPR:
+    case FBLE_EVAL_EXPR:
+    case FBLE_LINK_EXPR:
+    case FBLE_EXEC_EXPR:
+    case FBLE_VAR_EXPR:
+    case FBLE_LET_EXPR:
+    case FBLE_MODULE_REF_EXPR:
+    case FBLE_POLY_EXPR:
+    case FBLE_POLY_APPLY_EXPR:
+    case FBLE_LIST_EXPR:
+    case FBLE_LITERAL_EXPR: {
+      Compiled proc = CompileExpr(heap, blocks, false, scope, expr);
+      if (proc.type == NULL) {
+        return COMPILE_FAILED;
+      }
 
-  Compiled proc = CompileExpr(heap, blocks, false, scope, expr);
-  if (proc.type == NULL) {
-    return COMPILE_FAILED;
+      FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc.type);
+      if (normal->_base.tag != FBLE_PROC_TYPE) {
+        ReportError(arena, &expr->loc,
+            "expected process, but found expression of type %t\n",
+            proc.type);
+        FbleTypeRelease(heap, &normal->_base);
+        FbleTypeRelease(heap, proc.type);
+        return COMPILE_FAILED;
+      }
+
+      Compiled c;
+      c.type = FbleTypeRetain(heap, normal->type);
+      c.local = NewLocal(arena, scope);
+
+      FbleProcInstr* instr = FbleAlloc(arena, FbleProcInstr);
+      instr->_base.tag = FBLE_PROC_INSTR;
+      instr->exit = exit;
+      instr->dest = c.local->index.index;
+      instr->proc = proc.local->index;
+      AppendInstr(arena, scope, &instr->_base);
+
+      LocalRelease(arena, scope, proc.local);
+      FbleTypeRelease(heap, &normal->_base);
+      FbleTypeRelease(heap, proc.type);
+
+      return c;
+    }
   }
 
-  FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc.type);
-  if (normal->_base.tag != FBLE_PROC_TYPE) {
-    ReportError(arena, &expr->loc,
-        "expected process, but found expression of type %t\n",
-        proc.type);
-    FbleTypeRelease(heap, &normal->_base);
-    FbleTypeRelease(heap, proc.type);
-    return COMPILE_FAILED;
-  }
-
-  Compiled c;
-  c.type = FbleTypeRetain(heap, normal->type);
-  c.local = NewLocal(arena, scope);
-
-  FbleProcInstr* instr = FbleAlloc(arena, FbleProcInstr);
-  instr->_base.tag = FBLE_PROC_INSTR;
-  instr->exit = exit;
-  instr->dest = c.local->index.index;
-  instr->proc = proc.local->index;
-  AppendInstr(arena, scope, &instr->_base);
-
-  LocalRelease(arena, scope, proc.local);
-  FbleTypeRelease(heap, &normal->_base);
-  FbleTypeRelease(heap, proc.type);
-
-  return c;
+  UNREACHABLE("should never get here");
+  return COMPILE_FAILED;
 }
 
 // CompileExprNoInstrs --
