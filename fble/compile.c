@@ -1359,22 +1359,19 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     }
 
     case FBLE_EVAL_EXPR: {
-      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
-
       FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->code = NewInstrBlock(arena);
 
-      Scope eval_scope;
-      InitScope(arena, &eval_scope, instr->code, &instr->scope, scope);
-      EnterBodyBlock(arena, blocks, expr->loc, &eval_scope);
+      Scope body_scope;
+      InitScope(arena, &body_scope, instr->code, &instr->scope, scope);
+      EnterBodyBlock(arena, blocks, expr->loc, &body_scope);
 
-      Compiled body = CompileExpr(heap, blocks, true, &eval_scope, eval_expr->body);
+      Compiled body = CompileExec(heap, blocks, true, &body_scope, expr);
       ExitBlock(arena, blocks, NULL);
-      CompileExit(arena, true, &eval_scope, body.local);
 
       if (body.type == NULL) {
-        FreeScope(heap, &eval_scope);
+        FreeScope(heap, &body_scope);
         FbleFreeInstr(arena, &instr->_base);
         return COMPILE_FAILED;
       }
@@ -1389,7 +1386,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       c.local = NewLocal(arena, scope);
       instr->dest = c.local->index.index;
 
-      FreeScope(heap, &eval_scope);
+      FreeScope(heap, &body_scope);
       AppendInstr(arena, scope, &instr->_base);
       CompileExit(arena, exit, scope, c.local);
       return c;
@@ -2218,7 +2215,6 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
-    case FBLE_EVAL_EXPR:
     case FBLE_LINK_EXPR:
     case FBLE_EXEC_EXPR:
     case FBLE_VAR_EXPR:
@@ -2259,6 +2255,11 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleTypeRelease(heap, proc.type);
 
       return c;
+    }
+
+    case FBLE_EVAL_EXPR: {
+      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
+      return CompileExpr(heap, blocks, exit, scope, eval_expr->body);
     }
   }
 
