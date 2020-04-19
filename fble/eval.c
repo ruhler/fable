@@ -92,8 +92,6 @@ static FbleInstrBlock g_put_block = {
   .instrs = { .size = 1, .xs = g_put_block_instrs }
 };
 
-static void Add(FbleHeap* heap, FbleValue* src, FbleValue* dst);
-
 static FbleValue* FrameGet(Frame* frame, FbleFrameIndex index);
 static FbleValue* FrameTaggedGet(FbleValueTag tag, Frame* frame, FbleFrameIndex index);
 
@@ -105,27 +103,6 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread);
 static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread);
 static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, FbleInstrBlock* code, FbleProfile* profile);
-
-// Add --
-//   Helper function for tracking ref value assignments.
-//
-// Inputs:
-//   heap - the value heap
-//   src - a source value
-//   dst - a destination value
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Notifies the reference system that there is now a reference from src to
-//   dst.
-static void Add(FbleHeap* heap, FbleValue* src, FbleValue* dst)
-{
-  if (dst != NULL) {
-    FbleValueAddRef(heap, src, dst);
-  }
-}
 
 // FrameGet --
 //   Get a value from the given frame.
@@ -470,9 +447,9 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           value->_base.tag = FBLE_THUNK_FUNC_VALUE;
           value->_base.argc = func->argc - 1;
           value->func = func;
-          Add(heap, &value->_base._base, &value->func->_base);
+          FbleValueAddRef(heap, &value->_base._base, &value->func->_base);
           value->arg = arg;
-          Add(heap, &value->_base._base, value->arg);
+          FbleValueAddRef(heap, &value->_base._base, value->arg);
 
           if (func_apply_instr->exit) {
             *thread->stack->frame.result = &value->_base._base;
@@ -489,10 +466,10 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           FbleVectorInit(arena, value->scope);
 
           FbleVectorAppend(arena, value->scope, f->port);
-          Add(heap, &value->_base, f->port);
+          FbleValueAddRef(heap, &value->_base, f->port);
 
           FbleVectorAppend(arena, value->scope, arg);
-          Add(heap, &value->_base, arg);
+          FbleValueAddRef(heap, &value->_base, arg);
 
           value->code = &g_put_block;
           value->code->refcount++;
@@ -630,7 +607,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
             link->tail = tail;
           }
 
-          Add(heap, &link->_base, tail->value);
+          FbleValueAddRef(heap, &link->_base, tail->value);
 
           *thread->stack->frame.result = unit;
           thread->stack = PopFrame(heap, thread->stack);
@@ -673,7 +650,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         put->_base.tag = FBLE_PUT_FUNC_VALUE;
         put->_base.argc = 1;
         put->port = &port->_base;
-        Add(heap, &put->_base._base, put->port);
+        FbleValueAddRef(heap, &put->_base._base, put->port);
 
         FbleValueRelease(heap, &port->_base);
 
@@ -759,7 +736,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         FbleValue* value = FrameGet(&thread->stack->frame, ref_def_instr->value);
         assert(value != NULL);
         rv->value = value;
-        Add(heap, &rv->_base, rv->value);
+        FbleValueAddRef(heap, &rv->_base, rv->value);
         break;
       }
 
