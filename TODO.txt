@@ -3,7 +3,6 @@
  - Have forked children replace parent, each with their own continuation.
  - Track suspended threads on links.
    Use this to determine i/o blocking instead of progress.
- - Return status code from run thread instead of storing stuff in Thread.
  - Use fair thread traversal by starting over from root when yield occurs.
 
 * [invaders] Implement space invaders game.
