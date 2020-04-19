@@ -731,9 +731,13 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         assert(proc != NULL && "undefined proc value");
 
         FbleValueRetain(heap, &proc->_base);
-
-        thread->stack = ReplaceFrame(heap, &proc->_base, proc->scope.xs, proc->code, thread->stack);
-        FbleProfileAutoExitBlock(arena, thread->profile);
+        if (proc_instr->exit) {
+          thread->stack = ReplaceFrame(heap, &proc->_base, proc->scope.xs, proc->code, thread->stack);
+          FbleProfileAutoExitBlock(arena, thread->profile);
+        } else {
+          FbleValue** result = thread->stack->frame.locals + proc_instr->dest;
+          thread->stack = PushFrame(arena, &proc->_base, proc->scope.xs, proc->code, result, thread->stack);
+        }
         break;
       }
 

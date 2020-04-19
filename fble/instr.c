@@ -117,13 +117,17 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_FUNC_APPLY_INSTR: {
           FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
-          fprintf(fout, "l[%zi] = %s[%zi](%s[%zi]); // (exit=%s) %s:%i:%i\n",
-              func_apply_instr->dest,
+          if (func_apply_instr->exit) {
+            fprintf(fout, "$");
+          } else {
+            fprintf(fout, "l[%zi]", func_apply_instr->dest);
+          }
+
+          fprintf(fout, " = %s[%zi](%s[%zi]); // %s:%i:%i\n",
               sections[func_apply_instr->func.section],
               func_apply_instr->func.index,
               sections[func_apply_instr->arg.section],
               func_apply_instr->arg.index,
-              func_apply_instr->exit ? "true" : "false",
               func_apply_instr->loc.source, func_apply_instr->loc.line,
               func_apply_instr->loc.col);
           break;
@@ -193,7 +197,12 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_PROC_INSTR: {
           FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-          fprintf(fout, "$ <- %s[%zi];\n",
+          if (proc_instr->exit) {
+            fprintf(fout, "$");
+          } else {
+            fprintf(fout, "l[%zi]", proc_instr->dest);
+          }
+          fprintf(fout, " := %s[%zi];\n",
               sections[proc_instr->proc.section],
               proc_instr->proc.index);
           break;
@@ -216,7 +225,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_RETURN_INSTR: {
           FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-          fprintf(fout, "return %s[%zi];\n",
+          fprintf(fout, "$ = %s[%zi];\n",
               sections[return_instr->result.section],
               return_instr->result.index);
           break;

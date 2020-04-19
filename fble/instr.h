@@ -259,12 +259,16 @@ typedef struct {
 } FbleJoinInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
-//   Execute a process value and return the result from the current stack
-//   frame.
+//   Execute a process value.
 //
-// return proc!
+// *dest = exec(proc)
+//
+// if exit is true, this is treated as a tail call. In that case, dest is
+// ignored and the result is returned to the caller.
 typedef struct {
   FbleInstr _base;
+  bool exit;
+  FbleLocalIndex dest;
   FbleFrameIndex proc;
 } FbleProcInstr;
 

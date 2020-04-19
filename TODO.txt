@@ -1,12 +1,26 @@
 * [eval] Thread management cleanup
+ - Clarify for FORK instruction whether the main thread continues to run until
+   join, or if the main thread waits until all children are done. If the
+   former, implement it correctly. If the later, fix the bug in reference
+   counting that triggers a memory leak in some cases if we fail to execute
+   the release following the fork in a timely manner.
  - Switch i/o ports to use links.
- - Have forked children replace parent, each with their own continuation.
  - Track suspended threads on links.
    Use this to determine i/o blocking instead of progress.
  - Use fair thread traversal by starting over from root when yield occurs.
 
 * [invaders] Implement space invaders game.
+ - Add lives indicators to display.
  - Figure out how they know when to move forward as a group.
+
+* [compile] Optimize single thread fork.
+ - Maybe wait to hear about the details of the FORK instruction first?
+ - We may want to separate PROC_INSTR from exiting.
+
+* [compile] Have CompileProcExpr that knows how to exec a proc in place?
+ - Then we could avoid allocating a proc value in the body of an exec, which
+   probably saves as a decent amount on runtime, because we essentially get to
+   inline the body of the process for free.
 
 * [compile] Figure out why Normal is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.

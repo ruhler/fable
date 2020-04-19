@@ -1457,6 +1457,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
+      proc->exit = true;
+      proc->dest = 0;     // don't care, because exit is true.
       AppendInstr(arena, &body_scope, &proc->_base);
 
       if (body.type != NULL) {
@@ -1528,6 +1530,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
         FbleProcInstr* bproc = FbleAlloc(arena, FbleProcInstr);
         bproc->_base.tag = FBLE_PROC_INSTR;
+        bproc->exit = true;
+        bproc->dest = 0;    // don't care because exit is true.
 
         AppendInstr(arena, &binding_scope, &bproc->_base);
         if (binding.type != NULL) {
@@ -1606,6 +1610,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleProcInstr* proc = FbleAlloc(arena, FbleProcInstr);
       proc->_base.tag = FBLE_PROC_INSTR;
+      proc->exit = true;
+      proc->dest = 0;   // don't care because exit is true.
       AppendInstr(arena, &body_scope, &proc->_base);
       if (body.type != NULL) {
         proc->proc = body.local->index;
