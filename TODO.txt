@@ -1,3 +1,6 @@
+* [test] Check if 6.4-proc-exec/eval/propagate-abort-blocking test fails when
+  unused 'true' variable definition is removed.
+
 * [eval] Thread management cleanup
  - Clarify for FORK instruction whether the main thread continues to run until
    join, or if the main thread waits until all children are done. If the
@@ -6,7 +9,6 @@
    the release following the fork in a timely manner.
  - Switch i/o ports to use links.
  - Track suspended threads on links.
-   Use this to determine i/o blocking instead of progress.
  - Use fair thread traversal by starting over from root when yield occurs.
 
 * [invaders] Implement space invaders game.

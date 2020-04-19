@@ -79,8 +79,8 @@ struct Thread {
 typedef enum {
   FINISHED,       // The thread has finished running.
   ABORTED,        // The thread was aborted.
-  BLOCKED,        // The thread is blocked and made no progress.
-  PROGRESSED,     // The thread made some progress.
+  BLOCKED,        // The thread is blocked on I/O.
+  UNBLOCKED,      // The thread is not blocked on I/O.
 } Status;
 
 static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
@@ -100,7 +100,7 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleValue* scope, FbleValue** statics, FbleInstrBlock* code, Stack* stack);
 
 static void AbortThread(FbleValueHeap* heap, Thread* thread);
-static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread);
+static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread, bool* io_activity);
 static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, FbleInstrBlock* code, FbleProfile* profile);
 
@@ -318,20 +318,23 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 //   io - io to use for external ports.
 //   profile - the profile to save execution stats to.
 //   thread - the thread to run.
+//   io_activity - set to true if the thread does any i/o activity that could
+//                 unblock another thread.
 //
 // Results:
 //   The status of the thread.
 //
 // Side effects:
 //   The thread is executed, updating its stack.
-static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread)
+//   io_activity is set to true if the thread does any i/o activity that could
+//   unblock another thread.
+static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
-  bool progress = false;
   while (thread->stack != NULL) {
     if (rand() % TIME_SLICE == 0) {
       FbleProfileSample(arena, thread->profile, 1);
-      return PROGRESSED;
+      return UNBLOCKED;
     }
 
     assert(thread->stack->frame.pc < thread->stack->frame.code->instrs.size);
@@ -547,7 +550,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
             // Blocked on get. Restore the thread state and return before
             // logging progress.
             thread->stack->frame.pc--;
-            return progress ? PROGRESSED : BLOCKED;
+            return BLOCKED;
           }
 
           FbleValues* head = link->head;
@@ -571,12 +574,13 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
             // Blocked on get. Restore the thread state and return before
             // logging progress.
             thread->stack->frame.pc--;
-            return progress ? PROGRESSED : BLOCKED;
+            return BLOCKED;
           }
 
           *thread->stack->frame.result = io->ports.xs[port->id];
           thread->stack = PopFrame(heap, thread->stack);
           io->ports.xs[port->id] = NULL;
+          *io_activity = true;
           break;
         }
 
@@ -611,6 +615,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
 
           *thread->stack->frame.result = unit;
           thread->stack = PopFrame(heap, thread->stack);
+          *io_activity = true;
           break;
         }
 
@@ -622,12 +627,13 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
             // Blocked on put. Restore the thread state and return before
             // logging progress.
             thread->stack->frame.pc--;
-            return progress ? PROGRESSED : BLOCKED;
+            return BLOCKED;
           }
 
           io->ports.xs[port->id] = FbleValueRetain(heap, arg);
           *thread->stack->frame.result = unit;
           thread->stack = PopFrame(heap, thread->stack);
+          *io_activity = true;
           break;
         }
 
@@ -686,15 +692,19 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           FbleVectorAppend(arena, thread->children, child);
         }
         thread->next_child = 0;
+
+        // We'll count forking as I/O activity, because it means there are new
+        // threads that might do some I/O.
+        *io_activity = true;
         break;
       }
 
       case FBLE_JOIN_INSTR: {
         if (thread->children.size > 0) {
           // Blocked on child. Restore the thread state and return before
-          // logging progress
+          // logging progress.
           thread->stack->frame.pc--;
-          return progress ? PROGRESSED : BLOCKED;
+          return BLOCKED;
         }
         break;
       }
@@ -773,8 +783,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         break;
       }
     }
-
-    progress = true;
   }
   return FINISHED;
 }
@@ -799,7 +807,7 @@ static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, 
 {
   FbleArena* arena = heap->arena;
 
-  bool progress = false;
+  bool unblocked = false;
   while (thread != NULL) {
     if (thread->children.size > 0) {
       if (thread->next_child == thread->children.size) {
@@ -812,10 +820,10 @@ static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, 
     } else {
       // Run the leaf thread, then go back up to the parent for the rest of
       // the threads to process.
-      Status status = RunThread(heap, io, profile, thread);
+      Status status = RunThread(heap, io, profile, thread, &unblocked);
       switch (status) {
         case FINISHED: {
-          progress = true;
+          unblocked = true;
           if (thread->parent == NULL) {
             return FINISHED;
           }
@@ -849,15 +857,15 @@ static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, 
           break;
         }
 
-        case PROGRESSED: {
-          progress = true;
+        case UNBLOCKED: {
+          unblocked = true;
           thread = thread->parent;
           break;
         }
       }
     }
   }
-  return progress ? PROGRESSED : BLOCKED;
+  return unblocked ? UNBLOCKED : BLOCKED;
 }
 
 // Eval --
@@ -917,7 +925,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, Fbl
         break;
       }
 
-      case PROGRESSED: {
+      case UNBLOCKED: {
         // Give a chance to do some I/O, but don't block, because the thread
         // is making progress anyway.
         io->io(io, heap, false);
