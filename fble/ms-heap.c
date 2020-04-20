@@ -171,8 +171,11 @@ bool IncrGc(Heap* heap)
   }
 
   // Traverse some roots.
-  // TODO: How many should we traverse?
-  for (size_t i = 0; i < 2 && heap->roots_from->next != heap->roots_from; ++i) {
+  // Assuming we do incremental GC for each new allocation, we should traverse
+  // 3 objects per allocation. That way fewer than N new objects will be
+  // allocated in the time it takes us to traverse a heap with N objects (in
+  // addition to whatever objects are allocated while traversing that heap).
+  for (size_t i = 0; i < 3 && heap->roots_from->next != heap->roots_from; ++i) {
     Obj* obj = heap->roots_from->next;
     obj->prev->next = obj->next;
     obj->next->prev = obj->prev;
@@ -185,7 +188,11 @@ bool IncrGc(Heap* heap)
   }
 
   // Traverse some pending objects.
-  for (size_t i = 0; i < 2 && heap->pending->next != heap->pending; ++i) {
+  // Assuming we do incremental GC for each new allocation, we should traverse
+  // 3 objects per allocation. That way fewer than N new objects will be
+  // allocated in the time it takes us to traverse a heap with N objects (in
+  // addition to whatever objects are allocated while traversing that heap).
+  for (size_t i = 0; i < 3 && heap->pending->next != heap->pending; ++i) {
     Obj* obj = heap->pending->next;
     obj->prev->next = obj->next;
     obj->next->prev = obj->prev;

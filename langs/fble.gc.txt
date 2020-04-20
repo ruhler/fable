@@ -396,3 +396,47 @@ to work out, but I think it's pretty nice. Some thoughts:
   on to its own copy of a value. But that sounds way too inefficient to be
   worth it.
 
+---
+
+Mark sweep GC works now. It's a little slower and uses more memory than
+reference counting in the first implementation, but I suspect that can be
+fixed.
+
+Thoughts on how much work to do in increments:
+* Free 2 objects for every 1 allocation. Ensures we can keep up with
+  allocations. If we only freed 1 object per allocation, we would never
+  recover from a sudden mass free of objects.
+
+* Traverse... I think 3 objects for every 1 allocation.
+ 
+  Assume we have a heap of N objects. Worst case, we have to traverse all N
+  objects before we can free any of them. If we traverse 1 object per
+  allocation, then we will have allocated N new objects while traversing the
+  heap, and we may now need to traverse all of those. And you can see we can't
+  keep up.
+
+  If we traverse 2 objects per allocation, then we will have allocated N/2 new
+  objects while traversing the first N. Then N/4 while traversing the second
+  N/2, and so on. So it takes, in total 2N allocations to do full GC on N
+  objects. That means we free half the heap, but we can't keep up.
+
+  Thus, 3 objects traversed per allocation is the magic number. It ensures we
+  can traverse N objects on the heap in less time than it takes to allocate N
+  more objects.
+
+Other thoughts:
+* I think there's something wrong with the GC implementation, because I can
+  see that it's running through full GCs very often, but it still has a high
+  overhead of memory use. Could it be failing to reclaim things soon enough?
+  Or is it just slow in calling free? It may be worth freeing all objects
+  right away instead of incrementally to see if that makes any difference.
+  Maybe we have some form of finalizers issue where we keep things alive
+  longer than we would need to if we don't call on_free right away.
+
+* Performance wise, GC doesn't seem like the answer to all our problems yet.
+  We are spending just as much time in Retain/Release as before. But now we
+  spend a ton of time traversing objects. I think, at minimum, we'll need to
+  add a 'roots' function and avoid calling Retain/Release all the time in
+  eval.
+
+
