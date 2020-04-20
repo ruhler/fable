@@ -239,9 +239,6 @@ static Obj* ToObj(void* obj_)
 //   obj - the object to get the references of.
 //   refs - a preinitialized vector to add the references to.
 //
-// Results:
-//   None.
-//
 // Side effects:
 //   Adds objects referenced by obj to the refs vector.
 typedef struct {
@@ -258,12 +255,12 @@ static void CollectRef(CollectRefsCallback* this, void* obj_)
 
 static void CollectRefs(Heap* heap, Obj* obj, ObjV* refs)
 {
-    CollectRefsCallback callback = {
-      ._base = { .callback = (void(*)(FbleHeapCallback*, void*))&CollectRef },
-      .arena = heap->_base.arena,
-      .refs = refs
-    };
-    heap->_base.refs(&callback._base, obj->obj);
+  CollectRefsCallback callback = {
+    ._base = { .callback = (void(*)(FbleHeapCallback*, void*))&CollectRef },
+    .arena = heap->_base.arena,
+    .refs = refs
+  };
+  heap->_base.refs(&callback._base, obj->obj);
 }
 
 // ReleaseRefs --

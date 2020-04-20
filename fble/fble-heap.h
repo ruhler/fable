@@ -202,4 +202,40 @@ FbleHeap* FbleNewRefCountingHeap(
 //   Frees resources associated with the given heap.
 void FbleFreeRefCountingHeap(FbleHeap* heap);
 
+// FbleNewMarkSweepHeap --
+//   Create a new mark sweep based heap.
+//
+// Inputs:
+//   arena - The underlying arena to use for allocations
+//   refs - The refs function associated with the object type.
+//   on_free - The on_free function associated with the object type.
+//
+//  Results:
+//    The newly allocated heap.
+//
+//  Side effects:
+//    Allocates a new mark sweep heap. The caller is resposible for
+//    calling FbleFreeMarkSweepHeap when the heap is no longer needed.
+FbleHeap* FbleNewMarkSweepHeap(
+    FbleArena* arena, 
+    void (*refs)(FbleHeapCallback*, void*),
+    void (*on_free)(FbleHeap*, void*));
+
+// FbleFreeMarkSweepHeap --
+//   Free a mark sweep heap that is no longer in use.
+//
+// Inputs:
+//   heap - the heap to delete.
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Does a full GC to reclaim all unreachable objects, and frees resources
+//   associated with the given heap.
+//
+//   Does not free objects that are still being retained on the heap. Those
+//   will be leaked.
+void FbleFreeMarkSweepHeap(FbleHeap* heap);
+
 #endif // FBLE_HEAP_H_
