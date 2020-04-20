@@ -262,6 +262,9 @@ void FullGc(Heap* heap)
   // Do another round of full GC to catch any references that were removed
   // during the previos GC.
   while (!IncrGc(heap));
+
+  // Do another round of full GC to free any remaining 'free' references.
+  while (!IncrGc(heap));
 }
 
 // New -- see documentation for FbleHeap.new in fble-heap.h
