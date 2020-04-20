@@ -413,8 +413,8 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         FbleVectorInit(arena, value->scope);
         for (size_t i = 0; i < func_value_instr->scope.size; ++i) {
           FbleValue* arg = FrameGet(thread->stack, func_value_instr->scope.xs[i]);
-          FbleValueRetain(heap, arg);
           FbleVectorAppend(arena, value->scope, arg);
+          FbleValueAddRef(heap, &value->_base._base, arg);
         }
         thread->stack->locals[func_value_instr->dest] = &value->_base._base;
         break;
@@ -521,8 +521,8 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         FbleVectorInit(arena, value->scope);
         for (size_t i = 0; i < proc_value_instr->scope.size; ++i) {
           FbleValue* arg = FrameGet(thread->stack, proc_value_instr->scope.xs[i]);
-          FbleValueRetain(heap, arg);
           FbleVectorAppend(arena, value->scope, arg);
+          FbleValueAddRef(heap, &value->_base, arg);
         }
         thread->stack->locals[proc_value_instr->dest] = &value->_base;
         break;

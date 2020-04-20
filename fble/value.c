@@ -26,6 +26,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value);
 // FbleNewValueHeap -- see documentation in fble-.h
 FbleValueHeap* FbleNewValueHeap(FbleArena* arena)
 {
+  //return FbleNewMarkSweepHeap(arena,
   return FbleNewRefCountingHeap(arena,
       (void (*)(FbleHeapCallback*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
@@ -34,6 +35,7 @@ FbleValueHeap* FbleNewValueHeap(FbleArena* arena)
 // FbleFreeValueHeap -- see documentation in fble.h
 void FbleFreeValueHeap(FbleValueHeap* heap)
 {
+  //FbleFreeMarkSweepHeap(heap);
   FbleFreeRefCountingHeap(heap);
 }
 

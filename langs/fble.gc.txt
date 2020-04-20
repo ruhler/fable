@@ -354,3 +354,45 @@ reduced fble bench that fits in memory takes 87 seconds without any gc versus
 bound on how much we can save by switching to a more efficient garbage
 collector.
 
+------
+
+I drafted a simple incremental mark sweep algorithm. It's still got some bugs
+to work out, but I think it's pretty nice. Some thoughts:
+
+* For incremental mark sweep, we have to track AddRef calls. I can't think of
+  any other way to avoid moving a reference from the region we haven't swept
+  yet into the region we have swept. But hopefully this is rare?
+
+* We still need to support Retain and Release, because of the fble api.
+  There's no way to know outside of FbleEval, for example, if the caller has
+  held on to anything. We have to have Retain and Release.
+
+* Ideally we don't have to call Retain/Release all over the place inside of
+  Eval. We wouldn't need to if the threads were considered values and we could
+  traverse them from a root. But that's annoying. Another option is to provide
+  a callback that can traverse all of these kinds of roots. Maybe we add a
+  notion of a safe point where, if the gc calls the 'roots' callback from the
+  safe point, it is guaranteed to see all the roots. We would still support
+  Retain/Release for fble api users, but avoid it as much as possible
+  internally.
+
+* Mark sweep suggests maybe we should care about the cost of allocated memory
+  over time rather than just the cost of allocations. For example, surely you
+  would say a 24 byte allocation that stays alive for 5 minutes is more costly
+  than a 24 byte allocation that stays alive for 5 seconds, right?
+
+  If that's the case, then it actually is reasonable to sweep all of the heap
+  every time, instead of trying to do some generational sweep or avoid
+  touching bits of the heap that you suspect haven't changed recently.
+
+  The downside to that notion of cost is it isn't a modular cost. You can't
+  tell by looking at the cost of a function in isolation what the cost of that
+  function will be in composition. But again, surely a function that holds on
+  to its arguments for a long time is more costly from a memory perspective
+  than a function that drops all references to its arguments immediately. Even
+  though neither function made any new allocations.
+
+  We get modularity back if we say no objects are shared. Each function holds
+  on to its own copy of a value. But that sounds way too inefficient to be
+  worth it.
+
