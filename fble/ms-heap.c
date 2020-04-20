@@ -204,26 +204,34 @@ bool IncrGc(Heap* heap)
       && heap->pending->next == heap->pending) {
     // Anything still in the "from" space is unreachable. Move it to the free
     // space.
-    heap->from->next->prev = heap->free;
-    heap->from->prev->next = heap->free;
-    heap->free->next = heap->from->next;
-    heap->free->prev = heap->from->prev;
+    if (heap->from->next != heap->from) {
+      heap->from->next->prev = heap->free;
+      heap->from->prev->next = heap->free;
+      heap->free->next = heap->from->next;
+      heap->free->prev = heap->from->prev;
+    }
+    heap->from->next = heap->from;
+    heap->from->prev = heap->from;
 
     // Move the "to" space to the "from" space.
-    heap->to->next->prev = heap->from;
-    heap->to->prev->next = heap->from;
-    heap->from->next = heap->to->next;
-    heap->from->prev = heap->to->prev;
-
-    // The "to" space is now empty.
+    if (heap->to->next != heap->to) {
+      heap->to->next->prev = heap->from;
+      heap->to->prev->next = heap->from;
+      heap->from->next = heap->to->next;
+      heap->from->prev = heap->to->prev;
+    }
     heap->to->next = heap->to;
     heap->to->prev = heap->to;
 
     // Move the roots to the roots_from space.
-    heap->roots_to->next->prev = heap->roots_from;
-    heap->roots_to->prev->next = heap->roots_from;
-    heap->roots_from->next = heap->roots_to->next;
-    heap->roots_from->prev = heap->roots_to->prev;
+    if (heap->roots_to->next != heap->roots_to) {
+      heap->roots_to->next->prev = heap->roots_from;
+      heap->roots_to->prev->next = heap->roots_from;
+      heap->roots_from->next = heap->roots_to->next;
+      heap->roots_from->prev = heap->roots_to->prev;
+    }
+    heap->roots_to->next = heap->roots_to;
+    heap->roots_to->prev = heap->roots_to;
 
     Space tmp = heap->to_space;
     heap->to_space = heap->from_space;
