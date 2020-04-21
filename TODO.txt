@@ -18,7 +18,7 @@
  - Use fair thread traversal by starting over from root when yield occurs.
 
 * [invaders] Implement space invaders game.
- - Add lives indicators to display.
+ - Add score value to the display.
  - Figure out how they know when to move forward as a group.
 
 * [compile] Figure out why Normal is called so often

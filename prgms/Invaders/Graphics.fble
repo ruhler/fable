@@ -1296,16 +1296,16 @@ Drawing@ Background = Drawings([
 Drawing@ Screenshot = Drawings([
   Background,
 
-  Translate(I(D|80), I(D|444), Digit0),
-  Translate(I(D|96), I(D|444), Digit1),
-  Translate(I(D|112), I(D|444), Digit2),
-  Translate(I(D|128), I(D|444), Digit3),
-  Translate(I(D|144), I(D|444), Digit4),
-  Translate(I(D|160), I(D|444), Digit5),
-  Translate(I(D|176), I(D|444), Digit6),
-  Translate(I(D|192), I(D|444), Digit7),
-  Translate(I(D|208), I(D|444), Digit8),
-  Translate(I(D|224), I(D|444), Digit9),
+  Translate(I(D|80), I(D|440), Digit0),
+  Translate(I(D|96), I(D|440), Digit1),
+  Translate(I(D|112), I(D|440), Digit2),
+  Translate(I(D|128), I(D|440), Digit3),
+  Translate(I(D|144), I(D|440), Digit4),
+  Translate(I(D|160), I(D|440), Digit5),
+  Translate(I(D|176), I(D|440), Digit6),
+  Translate(I(D|192), I(D|440), Digit7),
+  Translate(I(D|208), I(D|440), Digit8),
+  Translate(I(D|224), I(D|440), Digit9),
 
   Translate(I(D|200), I(D|400), UFO),
 

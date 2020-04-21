@@ -1,6 +1,8 @@
 
 @ Drawing@ = /Drawing%.Drawing@;
+% Blank = /Drawing%.Blank;
 % Drawings = /Drawing%.Drawings;
+% Translate = /Drawing%.Translate;
 
 @ Int@ = /Int/Int%.Int@;
 
@@ -39,10 +41,23 @@ Game@ Initial = @(
   Game@(g.score, g.lives, Ship.Input(g.ship, d));
 };
 
+(Lives@) { Drawing@; } DrawLives = {
+  Drawing@ l1 = Translate(I(D|320), I(D|440), Graphics.Ship);
+  Drawing@ l2 = Translate(I(D|360), I(D|440), Graphics.Ship);
+  Drawing@ l3 = Translate(I(D|400), I(D|440), Graphics.Ship);
+  (Lives@ l) {
+    ?(l;
+      0: Blank,
+      1: Drawings([l1]),
+      2: Drawings([l1, l2]),
+      3: Drawings([l1, l2, l3]));
+  };
+};
+
 (Game@) { Drawing@; } Draw = (Game@ g) {
   Drawings([
     # TODO: Print the score.
-    # TODO: Print the lives.
+    DrawLives(g.lives),
     Graphics.Background,
     Ship.Draw(g.ship)
   ]);

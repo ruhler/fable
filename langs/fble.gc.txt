@@ -439,4 +439,11 @@ Other thoughts:
   add a 'roots' function and avoid calling Retain/Release all the time in
   eval.
 
+---
+
+* It's unreasonable to expect lower memory use from a mark sweep gc than
+  reference counting. Because before you can collect an object, you have to
+  wait for a GC. So things stay alive longer and that stacks up. What, then,
+  is a reasonable amount of memory overhead to incur? It seems like there is
+  so much arbitrary tuning we can do of the gc.
 
