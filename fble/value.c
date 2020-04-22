@@ -74,12 +74,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 {
   FbleArena* arena = heap->arena;
   switch (value->tag) {
-    case FBLE_STRUCT_VALUE: {
-      FbleStructValue* sv = (FbleStructValue*)value;
-      FbleFree(arena, sv->fields.xs);
-      return;
-    }
-
+    case FBLE_STRUCT_VALUE: return;
     case FBLE_UNION_VALUE: return;
 
     case FBLE_FUNC_VALUE: {
@@ -151,8 +146,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
   switch (value->tag) {
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;
-      for (size_t i = 0; i < sv->fields.size; ++i) {
-        Ref(callback, sv->fields.xs[i]);
+      for (size_t i = 0; i < sv->fieldc; ++i) {
+        Ref(callback, sv->fields[i]);
       }
       break;
     }
@@ -225,14 +220,12 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 // FbleNewStructValue -- see documentation in fble.h
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args)
 {
-  FbleArena* arena = heap->arena;
-  FbleStructValue* value = FbleNewValue(heap, FbleStructValue);
+  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * args.size);
   value->_base.tag = FBLE_STRUCT_VALUE;
-  value->fields.size = args.size;
-  value->fields.xs = FbleArrayAlloc(arena, FbleValue*, value->fields.size);
+  value->fieldc = args.size;
 
   for (size_t i = 0; i < args.size; ++i) {
-    value->fields.xs[i] = args.xs[i];
+    value->fields[i] = args.xs[i];
     FbleValueAddRef(heap, &value->_base, args.xs[i]);
     FbleValueRelease(heap, args.xs[i]);
   }
@@ -244,8 +237,8 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 {
   assert(object->tag == FBLE_STRUCT_VALUE);
   FbleStructValue* value = (FbleStructValue*)object;
-  assert(field < value->fields.size);
-  return value->fields.xs[field];
+  assert(field < value->fieldc);
+  return value->fields[field];
 }
 
 // FbleNewUnionValue -- see documentation in fble-value.h

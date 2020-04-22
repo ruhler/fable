@@ -35,7 +35,8 @@ struct FbleValue {
 //   FBLE_STRUCT_VALUE
 typedef struct {
   FbleValue _base;
-  FbleValueV fields;
+  size_t fieldc;
+  FbleValue* fields[];
 } FbleStructValue;
 
 // FbleUnionValue --

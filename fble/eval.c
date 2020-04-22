@@ -360,8 +360,8 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           FbleReportError("undefined struct value access\n", &access_instr->loc);
           return ABORTED;
         }
-        assert(access_instr->tag < sv->fields.size);
-        thread->stack->locals[access_instr->dest] = FbleValueRetain(heap, sv->fields.xs[access_instr->tag]);
+        assert(access_instr->tag < sv->fieldc);
+        thread->stack->locals[access_instr->dest] = FbleValueRetain(heap, sv->fields[access_instr->tag]);
         break;
       }
 

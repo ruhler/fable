@@ -61,6 +61,22 @@ void FbleFreeValueHeap(FbleValueHeap* heap);
 //   Allocates a value that should be released when it is no longer needed.
 #define FbleNewValue(heap, T) ((T*) heap->new(heap, sizeof(T)))
 
+// FbleNewValueExtra --
+//   Allocate a new value of the given type with some extra space.
+//
+// Inputs:
+//   heap - the heap to allocate the value on
+//   T - the type of the value
+//   size - the number of bytes of extra space to include in the allocated
+//   object.
+//
+// Results:
+//   The newly allocated value with extra space.
+//
+// Side effects:
+//   Allocates a value that should be released when it is no longer needed.
+#define FbleNewValueExtra(heap, T, size) ((T*) heap->new(heap, sizeof(T) + size))
+
 // FbleValueRetain --
 //   Keep the given value alive until a corresponding FbleValueRelease is
 //   called.
