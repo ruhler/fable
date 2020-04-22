@@ -5,6 +5,8 @@
 % Translate = /Drawing%.Translate;
 
 @ Int@ = /Int/Int%.Int@;
+% Div = /Int/Int/Div%.Div;
+% Mod = /Int/Int/Div%.Mod;
 
 % I = /Int/Int/Lit%.I;
 % D = /Int/Int/Lit%.D;
@@ -28,7 +30,7 @@
 );
 
 Game@ Initial = @(
-  score: I(D|0),
+  score: I(D|920),
   lives: Lives@(3: Unit),
   ship: Ship.Initial
 );
@@ -39,6 +41,57 @@ Game@ Initial = @(
 
 (Game@, Dir@) { Game@; } Input = (Game@ g, Dir@ d) {
   Game@(g.score, g.lives, Ship.Input(g.ship, d));
+};
+
+(Int@) { Drawing@; } DrawScore = {
+  # Digit -- Get the drawing associated with the digit corresponding to d.
+  # Returns a blank drawing if d is not in [0-9].
+  (Int@) { Drawing@; } Digit = (Int@ d) {
+    ?(d; n: Blank, 0: Graphics.Digits.0, p: ?(d.p;
+        1: Graphics.Digits.1,
+        2p0: ?(d.p.2p0; 
+          1: Graphics.Digits.2,
+          2p0: ?(d.p.2p0.2p0;
+            1: Graphics.Digits.4,
+            2p0: ?(d.p.2p0.2p0.2p0;
+              1: Graphics.Digits.8,
+              : Blank),
+            : Blank),
+          2p1: ?(d.p.2p0.2p1;
+            1: Graphics.Digits.6,
+            : Blank)),
+        2p1: ?(d.p.2p1; 
+          1: Graphics.Digits.3,
+          2p0: ?(d.p.2p1.2p0;
+            1: Graphics.Digits.5,
+            2p0: ?(d.p.2p1.2p0.2p0;
+              1: Graphics.Digits.9,
+              : Blank),
+            : Blank),
+          2p1: ?(d.p.2p1.2p1;
+            1: Graphics.Digits.7,
+            : Blank))));
+  };
+
+  Int@ 10 = I(D|10);
+
+  (Int@ score) {
+    # We only print 4 digits for the score.
+    Int@ s1000 = score;
+    Int@ s100 = Div(s1000, 10);
+    Int@ s10 = Div(s100, 10);
+    Int@ s1 = Div(s10, 10);
+    Drawing@ d0 = Digit(Mod(s1000, 10));
+    Drawing@ d1 = Digit(Mod(s100, 10));
+    Drawing@ d2 = Digit(Mod(s10, 10));
+    Drawing@ d3 = Digit(Mod(s1, 10));
+    Drawings([
+      Translate(I(D|80), I(D|440), d3),
+      Translate(I(D|96), I(D|440), d2),
+      Translate(I(D|112), I(D|440), d1),
+      Translate(I(D|128), I(D|440), d0)
+    ]);
+  };
 };
 
 (Lives@) { Drawing@; } DrawLives = {
@@ -56,7 +109,7 @@ Game@ Initial = @(
 
 (Game@) { Drawing@; } Draw = (Game@ g) {
   Drawings([
-    # TODO: Print the score.
+    DrawScore(g.score),
     DrawLives(g.lives),
     Graphics.Background,
     Ship.Draw(g.ship)
