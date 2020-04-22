@@ -83,18 +83,18 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
         case FBLE_BASIC_FUNC_VALUE: {
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
           FbleFreeInstrBlock(arena, basic->code);
-          break;
+          return;
         }
 
-        case FBLE_THUNK_FUNC_VALUE: break;
-        case FBLE_PUT_FUNC_VALUE: break;
+        case FBLE_THUNK_FUNC_VALUE: return;
+        case FBLE_PUT_FUNC_VALUE: return;
       }
+      UNREACHABLE("should never get here");
       return;
     }
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* v = (FbleProcValue*)value;
-      FbleFree(arena, v->scope.xs);
       FbleFreeInstrBlock(arena, v->code);
       return;
     }
@@ -186,8 +186,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* v = (FbleProcValue*)value;
-      for (size_t i = 0; i < v->scope.size; ++i) {
-        Ref(callback, v->scope.xs[i]);
+      for (size_t i = 0; i < v->scopec; ++i) {
+        Ref(callback, v->scope[i]);
       }
       break;
     }
@@ -279,11 +279,10 @@ FbleValue* FbleNewGetProcValue(FbleValueHeap* heap, FbleValue* port)
 {
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
-  FbleArena* arena = heap->arena;
-  FbleProcValue* get = FbleNewValue(heap, FbleProcValue);
+  FbleProcValue* get = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*));
   get->_base.tag = FBLE_PROC_VALUE;
-  FbleVectorInit(arena, get->scope);
-  FbleVectorAppend(arena, get->scope, port);
+  get->scopec = 1;
+  get->scope[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
   get->code = &g_get_block;
   get->code->refcount++;

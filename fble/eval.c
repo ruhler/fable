@@ -457,14 +457,14 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         } else if (func->tag == FBLE_PUT_FUNC_VALUE) {
           FblePutFuncValue* f = (FblePutFuncValue*)func;
 
-          FbleProcValue* value = FbleNewValue(heap, FbleProcValue);
+          FbleProcValue* value = FbleNewValueExtra(heap, FbleProcValue, 2 * sizeof(FbleValue*));
           value->_base.tag = FBLE_PROC_VALUE;
-          FbleVectorInit(arena, value->scope);
+          value->scopec = 2;
 
-          FbleVectorAppend(arena, value->scope, f->port);
+          value->scope[0] = f->port;
           FbleValueAddRef(heap, &value->_base, f->port);
 
-          FbleVectorAppend(arena, value->scope, arg);
+          value->scope[1] = arg;
           FbleValueAddRef(heap, &value->_base, arg);
 
           value->code = &g_put_block;
@@ -514,14 +514,15 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_PROC_VALUE_INSTR: {
         FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-        FbleProcValue* value = FbleNewValue(heap, FbleProcValue);
+        FbleProcValue* value = FbleNewValueExtra(heap, FbleProcValue,
+            sizeof(FbleValue*) * proc_value_instr->scope.size);
         value->_base.tag = FBLE_PROC_VALUE;
         value->code = proc_value_instr->code;
         value->code->refcount++;
-        FbleVectorInit(arena, value->scope);
-        for (size_t i = 0; i < proc_value_instr->scope.size; ++i) {
+        value->scopec = proc_value_instr->scope.size;
+        for (size_t i = 0; i < value->scopec; ++i) {
           FbleValue* arg = FrameGet(thread->stack, proc_value_instr->scope.xs[i]);
-          FbleVectorAppend(arena, value->scope, arg);
+          value->scope[i] = arg;
           FbleValueAddRef(heap, &value->_base, arg);
         }
         thread->stack->locals[proc_value_instr->dest] = &value->_base;
@@ -677,7 +678,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
 
           Thread* child = FbleAlloc(arena, Thread);
-          child->stack = PushFrame(arena, &arg->_base, arg->scope.xs, arg->code, result, NULL);
+          child->stack = PushFrame(arena, &arg->_base, arg->scope, arg->code, result, NULL);
           child->profile = FbleNewProfileThread(arena, thread->profile, profile);
           child->children.size = 0;
           child->children.xs = NULL;
@@ -713,11 +714,11 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
 
         FbleValueRetain(heap, &proc->_base);
         if (proc_instr->exit) {
-          thread->stack = ReplaceFrame(heap, &proc->_base, proc->scope.xs, proc->code, thread->stack);
+          thread->stack = ReplaceFrame(heap, &proc->_base, proc->scope, proc->code, thread->stack);
           FbleProfileAutoExitBlock(arena, thread->profile);
         } else {
           FbleValue** result = thread->stack->locals + proc_instr->dest;
-          thread->stack = PushFrame(arena, &proc->_base, proc->scope.xs, proc->code, result, thread->stack);
+          thread->stack = PushFrame(arena, &proc->_base, proc->scope, proc->code, result, thread->stack);
         }
         break;
       }
@@ -1012,5 +1013,5 @@ FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfil
 {
   assert(proc->tag == FBLE_PROC_VALUE);
   FbleProcValue* p = (FbleProcValue*)proc;
-  return Eval(heap, io, p->scope.xs, p->code, profile);
+  return Eval(heap, io, p->scope, p->code, profile);
 }

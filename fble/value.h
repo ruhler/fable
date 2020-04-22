@@ -105,8 +105,9 @@ typedef struct {
 // FbleProcValue -- FBLE_PROC_VALUE
 typedef struct {
   FbleValue _base;
-  FbleValueV scope;
   FbleInstrBlock* code;
+  size_t scopec;
+  FbleValue* scope[];
 } FbleProcValue;
 
 // FbleValues --
