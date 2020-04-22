@@ -402,16 +402,18 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
 
       case FBLE_FUNC_VALUE_INSTR: {
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-        FbleBasicFuncValue* value = FbleNewValue(heap, FbleBasicFuncValue);
+        FbleBasicFuncValue* value = FbleNewValueExtra(
+            heap, FbleBasicFuncValue,
+            sizeof(FbleValue*) * func_value_instr->scope.size);
         value->_base._base.tag = FBLE_FUNC_VALUE;
         value->_base.tag = FBLE_BASIC_FUNC_VALUE;
         value->_base.argc = func_value_instr->argc;
         value->code = func_value_instr->code;
         value->code->refcount++;
-        FbleVectorInit(arena, value->scope);
-        for (size_t i = 0; i < func_value_instr->scope.size; ++i) {
+        value->scopec = func_value_instr->scope.size;
+        for (size_t i = 0; i < value->scopec; ++i) {
           FbleValue* arg = FrameGet(thread->stack, func_value_instr->scope.xs[i]);
-          FbleVectorAppend(arena, value->scope, arg);
+          value->scope[i] = arg;
           FbleValueAddRef(heap, &value->_base._base, arg);
         }
         thread->stack->locals[func_value_instr->dest] = &value->_base._base;
@@ -491,11 +493,11 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)f;
           FbleValueRetain(heap, &basic->_base._base);
           if (func_apply_instr->exit) {
-            thread->stack = ReplaceFrame(heap, &basic->_base._base, basic->scope.xs, basic->code, thread->stack);
+            thread->stack = ReplaceFrame(heap, &basic->_base._base, basic->scope, basic->code, thread->stack);
             FbleProfileAutoExitBlock(arena, thread->profile);
           } else {
             FbleValue** result = thread->stack->locals + func_apply_instr->dest;
-            thread->stack = PushFrame(arena, &basic->_base._base, basic->scope.xs, basic->code, result, thread->stack);
+            thread->stack = PushFrame(arena, &basic->_base._base, basic->scope, basic->code, result, thread->stack);
           }
 
           f = func;

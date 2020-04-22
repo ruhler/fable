@@ -71,15 +71,16 @@ typedef struct {
 // FbleBasicFuncValue -- FBLE_BASIC_FUNC_VALUE
 //
 // Fields:
-//   scope - The scope at the time the function was created,
-//           representing the lexical context available to the function.
-//           Stored as a vector of variables in scope order.
-//   body - The block of instructions representing the body of the function,
+//   code - The block of instructions representing the body of the function,
 //          which should pop the arguments and context.
+//   scopec - The number of values on the function scope.
+//   scope - The scope at the time the function was created, representing the
+//           lexical context available to the function.
 typedef struct {
   FbleFuncValue _base;
-  FbleValueV scope;
   FbleInstrBlock* code;
+  size_t scopec;
+  FbleValue* scope[];
 } FbleBasicFuncValue;
 
 // FbleThunkFuncValue -- FBLE_THUNK_FUNC_VALUE

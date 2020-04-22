@@ -82,7 +82,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       switch (fv->tag) {
         case FBLE_BASIC_FUNC_VALUE: {
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
-          FbleFree(arena, basic->scope.xs);
           FbleFreeInstrBlock(arena, basic->code);
           break;
         }
@@ -163,8 +162,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       switch (fv->tag) {
         case FBLE_BASIC_FUNC_VALUE: {
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
-          for (size_t i = 0; i < basic->scope.size; ++i) {
-            Ref(callback, basic->scope.xs[i]);
+          for (size_t i = 0; i < basic->scopec; ++i) {
+            Ref(callback, basic->scope[i]);
           }
           break;
         }
