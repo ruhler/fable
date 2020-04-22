@@ -437,9 +437,7 @@ static void* New(FbleHeap* heap_, size_t size)
   Heap* heap = (Heap*)heap_;
   assert(heap->next_id != NULL_OBJ_ID);
 
-  Obj* obj = (Obj*)FbleRawAlloc(heap->_base.arena, sizeof(Obj) + size,
-      FbleAllocMsg(__FILE__, __LINE__));
-
+  Obj* obj = FbleAllocExtra(heap->_base.arena, Obj, size);
   obj->id = heap->next_id++;
   obj->refcount = 1;
   obj->cycle = NULL;

@@ -181,8 +181,7 @@ static Stack* PushFrame(FbleArena* arena, FbleValue* scope, FbleValue** statics,
 {
   code->refcount++;
 
-  Stack* stack = (Stack*)FbleRawAlloc(arena, sizeof(Stack) + code->locals * sizeof(FbleValue*),
-      FbleAllocMsg(__FILE__, __LINE__));
+  Stack* stack = FbleAllocExtra(arena, Stack, code->locals * sizeof(FbleValue*));
   stack->scope = scope;
   stack->statics = statics;
   stack->code = code;
@@ -249,8 +248,7 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleValue* scope, FbleValue** st
   FbleFreeInstrBlock(arena, stack->code);
 
   if (code->locals > stack->code->locals) {
-    Stack* nstack = (Stack*)FbleRawAlloc(arena, sizeof(Stack) + code->locals * sizeof(FbleValue*),
-        FbleAllocMsg(__FILE__, __LINE__));
+    Stack* nstack = FbleAllocExtra(arena, Stack, code->locals * sizeof(FbleValue*));
     nstack->tail = stack->tail;
     nstack->result = stack->result;
 

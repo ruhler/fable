@@ -446,4 +446,11 @@ Other thoughts:
   wait for a GC. So things stay alive longer and that stacks up. What, then,
   is a reasonable amount of memory overhead to incur? It seems like there is
   so much arbitrary tuning we can do of the gc.
+* In practice, I'm seeing about 50% overhead of objects allocated using gc,
+  due to the lag between when an object becomes garbage and when garbage
+  collection completes. One idea is to combine reference counting and mark
+  sweep, so you can eagerly free everything except for cycles. But then you
+  could have pathological cases where everything you allocate is a cycle, and
+  if you're happy with that behavior, you may as well be happy with just mark
+  sweep, no?
 

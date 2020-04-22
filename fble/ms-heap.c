@@ -284,10 +284,8 @@ static void* New(FbleHeap* heap_, size_t size)
   Heap* heap = (Heap*)heap_;
   IncrGc(heap);
 
-  Obj* obj = (Obj*)FbleRawAlloc(heap->_base.arena, sizeof(Obj) + size,
-      FbleAllocMsg(__FILE__, __LINE__));
-
   // Objects are allocated as roots.
+  Obj* obj = FbleAllocExtra(heap->_base.arena, Obj, size);
   obj->next = heap->roots_to->next;
   obj->prev = heap->roots_to;
   obj->space = heap->to_space;

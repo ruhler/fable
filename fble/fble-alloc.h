@@ -44,6 +44,26 @@ void* FbleRawAlloc(FbleArena* arena, size_t size, const char* msg);
 #define FbleAllocMsg(file, line) file ":" FbleAllocLine(line)
 #define FbleAlloc(arena, T) ((T*) FbleRawAlloc(arena, sizeof(T), FbleAllocMsg(__FILE__, __LINE__)))
 
+// FbleAllocExtra --
+//   Allocate an object with additional extra space. For use with objects like:
+//   struct {
+//     ...
+//     Foo foo[]
+//   };
+//
+// Inputs:
+//   arena - The arena to use for allocation.
+//   T - The type of object to allocate.
+//   size - The size of the extra space to include.
+//
+// Results:
+//   A pointer to a newly allocated object of the given type with extra size.
+//
+// Side effects:
+//   Allocates from the arena. The allocation should be freed by calling
+//   FbleFree when no longer in use.
+#define FbleAllocExtra(arena, T, size) ((T*) FbleRawAlloc(arena, sizeof(T) + size, FbleAllocMsg(__FILE__, __LINE__)))
+
 // FbleArrayAlloc --
 //   A type safe way of allocating an array of objects from an arena.
 //
