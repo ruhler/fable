@@ -204,18 +204,16 @@ bool IncrGc(Heap* heap)
     MarkRefs(heap, obj);
   }
 
-  // If we are done with gc and need some more free objects, start a new GC by
-  // swapping from and to spaces.
-  if (heap->free->next == heap->free
-      && heap->roots_from->next == heap->roots_from
+  // If we are done with gc, start a new GC by swapping from and to spaces.
+  if (heap->roots_from->next == heap->roots_from
       && heap->pending->next == heap->pending) {
     // Anything still in the "from" space is unreachable. Move it to the free
     // space.
     if (heap->from->next != heap->from) {
-      heap->from->next->prev = heap->free;
-      heap->from->prev->next = heap->free;
+      heap->free->next->prev = heap->from->prev;
+      heap->from->prev->next = heap->free->next;
       heap->free->next = heap->from->next;
-      heap->free->prev = heap->from->prev;
+      heap->free->next->prev = heap->free;
     }
     heap->from->next = heap->from;
     heap->from->prev = heap->from;
@@ -270,8 +268,14 @@ void FullGc(Heap* heap)
   // during the previos GC.
   while (!IncrGc(heap));
 
-  // Do another round of full GC to free any remaining 'free' references.
-  while (!IncrGc(heap));
+  // Clean up all the free objects.
+  while (heap->free->next != heap->free) {
+    Obj* obj = heap->free->next;
+    obj->prev->next = obj->next;
+    obj->next->prev = obj->prev;
+    heap->_base.on_free(&heap->_base, obj->obj);
+    FbleFree(heap->_base.arena, obj);
+  }
 }
 
 // New -- see documentation for FbleHeap.new in fble-heap.h
