@@ -8,7 +8,7 @@ Unit@ Unit = Unit@();
 @ Bit@ = +(Unit@ 0, Unit@ 1);
 % Bit = @(
   0: Bit@(0: Unit), 
-  1: Bit@(0: Unit)
+  1: Bit@(1: Unit)
 ); 
 
 @ BitS@ = +(BitP@ cons, Unit@ nil),
