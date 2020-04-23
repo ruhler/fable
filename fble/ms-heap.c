@@ -160,8 +160,11 @@ bool IncrGc(Heap* heap)
   FbleArena* arena = heap->_base.arena;
 
   // Free a couple of objects on the free list.
-  // Assuming we do incremental GC for each new allocation, it's good to free
-  // two objects so that we free at a faster rate than we allocate.
+  // If we free less than one object, we won't be able to keep up with
+  // allocations and the heap will grow unbounded. If we free exactly one
+  // object here, we won't be able to get ahead of allocations; the heap will
+  // never shrink. We can shrink the heap if we free just a little more than
+  // one object here. Two seems like the easiest approximation to that.
   for (size_t i = 0; i < 2 && heap->free->next != heap->free; ++i) {
     Obj* obj = heap->free->next;
     obj->prev->next = obj->next;
@@ -170,12 +173,14 @@ bool IncrGc(Heap* heap)
     FbleFree(arena, obj);
   }
 
-  // Traverse some roots.
-  // Assuming we do incremental GC for each new allocation, we should traverse
-  // 3 objects per allocation. That way fewer than N new objects will be
-  // allocated in the time it takes us to traverse a heap with N objects (in
-  // addition to whatever objects are allocated while traversing that heap).
-  for (size_t i = 0; i < 3 && heap->roots_from->next != heap->roots_from; ++i) {
+  // Traverse some objects on the heap.
+  // The more objects we traverse, the more time we spend doing GC but the
+  // less time a garbage object spends waiting to be collected, which means
+  // the less memory overhead. The less time we traverse, the less time doing
+  // GC, but the greater the memory overhead. I think, technically, as long as
+  // we traverse at least one object occasionally, we should be able to keep
+  // up with allocations.
+  if (heap->roots_from->next != heap->roots_from) {
     Obj* obj = heap->roots_from->next;
     obj->prev->next = obj->next;
     obj->next->prev = obj->prev;
@@ -185,14 +190,7 @@ bool IncrGc(Heap* heap)
     heap->roots_to->next->prev = obj;
     heap->roots_to->next = obj;
     MarkRefs(heap, obj);
-  }
-
-  // Traverse some pending objects.
-  // Assuming we do incremental GC for each new allocation, we should traverse
-  // 3 objects per allocation. That way fewer than N new objects will be
-  // allocated in the time it takes us to traverse a heap with N objects (in
-  // addition to whatever objects are allocated while traversing that heap).
-  for (size_t i = 0; i < 3 && heap->pending->next != heap->pending; ++i) {
+  } else if (heap->pending->next != heap->pending) {
     Obj* obj = heap->pending->next;
     obj->prev->next = obj->next;
     obj->next->prev = obj->prev;
@@ -301,14 +299,26 @@ static void Retain(FbleHeap* heap_, void* obj_)
   Heap* heap = (Heap*)heap_;
   Obj* obj = ToObj(obj_);
   if (obj->refcount++ == 0) {
-    // This is a new root. Move it to roots_from.
-    obj->prev->next = obj->next;
-    obj->next->prev = obj->prev;
-    obj->next = heap->roots_from->next;
-    obj->prev = heap->roots_from;
-    obj->space = heap->from_space;
-    heap->roots_from->next->prev = obj;
-    heap->roots_from->next = obj;
+    // This is a new root.
+    if (obj->space == heap->to_space) {
+      // We have already traversed the object, so move it to roots_to.
+      obj->prev->next = obj->next;
+      obj->next->prev = obj->prev;
+      obj->next = heap->roots_to->next;
+      obj->prev = heap->roots_to;
+      obj->space = heap->to_space;
+      heap->roots_to->next->prev = obj;
+      heap->roots_to->next = obj;
+    } else {
+      // We haven't traversed the object yet, so move it to roots_from.
+      obj->prev->next = obj->next;
+      obj->next->prev = obj->prev;
+      obj->next = heap->roots_from->next;
+      obj->prev = heap->roots_from;
+      obj->space = heap->from_space;
+      heap->roots_from->next->prev = obj;
+      heap->roots_from->next = obj;
+    }
   }
 }
 
@@ -323,6 +333,10 @@ static void Release(FbleHeap* heap_, void* obj_)
       // The object may be reachable from some other root that we have already
       // traversed. Conservatively assume that's the case and mark this object
       // as pending.
+      // TODO: Could we keep track of which from_roots are reachable from
+      // other objects that have been traversed, so we can move the object to
+      // the from space instead of PENDING in this case? That way we could
+      // free it a round earlier, no?
       obj->prev->next = obj->next;
       obj->next->prev = obj->prev;
       obj->next = heap->pending->next;
