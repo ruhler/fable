@@ -15,13 +15,26 @@
 // check which space an object is in, and instantly swap all objects in the
 // "to" space with all objects in the "from" space.
 //
-// Root objects in the "from" root space have yet to be traversed.
 // Root objects in the "to" root space have already been traversed.
-// Root objects are not allowed to be in the PENDING space.
+// They live on heap->roots_to.
+//
+// Root objects in the "from" root space have yet to be traversed, and so far
+// are otherwise unreachable aside from being roots.
+// They live on heap->roots_from.
+//
+// Root objects in the PENDING root space have yet to be traversed, but are
+// otherwise reachable even if they weren't roots.
+// They live on heap->roots_from.
+//
 // Non-root objects in the "from" space have not yet been seen.
+// They live on heap->from.
+//
 // Non-root objects in the PENDING space are reachable, but have not yet been
-//    traversed.
+// traversed.
+// They live on heap->pending.
+//
 // Non-root objects in the "to" space are reachable and have been traversed.
+// They live on heap->to.
 typedef enum {
   A,
   B,
@@ -61,7 +74,7 @@ typedef struct Obj {
 //   from - List of non-root objects in the "from" space.
 //   pending - List of non-root objects in the PENDING space.
 //   roots_to - List of root objects in the "to" space.
-//   roots_from - List of root objects in the "from" space.
+//   roots_from - List of root objects in the "from" and PENDING space.
 //   free - List of free objects.
 //
 //   to_space - Which space, A or B, is currently the "to" space.
@@ -123,15 +136,18 @@ static void MarkRef(MarkRefsCallback* this, void* obj_)
   Obj* obj = ToObj(obj_);
   Heap* heap = this->heap;
 
-  // Move non-root "from" space objects to pending.
-  if (obj->refcount == 0 && obj->space == heap->from_space) {
-    obj->prev->next = obj->next;
-    obj->next->prev = obj->prev;
-    obj->next = heap->pending->next;
-    obj->prev = heap->pending;
+  // Move "from" space objects to pending.
+  if (obj->space == heap->from_space) {
     obj->space = PENDING;
-    heap->pending->next->prev = obj;
-    heap->pending->next = obj;
+    if (obj->refcount == 0) {
+      // Non-root objects move to pending.
+      obj->prev->next = obj->next;
+      obj->next->prev = obj->prev;
+      obj->next = heap->pending->next;
+      obj->prev = heap->pending;
+      heap->pending->next->prev = obj;
+      heap->pending->next = obj;
+    }
   }
 }
 
@@ -180,6 +196,7 @@ bool IncrGc(Heap* heap)
   // GC, but the greater the memory overhead. I think, technically, as long as
   // we traverse at least one object occasionally, we should be able to keep
   // up with allocations.
+  // Here we traverse exactly one object.
   if (heap->roots_from->next != heap->roots_from) {
     Obj* obj = heap->roots_from->next;
     obj->prev->next = obj->next;
@@ -306,16 +323,15 @@ static void Retain(FbleHeap* heap_, void* obj_)
       obj->next->prev = obj->prev;
       obj->next = heap->roots_to->next;
       obj->prev = heap->roots_to;
-      obj->space = heap->to_space;
       heap->roots_to->next->prev = obj;
       heap->roots_to->next = obj;
     } else {
       // We haven't traversed the object yet, so move it to roots_from.
+      // If the object was PENDING, we keep it marked as PENDING.
       obj->prev->next = obj->next;
       obj->next->prev = obj->prev;
       obj->next = heap->roots_from->next;
       obj->prev = heap->roots_from;
-      obj->space = heap->from_space;
       heap->roots_from->next->prev = obj;
       heap->roots_from->next = obj;
     }
@@ -329,30 +345,32 @@ static void Release(FbleHeap* heap_, void* obj_)
   Obj* obj = ToObj(obj_);
   if (--obj->refcount == 0) {
     // This is no longer a root.
-    if (obj->space == heap->from_space) {
-      // The object may be reachable from some other root that we have already
-      // traversed. Conservatively assume that's the case and mark this object
-      // as pending.
-      // TODO: Could we keep track of which from_roots are reachable from
-      // other objects that have been traversed, so we can move the object to
-      // the from space instead of PENDING in this case? That way we could
-      // free it a round earlier, no?
-      obj->prev->next = obj->next;
-      obj->next->prev = obj->prev;
-      obj->next = heap->pending->next;
-      obj->prev = heap->pending;
-      obj->space = PENDING;
-      heap->pending->next->prev = obj;
-      heap->pending->next = obj;
-    } else {
-      // We've already traversed this object. Move it to the to space.
+    if (obj->space == heap->to_space) {
+      // We have already traversed this object. Move it to the "to" space.
       obj->prev->next = obj->next;
       obj->next->prev = obj->prev;
       obj->next = heap->to->next;
       obj->prev = heap->to;
-      obj->space = heap->to_space;
       heap->to->next->prev = obj;
       heap->to->next = obj;
+    } else if (obj->space == PENDING) {
+      // We haven't traversed the object yet, but it's reachable from some
+      // other root that we have already traversed. Move it to pending.
+      obj->prev->next = obj->next;
+      obj->next->prev = obj->prev;
+      obj->next = heap->pending->next;
+      obj->prev = heap->pending;
+      heap->pending->next->prev = obj;
+      heap->pending->next = obj;
+    } else {
+      // We haven't traversed the object yet, but it isn't reachable from
+      // anything else we have traversed so far. Move it to "from" space.
+      obj->prev->next = obj->next;
+      obj->next->prev = obj->prev;
+      obj->next = heap->from->next;
+      obj->prev = heap->from;
+      heap->from->next->prev = obj;
+      heap->from->next = obj;
     }
   }
 }
@@ -364,22 +382,20 @@ static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
   Obj* src = ToObj(src_);
   Obj* dst = ToObj(dst_);
 
-  // Mark dst as pending if the following conditions hold:
-  // * we have already traversed the src node.
-  // * we have not already traversed the dst node.
-  // * the dst node is not a root.
-  // Because this means dst is now reachable by root when it may not otherwise
-  // have been.
-  if (src->space == heap->to_space
-      && dst->space == heap->from_space
-      && dst->refcount == 0) {
+  // Mark dst as pending if we have already traversed the src, but haven't yet
+  // seen the dst this round of gc.
+  if (src->space == heap->to_space && dst->space == heap->from_space) {
+    // If dst is a root, we just updating its PENDING state. Otherwise we need
+    // to move it to the list of pending objects.
+    dst->space = PENDING;
+    if (dst->refcount == 0) {
       dst->prev->next = dst->next;
       dst->next->prev = dst->prev;
       dst->next = heap->pending->next;
       dst->prev = heap->pending;
-      dst->space = PENDING;
       heap->pending->next->prev = dst;
       heap->pending->next = dst;
+    }
   }
 }
 
