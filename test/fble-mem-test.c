@@ -43,7 +43,9 @@ static void PrintUsage(FILE* stream)
 //
 // Inputs:
 //   prgm - the program to run.
-//   use_large_n - true if we should run it for large_n, false otherwise.
+//   use_n - the value of n to run for.
+//   alloc_n - the value of n to allocate, which should match on all runs if
+//             we want a fair memory comparison.
 //   max_bytes - output set to the maximum bytes of memory used during the run.
 //
 // Results:
@@ -51,8 +53,10 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects: 
 //   Sets max_bytes to the maximum bytes used during the run.
-bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
+bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
 {
+  assert(use_n <= alloc_n);
+
   bool success = false;
   FbleArena* eval_arena = FbleNewArena();
   FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
@@ -64,17 +68,17 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
     FbleValueV args = { .size = 0, .xs = NULL };
     FbleValue* unit = FbleNewStructValue(heap, args);
     FbleValue* zero = FbleNewUnionValue(heap, 1, unit);
-    FbleValue* large_n = zero;
-    FbleValue* small_n = NULL;
-    for (size_t i = 0; i < 200; i++) {
-      large_n = FbleNewUnionValue(heap, 0, large_n);
-      if (i == 100) {
-        small_n = large_n;
+    FbleValue* alloc = zero;
+    FbleValue* use = zero;
+    for (size_t i = 0; i < alloc_n; i++) {
+      alloc = FbleNewUnionValue(heap, 0, alloc);
+      if (i + 1 == use_n) {
+        use = alloc;
       }
     }
 
     FbleValueV argv = {
-      .xs = (use_large_n ? &large_n : &small_n),
+      .xs = &use,
       .size = 1
     };
     FbleValue* result = FbleApply(heap, func, argv, profile);
@@ -90,7 +94,7 @@ bool Run(FbleProgram* prgm, bool use_large_n, size_t* max_bytes)
 
     success = (result != NULL);
     FbleValueRelease(heap, result);
-    FbleValueRelease(heap, large_n);
+    FbleValueRelease(heap, alloc);
   }
 
   FbleValueRelease(heap, func);
@@ -155,13 +159,13 @@ int main(int argc, char* argv[])
   }
 
   size_t max_small_n = 0;
-  if (!Run(prgm, false, &max_small_n)) {
+  if (!Run(prgm, 100, 200, &max_small_n)) {
     FbleFreeArena(prgm_arena);
     return EX_FAIL;
   }
 
   size_t max_large_n = 0;
-  if (!Run(prgm, true, &max_large_n)) {
+  if (!Run(prgm, 200, 200, &max_large_n)) {
     FbleFreeArena(prgm_arena);
     return EX_FAIL;
   }
