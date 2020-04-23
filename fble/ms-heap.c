@@ -196,18 +196,11 @@ bool IncrGc(Heap* heap)
   // GC, but the greater the memory overhead. I think, technically, as long as
   // we traverse at least one object occasionally, we should be able to keep
   // up with allocations.
-  // Here we traverse exactly one object.
-  if (heap->roots_from->next != heap->roots_from) {
-    Obj* obj = heap->roots_from->next;
-    obj->prev->next = obj->next;
-    obj->next->prev = obj->prev;
-    obj->next = heap->roots_to->next;
-    obj->prev = heap->roots_to;
-    obj->space = heap->to_space;
-    heap->roots_to->next->prev = obj;
-    heap->roots_to->next = obj;
-    MarkRefs(heap, obj);
-  } else if (heap->pending->next != heap->pending) {
+  //
+  // Here we traverse exactly one object. We give priority to pending objects
+  // in the hopes that roots will be dropped and can be collected this GC
+  // cycle if we haven't traversed them yet.
+  if (heap->pending->next != heap->pending) {
     Obj* obj = heap->pending->next;
     obj->prev->next = obj->next;
     obj->next->prev = obj->prev;
@@ -216,6 +209,16 @@ bool IncrGc(Heap* heap)
     obj->space = heap->to_space;
     heap->to->next->prev = obj;
     heap->to->next = obj;
+    MarkRefs(heap, obj);
+  } else if (heap->roots_from->next != heap->roots_from) {
+    Obj* obj = heap->roots_from->next;
+    obj->prev->next = obj->next;
+    obj->next->prev = obj->prev;
+    obj->next = heap->roots_to->next;
+    obj->prev = heap->roots_to;
+    obj->space = heap->to_space;
+    heap->roots_to->next->prev = obj;
+    heap->roots_to->next = obj;
     MarkRefs(heap, obj);
   }
 

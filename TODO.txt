@@ -1,4 +1,8 @@
 
+* [test] Figure out how to be more lenient in memory growth tests
+ - So that the mark sweep collector, which does work as intended (I'm pretty
+   sure), can satisfy those tests.
+
 * [eval] gprof profiling based improvements.
   - Little things that are cleanup are worth doing.
   - Things the compiler could easily fix itself are not worth doing if they
