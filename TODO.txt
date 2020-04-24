@@ -1,7 +1,4 @@
 
-* [compile] make sure types are not constructed incrementally
- - otherwise gc could end up traversing garbage.
-* [eval] replace all uses of rc-heap with ms-heap.
 * [type] Inline fields and args data into FbleType objects?
 
 * [eval] gprof profiling based improvements.
@@ -15,9 +12,7 @@
 * [eval] Thread management cleanup
  - Clarify for FORK instruction whether the main thread continues to run until
    join, or if the main thread waits until all children are done. If the
-   former, implement it correctly. If the later, fix the bug in reference
-   counting that triggers a memory leak in some cases if we fail to execute
-   the release following the fork in a timely manner.
+   former, implement it correctly.
  - Switch i/o ports to use links.
  - Track suspended threads on links.
  - Use fair thread traversal by starting over from root when yield occurs.
@@ -58,10 +53,6 @@
 
 * [gc] Optimize gc. 
  - Experiments suggest gc is 28% overhead for fble bench today.
-
-* [test] Add fble-heap-test for splitting cycles
-   Test that we don't retain a cycle a->b->c by referencing a separate object
-   d that used to be in the cycle a->b->c->d.
 
 * [snake] Switch to a target 60 FPS?
 * [snake] Test and fix bug when snake eats its tail.
@@ -125,10 +116,6 @@
 * [release] Write man pages for fble and friends?
 * [release] Better error message for importing something from a module that
   is not defined in the module?
-
-* [heap] Change reference counting to be incrementally done on allocation.
-  Maybe write a test that shows how something that should take no time gets
-  charged for a big deallocation time today?
 
 * [arena] Rethink arenas and documentation, because some cases appear to assume you
   have a bulk-free arena. Other cases its not well specified what is freed
