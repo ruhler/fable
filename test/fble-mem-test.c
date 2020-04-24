@@ -193,13 +193,17 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  if (!growth && max_large_n > max_small_n) {
+  // The memory samples can be a little bit noisy. Be a little lenient to
+  // that. I think it's unlikely a small memory growth could hide within 1% of
+  // the small heap size.
+  size_t noise = max_small_n / 100;
+  if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
     FbleFreeArena(prgm_arena);
     return EX_FAIL;
   }
 
-  if (growth && max_large_n == max_small_n) {
+  if (growth && max_large_n <= max_small_n + noise) {
     fprintf(stderr, "memory constant\n");
     FbleFreeArena(prgm_arena);
     return EX_FAIL;

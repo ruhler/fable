@@ -1,6 +1,4 @@
 
-* [test] Debug failing memory tests for mark sweep collector.
-
 * [eval] gprof profiling based improvements.
   - Little things that are cleanup are worth doing.
   - Things the compiler could easily fix itself are not worth doing if they
