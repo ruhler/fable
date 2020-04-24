@@ -95,7 +95,7 @@ proc fble-test-run { cmd loc expr modules } {
   exec mkdir -p $dir
   set fprgm $dir/_.fble
   exec echo $expr > $fprgm
-  exec cp langs/fble/Nat.fble $dir/Nat.fble
+  exec ln langs/fble/Nat.fble $dir/Nat.fble
   write_modules $dir $modules
 
   # Execute the program.
