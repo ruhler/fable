@@ -1,4 +1,7 @@
 
+* [compile] figure out bug when using mark sweep gc with types.
+* [eval] replace all uses of rc-heap with ms-heap.
+
 * [eval] gprof profiling based improvements.
   - Little things that are cleanup are worth doing.
   - Things the compiler could easily fix itself are not worth doing if they
