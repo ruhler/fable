@@ -1,6 +1,8 @@
 
-* [compile] figure out bug when using mark sweep gc with types.
+* [compile] make sure types are not constructed incrementally
+ - otherwise gc could end up traversing garbage.
 * [eval] replace all uses of rc-heap with ms-heap.
+* [type] Inline fields and args data into FbleType objects?
 
 * [eval] gprof profiling based improvements.
   - Little things that are cleanup are worth doing.

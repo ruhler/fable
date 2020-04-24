@@ -948,10 +948,12 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             error = true;
           }
 
-          FbleTaggedType* cfield = FbleVectorExtend(arena, struct_type->fields);
-          cfield->name = arg->name;
-          cfield->type = args[i].type;
-          FbleTypeAddRef(heap, &struct_type->_base, cfield->type);
+          FbleTaggedType cfield = {
+            .name = arg->name,
+            .type = args[i].type
+          };
+          FbleVectorAppend(arena, struct_type->fields, cfield);
+          FbleTypeAddRef(heap, &struct_type->_base, cfield.type);
         }
 
         for (size_t j = 0; j < i; ++j) {
@@ -2252,12 +2254,14 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
           return NULL;
         }
 
-        FbleTaggedType* cfield = FbleVectorExtend(arena, st->fields);
-        cfield->name = field->name;
-        cfield->type = compiled;
+        FbleTaggedType cfield = {
+          .name = field->name,
+          .type = compiled
+        };
+        FbleVectorAppend(arena, st->fields, cfield);
 
-        FbleTypeAddRef(heap, &st->_base, cfield->type);
-        FbleTypeRelease(heap, cfield->type);
+        FbleTypeAddRef(heap, &st->_base, cfield.type);
+        FbleTypeRelease(heap, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&field->name, &struct_type->fields.xs[j].name)) {
@@ -2284,11 +2288,13 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
           FbleTypeRelease(heap, &ut->_base);
           return NULL;
         }
-        FbleTaggedType* cfield = FbleVectorExtend(arena, ut->fields);
-        cfield->name = field->name;
-        cfield->type = compiled;
-        FbleTypeAddRef(heap, &ut->_base, cfield->type);
-        FbleTypeRelease(heap, cfield->type);
+        FbleTaggedType cfield = {
+          .name = field->name,
+          .type = compiled
+        };
+        FbleVectorAppend(arena, ut->fields, cfield);
+        FbleTypeAddRef(heap, &ut->_base, cfield.type);
+        FbleTypeRelease(heap, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&field->name, &union_type->fields.xs[j].name)) {

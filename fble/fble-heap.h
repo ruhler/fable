@@ -85,6 +85,11 @@ typedef struct FbleHeap {
   // This function should be supplied by the implementation of the garbage
   // collector. It will be called by the user of the heap.
   //
+  // Callers must ensure the heap is in a consistent state when calling this
+  // function. In particular, calls to the refs function could be made for any
+  // objects previously allocated on the heap, so they must be fully
+  // initialized.
+  //
   // Inputs:
   //   heap - this heap
   //   size - the user size of object to allocate
@@ -93,8 +98,10 @@ typedef struct FbleHeap {
   //   A pointer to a newly allocated object on the heap.
   //
   // Side effects:
-  //   The returned object is retained. A corresponding call to release is
-  //   required before the object can be freed.
+  //   * The returned object is retained. A corresponding call to release is
+  //     required before the object can be freed.
+  //   * Calls the 'refs' function arbitrarily on existing objects of the
+  //     heap.
   void* (*new)(struct FbleHeap* heap, size_t size);
 
   // retain --

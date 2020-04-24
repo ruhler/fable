@@ -445,11 +445,13 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 
       FbleVectorInit(arena, sst->fields);
       for (size_t i = 0; i < st->fields.size; ++i) {
-        FbleTaggedType* field = FbleVectorExtend(arena, sst->fields);
-        field->name = st->fields.xs[i].name;
-        field->type = Subst(heap, st->fields.xs[i].type, param, arg, tps);
-        FbleTypeAddRef(heap, &sst->_base, field->type);
-        FbleTypeRelease(heap, field->type);
+        FbleTaggedType field = {
+          .name = st->fields.xs[i].name,
+          .type = Subst(heap, st->fields.xs[i].type, param, arg, tps)
+        };
+        FbleVectorAppend(arena, sst->fields, field);
+        FbleTypeAddRef(heap, &sst->_base, field.type);
+        FbleTypeRelease(heap, field.type);
       }
       return &sst->_base;
     }
@@ -460,25 +462,31 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       sut->_base.id = ut->_base.id;
       FbleVectorInit(arena, sut->fields);
       for (size_t i = 0; i < ut->fields.size; ++i) {
-        FbleTaggedType* field = FbleVectorExtend(arena, sut->fields);
-        field->name = ut->fields.xs[i].name;
-        field->type = Subst(heap, ut->fields.xs[i].type, param, arg, tps);
-        FbleTypeAddRef(heap, &sut->_base, field->type);
-        FbleTypeRelease(heap, field->type);
+        FbleTaggedType field = {
+          .name = ut->fields.xs[i].name,
+          .type = Subst(heap, ut->fields.xs[i].type, param, arg, tps)
+        };
+        FbleVectorAppend(arena, sut->fields, field);
+        FbleTypeAddRef(heap, &sut->_base, field.type);
+        FbleTypeRelease(heap, field.type);
       }
       return &sut->_base;
     }
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
+
+      FbleType* farg = Subst(heap, ft->arg, param, arg, tps);
+      FbleType* rtype = Subst(heap, ft->rtype, param, arg, tps);
+
       FbleFuncType* sft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, ft->_base.loc);
       sft->_base.id = ft->_base.id;
 
-      sft->arg = Subst(heap, ft->arg, param, arg, tps);
+      sft->arg = farg;
       FbleTypeAddRef(heap, &sft->_base, sft->arg);
       FbleTypeRelease(heap, sft->arg);
 
-      sft->rtype = Subst(heap, ft->rtype, param, arg, tps);
+      sft->rtype = rtype;
       FbleTypeAddRef(heap, &sft->_base, sft->rtype);
       FbleTypeRelease(heap, sft->rtype);
       return &sft->_base;
@@ -486,9 +494,11 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 
     case FBLE_PROC_TYPE: {
       FbleProcType* ut = (FbleProcType*)type;
+      FbleType* body = Subst(heap, ut->type, param, arg, tps);
+
       FbleProcType* sut = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, ut->_base.loc);
       sut->_base.id = ut->_base.id;
-      sut->type = Subst(heap, ut->type, param, arg, tps);
+      sut->type = body;
       FbleTypeAddRef(heap, &sut->_base, sut->type);
       FbleTypeRelease(heap, sut->type);
       return &sut->_base;
@@ -558,9 +568,12 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tt = (FbleTypeType*)type;
+
+      FbleType* body = Subst(heap, tt->type, param, arg, tps);
+
       FbleTypeType* stt = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, tt->_base.loc);
       stt->_base.id = tt->_base.id;
-      stt->type = Subst(heap, tt->type, param, arg, tps);
+      stt->type = body;
       FbleTypeAddRef(heap, &stt->_base, stt->type);
       FbleTypeRelease(heap, stt->type);
       return &stt->_base;
@@ -895,7 +908,7 @@ void FblePrintKind(FbleKind* kind)
 // FbleNewTypeHeap -- see documentation in fble-types.h
 FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
 {
-  return FbleNewRefCountingHeap(arena,
+  return FbleNewMarkSweepHeap(arena,
       (void (*)(FbleHeapCallback*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
 }
@@ -903,7 +916,7 @@ FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
 // FbleFreeTypeHeap -- see documentation in fble-types.h
 void FbleFreeTypeHeap(FbleTypeHeap* heap)
 {
-  FbleFreeRefCountingHeap(heap);
+  FbleFreeMarkSweepHeap(heap);
 }
 
 // FbleNewType -- see documentation in fble-type.h
@@ -989,8 +1002,10 @@ FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleTy
   if (body->tag == FBLE_TYPE_TYPE) {
     // \arg -> typeof(body) = typeof(\arg -> body)
     FbleTypeType* ttbody = (FbleTypeType*)body;
+    FbleType* body_type = FbleNewPolyType(heap, loc, arg, ttbody->type);
+
     FbleTypeType* tt = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, loc);
-    tt->type = FbleNewPolyType(heap, loc, arg, ttbody->type);
+    tt->type = body_type;
     FbleTypeAddRef(heap, &tt->_base, tt->type);
     FbleTypeRelease(heap, tt->type);
     return &tt->_base;
@@ -1012,8 +1027,9 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
   if (poly->tag == FBLE_TYPE_TYPE) {
     // typeof(poly)<arg> == typeof(poly<arg>)
     FbleTypeType* ttpoly = (FbleTypeType*)poly;
+    FbleType* body_type = FbleNewPolyApplyType(heap, loc, ttpoly->type, arg);
     FbleTypeType* tt = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, loc);
-    tt->type = FbleNewPolyApplyType(heap, loc, ttpoly->type, arg);
+    tt->type = body_type;
     FbleTypeAddRef(heap, &tt->_base, tt->type);
     FbleTypeRelease(heap, tt->type);
     return &tt->_base;
