@@ -1,6 +1,8 @@
 fble-test-memory-growth {
   @ Unit@ = *();
-  @ Nat@ = +(Nat@ S, Unit@ Z);
+  @ Nat@ = /Nat%.Nat@;
+  @ S@ = /Nat%.S@;
+  % S = /Nat%.S;
 
   # If we keep putting values onto a link and never take them off, that's
   # memory growth. This test is primarily to double check that the 
@@ -10,12 +12,13 @@ fble-test-memory-growth {
     Unit@ ~ get, put;
 
     (Nat@){ Unit@!; } f = (Nat@ n) {
-      ?(n;
+      S@ s = S(n);
+      ?(s;
+          Z: $(Unit@()),
           S: {
             Unit@ _ := put(Unit@());
-            f(n.S);
-          },
-          Z: $(Unit@()));
+            f(s.S);
+          });
     };
     f(x);
   };

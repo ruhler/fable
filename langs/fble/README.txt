@@ -23,14 +23,15 @@ proc fble-test { expr modules } { ... }
 # name, value, and submodule hierarchy.
 proc fble-test-error { loc expr modules } { ... }
 
-# The expr should be a function that takes a single argument of type:
-#    @ Nat@ = +(Nat@ S, *() Z);
+# The expr should be a function that takes a single argument of type Nat@ from
+# the testing module Nat%.
+#
 # The test is considered passing if the function's memory use is O(1) in the
 # size of the input argument.
 proc fble-test-memory-constant { expr } { ... }
 
-# The expr should be a function that takes a single argument of type:
-#    @ Nat@ = +(Nat@ S, *() Z);
+# The expr should be a function that takes a single argument of type Nat@ from
+# the testing module Nat%.
 # The test is considered failing if the function's memory uses is O(1) in the
 # size of the input argument.
 proc fble-test-memory-growth { expr } { ... }

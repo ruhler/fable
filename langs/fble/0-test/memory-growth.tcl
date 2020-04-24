@@ -1,14 +1,19 @@
 fble-test-memory-growth {
   @ Unit@ = *();
-  @ Nat@ = +(Nat@ S, Unit@ Z);
+  @ Nat@ = /Nat%.Nat@;
+  @ S@ = /Nat%.S@;
+  % S = /Nat%.S;
 
-  (Nat@, Nat@){ Nat@; } add = (Nat@ n, Nat@ sum) {
-    ?(n; S: add(n.S, Nat@(S: sum)), Z: sum);
+  @ Sum@ = +(Sum@ S, Unit@ Z);
+
+  (Nat@, Sum@){ Sum@; } add = (Nat@ n, Sum@ sum) {
+    S@ s = S(n);
+    ?(s; Z: sum, S: add(s.S, Sum@(S: sum)));
   };
 
   # f requires O(N) memory.
-  (Nat@){ Nat@; } f = (Nat@ n) {
-    add(n, n);
+  (Nat@){ Sum@; } f = (Nat@ n) {
+    add(n, Sum@(Z: Unit@()));
   };
 
   f;

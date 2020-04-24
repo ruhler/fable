@@ -1,7 +1,5 @@
 
-* [test] Figure out how to be more lenient in memory growth tests
- - So that the mark sweep collector, which does work as intended (I'm pretty
-   sure), can satisfy those tests.
+* [test] Debug failing memory tests for mark sweep collector.
 
 * [eval] gprof profiling based improvements.
   - Little things that are cleanup are worth doing.

@@ -1,6 +1,8 @@
 fble-test-memory-growth {
   @ Unit@ = *();
-  @ Nat@ = +(Nat@ S, Unit@ Z);
+  @ Nat@ = /Nat%.Nat@;
+  @ S@ = /Nat%.S@;
+  % S = /Nat%.S;
 
   @ Func@ = (Unit@) { Unit@; };
 
@@ -8,7 +10,8 @@ fble-test-memory-growth {
     # The variable x is captured by the function g, because x is referenced in
     # the body of g. That means f should use linear memory.
     Func@ g = (Unit@ _) { x(_); };
-    ?(n; S: f(g, n.S), Z: g);
+    S@ s = S(n);
+    ?(s; Z: g, S: f(g, s.S));
   };
 
   f((Unit@ x) { x; });

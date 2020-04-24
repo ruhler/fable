@@ -1,6 +1,8 @@
 fble-test-memory-constant {
   @ Unit@ = *();
-  @ Nat@ = +(Nat@ S, Unit@ Z);
+  @ Nat@ = /Nat%.Nat@;
+  @ S@ = /Nat%.S@;
+  % S = /Nat%.S;
 
   @ Func@ = (Unit@) { Unit@; };
 
@@ -9,7 +11,8 @@ fble-test-memory-constant {
     # x is not referenced in the body of g. That means f should use
     # constant memory, not linear.
     Func@ g = (Unit@ _) { _; };
-    ?(n; S: f(g, n.S), Z: g);
+    S@ s = S(n);
+    ?(s; Z: g, S: f(g, s.S));
   };
 
   f((Unit@ x) { x; });

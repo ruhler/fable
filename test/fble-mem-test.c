@@ -57,6 +57,12 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
 {
   assert(use_n <= alloc_n);
 
+  size_t num_bits = 0;
+  while (alloc_n > 0) {
+    num_bits++;
+    alloc_n /= 2;
+  }
+
   bool success = false;
   FbleArena* eval_arena = FbleNewArena();
   FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
@@ -64,24 +70,32 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
   FbleProfile* profile = NULL;
   FbleValue* func = FbleEval(heap, prgm, &blocks, &profile);
   if (func != NULL) {
-    // Number type is: @ Nat@ = +(Nat@ S, Unit@ Z);
-    FbleValueV args = { .size = 0, .xs = NULL };
+    // Number type is BitS@ from:
+    // Unit@ Unit = Unit@();
+    // @ Bit@ = +(Unit@ 0, Unit@ 1);
+    // @ BitS@ = +(BitP@ cons, Unit@ nil),
+    // @ BitP@ = *(Bit@ msb, BitS@ tail);
+    FbleValue* xs[2];
+    FbleValueV args = { .size = 0, .xs = xs };
     FbleValue* unit = FbleNewStructValue(heap, args);
-    FbleValue* zero = FbleNewUnionValue(heap, 1, unit);
-    FbleValue* alloc = zero;
-    FbleValue* use = zero;
-    for (size_t i = 0; i < alloc_n; i++) {
-      alloc = FbleNewUnionValue(heap, 0, alloc);
-      if (i + 1 == use_n) {
-        use = alloc;
-      }
+    FbleValue* zero = FbleNewUnionValue(heap, 0, FbleValueRetain(heap, unit));
+    FbleValue* one = FbleNewUnionValue(heap, 1, FbleValueRetain(heap, unit));
+    FbleValue* tail = FbleNewUnionValue(heap, 1, unit);
+    for (size_t i = 0; i < num_bits; ++i) {
+      FbleValue* bit = (use_n % 2 == 0) ? zero : one;
+      use_n /= 2;
+      args.size = 2;
+      args.xs[0] = FbleValueRetain(heap, bit);
+      args.xs[1] = tail;
+      FbleValue* cons = FbleNewStructValue(heap, args);
+      tail = FbleNewUnionValue(heap, 0, cons);
     }
+    FbleValueRelease(heap, zero);
+    FbleValueRelease(heap, one);
 
-    FbleValueV argv = {
-      .xs = &use,
-      .size = 1
-    };
-    FbleValue* result = FbleApply(heap, func, argv, profile);
+    args.size = 1;
+    args.xs[0] = tail;
+    FbleValue* result = FbleApply(heap, func, args, profile);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
@@ -94,7 +108,7 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
 
     success = (result != NULL);
     FbleValueRelease(heap, result);
-    FbleValueRelease(heap, alloc);
+    FbleValueRelease(heap, tail);
   }
 
   FbleValueRelease(heap, func);

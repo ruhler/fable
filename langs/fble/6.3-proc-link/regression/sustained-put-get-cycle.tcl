@@ -1,6 +1,8 @@
 fble-test-memory-constant {
   @ Unit@ = *();
-  @ Nat@ = +(Nat@ S, Unit@ Z);
+  @ Nat@ = /Nat%.Nat@;
+  @ S@ = /Nat%.S@;
+  % S = /Nat%.S;
 
   # We should be able to do sustained put and get on a port without growing
   # memory. Even if the object we are putting on the link is a cycle that
@@ -12,7 +14,9 @@ fble-test-memory-constant {
     Unit@! ~ get, put;
 
     (Nat@){ Unit@!; } f = (Nat@ n) {
-      ?(n;
+      S@ s = S(n);
+      ?(s;
+          Z: $(Unit@()),
           S: {
             Unit@! a = { Unit@! _ := get; b; }, 
             Unit@! b = { Unit@! _ := get; a; };
@@ -20,9 +24,8 @@ fble-test-memory-constant {
             Unit@ _ := put(a);
             Unit@! _ := get;
 
-            f(n.S);
-          },
-          Z: $(Unit@()));
+            f(s.S);
+          });
     };
     f(x);
   };
