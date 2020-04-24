@@ -33,7 +33,7 @@ Unit@ Unit = Unit@();
 
 (Nat@) { S@; } S = (Nat@ n) {
   % d = Decr(n);
-  ?(d.overflow; 0: S@(Z: Unit), 1: S@(S: d.x));
+  ?(d.overflow; 0: S@(S: d.x), 1: S@(Z: Unit));
 };
 
 @(Nat@, S@, S);

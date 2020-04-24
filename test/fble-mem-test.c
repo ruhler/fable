@@ -172,6 +172,15 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
+//  for (size_t i = 0; i < 200; ++i) {
+//    size_t max_n = 0;
+//    if (!Run(prgm, i, 200, &max_n)) {
+//      FbleFreeArena(prgm_arena);
+//      return EX_FAIL;
+//    }
+//    fprintf(stderr, "% 4zi: %zi\n", i, max_n);
+//  }
+
   size_t max_small_n = 0;
   if (!Run(prgm, 100, 200, &max_small_n)) {
     FbleFreeArena(prgm_arena);
