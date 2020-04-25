@@ -372,7 +372,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blocks - vector of locations to record for each block.
+//   profile - profile to populate with blocks.
 //   prgm - the program to compile.
 //
 // Results:
@@ -383,7 +383,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //   Prints a message to stderr if the program fails to compile. Allocates
 //   memory for the instructions which must be freed with FbleFreeInstrBlock when
 //   it is no longer needed.
-//   Initializes and populates blocks with the compiled blocks.
-FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* program);
+//   Adds blocks to the given profile.
+FbleInstrBlock* FbleCompile(FbleArena* arena, FbleProfile* profile, FbleProgram* program);
 
 #endif // FBLE_INSTR_H_

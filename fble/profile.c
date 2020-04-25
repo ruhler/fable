@@ -176,8 +176,8 @@ static void CallStackPop(FbleArena* arena, FbleProfileThread* thread);
 static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile, FbleBlockId caller, FbleBlockId callee);
 static void MergeSortCallData(FbleProfileClock clock, Order order, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
 static void SortCallData(FbleProfileClock clock, Order order, FbleCallData** data, size_t size);
-static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id);
-static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call);
+static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id);
+static void PrintCallData(FILE* fout, FbleProfile* profile, bool highlight, FbleCallData* call);
 
 static uint64_t GetTimeMillis();
 static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, size_t blockc);
@@ -392,7 +392,7 @@ static void SortCallData(FbleProfileClock clock, Order order, FbleCallData** dat
 // 
 // Inputs:
 //   fout - where to print the name
-//   blocks - the names of block indexed by id
+//   profile - the profile, used for getting block names
 //   id - the id of the block
 //
 // Results:
@@ -400,10 +400,9 @@ static void SortCallData(FbleProfileClock clock, Order order, FbleCallData** dat
 //
 // Side effects:
 //   Prints a human readable description of the block to the given file.
-static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
+static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 {
-  FbleName* name = blocks->xs + id;
-  fprintf(fout, "%s[%04x]", name->name, id);
+  fprintf(fout, "%s[%04x]", profile->blocks.xs[id]->name.name, id);
 }
 
 // PrintCallData --
@@ -411,7 +410,7 @@ static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
 //
 // Inputs:
 //   fout - the file to print to
-//   blocks - the names of blocks, indexed by id
+//   profile - the profile, used for getting block names
 //   highlight - if true, highlight the line
 //   call - the call data to print
 //
@@ -420,14 +419,14 @@ static void PrintBlockName(FILE* fout, FbleNameV* blocks, FbleBlockId id)
 //
 // Side effects:
 //   Prints a single line description of the call data to the given file.
-static void PrintCallData(FILE* fout, FbleNameV* blocks, bool highlight, FbleCallData* call)
+static void PrintCallData(FILE* fout, FbleProfile* profile, bool highlight, FbleCallData* call)
 {
   uint64_t wall = call->time[FBLE_PROFILE_WALL_CLOCK];
   uint64_t time = call->time[FBLE_PROFILE_TIME_CLOCK];
   char h = highlight ? '*' : ' ';
   fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 " %8" PRIu64 " ",
       h, h, call->count, wall, time);
-  PrintBlockName(fout, blocks, call->id);
+  PrintBlockName(fout, profile, call->id);
   fprintf(fout, " %c%c\n", h, h);
 }
 
@@ -481,22 +480,28 @@ static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, s
 }
 
 // FbleNewProfile -- see documentation in fble-profile.h
-FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc)
+FbleProfile* FbleNewProfile(FbleArena* arena)
 {
   FbleProfile* profile = FbleAlloc(arena, FbleProfile);
   profile->wall = 0;
-  profile->blocks.size = blockc;
-  profile->blocks.xs = FbleArrayAlloc(arena, FbleBlockProfile*, blockc);
-  for (size_t i = 0; i < blockc; ++i) {
-    profile->blocks.xs[i] = FbleAlloc(arena, FbleBlockProfile);
-    profile->blocks.xs[i]->block.id = i;
-    profile->blocks.xs[i]->block.count = 0;
-    for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-      profile->blocks.xs[i]->block.time[clock] = 0;
-    }
-    FbleVectorInit(arena, profile->blocks.xs[i]->callees);
-  }
+  FbleVectorInit(arena, profile->blocks);
   return profile;
+}
+
+// FbleProfileAddBlock -- see documentation in fble-profile.h
+FbleBlockId FbleProfileAddBlock(FbleArena* arena, FbleProfile* profile, FbleName name)
+{
+  FbleBlockId id = profile->blocks.size;
+  FbleBlockProfile* block = FbleAlloc(arena, FbleBlockProfile);
+  block->name = name;
+  block->block.id = id;
+  block->block.count = 0;
+  for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
+    block->block.time[clock] = 0;
+  }
+  FbleVectorInit(arena, block->callees);
+  FbleVectorAppend(arena, profile->blocks, block);
+  return id;
 }
 
 // FbleFreeProfile -- see documentation in fble-profile.h
@@ -505,11 +510,11 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     FbleBlockProfile* block = profile->blocks.xs[i];
 
+    FbleFree(arena, (char*)block->name.name);
     for (size_t j = 0; j < block->callees.size; ++j) {
       FbleFree(arena, block->callees.xs[j]);
     }
     FbleFree(arena, block->callees.xs);
-
     FbleFree(arena, block);
   }
   FbleFree(arena, profile->blocks.xs);
@@ -719,7 +724,7 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
 }
 
 // FbleProfileReport -- see documentation in fble-profile.h
-void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
+void FbleProfileReport(FILE* fout, FbleProfile* profile)
 {
   FbleArena* arena = FbleNewArena();
   FbleCallData* calls[profile->blocks.size];
@@ -786,7 +791,7 @@ void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   fprintf(fout, "------------\n");
   fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
   for (size_t i = 0; i < profile->blocks.size; ++i) {
-    PrintCallData(fout, blocks, true, calls[i]);
+    PrintCallData(fout, profile, true, calls[i]);
   }
   fprintf(fout, "\n");
 
@@ -801,11 +806,11 @@ void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
       // Callers
       SortCallData(FBLE_PROFILE_TIME_CLOCK, ASCENDING, callers[id].xs, callers[id].size);
       for (size_t j = 0; j < callers[id].size; ++j) {
-        PrintCallData(fout, blocks, false, callers[id].xs[j]);
+        PrintCallData(fout, profile, false, callers[id].xs[j]);
       }
 
       // Block
-      PrintCallData(fout, blocks, true, calls[i]);
+      PrintCallData(fout, profile, true, calls[i]);
 
       // Callees
       FbleCallData* callees[block->callees.size];
@@ -814,7 +819,7 @@ void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
       }
       SortCallData(FBLE_PROFILE_TIME_CLOCK, DESCENDING, callees, block->callees.size);
       for (size_t j = 0; j < block->callees.size; ++j) {
-        PrintCallData(fout, blocks, false, callees[j]);
+        PrintCallData(fout, profile, false, callees[j]);
       }
       fprintf(fout, "-------------------------------\n");
     }
@@ -832,18 +837,9 @@ void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile)
   fprintf(fout, "Block Locations\n");
   fprintf(fout, "---------------\n");
   for (size_t i = 0; i < profile->blocks.size; ++i) {
-    FbleName* name = blocks->xs + profile->blocks.xs[i]->block.id;
-    PrintBlockName(fout, blocks, profile->blocks.xs[i]->block.id);
+    FbleName* name = &profile->blocks.xs[i]->name;
+    PrintBlockName(fout, profile, profile->blocks.xs[i]->block.id);
     fprintf(fout, ": %s:%d:%d\n", name->loc.source, name->loc.line, name->loc.col);
   }
   fprintf(fout, "\n");
-}
-
-// FbleFreeBlockNames -- see documentation in fble-profile.h
-void FbleFreeBlockNames(FbleArena* arena, FbleNameV* blocks)
-{
-  for (size_t i = 0; i < blocks->size; ++i) {
-    FbleFree(arena, (char*)blocks->xs[i].name);
-  }
-  FbleFree(arena, blocks->xs);
 }

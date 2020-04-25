@@ -38,7 +38,6 @@ bool FbleDecompile(FILE* fout, FbleProgram* program);
 // Inputs:
 //   heap - The heap to use for allocating values.
 //   program - The program to evaluate.
-//   blocks - Output info about blocks in the program.
 //   profile - Output profile for the evaluation.
 //
 // Results:
@@ -50,11 +49,10 @@ bool FbleDecompile(FILE* fout, FbleProgram* program);
 //   use.
 //   Prints warning messages to stderr.
 //   Prints an error message to stderr in case of error.
-//   Sets blocks to the info about all blocks in the program. This must be
-//   freed when no longer in use.
 //   Sets profile to the profile for the evaluation. This must be freed with
-//   FbleFreeProfile when no longer in use.
-FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile);
+//   FbleFreeProfile when no longer in use, regardless of whether evaluation
+//   succeeded or failed.
+FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile);
 
 // FbleApply --
 //   Apply a function to the given arguments.

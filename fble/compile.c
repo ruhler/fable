@@ -95,11 +95,10 @@ static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 //
 // Fields:
 //   stack - The stack of black frames representing the current location.
-//   blocks - Mapping from block id to block name and location, which is an
-//            output of compilation.
+//   profile - The profile to append blocks to.
 typedef struct {
   FbleBlockIdV stack;
-  FbleNameV blocks;
+  FbleProfile* profile;
 } Blocks;
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
@@ -469,18 +468,9 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   size_t currlen = 0;
   if (blocks->stack.size > 0) {
     size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
-    curr = blocks->blocks.xs[curr_id].name;
+    curr = blocks->profile->blocks.xs[curr_id]->name.name;
     currlen = strlen(curr);
   }
-
-  size_t id = blocks->blocks.size;
-
-  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
-  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
-  enter->block = id;
-  AppendInstr(arena, scope, &enter->_base);
-
-  FbleVectorAppend(arena, blocks->stack, id);
 
   // Append ".name" to the current block name to figure out the new block
   // name.
@@ -497,9 +487,14 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
     case FBLE_MODULE_NAME_SPACE: strcat(str, "%"); break;
   }
 
-  FbleName* nm = FbleVectorExtend(arena, blocks->blocks);
-  nm->name = str;
-  nm->loc = loc;
+  FbleName nm = { .name = str, .loc = loc };
+  size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
+
+  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
+  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
+  enter->block = id;
+  AppendInstr(arena, scope, &enter->_base);
+  FbleVectorAppend(arena, blocks->stack, id);
 }
 
 // EnterBodyBlock --
@@ -526,17 +521,8 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
   const char* curr = "";
   if (blocks->stack.size > 0) {
     size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
-    curr = blocks->blocks.xs[curr_id].name;
+    curr = blocks->profile->blocks.xs[curr_id]->name.name;
   }
-
-  size_t id = blocks->blocks.size;
-
-  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
-  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
-  enter->block = id;
-  AppendInstr(arena, scope, &enter->_base);
-
-  FbleVectorAppend(arena, blocks->stack, id);
 
   // Append "!" to the current block name to figure out the new block name.
   char* str = FbleArrayAlloc(arena, char, strlen(curr) + 2);
@@ -544,9 +530,16 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
   strcat(str, curr);
   strcat(str, "!");
 
-  FbleName* nm = FbleVectorExtend(arena, blocks->blocks);
-  nm->name = str;
-  nm->loc = loc;
+  FbleName nm = { .name = str, .loc = loc };
+
+  size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
+
+  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
+  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
+  enter->block = id;
+  AppendInstr(arena, scope, &enter->_base);
+
+  FbleVectorAppend(arena, blocks->stack, id);
 }
 
 // ExitBlock --
@@ -2207,10 +2200,10 @@ static FbleType* CompileExprNoInstrs(FbleTypeHeap* heap, Scope* scope, FbleExpr*
 
   Blocks blocks;
   FbleVectorInit(arena, blocks.stack);
-  FbleVectorInit(arena, blocks.blocks);
+  blocks.profile = FbleNewProfile(arena);
   Compiled result = CompileExpr(heap, &blocks, true, &nscope, expr);
   FbleFree(arena, blocks.stack.xs);
-  FbleFreeBlockNames(arena, &blocks.blocks);
+  FbleFreeProfile(arena, blocks.profile);
   FreeScope(heap, &nscope, true);
   FbleFreeInstrBlock(arena, code);
   return result.type;
@@ -2438,11 +2431,11 @@ static bool CompileProgram(FbleTypeHeap* heap, Blocks* blocks, Scope* scope, Fbl
 }
 
 // FbleCompile -- see documentation in instr.h
-FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* program)
+FbleInstrBlock* FbleCompile(FbleArena* arena, FbleProfile* profile, FbleProgram* program)
 {
   Blocks block_stack;
   FbleVectorInit(arena, block_stack.stack);
-  FbleVectorInit(arena, block_stack.blocks);
+  block_stack.profile = profile;
 
   FbleInstrBlock* code = NewInstrBlock(arena);
 
@@ -2465,7 +2458,6 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleNameV* blocks, FbleProgram* pr
 
   assert(block_stack.stack.size == 0);
   FbleFree(arena, block_stack.stack.xs);
-  *blocks = block_stack.blocks;
 
   if (!ok) {
     FbleFreeInstrBlock(arena, code);

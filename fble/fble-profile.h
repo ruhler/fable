@@ -68,11 +68,13 @@ typedef struct {
 //   Profile information for a particular block.
 //
 // Fields:
-//   call - the id, summary count and time spent in this block.
+//   name - the name of this block.
+//   block - the id, summary count and time spent in this block.
 //   callees - info about calls from this block into other blocks, sorted in
 //             increasing order of callee. Only callees that have been called
 //             from this block are included.
 typedef struct {
+  FbleName name;
   FbleCallData block;
   FbleCallDataV callees;
 } FbleBlockProfile;
@@ -96,21 +98,34 @@ typedef struct {
 } FbleProfile;
 
 // FbleNewProfile --
-//   Creates a new, empty profile for the given number of blocks.
+//   Creates a new, empty profile.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   blockc - the number of blocks in the program being profiled. Must be
-//            greater than 0, because FBLE_ROOT_BLOCK_ID should be a valid
-//            block.
 //
 // Results:
 //   A new empty profile.
 //
 // Side effects:
-//   Allocates a new call that should be freed with FbleFreeProfile when
+//   Allocates a new profile that should be freed with FbleFreeProfile when
 //   no longer in use.
-FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc);
+FbleProfile* FbleNewProfile(FbleArena* arena);
+
+// FbleProfileAddBlock --
+//   Add a new block to the profile.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   profile - the profile to add the block to
+//   name - the name of the block
+//
+// Results:
+//   The id of the newly added block.
+//
+// Side effects:
+// * Takes ownership of name.name memory, which will be freed when
+//   FbleFreeProfile is called.
+FbleBlockId FbleProfileAddBlock(FbleArena* arena, FbleProfile* profile, FbleName name);
 
 // FbleFreeProfile --
 //   Free a profile.
@@ -123,7 +138,8 @@ FbleProfile* FbleNewProfile(FbleArena* arena, size_t blockc);
 //   none.
 //
 // Side effects:
-//   Frees the memory resources associated with the given profile.
+//   Frees the memory resources associated with the given profile, including
+//   the memory for the block names supplied to FbleProfileAddBlock.
 void FbleFreeProfile(FbleArena* arena, FbleProfile* profile);
 
 // FbleProfileThread --
@@ -232,8 +248,6 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread);
 //
 // Inputs:
 //   fout - the file to output the profile report to.
-//   blocks - names and locations for the blocks of a program, indexed by
-//            block id.
 //   profile - the profile to generate a report for.
 //
 // Results:
@@ -241,20 +255,6 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread);
 //
 // Side effects:
 //   Writes a profile report to the given file.
-void FbleProfileReport(FILE* fout, FbleNameV* blocks, FbleProfile* profile);
-
-// FbleFreeBlockNames --
-//   Free the names for blocks.
-//
-// Inputs:
-//   arena - arena to use for allocations
-//   blocks - the names of blocks to free
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Frees the name strings and the underlying array for blocks.
-void FbleFreeBlockNames(FbleArena* arena, FbleNameV* blocks);
+void FbleProfileReport(FILE* fout, FbleProfile* profile);
 
 #endif // FBLE_PROFILE_H_

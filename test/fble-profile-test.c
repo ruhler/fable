@@ -2,6 +2,9 @@
 //   This file implements the main entry point for the fble-profile-test
 //   program.
 
+#include <string.h>   // for strcpy
+#include <stdlib.h>   // for rand
+
 #include "fble-profile.h"
 
 static bool sTestsFailed = false;
@@ -19,7 +22,32 @@ static void Fail(const char* file, int line, const char* msg)
   fprintf(stderr, "%s:%i: assert failure: %s\n", file, line, msg);
   sTestsFailed = true;
 }
+
+// FbleName --
+//   Create a name to use in FbleProfileAddBlock.
+//
+// Inputs:
+//   arena - The arena to use for allocations.
+//   name - The name to use for the block. Typically a string literal.
+//
+// Results:
+//   An FbleName that can be used in FbleProfileAddBlock.
+//
+// Side effects:
+//   Allocates memory for the name that we expect to be freed by
+//   FbleFreeProfile.
+static FbleName Name(FbleArena* arena, const char* name)
+{
+  char* copy = FbleArrayAlloc(arena, char, strlen(name));
+  strcpy(copy, name);
 
+  FbleName nm = {
+    .name = copy,
+    .loc = { .source = __FILE__, .line = rand(), .col = rand() }
+  };
+  return nm;
+}
+
 // AutoExitMaxMem --
 //   Returns the maximum memory required for an n deep auto exit self
 //   recursive call. For the purposes of testing that tail calls can be done
@@ -37,7 +65,10 @@ static size_t AutoExitMaxMem(size_t n)
 {
   // 0 -> 1 -> 1 -> ... -> 1
   FbleArena* arena = FbleNewArena();
-  FbleProfile* profile = FbleNewProfile(arena, 2);
+  FbleProfile* profile = FbleNewProfile(arena);
+  FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
+  FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+
   FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
   FbleProfileEnterBlock(arena, thread, 1);
   FbleProfileSample(arena, thread, 10);
@@ -95,7 +126,13 @@ int main(int argc, char* argv[])
     // 0 -> 1 -> 2 -> 3
     //             -> 4
     //        -> 3
-    FbleProfile* profile = FbleNewProfile(arena, 5);
+    FbleProfile* profile = FbleNewProfile(arena);
+    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_4")); 
+
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -155,15 +192,7 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
     ASSERT(profile->blocks.xs[4]->callees.size == 0);
 
-    FbleName names[] = {
-        { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
-        { .name = "a", .loc = { .source = "foo.c", .line = 1, .col = 10}},
-        { .name = "b", .loc = { .source = "foo.c", .line = 2, .col = 20}},
-        { .name = "c", .loc = { .source = "foo.c", .line = 3, .col = 30}},
-        { .name = "d", .loc = { .source = "foo.c", .line = 4, .col = 40}}
-    };
-    FbleNameV blocks = { .size = 5, .xs = names };
-    FbleProfileReport(stdout, &blocks, profile);
+    FbleProfileReport(stdout, profile);
     FbleFreeProfile(arena, profile);
     FbleAssertEmptyArena(arena);
   }
@@ -174,7 +203,15 @@ int main(int argc, char* argv[])
     //                  => 5
     //        -> 6
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 7);
+    FbleProfile* profile = FbleNewProfile(arena);
+    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_4")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_5")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_6")); 
+
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -258,7 +295,12 @@ int main(int argc, char* argv[])
     // Test a profile with self recursion
     // 0 -> 1 -> 2 -> 2 -> 2 -> 3
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 4);
+    FbleProfile* profile = FbleNewProfile(arena);
+    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
+
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -310,14 +352,7 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
     ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
-    FbleName names[] = {
-        { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
-        { .name = "a", .loc = { .source = "foo.c", .line = 1, .col = 10}},
-        { .name = "b", .loc = { .source = "foo.c", .line = 2, .col = 20}},
-        { .name = "c", .loc = { .source = "foo.c", .line = 3, .col = 30}},
-    };
-    FbleNameV blocks = { .size = 4, .xs = names };
-    FbleProfileReport(stdout, &blocks, profile);
+    FbleProfileReport(stdout, profile);
     FbleFreeProfile(arena, profile);
     FbleAssertEmptyArena(arena);
   }
@@ -326,7 +361,12 @@ int main(int argc, char* argv[])
     // Test a profile with self recursion and tail calls
     // 0 -> 1 => 2 => 2 => 2 => 3
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 4);
+    FbleProfile* profile = FbleNewProfile(arena);
+    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
+
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -378,14 +418,7 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[3]->block.time[FBLE_PROFILE_TIME_CLOCK] == 30);
     ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
-    FbleName names[] = {
-        { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
-        { .name = "a", .loc = { .source = "foo.c", .line = 1, .col = 10}},
-        { .name = "b", .loc = { .source = "foo.c", .line = 2, .col = 20}},
-        { .name = "c", .loc = { .source = "foo.c", .line = 3, .col = 30}},
-    };
-    FbleNameV blocks = { .size = 4, .xs = names };
-    FbleProfileReport(stdout, &blocks, profile);
+    FbleProfileReport(stdout, profile);
     FbleFreeProfile(arena, profile);
     FbleAssertEmptyArena(arena);
   }
@@ -394,7 +427,13 @@ int main(int argc, char* argv[])
     // Test a profile with mutual recursion
     // 0 -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 5);
+    FbleProfile* profile = FbleNewProfile(arena);
+    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_4")); 
+
     FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
@@ -457,15 +496,7 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[4]->block.time[FBLE_PROFILE_TIME_CLOCK] == 40);
     ASSERT(profile->blocks.xs[4]->callees.size == 0);
 
-    FbleName names[] = {
-        { .name = ".", .loc = { .source = "foo.c", .line = 0, .col = 0}},
-        { .name = "a", .loc = { .source = "foo.c", .line = 1, .col = 10}},
-        { .name = "b", .loc = { .source = "foo.c", .line = 2, .col = 20}},
-        { .name = "c", .loc = { .source = "foo.c", .line = 3, .col = 30}},
-        { .name = "d", .loc = { .source = "foo.c", .line = 4, .col = 40}},
-    };
-    FbleNameV blocks = { .size = 5, .xs = names };
-    FbleProfileReport(stdout, &blocks, profile);
+    FbleProfileReport(stdout, profile);
     FbleFreeProfile(arena, profile);
     FbleAssertEmptyArena(arena);
   }
@@ -482,7 +513,11 @@ int main(int argc, char* argv[])
     // a: 0 -> 1 -> 2
     // b: 0 -> 1 -> 2
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 3);
+    FbleProfile* profile = FbleNewProfile(arena);
+    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
+
     FbleProfileThread* a = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileThread* b = FbleNewProfileThread(arena, NULL, profile);
 
@@ -537,7 +572,11 @@ int main(int argc, char* argv[])
     // parent: 0 -> 1 -> 2
     // child:       \--> 3
     FbleAssertEmptyArena(arena);
-    FbleProfile* profile = FbleNewProfile(arena, 4);
+    FbleProfile* profile = FbleNewProfile(arena);
+    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
+    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
 
     FbleProfileThread* parent = FbleNewProfileThread(arena, NULL, profile);
     FbleProfileEnterBlock(arena, parent, 1);

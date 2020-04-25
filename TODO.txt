@@ -1,4 +1,12 @@
 
+* [profile] Separate from main eval
+ - Allow FbleProfile to be passed as NULL to eval, and have that disable
+   profiling.
+ - Replace enter, exit, auto exit instructions with profile ops to run with
+   each FbleInstr.
+ - Move all references to ROOT_BLOCK_ID into profile.c.
+ - Remove wall clock time tracking from profiling.
+
 * [type] Inline fields and args data into FbleType objects?
 * [gc] Implement generational gc?
 

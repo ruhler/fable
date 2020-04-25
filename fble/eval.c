@@ -934,18 +934,16 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, Fbl
 }
 
 // FbleEval -- see documentation in fble.h
-FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleNameV* blocks, FbleProfile** profile)
+FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile)
 {
   FbleArena* arena = heap->arena;
-
-  FbleInstrBlock* code = FbleCompile(arena, blocks, program);
-  *profile = FbleNewProfile(arena, blocks->size);
+  FbleInstrBlock* code = FbleCompile(arena, profile, program);
   if (code == NULL) {
     return NULL;
   }
 
   FbleIO io = { .io = &FbleNoIO, .ports = { .size = 0, .xs = NULL} };
-  FbleValue* result = Eval(heap, &io, NULL, code, *profile);
+  FbleValue* result = Eval(heap, &io, NULL, code, profile);
   FbleFreeInstrBlock(arena, code);
   return result;
 }

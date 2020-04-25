@@ -9,7 +9,7 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_blocks);
+static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profile);
 
 // DumpInstrBlock -- 
 //   For debugging purposes, dump the given code block in human readable
@@ -18,14 +18,14 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 // Inputs:
 //   fout - where to dump the blocks to.
 //   code - the code block to dump.
-//   profile_blocks - the names of the profiling blocks.
+//   profile - the profile, for getting names of profiling blocks.
 //
 // Results:
 //   none
 //
 // Side effects:
 //   Prints the code block in human readable format to stderr.
-static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_blocks)
+static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profile)
 {
   // Map from FbleFrameSection to short descriptor of the section.
   static const char* sections[] = {"s", "l"};
@@ -240,7 +240,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleNameV* profile_
 
         case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
           FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
-          FbleName* name = profile_blocks->xs + enter->block;
+          FbleName* name = &profile->blocks.xs[enter->block]->name;
           fprintf(fout, "enter [%04x]; ", enter->block);
           fprintf(fout, "// %s[%04x]: %s:%d:%d\n",
               name->name, enter->block,
@@ -353,13 +353,13 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 bool FbleDecompile(FILE* fout, FbleProgram* program)
 {
   FbleArena* arena = FbleNewArena();
-  FbleNameV blocks;
-  FbleInstrBlock* code = FbleCompile(arena, &blocks, program);
+  FbleProfile* profile = FbleNewProfile(arena);
+  FbleInstrBlock* code = FbleCompile(arena, profile, program);
   if (code != NULL) {
-    DumpInstrBlock(fout, code, &blocks);
+    DumpInstrBlock(fout, code, profile);
     FbleFreeInstrBlock(arena, code);
   }
-  FbleFreeBlockNames(arena, &blocks);
+  FbleFreeProfile(arena, profile);
   FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
   return code != NULL;
