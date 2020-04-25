@@ -671,6 +671,10 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
+    FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileExitBlockInstr);
+    exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
+    AppendInstr(arena, scope, &exit_instr->_base);
+
     FbleReturnInstr* return_instr = FbleAlloc(arena, FbleReturnInstr);
     return_instr->_base.tag = FBLE_RETURN_INSTR;
     return_instr->result = result->index;

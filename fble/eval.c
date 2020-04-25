@@ -736,7 +736,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         FbleValue* result = FrameGet(thread->stack, return_instr->result);
         *thread->stack->result = FbleValueRetain(heap, result);
         thread->stack = PopFrame(heap, thread->stack);
-        FbleProfileExitBlock(arena, thread->profile);
         break;
       }
 

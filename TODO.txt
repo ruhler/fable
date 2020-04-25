@@ -1,5 +1,10 @@
 
 * [profile] Separate from main eval
+ - Switch to convention that caller is responsible for enter block.
+ - Replace AutoExitBlock with ReplaceBlock.
+ - Try to have all profiling activity except for thread management be
+   initiated by profile instructions instead of mixed with other instructions.
+ - Merge all the profile instructions into a single profile instruction.
  - Allow FbleProfile to be passed as NULL to eval, and have that disable
    profiling.
  - Move all references to ROOT_BLOCK_ID into profile.c.
