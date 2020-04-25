@@ -103,7 +103,7 @@ typedef struct {
 
 static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
 static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
-static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope);
+static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit);
 
 // Compiled --
 //   A pair of type and local returned from compilation.
@@ -548,21 +548,21 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 // Inputs:
 //   arena - arena to use for allocations.
 //   blocks - the blocks stack.
-//   scope - where to generate the PROFILE_EXIT_BLOCK instruction, or NULL to
-//           indicate that no instruction should be generated.
+//   scope - where to generate the PROFILE_EXIT_BLOCK instruction.
+//   exit - whether the frame has already been exited.
 //
 // Results:
 //   none.
 //
 // Side effects:
 //   Pops the top block frame off the blocks stack and append a
-//   PROFILE_EXIT_BLOCK instruction to instrs if instrs is non-null.
-static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope)
+//   PROFILE_EXIT_BLOCK instruction to instrs if exit is false.
+static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 {
   assert(blocks->stack.size > 0);
   blocks->stack.size--;
 
-  if (scope != NULL) {
+  if (!exit) {
     FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileExitBlockInstr);
     exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
     AppendInstr(arena, scope, &exit_instr->_base);
@@ -930,7 +930,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
         EnterBlock(arena, blocks, arg->name, arg->expr->loc, scope);
         args[j] = CompileExpr(heap, blocks, false, scope, arg->expr);
-        ExitBlock(arena, blocks, scope);
+        ExitBlock(arena, blocks, scope, false);
         error = error || (args[j].type == NULL);
       }
 
@@ -1160,7 +1160,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         Compiled result = CompileExpr(heap, blocks, exit, scope, select_expr->default_);
 
         if (result.type == NULL) {
-          ExitBlock(arena, blocks, NULL);
+          ExitBlock(arena, blocks, scope, exit);
           FbleTypeRelease(heap, &union_type->_base);
           return COMPILE_FAILED;
         }
@@ -1176,7 +1176,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           AppendInstr(arena, scope, &copy->_base);
           LocalRelease(arena, scope, result.local, false);
         }
-        ExitBlock(arena, blocks, exit ? NULL : scope);
+        ExitBlock(arena, blocks, scope, exit);
 
         if (!exit) {
           exit_goto_default = FbleAlloc(arena, FbleGotoInstr);
@@ -1198,7 +1198,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           Compiled result = CompileExpr(heap, blocks, exit, scope, select_expr->choices.xs[choice].expr);
 
           if (result.type == NULL) {
-            ExitBlock(arena, blocks, NULL);
+            ExitBlock(arena, blocks, scope, exit);
             FbleTypeRelease(heap, &union_type->_base);
             FbleTypeRelease(heap, target.type);
             return COMPILE_FAILED;
@@ -1216,7 +1216,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
               FbleTypeRelease(heap, result.type);
               FbleTypeRelease(heap, target.type);
               FbleTypeRelease(heap, &union_type->_base);
-              ExitBlock(arena, blocks, NULL);
+              ExitBlock(arena, blocks, scope, exit);
               return COMPILE_FAILED;
             }
             FbleTypeRelease(heap, result.type);
@@ -1230,7 +1230,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             AppendInstr(arena, scope, &copy->_base);
           }
 
-          ExitBlock(arena, blocks, exit ? NULL : scope);
+          ExitBlock(arena, blocks, scope, exit);
           LocalRelease(arena, scope, result.local, exit);
 
           if (!exit) {
@@ -1327,7 +1327,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       }
 
       Compiled func_result = CompileExpr(heap, blocks, true, &func_scope, func_value_expr->body);
-      ExitBlock(arena, blocks, NULL);
+      ExitBlock(arena, blocks, &func_scope, true);
       if (func_result.type == NULL) {
         FreeScope(heap, &func_scope, true);
         FbleFreeInstr(arena, &instr->_base);
@@ -1371,7 +1371,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       EnterBodyBlock(arena, blocks, expr->loc, &body_scope);
 
       Compiled body = CompileExec(heap, blocks, true, &body_scope, expr);
-      ExitBlock(arena, blocks, NULL);
+      ExitBlock(arena, blocks, &body_scope, true);
 
       if (body.type == NULL) {
         FreeScope(heap, &body_scope, true);
@@ -1470,7 +1470,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         if (!error) {
           EnterBlock(arena, blocks, binding->name, binding->expr->loc, scope);
           defs[i] = CompileExpr(heap, blocks, false, scope, binding->expr);
-          ExitBlock(arena, blocks, scope);
+          ExitBlock(arena, blocks, scope, false);
         }
         error = error || (defs[i].type == NULL);
 
@@ -2408,7 +2408,7 @@ static bool CompileProgram(FbleTypeHeap* heap, Blocks* blocks, Scope* scope, Fbl
   for (size_t i = 0; i < prgm->modules.size; ++i) {
     EnterBlock(arena, blocks, prgm->modules.xs[i].name, prgm->modules.xs[i].value->loc, scope);
     Compiled module = CompileExpr(heap, blocks, false, scope, prgm->modules.xs[i].value);
-    ExitBlock(arena, blocks, scope);
+    ExitBlock(arena, blocks, scope, false);
 
     if (module.type == NULL) {
       return false;
@@ -2448,7 +2448,7 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleProfile* profile, FbleProgram*
   FbleTypeHeap* heap = FbleNewTypeHeap(arena);
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
   bool ok = CompileProgram(heap, &block_stack, &scope, program);
-  ExitBlock(arena, &block_stack, NULL);
+  ExitBlock(arena, &block_stack, &scope, true);
   FreeScope(heap, &scope, true);
   FbleFreeTypeHeap(heap);
 
