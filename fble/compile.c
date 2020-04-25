@@ -85,8 +85,7 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
 static void PopVar(FbleTypeHeap* heap, Scope* scope, bool exit);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
 
-static FbleInstrBlock* NewInstrBlock(FbleArena* arena);
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent);
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, FbleFrameIndexV* capture, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 
@@ -330,35 +329,13 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
   return NULL;
 }
 
-// NewInstrBlock --
-//   Allocate and initialize a new instruction block.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//
-// Results:
-//   A newly allocated and initialized instruction block.
-//
-// Side effects:
-//   Allocates a new instruction block that should be freed with
-//   FbleFreeInstrBlock when no longer needed.
-static FbleInstrBlock* NewInstrBlock(FbleArena* arena)
-{
-  FbleInstrBlock* instr_block = FbleAlloc(arena, FbleInstrBlock);
-  instr_block->refcount = 1;
-  instr_block->statics = 0;
-  instr_block->locals = 0;
-  FbleVectorInit(arena, instr_block->instrs);
-  return instr_block;
-}
-
 // InitScope --
 //   Initialize a new scope.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //   scope - the scope to initialize.
-//   code - a pointer to the code block for this scope.
+//   code - a pointer to store the allocated code block for this scope.
 //   capture - vector to store capture variables from the parent scope in. May
 //             be NULL.
 //   parent - the parent of the scope to initialize. May be NULL.
@@ -374,7 +351,9 @@ static FbleInstrBlock* NewInstrBlock(FbleArena* arena)
 //   captured from the parent scope. capture may be NULL, in which case the
 //   scope is treated as a phantom scope that does not cause any changes to be
 //   made to the parent scope.
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, FbleFrameIndexV* capture, Scope* parent)
+//   The caller is responsible for calling FbleFreeInstrBlock on *code when it
+//   is no longer needed.
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, FbleFrameIndexV* capture, Scope* parent)
 {
   FbleVectorInit(arena, scope->statics);
   FbleVectorInit(arena, scope->vars);
@@ -383,11 +362,17 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock* code, Fble
     FbleVectorInit(arena, *capture);
   }
 
-  scope->code = code;
+  scope->code = FbleAlloc(arena, FbleInstrBlock);
+  scope->code->refcount = 1;
+  scope->code->statics = 0;
+  scope->code->locals = 0;
+  FbleVectorInit(arena, scope->code->instrs);
   scope->code->statics = 0;
   scope->code->locals = 0;
   scope->capture = capture;
   scope->parent = parent;
+
+  *code = scope->code;
 }
 
 // FreeScope --
@@ -1314,11 +1299,10 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleFuncValueInstr* instr = FbleAlloc(arena, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
-      instr->code = NewInstrBlock(arena);
       instr->argc = argc;
 
       Scope func_scope;
-      InitScope(arena, &func_scope, instr->code, &instr->scope, scope);
+      InitScope(arena, &func_scope, &instr->code, &instr->scope, scope);
       EnterBodyBlock(arena, blocks, func_value_expr->body->loc, &func_scope);
 
       for (size_t i = 0; i < argc; ++i) {
@@ -1364,10 +1348,9 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_EXEC_EXPR: {
       FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
-      instr->code = NewInstrBlock(arena);
 
       Scope body_scope;
-      InitScope(arena, &body_scope, instr->code, &instr->scope, scope);
+      InitScope(arena, &body_scope, &instr->code, &instr->scope, scope);
       EnterBodyBlock(arena, blocks, expr->loc, &body_scope);
 
       Compiled body = CompileExec(heap, blocks, true, &body_scope, expr);
@@ -2189,10 +2172,9 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 static FbleType* CompileExprNoInstrs(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = heap->arena;
-  FbleInstrBlock* code = NewInstrBlock(arena);
-
+  FbleInstrBlock* code;
   Scope nscope;
-  InitScope(arena, &nscope, code, NULL, scope);
+  InitScope(arena, &nscope, &code, NULL, scope);
 
   Blocks blocks;
   FbleVectorInit(arena, blocks.stack);
@@ -2433,7 +2415,6 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleProfile* profile, FbleProgram*
   FbleVectorInit(arena, block_stack.stack);
   block_stack.profile = profile;
 
-  FbleInstrBlock* code = NewInstrBlock(arena);
 
   // The entry associated with FBLE_ROOT_BLOCK_ID.
   FbleName entry_name = {
@@ -2442,8 +2423,9 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleProfile* profile, FbleProgram*
     .space = FBLE_NORMAL_NAME_SPACE,
   };
 
+  FbleInstrBlock* code;
   Scope scope;
-  InitScope(arena, &scope, code, NULL, NULL);
+  InitScope(arena, &scope, &code, NULL, NULL);
 
   FbleTypeHeap* heap = FbleNewTypeHeap(arena);
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
