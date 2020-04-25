@@ -118,15 +118,15 @@ typedef struct {
   FbleCallData* call;
 } Sample;
 
-// SampleV --
-//   A vector of Sample. Also known as the sample stack. This is different
-//   from the call stack in that calls to the same caller/callee appear at
-//   most once in the sample stack, and it includes information about
-//   auto-exited calls.
+// SampleStack --
+//   A stack of Samples. This is different from the call stack in that calls
+//   to the same caller/callee appear at most once in the sample stack, and it
+//   includes information about auto-exited calls.
 typedef struct {
+  size_t capacity;
   size_t size;
   Sample* xs;
-} SampleV;
+} SampleStack;
 
 // Entry --
 //   Table entry used in a hash map from (caller,callee) pair.
@@ -162,7 +162,7 @@ struct FbleProfileThread {
   Table table;
 
   CallStack* calls;
-  SampleV sample;
+  SampleStack sample;
 };
 
 typedef enum {
@@ -537,7 +537,9 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
     thread->calls->top->id = FBLE_ROOT_BLOCK_ID;
     thread->calls->top->exit = 0;
 
-    FbleVectorInit(arena, thread->sample);
+    thread->sample.capacity = 8;
+    thread->sample.size = 0;
+    thread->sample.xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
 
     thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
   } else {
@@ -569,12 +571,10 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* par
       }
     }
 
-    // Copy the sample vectors directly.
-    // Allocate new vector twice the size of the previous to ensure the
-    // underlying allocation is at least as large as the power of two greater
-    // than the size.
+    // Copy the sample stack.
+    thread->sample.capacity = parent->sample.capacity;
     thread->sample.size = parent->sample.size;
-    thread->sample.xs = FbleArrayAlloc(arena, Sample, 2 * parent->sample.size);
+    thread->sample.xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
     memcpy(thread->sample.xs, parent->sample.xs, parent->sample.size * sizeof(Sample));
   }
   return thread;
@@ -640,7 +640,14 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   if (!call_running) {
     entry->sample = thread->sample.size;
 
-    Sample* sample = FbleVectorExtend(arena, thread->sample);
+    if (thread->sample.size == thread->sample.capacity) {
+      thread->sample.capacity *= 2;
+      Sample* xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
+      memcpy(xs, thread->sample.xs, thread->sample.size * sizeof(Sample));
+      FbleFree(arena, thread->sample.xs);
+      thread->sample.xs = xs;
+    }
+    Sample* sample = thread->sample.xs + thread->sample.size++;
     sample->caller = caller;
     sample->callee = callee;
     sample->call = entry->data;
@@ -700,6 +707,7 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
 // FbleProfileExitBlock -- see documentation in fble-profile.h
 void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
 {
+  // TODO: Consider shrinking the sample stack occasionally to recover memory?
   thread->sample.size -= thread->calls->top->exit;
   CallStackPop(arena, thread);
 }
