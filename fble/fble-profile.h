@@ -11,22 +11,6 @@
 #include "fble-alloc.h"
 #include "fble-syntax.h"
 
-// FbleProfileClock --
-//   The clocks used for profiling.
-typedef enum {
-  // The profile time clock is advanced explicitly based on the time argument
-  // to FbleProfileSample. It gives deterministic timing results.
-  FBLE_PROFILE_TIME_CLOCK,
-
-  // The profile wall clock is advanced implicitly based on wall clock time
-  // that has passed since the previous sample. It is not deterministic, but
-  // should give a reasonable approximation of real wall clock time.
-  FBLE_PROFILE_WALL_CLOCK,
-
-  // Enum whose value is the number of profiling clocks.
-  FBLE_PROFILE_NUM_CLOCKS
-} FbleProfileClock;
-
 // FbleBlockId --
 //  An identifier for a program block
 typedef size_t FbleBlockId;
@@ -50,11 +34,11 @@ typedef struct {
 // Fields:
 //   id - the id of the caller/callee block.
 //   count - the number of times the call was made.
-//   time - the amount of time spent in the call, indexed by FbleProfileClock.
+//   time - the amount of time spent in the call.
 typedef struct {
   FbleBlockId id;
   uint64_t count;
-  uint64_t time[FBLE_PROFILE_NUM_CLOCKS];
+  uint64_t time;
 } FbleCallData;
 
 // FbleCallDataV --
@@ -93,7 +77,6 @@ typedef struct {
 //   last - the wall clock time of the last sample.
 //   blocks - blocks.xs[i] contains block and callee information for block i.
 typedef struct {
-  uint64_t wall;
   FbleBlockProfileV blocks;
 } FbleProfile;
 
@@ -202,16 +185,13 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 // FbleProfileSample --
 //   Take an explicit profiling sample.
 //
-// See FbleProfileTick for an alternate method of triggering samples.
-//
 // Inputs:
 //   arena - arena to use for allocations.
 //   thread - the profile thread to sample.
 //   time - the amount of profile time to advance.
 //
 // Side effects:
-//   Charges calls on the current thread with the given explicit time and
-//   implicit wall clock time since the last sample on the thread.
+//   Charges calls on the current thread with the given time.
 void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t time);
 
 // FbleProfileExitBlock --

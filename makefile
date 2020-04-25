@@ -13,7 +13,7 @@ checkerr:
 
 .PHONY: foo
 foo:
-	./out/bin/fble-test foo.fble .
+	./out/bin/fble-test --profile foo.fble .
 
 .PHONY: test
 test:

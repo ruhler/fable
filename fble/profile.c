@@ -16,12 +16,12 @@
 // Notes on profiling
 // ------------------
 // Consider a profile call graph entry such as:
-//       count     wall     time block
-//           2        0       70 b[0002]   
-//           1        0       90 a[0001]   
-// **        3        0       90 b[0002] **
-//           2        0       70 b[0002]   
-//           1        0       30 c[0003]   
+//       count     time block
+//           2       70 /b[0002]   
+//           1       90 /a[0001]   
+// **        3       90 /b[0002] **
+//           2       70 /b[0002]   
+//           1       30 /c[0003]   
 //
 // Focusing on the highlighted line with **, this says we spent 90 profile
 // time in block 'b'. The blocks that 'b' called are listed below it. So in
@@ -174,12 +174,11 @@ static Call* CallStackPush(FbleArena* arena, FbleProfileThread* thread);
 static void CallStackPop(FbleArena* arena, FbleProfileThread* thread);
 
 static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile, FbleBlockId caller, FbleBlockId callee);
-static void MergeSortCallData(FbleProfileClock clock, Order order, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
-static void SortCallData(FbleProfileClock clock, Order order, FbleCallData** data, size_t size);
+static void MergeSortCallData(Order order, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
+static void SortCallData(Order order, FbleCallData** data, size_t size);
 static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id);
 static void PrintCallData(FILE* fout, FbleProfile* profile, bool highlight, FbleCallData* call);
 
-static uint64_t GetTimeMillis();
 static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, size_t blockc);
 
 // CallStackPush --
@@ -275,9 +274,7 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
   // Nothing was found. Allocate new call data for this callee.
   FbleCallData* call = FbleAlloc(arena, FbleCallData);
   call->id = callee;
-  for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-    call->time[clock] = 0;
-  }
+  call->time = 0;
   call->count = 0;
 
   // Insert the new call data into the callee list, preserving the sort by
@@ -299,7 +296,6 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
 //   2. !in_place - a is sorted into b, then a can be used as a scratch buffer
 //
 // Inputs:
-//   clock - the clock to sort by.
 //   order - the order to sort in.
 //   in_place - whether to use in place sort or not.
 //   a - the data to sort
@@ -313,7 +309,7 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
 // Side effects:
 //   Sorts the contents of data a, either in place or into b. Overwrites the
 //   contents of the non-sorted array with scratch data.
-static void MergeSortCallData(FbleProfileClock clock, Order order, bool in_place, FbleCallData** a, FbleCallData** b, size_t size)
+static void MergeSortCallData(Order order, bool in_place, FbleCallData** a, FbleCallData** b, size_t size)
 {
   if (size == 0) {
     return;
@@ -329,12 +325,12 @@ static void MergeSortCallData(FbleProfileClock clock, Order order, bool in_place
   FbleCallData** a1 = a;
   FbleCallData** b1 = b;
   size_t size1 = size / 2;
-  MergeSortCallData(clock, order, !in_place, a1, b1, size1);
+  MergeSortCallData(order, !in_place, a1, b1, size1);
 
   FbleCallData** a2 = a + size1;
   FbleCallData** b2 = b + size1;
   size_t size2 = size - size1;
-  MergeSortCallData(clock, order, !in_place, a2, b2, size2);
+  MergeSortCallData(order, !in_place, a2, b2, size2);
 
   FbleCallData** s1 = in_place ? b1 : a1;
   FbleCallData** s2 = in_place ? b2 : a2;
@@ -344,13 +340,13 @@ static void MergeSortCallData(FbleProfileClock clock, Order order, bool in_place
   FbleCallData** e2 = s2 + size2;
   while (s1 < e1 && s2 < e2) {
     if (order == ASCENDING) {
-      if ((*s1)->time[clock] <= (*s2)->time[clock]) {
+      if ((*s1)->time <= (*s2)->time) {
         *d++ = *s1++;
       } else {
         *d++ = *s2++;
       }
     } else {
-      if ((*s1)->time[clock] >= (*s2)->time[clock]) {
+      if ((*s1)->time >= (*s2)->time) {
         *d++ = *s1++;
       } else {
         *d++ = *s2++;
@@ -371,7 +367,6 @@ static void MergeSortCallData(FbleProfileClock clock, Order order, bool in_place
 //   Sort a vector of call data by time.
 //
 // Inputs:
-//   clock - the clock to sort by.
 //   order - the order to sort in.
 //   data - the call data to sort
 //   size - the number of elements of data.
@@ -381,10 +376,10 @@ static void MergeSortCallData(FbleProfileClock clock, Order order, bool in_place
 //
 // Side effects:
 //   Sorts the given array of call data in increasing order of time.
-static void SortCallData(FbleProfileClock clock, Order order, FbleCallData** data, size_t size)
+static void SortCallData(Order order, FbleCallData** data, size_t size)
 {
   FbleCallData* scratch[size];
-  MergeSortCallData(clock, order, true, data, scratch, size);
+  MergeSortCallData(order, true, data, scratch, size);
 }
 
 // PrintBlockName --
@@ -421,35 +416,11 @@ static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 //   Prints a single line description of the call data to the given file.
 static void PrintCallData(FILE* fout, FbleProfile* profile, bool highlight, FbleCallData* call)
 {
-  uint64_t wall = call->time[FBLE_PROFILE_WALL_CLOCK];
-  uint64_t time = call->time[FBLE_PROFILE_TIME_CLOCK];
   char h = highlight ? '*' : ' ';
-  fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 " %8" PRIu64 " ",
-      h, h, call->count, wall, time);
+  fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 "  ",
+      h, h, call->count, call->time);
   PrintBlockName(fout, profile, call->id);
   fprintf(fout, " %c%c\n", h, h);
-}
-
-// GetTimeMillis -
-//   Get the current time in milliseconds.
-//
-// Inputs:
-//   None.
-//
-// Results:
-//   The current wall clock time in milliseconds, relative to some arbitrary,
-//   fixed point in time.
-//
-// Side effects:
-//   None.
-static uint64_t GetTimeMillis()
-{
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  uint64_t seconds = tv.tv_sec;
-  uint64_t millis = tv.tv_usec / 1000;
-  uint64_t time = 1000 * seconds + millis;
-  return time;
 }
 
 // TableEntry --
@@ -483,7 +454,6 @@ static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, s
 FbleProfile* FbleNewProfile(FbleArena* arena)
 {
   FbleProfile* profile = FbleAlloc(arena, FbleProfile);
-  profile->wall = 0;
   FbleVectorInit(arena, profile->blocks);
   return profile;
 }
@@ -496,9 +466,7 @@ FbleBlockId FbleProfileAddBlock(FbleArena* arena, FbleProfile* profile, FbleName
   block->name = name;
   block->block.id = id;
   block->block.count = 0;
-  for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-    block->block.time[clock] = 0;
-  }
+  block->block.time = 0;
   FbleVectorInit(arena, block->callees);
   FbleVectorAppend(arena, profile->blocks, block);
   return id;
@@ -681,15 +649,6 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 // FbleProfileSample -- see documentation in fble-profile.h
 void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
 {
-  // Get the wall clock time since the last sample on this thread.
-  uint64_t now = GetTimeMillis();
-  if (thread->profile->wall == 0) {
-    thread->profile->wall = now;
-  }
-
-  uint64_t wall = now - thread->profile->wall;
-  thread->profile->wall = now;
-  
   // Charge calls in the stack for their time.
   bool block_seen[thread->profile->blocks.size];
   memset(block_seen, 0, thread->profile->blocks.size * sizeof(bool));
@@ -698,15 +657,12 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
     FbleCallData* data = sample->call;
     if (!block_seen[sample->callee]) {
       block_seen[sample->callee] = true;
-      thread->profile->blocks.xs[sample->callee]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
-      thread->profile->blocks.xs[sample->callee]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
+      thread->profile->blocks.xs[sample->callee]->block.time += time;
     }
-    data->time[FBLE_PROFILE_WALL_CLOCK] += wall;
-    data->time[FBLE_PROFILE_TIME_CLOCK] += time;
+    data->time += time;
   }
 
-  thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.time[FBLE_PROFILE_WALL_CLOCK] += wall;
-  thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.time[FBLE_PROFILE_TIME_CLOCK] += time;
+  thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.time += time;
 }
 
 // FbleProfileExitBlock -- see documentation in fble-profile.h
@@ -732,14 +688,6 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
   // Number of blocks covered.
   size_t covered = 0;
 
-  // Stats for correlating profile time (x) with wall clock time (y)
-  uint64_t n = 0;
-  uint64_t x = 0;  // sum of x_i
-  uint64_t y = 0;  // sum of y_i
-  uint64_t xx = 0;  // sum of x_i * x_i
-  uint64_t yy = 0;  // sum of y_i * y_i
-  uint64_t xy = 0;  // sum of x_i * y_i
-
   FbleCallDataV callers[profile->blocks.size];
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     FbleVectorInit(arena, callers[i]);
@@ -752,44 +700,28 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
       covered++;
     }
 
-    uint64_t x_i = calls[i]->time[FBLE_PROFILE_TIME_CLOCK];
-    uint64_t y_i = calls[i]->time[FBLE_PROFILE_WALL_CLOCK];
-    n++;
-    x += x_i;
-    y += y_i;
-    xx += x_i * x_i;
-    yy += y_i * y_i;
-    xy += x_i * y_i;
-
     for (size_t j = 0; j < profile->blocks.xs[i]->callees.size; ++j) {
       FbleCallData* call = profile->blocks.xs[i]->callees.xs[j];
       FbleCallData* called = FbleAlloc(arena, FbleCallData);
       called->id = i;
       called->count = call->count;
-      for (FbleProfileClock clock = 0; clock < FBLE_PROFILE_NUM_CLOCKS; ++clock) {
-        called->time[clock] = call->time[clock];
-      }
+      called->time = call->time;
       FbleVectorAppend(arena, callers[call->id], called);
     }
   }
-  SortCallData(FBLE_PROFILE_TIME_CLOCK, DESCENDING, calls, profile->blocks.size);
+  SortCallData(DESCENDING, calls, profile->blocks.size);
 
   double coverage = (double)covered / (double)profile->blocks.size;
-  double m = (double)xy / (double)xx;
-  double r = (double)(n * xy - x * y)
-           / (  sqrt((double)n*xx - (double)x*x)
-              * sqrt((double)n*yy - (double)y*y));
 
   fprintf(fout, "Profile Report\n");
   fprintf(fout, "==============\n");
   fprintf(fout, "blocks executed: %2.2f%% of %zi\n", 100 * coverage, profile->blocks.size);
-  fprintf(fout, "wall / time clock ratio: %f (r^2 = %f)\n", m, r*r);
   fprintf(fout, "\n");
 
   // Flat Profile
   fprintf(fout, "Flat Profile\n");
   fprintf(fout, "------------\n");
-  fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
+  fprintf(fout, "   %8s %8s  %s\n", "count", "time", "block");
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     PrintCallData(fout, profile, true, calls[i]);
   }
@@ -798,13 +730,13 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
   // Call Graph
   fprintf(fout, "Call Graph\n");
   fprintf(fout, "----------\n");
-  fprintf(fout, "   %8s %8s %8s %s\n", "count", "wall", "time", "block");
+  fprintf(fout, "   %8s %8s  %s\n", "count", "time", "block");
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     size_t id = calls[i]->id;
     FbleBlockProfile* block = profile->blocks.xs[id];
     if (block->block.count > 0) {
       // Callers
-      SortCallData(FBLE_PROFILE_TIME_CLOCK, ASCENDING, callers[id].xs, callers[id].size);
+      SortCallData(ASCENDING, callers[id].xs, callers[id].size);
       for (size_t j = 0; j < callers[id].size; ++j) {
         PrintCallData(fout, profile, false, callers[id].xs[j]);
       }
@@ -817,7 +749,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
       for (size_t j = 0; j < block->callees.size; ++j) {
         callees[j] = block->callees.xs[j];
       }
-      SortCallData(FBLE_PROFILE_TIME_CLOCK, DESCENDING, callees, block->callees.size);
+      SortCallData(DESCENDING, callees, block->callees.size);
       for (size_t j = 0; j < block->callees.size; ++j) {
         PrintCallData(fout, profile, false, callees[j]);
       }
