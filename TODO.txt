@@ -1,5 +1,6 @@
 
 * [type] Inline fields and args data into FbleType objects?
+* [gc] Implement generational gc?
 
 * [eval] gprof profiling based improvements.
   - Little things that are cleanup are worth doing.
@@ -18,6 +19,7 @@
  - Use fair thread traversal by starting over from root when yield occurs.
 
 * [invaders] Implement space invaders game.
+ - Add single alien to the game.
  - Figure out how they know when to move forward as a group.
 
 * [compile] Figure out why Normal is called so often
@@ -34,25 +36,9 @@
  - gcov suggests we'll save on the order of 4 million instructions and 4
    million allocations in fble bench. Surely that's good for something.
 
-* [bench] Optimize
- - game of life:
-    40s step,
-    14s transform draw, calling back into 'f'.
-        x: 5s add, 3s mul, y: 3s add, 1s mul.
-        Looks like add, mul the only opportunity for improvement?
-
-* [profile] Optimize profiling.
- - 30 seconds spent in enter/exit processing
- - 17 seconds spent in FbleProfileSample
- - 24 seconds spent in FbleProfileTick (without sampling)
- I'm not sure how to make it better though, besides turning it off.
-
 * [cc] Implement .fble -> .o compiler
  - Goal is to significantly increase performance by removing the instruction
    fetch decode logic.
-
-* [gc] Optimize gc. 
- - Experiments suggest gc is 28% overhead for fble bench today.
 
 * [snake] Switch to a target 60 FPS?
 * [snake] Test and fix bug when snake eats its tail.
@@ -98,8 +84,6 @@
  - test that calling into block 0 does the right thing. Though I'm not sure it
    makes much sense.
 
-* [eval] Experiment with alternate garbage collection implementations.
- - For the purpose of improving memory and runtime performance.
 * [eval] Make child thread execution fair.
   Children should be time multiplexed, where priority is assigned based on how
   far down the family tree the child belongs. The amount of time a family gets
