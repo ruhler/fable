@@ -55,7 +55,6 @@ typedef enum {
   FBLE_PUT_INSTR,
   FBLE_LINK_INSTR,
   FBLE_FORK_INSTR,
-  FBLE_JOIN_INSTR,
   FBLE_PROC_INSTR,
   FBLE_COPY_INSTR,
   FBLE_REF_VALUE_INSTR,
@@ -246,17 +245,13 @@ typedef struct {
 // Each argument should be a proc value. Executes the proc value in the child
 // thread and stores the result to the given destination in the parent
 // thread's stack frame.
+//
+// The parent thread does not resume until all child threads have finished.
 typedef struct {
   FbleInstr _base;
   FbleFrameIndexV args;
   FbleLocalIndexV dests;
 } FbleForkInstr;
-
-// FbleJoinInstr -- FBLE_JOIN_INSTR
-//   Wait until all child threads are done executing.
-typedef struct {
-  FbleInstr _base;
-} FbleJoinInstr;
 
 // FbleProcInstr -- FBLE_PROC_INSTR
 //   Execute a process value.

@@ -2153,10 +2153,6 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         }
       }
 
-      FbleJoinInstr* join = FbleAlloc(arena, FbleJoinInstr);
-      join->_base.tag = FBLE_JOIN_INSTR;
-      AppendInstr(arena, scope, &join->_base);
-
       Compiled c = COMPILE_FAILED;
       if (!error) {
         c = CompileExec(heap, blocks, exit, scope, exec_expr->body);

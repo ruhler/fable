@@ -191,11 +191,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           break;
         }
 
-        case FBLE_JOIN_INSTR: {
-          fprintf(fout, "join;\n");
-          break;
-        }
-
         case FBLE_PROC_INSTR: {
           FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
           if (proc_instr->exit) {
@@ -284,7 +279,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_PUT_INSTR:
     case FBLE_LINK_INSTR:
     case FBLE_PROC_INSTR:
-    case FBLE_JOIN_INSTR:
     case FBLE_REF_VALUE_INSTR:
     case FBLE_REF_DEF_INSTR:
     case FBLE_RETURN_INSTR:

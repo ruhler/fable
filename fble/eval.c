@@ -687,21 +687,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           FbleVectorAppend(arena, thread->children, child);
         }
         thread->next_child = 0;
-
-        // We'll count forking as I/O activity, because it means there are new
-        // threads that might do some I/O.
-        *io_activity = true;
-        break;
-      }
-
-      case FBLE_JOIN_INSTR: {
-        if (thread->children.size > 0) {
-          // Blocked on child. Restore the thread state and return before
-          // logging progress.
-          thread->stack->pc--;
-          return BLOCKED;
-        }
-        break;
+        return UNBLOCKED;
       }
 
       case FBLE_PROC_INSTR: {

@@ -2,8 +2,6 @@
 * [profile] Separate from main eval
  - Allow FbleProfile to be passed as NULL to eval, and have that disable
    profiling.
- - Replace enter, exit, auto exit instructions with profile ops to run with
-   each FbleInstr.
  - Move all references to ROOT_BLOCK_ID into profile.c.
 
 * [type] Inline fields and args data into FbleType objects?
@@ -18,9 +16,6 @@
   unused 'true' variable definition is removed.
 
 * [eval] Thread management cleanup
- - Clarify for FORK instruction whether the main thread continues to run until
-   join, or if the main thread waits until all children are done. If the
-   former, implement it correctly.
  - Switch i/o ports to use links.
  - Track suspended threads on links.
  - Use fair thread traversal by starting over from root when yield occurs.
