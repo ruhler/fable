@@ -701,7 +701,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         FbleValueRetain(heap, &proc->_base);
         if (proc_instr->exit) {
           thread->stack = ReplaceFrame(heap, &proc->_base, proc->scope, proc->code, thread->stack);
-          FbleProfileAutoExitBlock(arena, thread->profile);
         } else {
           FbleValue** result = thread->stack->locals + proc_instr->dest;
           thread->stack = PushFrame(arena, &proc->_base, proc->scope, proc->code, result, thread->stack);

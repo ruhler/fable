@@ -2011,6 +2011,12 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       c.type = FbleTypeRetain(heap, normal->type);
       c.local = NewLocal(arena, scope);
 
+      if (exit) {
+        FbleProfileAutoExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileAutoExitBlockInstr);
+        exit_instr->_base.tag = FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR;
+        AppendInstr(arena, scope, &exit_instr->_base);
+      }
+
       FbleProcInstr* instr = FbleAlloc(arena, FbleProcInstr);
       instr->_base.tag = FBLE_PROC_INSTR;
       instr->exit = exit;
