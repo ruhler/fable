@@ -61,10 +61,7 @@ typedef enum {
   FBLE_REF_DEF_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
-  FBLE_PROFILE_ENTER_BLOCK_INSTR,
-  FBLE_PROFILE_EXIT_BLOCK_INSTR,
-  FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR,
-  FBLE_PROFILE_EXIT_FUNC_INSTR,
+  FBLE_PROFILE_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -314,40 +311,33 @@ typedef struct {
   FbleLocalIndex dest;
 } FbleTypeInstr;
 
-// FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR
-//
-// Enters a new profiling block.
-// 
-// Fields:
-//   block - the block to enter.
-typedef struct {
-  FbleInstr _base;
-  FbleBlockId block;
-} FbleProfileEnterBlockInstr;
+// FbleProfileOp --
+//   Operations that can be done as part of an FBLE_PROFILE_INSTR.
+typedef enum {
+  FBLE_PROFILE_ENTER_OP,
+  FBLE_PROFILE_EXIT_OP,
+  FBLE_PROFILE_AUTO_EXIT_OP,
+  FBLE_PROFILE_FUNC_EXIT_OP
+} FbleProfileOp;
 
-// FbleProfileExitBlockInstr -- FBLE_PROFILE_EXIT_BLOCK_INSTR
+// FbleProfileInstr -- FBLE_PROFILE_INSTR
 //
-// Exits the current profiling block.
+// Perform a profiling operations.
+//
+// ENTER: Enters a new profiling block, as given by the 'block' field.
+// EXIT: Exits the current profiling block.
+// AUTO_EXIT: Auto-exits the current profiling block.
+// FUNC_EXIT: Exits or auto-exits the current profiling block as appropriate
+// based on the value of the function 'func' about to be applied
+// tail-recursively.
 typedef struct {
   FbleInstr _base;
-} FbleProfileExitBlockInstr;
-
-// FbleProfileAutoExitBlockInstr -- FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR
-//
-// Auto-exits the current profiling block.
-typedef struct {
-  FbleInstr _base;
-} FbleProfileAutoExitBlockInstr;
-
-// FbleProfileExitFuncInstr -- FBLE_PROFILE_EXIT_FUNC_INSTR
-//
-// Exits or auto-exits the current profiling block as appropriate based on the
-// value of a function about to be applied tail-recursively.
-typedef struct {
-  FbleInstr _base;
-  FbleLoc loc;
-  FbleFrameIndex func;
-} FbleProfileExitFuncInstr;
+  FbleProfileOp op;
+  union {
+    struct { FbleBlockId block; } enter;
+    struct { FbleLoc loc; FbleFrameIndex func; } func_exit;
+  } data;
+} FbleProfileInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.

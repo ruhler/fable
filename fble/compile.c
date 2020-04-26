@@ -475,9 +475,10 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   FbleName nm = { .name = str, .loc = loc };
   size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
 
-  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
-  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
-  enter->block = id;
+  FbleProfileInstr* enter = FbleAlloc(arena, FbleProfileInstr);
+  enter->_base.tag = FBLE_PROFILE_INSTR;
+  enter->op = FBLE_PROFILE_ENTER_OP;
+  enter->data.enter.block = id;
   AppendInstr(arena, scope, &enter->_base);
   FbleVectorAppend(arena, blocks->stack, id);
 }
@@ -519,9 +520,10 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 
   size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
 
-  FbleProfileEnterBlockInstr* enter = FbleAlloc(arena, FbleProfileEnterBlockInstr);
-  enter->_base.tag = FBLE_PROFILE_ENTER_BLOCK_INSTR;
-  enter->block = id;
+  FbleProfileInstr* enter = FbleAlloc(arena, FbleProfileInstr);
+  enter->_base.tag = FBLE_PROFILE_INSTR;
+  enter->op = FBLE_PROFILE_ENTER_OP;
+  enter->data.enter.block = id;
   AppendInstr(arena, scope, &enter->_base);
 
   FbleVectorAppend(arena, blocks->stack, id);
@@ -548,8 +550,9 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
   blocks->stack.size--;
 
   if (!exit) {
-    FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileExitBlockInstr);
-    exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
+    FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
+    exit_instr->_base.tag = FBLE_PROFILE_INSTR;
+    exit_instr->op = FBLE_PROFILE_EXIT_OP;
     AppendInstr(arena, scope, &exit_instr->_base);
   }
 }
@@ -671,8 +674,9 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
-    FbleProfileExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileExitBlockInstr);
-    exit_instr->_base.tag = FBLE_PROFILE_EXIT_BLOCK_INSTR;
+    FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
+    exit_instr->_base.tag = FBLE_PROFILE_INSTR;
+    exit_instr->op = FBLE_PROFILE_EXIT_OP;
     AppendInstr(arena, scope, &exit_instr->_base);
 
     FbleReturnInstr* return_instr = FbleAlloc(arena, FbleReturnInstr);
@@ -796,10 +800,11 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
             bool exit_apply = exit && (i+1 == argc);
             if (exit_apply) {
-              FbleProfileExitFuncInstr* exit_instr = FbleAlloc(arena, FbleProfileExitFuncInstr);
-              exit_instr->_base.tag = FBLE_PROFILE_EXIT_FUNC_INSTR;
-              exit_instr->loc = misc_apply_expr->misc->loc;
-              exit_instr->func = misc.local->index;
+              FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
+              exit_instr->_base.tag = FBLE_PROFILE_INSTR;
+              exit_instr->op = FBLE_PROFILE_FUNC_EXIT_OP;
+              exit_instr->data.func_exit.loc = misc_apply_expr->misc->loc;
+              exit_instr->data.func_exit.func = misc.local->index;
               AppendInstr(arena, scope, &exit_instr->_base);
             }
 
@@ -1128,8 +1133,9 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleTypeRelease(heap, condition.type);
 
       if (exit) {
-        FbleProfileAutoExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileAutoExitBlockInstr);
-        exit_instr->_base.tag = FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR;
+        FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
+        exit_instr->_base.tag = FBLE_PROFILE_INSTR;
+        exit_instr->op = FBLE_PROFILE_AUTO_EXIT_OP;
         AppendInstr(arena, scope, &exit_instr->_base);
       }
 
@@ -2022,8 +2028,9 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       c.local = NewLocal(arena, scope);
 
       if (exit) {
-        FbleProfileAutoExitBlockInstr* exit_instr = FbleAlloc(arena, FbleProfileAutoExitBlockInstr);
-        exit_instr->_base.tag = FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR;
+        FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
+        exit_instr->_base.tag = FBLE_PROFILE_INSTR;
+        exit_instr->op = FBLE_PROFILE_AUTO_EXIT_OP;
         AppendInstr(arena, scope, &exit_instr->_base);
       }
 

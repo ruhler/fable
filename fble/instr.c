@@ -233,28 +233,38 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           break;
         }
 
-        case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
-          FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
-          FbleName* name = &profile->blocks.xs[enter->block]->name;
-          fprintf(fout, "enter [%04x]; ", enter->block);
-          fprintf(fout, "// %s[%04x]: %s:%d:%d\n",
-              name->name, enter->block,
-              name->loc.source, name->loc.line, name->loc.col);
-          break;
-        }
+        case FBLE_PROFILE_INSTR: {
+          FbleProfileInstr* profile_instr = (FbleProfileInstr*)instr;
+          switch (profile_instr->op) {
+            case FBLE_PROFILE_ENTER_OP: {
+              FbleBlockId block = profile_instr->data.enter.block;
+              FbleName* name = &profile->blocks.xs[block]->name;
+              fprintf(fout, "profile enter [%04x]; ", block);
+              fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name, block,
+                  name->loc.source, name->loc.line, name->loc.col);
+              break;
+            }
 
-        case FBLE_PROFILE_EXIT_BLOCK_INSTR: {
-          fprintf(fout, "exit block;\n");
-          break;
-        }
+            case FBLE_PROFILE_EXIT_OP: {
+              fprintf(fout, "profile exit;\n");
+              break;
+            }
 
-        case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
-          fprintf(fout, "auto exit block;\n");
-          break;
-        }
+            case FBLE_PROFILE_AUTO_EXIT_OP: {
+              fprintf(fout, "profile auto exit;\n");
+              break;
+            }
 
-        case FBLE_PROFILE_EXIT_FUNC_INSTR: {
-          fprintf(fout, "exit func;\n");
+            case FBLE_PROFILE_FUNC_EXIT_OP: {
+              FbleLoc loc = profile_instr->data.func_exit.loc;
+              FbleFrameIndex func = profile_instr->data.func_exit.func;
+
+              fprintf(fout, "profile exit func %s%zi; // %s:%i:%i\n",
+                  sections[func.section], func.index,
+                  loc.source, loc.line, loc.col);
+              break;
+            }
+          }
           break;
         }
       }
@@ -288,10 +298,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_REF_DEF_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
-    case FBLE_PROFILE_ENTER_BLOCK_INSTR:
-    case FBLE_PROFILE_EXIT_BLOCK_INSTR:
-    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR:
-    case FBLE_PROFILE_EXIT_FUNC_INSTR:
+    case FBLE_PROFILE_INSTR:
       FbleFree(arena, instr);
       return;
 

@@ -743,38 +743,40 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         break;
       }
 
-      case FBLE_PROFILE_ENTER_BLOCK_INSTR: {
-        FbleProfileEnterBlockInstr* enter = (FbleProfileEnterBlockInstr*)instr;
-        FbleProfileEnterBlock(arena, thread->profile, enter->block);
-        break;
-      }
+      case FBLE_PROFILE_INSTR: {
+        FbleProfileInstr* profile_instr = (FbleProfileInstr*)instr;
+        switch (profile_instr->op) {
+          case FBLE_PROFILE_ENTER_OP:
+            FbleProfileEnterBlock(arena, thread->profile, profile_instr->data.enter.block);
+            break;
 
-      case FBLE_PROFILE_EXIT_BLOCK_INSTR: {
-        FbleProfileExitBlock(arena, thread->profile);
-        break;
-      }
+          case FBLE_PROFILE_EXIT_OP:
+            FbleProfileExitBlock(arena, thread->profile);
+            break;
 
-      case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
-        FbleProfileAutoExitBlock(arena, thread->profile);
-        break;
-      }
+          case FBLE_PROFILE_AUTO_EXIT_OP: {
+            FbleProfileAutoExitBlock(arena, thread->profile);
+            break;
+          }
 
-      case FBLE_PROFILE_EXIT_FUNC_INSTR: {
-        FbleProfileExitFuncInstr* exit_instr = (FbleProfileExitFuncInstr*)instr;
-        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread->stack, exit_instr->func);
-        if (func == NULL) {
-          FbleReportError("undefined function value apply\n", &exit_instr->loc);
-          return ABORTED;
-        };
+          case FBLE_PROFILE_FUNC_EXIT_OP: {
+            FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread->stack, profile_instr->data.func_exit.func);
+            if (func == NULL) {
+              FbleReportError("undefined function value apply\n", &profile_instr->data.func_exit.loc);
+              return ABORTED;
+            };
 
-        if (func->argc > 1 || func->tag == FBLE_PUT_FUNC_VALUE) {
-          FbleProfileExitBlock(arena, thread->profile);
-        } else {
-          FbleProfileAutoExitBlock(arena, thread->profile);
+            if (func->argc > 1 || func->tag == FBLE_PUT_FUNC_VALUE) {
+              FbleProfileExitBlock(arena, thread->profile);
+            } else {
+              FbleProfileAutoExitBlock(arena, thread->profile);
+            }
+            break;
+          }
         }
+
         break;
       }
-
     }
   }
   return FINISHED;
