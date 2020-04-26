@@ -323,13 +323,19 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
 {
   FbleArena* arena = heap->arena;
   while (thread->stack != NULL) {
+    assert(thread->stack->pc < thread->stack->code->instrs.size);
+    FbleInstr* instr = thread->stack->code->instrs.xs[thread->stack->pc++];
     if (rand() % TIME_SLICE == 0) {
-      FbleProfileSample(arena, thread->profile, 1);
+      // Don't count profiling instructions against the profile time. The user
+      // doesn't care about those.
+      if (instr->tag != FBLE_PROFILE_INSTR) {
+        FbleProfileSample(arena, thread->profile, 1);
+      }
+
+      thread->stack->pc--;
       return UNBLOCKED;
     }
 
-    assert(thread->stack->pc < thread->stack->code->instrs.size);
-    FbleInstr* instr = thread->stack->code->instrs.xs[thread->stack->pc++];
     switch (instr->tag) {
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;

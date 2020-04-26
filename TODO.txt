@@ -3,7 +3,7 @@
  - Switch to convention that caller is responsible for enter block.
  - Replace AutoExitBlock with ReplaceBlock.
  - Allow FbleProfile to be passed as NULL to eval, and have that disable
-   profiling.
+   profiling?
  - Move all references to ROOT_BLOCK_ID into profile.c.
 
 * [type] Inline fields and args data into FbleType objects?
