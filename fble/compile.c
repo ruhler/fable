@@ -793,10 +793,20 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             FbleTypeRelease(heap, args[i].type);
 
             Local* dest = NewLocal(arena, scope);
+
+            bool exit_apply = exit && (i+1 == argc);
+            if (exit_apply) {
+              FbleProfileExitFuncInstr* exit_instr = FbleAlloc(arena, FbleProfileExitFuncInstr);
+              exit_instr->_base.tag = FBLE_PROFILE_EXIT_FUNC_INSTR;
+              exit_instr->loc = misc_apply_expr->misc->loc;
+              exit_instr->func = misc.local->index;
+              AppendInstr(arena, scope, &exit_instr->_base);
+            }
+
             FbleFuncApplyInstr* apply_instr = FbleAlloc(arena, FbleFuncApplyInstr);
             apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
             apply_instr->loc = misc_apply_expr->misc->loc;
-            apply_instr->exit = exit && (i+1 == argc);
+            apply_instr->exit = exit_apply;
             apply_instr->func = misc.local->index;
             apply_instr->arg = args[i].local->index;
             apply_instr->dest = dest->index.index;

@@ -450,7 +450,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           if (func_apply_instr->exit) {
             *thread->stack->result = &value->_base._base;
             thread->stack = PopFrame(heap, thread->stack);
-            FbleProfileExitBlock(arena, thread->profile);
           } else {
             thread->stack->locals[func_apply_instr->dest] = &value->_base._base;
           }
@@ -473,7 +472,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           if (func_apply_instr->exit) {
             *thread->stack->result = &value->_base;
             thread->stack = PopFrame(heap, thread->stack);
-            FbleProfileExitBlock(arena, thread->profile);
           } else {
             thread->stack->locals[func_apply_instr->dest] = &value->_base;
           }
@@ -494,7 +492,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
           FbleValueRetain(heap, &basic->_base._base);
           if (func_apply_instr->exit) {
             thread->stack = ReplaceFrame(heap, &basic->_base._base, basic->scope, basic->code, thread->stack);
-            FbleProfileAutoExitBlock(arena, thread->profile);
           } else {
             FbleValue** result = thread->stack->locals + func_apply_instr->dest;
             thread->stack = PushFrame(arena, &basic->_base._base, basic->scope, basic->code, result, thread->stack);
@@ -761,6 +758,23 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
         FbleProfileAutoExitBlock(arena, thread->profile);
         break;
       }
+
+      case FBLE_PROFILE_EXIT_FUNC_INSTR: {
+        FbleProfileExitFuncInstr* exit_instr = (FbleProfileExitFuncInstr*)instr;
+        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread->stack, exit_instr->func);
+        if (func == NULL) {
+          FbleReportError("undefined function value apply\n", &exit_instr->loc);
+          return ABORTED;
+        };
+
+        if (func->argc > 1 || func->tag == FBLE_PUT_FUNC_VALUE) {
+          FbleProfileExitBlock(arena, thread->profile);
+        } else {
+          FbleProfileAutoExitBlock(arena, thread->profile);
+        }
+        break;
+      }
+
     }
   }
   return FINISHED;
@@ -938,20 +952,14 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, Fble
   assert(args.size > 0);
   assert(func->tag == FBLE_FUNC_VALUE);
 
-  FbleProfileEnterBlockInstr enter = {
-    ._base = { .tag = FBLE_PROFILE_ENTER_BLOCK_INSTR },
-    .block = FBLE_ROOT_BLOCK_ID,
-  };
-
-  FbleInstr* instrs[1 + args.size];
-  instrs[0] = &enter._base;
+  FbleInstr* instrs[args.size];
 
   FbleValue* xs[1 + args.size];
   xs[0] = func;
 
   FbleFuncApplyInstr applies[args.size];
   for (size_t i = 0; i < args.size; ++i) {
-    instrs[i+1] = &applies[i]._base;
+    instrs[i] = &applies[i]._base;
     xs[i+1] = args.xs[i];
 
     applies[i]._base.tag = FBLE_FUNC_APPLY_INSTR;
@@ -977,7 +985,7 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, Fble
     .refcount = 2,
     .statics = 1 + args.size,
     .locals = args.size,
-    .instrs = { .size = 1 + args.size, .xs = instrs }
+    .instrs = { .size = args.size, .xs = instrs }
   };
   FbleIO io = { .io = &FbleNoIO, .ports = { .size = 0, .xs = NULL} };
   FbleValue* result = Eval(heap, &io, xs, &code, profile);

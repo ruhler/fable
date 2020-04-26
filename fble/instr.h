@@ -64,6 +64,7 @@ typedef enum {
   FBLE_PROFILE_ENTER_BLOCK_INSTR,
   FBLE_PROFILE_EXIT_BLOCK_INSTR,
   FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR,
+  FBLE_PROFILE_EXIT_FUNC_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -314,6 +315,8 @@ typedef struct {
 } FbleTypeInstr;
 
 // FbleProfileEnterBlockInstr -- FBLE_PROFILE_ENTER_BLOCK_INSTR
+//
+// Enters a new profiling block.
 // 
 // Fields:
 //   block - the block to enter.
@@ -323,14 +326,28 @@ typedef struct {
 } FbleProfileEnterBlockInstr;
 
 // FbleProfileExitBlockInstr -- FBLE_PROFILE_EXIT_BLOCK_INSTR
+//
+// Exits the current profiling block.
 typedef struct {
   FbleInstr _base;
 } FbleProfileExitBlockInstr;
 
 // FbleProfileAutoExitBlockInstr -- FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR
+//
+// Auto-exits the current profiling block.
 typedef struct {
   FbleInstr _base;
 } FbleProfileAutoExitBlockInstr;
+
+// FbleProfileExitFuncInstr -- FBLE_PROFILE_EXIT_FUNC_INSTR
+//
+// Exits or auto-exits the current profiling block as appropriate based on the
+// value of a function about to be applied tail-recursively.
+typedef struct {
+  FbleInstr _base;
+  FbleLoc loc;
+  FbleFrameIndex func;
+} FbleProfileExitFuncInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.

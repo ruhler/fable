@@ -252,6 +252,11 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           fprintf(fout, "auto exit block;\n");
           break;
         }
+
+        case FBLE_PROFILE_EXIT_FUNC_INSTR: {
+          fprintf(fout, "exit func;\n");
+          break;
+        }
       }
     }
     fprintf(fout, "\n\n");
@@ -285,10 +290,10 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_TYPE_INSTR:
     case FBLE_PROFILE_ENTER_BLOCK_INSTR:
     case FBLE_PROFILE_EXIT_BLOCK_INSTR:
-    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR: {
+    case FBLE_PROFILE_AUTO_EXIT_BLOCK_INSTR:
+    case FBLE_PROFILE_EXIT_FUNC_INSTR:
       FbleFree(arena, instr);
       return;
-    }
 
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
