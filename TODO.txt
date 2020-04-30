@@ -1,10 +1,14 @@
 
 * [eval] Use native stack
 
+* [profile] Remove special block 0
+ - Add block data at the profile level representing 'total' and special case
+   that way instead. So that literally it is impossible for anyone to call
+   into the root block except via new profile thread.
+
 * [profile] Separate from main eval
  - Switch to convention that caller is responsible for enter block.
  - Replace AutoExitBlock with ReplaceBlock.
- - Move all references to ROOT_BLOCK_ID into profile.c.
 
 * [type] Inline fields and args data into FbleType objects?
 * [gc] Implement generational gc?
@@ -69,10 +73,6 @@
 * [compile] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced
    abstract type?
-
-* [profile] I suspect there are still bugs around block id 0
- - test that calling into block 0 does the right thing. Though I'm not sure it
-   makes much sense.
 
 * [eval] Make child thread execution fair.
   Children should be time multiplexed, where priority is assigned based on how

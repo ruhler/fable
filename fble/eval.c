@@ -94,8 +94,8 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleValue* scope, FbleValue** statics, FbleInstrBlock* code, Stack* stack);
 
 static void AbortThread(FbleValueHeap* heap, Thread* thread);
-static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread, bool* io_activity);
-static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread);
+static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* io_activity);
+static Status RunThreads(FbleValueHeap* heap, FbleIO* io, Thread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, FbleInstrBlock* code, FbleProfile* profile);
 
 // FrameGet --
@@ -307,7 +307,6 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 // Inputs:
 //   heap - the value heap.
 //   io - io to use for external ports.
-//   profile - the profile to save execution stats to.
 //   thread - the thread to run.
 //   io_activity - set to true if the thread does any i/o activity that could
 //                 unblock another thread.
@@ -319,7 +318,7 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 //   The thread is executed, updating its stack.
 //   io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread, bool* io_activity)
+static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
   while (thread->stack != NULL) {
@@ -682,7 +681,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
 
           Thread* child = FbleAlloc(arena, Thread);
           child->stack = PushFrame(arena, &arg->_base, arg->scope, arg->code, result, NULL);
-          child->profile = FbleNewProfileThread(arena, thread->profile, profile);
+          child->profile = FbleForkProfileThread(arena, thread->profile);
           child->children.size = 0;
           child->children.xs = NULL;
           child->next_child = 0;
@@ -795,7 +794,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
 // Inputs:
 //   heap - the value heap.
 //   io - io to use for external ports.
-//   profile - profile to save execution stats to.
 //   thread - the thread to run.
 //
 // Results:
@@ -804,7 +802,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, T
 // Side effects:
 //   The thread and its children are executed and updated.
 //   Updates the profile based on the execution.
-static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, Thread* thread)
+static Status RunThreads(FbleValueHeap* heap, FbleIO* io, Thread* thread)
 {
   FbleArena* arena = heap->arena;
 
@@ -821,7 +819,7 @@ static Status RunThreads(FbleValueHeap* heap, FbleIO* io, FbleProfile* profile, 
     } else {
       // Run the leaf thread, then go back up to the parent for the rest of
       // the threads to process.
-      Status status = RunThread(heap, io, profile, thread, &unblocked);
+      Status status = RunThread(heap, io, thread, &unblocked);
       switch (status) {
         case FINISHED: {
           unblocked = true;
@@ -892,14 +890,14 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, Fbl
   FbleValue* final_result = NULL;
   Thread thread = {
     .stack = PushFrame(arena, NULL, statics, code, &final_result, NULL),
-    .profile = FbleNewProfileThread(arena, NULL, profile),
+    .profile = FbleNewProfileThread(arena, profile),
     .children = {0, NULL},
     .next_child = 0,
     .parent = NULL,
   };
 
   while (true) {
-    Status status = RunThreads(heap, io, profile, &thread);
+    Status status = RunThreads(heap, io, &thread);
     switch (status) {
       case FINISHED: {
         assert(final_result != NULL);

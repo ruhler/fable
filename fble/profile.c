@@ -490,66 +490,71 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 }
 
 // FbleNewProfileThread -- see documentation in fble-profile.h
-FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfileThread* parent, FbleProfile* profile)
+FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
 {
   FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
   thread->profile = profile;
   thread->auto_exit = false;
 
-  if (parent == NULL) {
-    thread->table.capacity = 10;
-    thread->table.size = 0;
-    thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
-    memset(thread->table.xs, 0, thread->table.capacity * sizeof(Entry));
+  thread->table.capacity = 10;
+  thread->table.size = 0;
+  thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
+  memset(thread->table.xs, 0, thread->table.capacity * sizeof(Entry));
 
-    thread->calls = FbleAllocExtra(arena, CallStack, 8 * sizeof(CallStack));
-    thread->calls->tail = NULL;
-    thread->calls->next = NULL;
-    thread->calls->top = thread->calls->data;
-    thread->calls->end = thread->calls->data + 8;
-    thread->calls->top->id = FBLE_ROOT_BLOCK_ID;
-    thread->calls->top->exit = 0;
+  thread->calls = FbleAllocExtra(arena, CallStack, 8 * sizeof(CallStack));
+  thread->calls->tail = NULL;
+  thread->calls->next = NULL;
+  thread->calls->top = thread->calls->data;
+  thread->calls->end = thread->calls->data + 8;
+  thread->calls->top->id = FBLE_ROOT_BLOCK_ID;
+  thread->calls->top->exit = 0;
 
-    thread->sample.capacity = 8;
-    thread->sample.size = 0;
-    thread->sample.xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
+  thread->sample.capacity = 8;
+  thread->sample.size = 0;
+  thread->sample.xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
 
-    thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
-  } else {
-    assert(parent->profile == profile);
+  thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
+  return thread;
+}
+
+// FbleForkProfileThread -- see documentation in fble-profile.h
+FbleProfileThread* FbleForkProfileThread(FbleArena* arena, FbleProfileThread* parent)
+{
+  FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
+  thread->profile = parent->profile;
+  thread->auto_exit = false;
 
-    thread->table.capacity = parent->table.capacity;
-    thread->table.size = parent->table.size;
-    thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
-    memcpy(thread->table.xs, parent->table.xs, thread->table.capacity * sizeof(Entry));
+  thread->table.capacity = parent->table.capacity;
+  thread->table.size = parent->table.size;
+  thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
+  memcpy(thread->table.xs, parent->table.xs, thread->table.capacity * sizeof(Entry));
 
-    // Copy the call stack.
-    {
-      CallStack* next = NULL;
-      for (CallStack* p = parent->calls; p != NULL; p = p->tail) {
-        size_t chunk_size = p->end - p->data;
-        CallStack* c = FbleAllocExtra(arena, CallStack, chunk_size * sizeof(Call));
-        if (next == NULL) {
-          thread->calls = c;
-        } else {
-          next->tail = c;
-        }
-
-        c->tail = NULL;
-        c->next = next;
-        c->top = c->data + (p->top - p->data);
-        c->end = c->data + chunk_size;
-        memcpy(c->data, p->data, chunk_size * sizeof(Call));
-        next = c;
+  // Copy the call stack.
+  {
+    CallStack* next = NULL;
+    for (CallStack* p = parent->calls; p != NULL; p = p->tail) {
+      size_t chunk_size = p->end - p->data;
+      CallStack* c = FbleAllocExtra(arena, CallStack, chunk_size * sizeof(Call));
+      if (next == NULL) {
+        thread->calls = c;
+      } else {
+        next->tail = c;
       }
-    }
 
-    // Copy the sample stack.
-    thread->sample.capacity = parent->sample.capacity;
-    thread->sample.size = parent->sample.size;
-    thread->sample.xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
-    memcpy(thread->sample.xs, parent->sample.xs, parent->sample.size * sizeof(Sample));
+      c->tail = NULL;
+      c->next = next;
+      c->top = c->data + (p->top - p->data);
+      c->end = c->data + chunk_size;
+      memcpy(c->data, p->data, chunk_size * sizeof(Call));
+      next = c;
+    }
   }
+
+  // Copy the sample stack.
+  thread->sample.capacity = parent->sample.capacity;
+  thread->sample.size = parent->sample.size;
+  thread->sample.xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
+  memcpy(thread->sample.xs, parent->sample.xs, parent->sample.size * sizeof(Sample));
   return thread;
 }
 

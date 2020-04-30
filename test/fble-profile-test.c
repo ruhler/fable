@@ -69,7 +69,7 @@ static size_t AutoExitMaxMem(size_t n)
   FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
   FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
 
-  FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
+  FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
   FbleProfileEnterBlock(arena, thread, 1);
   FbleProfileSample(arena, thread, 10);
 
@@ -133,7 +133,7 @@ int main(int argc, char* argv[])
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_4")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
     FbleProfileAddBlock(arena, profile, Name(arena, "_5")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_6")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
@@ -301,7 +301,7 @@ int main(int argc, char* argv[])
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
@@ -367,7 +367,7 @@ int main(int argc, char* argv[])
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileAutoExitBlock(arena, thread);  // 1
@@ -434,7 +434,7 @@ int main(int argc, char* argv[])
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_4")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, thread, 1);
     FbleProfileSample(arena, thread, 10);
     FbleProfileEnterBlock(arena, thread, 2);
@@ -518,8 +518,8 @@ int main(int argc, char* argv[])
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
 
-    FbleProfileThread* a = FbleNewProfileThread(arena, NULL, profile);
-    FbleProfileThread* b = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileThread* a = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* b = FbleNewProfileThread(arena, profile);
 
     FbleProfileEnterBlock(arena, a, 1);
     FbleProfileSample(arena, a, 1);
@@ -578,11 +578,11 @@ int main(int argc, char* argv[])
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
 
-    FbleProfileThread* parent = FbleNewProfileThread(arena, NULL, profile);
+    FbleProfileThread* parent = FbleNewProfileThread(arena, profile);
     FbleProfileEnterBlock(arena, parent, 1);
     FbleProfileSample(arena, parent, 1);
 
-    FbleProfileThread* child = FbleNewProfileThread(arena, parent, profile);
+    FbleProfileThread* child = FbleForkProfileThread(arena, parent);
 
     FbleProfileEnterBlock(arena, parent, 2);
     FbleProfileSample(arena, parent, 2);
