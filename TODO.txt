@@ -1,25 +1,19 @@
 
+* [eval] Use native stack
+
 * [profile] Separate from main eval
  - Switch to convention that caller is responsible for enter block.
  - Replace AutoExitBlock with ReplaceBlock.
- - Allow FbleProfile to be passed as NULL to eval, and have that disable
-   profiling?
  - Move all references to ROOT_BLOCK_ID into profile.c.
 
 * [type] Inline fields and args data into FbleType objects?
 * [gc] Implement generational gc?
 
-* [eval] gprof profiling based improvements.
-  - Little things that are cleanup are worth doing.
-  - Things the compiler could easily fix itself are not worth doing if they
-    are not clean.
-
 * [test] Check if 6.4-proc-exec/eval/propagate-abort-blocking test fails when
   unused 'true' variable definition is removed.
 
 * [eval] Thread management cleanup
- - Switch i/o ports to use links.
- - Track suspended threads on links.
+ - Switch i/o ports to use links?
  - Use fair thread traversal by starting over from root when yield occurs.
 
 * [invaders] Implement space invaders game.
