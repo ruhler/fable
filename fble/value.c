@@ -9,29 +9,6 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static FbleGetInstr g_get_instr = {
-  ._base = { .tag = FBLE_GET_INSTR },
-  .port = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0},
-  .dest = 0,
-};
-
-static FbleReturnInstr g_return_instr = {
-  ._base = { .tag = FBLE_RETURN_INSTR },
-  .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0}
-};
-
-static FbleInstr* g_get_block_instrs[] = {
-  &g_get_instr._base,
-  &g_return_instr._base,
-};
-
-static FbleInstrBlock g_get_block = {
-  .refcount = 1,
-  .statics = 1,  // port
-  .locals = 1,   // result
-  .instrs = { .size = 2, .xs = g_get_block_instrs }
-};
-
 static void OnFree(FbleValueHeap* heap, FbleValue* value);
 static void Ref(FbleHeapCallback* callback, FbleValue* value);
 static void Refs(FbleHeapCallback* callback, FbleValue* value);
@@ -99,7 +76,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
         }
 
         case FBLE_THUNK_FUNC_VALUE: return;
-        case FBLE_PUT_FUNC_VALUE: return;
       }
       UNREACHABLE("should never get here");
       return;
@@ -184,12 +160,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
           FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)fv;
           Ref(callback, &thunk->func->_base);
           Ref(callback, thunk->arg);
-          break;
-        }
-
-        case FBLE_PUT_FUNC_VALUE: {
-          FblePutFuncValue* put = (FblePutFuncValue*)fv;
-          Ref(callback, put->port);
           break;
         }
       }
@@ -289,6 +259,29 @@ bool FbleIsProcValue(FbleValue* value)
 // FbleNewGetValue -- see documentation in value.h
 FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 {
+  static FbleGetInstr iget = {
+    ._base = { .tag = FBLE_GET_INSTR },
+    .port = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0},
+    .dest = 0,
+  };
+
+  static FbleReturnInstr irtn = {
+    ._base = { .tag = FBLE_RETURN_INSTR },
+    .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0}
+  };
+
+  static FbleInstr* instrs[] = {
+    &iget._base,
+    &irtn._base,
+  };
+
+  static FbleInstrBlock code = {
+    .refcount = 1,
+    .statics = 1,  // port
+    .locals = 1,   // result
+    .instrs = { .size = 2, .xs = instrs }
+  };
+
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
   FbleProcValue* get = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*));
@@ -296,7 +289,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
   get->scopec = 1;
   get->scope[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
-  get->code = &g_get_block;
+  get->code = &code;
   get->code->refcount++;
   return &get->_base;
 }
@@ -316,12 +309,69 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, size_t id)
 // FbleNewPutValue -- see documentation in value.h
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 {
-  FblePutFuncValue* put = FbleNewValue(heap, FblePutFuncValue);
+  static FblePutInstr iput = {
+    ._base = { .tag = FBLE_PUT_INSTR },
+    .port = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0},
+    .arg = { .section = FBLE_STATICS_FRAME_SECTION, .index = 1},
+    .dest = 0,
+  };
+
+  static FbleReturnInstr irtn0 = {
+    ._base = { .tag = FBLE_RETURN_INSTR },
+    .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0}
+  };
+
+  static FbleInstr* proc_instrs[] = {
+    &iput._base,
+    &irtn0._base,
+  };
+
+  static FbleInstrBlock proc_code = {
+    .refcount = 1,
+    .statics = 2,  // port, arg
+    .locals = 1,   // result
+    .instrs = { .size = 2, .xs = proc_instrs }
+  };
+
+  static FbleFrameIndex proc_scope[] = {
+    { .section = FBLE_STATICS_FRAME_SECTION, .index = 0 },  // port
+    { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0 },   // arg
+  };
+
+  static FbleProcValueInstr iproc = {
+    ._base = { .tag = FBLE_PROC_VALUE_INSTR },
+    .code = &proc_code,
+    .scope = { .size = 2, .xs = proc_scope },
+    .dest = 1,
+  };
+  iproc.code->refcount++;
+
+  static FbleReturnInstr irtn1 = {
+    ._base = { .tag = FBLE_RETURN_INSTR },
+    .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 1}
+  };
+
+  static FbleInstr* func_instrs[] = {
+    &iproc._base,
+    &irtn1._base,
+  };
+
+  static FbleInstrBlock func_code = {
+    .refcount = 1,
+    .statics = 1,  // port
+    .locals = 2,   // arg, result
+    .instrs = { .size = 2, .xs = func_instrs }
+  };
+  func_code.refcount++;
+
+  FbleBasicFuncValue* put = FbleNewValueExtra(heap, FbleBasicFuncValue, sizeof(FbleValue*));
   put->_base._base.tag = FBLE_FUNC_VALUE;
-  put->_base.tag = FBLE_PUT_FUNC_VALUE;
+  put->_base.tag = FBLE_BASIC_FUNC_VALUE;
   put->_base.argc = 1;
-  put->port = link;
-  FbleValueAddRef(heap, &put->_base._base, put->port);
+  put->code = &func_code;
+  put->scopec = 1;
+  put->scope[0] = link;
+  FbleValueAddRef(heap, &put->_base._base, link);
   return &put->_base._base;
 }
 

@@ -170,7 +170,13 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
         }
 
         case FBLE_PUT_INSTR: {
-          fprintf(fout, "return put(s[0], s[1]);\n");
+          FblePutInstr* put_instr = (FblePutInstr*)instr;
+          fprintf(fout, "l%zi := put(%s%zi, %s%zi);\n",
+              put_instr->dest,
+              sections[put_instr->port.section],
+              put_instr->port.index,
+              sections[put_instr->arg.section],
+              put_instr->arg.index);
           break;
         }
 

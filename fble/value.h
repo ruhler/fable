@@ -50,7 +50,6 @@ typedef struct {
 typedef enum {
   FBLE_BASIC_FUNC_VALUE,
   FBLE_THUNK_FUNC_VALUE,
-  FBLE_PUT_FUNC_VALUE,
 } FbleFuncValueTag;
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
@@ -93,14 +92,6 @@ typedef struct {
   FbleFuncValue* func;
   FbleValue* arg;
 } FbleThunkFuncValue;
-
-// FblePutFuncValue -- FBLE_PUT_FUNC_VALUE
-//   A process put function. Given an argument, it returns a process to put
-//   that argument onto the associated put port.
-typedef struct {
-  FbleFuncValue _base;
-  FbleValue* port;
-} FblePutFuncValue;
 
 // FbleProcValue -- FBLE_PROC_VALUE
 typedef struct {

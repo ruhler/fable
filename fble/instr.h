@@ -218,13 +218,14 @@ typedef struct {
 } FbleGetInstr;
 
 // FblePutInstr -- FBLE_PUT_INSTR
-//   Put a value to a port. The port and arg are assumed to be supplied as
-//   static values 0 and 1 respectively.
+//   Put a value to a port.
 //
-// put(port, arg);
-// return unit;
+// *dest = put(port, arg);
 typedef struct {
   FbleInstr _base;
+  FbleFrameIndex port;
+  FbleFrameIndex arg;
+  FbleLocalIndex dest;
 } FblePutInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR

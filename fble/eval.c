@@ -77,15 +77,6 @@ typedef enum {
   UNBLOCKED,      // The thread is not blocked on I/O.
 } Status;
 
-static FbleInstr g_put_instr = { .tag = FBLE_PUT_INSTR };
-static FbleInstr* g_put_block_instrs[] = { &g_put_instr };
-static FbleInstrBlock g_put_block = {
-  .refcount = 1,
-  .statics = 2,  // port, arg
-  .locals = 0,
-  .instrs = { .size = 1, .xs = g_put_block_instrs }
-};
-
 static FbleValue* FrameGet(Stack* stack, FbleFrameIndex index);
 static FbleValue* FrameTaggedGet(FbleValueTag tag, Stack* stack, FbleFrameIndex index);
 
@@ -458,28 +449,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
           } else {
             thread->stack->locals[func_apply_instr->dest] = &value->_base._base;
           }
-        } else if (func->tag == FBLE_PUT_FUNC_VALUE) {
-          FblePutFuncValue* f = (FblePutFuncValue*)func;
-
-          FbleProcValue* value = FbleNewValueExtra(heap, FbleProcValue, 2 * sizeof(FbleValue*));
-          value->_base.tag = FBLE_PROC_VALUE;
-          value->scopec = 2;
-
-          value->scope[0] = f->port;
-          FbleValueAddRef(heap, &value->_base, f->port);
-
-          value->scope[1] = arg;
-          FbleValueAddRef(heap, &value->_base, arg);
-
-          value->code = &g_put_block;
-          value->code->refcount++;
-
-          if (func_apply_instr->exit) {
-            *thread->stack->result = &value->_base;
-            thread->stack = PopFrame(heap, thread->stack);
-          } else {
-            thread->stack->locals[func_apply_instr->dest] = &value->_base;
-          }
         } else {
           FbleValueRetain(heap, &func->_base);
           FbleValueRetain(heap, arg);
@@ -585,8 +554,9 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
       }
 
       case FBLE_PUT_INSTR: {
-        FbleValue* put_port = thread->stack->statics[0];
-        FbleValue* arg = thread->stack->statics[1];
+        FblePutInstr* put_instr = (FblePutInstr*)instr;
+        FbleValue* put_port = FrameGet(thread->stack, put_instr->port);
+        FbleValue* arg = FrameGet(thread->stack, put_instr->arg);
 
         FbleValueV args = { .size = 0, .xs = NULL, };
         FbleValue* unit = FbleNewStructValue(heap, args);
@@ -608,9 +578,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
           }
 
           FbleValueAddRef(heap, &link->_base, tail->value);
-
-          *thread->stack->result = unit;
-          thread->stack = PopFrame(heap, thread->stack);
+          thread->stack->locals[put_instr->dest] = unit;
           *io_activity = true;
           break;
         }
@@ -627,8 +595,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
           }
 
           io->ports.xs[port->id] = FbleValueRetain(heap, arg);
-          *thread->stack->result = unit;
-          thread->stack = PopFrame(heap, thread->stack);
+          thread->stack->locals[put_instr->dest] = unit;
           *io_activity = true;
           break;
         }
@@ -763,7 +730,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
               return ABORTED;
             };
 
-            if (func->argc > 1 || func->tag == FBLE_PUT_FUNC_VALUE) {
+            if (func->argc > 1) {
               FbleProfileExitBlock(arena, thread->profile);
             } else {
               FbleProfileAutoExitBlock(arena, thread->profile);
