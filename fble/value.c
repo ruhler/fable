@@ -272,8 +272,8 @@ bool FbleIsProcValue(FbleValue* value)
   return value->tag == FBLE_PROC_VALUE;
 }
 
-// FbleNewGetProcValue -- see documentation in value.h
-FbleValue* FbleNewGetProcValue(FbleValueHeap* heap, FbleValue* port)
+// FbleNewGetValue -- see documentation in value.h
+FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 {
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
@@ -294,9 +294,21 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, size_t id)
   get_port->_base.tag = FBLE_PORT_VALUE;
   get_port->id = id;
 
-  FbleValue* get = FbleNewGetProcValue(heap, &get_port->_base);
+  FbleValue* get = FbleNewGetValue(heap, &get_port->_base);
   FbleValueRelease(heap, &get_port->_base);
   return get;
+}
+
+// FbleNewPutValue -- see documentation in value.h
+FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
+{
+  FblePutFuncValue* put = FbleNewValue(heap, FblePutFuncValue);
+  put->_base._base.tag = FBLE_FUNC_VALUE;
+  put->_base.tag = FBLE_PUT_FUNC_VALUE;
+  put->_base.argc = 1;
+  put->port = link;
+  FbleValueAddRef(heap, &put->_base._base, put->port);
+  return &put->_base._base;
 }
 
 // FbleNewOutputPortValue -- see documentation in fble-value.h
@@ -305,13 +317,7 @@ FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, size_t id)
   FblePortValue* port_value = FbleNewValue(heap, FblePortValue);
   port_value->_base.tag = FBLE_PORT_VALUE;
   port_value->id = id;
-
-  FblePutFuncValue* put = FbleNewValue(heap, FblePutFuncValue);
-  put->_base._base.tag = FBLE_FUNC_VALUE;
-  put->_base.tag = FBLE_PUT_FUNC_VALUE;
-  put->_base.argc = 1;
-  put->port = &port_value->_base;
-  FbleValueAddRef(heap, &put->_base._base, put->port);
-  FbleValueRelease(heap, put->port);
-  return &put->_base._base;
+  FbleValue* put = FbleNewPutValue(heap, &port_value->_base);
+  FbleValueRelease(heap, &port_value->_base);
+  return put;
 }

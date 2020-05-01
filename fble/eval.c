@@ -641,24 +641,17 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
       case FBLE_LINK_INSTR: {
         FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
 
-        FbleLinkValue* port = FbleNewValue(heap, FbleLinkValue);
-        port->_base.tag = FBLE_LINK_VALUE;
-        port->head = NULL;
-        port->tail = NULL;
+        FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
+        link->_base.tag = FBLE_LINK_VALUE;
+        link->head = NULL;
+        link->tail = NULL;
 
-        FbleValue* get = FbleNewGetProcValue(heap, &port->_base);
-
-        FblePutFuncValue* put = FbleNewValue(heap, FblePutFuncValue);
-        put->_base._base.tag = FBLE_FUNC_VALUE;
-        put->_base.tag = FBLE_PUT_FUNC_VALUE;
-        put->_base.argc = 1;
-        put->port = &port->_base;
-        FbleValueAddRef(heap, &put->_base._base, put->port);
-
-        FbleValueRelease(heap, &port->_base);
+        FbleValue* get = FbleNewGetValue(heap, &link->_base);
+        FbleValue* put = FbleNewPutValue(heap, &link->_base);
+        FbleValueRelease(heap, &link->_base);
 
         thread->stack->locals[link_instr->get] = get;
-        thread->stack->locals[link_instr->put] = &put->_base._base;
+        thread->stack->locals[link_instr->put] = put;
         break;
       }
 

@@ -160,7 +160,7 @@ typedef struct FbleTypeValue {
   FbleValue _base;
 } FbleTypeValue;
 
-// FbleNewGetProcValue --
+// FbleNewGetValue --
 //   Create a new get proc value for the given link.
 //
 // Inputs:
@@ -174,6 +174,21 @@ typedef struct FbleTypeValue {
 //   The returned get value must be freed using FbleValueRelease when no
 //   longer in use. This function does not take ownership of the port value.
 //   argument.
-FbleValue* FbleNewGetProcValue(FbleValueHeap* heap, FbleValue* port);
+FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
+
+// FbleNewPutValue --
+//   Create a new put value for the given link.
+//
+// Inputs:
+//   heap - the heap to allocate the value on.
+//   link - the link to put to.
+//
+// Results:
+//   A newly allocated put value.
+//
+// Side effects:
+//   The returned put value must be freed using FbleValueRelease when no
+//   longer in use. This function does not take ownership of the link value.
+FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link);
 
 #endif // FBLE_INTERNAL_VALUE_H_
