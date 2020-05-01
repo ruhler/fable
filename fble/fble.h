@@ -78,27 +78,28 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, Fble
 //   An interface for reading or writing values over external ports.
 typedef struct FbleIO {
   // io --
-  //   Read or write values over the external ports. An FbleValue* is supplied
-  //   for each port. The behavior of the function depends on the port type and
-  //   whether the provided FbleValue* is NULL or non-NULL as follows:
+  //   Read or write values over the external ports. The caller will already
+  //   have provided FbleValue** for the ports. The behavior of the function
+  //   depends on the port type and whether the respective FbleValue* is NULL
+  //   or non-NULL as follows:
   //
-  //   Get Ports:
+  //   Input Ports:
   //     NULL: the io function may, at its option, read the next input
   //       value and replace NULL with the newly read value.
   //     non-NULL: the io function should do nothing for this port.
   //
-  //   Put Ports:
+  //   Output Ports:
   //     NULL: the io function should do nothing for this port.
   //     non-NULL: the io function may, at its option, output the value.
   //       If the io function chooses to output the value, it should
   //       FbleValueRelease the value and replace it with NULL. Otherwise the
   //       io function should leave the existing value as is.
   //
-  //   io may blocking or non-blocking depending on the 'block' input. For
-  //   non-blocking io, the io function should return immediately without
+  //   io may be blocking or non-blocking depending on the 'block' argument.
+  //   For non-blocking io, the io function should return immediately without
   //   blocking for inputs to be ready. For blocking io, the io function
-  //   should block until there is an input available on one of the NULL get
-  //   ports.
+  //   should block until there is an input available for one of the NULL
+  //   input ports.
   //
   //   The function should return true if any of the ports have been read or
   //   written, false otherwise.
@@ -115,12 +116,7 @@ typedef struct FbleIO {
   // Side effects:
   //   Reads or writes values to external ports depending on the provided
   //   arguments and may block.
-  //   
   bool (*io)(struct FbleIO* io, FbleValueHeap* heap, bool block);
-
-  // Vector of port values to read from and write to. The caller must
-  // initialize and clear this vector.
-  FbleValueV ports;
 } FbleIO;
 
 // FbleNoIO --

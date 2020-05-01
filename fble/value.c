@@ -295,11 +295,11 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 }
 
 // FbleNewInputPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, size_t id)
+FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data)
 {
   FblePortValue* get_port = FbleNewValue(heap, FblePortValue);
   get_port->_base.tag = FBLE_PORT_VALUE;
-  get_port->id = id;
+  get_port->data = data;
 
   FbleValue* get = FbleNewGetValue(heap, &get_port->_base);
   FbleValueRelease(heap, &get_port->_base);
@@ -376,11 +376,11 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 }
 
 // FbleNewOutputPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, size_t id)
+FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data)
 {
   FblePortValue* port_value = FbleNewValue(heap, FblePortValue);
   port_value->_base.tag = FBLE_PORT_VALUE;
-  port_value->id = id;
+  port_value->data = data;
   FbleValue* put = FbleNewPutValue(heap, &port_value->_base);
   FbleValueRelease(heap, &port_value->_base);
   return put;

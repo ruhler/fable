@@ -21,6 +21,13 @@
 
 #include "fble.h"
 
+typedef struct {
+  FbleIO io;
+
+  FbleValue* input;
+  FbleValue* output;
+} Stdio;
+
 static void PrintUsage(FILE* stream);
 static char ReadChar(FbleValue* c);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
@@ -106,14 +113,15 @@ static FbleValue* WriteChar(FbleValueHeap* heap, char c)
 //   See the corresponding documentation in fble.h.
 //
 // Ports:
-//  0: Maybe@<Str@>-  Read a line from stdin. Nothing on end of file.
-//  1: Str@+          Output a line to stdout.
+//  input: Maybe@<Str@>-  Read a line from stdin. Nothing on end of file.
+//  output: Str@+          Output a line to stdout.
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
+  Stdio* stdio = (Stdio*)io;
   bool change = false;
-  if (io->ports.xs[1] != NULL) {
+  if (stdio->output != NULL) {
     // Output a string to stdout.
-    FbleValue* charS = io->ports.xs[1];
+    FbleValue* charS = stdio->output;
     while (FbleUnionValueTag(charS) == 0) {
       FbleValue* charP = FbleUnionValueAccess(charS);
       FbleValue* charV = FbleStructValueAccess(charP, 0);
@@ -124,12 +132,12 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     }
     fflush(stdout);
 
-    FbleValueRelease(heap, io->ports.xs[1]);
-    io->ports.xs[1] = NULL;
+    FbleValueRelease(heap, stdio->output);
+    stdio->output = NULL;
     change = true;
   }
 
-  if (block && io->ports.xs[0] == NULL) {
+  if (block && stdio->input == NULL) {
     // Read a line from stdin.
     char* line = NULL;
     size_t len = 0;
@@ -137,7 +145,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     FbleValueV emptyArgs = { .size = 0, .xs = NULL };
     FbleValue* unit = FbleNewStructValue(heap, emptyArgs);
     if (read < 0) {
-      io->ports.xs[0] = FbleNewUnionValue(heap, 1, unit);
+      stdio->input = FbleNewUnionValue(heap, 1, unit);
     } else {
       FbleValue* charS = FbleNewUnionValue(heap, 1, unit);
       for (size_t i = 0; i < read; ++i) {
@@ -147,7 +155,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
         FbleValue* charP = FbleNewStructValue(heap, args);
         charS = FbleNewUnionValue(heap, 0, charP);
       }
-      io->ports.xs[0] = FbleNewUnionValue(heap, 0, charS);
+      stdio->input = FbleNewUnionValue(heap, 0, charS);
     }
     free(line);
     change = true;
@@ -216,9 +224,15 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  Stdio io = {
+    .io = { .io = &IO, },
+    .input = NULL,
+    .output = NULL,
+  };
+
   FbleValue* args[2];
-  args[0] = FbleNewInputPortValue(heap, 0);
-  args[1] = FbleNewOutputPortValue(heap, 1);
+  args[0] = FbleNewInputPortValue(heap, &io.input);
+  args[1] = FbleNewOutputPortValue(heap, &io.output);
   FbleValueV argsv = { .xs = args, .size = 2 };
   FbleValue* proc = FbleApply(heap, func, argsv, profile);
   FbleValueRelease(heap, func);
@@ -233,14 +247,11 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValue* ports[2] = {NULL, NULL};
-  FbleIO io = { .io = &IO, .ports = { .size = 2, .xs = ports} };
-
-  FbleValue* value = FbleExec(heap, &io, proc, profile);
+  FbleValue* value = FbleExec(heap, &io.io, proc, profile);
 
   FbleValueRelease(heap, proc);
-  FbleValueRelease(heap, ports[0]);
-  FbleValueRelease(heap, ports[1]);
+  FbleValueRelease(heap, io.input);
+  FbleValueRelease(heap, io.output);
 
   size_t result = FbleUnionValueTag(value);
 

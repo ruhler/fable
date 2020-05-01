@@ -234,7 +234,7 @@ bool FbleIsProcValue(FbleValue* value);
 //
 // Inputs:
 //   heap - the heap to allocate the value on.
-//   id - the id of the port for use with FbleIO.
+//   data - a pointer to where the input data will be communicated.
 //
 // Results:
 //   A newly allocated port value.
@@ -242,14 +242,14 @@ bool FbleIsProcValue(FbleValue* value);
 // Side effects:
 //   The returned port value must be freed using FbleValueRelease when no
 //   longer in use.
-FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, size_t id);
+FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data);
 
 // FbleNewOutputPortValue --
 //   Create a new output port value with given id.
 //
 // Inputs:
 //   heap - the heap to allocate the value on.
-//   id - the id of the port for use with FbleIO.
+//   data - a pointer to where the output data will be communicated.
 //
 // Results:
 //   A newly allocated port value.
@@ -257,6 +257,6 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, size_t id);
 // Side effects:
 //   The returned port value must be freed using FbleValueRelease when no
 //   longer in use.
-FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, size_t id);
+FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data);
 
 #endif // FBLE_VALUE_H_

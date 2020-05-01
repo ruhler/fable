@@ -14,6 +14,8 @@
 typedef struct {
   FbleIO io;
   FILE* fin;
+
+  FbleValue* input;
 } Md5IO;
 
 static void PrintUsage(FILE* stream);
@@ -76,19 +78,19 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 //   See the corresponding documentation in fble.h.
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
-  if (block && io->ports.xs[0] == NULL) {
+  Md5IO* mio = (Md5IO*)io;
+  if (block && mio->input == NULL) {
     // Read the next byte from the file.
-    Md5IO* mio = (Md5IO*)io;
     int c = fgetc(mio->fin);
     if (c == EOF) {
       // Maybe<Bit8>:nothing(Unit())
       FbleValueV args = { .size = 0, .xs = NULL };
       FbleValue* unit = FbleNewStructValue(heap, args);
-      io->ports.xs[0] = FbleNewUnionValue(heap, 1, unit);
+      mio->input = FbleNewUnionValue(heap, 1, unit);
     } else {
       // Maybe<Bit8>:just(c)
       FbleValue* byte = MkBitN(heap, 8, c);
-      io->ports.xs[0] = FbleNewUnionValue(heap, 0, byte);
+      mio->input = FbleNewUnionValue(heap, 0, byte);
     }
     return true;
   }
@@ -156,7 +158,19 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValue* input = FbleNewInputPortValue(heap, 0);
+  FILE* fin = fopen(file, "rb");
+  if (fin == NULL) {
+    fprintf(stderr, "unable to open %s\n", file);
+    return 1;
+  }
+
+  Md5IO mio = {
+    .io = { .io = &IO, },
+    .fin = fin,
+    .input = NULL,
+  };
+
+  FbleValue* input = FbleNewInputPortValue(heap, &mio.input);
   FbleValueV args = {
     .xs = &input,
     .size = 1,
@@ -173,22 +187,10 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FILE* fin = fopen(file, "rb");
-  if (fin == NULL) {
-    fprintf(stderr, "unable to open %s\n", file);
-    return 1;
-  }
-
-  FbleValue* ports[1] = {NULL};
-  Md5IO mio = {
-    .io = { .io = &IO, .ports = { .size = 1, .xs = ports} },
-    .fin = fin
-  };
-
   FbleValue* value = FbleExec(heap, &mio.io, proc, profile);
 
   FbleValueRelease(heap, proc);
-  assert(ports[0] == NULL);
+  assert(mio.input == NULL);
 
   // Print the md5 hash
   char* hex = "0123456789abcdef";

@@ -122,9 +122,12 @@ typedef struct {
 //   FBLE_PORT_VALUE
 //
 // Use for input and output values linked to external IO.
+//
+// data is a pointer to a value owned externally where data should be put to
+// and got from.
 typedef struct {
   FbleValue _base;
-  size_t id;
+  FbleValue** data;
 } FblePortValue;
 
 // FbleRefValue --

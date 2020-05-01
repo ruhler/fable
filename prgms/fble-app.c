@@ -16,11 +16,17 @@
 //   window - The window to draw to.
 //   colors - A preinitialized array of colors.
 //   time - The current simulation time in units of SDL_GetTicks.
+//
+//   event - The event input port.
+//   effect - The effect output port.
 typedef struct {
   FbleIO _base;
   SDL_Window* window;
   Uint32* colors;
   Uint32 time;
+
+  FbleValue* event;
+  FbleValue* effect;
 } AppIO;
 
 static void PrintUsage(FILE* stream);
@@ -326,8 +332,8 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 
   bool change = false;
 
-  if (io->ports.xs[1] != NULL) {
-    FbleValue* effect = io->ports.xs[1];
+  if (app->effect != NULL) {
+    FbleValue* effect = app->effect;
     switch (FbleUnionValueTag(effect)) {
       case 0: {
         int tick = ReadInt(FbleUnionValueAccess(effect));
@@ -367,20 +373,20 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       }
     }
 
-    FbleValueRelease(heap, io->ports.xs[1]);
-    io->ports.xs[1] = NULL;
+    FbleValueRelease(heap, app->effect);
+    app->effect = NULL;
     change = true;
   }
 
   if (block) {
-    while (io->ports.xs[0] == NULL) {
+    while (app->event == NULL) {
       SDL_Event event;
       SDL_WaitEvent(&event);
       switch (event.type) {
         case SDL_KEYDOWN: {
           FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
           if (key != NULL) {
-            io->ports.xs[0] = FbleNewUnionValue(heap, 1, key);
+            app->event = FbleNewUnionValue(heap, 1, key);
             change = true;
           }
           break;
@@ -389,7 +395,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
         case SDL_KEYUP: {
           FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
           if (key != NULL) {
-            io->ports.xs[0] = FbleNewUnionValue(heap, 2, key);
+            app->event = FbleNewUnionValue(heap, 2, key);
             change = true;
           }
           break;
@@ -397,7 +403,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 
         case SDL_USEREVENT: {
           FbleValueV args = { .size = 0, .xs = NULL };
-          io->ports.xs[0] = FbleNewUnionValue(heap, 0, FbleNewStructValue(heap, args));
+          app->event = FbleNewUnionValue(heap, 0, FbleNewStructValue(heap, args));
           change = true;
           break;
         }
@@ -516,11 +522,21 @@ int main(int argc, char* argv[])
   int height = 0;
   SDL_GetWindowSize(window, &width, &height);
 
+  AppIO io = {
+    ._base = { .io = &IO, },
+    .window = window,
+    .colors = colors,
+    .time = SDL_GetTicks(),
+
+    .event = NULL,
+    .effect = NULL,
+  };
+
   FbleValue* args[4];
   args[0] = MakeInt(heap, width);
   args[1] = MakeInt(heap, height);
-  args[2] = FbleNewInputPortValue(heap, 0);
-  args[3] = FbleNewOutputPortValue(heap, 1);
+  args[2] = FbleNewInputPortValue(heap, &io.event);
+  args[3] = FbleNewOutputPortValue(heap, &io.effect);
   FbleValueV argsv = { .xs = args, .size = 4 };
   FbleValue* proc = FbleApply(heap, func, argsv, profile);
   FbleValueRelease(heap, func);
@@ -541,19 +557,10 @@ int main(int argc, char* argv[])
 
   SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));
 
-  FbleValue* ports[2] = {NULL, NULL};
-  AppIO io = {
-    ._base = { .io = &IO, .ports = { .size = 2, .xs = ports} },
-    .window = window,
-    .colors = colors,
-    .time = SDL_GetTicks(),
-  };
-
   FbleValue* value = FbleExec(heap, &io._base, proc, profile);
-
   FbleValueRelease(heap, proc);
-  FbleValueRelease(heap, ports[0]);
-  FbleValueRelease(heap, ports[1]);
+  FbleValueRelease(heap, io.event);
+  FbleValueRelease(heap, io.effect);
 
   FbleValueRelease(heap, value);
   FbleFreeValueHeap(heap);

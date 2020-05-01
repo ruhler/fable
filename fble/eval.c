@@ -85,8 +85,8 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleValue* scope, FbleValue** statics, FbleInstrBlock* code, Stack* stack);
 
 static void AbortThread(FbleValueHeap* heap, Thread* thread);
-static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* io_activity);
-static Status RunThreads(FbleValueHeap* heap, FbleIO* io, Thread* thread);
+static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity);
+static Status RunThreads(FbleValueHeap* heap, Thread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, FbleInstrBlock* code, FbleProfile* profile);
 
 // FrameGet --
@@ -297,7 +297,6 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 //
 // Inputs:
 //   heap - the value heap.
-//   io - io to use for external ports.
 //   thread - the thread to run.
 //   io_activity - set to true if the thread does any i/o activity that could
 //                 unblock another thread.
@@ -309,7 +308,7 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 //   The thread is executed, updating its stack.
 //   io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* io_activity)
+static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
   while (thread->stack != NULL) {
@@ -534,17 +533,15 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
 
         if (get_port->tag == FBLE_PORT_VALUE) {
           FblePortValue* port = (FblePortValue*)get_port;
-          assert(port->id < io->ports.size);
-          if (io->ports.xs[port->id] == NULL) {
+          if (*port->data == NULL) {
             // Blocked on get. Restore the thread state and return before
             // logging progress.
             thread->stack->pc--;
             return BLOCKED;
           }
 
-          *thread->stack->result = io->ports.xs[port->id];
-          thread->stack = PopFrame(heap, thread->stack);
-          io->ports.xs[port->id] = NULL;
+          thread->stack->locals[get_instr->dest] = *port->data;
+          *port->data = NULL;
           *io_activity = true;
           break;
         }
@@ -585,16 +582,15 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
 
         if (put_port->tag == FBLE_PORT_VALUE) {
           FblePortValue* port = (FblePortValue*)put_port;
-          assert(port->id < io->ports.size);
 
-          if (io->ports.xs[port->id] != NULL) {
+          if (*port->data != NULL) {
             // Blocked on put. Restore the thread state and return before
             // logging progress.
             thread->stack->pc--;
             return BLOCKED;
           }
 
-          io->ports.xs[port->id] = FbleValueRetain(heap, arg);
+          *port->data = FbleValueRetain(heap, arg);
           thread->stack->locals[put_instr->dest] = unit;
           *io_activity = true;
           break;
@@ -752,7 +748,6 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
 //
 // Inputs:
 //   heap - the value heap.
-//   io - io to use for external ports.
 //   thread - the thread to run.
 //
 // Results:
@@ -761,7 +756,7 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
 // Side effects:
 //   The thread and its children are executed and updated.
 //   Updates the profile based on the execution.
-static Status RunThreads(FbleValueHeap* heap, FbleIO* io, Thread* thread)
+static Status RunThreads(FbleValueHeap* heap, Thread* thread)
 {
   FbleArena* arena = heap->arena;
 
@@ -778,7 +773,7 @@ static Status RunThreads(FbleValueHeap* heap, FbleIO* io, Thread* thread)
     } else {
       // Run the leaf thread, then go back up to the parent for the rest of
       // the threads to process.
-      Status status = RunThread(heap, io, thread, &unblocked);
+      Status status = RunThread(heap, thread, &unblocked);
       switch (status) {
         case FINISHED: {
           unblocked = true;
@@ -856,7 +851,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue** statics, Fbl
   };
 
   while (true) {
-    Status status = RunThreads(heap, io, &thread);
+    Status status = RunThreads(heap, &thread);
     switch (status) {
       case FINISHED: {
         assert(final_result != NULL);
@@ -905,7 +900,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
     return NULL;
   }
 
-  FbleIO io = { .io = &FbleNoIO, .ports = { .size = 0, .xs = NULL} };
+  FbleIO io = { .io = &FbleNoIO };
   FbleValue* result = Eval(heap, &io, NULL, code, profile);
   FbleFreeInstrBlock(arena, code);
   return result;
@@ -952,7 +947,7 @@ FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, Fble
     .locals = args.size,
     .instrs = { .size = args.size, .xs = instrs }
   };
-  FbleIO io = { .io = &FbleNoIO, .ports = { .size = 0, .xs = NULL} };
+  FbleIO io = { .io = &FbleNoIO, };
   FbleValue* result = Eval(heap, &io, xs, &code, profile);
   return result;
 }
