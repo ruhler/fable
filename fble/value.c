@@ -9,13 +9,27 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static FbleInstr g_get_instr = { .tag = FBLE_GET_INSTR };
-static FbleInstr* g_get_block_instrs[] = { &g_get_instr };
+static FbleGetInstr g_get_instr = {
+  ._base = { .tag = FBLE_GET_INSTR },
+  .port = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0},
+  .dest = 0,
+};
+
+static FbleReturnInstr g_return_instr = {
+  ._base = { .tag = FBLE_RETURN_INSTR },
+  .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0}
+};
+
+static FbleInstr* g_get_block_instrs[] = {
+  &g_get_instr._base,
+  &g_return_instr._base,
+};
+
 static FbleInstrBlock g_get_block = {
   .refcount = 1,
   .statics = 1,  // port
-  .locals = 0,
-  .instrs = { .size = 1, .xs = g_get_block_instrs }
+  .locals = 1,   // result
+  .instrs = { .size = 2, .xs = g_get_block_instrs }
 };
 
 static void OnFree(FbleValueHeap* heap, FbleValue* value);

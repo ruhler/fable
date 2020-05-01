@@ -208,12 +208,13 @@ typedef struct {
 } FbleProcValueInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR
-//   Get a value from a port and return from the stack frame.
-//   The port is specified as static variable 0.
+//   Get a value from a port.
 //
-// return get(port)
+//  *dest := get(port)
 typedef struct {
   FbleInstr _base;
+  FbleFrameIndex port;
+  FbleLocalIndex dest;
 } FbleGetInstr;
 
 // FblePutInstr -- FBLE_PUT_INSTR

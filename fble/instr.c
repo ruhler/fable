@@ -161,7 +161,11 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
         }
 
         case FBLE_GET_INSTR: {
-          fprintf(fout, "return get(s[0]);\n");
+          FbleGetInstr* get_instr = (FbleGetInstr*)instr;
+          fprintf(fout, "l%zi := get(%s%zi);\n",
+              get_instr->dest,
+              sections[get_instr->port.section],
+              get_instr->port.index);
           break;
         }
 

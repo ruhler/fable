@@ -539,7 +539,8 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
       }
 
       case FBLE_GET_INSTR: {
-        FbleValue* get_port = thread->stack->statics[0];
+        FbleGetInstr* get_instr = (FbleGetInstr*)instr;
+        FbleValue* get_port = FrameGet(thread->stack, get_instr->port);
         if (get_port->tag == FBLE_LINK_VALUE) {
           FbleLinkValue* link = (FbleLinkValue*)get_port;
 
@@ -556,10 +557,8 @@ static Status RunThread(FbleValueHeap* heap, FbleIO* io, Thread* thread, bool* i
             link->tail = NULL;
           }
 
-          *thread->stack->result = FbleValueRetain(heap, head->value);
+          thread->stack->locals[get_instr->dest] = FbleValueRetain(heap, head->value);
           FbleValueDelRef(heap, &link->_base, head->value);
-
-          thread->stack = PopFrame(heap, thread->stack);
           FbleFree(arena, head);
           break;
         }
