@@ -97,8 +97,7 @@ typedef struct {
 typedef struct {
   FbleValue _base;
   FbleInstrBlock* code;
-  size_t scopec;
-  FbleValue* scope[];
+  FbleValue* scope[];     // length is code->statics values.
 } FbleProcValue;
 
 // FbleValues --

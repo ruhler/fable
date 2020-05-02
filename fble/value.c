@@ -168,7 +168,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 
     case FBLE_PROC_VALUE: {
       FbleProcValue* v = (FbleProcValue*)value;
-      for (size_t i = 0; i < v->scopec; ++i) {
+      for (size_t i = 0; i < v->code->statics; ++i) {
         Ref(callback, v->scope[i]);
       }
       break;
@@ -286,7 +286,6 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 
   FbleProcValue* get = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*));
   get->_base.tag = FBLE_PROC_VALUE;
-  get->scopec = 1;
   get->scope[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
   get->code = &code;

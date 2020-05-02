@@ -477,13 +477,13 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_PROC_VALUE_INSTR: {
         FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-        FbleProcValue* value = FbleNewValueExtra(heap, FbleProcValue,
-            sizeof(FbleValue*) * proc_value_instr->scope.size);
+        size_t scopec = proc_value_instr->code->statics;
+
+        FbleProcValue* value = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*) * scopec);
         value->_base.tag = FBLE_PROC_VALUE;
         value->code = proc_value_instr->code;
         value->code->refcount++;
-        value->scopec = proc_value_instr->scope.size;
-        for (size_t i = 0; i < value->scopec; ++i) {
+        for (size_t i = 0; i < scopec; ++i) {
           FbleValue* arg = FrameGet(thread->stack, proc_value_instr->scope.xs[i]);
           value->scope[i] = arg;
           FbleValueAddRef(heap, &value->_base, arg);
