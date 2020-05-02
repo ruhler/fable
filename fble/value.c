@@ -66,24 +66,18 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     case FBLE_STRUCT_VALUE: return;
     case FBLE_UNION_VALUE: return;
 
-    case FBLE_FUNC_VALUE: {
-      FbleFuncValue* fv = (FbleFuncValue*)value;
-      switch (fv->tag) {
-        case FBLE_BASIC_FUNC_VALUE: {
-          FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
-          FbleFreeInstrBlock(arena, basic->code);
+    case FBLE_THUNK_VALUE: {
+      FbleThunkValue* v = (FbleThunkValue*)value;
+      switch (v->tag) {
+        case FBLE_CODE_THUNK_VALUE: {
+          FbleCodeThunkValue* thunk = (FbleCodeThunkValue*)v;
+          FbleFreeInstrBlock(arena, thunk->code);
           return;
         }
 
-        case FBLE_THUNK_FUNC_VALUE: return;
+        case FBLE_APP_THUNK_VALUE: return;
       }
       UNREACHABLE("should never get here");
-      return;
-    }
-
-    case FBLE_PROC_VALUE: {
-      FbleProcValue* v = (FbleProcValue*)value;
-      FbleFreeInstrBlock(arena, v->code);
       return;
     }
 
@@ -145,31 +139,23 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_FUNC_VALUE: {
-      FbleFuncValue* fv = (FbleFuncValue*)value;
-      switch (fv->tag) {
-        case FBLE_BASIC_FUNC_VALUE: {
-          FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
-          for (size_t i = 0; i < basic->code->statics; ++i) {
-            Ref(callback, basic->scope[i]);
+    case FBLE_THUNK_VALUE: {
+      FbleThunkValue* v = (FbleThunkValue*)value;
+      switch (v->tag) {
+        case FBLE_CODE_THUNK_VALUE: {
+          FbleCodeThunkValue* thunk = (FbleCodeThunkValue*)v;
+          for (size_t i = 0; i < thunk->code->statics; ++i) {
+            Ref(callback, thunk->scope[i]);
           }
           break;
         }
 
-        case FBLE_THUNK_FUNC_VALUE: {
-          FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)fv;
+        case FBLE_APP_THUNK_VALUE: {
+          FbleAppThunkValue* thunk = (FbleAppThunkValue*)v;
           Ref(callback, &thunk->func->_base);
           Ref(callback, thunk->arg);
           break;
         }
-      }
-      break;
-    }
-
-    case FBLE_PROC_VALUE: {
-      FbleProcValue* v = (FbleProcValue*)value;
-      for (size_t i = 0; i < v->code->statics; ++i) {
-        Ref(callback, v->scope[i]);
       }
       break;
     }
@@ -253,7 +239,10 @@ FbleValue* FbleUnionValueAccess(FbleValue* object)
 // FbleIsProcValue -- see documentation in fble-value.h
 bool FbleIsProcValue(FbleValue* value)
 {
-  return value->tag == FBLE_PROC_VALUE;
+  FbleCodeThunkValue* thunk = (FbleCodeThunkValue*)value;
+  return value->tag == FBLE_THUNK_VALUE
+    && thunk->_base.tag == FBLE_CODE_THUNK_VALUE
+    && thunk->_base.args_needed == 0;
 }
 
 // FbleNewGetValue -- see documentation in value.h
@@ -284,13 +273,15 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
-  FbleProcValue* get = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*));
-  get->_base.tag = FBLE_PROC_VALUE;
-  get->scope[0] = port;
-  FbleValueAddRef(heap, &get->_base, port);
+  FbleCodeThunkValue* get = FbleNewValueExtra(heap, FbleCodeThunkValue, sizeof(FbleValue*));
+  get->_base._base.tag = FBLE_THUNK_VALUE;
+  get->_base.tag = FBLE_CODE_THUNK_VALUE;
+  get->_base.args_needed = 0;
   get->code = &code;
   get->code->refcount++;
-  return &get->_base;
+  get->scope[0] = port;
+  FbleValueAddRef(heap, &get->_base._base, port);
+  return &get->_base._base;
 }
 
 // FbleNewInputPortValue -- see documentation in fble-value.h
@@ -363,10 +354,10 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   };
   func_code.refcount++;
 
-  FbleBasicFuncValue* put = FbleNewValueExtra(heap, FbleBasicFuncValue, sizeof(FbleValue*));
-  put->_base._base.tag = FBLE_FUNC_VALUE;
-  put->_base.tag = FBLE_BASIC_FUNC_VALUE;
-  put->_base.argc = 1;
+  FbleCodeThunkValue* put = FbleNewValueExtra(heap, FbleCodeThunkValue, sizeof(FbleValue*));
+  put->_base._base.tag = FBLE_THUNK_VALUE;
+  put->_base.tag = FBLE_CODE_THUNK_VALUE;
+  put->_base.args_needed = 1;
   put->code = &func_code;
   put->scope[0] = link;
   FbleValueAddRef(heap, &put->_base._base, link);

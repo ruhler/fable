@@ -14,8 +14,7 @@
 typedef enum {
   FBLE_STRUCT_VALUE,
   FBLE_UNION_VALUE,
-  FBLE_FUNC_VALUE,
-  FBLE_PROC_VALUE,
+  FBLE_THUNK_VALUE,
   FBLE_LINK_VALUE,
   FBLE_PORT_VALUE,
   FBLE_REF_VALUE,
@@ -47,57 +46,50 @@ typedef struct {
   FbleValue* arg;
 } FbleUnionValue;
 
+// FbleThunkValueTag --
+//   Enum used to distinguish between the different kinds of thunks.
 typedef enum {
-  FBLE_BASIC_FUNC_VALUE,
-  FBLE_THUNK_FUNC_VALUE,
-} FbleFuncValueTag;
+  FBLE_CODE_THUNK_VALUE,
+  FBLE_APP_THUNK_VALUE,
+} FbleThunkValueTag;
 
-// FbleFuncValue -- FBLE_FUNC_VALUE
-//   A tagged union of func value types. All values have the same initial
-//   layout as FbleFuncValue. The tag can be used to determine what kind of
+// FbleThunkValue -- FBLE_THUNK_VALUE
+//   A tagged union of thunk value types. All values have the same initial
+//   layout as FbleThunkValue. The tag can be used to determine what kind of
 //   func value this is to get access to additional fields of the func value
 //   by first casting to that specific type of func value.
 //
 // Fields:
-//   argc - The number of arguments to be applied to this function before the
-//          function body is executed.
+//   args_needed - The number of additional arguments needed before the thunk
+//   can be evaluated.
 typedef struct {
   FbleValue _base;
-  FbleFuncValueTag tag;
-  size_t argc;
-} FbleFuncValue;
+  FbleThunkValueTag tag;
+  size_t args_needed;
+} FbleThunkValue;
 
-// FbleBasicFuncValue -- FBLE_BASIC_FUNC_VALUE
+// FbleCodeThunkValue -- FBLE_CODE_THUNK_VALUE
 //
 // Fields:
-//   code - The block of instructions representing the body of the function,
-//          which should pop the arguments and context.
-//   scopec - The number of values on the function scope.
-//   scope - The scope at the time the function was created, representing the
-//           lexical context available to the function.
+//   code - The code for the thunk.
+//   scope - The scope at the time the thunk was created, representing the
+//           lexical context available to the thunk. The length of this array
+//           is code->statics.
 typedef struct {
-  FbleFuncValue _base;
+  FbleThunkValue _base;
   FbleInstrBlock* code;
-  FbleValue* scope[];     // length is code->statics values
-} FbleBasicFuncValue;
+  FbleValue* scope[];
+} FbleCodeThunkValue;
 
-// FbleThunkFuncValue -- FBLE_THUNK_FUNC_VALUE
-//   A function value that is the partial application of another function to
-//   an argument.
+// FbleAppThunkValue -- FBLE_APP_THUNK_VALUE
+//   A thunk that is an application of another thunk to an argument.
 //
-// The value of this function value is: func[arg]
+// The value of the thunk is: func(arg)
 typedef struct {
-  FbleFuncValue _base;
-  FbleFuncValue* func;
+  FbleThunkValue _base;
+  FbleThunkValue* func;
   FbleValue* arg;
-} FbleThunkFuncValue;
-
-// FbleProcValue -- FBLE_PROC_VALUE
-typedef struct {
-  FbleValue _base;
-  FbleInstrBlock* code;
-  FbleValue* scope[];     // length is code->statics values.
-} FbleProcValue;
+} FbleAppThunkValue;
 
 // FbleValues --
 //   A non-circular singly linked list of values.

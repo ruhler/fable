@@ -399,12 +399,12 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
         size_t scopec = func_value_instr->code->statics;
 
-        FbleBasicFuncValue* value = FbleNewValueExtra(
-            heap, FbleBasicFuncValue,
+        FbleCodeThunkValue* value = FbleNewValueExtra(
+            heap, FbleCodeThunkValue,
             sizeof(FbleValue*) * scopec);
-        value->_base._base.tag = FBLE_FUNC_VALUE;
-        value->_base.tag = FBLE_BASIC_FUNC_VALUE;
-        value->_base.argc = func_value_instr->argc;
+        value->_base._base.tag = FBLE_THUNK_VALUE;
+        value->_base.tag = FBLE_CODE_THUNK_VALUE;
+        value->_base.args_needed = func_value_instr->argc;
         value->code = func_value_instr->code;
         value->code->refcount++;
         for (size_t i = 0; i < scopec; ++i) {
@@ -426,22 +426,22 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
-        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread->stack, func_apply_instr->func);
+        FbleThunkValue* func = (FbleThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, thread->stack, func_apply_instr->func);
         if (func == NULL) {
           FbleReportError("undefined function value apply\n", &func_apply_instr->loc);
           return ABORTED;
         };
 
-        FbleThunkFuncValue* value = FbleNewValue(heap, FbleThunkFuncValue);
-        value->_base._base.tag = FBLE_FUNC_VALUE;
-        value->_base.tag = FBLE_THUNK_FUNC_VALUE;
-        value->_base.argc = func->argc - 1;
+        FbleAppThunkValue* value = FbleNewValue(heap, FbleAppThunkValue);
+        value->_base._base.tag = FBLE_THUNK_VALUE;
+        value->_base.tag = FBLE_APP_THUNK_VALUE;
+        value->_base.args_needed = func->args_needed - 1;
         value->func = func;
         FbleValueAddRef(heap, &value->_base._base, &value->func->_base);
         value->arg = FrameGet(thread->stack, func_apply_instr->arg);
         FbleValueAddRef(heap, &value->_base._base, value->arg);
 
-        if (value->_base.argc > 0) {
+        if (value->_base.args_needed > 0) {
           if (func_apply_instr->exit) {
             *thread->stack->result = &value->_base._base;
             thread->stack = PopFrame(heap, thread->stack);
@@ -450,15 +450,15 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           }
         } else {
           size_t argc = 0;
-          FbleFuncValue* f = &value->_base;
-          while (f->tag == FBLE_THUNK_FUNC_VALUE) {
+          FbleThunkValue* f = &value->_base;
+          while (f->tag == FBLE_APP_THUNK_VALUE) {
             argc++;
-            FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
+            FbleAppThunkValue* thunk = (FbleAppThunkValue*)f;
             f = thunk->func;
           }
 
-          assert(f->tag == FBLE_BASIC_FUNC_VALUE);
-          FbleBasicFuncValue* basic = (FbleBasicFuncValue*)f;
+          assert(f->tag == FBLE_CODE_THUNK_VALUE);
+          FbleCodeThunkValue* basic = (FbleCodeThunkValue*)f;
           if (func_apply_instr->exit) {
             thread->stack = ReplaceFrame(heap, &value->_base._base, basic->scope, basic->code, thread->stack);
           } else {
@@ -467,8 +467,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           }
 
           f = &value->_base;
-          while (f->tag == FBLE_THUNK_FUNC_VALUE) {
-            FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
+          while (f->tag == FBLE_APP_THUNK_VALUE) {
+            FbleAppThunkValue* thunk = (FbleAppThunkValue*)f;
             thread->stack->locals[--argc] = FbleValueRetain(heap, thunk->arg);
             f = thunk->func;
           }
@@ -480,16 +480,18 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
         size_t scopec = proc_value_instr->code->statics;
 
-        FbleProcValue* value = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*) * scopec);
-        value->_base.tag = FBLE_PROC_VALUE;
+        FbleCodeThunkValue* value = FbleNewValueExtra(heap, FbleCodeThunkValue, sizeof(FbleValue*) * scopec);
+        value->_base._base.tag = FBLE_THUNK_VALUE;
+        value->_base.tag = FBLE_CODE_THUNK_VALUE;
+        value->_base.args_needed = 0;
         value->code = proc_value_instr->code;
         value->code->refcount++;
         for (size_t i = 0; i < scopec; ++i) {
           FbleValue* arg = FrameGet(thread->stack, proc_value_instr->scope.xs[i]);
           value->scope[i] = arg;
-          FbleValueAddRef(heap, &value->_base, arg);
+          FbleValueAddRef(heap, &value->_base._base, arg);
         }
-        thread->stack->locals[proc_value_instr->dest] = &value->_base;
+        thread->stack->locals[proc_value_instr->dest] = &value->_base._base;
         break;
       }
 
@@ -619,17 +621,19 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleVectorInit(arena, thread->children);
 
         for (size_t i = 0; i < fork_instr->args.size; ++i) {
-          FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread->stack, fork_instr->args.xs[i]);
-          FbleValueRetain(heap, &arg->_base);
+          FbleCodeThunkValue* arg = (FbleCodeThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, thread->stack, fork_instr->args.xs[i]);
 
           // You cannot execute a proc in a let binding, so it should be
           // impossible to ever have an undefined proc value.
           assert(arg != NULL && "undefined proc value");
 
+          assert(arg->_base.tag == FBLE_CODE_THUNK_VALUE);
+          FbleValueRetain(heap, &arg->_base._base);
+
           FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
 
           Thread* child = FbleAlloc(arena, Thread);
-          child->stack = PushFrame(arena, &arg->_base, arg->scope, arg->code, result, NULL);
+          child->stack = PushFrame(arena, &arg->_base._base, arg->scope, arg->code, result, NULL);
           child->profile = FbleForkProfileThread(arena, thread->profile);
           child->children.size = 0;
           child->children.xs = NULL;
@@ -643,18 +647,20 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_PROC_INSTR: {
         FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-        FbleProcValue* proc = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread->stack, proc_instr->proc);
+        FbleCodeThunkValue* proc = (FbleCodeThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, thread->stack, proc_instr->proc);
 
         // You cannot execute a proc in a let binding, so it should be
         // impossible to ever have an undefined proc value.
         assert(proc != NULL && "undefined proc value");
 
-        FbleValueRetain(heap, &proc->_base);
+        assert(proc->_base.tag == FBLE_CODE_THUNK_VALUE);
+        FbleValueRetain(heap, &proc->_base._base);
+
         if (proc_instr->exit) {
-          thread->stack = ReplaceFrame(heap, &proc->_base, proc->scope, proc->code, thread->stack);
+          thread->stack = ReplaceFrame(heap, &proc->_base._base, proc->scope, proc->code, thread->stack);
         } else {
           FbleValue** result = thread->stack->locals + proc_instr->dest;
-          thread->stack = PushFrame(arena, &proc->_base, proc->scope, proc->code, result, thread->stack);
+          thread->stack = PushFrame(arena, &proc->_base._base, proc->scope, proc->code, result, thread->stack);
         }
         break;
       }
@@ -714,13 +720,13 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           }
 
           case FBLE_PROFILE_FUNC_EXIT_OP: {
-            FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread->stack, profile_instr->data.func_exit.func);
+            FbleThunkValue* func = (FbleThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, thread->stack, profile_instr->data.func_exit.func);
             if (func == NULL) {
               FbleReportError("undefined function value apply\n", &profile_instr->data.func_exit.loc);
               return ABORTED;
             };
 
-            if (func->argc > 1) {
+            if (func->args_needed > 1) {
               FbleProfileExitBlock(arena, thread->profile);
             } else {
               FbleProfileAutoExitBlock(arena, thread->profile);
@@ -904,7 +910,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, FbleProfile* profile)
 {
   assert(args.size > 0);
-  assert(func->tag == FBLE_FUNC_VALUE);
+  assert(func->tag == FBLE_THUNK_VALUE);
 
   FbleInstr* instrs[args.size];
 
@@ -955,7 +961,8 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 // FbleExec -- see documentation in fble.h
 FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile)
 {
-  assert(proc->tag == FBLE_PROC_VALUE);
-  FbleProcValue* p = (FbleProcValue*)proc;
+  assert(proc->tag == FBLE_THUNK_VALUE);
+  FbleCodeThunkValue* p = (FbleCodeThunkValue*)proc;
+  assert(p->_base.tag == FBLE_CODE_THUNK_VALUE);
   return Eval(heap, io, p->scope, p->code, profile);
 }
