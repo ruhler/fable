@@ -430,18 +430,17 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           FbleReportError("undefined function value apply\n", &func_apply_instr->loc);
           return ABORTED;
         };
-        FbleValue* arg = FrameGet(thread->stack, func_apply_instr->arg);
 
-        if (func->argc > 1) {
-          FbleThunkFuncValue* value = FbleNewValue(heap, FbleThunkFuncValue);
-          value->_base._base.tag = FBLE_FUNC_VALUE;
-          value->_base.tag = FBLE_THUNK_FUNC_VALUE;
-          value->_base.argc = func->argc - 1;
-          value->func = func;
-          FbleValueAddRef(heap, &value->_base._base, &value->func->_base);
-          value->arg = arg;
-          FbleValueAddRef(heap, &value->_base._base, value->arg);
+        FbleThunkFuncValue* value = FbleNewValue(heap, FbleThunkFuncValue);
+        value->_base._base.tag = FBLE_FUNC_VALUE;
+        value->_base.tag = FBLE_THUNK_FUNC_VALUE;
+        value->_base.argc = func->argc - 1;
+        value->func = func;
+        FbleValueAddRef(heap, &value->_base._base, &value->func->_base);
+        value->arg = FrameGet(thread->stack, func_apply_instr->arg);
+        FbleValueAddRef(heap, &value->_base._base, value->arg);
 
+        if (value->_base.argc > 0) {
           if (func_apply_instr->exit) {
             *thread->stack->result = &value->_base._base;
             thread->stack = PopFrame(heap, thread->stack);
@@ -449,11 +448,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
             thread->stack->locals[func_apply_instr->dest] = &value->_base._base;
           }
         } else {
-          FbleValueRetain(heap, &func->_base);
-          FbleValueRetain(heap, arg);
-
-          size_t argc = 1;
-          FbleFuncValue* f = func;
+          size_t argc = 0;
+          FbleFuncValue* f = &value->_base;
           while (f->tag == FBLE_THUNK_FUNC_VALUE) {
             argc++;
             FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
@@ -462,22 +458,19 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
           assert(f->tag == FBLE_BASIC_FUNC_VALUE);
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)f;
-          FbleValueRetain(heap, &basic->_base._base);
           if (func_apply_instr->exit) {
-            thread->stack = ReplaceFrame(heap, &basic->_base._base, basic->scope, basic->code, thread->stack);
+            thread->stack = ReplaceFrame(heap, &value->_base._base, basic->scope, basic->code, thread->stack);
           } else {
             FbleValue** result = thread->stack->locals + func_apply_instr->dest;
-            thread->stack = PushFrame(arena, &basic->_base._base, basic->scope, basic->code, result, thread->stack);
+            thread->stack = PushFrame(arena, &value->_base._base, basic->scope, basic->code, result, thread->stack);
           }
 
-          f = func;
-          thread->stack->locals[--argc] = arg;
+          f = &value->_base;
           while (f->tag == FBLE_THUNK_FUNC_VALUE) {
             FbleThunkFuncValue* thunk = (FbleThunkFuncValue*)f;
             thread->stack->locals[--argc] = FbleValueRetain(heap, thunk->arg);
             f = thunk->func;
           }
-          FbleValueRelease(heap, &func->_base);
         }
         break;
       }
