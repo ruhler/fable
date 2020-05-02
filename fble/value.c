@@ -150,7 +150,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       switch (fv->tag) {
         case FBLE_BASIC_FUNC_VALUE: {
           FbleBasicFuncValue* basic = (FbleBasicFuncValue*)fv;
-          for (size_t i = 0; i < basic->scopec; ++i) {
+          for (size_t i = 0; i < basic->code->statics; ++i) {
             Ref(callback, basic->scope[i]);
           }
           break;
@@ -368,7 +368,6 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   put->_base.tag = FBLE_BASIC_FUNC_VALUE;
   put->_base.argc = 1;
   put->code = &func_code;
-  put->scopec = 1;
   put->scope[0] = link;
   FbleValueAddRef(heap, &put->_base._base, link);
   return &put->_base._base;
