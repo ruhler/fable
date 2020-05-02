@@ -85,6 +85,9 @@ typedef struct {
 //   A thunk that is an application of another thunk to an argument.
 //
 // The value of the thunk is: func(arg)
+//
+// Invariant:
+//   _base.args_needed = func->args_needed - 1;
 typedef struct {
   FbleThunkValue _base;
   FbleThunkValue* func;
