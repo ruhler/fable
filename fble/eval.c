@@ -629,55 +629,40 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 // FbleApply -- see documentation in fble.h
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, FbleProfile* profile)
 {
-  assert(args.size > 0);
+  FbleIO io = { .io = &FbleNoIO, };
+  FbleValueRetain(heap, func);
+
   assert(func->tag == FBLE_THUNK_VALUE);
+  FbleThunkValue* thunk = (FbleThunkValue*)func;
 
-  FbleInstr* instrs[args.size];
-
-  FbleCodeThunkValue* thunk = FbleNewValueExtra(
-      heap, FbleCodeThunkValue, sizeof(FbleValue*) * (1 + args.size));
-  thunk->_base._base.tag = FBLE_THUNK_VALUE;
-  thunk->_base.tag = FBLE_CODE_THUNK_VALUE;
-  thunk->_base.args_needed = 0;
-  thunk->code = NULL;
-  thunk->scope[0] = func;
-  FbleValueAddRef(heap, &thunk->_base._base, func);
-
-  FbleFuncApplyInstr applies[args.size];
   for (size_t i = 0; i < args.size; ++i) {
-    instrs[i] = &applies[i]._base;
-    thunk->scope[i+1] = args.xs[i];
-    FbleValueAddRef(heap, &thunk->_base._base, args.xs[i]);
+    if (thunk->args_needed == 0) {
+      FbleValue* result = Eval(heap, &io, thunk, profile);
+      if (result == NULL) {
+        return NULL;
+      }
 
-    applies[i]._base.tag = FBLE_FUNC_APPLY_INSTR;
-    applies[i].loc.source = __FILE__;
-    applies[i].loc.line = __LINE__;
-    applies[i].loc.col = 0;
-    applies[i].exit = (i + 1 == args.size);
-    applies[i].dest = i;
-
-    if (i == 0) {
-      applies[i].func.section = FBLE_STATICS_FRAME_SECTION;
-      applies[i].func.index = 0;
-    } else {
-      applies[i].func.section = FBLE_LOCALS_FRAME_SECTION;
-      applies[i].func.index = i - 1;
+      assert(result->tag == FBLE_THUNK_VALUE && "too many args to apply");
+      thunk = (FbleThunkValue*) result;
     }
 
-    applies[i].arg.section = FBLE_STATICS_FRAME_SECTION;
-    applies[i].arg.index = i + 1;
+    FbleAppThunkValue* app = FbleNewValue(heap, FbleAppThunkValue);
+    app->_base._base.tag = FBLE_THUNK_VALUE;
+    app->_base.tag = FBLE_APP_THUNK_VALUE;
+    app->_base.args_needed = thunk->args_needed - 1;
+    app->func = thunk;
+    FbleValueAddRef(heap, &app->_base._base, &app->func->_base);
+    app->arg = args.xs[i];
+    FbleValueAddRef(heap, &app->_base._base, app->arg);
+
+    FbleValueRelease(heap, &thunk->_base);
+    thunk = &app->_base;
   }
 
-  FbleInstrBlock code = {
-    .refcount = 2,
-    .statics = 1 + args.size,
-    .locals = args.size,
-    .instrs = { .size = args.size, .xs = instrs }
-  };
-  thunk->code = &code;
-  FbleIO io = { .io = &FbleNoIO, };
-  FbleValue* result = Eval(heap, &io, &thunk->_base, profile);
-  return result;
+  if (thunk->args_needed == 0) {
+    return Eval(heap, &io, thunk, profile);
+  }
+  return &thunk->_base;
 }
 
 // FbleNoIO -- See documentation in fble.h

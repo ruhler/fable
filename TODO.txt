@@ -1,5 +1,7 @@
 
 * [eval] Use native stack
+ - Fix tail calls.
+ - Add thread support.
 
 * [profile] Remove special block 0
  - Add block data at the profile level representing 'total' and special case
