@@ -14,6 +14,17 @@ Unit@ Unit = Unit@();
   BitS@(cons: BitP@(msb, tail));
 };
 
+<@,@>@ List@ = <@ T@><@ L@>((T@, L@){L@;}, L@){L@;};
+
+# Nat --
+#   Make a natural number from a list of bits, with most significant bit
+#   first.
+#
+# For example: Nat(Bit|1010) is the number 10.
+(List@<Bit@>) { BitS@; } Nat = (List@<Bit@> bits) {
+  bits<BitS@>(BitP, BitS@(nil: Unit));
+};
+
 (BitS@){ *(BitS@ x, Bit@ overflow); } Decr = (BitS@ s) {
   ?(s;
      cons: {
@@ -36,4 +47,4 @@ Unit@ Unit = Unit@();
   ?(d.overflow; 0: S@(S: d.x), 1: S@(Z: Unit));
 };
 
-@(Nat@, S@, S);
+@(Nat@, S@, S, Bit, Nat);

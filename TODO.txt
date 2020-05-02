@@ -1,6 +1,5 @@
 
 * [eval] Use native stack
- - Fix tail calls.
  - Add thread support.
 
 * [profile] Remove special block 0
