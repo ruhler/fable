@@ -26,14 +26,15 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, FbleProfile* profile);
 
 // FrameGet --
-//   Get a value from the frame on the top of the execution stack.
+//   Look up a value by frame index.
 //
 // Inputs:
-//   stack - the stack to access the value from.
+//   statics - static variables in the frame.
+//   locals - local variables in the frame.
 //   index - the index of the value to access.
 //
 // Results:
-//   The value in the top stack frame at the given index.
+//   The value at the given index.
 //
 // Side effects:
 //   None.
@@ -47,7 +48,8 @@ static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameInd
 }
 
 // FrameTaggedGet --
-//   Get and dereference a value from the frame at the top of the given stack.
+//   Get and dereference a value by frame index.
+//
 //   Dereferences the data value, removing all layers of reference values
 //   until a non-reference value is encountered and returns the non-reference
 //   value.
@@ -57,7 +59,8 @@ static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameInd
 //
 // Inputs:
 //   tag - the expected tag of the value.
-//   stack - the stack to get the value from.
+//   statics - static variables in the frame.
+//   locals - local variables in the frame.
 //   index - the location of the value in the frame.
 //
 // Results:
@@ -155,7 +158,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
 
     bool tail_call = false;
     size_t pc = 0;
-    while (!tail_call) {
+    do {
       FbleInstr* instr = instrs[pc++];
       if (rand() % TIME_SLICE == 0) {
         // Don't count profiling instructions against the profile time. The user
@@ -579,7 +582,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
           break;
         }
       }
-    }
+    } while (!tail_call);
   }
 
   UNREACHABLE("should never get here");
