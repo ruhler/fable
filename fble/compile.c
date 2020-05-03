@@ -771,22 +771,42 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       switch (normal->tag) {
         case FBLE_FUNC_TYPE: {
           // FUNC_APPLY
-          for (size_t i = 0; i < argc; ++i) {
-            if (normal->tag != FBLE_FUNC_TYPE) {
-              ReportError(arena, &expr->loc, "too many arguments to function\n");
-              FbleTypeRelease(heap, normal);
-              FbleTypeRelease(heap, misc.type);
-              for (size_t j = i; j < argc; ++j) {
-                FbleTypeRelease(heap, args[j].type);
-              }
-              return COMPILE_FAILED;
+          FbleFuncType* func_type = (FbleFuncType*)normal;
+          if (func_type->args.size != argc) {
+            ReportError(arena, &expr->loc,
+                "expected %i args, but %i were provided\n",
+                func_type->args.size, argc);
+            FbleTypeRelease(heap, normal);
+            FbleTypeRelease(heap, misc.type);
+            for (size_t i = 0; i < argc; ++i) {
+              FbleTypeRelease(heap, args[i].type);
             }
+            return COMPILE_FAILED;
+          }
 
-            FbleFuncType* func_type = (FbleFuncType*)normal;
-            if (!FbleTypesEqual(heap, func_type->arg, args[i].type)) {
+          if (exit) {
+            FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
+            exit_instr->_base.tag = FBLE_PROFILE_INSTR;
+            exit_instr->op = FBLE_PROFILE_AUTO_EXIT_OP;
+            AppendInstr(arena, scope, &exit_instr->_base);
+          }
+
+          Local* dest = NewLocal(arena, scope);
+
+          FbleFuncApplyInstr* apply_instr = FbleAlloc(arena, FbleFuncApplyInstr);
+          apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+          apply_instr->loc = misc_apply_expr->misc->loc;
+          apply_instr->exit = exit;
+          apply_instr->func = misc.local->index;
+          // TODO: apply_instr->arg =
+          apply_instr->dest = dest->index.index;
+          AppendInstr(arena, scope, &apply_instr->_base);
+
+          for (size_t i = 0; i < argc; ++i) {
+            if (!FbleTypesEqual(heap, func_type->args.xs[i], args[i].type)) {
               ReportError(arena, &misc_apply_expr->args.xs[i]->loc,
                   "expected type %t, but found %t\n",
-                  func_type->arg, args[i].type);
+                  func_type->args.xs[i], args[i].type);
               FbleTypeRelease(heap, normal);
               FbleTypeRelease(heap, misc.type);
               for (size_t j = i; j < argc; ++j) {
@@ -796,38 +816,17 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             }
             FbleTypeRelease(heap, args[i].type);
 
-            Local* dest = NewLocal(arena, scope);
-
-            bool exit_apply = exit && (i+1 == argc);
-            if (exit_apply) {
-              FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
-              exit_instr->_base.tag = FBLE_PROFILE_INSTR;
-              exit_instr->op = FBLE_PROFILE_FUNC_EXIT_OP;
-              exit_instr->data.func_exit.loc = misc_apply_expr->misc->loc;
-              exit_instr->data.func_exit.func = misc.local->index;
-              AppendInstr(arena, scope, &exit_instr->_base);
-            }
-
-            FbleFuncApplyInstr* apply_instr = FbleAlloc(arena, FbleFuncApplyInstr);
-            apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
-            apply_instr->loc = misc_apply_expr->misc->loc;
-            apply_instr->exit = exit_apply;
-            apply_instr->func = misc.local->index;
-            apply_instr->arg = args[i].local->index;
-            apply_instr->dest = dest->index.index;
-            AppendInstr(arena, scope, &apply_instr->_base);
-            LocalRelease(arena, scope, misc.local, apply_instr->exit);
+            // TODO: FbleVectorAppend(arena, apply_instr->args, args[i].local->index);
             LocalRelease(arena, scope, args[i].local, apply_instr->exit);
-
-            FbleTypeRelease(heap, misc.type);
-            misc.type = FbleTypeRetain(heap, func_type->rtype);
-            misc.local = dest;
-
-            normal = FbleNormalType(heap, func_type->rtype);
-            FbleTypeRelease(heap, &func_type->_base);
           }
+
+          Compiled c = {
+            .type = FbleTypeRetain(heap, func_type->rtype),
+            .local = dest
+          };
+
           FbleTypeRelease(heap, normal);
-          return misc;
+          return c;
         }
 
         case FBLE_TYPE_TYPE: {
@@ -1298,10 +1297,12 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       size_t argc = func_value_expr->args.size;
 
       bool error = false;
-      FbleType* arg_types[argc];
+      FbleTypeV arg_types;
+      FbleVectorInit(arena, arg_types);
       for (size_t i = 0; i < argc; ++i) {
-        arg_types[i] = CompileType(heap, scope, func_value_expr->args.xs[i].type);
-        error = error || arg_types[i] == NULL;
+        FbleType* arg_type = CompileType(heap, scope, func_value_expr->args.xs[i].type);
+        FbleVectorAppend(arena, arg_types, arg_type);
+        error = error || arg_type == NULL;
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&func_value_expr->args.xs[i].name, &func_value_expr->args.xs[j].name)) {
@@ -1315,8 +1316,9 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       if (error) {
         for (size_t i = 0; i < argc; ++i) {
-          FbleTypeRelease(heap, arg_types[i]);
+          FbleTypeRelease(heap, arg_types.xs[i]);
         }
+        FbleFree(arena, arg_types.xs);
         return COMPILE_FAILED;
       }
 
@@ -1330,7 +1332,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       for (size_t i = 0; i < argc; ++i) {
         Local* local = NewLocal(arena, &func_scope);
-        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types[i], local);
+        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types.xs[i], local);
       }
 
       Compiled func_result = CompileExpr(heap, blocks, true, &func_scope, func_value_expr->body);
@@ -1338,27 +1340,26 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       if (func_result.type == NULL) {
         FreeScope(heap, &func_scope, true);
         FbleFreeInstr(arena, &instr->_base);
+        FbleFree(arena, arg_types.xs);
         return COMPILE_FAILED;
       }
       FbleType* type = func_result.type;
       LocalRelease(arena, &func_scope, func_result.local, true);
 
-      for (size_t i = 0; i < argc; ++i) {
-        FbleType* arg_type = arg_types[argc - 1 - i];
-        FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-        ft->arg = arg_type;
-        ft->rtype = type;
+      FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+      ft->args = arg_types;
+      ft->rtype = type;
+      FbleTypeAddRef(heap, &ft->_base, ft->rtype);
+      FbleTypeRelease(heap, ft->rtype);
 
-        FbleTypeAddRef(heap, &ft->_base, ft->arg);
-        FbleTypeAddRef(heap, &ft->_base, ft->rtype);
-        FbleTypeRelease(heap, ft->rtype);
-        type = &ft->_base;
+      for (size_t i = 0; i < argc; ++i) {
+        FbleTypeAddRef(heap, &ft->_base, arg_types.xs[i]);
       }
 
       FreeScope(heap, &func_scope, true);
 
       Compiled c;
-      c.type = type;
+      c.type = &ft->_base;
       c.local = NewLocal(arena, scope);
       instr->dest = c.local->index.index;
       AppendInstr(arena, scope, &instr->_base);
@@ -1857,18 +1858,15 @@ static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     .var = cons_name,
   };
 
-  // L@ -> L@
-  FbleFuncTypeExpr cons_type_inner = {
-    ._base = { .tag = FBLE_FUNC_TYPE_EXPR, .loc = loc, },
-    .arg = &list_type._base,
-    .rtype = &list_type._base,
+  // T@, L@ -> L@
+  FbleTypeExpr* cons_arg_types[] = {
+    &elem_type._base,
+    &list_type._base
   };
-
-  // T@ -> (L@ -> L@)
   FbleFuncTypeExpr cons_type = {
     ._base = { .tag = FBLE_FUNC_TYPE_EXPR, .loc = loc, },
-    .arg = &elem_type._base,
-    .rtype = &cons_type_inner._base,
+    .args = { .size = 2, .xs = cons_arg_types },
+    .rtype = &list_type._base,
   };
 
   inner_args[0].type = &cons_type._base;
@@ -2083,8 +2081,9 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleTypeRelease(heap, &unit_type->_base);
 
       FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-      put_type->arg = port_type;
-      FbleTypeAddRef(heap, &put_type->_base, put_type->arg);
+      FbleVectorInit(arena, put_type->args);
+      FbleVectorAppend(arena, put_type->args, port_type);
+      FbleTypeAddRef(heap, &put_type->_base, port_type);
       FbleTypeRelease(heap, port_type);
       put_type->rtype = &unit_proc_type->_base;
       FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
@@ -2312,17 +2311,27 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
 
     case FBLE_FUNC_TYPE_EXPR: {
       FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, type->loc);
-      ft->arg = NULL;
+      FbleFuncTypeExpr* func_type = (FbleFuncTypeExpr*)type;
+
+      FbleVectorInit(arena, ft->args);
       ft->rtype = NULL;
 
-      FbleFuncTypeExpr* func_type = (FbleFuncTypeExpr*)type;
-      ft->arg = CompileType(heap, scope, func_type->arg);
-      if (ft->arg == NULL) {
+      bool error = false;
+      for (size_t i = 0; i < func_type->args.size; ++i) {
+        FbleType* arg = CompileType(heap, scope, func_type->args.xs[i]);
+        if (arg == NULL) {
+          error = true;
+        } else {
+          FbleVectorAppend(arena, ft->args, arg);
+          FbleTypeAddRef(heap, &ft->_base, arg);
+        }
+        FbleTypeRelease(heap, arg);
+      }
+
+      if (error) {
         FbleTypeRelease(heap, &ft->_base);
         return NULL;
       }
-      FbleTypeAddRef(heap, &ft->_base, ft->arg);
-      FbleTypeRelease(heap, ft->arg);
 
       FbleType* rtype = CompileType(heap, scope, func_type->rtype);
       if (rtype == NULL) {

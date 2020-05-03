@@ -176,7 +176,7 @@ typedef struct {
 } FbleReleaseInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
-//   Apply a function to a single argument.
+//   Apply a function to arguments.
 //
 // *dest = func(arg)
 //

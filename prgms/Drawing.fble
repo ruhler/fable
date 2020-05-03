@@ -84,8 +84,8 @@ Transform = ((Point@) { Point@; } f, Drawing@ d) {
 
 # Translate the drawing by the given x and y amounts.
 (Int@, Int@, Drawing@) { Drawing@; }
-Translate = (Int@ dx, Int@ dy) {
-  Transform((Point@ p) { Point@(Add(dx, p.x), Add(dy, p.y)); }); 
+Translate = (Int@ dx, Int@ dy, Drawing@ d) {
+  Transform((Point@ p) { Point@(Add(dx, p.x), Add(dy, p.y)); }, d); 
 };
 
 @(Color@, Drawing@, Point@,

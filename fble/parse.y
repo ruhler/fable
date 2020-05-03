@@ -344,18 +344,12 @@ block:
       $$ = $2;
    }
  | '(' expr_p ')' block {
-      FbleTypeExpr* type = $4;
-      for (size_t i = 0; i < $2.size; ++i) {
-        FbleTypeExpr* arg = $2.xs[$2.size - 1 - i];
-        FbleFuncTypeExpr* func_type = FbleAlloc(arena, FbleFuncTypeExpr);
-        func_type->_base.tag = FBLE_FUNC_TYPE_EXPR;
-        func_type->_base.loc = arg->loc;
-        func_type->arg = arg;
-        func_type->rtype = type;
-        type = &func_type->_base;
-      }
-      FbleFree(arena, $2.xs);
-      $$ = type;
+      FbleFuncTypeExpr* func_type = FbleAlloc(arena, FbleFuncTypeExpr);
+      func_type->_base.tag = FBLE_FUNC_TYPE_EXPR;
+      func_type->_base.loc = @$;
+      func_type->args = $2;
+      func_type->rtype = $4;
+      $$ = &func_type->_base;
    }
  | '(' field_p ')' block {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);

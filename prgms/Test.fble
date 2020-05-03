@@ -39,19 +39,20 @@
 # Returns True if the tests all pass, false otherwise.
 (Put@<Str@>, S@<Test@>){Bool@!;} RunTests = (Put@<Str@> out, S@<Test@> tests) {
   SeqS<Bool@>(AndMonoid, {
-    Test@ test <- MapS<Test@, Bool@!>(tests);
-    Unit@ _ := Print(out, test.name);
-    TestResult@ tr := test.test;
-    ?(tr; pass: {
-            Unit@ _ := PrintLn(out, S0<Char@>);
-            $(True);
-          },
-          fail: {
-            Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
-              Str(Chars|': FAILED: '),
-              tr.fail])));
-            $(False);
-          });
+    MapS<Test@, Bool@!>(tests, (Test@ test) {
+      Unit@ _ := Print(out, test.name);
+      TestResult@ tr := test.test;
+      ?(tr; pass: {
+              Unit@ _ := PrintLn(out, S0<Char@>);
+              $(True);
+            },
+            fail: {
+              Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
+                Str(Chars|': FAILED: '),
+                tr.fail])));
+              $(False);
+            });
+    });
   });
 };
 

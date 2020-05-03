@@ -262,6 +262,9 @@ typedef struct {
 // FbleTypeExpr -- Synonym for FbleExpr when a type is expected
 typedef FbleExpr FbleTypeExpr;
 
+// FbleTypeExprV -- Synonym for FbleExprV when types are expected.
+typedef FbleExprV FbleTypeExprV;
+
 // FbleField --
 //   A pair of (Type, Name) used to describe type and function arguments.
 typedef struct {
@@ -336,7 +339,7 @@ typedef struct {
 //   FBLE_FUNC_TYPE_EXPR (arg :: Type) (return :: Type)
 typedef struct {
   FbleTypeExpr _base;
-  FbleTypeExpr* arg;
+  FbleTypeExprV args;
   FbleTypeExpr* rtype;
 } FbleFuncTypeExpr;
 

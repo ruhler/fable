@@ -71,7 +71,7 @@ typedef struct {
 // FbleFuncType -- FBLE_FUNC_TYPE
 typedef struct {
   FbleType _base;
-  FbleType* arg;
+  FbleTypeV args;
   FbleType* rtype;
 } FbleFuncType;
 

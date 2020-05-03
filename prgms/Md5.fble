@@ -12,6 +12,7 @@
 <@>@ SL@ = /List%.S@;
 <@,@>@ List@ = /List%.List@;
 <@>% SL = /List%.S;
+<@,@>% ForS = /List%.ForS;
 
 @ Bit@ = /Bits%.Bit.Bit@;
 @ Bit2@ = /Bits%.Bit2.Bit2@;
@@ -669,22 +670,16 @@ ABCD@ ABCD0 = ABCD@(
 };
 
 (Md5Hash@, Md5Hash@){Bool@;} Eq = (Md5Hash@ a, Md5Hash@ b) {
-  And(And(And(And(And(EqHex(a.0, b.0), EqHex(a.1, b.1)))
-                 (And(EqHex(a.2, b.2), EqHex(a.3, b.3))))
-             (And(And(EqHex(a.4, b.4), EqHex(a.5, b.5)))
-                 (And(EqHex(a.6, b.6), EqHex(a.7, b.7)))))
-         (And(And(And(EqHex(a.8, b.8), EqHex(a.9, b.9)))
-                 (And(EqHex(a.10, b.10), EqHex(a.11, b.11))))
-             (And(And(EqHex(a.12, b.12), EqHex(a.13, b.13)))
-                 (And(EqHex(a.14, b.14), EqHex(a.15, b.15))))))
-     (And(And(And(And(EqHex(a.16, b.16), EqHex(a.17, b.17)))
-                 (And(EqHex(a.18, b.18), EqHex(a.19, b.19))))
-             (And(And(EqHex(a.20, b.20), EqHex(a.21, b.21)))
-                 (And(EqHex(a.22, b.22), EqHex(a.23, b.23)))))
-         (And(And(And(EqHex(a.24, b.24), EqHex(a.25, b.25)))
-                 (And(EqHex(a.26, b.26), EqHex(a.27, b.27))))
-             (And(And(EqHex(a.28, b.28), EqHex(a.29, b.29)))
-                 (And(EqHex(a.30, b.30), EqHex(a.31, b.31))))));
+  ForS<Bool@, Bool@>(SL<Bool@>([
+    EqHex(a.0, b.0), EqHex(a.1, b.1), EqHex(a.2, b.2), EqHex(a.3, b.3),
+    EqHex(a.4, b.4), EqHex(a.5, b.5), EqHex(a.6, b.6), EqHex(a.7, b.7),
+    EqHex(a.8, b.8), EqHex(a.9, b.9), EqHex(a.10, b.10), EqHex(a.11, b.11),
+    EqHex(a.12, b.12), EqHex(a.13, b.13), EqHex(a.14, b.14), EqHex(a.15, b.15),
+    EqHex(a.16, b.16), EqHex(a.17, b.17), EqHex(a.18, b.18), EqHex(a.19, b.19),
+    EqHex(a.20, b.20), EqHex(a.21, b.21), EqHex(a.22, b.22), EqHex(a.23, b.23),
+    EqHex(a.24, b.24), EqHex(a.25, b.25), EqHex(a.26, b.26), EqHex(a.27, b.27),
+    EqHex(a.28, b.28), EqHex(a.29, b.29), EqHex(a.30, b.30), EqHex(a.31, b.31)
+  ]), True, And);
 };
 
 @(Md5Hash@, Md5, Eq);

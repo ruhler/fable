@@ -25,10 +25,10 @@
   # Ahahaha! See if you can figure out how this works. :)
   @ MkInt@ = (Int@) { Int@; };
   mkInt<MkInt@>(
-    (Int@ d, MkInt@ mk, Int@ msb) {
+    (Int@ d, MkInt@ mk)(Int@ msb) {
       mk(Add(Mul(10, msb), d));
     },
-    (Int@ msb) { msb; }, 0);
+    (Int@ msb) { msb; })(0);
 };
 
 @(I, D);

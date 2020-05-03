@@ -46,7 +46,9 @@
 # The world is a set of Coord@ where there are live cells.
 % MapCoord = Map<Coord@>(DCoord);
 @ World@ = MapCoord.Map@<Unit@>;
-% EqWorld = MapCoord.Equals<Unit@>((Unit@ a, Unit@ b) { True; });
+% EqWorld = (World@ a, World@ b) {
+   MapCoord.Equals<Unit@>((Unit@ _a, Unit@ _b) { True; }, a, b);
+};
 % W = @(
   Empty: MapCoord.Empty<Unit@>,
   Insert: MapCoord.Insert<Unit@>,

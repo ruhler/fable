@@ -164,7 +164,7 @@ Set@ FullSet = (Symbol@ s) { True; };
 # 2D array of cells. The first index is the row, the second index is the
 # column.
 @ Board@ = Array@<Array@<Cell@>>;
-Board@ EmptyBoard = (Symbol@ r, Symbol@ c) { FullSet; };
+Board@ EmptyBoard = (Symbol@ r)(Symbol@ c) { FullSet; };
 
 # A constraint specifying that a cell cannot be the given symbol.
 @ X@ = *(CellId@ cell, Symbol@ symbol);
@@ -236,7 +236,7 @@ XS@ EmptyXS = XS@(empty: Unit);
 # Produces an updated board and new constraints learned in the process.
 # Does nothing if the constraint was already known.
 (Board@, X@) { BoardX@; } ApplyX = (Board@ board, X@ x) {
-  Cell@ cell = board(x.cell.row, x.cell.col);
+  Cell@ cell = board(x.cell.row)(x.cell.col);
   ?(cell(x.symbol);
      true: {
        Cell@ ncell = Set<Bool@>(x.symbol, False, cell);
@@ -250,14 +250,14 @@ XS@ EmptyXS = XS@(empty: Unit);
          nothing: EmptyXS);
 
        # If board[row].symbol has only one cell, generate the assignment.
-       Set@ cells = (Symbol@ col) { nboard(x.cell.row, col, x.symbol); };
+       Set@ cells = (Symbol@ col) { nboard(x.cell.row)(col)(x.symbol); };
        Maybe@<Symbol@> single = Singleton(cells);
        XS@ xRow = ?(single;
          just: Assign(CellId@(x.cell.row, single.just), x.symbol),
          nothing: EmptyXS);
 
        # If board[col].symbol has only one cell, generate the assignment.
-       Set@ cells = (Symbol@ row) { nboard(row, x.cell.col, x.symbol); };
+       Set@ cells = (Symbol@ row) { nboard(row)(x.cell.col)(x.symbol); };
        Maybe@<Symbol@> single = Singleton(cells);
        XS@ xCol = ?(single;
          just: Assign(CellId@(single.just, x.cell.col), x.symbol),
@@ -267,7 +267,7 @@ XS@ EmptyXS = XS@(empty: Unit);
        Symbol@ box = BoxGroupOf(x.cell);
        Set@ cells = (Symbol@ pos) {
          CellId@ cell = CellOfPos(box, pos);
-         nboard(cell.row, cell.col, x.symbol);
+         nboard(cell.row)(cell.col)(x.symbol);
        };
        Maybe@<Symbol@> single = Singleton(cells);
        XS@ xBox = ?(single;
@@ -305,7 +305,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
   ?(mfrom;
       just: {
         CellId@ from = mfrom.just;
-        Cell@ cell = board(from.row, from.col);
+        Cell@ cell = board(from.row)(from.col);
         Maybe@<CellId@> next = IterateCellId(from);
 
         Maybe@<Symbol@> single = Singleton(cell);
@@ -336,20 +336,20 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
       nothing: Just<Board@>(board));
 };
 
-@ Input@ = (Symbol@, Symbol@) { Maybe@<Symbol@>; };
+@ Input@ = (Symbol@)(Symbol@) { Maybe@<Symbol@>; };
 
 # Generate constraints based on the given input board.
 (Input@) { XS@; } InputXS = (Input@ board) {
   For<CellId@, XS@>(CellId@(1, 1), EmptyXS, IterateCellId,
     (CellId@ cell, XS@ xs) {
-      Maybe@<Symbol@> ms = board(cell.row, cell.col);
+      Maybe@<Symbol@> ms = board(cell.row)(cell.col);
       ?(ms;
          just: AppendXS(Assign(cell, ms.just), xs),
          nothing: xs);
   });
 };
 
-@ Solved@ = (Symbol@, Symbol@) { Symbol@; };
+@ Solved@ = (Symbol@)(Symbol@) { Symbol@; };
 
 # Solve a board.
 (Input@) { Maybe@<Solved@>; } Solve = (Input@ in) {
@@ -357,8 +357,8 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
     ApplyXS(EmptyBoard, InputXS(in)),
     Just<CellId@>(CellId@(1, 1)));
   ?(solved;
-      just: Just<Solved@>((Symbol@ row, Symbol@ col) {
-        Singleton(solved.just(row, col)).just;
+      just: Just<Solved@>((Symbol@ row)(Symbol@ col) {
+        Singleton(solved.just(row)(col)).just;
       }),
       nothing: Nothing<Solved@>);
 };

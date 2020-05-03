@@ -125,7 +125,10 @@ Equals = <@ K@, @ V@>((V@, V@) { Bool@;} eq, DataMap@<K@, V@> a, DataMap@<K@, V@
 
           Bool@ product_eq = 
             Equals<Unit@, DataMap@<K@, V@>>(
-              Equals<K@, V@>(eq), a.map.product, b.map.product);
+              (DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
+                Equals<K@, V@>(eq, a, b);
+              },
+              a.map.product, b.map.product);
           And(unit_eq, And(sum_eq, product_eq));
         }));
 };
