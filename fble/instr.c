@@ -306,7 +306,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_UNION_SELECT_INSTR:
     case FBLE_JUMP_INSTR:
     case FBLE_RELEASE_INSTR:
-    case FBLE_FUNC_APPLY_INSTR:
     case FBLE_COPY_INSTR:
     case FBLE_GET_INSTR:
     case FBLE_PUT_INSTR:
@@ -332,6 +331,13 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleFreeInstrBlock(arena, func_value_instr->code);
       FbleFree(arena, func_value_instr->scope.xs);
       FbleFree(arena, func_value_instr);
+      return;
+    }
+
+    case FBLE_FUNC_APPLY_INSTR: {
+      FbleFuncApplyInstr* apply_instr = (FbleFuncApplyInstr*)instr;
+      FbleFree(arena, apply_instr->args.xs);
+      FbleFree(arena, instr);
       return;
     }
 

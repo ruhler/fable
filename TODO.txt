@@ -1,10 +1,10 @@
 
-* Fix memory leaks.
-
 * Replace FbleThunkValue with FbleFuncValue
  - use zero arg func value for proc.
 
-* Update the language spec.
+* Update the language spec for func type change.
+* Update the spec test for func type change.
+* Allow zero-argument functions in the language spec?
 
 * [profile] Remove special block 0
  - Add block data at the profile level representing 'total' and special case

@@ -774,7 +774,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           FbleFuncType* func_type = (FbleFuncType*)normal;
           if (func_type->args.size != argc) {
             ReportError(arena, &expr->loc,
-                "expected %i args, but %i were provided\n",
+                "expected %i args, but found %i\n",
                 func_type->args.size, argc);
             FbleTypeRelease(heap, normal);
             FbleTypeRelease(heap, misc.type);
@@ -826,6 +826,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           };
 
           FbleTypeRelease(heap, normal);
+          FbleTypeRelease(heap, misc.type);
           return c;
         }
 
