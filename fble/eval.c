@@ -35,7 +35,7 @@ typedef struct Stack {
   FbleValue* thunk;
   FbleValue** statics;
   FbleInstrBlock* code;
-  size_t pc;
+  FbleInstr** pc;
   FbleValue** result;
   struct Stack* tail;
   FbleValue* locals[];
@@ -187,7 +187,7 @@ static Stack* PushFrame(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue** 
   stack->thunk = &thunk->_base;
   stack->statics = code_thunk->scope;
   stack->code = code_thunk->code;
-  stack->pc = 0;
+  stack->pc = stack->code->instrs.xs;
   stack->result = result;
   stack->tail = tail;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
@@ -280,7 +280,7 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleThunkValue* thunk, Stack* st
   stack->thunk = &thunk->_base;
   stack->statics = code_thunk->scope;
   stack->code = code_thunk->code;
-  stack->pc = 0;
+  stack->pc = stack->code->instrs.xs;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   t = thunk;
@@ -349,8 +349,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
   while (true) {
-    assert(thread->stack->pc < thread->stack->code->instrs.size);
-    FbleInstr* instr = thread->stack->code->instrs.xs[thread->stack->pc++];
+    FbleInstr* instr = *thread->stack->pc++;
     if (rand() % TIME_SLICE == 0) {
       // Don't count profiling instructions against the profile time. The user
       // doesn't care about those.
