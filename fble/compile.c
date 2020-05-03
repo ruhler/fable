@@ -798,7 +798,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           apply_instr->loc = misc_apply_expr->misc->loc;
           apply_instr->exit = exit;
           apply_instr->func = misc.local->index;
-          // TODO: apply_instr->arg =
+          FbleVectorInit(arena, apply_instr->args);
           apply_instr->dest = dest->index.index;
           AppendInstr(arena, scope, &apply_instr->_base);
 
@@ -816,7 +816,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             }
             FbleTypeRelease(heap, args[i].type);
 
-            // TODO: FbleVectorAppend(arena, apply_instr->args, args[i].local->index);
+            FbleVectorAppend(arena, apply_instr->args, args[i].local->index);
             LocalRelease(arena, scope, args[i].local, apply_instr->exit);
           }
 
@@ -854,7 +854,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           if (struct_type->fields.size != argc) {
             // TODO: Where should the error message go?
             ReportError(arena, &expr->loc,
-                "expected %i args, but %i were provided\n",
+                "expected %i args, but %i provided\n",
                  struct_type->fields.size, argc);
             FbleTypeRelease(heap, &struct_type->_base);
             FbleTypeRelease(heap, vtype);

@@ -176,9 +176,9 @@ typedef struct {
 } FbleReleaseInstr;
 
 // FbleFuncApplyInstr -- FBLE_FUNC_APPLY_INSTR
-//   Apply a function to arguments.
+//   Apply a function to its arguments.
 //
-// *dest = func(arg)
+// *dest = func(args[0], args[1], ...)
 //
 // If exit is true, this is treated as a tail call. In that case, dest is
 // ignored and the result is returned to the caller.
@@ -188,7 +188,7 @@ typedef struct {
   bool exit;
   FbleLocalIndex dest;
   FbleFrameIndex func;
-  FbleFrameIndex arg;
+  FbleFrameIndexV args;
 } FbleFuncApplyInstr;
 
 // FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR

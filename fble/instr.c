@@ -124,11 +124,19 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
             fprintf(fout, "l%zi", func_apply_instr->dest);
           }
 
-          fprintf(fout, " = %s%zi(%s%zi); // %s:%i:%i\n",
+          fprintf(fout, " = %s%zi(",
               sections[func_apply_instr->func.section],
-              func_apply_instr->func.index,
-              sections[func_apply_instr->arg.section],
-              func_apply_instr->arg.index,
+              func_apply_instr->func.index);
+
+          const char* comma = "";
+          for (size_t i = 0; i < func_apply_instr->args.size; ++i) {
+            fprintf(fout, "%s%s%zi", comma, 
+              sections[func_apply_instr->args.xs[i].section],
+              func_apply_instr->args.xs[i].index);
+            comma = ", ";
+          }
+              
+          fprintf(fout, "); // %s:%i:%i\n",
               func_apply_instr->loc.source, func_apply_instr->loc.line,
               func_apply_instr->loc.col);
           break;
