@@ -1,13 +1,4 @@
 
-* [eval] Use native stack
- - Track down deadlock in tests.
- - Track down deadlock in md5.
- - Track down crash in bench.
- - consider switching to pth or experimenting with condition variables?
-
-* [eval] Any way to abstract the thread API away?
- - In other words, ideally there are no references to pthreads in eval.c
-
 * [profile] Remove special block 0
  - Add block data at the profile level representing 'total' and special case
    that way instead. So that literally it is impossible for anyone to call
@@ -24,7 +15,6 @@
   unused 'true' variable definition is removed.
 
 * [eval] Thread management cleanup
- - Switch i/o ports to use links?
  - Use fair thread traversal by starting over from root when yield occurs.
 
 * [invaders] Implement space invaders game.

@@ -49,13 +49,13 @@ foreach {x} [glob test/*.c prgms/*.c] {
 
 set ::bin out/bin
 exec mkdir -p $::bin
-gcc_prgm -o $::bin/fble-decompile $::obj/fble-decompile.o -lfble -lpthread
-gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble -lpthread
-gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble -lpthread
-gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble -lpthread
-gcc_prgm -o $::bin/fble-app $::obj/fble-app.o -lfble -lSDL2 -lpthread
-gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble -lpthread
-gcc_prgm -o $::bin/fble-stdio $::obj/fble-stdio.o -lfble -lpthread
+gcc_prgm -o $::bin/fble-decompile $::obj/fble-decompile.o -lfble
+gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble
+gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble
+gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble
+gcc_prgm -o $::bin/fble-app $::obj/fble-app.o -lfble -lSDL2
+gcc_prgm -o $::bin/fble-md5 $::obj/fble-md5.o -lfble
+gcc_prgm -o $::bin/fble-stdio $::obj/fble-stdio.o -lfble
 
 proc write_modules { dir modules } {
   foreach m $modules {
