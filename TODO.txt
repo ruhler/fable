@@ -1,6 +1,9 @@
 
 * [eval] Use native stack
- - fix thread support.
+ - Track down deadlock in tests.
+ - Track down deadlock in md5.
+ - Track down crash in bench.
+ - consider switching to pth or experimenting with condition variables?
 
 * [eval] Any way to abstract the thread API away?
  - In other words, ideally there are no references to pthreads in eval.c

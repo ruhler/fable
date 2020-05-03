@@ -164,3 +164,19 @@ instructions.
 gprof suggests there isn't that much to gain from compiling. Because the
 execution time is dominated by allocations and memory management work.
 
+---
+
+Threading revisited: we can use pthreads if we want, or pth, or getcontext.
+For pthreads, we just need a mutex that a thread has to acquire before it can
+do any work. That way only one thread runs at a time.
+
+Problems with pthreads:
+* non-deterministic behavior is, right out of the box, causing lots of
+  problems. Bugs go away under the debugger. Different bugs from different
+  runs. That's going to be a debugging nightmare as long as we use pthreads.
+* limits on number of threads. Like, 32K number on linux? That's not really
+  acceptable. Max user processes of 7314 by ulimit. Definitely not acceptable.
+* only the main thread has a dynamically sized stack. Though I'm not sure how
+  we could ever get around that limitation. gcc's -fsplit-stack is not
+  supported by the gcc preinstalled on my computer.
+

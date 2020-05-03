@@ -4,7 +4,7 @@
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
 #include <stdlib.h>   // for NULL, abort, rand
-#include <string.h>   // for memset
+#include <string.h>   // for memset, strerror
 
 #include <pthread.h>  // for pthread_*
 #include <sched.h>    // for sched_yield
@@ -127,7 +127,16 @@ static Thread* Fork(FbleValueHeap* heap, Thread* thread, FbleThunkValue* thunk, 
   args->thunk = thunk;
   args->profile = profile;
 
-  pthread_create(&forked->pthread, NULL, (void*(*)(void*))&Spawn, args);
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_attr_setstacksize(&attr, 256 * 1024);
+  int err = pthread_create(&forked->pthread, &attr, (void*(*)(void*))&Spawn, args);
+  pthread_attr_destroy(&attr);
+  if (err != 0) {
+    fprintf(stderr, "pthread_create: %s\n", strerror(err));
+    abort();
+  }
+
   return forked;
 }
 
