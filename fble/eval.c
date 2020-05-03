@@ -348,7 +348,7 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
-  while (thread->stack != NULL) {
+  while (true) {
     assert(thread->stack->pc < thread->stack->code->instrs.size);
     FbleInstr* instr = thread->stack->code->instrs.xs[thread->stack->pc++];
     if (rand() % TIME_SLICE == 0) {
@@ -482,6 +482,9 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           if (func_apply_instr->exit) {
             *thread->stack->result = &value->_base._base;
             thread->stack = PopFrame(heap, thread->stack);
+            if (thread->stack == NULL) {
+              return FINISHED;
+            }
           } else {
             thread->stack->locals[func_apply_instr->dest] = &value->_base._base;
           }
@@ -710,6 +713,9 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleValue* result = FrameGet(thread->stack, return_instr->result);
         *thread->stack->result = FbleValueRetain(heap, result);
         thread->stack = PopFrame(heap, thread->stack);
+        if (thread->stack == NULL) {
+          return FINISHED;
+        }
         break;
       }
 
@@ -757,7 +763,9 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
       }
     }
   }
-  return FINISHED;
+
+  UNREACHABLE("should never get here");
+  return ABORTED;
 }
 
 // RunThreads --

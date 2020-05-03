@@ -21,7 +21,7 @@ test:
 
 .PHONY: bench
 bench:
-	./out/bin/fble-test --profile prgms/Fble/Bench.fble prgms > bench.prof
+	./out/bin/fble-test prgms/Fble/Bench.fble prgms
 	mkdir -p out/cov/bench
 	gcov out/obj/*.o > fble.gcov
 	mv *.gcov out/cov/bench/
