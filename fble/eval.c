@@ -21,17 +21,6 @@
 //   instructions executed.
 #define TIME_SLICE 1024
 
-// Space --
-//   Used to keep track of whether all threads have run since the last io.
-//
-// Threads will belong to either space A or space B, which will be labelled as
-// "to" and "from" spaces. When a thread has a chance to run, it moves to the
-// "to" space. Once all threads have moved to the "to" space, we do io and
-// swap "from" and "to" spaces.
-typedef enum {
-  A, B
-} Space;
-
 // Thread --
 //   Handle to a thread that can be passed to Join.
 typedef struct {
@@ -47,12 +36,9 @@ typedef struct {
 typedef struct {
   pthread_mutex_t mutex;  // mutex held by currently running thread.
 
-  bool blocked;     // True if all threads in the "to" space are blocked.
-  size_t to;        // Number of threads in the "to" space.
-  size_t from;      // Number of threads in the "from" space.
-
-  Space to_space;   // The current "to" space.
-  bool abort;       // True if threads should abort.
+  size_t num_threads;     // The number of threads.
+  bool blocked;           // True if all threads are blocked.
+  bool abort;             // True if threads should abort.
 } Sched;
 
 // SpawnArgs --
@@ -93,6 +79,9 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, F
 //   are needed.
 static Thread* Fork(FbleValueHeap* heap, Sched* sched, FbleThunkValue* thunk, FbleProfileThread* profile)
 {
+  sched->num_threads++;
+  sched->blocked = false;
+
   SpawnArgs* args = FbleAlloc(heap->arena, SpawnArgs);
   args->heap = heap;
   args->sched = sched;
@@ -101,9 +90,6 @@ static Thread* Fork(FbleValueHeap* heap, Sched* sched, FbleThunkValue* thunk, Fb
 
   Thread* thread = FbleAlloc(heap->arena, Thread);
   pthread_create(&thread->thread, NULL, (void*(*)(void*))&Spawn, args);
-
-  // Threads start in the 'from' space.
-  sched->from++;
   return thread;
 }
 
@@ -129,12 +115,12 @@ static FbleValue* Spawn(SpawnArgs* args)
   FbleFree(heap->arena, args);
 
   pthread_mutex_lock(&sched->mutex);
-  sched->from--;
 
   FbleValue* result = Run(heap, sched, thunk, profile);
 
   // A consequence of finishing this thread means whoever is joining the
   // thread is no longer blocked
+  sched->num_threads--;
   sched->blocked = false;
 
   pthread_mutex_unlock(&sched->mutex);
@@ -158,11 +144,6 @@ static FbleValue* Spawn(SpawnArgs* args)
 //   behavior.
 static FbleValue* Join(FbleArena* arena, Sched* sched, Thread* thread)
 {
-  // Put the current thread into the "to" space.
-  sched->to++;
-  Space space = sched->to_space;
-
-  // Join with the given thread.
   pthread_mutex_unlock(&sched->mutex);
 
   FbleValue* result = NULL;
@@ -170,14 +151,6 @@ static FbleValue* Join(FbleArena* arena, Sched* sched, Thread* thread)
   FbleFree(arena, thread);
 
   pthread_mutex_lock(&sched->mutex);
-
-  // Take the current thread out of whatever space it is in now.
-  if (space == sched->to_space) {
-    sched->to--;
-  } else {
-    sched->from--;
-  }
-
   return result;
 }
 
@@ -196,21 +169,9 @@ static void Yield(Sched* sched, bool blocked)
     sched->blocked = false;
   }
 
-  // Put the thread into the "to" space.
-  sched->to++;
-  Space space = sched->to_space;
-
-  // Give some other threads a chance to run.
   pthread_mutex_unlock(&sched->mutex);
   sched_yield();
   pthread_mutex_lock(&sched->mutex);
-
-  // Take the thread out of whatever space it is in now.
-  if (space == sched->to_space) {
-    sched->to--;
-  } else {
-    sched->from--;
-  }
 }
 
 // FrameGet --
@@ -822,10 +783,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, F
 
   Sched sched = {
     .mutex = PTHREAD_MUTEX_INITIALIZER,
+    .num_threads = 0,
     .blocked = false,
-    .to = 0,
-    .from = 0,
-    .to_space = A,
     .abort = false,
   };
 
@@ -839,33 +798,34 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, F
   while (true) {
     pthread_mutex_lock(&sched.mutex);
 
-    if (sched.to + sched.from == 0) {
+    if (sched.num_threads == 0) {
       // No more threads are running. We're all done here.
       break;
     }
 
     // Do some io.
-    if (io->io(io, heap, sched.blocked && sched.from == 0)) {
+    if (io->io(io, heap, sched.blocked)) {
       sched.blocked = false;
     }
 
-    if (sched.from == 0) {
-      if (sched.blocked) {
-        // All threads are blocked, and blocking io made no progress.
-        // This is deadlock.
-        FbleLoc loc = { .source = __FILE__, .line = 0, .col = 0 };
-        FbleReportError("deadlock detected\n", &loc);
-        sched.abort = true;
-      }
-
-      // Swap "from" and "to" spaces.
-      sched.blocked = !sched.abort;
-      sched.from = sched.to;
-      sched.to = 0;
-      sched.to_space = (sched.to_space == A) ? B : A;
+    if (sched.blocked) {
+      // All threads are blocked, and blocking io made no progress.
+      // This is deadlock.
+      FbleLoc loc = { .source = __FILE__, .line = 0, .col = 0 };
+      FbleReportError("deadlock detected\n", &loc);
+      sched.abort = true;
+      sched.blocked = false;
+      abort();
+    } else {
+      // sched.blocked = true;
+      sched.blocked = false;
     }
 
     // Give some other threads a chance to run.
+    // TODO: Is it safe to assume all other threads will have a chance to run
+    // before we come back to this thread?
+    // Answer: No! Don't make any assumptions at all about what order threads
+    // get scheduled to run in.
     pthread_mutex_unlock(&sched.mutex);
     sched_yield();
   }
