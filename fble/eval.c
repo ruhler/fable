@@ -6,6 +6,9 @@
 #include <stdlib.h>   // for NULL, abort, rand
 #include <string.h>   // for memset
 
+#include <pthread.h>  // for pthread_*
+#include <sched.h>    // for sched_yield
+
 #include "fble.h"
 #include "instr.h"
 #include "value.h"
@@ -18,12 +21,197 @@
 //   instructions executed.
 #define TIME_SLICE 1024
 
+// Space --
+//   Used to keep track of whether all threads have run since the last io.
+//
+// Threads will belong to either space A or space B, which will be labelled as
+// "to" and "from" spaces. When a thread has a chance to run, it moves to the
+// "to" space. Once all threads have moved to the "to" space, we do io and
+// swap "from" and "to" spaces.
+typedef enum {
+  A, B
+} Space;
+
+// Thread --
+//   Handle to a thread that can be passed to Join.
+typedef struct {
+  pthread_t thread;
+} Thread;
+
+// Sched --
+//   The thread scheduler.
+//
+// Threads use cooperative multithreading. Only the thread that holds the
+// mutex is allowed to run. It is the responsibility of the thread with the
+// mutex to periodically yield the mutex so some other thread can run.
+typedef struct {
+  pthread_mutex_t mutex;  // mutex held by currently running thread.
+
+  bool blocked;     // True if all threads in the "to" space are blocked.
+  size_t to;        // Number of threads in the "to" space.
+  size_t from;      // Number of threads in the "from" space.
+
+  Space to_space;   // The current "to" space.
+  bool abort;       // True if threads should abort.
+} Sched;
+
+// SpawnArgs --
+//   Wrapper around arguments to pass to Spawn.
+typedef struct {
+  FbleValueHeap* heap;
+  Sched* sched;
+  FbleThunkValue* thunk;
+  FbleProfileThread* profile;
+} SpawnArgs;
+
+static Thread* Fork(FbleValueHeap* heap, Sched* sched, FbleThunkValue* thunk, FbleProfileThread* profile);
+static FbleValue* Spawn(SpawnArgs* args);
+static FbleValue* Join(FbleArena* arena, Sched* sched, Thread* thread);
+static void Yield(Sched* sched, bool blocked);
+
 static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameIndex index);
 static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValue** locals, FbleFrameIndex index);
 
 static void Cleanup(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue** locals, size_t localc);
-static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, FbleProfileThread* profile);
+static FbleValue* Run(FbleValueHeap* heap, Sched* sched, FbleThunkValue* thunk, FbleProfileThread* profile);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, FbleProfile* profile);
+
+// Fork --
+//   Fork a new thread to evaluate a thunk.
+// 
+// Inputs:
+//   heap - the value heap
+//   sched - the thread scheduler
+//   thunk - the thunk to evaluate
+//   profile - the profiling thread to use for the forked thread
+//
+// Results:
+//   A handle to the thread that was forked.
+//
+// Side effects:
+//   Allocates a thread that must be joined with using Join when its results
+//   are needed.
+static Thread* Fork(FbleValueHeap* heap, Sched* sched, FbleThunkValue* thunk, FbleProfileThread* profile)
+{
+  SpawnArgs* args = FbleAlloc(heap->arena, SpawnArgs);
+  args->heap = heap;
+  args->sched = sched;
+  args->thunk = thunk;
+  args->profile = profile;
+
+  Thread* thread = FbleAlloc(heap->arena, Thread);
+  pthread_create(&thread->thread, NULL, (void*(*)(void*))&Spawn, args);
+
+  // Threads start in the 'from' space.
+  sched->from++;
+  return thread;
+}
+
+// Spawn --
+//   Function called to spawn a new thread.
+//
+// Evaluates the thunk given in its arguments and returns the result.
+//
+// Inputs:
+//   args - the arguments to spawn the thread with.
+//
+// Results:
+//   The result of evaluating the thunk passed in the args.
+//
+// Side effects:
+//   Frees 'args'. And everything that evaluating a thunk might do.
+static FbleValue* Spawn(SpawnArgs* args)
+{
+  FbleValueHeap* heap = args->heap;
+  Sched* sched = args->sched;
+  FbleThunkValue* thunk = args->thunk;
+  FbleProfileThread* profile = args->profile;
+  FbleFree(heap->arena, args);
+
+  pthread_mutex_lock(&sched->mutex);
+  sched->from--;
+
+  FbleValue* result = Run(heap, sched, thunk, profile);
+
+  // A consequence of finishing this thread means whoever is joining the
+  // thread is no longer blocked
+  sched->blocked = false;
+
+  pthread_mutex_unlock(&sched->mutex);
+  return result;
+}
+
+// Join --
+//   Join with a thread and get its result.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   sched - the thread scheduler.
+//   thread - the thread to join with.
+//
+// Results:
+//   The final result from the thread to join with.
+//
+// Side effects:
+//   Blocks until the thread is finished, then returns the threads result.
+//   Access to 'thread' after this function returns will result in undefined
+//   behavior.
+static FbleValue* Join(FbleArena* arena, Sched* sched, Thread* thread)
+{
+  // Put the current thread into the "to" space.
+  sched->to++;
+  Space space = sched->to_space;
+
+  // Join with the given thread.
+  pthread_mutex_unlock(&sched->mutex);
+
+  FbleValue* result = NULL;
+  pthread_join(thread->thread, (void**)&result);
+  FbleFree(arena, thread);
+
+  pthread_mutex_lock(&sched->mutex);
+
+  // Take the current thread out of whatever space it is in now.
+  if (space == sched->to_space) {
+    sched->to--;
+  } else {
+    sched->from--;
+  }
+
+  return result;
+}
+
+// Yield --
+//   Give some other threads a chance to run.
+//
+// Inputs:
+//   sched - the thread scheduler.
+//   blocked - true if this thread is currently blocked, false otherwise.
+//
+// Side effects:
+//   Gives other threads a chance to run.
+static void Yield(Sched* sched, bool blocked)
+{
+  if (!blocked) {
+    sched->blocked = false;
+  }
+
+  // Put the thread into the "to" space.
+  sched->to++;
+  Space space = sched->to_space;
+
+  // Give some other threads a chance to run.
+  pthread_mutex_unlock(&sched->mutex);
+  sched_yield();
+  pthread_mutex_lock(&sched->mutex);
+
+  // Take the thread out of whatever space it is in now.
+  if (space == sched->to_space) {
+    sched->to--;
+  } else {
+    sched->from--;
+  }
+}
 
 // FrameGet --
 //   Look up a value by frame index.
@@ -114,7 +302,7 @@ static void Cleanup(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue** loca
 //
 // Inputs:
 //   heap - the value heap.
-//   io - io to use for external ports.
+//   sched - the thread scheduler.
 //   thunk - the thunk to evaluate.
 //   profile - the current profiling thread.
 //
@@ -126,7 +314,7 @@ static void Cleanup(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue** loca
 //   Takes ownership of thunk.
 //   Updates profiling information based on evaluation of the thunk.
 //   Prints a message to stderr in case of error.
-static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, FbleProfileThread* profile)
+static FbleValue* Run(FbleValueHeap* heap, Sched* sched, FbleThunkValue* thunk, FbleProfileThread* profile)
 {
   FbleArena* arena = heap->arena;
 
@@ -167,7 +355,11 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
           FbleProfileSample(arena, profile, 1);
         }
 
-        // TODO: Yield here and check for abort.
+        Yield(sched, false);
+        if (sched->abort) {
+          Cleanup(heap, thunk, locals, localc);
+          return NULL;
+        }
       }
 
       switch (instr->tag) {
@@ -199,6 +391,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
           if (sv == NULL) {
             FbleReportError("undefined struct value access\n", &access_instr->loc);
             Cleanup(heap, thunk, locals, localc);
+            sched->abort = true;
             return NULL;
           }
           assert(access_instr->tag < sv->fieldc);
@@ -213,12 +406,14 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
           if (uv == NULL) {
             FbleReportError("undefined union value access\n", &access_instr->loc);
             Cleanup(heap, thunk, locals, localc);
+            sched->abort = true;
             return NULL;
           }
 
           if (uv->tag != access_instr->tag) {
             FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
             Cleanup(heap, thunk, locals, localc);
+            sched->abort = true;
             return NULL;
           }
 
@@ -232,6 +427,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
           if (uv == NULL) {
             FbleReportError("undefined union value select\n", &select_instr->loc);
             Cleanup(heap, thunk, locals, localc);
+            sched->abort = true;
             return NULL;
           }
           pc += uv->tag;
@@ -279,6 +475,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
           if (func == NULL) {
             FbleReportError("undefined function value apply\n", &func_apply_instr->loc);
             Cleanup(heap, thunk, locals, localc);
+            sched->abort = true;
             return NULL;
           };
 
@@ -305,9 +502,10 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
               tail_call = true;
               break;
             } else {
-              locals[func_apply_instr->dest] = Run(heap, io, &value->_base, profile);
+              locals[func_apply_instr->dest] = Run(heap, sched, &value->_base, profile);
               if (locals[func_apply_instr->dest] == NULL) {
                 Cleanup(heap, thunk, locals, localc);
+                sched->abort = true;
                 return NULL;
               }
             }
@@ -347,12 +545,13 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
           if (get_port->tag == FBLE_LINK_VALUE) {
             FbleLinkValue* link = (FbleLinkValue*)get_port;
 
-            if (link->head == NULL) {
+            while (link->head == NULL) {
               // Blocked on get.
-              // TODO: Yield here and check for abort.
-              fprintf(stderr, "BLOCKED ON LINK GET\n");
-              Cleanup(heap, thunk, locals, localc);
-              return NULL;
+              Yield(sched, true);
+              if (sched->abort) {
+                Cleanup(heap, thunk, locals, localc);
+                return NULL;
+              }
             }
 
             FbleValues* head = link->head;
@@ -369,12 +568,10 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
 
           if (get_port->tag == FBLE_PORT_VALUE) {
             FblePortValue* port = (FblePortValue*)get_port;
-            if (*port->data == NULL) {
+            while (*port->data == NULL) {
               // Blocked on get.
-              // TODO: Handle this properly.
-              io->io(io, heap, true);
-              if (*port->data == NULL) {
-                fprintf(stderr, "BLOCKED ON IO GET\n");
+              Yield(sched, true);
+              if (sched->abort) {
                 Cleanup(heap, thunk, locals, localc);
                 return NULL;
               }
@@ -415,18 +612,20 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
 
             FbleValueAddRef(heap, &link->_base, tail->value);
             locals[put_instr->dest] = unit;
+
+            // A consequence of putting a value is that whatever other thread
+            // is trying to get from the link is no longer blocked.
+            sched->blocked = false;
             break;
           }
 
           if (put_port->tag == FBLE_PORT_VALUE) {
             FblePortValue* port = (FblePortValue*)put_port;
 
-            if (*port->data != NULL) {
+            while (*port->data != NULL) {
               // Blocked on put.
-              // TODO: Handle this properly.
-              io->io(io, heap, true);
-              if (*port->data != NULL) {
-                fprintf(stderr, "BLOCKED ON IO PUT\n");
+              Yield(sched, true);
+              if (sched->abort) {
                 Cleanup(heap, thunk, locals, localc);
                 return NULL;
               }
@@ -460,8 +659,13 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
 
         case FBLE_FORK_INSTR: {
           FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+          size_t argc = fork_instr->args.size;
 
-          for (size_t i = 0; i < fork_instr->args.size; ++i) {
+          FbleProfileThread* profiles[argc];
+          Thread* children[argc];
+
+          // Launch the child threads.
+          for (size_t i = 0; i < argc; ++i) {
             FbleThunkValue* arg = (FbleThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, statics, locals, fork_instr->args.xs[i]);
 
             // You cannot execute a proc in a let binding, so it should be
@@ -470,14 +674,20 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
 
             FbleValueRetain(heap, &arg->_base);
 
-            // TODO: Add real support for forking.
-            // For now, execute the children serially instead of in parallel and
-            // hope for the best.
-            locals[fork_instr->dests.xs[i]] = Run(heap, io, arg, profile);
-            if (locals[fork_instr->dests.xs[i]] == NULL) {
-              Cleanup(heap, thunk, locals, localc);
-              return NULL;
-            }
+            profiles[i] = FbleForkProfileThread(arena, profile);
+            children[i] = Fork(heap, sched, arg, profiles[i]);
+          }
+
+          // Get the results from the child threads.
+          for (size_t i = 0; i < argc; ++i) {
+            locals[fork_instr->dests.xs[i]] = Join(arena, sched, children[i]);
+            FbleFreeProfileThread(arena, profiles[i]);
+          }
+
+          if (sched->abort) {
+            Cleanup(heap, thunk, locals, localc);
+            sched->abort = true;
+            return NULL;
           }
 
           break;
@@ -493,15 +703,15 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
           FbleValueRetain(heap, &proc->_base);
 
           if (proc_instr->exit) {
-            // TODO: Make this a proper tail call!
             Cleanup(heap, thunk, locals, localc);
             thunk = proc;
             tail_call = true;
             break;
           } else {
-            locals[proc_instr->dest] = Run(heap, io, proc, profile);
+            locals[proc_instr->dest] = Run(heap, sched, proc, profile);
             if (locals[proc_instr->dest] == NULL) {
               Cleanup(heap, thunk, locals, localc);
+              sched->abort = true;
               return NULL;
             }
           }
@@ -590,7 +800,7 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
 }
 
 // Eval --
-//   Execute the given sequence of instructions to completion.
+//   Evalue the given thunk to completion.
 //
 // Inputs:
 //   heap - the value heap.
@@ -609,9 +819,63 @@ static FbleValue* Run(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, Fb
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, FbleProfile* profile)
 {
   FbleArena* arena = heap->arena;
-  FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
-  FbleValue* result = Run(heap, io, thunk, thread);
-  FbleFreeProfileThread(arena, thread);
+
+  Sched sched = {
+    .mutex = PTHREAD_MUTEX_INITIALIZER,
+    .blocked = false,
+    .to = 0,
+    .from = 0,
+    .to_space = A,
+    .abort = false,
+  };
+
+  pthread_mutex_lock(&sched.mutex);
+
+  FbleProfileThread* profile_thread = FbleNewProfileThread(arena, profile);
+  Thread* root = Fork(heap, &sched, thunk, profile_thread);
+
+  pthread_mutex_unlock(&sched.mutex);
+
+  while (true) {
+    pthread_mutex_lock(&sched.mutex);
+
+    if (sched.to + sched.from == 0) {
+      // No more threads are running. We're all done here.
+      break;
+    }
+
+    // Do some io.
+    if (io->io(io, heap, sched.blocked && sched.from == 0)) {
+      sched.blocked = false;
+    }
+
+    if (sched.from == 0) {
+      if (sched.blocked) {
+        // All threads are blocked, and blocking io made no progress.
+        // This is deadlock.
+        FbleLoc loc = { .source = __FILE__, .line = 0, .col = 0 };
+        FbleReportError("deadlock detected\n", &loc);
+        sched.abort = true;
+      }
+
+      // Swap "from" and "to" spaces.
+      sched.blocked = !sched.abort;
+      sched.from = sched.to;
+      sched.to = 0;
+      sched.to_space = (sched.to_space == A) ? B : A;
+    }
+
+    // Give some other threads a chance to run.
+    pthread_mutex_unlock(&sched.mutex);
+    sched_yield();
+  }
+
+  FbleValue* result = Join(arena, &sched, root);
+
+  pthread_mutex_unlock(&sched.mutex);
+  pthread_mutex_destroy(&sched.mutex);
+
+  FbleFreeProfileThread(arena, profile_thread);
   return result;
 }
 
