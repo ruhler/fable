@@ -1146,15 +1146,16 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       AppendInstr(arena, scope, &select_instr->_base);
 
       Compiled target = COMPILE_FAILED;
-      FbleGotoInstr* enter_gotos[union_type->fields.size];
+      FbleJumpInstr* enter_jumps[union_type->fields.size];
       for (size_t i = 0; i < union_type->fields.size; ++i) {
-        enter_gotos[i] = FbleAlloc(arena, FbleGotoInstr);
-        enter_gotos[i]->_base.tag = FBLE_GOTO_INSTR;
-        AppendInstr(arena, scope, &enter_gotos[i]->_base);
+        enter_jumps[i] = FbleAlloc(arena, FbleJumpInstr);
+        enter_jumps[i]->_base.tag = FBLE_JUMP_INSTR;
+        enter_jumps[i]->count = scope->code->instrs.size + 1;
+        AppendInstr(arena, scope, &enter_jumps[i]->_base);
       }
 
       size_t default_pc = scope->code->instrs.size;
-      FbleGotoInstr* exit_goto_default = NULL;
+      FbleJumpInstr* exit_jump_default = NULL;
       if (select_expr->default_ != NULL) {
         FbleName name = {
           .name = ":",
@@ -1184,17 +1185,18 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         ExitBlock(arena, blocks, scope, exit);
 
         if (!exit) {
-          exit_goto_default = FbleAlloc(arena, FbleGotoInstr);
-          exit_goto_default->_base.tag = FBLE_GOTO_INSTR;
-          AppendInstr(arena, scope, &exit_goto_default->_base);
+          exit_jump_default = FbleAlloc(arena, FbleJumpInstr);
+          exit_jump_default->_base.tag = FBLE_JUMP_INSTR;
+          exit_jump_default->count = scope->code->instrs.size + 1;
+          AppendInstr(arena, scope, &exit_jump_default->_base);
         }
       }
 
-      FbleGotoInstr* exit_gotos[select_expr->choices.size];
+      FbleJumpInstr* exit_jumps[select_expr->choices.size];
       size_t choice = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         if (choice < select_expr->choices.size && FbleNamesEqual(&select_expr->choices.xs[choice].name, &union_type->fields.xs[i].name)) {
-          enter_gotos[i]->pc = scope->code->instrs.size;
+          enter_jumps[i]->count = scope->code->instrs.size - enter_jumps[i]->count;
 
           EnterBlock(arena, blocks,
               select_expr->choices.xs[choice].name,
@@ -1239,9 +1241,10 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           LocalRelease(arena, scope, result.local, exit);
 
           if (!exit) {
-            exit_gotos[choice] = FbleAlloc(arena, FbleGotoInstr);
-            exit_gotos[choice]->_base.tag = FBLE_GOTO_INSTR;
-            AppendInstr(arena, scope, &exit_gotos[choice]->_base);
+            exit_jumps[choice] = FbleAlloc(arena, FbleJumpInstr);
+            exit_jumps[choice]->_base.tag = FBLE_JUMP_INSTR;
+            exit_jumps[choice]->count = scope->code->instrs.size + 1;
+            AppendInstr(arena, scope, &exit_jumps[choice]->_base);
           }
 
           choice++;
@@ -1259,7 +1262,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           FbleTypeRelease(heap, target.type);
           return COMPILE_FAILED;
         } else {
-          enter_gotos[i]->pc = default_pc;
+          enter_jumps[i]->count = default_pc - enter_jumps[i]->count;
         }
       }
       FbleTypeRelease(heap, &union_type->_base);
@@ -1273,11 +1276,11 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       }
 
       if (!exit) {
-        if (exit_goto_default != NULL) {
-          exit_goto_default->pc = scope->code->instrs.size;
+        if (exit_jump_default != NULL) {
+          exit_jump_default->count = scope->code->instrs.size - exit_jump_default->count;
         }
         for (size_t i = 0; i < select_expr->choices.size; ++i) {
-          exit_gotos[i]->pc = scope->code->instrs.size;
+          exit_jumps[i]->count = scope->code->instrs.size - exit_jumps[i]->count;
         }
       }
 

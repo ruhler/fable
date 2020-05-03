@@ -46,7 +46,7 @@ typedef enum {
   FBLE_STRUCT_ACCESS_INSTR,
   FBLE_UNION_ACCESS_INSTR,
   FBLE_UNION_SELECT_INSTR,
-  FBLE_GOTO_INSTR,
+  FBLE_JUMP_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_RELEASE_INSTR,
   FBLE_FUNC_APPLY_INSTR,
@@ -128,21 +128,24 @@ typedef struct {
 //   Select the next thing to execute based on the tag of the value on top of
 //   the value stack.
 //
-// pc += condition.tag
+// next_pc += condition.tag
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
   FbleFrameIndex condition;
 } FbleUnionSelectInstr;
 
-// FbleGotoInstr -- FBLE_GOTO_INSTR
-//   Jumped to the specified position in the current instruction block.
+// FbleJumpInstr -- FBLE_JUMP_INSTR
+//   Jump forward by the given number of instructions beyond what would
+//   otherwise have been the next instruction.
+// 
+// Jumping backwards is not supported.
 //
-// pc = pc
+// next_pc += count
 typedef struct {
   FbleInstr _base;
-  size_t pc;
-} FbleGotoInstr;
+  size_t count;
+} FbleJumpInstr;
 
 // FbleFuncValueInstr -- FBLE_FUNC_VALUE_INSTR
 //   Allocate a function, capturing the values to use for as variable values

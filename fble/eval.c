@@ -426,9 +426,9 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         break;
       }
 
-      case FBLE_GOTO_INSTR: {
-        FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-        thread->stack->pc = goto_instr->pc;
+      case FBLE_JUMP_INSTR: {
+        FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+        thread->stack->pc += jump_instr->count;
         break;
       }
 

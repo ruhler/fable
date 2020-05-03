@@ -79,7 +79,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-          fprintf(fout, "goto +%s%zi.tag; // %s:%i:%i\n",
+          fprintf(fout, "jump +%s%zi.tag; // %s:%i:%i\n",
               sections[select_instr->condition.section],
               select_instr->condition.index,
               select_instr->loc.source, select_instr->loc.line,
@@ -87,9 +87,9 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           break;
         }
 
-        case FBLE_GOTO_INSTR: {
-          FbleGotoInstr* goto_instr = (FbleGotoInstr*)instr;
-          fprintf(fout, "goto %zi;\n", goto_instr->pc);
+        case FBLE_JUMP_INSTR: {
+          FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+          fprintf(fout, "jump +%zi;\n", jump_instr->count);
           break;
         }
 
@@ -296,7 +296,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_STRUCT_ACCESS_INSTR:
     case FBLE_UNION_ACCESS_INSTR:
     case FBLE_UNION_SELECT_INSTR:
-    case FBLE_GOTO_INSTR:
+    case FBLE_JUMP_INSTR:
     case FBLE_RELEASE_INSTR:
     case FBLE_FUNC_APPLY_INSTR:
     case FBLE_COPY_INSTR:
