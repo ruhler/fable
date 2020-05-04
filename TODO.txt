@@ -1,5 +1,6 @@
 
 * Figure out why sustained-put-get test is showing memory growth.
+* Clean up how we track io activity?
 * Remove statics and code from Stack?
  - Fetch them from the func when needed instead?
 

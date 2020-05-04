@@ -75,8 +75,8 @@ typedef enum {
   UNBLOCKED,      // The thread is not blocked on I/O.
 } Status;
 
-static FbleValue* FrameGet(Stack* stack, FbleFrameIndex index);
-static FbleValue* FrameTaggedGet(FbleValueTag tag, Stack* stack, FbleFrameIndex index);
+static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameIndex index);
+static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValue** locals, FbleFrameIndex index);
 
 static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleValue** result, Stack* tail);
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
@@ -91,7 +91,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 //   Get a value from the frame on the top of the execution stack.
 //
 // Inputs:
-//   stack - the stack to access the value from.
+//   statics - the static variables at the top of the stack.
+//   locals - the local variables at the top of the stack.
 //   index - the index of the value to access.
 //
 // Results:
@@ -99,11 +100,11 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 //
 // Side effects:
 //   None.
-static FbleValue* FrameGet(Stack* stack, FbleFrameIndex index)
+static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameIndex index)
 {
   switch (index.section) {
-    case FBLE_STATICS_FRAME_SECTION: return stack->statics[index.index];
-    case FBLE_LOCALS_FRAME_SECTION: return stack->locals[index.index];
+    case FBLE_STATICS_FRAME_SECTION: return statics[index.index];
+    case FBLE_LOCALS_FRAME_SECTION: return locals[index.index];
   }
   UNREACHABLE("should never get here");
 }
@@ -119,7 +120,8 @@ static FbleValue* FrameGet(Stack* stack, FbleFrameIndex index)
 //
 // Inputs:
 //   tag - the expected tag of the value.
-//   stack - the stack to get the value from.
+//   statics - the static variables at the top of the stack.
+//   locals - the local variables at the top of the stack.
 //   index - the location of the value in the frame.
 //
 // Results:
@@ -129,9 +131,9 @@ static FbleValue* FrameGet(Stack* stack, FbleFrameIndex index)
 // Side effects:
 //   The returned value will only stay alive as long as the original value on
 //   the stack frame.
-static FbleValue* FrameTaggedGet(FbleValueTag tag, Stack* stack, FbleFrameIndex index)
+static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValue** locals, FbleFrameIndex index)
 {
-  FbleValue* original = FrameGet(stack, index);
+  FbleValue* original = FrameGet(statics, locals, index);
   FbleValue* value = original;
   while (value->tag == FBLE_REF_VALUE) {
     FbleRefValue* rv = (FbleRefValue*)value;
@@ -318,16 +320,21 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
+  FbleProfileThread* profile = thread->profile;
+  FbleInstr** pc = thread->stack->pc;
+  FbleValue** statics = thread->stack->statics;
+  FbleValue** locals = thread->stack->locals;
+
   while (true) {
-    FbleInstr* instr = *thread->stack->pc++;
+    FbleInstr* instr = *pc++;
     if (rand() % TIME_SLICE == 0) {
       // Don't count profiling instructions against the profile time. The user
       // doesn't care about those.
       if (instr->tag != FBLE_PROFILE_INSTR) {
-        FbleProfileSample(arena, thread->profile, 1);
+        FbleProfileSample(arena, profile, 1);
       }
 
-      thread->stack->pc--;
+      thread->stack->pc = pc - 1;
       return UNBLOCKED;
     }
 
@@ -337,39 +344,39 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         size_t argc = struct_value_instr->args.size;
         FbleValue* argv[argc];
         for (size_t i = 0; i < argc; ++i) {
-          FbleValue* arg = FrameGet(thread->stack, struct_value_instr->args.xs[i]);
+          FbleValue* arg = FrameGet(statics, locals, struct_value_instr->args.xs[i]);
           argv[i] = FbleValueRetain(heap, arg);
         }
 
         FbleValueV args = { .size = argc, .xs = argv, };
-        thread->stack->locals[struct_value_instr->dest] = FbleNewStructValue(heap, args);
+        locals[struct_value_instr->dest] = FbleNewStructValue(heap, args);
         break;
       }
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-        FbleValue* arg = FrameGet(thread->stack, union_value_instr->arg);
-        thread->stack->locals[union_value_instr->dest] = FbleNewUnionValue(heap, union_value_instr->tag, FbleValueRetain(heap, arg));
+        FbleValue* arg = FrameGet(statics, locals, union_value_instr->arg);
+        locals[union_value_instr->dest] = FbleNewUnionValue(heap, union_value_instr->tag, FbleValueRetain(heap, arg));
         break;
       }
 
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, thread->stack, access_instr->obj);
+        FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, statics, locals, access_instr->obj);
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", &access_instr->loc);
           return ABORTED;
         }
         assert(access_instr->tag < sv->fieldc);
-        thread->stack->locals[access_instr->dest] = FbleValueRetain(heap, sv->fields[access_instr->tag]);
+        locals[access_instr->dest] = FbleValueRetain(heap, sv->fields[access_instr->tag]);
         break;
       }
 
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread->stack, access_instr->obj);
+        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, statics, locals, access_instr->obj);
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", &access_instr->loc);
           return ABORTED;
@@ -380,24 +387,24 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           return ABORTED;
         }
 
-        thread->stack->locals[access_instr->dest] = FbleValueRetain(heap, uv->arg);
+        locals[access_instr->dest] = FbleValueRetain(heap, uv->arg);
         break;
       }
 
       case FBLE_UNION_SELECT_INSTR: {
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread->stack, select_instr->condition);
+        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, statics, locals, select_instr->condition);
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", &select_instr->loc);
           return ABORTED;
         }
-        thread->stack->pc += uv->tag;
+        pc += uv->tag;
         break;
       }
 
       case FBLE_JUMP_INSTR: {
         FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-        thread->stack->pc += jump_instr->count;
+        pc += jump_instr->count;
         break;
       }
 
@@ -411,25 +418,25 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         value->code = func_value_instr->code;
         value->code->refcount++;
         for (size_t i = 0; i < scopec; ++i) {
-          FbleValue* arg = FrameGet(thread->stack, func_value_instr->scope.xs[i]);
+          FbleValue* arg = FrameGet(statics, locals, func_value_instr->scope.xs[i]);
           value->scope[i] = arg;
           FbleValueAddRef(heap, &value->_base, arg);
         }
-        thread->stack->locals[func_value_instr->dest] = &value->_base;
+        locals[func_value_instr->dest] = &value->_base;
         break;
       }
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-        assert(thread->stack->locals[release->value] != NULL);
-        FbleValueRelease(heap, thread->stack->locals[release->value]);
-        thread->stack->locals[release->value] = NULL;
+        assert(locals[release->value] != NULL);
+        FbleValueRelease(heap, locals[release->value]);
+        locals[release->value] = NULL;
         break;
       }
 
       case FBLE_APPLY_INSTR: {
         FbleApplyInstr* apply_instr = (FbleApplyInstr*)instr;
-        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread->stack, apply_instr->func);
+        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, statics, locals, apply_instr->func);
         if (func == NULL) {
           FbleReportError("undefined function value apply\n", &apply_instr->loc);
           return ABORTED;
@@ -437,15 +444,22 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
         FbleValue* args[func->argc];
         for (size_t i = 0; i < func->argc; ++i) {
-          args[i] = FrameGet(thread->stack, apply_instr->args.xs[i]);
+          args[i] = FrameGet(statics, locals, apply_instr->args.xs[i]);
         }
 
         FbleValueRetain(heap, &func->_base);
         if (apply_instr->exit) {
           thread->stack = ReplaceFrame(heap, func, args, thread->stack);
+          pc = thread->stack->pc;
+          statics = thread->stack->statics;
+          locals = thread->stack->locals;
         } else {
-          FbleValue** result = thread->stack->locals + apply_instr->dest;
+          thread->stack->pc = pc;
+          FbleValue** result = locals + apply_instr->dest;
           thread->stack = PushFrame(heap, func, args, result, thread->stack);
+          pc = thread->stack->pc;
+          statics = thread->stack->statics;
+          locals = thread->stack->locals;
         }
         break;
       }
@@ -460,31 +474,31 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         value->code = proc_value_instr->code;
         value->code->refcount++;
         for (size_t i = 0; i < scopec; ++i) {
-          FbleValue* arg = FrameGet(thread->stack, proc_value_instr->scope.xs[i]);
+          FbleValue* arg = FrameGet(statics, locals, proc_value_instr->scope.xs[i]);
           value->scope[i] = arg;
           FbleValueAddRef(heap, &value->_base, arg);
         }
-        thread->stack->locals[proc_value_instr->dest] = &value->_base;
+        locals[proc_value_instr->dest] = &value->_base;
         break;
       }
 
       case FBLE_COPY_INSTR: {
         FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-        FbleValue* value = FrameGet(thread->stack, copy_instr->source);
-        thread->stack->locals[copy_instr->dest] = FbleValueRetain(heap, value);
+        FbleValue* value = FrameGet(statics, locals, copy_instr->source);
+        locals[copy_instr->dest] = FbleValueRetain(heap, value);
         break;
       }
 
       case FBLE_GET_INSTR: {
         FbleGetInstr* get_instr = (FbleGetInstr*)instr;
-        FbleValue* get_port = FrameGet(thread->stack, get_instr->port);
+        FbleValue* get_port = FrameGet(statics, locals, get_instr->port);
         if (get_port->tag == FBLE_LINK_VALUE) {
           FbleLinkValue* link = (FbleLinkValue*)get_port;
 
           if (link->head == NULL) {
             // Blocked on get. Restore the thread state and return before
             // logging progress.
-            thread->stack->pc--;
+            thread->stack->pc = pc - 1;
             return BLOCKED;
           }
 
@@ -494,7 +508,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
             link->tail = NULL;
           }
 
-          thread->stack->locals[get_instr->dest] = FbleValueRetain(heap, head->value);
+          locals[get_instr->dest] = FbleValueRetain(heap, head->value);
           FbleValueDelRef(heap, &link->_base, head->value);
           FbleFree(arena, head);
           break;
@@ -505,11 +519,11 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           if (*port->data == NULL) {
             // Blocked on get. Restore the thread state and return before
             // logging progress.
-            thread->stack->pc--;
+            thread->stack->pc = pc - 1;
             return BLOCKED;
           }
 
-          thread->stack->locals[get_instr->dest] = *port->data;
+          locals[get_instr->dest] = *port->data;
           *port->data = NULL;
           *io_activity = true;
           break;
@@ -521,8 +535,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_PUT_INSTR: {
         FblePutInstr* put_instr = (FblePutInstr*)instr;
-        FbleValue* put_port = FrameGet(thread->stack, put_instr->port);
-        FbleValue* arg = FrameGet(thread->stack, put_instr->arg);
+        FbleValue* put_port = FrameGet(statics, locals, put_instr->port);
+        FbleValue* arg = FrameGet(statics, locals, put_instr->arg);
 
         FbleValueV args = { .size = 0, .xs = NULL, };
         FbleValue* unit = FbleNewStructValue(heap, args);
@@ -544,7 +558,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           }
 
           FbleValueAddRef(heap, &link->_base, tail->value);
-          thread->stack->locals[put_instr->dest] = unit;
+          locals[put_instr->dest] = unit;
           *io_activity = true;
           break;
         }
@@ -555,12 +569,12 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           if (*port->data != NULL) {
             // Blocked on put. Restore the thread state and return before
             // logging progress.
-            thread->stack->pc--;
+            thread->stack->pc = pc - 1;
             return BLOCKED;
           }
 
           *port->data = FbleValueRetain(heap, arg);
-          thread->stack->locals[put_instr->dest] = unit;
+          locals[put_instr->dest] = unit;
           *io_activity = true;
           break;
         }
@@ -581,8 +595,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleValue* put = FbleNewPutValue(heap, &link->_base);
         FbleValueRelease(heap, &link->_base);
 
-        thread->stack->locals[link_instr->get] = get;
-        thread->stack->locals[link_instr->put] = put;
+        locals[link_instr->get] = get;
+        locals[link_instr->put] = put;
         break;
       }
 
@@ -594,7 +608,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleVectorInit(arena, thread->children);
 
         for (size_t i = 0; i < fork_instr->args.size; ++i) {
-          FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread->stack, fork_instr->args.xs[i]);
+          FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, statics, locals, fork_instr->args.xs[i]);
 
           // You cannot execute a proc in a let binding, so it should be
           // impossible to ever have an undefined proc value.
@@ -602,11 +616,11 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
           FbleValueRetain(heap, &arg->_base);
 
-          FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
+          FbleValue** result = locals + fork_instr->dests.xs[i];
 
           Thread* child = FbleAlloc(arena, Thread);
           child->stack = PushFrame(heap, arg, NULL, result, NULL);
-          child->profile = FbleForkProfileThread(arena, thread->profile);
+          child->profile = FbleForkProfileThread(arena, profile);
           child->children.size = 0;
           child->children.xs = NULL;
           child->next_child = 0;
@@ -614,6 +628,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           FbleVectorAppend(arena, thread->children, child);
         }
         thread->next_child = 0;
+        thread->stack->pc = pc;
         return UNBLOCKED;
       }
 
@@ -623,16 +638,16 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         rv->_base.tag = FBLE_REF_VALUE;
         rv->value = NULL;
 
-        thread->stack->locals[ref_instr->dest] = &rv->_base;
+        locals[ref_instr->dest] = &rv->_base;
         break;
       }
 
       case FBLE_REF_DEF_INSTR: {
         FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-        FbleRefValue* rv = (FbleRefValue*)thread->stack->locals[ref_def_instr->ref];
+        FbleRefValue* rv = (FbleRefValue*)locals[ref_def_instr->ref];
         assert(rv->_base.tag == FBLE_REF_VALUE);
 
-        FbleValue* value = FrameGet(thread->stack, ref_def_instr->value);
+        FbleValue* value = FrameGet(statics, locals, ref_def_instr->value);
         assert(value != NULL);
         rv->value = value;
         FbleValueAddRef(heap, &rv->_base, rv->value);
@@ -641,12 +656,15 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        FbleValue* result = FrameGet(thread->stack, return_instr->result);
+        FbleValue* result = FrameGet(statics, locals, return_instr->result);
         *thread->stack->result = FbleValueRetain(heap, result);
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
           return FINISHED;
         }
+        pc = thread->stack->pc;
+        statics = thread->stack->statics;
+        locals = thread->stack->locals;
         break;
       }
 
@@ -654,7 +672,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
         FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
         value->_base.tag = FBLE_TYPE_VALUE;
-        thread->stack->locals[type_instr->dest] = &value->_base;
+        locals[type_instr->dest] = &value->_base;
         break;
       }
 
@@ -662,15 +680,15 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleProfileInstr* profile_instr = (FbleProfileInstr*)instr;
         switch (profile_instr->op) {
           case FBLE_PROFILE_ENTER_OP:
-            FbleProfileEnterBlock(arena, thread->profile, profile_instr->block);
+            FbleProfileEnterBlock(arena, profile, profile_instr->block);
             break;
 
           case FBLE_PROFILE_EXIT_OP:
-            FbleProfileExitBlock(arena, thread->profile);
+            FbleProfileExitBlock(arena, profile);
             break;
 
           case FBLE_PROFILE_AUTO_EXIT_OP: {
-            FbleProfileAutoExitBlock(arena, thread->profile);
+            FbleProfileAutoExitBlock(arena, profile);
             break;
           }
         }
