@@ -64,8 +64,9 @@ PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x
 };
 
 (Get@<Input@>, Put@<Output@>){Unit@!;} TicTacToe = (Get@<Input@> input, Put@<Output@> output) {
-  AI@ ai <- WithAI<Unit@>;
-  NewGame(input, output, ai);
+  WithAI<Unit@>((AI@ ai) {
+    NewGame(input, output, ai);
+  });
 };
 
 @(GameStatus@, Input@, Output@, TicTacToe);

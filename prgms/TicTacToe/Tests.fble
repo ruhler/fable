@@ -39,25 +39,27 @@ TestResult@! TestBoardStatus = {
 
 # TODO: Use PositionEquals for test result, and report position when failed?
 TestResult@! TestChooseBestMoveWin = {
-  AI@ ai <- WithAI<TestResult@>;
-  Position@ position := ai(Board@(
-        Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
-        Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
-        Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)), Player@(X: Unit));
-  $(?(position ;
-        UR: TestResult@(pass: Unit),
-          : TestResult@(fail: Str(Chars|failed))));
+  WithAI<TestResult@>((AI@ ai) {
+    Position@ position := ai(Board@(
+          Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
+          Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
+          Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)), Player@(X: Unit));
+    $(?(position ;
+          UR: TestResult@(pass: Unit),
+            : TestResult@(fail: Str(Chars|failed))));
+  });
 };
 
 TestResult@! TestChooseBestMoveNoLose = {
-  AI@ ai <- WithAI<TestResult@>;
-  Position@ position := ai(Board@(
-        Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
-        Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
-        Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)), Player@(X: Unit));
-  $(?(position ;
-        UR: TestResult@(pass: Unit),
-          : TestResult@(fail: Str(Chars|failed))));
+  WithAI<TestResult@>((AI@ ai) {
+    Position@ position := ai(Board@(
+          Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
+          Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
+          Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)), Player@(X: Unit));
+    $(?(position ;
+          UR: TestResult@(pass: Unit),
+            : TestResult@(fail: Str(Chars|failed))));
+  });
 };
 
 
@@ -69,9 +71,10 @@ S@<Test@> Tests = S<Test@>([
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.
 Unit@! Bench = {
-  AI@ ai <- WithAI<Unit@>;
-  Position@ _ := ai(EmptyBoard, Player@(X: Unit));
-  $(Unit);
+  WithAI<Unit@>((AI@ ai) {
+    Position@ _ := ai(EmptyBoard, Player@(X: Unit));
+    $(Unit);
+  });
 };
 
 @(Tests, Bench);
