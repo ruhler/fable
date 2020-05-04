@@ -1,8 +1,4 @@
 
-* Avoid redundant Retain/Release when allocating a struct value.
-* Avoid redundant Retain/Release when allocating a union value.
-* Avoid redundant Retain/Release when returning a local value?
-* Figure out why sustained-put-get test is showing memory growth.
 * Clean up how we track io activity?
 
 * Allow zero-argument functions in the language spec?

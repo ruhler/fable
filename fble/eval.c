@@ -22,18 +22,22 @@
 //   An execution stack.
 //
 // Fields:
-//   func - The function being executed. Owned by this Stack.
-//   pc - The location of the next instruction in the code to execute.
-//   result - Where to store the result when exiting the stack frame.
 //   tail - The next frame down in the stack.
+//   result - Where to store the result when exiting the stack frame.
+//   owner - if true, we own the function and args. Otherwise we don't.
+//   func - The function being executed.
+//   pc - The location of the next instruction in the code to execute.
 //   locals - Space allocated for local variables.
 //      Has length at least func->code->locals values.
-//      All non-NULL entries are owned by this Stack.
+//      The initial func->argc locals are arguments that may or may not be
+//      owned by the stack as specified by 'owner'. The rest of the locals are
+//      owned by this Stack.
 typedef struct Stack {
+  struct Stack* tail;
+  FbleValue** result;
+  bool owner;
   FbleFuncValue* func;
   FbleInstr** pc;
-  FbleValue** result;
-  struct Stack* tail;
   FbleValue* locals[];
 } Stack;
 
@@ -164,8 +168,9 @@ static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValu
 //
 // Side effects:
 //   Allocates new Stack instances that should be freed with PopFrame when done.
-//   Takes ownership of the function value.
-//   Does not take ownership of the args.
+//   Does not take ownership of the function or the args.
+//   It is the caller's responsibility to ensure the function and args remain
+//   valid until the frame is popped.
 static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleValue** result, Stack* tail)
 {
   FbleArena* arena = heap->arena;
@@ -173,16 +178,16 @@ static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
   size_t locals = func->code->locals;
 
   Stack* stack = FbleAllocExtra(arena, Stack, locals * sizeof(FbleValue*));
+  stack->tail = tail;
+  stack->result = result;
+  stack->owner = false;
   stack->func = func;
   stack->pc = func->code->instrs.xs;
-  stack->result = result;
-  stack->tail = tail;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   for (size_t i = 0; i < func->argc; ++i) {
-    stack->locals[i] = FbleValueRetain(heap, args[i]);
+    stack->locals[i] = args[i];
   }
-
   return stack;
 }
 
@@ -203,10 +208,14 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 {
   FbleArena* arena = heap->arena;
 
-  for (size_t i = 0; i < stack->func->code->locals; ++i) {
+  size_t start = stack->owner ? 0 : stack->func->argc;
+  for (size_t i = start; i < stack->func->code->locals; ++i) {
     FbleValueRelease(heap, stack->locals[i]);
   }
-  FbleValueRelease(heap, &stack->func->_base);
+
+  if (stack->owner) {
+    FbleValueRelease(heap, &stack->func->_base);
+  }
 
   Stack* tail = stack->tail;
   FbleFree(arena, stack);
@@ -227,17 +236,26 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 //
 // Side effects:
 //   Allocates new Stack instances that should be freed with PopFrame when done.
-//   Takes ownership of func. Does not take ownership of args.
+//   Does not take ownership of func nor args. The caller need not guarantee
+//   the func and args remain valid after this call.
 //   Exits the current frame, which potentially frees any instructions
 //   belonging to that frame.
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack)
 {
   FbleArena* arena = heap->arena;
 
+  FbleValueRetain(heap, &func->_base);
+  for (size_t i = 0; i < func->argc; ++i) {
+    FbleValueRetain(heap, args[i]);
+  }
+
   size_t old_locals = stack->func->code->locals;
-  FbleValueRelease(heap, &stack->func->_base);
-  for (size_t i = 0; i < old_locals; ++i) {
+  size_t start = stack->owner ? 0 : stack->func->argc;
+  for (size_t i = start; i < old_locals; ++i) {
     FbleValueRelease(heap, stack->locals[i]);
+  }
+  if (stack->owner) {
+    FbleValueRelease(heap, &stack->func->_base);
   }
 
   size_t locals = func->code->locals;
@@ -250,12 +268,13 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
     stack = nstack;
   }
 
+  stack->owner = true;
   stack->func = func;
   stack->pc = func->code->instrs.xs;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   for (size_t i = 0; i < func->argc; ++i) {
-    stack->locals[i] = FbleValueRetain(heap, args[i]);
+    stack->locals[i] = args[i];
   }
 
   return stack;
@@ -451,7 +470,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           args[i] = FrameGet(statics, locals, apply_instr->args.xs[i]);
         }
 
-        FbleValueRetain(heap, &func->_base);
         if (apply_instr->exit) {
           thread->stack = ReplaceFrame(heap, func, args, thread->stack);
           pc = thread->stack->pc;
@@ -618,8 +636,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           // impossible to ever have an undefined proc value.
           assert(arg != NULL && "undefined proc value");
 
-          FbleValueRetain(heap, &arg->_base);
-
           FbleValue** result = locals + fork_instr->dests.xs[i];
 
           Thread* child = FbleAlloc(arena, Thread);
@@ -660,18 +676,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        size_t index = return_instr->result.index;
-        switch (return_instr->result.section) {
-          case FBLE_STATICS_FRAME_SECTION:
-            *thread->stack->result = FbleValueRetain(heap, statics[index]);
-            break;
-
-          case FBLE_LOCALS_FRAME_SECTION:
-            *thread->stack->result = locals[index];
-            locals[index] = NULL;
-            break;
-        }
-
+        FbleValue* result = FrameGet(statics, locals, return_instr->result);
+        *thread->stack->result = FbleValueRetain(heap, result);
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
           return FINISHED;
@@ -812,7 +818,7 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread)
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
-//   Takes ownership of the function. Does not take ownership of args.
+//   Does not take ownership of the function or the args.
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile)
 {
   FbleArena* arena = heap->arena;
@@ -883,6 +889,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 
   FbleIO io = { .io = &FbleNoIO };
   FbleValue* result = Eval(heap, &io, func, NULL, profile);
+  FbleValueRelease(heap, &func->_base);
   return result;
 }
 
@@ -890,8 +897,6 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
   assert(func->tag == FBLE_FUNC_VALUE);
-
-  FbleValueRetain(heap, func);
   FbleIO io = { .io = &FbleNoIO, };
   FbleValue* result = Eval(heap, &io, (FbleFuncValue*)func, args, profile);
   return result;
@@ -906,7 +911,6 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 // FbleExec -- see documentation in fble.h
 FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile)
 {
-  FbleValueRetain(heap, proc);
   assert(proc->tag == FBLE_PROC_VALUE);
   return Eval(heap, io, (FbleFuncValue*)proc, NULL, profile);
 }
