@@ -209,19 +209,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           break;
         }
 
-        case FBLE_PROC_INSTR: {
-          FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-          if (proc_instr->exit) {
-            fprintf(fout, "$");
-          } else {
-            fprintf(fout, "l%zi", proc_instr->dest);
-          }
-          fprintf(fout, " := %s%zi;\n",
-              sections[proc_instr->proc.section],
-              proc_instr->proc.index);
-          break;
-        }
-
         case FBLE_REF_VALUE_INSTR: {
           FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
           fprintf(fout, "l%zi = ref;\n", ref_instr->dest);
@@ -300,7 +287,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_GET_INSTR:
     case FBLE_PUT_INSTR:
     case FBLE_LINK_INSTR:
-    case FBLE_PROC_INSTR:
     case FBLE_REF_VALUE_INSTR:
     case FBLE_REF_DEF_INSTR:
     case FBLE_RETURN_INSTR:

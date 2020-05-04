@@ -1,6 +1,7 @@
 
 * Change FbleApply to take an FbleValue** instead of a vector.
-* Replace PROC_INSTR with APPLY_INSTR?
+* Figure out why sustained-put-get test is showing memory growth.
+* Rename FBLE_FUNC_APPLY_INSTR to FBLE_APPLY_INSTR?
 * Remove statics and code from Stack?
  - Fetch them from the func when needed instead?
 

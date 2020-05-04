@@ -622,24 +622,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         return UNBLOCKED;
       }
 
-      case FBLE_PROC_INSTR: {
-        FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-        FbleProcValue* proc = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread->stack, proc_instr->proc);
-
-        // You cannot execute a proc in a let binding, so it should be
-        // impossible to ever have an undefined proc value.
-        assert(proc != NULL && "undefined proc value");
-        FbleValueRetain(heap, &proc->_base);
-
-        if (proc_instr->exit) {
-          thread->stack = ReplaceFrame(heap, proc, NULL, thread->stack);
-        } else {
-          FbleValue** result = thread->stack->locals + proc_instr->dest;
-          thread->stack = PushFrame(heap, proc, NULL, result, thread->stack);
-        }
-        break;
-      }
-
       case FBLE_REF_VALUE_INSTR: {
         FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
         FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);

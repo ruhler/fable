@@ -55,7 +55,6 @@ typedef enum {
   FBLE_PUT_INSTR,
   FBLE_LINK_INSTR,
   FBLE_FORK_INSTR,
-  FBLE_PROC_INSTR,
   FBLE_COPY_INSTR,
   FBLE_REF_VALUE_INSTR,
   FBLE_REF_DEF_INSTR,
@@ -255,20 +254,6 @@ typedef struct {
   FbleFrameIndexV args;
   FbleLocalIndexV dests;
 } FbleForkInstr;
-
-// FbleProcInstr -- FBLE_PROC_INSTR
-//   Execute a process value.
-//
-// *dest = exec(proc)
-//
-// if exit is true, this is treated as a tail call. In that case, dest is
-// ignored and the result is returned to the caller.
-typedef struct {
-  FbleInstr _base;
-  bool exit;
-  FbleLocalIndex dest;
-  FbleFrameIndex proc;
-} FbleProcInstr;
 
 // FbleCopyInstr -- FBLE_COPY_INSTR
 //   Copy a value in the stack frame from one location to another.

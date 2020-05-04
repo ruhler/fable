@@ -2036,11 +2036,15 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         AppendInstr(arena, scope, &exit_instr->_base);
       }
 
-      FbleProcInstr* instr = FbleAlloc(arena, FbleProcInstr);
-      instr->_base.tag = FBLE_PROC_INSTR;
+      // A process is represented at runtime as a zero argument function. To
+      // execute the process, use the FBLE_FUNC_APPLY_INSTR.
+      FbleFuncApplyInstr* instr = FbleAlloc(arena, FbleFuncApplyInstr);
+      instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+      instr->loc = expr->loc;
       instr->exit = exit;
       instr->dest = c.local->index.index;
-      instr->proc = proc.local->index;
+      instr->func = proc.local->index;
+      FbleVectorInit(arena, instr->args);
       AppendInstr(arena, scope, &instr->_base);
 
       LocalRelease(arena, scope, proc.local, exit);
