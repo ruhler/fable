@@ -3,8 +3,9 @@
 * Replace PROC_INSTR with APPLY_INSTR?
 * Remove statics and code from Stack?
  - Fetch them from the func when needed instead?
-* Update the language spec for func type change.
+
 * Allow zero-argument functions in the language spec?
+
 * Consider removing function bind syntax?
  - It doesn't seem too useful to be honest.
 

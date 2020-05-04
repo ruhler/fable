@@ -460,27 +460,20 @@ where N is the number of fields in the union.
 
 5. Functions
 ------------
-A function is a mapping from argument value to result value. The argument has
-a name, used to identify the argument in the body of the function, and a type,
-specifying the type of value that can be supplied for that argument. A
-function has a return type, specifying the type of value that will result when
-applying the function.
+A function is a mapping from one or more argument values to a result value.
+Each argument has a name, used to identify the argument in the body of the
+function, and a type, specifying the type of value that can be supplied for
+that argument. A function has a return type, specifying the type of value that
+will result when applying the function.
 
 Functions are described using the fble expression language. A function can be
-applied to an argument of appropriate type to produce a value with the return
+applied to arguments of appropriate type to produce a value with the return
 type of the function.
-
-Functions can have more than one argument. For the most part function
-expressions involving multiple arguments are desugared into function
-expressions involving single arguments, in the sense that a multiple argument
-function can be written as a single argument function that returns a function.
-The exception is that in some cases there are performance implications
-for use of multiple argument functions instead of single argument functions.
 
 5.1 Function Type
 -----------------
 Abstract Syntax:
-  Type ::= func_type (arg :: Type) (return :: Type)
+  Type ::= func_type (args :: [Type]) (return :: Type)
 
 Concrete Syntax:
   block ::= '(' type [',' type [...]] ')' block
@@ -494,15 +487,16 @@ function's argument and return types.
 Function arguments can be any kind of value, including types, structs, unions,
 functions, or processes.
 
-Two function types are equal if they take the same argument and return types.
+Two function types are equal if their argument and return types are equal.
 
-The concrete syntax allows you to specify multiple arguments in a function
-type. This is syntactic sugar for nested single argument function types. For
-example, the following three expressions describe the same type:
- 
-  (a, b, c){ d; }
-  (a)(b)(c){ d; }
-  (a){ (b){ (c){ d; }}}
+Curried function types are not considered equal. For example, the following
+two expressions describe different types:
+
+ (a, b) { c; }
+ (a) { (b) { c;}; }
+  
+We distinguish between these types because in practice there are performance
+implications for which type you choose.
 
 Runtime is O(1);
 
@@ -520,18 +514,8 @@ Example:
 The function value expression is used to describe a primitive function value
 given the arguments and the body of the function. The return type of
 the function is inferred to be the type of the body of the function. The
-argument names chosen when defining a function has no effect on the type of
+argument names chosen when defining a function have no effect on the type of
 the function.
-
-There is a slight performance difference between specifying a multi-argument
-function value and nested single-argument function values. The body of the
-function is not executed until all arguments have been supplied. A
-multi-argument function can be partially applied, which creates a thunk that
-retains the provided arguments without executing the function until sufficient
-arguments are supplied for the function to be fully applied.
-
-Multi-argument functions can be used to have O(N) application in the case of N
-arguments, whereas nested single-argument functions would require O(N^2) time.
 
 Arguments to multi-argument functions must have distinct names, because it's
 more likely you gave multiple arguments the same name accidentally than on
@@ -544,7 +528,7 @@ variables referenced in the body of the function are captured by the function.
 5.3 Function Application
 ------------------------
 Abstract Syntax:
-  Expr ::= apply (func :: Expr) (arg :: Expr)
+  Expr ::= apply (func :: Expr) (args :: [Expr])
 
 Concrete Syntax:
   expr ::= expr '(' expr [',' expr [...]] ')'
@@ -552,30 +536,14 @@ Concrete Syntax:
 Example:
   foo(x, y)
 
-The application expression is used to apply a function to an argument. The
-supplied argument must match the type of argument specified for the function.
-The application expression evaluates to the value of the body of the function
-in the context of the supplied argument.
+The application expression is used to apply a function to some arguments. The
+supplied arguments must match the type of arguments specified for the
+function. The application expression evaluates to the value of the body of the
+function in the context of the supplied arguments.
 
-The concrete syntax allows you to specify multiple arguments in a function
-application. This is syntactic sugar for repeated single argument function
-application. For example, the following two expressions describe the same
-expression:
-  foo(a, b, c)
-  foo(a)(b)(c)
-
-Function application creates a thunk if the function has not been supplied
-with all required arguments. Otherwise the body of the function is evaluated
-in the context of all arguments supplied to the function.
-
-When the function is supplied with all required arguments, runtime is O(log(N
-+ M)) plus the runtime of func, the runtimes of each of the arguments, and the
-runtime of the body, where N is the number of arguments to the function and M
-is the number of variables captured by the function.
-
-When the function is not supplied with all required arguments, runtime is 
-O(log(N)) plus the runtime of func and the runtimes of each of the arguments,
-where N is the number of arguments supplied to the function.
+Runtime is O(log(N + M)) plus the runtime of func, the runtimes of each of the
+arguments, and the runtime of the body, where N is the number of arguments to
+the function and M is the number of variables captured by the function.
 
 5.4 Function Bind
 -----------------
@@ -1054,9 +1022,9 @@ Expr ::=
  | union_access (object :: Expr) (field :: Name)
  | union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
 
- | func_type (arg :: Type) (result :: Type)
+ | func_type (args :: [Type]) (result :: Type)
  | func_value (args :: [(Type, Name)]) (body :: Expr)
- | func_apply (func :: Expr) (arg :: Expr)
+ | func_apply (func :: Expr) (args :: [Expr])
 
  | proc_type (result :: Type)
  | proc_eval (body :: Expr)
@@ -1286,4 +1254,9 @@ Notes:
   - automatic memory management
   - closures that capture variables from local scope
   - light weight multithreading
+
+* Should we support zero-argument functions now?
+  They aren't necessary, because you could always do a single argument
+  function that takes a unit. But it seems a little arbitrary to disallow them
+  now?
 
