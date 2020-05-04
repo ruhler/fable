@@ -255,7 +255,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           FbleProfileInstr* profile_instr = (FbleProfileInstr*)instr;
           switch (profile_instr->op) {
             case FBLE_PROFILE_ENTER_OP: {
-              FbleBlockId block = profile_instr->data.enter.block;
+              FbleBlockId block = profile_instr->block;
               FbleName* name = &profile->blocks.xs[block]->name;
               fprintf(fout, "profile enter [%04x]; ", block);
               fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name, block,
@@ -270,16 +270,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 
             case FBLE_PROFILE_AUTO_EXIT_OP: {
               fprintf(fout, "profile auto exit;\n");
-              break;
-            }
-
-            case FBLE_PROFILE_FUNC_EXIT_OP: {
-              FbleLoc loc = profile_instr->data.func_exit.loc;
-              FbleFrameIndex func = profile_instr->data.func_exit.func;
-
-              fprintf(fout, "profile exit func %s%zi; // %s:%i:%i\n",
-                  sections[func.section], func.index,
-                  loc.source, loc.line, loc.col);
               break;
             }
           }

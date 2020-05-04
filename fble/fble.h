@@ -57,6 +57,9 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 // FbleApply --
 //   Apply a function to the given arguments.
 //
+// The number of arguments supplied must match the number of arguments
+// expected by the function.
+//
 // Inputs:
 //   heap - the heap to use for allocating values.
 //   func - the function to apply.

@@ -478,7 +478,7 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   FbleProfileInstr* enter = FbleAlloc(arena, FbleProfileInstr);
   enter->_base.tag = FBLE_PROFILE_INSTR;
   enter->op = FBLE_PROFILE_ENTER_OP;
-  enter->data.enter.block = id;
+  enter->block = id;
   AppendInstr(arena, scope, &enter->_base);
   FbleVectorAppend(arena, blocks->stack, id);
 }
@@ -523,7 +523,7 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
   FbleProfileInstr* enter = FbleAlloc(arena, FbleProfileInstr);
   enter->_base.tag = FBLE_PROFILE_INSTR;
   enter->op = FBLE_PROFILE_ENTER_OP;
-  enter->data.enter.block = id;
+  enter->block = id;
   AppendInstr(arena, scope, &enter->_base);
 
   FbleVectorAppend(arena, blocks->stack, id);

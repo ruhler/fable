@@ -22,9 +22,9 @@
 //   An execution stack.
 //
 // Fields:
-//   thunk - The thunk being executed. Owned by this Stack.
-//   statics - Variables captured from the parent scope. Owned by thunk.
-//   code - The currently executing instruction block. Owned by thunk.
+//   func - The function being executed. Owned by this Stack.
+//   statics - Variables captured from the parent scope. Owned by func.
+//   code - The currently executing instruction block. Owned by func.
 //   pc - The location of the next instruction in the code to execute.
 //   result - Where to store the result when exiting the stack frame.
 //   tail - The next frame down in the stack.
@@ -32,7 +32,7 @@
 //      Has length at least code->locals values.
 //      All non-NULL entries are owned by this Stack.
 typedef struct Stack {
-  FbleValue* thunk;
+  FbleFuncValue* func;
   FbleValue** statics;
   FbleInstrBlock* code;
   FbleInstr** pc;
@@ -80,14 +80,14 @@ typedef enum {
 static FbleValue* FrameGet(Stack* stack, FbleFrameIndex index);
 static FbleValue* FrameTaggedGet(FbleValueTag tag, Stack* stack, FbleFrameIndex index);
 
-static Stack* PushFrame(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue** args, FbleValue** result, Stack* tail);
+static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleValue** result, Stack* tail);
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
-static Stack* ReplaceFrame(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue** args, Stack* stack);
+static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack);
 
 static void AbortThread(FbleValueHeap* heap, Thread* thread);
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity);
 static Status RunThreads(FbleValueHeap* heap, Thread* thread);
-static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, FbleValue** args, FbleProfile* profile);
+static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile);
 
 // FrameGet --
 //   Get a value from the frame on the top of the execution stack.
@@ -156,9 +156,8 @@ static FbleValue* FrameTaggedGet(FbleValueTag tag, Stack* stack, FbleFrameIndex 
 //
 // Inputs:
 //   arena - the arena to use for allocations
-//   thunk - the thunk to execute.
-//   args - arguments to pass to the function.
-//          Must be thunk->args_needed in length.
+//   func - the function to execute.
+//   args - arguments to pass to the function. length == func->argc.
 //   result - the return address.
 //   tail - the stack to push to
 //
@@ -167,28 +166,24 @@ static FbleValue* FrameTaggedGet(FbleValueTag tag, Stack* stack, FbleFrameIndex 
 //
 // Side effects:
 //   Allocates new Stack instances that should be freed with PopFrame when done.
-//   Takes ownership of the thunk value.
+//   Takes ownership of the function value.
 //   Does not take ownership of the args.
-static Stack* PushFrame(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue** args, FbleValue** result, Stack* tail)
+static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleValue** result, Stack* tail)
 {
   FbleArena* arena = heap->arena;
 
-  size_t argc = thunk->args_needed;
-  assert(thunk->tag == FBLE_CODE_THUNK_VALUE);
-  FbleCodeThunkValue* code_thunk = (FbleCodeThunkValue*)thunk;
-
-  size_t locals = code_thunk->code->locals;
+  size_t locals = func->code->locals;
 
   Stack* stack = FbleAllocExtra(arena, Stack, locals * sizeof(FbleValue*));
-  stack->thunk = &thunk->_base;
-  stack->statics = code_thunk->scope;
-  stack->code = code_thunk->code;
+  stack->func = func;
+  stack->statics = func->scope;
+  stack->code = func->code;
   stack->pc = stack->code->instrs.xs;
   stack->result = result;
   stack->tail = tail;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
-  for (size_t i = 0; i < argc; ++i) {
+  for (size_t i = 0; i < func->argc; ++i) {
     stack->locals[i] = FbleValueRetain(heap, args[i]);
   }
 
@@ -212,7 +207,7 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 {
   FbleArena* arena = heap->arena;
 
-  FbleValueRelease(heap, stack->thunk);
+  FbleValueRelease(heap, &stack->func->_base);
   for (size_t i = 0; i < stack->code->locals; ++i) {
     FbleValueRelease(heap, stack->locals[i]);
   }
@@ -227,8 +222,8 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 //
 // Inputs:
 //   heap - the value heap.
-//   thunk - the thunk to execute.
-//   args - args to the function. length == thunk->args_needed
+//   func - the function to execute.
+//   args - args to the function. length == func->argc
 //   tail - the stack to change.
 //
 // Result:
@@ -236,26 +231,21 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 //
 // Side effects:
 //   Allocates new Stack instances that should be freed with PopFrame when done.
-//   Takes ownership of thunk. Does not take ownership of args.
+//   Takes ownership of func. Does not take ownership of args.
 //   Exits the current frame, which potentially frees any instructions
 //   belonging to that frame.
-static Stack* ReplaceFrame(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue** args, Stack* stack)
+static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack)
 {
   FbleArena* arena = heap->arena;
 
   size_t old_locals = stack->code->locals;
 
-  FbleValueRelease(heap, stack->thunk);
+  FbleValueRelease(heap, &stack->func->_base);
   for (size_t i = 0; i < stack->code->locals; ++i) {
     FbleValueRelease(heap, stack->locals[i]);
   }
 
-  size_t argc = thunk->args_needed;
-  assert(thunk->tag == FBLE_CODE_THUNK_VALUE);
-  FbleCodeThunkValue* code_thunk = (FbleCodeThunkValue*)thunk;
-
-  size_t locals = code_thunk->code->locals;
-
+  size_t locals = func->code->locals;
   if (locals > old_locals) {
     Stack* nstack = FbleAllocExtra(arena, Stack, locals * sizeof(FbleValue*));
     nstack->tail = stack->tail;
@@ -265,13 +255,13 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleThunkValue* thunk, FbleValue
     stack = nstack;
   }
 
-  stack->thunk = &thunk->_base;
-  stack->statics = code_thunk->scope;
-  stack->code = code_thunk->code;
+  stack->func = func;
+  stack->statics = func->scope;
+  stack->code = func->code;
   stack->pc = stack->code->instrs.xs;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
-  for (size_t i = 0; i < argc; ++i) {
+  for (size_t i = 0; i < func->argc; ++i) {
     stack->locals[i] = FbleValueRetain(heap, args[i]);
   }
 
@@ -420,20 +410,17 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
         size_t scopec = func_value_instr->code->statics;
 
-        FbleCodeThunkValue* value = FbleNewValueExtra(
-            heap, FbleCodeThunkValue,
-            sizeof(FbleValue*) * scopec);
-        value->_base._base.tag = FBLE_THUNK_VALUE;
-        value->_base.tag = FBLE_CODE_THUNK_VALUE;
-        value->_base.args_needed = func_value_instr->argc;
+        FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * scopec);
+        value->_base.tag = FBLE_FUNC_VALUE;
+        value->argc = func_value_instr->argc;
         value->code = func_value_instr->code;
         value->code->refcount++;
         for (size_t i = 0; i < scopec; ++i) {
           FbleValue* arg = FrameGet(thread->stack, func_value_instr->scope.xs[i]);
           value->scope[i] = arg;
-          FbleValueAddRef(heap, &value->_base._base, arg);
+          FbleValueAddRef(heap, &value->_base, arg);
         }
-        thread->stack->locals[func_value_instr->dest] = &value->_base._base;
+        thread->stack->locals[func_value_instr->dest] = &value->_base;
         break;
       }
 
@@ -447,18 +434,14 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_FUNC_APPLY_INSTR: {
         FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
-        FbleThunkValue* func = (FbleThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, thread->stack, func_apply_instr->func);
+        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread->stack, func_apply_instr->func);
         if (func == NULL) {
           FbleReportError("undefined function value apply\n", &func_apply_instr->loc);
           return ABORTED;
         };
 
-        assert(func_apply_instr->args.size == func->args_needed);
-        assert(func->tag == FBLE_CODE_THUNK_VALUE);
-
-        size_t argc = func_apply_instr->args.size;
-        FbleValue* args[argc];
-        for (size_t i = 0; i < argc; ++i) {
+        FbleValue* args[func->argc];
+        for (size_t i = 0; i < func->argc; ++i) {
           args[i] = FrameGet(thread->stack, func_apply_instr->args.xs[i]);
         }
 
@@ -476,18 +459,17 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
         size_t scopec = proc_value_instr->code->statics;
 
-        FbleCodeThunkValue* value = FbleNewValueExtra(heap, FbleCodeThunkValue, sizeof(FbleValue*) * scopec);
-        value->_base._base.tag = FBLE_THUNK_VALUE;
-        value->_base.tag = FBLE_CODE_THUNK_VALUE;
-        value->_base.args_needed = 0;
+        FbleProcValue* value = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*) * scopec);
+        value->_base.tag = FBLE_PROC_VALUE;
+        value->argc = 0;
         value->code = proc_value_instr->code;
         value->code->refcount++;
         for (size_t i = 0; i < scopec; ++i) {
           FbleValue* arg = FrameGet(thread->stack, proc_value_instr->scope.xs[i]);
           value->scope[i] = arg;
-          FbleValueAddRef(heap, &value->_base._base, arg);
+          FbleValueAddRef(heap, &value->_base, arg);
         }
-        thread->stack->locals[proc_value_instr->dest] = &value->_base._base;
+        thread->stack->locals[proc_value_instr->dest] = &value->_base;
         break;
       }
 
@@ -617,7 +599,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleVectorInit(arena, thread->children);
 
         for (size_t i = 0; i < fork_instr->args.size; ++i) {
-          FbleThunkValue* arg = (FbleThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, thread->stack, fork_instr->args.xs[i]);
+          FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread->stack, fork_instr->args.xs[i]);
 
           // You cannot execute a proc in a let binding, so it should be
           // impossible to ever have an undefined proc value.
@@ -642,7 +624,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_PROC_INSTR: {
         FbleProcInstr* proc_instr = (FbleProcInstr*)instr;
-        FbleThunkValue* proc = (FbleThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, thread->stack, proc_instr->proc);
+        FbleProcValue* proc = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread->stack, proc_instr->proc);
 
         // You cannot execute a proc in a let binding, so it should be
         // impossible to ever have an undefined proc value.
@@ -703,7 +685,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleProfileInstr* profile_instr = (FbleProfileInstr*)instr;
         switch (profile_instr->op) {
           case FBLE_PROFILE_ENTER_OP:
-            FbleProfileEnterBlock(arena, thread->profile, profile_instr->data.enter.block);
+            FbleProfileEnterBlock(arena, thread->profile, profile_instr->block);
             break;
 
           case FBLE_PROFILE_EXIT_OP:
@@ -712,21 +694,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
           case FBLE_PROFILE_AUTO_EXIT_OP: {
             FbleProfileAutoExitBlock(arena, thread->profile);
-            break;
-          }
-
-          case FBLE_PROFILE_FUNC_EXIT_OP: {
-            FbleThunkValue* func = (FbleThunkValue*)FrameTaggedGet(FBLE_THUNK_VALUE, thread->stack, profile_instr->data.func_exit.func);
-            if (func == NULL) {
-              FbleReportError("undefined function value apply\n", &profile_instr->data.func_exit.loc);
-              return ABORTED;
-            };
-
-            if (func->args_needed > 1) {
-              FbleProfileExitBlock(arena, thread->profile);
-            } else {
-              FbleProfileAutoExitBlock(arena, thread->profile);
-            }
             break;
           }
         }
@@ -820,13 +787,13 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread)
 }
 
 // Eval --
-//   Execute the given sequence of instructions to completion.
+//   Evaluate the given function.
 //
 // Inputs:
 //   heap - the value heap.
 //   io - io to use for external ports.
-//   thunk - the thunk to evaluate.
-//   args - args to pass to the thunk. length == thunk->args_needed.
+//   func - the function to evaluate.
+//   args - args to pass to the function. length == func->argc.
 //   profile - profile to update with execution stats.
 //
 // Results:
@@ -836,13 +803,13 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread)
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
-//   Takes ownership of thunk. Does not take ownership of args.
-static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleThunkValue* thunk, FbleValue** args, FbleProfile* profile)
+//   Takes ownership of the function. Does not take ownership of args.
+static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile)
 {
   FbleArena* arena = heap->arena;
   FbleValue* final_result = NULL;
   Thread thread = {
-    .stack = PushFrame(heap, thunk, args, &final_result, NULL),
+    .stack = PushFrame(heap, func, args, &final_result, NULL),
     .profile = FbleNewProfileThread(arena, profile),
     .children = {0, NULL},
     .next_child = 0,
@@ -899,28 +866,27 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
     return NULL;
   }
 
-  FbleCodeThunkValue* thunk = FbleNewValue(heap, FbleCodeThunkValue);
-  thunk->_base._base.tag = FBLE_THUNK_VALUE;
-  thunk->_base.tag = FBLE_CODE_THUNK_VALUE;
-  thunk->_base.args_needed = 0;
-  thunk->code = code;
+  FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
+  func->_base.tag = FBLE_FUNC_VALUE;
+  func->argc = 0;
+  func->code = code;
+  assert(code->statics == 0);
 
   FbleIO io = { .io = &FbleNoIO };
-  FbleValue* result = Eval(heap, &io, &thunk->_base, NULL, profile);
+  FbleValue* result = Eval(heap, &io, func, NULL, profile);
   return result;
 }
 
 // FbleApply -- see documentation in fble.h
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, FbleProfile* profile)
 {
-  assert(func->tag == FBLE_THUNK_VALUE);
-  FbleThunkValue* thunk = (FbleThunkValue*)func;
-
-  assert(thunk->args_needed == args.size);
+  assert(func->tag == FBLE_FUNC_VALUE);
+  FbleFuncValue* f = (FbleFuncValue*)func;
+  assert(f->argc == args.size);
 
   FbleValueRetain(heap, func);
   FbleIO io = { .io = &FbleNoIO, };
-  FbleValue* result = Eval(heap, &io, thunk, args.xs, profile);
+  FbleValue* result = Eval(heap, &io, f, args.xs, profile);
   return result;
 }
 
@@ -934,6 +900,6 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile)
 {
   FbleValueRetain(heap, proc);
-  assert(proc->tag == FBLE_THUNK_VALUE);
-  return Eval(heap, io, (FbleThunkValue*)proc, NULL, profile);
+  assert(proc->tag == FBLE_PROC_VALUE);
+  return Eval(heap, io, (FbleFuncValue*)proc, NULL, profile);
 }

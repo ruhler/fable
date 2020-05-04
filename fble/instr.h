@@ -322,7 +322,6 @@ typedef enum {
   FBLE_PROFILE_ENTER_OP,
   FBLE_PROFILE_EXIT_OP,
   FBLE_PROFILE_AUTO_EXIT_OP,
-  FBLE_PROFILE_FUNC_EXIT_OP
 } FbleProfileOp;
 
 // FbleProfileInstr -- FBLE_PROFILE_INSTR
@@ -332,16 +331,10 @@ typedef enum {
 // ENTER: Enters a new profiling block, as given by the 'block' field.
 // EXIT: Exits the current profiling block.
 // AUTO_EXIT: Auto-exits the current profiling block.
-// FUNC_EXIT: Exits or auto-exits the current profiling block as appropriate
-// based on the value of the function 'func' about to be applied
-// tail-recursively.
 typedef struct {
   FbleInstr _base;
   FbleProfileOp op;
-  union {
-    struct { FbleBlockId block; } enter;
-    struct { FbleLoc loc; FbleFrameIndex func; } func_exit;
-  } data;
+  FbleBlockId block;
 } FbleProfileInstr;
 
 // FbleFreeInstr --

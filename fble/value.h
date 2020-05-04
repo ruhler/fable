@@ -14,7 +14,7 @@
 typedef enum {
   FBLE_STRUCT_VALUE,
   FBLE_UNION_VALUE,
-  FBLE_THUNK_VALUE,
+  FBLE_FUNC_VALUE,
   FBLE_LINK_VALUE,
   FBLE_PORT_VALUE,
   FBLE_REF_VALUE,
@@ -46,53 +46,25 @@ typedef struct {
   FbleValue* arg;
 } FbleUnionValue;
 
-// FbleThunkValueTag --
-//   Enum used to distinguish between the different kinds of thunks.
-typedef enum {
-  FBLE_CODE_THUNK_VALUE,
-  FBLE_APP_THUNK_VALUE,
-} FbleThunkValueTag;
-
-// FbleThunkValue -- FBLE_THUNK_VALUE
-//   A tagged union of thunk value types. All values have the same initial
-//   layout as FbleThunkValue. The tag can be used to determine what kind of
-//   func value this is to get access to additional fields of the func value
-//   by first casting to that specific type of func value.
+// FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
-//   args_needed - The number of additional arguments needed before the thunk
-//   can be evaluated.
+//   argc - The number of arguments expected by the function.
+//   code - The code for the function.
+//   scope - The scope at the time the function was created, representing the
+//           lexical context available to the function. The length of this
+//           array is code->statics.
 typedef struct {
   FbleValue _base;
-  FbleThunkValueTag tag;
-  size_t args_needed;
-} FbleThunkValue;
-
-// FbleCodeThunkValue -- FBLE_CODE_THUNK_VALUE
-//
-// Fields:
-//   code - The code for the thunk.
-//   scope - The scope at the time the thunk was created, representing the
-//           lexical context available to the thunk. The length of this array
-//           is code->statics.
-typedef struct {
-  FbleThunkValue _base;
+  size_t argc;
   FbleInstrBlock* code;
   FbleValue* scope[];
-} FbleCodeThunkValue;
+} FbleFuncValue;
 
-// FbleAppThunkValue -- FBLE_APP_THUNK_VALUE
-//   A thunk that is an application of another thunk to an argument.
-//
-// The value of the thunk is: func(arg)
-//
-// Invariant:
-//   _base.args_needed = func->args_needed - 1;
-typedef struct {
-  FbleThunkValue _base;
-  FbleThunkValue* func;
-  FbleValue* arg;
-} FbleAppThunkValue;
+// FbleProcValue -- FBLE_PROC_VALUE
+//   A proc value is represented as a function that takes no arguments.
+#define FBLE_PROC_VALUE FBLE_FUNC_VALUE
+typedef FbleFuncValue FbleProcValue;
 
 // FbleValues --
 //   A non-circular singly linked list of values.

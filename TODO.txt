@@ -1,7 +1,8 @@
 
-* Replace FbleThunkValue with FbleFuncValue
- - use zero arg func value for proc.
-
+* Change FbleApply to take an FbleValue** instead of a vector.
+* Replace PROC_INSTR with APPLY_INSTR?
+* Remove statics and code from Stack?
+ - Fetch them from the func when needed instead?
 * Update the language spec for func type change.
 * Allow zero-argument functions in the language spec?
 * Consider removing function bind syntax?
