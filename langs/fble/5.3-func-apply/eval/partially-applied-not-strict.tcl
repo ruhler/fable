@@ -3,7 +3,7 @@ fble-test {
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
 
-  (Bool@, Bool@) { Bool@; } And = (Bool@ a, Bool@ b) {
+  (Bool@)(Bool@) { Bool@; } And = (Bool@ a)(Bool@ b) {
     Unit@ tf = true.false;
     ?(a; true: b, false: Bool@(false: tf));
   };

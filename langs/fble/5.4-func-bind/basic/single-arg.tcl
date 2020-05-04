@@ -6,7 +6,7 @@ fble-test {
 
   @ Pair@ = *(Bool@ first, Bool@ second);
 
-  (Pair@, (Bool@){Bool@;}) { Pair@; } Map = (Pair@ p, (Bool@){Bool@;} f) {
+  (Pair@)((Bool@){Bool@;}) { Pair@; } Map = (Pair@ p)((Bool@){Bool@;} f) {
     Pair@(f(p.first), f(p.second));
   };
 

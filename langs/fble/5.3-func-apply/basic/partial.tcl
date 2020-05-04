@@ -1,4 +1,4 @@
-fble-test {
+fble-test-error 12:27 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
@@ -8,7 +8,7 @@ fble-test {
     ?(a; true: b, false: false);
   };
 
-  # Partial application.
+  # Partial application is not allowed.
   (Bool@) { Bool@; } Id = And(true);
 
   Unit@ _tt = Id(true).true;
