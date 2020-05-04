@@ -57,13 +57,10 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 // FbleApply --
 //   Apply a function to the given arguments.
 //
-// The number of arguments supplied must match the number of arguments
-// expected by the function.
-//
 // Inputs:
 //   heap - the heap to use for allocating values.
 //   func - the function to apply.
-//   args - the arguments to apply the function to.
+//   args - the arguments to apply the function to. length == func->argc.
 //   profile - the profile to update.
 //
 // Results:
@@ -72,10 +69,11 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use.
+//   Does not take ownership of the func. Does not take ownership of the args.
 //   Prints warning messages to stderr.
 //   Prints an error message to stderr in case of error.
 //   Updates the profile with stats from the evaluation.
-FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, FbleProfile* profile);
+FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
 // FbleIO --
 //   An interface for reading or writing values over external ports.

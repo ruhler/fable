@@ -230,11 +230,11 @@ int main(int argc, char* argv[])
     .output = NULL,
   };
 
-  FbleValue* args[2];
-  args[0] = FbleNewInputPortValue(heap, &io.input);
-  args[1] = FbleNewOutputPortValue(heap, &io.output);
-  FbleValueV argsv = { .xs = args, .size = 2 };
-  FbleValue* proc = FbleApply(heap, func, argsv, profile);
+  FbleValue* args[2] = {
+    FbleNewInputPortValue(heap, &io.input),
+    FbleNewOutputPortValue(heap, &io.output)
+  };
+  FbleValue* proc = FbleApply(heap, func, args, profile);
   FbleValueRelease(heap, func);
   FbleValueRelease(heap, args[0]);
   FbleValueRelease(heap, args[1]);

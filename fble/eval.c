@@ -860,15 +860,13 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 }
 
 // FbleApply -- see documentation in fble.h
-FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValueV args, FbleProfile* profile)
+FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
   assert(func->tag == FBLE_FUNC_VALUE);
-  FbleFuncValue* f = (FbleFuncValue*)func;
-  assert(f->argc == args.size);
 
   FbleValueRetain(heap, func);
   FbleIO io = { .io = &FbleNoIO, };
-  FbleValue* result = Eval(heap, &io, f, args.xs, profile);
+  FbleValue* result = Eval(heap, &io, (FbleFuncValue*)func, args, profile);
   return result;
 }
 

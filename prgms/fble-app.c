@@ -532,13 +532,13 @@ int main(int argc, char* argv[])
     .effect = NULL,
   };
 
-  FbleValue* args[4];
-  args[0] = MakeInt(heap, width);
-  args[1] = MakeInt(heap, height);
-  args[2] = FbleNewInputPortValue(heap, &io.event);
-  args[3] = FbleNewOutputPortValue(heap, &io.effect);
-  FbleValueV argsv = { .xs = args, .size = 4 };
-  FbleValue* proc = FbleApply(heap, func, argsv, profile);
+  FbleValue* args[] = {
+    MakeInt(heap, width),
+    MakeInt(heap, height),
+    FbleNewInputPortValue(heap, &io.event),
+    FbleNewOutputPortValue(heap, &io.effect)
+  };
+  FbleValue* proc = FbleApply(heap, func, args, profile);
   FbleValueRelease(heap, func);
   FbleValueRelease(heap, args[0]);
   FbleValueRelease(heap, args[1]);

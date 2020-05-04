@@ -1,5 +1,4 @@
 
-* Change FbleApply to take an FbleValue** instead of a vector.
 * Figure out why sustained-put-get test is showing memory growth.
 * Remove statics and code from Stack?
  - Fetch them from the func when needed instead?

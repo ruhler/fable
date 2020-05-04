@@ -92,9 +92,7 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
     FbleValueRelease(heap, zero);
     FbleValueRelease(heap, one);
 
-    args.size = 1;
-    args.xs[0] = tail;
-    FbleValue* result = FbleApply(heap, func, args, profile);
+    FbleValue* result = FbleApply(heap, func, &tail, profile);
 
     // As a special case, if the result of evaluation is a process, execute
     // the process. This allows us to test process execution.
