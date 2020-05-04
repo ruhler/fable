@@ -23,7 +23,6 @@
 //
 // Fields:
 //   func - The function being executed. Owned by this Stack.
-//   statics - Variables captured from the parent scope. Owned by func.
 //   pc - The location of the next instruction in the code to execute.
 //   result - Where to store the result when exiting the stack frame.
 //   tail - The next frame down in the stack.
@@ -32,7 +31,6 @@
 //      All non-NULL entries are owned by this Stack.
 typedef struct Stack {
   FbleFuncValue* func;
-  FbleValue** statics;
   FbleInstr** pc;
   FbleValue** result;
   struct Stack* tail;
@@ -176,7 +174,6 @@ static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 
   Stack* stack = FbleAllocExtra(arena, Stack, locals * sizeof(FbleValue*));
   stack->func = func;
-  stack->statics = func->scope;
   stack->pc = func->code->instrs.xs;
   stack->result = result;
   stack->tail = tail;
@@ -254,7 +251,6 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
   }
 
   stack->func = func;
-  stack->statics = func->scope;
   stack->pc = func->code->instrs.xs;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
@@ -322,7 +318,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
   FbleInstr** pc = thread->stack->pc;
-  FbleValue** statics = thread->stack->statics;
+  FbleValue** statics = thread->stack->func->scope;
   FbleValue** locals = thread->stack->locals;
 
   while (true) {
@@ -451,14 +447,14 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         if (apply_instr->exit) {
           thread->stack = ReplaceFrame(heap, func, args, thread->stack);
           pc = thread->stack->pc;
-          statics = thread->stack->statics;
+          statics = thread->stack->func->scope;
           locals = thread->stack->locals;
         } else {
           thread->stack->pc = pc;
           FbleValue** result = locals + apply_instr->dest;
           thread->stack = PushFrame(heap, func, args, result, thread->stack);
           pc = thread->stack->pc;
-          statics = thread->stack->statics;
+          statics = thread->stack->func->scope;
           locals = thread->stack->locals;
         }
         break;
@@ -663,7 +659,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           return FINISHED;
         }
         pc = thread->stack->pc;
-        statics = thread->stack->statics;
+        statics = thread->stack->func->scope;
         locals = thread->stack->locals;
         break;
       }
