@@ -338,21 +338,29 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
         size_t argc = struct_value_instr->args.size;
-        FbleValue* argv[argc];
+
+        FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
+        value->_base.tag = FBLE_STRUCT_VALUE;
+        value->fieldc = argc;
         for (size_t i = 0; i < argc; ++i) {
-          FbleValue* arg = FrameGet(statics, locals, struct_value_instr->args.xs[i]);
-          argv[i] = FbleValueRetain(heap, arg);
+          value->fields[i] = FrameGet(statics, locals, struct_value_instr->args.xs[i]);
+          FbleValueAddRef(heap, &value->_base, value->fields[i]);
         }
 
-        FbleValueV args = { .size = argc, .xs = argv, };
-        locals[struct_value_instr->dest] = FbleNewStructValue(heap, args);
+        locals[struct_value_instr->dest] = &value->_base;
         break;
       }
 
       case FBLE_UNION_VALUE_INSTR: {
         FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-        FbleValue* arg = FrameGet(statics, locals, union_value_instr->arg);
-        locals[union_value_instr->dest] = FbleNewUnionValue(heap, union_value_instr->tag, FbleValueRetain(heap, arg));
+
+        FbleUnionValue* value = FbleNewValue(heap, FbleUnionValue);
+        value->_base.tag = FBLE_UNION_VALUE;
+        value->tag = union_value_instr->tag;
+        value->arg = FrameGet(statics, locals, union_value_instr->arg);
+        FbleValueAddRef(heap, &value->_base, value->arg);
+
+        locals[union_value_instr->dest] = &value->_base;
         break;
       }
 
@@ -652,8 +660,18 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        FbleValue* result = FrameGet(statics, locals, return_instr->result);
-        *thread->stack->result = FbleValueRetain(heap, result);
+        size_t index = return_instr->result.index;
+        switch (return_instr->result.section) {
+          case FBLE_STATICS_FRAME_SECTION:
+            *thread->stack->result = FbleValueRetain(heap, statics[index]);
+            break;
+
+          case FBLE_LOCALS_FRAME_SECTION:
+            *thread->stack->result = locals[index];
+            locals[index] = NULL;
+            break;
+        }
+
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
           return FINISHED;
