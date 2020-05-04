@@ -24,17 +24,15 @@
 // Fields:
 //   func - The function being executed. Owned by this Stack.
 //   statics - Variables captured from the parent scope. Owned by func.
-//   code - The currently executing instruction block. Owned by func.
 //   pc - The location of the next instruction in the code to execute.
 //   result - Where to store the result when exiting the stack frame.
 //   tail - The next frame down in the stack.
 //   locals - Space allocated for local variables.
-//      Has length at least code->locals values.
+//      Has length at least func->code->locals values.
 //      All non-NULL entries are owned by this Stack.
 typedef struct Stack {
   FbleFuncValue* func;
   FbleValue** statics;
-  FbleInstrBlock* code;
   FbleInstr** pc;
   FbleValue** result;
   struct Stack* tail;
@@ -177,8 +175,7 @@ static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
   Stack* stack = FbleAllocExtra(arena, Stack, locals * sizeof(FbleValue*));
   stack->func = func;
   stack->statics = func->scope;
-  stack->code = func->code;
-  stack->pc = stack->code->instrs.xs;
+  stack->pc = func->code->instrs.xs;
   stack->result = result;
   stack->tail = tail;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
@@ -207,10 +204,10 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 {
   FbleArena* arena = heap->arena;
 
-  FbleValueRelease(heap, &stack->func->_base);
-  for (size_t i = 0; i < stack->code->locals; ++i) {
+  for (size_t i = 0; i < stack->func->code->locals; ++i) {
     FbleValueRelease(heap, stack->locals[i]);
   }
+  FbleValueRelease(heap, &stack->func->_base);
 
   Stack* tail = stack->tail;
   FbleFree(arena, stack);
@@ -238,10 +235,9 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
 {
   FbleArena* arena = heap->arena;
 
-  size_t old_locals = stack->code->locals;
-
+  size_t old_locals = stack->func->code->locals;
   FbleValueRelease(heap, &stack->func->_base);
-  for (size_t i = 0; i < stack->code->locals; ++i) {
+  for (size_t i = 0; i < old_locals; ++i) {
     FbleValueRelease(heap, stack->locals[i]);
   }
 
@@ -257,8 +253,7 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
 
   stack->func = func;
   stack->statics = func->scope;
-  stack->code = func->code;
-  stack->pc = stack->code->instrs.xs;
+  stack->pc = func->code->instrs.xs;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   for (size_t i = 0; i < func->argc; ++i) {
