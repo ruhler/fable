@@ -793,8 +793,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
           Local* dest = NewLocal(arena, scope);
 
-          FbleFuncApplyInstr* apply_instr = FbleAlloc(arena, FbleFuncApplyInstr);
-          apply_instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+          FbleApplyInstr* apply_instr = FbleAlloc(arena, FbleApplyInstr);
+          apply_instr->_base.tag = FBLE_APPLY_INSTR;
           apply_instr->loc = misc_apply_expr->misc->loc;
           apply_instr->exit = exit;
           apply_instr->func = misc.local->index;
@@ -2037,9 +2037,9 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       }
 
       // A process is represented at runtime as a zero argument function. To
-      // execute the process, use the FBLE_FUNC_APPLY_INSTR.
-      FbleFuncApplyInstr* instr = FbleAlloc(arena, FbleFuncApplyInstr);
-      instr->_base.tag = FBLE_FUNC_APPLY_INSTR;
+      // execute the process, use the FBLE_APPLY_INSTR.
+      FbleApplyInstr* instr = FbleAlloc(arena, FbleApplyInstr);
+      instr->_base.tag = FBLE_APPLY_INSTR;
       instr->loc = expr->loc;
       instr->exit = exit;
       instr->dest = c.local->index.index;

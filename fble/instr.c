@@ -116,29 +116,29 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           break;
         }
 
-        case FBLE_FUNC_APPLY_INSTR: {
-          FbleFuncApplyInstr* func_apply_instr = (FbleFuncApplyInstr*)instr;
-          if (func_apply_instr->exit) {
+        case FBLE_APPLY_INSTR: {
+          FbleApplyInstr* apply_instr = (FbleApplyInstr*)instr;
+          if (apply_instr->exit) {
             fprintf(fout, "$");
           } else {
-            fprintf(fout, "l%zi", func_apply_instr->dest);
+            fprintf(fout, "l%zi", apply_instr->dest);
           }
 
           fprintf(fout, " = %s%zi(",
-              sections[func_apply_instr->func.section],
-              func_apply_instr->func.index);
+              sections[apply_instr->func.section],
+              apply_instr->func.index);
 
           const char* comma = "";
-          for (size_t i = 0; i < func_apply_instr->args.size; ++i) {
+          for (size_t i = 0; i < apply_instr->args.size; ++i) {
             fprintf(fout, "%s%s%zi", comma, 
-              sections[func_apply_instr->args.xs[i].section],
-              func_apply_instr->args.xs[i].index);
+              sections[apply_instr->args.xs[i].section],
+              apply_instr->args.xs[i].index);
             comma = ", ";
           }
               
           fprintf(fout, "); // %s:%i:%i\n",
-              func_apply_instr->loc.source, func_apply_instr->loc.line,
-              func_apply_instr->loc.col);
+              apply_instr->loc.source, apply_instr->loc.line,
+              apply_instr->loc.col);
           break;
         }
 
@@ -310,8 +310,8 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       return;
     }
 
-    case FBLE_FUNC_APPLY_INSTR: {
-      FbleFuncApplyInstr* apply_instr = (FbleFuncApplyInstr*)instr;
+    case FBLE_APPLY_INSTR: {
+      FbleApplyInstr* apply_instr = (FbleApplyInstr*)instr;
       FbleFree(arena, apply_instr->args.xs);
       FbleFree(arena, instr);
       return;
