@@ -473,7 +473,7 @@ this isn't an approximation of garbage collection. If we don't traverse an
 older generation, it's because we know for certain that it wouldn't make a
 difference to traverse the older generation.
 
-It don't expect the runtime performance of GC to change much. That's tied to
+I don't expect the runtime performance of GC to change much. That's tied to
 how much traversal you do per allocation, not how long it takes to go through
 the heap. But it should reduce collection lag a lot, which will reduce memory
 overhead. And potentially it would allow us to lower the traversal rate, which
@@ -481,7 +481,50 @@ would improve performance.
 
 I do have this fear that something like routine putting objects on a link will
 force full GC pretty often. Because once you do a full GC, everything is
-lumped into the same generation. If one of those objects is a link, than any
+lumped into the same generation. If one of those objects is a link, then any
 time we put something onto the link we'll have to do a full GC, and there's no
 way to get out of it.
+
+---
+
+Proposal for how to convert generation gc to improved performance:
+
+1. Slow down how fast we reclaim freed objects. Instead of reclaiming 2
+objects per allocation, reclaim, say, 1.2 objects. Or, every 5 allocations
+reclaim an extra object.
+
+This lengthens the amount of time we can go before we run out of free objects.
+For example, if you have 100 objects free, instead of having 50 allocations
+until you run out, you have 83 allocations until you run out.
+
+2. Adaptively slow down how fast you gc. At the start of each gc cycle, say we
+know how long until we run out of free objects, and we know how many objects
+we need to traverse in the worst case to get the next batch of free objects.
+Adapt the rate of gc with the goal of finishing traversal in the worse case
+just before you run out of free objects.
+
+For example, say we have to GC at most 40 objects, and we know we'll run out
+of free objects after 83 allocations. Then we only need to traverse 1
+object every 2 allocations. Let's say the fastest we go is what we have today:
+1 object traversed per allocation.
+
+With these adjustments, and with generational GC, the hope is that you only
+have to scan a very few number of objects each generation, and you have a fair
+amount of time to do it in, so you'll end up doing much less work.
+
+I think it's worth a try.
+
+---
+
+It's about trading off the following:
+1. The more objects you traverse per allocation, the more time you spend in
+gc. That's costly.
+
+2. If you fail to complete gc before you run out of free objects, you end up
+allocating new objects that you could otherwise have avoided. That number of
+unnecessary new allocations is costly. But only in case of maximum memory use?
+
+Perhaps, if we care about max memory use, then the case to care about is when
+we drop a large number of objects, then allocate with 100% retention? Because
+that's where lag to reclaim effects the max memory use.
 

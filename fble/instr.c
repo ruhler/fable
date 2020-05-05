@@ -79,9 +79,15 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-          fprintf(fout, "jump +%s%zi.tag; // %s:%i:%i\n",
+          fprintf(fout, "pc += ?(%s%zi; ",
               sections[select_instr->condition.section],
-              select_instr->condition.index,
+              select_instr->condition.index);
+          const char* comma = "";
+          for (size_t i = 0; i < select_instr->jumps.size; ++i) {
+            fprintf(fout, "%s%zi", comma, select_instr->jumps.xs[i]);
+            comma = ", ";
+          }
+          fprintf(fout, ");  // %s:%i:%i\n",
               select_instr->loc.source, select_instr->loc.line,
               select_instr->loc.col);
           break;
@@ -280,7 +286,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_UNION_VALUE_INSTR:
     case FBLE_STRUCT_ACCESS_INSTR:
     case FBLE_UNION_ACCESS_INSTR:
-    case FBLE_UNION_SELECT_INSTR:
     case FBLE_JUMP_INSTR:
     case FBLE_RELEASE_INSTR:
     case FBLE_COPY_INSTR:
@@ -298,6 +303,13 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       FbleFree(arena, struct_instr->args.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_UNION_SELECT_INSTR: {
+      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+      FbleFree(arena, select_instr->jumps.xs);
       FbleFree(arena, instr);
       return;
     }

@@ -123,15 +123,23 @@ typedef struct {
   FbleInstrBlock** xs;
 } FbleInstrBlockV;
 
+// FbleOffsetV --
+//   A vector of offsets.
+typedef struct {
+  size_t size;
+  size_t* xs;
+} FbleOffsetV;
+
 // FbleUnionSelectInstr -- FBLE_UNION_SELECT_INSTR
 //   Select the next thing to execute based on the tag of the value on top of
 //   the value stack.
 //
-// next_pc += condition.tag
+// next_pc += ?(condition.tag; jumps[0], jumps[1], ...);
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
   FbleFrameIndex condition;
+  FbleOffsetV jumps;
 } FbleUnionSelectInstr;
 
 // FbleJumpInstr -- FBLE_JUMP_INSTR

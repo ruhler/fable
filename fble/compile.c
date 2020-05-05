@@ -1143,18 +1143,12 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       select_instr->loc = select_expr->condition->loc;
       select_instr->condition = condition.local->index;
+      FbleVectorInit(arena, select_instr->jumps);
       AppendInstr(arena, scope, &select_instr->_base);
 
-      Compiled target = COMPILE_FAILED;
-      FbleJumpInstr* enter_jumps[union_type->fields.size];
-      for (size_t i = 0; i < union_type->fields.size; ++i) {
-        enter_jumps[i] = FbleAlloc(arena, FbleJumpInstr);
-        enter_jumps[i]->_base.tag = FBLE_JUMP_INSTR;
-        enter_jumps[i]->count = scope->code->instrs.size + 1;
-        AppendInstr(arena, scope, &enter_jumps[i]->_base);
-      }
+      size_t select_instr_pc = scope->code->instrs.size;
 
-      size_t default_pc = scope->code->instrs.size;
+      Compiled target = COMPILE_FAILED;
       FbleJumpInstr* exit_jump_default = NULL;
       if (select_expr->default_ != NULL) {
         FbleName name = {
@@ -1196,7 +1190,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       size_t choice = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         if (choice < select_expr->choices.size && FbleNamesEqual(&select_expr->choices.xs[choice].name, &union_type->fields.xs[i].name)) {
-          enter_jumps[i]->count = scope->code->instrs.size - enter_jumps[i]->count;
+          size_t jump = scope->code->instrs.size - select_instr_pc;
+          FbleVectorAppend(arena, select_instr->jumps, jump);
 
           EnterBlock(arena, blocks,
               select_expr->choices.xs[choice].name,
@@ -1262,7 +1257,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           FbleTypeRelease(heap, target.type);
           return COMPILE_FAILED;
         } else {
-          enter_jumps[i]->count = default_pc - enter_jumps[i]->count;
+          FbleVectorAppend(arena, select_instr->jumps, 0);
         }
       }
       FbleTypeRelease(heap, &union_type->_base);

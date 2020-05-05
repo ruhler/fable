@@ -1,4 +1,15 @@
 
+* Think about how it's maybe okay to slow down gc more
+ - Because the worst case of traversing the entire heap also is the least
+   important to run gc given that gc won't free anything.
+
+* Think about how to do static analysis to avoid retain/release when possible.
+  For example, no need to retain/release a.x if a is an argument to the
+  function and we use a.x locally.
+
+* Merge select and jump instructions into a single instruction for case.
+ - So we are consistent about not splitting up instructions. And hey, why not?
+
 * Clean up how we track io activity?
 
 * Allow zero-argument functions in the language spec?
@@ -13,6 +24,10 @@
  - Replace AutoExitBlock with ReplaceBlock.
 
 * [type] Inline fields and args data into FbleType objects?
+
+* [gc] Collect stats during gc?
+ - Ideally # of objects freed, # of objects retained.
+* [gc] Implement adaptive rate gc?
 * [gc] Implement generational gc?
 
 * [test] Check if 6.4-proc-exec/eval/propagate-abort-blocking test fails when

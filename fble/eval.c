@@ -421,7 +421,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           FbleReportError("undefined union value select\n", &select_instr->loc);
           return ABORTED;
         }
-        pc += uv->tag;
+        pc += select_instr->jumps.xs[uv->tag];
         break;
       }
 
