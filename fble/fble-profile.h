@@ -115,7 +115,7 @@ FbleBlockId FbleProfileAddBlock(FbleArena* arena, FbleProfile* profile, FbleName
 //
 // Input:
 //   arena - arena to use for allocations
-//   profile - the profile to free
+//   profile - the profile to free. May be NULL.
 //
 // Results:
 //   none.
@@ -171,7 +171,7 @@ FbleProfileThread* FbleForkProfileThread(FbleArena* arena, FbleProfileThread* pa
 //
 // Inputs:
 //   arena - arena to use for allocations
-//   thread - thread to free
+//   thread - thread to free. May be NULL.
 //
 // Results:
 //   none.

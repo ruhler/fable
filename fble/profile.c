@@ -475,6 +475,10 @@ FbleBlockId FbleProfileAddBlock(FbleArena* arena, FbleProfile* profile, FbleName
 // FbleFreeProfile -- see documentation in fble-profile.h
 void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 {
+  if (profile == NULL) {
+    return;
+  }
+
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     FbleBlockProfile* block = profile->blocks.xs[i];
 
@@ -561,6 +565,10 @@ FbleProfileThread* FbleForkProfileThread(FbleArena* arena, FbleProfileThread* pa
 // FbleFreeProfileThread -- see documentation in fble-profile.h
 void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
 {
+  if (thread == NULL) {
+    return;
+  }
+
   CallStack* calls = thread->calls;
   if (calls->next != NULL) {
     calls = calls->next;

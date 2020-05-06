@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
   if (prgm != NULL) {
     FbleArena* eval_arena = FbleNewArena();
     FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
-    FbleProfile* profile = FbleNewProfile(eval_arena);
+    FbleProfile* profile = report_profile ? FbleNewProfile(eval_arena) : NULL;
     result = FbleEval(heap, prgm, profile);
 
     // As a special case, if the result of evaluation is a process, execute
@@ -119,9 +119,9 @@ int main(int argc, char* argv[])
     if (report_profile) {
       printf("max memory eval: %zi (bytes)\n\n", FbleArenaMaxSize(eval_arena));
       FbleProfileReport(stdout, profile);
+      FbleFreeProfile(eval_arena, profile);
     }
 
-    FbleFreeProfile(eval_arena, profile);
     FbleAssertEmptyArena(eval_arena);
     FbleFreeArena(eval_arena);
   }

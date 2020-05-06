@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
 
   FbleArena* eval_arena = FbleNewArena();
   FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
-  FbleProfile* profile = FbleNewProfile(eval_arena);
+  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile(eval_arena);
 
   FbleValue* func = FbleEval(heap, prgm, profile);
   if (func == NULL) {

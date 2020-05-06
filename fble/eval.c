@@ -55,7 +55,8 @@ typedef struct {
 //
 // Fields:
 //   stack - the execution stack.
-//   profile - the profile thread associated with this thread.
+//   profile - the profile thread associated with this thread. May be NULL to
+//             disable profiling.
 //   children - child threads that this thread is potentially blocked on.
 //      This vector is {0, NULL} when there are no child threads.
 //   next_child - the child of this thread to execute next.
@@ -309,10 +310,8 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
     thread->stack = PopFrame(heap, thread->stack);
   }
 
-  if (thread->profile != NULL) {
-    FbleFreeProfileThread(arena, thread->profile);
-    thread->profile = NULL;
-  }
+  FbleFreeProfileThread(arena, thread->profile);
+  thread->profile = NULL;
 }
 
 // RunThread --
@@ -343,25 +342,29 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
   while (true) {
     FbleInstr* instr = *pc++;
     if (rand() % TIME_SLICE == 0) {
-      FbleProfileSample(arena, profile, 1);
+      if (profile != NULL) {
+        FbleProfileSample(arena, profile, 1);
+      }
 
       thread->stack->pc = pc - 1;
       return UNBLOCKED;
     }
 
-    for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-      switch (op->tag) {
-        case FBLE_PROFILE_ENTER_OP:
-          FbleProfileEnterBlock(arena, profile, op->block);
-          break;
+    if (profile != NULL) {
+      for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+        switch (op->tag) {
+          case FBLE_PROFILE_ENTER_OP:
+            FbleProfileEnterBlock(arena, profile, op->block);
+            break;
 
-        case FBLE_PROFILE_EXIT_OP:
-          FbleProfileExitBlock(arena, profile);
-          break;
+          case FBLE_PROFILE_EXIT_OP:
+            FbleProfileExitBlock(arena, profile);
+            break;
 
-        case FBLE_PROFILE_AUTO_EXIT_OP: {
-          FbleProfileAutoExitBlock(arena, profile);
-          break;
+          case FBLE_PROFILE_AUTO_EXIT_OP: {
+            FbleProfileAutoExitBlock(arena, profile);
+            break;
+          }
         }
       }
     }
@@ -656,7 +659,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 
           Thread* child = FbleAlloc(arena, Thread);
           child->stack = PushFrame(heap, arg, NULL, result, NULL);
-          child->profile = FbleForkProfileThread(arena, profile);
+          child->profile = profile == NULL ? NULL : FbleForkProfileThread(arena, profile);
           child->children.size = 0;
           child->children.xs = NULL;
           child->next_child = 0;
@@ -805,7 +808,8 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread)
 //   io - io to use for external ports.
 //   func - the function to evaluate.
 //   args - args to pass to the function. length == func->argc.
-//   profile - profile to update with execution stats.
+//   profile - profile to update with execution stats. May be NULL to disable
+//             profiling.
 //
 // Results:
 //   The computed value, or NULL on error.
@@ -821,7 +825,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
   FbleValue* final_result = NULL;
   Thread thread = {
     .stack = PushFrame(heap, func, args, &final_result, NULL),
-    .profile = FbleNewProfileThread(arena, profile),
+    .profile = profile == NULL ? NULL : FbleNewProfileThread(arena, profile),
     .children = {0, NULL},
     .next_child = 0,
     .parent = NULL,
@@ -872,7 +876,23 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile)
 {
   FbleArena* arena = heap->arena;
+
+  bool profiling_disabled = false;
+  if (profile == NULL) {
+    // Profiling is diabled. Allocate a new temporary profile to pass to the
+    // compiler so that the compiler doesn't have to handle disabled profiling
+    // specially.
+    profiling_disabled = true;
+    profile = FbleNewProfile(arena);
+  }
+
   FbleInstrBlock* code = FbleCompile(arena, profile, program);
+
+  if (profiling_disabled) {
+    FbleFreeProfile(arena, profile);
+    profile = NULL;
+  }
+
   if (code == NULL) {
     return NULL;
   }

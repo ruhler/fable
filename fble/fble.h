@@ -38,7 +38,7 @@ bool FbleDecompile(FILE* fout, FbleProgram* program);
 // Inputs:
 //   heap - The heap to use for allocating values.
 //   program - The program to evaluate.
-//   profile - Output profile for the evaluation.
+//   profile - the profile to update. May be NULL to disable profiling.
 //
 // Results:
 //   The value of the evaluated program, or NULL in case of error. The
@@ -61,7 +61,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* prof
 //   heap - the heap to use for allocating values.
 //   func - the function to apply.
 //   args - the arguments to apply the function to. length == func->argc.
-//   profile - the profile to update.
+//   profile - the profile to update. May be NULL to disable profiling.
 //
 // Results:
 //   The result of applying the function to the given arguments.
@@ -133,7 +133,7 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block);
 //   heap - The heap to use for allocating values.
 //   io - The io to use for external ports.
 //   proc - The process to execute.
-//   profile - the profile to update.
+//   profile - the profile to update. May be NULL to disable profiling.
 //
 // Results:
 //   The result of executing the process, or NULL in case of error. The
