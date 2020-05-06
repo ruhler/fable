@@ -38,6 +38,27 @@ typedef struct {
   FbleLocalIndex* xs;
 } FbleLocalIndexV;
 
+// FbleProfileOpTag --
+//   Enum used to distinguish among different kinds of FbleProfileOps.
+typedef enum {
+  FBLE_PROFILE_ENTER_OP,
+  FBLE_PROFILE_EXIT_OP,
+  FBLE_PROFILE_AUTO_EXIT_OP,
+} FbleProfileOpTag;
+
+// FbleProfileOp
+//
+// A singly-linked list of profiling operations.
+//
+// ENTER: Enters a new profiling block, as given by the 'block' field.
+// EXIT: Exits the current profiling block. 'block' is ignored.
+// AUTO_EXIT: Auto-exits the current profiling block. 'block' is ignored.
+typedef struct FbleProfileOp {
+  FbleProfileOpTag tag;
+  FbleBlockId block;
+  struct FbleProfileOp* next;
+} FbleProfileOp;
+
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
@@ -60,13 +81,16 @@ typedef enum {
   FBLE_REF_DEF_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
-  FBLE_PROFILE_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
 //   Common base type for all instructions.
+//
+// profile_ops are profiling operations to perform before executing the
+// instruction.
 typedef struct {
   FbleInstrTag tag;
+  FbleProfileOp* profile_ops;
 } FbleInstr;
 
 // FbleInstrV --
@@ -311,27 +335,6 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
 } FbleTypeInstr;
-
-// FbleProfileOp --
-//   Operations that can be done as part of an FBLE_PROFILE_INSTR.
-typedef enum {
-  FBLE_PROFILE_ENTER_OP,
-  FBLE_PROFILE_EXIT_OP,
-  FBLE_PROFILE_AUTO_EXIT_OP,
-} FbleProfileOp;
-
-// FbleProfileInstr -- FBLE_PROFILE_INSTR
-//
-// Perform a profiling operations.
-//
-// ENTER: Enters a new profiling block, as given by the 'block' field.
-// EXIT: Exits the current profiling block.
-// AUTO_EXIT: Auto-exits the current profiling block.
-typedef struct {
-  FbleInstr _base;
-  FbleProfileOp op;
-  FbleBlockId block;
-} FbleProfileInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.

@@ -41,6 +41,30 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
         (void*)block, block->statics, block->locals);
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];
+
+      for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+        switch (op->tag) {
+          case FBLE_PROFILE_ENTER_OP: {
+            FbleBlockId block = op->block;
+            FbleName* name = &profile->blocks.xs[block]->name;
+            fprintf(fout, "    .  profile enter [%04x]; ", block);
+            fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name, block,
+                name->loc.source, name->loc.line, name->loc.col);
+            break;
+          }
+
+          case FBLE_PROFILE_EXIT_OP: {
+            fprintf(fout, "    .  profile exit;\n");
+            break;
+          }
+
+          case FBLE_PROFILE_AUTO_EXIT_OP: {
+            fprintf(fout, "    .  profile auto exit;\n");
+            break;
+          }
+        }
+      }
+
       fprintf(fout, "%4zi.  ", i);
       switch (instr->tag) {
         case FBLE_STRUCT_VALUE_INSTR: {
@@ -243,31 +267,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           fprintf(fout, "l%zi = type;\n", type_instr->dest);
           break;
         }
-
-        case FBLE_PROFILE_INSTR: {
-          FbleProfileInstr* profile_instr = (FbleProfileInstr*)instr;
-          switch (profile_instr->op) {
-            case FBLE_PROFILE_ENTER_OP: {
-              FbleBlockId block = profile_instr->block;
-              FbleName* name = &profile->blocks.xs[block]->name;
-              fprintf(fout, "profile enter [%04x]; ", block);
-              fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name, block,
-                  name->loc.source, name->loc.line, name->loc.col);
-              break;
-            }
-
-            case FBLE_PROFILE_EXIT_OP: {
-              fprintf(fout, "profile exit;\n");
-              break;
-            }
-
-            case FBLE_PROFILE_AUTO_EXIT_OP: {
-              fprintf(fout, "profile auto exit;\n");
-              break;
-            }
-          }
-          break;
-        }
       }
     }
     fprintf(fout, "\n\n");
@@ -282,6 +281,12 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
 {
   assert(instr != NULL);
+  while (instr->profile_ops != NULL) {
+    FbleProfileOp* op = instr->profile_ops;
+    instr->profile_ops = op->next;
+    FbleFree(arena, op);
+  }
+
   switch (instr->tag) {
     case FBLE_UNION_VALUE_INSTR:
     case FBLE_STRUCT_ACCESS_INSTR:
@@ -296,7 +301,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_REF_DEF_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
-    case FBLE_PROFILE_INSTR:
       FbleFree(arena, instr);
       return;
 

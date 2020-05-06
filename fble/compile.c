@@ -65,6 +65,8 @@ typedef struct {
 //   locals - local values. Entries may be NULL to indicate a free slot.
 //     Owns the Local.
 //   code - the instruction block for this scope.
+//   pending_profile_ops - profiling ops to associated with the next
+//                         instruction added.
 //   capture - A vector of variables captured from the parent scope. If NULL,
 //             operations on this scope should not have any side
 //             effects on the parent scope, which is used in the case when we
@@ -75,6 +77,7 @@ typedef struct Scope {
   VarV vars;
   LocalV locals;
   FbleInstrBlock* code;
+  FbleProfileOp* pending_profile_ops;
   FbleFrameIndexV* capture;
   struct Scope* parent;
 } Scope;
@@ -88,7 +91,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, FbleFrameIndexV* capture, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
-static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOp op, FbleBlockId block);
+static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
 
 // Blocks --
 //   A stack of block frames tracking the current block for profiling.
@@ -187,6 +190,7 @@ static void LocalRelease(FbleArena* arena, Scope* scope, Local* local, bool exit
     if (!exit) {
       FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
       release->_base.tag = FBLE_RELEASE_INSTR;
+      release->_base.profile_ops = NULL;
       release->value = local->index.index;
       AppendInstr(arena, scope, &release->_base);
     }
@@ -370,6 +374,7 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, Fbl
   FbleVectorInit(arena, scope->code->instrs);
   scope->code->statics = 0;
   scope->code->locals = 0;
+  scope->pending_profile_ops = NULL;
   scope->capture = capture;
   scope->parent = parent;
 
@@ -410,6 +415,12 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit)
     }
   }
   FbleFree(arena, scope->locals.xs);
+
+  while (scope->pending_profile_ops != NULL) {
+    FbleProfileOp* op = scope->pending_profile_ops;
+    scope->pending_profile_ops = op->next;
+    FbleFree(arena, op);
+  }
 }
 
 // AppendInstr --
@@ -428,6 +439,9 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit)
 //   ownership of the instr.
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr)
 {
+  assert(instr->profile_ops == NULL);
+  instr->profile_ops = scope->pending_profile_ops;
+  scope->pending_profile_ops = NULL;
   FbleVectorAppend(arena, scope->code->instrs, instr);
 }
 
@@ -437,7 +451,7 @@ static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr)
 // Inputs:
 //   arena - arena to use for allocations.
 //   scope - the scope to append the instruction to.
-//   op - the profile op to insert.
+//   tag - the tag of the profile op to insert.
 //   block - the block id if relevant.
 //
 // Result:
@@ -445,13 +459,22 @@ static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr)
 //
 // Side effects:
 //   Appends the profile op to the code block for the given scope.
-static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOp op, FbleBlockId block)
+static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag, FbleBlockId block)
 {
-  FbleProfileInstr* instr = FbleAlloc(arena, FbleProfileInstr);
-  instr->_base.tag = FBLE_PROFILE_INSTR;
-  instr->op = op;
-  instr->block = block;
-  AppendInstr(arena, scope, &instr->_base);
+  FbleProfileOp* op = FbleAlloc(arena, FbleProfileOp);
+  op->tag = tag;
+  op->block = block;
+  op->next = NULL;
+
+  if (scope->pending_profile_ops == NULL) {
+    scope->pending_profile_ops = op;
+  } else {
+    FbleProfileOp* curr = scope->pending_profile_ops;
+    while (curr->next != NULL) {
+      curr = curr->next;
+    }
+    curr->next = op;
+  } 
 }
 
 // EnterBlock --
@@ -690,6 +713,7 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result
 
     FbleReturnInstr* return_instr = FbleAlloc(arena, FbleReturnInstr);
     return_instr->_base.tag = FBLE_RETURN_INSTR;
+    return_instr->_base.profile_ops = NULL;
     return_instr->result = result->index;
     AppendInstr(arena, scope, &return_instr->_base);
   }
@@ -744,6 +768,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       Local* local = NewLocal(arena, scope);
       FbleTypeInstr* instr = FbleAlloc(arena, FbleTypeInstr);
       instr->_base.tag = FBLE_TYPE_INSTR;
+      instr->_base.profile_ops = NULL;
       instr->dest = local->index.index;
       AppendInstr(arena, scope, &instr->_base);
       CompileExit(arena, exit, scope, local);
@@ -801,6 +826,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
           FbleApplyInstr* apply_instr = FbleAlloc(arena, FbleApplyInstr);
           apply_instr->_base.tag = FBLE_APPLY_INSTR;
+          apply_instr->_base.profile_ops = NULL;
           apply_instr->loc = misc_apply_expr->misc->loc;
           apply_instr->exit = exit;
           apply_instr->func = misc.local->index;
@@ -897,6 +923,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
           FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
           struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+          struct_instr->_base.profile_ops = NULL;
           struct_instr->dest = c.local->index.index;
           FbleVectorInit(arena, struct_instr->args);
           AppendInstr(arena, scope, &struct_instr->_base);
@@ -981,6 +1008,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       c.local = NewLocal(arena, scope);
       FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+      struct_instr->_base.profile_ops = NULL;
       struct_instr->dest = c.local->index.index;
       AppendInstr(arena, scope, &struct_instr->_base);
       CompileExit(arena, exit, scope, c.local);
@@ -1053,6 +1081,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       c.local = NewLocal(arena, scope);
       FbleUnionValueInstr* union_instr = FbleAlloc(arena, FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
+      union_instr->_base.profile_ops = NULL;
       union_instr->tag = tag;
       union_instr->arg = arg.local->index;
       union_instr->dest = c.local->index.index;
@@ -1072,6 +1101,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
       access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
+      access->_base.profile_ops = NULL;
       access->loc = access_expr->field.loc;
       access->obj = obj.local->index;
       AppendInstr(arena, scope, &access->_base);
@@ -1144,6 +1174,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleUnionSelectInstr* select_instr = FbleAlloc(arena, FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
+      select_instr->_base.profile_ops = NULL;
       select_instr->loc = select_expr->condition->loc;
       select_instr->condition = condition.local->index;
       FbleVectorInit(arena, select_instr->jumps);
@@ -1174,6 +1205,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         if (!exit) {
           FbleCopyInstr* copy = FbleAlloc(arena, FbleCopyInstr);
           copy->_base.tag = FBLE_COPY_INSTR;
+          copy->_base.profile_ops = NULL;
           copy->source = result.local->index;
           copy->dest = target.local->index.index;
           AppendInstr(arena, scope, &copy->_base);
@@ -1184,6 +1216,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         if (!exit) {
           exit_jump_default = FbleAlloc(arena, FbleJumpInstr);
           exit_jump_default->_base.tag = FBLE_JUMP_INSTR;
+          exit_jump_default->_base.profile_ops = NULL;
           exit_jump_default->count = scope->code->instrs.size + 1;
           AppendInstr(arena, scope, &exit_jump_default->_base);
         }
@@ -1230,6 +1263,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           if (!exit) {
             FbleCopyInstr* copy = FbleAlloc(arena, FbleCopyInstr);
             copy->_base.tag = FBLE_COPY_INSTR;
+            copy->_base.profile_ops = NULL;
             copy->source = result.local->index;
             copy->dest = target.local->index.index;
             AppendInstr(arena, scope, &copy->_base);
@@ -1241,6 +1275,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           if (!exit) {
             exit_jumps[choice] = FbleAlloc(arena, FbleJumpInstr);
             exit_jumps[choice]->_base.tag = FBLE_JUMP_INSTR;
+            exit_jumps[choice]->_base.profile_ops = NULL;
             exit_jumps[choice]->count = scope->code->instrs.size + 1;
             AppendInstr(arena, scope, &exit_jumps[choice]->_base);
           }
@@ -1323,6 +1358,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleFuncValueInstr* instr = FbleAlloc(arena, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
+      instr->_base.profile_ops = NULL;
       instr->argc = argc;
 
       Scope func_scope;
@@ -1371,6 +1407,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_EXEC_EXPR: {
       FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
+      instr->_base.profile_ops = NULL;
 
       Scope body_scope;
       InitScope(arena, &body_scope, &instr->code, &instr->scope, scope);
@@ -1463,6 +1500,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, types[i], local);
         FbleRefValueInstr* ref_instr = FbleAlloc(arena, FbleRefValueInstr);
         ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
+        ref_instr->_base.profile_ops = NULL;
         ref_instr->dest = local->index.index;
         AppendInstr(arena, scope, &ref_instr->_base);
       }
@@ -1526,6 +1564,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           if (recursive) {
             FbleRefDefInstr* ref_def_instr = FbleAlloc(arena, FbleRefDefInstr);
             ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
+            ref_def_instr->_base.profile_ops = NULL;
             ref_def_instr->ref = vars[i]->local->index.index;
             ref_def_instr->value = defs[i].local->index;
             AppendInstr(arena, scope, &ref_def_instr->_base);
@@ -1601,6 +1640,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       Local* local = NewLocal(arena, scope);
       FbleTypeInstr* type_instr = FbleAlloc(arena, FbleTypeInstr);
       type_instr->_base.tag = FBLE_TYPE_INSTR;
+      type_instr->_base.profile_ops = NULL;
       type_instr->dest = local->index.index;
       AppendInstr(arena, scope, &type_instr->_base);
 
@@ -2035,6 +2075,7 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       // execute the process, use the FBLE_APPLY_INSTR.
       FbleApplyInstr* instr = FbleAlloc(arena, FbleApplyInstr);
       instr->_base.tag = FBLE_APPLY_INSTR;
+      instr->_base.profile_ops = NULL;
       instr->loc = expr->loc;
       instr->exit = exit;
       instr->dest = c.local->index.index;
@@ -2091,6 +2132,7 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleLinkInstr* link = FbleAlloc(arena, FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
+      link->_base.profile_ops = NULL;
 
       Local* get_local = NewLocal(arena, scope);
       link->get = get_local->index.index;
@@ -2144,6 +2186,7 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleForkInstr* fork = FbleAlloc(arena, FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
+      fork->_base.profile_ops = NULL;
       FbleVectorInit(arena, fork->args);
       fork->dests.xs = FbleArrayAlloc(arena, FbleLocalIndex, exec_expr->bindings.size);
       fork->dests.size = exec_expr->bindings.size;

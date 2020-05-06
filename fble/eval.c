@@ -343,14 +343,27 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
   while (true) {
     FbleInstr* instr = *pc++;
     if (rand() % TIME_SLICE == 0) {
-      // Don't count profiling instructions against the profile time. The user
-      // doesn't care about those.
-      if (instr->tag != FBLE_PROFILE_INSTR) {
-        FbleProfileSample(arena, profile, 1);
-      }
+      FbleProfileSample(arena, profile, 1);
 
       thread->stack->pc = pc - 1;
       return UNBLOCKED;
+    }
+
+    for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+      switch (op->tag) {
+        case FBLE_PROFILE_ENTER_OP:
+          FbleProfileEnterBlock(arena, profile, op->block);
+          break;
+
+        case FBLE_PROFILE_EXIT_OP:
+          FbleProfileExitBlock(arena, profile);
+          break;
+
+        case FBLE_PROFILE_AUTO_EXIT_OP: {
+          FbleProfileAutoExitBlock(arena, profile);
+          break;
+        }
+      }
     }
 
     switch (instr->tag) {
@@ -520,6 +533,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           if (link->head == NULL) {
             // Blocked on get. Restore the thread state and return before
             // logging progress.
+            assert(instr->profile_ops == NULL);
             thread->stack->pc = pc - 1;
             return BLOCKED;
           }
@@ -541,6 +555,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           if (*port->data == NULL) {
             // Blocked on get. Restore the thread state and return before
             // logging progress.
+            assert(instr->profile_ops == NULL);
             thread->stack->pc = pc - 1;
             return BLOCKED;
           }
@@ -591,6 +606,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           if (*port->data != NULL) {
             // Blocked on put. Restore the thread state and return before
             // logging progress.
+            assert(instr->profile_ops == NULL);
             thread->stack->pc = pc - 1;
             return BLOCKED;
           }
@@ -693,26 +709,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
         value->_base.tag = FBLE_TYPE_VALUE;
         locals[type_instr->dest] = &value->_base;
-        break;
-      }
-
-      case FBLE_PROFILE_INSTR: {
-        FbleProfileInstr* profile_instr = (FbleProfileInstr*)instr;
-        switch (profile_instr->op) {
-          case FBLE_PROFILE_ENTER_OP:
-            FbleProfileEnterBlock(arena, profile, profile_instr->block);
-            break;
-
-          case FBLE_PROFILE_EXIT_OP:
-            FbleProfileExitBlock(arena, profile);
-            break;
-
-          case FBLE_PROFILE_AUTO_EXIT_OP: {
-            FbleProfileAutoExitBlock(arena, profile);
-            break;
-          }
-        }
-
         break;
       }
     }

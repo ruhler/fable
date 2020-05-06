@@ -225,13 +225,13 @@ bool FbleIsProcValue(FbleValue* value)
 FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 {
   static FbleGetInstr iget = {
-    ._base = { .tag = FBLE_GET_INSTR },
+    ._base = { .tag = FBLE_GET_INSTR, .profile_ops = NULL },
     .port = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0},
     .dest = 0,
   };
 
   static FbleReturnInstr irtn = {
-    ._base = { .tag = FBLE_RETURN_INSTR },
+    ._base = { .tag = FBLE_RETURN_INSTR, .profile_ops = NULL },
     .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0}
   };
 
@@ -275,14 +275,14 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data)
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 {
   static FblePutInstr iput = {
-    ._base = { .tag = FBLE_PUT_INSTR },
+    ._base = { .tag = FBLE_PUT_INSTR, .profile_ops = NULL },
     .port = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0},
     .arg = { .section = FBLE_STATICS_FRAME_SECTION, .index = 1},
     .dest = 0,
   };
 
   static FbleReturnInstr irtn0 = {
-    ._base = { .tag = FBLE_RETURN_INSTR },
+    ._base = { .tag = FBLE_RETURN_INSTR, .profile_ops = NULL },
     .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0}
   };
 
@@ -304,7 +304,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   };
 
   static FbleProcValueInstr iproc = {
-    ._base = { .tag = FBLE_PROC_VALUE_INSTR },
+    ._base = { .tag = FBLE_PROC_VALUE_INSTR, .profile_ops = NULL },
     .code = &proc_code,
     .scope = { .size = 2, .xs = proc_scope },
     .dest = 1,
@@ -312,7 +312,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   iproc.code->refcount++;
 
   static FbleReturnInstr irtn1 = {
-    ._base = { .tag = FBLE_RETURN_INSTR },
+    ._base = { .tag = FBLE_RETURN_INSTR, .profile_ops = NULL },
     .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 1}
   };
 
