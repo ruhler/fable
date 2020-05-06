@@ -88,6 +88,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, FbleFrameIndexV* capture, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
+static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOp op, FbleBlockId block);
 
 // Blocks --
 //   A stack of block frames tracking the current block for profiling.
@@ -430,6 +431,29 @@ static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr)
   FbleVectorAppend(arena, scope->code->instrs, instr);
 }
 
+// AppendProfileOp --
+//   Append a profile op to the code block for the given scope.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   scope - the scope to append the instruction to.
+//   op - the profile op to insert.
+//   block - the block id if relevant.
+//
+// Result:
+//   none.
+//
+// Side effects:
+//   Appends the profile op to the code block for the given scope.
+static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOp op, FbleBlockId block)
+{
+  FbleProfileInstr* instr = FbleAlloc(arena, FbleProfileInstr);
+  instr->_base.tag = FBLE_PROFILE_INSTR;
+  instr->op = op;
+  instr->block = block;
+  AppendInstr(arena, scope, &instr->_base);
+}
+
 // EnterBlock --
 //   Enter a new profiling block.
 //
@@ -475,11 +499,7 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   FbleName nm = { .name = str, .loc = loc };
   size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
 
-  FbleProfileInstr* enter = FbleAlloc(arena, FbleProfileInstr);
-  enter->_base.tag = FBLE_PROFILE_INSTR;
-  enter->op = FBLE_PROFILE_ENTER_OP;
-  enter->block = id;
-  AppendInstr(arena, scope, &enter->_base);
+  AppendProfileOp(arena, scope, FBLE_PROFILE_ENTER_OP, id);
   FbleVectorAppend(arena, blocks->stack, id);
 }
 
@@ -520,12 +540,7 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 
   size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
 
-  FbleProfileInstr* enter = FbleAlloc(arena, FbleProfileInstr);
-  enter->_base.tag = FBLE_PROFILE_INSTR;
-  enter->op = FBLE_PROFILE_ENTER_OP;
-  enter->block = id;
-  AppendInstr(arena, scope, &enter->_base);
-
+  AppendProfileOp(arena, scope, FBLE_PROFILE_ENTER_OP, id);
   FbleVectorAppend(arena, blocks->stack, id);
 }
 
@@ -535,7 +550,7 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 // Inputs:
 //   arena - arena to use for allocations.
 //   blocks - the blocks stack.
-//   scope - where to generate the PROFILE_EXIT_BLOCK instruction.
+//   scope - where to append the profile exit op.
 //   exit - whether the frame has already been exited.
 //
 // Results:
@@ -543,17 +558,14 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 //
 // Side effects:
 //   Pops the top block frame off the blocks stack and append a
-//   PROFILE_EXIT_BLOCK instruction to instrs if exit is false.
+//   profile exit op to the scope if exit is false.
 static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 {
   assert(blocks->stack.size > 0);
   blocks->stack.size--;
 
   if (!exit) {
-    FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
-    exit_instr->_base.tag = FBLE_PROFILE_INSTR;
-    exit_instr->op = FBLE_PROFILE_EXIT_OP;
-    AppendInstr(arena, scope, &exit_instr->_base);
+    AppendProfileOp(arena, scope, FBLE_PROFILE_EXIT_OP, 0);
   }
 }
 
@@ -674,10 +686,7 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
-    FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
-    exit_instr->_base.tag = FBLE_PROFILE_INSTR;
-    exit_instr->op = FBLE_PROFILE_EXIT_OP;
-    AppendInstr(arena, scope, &exit_instr->_base);
+    AppendProfileOp(arena, scope, FBLE_PROFILE_EXIT_OP, 0);
 
     FbleReturnInstr* return_instr = FbleAlloc(arena, FbleReturnInstr);
     return_instr->_base.tag = FBLE_RETURN_INSTR;
@@ -785,10 +794,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           }
 
           if (exit) {
-            FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
-            exit_instr->_base.tag = FBLE_PROFILE_INSTR;
-            exit_instr->op = FBLE_PROFILE_AUTO_EXIT_OP;
-            AppendInstr(arena, scope, &exit_instr->_base);
+            AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
           }
 
           Local* dest = NewLocal(arena, scope);
@@ -1133,10 +1139,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleTypeRelease(heap, condition.type);
 
       if (exit) {
-        FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
-        exit_instr->_base.tag = FBLE_PROFILE_INSTR;
-        exit_instr->op = FBLE_PROFILE_AUTO_EXIT_OP;
-        AppendInstr(arena, scope, &exit_instr->_base);
+        AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
       }
 
       FbleUnionSelectInstr* select_instr = FbleAlloc(arena, FbleUnionSelectInstr);
@@ -2025,10 +2028,7 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       c.local = NewLocal(arena, scope);
 
       if (exit) {
-        FbleProfileInstr* exit_instr = FbleAlloc(arena, FbleProfileInstr);
-        exit_instr->_base.tag = FBLE_PROFILE_INSTR;
-        exit_instr->op = FBLE_PROFILE_AUTO_EXIT_OP;
-        AppendInstr(arena, scope, &exit_instr->_base);
+        AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
       }
 
       // A process is represented at runtime as a zero argument function. To
