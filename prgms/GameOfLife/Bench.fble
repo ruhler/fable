@@ -41,8 +41,8 @@ Unit@! Bench = {
   # The number of iterations is chosen so that the benchmark takes on the
   # order of 1 minute to run.
   # Note: To avoid deadlock, make sure this is less than the number of
-  # iterations that the GameOfLife App runs for (100 last time I looked).
-  Int@ n = I(D|75);
+  # iterations that the GameOfLife App runs for (200 last time I looked).
+  Int@ n = I(D|100);
 
   Int@ w = I(D|640);
   Int@ h = I(D|480);

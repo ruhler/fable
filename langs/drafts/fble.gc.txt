@@ -528,3 +528,38 @@ Perhaps, if we care about max memory use, then the case to care about is when
 we drop a large number of objects, then allocate with 100% retention? Because
 that's where lag to reclaim effects the max memory use.
 
+---
+
+Let's say your retained heap size is H, and you traverse R objects per new
+allocation. It takes H/R allocations before you finish gc. At that point,
+worst case, all your H/R new allocations are garbage. The maximum overhead of
+garbage on the heap is H/R / (H/R + H) or 1 / (1 + R). Today 'R' is 1, which
+means we can guarantee no more than 50% of the heap is garbage. That's a nice
+user level thing to report.
+
+The idea with generational GC is maybe we only have to traverse, say, 1/8th of
+the heap. We can't help the worst case, because you might have to traverse the
+entire heap in the worst case. But we can say, whenever you see you are only
+traversing 1/8th the heap, spend 1/8th the time traversing the heap. We can
+still guarantee the same 1 / (1 + R) overhead, with 1/8th the time spent.
+That's the potential power of generational gc.
+
+I did an experiment where I spent 1/8th the time running GC. Worst case,
+memory could increase by...
+
+Was 50% overhead.
+Now is 1 / (1 + 1/8) ~ 90% overhead. So a little less than double. We saw less
+than that.
+
+But performance didn't improve much: 2m13s -> 2m07s. This is consistent with
+the total time reported in MarkRefs for gprof as about 7.5 seconds.
+
+In other words... the cost of gc is more Release and Retain than it is marking
+references.
+
+For example, if we simply change FbleValueRetain to be a macro instead of a
+function call: 2m13s -> 2m10s.
+
+In short, it doesn't seem worth while to pursue generational gc until we can
+first reduce the overheads associated with Retain/Release.
+

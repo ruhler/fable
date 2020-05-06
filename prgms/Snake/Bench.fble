@@ -41,8 +41,8 @@ Unit@! Bench = {
   # The number of iterations is chosen so that the benchmark takes on the
   # order of 1 minute to run.
   # Note: To avoid deadlock, make sure this is less than the number of
-  # iterations that the SNake App runs for.
-  Int@ n = I(D|600);
+  # iterations that the Snake App runs for.
+  Int@ n = I(D|800);
 
   Int@ w = I(D|640);
   Int@ h = I(D|480);
