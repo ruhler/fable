@@ -60,6 +60,21 @@ typedef struct Obj {
   char obj[];
 } Obj;
 
+// ToObj --
+//   Get the Obj* corresponding to a void* obj pointer.
+//
+// Inputs:
+//   obj - the void* obj pointer.
+//
+// Results:
+//   The corresponding Obj* pointer.
+//
+// Side effects:
+//   None.
+//
+// Notes: defined as a macro instead of a function to improve performance.
+#define ToObj(obj) (((Obj*)obj)-1)
+
 // Heap --
 //   The FbleHeap for the mark sweek heap.
 //
@@ -93,28 +108,9 @@ typedef struct {
   Space from_space;
 } Heap;
 
-static Obj* ToObj(void* obj_);
 static void MarkRefs(Heap* heap, Obj* obj);
 static bool IncrGc(Heap* heap);
 static void FullGc(Heap* heap);
-
-// ToObj --
-//   Get the Obj* corresponding to a void* obj pointer.
-//
-// Inputs:
-//   obj_ - the void* obj pointer.
-//
-// Results:
-//   The corresponding Obj* pointer.
-//
-// Side effects:
-//   None.
-static Obj* ToObj(void* obj_)
-{
-  Obj* obj = ((Obj*)obj_) - 1;
-  assert(obj->obj == obj_);
-  return obj;
-}
 
 // MarkRefs --
 //   Visit the references from the given object for the purposes of marking.

@@ -1,12 +1,21 @@
 
+* Inline ToObj in ms-heap.
+* Split apply instr into call and tail call instructions.
+* Don't return a pointer from retain function.
+* Abort by reading through instructions instead of using NULL to know what we
+  own on the stack.
+* Split compile into typecheck and codegen.
+* Avoid emitting ref/release for non-recursive variables.
+* Figure out how to do better lifecycle analysis in the compiler
+ - Don't retain/release a field of an object if you know the object is going
+   to stay alive as long as you need the field anyway.
+
 * [eval] Would it improve performance to merge statics into the locals array?
   We don't have to own them. Just copy them all over when we push a frame.
   Then we avoid the need to switch when looking up a value, and we can store a
   frame index in a single word.
 
-* Think about how to do static analysis to avoid retain/release when possible.
-  For example, no need to retain/release a.x if a is an argument to the
-  function and we use a.x locally.
+* [eval] Have option to turn off checking for nulls and other runtime errors?
 
 * Clean up how we track io activity?
 
@@ -59,12 +68,6 @@
  - For example, so you can do newline in a comment block and have it auto add
    the comment character.
 
-* [compile] Optimization: Avoid REF_INSTR if we aren't going to ever use it.
- - Maybe have a way to list free vars in an expression and use that to compute
-   'recursive' ahead of time? Not sure.
- - gcov suggests we'll save on the order of 4 million instructions and 4
-   million allocations in fble bench. Surely that's good for something.
-
 * [cc] Implement .fble -> .o compiler
  - Goal is to significantly increase performance by removing the instruction
    fetch decode logic.
@@ -88,10 +91,6 @@
 * [lib] Separate List@ from S@ and P@ module wise.
 
 * [api] Can fble-stdio check that the function has the right type?
-
-
-* [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
-  of instructions vs scopes vs locals? It all seems very confused to me.
 
 * [compile] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced

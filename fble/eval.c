@@ -136,8 +136,7 @@ static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameInd
 //   the stack frame.
 static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValue** locals, FbleFrameIndex index)
 {
-  FbleValue* original = FrameGet(statics, locals, index);
-  FbleValue* value = original;
+  FbleValue* value = FrameGet(statics, locals, index);
   while (value->tag == FBLE_REF_VALUE) {
     FbleRefValue* rv = (FbleRefValue*)value;
 
