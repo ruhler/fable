@@ -73,7 +73,6 @@ struct Thread {
 //   The status after running a thread.
 typedef enum {
   FINISHED,       // The thread has finished running.
-  ABORTED,        // The thread was aborted.
   BLOCKED,        // The thread is blocked on I/O.
   UNBLOCKED,      // The thread is not blocked on I/O.
 } Status;
@@ -85,9 +84,9 @@ static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack);
 
-static void AbortThread(FbleValueHeap* heap, Thread* thread);
-static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity);
-static Status RunThreads(FbleValueHeap* heap, Thread* thread);
+static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
+static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
+static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile);
 
 // FrameGet --
@@ -280,39 +279,6 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
   return stack;
 }
 
-// AbortThread --
-//   Unwind the given thread, cleaning the stack and children threads as
-//   appropriate.
-//
-// Inputs:
-//   heap - the value heap.
-//   thread - the thread to abort.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Cleans up the thread state by unwinding the thread.
-static void AbortThread(FbleValueHeap* heap, Thread* thread)
-{
-  // TODO: Worry about this recursive function smashing the stack?
-  FbleArena* arena = heap->arena;
-  for (size_t i = 0; i < thread->children.size; ++i) {
-    AbortThread(heap, thread->children.xs[i]);
-    FbleFree(arena, thread->children.xs[i]);
-  }
-  thread->children.size = 0;
-  FbleFree(arena, thread->children.xs);
-  thread->children.xs = NULL;
-
-  while (thread->stack != NULL) {
-    thread->stack = PopFrame(heap, thread->stack);
-  }
-
-  FbleFreeProfileThread(arena, thread->profile);
-  thread->profile = NULL;
-}
-
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -322,6 +288,7 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 //   thread - the thread to run.
 //   io_activity - set to true if the thread does any i/o activity that could
 //                 unblock another thread.
+//   aborted - if true, abort the thread. set to true if thread aborts.
 //
 // Results:
 //   The status of the thread.
@@ -330,8 +297,13 @@ static void AbortThread(FbleValueHeap* heap, Thread* thread)
 //   The thread is executed, updating its stack.
 //   io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
+//   aborted is set to true if the thread aborts.
+static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted)
 {
+  if (*aborted) {
+    return AbortThread(heap, thread, aborted);
+  }
+
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
   FbleInstr** pc = thread->stack->pc;
@@ -404,7 +376,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, statics, locals, access_instr->obj);
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", &access_instr->loc);
-          return ABORTED;
+          thread->stack->pc = pc - 1;
+          return AbortThread(heap, thread, aborted);
         }
 
         assert(access_instr->tag < sv->fieldc);
@@ -420,12 +393,14 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, statics, locals, access_instr->obj);
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", &access_instr->loc);
-          return ABORTED;
+          thread->stack->pc = pc - 1;
+          return AbortThread(heap, thread, aborted);
         }
 
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
-          return ABORTED;
+          thread->stack->pc = pc - 1;
+          return AbortThread(heap, thread, aborted);
         }
 
         FbleValueRetain(heap, uv->arg);
@@ -438,7 +413,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, statics, locals, select_instr->condition);
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", &select_instr->loc);
-          return ABORTED;
+          thread->stack->pc = pc - 1;
+          return AbortThread(heap, thread, aborted);
         }
         pc += select_instr->jumps.xs[uv->tag];
         break;
@@ -481,7 +457,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, statics, locals, call_instr->func);
         if (func == NULL) {
           FbleReportError("called undefined function\n", &call_instr->loc);
-          return ABORTED;
+          thread->stack->pc = pc - 1;
+          return AbortThread(heap, thread, aborted);
         };
 
         FbleValue* args[func->argc];
@@ -725,7 +702,172 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
   }
 
   UNREACHABLE("should never get here");
-  return ABORTED;
+  return FINISHED;
+}
+
+// AbortThread --
+//   Unwind the given thread, cleaning the stack and children threads as
+//   appropriate.
+//
+// Inputs:
+//   heap - the value heap.
+//   thread - the thread to abort.
+//   aborted - set to true.
+//
+// Results:
+//   FINISHED
+//
+// Side effects:
+//   Cleans up the thread state by unwinding the thread. The state of the
+//   thread after this function is the same as if it had completed normally,
+//   except that it will not have produced a return value.
+//   Sets aborted to true.
+static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
+{
+  *aborted = true;
+
+  FbleInstr** pc = thread->stack->pc;
+  FbleValue** locals = thread->stack->locals;
+
+  while (true) {
+    FbleInstr* instr = *pc++;
+
+    switch (instr->tag) {
+      case FBLE_STRUCT_VALUE_INSTR: {
+        FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
+        locals[struct_value_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_UNION_VALUE_INSTR: {
+        FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
+        locals[union_value_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_STRUCT_ACCESS_INSTR: {
+        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        locals[access_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_UNION_ACCESS_INSTR: {
+        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        locals[access_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_UNION_SELECT_INSTR: {
+        FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+        pc += select_instr->jumps.xs[0];
+        break;
+      }
+
+      case FBLE_JUMP_INSTR: {
+        FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+        pc += jump_instr->count;
+        break;
+      }
+
+      case FBLE_FUNC_VALUE_INSTR: {
+        FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
+        locals[func_value_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_RELEASE_INSTR: {
+        FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
+        FbleValueRelease(heap, locals[release->value]);
+        locals[release->value] = NULL;
+        break;
+      }
+
+      case FBLE_CALL_INSTR: {
+        FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+        if (call_instr->exit) {
+          *thread->stack->result = NULL;
+          thread->stack = PopFrame(heap, thread->stack);
+          if (thread->stack == NULL) {
+            return FINISHED;
+          }
+          pc = thread->stack->pc;
+          locals = thread->stack->locals;
+        } else {
+          locals[call_instr->dest] = NULL;
+        }
+        break;
+      }
+
+      case FBLE_PROC_VALUE_INSTR: {
+        FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
+        locals[proc_value_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_COPY_INSTR: {
+        FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+        locals[copy_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_GET_INSTR: {
+        FbleGetInstr* get_instr = (FbleGetInstr*)instr;
+        locals[get_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_PUT_INSTR: {
+        FblePutInstr* put_instr = (FblePutInstr*)instr;
+        locals[put_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_LINK_INSTR: {
+        FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
+        locals[link_instr->get] = NULL;
+        locals[link_instr->put] = NULL;
+        break;
+      }
+
+      case FBLE_FORK_INSTR: {
+        FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+        for (size_t i = 0; i < fork_instr->args.size; ++i) {
+          locals[fork_instr->dests.xs[i]] = NULL;
+        }
+        break;
+      }
+
+      case FBLE_REF_VALUE_INSTR: {
+        FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+        locals[ref_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_REF_DEF_INSTR: {
+        break;
+      }
+
+      case FBLE_RETURN_INSTR: {
+        *thread->stack->result = NULL;
+        thread->stack = PopFrame(heap, thread->stack);
+        if (thread->stack == NULL) {
+          return FINISHED;
+        }
+        pc = thread->stack->pc;
+        locals = thread->stack->locals;
+        break;
+      }
+
+      case FBLE_TYPE_INSTR: {
+        FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
+        locals[type_instr->dest] = NULL;
+        break;
+      }
+    }
+  }
+
+  UNREACHABLE("should never get here");
+  return FINISHED;
 }
 
 // RunThreads --
@@ -735,6 +877,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 // Inputs:
 //   heap - the value heap.
 //   thread - the thread to run.
+//   aborted - aborts threads if set to true.
+//             set to true if the thread is aborted.
 //
 // Results:
 //   The status of running the threads.
@@ -742,7 +886,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 // Side effects:
 //   The thread and its children are executed and updated.
 //   Updates the profile based on the execution.
-static Status RunThreads(FbleValueHeap* heap, Thread* thread)
+//   Sets aborted to true in case of abort.
+static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
 {
   FbleArena* arena = heap->arena;
 
@@ -759,12 +904,12 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread)
     } else {
       // Run the leaf thread, then go back up to the parent for the rest of
       // the threads to process.
-      Status status = RunThread(heap, thread, &unblocked);
+      Status status = RunThread(heap, thread, &unblocked, aborted);
       switch (status) {
         case FINISHED: {
           unblocked = true;
           if (thread->parent == NULL) {
-            return FINISHED;
+            return status;
           }
 
           Thread* parent = thread->parent;
@@ -785,10 +930,6 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread)
           FbleFree(arena, thread);
           thread = parent;
           break;
-        }
-
-        case ABORTED: {
-          return ABORTED;
         }
 
         case BLOCKED: {
@@ -838,11 +979,12 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
     .parent = NULL,
   };
 
+  bool aborted = false;
   while (true) {
-    Status status = RunThreads(heap, &thread);
+    Status status = RunThreads(heap, &thread, &aborted);
     switch (status) {
       case FINISHED: {
-        assert(final_result != NULL);
+        assert(aborted || final_result != NULL);
         assert(thread.stack == NULL);
         assert(thread.children.size == 0);
         assert(thread.children.xs == NULL);
@@ -850,18 +992,12 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
         return final_result;
       }
 
-      case ABORTED: {
-        AbortThread(heap, &thread);
-        return NULL;
-      }
-
       case BLOCKED: {
         // The thread is not making forward progress anymore. Block for I/O.
         if (!io->io(io, heap, true)) {
           FbleLoc loc = { .source = __FILE__, .line = 0, .col = 0 };
           FbleReportError("deadlock\n", &loc);
-          AbortThread(heap, &thread);
-          return NULL;
+          aborted = true;
         }
         break;
       }

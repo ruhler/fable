@@ -1,7 +1,6 @@
 
-* Split apply instr into call and tail call instructions.
-* Abort by reading through instructions instead of using NULL to know what we
-  own on the stack.
+* Don't rely on NULL vs. non-NULL to free values except for abort?
+ - But how do you know what to free when you do a tail call?
 * Split compile into typecheck and codegen.
 * Avoid emitting ref/release for non-recursive variables.
 * Figure out how to do better lifecycle analysis in the compiler
