@@ -2,6 +2,14 @@
 " Language:	Fble
 " Maintainer:	Richard Uhler <ruhler@degralder.com>
 
+" Indent stuff.
+set comments=:#
+set formatoptions=croqtl
+set cindent
+set cinkeys=0{,0},!^F,o,O
+set cinwords=
+set cinoptions=(1s
+
 " TODO: Using \w for normal characters fails to match many characters.
 " Is there some way to factor out the actual regex for a normal character?
 
