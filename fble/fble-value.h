@@ -145,9 +145,7 @@ void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 //
 // Side effects:
 //   The returned struct value must be freed using FbleValueRelease when no
-//   longer in use. The args are freed using FbleValueRelease as part of
-//   calling this function. The function does not take ownership of the args
-//   array.
+//   longer in use.
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args);
 
 // FbleStructValueAccess --

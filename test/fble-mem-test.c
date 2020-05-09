@@ -89,6 +89,8 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
       args.xs[0] = bit;
       args.xs[1] = tail;
       FbleValue* cons = FbleNewStructValue(heap, args);
+      FbleValueRelease(heap, bit);
+      FbleValueRelease(heap, tail);
       tail = FbleNewUnionValue(heap, 0, cons);
       FbleValueRelease(heap, cons);
     }

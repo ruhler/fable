@@ -158,6 +158,8 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
         FbleValue* xs[] = { charV, charS };
         FbleValueV args = { .size = 2, .xs = xs };
         FbleValue* charP = FbleNewStructValue(heap, args);
+        FbleValueRelease(heap, charV);
+        FbleValueRelease(heap, charS);
         charS = FbleNewUnionValue(heap, 0, charP);
         FbleValueRelease(heap, charP);
       }

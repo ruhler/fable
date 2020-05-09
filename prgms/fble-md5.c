@@ -73,7 +73,10 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
   xs[1] = MkBitN(heap, halfn, data);
   xs[0] = MkBitN(heap, halfn, (data >> halfn));
   FbleValueV args = { .size = 2, .xs = xs };
-  return FbleNewStructValue(heap, args);
+  FbleValue* result = FbleNewStructValue(heap, args);
+  FbleValueRelease(heap, xs[0]);
+  FbleValueRelease(heap, xs[1]);
+  return result;
 }
 
 // IO --

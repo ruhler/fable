@@ -159,7 +159,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
   }
 }
 
-// FbleNewStructValue -- see documentation in fble.h
+// FbleNewStructValue -- see documentation in fble-value.h
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args)
 {
   FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * args.size);
@@ -169,7 +169,6 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args)
   for (size_t i = 0; i < args.size; ++i) {
     value->fields[i] = args.xs[i];
     FbleValueAddRef(heap, &value->_base, args.xs[i]);
-    FbleValueRelease(heap, args.xs[i]);
   }
   return &value->_base;
 }
