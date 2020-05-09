@@ -255,10 +255,16 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
   assert(x > 0);
   if (x == 1) {
     FbleValueV args = { .size = 0, .xs = NULL };
-    return FbleNewUnionValue(heap, 0, FbleNewStructValue(heap, args));
+    FbleValue* unit = FbleNewStructValue(heap, args);
+    FbleValue* result = FbleNewUnionValue(heap, 0, unit);
+    FbleValueRelease(heap, unit);
+    return result;
   }
 
-  return FbleNewUnionValue(heap, 1 + (x % 2), MakeIntP(heap, x / 2));
+  FbleValue* p = MakeIntP(heap, x / 2);
+  FbleValue* result = FbleNewUnionValue(heap, 1 + (x % 2), p);
+  FbleValueRelease(heap, p);
+  return result;
 }
 
 // MakeInt -- 
@@ -277,15 +283,24 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 static FbleValue* MakeInt(FbleValueHeap* heap, int x)
 {
   if (x < 0) {
-    return FbleNewUnionValue(heap, 0, MakeIntP(heap, -x));
+    FbleValue* p = MakeIntP(heap, -x);
+    FbleValue* result = FbleNewUnionValue(heap, 0, p);
+    FbleValueRelease(heap, p);
+    return result;
   }
 
   if (x == 0) {
     FbleValueV args = { .size = 0, .xs = NULL };
-    return FbleNewUnionValue(heap, 1, FbleNewStructValue(heap, args));
+    FbleValue* unit = FbleNewStructValue(heap, args);
+    FbleValue* result = FbleNewUnionValue(heap, 1, unit);
+    FbleValueRelease(heap, unit);
+    return result;
   }
 
-  return FbleNewUnionValue(heap, 2, MakeIntP(heap, x));
+  FbleValue* p = MakeIntP(heap, x);
+  FbleValue* result = FbleNewUnionValue(heap, 2, p);
+  FbleValueRelease(heap, p);
+  return result;
 }
 
 // MakeKey -- 
@@ -318,7 +333,10 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
 
   if (k >= 0) {
     FbleValueV args = { .size = 0, .xs = NULL };
-    return FbleNewUnionValue(heap, k, FbleNewStructValue(heap, args));
+    FbleValue* unit = FbleNewStructValue(heap, args);
+    FbleValue* result = FbleNewUnionValue(heap, k, unit);
+    FbleValueRelease(heap, result);
+    return result;
   }
   return NULL;
 }
@@ -387,6 +405,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
           if (key != NULL) {
             app->event = FbleNewUnionValue(heap, 1, key);
+            FbleValueRelease(heap, key);
             change = true;
           }
           break;
@@ -396,6 +415,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
           if (key != NULL) {
             app->event = FbleNewUnionValue(heap, 2, key);
+            FbleValueRelease(heap, key);
             change = true;
           }
           break;
@@ -403,7 +423,9 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 
         case SDL_USEREVENT: {
           FbleValueV args = { .size = 0, .xs = NULL };
-          app->event = FbleNewUnionValue(heap, 0, FbleNewStructValue(heap, args));
+          FbleValue* unit = FbleNewStructValue(heap, args);
+          app->event = FbleNewUnionValue(heap, 0, unit);
+          FbleValueRelease(heap, unit);
           change = true;
           break;
         }

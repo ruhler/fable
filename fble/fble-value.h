@@ -179,8 +179,7 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 //
 // Side effects:
 //   The returned union value must be freed using FbleValueRelease when no
-//   longer in use. The arg is freed using FbleValueRelease as part of calling
-//   this function.
+//   longer in use.
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
 
 // FbleUnionValueTag --

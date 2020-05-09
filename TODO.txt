@@ -1,5 +1,5 @@
 
-* Don't Release args in NewUnion and NewStruct functions.
+* Don't Release args in NewStruct function.
 * Split apply instr into call and tail call instructions.
 * Abort by reading through instructions instead of using NULL to know what we
   own on the stack.

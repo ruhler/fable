@@ -191,7 +191,6 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
   union_value->tag = tag;
   union_value->arg = arg;
   FbleValueAddRef(heap, &union_value->_base, arg);
-  FbleValueRelease(heap, arg);
   return &union_value->_base;
 }
 

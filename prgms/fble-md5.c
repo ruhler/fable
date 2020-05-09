@@ -61,7 +61,10 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 {
   if (n == 1) {
     FbleValueV args = { .size = 0, .xs = NULL };
-    return FbleNewUnionValue(heap, data & 0x1, FbleNewStructValue(heap, args));
+    FbleValue* unit = FbleNewStructValue(heap, args);
+    FbleValue* result = FbleNewUnionValue(heap, data & 0x1, unit);
+    FbleValueRelease(heap, result);
+    return result;
   }
 
   assert(n % 2 == 0 && "Invalid n supplied");
@@ -87,10 +90,12 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       FbleValueV args = { .size = 0, .xs = NULL };
       FbleValue* unit = FbleNewStructValue(heap, args);
       mio->input = FbleNewUnionValue(heap, 1, unit);
+      FbleValueRelease(heap, unit);
     } else {
       // Maybe<Bit8>:just(c)
       FbleValue* byte = MkBitN(heap, 8, c);
       mio->input = FbleNewUnionValue(heap, 0, byte);
+      FbleValueRelease(heap, byte);
     }
     return true;
   }

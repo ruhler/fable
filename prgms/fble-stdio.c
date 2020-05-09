@@ -105,7 +105,10 @@ static FbleValue* WriteChar(FbleValueHeap* heap, char c)
   assert(p >= gStdLibChars);
   size_t tag = p - gStdLibChars;
   FbleValueV args = { .size = 0, .xs = NULL };
-  return FbleNewUnionValue(heap, tag, FbleNewStructValue(heap, args));
+  FbleValue* unit = FbleNewStructValue(heap, args);
+  FbleValue* result = FbleNewUnionValue(heap, tag, unit);
+  FbleValueRelease(heap, unit);
+  return result;
 }
 
 // IO --
@@ -146,16 +149,20 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     FbleValue* unit = FbleNewStructValue(heap, emptyArgs);
     if (read < 0) {
       stdio->input = FbleNewUnionValue(heap, 1, unit);
+      FbleValueRelease(heap, unit);
     } else {
       FbleValue* charS = FbleNewUnionValue(heap, 1, unit);
+      FbleValueRelease(heap, unit);
       for (size_t i = 0; i < read; ++i) {
         FbleValue* charV = WriteChar(heap, line[read - i - 1]);
         FbleValue* xs[] = { charV, charS };
         FbleValueV args = { .size = 2, .xs = xs };
         FbleValue* charP = FbleNewStructValue(heap, args);
         charS = FbleNewUnionValue(heap, 0, charP);
+        FbleValueRelease(heap, charP);
       }
       stdio->input = FbleNewUnionValue(heap, 0, charS);
+      FbleValueRelease(heap, charS);
     }
     free(line);
     change = true;
