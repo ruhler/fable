@@ -35,7 +35,7 @@ static void PrintUsage(FILE* stream)
 }
 
 // main --
-//   The main entry point for the fble-copmile program.
+//   The main entry point for the fble-decompile program.
 //
 // Inputs:
 //   argc - The number of command line arguments.

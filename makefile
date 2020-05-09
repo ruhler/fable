@@ -35,7 +35,7 @@ perf:
 
 .PHONY: prof
 prof:
-	./out/bin/fble-test --profile prgms/Fble/Bench.fble prgms
+	./out/bin/fble-test prgms/Fble/Bench.fble prgms
 	mkdir -p prof
 	gprof out/bin/fble-test > prof/gprof.txt
 	gcov out/obj/*.o > prof/fble.gcov

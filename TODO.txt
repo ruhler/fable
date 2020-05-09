@@ -1,4 +1,9 @@
 
+* [eval] Would it improve performance to merge statics into the locals array?
+  We don't have to own them. Just copy them all over when we push a frame.
+  Then we avoid the need to switch when looking up a value, and we can store a
+  frame index in a single word.
+
 * Think about how to do static analysis to avoid retain/release when possible.
   For example, no need to retain/release a.x if a is an argument to the
   function and we use a.x locally.
@@ -26,15 +31,31 @@
 * [eval] Thread management cleanup
  - Use fair thread traversal by starting over from root when yield occurs.
 
+* [app] Change App% back to drawing over the previous screen?
+ - It can figure out how to double buffer appropriately on the implementation
+   side, for example by drawing the last two updates to the buffer.
+ - Because presumably, if not much has changed, that can be much more
+   efficient? And if a lot has changed, we can optimize 'Over' to throw away
+   the previous frame entirely if you start with a blank screen?
+
+   Maybe more accurate is, if your point of view isn't changing, delta is
+   better. If your point of view is changing, you probably have to redraw
+   everything regardless and it would be nice to avoid drawing a bunch of
+   stuff and then covering it up right away.
+
 * [invaders] Implement space invaders game.
- - Add single alien to the game.
- - Figure out how they know when to move forward as a group.
+ - Add aliens to the game.
+
+* [compile] Do proper memory tracking and cleanup for the abstract syntax?
+ - Implement FbleFreeProgram function
+ - Figure out who is going to own source filenames. Maybe refcount them?
+ - Is there an issue supporting heap and stack allocated expressions?
 
 * [compile] Figure out why Normal is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
  - Profiling said its all in TypeEquals. Maybe something pathological?
 
-* [lang] Set up cindent properly for fble.vim
+* [lang] Set up cindent (or whatever) properly for fble.vim
  - For example, so you can do newline in a comment block and have it auto add
    the comment character.
 
@@ -68,10 +89,6 @@
 
 * [api] Can fble-stdio check that the function has the right type?
 
-* [compile] Consider tracking memory for proper cleanup?
-  I wonder how much of what we allocate ends up unused. If we could track and
-  clean up allocations when we are done with them, maybe we can save some
-  memory.
 
 * [compile] Is there a way to clean up compile.c, in terms of orders of setting fields
   of instructions vs scopes vs locals? It all seems very confused to me.
