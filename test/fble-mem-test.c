@@ -74,20 +74,15 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
     // @ Bit@ = +(Unit@ 0, Unit@ 1);
     // @ BitS@ = +(BitP@ cons, Unit@ nil),
     // @ BitP@ = *(Bit@ msb, BitS@ tail);
-    FbleValue* xs[2];
-    FbleValueV args = { .size = 0, .xs = xs };
-    FbleValue* unit = FbleNewStructValue(heap, args);
-    FbleValue* zero = FbleNewUnionValue(heap, 0, unit);
-    FbleValue* one = FbleNewUnionValue(heap, 1, unit);
-    FbleValue* tail = FbleNewUnionValue(heap, 1, unit);
-    FbleValueRelease(heap, unit);
+    FbleValue* zero = FbleNewEnumValue(heap, 0);
+    FbleValue* one = FbleNewEnumValue(heap, 1);
+    FbleValue* tail = FbleNewEnumValue(heap, 1);
     for (size_t i = 0; i < num_bits; ++i) {
       FbleValue* bit = (use_n % 2 == 0) ? zero : one;
       use_n /= 2;
-      args.size = 2;
       FbleValueRetain(heap, bit);
-      args.xs[0] = bit;
-      args.xs[1] = tail;
+      FbleValue* xs[2] = { bit, tail };
+      FbleValueV args = { .size = 2, .xs = xs };
       FbleValue* cons = FbleNewStructValue(heap, args);
       FbleValueRelease(heap, bit);
       FbleValueRelease(heap, tail);

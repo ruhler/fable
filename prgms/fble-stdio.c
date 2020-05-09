@@ -104,11 +104,7 @@ static FbleValue* WriteChar(FbleValueHeap* heap, char c)
   }
   assert(p >= gStdLibChars);
   size_t tag = p - gStdLibChars;
-  FbleValueV args = { .size = 0, .xs = NULL };
-  FbleValue* unit = FbleNewStructValue(heap, args);
-  FbleValue* result = FbleNewUnionValue(heap, tag, unit);
-  FbleValueRelease(heap, unit);
-  return result;
+  return FbleNewEnumValue(heap, tag);
 }
 
 // IO --
@@ -145,14 +141,10 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     char* line = NULL;
     size_t len = 0;
     ssize_t read = getline(&line, &len, stdin);
-    FbleValueV emptyArgs = { .size = 0, .xs = NULL };
-    FbleValue* unit = FbleNewStructValue(heap, emptyArgs);
     if (read < 0) {
-      stdio->input = FbleNewUnionValue(heap, 1, unit);
-      FbleValueRelease(heap, unit);
+      stdio->input = FbleNewEnumValue(heap, 1);
     } else {
-      FbleValue* charS = FbleNewUnionValue(heap, 1, unit);
-      FbleValueRelease(heap, unit);
+      FbleValue* charS = FbleNewEnumValue(heap, 1);
       for (size_t i = 0; i < read; ++i) {
         FbleValue* charV = WriteChar(heap, line[read - i - 1]);
         FbleValue* xs[] = { charV, charS };

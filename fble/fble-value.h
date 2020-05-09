@@ -180,6 +180,22 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 //   longer in use.
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
 
+// FbleNewEnumValue --
+//   Create a new union value with given tag. Convenience function for
+//   creating unions with value of type *().
+//
+// Inputs:
+//   heap - The heap to allocate the value on.
+//   tag - The tag of the union value.
+//
+// Results:
+//   A newly allocated union value with given tag and arg.
+//
+// Side effects:
+//   The returned union value must be freed using FbleValueRelease when no
+//   longer in use.
+FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
+
 // FbleUnionValueTag --
 //   Gets the tag of a union value.
 //

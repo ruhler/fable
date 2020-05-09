@@ -254,11 +254,7 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 {
   assert(x > 0);
   if (x == 1) {
-    FbleValueV args = { .size = 0, .xs = NULL };
-    FbleValue* unit = FbleNewStructValue(heap, args);
-    FbleValue* result = FbleNewUnionValue(heap, 0, unit);
-    FbleValueRelease(heap, unit);
-    return result;
+    return FbleNewEnumValue(heap, 0);
   }
 
   FbleValue* p = MakeIntP(heap, x / 2);
@@ -290,11 +286,7 @@ static FbleValue* MakeInt(FbleValueHeap* heap, int x)
   }
 
   if (x == 0) {
-    FbleValueV args = { .size = 0, .xs = NULL };
-    FbleValue* unit = FbleNewStructValue(heap, args);
-    FbleValue* result = FbleNewUnionValue(heap, 1, unit);
-    FbleValueRelease(heap, unit);
-    return result;
+    return FbleNewEnumValue(heap, 1);
   }
 
   FbleValue* p = MakeIntP(heap, x);
@@ -332,11 +324,7 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
   }
 
   if (k >= 0) {
-    FbleValueV args = { .size = 0, .xs = NULL };
-    FbleValue* unit = FbleNewStructValue(heap, args);
-    FbleValue* result = FbleNewUnionValue(heap, k, unit);
-    FbleValueRelease(heap, result);
-    return result;
+    return FbleNewEnumValue(heap, k);
   }
   return NULL;
 }
@@ -422,10 +410,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
         }
 
         case SDL_USEREVENT: {
-          FbleValueV args = { .size = 0, .xs = NULL };
-          FbleValue* unit = FbleNewStructValue(heap, args);
-          app->event = FbleNewUnionValue(heap, 0, unit);
-          FbleValueRelease(heap, unit);
+          app->event = FbleNewEnumValue(heap, 0);
           change = true;
           break;
         }

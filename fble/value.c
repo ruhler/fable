@@ -192,6 +192,15 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
   FbleValueAddRef(heap, &union_value->_base, arg);
   return &union_value->_base;
 }
+// FbleNewEnumValue -- see documentation in fble-value.h
+FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
+{
+  FbleValueV args = { .size = 0, .xs = NULL, };
+  FbleValue* unit = FbleNewStructValue(heap, args);
+  FbleValue* result = FbleNewUnionValue(heap, tag, unit);
+  FbleValueRelease(heap, unit);
+  return result;
+}
 
 // FbleUnionValueTag -- see documentation in fble-value.h
 size_t FbleUnionValueTag(FbleValue* object)

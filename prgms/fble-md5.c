@@ -60,11 +60,7 @@ static void PrintUsage(FILE* stream)
 static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 {
   if (n == 1) {
-    FbleValueV args = { .size = 0, .xs = NULL };
-    FbleValue* unit = FbleNewStructValue(heap, args);
-    FbleValue* result = FbleNewUnionValue(heap, data & 0x1, unit);
-    FbleValueRelease(heap, result);
-    return result;
+    return FbleNewEnumValue(heap, data & 0x1);
   }
 
   assert(n % 2 == 0 && "Invalid n supplied");
@@ -90,10 +86,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     int c = fgetc(mio->fin);
     if (c == EOF) {
       // Maybe<Bit8>:nothing(Unit())
-      FbleValueV args = { .size = 0, .xs = NULL };
-      FbleValue* unit = FbleNewStructValue(heap, args);
-      mio->input = FbleNewUnionValue(heap, 1, unit);
-      FbleValueRelease(heap, unit);
+      mio->input = FbleNewEnumValue(heap, 1);
     } else {
       // Maybe<Bit8>:just(c)
       FbleValue* byte = MkBitN(heap, 8, c);
