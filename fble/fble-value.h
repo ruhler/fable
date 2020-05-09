@@ -83,18 +83,13 @@ void FbleFreeValueHeap(FbleValueHeap* heap);
 //
 // Inputs:
 //   arena - The heap used to allocate the value.
-//   value - The value to retain. The value may be NULL, in which case nothing
-//           is done.
-//
-// Results:
-//   The given value, for the caller's convenience when retaining the
-//   value and assigning it at the same time.
+//   value - The value to retain.
 //
 // Side effects:
 //   Causes the value to be retained until a corresponding FbleValueRelease
 //   calls is made on the value. FbleValueRelease must be called when the
 //   value is no longer needed.
-FbleValue* FbleValueRetain(FbleValueHeap* heap, FbleValue* src);
+void FbleValueRetain(FbleValueHeap* heap, FbleValue* src);
 
 // FbleValueRelease --
 //

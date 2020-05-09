@@ -1,7 +1,6 @@
 
-* Inline ToObj in ms-heap.
+* Don't Release args in NewUnion and NewStruct functions.
 * Split apply instr into call and tail call instructions.
-* Don't return a pointer from retain function.
 * Abort by reading through instructions instead of using NULL to know what we
   own on the stack.
 * Split compile into typecheck and codegen.

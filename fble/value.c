@@ -28,16 +28,13 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
   FbleFreeMarkSweepHeap(heap);
 }
 
-// FbleValueRetain -- see documentation in fble.h
-FbleValue* FbleValueRetain(FbleValueHeap* heap, FbleValue* value)
+// FbleValueRetain -- see documentation in fble-value.h
+void FbleValueRetain(FbleValueHeap* heap, FbleValue* value)
 {
-  if (value != NULL) {
-    heap->retain(heap, value);
-  }
-  return value;
+  heap->retain(heap, value);
 }
 
-// FbleValueRelease -- see documentation in fble.h
+// FbleValueRelease -- see documentation in fble-value.h
 void FbleValueRelease(FbleValueHeap* heap, FbleValue* value)
 {
   if (value != NULL) {

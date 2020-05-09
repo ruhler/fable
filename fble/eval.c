@@ -406,8 +406,11 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           FbleReportError("undefined struct value access\n", &access_instr->loc);
           return ABORTED;
         }
+
         assert(access_instr->tag < sv->fieldc);
-        locals[access_instr->dest] = FbleValueRetain(heap, sv->fields[access_instr->tag]);
+        FbleValue* value = sv->fields[access_instr->tag];
+        FbleValueRetain(heap, value);
+        locals[access_instr->dest] = value;
         break;
       }
 
@@ -425,7 +428,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
           return ABORTED;
         }
 
-        locals[access_instr->dest] = FbleValueRetain(heap, uv->arg);
+        FbleValueRetain(heap, uv->arg);
+        locals[access_instr->dest] = uv->arg;
         break;
       }
 
@@ -522,7 +526,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
       case FBLE_COPY_INSTR: {
         FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
         FbleValue* value = FrameGet(statics, locals, copy_instr->source);
-        locals[copy_instr->dest] = FbleValueRetain(heap, value);
+        FbleValueRetain(heap, value);
+        locals[copy_instr->dest] = value;
         break;
       }
 
@@ -546,7 +551,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
             link->tail = NULL;
           }
 
-          locals[get_instr->dest] = FbleValueRetain(heap, head->value);
+          FbleValueRetain(heap, head->value);
+          locals[get_instr->dest] = head->value;
           FbleValueDelRef(heap, &link->_base, head->value);
           FbleFree(arena, head);
           break;
@@ -613,7 +619,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
             return BLOCKED;
           }
 
-          *port->data = FbleValueRetain(heap, arg);
+          FbleValueRetain(heap, arg);
+          *port->data = arg;
           locals[put_instr->dest] = unit;
           *io_activity = true;
           break;
@@ -695,7 +702,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
         FbleValue* result = FrameGet(statics, locals, return_instr->result);
-        *thread->stack->result = FbleValueRetain(heap, result);
+        FbleValueRetain(heap, result);
+        *thread->stack->result = result;
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
           return FINISHED;
