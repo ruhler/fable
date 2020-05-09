@@ -70,7 +70,7 @@ typedef enum {
   FBLE_JUMP_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_RELEASE_INSTR,
-  FBLE_APPLY_INSTR,
+  FBLE_CALL_INSTR,
   FBLE_PROC_VALUE_INSTR,
   FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
@@ -206,8 +206,8 @@ typedef struct {
   FbleLocalIndex value;
 } FbleReleaseInstr;
 
-// FbleApplyInstr -- FBLE_APPLY_INSTR
-//   Apply a function to its arguments.
+// FbleCallInstr -- FBLE_CALL_INSTR
+//   Call a function.
 //
 // Also used for executing a process value, which is treated as a
 // zero-argument function.
@@ -223,7 +223,7 @@ typedef struct {
   FbleLocalIndex dest;
   FbleFrameIndex func;
   FbleFrameIndexV args;
-} FbleApplyInstr;
+} FbleCallInstr;
 
 // FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR
 //   Allocate an FbleProcValue.

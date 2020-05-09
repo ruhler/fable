@@ -476,27 +476,27 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity)
         break;
       }
 
-      case FBLE_APPLY_INSTR: {
-        FbleApplyInstr* apply_instr = (FbleApplyInstr*)instr;
-        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, statics, locals, apply_instr->func);
+      case FBLE_CALL_INSTR: {
+        FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, statics, locals, call_instr->func);
         if (func == NULL) {
-          FbleReportError("undefined function value apply\n", &apply_instr->loc);
+          FbleReportError("called undefined function\n", &call_instr->loc);
           return ABORTED;
         };
 
         FbleValue* args[func->argc];
         for (size_t i = 0; i < func->argc; ++i) {
-          args[i] = FrameGet(statics, locals, apply_instr->args.xs[i]);
+          args[i] = FrameGet(statics, locals, call_instr->args.xs[i]);
         }
 
-        if (apply_instr->exit) {
+        if (call_instr->exit) {
           thread->stack = ReplaceFrame(heap, func, args, thread->stack);
           pc = thread->stack->pc;
           statics = thread->stack->func->scope;
           locals = thread->stack->locals;
         } else {
           thread->stack->pc = pc;
-          FbleValue** result = locals + apply_instr->dest;
+          FbleValue** result = locals + call_instr->dest;
           thread->stack = PushFrame(heap, func, args, result, thread->stack);
           pc = thread->stack->pc;
           statics = thread->stack->func->scope;

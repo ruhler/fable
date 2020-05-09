@@ -146,29 +146,29 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           break;
         }
 
-        case FBLE_APPLY_INSTR: {
-          FbleApplyInstr* apply_instr = (FbleApplyInstr*)instr;
-          if (apply_instr->exit) {
+        case FBLE_CALL_INSTR: {
+          FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+          if (call_instr->exit) {
             fprintf(fout, "$");
           } else {
-            fprintf(fout, "l%zi", apply_instr->dest);
+            fprintf(fout, "l%zi", call_instr->dest);
           }
 
           fprintf(fout, " = %s%zi(",
-              sections[apply_instr->func.section],
-              apply_instr->func.index);
+              sections[call_instr->func.section],
+              call_instr->func.index);
 
           const char* comma = "";
-          for (size_t i = 0; i < apply_instr->args.size; ++i) {
+          for (size_t i = 0; i < call_instr->args.size; ++i) {
             fprintf(fout, "%s%s%zi", comma, 
-              sections[apply_instr->args.xs[i].section],
-              apply_instr->args.xs[i].index);
+              sections[call_instr->args.xs[i].section],
+              call_instr->args.xs[i].index);
             comma = ", ";
           }
               
           fprintf(fout, "); // %s:%i:%i\n",
-              apply_instr->loc.source, apply_instr->loc.line,
-              apply_instr->loc.col);
+              call_instr->loc.source, call_instr->loc.line,
+              call_instr->loc.col);
           break;
         }
 
@@ -326,9 +326,9 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       return;
     }
 
-    case FBLE_APPLY_INSTR: {
-      FbleApplyInstr* apply_instr = (FbleApplyInstr*)instr;
-      FbleFree(arena, apply_instr->args.xs);
+    case FBLE_CALL_INSTR: {
+      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+      FbleFree(arena, call_instr->args.xs);
       FbleFree(arena, instr);
       return;
     }

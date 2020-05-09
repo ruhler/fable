@@ -824,15 +824,15 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
           Local* dest = NewLocal(arena, scope);
 
-          FbleApplyInstr* apply_instr = FbleAlloc(arena, FbleApplyInstr);
-          apply_instr->_base.tag = FBLE_APPLY_INSTR;
-          apply_instr->_base.profile_ops = NULL;
-          apply_instr->loc = misc_apply_expr->misc->loc;
-          apply_instr->exit = exit;
-          apply_instr->func = misc.local->index;
-          FbleVectorInit(arena, apply_instr->args);
-          apply_instr->dest = dest->index.index;
-          AppendInstr(arena, scope, &apply_instr->_base);
+          FbleCallInstr* call_instr = FbleAlloc(arena, FbleCallInstr);
+          call_instr->_base.tag = FBLE_CALL_INSTR;
+          call_instr->_base.profile_ops = NULL;
+          call_instr->loc = misc_apply_expr->misc->loc;
+          call_instr->exit = exit;
+          call_instr->func = misc.local->index;
+          FbleVectorInit(arena, call_instr->args);
+          call_instr->dest = dest->index.index;
+          AppendInstr(arena, scope, &call_instr->_base);
 
           for (size_t i = 0; i < argc; ++i) {
             if (!FbleTypesEqual(heap, func_type->args.xs[i], args[i].type)) {
@@ -848,8 +848,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             }
             FbleTypeRelease(heap, args[i].type);
 
-            FbleVectorAppend(arena, apply_instr->args, args[i].local->index);
-            LocalRelease(arena, scope, args[i].local, apply_instr->exit);
+            FbleVectorAppend(arena, call_instr->args, args[i].local->index);
+            LocalRelease(arena, scope, args[i].local, call_instr->exit);
           }
 
           Compiled c = {
@@ -2072,9 +2072,9 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       }
 
       // A process is represented at runtime as a zero argument function. To
-      // execute the process, use the FBLE_APPLY_INSTR.
-      FbleApplyInstr* instr = FbleAlloc(arena, FbleApplyInstr);
-      instr->_base.tag = FBLE_APPLY_INSTR;
+      // execute the process, use the FBLE_CALL_INSTR.
+      FbleCallInstr* instr = FbleAlloc(arena, FbleCallInstr);
+      instr->_base.tag = FBLE_CALL_INSTR;
       instr->_base.profile_ops = NULL;
       instr->loc = expr->loc;
       instr->exit = exit;
