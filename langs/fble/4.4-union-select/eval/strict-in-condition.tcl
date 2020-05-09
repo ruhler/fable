@@ -1,4 +1,4 @@
-fble-test-error 11:7 {
+fble-test-error 11:5 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ t = Bool@(true: Unit@());
@@ -8,5 +8,5 @@ fble-test-error 11:7 {
   Maybe@ m = Maybe@(nothing: Unit@());
 
   # The condition is evaluated first.
-  ?(m.just; true: f.true, false: t.false);
+  m.just.?(true: f.true, false: t.false);
 }

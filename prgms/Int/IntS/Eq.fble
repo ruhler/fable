@@ -8,17 +8,17 @@
 % P = /Int/IntP/Eq%;
 
 (IntS@) { Bool@; } IsZero = (IntS@ a) {
-  ?(a; 0: True, p: False);
+  a.?(0: True, p: False);
 };
 
 (IntS@, IntS@) { Bool@; } Lt = (IntS@ a, IntS@ b) {
-  ?(a; 0: ?(b; 0: False, p: True),
-       p: ?(b; 0: False, p: P.Lt(a.p, b.p)));
+  a.?(0: b.?(0: False, p: True),
+       p: b.?(0: False, p: P.Lt(a.p, b.p)));
 };
 
 (IntS@, IntS@) { Bool@; } Gt = (IntS@ a, IntS@ b) {
-  ?(a; 0: False,
-       p: ?(b; 0: True, p: P.Gt(a.p, b.p)));
+  a.?(0: False,
+      p: b.?(0: True, p: P.Gt(a.p, b.p)));
 };
 
 @(IsZero, Gt, Lt);

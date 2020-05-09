@@ -32,11 +32,11 @@
 @ Coord@ = *(Int@ row, Int@ col);
 
 (IntP@) { Data@; } DNat = (IntP@ n) {
-  ?(n; 1: DUnit, 2p0: Left(DNat(n.2p0)), 2p1: Right(DNat(n.2p1)));
+  n.?(1: DUnit, 2p0: Left(DNat(n.2p0)), 2p1: Right(DNat(n.2p1)));
 };
 
 (Int@){ Data@; } DInt = (Int@ n) {
-  ?(n; n: Left(DNat(n.n)), 0: DUnit, p: Right(DNat(n.p)));
+  n.?(n: Left(DNat(n.n)), 0: DUnit, p: Right(DNat(n.p)));
 };
 
 (Coord@) { Data@; } DCoord = (Coord@ c) {
@@ -69,11 +69,11 @@
 @ Count@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4p);
 
 (Count@) { Count@; } IncCount = (Count@ c) {
-  ?(c; 0: Count@(1: Unit),
-       1: Count@(2: Unit),
-       2: Count@(3: Unit),
-       3: Count@(4p: Unit),
-       4p: Count@(4p: Unit));
+  c.?(0: Count@(1: Unit),
+      1: Count@(2: Unit),
+      2: Count@(3: Unit),
+      3: Count@(4p: Unit),
+      4p: Count@(4p: Unit));
 };
 
 @ Status@ = *(Bool@ alive, Count@ neighbors);
@@ -81,9 +81,9 @@
 # Returns true if a cell with the given status should be a live cell in the
 # next generation.
 (Status@) { Bool@; } Lives = (Status@ status) {
-  ?(status.alive;
-      true: ?(status.neighbors; 2: True, 3: True, : False),
-      false: ?(status.neighbors; 3: True, : False));
+  status.alive.?(
+      true: status.neighbors.?(2: True, 3: True, : False),
+      false: status.neighbors.?(3: True, : False));
 };
 
 # Map from Coord to the status of the cell.
@@ -103,8 +103,8 @@
   Cand@ candidates = W.For<Cand@>(w, C.Empty,
     (Coord@ coord, Unit@ _, Cand@ cand_in) {
       Cand@ cand_alive = C.InsertWith(cand_in, coord, (Maybe@<Status@> ms) {
-        ?(ms; just: Status@(True, ms.just.neighbors),
-              nothing: Status@(True, Count@(0: Unit)));
+        ms.?(just: Status@(True, ms.just.neighbors),
+             nothing: Status@(True, Count@(0: Unit)));
       });
 
       S@<Coord@> neighbors = S<Coord@>([
@@ -119,8 +119,8 @@
 
       ForS<Coord@, Cand@>(neighbors, cand_alive, (Coord@ n, Cand@ c) {
         C.InsertWith(c, n, (Maybe@<Status@> ms) {
-          ?(ms; just: Status@(ms.just.alive, IncCount(ms.just.neighbors)),
-                nothing: Status@(False, Count@(1: Unit)));
+          ms.?(just: Status@(ms.just.alive, IncCount(ms.just.neighbors)),
+               nothing: Status@(False, Count@(1: Unit)));
         });
       });
     }
@@ -129,14 +129,14 @@
   # 2. Filter live cells from the map.
   C.For<World@>(candidates, W.Empty,
     (Coord@ coord, Status@ status, World@ w_in) {
-    ?(Lives(status);
+    Lives(status).?(
        true: W.Insert(w_in, coord, Unit),
        false: w_in);
   });
 };
 
 (Int@, World@) { World@; } StepN = (Int@ n, World@ w) {
-  ?(IsZero(n); true: w, false: StepN(Dec(n), Step(w)));
+  IsZero(n).?(true: w, false: StepN(Dec(n), Step(w)));
 };
 
 @(Coord@, World@, World, ForWorld: W.For, EqWorld, Step, StepN);

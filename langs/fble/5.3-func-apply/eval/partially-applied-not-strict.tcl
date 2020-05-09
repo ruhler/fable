@@ -5,7 +5,7 @@ fble-test {
 
   (Bool@)(Bool@) { Bool@; } And = (Bool@ a)(Bool@ b) {
     Unit@ tf = true.false;
-    ?(a; true: b, false: Bool@(false: tf));
+    a.?(true: b, false: Bool@(false: tf));
   };
 
   # The multi argument function is not fully applied given one argument.

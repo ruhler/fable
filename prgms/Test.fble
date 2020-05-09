@@ -42,16 +42,16 @@
     MapS<Test@, Bool@!>(tests, (Test@ test) {
       Unit@ _ := Print(out, test.name);
       TestResult@ tr := test.test;
-      ?(tr; pass: {
-              Unit@ _ := PrintLn(out, S0<Char@>);
-              $(True);
-            },
-            fail: {
-              Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
-                Str(Chars|': FAILED: '),
-                tr.fail])));
-              $(False);
-            });
+      tr.?(pass: {
+             Unit@ _ := PrintLn(out, S0<Char@>);
+             $(True);
+           },
+           fail: {
+             Unit@ _ := PrintLn(out, Concat<Char@>(S<Str@>([
+               Str(Chars|': FAILED: '),
+               tr.fail])));
+             $(False);
+           });
     });
   });
 };

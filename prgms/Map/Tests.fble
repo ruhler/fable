@@ -40,8 +40,8 @@ Bit2@ B = Bit2@(Bit1@(0: Unit), Bit1@(1: Unit));
 Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
 
 (Bit1@, Bit1@) { Bool@; } EqBit1 = (Bit1@ a, Bit1@ b) {
-  ?(a; 0: ?(b; 0: True, 1: False),
-       1: ?(b; 0: False, 1: True));
+  a.?(0: b.?(0: True, 1: False),
+      1: b.?(0: False, 1: True));
 };
 
 (Bit2@, Bit2@) { Bool@; } EqBit2 = (Bit2@ a, Bit2@ b) {
@@ -50,8 +50,8 @@ Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
 
 % MapBit2 = Map<Bit2@>((Bit2@ x) {
   Product(
-    ?(x.h; 0: Left(DUnit), 1: Right(DUnit)),
-    ?(x.l; 0: Left(DUnit), 1: Right(DUnit)));
+    x.h.?(0: Left(DUnit), 1: Right(DUnit)),
+    x.l.?(0: Left(DUnit), 1: Right(DUnit)));
 });
 <@>@ Map@ = MapBit2.Map@;
 <@>% Empty = MapBit2.Empty;
@@ -67,18 +67,18 @@ S@<Test@> Tests = {
 
   S<Test@>([
     Test@(name(Str(Chars|'empty')), $({
-      ?(Lookup<Unit@>(Empty<Unit@>, B);
-         just: TestResult@(fail:
-           Str(Chars|'Lookup found something in an empty map')),
-         nothing: TestResult@(pass: Unit));
+      Lookup<Unit@>(Empty<Unit@>, B).?(
+        just: TestResult@(fail:
+          Str(Chars|'Lookup found something in an empty map')),
+        nothing: TestResult@(pass: Unit));
     })),
 
     Test@(name(Str(Chars|'not found')), $({
       Map@<Unit@> map = Insert<Unit@>(Empty<Unit@>, C, Unit);
-      ?(Lookup<Unit@>(map, B);
-         just: TestResult@(fail:
-           Str(Chars|'Lookup found B in a map with only C')),
-         nothing: TestResult@(pass: Unit));
+      Lookup<Unit@>(map, B).?(
+        just: TestResult@(fail:
+          Str(Chars|'Lookup found B in a map with only C')),
+        nothing: TestResult@(pass: Unit));
     })),
 
     Test@(name(Str(Chars|'found')), $({
@@ -87,15 +87,15 @@ S@<Test@> Tests = {
         B, True),
         C, False);
       Maybe@<Bool@> mv = Lookup<Bool@>(map, B);
-      ?(mv;
-         just:
-           ?(mv.just;
-              true: TestResult@(pass: Unit),
-              false: TestResult@(fail:
-                Str(Chars|'Wrong value found for B.'))
-            ),
-         nothing: TestResult@(fail:
-           Str(Chars|'Failed to find B in map.')));
+      mv.?(
+        just:
+          mv.just.?(
+            true: TestResult@(pass: Unit),
+            false: TestResult@(fail:
+              Str(Chars|'Wrong value found for B.'))
+          ),
+        nothing: TestResult@(fail:
+          Str(Chars|'Failed to find B in map.')));
     })),
 
     Test@(name(Str(Chars|'replace')), $({
@@ -103,15 +103,15 @@ S@<Test@> Tests = {
         B, False),
         B, True);
       Maybe@<Bool@> mv = Lookup<Bool@>(map, B);
-      ?(mv;
-         just:
-           ?(mv.just;
-              true: TestResult@(pass: Unit),
-              false: TestResult@(fail:
-                Str(Chars|'Wrong value found for B.'))
-            ),
-         nothing: TestResult@(fail:
-           Str(Chars|'Failed to find B in map.')));
+      mv.?(
+        just:
+          mv.just.?(
+            true: TestResult@(pass: Unit),
+            false: TestResult@(fail:
+              Str(Chars|'Wrong value found for B.'))
+          ),
+        nothing: TestResult@(fail:
+          Str(Chars|'Failed to find B in map.')));
     })),
 
     Test@(name(Str(Chars|'for')), $({
@@ -128,20 +128,20 @@ S@<Test@> Tests = {
           ConsS<Entry@>(Entry@(k, v), l);
         });
 
-      ?(entries;
+      entries.?(
         cons:
-          ?(entries.cons.tail;
+          entries.cons.tail.?(
             cons:
-              ?(entries.cons.tail.cons.tail;
+              entries.cons.tail.cons.tail.?(
                 cons: TestResult@(fail: Str(Chars|'Too many entries.')),
                 nil: {
-                  % _ = ?(EqBit2(A, entries.cons.head.key);
+                  % _ = EqBit2(A, entries.cons.head.key).?(
                     true: @(a: entries.cons.head, 
                             b: entries.cons.tail.cons.head),
                     false: @(a: entries.cons.tail.cons.head, 
                              b: entries.cons.head));
-                  ?(And(And(EqBit2(A, _.a.key), EqBit2(B, _.b.key)),
-                        And(_.a.value, Not(_.b.value)));
+                  And(And(EqBit2(A, _.a.key), EqBit2(B, _.b.key)),
+                        And(_.a.value, Not(_.b.value))).?(
                     true: TestResult@(pass: Unit),
                     false: TestResult@(fail: Str(Chars|'key/value mismatch'))
                   );

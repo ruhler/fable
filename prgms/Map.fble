@@ -17,7 +17,7 @@
 
 <@ K@, @ V@>(Maybe@<Entry@<K@, V@>>) { Maybe@<V@>; }
 MValue = <@ K@, @ V@>(Maybe@<Entry@<K@, V@>> m) {
-  ?(m; just: Just<V@>(m.just.value), nothing: Nothing<V@>);
+  m.?(just: Just<V@>(m.just.value), nothing: Nothing<V@>);
 };
 
 # A map from K@ to V@, using Data@ as the lookup hash for K@.
@@ -34,17 +34,17 @@ MValue = <@ K@, @ V@>(Maybe@<Entry@<K@, V@>> m) {
 
 <@ K@, @ V@>(DataMap@<K@, V@>, Data@) { Maybe@<V@>; }
 Lookup = <@ K@, @ V@>(DataMap@<K@, V@> map, Data@ hash) {
-  ?(map;
+  map.?(
      empty: Nothing<V@>,
      map: {
-       ?(hash;
+       hash.?(
           unit: MValue<K@, V@>(map.map.unit),
-          sum: ?(hash.sum;
+          sum: hash.sum.?(
                    a: Lookup<K@, V@>(map.map.sum.a, hash.sum.a),
                    b: Lookup<K@, V@>(map.map.sum.b, hash.sum.b)),
           product: {
             Maybe@<DataMap@<K@, V@>> mm = Lookup<Unit@, DataMap@<K@, V@>>(map.map.product, hash.product.a);
-            ?(mm;
+            mm.?(
                 just: Lookup<K@, V@>(mm.just, hash.product.b),
                 nothing: Nothing<V@>);
           });
@@ -55,26 +55,26 @@ Lookup = <@ K@, @ V@>(DataMap@<K@, V@> map, Data@ hash) {
 <@ K@, @ V@>(DataMap@<K@, V@>, K@, Data@, (Maybe@<V@>){ V@; }) { DataMap@<K@, V@>; }
 InsertWith = <@ K@, @ V@>(DataMap@<K@, V@> map, K@ key, Data@ hash, (Maybe@<V@>){ V@; } with) {
   DataMapP@<K@, V@> p =
-    ?(map;
+    map.?(
        empty: DataMapP@<K@, V@>(
          Nothing<Entry@<K@, V@>>,
          @(a: Empty<K@, V@>, b: Empty<K@, V@>),
          Empty<Unit@, DataMap@<K@, V@>>),
        map: map.map);
   DataMap@<K@, V@>(map:
-   ?(hash;
+   hash.?(
      unit: DataMapP@<K@, V@>(
        Just<Entry@<K@, V@>>(Entry@<K@, V@>(key, with(MValue<K@, V@>(p.unit)))),
        p.sum,
        p.product
      ),
-     sum: ?(hash.sum;
+     sum: hash.sum.?(
               a: DataMapP@<K@, V@>(p.unit, @(a: InsertWith<K@, V@>(p.sum.a, key, hash.sum.a, with), b: p.sum.b), p.product),
               b: DataMapP@<K@, V@>(p.unit, @(a: p.sum.a, b: InsertWith<K@, V@>(p.sum.b, key, hash.sum.b, with)), p.product)),
      product: {
        DataMapP@<K@, V@>(p.unit, p.sum,
          InsertWith<Unit@, DataMap@<K@, V@>>(p.product, Unit, hash.product.a, (Maybe@<DataMap@<K@, V@>> mm) {
-           InsertWith<K@, V@>(?(mm; just: mm.just, nothing: Empty<K@, V@>), key, hash.product.b, with);
+           InsertWith<K@, V@>(mm.?(just: mm.just, nothing: Empty<K@, V@>), key, hash.product.b, with);
          }));
      }));
 };
@@ -86,10 +86,10 @@ Insert = <@ K@, @ V@>(DataMap@<K@, V@> map, K@ key, Data@ hash, V@ value) {
 
 <@ K@, @ V@, @ B@>(DataMap@<K@, V@>, B@, (K@, V@, B@) { B@;}) { B@; }
 For = <@ K@, @ V@, @ B@>(DataMap@<K@, V@> m, B@ base, (K@, V@, B@) { B@;} body) {
-  ?(m;
+  m.?(
     empty: base,
     map: {
-      B@ b2 = ?(m.map.unit;
+      B@ b2 = m.map.unit.?(
                   just: body(m.map.unit.just.key, m.map.unit.just.value, base),
                   nothing: base);
       B@ b3 = For<K@, V@, B@>(m.map.sum.a, b2, body);
@@ -106,16 +106,16 @@ For = <@ K@, @ V@, @ B@>(DataMap@<K@, V@> m, B@ base, (K@, V@, B@) { B@;} body) 
 # import Bool%.
 <@ K@, @ V@>((V@, V@) { Bool@; }, DataMap@<K@, V@>, DataMap@<K@, V@>) { Bool@; }
 Equals = <@ K@, @ V@>((V@, V@) { Bool@;} eq, DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
-  ?(a;
-      empty: ?(b; empty: True, map: False),
-      map: ?(b;
+  a.?(
+      empty: b.?(empty: True, map: False),
+      map: b.?(
         empty: False,
         map: {
-          Bool@ unit_eq = ?(a.map.unit;
-            just: ?(b.map.unit;
+          Bool@ unit_eq = a.map.unit.?(
+            just: b.map.unit.?(
               just: eq(a.map.unit.just.value, b.map.unit.just.value),
               nothing: False),
-            nothing: ?(b.map.unit; just: False, nothing: True)
+            nothing: b.map.unit.?(just: False, nothing: True)
           );
 
           Bool@ sum_eq = And(

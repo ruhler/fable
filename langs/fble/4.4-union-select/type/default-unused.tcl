@@ -10,7 +10,7 @@ fble-test {
   # It's a bit silly to have a default branch in that case, but to leave
   # things open for future refactorings where new tags are added without
   # having to change the expression, this is allowed.
-  ?(Char@(b: Unit@());
+  Char@(b: Unit@()).?(
       a: true,
       b: true,
       c: true,

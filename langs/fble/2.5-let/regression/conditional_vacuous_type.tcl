@@ -4,7 +4,7 @@ fble-test-error 7:5 {
   Bool@ true = Bool@(true: Unit@());
 
   # Regression test for a funny way to define a vacuous type.
-  @ T@ = ?(true; true: T@, false: T@);
+  @ T@ = true.?(true: T@, false: T@);
 
   T@();
 }

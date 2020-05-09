@@ -5,5 +5,5 @@ fble-test {
   Bool@ f = Bool@(false: Unit@());
 
   # Non taken choices are not evaluated.
-  ?(f; true: f.true, false: t.true);
+  f.?(true: f.true, false: t.true);
 }

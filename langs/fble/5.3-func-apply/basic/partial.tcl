@@ -5,7 +5,7 @@ fble-test-error 12:27 {
   Bool@ false = Bool@(false: Unit@());
 
   (Bool@, Bool@) { Bool@; } And = (Bool@ a, Bool@ b) {
-    ?(a; true: b, false: false);
+    a.?(true: b, false: false);
   };
 
   # Partial application is not allowed.

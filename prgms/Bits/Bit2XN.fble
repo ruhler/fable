@@ -38,7 +38,7 @@
 
   (Bit2X@){Result@;} fullinc = (Bit2X@ a) {
       B.Result@ rlo = B.fullinc(a.lo);
-      ?(rlo.cout;
+      rlo.cout.?(
           0: Result@(Bit2X@(a.hi, rlo.z), /Bits/Bit1%.BitN.zero),
           1: {
               B.Result@ rhi = B.fullinc(a.hi);

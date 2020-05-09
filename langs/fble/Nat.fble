@@ -26,12 +26,12 @@ Unit@ Unit = Unit@();
 };
 
 (BitS@){ *(BitS@ x, Bit@ overflow); } Decr = (BitS@ s) {
-  ?(s;
+  s.?(
      cons: {
        % d = Decr(s.cons.tail);
-       ?(d.overflow;
+       d.overflow.?(
           0: @(x: BitP(s.cons.msb, d.x), overflow: Bit.0),
-          1: ?(s.cons.msb;
+          1: s.cons.msb.?(
                 0: @(x: BitP(Bit.1, d.x), overflow: Bit.1),
                 1: @(x: BitP(Bit.0, d.x), overflow: Bit.0)));
      },
@@ -44,7 +44,7 @@ Unit@ Unit = Unit@();
 
 (Nat@) { S@; } S = (Nat@ n) {
   % d = Decr(n);
-  ?(d.overflow; 0: S@(S: d.x), 1: S@(Z: Unit));
+  d.overflow.?(0: S@(S: d.x), 1: S@(Z: Unit));
 };
 
 @(Nat@, S@, S, Bit, Nat);

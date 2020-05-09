@@ -13,7 +13,7 @@ fble-test {
     #   expected value of union type, but found value of type Maybe<Unit>
     # Because we were not evaluating the type of x before checking it was a
     # union type.
-    ?(x; just: true, nothing: false);
+    x.?(just: true, nothing: false);
   };
 
   isJust(Maybe@<Unit@>(just: Unit@())).true;

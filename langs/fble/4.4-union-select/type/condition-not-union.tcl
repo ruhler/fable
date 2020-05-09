@@ -1,4 +1,4 @@
-fble-test-error 10:5 {
+fble-test-error 10:3 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ t = Bool@(true: Unit@());
@@ -7,5 +7,5 @@ fble-test-error 10:5 {
   # The condition isn't a union type
   @ Pair@ = *(Unit@ true, Unit@ false);
   Pair@ s = Pair@(Unit@(), Unit@());
-  ?(s; true: f, false: t);
+  s.?(true: f, false: t);
 }

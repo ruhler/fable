@@ -58,16 +58,16 @@ Ship@ Initial = @(
 
 # Advance the ship one unit of game time.
 (Ship@) { Ship@; } Tick = (Ship@ s) {
-  ?(s.status.alive;
+  s.status.alive.?(
       left: {
         Int@ nx = Sub(s.x, ShipV);
-        ?(Lt(nx, MinX);
+        Lt(nx, MinX).?(
            true: @(x: MinX, status: Status@(alive: Dir@(stopped: Unit))),
            false: @(x: nx, status: s.status));
       },
       right: {
         Int@ nx = Add(s.x, ShipV);
-        ?(Gt(nx, MaxX);
+        Gt(nx, MaxX).?(
            true: @(x: MaxX, status: Status@(alive: Dir@(stopped: Unit))),
            false: @(x: nx, status: s.status));
       },

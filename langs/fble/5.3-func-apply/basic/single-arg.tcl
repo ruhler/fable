@@ -5,7 +5,7 @@ fble-test {
   Bool@ false = Bool@(false: Unit@());
 
   (Bool@) { Bool@; } Not = (Bool@ x) {
-    ?(x; true: false, false: true);
+    x.?(true: false, false: true);
   };
 
   # Function application of a single argument.

@@ -436,11 +436,11 @@ Abstract Syntax:
   Expr ::= union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
 
 Concrete Syntax:
-  expr ::= '?(' expr ';' name ':' expr [',' name ':' expr [...]] [',' ':' expr]')'
+  expr ::= expr '.?(' name ':' expr [',' name ':' expr [...]] [',' ':' expr]')'
 
 Example:
-  ?(mfoo; Just: mfoo.Just, Nothing: 3)
-  ?(char; a: True, b: True, : False)
+  mfoo.?(Just: mfoo.Just, Nothing: 3)
+  char.?(a: True, b: True, : False)
 
 The condition must be a union value. Returns the value of the choice selected
 by the tag of the condition, without causing any other choices to be
@@ -509,7 +509,7 @@ Concrete Syntax:
   block ::= '(' type name [',' type name [...]] ')' block
 
 Example:
-  (Bool@ a, Bool@ b) { ?(a; true: b, false: False); }
+  (Bool@ a, Bool@ b) { a.?(true: b, false: False); }
 
 The function value expression is used to describe a primitive function value
 given the arguments and the body of the function. The return type of
@@ -1097,9 +1097,9 @@ expr ::=
  | '+(' type name [',' type name [...]] ')'        (* union_type *)
  | type '(' name ':' expr ')'                      (* union_value *)
  | expr '.' name                                   (* union_access *)
- | '?(' expr ';' name ':' expr                     (* union_select *)
-            [',' name ':' expr [...]]
-            [',' ':' expr ] ')'   
+ | expr '.?(' name ':' expr                        (* union_select *)
+           [',' name ':' expr [...]]
+           [',' ':' expr ] ')'   
 
  | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
 

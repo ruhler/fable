@@ -73,7 +73,7 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 # Transform all of the coordinates in the given drawing.
 ((Point@) { Point@; }, Drawing@) { Drawing@; }
 Transform = ((Point@) { Point@; } f, Drawing@ d) {
-  ?(d; blank: d,
+  d.?(blank: d,
        path: Drawing@(path: @(
            points: MapS<Point@, Point@>(d.path.points, f),
            color: d.path.color)),

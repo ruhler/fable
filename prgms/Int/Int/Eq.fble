@@ -12,51 +12,51 @@
 % GeP = /Int/IntP/Eq%.Ge;
 
 (Int@) { Bool@; } IsZero = (Int@ x) {
-  ?(x; 0: True, : False);
+  x.?(0: True, : False);
 };
 
 (Int@, Int@){ Bool@; } Eq = (Int@ a, Int@ b) {
-  ?(a;
-      n: ?(b; n: EqP(a.n, b.n),  0: False, p: False),
-      0: ?(b; n: False, 0: True,  p: False),
-      p: ?(b; n: False, 0: False, p: EqP(a.p, b.p)));
+  a.?(
+    n: b.?(n: EqP(a.n, b.n),  0: False, p: False),
+    0: b.?(n: False, 0: True,  p: False),
+    p: b.?(n: False, 0: False, p: EqP(a.p, b.p)));
 };
 
 (Int@, Int@){ Bool@; } Lt = (Int@ a, Int@ b) {
-  ?(a;
-      n: ?(b; n: LtP(b.n, a.n), 0: True, p: True),
-      0: ?(b; n: False, 0: False, p: True),
-      p: ?(b; n: False, 0: False, p: LtP(a.p, b.p)));
+  a.?(
+      n: b.?(n: LtP(b.n, a.n), 0: True, p: True),
+      0: b.?(n: False, 0: False, p: True),
+      p: b.?(n: False, 0: False, p: LtP(a.p, b.p)));
 };
 
 (Int@, Int@){ Bool@; } Le = (Int@ a, Int@ b) {
-  ?(a;
-      n: ?(b; n: LeP(b.n, a.n), 0: True, p: True),
-      0: ?(b; n: False, 0: True, p: True),
-      p: ?(b; n: False, 0: False, p: LeP(a.p, b.p)));
+  a.?(
+      n: b.?(n: LeP(b.n, a.n), 0: True, p: True),
+      0: b.?(n: False, 0: True, p: True),
+      p: b.?(n: False, 0: False, p: LeP(a.p, b.p)));
 };
 
 (Int@, Int@){ Bool@; } Gt = (Int@ a, Int@ b) {
-  ?(a;
-      n: ?(b; n: GtP(b.n, a.n), 0: False, p: False),
-      0: ?(b; n: True, 0: False, p: False),
-      p: ?(b; n: True, 0: True, p: GtP(a.p, b.p)));
+  a.?(
+      n: b.?(n: GtP(b.n, a.n), 0: False, p: False),
+      0: b.?(n: True, 0: False, p: False),
+      p: b.?(n: True, 0: True, p: GtP(a.p, b.p)));
 };
 
 (Int@, Int@){ Bool@; } Ge = (Int@ a, Int@ b) {
-  ?(a;
-      n: ?(b; n: GeP(b.n, a.n), 0: True, p: False),
-      0: ?(b; n: True, 0: True, p: False),
-      p: ?(b; n: True, 0: True, p: GeP(a.p, b.p)));
+  a.?(
+      n: b.?(n: GeP(b.n, a.n), 0: True, p: False),
+      0: b.?(n: True, 0: True, p: False),
+      p: b.?(n: True, 0: True, p: GeP(a.p, b.p)));
 };
 
 # Abs(x) = |x|
 (Int@) { Int@; } Abs = (Int@ x) {
-  ?(x; n: Int@(p: x.n), 0: x, p: x);
+  x.?(n: Int@(p: x.n), 0: x, p: x);
 };
 
 (Int@, Int@) { Int@; } Min = (Int@ a, Int@ b) {
-  ?(Lt(a, b); true: a, false: b);
+  Lt(a, b).?(true: a, false: b);
 };
 
 @(IsZero, Eq, Lt, Le, Gt, Ge, Abs, Min);

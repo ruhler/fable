@@ -8,7 +8,8 @@ fble-test {
   # Basic test of a nested conditional expression.
   # This is a regression test for a bug in profiling that improperly kept
   # track of profile blocks for nested conditional expressions.
-  ?(true;
-      true: ?(false; true: false, false: false),
-      false: false);
+  true.?(
+    true: false.?(true: false, false: false),
+    false: false
+  );
 }

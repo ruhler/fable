@@ -1,4 +1,4 @@
-fble-test-error 6:4 {
+fble-test-error 6:3 {
   @ Unit@ = *();
 
   # The body of the let is malformed.

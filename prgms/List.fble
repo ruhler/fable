@@ -23,7 +23,7 @@
 
 # Append list b to the end of list a.
 <@ T@>(S@<T@>, S@<T@>){S@<T@>;} Append = <@ T@>(S@<T@> a, S@<T@> b) {
-  ?(a; cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
+  a.?(cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
 };
 
 S@ S0 = <@ T@> {
@@ -41,21 +41,21 @@ S@ S0 = <@ T@> {
 
 # InitP - Return all but the last element in 'list'.
 <@ T@>(P@<T@>){S@<T@>;} InitP = <@ T@>(P@<T@> list) {
-  ?(list.tail; cons: ConsS<T@>(list.head, InitP<T@>(list.tail.cons)), nil: S0<T@>);
+  list.tail.?(cons: ConsS<T@>(list.head, InitP<T@>(list.tail.cons)), nil: S0<T@>);
 };
 
 # LastP - Return the last element in 'list'.
 <@ T@>(P@<T@>){T@;} LastP = <@ T@>(P@<T@> list) {
-  ?(list.tail; cons: LastP<T@>(list.tail.cons), nil: list.head);
+  list.tail.?(cons: LastP<T@>(list.tail.cons), nil: list.head);
 };
 
 # Concat: Flatten a list of lists into a single list of all the elements.
 <@ T@>(S@<S@<T@>>){S@<T@>;} Concat = <@ T@>(S@<S@<T@>> x) {
-  ?(x; cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: S0<T@>);
+  x.?(cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: S0<T@>);
 };
 
 <@ A@, @ B@>(S@<A@>, (A@){B@;}){S@<B@>;} MapS = <@ A@, @ B@>(S@<A@> a, (A@){B@;} f) {
-  ?(a; cons: S@<B@>(cons: MapP<A@, B@>(a.cons, f)), nil: S0<B@>);
+  a.?(cons: S@<B@>(cons: MapP<A@, B@>(a.cons, f)), nil: S0<B@>);
 },
 <@ A@, @ B@>(P@<A@>, (A@){B@;}){P@<B@>;} MapP = <@ A@, @ B@>(P@<A@> a, (A@){B@;} f) {
   P@<B@>(f(a.head), MapS<A@, B@>(a.tail, f));
@@ -63,12 +63,12 @@ S@ S0 = <@ T@> {
 
 <@ A@, @ B@>(A@, S@<B@>, (A@, B@){A@;}){A@;}
 FoldS = <@ A@, @ B@>(A@ x, S@<B@> s, (A@, B@){A@;} f) {
-  ?(s; cons: FoldS<A@, B@>(f(x, s.cons.head), s.cons.tail, f), nil: x);
+  s.?(cons: FoldS<A@, B@>(f(x, s.cons.head), s.cons.tail, f), nil: x);
 };
 
 <@ A@>(Monoid@<A@>, S@<A@!>){A@!;} SeqS = <@ A@>(Monoid@<A@> m, S@<A@!> s) {
-  ?(s; cons: SeqP<A@>(m, s.cons),
-       nil: $(m.x));
+  s.?(cons: SeqP<A@>(m, s.cons),
+      nil: $(m.x));
 },
 <@ A@>(Monoid@<A@>, P@<A@!>){A@!;} SeqP = <@ A@>(Monoid@<A@> m, P@<A@!> p) {
   A@ head := p.head;
@@ -80,7 +80,7 @@ FoldS = <@ A@, @ B@>(A@ x, S@<B@> s, (A@, B@){A@;} f) {
 # comparision function.
 <@ T@>((T@, T@){Bool@;}, T@, S@<T@>){P@<T@>;} SortInsert =
   <@ T@>((T@, T@){Bool@;} le, T@ x, S@<T@> l) {
-    ?(l; cons: ?(le(x, l.cons.head);
+    l.?(cons: le(x, l.cons.head).?(
                   true: P@<T@>(x, l),
                   false: P@<T@>(l.cons.head, S@<T@>(cons: SortInsert<T@>(le, x, l.cons.tail)))),
          nil: P@<T@>(x, S0<T@>));
@@ -90,7 +90,7 @@ FoldS = <@ A@, @ B@>(A@ x, S@<B@> s, (A@, B@){A@;} f) {
 # TODO: Use something more efficient than an insertion sort.
 <@ T@>((T@, T@){Bool@;}, S@<T@>){S@<T@>;} SortS =
   <@ T@>((T@, T@){Bool@;} le, S@<T@> l) {
-    ?(l; cons: S@<T@>(cons: SortP<T@>(le, l.cons)), nil: l);
+    l.?(cons: S@<T@>(cons: SortP<T@>(le, l.cons)), nil: l);
   },
 <@ T@>((T@, T@){Bool@;}, P@<T@>){P@<T@>;} SortP =
   <@ T@>((T@, T@){Bool@;} le, P@<T@> l) {
@@ -98,7 +98,7 @@ FoldS = <@ A@, @ B@>(A@ x, S@<B@> s, (A@, B@){A@;} f) {
   };
 
 (S@<Bool@>){Bool@;} AndS = (S@<Bool@> s) {
-  ?(s; cons: AndP(s.cons), nil: True);
+  s.?(cons: AndP(s.cons), nil: True);
 },
 (P@<Bool@>){Bool@;} AndP = (P@<Bool@> p) {
   And(p.head, AndS(p.tail));
@@ -106,8 +106,8 @@ FoldS = <@ A@, @ B@>(A@ x, S@<B@> s, (A@, B@){A@;} f) {
 
 <@ A@, @ B@>(S@<A@>, B@, (A@, B@){B@;}){ B@;}
 ForS = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
-  ?(l; cons: ForS<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
-       nil: base);
+  l.?(cons: ForS<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
+      nil: base);
 };
 
 @(P@, S@, List@, EmptyList,

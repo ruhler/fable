@@ -8,7 +8,7 @@ fble-test-memory-growth {
 
   (Nat@, Sum@){ Sum@; } add = (Nat@ n, Sum@ sum) {
     S@ s = S(n);
-    ?(s; Z: sum, S: add(s.S, Sum@(S: sum)));
+    s.?(Z: sum, S: add(s.S, Sum@(S: sum)));
   };
 
   # f requires O(N) memory.

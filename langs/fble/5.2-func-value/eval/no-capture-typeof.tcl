@@ -14,7 +14,7 @@ fble-test-memory-constant {
       @(tx@: @<x>, u: Unit@()).u;
     };
     S@ s = S(n);
-    ?(s; Z: g, S: f(g, s.S));
+    s.?(Z: g, S: f(g, s.S));
   };
 
   (Nat@ n) { f((Unit@ x) { x; }, n); };

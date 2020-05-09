@@ -160,7 +160,7 @@ B32 =
 
 # TODO: This is a pretty lame implementation of circular left shift...
 (Bit32@, S@){Bit32@;} cls = (Bit32@ a, S@ s) {
-  ?(s;
+  s.?(
     0: B32(
       a.hi.hi.hi.hi.hi, a.hi.hi.hi.hi.lo, a.hi.hi.hi.lo.hi, a.hi.hi.hi.lo.lo,
       a.hi.hi.lo.hi.hi, a.hi.hi.lo.hi.lo, a.hi.hi.lo.lo.hi, a.hi.hi.lo.lo.lo,
@@ -565,7 +565,7 @@ B32 =
 (Streamed@<Bit8@>!, ABCD@){ABCD@!;} PaddedMd5 = (Streamed@<Bit8@>! padded, ABCD@ abcd) {
   Streamed@<Block@> block := GetBlock(padded);
   ABCD@ md5 = DoBlock(abcd, block.data);
-  ?(block.last; true: $(md5), false: PaddedMd5(padded, md5));
+  block.last.?(true: $(md5), false: PaddedMd5(padded, md5));
 };
 
 (Bit64@){Bit64@;} Inc64 = (Bit64@ a) {
@@ -585,8 +585,8 @@ B32 =
 Bit64@ 3f_64 = H2_64(3, Hex.F);
 Bit64@ 08_64 = H2_64(0, 8);
 (Put@<Streamed@<Bit8@>>, Bit64@, Bit64@){Unit@!;} PadZ = (Put@<Streamed@<Bit8@>> output, Bit64@ msglen, Bit64@ length) {
-    ?(/Bits%.Bit64.BitN.iszero(
-        /Bits%.Bit64.BitN.and(3f_64, /Bits%.Bit64.BitN.add(08_64, length)));
+    /Bits%.Bit64.BitN.iszero(
+        /Bits%.Bit64.BitN.and(3f_64, /Bits%.Bit64.BitN.add(08_64, length))).?(
           true: {
          Bit64@ bits = shl64(shl64(shl64(msglen)));
          Unit@ _ := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
@@ -608,7 +608,7 @@ Bit64@ 08_64 = H2_64(0, 8);
 (Get@<Maybe@<Bit8@>>, Put@<Streamed@<Bit8@>>, Bit64@){Unit@!;}
 Pad = (Get@<Maybe@<Bit8@>> input, Put@<Streamed@<Bit8@>> output, Bit64@ length) {
     Maybe@<Bit8@> x := input;
-    ?(x; just: {
+    x.?(just: {
         Unit@ _ := output(Streamed@<Bit8@>(x.just, False));
         Pad(input, output, Inc64(length));
       }, nothing: {
@@ -627,10 +627,10 @@ ABCD@ ABCD0 = ABCD@(
 
 (Bit@, Bit@, Bit@, Bit@){Hex@;} HexFromBits =
   (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
-    ?(b3; 0: ?(b2; 0: ?(b1; 0: ?(b0; 0: 0, 1: 1), 1: ?(b0; 0: 2, 1: 3)),
-                   1: ?(b1; 0: ?(b0; 0: 4, 1: 5), 1: ?(b0; 0: 6, 1: 7))),
-          1: ?(b2; 0: ?(b1; 0: ?(b0; 0: 8, 1: 9), 1: ?(b0; 0: A, 1: B)),
-                   1: ?(b1; 0: ?(b0; 0: C, 1: D), 1: ?(b0; 0: E, 1: Hex.F))));
+    b3.?(0: b2.?(0: b1.?(0: b0.?(0: 0, 1: 1), 1: b0.?(0: 2, 1: 3)),
+                 1: b1.?(0: b0.?(0: 4, 1: 5), 1: b0.?(0: 6, 1: 7))),
+         1: b2.?(0: b1.?(0: b0.?(0: 8, 1: 9), 1: b0.?(0: A, 1: B)),
+                 1: b1.?(0: b0.?(0: C, 1: D), 1: b0.?(0: E, 1: Hex.F))));
   };
 
 (Bit4@){Hex@;} HexFromBit4 = (Bit4@ x) {

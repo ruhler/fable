@@ -1,4 +1,4 @@
-fble-test-error 3:6 {
+fble-test-error 3:5 {
   @ Bool@ = /Bool%.Bool@;
   % True = /Bool%.True;
   % Flase = /Bool%.Flase;

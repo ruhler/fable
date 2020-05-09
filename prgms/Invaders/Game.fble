@@ -47,28 +47,28 @@ Game@ Initial = @(
   # Digit -- Get the drawing associated with the digit corresponding to d.
   # Returns a blank drawing if d is not in [0-9].
   (Int@) { Drawing@; } Digit = (Int@ d) {
-    ?(d; n: Blank, 0: Graphics.Digits.0, p: ?(d.p;
+    d.?(n: Blank, 0: Graphics.Digits.0, p: d.p.?(
         1: Graphics.Digits.1,
-        2p0: ?(d.p.2p0; 
+        2p0: d.p.2p0.?( 
           1: Graphics.Digits.2,
-          2p0: ?(d.p.2p0.2p0;
+          2p0: d.p.2p0.2p0.?(
             1: Graphics.Digits.4,
-            2p0: ?(d.p.2p0.2p0.2p0;
+            2p0: d.p.2p0.2p0.2p0.?(
               1: Graphics.Digits.8,
               : Blank),
             : Blank),
-          2p1: ?(d.p.2p0.2p1;
+          2p1: d.p.2p0.2p1.?(
             1: Graphics.Digits.6,
             : Blank)),
-        2p1: ?(d.p.2p1; 
+        2p1: d.p.2p1.?( 
           1: Graphics.Digits.3,
-          2p0: ?(d.p.2p1.2p0;
+          2p0: d.p.2p1.2p0.?(
             1: Graphics.Digits.5,
-            2p0: ?(d.p.2p1.2p0.2p0;
+            2p0: d.p.2p1.2p0.2p0.?(
               1: Graphics.Digits.9,
               : Blank),
             : Blank),
-          2p1: ?(d.p.2p1.2p1;
+          2p1: d.p.2p1.2p1.?(
             1: Graphics.Digits.7,
             : Blank))));
   };
@@ -99,7 +99,7 @@ Game@ Initial = @(
   Drawing@ l2 = Translate(I(D|360), I(D|440), Graphics.Ship);
   Drawing@ l3 = Translate(I(D|400), I(D|440), Graphics.Ship);
   (Lives@ l) {
-    ?(l;
+    l.?(
       0: Blank,
       1: Drawings([l1]),
       2: Drawings([l1, l2]),

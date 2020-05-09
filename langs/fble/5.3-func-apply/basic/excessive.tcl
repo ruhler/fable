@@ -5,8 +5,8 @@ fble-test-error 13:3 {
   Bool@ false = Bool@(false: Unit@());
 
   (Bool@) { (Bool@) { Bool@; }; } And = (Bool@ a) {
-    ?(a; true: (Bool@ b) { b; },
-         false: (Bool@ b) { false; });
+    a.?(true: (Bool@ b) { b; },
+        false: (Bool@ b) { false; });
   };
 
   # Excessive application is not allowed.

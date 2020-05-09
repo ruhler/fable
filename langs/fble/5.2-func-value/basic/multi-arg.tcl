@@ -4,6 +4,6 @@ fble-test {
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ false = Bool@(false: Unit@());
 
-  (Bool@ x, Bool@ y) { ?(x; true: y, false: false); };
+  (Bool@ x, Bool@ y) { x.?(true: y, false: false); };
 }
 

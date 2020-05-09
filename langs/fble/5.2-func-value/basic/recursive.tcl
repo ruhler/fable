@@ -4,10 +4,10 @@ fble-test {
 
   # Recursive functions are allowed.
   (Int@) { Int@; } zeroify = (Int@ x) {
-    ?(x; 0: x,
-         1: zeroify(Int@(0: Unit@())),
-         2: zeroify(Int@(1: Unit@())),
-         3: zeroify(Int@(2: Unit@())));
+    x.?(0: x,
+        1: zeroify(Int@(0: Unit@())),
+        2: zeroify(Int@(1: Unit@())),
+        3: zeroify(Int@(2: Unit@())));
   };
   zeroify(Int@(3: Unit@())).0;
 }

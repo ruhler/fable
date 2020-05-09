@@ -32,7 +32,7 @@ Symbol@ 9 = Symbol@(9: Unit);
 # Iterate over the symbols in order.
 (Symbol@){ Maybe@<Symbol@>; } IterateSymbol = (Symbol@ s) {
   (Symbol@){ Maybe@<Symbol@>; } J = Just<Symbol@>;
-  ?(s;
+  s.?(
     1: J(2), 2: J(3), 3: J(4),
     4: J(5), 5: J(6), 6: J(7),
     7: J(8), 8: J(9), 9: Nothing<Symbol@>);
@@ -47,23 +47,23 @@ BoxIndex@ B3 = BoxIndex@(3: Unit);
 
 # s / 3
 (Symbol@) { BoxIndex@; } Div3 = (Symbol@ s) {
-  ?(s; 1: B1, 2: B1, 3: B1,
-       4: B2, 5: B2, 6: B2,
-       7: B3, 8: B3, 9: B3);
+  s.?(1: B1, 2: B1, 3: B1,
+      4: B2, 5: B2, 6: B2,
+      7: B3, 8: B3, 9: B3);
 };
 
 # s % 3
 (Symbol@) { BoxIndex@; } Mod3 = (Symbol@ s) {
-  ?(s; 1: B1, 2: B2, 3: B3,
-       4: B1, 5: B2, 6: B3,
-       7: B1, 8: B2, 9: B3);
+  s.?(1: B1, 2: B2, 3: B3,
+      4: B1, 5: B2, 6: B3,
+      7: B1, 8: B2, 9: B3);
 };
 
 # 3a + b
 (BoxIndex@, BoxIndex@) { Symbol@; } Lit3 = (BoxIndex@ a, BoxIndex@ b) {
-  ?(a; 1: ?(b; 1: 1, 2: 2, 3: 3),
-       2: ?(b; 1: 4, 2: 5, 3: 6),
-       3: ?(b; 1: 7, 2: 8, 3: 9));
+  a.?(1: b.?(1: 1, 2: 2, 3: 3),
+      2: b.?(1: 4, 2: 5, 3: 6),
+      3: b.?(1: 7, 2: 8, 3: 9));
 };
 
 # An array of elements of type T@, indexed by symbol.
@@ -73,17 +73,17 @@ BoxIndex@ B3 = BoxIndex@(3: Unit);
 #   a[s] = x
 <@ T@>(Symbol@, T@, Array@<T@>){ Array@<T@>; }
 Set = <@ T@>(Symbol@ s, T@ x, Array@<T@> a) {
-  T@ a1 = ?(s; 1: x, : a(1));
-  T@ a2 = ?(s; 2: x, : a(2));
-  T@ a3 = ?(s; 3: x, : a(3));
-  T@ a4 = ?(s; 4: x, : a(4));
-  T@ a5 = ?(s; 5: x, : a(5));
-  T@ a6 = ?(s; 6: x, : a(6));
-  T@ a7 = ?(s; 7: x, : a(7));
-  T@ a8 = ?(s; 8: x, : a(8));
-  T@ a9 = ?(s; 9: x, : a(9));
+  T@ a1 = s.?(1: x, : a(1));
+  T@ a2 = s.?(2: x, : a(2));
+  T@ a3 = s.?(3: x, : a(3));
+  T@ a4 = s.?(4: x, : a(4));
+  T@ a5 = s.?(5: x, : a(5));
+  T@ a6 = s.?(6: x, : a(6));
+  T@ a7 = s.?(7: x, : a(7));
+  T@ a8 = s.?(8: x, : a(8));
+  T@ a9 = s.?(9: x, : a(9));
   (Symbol@ k) {
-    ?(k;
+    k.?(
       1: a1, 2: a2, 3: a3,
       4: a4, 5: a5, 6: a6,
       7: a7, 8: a8, 9: a9);
@@ -101,11 +101,11 @@ Set2D = <@ T@>(Symbol@ a, Symbol@ b, T@ x, Array@<Array@<T@>> array) {
 # Iterate over cell ids, going left to right and top to bottom.
 (CellId@) { Maybe@<CellId@>; } IterateCellId = (CellId@ cell) {
   Maybe@<Symbol@> mncol = IterateSymbol(cell.col);
-  ?(mncol;
+  mncol.?(
      just: Just<CellId@>(CellId@(cell.row, mncol.just)),
      nothing: {
        Maybe@<Symbol@> mnrow = IterateSymbol(cell.row);
-       ?(mnrow;
+       mnrow.?(
           just: Just<CellId@>(CellId@(mnrow.just, 1)),
           nothing: Nothing<CellId@>);
      });
@@ -145,14 +145,14 @@ Set@ FullSet = (Symbol@ s) { True; };
 
   State@ state = For<Symbol@, State@>(1, State@(empty: Unit), IterateSymbol,
     (Symbol@ symbol, State@ state) {
-       ?(set(symbol);
-          true: ?(state;
+       set(symbol).?(
+          true: state.?(
             empty: State@(single: symbol),
             single: State@(multi: Unit),
             multi: state),
           false: state);
   });
-  ?(state; empty: Nothing<Symbol@>,
+  state.?( empty: Nothing<Symbol@>,
            single: Just<Symbol@>(state.single),
            multi: Nothing<Symbol@>);
 };
@@ -175,7 +175,7 @@ Board@ EmptyBoard = (Symbol@ r)(Symbol@ c) { FullSet; };
 XS@ EmptyXS = XS@(empty: Unit);
 
 (XS@, XS@) { XS@; } AppendXS = (XS@ a, XS@ b) {
-  ?(a; empty: b, : ?(b; empty: a, : XS@(pair: @(a, b))));
+  a.?(empty: b, : b.?(empty: a, : XS@(pair: @(a, b))));
 };
 
 (X@, XS@){ XS@; } AddX = (X@ x, XS@ xs) {
@@ -193,7 +193,7 @@ XS@ EmptyXS = XS@(empty: Unit);
   Set@ isS = Set<Bool@>(s, True, (Symbol@ _) { False; });
   XS@ xCell = For<Symbol@, XS@>(1, EmptyXS, IterateSymbol,
     (Symbol@ other, XS@ xs) {
-      ?(isS(other);
+      isS(other).?(
          true: xs,
          false: AddX(X@(cell, other), xs));
   });
@@ -204,7 +204,7 @@ XS@ EmptyXS = XS@(empty: Unit);
   Group = (Set@ isThis, (Symbol@){CellId@;} cellOf) {
     For<Symbol@, XS@>(1, EmptyXS, IterateSymbol,
       (Symbol@ i, XS@ xs) {
-        ?(isThis(i);
+        isThis(i).?(
            true: xs,
            false: AddX(X@(cellOf(i), s), xs));
     });
@@ -237,52 +237,52 @@ XS@ EmptyXS = XS@(empty: Unit);
 # Does nothing if the constraint was already known.
 (Board@, X@) { BoardX@; } ApplyX = (Board@ board, X@ x) {
   Cell@ cell = board(x.cell.row)(x.cell.col);
-  ?(cell(x.symbol);
-     true: {
-       Cell@ ncell = Set<Bool@>(x.symbol, False, cell);
-       Board@ nboard = Set2D<Cell@>(x.cell.row, x.cell.col, ncell, board);
+  cell(x.symbol).?(
+    true: {
+      Cell@ ncell = Set<Bool@>(x.symbol, False, cell);
+      Board@ nboard = Set2D<Cell@>(x.cell.row, x.cell.col, ncell, board);
 
-       # If there is now only one possible symbol value for this cell, we
-       # know this cell must take on that single possible symbol value.
-       Maybe@<Symbol@> single = Singleton(ncell);
-       XS@ xCell = ?(single;
-         just: Assign(x.cell, single.just),
-         nothing: EmptyXS);
+      # If there is now only one possible symbol value for this cell, we
+      # know this cell must take on that single possible symbol value.
+      Maybe@<Symbol@> single = Singleton(ncell);
+      XS@ xCell = single.?(
+        just: Assign(x.cell, single.just),
+        nothing: EmptyXS);
 
-       # If board[row].symbol has only one cell, generate the assignment.
-       Set@ cells = (Symbol@ col) { nboard(x.cell.row)(col)(x.symbol); };
-       Maybe@<Symbol@> single = Singleton(cells);
-       XS@ xRow = ?(single;
-         just: Assign(CellId@(x.cell.row, single.just), x.symbol),
-         nothing: EmptyXS);
+      # If board[row].symbol has only one cell, generate the assignment.
+      Set@ cells = (Symbol@ col) { nboard(x.cell.row)(col)(x.symbol); };
+      Maybe@<Symbol@> single = Singleton(cells);
+      XS@ xRow = single.?(
+        just: Assign(CellId@(x.cell.row, single.just), x.symbol),
+        nothing: EmptyXS);
 
-       # If board[col].symbol has only one cell, generate the assignment.
-       Set@ cells = (Symbol@ row) { nboard(row)(x.cell.col)(x.symbol); };
-       Maybe@<Symbol@> single = Singleton(cells);
-       XS@ xCol = ?(single;
-         just: Assign(CellId@(single.just, x.cell.col), x.symbol),
-         nothing: EmptyXS);
+      # If board[col].symbol has only one cell, generate the assignment.
+      Set@ cells = (Symbol@ row) { nboard(row)(x.cell.col)(x.symbol); };
+      Maybe@<Symbol@> single = Singleton(cells);
+      XS@ xCol = single.?(
+        just: Assign(CellId@(single.just, x.cell.col), x.symbol),
+        nothing: EmptyXS);
 
-       # If board[box].symbol has only one cell, generate the assignment.
-       Symbol@ box = BoxGroupOf(x.cell);
-       Set@ cells = (Symbol@ pos) {
-         CellId@ cell = CellOfPos(box, pos);
-         nboard(cell.row)(cell.col)(x.symbol);
-       };
-       Maybe@<Symbol@> single = Singleton(cells);
-       XS@ xBox = ?(single;
-         just: Assign(CellOfPos(box, single.just), x.symbol),
-         nothing: EmptyXS);
+      # If board[box].symbol has only one cell, generate the assignment.
+      Symbol@ box = BoxGroupOf(x.cell);
+      Set@ cells = (Symbol@ pos) {
+        CellId@ cell = CellOfPos(box, pos);
+        nboard(cell.row)(cell.col)(x.symbol);
+      };
+      Maybe@<Symbol@> single = Singleton(cells);
+      XS@ xBox = single.?(
+        just: Assign(CellOfPos(box, single.just), x.symbol),
+        nothing: EmptyXS);
 
-       BoardX@(nboard, CatXS([xCell, xRow, xCol, xBox]));
-     },
-     false: BoardX@(board, EmptyXS));
+      BoardX@(nboard, CatXS([xCell, xRow, xCol, xBox]));
+    },
+    false: BoardX@(board, EmptyXS));
 };
 
 # Apply all constraints to the board, and all resulting constraints, until
 # there is nothing left to do.
 (Board@, XS@) { Board@; } ApplyXS = (Board@ board, XS@ xs) {
-  ?(xs;
+  xs.?(
      empty: board,
      single: {
        BoardX@ bx = ApplyX(board, xs.single);
@@ -302,14 +302,14 @@ XS@ EmptyXS = XS@(empty: Unit);
 #          have been determined.
 (Board@, Maybe@<CellId@>) { Maybe@<Board@>; }
 SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
-  ?(mfrom;
+  mfrom.?(
       just: {
         CellId@ from = mfrom.just;
         Cell@ cell = board(from.row)(from.col);
         Maybe@<CellId@> next = IterateCellId(from);
 
         Maybe@<Symbol@> single = Singleton(cell);
-        ?(single;
+        single.?(
             just: {
               # We already know the symbol for this cell. As an optimization,
               # move on to the next cell right away.
@@ -320,13 +320,13 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
               # options until we've found a solution to the puzzle.
               For<Symbol@, Maybe@<Board@>>(1, Nothing<Board@>, IterateSymbol,
                 (Symbol@ s, Maybe@<Board@> solved) {
-                  ?(solved;
+                  solved.?(
                       # TODO: Can we break out more efficiently in this case?
                       # Rather than have to iterate through and ignore all the
                       # rest of the possible symbols?
                       just: solved,
                       nothing: {
-                        ?(cell(s);
+                        cell(s).?(
                             true: SolveFrom(ApplyXS(board, Assign(from, s)), next),
                             false: Nothing<Board@>);
                       });
@@ -343,7 +343,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
   For<CellId@, XS@>(CellId@(1, 1), EmptyXS, IterateCellId,
     (CellId@ cell, XS@ xs) {
       Maybe@<Symbol@> ms = board(cell.row)(cell.col);
-      ?(ms;
+      ms.?(
          just: AppendXS(Assign(cell, ms.just), xs),
          nothing: xs);
   });
@@ -356,7 +356,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
   Maybe@<Board@> solved = SolveFrom(
     ApplyXS(EmptyBoard, InputXS(in)),
     Just<CellId@>(CellId@(1, 1)));
-  ?(solved;
+  solved.?(
       just: Just<Solved@>((Symbol@ row)(Symbol@ col) {
         Singleton(solved.just(row)(col)).just;
       }),

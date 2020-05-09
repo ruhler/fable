@@ -6,6 +6,6 @@ fble-test {
 
   # Basic test of a conditional expression.
   # Selects the first choice.
-  Bool@ z = ?(t; true: f, false: t);
+  Bool@ z = t.?(true: f, false: t);
   z.false;
 }

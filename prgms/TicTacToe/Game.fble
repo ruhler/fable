@@ -34,24 +34,24 @@ NewGame = (Input@! input, Put@<Output@> output, AI@ ai) {
 },
 (Input@!, Put@<Output@>, AI@, Board@, Player@){Unit@!;}
 PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x) {
-  GameStatus@ status := $(?(BoardStatus(board);
+  GameStatus@ status := $(BoardStatus(board).?(
                           X: GameStatus@(ended: GameResult@(win: Player@(X: Unit))),
                           O: GameStatus@(ended: GameResult@(win: Player@(O: Unit))),
                           D: GameStatus@(ended: GameResult@(draw: Unit)),
                           E: GameStatus@(playing: x)));
   Unit@ _ := output(Output@(board, status));
   Input@ in := input;
-  ?(in;
+  in.?(
      move:
-       ?(status;
+       status.?(
           playing: {
-            Position@ position := ?(in.move;
+            Position@ position := in.move.?(
               just: $(in.move.just),
               nothing: ai(board, x));
 
             Maybe@<Board@> nboard := $(Move(board, position, x));
-            ?(nboard ;
-                just: PlayGame(input, output, ai, nboard.just, ?(x; X: Player@(O: Unit), O: Player@(X: Unit))),
+            nboard.?(
+                just: PlayGame(input, output, ai, nboard.just, x.?(X: Player@(O: Unit), O: Player@(X: Unit))),
                 nothing: PlayGame(input, output, ai, board, x));
 
           },

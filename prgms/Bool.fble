@@ -10,19 +10,19 @@ Bool@ True = Bool@(true: Unit);
 Bool@ False = Bool@(false: Unit);
 
 (Bool@){Bool@;} Not = (Bool@ a) {
-  ?(a; true: False, false: True);
+  a.?(true: False, false: True);
 };
 
 (Bool@, Bool@){Bool@;} And = (Bool@ a, Bool@ b) {
-  ?(a; true: b, false: False);
+  a.?(true: b, false: False);
 };
 
 (Bool@, Bool@){Bool@;} Or = (Bool@ a, Bool@ b) {
-  ?(a; true: True, false: b);
+  a.?(true: True, false: b);
 };
 
 (Bool@, Bool@){Bool@;} Eq = (Bool@ a, Bool@ b) {
-  ?(a; true: Not(b), false: b);
+  a.?(true: Not(b), false: b);
 };
 
 Monoid@<Bool@> AndMonoid = Monoid@<Bool@>(And, True);

@@ -1,4 +1,4 @@
-fble-test-error 9:15 {
+fble-test-error 9:14 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
@@ -6,5 +6,5 @@ fble-test-error 9:15 {
 
   # You cannot use implicit field names for union select expressions like you
   # can with implicit type struct value expressions.
-  ?(true; true, false);
+  true.?(true, false);
 }

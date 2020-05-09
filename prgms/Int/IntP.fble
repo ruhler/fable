@@ -32,17 +32,17 @@ IntP@ 10 = 2P0(5);
 
 # Add1(x) = x + 1
 (IntP@) { IntP@; } Add1 = (IntP@ x) {
-  ?(x; 1: 2, 2p0: 2P1(x.2p0), 2p1: 2P0(Add1(x.2p1)));
+  x.?(1: 2, 2p0: 2P1(x.2p0), 2p1: 2P0(Add1(x.2p1)));
 };
 
 (IntP@, IntP@) { IntP@; } Add = (IntP@ a, IntP@ b) {
-  ?(a;
+  a.?(
     1: Add1(b),
-    2p0: ?(b;
+    2p0: b.?(
       1: 2P1(a.2p0), 
       2p0: 2P0(Add(a.2p0, b.2p0)),
       2p1: 2P1(Add(a.2p0, b.2p1))),
-    2p1: ?(b;
+    2p1: b.?(
       1: 2P0(Add1(a.2p1)),
       2p0: 2P1(Add(a.2p1, b.2p0)),
       2p1: 2P0(Add1(Add(a.2p1, b.2p1)))));
@@ -50,13 +50,13 @@ IntP@ 10 = 2P0(5);
 
 # Mul(a, b) = a * b
 (IntP@, IntP@) { IntP@; } Mul = (IntP@ a, IntP@ b) {
-  ?(a;
+  a.?(
       1: b,
-      2p0: ?(b;
+      2p0: b.?(
         1: a,
         2p0: 2P0(2P0(Mul(a.2p0, b.2p0))),
         2p1: 2P0(Add(2P0(Mul(a.2p0, b.2p1)), a.2p0))),
-      2p1: ?(b;
+      2p1: b.?(
         1: a,
         2p0: 2P0(Add(2P0(Mul(a.2p1, b.2p0)), b.2p0)),
         2p1: 2P1(Add(2P0(Mul(a.2p1, b.2p1)), Add(a.2p1, b.2p1)))));

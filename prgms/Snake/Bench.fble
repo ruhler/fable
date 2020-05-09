@@ -21,7 +21,7 @@
 # quiting.
 (Int@, Put@<Event@>, Get@<Effect@>) { Unit@!; }
 Feed = (Int@ n, Put@<Event@> in, Get@<Effect@> out) {
-  ?(n; n: {
+  n.?(n: {
        Unit@ _ := in(Event@(key_down: Key@(q: Unit)));
        Unit@ _ := in(Event@(key_down: Key@(q: Unit)));
        $(Unit);
@@ -29,11 +29,11 @@ Feed = (Int@ n, Put@<Event@> in, Get@<Effect@> out) {
        # TODO: This will deadlock if the game ends earlier than we expect.
        # Make the benchmark more robust than this.
        Effect@ e := out;
-       ?(e; tick: {
-              Unit@ _ := in(Event@(tick: Unit));
-              Feed(Dec(n), in, out);
-            },
-            draw: Feed(n, in, out));
+       e.?(tick: {
+             Unit@ _ := in(Event@(tick: Unit));
+             Feed(Dec(n), in, out);
+           },
+           draw: Feed(n, in, out));
      });
 };
 

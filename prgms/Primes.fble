@@ -28,18 +28,18 @@
 #   Computes whether x is prime given that there are no factors of x other
 #   than 1 that are less than f.
 (IntP@, IntP@){Bool@;} IsPrimeHelper = (IntP@ x, IntP@ f) {
-  ?(Gt(Mul(f, f), x); true: True, false:
-      ?(Divides(x, f); true: False, false:
+  Gt(Mul(f, f), x).?(true: True, false:
+      Divides(x, f).?(true: False, false:
           IsPrimeHelper(x, Add1(f))));
 };
 
 (IntP@){Bool@;} IsPrime = (IntP@ x) {
-  ?(Lt(x, 2) ; true: False, false: IsPrimeHelper(x, 2));
+  Lt(x, 2).?(true: False, false: IsPrimeHelper(x, 2));
 };
 
 (IntP@, IntS@){IntP@;} NthPrime = (IntP@ x, IntS@ n) {
-  ?(IsPrime(x) ;
-      true: ?(n; 0: x, p: NthPrime(Add1(x), Sub1(n.p))),
+  IsPrime(x).?(
+      true: n.?(0: x, p: NthPrime(Add1(x), Sub1(n.p))),
       false: NthPrime(Add1(x), n));
 };
 

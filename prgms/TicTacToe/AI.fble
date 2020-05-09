@@ -34,7 +34,7 @@
   Data@ x = Left(Left(DUnit));
   Data@ o = Left(Right(DUnit));
   Data@ e = Right(DUnit);
-  (Square@ s) { ?(s; X: x, O: o, E: e); };
+  (Square@ s) { s.?(X: x, O: o, E: e); };
 };
 
 (Board@) { Data@; } DBoard = {
@@ -54,15 +54,15 @@
 };
 
 (Position@){ Maybe@<Position@>; } NextPosition = (Position@ p) {
-  ?(p; UL: Just<Position@>(Position@(UC: Unit)),
-       UC: Just<Position@>(Position@(UR: Unit)),
-       UR: Just<Position@>(Position@(ML: Unit)),
-       ML: Just<Position@>(Position@(MC: Unit)),
-       MC: Just<Position@>(Position@(MR: Unit)),
-       MR: Just<Position@>(Position@(LL: Unit)),
-       LL: Just<Position@>(Position@(LC: Unit)),
-       LC: Just<Position@>(Position@(LR: Unit)),
-       LR: Nothing<Position@>);
+  p.?(UL: Just<Position@>(Position@(UC: Unit)),
+      UC: Just<Position@>(Position@(UR: Unit)),
+      UR: Just<Position@>(Position@(ML: Unit)),
+      ML: Just<Position@>(Position@(MC: Unit)),
+      MC: Just<Position@>(Position@(MR: Unit)),
+      MR: Just<Position@>(Position@(LL: Unit)),
+      LL: Just<Position@>(Position@(LC: Unit)),
+      LC: Just<Position@>(Position@(LR: Unit)),
+      LR: Nothing<Position@>);
 };
 
 # Rotate a board 90 degrees clockwise
@@ -74,7 +74,7 @@
 
 # Rotate a position 90 degrees clockwise
 (Position@) { Position@; } RotatePosition = (Position@ p) {
-  ?(p;
+  p.?(
     UL: Position@(UR: Unit), UC: Position@(MR: Unit), UR: Position@(LR: Unit),
     ML: Position@(UC: Unit), MC: Position@(MC: Unit), MR: Position@(LC: Unit),
     LL: Position@(UL: Unit), LC: Position@(ML: Unit), LR: Position@(LL: Unit));
@@ -89,7 +89,7 @@
 
 # Flip a position horizontally
 (Position@) { Position@; } FlipPosition = (Position@ p) {
-  ?(p;
+  p.?(
     UL: Position@(LL: Unit), UC: Position@(LC: Unit), UR: Position@(LR: Unit),
     ML: Position@(ML: Unit), MC: Position@(MC: Unit), MR: Position@(MR: Unit),
     LL: Position@(UL: Unit), LC: Position@(UC: Unit), LR: Position@(UR: Unit));
@@ -98,9 +98,9 @@
 
 # Re-interpret the result from the perspective of the opposing player.
 (Result@){Result@;} FlipResult = (Result@ r) {
-  ?(r ; Win:  Result@(Loss: Unit),
-        Draw: Result@(Draw: Unit),
-        Loss: Result@(Win: Unit));
+  r.?(Win:  Result@(Loss: Unit),
+      Draw: Result@(Draw: Unit),
+      Loss: Result@(Win: Unit));
 };
 
 @ PositionResult@ = *(Position@ position, Result@ result);
@@ -137,16 +137,16 @@ AllSymmetries = (BoardPositionResult@ bpr) {
 ChooseBestPosition = (PositionResult@ a, PositionResult@ b) {
   Result@ ra = a.result;
   Result@ rb = b.result;
-  ?(ra; Win: a,
-        Draw: ?(rb; Win: b, Draw: a, Loss: a),
-        Loss: b);
+  ra.?(Win: a,
+       Draw: rb.?(Win: b, Draw: a, Loss: a),
+       Loss: b);
 };
 
 (Maybe@<PositionResult@>, Maybe@<PositionResult@>) { Maybe@<PositionResult@>; }
 ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b) {
-  ?(a; just:
-        ?(b; just: Just<PositionResult@>(ChooseBestPosition(a.just, b.just)),
-             nothing: a),
+  a.?(just:
+        b.?(just: Just<PositionResult@>(ChooseBestPosition(a.just, b.just)),
+            nothing: a),
        nothing: b);
 };
 
@@ -164,14 +164,14 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 # has just moved and that both players play optimally.
 (MemoTable@, Board@, Player@){MemoState@<Result@>;}
 ExpectedResult = (MemoTable@ m, Board@ b, Player@ x) {
-  ?(BoardStatus(b);
+  BoardStatus(b).?(
       X: MemoState@<Result@>(m,
-          ?(x; X: Result@(Win: Unit), O: Result@(Loss: Unit))),
+          x.?(X: Result@(Win: Unit), O: Result@(Loss: Unit))),
       O: MemoState@<Result@>(m,
-          ?(x; X: Result@(Loss: Unit), O: Result@(Win: Unit))),
+          x.?(X: Result@(Loss: Unit), O: Result@(Win: Unit))),
       D: MemoState@<Result@>(m, Result@(Draw: Unit)),
       E: {
-        Player@ o = ?(x; X: Player@(O: Unit), O: Player@(X: Unit));
+        Player@ o = x.?(X: Player@(O: Unit), O: Player@(X: Unit));
         MemoState@<PositionResult@> move = ChooseBestMove(m, b, o);
         MemoState@<Result@>(move.memo, FlipResult(move.data.result));
       }
@@ -184,7 +184,7 @@ ExpectedResult = (MemoTable@ m, Board@ b, Player@ x) {
 (MemoTable@, Board@, Player@, Position@){MemoState@<Maybe@<PositionResult@>>;}
 MoveResult = (MemoTable@ m, Board@ b, Player@ x, Position@ p) {
   Maybe@<Board@> moved = Move(b, p, x);
-  ?(moved;
+  moved.?(
     just: {
       MemoState@<Result@> result = ExpectedResult(m, moved.just, x);
       MemoState@<Maybe@<PositionResult@>>(
@@ -199,7 +199,7 @@ MoveResult = (MemoTable@ m, Board@ b, Player@ x, Position@ p) {
 (MemoTable@, Board@, Player@){MemoState@<PositionResult@>;}
 ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
   Maybe@<PositionResult@> cached = Lookup(m, b);
-  ?(cached;
+  cached.?(
     just: MemoState@<PositionResult@>(m, cached.just),
     nothing: {
       MemoState@<Maybe@<PositionResult@>> best =
@@ -238,14 +238,14 @@ MemoTable@ InitialAI = {
 (MemoTable@, Get@<Maybe@<Turn@>>, Put@<Position@>){ Unit@!; }
 RunAI = (MemoTable@ ai, Get@<Maybe@<Turn@>> get, Put@<Position@> put) {
   Maybe@<Turn@> mturn := get;
-  ?(mturn;
-     just: {
-       Turn@ turn = mturn.just;
-       MemoState@<PositionResult@> mpr = ChooseBestMove(ai, turn.board, turn.player);
-       Unit@ _ := put(mpr.data.position);
-       RunAI(mpr.memo, get, put);
-     },
-     nothing: $(Unit));
+  mturn.?(
+    just: {
+      Turn@ turn = mturn.just;
+      MemoState@<PositionResult@> mpr = ChooseBestMove(ai, turn.board, turn.player);
+      Unit@ _ := put(mpr.data.position);
+      RunAI(mpr.memo, get, put);
+    },
+    nothing: $(Unit));
 };
 
 # A TicTacToe AI that will pick a position when it is the given player's turn

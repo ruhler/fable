@@ -32,9 +32,9 @@ TestResult@! TestBoardStatus = {
         Square@(X: Unit), Square@(O: Unit), Square@(O: Unit),
         Square@(E: Unit), Square@(O: Unit), Square@(X: Unit),
         Square@(O: Unit), Square@(X: Unit), Square@(X: Unit)));
-  $(?(status ;
-        O: TestResult@(pass: Unit),
-        : TestResult@(fail: Str(Chars|failed))));
+  $(status.?(
+      O: TestResult@(pass: Unit),
+      : TestResult@(fail: Str(Chars|failed))));
 };
 
 # TODO: Use PositionEquals for test result, and report position when failed?
@@ -44,9 +44,9 @@ TestResult@! TestChooseBestMoveWin = {
           Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
           Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
           Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)), Player@(X: Unit));
-    $(?(position ;
-          UR: TestResult@(pass: Unit),
-            : TestResult@(fail: Str(Chars|failed))));
+    $(position.?(
+        UR: TestResult@(pass: Unit),
+          : TestResult@(fail: Str(Chars|failed))));
   });
 };
 
@@ -56,9 +56,9 @@ TestResult@! TestChooseBestMoveNoLose = {
           Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
           Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
           Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)), Player@(X: Unit));
-    $(?(position ;
-          UR: TestResult@(pass: Unit),
-            : TestResult@(fail: Str(Chars|failed))));
+    $(position.?(
+        UR: TestResult@(pass: Unit),
+          : TestResult@(fail: Str(Chars|failed))));
   });
 };
 

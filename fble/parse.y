@@ -274,20 +274,20 @@ expr:
       union_value_expr->arg = $5;
       $$ = &union_value_expr->_base;
    }
- | '?' '(' expr ';' tagged_expr_p ')' {
+ | expr '.' '?' '(' tagged_expr_p ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(arena, FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
       select_expr->_base.loc = @$;
-      select_expr->condition = $3;
+      select_expr->condition = $1;
       select_expr->choices = $5;
       select_expr->default_ = NULL;
       $$ = &select_expr->_base;
    }
- | '?' '(' expr ';' tagged_expr_p ',' ':' expr ')' {
+ | expr '.' '?' '(' tagged_expr_p ',' ':' expr ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(arena, FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
       select_expr->_base.loc = @$;
-      select_expr->condition = $3;
+      select_expr->condition = $1;
       select_expr->choices = $5;
       select_expr->default_ = $8;
       $$ = &select_expr->_base;

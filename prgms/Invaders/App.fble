@@ -37,14 +37,14 @@
 
 (Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
-  ?(e;
+  e.?(
       tick: $(Input@(tick: Unit)),
-      key_down: ?(e.key_down;
+      key_down: e.key_down.?(
         q: $(Input@(quit: Unit)),
         left: $(Input@(dir: Dir@(left: Unit))),
         right: $(Input@(dir: Dir@(right: Unit))),
         : GetInput(in)),
-      key_up: ?(e.key_up;
+      key_up: e.key_up.?(
         left: $(Input@(dir: Dir@(stopped: Unit))),
         right: $(Input@(dir: Dir@(stopped: Unit))),
         : GetInput(in))
@@ -54,15 +54,15 @@
 (Get@<Input@>, Put@<Game@>, Unit@!, Game@) { Unit@!; }
 Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
   Input@ i := in;
-  ?(i;
-      tick: {
-        Unit@ _ := tick;
-        Game@ ngame = Game.Tick(game);
-        Unit@ _ := draw(ngame);
-        Run(in, draw, tick, ngame);
-      },
-      quit: $(Unit),
-      dir: Run(in, draw, tick, Game.Input(game, i.dir)));
+  i.?(
+     tick: {
+       Unit@ _ := tick;
+       Game@ ngame = Game.Tick(game);
+       Unit@ _ := draw(ngame);
+       Run(in, draw, tick, ngame);
+     },
+     quit: $(Unit),
+     dir: Run(in, draw, tick, Game.Input(game, i.dir)));
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {

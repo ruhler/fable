@@ -4,6 +4,6 @@ fble-test {
   Bool@ f = Bool@(false: Unit@());
 
   # The type of the union select is the type of the choices.
-  Unit@ x = ?(f; true: Unit@(), false: Unit@());
+  Unit@ x = f.?(true: Unit@(), false: Unit@());
   x;
 }

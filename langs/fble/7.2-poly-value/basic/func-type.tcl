@@ -9,9 +9,9 @@ fble-test {
   @ BoolPredicate@ = BinaryPredicate@<Bool@>;
 
   BoolPredicate@ eqBool = (Bool@ a, Bool@ b) {
-    ?(a; true: b,
-         false: ?(b; true: false,
-                     false: true));
+    a.?(true: b,
+        false: b.?(true: false,
+                   false: true));
   };
 
   eqBool(false, false).true;

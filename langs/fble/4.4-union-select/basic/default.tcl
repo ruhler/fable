@@ -9,8 +9,9 @@ fble-test {
 
   # Basic test of a conditional expression with a default branch.
   # Selects the default choice.
-  ?(Char@(b: Unit@());
-      a: true,
-      d: true,
-       : false).false;
+  Char@(b: Unit@()).?(
+    a: true,
+    d: true,
+     : false
+  ).false;
 }

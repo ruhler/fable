@@ -5,7 +5,7 @@ fble-test-error 12:7 {
   Bool@ false = Bool@(false: Unit@());
 
   (Bool@) { Bool@; } Not = (Bool@ x) {
-    ?(x; true: false, false: true);
+    x.?(true: false, false: true);
   };
 
   # The argument does not compile.

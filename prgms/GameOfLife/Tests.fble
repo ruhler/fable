@@ -57,9 +57,10 @@ TestResult@! AcornStep = $({
     C(3, 5)
   ]);
 
-  ?(EqWorld(g1, Step(g0));
-      true: TestResult@(pass: Unit),
-      false: TestResult@(fail: Str(Chars|failed)));
+  EqWorld(g1, Step(g0)).?(
+    true: TestResult@(pass: Unit),
+    false: TestResult@(fail: Str(Chars|failed))
+  );
 });
 
 S@<Test@> Tests = S<Test@>([

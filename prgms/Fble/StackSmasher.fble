@@ -25,11 +25,11 @@ Unit@ Unit = Unit@();
 };
 
 (BitS@){ BitS@; } Decr = (BitS@ s) {
-  ?(s;
+  s.?(
      cons: {
-       ?(s.cons.tail;
+       s.cons.tail.?(
           cons: {
-            ?(s.cons.lsb;
+            s.cons.lsb.?(
                0: BitP(Bit.1, Decr(s.cons.tail)),
                1: BitP(Bit.0, s.cons.tail));
           },
@@ -45,23 +45,23 @@ Unit@ Unit = Unit@();
 # theory. In practice I'm too impatient to wait for it to actually smash the
 # stack.
 (BitS@){ Unit@!; } F = (BitS@ s) {
-  ?(s; cons: { Unit@ u := F(Decr(s)); $(u); },
-       nil: $(Unit));
+  s.?(cons: { Unit@ u := F(Decr(s)); $(u); },
+      nil: $(Unit));
 };
 
 (BitS@) { BitS@; } G1 = (BitS@ s) {
-  ?(s; cons: { 
-         # Deep chain of lets in the binding to exercise the let ref traversal
-         # issue.
-         BitS@ tail = G1(Decr(s));
-         BitP(Bit.1, tail);
-       },
-       nil: BitS@(nil: Unit));
+  s.?(cons: { 
+        # Deep chain of lets in the binding to exercise the let ref traversal
+        # issue.
+        BitS@ tail = G1(Decr(s));
+        BitP(Bit.1, tail);
+      },
+      nil: BitS@(nil: Unit));
 };
 
 (BitS@) { BitS@; } G2 = (BitS@ s) {
-  ?(s; cons: BitP(Bit.1, G2(Decr(s))),
-       nil: BitS@(nil: Unit));
+  s.?(cons: BitP(Bit.1, G2(Decr(s))),
+      nil: BitS@(nil: Unit));
 };
 
 

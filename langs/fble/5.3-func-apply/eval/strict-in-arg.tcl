@@ -7,7 +7,7 @@ fble-test-error 14:9 {
   Maybe@ m = Maybe@(nothing: Unit@());
 
   (Bool@) { Bool@; } Not = (Bool@ x) {
-    ?(x; true: false, false: true);
+    x.?(true: false, false: true);
   };
 
   # Function application is strict in the argument..

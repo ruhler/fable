@@ -1,9 +1,9 @@
-fble-test-error 8:24 {
+fble-test-error 8:23 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ t = Bool@(true: Unit@());
   Bool@ f = Bool@(false: Unit@());
 
   # The second argument fails to compile.
-  ?(f; true: f, false: zzz);
+  f.?(true: f, false: zzz);
 }

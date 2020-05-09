@@ -15,12 +15,13 @@
 # The 'cat' program to cat stdin.
 Stdio@ Cat = (Get@<Maybe@<Str@>> stdin, Put@<Str@> stdout) {
   Maybe@<Str@> line := stdin;
-  ?(line;
-      just: {
-        Unit@ _ := stdout(line.just);
-        Cat(stdin, stdout);
-      },
-      nothing: $(True));
+  line.?(
+    just: {
+      Unit@ _ := stdout(line.just);
+      Cat(stdin, stdout);
+    },
+    nothing: $(True)
+  );
 };
 
 Cat;

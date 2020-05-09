@@ -11,7 +11,7 @@ fble-test-memory-growth {
     # the body of g. That means f should use linear memory.
     Func@ g = (Unit@ _) { x(_); };
     S@ s = S(n);
-    ?(s; Z: g, S: f(g, s.S));
+    s.?(Z: g, S: f(g, s.S));
   };
 
   (Nat@ n) { f((Unit@ x) { x; }, n); };

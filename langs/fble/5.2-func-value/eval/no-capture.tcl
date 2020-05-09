@@ -12,7 +12,7 @@ fble-test-memory-constant {
     # constant memory, not linear.
     Func@ g = (Unit@ _) { _; };
     S@ s = S(n);
-    ?(s; Z: g, S: f(g, s.S));
+    s.?(Z: g, S: f(g, s.S));
   };
 
   (Nat@ n) { f((Unit@ x) { x; }, n); };

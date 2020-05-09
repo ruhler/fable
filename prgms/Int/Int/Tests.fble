@@ -43,9 +43,10 @@
 (CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
   Test@(Append<Char@>(Str(Chars|'Int.'), Str(name)), {
     Bool@ x := p;
-    ?(x;
-       true: $(TestResult@(pass: Unit)),
-       false: $(TestResult@(fail: Str(Chars|failed))));
+    x.?(
+      true: $(TestResult@(pass: Unit)),
+      false: $(TestResult@(fail: Str(Chars|failed)))
+    );
   });
 };
 

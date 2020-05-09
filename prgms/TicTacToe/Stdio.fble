@@ -32,7 +32,7 @@
 @ Output@ = /TicTacToe/Game%.Output@;
 
 (Square@) { Str@; } ShowSquare = (Square@ s) {
-  ?(s; X: Str(Chars|X), O: Str(Chars|O), E: Str(Chars|_));
+  s.?(X: Str(Chars|X), O: Str(Chars|O), E: Str(Chars|_));
 };
 
 (Board@) { Str@; } ShowBoard = (Board@ b) {
@@ -45,21 +45,21 @@
 };
 
 (Player@) { Str@; } ShowPlayer = (Player@ p) {
-  ?(p; X: Str(Chars|X), O: Str(Chars|O));
+  p.?(X: Str(Chars|X), O: Str(Chars|O));
 };
 
 (GameStatus@) { Str@; } ShowStatus = (GameStatus@ s) {
-  ?(s; playing: Concat<Char@>(S<Str@>([
-         Str(Chars|'Player '),
-         ShowPlayer(s.playing),
-         Str(Chars|' move:')])),
-       ended:
-         ?(s.ended;
-            win: Concat<Char@>(S<Str@>([
-                 Str(Chars|'GAME OVER: Player '),
-                 ShowPlayer(s.ended.win),
-                 Str(Chars|' wins.')])),
-            draw: Str(Chars|'GAME OVER: Draw.')));
+  s.?(playing: Concat<Char@>(S<Str@>([
+        Str(Chars|'Player '),
+        ShowPlayer(s.playing),
+        Str(Chars|' move:')])),
+      ended:
+        s.ended.?(
+           win: Concat<Char@>(S<Str@>([
+                Str(Chars|'GAME OVER: Player '),
+                ShowPlayer(s.ended.win),
+                Str(Chars|' wins.')])),
+           draw: Str(Chars|'GAME OVER: Draw.')));
 };
 
 (Output@) { Str@; } ShowOutput = (Output@ out) {
@@ -71,21 +71,21 @@
 };
 
 (Str@) { Maybe@<Input@>; } ParseInput = (Str@ in) {
-  ?(in;
-      cons: ?(in.cons.head;
-        'A': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+  in.?(
+      cons: in.cons.head.?(
+        'A': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
                 '1': Just<Input@>(Input@(move: Just<Position@>(Position@(UL: Unit)))),
                 '2': Just<Input@>(Input@(move: Just<Position@>(Position@(UC: Unit)))),
                 '3': Just<Input@>(Input@(move: Just<Position@>(Position@(UR: Unit)))),
                    : Nothing<Input@>),
                 nil: Nothing<Input@>),
-        'B': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+        'B': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
                 '1': Just<Input@>(Input@(move: Just<Position@>(Position@(ML: Unit)))),
                 '2': Just<Input@>(Input@(move: Just<Position@>(Position@(MC: Unit)))),
                 '3': Just<Input@>(Input@(move: Just<Position@>(Position@(MR: Unit)))),
                    : Nothing<Input@>),
                 nil: Nothing<Input@>),
-        'C': ?(in.cons.tail; cons: ?(in.cons.tail.cons.head;
+        'C': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
                 '1': Just<Input@>(Input@(move: Just<Position@>(Position@(LL: Unit)))),
                 '2': Just<Input@>(Input@(move: Just<Position@>(Position@(LC: Unit)))),
                 '3': Just<Input@>(Input@(move: Just<Position@>(Position@(LR: Unit)))),
@@ -101,16 +101,16 @@
 Stdio@ TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
   Get@<Input@> in = {
     Maybe@<Str@> s := input;
-    ?(s; just: {
+    s.?(just: {
             Maybe@<Input@> mi = ParseInput(s.just);
-            ?(mi; just: $(mi.just),
-                  nothing: {
-                     Unit@ _ := output(Concat<Char@>(S<Str@>([
-                       Str(Chars|'invalid input: '),
-                       Str(Chars|'expected {A,B,C}{1,2,3}, P, or R'),
-                       Str([Chars.nl])])));
-                       in;
-                  });
+            mi.?(just: $(mi.just),
+                 nothing: {
+                    Unit@ _ := output(Concat<Char@>(S<Str@>([
+                      Str(Chars|'invalid input: '),
+                      Str(Chars|'expected {A,B,C}{1,2,3}, P, or R'),
+                      Str([Chars.nl])])));
+                      in;
+                 });
          },
          nothing: $(Input@(quit: Unit)));
   };

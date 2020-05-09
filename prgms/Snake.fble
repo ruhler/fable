@@ -65,18 +65,18 @@ Int@ MaxCol = I(D|60);
 @ Input@ = +(Dir@ dir, Unit@ quit, Unit@ tick);
 
 (Dir@, Dir@) { Bool@; } EqDir = (Dir@ a, Dir@ b) {
-  ?(a; up: ?(b; up: True, : False),
-       down: ?(b; down: True, : False),
-       left: ?(b; left: True, : False),
-       right: ?(b; right: True, : False));
+  a.?(up: b.?(up: True, : False),
+      down: b.?(down: True, : False),
+      left: b.?(left: True, : False),
+      right: b.?(right: True, : False));
 };
 
 
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 
 (Pos@, Cell@){Drawing@;} DrawCell = (Pos@ pos, Cell@ cell) {
-  Color@ c = ?(cell; empty: Color@(blue: Unit),
-                     snake: Color@(cyan: Unit),
+  Color@ c = cell.?(empty: Color@(blue: Unit),
+                    snake: Color@(cyan: Unit),
                      food: Color@(green: Unit));
   Rect(pos.col, pos.row, 1, 1, c);
 };
@@ -101,7 +101,7 @@ Int@ MaxCol = I(D|60);
 
 # TODO: Use MapS or some other combinator for this.
 (S@<Pos@>){Drawing@;} DrawSnakeS = (S@<Pos@> s) {
-  ?(s; cons: DrawSnakeP(s.cons), nil: Blank);
+  s.?(cons: DrawSnakeP(s.cons), nil: Blank);
 },
 (P@<Pos@>){Drawing@;} DrawSnakeP = (P@<Pos@> s) {
   Over(DrawCell(s.head, Cell@(snake: Unit)), DrawSnakeS(s.tail));
@@ -138,10 +138,10 @@ State@ InitialState = {
 
 # Return true if the given position is found in the list of positions.
 (S@<Pos@>, Pos@){Bool@;} InPosS = (S@<Pos@> s, Pos@ p) {
-  ?(s ; cons: InPosP(s.cons, p), nil: False);
+  s.?(cons: InPosP(s.cons, p), nil: False);
 },
 (P@<Pos@>, Pos@){Bool@;} InPosP = (P@<Pos@> s, Pos@ p) {
-  ?(EqPos(s.head, p); true: True, false: InPosS(s.tail, p));
+  EqPos(s.head, p).?(true: True, false: InPosS(s.tail, p));
 };
 
 # Update the random number for where the next food will be generate.
@@ -149,7 +149,7 @@ State@ InitialState = {
 # update.
 Int@ Max64 = I(D|18446744073709551616);
 (Dir@, Int@) { Int@; } StepRand = (Dir@ d, Int@ s) {
-  Int@ offset = ?(d; up: 0, down: 1, left: 2, right: 3);
+  Int@ offset = d.?(up: 0, down: 1, left: 2, right: 3);
   Mod(Add(Mul(s, I(D|1103515245)), Add(I(D|12345), offset)), Max64);
 };
 
@@ -160,47 +160,48 @@ Int@ Max64 = I(D|18446744073709551616);
   Int@ row = Inc(Mod(x, Dec(MaxRow)));
   Int@ col = Inc(Mod(Div(x, MaxRow), Dec(MaxCol)));
   Pos@ pos = Pos@(row, col);
-  ?(InPosP(snake, pos);
-     true: GetNextFood(StepRand(Dir@(up: Unit), rand), snake),
-     false: pos);
+  InPosP(snake, pos).?(
+    true: GetNextFood(StepRand(Dir@(up: Unit), rand), snake),
+    false: pos
+  );
 };
 
 (State@){MoveResultM@;} Move = (State@ s) {
   Int@ nrand = StepRand(s.dir, s.rand);
-  PosM@ pm = ?(s.dir;
+  PosM@ pm = s.dir.?(
     up:
-    ?(Eq(s.snake.head.row, MaxRow);
+    Eq(s.snake.head.row, MaxRow).?(
         true: PosM@(dead: Unit),
        false: PosM@(pos: Pos@(Inc(s.snake.head.row), s.snake.head.col))),
 
     down:
-    ?(Eq(s.snake.head.row, MinRow);
+    Eq(s.snake.head.row, MinRow).?(
         true: PosM@(dead: Unit),
        false: PosM@(pos: Pos@(Dec(s.snake.head.row), s.snake.head.col))),
 
     left:
-    ?(Eq(s.snake.head.col, MinCol);
+    Eq(s.snake.head.col, MinCol).?(
         true: PosM@(dead: Unit),
        false: PosM@(pos: Pos@(s.snake.head.row, Dec(s.snake.head.col)))),
 
     right:
-    ?(Eq(s.snake.head.col, MaxCol);
+    Eq(s.snake.head.col, MaxCol).?(
         true: PosM@(dead: Unit),
        false: PosM@(pos: Pos@(s.snake.head.row, Inc(s.snake.head.col)))));
 
-  ?(pm; dead: MoveResultM@(dead: Unit), pos:
-      ?(EqPos(pm.pos, s.food);
+  pm.?(dead: MoveResultM@(dead: Unit), pos:
+      EqPos(pm.pos, s.food).?(
           true: {
             # TODO: Properly handle the case where the snake eats food at its
             # tail.
             P@<Pos@> nsnake = P@<Pos@>(s.food, S@<Pos@>(cons: s.snake));
             Pos@ nfood = GetNextFood(nrand, nsnake);
-            Int@ nspeed = s.speed; # ?(s.speed; n: 0, 0: 0, p: Sub(s.speed, 4));
+            Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
             State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
             MoveResultM@(state: ns);
           },
           false:
-          ?(InPosP(s.snake, pm.pos); true: MoveResultM@(dead: Unit),
+          InPosP(s.snake, pm.pos).?(true: MoveResultM@(dead: Unit),
             false: {
               # TODO: Combine calls to Init and Last so we only have to
               # iterate over the list of elements once instead of twice?
@@ -221,11 +222,11 @@ Int@ Max64 = I(D|18446744073709551616);
   );
   
   (Choice@, Choice@) { Choice@; } Best = (Choice@ a, Choice@ b) {
-    ?(Lt(a.cost, b.cost); true: a, false: b);
+    Lt(a.cost, b.cost).?(true: a, false: b);
   };
 
   (Dir@) { Choice@; } Choice = (Dir@ dir) {
-    Pos@ pos = ?(dir;
+    Pos@ pos = dir.?(
       up: Pos@(Inc(s.snake.head.row), s.snake.head.col),
       down: Pos@(Dec(s.snake.head.row), s.snake.head.col),
       left: Pos@(s.snake.head.row, Dec(s.snake.head.col)),
@@ -237,7 +238,7 @@ Int@ Max64 = I(D|18446744073709551616);
          InPosP(s.snake, pos));
 
     # The cost of death is very high.
-    Int@ death = ?(dead; true: I(D|100000), false: 0);
+    Int@ death = dead.?(true: I(D|100000), false: 0);
 
     # The further away from the food, the worse we are.
     Int@ food = Mul(2, Add(Abs(Sub(pos.row, s.food.row)),
@@ -245,7 +246,7 @@ Int@ Max64 = I(D|18446744073709551616);
 
     # We would prefer to go straight, all else equal. That way the human can
     # sort of influence the snakes behavior.
-    Int@ turn = ?(EqDir(s.dir, dir); true: 0, false: 1);
+    Int@ turn = EqDir(s.dir, dir).?(true: 0, false: 1);
 
     Int@ cost = Add(death, Add(food, turn));
     Choice@(dir, cost);
@@ -261,27 +262,27 @@ Int@ Max64 = I(D|18446744073709551616);
 (Get@<Input@>, Put@<Effect@>, State@){Unit@!;}
 Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   Input@ x := in;
-  ?(x; dir: Snake(in, out, State@(x.dir, s.food, s.rand, s.snake, s.speed)),
-       quit: $(Unit),
-       tick: {
-           Dir@ dir = AI(s);
-           State@ ns = State@(dir, s.food, s.rand, s.snake, s.speed);
-           MoveResultM@ m = Move(ns);
-           ?(m;
-              dead: $(Unit),
-              state: {
-                 Unit@ _ := out(Effect@(draw: Draw(ns)));
-                 Unit@ _ := out(Effect@(tick: ns.speed));
-                 Snake(in, out, m.state);
-              });
-       });
+  x.?(dir: Snake(in, out, State@(x.dir, s.food, s.rand, s.snake, s.speed)),
+      quit: $(Unit),
+      tick: {
+          Dir@ dir = AI(s);
+          State@ ns = State@(dir, s.food, s.rand, s.snake, s.speed);
+          MoveResultM@ m = Move(ns);
+          m.?(
+            dead: $(Unit),
+            state: {
+               Unit@ _ := out(Effect@(draw: Draw(ns)));
+               Unit@ _ := out(Effect@(tick: ns.speed));
+               Snake(in, out, m.state);
+            });
+      });
 };
 
 (Get@<Event@>){ Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
-  ?(e;
+  e.?(
     tick: $(Input@(tick: Unit)),
-    key_down: ?(e.key_down;
+    key_down: e.key_down.?(
       h: $(Input@(dir: Dir@(left: Unit))),
       j: $(Input@(dir: Dir@(down: Unit))),
       k: $(Input@(dir: Dir@(up: Unit))),
@@ -307,7 +308,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   };
 
   Put@<Effect@> game_out = (Effect@ e) {
-    Effect@ transformed = ?(e;
+    Effect@ transformed = e.?(
       tick: e,
       draw: Effect@(draw: Transform(f, e.draw)));
     out(transformed);
@@ -320,7 +321,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;
-    ?(e; tick: WaitForKeyPress, key_down: $(Unit), key_up: WaitForKeyPress);
+    e.?(tick: WaitForKeyPress, key_down: $(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
 };

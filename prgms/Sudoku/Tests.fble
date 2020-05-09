@@ -43,15 +43,15 @@
 % Solve = /Sudoku%.Solve;
 
 (Symbol@, Symbol@) { Bool@; } EqSymbol = (Symbol@ a, Symbol@ b) {
-  ?(a; 1: ?(b; 1: True, : False),
-       2: ?(b; 2: True, : False),
-       3: ?(b; 3: True, : False),
-       4: ?(b; 4: True, : False),
-       5: ?(b; 5: True, : False),
-       6: ?(b; 6: True, : False),
-       7: ?(b; 7: True, : False),
-       8: ?(b; 8: True, : False),
-       9: ?(b; 9: True, : False));
+  a.?(1: b.?(1: True, : False),
+      2: b.?(2: True, : False),
+      3: b.?(3: True, : False),
+      4: b.?(4: True, : False),
+      5: b.?(5: True, : False),
+      6: b.?(6: True, : False),
+      7: b.?(7: True, : False),
+      8: b.?(8: True, : False),
+      9: b.?(9: True, : False));
 };
 
 # An array of elements of type T@, indexed by symbol.
@@ -70,13 +70,13 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
 # Otherwise, don't include any whitespace in the output.
 (Bool@)(Solved@) { Str@; } ShowBoard = (Bool@ spaced) {
   (Symbol@) { Str@; } ShowCell = (Symbol@ s) {
-    ?(s; 1: Str(Chars|1), 2: Str(Chars|2), 3: Str(Chars|3),
-         4: Str(Chars|4), 5: Str(Chars|5), 6: Str(Chars|6),
-         7: Str(Chars|7), 8: Str(Chars|8), 9: Str(Chars|9));
+    s.?(1: Str(Chars|1), 2: Str(Chars|2), 3: Str(Chars|3),
+        4: Str(Chars|4), 5: Str(Chars|5), 6: Str(Chars|6),
+        7: Str(Chars|7), 8: Str(Chars|8), 9: Str(Chars|9));
   };
 
-  Str@ space = ?(spaced; true: Str(Chars|' '), false: S0<Char@>);
-  Str@ nl = ?(spaced; true: S<Char@>([Chars.nl]), false: S0<Char@>);
+  Str@ space = spaced.?(true: Str(Chars|' '), false: S0<Char@>);
+  Str@ nl = spaced.?(true: S<Char@>([Chars.nl]), false: S0<Char@>);
 
   (Array@<Symbol@>) { Str@; } ShowRow = (Array@<Symbol@> row) {
     Concat<Char@>(S<Str@>([
@@ -106,7 +106,7 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
 <@ T@>(T@, T@, T@, T@, T@, T@, T@, T@, T@){ Array@<T@>; }
 Array = <@ T@>(T@ 1, T@ 2, T@ 3, T@ 4, T@ 5, T@ 6, T@ 7, T@ 8, T@ 9) {
   (Symbol@ i) {
-    ?(i; 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9);
+    i.?(1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9);
   };
 };
 
@@ -233,19 +233,19 @@ S@<Test@> Tests = {
 
   Test@ sample = Test@(name(Str(Chars|sample)), $({
     Maybe@<Solved@> ms = Solve(SampleInput);
-    ?(ms;
+    ms.?(
        just: {
-         ?(EqArray<Array@<Symbol@>>(
+         EqArray<Array@<Symbol@>>(
              (Array@<Symbol@> a, Array@<Symbol@> b) {
                EqArray<Symbol@>(EqSymbol, a, b);
              },
-             SampleSolved, ms.just);
-            true: TestResult@(pass: Unit),
-            false: TestResult@(fail: Concat<Char@>(S<Str@>([
-                    Str(Chars|'incorrect solution. expected:'), S<Char@>([Chars.nl]),
-                    ShowBoard(False)(SampleSolved), S<Char@>([Chars.nl]),
-                    Str(Chars|'but got:'), S<Char@>([Chars.nl]),
-                    ShowBoard(False)(ms.just)]))));
+             SampleSolved, ms.just).?(
+           true: TestResult@(pass: Unit),
+           false: TestResult@(fail: Concat<Char@>(S<Str@>([
+                   Str(Chars|'incorrect solution. expected:'), S<Char@>([Chars.nl]),
+                   ShowBoard(False)(SampleSolved), S<Char@>([Chars.nl]),
+                   Str(Chars|'but got:'), S<Char@>([Chars.nl]),
+                   ShowBoard(False)(ms.just)]))));
        },
        nothing: TestResult@(fail: Str(Chars|'failed to solve board')));
   }));
