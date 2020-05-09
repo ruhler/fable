@@ -1209,6 +1209,8 @@ Notes:
   are really big. Then implement some packing algorithm to move things to a
   single line if it fits.
 
+  Working style guide proposed in fble.style.txt.
+
 * There's no good support for abstract data types. You can't export a union or
   struct type abstractly without also exporting the fields and constructors
   and deconstructors. That seems bad, because it means you can't easily

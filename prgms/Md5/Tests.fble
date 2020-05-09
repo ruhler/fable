@@ -38,26 +38,28 @@
 # Import to test compilation.
 % _ = /Md5/Main%;
 
-(Hex@){Char@;} Hex2Char = (Hex@ h) {
-  h.?(0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),
-      4: Char@(4: Unit), 5: Char@(5: Unit), 6: Char@(6: Unit), 7: Char@(7: Unit),
-      8: Char@(8: Unit), 9: Char@(9: Unit), A: Char@(A: Unit), B: Char@(B: Unit),
-      C: Char@(C: Unit), D: Char@(D: Unit), E: Char@(E: Unit), F: Char@(F: Unit));
+(Hex@) { Char@; } Hex2Char = (Hex@ h) {
+  h.?(
+    0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),
+    4: Char@(4: Unit), 5: Char@(5: Unit), 6: Char@(6: Unit), 7: Char@(7: Unit),
+    8: Char@(8: Unit), 9: Char@(9: Unit), A: Char@(A: Unit), B: Char@(B: Unit),
+    C: Char@(C: Unit), D: Char@(D: Unit), E: Char@(E: Unit), F: Char@(F: Unit));
 };
 
 (Md5Hash@){Str@;} Md5Hash2Str = (Md5Hash@ x) {
-  Concat<Char@>(S<Str@>([
-    Str([Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)]),
-    Str([Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)]),
-    Str([Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)]),
-    Str([Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)]),
-    Str([Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)]),
-    Str([Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)]),
-    Str([Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)]),
-    Str([Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)])]));
+  Concat<Char@>(
+    S<Str@>([
+      Str([Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)]),
+      Str([Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)]),
+      Str([Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)]),
+      Str([Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)]),
+      Str([Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)]),
+      Str([Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)]),
+      Str([Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)]),
+      Str([Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)])]));
 };
 
-(List@<Hex@>){Md5Hash@;} Str2Md5Hash = (List@<Hex@> list) {
+(List@<Hex@>) { Md5Hash@; } Str2Md5Hash = (List@<Hex@> list) {
   S@<Hex@> s00 = S<Hex@>(list);
   Hex@ h00 = s00.cons.head; S@<Hex@> s01 = s00.cons.tail;
   Hex@ h01 = s01.cons.head; S@<Hex@> s02 = s01.cons.tail;
@@ -99,26 +101,26 @@
 };
 
 # Put all the bytes onto the output port, followed by nothing.
-(Put@<Maybe@<Bit8@>>, S@<Bit8@>){Unit@!;} PutAll = (Put@<Maybe@<Bit8@>> out, S@<Bit8@> bytes) {
-    bytes.?(
-      cons: {
-        Unit@ _ := out(Maybe@<Bit8@>(just: bytes.cons.head));
-        PutAll(out, bytes.cons.tail);
-      },
-      nil: {
-        out(Maybe@<Bit8@>(nothing: Unit));
-    });
-  };
+(Put@<Maybe@<Bit8@>>, S@<Bit8@>) { Unit@!; } PutAll = (Put@<Maybe@<Bit8@>> out, S@<Bit8@> bytes) {
+  bytes.?(
+    cons: {
+      Unit@ _ := out(Maybe@<Bit8@>(just: bytes.cons.head));
+      PutAll(out, bytes.cons.tail);
+    },
+    nil: {
+      out(Maybe@<Bit8@>(nothing: Unit));
+  });
+};
 
 
 # Compute the md5 hash for a string of bytes.
-(S@<Bit8@>){Md5Hash@!;} Md5Str = (S@<Bit8@> bytes) {
+(S@<Bit8@>) { Md5Hash@!; } Md5Str = (S@<Bit8@> bytes) {
   Maybe@<Bit8@> ~ get, put;
   Md5Hash@ md5 := Md5(get), Unit@ x := PutAll(put, bytes);
   $(md5);
 };
 
-(Md5Hash@, Md5Hash@){TestResult@;} AssertEq = (Md5Hash@ wnt, Md5Hash@ got) {
+(Md5Hash@, Md5Hash@) { TestResult@; } AssertEq = (Md5Hash@ wnt, Md5Hash@ got) {
   Eq(wnt, got).?(
     true: TestResult@(pass: Unit),
     false: {
@@ -131,19 +133,21 @@
     });
 };
 
-(S@<Hex@>){S@<Bit8@>;} Hex2Bytes = (S@<Hex@> hex) {
+(S@<Hex@>) { S@<Bit8@>; } Hex2Bytes = (S@<Hex@> hex) {
   hex.?(
     cons: ConsS<Bit8@>(
-            H2(hex.cons.head, hex.cons.tail.cons.head),
-            Hex2Bytes(hex.cons.tail.cons.tail)),
+      H2(hex.cons.head, hex.cons.tail.cons.head),
+      Hex2Bytes(hex.cons.tail.cons.tail)),
     nil: S0<Bit8@>);
 };
       
-(CharLit@, List@<Hex@>, List@<Hex@>){Test@;} TestStr = (CharLit@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
-  Test@(Append<Char@>(Str(Chars|'Md5.'), Str(name)), {
-          Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
-          $(AssertEq(Str2Md5Hash(wnt), got));
-        });
+(CharLit@, List@<Hex@>, List@<Hex@>) { Test@; } TestStr = (CharLit@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
+  Test@(
+    Append<Char@>(Str(Chars|'Md5.'), Str(name)),
+    {
+      Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
+      $(AssertEq(Str2Md5Hash(wnt), got));
+    });
 };
 
 S@<Test@> Tests = {

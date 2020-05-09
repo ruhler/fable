@@ -11,15 +11,14 @@
 <@,@>% MapS = /List%.MapS;
 
 @ Color@ = +(
-    Unit@ black,
-    Unit@ red,
-    Unit@ green,
-    Unit@ yellow,
-    Unit@ blue,
-    Unit@ magenta,
-    Unit@ cyan,
-    Unit@ white
-    );
+  Unit@ black,
+  Unit@ red,
+  Unit@ green,
+  Unit@ yellow,
+  Unit@ blue,
+  Unit@ magenta,
+  Unit@ cyan,
+  Unit@ white);
 
 @ Point@ = *(Int@ x, Int@ y);
 
@@ -51,11 +50,12 @@ Drawing@ Blank = Drawing@(blank: Unit);
 (Int@, Int@, Int@, Int@, Color@) { Drawing@; }
 Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
   Drawing@(path: @(
-    points: S<Point@>([
-      Point@(x, y),
-      Point@(Add(x, w), y),
-      Point@(Add(x, w), Add(y, h)),
-      Point@(x, Add(y, h))]),
+    points:
+      S<Point@>([
+        Point@(x, y),
+        Point@(Add(x, w), y),
+        Point@(Add(x, w), Add(y, h)),
+        Point@(x, Add(y, h))]),
     color: color));
 };
 
@@ -74,9 +74,11 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 ((Point@) { Point@; }, Drawing@) { Drawing@; }
 Transform = ((Point@) { Point@; } f, Drawing@ d) {
   d.?(blank: d,
-       path: Drawing@(path: @(
-           points: MapS<Point@, Point@>(d.path.points, f),
-           color: d.path.color)),
+    path:
+      Drawing@(
+        path: @(
+          points: MapS<Point@, Point@>(d.path.points, f),
+          color: d.path.color)),
        over: {
          Over(Transform(f, d.over.below), Transform(f, d.over.above));
        });
