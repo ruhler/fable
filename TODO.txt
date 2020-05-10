@@ -1,7 +1,6 @@
 
-* Don't rely on NULL vs. non-NULL to free values except for abort?
- - But how do you know what to free when you do a tail call?
 * Split compile into typecheck and codegen.
+* Don't rely on NULL vs. non-NULL to free values.
 * Avoid emitting ref/release for non-recursive variables.
 * Figure out how to do better lifecycle analysis in the compiler
  - Don't retain/release a field of an object if you know the object is going
@@ -22,6 +21,7 @@
  - Add block data at the profile level representing 'total' and special case
    that way instead. So that literally it is impossible for anyone to call
    into the root block except via new profile thread.
+ - Except... does that make for lots of messy special casing?
 
 * [profile] Cleanup
  - Switch to convention that caller is responsible for enter block?
@@ -30,9 +30,6 @@
 * [type] Inline fields and args data into FbleType objects?
 
 * [gc] Implement generational gc?
-
-* [test] Check if 6.4-proc-exec/eval/propagate-abort-blocking test fails when
-  unused 'true' variable definition is removed.
 
 * [eval] Thread management cleanup
  - Use fair thread traversal by starting over from root when yield occurs.
