@@ -2,7 +2,7 @@
 #include <assert.h>   // for assert
 
 #include "fble-vector.h"
-#include "fble-type.h"
+#include "type.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -788,7 +788,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
   return false;
 }
 
-// FbleGetKind -- see documentation in fble-type.h
+// FbleGetKind -- see documentation in type.h
 FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
 {
   switch (type->tag) {
@@ -858,7 +858,7 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
   return NULL;
 }
 
-// FbleGetKindLevel -- see documentation in fble-type.h
+// FbleGetKindLevel -- see documentation in type.h
 size_t FbleGetKindLevel(FbleKind* kind)
 {
   switch (kind->tag) {
@@ -876,7 +876,7 @@ size_t FbleGetKindLevel(FbleKind* kind)
   return -1;
 }
 
-// FbleKindsEqual -- see documentation in fble-type.h
+// FbleKindsEqual -- see documentation in type.h
 bool FbleKindsEqual(FbleKind* a, FbleKind* b)
 {
   if (a->tag != b->tag) {
@@ -902,7 +902,7 @@ bool FbleKindsEqual(FbleKind* a, FbleKind* b)
   return false;
 }
 
-// FblePrintKind -- see documentation in fble-type.h
+// FblePrintKind -- see documentation in type.h
 void FblePrintKind(FbleKind* kind)
 {
   switch (kind->tag) {
@@ -946,7 +946,7 @@ void FbleFreeTypeHeap(FbleTypeHeap* heap)
   FbleFreeMarkSweepHeap(heap);
 }
 
-// FbleNewType -- see documentation in fble-type.h
+// FbleNewType -- see documentation in type.h
 FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleLoc loc)
 {
   FbleType* type = (FbleType*)heap->new(heap, size);
@@ -960,7 +960,7 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
   return type;
 }
 
-// FbleTypeRetain -- see documentation in fble-type.h
+// FbleTypeRetain -- see documentation in type.h
 FbleType* FbleTypeRetain(FbleTypeHeap* heap, FbleType* type)
 {
   if (type != NULL) {
@@ -969,20 +969,20 @@ FbleType* FbleTypeRetain(FbleTypeHeap* heap, FbleType* type)
   return type;
 }
 
-// FbleTypeRelease -- see documentation in fble-type.h
+// FbleTypeRelease -- see documentation in type.h
 void FbleTypeRelease(FbleTypeHeap* heap, FbleType* type)
 {
   if (type != NULL) {
     heap->release(heap, type);
   }
 }
-// FbleTypeAddRef -- see documentation in fble-type.h
+// FbleTypeAddRef -- see documentation in type.h
 void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
 {
   heap->add_ref(heap, src, dst);
 }
 
-// FbleNewVarType -- see documentation in fble-type.h
+// FbleNewVarType -- see documentation in type.h
 FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name)
 {
   assert(name.space == FBLE_TYPE_NAME_SPACE && "bad namespace for var type");
@@ -1008,7 +1008,7 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
   return type;
 }
 
-// FbleAssignVarType -- see documentation in fble-type.h
+// FbleAssignVarType -- see documentation in type.h
 void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value)
 {
   while (var->tag == FBLE_TYPE_TYPE) {
@@ -1023,7 +1023,7 @@ void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value)
   FbleTypeAddRef(heap, &var_type->_base, var_type->value);
 }
 
-// FbleNewPolyType -- see documentation in fble-type.h
+// FbleNewPolyType -- see documentation in type.h
 FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleType* body)
 {
   if (body->tag == FBLE_TYPE_TYPE) {
@@ -1048,7 +1048,7 @@ FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleTy
   return &pt->_base;
 }
 
-// FbleNewPolyApplyType -- see documentation in fble-type.h
+// FbleNewPolyApplyType -- see documentation in type.h
 FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg)
 {
   if (poly->tag == FBLE_TYPE_TYPE) {
@@ -1072,7 +1072,7 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
   return &pat->_base;
 }
 
-// FbleTypeIsVacuous -- see documentation in fble-type.h
+// FbleTypeIsVacuous -- see documentation in type.h
 bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 {
   FbleType* normal = Normal(heap, type, NULL);
@@ -1093,7 +1093,7 @@ bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
   return normal == NULL;
 }
 
-// FbleNormalType -- see documentation in fble-type.h
+// FbleNormalType -- see documentation in type.h
 FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
 {
   FbleType* normal = Normal(heap, type, NULL);
@@ -1101,7 +1101,7 @@ FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
   return normal;
 }
 
-// FbleValueOfType -- see documentation in fble-type.h
+// FbleValueOfType -- see documentation in type.h
 FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof)
 {
   if (typeof->tag == FBLE_TYPE_TYPE) {
@@ -1118,7 +1118,7 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
   return TypesEqual(heap, a, b, NULL);
 }
 
-// FblePrintType -- see documentation in fble-type.h
+// FblePrintType -- see documentation in type.h
 //
 // Notes:
 //   Human readable means we print var types using their name, without the

@@ -7,8 +7,8 @@
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
-#include "fble-type.h"
 #include "instr.h"
+#include "type.h"
 
 #define UNREACHABLE(x) assert(false && x)
 

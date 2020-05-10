@@ -1,6 +1,6 @@
 
-#ifndef FBLE_TYPE_H_
-#define FBLE_TYPE_H_
+#ifndef FBLE_INTERNAL_TYPE_H_
+#define FBLE_INTERNAL_TYPE_H_
 
 #include <stdint.h>   // for uintptr_t
 
@@ -438,4 +438,4 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
 //   Prints the given type in human readable form to stderr.
 void FblePrintType(FbleArena* arena, FbleType* type);
 
-#endif // FBLE_TYPE_H_
+#endif // FBLE_INTERNAL_TYPE_H_
