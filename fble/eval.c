@@ -7,6 +7,7 @@
 #include <string.h>   // for memset
 
 #include "fble.h"
+#include "heap.h"
 #include "instr.h"
 #include "value.h"
 

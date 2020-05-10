@@ -1,3 +1,5 @@
+// type.h --
+//   Header file for the internal fble types API.
 
 #ifndef FBLE_INTERNAL_TYPE_H_
 #define FBLE_INTERNAL_TYPE_H_
@@ -5,7 +7,7 @@
 #include <stdint.h>   // for uintptr_t
 
 #include "fble-syntax.h"
-#include "fble-heap.h"
+#include "heap.h"
 
 // FbleTypeTag --
 //   A tag used to dinstinguish among different kinds of compiled types.

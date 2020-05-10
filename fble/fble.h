@@ -10,7 +10,6 @@
 
 #include "fble-alloc.h"
 #include "fble-vector.h"
-#include "fble-heap.h"
 #include "fble-syntax.h"
 #include "fble-value.h"
 #include "fble-profile.h"

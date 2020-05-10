@@ -130,7 +130,7 @@ static void Ref(FbleHeapCallback* callback, FbleType* type)
 }
 
 // Refs --
-//   The refs function for types. See documentation in fble-heap.h
+//   The refs function for types. See documentation in heap.h
 static void Refs(FbleHeapCallback* callback, FbleType* type)
 {
   switch (type->tag) {
@@ -193,7 +193,7 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
   }
 }
 
-//   The on_free function for types. See documentation in fble-heap.h
+//   The on_free function for types. See documentation in heap.h
 static void OnFree(FbleTypeHeap* heap, FbleType* type)
 {
   FbleArena* arena = heap->arena;

@@ -1,8 +1,8 @@
-// fble-heap.h --
-//   Header file for the fble heap API.
+// heap.h --
+//   Header file for the internal fble heap API.
 
-#ifndef FBLE_HEAP_H_
-#define FBLE_HEAP_H_
+#ifndef FBLE_INTERNAL_HEAP_H_
+#define FBLE_INTERNAL_HEAP_H_
 
 #include "fble-alloc.h"   // for FbleArena
 
@@ -213,4 +213,4 @@ FbleHeap* FbleNewMarkSweepHeap(
 //   will be leaked.
 void FbleFreeMarkSweepHeap(FbleHeap* heap);
 
-#endif // FBLE_HEAP_H_
+#endif // FBLE_INTERNAL_HEAP_H_

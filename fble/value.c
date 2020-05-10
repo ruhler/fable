@@ -5,6 +5,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "fble.h"
+#include "heap.h"
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
@@ -55,7 +56,7 @@ void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 }
 
 // OnFree --
-//   The 'on_free' function for values. See documentation in fble-heap.h
+//   The 'on_free' function for values. See documentation in heap.h
 static void OnFree(FbleValueHeap* heap, FbleValue* value)
 {
   FbleArena* arena = heap->arena;
@@ -109,7 +110,7 @@ static void Ref(FbleHeapCallback* callback, FbleValue* value)
 }
 
 // Refs --
-//   The 'refs' function for values. See documentation in fble-heap.h
+//   The 'refs' function for values. See documentation in heap.h
 static void Refs(FbleHeapCallback* callback, FbleValue* value)
 {
   switch (value->tag) {

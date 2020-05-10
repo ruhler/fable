@@ -5,7 +5,7 @@
 #include <stdbool.h>  // for bool
 
 #include "fble-alloc.h"
-#include "fble-heap.h"
+#include "heap.h"
 
 // Space --
 //   Which space the object belongs to.
@@ -292,7 +292,7 @@ void FullGc(Heap* heap)
   }
 }
 
-// New -- see documentation for FbleHeap.new in fble-heap.h
+// New -- see documentation for FbleHeap.new in heap.h
 static void* New(FbleHeap* heap_, size_t size)
 {
   Heap* heap = (Heap*)heap_;
@@ -309,7 +309,7 @@ static void* New(FbleHeap* heap_, size_t size)
   return obj->obj;
 }
 
-// Retain -- see documentation for FbleHeap.retain in fble-heap.h
+// Retain -- see documentation for FbleHeap.retain in heap.h
 static void Retain(FbleHeap* heap_, void* obj_)
 {
   Heap* heap = (Heap*)heap_;
@@ -337,7 +337,7 @@ static void Retain(FbleHeap* heap_, void* obj_)
   }
 }
 
-// Release -- see documentation for FbleHeap.release in fble-heap.h
+// Release -- see documentation for FbleHeap.release in heap.h
 static void Release(FbleHeap* heap_, void* obj_)
 {
   Heap* heap = (Heap*)heap_;
@@ -374,7 +374,7 @@ static void Release(FbleHeap* heap_, void* obj_)
   }
 }
 
-// AddRef -- see documentation for FbleHeap.add_ref in fble-heap.h
+// AddRef -- see documentation for FbleHeap.add_ref in heap.h
 static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
 {
   Heap* heap = (Heap*)heap_;
@@ -398,13 +398,13 @@ static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
   }
 }
 
-// DelRef -- see documentation for FbleHeap.del_ref in fble-heap.h
+// DelRef -- see documentation for FbleHeap.del_ref in heap.h
 static void DelRef(FbleHeap* heap, void* src_, void* dst_)
 {
   // Nothing to do. Ideally we arrange for this function to never be called.
 }
 
-// FbleNewMarkSweepHeap -- see documentation in fble-heap.h
+// FbleNewMarkSweepHeap -- see documentation in heap.h
 FbleHeap* FbleNewMarkSweepHeap(
     FbleArena* arena, 
     void (*refs)(FbleHeapCallback*, void*),
@@ -445,7 +445,7 @@ FbleHeap* FbleNewMarkSweepHeap(
   return &heap->_base;
 }
 
-// FbleFreeMarkSweepHeap -- see documentation in fble-heap.h
+// FbleFreeMarkSweepHeap -- see documentation in heap.h
 void FbleFreeMarkSweepHeap(FbleHeap* heap_)
 {
   Heap* heap = (Heap*)heap_;
