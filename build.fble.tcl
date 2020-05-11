@@ -49,7 +49,7 @@ foreach {x} [glob test/*.c prgms/*.c] {
 
 set ::bin out/bin
 exec mkdir -p $::bin
-gcc_prgm -o $::bin/fble-decompile $::obj/fble-decompile.o -lfble
+gcc_prgm -o $::bin/fble-disassemble $::obj/fble-disassemble.o -lfble
 gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble
 gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble
 gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble
@@ -148,7 +148,7 @@ exec mv {*}[glob *.gcov] out/cov/spec
 
 exec mkdir -p out/test
 testn fble-profile-test exec $::bin/fble-profile-test > out/test/fble-profile-test.txt
-testn fble-decompile exec $::bin/fble-decompile prgms/Fble/Tests.fble prgms > out/test/FbleTests.fble.s
+testn fble-disassemble exec $::bin/fble-disassemble prgms/Fble/Tests.fble prgms > out/test/FbleTests.fble.s
 testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/Fble/Tests.fble prgms >@ stdout
 testn fble-md5 exec $::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null
 testn fble-cat exec $::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -

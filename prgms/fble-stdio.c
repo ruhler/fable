@@ -213,13 +213,22 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* eval_arena = FbleNewArena();
-  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile(eval_arena);
 
-  FbleValue* func = FbleEval(heap, prgm, profile);
+  FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, profile);
+  if (compiled == NULL) {
+    FbleFreeProfile(eval_arena, profile);
+    FbleFreeArena(eval_arena);
+    FbleFreeArena(prgm_arena);
+    return 1;
+  }
+
+  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
+  FbleValue* func = FbleEval(heap, compiled, profile);
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(eval_arena, profile);
+    FbleFreeCompiledProgram(eval_arena, compiled);
     FbleFreeArena(eval_arena);
     FbleFreeArena(prgm_arena);
     return 1;
@@ -263,6 +272,7 @@ int main(int argc, char* argv[])
     FbleProfileReport(fprofile, profile);
   }
 
+  FbleFreeCompiledProgram(eval_arena, compiled);
   FbleFreeProfile(eval_arena, profile);
   FbleAssertEmptyArena(eval_arena);
   FbleFreeArena(eval_arena);

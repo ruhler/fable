@@ -485,13 +485,19 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* eval_arena = FbleNewArena();
-  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
-  FbleProfile* profile = NULL;
+  FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, NULL);
+  if (compiled == NULL) {
+    FbleFreeArena(eval_arena);
+    FbleFreeArena(prgm_arena);
+    return 1;
+  }
 
-  FbleValue* func = FbleEval(heap, prgm, profile);
+  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
+
+  FbleValue* func = FbleEval(heap, compiled, NULL);
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(eval_arena, profile);
+    FbleFreeCompiledProgram(eval_arena, compiled);
     FbleFreeArena(eval_arena);
     FbleFreeArena(prgm_arena);
     return 1;
@@ -500,7 +506,7 @@ int main(int argc, char* argv[])
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(eval_arena, profile);
+    FbleFreeCompiledProgram(eval_arena, compiled);
     FbleFreeArena(eval_arena);
     FbleFreeArena(prgm_arena);
     return 1;
@@ -545,7 +551,7 @@ int main(int argc, char* argv[])
     FbleNewInputPortValue(heap, &io.event),
     FbleNewOutputPortValue(heap, &io.effect)
   };
-  FbleValue* proc = FbleApply(heap, func, args, profile);
+  FbleValue* proc = FbleApply(heap, func, args, NULL);
   FbleValueRelease(heap, func);
   FbleValueRelease(heap, args[0]);
   FbleValueRelease(heap, args[1]);
@@ -554,7 +560,7 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(eval_arena, profile);
+    FbleFreeCompiledProgram(eval_arena, compiled);
     FbleFreeArena(eval_arena);
     FbleFreeArena(prgm_arena);
     SDL_DestroyWindow(window);
@@ -564,14 +570,14 @@ int main(int argc, char* argv[])
 
   SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));
 
-  FbleValue* value = FbleExec(heap, &io._base, proc, profile);
+  FbleValue* value = FbleExec(heap, &io._base, proc, NULL);
   FbleValueRelease(heap, proc);
   FbleValueRelease(heap, io.event);
   FbleValueRelease(heap, io.effect);
 
   FbleValueRelease(heap, value);
   FbleFreeValueHeap(heap);
-  FbleFreeProfile(eval_arena, profile);
+  FbleFreeCompiledProgram(eval_arena, compiled);
   FbleAssertEmptyArena(eval_arena);
   FbleFreeArena(eval_arena);
   FbleFreeArena(prgm_arena);

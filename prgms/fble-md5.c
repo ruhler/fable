@@ -147,13 +147,18 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* eval_arena = FbleNewArena();
-  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
-  FbleProfile* profile = NULL;
+  FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, NULL);
+  if (compiled == NULL) {
+    FbleFreeArena(eval_arena);
+    FbleFreeArena(prgm_arena);
+    return 1;
+  }
 
-  FbleValue* func = FbleEval(heap, prgm, profile);
+  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
+  FbleValue* func = FbleEval(heap, compiled, NULL);
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(eval_arena, profile);
+    FbleFreeCompiledProgram(eval_arena, compiled);
     FbleFreeArena(eval_arena);
     FbleFreeArena(prgm_arena);
     return 1;
@@ -172,19 +177,19 @@ int main(int argc, char* argv[])
   };
 
   FbleValue* input = FbleNewInputPortValue(heap, &mio.input);
-  FbleValue* proc = FbleApply(heap, func, &input, profile);
+  FbleValue* proc = FbleApply(heap, func, &input, NULL);
   FbleValueRelease(heap, func);
   FbleValueRelease(heap, input);
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(eval_arena, profile);
+    FbleFreeCompiledProgram(eval_arena, compiled);
     FbleFreeArena(eval_arena);
     FbleFreeArena(prgm_arena);
     return 1;
   }
 
-  FbleValue* value = FbleExec(heap, &mio.io, proc, profile);
+  FbleValue* value = FbleExec(heap, &mio.io, proc, NULL);
 
   FbleValueRelease(heap, proc);
   assert(mio.input == NULL);
@@ -201,7 +206,7 @@ int main(int argc, char* argv[])
 
   FbleValueRelease(heap, value);
   FbleFreeValueHeap(heap);
-  FbleFreeProfile(eval_arena, profile);
+  FbleFreeCompiledProgram(eval_arena, compiled);
   FbleAssertEmptyArena(eval_arena);
   FbleFreeArena(eval_arena);
   FbleFreeArena(prgm_arena);

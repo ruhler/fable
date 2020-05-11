@@ -9,30 +9,14 @@
 #include <sys/types.h>    // for size_t
 
 #include "fble-alloc.h"
-#include "fble-vector.h"
+#include "fble-compile.h"
+#include "fble-profile.h"
 #include "fble-syntax.h"
 #include "fble-value.h"
-#include "fble-profile.h"
-
-
-// FbleDecompile --
-//   Decompile the given program, writing a disassembled version of the program
-//   in human readable format to the given file. For debugging purposes.
-//
-// Inputs:
-//   fout - the file to write the disassembled program to.
-//   program - the program to decompile.
-//
-// Results:
-//   True if the program compiled successfully, false otherwise.
-//
-// Side effects:
-//   A disassembled version of the file is printed to fout. In case of error,
-//   an error message is printed to stderr.
-bool FbleDecompile(FILE* fout, FbleProgram* program);
+#include "fble-vector.h"
 
 // FbleEval --
-//   Type check and evaluate a program.
+//   Evaluate a compiled program.
 //
 // Inputs:
 //   heap - The heap to use for allocating values.
@@ -40,18 +24,16 @@ bool FbleDecompile(FILE* fout, FbleProgram* program);
 //   profile - the profile to update. May be NULL to disable profiling.
 //
 // Results:
-//   The value of the evaluated program, or NULL in case of error. The
-//   error could be a type error or an undefined union field access.
+//   The value of the evaluated program, or NULL in case of a runtime error in
+//   the program.
 //
 // Side effects:
 //   The returned value must be freed with FbleValueRelease when no longer in
 //   use.
-//   Prints warning messages to stderr.
-//   Prints an error message to stderr in case of error.
-//   Sets profile to the profile for the evaluation. This must be freed with
-//   FbleFreeProfile when no longer in use, regardless of whether evaluation
-//   succeeded or failed.
-FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile);
+//   Prints an error message to stderr in case of a runtime error.
+//   Updates profiling information in profile based on the execution of the
+//   program.
+FbleValue* FbleEval(FbleValueHeap* heap, FbleCompiledProgram* program, FbleProfile* profile);
 
 // FbleApply --
 //   Apply a function to the given arguments.

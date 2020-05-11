@@ -65,51 +65,55 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
 
   bool success = false;
   FbleArena* eval_arena = FbleNewArena();
-  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
   FbleProfile* profile = FbleNewProfile(eval_arena);
-  FbleValue* func = FbleEval(heap, prgm, profile);
-  if (func != NULL) {
-    // Number type is BitS@ from:
-    // Unit@ Unit = Unit@();
-    // @ Bit@ = +(Unit@ 0, Unit@ 1);
-    // @ BitS@ = +(BitP@ cons, Unit@ nil),
-    // @ BitP@ = *(Bit@ msb, BitS@ tail);
-    FbleValue* zero = FbleNewEnumValue(heap, 0);
-    FbleValue* one = FbleNewEnumValue(heap, 1);
-    FbleValue* tail = FbleNewEnumValue(heap, 1);
-    for (size_t i = 0; i < num_bits; ++i) {
-      FbleValue* bit = (use_n % 2 == 0) ? zero : one;
-      use_n /= 2;
-      FbleValueRetain(heap, bit);
-      FbleValue* xs[2] = { bit, tail };
-      FbleValueV args = { .size = 2, .xs = xs };
-      FbleValue* cons = FbleNewStructValue(heap, args);
-      FbleValueRelease(heap, bit);
-      FbleValueRelease(heap, tail);
-      tail = FbleNewUnionValue(heap, 0, cons);
-      FbleValueRelease(heap, cons);
-    }
-    FbleValueRelease(heap, zero);
-    FbleValueRelease(heap, one);
+  FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, profile);
+  if (compiled != NULL) {
+    FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
+    FbleValue* func = FbleEval(heap, compiled, profile);
+    if (func != NULL) {
+      // Number type is BitS@ from:
+      // Unit@ Unit = Unit@();
+      // @ Bit@ = +(Unit@ 0, Unit@ 1);
+      // @ BitS@ = +(BitP@ cons, Unit@ nil),
+      // @ BitP@ = *(Bit@ msb, BitS@ tail);
+      FbleValue* zero = FbleNewEnumValue(heap, 0);
+      FbleValue* one = FbleNewEnumValue(heap, 1);
+      FbleValue* tail = FbleNewEnumValue(heap, 1);
+      for (size_t i = 0; i < num_bits; ++i) {
+        FbleValue* bit = (use_n % 2 == 0) ? zero : one;
+        use_n /= 2;
+        FbleValueRetain(heap, bit);
+        FbleValue* xs[2] = { bit, tail };
+        FbleValueV args = { .size = 2, .xs = xs };
+        FbleValue* cons = FbleNewStructValue(heap, args);
+        FbleValueRelease(heap, bit);
+        FbleValueRelease(heap, tail);
+        tail = FbleNewUnionValue(heap, 0, cons);
+        FbleValueRelease(heap, cons);
+      }
+      FbleValueRelease(heap, zero);
+      FbleValueRelease(heap, one);
 
-    FbleValue* result = FbleApply(heap, func, &tail, profile);
+      FbleValue* result = FbleApply(heap, func, &tail, profile);
 
-    // As a special case, if the result of evaluation is a process, execute
-    // the process. This allows us to test process execution.
-    if (result != NULL && FbleIsProcValue(result)) {
-      FbleIO io = { .io = &FbleNoIO };
-      FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+      // As a special case, if the result of evaluation is a process, execute
+      // the process. This allows us to test process execution.
+      if (result != NULL && FbleIsProcValue(result)) {
+        FbleIO io = { .io = &FbleNoIO };
+        FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+        FbleValueRelease(heap, result);
+        result = exec_result;
+      }
+
+      success = (result != NULL);
       FbleValueRelease(heap, result);
-      result = exec_result;
+      FbleValueRelease(heap, tail);
     }
 
-    success = (result != NULL);
-    FbleValueRelease(heap, result);
-    FbleValueRelease(heap, tail);
+    FbleValueRelease(heap, func);
+    FbleFreeValueHeap(heap);
+    FbleFreeCompiledProgram(eval_arena, compiled);
   }
-
-  FbleValueRelease(heap, func);
-  FbleFreeValueHeap(heap);
   FbleFreeProfile(eval_arena, profile);
 
   *max_bytes = FbleArenaMaxSize(eval_arena);

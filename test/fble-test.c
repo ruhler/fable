@@ -100,26 +100,32 @@ int main(int argc, char* argv[])
   FbleValue* result = NULL;
   if (prgm != NULL) {
     FbleArena* eval_arena = FbleNewArena();
-    FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
     FbleProfile* profile = report_profile ? FbleNewProfile(eval_arena) : NULL;
-    result = FbleEval(heap, prgm, profile);
+    FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, profile);
+    if (compiled != NULL) {
+      FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
 
-    // As a special case, if the result of evaluation is a process, execute
-    // the process. This allows us to test process execution.
-    if (result != NULL && FbleIsProcValue(result)) {
-      FbleIO io = { .io = &FbleNoIO, };
-      FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+      result = FbleEval(heap, compiled, profile);
+
+      // As a special case, if the result of evaluation is a process, execute
+      // the process. This allows us to test process execution.
+      if (result != NULL && FbleIsProcValue(result)) {
+        FbleIO io = { .io = &FbleNoIO, };
+        FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+        FbleValueRelease(heap, result);
+        result = exec_result;
+      }
+
       FbleValueRelease(heap, result);
-      result = exec_result;
-    }
+      FbleFreeValueHeap(heap);
 
-    FbleValueRelease(heap, result);
-    FbleFreeValueHeap(heap);
+      if (report_profile) {
+        printf("max memory eval: %zi (bytes)\n\n", FbleArenaMaxSize(eval_arena));
+        FbleProfileReport(stdout, profile);
+        FbleFreeProfile(eval_arena, profile);
+      }
 
-    if (report_profile) {
-      printf("max memory eval: %zi (bytes)\n\n", FbleArenaMaxSize(eval_arena));
-      FbleProfileReport(stdout, profile);
-      FbleFreeProfile(eval_arena, profile);
+      FbleFreeCompiledProgram(eval_arena, compiled);
     }
 
     FbleAssertEmptyArena(eval_arena);

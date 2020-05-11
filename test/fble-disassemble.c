@@ -1,5 +1,5 @@
-// fble-decompile.c --
-//   This file implements the main entry point for the fble-decompile program.
+// fble-disassemble.c --
+//   This file implements the main entry point for the fble-disassemble program.
 
 #include <assert.h>   // for assert
 #include <string.h>   // for strcmp
@@ -27,15 +27,15 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-decompile FILE [PATH]\n"
-      "Decompile the fble program from FILE.\n"
+      "Usage: fble-disassemble FILE [PATH]\n"
+      "Disassemble the fble program from FILE.\n"
       "PATH is an optional include search path.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
 }
 
 // main --
-//   The main entry point for the fble-decompile program.
+//   The main entry point for the fble-disassemble program.
 //
 // Inputs:
 //   argc - The number of command line arguments.
@@ -72,7 +72,23 @@ int main(int argc, char* argv[])
 
   FbleArena* arena = FbleNewArena();
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
-  bool ok = FbleDecompile(stdout, prgm);
+  if (prgm == NULL) {
+    return EX_FAIL;
+  }
+
+  FbleProfile* profile = FbleNewProfile(arena);
+  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
+  if (compiled == NULL) {
+    FbleFreeProfile(arena, profile);
+    return EX_FAIL;
+  }
+
+  FbleDisassemble(stdout, compiled, profile);
+
+  //  TODO: Assert the arena is empty once we add proper support for cleaning
+  //  up loaded programs.
+  FbleFreeCompiledProgram(arena, compiled);
+  FbleFreeProfile(arena, profile);
   FbleFreeArena(arena);
-  return ok ? EX_SUCCESS : EX_FAIL;
+  return EX_SUCCESS;
 }

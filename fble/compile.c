@@ -2490,13 +2490,21 @@ static bool CompileProgram(FbleTypeHeap* heap, Blocks* blocks, Scope* scope, Fbl
   return result.type != NULL;
 }
 
-// FbleCompile -- see documentation in instr.h
-FbleInstrBlock* FbleCompile(FbleArena* arena, FbleProfile* profile, FbleProgram* program)
+// FbleCompile -- see documentation in fble-compile.h
+FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
 {
+  bool profiling_disabled = false;
+  if (profile == NULL) {
+    // Profiling is disabled. Allocate a new temporary profile to use during
+    // compilation so we don't have to special case the code for emitting
+    // profiling information.
+    profiling_disabled = true;
+    profile = FbleNewProfile(arena);
+  }
+
   Blocks block_stack;
   FbleVectorInit(arena, block_stack.stack);
   block_stack.profile = profile;
-
 
   // The entry associated with FBLE_ROOT_BLOCK_ID.
   FbleName entry_name = {
@@ -2519,9 +2527,23 @@ FbleInstrBlock* FbleCompile(FbleArena* arena, FbleProfile* profile, FbleProgram*
   assert(block_stack.stack.size == 0);
   FbleFree(arena, block_stack.stack.xs);
 
+  if (profiling_disabled) {
+    FbleFreeProfile(arena, profile);
+  }
+
   if (!ok) {
     FbleFreeInstrBlock(arena, code);
     return NULL;
   }
-  return code;
+
+  FbleCompiledProgram* compiled = FbleAlloc(arena, FbleCompiledProgram);
+  compiled->code = code;
+  return compiled;
+}
+
+// FbleFreeCompiledProgram -- see documentation in fble-compile.h
+void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program)
+{
+  FbleFreeInstrBlock(arena, program->code);
+  FbleFree(arena, program);
 }

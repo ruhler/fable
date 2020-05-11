@@ -371,18 +371,8 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
   }
 }
 
-// FbleDecompile -- see documentation in fble.h.
-bool FbleDecompile(FILE* fout, FbleProgram* program)
+// FbleDisassmeble -- see documentation in fble-compile.h.
+void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile)
 {
-  FbleArena* arena = FbleNewArena();
-  FbleProfile* profile = FbleNewProfile(arena);
-  FbleInstrBlock* code = FbleCompile(arena, profile, program);
-  if (code != NULL) {
-    DumpInstrBlock(fout, code, profile);
-    FbleFreeInstrBlock(arena, code);
-  }
-  FbleFreeProfile(arena, profile);
-  FbleAssertEmptyArena(arena);
-  FbleFreeArena(arena);
-  return code != NULL;
+  DumpInstrBlock(fout, program->code, profile);
 }

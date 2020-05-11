@@ -109,6 +109,13 @@ typedef struct {
   FbleInstrV instrs;
 } FbleInstrBlock;
 
+// FbleCompiledProgram --
+//   Implementation of the abstract type for a compiled program declared in
+//   fble-compile.h
+struct FbleCompiledProgram {
+  FbleInstrBlock* code;
+};
+
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.
 //
@@ -365,24 +372,5 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 //   Frees memory allocated for the given block of instruction if the refcount
 //   has gone to 0.
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
-
-// FbleCompile --
-//   Type check and compile the given program.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   profile - profile to populate with blocks.
-//   prgm - the program to compile.
-//
-// Results:
-//   The compiled program, or NULL if the program is not well typed.
-//
-// Side effects:
-//   Prints warning messages to stderr.
-//   Prints a message to stderr if the program fails to compile. Allocates
-//   memory for the instructions which must be freed with FbleFreeInstrBlock when
-//   it is no longer needed.
-//   Adds blocks to the given profile.
-FbleInstrBlock* FbleCompile(FbleArena* arena, FbleProfile* profile, FbleProgram* program);
 
 #endif // FBLE_INSTR_H_

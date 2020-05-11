@@ -1017,35 +1017,13 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 }
 
 // FbleEval -- see documentation in fble.h
-FbleValue* FbleEval(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile)
+FbleValue* FbleEval(FbleValueHeap* heap, FbleCompiledProgram* program, FbleProfile* profile)
 {
-  FbleArena* arena = heap->arena;
-
-  bool profiling_disabled = false;
-  if (profile == NULL) {
-    // Profiling is diabled. Allocate a new temporary profile to pass to the
-    // compiler so that the compiler doesn't have to handle disabled profiling
-    // specially.
-    profiling_disabled = true;
-    profile = FbleNewProfile(arena);
-  }
-
-  FbleInstrBlock* code = FbleCompile(arena, profile, program);
-
-  if (profiling_disabled) {
-    FbleFreeProfile(arena, profile);
-    profile = NULL;
-  }
-
-  if (code == NULL) {
-    return NULL;
-  }
-
   FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
   func->_base.tag = FBLE_FUNC_VALUE;
   func->argc = 0;
-  func->code = code;
-  assert(code->statics == 0);
+  func->code = program->code;
+  assert(program->code->statics == 0);
 
   FbleIO io = { .io = &FbleNoIO };
   FbleValue* result = Eval(heap, &io, func, NULL, profile);
