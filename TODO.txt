@@ -1,3 +1,11 @@
+* [compile] Do proper memory tracking and cleanup for the abstract syntax.
+ - Implement FbleFreeProgram function
+ - Figure out who is going to own source filenames and string names.
+   Maybe refcount them?
+ - Replace prgm_arena and eval_arena with a single arena now, and always
+   assert it ends up empty.
+
+* Move FbleParse to an internal header file.
 
 * Split compile into typecheck and codegen.
 * Don't rely on NULL vs. non-NULL to free values.
@@ -9,7 +17,7 @@
 * [eval] Would it improve performance to merge statics into the locals array?
   We don't have to own them. Just copy them all over when we push a frame.
   Then we avoid the need to switch when looking up a value, and we can store a
-  frame index in a single word.
+  frame index in a single word. FrameGet goes away.
 
 * [eval] Have option to turn off checking for nulls and other runtime errors?
 
@@ -48,11 +56,6 @@
 
 * [invaders] Implement space invaders game.
  - Add aliens to the game.
-
-* [compile] Do proper memory tracking and cleanup for the abstract syntax?
- - Implement FbleFreeProgram function
- - Figure out who is going to own source filenames. Maybe refcount them?
- - Is there an issue supporting heap and stack allocated expressions?
 
 * [compile] Figure out why Normal is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.

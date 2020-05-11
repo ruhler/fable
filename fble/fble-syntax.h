@@ -572,14 +572,23 @@ FbleExpr* FbleParse(FbleArena* arena, const char* filename, FbleModuleRefV* modu
 //   Prints an error message to stderr if the program cannot be parsed.
 //
 // Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of the returned program if there is no error.
+//   The user should call FbleFreeProgram to free resources associated with
+//   the given program when it is no longer needed.
 //
 // Note:
 //   A copy of the filename will be made for use in locations. The user need
 //   not ensure that filename remains valid for the duration of the lifetime
 //   of the program.
 FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root);
+
+// FbleFreeProgram --
+//   Free resources associated with the given program.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//
+// Side effects:
+//   Frees resources associated with the given program.
+void FbleFreeProgram(FbleArena* arena, FbleProgram* program);
 
 #endif // FBLE_SYNTAX_H_

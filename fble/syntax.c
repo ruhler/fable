@@ -86,3 +86,9 @@ void FbleKindRelease(FbleArena* arena, FbleKind* kind)
     }
   }
 }
+
+// FbleFreeProgram -- see documentation in fble-syntax.h
+void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
+{
+  // TODO: Actually free stuff.
+}
