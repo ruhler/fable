@@ -58,8 +58,11 @@ static void FreeExpr(FbleArena* arena, FbleExpr* expr)
     }
 
     case FBLE_MODULE_REF_EXPR: {
-      // TODO: Free path?
-      // TODO: Free resolved?
+      FbleModuleRefExpr* e = (FbleModuleRefExpr*)expr;
+      for (size_t i = 0; i < e->ref.path.size; ++i) {
+        FbleFree(arena, (char*)e->ref.path.xs[i].name);
+      }
+      FbleFree(arena, e->ref.path.xs);
       FbleFree(arena, expr);
       return;
     }
