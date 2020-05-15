@@ -1,9 +1,9 @@
 * [compile] Do proper memory tracking and cleanup for the abstract syntax.
- - Track down memory leak in load.c:200 for no-error test.
  - Make sure to retain a copy of filename for locs when generating instruction
    blocks.
+ - Track down all the memory leaks.
  - Replace prgm_arena and eval_arena with a single arena now, and always
-   assert it ends up empty.
+   assert it ends up empty. For all top level programs.
 
 * Move FbleParse to an internal header file.
 

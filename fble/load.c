@@ -423,6 +423,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
   // The last module loaded should be the main entry point.
   program->modules.size--;
+  FbleFree(arena, (char*)program->modules.xs[program->modules.size].name.name);
   program->filename = program->modules.xs[program->modules.size].filename;
   program->main = program->modules.xs[program->modules.size].value;
 
