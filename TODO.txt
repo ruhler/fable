@@ -1,7 +1,7 @@
 * [compile] Do proper memory tracking and cleanup for the abstract syntax.
- - Consider removing the asymmetry of the root fble file not being a module?
- - Save FbleString source filename at the Module level and release it when
-   freeing a module.
+ - Avoid making a separate load_arena in load.
+ - Make sure to retain a copy of filename for locs when generating instruction
+   blocks.
  - Replace prgm_arena and eval_arena with a single arena now, and always
    assert it ends up empty.
 

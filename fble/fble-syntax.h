@@ -27,7 +27,7 @@ typedef struct {
 // Results:
 //   A newly allocated string with a reference count that should be released
 //   using FbleStringRelease when no longer needed.
-//   Takes ownership of str, which should have been allocated on the arena.
+//   Does not take ownership of str - makes a copy instead.
 FbleString* FbleNewString(FbleArena* arena, const char* str);
 
 // FbleStringRetain -- 
@@ -550,10 +550,14 @@ typedef struct {
 //   Represents an individual module.
 // 
 // Fields:
+//   filename - the filename of the module. Used for ownership of all loc
+//              references in the module value.
 //   name - the canonical name of the module. This is the resolved path to the
-//   module with "/" used as a separator. For example, the module Foo/Bar% has
-//   name "Foo/Bar" in the MODULE name space.
+//          module with "/" used as a separator. For example, the module Foo/Bar% has
+//          name "Foo/Bar" in the MODULE name space.
+//   value - the value of the module
 typedef struct {
+  FbleString* filename;
   FbleName name;
   FbleExpr* value;
 } FbleModule;
@@ -571,9 +575,12 @@ typedef struct {
 //   modules - List of dependant modules in topological dependancy order. Later
 //             modules in the list may depend on earlier modules in the list,
 //             but not the other way around.
+//   filename - The filename of the main program. Used for ownership of all
+//              references to the filename in locs in main.
 //   main - The value of the program, which may depend on any of the modules.
 typedef struct {
   FbleModuleV modules;
+  FbleString* filename;
   FbleExpr* main;
 } FbleProgram;
 
@@ -599,11 +606,14 @@ typedef struct {
 //   this function. The total number of allocations made will be linear in the
 //   size of the returned program if there is no error.
 //
+// TODO:
+//   Make this function internal.
+//
 // Note:
-//   A copy of the filename will be made for use in locations. The user need
-//   not ensure that filename remains valid for the duration of the lifetime
-//   of the program.
-FbleExpr* FbleParse(FbleArena* arena, const char* filename, FbleModuleRefV* module_refs);
+//   The user should ensure that filename remains valid for the duration of
+//   the lifetime of the program, because it is used in locations of the
+//   returned expression without additional reference counts.
+FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModuleRefV* module_refs);
 
 // FbleLoad --
 //   Load an fble program.

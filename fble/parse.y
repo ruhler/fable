@@ -733,22 +733,17 @@ static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** resul
 }
 
 // FbleParse -- see documentation in fble-syntax.h
-FbleExpr* FbleParse(FbleArena* arena, const char* filename, FbleModuleRefV* module_refs)
+FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModuleRefV* module_refs)
 {
-  FILE* fin = fopen(filename, "r");
+  FILE* fin = fopen(filename->str, "r");
   if (fin == NULL) {
-    fprintf(stderr, "Unable to open file %s for parsing.\n", filename);
+    fprintf(stderr, "Unable to open file %s for parsing.\n", filename->str);
     return NULL;
   }
 
-  // Make a copy of the filename for locations so that the user doesn't have
-  // to worry about keeping it alive for the duration of the program lifetime.
-  char* source = FbleArrayAlloc(arena, char, strlen(filename) + 1);
-  strcpy(source, filename);
-
   Lex lex = {
     .c = ' ',
-    .loc = { .source = FbleNewString(arena, source), .line = 1, .col = 0 },
+    .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL
   };

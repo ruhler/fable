@@ -33,11 +33,13 @@ struct Tree {
 // Fields:
 //   module_refs - relative references from the module to other modules.
 //   path - the resolved path to the module.
+//   filename - the filename for the source code of the module.
 //   value - the value of the module.
 //   tail - the rest of the stack of modules.
 typedef struct Stack {
   FbleModuleRefV module_refs;
   FbleNameV path;
+  FbleString* filename;
   FbleExpr* value;
   struct Stack* tail;
 } Stack;
@@ -47,7 +49,7 @@ static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target);
 static void FreeTree(FbleArena* arena, Tree* tree);
 static bool PathsEqual(FbleNameV a, FbleNameV b);
 static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name);
-static FbleExpr* Parse(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs);
+static FbleString* Find(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path);
 
 // PrintModuleName --
 //   Print the name of a module to the given stream.
@@ -207,32 +209,26 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
   }
 }
 
-// Parse  -- 
-//  Parse an expression from given path.
+// Find  -- 
+//  Locate the file associated with the given module path, enforcing
+//  visibility rules in the process.
 //  
 // Inputs:
 //   load_arena - arena to use for allocations local to loading.
-//   program_arena - arena to use for allocations returned from loading.
+//   program_arena - arena to use for allocating the returned file name.
 //   root - file path to the root of the module search path. May be NULL.
-//   tree - the module hierarchy known so far
-//   path - the resolved module path to parse
-//   module_refs - Output param: A list of the module references in the parsed
-//                 expression.
+//   tree - the module hierarchy known so far.
+//   path - the module path to find the source file for.
 //
 // Results:
-//   The parsed program, or NULL in case of error.
+//   The file path to the source code of the module, or NULL in case of error.
 //
 // Side effects:
-//   Prints an error message to stderr if the program cannot be parsed.
+//   Prints an error message to stderr in case of error.
 //   Updates the tree with new module hierarchy information.
-//   Appends module references in the parsed expression to module_refs, which
-//   is assumed to be a pre-initialized vector.
-//
-// Allocations:
-//   The user is responsible for tracking and freeing any allocations made by
-//   this function. The total number of allocations made will be linear in the
-//   size of the returned program if there is no error.
-static FbleExpr* Parse(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path, FbleModuleRefV* module_refs)
+//   The user should call FbleStringRelease when the returned string is no
+//   longer needed.
+static FbleString* Find(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path)
 {
   if (root == NULL) {
     FbleReportError("module ", &path.xs[0].loc);
@@ -312,14 +308,7 @@ static FbleExpr* Parse(FbleArena* load_arena, FbleArena* program_arena, const ch
     }
   }
   strcat(filename, ".fble");
-
-  FbleExpr* expr = FbleParse(program_arena, filename, module_refs);
-  if (expr == NULL) {
-    FbleReportError("Failed to parse module ", &path.xs[0].loc);
-    PrintModuleName(stderr, path);
-    fprintf(stderr, "\n");
-  }
-  return expr;
+  return FbleNewString(program_arena, filename);
 }
 
 // FbleLoad -- see documentation in fble-syntax.h
@@ -339,8 +328,8 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FbleVectorInit(arena, stack->module_refs);
   stack->path.size = 0;
   stack->tail = NULL;
-
-  stack->value = FbleParse(arena, filename, &stack->module_refs);
+  stack->filename = FbleNewString(arena, filename);
+  stack->value = FbleParse(arena, stack->filename, &stack->module_refs);
   bool error = (stack->value == NULL);
   if (stack->value == NULL) {
     stack->module_refs.size = 0;
@@ -359,6 +348,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       // We have loaded all the dependencies for this module.
       FbleModule* module = FbleVectorExtend(arena, program->modules);
       PathToName(arena, stack->path, &module->name);
+      module->filename = stack->filename;
       module->value = stack->value;
       Stack* tail = stack->tail;
       FbleFree(arena, stack->module_refs.xs);
@@ -425,7 +415,13 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     FbleVectorInit(arena, stack->module_refs);
     stack->path = ref->path;
     stack->tail = tail;
-    stack->value = Parse(load_arena, arena, root, tree, stack->path, &stack->module_refs);
+    stack->filename = Find(load_arena, arena, root, tree, stack->path);
+    stack->value = NULL;
+
+    if (stack->filename != NULL) {
+      stack->value = FbleParse(arena, stack->filename, &stack->module_refs);
+    }
+
     if (stack->value == NULL) {
       error = true;
       stack->module_refs.size = 0;
@@ -435,7 +431,13 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
   // The last module loaded should be the main entry point.
   program->modules.size--;
+  program->filename = program->modules.xs[program->modules.size].filename;
   program->main = program->modules.xs[program->modules.size].value;
   FbleAssertEmptyArena(load_arena);
-  return error ? NULL : program;
+
+  if (error) {
+    FbleFreeProgram(arena, program);
+    return NULL;
+  }
+  return program;
 }

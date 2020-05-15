@@ -245,9 +245,12 @@ static void FreeExpr(FbleArena* arena, FbleExpr* expr)
 // FbleNewString -- see documentation in fble-syntax.h
 FbleString* FbleNewString(FbleArena* arena, const char* str)
 {
+  char* str_copy = FbleArrayAlloc(arena, char, strlen(str) + 1);
+  strcpy(str_copy, str);
+
   FbleString* string = FbleAlloc(arena, FbleString);
   string->refcount = 1;
-  string->str = str;
+  string->str = str_copy;
   return string;
 }
 
@@ -349,10 +352,12 @@ void FbleKindRelease(FbleArena* arena, FbleKind* kind)
 void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
 {
   for (size_t i = 0; i < program->modules.size; ++i) {
+    FbleStringRelease(arena, program->modules.xs[i].filename);
     FbleFree(arena, (char*)program->modules.xs[i].name.name);
     FreeExpr(arena, program->modules.xs[i].value);
   }
   FbleFree(arena, program->modules.xs);
+  FbleStringRelease(arena, program->filename);
   FreeExpr(arena, program->main);
   FbleFree(arena, program);
 }
