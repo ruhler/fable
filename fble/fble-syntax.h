@@ -10,6 +10,54 @@
 
 #include "fble-alloc.h"
 
+// FbleString --
+//   A reference counted string.
+typedef struct {
+  size_t refcount;
+  const char* str;
+} FbleString;
+
+// FbleNewString --
+//   Allocate a new FbleString.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   str - the contents of the string.
+//
+// Results:
+//   A newly allocated string with a reference count that should be released
+//   using FbleStringRelease when no longer needed.
+//   Takes ownership of str, which should have been allocated on the arena.
+FbleString* FbleNewString(FbleArena* arena, const char* str);
+
+// FbleStringRetain -- 
+//   Increment the refcount on a string.
+//
+// Inputs:
+//   string - the string to increment the reference count on.
+// 
+// Results:
+//   The input string, for convenience.
+//
+// Side effects:
+//   Increments the reference count on the string. The user should arrange for
+//   FbleStringRelease to be called on the string when this reference of it is
+//   no longer needed.
+FbleString* FbleStringRetain(FbleString* string);
+
+// FbleStringRelease -- 
+//   Decrement the refcount on a string, freeing resources associated with the
+//   string if the refcount goes to zero.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   string - the string to decrement the reference count on.
+//
+// Side effects:
+//   Decrements the reference count of the string, freeing it and its str
+//   contents if the reference count goes to zero.
+void FbleStringRelease(FbleArena* arena, FbleString* string);
+
 // FbleLoc --
 //   Represents a location in a source file.
 //
@@ -19,7 +67,7 @@
 //   line - The line within the file for the location.
 //   col - The column within the line for the location.
 typedef struct {
-  const char* source;
+  FbleString* source;
   int line;
   int col;
 } FbleLoc;

@@ -996,7 +996,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
       case BLOCKED: {
         // The thread is not making forward progress anymore. Block for I/O.
         if (!io->io(io, heap, true)) {
-          FbleLoc loc = { .source = __FILE__, .line = 0, .col = 0 };
+          FbleString source = { .refcount = 1, .str = __FILE__ };
+          FbleLoc loc = { .source = &source, .line = 0, .col = 0 };
           FbleReportError("deadlock\n", &loc);
           aborted = true;
         }

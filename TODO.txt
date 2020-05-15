@@ -1,7 +1,7 @@
 * [compile] Do proper memory tracking and cleanup for the abstract syntax.
- - Implement FbleFreeProgram function
- - Figure out who is going to own source filenames and string names.
-   Maybe refcount them?
+ - Consider removing the asymmetry of the root fble file not being a module?
+ - Save FbleString source filename at the Module level and release it when
+   freeing a module.
  - Replace prgm_arena and eval_arena with a single arena now, and always
    assert it ends up empty.
 

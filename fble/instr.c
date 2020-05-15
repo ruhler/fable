@@ -49,7 +49,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
             FbleName* name = &profile->blocks.xs[block]->name;
             fprintf(fout, "    .  profile enter [%04x]; ", block);
             fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name, block,
-                name->loc.source, name->loc.line, name->loc.col);
+                name->loc.source->str, name->loc.line, name->loc.col);
             break;
           }
 
@@ -96,7 +96,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           fprintf(fout, "l%zi = %s%zi.%zi; // %s:%i:%i\n",
               access_instr->dest, sections[access_instr->obj.section],
               access_instr->obj.index,
-              access_instr->tag, access_instr->loc.source,
+              access_instr->tag, access_instr->loc.source->str,
               access_instr->loc.line, access_instr->loc.col);
           break;
         }
@@ -112,7 +112,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
             comma = ", ";
           }
           fprintf(fout, ");  // %s:%i:%i\n",
-              select_instr->loc.source, select_instr->loc.line,
+              select_instr->loc.source->str, select_instr->loc.line,
               select_instr->loc.col);
           break;
         }
@@ -167,7 +167,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           }
               
           fprintf(fout, "); // %s:%i:%i\n",
-              call_instr->loc.source, call_instr->loc.line,
+              call_instr->loc.source->str, call_instr->loc.line,
               call_instr->loc.col);
           break;
         }

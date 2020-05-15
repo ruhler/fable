@@ -2507,9 +2507,10 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
   block_stack.profile = profile;
 
   // The entry associated with FBLE_ROOT_BLOCK_ID.
+  static FbleString source = { .refcount = 1, .str = __FILE__ };
   FbleName entry_name = {
     .name = "",
-    .loc = { .source = __FILE__, .line = __LINE__, .col = 0, },
+    .loc = { .source = &source, .line = 0, .col = 0, },
     .space = FBLE_NORMAL_NAME_SPACE,
   };
 

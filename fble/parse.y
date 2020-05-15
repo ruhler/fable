@@ -748,7 +748,7 @@ FbleExpr* FbleParse(FbleArena* arena, const char* filename, FbleModuleRefV* modu
 
   Lex lex = {
     .c = ' ',
-    .loc = { .source = source, .line = 1, .col = 0 },
+    .loc = { .source = FbleNewString(arena, source), .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL
   };

@@ -8,6 +8,8 @@
 #include "fble.h"
 #include "instr.h"
 
+static FbleString UnknownSource = { .refcount = 1, .str = "???"};
+
 typedef struct Tree Tree;
 
 // TreeV --
@@ -179,7 +181,7 @@ static bool PathsEqual(FbleNameV a, FbleNameV b)
 static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 {
   FbleLoc loc = {
-    .source = "???",
+    .source = FbleStringRetain(&UnknownSource),
     .line = 0,
     .col = 0
   };
@@ -346,7 +348,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
   Tree* tree = FbleAlloc(load_arena, Tree);
   tree->name.name = "";
-  tree->name.loc.source = "???";
+  tree->name.loc.source = FbleStringRetain(&UnknownSource);
   tree->name.loc.line = 0;
   tree->name.loc.col = 0;
   tree->private = false;

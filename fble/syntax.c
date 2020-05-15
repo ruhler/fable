@@ -242,12 +242,37 @@ static void FreeExpr(FbleArena* arena, FbleExpr* expr)
   UNREACHABLE("should never get here");
 }
 
+// FbleNewString -- see documentation in fble-syntax.h
+FbleString* FbleNewString(FbleArena* arena, const char* str)
+{
+  FbleString* string = FbleAlloc(arena, FbleString);
+  string->refcount = 1;
+  string->str = str;
+  return string;
+}
+
+// FbleStringRetain -- see documentation in fble-syntax.h
+FbleString* FbleStringRetain(FbleString* string)
+{
+  string->refcount++;
+  return string;
+}
+
+// FbleStringRelease -- see documentation in fble-syntax.h
+void FbleStringRelease(FbleArena* arena, FbleString* string)
+{
+  if (--string->refcount == 0) {
+    FbleFree(arena, (char*)string->str);
+    FbleFree(arena, string);
+  }
+}
+
 // FbleReportWarning -- see documentation in fble-syntax.h
 void FbleReportWarning(const char* format, FbleLoc* loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
-  fprintf(stderr, "%s:%d:%d: warning: ", loc->source, loc->line, loc->col);
+  fprintf(stderr, "%s:%d:%d: warning: ", loc->source->str, loc->line, loc->col);
   vfprintf(stderr, format, ap);
   va_end(ap);
 }
@@ -257,7 +282,7 @@ void FbleReportError(const char* format, FbleLoc* loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
-  fprintf(stderr, "%s:%d:%d: error: ", loc->source, loc->line, loc->col);
+  fprintf(stderr, "%s:%d:%d: error: ", loc->source->str, loc->line, loc->col);
   vfprintf(stderr, format, ap);
   va_end(ap);
 }
