@@ -1,0 +1,60 @@
+
+# Implementation of a counter in data flow
+#
+% True = /Bool%.True;
+
+% Chars = /Char%.Chars;
+
+<@>% Const = /DataFlow%.Const;
+<@>% Copy = /DataFlow%.Copy;
+<@>% Connect = /DataFlow%.Connect;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Stdio@ = /Stdio%.Stdio@;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+ 
+@ Count@ = +(Unit@ 1, Unit@ 2, Unit@ 3);
+
+(Put@<Unit@>, Put@<Unit@>, Put@<Unit@>) { Put@<Count@>!; }
+Select = (Put@<Unit@> on1, Put@<Unit@> on2, Put@<Unit@> on3) {
+  $((Count@ x) {
+    x.?(1: on1(x.1), 2: on2(x.2), 3: on3(x.3));
+  });
+};
+
+# Count --
+#   A module that outputs 1, 2, 3, 1, 2, 3, ...
+#
+# Does not terminate.
+(Put@<Count@>) { Unit@!; } Count = (Put@<Count@> result) {
+  Count@ ~ feedback_get, feedback_put;
+  Put@<Count@> merged := Copy<Count@>(feedback_put, result);
+  Put@<Unit@> mk1 := Const<Count@>(Count@(1: Unit), merged);
+  Put@<Unit@> mk2 := Const<Count@>(Count@(2: Unit), merged);
+  Put@<Unit@> mk3 := Const<Count@>(Count@(3: Unit), merged);
+  Put@<Count@> feedbacked := Select(mk2, mk3, mk1);
+
+  Unit@ _ := merged(Count@(1: Unit)),
+  Unit@ _ := Connect<Count@>(feedback_get, feedbacked);
+  $(Unit);
+};
+
+Stdio@ Stdio = (Get@<Maybe@<Str@>> in, Put@<Str@> out) {
+  Put@<Count@> result = (Count@ x) {
+    x.?(1: out(Str(Chars|1)), 2: out(Str(Chars|2)), 3: out(Str(Chars|3)));
+  };
+
+  Unit@ _ := Count(result);
+  $(True);
+};
+
+@(Count@, Count, Stdio);

@@ -15,6 +15,7 @@
 @ Test@ = /Test%.Test@;
 
 # Import to test compilation.
+% _ = /DataFlow/Counter%;
 % _ = /Fble/Bench%;
 % _ = /Fble/StackSmasher%;
 % _ = /Invaders/App%;

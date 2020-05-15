@@ -1,0 +1,65 @@
+
+# DataFlow describes computation as a graph of modules. A module has some
+# number of input ports and some number of output ports. The behavior of a
+# module is to consume values on its input ports and produce corresponding
+# values on its output ports.
+
+# A DataFlow module is described in fble as a process that takes output ports
+# as arguments and returns input ports to the module. It has the effect of
+# instantiating a computation that runs asynchronously. In particular, putting
+# a value onto an input port is a non-blocking operation.
+
+# TODO: How do we finish a dataflow computation? Is there such a thing? 
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# Const --
+#   A module that outputs a constant value for every input.
+<@ T@>(T@, Put@<T@>) { Put@<Unit@>!; }
+Const = <@ T@>(T@ x, Put@<T@> out) {
+  $((Unit@ _) {
+    out(x);
+  });
+};
+
+# Copy -- 
+#   A module that copies its input to multiple outputs.
+#
+# Inputs:
+#   a - the first output port
+#   b - the second output port
+#
+# Results:
+#   the input port port
+#
+# Behavior:
+#   Putting a value onto the returned input port will cause that value to be
+#   put on both output ports.
+<@ T@>(Put@<T@>, Put@<T@>) { Put@<T@>!; }
+Copy = <@ T@>(Put@<T@> a, Put@<T@> b) {
+  $((T@ x) {
+    Unit@ _ := a(x);
+    Unit@ _ := b(x);
+    $(Unit);
+  });
+};
+
+# Connect --
+#   Connect a get port to a put port.
+#
+# TODO: Does not terminate.
+<@ T@>(Get@<T@>, Put@<T@>) { Unit@!; }
+Connect = <@ T@>(Get@<T@> get, Put@<T@> put) {
+  T@ x := get;
+  Unit@ _ := put(x);
+  Connect<T@>(get, put);
+};
+
+# Connect --
+#   Create a module that 
+
+@(Const, Copy, Connect);
