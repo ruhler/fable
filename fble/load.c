@@ -49,7 +49,7 @@ static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target);
 static void FreeTree(FbleArena* arena, Tree* tree);
 static bool PathsEqual(FbleNameV a, FbleNameV b);
 static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name);
-static FbleString* Find(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path);
+static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleNameV path);
 
 // PrintModuleName --
 //   Print the name of a module to the given stream.
@@ -214,8 +214,7 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 //  visibility rules in the process.
 //  
 // Inputs:
-//   load_arena - arena to use for allocations local to loading.
-//   program_arena - arena to use for allocating the returned file name.
+//   arena - arena to use for allocations.
 //   root - file path to the root of the module search path. May be NULL.
 //   tree - the module hierarchy known so far.
 //   path - the module path to find the source file for.
@@ -228,7 +227,7 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 //   Updates the tree with new module hierarchy information.
 //   The user should call FbleStringRelease when the returned string is no
 //   longer needed.
-static FbleString* Find(FbleArena* load_arena, FbleArena* program_arena, const char* root, Tree* tree, FbleNameV path)
+static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleNameV path)
 {
   if (root == NULL) {
     FbleReportError("module ", &path.xs[0].loc);
@@ -263,10 +262,10 @@ static FbleString* Find(FbleArena* load_arena, FbleArena* program_arena, const c
     }
 
     if (!treed) {
-      Tree* child = FbleAlloc(load_arena, Tree);
+      Tree* child = FbleAlloc(arena, Tree);
       child->name = path.xs[i];
-      FbleVectorInit(load_arena, child->children);
-      FbleVectorAppend(load_arena, tree->children, child);
+      FbleVectorInit(arena, child->children);
+      FbleVectorAppend(arena, tree->children, child);
       tree = child;
 
       char* tail = filename + strlen(filename);
@@ -308,23 +307,16 @@ static FbleString* Find(FbleArena* load_arena, FbleArena* program_arena, const c
     }
   }
   strcat(filename, ".fble");
-  return FbleNewString(program_arena, filename);
+  return FbleNewString(arena, filename);
 }
 
 // FbleLoad -- see documentation in fble-syntax.h
 FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 {
-  // The load_arena is used for allocations local to FbleLoad, so it's easier
-  // to keep track of whether we are leaking any memory here.
-  //
-  // Note: stack->module_refs is not allocated on load_arena because FbleParse
-  // needs to be able to reallocate it.
-  FbleArena* load_arena = FbleNewArena();
-
   FbleProgram* program = FbleAlloc(arena, FbleProgram);
   FbleVectorInit(arena, program->modules);
 
-  Stack* stack = FbleAlloc(load_arena, Stack);
+  Stack* stack = FbleAlloc(arena, Stack);
   FbleVectorInit(arena, stack->module_refs);
   stack->path.size = 0;
   stack->tail = NULL;
@@ -335,13 +327,13 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     stack->module_refs.size = 0;
   }
 
-  Tree* tree = FbleAlloc(load_arena, Tree);
+  Tree* tree = FbleAlloc(arena, Tree);
   tree->name.name = "";
   tree->name.loc.source = FbleStringRetain(&UnknownSource);
   tree->name.loc.line = 0;
   tree->name.loc.col = 0;
   tree->private = false;
-  FbleVectorInit(load_arena, tree->children);
+  FbleVectorInit(arena, tree->children);
 
   while (stack != NULL) {
     if (stack->module_refs.size == 0) {
@@ -352,7 +344,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       module->value = stack->value;
       Stack* tail = stack->tail;
       FbleFree(arena, stack->module_refs.xs);
-      FbleFree(load_arena, stack);
+      FbleFree(arena, stack);
       stack = tail;
       continue;
     }
@@ -361,7 +353,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
     // Check to see if we have already loaded this path.
     FbleName resolved_name;
-    PathToName(load_arena, ref->path, &resolved_name);
+    PathToName(arena, ref->path, &resolved_name);
     bool found = false;
     for (size_t i = 0; i < program->modules.size; ++i) {
       if (FbleNamesEqual(&resolved_name, &program->modules.xs[i].name)) {
@@ -386,7 +378,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
         break;
       }
     }
-    FbleFree(load_arena, (void*)resolved_name.name);
+    FbleFree(arena, (void*)resolved_name.name);
     if (found) {
       continue;
     }
@@ -411,11 +403,11 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
     // Parse the new module, placing it on the stack for processing.
     Stack* tail = stack;
-    stack = FbleAlloc(load_arena, Stack);
+    stack = FbleAlloc(arena, Stack);
     FbleVectorInit(arena, stack->module_refs);
     stack->path = ref->path;
     stack->tail = tail;
-    stack->filename = Find(load_arena, arena, root, tree, stack->path);
+    stack->filename = Find(arena, root, tree, stack->path);
     stack->value = NULL;
 
     if (stack->filename != NULL) {
@@ -427,13 +419,12 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       stack->module_refs.size = 0;
     }
   }
-  FreeTree(load_arena, tree);
+  FreeTree(arena, tree);
 
   // The last module loaded should be the main entry point.
   program->modules.size--;
   program->filename = program->modules.xs[program->modules.size].filename;
   program->main = program->modules.xs[program->modules.size].value;
-  FbleAssertEmptyArena(load_arena);
 
   if (error) {
     FbleFreeProgram(arena, program);

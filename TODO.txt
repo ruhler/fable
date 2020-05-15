@@ -1,5 +1,5 @@
 * [compile] Do proper memory tracking and cleanup for the abstract syntax.
- - Avoid making a separate load_arena in load.
+ - Track down memory leak in load.c:200 for no-error test.
  - Make sure to retain a copy of filename for locs when generating instruction
    blocks.
  - Replace prgm_arena and eval_arena with a single arena now, and always
