@@ -477,38 +477,38 @@ int main(int argc, char* argv[])
   const char* path = argv[1];
   const char* include_path = argv[2];
 
-  FbleArena* prgm_arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
+  FbleArena* arena = FbleNewArena();
+  FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
-  FbleArena* eval_arena = FbleNewArena();
-  FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, NULL);
+  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
+  FbleFreeProgram(arena, prgm);
   if (compiled == NULL) {
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
-  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
-
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleValue* func = FbleEval(heap, compiled, NULL);
+  FbleFreeCompiledProgram(arena, compiled);
+
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeCompiledProgram(eval_arena, compiled);
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
     FbleFreeValueHeap(heap);
-    FbleFreeCompiledProgram(eval_arena, compiled);
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
@@ -560,9 +560,8 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeCompiledProgram(eval_arena, compiled);
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 1;
@@ -577,10 +576,8 @@ int main(int argc, char* argv[])
 
   FbleValueRelease(heap, value);
   FbleFreeValueHeap(heap);
-  FbleFreeCompiledProgram(eval_arena, compiled);
-  FbleAssertEmptyArena(eval_arena);
-  FbleFreeArena(eval_arena);
-  FbleFreeArena(prgm_arena);
+  FbleAssertEmptyArena(arena);
+  FbleFreeArena(arena);
 
   SDL_DestroyWindow(window);
   SDL_Quit();

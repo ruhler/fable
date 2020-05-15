@@ -205,32 +205,34 @@ int main(int argc, char* argv[])
   const char* path = argv[1];
   const char* include_path = argv[2];
 
-  FbleArena* prgm_arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
+  FbleArena* arena = FbleNewArena();
+  FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
-  FbleArena* eval_arena = FbleNewArena();
-  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile(eval_arena);
+  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile(arena);
+  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
+  FbleFreeProgram(arena, prgm);
 
-  FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, profile);
   if (compiled == NULL) {
-    FbleFreeProfile(eval_arena, profile);
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleFreeProfile(arena, profile);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
-  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleValue* func = FbleEval(heap, compiled, profile);
+  FbleFreeCompiledProgram(arena, compiled);
+
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(eval_arena, profile);
-    FbleFreeCompiledProgram(eval_arena, compiled);
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleFreeProfile(arena, profile);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
@@ -251,9 +253,9 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(eval_arena, profile);
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleFreeProfile(arena, profile);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
@@ -272,11 +274,9 @@ int main(int argc, char* argv[])
     FbleProfileReport(fprofile, profile);
   }
 
-  FbleFreeCompiledProgram(eval_arena, compiled);
-  FbleFreeProfile(eval_arena, profile);
-  FbleAssertEmptyArena(eval_arena);
-  FbleFreeArena(eval_arena);
-  FbleFreeArena(prgm_arena);
-
+  FbleFreeValueHeap(heap);
+  FbleFreeProfile(arena, profile);
+  FbleAssertEmptyArena(arena);
+  FbleFreeArena(arena);
   return result;
 }

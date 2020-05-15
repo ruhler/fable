@@ -2,9 +2,9 @@
  - Make sure to retain a copy of filename for locs when generating instruction
    blocks.
  - Track down all the memory leaks.
- - Replace prgm_arena and eval_arena with a single arena now, and always
-   assert it ends up empty. For all top level programs.
 
+* Do FbleAssertEmptyArena automatically in FbleFreeArena?
+ - It seems like a bad idea to rely on bulk free now.
 * Move FbleParse to an internal header file.
 
 * Split compile into typecheck and codegen.

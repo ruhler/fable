@@ -64,11 +64,11 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
   }
 
   bool success = false;
-  FbleArena* eval_arena = FbleNewArena();
-  FbleProfile* profile = FbleNewProfile(eval_arena);
-  FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, profile);
+  FbleArena* arena = FbleNewArena();
+  FbleProfile* profile = FbleNewProfile(arena);
+  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
   if (compiled != NULL) {
-    FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
+    FbleValueHeap* heap = FbleNewValueHeap(arena);
     FbleValue* func = FbleEval(heap, compiled, profile);
     if (func != NULL) {
       // Number type is BitS@ from:
@@ -112,13 +112,13 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
 
     FbleValueRelease(heap, func);
     FbleFreeValueHeap(heap);
-    FbleFreeCompiledProgram(eval_arena, compiled);
+    FbleFreeCompiledProgram(arena, compiled);
   }
-  FbleFreeProfile(eval_arena, profile);
+  FbleFreeProfile(arena, profile);
 
-  *max_bytes = FbleArenaMaxSize(eval_arena);
-  FbleAssertEmptyArena(eval_arena);
-  FbleFreeArena(eval_arena);
+  *max_bytes = FbleArenaMaxSize(arena);
+  FbleAssertEmptyArena(arena);
+  FbleFreeArena(arena);
   return success;
 }
 
@@ -165,17 +165,20 @@ int main(int argc, char* argv[])
     include_path = *argv;
   }
 
-  FbleArena* prgm_arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
+  FbleArena* arena = FbleNewArena();
+  FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
 //  for (size_t i = 0; i < 200; ++i) {
 //    size_t max_n = 0;
 //    if (!Run(prgm, i, 200, &max_n)) {
-//      FbleFreeArena(prgm_arena);
+//      FbleFreeProgram(arena, prgm);
+//      FbleAssertEmptyArena(arena);
+//      FbleFreeArena(arena);
 //      return EX_FAIL;
 //    }
 //    fprintf(stderr, "% 4zi: %zi\n", i, max_n);
@@ -183,13 +186,17 @@ int main(int argc, char* argv[])
 
   size_t max_small_n = 0;
   if (!Run(prgm, 100, 200, &max_small_n)) {
-    FbleFreeArena(prgm_arena);
+    FbleFreeProgram(arena, prgm);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
   size_t max_large_n = 0;
   if (!Run(prgm, 200, 200, &max_large_n)) {
-    FbleFreeArena(prgm_arena);
+    FbleFreeProgram(arena, prgm);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
@@ -199,16 +206,22 @@ int main(int argc, char* argv[])
   size_t noise = max_small_n / 100;
   if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
-    FbleFreeArena(prgm_arena);
+    FbleFreeProgram(arena, prgm);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
   if (growth && max_large_n <= max_small_n + noise) {
     fprintf(stderr, "memory constant\n");
-    FbleFreeArena(prgm_arena);
+    FbleFreeProgram(arena, prgm);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
-  FbleFreeArena(prgm_arena);
+  FbleFreeProgram(arena, prgm);
+  FbleAssertEmptyArena(arena);
+  FbleFreeArena(arena);
   return EX_SUCCESS;
 }

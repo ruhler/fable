@@ -139,34 +139,40 @@ int main(int argc, char* argv[])
   const char* include_path = argv[2];
   const char* file = argv[3];
 
-  FbleArena* prgm_arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(prgm_arena, path, include_path);
+  FbleArena* arena = FbleNewArena();
+  FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
-  FbleArena* eval_arena = FbleNewArena();
-  FbleCompiledProgram* compiled = FbleCompile(eval_arena, prgm, NULL);
+  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
+  FbleFreeProgram(arena, prgm);
+
   if (compiled == NULL) {
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
-  FbleValueHeap* heap = FbleNewValueHeap(eval_arena);
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleValue* func = FbleEval(heap, compiled, NULL);
+  FbleFreeCompiledProgram(arena, compiled);
+
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeCompiledProgram(eval_arena, compiled);
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
   FILE* fin = fopen(file, "rb");
   if (fin == NULL) {
     fprintf(stderr, "unable to open %s\n", file);
+    FbleFreeValueHeap(heap);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
@@ -183,9 +189,8 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeCompiledProgram(eval_arena, compiled);
-    FbleFreeArena(eval_arena);
-    FbleFreeArena(prgm_arena);
+    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
     return 1;
   }
 
@@ -206,9 +211,7 @@ int main(int argc, char* argv[])
 
   FbleValueRelease(heap, value);
   FbleFreeValueHeap(heap);
-  FbleFreeCompiledProgram(eval_arena, compiled);
-  FbleAssertEmptyArena(eval_arena);
-  FbleFreeArena(eval_arena);
-  FbleFreeArena(prgm_arena);
+  FbleAssertEmptyArena(arena);
+  FbleFreeArena(arena);
   return 0;
 }
