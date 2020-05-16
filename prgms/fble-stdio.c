@@ -270,7 +270,6 @@ int main(int argc, char* argv[])
     FbleProfileReport(fprofile, profile);
   }
 
-  FbleFreeValueHeap(heap);
   FbleFreeProfile(arena, profile);
   FbleFreeArena(arena);
   return result;
