@@ -8,8 +8,6 @@
 #include "fble.h"
 #include "instr.h"
 
-static FbleString UnknownSource = { .refcount = 1, .str = "???"};
-
 typedef struct Tree Tree;
 
 // TreeV --
@@ -181,13 +179,15 @@ static bool PathsEqual(FbleNameV a, FbleNameV b)
 static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 {
   FbleLoc loc = {
-    .source = FbleStringRetain(&UnknownSource),
+    .source = NULL,
     .line = 0,
     .col = 0
   };
 
   if (path.size > 0) {
     loc = FbleCopyLoc(path.xs[path.size - 1].loc);
+  } else {
+    loc.source = FbleNewString(arena, "???");
   }
 
   size_t len = 1;
@@ -326,9 +326,10 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     stack->module_refs.size = 0;
   }
 
+  FbleString* unknownSource = FbleNewString(arena, "???");
   Tree* tree = FbleAlloc(arena, Tree);
   tree->name.name = "";
-  tree->name.loc.source = FbleStringRetain(&UnknownSource);
+  tree->name.loc.source = unknownSource;
   tree->name.loc.line = 0;
   tree->name.loc.col = 0;
   tree->private = false;
@@ -419,10 +420,11 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     }
   }
   FreeTree(arena, tree);
+  FbleStringRelease(arena, unknownSource);
 
   // The last module loaded should be the main entry point.
   program->modules.size--;
-  FbleFree(arena, (char*)program->modules.xs[program->modules.size].name.name);
+  FbleFreeName(arena, program->modules.xs[program->modules.size].name);
   program->main = program->modules.xs[program->modules.size].value;
 
   if (error) {
