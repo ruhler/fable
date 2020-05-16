@@ -544,8 +544,9 @@ implicit_tagged_expr:
       // lead to double free.
       char* copy = FbleArrayAlloc(arena, char, strlen($1.name) + 1);
       strcpy(copy, $1.name);
-      $$.name = $1;
       $$.name.name = copy;
+      $$.name.space = $1.space;
+      $$.name.loc = FbleCopyLoc($1.loc);
 
       FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
       var_expr->_base.tag = FBLE_VAR_EXPR;
