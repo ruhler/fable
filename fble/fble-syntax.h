@@ -12,9 +12,13 @@
 
 // FbleString --
 //   A reference counted string.
+//
+// Note: The checksum field is used internally to detect double frees of
+// FbleString, which we have had trouble with in the past.
 typedef struct {
   size_t refcount;
   const char* str;
+  size_t checksum;
 } FbleString;
 
 // FbleNewString --
