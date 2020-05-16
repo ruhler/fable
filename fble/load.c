@@ -187,7 +187,7 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
   };
 
   if (path.size > 0) {
-    loc = path.xs[path.size - 1].loc;
+    loc = FbleCopyLoc(path.xs[path.size - 1].loc);
   }
 
   size_t len = 1;
@@ -376,7 +376,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
         break;
       }
     }
-    FbleFree(arena, (void*)resolved_name.name);
+    FbleFreeName(arena, resolved_name);
     if (found) {
       continue;
     }
