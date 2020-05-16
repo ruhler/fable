@@ -615,6 +615,19 @@ typedef struct {
 //   returned expression without additional reference counts.
 FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModuleRefV* module_refs);
 
+// FbleFreeExpr --
+//   Free resources associated with an expression.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   expr - expression to free. May be NULL.
+//
+// Side effect:
+//   Frees resources associated with expr.
+//
+// TODO: Make this function internal?
+void FbleFreeExpr(FbleArena* arena, FbleExpr* expr);
+
 // FbleLoad --
 //   Load an fble program.
 //

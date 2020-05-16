@@ -1,7 +1,7 @@
 * [compile] Do proper memory tracking and cleanup for the abstract syntax.
  - Make sure to retain a copy of filename for locs when generating instruction
    blocks.
- - Track down all the memory leaks.
+ - fix free on bad pointer assertions.
 
 * Do FbleAssertEmptyArena automatically in FbleFreeArena?
  - It seems like a bad idea to rely on bulk free now.

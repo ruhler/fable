@@ -85,6 +85,94 @@
 %type <tagged_exprs> implicit_tagged_expr_p implicit_tagged_expr_s tagged_expr_p
 %type <bindings> exec_binding_p let_binding_p
 
+%destructor {
+  FbleFree(arena, (char*)$$);
+} <word>
+
+%destructor {
+  FbleFree(arena, (char*)$$.name);
+} <name>
+
+%destructor {
+  for (size_t i = 0; i < $$.size; ++i) {
+    FbleFree(arena, (char*)$$.xs[i].name);
+  }
+  FbleFree(arena, $$.xs);
+} <names>
+
+%destructor {
+  for (size_t i = 0; i < $$.path.size; ++i) {
+    FbleFree(arena, (char*)$$.path.xs[i].name);
+  }
+  FbleFree(arena, $$.path.xs);
+} <module_ref>
+
+%destructor {
+  FbleKindRelease(arena, $$);
+} <kind>
+
+%destructor {
+  for (size_t i = 0; i < $$.size; ++i) {
+    FbleKindRelease(arena, $$.xs[i]);
+  }
+  FbleFree(arena, $$.xs);
+} <kinds>
+
+%destructor { 
+  for (size_t i = 0; i < $$.size; ++i) {
+    FbleKindRelease(arena, $$.xs[i].kind);
+    FbleFree(arena, (char*)$$.xs[i].name.name);
+  }
+  FbleFree(arena, $$.xs);
+} <type_fields>
+
+%destructor {
+  FbleFreeExpr(arena, $$);
+} <expr>
+
+%destructor {
+  for (size_t i = 0; i < $$.size; ++i) {
+    FbleFreeExpr(arena, $$.xs[i]);
+  }
+  FbleFree(arena, $$.xs);
+} <exprs>
+
+%destructor { 
+  FbleFreeExpr(arena, $$.type);
+  FbleFree(arena, (char*)$$.name.name);
+} <field>
+
+%destructor {
+  for (size_t i = 0; i < $$.size; ++i) {
+    FbleFreeExpr(arena, $$.xs[i].type);
+    FbleFree(arena, (char*)$$.xs[i].name.name);
+  }
+  FbleFree(arena, $$.xs);
+} <fields>
+
+%destructor {
+  FbleFree(arena, (char*)$$.name.name);
+  FbleFreeExpr(arena, $$.expr);
+} <tagged_expr>
+
+%destructor {
+  for (size_t i = 0; i < $$.size; ++i) {
+    FbleFree(arena, (char*)$$.xs[i].name.name);
+    FbleFreeExpr(arena, $$.xs[i].expr);
+  }
+  FbleFree(arena, $$.xs);
+} <tagged_exprs>
+
+%destructor {
+  for (size_t i = 0; i < $$.size; ++i) {
+    FbleKindRelease(arena, $$.xs[i].kind);
+    FbleFreeExpr(arena, $$.xs[i].type);
+    FbleFree(arena, (char*)$$.xs[i].name.name);
+    FbleFreeExpr(arena, $$.xs[i].expr);
+  }
+  FbleFree(arena, $$.xs);
+} <bindings>
+
 %%
 
 start: stmt { *result = $1; } ;
