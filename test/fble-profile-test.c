@@ -41,7 +41,8 @@ static FbleName Name(FbleArena* arena, const char* name)
   char* copy = FbleArrayAlloc(arena, char, strlen(name));
   strcpy(copy, name);
 
-  FbleString source = { .refcount = 1, .str = __FILE__ };
+  static FbleString source = { .refcount = 1, .str = __FILE__ };
+  FbleStringRetain(&source);
   FbleName nm = {
     .name = copy,
     .loc = { .source = &source, .line = rand(), .col = rand() }
