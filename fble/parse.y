@@ -539,7 +539,14 @@ field_s:
 
 implicit_tagged_expr:
     name {
+      // Make a copy of the name to ensure we aren't sharing the same
+      // underlying pointer between the name and the variable, which would
+      // lead to double free.
+      char* copy = FbleArrayAlloc(arena, char, strlen($1.name) + 1);
+      strcpy(copy, $1.name);
       $$.name = $1;
+      $$.name.name = copy;
+
       FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
       var_expr->_base.tag = FBLE_VAR_EXPR;
       var_expr->_base.loc = @$;
