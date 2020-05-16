@@ -90,19 +90,19 @@
 } <word>
 
 %destructor {
-  FbleFree(arena, (char*)$$.name);
+  FbleFreeName(arena, $$);
 } <name>
 
 %destructor {
   for (size_t i = 0; i < $$.size; ++i) {
-    FbleFree(arena, (char*)$$.xs[i].name);
+    FbleFreeName(arena, $$.xs[i]);
   }
   FbleFree(arena, $$.xs);
 } <names>
 
 %destructor {
   for (size_t i = 0; i < $$.path.size; ++i) {
-    FbleFree(arena, (char*)$$.path.xs[i].name);
+    FbleFreeName(arena, $$.path.xs[i]);
   }
   FbleFree(arena, $$.path.xs);
 } <module_ref>
@@ -121,7 +121,7 @@
 %destructor { 
   for (size_t i = 0; i < $$.size; ++i) {
     FbleKindRelease(arena, $$.xs[i].kind);
-    FbleFree(arena, (char*)$$.xs[i].name.name);
+    FbleFreeName(arena, $$.xs[i].name);
   }
   FbleFree(arena, $$.xs);
 } <type_fields>
@@ -139,25 +139,25 @@
 
 %destructor { 
   FbleFreeExpr(arena, $$.type);
-  FbleFree(arena, (char*)$$.name.name);
+  FbleFreeName(arena, $$.name);
 } <field>
 
 %destructor {
   for (size_t i = 0; i < $$.size; ++i) {
     FbleFreeExpr(arena, $$.xs[i].type);
-    FbleFree(arena, (char*)$$.xs[i].name.name);
+    FbleFreeName(arena, $$.xs[i].name);
   }
   FbleFree(arena, $$.xs);
 } <fields>
 
 %destructor {
-  FbleFree(arena, (char*)$$.name.name);
+  FbleFreeName(arena, $$.name);
   FbleFreeExpr(arena, $$.expr);
 } <tagged_expr>
 
 %destructor {
   for (size_t i = 0; i < $$.size; ++i) {
-    FbleFree(arena, (char*)$$.xs[i].name.name);
+    FbleFreeName(arena, $$.xs[i].name);
     FbleFreeExpr(arena, $$.xs[i].expr);
   }
   FbleFree(arena, $$.xs);
@@ -167,7 +167,7 @@
   for (size_t i = 0; i < $$.size; ++i) {
     FbleKindRelease(arena, $$.xs[i].kind);
     FbleFreeExpr(arena, $$.xs[i].type);
-    FbleFree(arena, (char*)$$.xs[i].name.name);
+    FbleFreeName(arena, $$.xs[i].name);
     FbleFreeExpr(arena, $$.xs[i].expr);
   }
   FbleFree(arena, $$.xs);
@@ -181,12 +181,12 @@ name:
    WORD {
      $$.name = $1;
      $$.space = FBLE_NORMAL_NAME_SPACE;
-     $$.loc = @$;
+     $$.loc = FbleCopyLoc(@$);
    }
  | WORD '@' {
      $$.name = $1;
      $$.space = FBLE_TYPE_NAME_SPACE;
-     $$.loc = @$;
+     $$.loc = FbleCopyLoc(@$);
    }
  ;
 
@@ -196,14 +196,14 @@ path:
      FbleName* name = FbleVectorExtend(arena, $$);
      name->name = $1;
      name->space = FBLE_NORMAL_NAME_SPACE;  // arbitrary choice
-     name->loc = @$;
+     name->loc = FbleCopyLoc(@$);
    }
  | path '/' WORD {
      $$ = $1;
      FbleName* name = FbleVectorExtend(arena, $$);
      name->name = $3;
      name->space = FBLE_NORMAL_NAME_SPACE;  // arbitrary choice
-     name->loc = @$;
+     name->loc = FbleCopyLoc(@$);
    };
 
 module_ref:
@@ -217,7 +217,7 @@ nkind:
    '%' {
       FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
       basic_kind->_base.tag = FBLE_BASIC_KIND;
-      basic_kind->_base.loc = @$;
+      basic_kind->_base.loc = FbleCopyLoc(@$);
       basic_kind->_base.refcount = 1;
       basic_kind->level = 0;
       $$ = &basic_kind->_base;
@@ -228,7 +228,7 @@ nkind:
         FbleKind* arg = $2.xs[$2.size - 1 - i];
         FblePolyKind* poly_kind = FbleAlloc(arena, FblePolyKind);
         poly_kind->_base.tag = FBLE_POLY_KIND;
-        poly_kind->_base.loc = @$;
+        poly_kind->_base.loc = FbleCopyLoc(@$);
         poly_kind->_base.refcount = 1;
         poly_kind->arg = arg;
         poly_kind->rkind = kind;
@@ -243,7 +243,7 @@ tkind:
    '@' {
       FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
       basic_kind->_base.tag = FBLE_BASIC_KIND;
-      basic_kind->_base.loc = @$;
+      basic_kind->_base.loc = FbleCopyLoc(@$);
       basic_kind->_base.refcount = 1;
       basic_kind->level = 1;
       $$ = &basic_kind->_base;
@@ -254,7 +254,7 @@ tkind:
         FbleKind* arg = $2.xs[$2.size - 1 - i];
         FblePolyKind* poly_kind = FbleAlloc(arena, FblePolyKind);
         poly_kind->_base.tag = FBLE_POLY_KIND;
-        poly_kind->_base.loc = @$;
+        poly_kind->_base.loc = FbleCopyLoc(@$);
         poly_kind->_base.refcount = 1;
         poly_kind->arg = arg;
         poly_kind->rkind = kind;
@@ -297,21 +297,21 @@ expr:
    '@' '<' expr '>' {
      FbleTypeofExpr* typeof = FbleAlloc(arena, FbleTypeofExpr);
      typeof->_base.tag = FBLE_TYPEOF_EXPR;
-     typeof->_base.loc = @$;
+     typeof->_base.loc = FbleCopyLoc(@$);
      typeof->expr = $3;
      $$ = &typeof->_base;
    }
  | name {
       FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
       var_expr->_base.tag = FBLE_VAR_EXPR;
-      var_expr->_base.loc = @$;
+      var_expr->_base.loc = FbleCopyLoc(@$);
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
  | module_ref {
       FbleModuleRefExpr* mref = FbleAlloc(arena, FbleModuleRefExpr);
       mref->_base.tag = FBLE_MODULE_REF_EXPR;
-      mref->_base.loc = @$;
+      mref->_base.loc = FbleCopyLoc(@$);
       mref->ref = $1;
       $$ = &mref->_base;
       FbleVectorAppend(arena, *module_refs, &mref->ref);
@@ -319,14 +319,14 @@ expr:
  | '*' '(' field_s ')' {
       FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);
       struct_type->_base.tag = FBLE_STRUCT_TYPE_EXPR;
-      struct_type->_base.loc = @$;
+      struct_type->_base.loc = FbleCopyLoc(@$);
       struct_type->fields = $3;
       $$ = &struct_type->_base;
    }
  | expr '(' expr_s ')' {
       FbleMiscApplyExpr* misc_apply_expr = FbleAlloc(arena, FbleMiscApplyExpr);
       misc_apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
-      misc_apply_expr->_base.loc = @$;
+      misc_apply_expr->_base.loc = FbleCopyLoc(@$);
       misc_apply_expr->misc = $1;
       misc_apply_expr->args = $3;
       $$ = &misc_apply_expr->_base;
@@ -334,14 +334,14 @@ expr:
  | '@' '(' implicit_tagged_expr_s ')' {
       FbleStructValueImplicitTypeExpr* expr = FbleAlloc(arena, FbleStructValueImplicitTypeExpr);
       expr->_base.tag = FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR;
-      expr->_base.loc = @$;
+      expr->_base.loc = FbleCopyLoc(@$);
       expr->args = $3;
       $$ = &expr->_base;
    }
  | expr '.' name {
       FbleMiscAccessExpr* access_expr = FbleAlloc(arena, FbleMiscAccessExpr);
       access_expr->_base.tag = FBLE_MISC_ACCESS_EXPR;
-      access_expr->_base.loc = @$;
+      access_expr->_base.loc = FbleCopyLoc(@$);
       access_expr->object = $1;
       access_expr->field = $3;
       $$ = &access_expr->_base;
@@ -349,14 +349,14 @@ expr:
  | '+' '(' field_p ')' {
       FbleUnionTypeExpr* union_type = FbleAlloc(arena, FbleUnionTypeExpr);
       union_type->_base.tag = FBLE_UNION_TYPE_EXPR;
-      union_type->_base.loc = @$;
+      union_type->_base.loc = FbleCopyLoc(@$);
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
  | expr '(' name ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(arena, FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
-      union_value_expr->_base.loc = @$;
+      union_value_expr->_base.loc = FbleCopyLoc(@$);
       union_value_expr->type = $1;
       union_value_expr->field = $3;
       union_value_expr->arg = $5;
@@ -365,7 +365,7 @@ expr:
  | expr '.' '?' '(' tagged_expr_p ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(arena, FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
-      select_expr->_base.loc = @$;
+      select_expr->_base.loc = FbleCopyLoc(@$);
       select_expr->condition = $1;
       select_expr->choices = $5;
       select_expr->default_ = NULL;
@@ -374,7 +374,7 @@ expr:
  | expr '.' '?' '(' tagged_expr_p ',' ':' expr ')' {
       FbleUnionSelectExpr* select_expr = FbleAlloc(arena, FbleUnionSelectExpr);
       select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
-      select_expr->_base.loc = @$;
+      select_expr->_base.loc = FbleCopyLoc(@$);
       select_expr->condition = $1;
       select_expr->choices = $5;
       select_expr->default_ = $8;
@@ -383,14 +383,14 @@ expr:
  | expr '!' {
       FbleProcTypeExpr* proc_type = FbleAlloc(arena, FbleProcTypeExpr);
       proc_type->_base.tag = FBLE_PROC_TYPE_EXPR;
-      proc_type->_base.loc = @$;
+      proc_type->_base.loc = FbleCopyLoc(@$);
       proc_type->type = $1;
       $$ = &proc_type->_base;
    }
  | '$' '(' expr ')' {
       FbleEvalExpr* eval_expr = FbleAlloc(arena, FbleEvalExpr);
       eval_expr->_base.tag = FBLE_EVAL_EXPR;
-      eval_expr->_base.loc = @$;
+      eval_expr->_base.loc = FbleCopyLoc(@$);
       eval_expr->body = $3;
       $$ = &eval_expr->_base;
    }
@@ -399,7 +399,7 @@ expr:
       for (size_t i = 0; i < $3.size; ++i) {
         FblePolyApplyExpr* poly_apply_expr = FbleAlloc(arena, FblePolyApplyExpr);
         poly_apply_expr->_base.tag = FBLE_POLY_APPLY_EXPR;
-        poly_apply_expr->_base.loc = @$;
+        poly_apply_expr->_base.loc = FbleCopyLoc(@$);
         poly_apply_expr->poly = $$;
         poly_apply_expr->arg = $3.xs[i];
         $$ = &poly_apply_expr->_base;
@@ -409,16 +409,16 @@ expr:
  | '[' expr_p ']' {
       FbleListExpr* list_expr = FbleAlloc(arena, FbleListExpr);
       list_expr->_base.tag = FBLE_LIST_EXPR;
-      list_expr->_base.loc = @$;
+      list_expr->_base.loc = FbleCopyLoc(@$);
       list_expr->args = $2;
       $$ = &list_expr->_base;
    }
  | expr '|' WORD {
       FbleLiteralExpr* literal_expr = FbleAlloc(arena, FbleLiteralExpr);
       literal_expr->_base.tag = FBLE_LITERAL_EXPR;
-      literal_expr->_base.loc = @$;
+      literal_expr->_base.loc = FbleCopyLoc(@$);
       literal_expr->spec = $1;
-      literal_expr->word_loc = @3;
+      literal_expr->word_loc = FbleCopyLoc(@3);
       literal_expr->word = $3;
       $$ = &literal_expr->_base;
    }
@@ -434,7 +434,7 @@ block:
  | '(' expr_p ')' block {
       FbleFuncTypeExpr* func_type = FbleAlloc(arena, FbleFuncTypeExpr);
       func_type->_base.tag = FBLE_FUNC_TYPE_EXPR;
-      func_type->_base.loc = @$;
+      func_type->_base.loc = FbleCopyLoc(@$);
       func_type->args = $2;
       func_type->rtype = $4;
       $$ = &func_type->_base;
@@ -442,7 +442,7 @@ block:
  | '(' field_p ')' block {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
-      func_value_expr->_base.loc = @$;
+      func_value_expr->_base.loc = FbleCopyLoc(@$);
       func_value_expr->args = $2;
       func_value_expr->body = $4;
       $$ = &func_value_expr->_base;
@@ -453,7 +453,7 @@ block:
         FbleTypeField* arg = $2.xs + $2.size - 1 - i;
         FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
         poly_expr->_base.tag = FBLE_POLY_EXPR;
-        poly_expr->_base.loc = @$;
+        poly_expr->_base.loc = FbleCopyLoc(@$);
         poly_expr->arg.kind = arg->kind;
         poly_expr->arg.name = arg->name;
         poly_expr->body = expr;
@@ -469,7 +469,7 @@ stmt:
   | let_binding_p ';' stmt {
       FbleLetExpr* let_expr = FbleAlloc(arena, FbleLetExpr);
       let_expr->_base.tag = FBLE_LET_EXPR;
-      let_expr->_base.loc = @$;
+      let_expr->_base.loc = FbleCopyLoc(@$);
       let_expr->bindings = $1;
       let_expr->body = $3;
       $$ = &let_expr->_base;
@@ -477,7 +477,7 @@ stmt:
   | expr '~' name ',' name ';' stmt {
       FbleLinkExpr* link_expr = FbleAlloc(arena, FbleLinkExpr);
       link_expr->_base.tag = FBLE_LINK_EXPR;
-      link_expr->_base.loc = @$;
+      link_expr->_base.loc = FbleCopyLoc(@$);
       link_expr->type = $1;
       link_expr->get = $3;
       link_expr->put = $5;
@@ -487,7 +487,7 @@ stmt:
   | exec_binding_p ';' stmt {
       FbleExecExpr* exec_expr = FbleAlloc(arena, FbleExecExpr);
       exec_expr->_base.tag = FBLE_EXEC_EXPR;
-      exec_expr->_base.loc = @$;
+      exec_expr->_base.loc = FbleCopyLoc(@$);
       exec_expr->bindings = $1;
       exec_expr->body = $3;
       $$ = &exec_expr->_base;
@@ -549,7 +549,7 @@ implicit_tagged_expr:
 
       FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
       var_expr->_base.tag = FBLE_VAR_EXPR;
-      var_expr->_base.loc = @$;
+      var_expr->_base.loc = FbleCopyLoc(@$);
       var_expr->var = $1;
       $$.expr = &var_expr->_base;
     }

@@ -481,8 +481,7 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     FbleBlockProfile* block = profile->blocks.xs[i];
-
-    FbleFree(arena, (char*)block->name.name);
+    FbleFreeName(arena, block->name);
     for (size_t j = 0; j < block->callees.size; ++j) {
       FbleFree(arena, block->callees.xs[j]);
     }

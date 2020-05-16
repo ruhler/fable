@@ -289,8 +289,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
 
   switch (instr->tag) {
     case FBLE_UNION_VALUE_INSTR:
-    case FBLE_STRUCT_ACCESS_INSTR:
-    case FBLE_UNION_ACCESS_INSTR:
     case FBLE_JUMP_INSTR:
     case FBLE_RELEASE_INSTR:
     case FBLE_COPY_INSTR:
@@ -304,6 +302,14 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleFree(arena, instr);
       return;
 
+    case FBLE_STRUCT_ACCESS_INSTR:
+    case FBLE_UNION_ACCESS_INSTR: {
+      FbleAccessInstr* i = (FbleAccessInstr*)instr;
+      FbleFreeLoc(arena, i->loc);
+      FbleFree(arena, instr);
+      return;
+    }
+
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       FbleFree(arena, struct_instr->args.xs);
@@ -313,6 +319,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+      FbleFreeLoc(arena, select_instr->loc);
       FbleFree(arena, select_instr->jumps.xs);
       FbleFree(arena, instr);
       return;
@@ -328,6 +335,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+      FbleFreeLoc(arena, call_instr->loc);
       FbleFree(arena, call_instr->args.xs);
       FbleFree(arena, instr);
       return;

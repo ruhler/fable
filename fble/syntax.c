@@ -17,6 +17,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     return;
   }
 
+  FbleFreeLoc(arena, expr->loc);
   switch (expr->tag) {
     case FBLE_TYPEOF_EXPR: {
       FbleTypeofExpr* e = (FbleTypeofExpr*)expr;
@@ -27,7 +28,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
 
     case FBLE_VAR_EXPR: {
       FbleVarExpr* e = (FbleVarExpr*)expr;
-      FbleFree(arena, (char*)e->var.name);
+      FbleFreeName(arena, e->var);
       FbleFree(arena, expr);
       return;
     }
@@ -38,7 +39,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
         FbleBinding* binding = e->bindings.xs + i;
         FbleKindRelease(arena, binding->kind);
         FbleFreeExpr(arena, binding->type);
-        FbleFree(arena, (char*)binding->name.name);
+        FbleFreeName(arena, binding->name);
         FbleFreeExpr(arena, binding->expr);
       }
       FbleFree(arena, e->bindings.xs);
@@ -50,7 +51,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_MODULE_REF_EXPR: {
       FbleModuleRefExpr* e = (FbleModuleRefExpr*)expr;
       for (size_t i = 0; i < e->ref.path.size; ++i) {
-        FbleFree(arena, (char*)e->ref.path.xs[i].name);
+        FbleFreeName(arena, e->ref.path.xs[i]);
       }
       FbleFree(arena, e->ref.path.xs);
       FbleFree(arena, expr);
@@ -61,7 +62,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleStructTypeExpr* e = (FbleStructTypeExpr*)expr;
       for (size_t i = 0; i < e->fields.size; ++i) {
         FbleFreeExpr(arena, e->fields.xs[i].type);
-        FbleFree(arena, (char*)e->fields.xs[i].name.name);
+        FbleFreeName(arena, e->fields.xs[i].name);
       }
       FbleFree(arena, e->fields.xs);
       FbleFree(arena, expr);
@@ -71,7 +72,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
       FbleStructValueImplicitTypeExpr* e = (FbleStructValueImplicitTypeExpr*)expr;
       for (size_t i = 0; i < e->args.size; ++i) {
-        FbleFree(arena, (char*)e->args.xs[i].name.name);
+        FbleFreeName(arena, e->args.xs[i].name);
         FbleFreeExpr(arena, e->args.xs[i].expr);
       }
       FbleFree(arena, e->args.xs);
@@ -83,7 +84,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleUnionTypeExpr* e = (FbleUnionTypeExpr*)expr;
       for (size_t i = 0; i < e->fields.size; ++i) {
         FbleFreeExpr(arena, e->fields.xs[i].type);
-        FbleFree(arena, (char*)e->fields.xs[i].name.name);
+        FbleFreeName(arena, e->fields.xs[i].name);
       }
       FbleFree(arena, e->fields.xs);
       FbleFree(arena, expr);
@@ -93,7 +94,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* e = (FbleUnionValueExpr*)expr;
       FbleFreeExpr(arena, e->type);
-      FbleFree(arena, (char*)e->field.name);
+      FbleFreeName(arena, e->field);
       FbleFreeExpr(arena, e->arg);
       FbleFree(arena, expr);
       return;
@@ -103,7 +104,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleUnionSelectExpr* e = (FbleUnionSelectExpr*)expr;
       FbleFreeExpr(arena, e->condition);
       for (size_t i = 0; i < e->choices.size; ++i) {
-        FbleFree(arena, (char*)e->choices.xs[i].name.name);
+        FbleFreeName(arena, e->choices.xs[i].name);
         FbleFreeExpr(arena, e->choices.xs[i].expr);
       }
       FbleFree(arena, e->choices.xs);
@@ -127,7 +128,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleFuncValueExpr* e = (FbleFuncValueExpr*)expr;
       for (size_t i = 0; i < e->args.size; ++i) {
         FbleFreeExpr(arena, e->args.xs[i].type);
-        FbleFree(arena, (char*)e->args.xs[i].name.name);
+        FbleFreeName(arena, e->args.xs[i].name);
       }
       FbleFree(arena, e->args.xs);
       FbleFreeExpr(arena, e->body);
@@ -152,8 +153,8 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_LINK_EXPR: {
       FbleLinkExpr* e = (FbleLinkExpr*)expr;
       FbleFreeExpr(arena, e->type);
-      FbleFree(arena, (char*)e->get.name);
-      FbleFree(arena, (char*)e->put.name);
+      FbleFreeName(arena, e->get);
+      FbleFreeName(arena, e->put);
       FbleFreeExpr(arena, e->body);
       FbleFree(arena, expr);
       return;
@@ -165,7 +166,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
         FbleBinding* binding = e->bindings.xs + i;
         FbleKindRelease(arena, binding->kind);
         FbleFreeExpr(arena, binding->type);
-        FbleFree(arena, (char*)binding->name.name);
+        FbleFreeName(arena, binding->name);
         FbleFreeExpr(arena, binding->expr);
       }
       FbleFree(arena, e->bindings.xs);
@@ -177,7 +178,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_POLY_EXPR: {
       FblePolyExpr* e = (FblePolyExpr*)expr;
       FbleKindRelease(arena, e->arg.kind);
-      FbleFree(arena, (char*)e->arg.name.name);
+      FbleFreeName(arena, e->arg.name);
       FbleFreeExpr(arena, e->body);
       FbleFree(arena, expr);
       return;
@@ -204,6 +205,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_LITERAL_EXPR: {
       FbleLiteralExpr* e = (FbleLiteralExpr*)expr;
       FbleFreeExpr(arena, e->spec);
+      FbleFreeLoc(arena, e->word_loc);
       FbleFree(arena, (char*)e->word);
       FbleFree(arena, expr);
       return;
@@ -212,7 +214,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_MISC_ACCESS_EXPR: {
       FbleMiscAccessExpr* e = (FbleMiscAccessExpr*)expr;
       FbleFreeExpr(arena, e->object);
-      FbleFree(arena, (char*)e->field.name);
+      FbleFreeName(arena, e->field);
       FbleFree(arena, expr);
       return;
     }
@@ -260,6 +262,19 @@ void FbleStringRelease(FbleArena* arena, FbleString* string)
   }
 }
 
+// FbleCopyLoc -- see documentation in fble-syntax.h
+FbleLoc FbleCopyLoc(FbleLoc loc)
+{
+  FbleStringRetain(loc.source);
+  return loc;
+}
+
+// FbleFreeLoc -- see documentation in fble-syntax.h
+void FbleFreeLoc(FbleArena* arena, FbleLoc loc)
+{
+  FbleStringRelease(arena, loc.source);
+}
+
 // FbleReportWarning -- see documentation in fble-syntax.h
 void FbleReportWarning(const char* format, FbleLoc* loc, ...)
 {
@@ -284,6 +299,13 @@ void FbleReportError(const char* format, FbleLoc* loc, ...)
 bool FbleNamesEqual(FbleName* a, FbleName* b)
 {
   return a->space == b->space && strcmp(a->name, b->name) == 0;
+}
+
+// FbleFreeName -- see documentation in fble-syntax.h
+void FbleFreeName(FbleArena* arena, FbleName name)
+{
+  FbleFreeLoc(arena, name.loc);
+  FbleFree(arena, (char*)name.name);
 }
 
 // FblePrintName -- see documentation in fble-syntax.h
@@ -320,6 +342,7 @@ void FbleKindRelease(FbleArena* arena, FbleKind* kind)
     assert(kind->refcount > 0);
     kind->refcount--;
     if (kind->refcount == 0) {
+      FbleFreeLoc(arena, kind->loc);
       switch (kind->tag) {
         case FBLE_BASIC_KIND: {
           FbleFree(arena, kind);
@@ -342,12 +365,10 @@ void FbleKindRelease(FbleArena* arena, FbleKind* kind)
 void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
 {
   for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleStringRelease(arena, program->modules.xs[i].filename);
-    FbleFree(arena, (char*)program->modules.xs[i].name.name);
+    FbleFreeName(arena, program->modules.xs[i].name);
     FbleFreeExpr(arena, program->modules.xs[i].value);
   }
   FbleFree(arena, program->modules.xs);
-  FbleStringRelease(arena, program->filename);
   FbleFreeExpr(arena, program->main);
   FbleFree(arena, program);
 }

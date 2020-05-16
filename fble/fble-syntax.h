@@ -72,6 +72,31 @@ typedef struct {
   int col;
 } FbleLoc;
 
+// FbleCopyLoc --
+//   Make a copy of a location. In particular, increments the reference count
+//   on the filename.
+//
+// Inputs:
+//   loc - the loc to copy.
+//
+// Result:
+//   A copy of the loc.
+//
+// Side effects:
+//   Increments the reference count on the filename used in the loc.
+FbleLoc FbleCopyLoc(FbleLoc loc);
+
+// FbleFreeLoc --
+//   Free resources associated with the given loc.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   loc - the location to free resources of.
+//
+// Side effects
+//   Decrements the refcount on the loc's source filename.
+void FbleFreeLoc(FbleArena* arena, FbleLoc loc);
+
 // FbleReportWarning --
 //   Report a warning message associated with a location in a source file.
 //
@@ -118,6 +143,17 @@ typedef struct {
   FbleNameSpace space;
   FbleLoc loc;
 } FbleName;
+
+// FbleFreeName --
+//   Free resources associated with a name.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   name - the name to free resources of.
+//
+// Side effects:
+//   Frees resources associated with the name.
+void FbleFreeName(FbleArena* arena, FbleName name);
 
 // FbleNameV --
 //   A vector of FbleNames.
@@ -557,7 +593,6 @@ typedef struct {
 //          name "Foo/Bar" in the MODULE name space.
 //   value - the value of the module
 typedef struct {
-  FbleString* filename;
   FbleName name;
   FbleExpr* value;
 } FbleModule;
@@ -580,7 +615,6 @@ typedef struct {
 //   main - The value of the program, which may depend on any of the modules.
 typedef struct {
   FbleModuleV modules;
-  FbleString* filename;
   FbleExpr* main;
 } FbleProgram;
 

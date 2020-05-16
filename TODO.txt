@@ -1,7 +1,8 @@
 * [compile] Do proper memory tracking and cleanup for the abstract syntax.
- - Make sure to retain a copy of filename for locs when generating instruction
-   blocks.
- - Make sure to retain a copy of filename for profiles too.
+ - Figure out how to track down messed up refcounting on loc source filenames.
+   Sigh.
+
+* Better document ownership of memory in fble-syntax.h
 
 * Do FbleAssertEmptyArena automatically in FbleFreeArena?
  - It seems like a bad idea to rely on bulk free now.

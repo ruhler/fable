@@ -33,13 +33,11 @@ struct Tree {
 // Fields:
 //   module_refs - relative references from the module to other modules.
 //   path - the resolved path to the module.
-//   filename - the filename for the source code of the module.
 //   value - the value of the module.
 //   tail - the rest of the stack of modules.
 typedef struct Stack {
   FbleModuleRefV module_refs;
   FbleNameV path;
-  FbleString* filename;
   FbleExpr* value;
   struct Stack* tail;
 } Stack;
@@ -320,8 +318,9 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FbleVectorInit(arena, stack->module_refs);
   stack->path.size = 0;
   stack->tail = NULL;
-  stack->filename = FbleNewString(arena, filename);
-  stack->value = FbleParse(arena, stack->filename, &stack->module_refs);
+  FbleString* filename_str = FbleNewString(arena, filename);
+  stack->value = FbleParse(arena, filename_str, &stack->module_refs);
+  FbleStringRelease(arena, filename_str);
   bool error = (stack->value == NULL);
   if (stack->value == NULL) {
     stack->module_refs.size = 0;
@@ -340,7 +339,6 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       // We have loaded all the dependencies for this module.
       FbleModule* module = FbleVectorExtend(arena, program->modules);
       PathToName(arena, stack->path, &module->name);
-      module->filename = stack->filename;
       module->value = stack->value;
       Stack* tail = stack->tail;
       FbleFree(arena, stack->module_refs.xs);
@@ -407,11 +405,12 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     FbleVectorInit(arena, stack->module_refs);
     stack->path = ref->path;
     stack->tail = tail;
-    stack->filename = Find(arena, root, tree, stack->path);
+    FbleString* filename_str = Find(arena, root, tree, stack->path);
     stack->value = NULL;
 
-    if (stack->filename != NULL) {
-      stack->value = FbleParse(arena, stack->filename, &stack->module_refs);
+    if (filename_str != NULL) {
+      stack->value = FbleParse(arena, filename_str, &stack->module_refs);
+      FbleStringRelease(arena, filename_str);
     }
 
     if (stack->value == NULL) {
@@ -424,7 +423,6 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   // The last module loaded should be the main entry point.
   program->modules.size--;
   FbleFree(arena, (char*)program->modules.xs[program->modules.size].name.name);
-  program->filename = program->modules.xs[program->modules.size].filename;
   program->main = program->modules.xs[program->modules.size].value;
 
   if (error) {
