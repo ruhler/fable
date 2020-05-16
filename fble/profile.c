@@ -774,7 +774,6 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
     FbleFree(arena, callers[id].xs);
   }
   fprintf(fout, "\n");
-  FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
 
   // Locations

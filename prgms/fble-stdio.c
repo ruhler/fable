@@ -208,7 +208,6 @@ int main(int argc, char* argv[])
   FbleArena* arena = FbleNewArena();
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return 1;
   }
@@ -219,7 +218,6 @@ int main(int argc, char* argv[])
 
   if (compiled == NULL) {
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return 1;
   }
@@ -231,7 +229,6 @@ int main(int argc, char* argv[])
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return 1;
   }
@@ -254,7 +251,6 @@ int main(int argc, char* argv[])
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return 1;
   }
@@ -276,7 +272,6 @@ int main(int argc, char* argv[])
 
   FbleFreeValueHeap(heap);
   FbleFreeProfile(arena, profile);
-  FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
   return result;
 }

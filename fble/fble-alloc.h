@@ -113,7 +113,7 @@ void FbleFree(FbleArena* arena, void* ptr);
 FbleArena* FbleNewArena();
 
 // FbleFreeArena --
-//   Free an arena created with FbleNewArena.
+//   Free an arena created with FbleNewArena. The arena must be empty.
 //
 // Inputs:
 //   arena - the arena to delete.
@@ -122,24 +122,9 @@ FbleArena* FbleNewArena();
 //   None.
 //
 // Side effects:
-//   Frees memory associated with the arena, including the arena itself and
-//   all outstanding allocations made by the arena.
+//   Frees memory associated with the arena. Behavior is undefined if there
+//   are outstanding allocations made by the arena.
 void FbleFreeArena(FbleArena* arena);
-
-// FbleAssertEmptyArena
-//   Check that there are no outstanding allocations in the given arena. Used
-//   to aid in testing and debugging memory leaks.
-//
-// Inputs:
-//   arena - A pointer to the arena to check.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Prints debug message to stderr and aborts the process if there are any
-//   outstanding allocations in the arena.
-void FbleAssertEmptyArena(FbleArena* arena);
 
 // FbleArenaMaxSize
 //   Returns the maximum size the given arena reached in bytes.

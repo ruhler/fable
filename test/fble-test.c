@@ -96,7 +96,6 @@ int main(int argc, char* argv[])
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
 
   if (prgm == NULL) {
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return failure;
   }
@@ -107,7 +106,6 @@ int main(int argc, char* argv[])
 
   if (compiled == NULL) {
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return failure;
   }
@@ -133,7 +131,6 @@ int main(int argc, char* argv[])
     FbleFreeProfile(arena, profile);
   }
 
-  FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
 
   if (result == NULL) {

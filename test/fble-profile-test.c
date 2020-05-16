@@ -101,7 +101,6 @@ static size_t AutoExitMaxMem(size_t n)
   ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 10 * n);
 
   FbleFreeProfile(arena, profile);
-  FbleAssertEmptyArena(arena);
   size_t memory = FbleArenaMaxSize(arena);
   FbleFreeArena(arena);
   return memory;
@@ -121,13 +120,12 @@ static size_t AutoExitMaxMem(size_t n)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, char* argv[])
 {
-  FbleArena* arena = FbleNewArena();
-
   {
     // Test a simple call profile:
     // 0 -> 1 -> 2 -> 3
     //             -> 4
     //        -> 3
+    FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
     FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
@@ -196,7 +194,7 @@ int main(int argc, char* argv[])
 
     FbleProfileReport(stdout, profile);
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
   }
 
   {
@@ -204,7 +202,7 @@ int main(int argc, char* argv[])
     // 0 -> 1 -> 2 => 3 -> 4
     //                  => 5
     //        -> 6
-    FbleAssertEmptyArena(arena);
+    FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
     FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
@@ -290,13 +288,13 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[6]->callees.size == 0);
 
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
   }
 
   {
     // Test a profile with self recursion
     // 0 -> 1 -> 2 -> 2 -> 2 -> 3
-    FbleAssertEmptyArena(arena);
+    FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
     FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
@@ -356,13 +354,13 @@ int main(int argc, char* argv[])
 
     FbleProfileReport(stdout, profile);
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
   }
 
   {
     // Test a profile with self recursion and tail calls
     // 0 -> 1 => 2 => 2 => 2 => 3
-    FbleAssertEmptyArena(arena);
+    FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
     FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
@@ -422,13 +420,13 @@ int main(int argc, char* argv[])
 
     FbleProfileReport(stdout, profile);
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
   }
 
   {
     // Test a profile with mutual recursion
     // 0 -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
-    FbleAssertEmptyArena(arena);
+    FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
     FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
@@ -500,7 +498,7 @@ int main(int argc, char* argv[])
 
     FbleProfileReport(stdout, profile);
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
   }
 
   {
@@ -514,7 +512,7 @@ int main(int argc, char* argv[])
     // Test multithreaded profiling.
     // a: 0 -> 1 -> 2
     // b: 0 -> 1 -> 2
-    FbleAssertEmptyArena(arena);
+    FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
     FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
@@ -566,14 +564,14 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[2]->callees.size == 0);
 
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
   }
 
   {
     // Test forking of threads.
     // parent: 0 -> 1 -> 2
     // child:       \--> 3
-    FbleAssertEmptyArena(arena);
+    FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
     FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
@@ -630,9 +628,8 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
     FbleFreeProfile(arena, profile);
-    FbleAssertEmptyArena(arena);
+    FbleFreeArena(arena);
   }
 
-  FbleFreeArena(arena);
   return sTestsFailed ? 1 : 0;
 }

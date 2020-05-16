@@ -98,16 +98,7 @@ FbleArena* FbleNewArena()
 // FbleFreeArena -- see documentation in fble-alloc.h
 void FbleFreeArena(FbleArena* arena)
 {
-  while (arena->allocs->next != arena->allocs) {
-    FbleFree(arena, arena->allocs->next->data);
-  }
-  free(arena->allocs);
-  free(arena);
-}
-
-// FbleAssertEmptyArena -- see documentation in fble-alloc.h
-void FbleAssertEmptyArena(FbleArena* arena)
-{
+  // Check for memory leaks.
   if (arena->allocs->next != arena->allocs) {
     fprintf(stderr, "the following allocations are outstanding:\n");
     for (Alloc* alloc = arena->allocs->next; alloc != arena->allocs; alloc = alloc->next) {
@@ -115,6 +106,12 @@ void FbleAssertEmptyArena(FbleArena* arena)
     }
     abort();
   }
+
+  while (arena->allocs->next != arena->allocs) {
+    FbleFree(arena, arena->allocs->next->data);
+  }
+  free(arena->allocs);
+  free(arena);
 }
 
 // FbleArenaMaxSize -- see documentation in fble-alloc.h

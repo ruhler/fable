@@ -117,7 +117,6 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
   FbleFreeProfile(arena, profile);
 
   *max_bytes = FbleArenaMaxSize(arena);
-  FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
   return success;
 }
@@ -168,7 +167,6 @@ int main(int argc, char* argv[])
   FbleArena* arena = FbleNewArena();
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
@@ -177,7 +175,6 @@ int main(int argc, char* argv[])
 //    size_t max_n = 0;
 //    if (!Run(prgm, i, 200, &max_n)) {
 //      FbleFreeProgram(arena, prgm);
-//      FbleAssertEmptyArena(arena);
 //      FbleFreeArena(arena);
 //      return EX_FAIL;
 //    }
@@ -187,7 +184,6 @@ int main(int argc, char* argv[])
   size_t max_small_n = 0;
   if (!Run(prgm, 100, 200, &max_small_n)) {
     FbleFreeProgram(arena, prgm);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
@@ -195,7 +191,6 @@ int main(int argc, char* argv[])
   size_t max_large_n = 0;
   if (!Run(prgm, 200, 200, &max_large_n)) {
     FbleFreeProgram(arena, prgm);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
@@ -207,7 +202,6 @@ int main(int argc, char* argv[])
   if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
     FbleFreeProgram(arena, prgm);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
@@ -215,13 +209,11 @@ int main(int argc, char* argv[])
   if (growth && max_large_n <= max_small_n + noise) {
     fprintf(stderr, "memory constant\n");
     FbleFreeProgram(arena, prgm);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
 
   FbleFreeProgram(arena, prgm);
-  FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
   return EX_SUCCESS;
 }

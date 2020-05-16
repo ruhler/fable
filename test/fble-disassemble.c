@@ -73,20 +73,21 @@ int main(int argc, char* argv[])
   FbleArena* arena = FbleNewArena();
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
+    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
   FbleProfile* profile = FbleNewProfile(arena);
   FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
+  FbleFreeProgram(arena, prgm);
   if (compiled == NULL) {
     FbleFreeProfile(arena, profile);
+    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
   FbleDisassemble(stdout, compiled, profile);
 
-  //  TODO: Assert the arena is empty once we add proper support for cleaning
-  //  up loaded programs.
   FbleFreeCompiledProgram(arena, compiled);
   FbleFreeProfile(arena, profile);
   FbleFreeArena(arena);

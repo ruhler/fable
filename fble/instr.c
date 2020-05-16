@@ -273,7 +273,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
   }
 
   FbleFree(arena, blocks.xs);
-  FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
 }
 

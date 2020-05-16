@@ -480,7 +480,6 @@ int main(int argc, char* argv[])
   FbleArena* arena = FbleNewArena();
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return 1;
   }
@@ -488,7 +487,6 @@ int main(int argc, char* argv[])
   FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
   FbleFreeProgram(arena, prgm);
   if (compiled == NULL) {
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return 1;
   }
@@ -499,7 +497,6 @@ int main(int argc, char* argv[])
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return 1;
   }
@@ -507,7 +504,6 @@ int main(int argc, char* argv[])
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
     FbleFreeValueHeap(heap);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     return 1;
   }
@@ -560,7 +556,6 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleAssertEmptyArena(arena);
     FbleFreeArena(arena);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -576,7 +571,6 @@ int main(int argc, char* argv[])
 
   FbleValueRelease(heap, value);
   FbleFreeValueHeap(heap);
-  FbleAssertEmptyArena(arena);
   FbleFreeArena(arena);
 
   SDL_DestroyWindow(window);
