@@ -256,6 +256,7 @@ FbleString* FbleStringRetain(FbleString* string)
 // FbleStringRelease -- see documentation in fble-syntax.h
 void FbleStringRelease(FbleArena* arena, FbleString* string)
 {
+  assert(string->refcount > 0);
   if (--string->refcount == 0) {
     FbleFree(arena, (char*)string->str);
     FbleFree(arena, string);

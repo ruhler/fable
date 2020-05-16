@@ -1,6 +1,5 @@
 * [compile] Do proper memory tracking and cleanup for the abstract syntax.
- - Figure out how to track down messed up refcounting on loc source filenames.
-   Sigh.
+ - Track down the remaining seg faults.
 
 * Better document ownership of memory in fble-syntax.h
 
