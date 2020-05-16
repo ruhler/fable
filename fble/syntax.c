@@ -229,7 +229,7 @@ static void FreeExpr(FbleArena* arena, FbleExpr* expr)
 
     case FBLE_MISC_APPLY_EXPR: {
       FbleMiscApplyExpr* e = (FbleMiscApplyExpr*)expr;
-      FbleFree(arena, e->misc);
+      FreeExpr(arena, e->misc);
       for (size_t i = 0; i < e->args.size; ++i) {
         FreeExpr(arena, e->args.xs[i]);
       }
