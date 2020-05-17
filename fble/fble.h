@@ -28,7 +28,7 @@
 //   the program.
 //
 // Side effects:
-//   The returned value must be freed with FbleValueRelease when no longer in
+//   The returned value must be freed with FbleReleaseValue when no longer in
 //   use.
 //   Prints an error message to stderr in case of a runtime error.
 //   Updates profiling information in profile based on the execution of the
@@ -48,7 +48,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleCompiledProgram* program, FbleProfi
 //   The result of applying the function to the given arguments.
 //
 // Side effects:
-//   The returned value must be freed with FbleValueRelease when no longer in
+//   The returned value must be freed with FbleReleaseValue when no longer in
 //   use.
 //   Does not take ownership of the func. Does not take ownership of the args.
 //   Prints warning messages to stderr.
@@ -74,7 +74,7 @@ typedef struct FbleIO {
   //     NULL: the io function should do nothing for this port.
   //     non-NULL: the io function may, at its option, output the value.
   //       If the io function chooses to output the value, it should
-  //       FbleValueRelease the value and replace it with NULL. Otherwise the
+  //       FbleReleaseValue the value and replace it with NULL. Otherwise the
   //       io function should leave the existing value as is.
   //
   //   io may be blocking or non-blocking depending on the 'block' argument.

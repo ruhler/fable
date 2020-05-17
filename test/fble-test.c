@@ -119,11 +119,11 @@ int main(int argc, char* argv[])
   if (result != NULL && FbleIsProcValue(result)) {
     FbleIO io = { .io = &FbleNoIO, };
     FbleValue* exec_result = FbleExec(heap, &io, result, profile);
-    FbleValueRelease(heap, result);
+    FbleReleaseValue(heap, result);
     result = exec_result;
   }
 
-  FbleValueRelease(heap, result);
+  FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 
   if (report_profile) {

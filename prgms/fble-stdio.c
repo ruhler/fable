@@ -131,7 +131,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     }
     fflush(stdout);
 
-    FbleValueRelease(heap, stdio->output);
+    FbleReleaseValue(heap, stdio->output);
     stdio->output = NULL;
     change = true;
   }
@@ -150,13 +150,13 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
         FbleValue* xs[] = { charV, charS };
         FbleValueV args = { .size = 2, .xs = xs };
         FbleValue* charP = FbleNewStructValue(heap, args);
-        FbleValueRelease(heap, charV);
-        FbleValueRelease(heap, charS);
+        FbleReleaseValue(heap, charV);
+        FbleReleaseValue(heap, charS);
         charS = FbleNewUnionValue(heap, 0, charP);
-        FbleValueRelease(heap, charP);
+        FbleReleaseValue(heap, charP);
       }
       stdio->input = FbleNewUnionValue(heap, 0, charS);
-      FbleValueRelease(heap, charS);
+      FbleReleaseValue(heap, charS);
     }
     free(line);
     change = true;
@@ -244,9 +244,9 @@ int main(int argc, char* argv[])
     FbleNewOutputPortValue(heap, &io.output)
   };
   FbleValue* proc = FbleApply(heap, func, args, profile);
-  FbleValueRelease(heap, func);
-  FbleValueRelease(heap, args[0]);
-  FbleValueRelease(heap, args[1]);
+  FbleReleaseValue(heap, func);
+  FbleReleaseValue(heap, args[0]);
+  FbleReleaseValue(heap, args[1]);
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
@@ -257,13 +257,13 @@ int main(int argc, char* argv[])
 
   FbleValue* value = FbleExec(heap, &io.io, proc, profile);
 
-  FbleValueRelease(heap, proc);
-  FbleValueRelease(heap, io.input);
-  FbleValueRelease(heap, io.output);
+  FbleReleaseValue(heap, proc);
+  FbleReleaseValue(heap, io.input);
+  FbleReleaseValue(heap, io.output);
 
   size_t result = FbleUnionValueTag(value);
 
-  FbleValueRelease(heap, value);
+  FbleReleaseValue(heap, value);
   FbleFreeValueHeap(heap);
 
   if (fprofile != NULL) {

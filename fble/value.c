@@ -29,14 +29,14 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
   FbleFreeMarkSweepHeap(heap);
 }
 
-// FbleValueRetain -- see documentation in fble-value.h
-void FbleValueRetain(FbleValueHeap* heap, FbleValue* value)
+// FbleRetainValue -- see documentation in fble-value.h
+void FbleRetainValue(FbleValueHeap* heap, FbleValue* value)
 {
   heap->retain(heap, value);
 }
 
-// FbleValueRelease -- see documentation in fble-value.h
-void FbleValueRelease(FbleValueHeap* heap, FbleValue* value)
+// FbleReleaseValue -- see documentation in fble-value.h
+void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value)
 {
   if (value != NULL) {
     heap->release(heap, value);
@@ -199,7 +199,7 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
   FbleValueV args = { .size = 0, .xs = NULL, };
   FbleValue* unit = FbleNewStructValue(heap, args);
   FbleValue* result = FbleNewUnionValue(heap, tag, unit);
-  FbleValueRelease(heap, unit);
+  FbleReleaseValue(heap, unit);
   return result;
 }
 
@@ -273,7 +273,7 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data)
   get_port->data = data;
 
   FbleValue* get = FbleNewGetValue(heap, &get_port->_base);
-  FbleValueRelease(heap, &get_port->_base);
+  FbleReleaseValue(heap, &get_port->_base);
   return get;
 }
 
@@ -353,6 +353,6 @@ FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data)
   port_value->_base.tag = FBLE_PORT_VALUE;
   port_value->data = data;
   FbleValue* put = FbleNewPutValue(heap, &port_value->_base);
-  FbleValueRelease(heap, &port_value->_base);
+  FbleReleaseValue(heap, &port_value->_base);
   return put;
 }

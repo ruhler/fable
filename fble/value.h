@@ -130,7 +130,7 @@ typedef struct FbleTypeValue {
 //   A newly allocated get value.
 //
 // Side effects:
-//   The returned get value must be freed using FbleValueRelease when no
+//   The returned get value must be freed using FbleReleaseValue when no
 //   longer in use. This function does not take ownership of the port value.
 //   argument.
 FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
@@ -146,7 +146,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
 //   A newly allocated put value.
 //
 // Side effects:
-//   The returned put value must be freed using FbleValueRelease when no
+//   The returned put value must be freed using FbleReleaseValue when no
 //   longer in use. This function does not take ownership of the link value.
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link);
 

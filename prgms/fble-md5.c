@@ -70,8 +70,8 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
   xs[0] = MkBitN(heap, halfn, (data >> halfn));
   FbleValueV args = { .size = 2, .xs = xs };
   FbleValue* result = FbleNewStructValue(heap, args);
-  FbleValueRelease(heap, xs[0]);
-  FbleValueRelease(heap, xs[1]);
+  FbleReleaseValue(heap, xs[0]);
+  FbleReleaseValue(heap, xs[1]);
   return result;
 }
 
@@ -91,7 +91,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       // Maybe<Bit8>:just(c)
       FbleValue* byte = MkBitN(heap, 8, c);
       mio->input = FbleNewUnionValue(heap, 0, byte);
-      FbleValueRelease(heap, byte);
+      FbleReleaseValue(heap, byte);
     }
     return true;
   }
@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
   FILE* fin = fopen(file, "rb");
   if (fin == NULL) {
     fprintf(stderr, "unable to open %s\n", file);
-    FbleValueRelease(heap, func);
+    FbleReleaseValue(heap, func);
     FbleFreeValueHeap(heap);
     FbleFreeArena(arena);
     return 1;
@@ -181,8 +181,8 @@ int main(int argc, char* argv[])
 
   FbleValue* input = FbleNewInputPortValue(heap, &mio.input);
   FbleValue* proc = FbleApply(heap, func, &input, NULL);
-  FbleValueRelease(heap, func);
-  FbleValueRelease(heap, input);
+  FbleReleaseValue(heap, func);
+  FbleReleaseValue(heap, input);
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
@@ -192,7 +192,7 @@ int main(int argc, char* argv[])
 
   FbleValue* value = FbleExec(heap, &mio.io, proc, NULL);
 
-  FbleValueRelease(heap, proc);
+  FbleReleaseValue(heap, proc);
   assert(mio.input == NULL);
 
   // Print the md5 hash
@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
   }
   printf("\n");
 
-  FbleValueRelease(heap, value);
+  FbleReleaseValue(heap, value);
   FbleFreeValueHeap(heap);
   FbleFreeArena(arena);
   return 0;

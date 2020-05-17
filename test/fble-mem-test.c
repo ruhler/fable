@@ -82,17 +82,17 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
       for (size_t i = 0; i < num_bits; ++i) {
         FbleValue* bit = (use_n % 2 == 0) ? zero : one;
         use_n /= 2;
-        FbleValueRetain(heap, bit);
+        FbleRetainValue(heap, bit);
         FbleValue* xs[2] = { bit, tail };
         FbleValueV args = { .size = 2, .xs = xs };
         FbleValue* cons = FbleNewStructValue(heap, args);
-        FbleValueRelease(heap, bit);
-        FbleValueRelease(heap, tail);
+        FbleReleaseValue(heap, bit);
+        FbleReleaseValue(heap, tail);
         tail = FbleNewUnionValue(heap, 0, cons);
-        FbleValueRelease(heap, cons);
+        FbleReleaseValue(heap, cons);
       }
-      FbleValueRelease(heap, zero);
-      FbleValueRelease(heap, one);
+      FbleReleaseValue(heap, zero);
+      FbleReleaseValue(heap, one);
 
       FbleValue* result = FbleApply(heap, func, &tail, profile);
 
@@ -101,16 +101,16 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
       if (result != NULL && FbleIsProcValue(result)) {
         FbleIO io = { .io = &FbleNoIO };
         FbleValue* exec_result = FbleExec(heap, &io, result, profile);
-        FbleValueRelease(heap, result);
+        FbleReleaseValue(heap, result);
         result = exec_result;
       }
 
       success = (result != NULL);
-      FbleValueRelease(heap, result);
-      FbleValueRelease(heap, tail);
+      FbleReleaseValue(heap, result);
+      FbleReleaseValue(heap, tail);
     }
 
-    FbleValueRelease(heap, func);
+    FbleReleaseValue(heap, func);
     FbleFreeValueHeap(heap);
     FbleFreeCompiledProgram(arena, compiled);
   }

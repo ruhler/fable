@@ -77,8 +77,8 @@ void FbleFreeValueHeap(FbleValueHeap* heap);
 //   Allocates a value that should be released when it is no longer needed.
 #define FbleNewValueExtra(heap, T, size) ((T*) heap->new(heap, sizeof(T) + size))
 
-// FbleValueRetain --
-//   Keep the given value alive until a corresponding FbleValueRelease is
+// FbleRetainValue --
+//   Keep the given value alive until a corresponding FbleReleaseValue is
 //   called.
 //
 // Inputs:
@@ -86,12 +86,12 @@ void FbleFreeValueHeap(FbleValueHeap* heap);
 //   value - The value to retain.
 //
 // Side effects:
-//   Causes the value to be retained until a corresponding FbleValueRelease
-//   calls is made on the value. FbleValueRelease must be called when the
+//   Causes the value to be retained until a corresponding FbleReleaseValue
+//   calls is made on the value. FbleReleaseValue must be called when the
 //   value is no longer needed.
-void FbleValueRetain(FbleValueHeap* heap, FbleValue* src);
+void FbleRetainValue(FbleValueHeap* heap, FbleValue* src);
 
-// FbleValueRelease --
+// FbleReleaseValue --
 //
 //   Decrement the strong reference count of a value and free the resources
 //   associated with that value if it has no more references.
@@ -107,7 +107,7 @@ void FbleValueRetain(FbleValueHeap* heap, FbleValue* src);
 // Side effect:
 //   Decrements the strong reference count of the value and frees resources
 //   associated with the value if there are no more references to it.
-void FbleValueRelease(FbleValueHeap* heap, FbleValue* value);
+void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value);
 
 // FbleValueAddRef --
 //   Notify the value heap of a new reference from src to dst.
@@ -144,7 +144,7 @@ void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 //   A newly allocated struct value with given args.
 //
 // Side effects:
-//   The returned struct value must be freed using FbleValueRelease when no
+//   The returned struct value must be freed using FbleReleaseValue when no
 //   longer in use.
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args);
 
@@ -176,7 +176,7 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 //   A newly allocated union value with given tag and arg.
 //
 // Side effects:
-//   The returned union value must be freed using FbleValueRelease when no
+//   The returned union value must be freed using FbleReleaseValue when no
 //   longer in use.
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
 
@@ -192,7 +192,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
 //   A newly allocated union value with given tag and arg.
 //
 // Side effects:
-//   The returned union value must be freed using FbleValueRelease when no
+//   The returned union value must be freed using FbleReleaseValue when no
 //   longer in use.
 FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
 
@@ -248,7 +248,7 @@ bool FbleIsProcValue(FbleValue* value);
 //   A newly allocated port value.
 //
 // Side effects:
-//   The returned port value must be freed using FbleValueRelease when no
+//   The returned port value must be freed using FbleReleaseValue when no
 //   longer in use.
 FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data);
 
@@ -263,7 +263,7 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data);
 //   A newly allocated port value.
 //
 // Side effects:
-//   The returned port value must be freed using FbleValueRelease when no
+//   The returned port value must be freed using FbleReleaseValue when no
 //   longer in use.
 FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data);
 

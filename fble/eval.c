@@ -210,11 +210,11 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 
   size_t start = stack->owner ? 0 : stack->func->argc;
   for (size_t i = start; i < stack->func->code->locals; ++i) {
-    FbleValueRelease(heap, stack->locals[i]);
+    FbleReleaseValue(heap, stack->locals[i]);
   }
 
   if (stack->owner) {
-    FbleValueRelease(heap, &stack->func->_base);
+    FbleReleaseValue(heap, &stack->func->_base);
   }
 
   Stack* tail = stack->tail;
@@ -244,18 +244,18 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
 {
   FbleArena* arena = heap->arena;
 
-  FbleValueRetain(heap, &func->_base);
+  FbleRetainValue(heap, &func->_base);
   for (size_t i = 0; i < func->argc; ++i) {
-    FbleValueRetain(heap, args[i]);
+    FbleRetainValue(heap, args[i]);
   }
 
   size_t old_locals = stack->func->code->locals;
   size_t start = stack->owner ? 0 : stack->func->argc;
   for (size_t i = start; i < old_locals; ++i) {
-    FbleValueRelease(heap, stack->locals[i]);
+    FbleReleaseValue(heap, stack->locals[i]);
   }
   if (stack->owner) {
-    FbleValueRelease(heap, &stack->func->_base);
+    FbleReleaseValue(heap, &stack->func->_base);
   }
 
   size_t locals = func->code->locals;
@@ -383,7 +383,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
         assert(access_instr->tag < sv->fieldc);
         FbleValue* value = sv->fields[access_instr->tag];
-        FbleValueRetain(heap, value);
+        FbleRetainValue(heap, value);
         locals[access_instr->dest] = value;
         break;
       }
@@ -404,7 +404,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
           return AbortThread(heap, thread, aborted);
         }
 
-        FbleValueRetain(heap, uv->arg);
+        FbleRetainValue(heap, uv->arg);
         locals[access_instr->dest] = uv->arg;
         break;
       }
@@ -448,7 +448,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
         assert(locals[release->value] != NULL);
-        FbleValueRelease(heap, locals[release->value]);
+        FbleReleaseValue(heap, locals[release->value]);
         locals[release->value] = NULL;
         break;
       }
@@ -504,7 +504,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       case FBLE_COPY_INSTR: {
         FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
         FbleValue* value = FrameGet(statics, locals, copy_instr->source);
-        FbleValueRetain(heap, value);
+        FbleRetainValue(heap, value);
         locals[copy_instr->dest] = value;
         break;
       }
@@ -529,7 +529,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
             link->tail = NULL;
           }
 
-          FbleValueRetain(heap, head->value);
+          FbleRetainValue(heap, head->value);
           locals[get_instr->dest] = head->value;
           FbleValueDelRef(heap, &link->_base, head->value);
           FbleFree(arena, head);
@@ -597,7 +597,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
             return BLOCKED;
           }
 
-          FbleValueRetain(heap, arg);
+          FbleRetainValue(heap, arg);
           *port->data = arg;
           locals[put_instr->dest] = unit;
           *io_activity = true;
@@ -618,7 +618,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
         FbleValue* get = FbleNewGetValue(heap, &link->_base);
         FbleValue* put = FbleNewPutValue(heap, &link->_base);
-        FbleValueRelease(heap, &link->_base);
+        FbleReleaseValue(heap, &link->_base);
 
         locals[link_instr->get] = get;
         locals[link_instr->put] = put;
@@ -680,7 +680,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
         FbleValue* result = FrameGet(statics, locals, return_instr->result);
-        FbleValueRetain(heap, result);
+        FbleRetainValue(heap, result);
         *thread->stack->result = result;
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
@@ -778,7 +778,7 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-        FbleValueRelease(heap, locals[release->value]);
+        FbleReleaseValue(heap, locals[release->value]);
         locals[release->value] = NULL;
         break;
       }
@@ -964,7 +964,7 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
 //   The computed value, or NULL on error.
 //
 // Side effects:
-//   The returned value must be freed with FbleValueRelease when no longer in
+//   The returned value must be freed with FbleReleaseValue when no longer in
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
 //   Does not take ownership of the function or the args.
@@ -1030,7 +1030,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleCompiledProgram* program, FbleProfi
 
   FbleIO io = { .io = &FbleNoIO };
   FbleValue* result = Eval(heap, &io, func, NULL, profile);
-  FbleValueRelease(heap, &func->_base);
+  FbleReleaseValue(heap, &func->_base);
   return result;
 }
 

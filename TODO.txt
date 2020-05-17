@@ -1,7 +1,4 @@
 * Better document ownership of memory in fble-syntax.h
-* Why use FbleNewString, FbleStringRetain, and not FbleRetainString?
-   FbleValueRetain, FbleValueRelease,
-
 * Move FbleParse and FbleFreeExpr to an internal header file.
 
 * Split compile into typecheck and codegen.

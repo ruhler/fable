@@ -248,7 +248,7 @@ static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
 //   An FbleValue for the integer.
 //
 // Side effects:
-//   Allocates a value that should be freed with FbleValueRelease when no
+//   Allocates a value that should be freed with FbleReleaseValue when no
 //   longer needed. Behavior is undefined if x is not positive.
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 {
@@ -259,7 +259,7 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 
   FbleValue* p = MakeIntP(heap, x / 2);
   FbleValue* result = FbleNewUnionValue(heap, 1 + (x % 2), p);
-  FbleValueRelease(heap, p);
+  FbleReleaseValue(heap, p);
   return result;
 }
 
@@ -274,14 +274,14 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 //   An FbleValue for the integer.
 //
 // Side effects:
-//   Allocates a value that should be freed with FbleValueRelease when no
+//   Allocates a value that should be freed with FbleReleaseValue when no
 //   longer needed.
 static FbleValue* MakeInt(FbleValueHeap* heap, int x)
 {
   if (x < 0) {
     FbleValue* p = MakeIntP(heap, -x);
     FbleValue* result = FbleNewUnionValue(heap, 0, p);
-    FbleValueRelease(heap, p);
+    FbleReleaseValue(heap, p);
     return result;
   }
 
@@ -291,7 +291,7 @@ static FbleValue* MakeInt(FbleValueHeap* heap, int x)
 
   FbleValue* p = MakeIntP(heap, x);
   FbleValue* result = FbleNewUnionValue(heap, 2, p);
-  FbleValueRelease(heap, p);
+  FbleReleaseValue(heap, p);
   return result;
 }
 
@@ -307,7 +307,7 @@ static FbleValue* MakeInt(FbleValueHeap* heap, int x)
 //   that scan code.
 //
 // Side effects:
-//   Allocates a value that should be freed with FbleValueRelease when no
+//   Allocates a value that should be freed with FbleReleaseValue when no
 //   longer needed.
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
 {
@@ -379,7 +379,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       }
     }
 
-    FbleValueRelease(heap, app->effect);
+    FbleReleaseValue(heap, app->effect);
     app->effect = NULL;
     change = true;
   }
@@ -393,7 +393,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
           if (key != NULL) {
             app->event = FbleNewUnionValue(heap, 1, key);
-            FbleValueRelease(heap, key);
+            FbleReleaseValue(heap, key);
             change = true;
           }
           break;
@@ -403,7 +403,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
           if (key != NULL) {
             app->event = FbleNewUnionValue(heap, 2, key);
-            FbleValueRelease(heap, key);
+            FbleReleaseValue(heap, key);
             change = true;
           }
           break;
@@ -548,11 +548,11 @@ int main(int argc, char* argv[])
     FbleNewOutputPortValue(heap, &io.effect)
   };
   FbleValue* proc = FbleApply(heap, func, args, NULL);
-  FbleValueRelease(heap, func);
-  FbleValueRelease(heap, args[0]);
-  FbleValueRelease(heap, args[1]);
-  FbleValueRelease(heap, args[2]);
-  FbleValueRelease(heap, args[3]);
+  FbleReleaseValue(heap, func);
+  FbleReleaseValue(heap, args[0]);
+  FbleReleaseValue(heap, args[1]);
+  FbleReleaseValue(heap, args[2]);
+  FbleReleaseValue(heap, args[3]);
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
@@ -565,11 +565,11 @@ int main(int argc, char* argv[])
   SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));
 
   FbleValue* value = FbleExec(heap, &io._base, proc, NULL);
-  FbleValueRelease(heap, proc);
-  FbleValueRelease(heap, io.event);
-  FbleValueRelease(heap, io.effect);
+  FbleReleaseValue(heap, proc);
+  FbleReleaseValue(heap, io.event);
+  FbleReleaseValue(heap, io.effect);
 
-  FbleValueRelease(heap, value);
+  FbleReleaseValue(heap, value);
   FbleFreeValueHeap(heap);
   FbleFreeArena(arena);
 
