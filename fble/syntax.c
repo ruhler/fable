@@ -394,7 +394,7 @@ void FbleReleaseKind(FbleArena* arena, FbleKind* kind)
   }
 }
 
-// FbleFreeProgram -- see documentation in fble-syntax.h
+// FbleFreeProgram -- see documentation in fble.h
 void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
 {
   for (size_t i = 0; i < program->modules.size; ++i) {

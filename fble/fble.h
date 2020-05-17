@@ -11,12 +11,44 @@
 
 #include "fble-alloc.h"
 #include "fble-profile.h"
+#include "fble-syntax.h"
 #include "fble-value.h"
 #include "fble-vector.h"
 
-// TODO: Move fble-syntax.h to internal.
-#include "fble-syntax.h"
+
+// FbleLoad --
+//   Load an fble program.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed program.
+//   filename - The name of the file to parse the program from.
+//   root - The directory to search for modules in. May be NULL.
+//
+// Results:
+//   The parsed program, or NULL in case of error.
+//
+// Side effects:
+//   Prints an error message to stderr if the program cannot be parsed.
+//
+// Allocations:
+//   The user should call FbleFreeProgram to free resources associated with
+//   the given program when it is no longer needed.
+//
+// Note:
+//   A copy of the filename will be made for use in locations. The user need
+//   not ensure that filename remains valid for the duration of the lifetime
+//   of the program.
+FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root);
 
+// FbleFreeProgram --
+//   Free resources associated with the given program.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//
+// Side effects:
+//   Frees resources associated with the given program.
+void FbleFreeProgram(FbleArena* arena, FbleProgram* program);
 
 // FbleCompiledProgram --
 //   Abstract type representing a compiled fble program.

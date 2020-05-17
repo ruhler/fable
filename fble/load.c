@@ -308,7 +308,7 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
   return FbleNewString(arena, filename);
 }
 
-// FbleLoad -- see documentation in fble-syntax.h
+// FbleLoad -- see documentation in fble.h
 FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 {
   FbleProgram* program = FbleAlloc(arena, FbleProgram);
