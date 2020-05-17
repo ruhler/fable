@@ -252,7 +252,7 @@ static void PopVar(FbleTypeHeap* heap, Scope* scope, bool exit)
 
   scope->vars.size--;
   Var* var = scope->vars.xs[scope->vars.size];
-  FbleTypeRelease(heap, var->type);
+  FbleReleaseType(heap, var->type);
   LocalRelease(arena, scope, var->local, exit);
   FbleFree(arena, var);
 }
@@ -315,7 +315,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
 
       Var* captured = FbleAlloc(arena, Var);
       captured->name = var->name;
-      captured->type = FbleTypeRetain(heap, var->type);
+      captured->type = FbleRetainType(heap, var->type);
       captured->local = local;
       captured->used = !phantom;
       captured->accessed = true;
@@ -399,7 +399,7 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit)
 {
   FbleArena* arena = heap->arena;
   for (size_t i = 0; i < scope->statics.size; ++i) {
-    FbleTypeRelease(heap, scope->statics.xs[i]->type);
+    FbleReleaseType(heap, scope->statics.xs[i]->type);
     FbleFree(arena, scope->statics.xs[i]->local);
     FbleFree(arena, scope->statics.xs[i]);
   }
@@ -742,7 +742,7 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result
 //     the scope if the expression fails to compile.
 //   * Prints warning messages to stderr.
 //   * Prints a message to stderr if the expression fails to compile.
-//   * The caller should call FbleTypeRelease and LocalRelease when the
+//   * The caller should call FbleReleaseType and LocalRelease when the
 //     returned results are no longer needed. Note that FreeScope calls
 //     LocalRelease for all locals allocated to the scope, so that can also be
 //     used to clean up the local, but not the type.
@@ -763,7 +763,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleTypeType* type_type = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
       type_type->type = type;
       FbleTypeAddRef(heap, &type_type->_base, type_type->type);
-      FbleTypeRelease(heap, type);
+      FbleReleaseType(heap, type);
 
       Local* local = NewLocal(arena, scope);
       FbleTypeInstr* instr = FbleAlloc(arena, FbleTypeInstr);
@@ -794,9 +794,9 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       }
 
       if (error) {
-        FbleTypeRelease(heap, misc.type);
+        FbleReleaseType(heap, misc.type);
         for (size_t i = 0; i < argc; ++i) {
-          FbleTypeRelease(heap, args[i].type);
+          FbleReleaseType(heap, args[i].type);
         }
         return COMPILE_FAILED;
       }
@@ -810,10 +810,10 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             ReportError(arena, &expr->loc,
                 "expected %i args, but found %i\n",
                 func_type->args.size, argc);
-            FbleTypeRelease(heap, normal);
-            FbleTypeRelease(heap, misc.type);
+            FbleReleaseType(heap, normal);
+            FbleReleaseType(heap, misc.type);
             for (size_t i = 0; i < argc; ++i) {
-              FbleTypeRelease(heap, args[i].type);
+              FbleReleaseType(heap, args[i].type);
             }
             return COMPILE_FAILED;
           }
@@ -839,36 +839,36 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
               ReportError(arena, &misc_apply_expr->args.xs[i]->loc,
                   "expected type %t, but found %t\n",
                   func_type->args.xs[i], args[i].type);
-              FbleTypeRelease(heap, normal);
-              FbleTypeRelease(heap, misc.type);
+              FbleReleaseType(heap, normal);
+              FbleReleaseType(heap, misc.type);
               for (size_t j = i; j < argc; ++j) {
-                FbleTypeRelease(heap, args[j].type);
+                FbleReleaseType(heap, args[j].type);
               }
               return COMPILE_FAILED;
             }
-            FbleTypeRelease(heap, args[i].type);
+            FbleReleaseType(heap, args[i].type);
 
             FbleVectorAppend(arena, call_instr->args, args[i].local->index);
             LocalRelease(arena, scope, args[i].local, call_instr->exit);
           }
 
           Compiled c = {
-            .type = FbleTypeRetain(heap, func_type->rtype),
+            .type = FbleRetainType(heap, func_type->rtype),
             .local = dest
           };
 
-          FbleTypeRelease(heap, normal);
-          FbleTypeRelease(heap, misc.type);
+          FbleReleaseType(heap, normal);
+          FbleReleaseType(heap, misc.type);
           return c;
         }
 
         case FBLE_TYPE_TYPE: {
           // FBLE_STRUCT_VALUE_EXPR
           FbleTypeType* type_type = (FbleTypeType*)normal;
-          FbleType* vtype = FbleTypeRetain(heap, type_type->type);
-          FbleTypeRelease(heap, normal);
+          FbleType* vtype = FbleRetainType(heap, type_type->type);
+          FbleReleaseType(heap, normal);
 
-          FbleTypeRelease(heap, misc.type);
+          FbleReleaseType(heap, misc.type);
           LocalRelease(arena, scope, misc.local, false);
 
           FbleStructType* struct_type = (FbleStructType*)FbleNormalType(heap, vtype);
@@ -876,10 +876,10 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             ReportError(arena, &misc_apply_expr->misc->loc,
                 "expected a struct type, but found %t\n",
                 vtype);
-            FbleTypeRelease(heap, &struct_type->_base);
-            FbleTypeRelease(heap, vtype);
+            FbleReleaseType(heap, &struct_type->_base);
+            FbleReleaseType(heap, vtype);
             for (size_t i = 0; i < argc; ++i) {
-              FbleTypeRelease(heap, args[i].type);
+              FbleReleaseType(heap, args[i].type);
             }
             return COMPILE_FAILED;
           }
@@ -889,10 +889,10 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             ReportError(arena, &expr->loc,
                 "expected %i args, but %i provided\n",
                  struct_type->fields.size, argc);
-            FbleTypeRelease(heap, &struct_type->_base);
-            FbleTypeRelease(heap, vtype);
+            FbleReleaseType(heap, &struct_type->_base);
+            FbleReleaseType(heap, vtype);
             for (size_t i = 0; i < argc; ++i) {
-              FbleTypeRelease(heap, args[i].type);
+              FbleReleaseType(heap, args[i].type);
             }
             return COMPILE_FAILED;
           }
@@ -907,13 +907,13 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
                   field->type, args[i].type);
               error = true;
             }
-            FbleTypeRelease(heap, args[i].type);
+            FbleReleaseType(heap, args[i].type);
           }
 
-          FbleTypeRelease(heap, &struct_type->_base);
+          FbleReleaseType(heap, &struct_type->_base);
 
           if (error) {
-            FbleTypeRelease(heap, vtype);
+            FbleReleaseType(heap, vtype);
             return COMPILE_FAILED;
           }
 
@@ -941,10 +941,10 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           ReportError(arena, &expr->loc,
               "expecting a function or struct type, but found something of type %t\n",
               misc.type);
-          FbleTypeRelease(heap, misc.type);
-          FbleTypeRelease(heap, normal);
+          FbleReleaseType(heap, misc.type);
+          FbleReleaseType(heap, normal);
           for (size_t i = 0; i < argc; ++i) {
-            FbleTypeRelease(heap, args[i].type);
+            FbleReleaseType(heap, args[i].type);
           }
           return COMPILE_FAILED;
         }
@@ -995,11 +995,11 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           }
         }
 
-        FbleTypeRelease(heap, args[i].type);
+        FbleReleaseType(heap, args[i].type);
       }
 
       if (error) {
-        FbleTypeRelease(heap, &struct_type->_base);
+        FbleReleaseType(heap, &struct_type->_base);
         return COMPILE_FAILED;
       }
 
@@ -1032,8 +1032,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       if (union_type->_base.tag != FBLE_UNION_TYPE) {
         ReportError(arena, &union_value_expr->type->loc,
             "expected a union type, but found %t\n", type);
-        FbleTypeRelease(heap, &union_type->_base);
-        FbleTypeRelease(heap, type);
+        FbleReleaseType(heap, &union_type->_base);
+        FbleReleaseType(heap, type);
         return COMPILE_FAILED;
       }
 
@@ -1052,15 +1052,15 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         ReportError(arena, &union_value_expr->field.loc,
             "'%n' is not a field of type %t\n",
             &union_value_expr->field, type);
-        FbleTypeRelease(heap, &union_type->_base);
-        FbleTypeRelease(heap, type);
+        FbleReleaseType(heap, &union_type->_base);
+        FbleReleaseType(heap, type);
         return COMPILE_FAILED;
       }
 
       Compiled arg = CompileExpr(heap, blocks, false, scope, union_value_expr->arg);
       if (arg.type == NULL) {
-        FbleTypeRelease(heap, &union_type->_base);
-        FbleTypeRelease(heap, type);
+        FbleReleaseType(heap, &union_type->_base);
+        FbleReleaseType(heap, type);
         return COMPILE_FAILED;
       }
 
@@ -1068,13 +1068,13 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         ReportError(arena, &union_value_expr->arg->loc,
             "expected type %t, but found type %t\n",
             field_type, arg.type);
-        FbleTypeRelease(heap, type);
-        FbleTypeRelease(heap, &union_type->_base);
-        FbleTypeRelease(heap, arg.type);
+        FbleReleaseType(heap, type);
+        FbleReleaseType(heap, &union_type->_base);
+        FbleReleaseType(heap, arg.type);
         return COMPILE_FAILED;
       }
-      FbleTypeRelease(heap, arg.type);
-      FbleTypeRelease(heap, &union_type->_base);
+      FbleReleaseType(heap, arg.type);
+      FbleReleaseType(heap, &union_type->_base);
 
       Compiled c;
       c.type = type;
@@ -1119,23 +1119,23 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             "expected value of type struct or union, but found value of type %t\n",
             obj.type);
 
-        FbleTypeRelease(heap, obj.type);
-        FbleTypeRelease(heap, normal);
+        FbleReleaseType(heap, obj.type);
+        FbleReleaseType(heap, normal);
         return COMPILE_FAILED;
       }
 
       for (size_t i = 0; i < fields->size; ++i) {
         if (FbleNamesEqual(&access_expr->field, &fields->xs[i].name)) {
           access->tag = i;
-          FbleType* rtype = FbleTypeRetain(heap, fields->xs[i].type);
-          FbleTypeRelease(heap, normal);
+          FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
+          FbleReleaseType(heap, normal);
 
           Compiled c;
           c.type = rtype;
           c.local = NewLocal(arena, scope);
           access->dest = c.local->index.index;
           CompileExit(arena, exit, scope, c.local);
-          FbleTypeRelease(heap, obj.type);
+          FbleReleaseType(heap, obj.type);
           LocalRelease(arena, scope, obj.local, exit);
           return c;
         }
@@ -1144,8 +1144,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       ReportError(arena, &access_expr->field.loc,
           "'%n' is not a field of type %t\n",
           &access_expr->field, obj.type);
-      FbleTypeRelease(heap, obj.type);
-      FbleTypeRelease(heap, normal);
+      FbleReleaseType(heap, obj.type);
+      FbleReleaseType(heap, normal);
       return COMPILE_FAILED;
     }
 
@@ -1162,11 +1162,11 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         ReportError(arena, &select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
             condition.type);
-        FbleTypeRelease(heap, &union_type->_base);
-        FbleTypeRelease(heap, condition.type);
+        FbleReleaseType(heap, &union_type->_base);
+        FbleReleaseType(heap, condition.type);
         return COMPILE_FAILED;
       }
-      FbleTypeRelease(heap, condition.type);
+      FbleReleaseType(heap, condition.type);
 
       if (exit) {
         AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
@@ -1195,7 +1195,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
         if (result.type == NULL) {
           ExitBlock(arena, blocks, scope, exit);
-          FbleTypeRelease(heap, &union_type->_base);
+          FbleReleaseType(heap, &union_type->_base);
           return COMPILE_FAILED;
         }
 
@@ -1237,8 +1237,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
           if (result.type == NULL) {
             ExitBlock(arena, blocks, scope, exit);
-            FbleTypeRelease(heap, &union_type->_base);
-            FbleTypeRelease(heap, target.type);
+            FbleReleaseType(heap, &union_type->_base);
+            FbleReleaseType(heap, target.type);
             return COMPILE_FAILED;
           }
 
@@ -1251,13 +1251,13 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
                   "expected type %t, but found %t\n",
                   target.type, result.type);
 
-              FbleTypeRelease(heap, result.type);
-              FbleTypeRelease(heap, target.type);
-              FbleTypeRelease(heap, &union_type->_base);
+              FbleReleaseType(heap, result.type);
+              FbleReleaseType(heap, target.type);
+              FbleReleaseType(heap, &union_type->_base);
               ExitBlock(arena, blocks, scope, exit);
               return COMPILE_FAILED;
             }
-            FbleTypeRelease(heap, result.type);
+            FbleReleaseType(heap, result.type);
           }
 
           if (!exit) {
@@ -1291,20 +1291,20 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
                 "missing tag '%n'\n",
                 &union_type->fields.xs[i].name);
           }
-          FbleTypeRelease(heap, &union_type->_base);
-          FbleTypeRelease(heap, target.type);
+          FbleReleaseType(heap, &union_type->_base);
+          FbleReleaseType(heap, target.type);
           return COMPILE_FAILED;
         } else {
           FbleVectorAppend(arena, select_instr->jumps, 0);
         }
       }
-      FbleTypeRelease(heap, &union_type->_base);
+      FbleReleaseType(heap, &union_type->_base);
 
       if (choice < select_expr->choices.size) {
         ReportError(arena, &select_expr->choices.xs[choice].name.loc,
             "unexpected tag '%n'\n",
             &select_expr->choices.xs[choice]);
-        FbleTypeRelease(heap, target.type);
+        FbleReleaseType(heap, target.type);
         return COMPILE_FAILED;
       }
 
@@ -1350,7 +1350,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       if (error) {
         for (size_t i = 0; i < argc; ++i) {
-          FbleTypeRelease(heap, arg_types.xs[i]);
+          FbleReleaseType(heap, arg_types.xs[i]);
         }
         FbleFree(arena, arg_types.xs);
         return COMPILE_FAILED;
@@ -1385,7 +1385,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       ft->args = arg_types;
       ft->rtype = type;
       FbleTypeAddRef(heap, &ft->_base, ft->rtype);
-      FbleTypeRelease(heap, ft->rtype);
+      FbleReleaseType(heap, ft->rtype);
 
       for (size_t i = 0; i < argc; ++i) {
         FbleTypeAddRef(heap, &ft->_base, arg_types.xs[i]);
@@ -1425,7 +1425,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
       proc_type->type = body.type;
       FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
-      FbleTypeRelease(heap, body.type);
+      FbleReleaseType(heap, body.type);
 
       Compiled c;
       c.type = &proc_type->_base;
@@ -1448,7 +1448,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       }
 
       Compiled c;
-      c.type = FbleTypeRetain(heap, var->type);
+      c.type = FbleRetainType(heap, var->type);
       c.local = var->local;
       c.local->refcount++;
       CompileExit(arena, exit, scope, c.local);
@@ -1549,7 +1549,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         if (!error && let_expr->bindings.xs[i].type == NULL) {
           FbleAssignVarType(heap, types[i], defs[i].type);
         }
-        FbleTypeRelease(heap, defs[i].type);
+        FbleReleaseType(heap, defs[i].type);
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
@@ -1605,7 +1605,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       assert(var != NULL && "module not in scope");
 
       Compiled c;
-      c.type = FbleTypeRetain(heap, var->type);
+      c.type = FbleRetainType(heap, var->type);
       c.local = var->local;
       c.local->refcount++;
       CompileExit(arena, exit, scope, c.local);
@@ -1649,13 +1649,13 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       PopVar(heap, scope, exit);
 
       if (body.type == NULL) {
-        FbleTypeRelease(heap, arg);
+        FbleReleaseType(heap, arg);
         return COMPILE_FAILED;
       }
 
       FbleType* pt = FbleNewPolyType(heap, expr->loc, arg, body.type);
-      FbleTypeRelease(heap, arg);
-      FbleTypeRelease(heap, body.type);
+      FbleReleaseType(heap, arg);
+      FbleReleaseType(heap, body.type);
       body.type = pt;
       return body;
     }
@@ -1675,7 +1675,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         ReportError(arena, &expr->loc,
             "cannot apply poly args to a basic kinded entity\n");
         FbleReleaseKind(arena, &poly_kind->_base);
-        FbleTypeRelease(heap, poly.type);
+        FbleReleaseType(heap, poly.type);
         return COMPILE_FAILED;
       }
 
@@ -1683,7 +1683,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleType* arg_type = CompileExprNoInstrs(heap, scope, apply->arg);
       if (arg_type == NULL) {
         FbleReleaseKind(arena, &poly_kind->_base);
-        FbleTypeRelease(heap, poly.type);
+        FbleReleaseType(heap, poly.type);
         return COMPILE_FAILED;
       }
 
@@ -1695,8 +1695,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             expected_kind, actual_kind);
         FbleReleaseKind(arena, &poly_kind->_base);
         FbleReleaseKind(arena, actual_kind);
-        FbleTypeRelease(heap, arg_type);
-        FbleTypeRelease(heap, poly.type);
+        FbleReleaseType(heap, arg_type);
+        FbleReleaseType(heap, poly.type);
         return COMPILE_FAILED;
       }
       FbleReleaseKind(arena, actual_kind);
@@ -1704,11 +1704,11 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       FbleType* arg = FbleValueOfType(heap, arg_type);
       assert(arg != NULL && "TODO: poly apply arg is a value?");
-      FbleTypeRelease(heap, arg_type);
+      FbleReleaseType(heap, arg_type);
 
       FbleType* pat = FbleNewPolyApplyType(heap, expr->loc, poly.type, arg);
-      FbleTypeRelease(heap, arg);
-      FbleTypeRelease(heap, poly.type);
+      FbleReleaseType(heap, arg);
+      FbleReleaseType(heap, poly.type);
       poly.type = pat;
       return poly;
     }
@@ -1731,17 +1731,17 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         ReportError(arena, &literal->spec->loc,
             "expected a struct value, but literal spec has type %t\n",
             spec.type);
-        FbleTypeRelease(heap, spec.type);
-        FbleTypeRelease(heap, &normal->_base);
+        FbleReleaseType(heap, spec.type);
+        FbleReleaseType(heap, &normal->_base);
         return COMPILE_FAILED;
       }
-      FbleTypeRelease(heap, &normal->_base);
+      FbleReleaseType(heap, &normal->_base);
 
       size_t n = strlen(literal->word);
       if (n == 0) {
         ReportError(arena, &literal->word_loc,
             "literals must not be empty\n");
-        FbleTypeRelease(heap, spec.type);
+        FbleReleaseType(heap, spec.type);
         return COMPILE_FAILED;
       }
 
@@ -1816,7 +1816,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 //     scope if the expression fails to compile.
 //   * Prints a message to stderr if the expression fails to compile.
 //   * Allocates a reference-counted type that must be freed using
-//     FbleTypeRelease when it is no longer needed.
+//     FbleReleaseType when it is no longer needed.
 //   * Behavior is undefined if there is not at least one list argument.
 static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* scope, FbleLoc loc, FbleExprV args)
 {
@@ -2022,7 +2022,7 @@ static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 //     the scope if the expression fails to compile.
 //   * Prints warning messages to stderr.
 //   * Prints a message to stderr if the expression fails to compile.
-//   * The caller should call FbleTypeRelease and LocalRelease when the
+//   * The caller should call FbleReleaseType and LocalRelease when the
 //     returned results are no longer needed. Note that FreeScope calls
 //     LocalRelease for all locals allocated to the scope, so that can also be
 //     used to clean up the local, but not the type.
@@ -2058,13 +2058,13 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         ReportError(arena, &expr->loc,
             "expected process, but found expression of type %t\n",
             proc.type);
-        FbleTypeRelease(heap, &normal->_base);
-        FbleTypeRelease(heap, proc.type);
+        FbleReleaseType(heap, &normal->_base);
+        FbleReleaseType(heap, proc.type);
         return COMPILE_FAILED;
       }
 
       Compiled c;
-      c.type = FbleTypeRetain(heap, normal->type);
+      c.type = FbleRetainType(heap, normal->type);
       c.local = NewLocal(arena, scope);
 
       if (exit) {
@@ -2084,8 +2084,8 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       AppendInstr(arena, scope, &instr->_base);
 
       LocalRelease(arena, scope, proc.local, exit);
-      FbleTypeRelease(heap, &normal->_base);
-      FbleTypeRelease(heap, proc.type);
+      FbleReleaseType(heap, &normal->_base);
+      FbleReleaseType(heap, proc.type);
 
       return c;
     }
@@ -2119,16 +2119,16 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
       unit_proc_type->type = &unit_type->_base;
       FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
-      FbleTypeRelease(heap, &unit_type->_base);
+      FbleReleaseType(heap, &unit_type->_base);
 
       FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
       FbleVectorInit(arena, put_type->args);
       FbleVectorAppend(arena, put_type->args, port_type);
       FbleTypeAddRef(heap, &put_type->_base, port_type);
-      FbleTypeRelease(heap, port_type);
+      FbleReleaseType(heap, port_type);
       put_type->rtype = &unit_proc_type->_base;
       FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
-      FbleTypeRelease(heap, &unit_proc_type->_base);
+      FbleReleaseType(heap, &unit_proc_type->_base);
 
       FbleLinkInstr* link = FbleAlloc(arena, FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
@@ -2177,11 +2177,11 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
                 "expected process, but found expression of type %t\n",
                 binding.type);
           }
-          FbleTypeRelease(heap, &proc_type->_base);
+          FbleReleaseType(heap, &proc_type->_base);
         } else {
           error = true;
         }
-        FbleTypeRelease(heap, binding.type);
+        FbleReleaseType(heap, binding.type);
       }
 
       FbleForkInstr* fork = FbleAlloc(arena, FbleForkInstr);
@@ -2240,7 +2240,7 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 // Side effects:
 //   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
-//   FbleTypeRelease when it is no longer needed.
+//   FbleReleaseType when it is no longer needed.
 static FbleType* CompileExprNoInstrs(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = heap->arena;
@@ -2273,7 +2273,7 @@ static FbleType* CompileExprNoInstrs(FbleTypeHeap* heap, Scope* scope, FbleExpr*
 // Side effects:
 //   Prints a message to stderr if the type fails to compile or evalute.
 //   Allocates a reference-counted type that must be freed using
-//   FbleTypeRelease when it is no longer needed.
+//   FbleReleaseType when it is no longer needed.
 static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* type)
 {
   FbleArena* arena = heap->arena;
@@ -2287,13 +2287,13 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
         FbleField* field = struct_type->fields.xs + i;
         FbleType* compiled = CompileType(heap, scope, field->type);
         if (compiled == NULL) {
-          FbleTypeRelease(heap, &st->_base);
+          FbleReleaseType(heap, &st->_base);
           return NULL;
         }
 
         if (!CheckNameSpace(arena, &field->name, compiled)) {
-          FbleTypeRelease(heap, compiled);
-          FbleTypeRelease(heap, &st->_base);
+          FbleReleaseType(heap, compiled);
+          FbleReleaseType(heap, &st->_base);
           return NULL;
         }
 
@@ -2304,14 +2304,14 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
         FbleVectorAppend(arena, st->fields, cfield);
 
         FbleTypeAddRef(heap, &st->_base, cfield.type);
-        FbleTypeRelease(heap, cfield.type);
+        FbleReleaseType(heap, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&field->name, &struct_type->fields.xs[j].name)) {
             ReportError(arena, &field->name.loc,
                 "duplicate field name '%n'\n",
                 &field->name);
-            FbleTypeRelease(heap, &st->_base);
+            FbleReleaseType(heap, &st->_base);
             return NULL;
           }
         }
@@ -2328,7 +2328,7 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
         FbleField* field = union_type->fields.xs + i;
         FbleType* compiled = CompileType(heap, scope, field->type);
         if (compiled == NULL) {
-          FbleTypeRelease(heap, &ut->_base);
+          FbleReleaseType(heap, &ut->_base);
           return NULL;
         }
         FbleTaggedType cfield = {
@@ -2337,14 +2337,14 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
         };
         FbleVectorAppend(arena, ut->fields, cfield);
         FbleTypeAddRef(heap, &ut->_base, cfield.type);
-        FbleTypeRelease(heap, cfield.type);
+        FbleReleaseType(heap, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(&field->name, &union_type->fields.xs[j].name)) {
             ReportError(arena, &field->name.loc,
                 "duplicate field name '%n'\n",
                 &field->name);
-            FbleTypeRelease(heap, &ut->_base);
+            FbleReleaseType(heap, &ut->_base);
             return NULL;
           }
         }
@@ -2368,22 +2368,22 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
           FbleVectorAppend(arena, ft->args, arg);
           FbleTypeAddRef(heap, &ft->_base, arg);
         }
-        FbleTypeRelease(heap, arg);
+        FbleReleaseType(heap, arg);
       }
 
       if (error) {
-        FbleTypeRelease(heap, &ft->_base);
+        FbleReleaseType(heap, &ft->_base);
         return NULL;
       }
 
       FbleType* rtype = CompileType(heap, scope, func_type->rtype);
       if (rtype == NULL) {
-        FbleTypeRelease(heap, &ft->_base);
+        FbleReleaseType(heap, &ft->_base);
         return NULL;
       }
       ft->rtype = rtype;
       FbleTypeAddRef(heap, &ft->_base, ft->rtype);
-      FbleTypeRelease(heap, ft->rtype);
+      FbleReleaseType(heap, ft->rtype);
       return &ft->_base;
     }
 
@@ -2394,11 +2394,11 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
       FbleProcTypeExpr* unary_type = (FbleProcTypeExpr*)type;
       ut->type = CompileType(heap, scope, unary_type->type);
       if (ut->type == NULL) {
-        FbleTypeRelease(heap, &ut->_base);
+        FbleReleaseType(heap, &ut->_base);
         return NULL;
       }
       FbleTypeAddRef(heap, &ut->_base, ut->type);
-      FbleTypeRelease(heap, ut->type);
+      FbleReleaseType(heap, ut->type);
       return &ut->_base;
     }
 
@@ -2434,10 +2434,10 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
         ReportError(arena, &expr->loc,
             "expected a type, but found value of type %t\n",
             type);
-        FbleTypeRelease(heap, type);
+        FbleReleaseType(heap, type);
         return NULL;
       }
-      FbleTypeRelease(heap, type);
+      FbleReleaseType(heap, type);
       return type_value;
     }
   }
@@ -2486,7 +2486,7 @@ static bool CompileProgram(FbleTypeHeap* heap, Blocks* blocks, Scope* scope, Fbl
     PopVar(heap, scope, true);
   }
 
-  FbleTypeRelease(heap, result.type);
+  FbleReleaseType(heap, result.type);
   return result.type != NULL;
 }
 

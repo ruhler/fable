@@ -242,7 +242,7 @@ void FbleFreeTypeHeap(FbleTypeHeap* heap);
 #define FbleNewType(heap, T, tag, loc) ((T*) FbleNewTypeRaw(heap, sizeof(T), tag, loc))
 FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleLoc loc);
 
-// FbleTypeRetain --
+// FbleRetainType --
 //   Takes a reference to a compiled type.
 //
 // Inputs:
@@ -253,11 +253,11 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
 //   The type with incremented strong reference count.
 //
 // Side effects:
-//   The returned type must be freed using FbleTypeRelease when no longer in
+//   The returned type must be freed using FbleReleaseType when no longer in
 //   use.
-FbleType* FbleTypeRetain(FbleTypeHeap* heap, FbleType* type);
+FbleType* FbleRetainType(FbleTypeHeap* heap, FbleType* type);
 
-// FbleTypeRelease --
+// FbleReleaseType --
 //   Drop a reference to a compiled type.
 //
 // Inputs:
@@ -270,7 +270,7 @@ FbleType* FbleTypeRetain(FbleTypeHeap* heap, FbleType* type);
 // Side effects:
 //   Decrements the strong refcount for the type and frees it if there are no
 //   more references to it.
-void FbleTypeRelease(FbleTypeHeap* heap, FbleType* type);
+void FbleReleaseType(FbleTypeHeap* heap, FbleType* type);
 
 // FbleTypeAddRef --
 //   Notify the type heap of a new reference from src to dst.
@@ -301,7 +301,7 @@ void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 //   FbleAssignVarType to set the value of the var type if desired.
 //
 // Side effects:
-//   The caller is responsible for calling FbleTypeRelease on the returned
+//   The caller is responsible for calling FbleReleaseType on the returned
 //   type when it is no longer needed. This function does not take ownership
 //   of passed kind.
 FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name);
@@ -339,7 +339,7 @@ void FbleAssignVarType(FbleTypeHeap* heap, FbleType* var, FbleType* value);
 //   A type representing the poly type: \arg -> body.
 //
 // Side effects:
-//   The caller is responsible for calling FbleTypeRelease on the returned type
+//   The caller is responsible for calling FbleReleaseType on the returned type
 //   when it is no longer needed. This function does not take ownership of the
 //   passed arg or body types.
 FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleType* body);
@@ -358,7 +358,7 @@ FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleTy
 //   An unevaluated type representing the poly apply type: poly<arg>
 //
 // Side effects:
-//   The caller is responsible for calling FbleTypeRelease on the returned type
+//   The caller is responsible for calling FbleReleaseType on the returned type
 //   when it is no longer needed. This function does not take ownership of the
 //   passed poly or arg types.
 FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg);
@@ -390,7 +390,7 @@ bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type);
 //   The type reduced to normal form.
 //
 // Side effects:
-//   The caller is responsible for calling FbleTypeRelease on the returned type
+//   The caller is responsible for calling FbleReleaseType on the returned type
 //   when it is no longer needed. The behavior is undefined if the type is
 //   vacuous.
 FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type);
@@ -407,7 +407,7 @@ FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type);
 //   type.
 //
 // Side effects:
-//   The returned type must be released using FbleTypeRelease when no longer
+//   The returned type must be released using FbleReleaseType when no longer
 //   needed.
 FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof);
 
