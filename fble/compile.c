@@ -2490,7 +2490,7 @@ static bool CompileProgram(FbleTypeHeap* heap, Blocks* blocks, Scope* scope, Fbl
   return result.type != NULL;
 }
 
-// FbleCompile -- see documentation in fble-compile.h
+// FbleCompile -- see documentation in fble.h
 FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
 {
   bool profiling_disabled = false;
@@ -2542,7 +2542,7 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
   return compiled;
 }
 
-// FbleFreeCompiledProgram -- see documentation in fble-compile.h
+// FbleFreeCompiledProgram -- see documentation in fble.h
 void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program)
 {
   FbleFreeInstrBlock(arena, program->code);

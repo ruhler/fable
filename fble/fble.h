@@ -6,15 +6,70 @@
 #define FBLE_H_
 
 #include <stdbool.h>      // for bool
+#include <stdio.h>        // for FILE
 #include <sys/types.h>    // for size_t
 
 #include "fble-alloc.h"
-#include "fble-compile.h"
 #include "fble-profile.h"
-#include "fble-syntax.h"
 #include "fble-value.h"
 #include "fble-vector.h"
 
+// TODO: Move fble-syntax.h to internal.
+#include "fble-syntax.h"
+
+
+// FbleCompiledProgram --
+//   Abstract type representing a compiled fble program.
+typedef struct FbleCompiledProgram FbleCompiledProgram;
+
+// FbleCompile --
+//   Type check and compile the given program.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   prgm - the program to compile.
+//   profile - profile to populate with blocks. May be NULL.
+//
+// Results:
+//   The compiled program, or NULL if the program is not well typed.
+//
+// Side effects:
+//   Prints warning messages to stderr.
+//   Prints a message to stderr if the program fails to compile. Allocates
+//   memory for the instructions which must be freed with FbleFreeInstrBlock when
+//   it is no longer needed.
+//   Adds blocks to the given profile.
+//   The caller should call FbleFreeCompiledProgram to release resources
+//   associated with the returned program when it is no longer needed.
+FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile);
+
+// FbleFreeCompiledProgram --
+//   Free resources associated with a compiled program.
+//
+// Inputs:
+//   arena - the arena to use for allocations
+//   program - the program to free.
+//
+// Side effects:
+//   Frees resources associated with the given program.
+void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program);
+
+// FbleDisassemble --
+//   Writing a disassembled version of a compiled program in human readable
+//   format to the given file. For debugging purposes.
+//
+// Inputs:
+//   fout - the file to write the disassembled program to.
+//   program - the program to decompile.
+//   profile - profile to use for profile block information.
+//
+// Results:
+//   True if the program compiled successfully, false otherwise.
+//
+// Side effects:
+//   A disassembled version of the file is printed to fout.
+void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile);
+
 // FbleEval --
 //   Evaluate a compiled program.
 //

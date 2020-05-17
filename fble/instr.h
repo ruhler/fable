@@ -117,7 +117,7 @@ typedef struct {
 
 // FbleCompiledProgram --
 //   Implementation of the abstract type for a compiled program declared in
-//   fble-compile.h
+//   fble.h
 struct FbleCompiledProgram {
   FbleInstrBlock* code;
 };

@@ -385,7 +385,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
   }
 }
 
-// FbleDisassmeble -- see documentation in fble-compile.h.
+// FbleDisassmeble -- see documentation in fble.h.
 void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile)
 {
   DumpInstrBlock(fout, program->code, profile);

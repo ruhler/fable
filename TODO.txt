@@ -16,6 +16,7 @@
 * [eval] Have option to turn off checking for nulls and other runtime errors?
 
 * Clean up how we track io activity?
+* Add tests to increase code coverage.
 
 * Allow zero-argument functions in the language spec?
 
