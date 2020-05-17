@@ -45,8 +45,7 @@
 (List@<DataFlow@>) { DataFlow@; } Compose = (List@<DataFlow@> args) {
   args<DataFlow@>(
     (DataFlow@ x, DataFlow@ y) {
-      Unit@ _ := x;
-      Unit@ _ := y;
+      Unit@ _ := x, Unit@ _ := y;
       $(Unit);
     },
     $(Unit));
@@ -63,12 +62,8 @@
 <@ T@>(Get@<End@<T@>>, Out@<T@>) { DataFlow@; }
 Input = <@ T@>(Get@<End@<T@>> in, Out@<T@> out) {
   End@<T@> x := in;
-  x.?(
-    data: {
-      Unit@ _ := out(x);
-      Input<T@>(in, out);
-    },
-    end: out(x));
+  Unit@ _ := out(x);
+  x.?(data: Input<T@>(in, out), end: $(Unit));
 };
 
 # Output --
@@ -91,18 +86,41 @@ Const = <@ T@>(T@ x, In@<Unit@> in, Out@<T@> out) {
     end: out(End<T@>));
 };
 
+# Once
+#   Output a constant value once.
+<@ T@>(T@, Out@<T@>) { DataFlow@; }
+Once = <@ T@>(T@ x, Out@<T@> out) {
+  out(Data<T@>(x));
+};
+
 # Copy --
 #   Copy an input to multiple outputs.
 <@ T@>(In@<T@>, List@<Out@<T@>>) { DataFlow@; }
 Copy = <@ T@>(In@<T@> in, List@<Out@<T@>> outs) {
   End@<T@> i := in;
-  Unit@! broadcast = outs<Unit@!>((Out@<T@> o, Unit@! _) { o(i); }, $(Unit));
-  i.?(
-    data: {
-      Unit@ _ := broadcast;
-      Copy<T@>(in, outs);
-    }, 
-    end: broadcast);
+  Unit@ _ := outs<Unit@!>((Out@<T@> o, Unit@! t) {
+    Unit@ _ := o(i), Unit@ _ := t;
+    $(Unit);
+  }, $(Unit));
+
+  i.?(data: Copy<T@>(in, outs), end: $(Unit));
 };
 
-@(DataFlow@, In@, Out@, Input, Output, Copy, Const, Compose, Run);
+# Forward --
+#   Forward data from 'in' to 'out' every time there is 'send' input.
+<@ T@>(In@<Unit@>, In@<T@>, Out@<T@>) { DataFlow@; }
+Forward = <@ T@>(In@<Unit@> send, In@<T@> in, Out@<T@> out) {
+  End@<Unit@> s := send;
+  s.?(
+    data: {
+      End@<T@> i := in;
+      Unit@ _ := out(i);
+      Forward<T@>(send, in, out);
+    },
+    end: out(End<T@>));
+};
+
+@(DataFlow@, In@, Out@, End@,
+  End, Data,
+  Input, Output, Once, Copy, Const, Forward,
+  Compose, Run);

@@ -6,6 +6,19 @@
 % Chars = /Char%.Chars;
 
 @ DataFlow@ = /DataFlow%.DataFlow@;
+<@>@ In@ = /DataFlow%.In@;
+<@>@ Out@ = /DataFlow%.Out@;
+<@>@ End@ = /DataFlow%.End@;
+<@>% Data = /DataFlow%.Data;
+<@>% End = /DataFlow%.End;
+% Compose = /DataFlow%.Compose;
+<@>% Once = /DataFlow%.Once;
+<@>% Forward = /DataFlow%.Forward;
+<@>% Const = /DataFlow%.Const;
+<@>% Copy = /DataFlow%.Copy;
+<@>% Input = /DataFlow%.Input;
+<@>% Output = /DataFlow%.Output;
+% Run = /DataFlow%.Run;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -21,99 +34,83 @@
 % Unit = /Unit%.Unit;
  
 @ Count@ = +(Unit@ 1, Unit@ 2, Unit@ 3);
-@ Input@ = +(Unit@ tick, Unit@ finish);
 
-(Put@<Unit@>, Put@<Unit@>, Put@<Unit@>) { Put@<Count@>!; }
-Select = (Put@<Unit@> on1, Put@<Unit@> on2, Put@<Unit@> on3) {
-  $((Count@ x) {
-    x.?(1: on1(x.1), 2: on2(x.2), 3: on3(x.3));
-  });
-};
-
-# Run --
-#   Input driver for the count module.
-#
-# Forwards the value on 'prev' to 'forward' for as long as we keep receiving
-# ticks.
-(Get@<Input@>, Get@<Count@>, Put@<Count@>) { DataFlow@; }
-Run = (Get@<Input@> in, Get@<Count@> prev, Put@<Count@> forward) {
-  Input@ i := in;
+(In@<Count@>, Out@<Unit@>, Out@<Unit@>, Out@<Unit@>) { DataFlow@; }
+Select = (In@<Count@> in, Out@<Unit@> on1, Out@<Unit@> on2, Out@<Unit@> on3) {
+  End@<Count@> i := in;
   i.?(
-    tick: {
-      Count@ x := prev;
-      Unit@ _ := forward(x);
-      Run(in, prev, forward);
+    data: {
+      Unit@ _ := i.data.?(
+        1: on1(Data<Unit@>(Unit)),
+        2: on2(Data<Unit@>(Unit)),
+        3: on3(Data<Unit@>(Unit)));
+      Select(in, on1, on2, on3);
     },
-    finish: $(Unit));
-};
-
-# Const --
-#   A module that outputs a constant value for every input.
-<@ T@>(T@, Put@<T@>) { Put@<Unit@>!; }
-Const = <@ T@>(T@ x, Put@<T@> out) {
-  $((Unit@ _) {
-    out(x);
-  });
-};
-
-# Copy -- 
-#   A module that copies its input to multiple outputs.
-#
-# Inputs:
-#   a - the first output port
-#   b - the second output port
-#
-# Results:
-#   the input port port
-#
-# Behavior:
-#   Putting a value onto the returned input port will cause that value to be
-#   put on both output ports.
-<@ T@>(Put@<T@>, Put@<T@>) { Put@<T@>!; }
-Copy = <@ T@>(Put@<T@> a, Put@<T@> b) {
-  $((T@ x) {
-    Unit@ _ := a(x);
-    Unit@ _ := b(x);
-    $(Unit);
-  });
+    end: {
+      Unit@ _ := on1(End<Unit@>);
+      Unit@ _ := on2(End<Unit@>);
+      Unit@ _ := on3(End<Unit@>);
+      $(Unit);
+    });
 };
 
 # Count --
 #   A module that outputs 1, 2, 3, 1, 2, 3, ...
 #
 # For each input tick.
-(Get@<Input@>, Put@<Count@>) { DataFlow@; }
-Count = (Get@<Input@> input, Put@<Count@> result) {
-  Count@ ~ prev_get, prev_put;
-  Put@<Count@> merged := Copy<Count@>(prev_put, result);
-  Put@<Unit@> mk1 := Const<Count@>(Count@(1: Unit), merged);
-  Put@<Unit@> mk2 := Const<Count@>(Count@(2: Unit), merged);
-  Put@<Unit@> mk3 := Const<Count@>(Count@(3: Unit), merged);
-  Put@<Count@> feedback := Select(mk2, mk3, mk1);
+(In@<Unit@>, Out@<Count@>) { DataFlow@; }
+Count = (In@<Unit@> in, Out@<Count@> out) {
+  End@<Count@> ~ prev_get, prev_put;
+  End@<Count@> ~ next_get, next_put;
+  End@<Count@> ~ sel_get, sel_put;
+  End@<Unit@> ~ on1_get, on1_put;
+  End@<Unit@> ~ on2_get, on2_put;
+  End@<Unit@> ~ on3_get, on3_put;
 
-  Unit@ _ := prev_put(Count@(3: Unit)),
-  Unit@ _ := Run(input, prev_get, feedback);
-  $(Unit);
+  Compose([
+    Once<Count@>(Count@(3: Unit), prev_put),
+    Forward<Count@>(in, prev_get, sel_put),
+    Select(sel_get, on1_put, on2_put, on3_put),
+    Const<Count@>(Count@(2: Unit), on1_get, next_put),
+    Const<Count@>(Count@(3: Unit), on2_get, next_put),
+    Const<Count@>(Count@(1: Unit), on3_get, next_put),
+    Copy<Count@>(next_get, [prev_put, out])]);
 };
 
-(Put@<Input@>) { Unit@!; } Drive = (Put@<Input@> input) {
-  Unit@ _ := input(Input@(tick: Unit));
-  Unit@ _ := input(Input@(tick: Unit));
-  Unit@ _ := input(Input@(tick: Unit));
-  Unit@ _ := input(Input@(tick: Unit));
-  Unit@ _ := input(Input@(tick: Unit));
-  Unit@ _ := input(Input@(finish: Unit));
-  $(Unit);
+(Get@<End@<Unit@>>, Put@<End@<Count@>>) { DataFlow@; }
+Main = (Get@<End@<Unit@>> in, Put@<End@<Count@>> out) {
+  End@<Unit@> ~ in_get, in_put;
+  End@<Count@> ~ out_get, out_put;
+
+  Compose([
+    Input<Unit@>(in, in_put),
+    Count(in_get, out_put),
+    Output<Count@>(out, out_get)]);
+};
+
+(Put@<End@<Unit@>>) { Unit@!; } Drive = (Put@<End@<Unit@>> input) {
+  Unit@ _ := input(Data<Unit@>(Unit));
+  Unit@ _ := input(Data<Unit@>(Unit));
+  Unit@ _ := input(Data<Unit@>(Unit));
+  Unit@ _ := input(Data<Unit@>(Unit));
+  Unit@ _ := input(Data<Unit@>(Unit));
+  input(End<Unit@>);
 };
 
 Stdio@ Stdio = (Get@<Maybe@<Str@>> in, Put@<Str@> out) {
-  Put@<Count@> result = (Count@ x) {
-    x.?(1: out(Str(Chars|1)), 2: out(Str(Chars|2)), 3: out(Str(Chars|3)));
+  Put@<End@<Count@>> result = (End@<Count@> x) {
+    x.?(
+      data: x.data.?(
+        1: out(Str(Chars|1)),
+        2: out(Str(Chars|2)),
+        3: out(Str(Chars|3))),
+      end: out(Str(Chars|E)));
   };
 
-  Input@ ~ get, put;
-  Unit@ _ := Count(get, result), Unit@ _ := Drive(put);
+  End@<Unit@> ~ get, put;
+  Unit@ _ := Drive(put),
+  Unit@ _ := Run(Main(get, result));
   $(True);
 };
 
-@(Count@, Count, Stdio);
+@(Stdio);

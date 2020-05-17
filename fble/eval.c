@@ -998,7 +998,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
         // The thread is not making forward progress anymore. Block for I/O.
         if (!io->io(io, heap, true)) {
           FbleString* source = FbleNewString(arena, __FILE__);
-          FbleLoc loc = { .source = source, .line = 0, .col = 0 };
+          FbleLoc loc = { .source = source, .line = __LINE__, .col = 0 };
           FbleReportError("deadlock\n", &loc);
           FbleReleaseString(arena, source);
           aborted = true;
