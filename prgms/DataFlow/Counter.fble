@@ -5,8 +5,7 @@
 
 % Chars = /Char%.Chars;
 
-<@>% Const = /DataFlow%.Const;
-<@>% Copy = /DataFlow%.Copy;
+@ DataFlow@ = /DataFlow%.DataFlow@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -36,7 +35,7 @@ Select = (Put@<Unit@> on1, Put@<Unit@> on2, Put@<Unit@> on3) {
 #
 # Forwards the value on 'prev' to 'forward' for as long as we keep receiving
 # ticks.
-(Get@<Input@>, Get@<Count@>, Put@<Count@>) { Unit@!; }
+(Get@<Input@>, Get@<Count@>, Put@<Count@>) { DataFlow@; }
 Run = (Get@<Input@> in, Get@<Count@> prev, Put@<Count@> forward) {
   Input@ i := in;
   i.?(
@@ -48,11 +47,42 @@ Run = (Get@<Input@> in, Get@<Count@> prev, Put@<Count@> forward) {
     finish: $(Unit));
 };
 
+# Const --
+#   A module that outputs a constant value for every input.
+<@ T@>(T@, Put@<T@>) { Put@<Unit@>!; }
+Const = <@ T@>(T@ x, Put@<T@> out) {
+  $((Unit@ _) {
+    out(x);
+  });
+};
+
+# Copy -- 
+#   A module that copies its input to multiple outputs.
+#
+# Inputs:
+#   a - the first output port
+#   b - the second output port
+#
+# Results:
+#   the input port port
+#
+# Behavior:
+#   Putting a value onto the returned input port will cause that value to be
+#   put on both output ports.
+<@ T@>(Put@<T@>, Put@<T@>) { Put@<T@>!; }
+Copy = <@ T@>(Put@<T@> a, Put@<T@> b) {
+  $((T@ x) {
+    Unit@ _ := a(x);
+    Unit@ _ := b(x);
+    $(Unit);
+  });
+};
+
 # Count --
 #   A module that outputs 1, 2, 3, 1, 2, 3, ...
 #
 # For each input tick.
-(Get@<Input@>, Put@<Count@>) { Unit@!; }
+(Get@<Input@>, Put@<Count@>) { DataFlow@; }
 Count = (Get@<Input@> input, Put@<Count@> result) {
   Count@ ~ prev_get, prev_put;
   Put@<Count@> merged := Copy<Count@>(prev_put, result);

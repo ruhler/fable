@@ -9,40 +9,100 @@
 # instantiating a computation that runs asynchronously. In particular, putting
 # a value onto an input port is a non-blocking operation.
 
+<@,@>@ List@ = /List%.List@;
+
+<@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
+# DataFlow@ --
+#   A data flow computation.
+@ DataFlow@ = Unit@!;
+
+# End@ --
+#   Data to send to a data flow computation that can indicate end of
+#   computation.
+#
+# Often we want to either send data to a data flow computation, or tell it to
+# finish running. The End@ type should be used for that.
+<@>@ End@ = <@ T@> { +(T@ data, Unit@ end); };
+
+<@ T@> { End@<T@>; } End = <@ T@> { End@<T@>(end: Unit); };
+<@ T@>(T@) { End@<T@>; } Data = <@ T@>(T@ x) { End@<T@>(data: x); };
+
+# Input and output wires, from the perspective of the DataFlow computation.
+<@>@ In@ = <@ T@> { Get@<End@<T@>>; };
+<@>@ Out@ = <@ T@> { Put@<End@<T@>>; };
+
+# Compose --
+#   Compose together a bunch of data flow computations.
+#
+# The resulting data flow computation behaves as if all argument data flow
+# computations were run in parallel. It completes when all argument data flow
+# computations have completed.
+(List@<DataFlow@>) { DataFlow@; } Compose = (List@<DataFlow@> args) {
+  args<DataFlow@>(
+    (DataFlow@ x, DataFlow@ y) {
+      Unit@ _ := x;
+      Unit@ _ := y;
+      $(Unit);
+    },
+    $(Unit));
+};
+
+# Run --
+#   Execute a data flow computation.
+(DataFlow@) { Unit@!; } Run = (DataFlow@ x) {
+  x;
+};
+
+# Input --
+#   Inject input into a data flow computation.
+<@ T@>(Get@<End@<T@>>, Out@<T@>) { DataFlow@; }
+Input = <@ T@>(Get@<End@<T@>> in, Out@<T@> out) {
+  End@<T@> x := in;
+  x.?(
+    data: {
+      Unit@ _ := out(x);
+      Input<T@>(in, out);
+    },
+    end: out(x));
+};
+
+# Output --
+#   Get output from a data flow computation.
+<@ T@>(Put@<End@<T@>>, In@<T@>) { DataFlow@; }
+Output = <@ T@>(Put@<End@<T@>> out, In@<T@> in) {
+  Input<T@>(in, out);
+};
+
 # Const --
-#   A module that outputs a constant value for every input.
-<@ T@>(T@, Put@<T@>) { Put@<Unit@>!; }
-Const = <@ T@>(T@ x, Put@<T@> out) {
-  $((Unit@ _) {
-    out(x);
-  });
+#   Output a constant value for every input.
+<@ T@>(T@, In@<Unit@>, Out@<T@>) { DataFlow@; }
+Const = <@ T@>(T@ x, In@<Unit@> in, Out@<T@> out) {
+  End@<Unit@> i := in;
+  i.?(
+    data: {
+      Unit@ _ := out(Data<T@>(x));
+      Const<T@>(x, in, out);
+    },
+    end: out(End<T@>));
 };
 
-# Copy -- 
-#   A module that copies its input to multiple outputs.
-#
-# Inputs:
-#   a - the first output port
-#   b - the second output port
-#
-# Results:
-#   the input port port
-#
-# Behavior:
-#   Putting a value onto the returned input port will cause that value to be
-#   put on both output ports.
-<@ T@>(Put@<T@>, Put@<T@>) { Put@<T@>!; }
-Copy = <@ T@>(Put@<T@> a, Put@<T@> b) {
-  $((T@ x) {
-    Unit@ _ := a(x);
-    Unit@ _ := b(x);
-    $(Unit);
-  });
+# Copy --
+#   Copy an input to multiple outputs.
+<@ T@>(In@<T@>, List@<Out@<T@>>) { DataFlow@; }
+Copy = <@ T@>(In@<T@> in, List@<Out@<T@>> outs) {
+  End@<T@> i := in;
+  Unit@! broadcast = outs<Unit@!>((Out@<T@> o, Unit@! _) { o(i); }, $(Unit));
+  i.?(
+    data: {
+      Unit@ _ := broadcast;
+      Copy<T@>(in, outs);
+    }, 
+    end: broadcast);
 };
 
-@(Const, Copy);
+@(DataFlow@, In@, Out@, Input, Output, Copy, Const, Compose, Run);
