@@ -223,7 +223,7 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 // Side effects:
 //   Prints an error message to stderr in case of error.
 //   Updates the tree with new module hierarchy information.
-//   The user should call FbleStringRelease when the returned string is no
+//   The user should call FbleReleaseString when the returned string is no
 //   longer needed.
 static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleNameV path)
 {
@@ -320,7 +320,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   stack->tail = NULL;
   FbleString* filename_str = FbleNewString(arena, filename);
   stack->value = FbleParse(arena, filename_str, &stack->module_refs);
-  FbleStringRelease(arena, filename_str);
+  FbleReleaseString(arena, filename_str);
   bool error = (stack->value == NULL);
   if (stack->value == NULL) {
     stack->module_refs.size = 0;
@@ -411,7 +411,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 
     if (filename_str != NULL) {
       stack->value = FbleParse(arena, filename_str, &stack->module_refs);
-      FbleStringRelease(arena, filename_str);
+      FbleReleaseString(arena, filename_str);
     }
 
     if (stack->value == NULL) {
@@ -420,7 +420,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     }
   }
   FreeTree(arena, tree);
-  FbleStringRelease(arena, unknownSource);
+  FbleReleaseString(arena, unknownSource);
 
   // The last module loaded should be the main entry point.
   program->modules.size--;

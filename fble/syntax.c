@@ -272,15 +272,15 @@ FbleString* FbleNewString(FbleArena* arena, const char* str)
   return string;
 }
 
-// FbleStringRetain -- see documentation in fble-syntax.h
-FbleString* FbleStringRetain(FbleString* string)
+// FbleRetainString -- see documentation in fble-syntax.h
+FbleString* FbleRetainString(FbleString* string)
 {
   string->refcount++;
   return string;
 }
 
-// FbleStringRelease -- see documentation in fble-syntax.h
-void FbleStringRelease(FbleArena* arena, FbleString* string)
+// FbleReleaseString -- see documentation in fble-syntax.h
+void FbleReleaseString(FbleArena* arena, FbleString* string)
 {
   // If the string checksum doesn't match, the string is corrupted. That
   // suggests we have already freed this string, and that something is messed
@@ -298,14 +298,14 @@ void FbleStringRelease(FbleArena* arena, FbleString* string)
 // FbleCopyLoc -- see documentation in fble-syntax.h
 FbleLoc FbleCopyLoc(FbleLoc loc)
 {
-  FbleStringRetain(loc.source);
+  FbleRetainString(loc.source);
   return loc;
 }
 
 // FbleFreeLoc -- see documentation in fble-syntax.h
 void FbleFreeLoc(FbleArena* arena, FbleLoc loc)
 {
-  FbleStringRelease(arena, loc.source);
+  FbleReleaseString(arena, loc.source);
 }
 
 // FbleReportWarning -- see documentation in fble-syntax.h

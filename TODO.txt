@@ -1,10 +1,12 @@
 * Better document ownership of memory in fble-syntax.h
 * Why use FbleNewString, FbleStringRetain, and not FbleRetainString?
+  FbleTypeRetain, FbleTypeRelease, FbleValueRetain, FbleValueRelease,
+  FbleStringRetain, FbleStringRelease, FbleKindRetain, FbleKindRelease,
 
 * Move FbleParse and FbleFreeExpr to an internal header file.
 
 * Split compile into typecheck and codegen.
-* Don't rely on NULL vs. non-NULL to free values.
+* Don't rely on NULL vs. non-NULL to free values in PopFrame.
 * Avoid emitting ref/release for non-recursive variables.
 * Figure out how to do better lifecycle analysis in the compiler
  - Don't retain/release a field of an object if you know the object is going
@@ -34,6 +36,8 @@
 * [type] Inline fields and args data into FbleType objects?
 
 * [gc] Implement generational gc?
+ - Low priority, because experiments suggest at best we save like, 8 seconds
+   on fble bench.
 
 * [eval] Thread management cleanup
  - Use fair thread traversal by starting over from root when yield occurs.
@@ -56,10 +60,6 @@
 * [compile] Figure out why Normal is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
  - Profiling said its all in TypeEquals. Maybe something pathological?
-
-* [lang] Set up cindent (or whatever) properly for fble.vim
- - For example, so you can do newline in a comment block and have it auto add
-   the comment character.
 
 * [cc] Implement .fble -> .o compiler
  - Goal is to significantly increase performance by removing the instruction
@@ -112,6 +112,7 @@
  - Evaluate expressions in the context of the current scope and print the
    results.
  - Auto breakpoint at undefined behavior?
+ - Any way we could do this just by using dwarf + gdb?
  
  Use cases:
  - Debug why sudoku solver isn't working properly by stepping through a line

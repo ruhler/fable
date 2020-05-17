@@ -999,7 +999,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
           FbleString* source = FbleNewString(arena, __FILE__);
           FbleLoc loc = { .source = source, .line = 0, .col = 0 };
           FbleReportError("deadlock\n", &loc);
-          FbleStringRelease(arena, source);
+          FbleReleaseString(arena, source);
           aborted = true;
         }
         break;
