@@ -6,7 +6,7 @@
 
 #include <stdint.h>   // for uintptr_t
 
-#include "fble-syntax.h"
+#include "syntax.h"
 #include "heap.h"
 
 // FbleTypeTag --

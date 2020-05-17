@@ -9,7 +9,7 @@
 #include <stdio.h>    // for FILE
 
 #include "fble-alloc.h"
-#include "fble-syntax.h"
+#include "fble-name.h"
 
 // FbleBlockId --
 //  An identifier for a program block

@@ -10,12 +10,16 @@
 #include <sys/types.h>    // for size_t
 
 #include "fble-alloc.h"
+#include "fble-name.h"
 #include "fble-profile.h"
-#include "fble-syntax.h"
 #include "fble-value.h"
 #include "fble-vector.h"
 
 
+// FbleProgram --
+//   Abstract type representing an fble program.
+typedef struct FbleProgram FbleProgram;
+
 // FbleLoad --
 //   Load an fble program.
 //

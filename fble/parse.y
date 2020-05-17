@@ -8,6 +8,7 @@
   #include <string.h>   // for strchr, strcpy
 
   #include "fble.h"
+  #include "syntax.h"
 
   // Lex --
   //   State for the lexer.
@@ -828,7 +829,7 @@ static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** resul
   FbleReportError("%s\n", llocp, msg);
 }
 
-// FbleParse -- see documentation in fble-syntax.h
+// FbleParse -- see documentation in syntax.h
 FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModuleRefV* module_refs)
 {
   FILE* fin = fopen(filename->str, "r");

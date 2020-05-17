@@ -6,7 +6,8 @@
 #include <stdio.h>    // for fprintf, vfprintf, stderr
 #include <string.h>   // for strcmp
 
-#include "fble-syntax.h"
+#include "fble.h"
+#include "syntax.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -35,7 +36,7 @@ static size_t Checksum(const char* str)
   return checksum;
 }
 
-// FbleFreeExpr -- see documentation in fble-syntax.h
+// FbleFreeExpr -- see documentation in syntax.h
 void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
 {
   if (expr == NULL) {
@@ -259,7 +260,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
   UNREACHABLE("should never get here");
 }
 
-// FbleNewString -- see documentation in fble-syntax.h
+// FbleNewString -- see documentation in fble-name.h
 FbleString* FbleNewString(FbleArena* arena, const char* str)
 {
   char* str_copy = FbleArrayAlloc(arena, char, strlen(str) + 1);
@@ -272,14 +273,14 @@ FbleString* FbleNewString(FbleArena* arena, const char* str)
   return string;
 }
 
-// FbleRetainString -- see documentation in fble-syntax.h
+// FbleRetainString -- see documentation in fble-name.h
 FbleString* FbleRetainString(FbleString* string)
 {
   string->refcount++;
   return string;
 }
 
-// FbleReleaseString -- see documentation in fble-syntax.h
+// FbleReleaseString -- see documentation in fble-name.h
 void FbleReleaseString(FbleArena* arena, FbleString* string)
 {
   // If the string checksum doesn't match, the string is corrupted. That
@@ -295,20 +296,20 @@ void FbleReleaseString(FbleArena* arena, FbleString* string)
   }
 }
 
-// FbleCopyLoc -- see documentation in fble-syntax.h
+// FbleCopyLoc -- see documentation in fble-name.h
 FbleLoc FbleCopyLoc(FbleLoc loc)
 {
   FbleRetainString(loc.source);
   return loc;
 }
 
-// FbleFreeLoc -- see documentation in fble-syntax.h
+// FbleFreeLoc -- see documentation in fble-name.h
 void FbleFreeLoc(FbleArena* arena, FbleLoc loc)
 {
   FbleReleaseString(arena, loc.source);
 }
 
-// FbleReportWarning -- see documentation in fble-syntax.h
+// FbleReportWarning -- see documentation in syntax.h
 void FbleReportWarning(const char* format, FbleLoc* loc, ...)
 {
   va_list ap;
@@ -318,7 +319,7 @@ void FbleReportWarning(const char* format, FbleLoc* loc, ...)
   va_end(ap);
 }
 
-// FbleReportError -- see documentation in fble-syntax.h
+// FbleReportError -- see documentation in syntax.h
 void FbleReportError(const char* format, FbleLoc* loc, ...)
 {
   va_list ap;
@@ -328,20 +329,20 @@ void FbleReportError(const char* format, FbleLoc* loc, ...)
   va_end(ap);
 }
 
-// FbleNamesEqual -- see documentation in fble-syntax.h
+// FbleNamesEqual -- see documentation in syntax.h
 bool FbleNamesEqual(FbleName* a, FbleName* b)
 {
   return a->space == b->space && strcmp(a->name, b->name) == 0;
 }
 
-// FbleFreeName -- see documentation in fble-syntax.h
+// FbleFreeName -- see documentation in fble-name.h
 void FbleFreeName(FbleArena* arena, FbleName name)
 {
   FbleFreeLoc(arena, name.loc);
   FbleFree(arena, (char*)name.name);
 }
 
-// FblePrintName -- see documentation in fble-syntax.h
+// FblePrintName -- see documentation in syntax.h
 void FblePrintName(FILE* stream, FbleName* name)
 {
   fprintf(stream, name->name);
@@ -360,7 +361,7 @@ void FblePrintName(FILE* stream, FbleName* name)
   }
 }
 
-// FbleRetainKind -- see documentation in fble-syntax.h
+// FbleRetainKind -- see documentation in syntax.h
 FbleKind* FbleRetainKind(FbleArena* arena, FbleKind* kind)
 {
   assert(kind != NULL);
@@ -368,7 +369,7 @@ FbleKind* FbleRetainKind(FbleArena* arena, FbleKind* kind)
   return kind;
 }
 
-// FbleReleaseKind -- see documentation in fble-syntax.h
+// FbleReleaseKind -- see documentation in syntax.h
 void FbleReleaseKind(FbleArena* arena, FbleKind* kind)
 {
   if (kind != NULL) {

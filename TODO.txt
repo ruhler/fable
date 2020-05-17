@@ -1,5 +1,6 @@
 * Better document ownership of memory in fble-syntax.h
 * Move FbleParse and FbleFreeExpr to an internal header file.
+* Move implementations corresponding to fble-name.h to name.c?
 
 * Split compile into typecheck and codegen.
 * Don't rely on NULL vs. non-NULL to free values in PopFrame.

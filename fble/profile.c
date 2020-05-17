@@ -9,8 +9,8 @@
 #include <sys/time.h> // for gettimeofday
 
 #include "fble-alloc.h"
+#include "fble-name.h"
 #include "fble-profile.h"
-#include "fble-syntax.h"
 #include "fble-vector.h"
 
 // Notes on profiling

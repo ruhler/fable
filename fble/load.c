@@ -7,6 +7,7 @@
 
 #include "fble.h"
 #include "instr.h"
+#include "syntax.h"
 
 typedef struct Tree Tree;
 

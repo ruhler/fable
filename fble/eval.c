@@ -9,6 +9,7 @@
 #include "fble.h"
 #include "heap.h"
 #include "instr.h"
+#include "syntax.h"   // for FbleReportError
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
