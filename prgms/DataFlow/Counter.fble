@@ -7,7 +7,6 @@
 
 <@>% Const = /DataFlow%.Const;
 <@>% Copy = /DataFlow%.Copy;
-<@>% Connect = /DataFlow%.Connect;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -23,6 +22,7 @@
 % Unit = /Unit%.Unit;
  
 @ Count@ = +(Unit@ 1, Unit@ 2, Unit@ 3);
+@ Input@ = +(Unit@ tick, Unit@ finish);
 
 (Put@<Unit@>, Put@<Unit@>, Put@<Unit@>) { Put@<Count@>!; }
 Select = (Put@<Unit@> on1, Put@<Unit@> on2, Put@<Unit@> on3) {
@@ -31,20 +31,48 @@ Select = (Put@<Unit@> on1, Put@<Unit@> on2, Put@<Unit@> on3) {
   });
 };
 
+# Run --
+#   Input driver for the count module.
+#
+# Forwards the value on 'prev' to 'forward' for as long as we keep receiving
+# ticks.
+(Get@<Input@>, Get@<Count@>, Put@<Count@>) { Unit@!; }
+Run = (Get@<Input@> in, Get@<Count@> prev, Put@<Count@> forward) {
+  Input@ i := in;
+  i.?(
+    tick: {
+      Count@ x := prev;
+      Unit@ _ := forward(x);
+      Run(in, prev, forward);
+    },
+    finish: $(Unit));
+};
+
 # Count --
 #   A module that outputs 1, 2, 3, 1, 2, 3, ...
 #
-# Does not terminate.
-(Put@<Count@>) { Unit@!; } Count = (Put@<Count@> result) {
-  Count@ ~ feedback_get, feedback_put;
-  Put@<Count@> merged := Copy<Count@>(feedback_put, result);
+# For each input tick.
+(Get@<Input@>, Put@<Count@>) { Unit@!; }
+Count = (Get@<Input@> input, Put@<Count@> result) {
+  Count@ ~ prev_get, prev_put;
+  Put@<Count@> merged := Copy<Count@>(prev_put, result);
   Put@<Unit@> mk1 := Const<Count@>(Count@(1: Unit), merged);
   Put@<Unit@> mk2 := Const<Count@>(Count@(2: Unit), merged);
   Put@<Unit@> mk3 := Const<Count@>(Count@(3: Unit), merged);
-  Put@<Count@> feedbacked := Select(mk2, mk3, mk1);
+  Put@<Count@> feedback := Select(mk2, mk3, mk1);
 
-  Unit@ _ := merged(Count@(1: Unit)),
-  Unit@ _ := Connect<Count@>(feedback_get, feedbacked);
+  Unit@ _ := prev_put(Count@(3: Unit)),
+  Unit@ _ := Run(input, prev_get, feedback);
+  $(Unit);
+};
+
+(Put@<Input@>) { Unit@!; } Drive = (Put@<Input@> input) {
+  Unit@ _ := input(Input@(tick: Unit));
+  Unit@ _ := input(Input@(tick: Unit));
+  Unit@ _ := input(Input@(tick: Unit));
+  Unit@ _ := input(Input@(tick: Unit));
+  Unit@ _ := input(Input@(tick: Unit));
+  Unit@ _ := input(Input@(finish: Unit));
   $(Unit);
 };
 
@@ -53,7 +81,8 @@ Stdio@ Stdio = (Get@<Maybe@<Str@>> in, Put@<Str@> out) {
     x.?(1: out(Str(Chars|1)), 2: out(Str(Chars|2)), 3: out(Str(Chars|3)));
   };
 
-  Unit@ _ := Count(result);
+  Input@ ~ get, put;
+  Unit@ _ := Count(get, result), Unit@ _ := Drive(put);
   $(True);
 };
 

@@ -9,9 +9,6 @@
 # instantiating a computation that runs asynchronously. In particular, putting
 # a value onto an input port is a non-blocking operation.
 
-# TODO: How do we finish a dataflow computation? Is there such a thing? 
-
-<@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
 @ Unit@ = /Unit%.Unit@;
@@ -48,18 +45,4 @@ Copy = <@ T@>(Put@<T@> a, Put@<T@> b) {
   });
 };
 
-# Connect --
-#   Connect a get port to a put port.
-#
-# TODO: Does not terminate.
-<@ T@>(Get@<T@>, Put@<T@>) { Unit@!; }
-Connect = <@ T@>(Get@<T@> get, Put@<T@> put) {
-  T@ x := get;
-  Unit@ _ := put(x);
-  Connect<T@>(get, put);
-};
-
-# Connect --
-#   Create a module that 
-
-@(Const, Copy, Connect);
+@(Const, Copy);
