@@ -225,8 +225,8 @@ typedef enum {
 //   kind this is to get access to additional fields of the kind
 //   by first casting to that specific type of kind.
 //
-// Kinds are non-cyclcically reference counted. Use FbleKindRetain and
-// FbleKindRelease to manage the reference count and memory associated with
+// Kinds are non-cyclcically reference counted. Use FbleRetainKind and
+// FbleReleaseKind to manage the reference count and memory associated with
 // the kind.
 typedef struct {
   FbleKindTag tag;
@@ -263,7 +263,7 @@ typedef struct {
   FbleKind* rkind;
 } FblePolyKind;
 
-// FbleKindRetain --
+// FbleRetainKind --
 //   Makes a (refcount) copy of a kind.
 //
 // Inputs:
@@ -274,11 +274,11 @@ typedef struct {
 //   The copied kind.
 //
 // Side effects:
-//   The returned kind must be freed using FbleKindRelease when no longer in
+//   The returned kind must be freed using FbleReleaseKind when no longer in
 //   use.
-FbleKind* FbleKindRetain(FbleArena* arena, FbleKind* kind);
+FbleKind* FbleRetainKind(FbleArena* arena, FbleKind* kind);
 
-// FbleKindRelease --
+// FbleReleaseKind --
 //   Frees a (refcount) copy of a compiled kind.
 //
 // Inputs:
@@ -291,7 +291,7 @@ FbleKind* FbleKindRetain(FbleArena* arena, FbleKind* kind);
 // Side effects:
 //   Decrements the refcount for the kind and frees it if there are no
 //   more references to it.
-void FbleKindRelease(FbleArena* arena, FbleKind* kind);
+void FbleReleaseKind(FbleArena* arena, FbleKind* kind);
 
 // FbleExprTag --
 //   A tag used to dinstinguish among different kinds of expressions.
