@@ -247,6 +247,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 
   static FbleInstrBlock code = {
     .refcount = 1,
+    .magic = FBLE_INSTR_BLOCK_MAGIC,
     .statics = 1,  // port
     .locals = 1,   // result
     .instrs = { .size = 2, .xs = instrs }
@@ -298,6 +299,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 
   static FbleInstrBlock proc_code = {
     .refcount = 1,
+    .magic = FBLE_INSTR_BLOCK_MAGIC,
     .statics = 2,  // port, arg
     .locals = 1,   // result
     .instrs = { .size = 2, .xs = proc_instrs }
@@ -328,6 +330,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 
   static FbleInstrBlock func_code = {
     .refcount = 1,
+    .magic = FBLE_INSTR_BLOCK_MAGIC,
     .statics = 1,  // port
     .locals = 2,   // arg, result
     .instrs = { .size = 2, .xs = func_instrs }

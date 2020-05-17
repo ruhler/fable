@@ -167,6 +167,7 @@ int main(int argc, char* argv[])
   FILE* fin = fopen(file, "rb");
   if (fin == NULL) {
     fprintf(stderr, "unable to open %s\n", file);
+    FbleValueRelease(heap, func);
     FbleFreeValueHeap(heap);
     FbleFreeArena(arena);
     return 1;

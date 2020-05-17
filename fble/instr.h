@@ -104,10 +104,16 @@ typedef struct {
 //   A reference counted block of instructions.
 typedef struct {
   size_t refcount;
+  size_t magic;       // Magic number, to help detect double free.
   size_t statics;     // The number of statics used by this frame.
   size_t locals;      // The number of locals required by this stack frame.
   FbleInstrV instrs;
 } FbleInstrBlock;
+
+// FBLE_INSTR_BLOCK_MAGIC --
+//   The magic number we store in every FbleInstrBlock, to help catch double
+//   free.
+#define FBLE_INSTR_BLOCK_MAGIC 0xB10CE
 
 // FbleCompiledProgram --
 //   Implementation of the abstract type for a compiled program declared in

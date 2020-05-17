@@ -1,6 +1,3 @@
-* [compile] Do proper memory tracking and cleanup for the abstract syntax.
- - Track down the remaining seg faults.
-
 * Better document ownership of memory in fble-syntax.h
 * Why use FbleNewString, FbleStringRetain, and not FbleRetainString?
 

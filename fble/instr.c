@@ -367,6 +367,13 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
     return;
   }
 
+  // We've had trouble with double free of instr blocks in the past. Check to
+  // make sure the magic in the block hasn't been corrupted. Otherwise we've
+  // probably already freed this instruction block and decrementing the
+  // refcount could end up corrupting whatever is now making use of the memory
+  // that was previously used for the instruction block.
+  assert(block->magic == FBLE_INSTR_BLOCK_MAGIC && "corrupt FbleInstrBlock");
+
   assert(block->refcount > 0);
   block->refcount--;
   if (block->refcount == 0) {

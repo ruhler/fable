@@ -1025,6 +1025,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleCompiledProgram* program, FbleProfi
   func->_base.tag = FBLE_FUNC_VALUE;
   func->argc = 0;
   func->code = program->code;
+  func->code->refcount++;
   assert(program->code->statics == 0);
 
   FbleIO io = { .io = &FbleNoIO };
