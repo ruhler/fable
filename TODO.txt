@@ -1,4 +1,3 @@
-* Better document ownership of memory in fble-syntax.h
 * Move FbleParse and FbleFreeExpr to an internal header file.
 * Move implementations corresponding to fble-name.h to name.c?
 

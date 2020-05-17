@@ -65,7 +65,7 @@ void FbleReleaseString(FbleArena* arena, FbleString* string);
 //
 // Fields:
 //   source - The name of the source file or other description of the source
-//            of the program text.
+//            of the program text. Owned by this FbleLoc.
 //   line - The line within the file for the location.
 //   col - The column within the line for the location.
 typedef struct {
@@ -76,7 +76,7 @@ typedef struct {
 
 // FbleCopyLoc --
 //   Make a copy of a location. In particular, increments the reference count
-//   on the filename.
+//   on the source filename.
 //
 // Inputs:
 //   loc - the loc to copy.
@@ -110,6 +110,8 @@ typedef enum {
 // FbleName -- 
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
+//
+// name and loc are owned by this FbleName.
 typedef struct {
   const char* name;
   FbleNameSpace space;
