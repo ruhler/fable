@@ -401,25 +401,25 @@ typedef struct {
   FbleExpr* expr;
 } FbleTypeofExpr;
 
-// FbleTypeField --
+// FbleTaggedKind --
 //   A pair of (Kind, Name) used to describe poly arguments.
 typedef struct {
   FbleKind* kind;
   FbleName name;
-} FbleTypeField;
+} FbleTaggedKind;
 
-// FbleTypeFieldV -- 
-//   A vector of FbleTypeFields.
+// FbleTaggedKindV -- 
+//   A vector of FbleTaggedKinds.
 typedef struct {
-  FbleTypeField* xs;
+  FbleTaggedKind* xs;
   size_t size;
-} FbleTypeFieldV;
+} FbleTaggedKindV;
 
 // FblePolyExpr --
 //   FBLE_POLY_EXPR (arg :: (Kind, Name)) (body :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleTypeField arg;
+  FbleTaggedKind arg;
   FbleExpr* body;
 } FblePolyExpr;
 

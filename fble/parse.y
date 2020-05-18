@@ -42,7 +42,7 @@
   FbleModuleRef module_ref;
   FbleKind* kind;
   FbleKindV kinds;
-  FbleTypeFieldV type_fields;
+  FbleTaggedKindV tagged_kinds;
   FbleExpr* expr;
   FbleExprV exprs;
   FbleTaggedTypeExpr tagged_type;
@@ -77,7 +77,7 @@
 %type <module_ref> module_ref
 %type <kind> tkind nkind kind
 %type <kinds> tkind_p
-%type <type_fields> type_field_p
+%type <tagged_kinds> tagged_kind_p
 %type <expr> expr block stmt
 %type <exprs> expr_p expr_s
 %type <tagged_type> tagged_type
@@ -125,7 +125,7 @@
     FbleFreeName(arena, $$.xs[i].name);
   }
   FbleFree(arena, $$.xs);
-} <type_fields>
+} <tagged_kinds>
 
 %destructor {
   FbleFreeExpr(arena, $$);
@@ -279,16 +279,16 @@ tkind_p:
    }
  ;
 
-type_field_p:
+tagged_kind_p:
    kind name {
      FbleVectorInit(arena, $$);
-     FbleTypeField* type_field = FbleVectorExtend(arena, $$);
+     FbleTaggedKind* type_field = FbleVectorExtend(arena, $$);
      type_field->kind = $1;
      type_field->name = $2;
    }
- | type_field_p ',' kind name {
+ | tagged_kind_p ',' kind name {
      $$ = $1;
-     FbleTypeField* type_field = FbleVectorExtend(arena, $$);
+     FbleTaggedKind* type_field = FbleVectorExtend(arena, $$);
      type_field->kind = $3;
      type_field->name = $4;
    }
@@ -448,10 +448,10 @@ block:
       func_value_expr->body = $4;
       $$ = &func_value_expr->_base;
    }
- | '<' type_field_p '>' block {
+ | '<' tagged_kind_p '>' block {
       FbleExpr* expr = $4;
       for (size_t i = 0; i < $2.size; ++i) {
-        FbleTypeField* arg = $2.xs + $2.size - 1 - i;
+        FbleTaggedKind* arg = $2.xs + $2.size - 1 - i;
         FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
         poly_expr->_base.tag = FBLE_POLY_EXPR;
         poly_expr->_base.loc = FbleCopyLoc(@$);
