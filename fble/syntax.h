@@ -235,25 +235,25 @@ typedef FbleExpr FbleTypeExpr;
 // FbleTypeExprV -- Synonym for FbleExprV when types are expected.
 typedef FbleExprV FbleTypeExprV;
 
-// FbleField --
+// FbleTaggedTypeExpr --
 //   A pair of (Type, Name) used to describe type and function arguments.
 typedef struct {
   FbleTypeExpr* type;
   FbleName name;
-} FbleField;
+} FbleTaggedTypeExpr;
 
-// FbleFieldV --
-//   A vector of FbleField.
+// FbleTaggedTypeExprV --
+//   A vector of FbleTaggedTypeExpr.
 typedef struct {
   size_t size;
-  FbleField* xs;
-} FbleFieldV;
+  FbleTaggedTypeExpr* xs;
+} FbleTaggedTypeExprV;
 
 // FbleStructTypeExpr --
 //   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleTypeExpr _base;
-  FbleFieldV fields;
+  FbleTaggedTypeExprV fields;
 } FbleStructTypeExpr;
 
 // FbleTaggedExpr --
@@ -282,7 +282,7 @@ typedef struct {
 //   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleTypeExpr _base;
-  FbleFieldV fields;
+  FbleTaggedTypeExprV fields;
 } FbleUnionTypeExpr;
 
 // FbleUnionValueExpr --
@@ -317,7 +317,7 @@ typedef struct {
 //   FBLE_FUNC_VALUE_EXPR (args :: [(Type, Name)]) (body :: Expr)
 typedef struct {
   FbleExpr _base;
-  FbleFieldV args;
+  FbleTaggedTypeExprV args;
   FbleExpr* body;
 } FbleFuncValueExpr;
 

@@ -45,8 +45,8 @@
   FbleTypeFieldV type_fields;
   FbleExpr* expr;
   FbleExprV exprs;
-  FbleField field;
-  FbleFieldV fields;
+  FbleTaggedTypeExpr tagged_type;
+  FbleTaggedTypeExprV tagged_types;
   FbleTaggedExpr tagged_expr;
   FbleTaggedExprV tagged_exprs;
   FbleBindingV bindings;
@@ -80,8 +80,8 @@
 %type <type_fields> type_field_p
 %type <expr> expr block stmt
 %type <exprs> expr_p expr_s
-%type <field> field
-%type <fields> field_p field_s
+%type <tagged_type> tagged_type
+%type <tagged_types> tagged_type_p tagged_type_s
 %type <tagged_expr> implicit_tagged_expr tagged_expr
 %type <tagged_exprs> implicit_tagged_expr_p implicit_tagged_expr_s tagged_expr_p
 %type <bindings> exec_binding_p let_binding_p
@@ -141,7 +141,7 @@
 %destructor { 
   FbleFreeExpr(arena, $$.type);
   FbleFreeName(arena, $$.name);
-} <field>
+} <tagged_type>
 
 %destructor {
   for (size_t i = 0; i < $$.size; ++i) {
@@ -149,7 +149,7 @@
     FbleFreeName(arena, $$.xs[i].name);
   }
   FbleFree(arena, $$.xs);
-} <fields>
+} <tagged_types>
 
 %destructor {
   FbleFreeName(arena, $$.name);
@@ -317,7 +317,7 @@ expr:
       $$ = &mref->_base;
       FbleVectorAppend(arena, *module_refs, &mref->ref);
    }
- | '*' '(' field_s ')' {
+ | '*' '(' tagged_type_s ')' {
       FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);
       struct_type->_base.tag = FBLE_STRUCT_TYPE_EXPR;
       struct_type->_base.loc = FbleCopyLoc(@$);
@@ -347,7 +347,7 @@ expr:
       access_expr->field = $3;
       $$ = &access_expr->_base;
    }
- | '+' '(' field_p ')' {
+ | '+' '(' tagged_type_p ')' {
       FbleUnionTypeExpr* union_type = FbleAlloc(arena, FbleUnionTypeExpr);
       union_type->_base.tag = FBLE_UNION_TYPE_EXPR;
       union_type->_base.loc = FbleCopyLoc(@$);
@@ -440,7 +440,7 @@ block:
       func_type->rtype = $4;
       $$ = &func_type->_base;
    }
- | '(' field_p ')' block {
+ | '(' tagged_type_p ')' block {
       FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
       func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
       func_value_expr->_base.loc = FbleCopyLoc(@$);
@@ -511,31 +511,31 @@ expr_s:
  | expr_p { $$ = $1; }
  ;
 
-field:
+tagged_type:
    expr name {
      $$.type = $1;
      $$.name = $2;
    }
  ;
 
-field_p:
-   field {
+tagged_type_p:
+   tagged_type {
      FbleVectorInit(arena, $$);
-     FbleField* field = FbleVectorExtend(arena, $$);
+     FbleTaggedTypeExpr* field = FbleVectorExtend(arena, $$);
      field->type = $1.type;
      field->name = $1.name;
    }
- | field_p ',' field {
+ | tagged_type_p ',' tagged_type {
      $$ = $1;
-     FbleField* field = FbleVectorExtend(arena, $$);
+     FbleTaggedTypeExpr* field = FbleVectorExtend(arena, $$);
      field->type = $3.type;
      field->name = $3.name;
    }
  ;
 
-field_s:
+tagged_type_s:
    %empty { FbleVectorInit(arena, $$); }
- | field_p { $$ = $1; }
+ | tagged_type_p { $$ = $1; }
  ;
 
 implicit_tagged_expr:

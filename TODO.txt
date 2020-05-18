@@ -1,7 +1,13 @@
-* Move FbleParse and FbleFreeExpr to an internal header file.
+* Split compile into typecheck and codegen.
+ - Add expr tags for apply and access. Resolve misc as part of type checking.
+ - Change field name to FbleField with name and tag. Resolve as part of type
+   checking.
+ - Pull type checking out into a separate file.
+
+* [dataflow] Implement md5 using dataflow.
+
 * Move implementations corresponding to fble-name.h to name.c?
 
-* Split compile into typecheck and codegen.
 * Don't rely on NULL vs. non-NULL to free values in PopFrame.
 * Avoid emitting ref/release for non-recursive variables.
 * Figure out how to do better lifecycle analysis in the compiler
@@ -17,8 +23,6 @@
 
 * Clean up how we track io activity?
 * Add tests to increase code coverage.
-
-* Allow zero-argument functions in the language spec?
 
 * [profile] Remove special block 0
  - Add block data at the profile level representing 'total' and special case

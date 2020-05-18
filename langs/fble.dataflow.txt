@@ -1,0 +1,95 @@
+Fble DataFlow
+=============
+The biggest problem with the fble language today is that it is slow to run
+programs. This is partially because we haven't done the work yet of all the
+fancy optimizations, but it's also partially because of how the language is
+defined.
+
+In particular, in fble you don't distinguish between values and pointers. The
+stack and heap are used implicitly as a globally contentious resources the
+programmer has very little control over. It's not possible to describe or have
+control over the flow of data, which is what really matters in practice for
+super high performance computation.
+
+One could argue this is why we think of C and C++ as fast, but Java, Haskell,
+and fble as slow: C and C++ at least let you know about pointers, which give
+you some control over data flow.
+
+I still believe fble is a great language for describing information. It's
+support for programming language abstractions is wonderful. The idea is, could
+we add a data flow construct into the fble language? That way, you get the
+benefit of all the abstractions of fble for describing a computation, and you
+get the full control of a data flow graph for doing fast computation.
+
+Advantages of data flow for performance:
+* We restrict data to non-recursive unions and structs. This means we don't
+  need a fancy garbage collector at runtime. We know the size of everything.
+  We don't have to share anything. It's easy to pack things into bits.
+* We don't have function calls at run time.
+* We can effectively have mutable data types.
+* No need for automatic memory management.
+* No need for closures capturing things from local scope.
+
+In other words, it's solves all the performance challenges of fble except for
+taking advantage of primitives and light weight multi-threading. Both of
+which, hopefully, could be solved in practice by having support for
+compilation of some parts of the data flow graph to hardware.
+
+What is a data flow graph?
+
+We have types: non-recursive struct and union types just like in fble.
+  Though we may want to distinguish between unit and other struct types.
+We have edges/wires: each edge has a type. This represents data.
+We have nodes/modules: with multiple input and output ports connected to wires.
+
+The nodes/modules are primitive. No need for hierarchy in the data flow graph
+because we can push all our abstraction to fble. Unless we want some form of
+profiling or named hierarchy for debugging after the fact, which should be
+easy enough to add.
+
+I think it's useful to model wires as single element fifos. A module takes
+values off of input fifos and puts values on output fifos. In general the
+behavior may not be deterministic.
+
+Primitive Modules:
+
+Struct
+  Takes n input ports, has 1 output port. Waits for something to be available
+  on all input ports, then bundles them together into a struct and puts them
+  onto the output.
+
+Const
+  A special case of Struct for the unit type. Has 1 input port and 1 output
+  port. Waits for a value on the input port, then outputs Unit on the output
+  port.
+
+DeStruct
+  Takes 1 input port, has n output ports. Waits for something to be available
+  on the input port. Then splits it apart into its n fields.
+
+Union
+  Adds the given tag to a value to make a union value. 1 input, 1 output.
+
+DeUnion
+  1 input, N output. Given a union value, outputs the argument of the union to
+  just its corresponding port.
+  
+Copy
+  1 input, N outputs. Copies its input value to each of N output ports.
+
+Merge
+  N inputs, 1 output. Copies any of its inputs to the output.
+  Nondeterministic.
+
+Sink
+  1 input, no outputs. Consumes its input.
+
+
+Initially say the data flow graph starts with all wires empty. You can
+initialize it with a reset if you like by sending an external 'reset' signal
+to a bunch of Const modules inside the network.
+
+For software, it's also useful to be able to terminate a network. This can be
+done by augmenting each wire with a finish signal that propagates out to all
+the modules when set.
+

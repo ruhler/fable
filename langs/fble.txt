@@ -1244,3 +1244,9 @@ Notes:
   function that takes a unit. But it seems a little arbitrary to disallow them
   now?
 
+* Should we add built in support for dataflow?
+  See fble.dataflow.txt.
+
+* Should we have support for generics?
+  See fble.generics.txt.
+

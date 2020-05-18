@@ -1635,7 +1635,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
       // TODO: It's a little silly that we are pushing an empty type value
       // here. Oh well. Maybe in the future we'll optimize those away or
-      // add support for non-type poly args too.
+      // start making use of the type info at runtime.
 
       Local* local = NewLocal(arena, scope);
       FbleTypeInstr* type_instr = FbleAlloc(arena, FbleTypeInstr);
@@ -1885,7 +1885,7 @@ static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     .var = list_type_name,
   };
 
-  FbleField inner_args[2];
+  FbleTaggedTypeExpr inner_args[2];
   FbleName cons_name = {
     .name = "cons",
     .space = FBLE_NORMAL_NAME_SPACE,
@@ -1953,7 +1953,7 @@ static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     .body = &inner_func._base,
   };
 
-  FbleField outer_args[args.size];
+  FbleTaggedTypeExpr outer_args[args.size];
   for (size_t i = 0; i < args.size; ++i) {
     outer_args[i].type = &elem_type._base;
     outer_args[i].name = arg_names[i];
@@ -2284,7 +2284,7 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
       FbleVectorInit(arena, st->fields);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        FbleField* field = struct_type->fields.xs + i;
+        FbleTaggedTypeExpr* field = struct_type->fields.xs + i;
         FbleType* compiled = CompileType(heap, scope, field->type);
         if (compiled == NULL) {
           FbleReleaseType(heap, &st->_base);
@@ -2325,7 +2325,7 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
 
       FbleUnionTypeExpr* union_type = (FbleUnionTypeExpr*)type;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
-        FbleField* field = union_type->fields.xs + i;
+        FbleTaggedTypeExpr* field = union_type->fields.xs + i;
         FbleType* compiled = CompileType(heap, scope, field->type);
         if (compiled == NULL) {
           FbleReleaseType(heap, &ut->_base);

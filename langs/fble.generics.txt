@@ -1,0 +1,61 @@
+Fble Generics
+=============
+A number of times this question has come up: can we write generic code that
+operates on any kind of struct or union type?
+
+For example:
+* Could we write a single function that wraps a select expression and works
+  for all union types?
+* Could we define an array type that works for all mix of struct and union
+  types? And use this as the implementation of Map without having to hash the
+  keys to Data@?
+* Could we change processes to be entirely done with primitive functions in
+  fble instead of a special syntax? In particular, could we describe an Exec
+  function that works for any combination of arguments?
+* Could we define a data flow DeUnion operation in fble that works for any
+  union type?
+* Could we define a generic equals function that works for any mix of struct
+  and union types?
+
+Perhaps we could add a new kind, which is 'arg list kind', or something like
+that. Uh, let's use the syntax '&' for the time being. I imagine something
+like:
+
+& AB& = A@ a, B@ b;
+
+@ ABStruct@ = *(AB&);
+@ ABUnion@ = +(AB&);
+
+(AB&) { ABStruct@; } MkAbStruct = (AB& ab) {
+  ABStruct@(ab);
+};
+
+<@,@>@ Const@ = <@ K@, @ T@> { K@; };
+
+<@ T@>(ABUnion@, Const@<T@, AB&>) { T@; }
+ABSelect = <@ T@>(ABUnion@ x, Const@<T@, AB&> args) {
+  x.?(args);
+};
+
+<& F&, @ T@>(+(F&), Const@<T@, F&>) { T@; }
+Select = <& F&, @ T@>(+(F&) x, Const@<T@, F&> args) {
+  x.?(args);
+};
+
+
+Something like that, for example. I think this is missing a way to do
+something different for struct and union types, and having to specify the
+fields explicitly in Select would be a big pain. But otherwise I think it kind
+of makes sense. Maybe we use x.& as a way to get the fields given the type of
+x. Then we could, in practice, do:
+
+    Select<Bool@.&, Foo@>(true, Foo1, Foo2);
+
+Note that the reason we don't need to list the type explicitly if we have
+built in syntax for select is because we never use the .? standalone. But here
+we might want to use Select<Bool&.&, Foo@> without providing arguments that
+could be used to infer its type. Maybe we could add an expression:
+    expr <> (...)
+
+That infers the type polymorphic type parameters of expr from the arguments,
+assuming that's possible.
