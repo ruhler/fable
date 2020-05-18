@@ -1,3 +1,5 @@
+
+* Rename MiscAccessExpr to AccessExpr
 * Split compile into typecheck and codegen.
  - Add expr tags for apply and access. Resolve misc as part of type checking.
  - Change field name to FbleField with name and tag. Resolve as part of type

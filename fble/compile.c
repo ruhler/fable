@@ -1091,6 +1091,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       return c;
     }
 
+    case FBLE_STRUCT_ACCESS_EXPR:
+    case FBLE_UNION_ACCESS_EXPR:
     case FBLE_MISC_ACCESS_EXPR: {
       FbleMiscAccessExpr* access_expr = (FbleMiscAccessExpr*)expr;
 
@@ -1099,22 +1101,24 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         return COMPILE_FAILED;
       }
 
-      FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
-      access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
-      access->_base.profile_ops = NULL;
-      access->loc = FbleCopyLoc(access_expr->field.loc);
-      access->obj = obj.local->index;
-      AppendInstr(arena, scope, &access->_base);
-
       FbleType* normal = FbleNormalType(heap, obj.type);
-      FbleTaggedTypeV* fields = NULL;
-      if (normal->tag == FBLE_STRUCT_TYPE) {
-        access->_base.tag = FBLE_STRUCT_ACCESS_INSTR;
-        fields = &((FbleStructType*)normal)->fields;
-      } else if (normal->tag == FBLE_UNION_TYPE) {
-        access->_base.tag = FBLE_UNION_ACCESS_INSTR;
-        fields = &((FbleUnionType*)normal)->fields;
-      } else {
+      if (expr->tag == FBLE_STRUCT_ACCESS_EXPR && normal->tag != FBLE_STRUCT_TYPE) {
+        ReportError(arena, &access_expr->object->loc,
+            "expected struct value, but found value of type %t\n",
+            obj.type);
+
+        FbleReleaseType(heap, obj.type);
+        FbleReleaseType(heap, normal);
+        return COMPILE_FAILED;
+      } else if (expr->tag == FBLE_UNION_ACCESS_EXPR && normal->tag != FBLE_UNION_TYPE) {
+        ReportError(arena, &access_expr->object->loc,
+            "expected union value, but found value of type %t\n",
+            obj.type);
+
+        FbleReleaseType(heap, obj.type);
+        FbleReleaseType(heap, normal);
+        return COMPILE_FAILED;
+      } else if (normal->tag != FBLE_STRUCT_TYPE && normal->tag != FBLE_UNION_TYPE) {
         ReportError(arena, &access_expr->object->loc,
             "expected value of type struct or union, but found value of type %t\n",
             obj.type);
@@ -1122,7 +1126,30 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         FbleReleaseType(heap, obj.type);
         FbleReleaseType(heap, normal);
         return COMPILE_FAILED;
+      } else {
+        expr->tag = (normal->tag == FBLE_STRUCT_TYPE)
+          ? FBLE_STRUCT_ACCESS_EXPR
+          : FBLE_UNION_ACCESS_EXPR;
       }
+
+      FbleTaggedTypeV* fields = NULL;
+      if (normal->tag == FBLE_STRUCT_TYPE) {
+        fields = &((FbleStructType*)normal)->fields;
+      } else if (normal->tag == FBLE_UNION_TYPE) {
+        fields = &((FbleUnionType*)normal)->fields;
+      } else {
+        UNREACHABLE("should never get here");
+        return COMPILE_FAILED;
+      }
+
+      FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
+      access->_base.tag = (expr->tag == FBLE_STRUCT_ACCESS_EXPR)
+        ? FBLE_STRUCT_ACCESS_INSTR
+        : FBLE_UNION_ACCESS_INSTR;
+      access->_base.profile_ops = NULL;
+      access->loc = FbleCopyLoc(access_expr->field.loc);
+      access->obj = obj.local->index;
+      AppendInstr(arena, scope, &access->_base);
 
       for (size_t i = 0; i < fields->size; ++i) {
         if (FbleNamesEqual(&access_expr->field, &fields->xs[i].name)) {
@@ -2038,6 +2065,8 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_MISC_APPLY_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
+    case FBLE_STRUCT_ACCESS_EXPR:
+    case FBLE_UNION_ACCESS_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
@@ -2410,6 +2439,8 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
     case FBLE_MISC_APPLY_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
+    case FBLE_STRUCT_ACCESS_EXPR:
+    case FBLE_UNION_ACCESS_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
