@@ -457,16 +457,19 @@ typedef struct {
   FbleExprV args;
 } FbleMiscApplyExpr;
 
-// FbleMiscAccessExpr --
+// FbleAccessExpr --
 //   FBLE_MISC_ACCESS_EXPR (object :: Expr) (field :: Name)
 //   FBLE_STRUCT_ACCESS_EXPR (object :: Expr) (field :: Name)
 //   FBLE_UNION_ACCESS_EXPR (object :: Expr) (field :: Name)
+//
 // Common form used for both struct and union access.
+// FBLE_MISC_ACCESS_EXPR is resolved to FBLE_STRUCT_ACCESS_EXPR or
+// FBLE_UNION_ACCESS_EXPR as part of type check.
 typedef struct {
   FbleExpr _base;
   FbleExpr* object;
   FbleName field;
-} FbleMiscAccessExpr;
+} FbleAccessExpr;
 
 // FbleModule --
 //   Represents an individual module.

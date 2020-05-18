@@ -240,7 +240,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_STRUCT_ACCESS_EXPR:
     case FBLE_UNION_ACCESS_EXPR:
     case FBLE_MISC_ACCESS_EXPR: {
-      FbleMiscAccessExpr* e = (FbleMiscAccessExpr*)expr;
+      FbleAccessExpr* e = (FbleAccessExpr*)expr;
       FbleFreeExpr(arena, e->object);
       FbleFreeName(arena, e->field);
       FbleFree(arena, expr);

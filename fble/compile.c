@@ -1094,7 +1094,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_STRUCT_ACCESS_EXPR:
     case FBLE_UNION_ACCESS_EXPR:
     case FBLE_MISC_ACCESS_EXPR: {
-      FbleMiscAccessExpr* access_expr = (FbleMiscAccessExpr*)expr;
+      FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
       Compiled obj = CompileExpr(heap, blocks, false, scope, access_expr->object);
       if (obj.type == NULL) {
@@ -1784,7 +1784,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         .var = spec_name
       };
 
-      FbleMiscAccessExpr letters[n];
+      FbleAccessExpr letters[n];
       FbleExpr* xs[n];
       char word_letters[2*n];
       FbleLoc loc = literal->word_loc;
