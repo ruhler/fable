@@ -247,8 +247,10 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       return;
     }
 
+    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
+    case FBLE_FUNC_APPLY_EXPR:
     case FBLE_MISC_APPLY_EXPR: {
-      FbleMiscApplyExpr* e = (FbleMiscApplyExpr*)expr;
+      FbleApplyExpr* e = (FbleApplyExpr*)expr;
       FbleFreeExpr(arena, e->misc);
       for (size_t i = 0; i < e->args.size; ++i) {
         FbleFreeExpr(arena, e->args.xs[i]);

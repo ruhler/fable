@@ -1,6 +1,5 @@
 
 * Split compile into typecheck and codegen.
- - Add expr tags for apply. Resolve misc as part of type checking.
  - Change field name to FbleField with name and tag. Resolve as part of type
    checking.
  - Pull type checking out into a separate file.

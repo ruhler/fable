@@ -325,12 +325,12 @@ expr:
       $$ = &struct_type->_base;
    }
  | expr '(' expr_s ')' {
-      FbleMiscApplyExpr* misc_apply_expr = FbleAlloc(arena, FbleMiscApplyExpr);
-      misc_apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
-      misc_apply_expr->_base.loc = FbleCopyLoc(@$);
-      misc_apply_expr->misc = $1;
-      misc_apply_expr->args = $3;
-      $$ = &misc_apply_expr->_base;
+      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
+      apply_expr->_base.loc = FbleCopyLoc(@$);
+      apply_expr->misc = $1;
+      apply_expr->args = $3;
+      $$ = &apply_expr->_base;
    }
  | '@' '(' implicit_tagged_expr_s ')' {
       FbleStructValueImplicitTypeExpr* expr = FbleAlloc(arena, FbleStructValueImplicitTypeExpr);

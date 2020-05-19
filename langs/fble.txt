@@ -1090,7 +1090,7 @@ expr ::=
  | path                                            (* module_ref *)
 
  | '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
- | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type, get, put *)
+ | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type *)
  | '@(' [name [':' expr] [',' ...]] ')'            (* struct_value_implicit_type *)
  | expr '.' name                                   (* struct_access *)
 

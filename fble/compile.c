@@ -780,16 +780,18 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       return c;
     }
 
+    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
+    case FBLE_FUNC_APPLY_EXPR:
     case FBLE_MISC_APPLY_EXPR: {
-      FbleMiscApplyExpr* misc_apply_expr = (FbleMiscApplyExpr*)expr;
+      FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
-      Compiled misc = CompileExpr(heap, blocks, false, scope, misc_apply_expr->misc);
+      Compiled misc = CompileExpr(heap, blocks, false, scope, apply_expr->misc);
       bool error = (misc.type == NULL);
 
-      size_t argc = misc_apply_expr->args.size;
+      size_t argc = apply_expr->args.size;
       Compiled args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(heap, blocks, false, scope, misc_apply_expr->args.xs[i]);
+        args[i] = CompileExpr(heap, blocks, false, scope, apply_expr->args.xs[i]);
         error = error || (args[i].type == NULL);
       }
 
@@ -805,6 +807,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       switch (normal->tag) {
         case FBLE_FUNC_TYPE: {
           // FUNC_APPLY
+          assert(expr->tag != FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR && "TODO");
+          expr->tag = FBLE_FUNC_APPLY_EXPR;
           FbleFuncType* func_type = (FbleFuncType*)normal;
           if (func_type->args.size != argc) {
             ReportError(arena, &expr->loc,
@@ -827,7 +831,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
           FbleCallInstr* call_instr = FbleAlloc(arena, FbleCallInstr);
           call_instr->_base.tag = FBLE_CALL_INSTR;
           call_instr->_base.profile_ops = NULL;
-          call_instr->loc = FbleCopyLoc(misc_apply_expr->misc->loc);
+          call_instr->loc = FbleCopyLoc(apply_expr->misc->loc);
           call_instr->exit = exit;
           call_instr->func = misc.local->index;
           FbleVectorInit(arena, call_instr->args);
@@ -836,7 +840,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
           for (size_t i = 0; i < argc; ++i) {
             if (!FbleTypesEqual(heap, func_type->args.xs[i], args[i].type)) {
-              ReportError(arena, &misc_apply_expr->args.xs[i]->loc,
+              ReportError(arena, &apply_expr->args.xs[i]->loc,
                   "expected type %t, but found %t\n",
                   func_type->args.xs[i], args[i].type);
               FbleReleaseType(heap, normal);
@@ -864,6 +868,8 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
         case FBLE_TYPE_TYPE: {
           // FBLE_STRUCT_VALUE_EXPR
+          assert(expr->tag != FBLE_FUNC_APPLY_EXPR && "TODO");
+          expr->tag = FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR;
           FbleTypeType* type_type = (FbleTypeType*)normal;
           FbleType* vtype = FbleRetainType(heap, type_type->type);
           FbleReleaseType(heap, normal);
@@ -873,7 +879,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
 
           FbleStructType* struct_type = (FbleStructType*)FbleNormalType(heap, vtype);
           if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
-            ReportError(arena, &misc_apply_expr->misc->loc,
+            ReportError(arena, &apply_expr->misc->loc,
                 "expected a struct type, but found %t\n",
                 vtype);
             FbleReleaseType(heap, &struct_type->_base);
@@ -902,7 +908,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
             FbleTaggedType* field = struct_type->fields.xs + i;
 
             if (!FbleTypesEqual(heap, field->type, args[i].type)) {
-              ReportError(arena, &misc_apply_expr->args.xs[i]->loc,
+              ReportError(arena, &apply_expr->args.xs[i]->loc,
                   "expected type %t, but found %t\n",
                   field->type, args[i].type);
               error = true;
@@ -1952,7 +1958,7 @@ static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
   inner_args[1].type = &list_type._base;
   inner_args[1].name = nil_name;
 
-  FbleMiscApplyExpr applys[args.size];
+  FbleApplyExpr applys[args.size];
   FbleExpr* all_args[args.size * 2];
   for (size_t i = 0; i < args.size; ++i) {
     applys[i]._base.tag = FBLE_MISC_APPLY_EXPR;
@@ -2007,7 +2013,7 @@ static Compiled CompileList(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     .arg = type,
   };
 
-  FbleMiscApplyExpr apply_elems = {
+  FbleApplyExpr apply_elems = {
     ._base = { .tag = FBLE_MISC_APPLY_EXPR, .loc = loc },
     .misc = &apply_type._base,
     .args = args,
@@ -2063,6 +2069,8 @@ static Compiled CompileExec(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
     case FBLE_PROC_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
     case FBLE_MISC_APPLY_EXPR:
+    case FBLE_FUNC_APPLY_EXPR:
+    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_STRUCT_ACCESS_EXPR:
@@ -2436,7 +2444,9 @@ static FbleType* CompileType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* typ
       return CompileExprNoInstrs(heap, scope, typeof->expr);
     }
 
+    case FBLE_FUNC_APPLY_EXPR:
     case FBLE_MISC_APPLY_EXPR:
+    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_STRUCT_ACCESS_EXPR:

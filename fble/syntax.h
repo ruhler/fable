@@ -184,7 +184,7 @@ typedef enum {
   FBLE_MODULE_REF_EXPR,
 
   FBLE_STRUCT_TYPE_EXPR,
-//FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR,
+  FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR,
   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
   FBLE_STRUCT_ACCESS_EXPR,
 
@@ -195,7 +195,7 @@ typedef enum {
 
   FBLE_FUNC_TYPE_EXPR,
   FBLE_FUNC_VALUE_EXPR,
-//FBLE_FUNC_APPLY_EXPR = FBLE_MISC_APPLY_EXPR,
+  FBLE_FUNC_APPLY_EXPR,
 
   FBLE_PROC_TYPE_EXPR,
   FBLE_EVAL_EXPR,
@@ -209,7 +209,7 @@ typedef enum {
   FBLE_LITERAL_EXPR,
 
   FBLE_MISC_ACCESS_EXPR,
-  FBLE_MISC_APPLY_EXPR,   // Used for STRUCT_VALUE_EXPLICIT_TYPE, FUNC_APPLY
+  FBLE_MISC_APPLY_EXPR,
 } FbleExprTag;
 
 // FbleExpr --
@@ -447,15 +447,18 @@ typedef struct {
   const char* word;
 } FbleLiteralExpr;
 
-// FbleMiscApplyExpr --
+// FbleApplyExpr --
 //   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])
-//   FBLE_STRUCT_VALUE_EXPR (type :: Type) (args :: [Expr])
+//   FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR (type :: Type) (args :: [Expr])
 //   FBLE_FUNC_APPLY_EXPR (func :: Expr) (args :: [Expr])
+//
+// FBLE_MISC_APPLY_EXPR is resolved to FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR or
+// FBLE_FUNC_APPLY_EXPR as part of type check.
 typedef struct {
   FbleExpr _base;
   FbleExpr* misc;
   FbleExprV args;
-} FbleMiscApplyExpr;
+} FbleApplyExpr;
 
 // FbleAccessExpr --
 //   FBLE_MISC_ACCESS_EXPR (object :: Expr) (field :: Name)
