@@ -311,7 +311,10 @@ typedef struct {
 // FbleUnionSelectExpr --
 //   FBLE_UNION_SELECT_EXPR (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
 //
-// Note: default_ is NULL if no default is provided.
+// default_ is NULL if no default is provided.
+//
+// typecheck inserts tagged expressions into choices with expr set to NULL to
+// indicate default branches explicitly.
 typedef struct {
   FbleExpr _base;
   FbleExpr* condition;

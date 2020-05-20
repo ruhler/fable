@@ -719,10 +719,9 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         target = result;
       }
 
-      size_t choice = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
-        if (choice < select_expr->choices.size && FbleNamesEqual(&select_expr->choices.xs[choice].name, &union_type->fields.xs[i].name)) {
-          FbleType* result = TypeCheckExpr(heap, scope, select_expr->choices.xs[choice].expr);
+        if (i < select_expr->choices.size && FbleNamesEqual(&select_expr->choices.xs[i].name, &union_type->fields.xs[i].name)) {
+          FbleType* result = TypeCheckExpr(heap, scope, select_expr->choices.xs[i].expr);
 
           if (result == NULL) {
             FbleReleaseType(heap, &union_type->_base);
@@ -734,7 +733,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             target = result;
           } else {
             if (!FbleTypesEqual(heap, target, result)) {
-              ReportError(arena, &select_expr->choices.xs[choice].expr->loc,
+              ReportError(arena, &select_expr->choices.xs[i].expr->loc,
                   "expected type %t, but found %t\n",
                   target, result);
 
@@ -745,13 +744,11 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             }
             FbleReleaseType(heap, result);
           }
-
-          choice++;
         } else if (select_expr->default_ == NULL) {
-          if (choice < select_expr->choices.size) {
-            ReportError(arena, &select_expr->choices.xs[choice].name.loc,
+          if (i < select_expr->choices.size) {
+            ReportError(arena, &select_expr->choices.xs[i].name.loc,
                 "expected tag '%n', but found '%n'\n",
-                &union_type->fields.xs[i].name, &select_expr->choices.xs[choice].name);
+                &union_type->fields.xs[i].name, &select_expr->choices.xs[i].name);
           } else {
             ReportError(arena, &expr->loc,
                 "missing tag '%n'\n",
@@ -760,18 +757,30 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           FbleReleaseType(heap, &union_type->_base);
           FbleReleaseType(heap, target);
           return NULL;
+        } else {
+          // Insert a default expr for the current choice, so we can keep
+          // track of which fields refer to what choices without having to
+          // hold on to the union type.
+          FbleTaggedExpr x = { .expr = NULL };
+          for (int j = i; j < select_expr->choices.size; ++j) {
+            FbleTaggedExpr tmp = select_expr->choices.xs[i];
+            select_expr->choices.xs[i] = x;
+            x = tmp;
+          }
+          FbleVectorAppend(arena, select_expr->choices, x);
         }
       }
-      FbleReleaseType(heap, &union_type->_base);
 
-      if (choice < select_expr->choices.size) {
-        ReportError(arena, &select_expr->choices.xs[choice].name.loc,
+      if (union_type->fields.size < select_expr->choices.size) {
+        ReportError(arena, &select_expr->choices.xs[union_type->fields.size].name.loc,
             "unexpected tag '%n'\n",
-            &select_expr->choices.xs[choice]);
+            &select_expr->choices.xs[union_type->fields.size]);
+        FbleReleaseType(heap, &union_type->_base);
         FbleReleaseType(heap, target);
         return NULL;
       }
 
+      FbleReleaseType(heap, &union_type->_base);
       return target;
     }
 

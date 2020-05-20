@@ -853,7 +853,7 @@ static Local* CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* 
       // default expression.
       FbleJumpInstr* exit_jumps[select_expr->choices.size];
       for (size_t i = 0; i < select_expr->choices.size; ++i) {
-        if (select_expr->choices.xs[i].expr != select_expr->default_) {
+        if (select_expr->choices.xs[i].expr != NULL) {
           size_t jump = scope->code->instrs.size - select_instr_pc;
           FbleVectorAppend(arena, select_instr->jumps, jump);
 
@@ -896,7 +896,9 @@ static Local* CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* 
           exit_jump_default->count = scope->code->instrs.size - exit_jump_default->count;
         }
         for (size_t i = 0; i < select_expr->choices.size; ++i) {
-          exit_jumps[i]->count = scope->code->instrs.size - exit_jumps[i]->count;
+          if (select_expr->choices.xs[i].expr != NULL) {
+            exit_jumps[i]->count = scope->code->instrs.size - exit_jumps[i]->count;
+          }
         }
       }
 

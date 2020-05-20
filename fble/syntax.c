@@ -130,8 +130,10 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleUnionSelectExpr* e = (FbleUnionSelectExpr*)expr;
       FbleFreeExpr(arena, e->condition);
       for (size_t i = 0; i < e->choices.size; ++i) {
-        FbleFreeName(arena, e->choices.xs[i].name);
-        FbleFreeExpr(arena, e->choices.xs[i].expr);
+        if (e->choices.xs[i].expr != NULL) {
+          FbleFreeName(arena, e->choices.xs[i].name);
+          FbleFreeExpr(arena, e->choices.xs[i].expr);
+        }
       }
       FbleFree(arena, e->choices.xs);
       FbleFreeExpr(arena, e->default_);
