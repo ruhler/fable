@@ -2537,6 +2537,21 @@ static bool CompileProgram(FbleTypeHeap* heap, Blocks* blocks, Scope* scope, Fbl
   return result.type != NULL;
 }
 
+// FbleTypeCheck --
+//   Type check the given program.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   program - the program to type check.
+//
+// Results:
+//   true if the program is well typed, false otherwise.
+//
+// Side effects:
+//   Resolves field tags and MISC_*_EXPRs in the program.
+//   Prints messages to stderr in case of failure to type check.
+bool FbleTypeCheck(FbleArena* arena, FbleProgram* program);
+
 // FbleCompile -- see documentation in fble.h
 FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
 {
@@ -2567,7 +2582,10 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
 
   FbleTypeHeap* heap = FbleNewTypeHeap(arena);
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
-  bool ok = CompileProgram(heap, &block_stack, &scope, program);
+  bool ok = FbleTypeCheck(arena, program);
+  if (ok) {
+    CompileProgram(heap, &block_stack, &scope, program);
+  }
   ExitBlock(arena, &block_stack, &scope, true);
   FreeScope(heap, &scope, true);
   FbleFreeTypeHeap(heap);

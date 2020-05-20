@@ -63,7 +63,7 @@ typedef struct FbleCompiledProgram FbleCompiledProgram;
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   prgm - the program to compile.
+//   program - the program to compile.
 //   profile - profile to populate with blocks. May be NULL.
 //
 // Results:
