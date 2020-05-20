@@ -93,3 +93,94 @@ For software, it's also useful to be able to terminate a network. This can be
 done by augmenting each wire with a finish signal that propagates out to all
 the modules when set.
 
+---
+
+Stepping back. The goal here is to describe a computation that we can make run
+really fast, in both hardware and software.
+
+I don't see how we can make dataflow fast in software. I think we lose
+high level information about scheduling that is important for efficient
+software.
+
+I think better would be to describe the computation as close to fble as
+possible, but with the key limitations needed to be fast. Namely: all memory
+is statically allocated.
+
+I assume if we can describe our computation that way, it will not be hard to
+compile to efficient hardware.
+
+The things we want to avoid at runtime:
+* Heap allocations. Garbage collection.
+  This implies we don't allow recursive data types. That way we have no
+  cycles, no need for a complicated gc. I would go so far as to suggest we
+  also don't need reference counting: data movement is expensive in reality,
+  so copying a value should be expensive in the code.
+ 
+  Ideally we pack data values as tightly as we can into bits and make copies
+  as needed.
+
+* No function calls.
+  Which would require stack allocations.
+  This implies we want to inline all function calls. There's no need to worry
+  about the memory cost of inlining, because the entire point is to see what
+  the total memory cost of a program is.
+
+  This also implies we don't allow function or proc values at runtime, because
+  there's no way we could make use of them.
+
+  Tail recursive function calls are okay, because they don't need any
+  additional memory.
+
+I would expect a computation with these limitations to compile down to code
+that operates on pure values, does no dynamic memory allocation, and consists
+of some mix of straight line code, conditional statements, and while loops. It
+should be very easy to generate high performance code for this: translate
+types to structs in llvm, temporary variables become global variables, and we
+translate the code directly. No GC. No runtime. Super fast.
+
+It would be nice if I could try writing fble program's with these
+restrictions, to see how hard it is to write meaningful programs. The compiler
+should be able to help. For example, let's say we define a variant of the
+function type that is the "high performance" function type. The body of the
+function obeys the limitations above.
+
+Syntax could be something like:
+
+ %(Int@, Int@) { ... };
+ %(Int@ a, Int@ b) { ... };
+
+The compiler can check the arguments and the body.
+You are allowed to use high performance functions in normal functions, but not
+the other way around.
+
+Stating the restrictions again:
+* Types of args, variables, expressions, etc must be non recursive union and
+  struct types.
+* Function calls must be to high performance functions.
+* Recursive function calls must be (self?) tail recursive.
+
+Are procs allowed?
+
+It seems like we should be able to get and put from external ports. But we
+can't fork new threads dynamically. We would have to know all the threads at
+the start.
+
+I think we could have a "high performance" proc. There are two variants:
+1. The same as a high performance function but with the ability to get and put
+from given ports. No new links. No forking.
+2. A top level process that allocates a bunch of links statically, then does a
+single exec with a bunch of high performance processes. Actually, it might be
+okay to do multiple execs, in a non recursive fashion.
+
+In terms of implementation, we would want to know all links statically to turn
+them into global variables. But now we need a thread scheduler, which sounds
+scary. So we would really want to minimize how often we fork and join and how
+many threads there are. My vote to start is to not allow procs.
+
+But maybe it's fine to let high performance funcs be the core kernels of high
+performance computations, and wrap everything else in normal computation. In
+other words, it would be awesome if we automatically compiled high performance
+functions to be high performance (with some overhead for data conversion). As
+long as the normal performance stuff is a small enough part of the
+computation, it's fine to make it slow.
+

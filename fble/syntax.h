@@ -285,12 +285,26 @@ typedef struct {
   FbleTaggedTypeExprV fields;
 } FbleUnionTypeExpr;
 
+// FbleField --
+//   The name of a field.
+//
+// The tag is initially set to FBLE_UNRESOLVE_FIELD_TAG and resolved as part
+// of type checking.
+typedef struct {
+  FbleName name;
+  size_t tag;
+} FbleField;
+
+// FBLE_UNRESOLVED_FIELD_TAG --
+//   Sentinel value used for unresolved field tags.
+#define FBLE_UNRESOLVED_FIELD_TAG (-1)
+
 // FbleUnionValueExpr --
 //   FBLE_UNION_VALUE_EXPR (type :: Type) (field :: Name) (arg :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleTypeExpr* type;
-  FbleName field;
+  FbleField field;
   FbleExpr* arg;
 } FbleUnionValueExpr;
 

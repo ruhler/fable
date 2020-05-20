@@ -359,7 +359,8 @@ expr:
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
       union_value_expr->_base.loc = FbleCopyLoc(@$);
       union_value_expr->type = $1;
-      union_value_expr->field = $3;
+      union_value_expr->field.name = $3;
+      union_value_expr->field.tag = FBLE_UNRESOLVED_FIELD_TAG;
       union_value_expr->arg = $5;
       $$ = &union_value_expr->_base;
    }

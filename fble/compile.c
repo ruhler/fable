@@ -1044,18 +1044,17 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       }
 
       FbleType* field_type = NULL;
-      size_t tag = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         FbleTaggedType* field = union_type->fields.xs + i;
-        if (FbleNamesEqual(&field->name, &union_value_expr->field)) {
-          tag = i;
+        if (FbleNamesEqual(&field->name, &union_value_expr->field.name)) {
+          union_value_expr->field.tag = i;
           field_type = field->type;
           break;
         }
       }
 
       if (field_type == NULL) {
-        ReportError(arena, &union_value_expr->field.loc,
+        ReportError(arena, &union_value_expr->field.name.loc,
             "'%n' is not a field of type %t\n",
             &union_value_expr->field, type);
         FbleReleaseType(heap, &union_type->_base);
@@ -1088,7 +1087,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleUnionValueInstr* union_instr = FbleAlloc(arena, FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->_base.profile_ops = NULL;
-      union_instr->tag = tag;
+      union_instr->tag = union_value_expr->field.tag;
       union_instr->arg = arg.local->index;
       union_instr->dest = c.local->index.index;
       AppendInstr(arena, scope, &union_instr->_base);

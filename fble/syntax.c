@@ -120,7 +120,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* e = (FbleUnionValueExpr*)expr;
       FbleFreeExpr(arena, e->type);
-      FbleFreeName(arena, e->field);
+      FbleFreeName(arena, e->field.name);
       FbleFreeExpr(arena, e->arg);
       FbleFree(arena, expr);
       return;
