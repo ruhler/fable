@@ -454,11 +454,16 @@ typedef struct {
 
 // FbleLiteralExpr --
 //   FBLE_LITERAL_EXPR (spec :: Expr) (word :: Word)
+//
+// tags represents the resolved field tags corresponding to the letters of
+// word. The length of tags is strlen(word). The contents of tags is initially
+// set to FBLE_UNRESOLVED_FIELD_TAG, then later resolved in type check.
 typedef struct {
   FbleExpr _base;
   FbleExpr* spec;
   FbleLoc word_loc;
   const char* word;
+  size_t* tags;
 } FbleLiteralExpr;
 
 // FbleApplyExpr --

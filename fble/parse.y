@@ -423,6 +423,11 @@ expr:
       literal_expr->spec = $1;
       literal_expr->word_loc = FbleCopyLoc(@3);
       literal_expr->word = $3;
+      size_t n = strlen($3);
+      literal_expr->tags = FbleArrayAlloc(arena, size_t, n);
+      for (size_t i = 0; i < n; ++i) {
+        literal_expr->tags[i] = FBLE_UNRESOLVED_FIELD_TAG;
+      }
       $$ = &literal_expr->_base;
    }
  | block {

@@ -233,6 +233,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleFreeExpr(arena, e->spec);
       FbleFreeLoc(arena, e->word_loc);
       FbleFree(arena, (char*)e->word);
+      FbleFree(arena, e->tags);
       FbleFree(arena, expr);
       return;
     }

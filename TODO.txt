@@ -1,7 +1,6 @@
 
 * Split compile into typecheck and codegen.
- - Change field name to FbleField with name and tag. Resolve as part of type
-   checking.
+ - Pull type checking out into a separate function.
  - Pull type checking out into a separate file.
 
 * [dataflow] Implement md5 using dataflow.

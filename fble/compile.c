@@ -1818,6 +1818,11 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
       FbleExprV args = { .size = n, .xs = xs, };
       Compiled result = CompileList(heap, blocks, exit, scope, literal->word_loc, args);
       PopVar(heap, scope, exit);
+
+      for (size_t i = 0; i < n; ++i) {
+        literal->tags[i] = letters[i].field.tag;
+      }
+
       return result;
     }
   }
