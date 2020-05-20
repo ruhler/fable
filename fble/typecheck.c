@@ -949,10 +949,9 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       // Check to see if this is a recursive let block.
-      // TODO: Record this fact somewhere so we can use it during code gen.
-      bool recursive = false;
+      let_expr->recursive = false;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        recursive = recursive || vars[i]->used;
+        let_expr->recursive = let_expr->recursive || vars[i]->used;
       }
 
       // Apply the newly computed type values for variables whose types were

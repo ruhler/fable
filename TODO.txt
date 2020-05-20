@@ -1,15 +1,15 @@
+* Fix broken vacuous_value test.
+* Fix broken memory leak test.
 
-* Split compile into typecheck and codegen.
- - Clean up typecheck.c and compile.c now that they are separate.
-   Pick better name for TypeCheckExprNoInstrs.
- - Fix broken vacuous_value test.
+* Clean up typecheck.c and compile.c now that they are separate.
+ - Pick better name for TypeCheckExprNoInstrs.
+ - Remove 'used' and 'access' tracking from compile.c
 
 * Add tests to increase code coverage.
 
 * Move implementations corresponding to fble-name.h to name.c?
 
 * Don't rely on NULL vs. non-NULL to free values in PopFrame.
-* Avoid emitting ref/release for non-recursive variables.
 * Figure out how to do better lifecycle analysis in the compiler
  - Don't retain/release a field of an object if you know the object is going
    to stay alive as long as you need the field anyway.
