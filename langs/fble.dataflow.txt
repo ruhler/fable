@@ -184,3 +184,9 @@ functions to be high performance (with some overhead for data conversion). As
 long as the normal performance stuff is a small enough part of the
 computation, it's fine to make it slow.
 
+---
+
+For the existing implementation of md5 to be made "high performance", the
+following would need to be changed:
+
+

@@ -1152,12 +1152,13 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         ? FBLE_STRUCT_ACCESS_INSTR
         : FBLE_UNION_ACCESS_INSTR;
       access->_base.profile_ops = NULL;
-      access->loc = FbleCopyLoc(access_expr->field.loc);
+      access->loc = FbleCopyLoc(access_expr->field.name.loc);
       access->obj = obj.local->index;
       AppendInstr(arena, scope, &access->_base);
 
       for (size_t i = 0; i < fields->size; ++i) {
-        if (FbleNamesEqual(&access_expr->field, &fields->xs[i].name)) {
+        if (FbleNamesEqual(&access_expr->field.name, &fields->xs[i].name)) {
+          access_expr->field.tag = i;
           access->tag = i;
           FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
           FbleReleaseType(heap, normal);
@@ -1173,7 +1174,7 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         }
       }
 
-      ReportError(arena, &access_expr->field.loc,
+      ReportError(arena, &access_expr->field.name.loc,
           "'%n' is not a field of type %t\n",
           &access_expr->field, obj.type);
       FbleReleaseType(heap, obj.type);
@@ -1800,9 +1801,10 @@ static Compiled CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope
         letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
         letters[i]._base.loc = loc;
         letters[i].object = &spec_var._base;
-        letters[i].field.name = word_letters + 2*i;
-        letters[i].field.space = FBLE_NORMAL_NAME_SPACE;
-        letters[i].field.loc = loc;
+        letters[i].field.name.name = word_letters + 2*i;
+        letters[i].field.name.space = FBLE_NORMAL_NAME_SPACE;
+        letters[i].field.name.loc = loc;
+        letters[i].field.tag = FBLE_UNRESOLVED_FIELD_TAG;
 
         xs[i] = &letters[i]._base;
 

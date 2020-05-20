@@ -485,7 +485,7 @@ typedef struct {
 typedef struct {
   FbleExpr _base;
   FbleExpr* object;
-  FbleName field;
+  FbleField field;
 } FbleAccessExpr;
 
 // FbleModule --

@@ -344,7 +344,8 @@ expr:
       access_expr->_base.tag = FBLE_MISC_ACCESS_EXPR;
       access_expr->_base.loc = FbleCopyLoc(@$);
       access_expr->object = $1;
-      access_expr->field = $3;
+      access_expr->field.name = $3;
+      access_expr->field.tag = FBLE_UNRESOLVED_FIELD_TAG;
       $$ = &access_expr->_base;
    }
  | '+' '(' tagged_type_p ')' {
