@@ -763,8 +763,8 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           // hold on to the union type.
           FbleTaggedExpr x = { .expr = NULL };
           for (int j = i; j < select_expr->choices.size; ++j) {
-            FbleTaggedExpr tmp = select_expr->choices.xs[i];
-            select_expr->choices.xs[i] = x;
+            FbleTaggedExpr tmp = select_expr->choices.xs[j];
+            select_expr->choices.xs[j] = x;
             x = tmp;
           }
           FbleVectorAppend(arena, select_expr->choices, x);

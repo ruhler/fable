@@ -1,0 +1,11 @@
+fble-test {
+  @ Unit@ = *();
+  Unit@ Unit = Unit@();
+
+  @ C@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
+
+  # Regression test for an index bug we had that would lead to a segfault in
+  # this case where we use the default for the first and last option.
+  C@ c = C@(0: Unit);
+  c.?(1: Unit, 2: Unit, : Unit);
+}

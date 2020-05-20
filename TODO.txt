@@ -1,6 +1,5 @@
 
 * Split compile into typecheck and codegen.
- - Add regression test for failing default union select.
  - Clean up typecheck.c and compile.c now that they are separate.
    Pick better name for TypeCheckExprNoInstrs.
  - Fix broken vacuous_value test.
