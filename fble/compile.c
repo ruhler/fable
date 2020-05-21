@@ -35,13 +35,9 @@ typedef struct {
 // name - the name of the variable.
 // local - the type and location of the variable in the stack frame.
 //   A reference to the local is owned by this Var.
-// used  - true if the variable is used anywhere at runtime, false otherwise.
-// accessed - true if the variable is referenced anywhere, false otherwise.
 typedef struct {
   FbleName name;
   Local* local;
-  bool used;
-  bool accessed;
 } Var;
 
 // VarV --
@@ -209,8 +205,6 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, Local* local)
   Var* var = FbleAlloc(arena, Var);
   var->name = name;
   var->local = local;
-  var->used = false;
-  var->accessed = false;
   FbleVectorAppend(arena, scope->vars, var);
   return var;
 }
@@ -260,8 +254,6 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name)
     size_t j = scope->vars.size - i - 1;
     Var* var = scope->vars.xs[j];
     if (FbleNamesEqual(&name, &var->name)) {
-      var->accessed = true;
-      var->used = true;
       return var;
     }
   }
@@ -269,8 +261,6 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name)
   for (size_t i = 0; i < scope->statics.size; ++i) {
     Var* var = scope->statics.xs[i];
     if (FbleNamesEqual(&name, &var->name)) {
-      var->accessed = true;
-      var->used = true;
       return var;
     }
   }
@@ -287,8 +277,6 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name)
       Var* captured = FbleAlloc(arena, Var);
       captured->name = var->name;
       captured->local = local;
-      captured->used = true;
-      captured->accessed = true;
 
       FbleVectorAppend(arena, scope->statics, captured);
       if (scope->statics.size > scope->code->statics) {
