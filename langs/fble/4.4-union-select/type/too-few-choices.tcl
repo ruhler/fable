@@ -5,5 +5,5 @@ fble-test-error 8:3 {
   Bool@ f = Bool@(false: Unit@());
 
   # There are too few choices to the conditional.
-  ?(f; true: f);
+  f.?(true: f);
 }

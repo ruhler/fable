@@ -284,6 +284,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name)
     }
   }
 
+  UNREACHABLE("Vars should have been resolved at type check");
   return NULL;
 }
 
