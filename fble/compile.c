@@ -60,10 +60,7 @@ typedef struct {
 //   code - the instruction block for this scope.
 //   pending_profile_ops - profiling ops to associated with the next
 //                         instruction added.
-//   capture - A vector of variables captured from the parent scope. If NULL,
-//             operations on this scope should not have any side
-//             effects on the parent scope, which is used in the case when we
-//             are compiling for types only, not for instructions.
+//   capture - A vector of variables captured from the parent scope.
 //   parent - the parent of this scope. May be NULL.
 typedef struct Scope {
   VarV statics;
@@ -282,9 +279,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name)
       if (scope->statics.size > scope->code->statics) {
         scope->code->statics = scope->statics.size;
       }
-      if (scope->capture) {
-        FbleVectorAppend(arena, *scope->capture, var->local->index);
-      }
+      FbleVectorAppend(arena, *scope->capture, var->local->index);
       return captured;
     }
   }
@@ -299,8 +294,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name)
 //   arena - arena to use for allocations.
 //   scope - the scope to initialize.
 //   code - a pointer to store the allocated code block for this scope.
-//   capture - vector to store capture variables from the parent scope in. May
-//             be NULL.
+//   capture - vector to store capture variables from the parent scope in.
 //   parent - the parent of the scope to initialize. May be NULL.
 //
 // Results:
@@ -311,9 +305,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name)
 //   called to free the allocations for scope. The lifetimes of the code block
 //   and the parent scope must exceed the lifetime of this scope.
 //   Initializes capture and appends to it the variables that need to be
-//   captured from the parent scope. capture may be NULL, in which case the
-//   scope is treated as a phantom scope that does not cause any changes to be
-//   made to the parent scope.
+//   captured from the parent scope.
 //   The caller is responsible for calling FbleFreeInstrBlock on *code when it
 //   is no longer needed.
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, FbleFrameIndexV* capture, Scope* parent)
@@ -321,9 +313,7 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, Fbl
   FbleVectorInit(arena, scope->statics);
   FbleVectorInit(arena, scope->vars);
   FbleVectorInit(arena, scope->locals);
-  if (capture) {
-    FbleVectorInit(arena, *capture);
-  }
+  FbleVectorInit(arena, *capture);
 
   scope->code = FbleAlloc(arena, FbleInstrBlock);
   scope->code->refcount = 1;
@@ -1501,9 +1491,10 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
     .space = FBLE_NORMAL_NAME_SPACE,
   };
 
+  FbleFrameIndexV capture;
   FbleInstrBlock* code;
   Scope scope;
-  InitScope(arena, &scope, &code, NULL, NULL);
+  InitScope(arena, &scope, &code, &capture, NULL);
 
   FbleTypeHeap* heap = FbleNewTypeHeap(arena);
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
@@ -1513,6 +1504,8 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
   }
   ExitBlock(arena, &block_stack, &scope, true);
   FreeScope(heap, &scope, true);
+  assert(capture.size == 0 && "captured variables from nowhere?");
+  FbleFree(arena, capture.xs);
   FbleFreeTypeHeap(heap);
 
   assert(block_stack.stack.size == 0);
