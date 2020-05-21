@@ -83,7 +83,7 @@ static Local* NewLocal(FbleArena* arena, Scope* scope);
 static void LocalRelease(FbleArena* arena, Scope* scope, Local* local, bool exit);
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, Local* local);
 static void PopVar(FbleTypeHeap* heap, Scope* scope, bool exit);
-static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
+static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name);
 
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, FbleFrameIndexV* capture, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope, bool exit);
@@ -246,7 +246,6 @@ static void PopVar(FbleTypeHeap* heap, Scope* scope, bool exit)
 //   heap - heap to use for allocations.
 //   scope - the scope to look in.
 //   name - the name of the variable.
-//   phantom - if true, do not consider the variable to be accessed.
 //
 // Result:
 //   The variable from the scope, or NULL if no such variable was found. The
@@ -254,17 +253,15 @@ static void PopVar(FbleTypeHeap* heap, Scope* scope, bool exit)
 //   called or the scope is finished.
 //
 // Side effects:
-//   Marks variable as used and for capture if necessary and not phantom.
-static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom)
+//   Marks variable as used and for capture if necessary.
+static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name)
 {
   for (size_t i = 0; i < scope->vars.size; ++i) {
     size_t j = scope->vars.size - i - 1;
     Var* var = scope->vars.xs[j];
     if (FbleNamesEqual(&name, &var->name)) {
       var->accessed = true;
-      if (!phantom) {
-        var->used = true;
-      }
+      var->used = true;
       return var;
     }
   }
@@ -273,22 +270,14 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
     Var* var = scope->statics.xs[i];
     if (FbleNamesEqual(&name, &var->name)) {
       var->accessed = true;
-      if (!phantom) {
-        var->used = true;
-      }
+      var->used = true;
       return var;
     }
   }
 
   if (scope->parent != NULL) {
-    Var* var = GetVar(heap, scope->parent, name, scope->capture == NULL || phantom);
+    Var* var = GetVar(heap, scope->parent, name);
     if (var != NULL) {
-      if (phantom) {
-        // It doesn't matter that we are returning a variable for the wrong
-        // scope here. phantom means we won't actually use it ever.
-        return var;
-      }
-
       FbleArena* arena = heap->arena;
       Local* local = FbleAlloc(arena, Local);
       local->index.section = FBLE_STATICS_FRAME_SECTION;
@@ -298,7 +287,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
       Var* captured = FbleAlloc(arena, Var);
       captured->name = var->name;
       captured->local = local;
-      captured->used = !phantom;
+      captured->used = true;
       captured->accessed = true;
 
       FbleVectorAppend(arena, scope->statics, captured);
@@ -966,7 +955,7 @@ static Local* CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* 
 
     case FBLE_VAR_EXPR: {
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
-      Var* var = GetVar(heap, scope, var_expr->var, false);
+      Var* var = GetVar(heap, scope, var_expr->var);
 
       // Variables should have been resolved during type check.
       assert(var != NULL && "unresolved variable");
@@ -1030,7 +1019,7 @@ static Local* CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* 
     case FBLE_MODULE_REF_EXPR: {
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
-      Var* var = GetVar(heap, scope, module_ref_expr->ref.resolved, false);
+      Var* var = GetVar(heap, scope, module_ref_expr->ref.resolved);
 
       // We should have resolved all modules at program load time.
       assert(var != NULL && "module not in scope");
