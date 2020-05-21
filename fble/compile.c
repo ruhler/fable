@@ -979,8 +979,9 @@ static Local* CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* 
 
     case FBLE_LET_EXPR: {
       FbleLetExpr* let_expr = (FbleLetExpr*)expr;
+
+      Var* vars[let_expr->bindings.size];
       if (let_expr->recursive) {
-        Var* vars[let_expr->bindings.size];
         for (size_t i = 0; i < let_expr->bindings.size; ++i) {
           Local* local = NewLocal(arena, scope);
           vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, local);
@@ -989,20 +990,21 @@ static Local* CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* 
           ref_instr->_base.profile_ops = NULL;
           ref_instr->dest = local->index.index;
           AppendInstr(arena, scope, &ref_instr->_base);
-
         }
+      }
 
-        // Compile the values of the variables.
-        Local* defs[let_expr->bindings.size];
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          FbleBinding* binding = let_expr->bindings.xs + i;
+      // Compile the values of the variables.
+      Local* defs[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleBinding* binding = let_expr->bindings.xs + i;
 
-          EnterBlock(arena, blocks, binding->name, binding->expr->loc, scope);
-          defs[i] = CompileExpr(heap, blocks, false, scope, binding->expr);
-          ExitBlock(arena, blocks, scope, false);
-        }
+        EnterBlock(arena, blocks, binding->name, binding->expr->loc, scope);
+        defs[i] = CompileExpr(heap, blocks, false, scope, binding->expr);
+        ExitBlock(arena, blocks, scope, false);
+      }
 
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (let_expr->recursive) {
           FbleRefDefInstr* ref_def_instr = FbleAlloc(arena, FbleRefDefInstr);
           ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
           ref_def_instr->_base.profile_ops = NULL;
@@ -1011,38 +1013,18 @@ static Local* CompileExpr(FbleTypeHeap* heap, Blocks* blocks, bool exit, Scope* 
           AppendInstr(arena, scope, &ref_def_instr->_base);
           LocalRelease(arena, scope, vars[i]->local, false);
           vars[i]->local = defs[i];
-        }
-
-        Local* body = CompileExpr(heap, blocks, exit, scope, let_expr->body);
-
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          PopVar(heap, scope, exit);
-        }
-
-        return body;
-      } else {
-        // Compile the values of the variables.
-        Local* defs[let_expr->bindings.size];
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          FbleBinding* binding = let_expr->bindings.xs + i;
-
-          EnterBlock(arena, blocks, binding->name, binding->expr->loc, scope);
-          defs[i] = CompileExpr(heap, blocks, false, scope, binding->expr);
-          ExitBlock(arena, blocks, scope, false);
-        }
-
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        } else {
           PushVar(arena, scope, let_expr->bindings.xs[i].name, defs[i]);
         }
-
-        Local* body = CompileExpr(heap, blocks, exit, scope, let_expr->body);
-
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          PopVar(heap, scope, exit);
-        }
-
-        return body;
       }
+
+      Local* body = CompileExpr(heap, blocks, exit, scope, let_expr->body);
+
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        PopVar(heap, scope, exit);
+      }
+
+      return body;
     }
 
     case FBLE_MODULE_REF_EXPR: {

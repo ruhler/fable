@@ -1,11 +1,14 @@
 * Fix broken vacuous_value test.
 * Fix broken memory leak test.
+ - looks like a false positive test failure.
+
+* Add tests to increase code coverage.
 
 * Clean up typecheck.c and compile.c now that they are separate.
  - Pick better name for TypeCheckExprNoInstrs.
- - Remove 'used' and 'access' tracking from compile.c
-
-* Add tests to increase code coverage.
+ - Remove 'used' and 'access' tracking from compile.c?
+ - Avoid duplicating code for literal and list expressions between typecheck
+   and compile.
 
 * Move implementations corresponding to fble-name.h to name.c?
 
