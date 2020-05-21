@@ -2,8 +2,6 @@
 * Fix broken memory leak test.
  - looks like a false positive test failure.
 
-* Remove unused 'sin' option from lexer.
-
 * Add test for AbortThread code coverage
  Try to do all of the following things after an abort:
  - tail call that isn't from main

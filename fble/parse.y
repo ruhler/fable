@@ -17,13 +17,11 @@
   //   c - The next character in the input stream. EOF is used to indicate the
   //   end of the input stream.
   //   loc - The location corresponding to the character c.
-  //   fin - The input stream if reading from a file, NULL otherwise.
-  //   sin - The input stream if reading from a string, NULL otherwise.
+  //   fin - The input stream.
   typedef struct {
     int c;
     FbleLoc loc;
     FILE* fin;
-    const char* sin;
   } Lex;
 
   #define YYLTYPE FbleLoc
@@ -729,16 +727,7 @@ static bool IsNormalChar(int c)
 static void ReadNextChar(Lex* lex)
 {
   int c = lex->c;
-  if (lex->fin) {
-    lex->c = fgetc(lex->fin);
-  } else if (lex->sin) {
-    if (*lex->sin == '\0') {
-      lex->c = EOF;
-    } else {
-      lex->c = *lex->sin++;
-    }
-  }
-
+  lex->c = fgetc(lex->fin);
   if (c == '\n') {
     lex->loc.line++;
     lex->loc.col = 1;
@@ -850,7 +839,6 @@ FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModuleRefV* modu
     .c = ' ',
     .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
-    .sin = NULL
   };
   FbleExpr* result = NULL;
   yyparse(arena, &lex, &result, module_refs);
