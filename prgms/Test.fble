@@ -45,7 +45,7 @@
       tr.?(
         pass: {
           Unit@ _ := PrintLn(out, S0<Char@>);
-          $(True);
+          !(True);
         },
         fail: {
           Unit@ _ := PrintLn(
@@ -53,7 +53,7 @@
             Concat<Char@>(S<Str@>([
               Str(Chars|': FAILED: '),
               tr.fail])));
-          $(False);
+          !(False);
         });
     });
   });
@@ -64,8 +64,8 @@ S@<Test@> Tests = {
     Append<Char@>(Str(Chars|'Test.'), nm);
   };
 
-  Test@ pass = Test@(name(Str(Chars|pass)), $(TestResult@(pass: Unit)));
-  Test@ _fail = Test@(name(Str(Chars|fail)), $(TestResult@(fail: Str(Chars|FAILED))));
+  Test@ pass = Test@(name(Str(Chars|pass)), !(TestResult@(pass: Unit)));
+  Test@ _fail = Test@(name(Str(Chars|fail)), !(TestResult@(fail: Str(Chars|FAILED))));
 
   S<Test@>([pass]);
 };

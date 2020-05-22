@@ -186,6 +186,92 @@ computation, it's fine to make it slow.
 
 ---
 
-For the existing implementation of md5 to be made "high performance", I think
-all we need is to figure out what to do about the use of processes for
-input and padding.
+Here's the plan. Add a new type, analogous to process type, which represents
+an "inline" type. The operations we support on normal types also work on
+inline types, except with the extra restrictions.
+
+So, we have:
+inline_struct_type - a non recursive struct type with inline data args.
+  This is considered an inline data type.
+  Proposed syntax: +`(...)
+inline_struct_value_explicit_type
+  Same concrete syntax as struct value.
+  The type and args must be inline.
+inline_struct_value_implicit_type
+  Proposed syntax: @`(...)
+inline_struct_access
+  Same concrete syntax as struct_access.
+
+inline_union_type - a non recursive union type with inline data args.
+  This is considered an inline data type.
+  Proposed syntax: +`(...)
+inline_union_value 
+  Same concrete syntax as union_value.
+inline_union_access
+  Same concrete syntax as union_access.
+inline_union_select
+  Same concrete syntax as union_select.
+ 
+inline_func_type - a function type with inline data args and inline data
+  return type.
+  This is not considered an inline data type.
+  Proposed syntax: (...)`{...}
+inline_func_value
+  Enforces that the body only uses legal inline operations. (Some more thought
+  needed here about what exactly that means).
+  Proposed syntax: (...)`{...}
+inline_func_apply
+  Same syntax as func apply.
+
+inline_proc_type - a proc type with inline data return type.
+  This is not considered in inline data type.
+  Proposed syntax: ...`!
+inline_proc_eval
+  Proposed syntax: $`(...)
+inline_link
+  This is a normal proc that creates inline get and put ports.
+  Proposed syntax: T@ ~` get, put; ...
+inline_exec
+  Same syntax as normal exec, except restricted to a single argument.
+
+I'm not sure about how to handle polymorphism
+
+run_inline
+  Converts an inline object to a normal object.
+  Proposed syntax: `(foo)
+
+Uh, so, this is going to be awkward when we start mixing inline data types
+with normal computation, like in union select.
+
+I suppose a key question is if we want to think about this as a different kind
+of computation, or if we can think of it as a property a computation.
+
+Sigh. Needs more thought.
+
+I guess, if we think of it as a property of computation, we just need a single
+extra kind of operation:
+
+  inline <expr>
+
+Which fully inlines an expression, which must be fully inlinable. If it isn't
+fully inlinable, hopefully you can get a decent error message about what part
+of it isn't inlinable. inline preserves the type of an expression.
+
+I worry that won't give you enough when it comes time to compose inlineable
+things. Because what happens if there is some library call that's not
+inlineable?
+
+On the other hand, maybe it's better, because it lets you mix non-inlineable
+things, as long as they can be computed down to inlinable data values.
+
+In other words, you can inline any struct or union satisfying the inline data
+type requirement. You only get into trouble if you try to inline a function or
+proc that does unsupported operations.
+
+I'm tempted to try the inline expr approach. I suspect long term it won't work
+out, but it's easy to start, it makes inlining orthogonal to the rest of the
+language instead of doubling the complexity of the language, it allows for
+easy mixing of complex statically elaboratable things in inline computations.
+
+Proposed syntax:  $(...), where we replace proc eval with the syntax !(...).
+

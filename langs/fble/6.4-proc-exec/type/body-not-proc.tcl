@@ -4,6 +4,6 @@ fble-test-error 8:3 {
   Bool@ true = Bool@(true: Unit@());
 
   # The body of the exec is not a process.
-  Bool@ x := $(true);
+  Bool@ x := !(true);
   x;
 }

@@ -24,7 +24,7 @@ Feed = (Int@ n, Put@<Event@> in, Get@<Effect@> out) {
   n.?(n: {
        Unit@ _ := in(Event@(key_down: Key@(q: Unit)));
        Unit@ _ := in(Event@(key_down: Key@(q: Unit)));
-       $(Unit);
+       !(Unit);
      }, : {
        # TODO: This will deadlock if the game ends earlier than we expect.
        # Make the benchmark more robust than this.
@@ -51,7 +51,7 @@ Unit@! Bench = {
   Effect@ ~ get_effect, put_effect;
   Unit@ _ := Main(w, h, get_event, put_effect),
   Unit@ _ := Feed(n, put_event, get_effect);
-  $(Unit);
+  !(Unit);
 };
 
 @(Bench);

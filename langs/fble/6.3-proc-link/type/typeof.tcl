@@ -11,6 +11,6 @@ fble-test {
     Bool@ ~ get, put;
     Bool@! _g = get;
     (Bool@){ Unit@!; } _p = put;
-    $(X@(Unit@()));
+    !(X@(Unit@()));
   }; x;
 }

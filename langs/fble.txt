@@ -580,10 +580,10 @@ Abstract Syntax:
   Expr ::= proc_eval (body :: Expr)
 
 Concrete Syntax:
-  expr ::= '$(' expr ')'
+  expr ::= '!(' expr ')'
 
 Example:
-  $(3)
+  !(3)
 
 A process that evaluates body and returns its value without performing any
 other actions. The body is not evaluated until the eval process is executed.
@@ -637,7 +637,7 @@ Concrete Syntax:
   stmt ::= type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
 
 Example:
-  Int@ x := getx, Int@ y := gety; $(add(x, y))
+  Int@ x := getx, Int@ y := gety; !(add(x, y))
 
 Evaluates and executes each process in parallel, then evaluates and executes
 the body with the results of the processes assigned to variables in scope. The
@@ -1104,7 +1104,7 @@ expr ::=
  | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
 
  | type '!'                                        (* proc_type *)
- | '$(' expr ')'                                   (* proc_eval *)
+ | '!(' expr ')'                                   (* proc_eval *)
 
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
@@ -1167,7 +1167,7 @@ Notes:
    we run the test.
 
    For example, given something like:
-     { a = ...; b = ...; $(TestResult@(a, b)) }
+     { a = ...; b = ...; !(TestResult@(a, b)) }
 
    I intend for nothing to be run until we execute the test, but I think in
    practice the test is essentially run when we define the test, and executing
@@ -1175,7 +1175,7 @@ Notes:
 
    This seems like a subtle trap to get caught with.
 
-   I think it's fine to require $({ a = ...; b = ...; TestResult@(a, b); }).
+   I think it's fine to require !({ a = ...; b = ...; TestResult@(a, b); }).
    Just so long as it is clearly specified what runs when and we have tests to
    ensure the implementation obeys the spec.
 

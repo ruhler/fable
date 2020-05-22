@@ -263,13 +263,13 @@ Int@ Max64 = I(D|18446744073709551616);
 Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   Input@ x := in;
   x.?(dir: Snake(in, out, State@(x.dir, s.food, s.rand, s.snake, s.speed)),
-      quit: $(Unit),
+      quit: !(Unit),
       tick: {
           Dir@ dir = AI(s);
           State@ ns = State@(dir, s.food, s.rand, s.snake, s.speed);
           MoveResultM@ m = Move(ns);
           m.?(
-            dead: $(Unit),
+            dead: !(Unit),
             state: {
                Unit@ _ := out(Effect@(draw: Draw(ns)));
                Unit@ _ := out(Effect@(tick: ns.speed));
@@ -281,13 +281,13 @@ Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
 (Get@<Event@>){ Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
   e.?(
-    tick: $(Input@(tick: Unit)),
+    tick: !(Input@(tick: Unit)),
     key_down: e.key_down.?(
-      h: $(Input@(dir: Dir@(left: Unit))),
-      j: $(Input@(dir: Dir@(down: Unit))),
-      k: $(Input@(dir: Dir@(up: Unit))),
-      l: $(Input@(dir: Dir@(right: Unit))),
-      q: $(Input@(quit: Unit)),
+      h: !(Input@(dir: Dir@(left: Unit))),
+      j: !(Input@(dir: Dir@(down: Unit))),
+      k: !(Input@(dir: Dir@(up: Unit))),
+      l: !(Input@(dir: Dir@(right: Unit))),
+      q: !(Input@(quit: Unit)),
       : GetInput(in)),
     key_up: GetInput(in)
   );
@@ -321,7 +321,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;
-    e.?(tick: WaitForKeyPress, key_down: $(Unit), key_up: WaitForKeyPress);
+    e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
 };

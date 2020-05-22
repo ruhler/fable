@@ -45,8 +45,8 @@ Unit@ Unit = Unit@();
 # theory. In practice I'm too impatient to wait for it to actually smash the
 # stack.
 (BitS@){ Unit@!; } F = (BitS@ s) {
-  s.?(cons: { Unit@ u := F(Decr(s)); $(u); },
-      nil: $(Unit));
+  s.?(cons: { Unit@ u := F(Decr(s)); !(u); },
+      nil: !(Unit));
 };
 
 (BitS@) { BitS@; } G1 = (BitS@ s) {

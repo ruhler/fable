@@ -8,8 +8,8 @@ fble-test-memory-constant {
   (Nat@){ Unit@!; } f = (Nat@ n) {
     S@ s = S(n);
     s.?(
-      Z: $(Unit@()),
-      S: { Nat@ sn := $(s.S); f(sn); });
+      Z: !(Unit@()),
+      S: { Nat@ sn := !(s.S); f(sn); });
   };
 
   f;

@@ -27,7 +27,7 @@
 @ TestResult@ = /Test%.TestResult@;
 
 (Str@, IntP@, IntP@){Test@;} TEq = (Str@ name, IntP@ a, IntP@ b) {
-  Test@(Append<Char@>(Str(Chars|'Primes.'), name), $({
+  Test@(Append<Char@>(Str(Chars|'Primes.'), name), !({
     # TODO: Better error message in case of failure.
     Eq(a, b).?(
         true: TestResult@(pass: Unit),

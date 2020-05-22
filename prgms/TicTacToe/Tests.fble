@@ -27,12 +27,12 @@
 % _ = /TicTacToe/Stdio%;
 
 TestResult@! TestBoardStatus = {
-  Unit@ _ := $(Unit); # Delay the test until we execute the process
+  Unit@ _ := !(Unit); # Delay the test until we execute the process
   Status@ status = BoardStatus(Board@(
         Square@(X: Unit), Square@(O: Unit), Square@(O: Unit),
         Square@(E: Unit), Square@(O: Unit), Square@(X: Unit),
         Square@(O: Unit), Square@(X: Unit), Square@(X: Unit)));
-  $(status.?(
+  !(status.?(
       O: TestResult@(pass: Unit),
       : TestResult@(fail: Str(Chars|failed))));
 };
@@ -44,7 +44,7 @@ TestResult@! TestChooseBestMoveWin = {
           Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
           Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
           Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)), Player@(X: Unit));
-    $(position.?(
+    !(position.?(
         UR: TestResult@(pass: Unit),
           : TestResult@(fail: Str(Chars|failed))));
   });
@@ -56,7 +56,7 @@ TestResult@! TestChooseBestMoveNoLose = {
           Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
           Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
           Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)), Player@(X: Unit));
-    $(position.?(
+    !(position.?(
         UR: TestResult@(pass: Unit),
           : TestResult@(fail: Str(Chars|failed))));
   });
@@ -73,7 +73,7 @@ S@<Test@> Tests = S<Test@>([
 Unit@! Bench = {
   WithAI<Unit@>((AI@ ai) {
     Position@ _ := ai(EmptyBoard, Player@(X: Unit));
-    $(Unit);
+    !(Unit);
   });
 };
 

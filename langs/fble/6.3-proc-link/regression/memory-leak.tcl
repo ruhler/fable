@@ -12,5 +12,5 @@ fble-test {
     Unit@! x := get;
     x;
   });
-  $(Unit@());
+  !(Unit@());
 }

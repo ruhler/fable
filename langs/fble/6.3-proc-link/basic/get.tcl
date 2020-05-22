@@ -7,5 +7,5 @@ fble-test {
   Bool@ ~ get, put;
   Unit@ _ := put(true);
   Bool@ result := get;
-  $(result.true);
+  !(result.true);
 }

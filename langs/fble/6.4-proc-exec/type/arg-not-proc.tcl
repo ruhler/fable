@@ -5,5 +5,5 @@ fble-test-error 7:14 {
 
   # The argument to an exec is not a process.
   Bool@ x := true;
-  $(x);
+  !(x);
 }

@@ -14,7 +14,7 @@ fble-test-memory-growth {
     (Nat@){ Unit@!; } f = (Nat@ n) {
       S@ s = S(n);
       s.?(
-          Z: $(Unit@()),
+          Z: !(Unit@()),
           S: {
             Unit@ _ := put(Unit@());
             f(s.S);

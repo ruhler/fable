@@ -7,5 +7,5 @@ fble-test-error 0:0  {
   @ Unit@ = *();
   Unit@ ~ get, put;
   Unit@ u := get;
-  $(u);
+  !(u);
 }

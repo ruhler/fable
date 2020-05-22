@@ -231,7 +231,7 @@ S@<Test@> Tests = {
     Append<Char@>(Str(Chars|'Sudoku.'), nm);
   };
 
-  Test@ sample = Test@(name(Str(Chars|sample)), $({
+  Test@ sample = Test@(name(Str(Chars|sample)), !({
     Maybe@<Solved@> ms = Solve(SampleInput);
     ms.?(
        just: {
@@ -253,7 +253,7 @@ S@<Test@> Tests = {
   S<Test@>([sample]);
 };
 
-Unit@! Bench = $({
+Unit@! Bench = !({
   Solved@ _sample = Solve(SampleInput).just;
   Solved@ _easy = Solve(EasyInput).just;
   Solved@ _medium = Solve(MediumInput).just;

@@ -49,7 +49,7 @@
   };
 
 Test@ SortTest = Test@(
-  Str(Chars|'List.Sort'), $({
+  Str(Chars|'List.Sort'), !({
     S@<Elem@> unsorted = S<Elem@>([
       Elem@(D: Unit),
       Elem@(A: Unit),

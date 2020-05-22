@@ -20,7 +20,7 @@ Stdio@ Cat = (Get@<Maybe@<Str@>> stdin, Put@<Str@> stdout) {
       Unit@ _ := stdout(line.just);
       Cat(stdin, stdout);
     },
-    nothing: $(True)
+    nothing: !(True)
   );
 };
 

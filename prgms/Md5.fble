@@ -529,7 +529,7 @@ B32 =
   Streamed@<Bit8@> b := padded;
   Streamed@<Bit8@> c := padded;
   Streamed@<Bit8@> d := padded;
-  $(Streamed@<Bit32@>(Bit32@(Bit16@(d.data, c.data), Bit16@(b.data, a.data)), d.last));
+  !(Streamed@<Bit32@>(Bit32@(Bit16@(d.data, c.data), Bit16@(b.data, a.data)), d.last));
 };
 
 # Gets the next block from a pre-padded input
@@ -550,7 +550,7 @@ B32 =
   Streamed@<Bit32@> 13 := GetWord(padded);
   Streamed@<Bit32@> 14 := GetWord(padded);
   Streamed@<Bit32@> 15 := GetWord(padded);
-  $(Streamed@<Block@>(
+  !(Streamed@<Block@>(
     Block@(
       0.data, 1.data, 2.data, 3.data,
       4.data, 5.data, 6.data, 7.data,
@@ -563,7 +563,7 @@ B32 =
 (Streamed@<Bit8@>!, ABCD@) { ABCD@!; } PaddedMd5 = (Streamed@<Bit8@>! padded, ABCD@ abcd) {
   Streamed@<Block@> block := GetBlock(padded);
   ABCD@ md5 = DoBlock(abcd, block.data);
-  block.last.?(true: $(md5), false: PaddedMd5(padded, md5));
+  block.last.?(true: !(md5), false: PaddedMd5(padded, md5));
 };
 
 (Bit64@) { Bit64@; } Inc64 = (Bit64@ a) {
@@ -595,7 +595,7 @@ Bit64@ 08_64 = H2_64(0, 8);
          Unit@ _ := output(Streamed@<Bit8@>(bits.hi.lo.hi, False));
          Unit@ _ := output(Streamed@<Bit8@>(bits.hi.hi.lo, False));
          Unit@ _ := output(Streamed@<Bit8@>(bits.hi.hi.hi, True));
-         $(Unit);
+         !(Unit);
        },
        false: {
          Unit@ _ := output(Streamed@<Bit8@>(H2(0, 0), False));
@@ -667,7 +667,7 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
   Streamed@<Bit8@> ~ get_padded, put_padded;
   Unit@ _ := Pad(input, put_padded, /Bits%.Bit64.BitN.zero),
   ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
-  $(HexFromABCD(md5));
+  !(HexFromABCD(md5));
 };
 
 (Hex@, Hex@) { Bool@; } EqHex = (Hex@ a, Hex@ b) {

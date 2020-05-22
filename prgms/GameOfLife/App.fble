@@ -80,8 +80,8 @@ World@ acorn = World([
 
 (Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
-  e.?(tick: $(Input@(step: Unit)),
-      key_down: e.key_down.?(q: $(Input@(quit: Unit)), : GetInput(in)),
+  e.?(tick: !(Input@(step: Unit)),
+      key_down: e.key_down.?(q: !(Input@(quit: Unit)), : GetInput(in)),
       key_up: GetInput(in));
 };
 
@@ -90,9 +90,9 @@ StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, World@ w) {
   Unit@ _ := out(Effect@(draw: DrawWorld(w)));
   Unit@ _ := out(Effect@(tick: I(D|200)));
   Input@ x := in;
-  x.?(quit: $(Unit),
+  x.?(quit: !(Unit),
       step: IsZero(n).?(
-              true: $(Unit),
+              true: !(Unit),
               false: StepUI(in, out, Dec(n), Step(w))));
 };
 
@@ -119,7 +119,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;
-    e.?(tick: WaitForKeyPress, key_down: $(Unit), key_up: WaitForKeyPress);
+    e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
 };

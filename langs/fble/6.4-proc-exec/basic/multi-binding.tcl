@@ -7,6 +7,6 @@ fble-test {
   @ Units@ = *(Unit@ a, Unit@ b);
 
   # Test exec with multiple processes.
-  Bool@ t := $(true), Bool@ f := $(false);
-  $(Units@(t.true, f.false));
+  Bool@ t := !(true), Bool@ f := !(false);
+  !(Units@(t.true, f.false));
 }

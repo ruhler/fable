@@ -16,7 +16,7 @@ fble-test-memory-constant {
     (Nat@){ Unit@!; } f = (Nat@ n) {
       S@ s = S(n);
       s.?(
-          Z: $(Unit@()),
+          Z: !(Unit@()),
           S: {
             Unit@! a = { Unit@! _ := get; b; }, 
             Unit@! b = { Unit@! _ := get; a; };

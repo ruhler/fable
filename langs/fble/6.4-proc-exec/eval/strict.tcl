@@ -7,7 +7,7 @@ fble-test {
   # process itself.
   Unit@! _mku = {
     Unit@ u := nothing.just;
-    $(u);
+    !(u);
   };
   Unit@();
 }

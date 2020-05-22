@@ -4,6 +4,6 @@ fble-test {
   Bool@ true = Bool@(true: Unit@());
 
   # Test exec with a single process.
-  Bool@ t := $(true);
-  $(t.true);
+  Bool@ t := !(true);
+  !(t.true);
 }

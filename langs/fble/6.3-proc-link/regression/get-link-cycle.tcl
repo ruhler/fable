@@ -15,6 +15,6 @@ fble-test {
   # Take the value off the link, to break the reference cycle.
   Unit@! _ := get;
 
-  $(Unit@());
+  !(Unit@());
 }
 

@@ -66,14 +66,14 @@ S@<Test@> Tests = {
   };
 
   S<Test@>([
-    Test@(name(Str(Chars|'empty')), $({
+    Test@(name(Str(Chars|'empty')), !({
       Lookup<Unit@>(Empty<Unit@>, B).?(
         just: TestResult@(fail:
           Str(Chars|'Lookup found something in an empty map')),
         nothing: TestResult@(pass: Unit));
     })),
 
-    Test@(name(Str(Chars|'not found')), $({
+    Test@(name(Str(Chars|'not found')), !({
       Map@<Unit@> map = Insert<Unit@>(Empty<Unit@>, C, Unit);
       Lookup<Unit@>(map, B).?(
         just: TestResult@(fail:
@@ -81,7 +81,7 @@ S@<Test@> Tests = {
         nothing: TestResult@(pass: Unit));
     })),
 
-    Test@(name(Str(Chars|'found')), $({
+    Test@(name(Str(Chars|'found')), !({
       Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
         A, False),
         B, True),
@@ -98,7 +98,7 @@ S@<Test@> Tests = {
           Str(Chars|'Failed to find B in map.')));
     })),
 
-    Test@(name(Str(Chars|'replace')), $({
+    Test@(name(Str(Chars|'replace')), !({
       Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
         B, False),
         B, True);
@@ -114,7 +114,7 @@ S@<Test@> Tests = {
           Str(Chars|'Failed to find B in map.')));
     })),
 
-    Test@(name(Str(Chars|'for')), $({
+    Test@(name(Str(Chars|'for')), !({
       Map@<Bool@> map =
         Insert<Bool@>(
           Insert<Bool@>(

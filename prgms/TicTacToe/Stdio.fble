@@ -103,7 +103,7 @@ Stdio@ TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
     Maybe@<Str@> s := input;
     s.?(just: {
             Maybe@<Input@> mi = ParseInput(s.just);
-            mi.?(just: $(mi.just),
+            mi.?(just: !(mi.just),
                  nothing: {
                     Unit@ _ := output(Concat<Char@>(S<Str@>([
                       Str(Chars|'invalid input: '),
@@ -112,13 +112,13 @@ Stdio@ TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
                       in;
                  });
          },
-         nothing: $(Input@(quit: Unit)));
+         nothing: !(Input@(quit: Unit)));
   };
 
   Put@<Output@> out = (Output@ o) { output(ShowOutput(o)); };
 
   Unit@ _ := /TicTacToe/Game%.TicTacToe(in, out);
-  $(True);
+  !(True);
 };
 
 @(TicTacToe);

@@ -14,7 +14,7 @@ fble-test-memory-growth {
   # Evaluating f requires O(1) memory, but executing the resulting process
   # requires O(N) memory.
   (Nat@){ Sum@!; } f = (Nat@ n) {
-    $(add(n, Sum@(Z: Unit@())));
+    !(add(n, Sum@(Z: Unit@())));
   };
 
   f;

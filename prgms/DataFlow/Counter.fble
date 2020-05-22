@@ -50,7 +50,7 @@ Select = (In@<Count@> in, Out@<Unit@> on1, Out@<Unit@> on2, Out@<Unit@> on3) {
       Unit@ _ := on1(End<Unit@>);
       Unit@ _ := on2(End<Unit@>);
       Unit@ _ := on3(End<Unit@>);
-      $(Unit);
+      !(Unit);
     });
 };
 
@@ -110,7 +110,7 @@ Stdio@ Stdio = (Get@<Maybe@<Str@>> in, Put@<Str@> out) {
   End@<Unit@> ~ get, put;
   Unit@ _ := Drive(put),
   Unit@ _ := Run(Main(get, result));
-  $(True);
+  !(True);
 };
 
 @(Stdio);

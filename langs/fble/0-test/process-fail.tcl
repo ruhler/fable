@@ -3,5 +3,5 @@ fble-test-error 6:11 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ false = Bool@(false: Unit@());
-  $(false.true);
+  !(false.true);
 }

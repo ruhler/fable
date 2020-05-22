@@ -388,7 +388,7 @@ expr:
       proc_type->type = $1;
       $$ = &proc_type->_base;
    }
- | '$' '(' expr ')' {
+ | '!' '(' expr ')' {
       FbleEvalExpr* eval_expr = FbleAlloc(arena, FbleEvalExpr);
       eval_expr->_base.tag = FBLE_EVAL_EXPR;
       eval_expr->_base.loc = FbleCopyLoc(@$);

@@ -7,5 +7,5 @@ fble-test {
 
   Bool@ ~ get, put;
   Get@<Bool@> _g = get;
-  $(Unit@());
+  !(Unit@());
 }

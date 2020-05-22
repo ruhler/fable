@@ -4,7 +4,7 @@ fble-test {
   Bool@ true = Bool@(true: Unit@());
 
   # The type of eval is the process type of the type of the argument.
-  Bool@! mkt = $(true);
+  Bool@! mkt = !(true);
   mkt;
 }
 

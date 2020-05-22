@@ -245,7 +245,7 @@ RunAI = (MemoTable@ ai, Get@<Maybe@<Turn@>> get, Put@<Position@> put) {
       Unit@ _ := put(mpr.data.position);
       RunAI(mpr.memo, get, put);
     },
-    nothing: $(Unit));
+    nothing: !(Unit));
 };
 
 # A TicTacToe AI that will pick a position when it is the given player's turn
@@ -266,9 +266,9 @@ RunAI = (MemoTable@ ai, Get@<Maybe@<Turn@>> get, Put@<Position@> put) {
   T@ result := {
     T@ result := p(ai); 
     Unit@ _ := put_turn(Nothing<Turn@>);
-    $(result);
+    !(result);
   };
-  $(result);
+  !(result);
 };
 
 @(AI@, WithAI);

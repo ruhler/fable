@@ -117,7 +117,7 @@
 (S@<Bit8@>) { Md5Hash@!; } Md5Str = (S@<Bit8@> bytes) {
   Maybe@<Bit8@> ~ get, put;
   Md5Hash@ md5 := Md5(get), Unit@ x := PutAll(put, bytes);
-  $(md5);
+  !(md5);
 };
 
 (Md5Hash@, Md5Hash@) { TestResult@; } AssertEq = (Md5Hash@ wnt, Md5Hash@ got) {
@@ -146,7 +146,7 @@
     Append<Char@>(Str(Chars|'Md5.'), Str(name)),
     {
       Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
-      $(AssertEq(Str2Md5Hash(wnt), got));
+      !(AssertEq(Str2Md5Hash(wnt), got));
     });
 };
 
@@ -203,7 +203,7 @@ Unit@! Bench = {
   S@<Hex@> d2 = Concat<Hex@>(S<S@<Hex@>>([d1, d1, d1, d1, d1, d1, d1, d1]));
   S@<Hex@> d3 = Concat<Hex@>(S<S@<Hex@>>([d2, d2, d2, d2]));
   Md5Hash@ _ := Md5Str(Hex2Bytes(d3));
-  $(Unit);
+  !(Unit);
 };
 
 @(Tests, Bench);

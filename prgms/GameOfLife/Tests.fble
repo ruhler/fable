@@ -42,7 +42,7 @@
 #   OOO.OO.
 #   ....OO.
 #   .....O.
-TestResult@! AcornStep = $({
+TestResult@! AcornStep = !({
   (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
 
   World@ g0 = World([

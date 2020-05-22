@@ -4,7 +4,7 @@ fble-test-memory-constant {
 
   # Executing f(n) requires O(1) memory.
   (Nat@){ Unit@!; } f = (Nat@ n) {
-    $(Unit@());
+    !(Unit@());
   };
 
   f;

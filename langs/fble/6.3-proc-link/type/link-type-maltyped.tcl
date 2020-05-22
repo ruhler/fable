@@ -3,5 +3,5 @@ fble-test-error 5:3 {
 
   # The type Bool@ has not been defined.
   Bool@ ~ get, put;
-  $(Unit@());
+  !(Unit@());
 }

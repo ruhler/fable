@@ -68,12 +68,12 @@ FoldS = <@ A@, @ B@>(A@ x, S@<B@> s, (A@, B@){A@;} f) {
 
 <@ A@>(Monoid@<A@>, S@<A@!>){A@!;} SeqS = <@ A@>(Monoid@<A@> m, S@<A@!> s) {
   s.?(cons: SeqP<A@>(m, s.cons),
-      nil: $(m.x));
+      nil: !(m.x));
 },
 <@ A@>(Monoid@<A@>, P@<A@!>){A@!;} SeqP = <@ A@>(Monoid@<A@> m, P@<A@!> p) {
   A@ head := p.head;
   A@ tail := SeqS<A@>(m, p.tail);
-  $(m.op(head, tail));
+  !(m.op(head, tail));
 };
 
 # Insert the element 'x' into 'l' at the sorted position based on the le

@@ -17,7 +17,6 @@
 
 * Clean up typecheck.c and compile.c now that they are separate.
  - Pick better name for TypeCheckExprNoInstrs.
- - Remove 'used' and 'access' tracking from compile.c?
  - Avoid duplicating code for literal and list expressions between typecheck
    and compile.
 

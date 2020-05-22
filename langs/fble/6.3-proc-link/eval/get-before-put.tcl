@@ -9,5 +9,5 @@ fble-test {
   Bool@ ~ get, put;
   Unit@ p1 := put(true), Bool@ g1 := get;
   Bool@ g2 := get, Unit@ p2 := put(true);
-  $(g2.true);
+  !(g2.true);
 }

@@ -7,7 +7,7 @@ fble-test-memory-constant {
   # f should only require O(1) memory, because it is tail recursive.
   (Nat@){ Unit@!; } f = (Nat@ n) {
     S@ s = S(n);
-    s.?(Z: $(Unit@()), S: f(s.S));
+    s.?(Z: !(Unit@()), S: f(s.S));
   };
 
   f;

@@ -46,9 +46,9 @@
   args<DataFlow@>(
     (DataFlow@ x, DataFlow@ y) {
       Unit@ _ := x, Unit@ _ := y;
-      $(Unit);
+      !(Unit);
     },
-    $(Unit));
+    !(Unit));
 };
 
 # Run --
@@ -63,7 +63,7 @@
 Input = <@ T@>(Get@<End@<T@>> in, Out@<T@> out) {
   End@<T@> x := in;
   Unit@ _ := out(x);
-  x.?(data: Input<T@>(in, out), end: $(Unit));
+  x.?(data: Input<T@>(in, out), end: !(Unit));
 };
 
 # Output --
@@ -100,10 +100,10 @@ Copy = <@ T@>(In@<T@> in, List@<Out@<T@>> outs) {
   End@<T@> i := in;
   Unit@ _ := outs<Unit@!>((Out@<T@> o, Unit@! t) {
     Unit@ _ := o(i), Unit@ _ := t;
-    $(Unit);
-  }, $(Unit));
+    !(Unit);
+  }, !(Unit));
 
-  i.?(data: Copy<T@>(in, outs), end: $(Unit));
+  i.?(data: Copy<T@>(in, outs), end: !(Unit));
 };
 
 # Forward --

@@ -11,5 +11,5 @@ fble-test {
     put(b);
   };
   Unit@ u := f(true);
-  $(u);
+  !(u);
 }
