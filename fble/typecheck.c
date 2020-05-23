@@ -1795,7 +1795,7 @@ static bool TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm
   FbleReleaseType(heap, result);
   return result != NULL;
 }
-// FbleTypeCheck -- see documentation in compile.c
+// FbleTypeCheck -- see documentation in typecheck.h
 bool FbleTypeCheck(FbleArena* arena, FbleProgram* program)
 {
   Scope scope;
