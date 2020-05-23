@@ -16,7 +16,6 @@
  - names, module_ref, kinds, tagged_kinds, tagged_type, tagged_expr
 
 * Clean up typecheck.c and compile.c now that they are separate.
- - Pick better name for TypeCheckExprNoInstrs.
  - Avoid duplicating code for literal and list expressions between typecheck
    and compile.
 

@@ -67,7 +67,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, FbleExprV args);
 static FbleType* TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* arena, Scope* scope, FbleTypeExpr* type);
-static FbleType* TypeCheckExprNoInstrs(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
+static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static bool TypeCheckProgram(FbleTypeHeap* arena, Scope* scope, FbleProgram* prgm);
 
 // PushVar --
@@ -1061,7 +1061,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       // Note: arg_type is typeof(arg)
-      FbleType* arg_type = TypeCheckExprNoInstrs(heap, scope, apply->arg);
+      FbleType* arg_type = TypeCheckExprForType(heap, scope, apply->arg);
       if (arg_type == NULL) {
         FbleReleaseKind(arena, &poly_kind->_base);
         FbleReleaseType(heap, poly);
@@ -1542,8 +1542,15 @@ static FbleType* TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
   return NULL;
 }
 
-// TypeCheckExprNoInstrs --
+// TypeCheckExprForType --
 //   Type check the given expression, ignoring accesses to variables.
+//
+//   Some times an expression is only use only for its type. We don't want to
+//   mark variables referenced by the expression as used, because we don't
+//   need to know the value of the variable at runtime. This function type
+//   checks an expression without marking variables as used. The variables are
+//   marked as 'accessed' though, to avoid emitting warnings about unused
+//   variables that are actually used to get their type.
 //
 // Inputs:
 //   heap - heap to use for allocations.
@@ -1558,7 +1565,7 @@ static FbleType* TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 //   Prints a message to stderr if the expression fails to compile.
 //   Allocates a reference-counted type that must be freed using
 //   FbleReleaseType when it is no longer needed.
-static FbleType* TypeCheckExprNoInstrs(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
+static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = heap->arena;
   Scope nscope;
@@ -1714,7 +1721,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
 
     case FBLE_TYPEOF_EXPR: {
       FbleTypeofExpr* typeof = (FbleTypeofExpr*)type;
-      return TypeCheckExprNoInstrs(heap, scope, typeof->expr);
+      return TypeCheckExprForType(heap, scope, typeof->expr);
     }
 
     case FBLE_FUNC_APPLY_EXPR:
@@ -1738,7 +1745,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR: {
       FbleExpr* expr = type;
-      FbleType* type = TypeCheckExprNoInstrs(heap, scope, expr);
+      FbleType* type = TypeCheckExprForType(heap, scope, expr);
       if (type == NULL) {
         return NULL;
       }
