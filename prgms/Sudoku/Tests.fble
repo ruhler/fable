@@ -253,13 +253,13 @@ S@<Test@> Tests = {
   S<Test@>([sample]);
 };
 
-Unit@! Bench = !({
-  Solved@ _sample = Solve(SampleInput).just;
-  Solved@ _easy = Solve(EasyInput).just;
-  Solved@ _medium = Solve(MediumInput).just;
-  Solved@ _hard = Solve(HardInput).just;
-  Solved@ _expert = Solve(ExpertInput).just;
-  Unit;
-});
+Unit@! Bench = {
+  Solved@ sample := !(Solve(SampleInput).just);
+  Solved@ easy := !(Solve(EasyInput).just);
+  Solved@ medium := !(Solve(MediumInput).just);
+  Solved@ hard := !(Solve(HardInput).just);
+  Solved@ expert := !(Solve(ExpertInput).just);
+  !(Unit);
+};
 
 @(Tests, Bench);
