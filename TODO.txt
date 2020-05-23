@@ -3,20 +3,6 @@
  - looks like a false positive test failure.
  - figure out how to make these not be flaky.
 
-* Don't compile code for unused variable definitions?
- - I bet we could save a ton of code and improve performance a bunch.
- - The trouble is... it violates the spec?
-   What if the expression would fail to terminate?
-   What if the expression would abort, with undefined union access?
-   What if the expression had significant performance implications?
-   Maybe we should allow it, and if the user really want's to know the
-   consequences of running, they should use a proc:
-   T@  _ := $(...);
-
-   And we promise not to optimize away the procs?
-
-   In which case, maybe we should warn for all unused variables?
-
 * Add test for AbortThread code coverage
  Try to do all of the following things after an abort:
  - tail call that isn't from main
