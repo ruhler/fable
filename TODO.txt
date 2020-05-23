@@ -1,6 +1,13 @@
 
+* Figure out how to compile FUNC_VALUE_TC.
+ - Maybe associate a loc with every TC?
+* Figure out how to capture scope for EVAL, LINK, and EXEC TC in compile.
+
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
 * Change ReportError to take %n as a value instead of a pointer?
+* Unify FbleVarIndex and FbleFrameIndex types?
+* Remove unused extra data in FbleExpr syntax after we split post-typechecked
+  information out.
 
 * Distinguish between FbleExpr and a new FbleTc IR.
 

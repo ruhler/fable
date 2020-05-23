@@ -10,6 +10,7 @@
 #include "fble-vector.h"
 #include "fble.h"
 #include "type.h"
+#include "typecheck.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -63,12 +64,12 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type);
 
-static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
-static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, FbleExprV args);
-static FbleType* TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
-static FbleType* TypeCheckType(FbleTypeHeap* arena, Scope* scope, FbleTypeExpr* type);
+static FbleTc* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
+static FbleTc* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, FbleExprV args);
+static FbleTc* TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
+static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
-static bool TypeCheckProgram(FbleTypeHeap* arena, Scope* scope, FbleProgram* prgm);
+static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm);
 
 // PushVar --
 //   Push a variable onto the current scope.
@@ -346,15 +347,13 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
 //   expr - the expression to type check.
 //
 // Results:
-//   The type of the compiled expression, or NULL if the expression is not
-//   well typed.
+//   The type checked expression, or NULL if the expression is not well typed.
 //
 // Side effects:
-// * Resolves field tags and MISC_*_EXPRS in expr. 
 // * Prints a message to stderr if the expression fails to compile.
-// * The caller should call FbleReleaseType when the returned results are no
-//   longer needed.
-static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
+// * The caller should call FbleFreeTc when the returned result is no longer
+//   needed.
+static FbleTc* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = heap->arena;
   switch (expr->tag) {
@@ -372,7 +371,10 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       type_type->type = type;
       FbleTypeAddRef(heap, &type_type->_base, type_type->type);
       FbleReleaseType(heap, type);
-      return &type_type->_base;
+
+      FbleTypeTc* type_tc = FbleAlloc(arena, FbleTypeTc);
+      type_tc->_base.type = &type_type->_base;
+      return type_tc;
     }
 
     case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
@@ -525,6 +527,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
+        // TODO: Put the arg in its own profile block?
         args[j] = TypeCheckExpr(heap, scope, arg->expr);
         error = error || (args[j] == NULL);
       }
@@ -625,18 +628,18 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_MISC_ACCESS_EXPR: {
       FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
-      FbleType* obj = TypeCheckExpr(heap, scope, access_expr->object);
+      FbleTc* obj = TypeCheckExpr(heap, scope, access_expr->object);
       if (obj == NULL) {
         return NULL;
       }
 
-      FbleType* normal = FbleNormalType(heap, obj);
+      FbleType* normal = FbleNormalType(heap, obj->type);
       if (expr->tag == FBLE_STRUCT_ACCESS_EXPR && normal->tag != FBLE_STRUCT_TYPE) {
         ReportError(arena, &access_expr->object->loc,
             "expected struct value, but found value of type %t\n",
             obj);
 
-        FbleReleaseType(heap, obj);
+        FbleFreeTc(heap, obj);
         FbleReleaseType(heap, normal);
         return NULL;
       } else if (expr->tag == FBLE_UNION_ACCESS_EXPR && normal->tag != FBLE_UNION_TYPE) {
@@ -644,7 +647,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             "expected union value, but found value of type %t\n",
             obj);
 
-        FbleReleaseType(heap, obj);
+        FbleFreeTc(heap, obj);
         FbleReleaseType(heap, normal);
         return NULL;
       } else if (normal->tag != FBLE_STRUCT_TYPE && normal->tag != FBLE_UNION_TYPE) {
@@ -652,13 +655,9 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             "expected value of type struct or union, but found value of type %t\n",
             obj);
 
-        FbleReleaseType(heap, obj);
+        FbleFreeTc(heap, obj);
         FbleReleaseType(heap, normal);
         return NULL;
-      } else {
-        expr->tag = (normal->tag == FBLE_STRUCT_TYPE)
-          ? FBLE_STRUCT_ACCESS_EXPR
-          : FBLE_UNION_ACCESS_EXPR;
       }
 
       FbleTaggedTypeV* fields = NULL;
@@ -673,18 +672,25 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       for (size_t i = 0; i < fields->size; ++i) {
         if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name)) {
-          access_expr->field.tag = i;
           FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
           FbleReleaseType(heap, normal);
-          FbleReleaseType(heap, obj);
-          return rtype;
+
+          FbleAccessTc* access_tc = FbleAlloc(arena, FbleAccessTc);
+          access_tc->_base.tag = (normal->tag == FBLE_STRUCT_TYPE)
+            ? FBLE_STRUCT_ACCESS_EXPR
+            : FBLE_UNION_ACCESS_EXPR;
+          access_tc->_base.type = rtype;
+          access_tc->obj = obj;
+          access_tc->loc = FbleCopyLoc(access_expr->field.name.loc);
+          access_tc->tag = i;
+          return &access_tc._base;
         }
       }
 
       ReportError(arena, &access_expr->field.name.loc,
           "'%n' is not a field of type %t\n",
           &access_expr->field, obj);
-      FbleReleaseType(heap, obj);
+      FbleFreeTc(heap, obj);
       FbleReleaseType(heap, normal);
       return NULL;
     }
@@ -710,6 +716,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       FbleType* target = NULL;
       if (select_expr->default_ != NULL) {
+        // TODO: Label with profile block ":"?
         FbleType* result = TypeCheckExpr(heap, scope, select_expr->default_);
 
         if (result == NULL) {
@@ -722,6 +729,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         if (i < select_expr->choices.size && FbleNamesEqual(select_expr->choices.xs[i].name, union_type->fields.xs[i].name)) {
+          // TODO: Label with profile block.
           FbleType* result = TypeCheckExpr(heap, scope, select_expr->choices.xs[i].expr);
 
           if (result == NULL) {
@@ -922,6 +930,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       // Compile the values of the variables.
       FbleType* defs[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        // TODO: Wrap binding defs in profile blocks by variable name.
         FbleBinding* binding = let_expr->bindings.xs + i;
 
         defs[i] = NULL;
@@ -1790,10 +1799,11 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
 // Side effects:
 //   Prints warning messages to stderr.
 //   Prints a message to stderr if the program fails to compile.
-static bool TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm)
+static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm)
 {
   FbleArena* arena = heap->arena;
   for (size_t i = 0; i < prgm->modules.size; ++i) {
+    // TODO: Put each module into its own profiling block.
     FbleType* module = TypeCheckExpr(heap, scope, prgm->modules.xs[i].value);
 
     if (module == NULL) {

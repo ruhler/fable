@@ -176,7 +176,7 @@ FbleKind* FbleCopyKind(FbleArena* arena, FbleKind* kind);
 void FbleFreeKind(FbleArena* arena, FbleKind* kind);
 
 // FbleExprTag --
-//   A tag used to dinstinguish among different kinds of expressions.
+//   A tag used to distinguish among different kinds of expressions.
 typedef enum {
   FBLE_TYPEOF_EXPR,
   FBLE_VAR_EXPR,
