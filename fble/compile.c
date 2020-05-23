@@ -610,7 +610,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
     case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR: {
       FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
-      Local* misc = CompileExpr(arena, blocks, false, scope, apply_expr->misc);
 
       size_t argc = apply_expr->args.size;
       Local* args[argc];
@@ -618,9 +617,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
         args[i] = CompileExpr(arena, blocks, false, scope, apply_expr->args.xs[i]);
       }
 
-      LocalRelease(arena, scope, misc, false);
       Local* local = NewLocal(arena, scope);
-
       FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
       struct_instr->_base.profile_ops = NULL;
