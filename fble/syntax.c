@@ -39,7 +39,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleLetExpr* e = (FbleLetExpr*)expr;
       for (size_t i = 0; i < e->bindings.size; ++i) {
         FbleBinding* binding = e->bindings.xs + i;
-        FbleReleaseKind(arena, binding->kind);
+        FbleFreeKind(arena, binding->kind);
         FbleFreeExpr(arena, binding->type);
         FbleFreeName(arena, binding->name);
         FbleFreeExpr(arena, binding->expr);
@@ -168,7 +168,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleExecExpr* e = (FbleExecExpr*)expr;
       for (size_t i = 0; i < e->bindings.size; ++i) {
         FbleBinding* binding = e->bindings.xs + i;
-        FbleReleaseKind(arena, binding->kind);
+        FbleFreeKind(arena, binding->kind);
         FbleFreeExpr(arena, binding->type);
         FbleFreeName(arena, binding->name);
         FbleFreeExpr(arena, binding->expr);
@@ -181,7 +181,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
 
     case FBLE_POLY_EXPR: {
       FblePolyExpr* e = (FblePolyExpr*)expr;
-      FbleReleaseKind(arena, e->arg.kind);
+      FbleFreeKind(arena, e->arg.kind);
       FbleFreeName(arena, e->arg.name);
       FbleFreeExpr(arena, e->body);
       FbleFree(arena, expr);
@@ -345,16 +345,16 @@ void FblePrintName(FILE* stream, FbleName* name)
   }
 }
 
-// FbleRetainKind -- see documentation in syntax.h
-FbleKind* FbleRetainKind(FbleArena* arena, FbleKind* kind)
+// FbleCopyKind -- see documentation in syntax.h
+FbleKind* FbleCopyKind(FbleArena* arena, FbleKind* kind)
 {
   assert(kind != NULL);
   kind->refcount++;
   return kind;
 }
 
-// FbleReleaseKind -- see documentation in syntax.h
-void FbleReleaseKind(FbleArena* arena, FbleKind* kind)
+// FbleFreeKind -- see documentation in syntax.h
+void FbleFreeKind(FbleArena* arena, FbleKind* kind)
 {
   if (kind != NULL) {
     assert(kind->refcount > 0);
@@ -369,8 +369,8 @@ void FbleReleaseKind(FbleArena* arena, FbleKind* kind)
 
         case FBLE_POLY_KIND: {
           FblePolyKind* poly = (FblePolyKind*)kind;
-          FbleReleaseKind(arena, poly->arg);
-          FbleReleaseKind(arena, poly->rkind);
+          FbleFreeKind(arena, poly->arg);
+          FbleFreeKind(arena, poly->rkind);
           FbleFree(arena, poly);
           break;
         }

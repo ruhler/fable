@@ -1,6 +1,4 @@
 
-* Rename FbleRetainString/FbleReleaseString to FbleCopyString/FbleFreeString
-* Rename FbleRetainKind/FbleReleaseKind to FbleCopyKind/FbleFreeKind
 * Pass around FbleName* instead of FbleName.
 
 * Fix broken vacuous_value test.

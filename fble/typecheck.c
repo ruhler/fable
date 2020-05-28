@@ -324,7 +324,7 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
 {
   FbleKind* kind = FbleGetKind(arena, type);
   size_t kind_level = FbleGetKindLevel(kind);
-  FbleReleaseKind(arena, kind);
+  FbleFreeKind(arena, kind);
 
   bool match = (kind_level == 0 && name->space == FBLE_NORMAL_NAME_SPACE)
             || (kind_level == 1 && name->space == FBLE_TYPE_NAME_SPACE);
@@ -943,8 +943,8 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
                 expected_kind, actual_kind);
             error = true;
           }
-          FbleReleaseKind(arena, expected_kind);
-          FbleReleaseKind(arena, actual_kind);
+          FbleFreeKind(arena, expected_kind);
+          FbleFreeKind(arena, actual_kind);
         }
       }
 
@@ -1055,7 +1055,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       if (poly_kind->_base.tag != FBLE_POLY_KIND) {
         ReportError(arena, &expr->loc,
             "cannot apply poly args to a basic kinded entity\n");
-        FbleReleaseKind(arena, &poly_kind->_base);
+        FbleFreeKind(arena, &poly_kind->_base);
         FbleReleaseType(heap, poly);
         return NULL;
       }
@@ -1063,7 +1063,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       // Note: arg_type is typeof(arg)
       FbleType* arg_type = TypeCheckExprForType(heap, scope, apply->arg);
       if (arg_type == NULL) {
-        FbleReleaseKind(arena, &poly_kind->_base);
+        FbleFreeKind(arena, &poly_kind->_base);
         FbleReleaseType(heap, poly);
         return NULL;
       }
@@ -1074,14 +1074,14 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         ReportError(arena, &apply->arg->loc,
             "expected kind %k, but found something of kind %k\n",
             expected_kind, actual_kind);
-        FbleReleaseKind(arena, &poly_kind->_base);
-        FbleReleaseKind(arena, actual_kind);
+        FbleFreeKind(arena, &poly_kind->_base);
+        FbleFreeKind(arena, actual_kind);
         FbleReleaseType(heap, arg_type);
         FbleReleaseType(heap, poly);
         return NULL;
       }
-      FbleReleaseKind(arena, actual_kind);
-      FbleReleaseKind(arena, &poly_kind->_base);
+      FbleFreeKind(arena, actual_kind);
+      FbleFreeKind(arena, &poly_kind->_base);
 
       FbleType* arg = FbleValueOfType(heap, arg_type);
       assert(arg != NULL && "TODO: poly apply arg is a value?");
@@ -1369,7 +1369,7 @@ static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, Fb
 
   FbleType* result = TypeCheckExpr(heap, scope, expr);
 
-  FbleReleaseKind(arena, &basic_kind->_base);
+  FbleFreeKind(arena, &basic_kind->_base);
   for (size_t i = 0; i < args.size; i++) {
     FbleFree(arena, (void*)arg_names[i].name);
   }

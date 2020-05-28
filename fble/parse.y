@@ -107,19 +107,19 @@
 } <module_ref>
 
 %destructor {
-  FbleReleaseKind(arena, $$);
+  FbleFreeKind(arena, $$);
 } <kind>
 
 %destructor {
   for (size_t i = 0; i < $$.size; ++i) {
-    FbleReleaseKind(arena, $$.xs[i]);
+    FbleFreeKind(arena, $$.xs[i]);
   }
   FbleFree(arena, $$.xs);
 } <kinds>
 
 %destructor { 
   for (size_t i = 0; i < $$.size; ++i) {
-    FbleReleaseKind(arena, $$.xs[i].kind);
+    FbleFreeKind(arena, $$.xs[i].kind);
     FbleFreeName(arena, $$.xs[i].name);
   }
   FbleFree(arena, $$.xs);
@@ -164,7 +164,7 @@
 
 %destructor {
   for (size_t i = 0; i < $$.size; ++i) {
-    FbleReleaseKind(arena, $$.xs[i].kind);
+    FbleFreeKind(arena, $$.xs[i].kind);
     FbleFreeExpr(arena, $$.xs[i].type);
     FbleFreeName(arena, $$.xs[i].name);
     FbleFreeExpr(arena, $$.xs[i].expr);

@@ -1277,7 +1277,7 @@ static Local* CompileList(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
   Local* result = CompileExpr(arena, blocks, exit, scope, expr);
 
-  FbleReleaseKind(arena, &basic_kind->_base);
+  FbleFreeKind(arena, &basic_kind->_base);
   for (size_t i = 0; i < args.size; i++) {
     FbleFree(arena, (void*)arg_names[i].name);
   }

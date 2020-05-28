@@ -72,7 +72,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
 //   incremented by the given increment.
 //
 // Side effects:
-//   The caller is responsible for calling FbleReleaseKind on the returned
+//   The caller is responsible for calling FbleFreeKind on the returned
 //   kind when it is no longer needed. This function does not take ownership
 //   of the given kind.
 //
@@ -99,7 +99,7 @@ static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increme
       adjusted->_base.tag = FBLE_POLY_KIND;
       adjusted->_base.loc = FbleCopyLoc(kind->loc);
       adjusted->_base.refcount = 1;
-      adjusted->arg = FbleRetainKind(arena, poly->arg);
+      adjusted->arg = FbleCopyKind(arena, poly->arg);
       adjusted->rkind = LevelAdjustedKind(arena, poly->rkind, increment);
       return &adjusted->_base;
     }
@@ -223,7 +223,7 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      FbleReleaseKind(arena, var->kind);
+      FbleFreeKind(arena, var->kind);
       return;
     }
 
@@ -736,14 +736,14 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       FbleKind* ka = FbleGetKind(arena, pta->arg);
       FbleKind* kb = FbleGetKind(arena, ptb->arg);
       if (!FbleKindsEqual(ka, kb)) {
-        FbleReleaseKind(arena, ka);
-        FbleReleaseKind(arena, kb);
+        FbleFreeKind(arena, ka);
+        FbleFreeKind(arena, kb);
         FbleReleaseType(heap, a);
         FbleReleaseType(heap, b);
         return false;
       }
-      FbleReleaseKind(arena, ka);
-      FbleReleaseKind(arena, kb);
+      FbleFreeKind(arena, ka);
+      FbleFreeKind(arena, kb);
   
       TypeIdPairs pneq = {
         .a = pta->arg->id,
@@ -824,7 +824,7 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
       // the proper kind for the poly.
       FbleKind* arg_kind = FbleGetKind(arena, poly->arg);
       kind->arg = LevelAdjustedKind(arena, arg_kind, 1);
-      FbleReleaseKind(arena, arg_kind);
+      FbleFreeKind(arena, arg_kind);
 
       kind->rkind = FbleGetKind(arena, poly->body);
       return &kind->_base;
@@ -835,14 +835,14 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
       FblePolyKind* kind = (FblePolyKind*)FbleGetKind(arena, pat->poly);
       assert(kind->_base.tag == FBLE_POLY_KIND);
 
-      FbleKind* rkind = FbleRetainKind(arena, kind->rkind);
-      FbleReleaseKind(arena, &kind->_base);
+      FbleKind* rkind = FbleCopyKind(arena, kind->rkind);
+      FbleFreeKind(arena, &kind->_base);
       return rkind;
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      return FbleRetainKind(arena, var->kind);
+      return FbleCopyKind(arena, var->kind);
     }
 
     case FBLE_TYPE_TYPE: {
@@ -850,7 +850,7 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
 
       FbleKind* arg_kind = FbleGetKind(arena, type_type->type);
       FbleKind* kind = LevelAdjustedKind(arena, arg_kind, 1);
-      FbleReleaseKind(arena, arg_kind);
+      FbleFreeKind(arena, arg_kind);
       return kind;
     }
   }
@@ -1188,7 +1188,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
         fprintf(stderr, "%s", prefix);
         FbleKind* kind = FbleGetKind(arena, pt->arg);
         FblePrintKind(kind);
-        FbleReleaseKind(arena, kind);
+        FbleFreeKind(arena, kind);
         fprintf(stderr, " ");
         FblePrintType(arena, pt->arg);
         prefix = ", ";

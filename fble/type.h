@@ -151,7 +151,7 @@ typedef struct {
 //   The kind of the value with the given type.
 //
 // Side effects:
-//   The caller is responsible for calling FbleReleaseKind on the returned
+//   The caller is responsible for calling FbleFreeKind on the returned
 //   kind when it is no longer needed.
 FbleKind* FbleGetKind(FbleArena* arena, FbleType* type);
 
