@@ -11,30 +11,6 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static size_t Checksum(const char* str);
-
-
-// Checksum --
-//   Compute a checksum for the given string. Used to help detect double free
-//   of FbleString.
-//
-// Inputs:
-//   str - the string to get the checksum for
-//
-// Results:
-//   A checksum of the string.
-//
-// Side effects:
-//   None.
-static size_t Checksum(const char* str)
-{
-  size_t checksum = 4321;
-  while (*str != '\0') {
-    checksum = checksum * 27 + *str;
-    str++;
-  }
-  return checksum;
-}
 
 // FbleFreeExpr -- see documentation in syntax.h
 void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
@@ -275,8 +251,8 @@ FbleString* FbleNewString(FbleArena* arena, const char* str)
 
   FbleString* string = FbleAlloc(arena, FbleString);
   string->refcount = 1;
+  string->magic = FBLE_STRING_MAGIC;
   string->str = str_copy;
-  string->checksum = Checksum(str);
   return string;
 }
 
@@ -290,13 +266,10 @@ FbleString* FbleCopyString(FbleString* string)
 // FbleFreeString -- see documentation in fble-name.h
 void FbleFreeString(FbleArena* arena, FbleString* string)
 {
-  // If the string checksum doesn't match, the string is corrupted. That
-  // suggests we have already freed this string, and that something is messed
-  // up with tracking FbleString refcounts. 
-  // Of course, if the string is corrupt, we'll probably get a segfault
-  // computing the checksum instead of this nice assert failure. Oh well. The
-  // debugger should make it obvious what's wrong in that case.
-  assert(string->checksum == Checksum(string->str) && "corrupt FbleString");
+  // If the string magic is wrong, the string is corrupted. That suggests we
+  // have already freed this string, and that something is messed up with
+  // tracking FbleString refcounts. 
+  assert(string->magic == FBLE_STRING_MAGIC && "corrupt FbleString");
   if (--string->refcount == 0) {
     FbleFree(arena, (char*)string->str);
     FbleFree(arena, string);
