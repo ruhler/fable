@@ -13,15 +13,12 @@
 //
 // Note: The magic field is set to FBLE_STRING_MAGIC and is used to detect
 // double frees of FbleString, which we have had trouble with in the past.
+#define FBLE_STRING_MAGIC 0x516179
 typedef struct {
   size_t refcount;
   size_t magic;
   const char* str;
 } FbleString;
-
-// FBLE_STRING_MAGIC --
-//   The magic number we store in every FbleString, to help catch double free.
-#define FBLE_STRING_MAGIC 0x516179
 
 // FbleNewString --
 //   Allocate a new FbleString.
