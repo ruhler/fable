@@ -280,8 +280,8 @@ FbleString* FbleNewString(FbleArena* arena, const char* str)
   return string;
 }
 
-// FbleRetainString -- see documentation in fble-name.h
-FbleString* FbleRetainString(FbleString* string)
+// FbleCopyString -- see documentation in fble-name.h
+FbleString* FbleCopyString(FbleString* string)
 {
   string->refcount++;
   return string;
@@ -306,8 +306,12 @@ void FbleReleaseString(FbleArena* arena, FbleString* string)
 // FbleCopyLoc -- see documentation in fble-name.h
 FbleLoc FbleCopyLoc(FbleLoc loc)
 {
-  FbleRetainString(loc.source);
-  return loc;
+  FbleLoc copy = {
+    .source = FbleCopyString(loc.source),
+    .line = loc.line,
+    .col = loc.col,
+  };
+  return copy;
 }
 
 // FbleFreeLoc -- see documentation in fble-name.h

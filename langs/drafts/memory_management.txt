@@ -1,0 +1,205 @@
+Memory Management
+=================
+Some thoughts on memory management.
+
+Static vs Dynamically Sized
+---------------------------
+Statically sized: you know the size of the value given its type.
+
+Dynamically sized: you don't know the size of the value from its type.
+
+This is a key distinction, because you can allocate and pass around a
+statically sized object on the stack, but you can't allocate or pass around a
+dynamically sized object on the stack.
+
+
+Values vs References
+--------------------
+Consider an 8 bit unsigned integer (uint8_t) for example.
+
+There are 256 possible values: 0 through 255.
+
+A 'value' can be thought of as an index into the space of all possible values
+of the type. We could imagine an implicit array of all 256 values. A value of
+type uint8_t is an index into this array. We don't actually have to
+materialize the array.
+
+Another way to represent a uint8_t would be to have an explicit list, for
+example [1, 17, 23, 254], and the use a smaller index. For example, we now
+only need 2 bits to represent uint8_t, as long as we never refer to more than
+4 different values of uint8_t. We call this 2 bit index a reference. In this
+case, the dictionary defining the value of the reference must exist somewhere.
+
+References can be much smaller than values, because we often don't use the
+full range of values.
+
+In other words, references are compressed values.
+
+References make it possible to refer to an element of an infinite space. For
+example, there are an infinite number of lists of integers. We can't refer to
+them by value. But we can have a reference to a list of integers that is
+finite. That's what a pointer is: a finite reference to something, where the
+dictionary is memory.
+
+References make it possible to represent a dynamically sized value with a
+statically sized value.
+
+You can make a reference to a reference if you want, which compresses it even
+more.
+
+Cost to store / copy a value:
+* Potentially infinite if the space of values is infinite.
+
+Cost to store / copy a reference:
+* Presumably finite and smaller than the cost to store / copy a value.
+
+Note that a reference is a value of the reference space.
+
+Stack vs Heap
+-------------
+Values can be allocated statically, on the stack, or on the heap.
+
+Values allocated statically live forever. They are never freed.
+
+Values allocated on the stack are automatically freed when the frame goes out
+of scope.
+
+Values allocated on the heap must be freed explicitly. We can think of the
+heap as a global dictionary of values. Allocating a value on the heap is like
+adding something to that global heap dictionary and getting a reference to it.
+Freeing the value is removing something from that global heap dictionary. This
+introduces a concept of ownership.
+
+In c, there is no way to directly refer to a value allocated on the heap. You
+have to use a reference.
+
+Ownership
+---------
+To make references viable, we need to maintain dictionaries of values. This
+means keeping track of who is using which values in the dictionary, so we can
+re-use references for new values once the old values are no longer being used.
+
+There are a few patterns of ownership:
+* There is a single, well known owner of a value in a dictionary. The owner
+  frees the value from the dictionary when it knows the value is no longer
+  needed.
+
+  For recursively owned values, this corresponds to a tree: each node has a
+  single well known parent owner.
+
+  The implementation is straight forward: have code to free the value at the
+  right point.
+
+* There are multiple independent owners of the same value.
+
+  This corresponds to a directed acyclic graph.
+
+  This can be reduced to single ownership a couple different ways:
+  1. Make copies of all nodes with multiple parents until it looks like a
+  tree. This is potentially very expensive in terms of memory (worst case
+  exponential).
+
+  2. Use reference counting.
+
+* There could be cycles in the graph.
+
+  Corresponds to a cyclic graph.
+
+  This can be reduced to single ownership using a garbage collector. The
+  garbage collector because the single "smart" owner of the value. You could
+  have trivial implementations like: don't collect this until the garbage
+  collector is itself collected. That could be a memory leak, or it could be
+  like having a single high level owner that outlives many small reference
+  uses.
+
+Implicit vs Explicit Copy
+-------------------------
+In c, implicit copy always just copies a raw value on the stack. It cannot be
+used for managing lifetimes of values.
+
+If you want to manage lifetimes of values, you probably want to make explicit
+copies of (reference) values. That is, execute some code every time you make a
+copy. You could use this for reference counting, for reducing dags to trees by
+copying, or for tracking things in garbage collection.
+
+When doing explicit copying, you may want to add a new value to a dictionary
+and return a new reference. Or you may want to return the same reference.
+
+Summary of Options in C
+-----------------------
+
+Implicit copy:
+    Value x = y;
+  
+  x and y must be stack allocated. This can only be used to track ownership of
+  values in dictionaries in the case of an unsophisticated garbage collector.
+
+Reference count:
+    Value x = y;
+    Retain(y);
+
+  Can be used to track ownership of values in dictionaries using reference
+  counting.
+  x must be the same as y.
+
+Explicit copy:
+    Value x = Copy(y);
+
+  Can be used to track ownership of values in dictionaries using reference
+  counting or reduction to tree.
+  x may be different from y.
+
+What Memory Management Scheme to Use
+------------------------------------
+Key factors in determining the memory management scheme are:
+* Is the value dynamically sized or statically sized?
+* Is the value cyclic or acyclic?
+* How large do you expect the value to be?
+* What kind of ownership is appropriate, stack, single, or multi?
+
+statically sized, acyclic, small:
+  example: int
+  strategy: pass by value on the stack
+
+statically sized, acyclic, large:
+  example: int[640][480]
+  strategy:
+   - use stack, single ownership, or reference counting as appropriate.
+   - pass around a (statically sized, acyclic, small) reference to it.
+
+statically sized, cyclic:
+  invalid combination.
+
+dynamically sized, acyclic, small or large:
+  example: char*
+  strategy:
+   - use stack, single ownership, or reference counting as appropriate.
+   - pass around a (statically sized, acyclic, small) reference to it.
+  note: claim is you may as well use reference counting instead of copying the
+    value in the multi owner case. I suppose it depends on single or
+    multi-threaded? Why is shared_ptr frowned upon in C++ then?
+
+dynamically sized, cyclic:
+  example: FbleValue*
+  strategy:
+   - use stack or gc as appropriate.
+   - pass around a (statically sized, acyclic, small) reference to it.
+
+Summarized another way:
+* Pass by value on stack if it's small and statically sized, otherwise pass by
+  reference.
+* Use stack for ownership if appropriate. Otherwise...
+* For acyclic: use single ownership or reference counting as appropriate.
+* For cyclic: use gc.
+
+In my experience, the thing most likely to change unexpectedly is going from
+single ownership to multi ownership.
+
+Maybe the problem is whether you should use gc or reference counting depends
+on how the value is being used, but each approach requires slightly different
+coding. Why should you have to care in the code?
+
+This is all complicated a lot by the fact that whether a particular value is
+single owner or multi could depend on your decisions for how to handle
+another. For example, FbleName owns a char*. If we copy FbleName, the char*
+becomes multi use, but if we reference count FbleName, char* stays single use.

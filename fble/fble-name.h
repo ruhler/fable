@@ -32,20 +32,20 @@ typedef struct {
 //   Does not take ownership of str - makes a copy instead.
 FbleString* FbleNewString(FbleArena* arena, const char* str);
 
-// FbleRetainString -- 
-//   Increment the refcount on a string.
+// FbleCopyString -- 
+//   Make a copy of the given string.
 //
 // Inputs:
-//   string - the string to increment the reference count on.
+//   string - the string to copy.
 // 
 // Results:
-//   The input string, for convenience.
+//   The new copy of the string, which may be the same pointer as the given
+//   string.
 //
 // Side effects:
-//   Increments the reference count on the string. The user should arrange for
-//   FbleReleaseString to be called on the string when this reference of it is
-//   no longer needed.
-FbleString* FbleRetainString(FbleString* string);
+//   The user should arrange for FbleFreeString to be called on this string
+//   copy when it is no longer needed.
+FbleString* FbleCopyString(FbleString* string);
 
 // FbleReleaseString -- 
 //   Decrement the refcount on a string, freeing resources associated with the
