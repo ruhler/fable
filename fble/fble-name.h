@@ -28,7 +28,7 @@ typedef struct {
 //
 // Results:
 //   A newly allocated string with a reference count that should be released
-//   using FbleReleaseString when no longer needed.
+//   using FbleFreeString when no longer needed.
 //   Does not take ownership of str - makes a copy instead.
 FbleString* FbleNewString(FbleArena* arena, const char* str);
 
@@ -47,18 +47,16 @@ FbleString* FbleNewString(FbleArena* arena, const char* str);
 //   copy when it is no longer needed.
 FbleString* FbleCopyString(FbleString* string);
 
-// FbleReleaseString -- 
-//   Decrement the refcount on a string, freeing resources associated with the
-//   string if the refcount goes to zero.
+// FbleFreeString -- 
+//   Free resources associated with the given string.
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   string - the string to decrement the reference count on.
+//   string - the string to free.
 //
 // Side effects:
-//   Decrements the reference count of the string, freeing it and its str
-//   contents if the reference count goes to zero.
-void FbleReleaseString(FbleArena* arena, FbleString* string);
+//   Frees resources associated the string and its contents.
+void FbleFreeString(FbleArena* arena, FbleString* string);
 
 // FbleLoc --
 //   Represents a location in a source file.

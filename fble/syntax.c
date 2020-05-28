@@ -287,8 +287,8 @@ FbleString* FbleCopyString(FbleString* string)
   return string;
 }
 
-// FbleReleaseString -- see documentation in fble-name.h
-void FbleReleaseString(FbleArena* arena, FbleString* string)
+// FbleFreeString -- see documentation in fble-name.h
+void FbleFreeString(FbleArena* arena, FbleString* string)
 {
   // If the string checksum doesn't match, the string is corrupted. That
   // suggests we have already freed this string, and that something is messed
@@ -317,7 +317,7 @@ FbleLoc FbleCopyLoc(FbleLoc loc)
 // FbleFreeLoc -- see documentation in fble-name.h
 void FbleFreeLoc(FbleArena* arena, FbleLoc loc)
 {
-  FbleReleaseString(arena, loc.source);
+  FbleFreeString(arena, loc.source);
 }
 
 // FbleReportWarning -- see documentation in syntax.h
