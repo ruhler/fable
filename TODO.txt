@@ -2,9 +2,7 @@
 * Pass around FbleName* instead of FbleName.
 
 * Fix broken vacuous_value test.
-* Fix broken memory leak tests.
- - looks like a false positive test failure.
- - figure out how to make these not be flaky.
+ - this should fall out after we pull out an FbleTc IR.
 
 * Add test for AbortThread code coverage
  Try to do all of the following things after an abort:

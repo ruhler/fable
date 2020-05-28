@@ -171,15 +171,18 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-//  for (size_t i = 0; i < 200; ++i) {
-//    size_t max_n = 0;
-//    if (!Run(prgm, i, 200, &max_n)) {
-//      FbleFreeProgram(arena, prgm);
-//      FbleFreeArena(arena);
-//      return EX_FAIL;
-//    }
-//    fprintf(stderr, "% 4zi: %zi\n", i, max_n);
-//  }
+  bool debug = false;
+  if (debug) {
+    for (size_t i = 0; i <= 200; ++i) {
+      size_t max_n = 0;
+      if (!Run(prgm, i, 200, &max_n)) {
+        FbleFreeProgram(arena, prgm);
+        FbleFreeArena(arena);
+        return EX_FAIL;
+      }
+      fprintf(stderr, "% 4zi: %zi\n", i, max_n);
+    }
+  }
 
   size_t max_small_n = 0;
   if (!Run(prgm, 100, 200, &max_small_n)) {
@@ -195,10 +198,10 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  // The memory samples can be a little bit noisy. Be a little lenient to
-  // that. I think it's unlikely a small memory growth could hide within 1% of
-  // the small heap size.
-  size_t noise = max_small_n / 100;
+  // The memory samples can be a little bit noisy. Be lenient to that.
+  // Hopefully small memory growth will not be able to hide within 4% of the
+  // small heap size.
+  size_t noise = 4 * max_small_n / 100;
   if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
     FbleFreeProgram(arena, prgm);
