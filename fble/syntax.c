@@ -246,13 +246,10 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
 // FbleNewString -- see documentation in fble-name.h
 FbleString* FbleNewString(FbleArena* arena, const char* str)
 {
-  char* str_copy = FbleArrayAlloc(arena, char, strlen(str) + 1);
-  strcpy(str_copy, str);
-
-  FbleString* string = FbleAlloc(arena, FbleString);
+  FbleString* string = FbleAllocExtra(arena, FbleString, strlen(str) + 1);
   string->refcount = 1;
   string->magic = FBLE_STRING_MAGIC;
-  string->str = str_copy;
+  strcpy(string->str, str);
   return string;
 }
 
@@ -271,7 +268,6 @@ void FbleFreeString(FbleArena* arena, FbleString* string)
   // tracking FbleString refcounts. 
   assert(string->magic == FBLE_STRING_MAGIC && "corrupt FbleString");
   if (--string->refcount == 0) {
-    FbleFree(arena, (char*)string->str);
     FbleFree(arena, string);
   }
 }

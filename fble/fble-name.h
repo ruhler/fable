@@ -9,7 +9,9 @@
 #include "fble-alloc.h"
 
 // FbleString --
-//   A reference counted string.
+//   A string of characters.
+//
+// Pass by pointer. Explicit copy and free required.
 //
 // Note: The magic field is set to FBLE_STRING_MAGIC and is used to detect
 // double frees of FbleString, which we have had trouble with in the past.
@@ -17,7 +19,7 @@
 typedef struct {
   size_t refcount;
   size_t magic;
-  const char* str;
+  char str[];
 } FbleString;
 
 // FbleNewString --

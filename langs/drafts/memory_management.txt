@@ -203,3 +203,37 @@ This is all complicated a lot by the fact that whether a particular value is
 single owner or multi could depend on your decisions for how to handle
 another. For example, FbleName owns a char*. If we copy FbleName, the char*
 becomes multi use, but if we reference count FbleName, char* stays single use.
+
+---
+
+Okay. I think I have it figured out.
+
+The key points are:
+* I don't want to define separate getter/setter functions. I want to use '.'
+  or '->' to directly access fields in these data structures. Because
+  getter/setter functions are too much overhead for the kinds of objects I'm
+  thinking of.
+* The code that uses an object ought not to care whether we copy or ref count
+  copy the object.
+* Prefer to allocated fixed sized objects on the stack and dynamically sized
+  objects on the heap. Assuming the cost to copy a fixed sized object is cheap
+  compared to the cost of allocating on the heap and the extra indirection
+  needed to access an object on the heap.
+
+Let's distinguish between 3 cases:
+1. A dynamically sized object.
+Allocate on the heap. Refer to by pointer. Explicit copy and free required.
+
+2. A totally fixed sized object.
+Allocate on the stack. Refer to by value. No explicit copy or free required.
+
+3. A shallowly fixed sized object.
+Allocate on the stack. Refer to by value. Explicit copy and free required.
+
+If desired, large fixed sized objects can be treated as dynamically sized
+objects to avoid cost of copying on the stack.
+
+Whether we use reference count copy or actual copy is hidden in the explicit
+copy function.
+
+Perfect.

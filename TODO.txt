@@ -1,5 +1,7 @@
 
-* Pass around FbleName* instead of FbleName.
+* Pass around FbleName* instead of FbleName?
+
+* Distinguish between FbleExpr and a new FbleTc IR.
 
 * Fix broken vacuous_value test.
  - this should fall out after we pull out an FbleTc IR.
