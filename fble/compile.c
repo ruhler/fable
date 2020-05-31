@@ -246,14 +246,14 @@ static Var* GetVar(FbleArena* arena, Scope* scope, FbleName name)
   for (size_t i = 0; i < scope->vars.size; ++i) {
     size_t j = scope->vars.size - i - 1;
     Var* var = scope->vars.xs[j];
-    if (FbleNamesEqual(&name, &var->name)) {
+    if (FbleNamesEqual(name, var->name)) {
       return var;
     }
   }
 
   for (size_t i = 0; i < scope->statics.size; ++i) {
     Var* var = scope->statics.xs[i];
-    if (FbleNamesEqual(&name, &var->name)) {
+    if (FbleNamesEqual(name, var->name)) {
       return var;
     }
   }
@@ -443,23 +443,25 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   size_t currlen = 0;
   if (blocks->stack.size > 0) {
     size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
-    curr = blocks->profile->blocks.xs[curr_id]->name.name;
+    curr = blocks->profile->blocks.xs[curr_id]->name.name->str;
     currlen = strlen(curr);
   }
 
   // Append ".name" to the current block name to figure out the new block
   // name.
-  char* str = FbleArrayAlloc(arena, char, currlen + strlen(name.name) + 3);
-  str[0] = '\0';
+  FbleString* str = FbleAllocExtra(arena, FbleString, currlen + strlen(name.name->str) + 3);
+  str->refcount = 1;
+  str->magic = FBLE_STRING_MAGIC;
+  str->str[0] = '\0';
   if (currlen > 0) {
-    strcat(str, curr);
-    strcat(str, ".");
+    strcat(str->str, curr);
+    strcat(str->str, ".");
   }
-  strcat(str, name.name);
+  strcat(str->str, name.name->str);
   switch (name.space) {
     case FBLE_NORMAL_NAME_SPACE: break;
-    case FBLE_TYPE_NAME_SPACE: strcat(str, "@"); break;
-    case FBLE_MODULE_NAME_SPACE: strcat(str, "%"); break;
+    case FBLE_TYPE_NAME_SPACE: strcat(str->str, "@"); break;
+    case FBLE_MODULE_NAME_SPACE: strcat(str->str, "%"); break;
   }
 
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
@@ -493,14 +495,16 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
   const char* curr = "";
   if (blocks->stack.size > 0) {
     size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
-    curr = blocks->profile->blocks.xs[curr_id]->name.name;
+    curr = blocks->profile->blocks.xs[curr_id]->name.name->str;
   }
 
   // Append "!" to the current block name to figure out the new block name.
-  char* str = FbleArrayAlloc(arena, char, strlen(curr) + 2);
-  str[0] = '\0';
-  strcat(str, curr);
-  strcat(str, "!");
+  FbleString* str = FbleAllocExtra(arena, FbleString, strlen(curr) + 2);
+  str->refcount = 1;
+  str->magic = FBLE_STRING_MAGIC;
+  str->str[0] = '\0';
+  strcat(str->str, curr);
+  strcat(str->str, "!");
 
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
   size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
@@ -779,7 +783,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleJumpInstr* exit_jump_default = NULL;
       if (select_expr->default_ != NULL) {
         FbleName name = {
-          .name = ":",
+          .name = FbleNewString(arena, ":"),
           .loc = select_expr->default_->loc,  // unused.
           .space = FBLE_NORMAL_NAME_SPACE
         };
@@ -797,6 +801,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
           LocalRelease(arena, scope, result, false);
         }
         ExitBlock(arena, blocks, scope, exit);
+        FbleFreeString(arena, name.name);
 
         if (!exit) {
           exit_jump_default = FbleAlloc(arena, FbleJumpInstr);
@@ -1037,7 +1042,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       size_t n = strlen(literal->word);
 
       FbleName spec_name = {
-        .name = "__literal_spec",
+        .name = FbleNewString(arena, "__literal_spec"),
         .space = FBLE_NORMAL_NAME_SPACE,
         .loc = literal->spec->loc,
       };
@@ -1050,16 +1055,16 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       FbleAccessExpr letters[n];
       FbleExpr* xs[n];
-      char word_letters[2*n];
+      FbleString* fields[n];
       FbleLoc loc = literal->word_loc;
       for (size_t i = 0; i < n; ++i) {
-        word_letters[2*i] = literal->word[i];
-        word_letters[2*i + 1] = '\0';
+        char field_str[2] = { literal->word[i], '\0' };
+        fields[i] = FbleNewString(arena, field_str);
 
         letters[i]._base.tag = FBLE_STRUCT_ACCESS_EXPR;
         letters[i]._base.loc = loc;
         letters[i].object = &spec_var._base;
-        letters[i].field.name.name = word_letters + 2*i;
+        letters[i].field.name.name = fields[i];
         letters[i].field.name.space = FBLE_NORMAL_NAME_SPACE;
         letters[i].field.name.loc = loc;
         letters[i].field.tag = literal->tags[i];
@@ -1076,6 +1081,12 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleExprV args = { .size = n, .xs = xs, };
       Local* result = CompileList(arena, blocks, exit, scope, literal->word_loc, args);
       PopVar(arena, scope, exit);
+
+      for (size_t i = 0; i < n; ++i) {
+        FbleFreeString(arena, fields[i]);
+      }
+      FbleFreeString(arena, spec_name.name);
+
       return result;
     }
   }
@@ -1127,7 +1138,7 @@ static Local* CompileList(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
   basic_kind->level = 1;
 
   FbleName elem_type_name = {
-    .name = "T",
+    .name = FbleNewString(arena, "T"),
     .space = FBLE_TYPE_NAME_SPACE,
     .loc = loc,
   };
@@ -1146,11 +1157,13 @@ static Local* CompileList(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
   FbleName arg_names[args.size];
   FbleVarExpr arg_values[args.size];
   for (size_t i = 0; i < args.size; ++i) {
-    char* name = FbleArrayAlloc(arena, char, num_digits + 2);
-    name[0] = 'x';
-    name[num_digits+1] = '\0';
+    FbleString* name = FbleAllocExtra(arena, FbleString, num_digits + 2);
+    name->refcount = 1;
+    name->magic = FBLE_STRING_MAGIC;
+    name->str[0] = 'x';
+    name->str[num_digits+1] = '\0';
     for (size_t j = 0, x = i; j < num_digits; j++, x /= 10) {
-      name[num_digits - j] = (x % 10) + '0';
+      name->str[num_digits - j] = (x % 10) + '0';
     }
     arg_names[i].name = name;
     arg_names[i].space = FBLE_NORMAL_NAME_SPACE;
@@ -1162,7 +1175,7 @@ static Local* CompileList(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
   }
 
   FbleName list_type_name = {
-    .name = "L",
+    .name = FbleNewString(arena, "L"),
     .space = FBLE_TYPE_NAME_SPACE,
     .loc = loc,
   };
@@ -1174,7 +1187,7 @@ static Local* CompileList(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
   FbleTaggedTypeExpr inner_args[2];
   FbleName cons_name = {
-    .name = "cons",
+    .name = FbleNewString(arena, "cons"),
     .space = FBLE_NORMAL_NAME_SPACE,
     .loc = loc,
   };
@@ -1199,7 +1212,7 @@ static Local* CompileList(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
   inner_args[0].name = cons_name;
 
   FbleName nil_name = {
-    .name = "nil",
+    .name = FbleNewString(arena, "nil"),
     .space = FBLE_NORMAL_NAME_SPACE,
     .loc = loc,
   };
@@ -1279,8 +1292,12 @@ static Local* CompileList(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
   FbleFreeKind(arena, &basic_kind->_base);
   for (size_t i = 0; i < args.size; i++) {
-    FbleFree(arena, (void*)arg_names[i].name);
+    FbleFreeString(arena, arg_names[i].name);
   }
+  FbleFreeString(arena, elem_type_name.name);
+  FbleFreeString(arena, list_type_name.name);
+  FbleFreeString(arena, cons_name.name);
+  FbleFreeString(arena, nil_name.name);
   return result;
 }
 
@@ -1474,7 +1491,7 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
   // The entry associated with FBLE_ROOT_BLOCK_ID.
   // TODO: Does it make sense to use the main program for the location?
   FbleName entry_name = {
-    .name = "",
+    .name = FbleNewString(arena, ""),
     .loc = program->main->loc,
     .space = FBLE_NORMAL_NAME_SPACE,
   };
@@ -1490,6 +1507,7 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
     CompileProgram(arena, &block_stack, &scope, program);
   }
   ExitBlock(arena, &block_stack, &scope, true);
+  FbleFreeString(arena, entry_name.name);
   FreeScope(arena, &scope, true);
   assert(capture.size == 0 && "captured variables from nowhere?");
   FbleFree(arena, capture.xs);

@@ -66,7 +66,7 @@ static void PrintModuleName(FILE* fout, FbleNameV path)
     fprintf(fout, "/");
   }
   for (size_t i = 0; i < path.size; ++i) {
-    fprintf(fout, "/%s", path.xs[i].name);
+    fprintf(fout, "/%s", path.xs[i].name->str);
   }
   fprintf(fout, "%%");
 }
@@ -92,7 +92,7 @@ static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target)
   // to the source thanks to it being under a sibling node.
   size_t visible = 0;
   while (visible < source.size && visible < target.size
-      && FbleNamesEqual(source.xs + visible, target.xs + visible)) {
+      && FbleNamesEqual(source.xs[visible], target.xs[visible])) {
     visible++;
   }
 
@@ -100,7 +100,7 @@ static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target)
   for (size_t i = 0; i < target.size; ++i) {
     Tree* child = NULL;
     for (size_t j = 0; j < tree->children.size; ++j) {
-      if (FbleNamesEqual(&tree->children.xs[j]->name, target.xs + i)) {
+      if (FbleNamesEqual(tree->children.xs[j]->name, target.xs[i])) {
         child = tree->children.xs[j];
         break;
       }
@@ -156,7 +156,7 @@ static bool PathsEqual(FbleNameV a, FbleNameV b)
   }
 
   for (size_t i = 0; i < a.size; ++i) {
-    if (!FbleNamesEqual(a.xs + i, b.xs + i)) {
+    if (!FbleNamesEqual(a.xs[i], b.xs[i])) {
       return false;
     }
   }
@@ -193,18 +193,20 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 
   size_t len = 1;
   for (size_t i = 0; i < path.size; ++i) {
-    len += 1 + strlen(path.xs[i].name);
+    len += 1 + strlen(path.xs[i].name->str);
   }
 
-  char* name_name = FbleArrayAlloc(arena, char, len);
+  FbleString* name_name = FbleAllocExtra(arena, FbleString, len);
+  name_name->refcount = 1;
+  name_name->magic = FBLE_STRING_MAGIC;
   name->name = name_name;
   name->loc = loc;
   name->space = FBLE_MODULE_NAME_SPACE;
 
-  name_name[0] = '\0';
+  name_name->str[0] = '\0';
   for (size_t i = 0; i < path.size; ++i) {
-    strcat(name_name, "/");
-    strcat(name_name, path.xs[i].name);
+    strcat(name_name->str, "/");
+    strcat(name_name->str, path.xs[i].name->str);
   }
 }
 
@@ -239,7 +241,7 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
   size_t len = strlen(root) + strlen(".fble") + 1;
   for (size_t i = 0; i < path.size; ++i) {
     // "/name*"
-    len += 1 + strlen(path.xs[i].name) + 1;
+    len += 1 + strlen(path.xs[i].name->str) + 1;
   }
 
   // Find the path to the module on disk, which depends on the access
@@ -249,11 +251,11 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
   strcat(filename, root);
   for (size_t i = 0; i < path.size; ++i) {
     strcat(filename, "/");
-    strcat(filename, path.xs[i].name);
+    strcat(filename, path.xs[i].name->str);
 
     bool treed = false;
     for (size_t c = 0; c < tree->children.size; ++c) {
-      if (FbleNamesEqual(&path.xs[i], &tree->children.xs[c]->name)) {
+      if (FbleNamesEqual(path.xs[i], tree->children.xs[c]->name)) {
         treed = true;
         tree = tree->children.xs[c];
         break;
@@ -327,10 +329,9 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     stack->module_refs.size = 0;
   }
 
-  FbleString* unknownSource = FbleNewString(arena, "???");
   Tree* tree = FbleAlloc(arena, Tree);
-  tree->name.name = "";
-  tree->name.loc.source = unknownSource;
+  tree->name.name = FbleNewString(arena, "");
+  tree->name.loc.source = FbleNewString(arena, "???");
   tree->name.loc.line = 0;
   tree->name.loc.col = 0;
   tree->private = false;
@@ -356,7 +357,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     PathToName(arena, ref->path, &resolved_name);
     bool found = false;
     for (size_t i = 0; i < program->modules.size; ++i) {
-      if (FbleNamesEqual(&resolved_name, &program->modules.xs[i].name)) {
+      if (FbleNamesEqual(resolved_name, program->modules.xs[i].name)) {
         // We may have failed to load a module previously. Check to see if the
         // module has been loaded before doing the access allowed check.
         // There's no point checking access against a module that failed to
@@ -420,8 +421,9 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
       stack->module_refs.size = 0;
     }
   }
+  FbleFreeString(arena, tree->name.name);
+  FbleFreeString(arena, tree->name.loc.source);
   FreeTree(arena, tree);
-  FbleFreeString(arena, unknownSource);
 
   // The last module loaded should be the main entry point.
   program->modules.size--;

@@ -48,7 +48,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
             FbleBlockId block = op->block;
             FbleName* name = &profile->blocks.xs[block]->name;
             fprintf(fout, "    .  profile enter [%04x]; ", block);
-            fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name, block,
+            fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name->str, block,
                 name->loc.source->str, name->loc.line, name->loc.col);
             break;
           }

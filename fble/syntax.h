@@ -62,7 +62,7 @@ typedef struct {
 //
 // Side effects:
 //   None.
-bool FbleNamesEqual(FbleName* a, FbleName* b);
+bool FbleNamesEqual(FbleName a, FbleName b);
 
 // FblePrintName --
 //   Print a name in human readable form to the given stream.
@@ -76,7 +76,7 @@ bool FbleNamesEqual(FbleName* a, FbleName* b);
 //
 // Side effects:
 //   Prints the given name to the given stream.
-void FblePrintName(FILE* stream, FbleName* name);
+void FblePrintName(FILE* stream, FbleName name);
 
 // FbleModuleRef --
 //

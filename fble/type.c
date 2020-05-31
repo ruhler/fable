@@ -650,7 +650,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       }
 
       for (size_t i = 0; i < sta->fields.size; ++i) {
-        if (!FbleNamesEqual(&sta->fields.xs[i].name, &stb->fields.xs[i].name)) {
+        if (!FbleNamesEqual(sta->fields.xs[i].name, stb->fields.xs[i].name)) {
           FbleReleaseType(heap, a);
           FbleReleaseType(heap, b);
           return false;
@@ -678,7 +678,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       }
 
       for (size_t i = 0; i < uta->fields.size; ++i) {
-        if (!FbleNamesEqual(&uta->fields.xs[i].name, &utb->fields.xs[i].name)) {
+        if (!FbleNamesEqual(uta->fields.xs[i].name, utb->fields.xs[i].name)) {
           FbleReleaseType(heap, a);
           FbleReleaseType(heap, b);
           return false;
@@ -1138,7 +1138,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
         fprintf(stderr, "%s", comma);
         FblePrintType(arena, st->fields.xs[i].type);
         fprintf(stderr, " ");
-        FblePrintName(stderr, &st->fields.xs[i].name);
+        FblePrintName(stderr, st->fields.xs[i].name);
         comma = ", ";
       }
       fprintf(stderr, ")");
@@ -1153,7 +1153,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
         fprintf(stderr, "%s", comma);
         FblePrintType(arena, ut->fields.xs[i].type);
         fprintf(stderr, " ");
-        FblePrintName(stderr, &ut->fields.xs[i].name);
+        FblePrintName(stderr, ut->fields.xs[i].name);
         comma = ", ";
       }
       return;
@@ -1225,7 +1225,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      FblePrintName(stderr, &var->name);
+      FblePrintName(stderr, var->name);
       return;
     }
 

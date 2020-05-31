@@ -87,7 +87,8 @@ static bool TypeCheckProgram(FbleTypeHeap* arena, Scope* scope, FbleProgram* prg
 // Side effects:
 //   Pushes a new variable with given name and type onto the scope. Takes
 //   ownership of the given type, which will be released when the variable is
-//   freed.
+//   freed. Does not take owner ship of name. It is the callers responsibility
+//   to ensure that 'name' outlives the returned Var.
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
 {
   Var* var = FbleAlloc(arena, Var);
@@ -143,7 +144,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
   for (size_t i = 0; i < scope->vars.size; ++i) {
     size_t j = scope->vars.size - i - 1;
     Var* var = scope->vars.xs[j];
-    if (FbleNamesEqual(&name, &var->name)) {
+    if (FbleNamesEqual(name, var->name)) {
       var->accessed = true;
       if (!phantom) {
         var->used = true;
@@ -154,7 +155,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
 
   for (size_t i = 0; i < scope->statics.size; ++i) {
     Var* var = scope->statics.xs[i];
-    if (FbleNamesEqual(&name, &var->name)) {
+    if (FbleNamesEqual(name, var->name)) {
       var->accessed = true;
       if (!phantom) {
         var->used = true;
@@ -284,7 +285,7 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 
       case 'n': {
         FbleName* name = va_arg(ap, FbleName*);
-        FblePrintName(stderr, name);
+        FblePrintName(stderr, *name);
         break;
       }
 
@@ -544,7 +545,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         }
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(&arg->name, &struct_expr->args.xs[j].name)) {
+          if (FbleNamesEqual(arg->name, struct_expr->args.xs[j].name)) {
             error = true;
             ReportError(arena, &arg->name.loc,
                 "duplicate field name '%n'\n",
@@ -582,7 +583,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleType* field_type = NULL;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         FbleTaggedType* field = union_type->fields.xs + i;
-        if (FbleNamesEqual(&field->name, &union_value_expr->field.name)) {
+        if (FbleNamesEqual(field->name, union_value_expr->field.name)) {
           union_value_expr->field.tag = i;
           field_type = field->type;
           break;
@@ -671,7 +672,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       for (size_t i = 0; i < fields->size; ++i) {
-        if (FbleNamesEqual(&access_expr->field.name, &fields->xs[i].name)) {
+        if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name)) {
           access_expr->field.tag = i;
           FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
           FbleReleaseType(heap, normal);
@@ -720,7 +721,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       for (size_t i = 0; i < union_type->fields.size; ++i) {
-        if (i < select_expr->choices.size && FbleNamesEqual(&select_expr->choices.xs[i].name, &union_type->fields.xs[i].name)) {
+        if (i < select_expr->choices.size && FbleNamesEqual(select_expr->choices.xs[i].name, union_type->fields.xs[i].name)) {
           FbleType* result = TypeCheckExpr(heap, scope, select_expr->choices.xs[i].expr);
 
           if (result == NULL) {
@@ -797,7 +798,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         error = error || arg_type == NULL;
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(&func_value_expr->args.xs[i].name, &func_value_expr->args.xs[j].name)) {
+          if (FbleNamesEqual(func_value_expr->args.xs[i].name, func_value_expr->args.xs[j].name)) {
             error = true;
             ReportError(arena, &func_value_expr->args.xs[i].name.loc,
                 "duplicate arg name '%n'\n",
@@ -904,7 +905,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         }
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(&let_expr->bindings.xs[i].name, &let_expr->bindings.xs[j].name)) {
+          if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
             ReportError(arena, &let_expr->bindings.xs[i].name.loc,
                 "duplicate variable name '%n'\n",
                 &let_expr->bindings.xs[i].name);
@@ -980,9 +981,9 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       if (body != NULL) {
         for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          if (!vars[i]->accessed && vars[i]->name.name[0] != '_') {
+          if (!vars[i]->accessed && vars[i]->name.name->str[0] != '_') {
             FbleReportWarning("variable '", &vars[i]->name.loc);
-            FblePrintName(stderr, &vars[i]->name);
+            FblePrintName(stderr, vars[i]->name);
             fprintf(stderr, "' defined but not used\n");
           }
         }
@@ -1126,7 +1127,7 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleName spec_name = {
-        .name = "__literal_spec",
+        .name = FbleNewString(arena, "__literal_spec"),
         .space = FBLE_NORMAL_NAME_SPACE,
         .loc = literal->spec->loc,
       };
@@ -1139,16 +1140,16 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       FbleAccessExpr letters[n];
       FbleExpr* xs[n];
-      char word_letters[2*n];
+      FbleString* fields[n];
       FbleLoc loc = literal->word_loc;
       for (size_t i = 0; i < n; ++i) {
-        word_letters[2*i] = literal->word[i];
-        word_letters[2*i + 1] = '\0';
+        char field_str[2] = { literal->word[i], '\0' };
+        fields[i] = FbleNewString(arena, field_str);
 
         letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
         letters[i]._base.loc = loc;
         letters[i].object = &spec_var._base;
-        letters[i].field.name.name = word_letters + 2*i;
+        letters[i].field.name.name = fields[i];
         letters[i].field.name.space = FBLE_NORMAL_NAME_SPACE;
         letters[i].field.name.loc = loc;
         letters[i].field.tag = FBLE_UNRESOLVED_FIELD_TAG;
@@ -1168,7 +1169,9 @@ static FbleType* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       for (size_t i = 0; i < n; ++i) {
         literal->tags[i] = letters[i].field.tag;
+        FbleFreeString(arena, fields[i]);
       }
+      FbleFreeString(arena, spec_name.name);
 
       return result;
     }
@@ -1219,7 +1222,7 @@ static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, Fb
   basic_kind->level = 1;
 
   FbleName elem_type_name = {
-    .name = "T",
+    .name = FbleNewString(arena, "T"),
     .space = FBLE_TYPE_NAME_SPACE,
     .loc = loc,
   };
@@ -1238,11 +1241,13 @@ static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, Fb
   FbleName arg_names[args.size];
   FbleVarExpr arg_values[args.size];
   for (size_t i = 0; i < args.size; ++i) {
-    char* name = FbleArrayAlloc(arena, char, num_digits + 2);
-    name[0] = 'x';
-    name[num_digits+1] = '\0';
+    FbleString* name = FbleAllocExtra(arena, FbleString, num_digits + 2);
+    name->refcount = 1;
+    name->magic = FBLE_STRING_MAGIC;
+    name->str[0] = 'x';
+    name->str[num_digits+1] = '\0';
     for (size_t j = 0, x = i; j < num_digits; j++, x /= 10) {
-      name[num_digits - j] = (x % 10) + '0';
+      name->str[num_digits - j] = (x % 10) + '0';
     }
     arg_names[i].name = name;
     arg_names[i].space = FBLE_NORMAL_NAME_SPACE;
@@ -1254,7 +1259,7 @@ static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, Fb
   }
 
   FbleName list_type_name = {
-    .name = "L",
+    .name = FbleNewString(arena, "L"),
     .space = FBLE_TYPE_NAME_SPACE,
     .loc = loc,
   };
@@ -1266,7 +1271,7 @@ static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, Fb
 
   FbleTaggedTypeExpr inner_args[2];
   FbleName cons_name = {
-    .name = "cons",
+    .name = FbleNewString(arena, "cons"),
     .space = FBLE_NORMAL_NAME_SPACE,
     .loc = loc,
   };
@@ -1291,7 +1296,7 @@ static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, Fb
   inner_args[0].name = cons_name;
 
   FbleName nil_name = {
-    .name = "nil",
+    .name = FbleNewString(arena, "nil"),
     .space = FBLE_NORMAL_NAME_SPACE,
     .loc = loc,
   };
@@ -1371,8 +1376,12 @@ static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, Fb
 
   FbleFreeKind(arena, &basic_kind->_base);
   for (size_t i = 0; i < args.size; i++) {
-    FbleFree(arena, (void*)arg_names[i].name);
+    FbleFreeString(arena, arg_names[i].name);
   }
+  FbleFreeString(arena, elem_type_name.name);
+  FbleFreeString(arena, list_type_name.name);
+  FbleFreeString(arena, cons_name.name);
+  FbleFreeString(arena, nil_name.name);
   return result;
 }
 
@@ -1448,7 +1457,7 @@ static FbleType* TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
     case FBLE_LINK_EXPR: {
       FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
-      if (FbleNamesEqual(&link_expr->get, &link_expr->put)) {
+      if (FbleNamesEqual(link_expr->get, link_expr->put)) {
         ReportError(arena, &link_expr->put.loc,
             "duplicate port name '%n'\n",
             &link_expr->put);
@@ -1624,7 +1633,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
         FbleReleaseType(heap, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(&field->name, &struct_type->fields.xs[j].name)) {
+          if (FbleNamesEqual(field->name, struct_type->fields.xs[j].name)) {
             ReportError(arena, &field->name.loc,
                 "duplicate field name '%n'\n",
                 &field->name);
@@ -1657,7 +1666,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
         FbleReleaseType(heap, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(&field->name, &union_type->fields.xs[j].name)) {
+          if (FbleNamesEqual(field->name, union_type->fields.xs[j].name)) {
             ReportError(arena, &field->name.loc,
                 "duplicate field name '%n'\n",
                 &field->name);

@@ -310,23 +310,34 @@ void FbleReportError(const char* format, FbleLoc* loc, ...)
 }
 
 // FbleNamesEqual -- see documentation in syntax.h
-bool FbleNamesEqual(FbleName* a, FbleName* b)
+bool FbleNamesEqual(FbleName a, FbleName b)
 {
-  return a->space == b->space && strcmp(a->name, b->name) == 0;
+  return a.space == b.space && strcmp(a.name->str, b.name->str) == 0;
+}
+
+// FbleCopyName -- see documentation in fble-name.h
+FbleName FbleCopyName(FbleArena* arena, FbleName name)
+{
+  FbleName copy = {
+    .name = FbleCopyString(name.name),
+    .space = name.space,
+    .loc = FbleCopyLoc(name.loc)
+  };
+  return copy;
 }
 
 // FbleFreeName -- see documentation in fble-name.h
 void FbleFreeName(FbleArena* arena, FbleName name)
 {
+  FbleFreeString(arena, name.name);
   FbleFreeLoc(arena, name.loc);
-  FbleFree(arena, (char*)name.name);
 }
 
 // FblePrintName -- see documentation in syntax.h
-void FblePrintName(FILE* stream, FbleName* name)
+void FblePrintName(FILE* stream, FbleName name)
 {
-  fprintf(stream, name->name);
-  switch (name->space) {
+  fprintf(stream, "%s", name.name->str);
+  switch (name.space) {
     case FBLE_NORMAL_NAME_SPACE:
       // Nothing to add here
       break;

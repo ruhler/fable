@@ -38,11 +38,8 @@ static void Fail(const char* file, int line, const char* msg)
 //   FbleFreeProfile.
 static FbleName Name(FbleArena* arena, const char* name)
 {
-  char* copy = FbleArrayAlloc(arena, char, strlen(name));
-  strcpy(copy, name);
-
   FbleName nm = {
-    .name = copy,
+    .name = FbleNewString(arena, name),
     .loc = { .source = FbleNewString(arena, __FILE__), .line = rand(), .col = rand() }
   };
   return nm;

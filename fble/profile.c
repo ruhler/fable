@@ -397,7 +397,7 @@ static void SortCallData(Order order, FbleCallData** data, size_t size)
 //   Prints a human readable description of the block to the given file.
 static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 {
-  fprintf(fout, "%s[%04x]", profile->blocks.xs[id]->name.name, id);
+  fprintf(fout, "%s[%04x]", profile->blocks.xs[id]->name.name->str, id);
 }
 
 // PrintCallData --

@@ -36,14 +36,13 @@ typedef struct {
 FbleString* FbleNewString(FbleArena* arena, const char* str);
 
 // FbleCopyString -- 
-//   Make a copy of the given string.
+//   Make a (possibly shared) copy of the given string.
 //
 // Inputs:
 //   string - the string to copy.
 // 
 // Results:
-//   The new copy of the string, which may be the same pointer as the given
-//   string.
+//   The new (possibly shared) copy of the string.
 //
 // Side effects:
 //   The user should arrange for FbleFreeString to be called on this string
@@ -64,6 +63,8 @@ void FbleFreeString(FbleArena* arena, FbleString* string);
 // FbleLoc --
 //   Represents a location in a source file.
 //
+// Pass by value. Explicit copy and free required.
+//
 // Fields:
 //   source - The name of the source file or other description of the source
 //            of the program text. Owned by this FbleLoc.
@@ -76,17 +77,17 @@ typedef struct {
 } FbleLoc;
 
 // FbleCopyLoc --
-//   Make a copy of a location. In particular, increments the reference count
-//   on the source filename.
+//   Make a (possibly shared) copy of a location.
 //
 // Inputs:
 //   loc - the loc to copy.
 //
 // Result:
-//   A copy of the loc.
+//   A (possibly shared) copy of the loc.
 //
 // Side effects:
-//   Increments the reference count on the filename used in the loc.
+//   The user should call FbleFreeLoc on the returned loc when it is no longer
+//   needed.
 FbleLoc FbleCopyLoc(FbleLoc loc);
 
 // FbleFreeLoc --
@@ -97,7 +98,7 @@ FbleLoc FbleCopyLoc(FbleLoc loc);
 //   loc - the location to free resources of.
 //
 // Side effects
-//   Decrements the refcount on the loc's source filename.
+//   Frees resources associated with the given loc.
 void FbleFreeLoc(FbleArena* arena, FbleLoc loc);
 
 // FbleNamespace --
@@ -112,12 +113,29 @@ typedef enum {
 //   A name along with its associated location in a source file. The location
 //   is typically used for error reporting purposes.
 //
-// name and loc are owned by this FbleName.
+// Pass by value. Explicit copy and free required.
+//
+// The name and loc fields are owned by this FbleName.
 typedef struct {
-  const char* name;
+  FbleString* name;
   FbleNameSpace space;
   FbleLoc loc;
 } FbleName;
+
+// FbleCopyName --
+//   Make a (possibly shared) copy of the name.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   name - the name to copy.
+//
+// Results:
+//   A (possibly shared) copy of the name.
+//
+// Side effects:
+//   The user should call FbleFreeName on the returned name when it is no
+//   longer needed.
+FbleName FbleCopyName(FbleArena* arena, FbleName name);
 
 // FbleFreeName --
 //   Free resources associated with a name.

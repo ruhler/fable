@@ -51,6 +51,7 @@
 }
 
 %{
+  static FbleString* ToString(FbleArena* arena, const char* str);
   static bool IsSpaceChar(int c);
   static bool IsPunctuationChar(int c);
   static bool IsNormalChar(int c);
@@ -178,12 +179,12 @@ start: stmt { *result = $1; } ;
 
 name:
    WORD {
-     $$.name = $1;
+     $$.name = ToString(arena, $1);
      $$.space = FBLE_NORMAL_NAME_SPACE;
      $$.loc = FbleCopyLoc(@$);
    }
  | WORD '@' {
-     $$.name = $1;
+     $$.name = ToString(arena, $1);
      $$.space = FBLE_TYPE_NAME_SPACE;
      $$.loc = FbleCopyLoc(@$);
    }
@@ -193,14 +194,14 @@ path:
    WORD {
      FbleVectorInit(arena, $$);
      FbleName* name = FbleVectorExtend(arena, $$);
-     name->name = $1;
+     name->name = ToString(arena, $1);
      name->space = FBLE_NORMAL_NAME_SPACE;  // arbitrary choice
      name->loc = FbleCopyLoc(@$);
    }
  | path '/' WORD {
      $$ = $1;
      FbleName* name = FbleVectorExtend(arena, $$);
-     name->name = $3;
+     name->name = ToString(arena, $3);
      name->space = FBLE_NORMAL_NAME_SPACE;  // arbitrary choice
      name->loc = FbleCopyLoc(@$);
    };
@@ -546,19 +547,12 @@ tagged_type_s:
 
 implicit_tagged_expr:
     name {
-      // Make a copy of the name to ensure we aren't sharing the same
-      // underlying pointer between the name and the variable, which would
-      // lead to double free.
-      char* copy = FbleArrayAlloc(arena, char, strlen($1.name) + 1);
-      strcpy(copy, $1.name);
-      $$.name.name = copy;
-      $$.name.space = $1.space;
-      $$.name.loc = FbleCopyLoc($1.loc);
+      $$.name = $1;
 
       FbleVarExpr* var_expr = FbleAlloc(arena, FbleVarExpr);
       var_expr->_base.tag = FBLE_VAR_EXPR;
       var_expr->_base.loc = FbleCopyLoc(@$);
-      var_expr->var = $1;
+      var_expr->var = FbleCopyName(arena, $1);
       $$.expr = &var_expr->_base;
     }
   | name ':' expr {
@@ -656,6 +650,25 @@ let_binding_p:
   ;
 
 %%
+// ToString --
+//   Convert a dynamically allocated char* to FbleString*.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   str - the string to convert
+// 
+// Results:
+//   An FbleString version of str.
+//
+// Side effects:
+//   Frees 'str'. Allocates a new FbleString that should be freed using
+//   FbleFreeString.
+static FbleString* ToString(FbleArena* arena, const char* str)
+{
+  FbleString* string = FbleNewString(arena, str);
+  FbleFree(arena, (char*)str);
+  return string;
+}
 
 // IsSpaceChar --
 //   Tests whether a character is whitespace.

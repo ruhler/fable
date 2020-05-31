@@ -1,5 +1,6 @@
 
-* Pass around FbleName* instead of FbleName?
+* Move FblePrintName and FbleNamesEqual to fble-name.h?
+* Change ReportError to take %n as a value instead of a pointer?
 
 * Distinguish between FbleExpr and a new FbleTc IR.
 
