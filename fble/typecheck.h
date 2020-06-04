@@ -43,6 +43,7 @@ typedef enum {
 //   casting to that specific type of tc.
 typedef struct {
   FbleTcTag tag;
+  FbleLoc loc;
 } FbleTc;
 
 // FbleTcV --
@@ -120,7 +121,6 @@ typedef struct {
   FbleTc _base;
   FbleTc* obj;
   size_t tag;
-  FbleLoc loc;
 } FbleStructAccessTc;
 
 // FbleUnionValueTc --
@@ -137,7 +137,6 @@ typedef struct {
   FbleTc _base;
   FbleTc* condition;
   FbleTcV choices;
-  FbleLoc loc;
 } FbleUnionSelectTc;
 
 // FbleFuncValueTc --
@@ -155,7 +154,6 @@ typedef struct {
   FbleTc _base;
   FbleTc* func;
   FbleTcV args;
-  FbleLoc loc;
 } FbleFuncApplyTc;
 
 // FbleEvalTc --
@@ -200,8 +198,7 @@ typedef struct {
 // FbleProfileTc is used to denote a profiling block.
 //
 // Fields:
-//   name - the name of the block for profiling purposes. The location of the
-//          name specifies the location of the block.
+//   name - the name of the block for profiling purposes.
 //   body - the body of the profile block.
 typedef struct {
   FbleTc _base;

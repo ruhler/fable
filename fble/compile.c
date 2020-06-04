@@ -638,7 +638,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       access->_base.profile_ops = NULL;
       access->obj = obj->index;
       access->tag = access_tc->tag;
-      access->loc = FbleCopyLoc(access_tc->loc);
+      access->loc = FbleCopyLoc(tc->loc);
       AppendInstr(arena, scope, &access->_base);
 
       Local* local = NewLocal(arena, scope);
@@ -676,7 +676,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleUnionSelectInstr* select_instr = FbleAlloc(arena, FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       select_instr->_base.profile_ops = NULL;
-      select_instr->loc = FbleCopyLoc(select_tc->loc);
+      select_instr->loc = FbleCopyLoc(tc->loc);
       select_instr->condition = condition->index;
       FbleVectorInit(arena, select_instr->jumps);
       AppendInstr(arena, scope, &select_instr->_base);
@@ -743,7 +743,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       Scope func_scope;
       InitScope(arena, &func_scope, &instr->code, &instr->scope, scope);
-      EnterBodyBlock(arena, blocks, func_value_expr->body->loc, &func_scope);
+      EnterBodyBlock(arena, blocks, func_tc->body->loc, &func_scope);
 
       for (size_t i = 0; i < argc; ++i) {
         Local* local = NewLocal(arena, &func_scope);
@@ -781,7 +781,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleCallInstr* call_instr = FbleAlloc(arena, FbleCallInstr);
       call_instr->_base.tag = FBLE_CALL_INSTR;
       call_instr->_base.profile_ops = NULL;
-      call_instr->loc = FbleCopyLoc(apply_tc->loc);
+      call_instr->loc = FbleCopyLoc(tc->loc);
       call_instr->exit = exit;
       call_instr->func = func->index;
       FbleVectorInit(arena, call_instr->args);
@@ -806,7 +806,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       Scope body_scope;
       InitScope(arena, &body_scope, &instr->code, &instr->scope, scope);
-      EnterBodyBlock(arena, blocks, expr->loc, &body_scope);
+      EnterBodyBlock(arena, blocks, tc->loc, &body_scope);
 
       CompileExec(arena, blocks, true, &body_scope, expr);
       ExitBlock(arena, blocks, &body_scope, true);
@@ -847,7 +847,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
-      EnterBlock(arena, blocks, profile_tc->name, profile_tc->name.loc, scope);
+      EnterBlock(arena, blocks, profile_tc->name, tc->loc, scope);
       Local* result = CompileExpr(arena, blocks, exit, scope, profile_tc->body);
       ExitBlock(arena, blocks, scope, exit);
       return result;
@@ -908,7 +908,7 @@ static Local* CompileExec(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleCallInstr* instr = FbleAlloc(arena, FbleCallInstr);
       instr->_base.tag = FBLE_CALL_INSTR;
       instr->_base.profile_ops = NULL;
-      instr->loc = FbleCopyLoc(expr->loc);
+      instr->loc = FbleCopyLoc(tc->loc);
       instr->exit = exit;
       instr->dest = local->index.index;
       instr->func = proc->index;
