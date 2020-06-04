@@ -172,23 +172,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           break;
         }
 
-        case FBLE_PROC_VALUE_INSTR: {
-          FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-          fprintf(fout, "l%zi = proc %p [",
-              proc_value_instr->dest,
-              (void*)proc_value_instr->code);
-          const char* comma = "";
-          for (size_t j = 0; j < proc_value_instr->scope.size; ++j) {
-            fprintf(fout, "%s%s%zi",
-                comma, sections[proc_value_instr->scope.xs[j].section],
-                proc_value_instr->scope.xs[j].index);
-            comma = ", ";
-          }
-          fprintf(fout, "];\n");
-          FbleVectorAppend(arena, blocks, proc_value_instr->code);
-          break;
-        }
-
         case FBLE_COPY_INSTR: {
           FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
           fprintf(fout, "l%zi = %s%zi;\n",
@@ -345,14 +328,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleFree(arena, fork_instr->args.xs);
       FbleFree(arena, fork_instr->dests.xs);
       FbleFree(arena, instr);
-      return;
-    }
-
-    case FBLE_PROC_VALUE_INSTR: {
-      FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-      FbleFreeInstrBlock(arena, proc_value_instr->code);
-      FbleFree(arena, proc_value_instr->scope.xs);
-      FbleFree(arena, proc_value_instr);
       return;
     }
   }

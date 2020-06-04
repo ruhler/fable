@@ -71,7 +71,6 @@ typedef enum {
   FBLE_FUNC_VALUE_INSTR,
   FBLE_RELEASE_INSTR,
   FBLE_CALL_INSTR,
-  FBLE_PROC_VALUE_INSTR,
   FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
   FBLE_LINK_INSTR,
@@ -203,6 +202,10 @@ typedef struct {
 //          in the context of its scope and arguments. The instruction should
 //          remove the context of its scope and arguments.
 //   scope - Variables from the scope to capture for the function.
+//
+// Note: FuncValues are used for both pure functions and processes at runtime,
+// so FBLE_FUNC_VALUE_INSTR is used for allocating process values as well as
+// function values.
 typedef struct {
   FbleInstr _base;
   size_t argc;
@@ -210,6 +213,11 @@ typedef struct {
   FbleInstrBlock* code;
   FbleFrameIndexV scope;
 } FbleFuncValueInstr;
+
+// FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR
+//   A proc value is represented as a function that takes no arguments.
+#define FBLE_PROC_VALUE_INSTR FBLE_FUNC_VALUE_INSTR
+typedef FbleFuncValueInstr FbleProcValueInstr;
 
 // FbleReleaseInstr -- FBLE_RELEASE_INSTR
 //   Release and remove a value from the locals section of the stack frame.
@@ -236,25 +244,6 @@ typedef struct {
   FbleFrameIndex func;
   FbleFrameIndexV args;
 } FbleCallInstr;
-
-// FbleProcValueInstr -- FBLE_PROC_VALUE_INSTR
-//   Allocate an FbleProcValue.
-//
-// dest = proc code [v1, v2, ...]
-//
-// Fields:
-//   code - A block of instructions that will execute in the context of the
-//          captured scope. The instruction should remove the context of its
-//          scope.
-//   scope - Variables from the scope to capture for the function.
-//   dest - Where to put allocated proc value.
-//
-typedef struct {
-  FbleInstr _base;
-  FbleInstrBlock* code;
-  FbleFrameIndexV scope;
-  FbleLocalIndex dest;
-} FbleProcValueInstr;
 
 // FbleGetInstr -- FBLE_GET_INSTR
 //   Get a value from a port.

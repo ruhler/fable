@@ -484,24 +484,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         break;
       }
 
-      case FBLE_PROC_VALUE_INSTR: {
-        FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-        size_t scopec = proc_value_instr->code->statics;
-
-        FbleProcValue* value = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*) * scopec);
-        value->_base.tag = FBLE_PROC_VALUE;
-        value->argc = 0;
-        value->code = proc_value_instr->code;
-        value->code->refcount++;
-        for (size_t i = 0; i < scopec; ++i) {
-          FbleValue* arg = FrameGet(statics, locals, proc_value_instr->scope.xs[i]);
-          value->scope[i] = arg;
-          FbleValueAddRef(heap, &value->_base, arg);
-        }
-        locals[proc_value_instr->dest] = &value->_base;
-        break;
-      }
-
       case FBLE_COPY_INSTR: {
         FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
         FbleValue* value = FrameGet(statics, locals, copy_instr->source);
@@ -797,12 +779,6 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
         } else {
           locals[call_instr->dest] = NULL;
         }
-        break;
-      }
-
-      case FBLE_PROC_VALUE_INSTR: {
-        FbleProcValueInstr* proc_value_instr = (FbleProcValueInstr*)instr;
-        locals[proc_value_instr->dest] = NULL;
         break;
       }
 

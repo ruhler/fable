@@ -910,6 +910,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleProcValueInstr* instr = FbleAlloc(arena, FbleProcValueInstr);
       instr->_base.tag = FBLE_PROC_VALUE_INSTR;
       instr->_base.profile_ops = NULL;
+      instr->argc = 0;
 
       Scope body_scope;
       InitScope(arena, &body_scope, &instr->code, &instr->scope, scope);

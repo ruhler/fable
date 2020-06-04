@@ -54,6 +54,10 @@ typedef struct {
 //   scope - The scope at the time the function was created, representing the
 //           lexical context available to the function. The length of this
 //           array is code->statics.
+//
+// Note: Function values are used for both pure functions and processes. We
+// don't distinguish between the two at runtime, except that argc == 0
+// suggests this is for a process instead of a function.
 typedef struct {
   FbleValue _base;
   size_t argc;

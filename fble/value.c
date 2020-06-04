@@ -312,6 +312,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 
   static FbleProcValueInstr iproc = {
     ._base = { .tag = FBLE_PROC_VALUE_INSTR, .profile_ops = NULL },
+    .argc = 0,
     .code = &proc_code,
     .scope = { .size = 2, .xs = proc_scope },
     .dest = 1,
