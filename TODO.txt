@@ -1,7 +1,5 @@
 
-* Figure out how to compile FUNC_VALUE_TC.
- - Maybe associate a loc with every TC?
-* Figure out how to capture scope for EVAL, LINK, and EXEC TC in compile.
+* Rewrite typecheck.c to produce FbleTc.
 
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
 * Change ReportError to take %n as a value instead of a pointer?

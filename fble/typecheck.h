@@ -26,7 +26,6 @@ typedef enum {
   FBLE_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
 
-  FBLE_EVAL_TC,
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
 
@@ -83,7 +82,7 @@ typedef struct {
 //   A vector of FbleVarIndex.
 typedef struct {
   size_t size;
-  FbleVarIndex* xs
+  FbleVarIndex* xs;
 } FbleVarIndexV;
 
 // FbleVarTc --
@@ -141,6 +140,8 @@ typedef struct {
 
 // FbleFuncValueTc --
 //   FBLE_FUNC_VALUE_TC
+//
+// Note: FuncValueTc is used for process values as well as function values.
 typedef struct {
   FbleTc _base;
   FbleVarIndexV scope;
@@ -156,15 +157,11 @@ typedef struct {
   FbleTcV args;
 } FbleFuncApplyTc;
 
-// FbleEvalTc --
-//   FBLE_EVAL_TC
-typedef struct {
-  FbleTc _base;
-  FbleTc* body;
-} FbleEvalTc;
-
 // FbleLinkTc --
 //   FBLE_LINK_TC
+//
+// Unlike FBLE_LINK_EXPR, which evaluates to a proc value, FBLE_LINK_TC
+// evaluates to the result of the computing the proc value.
 typedef struct {
   FbleTc _base;
   FbleTc* body;
@@ -172,6 +169,9 @@ typedef struct {
 
 // FbleExecTc --
 //   FBLE_EXEC_TC
+//
+// Unlike FBLE_EXEC_EXPR, which evaluates to a proc value, FBLE_EXEC_TC
+// evaluates to the result of the computing the proc value.
 typedef struct {
   FbleTc _base;
   FbleTcV bindings;
