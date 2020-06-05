@@ -1833,3 +1833,128 @@ bool FbleTypeCheck(FbleArena* arena, FbleProgram* program)
   FbleFreeTypeHeap(heap);
   return ok;
 }
+
+// FbleFreeTc -- see documentation in typecheck.h
+void FbleFreeTc(FbleArena* arena, FbleTc* tc)
+{
+  FbleFreeLoc(arena, tc->loc);
+  switch (tc->tag) {
+    case FBLE_TYPE_TC: {
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_VAR_TC: {
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_LET_TC: {
+      FbleLetTc* let_tc = (FbleLetTc*)tc;
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        FbleFreeTc(arena, let_tc->bindings.xs[i]);
+      }
+      FbleFree(arena, let_tc->bindings.xs);
+      FbleFreeTc(arena, let_tc->body);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_STRUCT_VALUE_TC: {
+      FbleStructValueTc* struct_tc = (FbleStructValueTc*)tc;
+      for (size_t i = 0; i < struct_tc->args.size; ++i) {
+        FbleFreeTc(arena, struct_tc->args.xs[i]);
+      }
+      FbleFree(arena, struct_tc->args.xs);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_STRUCT_ACCESS_TC:
+    case FBLE_UNION_ACCESS_TC: {
+      FbleAccessTc access_tc = (FbleAccessTc*)tc;
+      FbleFreeTc(arena, access_tc->obj);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_UNION_VALUE_TC: {
+      FbleUnionValueTc* union_tc = (FbleUnionValueTc*)tc;
+      FbleFreeTc(arena, union_tc->arg);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_UNION_SELECT_TC: {
+      FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)tc;
+      FbleFreeTc(arena, select_tc->condition);
+      for (size_t i = 0; i < select_tc->choices.size; ++i) {
+        FbleFreeTc(arena, select_tc->choices.xs[i]);
+      }
+      FbleFree(arena, select_tc->choices.xs);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_FUNC_VALUE_TC: {
+      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)tc;
+      FbleFree(arena, func_tc->scope.xs);
+      FbleFreeTc(arena, func_tc->body);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_FUNC_APPLY_TC: {
+      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)tc;
+      FbleFreeTc(arena, apply_tc->func);
+      for (size_t i = 0; i < apply_tc->args.size; ++i) {
+        FbleFreeTc(arena, apply_tc->func.xs[i]);
+      }
+      FbleFree(arena, apply_tc->func.xs);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_LINK_TC: {
+      FbleLinkTc* link_tc = (FbleLinkTc*)tc;
+      FbleFreeTc(arena, link_tc->body);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_EXEC_TC: {
+      FbleExecTc* exec_tc = (FbleExecTc*)tc;
+      for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
+        FbleFreeTc(arena, exec_tc->bindings.xs[i]);
+      }
+      FbleFree(arena, exec_tc->bindings.xs);
+      FbleFreeTc(arena, exec_tc->body);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_POLY_VALUE_TC: {
+      FblePolyValueTc* poly_tc = (FblePolyValueTc*)tc;
+      FbleFreeTc(arena, poly_tc->body);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_POLY_APPLY_TC: {
+      FblePolyApplyTc* apply_tc = (FblePolyApplyTc*)tc;
+      FbleFreeTc(arena, apply_tc->poly);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_PROFILE_TC: {
+      FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
+      FbleFreeName(profile_tc->name);
+      FbleFreeTc(arena, profile_tc->body);
+      FbleFree(arena, tc);
+      return;
+    }
+  }
+
+  UNREACHABLE("should never get here");
+}

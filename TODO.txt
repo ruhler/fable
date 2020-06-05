@@ -6,6 +6,7 @@
 * Unify FbleVarIndex and FbleFrameIndex types?
 * Remove unused extra data in FbleExpr syntax after we split post-typechecked
   information out.
+* Should we remove FBLE_POLY_APPLY_TC? If not, should we restore FBLE_EVAL_TC?
 
 * Distinguish between FbleExpr and a new FbleTc IR.
 
