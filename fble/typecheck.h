@@ -200,6 +200,9 @@ typedef struct {
 // Fields:
 //   name - the name of the block for profiling purposes.
 //   body - the body of the profile block.
+//
+// The location of the profiling block is based through _base.loc, not
+// name.loc.
 typedef struct {
   FbleTc _base;
   FbleName name;

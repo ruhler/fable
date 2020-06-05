@@ -50,7 +50,7 @@ typedef struct {
 typedef struct Scope {
   VarV statics;
   VarV vars;
-  bool capture;
+  bool capture; // TODO: Turn into a vector of FbleVarIndex.
   struct Scope* parent;
 } Scope;
 
@@ -64,9 +64,23 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
 static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type);
 
-static FbleTc* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
-static FbleTc* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, FbleExprV args);
-static FbleTc* TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
+// Tc --
+//   A pair of returned type and type checked expression.
+typedef struct {
+  FbleType* type;
+  FbleTc* tc;
+} Tc;
+
+// TC_FAILED --
+//   Tc returned to indicate that type check has failed.
+static Tc TC_FAILED = { .type = NULL, .tc = NULL };
+
+static void FreeTc(FbleTypeHeap* heap, Tc tc);
+static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc);
+
+static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
+static Tc TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, FbleExprV args);
+static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm);
@@ -338,6 +352,50 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
   return match;
 }
 
+// FreeTc --
+//   Conveninence function to free the type and tc fields of a Tc.
+//
+// Inputs:
+//   heap - heap to use for allocations
+//   tc - tc to free the fields of
+//
+// Side effects:
+//   Frees resources associated with the type and tc fields of tc.
+static void FreeTc(FbleTypeHeap* heap, Tc tc)
+{
+  FbleReleaseType(heap, tc.type);
+  FbleFreeTc(heap->arena, tc.tc);
+}
+
+// ProfileBlock --
+//   Wrap the given tc in a profile block.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   label - the label of the profiling block.
+//   tc - the tc to wrap in a profile block. May be TC_FAILED.
+//
+// Results:
+//   The given tc wrapped in a profile block.
+//
+// Side effects:
+//   Forwards ownership of the type and tc in 'tc' to the returned tc.
+static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc)
+{
+  if (tc.type == NULL) {
+    assert(tc.tc == NULL);
+    return TC_FAILED;
+  }
+
+  FbleProfileTc* profile_tc = FbleAlloc(arena, FbleProfileTc);
+  profile_tc->_base.tag = FBLE_PROFILE_TC;
+  profile_tc->_base.loc = FbleCopyLoc(tc.tc->loc);
+  profile_tc->name = FbleCopyName(arena, label);
+  profile_tc->body = tc.tc;
+  tc.tc = &profile_tc->_base;
+  return tc;
+}
+
 // TypeCheckExpr --
 //   Type check the given expression.
 //
@@ -347,13 +405,15 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
 //   expr - the expression to type check.
 //
 // Results:
-//   The type checked expression, or NULL if the expression is not well typed.
+//   The type checked expression, or TC_FAILED if the expression is not well
+//   typed.
 //
 // Side effects:
 // * Prints a message to stderr if the expression fails to compile.
-// * The caller should call FbleFreeTc when the returned result is no longer
+// * The caller should call FbleFreeTc when the returned FbleTc is no longer
+//   needed and FbleReleaseType when the returned FbleType is no longer
 //   needed.
-static FbleTc* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
+static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = heap->arena;
   switch (expr->tag) {
@@ -364,7 +424,7 @@ static FbleTc* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_TYPEOF_EXPR: {
       FbleType* type = TypeCheckType(heap, scope, expr);
       if (type == NULL) {
-        return NULL;
+        return TC_FAILED;
       }
 
       FbleTypeType* type_type = FbleNewType(heap, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
@@ -373,147 +433,169 @@ static FbleTc* TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleReleaseType(heap, type);
 
       FbleTypeTc* type_tc = FbleAlloc(arena, FbleTypeTc);
-      type_tc->_base.type = &type_type->_base;
-      return type_tc;
+      type_tc->_base.tag = FBLE_TYPE_TC;
+      type_tc->_base.loc = FbleCopyLoc(expr->loc);
+
+      Tc tc = { .type = &type_type->_base, .tc = &type_tc->_base };
+      return tc;
     }
 
-    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
-    case FBLE_FUNC_APPLY_EXPR:
+    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR: {
+      UNREACHABLE("TODO: remove this enum option. Use FBLE_MISC_APPLY_EXPR instead");
+      return TC_FAILED;
+    }
+
+    case FBLE_FUNC_APPLY_EXPR: {
+      UNREACHABLE("TODO: remove this enum option. Use FBLE_MISC_APPLY_EXPR instead");
+      return TC_FAILED;
+    }
+
     case FBLE_MISC_APPLY_EXPR: {
       FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
-      FbleType* misc = TypeCheckExpr(heap, scope, apply_expr->misc);
-      bool error = (misc == NULL);
+      Tc misc = TypeCheckExpr(heap, scope, apply_expr->misc);
+      bool error = (misc.type == NULL);
 
       size_t argc = apply_expr->args.size;
-      FbleType* args[argc];
+      Tc args[argc];
       for (size_t i = 0; i < argc; ++i) {
         args[i] = TypeCheckExpr(heap, scope, apply_expr->args.xs[i]);
-        error = error || (args[i] == NULL);
+        error = error || (args[i].type == NULL);
       }
 
       if (error) {
-        FbleReleaseType(heap, misc);
+        FreeTc(heap, misc);
         for (size_t i = 0; i < argc; ++i) {
-          FbleReleaseType(heap, args[i]);
+          FreeTc(heap, args[i]);
         }
-        return NULL;
+        return TC_FAILED;
       }
 
-      FbleType* normal = FbleNormalType(heap, misc);
-      switch (normal->tag) {
-        case FBLE_FUNC_TYPE: {
-          // FUNC_APPLY
-          assert(expr->tag != FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR && "TODO");
-          expr->tag = FBLE_FUNC_APPLY_EXPR;
-          FbleFuncType* func_type = (FbleFuncType*)normal;
-          if (func_type->args.size != argc) {
-            ReportError(arena, &expr->loc,
-                "expected %i args, but found %i\n",
-                func_type->args.size, argc);
-            FbleReleaseType(heap, normal);
-            FbleReleaseType(heap, misc);
-            for (size_t i = 0; i < argc; ++i) {
-              FbleReleaseType(heap, args[i]);
-            }
-            return NULL;
-          }
-
-          for (size_t i = 0; i < argc; ++i) {
-            if (!FbleTypesEqual(heap, func_type->args.xs[i], args[i])) {
-              ReportError(arena, &apply_expr->args.xs[i]->loc,
-                  "expected type %t, but found %t\n",
-                  func_type->args.xs[i], args[i]);
-              FbleReleaseType(heap, normal);
-              FbleReleaseType(heap, misc);
-              for (size_t j = i; j < argc; ++j) {
-                FbleReleaseType(heap, args[j]);
-              }
-              return NULL;
-            }
-            FbleReleaseType(heap, args[i]);
-          }
-
-          FbleType* rtype = FbleRetainType(heap, func_type->rtype);
-          FbleReleaseType(heap, normal);
-          FbleReleaseType(heap, misc);
-          return rtype;
-        }
-
-        case FBLE_TYPE_TYPE: {
-          // FBLE_STRUCT_VALUE_EXPR
-          assert(expr->tag != FBLE_FUNC_APPLY_EXPR && "TODO");
-          expr->tag = FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR;
-          FbleTypeType* type_type = (FbleTypeType*)normal;
-          FbleType* vtype = FbleRetainType(heap, type_type->type);
-          FbleReleaseType(heap, normal);
-
-          FbleReleaseType(heap, misc);
-
-          FbleStructType* struct_type = (FbleStructType*)FbleNormalType(heap, vtype);
-          if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
-            ReportError(arena, &apply_expr->misc->loc,
-                "expected a struct type, but found %t\n",
-                vtype);
-            FbleReleaseType(heap, &struct_type->_base);
-            FbleReleaseType(heap, vtype);
-            for (size_t i = 0; i < argc; ++i) {
-              FbleReleaseType(heap, args[i]);
-            }
-            return NULL;
-          }
-
-          if (struct_type->fields.size != argc) {
-            // TODO: Where should the error message go?
-            ReportError(arena, &expr->loc,
-                "expected %i args, but %i provided\n",
-                 struct_type->fields.size, argc);
-            FbleReleaseType(heap, &struct_type->_base);
-            FbleReleaseType(heap, vtype);
-            for (size_t i = 0; i < argc; ++i) {
-              FbleReleaseType(heap, args[i]);
-            }
-            return NULL;
-          }
-
-          bool error = false;
-          for (size_t i = 0; i < argc; ++i) {
-            FbleTaggedType* field = struct_type->fields.xs + i;
-
-            if (!FbleTypesEqual(heap, field->type, args[i])) {
-              ReportError(arena, &apply_expr->args.xs[i]->loc,
-                  "expected type %t, but found %t\n",
-                  field->type, args[i]);
-              error = true;
-            }
-            FbleReleaseType(heap, args[i]);
-          }
-
-          FbleReleaseType(heap, &struct_type->_base);
-
-          if (error) {
-            FbleReleaseType(heap, vtype);
-            return NULL;
-          }
-
-          return vtype;
-        }
-
-        default: {
+      FbleType* normal = FbleNormalType(heap, misc.type);
+      if (normal->tag == FBLE_FUNC_TYPE) {
+        // FUNC_APPLY
+        FbleFuncType* func_type = (FbleFuncType*)normal;
+        if (func_type->args.size != argc) {
           ReportError(arena, &expr->loc,
-              "expecting a function or struct type, but found something of type %t\n",
-              misc);
-          FbleReleaseType(heap, misc);
+              "expected %i args, but found %i\n",
+              func_type->args.size, argc);
           FbleReleaseType(heap, normal);
+          FreeTc(heap, misc);
           for (size_t i = 0; i < argc; ++i) {
-            FbleReleaseType(heap, args[i]);
+            FreeTc(heap, args[i]);
           }
-          return NULL;
+          return TC_FAILED;
         }
+
+        for (size_t i = 0; i < argc; ++i) {
+          if (!FbleTypesEqual(heap, func_type->args.xs[i], args[i].type)) {
+            ReportError(arena, &apply_expr->args.xs[i]->loc,
+                "expected type %t, but found %t\n",
+                func_type->args.xs[i], args[i].type);
+            FbleReleaseType(heap, normal);
+            FreeTc(heap, misc);
+            for (size_t j = i; j < argc; ++j) {
+              FreeTc(heap, args[j]);
+            }
+            return TC_FAILED;
+          }
+          FbleReleaseType(heap, args[i].type);
+        }
+
+        FbleType* rtype = FbleRetainType(heap, func_type->rtype);
+        FbleReleaseType(heap, normal);
+        FbleReleaseType(heap, misc.type);
+
+        FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
+        apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
+        apply_tc->_base.loc = FbleCopyLoc(expr->loc);
+        apply_tc->func = misc.tc;
+        FbleVectorInit(arena, apply_tc->args);
+        for (size_t i = 0; i < argc; ++i) {
+          FbleVectorAppend(arena, apply_tc->args, args[i].tc);
+        }
+
+        Tc tc = { .type = rtype, .tc = &apply_tc->_base };
+        return tc;
       }
 
-      UNREACHABLE("Should never get here");
-      return NULL;
+      if (normal->tag == FBLE_TYPE_TYPE) {
+        // FBLE_STRUCT_VALUE_EXPR
+        FbleTypeType* type_type = (FbleTypeType*)normal;
+        FbleType* vtype = FbleRetainType(heap, type_type->type);
+        FbleReleaseType(heap, normal);
+        FreeTc(heap, misc);
+
+        FbleStructType* struct_type = (FbleStructType*)FbleNormalType(heap, vtype);
+        if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
+          ReportError(arena, &apply_expr->misc->loc,
+              "expected a struct type, but found %t\n",
+              vtype);
+          FbleReleaseType(heap, &struct_type->_base);
+          FbleReleaseType(heap, vtype);
+          for (size_t i = 0; i < argc; ++i) {
+            FreeTc(heap, args[i]);
+          }
+          return TC_FAILED;
+        }
+
+        if (struct_type->fields.size != argc) {
+          // TODO: Where should the error message go?
+          ReportError(arena, &expr->loc,
+              "expected %i args, but %i provided\n",
+               struct_type->fields.size, argc);
+          FbleReleaseType(heap, &struct_type->_base);
+          FbleReleaseType(heap, vtype);
+          for (size_t i = 0; i < argc; ++i) {
+            FreeTc(heap, args[i]);
+          }
+          return TC_FAILED;
+        }
+
+        bool error = false;
+        for (size_t i = 0; i < argc; ++i) {
+          FbleTaggedType* field = struct_type->fields.xs + i;
+
+          if (!FbleTypesEqual(heap, field->type, args[i].type)) {
+            ReportError(arena, &apply_expr->args.xs[i]->loc,
+                "expected type %t, but found %t\n",
+                field->type, args[i]);
+            error = true;
+          }
+        }
+
+        FbleReleaseType(heap, &struct_type->_base);
+
+        if (error) {
+          FbleReleaseType(heap, vtype);
+          for (size_t i = 0; i < argc; ++i) {
+            FreeTc(heap, args[i]);
+          }
+          return TC_FAILED;
+        }
+
+        FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
+        struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
+        struct_tc->_base.loc = FbleCopyLoc(expr->loc);
+        FbleVectorInit(arena, struct_tc->args);
+        for (size_t i = 0; i < argc; ++i) {
+          FbleReleaseType(heap, args[i].type);
+          FbleVectorAppend(arena, struct_tc->args, args[i].tc);
+        }
+
+        Tc tc = { .type = vtype, .tc = &struct_tc->_base };
+        return tc;
+      }
+
+      ReportError(arena, &expr->loc,
+          "expecting a function or struct type, but found something of type %t\n",
+          misc.type);
+      FreeTc(heap, misc);
+      FbleReleaseType(heap, normal);
+      for (size_t i = 0; i < argc; ++i) {
+        FreeTc(heap, args[i]);
+      }
+      return TC_FAILED;
     }
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
