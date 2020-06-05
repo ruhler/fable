@@ -120,7 +120,7 @@ typedef struct {
   FbleTc _base;
   FbleTc* obj;
   size_t tag;
-} FbleStructAccessTc;
+} FbleAccessTc;
 
 // FbleUnionValueTc --
 //   FBLE_UNION_VALUE_TC
@@ -219,5 +219,16 @@ typedef struct {
 // Side effects:
 // * Prints messages to stderr in case of failure to type check.
 FbleTc* FbleTypeCheck(FbleArena* arena, FbleProgram* program);
+
+// FbleFreeTc --
+//   Free resources assocatied with an FbleTc.
+// 
+// Inputs:
+//   arena - arena to use for allocations
+//   tc - the type checked expression to free
+//
+// Side effects:
+//   Frees resources associated with the given expression.
+void FbleFreeTc(FbleArena* arena, FbleTc* tc);
 
 #endif // FBLE_INTERNAL_TYPECHECK_H_

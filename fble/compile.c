@@ -58,7 +58,7 @@ static void PushVar(FbleArena* arena, Scope* scope, Local* local);
 static void PopVar(FbleArena* arena, Scope* scope, bool exit);
 static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index);
 
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, FbleFrameIndexV* capture, Scope* parent);
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, size_t statics, Scope* parent);
 static void FreeScope(FbleArena* arena, Scope* scope, bool exit);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
@@ -169,7 +169,7 @@ static void LocalRelease(FbleArena* arena, Scope* scope, Local* local, bool exit
 //   Pushes a new variable onto the scope. Takes ownership of the given local,
 //   which will be released when the variable is freed by a call to PopVar or
 //   FreeScope.
-static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, Local* local)
+static void PushVar(FbleArena* arena, Scope* scope, Local* local)
 {
   FbleVectorAppend(arena, scope->vars, local);
 }
@@ -210,15 +210,15 @@ static void PopVar(FbleArena* arena, Scope* scope, bool exit)
 //   Behavior is undefined if there is no such variable at the given index.
 static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index)
 {
-  switch (index->source) {
+  switch (index.source) {
     case FBLE_LOCAL_VAR: {
-      assert(index->index < scope->vars.size && "invalid local var index");
-      return scope->vars.xs[index->index];
+      assert(index.index < scope->vars.size && "invalid local var index");
+      return scope->vars.xs[index.index];
     }
 
     case FBLE_STATIC_VAR: {
-      assert(index->index < scope->statics.size && "invalid static var index");
-      return scope->statics.xs[index->index];
+      assert(index.index < scope->statics.size && "invalid static var index");
+      return scope->statics.xs[index.index];
     }
   }
 
@@ -242,27 +242,29 @@ static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index)
 //   Initializes scope based on parent. FreeScope should be
 //   called to free the allocations for scope. The lifetimes of the code block
 //   and the parent scope must exceed the lifetime of this scope.
-//   Initializes capture and appends to it the variables that need to be
-//   captured from the parent scope.
 //   The caller is responsible for calling FbleFreeInstrBlock on *code when it
 //   is no longer needed.
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, FbleFrameIndexV* capture, Scope* parent)
+static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, size_t statics, Scope* parent)
 {
   FbleVectorInit(arena, scope->statics);
+  for (size_t i = 0; i < statics; ++i) {
+    Local* local = FbleAlloc(arena, Local);
+    local->index.section = FBLE_STATICS_FRAME_SECTION;
+    local->index.index = i;
+    local->refcount = 1;
+    FbleVectorAppend(arena, scope->statics, local);
+  }
+
   FbleVectorInit(arena, scope->vars);
   FbleVectorInit(arena, scope->locals);
-  FbleVectorInit(arena, *capture);
 
   scope->code = FbleAlloc(arena, FbleInstrBlock);
   scope->code->refcount = 1;
   scope->code->magic = FBLE_INSTR_BLOCK_MAGIC;
-  scope->code->statics = 0;
+  scope->code->statics = statics;
   scope->code->locals = 0;
   FbleVectorInit(arena, scope->code->instrs);
-  scope->code->statics = 0;
-  scope->code->locals = 0;
   scope->pending_profile_ops = NULL;
-  scope->capture = capture;
   scope->parent = parent;
 
   *code = scope->code;
@@ -284,7 +286,6 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, Fbl
 static void FreeScope(FbleArena* arena, Scope* scope, bool exit)
 {
   for (size_t i = 0; i < scope->statics.size; ++i) {
-    FbleFree(arena, scope->statics.xs[i]->local);
     FbleFree(arena, scope->statics.xs[i]);
   }
   FbleFree(arena, scope->statics.xs);
@@ -557,14 +558,14 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleLetTc* let_tc = (FbleLetTc*)tc;
 
       Local* vars[let_tc->bindings.size];
-      if (let_expr->recursive) {
+      if (let_tc->recursive) {
         for (size_t i = 0; i < let_tc->bindings.size; ++i) {
           vars[i] = NewLocal(arena, scope);
           PushVar(arena, scope, vars[i]);
           FbleRefValueInstr* ref_instr = FbleAlloc(arena, FbleRefValueInstr);
           ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
           ref_instr->_base.profile_ops = NULL;
-          ref_instr->dest = local->index.index;
+          ref_instr->dest = vars[i]->index.index;
           AppendInstr(arena, scope, &ref_instr->_base);
         }
       }
@@ -733,7 +734,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
     case FBLE_FUNC_VALUE_TC: {
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)tc;
-      size_t argc = func_tc->args.size;
+      size_t argc = func_tc->argc;
 
       FbleFuncValueInstr* instr = FbleAlloc(arena, FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
@@ -745,22 +746,22 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
         FbleFrameIndex index = {
           .section = func_tc->scope.xs[i].source == FBLE_STATIC_VAR
              ? FBLE_STATICS_FRAME_SECTION
-             : FBLE_LOCALS_FRAME_SECTION;
-          .index = func_tc->scope.xs[i].index;
+             : FBLE_LOCALS_FRAME_SECTION,
+          .index = func_tc->scope.xs[i].index,
         };
         FbleVectorAppend(arena, instr->scope, index);
       }
 
       Scope func_scope;
-      InitScope(arena, &func_scope, &instr->code, scope);
+      InitScope(arena, &func_scope, &instr->code, func_tc->scope.size, scope);
       EnterBodyBlock(arena, blocks, func_tc->body->loc, &func_scope);
 
       for (size_t i = 0; i < argc; ++i) {
         Local* local = NewLocal(arena, &func_scope);
-        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, local);
+        PushVar(arena, &func_scope, local);
       }
 
-      Local* func_result = CompileExpr(arena, blocks, true, &func_scope, func_value_expr->body);
+      Local* func_result = CompileExpr(arena, blocks, true, &func_scope, func_tc->body);
       ExitBlock(arena, blocks, &func_scope, true);
       LocalRelease(arena, &func_scope, func_result, true);
       FreeScope(arena, &func_scope, true);
@@ -773,7 +774,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     }
 
     case FBLE_FUNC_APPLY_TC: {
-      FbleApplyTc* apply_tc = (FbleApplyTc*)tc;
+      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)tc;
       Local* func = CompileExpr(arena, blocks, false, scope, apply_tc->func);
 
       size_t argc = apply_tc->args.size;
@@ -806,7 +807,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return dest;
     }
 
-    case FBLE_LINK_EXPR: {
+    case FBLE_LINK_TC: {
       FbleLinkTc* link_tc = (FbleLinkTc*)tc;
 
       FbleLinkInstr* link = FbleAlloc(arena, FbleLinkInstr);
@@ -932,12 +933,12 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
 
   FbleInstrBlock* code;
   Scope scope;
-  InitScope(arena, &scope, &code, NULL);
+  InitScope(arena, &scope, &code, 0, NULL);
 
   EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
   FbleTc* tc = FbleTypeCheck(arena, program);
   if (tc != NULL) {
-    CompileExpr(arena, &block_stack, &scope, tc);
+    CompileExpr(arena, &block_stack, true, &scope, tc);
     FbleFreeTc(arena, tc);
   }
   ExitBlock(arena, &block_stack, &scope, true);
