@@ -803,7 +803,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       Tc condition = TypeCheckExpr(heap, scope, select_expr->condition);
       if (condition.type == NULL) {
-        return NULL;
+        return TC_FAILED;
       }
 
       FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(heap, condition.type);
@@ -815,84 +815,92 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         FreeTc(heap, condition);
         return TC_FAILED;
       }
+      FbleReleaseType(heap, condition.type);
 
+      FbleUnionSelectTc* select_tc = FbleAlloc(arena, FbleUnionSelectTc);
+      select_tc->_base.tag = FBLE_UNION_SELECT_TC;
+      select_tc->_base.loc = FbleCopyLoc(expr->loc);
+      select_tc->condition = condition.tc;
+      FbleVectorInit(arena, select_tc->choices);
+      FbleVectorInit(arena, select_tc->branches);
+
+      bool error = false;
       FbleType* target = NULL;
-      if (select_expr->default_ != NULL) {
-        // TODO: Label with profile block ":"?
-        FbleType* result = TypeCheckExpr(heap, scope, select_expr->default_);
 
-        if (result == NULL) {
-          FbleReleaseType(heap, &union_type->_base);
-          return NULL;
-        }
-
-        target = result;
-      }
-
+      size_t branch = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
-        if (i < select_expr->choices.size && FbleNamesEqual(select_expr->choices.xs[i].name, union_type->fields.xs[i].name)) {
-          // TODO: Label with profile block.
-          FbleType* result = TypeCheckExpr(heap, scope, select_expr->choices.xs[i].expr);
+        if (branch < select_expr->choices.size && FbleNamesEqual(select_expr->choices.xs[branch].name, union_type->fields.xs[i].name)) {
+          FbleVectorAppend(arena, select_tc->choices, branch);
 
-          if (result == NULL) {
-            FbleReleaseType(heap, &union_type->_base);
-            FbleReleaseType(heap, target);
-            return NULL;
-          }
+          Tc result = TypeCheckExpr(heap, scope, select_expr->choices.xs[branch].expr);
+          result = ProfileBlock(arena, select_expr->choices.xs[branch].name, result);
+          error = error || (result.type == NULL);
+          FbleVectorAppend(arena, select_tc->branches, result.tc);
 
           if (target == NULL) {
-            target = result;
-          } else {
-            if (!FbleTypesEqual(heap, target, result)) {
-              ReportError(arena, &select_expr->choices.xs[i].expr->loc,
+            target = result.type;
+          } else if (result.type != NULL) {
+            if (!FbleTypesEqual(heap, target, result.type)) {
+              ReportError(arena, &select_expr->choices.xs[branch].expr->loc,
                   "expected type %t, but found %t\n",
-                  target, result);
-
-              FbleReleaseType(heap, result);
-              FbleReleaseType(heap, target);
-              FbleReleaseType(heap, &union_type->_base);
-              return NULL;
+                  target, result.type);
+              error = true;
             }
-            FbleReleaseType(heap, result);
+            FbleReleaseType(heap, result.type);
           }
+
+          branch++;
         } else if (select_expr->default_ == NULL) {
-          if (i < select_expr->choices.size) {
-            ReportError(arena, &select_expr->choices.xs[i].name.loc,
+          error = true;
+
+          if (branch < select_expr->choices.size) {
+            ReportError(arena, &select_expr->choices.xs[branch].name.loc,
                 "expected tag '%n', but found '%n'\n",
-                &union_type->fields.xs[i].name, &select_expr->choices.xs[i].name);
+                &union_type->fields.xs[i].name, &select_expr->choices.xs[branch].name);
           } else {
             ReportError(arena, &expr->loc,
                 "missing tag '%n'\n",
                 &union_type->fields.xs[i].name);
           }
-          FbleReleaseType(heap, &union_type->_base);
-          FbleReleaseType(heap, target);
-          return NULL;
         } else {
-          // Insert a default expr for the current choice, so we can keep
-          // track of which fields refer to what choices without having to
-          // hold on to the union type.
-          FbleTaggedExpr x = { .expr = NULL };
-          for (int j = i; j < select_expr->choices.size; ++j) {
-            FbleTaggedExpr tmp = select_expr->choices.xs[j];
-            select_expr->choices.xs[j] = x;
-            x = tmp;
-          }
-          FbleVectorAppend(arena, select_expr->choices, x);
+          // Use the default branch for this field.
+          FbleVectorAppend(arena, select_tc->choices, select_expr->choices.size);
         }
       }
 
-      if (union_type->fields.size < select_expr->choices.size) {
-        ReportError(arena, &select_expr->choices.xs[union_type->fields.size].name.loc,
+      if (select_expr->default_ != NULL) {
+        // TODO: Label with profile block ":"?
+        Tc result = TypeCheckExpr(heap, scope, select_expr->default_);
+        error = error || (result.type == NULL);
+        target = result.type;
+        FbleVectorAppend(arena, select_tc->branches, result.tc);
+        if (target == NULL) {
+          target = result.type;
+        } else if (result.type != NULL) {
+          if (!FbleTypesEqual(heap, target, result.type)) {
+            ReportError(arena, &select_expr->choices.xs[branch].expr->loc,
+                "expected type %t, but found %t\n",
+                target, result.type);
+            error = true;
+          }
+          FbleReleaseType(heap, result.type);
+        }
+      }
+
+      if (branch < select_expr->choices.size) {
+        ReportError(arena, &select_expr->choices.xs[branch].name.loc,
             "unexpected tag '%n'\n",
-            &select_expr->choices.xs[union_type->fields.size]);
-        FbleReleaseType(heap, &union_type->_base);
-        FbleReleaseType(heap, target);
-        return NULL;
+            &select_expr->choices.xs[branch]);
+        error = true;
       }
 
       FbleReleaseType(heap, &union_type->_base);
-      return target;
+      Tc tc = MkTc(target, &select_tc->_base);
+      if (error) {
+        FreeTc(heap, tc);
+        return TC_FAILED;
+      }
+      return tc;
     }
 
     case FBLE_FUNC_VALUE_EXPR: {
@@ -1939,6 +1947,10 @@ bool FbleTypeCheck(FbleArena* arena, FbleProgram* program)
 // FbleFreeTc -- see documentation in typecheck.h
 void FbleFreeTc(FbleArena* arena, FbleTc* tc)
 {
+  if (tc == NULL) {
+    return;
+  }
+
   FbleFreeLoc(arena, tc->loc);
   switch (tc->tag) {
     case FBLE_TYPE_TC: {
@@ -1990,10 +2002,11 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)tc;
       FbleFreeTc(arena, select_tc->condition);
-      for (size_t i = 0; i < select_tc->choices.size; ++i) {
-        FbleFreeTc(arena, select_tc->choices.xs[i]);
-      }
       FbleFree(arena, select_tc->choices.xs);
+      for (size_t i = 0; i < select_tc->branches.size; ++i) {
+        FbleFreeTc(arena, select_tc->branches.xs[i]);
+      }
+      FbleFree(arena, select_tc->branches.xs);
       FbleFree(arena, tc);
       return;
     }
