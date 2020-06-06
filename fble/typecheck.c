@@ -75,6 +75,7 @@ typedef struct {
 //   Tc returned to indicate that type check has failed.
 static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 
+static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* heap, Tc tc);
 static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc);
 
@@ -352,12 +353,30 @@ static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
   return match;
 }
 
+// MkTc --
+//   Convenience function for constructing a tc pair.
+//
+// Inputs:
+//   type - the type to put in the tc.
+//   tc - the tc to put in the tc.
+//
+// Results:
+//   A Tc with type and tc as fields.
+//
+// Side effects:
+//   None.
+static Tc MkTc(FbleType* type, FbleTc* tc)
+{
+  Tc x = { .type = type, .tc = tc };
+  return x;
+}
+
 // FreeTc --
-//   Conveninence function to free the type and tc fields of a Tc.
+//   Convenience function to free the type and tc fields of a Tc.
 //
 // Inputs:
 //   heap - heap to use for allocations
-//   tc - tc to free the fields of
+//   tc - tc to free the fields of. May be TC_FAILED.
 //
 // Side effects:
 //   Frees resources associated with the type and tc fields of tc.
@@ -380,6 +399,7 @@ static void FreeTc(FbleTypeHeap* heap, Tc tc)
 //
 // Side effects:
 //   Forwards ownership of the type and tc in 'tc' to the returned tc.
+//   Does not take ownership of label, makes a copy instead.
 static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc)
 {
   if (tc.type == NULL) {
@@ -436,8 +456,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       type_tc->_base.tag = FBLE_TYPE_TC;
       type_tc->_base.loc = FbleCopyLoc(expr->loc);
 
-      Tc tc = { .type = &type_type->_base, .tc = &type_tc->_base };
-      return tc;
+      return MkTc(&type_type->_base, &type_tc->_base);
     }
 
     case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR: {
@@ -515,8 +534,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           FbleVectorAppend(arena, apply_tc->args, args[i].tc);
         }
 
-        Tc tc = { .type = rtype, .tc = &apply_tc->_base };
-        return tc;
+        return MkTc(rtype, &apply_tc->_base);
       }
 
       if (normal->tag == FBLE_TYPE_TYPE) {
@@ -583,8 +601,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           FbleVectorAppend(arena, struct_tc->args, args[i].tc);
         }
 
-        Tc tc = { .type = vtype, .tc = &struct_tc->_base };
-        return tc;
+        return MkTc(vtype, &struct_tc->_base);
       }
 
       ReportError(arena, &expr->loc,
@@ -604,26 +621,26 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleVectorInit(arena, struct_type->fields);
 
       size_t argc = struct_expr->args.size;
-      FbleType* args[argc];
+      Tc args[argc];
       bool error = false;
       for (size_t i = 0; i < argc; ++i) {
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
-        // TODO: Put the arg in its own profile block?
         args[j] = TypeCheckExpr(heap, scope, arg->expr);
-        error = error || (args[j] == NULL);
+        args[j] = ProfileBlock(arena, arg->name, args[j]);
+        error = error || (args[j].type == NULL);
       }
 
       for (size_t i = 0; i < argc; ++i) {
         FbleTaggedExpr* arg = struct_expr->args.xs + i;
-        if (args[i] != NULL) {
-          if (!CheckNameSpace(arena, &arg->name, args[i])) {
+        if (args[i].type != NULL) {
+          if (!CheckNameSpace(arena, &arg->name, args[i].type)) {
             error = true;
           }
 
           FbleTaggedType cfield = {
             .name = arg->name,
-            .type = args[i]
+            .type = args[i].type
           };
           FbleVectorAppend(arena, struct_type->fields, cfield);
           FbleTypeAddRef(heap, &struct_type->_base, cfield.type);
@@ -637,23 +654,33 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
                 &struct_expr->args.xs[j].name);
           }
         }
-
-        FbleReleaseType(heap, args[i]);
       }
 
       if (error) {
         FbleReleaseType(heap, &struct_type->_base);
-        return NULL;
+        for (size_t i = 0; i < argc; ++i) {
+          FreeTc(heap, args[i]);
+        }
+        return TC_FAILED;
       }
 
-      return &struct_type->_base;
+      FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
+      struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
+      struct_tc->_base.loc = FbleCopyLoc(expr->loc);
+      FbleVectorInit(arena, struct_tc->args);
+      for (size_t i = 0; i < argc; ++i) {
+        FbleReleaseType(heap, args[i].type);
+        FbleVectorAppend(arena, struct_tc->args, args[i].tc);
+      }
+
+      return MkTc(&struct_type->_base, &struct_tc->_base);
     }
 
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       FbleType* type = TypeCheckType(heap, scope, union_value_expr->type);
       if (type == NULL) {
-        return NULL;
+        return TC_FAILED;
       }
 
       FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(heap, type);
@@ -662,15 +689,16 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             "expected a union type, but found %t\n", type);
         FbleReleaseType(heap, &union_type->_base);
         FbleReleaseType(heap, type);
-        return NULL;
+        return TC_FAILED;
       }
 
       FbleType* field_type = NULL;
+      size_t tag = -1;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         FbleTaggedType* field = union_type->fields.xs + i;
         if (FbleNamesEqual(field->name, union_value_expr->field.name)) {
-          union_value_expr->field.tag = i;
           field_type = field->type;
+          tag = i;
           break;
         }
       }
@@ -681,75 +709,69 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             &union_value_expr->field, type);
         FbleReleaseType(heap, &union_type->_base);
         FbleReleaseType(heap, type);
-        return NULL;
+        return TC_FAILED;
       }
 
-      FbleType* arg = TypeCheckExpr(heap, scope, union_value_expr->arg);
-      if (arg == NULL) {
+      Tc arg = TypeCheckExpr(heap, scope, union_value_expr->arg);
+      if (arg.type == NULL) {
         FbleReleaseType(heap, &union_type->_base);
         FbleReleaseType(heap, type);
-        return NULL;
+        return TC_FAILED;
       }
 
-      if (!FbleTypesEqual(heap, field_type, arg)) {
+      if (!FbleTypesEqual(heap, field_type, arg.type)) {
         ReportError(arena, &union_value_expr->arg->loc,
             "expected type %t, but found type %t\n",
-            field_type, arg);
+            field_type, arg.type);
         FbleReleaseType(heap, type);
         FbleReleaseType(heap, &union_type->_base);
-        FbleReleaseType(heap, arg);
-        return NULL;
+        FreeTc(heap, arg);
+        return TC_FAILED;
       }
-      FbleReleaseType(heap, arg);
+      FbleReleaseType(heap, arg.type);
       FbleReleaseType(heap, &union_type->_base);
-      return type;
+
+      FbleUnionValueTc* union_tc = FbleAlloc(arena, FbleUnionValueTc);
+      union_tc->_base.tag = FBLE_UNION_VALUE_TC;
+      union_tc->_base.loc = FbleCopyLoc(expr->loc);
+      union_tc->arg = arg.tc;
+      union_tc->tag = tag;
+
+      return MkTc(type, &union_tc->_base);
     }
 
-    case FBLE_STRUCT_ACCESS_EXPR:
-    case FBLE_UNION_ACCESS_EXPR:
+    case FBLE_STRUCT_ACCESS_EXPR: {
+      UNREACHABLE("TODO: remove this enum option. Use FBLE_MISC_ACCESS_EXPR instead");
+      return TC_FAILED;
+    }
+
+    case FBLE_UNION_ACCESS_EXPR: {
+      UNREACHABLE("TODO: remove this enum option. Use FBLE_MISC_ACCESS_EXPR instead");
+      return TC_FAILED;
+    }
+
     case FBLE_MISC_ACCESS_EXPR: {
       FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
-      FbleTc* obj = TypeCheckExpr(heap, scope, access_expr->object);
-      if (obj == NULL) {
-        return NULL;
+      Tc obj = TypeCheckExpr(heap, scope, access_expr->object);
+      if (obj.type == NULL) {
+        return TC_FAILED;
       }
 
-      FbleType* normal = FbleNormalType(heap, obj->type);
-      if (expr->tag == FBLE_STRUCT_ACCESS_EXPR && normal->tag != FBLE_STRUCT_TYPE) {
-        ReportError(arena, &access_expr->object->loc,
-            "expected struct value, but found value of type %t\n",
-            obj);
-
-        FbleFreeTc(heap, obj);
-        FbleReleaseType(heap, normal);
-        return NULL;
-      } else if (expr->tag == FBLE_UNION_ACCESS_EXPR && normal->tag != FBLE_UNION_TYPE) {
-        ReportError(arena, &access_expr->object->loc,
-            "expected union value, but found value of type %t\n",
-            obj);
-
-        FbleFreeTc(heap, obj);
-        FbleReleaseType(heap, normal);
-        return NULL;
-      } else if (normal->tag != FBLE_STRUCT_TYPE && normal->tag != FBLE_UNION_TYPE) {
-        ReportError(arena, &access_expr->object->loc,
-            "expected value of type struct or union, but found value of type %t\n",
-            obj);
-
-        FbleFreeTc(heap, obj);
-        FbleReleaseType(heap, normal);
-        return NULL;
-      }
-
+      FbleType* normal = FbleNormalType(heap, obj.type);
       FbleTaggedTypeV* fields = NULL;
       if (normal->tag == FBLE_STRUCT_TYPE) {
         fields = &((FbleStructType*)normal)->fields;
       } else if (normal->tag == FBLE_UNION_TYPE) {
         fields = &((FbleUnionType*)normal)->fields;
       } else {
-        UNREACHABLE("should never get here");
-        return NULL;
+        ReportError(arena, &access_expr->object->loc,
+            "expected value of type struct or union, but found value of type %t\n",
+            obj.type);
+
+        FreeTc(heap, obj);
+        FbleReleaseType(heap, normal);
+        return TC_FAILED;
       }
 
       for (size_t i = 0; i < fields->size; ++i) {
@@ -761,40 +783,38 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           access_tc->_base.tag = (normal->tag == FBLE_STRUCT_TYPE)
             ? FBLE_STRUCT_ACCESS_EXPR
             : FBLE_UNION_ACCESS_EXPR;
-          access_tc->_base.type = rtype;
-          access_tc->obj = obj;
-          access_tc->loc = FbleCopyLoc(access_expr->field.name.loc);
+          access_tc->_base.loc = FbleCopyLoc(expr->loc);
+          access_tc->obj = obj.tc;
           access_tc->tag = i;
-          return &access_tc._base;
+          return MkTc(rtype, &access_tc->_base);
         }
       }
 
       ReportError(arena, &access_expr->field.name.loc,
           "'%n' is not a field of type %t\n",
-          &access_expr->field, obj);
-      FbleFreeTc(heap, obj);
+          &access_expr->field, obj.type);
+      FreeTc(heap, obj);
       FbleReleaseType(heap, normal);
-      return NULL;
+      return TC_FAILED;
     }
 
     case FBLE_UNION_SELECT_EXPR: {
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
-      FbleType* condition = TypeCheckExpr(heap, scope, select_expr->condition);
-      if (condition == NULL) {
+      Tc condition = TypeCheckExpr(heap, scope, select_expr->condition);
+      if (condition.type == NULL) {
         return NULL;
       }
 
-      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(heap, condition);
+      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(heap, condition.type);
       if (union_type->_base.tag != FBLE_UNION_TYPE) {
         ReportError(arena, &select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
-            condition);
+            condition.type);
         FbleReleaseType(heap, &union_type->_base);
-        FbleReleaseType(heap, condition);
-        return NULL;
+        FreeTc(heap, condition);
+        return TC_FAILED;
       }
-      FbleReleaseType(heap, condition);
 
       FbleType* target = NULL;
       if (select_expr->default_ != NULL) {
