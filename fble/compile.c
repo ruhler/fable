@@ -682,20 +682,17 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       AppendInstr(arena, scope, &select_instr->_base);
 
       size_t select_instr_pc = scope->code->instrs.size;
+      size_t branch_offsets[select_tc->branches.size];
 
-      Local* target = NULL;
-
+      // Generate code for each of the branches.
+      Local* target = NewLocal(arena, scope);
       FbleJumpInstr* exit_jumps[select_tc->choices.size];
-      for (size_t i = 0; i < select_tc->choices.size; ++i) {
-        size_t jump = scope->code->instrs.size - select_instr_pc;
-        FbleVectorAppend(arena, select_instr->jumps, jump);
-
-        assert(select_tc->choices.xs[i] != NULL && "non-defaulted choice in compile?");
-        Local* result = CompileExpr(arena, blocks, exit, scope, select_tc->choices.xs[i]);
-
-        if (target == NULL) {
-          target = NewLocal(arena, scope);
-        }
+      for (size_t i = 0; i < select_tc->branches.size; ++i) {
+        // TODO: Could we arrange for the branches to put their value in the
+        // target directly instead of in some cases allocating a new local and
+        // then copying that to target?
+        branch_offsets[i] = scope->code->instrs.size - select_instr_pc;
+        Local* result = CompileExpr(arena, blocks, exit, scope, select_tc->branches.xs[i]);
 
         if (!exit) {
           FbleCopyInstr* copy = FbleAlloc(arena, FbleCopyInstr);
@@ -717,15 +714,23 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
         }
       }
 
+      // Fix up exit jumps now that all the branch code is generated.
       if (!exit) {
-        for (size_t i = 0; i < select_tc->choices.size; ++i) {
+        for (size_t i = 0; i < select_tc->branches.size; ++i) {
           exit_jumps[i]->count = scope->code->instrs.size - exit_jumps[i]->count;
         }
       }
+      
+      // Fix up the jumps into the code generated for branches.
+      for (size_t i = 0; i < select_tc->choices.size; ++i) {
+        assert(select_tc->choices.xs[i] < select_tc->branches.size);
+        size_t offset = branch_offsets[select_tc->choices.xs[i]];
+        FbleVectorAppend(arena, select_instr->jumps, offset);
+      }
 
-      // TODO: We ought to release the condition right after doing goto,
-      // otherwise we'll end up unnecessarily holding on to it for the full
-      // duration of the block. Technically this doesn't appear to be a
+      // TODO: We ought to release the condition right after jumping into a
+      // branch, otherwise we'll end up unnecessarily holding on to it for the
+      // full duration of the block. Technically this doesn't appear to be a
       // violation of the language spec, because it only effects constants in
       // runtime. But we probably ought to fix it anyway.
       LocalRelease(arena, scope, condition, exit);

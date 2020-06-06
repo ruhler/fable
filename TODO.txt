@@ -1,6 +1,4 @@
 
-* We need to preserve 'default' for union select in compile.c, otherwise we'll
-  end up duplicating a bunch of code, no?
 * Rewrite typecheck.c to produce FbleTc.
 
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
