@@ -903,6 +903,146 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return tc;
     }
 
+    case FBLE_POLY_APPLY_EXPR: {
+      FblePolyApplyExpr* apply = (FblePolyApplyExpr*)expr;
+
+      // Note: typeof(poly<arg>) = typeof(poly)<arg>
+      // TypeCheckExpr gives us typeof(poly)
+      Tc poly = TypeCheckExpr(heap, scope, apply->poly);
+      if (poly.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(arena, poly.type);
+      if (poly_kind->_base.tag != FBLE_POLY_KIND) {
+        ReportError(arena, &expr->loc,
+            "cannot apply poly args to a basic kinded entity\n");
+        FbleFreeKind(arena, &poly_kind->_base);
+        FreeTc(heap, poly);
+        return TC_FAILED;
+      }
+
+      // Note: arg_type is typeof(arg)
+      FbleType* arg_type = TypeCheckExprForType(heap, scope, apply->arg);
+      if (arg_type == NULL) {
+        FbleFreeKind(arena, &poly_kind->_base);
+        FreeTc(heap, poly);
+        return TC_FAILED;
+      }
+
+      FbleKind* expected_kind = poly_kind->arg;
+      FbleKind* actual_kind = FbleGetKind(arena, arg_type);
+      if (!FbleKindsEqual(expected_kind, actual_kind)) {
+        ReportError(arena, &apply->arg->loc,
+            "expected kind %k, but found something of kind %k\n",
+            expected_kind, actual_kind);
+        FbleFreeKind(arena, &poly_kind->_base);
+        FbleFreeKind(arena, actual_kind);
+        FbleReleaseType(heap, arg_type);
+        FreeTc(heap, poly);
+        return TC_FAILED;
+      }
+      FbleFreeKind(arena, actual_kind);
+      FbleFreeKind(arena, &poly_kind->_base);
+
+      FbleType* arg = FbleValueOfType(heap, arg_type);
+      assert(arg != NULL && "TODO: poly apply arg is a value?");
+      FbleReleaseType(heap, arg_type);
+
+      FbleType* pat = FbleNewPolyApplyType(heap, expr->loc, poly.type, arg);
+      FbleReleaseType(heap, arg);
+      FbleReleaseType(heap, poly.type);
+
+      FblePolyApplyTc* apply_tc = FbleAlloc(arena, FblePolyApplyTc);
+      apply_tc->_base.tag = FBLE_POLY_APPLY_TC;
+      apply_tc->_base.loc = FbleCopyLoc(expr->loc);
+      apply_tc->poly = poly.tc;
+
+      return MkTc(pat, &apply_tc->_base);
+    }
+
+    case FBLE_LIST_EXPR: {
+      FbleListExpr* list_expr = (FbleListExpr*)expr;
+      return TypeCheckList(heap, scope, expr->loc, list_expr->args);
+    }
+
+    case FBLE_LITERAL_EXPR: {
+      FbleLiteralExpr* literal = (FbleLiteralExpr*)expr;
+
+      FbleType* spec = TypeCheckExpr(heap, scope, literal->spec);
+      if (spec == NULL) {
+        return NULL;
+      }
+
+      FbleStructType* normal = (FbleStructType*)FbleNormalType(heap, spec);
+      if (normal->_base.tag != FBLE_STRUCT_TYPE) {
+        ReportError(arena, &literal->spec->loc,
+            "expected a struct value, but literal spec has type %t\n",
+            spec);
+        FbleReleaseType(heap, spec);
+        FbleReleaseType(heap, &normal->_base);
+        return NULL;
+      }
+      FbleReleaseType(heap, &normal->_base);
+
+      size_t n = strlen(literal->word);
+      if (n == 0) {
+        ReportError(arena, &literal->word_loc,
+            "literals must not be empty\n");
+        FbleReleaseType(heap, spec);
+        return NULL;
+      }
+
+      FbleName spec_name = {
+        .name = FbleNewString(arena, "__literal_spec"),
+        .space = FBLE_NORMAL_NAME_SPACE,
+        .loc = literal->spec->loc,
+      };
+      PushVar(arena, scope, spec_name, spec);
+
+      FbleVarExpr spec_var = {
+        ._base = { .tag = FBLE_VAR_EXPR, .loc = literal->spec->loc },
+        .var = spec_name
+      };
+
+      FbleAccessExpr letters[n];
+      FbleExpr* xs[n];
+      FbleString* fields[n];
+      FbleLoc loc = literal->word_loc;
+      for (size_t i = 0; i < n; ++i) {
+        char field_str[2] = { literal->word[i], '\0' };
+        fields[i] = FbleNewString(arena, field_str);
+
+        letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
+        letters[i]._base.loc = loc;
+        letters[i].object = &spec_var._base;
+        letters[i].field.name.name = fields[i];
+        letters[i].field.name.space = FBLE_NORMAL_NAME_SPACE;
+        letters[i].field.name.loc = loc;
+        letters[i].field.tag = FBLE_UNRESOLVED_FIELD_TAG;
+
+        xs[i] = &letters[i]._base;
+
+        if (literal->word[i] == '\n') {
+          loc.line++;
+          loc.col = 0;
+        }
+        loc.col++;
+      }
+
+      FbleExprV args = { .size = n, .xs = xs, };
+      FbleType* result = TypeCheckList(heap, scope, literal->word_loc, args);
+      PopVar(heap, scope);
+
+      for (size_t i = 0; i < n; ++i) {
+        literal->tags[i] = letters[i].field.tag;
+        FbleFreeString(arena, fields[i]);
+      }
+      FbleFreeString(arena, spec_name.name);
+
+      return result;
+    }
+
     case FBLE_FUNC_VALUE_EXPR: {
       FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
       size_t argc = func_value_expr->args.size;
@@ -1159,140 +1299,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleReleaseType(heap, arg);
       FbleReleaseType(heap, body);
       return pt;
-    }
-
-    case FBLE_POLY_APPLY_EXPR: {
-      FblePolyApplyExpr* apply = (FblePolyApplyExpr*)expr;
-
-      // Note: typeof(poly<arg>) = typeof(poly)<arg>
-      // TypeCheckExpr gives us typeof(poly)
-      FbleType* poly = TypeCheckExpr(heap, scope, apply->poly);
-      if (poly == NULL) {
-        return NULL;
-      }
-
-      FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(arena, poly);
-      if (poly_kind->_base.tag != FBLE_POLY_KIND) {
-        ReportError(arena, &expr->loc,
-            "cannot apply poly args to a basic kinded entity\n");
-        FbleFreeKind(arena, &poly_kind->_base);
-        FbleReleaseType(heap, poly);
-        return NULL;
-      }
-
-      // Note: arg_type is typeof(arg)
-      FbleType* arg_type = TypeCheckExprForType(heap, scope, apply->arg);
-      if (arg_type == NULL) {
-        FbleFreeKind(arena, &poly_kind->_base);
-        FbleReleaseType(heap, poly);
-        return NULL;
-      }
-
-      FbleKind* expected_kind = poly_kind->arg;
-      FbleKind* actual_kind = FbleGetKind(arena, arg_type);
-      if (!FbleKindsEqual(expected_kind, actual_kind)) {
-        ReportError(arena, &apply->arg->loc,
-            "expected kind %k, but found something of kind %k\n",
-            expected_kind, actual_kind);
-        FbleFreeKind(arena, &poly_kind->_base);
-        FbleFreeKind(arena, actual_kind);
-        FbleReleaseType(heap, arg_type);
-        FbleReleaseType(heap, poly);
-        return NULL;
-      }
-      FbleFreeKind(arena, actual_kind);
-      FbleFreeKind(arena, &poly_kind->_base);
-
-      FbleType* arg = FbleValueOfType(heap, arg_type);
-      assert(arg != NULL && "TODO: poly apply arg is a value?");
-      FbleReleaseType(heap, arg_type);
-
-      FbleType* pat = FbleNewPolyApplyType(heap, expr->loc, poly, arg);
-      FbleReleaseType(heap, arg);
-      FbleReleaseType(heap, poly);
-      return pat;
-    }
-
-    case FBLE_LIST_EXPR: {
-      FbleListExpr* list_expr = (FbleListExpr*)expr;
-      return TypeCheckList(heap, scope, expr->loc, list_expr->args);
-    }
-
-    case FBLE_LITERAL_EXPR: {
-      FbleLiteralExpr* literal = (FbleLiteralExpr*)expr;
-
-      FbleType* spec = TypeCheckExpr(heap, scope, literal->spec);
-      if (spec == NULL) {
-        return NULL;
-      }
-
-      FbleStructType* normal = (FbleStructType*)FbleNormalType(heap, spec);
-      if (normal->_base.tag != FBLE_STRUCT_TYPE) {
-        ReportError(arena, &literal->spec->loc,
-            "expected a struct value, but literal spec has type %t\n",
-            spec);
-        FbleReleaseType(heap, spec);
-        FbleReleaseType(heap, &normal->_base);
-        return NULL;
-      }
-      FbleReleaseType(heap, &normal->_base);
-
-      size_t n = strlen(literal->word);
-      if (n == 0) {
-        ReportError(arena, &literal->word_loc,
-            "literals must not be empty\n");
-        FbleReleaseType(heap, spec);
-        return NULL;
-      }
-
-      FbleName spec_name = {
-        .name = FbleNewString(arena, "__literal_spec"),
-        .space = FBLE_NORMAL_NAME_SPACE,
-        .loc = literal->spec->loc,
-      };
-      PushVar(arena, scope, spec_name, spec);
-
-      FbleVarExpr spec_var = {
-        ._base = { .tag = FBLE_VAR_EXPR, .loc = literal->spec->loc },
-        .var = spec_name
-      };
-
-      FbleAccessExpr letters[n];
-      FbleExpr* xs[n];
-      FbleString* fields[n];
-      FbleLoc loc = literal->word_loc;
-      for (size_t i = 0; i < n; ++i) {
-        char field_str[2] = { literal->word[i], '\0' };
-        fields[i] = FbleNewString(arena, field_str);
-
-        letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
-        letters[i]._base.loc = loc;
-        letters[i].object = &spec_var._base;
-        letters[i].field.name.name = fields[i];
-        letters[i].field.name.space = FBLE_NORMAL_NAME_SPACE;
-        letters[i].field.name.loc = loc;
-        letters[i].field.tag = FBLE_UNRESOLVED_FIELD_TAG;
-
-        xs[i] = &letters[i]._base;
-
-        if (literal->word[i] == '\n') {
-          loc.line++;
-          loc.col = 0;
-        }
-        loc.col++;
-      }
-
-      FbleExprV args = { .size = n, .xs = xs, };
-      FbleType* result = TypeCheckList(heap, scope, literal->word_loc, args);
-      PopVar(heap, scope);
-
-      for (size_t i = 0; i < n; ++i) {
-        literal->tags[i] = letters[i].field.tag;
-        FbleFreeString(arena, fields[i]);
-      }
-      FbleFreeString(arena, spec_name.name);
-
-      return result;
     }
   }
 
