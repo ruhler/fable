@@ -73,6 +73,10 @@ typedef enum {
 
 // FbleVarIndex --
 //   Identifies a variable in scope.
+//
+// For local variables, index starts at 0 for the first argument to a
+// function. The index increases by one for each new variable introduced,
+// going from left to right, outer most to inner most binding.
 typedef struct {
   FbleVarSource source;
   size_t index;
@@ -188,6 +192,10 @@ typedef struct {
 
 // FblePolyValueTc --
 //   FBLE_POLY_VALUE_TC
+//
+// TODO: Is this necessary? Is there any reason in wrapping the body? Maybe
+// because we need to know to generate the type value used by the body? Should
+// we just reuse FbleFuncApplyTc?
 typedef struct {
   FbleTc _base;
   FbleTc* body;
@@ -195,6 +203,9 @@ typedef struct {
 
 // FblePolyApplyTc --
 //   FBLE_POLY_APPLY_TC
+//
+// TODO: Is this necessary? Is there any value in wrapping the poly in an
+// apply?
 typedef struct {
   FbleTc _base;
   FbleTc* poly;

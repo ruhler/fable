@@ -290,9 +290,9 @@ void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 //
 // Inputs:
 //   heap - the heap to allocate the type on.
-//   loc - the location for the type.
-//   kind - the kind of a value of this type.
-//   name - the name of the type variable.
+//   loc - the location for the type. Borrowed.
+//   kind - the kind of a value of this type. Borrowed.
+//   name - the name of the type variable. Consumed.
 //
 // Results:
 //   A type representing an abstract variable type of given kind and name.
@@ -302,8 +302,7 @@ void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 //
 // Side effects:
 //   The caller is responsible for calling FbleReleaseType on the returned
-//   type when it is no longer needed. This function does not take ownership
-//   of passed kind.
+//   type when it is no longer needed.
 FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleName name);
 
 // FbleAssignVarType --
@@ -362,6 +361,22 @@ FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleTy
 //   when it is no longer needed. This function does not take ownership of the
 //   passed poly or arg types.
 FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg);
+
+// FbleNewListType --
+//   Convenience function for creating the type of an fble list expression.
+//
+// Inputs:
+//   heap - heap to use for allocations
+//   elem_type - the type of the elements of the list.
+//
+// Results:
+//   The type of an fble list of elements.
+//
+// Side effects:
+//   The caller is responsible for calling FbleReleaseType on the returned type
+//   when it is no longer needed. This function does not take ownership of the
+//   passed elem_type.
+FbleType* FbleNewListType(FbleTypeHeap* heap, FbleType* elem_type);
 
 // FbleTypeIsVacuous --
 //   Check if a type will reduce to normal form.

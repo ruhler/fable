@@ -79,8 +79,9 @@ static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* heap, Tc tc);
 static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc);
 
+static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args);
+
 static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
-static Tc TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, FbleExprV args);
 static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
@@ -414,6 +415,114 @@ static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc)
   profile_tc->body = tc.tc;
   tc.tc = &profile_tc->_base;
   return tc;
+}
+
+// NewListTc --
+//   Create an FbleTc representing an fble list expression.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   loc - the location of the list expression.
+//   args - the elements of the list. Must be non-empty.
+//
+// Results:
+//   The newly created FbleTc representing the list expression.
+//
+// Side effects:
+// * Allocates an FbleTc that should be freed with FbleFreeTc when no longer
+//   needed.
+// * Transfers ownership of the args to the returned FbleTc. Does not take
+//   ownership of the args.xs array.
+// * Does not take ownership of loc, makes a copy instead.
+// * Behavior is undefined if there is not at least one list argument.
+static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args)
+{
+  // The goal is to desugar a list expression [a, b, c, d] into the
+  // following expression:
+  // <@ T@>(T@ x, T@ x1, T@ x2, T@ x3)<@ L@>((T@, L@){L@;} cons, L@ nil) {
+  //   cons(x, cons(x1, cons(x2, cons(x3, nil))));
+  // }<t@>(a, b, c, d)
+  assert(args.size > 0 && "empty lists not allowed");
+
+  FbleVarTc* nil = FbleAlloc(arena, FbleVarTc);
+  nil->_base.tag = FBLE_VAR_TC;
+  nil->_base.loc = FbleCopyLoc(loc);
+  nil->index.source = FBLE_LOCAL_VAR;
+  nil->index.index = 1;
+
+  FbleTc* applys = &nil->_base;
+  for (size_t i = 0; i < args.size; ++i) {
+    FbleVarTc* cons = FbleAlloc(arena, FbleVarTc);
+    cons->_base.tag = FBLE_VAR_TC;
+    cons->_base.loc = FbleCopyLoc(loc);
+    cons->index.source = FBLE_LOCAL_VAR;
+    cons->index.index = 0;
+
+    FbleVarTc* x = FbleAlloc(arena, FbleVarTc);
+    x->_base.tag = FBLE_VAR_TC;
+    x->_base.loc = FbleCopyLoc(loc);
+    x->index.source = FBLE_STATIC_VAR;
+    x->index.index = i;
+
+    FbleFuncApplyTc* apply = FbleAlloc(arena, FbleFuncApplyTc);
+    apply->_base.tag = FBLE_FUNC_APPLY_TC;
+    apply->_base.loc = FbleCopyLoc(loc);
+    apply->func = &cons->_base;
+    FbleVectorInit(arena, apply->args);
+    FbleVectorAppend(arena, apply->args, &x->_base);
+    FbleVectorAppend(arena, apply->args, applys);
+
+    applys = &apply->_base;
+  }
+
+  FbleFuncValueTc* inner_func = FbleAlloc(arena, FbleFuncValueTc);
+  inner_func->_base.tag = FBLE_FUNC_VALUE_TC;
+  inner_func->_base.loc = FbleCopyLoc(loc);
+
+  FbleVectorInit(arena, inner_func->scope);
+  for (size_t i = 0; i < args.size; ++i) {
+    FbleVarIndex index = {
+      .source = FBLE_LOCAL_VAR,
+      .index = i
+    };
+    FbleVectorAppend(arena, inner_func->scope, index);
+  }
+
+  inner_func->argc = 2;
+  inner_func->body = applys;
+
+  FblePolyValueTc* inner_poly = FbleAlloc(arena, FblePolyValueTc);
+  inner_poly->_base.tag = FBLE_POLY_VALUE_TC;
+  inner_poly->_base.loc = FbleCopyLoc(loc);
+  inner_poly->body = &inner_func->_base;
+
+  FbleFuncValueTc* outer_func = FbleAlloc(arena, FbleFuncValueTc);
+  outer_func->_base.tag = FBLE_FUNC_VALUE_TC;
+  outer_func->_base.loc = FbleCopyLoc(loc);
+  FbleVectorInit(arena, outer_func->scope);
+  outer_func->argc = args.size;
+  outer_func->body = &inner_poly->_base;
+
+  FblePolyValueTc* outer_poly = FbleAlloc(arena, FblePolyValueTc);
+  outer_poly->_base.tag = FBLE_POLY_VALUE_TC;
+  outer_poly->_base.loc = FbleCopyLoc(loc);
+  outer_poly->body = &outer_func->_base;
+
+  FblePolyApplyTc* apply_type = FbleAlloc(arena, FblePolyApplyTc);
+  apply_type->_base.tag = FBLE_POLY_APPLY_TC;
+  apply_type->_base.loc = FbleCopyLoc(loc);
+  apply_type->poly = &outer_poly->_base;
+
+  FbleFuncApplyTc* apply_elems = FbleAlloc(arena, FbleFuncApplyTc);
+  apply_elems->_base.tag = FBLE_FUNC_APPLY_TC;
+  apply_elems->_base.loc = FbleCopyLoc(loc);
+  apply_elems->func = &apply_type->_base;
+  FbleVectorInit(arena, apply_elems->args);
+  for (size_t i = 0; i < args.size; ++i) {
+    FbleVectorAppend(arena, apply_elems->args, args.xs[i]);
+  }
+
+  return &apply_elems->_base;
 }
 
 // TypeCheckExpr --
@@ -963,52 +1072,70 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
     case FBLE_LIST_EXPR: {
       FbleListExpr* list_expr = (FbleListExpr*)expr;
-      return TypeCheckList(heap, scope, expr->loc, list_expr->args);
+
+      bool error = false;
+      FbleType* type = NULL;
+      FbleTc* args[list_expr->args.size];
+      for (size_t i = 0; i < list_expr->args.size; ++i) {
+        Tc tc = TypeCheckExpr(heap, scope, list_expr->args.xs[i]);
+        error = error || (tc.type == NULL);
+
+        if (type == NULL) {
+          type = tc.type;
+        } else if (tc.type != NULL) {
+          if (!FbleTypesEqual(heap, type, tc.type)) {
+            error = true;
+            ReportError(arena, &list_expr->args.xs[i]->loc,
+                "expected type %t, but found something of type %t\n",
+                type, tc.type);
+          }
+          FbleReleaseType(heap, tc.type);
+        }
+        args[i] = tc.tc;
+      }
+
+      if (error) {
+        FbleReleaseType(heap, type);
+        for (size_t i = 0; i < list_expr->args.size; ++i) {
+          FbleFreeTc(arena, args[i]);
+        }
+        return TC_FAILED;
+      }
+
+      FbleTcV argv = { .size = list_expr->args.size, .xs = args };
+      Tc tc = MkTc(FbleNewListType(heap, type), NewListTc(arena, expr->loc, argv));
+      FbleReleaseType(heap, type);
+      return tc;
     }
 
     case FBLE_LITERAL_EXPR: {
       FbleLiteralExpr* literal = (FbleLiteralExpr*)expr;
 
-      FbleType* spec = TypeCheckExpr(heap, scope, literal->spec);
-      if (spec == NULL) {
-        return NULL;
+      Tc spec = TypeCheckExpr(heap, scope, literal->spec);
+      if (spec.type == NULL) {
+        return TC_FAILED;
       }
 
-      FbleStructType* normal = (FbleStructType*)FbleNormalType(heap, spec);
+      FbleStructType* normal = (FbleStructType*)FbleNormalType(heap, spec.type);
       if (normal->_base.tag != FBLE_STRUCT_TYPE) {
         ReportError(arena, &literal->spec->loc,
             "expected a struct value, but literal spec has type %t\n",
             spec);
-        FbleReleaseType(heap, spec);
+        FreeTc(heap, spec);
         FbleReleaseType(heap, &normal->_base);
-        return NULL;
+        return TC_FAILED;
       }
-      FbleReleaseType(heap, &normal->_base);
 
       size_t n = strlen(literal->word);
       if (n == 0) {
         ReportError(arena, &literal->word_loc,
             "literals must not be empty\n");
-        FbleReleaseType(heap, spec);
-        return NULL;
+        FreeTc(heap, spec);
+        FbleReleaseType(heap, &normal->_base);
+        return TC_FAILED;
       }
 
-      FbleName spec_name = {
-        .name = FbleNewString(arena, "__literal_spec"),
-        .space = FBLE_NORMAL_NAME_SPACE,
-        .loc = literal->spec->loc,
-      };
-      PushVar(arena, scope, spec_name, spec);
-
-      FbleVarExpr spec_var = {
-        ._base = { .tag = FBLE_VAR_EXPR, .loc = literal->spec->loc },
-        .var = spec_name
-      };
-
-      FbleAccessExpr letters[n];
-      FbleExpr* xs[n];
-      FbleString* fields[n];
-      FbleLoc loc = literal->word_loc;
+      assert(false && "TODO: rewrite me");
       for (size_t i = 0; i < n; ++i) {
         char field_str[2] = { literal->word[i], '\0' };
         fields[i] = FbleNewString(arena, field_str);
@@ -1304,210 +1431,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
   UNREACHABLE("should already have returned");
   return NULL;
-}
-
-// TypeCheckList --
-//   Type check a list expression.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   scope - the list of variables in scope.
-//   loc - the location of the list expression.
-//   args - the elements of the list expression to compile.
-//
-// Results:
-//   The type of the compiled expression, or NULL if the expression is not
-//   well typed.
-//
-// Side effects:
-//   * Resolves field tags and MISC_*_EXPRs.
-//   * Prints a message to stderr if the expression fails to type check.
-//   * Allocates a reference-counted type that must be freed using
-//     FbleReleaseType when it is no longer needed.
-//   * Behavior is undefined if there is not at least one list argument.
-static FbleType* TypeCheckList(FbleTypeHeap* heap, Scope* scope, FbleLoc loc, FbleExprV args)
-{
-  // The goal is to desugar a list expression [a, b, c, d] into the
-  // following expression:
-  // <@ T@>(T@ x, T@ x1, T@ x2, T@ x3)<@ L@>((T@, L@){L@;} cons, L@ nil) {
-  //   cons(x, cons(x1, cons(x2, cons(x3, nil))));
-  // }<t@>(a, b, c, d)
-  assert(args.size > 0 && "empty lists not allowed");
-  FbleTypeofExpr typeof_elem = {
-    ._base = { .tag = FBLE_TYPEOF_EXPR, .loc = loc },
-    .expr = args.xs[0],
-  };
-  FbleTypeExpr* type = &typeof_elem._base;
-
-  FbleArena* arena = heap->arena;
-  FbleBasicKind* basic_kind = FbleAlloc(arena, FbleBasicKind);
-  basic_kind->_base.tag = FBLE_BASIC_KIND;
-  basic_kind->_base.loc = FbleCopyLoc(loc);
-  basic_kind->_base.refcount = 1;
-  basic_kind->level = 1;
-
-  FbleName elem_type_name = {
-    .name = FbleNewString(arena, "T"),
-    .space = FBLE_TYPE_NAME_SPACE,
-    .loc = loc,
-  };
-
-  FbleVarExpr elem_type = {
-    ._base = { .tag = FBLE_VAR_EXPR, .loc = loc, },
-    .var = elem_type_name,
-  };
-
-  // Generate unique names for the variables x, x0, x1, ...
-  size_t num_digits = 0;
-  for (size_t x = args.size; x > 0; x /= 10) {
-    num_digits++;
-  }
-
-  FbleName arg_names[args.size];
-  FbleVarExpr arg_values[args.size];
-  for (size_t i = 0; i < args.size; ++i) {
-    FbleString* name = FbleAllocExtra(arena, FbleString, num_digits + 2);
-    name->refcount = 1;
-    name->magic = FBLE_STRING_MAGIC;
-    name->str[0] = 'x';
-    name->str[num_digits+1] = '\0';
-    for (size_t j = 0, x = i; j < num_digits; j++, x /= 10) {
-      name->str[num_digits - j] = (x % 10) + '0';
-    }
-    arg_names[i].name = name;
-    arg_names[i].space = FBLE_NORMAL_NAME_SPACE;
-    arg_names[i].loc = loc;
-
-    arg_values[i]._base.tag = FBLE_VAR_EXPR;
-    arg_values[i]._base.loc = loc;
-    arg_values[i].var = arg_names[i];
-  }
-
-  FbleName list_type_name = {
-    .name = FbleNewString(arena, "L"),
-    .space = FBLE_TYPE_NAME_SPACE,
-    .loc = loc,
-  };
-
-  FbleVarExpr list_type = {
-    ._base = { .tag = FBLE_VAR_EXPR, .loc = loc, },
-    .var = list_type_name,
-  };
-
-  FbleTaggedTypeExpr inner_args[2];
-  FbleName cons_name = {
-    .name = FbleNewString(arena, "cons"),
-    .space = FBLE_NORMAL_NAME_SPACE,
-    .loc = loc,
-  };
-
-  FbleVarExpr cons = {
-    ._base = { .tag = FBLE_VAR_EXPR, .loc = loc, },
-    .var = cons_name,
-  };
-
-  // T@, L@ -> L@
-  FbleTypeExpr* cons_arg_types[] = {
-    &elem_type._base,
-    &list_type._base
-  };
-  FbleFuncTypeExpr cons_type = {
-    ._base = { .tag = FBLE_FUNC_TYPE_EXPR, .loc = loc, },
-    .args = { .size = 2, .xs = cons_arg_types },
-    .rtype = &list_type._base,
-  };
-
-  inner_args[0].type = &cons_type._base;
-  inner_args[0].name = cons_name;
-
-  FbleName nil_name = {
-    .name = FbleNewString(arena, "nil"),
-    .space = FBLE_NORMAL_NAME_SPACE,
-    .loc = loc,
-  };
-
-  FbleVarExpr nil = {
-    ._base = { .tag = FBLE_VAR_EXPR, .loc = loc, },
-    .var = nil_name,
-  };
-
-  inner_args[1].type = &list_type._base;
-  inner_args[1].name = nil_name;
-
-  FbleApplyExpr applys[args.size];
-  FbleExpr* all_args[args.size * 2];
-  for (size_t i = 0; i < args.size; ++i) {
-    applys[i]._base.tag = FBLE_MISC_APPLY_EXPR;
-    applys[i]._base.loc = loc;
-    applys[i].misc = &cons._base;
-    applys[i].args.size = 2;
-    applys[i].args.xs = all_args + 2 * i;
-
-    applys[i].args.xs[0] = &arg_values[i]._base;
-    applys[i].args.xs[1] = (i + 1 < args.size) ? &applys[i+1]._base : &nil._base;
-  }
-
-  FbleFuncValueExpr inner_func = {
-    ._base = { .tag = FBLE_FUNC_VALUE_EXPR, .loc = loc },
-    .args = { .size = 2, .xs = inner_args },
-    .body = (args.size == 0) ? &nil._base : &applys[0]._base,
-  };
-
-  FblePolyExpr inner_poly = {
-    ._base = { .tag = FBLE_POLY_EXPR, .loc = loc },
-    .arg = {
-      .kind = &basic_kind->_base,
-      .name = list_type_name,
-    },
-    .body = &inner_func._base,
-  };
-
-  FbleTaggedTypeExpr outer_args[args.size];
-  for (size_t i = 0; i < args.size; ++i) {
-    outer_args[i].type = &elem_type._base;
-    outer_args[i].name = arg_names[i];
-  }
-
-  FbleFuncValueExpr outer_func = {
-    ._base = { .tag = FBLE_FUNC_VALUE_EXPR, .loc = loc },
-    .args = { .size = args.size, .xs = outer_args },
-    .body = &inner_poly._base,
-  };
-
-  FblePolyExpr outer_poly = {
-    ._base = { .tag = FBLE_POLY_EXPR, .loc = loc },
-    .arg = {
-      .kind = &basic_kind->_base,
-      .name = elem_type_name,
-    },
-    .body = &outer_func._base,
-  };
-
-  FblePolyApplyExpr apply_type = {
-    ._base = { .tag = FBLE_POLY_APPLY_EXPR, .loc = loc },
-    .poly = &outer_poly._base,
-    .arg = type,
-  };
-
-  FbleApplyExpr apply_elems = {
-    ._base = { .tag = FBLE_MISC_APPLY_EXPR, .loc = loc },
-    .misc = &apply_type._base,
-    .args = args,
-  };
-
-  FbleExpr* expr = &apply_elems._base;
-
-  FbleType* result = TypeCheckExpr(heap, scope, expr);
-
-  FbleFreeKind(arena, &basic_kind->_base);
-  for (size_t i = 0; i < args.size; i++) {
-    FbleFreeString(arena, arg_names[i].name);
-  }
-  FbleFreeString(arena, elem_type_name.name);
-  FbleFreeString(arena, list_type_name.name);
-  FbleFreeString(arena, cons_name.name);
-  FbleFreeString(arena, nil_name.name);
-  return result;
 }
 
 // TypeCheckExec --

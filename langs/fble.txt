@@ -760,7 +760,7 @@ of a list is a polymorphic function that can be used to construct any type of
 list of the given elements. Assuming the values have type T@, the type of this
 function is:
 
-  <@ L@>((T@, L@){L@;}, L@){L@;}
+  <@ L@>((T@, L@){ L@; }, L@){ L@; }
 
 The type parameter L@ represents the type of the list that can be produced by
 calling the function. The first argument to the function is a function that
@@ -829,7 +829,7 @@ that accepts a prepend function and empty list:
   <@ L@>((Octal@, L@){L@;}, L@){L@;}
 
 It is a type error if the word contains a letter for which there is no
-corresponding field in the struct value.
+corresponding field in the struct value. Empty literals are not allowed.
 
 Runtime is the runtime of the desugared literal, except that the struct value
 expr is only evaluated once.

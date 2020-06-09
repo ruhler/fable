@@ -1,5 +1,11 @@
 
+* Produce list type as well as tc in NewListTc.
 * Rewrite typecheck.c to produce FbleTc.
+
+* Consistently document ownership of args to functions?
+ Borrowed: no transfer of ownership.
+ Consumed: ownership transferred from caller to callee.
+ Required: caller responsible for keeping alive as long as returned result is.
 
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
 * Change ReportError to take %n as a value instead of a pointer?
@@ -7,6 +13,7 @@
 * Remove unused extra data in FbleExpr syntax after we split post-typechecked
   information out.
 * Should we remove FBLE_POLY_APPLY_TC? If not, should we restore FBLE_EVAL_TC?
+  Should we remove FBLE_POLY_VALUE_TC and use FBLE_FUNC_APPLY instead?
 
 * Distinguish between FbleExpr and a new FbleTc IR.
 

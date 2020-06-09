@@ -1073,6 +1073,43 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
   return &pat->_base;
 }
 
+// FbleNewListType -- see documentation in type.h
+FbleType* FbleNewListType(FbleTypeHeap* heap, FbleType* elem_type)
+{
+  // Assuming the values have type T@, the type of the list is:
+  //   <@ L@>((T@, L@){L@;}, L@){ L@; }
+  FbleBasicKind* kind = FbleAlloc(heap->arena, FbleBasicKind);
+  kind->_base.tag = FBLE_BASIC_KIND;
+  kind->_base.loc = FbleCopyLoc(elem_type->loc);
+  kind->_base.refcount = 1;
+  kind->level = 0;
+
+  FbleName l_name = {
+    .name = FbleNewString(heap->arena, "L"),
+    .space = FBLE_TYPE_NAME_SPACE,
+    .loc = FbleCopyLoc(elem_type->loc),
+  };
+
+  FbleType* l = FbleNewVarType(heap, elem_type->loc, kind, l_name);
+  FbleFreeKind(heap->arena, kind);
+
+  FbleFuncType* cons_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, elem_type->loc);
+  FbleVectorInit(heap->arena, cons_type->args);
+  FbleVectorAppend(heap->arena, cons_type->args, FbleRetainType(heap, elem_type));
+  FbleVectorAppend(heap->arena, cons_type->args, FbleRetainType(heap, l));
+  cons_type->rtype = FbleRetainType(heap, l);
+
+  FbleType* nil_type = FbleRetainType(heap, l);
+
+  FbleFuncType* func_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, elem_type->loc);
+  FbleVectorInit(heap->arena, func_type->args);
+  FbleVectorAppend(heap->arena, func_type->args, cons_type);
+  FbleVectorAppend(heap->arena, func_type->args, nil_type);
+  func_type->rtype = FbleRetainType(heap, l);
+
+  return FbleNewPolyType(heap, elem_type->loc, l, &func_type->_base);
+}
+
 // FbleTypeIsVacuous -- see documentation in type.h
 bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 {
