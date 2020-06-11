@@ -1090,8 +1090,8 @@ FbleType* FbleNewListType(FbleTypeHeap* heap, FbleType* elem_type)
     .loc = FbleCopyLoc(elem_type->loc),
   };
 
-  FbleType* l = FbleNewVarType(heap, elem_type->loc, kind, l_name);
-  FbleFreeKind(heap->arena, kind);
+  FbleType* l = FbleNewVarType(heap, elem_type->loc, &kind->_base, l_name);
+  FbleFreeKind(heap->arena, &kind->_base);
 
   FbleFuncType* cons_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, elem_type->loc);
   FbleVectorInit(heap->arena, cons_type->args);
@@ -1103,7 +1103,7 @@ FbleType* FbleNewListType(FbleTypeHeap* heap, FbleType* elem_type)
 
   FbleFuncType* func_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, elem_type->loc);
   FbleVectorInit(heap->arena, func_type->args);
-  FbleVectorAppend(heap->arena, func_type->args, cons_type);
+  FbleVectorAppend(heap->arena, func_type->args, &cons_type->_base);
   FbleVectorAppend(heap->arena, func_type->args, nil_type);
   func_type->rtype = FbleRetainType(heap, l);
 

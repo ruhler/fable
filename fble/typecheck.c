@@ -54,9 +54,9 @@ typedef struct Scope {
   struct Scope* parent;
 } Scope;
 
-static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
+//static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
-static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
+//static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
 
 static void InitScope(FbleArena* arena, Scope* scope, bool capture, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
@@ -82,7 +82,7 @@ static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc);
 static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args);
 
 static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
-static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
+//static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm);
@@ -106,16 +106,16 @@ static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* p
 //   ownership of the given type, which will be released when the variable is
 //   freed. Does not take owner ship of name. It is the callers responsibility
 //   to ensure that 'name' outlives the returned Var.
-static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
-{
-  Var* var = FbleAlloc(arena, Var);
-  var->name = name;
-  var->type = type;
-  var->used = false;
-  var->accessed = false;
-  FbleVectorAppend(arena, scope->vars, var);
-  return var;
-}
+//static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
+//{
+//  Var* var = FbleAlloc(arena, Var);
+//  var->name = name;
+//  var->type = type;
+//  var->used = false;
+//  var->accessed = false;
+//  FbleVectorAppend(arena, scope->vars, var);
+//  return var;
+//}
 
 // PopVar --
 //   Pops a var off the given scope.
@@ -156,53 +156,53 @@ static void PopVar(FbleTypeHeap* heap, Scope* scope)
 //
 // Side effects:
 //   Marks variable as used and for capture if necessary and not phantom.
-static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom)
-{
-  for (size_t i = 0; i < scope->vars.size; ++i) {
-    size_t j = scope->vars.size - i - 1;
-    Var* var = scope->vars.xs[j];
-    if (FbleNamesEqual(name, var->name)) {
-      var->accessed = true;
-      if (!phantom) {
-        var->used = true;
-      }
-      return var;
-    }
-  }
-
-  for (size_t i = 0; i < scope->statics.size; ++i) {
-    Var* var = scope->statics.xs[i];
-    if (FbleNamesEqual(name, var->name)) {
-      var->accessed = true;
-      if (!phantom) {
-        var->used = true;
-      }
-      return var;
-    }
-  }
-
-  if (scope->parent != NULL) {
-    Var* var = GetVar(heap, scope->parent, name, !scope->capture || phantom);
-    if (var != NULL) {
-      if (phantom) {
-        // It doesn't matter that we are returning a variable for the wrong
-        // scope here. phantom means we won't actually use it ever.
-        return var;
-      }
-
-      FbleArena* arena = heap->arena;
-      Var* captured = FbleAlloc(arena, Var);
-      captured->name = var->name;
-      captured->type = FbleRetainType(heap, var->type);
-      captured->used = !phantom;
-      captured->accessed = true;
-      FbleVectorAppend(arena, scope->statics, captured);
-      return captured;
-    }
-  }
-
-  return NULL;
-}
+//static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom)
+//{
+//  for (size_t i = 0; i < scope->vars.size; ++i) {
+//    size_t j = scope->vars.size - i - 1;
+//    Var* var = scope->vars.xs[j];
+//    if (FbleNamesEqual(name, var->name)) {
+//      var->accessed = true;
+//      if (!phantom) {
+//        var->used = true;
+//      }
+//      return var;
+//    }
+//  }
+//
+//  for (size_t i = 0; i < scope->statics.size; ++i) {
+//    Var* var = scope->statics.xs[i];
+//    if (FbleNamesEqual(name, var->name)) {
+//      var->accessed = true;
+//      if (!phantom) {
+//        var->used = true;
+//      }
+//      return var;
+//    }
+//  }
+//
+//  if (scope->parent != NULL) {
+//    Var* var = GetVar(heap, scope->parent, name, !scope->capture || phantom);
+//    if (var != NULL) {
+//      if (phantom) {
+//        // It doesn't matter that we are returning a variable for the wrong
+//        // scope here. phantom means we won't actually use it ever.
+//        return var;
+//      }
+//
+//      FbleArena* arena = heap->arena;
+//      Var* captured = FbleAlloc(arena, Var);
+//      captured->name = var->name;
+//      captured->type = FbleRetainType(heap, var->type);
+//      captured->used = !phantom;
+//      captured->accessed = true;
+//      FbleVectorAppend(arena, scope->statics, captured);
+//      return captured;
+//    }
+//  }
+//
+//  return NULL;
+//}
 
 // InitScope --
 //   Initialize a new scope.
@@ -1135,302 +1135,314 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      assert(false && "TODO: rewrite me");
-      for (size_t i = 0; i < n; ++i) {
-        char field_str[2] = { literal->word[i], '\0' };
-        fields[i] = FbleNewString(arena, field_str);
-
-        letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
-        letters[i]._base.loc = loc;
-        letters[i].object = &spec_var._base;
-        letters[i].field.name.name = fields[i];
-        letters[i].field.name.space = FBLE_NORMAL_NAME_SPACE;
-        letters[i].field.name.loc = loc;
-        letters[i].field.tag = FBLE_UNRESOLVED_FIELD_TAG;
-
-        xs[i] = &letters[i]._base;
-
-        if (literal->word[i] == '\n') {
-          loc.line++;
-          loc.col = 0;
-        }
-        loc.col++;
-      }
-
-      FbleExprV args = { .size = n, .xs = xs, };
-      FbleType* result = TypeCheckList(heap, scope, literal->word_loc, args);
-      PopVar(heap, scope);
-
-      for (size_t i = 0; i < n; ++i) {
-        literal->tags[i] = letters[i].field.tag;
-        FbleFreeString(arena, fields[i]);
-      }
-      FbleFreeString(arena, spec_name.name);
-
-      return result;
+      assert(false && "TODO: FBLE_LITERAL_EXPRESSION");
+      return TC_FAILED;
+//      for (size_t i = 0; i < n; ++i) {
+//        char field_str[2] = { literal->word[i], '\0' };
+//        fields[i] = FbleNewString(arena, field_str);
+//
+//        letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
+//        letters[i]._base.loc = loc;
+//        letters[i].object = &spec_var._base;
+//        letters[i].field.name.name = fields[i];
+//        letters[i].field.name.space = FBLE_NORMAL_NAME_SPACE;
+//        letters[i].field.name.loc = loc;
+//        letters[i].field.tag = FBLE_UNRESOLVED_FIELD_TAG;
+//
+//        xs[i] = &letters[i]._base;
+//
+//        if (literal->word[i] == '\n') {
+//          loc.line++;
+//          loc.col = 0;
+//        }
+//        loc.col++;
+//      }
+//
+//      FbleExprV args = { .size = n, .xs = xs, };
+//      FbleType* result = TypeCheckList(heap, scope, literal->word_loc, args);
+//      PopVar(heap, scope);
+//
+//      for (size_t i = 0; i < n; ++i) {
+//        literal->tags[i] = letters[i].field.tag;
+//        FbleFreeString(arena, fields[i]);
+//      }
+//      FbleFreeString(arena, spec_name.name);
+//
+//      return result;
     }
 
     case FBLE_FUNC_VALUE_EXPR: {
-      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
-      size_t argc = func_value_expr->args.size;
-
-      bool error = false;
-      FbleTypeV arg_types;
-      FbleVectorInit(arena, arg_types);
-      for (size_t i = 0; i < argc; ++i) {
-        FbleType* arg_type = TypeCheckType(heap, scope, func_value_expr->args.xs[i].type);
-        FbleVectorAppend(arena, arg_types, arg_type);
-        error = error || arg_type == NULL;
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(func_value_expr->args.xs[i].name, func_value_expr->args.xs[j].name)) {
-            error = true;
-            ReportError(arena, &func_value_expr->args.xs[i].name.loc,
-                "duplicate arg name '%n'\n",
-                &func_value_expr->args.xs[i].name);
-          }
-        }
-      }
-
-      if (error) {
-        for (size_t i = 0; i < argc; ++i) {
-          FbleReleaseType(heap, arg_types.xs[i]);
-        }
-        FbleFree(arena, arg_types.xs);
-        return NULL;
-      }
-
-      Scope func_scope;
-      InitScope(arena, &func_scope, true, scope);
-
-      for (size_t i = 0; i < argc; ++i) {
-        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types.xs[i]);
-      }
-
-      FbleType* func_result = TypeCheckExpr(heap, &func_scope, func_value_expr->body);
-      if (func_result == NULL) {
-        FreeScope(heap, &func_scope);
-        FbleFree(arena, arg_types.xs);
-        return NULL;
-      }
-      FbleType* type = func_result;
-
-      FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-      ft->args = arg_types;
-      ft->rtype = type;
-      FbleTypeAddRef(heap, &ft->_base, ft->rtype);
-      FbleReleaseType(heap, ft->rtype);
-
-      for (size_t i = 0; i < argc; ++i) {
-        FbleTypeAddRef(heap, &ft->_base, arg_types.xs[i]);
-      }
-
-      FreeScope(heap, &func_scope);
-      return &ft->_base;
+      assert(false && "TODO: FUNC_VALUE_EXPR");
+      return TC_FAILED;
+//      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
+//      size_t argc = func_value_expr->args.size;
+//
+//      bool error = false;
+//      FbleTypeV arg_types;
+//      FbleVectorInit(arena, arg_types);
+//      for (size_t i = 0; i < argc; ++i) {
+//        FbleType* arg_type = TypeCheckType(heap, scope, func_value_expr->args.xs[i].type);
+//        FbleVectorAppend(arena, arg_types, arg_type);
+//        error = error || arg_type == NULL;
+//
+//        for (size_t j = 0; j < i; ++j) {
+//          if (FbleNamesEqual(func_value_expr->args.xs[i].name, func_value_expr->args.xs[j].name)) {
+//            error = true;
+//            ReportError(arena, &func_value_expr->args.xs[i].name.loc,
+//                "duplicate arg name '%n'\n",
+//                &func_value_expr->args.xs[i].name);
+//          }
+//        }
+//      }
+//
+//      if (error) {
+//        for (size_t i = 0; i < argc; ++i) {
+//          FbleReleaseType(heap, arg_types.xs[i]);
+//        }
+//        FbleFree(arena, arg_types.xs);
+//        return NULL;
+//      }
+//
+//      Scope func_scope;
+//      InitScope(arena, &func_scope, true, scope);
+//
+//      for (size_t i = 0; i < argc; ++i) {
+//        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types.xs[i]);
+//      }
+//
+//      FbleType* func_result = TypeCheckExpr(heap, &func_scope, func_value_expr->body);
+//      if (func_result == NULL) {
+//        FreeScope(heap, &func_scope);
+//        FbleFree(arena, arg_types.xs);
+//        return NULL;
+//      }
+//      FbleType* type = func_result;
+//
+//      FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+//      ft->args = arg_types;
+//      ft->rtype = type;
+//      FbleTypeAddRef(heap, &ft->_base, ft->rtype);
+//      FbleReleaseType(heap, ft->rtype);
+//
+//      for (size_t i = 0; i < argc; ++i) {
+//        FbleTypeAddRef(heap, &ft->_base, arg_types.xs[i]);
+//      }
+//
+//      FreeScope(heap, &func_scope);
+//      return &ft->_base;
     }
 
     case FBLE_EVAL_EXPR:
     case FBLE_LINK_EXPR:
     case FBLE_EXEC_EXPR: {
-      Scope body_scope;
-      InitScope(arena, &body_scope, true, scope);
-
-      FbleType* body = TypeCheckExec(heap, &body_scope, expr);
-      if (body == NULL) {
-        FreeScope(heap, &body_scope);
-        return NULL;
-      }
-
-      FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-      proc_type->type = body;
-      FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
-      FbleReleaseType(heap, body);
-      FreeScope(heap, &body_scope);
-      return &proc_type->_base;
+      assert(false && "TODO: EVAL, LINK, EXEC");
+      return TC_FAILED;
+//      Scope body_scope;
+//      InitScope(arena, &body_scope, true, scope);
+//
+//      FbleType* body = TypeCheckExec(heap, &body_scope, expr);
+//      if (body == NULL) {
+//        FreeScope(heap, &body_scope);
+//        return NULL;
+//      }
+//
+//      FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
+//      proc_type->type = body;
+//      FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
+//      FbleReleaseType(heap, body);
+//      FreeScope(heap, &body_scope);
+//      return &proc_type->_base;
     }
 
     case FBLE_VAR_EXPR: {
-      FbleVarExpr* var_expr = (FbleVarExpr*)expr;
-      Var* var = GetVar(heap, scope, var_expr->var, false);
-      if (var == NULL) {
-        ReportError(arena, &var_expr->var.loc, "variable '%n' not defined\n",
-            &var_expr->var);
-        return NULL;
-      }
-      return FbleRetainType(heap, var->type);
+      assert(false && "TODO: VAR_EXPR");
+      return TC_FAILED;
+//      FbleVarExpr* var_expr = (FbleVarExpr*)expr;
+//      Var* var = GetVar(heap, scope, var_expr->var, false);
+//      if (var == NULL) {
+//        ReportError(arena, &var_expr->var.loc, "variable '%n' not defined\n",
+//            &var_expr->var);
+//        return NULL;
+//      }
+//      return FbleRetainType(heap, var->type);
     }
 
     case FBLE_LET_EXPR: {
-      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
-      bool error = false;
-
-      // Evaluate the types of the bindings and set up the new vars.
-      FbleType* types[let_expr->bindings.size];
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleBinding* binding = let_expr->bindings.xs + i;
-
-        if (binding->type == NULL) {
-          assert(binding->kind != NULL);
-
-          // We don't know the type, so create an abstract type variable to
-          // represent the type.
-          // TODO: It would be nice to pick a more descriptive type for kind
-          // level 0 variables. Perhaps: __name@?
-          FbleName type_name = binding->name;
-          type_name.space = FBLE_TYPE_NAME_SPACE;
-          types[i] = FbleNewVarType(heap, binding->name.loc, binding->kind, type_name);
-        } else {
-          assert(binding->kind == NULL);
-          types[i] = TypeCheckType(heap, scope, binding->type);
-          error = error || (types[i] == NULL);
-        }
-        
-        if (types[i] != NULL && !CheckNameSpace(arena, &binding->name, types[i])) {
-          error = true;
-        }
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
-            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
-                "duplicate variable name '%n'\n",
-                &let_expr->bindings.xs[i].name);
-            error = true;
-          }
-        }
-      }
-
-      Var* vars[let_expr->bindings.size];
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, types[i]);
-      }
-
-      // Compile the values of the variables.
-      FbleType* defs[let_expr->bindings.size];
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        // TODO: Wrap binding defs in profile blocks by variable name.
-        FbleBinding* binding = let_expr->bindings.xs + i;
-
-        defs[i] = NULL;
-        if (!error) {
-          defs[i] = TypeCheckExpr(heap, scope, binding->expr);
-        }
-        error = error || (defs[i] == NULL);
-
-        if (!error && binding->type != NULL && !FbleTypesEqual(heap, types[i], defs[i])) {
-          error = true;
-          ReportError(arena, &binding->expr->loc,
-              "expected type %t, but found something of type %t\n",
-              types[i], defs[i]);
-        } else if (!error && binding->type == NULL) {
-          FbleKind* expected_kind = FbleGetKind(arena, types[i]);
-          FbleKind* actual_kind = FbleGetKind(arena, defs[i]);
-          if (!FbleKindsEqual(expected_kind, actual_kind)) {
-            ReportError(arena, &binding->expr->loc,
-                "expected kind %k, but found something of kind %k\n",
-                expected_kind, actual_kind);
-            error = true;
-          }
-          FbleFreeKind(arena, expected_kind);
-          FbleFreeKind(arena, actual_kind);
-        }
-      }
-
-      // Check to see if this is a recursive let block.
-      let_expr->recursive = false;
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        let_expr->recursive = let_expr->recursive || vars[i]->used;
-      }
-
-      // Apply the newly computed type values for variables whose types were
-      // previously unknown.
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        if (!error && let_expr->bindings.xs[i].type == NULL) {
-          FbleAssignVarType(heap, types[i], defs[i]);
-        }
-        FbleReleaseType(heap, defs[i]);
-      }
-
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        if (defs[i] != NULL) {
-          if (FbleTypeIsVacuous(heap, types[i])) {
-            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
-                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
-            error = true;
-          }
-        }
-      }
-
-      FbleType* body = NULL;
-      if (!error) {
-        body = TypeCheckExpr(heap, scope, let_expr->body);
-      }
-
-      if (body != NULL) {
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          if (!vars[i]->accessed && vars[i]->name.name->str[0] != '_') {
-            FbleReportWarning("variable '", &vars[i]->name.loc);
-            FblePrintName(stderr, vars[i]->name);
-            fprintf(stderr, "' defined but not used\n");
-          }
-        }
-      }
-
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        PopVar(heap, scope);
-      }
-
-      return body;
+      assert(false && "TODO: LET_EXPR");
+      return TC_FAILED;
+//      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
+//      bool error = false;
+//
+//      // Evaluate the types of the bindings and set up the new vars.
+//      FbleType* types[let_expr->bindings.size];
+//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+//        FbleBinding* binding = let_expr->bindings.xs + i;
+//
+//        if (binding->type == NULL) {
+//          assert(binding->kind != NULL);
+//
+//          // We don't know the type, so create an abstract type variable to
+//          // represent the type.
+//          // TODO: It would be nice to pick a more descriptive type for kind
+//          // level 0 variables. Perhaps: __name@?
+//          FbleName type_name = binding->name;
+//          type_name.space = FBLE_TYPE_NAME_SPACE;
+//          types[i] = FbleNewVarType(heap, binding->name.loc, binding->kind, type_name);
+//        } else {
+//          assert(binding->kind == NULL);
+//          types[i] = TypeCheckType(heap, scope, binding->type);
+//          error = error || (types[i] == NULL);
+//        }
+//        
+//        if (types[i] != NULL && !CheckNameSpace(arena, &binding->name, types[i])) {
+//          error = true;
+//        }
+//
+//        for (size_t j = 0; j < i; ++j) {
+//          if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
+//            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
+//                "duplicate variable name '%n'\n",
+//                &let_expr->bindings.xs[i].name);
+//            error = true;
+//          }
+//        }
+//      }
+//
+//      Var* vars[let_expr->bindings.size];
+//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+//        vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, types[i]);
+//      }
+//
+//      // Compile the values of the variables.
+//      FbleType* defs[let_expr->bindings.size];
+//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+//        // TODO: Wrap binding defs in profile blocks by variable name.
+//        FbleBinding* binding = let_expr->bindings.xs + i;
+//
+//        defs[i] = NULL;
+//        if (!error) {
+//          defs[i] = TypeCheckExpr(heap, scope, binding->expr);
+//        }
+//        error = error || (defs[i] == NULL);
+//
+//        if (!error && binding->type != NULL && !FbleTypesEqual(heap, types[i], defs[i])) {
+//          error = true;
+//          ReportError(arena, &binding->expr->loc,
+//              "expected type %t, but found something of type %t\n",
+//              types[i], defs[i]);
+//        } else if (!error && binding->type == NULL) {
+//          FbleKind* expected_kind = FbleGetKind(arena, types[i]);
+//          FbleKind* actual_kind = FbleGetKind(arena, defs[i]);
+//          if (!FbleKindsEqual(expected_kind, actual_kind)) {
+//            ReportError(arena, &binding->expr->loc,
+//                "expected kind %k, but found something of kind %k\n",
+//                expected_kind, actual_kind);
+//            error = true;
+//          }
+//          FbleFreeKind(arena, expected_kind);
+//          FbleFreeKind(arena, actual_kind);
+//        }
+//      }
+//
+//      // Check to see if this is a recursive let block.
+//      let_expr->recursive = false;
+//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+//        let_expr->recursive = let_expr->recursive || vars[i]->used;
+//      }
+//
+//      // Apply the newly computed type values for variables whose types were
+//      // previously unknown.
+//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+//        if (!error && let_expr->bindings.xs[i].type == NULL) {
+//          FbleAssignVarType(heap, types[i], defs[i]);
+//        }
+//        FbleReleaseType(heap, defs[i]);
+//      }
+//
+//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+//        if (defs[i] != NULL) {
+//          if (FbleTypeIsVacuous(heap, types[i])) {
+//            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
+//                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
+//            error = true;
+//          }
+//        }
+//      }
+//
+//      FbleType* body = NULL;
+//      if (!error) {
+//        body = TypeCheckExpr(heap, scope, let_expr->body);
+//      }
+//
+//      if (body != NULL) {
+//        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+//          if (!vars[i]->accessed && vars[i]->name.name->str[0] != '_') {
+//            FbleReportWarning("variable '", &vars[i]->name.loc);
+//            FblePrintName(stderr, vars[i]->name);
+//            fprintf(stderr, "' defined but not used\n");
+//          }
+//        }
+//      }
+//
+//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+//        PopVar(heap, scope);
+//      }
+//
+//      return body;
     }
 
     case FBLE_MODULE_REF_EXPR: {
-      FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
-
-      Var* var = GetVar(heap, scope, module_ref_expr->ref.resolved, false);
-
-      // We should have resolved all modules at program load time.
-      assert(var != NULL && "module not in scope");
-      return FbleRetainType(heap, var->type);
+      assert(false && "TODO: MODULE_REF_EXPR");
+      return TC_FAILED;
+//      FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
+//
+//      Var* var = GetVar(heap, scope, module_ref_expr->ref.resolved, false);
+//
+//      // We should have resolved all modules at program load time.
+//      assert(var != NULL && "module not in scope");
+//      return FbleRetainType(heap, var->type);
     }
 
     case FBLE_POLY_EXPR: {
-      FblePolyExpr* poly = (FblePolyExpr*)expr;
-
-      if (FbleGetKindLevel(poly->arg.kind) != 1) {
-        ReportError(arena, &poly->arg.kind->loc,
-            "expected a type kind, but found %k\n",
-            poly->arg.kind);
-        return NULL;
-      }
-
-      if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
-        ReportError(arena, &poly->arg.name.loc,
-            "the namespace of '%n' is not appropriate for kind %k\n",
-            &poly->arg.name, poly->arg.kind);
-        return NULL;
-      }
-
-      FbleType* arg_type = FbleNewVarType(heap, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
-      FbleType* arg = FbleValueOfType(heap, arg_type);
-      assert(arg != NULL);
-
-      PushVar(arena, scope, poly->arg.name, arg_type);
-      FbleType* body = TypeCheckExpr(heap, scope, poly->body);
-      PopVar(heap, scope);
-
-      if (body == NULL) {
-        FbleReleaseType(heap, arg);
-        return NULL;
-      }
-
-      FbleType* pt = FbleNewPolyType(heap, expr->loc, arg, body);
-      FbleReleaseType(heap, arg);
-      FbleReleaseType(heap, body);
-      return pt;
+      assert(false && "TODO: POLY_EXPR");
+//      FblePolyExpr* poly = (FblePolyExpr*)expr;
+//
+//      if (FbleGetKindLevel(poly->arg.kind) != 1) {
+//        ReportError(arena, &poly->arg.kind->loc,
+//            "expected a type kind, but found %k\n",
+//            poly->arg.kind);
+//        return NULL;
+//      }
+//
+//      if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
+//        ReportError(arena, &poly->arg.name.loc,
+//            "the namespace of '%n' is not appropriate for kind %k\n",
+//            &poly->arg.name, poly->arg.kind);
+//        return NULL;
+//      }
+//
+//      FbleType* arg_type = FbleNewVarType(heap, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
+//      FbleType* arg = FbleValueOfType(heap, arg_type);
+//      assert(arg != NULL);
+//
+//      PushVar(arena, scope, poly->arg.name, arg_type);
+//      FbleType* body = TypeCheckExpr(heap, scope, poly->body);
+//      PopVar(heap, scope);
+//
+//      if (body == NULL) {
+//        FbleReleaseType(heap, arg);
+//        return NULL;
+//      }
+//
+//      FbleType* pt = FbleNewPolyType(heap, expr->loc, arg, body);
+//      FbleReleaseType(heap, arg);
+//      FbleReleaseType(heap, body);
+//      return pt;
     }
   }
 
   UNREACHABLE("should already have returned");
-  return NULL;
+  return TC_FAILED;
 }
 
 // TypeCheckExec --
@@ -1442,162 +1454,169 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 //   expr - the expression to compile.
 //
 // Results:
-//   The type of the result of executing the process expression.
-//   NULL if the expression is not well typed or is not a process expression.
+//   A type checked expression that computes the result of executing the
+//   process expression, or TC_FAILED if the expression is not well typed or
+//   is not a process expression. If the type of the process expression is T!,
+//   the returned type is T.
 //
 // Side effects:
-// * Resolves field tags and MISC_*_EXPRs.
-// * Prints warning messages to stderr.
 // * Prints a message to stderr if the expression fails to compile.
-// * The caller should call FbleReleaseType when the returned result is no
-//   longer needed.
-static FbleType* TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
-{
-  FbleArena* arena = heap->arena;
-  switch (expr->tag) {
-    case FBLE_STRUCT_TYPE_EXPR:
-    case FBLE_UNION_TYPE_EXPR:
-    case FBLE_FUNC_TYPE_EXPR:
-    case FBLE_PROC_TYPE_EXPR:
-    case FBLE_TYPEOF_EXPR:
-    case FBLE_MISC_APPLY_EXPR:
-    case FBLE_FUNC_APPLY_EXPR:
-    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
-    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
-    case FBLE_UNION_VALUE_EXPR:
-    case FBLE_STRUCT_ACCESS_EXPR:
-    case FBLE_UNION_ACCESS_EXPR:
-    case FBLE_MISC_ACCESS_EXPR:
-    case FBLE_UNION_SELECT_EXPR:
-    case FBLE_FUNC_VALUE_EXPR:
-    case FBLE_VAR_EXPR:
-    case FBLE_LET_EXPR:
-    case FBLE_MODULE_REF_EXPR:
-    case FBLE_POLY_EXPR:
-    case FBLE_POLY_APPLY_EXPR:
-    case FBLE_LIST_EXPR:
-    case FBLE_LITERAL_EXPR: {
-      FbleType* proc = TypeCheckExpr(heap, scope, expr);
-      if (proc == NULL) {
-        return NULL;
-      }
-
-      FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc);
-      if (normal->_base.tag != FBLE_PROC_TYPE) {
-        ReportError(arena, &expr->loc,
-            "expected process, but found expression of type %t\n",
-            proc);
-        FbleReleaseType(heap, &normal->_base);
-        FbleReleaseType(heap, proc);
-        return NULL;
-      }
-
-      FbleType* rtype = FbleRetainType(heap, normal->type);
-      FbleReleaseType(heap, &normal->_base);
-      FbleReleaseType(heap, proc);
-      return rtype;
-    }
-
-    case FBLE_EVAL_EXPR: {
-      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
-      return TypeCheckExpr(heap, scope, eval_expr->body);
-    }
-
-    case FBLE_LINK_EXPR: {
-      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
-      if (FbleNamesEqual(link_expr->get, link_expr->put)) {
-        ReportError(arena, &link_expr->put.loc,
-            "duplicate port name '%n'\n",
-            &link_expr->put);
-        return NULL;
-      }
-
-      FbleType* port_type = TypeCheckType(heap, scope, link_expr->type);
-      if (port_type == NULL) {
-        return NULL;
-      }
-
-      FbleProcType* get_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
-      get_type->type = port_type;
-      FbleTypeAddRef(heap, &get_type->_base, get_type->type);
-
-      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
-      FbleVectorInit(arena, unit_type->fields);
-
-      FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-      unit_proc_type->type = &unit_type->_base;
-      FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
-      FbleReleaseType(heap, &unit_type->_base);
-
-      FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-      FbleVectorInit(arena, put_type->args);
-      FbleVectorAppend(arena, put_type->args, port_type);
-      FbleTypeAddRef(heap, &put_type->_base, port_type);
-      FbleReleaseType(heap, port_type);
-      put_type->rtype = &unit_proc_type->_base;
-      FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
-      FbleReleaseType(heap, &unit_proc_type->_base);
-
-      PushVar(arena, scope, link_expr->get, &get_type->_base);
-      PushVar(arena, scope, link_expr->put, &put_type->_base);
-      return TypeCheckExec(heap, scope, link_expr->body);
-    }
-
-    case FBLE_EXEC_EXPR: {
-      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
-      bool error = false;
-
-      // Evaluate the types of the bindings and set up the new vars.
-      FbleType* types[exec_expr->bindings.size];
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        types[i] = TypeCheckType(heap, scope, exec_expr->bindings.xs[i].type);
-        error = error || (types[i] == NULL);
-      }
-
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        FbleType* binding = TypeCheckExpr(heap, scope, exec_expr->bindings.xs[i].expr);
-        if (binding != NULL) {
-          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(heap, binding);
-          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
-            if (types[i] != NULL && !FbleTypesEqual(heap, types[i], proc_type->type)) {
-              error = true;
-              ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
-                  "expected type %t!, but found %t\n",
-                  types[i], binding);
-            }
-          } else {
-            error = true;
-            ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
-                "expected process, but found expression of type %t\n",
-                binding);
-          }
-          FbleReleaseType(heap, &proc_type->_base);
-        } else {
-          error = true;
-        }
-        FbleReleaseType(heap, binding);
-      }
-
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        PushVar(arena, scope, exec_expr->bindings.xs[i].name, types[i]);
-      }
-
-      FbleType* body = NULL;
-      if (!error) {
-        body = TypeCheckExec(heap, scope, exec_expr->body);
-      }
-
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        PopVar(heap, scope);
-      }
-
-      return body;
-    }
-  }
-
-  UNREACHABLE("should never get here");
-  return NULL;
-}
+// * The caller should call FbleFreeTc when the returned result is no
+//   longer needed and FbleReleaseType when the returned FbleType is no longer
+//   needed.
+//static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
+//{
+//  // FbleArena* arena = heap->arena;
+//  switch (expr->tag) {
+//    case FBLE_STRUCT_TYPE_EXPR:
+//    case FBLE_UNION_TYPE_EXPR:
+//    case FBLE_FUNC_TYPE_EXPR:
+//    case FBLE_PROC_TYPE_EXPR:
+//    case FBLE_TYPEOF_EXPR:
+//    case FBLE_MISC_APPLY_EXPR:
+//    case FBLE_FUNC_APPLY_EXPR:
+//    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
+//    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
+//    case FBLE_UNION_VALUE_EXPR:
+//    case FBLE_STRUCT_ACCESS_EXPR:
+//    case FBLE_UNION_ACCESS_EXPR:
+//    case FBLE_MISC_ACCESS_EXPR:
+//    case FBLE_UNION_SELECT_EXPR:
+//    case FBLE_FUNC_VALUE_EXPR:
+//    case FBLE_VAR_EXPR:
+//    case FBLE_LET_EXPR:
+//    case FBLE_MODULE_REF_EXPR:
+//    case FBLE_POLY_EXPR:
+//    case FBLE_POLY_APPLY_EXPR:
+//    case FBLE_LIST_EXPR:
+//    case FBLE_LITERAL_EXPR: {
+//      Tc proc = TypeCheckExpr(heap, scope, expr);
+//      if (proc.type == NULL) {
+//        return TC_FAILED;
+//      }
+//
+//      assert(false && "TODO: EXEC NORMAL PROC");
+//      return TC_FAILED;
+////      FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc.type);
+////      if (normal->_base.tag != FBLE_PROC_TYPE) {
+////        ReportError(arena, &expr->loc,
+////            "expected process, but found expression of type %t\n",
+////            proc);
+////        FbleReleaseType(heap, &normal->_base);
+////        FbleReleaseType(heap, proc);
+////        return NULL;
+////      }
+////
+////      FbleType* rtype = FbleRetainType(heap, normal->type);
+////      FbleReleaseType(heap, &normal->_base);
+////      FbleReleaseType(heap, proc);
+////      return rtype;
+//    }
+//
+//    case FBLE_EVAL_EXPR: {
+//      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
+//      return TypeCheckExpr(heap, scope, eval_expr->body);
+//    }
+//
+//    case FBLE_LINK_EXPR: {
+//      assert(false && "TODO: EXEC LINK");
+//      return TC_FAILED;
+////      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
+////      if (FbleNamesEqual(link_expr->get, link_expr->put)) {
+////        ReportError(arena, &link_expr->put.loc,
+////            "duplicate port name '%n'\n",
+////            &link_expr->put);
+////        return NULL;
+////      }
+////
+////      FbleType* port_type = TypeCheckType(heap, scope, link_expr->type);
+////      if (port_type == NULL) {
+////        return NULL;
+////      }
+////
+////      FbleProcType* get_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
+////      get_type->type = port_type;
+////      FbleTypeAddRef(heap, &get_type->_base, get_type->type);
+////
+////      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
+////      FbleVectorInit(arena, unit_type->fields);
+////
+////      FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
+////      unit_proc_type->type = &unit_type->_base;
+////      FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
+////      FbleReleaseType(heap, &unit_type->_base);
+////
+////      FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+////      FbleVectorInit(arena, put_type->args);
+////      FbleVectorAppend(arena, put_type->args, port_type);
+////      FbleTypeAddRef(heap, &put_type->_base, port_type);
+////      FbleReleaseType(heap, port_type);
+////      put_type->rtype = &unit_proc_type->_base;
+////      FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
+////      FbleReleaseType(heap, &unit_proc_type->_base);
+////
+////      PushVar(arena, scope, link_expr->get, &get_type->_base);
+////      PushVar(arena, scope, link_expr->put, &put_type->_base);
+////      return TypeCheckExec(heap, scope, link_expr->body);
+//    }
+//
+//    case FBLE_EXEC_EXPR: {
+//      assert(false && "TODO: EXEC EXEC");
+//      return TC_FAILED;
+////      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
+////      bool error = false;
+////
+////      // Evaluate the types of the bindings and set up the new vars.
+////      FbleType* types[exec_expr->bindings.size];
+////      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+////        types[i] = TypeCheckType(heap, scope, exec_expr->bindings.xs[i].type);
+////        error = error || (types[i] == NULL);
+////      }
+////
+////      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+////        FbleType* binding = TypeCheckExpr(heap, scope, exec_expr->bindings.xs[i].expr);
+////        if (binding != NULL) {
+////          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(heap, binding);
+////          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
+////            if (types[i] != NULL && !FbleTypesEqual(heap, types[i], proc_type->type)) {
+////              error = true;
+////              ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
+////                  "expected type %t!, but found %t\n",
+////                  types[i], binding);
+////            }
+////          } else {
+////            error = true;
+////            ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
+////                "expected process, but found expression of type %t\n",
+////                binding);
+////          }
+////          FbleReleaseType(heap, &proc_type->_base);
+////        } else {
+////          error = true;
+////        }
+////        FbleReleaseType(heap, binding);
+////      }
+////
+////      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+////        PushVar(arena, scope, exec_expr->bindings.xs[i].name, types[i]);
+////      }
+////
+////      FbleType* body = NULL;
+////      if (!error) {
+////        body = TypeCheckExec(heap, scope, exec_expr->body);
+////      }
+////
+////      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+////        PopVar(heap, scope);
+////      }
+////
+////      return body;
+//    }
+//  }
+//
+//  UNREACHABLE("should never get here");
+//  return TC_FAILED;
+//}
 
 // TypeCheckExprForType --
 //   Type check the given expression, ignoring accesses to variables.
@@ -1628,9 +1647,10 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr
   Scope nscope;
   InitScope(arena, &nscope, false, scope);
 
-  FbleType* result = TypeCheckExpr(heap, &nscope, expr);
+  Tc result = TypeCheckExpr(heap, &nscope, expr);
   FreeScope(heap, &nscope);
-  return result;
+  FbleFreeTc(arena, result.tc);
+  return result.type;
 }
 
 // TypeCheckType --
@@ -1840,37 +1860,39 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
 //   Prints a message to stderr if the program fails to compile.
 static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm)
 {
-  FbleArena* arena = heap->arena;
-  for (size_t i = 0; i < prgm->modules.size; ++i) {
-    // TODO: Put each module into its own profiling block.
-    FbleType* module = TypeCheckExpr(heap, scope, prgm->modules.xs[i].value);
-
-    if (module == NULL) {
-      return false;
-    }
-
-    PushVar(arena, scope, prgm->modules.xs[i].name, module);
-  }
-
-  FbleType* result = TypeCheckExpr(heap, scope, prgm->main);
-  for (size_t i = 0; i < prgm->modules.size; ++i) {
-    PopVar(heap, scope);
-  }
-
-  FbleReleaseType(heap, result);
-  return result != NULL;
+  assert(false && "TODO: TypeCheckProgram");
+  return NULL;
+//  FbleArena* arena = heap->arena;
+//  for (size_t i = 0; i < prgm->modules.size; ++i) {
+//    Tc module = TypeCheckExpr(heap, scope, prgm->modules.xs[i].value);
+//    module = ProfileBlock(arena, prgm->modules.xs[i].name, module);
+//
+//    if (module.type == NULL) {
+//      return NULL;
+//    }
+//
+//    PushVar(arena, scope, prgm->modules.xs[i].name, module);
+//  }
+//
+//  FbleType* result = TypeCheckExpr(heap, scope, prgm->main);
+//  for (size_t i = 0; i < prgm->modules.size; ++i) {
+//    PopVar(heap, scope);
+//  }
+//
+//  FbleReleaseType(heap, result);
+//  return result != NULL;
 }
 // FbleTypeCheck -- see documentation in typecheck.h
-bool FbleTypeCheck(FbleArena* arena, FbleProgram* program)
+FbleTc* FbleTypeCheck(FbleArena* arena, FbleProgram* program)
 {
   Scope scope;
   InitScope(arena, &scope, false, NULL);
 
   FbleTypeHeap* heap = FbleNewTypeHeap(arena);
-  bool ok = TypeCheckProgram(heap, &scope, program);
+  FbleTc* result = TypeCheckProgram(heap, &scope, program);
   FreeScope(heap, &scope);
   FbleFreeTypeHeap(heap);
-  return ok;
+  return result;
 }
 
 // FbleFreeTc -- see documentation in typecheck.h
@@ -1915,7 +1937,7 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
 
     case FBLE_STRUCT_ACCESS_TC:
     case FBLE_UNION_ACCESS_TC: {
-      FbleAccessTc access_tc = (FbleAccessTc*)tc;
+      FbleAccessTc* access_tc = (FbleAccessTc*)tc;
       FbleFreeTc(arena, access_tc->obj);
       FbleFree(arena, tc);
       return;
@@ -1952,9 +1974,9 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
       FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)tc;
       FbleFreeTc(arena, apply_tc->func);
       for (size_t i = 0; i < apply_tc->args.size; ++i) {
-        FbleFreeTc(arena, apply_tc->func.xs[i]);
+        FbleFreeTc(arena, apply_tc->args.xs[i]);
       }
-      FbleFree(arena, apply_tc->func.xs);
+      FbleFree(arena, apply_tc->args.xs);
       FbleFree(arena, tc);
       return;
     }
@@ -1993,7 +2015,7 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
-      FbleFreeName(profile_tc->name);
+      FbleFreeName(arena, profile_tc->name);
       FbleFreeTc(arena, profile_tc->body);
       FbleFree(arena, tc);
       return;
