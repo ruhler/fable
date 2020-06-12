@@ -54,7 +54,7 @@ typedef struct Scope {
   struct Scope* parent;
 } Scope;
 
-//static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
+static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
 //static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
 
@@ -85,7 +85,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 //static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
-static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm);
+static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* modules, size_t modulec, FbleExpr* body);
 
 // PushVar --
 //   Push a variable onto the current scope.
@@ -106,16 +106,16 @@ static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* p
 //   ownership of the given type, which will be released when the variable is
 //   freed. Does not take owner ship of name. It is the callers responsibility
 //   to ensure that 'name' outlives the returned Var.
-//static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
-//{
-//  Var* var = FbleAlloc(arena, Var);
-//  var->name = name;
-//  var->type = type;
-//  var->used = false;
-//  var->accessed = false;
-//  FbleVectorAppend(arena, scope->vars, var);
-//  return var;
-//}
+static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
+{
+  Var* var = FbleAlloc(arena, Var);
+  var->name = name;
+  var->type = type;
+  var->used = false;
+  var->accessed = false;
+  FbleVectorAppend(arena, scope->vars, var);
+  return var;
+}
 
 // PopVar --
 //   Pops a var off the given scope.
@@ -1845,43 +1845,58 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
 }
 
 // TypeCheckProgram --
-//   Type check the given program.
+//   Type check a program.
 //
 // Inputs:
 //   heap - heap to use for allocations.
 //   scope - the list of variables in scope.
-//   prgm - the program to type check.
+//   modules - the modules of the program.
+//   modulec - the number of modules to check.
+//   body - the main body of the program.
 //
 // Results:
-//   true if the program type checked successfully, false otherwise.
+//   The type checked program, or NULL if the program failed to type check.
 //
 // Side effects:
-//   Prints warning messages to stderr.
-//   Prints a message to stderr if the program fails to compile.
-static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleProgram* prgm)
+// * Prints warning messages to stderr.
+// * Prints a message to stderr if the program fails to type check.
+// * The user is responsible for calling FbleFreeTc on the returned program
+//   when it is no longer needed.
+static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* modules, size_t modulec, FbleExpr* body)
 {
-  assert(false && "TODO: TypeCheckProgram");
-  return NULL;
-//  FbleArena* arena = heap->arena;
-//  for (size_t i = 0; i < prgm->modules.size; ++i) {
-//    Tc module = TypeCheckExpr(heap, scope, prgm->modules.xs[i].value);
-//    module = ProfileBlock(arena, prgm->modules.xs[i].name, module);
-//
-//    if (module.type == NULL) {
-//      return NULL;
-//    }
-//
-//    PushVar(arena, scope, prgm->modules.xs[i].name, module);
-//  }
-//
-//  FbleType* result = TypeCheckExpr(heap, scope, prgm->main);
-//  for (size_t i = 0; i < prgm->modules.size; ++i) {
-//    PopVar(heap, scope);
-//  }
-//
-//  FbleReleaseType(heap, result);
-//  return result != NULL;
+  FbleArena* arena = heap->arena;
+
+  if (modulec == 0) {
+    Tc result = TypeCheckExpr(heap, scope, body);
+    FbleReleaseType(heap, result.type);
+    return result.tc;
+  }
+
+  Tc module = TypeCheckExpr(heap, scope, modules->value);
+  module = ProfileBlock(arena, modules->name, module);
+  if (module.type == NULL) {
+    return NULL;
+  }
+
+  PushVar(arena, scope, modules->name, module.type);
+  FbleTc* body_tc = TypeCheckProgram(heap, scope, modules + 1, modulec - 1, body);
+  PopVar(heap, scope);
+
+  if (body_tc == NULL) {
+    FbleFreeTc(arena, module.tc);
+    return NULL;
+  }
+
+  FbleLetTc* let_tc = FbleAlloc(arena, FbleLetTc);
+  let_tc->_base.tag = FBLE_LET_TC;
+  let_tc->_base.loc = FbleCopyLoc(modules->name.loc);
+  let_tc->recursive = false;
+  FbleVectorInit(arena, let_tc->bindings);
+  FbleVectorAppend(arena, let_tc->bindings, module.tc);
+  let_tc->body = body_tc;
+  return &let_tc->_base;
 }
+
 // FbleTypeCheck -- see documentation in typecheck.h
 FbleTc* FbleTypeCheck(FbleArena* arena, FbleProgram* program)
 {
@@ -1889,7 +1904,7 @@ FbleTc* FbleTypeCheck(FbleArena* arena, FbleProgram* program)
   InitScope(arena, &scope, false, NULL);
 
   FbleTypeHeap* heap = FbleNewTypeHeap(arena);
-  FbleTc* result = TypeCheckProgram(heap, &scope, program);
+  FbleTc* result = TypeCheckProgram(heap, &scope, program->modules.xs, program->modules.size, program->main);
   FreeScope(heap, &scope);
   FbleFreeTypeHeap(heap);
   return result;

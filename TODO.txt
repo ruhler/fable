@@ -1,4 +1,5 @@
 
+* Reimplement typecheck.c LET_EXPR
 * Produce list type as well as tc in NewListTc.
 * Rewrite typecheck.c to produce FbleTc.
 
