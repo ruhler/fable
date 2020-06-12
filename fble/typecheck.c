@@ -17,16 +17,21 @@
 // Var --
 //   Information about a variable visible during type checking.
 //
+// A variable that is captured from one scope to another will have a separate
+// instance of Var for each scope that it is captured in.
+//
 // name - the name of the variable.
 // type - the type of the variable.
 //   A reference to the type is owned by this Var.
 // used  - true if the variable is used anywhere at runtime, false otherwise.
 // accessed - true if the variable is referenced anywhere, false otherwise.
+// index - the index of the variable.
 typedef struct {
   FbleName name;
   FbleType* type;
   bool used;
   bool accessed;
+  FbleVarIndex index;
 } Var;
 
 // VarV --
@@ -50,13 +55,13 @@ typedef struct {
 typedef struct Scope {
   VarV statics;
   VarV vars;
-  bool capture; // TODO: Turn into a vector of FbleVarIndex.
+  bool capture; // TODO: Turn into a vector of FbleVarIndex or some such.
   struct Scope* parent;
 } Scope;
 
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
-//static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
+static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
 
 static void InitScope(FbleArena* arena, Scope* scope, bool capture, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
@@ -113,6 +118,8 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
   var->type = type;
   var->used = false;
   var->accessed = false;
+  var->index.source = FBLE_LOCAL_VAR;
+  var->index.index = scope->vars.size;
   FbleVectorAppend(arena, scope->vars, var);
   return var;
 }
@@ -156,53 +163,55 @@ static void PopVar(FbleTypeHeap* heap, Scope* scope)
 //
 // Side effects:
 //   Marks variable as used and for capture if necessary and not phantom.
-//static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom)
-//{
-//  for (size_t i = 0; i < scope->vars.size; ++i) {
-//    size_t j = scope->vars.size - i - 1;
-//    Var* var = scope->vars.xs[j];
-//    if (FbleNamesEqual(name, var->name)) {
-//      var->accessed = true;
-//      if (!phantom) {
-//        var->used = true;
-//      }
-//      return var;
-//    }
-//  }
-//
-//  for (size_t i = 0; i < scope->statics.size; ++i) {
-//    Var* var = scope->statics.xs[i];
-//    if (FbleNamesEqual(name, var->name)) {
-//      var->accessed = true;
-//      if (!phantom) {
-//        var->used = true;
-//      }
-//      return var;
-//    }
-//  }
-//
-//  if (scope->parent != NULL) {
-//    Var* var = GetVar(heap, scope->parent, name, !scope->capture || phantom);
-//    if (var != NULL) {
-//      if (phantom) {
-//        // It doesn't matter that we are returning a variable for the wrong
-//        // scope here. phantom means we won't actually use it ever.
-//        return var;
-//      }
-//
-//      FbleArena* arena = heap->arena;
-//      Var* captured = FbleAlloc(arena, Var);
-//      captured->name = var->name;
-//      captured->type = FbleRetainType(heap, var->type);
-//      captured->used = !phantom;
-//      captured->accessed = true;
-//      FbleVectorAppend(arena, scope->statics, captured);
-//      return captured;
-//    }
-//  }
-//
-//  return NULL;
-//}
+static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom)
+{
+  for (size_t i = 0; i < scope->vars.size; ++i) {
+    size_t j = scope->vars.size - i - 1;
+    Var* var = scope->vars.xs[j];
+    if (FbleNamesEqual(name, var->name)) {
+      var->accessed = true;
+      if (!phantom) {
+        var->used = true;
+      }
+      return var;
+    }
+  }
+
+  for (size_t i = 0; i < scope->statics.size; ++i) {
+    Var* var = scope->statics.xs[i];
+    if (FbleNamesEqual(name, var->name)) {
+      var->accessed = true;
+      if (!phantom) {
+        var->used = true;
+      }
+      return var;
+    }
+  }
+
+  if (scope->parent != NULL) {
+    Var* var = GetVar(heap, scope->parent, name, !scope->capture || phantom);
+    if (var != NULL) {
+      if (phantom) {
+        // It doesn't matter that we are returning a variable for the wrong
+        // scope here. phantom means we won't actually use it ever.
+        return var;
+      }
+
+      FbleArena* arena = heap->arena;
+      Var* captured = FbleAlloc(arena, Var);
+      captured->name = var->name;
+      captured->type = FbleRetainType(heap, var->type);
+      captured->used = !phantom;
+      captured->accessed = true;
+      captured->index.source = FBLE_STATIC_VAR;
+      captured->index.index = scope->statics.size;
+      FbleVectorAppend(arena, scope->statics, captured);
+      return captured;
+    }
+  }
+
+  return NULL;
+}
 
 // InitScope --
 //   Initialize a new scope.
@@ -1255,16 +1264,19 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_VAR_EXPR: {
-      assert(false && "TODO: VAR_EXPR");
-      return TC_FAILED;
-//      FbleVarExpr* var_expr = (FbleVarExpr*)expr;
-//      Var* var = GetVar(heap, scope, var_expr->var, false);
-//      if (var == NULL) {
-//        ReportError(arena, &var_expr->var.loc, "variable '%n' not defined\n",
-//            &var_expr->var);
-//        return NULL;
-//      }
-//      return FbleRetainType(heap, var->type);
+      FbleVarExpr* var_expr = (FbleVarExpr*)expr;
+      Var* var = GetVar(heap, scope, var_expr->var, false);
+      if (var == NULL) {
+        ReportError(arena, &var_expr->var.loc, "variable '%n' not defined\n",
+            &var_expr->var);
+        return TC_FAILED;
+      }
+
+      FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
+      var_tc->_base.tag = FBLE_VAR_TC;
+      var_tc->_base.loc = FbleCopyLoc(expr->loc);
+      var_tc->index = var->index;
+      return MkTc(FbleRetainType(heap, var->type), &var_tc->_base);
     }
 
     case FBLE_LET_EXPR: {
@@ -1409,15 +1421,18 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_MODULE_REF_EXPR: {
-      assert(false && "TODO: MODULE_REF_EXPR");
-      return TC_FAILED;
-//      FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
-//
-//      Var* var = GetVar(heap, scope, module_ref_expr->ref.resolved, false);
-//
-//      // We should have resolved all modules at program load time.
-//      assert(var != NULL && "module not in scope");
-//      return FbleRetainType(heap, var->type);
+      FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
+
+      Var* var = GetVar(heap, scope, module_ref_expr->ref.resolved, false);
+
+      // We should have resolved all modules at program load time.
+      assert(var != NULL && "module not in scope");
+
+      FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
+      var_tc->_base.tag = FBLE_VAR_TC;
+      var_tc->_base.loc = FbleCopyLoc(expr->loc);
+      var_tc->index = var->index;
+      return MkTc(FbleRetainType(heap, var->type), &var_tc->_base);
     }
 
     case FBLE_POLY_EXPR: {
