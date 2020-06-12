@@ -1268,127 +1268,144 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_LET_EXPR: {
-      assert(false && "TODO: LET_EXPR");
-      return TC_FAILED;
-//      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
-//      bool error = false;
-//
-//      // Evaluate the types of the bindings and set up the new vars.
-//      FbleType* types[let_expr->bindings.size];
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        FbleBinding* binding = let_expr->bindings.xs + i;
-//
-//        if (binding->type == NULL) {
-//          assert(binding->kind != NULL);
-//
-//          // We don't know the type, so create an abstract type variable to
-//          // represent the type.
-//          // TODO: It would be nice to pick a more descriptive type for kind
-//          // level 0 variables. Perhaps: __name@?
-//          FbleName type_name = binding->name;
-//          type_name.space = FBLE_TYPE_NAME_SPACE;
-//          types[i] = FbleNewVarType(heap, binding->name.loc, binding->kind, type_name);
-//        } else {
-//          assert(binding->kind == NULL);
-//          types[i] = TypeCheckType(heap, scope, binding->type);
-//          error = error || (types[i] == NULL);
-//        }
-//        
-//        if (types[i] != NULL && !CheckNameSpace(arena, &binding->name, types[i])) {
-//          error = true;
-//        }
-//
-//        for (size_t j = 0; j < i; ++j) {
-//          if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
-//            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
-//                "duplicate variable name '%n'\n",
-//                &let_expr->bindings.xs[i].name);
-//            error = true;
-//          }
-//        }
-//      }
-//
-//      Var* vars[let_expr->bindings.size];
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, types[i]);
-//      }
-//
-//      // Compile the values of the variables.
-//      FbleType* defs[let_expr->bindings.size];
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        // TODO: Wrap binding defs in profile blocks by variable name.
-//        FbleBinding* binding = let_expr->bindings.xs + i;
-//
-//        defs[i] = NULL;
-//        if (!error) {
-//          defs[i] = TypeCheckExpr(heap, scope, binding->expr);
-//        }
-//        error = error || (defs[i] == NULL);
-//
-//        if (!error && binding->type != NULL && !FbleTypesEqual(heap, types[i], defs[i])) {
-//          error = true;
-//          ReportError(arena, &binding->expr->loc,
-//              "expected type %t, but found something of type %t\n",
-//              types[i], defs[i]);
-//        } else if (!error && binding->type == NULL) {
-//          FbleKind* expected_kind = FbleGetKind(arena, types[i]);
-//          FbleKind* actual_kind = FbleGetKind(arena, defs[i]);
-//          if (!FbleKindsEqual(expected_kind, actual_kind)) {
-//            ReportError(arena, &binding->expr->loc,
-//                "expected kind %k, but found something of kind %k\n",
-//                expected_kind, actual_kind);
-//            error = true;
-//          }
-//          FbleFreeKind(arena, expected_kind);
-//          FbleFreeKind(arena, actual_kind);
-//        }
-//      }
-//
-//      // Check to see if this is a recursive let block.
-//      let_expr->recursive = false;
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        let_expr->recursive = let_expr->recursive || vars[i]->used;
-//      }
-//
-//      // Apply the newly computed type values for variables whose types were
-//      // previously unknown.
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        if (!error && let_expr->bindings.xs[i].type == NULL) {
-//          FbleAssignVarType(heap, types[i], defs[i]);
-//        }
-//        FbleReleaseType(heap, defs[i]);
-//      }
-//
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        if (defs[i] != NULL) {
-//          if (FbleTypeIsVacuous(heap, types[i])) {
-//            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
-//                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
-//            error = true;
-//          }
-//        }
-//      }
-//
-//      FbleType* body = NULL;
-//      if (!error) {
-//        body = TypeCheckExpr(heap, scope, let_expr->body);
-//      }
-//
-//      if (body != NULL) {
-//        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//          if (!vars[i]->accessed && vars[i]->name.name->str[0] != '_') {
-//            FbleReportWarning("variable '", &vars[i]->name.loc);
-//            FblePrintName(stderr, vars[i]->name);
-//            fprintf(stderr, "' defined but not used\n");
-//          }
-//        }
-//      }
-//
-//      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-//        PopVar(heap, scope);
-//      }
-//
-//      return body;
+      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
+      bool error = false;
+
+      // Evaluate the types of the bindings and set up the new vars.
+      FbleType* types[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleBinding* binding = let_expr->bindings.xs + i;
+
+        if (binding->type == NULL) {
+          assert(binding->kind != NULL);
+
+          // We don't know the type, so create an abstract type variable to
+          // represent the type.
+          // TODO: It would be nice to pick a more descriptive type for kind
+          // level 0 variables. Perhaps: __name@?
+          FbleName type_name = binding->name;
+          type_name.space = FBLE_TYPE_NAME_SPACE;
+          types[i] = FbleNewVarType(heap, binding->name.loc, binding->kind, type_name);
+        } else {
+          assert(binding->kind == NULL);
+          types[i] = TypeCheckType(heap, scope, binding->type);
+          error = error || (types[i] == NULL);
+        }
+        
+        if (types[i] != NULL && !CheckNameSpace(arena, &binding->name, types[i])) {
+          error = true;
+        }
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
+            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
+                "duplicate variable name '%n'\n",
+                &let_expr->bindings.xs[i].name);
+            error = true;
+          }
+        }
+      }
+
+      Var* vars[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, types[i]);
+      }
+
+      // Compile the values of the variables.
+      Tc defs[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleBinding* binding = let_expr->bindings.xs + i;
+
+        defs[i] = TC_FAILED;
+        if (!error) {
+          defs[i] = TypeCheckExpr(heap, scope, binding->expr);
+          defs[i] = ProfileBlock(arena, binding->name, defs[i]);
+        }
+        error = error || (defs[i].type == NULL);
+
+        if (!error && binding->type != NULL && !FbleTypesEqual(heap, types[i], defs[i].type)) {
+          error = true;
+          ReportError(arena, &binding->expr->loc,
+              "expected type %t, but found something of type %t\n",
+              types[i], defs[i].type);
+        } else if (!error && binding->type == NULL) {
+          FbleKind* expected_kind = FbleGetKind(arena, types[i]);
+          FbleKind* actual_kind = FbleGetKind(arena, defs[i].type);
+          if (!FbleKindsEqual(expected_kind, actual_kind)) {
+            ReportError(arena, &binding->expr->loc,
+                "expected kind %k, but found something of kind %k\n",
+                expected_kind, actual_kind);
+            error = true;
+          }
+          FbleFreeKind(arena, expected_kind);
+          FbleFreeKind(arena, actual_kind);
+        }
+      }
+
+      // Check to see if this is a recursive let block.
+      bool recursive = false;
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        recursive = recursive || vars[i]->used;
+      }
+
+      // Apply the newly computed type values for variables whose types were
+      // previously unknown.
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (!error && let_expr->bindings.xs[i].type == NULL) {
+          FbleAssignVarType(heap, types[i], defs[i].type);
+        }
+        FbleReleaseType(heap, defs[i].type);
+      }
+
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (defs[i].type != NULL) {
+          if (FbleTypeIsVacuous(heap, types[i])) {
+            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
+                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
+            error = true;
+          }
+        }
+      }
+
+      Tc body = TC_FAILED;
+      if (!error) {
+        body = TypeCheckExpr(heap, scope, let_expr->body);
+        error = (body.type == NULL);
+      }
+
+      if (body.type != NULL) {
+        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+          if (!vars[i]->accessed && vars[i]->name.name->str[0] != '_') {
+            FbleReportWarning("variable '", &vars[i]->name.loc);
+            FblePrintName(stderr, vars[i]->name);
+            fprintf(stderr, "' defined but not used\n");
+          }
+        }
+      }
+
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        PopVar(heap, scope);
+      }
+
+      if (error) {
+        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+          FbleFreeTc(arena, defs[i].tc);
+        }
+        FreeTc(heap, body);
+        return TC_FAILED;
+      }
+
+      FbleLetTc* let_tc = FbleAlloc(arena, FbleLetTc);
+      let_tc->_base.tag = FBLE_LET_TC;
+      let_tc->_base.loc = FbleCopyLoc(expr->loc);
+      let_tc->recursive = recursive;
+      FbleVectorInit(arena, let_tc->bindings);
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleVectorAppend(arena, let_tc->bindings, defs[i].tc);
+      }
+      let_tc->body = body.tc;
+        
+      return MkTc(body.type, &let_tc->_base);
     }
 
     case FBLE_MODULE_REF_EXPR: {

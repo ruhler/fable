@@ -398,14 +398,10 @@ typedef struct {
 
 // FbleLetExpr --
 //   FBLE_LET_EXPR (bindings :: [(Type, Name, Expr)]) (body :: Expr)
-//
-// recursive is set to false during type checking if it detects that the let
-// is a non-recursive let expression.
 typedef struct {
   FbleExpr _base;
   FbleBindingV bindings;
   FbleExpr* body;
-  bool recursive;
 } FbleLetExpr;
 
 // FbleModuleRefExpr --

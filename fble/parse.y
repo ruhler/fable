@@ -479,7 +479,6 @@ stmt:
       let_expr->_base.loc = FbleCopyLoc(@$);
       let_expr->bindings = $1;
       let_expr->body = $3;
-      let_expr->recursive = true;
       $$ = &let_expr->_base;
     }  
   | expr '~' name ',' name ';' stmt {
