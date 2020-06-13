@@ -184,18 +184,18 @@ typedef enum {
   FBLE_MODULE_REF_EXPR,
 
   FBLE_STRUCT_TYPE_EXPR,
-  FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR,
+  // FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR
   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
-  FBLE_STRUCT_ACCESS_EXPR,
+  // FBLE_STRUCT_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR
 
   FBLE_UNION_TYPE_EXPR,
   FBLE_UNION_VALUE_EXPR,
-  FBLE_UNION_ACCESS_EXPR,
+  // FBLE_UNION_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR
   FBLE_UNION_SELECT_EXPR,
 
   FBLE_FUNC_TYPE_EXPR,
   FBLE_FUNC_VALUE_EXPR,
-  FBLE_FUNC_APPLY_EXPR,
+  // FBLE_FUNC_APPLY_EXPR = FBLE_MISC_APPLY_EXPR
 
   FBLE_PROC_TYPE_EXPR,
   FBLE_EVAL_EXPR,
@@ -285,26 +285,12 @@ typedef struct {
   FbleTaggedTypeExprV fields;
 } FbleUnionTypeExpr;
 
-// FbleField --
-//   The name of a field.
-//
-// The tag is initially set to FBLE_UNRESOLVE_FIELD_TAG and resolved as part
-// of type checking.
-typedef struct {
-  FbleName name;
-  size_t tag;
-} FbleField;
-
-// FBLE_UNRESOLVED_FIELD_TAG --
-//   Sentinel value used for unresolved field tags.
-#define FBLE_UNRESOLVED_FIELD_TAG (-1)
-
 // FbleUnionValueExpr --
 //   FBLE_UNION_VALUE_EXPR (type :: Type) (field :: Name) (arg :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleTypeExpr* type;
-  FbleField field;
+  FbleName field;
   FbleExpr* arg;
 } FbleUnionValueExpr;
 
@@ -457,25 +443,17 @@ typedef struct {
 
 // FbleLiteralExpr --
 //   FBLE_LITERAL_EXPR (spec :: Expr) (word :: Word)
-//
-// tags represents the resolved field tags corresponding to the letters of
-// word. The length of tags is strlen(word). The contents of tags is initially
-// set to FBLE_UNRESOLVED_FIELD_TAG, then later resolved in type check.
 typedef struct {
   FbleExpr _base;
   FbleExpr* spec;
   FbleLoc word_loc;
   const char* word;
-  size_t* tags;
 } FbleLiteralExpr;
 
 // FbleApplyExpr --
 //   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])
 //   FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR (type :: Type) (args :: [Expr])
 //   FBLE_FUNC_APPLY_EXPR (func :: Expr) (args :: [Expr])
-//
-// FBLE_MISC_APPLY_EXPR is resolved to FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR or
-// FBLE_FUNC_APPLY_EXPR as part of type check.
 typedef struct {
   FbleExpr _base;
   FbleExpr* misc;
@@ -486,14 +464,10 @@ typedef struct {
 //   FBLE_MISC_ACCESS_EXPR (object :: Expr) (field :: Name)
 //   FBLE_STRUCT_ACCESS_EXPR (object :: Expr) (field :: Name)
 //   FBLE_UNION_ACCESS_EXPR (object :: Expr) (field :: Name)
-//
-// Common form used for both struct and union access.
-// FBLE_MISC_ACCESS_EXPR is resolved to FBLE_STRUCT_ACCESS_EXPR or
-// FBLE_UNION_ACCESS_EXPR as part of type check.
 typedef struct {
   FbleExpr _base;
   FbleExpr* object;
-  FbleField field;
+  FbleName field;
 } FbleAccessExpr;
 
 // FbleModule --

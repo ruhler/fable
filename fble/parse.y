@@ -343,8 +343,7 @@ expr:
       access_expr->_base.tag = FBLE_MISC_ACCESS_EXPR;
       access_expr->_base.loc = FbleCopyLoc(@$);
       access_expr->object = $1;
-      access_expr->field.name = $3;
-      access_expr->field.tag = FBLE_UNRESOLVED_FIELD_TAG;
+      access_expr->field = $3;
       $$ = &access_expr->_base;
    }
  | '+' '(' tagged_type_p ')' {
@@ -359,8 +358,7 @@ expr:
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
       union_value_expr->_base.loc = FbleCopyLoc(@$);
       union_value_expr->type = $1;
-      union_value_expr->field.name = $3;
-      union_value_expr->field.tag = FBLE_UNRESOLVED_FIELD_TAG;
+      union_value_expr->field = $3;
       union_value_expr->arg = $5;
       $$ = &union_value_expr->_base;
    }
@@ -422,11 +420,6 @@ expr:
       literal_expr->spec = $1;
       literal_expr->word_loc = FbleCopyLoc(@3);
       literal_expr->word = $3;
-      size_t n = strlen($3);
-      literal_expr->tags = FbleArrayAlloc(arena, size_t, n);
-      for (size_t i = 0; i < n; ++i) {
-        literal_expr->tags[i] = FBLE_UNRESOLVED_FIELD_TAG;
-      }
       $$ = &literal_expr->_base;
    }
  | block {

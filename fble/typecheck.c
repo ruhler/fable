@@ -577,16 +577,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(&type_type->_base, &type_tc->_base);
     }
 
-    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR: {
-      UNREACHABLE("TODO: remove this enum option. Use FBLE_MISC_APPLY_EXPR instead");
-      return TC_FAILED;
-    }
-
-    case FBLE_FUNC_APPLY_EXPR: {
-      UNREACHABLE("TODO: remove this enum option. Use FBLE_MISC_APPLY_EXPR instead");
-      return TC_FAILED;
-    }
-
     case FBLE_MISC_APPLY_EXPR: {
       FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
@@ -814,7 +804,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       size_t tag = -1;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         FbleTaggedType* field = union_type->fields.xs + i;
-        if (FbleNamesEqual(field->name, union_value_expr->field.name)) {
+        if (FbleNamesEqual(field->name, union_value_expr->field)) {
           field_type = field->type;
           tag = i;
           break;
@@ -822,7 +812,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       if (field_type == NULL) {
-        ReportError(arena, &union_value_expr->field.name.loc,
+        ReportError(arena, &union_value_expr->field.loc,
             "'%n' is not a field of type %t\n",
             &union_value_expr->field, type);
         FbleReleaseType(heap, &union_type->_base);
@@ -858,16 +848,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(type, &union_tc->_base);
     }
 
-    case FBLE_STRUCT_ACCESS_EXPR: {
-      UNREACHABLE("TODO: remove this enum option. Use FBLE_MISC_ACCESS_EXPR instead");
-      return TC_FAILED;
-    }
-
-    case FBLE_UNION_ACCESS_EXPR: {
-      UNREACHABLE("TODO: remove this enum option. Use FBLE_MISC_ACCESS_EXPR instead");
-      return TC_FAILED;
-    }
-
     case FBLE_MISC_ACCESS_EXPR: {
       FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
@@ -893,7 +873,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       for (size_t i = 0; i < fields->size; ++i) {
-        if (FbleNamesEqual(access_expr->field.name, fields->xs[i].name)) {
+        if (FbleNamesEqual(access_expr->field, fields->xs[i].name)) {
           FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
           FbleReleaseType(heap, normal);
 
@@ -904,13 +884,13 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           access_tc->_base.loc = FbleCopyLoc(expr->loc);
           access_tc->obj = obj.tc;
           access_tc->tag = i;
-          access_tc->loc = FbleCopyLoc(access_expr->field.name.loc);
+          access_tc->loc = FbleCopyLoc(access_expr->field.loc);
           FbleReleaseType(heap, obj.type);
           return MkTc(rtype, &access_tc->_base);
         }
       }
 
-      ReportError(arena, &access_expr->field.name.loc,
+      ReportError(arena, &access_expr->field.loc,
           "'%n' is not a field of type %t\n",
           &access_expr->field, obj.type);
       FreeTc(heap, obj);
@@ -1834,13 +1814,9 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
       return TypeCheckExprForType(heap, scope, typeof->expr);
     }
 
-    case FBLE_FUNC_APPLY_EXPR:
     case FBLE_MISC_APPLY_EXPR:
-    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
-    case FBLE_STRUCT_ACCESS_EXPR:
-    case FBLE_UNION_ACCESS_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:

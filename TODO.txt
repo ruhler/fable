@@ -1,5 +1,6 @@
 
 * Fix 2.4-var/basic/shadow-same-type test.
+ - Figure out how to properly track var index in compile.c.
 * Reimplement typecheck.c
  - FUNC_VALUE_EXPR
  - POLY_EXPR
@@ -17,12 +18,11 @@
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
 * Change ReportError to take %n as a value instead of a pointer?
 * Unify FbleVarIndex and FbleFrameIndex types?
-* Remove unused extra data in FbleExpr syntax after we split post-typechecked
-  information out.
 * Should we remove FBLE_POLY_APPLY_TC? If not, should we restore FBLE_EVAL_TC?
   Should we remove FBLE_POLY_VALUE_TC and use FBLE_FUNC_APPLY instead?
 
 * Distinguish between FbleExpr and a new FbleTc IR.
+* Reorganize code in typecheck.c and compile.c to match enum definition order.
 
 * Fix broken vacuous_value test.
  - this should fall out after we pull out an FbleTc IR.

@@ -96,7 +96,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     case FBLE_UNION_VALUE_EXPR: {
       FbleUnionValueExpr* e = (FbleUnionValueExpr*)expr;
       FbleFreeExpr(arena, e->type);
-      FbleFreeName(arena, e->field.name);
+      FbleFreeName(arena, e->field);
       FbleFreeExpr(arena, e->arg);
       FbleFree(arena, expr);
       return;
@@ -211,23 +211,18 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       FbleFreeExpr(arena, e->spec);
       FbleFreeLoc(arena, e->word_loc);
       FbleFree(arena, (char*)e->word);
-      FbleFree(arena, e->tags);
       FbleFree(arena, expr);
       return;
     }
 
-    case FBLE_STRUCT_ACCESS_EXPR:
-    case FBLE_UNION_ACCESS_EXPR:
     case FBLE_MISC_ACCESS_EXPR: {
       FbleAccessExpr* e = (FbleAccessExpr*)expr;
       FbleFreeExpr(arena, e->object);
-      FbleFreeName(arena, e->field.name);
+      FbleFreeName(arena, e->field);
       FbleFree(arena, expr);
       return;
     }
 
-    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
-    case FBLE_FUNC_APPLY_EXPR:
     case FBLE_MISC_APPLY_EXPR: {
       FbleApplyExpr* e = (FbleApplyExpr*)expr;
       FbleFreeExpr(arena, e->misc);
