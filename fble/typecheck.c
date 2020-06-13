@@ -992,13 +992,12 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         // TODO: Label with profile block ":"?
         Tc result = TypeCheckExpr(heap, scope, select_expr->default_);
         error = error || (result.type == NULL);
-        target = result.type;
         FbleVectorAppend(arena, select_tc->branches, result.tc);
         if (target == NULL) {
           target = result.type;
         } else if (result.type != NULL) {
           if (!FbleTypesEqual(heap, target, result.type)) {
-            ReportError(arena, &select_expr->choices.xs[branch].expr->loc,
+            ReportError(arena, &select_expr->default_->loc,
                 "expected type %t, but found %t\n",
                 target, result.type);
             error = true;

@@ -1,5 +1,4 @@
 
-* Fix memory leak in 4.4-union-select/type/default-maltyped test.
 * Fix 2.4-var/basic/shadow-same-type test.
 * Reimplement typecheck.c
  - FUNC_VALUE_EXPR
