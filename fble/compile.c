@@ -638,7 +638,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       access->_base.profile_ops = NULL;
       access->obj = obj->index;
       access->tag = access_tc->tag;
-      access->loc = FbleCopyLoc(tc->loc);
+      access->loc = FbleCopyLoc(access_tc->loc);
       AppendInstr(arena, scope, &access->_base);
 
       Local* local = NewLocal(arena, scope);

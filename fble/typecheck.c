@@ -899,11 +899,12 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
           FbleAccessTc* access_tc = FbleAlloc(arena, FbleAccessTc);
           access_tc->_base.tag = (normal->tag == FBLE_STRUCT_TYPE)
-            ? FBLE_STRUCT_ACCESS_EXPR
-            : FBLE_UNION_ACCESS_EXPR;
+            ? FBLE_STRUCT_ACCESS_TC
+            : FBLE_UNION_ACCESS_TC;
           access_tc->_base.loc = FbleCopyLoc(expr->loc);
           access_tc->obj = obj.tc;
           access_tc->tag = i;
+          access_tc->loc = FbleCopyLoc(access_expr->field.name.loc);
           FbleReleaseType(heap, obj.type);
           return MkTc(rtype, &access_tc->_base);
         }
@@ -1987,6 +1988,7 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
     case FBLE_UNION_ACCESS_TC: {
       FbleAccessTc* access_tc = (FbleAccessTc*)tc;
       FbleFreeTc(arena, access_tc->obj);
+      FbleFreeLoc(arena, access_tc->loc);
       FbleFree(arena, tc);
       return;
     }

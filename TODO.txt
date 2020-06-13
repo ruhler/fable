@@ -1,9 +1,14 @@
 
-* Fix undefined-access test.
+* Fix memory leak in 4.4-union-select/type/default-maltyped test.
+* Fix 2.4-var/basic/shadow-same-type test.
 * Reimplement typecheck.c
  - FUNC_VALUE_EXPR
+ - POLY_EXPR
+ - EVAL, LINK, EXEC
+ - LITERAL
 * Produce list type as well as tc in NewListTc.
 * Rewrite typecheck.c to produce FbleTc.
+* Rename POLY_EXPR to POLY_VALUE_EXPR?
 
 * Consistently document ownership of args to functions?
  Borrowed: no transfer of ownership.

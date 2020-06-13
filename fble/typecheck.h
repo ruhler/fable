@@ -91,7 +91,6 @@ typedef struct {
 
 // FbleVarTc --
 //   FBLE_VAR_TC
-//
 typedef struct {
   FbleTc _base;
   FbleVarIndex index;
@@ -124,6 +123,7 @@ typedef struct {
   FbleTc _base;
   FbleTc* obj;
   size_t tag;
+  FbleLoc loc;    // Location to use for reporting undefined access.
 } FbleAccessTc;
 
 // FbleUnionValueTc --
