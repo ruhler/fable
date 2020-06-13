@@ -904,6 +904,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           access_tc->_base.loc = FbleCopyLoc(expr->loc);
           access_tc->obj = obj.tc;
           access_tc->tag = i;
+          FbleReleaseType(heap, obj.type);
           return MkTc(rtype, &access_tc->_base);
         }
       }

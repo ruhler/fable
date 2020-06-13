@@ -1,5 +1,5 @@
 
-* Fix memory leak of FbleType in undefined-access test.
+* Fix undefined-access test.
 * Reimplement typecheck.c
  - FUNC_VALUE_EXPR
 * Produce list type as well as tc in NewListTc.
