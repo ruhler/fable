@@ -1409,6 +1409,13 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       // We should have resolved all modules at program load time.
       assert(var != NULL && "module not in scope");
 
+      if (var->type == NULL) {
+        // TODO: The spec isn't very clear on whether module self reference is
+        // allowed or not.
+        ReportError(arena, &expr->loc, "illegal module self reference\n");
+        return TC_FAILED;
+      }
+
       FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
       var_tc->_base.tag = FBLE_VAR_TC;
       var_tc->_base.loc = FbleCopyLoc(expr->loc);
@@ -1881,8 +1888,16 @@ static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* mo
     return result.tc;
   }
 
+  // Push a dummy variable representing the value of the computed module,
+  // because we'll be turning this into a LET_TC, which assumes a variable
+  // index is consumed by the thing being defined.
+  // TODO: The spec isn't very clear on whether module self reference is
+  // allowed or not.
+  PushVar(arena, scope, modules->name, NULL);
   Tc module = TypeCheckExpr(heap, scope, modules->value);
   module = ProfileBlock(arena, modules->name, module);
+  PopVar(heap, scope);
+
   if (module.type == NULL) {
     return NULL;
   }

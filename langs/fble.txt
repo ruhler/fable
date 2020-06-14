@@ -1196,6 +1196,12 @@ Notes:
   I think it would be cool if children were executed fairly. In particular,
   the amount of runtime a child gets is independent of how many children its
   siblings has.
+
+* Can use use a module reference to refer to your own module?
+  For example, that would let me refer to bits from the final result of a
+  module before they have been defined. Technically it's feasible and
+  theoretically makes sense. I would suggest no, just to force things to be
+  simpler.
   
 * It would be awesome to have a well defined style guide for programming in
   fble. And maybe an automatic re-formatter.
