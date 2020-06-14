@@ -1,6 +1,8 @@
 
-* Fix 2.4-var/basic/shadow-same-type test.
- - Figure out how to properly track var index in compile.c.
+* Fix memory leak in 8.1-list/eval/strict.tcl test
+* Fix seg faults in 9.2-path/basic/absolute-child and friends.
+ - Share scope between modules to ensure variable indices are tracked
+   properly.
 * Reimplement typecheck.c
  - FUNC_VALUE_EXPR
  - POLY_EXPR

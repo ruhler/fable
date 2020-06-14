@@ -35,7 +35,7 @@ typedef struct {
 // Fields:
 //   statics - variables captured from the parent scope.
 //     Owns the Locals.
-//   vars - stack of local variables in scope order.
+//   vars - stack of local variables in scope order. Entries may be NULL.
 //     Owns the Locals.
 //   locals - local values. Entries may be NULL to indicate a free slot.
 //     Owns the Local.
@@ -57,6 +57,7 @@ static void LocalRelease(FbleArena* arena, Scope* scope, Local* local, bool exit
 static void PushVar(FbleArena* arena, Scope* scope, Local* local);
 static void PopVar(FbleArena* arena, Scope* scope, bool exit);
 static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index);
+static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local);
 
 static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, size_t statics, Scope* parent);
 static void FreeScope(FbleArena* arena, Scope* scope, bool exit);
@@ -124,7 +125,7 @@ static Local* NewLocal(FbleArena* arena, Scope* scope)
 // Inputs:
 //   arena - the arena for allocations
 //   scope - the scope that the local belongs to
-//   local - the local to release.
+//   local - the local to release. May be NULL.
 //   exit - whether the frame has already been exited
 //
 // Results:
@@ -136,6 +137,10 @@ static Local* NewLocal(FbleArena* arena, Scope* scope)
 //   appropriate.
 static void LocalRelease(FbleArena* arena, Scope* scope, Local* local, bool exit)
 {
+  if (local == NULL) {
+    return;
+  }
+
   local->refcount--;
   if (local->refcount == 0) {
     assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
@@ -224,6 +229,26 @@ static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index)
 
   UNREACHABLE("should never get here");
   return NULL;
+}
+
+// SetVar --
+//   Change the value of a variable in scope.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   scope - scope of variables
+//   index - the index of the local variable to change
+//   local - the new value for the local variable
+//
+// Side effects:
+// * Frees the existing local value of the variable.
+// * Sets the value of the variable to the given local.
+// * Takes ownership of the given local.
+static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local)
+{
+  assert(index < scope->vars.size);
+  LocalRelease(arena, scope, scope->vars.xs[index], false);
+  scope->vars.xs[index] = local;
 }
 
 // InitScope --
@@ -557,17 +582,20 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     case FBLE_LET_TC: {
       FbleLetTc* let_tc = (FbleLetTc*)tc;
 
+      size_t base_index = scope->vars.size;
+
       Local* vars[let_tc->bindings.size];
-      if (let_tc->recursive) {
-        for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        vars[i] = NULL;
+        if (let_tc->recursive) {
           vars[i] = NewLocal(arena, scope);
-          PushVar(arena, scope, vars[i]);
           FbleRefValueInstr* ref_instr = FbleAlloc(arena, FbleRefValueInstr);
           ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
           ref_instr->_base.profile_ops = NULL;
           ref_instr->dest = vars[i]->index.index;
           AppendInstr(arena, scope, &ref_instr->_base);
         }
+        PushVar(arena, scope, vars[i]);
       }
 
       // Compile the values of the variables.
@@ -584,11 +612,8 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
           ref_def_instr->ref = vars[i]->index.index;
           ref_def_instr->value = defs[i]->index;
           AppendInstr(arena, scope, &ref_def_instr->_base);
-          LocalRelease(arena, scope, vars[i], false);
-          vars[i] = defs[i];
-        } else {
-          PushVar(arena, scope, defs[i]);
         }
+        SetVar(arena, scope, base_index + i, defs[i]);
       }
 
       Local* body = CompileExpr(arena, blocks, exit, scope, let_tc->body);
