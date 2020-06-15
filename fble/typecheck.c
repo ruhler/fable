@@ -1439,40 +1439,45 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_POLY_EXPR: {
-      assert(false && "TODO: POLY_EXPR");
-//      FblePolyExpr* poly = (FblePolyExpr*)expr;
-//
-//      if (FbleGetKindLevel(poly->arg.kind) != 1) {
-//        ReportError(arena, &poly->arg.kind->loc,
-//            "expected a type kind, but found %k\n",
-//            poly->arg.kind);
-//        return NULL;
-//      }
-//
-//      if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
-//        ReportError(arena, &poly->arg.name.loc,
-//            "the namespace of '%n' is not appropriate for kind %k\n",
-//            &poly->arg.name, poly->arg.kind);
-//        return NULL;
-//      }
-//
-//      FbleType* arg_type = FbleNewVarType(heap, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
-//      FbleType* arg = FbleValueOfType(heap, arg_type);
-//      assert(arg != NULL);
-//
-//      PushVar(arena, scope, poly->arg.name, arg_type);
-//      FbleType* body = TypeCheckExpr(heap, scope, poly->body);
-//      PopVar(heap, scope);
-//
-//      if (body == NULL) {
-//        FbleReleaseType(heap, arg);
-//        return NULL;
-//      }
-//
-//      FbleType* pt = FbleNewPolyType(heap, expr->loc, arg, body);
-//      FbleReleaseType(heap, arg);
-//      FbleReleaseType(heap, body);
-//      return pt;
+      FblePolyExpr* poly = (FblePolyExpr*)expr;
+
+      if (FbleGetKindLevel(poly->arg.kind) != 1) {
+        ReportError(arena, &poly->arg.kind->loc,
+            "expected a type kind, but found %k\n",
+            poly->arg.kind);
+        return TC_FAILED;
+      }
+
+      if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
+        ReportError(arena, &poly->arg.name.loc,
+            "the namespace of '%n' is not appropriate for kind %k\n",
+            &poly->arg.name, poly->arg.kind);
+        return TC_FAILED;
+      }
+
+      FbleType* arg_type = FbleNewVarType(heap, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
+      FbleType* arg = FbleValueOfType(heap, arg_type);
+      assert(arg != NULL);
+
+      PushVar(arena, scope, poly->arg.name, arg_type);
+      Tc body = TypeCheckExpr(heap, scope, poly->body);
+      PopVar(heap, scope);
+
+      if (body.type == NULL) {
+        FbleReleaseType(heap, arg);
+        return TC_FAILED;
+      }
+
+      FbleType* pt = FbleNewPolyType(heap, expr->loc, arg, body.type);
+      FbleReleaseType(heap, arg);
+      FbleReleaseType(heap, body.type);
+
+      FblePolyValueTc* poly_tc = FbleAlloc(arena, FblePolyValueTc);
+      poly_tc->_base.tag = FBLE_POLY_VALUE_TC;
+      poly_tc->_base.loc = FbleCopyLoc(expr->loc);
+      poly_tc->body = body.tc;
+
+      return MkTc(pt, &poly_tc->_base);
     }
   }
 

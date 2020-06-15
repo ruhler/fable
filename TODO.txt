@@ -1,15 +1,14 @@
 
 * Fix memory leak in 8.1-list/eval/strict.tcl test
-* Reimplement typecheck.c
- - POLY_EXPR
+* Rewrite typecheck.c to produce FbleTc.
  - EVAL, LINK, EXEC
  - LITERAL
-* Produce list type as well as tc in NewListTc.
-* Rewrite typecheck.c to produce FbleTc.
 * Rename POLY_EXPR to POLY_VALUE_EXPR?
 * Consistent use of '-' versus '_' in test names.
 * Add test for referring to a module from itself
  - And figure out what the spec should be in that case.
+ - Or confirm that spec does say what to do, this is checked in load.c, and we
+   should remove the TODO comments in the code.
 
 * Consistently document ownership of args to functions?
  Borrowed: no transfer of ownership.
