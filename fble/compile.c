@@ -773,13 +773,8 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       FbleVectorInit(arena, instr->scope);
       for (size_t i = 0; i < func_tc->scope.size; ++i) {
-        FbleFrameIndex index = {
-          .section = func_tc->scope.xs[i].source == FBLE_STATIC_VAR
-             ? FBLE_STATICS_FRAME_SECTION
-             : FBLE_LOCALS_FRAME_SECTION,
-          .index = func_tc->scope.xs[i].index,
-        };
-        FbleVectorAppend(arena, instr->scope, index);
+        Local* local = GetVar(arena, scope, func_tc->scope.xs[i]);
+        FbleVectorAppend(arena, instr->scope, local->index);
       }
 
       Scope func_scope;

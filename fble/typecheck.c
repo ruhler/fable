@@ -49,13 +49,14 @@ typedef struct {
 //     Takes ownership of the Vars.
 //   vars - stack of local variables in scope order.
 //     Takes ownership of the Vars.
-//   capture - false if operations on this scope should not have any side
-//             effects on the parent scope.
+//   captured - Collects the source of variables captured from the parent
+//              scope. May be NULL to indicate that operations on this scope
+//              should not have any side effects on the parent scope.
 //   parent - the parent of this scope. May be NULL.
 typedef struct Scope {
   VarV statics;
   VarV vars;
-  bool capture; // TODO: Turn into a vector of FbleVarIndex or some such.
+  FbleVarIndexV* captured;
   struct Scope* parent;
 } Scope;
 
@@ -63,7 +64,7 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
 
-static void InitScope(FbleArena* arena, Scope* scope, bool capture, Scope* parent);
+static void InitScope(FbleArena* arena, Scope* scope, FbleVarIndexV* captured, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
@@ -189,7 +190,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
   }
 
   if (scope->parent != NULL) {
-    Var* var = GetVar(heap, scope->parent, name, !scope->capture || phantom);
+    Var* var = GetVar(heap, scope->parent, name, scope->captured == NULL || phantom);
     if (var != NULL) {
       if (phantom) {
         // It doesn't matter that we are returning a variable for the wrong
@@ -198,15 +199,18 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
       }
 
       FbleArena* arena = heap->arena;
-      Var* captured = FbleAlloc(arena, Var);
-      captured->name = var->name;
-      captured->type = FbleRetainType(heap, var->type);
-      captured->used = !phantom;
-      captured->accessed = true;
-      captured->index.source = FBLE_STATIC_VAR;
-      captured->index.index = scope->statics.size;
-      FbleVectorAppend(arena, scope->statics, captured);
-      return captured;
+      Var* captured_var = FbleAlloc(arena, Var);
+      captured_var->name = var->name;
+      captured_var->type = FbleRetainType(heap, var->type);
+      captured_var->used = !phantom;
+      captured_var->accessed = true;
+      captured_var->index.source = FBLE_STATIC_VAR;
+      captured_var->index.index = scope->statics.size;
+      FbleVectorAppend(arena, scope->statics, captured_var);
+      if (scope->captured != NULL) {
+        FbleVectorAppend(arena, *scope->captured, var->index);
+      }
+      return captured_var;
     }
   }
 
@@ -219,7 +223,9 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
 // Inputs:
 //   arena - arena to use for allocations.
 //   scope - the scope to initialize.
-//   capture - true to record variables captured from the parent scope as used.
+//   captured - Collects the source of variables captured from the parent
+//              scope. May be NULL to indicate that operations on this scope
+//              should not have any side effects on the parent scope.
 //   parent - the parent of the scope to initialize. May be NULL.
 //
 // Results:
@@ -229,11 +235,11 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
 //   Initializes scope based on parent. FreeScope should be
 //   called to free the allocations for scope. The lifetime of the parent
 //   scope must exceed the lifetime of this scope.
-static void InitScope(FbleArena* arena, Scope* scope, bool capture, Scope* parent)
+static void InitScope(FbleArena* arena, Scope* scope, FbleVarIndexV* captured, Scope* parent)
 {
   FbleVectorInit(arena, scope->statics);
   FbleVectorInit(arena, scope->vars);
-  scope->capture = capture;
+  scope->captured = captured;
   scope->parent = parent;
 }
 
@@ -1162,64 +1168,72 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_FUNC_VALUE_EXPR: {
-      assert(false && "TODO: FUNC_VALUE_EXPR");
-      return TC_FAILED;
-//      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
-//      size_t argc = func_value_expr->args.size;
-//
-//      bool error = false;
-//      FbleTypeV arg_types;
-//      FbleVectorInit(arena, arg_types);
-//      for (size_t i = 0; i < argc; ++i) {
-//        FbleType* arg_type = TypeCheckType(heap, scope, func_value_expr->args.xs[i].type);
-//        FbleVectorAppend(arena, arg_types, arg_type);
-//        error = error || arg_type == NULL;
-//
-//        for (size_t j = 0; j < i; ++j) {
-//          if (FbleNamesEqual(func_value_expr->args.xs[i].name, func_value_expr->args.xs[j].name)) {
-//            error = true;
-//            ReportError(arena, &func_value_expr->args.xs[i].name.loc,
-//                "duplicate arg name '%n'\n",
-//                &func_value_expr->args.xs[i].name);
-//          }
-//        }
-//      }
-//
-//      if (error) {
-//        for (size_t i = 0; i < argc; ++i) {
-//          FbleReleaseType(heap, arg_types.xs[i]);
-//        }
-//        FbleFree(arena, arg_types.xs);
-//        return NULL;
-//      }
-//
-//      Scope func_scope;
-//      InitScope(arena, &func_scope, true, scope);
-//
-//      for (size_t i = 0; i < argc; ++i) {
-//        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types.xs[i]);
-//      }
-//
-//      FbleType* func_result = TypeCheckExpr(heap, &func_scope, func_value_expr->body);
-//      if (func_result == NULL) {
-//        FreeScope(heap, &func_scope);
-//        FbleFree(arena, arg_types.xs);
-//        return NULL;
-//      }
-//      FbleType* type = func_result;
-//
-//      FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-//      ft->args = arg_types;
-//      ft->rtype = type;
-//      FbleTypeAddRef(heap, &ft->_base, ft->rtype);
-//      FbleReleaseType(heap, ft->rtype);
-//
-//      for (size_t i = 0; i < argc; ++i) {
-//        FbleTypeAddRef(heap, &ft->_base, arg_types.xs[i]);
-//      }
-//
-//      FreeScope(heap, &func_scope);
-//      return &ft->_base;
+      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
+      size_t argc = func_value_expr->args.size;
+
+      bool error = false;
+      FbleTypeV arg_types;
+      FbleVectorInit(arena, arg_types);
+      for (size_t i = 0; i < argc; ++i) {
+        FbleType* arg_type = TypeCheckType(heap, scope, func_value_expr->args.xs[i].type);
+        FbleVectorAppend(arena, arg_types, arg_type);
+        error = error || arg_type == NULL;
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(func_value_expr->args.xs[i].name, func_value_expr->args.xs[j].name)) {
+            error = true;
+            ReportError(arena, &func_value_expr->args.xs[i].name.loc,
+                "duplicate arg name '%n'\n",
+                &func_value_expr->args.xs[i].name);
+          }
+        }
+      }
+
+      if (error) {
+        for (size_t i = 0; i < argc; ++i) {
+          FbleReleaseType(heap, arg_types.xs[i]);
+        }
+        FbleFree(arena, arg_types.xs);
+        return TC_FAILED;
+      }
+
+
+      FbleVarIndexV captured;
+      FbleVectorInit(arena, captured);
+      Scope func_scope;
+      InitScope(arena, &func_scope, &captured, scope);
+
+      for (size_t i = 0; i < argc; ++i) {
+        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types.xs[i]);
+      }
+
+      Tc func_result = TypeCheckExpr(heap, &func_scope, func_value_expr->body);
+      if (func_result.type == NULL) {
+        FreeScope(heap, &func_scope);
+        FbleFree(arena, arg_types.xs);
+        FbleFree(arena, captured.xs);
+        return TC_FAILED;
+      }
+
+      FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+      ft->args = arg_types;
+      ft->rtype = func_result.type;
+      FbleTypeAddRef(heap, &ft->_base, ft->rtype);
+      FbleReleaseType(heap, ft->rtype);
+
+      for (size_t i = 0; i < argc; ++i) {
+        FbleTypeAddRef(heap, &ft->_base, arg_types.xs[i]);
+      }
+
+      FbleFuncValueTc* func_tc = FbleAlloc(arena, FbleFuncValueTc);
+      func_tc->_base.tag = FBLE_FUNC_VALUE_TC;
+      func_tc->_base.loc = FbleCopyLoc(expr->loc);
+      func_tc->scope = captured;
+      func_tc->argc = argc;
+      func_tc->body = func_result.tc;
+
+      FreeScope(heap, &func_scope);
+      return MkTc(&ft->_base, &func_tc->_base);
     }
 
     case FBLE_EVAL_EXPR:
@@ -1411,7 +1425,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       if (var->type == NULL) {
         // TODO: The spec isn't very clear on whether module self reference is
-        // allowed or not.
+        // allowed or not. Or is it? No recursive modules, right? Isn't this
+        // possibility precluded in load.c?
         ReportError(arena, &expr->loc, "illegal module self reference\n");
         return TC_FAILED;
       }
@@ -1665,7 +1680,7 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr
 {
   FbleArena* arena = heap->arena;
   Scope nscope;
-  InitScope(arena, &nscope, false, scope);
+  InitScope(arena, &nscope, NULL, scope);
 
   Tc result = TypeCheckExpr(heap, &nscope, expr);
   FreeScope(heap, &nscope);
@@ -1892,7 +1907,7 @@ static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* mo
   // because we'll be turning this into a LET_TC, which assumes a variable
   // index is consumed by the thing being defined.
   // TODO: The spec isn't very clear on whether module self reference is
-  // allowed or not.
+  // allowed or not. Or is it? No recursive modules, right?
   PushVar(arena, scope, modules->name, NULL);
   Tc module = TypeCheckExpr(heap, scope, modules->value);
   module = ProfileBlock(arena, modules->name, module);
@@ -1925,7 +1940,7 @@ static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* mo
 FbleTc* FbleTypeCheck(FbleArena* arena, FbleProgram* program)
 {
   Scope scope;
-  InitScope(arena, &scope, false, NULL);
+  InitScope(arena, &scope, NULL, NULL);
 
   FbleTypeHeap* heap = FbleNewTypeHeap(arena);
   FbleTc* result = TypeCheckProgram(heap, &scope, program->modules.xs, program->modules.size, program->main);

@@ -275,3 +275,22 @@ easy mixing of complex statically elaboratable things in inline computations.
 
 Proposed syntax:  $(...), where we replace proc eval with the syntax !(...).
 
+---
+
+New plan: Define a new language, perhaps call it fblf, that is the subset of
+fble that is inlinable. For things that you expect to be fast, such as md5,
+write it in fblf. You can freely use fblf code in an fble program.
+
+The questions are:
+* Exactly how much of a subset of fble should we support? For example, should
+  we allow modules? Structs of functions?  
+* Will it be reasonable to write programs in fblf, or is it missing key
+  programming abstractions of fble that we really want, and could use if it
+  they were statically elaborated away?
+* Can fblf take full advantage of both high performance software and hardware?
+  Or will it be overly limiting? For example, will it allow parallel
+  composition of modules, which you might expect is important to take
+  advantage of hardware but is difficult to implement efficiently in software.
+* How fast can we make fblf go in practice? Is it competitive with C code? Or
+  is it still missing something important (I'm thinking support for primitive
+  operations like integer arithmetic).

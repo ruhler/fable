@@ -1,7 +1,6 @@
 
 * Fix memory leak in 8.1-list/eval/strict.tcl test
 * Reimplement typecheck.c
- - FUNC_VALUE_EXPR
  - POLY_EXPR
  - EVAL, LINK, EXEC
  - LITERAL
