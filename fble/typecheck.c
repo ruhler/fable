@@ -88,7 +88,7 @@ static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc);
 static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args);
 
 static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
-//static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
+static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr);
 static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* modules, size_t modulec, FbleExpr* body);
@@ -1239,23 +1239,32 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_EVAL_EXPR:
     case FBLE_LINK_EXPR:
     case FBLE_EXEC_EXPR: {
-      assert(false && "TODO: EVAL, LINK, EXEC");
-      return TC_FAILED;
-//      Scope body_scope;
-//      InitScope(arena, &body_scope, true, scope);
-//
-//      FbleType* body = TypeCheckExec(heap, &body_scope, expr);
-//      if (body == NULL) {
-//        FreeScope(heap, &body_scope);
-//        return NULL;
-//      }
-//
-//      FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-//      proc_type->type = body;
-//      FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
-//      FbleReleaseType(heap, body);
-//      FreeScope(heap, &body_scope);
-//      return &proc_type->_base;
+      FbleVarIndexV captured;
+      FbleVectorInit(arena, captured);
+      Scope body_scope;
+      InitScope(arena, &body_scope, &captured, scope);
+
+      Tc body = TypeCheckExec(heap, &body_scope, expr);
+      if (body.type == NULL) {
+        FreeScope(heap, &body_scope);
+        FbleFree(arena, captured.xs);
+        return TC_FAILED;
+      }
+
+      FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
+      proc_type->type = body.type;
+      FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
+      FbleReleaseType(heap, body.type);
+
+      FbleFuncValueTc* proc_tc = FbleAlloc(arena, FbleFuncValueTc);
+      proc_tc->_base.tag = FBLE_FUNC_VALUE_TC;
+      proc_tc->_base.loc = FbleCopyLoc(expr->loc);
+      proc_tc->scope = captured;
+      proc_tc->argc = 0;
+      proc_tc->body = body.tc;
+
+      FreeScope(heap, &body_scope);
+      return MkTc(&proc_type->_base, &proc_tc->_base);
     }
 
     case FBLE_VAR_EXPR: {
@@ -1504,159 +1513,155 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 // * The caller should call FbleFreeTc when the returned result is no
 //   longer needed and FbleReleaseType when the returned FbleType is no longer
 //   needed.
-//static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
-//{
-//  // FbleArena* arena = heap->arena;
-//  switch (expr->tag) {
-//    case FBLE_STRUCT_TYPE_EXPR:
-//    case FBLE_UNION_TYPE_EXPR:
-//    case FBLE_FUNC_TYPE_EXPR:
-//    case FBLE_PROC_TYPE_EXPR:
-//    case FBLE_TYPEOF_EXPR:
-//    case FBLE_MISC_APPLY_EXPR:
-//    case FBLE_FUNC_APPLY_EXPR:
-//    case FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR:
-//    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
-//    case FBLE_UNION_VALUE_EXPR:
-//    case FBLE_STRUCT_ACCESS_EXPR:
-//    case FBLE_UNION_ACCESS_EXPR:
-//    case FBLE_MISC_ACCESS_EXPR:
-//    case FBLE_UNION_SELECT_EXPR:
-//    case FBLE_FUNC_VALUE_EXPR:
-//    case FBLE_VAR_EXPR:
-//    case FBLE_LET_EXPR:
-//    case FBLE_MODULE_REF_EXPR:
-//    case FBLE_POLY_EXPR:
-//    case FBLE_POLY_APPLY_EXPR:
-//    case FBLE_LIST_EXPR:
-//    case FBLE_LITERAL_EXPR: {
-//      Tc proc = TypeCheckExpr(heap, scope, expr);
-//      if (proc.type == NULL) {
-//        return TC_FAILED;
+static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
+{
+  // FbleArena* arena = heap->arena;
+  switch (expr->tag) {
+    case FBLE_STRUCT_TYPE_EXPR:
+    case FBLE_UNION_TYPE_EXPR:
+    case FBLE_FUNC_TYPE_EXPR:
+    case FBLE_PROC_TYPE_EXPR:
+    case FBLE_TYPEOF_EXPR:
+    case FBLE_MISC_APPLY_EXPR:
+    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
+    case FBLE_UNION_VALUE_EXPR:
+    case FBLE_MISC_ACCESS_EXPR:
+    case FBLE_UNION_SELECT_EXPR:
+    case FBLE_FUNC_VALUE_EXPR:
+    case FBLE_VAR_EXPR:
+    case FBLE_LET_EXPR:
+    case FBLE_MODULE_REF_EXPR:
+    case FBLE_POLY_EXPR:
+    case FBLE_POLY_APPLY_EXPR:
+    case FBLE_LIST_EXPR:
+    case FBLE_LITERAL_EXPR: {
+      Tc proc = TypeCheckExpr(heap, scope, expr);
+      if (proc.type == NULL) {
+        return TC_FAILED;
+      }
+
+      assert(false && "TODO: EXEC NORMAL PROC");
+      return TC_FAILED;
+//      FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc.type);
+//      if (normal->_base.tag != FBLE_PROC_TYPE) {
+//        ReportError(arena, &expr->loc,
+//            "expected process, but found expression of type %t\n",
+//            proc);
+//        FbleReleaseType(heap, &normal->_base);
+//        FbleReleaseType(heap, proc);
+//        return NULL;
 //      }
 //
-//      assert(false && "TODO: EXEC NORMAL PROC");
-//      return TC_FAILED;
-////      FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc.type);
-////      if (normal->_base.tag != FBLE_PROC_TYPE) {
-////        ReportError(arena, &expr->loc,
-////            "expected process, but found expression of type %t\n",
-////            proc);
-////        FbleReleaseType(heap, &normal->_base);
-////        FbleReleaseType(heap, proc);
-////        return NULL;
-////      }
-////
-////      FbleType* rtype = FbleRetainType(heap, normal->type);
-////      FbleReleaseType(heap, &normal->_base);
-////      FbleReleaseType(heap, proc);
-////      return rtype;
-//    }
+//      FbleType* rtype = FbleRetainType(heap, normal->type);
+//      FbleReleaseType(heap, &normal->_base);
+//      FbleReleaseType(heap, proc);
+//      return rtype;
+    }
+
+    case FBLE_EVAL_EXPR: {
+      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
+      return TypeCheckExpr(heap, scope, eval_expr->body);
+    }
+
+    case FBLE_LINK_EXPR: {
+      assert(false && "TODO: EXEC LINK");
+      return TC_FAILED;
+//      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
+//      if (FbleNamesEqual(link_expr->get, link_expr->put)) {
+//        ReportError(arena, &link_expr->put.loc,
+//            "duplicate port name '%n'\n",
+//            &link_expr->put);
+//        return NULL;
+//      }
 //
-//    case FBLE_EVAL_EXPR: {
-//      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
-//      return TypeCheckExpr(heap, scope, eval_expr->body);
-//    }
+//      FbleType* port_type = TypeCheckType(heap, scope, link_expr->type);
+//      if (port_type == NULL) {
+//        return NULL;
+//      }
 //
-//    case FBLE_LINK_EXPR: {
-//      assert(false && "TODO: EXEC LINK");
-//      return TC_FAILED;
-////      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
-////      if (FbleNamesEqual(link_expr->get, link_expr->put)) {
-////        ReportError(arena, &link_expr->put.loc,
-////            "duplicate port name '%n'\n",
-////            &link_expr->put);
-////        return NULL;
-////      }
-////
-////      FbleType* port_type = TypeCheckType(heap, scope, link_expr->type);
-////      if (port_type == NULL) {
-////        return NULL;
-////      }
-////
-////      FbleProcType* get_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
-////      get_type->type = port_type;
-////      FbleTypeAddRef(heap, &get_type->_base, get_type->type);
-////
-////      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
-////      FbleVectorInit(arena, unit_type->fields);
-////
-////      FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-////      unit_proc_type->type = &unit_type->_base;
-////      FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
-////      FbleReleaseType(heap, &unit_type->_base);
-////
-////      FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-////      FbleVectorInit(arena, put_type->args);
-////      FbleVectorAppend(arena, put_type->args, port_type);
-////      FbleTypeAddRef(heap, &put_type->_base, port_type);
-////      FbleReleaseType(heap, port_type);
-////      put_type->rtype = &unit_proc_type->_base;
-////      FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
-////      FbleReleaseType(heap, &unit_proc_type->_base);
-////
-////      PushVar(arena, scope, link_expr->get, &get_type->_base);
-////      PushVar(arena, scope, link_expr->put, &put_type->_base);
-////      return TypeCheckExec(heap, scope, link_expr->body);
-//    }
+//      FbleProcType* get_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
+//      get_type->type = port_type;
+//      FbleTypeAddRef(heap, &get_type->_base, get_type->type);
 //
-//    case FBLE_EXEC_EXPR: {
-//      assert(false && "TODO: EXEC EXEC");
-//      return TC_FAILED;
-////      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
-////      bool error = false;
-////
-////      // Evaluate the types of the bindings and set up the new vars.
-////      FbleType* types[exec_expr->bindings.size];
-////      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-////        types[i] = TypeCheckType(heap, scope, exec_expr->bindings.xs[i].type);
-////        error = error || (types[i] == NULL);
-////      }
-////
-////      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-////        FbleType* binding = TypeCheckExpr(heap, scope, exec_expr->bindings.xs[i].expr);
-////        if (binding != NULL) {
-////          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(heap, binding);
-////          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
-////            if (types[i] != NULL && !FbleTypesEqual(heap, types[i], proc_type->type)) {
-////              error = true;
-////              ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
-////                  "expected type %t!, but found %t\n",
-////                  types[i], binding);
-////            }
-////          } else {
-////            error = true;
-////            ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
-////                "expected process, but found expression of type %t\n",
-////                binding);
-////          }
-////          FbleReleaseType(heap, &proc_type->_base);
-////        } else {
-////          error = true;
-////        }
-////        FbleReleaseType(heap, binding);
-////      }
-////
-////      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-////        PushVar(arena, scope, exec_expr->bindings.xs[i].name, types[i]);
-////      }
-////
-////      FbleType* body = NULL;
-////      if (!error) {
-////        body = TypeCheckExec(heap, scope, exec_expr->body);
-////      }
-////
-////      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-////        PopVar(heap, scope);
-////      }
-////
-////      return body;
-//    }
-//  }
+//      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
+//      FbleVectorInit(arena, unit_type->fields);
 //
-//  UNREACHABLE("should never get here");
-//  return TC_FAILED;
-//}
+//      FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
+//      unit_proc_type->type = &unit_type->_base;
+//      FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
+//      FbleReleaseType(heap, &unit_type->_base);
+//
+//      FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+//      FbleVectorInit(arena, put_type->args);
+//      FbleVectorAppend(arena, put_type->args, port_type);
+//      FbleTypeAddRef(heap, &put_type->_base, port_type);
+//      FbleReleaseType(heap, port_type);
+//      put_type->rtype = &unit_proc_type->_base;
+//      FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
+//      FbleReleaseType(heap, &unit_proc_type->_base);
+//
+//      PushVar(arena, scope, link_expr->get, &get_type->_base);
+//      PushVar(arena, scope, link_expr->put, &put_type->_base);
+//      return TypeCheckExec(heap, scope, link_expr->body);
+    }
+
+    case FBLE_EXEC_EXPR: {
+      assert(false && "TODO: EXEC EXEC");
+      return TC_FAILED;
+//      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
+//      bool error = false;
+//
+//      // Evaluate the types of the bindings and set up the new vars.
+//      FbleType* types[exec_expr->bindings.size];
+//      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+//        types[i] = TypeCheckType(heap, scope, exec_expr->bindings.xs[i].type);
+//        error = error || (types[i] == NULL);
+//      }
+//
+//      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+//        FbleType* binding = TypeCheckExpr(heap, scope, exec_expr->bindings.xs[i].expr);
+//        if (binding != NULL) {
+//          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(heap, binding);
+//          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
+//            if (types[i] != NULL && !FbleTypesEqual(heap, types[i], proc_type->type)) {
+//              error = true;
+//              ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
+//                  "expected type %t!, but found %t\n",
+//                  types[i], binding);
+//            }
+//          } else {
+//            error = true;
+//            ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
+//                "expected process, but found expression of type %t\n",
+//                binding);
+//          }
+//          FbleReleaseType(heap, &proc_type->_base);
+//        } else {
+//          error = true;
+//        }
+//        FbleReleaseType(heap, binding);
+//      }
+//
+//      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+//        PushVar(arena, scope, exec_expr->bindings.xs[i].name, types[i]);
+//      }
+//
+//      FbleType* body = NULL;
+//      if (!error) {
+//        body = TypeCheckExec(heap, scope, exec_expr->body);
+//      }
+//
+//      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+//        PopVar(heap, scope);
+//      }
+//
+//      return body;
+    }
+  }
+
+  UNREACHABLE("should never get here");
+  return TC_FAILED;
+}
 
 // TypeCheckExprForType --
 //   Type check the given expression, ignoring accesses to variables.
