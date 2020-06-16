@@ -1132,7 +1132,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       bool error = false;
-      FbleType* type = NULL;
+      FbleType* type = NULL;    // Borrowed from normal.
       FbleTc* args[n];
       FbleLoc loc = literal->word_loc;
       for (size_t i = 0; i < n; ++i) {
@@ -1141,7 +1141,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         for (size_t j = 0; j < normal->fields.size; ++j) {
           if (strcmp(field_str, normal->fields.xs[j].name.name->str) == 0) {
             if (type == NULL) {
-              type = FbleRetainType(heap, normal->fields.xs[j].type);
+              type = normal->fields.xs[j].type;
             } else if (!FbleTypesEqual(heap, type, normal->fields.xs[j].type)) {
               ReportError(arena, &loc, "expected type %t, but found something of type %t\n",
                   type, normal->fields.xs[j].type);
@@ -1174,11 +1174,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       if (error) {
-        FbleReleaseType(heap, type);
         for (size_t i = 0; i < n; ++i) {
           FbleFreeTc(arena, args[i]);
         }
         FreeTc(heap, spec);
+        FbleReleaseType(heap, &normal->_base);
         return TC_FAILED;
       }
 
@@ -1192,7 +1192,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       FbleTcV argv = { .size = n, .xs = args, };
       let_tc->body = NewListTc(arena, literal->word_loc, argv);
-      return MkTc(type, &let_tc->_base);
+      FbleType* list_type = FbleNewListType(heap, type);
+      FbleReleaseType(heap, &normal->_base);
+      return MkTc(list_type, &let_tc->_base);
     }
 
     case FBLE_FUNC_VALUE_EXPR: {

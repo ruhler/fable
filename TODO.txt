@@ -1,12 +1,15 @@
 
-* Fix memory leak in 8.1-list/eval/strict.tcl test
 * Fix failing list tests.
+ - unexpected undefined union field access in 8.1-list/basic/multi-arg
+ - memory leaking of strings in list expression.
+ - reporting of letter not found in literal.
 * Rename POLY_EXPR to POLY_VALUE_EXPR?
 * Consistent use of '-' versus '_' in test names.
 * Add test for referring to a module from itself
  - And figure out what the spec should be in that case.
  - Or confirm that spec does say what to do, this is checked in load.c, and we
    should remove the TODO comments in the code.
+* Add tests for test coverage.
 
 * Consistently document ownership of args to functions?
  Borrowed: no transfer of ownership.

@@ -367,7 +367,7 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
 //
 // Inputs:
 //   heap - heap to use for allocations
-//   elem_type - the type of the elements of the list.
+//   elem_type - the type of the elements of the list. Borrowed.
 //
 // Results:
 //   The type of an fble list of elements.
