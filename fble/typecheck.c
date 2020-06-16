@@ -437,7 +437,7 @@ static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc)
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   loc - the location of the list expression.
+//   loc - the location of the list expression. Borrowed.
 //   args - the elements of the list. Must be non-empty.
 //
 // Results:
@@ -1131,40 +1131,68 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      assert(false && "TODO: FBLE_LITERAL_EXPRESSION");
-      return TC_FAILED;
-//      for (size_t i = 0; i < n; ++i) {
-//        char field_str[2] = { literal->word[i], '\0' };
-//        fields[i] = FbleNewString(arena, field_str);
-//
-//        letters[i]._base.tag = FBLE_MISC_ACCESS_EXPR;
-//        letters[i]._base.loc = loc;
-//        letters[i].object = &spec_var._base;
-//        letters[i].field.name.name = fields[i];
-//        letters[i].field.name.space = FBLE_NORMAL_NAME_SPACE;
-//        letters[i].field.name.loc = loc;
-//        letters[i].field.tag = FBLE_UNRESOLVED_FIELD_TAG;
-//
-//        xs[i] = &letters[i]._base;
-//
-//        if (literal->word[i] == '\n') {
-//          loc.line++;
-//          loc.col = 0;
-//        }
-//        loc.col++;
-//      }
-//
-//      FbleExprV args = { .size = n, .xs = xs, };
-//      FbleType* result = TypeCheckList(heap, scope, literal->word_loc, args);
-//      PopVar(heap, scope);
-//
-//      for (size_t i = 0; i < n; ++i) {
-//        literal->tags[i] = letters[i].field.tag;
-//        FbleFreeString(arena, fields[i]);
-//      }
-//      FbleFreeString(arena, spec_name.name);
-//
-//      return result;
+      bool error = false;
+      FbleType* type = NULL;
+      FbleTc* args[n];
+      FbleLoc loc = literal->word_loc;
+      for (size_t i = 0; i < n; ++i) {
+        char field_str[2] = { literal->word[i], '\0' };
+        args[i] = NULL;
+        for (size_t j = 0; j < normal->fields.size; ++j) {
+          if (strcmp(field_str, normal->fields.xs[j].name.name->str) == 0) {
+            if (type == NULL) {
+              type = FbleRetainType(heap, normal->fields.xs[j].type);
+            } else if (!FbleTypesEqual(heap, type, normal->fields.xs[j].type)) {
+              ReportError(arena, &loc, "expected type %t, but found something of type %t\n",
+                  type, normal->fields.xs[j].type);
+              break;
+            }
+
+            FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
+            var_tc->_base.tag = FBLE_VAR_TC;
+            var_tc->_base.loc = FbleCopyLoc(loc);
+            var_tc->index.source = FBLE_LOCAL_VAR;
+            var_tc->index.index = scope->vars.size;
+
+            FbleAccessTc* access_tc = FbleAlloc(arena, FbleAccessTc);
+            access_tc->_base.tag = FBLE_STRUCT_ACCESS_TC;
+            access_tc->_base.loc = FbleCopyLoc(loc);
+            access_tc->obj = &var_tc->_base;
+            access_tc->tag = j;
+            access_tc->loc = FbleCopyLoc(loc);
+            args[i] = &access_tc->_base;
+            break;
+          }
+        }
+        error = error || (args[i] == NULL);
+
+        if (literal->word[i] == '\n') {
+          loc.line++;
+          loc.col = 0;
+        }
+        loc.col++;
+      }
+
+      if (error) {
+        FbleReleaseType(heap, type);
+        for (size_t i = 0; i < n; ++i) {
+          FbleFreeTc(arena, args[i]);
+        }
+        FreeTc(heap, spec);
+        return TC_FAILED;
+      }
+
+      FbleLetTc* let_tc = FbleAlloc(arena, FbleLetTc);
+      let_tc->_base.tag = FBLE_LET_TC;
+      let_tc->_base.loc = FbleCopyLoc(expr->loc);
+      let_tc->recursive = false;
+      FbleVectorInit(arena, let_tc->bindings);
+      FbleVectorAppend(arena, let_tc->bindings, spec.tc);
+      FbleReleaseType(heap, spec.type);
+
+      FbleTcV argv = { .size = n, .xs = args, };
+      let_tc->body = NewListTc(arena, literal->word_loc, argv);
+      return MkTc(type, &let_tc->_base);
     }
 
     case FBLE_FUNC_VALUE_EXPR: {
