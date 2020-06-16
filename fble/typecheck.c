@@ -760,7 +760,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           }
 
           FbleTaggedType cfield = {
-            .name = arg->name,
+            .name = FbleCopyName(arena, arg->name),
             .type = args[i].type
           };
           FbleVectorAppend(arena, struct_type->fields, cfield);
@@ -1810,7 +1810,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
         }
 
         FbleTaggedType cfield = {
-          .name = field->name,
+          .name = FbleCopyName(arena, field->name),
           .type = compiled
         };
         FbleVectorAppend(arena, st->fields, cfield);
@@ -1844,7 +1844,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
           return NULL;
         }
         FbleTaggedType cfield = {
-          .name = field->name,
+          .name = FbleCopyName(arena, field->name),
           .type = compiled
         };
         FbleVectorAppend(arena, ut->fields, cfield);

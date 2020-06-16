@@ -201,12 +201,18 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
   switch (type->tag) {
     case FBLE_STRUCT_TYPE: {
       FbleStructType* st = (FbleStructType*)type;
+      for (size_t i = 0; i < st->fields.size; ++i) {
+        FbleFreeName(arena, st->fields.xs[i].name);
+      }
       FbleFree(arena, st->fields.xs);
       return;
     }
 
     case FBLE_UNION_TYPE: {
       FbleUnionType* ut = (FbleUnionType*)type;
+      for (size_t i = 0; i < ut->fields.size; ++i) {
+        FbleFreeName(arena, ut->fields.xs[i].name);
+      }
       FbleFree(arena, ut->fields.xs);
       return;
     }
@@ -224,6 +230,7 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
       FbleFreeKind(arena, var->kind);
+      FbleFreeName(arena, var->name);
       return;
     }
 
@@ -458,7 +465,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       FbleVectorInit(arena, sst->fields);
       for (size_t i = 0; i < st->fields.size; ++i) {
         FbleTaggedType field = {
-          .name = st->fields.xs[i].name,
+          .name = FbleCopyName(arena, st->fields.xs[i].name),
           .type = Subst(heap, st->fields.xs[i].type, param, arg, tps)
         };
         FbleVectorAppend(arena, sst->fields, field);
@@ -475,7 +482,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       FbleVectorInit(arena, sut->fields);
       for (size_t i = 0; i < ut->fields.size; ++i) {
         FbleTaggedType field = {
-          .name = ut->fields.xs[i].name,
+          .name = FbleCopyName(arena, ut->fields.xs[i].name),
           .type = Subst(heap, ut->fields.xs[i].type, param, arg, tps)
         };
         FbleVectorAppend(arena, sut->fields, field);
@@ -993,7 +1000,7 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
   size_t level = FbleGetKindLevel(kind);
 
   FbleVarType* var = FbleNewType(heap, FbleVarType, FBLE_VAR_TYPE, loc);
-  var->name = name;
+  var->name = FbleCopyName(arena, name);
   var->kind = LevelAdjustedKind(arena, kind, -(int)level);
   var->value = NULL;
 
@@ -1091,6 +1098,7 @@ FbleType* FbleNewListType(FbleTypeHeap* heap, FbleType* elem_type)
   };
 
   FbleType* l = FbleNewVarType(heap, elem_type->loc, &kind->_base, l_name);
+  FbleFreeName(heap->arena, l_name);
   FbleFreeKind(heap->arena, &kind->_base);
 
   FbleFuncType* cons_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, elem_type->loc);

@@ -1,6 +1,6 @@
 
-* Fix failing list tests.
- - Fix tracking of names in type.c
+* Debug failure in profiling.
+ - Suspicion is mismatched Enter/Exit block in case of auto exit.
 * Rename POLY_EXPR to POLY_VALUE_EXPR?
 * Consistent use of '-' versus '_' in test names.
 * Add test for referring to a module from itself

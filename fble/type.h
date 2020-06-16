@@ -292,7 +292,7 @@ void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst);
 //   heap - the heap to allocate the type on.
 //   loc - the location for the type. Borrowed.
 //   kind - the kind of a value of this type. Borrowed.
-//   name - the name of the type variable. Consumed???
+//   name - the name of the type variable. Borrowed.
 //
 // Results:
 //   A type representing an abstract variable type of given kind and name.
