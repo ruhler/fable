@@ -1623,56 +1623,67 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_EXEC_EXPR: {
-      assert(false && "TODO: EXEC EXEC");
-      return TC_FAILED;
-//      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
-//      bool error = false;
-//
-//      // Evaluate the types of the bindings and set up the new vars.
-//      FbleType* types[exec_expr->bindings.size];
-//      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-//        types[i] = TypeCheckType(heap, scope, exec_expr->bindings.xs[i].type);
-//        error = error || (types[i] == NULL);
-//      }
-//
-//      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-//        FbleType* binding = TypeCheckExpr(heap, scope, exec_expr->bindings.xs[i].expr);
-//        if (binding != NULL) {
-//          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(heap, binding);
-//          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
-//            if (types[i] != NULL && !FbleTypesEqual(heap, types[i], proc_type->type)) {
-//              error = true;
-//              ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
-//                  "expected type %t!, but found %t\n",
-//                  types[i], binding);
-//            }
-//          } else {
-//            error = true;
-//            ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
-//                "expected process, but found expression of type %t\n",
-//                binding);
-//          }
-//          FbleReleaseType(heap, &proc_type->_base);
-//        } else {
-//          error = true;
-//        }
-//        FbleReleaseType(heap, binding);
-//      }
-//
-//      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-//        PushVar(arena, scope, exec_expr->bindings.xs[i].name, types[i]);
-//      }
-//
-//      FbleType* body = NULL;
-//      if (!error) {
-//        body = TypeCheckExec(heap, scope, exec_expr->body);
-//      }
-//
-//      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-//        PopVar(heap, scope);
-//      }
-//
-//      return body;
+      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
+      bool error = false;
+
+      // Evaluate the types of the bindings and set up the new vars.
+      FbleType* types[exec_expr->bindings.size];
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        types[i] = TypeCheckType(heap, scope, exec_expr->bindings.xs[i].type);
+        error = error || (types[i] == NULL);
+      }
+
+      FbleExecTc* exec_tc = FbleAlloc(arena, FbleExecTc);
+      exec_tc->_base.tag = FBLE_EXEC_TC;
+      exec_tc->_base.loc = FbleCopyLoc(expr->loc);
+      FbleVectorInit(arena, exec_tc->bindings);
+      exec_tc->body = NULL;
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        Tc binding = TypeCheckExpr(heap, scope, exec_expr->bindings.xs[i].expr);
+        if (binding.type != NULL) {
+          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(heap, binding.type);
+          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
+            if (types[i] != NULL && !FbleTypesEqual(heap, types[i], proc_type->type)) {
+              error = true;
+              ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
+                  "expected type %t!, but found %t\n",
+                  types[i], binding.type);
+            }
+          } else {
+            error = true;
+            ReportError(arena, &exec_expr->bindings.xs[i].expr->loc,
+                "expected process, but found expression of type %t\n",
+                binding.type);
+          }
+          FbleReleaseType(heap, &proc_type->_base);
+        } else {
+          error = true;
+        }
+        FbleVectorAppend(arena, exec_tc->bindings, binding.tc);
+        FbleReleaseType(heap, binding.type);
+      }
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        PushVar(arena, scope, exec_expr->bindings.xs[i].name, types[i]);
+      }
+
+      Tc body = TC_FAILED;
+      if (!error) {
+        body = TypeCheckExec(heap, scope, exec_expr->body);
+      }
+
+      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
+        PopVar(heap, scope);
+      }
+
+      if (body.type == NULL) {
+        FbleFreeTc(arena, &exec_tc->_base);
+        return TC_FAILED;
+      }
+
+      exec_tc->body = body.tc;
+      return MkTc(body.type, &exec_tc->_base);
     }
   }
 

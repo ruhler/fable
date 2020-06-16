@@ -1,7 +1,6 @@
 
 * Fix memory leak in 8.1-list/eval/strict.tcl test
 * Rewrite typecheck.c to produce FbleTc.
- - EXEC
  - LITERAL
 * Rename POLY_EXPR to POLY_VALUE_EXPR?
 * Consistent use of '-' versus '_' in test names.
