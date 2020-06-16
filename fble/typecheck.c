@@ -1540,22 +1540,27 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      assert(false && "TODO: EXEC NORMAL PROC");
-      return TC_FAILED;
-//      FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc.type);
-//      if (normal->_base.tag != FBLE_PROC_TYPE) {
-//        ReportError(arena, &expr->loc,
-//            "expected process, but found expression of type %t\n",
-//            proc);
-//        FbleReleaseType(heap, &normal->_base);
-//        FbleReleaseType(heap, proc);
-//        return NULL;
-//      }
-//
-//      FbleType* rtype = FbleRetainType(heap, normal->type);
-//      FbleReleaseType(heap, &normal->_base);
-//      FbleReleaseType(heap, proc);
-//      return rtype;
+      FbleProcType* normal = (FbleProcType*)FbleNormalType(heap, proc.type);
+      if (normal->_base.tag != FBLE_PROC_TYPE) {
+        ReportError(arena, &expr->loc,
+            "expected process, but found expression of type %t\n",
+            proc);
+        FbleReleaseType(heap, &normal->_base);
+        FreeTc(heap, proc);
+        return TC_FAILED;
+      }
+
+      FbleType* rtype = FbleRetainType(heap, normal->type);
+      FbleReleaseType(heap, &normal->_base);
+      FbleReleaseType(heap, proc.type);
+
+      FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
+      apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
+      apply_tc->_base.loc = FbleCopyLoc(expr->loc);
+      apply_tc->func = proc.tc;
+      FbleVectorInit(arena, apply_tc->args);
+
+      return MkTc(rtype, &apply_tc->_base);
     }
 
     case FBLE_EVAL_EXPR: {

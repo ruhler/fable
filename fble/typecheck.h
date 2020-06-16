@@ -195,7 +195,7 @@ typedef struct {
 //
 // TODO: Is this necessary? Is there any reason in wrapping the body? Maybe
 // because we need to know to generate the type value used by the body? Should
-// we just reuse FbleFuncApplyTc?
+// we just reuse FbleFuncValueTc?
 typedef struct {
   FbleTc _base;
   FbleTc* body;
