@@ -1515,7 +1515,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 //   needed.
 static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 {
-  // FbleArena* arena = heap->arena;
+  FbleArena* arena = heap->arena;
   switch (expr->tag) {
     case FBLE_STRUCT_TYPE_EXPR:
     case FBLE_UNION_TYPE_EXPR:
@@ -1564,45 +1564,57 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_LINK_EXPR: {
-      assert(false && "TODO: EXEC LINK");
-      return TC_FAILED;
-//      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
-//      if (FbleNamesEqual(link_expr->get, link_expr->put)) {
-//        ReportError(arena, &link_expr->put.loc,
-//            "duplicate port name '%n'\n",
-//            &link_expr->put);
-//        return NULL;
-//      }
-//
-//      FbleType* port_type = TypeCheckType(heap, scope, link_expr->type);
-//      if (port_type == NULL) {
-//        return NULL;
-//      }
-//
-//      FbleProcType* get_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
-//      get_type->type = port_type;
-//      FbleTypeAddRef(heap, &get_type->_base, get_type->type);
-//
-//      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
-//      FbleVectorInit(arena, unit_type->fields);
-//
-//      FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-//      unit_proc_type->type = &unit_type->_base;
-//      FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
-//      FbleReleaseType(heap, &unit_type->_base);
-//
-//      FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-//      FbleVectorInit(arena, put_type->args);
-//      FbleVectorAppend(arena, put_type->args, port_type);
-//      FbleTypeAddRef(heap, &put_type->_base, port_type);
-//      FbleReleaseType(heap, port_type);
-//      put_type->rtype = &unit_proc_type->_base;
-//      FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
-//      FbleReleaseType(heap, &unit_proc_type->_base);
-//
-//      PushVar(arena, scope, link_expr->get, &get_type->_base);
-//      PushVar(arena, scope, link_expr->put, &put_type->_base);
-//      return TypeCheckExec(heap, scope, link_expr->body);
+      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
+      if (FbleNamesEqual(link_expr->get, link_expr->put)) {
+        ReportError(arena, &link_expr->put.loc,
+            "duplicate port name '%n'\n",
+            &link_expr->put);
+        return TC_FAILED;
+      }
+
+      FbleType* port_type = TypeCheckType(heap, scope, link_expr->type);
+      if (port_type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleProcType* get_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
+      get_type->type = port_type;
+      FbleTypeAddRef(heap, &get_type->_base, get_type->type);
+
+      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
+      FbleVectorInit(arena, unit_type->fields);
+
+      FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
+      unit_proc_type->type = &unit_type->_base;
+      FbleTypeAddRef(heap, &unit_proc_type->_base, unit_proc_type->type);
+      FbleReleaseType(heap, &unit_type->_base);
+
+      FbleFuncType* put_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+      FbleVectorInit(arena, put_type->args);
+      FbleVectorAppend(arena, put_type->args, port_type);
+      FbleTypeAddRef(heap, &put_type->_base, port_type);
+      FbleReleaseType(heap, port_type);
+      put_type->rtype = &unit_proc_type->_base;
+      FbleTypeAddRef(heap, &put_type->_base, put_type->rtype);
+      FbleReleaseType(heap, &unit_proc_type->_base);
+
+      PushVar(arena, scope, link_expr->get, &get_type->_base);
+      PushVar(arena, scope, link_expr->put, &put_type->_base);
+
+      Tc body = TypeCheckExec(heap, scope, link_expr->body);
+
+      PopVar(heap, scope);
+      PopVar(heap, scope);
+
+      if (body.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleLinkTc* link_tc = FbleAlloc(arena, FbleLinkTc);
+      link_tc->_base.tag = FBLE_LINK_TC;
+      link_tc->_base.loc = FbleCopyLoc(expr->loc);
+      link_tc->body = body.tc;
+      return MkTc(body.type, &link_tc->_base);
     }
 
     case FBLE_EXEC_EXPR: {
