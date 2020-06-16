@@ -484,7 +484,7 @@ static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args)
     x->_base.tag = FBLE_VAR_TC;
     x->_base.loc = FbleCopyLoc(loc);
     x->index.source = FBLE_STATIC_VAR;
-    x->index.index = i;
+    x->index.index = args.size - i - 1;
 
     FbleFuncApplyTc* apply = FbleAlloc(arena, FbleFuncApplyTc);
     apply->_base.tag = FBLE_FUNC_APPLY_TC;

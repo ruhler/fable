@@ -1,7 +1,6 @@
 
 * Fix failing list tests.
- - unexpected undefined union field access in 8.1-list/basic/multi-arg
- - memory leaking of strings in list expression.
+ - Fix tracking of names in type.c
 * Rename POLY_EXPR to POLY_VALUE_EXPR?
 * Consistent use of '-' versus '_' in test names.
 * Add test for referring to a module from itself
