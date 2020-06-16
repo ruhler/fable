@@ -2,7 +2,6 @@
 * Fix failing list tests.
  - unexpected undefined union field access in 8.1-list/basic/multi-arg
  - memory leaking of strings in list expression.
- - reporting of letter not found in literal.
 * Rename POLY_EXPR to POLY_VALUE_EXPR?
 * Consistent use of '-' versus '_' in test names.
 * Add test for referring to a module from itself
@@ -10,6 +9,7 @@
  - Or confirm that spec does say what to do, this is checked in load.c, and we
    should remove the TODO comments in the code.
 * Add tests for test coverage.
+* Visually inspect error messages to make sure they look okay.
 
 * Consistently document ownership of args to functions?
  Borrowed: no transfer of ownership.

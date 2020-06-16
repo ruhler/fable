@@ -278,6 +278,7 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
 //     %i - size_t
 //     %k - FbleKind*
 //     %n - FbleName*
+//     %s - const char*
 //     %t - FbleType*
 //   Please add additional format specifiers as needed.
 //
@@ -318,6 +319,12 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
       case 'n': {
         FbleName* name = va_arg(ap, FbleName*);
         FblePrintName(stderr, *name);
+        break;
+      }
+
+      case 's': {
+        const char* str = va_arg(ap, const char*);
+        fprintf(stderr, "%s", str);
         break;
       }
 
@@ -1138,8 +1145,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       for (size_t i = 0; i < n; ++i) {
         char field_str[2] = { literal->word[i], '\0' };
         args[i] = NULL;
+        bool found = false;
         for (size_t j = 0; j < normal->fields.size; ++j) {
           if (strcmp(field_str, normal->fields.xs[j].name.name->str) == 0) {
+            found = true;
             if (type == NULL) {
               type = normal->fields.xs[j].type;
             } else if (!FbleTypesEqual(heap, type, normal->fields.xs[j].type)) {
@@ -1165,6 +1174,12 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           }
         }
         error = error || (args[i] == NULL);
+
+        if (!found) {
+          ReportError(arena, &loc, "'%s' is not a field of type %t\n",
+              field_str, spec.type);
+        }
+
 
         if (literal->word[i] == '\n') {
           loc.line++;
