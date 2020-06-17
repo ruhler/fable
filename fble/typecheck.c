@@ -590,150 +590,161 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(&type_type->_base, &type_tc->_base);
     }
 
-    case FBLE_MISC_APPLY_EXPR: {
-      FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
-
-      Tc misc = TypeCheckExpr(heap, scope, apply_expr->misc);
-      bool error = (misc.type == NULL);
-
-      size_t argc = apply_expr->args.size;
-      Tc args[argc];
-      for (size_t i = 0; i < argc; ++i) {
-        args[i] = TypeCheckExpr(heap, scope, apply_expr->args.xs[i]);
-        error = error || (args[i].type == NULL);
-      }
-
-      if (error) {
-        FreeTc(heap, misc);
-        for (size_t i = 0; i < argc; ++i) {
-          FreeTc(heap, args[i]);
-        }
+    case FBLE_VAR_EXPR: {
+      FbleVarExpr* var_expr = (FbleVarExpr*)expr;
+      Var* var = GetVar(heap, scope, var_expr->var, false);
+      if (var == NULL) {
+        ReportError(arena, &var_expr->var.loc, "variable '%n' not defined\n",
+            &var_expr->var);
         return TC_FAILED;
       }
 
-      FbleType* normal = FbleNormalType(heap, misc.type);
-      if (normal->tag == FBLE_FUNC_TYPE) {
-        // FUNC_APPLY
-        FbleFuncType* func_type = (FbleFuncType*)normal;
-        if (func_type->args.size != argc) {
-          ReportError(arena, &expr->loc,
-              "expected %i args, but found %i\n",
-              func_type->args.size, argc);
-          FbleReleaseType(heap, normal);
-          FreeTc(heap, misc);
-          for (size_t i = 0; i < argc; ++i) {
-            FreeTc(heap, args[i]);
-          }
-          return TC_FAILED;
+      FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
+      var_tc->_base.tag = FBLE_VAR_TC;
+      var_tc->_base.loc = FbleCopyLoc(expr->loc);
+      var_tc->index = var->index;
+      return MkTc(FbleRetainType(heap, var->type), &var_tc->_base);
+    }
+
+    case FBLE_LET_EXPR: {
+      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
+      bool error = false;
+
+      // Evaluate the types of the bindings and set up the new vars.
+      FbleType* types[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleBinding* binding = let_expr->bindings.xs + i;
+
+        if (binding->type == NULL) {
+          assert(binding->kind != NULL);
+
+          // We don't know the type, so create an abstract type variable to
+          // represent the type.
+          // TODO: It would be nice to pick a more descriptive type for kind
+          // level 0 variables. Perhaps: __name@?
+          FbleName type_name = binding->name;
+          type_name.space = FBLE_TYPE_NAME_SPACE;
+          types[i] = FbleNewVarType(heap, binding->name.loc, binding->kind, type_name);
+        } else {
+          assert(binding->kind == NULL);
+          types[i] = TypeCheckType(heap, scope, binding->type);
+          error = error || (types[i] == NULL);
+        }
+        
+        if (types[i] != NULL && !CheckNameSpace(arena, &binding->name, types[i])) {
+          error = true;
         }
 
-        for (size_t i = 0; i < argc; ++i) {
-          if (!FbleTypesEqual(heap, func_type->args.xs[i], args[i].type)) {
-            ReportError(arena, &apply_expr->args.xs[i]->loc,
-                "expected type %t, but found %t\n",
-                func_type->args.xs[i], args[i].type);
-            FbleReleaseType(heap, normal);
-            FreeTc(heap, misc);
-            for (size_t j = i; j < argc; ++j) {
-              FreeTc(heap, args[j]);
-            }
-            return TC_FAILED;
-          }
-          FbleReleaseType(heap, args[i].type);
-        }
-
-        FbleType* rtype = FbleRetainType(heap, func_type->rtype);
-        FbleReleaseType(heap, normal);
-        FbleReleaseType(heap, misc.type);
-
-        FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
-        apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
-        apply_tc->_base.loc = FbleCopyLoc(expr->loc);
-        apply_tc->func = misc.tc;
-        FbleVectorInit(arena, apply_tc->args);
-        for (size_t i = 0; i < argc; ++i) {
-          FbleVectorAppend(arena, apply_tc->args, args[i].tc);
-        }
-
-        return MkTc(rtype, &apply_tc->_base);
-      }
-
-      if (normal->tag == FBLE_TYPE_TYPE) {
-        // FBLE_STRUCT_VALUE_EXPR
-        FbleTypeType* type_type = (FbleTypeType*)normal;
-        FbleType* vtype = FbleRetainType(heap, type_type->type);
-        FbleReleaseType(heap, normal);
-        FreeTc(heap, misc);
-
-        FbleStructType* struct_type = (FbleStructType*)FbleNormalType(heap, vtype);
-        if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
-          ReportError(arena, &apply_expr->misc->loc,
-              "expected a struct type, but found %t\n",
-              vtype);
-          FbleReleaseType(heap, &struct_type->_base);
-          FbleReleaseType(heap, vtype);
-          for (size_t i = 0; i < argc; ++i) {
-            FreeTc(heap, args[i]);
-          }
-          return TC_FAILED;
-        }
-
-        if (struct_type->fields.size != argc) {
-          // TODO: Where should the error message go?
-          ReportError(arena, &expr->loc,
-              "expected %i args, but %i provided\n",
-               struct_type->fields.size, argc);
-          FbleReleaseType(heap, &struct_type->_base);
-          FbleReleaseType(heap, vtype);
-          for (size_t i = 0; i < argc; ++i) {
-            FreeTc(heap, args[i]);
-          }
-          return TC_FAILED;
-        }
-
-        bool error = false;
-        for (size_t i = 0; i < argc; ++i) {
-          FbleTaggedType* field = struct_type->fields.xs + i;
-
-          if (!FbleTypesEqual(heap, field->type, args[i].type)) {
-            ReportError(arena, &apply_expr->args.xs[i]->loc,
-                "expected type %t, but found %t\n",
-                field->type, args[i]);
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
+            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
+                "duplicate variable name '%n'\n",
+                &let_expr->bindings.xs[i].name);
             error = true;
           }
         }
+      }
 
-        FbleReleaseType(heap, &struct_type->_base);
+      Var* vars[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, types[i]);
+      }
 
-        if (error) {
-          FbleReleaseType(heap, vtype);
-          for (size_t i = 0; i < argc; ++i) {
-            FreeTc(heap, args[i]);
+      // Compile the values of the variables.
+      Tc defs[let_expr->bindings.size];
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleBinding* binding = let_expr->bindings.xs + i;
+
+        defs[i] = TC_FAILED;
+        if (!error) {
+          defs[i] = TypeCheckExpr(heap, scope, binding->expr);
+          defs[i] = ProfileBlock(arena, binding->name, defs[i]);
+        }
+        error = error || (defs[i].type == NULL);
+
+        if (!error && binding->type != NULL && !FbleTypesEqual(heap, types[i], defs[i].type)) {
+          error = true;
+          ReportError(arena, &binding->expr->loc,
+              "expected type %t, but found something of type %t\n",
+              types[i], defs[i].type);
+        } else if (!error && binding->type == NULL) {
+          FbleKind* expected_kind = FbleGetKind(arena, types[i]);
+          FbleKind* actual_kind = FbleGetKind(arena, defs[i].type);
+          if (!FbleKindsEqual(expected_kind, actual_kind)) {
+            ReportError(arena, &binding->expr->loc,
+                "expected kind %k, but found something of kind %k\n",
+                expected_kind, actual_kind);
+            error = true;
           }
-          return TC_FAILED;
+          FbleFreeKind(arena, expected_kind);
+          FbleFreeKind(arena, actual_kind);
         }
-
-        FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
-        struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
-        struct_tc->_base.loc = FbleCopyLoc(expr->loc);
-        FbleVectorInit(arena, struct_tc->args);
-        for (size_t i = 0; i < argc; ++i) {
-          FbleReleaseType(heap, args[i].type);
-          FbleVectorAppend(arena, struct_tc->args, args[i].tc);
-        }
-
-        return MkTc(vtype, &struct_tc->_base);
       }
 
-      ReportError(arena, &expr->loc,
-          "expecting a function or struct type, but found something of type %t\n",
-          misc.type);
-      FreeTc(heap, misc);
-      FbleReleaseType(heap, normal);
-      for (size_t i = 0; i < argc; ++i) {
-        FreeTc(heap, args[i]);
+      // Check to see if this is a recursive let block.
+      bool recursive = false;
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        recursive = recursive || vars[i]->used;
       }
-      return TC_FAILED;
+
+      // Apply the newly computed type values for variables whose types were
+      // previously unknown.
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (!error && let_expr->bindings.xs[i].type == NULL) {
+          FbleAssignVarType(heap, types[i], defs[i].type);
+        }
+        FbleReleaseType(heap, defs[i].type);
+      }
+
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        if (defs[i].type != NULL) {
+          if (FbleTypeIsVacuous(heap, types[i])) {
+            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
+                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
+            error = true;
+          }
+        }
+      }
+
+      Tc body = TC_FAILED;
+      if (!error) {
+        body = TypeCheckExpr(heap, scope, let_expr->body);
+        error = (body.type == NULL);
+      }
+
+      if (body.type != NULL) {
+        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+          if (!vars[i]->accessed && vars[i]->name.name->str[0] != '_') {
+            FbleReportWarning("variable '", &vars[i]->name.loc);
+            FblePrintName(stderr, vars[i]->name);
+            fprintf(stderr, "' defined but not used\n");
+          }
+        }
+      }
+
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        PopVar(heap, scope);
+      }
+
+      if (error) {
+        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+          FbleFreeTc(arena, defs[i].tc);
+        }
+        FreeTc(heap, body);
+        return TC_FAILED;
+      }
+
+      FbleLetTc* let_tc = FbleAlloc(arena, FbleLetTc);
+      let_tc->_base.tag = FBLE_LET_TC;
+      let_tc->_base.loc = FbleCopyLoc(expr->loc);
+      let_tc->recursive = recursive;
+      FbleVectorInit(arena, let_tc->bindings);
+      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
+        FbleVectorAppend(arena, let_tc->bindings, defs[i].tc);
+      }
+      let_tc->body = body.tc;
+        
+      return MkTc(body.type, &let_tc->_base);
     }
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
@@ -861,56 +872,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(type, &union_tc->_base);
     }
 
-    case FBLE_MISC_ACCESS_EXPR: {
-      FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
-
-      Tc obj = TypeCheckExpr(heap, scope, access_expr->object);
-      if (obj.type == NULL) {
-        return TC_FAILED;
-      }
-
-      FbleType* normal = FbleNormalType(heap, obj.type);
-      FbleTaggedTypeV* fields = NULL;
-      if (normal->tag == FBLE_STRUCT_TYPE) {
-        fields = &((FbleStructType*)normal)->fields;
-      } else if (normal->tag == FBLE_UNION_TYPE) {
-        fields = &((FbleUnionType*)normal)->fields;
-      } else {
-        ReportError(arena, &access_expr->object->loc,
-            "expected value of type struct or union, but found value of type %t\n",
-            obj.type);
-
-        FreeTc(heap, obj);
-        FbleReleaseType(heap, normal);
-        return TC_FAILED;
-      }
-
-      for (size_t i = 0; i < fields->size; ++i) {
-        if (FbleNamesEqual(access_expr->field, fields->xs[i].name)) {
-          FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
-          FbleReleaseType(heap, normal);
-
-          FbleAccessTc* access_tc = FbleAlloc(arena, FbleAccessTc);
-          access_tc->_base.tag = (normal->tag == FBLE_STRUCT_TYPE)
-            ? FBLE_STRUCT_ACCESS_TC
-            : FBLE_UNION_ACCESS_TC;
-          access_tc->_base.loc = FbleCopyLoc(expr->loc);
-          access_tc->obj = obj.tc;
-          access_tc->tag = i;
-          access_tc->loc = FbleCopyLoc(access_expr->field.loc);
-          FbleReleaseType(heap, obj.type);
-          return MkTc(rtype, &access_tc->_base);
-        }
-      }
-
-      ReportError(arena, &access_expr->field.loc,
-          "'%n' is not a field of type %t\n",
-          &access_expr->field, obj.type);
-      FreeTc(heap, obj);
-      FbleReleaseType(heap, normal);
-      return TC_FAILED;
-    }
-
     case FBLE_UNION_SELECT_EXPR: {
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)expr;
 
@@ -1023,6 +984,148 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
       return tc;
+    }
+
+    case FBLE_FUNC_VALUE_EXPR: {
+      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
+      size_t argc = func_value_expr->args.size;
+
+      bool error = false;
+      FbleTypeV arg_types;
+      FbleVectorInit(arena, arg_types);
+      for (size_t i = 0; i < argc; ++i) {
+        FbleType* arg_type = TypeCheckType(heap, scope, func_value_expr->args.xs[i].type);
+        FbleVectorAppend(arena, arg_types, arg_type);
+        error = error || arg_type == NULL;
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(func_value_expr->args.xs[i].name, func_value_expr->args.xs[j].name)) {
+            error = true;
+            ReportError(arena, &func_value_expr->args.xs[i].name.loc,
+                "duplicate arg name '%n'\n",
+                &func_value_expr->args.xs[i].name);
+          }
+        }
+      }
+
+      if (error) {
+        for (size_t i = 0; i < argc; ++i) {
+          FbleReleaseType(heap, arg_types.xs[i]);
+        }
+        FbleFree(arena, arg_types.xs);
+        return TC_FAILED;
+      }
+
+
+      FbleVarIndexV captured;
+      FbleVectorInit(arena, captured);
+      Scope func_scope;
+      InitScope(arena, &func_scope, &captured, scope);
+
+      for (size_t i = 0; i < argc; ++i) {
+        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types.xs[i]);
+      }
+
+      Tc func_result = TypeCheckExpr(heap, &func_scope, func_value_expr->body);
+      if (func_result.type == NULL) {
+        FreeScope(heap, &func_scope);
+        FbleFree(arena, arg_types.xs);
+        FbleFree(arena, captured.xs);
+        return TC_FAILED;
+      }
+
+      FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
+      ft->args = arg_types;
+      ft->rtype = func_result.type;
+      FbleTypeAddRef(heap, &ft->_base, ft->rtype);
+      FbleReleaseType(heap, ft->rtype);
+
+      for (size_t i = 0; i < argc; ++i) {
+        FbleTypeAddRef(heap, &ft->_base, arg_types.xs[i]);
+      }
+
+      FbleFuncValueTc* func_tc = FbleAlloc(arena, FbleFuncValueTc);
+      func_tc->_base.tag = FBLE_FUNC_VALUE_TC;
+      func_tc->_base.loc = FbleCopyLoc(expr->loc);
+      func_tc->scope = captured;
+      func_tc->argc = argc;
+      func_tc->body = func_result.tc;
+
+      FreeScope(heap, &func_scope);
+      return MkTc(&ft->_base, &func_tc->_base);
+    }
+
+    case FBLE_EVAL_EXPR:
+    case FBLE_LINK_EXPR:
+    case FBLE_EXEC_EXPR: {
+      FbleVarIndexV captured;
+      FbleVectorInit(arena, captured);
+      Scope body_scope;
+      InitScope(arena, &body_scope, &captured, scope);
+
+      Tc body = TypeCheckExec(heap, &body_scope, expr);
+      if (body.type == NULL) {
+        FreeScope(heap, &body_scope);
+        FbleFree(arena, captured.xs);
+        return TC_FAILED;
+      }
+
+      FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
+      proc_type->type = body.type;
+      FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
+      FbleReleaseType(heap, body.type);
+
+      FbleFuncValueTc* proc_tc = FbleAlloc(arena, FbleFuncValueTc);
+      proc_tc->_base.tag = FBLE_FUNC_VALUE_TC;
+      proc_tc->_base.loc = FbleCopyLoc(expr->loc);
+      proc_tc->scope = captured;
+      proc_tc->argc = 0;
+      proc_tc->body = body.tc;
+
+      FreeScope(heap, &body_scope);
+      return MkTc(&proc_type->_base, &proc_tc->_base);
+    }
+
+    case FBLE_POLY_VALUE_EXPR: {
+      FblePolyValueExpr* poly = (FblePolyValueExpr*)expr;
+
+      if (FbleGetKindLevel(poly->arg.kind) != 1) {
+        ReportError(arena, &poly->arg.kind->loc,
+            "expected a type kind, but found %k\n",
+            poly->arg.kind);
+        return TC_FAILED;
+      }
+
+      if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
+        ReportError(arena, &poly->arg.name.loc,
+            "the namespace of '%n' is not appropriate for kind %k\n",
+            &poly->arg.name, poly->arg.kind);
+        return TC_FAILED;
+      }
+
+      FbleType* arg_type = FbleNewVarType(heap, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
+      FbleType* arg = FbleValueOfType(heap, arg_type);
+      assert(arg != NULL);
+
+      PushVar(arena, scope, poly->arg.name, arg_type);
+      Tc body = TypeCheckExpr(heap, scope, poly->body);
+      PopVar(heap, scope);
+
+      if (body.type == NULL) {
+        FbleReleaseType(heap, arg);
+        return TC_FAILED;
+      }
+
+      FbleType* pt = FbleNewPolyType(heap, expr->loc, arg, body.type);
+      FbleReleaseType(heap, arg);
+      FbleReleaseType(heap, body.type);
+
+      FblePolyValueTc* poly_tc = FbleAlloc(arena, FblePolyValueTc);
+      poly_tc->_base.tag = FBLE_POLY_VALUE_TC;
+      poly_tc->_base.loc = FbleCopyLoc(expr->loc);
+      poly_tc->body = body.tc;
+
+      return MkTc(pt, &poly_tc->_base);
     }
 
     case FBLE_POLY_APPLY_EXPR: {
@@ -1222,263 +1325,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(list_type, &let_tc->_base);
     }
 
-    case FBLE_FUNC_VALUE_EXPR: {
-      FbleFuncValueExpr* func_value_expr = (FbleFuncValueExpr*)expr;
-      size_t argc = func_value_expr->args.size;
-
-      bool error = false;
-      FbleTypeV arg_types;
-      FbleVectorInit(arena, arg_types);
-      for (size_t i = 0; i < argc; ++i) {
-        FbleType* arg_type = TypeCheckType(heap, scope, func_value_expr->args.xs[i].type);
-        FbleVectorAppend(arena, arg_types, arg_type);
-        error = error || arg_type == NULL;
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(func_value_expr->args.xs[i].name, func_value_expr->args.xs[j].name)) {
-            error = true;
-            ReportError(arena, &func_value_expr->args.xs[i].name.loc,
-                "duplicate arg name '%n'\n",
-                &func_value_expr->args.xs[i].name);
-          }
-        }
-      }
-
-      if (error) {
-        for (size_t i = 0; i < argc; ++i) {
-          FbleReleaseType(heap, arg_types.xs[i]);
-        }
-        FbleFree(arena, arg_types.xs);
-        return TC_FAILED;
-      }
-
-
-      FbleVarIndexV captured;
-      FbleVectorInit(arena, captured);
-      Scope func_scope;
-      InitScope(arena, &func_scope, &captured, scope);
-
-      for (size_t i = 0; i < argc; ++i) {
-        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types.xs[i]);
-      }
-
-      Tc func_result = TypeCheckExpr(heap, &func_scope, func_value_expr->body);
-      if (func_result.type == NULL) {
-        FreeScope(heap, &func_scope);
-        FbleFree(arena, arg_types.xs);
-        FbleFree(arena, captured.xs);
-        return TC_FAILED;
-      }
-
-      FbleFuncType* ft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-      ft->args = arg_types;
-      ft->rtype = func_result.type;
-      FbleTypeAddRef(heap, &ft->_base, ft->rtype);
-      FbleReleaseType(heap, ft->rtype);
-
-      for (size_t i = 0; i < argc; ++i) {
-        FbleTypeAddRef(heap, &ft->_base, arg_types.xs[i]);
-      }
-
-      FbleFuncValueTc* func_tc = FbleAlloc(arena, FbleFuncValueTc);
-      func_tc->_base.tag = FBLE_FUNC_VALUE_TC;
-      func_tc->_base.loc = FbleCopyLoc(expr->loc);
-      func_tc->scope = captured;
-      func_tc->argc = argc;
-      func_tc->body = func_result.tc;
-
-      FreeScope(heap, &func_scope);
-      return MkTc(&ft->_base, &func_tc->_base);
-    }
-
-    case FBLE_EVAL_EXPR:
-    case FBLE_LINK_EXPR:
-    case FBLE_EXEC_EXPR: {
-      FbleVarIndexV captured;
-      FbleVectorInit(arena, captured);
-      Scope body_scope;
-      InitScope(arena, &body_scope, &captured, scope);
-
-      Tc body = TypeCheckExec(heap, &body_scope, expr);
-      if (body.type == NULL) {
-        FreeScope(heap, &body_scope);
-        FbleFree(arena, captured.xs);
-        return TC_FAILED;
-      }
-
-      FbleProcType* proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-      proc_type->type = body.type;
-      FbleTypeAddRef(heap, &proc_type->_base, proc_type->type);
-      FbleReleaseType(heap, body.type);
-
-      FbleFuncValueTc* proc_tc = FbleAlloc(arena, FbleFuncValueTc);
-      proc_tc->_base.tag = FBLE_FUNC_VALUE_TC;
-      proc_tc->_base.loc = FbleCopyLoc(expr->loc);
-      proc_tc->scope = captured;
-      proc_tc->argc = 0;
-      proc_tc->body = body.tc;
-
-      FreeScope(heap, &body_scope);
-      return MkTc(&proc_type->_base, &proc_tc->_base);
-    }
-
-    case FBLE_VAR_EXPR: {
-      FbleVarExpr* var_expr = (FbleVarExpr*)expr;
-      Var* var = GetVar(heap, scope, var_expr->var, false);
-      if (var == NULL) {
-        ReportError(arena, &var_expr->var.loc, "variable '%n' not defined\n",
-            &var_expr->var);
-        return TC_FAILED;
-      }
-
-      FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
-      var_tc->_base.tag = FBLE_VAR_TC;
-      var_tc->_base.loc = FbleCopyLoc(expr->loc);
-      var_tc->index = var->index;
-      return MkTc(FbleRetainType(heap, var->type), &var_tc->_base);
-    }
-
-    case FBLE_LET_EXPR: {
-      FbleLetExpr* let_expr = (FbleLetExpr*)expr;
-      bool error = false;
-
-      // Evaluate the types of the bindings and set up the new vars.
-      FbleType* types[let_expr->bindings.size];
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleBinding* binding = let_expr->bindings.xs + i;
-
-        if (binding->type == NULL) {
-          assert(binding->kind != NULL);
-
-          // We don't know the type, so create an abstract type variable to
-          // represent the type.
-          // TODO: It would be nice to pick a more descriptive type for kind
-          // level 0 variables. Perhaps: __name@?
-          FbleName type_name = binding->name;
-          type_name.space = FBLE_TYPE_NAME_SPACE;
-          types[i] = FbleNewVarType(heap, binding->name.loc, binding->kind, type_name);
-        } else {
-          assert(binding->kind == NULL);
-          types[i] = TypeCheckType(heap, scope, binding->type);
-          error = error || (types[i] == NULL);
-        }
-        
-        if (types[i] != NULL && !CheckNameSpace(arena, &binding->name, types[i])) {
-          error = true;
-        }
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
-            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
-                "duplicate variable name '%n'\n",
-                &let_expr->bindings.xs[i].name);
-            error = true;
-          }
-        }
-      }
-
-      Var* vars[let_expr->bindings.size];
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, types[i]);
-      }
-
-      // Compile the values of the variables.
-      Tc defs[let_expr->bindings.size];
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleBinding* binding = let_expr->bindings.xs + i;
-
-        defs[i] = TC_FAILED;
-        if (!error) {
-          defs[i] = TypeCheckExpr(heap, scope, binding->expr);
-          defs[i] = ProfileBlock(arena, binding->name, defs[i]);
-        }
-        error = error || (defs[i].type == NULL);
-
-        if (!error && binding->type != NULL && !FbleTypesEqual(heap, types[i], defs[i].type)) {
-          error = true;
-          ReportError(arena, &binding->expr->loc,
-              "expected type %t, but found something of type %t\n",
-              types[i], defs[i].type);
-        } else if (!error && binding->type == NULL) {
-          FbleKind* expected_kind = FbleGetKind(arena, types[i]);
-          FbleKind* actual_kind = FbleGetKind(arena, defs[i].type);
-          if (!FbleKindsEqual(expected_kind, actual_kind)) {
-            ReportError(arena, &binding->expr->loc,
-                "expected kind %k, but found something of kind %k\n",
-                expected_kind, actual_kind);
-            error = true;
-          }
-          FbleFreeKind(arena, expected_kind);
-          FbleFreeKind(arena, actual_kind);
-        }
-      }
-
-      // Check to see if this is a recursive let block.
-      bool recursive = false;
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        recursive = recursive || vars[i]->used;
-      }
-
-      // Apply the newly computed type values for variables whose types were
-      // previously unknown.
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        if (!error && let_expr->bindings.xs[i].type == NULL) {
-          FbleAssignVarType(heap, types[i], defs[i].type);
-        }
-        FbleReleaseType(heap, defs[i].type);
-      }
-
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        if (defs[i].type != NULL) {
-          if (FbleTypeIsVacuous(heap, types[i])) {
-            ReportError(arena, &let_expr->bindings.xs[i].name.loc,
-                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
-            error = true;
-          }
-        }
-      }
-
-      Tc body = TC_FAILED;
-      if (!error) {
-        body = TypeCheckExpr(heap, scope, let_expr->body);
-        error = (body.type == NULL);
-      }
-
-      if (body.type != NULL) {
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          if (!vars[i]->accessed && vars[i]->name.name->str[0] != '_') {
-            FbleReportWarning("variable '", &vars[i]->name.loc);
-            FblePrintName(stderr, vars[i]->name);
-            fprintf(stderr, "' defined but not used\n");
-          }
-        }
-      }
-
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        PopVar(heap, scope);
-      }
-
-      if (error) {
-        for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          FbleFreeTc(arena, defs[i].tc);
-        }
-        FreeTc(heap, body);
-        return TC_FAILED;
-      }
-
-      FbleLetTc* let_tc = FbleAlloc(arena, FbleLetTc);
-      let_tc->_base.tag = FBLE_LET_TC;
-      let_tc->_base.loc = FbleCopyLoc(expr->loc);
-      let_tc->recursive = recursive;
-      FbleVectorInit(arena, let_tc->bindings);
-      for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleVectorAppend(arena, let_tc->bindings, defs[i].tc);
-      }
-      let_tc->body = body.tc;
-        
-      return MkTc(body.type, &let_tc->_base);
-    }
-
     case FBLE_MODULE_REF_EXPR: {
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
@@ -1502,46 +1348,200 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(FbleRetainType(heap, var->type), &var_tc->_base);
     }
 
-    case FBLE_POLY_VALUE_EXPR: {
-      FblePolyValueExpr* poly = (FblePolyValueExpr*)expr;
+    case FBLE_MISC_ACCESS_EXPR: {
+      FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
-      if (FbleGetKindLevel(poly->arg.kind) != 1) {
-        ReportError(arena, &poly->arg.kind->loc,
-            "expected a type kind, but found %k\n",
-            poly->arg.kind);
+      Tc obj = TypeCheckExpr(heap, scope, access_expr->object);
+      if (obj.type == NULL) {
         return TC_FAILED;
       }
 
-      if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
-        ReportError(arena, &poly->arg.name.loc,
-            "the namespace of '%n' is not appropriate for kind %k\n",
-            &poly->arg.name, poly->arg.kind);
+      FbleType* normal = FbleNormalType(heap, obj.type);
+      FbleTaggedTypeV* fields = NULL;
+      if (normal->tag == FBLE_STRUCT_TYPE) {
+        fields = &((FbleStructType*)normal)->fields;
+      } else if (normal->tag == FBLE_UNION_TYPE) {
+        fields = &((FbleUnionType*)normal)->fields;
+      } else {
+        ReportError(arena, &access_expr->object->loc,
+            "expected value of type struct or union, but found value of type %t\n",
+            obj.type);
+
+        FreeTc(heap, obj);
+        FbleReleaseType(heap, normal);
         return TC_FAILED;
       }
 
-      FbleType* arg_type = FbleNewVarType(heap, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
-      FbleType* arg = FbleValueOfType(heap, arg_type);
-      assert(arg != NULL);
+      for (size_t i = 0; i < fields->size; ++i) {
+        if (FbleNamesEqual(access_expr->field, fields->xs[i].name)) {
+          FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
+          FbleReleaseType(heap, normal);
 
-      PushVar(arena, scope, poly->arg.name, arg_type);
-      Tc body = TypeCheckExpr(heap, scope, poly->body);
-      PopVar(heap, scope);
+          FbleAccessTc* access_tc = FbleAlloc(arena, FbleAccessTc);
+          access_tc->_base.tag = (normal->tag == FBLE_STRUCT_TYPE)
+            ? FBLE_STRUCT_ACCESS_TC
+            : FBLE_UNION_ACCESS_TC;
+          access_tc->_base.loc = FbleCopyLoc(expr->loc);
+          access_tc->obj = obj.tc;
+          access_tc->tag = i;
+          access_tc->loc = FbleCopyLoc(access_expr->field.loc);
+          FbleReleaseType(heap, obj.type);
+          return MkTc(rtype, &access_tc->_base);
+        }
+      }
 
-      if (body.type == NULL) {
-        FbleReleaseType(heap, arg);
+      ReportError(arena, &access_expr->field.loc,
+          "'%n' is not a field of type %t\n",
+          &access_expr->field, obj.type);
+      FreeTc(heap, obj);
+      FbleReleaseType(heap, normal);
+      return TC_FAILED;
+    }
+
+    case FBLE_MISC_APPLY_EXPR: {
+      FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
+
+      Tc misc = TypeCheckExpr(heap, scope, apply_expr->misc);
+      bool error = (misc.type == NULL);
+
+      size_t argc = apply_expr->args.size;
+      Tc args[argc];
+      for (size_t i = 0; i < argc; ++i) {
+        args[i] = TypeCheckExpr(heap, scope, apply_expr->args.xs[i]);
+        error = error || (args[i].type == NULL);
+      }
+
+      if (error) {
+        FreeTc(heap, misc);
+        for (size_t i = 0; i < argc; ++i) {
+          FreeTc(heap, args[i]);
+        }
         return TC_FAILED;
       }
 
-      FbleType* pt = FbleNewPolyType(heap, expr->loc, arg, body.type);
-      FbleReleaseType(heap, arg);
-      FbleReleaseType(heap, body.type);
+      FbleType* normal = FbleNormalType(heap, misc.type);
+      if (normal->tag == FBLE_FUNC_TYPE) {
+        // FUNC_APPLY
+        FbleFuncType* func_type = (FbleFuncType*)normal;
+        if (func_type->args.size != argc) {
+          ReportError(arena, &expr->loc,
+              "expected %i args, but found %i\n",
+              func_type->args.size, argc);
+          FbleReleaseType(heap, normal);
+          FreeTc(heap, misc);
+          for (size_t i = 0; i < argc; ++i) {
+            FreeTc(heap, args[i]);
+          }
+          return TC_FAILED;
+        }
 
-      FblePolyValueTc* poly_tc = FbleAlloc(arena, FblePolyValueTc);
-      poly_tc->_base.tag = FBLE_POLY_VALUE_TC;
-      poly_tc->_base.loc = FbleCopyLoc(expr->loc);
-      poly_tc->body = body.tc;
+        for (size_t i = 0; i < argc; ++i) {
+          if (!FbleTypesEqual(heap, func_type->args.xs[i], args[i].type)) {
+            ReportError(arena, &apply_expr->args.xs[i]->loc,
+                "expected type %t, but found %t\n",
+                func_type->args.xs[i], args[i].type);
+            FbleReleaseType(heap, normal);
+            FreeTc(heap, misc);
+            for (size_t j = i; j < argc; ++j) {
+              FreeTc(heap, args[j]);
+            }
+            return TC_FAILED;
+          }
+          FbleReleaseType(heap, args[i].type);
+        }
 
-      return MkTc(pt, &poly_tc->_base);
+        FbleType* rtype = FbleRetainType(heap, func_type->rtype);
+        FbleReleaseType(heap, normal);
+        FbleReleaseType(heap, misc.type);
+
+        FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
+        apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
+        apply_tc->_base.loc = FbleCopyLoc(expr->loc);
+        apply_tc->func = misc.tc;
+        FbleVectorInit(arena, apply_tc->args);
+        for (size_t i = 0; i < argc; ++i) {
+          FbleVectorAppend(arena, apply_tc->args, args[i].tc);
+        }
+
+        return MkTc(rtype, &apply_tc->_base);
+      }
+
+      if (normal->tag == FBLE_TYPE_TYPE) {
+        // FBLE_STRUCT_VALUE_EXPR
+        FbleTypeType* type_type = (FbleTypeType*)normal;
+        FbleType* vtype = FbleRetainType(heap, type_type->type);
+        FbleReleaseType(heap, normal);
+        FreeTc(heap, misc);
+
+        FbleStructType* struct_type = (FbleStructType*)FbleNormalType(heap, vtype);
+        if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
+          ReportError(arena, &apply_expr->misc->loc,
+              "expected a struct type, but found %t\n",
+              vtype);
+          FbleReleaseType(heap, &struct_type->_base);
+          FbleReleaseType(heap, vtype);
+          for (size_t i = 0; i < argc; ++i) {
+            FreeTc(heap, args[i]);
+          }
+          return TC_FAILED;
+        }
+
+        if (struct_type->fields.size != argc) {
+          // TODO: Where should the error message go?
+          ReportError(arena, &expr->loc,
+              "expected %i args, but %i provided\n",
+               struct_type->fields.size, argc);
+          FbleReleaseType(heap, &struct_type->_base);
+          FbleReleaseType(heap, vtype);
+          for (size_t i = 0; i < argc; ++i) {
+            FreeTc(heap, args[i]);
+          }
+          return TC_FAILED;
+        }
+
+        bool error = false;
+        for (size_t i = 0; i < argc; ++i) {
+          FbleTaggedType* field = struct_type->fields.xs + i;
+
+          if (!FbleTypesEqual(heap, field->type, args[i].type)) {
+            ReportError(arena, &apply_expr->args.xs[i]->loc,
+                "expected type %t, but found %t\n",
+                field->type, args[i]);
+            error = true;
+          }
+        }
+
+        FbleReleaseType(heap, &struct_type->_base);
+
+        if (error) {
+          FbleReleaseType(heap, vtype);
+          for (size_t i = 0; i < argc; ++i) {
+            FreeTc(heap, args[i]);
+          }
+          return TC_FAILED;
+        }
+
+        FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
+        struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
+        struct_tc->_base.loc = FbleCopyLoc(expr->loc);
+        FbleVectorInit(arena, struct_tc->args);
+        for (size_t i = 0; i < argc; ++i) {
+          FbleReleaseType(heap, args[i].type);
+          FbleVectorAppend(arena, struct_tc->args, args[i].tc);
+        }
+
+        return MkTc(vtype, &struct_tc->_base);
+      }
+
+      ReportError(arena, &expr->loc,
+          "expecting a function or struct type, but found something of type %t\n",
+          misc.type);
+      FreeTc(heap, misc);
+      FbleReleaseType(heap, normal);
+      for (size_t i = 0; i < argc; ++i) {
+        FreeTc(heap, args[i]);
+      }
+      return TC_FAILED;
     }
   }
 
@@ -1572,24 +1572,25 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = heap->arena;
   switch (expr->tag) {
-    case FBLE_STRUCT_TYPE_EXPR:
-    case FBLE_UNION_TYPE_EXPR:
-    case FBLE_FUNC_TYPE_EXPR:
-    case FBLE_PROC_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
-    case FBLE_MISC_APPLY_EXPR:
-    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
-    case FBLE_UNION_VALUE_EXPR:
-    case FBLE_MISC_ACCESS_EXPR:
-    case FBLE_UNION_SELECT_EXPR:
-    case FBLE_FUNC_VALUE_EXPR:
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
-    case FBLE_MODULE_REF_EXPR:
+    case FBLE_STRUCT_TYPE_EXPR:
+    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
+    case FBLE_UNION_TYPE_EXPR:
+    case FBLE_UNION_VALUE_EXPR:
+    case FBLE_UNION_SELECT_EXPR:
+    case FBLE_FUNC_TYPE_EXPR:
+    case FBLE_FUNC_VALUE_EXPR:
+    case FBLE_PROC_TYPE_EXPR:
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
-    case FBLE_LITERAL_EXPR: {
+    case FBLE_LITERAL_EXPR:
+    case FBLE_MODULE_REF_EXPR:
+    case FBLE_MISC_ACCESS_EXPR:
+    case FBLE_MISC_APPLY_EXPR:
+    {
       Tc proc = TypeCheckExpr(heap, scope, expr);
       if (proc.type == NULL) {
         return TC_FAILED;
@@ -1800,6 +1801,11 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
 {
   FbleArena* arena = heap->arena;
   switch (type->tag) {
+    case FBLE_TYPEOF_EXPR: {
+      FbleTypeofExpr* typeof = (FbleTypeofExpr*)type;
+      return TypeCheckExprForType(heap, scope, typeof->expr);
+    }
+
     case FBLE_STRUCT_TYPE_EXPR: {
       FbleStructTypeExpr* struct_type = (FbleStructTypeExpr*)type;
       FbleStructType* st = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, type->loc);
@@ -1924,27 +1930,23 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
       return &ut->_base;
     }
 
-    case FBLE_TYPEOF_EXPR: {
-      FbleTypeofExpr* typeof = (FbleTypeofExpr*)type;
-      return TypeCheckExprForType(heap, scope, typeof->expr);
-    }
-
-    case FBLE_MISC_APPLY_EXPR:
+    case FBLE_VAR_EXPR:
+    case FBLE_LET_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
-    case FBLE_MISC_ACCESS_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
     case FBLE_EVAL_EXPR:
     case FBLE_LINK_EXPR:
     case FBLE_EXEC_EXPR:
-    case FBLE_VAR_EXPR:
-    case FBLE_MODULE_REF_EXPR:
-    case FBLE_LET_EXPR:
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
-    case FBLE_LITERAL_EXPR: {
+    case FBLE_LITERAL_EXPR:
+    case FBLE_MODULE_REF_EXPR:
+    case FBLE_MISC_ACCESS_EXPR:
+    case FBLE_MISC_APPLY_EXPR:
+    {
       FbleExpr* expr = type;
       FbleType* type = TypeCheckExprForType(heap, scope, expr);
       if (type == NULL) {
