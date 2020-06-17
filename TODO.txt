@@ -1,6 +1,5 @@
 
 * Minimize test case for segfault with no profile block around default case.
-* Rename POLY_EXPR to POLY_VALUE_EXPR?
 * Consistent use of '-' versus '_' in test names.
 * Add test for referring to a module from itself
  - And figure out what the spec should be in that case.
@@ -11,6 +10,7 @@
 * Understand why we are capturing 'type' in statics now when we don't in the
   'master' branch.
 * Fix failing vacuous test.
+* Double check that dumped profiles have all the info we want still?
 
 * Consistently document ownership of args to functions?
  Borrowed: no transfer of ownership.

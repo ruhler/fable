@@ -179,8 +179,8 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       return;
     }
 
-    case FBLE_POLY_EXPR: {
-      FblePolyExpr* e = (FblePolyExpr*)expr;
+    case FBLE_POLY_VALUE_EXPR: {
+      FblePolyValueExpr* e = (FblePolyValueExpr*)expr;
       FbleFreeKind(arena, e->arg.kind);
       FbleFreeName(arena, e->arg.name);
       FbleFreeExpr(arena, e->body);

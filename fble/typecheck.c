@@ -1502,8 +1502,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(FbleRetainType(heap, var->type), &var_tc->_base);
     }
 
-    case FBLE_POLY_EXPR: {
-      FblePolyExpr* poly = (FblePolyExpr*)expr;
+    case FBLE_POLY_VALUE_EXPR: {
+      FblePolyValueExpr* poly = (FblePolyValueExpr*)expr;
 
       if (FbleGetKindLevel(poly->arg.kind) != 1) {
         ReportError(arena, &poly->arg.kind->loc,
@@ -1586,7 +1586,7 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
     case FBLE_MODULE_REF_EXPR:
-    case FBLE_POLY_EXPR:
+    case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR: {
@@ -1941,7 +1941,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
     case FBLE_VAR_EXPR:
     case FBLE_MODULE_REF_EXPR:
     case FBLE_LET_EXPR:
-    case FBLE_POLY_EXPR:
+    case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR: {

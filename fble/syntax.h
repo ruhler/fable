@@ -202,7 +202,7 @@ typedef enum {
   FBLE_LINK_EXPR,
   FBLE_EXEC_EXPR,
 
-  FBLE_POLY_EXPR,
+  FBLE_POLY_VALUE_EXPR,
   FBLE_POLY_APPLY_EXPR,
 
   FBLE_LIST_EXPR,
@@ -418,13 +418,13 @@ typedef struct {
   size_t size;
 } FbleTaggedKindV;
 
-// FblePolyExpr --
-//   FBLE_POLY_EXPR (arg :: (Kind, Name)) (body :: Expr)
+// FblePolyValueExpr --
+//   FBLE_POLY_VALUE_EXPR (arg :: (Kind, Name)) (body :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleTaggedKind arg;
   FbleExpr* body;
-} FblePolyExpr;
+} FblePolyValueExpr;
 
 // FblePolyApplyExpr --
 //   FBLE_POLY_APPLY_EXPR (poly :: Expr) (arg :: Type)

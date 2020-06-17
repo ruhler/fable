@@ -451,8 +451,8 @@ block:
       FbleExpr* expr = $4;
       for (size_t i = 0; i < $2.size; ++i) {
         FbleTaggedKind* arg = $2.xs + $2.size - 1 - i;
-        FblePolyExpr* poly_expr = FbleAlloc(arena, FblePolyExpr);
-        poly_expr->_base.tag = FBLE_POLY_EXPR;
+        FblePolyValueExpr* poly_expr = FbleAlloc(arena, FblePolyValueExpr);
+        poly_expr->_base.tag = FBLE_POLY_VALUE_EXPR;
         poly_expr->_base.loc = FbleCopyLoc(@$);
         poly_expr->arg.kind = arg->kind;
         poly_expr->arg.name = arg->name;
