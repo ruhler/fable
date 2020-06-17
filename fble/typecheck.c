@@ -414,7 +414,7 @@ static void FreeTc(FbleTypeHeap* heap, Tc tc)
 //
 // Inputs:
 //   arena - arena to use for allocations.
-//   label - the label of the profiling block.
+//   label - the label of the profiling block. Borrowed.
 //   tc - the tc to wrap in a profile block. May be TC_FAILED.
 //
 // Results:
@@ -982,8 +982,18 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       if (select_expr->default_ != NULL) {
-        // TODO: Label with profile block ":"?
+        // TODO: We get a segfault in some cases if we don't put a profile
+        // block around the default case block. Extract a minimized test
+        // example showing that and add it to the spec tests.
+        FbleName label = {
+          .name = FbleNewString(arena, ":"),
+          .space = FBLE_NORMAL_NAME_SPACE,
+          .loc = FbleCopyLoc(select_expr->default_->loc),
+        };
+
         Tc result = TypeCheckExpr(heap, scope, select_expr->default_);
+        result = ProfileBlock(arena, label, result);
+        FbleFreeName(arena, label);
         error = error || (result.type == NULL);
         FbleVectorAppend(arena, select_tc->branches, result.tc);
         if (target == NULL) {

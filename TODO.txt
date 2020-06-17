@@ -1,6 +1,5 @@
 
-* Debug failure in profiling.
- - Suspicion is mismatched Enter/Exit block in case of auto exit.
+* Minimize test case for segfault with no profile block around default case.
 * Rename POLY_EXPR to POLY_VALUE_EXPR?
 * Consistent use of '-' versus '_' in test names.
 * Add test for referring to a module from itself
@@ -9,6 +8,9 @@
    should remove the TODO comments in the code.
 * Add tests for test coverage.
 * Visually inspect error messages to make sure they look okay.
+* Understand why we are capturing 'type' in statics now when we don't in the
+  'master' branch.
+* Fix failing vacuous test.
 
 * Consistently document ownership of args to functions?
  Borrowed: no transfer of ownership.
