@@ -231,7 +231,7 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleNameV path)
 {
   if (root == NULL) {
-    FbleReportError("module ", &path.xs[0].loc);
+    FbleReportError("module ", path.xs[0].loc);
     PrintModuleName(stderr, path);
     fprintf(stderr, " not found\n");
     return NULL;
@@ -286,7 +286,7 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
       *tail = '\0';
 
       if (public && private) {
-        FbleReportError("module ", &path.xs[0].loc);
+        FbleReportError("module ", path.xs[0].loc);
         FbleNameV prefix = { .xs = path.xs, .size = i + 1 };
         PrintModuleName(stderr, prefix);
         fprintf(stderr, " is marked as both public and private\n");
@@ -296,7 +296,7 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
       } else if (private) {
         child->private = true;
       } else {
-        FbleReportError("module ", &path.xs[0].loc);
+        FbleReportError("module ", path.xs[0].loc);
         PrintModuleName(stderr, path);
         fprintf(stderr, " not found\n");
         return NULL;
@@ -365,7 +365,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
         // Tree in the way AccessAllowed expects.
         if (program->modules.xs[i].value != NULL
             && !AccessAllowed(tree, stack->path, ref->path)) {
-          FbleReportError("module ", &ref->path.xs[0].loc);
+          FbleReportError("module ", ref->path.xs[0].loc);
           PrintModuleName(stderr, stack->path);
           fprintf(stderr, " is not allowed to reference private module ");
           PrintModuleName(stderr, ref->path);
@@ -388,7 +388,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     for (Stack* s = stack; s != NULL; s = s->tail) {
       if (PathsEqual(ref->path, s->path)) {
         FbleName* module = ref->path.xs + ref->path.size - 1;
-        FbleReportError("module ", &module->loc);
+        FbleReportError("module ", module->loc);
         PrintModuleName(stderr, ref->path);
         fprintf(stderr, " recursively depends on itself\n");
         error = true;

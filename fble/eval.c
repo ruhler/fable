@@ -377,7 +377,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
         FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, statics, locals, access_instr->obj);
         if (sv == NULL) {
-          FbleReportError("undefined struct value access\n", &access_instr->loc);
+          FbleReportError("undefined struct value access\n", access_instr->loc);
           thread->stack->pc = pc - 1;
           return AbortThread(heap, thread, aborted);
         }
@@ -394,13 +394,13 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
         FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, statics, locals, access_instr->obj);
         if (uv == NULL) {
-          FbleReportError("undefined union value access\n", &access_instr->loc);
+          FbleReportError("undefined union value access\n", access_instr->loc);
           thread->stack->pc = pc - 1;
           return AbortThread(heap, thread, aborted);
         }
 
         if (uv->tag != access_instr->tag) {
-          FbleReportError("union field access undefined: wrong tag\n", &access_instr->loc);
+          FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
           thread->stack->pc = pc - 1;
           return AbortThread(heap, thread, aborted);
         }
@@ -414,7 +414,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
         FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, statics, locals, select_instr->condition);
         if (uv == NULL) {
-          FbleReportError("undefined union value select\n", &select_instr->loc);
+          FbleReportError("undefined union value select\n", select_instr->loc);
           thread->stack->pc = pc - 1;
           return AbortThread(heap, thread, aborted);
         }
@@ -458,7 +458,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
         FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, statics, locals, call_instr->func);
         if (func == NULL) {
-          FbleReportError("called undefined function\n", &call_instr->loc);
+          FbleReportError("called undefined function\n", call_instr->loc);
           thread->stack->pc = pc - 1;
           return AbortThread(heap, thread, aborted);
         };
@@ -975,7 +975,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
         if (!io->io(io, heap, true)) {
           FbleString* source = FbleNewString(arena, __FILE__);
           FbleLoc loc = { .source = source, .line = 0, .col = 0 };
-          FbleReportError("deadlock\n", &loc);
+          FbleReportError("deadlock\n", loc);
           FbleFreeString(arena, source);
           aborted = true;
         }

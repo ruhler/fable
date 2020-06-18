@@ -24,7 +24,7 @@
 //
 // Side effects:
 //   Prints a warning message to stderr with error location.
-void FbleReportWarning(const char* format, FbleLoc* loc, ...);
+void FbleReportWarning(const char* format, FbleLoc loc, ...);
 
 // FbleReportError --
 //   Report an error message associated with a location in a source file.
@@ -39,7 +39,7 @@ void FbleReportWarning(const char* format, FbleLoc* loc, ...);
 //
 // Side effects:
 //   Prints an error message to stderr with error location.
-void FbleReportError(const char* format, FbleLoc* loc, ...);
+void FbleReportError(const char* format, FbleLoc loc, ...);
 
 // FbleNameV --
 //   A vector of FbleNames.

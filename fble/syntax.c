@@ -285,21 +285,21 @@ void FbleFreeLoc(FbleArena* arena, FbleLoc loc)
 }
 
 // FbleReportWarning -- see documentation in syntax.h
-void FbleReportWarning(const char* format, FbleLoc* loc, ...)
+void FbleReportWarning(const char* format, FbleLoc loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
-  fprintf(stderr, "%s:%d:%d: warning: ", loc->source->str, loc->line, loc->col);
+  fprintf(stderr, "%s:%d:%d: warning: ", loc.source->str, loc.line, loc.col);
   vfprintf(stderr, format, ap);
   va_end(ap);
 }
 
 // FbleReportError -- see documentation in syntax.h
-void FbleReportError(const char* format, FbleLoc* loc, ...)
+void FbleReportError(const char* format, FbleLoc loc, ...)
 {
   va_list ap;
   va_start(ap, loc);
-  fprintf(stderr, "%s:%d:%d: error: ", loc->source->str, loc->line, loc->col);
+  fprintf(stderr, "%s:%d:%d: error: ", loc.source->str, loc.line, loc.col);
   vfprintf(stderr, format, ap);
   va_end(ap);
 }

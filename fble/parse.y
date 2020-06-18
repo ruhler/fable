@@ -828,7 +828,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex)
 //   An error message is printed to stderr.
 static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg)
 {
-  FbleReportError("%s\n", llocp, msg);
+  FbleReportError("%s\n", *llocp, msg);
 }
 
 // FbleParse -- see documentation in syntax.h
