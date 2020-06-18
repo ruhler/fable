@@ -4,6 +4,6 @@ fble-test-error 7:14 {
   Bool@ true = Bool@(true: Unit@());
 
   # The argument to an exec has the wrong type.
-  Bool@ x := $(Unit@());
-  $(x);
+  Bool@ x := !(Unit@());
+  !(x);
 }
