@@ -11,6 +11,15 @@
 // FbleTcTag --
 //   A tag used to distinguish among different kinds of type checked
 //   expressions.
+//
+// FbleTc is like FbleExpr, except that:
+// * Field and variable names are replaced with integer indicies.
+// * Types are eliminated.
+// * Processes are treated as zero argument functions.
+// * There is no difference between a function context and a process context.
+//   In particular, LINK_TC and EXEC_TC represent the computation that returns
+//   the result of running the link and exec processes, rather than a
+//   computation that creates link and exec process values.
 typedef enum {
   FBLE_TYPE_TC,
   FBLE_VAR_TC,
@@ -28,9 +37,6 @@ typedef enum {
 
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
-
-  FBLE_POLY_VALUE_TC,
-  FBLE_POLY_APPLY_TC,
 
   FBLE_PROFILE_TC,
 } FbleTcTag;
@@ -189,27 +195,6 @@ typedef struct {
   FbleTcV bindings;
   FbleTc* body;
 } FbleExecTc;
-
-// FblePolyValueTc --
-//   FBLE_POLY_VALUE_TC
-//
-// TODO: Is this necessary? Is there any reason in wrapping the body? Maybe
-// because we need to know to generate the type value used by the body? Should
-// we just reuse FbleFuncValueTc?
-typedef struct {
-  FbleTc _base;
-  FbleTc* body;
-} FblePolyValueTc;
-
-// FblePolyApplyTc --
-//   FBLE_POLY_APPLY_TC
-//
-// TODO: Is this necessary? Is there any value in wrapping the poly in an
-// apply?
-typedef struct {
-  FbleTc _base;
-  FbleTc* poly;
-} FblePolyApplyTc;
 
 // FbleProfileTc --
 //   FBLE_PROFILE_TC

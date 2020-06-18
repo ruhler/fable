@@ -464,6 +464,13 @@ static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args)
   // <@ T@>(T@ x, T@ x1, T@ x2, T@ x3)<@ L@>((T@, L@){L@;} cons, L@ nil) {
   //   cons(x, cons(x1, cons(x2, cons(x3, nil))));
   // }<t@>(a, b, c, d)
+  //
+  // Note: we can erase the poly values and applications when generating TC
+  // code. In that case this becomes something like:
+  // (x0, x1, x2, x3)(cons, nil) {
+  //   cons(x, cons(x1, cons(x2, cons(x3, nil))));
+  // }(a, b, c, d)
+  //   
   assert(args.size > 0 && "empty lists not allowed");
 
   FbleVarTc* nil = FbleAlloc(arena, FbleVarTc);
@@ -513,32 +520,17 @@ static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args)
   inner_func->argc = 2;
   inner_func->body = applys;
 
-  FblePolyValueTc* inner_poly = FbleAlloc(arena, FblePolyValueTc);
-  inner_poly->_base.tag = FBLE_POLY_VALUE_TC;
-  inner_poly->_base.loc = FbleCopyLoc(loc);
-  inner_poly->body = &inner_func->_base;
-
   FbleFuncValueTc* outer_func = FbleAlloc(arena, FbleFuncValueTc);
   outer_func->_base.tag = FBLE_FUNC_VALUE_TC;
   outer_func->_base.loc = FbleCopyLoc(loc);
   FbleVectorInit(arena, outer_func->scope);
   outer_func->argc = args.size;
-  outer_func->body = &inner_poly->_base;
-
-  FblePolyValueTc* outer_poly = FbleAlloc(arena, FblePolyValueTc);
-  outer_poly->_base.tag = FBLE_POLY_VALUE_TC;
-  outer_poly->_base.loc = FbleCopyLoc(loc);
-  outer_poly->body = &outer_func->_base;
-
-  FblePolyApplyTc* apply_type = FbleAlloc(arena, FblePolyApplyTc);
-  apply_type->_base.tag = FBLE_POLY_APPLY_TC;
-  apply_type->_base.loc = FbleCopyLoc(loc);
-  apply_type->poly = &outer_poly->_base;
+  outer_func->body = &inner_func->_base;
 
   FbleFuncApplyTc* apply_elems = FbleAlloc(arena, FbleFuncApplyTc);
   apply_elems->_base.tag = FBLE_FUNC_APPLY_TC;
   apply_elems->_base.loc = FbleCopyLoc(loc);
-  apply_elems->func = &apply_type->_base;
+  apply_elems->func = &outer_func->_base;
   FbleVectorInit(arena, apply_elems->args);
   for (size_t i = 0; i < args.size; ++i) {
     FbleVectorAppend(arena, apply_elems->args, args.xs[i]);
@@ -1120,12 +1112,27 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleReleaseType(heap, arg);
       FbleReleaseType(heap, body.type);
 
-      FblePolyValueTc* poly_tc = FbleAlloc(arena, FblePolyValueTc);
-      poly_tc->_base.tag = FBLE_POLY_VALUE_TC;
-      poly_tc->_base.loc = FbleCopyLoc(expr->loc);
-      poly_tc->body = body.tc;
+      // A poly value expression gets rewritten as a let when we erase types:
+      // <@ T@> ...
+      // turns into:
+      //   let T@ = type
+      //   in ...
 
-      return MkTc(pt, &poly_tc->_base);
+      // TODO: Do we really have to allocation a type value here? Can we
+      // optimize this away?
+      FbleTypeTc* type_tc = FbleAlloc(arena, FbleTypeTc);
+      type_tc->_base.tag = FBLE_TYPE_TC;
+      type_tc->_base.loc = FbleCopyLoc(arg_type->loc);
+
+      FbleLetTc* let_tc = FbleAlloc(arena, FbleLetTc);
+      let_tc->_base.tag = FBLE_LET_TC;
+      let_tc->_base.loc = FbleCopyLoc(expr->loc);
+      let_tc->recursive = false;
+      FbleVectorInit(arena, let_tc->bindings);
+      FbleVectorAppend(arena, let_tc->bindings, &type_tc->_base);
+      let_tc->body = body.tc;
+
+      return MkTc(pt, &let_tc->_base);
     }
 
     case FBLE_POLY_APPLY_EXPR: {
@@ -1178,12 +1185,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleReleaseType(heap, arg);
       FbleReleaseType(heap, poly.type);
 
-      FblePolyApplyTc* apply_tc = FbleAlloc(arena, FblePolyApplyTc);
-      apply_tc->_base.tag = FBLE_POLY_APPLY_TC;
-      apply_tc->_base.loc = FbleCopyLoc(expr->loc);
-      apply_tc->poly = poly.tc;
-
-      return MkTc(pat, &apply_tc->_base);
+      // When we erase types, poly application dissappears, because we already
+      // supplied the generic type when creating the poly value.
+      return MkTc(pat, poly.tc);
     }
 
     case FBLE_LIST_EXPR: {
@@ -2138,20 +2142,6 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
       }
       FbleFree(arena, exec_tc->bindings.xs);
       FbleFreeTc(arena, exec_tc->body);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_POLY_VALUE_TC: {
-      FblePolyValueTc* poly_tc = (FblePolyValueTc*)tc;
-      FbleFreeTc(arena, poly_tc->body);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_POLY_APPLY_TC: {
-      FblePolyApplyTc* apply_tc = (FblePolyApplyTc*)tc;
-      FbleFreeTc(arena, apply_tc->poly);
       FbleFree(arena, tc);
       return;
     }

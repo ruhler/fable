@@ -894,31 +894,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
-    case FBLE_POLY_VALUE_TC: {
-      FblePolyValueTc* poly_tc = (FblePolyValueTc*)tc;
-
-      // TODO: It's a little silly that we are pushing an empty type value
-      // here. Oh well. Maybe in the future we'll optimize those away or
-      // start making use of the type info at runtime.
-
-      Local* local = NewLocal(arena, scope);
-      FbleTypeInstr* type_instr = FbleAlloc(arena, FbleTypeInstr);
-      type_instr->_base.tag = FBLE_TYPE_INSTR;
-      type_instr->_base.profile_ops = NULL;
-      type_instr->dest = local->index.index;
-      AppendInstr(arena, scope, &type_instr->_base);
-
-      PushVar(arena, scope, local);
-      Local* body = CompileExpr(arena, blocks, exit, scope, poly_tc->body);
-      PopVar(arena, scope, exit);
-      return body;
-    }
-
-    case FBLE_POLY_APPLY_TC: {
-      FblePolyApplyTc* apply_tc = (FblePolyApplyTc*)tc;
-      return CompileExpr(arena, blocks, exit, scope, apply_tc->poly);
-    }
-
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
       EnterBlock(arena, blocks, profile_tc->name, tc->loc, scope);
