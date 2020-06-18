@@ -12,7 +12,6 @@
  Outlives: caller responsible for keeping alive as long as returned result is.
 
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
-* Change ReportError to take %n as a value instead of a pointer?
 
 * Fix broken vacuous_value test.
  - this should fall out after we pull out an FbleTc IR.

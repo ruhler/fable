@@ -68,7 +68,7 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleVarIndexV* captured, S
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 
 static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...);
-static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type);
+static bool CheckNameSpace(FbleArena* arena, FbleName name, FbleType* type);
 
 // Tc --
 //   A pair of returned type and type checked expression.
@@ -277,7 +277,7 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
 //   are supported:
 //     %i - size_t
 //     %k - FbleKind*
-//     %n - FbleName*
+//     %n - FbleName
 //     %s - const char*
 //     %t - FbleType*
 //   Please add additional format specifiers as needed.
@@ -317,8 +317,8 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
       }
 
       case 'n': {
-        FbleName* name = va_arg(ap, FbleName*);
-        FblePrintName(stderr, *name);
+        FbleName name = va_arg(ap, FbleName);
+        FblePrintName(stderr, name);
         break;
       }
 
@@ -360,17 +360,17 @@ static void ReportError(FbleArena* arena, FbleLoc* loc, const char* fmt, ...)
 //
 // Side effects:
 //   Prints a message to stderr if the namespace and type don't match.
-static bool CheckNameSpace(FbleArena* arena, FbleName* name, FbleType* type)
+static bool CheckNameSpace(FbleArena* arena, FbleName name, FbleType* type)
 {
   FbleKind* kind = FbleGetKind(arena, type);
   size_t kind_level = FbleGetKindLevel(kind);
   FbleFreeKind(arena, kind);
 
-  bool match = (kind_level == 0 && name->space == FBLE_NORMAL_NAME_SPACE)
-            || (kind_level == 1 && name->space == FBLE_TYPE_NAME_SPACE);
+  bool match = (kind_level == 0 && name.space == FBLE_NORMAL_NAME_SPACE)
+            || (kind_level == 1 && name.space == FBLE_TYPE_NAME_SPACE);
 
   if (!match) {
-    ReportError(arena, &name->loc,
+    ReportError(arena, &name.loc,
         "the namespace of '%n' is not appropriate for something of type %t\n", name, type);
   }
   return match;
@@ -586,8 +586,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
       Var* var = GetVar(heap, scope, var_expr->var, false);
       if (var == NULL) {
-        ReportError(arena, &var_expr->var.loc, "variable '%n' not defined\n",
-            &var_expr->var);
+        ReportError(arena, &var_expr->var.loc, "variable '%n' not defined\n", var_expr->var);
         return TC_FAILED;
       }
 
@@ -623,7 +622,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           error = error || (types[i] == NULL);
         }
         
-        if (types[i] != NULL && !CheckNameSpace(arena, &binding->name, types[i])) {
+        if (types[i] != NULL && !CheckNameSpace(arena, binding->name, types[i])) {
           error = true;
         }
 
@@ -631,7 +630,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           if (FbleNamesEqual(let_expr->bindings.xs[i].name, let_expr->bindings.xs[j].name)) {
             ReportError(arena, &let_expr->bindings.xs[i].name.loc,
                 "duplicate variable name '%n'\n",
-                &let_expr->bindings.xs[i].name);
+                let_expr->bindings.xs[i].name);
             error = true;
           }
         }
@@ -692,7 +691,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         if (defs[i].type != NULL) {
           if (FbleTypeIsVacuous(heap, types[i])) {
             ReportError(arena, &let_expr->bindings.xs[i].name.loc,
-                "%n is vacuous\n", &let_expr->bindings.xs[i].name);
+                "%n is vacuous\n", let_expr->bindings.xs[i].name);
             error = true;
           }
         }
@@ -758,7 +757,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       for (size_t i = 0; i < argc; ++i) {
         FbleTaggedExpr* arg = struct_expr->args.xs + i;
         if (args[i].type != NULL) {
-          if (!CheckNameSpace(arena, &arg->name, args[i].type)) {
+          if (!CheckNameSpace(arena, arg->name, args[i].type)) {
             error = true;
           }
 
@@ -775,7 +774,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             error = true;
             ReportError(arena, &arg->name.loc,
                 "duplicate field name '%n'\n",
-                &struct_expr->args.xs[j].name);
+                struct_expr->args.xs[j].name);
           }
         }
       }
@@ -830,7 +829,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       if (field_type == NULL) {
         ReportError(arena, &union_value_expr->field.loc,
             "'%n' is not a field of type %t\n",
-            &union_value_expr->field, type);
+            union_value_expr->field, type);
         FbleReleaseType(heap, &union_type->_base);
         FbleReleaseType(heap, type);
         return TC_FAILED;
@@ -922,11 +921,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           if (branch < select_expr->choices.size) {
             ReportError(arena, &select_expr->choices.xs[branch].name.loc,
                 "expected tag '%n', but found '%n'\n",
-                &union_type->fields.xs[i].name, &select_expr->choices.xs[branch].name);
+                union_type->fields.xs[i].name, select_expr->choices.xs[branch].name);
           } else {
             ReportError(arena, &expr->loc,
                 "missing tag '%n'\n",
-                &union_type->fields.xs[i].name);
+                union_type->fields.xs[i].name);
           }
         } else {
           // Use the default branch for this field.
@@ -965,7 +964,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       if (branch < select_expr->choices.size) {
         ReportError(arena, &select_expr->choices.xs[branch].name.loc,
             "unexpected tag '%n'\n",
-            &select_expr->choices.xs[branch]);
+            select_expr->choices.xs[branch]);
         error = true;
       }
 
@@ -995,7 +994,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             error = true;
             ReportError(arena, &func_value_expr->args.xs[i].name.loc,
                 "duplicate arg name '%n'\n",
-                &func_value_expr->args.xs[i].name);
+                func_value_expr->args.xs[i].name);
           }
         }
       }
@@ -1091,7 +1090,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       if (poly->arg.name.space != FBLE_TYPE_NAME_SPACE) {
         ReportError(arena, &poly->arg.name.loc,
             "the namespace of '%n' is not appropriate for kind %k\n",
-            &poly->arg.name, poly->arg.kind);
+            poly->arg.name, poly->arg.kind);
         return TC_FAILED;
       }
 
@@ -1389,7 +1388,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       ReportError(arena, &access_expr->field.loc,
           "'%n' is not a field of type %t\n",
-          &access_expr->field, obj.type);
+          access_expr->field, obj.type);
       FreeTc(heap, obj);
       FbleReleaseType(heap, normal);
       return TC_FAILED;
@@ -1626,7 +1625,7 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       if (FbleNamesEqual(link_expr->get, link_expr->put)) {
         ReportError(arena, &link_expr->put.loc,
             "duplicate port name '%n'\n",
-            &link_expr->put);
+            link_expr->put);
         return TC_FAILED;
       }
 
@@ -1816,7 +1815,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
           return NULL;
         }
 
-        if (!CheckNameSpace(arena, &field->name, compiled)) {
+        if (!CheckNameSpace(arena, field->name, compiled)) {
           FbleReleaseType(heap, compiled);
           FbleReleaseType(heap, &st->_base);
           return NULL;
@@ -1835,7 +1834,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
           if (FbleNamesEqual(field->name, struct_type->fields.xs[j].name)) {
             ReportError(arena, &field->name.loc,
                 "duplicate field name '%n'\n",
-                &field->name);
+                field->name);
             FbleReleaseType(heap, &st->_base);
             return NULL;
           }
@@ -1868,7 +1867,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
           if (FbleNamesEqual(field->name, union_type->fields.xs[j].name)) {
             ReportError(arena, &field->name.loc,
                 "duplicate field name '%n'\n",
-                &field->name);
+                field->name);
             FbleReleaseType(heap, &ut->_base);
             return NULL;
           }
