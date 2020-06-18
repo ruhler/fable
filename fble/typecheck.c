@@ -1332,14 +1332,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       // We should have resolved all modules at program load time.
       assert(var != NULL && "module not in scope");
-
-      if (var->type == NULL) {
-        // TODO: The spec isn't very clear on whether module self reference is
-        // allowed or not. Or is it? No recursive modules, right? Isn't this
-        // possibility precluded in load.c?
-        ReportError(arena, &expr->loc, "illegal module self reference\n");
-        return TC_FAILED;
-      }
+      assert(var->type != NULL && "recursive module reference");
 
       FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
       var_tc->_base.tag = FBLE_VAR_TC;
@@ -2000,9 +1993,9 @@ static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* mo
 
   // Push a dummy variable representing the value of the computed module,
   // because we'll be turning this into a LET_TC, which assumes a variable
-  // index is consumed by the thing being defined.
-  // TODO: The spec isn't very clear on whether module self reference is
-  // allowed or not. Or is it? No recursive modules, right?
+  // index is consumed by the thing being defined. The module loading process
+  // is responsible for ensuring we will never try to access the variable in
+  // the definition of the module.
   PushVar(arena, scope, modules->name, NULL);
   Tc module = TypeCheckExpr(heap, scope, modules->value);
   module = ProfileBlock(arena, modules->name, module);

@@ -1,9 +1,5 @@
 
 * Minimize test case for segfault with no profile block around default case.
-* Add test for referring to a module from itself
- - And figure out what the spec should be in that case.
- - Or confirm that spec does say what to do, this is checked in load.c, and we
-   should remove the TODO comments in the code.
 * Add tests for test coverage.
 * Visually inspect error messages to make sure they look okay.
 * Understand why we are capturing 'type' in statics now when we don't in the
@@ -14,14 +10,12 @@
 * Consistently document ownership of args to functions?
  Borrowed: no transfer of ownership.
  Consumed: ownership transferred from caller to callee.
- Required: caller responsible for keeping alive as long as returned result is.
+ Outlives: caller responsible for keeping alive as long as returned result is.
 
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
 * Change ReportError to take %n as a value instead of a pointer?
 * Should we remove FBLE_POLY_APPLY_TC? If not, should we restore FBLE_EVAL_TC?
   Should we remove FBLE_POLY_VALUE_TC and use FBLE_FUNC_APPLY instead?
-
-* Reorganize code in compile.c to match enum definition order.
 
 * Fix broken vacuous_value test.
  - this should fall out after we pull out an FbleTc IR.

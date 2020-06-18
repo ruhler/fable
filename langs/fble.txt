@@ -894,7 +894,8 @@ Modules may depend on other modules independent of the tree hierarchy of
 modules. A program can include a module without having to depend on any
 descendants of that module. The only restrictions on module dependencies is
 that there must not be any cyclic dependencies and module visibility rules
-must be obeyed.
+must be obeyed. A module may not reference itself, as that is considered a
+form of cyclic dependency.
 
 A module is referred to using an absolute path, which describes a path of
 named children from the root of the module hierarchy.
@@ -1196,12 +1197,6 @@ Notes:
   I think it would be cool if children were executed fairly. In particular,
   the amount of runtime a child gets is independent of how many children its
   siblings has.
-
-* Can use use a module reference to refer to your own module?
-  For example, that would let me refer to bits from the final result of a
-  module before they have been defined. Technically it's feasible and
-  theoretically makes sense. I would suggest no, just to force things to be
-  simpler.
   
 * It would be awesome to have a well defined style guide for programming in
   fble. And maybe an automatic re-formatter.
