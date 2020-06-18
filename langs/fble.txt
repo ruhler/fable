@@ -450,7 +450,8 @@ If no default is provided, a choice must be present for each field of the
 condition's union type. If a default is provided, the default value will be
 used for any fields not explicitly listed. The fields must be listed in the
 same order as they are declared in the union type, regardless of whether or
-not a default value is provided.
+not a default value is provided. At least one non-default choice must be
+provided.
 
 The expression is evaluated by evaluating the condition, then evaluating the
 choice selected by the condition. No other choices are evaluated.

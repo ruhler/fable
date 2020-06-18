@@ -1,9 +1,13 @@
 
 * Minimize test case for segfault with no profile block around default case.
 * Add tests for test coverage.
+ - union select with all but the default branch maltyped.
+ - maltyped list arg.
+ - inconsistent arg types to list expression.
+ - inconsistent arg types to literal expressions.
+ - maltyped exec arg.
 * Understand why we are capturing 'type' in statics now when we don't in the
   'master' branch.
-* Fix failing vacuous test.
 * Double check that dumped profiles have all the info we want still?
 
 * Consistently document ownership of args to functions?
