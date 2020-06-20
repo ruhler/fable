@@ -1,8 +1,19 @@
 
-* Minimize test case for segfault with no profile block around default case.
-* Understand why we are capturing 'type' in statics now when we don't in the
-  'master' branch.
-* Double check that dumped profiles have all the info we want still?
+* Run spec tests both with and without profiling.
+ - Change fble-test-run to take a dir instead of loc.
+* Minimize test case for type_memleak.fble and add to spec tests.
+
+* Should we avoid capturing an unused 'type' as a static?
+  For example, if we have Unit@() in a function body.
+  Proposal: whenever we look up a variable, if the kind is a type kind, return
+  a special FBLE_TYPE_VAR type and don't mark the variable as accessed.
+  Eliminate all let bindings of type kind.
+
+  The trouble is:
+  - This is such a small fraction of runtime, I don't expect any significant
+    performance improvement in practice.
+  - It feels sketchy to me to remove code that could contain errors. For
+    example: ??? is there an example?
 
 * Consistently document ownership of args to functions?
  Borrowed: no transfer of ownership.
@@ -10,6 +21,13 @@
  Outlives: caller responsible for keeping alive as long as returned result is.
 
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
+  The question is if they should be public or private.
+  If they should be private, they should go into name.h rather than syntax.h,
+  right?
+
+* We don't get a warning about an unused self recursive function.
+  More generally, we don't get warnings about variables that are referenced
+  only by unused variables.
 
 * Fix broken vacuous_value test.
  - this should fall out after we pull out an FbleTc IR.
@@ -33,6 +51,7 @@
 * Figure out how to do better lifecycle analysis in the compiler
  - Don't retain/release a field of an object if you know the object is going
    to stay alive as long as you need the field anyway.
+ - I think this is the biggest opportunity for real performance gains.
 
 * [eval] Would it improve performance to merge statics into the locals array?
   We don't have to own them. Just copy them all over when we push a frame.
