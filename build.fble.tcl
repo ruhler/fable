@@ -68,11 +68,7 @@ proc write_modules { dir modules } {
   }
 }
 
-proc fble-test-error-run { tloc loc expr modules } {
-  set line [dict get $tloc line]
-  set file [dict get $tloc file]
-  set dir "out/[relative_file $file]:$line"
-
+proc fble-test-error-run { dir loc expr modules } {
   exec mkdir -p $dir
   set fprgm $dir/_.fble
   exec echo $expr > $fprgm
@@ -85,11 +81,7 @@ proc fble-test-error-run { tloc loc expr modules } {
   }
 }
 
-proc fble-test-run { cmd loc expr modules } {
-  set line [dict get $loc line]
-  set file [dict get $loc file]
-  set dir "out/[relative_file $file]:$line"
-
+proc fble-test-run { dir cmd expr modules } {
   # Write the program to file.
   exec mkdir -p $dir
   set fprgm $dir/_.fble
@@ -103,30 +95,44 @@ proc fble-test-run { cmd loc expr modules } {
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test { expr args } {
-  set loc [info frame -1]
-  set file [dict get $loc file]
-  testln $loc [relative_file $file] fble-test-run $::bin/fble-test $loc $expr $args
+  set tloc [info frame -1]
+  set line [dict get $tloc line]
+  set file [dict get $tloc file]
+
+  # Run test without profiling enabled
+  set dir "out/[relative_file $file]:$line"
+  testln $tloc [relative_file $file] fble-test-run $dir "$::bin/fble-test" $expr $args
+
+  # Run test with profiling enabled
+  set dir "out/[relative_file $file]-profile:$line"
+  testln $tloc "[relative_file $file]-profile" fble-test-run $dir "$::bin/fble-test --profile" $expr $args
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-error { loc expr args } {
   set tloc [info frame -1]
+  set line [dict get $tloc line]
   set file [dict get $tloc file]
-  testln $tloc [relative_file $file] fble-test-error-run $tloc $loc $expr $args
+  set dir "out/[relative_file $file]:$line"
+  testln $tloc [relative_file $file] fble-test-error-run $dir $loc $expr $args
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-memory-constant { expr } {
-  set loc [info frame -1]
-  set file [dict get $loc file]
-  testln $loc [relative_file $file] fble-test-run $::bin/fble-mem-test $loc $expr {}
+  set tloc [info frame -1]
+  set line [dict get $tloc line]
+  set file [dict get $tloc file]
+  set dir "out/[relative_file $file]:$line"
+  testln $tloc [relative_file $file] fble-test-run $dir $::bin/fble-mem-test $expr {}
 }
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-memory-growth { expr } {
-  set loc [info frame -1]
-  set file [dict get $loc file]
-  testln $loc [relative_file $file] fble-test-run "$::bin/fble-mem-test --growth" $loc $expr {}
+  set tloc [info frame -1]
+  set line [dict get $tloc line]
+  set file [dict get $tloc file]
+  set dir "out/[relative_file $file]:$line"
+  testln $tloc [relative_file $file] fble-test-run $dir "$::bin/fble-mem-test --growth" $expr {}
 }
 
 # Source all *.tcl files under the given directory, recursively.

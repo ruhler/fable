@@ -934,9 +934,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       if (select_expr->default_ != NULL) {
-        // TODO: We get a segfault in some cases if we don't put a profile
-        // block around the default case block. Extract a minimized test
-        // example showing that and add it to the spec tests.
         FbleName label = {
           .name = FbleNewString(arena, ":"),
           .space = FBLE_NORMAL_NAME_SPACE,
@@ -1117,7 +1114,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       //   let T@ = type
       //   in ...
 
-      // TODO: Do we really have to allocation a type value here? Can we
+      // TODO: Do we really have to allocate a type value here? Can we
       // optimize this away?
       FbleTypeTc* type_tc = FbleAlloc(arena, FbleTypeTc);
       type_tc->_base.tag = FBLE_TYPE_TC;

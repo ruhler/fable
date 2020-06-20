@@ -1,6 +1,4 @@
 
-* Run spec tests both with and without profiling.
- - Change fble-test-run to take a dir instead of loc.
 * Minimize test case for type_memleak.fble and add to spec tests.
 
 * Should we avoid capturing an unused 'type' as a static?
