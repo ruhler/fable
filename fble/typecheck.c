@@ -1435,6 +1435,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
                 func_type->args.xs[i], args[i].type);
             FbleReleaseType(heap, normal);
             FreeTc(heap, misc);
+            // TODO: This double for loop thing is pretty ugly. Anything we
+            // can do to clean up?
+            for (size_t j = 0; j < i; ++j) {
+              FbleFreeTc(arena, args[j].tc);
+            }
             for (size_t j = i; j < argc; ++j) {
               FreeTc(heap, args[j]);
             }

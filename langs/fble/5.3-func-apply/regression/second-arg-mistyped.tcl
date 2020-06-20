@@ -1,0 +1,15 @@
+fble-test-error 14:14 {
+  @ Unit@ = *();
+  Unit@ Unit = Unit@();
+
+  @ Bool@ = +(Unit@ true, Unit@ false);
+  Bool@ True = Bool@(true: Unit);
+
+  (Unit@, Unit@) { Unit@; } F = (Unit@ x, Unit@ y) {
+    x;
+  };
+
+  # We had a memory leak in the past where we failed to free memory for the
+  # first argument to a function if the second argument had the wrong type.
+  F(Unit@(), True);
+}

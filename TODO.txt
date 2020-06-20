@@ -1,6 +1,4 @@
 
-* Minimize test case for type_memleak.fble and add to spec tests.
-
 * Should we avoid capturing an unused 'type' as a static?
   For example, if we have Unit@() in a function body.
   Proposal: whenever we look up a variable, if the kind is a type kind, return
