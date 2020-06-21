@@ -1,6 +1,4 @@
 
-* Add spec test to catch failure to free local for func apply.
-
 * Don't rely on NULL vs. non-NULL to free values in PopFrame.
  - Do explicit RELEASE_INSTR to free everything in tail call.
 

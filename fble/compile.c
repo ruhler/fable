@@ -836,9 +836,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       call_instr->dest = dest->index.index;
       AppendInstr(arena, scope, &call_instr->_base);
 
-      // TODO: Add spec test to catch the regression where we forgot to
-      // release func here. It caused a problem when we did that in the first
-      // branch of a case, but tried to release the value in a separate case.
       LocalRelease(arena, scope, func, exit);
       for (size_t i = 0; i < argc; ++i) {
         FbleVectorAppend(arena, call_instr->args, args[i]->index);
@@ -865,7 +862,8 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       AppendInstr(arena, scope, &link->_base);
 
-      // TODO: Should we call ReleaseLocal after this?
+      // TODO: Should we call PopVar after this?
+      // The answer is almost certainly yes.
       return CompileExpr(arena, blocks, exit, scope, link_tc->body);
     }
 
