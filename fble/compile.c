@@ -821,10 +821,32 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       }
 
       if (exit) {
+        // Free any locals that we do not need to make the tail call.
+        for (size_t i = 0; i < scope->locals.size; ++i) {
+          Local* local = scope->locals.xs[i];
+          if (local != NULL && local != func) {
+            bool is_arg = false;
+            for (size_t j = 0; j < argc; ++j) {
+              if (args[j] == local) {
+                is_arg = true;
+                break;
+              }
+            }
+
+            if (!is_arg) {
+              FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
+              release->_base.tag = FBLE_RELEASE_INSTR;
+              release->_base.profile_ops = NULL;
+              release->value = local->index.index;
+              AppendInstr(arena, scope, &release->_base);
+            }
+          }
+        }
+
         AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
       }
 
-      Local* dest = NewLocal(arena, scope);
+      Local* dest = exit ? NULL : NewLocal(arena, scope);
 
       FbleCallInstr* call_instr = FbleAlloc(arena, FbleCallInstr);
       call_instr->_base.tag = FBLE_CALL_INSTR;
@@ -833,7 +855,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       call_instr->exit = exit;
       call_instr->func = func->index;
       FbleVectorInit(arena, call_instr->args);
-      call_instr->dest = dest->index.index;
+      call_instr->dest = exit ? 0 : dest->index.index;
       AppendInstr(arena, scope, &call_instr->_base);
 
       LocalRelease(arena, scope, func, exit);

@@ -1,6 +1,8 @@
 
 * Don't rely on NULL vs. non-NULL to free values in PopFrame.
- - Do explicit RELEASE_INSTR to free everything in tail call.
+ - Fix failure to pop var in compilation of LINK_TC.
+ - Avoid redundant retain/release of args in ReplaceFrame.
+
 
 * Allow the lifetime of a value to depend on the lifetime of another value.
  - Track lifetimes statically. Lazily retain a value only if and when it's
