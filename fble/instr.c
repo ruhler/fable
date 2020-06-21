@@ -103,7 +103,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 
         case FBLE_UNION_SELECT_INSTR: {
           FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-          fprintf(fout, "pc += ?(%s%zi; ",
+          fprintf(fout, "pc += %s%zi.?(",
               sections[select_instr->condition.section],
               select_instr->condition.index);
           const char* comma = "";
@@ -149,12 +149,12 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
         case FBLE_CALL_INSTR: {
           FbleCallInstr* call_instr = (FbleCallInstr*)instr;
           if (call_instr->exit) {
-            fprintf(fout, "$");
+            fprintf(fout, "return ");
           } else {
-            fprintf(fout, "l%zi", call_instr->dest);
+            fprintf(fout, "l%zi = ", call_instr->dest);
           }
 
-          fprintf(fout, " = %s%zi(",
+          fprintf(fout, "%s%zi(",
               sections[call_instr->func.section],
               call_instr->func.index);
 
@@ -239,7 +239,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 
         case FBLE_RETURN_INSTR: {
           FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-          fprintf(fout, "$ = %s%zi;\n",
+          fprintf(fout, "return %s%zi;\n",
               sections[return_instr->result.section],
               return_instr->result.index);
           break;

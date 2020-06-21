@@ -1,14 +1,11 @@
 
 * Don't rely on NULL vs. non-NULL to free values in PopFrame.
  - Do explicit RELEASE_INSTR to free everything.
+ - Only clean up args if it is a tail call. Introduce RELEASE_ARG_INSTR?
 
 * Allow the lifetime of a value to depend on the lifetime of another value.
  - Track lifetimes statically. Lazily retain a value only if and when it's
    previous retainer is released.
-
-* Track whether a call is normal or tail at runtime.
- - Have only tail calls transfer ownership of args to callee.
- - Callee only cleans up args if it is a tail call.
 
 * Consider dynamically tracking whether returned value is retained by args
   or not.

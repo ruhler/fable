@@ -524,7 +524,8 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
-    // TODO:
+    // TODO: We need to know which local vars are args and conditionally
+    // release them depending on whether we are in a tail call or not.
 //    // Clean up any remaining locals before we return from the stack frame.
 //    for (size_t i = 0; i < scope->locals.size; ++i) {
 //      Local* local = scope->locals.xs[i];
@@ -723,7 +724,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       size_t branch_offsets[select_tc->branches.size];
 
       // Generate code for each of the branches.
-      Local* target = NewLocal(arena, scope);
+      Local* target = exit ? NULL : NewLocal(arena, scope);
       FbleJumpInstr* exit_jumps[select_tc->choices.size];
       for (size_t i = 0; i < select_tc->branches.size; ++i) {
         // TODO: Could we arrange for the branches to put their value in the
