@@ -1,4 +1,25 @@
 
+* Don't rely on NULL vs. non-NULL to free values in PopFrame.
+ - Do explicit RELEASE_INSTR to free everything.
+
+* Allow the lifetime of a value to depend on the lifetime of another value.
+ - Track lifetimes statically. Lazily retain a value only if and when it's
+   previous retainer is released.
+
+* Track whether a call is normal or tail at runtime.
+ - Have only tail calls transfer ownership of args to callee.
+ - Callee only cleans up args if it is a tail call.
+
+* Consider dynamically tracking whether returned value is retained by args
+  or not.
+ - If returned value is retained by args, lazily retain the returned value only
+   if and when one of the corresponding args is released.
+
+* Should we do function inlining in the compiler?
+ - At least when the function being called is known and the call is not behind
+   a condition?
+ - How to make the tradeoff between runtime performance and program size?
+
 * Should we avoid capturing an unused 'type' as a static?
   For example, if we have Unit@() in a function body.
   Proposal: whenever we look up a variable, if the kind is a type kind, return
@@ -42,12 +63,6 @@
  - names, module_ref, kinds, tagged_kinds, tagged_type, tagged_expr
 
 * Move implementations corresponding to fble-name.h to name.c?
-
-* Don't rely on NULL vs. non-NULL to free values in PopFrame.
-* Figure out how to do better lifecycle analysis in the compiler
- - Don't retain/release a field of an object if you know the object is going
-   to stay alive as long as you need the field anyway.
- - I think this is the biggest opportunity for real performance gains.
 
 * [eval] Would it improve performance to merge statics into the locals array?
   We don't have to own them. Just copy them all over when we push a frame.

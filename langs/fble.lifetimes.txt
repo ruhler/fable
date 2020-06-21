@@ -1,0 +1,23 @@
+Fble Lifetimes
+==============
+There are a couple of questions:
+1. What is the lifetime of an fble value? Is it clear from the spec? If not,
+how should the spec be written to make it clear?
+
+2. How can we efficiently track lifetimes at runtime?
+This is suspected to be the current greatest opportunity for performance
+improvement in the runtime.
+
+For example, consider a function like:
+
+(Bit2X@, Bit2X@, /Bits/Bit1%.Bit1@){Result@;} fulladd = (Bit2X@ a, Bit2X@ b, /Bits/Bit1%.Bit1@ cin) {
+    B.Result@ rlo = B.fulladd(a.lo, b.lo, cin);
+    B.Result@ rhi = B.fulladd(a.hi, b.hi, rlo.cout);
+    Result@(Bit2X@(rhi.z, rlo.z), rhi.cout);
+  };
+
+Today, when we see 'a.lo', we increment the reference count on a.lo, then
+decrement the reference count on a.lo. But because we know that 'a' is alive
+for the duration of the function, there is no need to increment and decrement
+the refcount on a.lo.
+

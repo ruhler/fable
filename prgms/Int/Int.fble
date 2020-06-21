@@ -1,6 +1,8 @@
 
 % IntP = /Int/IntP%;
 @ IntP@ = IntP.IntP@;
+% AddP = IntP.Add;
+% MulP = IntP.Mul;
 
 % Sub1 = /Int/IntP/Sub%.Sub1;
 
@@ -78,13 +80,13 @@ Int@ 10 = P(IntP.10);
 
 # a + b
 (Int@, Int@) { Int@; } Add = (Int@ a, Int@ b) {
-  a.?(n: b.?(n: N(IntP.Add(a.n, b.n)),
+  a.?(n: b.?(n: N(AddP(a.n, b.n)),
              0: a,
              p: SubP(b.p, a.n)),
        0: b,
        p: b.?(n: SubP(a.p, b.n),
               0: a,
-              p: P(IntP.Add(a.p, b.p))));
+              p: P(AddP(a.p, b.p))));
 };
 
 # -a 
@@ -101,13 +103,13 @@ Int@ 10 = P(IntP.10);
 # a * b
 (Int@, Int@){ Int@; } Mul = (Int@ a, Int@ b) {
   a.?(
-    n: b.?(n: P(IntP.Mul(a.n, b.n)),
+    n: b.?(n: P(MulP(a.n, b.n)),
            0: 0,
-           p: N(IntP.Mul(a.n, b.p))),
+           p: N(MulP(a.n, b.p))),
     0: 0,
-    p: b.?(n: N(IntP.Mul(a.p, b.n)),
+    p: b.?(n: N(MulP(a.p, b.n)),
             0: 0,
-            p: P(IntP.Mul(a.p, b.p))));
+            p: P(MulP(a.p, b.p))));
 };
 
 @(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
