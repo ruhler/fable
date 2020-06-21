@@ -767,7 +767,9 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-        FbleReleaseValue(heap, locals[release->value]);
+        if (release->value >= thread->stack->func->argc || thread->stack->owner) {
+          FbleReleaseValue(heap, locals[release->value]);
+        }
         locals[release->value] = NULL;
         break;
       }
