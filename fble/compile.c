@@ -165,7 +165,7 @@ static void LocalRelease(FbleArena* arena, Scope* scope, Local* local, bool exit
 // Inputs:
 //   arena - arena to use for allocations.
 //   scope - the scope to push the variable on to.
-//   local - the local address of the variable.
+//   local - the local address of the variable. Consumed.
 //
 // Results:
 //   None.
@@ -884,9 +884,11 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       AppendInstr(arena, scope, &link->_base);
 
-      // TODO: Should we call PopVar after this?
-      // The answer is almost certainly yes.
-      return CompileExpr(arena, blocks, exit, scope, link_tc->body);
+      Local* result = CompileExpr(arena, blocks, exit, scope, link_tc->body);
+
+      PopVar(arena, scope, exit);
+      PopVar(arena, scope, exit);
+      return result;
     }
 
     case FBLE_EXEC_TC: {
