@@ -212,6 +212,7 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
   size_t start = stack->owner ? 0 : stack->func->argc;
   for (size_t i = start; i < stack->func->code->locals; ++i) {
     if (stack->locals[i] != NULL) {
+      //assert(false && "implicitly released value");
       FbleReleaseValue(heap, stack->locals[i]);
     }
   }
@@ -256,6 +257,7 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
   size_t start = stack->owner ? 0 : stack->func->argc;
   for (size_t i = start; i < old_locals; ++i) {
     if (stack->locals[i] != NULL) {
+      //assert(false && "implicitly released value");
       FbleReleaseValue(heap, stack->locals[i]);
     }
   }
@@ -668,9 +670,20 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        FbleValue* result = FrameGet(statics, locals, return_instr->result);
-        FbleRetainValue(heap, result);
-        *thread->stack->result = result;
+        switch (return_instr->result.section) {
+          case FBLE_STATICS_FRAME_SECTION:
+            *thread->stack->result = statics[return_instr->result.index];
+            FbleRetainValue(heap, *thread->stack->result);
+            break;
+
+          case FBLE_LOCALS_FRAME_SECTION:
+            *thread->stack->result = locals[return_instr->result.index];
+            if (return_instr->result.index < thread->stack->func->argc && !thread->stack->owner) {
+              FbleRetainValue(heap, *thread->stack->result);
+            }
+            locals[return_instr->result.index] = NULL;
+            break;
+        }
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
           return FINISHED;
