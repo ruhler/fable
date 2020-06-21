@@ -221,6 +221,9 @@ typedef FbleFuncValueInstr FbleProcValueInstr;
 
 // FbleReleaseInstr -- FBLE_RELEASE_INSTR
 //   Release and remove a value from the locals section of the stack frame.
+//
+// The value is not released if it is an arg value not owned by the current
+// stack frame.
 typedef struct {
   FbleInstr _base;
   FbleLocalIndex value;

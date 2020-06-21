@@ -1,7 +1,8 @@
 
+* Add spec test to catch failure to free local for func apply.
+
 * Don't rely on NULL vs. non-NULL to free values in PopFrame.
- - Do explicit RELEASE_INSTR to free everything.
- - Only clean up args if it is a tail call. Introduce RELEASE_ARG_INSTR?
+ - Do explicit RELEASE_INSTR to free everything in tail call.
 
 * Allow the lifetime of a value to depend on the lifetime of another value.
  - Track lifetimes statically. Lazily retain a value only if and when it's
@@ -16,6 +17,11 @@
  - At least when the function being called is known and the call is not behind
    a condition?
  - How to make the tradeoff between runtime performance and program size?
+
+* Distinguish between RELEASE_VALUE_INSTR and RELEASE_ARG_INSTR?
+  Because we can do the check of release->value >= stack->func->argc
+  statically? Or is it as expensive to add another instruction as it is to
+  check if the value is an arg or not?
 
 * Should we avoid capturing an unused 'type' as a static?
   For example, if we have Unit@() in a function body.

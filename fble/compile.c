@@ -524,19 +524,17 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
-    // TODO: We need to know which local vars are args and conditionally
-    // release them depending on whether we are in a tail call or not.
-//    // Clean up any remaining locals before we return from the stack frame.
-//    for (size_t i = 0; i < scope->locals.size; ++i) {
-//      Local* local = scope->locals.xs[i];
-//      if (local != NULL && local != result) {
-//        FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
-//        release->_base.tag = FBLE_RELEASE_INSTR;
-//        release->_base.profile_ops = NULL;
-//        release->value = local->index.index;
-//        AppendInstr(arena, scope, &release->_base);
-//      }
-//    }
+    // Clean up any remaining locals before we return from the stack frame.
+    for (size_t i = 0; i < scope->locals.size; ++i) {
+      Local* local = scope->locals.xs[i];
+      if (local != NULL && local != result) {
+        FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
+        release->_base.tag = FBLE_RELEASE_INSTR;
+        release->_base.profile_ops = NULL;
+        release->value = local->index.index;
+        AppendInstr(arena, scope, &release->_base);
+      }
+    }
 
     AppendProfileOp(arena, scope, FBLE_PROFILE_EXIT_OP, 0);
 
@@ -838,9 +836,13 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       call_instr->dest = dest->index.index;
       AppendInstr(arena, scope, &call_instr->_base);
 
+      // TODO: Add spec test to catch the regression where we forgot to
+      // release func here. It caused a problem when we did that in the first
+      // branch of a case, but tried to release the value in a separate case.
+      LocalRelease(arena, scope, func, exit);
       for (size_t i = 0; i < argc; ++i) {
         FbleVectorAppend(arena, call_instr->args, args[i]->index);
-        LocalRelease(arena, scope, args[i], call_instr->exit);
+        LocalRelease(arena, scope, args[i], exit);
       }
 
       return dest;
