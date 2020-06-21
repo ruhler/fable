@@ -524,6 +524,19 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
+    // TODO:
+//    // Clean up any remaining locals before we return from the stack frame.
+//    for (size_t i = 0; i < scope->locals.size; ++i) {
+//      Local* local = scope->locals.xs[i];
+//      if (local != NULL && local != result) {
+//        FbleReleaseInstr* release = FbleAlloc(arena, FbleReleaseInstr);
+//        release->_base.tag = FBLE_RELEASE_INSTR;
+//        release->_base.profile_ops = NULL;
+//        release->value = local->index.index;
+//        AppendInstr(arena, scope, &release->_base);
+//      }
+//    }
+
     AppendProfileOp(arena, scope, FBLE_PROFILE_EXIT_OP, 0);
 
     FbleReturnInstr* return_instr = FbleAlloc(arena, FbleReturnInstr);

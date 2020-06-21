@@ -211,7 +211,9 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 
   size_t start = stack->owner ? 0 : stack->func->argc;
   for (size_t i = start; i < stack->func->code->locals; ++i) {
-    FbleReleaseValue(heap, stack->locals[i]);
+    if (stack->locals[i] != NULL) {
+      FbleReleaseValue(heap, stack->locals[i]);
+    }
   }
 
   if (stack->owner) {
@@ -253,7 +255,9 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
   size_t old_locals = stack->func->code->locals;
   size_t start = stack->owner ? 0 : stack->func->argc;
   for (size_t i = start; i < old_locals; ++i) {
-    FbleReleaseValue(heap, stack->locals[i]);
+    if (stack->locals[i] != NULL) {
+      FbleReleaseValue(heap, stack->locals[i]);
+    }
   }
   if (stack->owner) {
     FbleReleaseValue(heap, &stack->func->_base);
