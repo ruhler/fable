@@ -254,7 +254,7 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
   size_t start = stack->owner ? 0 : stack->func->argc;
   for (size_t i = start; i < stack->func->code->locals; ++i) {
     if (stack->locals[i] != NULL) {
-      //assert(false && "implicitly released value");
+      assert(false && "implicitly released value");
       FbleReleaseValue(heap, stack->locals[i]);
     }
   }
@@ -273,8 +273,8 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 //
 // Inputs:
 //   heap - the value heap.
-//   func - the function to execute.
-//   args - args to the function. length == func->argc
+//   func - the function to execute. Consumed..
+//   args - args to the function. length == func->argc. args[i] is Consumed.
 //   tail - the stack to change.
 //
 // Result:
@@ -282,21 +282,18 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 //
 // Side effects:
 //   Allocates new Stack instances that should be freed with PopFrame when done.
-//   Takes ownership of func (TODO) and args.
+//   Takes ownership of func and args.
 //   Exits the current frame, which potentially frees any instructions
 //   belonging to that frame.
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack)
 {
   FbleArena* arena = heap->arena;
 
-  // TODO: Figure out how to remove this.
-  FbleRetainValue(heap, &func->_base);
-
   size_t old_locals = stack->func->code->locals;
   size_t start = stack->owner ? 0 : stack->func->argc;
   for (size_t i = start; i < old_locals; ++i) {
     if (stack->locals[i] != NULL) {
-      //assert(false && "implicitly released value");
+      assert(false && "implicitly released value");
       FbleReleaseValue(heap, stack->locals[i]);
     }
   }
@@ -512,7 +509,15 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
 
         if (call_instr->exit) {
-          // FrameMove(heap, statics, locals, call_instr->func, thread->stack->func->argc, thread->stack->owner);
+          FbleRetainValue(heap, &func->_base);
+          if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+            if (call_instr->func.index >= thread->stack->func->argc
+                || thread->stack->owner) {
+              FbleReleaseValue(heap, locals[call_instr->func.index]);
+            }
+            locals[call_instr->func.index] = NULL;
+          }
+
           FbleValue* args[func->argc];
           for (size_t i = 0; i < func->argc; ++i) {
             args[i] = FrameMove(heap, statics, locals, call_instr->args.xs[i], thread->stack->func->argc, thread->stack->owner);

@@ -1,8 +1,7 @@
-fble-test-error 8:21 {
+fble-test-error 7:21 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
-  Bool@ false = Bool@(false: Unit@());
 
   (Bool@) { (Bool@) { Bool@; }; } And = (Bool@ a) {
     Unit@ tf = true.false;
