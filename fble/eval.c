@@ -282,18 +282,15 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 //
 // Side effects:
 //   Allocates new Stack instances that should be freed with PopFrame when done.
-//   Does not take ownership of func nor args. The caller need not guarantee
-//   the func and args remain valid after this call.
+//   Takes ownership of func (TODO) and args.
 //   Exits the current frame, which potentially frees any instructions
 //   belonging to that frame.
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack)
 {
   FbleArena* arena = heap->arena;
 
+  // TODO: Figure out how to remove this.
   FbleRetainValue(heap, &func->_base);
-  for (size_t i = 0; i < func->argc; ++i) {
-    FbleRetainValue(heap, args[i]);
-  }
 
   size_t old_locals = stack->func->code->locals;
   size_t start = stack->owner ? 0 : stack->func->argc;
@@ -513,17 +510,24 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
           return AbortThread(heap, thread, aborted);
         };
 
-        FbleValue* args[func->argc];
-        for (size_t i = 0; i < func->argc; ++i) {
-          args[i] = FrameGet(statics, locals, call_instr->args.xs[i]);
-        }
 
         if (call_instr->exit) {
+          // FrameMove(heap, statics, locals, call_instr->func, thread->stack->func->argc, thread->stack->owner);
+          FbleValue* args[func->argc];
+          for (size_t i = 0; i < func->argc; ++i) {
+            args[i] = FrameMove(heap, statics, locals, call_instr->args.xs[i], thread->stack->func->argc, thread->stack->owner);
+          }
+
           thread->stack = ReplaceFrame(heap, func, args, thread->stack);
           pc = thread->stack->pc;
           statics = thread->stack->func->scope;
           locals = thread->stack->locals;
         } else {
+          FbleValue* args[func->argc];
+          for (size_t i = 0; i < func->argc; ++i) {
+            args[i] = FrameGet(statics, locals, call_instr->args.xs[i]);
+          }
+
           thread->stack->pc = pc;
           FbleValue** result = locals + call_instr->dest;
           thread->stack = PushFrame(heap, func, args, result, thread->stack);
