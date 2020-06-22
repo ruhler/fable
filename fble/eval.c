@@ -250,15 +250,6 @@ static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 {
   FbleArena* arena = heap->arena;
-
-  size_t start = stack->owner ? 0 : stack->func->argc;
-  for (size_t i = start; i < stack->func->code->locals; ++i) {
-    if (stack->locals[i] != NULL) {
-      assert(false && "implicitly released value");
-      FbleReleaseValue(heap, stack->locals[i]);
-    }
-  }
-
   if (stack->owner) {
     FbleReleaseValue(heap, &stack->func->_base);
   }
@@ -290,13 +281,6 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
   FbleArena* arena = heap->arena;
 
   size_t old_locals = stack->func->code->locals;
-  size_t start = stack->owner ? 0 : stack->func->argc;
-  for (size_t i = start; i < old_locals; ++i) {
-    if (stack->locals[i] != NULL) {
-      assert(false && "implicitly released value");
-      FbleReleaseValue(heap, stack->locals[i]);
-    }
-  }
   if (stack->owner) {
     FbleReleaseValue(heap, &stack->func->_base);
   }
@@ -309,12 +293,12 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
 
     FbleFree(arena, stack);
     stack = nstack;
+    memset(stack->locals + old_locals, 0, (locals - old_locals) * sizeof(FbleValue*));
   }
 
   stack->owner = true;
   stack->func = func;
   stack->pc = func->code->instrs.xs;
-  memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   for (size_t i = 0; i < func->argc; ++i) {
     stack->locals[i] = args[i];

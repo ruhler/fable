@@ -1,8 +1,16 @@
 
-* Don't rely on NULL vs. non-NULL to free values in PopFrame.
- - Release locals properly in return and tail call when unwinding stack.
- - Avoid redundant retain/release of func in ReplaceFrame.
+* Release locals properly in return and tail call when unwinding stack.
 
+* Add test for AbortThread code coverage
+ Try to do all of the following things after an abort:
+ - tail call that isn't from main
+ - proc value
+ - put 
+ - link
+ - fork
+ - ref value
+ - return that isn't from main
+ - type instr
 
 * Allow the lifetime of a value to depend on the lifetime of another value.
  - Track lifetimes statically. Lazily retain a value only if and when it's
@@ -52,16 +60,6 @@
 * Fix broken vacuous_value test.
  - this should fall out after we pull out an FbleTc IR.
 
-* Add test for AbortThread code coverage
- Try to do all of the following things after an abort:
- - tail call that isn't from main
- - proc value
- - put 
- - link
- - fork
- - ref value
- - return that isn't from main
- - type instr
 * Add coverage for parse destructors
  - names, module_ref, kinds, tagged_kinds, tagged_type, tagged_expr
 
