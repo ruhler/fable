@@ -1,5 +1,9 @@
 
 * Don't rely on NULL vs. non-NULL to free values in PopFrame.
+ - Clean up tracking of ownership somehow?
+   Like, a common function that can check if we own a FrameIndex value and
+   transfer ownership as appropriate? Call it FrameTransfer?
+ - Release return value in RETURN_INSTR when unwinding stack.
  - Avoid redundant retain/release of args in ReplaceFrame.
 
 

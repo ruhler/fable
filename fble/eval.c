@@ -81,6 +81,7 @@ typedef enum {
 
 static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameIndex index);
 static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValue** locals, FbleFrameIndex index);
+static FbleValue* FrameMove(FbleHeap* heap, FbleValue** statics, FbleValue** locals, FbleFrameIndex index, size_t argc, bool owner);
 
 static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleValue** result, Stack* tail);
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
@@ -152,6 +153,47 @@ static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValu
   }
   assert(value->tag == tag);
   return value;
+}
+
+// FrameMove --
+//   Get a value from the frame on the top of the execution stack, transfering
+//   ownership of the value if we have ownership of it.
+//
+// Inputs:
+//   heap - heap used for allocations.
+//   statics - the static variables at the top of the stack.
+//   locals - the local variables at the top of the stack.
+//   index - the index of the value to access.
+//   argc - the number of arguments to the currently executing function.
+//   owner - whether we own the arguments to the currently executing function.
+//
+// Results:
+//   The value in the top stack frame at the given index.
+//
+// Side effects:
+//   Has the effect of taking a reference to the value and releasing the value
+//   on the stack frame if we have ownership of it.
+static FbleValue* FrameMove(FbleHeap* heap, FbleValue** statics, FbleValue** locals, FbleFrameIndex index, size_t argc, bool owner)
+{
+  switch (index.section) {
+    case FBLE_STATICS_FRAME_SECTION: {
+      FbleValue* value = statics[index.index];
+      FbleRetainValue(heap, value);
+      return value;
+    }
+
+    case FBLE_LOCALS_FRAME_SECTION: {
+      FbleValue* value = locals[index.index];
+      if (index.index < argc && !owner) {
+        FbleRetainValue(heap, value);
+      }
+      locals[index.index] = NULL;
+      return value;
+    }
+  }
+
+  UNREACHABLE("should never get here");
+  return NULL;
 }
 
 // PushFrame --
@@ -670,20 +712,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        switch (return_instr->result.section) {
-          case FBLE_STATICS_FRAME_SECTION:
-            *thread->stack->result = statics[return_instr->result.index];
-            FbleRetainValue(heap, *thread->stack->result);
-            break;
-
-          case FBLE_LOCALS_FRAME_SECTION:
-            *thread->stack->result = locals[return_instr->result.index];
-            if (return_instr->result.index < thread->stack->func->argc && !thread->stack->owner) {
-              FbleRetainValue(heap, *thread->stack->result);
-            }
-            locals[return_instr->result.index] = NULL;
-            break;
-        }
+        *thread->stack->result = FrameMove(heap, statics, locals, return_instr->result, thread->stack->func->argc, thread->stack->owner);
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
           return FINISHED;
