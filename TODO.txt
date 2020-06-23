@@ -1,5 +1,6 @@
 
-* Release locals properly in return and tail call when unwinding stack.
+* Add some conditional instructions for retain and release of values
+  Instead of doing things conditionally in return and tail call instructions?
 
 * Add test for AbortThread code coverage
  Try to do all of the following things after an abort:
@@ -15,6 +16,7 @@
 * Allow the lifetime of a value to depend on the lifetime of another value.
  - Track lifetimes statically. Lazily retain a value only if and when it's
    previous retainer is released.
+ - Don't assume all locals are NULL in replace frame?
 
 * Consider dynamically tracking whether returned value is retained by args
   or not.
