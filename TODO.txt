@@ -12,7 +12,6 @@
  - fork
  - ref value
  - return that isn't from main
- - type instr
 
 * Allow the lifetime of a value to depend on the lifetime of another value.
  - Track lifetimes statically. Lazily retain a value only if and when it's
