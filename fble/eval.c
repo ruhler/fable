@@ -862,6 +862,11 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       }
 
       case FBLE_PUT_INSTR: {
+        // A put instruction is always the first instruction of a put
+        // function, and it never aborts. That makes this code unreachable for
+        // the time being.
+        UNREACHABLE("put functions can't abort");
+
         FblePutInstr* put_instr = (FblePutInstr*)instr;
         locals[put_instr->dest] = NULL;
         break;

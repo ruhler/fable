@@ -1,12 +1,13 @@
 
 * Add some conditional instructions for retain and release of values
   Instead of doing things conditionally in return and tail call instructions?
+ - allows us to take advantage of static info about whether a value is a
+   static or an arg or a local.
+ - but increases number of generated instructions.
 
 * Add test for AbortThread code coverage
  Try to do all of the following things after an abort:
- - tail call that isn't from main
  - proc value
- - put 
  - link
  - fork
  - ref value
