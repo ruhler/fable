@@ -180,3 +180,45 @@ Problems with pthreads:
   we could ever get around that limitation. gcc's -fsplit-stack is not
   supported by the gcc preinstalled on my computer.
 
+---
+
+Idea is to compile blocks of instructions together that we can execute
+atomically, while still using the interpreter to drive execution. Hopefully
+this cuts down noticeably on the cost of instruction dispatch, while still
+supporting full control over thread execution.
+
+We can start by converting the existing instructions to abstract functions
+that the interpreter calls. This will make the interpreter compatible with
+abstract functions operating on thread state. The compiler can then generate
+some new abstract functions and that works fine with the interpreter.
+
+The concern is there will be too much overhead to calling these abstract
+functions. Let's do some experiments.
+
+The most commonly called instruction at the moment in fble-bench, by far, is
+FBLE_RELEASE_INSTR. It accounts for over 40% of instructions executed.
+
+One nice benefit of putting instructions into functions is then profiling can
+tell us which instructions take a lot of time, and how much time is spent on
+instruction dispatch.
+
+Baseline fble bench: 2m9.762s
+
+Experiment:
+  Access thread state through thread pointer instead of local variables.
+
+  fble bench: 2m10.890s
+
+Experiment: 
+  Pull ReleaseInstr into its own function.
+
+  fble bench: 2m12.889s
+  
+If we assume all instructions regress the same amount, then total I would
+expect 7.5s overhead changing all instructions to functions. But then we can
+get rid of the binary search from the switch statement, which I expect would
+get us all of that back. We also get the advantage of per-instruction
+profiling breakdowns and the opportunity for compilation. I think it's worth
+trying. Let's do it.
+
+

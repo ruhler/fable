@@ -1,4 +1,17 @@
 
+* Pull out all instructions into separate functions.
+ - Expect total regression on the order of 8s.
+* Change switch statement to array lookup.
+ - Hopefully big performance improvement.
+* Store function pointer in FbleInstr instead of tag
+ - Requires we also store functions for disassembly and freeing of
+   instructions.
+
+* Avoid setting local values to NULL when done?
+ - It helps debugging, but otherwise we shouldn't rely on it?
+ - Note, we should still set local values to NULL when aborting, so that when
+   we release those NULL values, we aren't releasing garbage.
+
 * Add some conditional instructions for retain and release of values
   Instead of doing things conditionally in return and tail call instructions?
  - allows us to take advantage of static info about whether a value is a
@@ -10,11 +23,15 @@
  lot of the same code: change the body from CompileExpr to CompileExec.
  Otherwise we create a process function only to immediately apply it, when we
  could inline the body of the process directly.
+ - I would guess this is low impact to performance, given how rarely we do let
+   of process inside a process?
 
 * Allow the lifetime of a value to depend on the lifetime of another value.
- - Track lifetimes statically. Lazily retain a value only if and when it's
+ - Track lifetimes statically. Lazily retain a value only if and when its
    previous retainer is released.
  - Don't assume all locals are NULL in replace frame?
+ - I fear we don't clearly track locals across case branches, which could lead
+   to bugs.
 
 * Consider dynamically tracking whether returned value is retained by args
   or not.
@@ -58,7 +75,10 @@
   only by unused variables.
 
 * Fix broken vacuous_value test.
- - this should fall out after we pull out an FbleTc IR.
+ - is this feasible to fix, now that we no longer allow errors in compile.c? 
+ - is this feasible to fix in general? Try adding a more complicated test
+   where we define a function and apply it to get a vacuous value?
+ - Make the test more obviously failing, by trying to use the resulting value?
 
 * Add coverage for parse destructors
  - names, module_ref, kinds, tagged_kinds, tagged_type, tagged_expr
@@ -146,7 +166,6 @@
   to spend evaluating should be independent of the number of children in the
   family.
 
-* [lang] Can a module reference itself? Clarify in the spec and test this case.
 * [lang] Add support for abstract types?
 * [lang] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.

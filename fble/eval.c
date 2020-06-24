@@ -332,6 +332,25 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
   return stack;
 }
 
+// ReleaseInstr --
+//   Execute a RELEASE_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the release instruction.
+static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleReleaseInstr* release)
+{
+  assert(thread->stack->locals[release->value] != NULL);
+  if (release->value >= thread->stack->func->argc || thread->stack->owner) {
+    FbleReleaseValue(heap, thread->stack->locals[release->value]);
+  }
+  thread->stack->locals[release->value] = NULL;
+}
+
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -498,12 +517,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       case FBLE_RELEASE_INSTR: {
-        FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-        assert(locals[release->value] != NULL);
-        if (release->value >= thread->stack->func->argc || thread->stack->owner) {
-          FbleReleaseValue(heap, locals[release->value]);
-        }
-        locals[release->value] = NULL;
+        ReleaseInstr(heap, thread, (FbleReleaseInstr*)instr);
         break;
       }
 
