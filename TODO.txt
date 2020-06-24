@@ -5,13 +5,11 @@
    static or an arg or a local.
  - but increases number of generated instructions.
 
-* Add test for AbortThread code coverage
- Try to do all of the following things after an abort:
- - proc value
- - link
- - fork
- - ref value
- - return that isn't from main
+* Should 'exec' be a flag passed to compile expression?
+ That way we could distinguish between normal let and exec let while reusing a
+ lot of the same code: change the body from CompileExpr to CompileExec.
+ Otherwise we create a process function only to immediately apply it, when we
+ could inline the body of the process directly.
 
 * Allow the lifetime of a value to depend on the lifetime of another value.
  - Track lifetimes statically. Lazily retain a value only if and when it's
