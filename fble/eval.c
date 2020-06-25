@@ -77,7 +77,10 @@ typedef enum {
   FINISHED,       // The thread has finished running.
   BLOCKED,        // The thread is blocked on I/O.
   YIELDED,        // The thread yielded, but is not blocked on I/O.
+
+  // Relevant only to RunThread:
   RUNNING,        // The thread is actively running.
+  ABORTED,        // The thread needs to be aborted.
 } Status;
 
 static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index);
@@ -89,15 +92,55 @@ static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack);
 
-static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
-static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
-static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
-static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
-static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
-static void LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
-static void RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
-static void RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
-static void TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+// InstrImpl --
+//   A function that executes an instruction.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//   io_activity - set to true if the thread does any i/o activity that could
+//                 unblock another thread.
+//
+// Results:
+//   The status of the thread resulting from execution of the function.
+//
+// Side effects:
+//   Executes the release instruction.
+typedef Status (*InstrImpl)(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+
+static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+
+// sInstrImpls --
+//   Implementations of instructions, indexed by instruction tag.
+static InstrImpl sInstrImpls[] = {
+  &StructValueInstr,
+  &UnionValueInstr,
+  NULL, // TODO: FBLE_STRUCT_ACCESS_INSTR
+  NULL, // TODO: FBLE_UNION_ACCESS_INSTR
+  NULL, // TODO: FBLE_UNION_SELECT_INSTR
+  NULL, // TODO: FBLE_JUMP_INSTR
+  &FuncValueInstr,
+  &ReleaseInstr,
+  NULL, // TODO: FBLE_CALL_INSTR
+  NULL, // TODO: FBLE_GET_INSTR,
+  NULL, // TODO: FBLE_PUT_INSTR,
+  &LinkInstr,
+  NULL, // TODO: FBLE_FORK_INSTR,
+  &CopyInstr,
+  &RefValueInstr,
+  &RefDefInstr,
+  NULL, // TODO: FBLE_RETURN_INSTR,
+  &TypeInstr
+};
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
@@ -339,17 +382,9 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
   return stack;
 }
 
-// StructValueInstr --
+// StructValueInstr -- see documentation of InstrImpl.
 //   Execute a STRUCT_VALUE_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the struct value instruction.
-static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
   size_t argc = struct_value_instr->args.size;
@@ -363,19 +398,12 @@ static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* ins
   }
 
   thread->stack->locals[struct_value_instr->dest] = &value->_base;
+  return RUNNING;
 }
 
-// UnionValueInstr --
+// UnionValueInstr -- see documentation of InstrImpl
 //   Execute a UNION_VALUE_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the union value instruction.
-static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
 
@@ -386,19 +414,12 @@ static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
   FbleValueAddRef(heap, &value->_base, value->arg);
 
   thread->stack->locals[union_value_instr->dest] = &value->_base;
+  return RUNNING;
 }
 
-// UnionValueInstr --
+// FuncValueInstr -- see documentation of InstrImpl
 //   Execute a FUNC_VALUE_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the func value instruction.
-static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
   size_t scopec = func_value_instr->code->statics;
@@ -414,19 +435,12 @@ static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr
     FbleValueAddRef(heap, &value->_base, arg);
   }
   thread->stack->locals[func_value_instr->dest] = &value->_base;
+  return RUNNING;
 }
 
-// ReleaseInstr --
+// ReleaseInstr -- see documentation of InstrImpl
 //   Execute a RELEASE_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the release instruction.
-static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
   assert(thread->stack->locals[release->value] != NULL);
@@ -434,37 +448,23 @@ static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
     FbleReleaseValue(heap, thread->stack->locals[release->value]);
   }
   thread->stack->locals[release->value] = NULL;
+  return RUNNING;
 }
 
-// CopyInstr --
+// CopyInstr -- see documentation of InstrImpl
 //   Execute a COPY_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the copy instruction.
-static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
   FbleValue* value = FrameGet(thread, copy_instr->source);
   FbleRetainValue(heap, value);
   thread->stack->locals[copy_instr->dest] = value;
+  return RUNNING;
 }
 
-// LinkInstr --
+// LinkInstr -- see documentation of InstrImpl
 //   Execute a LINK_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the link instruction.
-static void LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
 
@@ -479,19 +479,12 @@ static void LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
 
   thread->stack->locals[link_instr->get] = get;
   thread->stack->locals[link_instr->put] = put;
+  return RUNNING;
 }
 
-// RefValueInstr --
+// RefValueInstr -- see documentation of InstrImpl
 //   Execute a REF_VALUE_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the ref value instruction.
-static void RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
   FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);
@@ -499,19 +492,12 @@ static void RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
   rv->value = NULL;
 
   thread->stack->locals[ref_instr->dest] = &rv->_base;
+  return RUNNING;
 }
 
-// RefDefInstr --
+// RefDefInstr -- see documentation of InstrImpl
 //   Execute a REF_DEF_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the ref def instruction.
-static void RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
   FbleRefValue* rv = (FbleRefValue*)thread->stack->locals[ref_def_instr->ref];
@@ -521,24 +507,18 @@ static void RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
   assert(value != NULL);
   rv->value = value;
   FbleValueAddRef(heap, &rv->_base, rv->value);
+  return RUNNING;
 }
 
-// TypeInstr --
+// TypeInstr -- see documentation of InstrImpl
 //   Execute a TYPE_INSTR.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   instr - the instruction to execute.
-//   thread - the thread state.
-//
-// Side effects:
-//   Executes the type instruction.
-static void TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
   FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
   value->_base.tag = FBLE_TYPE_VALUE;
   thread->stack->locals[type_instr->dest] = &value->_base;
+  return RUNNING;
 }
 
 // RunThread --
@@ -600,13 +580,25 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
     }
 
     switch (instr->tag) {
-      case FBLE_STRUCT_VALUE_INSTR: {
-        StructValueInstr(heap, thread, instr);
-        break;
-      }
+      case FBLE_STRUCT_VALUE_INSTR:
+      case FBLE_UNION_VALUE_INSTR:
+      case FBLE_FUNC_VALUE_INSTR:
+      case FBLE_RELEASE_INSTR:
+      case FBLE_COPY_INSTR:
+      case FBLE_LINK_INSTR:
+      case FBLE_REF_VALUE_INSTR:
+      case FBLE_REF_DEF_INSTR:
+      case FBLE_TYPE_INSTR:
+      {
+        Status status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
+        if (status == ABORTED) {
+          thread->stack->pc--;
+          return AbortThread(heap, thread, aborted);
+        }
 
-      case FBLE_UNION_VALUE_INSTR: {
-        UnionValueInstr(heap, thread, instr);
+        if (status != RUNNING) {
+          return status;
+        }
         break;
       }
 
@@ -666,15 +658,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         break;
       }
 
-      case FBLE_FUNC_VALUE_INSTR: {
-        FuncValueInstr(heap, thread, instr);
-        break;
-      }
-
-      case FBLE_RELEASE_INSTR: {
-        ReleaseInstr(heap, thread, instr);
-        break;
-      }
 
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
@@ -705,11 +688,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
           FbleValue** result = thread->stack->locals + call_instr->dest;
           thread->stack = PushFrame(heap, func, args, result, thread->stack);
         }
-        break;
-      }
-
-      case FBLE_COPY_INSTR: {
-        CopyInstr(heap, thread, instr);
         break;
       }
 
@@ -812,11 +790,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         break;
       }
 
-      case FBLE_LINK_INSTR: {
-        LinkInstr(heap, thread, instr);
-        break;
-      }
-
       case FBLE_FORK_INSTR: {
         FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
 
@@ -846,16 +819,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         return YIELDED;
       }
 
-      case FBLE_REF_VALUE_INSTR: {
-        RefValueInstr(heap, thread, instr);
-        break;
-      }
-
-      case FBLE_REF_DEF_INSTR: {
-        RefDefInstr(heap, thread, instr);
-        break;
-      }
-
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
         *thread->stack->result = FrameMove(heap, thread, return_instr->result, thread->stack->func->argc, thread->stack->owner);
@@ -863,11 +826,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         if (thread->stack == NULL) {
           return FINISHED;
         }
-        break;
-      }
-
-      case FBLE_TYPE_INSTR: {
-        TypeInstr(heap, thread, instr);
         break;
       }
     }
@@ -1129,6 +1087,13 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
           UNREACHABLE("should never get here");
           break;
         }
+
+        case ABORTED: {
+          // RunThread should have converted this into FINISHED after
+          // unwinding the thread.
+          UNREACHABLE("should never get here");
+          break;
+        }
       }
     }
   }
@@ -1201,6 +1166,13 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
       case RUNNING: {
         // If the thread is actively running, it should not have returned
         // control to this point.
+        UNREACHABLE("should never get here");
+        break;
+      }
+
+      case ABORTED: {
+        // RunThread should have converted this into FINISHED after
+        // unwinding the thread.
         UNREACHABLE("should never get here");
         break;
       }
