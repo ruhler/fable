@@ -112,6 +112,9 @@ typedef Status (*InstrImpl)(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
 static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status JumpInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
@@ -126,9 +129,9 @@ static InstrImpl sInstrImpls[] = {
   &StructValueInstr,
   &UnionValueInstr,
   &StructAccessInstr,
-  NULL, // TODO: FBLE_UNION_ACCESS_INSTR
-  NULL, // TODO: FBLE_UNION_SELECT_INSTR
-  NULL, // TODO: FBLE_JUMP_INSTR
+  &UnionAccessInstr,
+  &UnionSelectInstr,
+  &JumpInstr,
   &FuncValueInstr,
   &ReleaseInstr,
   NULL, // TODO: FBLE_CALL_INSTR
@@ -437,6 +440,51 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
   return RUNNING;
 }
 
+// UnionAccessInstr -- see documentation of InstrImpl
+//   Execute a UNION_ACCESS_INSTR.
+static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+
+  FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread, access_instr->obj);
+  if (uv == NULL) {
+    FbleReportError("undefined union value access\n", access_instr->loc);
+    return ABORTED;
+  }
+
+  if (uv->tag != access_instr->tag) {
+    FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
+    return ABORTED;
+  }
+
+  FbleRetainValue(heap, uv->arg);
+  thread->stack->locals[access_instr->dest] = uv->arg;
+  return RUNNING;
+}
+
+// UnionSelectInstr -- see documentation of InstrImpl
+//   Execute a UNION_SELECT_INSTR.
+static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+  FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread, select_instr->condition);
+  if (uv == NULL) {
+    FbleReportError("undefined union value select\n", select_instr->loc);
+    return ABORTED;
+  }
+  thread->stack->pc += select_instr->jumps.xs[uv->tag];
+  return RUNNING;
+}
+
+// JumpInstr -- see documentation of InstrImpl
+//   Execute a JUMP_INSTR.
+static Status JumpInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+  thread->stack->pc += jump_instr->count;
+  return RUNNING;
+}
+
 // FuncValueInstr -- see documentation of InstrImpl
 //   Execute a FUNC_VALUE_INSTR.
 static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
@@ -610,6 +658,9 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       case FBLE_REF_DEF_INSTR:
       case FBLE_TYPE_INSTR:
       case FBLE_STRUCT_ACCESS_INSTR:
+      case FBLE_UNION_ACCESS_INSTR:
+      case FBLE_UNION_SELECT_INSTR:
+      case FBLE_JUMP_INSTR:
       {
         Status status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
         if (status == ABORTED) {
@@ -622,46 +673,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         }
         break;
       }
-
-      case FBLE_UNION_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-
-        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread, access_instr->obj);
-        if (uv == NULL) {
-          FbleReportError("undefined union value access\n", access_instr->loc);
-          thread->stack->pc--;
-          return AbortThread(heap, thread, aborted);
-        }
-
-        if (uv->tag != access_instr->tag) {
-          FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-          thread->stack->pc--;
-          return AbortThread(heap, thread, aborted);
-        }
-
-        FbleRetainValue(heap, uv->arg);
-        thread->stack->locals[access_instr->dest] = uv->arg;
-        break;
-      }
-
-      case FBLE_UNION_SELECT_INSTR: {
-        FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread, select_instr->condition);
-        if (uv == NULL) {
-          FbleReportError("undefined union value select\n", select_instr->loc);
-          thread->stack->pc--;
-          return AbortThread(heap, thread, aborted);
-        }
-        thread->stack->pc += select_instr->jumps.xs[uv->tag];
-        break;
-      }
-
-      case FBLE_JUMP_INSTR: {
-        FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-        thread->stack->pc += jump_instr->count;
-        break;
-      }
-
 
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
