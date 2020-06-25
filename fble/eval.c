@@ -96,6 +96,7 @@ static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+static void TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
@@ -525,6 +526,24 @@ static void RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
   FbleValueAddRef(heap, &rv->_base, rv->value);
 }
 
+// TypeInstr --
+//   Execute a TYPE_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the type instruction.
+static void TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+{
+  FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
+  FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
+  value->_base.tag = FBLE_TYPE_VALUE;
+  thread->stack->locals[type_instr->dest] = &value->_base;
+}
+
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -865,10 +884,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       case FBLE_TYPE_INSTR: {
-        FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-        FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
-        value->_base.tag = FBLE_TYPE_VALUE;
-        locals[type_instr->dest] = &value->_base;
+        TypeInstr(heap, thread, instr);
         break;
       }
     }
