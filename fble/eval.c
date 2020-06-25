@@ -111,6 +111,7 @@ typedef Status (*InstrImpl)(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
 
 static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
@@ -124,7 +125,7 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 static InstrImpl sInstrImpls[] = {
   &StructValueInstr,
   &UnionValueInstr,
-  NULL, // TODO: FBLE_STRUCT_ACCESS_INSTR
+  &StructAccessInstr,
   NULL, // TODO: FBLE_UNION_ACCESS_INSTR
   NULL, // TODO: FBLE_UNION_SELECT_INSTR
   NULL, // TODO: FBLE_JUMP_INSTR
@@ -417,6 +418,25 @@ static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* in
   return RUNNING;
 }
 
+// StructAccessInstr -- see documentation of InstrImpl
+//   Execute a STRUCT_ACCESS_INSTR.
+static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+
+  FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, thread, access_instr->obj);
+  if (sv == NULL) {
+    FbleReportError("undefined struct value access\n", access_instr->loc);
+    return ABORTED;
+  }
+
+  assert(access_instr->tag < sv->fieldc);
+  FbleValue* value = sv->fields[access_instr->tag];
+  FbleRetainValue(heap, value);
+  thread->stack->locals[access_instr->dest] = value;
+  return RUNNING;
+}
+
 // FuncValueInstr -- see documentation of InstrImpl
 //   Execute a FUNC_VALUE_INSTR.
 static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
@@ -589,6 +609,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       case FBLE_REF_VALUE_INSTR:
       case FBLE_REF_DEF_INSTR:
       case FBLE_TYPE_INSTR:
+      case FBLE_STRUCT_ACCESS_INSTR:
       {
         Status status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
         if (status == ABORTED) {
@@ -599,23 +620,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         if (status != RUNNING) {
           return status;
         }
-        break;
-      }
-
-      case FBLE_STRUCT_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-
-        FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, thread, access_instr->obj);
-        if (sv == NULL) {
-          FbleReportError("undefined struct value access\n", access_instr->loc);
-          thread->stack->pc--;
-          return AbortThread(heap, thread, aborted);
-        }
-
-        assert(access_instr->tag < sv->fieldc);
-        FbleValue* value = sv->fields[access_instr->tag];
-        FbleRetainValue(heap, value);
-        thread->stack->locals[access_instr->dest] = value;
         break;
       }
 
