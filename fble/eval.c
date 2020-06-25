@@ -122,8 +122,10 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
 static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status ForkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
@@ -141,11 +143,11 @@ static InstrImpl sInstrImpls[] = {
   &GetInstr,
   &PutInstr,
   &LinkInstr,
-  NULL, // TODO: FBLE_FORK_INSTR,
+  &ForkInstr,
   &CopyInstr,
   &RefValueInstr,
   &RefDefInstr,
-  NULL, // TODO: FBLE_RETURN_INSTR,
+  &ReturnInstr,
   &TypeInstr
 };
 
@@ -569,7 +571,6 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
       // Blocked on get. Restore the thread state and return before
       // logging progress.
       assert(instr->profile_ops == NULL);
-      thread->stack->pc--;
       return BLOCKED;
     }
 
@@ -592,7 +593,6 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
       // Blocked on get. Restore the thread state and return before
       // logging progress.
       assert(instr->profile_ops == NULL);
-      thread->stack->pc--;
       return BLOCKED;
     }
 
@@ -646,7 +646,6 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
       // Blocked on put. Restore the thread state and return before
       // logging progress.
       assert(instr->profile_ops == NULL);
-      thread->stack->pc--;
       return BLOCKED;
     }
 
@@ -659,6 +658,38 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
 
   UNREACHABLE("put port must be an output or port value");
   return ABORTED;
+}
+
+// ForkInstr -- see documentation of InstrImpl
+//   Execute a FORK_INSTR.
+static Status ForkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+
+  assert(thread->children.size == 0);
+  assert(thread->children.xs == NULL);
+  FbleVectorInit(heap->arena, thread->children);
+
+  for (size_t i = 0; i < fork_instr->args.size; ++i) {
+    FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread, fork_instr->args.xs[i]);
+
+    // You cannot execute a proc in a let binding, so it should be
+    // impossible to ever have an undefined proc value.
+    assert(arg != NULL && "undefined proc value");
+
+    FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
+
+    Thread* child = FbleAlloc(heap->arena, Thread);
+    child->stack = PushFrame(heap, arg, NULL, result, NULL);
+    child->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(heap->arena, thread->profile);
+    child->children.size = 0;
+    child->children.xs = NULL;
+    child->next_child = 0;
+    child->parent = thread;
+    FbleVectorAppend(heap->arena, thread->children, child);
+  }
+  thread->next_child = 0;
+  return YIELDED;
 }
 
 // CopyInstr -- see documentation of InstrImpl
@@ -717,6 +748,19 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
   assert(value != NULL);
   rv->value = value;
   FbleValueAddRef(heap, &rv->_base, rv->value);
+  return RUNNING;
+}
+
+// ReturnInstr -- see documentation of InstrImpl
+//   Execute a RETURN_INSTR.
+static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
+  *thread->stack->result = FrameMove(heap, thread, return_instr->result, thread->stack->func->argc, thread->stack->owner);
+  thread->stack = PopFrame(heap, thread->stack);
+  if (thread->stack == NULL) {
+    return FINISHED;
+  }
   return RUNNING;
 }
 
@@ -789,74 +833,20 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
     }
 
-    switch (instr->tag) {
-      case FBLE_STRUCT_VALUE_INSTR:
-      case FBLE_UNION_VALUE_INSTR:
-      case FBLE_FUNC_VALUE_INSTR:
-      case FBLE_RELEASE_INSTR:
-      case FBLE_COPY_INSTR:
-      case FBLE_LINK_INSTR:
-      case FBLE_REF_VALUE_INSTR:
-      case FBLE_REF_DEF_INSTR:
-      case FBLE_TYPE_INSTR:
-      case FBLE_STRUCT_ACCESS_INSTR:
-      case FBLE_UNION_ACCESS_INSTR:
-      case FBLE_UNION_SELECT_INSTR:
-      case FBLE_JUMP_INSTR:
-      case FBLE_CALL_INSTR:
-      case FBLE_GET_INSTR:
-      case FBLE_PUT_INSTR:
-      {
-        Status status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
-        if (status == ABORTED) {
-          thread->stack->pc--;
-          return AbortThread(heap, thread, aborted);
-        }
+    Status status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
 
-        if (status != RUNNING) {
-          return status;
-        }
-        break;
-      }
+    if (status == ABORTED) {
+      thread->stack->pc--;
+      return AbortThread(heap, thread, aborted);
+    }
 
-      case FBLE_FORK_INSTR: {
-        FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+    if (status == BLOCKED) {
+      thread->stack->pc--;
+      return BLOCKED;
+    }
 
-        assert(thread->children.size == 0);
-        assert(thread->children.xs == NULL);
-        FbleVectorInit(arena, thread->children);
-
-        for (size_t i = 0; i < fork_instr->args.size; ++i) {
-          FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread, fork_instr->args.xs[i]);
-
-          // You cannot execute a proc in a let binding, so it should be
-          // impossible to ever have an undefined proc value.
-          assert(arg != NULL && "undefined proc value");
-
-          FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
-
-          Thread* child = FbleAlloc(arena, Thread);
-          child->stack = PushFrame(heap, arg, NULL, result, NULL);
-          child->profile = profile == NULL ? NULL : FbleForkProfileThread(arena, profile);
-          child->children.size = 0;
-          child->children.xs = NULL;
-          child->next_child = 0;
-          child->parent = thread;
-          FbleVectorAppend(arena, thread->children, child);
-        }
-        thread->next_child = 0;
-        return YIELDED;
-      }
-
-      case FBLE_RETURN_INSTR: {
-        FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        *thread->stack->result = FrameMove(heap, thread, return_instr->result, thread->stack->func->argc, thread->stack->owner);
-        thread->stack = PopFrame(heap, thread->stack);
-        if (thread->stack == NULL) {
-          return FINISHED;
-        }
-        break;
-      }
+    if (status != RUNNING) {
+      return status;
     }
   }
 
