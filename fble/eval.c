@@ -835,9 +835,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
     Status status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
 
-    if (status == ABORTED) {
-      thread->stack->pc--;
-      return AbortThread(heap, thread, aborted);
+    if (status == RUNNING) {
+      continue;
     }
 
     if (status == BLOCKED) {
@@ -845,9 +844,12 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       return BLOCKED;
     }
 
-    if (status != RUNNING) {
-      return status;
+    if (status == ABORTED) {
+      thread->stack->pc--;
+      return AbortThread(heap, thread, aborted);
     }
+
+    return status;
   }
 
   UNREACHABLE("should never get here");

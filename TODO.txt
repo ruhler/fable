@@ -1,8 +1,4 @@
 
-* Pull out all instructions into separate functions.
- - Expect total regression on the order of 8s.
-* Change switch statement to array lookup.
- - Hopefully big performance improvement.
 * Store function pointer in FbleInstr instead of tag
  - Requires we also store functions for disassembly and freeing of
    instructions.

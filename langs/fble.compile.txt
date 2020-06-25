@@ -224,3 +224,12 @@ trying. Let's do it.
 After converting a bunch more instructions over:
   fble bench: 2m12.251s
 
+After converting all the rest of the instructions and getting rid of the
+switch statement entirely:
+  fble bench: 2m16.704s
+
+That's too bad. Total regression of 7s, even after removing the case
+expression.
+
+Well, if it's any consolation, we get 1m12.644s with -O3 turned on and no
+profiling arcs.
