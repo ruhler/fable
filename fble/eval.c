@@ -93,6 +93,7 @@ static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
 static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+static void LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
@@ -453,6 +454,33 @@ static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
   thread->stack->locals[copy_instr->dest] = value;
 }
 
+// LinkInstr --
+//   Execute a LINK_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the link instruction.
+static void LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+{
+  FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
+
+  FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
+  link->_base.tag = FBLE_LINK_VALUE;
+  link->head = NULL;
+  link->tail = NULL;
+
+  FbleValue* get = FbleNewGetValue(heap, &link->_base);
+  FbleValue* put = FbleNewPutValue(heap, &link->_base);
+  FbleReleaseValue(heap, &link->_base);
+
+  thread->stack->locals[link_instr->get] = get;
+  thread->stack->locals[link_instr->put] = put;
+}
+
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -735,19 +763,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       case FBLE_LINK_INSTR: {
-        FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-
-        FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
-        link->_base.tag = FBLE_LINK_VALUE;
-        link->head = NULL;
-        link->tail = NULL;
-
-        FbleValue* get = FbleNewGetValue(heap, &link->_base);
-        FbleValue* put = FbleNewPutValue(heap, &link->_base);
-        FbleReleaseValue(heap, &link->_base);
-
-        locals[link_instr->get] = get;
-        locals[link_instr->put] = put;
+        LinkInstr(heap, thread, instr);
         break;
       }
 

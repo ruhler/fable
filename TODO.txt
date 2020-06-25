@@ -7,6 +7,10 @@
  - Requires we also store functions for disassembly and freeing of
    instructions.
 
+* Change FrameGet to take thread.
+* Pull out definition of architectural state and instruction functions.
+ - Would be nice to separate them from the evaluator I think.
+
 * Avoid setting local values to NULL when done?
  - It helps debugging, but otherwise we shouldn't rely on it?
  - Note, we should still set local values to NULL when aborting, so that when
