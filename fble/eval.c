@@ -117,6 +117,9 @@ static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 static Status JumpInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
@@ -134,9 +137,9 @@ static InstrImpl sInstrImpls[] = {
   &JumpInstr,
   &FuncValueInstr,
   &ReleaseInstr,
-  NULL, // TODO: FBLE_CALL_INSTR
-  NULL, // TODO: FBLE_GET_INSTR,
-  NULL, // TODO: FBLE_PUT_INSTR,
+  &CallInstr,
+  &GetInstr,
+  &PutInstr,
   &LinkInstr,
   NULL, // TODO: FBLE_FORK_INSTR,
   &CopyInstr,
@@ -519,6 +522,145 @@ static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr
   return RUNNING;
 }
 
+// CallInstr -- see documentation of InstrImpl
+//   Execute a CALL_INSTR.
+static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+  FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread, call_instr->func);
+  if (func == NULL) {
+    FbleReportError("called undefined function\n", call_instr->loc);
+    return ABORTED;
+  };
+
+
+  if (call_instr->exit) {
+    FbleRetainValue(heap, &func->_base);
+    FrameRelease(heap, thread, call_instr->func, thread->stack->func->argc, thread->stack->owner);
+
+    FbleValue* args[func->argc];
+    for (size_t i = 0; i < func->argc; ++i) {
+      args[i] = FrameMove(heap, thread, call_instr->args.xs[i], thread->stack->func->argc, thread->stack->owner);
+    }
+
+    thread->stack = ReplaceFrame(heap, func, args, thread->stack);
+  } else {
+    FbleValue* args[func->argc];
+    for (size_t i = 0; i < func->argc; ++i) {
+      args[i] = FrameGet(thread, call_instr->args.xs[i]);
+    }
+
+    FbleValue** result = thread->stack->locals + call_instr->dest;
+    thread->stack = PushFrame(heap, func, args, result, thread->stack);
+  }
+  return RUNNING;
+}
+
+// GetInstr -- see documentation of InstrImpl
+//   Execute a GET_INSTR.
+static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleGetInstr* get_instr = (FbleGetInstr*)instr;
+  FbleValue* get_port = FrameGet(thread, get_instr->port);
+  if (get_port->tag == FBLE_LINK_VALUE) {
+    FbleLinkValue* link = (FbleLinkValue*)get_port;
+
+    if (link->head == NULL) {
+      // Blocked on get. Restore the thread state and return before
+      // logging progress.
+      assert(instr->profile_ops == NULL);
+      thread->stack->pc--;
+      return BLOCKED;
+    }
+
+    FbleValues* head = link->head;
+    link->head = link->head->next;
+    if (link->head == NULL) {
+      link->tail = NULL;
+    }
+
+    FbleRetainValue(heap, head->value);
+    thread->stack->locals[get_instr->dest] = head->value;
+    FbleValueDelRef(heap, &link->_base, head->value);
+    FbleFree(heap->arena, head);
+    return RUNNING;
+  }
+
+  if (get_port->tag == FBLE_PORT_VALUE) {
+    FblePortValue* port = (FblePortValue*)get_port;
+    if (*port->data == NULL) {
+      // Blocked on get. Restore the thread state and return before
+      // logging progress.
+      assert(instr->profile_ops == NULL);
+      thread->stack->pc--;
+      return BLOCKED;
+    }
+
+    thread->stack->locals[get_instr->dest] = *port->data;
+    *port->data = NULL;
+    *io_activity = true;
+    return RUNNING;
+  }
+
+  UNREACHABLE("get port must be an input or port value");
+  return ABORTED;
+}
+
+// PutInstr -- see documentation of InstrImpl
+//   Execute a PUT_INSTR.
+static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FblePutInstr* put_instr = (FblePutInstr*)instr;
+  FbleValue* put_port = FrameGet(thread, put_instr->port);
+  FbleValue* arg = FrameGet(thread, put_instr->arg);
+
+  FbleValueV args = { .size = 0, .xs = NULL, };
+  FbleValue* unit = FbleNewStructValue(heap, args);
+
+  if (put_port->tag == FBLE_LINK_VALUE) {
+    FbleLinkValue* link = (FbleLinkValue*)put_port;
+
+    FbleValues* tail = FbleAlloc(heap->arena, FbleValues);
+    tail->value = arg;
+    tail->next = NULL;
+
+    if (link->head == NULL) {
+      link->head = tail;
+      link->tail = tail;
+    } else {
+      assert(link->tail != NULL);
+      link->tail->next = tail;
+      link->tail = tail;
+    }
+
+    FbleValueAddRef(heap, &link->_base, tail->value);
+    thread->stack->locals[put_instr->dest] = unit;
+    *io_activity = true;
+    return RUNNING;
+  }
+
+  if (put_port->tag == FBLE_PORT_VALUE) {
+    FblePortValue* port = (FblePortValue*)put_port;
+
+    if (*port->data != NULL) {
+      // Blocked on put. Restore the thread state and return before
+      // logging progress.
+      assert(instr->profile_ops == NULL);
+      thread->stack->pc--;
+      return BLOCKED;
+    }
+
+    FbleRetainValue(heap, arg);
+    *port->data = arg;
+    thread->stack->locals[put_instr->dest] = unit;
+    *io_activity = true;
+    return RUNNING;
+  }
+
+  UNREACHABLE("put port must be an output or port value");
+  return ABORTED;
+}
+
 // CopyInstr -- see documentation of InstrImpl
 //   Execute a COPY_INSTR.
 static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
@@ -661,6 +803,9 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       case FBLE_UNION_ACCESS_INSTR:
       case FBLE_UNION_SELECT_INSTR:
       case FBLE_JUMP_INSTR:
+      case FBLE_CALL_INSTR:
+      case FBLE_GET_INSTR:
+      case FBLE_PUT_INSTR:
       {
         Status status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
         if (status == ABORTED) {
@@ -671,137 +816,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         if (status != RUNNING) {
           return status;
         }
-        break;
-      }
-
-      case FBLE_CALL_INSTR: {
-        FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread, call_instr->func);
-        if (func == NULL) {
-          FbleReportError("called undefined function\n", call_instr->loc);
-          thread->stack->pc--;
-          return AbortThread(heap, thread, aborted);
-        };
-
-
-        if (call_instr->exit) {
-          FbleRetainValue(heap, &func->_base);
-          FrameRelease(heap, thread, call_instr->func, thread->stack->func->argc, thread->stack->owner);
-
-          FbleValue* args[func->argc];
-          for (size_t i = 0; i < func->argc; ++i) {
-            args[i] = FrameMove(heap, thread, call_instr->args.xs[i], thread->stack->func->argc, thread->stack->owner);
-          }
-
-          thread->stack = ReplaceFrame(heap, func, args, thread->stack);
-        } else {
-          FbleValue* args[func->argc];
-          for (size_t i = 0; i < func->argc; ++i) {
-            args[i] = FrameGet(thread, call_instr->args.xs[i]);
-          }
-
-          FbleValue** result = thread->stack->locals + call_instr->dest;
-          thread->stack = PushFrame(heap, func, args, result, thread->stack);
-        }
-        break;
-      }
-
-      case FBLE_GET_INSTR: {
-        FbleGetInstr* get_instr = (FbleGetInstr*)instr;
-        FbleValue* get_port = FrameGet(thread, get_instr->port);
-        if (get_port->tag == FBLE_LINK_VALUE) {
-          FbleLinkValue* link = (FbleLinkValue*)get_port;
-
-          if (link->head == NULL) {
-            // Blocked on get. Restore the thread state and return before
-            // logging progress.
-            assert(instr->profile_ops == NULL);
-            thread->stack->pc--;
-            return BLOCKED;
-          }
-
-          FbleValues* head = link->head;
-          link->head = link->head->next;
-          if (link->head == NULL) {
-            link->tail = NULL;
-          }
-
-          FbleRetainValue(heap, head->value);
-          thread->stack->locals[get_instr->dest] = head->value;
-          FbleValueDelRef(heap, &link->_base, head->value);
-          FbleFree(arena, head);
-          break;
-        }
-
-        if (get_port->tag == FBLE_PORT_VALUE) {
-          FblePortValue* port = (FblePortValue*)get_port;
-          if (*port->data == NULL) {
-            // Blocked on get. Restore the thread state and return before
-            // logging progress.
-            assert(instr->profile_ops == NULL);
-            thread->stack->pc--;
-            return BLOCKED;
-          }
-
-          thread->stack->locals[get_instr->dest] = *port->data;
-          *port->data = NULL;
-          *io_activity = true;
-          break;
-        }
-
-        UNREACHABLE("get port must be an input or port value");
-        break;
-      }
-
-      case FBLE_PUT_INSTR: {
-        FblePutInstr* put_instr = (FblePutInstr*)instr;
-        FbleValue* put_port = FrameGet(thread, put_instr->port);
-        FbleValue* arg = FrameGet(thread, put_instr->arg);
-
-        FbleValueV args = { .size = 0, .xs = NULL, };
-        FbleValue* unit = FbleNewStructValue(heap, args);
-
-        if (put_port->tag == FBLE_LINK_VALUE) {
-          FbleLinkValue* link = (FbleLinkValue*)put_port;
-
-          FbleValues* tail = FbleAlloc(arena, FbleValues);
-          tail->value = arg;
-          tail->next = NULL;
-
-          if (link->head == NULL) {
-            link->head = tail;
-            link->tail = tail;
-          } else {
-            assert(link->tail != NULL);
-            link->tail->next = tail;
-            link->tail = tail;
-          }
-
-          FbleValueAddRef(heap, &link->_base, tail->value);
-          thread->stack->locals[put_instr->dest] = unit;
-          *io_activity = true;
-          break;
-        }
-
-        if (put_port->tag == FBLE_PORT_VALUE) {
-          FblePortValue* port = (FblePortValue*)put_port;
-
-          if (*port->data != NULL) {
-            // Blocked on put. Restore the thread state and return before
-            // logging progress.
-            assert(instr->profile_ops == NULL);
-            thread->stack->pc--;
-            return BLOCKED;
-          }
-
-          FbleRetainValue(heap, arg);
-          *port->data = arg;
-          thread->stack->locals[put_instr->dest] = unit;
-          *io_activity = true;
-          break;
-        }
-
-        UNREACHABLE("put port must be an output or port value");
         break;
       }
 
