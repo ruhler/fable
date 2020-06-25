@@ -90,6 +90,7 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
 
 static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
@@ -385,6 +386,34 @@ static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
   thread->stack->locals[union_value_instr->dest] = &value->_base;
 }
 
+// UnionValueInstr --
+//   Execute a FUNC_VALUE_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the func value instruction.
+static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+{
+  FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
+  size_t scopec = func_value_instr->code->statics;
+
+  FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * scopec);
+  value->_base.tag = FBLE_FUNC_VALUE;
+  value->argc = func_value_instr->argc;
+  value->code = func_value_instr->code;
+  value->code->refcount++;
+  for (size_t i = 0; i < scopec; ++i) {
+    FbleValue* arg = FrameGet(thread->stack->func->scope, thread->stack->locals, func_value_instr->scope.xs[i]);
+    value->scope[i] = arg;
+    FbleValueAddRef(heap, &value->_base, arg);
+  }
+  thread->stack->locals[func_value_instr->dest] = &value->_base;
+}
+
 // ReleaseInstr --
 //   Execute a RELEASE_INSTR.
 //
@@ -534,20 +563,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       case FBLE_FUNC_VALUE_INSTR: {
-        FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-        size_t scopec = func_value_instr->code->statics;
-
-        FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * scopec);
-        value->_base.tag = FBLE_FUNC_VALUE;
-        value->argc = func_value_instr->argc;
-        value->code = func_value_instr->code;
-        value->code->refcount++;
-        for (size_t i = 0; i < scopec; ++i) {
-          FbleValue* arg = FrameGet(statics, locals, func_value_instr->scope.xs[i]);
-          value->scope[i] = arg;
-          FbleValueAddRef(heap, &value->_base, arg);
-        }
-        locals[func_value_instr->dest] = &value->_base;
+        FuncValueInstr(heap, thread, instr);
         break;
       }
 
