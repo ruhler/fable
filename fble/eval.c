@@ -89,6 +89,7 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack);
 
 static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
@@ -361,6 +362,29 @@ static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* ins
   thread->stack->locals[struct_value_instr->dest] = &value->_base;
 }
 
+// UnionValueInstr --
+//   Execute a UNION_VALUE_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the union value instruction.
+static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+{
+  FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
+
+  FbleUnionValue* value = FbleNewValue(heap, FbleUnionValue);
+  value->_base.tag = FBLE_UNION_VALUE;
+  value->tag = union_value_instr->tag;
+  value->arg = FrameGet(thread->stack->func->scope, thread->stack->locals, union_value_instr->arg);
+  FbleValueAddRef(heap, &value->_base, value->arg);
+
+  thread->stack->locals[union_value_instr->dest] = &value->_base;
+}
+
 // ReleaseInstr --
 //   Execute a RELEASE_INSTR.
 //
@@ -449,15 +473,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       case FBLE_UNION_VALUE_INSTR: {
-        FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-
-        FbleUnionValue* value = FbleNewValue(heap, FbleUnionValue);
-        value->_base.tag = FBLE_UNION_VALUE;
-        value->tag = union_value_instr->tag;
-        value->arg = FrameGet(statics, locals, union_value_instr->arg);
-        FbleValueAddRef(heap, &value->_base, value->arg);
-
-        locals[union_value_instr->dest] = &value->_base;
+        UnionValueInstr(heap, thread, instr);
         break;
       }
 
