@@ -76,7 +76,7 @@ struct Thread {
 typedef enum {
   FINISHED,       // The thread has finished running.
   BLOCKED,        // The thread is blocked on I/O.
-  UNBLOCKED,      // The thread is not blocked on I/O.
+  YIELDED,        // The thread yielded, but is not blocked on I/O.
 } Status;
 
 static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index);
@@ -576,7 +576,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       thread->stack->pc--;
-      return UNBLOCKED;
+      return YIELDED;
     }
 
     if (profile != NULL) {
@@ -842,7 +842,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
           FbleVectorAppend(arena, thread->children, child);
         }
         thread->next_child = 0;
-        return UNBLOCKED;
+        return YIELDED;
       }
 
       case FBLE_REF_VALUE_INSTR: {
@@ -1116,7 +1116,7 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
           break;
         }
 
-        case UNBLOCKED: {
+        case YIELDED: {
           unblocked = true;
           thread = thread->parent;
           break;
@@ -1124,7 +1124,7 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
       }
     }
   }
-  return unblocked ? UNBLOCKED : BLOCKED;
+  return unblocked ? YIELDED : BLOCKED;
 }
 
 // Eval --
@@ -1183,7 +1183,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
         break;
       }
 
-      case UNBLOCKED: {
+      case YIELDED: {
         // Give a chance to do some I/O, but don't block, because the thread
         // is making progress anyway.
         io->io(io, heap, false);
