@@ -571,18 +571,17 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
-  FbleInstr** pc = thread->stack->pc;
   FbleValue** statics = thread->stack->func->scope;
   FbleValue** locals = thread->stack->locals;
 
   while (true) {
-    FbleInstr* instr = *pc++;
+    FbleInstr* instr = *thread->stack->pc++;
     if (rand() % TIME_SLICE == 0) {
       if (profile != NULL) {
         FbleProfileSample(arena, profile, 1);
       }
 
-      thread->stack->pc = pc - 1;
+      thread->stack->pc--;
       return UNBLOCKED;
     }
 
@@ -622,7 +621,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, statics, locals, access_instr->obj);
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", access_instr->loc);
-          thread->stack->pc = pc - 1;
+          thread->stack->pc--;
           return AbortThread(heap, thread, aborted);
         }
 
@@ -639,13 +638,13 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, statics, locals, access_instr->obj);
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", access_instr->loc);
-          thread->stack->pc = pc - 1;
+          thread->stack->pc--;
           return AbortThread(heap, thread, aborted);
         }
 
         if (uv->tag != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-          thread->stack->pc = pc - 1;
+          thread->stack->pc--;
           return AbortThread(heap, thread, aborted);
         }
 
@@ -659,16 +658,16 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, statics, locals, select_instr->condition);
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", select_instr->loc);
-          thread->stack->pc = pc - 1;
+          thread->stack->pc--;
           return AbortThread(heap, thread, aborted);
         }
-        pc += select_instr->jumps.xs[uv->tag];
+        thread->stack->pc += select_instr->jumps.xs[uv->tag];
         break;
       }
 
       case FBLE_JUMP_INSTR: {
         FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-        pc += jump_instr->count;
+        thread->stack->pc += jump_instr->count;
         break;
       }
 
@@ -687,7 +686,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, statics, locals, call_instr->func);
         if (func == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
-          thread->stack->pc = pc - 1;
+          thread->stack->pc--;
           return AbortThread(heap, thread, aborted);
         };
 
@@ -702,7 +701,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
           }
 
           thread->stack = ReplaceFrame(heap, func, args, thread->stack);
-          pc = thread->stack->pc;
           statics = thread->stack->func->scope;
           locals = thread->stack->locals;
         } else {
@@ -711,10 +709,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
             args[i] = FrameGet(statics, locals, call_instr->args.xs[i]);
           }
 
-          thread->stack->pc = pc;
           FbleValue** result = locals + call_instr->dest;
           thread->stack = PushFrame(heap, func, args, result, thread->stack);
-          pc = thread->stack->pc;
           statics = thread->stack->func->scope;
           locals = thread->stack->locals;
         }
@@ -736,7 +732,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
             // Blocked on get. Restore the thread state and return before
             // logging progress.
             assert(instr->profile_ops == NULL);
-            thread->stack->pc = pc - 1;
+            thread->stack->pc--;
             return BLOCKED;
           }
 
@@ -759,7 +755,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
             // Blocked on get. Restore the thread state and return before
             // logging progress.
             assert(instr->profile_ops == NULL);
-            thread->stack->pc = pc - 1;
+            thread->stack->pc--;
             return BLOCKED;
           }
 
@@ -810,7 +806,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
             // Blocked on put. Restore the thread state and return before
             // logging progress.
             assert(instr->profile_ops == NULL);
-            thread->stack->pc = pc - 1;
+            thread->stack->pc--;
             return BLOCKED;
           }
 
@@ -856,7 +852,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
           FbleVectorAppend(arena, thread->children, child);
         }
         thread->next_child = 0;
-        thread->stack->pc = pc;
         return UNBLOCKED;
       }
 
@@ -877,7 +872,6 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         if (thread->stack == NULL) {
           return FINISHED;
         }
-        pc = thread->stack->pc;
         statics = thread->stack->func->scope;
         locals = thread->stack->locals;
         break;

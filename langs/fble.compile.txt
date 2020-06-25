@@ -221,4 +221,6 @@ get us all of that back. We also get the advantage of per-instruction
 profiling breakdowns and the opportunity for compilation. I think it's worth
 trying. Let's do it.
 
+After converting a bunch more instructions over:
+  fble bench: 2m12.251s
 
