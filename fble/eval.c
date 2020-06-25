@@ -92,6 +92,7 @@ static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* ins
 static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
@@ -434,6 +435,24 @@ static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
   thread->stack->locals[release->value] = NULL;
 }
 
+// CopyInstr --
+//   Execute a COPY_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the copy instruction.
+static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+{
+  FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+  FbleValue* value = FrameGet(thread->stack->func->scope, thread->stack->locals, copy_instr->source);
+  FbleRetainValue(heap, value);
+  thread->stack->locals[copy_instr->dest] = value;
+}
+
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -612,10 +631,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       case FBLE_COPY_INSTR: {
-        FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-        FbleValue* value = FrameGet(statics, locals, copy_instr->source);
-        FbleRetainValue(heap, value);
-        locals[copy_instr->dest] = value;
+        CopyInstr(heap, thread, instr);
         break;
       }
 
