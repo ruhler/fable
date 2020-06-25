@@ -94,6 +94,8 @@ static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr
 static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 static void LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+static void RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+static void RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
@@ -481,6 +483,48 @@ static void LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
   thread->stack->locals[link_instr->put] = put;
 }
 
+// RefValueInstr --
+//   Execute a REF_VALUE_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the ref value instruction.
+static void RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+{
+  FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+  FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);
+  rv->_base.tag = FBLE_REF_VALUE;
+  rv->value = NULL;
+
+  thread->stack->locals[ref_instr->dest] = &rv->_base;
+}
+
+// RefDefInstr --
+//   Execute a REF_DEF_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the ref def instruction.
+static void RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+{
+  FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
+  FbleRefValue* rv = (FbleRefValue*)thread->stack->locals[ref_def_instr->ref];
+  assert(rv->_base.tag == FBLE_REF_VALUE);
+
+  FbleValue* value = FrameGet(thread->stack->func->scope, thread->stack->locals, ref_def_instr->value);
+  assert(value != NULL);
+  rv->value = value;
+  FbleValueAddRef(heap, &rv->_base, rv->value);
+}
+
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -798,24 +842,12 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       case FBLE_REF_VALUE_INSTR: {
-        FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-        FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);
-        rv->_base.tag = FBLE_REF_VALUE;
-        rv->value = NULL;
-
-        locals[ref_instr->dest] = &rv->_base;
+        RefValueInstr(heap, thread, instr);
         break;
       }
 
       case FBLE_REF_DEF_INSTR: {
-        FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-        FbleRefValue* rv = (FbleRefValue*)locals[ref_def_instr->ref];
-        assert(rv->_base.tag == FBLE_REF_VALUE);
-
-        FbleValue* value = FrameGet(statics, locals, ref_def_instr->value);
-        assert(value != NULL);
-        rv->value = value;
-        FbleValueAddRef(heap, &rv->_base, rv->value);
+        RefDefInstr(heap, thread, instr);
         break;
       }
 
