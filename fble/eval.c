@@ -88,6 +88,9 @@ static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
 static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack);
 
+static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr);
+
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
 static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted);
@@ -332,6 +335,32 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
   return stack;
 }
 
+// StructValueInstr --
+//   Execute a STRUCT_VALUE_INSTR.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   instr - the instruction to execute.
+//   thread - the thread state.
+//
+// Side effects:
+//   Executes the struct value instruction.
+static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
+{
+  FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
+  size_t argc = struct_value_instr->args.size;
+
+  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
+  value->_base.tag = FBLE_STRUCT_VALUE;
+  value->fieldc = argc;
+  for (size_t i = 0; i < argc; ++i) {
+    value->fields[i] = FrameGet(thread->stack->func->scope, thread->stack->locals, struct_value_instr->args.xs[i]);
+    FbleValueAddRef(heap, &value->_base, value->fields[i]);
+  }
+
+  thread->stack->locals[struct_value_instr->dest] = &value->_base;
+}
+
 // ReleaseInstr --
 //   Execute a RELEASE_INSTR.
 //
@@ -342,8 +371,9 @@ static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue**
 //
 // Side effects:
 //   Executes the release instruction.
-static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleReleaseInstr* release)
+static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
 {
+  FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
   assert(thread->stack->locals[release->value] != NULL);
   if (release->value >= thread->stack->func->argc || thread->stack->owner) {
     FbleReleaseValue(heap, thread->stack->locals[release->value]);
@@ -414,18 +444,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
     switch (instr->tag) {
       case FBLE_STRUCT_VALUE_INSTR: {
-        FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-        size_t argc = struct_value_instr->args.size;
-
-        FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
-        value->_base.tag = FBLE_STRUCT_VALUE;
-        value->fieldc = argc;
-        for (size_t i = 0; i < argc; ++i) {
-          value->fields[i] = FrameGet(statics, locals, struct_value_instr->args.xs[i]);
-          FbleValueAddRef(heap, &value->_base, value->fields[i]);
-        }
-
-        locals[struct_value_instr->dest] = &value->_base;
+        StructValueInstr(heap, thread, instr);
         break;
       }
 
@@ -517,7 +536,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       }
 
       case FBLE_RELEASE_INSTR: {
-        ReleaseInstr(heap, thread, (FbleReleaseInstr*)instr);
+        ReleaseInstr(heap, thread, instr);
         break;
       }
 
