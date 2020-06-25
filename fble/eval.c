@@ -77,6 +77,7 @@ typedef enum {
   FINISHED,       // The thread has finished running.
   BLOCKED,        // The thread is blocked on I/O.
   YIELDED,        // The thread yielded, but is not blocked on I/O.
+  RUNNING,        // The thread is actively running.
 } Status;
 
 static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index);
@@ -1121,6 +1122,13 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
           thread = thread->parent;
           break;
         }
+
+        case RUNNING: {
+          // If the thread is actively running, it should not have returned
+          // control to this point.
+          UNREACHABLE("should never get here");
+          break;
+        }
       }
     }
   }
@@ -1187,6 +1195,13 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
         // Give a chance to do some I/O, but don't block, because the thread
         // is making progress anyway.
         io->io(io, heap, false);
+        break;
+      }
+
+      case RUNNING: {
+        // If the thread is actively running, it should not have returned
+        // control to this point.
+        UNREACHABLE("should never get here");
         break;
       }
     }
