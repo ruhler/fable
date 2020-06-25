@@ -7,7 +7,6 @@
  - Requires we also store functions for disassembly and freeing of
    instructions.
 
-* Change FrameGet to take thread.
 * Pull out definition of architectural state and instruction functions.
  - Would be nice to separate them from the evaluator I think.
 

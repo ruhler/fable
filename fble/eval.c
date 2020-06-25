@@ -79,10 +79,10 @@ typedef enum {
   UNBLOCKED,      // The thread is not blocked on I/O.
 } Status;
 
-static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameIndex index);
-static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValue** locals, FbleFrameIndex index);
-static FbleValue* FrameMove(FbleHeap* heap, FbleValue** statics, FbleValue** locals, FbleFrameIndex index, size_t argc, bool owner);
-static void FrameRelease(FbleHeap* heap, FbleValue** locals, FbleFrameIndex index, size_t argc, bool owner);
+static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index);
+static FbleValue* FrameTaggedGet(FbleValueTag tag, Thread* thread, FbleFrameIndex index);
+static FbleValue* FrameMove(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc, bool owner);
+static void FrameRelease(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc, bool owner);
 
 static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleValue** result, Stack* tail);
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
@@ -107,8 +107,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 //   Get a value from the frame on the top of the execution stack.
 //
 // Inputs:
-//   statics - the static variables at the top of the stack.
-//   locals - the local variables at the top of the stack.
+//   thread - the current thread.
 //   index - the index of the value to access.
 //
 // Results:
@@ -116,11 +115,11 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 //
 // Side effects:
 //   None.
-static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameIndex index)
+static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index)
 {
   switch (index.section) {
-    case FBLE_STATICS_FRAME_SECTION: return statics[index.index];
-    case FBLE_LOCALS_FRAME_SECTION: return locals[index.index];
+    case FBLE_STATICS_FRAME_SECTION: return thread->stack->func->scope[index.index];
+    case FBLE_LOCALS_FRAME_SECTION: return thread->stack->locals[index.index];
   }
   UNREACHABLE("should never get here");
 }
@@ -136,8 +135,7 @@ static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameInd
 //
 // Inputs:
 //   tag - the expected tag of the value.
-//   statics - the static variables at the top of the stack.
-//   locals - the local variables at the top of the stack.
+//   thread - the current thread.
 //   index - the location of the value in the frame.
 //
 // Results:
@@ -147,9 +145,9 @@ static FbleValue* FrameGet(FbleValue** statics, FbleValue** locals, FbleFrameInd
 // Side effects:
 //   The returned value will only stay alive as long as the original value on
 //   the stack frame.
-static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValue** locals, FbleFrameIndex index)
+static FbleValue* FrameTaggedGet(FbleValueTag tag, Thread* thread, FbleFrameIndex index)
 {
-  FbleValue* value = FrameGet(statics, locals, index);
+  FbleValue* value = FrameGet(thread, index);
   while (value->tag == FBLE_REF_VALUE) {
     FbleRefValue* rv = (FbleRefValue*)value;
 
@@ -172,8 +170,7 @@ static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValu
 //
 // Inputs:
 //   heap - heap used for allocations.
-//   statics - the static variables at the top of the stack.
-//   locals - the local variables at the top of the stack.
+//   thread - the current thread.
 //   index - the index of the value to access.
 //   argc - the number of arguments to the currently executing function.
 //   owner - whether we own the arguments to the currently executing function.
@@ -184,21 +181,21 @@ static FbleValue* FrameTaggedGet(FbleValueTag tag, FbleValue** statics, FbleValu
 // Side effects:
 //   Has the effect of taking a reference to the value and releasing the value
 //   on the stack frame if we have ownership of it.
-static FbleValue* FrameMove(FbleHeap* heap, FbleValue** statics, FbleValue** locals, FbleFrameIndex index, size_t argc, bool owner)
+static FbleValue* FrameMove(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc, bool owner)
 {
   switch (index.section) {
     case FBLE_STATICS_FRAME_SECTION: {
-      FbleValue* value = statics[index.index];
+      FbleValue* value = thread->stack->func->scope[index.index];
       FbleRetainValue(heap, value);
       return value;
     }
 
     case FBLE_LOCALS_FRAME_SECTION: {
-      FbleValue* value = locals[index.index];
+      FbleValue* value = thread->stack->locals[index.index];
       if (index.index < argc && !owner) {
         FbleRetainValue(heap, value);
       }
-      locals[index.index] = NULL;
+      thread->stack->locals[index.index] = NULL;
       return value;
     }
   }
@@ -212,8 +209,7 @@ static FbleValue* FrameMove(FbleHeap* heap, FbleValue** statics, FbleValue** loc
 //
 // Inputs:
 //   heap - heap used for allocations.
-//   statics - the static variables at the top of the stack.
-//   locals - the local variables at the top of the stack.
+//   thread - the current thread.
 //   index - the index of the value to access.
 //   argc - the number of arguments to the currently executing function.
 //   owner - whether we own the arguments to the currently executing function.
@@ -221,13 +217,13 @@ static FbleValue* FrameMove(FbleHeap* heap, FbleValue** statics, FbleValue** loc
 // Side effects:
 //   Has the effect of releasing the value on the stack frame if we have
 //   ownership of it.
-static void FrameRelease(FbleHeap* heap, FbleValue** locals, FbleFrameIndex index, size_t argc, bool owner)
+static void FrameRelease(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc, bool owner)
 {
   if (index.section == FBLE_LOCALS_FRAME_SECTION) {
     if (index.index >= argc || owner) {
-      FbleReleaseValue(heap, locals[index.index]);
+      FbleReleaseValue(heap, thread->stack->locals[index.index]);
     }
-    locals[index.index] = NULL;
+    thread->stack->locals[index.index] = NULL;
   }
 }
 
@@ -361,7 +357,7 @@ static void StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* ins
   value->_base.tag = FBLE_STRUCT_VALUE;
   value->fieldc = argc;
   for (size_t i = 0; i < argc; ++i) {
-    value->fields[i] = FrameGet(thread->stack->func->scope, thread->stack->locals, struct_value_instr->args.xs[i]);
+    value->fields[i] = FrameGet(thread, struct_value_instr->args.xs[i]);
     FbleValueAddRef(heap, &value->_base, value->fields[i]);
   }
 
@@ -385,7 +381,7 @@ static void UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
   FbleUnionValue* value = FbleNewValue(heap, FbleUnionValue);
   value->_base.tag = FBLE_UNION_VALUE;
   value->tag = union_value_instr->tag;
-  value->arg = FrameGet(thread->stack->func->scope, thread->stack->locals, union_value_instr->arg);
+  value->arg = FrameGet(thread, union_value_instr->arg);
   FbleValueAddRef(heap, &value->_base, value->arg);
 
   thread->stack->locals[union_value_instr->dest] = &value->_base;
@@ -412,7 +408,7 @@ static void FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr
   value->code = func_value_instr->code;
   value->code->refcount++;
   for (size_t i = 0; i < scopec; ++i) {
-    FbleValue* arg = FrameGet(thread->stack->func->scope, thread->stack->locals, func_value_instr->scope.xs[i]);
+    FbleValue* arg = FrameGet(thread, func_value_instr->scope.xs[i]);
     value->scope[i] = arg;
     FbleValueAddRef(heap, &value->_base, arg);
   }
@@ -452,7 +448,7 @@ static void ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
 static void CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-  FbleValue* value = FrameGet(thread->stack->func->scope, thread->stack->locals, copy_instr->source);
+  FbleValue* value = FrameGet(thread, copy_instr->source);
   FbleRetainValue(heap, value);
   thread->stack->locals[copy_instr->dest] = value;
 }
@@ -520,7 +516,7 @@ static void RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr)
   FbleRefValue* rv = (FbleRefValue*)thread->stack->locals[ref_def_instr->ref];
   assert(rv->_base.tag == FBLE_REF_VALUE);
 
-  FbleValue* value = FrameGet(thread->stack->func->scope, thread->stack->locals, ref_def_instr->value);
+  FbleValue* value = FrameGet(thread, ref_def_instr->value);
   assert(value != NULL);
   rv->value = value;
   FbleValueAddRef(heap, &rv->_base, rv->value);
@@ -616,7 +612,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       case FBLE_STRUCT_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, thread->stack->func->scope, thread->stack->locals, access_instr->obj);
+        FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, thread, access_instr->obj);
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", access_instr->loc);
           thread->stack->pc--;
@@ -633,7 +629,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread->stack->func->scope, thread->stack->locals, access_instr->obj);
+        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread, access_instr->obj);
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", access_instr->loc);
           thread->stack->pc--;
@@ -653,7 +649,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
       case FBLE_UNION_SELECT_INSTR: {
         FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread->stack->func->scope, thread->stack->locals, select_instr->condition);
+        FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread, select_instr->condition);
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", select_instr->loc);
           thread->stack->pc--;
@@ -681,7 +677,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread->stack->func->scope, thread->stack->locals, call_instr->func);
+        FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread, call_instr->func);
         if (func == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
           thread->stack->pc--;
@@ -691,18 +687,18 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
         if (call_instr->exit) {
           FbleRetainValue(heap, &func->_base);
-          FrameRelease(heap, thread->stack->locals, call_instr->func, thread->stack->func->argc, thread->stack->owner);
+          FrameRelease(heap, thread, call_instr->func, thread->stack->func->argc, thread->stack->owner);
 
           FbleValue* args[func->argc];
           for (size_t i = 0; i < func->argc; ++i) {
-            args[i] = FrameMove(heap, thread->stack->func->scope, thread->stack->locals, call_instr->args.xs[i], thread->stack->func->argc, thread->stack->owner);
+            args[i] = FrameMove(heap, thread, call_instr->args.xs[i], thread->stack->func->argc, thread->stack->owner);
           }
 
           thread->stack = ReplaceFrame(heap, func, args, thread->stack);
         } else {
           FbleValue* args[func->argc];
           for (size_t i = 0; i < func->argc; ++i) {
-            args[i] = FrameGet(thread->stack->func->scope, thread->stack->locals, call_instr->args.xs[i]);
+            args[i] = FrameGet(thread, call_instr->args.xs[i]);
           }
 
           FbleValue** result = thread->stack->locals + call_instr->dest;
@@ -718,7 +714,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
       case FBLE_GET_INSTR: {
         FbleGetInstr* get_instr = (FbleGetInstr*)instr;
-        FbleValue* get_port = FrameGet(thread->stack->func->scope, thread->stack->locals, get_instr->port);
+        FbleValue* get_port = FrameGet(thread, get_instr->port);
         if (get_port->tag == FBLE_LINK_VALUE) {
           FbleLinkValue* link = (FbleLinkValue*)get_port;
 
@@ -765,8 +761,8 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
       case FBLE_PUT_INSTR: {
         FblePutInstr* put_instr = (FblePutInstr*)instr;
-        FbleValue* put_port = FrameGet(thread->stack->func->scope, thread->stack->locals, put_instr->port);
-        FbleValue* arg = FrameGet(thread->stack->func->scope, thread->stack->locals, put_instr->arg);
+        FbleValue* put_port = FrameGet(thread, put_instr->port);
+        FbleValue* arg = FrameGet(thread, put_instr->arg);
 
         FbleValueV args = { .size = 0, .xs = NULL, };
         FbleValue* unit = FbleNewStructValue(heap, args);
@@ -828,7 +824,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
         FbleVectorInit(arena, thread->children);
 
         for (size_t i = 0; i < fork_instr->args.size; ++i) {
-          FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread->stack->func->scope, thread->stack->locals, fork_instr->args.xs[i]);
+          FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread, fork_instr->args.xs[i]);
 
           // You cannot execute a proc in a let binding, so it should be
           // impossible to ever have an undefined proc value.
@@ -861,7 +857,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        *thread->stack->result = FrameMove(heap, thread->stack->func->scope, thread->stack->locals, return_instr->result, thread->stack->func->argc, thread->stack->owner);
+        *thread->stack->result = FrameMove(heap, thread, return_instr->result, thread->stack->func->argc, thread->stack->owner);
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
           return FINISHED;
@@ -962,9 +958,9 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
         if (call_instr->exit) {
-          FrameRelease(heap, locals, call_instr->func, thread->stack->func->argc, thread->stack->owner);
+          FrameRelease(heap, thread, call_instr->func, thread->stack->func->argc, thread->stack->owner);
           for (size_t i = 0; i < call_instr->args.size; ++i) {
-            FrameRelease(heap, locals, call_instr->args.xs[i], thread->stack->func->argc, thread->stack->owner);
+            FrameRelease(heap, thread, call_instr->args.xs[i], thread->stack->func->argc, thread->stack->owner);
           }
 
           *thread->stack->result = NULL;
@@ -1030,7 +1026,7 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
 
       case FBLE_RETURN_INSTR: {
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        FrameRelease(heap, locals, return_instr->result, thread->stack->func->argc, thread->stack->owner);
+        FrameRelease(heap, thread, return_instr->result, thread->stack->func->argc, thread->stack->owner);
         *thread->stack->result = NULL;
         thread->stack = PopFrame(heap, thread->stack);
         if (thread->stack == NULL) {
