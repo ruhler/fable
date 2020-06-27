@@ -29,8 +29,8 @@
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
-@ TestResult@ = /Test%.TestResult@;
 @ TestSuite@ = /Test%.TestSuite@;
+<@>% AssertEquals = /Test%.AssertEquals;
 % TestSuite = /Test%.TestSuite;
 
 @ Unit@ = /Unit%.Unit@;
@@ -121,19 +121,6 @@
   !(md5);
 };
 
-(Md5Hash@, Md5Hash@) { TestResult@; } AssertEq = (Md5Hash@ wnt, Md5Hash@ got) {
-  Eq(wnt, got).?(
-    true: TestResult@(pass: Unit),
-    false: {
-      Str@ msg = Concat<Char@>(S<Str@>([
-        Str(Chars|'expected: '),
-        Md5Hash2Str(wnt),
-        Str(Chars|' but got: '),
-        Md5Hash2Str(got)]));
-      TestResult@(fail: msg);
-    });
-};
-
 (S@<Hex@>) { S@<Bit8@>; } Hex2Bytes = (S@<Hex@> hex) {
   hex.?(
     cons: ConsS<Bit8@>(
@@ -143,11 +130,10 @@
 };
       
 (CharLit@, List@<Hex@>, List@<Hex@>) { Test@; } TestStr = (CharLit@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
-  Test@(Str(name),
-    {
-      Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
-      !(AssertEq(Str2Md5Hash(wnt), got));
-    });
+  Test@(Str(name), {
+    Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
+    !(AssertEquals<Md5Hash@>(Eq, Md5Hash2Str, Str2Md5Hash(wnt), got));
+  });
 };
 
 TestSuite@ Tests = TestSuite(Chars|Md5, [

@@ -29,16 +29,6 @@
 @ Test@ = *(Str@ name, TestResult@! test);
 @ TestSuite@ = S@<Test@>;
 
-# Print a string to the given output stream.
-(Put@<Str@>, Str@) { Unit@!; } Print = (Put@<Str@> out, Str@ str) {
-  out(str);
-};
-
-# Print a string and newline to the given output stream.
-(Put@<Str@>, Str@) { Unit@!; } PrintLn = (Put@<Str@> out, Str@ str) {
-  out(Append<Char@>(str, Str([Chars.nl])));
-};
-
 # TestSuite --
 #   Creates a suite of tests.
 #
@@ -51,6 +41,27 @@ TestSuite = (CharLit@ name, List@<Test@> tests) {
   MapS<Test@, Test@>(S<Test@>(tests), (Test@ test) {
     Test@(Append<Char@>(prefix, test.name), test.test);
   });
+};
+
+<@ T@>((T@, T@) { Bool@; }, (T@) { Str@; }, T@, T@) { TestResult@; }
+AssertEquals = <@ T@>((T@, T@) { Bool@; } eq, (T@) { Str@; } print, T@ expected, T@ actual) {
+  eq(expected, actual).?(
+    true: TestResult@(pass: Unit),
+    false: TestResult@(fail: Concat<Char@>(S<Str@>([
+          Str(Chars|'expected: '),
+          print(expected),
+          Str(Chars|', but got: '),
+          print(actual)]))));
+};
+
+# Print a string to the given output stream.
+(Put@<Str@>, Str@) { Unit@!; } Print = (Put@<Str@> out, Str@ str) {
+  out(str);
+};
+
+# Print a string and newline to the given output stream.
+(Put@<Str@>, Str@) { Unit@!; } PrintLn = (Put@<Str@> out, Str@ str) {
+  out(Append<Char@>(str, Str([Chars.nl])));
 };
 
 # Returns True if the tests all pass, false otherwise.
@@ -83,4 +94,4 @@ TestSuite@ Tests = {
   TestSuite(Chars|'Test', [pass]);
 };
 
-@(Str@, TestResult@, Test@, TestSuite@, TestSuite, RunTests, Tests);
+@(Str@, TestResult@, Test@, TestSuite@, AssertEquals, TestSuite, RunTests, Tests);

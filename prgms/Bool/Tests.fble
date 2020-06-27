@@ -10,31 +10,29 @@
 % Chars = /Char%.Chars;
 
 <@>@ CharLit@ = /String%.CharLit@;
+@ Str@ = /String%.Str@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
-@ TestResult@ = /Test%.TestResult@;
 @ TestSuite@ = /Test%.TestSuite@;
+<@>% AssertEquals = /Test%.AssertEquals;
 % TestSuite = /Test%.TestSuite;
 
-% Unit = /Unit%.Unit;
+(Bool@) { Str@; } PrintBool = (Bool@ x) {
+  x.?(true: Str(Chars|True), false: Str(Chars|False));
+};
 
 (CharLit@, Bool@!){Test@;} TT = (CharLit@ name, Bool@! p) {
   Test@(Str(name), {
     Bool@ x := p;
-    x.?(
-      true: !(TestResult@(pass: Unit)),
-      false: !(TestResult@(fail: Str(Chars|'Expected True but got False')))
-    );
+    !(AssertEquals<Bool@>(Eq, PrintBool, True, x));
   });
 };
 
 (CharLit@, Bool@!){Test@;} TF = (CharLit@ name, Bool@! p) {
   Test@(Str(name), {
     Bool@ x := p;
-    x.?(
-      true: !(TestResult@(fail: Str(Chars|'Expected False but got True'))),
-      false: !(TestResult@(pass: Unit)));
+    !(AssertEquals<Bool@>(Eq, PrintBool, False, x));
   });
 };
 

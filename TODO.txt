@@ -1,6 +1,7 @@
 
 * Clean up fble test framework
- - Add common assertions for testing equality with pretty error messages.
+ - Define Test function that takes CharLit and start using it.
+ - Use AssertEquals for more of the tests.
  - Add less verbose Test runner, that behaves like junit.
  - Separate Test tests out into separate module and properly test the test
    infra.
