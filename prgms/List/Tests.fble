@@ -18,6 +18,7 @@
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
+% TestSuite = /Test%.TestSuite;
 
 @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 
@@ -49,7 +50,7 @@
   };
 
 Test@ SortTest = Test@(
-  Str(Chars|'List.Sort'), !({
+  Str(Chars|'Sort'), !({
     S@<Elem@> unsorted = S<Elem@>([
       Elem@(D: Unit),
       Elem@(A: Unit),
@@ -71,4 +72,4 @@ Test@ SortTest = Test@(
     );
 }));
 
-@(Tests: S<Test@>([SortTest]));
+@(Tests: TestSuite(Chars|List, [SortTest]));

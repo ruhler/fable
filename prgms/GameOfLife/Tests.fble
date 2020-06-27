@@ -10,13 +10,12 @@
 % 5 = /Int/Int%.5;
 % 6 = /Int/Int%.6;
 
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
-
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
+@ TestSuite@ = /Test%.TestSuite@;
+% TestSuite = /Test%.TestSuite;
 
 % Unit = /Unit%.Unit;
 
@@ -63,8 +62,8 @@ TestResult@! AcornStep = !({
   );
 });
 
-S@<Test@> Tests = S<Test@>([
-  Test@(Str(Chars|'GameOfLife.AcornStep'), AcornStep)
+TestSuite@ Tests = TestSuite(Chars|GameOfLife, [
+  Test@(Str(Chars|AcornStep), AcornStep)
   ]);
 
 @(Tests);

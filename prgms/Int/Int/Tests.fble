@@ -2,18 +2,15 @@
 @ Bool@ = /Bool%.Bool@;
 % Not = /Bool%.Not;
 
-@ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
-
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
-<@>% Append = /List%.Append;
 
 <@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
+@ TestSuite@ = /Test%.TestSuite@;
+% TestSuite = /Test%.TestSuite;
 
 % Unit = /Unit%.Unit;
 
@@ -41,7 +38,7 @@
 % I = /Int/Int/Lit%.I;
 
 (CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
-  Test@(Append<Char@>(Str(Chars|'Int.'), Str(name)), {
+  Test@(Str(name), {
     Bool@ x := p;
     x.?(
       true: !(TestResult@(pass: Unit)),
@@ -55,7 +52,7 @@
   T(name, { Int@ x := b; !(Eq(a, x)); });
 };
 
-S@<Test@> Tests = S<Test@>([
+TestSuite@ Tests = TestSuite(Chars|Int, [
   T(Chars|Eq_0_0, !(Eq(0, 0))),
   T(Chars|Eq_0_1, !(Not(Eq(0, 1)))),
   T(Chars|Eq_4_4, !(Eq(4, 4))),

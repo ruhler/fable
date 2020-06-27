@@ -7,23 +7,20 @@
 % Or = /Bool%.Or;
 % Eq = /Bool%.Eq;
 
-@ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
-
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
-<@>% Append = /List%.Append;
 
 <@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
+@ TestSuite@ = /Test%.TestSuite@;
+% TestSuite = /Test%.TestSuite;
 
 % Unit = /Unit%.Unit;
 
 (CharLit@, Bool@!){Test@;} TT = (CharLit@ name, Bool@! p) {
-  Test@(Append<Char@>(Str(Chars|'Bool.'), Str(name)), {
+  Test@(Str(name), {
     Bool@ x := p;
     x.?(
       true: !(TestResult@(pass: Unit)),
@@ -33,7 +30,7 @@
 };
 
 (CharLit@, Bool@!){Test@;} TF = (CharLit@ name, Bool@! p) {
-  Test@(Append<Char@>(Str(Chars|'Bool.'), Str(name)), {
+  Test@(Str(name), {
     Bool@ x := p;
     x.?(
       true: !(TestResult@(fail: Str(Chars|'Expected False but got True'))),
@@ -41,7 +38,7 @@
   });
 };
 
-S@<Test@> Tests = S<Test@>([
+TestSuite@ Tests = TestSuite(Chars|Bool, [
   TT(Chars|True, !(True)),
   TF(Chars|False, !(False)),
 

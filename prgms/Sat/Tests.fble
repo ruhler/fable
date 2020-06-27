@@ -1,22 +1,20 @@
 % True = /Bool%.True;
 
-@ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
 % EqIntP = /Int/IntP/Eq%.Eq;
 % 1 = /Int/IntP%.1;
 
-<@>@ S@ = /List%.S@;
 <@>% S = /List%.S;
-<@>% Append = /List%.Append;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
-@ Str@ = /String%.Str@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
+@ TestSuite@ = /Test%.TestSuite@;
+% TestSuite = /Test%.TestSuite;
 
 % Unit = /Unit%.Unit;
 
@@ -26,12 +24,8 @@
 @ Assignment@ = /Sat%.Assignment@;
 % Solve = /Sat%.Solve;
 
-S@<Test@> Tests = {
-  (Str@) { Str@; } name = (Str@ nm) {
-    Append<Char@>(Str(Chars|'Sat.'), nm);
-  };
-
-  Test@ x = Test@(name(Str(Chars|x)), !({
+TestSuite@ Tests = TestSuite(Chars|Sat, [
+  Test@(Str(Chars|x), !({
     Formula@ f = S<Clause@>([S<Var@>([Var@(1, True)])]);
     Maybe@<Assignment@> solved = Solve(f);
     # TODO: Use an equality assertion to confirm the result is as expected,
@@ -53,9 +47,7 @@ S@<Test@> Tests = {
           nil: TestResult@(fail: Str(Chars|'empty assignment')));
       },
       nothing: TestResult@(fail: Str(Chars|'failed to find assignment')));
-  }));
-
-  S<Test@>([x]);
-};
+  }))
+]);
 
 @(Tests);

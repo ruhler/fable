@@ -7,10 +7,8 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-<@>@ S@ = /List%.S@;
 <@>% S0 = /List%.S0;
 <@>% S = /List%.S;
-<@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
@@ -23,6 +21,8 @@
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
+@ TestSuite@ = /Test%.TestSuite@;
+% TestSuite = /Test%.TestSuite;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -226,12 +226,8 @@ Input@ ExpertInput = {
     Array<S@>(_,9,_,  _,_,_,  _,8,_));
 };
 
-S@<Test@> Tests = {
-  (Str@){Str@;} name = (Str@ nm) {
-    Append<Char@>(Str(Chars|'Sudoku.'), nm);
-  };
-
-  Test@ sample = Test@(name(Str(Chars|sample)), !({
+TestSuite@ Tests = TestSuite(Chars|Sudoku, [
+  Test@(Str(Chars|sample), !({
     Maybe@<Solved@> ms = Solve(SampleInput);
     ms.?(
        just: {
@@ -248,10 +244,8 @@ S@<Test@> Tests = {
                    ShowBoard(False)(ms.just)]))));
        },
        nothing: TestResult@(fail: Str(Chars|'failed to solve board')));
-  }));
-
-  S<Test@>([sample]);
-};
+  }))
+]);
 
 Unit@! Bench = {
   Solved@ sample := !(Solve(SampleInput).just);

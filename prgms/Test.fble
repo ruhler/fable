@@ -8,6 +8,7 @@
 % Chars = /Char%.Chars;
 
 <@>@ S@ = /List%.S@;
+<@,@>@ List@ = /List%.List@;
 <@>% S0 = /List%.S0;
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
@@ -18,6 +19,7 @@
 <@>@ Put@ = /Process%.Put@;
 
 @ Str@ = /String%.Str@;
+<@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
 @ Unit@ = /Unit%.Unit@;
@@ -25,6 +27,7 @@
 
 @ TestResult@ = +(Unit@ pass, Str@ fail);
 @ Test@ = *(Str@ name, TestResult@! test);
+@ TestSuite@ = S@<Test@>;
 
 # Print a string to the given output stream.
 (Put@<Str@>, Str@) { Unit@!; } Print = (Put@<Str@> out, Str@ str) {
@@ -36,8 +39,22 @@
   out(Append<Char@>(str, Str([Chars.nl])));
 };
 
+# TestSuite --
+#   Creates a suite of tests.
+#
+# Inputs:
+#   name - the name of the test suite.
+#   tests - the list of tests in the test suite.
+(CharLit@, List@<Test@>) { TestSuite@; }
+TestSuite = (CharLit@ name, List@<Test@> tests) {
+  Str@ prefix = Append<Char@>(Str(name), Str(Chars|'.'));
+  MapS<Test@, Test@>(S<Test@>(tests), (Test@ test) {
+    Test@(Append<Char@>(prefix, test.name), test.test);
+  });
+};
+
 # Returns True if the tests all pass, false otherwise.
-(Put@<Str@>, S@<Test@>) { Bool@!; } RunTests = (Put@<Str@> out, S@<Test@> tests) {
+(Put@<Str@>, TestSuite@) { Bool@!; } RunTests = (Put@<Str@> out, TestSuite@ tests) {
   SeqS<Bool@>(AndMonoid, {
     MapS<Test@, Bool@!>(tests, (Test@ test) {
       Unit@ _ := Print(out, test.name);
@@ -59,15 +76,11 @@
   });
 };
 
-S@<Test@> Tests = {
-  (Str@){Str@;} name = (Str@ nm) {
-    Append<Char@>(Str(Chars|'Test.'), nm);
-  };
+TestSuite@ Tests = {
+  Test@ pass = Test@(Str(Chars|pass), !(TestResult@(pass: Unit)));
+  Test@ _fail = Test@(Str(Chars|fail), !(TestResult@(fail: Str(Chars|FAILED))));
 
-  Test@ pass = Test@(name(Str(Chars|pass)), !(TestResult@(pass: Unit)));
-  Test@ _fail = Test@(name(Str(Chars|fail)), !(TestResult@(fail: Str(Chars|FAILED))));
-
-  S<Test@>([pass]);
+  TestSuite(Chars|'Test', [pass]);
 };
 
-@(Str@, TestResult@, Test@, RunTests, Tests);
+@(Str@, TestResult@, Test@, TestSuite@, TestSuite, RunTests, Tests);

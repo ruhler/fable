@@ -1,13 +1,12 @@
 
 % Chars = /Char%.Chars;
 
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
-
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
+@ TestSuite@ = /Test%.TestSuite@;
+% TestSuite = /Test%.TestSuite;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -63,11 +62,11 @@ TestResult@! TestChooseBestMoveNoLose = {
 };
 
 
-S@<Test@> Tests = S<Test@>([
-  Test@(Str(Chars|'TicTacToe.TestBoardStatus'), TestBoardStatus),
-  Test@(Str(Chars|'TicTacToe.TestChooseBestMoveWin'), TestChooseBestMoveWin),
-  Test@(Str(Chars|'TicTacToe.TestChooseBestMoveNoLose'), TestChooseBestMoveNoLose)
-  ]);
+TestSuite@ Tests = TestSuite(Chars|TicTacToe, [
+  Test@(Str(Chars|TestBoardStatus), TestBoardStatus),
+  Test@(Str(Chars|TestChooseBestMoveWin), TestChooseBestMoveWin),
+  Test@(Str(Chars|TestChooseBestMoveNoLose), TestChooseBestMoveNoLose)
+]);
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.
 Unit@! Bench = {

@@ -1,7 +1,9 @@
 
 * Clean up fble test framework
- - Factor out common code for naming tests by test suite.
  - Add common assertions for testing equality with pretty error messages.
+ - Add less verbose Test runner, that behaves like junit.
+ - Separate Test tests out into separate module and properly test the test
+   infra.
 
 * Add more Sat tests.
 
