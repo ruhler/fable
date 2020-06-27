@@ -1,4 +1,10 @@
 
+* Clean up fble test framework
+ - Factor out common code for naming tests by test suite.
+ - Add common assertions for testing equality with pretty error messages.
+
+* Add more Sat tests.
+
 * Fix failing sat solver test.
 
 * Improve type error in case of this?
@@ -217,4 +223,7 @@
  - Debug why sat solver test is failing.
    Manual code inspection doesn't reveal the issue. I really want to trace the
    code to see which unexpected branch is being taken.
+
+   Manually tracing through the code by profiling block led straight to the
+   problem: bad implementation of boolean Eq.
 

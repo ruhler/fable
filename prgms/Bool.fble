@@ -22,7 +22,7 @@ Bool@ False = Bool@(false: Unit);
 };
 
 (Bool@, Bool@){Bool@;} Eq = (Bool@ a, Bool@ b) {
-  a.?(true: Not(b), false: b);
+  a.?(true: b, false: Not(b));
 };
 
 Monoid@<Bool@> AndMonoid = Monoid@<Bool@>(And, True);

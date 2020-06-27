@@ -24,6 +24,7 @@
 % _ = /Stdio/Cat%;
 
 S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
+  /Bool/Tests%.Tests,
   /GameOfLife/Tests%.Tests,
   /Int/Int/Tests%.Tests,
   /List/Tests%.Tests,

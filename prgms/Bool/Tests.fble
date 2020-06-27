@@ -1,0 +1,67 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% Not = /Bool%.Not;
+% And = /Bool%.And;
+% Or = /Bool%.Or;
+% Eq = /Bool%.Eq;
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+<@>% Append = /List%.Append;
+
+<@>@ CharLit@ = /String%.CharLit@;
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
+
+% Unit = /Unit%.Unit;
+
+(CharLit@, Bool@!){Test@;} TT = (CharLit@ name, Bool@! p) {
+  Test@(Append<Char@>(Str(Chars|'Bool.'), Str(name)), {
+    Bool@ x := p;
+    x.?(
+      true: !(TestResult@(pass: Unit)),
+      false: !(TestResult@(fail: Str(Chars|'Expected True but got False')))
+    );
+  });
+};
+
+(CharLit@, Bool@!){Test@;} TF = (CharLit@ name, Bool@! p) {
+  Test@(Append<Char@>(Str(Chars|'Bool.'), Str(name)), {
+    Bool@ x := p;
+    x.?(
+      true: !(TestResult@(fail: Str(Chars|'Expected False but got True'))),
+      false: !(TestResult@(pass: Unit)));
+  });
+};
+
+S@<Test@> Tests = S<Test@>([
+  TT(Chars|True, !(True)),
+  TF(Chars|False, !(False)),
+
+  TF(Chars|Not_True, !(Not(True))),
+  TT(Chars|Not_False, !(Not(False))),
+
+  TT(Chars|And_True_True, !(And(True, True))),
+  TF(Chars|And_True_False, !(And(True, False))),
+  TF(Chars|And_False_True, !(And(False, True))),
+  TF(Chars|And_False_False, !(And(False, False))),
+
+  TT(Chars|Or_True_True, !(Or(True, True))),
+  TT(Chars|Or_True_False, !(Or(True, False))),
+  TT(Chars|Or_False_True, !(Or(False, True))),
+  TF(Chars|Or_False_False, !(Or(False, False))),
+
+  TT(Chars|Eq_True_True, !(Eq(True, True))),
+  TF(Chars|Eq_True_False, !(Eq(True, False))),
+  TF(Chars|Eq_False_True, !(Eq(False, True))),
+  TT(Chars|Eq_False_False, !(Eq(False, False)))
+]);
+
+@(Tests);
