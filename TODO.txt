@@ -1,6 +1,21 @@
 
+* Fix failing sat solver test.
+
+* Improve type error in case of this?
+  <@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
+  True.?(true: Nothing<Bool@>, false: True);
+
+  We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
+  Should we instead get: expected type Maybe@<Bool@>? 
+
+* Make VLIW like instructions to reduce overhead of dispatching instructions?
+ - RETURN + RELEASES
+ - CALL + RELEASES
+ - REF_VALS 
+ - REF_DEFS
+
 * Store function pointer in FbleInstr instead of tag
- - Requires we also store functions for disassembly and freeing of
+ - Requires we also store functions for disassembly, abort and freeing of
    instructions.
 
 * Pull out definition of architectural state and instruction functions.
@@ -15,7 +30,8 @@
   Instead of doing things conditionally in return and tail call instructions?
  - allows us to take advantage of static info about whether a value is a
    static or an arg or a local.
- - but increases number of generated instructions.
+ - but increases number of generated instructions. It seems like, performance
+   wise, the bigger the individual instructions the better.
 
 * Should 'exec' be a flag passed to compile expression?
  That way we could distinguish between normal let and exec let while reusing a
@@ -30,7 +46,9 @@
    previous retainer is released.
  - Don't assume all locals are NULL in replace frame?
  - I fear we don't clearly track locals across case branches, which could lead
-   to bugs.
+   to bugs. Perhaps have the concept of reserving the result local, and
+   require all expressions to leave the locals unchanged except
+   for possibly using the reserved result local?
 
 * Consider dynamically tracking whether returned value is retained by args
   or not.
@@ -195,4 +213,8 @@
    It turns out we were using the wrong direction. A debugger to step through
    code and print variable values would have found this more quickly than my
    guess and check approach, which was pretty tedious.
+
+ - Debug why sat solver test is failing.
+   Manual code inspection doesn't reveal the issue. I really want to trace the
+   code to see which unexpected branch is being taken.
 

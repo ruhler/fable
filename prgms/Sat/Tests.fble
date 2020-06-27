@@ -1,0 +1,61 @@
+% True = /Bool%.True;
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+% EqIntP = /Int/IntP/Eq%.Eq;
+% 1 = /Int/IntP%.1;
+
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+<@>% Append = /List%.Append;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
+
+% Unit = /Unit%.Unit;
+
+@ Formula@ = /Sat%.Formula@;
+@ Clause@ = /Sat%.Clause@;
+@ Var@ = /Sat%.Var@;
+@ Assignment@ = /Sat%.Assignment@;
+% Solve = /Sat%.Solve;
+
+S@<Test@> Tests = {
+  (Str@) { Str@; } name = (Str@ nm) {
+    Append<Char@>(Str(Chars|'Sat.'), nm);
+  };
+
+  Test@ x = Test@(name(Str(Chars|x)), !({
+    Formula@ f = S<Clause@>([S<Var@>([Var@(1, True)])]);
+    Maybe@<Assignment@> solved = Solve(f);
+    # TODO: Use an equality assertion to confirm the result is as expected,
+    # with pretty printing to report the actual result if it doesn't match.
+    solved.?(
+      just: {
+        solved.just.?(
+          cons: {
+            solved.just.cons.tail.?(
+              cons: TestResult@(fail: Str(Chars|'too many vars in assignment')),
+              nil: {
+                EqIntP(solved.just.cons.head.id, 1).?(
+                  true: solved.just.cons.head.polarity.?(
+                    true: TestResult@(pass: Unit),
+                    false: TestResult@(fail: Str(Chars|'bad assignment'))),
+                  false: TestResult@(fail: Str(Chars|'wrong var id')));
+              });
+          },
+          nil: TestResult@(fail: Str(Chars|'empty assignment')));
+      },
+      nothing: TestResult@(fail: Str(Chars|'failed to find assignment')));
+  }));
+
+  S<Test@>([x]);
+};
+
+@(Tests);

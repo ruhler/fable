@@ -1,0 +1,121 @@
+
+@ Bool@ = /Bool%.Bool@;
+% EqBool = /Bool%.Eq;
+% Not = /Bool%.Not;
+
+@ IntP@ = /Int/IntP%.IntP@;
+% EqIntP = /Int/IntP/Eq%.Eq;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+<@>@ S@ = /List%.S@;
+<@>% ConsS = /List%.ConsS;
+<@>% S0 = /List%.S0;
+
+# VarId@ --
+#   A variable identifier.
+@ VarId@ = IntP@;
+% EqId = EqIntP;
+
+# Var@ --
+#   A variable in a boolean formula.
+@ Var@ = *(VarId@ id, Bool@ polarity);
+% EqPolarity = EqBool;
+
+# Clause@ --
+#   A disjunction (OR) of variables.
+@ Clause@ = S@<Var@>;
+
+# Formula@ --
+#   A conjunction (AND) of clauses.
+@ Formula@ = S@<Clause@>;
+
+# Assignment@ --
+#   A sets of variables assigned the values True or False as specified by
+#   their polarity.
+@ Assignment@ = S@<Var@>;
+
+# SubstClause --
+#   Substitute a value for a variable into the given clause.
+#
+# Returns the simplified clause, or Nothing if the clause is now satisfied.
+(Clause@, Var@) { Maybe@<Clause@>; } SubstClause = (Clause@ c, Var@ v) {
+  c.?(
+    cons: {
+      Var@ head = c.cons.head;
+      EqId(head.id, v.id).?(
+        true: EqPolarity(head.polarity, v.polarity).?(
+          true: Nothing<Clause@>,                 # clause satisfied
+          false: SubstClause(c.cons.tail, v)),    # variable eliminated
+        false: {
+          Maybe@<Clause@> tail = SubstClause(c.cons.tail, v);
+          tail.?(
+            just: Just<Clause@>(ConsS<Var@>(head, tail.just)),
+            nothing: Nothing<Clause@>);
+        });
+    },
+    nil: Just<Clause@>(c));
+};
+
+# Subst --
+#   Substitute a value for a variable into the formula.
+(Formula@, Var@) { Formula@; } Subst = (Formula@ f, Var@ v) {
+  f.?(
+    cons: {
+      Maybe@<Clause@> c = SubstClause(f.cons.head, v);
+      c.?(
+        just: ConsS<Clause@>(c.just, Subst(f.cons.tail, v)),
+        nothing: Subst(f.cons.tail, v));
+    },
+    nil: f);
+};
+
+# Naive --
+#   Naive, brute force sat solver.
+#
+# Inputs:
+#   f - the formula to solve
+#   a - the assignments made so far
+#
+# Returns:
+#   A satisfying assignment, or Nothing if the formula is unsatisfiable.
+#
+# TODO: Make this less naive by using:
+#   * unit propagation:
+#     prioritize assignments from single variable clauses.
+#   * pure literal elimination:
+#     prioritize assignments to variables that always have the same polarity.
+(Formula@, Assignment@) { Maybe@<Assignment@>; }
+Naive = (Formula@ f, Assignment@ a) {
+  f.?(
+    cons: {
+      f.cons.head.?(
+        cons: {
+          Var@ v = f.cons.head.cons.head;
+          Maybe@<Assignment@> attempted = Naive(
+            Subst(f, v),
+            ConsS<Var@>(v, a));
+          attempted.?(
+            just: attempted,
+            nothing: {
+              Var@ nv = Var@(v.id, Not(v.polarity));
+              Naive(Subst(f, nv), ConsS<Var@>(nv, a));
+            });
+        },
+        nil: Nothing<Assignment@>);
+    },
+    nil: Just<Assignment@>(a));
+};
+
+# Solve --
+#   Solve a SAT formula.
+#
+# Returns:
+#   A satisfying assignment, or Nothing if the formula is unsatisfiable.
+(Formula@) { Maybe@<Assignment@>; } Solve = (Formula@ f) {
+  Naive(f, S0<Var@>);
+};
+
+@(VarId@, Var@, Clause@, Formula@, Assignment@, Solve);

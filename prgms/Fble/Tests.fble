@@ -30,6 +30,7 @@ S@<Test@> AllTests = Concat<Test@>(S<S@<Test@>>([
   /Map/Tests%.Tests,
   /Md5/Tests%.Tests,
   /Primes/Tests%.Tests,
+  /Sat/Tests%.Tests,
   /Sudoku/Tests%.Tests,
   /Test%.Tests,
   /TicTacToe/Tests%.Tests
