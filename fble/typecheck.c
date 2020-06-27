@@ -610,12 +610,30 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           assert(binding->kind != NULL);
 
           // We don't know the type, so create an abstract type variable to
-          // represent the type.
-          // TODO: It would be nice to pick a more descriptive type for kind
-          // level 0 variables. Perhaps: __name@?
-          FbleName type_name = binding->name;
-          type_name.space = FBLE_TYPE_NAME_SPACE;
+          // represent the type. If it's an abstract type, such as
+          //   @ Unit@ = ...
+          // Then we'll use the type name Unit@ as is.
+          //
+          // If it's an abstract value, such as
+          //   % True = ...
+          //
+          // Then we'll use the slightly different name __True@, because it is
+          // very confusing to show the type of True as True@.
+          char renamed[strlen(binding->name.name->str) + 3];
+          renamed[0] = '\0';
+          if (FbleGetKindLevel(binding->kind) == 0) {
+            strcat(renamed, "__");
+          }
+          strcat(renamed, binding->name.name->str);
+
+          FbleName type_name = {
+            .name = FbleNewString(arena, renamed),
+            .space = FBLE_TYPE_NAME_SPACE,
+            .loc = binding->name.loc,
+          };
+
           types[i] = FbleNewVarType(heap, binding->name.loc, binding->kind, type_name);
+          FbleFreeString(arena, type_name.name);
         } else {
           assert(binding->kind == NULL);
           types[i] = TypeCheckType(heap, scope, binding->type);
@@ -683,6 +701,21 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         if (!error && let_expr->bindings.xs[i].type == NULL) {
           FbleAssignVarType(heap, types[i], defs[i].type);
+
+          // Here we pick the name for the type to use in error messages.
+          // For normal type definitions, such as
+          //   @ Foo@ = ...
+          // We want to use the simple name 'Foo@'.
+          //
+          // For value definitions, such as
+          //   % Foo = ...
+          // We want to use the inferred type, not the made up abstract type
+          // name '__Foo@'.
+          if (FbleGetKindLevel(let_expr->bindings.xs[i].kind) == 0) {
+            vars[i]->type = defs[i].type;
+            defs[i].type = types[i];
+            types[i] = vars[i]->type;
+          }
         }
         FbleReleaseType(heap, defs[i].type);
       }

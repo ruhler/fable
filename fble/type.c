@@ -1209,6 +1209,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
         FblePrintName(stderr, ut->fields.xs[i].name);
         comma = ", ";
       }
+      fprintf(stderr, ")");
       return;
     }
 
@@ -1239,9 +1240,13 @@ void FblePrintType(FbleArena* arena, FbleType* type)
       while (type->tag == FBLE_POLY_TYPE) {
         FblePolyType* pt = (FblePolyType*)type;
         fprintf(stderr, "%s", prefix);
-        FbleKind* kind = FbleGetKind(arena, pt->arg);
-        FblePrintKind(kind);
-        FbleFreeKind(arena, kind);
+
+        FbleKind* value_kind = FbleGetKind(arena, pt->arg);
+        FbleKind* type_kind = LevelAdjustedKind(arena, value_kind, 1);
+        FblePrintKind(type_kind);
+        FbleFreeKind(arena, type_kind);
+        FbleFreeKind(arena, value_kind);
+
         fprintf(stderr, " ");
         FblePrintType(arena, pt->arg);
         prefix = ", ";
