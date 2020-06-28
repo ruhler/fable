@@ -1,0 +1,37 @@
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+<@>@ S@ = /List%.S@;
+<@>% S = /List%.S;
+<@>% Concat = /List%.Concat;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+# PrintTail --
+#   Print the tail part of a list.
+#
+# For example, the list [1, 2, 3] is printed as ", 1, 2, 3]"
+<@ T@>((T@) { Str@; }, S@<T@>) { Str@; }
+PrintTail = <@ T@>((T@) { Str@; } print, S@<T@> l) {
+  l.?(
+    cons:
+      Concat<Char@>(S<Str@>([
+          Str(Chars|', '),
+          print(l.cons.head),
+          PrintTail<T@>(print, l.cons.tail)])),
+    nil: Str(Chars|']'));
+};
+
+<@ T@>((T@) { Str@; }, S@<T@>) { Str@; }
+Print = <@ T@>((T@) { Str@; } print, S@<T@> l) {
+  l.?(
+    cons: Concat<Char@>(S<Str@>([
+        Str(Chars|'['),
+        print(l.cons.head),
+        PrintTail<T@>(print, l.cons.tail)])),
+    nil: Str(Chars|'[]'));
+};
+
+@(Print);

@@ -5,71 +5,110 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
-% And = /Bool%.And;
 
+@ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
 <@>@ S@ = /List%.S@;
-<@>@ P@ = /List%.P@;
 <@>% S = /List%.S;
+<@>% Concat = /List%.Concat;
 <@>% SortS = /List%.SortS;
 
+<@>% EqList = /List/Eq%.Eq;
+<@>% Print = /List/Print%.Print;
+
+@ Str@ = /String%.Str@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
+@ TestSuite@ = /Test%.TestSuite@;
 % TestSuite = /Test%.TestSuite;
 
 @ Elem@ = +(Unit@ A, Unit@ B, Unit@ C, Unit@ D, Unit@ E);
 
-(Elem@, Elem@){Bool@;} ElemLe = (Elem@ a, Elem@ b) {
-  a.?( A: b.?(A: True,  B: True,  C: True,  D: True,  E: True),
-       B: b.?(A: False, B: True,  C: True,  D: True,  E: True),
-       C: b.?(A: False, B: False, C: True,  D: True,  E: True),
-       D: b.?(A: False, B: False, C: False, D: True,  E: True),
-       E: b.?(A: False, B: False, C: False, D: False, E: True));
+% Elems = @(
+  A: Elem@(A: Unit),
+  B: Elem@(B: Unit),
+  C: Elem@(C: Unit),
+  D: Elem@(D: Unit),
+  E: Elem@(E: Unit));
+
+(Elem@) { Str@; } ElemPrint = (Elem@ e) {
+  Str(e.?(A: Chars|A, B: Chars|B, C: Chars|C, D: Chars|D, E: Chars|E));
 };
 
-(Elem@, Elem@){Bool@;} ElemEq = (Elem@ a, Elem@ b) {
-  a.?(A: b.?(A: True,  B: False, C: False, D: False, E: False),
-      B: b.?(A: False, B: True,  C: False, D: False, E: False),
-      C: b.?(A: False, B: False, C: True,  D: False, E: False),
-      D: b.?(A: False, B: False, C: False, D: True,  E: False),
+(Elem@, Elem@) { Bool@; } ElemLe = (Elem@ a, Elem@ b) {
+  a.?(A: True,
+      B: b.?(A: False, : True),
+      C: b.?(A: False, B: False, : True),
+      D: b.?(A: False, B: False, C: False, : True),
       E: b.?(A: False, B: False, C: False, D: False, E: True));
 };
 
-# TODO: Move these to List_ and make it public?
-<@ T@>((T@, T@){Bool@;}, S@<T@>, S@<T@>){Bool@;} SEq =
-  <@ T@>((T@, T@){Bool@;} eq, S@<T@> a, S@<T@> b) {
-    a.?(cons: b.?(cons: PEq<T@>(eq, a.cons, b.cons), nil: False),
-        nil: b.?(cons: False, nil: True));
-  },
-<@ T@>((T@, T@){Bool@;}, P@<T@>, P@<T@>){Bool@;} PEq =
-  <@ T@>((T@, T@){Bool@;} eq, P@<T@> a, P@<T@> b) {
-    And(eq(a.head, b.head), SEq<T@>(eq, a.tail, b.tail));
-  };
+(Elem@, Elem@){Bool@;} ElemEq = (Elem@ a, Elem@ b) {
+  a.?(A: b.?(A: True, : False),
+      B: b.?(B: True, : False),
+      C: b.?(C: True, : False),
+      D: b.?(D: True, : False),
+      E: b.?(E: True, : False));
+};
 
-Test@ SortTest = Test@(
-  Str(Chars|'Sort'), !({
-    S@<Elem@> unsorted = S<Elem@>([
-      Elem@(D: Unit),
-      Elem@(A: Unit),
-      Elem@(B: Unit),
-      Elem@(E: Unit),
-      Elem@(C: Unit)]);
+TestSuite@ Tests = TestSuite(Chars|List, [
+  Test@(Str(Chars|'Eq_Same'), !({
+    S@<Elem@> a = S<Elem@>(Elems|ABCDE);
+    S@<Elem@> b = S<Elem@>(Elems|ABCDE);
 
-    S@<Elem@> wnt = S<Elem@>([
-      Elem@(A: Unit),
-      Elem@(B: Unit),
-      Elem@(C: Unit),
-      Elem@(D: Unit),
-      Elem@(E: Unit)]);
-
-    S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
-    SEq<Elem@>(ElemEq, wnt, got).?(
+    EqList<Elem@>(ElemEq, a, b).?(
       true: TestResult@(pass: Unit),
-      false: TestResult@(fail: Str(Chars|failed))
-    );
-}));
+      false: TestResult@(fail: Concat<Char@>(S<Str@>([
+        Print<Elem@>(ElemPrint, a),
+        Str(Chars|' != '),
+        Print<Elem@>(ElemPrint, b)
+      ]))));
+  })),
 
-@(Tests: TestSuite(Chars|List, [SortTest]));
+  Test@(Str(Chars|'Eq_DiffElem'), !({
+    S@<Elem@> a = S<Elem@>(Elems|ABCDE);
+    S@<Elem@> b = S<Elem@>(Elems|ABDDE);
+
+    EqList<Elem@>(ElemEq, a, b).?(
+      true: TestResult@(fail: Concat<Char@>(S<Str@>([
+          Print<Elem@>(ElemPrint, a),
+          Str(Chars|' == '),
+          Print<Elem@>(ElemPrint, b)
+        ]))),
+      false: TestResult@(pass: Unit));
+  })),
+
+  Test@(Str(Chars|'Eq_DiffSize'), !({
+    S@<Elem@> a = S<Elem@>(Elems|ABCDE);
+    S@<Elem@> b = S<Elem@>(Elems|ABCD);
+
+    EqList<Elem@>(ElemEq, a, b).?(
+      true: TestResult@(fail: Concat<Char@>(S<Str@>([
+          Print<Elem@>(ElemPrint, a),
+          Str(Chars|' == '),
+          Print<Elem@>(ElemPrint, b)
+        ]))),
+      false: TestResult@(pass: Unit));
+  })),
+
+  Test@(Str(Chars|'Sort'), !({
+    S@<Elem@> unsorted = S<Elem@>(Elems|DABEC);
+    S@<Elem@> wnt = S<Elem@>(Elems|ABCDE);
+
+    # TODO: Switch to using AssertEquals here once we've defined Print for
+    # lists.
+    S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
+    EqList<Elem@>(ElemEq, wnt, got).?(
+      true: TestResult@(pass: Unit),
+      false: TestResult@(fail: Concat<Char@>(S<Str@>([
+        Print<Elem@>(ElemPrint, wnt),
+        Str(Chars|' != '),
+        Print<Elem@>(ElemPrint, got)
+      ]))));
+  }))
+]);
+
+@(Tests);

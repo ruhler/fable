@@ -1,3 +1,11 @@
+* Add more Sat tests.
+ - Use AssertEquals for List tests
+ - Implement Eq and Print for Strings
+ - Implement and test Print for IntP
+ - Use AssertEquals for IntP tests
+ - Implement Print and Eq for Assignment
+ - Use AssertEquals for Sat tests
+ - Add more sat tests.
 
 * Clean up fble test framework
  - Define Test function that takes CharLit and start using it.
@@ -11,9 +19,6 @@
 
 * Figure out memory leak when 3 Bool Or tests were set to failing.
 
-* Add more Sat tests.
-
-* Fix failing sat solver test.
 
 * Improve type error in case of this?
   <@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
@@ -234,4 +239,9 @@
 
    Manually tracing through the code by profiling block led straight to the
    problem: bad implementation of boolean Eq.
+
+ - Debug why List Eq test is failing. I want to step through again.
+   Sigh. I definitely need a debugger.
+
+   Turns out False was being defined as True instead of False.
 
