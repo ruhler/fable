@@ -13,6 +13,8 @@
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
+<@>% ConsS = /List%.ConsS;
+<@,@>% ForS = /List%.ForS;
 <@,@>% MapS = /List%.MapS;
 <@>% SeqS = /List%.SeqS;
 
@@ -66,6 +68,43 @@ AssertEquals = <@ T@>((T@, T@) { Bool@; } eq, (T@) { Str@; } print, T@ expected,
 
 # Returns True if the tests all pass, false otherwise.
 (Put@<Str@>, TestSuite@) { Bool@!; } RunTests = (Put@<Str@> out, TestSuite@ tests) {
+  @ Failure@ = *(Str@ name, Str@ msg);
+
+  # Run all the tests, given a list of tests that failed so far.
+  # Returns the list of failing tests.
+  (TestSuite@, S@<Failure@>) { S@<Failure@>!; }
+  Run = (TestSuite@ ts, S@<Failure@> failed) {
+    ts.?(
+      cons: {
+        Test@ t = ts.cons.head;
+        TestResult@ tr := t.test;
+        Str@ status = Str(tr.?(pass: Chars|'.', fail: Chars|'F'));
+        Unit@ _ := out(status);
+        S@<Failure@> nfailed = tr.?(
+          pass: failed,
+          fail: ConsS<Failure@>(Failure@(t.name, tr.fail), failed));
+        Run(ts.cons.tail, nfailed);
+      },
+      nil: !(failed));
+  };
+
+  S@<Failure@> failures := Run(tests, S0<Failure@>);
+
+  Unit@ _ := PrintLn(out, S0<Char@>);
+  Unit@ _ := ForS<Failure@, Unit@!>(failures, !(Unit), (Failure@ f, Unit@! p) {
+    Unit@ _ := p;
+    PrintLn(out, Concat<Char@>(S<Str@>([f.name, Str(Chars|': FAILED: '), f.msg])));
+  });
+
+  # TODO: Why do we need this extra output?
+  Unit@ _ := PrintLn(out, S0<Char@>);
+  Unit@ _ := PrintLn(out, S0<Char@>);
+
+  !(failures.?(cons: False, nil: True));
+};
+
+# Returns True if the tests all pass, false otherwise.
+(Put@<Str@>, TestSuite@) { Bool@!; } RunTestsVerbose = (Put@<Str@> out, TestSuite@ tests) {
   SeqS<Bool@>(AndMonoid, {
     MapS<Test@, Bool@!>(tests, (Test@ test) {
       Unit@ _ := Print(out, test.name);
@@ -94,4 +133,6 @@ TestSuite@ Tests = {
   TestSuite(Chars|'Test', [pass]);
 };
 
-@(Str@, TestResult@, Test@, TestSuite@, AssertEquals, TestSuite, RunTests, Tests);
+@(
+  Str@, TestResult@, Test@, TestSuite@,
+  AssertEquals, TestSuite, RunTests, RunTestsVerbose, Tests);
