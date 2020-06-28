@@ -1,0 +1,54 @@
+Fable F
+=======
+Fble is a nice language, designed from the perspective of how to describe
+programs. There are challenges to making fble run fast.
+
+Fblf is about designing a language from the other direction. Design a language
+that we can make run fast, and try to add features to it to get closer to
+fble.
+
+Phase 1
+-------
+The first phase is to write a significant program in fblf and demonstrate that
+we can make it run fast. We'll start by modeling the language in fble and use
+fble to describe the fblf program. That should give us access to the basic
+programming abstractions we want without unduly influencing the meat of the
+fblf language.
+
+The simplest place to start is a purely functional static dataflow language
+without support for conditionals or loops. Think of it as combinatorial logic
+(back to fable A ...).
+
+A key difference between fble and fblf, to start, will be that fblf does not
+specify an order of operations.
+
+To start, we'll include the following features:
+* Non-recursive union and struct types.
+ - Including construction, field access, and union select
+ - We'll treat union select as not short circuiting - you always evaluate all
+   branches of the union select.
+* Variables and non-recursive let expressions.
+
+We will specifically not include the following features:
+* Functions, Processes, Polymorphism
+
+Some kinds of programs we could try writing in this language:
+* Fixed width integer addition, subtraction, multiplication, division, etc.
+* Floating point arithmetic.
+* md5 of bounded length files.
+
+Bounded length Md5 sounds like a great place to start. We can compare its
+performance against fble and C code. It includes relevant integer operations.
+The fact that everything is inlined will likely reduce performance compared to
+C code, which will give clear motivation for the next phase of fblf once we
+finish with the first phase.
+
+How to make code that runs fast in practice:
+* Generate llvm code and compile with llvm.
+* First attempt: Just dump to a raw ssa graph and see what llvm can do with it
+  schedule wise.
+* Subsequent attempts
+ - Perhaps pick a different schedule for the graph based on a model of a
+   memory hierarchy
+ - Figure out how adding functions to the language could improve performance.
+

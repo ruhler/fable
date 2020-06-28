@@ -1,22 +1,33 @@
+@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
+% And = /Bool%.And;
+% EqBool = /Bool%.Eq;
 
+@ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
+@ IntP@ = /Int/IntP%.IntP@;
 % EqIntP = /Int/IntP/Eq%.Eq;
 % 1 = /Int/IntP%.1;
 
 <@>% S = /List%.S;
+<@>% Append = /List%.Append;
+<@>% EqList = /List/Eq%.Eq;
+<@>% PrintList = /List/Print%.Print;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% EqMaybe = /Maybe/Eq%.Eq;
+<@>% PrintMaybe = /Maybe/Print%.Print;
 
+@ Str@ = /String%.Str@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
 @ TestSuite@ = /Test%.TestSuite@;
 % TestSuite = /Test%.TestSuite;
-
-% Unit = /Unit%.Unit;
+<@>% AssertEquals = /Test%.AssertEquals;
 
 @ Formula@ = /Sat%.Formula@;
 @ Clause@ = /Sat%.Clause@;
@@ -24,29 +35,50 @@
 @ Assignment@ = /Sat%.Assignment@;
 % Solve = /Sat%.Solve;
 
+(IntP@) { Str@; } PrintId = (IntP@ x) {
+  # TODO: Print variable ids properly.
+  Str(x.?(1: Chars|1, : Chars|'?'));
+};
+
+(Var@) { Str@; } PrintVar = (Var@ v) {
+  Str@ sign = Str(v.polarity.?(true: Chars|'+', false: Chars|'-'));
+  Append<Char@>(sign, PrintId(v.id));
+};
+
+(Assignment@) { Str@; } PrintAssignment = (Assignment@ x) {
+  PrintList<Var@>(PrintVar, x);
+};
+
+(Maybe@<Assignment@>) { Str@; } PrintMaybeAssignment = (Maybe@<Assignment@> m) {
+  PrintMaybe<Assignment@>(PrintAssignment, m);
+};
+
+(Var@, Var@) { Bool@; } EqVar = (Var@ a, Var@ b) {
+  And(EqIntP(a.id, b.id), EqBool(a.polarity, b.polarity));
+};
+
+(Assignment@, Assignment@) { Bool@; }
+EqAssignment = (Assignment@ a, Assignment@ b) {
+  EqList<Var@>(EqVar, a, b);
+};
+
+(Maybe@<Assignment@>, Maybe@<Assignment@>) { Bool@; }
+EqMaybeAssignment = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
+  EqMaybe<Assignment@>(EqAssignment, a, b);
+};
+
+(Maybe@<Assignment@>, Maybe@<Assignment@>) { TestResult@; }
+AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
+  AssertEquals<Maybe@<Assignment@>>(
+    EqMaybeAssignment, PrintMaybeAssignment, a, b);
+};
+
 TestSuite@ Tests = TestSuite(Chars|Sat, [
   Test@(Str(Chars|x), !({
     Formula@ f = S<Clause@>([S<Var@>([Var@(1, True)])]);
-    Maybe@<Assignment@> solved = Solve(f);
-    # TODO: Use an equality assertion to confirm the result is as expected,
-    # with pretty printing to report the actual result if it doesn't match.
-    solved.?(
-      just: {
-        solved.just.?(
-          cons: {
-            solved.just.cons.tail.?(
-              cons: TestResult@(fail: Str(Chars|'too many vars in assignment')),
-              nil: {
-                EqIntP(solved.just.cons.head.id, 1).?(
-                  true: solved.just.cons.head.polarity.?(
-                    true: TestResult@(pass: Unit),
-                    false: TestResult@(fail: Str(Chars|'bad assignment'))),
-                  false: TestResult@(fail: Str(Chars|'wrong var id')));
-              });
-          },
-          nil: TestResult@(fail: Str(Chars|'empty assignment')));
-      },
-      nothing: TestResult@(fail: Str(Chars|'failed to find assignment')));
+    Maybe@<Assignment@> want = Just<Assignment@>(S<Var@>([Var@(1, True)]));
+    Maybe@<Assignment@> got = Solve(f);
+    AssertEq(want, got);
   }))
 ]);
 
