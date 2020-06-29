@@ -2,8 +2,6 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-<@>@ Monoid@ = /Monoid%.Monoid@;
-
 @ Bool@ = +(Unit@ true, Unit@ false);
 
 Bool@ True = Bool@(true: Unit);
@@ -25,7 +23,4 @@ Bool@ False = Bool@(false: Unit);
   a.?(true: b, false: Not(b));
 };
 
-Monoid@<Bool@> AndMonoid = Monoid@<Bool@>(And, True);
-
-
-@(Bool@, True, False, Not, And, Or, Eq, AndMonoid);
+@(Bool@, True, False, Not, And, Or, Eq);

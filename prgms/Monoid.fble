@@ -1,5 +1,0 @@
-# An operator 'op' and a value 'x' form a monoid if 'op' is
-# associative and 'x' is its left and right identity.
-<@>@ Monoid@ = <@ T@> { *((T@, T@){T@;} op, T@ x); };
-
-@(Monoid@);

@@ -2,7 +2,6 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
-% AndMonoid = /Bool%.AndMonoid;
 
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
@@ -13,9 +12,8 @@
 <@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
 <@>% ConsS = /List%.ConsS;
-<@,@>% ForS = /List%.ForS;
+<@,@>% ForS_ = /List%.ForS_;
 <@,@>% MapS = /List%.MapS;
-<@>% SeqS = /List%.SeqS;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
@@ -92,8 +90,7 @@ AssertEquals = <@ T@>((T@, T@) { Bool@; } eq, (T@) { Str@; } print, T@ expected,
   S@<Failure@> failures := Run(tests, S0<Failure@>);
 
   Unit@ _ := PrintLn(out, S0<Char@>);
-  Unit@ _ := ForS<Failure@, Unit@!>(failures, !(Unit), (Failure@ f, Unit@! p) {
-    Unit@ _ := p;
+  Unit@ _ := ForS_<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
     PrintLn(out, Concat<Char@>(S<Str@>([f.name, Str(Chars|': FAILED: '), f.msg])));
   });
 
@@ -106,24 +103,22 @@ AssertEquals = <@ T@>((T@, T@) { Bool@; } eq, (T@) { Str@; } print, T@ expected,
 
 # Returns True if the tests all pass, false otherwise.
 (Put@<Str@>, TestSuite@) { Bool@!; } RunTestsVerbose = (Put@<Str@> out, TestSuite@ tests) {
-  SeqS<Bool@>(AndMonoid, {
-    MapS<Test@, Bool@!>(tests, (Test@ test) {
-      Unit@ _ := Print(out, test.name);
-      TestResult@ tr := test.test;
-      tr.?(
-        pass: {
-          Unit@ _ := PrintLn(out, S0<Char@>);
-          !(True);
-        },
-        fail: {
-          Unit@ _ := PrintLn(
-            out,
-            Concat<Char@>(S<Str@>([
-              Str(Chars|': FAILED: '),
-              tr.fail])));
-          !(False);
-        });
-    });
+  ForS_<Test@, Bool@>(tests, True, (Test@ test, Bool@ passing) {
+    Unit@ _ := Print(out, test.name);
+    TestResult@ tr := test.test;
+    tr.?(
+      pass: {
+        Unit@ _ := PrintLn(out, S0<Char@>);
+        !(passing);
+      },
+      fail: {
+        Unit@ _ := PrintLn(
+          out,
+          Concat<Char@>(S<Str@>([
+            Str(Chars|': FAILED: '),
+            tr.fail])));
+        !(False);
+      });
   });
 };
 
