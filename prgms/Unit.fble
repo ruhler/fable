@@ -1,4 +1,15 @@
+# Unit@ --
+#  The unit type that has a single inhabitant.
+#
+# Example Use:
+#   ABC@ = +(Unit@ a, Unit@ b, Unit@ c);
 @ Unit@ = *();
+
+# Unit --
+#   The single inhabitant of the unit type.
+#
+# Example Use:
+#   ABC@(a: Unit);
 Unit@ Unit = Unit@();
 
 @(Unit@, Unit);

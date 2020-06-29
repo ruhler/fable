@@ -1,4 +1,5 @@
 * Create a Sat benchmark
+ - Implement an IntP parser (or IntS or Int?)
  - Implement dimacs cnf parser.
 
 * Clean up fble test framework
@@ -187,7 +188,6 @@
  - In particular, test Div and Mod.
 * [lib] Separate Map from DataMap and EqMap.
 * [lib] Add unit tests for /Map%.Equals.
-* [lib] Separate List@ from S@ and P@ module wise.
 
 * [api] Can fble-stdio check that the function has the right type?
 
@@ -242,5 +242,7 @@
  - Debug why List Eq test is failing. I want to step through again.
    Sigh. I definitely need a debugger.
 
-   Turns out False was being defined as True instead of False.
+   Turns out False was being defined as True instead of False. If figured that
+   out by changing the body of ListEq to always return False and being
+   surprised when the result was as if it returned True.
 

@@ -17,9 +17,10 @@
 <@,@>@ Lit@ = <@ T@, @ L@>((T@, L@){ L@; }, L@) { L@; };
 
 # EmptyLit --
-#  A empty literal. The syntax does not allow empty list or literal
+#  A empty literal. The fble syntax does not support empty list or literal
 #  expressions. This function provides an equivalent alternative to the empty
-#  list or empty literal. Conceptually: [], or Foo|''.
+#  list or empty literal. It is what you should use if you have the desire
+#  to write [] or Foo|''.
 #
 # Example Use:
 #   Lit@<ABC@> lit = Empty<ABC@>;
