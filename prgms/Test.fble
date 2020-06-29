@@ -8,7 +8,6 @@
 % Chars = /Char%.Chars;
 
 <@>@ S@ = /List%.S@;
-<@,@>@ List@ = /List%.List@;
 <@>% S0 = /List%.S0;
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
@@ -17,6 +16,8 @@
 <@,@>% ForS = /List%.ForS;
 <@,@>% MapS = /List%.MapS;
 <@>% SeqS = /List%.SeqS;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
 
 <@>@ Put@ = /Process%.Put@;
 
@@ -37,8 +38,8 @@
 # Inputs:
 #   name - the name of the test suite.
 #   tests - the list of tests in the test suite.
-(CharLit@, List@<Test@>) { TestSuite@; }
-TestSuite = (CharLit@ name, List@<Test@> tests) {
+(CharLit@, Lit@<Test@>) { TestSuite@; }
+TestSuite = (CharLit@ name, Lit@<Test@> tests) {
   Str@ prefix = Append<Char@>(Str(name), Str(Chars|'.'));
   MapS<Test@, Test@>(S<Test@>(tests), (Test@ test) {
     Test@(Append<Char@>(prefix, test.name), test.test);

@@ -65,3 +65,15 @@ canonical one.
   TODO: Sort by name its imported from or name its imported to?
   TODO: Alphabetic, not like dependency order? Or package grouping?
 
+* TODO: Prefer short names within a module, rely on module qualification to
+  distinguish between names?
+
+  For example, prefer /Bool%.Eq over /Bool%.EqBool.
+
+* TODO: Prefer abbreviated names, but non-abbreviated module names?
+  For example, values: Eq, Lit@, Str@, modules: /Equals%, /Literal%, /String%
+
+  But then we should prefer the module /Character% over /Char%? And
+  /Application% over /App%? Isn't that confusing? Wouldn't you like Str@ to be
+  defined in /Str%?
+

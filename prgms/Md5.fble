@@ -5,9 +5,10 @@
 % True = /Bool%.True;
 
 <@>@ SL@ = /List%.S@;
-<@,@>@ List@ = /List%.List@;
 <@>% SL = /List%.S;
 <@,@>% ForS = /List%.ForS;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -41,8 +42,8 @@
 <@>@ Put@ = /Process%.Put@;
 
 # Construct a Bit32 in hex, with high-order byte first.
-(List@<Hex@>) { Bit32@; } H8 = (List@<Hex@> list) {
-  SL@<Hex@> s = SL<Hex@>(list);
+(Lit@<Hex@>) { Bit32@; } H8 = (Lit@<Hex@> lit) {
+  SL@<Hex@> s = SL<Hex@>(lit);
   Hex@ 7 = s.cons.head;
   Hex@ 6 = s.cons.tail.cons.head;
   Hex@ 5 = s.cons.tail.cons.tail.cons.head;

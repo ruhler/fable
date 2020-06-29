@@ -9,7 +9,7 @@
 # instantiating a computation that runs asynchronously. In particular, putting
 # a value onto an input port is a non-blocking operation.
 
-<@,@>@ List@ = /List%.List@;
+<@,@>@ Lit@ = /Literal%.Lit@;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -42,7 +42,7 @@
 # The resulting data flow computation behaves as if all argument data flow
 # computations were run in parallel. It completes when all argument data flow
 # computations have completed.
-(List@<DataFlow@>) { DataFlow@; } Compose = (List@<DataFlow@> args) {
+(Lit@<DataFlow@>) { DataFlow@; } Compose = (Lit@<DataFlow@> args) {
   args<DataFlow@>(
     (DataFlow@ x, DataFlow@ y) {
       Unit@ _ := x, Unit@ _ := y;
@@ -95,8 +95,8 @@ Once = <@ T@>(T@ x, Out@<T@> out) {
 
 # Copy --
 #   Copy an input to multiple outputs.
-<@ T@>(In@<T@>, List@<Out@<T@>>) { DataFlow@; }
-Copy = <@ T@>(In@<T@> in, List@<Out@<T@>> outs) {
+<@ T@>(In@<T@>, Lit@<Out@<T@>>) { DataFlow@; }
+Copy = <@ T@>(In@<T@> in, Lit@<Out@<T@>> outs) {
   End@<T@> i := in;
   Unit@ _ := outs<Unit@!>((Out@<T@> o, Unit@! t) {
     Unit@ _ := o(i), Unit@ _ := t;

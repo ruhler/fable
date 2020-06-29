@@ -6,9 +6,10 @@
 % Add = /Int/Int%.Add;
 
 <@>@ S@ = /List%.S@;
-<@,@>@ List@ = /List%.List@;
 <@>% S = /List%.S;
 <@,@>% MapS = /List%.MapS;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
 
 @ Color@ = +(
   Unit@ black,
@@ -66,7 +67,7 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 
 # Combing a list of drawings into a single drawing by drawing each subsequent
 # drawing on top of the previous drawing.
-(List@<Drawing@>) { Drawing@; } Drawings = (List@<Drawing@> drawings) {
+(Lit@<Drawing@>) { Drawing@; } Drawings = (Lit@<Drawing@> drawings) {
   drawings<Drawing@>(Over, Blank);
 };
 

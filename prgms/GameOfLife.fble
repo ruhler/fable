@@ -18,9 +18,10 @@
 % IsZero = /Int/Int/Eq%.IsZero;
 
 <@>@ S@ = /List%.S@;
-<@,@>@ List@ = /List%.List@;
 <@>% S = /List%.S;
 <@,@>% ForS = /List%.ForS;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
 
 <@>% Map = /Map%.Map;
 
@@ -56,7 +57,7 @@
 );
 
 # Create a world from a list of coordinates of live cells.
-(List@<Coord@>){ World@; } World = (List@<Coord@> mkCells) {
+(Lit@<Coord@>){ World@; } World = (Lit@<Coord@> mkCells) {
   mkCells<World@>(
     (Coord@ c, World@ w) {
       W.Insert(w, c, Unit);

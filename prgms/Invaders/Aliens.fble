@@ -1,0 +1,83 @@
+
+
+@ Bool@ = /Bool%.Bool@;
+
+@ IntP@ = /Int/IntP%.IntP@;
+% AddP = /Int/IntP%.Add;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# An individual alien is identified by its position in the group.
+# There are 5 rows and 11 columns of aliens.
+# Row 0 is the bottom row of aliens, column 0 is the left column.
+@ Row@ = IntP@;
+@ Col@ = IntP@;
+@ Alien@ = *(Row@ row, Col@ col);
+% NumRows = I(D|5);
+% NumCols = I(D|11);
+
+# A set of aliens.
+@ Set@ = ; # TODO!
+
+# Next -- returns the next alien in the group, or Nothing if we are at the
+# end.
+(Alien@) { Maybe@<Alien@>; } Next = (Alien@ a) {
+  Col@ ncol = AddP(a.col);
+  ?(Lt(ncol, NumCols);
+    true: Just<Alien@>(@(row: a.row, col: ncol)),
+    false: {
+      Row@ nrow = AddP(a.row);
+      ?(Lt(nrow, NumRows);
+        true: Just<Alien@>(@(row: nrow, col: 0)),
+        false: Nothing<Alien@>);
+    }
+  );
+};
+
+# NextAlive -- returns the next live alien in the group, or Nothing if we have
+# reached the end of live aliens.
+(Set@, Alien@) { Maybe@<Alien@>; } NextAlive = (Set@ alive, Alien@ a) {
+  # TODO!
+};
+
+# Phase specifies which graphic to use for the alien. It toggles back and
+# forth between a and b.
+@ Phase@ = +(Unit@ a, Unit@ b);
+
+@ Dir@ = +(Unit@ left, Unit@ right);
+
+# Aliens move as a group. They decide which direction to move. Then each live
+# alien, in turn, makes a move. They go 4 pixels side by side in a move, or
+# 16 pixels down. Time between moves starts at 8 units, then gradually goes
+# down to 2 units depending on how many aliens are alive. After a full round
+# of moves, if any alien has reached an edge, as a group they go down and
+# plan to switch direction.
+@ Aliens@ = *(
+  Int@ x;                # The x position of the left edge of the group.
+  Int@ y;                # The y position of the bottom of the group.
+  Dir@ dir;              # The current direction of the group.
+  Bool@ advance;         # True if the group is moving down this round.
+  Phase@ phase;          # The phase that the group is moving to.
+  Alien@ current;        # The next alien in the group whose turn it is to move.
+  Bool@ should_advance;  # True if we should advance in the next full round.
+  Set@ dead;             # The set of aliens in the group that are dead.
+  IntP@ num_alive;       # The number of aliens in the group that are alive.
+  Int@ wait;             # The number of ticks to wait before the next alien
+                         # moves.
+);
+  
+# Tick --
+#   Advance the aliens by one unit of time tick.
+(Aliens@) { Aliens@; } Tick = (Aliens@ a) {
+  ?(a.wait;
+    0: { # TODO
+    },
+    p: Aliens@(
+         a.x, a.y, a.dir, a.advance, a.phase, a.current,
+         a.should_advance, a.alive, a.num_alive, Dec(a.wait)));
+};

@@ -3,7 +3,7 @@
 % False = /Bool%.False;
 % True = /Bool%.True;
 
-<@,@>@ List@ = /List%.List@;
+<@,@>@ Lit@ = /Literal%.Lit@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@,@>% For = /Maybe%.For; 
@@ -187,8 +187,8 @@ XS@ EmptyXS = XS@(empty: Unit);
   AppendXS(XS@(single: x), xs);
 };
 
-(List@<XS@>){ XS@; } CatXS = (List@<XS@> mkList) {
-  mkList<XS@>(AppendXS, EmptyXS);
+(Lit@<XS@>){ XS@; } CatXS = (Lit@<XS@> lit) {
+  lit<XS@>(AppendXS, EmptyXS);
 };
 
 # Generate the set of constraints that result from setting the value of the

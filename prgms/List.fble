@@ -1,12 +1,14 @@
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
-
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % And = /Bool%.And;
 
+<@,@>@ Lit@ = /Literal%.Lit@;
+
 <@>@ Monoid@ = /Monoid%.Monoid@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 # P - A list of 1 or more elements: T+
 # S - A list of 0 or more elements: T*
@@ -30,13 +32,8 @@ S@ S0 = <@ T@> {
   S@<T@>(nil: Unit);
 };
 
-<@,@>@ List@ = <@ T@><@ L@>((T@, L@){L@;}, L@){L@;};
-
-<@ T@>{ List@<T@>; } EmptyList = <@ T@><@ L@>((T@, L@){L@;} _, L@ l) { l; };
-
-
-<@ T@>(List@<T@>){S@<T@>;} S = <@ T@>(List@<T@> mkList) {
-  mkList<S@<T@>>(ConsS<T@>, S0<T@>);
+<@ T@>(Lit@<T@>) { S@<T@>; } S = <@ T@>(Lit@<T@> lit) {
+  lit<S@<T@>>(ConsS<T@>, S0<T@>);
 };
 
 # InitP - Return all but the last element in 'list'.
@@ -110,7 +107,7 @@ ForS = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
       nil: base);
 };
 
-@(P@, S@, List@, EmptyList,
+@(P@, S@,
   HeadS, ConsS, Append, S0, S,
   InitP, LastP, Concat, MapS, MapP, FoldS, SeqS, SeqP,
   AndS, AndP, SortS, SortP, ForS);

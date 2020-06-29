@@ -9,12 +9,13 @@
 % Hex = /Hex%.Hex;
 
 <@>@ S@ = /List%.S@;
-<@,@>@ List@ = /List%.List@;
-<@,@>% EmptyList = /List%.EmptyList;
 <@>% ConsS = /List%.ConsS;
 <@>% S0 = /List%.S0;
 <@>% S = /List%.S;
 <@>% Concat = /List%.Concat;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+<@,@>% Empty = /Literal%.Empty;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -60,8 +61,8 @@
       Str([Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)])]));
 };
 
-(List@<Hex@>) { Md5Hash@; } Str2Md5Hash = (List@<Hex@> list) {
-  S@<Hex@> s00 = S<Hex@>(list);
+(Lit@<Hex@>) { Md5Hash@; } Str2Md5Hash = (Lit@<Hex@> lit) {
+  S@<Hex@> s00 = S<Hex@>(lit);
   Hex@ h00 = s00.cons.head; S@<Hex@> s01 = s00.cons.tail;
   Hex@ h01 = s01.cons.head; S@<Hex@> s02 = s01.cons.tail;
   Hex@ h02 = s02.cons.head; S@<Hex@> s03 = s02.cons.tail;
@@ -129,7 +130,7 @@
     nil: S0<Bit8@>);
 };
       
-(CharLit@, List@<Hex@>, List@<Hex@>) { Test@; } TestStr = (CharLit@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
+(CharLit@, Lit@<Hex@>, Lit@<Hex@>) { Test@; } TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
   Test@(Str(name), {
     Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
     !(AssertEquals<Md5Hash@>(Eq, Md5Hash2Str, Str2Md5Hash(wnt), got));
@@ -141,7 +142,7 @@ TestSuite@ Tests = TestSuite(Chars|Md5, [
   TestStr(
     Chars|empty,
     Hex|D41D8CD98F00B204E9800998ECF8427E,
-    EmptyList<Hex@>),
+    Empty<Hex@>),
 
   # "a"
   TestStr(
