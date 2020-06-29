@@ -1,11 +1,5 @@
-* Add more Sat tests.
- - Use AssertEquals for List tests
- - Implement Eq and Print for Strings
- - Implement and test Print for IntP
- - Use AssertEquals for IntP tests
- - Implement Print and Eq for Assignment
- - Use AssertEquals for Sat tests
- - Add more sat tests.
+* Create a Sat benchmark
+ - Implement dimacs cnf parser.
 
 * Clean up fble test framework
  - Define Test function that takes CharLit and start using it.
@@ -13,6 +7,11 @@
  - Print out total tests passed, failed, and run in RunTest.
  - Separate Test tests out into separate module and properly test the test
    infra.
+
+* Clean up fble library
+ - Separate modules as appropriate to reduce false dependencies.
+ - Document all functions.
+ - Add tests for full code coverage of all functions.
 
 * Figure out why we need an extra print in RunTest.
  Does the program end before we have a chance to put all the output?

@@ -1,5 +1,6 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
+% False = /Bool%.False;
 % And = /Bool%.And;
 % EqBool = /Bool%.Eq;
 
@@ -17,6 +18,7 @@
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
 <@>% EqMaybe = /Maybe/Eq%.Eq;
 <@>% PrintMaybe = /Maybe/Print%.Print;
 
@@ -74,9 +76,21 @@ AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
 };
 
 TestSuite@ Tests = TestSuite(Chars|Sat, [
-  Test@(Str(Chars|x), !({
-    Formula@ f = S<Clause@>([S<Var@>([Var@(1, True)])]);
+  Test@(Str(Chars|Sat), !({
+    Formula@ f = S<Clause@>([
+      S<Var@>([Var@(1, True)])
+    ]);
     Maybe@<Assignment@> want = Just<Assignment@>(S<Var@>([Var@(1, True)]));
+    Maybe@<Assignment@> got = Solve(f);
+    AssertEq(want, got);
+  })),
+
+  Test@(Str(Chars|Unsat), !({
+    Formula@ f = S<Clause@>([
+      S<Var@>([Var@(1, True)]),
+      S<Var@>([Var@(1, False)])
+    ]);
+    Maybe@<Assignment@> want = Nothing<Assignment@>;
     Maybe@<Assignment@> got = Solve(f);
     AssertEq(want, got);
   }))
