@@ -3,8 +3,8 @@
 #  The builtin type of a list or literal expression.
 #
 # Type Parameters:
-#  @T - The type of elements of the list.
-#  @L - The type of a list to produce.
+#  T@ - The type of elements of the list.
+#  L@ - The type of a list to produce.
 #
 # Arguments:
 #  (T@, L@) { L@; } - A cons function to prepend an element to the produced list.

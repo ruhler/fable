@@ -18,45 +18,80 @@
 <@>% AssertEquals = /Test%.AssertEquals;
 % TestSuite = /Test%.TestSuite;
 
+# PrintBool --
+#  Converts a Bool@ to a human readable string.
+#
+# TODO: Move to /Bool/Print%.Print, because this function would be more
+# broadly useful.
 (Bool@) { Str@; } PrintBool = (Bool@ x) {
   x.?(true: Str(Chars|True), false: Str(Chars|False));
 };
 
-(CharLit@, Bool@!){Test@;} TT = (CharLit@ name, Bool@! p) {
+# T --
+#  Tests that a boolean expression evaluates to True.
+#
+# Inputs:
+#  name - the name of the test.
+#  p - a process that evaluates and returns the result of the boolean
+#      expression to test.
+#
+# Results:
+#  A test case that tests the result of evaluating the boolean expression is
+#  True.
+#
+# Example Use:
+#  T(Chars|Test_True_Is_True, !(True));
+(CharLit@, Bool@!) { Test@; } T = (CharLit@ name, Bool@! p) {
   Test@(Str(name), {
     Bool@ x := p;
     !(AssertEquals<Bool@>(Eq, PrintBool, True, x));
   });
 };
 
-(CharLit@, Bool@!){Test@;} TF = (CharLit@ name, Bool@! p) {
+# F --
+#  Tests that a boolean expression evaluates to False.
+#
+# Inputs:
+#  name - the name of the test.
+#  p - a process that evaluates and returns the result of the boolean
+#      expression to test.
+#
+# Results:
+#  A test case that tests the result of evaluating the boolean expression is
+#  False.
+#
+# Example Use:
+#  F(Chars|Test_False_Is_False, !(False));
+(CharLit@, Bool@!) { Test@; } F = (CharLit@ name, Bool@! p) {
   Test@(Str(name), {
     Bool@ x := p;
     !(AssertEquals<Bool@>(Eq, PrintBool, False, x));
   });
 };
 
+# Tests --
+#  A test suite to test the /Bool% module.
 TestSuite@ Tests = TestSuite(Chars|Bool, [
-  TT(Chars|True, !(True)),
-  TF(Chars|False, !(False)),
+  T(Chars|True, !(True)),
+  F(Chars|False, !(False)),
 
-  TF(Chars|Not_True, !(Not(True))),
-  TT(Chars|Not_False, !(Not(False))),
+  F(Chars|Not_True, !(Not(True))),
+  T(Chars|Not_False, !(Not(False))),
 
-  TT(Chars|And_True_True, !(And(True, True))),
-  TF(Chars|And_True_False, !(And(True, False))),
-  TF(Chars|And_False_True, !(And(False, True))),
-  TF(Chars|And_False_False, !(And(False, False))),
+  T(Chars|And_True_True, !(And(True, True))),
+  F(Chars|And_True_False, !(And(True, False))),
+  F(Chars|And_False_True, !(And(False, True))),
+  F(Chars|And_False_False, !(And(False, False))),
 
-  TT(Chars|Or_True_True, !(Or(True, True))),
-  TT(Chars|Or_True_False, !(Or(True, False))),
-  TT(Chars|Or_False_True, !(Or(False, True))),
-  TF(Chars|Or_False_False, !(Or(False, False))),
+  T(Chars|Or_True_True, !(Or(True, True))),
+  T(Chars|Or_True_False, !(Or(True, False))),
+  T(Chars|Or_False_True, !(Or(False, True))),
+  F(Chars|Or_False_False, !(Or(False, False))),
 
-  TT(Chars|Eq_True_True, !(Eq(True, True))),
-  TF(Chars|Eq_True_False, !(Eq(True, False))),
-  TF(Chars|Eq_False_True, !(Eq(False, True))),
-  TT(Chars|Eq_False_False, !(Eq(False, False)))
+  T(Chars|Eq_True_True, !(Eq(True, True))),
+  F(Chars|Eq_True_False, !(Eq(True, False))),
+  F(Chars|Eq_False_True, !(Eq(False, True))),
+  T(Chars|Eq_False_False, !(Eq(False, False)))
 ]);
 
 @(Tests);

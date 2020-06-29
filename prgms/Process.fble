@@ -1,7 +1,27 @@
 
 @ Unit@ = /Unit%.Unit@;
 
+# Get@ --
+#  The builtin type for input ports.
+#
+# Type Parameters:
+#  T@ - The type of element to get from an input port.
 <@>@ Get@ = <@ T@>{ T@!; };
-<@>@ Put@ = <@ T@>{ (T@){Unit@!;}; };
+
+# Put@ --
+#  The builtin type for output ports.
+#
+# Type Parameters:
+#  T@ - The type of element to put to an output port.
+#
+# Arguments:
+#  T@ - The element to output.
+#
+# Side Effects:
+#  Outputs the element.
+#
+# Results:
+#  Unit
+<@>@ Put@ = <@ T@>(T@){ Unit@!; };
 
 @(Get@, Put@);

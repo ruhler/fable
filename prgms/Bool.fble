@@ -2,24 +2,53 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
+# Bool@ --
+#  The boolean type.
 @ Bool@ = +(Unit@ true, Unit@ false);
 
+# True --
+#  The true value of the boolean type.
 Bool@ True = Bool@(true: Unit);
+
+# False --
+#  The false value of the boolean type.
 Bool@ False = Bool@(false: Unit);
 
-(Bool@){Bool@;} Not = (Bool@ a) {
+# Not --
+#  Logical not. ¬a
+#
+# Returns True if the argument is False. Returns False otherwise.
+(Bool@) { Bool@; } Not = (Bool@ a) {
   a.?(true: False, false: True);
 };
 
-(Bool@, Bool@){Bool@;} And = (Bool@ a, Bool@ b) {
+# And --
+#  Logical AND. Conjunction. a ∧ b
+#
+# Returns True if both arguments are True. Returns False othewise.
+#
+# Note: This is not a short circuiting AND operation. Both arguments are
+# evaluated fully when applying this function.
+(Bool@, Bool@) { Bool@; } And = (Bool@ a, Bool@ b) {
   a.?(true: b, false: False);
 };
 
-(Bool@, Bool@){Bool@;} Or = (Bool@ a, Bool@ b) {
+# Or --
+#  Logical OR. Disjunction. a ∨ b
+#
+# Returns True if either argument is True. Returns False othewise.
+#
+# Note: This is not a shirt circuiting OR operation. Both arguments are
+# evaluated fully when applying this function.
+(Bool@, Bool@) { Bool@; } Or = (Bool@ a, Bool@ b) {
   a.?(true: True, false: b);
 };
 
-(Bool@, Bool@){Bool@;} Eq = (Bool@ a, Bool@ b) {
+# Eq --
+#  Boolean equality. a == b
+#
+# Returns True if both arguments are the same. Returns False otherwise.
+(Bool@, Bool@) { Bool@; } Eq = (Bool@ a, Bool@ b) {
   a.?(true: b, false: Not(b));
 };
 
