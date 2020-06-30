@@ -1,21 +1,51 @@
 @ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
+# Maybe@ --
+#   Type representing an optional value.
+#
+# Type Parameters:
+#   T@ - The type of value that is optional.
+#
+# Fields: 
+#   just - The value is present.
+#   nothing - The value is not present.
 <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 
+# Just --
+#   Construct a Maybe@ with a value that is present.
+#
+# Type Parameters:
+#   T@ - The type of the value that is present.
+#
+# Arguments:
+#   x - The value that is present.
+#
+# Returns:
+#   A Maybe@ with the given present value.
+#
+# Example Use:
+#   Maybe@<Foo@> = Just<Foo@>(MyFoo);
 <@ T@>(T@){ Maybe@<T@>; } Just = <@ T@>(T@ x) { Maybe@<T@>(just: x); };
-<@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
 
-<@ A@, @ B@>(Maybe@<A@>, (A@){B@;}){ Maybe@<B@>; }
-MapMaybe = <@ A@, @ B@>(Maybe@<A@> m, (A@){B@;} f) {
-  m.?(just: Just<B@>(f(m.just)), nothing: Nothing<B@>);
-};
+# Nothing --
+#   A Maybe@ that does not have a value present.
+#
+# Type Parameters:
+#   T@ - The type of value that the Maybe holds.
+#
+# Example Use:
+#   Maybe@<Foo@> = Nothing<Foo@>;
+Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
 
-<@ A@, @ B@>(A@, B@, (A@){Maybe@<A@>;}, (A@, B@){B@;}){ B@;}
-For = <@ A@, @ B@>(A@ i, B@ base, (A@){Maybe@<A@>;} incr, (A@, B@){B@;} body) {
-  Maybe@<A@> mnext = incr(i);
+# For --
+#   TODO: Clean up the way this function is specified.
+<@ I@, @ B@>(I@, B@, (I@) { Maybe@<I@>; }, (I@, B@) { B@; }) { B@; }
+For = <@ I@, @ B@>(I@ i, B@ base, (I@) { Maybe@<I@>; } next, (I@, B@) { B@; } body) {
+  Maybe@<I@> mnext = next(i);
   mnext.?(
-    just: For<A@, B@>(mnext.just, body(i, base), incr, body),
+    just: For<I@, B@>(mnext.just, body(i, base), next, body),
     nothing: body(i, base));
 };
 
-@(Maybe@, Just, Nothing, MapMaybe, For);
+@(Maybe@, Just, Nothing, For);
