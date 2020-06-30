@@ -5,8 +5,9 @@
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
+<@,@>% DoWhile = /Loop%.DoWhile; 
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
-<@,@>% For = /Maybe%.For; 
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing; 
 
@@ -146,8 +147,8 @@ Set@ FullSet = (Symbol@ s) { True; };
 (Set@) { Maybe@<Symbol@>; } Singleton = (Set@ set) {
   @ State@ = +(Unit@ empty, Symbol@ single, Unit@ multi);
 
-  State@ state = For<Symbol@, State@>(
-    1, State@(empty: Unit), IterateSymbol,
+  State@ state = DoWhile<Symbol@, State@>(
+    1, IterateSymbol, State@(empty: Unit),
     (Symbol@ symbol, State@ state) {
       set(symbol).?(
         true: state.?(
@@ -196,7 +197,7 @@ XS@ EmptyXS = XS@(empty: Unit);
 (CellId@, Symbol@) { XS@; } Assign = (CellId@ cell, Symbol@ s) {
   # Cell: This cell cannot be any symbol other than s.
   Set@ isS = Set<Bool@>(s, True, (Symbol@ _) { False; });
-  XS@ xCell = For<Symbol@, XS@>(1, EmptyXS, IterateSymbol,
+  XS@ xCell = DoWhile<Symbol@, XS@>(1, IterateSymbol, EmptyXS,
     (Symbol@ other, XS@ xs) {
       isS(other).?(
         true: xs,
@@ -207,8 +208,7 @@ XS@ EmptyXS = XS@(empty: Unit);
   # This is a helper function we'll reuse for rows, columns, and boxes.
   (Set@, (Symbol@) { CellId@; }) { XS@; }
   Group = (Set@ isThis, (Symbol@) { CellId@; } cellOf) {
-    For<Symbol@, XS@>(
-      1, EmptyXS, IterateSymbol,
+    DoWhile<Symbol@, XS@>(1, IterateSymbol, EmptyXS,
       (Symbol@ i, XS@ xs) {
         isThis(i).?(
           true: xs,
@@ -324,7 +324,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
         nothing: {
           # We don't know the symbol for this cell yet. Try all possible
           # options until we've found a solution to the puzzle.
-          For<Symbol@, Maybe@<Board@>>(1, Nothing<Board@>, IterateSymbol,
+          DoWhile<Symbol@, Maybe@<Board@>>(1, IterateSymbol, Nothing<Board@>,
             (Symbol@ s, Maybe@<Board@> solved) {
               solved.?(
                 # TODO: Can we break out more efficiently in this case?
@@ -346,8 +346,7 @@ SolveFrom = (Board@ board, Maybe@<CellId@> mfrom) {
 
 # Generate constraints based on the given input board.
 (Input@) { XS@; } InputXS = (Input@ board) {
-  For<CellId@, XS@>(
-    CellId@(1, 1), EmptyXS, IterateCellId,
+  DoWhile<CellId@, XS@>(CellId@(1, 1), IterateCellId, EmptyXS,
     (CellId@ cell, XS@ xs) {
       Maybe@<Symbol@> ms = board(cell.row)(cell.col);
       ms.?(

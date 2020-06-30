@@ -11,10 +11,11 @@
 <@>% S = /List%.S;
 <@>% Concat = /List%.Concat;
 
+<@,@>% DoWhile = /Loop%.DoWhile;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
-<@,@>% For = /Maybe%.For;
 
 @ Str@ = /String%.Str@;
 % Str = /String%.Str;
@@ -59,7 +60,7 @@
 
 <@ T@>((T@, T@) { Bool@; }, Array@<T@>, Array@<T@>) { Bool@; }
 EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
-  For<Symbol@, Bool@>(1, True, IterateSymbol,
+  DoWhile<Symbol@, Bool@>(1, IterateSymbol, True,
     (Symbol@ s, Bool@ p) {
       And(p, eq(a(s), b(s)));
   });

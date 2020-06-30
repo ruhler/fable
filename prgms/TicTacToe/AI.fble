@@ -11,8 +11,9 @@
 <@>% S = /List%.S;
 <@,@>% ForS = /List%.ForS;
 
+<@,@>% DoWhile = /Loop%.DoWhile;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
-<@,@>% For = /Maybe%.For;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
@@ -203,10 +204,9 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
     just: MemoState@<PositionResult@>(m, cached.just),
     nothing: {
       MemoState@<Maybe@<PositionResult@>> best =
-        For<Position@, MemoState@<Maybe@<PositionResult@>>>(
-          Position@(UL: Unit),
+        DoWhile<Position@, MemoState@<Maybe@<PositionResult@>>>(
+          Position@(UL: Unit), NextPosition,
           MemoState@<Maybe@<PositionResult@>>(m, Nothing<PositionResult@>),
-          NextPosition,
           (Position@ p, MemoState@<Maybe@<PositionResult@>> best) {
             MemoState@<Maybe@<PositionResult@>> curr = MoveResult(best.memo, b, x, p);
             MemoState@<Maybe@<PositionResult@>>(

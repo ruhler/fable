@@ -38,14 +38,4 @@
 #   Maybe@<Foo@> = Nothing<Foo@>;
 Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
 
-# For --
-#   TODO: Clean up the way this function is specified.
-<@ I@, @ B@>(I@, B@, (I@) { Maybe@<I@>; }, (I@, B@) { B@; }) { B@; }
-For = <@ I@, @ B@>(I@ i, B@ base, (I@) { Maybe@<I@>; } next, (I@, B@) { B@; } body) {
-  Maybe@<I@> mnext = next(i);
-  mnext.?(
-    just: For<I@, B@>(mnext.just, body(i, base), next, body),
-    nothing: body(i, base));
-};
-
-@(Maybe@, Just, Nothing, For);
+@(Maybe@, Just, Nothing);
