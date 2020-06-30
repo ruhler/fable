@@ -30,6 +30,19 @@
 @ Test@ = *(Str@ name, TestResult@! test);
 @ TestSuite@ = S@<Test@>;
 
+# Test --
+#   Creates a test.
+#
+# In particular, this is more convenient to use than Test@(...) if you want to
+# specify the name of the test using a CharLit@ instead of a Str@.
+#
+# Inputs:
+#   name - the name of the test
+#   test - a process that returns the result of the test
+(CharLit@, TestResult@!) { Test@; } Test = (CharLit@ name, TestResult@! test) {
+  Test@(Str(name), test);
+};
+
 # TestSuite --
 #   Creates a suite of tests.
 #
@@ -131,4 +144,4 @@ TestSuite@ Tests = {
 
 @(
   Str@, TestResult@, Test@, TestSuite@,
-  AssertEquals, TestSuite, RunTests, RunTestsVerbose, Tests);
+  AssertEquals, Test, TestSuite, RunTests, RunTestsVerbose, Tests);

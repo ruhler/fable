@@ -15,6 +15,7 @@
 
 @ Test@ = /Test%.Test@;
 @ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
 <@>% AssertEquals = /Test%.AssertEquals;
 % TestSuite = /Test%.TestSuite;
 
@@ -42,7 +43,7 @@
 # Example Use:
 #  T(Chars|Test_True_Is_True, !(True));
 (CharLit@, Bool@!) { Test@; } T = (CharLit@ name, Bool@! p) {
-  Test@(Str(name), {
+  Test(name, {
     Bool@ x := p;
     !(AssertEquals<Bool@>(Eq, PrintBool, True, x));
   });
@@ -63,7 +64,7 @@
 # Example Use:
 #  F(Chars|Test_False_Is_False, !(False));
 (CharLit@, Bool@!) { Test@; } F = (CharLit@ name, Bool@! p) {
-  Test@(Str(name), {
+  Test(name, {
     Bool@ x := p;
     !(AssertEquals<Bool@>(Eq, PrintBool, False, x));
   });
