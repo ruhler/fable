@@ -3,7 +3,7 @@
  - Implement dimacs cnf parser.
 
 * Clean up fble test framework
- - Define Test function that takes CharLit and start using it.
+ - Rename 'Print' to 'Show', which better describes what the function does.
  - Use AssertEquals for more of the tests.
  - Print out total tests passed, failed, and run in RunTest.
  - Separate Test tests out into separate module and properly test the test
