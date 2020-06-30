@@ -5,7 +5,7 @@
 % Not = /Bool%.Not;
 % And = /Bool%.And;
 % Or = /Bool%.Or;
-% Eq = /Bool%.Eq;
+% Eq = /Bool/Eq%.Eq;
 
 % Chars = /Char%.Chars;
 

@@ -38,18 +38,10 @@ Bool@ False = Bool@(false: Unit);
 #
 # Returns True if either argument is True. Returns False othewise.
 #
-# Note: This is not a shirt circuiting OR operation. Both arguments are
+# Note: This is not a short circuiting OR operation. Both arguments are
 # evaluated fully when applying this function.
 (Bool@, Bool@) { Bool@; } Or = (Bool@ a, Bool@ b) {
   a.?(true: True, false: b);
 };
 
-# Eq --
-#  Boolean equality. a == b
-#
-# Returns True if both arguments are the same. Returns False otherwise.
-(Bool@, Bool@) { Bool@; } Eq = (Bool@ a, Bool@ b) {
-  a.?(true: b, false: Not(b));
-};
-
-@(Bool@, True, False, Not, And, Or, Eq);
+@(Bool@, True, False, Not, And, Or);

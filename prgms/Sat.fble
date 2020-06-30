@@ -1,6 +1,5 @@
 
 @ Bool@ = /Bool%.Bool@;
-% EqBool = /Bool%.Eq;
 % Not = /Bool%.Not;
 
 @ IntP@ = /Int/IntP%.IntP@;
@@ -22,7 +21,7 @@
 # Var@ --
 #   A variable in a boolean formula.
 @ Var@ = *(VarId@ id, Bool@ polarity);
-% EqPolarity = EqBool;
+% EqPolarity = /Bool/Eq%.Eq;
 
 # Clause@ --
 #   A disjunction (OR) of variables.

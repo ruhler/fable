@@ -1,0 +1,15 @@
+
+# Eq@ --
+#   Common facility for comparing two values for equality.
+#
+# Type Parameters:
+#   T@ - The type of the values to compare.
+#
+# Arguments:
+#   The two values to compare.
+#
+# Returns:
+#   True if the two values are equal, false otherwise.
+<@>@ Eq@ = <@ T@>(T@, T@) { /Bool%.Bool@; };
+
+@(Eq@);

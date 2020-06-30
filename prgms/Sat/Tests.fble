@@ -2,7 +2,6 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 % And = /Bool%.And;
-% EqBool = /Bool%.Eq;
 
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
@@ -56,7 +55,7 @@
 };
 
 (Var@, Var@) { Bool@; } EqVar = (Var@ a, Var@ b) {
-  And(EqIntP(a.id, b.id), EqBool(a.polarity, b.polarity));
+  And(EqIntP(a.id, b.id), /Bool/Eq%.Eq(a.polarity, b.polarity));
 };
 
 (Assignment@, Assignment@) { Bool@; }

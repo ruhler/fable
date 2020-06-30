@@ -19,8 +19,6 @@
 
 <@>@ Put@ = /Process%.Put@;
 
-<@>@ Show@ = /Show%.Show@;
-
 @ Str@ = /String%.Str@;
 <@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
@@ -60,7 +58,7 @@ TestSuite = (CharLit@ name, Lit@<Test@> tests) {
 };
 
 <@ T@>((T@, T@) { Bool@; }, (T@) { Str@; }, T@, T@) { TestResult@; }
-AssertEquals = <@ T@>((T@, T@) { Bool@; } eq, Show@<T@> show, T@ expected, T@ actual) {
+AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ actual) {
   eq(expected, actual).?(
     true: TestResult@(pass: Unit),
     false: TestResult@(fail: Concat<Char@>(S<Str@>([

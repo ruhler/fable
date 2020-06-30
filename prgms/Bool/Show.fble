@@ -4,8 +4,7 @@
 <@>@ Show@ = /Show%.Show@;
 % Str = /String%.Str;
 
-# Show --
-#  See documentation of /Show%.Show@.
+# Show -- see documentation of /Show%.Show@.
 Show@<Bool@> Show = (Bool@ x) {
   Str(x.?(true: Chars|True, false: Chars|False));
 };
