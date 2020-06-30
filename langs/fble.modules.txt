@@ -185,3 +185,16 @@ IntP, IntS, and Int types.
 Or: is it better to define these across a bunch of modules to avoid false
 dependencies, or better to just define them all in one module and avoid the
 headache of splitting them up?
+
+---
+
+Things I want to try to see how well they work:
+* Lots of little modules. Because what, really, is the cost of that? I think
+it's just being able to remember what module to import. It doesn't reduce the
+number of import statements you would use.
+
+* Don't require modules to all be imported at the top of the file. I'm not
+convinced it adds much. For example, /Bool/Show%.Show is just as good or
+better to use than locally defining ShowBool. Take a little more risk here and
+see if it leads to any problems.
+

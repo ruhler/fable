@@ -10,23 +10,12 @@
 % Chars = /Char%.Chars;
 
 <@>@ CharLit@ = /String%.CharLit@;
-@ Str@ = /String%.Str@;
-% Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestSuite@ = /Test%.TestSuite@;
 % Test = /Test%.Test;
 <@>% AssertEquals = /Test%.AssertEquals;
 % TestSuite = /Test%.TestSuite;
-
-# PrintBool --
-#  Converts a Bool@ to a human readable string.
-#
-# TODO: Move to /Bool/Print%.Print, because this function would be more
-# broadly useful.
-(Bool@) { Str@; } PrintBool = (Bool@ x) {
-  x.?(true: Str(Chars|True), false: Str(Chars|False));
-};
 
 # T --
 #  Tests that a boolean expression evaluates to True.
@@ -45,7 +34,7 @@
 (CharLit@, Bool@!) { Test@; } T = (CharLit@ name, Bool@! p) {
   Test(name, {
     Bool@ x := p;
-    !(AssertEquals<Bool@>(Eq, PrintBool, True, x));
+    !(AssertEquals<Bool@>(Eq, /Bool/Show%.Show, True, x));
   });
 };
 
@@ -66,7 +55,7 @@
 (CharLit@, Bool@!) { Test@; } F = (CharLit@ name, Bool@! p) {
   Test(name, {
     Bool@ x := p;
-    !(AssertEquals<Bool@>(Eq, PrintBool, False, x));
+    !(AssertEquals<Bool@>(Eq, /Bool/Show%.Show, False, x));
   });
 };
 

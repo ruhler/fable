@@ -1,5 +1,6 @@
 * Create a Sat benchmark
- - Implement an IntP parser (or IntS or Int?)
+ - Implement support for IntP literals.
+ - Implement an IntP parser (or IntS or Int?).
  - Implement dimacs cnf parser.
 
 * Clean up fble test framework

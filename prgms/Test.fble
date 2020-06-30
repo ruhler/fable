@@ -19,6 +19,8 @@
 
 <@>@ Put@ = /Process%.Put@;
 
+<@>@ Show@ = /Show%.Show@;
+
 @ Str@ = /String%.Str@;
 <@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
@@ -58,14 +60,14 @@ TestSuite = (CharLit@ name, Lit@<Test@> tests) {
 };
 
 <@ T@>((T@, T@) { Bool@; }, (T@) { Str@; }, T@, T@) { TestResult@; }
-AssertEquals = <@ T@>((T@, T@) { Bool@; } eq, (T@) { Str@; } print, T@ expected, T@ actual) {
+AssertEquals = <@ T@>((T@, T@) { Bool@; } eq, Show@<T@> show, T@ expected, T@ actual) {
   eq(expected, actual).?(
     true: TestResult@(pass: Unit),
     false: TestResult@(fail: Concat<Char@>(S<Str@>([
           Str(Chars|'expected: '),
-          print(expected),
+          show(expected),
           Str(Chars|', but got: '),
-          print(actual)]))));
+          show(actual)]))));
 };
 
 # Print a string to the given output stream.

@@ -1,0 +1,18 @@
+
+@ Str@ = /String%.Str@;
+
+# Show@ --
+#   Common facility for converting values to human readable strings. Primarily
+#   used for testing and debugging.
+#
+# Type Parameters:
+#   T@ - The type of the value to convert to a string.
+#
+# Arguments:
+#   T@ - The value to convert to a string.
+#
+# Returns:
+#   A human readable representation of the given value.
+<@>@ Show@ = <@ T@>(T@) { Str@; };
+
+@(Show@);
