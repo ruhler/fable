@@ -1,7 +1,7 @@
 * Clean up fble library
  - Test /Bool/Show%.Show
  - Test /Maybe/Show%.Show
- - Clean up /Maybe/Eq% and test it.
+ - Test /Maybe/Eq%.Eq
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.
  - Add tests for full code coverage of all functions.

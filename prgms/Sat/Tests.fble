@@ -18,7 +18,6 @@
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
-<@>% EqMaybe = /Maybe/Eq%.Eq;
 
 @ Str@ = /String%.Str@;
 % Str = /String%.Str;
@@ -58,15 +57,10 @@ EqAssignment = (Assignment@ a, Assignment@ b) {
   EqList<Var@>(EqVar, a, b);
 };
 
-(Maybe@<Assignment@>, Maybe@<Assignment@>) { Bool@; }
-EqMaybeAssignment = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
-  EqMaybe<Assignment@>(EqAssignment, a, b);
-};
-
 (Maybe@<Assignment@>, Maybe@<Assignment@>) { TestResult@; }
 AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
   AssertEquals<Maybe@<Assignment@>>(
-    EqMaybeAssignment,
+    /Maybe/Eq%.Eq<Assignment@>(EqAssignment),
     /Maybe/Show%.Show<Assignment@>(PrintAssignment),
     a, b);
 };

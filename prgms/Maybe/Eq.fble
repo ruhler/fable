@@ -1,12 +1,11 @@
 
-@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
-
+<@>@ Eq@ = /Eq%.Eq@;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
-<@ T@>((T@, T@) { Bool@; }, Maybe@<T@>, Maybe@<T@>) { Bool@; }
-Eq = <@ T@>((T@, T@) { Bool@; } eq, Maybe@<T@> a, Maybe@<T@> b) {
+<@ T@>(Eq@<T@>) { Eq@<Maybe@<T@>>; }
+Eq = <@ T@>(Eq@<T@> eq)(Maybe@<T@> a, Maybe@<T@> b) {
   a.?(
     just: b.?(just: eq(a.just, b.just), nothing: False),
     nothing: b.?(just: False, nothing: True));
