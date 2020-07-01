@@ -6,7 +6,7 @@
 
 <@>@ SL@ = /List%.S@;
 <@>% SL = /List%.S;
-<@,@>% ForS = /List%.ForS;
+<@,@>% ForEach = /List%.ForEach;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
@@ -676,7 +676,7 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
 };
 
 (Md5Hash@, Md5Hash@) { Bool@; } Eq = (Md5Hash@ a, Md5Hash@ b) {
-  ForS<Bool@, Bool@>(
+  ForEach<Bool@, Bool@>(
     SL<Bool@>([
       EqHex(a.0, b.0), EqHex(a.1, b.1), EqHex(a.2, b.2), EqHex(a.3, b.3),
       EqHex(a.4, b.4), EqHex(a.5, b.5), EqHex(a.6, b.6), EqHex(a.7, b.7),

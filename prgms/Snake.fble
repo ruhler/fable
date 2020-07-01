@@ -22,7 +22,7 @@
 <@>% S = /List%.S;
 <@>% InitS = /List%.InitS;
 <@>% Cons = /List%.Cons;
-<@,@>% ForS = /List%.ForS;
+<@,@>% ForEach = /List%.ForEach;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -103,7 +103,7 @@ Int@ MaxCol = I(D|60);
 );
 
 (S@<Pos@>) { Drawing@; } DrawSnakeS = (S@<Pos@> s) {
-  ForS<Pos@, Drawing@>(s, Blank, (Pos@ p, Drawing@ d) {
+  ForEach<Pos@, Drawing@>(s, Blank, (Pos@ p, Drawing@ d) {
     Over(DrawCell(p, Cell@(snake: Unit)), d);
   });
 };

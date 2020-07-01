@@ -49,13 +49,13 @@ S@ Nil = <@ T@> {
 };
 
 <@ A@, @ B@>(S@<A@>, B@, (A@, B@){B@;}){ B@;}
-ForS = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
-  l.?(cons: ForS<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
+ForEach = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
+  l.?(cons: ForEach<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
       nil: base);
 };
 
 # ForS_
-#  A process version of ForS.
+#  A process version of ForEach.
 #
 # TODO: Pick a better name for this.
 <@ A@, @ B@>(S@<A@>, B@, (A@, B@) { B@!; }){ B@!; }
@@ -71,4 +71,4 @@ ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
 @(S@,
   Cons, Append, Nil, S,
   InitS, Concat, MapS,
-  ForS, ForS_);
+  ForEach, ForS_);

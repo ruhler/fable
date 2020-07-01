@@ -19,7 +19,7 @@
 
 <@>@ S@ = /List%.S@;
 <@>% S = /List%.S;
-<@,@>% ForS = /List%.ForS;
+<@,@>% ForEach = /List%.ForEach;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
@@ -118,7 +118,7 @@
         Coord@(Inc(coord.row),     coord.col ),
         Coord@(Inc(coord.row), Inc(coord.col))]);
 
-      ForS<Coord@, Cand@>(neighbors, cand_alive, (Coord@ n, Cand@ c) {
+      ForEach<Coord@, Cand@>(neighbors, cand_alive, (Coord@ n, Cand@ c) {
         C.InsertWith(c, n, (Maybe@<Status@> ms) {
           ms.?(just: Status@(ms.just.alive, IncCount(ms.just.neighbors)),
                nothing: Status@(False, Count@(1: Unit)));

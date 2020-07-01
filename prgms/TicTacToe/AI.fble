@@ -9,7 +9,7 @@
 
 <@>@ S@ = /List%.S@;
 <@>% S = /List%.S;
-<@,@>% ForS = /List%.ForS;
+<@,@>% ForEach = /List%.ForEach;
 
 <@,@>% DoWhile = /Loop%.DoWhile;
 
@@ -215,7 +215,7 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
         });
 
       MemoTable@ newMemo =
-        ForS<BoardPositionResult@, MemoTable@>(
+        ForEach<BoardPositionResult@, MemoTable@>(
           AllSymmetries(BoardPositionResult@(b, best.data.just)),
           best.memo,
           (BoardPositionResult@ bpr, MemoTable@ m) {
