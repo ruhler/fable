@@ -59,7 +59,7 @@ Int@ MaxCol = I(D|60);
 
 @ Pos@ = *(Int@ row, Int@ col);
 
-(Pos@, Pos@){Bool@;} EqPos = (Pos@ a, Pos@ b) {
+(Pos@, Pos@) { Bool@; } EqPos = (Pos@ a, Pos@ b) {
   And(Eq(a.row, b.row), Eq(a.col, b.col));
 };
 
@@ -67,22 +67,23 @@ Int@ MaxCol = I(D|60);
 @ Input@ = +(Dir@ dir, Unit@ quit, Unit@ tick);
 
 (Dir@, Dir@) { Bool@; } EqDir = (Dir@ a, Dir@ b) {
-  a.?(up: b.?(up: True, : False),
-      down: b.?(down: True, : False),
-      left: b.?(left: True, : False),
-      right: b.?(right: True, : False));
+  a.?(
+    up: b.?(up: True, : False),
+    down: b.?(down: True, : False),
+    left: b.?(left: True, : False),
+    right: b.?(right: True, : False));
 };
 
 
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 
-(Pos@, Cell@){Drawing@;} DrawCell = (Pos@ pos, Cell@ cell) {
-  Color@ c = cell.?(empty: Color@(blue: Unit),
-                    snake: Color@(cyan: Unit),
-                     food: Color@(green: Unit));
+(Pos@, Cell@) { Drawing@; } DrawCell = (Pos@ pos, Cell@ cell) {
+  Color@ c = cell.?(
+    empty: Color@(blue: Unit),
+    snake: Color@(cyan: Unit),
+    food: Color@(green: Unit));
   Rect(pos.col, pos.row, 1, 1, c);
 };
-
 
 # State --
 #   The state of the game.
@@ -101,14 +102,13 @@ Int@ MaxCol = I(D|60);
   Int@ speed
 );
 
-# TODO: Use MapS or some other combinator for this.
-(S@<Pos@>){Drawing@;} DrawSnakeS = (S@<Pos@> s) {
+(S@<Pos@>) { Drawing@; } DrawSnakeS = (S@<Pos@> s) {
   ForS<Pos@, Drawing@>(s, Blank, (Pos@ p, Drawing@ d) {
     Over(DrawCell(p, Cell@(snake: Unit)), d);
   });
 };
 
-(State@){Drawing@;} Draw = (State@ s) {
+(State@) { Drawing@; } Draw = (State@ s) {
   Drawings([
     Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit)),
     DrawSnakeS(s.snake),
@@ -124,18 +124,18 @@ State@ InitialState = {
   Int@ r1 = Inc(r0); Int@ r2 = Inc(r1);
   Int@ r3 = Inc(r2); Int@ r4 = Inc(r3);
   State@(
-      Dir@(right: Unit),
-      Pos@(r4, c1),
-      I(D|1),
-      S<Pos@>([Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)]),
-      I(D|40));
+    Dir@(right: Unit),
+    Pos@(r4, c1),
+    I(D|1),
+    S<Pos@>([Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)]),
+    I(D|40));
 };
 
 @ MoveResultM@ = +(Unit@ dead, State@ state);
 @ PosM@ = +(Unit@ dead, Pos@ pos);
 
 # Return true if the given position is found in the list of positions.
-(S@<Pos@>, Pos@){Bool@;} InPosS = (S@<Pos@> s, Pos@ p) {
+(S@<Pos@>, Pos@) { Bool@; } InPosS = (S@<Pos@> s, Pos@ p) {
   s.?(
     cons: EqPos(s.cons.head, p).?(true: True, false: InPosS(s.cons.tail, p)),
     nil: False);
@@ -163,49 +163,43 @@ Int@ Max64 = I(D|18446744073709551616);
   );
 };
 
-(State@){MoveResultM@;} Move = (State@ s) {
+(State@) { MoveResultM@; } Move = (State@ s) {
   Int@ nrand = StepRand(s.dir, s.rand);
   PosM@ pm = s.dir.?(
-    up:
-    Eq(s.snake.cons.head.row, MaxRow).?(
-        true: PosM@(dead: Unit),
-       false: PosM@(pos: Pos@(Inc(s.snake.cons.head.row), s.snake.cons.head.col))),
+    up: Eq(s.snake.cons.head.row, MaxRow).?(
+      true: PosM@(dead: Unit),
+      false: PosM@(pos: Pos@(Inc(s.snake.cons.head.row), s.snake.cons.head.col))),
+    down: Eq(s.snake.cons.head.row, MinRow).?(
+      true: PosM@(dead: Unit),
+      false: PosM@(pos: Pos@(Dec(s.snake.cons.head.row), s.snake.cons.head.col))),
+    left: Eq(s.snake.cons.head.col, MinCol).?(
+      true: PosM@(dead: Unit),
+      false: PosM@(pos: Pos@(s.snake.cons.head.row, Dec(s.snake.cons.head.col)))),
+    right: Eq(s.snake.cons.head.col, MaxCol).?(
+      true: PosM@(dead: Unit),
+      false: PosM@(pos: Pos@(s.snake.cons.head.row, Inc(s.snake.cons.head.col)))));
 
-    down:
-    Eq(s.snake.cons.head.row, MinRow).?(
-        true: PosM@(dead: Unit),
-       false: PosM@(pos: Pos@(Dec(s.snake.cons.head.row), s.snake.cons.head.col))),
-
-    left:
-    Eq(s.snake.cons.head.col, MinCol).?(
-        true: PosM@(dead: Unit),
-       false: PosM@(pos: Pos@(s.snake.cons.head.row, Dec(s.snake.cons.head.col)))),
-
-    right:
-    Eq(s.snake.cons.head.col, MaxCol).?(
-        true: PosM@(dead: Unit),
-       false: PosM@(pos: Pos@(s.snake.cons.head.row, Inc(s.snake.cons.head.col)))));
-
-  pm.?(dead: MoveResultM@(dead: Unit), pos:
-      EqPos(pm.pos, s.food).?(
-          true: {
-            # TODO: Properly handle the case where the snake eats food at its
-            # tail.
-            S@<Pos@> nsnake = ConsS<Pos@>(s.food, s.snake);
-            Pos@ nfood = GetNextFood(nrand, nsnake);
-            Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
-            State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
-            MoveResultM@(state: ns);
-          },
-          false:
-          InPosS(s.snake, pm.pos).?(true: MoveResultM@(dead: Unit),
-            false: {
-              # TODO: Combine calls to Init and Last so we only have to
-              # iterate over the list of elements once instead of twice?
-              S@<Pos@> nsnake = ConsS<Pos@>(pm.pos, InitS<Pos@>(s.snake));
-              State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
-              MoveResultM@(state: ns);
-            })));
+  pm.?(
+    dead: MoveResultM@(dead: Unit),
+    pos: EqPos(pm.pos, s.food).?(
+      true: {
+        # TODO: Properly handle the case where the snake eats food at its
+        # tail.
+        S@<Pos@> nsnake = ConsS<Pos@>(s.food, s.snake);
+        Pos@ nfood = GetNextFood(nrand, nsnake);
+        Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
+        State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
+        MoveResultM@(state: ns);
+      },
+      false: InPosS(s.snake, pm.pos).?(
+        true: MoveResultM@(dead: Unit),
+        false: {
+          # TODO: Combine calls to Init and Last so we only have to
+          # iterate over the list of elements once instead of twice?
+          S@<Pos@> nsnake = ConsS<Pos@>(pm.pos, InitS<Pos@>(s.snake));
+          State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
+          MoveResultM@(state: ns);
+         })));
 };
 
 # Computer controlled choice of next direction.
@@ -256,26 +250,27 @@ Int@ Max64 = I(D|18446744073709551616);
   Best(Best(up, down), Best(left, right)).dir;
 };
 
-(Get@<Input@>, Put@<Effect@>, State@){Unit@!;}
+(Get@<Input@>, Put@<Effect@>, State@) { Unit@!; }
 Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   Input@ x := in;
-  x.?(dir: Snake(in, out, State@(x.dir, s.food, s.rand, s.snake, s.speed)),
-      quit: !(Unit),
-      tick: {
-          Dir@ dir = AI(s);
-          State@ ns = State@(dir, s.food, s.rand, s.snake, s.speed);
-          MoveResultM@ m = Move(ns);
-          m.?(
-            dead: !(Unit),
-            state: {
-               Unit@ _ := out(Effect@(draw: Draw(ns)));
-               Unit@ _ := out(Effect@(tick: ns.speed));
-               Snake(in, out, m.state);
-            });
-      });
+  x.?(
+    dir: Snake(in, out, State@(x.dir, s.food, s.rand, s.snake, s.speed)),
+    quit: !(Unit),
+    tick: {
+      Dir@ dir = AI(s);
+      State@ ns = State@(dir, s.food, s.rand, s.snake, s.speed);
+      MoveResultM@ m = Move(ns);
+      m.?(
+        dead: !(Unit),
+        state: {
+           Unit@ _ := out(Effect@(draw: Draw(ns)));
+           Unit@ _ := out(Effect@(tick: ns.speed));
+           Snake(in, out, m.state);
+        });
+    });
 };
 
-(Get@<Event@>){ Get@<Input@>; } GetInput = (Get@<Event@> in) {
+(Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
   e.?(
     tick: !(Input@(tick: Unit)),
