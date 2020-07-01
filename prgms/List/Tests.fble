@@ -59,7 +59,7 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     S@<Elem@> a = S<Elem@>(Elems|ABCDE);
     S@<Elem@> b = S<Elem@>(Elems|ABCDE);
 
-    EqList<Elem@>(ElemEq, a, b).?(
+    EqList<Elem@>(ElemEq)(a, b).?(
       true: TestResult@(pass: Unit),
       false: TestResult@(fail: Concat<Char@>(S<Str@>([
         Print<Elem@>(ElemPrint, a),
@@ -72,7 +72,7 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     S@<Elem@> a = S<Elem@>(Elems|ABCDE);
     S@<Elem@> b = S<Elem@>(Elems|ABDDE);
 
-    EqList<Elem@>(ElemEq, a, b).?(
+    EqList<Elem@>(ElemEq)(a, b).?(
       true: TestResult@(fail: Concat<Char@>(S<Str@>([
           Print<Elem@>(ElemPrint, a),
           Str(Chars|' == '),
@@ -85,7 +85,7 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     S@<Elem@> a = S<Elem@>(Elems|ABCDE);
     S@<Elem@> b = S<Elem@>(Elems|ABCD);
 
-    EqList<Elem@>(ElemEq, a, b).?(
+    EqList<Elem@>(ElemEq)(a, b).?(
       true: TestResult@(fail: Concat<Char@>(S<Str@>([
           Print<Elem@>(ElemPrint, a),
           Str(Chars|' == '),
@@ -101,7 +101,7 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     # TODO: Switch to using AssertEquals here once we've defined Print for
     # lists.
     S@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
-    EqList<Elem@>(ElemEq, wnt, got).?(
+    EqList<Elem@>(ElemEq)(wnt, got).?(
       true: TestResult@(pass: Unit),
       false: TestResult@(fail: Concat<Char@>(S<Str@>([
         Print<Elem@>(ElemPrint, wnt),

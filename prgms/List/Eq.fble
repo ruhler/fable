@@ -1,24 +1,17 @@
 
-@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
-
+<@>@ Eq@ = /Eq%.Eq@;
 <@>@ S@ = /List%.S@;
 
 # Eq --
-#   Returns true if the given lists are equal.
-#
-# Inputs:
-#   eq - definition of equality for elements of the list.
-#   a - one of the lists to compare.
-#   b - the other list to compare.
-<@ T@>((T@, T@) { Bool@; }, S@<T@>, S@<T@>) { Bool@; }
-Eq = <@ T@>((T@, T@) { Bool@; } eq, S@<T@> a, S@<T@> b) {
+#   Implementation of Eq@ for S@. See documentation of /Eq%.Eq@.
+<@ T@>(Eq@<T@>) { Eq@<S@<T@>>; } Eq = <@ T@>(Eq@<T@> eq)(S@<T@> a, S@<T@> b) {
   a.?(
     cons: b.?(
       cons: {
         eq(a.cons.head, b.cons.head).?(
-          true: Eq<T@>(eq, a.cons.tail, b.cons.tail),
+          true: Eq<T@>(eq)(a.cons.tail, b.cons.tail),
           false: False);
       },
       nil: False),

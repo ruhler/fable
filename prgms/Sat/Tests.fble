@@ -12,7 +12,6 @@
 
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
-<@>% EqList = /List/Eq%.Eq;
 <@>% PrintList = /List/Print%.Print;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
@@ -52,15 +51,10 @@
   And(EqIntP(a.id, b.id), /Bool/Eq%.Eq(a.polarity, b.polarity));
 };
 
-(Assignment@, Assignment@) { Bool@; }
-EqAssignment = (Assignment@ a, Assignment@ b) {
-  EqList<Var@>(EqVar, a, b);
-};
-
 (Maybe@<Assignment@>, Maybe@<Assignment@>) { TestResult@; }
 AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
   AssertEquals<Maybe@<Assignment@>>(
-    /Maybe/Eq%.Eq<Assignment@>(EqAssignment),
+    /Maybe/Eq%.Eq<Assignment@>(/List/Eq%.Eq<Var@>(EqVar)),
     /Maybe/Show%.Show<Assignment@>(PrintAssignment),
     a, b);
 };
