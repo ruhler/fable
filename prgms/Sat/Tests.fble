@@ -19,7 +19,6 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 <@>% EqMaybe = /Maybe/Eq%.Eq;
-<@>% PrintMaybe = /Maybe/Print%.Print;
 
 @ Str@ = /String%.Str@;
 % Str = /String%.Str;
@@ -50,10 +49,6 @@
   PrintList<Var@>(PrintVar, x);
 };
 
-(Maybe@<Assignment@>) { Str@; } PrintMaybeAssignment = (Maybe@<Assignment@> m) {
-  PrintMaybe<Assignment@>(PrintAssignment, m);
-};
-
 (Var@, Var@) { Bool@; } EqVar = (Var@ a, Var@ b) {
   And(EqIntP(a.id, b.id), /Bool/Eq%.Eq(a.polarity, b.polarity));
 };
@@ -71,7 +66,9 @@ EqMaybeAssignment = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
 (Maybe@<Assignment@>, Maybe@<Assignment@>) { TestResult@; }
 AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
   AssertEquals<Maybe@<Assignment@>>(
-    EqMaybeAssignment, PrintMaybeAssignment, a, b);
+    EqMaybeAssignment,
+    /Maybe/Show%.Show<Assignment@>(PrintAssignment),
+    a, b);
 };
 
 TestSuite@ Tests = TestSuite(Chars|Sat, [

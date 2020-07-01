@@ -1,3 +1,11 @@
+* Clean up fble library
+ - Test /Bool/Show%.Show
+ - Test /Maybe/Show%.Show
+ - Clean up /Maybe/Eq% and test it.
+ - Separate modules as appropriate to reduce false dependencies.
+ - Document all functions.
+ - Add tests for full code coverage of all functions.
+
 * Create a Sat benchmark
  - Implement support for IntP literals.
  - Implement an IntP parser (or IntS or Int?).
@@ -9,11 +17,6 @@
  - Print out total tests passed, failed, and run in RunTest.
  - Separate Test tests out into separate module and properly test the test
    infra.
-
-* Clean up fble library
- - Separate modules as appropriate to reduce false dependencies.
- - Document all functions.
- - Add tests for full code coverage of all functions.
 
 * Figure out why we need an extra print in RunTest.
  Does the program end before we have a chance to put all the output?
