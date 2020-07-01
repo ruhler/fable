@@ -10,7 +10,7 @@
 % EqIntP = /Int/IntP/Eq%.Eq;
 % 1 = /Int/IntP%.1;
 
-<@>% S = /List%.S;
+<@>% List = /List%.List;
 <@>% Append = /List%.Append;
 <@>% PrintList = /List/Print%.Print;
 
@@ -61,18 +61,18 @@ AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
 
 TestSuite@ Tests = TestSuite(Chars|Sat, [
   Test@(Str(Chars|Sat), !({
-    Formula@ f = S<Clause@>([
-      S<Var@>([Var@(1, True)])
+    Formula@ f = List<Clause@>([
+      List<Var@>([Var@(1, True)])
     ]);
-    Maybe@<Assignment@> want = Just<Assignment@>(S<Var@>([Var@(1, True)]));
+    Maybe@<Assignment@> want = Just<Assignment@>(List<Var@>([Var@(1, True)]));
     Maybe@<Assignment@> got = Solve(f);
     AssertEq(want, got);
   })),
 
   Test@(Str(Chars|Unsat), !({
-    Formula@ f = S<Clause@>([
-      S<Var@>([Var@(1, True)]),
-      S<Var@>([Var@(1, False)])
+    Formula@ f = List<Clause@>([
+      List<Var@>([Var@(1, True)]),
+      List<Var@>([Var@(1, False)])
     ]);
     Maybe@<Assignment@> want = Nothing<Assignment@>;
     Maybe@<Assignment@> got = Solve(f);

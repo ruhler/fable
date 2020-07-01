@@ -7,8 +7,8 @@
 
 <@>% Map = /Map%.Map;
 
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 <@,@>% ForEach = /List%.ForEach;
 
 <@,@>% DoWhile = /Loop%.DoWhile;
@@ -121,7 +121,7 @@ FlipBPR = (BoardPositionResult@ bpr) {
 
 # Produce all different symmetrically equivalent board position results of the
 # given board position result.
-(BoardPositionResult@) { S@<BoardPositionResult@>; }
+(BoardPositionResult@) { List@<BoardPositionResult@>; }
 AllSymmetries = (BoardPositionResult@ bpr) {
   BoardPositionResult@ b0 = bpr;
   BoardPositionResult@ b1 = RotateBPR(b0);
@@ -131,7 +131,7 @@ AllSymmetries = (BoardPositionResult@ bpr) {
   BoardPositionResult@ f1 = RotateBPR(f0);
   BoardPositionResult@ f2 = RotateBPR(f1);
   BoardPositionResult@ f3 = RotateBPR(f2);
-  S<BoardPositionResult@>([b0, b1, b2, b3, f0, f1, f2, f3]);
+  List<BoardPositionResult@>([b0, b1, b2, b3, f0, f1, f2, f3]);
 };
 
 (PositionResult@, PositionResult@) { PositionResult@; }

@@ -6,9 +6,9 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-<@>@ S@ = /List%.S@;
+<@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;
-<@>% S = /List%.S;
+<@>% List = /List%.List;
 <@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
 <@>% Cons = /List%.Cons;
@@ -28,7 +28,7 @@
 
 @ TestResult@ = +(Unit@ pass, Str@ fail);
 @ Test@ = *(Str@ name, TestResult@! test);
-@ TestSuite@ = S@<Test@>;
+@ TestSuite@ = List@<Test@>;
 
 # Test --
 #   Creates a test.
@@ -52,7 +52,7 @@
 (CharLit@, Lit@<Test@>) { TestSuite@; }
 TestSuite = (CharLit@ name, Lit@<Test@> tests) {
   Str@ prefix = Append<Char@>(Str(name), Str(Chars|'.'));
-  Map<Test@, Test@>(S<Test@>(tests), (Test@ test) {
+  Map<Test@, Test@>(List<Test@>(tests), (Test@ test) {
     Test@(Append<Char@>(prefix, test.name), test.test);
   });
 };
@@ -61,7 +61,7 @@ TestSuite = (CharLit@ name, Lit@<Test@> tests) {
 AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ actual) {
   eq(expected, actual).?(
     true: TestResult@(pass: Unit),
-    false: TestResult@(fail: Concat<Char@>(S<Str@>([
+    false: TestResult@(fail: Concat<Char@>(List<Str@>([
           Str(Chars|'expected: '),
           show(expected),
           Str(Chars|', but got: '),
@@ -84,15 +84,15 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 
   # Run all the tests, given a list of tests that failed so far.
   # Returns the list of failing tests.
-  (TestSuite@, S@<Failure@>) { S@<Failure@>!; }
-  Run = (TestSuite@ ts, S@<Failure@> failed) {
+  (TestSuite@, List@<Failure@>) { List@<Failure@>!; }
+  Run = (TestSuite@ ts, List@<Failure@> failed) {
     ts.?(
       cons: {
         Test@ t = ts.cons.head;
         TestResult@ tr := t.test;
         Str@ status = Str(tr.?(pass: Chars|'.', fail: Chars|'F'));
         Unit@ _ := out(status);
-        S@<Failure@> nfailed = tr.?(
+        List@<Failure@> nfailed = tr.?(
           pass: failed,
           fail: Cons<Failure@>(Failure@(t.name, tr.fail), failed));
         Run(ts.cons.tail, nfailed);
@@ -100,11 +100,11 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       nil: !(failed));
   };
 
-  S@<Failure@> failures := Run(tests, Nil<Failure@>);
+  List@<Failure@> failures := Run(tests, Nil<Failure@>);
 
   Unit@ _ := PrintLn(out, Nil<Char@>);
   Unit@ _ := ProcessEach<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
-    PrintLn(out, Concat<Char@>(S<Str@>([f.name, Str(Chars|': FAILED: '), f.msg])));
+    PrintLn(out, Concat<Char@>(List<Str@>([f.name, Str(Chars|': FAILED: '), f.msg])));
   });
 
   # TODO: Why do we need this extra output?
@@ -127,7 +127,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       fail: {
         Unit@ _ := PrintLn(
           out,
-          Concat<Char@>(S<Str@>([
+          Concat<Char@>(List<Str@>([
             Str(Chars|': FAILED: '),
             tr.fail])));
         !(False);

@@ -2,11 +2,12 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 <@>@ Eq@ = /Eq%.Eq@;
-<@>@ S@ = /List%.S@;
+<@>@ List@ = /List%.List@;
 
 # Eq --
-#   Implementation of Eq@ for S@. See documentation of /Eq%.Eq@.
-<@ T@>(Eq@<T@>) { Eq@<S@<T@>>; } Eq = <@ T@>(Eq@<T@> eq)(S@<T@> a, S@<T@> b) {
+#   Implementation of Eq@ for List@. See documentation of /Eq%.Eq@.
+<@ T@>(Eq@<T@>) { Eq@<List@<T@>>; }
+Eq = <@ T@>(Eq@<T@> eq)(List@<T@> a, List@<T@> b) {
   a.?(
     cons: b.?(
       cons: {

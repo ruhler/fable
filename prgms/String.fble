@@ -1,16 +1,16 @@
 
 @ Char@ = /Char%.Char@;
 
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
-@ Str@ = S@<Char@>;
+@ Str@ = List@<Char@>;
 <@>@ CharLit@ = Lit@<Char@>;
 
-(CharLit@) { S@<Char@>; } Str = (CharLit@ lit) {
-  S<Char@>(lit);
+(CharLit@) { List@<Char@>; } Str = (CharLit@ lit) {
+  List<Char@>(lit);
 };
 
 @(Str@, CharLit@, Str);

@@ -7,7 +7,7 @@
 
 % Chars = /Char%.Chars;
 
-<@>@ S@ = /List%.S@;
+<@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
 
@@ -116,8 +116,8 @@ TestSuite@ Tests = TestSuite(Chars|Map, [
           A, True),
         B, False);
     @ Entry@ = *(Bit2@ key, Bool@ value);
-    S@<Entry@> entries = For<Bool@, S@<Entry@>>(map, Nil<Entry@>,
-      (Bit2@ k, Bool@ v, S@<Entry@> l) {
+    List@<Entry@> entries = For<Bool@, List@<Entry@>>(map, Nil<Entry@>,
+      (Bit2@ k, Bool@ v, List@<Entry@> l) {
         Cons<Entry@>(Entry@(k, v), l);
       });
 

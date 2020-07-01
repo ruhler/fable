@@ -9,7 +9,7 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-<@>@ S@ = /List%.S@;
+<@>@ List@ = /List%.List@;
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 
@@ -25,16 +25,16 @@
 
 # Clause@ --
 #   A disjunction (OR) of variables.
-@ Clause@ = S@<Var@>;
+@ Clause@ = List@<Var@>;
 
 # Formula@ --
 #   A conjunction (AND) of clauses.
-@ Formula@ = S@<Clause@>;
+@ Formula@ = List@<Clause@>;
 
 # Assignment@ --
 #   A sets of variables assigned the values True or False as specified by
 #   their polarity.
-@ Assignment@ = S@<Var@>;
+@ Assignment@ = List@<Var@>;
 
 # SubstClause --
 #   Substitute a value for a variable into the given clause.

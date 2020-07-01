@@ -17,8 +17,8 @@
 
 % IsZero = /Int/Int/Eq%.IsZero;
 
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 <@,@>% ForEach = /List%.ForEach;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
@@ -108,7 +108,7 @@
              nothing: Status@(True, Count@(0: Unit)));
       });
 
-      S@<Coord@> neighbors = S<Coord@>([
+      List@<Coord@> neighbors = List<Coord@>([
         Coord@(Dec(coord.row), Dec(coord.col)),
         Coord@(Dec(coord.row),     coord.col ),
         Coord@(Dec(coord.row), Inc(coord.col)),

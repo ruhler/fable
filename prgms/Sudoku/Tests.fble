@@ -8,7 +8,7 @@
 % Chars = /Char%.Chars;
 
 <@>% Nil = /List%.Nil;
-<@>% S = /List%.S;
+<@>% List = /List%.List;
 <@>% Concat = /List%.Concat;
 
 <@,@>% DoWhile = /Loop%.DoWhile;
@@ -77,10 +77,10 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
   };
 
   Str@ space = spaced.?(true: Str(Chars|' '), false: Nil<Char@>);
-  Str@ nl = spaced.?(true: S<Char@>([Chars.nl]), false: Nil<Char@>);
+  Str@ nl = spaced.?(true: List<Char@>([Chars.nl]), false: Nil<Char@>);
 
   (Array@<Symbol@>) { Str@; } ShowRow = (Array@<Symbol@> row) {
-    Concat<Char@>(S<Str@>([
+    Concat<Char@>(List<Str@>([
       ShowCell(row(1)), ShowCell(row(2)), ShowCell(row(3)), space,
       ShowCell(row(4)), ShowCell(row(5)), ShowCell(row(6)), space,
       ShowCell(row(7)), ShowCell(row(8)), ShowCell(row(9)), nl
@@ -88,7 +88,7 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
   };
 
   (Solved@ board) {
-    Concat<Char@>(S<Str@>([
+    Concat<Char@>(List<Str@>([
       ShowRow(board(1)), ShowRow(board(2)), ShowRow(board(3)), nl,
       ShowRow(board(4)), ShowRow(board(5)), ShowRow(board(6)), nl,
       ShowRow(board(7)), ShowRow(board(8)), ShowRow(board(9))
@@ -238,10 +238,10 @@ TestSuite@ Tests = TestSuite(Chars|Sudoku, [
              },
              SampleSolved, ms.just).?(
            true: TestResult@(pass: Unit),
-           false: TestResult@(fail: Concat<Char@>(S<Str@>([
-                   Str(Chars|'incorrect solution. expected:'), S<Char@>([Chars.nl]),
-                   ShowBoard(False)(SampleSolved), S<Char@>([Chars.nl]),
-                   Str(Chars|'but got:'), S<Char@>([Chars.nl]),
+           false: TestResult@(fail: Concat<Char@>(List<Str@>([
+                   Str(Chars|'incorrect solution. expected:'), List<Char@>([Chars.nl]),
+                   ShowBoard(False)(SampleSolved), List<Char@>([Chars.nl]),
+                   Str(Chars|'but got:'), List<Char@>([Chars.nl]),
                    ShowBoard(False)(ms.just)]))));
        },
        nothing: TestResult@(fail: Str(Chars|'failed to solve board')));

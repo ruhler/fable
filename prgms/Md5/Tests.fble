@@ -8,10 +8,10 @@
 @ Hex@ = /Hex%.Hex@;
 % Hex = /Hex%.Hex;
 
-<@>@ S@ = /List%.S@;
+<@>@ List@ = /List%.List@;
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
-<@>% S = /List%.S;
+<@>% List = /List%.List;
 <@>% Concat = /List%.Concat;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
@@ -50,7 +50,7 @@
 
 (Md5Hash@){Str@;} Md5Hash2Str = (Md5Hash@ x) {
   Concat<Char@>(
-    S<Str@>([
+    List<Str@>([
       Str([Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)]),
       Str([Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)]),
       Str([Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)]),
@@ -62,38 +62,38 @@
 };
 
 (Lit@<Hex@>) { Md5Hash@; } Str2Md5Hash = (Lit@<Hex@> lit) {
-  S@<Hex@> s00 = S<Hex@>(lit);
-  Hex@ h00 = s00.cons.head; S@<Hex@> s01 = s00.cons.tail;
-  Hex@ h01 = s01.cons.head; S@<Hex@> s02 = s01.cons.tail;
-  Hex@ h02 = s02.cons.head; S@<Hex@> s03 = s02.cons.tail;
-  Hex@ h03 = s03.cons.head; S@<Hex@> s04 = s03.cons.tail;
-  Hex@ h04 = s04.cons.head; S@<Hex@> s05 = s04.cons.tail;
-  Hex@ h05 = s05.cons.head; S@<Hex@> s06 = s05.cons.tail;
-  Hex@ h06 = s06.cons.head; S@<Hex@> s07 = s06.cons.tail;
-  Hex@ h07 = s07.cons.head; S@<Hex@> s08 = s07.cons.tail;
-  Hex@ h08 = s08.cons.head; S@<Hex@> s09 = s08.cons.tail;
-  Hex@ h09 = s09.cons.head; S@<Hex@> s10 = s09.cons.tail;
-  Hex@ h10 = s10.cons.head; S@<Hex@> s11 = s10.cons.tail;
-  Hex@ h11 = s11.cons.head; S@<Hex@> s12 = s11.cons.tail;
-  Hex@ h12 = s12.cons.head; S@<Hex@> s13 = s12.cons.tail;
-  Hex@ h13 = s13.cons.head; S@<Hex@> s14 = s13.cons.tail;
-  Hex@ h14 = s14.cons.head; S@<Hex@> s15 = s14.cons.tail;
-  Hex@ h15 = s15.cons.head; S@<Hex@> s16 = s15.cons.tail;
-  Hex@ h16 = s16.cons.head; S@<Hex@> s17 = s16.cons.tail;
-  Hex@ h17 = s17.cons.head; S@<Hex@> s18 = s17.cons.tail;
-  Hex@ h18 = s18.cons.head; S@<Hex@> s19 = s18.cons.tail;
-  Hex@ h19 = s19.cons.head; S@<Hex@> s20 = s19.cons.tail;
-  Hex@ h20 = s20.cons.head; S@<Hex@> s21 = s20.cons.tail;
-  Hex@ h21 = s21.cons.head; S@<Hex@> s22 = s21.cons.tail;
-  Hex@ h22 = s22.cons.head; S@<Hex@> s23 = s22.cons.tail;
-  Hex@ h23 = s23.cons.head; S@<Hex@> s24 = s23.cons.tail;
-  Hex@ h24 = s24.cons.head; S@<Hex@> s25 = s24.cons.tail;
-  Hex@ h25 = s25.cons.head; S@<Hex@> s26 = s25.cons.tail;
-  Hex@ h26 = s26.cons.head; S@<Hex@> s27 = s26.cons.tail;
-  Hex@ h27 = s27.cons.head; S@<Hex@> s28 = s27.cons.tail;
-  Hex@ h28 = s28.cons.head; S@<Hex@> s29 = s28.cons.tail;
-  Hex@ h29 = s29.cons.head; S@<Hex@> s30 = s29.cons.tail;
-  Hex@ h30 = s30.cons.head; S@<Hex@> s31 = s30.cons.tail;
+  List@<Hex@> s00 = List<Hex@>(lit);
+  Hex@ h00 = s00.cons.head; List@<Hex@> s01 = s00.cons.tail;
+  Hex@ h01 = s01.cons.head; List@<Hex@> s02 = s01.cons.tail;
+  Hex@ h02 = s02.cons.head; List@<Hex@> s03 = s02.cons.tail;
+  Hex@ h03 = s03.cons.head; List@<Hex@> s04 = s03.cons.tail;
+  Hex@ h04 = s04.cons.head; List@<Hex@> s05 = s04.cons.tail;
+  Hex@ h05 = s05.cons.head; List@<Hex@> s06 = s05.cons.tail;
+  Hex@ h06 = s06.cons.head; List@<Hex@> s07 = s06.cons.tail;
+  Hex@ h07 = s07.cons.head; List@<Hex@> s08 = s07.cons.tail;
+  Hex@ h08 = s08.cons.head; List@<Hex@> s09 = s08.cons.tail;
+  Hex@ h09 = s09.cons.head; List@<Hex@> s10 = s09.cons.tail;
+  Hex@ h10 = s10.cons.head; List@<Hex@> s11 = s10.cons.tail;
+  Hex@ h11 = s11.cons.head; List@<Hex@> s12 = s11.cons.tail;
+  Hex@ h12 = s12.cons.head; List@<Hex@> s13 = s12.cons.tail;
+  Hex@ h13 = s13.cons.head; List@<Hex@> s14 = s13.cons.tail;
+  Hex@ h14 = s14.cons.head; List@<Hex@> s15 = s14.cons.tail;
+  Hex@ h15 = s15.cons.head; List@<Hex@> s16 = s15.cons.tail;
+  Hex@ h16 = s16.cons.head; List@<Hex@> s17 = s16.cons.tail;
+  Hex@ h17 = s17.cons.head; List@<Hex@> s18 = s17.cons.tail;
+  Hex@ h18 = s18.cons.head; List@<Hex@> s19 = s18.cons.tail;
+  Hex@ h19 = s19.cons.head; List@<Hex@> s20 = s19.cons.tail;
+  Hex@ h20 = s20.cons.head; List@<Hex@> s21 = s20.cons.tail;
+  Hex@ h21 = s21.cons.head; List@<Hex@> s22 = s21.cons.tail;
+  Hex@ h22 = s22.cons.head; List@<Hex@> s23 = s22.cons.tail;
+  Hex@ h23 = s23.cons.head; List@<Hex@> s24 = s23.cons.tail;
+  Hex@ h24 = s24.cons.head; List@<Hex@> s25 = s24.cons.tail;
+  Hex@ h25 = s25.cons.head; List@<Hex@> s26 = s25.cons.tail;
+  Hex@ h26 = s26.cons.head; List@<Hex@> s27 = s26.cons.tail;
+  Hex@ h27 = s27.cons.head; List@<Hex@> s28 = s27.cons.tail;
+  Hex@ h28 = s28.cons.head; List@<Hex@> s29 = s28.cons.tail;
+  Hex@ h29 = s29.cons.head; List@<Hex@> s30 = s29.cons.tail;
+  Hex@ h30 = s30.cons.head; List@<Hex@> s31 = s30.cons.tail;
   Hex@ h31 = s31.cons.head;
   Md5Hash@(
     h00, h01, h02, h03, h04, h05, h06, h07,
@@ -103,7 +103,7 @@
 };
 
 # Put all the bytes onto the output port, followed by nothing.
-(Put@<Maybe@<Bit8@>>, S@<Bit8@>) { Unit@!; } PutAll = (Put@<Maybe@<Bit8@>> out, S@<Bit8@> bytes) {
+(Put@<Maybe@<Bit8@>>, List@<Bit8@>) { Unit@!; } PutAll = (Put@<Maybe@<Bit8@>> out, List@<Bit8@> bytes) {
   bytes.?(
     cons: {
       Unit@ _ := out(Maybe@<Bit8@>(just: bytes.cons.head));
@@ -116,13 +116,13 @@
 
 
 # Compute the md5 hash for a string of bytes.
-(S@<Bit8@>) { Md5Hash@!; } Md5Str = (S@<Bit8@> bytes) {
+(List@<Bit8@>) { Md5Hash@!; } Md5Str = (List@<Bit8@> bytes) {
   Maybe@<Bit8@> ~ get, put;
   Md5Hash@ md5 := Md5(get), Unit@ x := PutAll(put, bytes);
   !(md5);
 };
 
-(S@<Hex@>) { S@<Bit8@>; } Hex2Bytes = (S@<Hex@> hex) {
+(List@<Hex@>) { List@<Bit8@>; } Hex2Bytes = (List@<Hex@> hex) {
   hex.?(
     cons: Cons<Bit8@>(
       H2(hex.cons.head, hex.cons.tail.cons.head),
@@ -132,7 +132,7 @@
       
 (CharLit@, Lit@<Hex@>, Lit@<Hex@>) { Test@; } TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
   Test@(Str(name), {
-    Md5Hash@ got := Md5Str(Hex2Bytes(S<Hex@>(bytes)));
+    Md5Hash@ got := Md5Str(Hex2Bytes(List<Hex@>(bytes)));
     !(AssertEquals<Md5Hash@>(Eq, Md5Hash2Str, Str2Md5Hash(wnt), got));
   });
 };
@@ -183,10 +183,10 @@ TestSuite@ Tests = TestSuite(Chars|Md5, [
 
 # Benchmark for md5 sum that takes about 1 minute to run.
 Unit@! Bench = {
-  S@<Hex@> d0 = S<Hex@>(Hex|3132333435363738393031323334353637383930313233);
-  S@<Hex@> d1 = Concat<Hex@>(S<S@<Hex@>>([d0, d0, d0, d0, d0, d0, d0, d0]));
-  S@<Hex@> d2 = Concat<Hex@>(S<S@<Hex@>>([d1, d1, d1, d1, d1, d1, d1, d1]));
-  S@<Hex@> d3 = Concat<Hex@>(S<S@<Hex@>>([d2, d2, d2, d2]));
+  List@<Hex@> d0 = List<Hex@>(Hex|3132333435363738393031323334353637383930313233);
+  List@<Hex@> d1 = Concat<Hex@>(List<List@<Hex@>>([d0, d0, d0, d0, d0, d0, d0, d0]));
+  List@<Hex@> d2 = Concat<Hex@>(List<List@<Hex@>>([d1, d1, d1, d1, d1, d1, d1, d1]));
+  List@<Hex@> d3 = Concat<Hex@>(List<List@<Hex@>>([d2, d2, d2, d2]));
   Md5Hash@ _ := Md5Str(Hex2Bytes(d3));
   !(Unit);
 };

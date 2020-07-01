@@ -18,8 +18,8 @@
 % Over = /Drawing%.Over;
 % Transform = /Drawing%.Transform;
 
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 <@>% Init = /List%.Init;
 <@>% Cons = /List%.Cons;
 <@,@>% ForEach = /List%.ForEach;
@@ -98,11 +98,11 @@ Int@ MaxCol = I(D|60);
   Dir@ dir,
   Pos@ food,
   Int@ rand,
-  S@<Pos@> snake,
+  List@<Pos@> snake,
   Int@ speed
 );
 
-(S@<Pos@>) { Drawing@; } DrawSnakeS = (S@<Pos@> s) {
+(List@<Pos@>) { Drawing@; } DrawSnakeS = (List@<Pos@> s) {
   ForEach<Pos@, Drawing@>(s, Blank, (Pos@ p, Drawing@ d) {
     Over(DrawCell(p, Cell@(snake: Unit)), d);
   });
@@ -127,7 +127,7 @@ State@ InitialState = {
     Dir@(right: Unit),
     Pos@(r4, c1),
     I(D|1),
-    S<Pos@>([Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)]),
+    List<Pos@>([Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)]),
     I(D|40));
 };
 
@@ -135,7 +135,7 @@ State@ InitialState = {
 @ PosM@ = +(Unit@ dead, Pos@ pos);
 
 # Return true if the given position is found in the list of positions.
-(S@<Pos@>, Pos@) { Bool@; } InPosS = (S@<Pos@> s, Pos@ p) {
+(List@<Pos@>, Pos@) { Bool@; } InPosS = (List@<Pos@> s, Pos@ p) {
   s.?(
     cons: EqPos(s.cons.head, p).?(true: True, false: InPosS(s.cons.tail, p)),
     nil: False);
@@ -152,7 +152,7 @@ Int@ Max64 = I(D|18446744073709551616);
 
 # Pick the position of the next food randomly, given the random bits and the
 # snakes position.
-(Int@, S@<Pos@>) { Pos@; } GetNextFood = (Int@ rand, S@<Pos@> snake) {
+(Int@, List@<Pos@>) { Pos@; } GetNextFood = (Int@ rand, List@<Pos@> snake) {
   Int@ x = Mod(Div(rand, I(D|65536)), I(D|32768));
   Int@ row = Inc(Mod(x, Dec(MaxRow)));
   Int@ col = Inc(Mod(Div(x, MaxRow), Dec(MaxCol)));
@@ -185,7 +185,7 @@ Int@ Max64 = I(D|18446744073709551616);
       true: {
         # TODO: Properly handle the case where the snake eats food at its
         # tail.
-        S@<Pos@> nsnake = Cons<Pos@>(s.food, s.snake);
+        List@<Pos@> nsnake = Cons<Pos@>(s.food, s.snake);
         Pos@ nfood = GetNextFood(nrand, nsnake);
         Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
         State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
@@ -196,7 +196,7 @@ Int@ Max64 = I(D|18446744073709551616);
         false: {
           # TODO: Combine calls to Init and Last so we only have to
           # iterate over the list of elements once instead of twice?
-          S@<Pos@> nsnake = Cons<Pos@>(pm.pos, Init<Pos@>(s.snake));
+          List@<Pos@> nsnake = Cons<Pos@>(pm.pos, Init<Pos@>(s.snake));
           State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
           MoveResultM@(state: ns);
          })));

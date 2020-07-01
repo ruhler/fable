@@ -2,8 +2,8 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 <@>% Concat = /List%.Concat;
 
 @ Str@ = /String%.Str@;
@@ -13,21 +13,21 @@
 #   Print the tail part of a list.
 #
 # For example, the list [1, 2, 3] is printed as ", 1, 2, 3]"
-<@ T@>((T@) { Str@; }, S@<T@>) { Str@; }
-PrintTail = <@ T@>((T@) { Str@; } print, S@<T@> l) {
+<@ T@>((T@) { Str@; }, List@<T@>) { Str@; }
+PrintTail = <@ T@>((T@) { Str@; } print, List@<T@> l) {
   l.?(
     cons:
-      Concat<Char@>(S<Str@>([
+      Concat<Char@>(List<Str@>([
           Str(Chars|', '),
           print(l.cons.head),
           PrintTail<T@>(print, l.cons.tail)])),
     nil: Str(Chars|']'));
 };
 
-<@ T@>((T@) { Str@; }, S@<T@>) { Str@; }
-Print = <@ T@>((T@) { Str@; } print, S@<T@> l) {
+<@ T@>((T@) { Str@; }, List@<T@>) { Str@; }
+Print = <@ T@>((T@) { Str@; } print, List@<T@> l) {
   l.?(
-    cons: Concat<Char@>(S<Str@>([
+    cons: Concat<Char@>(List<Str@>([
         Str(Chars|'['),
         print(l.cons.head),
         PrintTail<T@>(print, l.cons.tail)])),

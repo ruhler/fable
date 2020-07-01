@@ -5,8 +5,8 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 
-<@>@ S@ = /List%.S@;
-<@>% S = /List%.S;
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 <@,@>% Map = /List%.Map;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
@@ -31,7 +31,7 @@
   #
   # The path is implicitly closed. For example, to draw a rectangle, give the
   # four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
-  *(S@<Point@> points, Color@ color) path,
+  *(List@<Point@> points, Color@ color) path,
 
   # Draw one drawing over another.
   *(Drawing@ below, Drawing@ above) over
@@ -43,7 +43,7 @@ Drawing@ Blank = Drawing@(blank: Unit);
 #
 # The path is implicitly closed. For example, to draw a rectangle, give the
 # four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
-(S@<Point@>, Color@) { Drawing@; } Path = (S@<Point@> points, Color@ color) {
+(List@<Point@>, Color@) { Drawing@; } Path = (List@<Point@> points, Color@ color) {
   Drawing@(path: @(points, color));
 };
 
@@ -52,7 +52,7 @@ Drawing@ Blank = Drawing@(blank: Unit);
 Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
   Drawing@(path: @(
     points:
-      S<Point@>([
+      List<Point@>([
         Point@(x, y),
         Point@(Add(x, w), y),
         Point@(Add(x, w), Add(y, h)),
