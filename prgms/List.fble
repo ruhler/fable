@@ -1,7 +1,5 @@
 
 @ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% And = /Bool%.And;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
@@ -12,10 +10,6 @@
 # S - A list of 0 or more elements: T*
 <@>@ P@ = <@ T@> { *(T@ head, S@<T@> tail); },
 <@>@ S@ = <@ T@> { +(P@<T@> cons, Unit@ nil); };
-
-<@ T@>(S@<T@>){T@;} HeadS = <@ T@>(S@<T@> l) {
-  l.cons.head;
-};
 
 <@ T@>(T@, S@<T@>){S@<T@>;} ConsS = <@ T@>(T@ a, S@<T@> l) {
   S@<T@>(cons: P@<T@>(a, l));
@@ -72,13 +66,6 @@ S@ S0 = <@ T@> {
     SortInsert<T@>(le, l.head, SortS<T@>(le, l.tail));
   };
 
-(S@<Bool@>){Bool@;} AndS = (S@<Bool@> s) {
-  s.?(cons: AndP(s.cons), nil: True);
-},
-(P@<Bool@>){Bool@;} AndP = (P@<Bool@> p) {
-  And(p.head, AndS(p.tail));
-};
-
 <@ A@, @ B@>(S@<A@>, B@, (A@, B@){B@;}){ B@;}
 ForS = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
   l.?(cons: ForS<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
@@ -100,6 +87,6 @@ ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
 };
 
 @(P@, S@,
-  HeadS, ConsS, Append, S0, S,
+  ConsS, Append, S0, S,
   InitP, Concat, MapS, MapP,
-  AndS, AndP, SortS, SortP, ForS, ForS_);
+  SortS, SortP, ForS, ForS_);
