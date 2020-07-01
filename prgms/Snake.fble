@@ -20,7 +20,9 @@
 
 <@>@ P@ = /List%.P@;
 <@>@ S@ = /List%.S@;
-<@>% InitP = /List%.InitP;
+<@>% S = /List%.S;
+<@>% InitS = /List%.InitS;
+<@>% ConsS = /List%.ConsS;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -95,7 +97,7 @@ Int@ MaxCol = I(D|60);
   Dir@ dir,
   Pos@ food,
   Int@ rand,
-  P@<Pos@> snake,
+  S@<Pos@> snake,
   Int@ speed
 );
 
@@ -110,7 +112,7 @@ Int@ MaxCol = I(D|60);
 (State@){Drawing@;} Draw = (State@ s) {
   Drawings([
     Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit)),
-    DrawSnakeP(s.snake),
+    DrawSnakeS(s.snake),
     DrawCell(s.food, Cell@(food: Unit))
   ]);
 };
@@ -126,10 +128,7 @@ State@ InitialState = {
       Dir@(right: Unit),
       Pos@(r4, c1),
       I(D|1),
-      P@<Pos@>(Pos@(r1, c4), S@<Pos@>(cons: P@<Pos@>(
-              Pos@(r1, c3), S@<Pos@>(cons: P@<Pos@>(
-              Pos@(r1, c2), S@<Pos@>(cons: P@<Pos@>(
-              Pos@(r1, c1), S@<Pos@>(nil: Unit)))))))),
+      S<Pos@>([Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)]),
       I(D|40));
 };
 
@@ -155,12 +154,12 @@ Int@ Max64 = I(D|18446744073709551616);
 
 # Pick the position of the next food randomly, given the random bits and the
 # snakes position.
-(Int@, P@<Pos@>) { Pos@; } GetNextFood = (Int@ rand, P@<Pos@> snake) {
+(Int@, S@<Pos@>) { Pos@; } GetNextFood = (Int@ rand, S@<Pos@> snake) {
   Int@ x = Mod(Div(rand, I(D|65536)), I(D|32768));
   Int@ row = Inc(Mod(x, Dec(MaxRow)));
   Int@ col = Inc(Mod(Div(x, MaxRow), Dec(MaxCol)));
   Pos@ pos = Pos@(row, col);
-  InPosP(snake, pos).?(
+  InPosS(snake, pos).?(
     true: GetNextFood(StepRand(Dir@(up: Unit), rand), snake),
     false: pos
   );
@@ -170,42 +169,42 @@ Int@ Max64 = I(D|18446744073709551616);
   Int@ nrand = StepRand(s.dir, s.rand);
   PosM@ pm = s.dir.?(
     up:
-    Eq(s.snake.head.row, MaxRow).?(
+    Eq(s.snake.cons.head.row, MaxRow).?(
         true: PosM@(dead: Unit),
-       false: PosM@(pos: Pos@(Inc(s.snake.head.row), s.snake.head.col))),
+       false: PosM@(pos: Pos@(Inc(s.snake.cons.head.row), s.snake.cons.head.col))),
 
     down:
-    Eq(s.snake.head.row, MinRow).?(
+    Eq(s.snake.cons.head.row, MinRow).?(
         true: PosM@(dead: Unit),
-       false: PosM@(pos: Pos@(Dec(s.snake.head.row), s.snake.head.col))),
+       false: PosM@(pos: Pos@(Dec(s.snake.cons.head.row), s.snake.cons.head.col))),
 
     left:
-    Eq(s.snake.head.col, MinCol).?(
+    Eq(s.snake.cons.head.col, MinCol).?(
         true: PosM@(dead: Unit),
-       false: PosM@(pos: Pos@(s.snake.head.row, Dec(s.snake.head.col)))),
+       false: PosM@(pos: Pos@(s.snake.cons.head.row, Dec(s.snake.cons.head.col)))),
 
     right:
-    Eq(s.snake.head.col, MaxCol).?(
+    Eq(s.snake.cons.head.col, MaxCol).?(
         true: PosM@(dead: Unit),
-       false: PosM@(pos: Pos@(s.snake.head.row, Inc(s.snake.head.col)))));
+       false: PosM@(pos: Pos@(s.snake.cons.head.row, Inc(s.snake.cons.head.col)))));
 
   pm.?(dead: MoveResultM@(dead: Unit), pos:
       EqPos(pm.pos, s.food).?(
           true: {
             # TODO: Properly handle the case where the snake eats food at its
             # tail.
-            P@<Pos@> nsnake = P@<Pos@>(s.food, S@<Pos@>(cons: s.snake));
+            S@<Pos@> nsnake = ConsS<Pos@>(s.food, s.snake);
             Pos@ nfood = GetNextFood(nrand, nsnake);
             Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
             State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
             MoveResultM@(state: ns);
           },
           false:
-          InPosP(s.snake, pm.pos).?(true: MoveResultM@(dead: Unit),
+          InPosS(s.snake, pm.pos).?(true: MoveResultM@(dead: Unit),
             false: {
               # TODO: Combine calls to Init and Last so we only have to
               # iterate over the list of elements once instead of twice?
-              P@<Pos@> nsnake = P@<Pos@>(pm.pos, InitP<Pos@>(s.snake));
+              S@<Pos@> nsnake = ConsS<Pos@>(pm.pos, InitS<Pos@>(s.snake));
               State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
               MoveResultM@(state: ns);
             })));
@@ -227,15 +226,15 @@ Int@ Max64 = I(D|18446744073709551616);
 
   (Dir@) { Choice@; } Choice = (Dir@ dir) {
     Pos@ pos = dir.?(
-      up: Pos@(Inc(s.snake.head.row), s.snake.head.col),
-      down: Pos@(Dec(s.snake.head.row), s.snake.head.col),
-      left: Pos@(s.snake.head.row, Dec(s.snake.head.col)),
-      right: Pos@(s.snake.head.row, Inc(s.snake.head.col)));
+      up: Pos@(Inc(s.snake.cons.head.row), s.snake.cons.head.col),
+      down: Pos@(Dec(s.snake.cons.head.row), s.snake.cons.head.col),
+      left: Pos@(s.snake.cons.head.row, Dec(s.snake.cons.head.col)),
+      right: Pos@(s.snake.cons.head.row, Inc(s.snake.cons.head.col)));
 
     Bool@ dead =
       Or(Or(Or(Eq(pos.row, MinRow), Eq(pos.row, MaxRow)),
             Or(Eq(pos.col, MinCol), Eq(pos.col, MaxCol))),
-         InPosP(s.snake, pos));
+         InPosS(s.snake, pos));
 
     # The cost of death is very high.
     Int@ death = dead.?(true: I(D|100000), false: 0);
