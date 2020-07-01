@@ -91,7 +91,7 @@ ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
     nil: !(base));
 };
 
-@(P@, S@,
+@(S@,
   ConsS, Append, S0, S,
   InitS, Concat, MapS,
   SortS, ForS, ForS_);

@@ -18,11 +18,11 @@
 % Over = /Drawing%.Over;
 % Transform = /Drawing%.Transform;
 
-<@>@ P@ = /List%.P@;
 <@>@ S@ = /List%.S@;
 <@>% S = /List%.S;
 <@>% InitS = /List%.InitS;
 <@>% ConsS = /List%.ConsS;
+<@,@>% ForS = /List%.ForS;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -103,10 +103,9 @@ Int@ MaxCol = I(D|60);
 
 # TODO: Use MapS or some other combinator for this.
 (S@<Pos@>){Drawing@;} DrawSnakeS = (S@<Pos@> s) {
-  s.?(cons: DrawSnakeP(s.cons), nil: Blank);
-},
-(P@<Pos@>){Drawing@;} DrawSnakeP = (P@<Pos@> s) {
-  Over(DrawCell(s.head, Cell@(snake: Unit)), DrawSnakeS(s.tail));
+  ForS<Pos@, Drawing@>(s, Blank, (Pos@ p, Drawing@ d) {
+    Over(DrawCell(p, Cell@(snake: Unit)), d);
+  });
 };
 
 (State@){Drawing@;} Draw = (State@ s) {
@@ -137,10 +136,9 @@ State@ InitialState = {
 
 # Return true if the given position is found in the list of positions.
 (S@<Pos@>, Pos@){Bool@;} InPosS = (S@<Pos@> s, Pos@ p) {
-  s.?(cons: InPosP(s.cons, p), nil: False);
-},
-(P@<Pos@>, Pos@){Bool@;} InPosP = (P@<Pos@> s, Pos@ p) {
-  EqPos(s.head, p).?(true: True, false: InPosS(s.tail, p));
+  s.?(
+    cons: EqPos(s.cons.head, p).?(true: True, false: InPosS(s.cons.tail, p)),
+    nil: False);
 };
 
 # Update the random number for where the next food will be generate.
