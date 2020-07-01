@@ -7,7 +7,7 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-<@>% S0 = /List%.S0;
+<@>% Nil = /List%.Nil;
 <@>% S = /List%.S;
 <@>% Concat = /List%.Concat;
 
@@ -76,8 +76,8 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
         7: Str(Chars|7), 8: Str(Chars|8), 9: Str(Chars|9));
   };
 
-  Str@ space = spaced.?(true: Str(Chars|' '), false: S0<Char@>);
-  Str@ nl = spaced.?(true: S<Char@>([Chars.nl]), false: S0<Char@>);
+  Str@ space = spaced.?(true: Str(Chars|' '), false: Nil<Char@>);
+  Str@ nl = spaced.?(true: S<Char@>([Chars.nl]), false: Nil<Char@>);
 
   (Array@<Symbol@>) { Str@; } ShowRow = (Array@<Symbol@> row) {
     Concat<Char@>(S<Str@>([

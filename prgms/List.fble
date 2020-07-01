@@ -18,31 +18,31 @@
   a.?(cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
 };
 
-S@ S0 = <@ T@> {
+S@ Nil = <@ T@> {
   S@<T@>(nil: Unit);
 };
 
 <@ T@>(Lit@<T@>) { S@<T@>; } S = <@ T@>(Lit@<T@> lit) {
-  lit<S@<T@>>(ConsS<T@>, S0<T@>);
+  lit<S@<T@>>(ConsS<T@>, Nil<T@>);
 };
 
 # InitP - Return all but the last element in 'list'.
 <@ T@>(P@<T@>){S@<T@>;} InitP = <@ T@>(P@<T@> list) {
-  list.tail.?(cons: ConsS<T@>(list.head, InitP<T@>(list.tail.cons)), nil: S0<T@>);
+  list.tail.?(cons: ConsS<T@>(list.head, InitP<T@>(list.tail.cons)), nil: Nil<T@>);
 };
 
 # InitS - Return all but the last element in 'list'.
 <@ T@>(S@<T@>){S@<T@>;} InitS = <@ T@>(S@<T@> list) {
-  list.?(cons: InitP<T@>(list.cons), nil: S0<T@>);
+  list.?(cons: InitP<T@>(list.cons), nil: Nil<T@>);
 };
 
 # Concat: Flatten a list of lists into a single list of all the elements.
 <@ T@>(S@<S@<T@>>){S@<T@>;} Concat = <@ T@>(S@<S@<T@>> x) {
-  x.?(cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: S0<T@>);
+  x.?(cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: Nil<T@>);
 };
 
 <@ A@, @ B@>(S@<A@>, (A@){B@;}){S@<B@>;} MapS = <@ A@, @ B@>(S@<A@> a, (A@){B@;} f) {
-  a.?(cons: S@<B@>(cons: MapP<A@, B@>(a.cons, f)), nil: S0<B@>);
+  a.?(cons: S@<B@>(cons: MapP<A@, B@>(a.cons, f)), nil: Nil<B@>);
 },
 <@ A@, @ B@>(P@<A@>, (A@){B@;}){P@<B@>;} MapP = <@ A@, @ B@>(P@<A@> a, (A@){B@;} f) {
   P@<B@>(f(a.head), MapS<A@, B@>(a.tail, f));
@@ -69,6 +69,6 @@ ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
 };
 
 @(S@,
-  ConsS, Append, S0, S,
+  ConsS, Append, Nil, S,
   InitS, Concat, MapS,
   ForS, ForS_);

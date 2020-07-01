@@ -7,7 +7,7 @@
 % Chars = /Char%.Chars;
 
 <@>@ S@ = /List%.S@;
-<@>% S0 = /List%.S0;
+<@>% Nil = /List%.Nil;
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
@@ -100,16 +100,16 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       nil: !(failed));
   };
 
-  S@<Failure@> failures := Run(tests, S0<Failure@>);
+  S@<Failure@> failures := Run(tests, Nil<Failure@>);
 
-  Unit@ _ := PrintLn(out, S0<Char@>);
+  Unit@ _ := PrintLn(out, Nil<Char@>);
   Unit@ _ := ForS_<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
     PrintLn(out, Concat<Char@>(S<Str@>([f.name, Str(Chars|': FAILED: '), f.msg])));
   });
 
   # TODO: Why do we need this extra output?
-  Unit@ _ := PrintLn(out, S0<Char@>);
-  Unit@ _ := PrintLn(out, S0<Char@>);
+  Unit@ _ := PrintLn(out, Nil<Char@>);
+  Unit@ _ := PrintLn(out, Nil<Char@>);
 
   !(failures.?(cons: False, nil: True));
 };
@@ -121,7 +121,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
     TestResult@ tr := test.test;
     tr.?(
       pass: {
-        Unit@ _ := PrintLn(out, S0<Char@>);
+        Unit@ _ := PrintLn(out, Nil<Char@>);
         !(passing);
       },
       fail: {

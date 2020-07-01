@@ -1,7 +1,7 @@
 @ Bool@ = /Bool%.Bool@;
 
 <@>@ S@ = /List%.S@;
-<@>% S0 = /List%.S0;
+<@>% Nil = /List%.Nil;
 <@>% ConsS = /List%.ConsS;
 
 # Insert the element 'x' into 'l' at the sorted position based on the le
@@ -11,7 +11,7 @@
     l.?(cons: le(x, l.cons.head).?(
                   true: ConsS<T@>(x, l),
                   false: ConsS<T@>(l.cons.head, SortInsert<T@>(le, x, l.cons.tail))),
-         nil: ConsS<T@>(x, S0<T@>));
+         nil: ConsS<T@>(x, Nil<T@>));
   };
 
 # Sort the given list of elements, using LE for the comparisons.

@@ -10,7 +10,7 @@
 
 <@>@ S@ = /List%.S@;
 <@>% ConsS = /List%.ConsS;
-<@>% S0 = /List%.S0;
+<@>% Nil = /List%.Nil;
 <@>% S = /List%.S;
 <@>% Concat = /List%.Concat;
 
@@ -127,7 +127,7 @@
     cons: ConsS<Bit8@>(
       H2(hex.cons.head, hex.cons.tail.cons.head),
       Hex2Bytes(hex.cons.tail.cons.tail)),
-    nil: S0<Bit8@>);
+    nil: Nil<Bit8@>);
 };
       
 (CharLit@, Lit@<Hex@>, Lit@<Hex@>) { Test@; } TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {

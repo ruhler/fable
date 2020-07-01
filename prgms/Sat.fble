@@ -11,7 +11,7 @@
 
 <@>@ S@ = /List%.S@;
 <@>% ConsS = /List%.ConsS;
-<@>% S0 = /List%.S0;
+<@>% Nil = /List%.Nil;
 
 # VarId@ --
 #   A variable identifier.
@@ -114,7 +114,7 @@ Naive = (Formula@ f, Assignment@ a) {
 # Returns:
 #   A satisfying assignment, or Nothing if the formula is unsatisfiable.
 (Formula@) { Maybe@<Assignment@>; } Solve = (Formula@ f) {
-  Naive(f, S0<Var@>);
+  Naive(f, Nil<Var@>);
 };
 
 @(VarId@, Var@, Clause@, Formula@, Assignment@, Solve);
