@@ -20,7 +20,7 @@
 
 <@>@ S@ = /List%.S@;
 <@>% S = /List%.S;
-<@>% InitS = /List%.InitS;
+<@>% Init = /List%.Init;
 <@>% Cons = /List%.Cons;
 <@,@>% ForEach = /List%.ForEach;
 
@@ -196,7 +196,7 @@ Int@ Max64 = I(D|18446744073709551616);
         false: {
           # TODO: Combine calls to Init and Last so we only have to
           # iterate over the list of elements once instead of twice?
-          S@<Pos@> nsnake = Cons<Pos@>(pm.pos, InitS<Pos@>(s.snake));
+          S@<Pos@> nsnake = Cons<Pos@>(pm.pos, Init<Pos@>(s.snake));
           State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
           MoveResultM@(state: ns);
          })));

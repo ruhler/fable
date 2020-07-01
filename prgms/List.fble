@@ -31,8 +31,8 @@ S@ Nil = <@ T@> {
   list.tail.?(cons: Cons<T@>(list.head, InitP<T@>(list.tail.cons)), nil: Nil<T@>);
 };
 
-# InitS - Return all but the last element in 'list'.
-<@ T@>(S@<T@>){S@<T@>;} InitS = <@ T@>(S@<T@> list) {
+# Init - Return all but the last element in 'list'.
+<@ T@>(S@<T@>){S@<T@>;} Init = <@ T@>(S@<T@> list) {
   list.?(cons: InitP<T@>(list.cons), nil: Nil<T@>);
 };
 
@@ -41,11 +41,11 @@ S@ Nil = <@ T@> {
   x.?(cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: Nil<T@>);
 };
 
-<@ A@, @ B@>(S@<A@>, (A@){B@;}){S@<B@>;} MapS = <@ A@, @ B@>(S@<A@> a, (A@){B@;} f) {
+<@ A@, @ B@>(S@<A@>, (A@){B@;}){S@<B@>;} Map = <@ A@, @ B@>(S@<A@> a, (A@){B@;} f) {
   a.?(cons: S@<B@>(cons: MapP<A@, B@>(a.cons, f)), nil: Nil<B@>);
 },
 <@ A@, @ B@>(P@<A@>, (A@){B@;}){P@<B@>;} MapP = <@ A@, @ B@>(P@<A@> a, (A@){B@;} f) {
-  P@<B@>(f(a.head), MapS<A@, B@>(a.tail, f));
+  P@<B@>(f(a.head), Map<A@, B@>(a.tail, f));
 };
 
 <@ A@, @ B@>(S@<A@>, B@, (A@, B@){B@;}){ B@;}
@@ -54,21 +54,19 @@ ForEach = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
       nil: base);
 };
 
-# ForS_
+# ProcessEach
 #  A process version of ForEach.
-#
-# TODO: Pick a better name for this.
 <@ A@, @ B@>(S@<A@>, B@, (A@, B@) { B@!; }){ B@!; }
-ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
+ProcessEach = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
   l.?(
     cons: {
       B@ nbase := body(l.cons.head, base);
-      ForS_<A@, B@>(l.cons.tail, nbase, body);
+      ProcessEach<A@, B@>(l.cons.tail, nbase, body);
     },
     nil: !(base));
 };
 
-@(S@,
-  Cons, Append, Nil, S,
-  InitS, Concat, MapS,
-  ForEach, ForS_);
+@(S@, S,
+  Cons, Append, Nil,
+  Init, Concat, Map,
+  ForEach, ProcessEach);

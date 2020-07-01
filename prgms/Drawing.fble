@@ -7,7 +7,7 @@
 
 <@>@ S@ = /List%.S@;
 <@>% S = /List%.S;
-<@,@>% MapS = /List%.MapS;
+<@,@>% Map = /List%.Map;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
@@ -78,7 +78,7 @@ Transform = ((Point@) { Point@; } f, Drawing@ d) {
     path:
       Drawing@(
         path: @(
-          points: MapS<Point@, Point@>(d.path.points, f),
+          points: Map<Point@, Point@>(d.path.points, f),
           color: d.path.color)),
        over: {
          Over(Transform(f, d.over.below), Transform(f, d.over.above));

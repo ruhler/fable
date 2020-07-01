@@ -12,8 +12,8 @@
 <@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
 <@>% Cons = /List%.Cons;
-<@,@>% ForS_ = /List%.ForS_;
-<@,@>% MapS = /List%.MapS;
+<@,@>% ProcessEach = /List%.ProcessEach;
+<@,@>% Map = /List%.Map;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
@@ -52,7 +52,7 @@
 (CharLit@, Lit@<Test@>) { TestSuite@; }
 TestSuite = (CharLit@ name, Lit@<Test@> tests) {
   Str@ prefix = Append<Char@>(Str(name), Str(Chars|'.'));
-  MapS<Test@, Test@>(S<Test@>(tests), (Test@ test) {
+  Map<Test@, Test@>(S<Test@>(tests), (Test@ test) {
     Test@(Append<Char@>(prefix, test.name), test.test);
   });
 };
@@ -103,7 +103,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
   S@<Failure@> failures := Run(tests, Nil<Failure@>);
 
   Unit@ _ := PrintLn(out, Nil<Char@>);
-  Unit@ _ := ForS_<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
+  Unit@ _ := ProcessEach<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
     PrintLn(out, Concat<Char@>(S<Str@>([f.name, Str(Chars|': FAILED: '), f.msg])));
   });
 
@@ -116,7 +116,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 
 # Returns True if the tests all pass, false otherwise.
 (Put@<Str@>, TestSuite@) { Bool@!; } RunTestsVerbose = (Put@<Str@> out, TestSuite@ tests) {
-  ForS_<Test@, Bool@>(tests, True, (Test@ test, Bool@ passing) {
+  ProcessEach<Test@, Bool@>(tests, True, (Test@ test, Bool@ passing) {
     Unit@ _ := Print(out, test.name);
     TestResult@ tr := test.test;
     tr.?(
