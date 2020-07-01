@@ -21,7 +21,7 @@
 <@>@ S@ = /List%.S@;
 <@>% S = /List%.S;
 <@>% InitS = /List%.InitS;
-<@>% ConsS = /List%.ConsS;
+<@>% Cons = /List%.Cons;
 <@,@>% ForS = /List%.ForS;
 
 <@>@ Get@ = /Process%.Get@;
@@ -185,7 +185,7 @@ Int@ Max64 = I(D|18446744073709551616);
       true: {
         # TODO: Properly handle the case where the snake eats food at its
         # tail.
-        S@<Pos@> nsnake = ConsS<Pos@>(s.food, s.snake);
+        S@<Pos@> nsnake = Cons<Pos@>(s.food, s.snake);
         Pos@ nfood = GetNextFood(nrand, nsnake);
         Int@ nspeed = s.speed; # s.speed.?(n: 0, 0: 0, p: Sub(s.speed, 4));
         State@ ns = State@(s.dir, nfood, nrand, nsnake, nspeed);
@@ -196,7 +196,7 @@ Int@ Max64 = I(D|18446744073709551616);
         false: {
           # TODO: Combine calls to Init and Last so we only have to
           # iterate over the list of elements once instead of twice?
-          S@<Pos@> nsnake = ConsS<Pos@>(pm.pos, InitS<Pos@>(s.snake));
+          S@<Pos@> nsnake = Cons<Pos@>(pm.pos, InitS<Pos@>(s.snake));
           State@ ns = State@(s.dir, s.food, nrand, nsnake, s.speed);
           MoveResultM@(state: ns);
          })));

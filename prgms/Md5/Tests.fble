@@ -9,7 +9,7 @@
 % Hex = /Hex%.Hex;
 
 <@>@ S@ = /List%.S@;
-<@>% ConsS = /List%.ConsS;
+<@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 <@>% S = /List%.S;
 <@>% Concat = /List%.Concat;
@@ -124,7 +124,7 @@
 
 (S@<Hex@>) { S@<Bit8@>; } Hex2Bytes = (S@<Hex@> hex) {
   hex.?(
-    cons: ConsS<Bit8@>(
+    cons: Cons<Bit8@>(
       H2(hex.cons.head, hex.cons.tail.cons.head),
       Hex2Bytes(hex.cons.tail.cons.tail)),
     nil: Nil<Bit8@>);

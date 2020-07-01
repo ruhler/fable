@@ -2,16 +2,16 @@
 
 <@>@ S@ = /List%.S@;
 <@>% Nil = /List%.Nil;
-<@>% ConsS = /List%.ConsS;
+<@>% Cons = /List%.Cons;
 
 # Insert the element 'x' into 'l' at the sorted position based on the le
 # comparision function.
 <@ T@>((T@, T@){Bool@;}, T@, S@<T@>){S@<T@>;} SortInsert =
   <@ T@>((T@, T@){Bool@;} le, T@ x, S@<T@> l) {
     l.?(cons: le(x, l.cons.head).?(
-                  true: ConsS<T@>(x, l),
-                  false: ConsS<T@>(l.cons.head, SortInsert<T@>(le, x, l.cons.tail))),
-         nil: ConsS<T@>(x, Nil<T@>));
+                  true: Cons<T@>(x, l),
+                  false: Cons<T@>(l.cons.head, SortInsert<T@>(le, x, l.cons.tail))),
+         nil: Cons<T@>(x, Nil<T@>));
   };
 
 # Sort the given list of elements, using LE for the comparisons.

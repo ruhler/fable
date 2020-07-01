@@ -10,7 +10,7 @@
 <@>% Nothing = /Maybe%.Nothing;
 
 <@>@ S@ = /List%.S@;
-<@>% ConsS = /List%.ConsS;
+<@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 
 # VarId@ --
@@ -51,7 +51,7 @@
         false: {
           Maybe@<Clause@> tail = SubstClause(c.cons.tail, v);
           tail.?(
-            just: Just<Clause@>(ConsS<Var@>(head, tail.just)),
+            just: Just<Clause@>(Cons<Var@>(head, tail.just)),
             nothing: Nothing<Clause@>);
         });
     },
@@ -65,7 +65,7 @@
     cons: {
       Maybe@<Clause@> c = SubstClause(f.cons.head, v);
       c.?(
-        just: ConsS<Clause@>(c.just, Subst(f.cons.tail, v)),
+        just: Cons<Clause@>(c.just, Subst(f.cons.tail, v)),
         nothing: Subst(f.cons.tail, v));
     },
     nil: f);
@@ -95,12 +95,12 @@ Naive = (Formula@ f, Assignment@ a) {
           Var@ v = f.cons.head.cons.head;
           Maybe@<Assignment@> attempted = Naive(
             Subst(f, v),
-            ConsS<Var@>(v, a));
+            Cons<Var@>(v, a));
           attempted.?(
             just: attempted,
             nothing: {
               Var@ nv = Var@(v.id, Not(v.polarity));
-              Naive(Subst(f, nv), ConsS<Var@>(nv, a));
+              Naive(Subst(f, nv), Cons<Var@>(nv, a));
             });
         },
         nil: Nothing<Assignment@>);

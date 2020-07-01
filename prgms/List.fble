@@ -9,13 +9,13 @@
 <@>@ P@ = <@ T@> { *(T@ head, S@<T@> tail); },
 <@>@ S@ = <@ T@> { +(P@<T@> cons, Unit@ nil); };
 
-<@ T@>(T@, S@<T@>){S@<T@>;} ConsS = <@ T@>(T@ a, S@<T@> l) {
+<@ T@>(T@, S@<T@>){S@<T@>;} Cons = <@ T@>(T@ a, S@<T@> l) {
   S@<T@>(cons: P@<T@>(a, l));
 };
 
 # Append list b to the end of list a.
 <@ T@>(S@<T@>, S@<T@>){S@<T@>;} Append = <@ T@>(S@<T@> a, S@<T@> b) {
-  a.?(cons: ConsS<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
+  a.?(cons: Cons<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
 };
 
 S@ Nil = <@ T@> {
@@ -23,12 +23,12 @@ S@ Nil = <@ T@> {
 };
 
 <@ T@>(Lit@<T@>) { S@<T@>; } S = <@ T@>(Lit@<T@> lit) {
-  lit<S@<T@>>(ConsS<T@>, Nil<T@>);
+  lit<S@<T@>>(Cons<T@>, Nil<T@>);
 };
 
 # InitP - Return all but the last element in 'list'.
 <@ T@>(P@<T@>){S@<T@>;} InitP = <@ T@>(P@<T@> list) {
-  list.tail.?(cons: ConsS<T@>(list.head, InitP<T@>(list.tail.cons)), nil: Nil<T@>);
+  list.tail.?(cons: Cons<T@>(list.head, InitP<T@>(list.tail.cons)), nil: Nil<T@>);
 };
 
 # InitS - Return all but the last element in 'list'.
@@ -69,6 +69,6 @@ ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
 };
 
 @(S@,
-  ConsS, Append, Nil, S,
+  Cons, Append, Nil, S,
   InitS, Concat, MapS,
   ForS, ForS_);

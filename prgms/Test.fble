@@ -11,7 +11,7 @@
 <@>% S = /List%.S;
 <@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
-<@>% ConsS = /List%.ConsS;
+<@>% Cons = /List%.Cons;
 <@,@>% ForS_ = /List%.ForS_;
 <@,@>% MapS = /List%.MapS;
 
@@ -94,7 +94,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
         Unit@ _ := out(status);
         S@<Failure@> nfailed = tr.?(
           pass: failed,
-          fail: ConsS<Failure@>(Failure@(t.name, tr.fail), failed));
+          fail: Cons<Failure@>(Failure@(t.name, tr.fail), failed));
         Run(ts.cons.tail, nfailed);
       },
       nil: !(failed));
