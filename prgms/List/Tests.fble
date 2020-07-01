@@ -12,7 +12,7 @@
 <@>@ S@ = /List%.S@;
 <@>% S = /List%.S;
 <@>% Concat = /List%.Concat;
-<@>% SortS = /List%.SortS;
+<@>% SortS = /List/Sort%.SortS;
 
 <@>% EqList = /List/Eq%.Eq;
 <@>% Print = /List/Print%.Print;

@@ -1,6 +1,4 @@
 
-@ Bool@ = /Bool%.Bool@;
-
 <@,@>@ Lit@ = /Literal%.Lit@;
 
 @ Unit@ = /Unit%.Unit@;
@@ -50,27 +48,6 @@ S@ S0 = <@ T@> {
   P@<B@>(f(a.head), MapS<A@, B@>(a.tail, f));
 };
 
-# Insert the element 'x' into 'l' at the sorted position based on the le
-# comparision function.
-<@ T@>((T@, T@){Bool@;}, T@, S@<T@>){P@<T@>;} SortInsert =
-  <@ T@>((T@, T@){Bool@;} le, T@ x, S@<T@> l) {
-    l.?(cons: le(x, l.cons.head).?(
-                  true: P@<T@>(x, l),
-                  false: P@<T@>(l.cons.head, S@<T@>(cons: SortInsert<T@>(le, x, l.cons.tail)))),
-         nil: P@<T@>(x, S0<T@>));
-  };
-
-# Sort the given list of elements, using LE for the comparisons.
-# TODO: Use something more efficient than an insertion sort.
-<@ T@>((T@, T@){Bool@;}, S@<T@>){S@<T@>;} SortS =
-  <@ T@>((T@, T@){Bool@;} le, S@<T@> l) {
-    l.?(cons: S@<T@>(cons: SortP<T@>(le, l.cons)), nil: l);
-  },
-<@ T@>((T@, T@){Bool@;}, P@<T@>){P@<T@>;} SortP =
-  <@ T@>((T@, T@){Bool@;} le, P@<T@> l) {
-    SortInsert<T@>(le, l.head, SortS<T@>(le, l.tail));
-  };
-
 <@ A@, @ B@>(S@<A@>, B@, (A@, B@){B@;}){ B@;}
 ForS = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@){B@;} body) {
   l.?(cons: ForS<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
@@ -94,4 +71,4 @@ ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
 @(S@,
   ConsS, Append, S0, S,
   InitS, Concat, MapS,
-  SortS, ForS, ForS_);
+  ForS, ForS_);

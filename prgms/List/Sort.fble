@@ -1,0 +1,26 @@
+@ Bool@ = /Bool%.Bool@;
+
+<@>@ S@ = /List%.S@;
+<@>% S0 = /List%.S0;
+<@>% ConsS = /List%.ConsS;
+
+# Insert the element 'x' into 'l' at the sorted position based on the le
+# comparision function.
+<@ T@>((T@, T@){Bool@;}, T@, S@<T@>){S@<T@>;} SortInsert =
+  <@ T@>((T@, T@){Bool@;} le, T@ x, S@<T@> l) {
+    l.?(cons: le(x, l.cons.head).?(
+                  true: ConsS<T@>(x, l),
+                  false: ConsS<T@>(l.cons.head, SortInsert<T@>(le, x, l.cons.tail))),
+         nil: ConsS<T@>(x, S0<T@>));
+  };
+
+# Sort the given list of elements, using LE for the comparisons.
+# TODO: Use something more efficient than an insertion sort.
+<@ T@>((T@, T@){Bool@;}, S@<T@>){S@<T@>;} SortS =
+  <@ T@>((T@, T@){Bool@;} le, S@<T@> l) {
+    l.?(
+      cons: SortInsert<T@>(le, l.cons.head, SortS<T@>(le, l.cons.tail)),
+      nil: l);
+  };
+
+@(SortS);
