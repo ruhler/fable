@@ -39,11 +39,6 @@ S@ S0 = <@ T@> {
   list.tail.?(cons: ConsS<T@>(list.head, InitP<T@>(list.tail.cons)), nil: S0<T@>);
 };
 
-# LastP - Return the last element in 'list'.
-<@ T@>(P@<T@>){T@;} LastP = <@ T@>(P@<T@> list) {
-  list.tail.?(cons: LastP<T@>(list.tail.cons), nil: list.head);
-};
-
 # Concat: Flatten a list of lists into a single list of all the elements.
 <@ T@>(S@<S@<T@>>){S@<T@>;} Concat = <@ T@>(S@<S@<T@>> x) {
   x.?(cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: S0<T@>);
@@ -106,5 +101,5 @@ ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
 
 @(P@, S@,
   HeadS, ConsS, Append, S0, S,
-  InitP, LastP, Concat, MapS, MapP,
+  InitP, Concat, MapS, MapP,
   AndS, AndP, SortS, SortP, ForS, ForS_);
