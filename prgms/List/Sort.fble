@@ -16,11 +16,11 @@
 
 # Sort the given list of elements, using LE for the comparisons.
 # TODO: Use something more efficient than an insertion sort.
-<@ T@>((T@, T@){Bool@;}, List@<T@>){List@<T@>;} SortS =
+<@ T@>((T@, T@){Bool@;}, List@<T@>){List@<T@>;} Sort =
   <@ T@>((T@, T@){Bool@;} le, List@<T@> l) {
     l.?(
-      cons: SortInsert<T@>(le, l.cons.head, SortS<T@>(le, l.cons.tail)),
+      cons: SortInsert<T@>(le, l.cons.head, Sort<T@>(le, l.cons.tail)),
       nil: l);
   };
 
-@(SortS);
+@(Sort);

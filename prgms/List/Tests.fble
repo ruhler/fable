@@ -12,7 +12,7 @@
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 <@>% Concat = /List%.Concat;
-<@>% SortS = /List/Sort%.SortS;
+<@>% Sort = /List/Sort%.Sort;
 
 <@>% EqList = /List/Eq%.Eq;
 <@>% Print = /List/Print%.Print;
@@ -100,7 +100,7 @@ TestSuite@ Tests = TestSuite(Chars|List, [
 
     # TODO: Switch to using AssertEquals here once we've defined Print for
     # lists.
-    List@<Elem@> got = SortS<Elem@>(ElemLe, unsorted);
+    List@<Elem@> got = Sort<Elem@>(ElemLe, unsorted);
     EqList<Elem@>(ElemEq)(wnt, got).?(
       true: TestResult@(pass: Unit),
       false: TestResult@(fail: Concat<Char@>(List<Str@>([
