@@ -1,4 +1,5 @@
 * Clean up fble library
+ - Rewrite List module.
  - Test /Maybe/Eq%.Eq
  - Test /List/Eq%.Eq
  - Implement and test Eq and Show for Str@.

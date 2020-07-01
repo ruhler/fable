@@ -88,5 +88,5 @@ ForS_ = <@ A@, @ B@>(S@<A@> l, B@ base, (A@, B@) { B@!; } body) {
 
 @(P@, S@,
   ConsS, Append, S0, S,
-  InitP, Concat, MapS, MapP,
-  SortS, SortP, ForS, ForS_);
+  InitP, Concat, MapS,
+  SortS, ForS, ForS_);
