@@ -15,7 +15,7 @@
 <@>% Sort = /List/Sort%.Sort;
 
 <@>% EqList = /List/Eq%.Eq;
-<@>% Print = /List/Print%.Print;
+<@>% Show = /List/Show%.Show;
 
 @ Str@ = /String%.Str@;
 % Str = /String%.Str;
@@ -62,9 +62,9 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     EqList<Elem@>(ElemEq)(a, b).?(
       true: TestResult@(pass: Unit),
       false: TestResult@(fail: Concat<Char@>(List<Str@>([
-        Print<Elem@>(ElemPrint, a),
+        Show<Elem@>(ElemPrint)(a),
         Str(Chars|' != '),
-        Print<Elem@>(ElemPrint, b)
+        Show<Elem@>(ElemPrint)(b)
       ]))));
   })),
 
@@ -74,9 +74,9 @@ TestSuite@ Tests = TestSuite(Chars|List, [
 
     EqList<Elem@>(ElemEq)(a, b).?(
       true: TestResult@(fail: Concat<Char@>(List<Str@>([
-          Print<Elem@>(ElemPrint, a),
+          Show<Elem@>(ElemPrint)(a),
           Str(Chars|' == '),
-          Print<Elem@>(ElemPrint, b)
+          Show<Elem@>(ElemPrint)(b)
         ]))),
       false: TestResult@(pass: Unit));
   })),
@@ -87,9 +87,9 @@ TestSuite@ Tests = TestSuite(Chars|List, [
 
     EqList<Elem@>(ElemEq)(a, b).?(
       true: TestResult@(fail: Concat<Char@>(List<Str@>([
-          Print<Elem@>(ElemPrint, a),
+          Show<Elem@>(ElemPrint)(a),
           Str(Chars|' == '),
-          Print<Elem@>(ElemPrint, b)
+          Show<Elem@>(ElemPrint)(b)
         ]))),
       false: TestResult@(pass: Unit));
   })),
@@ -98,15 +98,15 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     List@<Elem@> unsorted = List<Elem@>(Elems|DABEC);
     List@<Elem@> wnt = List<Elem@>(Elems|ABCDE);
 
-    # TODO: Switch to using AssertEquals here once we've defined Print for
+    # TODO: Switch to using AssertEquals here once we've defined Show for
     # lists.
     List@<Elem@> got = Sort<Elem@>(ElemLe, unsorted);
     EqList<Elem@>(ElemEq)(wnt, got).?(
       true: TestResult@(pass: Unit),
       false: TestResult@(fail: Concat<Char@>(List<Str@>([
-        Print<Elem@>(ElemPrint, wnt),
+        Show<Elem@>(ElemPrint)(wnt),
         Str(Chars|' != '),
-        Print<Elem@>(ElemPrint, got)
+        Show<Elem@>(ElemPrint)(got)
       ]))));
   }))
 ]);

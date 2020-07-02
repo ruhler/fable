@@ -1,0 +1,62 @@
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@>% Concat = /List%.Concat;
+
+<@>@ Show@ = /Show%.Show@;
+
+@ Str@ = /String%.Str@;
+% Str = /String%.Str;
+
+# ShowTail --
+#   Shows the tail part of a list.
+#
+# Type Parameters:
+#   T@ - The type of elements on the list.
+#
+# Arguments:
+#   show - How to show an element of the list.
+#   l - The list to show.
+#
+# Returns:
+#   A string representation of the tail of the list. For example, the list 
+#   [1, 2, 3] is shown as ", 1, 2, 3]"
+<@ T@>(Show@<T@>) { Show@<List@<T@>>; }
+ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
+  l.?(
+    cons:
+      Concat<Char@>(List<Str@>([
+          Str(Chars|', '),
+          show(l.cons.head),
+          ShowTail<T@>(show)(l.cons.tail)])),
+    nil: Str(Chars|']'));
+};
+
+# Show --
+#   An instance of Show@ for lists. Converts a list to a human readable string
+#   for debugging purposes.
+#
+# Type Parameters:
+#   T@ - The type of elements on the list.
+#
+# Arguments:
+#   show - How to show an element of the list.
+#   l - The list to show.
+#
+# Returns:
+#   A string representation of the list. For example, the list [1, 2, 3] might
+#   be shown as "[1, 2, 3]"
+<@ T@>(Show@<T@>) { Show@<List@<T@>>; }
+Show = <@ T@>(Show@<T@> show)(List@<T@> l) {
+  l.?(
+    cons: Concat<Char@>(List<Str@>([
+        Str(Chars|'['),
+        show(l.cons.head),
+        ShowTail<T@>(show)(l.cons.tail)])),
+    nil: Str(Chars|'[]'));
+};
+
+@(Show);

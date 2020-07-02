@@ -12,7 +12,6 @@
 
 <@>% List = /List%.List;
 <@>% Append = /List%.Append;
-<@>% PrintList = /List/Print%.Print;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
@@ -43,10 +42,6 @@
   Append<Char@>(sign, PrintId(v.id));
 };
 
-(Assignment@) { Str@; } PrintAssignment = (Assignment@ x) {
-  PrintList<Var@>(PrintVar, x);
-};
-
 (Var@, Var@) { Bool@; } EqVar = (Var@ a, Var@ b) {
   And(EqIntP(a.id, b.id), /Bool/Eq%.Eq(a.polarity, b.polarity));
 };
@@ -55,7 +50,7 @@
 AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
   AssertEquals<Maybe@<Assignment@>>(
     /Maybe/Eq%.Eq<Assignment@>(/List/Eq%.Eq<Var@>(EqVar)),
-    /Maybe/Show%.Show<Assignment@>(PrintAssignment),
+    /Maybe/Show%.Show<Assignment@>(/List/Show%.Show<Var@>(PrintVar)),
     a, b);
 };
 
