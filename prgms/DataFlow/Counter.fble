@@ -27,7 +27,7 @@
 
 @ Stdio@ = /Stdio%.Stdio@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 @ Unit@ = /Unit%.Unit@;
@@ -97,7 +97,7 @@ Main = (Get@<End@<Unit@>> in, Put@<End@<Count@>> out) {
   input(End<Unit@>);
 };
 
-Stdio@ Stdio = (Get@<Maybe@<Str@>> in, Put@<Str@> out) {
+Stdio@ Stdio = (Get@<Maybe@<String@>> in, Put@<String@> out) {
   Put@<End@<Count@>> result = (End@<Count@> x) {
     x.?(
       data: x.data.?(

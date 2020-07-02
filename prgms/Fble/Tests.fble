@@ -10,7 +10,7 @@
 
 @ Stdio@ = /Stdio%.Stdio@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 
 @ Test@ = /Test%.Test@;
 
@@ -37,7 +37,7 @@ List@<Test@> AllTests = Concat<Test@>(List<List@<Test@>>([
   /TicTacToe/Tests%.Tests
 ]));
 
-Stdio@ Main = (Get@<Maybe@<Str@>> in, Put@<Str@> out) {
+Stdio@ Main = (Get@<Maybe@<String@>> in, Put@<String@> out) {
   /Test%.RunTests(out, AllTests);
 };
 

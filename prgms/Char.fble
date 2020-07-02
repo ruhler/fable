@@ -2,6 +2,11 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
+# Char@ --
+#   Characters.
+#
+# TODO:
+#   Add more characters as needed.
 @ Char@ = +(
   Unit@ '
 ',
@@ -30,13 +35,20 @@
   Unit@ '{', Unit@ '|', Unit@ '}', Unit@ '~'
 );
 
-Char@ newline = Char@('
+# Newline --
+#   The newline character.
+Char@ Newline = Char@('
 ': Unit);
 
+# Chars --
+#   A collection of characters that can be used for character literals.
+#
+# Example Use:
+#   Str@ str = Str(Chars|'hello, world')
 % Chars = @(
   '
-': newline,
-  nl: newline,
+': Newline,
+  nl: Newline,
 
   '	': Char@('	': Unit),
 

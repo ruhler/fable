@@ -17,7 +17,7 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
@@ -32,13 +32,13 @@
 @ Assignment@ = /Sat%.Assignment@;
 % Solve = /Sat%.Solve;
 
-(IntP@) { Str@; } PrintId = (IntP@ x) {
+(IntP@) { String@; } PrintId = (IntP@ x) {
   # TODO: Print variable ids properly.
   Str(x.?(1: Chars|1, : Chars|'?'));
 };
 
-(Var@) { Str@; } PrintVar = (Var@ v) {
-  Str@ sign = Str(v.polarity.?(true: Chars|'+', false: Chars|'-'));
+(Var@) { String@; } PrintVar = (Var@ v) {
+  String@ sign = Str(v.polarity.?(true: Chars|'+', false: Chars|'-'));
   Append<Char@>(sign, PrintId(v.id));
 };
 

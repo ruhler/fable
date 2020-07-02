@@ -19,22 +19,22 @@
 
 <@>@ Put@ = /Process%.Put@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 <@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-@ TestResult@ = +(Unit@ pass, Str@ fail);
-@ Test@ = *(Str@ name, TestResult@! test);
+@ TestResult@ = +(Unit@ pass, String@ fail);
+@ Test@ = *(String@ name, TestResult@! test);
 @ TestSuite@ = List@<Test@>;
 
 # Test --
 #   Creates a test.
 #
 # In particular, this is more convenient to use than Test@(...) if you want to
-# specify the name of the test using a CharLit@ instead of a Str@.
+# specify the name of the test using a CharLit@ instead of a String@.
 #
 # Inputs:
 #   name - the name of the test
@@ -51,17 +51,17 @@
 #   tests - the list of tests in the test suite.
 (CharLit@, Lit@<Test@>) { TestSuite@; }
 TestSuite = (CharLit@ name, Lit@<Test@> tests) {
-  Str@ prefix = Append<Char@>(Str(name), Str(Chars|'.'));
+  String@ prefix = Append<Char@>(Str(name), Str(Chars|'.'));
   Map<Test@, Test@>(List<Test@>(tests), (Test@ test) {
     Test@(Append<Char@>(prefix, test.name), test.test);
   });
 };
 
-<@ T@>((T@, T@) { Bool@; }, (T@) { Str@; }, T@, T@) { TestResult@; }
+<@ T@>((T@, T@) { Bool@; }, (T@) { String@; }, T@, T@) { TestResult@; }
 AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ actual) {
   eq(expected, actual).?(
     true: TestResult@(pass: Unit),
-    false: TestResult@(fail: Concat<Char@>(List<Str@>([
+    false: TestResult@(fail: Concat<Char@>(List<String@>([
           Str(Chars|'expected: '),
           show(expected),
           Str(Chars|', but got: '),
@@ -69,18 +69,18 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 };
 
 # Print a string to the given output stream.
-(Put@<Str@>, Str@) { Unit@!; } Print = (Put@<Str@> out, Str@ str) {
+(Put@<String@>, String@) { Unit@!; } Print = (Put@<String@> out, String@ str) {
   out(str);
 };
 
 # Print a string and newline to the given output stream.
-(Put@<Str@>, Str@) { Unit@!; } PrintLn = (Put@<Str@> out, Str@ str) {
+(Put@<String@>, String@) { Unit@!; } PrintLn = (Put@<String@> out, String@ str) {
   out(Append<Char@>(str, Str([Chars.nl])));
 };
 
 # Returns True if the tests all pass, false otherwise.
-(Put@<Str@>, TestSuite@) { Bool@!; } RunTests = (Put@<Str@> out, TestSuite@ tests) {
-  @ Failure@ = *(Str@ name, Str@ msg);
+(Put@<String@>, TestSuite@) { Bool@!; } RunTests = (Put@<String@> out, TestSuite@ tests) {
+  @ Failure@ = *(String@ name, String@ msg);
 
   # Run all the tests, given a list of tests that failed so far.
   # Returns the list of failing tests.
@@ -90,7 +90,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       cons: {
         Test@ t = ts.cons.head;
         TestResult@ tr := t.test;
-        Str@ status = Str(tr.?(pass: Chars|'.', fail: Chars|'F'));
+        String@ status = Str(tr.?(pass: Chars|'.', fail: Chars|'F'));
         Unit@ _ := out(status);
         List@<Failure@> nfailed = tr.?(
           pass: failed,
@@ -104,7 +104,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 
   Unit@ _ := PrintLn(out, Nil<Char@>);
   Unit@ _ := ProcessEach<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
-    PrintLn(out, Concat<Char@>(List<Str@>([f.name, Str(Chars|': FAILED: '), f.msg])));
+    PrintLn(out, Concat<Char@>(List<String@>([f.name, Str(Chars|': FAILED: '), f.msg])));
   });
 
   # TODO: Why do we need this extra output?
@@ -115,7 +115,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 };
 
 # Returns True if the tests all pass, false otherwise.
-(Put@<Str@>, TestSuite@) { Bool@!; } RunTestsVerbose = (Put@<Str@> out, TestSuite@ tests) {
+(Put@<String@>, TestSuite@) { Bool@!; } RunTestsVerbose = (Put@<String@> out, TestSuite@ tests) {
   ProcessEach<Test@, Bool@>(tests, True, (Test@ test, Bool@ passing) {
     Unit@ _ := Print(out, test.name);
     TestResult@ tr := test.test;
@@ -127,7 +127,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       fail: {
         Unit@ _ := PrintLn(
           out,
-          Concat<Char@>(List<Str@>([
+          Concat<Char@>(List<String@>([
             Str(Chars|': FAILED: '),
             tr.fail])));
         !(False);
@@ -143,5 +143,5 @@ TestSuite@ Tests = {
 };
 
 @(
-  Str@, TestResult@, Test@, TestSuite@,
+  String@, TestResult@, Test@, TestSuite@,
   AssertEquals, Test, TestSuite, RunTests, RunTestsVerbose, Tests);

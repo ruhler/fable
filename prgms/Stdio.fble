@@ -6,7 +6,7 @@
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 
 # The Stdio Interface.
 # Inputs:
@@ -17,6 +17,6 @@
 # Results:
 #   True if the program ran successfully and should exit zero. False if the
 #   program failed and should exit non-zero.
-@ Stdio@ = (Get@<Maybe@<Str@>>, Put@<Str@>) { Bool@!; };
+@ Stdio@ = (Get@<Maybe@<String@>>, Put@<String@>) { Bool@!; };
 
 @(Stdio@);

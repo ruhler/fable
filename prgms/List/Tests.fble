@@ -24,7 +24,7 @@
 
 <@>@ Show@ = /Show%.Show@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
@@ -41,7 +41,7 @@
   D: Elem@(D: Unit),
   E: Elem@(E: Unit));
 
-(Elem@) { Str@; } ElemShow = (Elem@ e) {
+(Elem@) { String@; } ElemShow = (Elem@ e) {
   Str(e.?(A: Chars|A, B: Chars|B, C: Chars|C, D: Chars|D, E: Chars|E));
 };
 
@@ -76,7 +76,7 @@ TestSuite@ Tests = TestSuite(Chars|List, [
 
     Eq(a, b).?(
       true: TestResult@(pass: Unit),
-      false: TestResult@(fail: Concat<Char@>(List<Str@>([
+      false: TestResult@(fail: Concat<Char@>(List<String@>([
         Show(a), Str(Chars|' != '), Show(b)
       ]))));
   })),
@@ -86,7 +86,7 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     List@<Elem@> b = List<Elem@>(Elems|ABDDE);
 
     Eq(a, b).?(
-      true: TestResult@(fail: Concat<Char@>(List<Str@>([
+      true: TestResult@(fail: Concat<Char@>(List<String@>([
           Show(a), Str(Chars|' == '), Show(b)
         ]))),
       false: TestResult@(pass: Unit));
@@ -97,7 +97,7 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     List@<Elem@> b = List<Elem@>(Elems|ABCD);
 
     Eq(a, b).?(
-      true: TestResult@(fail: Concat<Char@>(List<Str@>([
+      true: TestResult@(fail: Concat<Char@>(List<String@>([
           Show(a), Str(Chars|' == '), Show(b)
         ]))),
       false: TestResult@(pass: Unit));

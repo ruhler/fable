@@ -25,7 +25,7 @@
 
 <@>@ Put@ = /Process%.Put@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 <@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
@@ -48,9 +48,9 @@
     C: Char@(C: Unit), D: Char@(D: Unit), E: Char@(E: Unit), F: Char@(F: Unit));
 };
 
-(Md5Hash@){Str@;} Md5Hash2Str = (Md5Hash@ x) {
+(Md5Hash@){String@;} Md5Hash2Str = (Md5Hash@ x) {
   Concat<Char@>(
-    List<Str@>([
+    List<String@>([
       Str([Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)]),
       Str([Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)]),
       Str([Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)]),

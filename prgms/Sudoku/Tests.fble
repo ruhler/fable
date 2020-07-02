@@ -17,7 +17,7 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
@@ -69,18 +69,18 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
 # Print a solved board.
 # If spaced is true, insert whitespace to make it more legible.
 # Otherwise, don't include any whitespace in the output.
-(Bool@)(Solved@) { Str@; } ShowBoard = (Bool@ spaced) {
-  (Symbol@) { Str@; } ShowCell = (Symbol@ s) {
+(Bool@)(Solved@) { String@; } ShowBoard = (Bool@ spaced) {
+  (Symbol@) { String@; } ShowCell = (Symbol@ s) {
     s.?(1: Str(Chars|1), 2: Str(Chars|2), 3: Str(Chars|3),
         4: Str(Chars|4), 5: Str(Chars|5), 6: Str(Chars|6),
         7: Str(Chars|7), 8: Str(Chars|8), 9: Str(Chars|9));
   };
 
-  Str@ space = spaced.?(true: Str(Chars|' '), false: Nil<Char@>);
-  Str@ nl = spaced.?(true: List<Char@>([Chars.nl]), false: Nil<Char@>);
+  String@ space = spaced.?(true: Str(Chars|' '), false: Nil<Char@>);
+  String@ nl = spaced.?(true: List<Char@>([Chars.nl]), false: Nil<Char@>);
 
-  (Array@<Symbol@>) { Str@; } ShowRow = (Array@<Symbol@> row) {
-    Concat<Char@>(List<Str@>([
+  (Array@<Symbol@>) { String@; } ShowRow = (Array@<Symbol@> row) {
+    Concat<Char@>(List<String@>([
       ShowCell(row(1)), ShowCell(row(2)), ShowCell(row(3)), space,
       ShowCell(row(4)), ShowCell(row(5)), ShowCell(row(6)), space,
       ShowCell(row(7)), ShowCell(row(8)), ShowCell(row(9)), nl
@@ -88,7 +88,7 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
   };
 
   (Solved@ board) {
-    Concat<Char@>(List<Str@>([
+    Concat<Char@>(List<String@>([
       ShowRow(board(1)), ShowRow(board(2)), ShowRow(board(3)), nl,
       ShowRow(board(4)), ShowRow(board(5)), ShowRow(board(6)), nl,
       ShowRow(board(7)), ShowRow(board(8)), ShowRow(board(9))
@@ -238,7 +238,7 @@ TestSuite@ Tests = TestSuite(Chars|Sudoku, [
              },
              SampleSolved, ms.just).?(
            true: TestResult@(pass: Unit),
-           false: TestResult@(fail: Concat<Char@>(List<Str@>([
+           false: TestResult@(fail: Concat<Char@>(List<String@>([
                    Str(Chars|'incorrect solution. expected:'), List<Char@>([Chars.nl]),
                    ShowBoard(False)(SampleSolved), List<Char@>([Chars.nl]),
                    Str(Chars|'but got:'), List<Char@>([Chars.nl]),

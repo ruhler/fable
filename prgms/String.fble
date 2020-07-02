@@ -6,11 +6,27 @@
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
-@ Str@ = List@<Char@>;
+# String@ --
+#   A character string.
+@ String@ = List@<Char@>;
+
+# CharLit@ --
+#   A character string literal.
+#
+# Example Use:
+#   CharLit@ chars = Chars|'hello, world'
 <@>@ CharLit@ = Lit@<Char@>;
 
+# Str --
+#   Creates a string from a character string literal.
+#
+# Inputs:
+#   lit - the string literal.
+#
+# Example Use:
+#   String@ s = Str(Chars|'hello, world')
 (CharLit@) { List@<Char@>; } Str = (CharLit@ lit) {
   List<Char@>(lit);
 };
 
-@(Str@, CharLit@, Str);
+@(String@, CharLit@, Str);

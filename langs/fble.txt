@@ -1252,3 +1252,8 @@ Notes:
 * Should we have support for generics?
   See fble.generics.txt.
 
+* Should we add support for unordered struct types?
+  The concern is that someone writes down an explicit type for a module, then
+  the module implementors reorder fields or add fields to that type, causing
+  the user to break. Is this captured already in the discussions on API
+  versioning that we have done before?

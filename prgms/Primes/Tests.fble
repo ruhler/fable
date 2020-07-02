@@ -3,7 +3,7 @@
 
 % Chars = /Char%.Chars;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 @ IntP@ = /Int/IntP%.IntP@;
@@ -23,7 +23,7 @@
 @ TestSuite@ = /Test%.TestSuite@;
 % TestSuite = /Test%.TestSuite;
 
-(Str@, IntP@, IntP@){Test@;} TEq = (Str@ name, IntP@ a, IntP@ b) {
+(String@, IntP@, IntP@){Test@;} TEq = (String@ name, IntP@ a, IntP@ b) {
   Test@(name, !({
     # TODO: Better error message in case of failure.
     Eq(a, b).?(

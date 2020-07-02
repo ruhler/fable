@@ -16,7 +16,7 @@
 
 @ Stdio@ = /Stdio%.Stdio@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 @ Unit@ = /Unit%.Unit@;
@@ -31,46 +31,46 @@
 @ Input@ = /TicTacToe/Game%.Input@;
 @ Output@ = /TicTacToe/Game%.Output@;
 
-(Square@) { Str@; } ShowSquare = (Square@ s) {
+(Square@) { String@; } ShowSquare = (Square@ s) {
   s.?(X: Str(Chars|X), O: Str(Chars|O), E: Str(Chars|_));
 };
 
-(Board@) { Str@; } ShowBoard = (Board@ b) {
-  Str@ _ = Str(Chars|' ');
-  Concat<Char@>(List<Str@>([
+(Board@) { String@; } ShowBoard = (Board@ b) {
+  String@ _ = Str(Chars|' ');
+  Concat<Char@>(List<String@>([
     Str(Chars|'  1 2 3'), List<Char@>([Chars.nl]),
     Str(Chars|'A '), ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), List<Char@>([Chars.nl]),
     Str(Chars|'B '), ShowSquare(b.ml), _, ShowSquare(b.mc), _, ShowSquare(b.mr), List<Char@>([Chars.nl]),
     Str(Chars|'C '), ShowSquare(b.ll), _, ShowSquare(b.lc), _, ShowSquare(b.lr), List<Char@>([Chars.nl])]));
 };
 
-(Player@) { Str@; } ShowPlayer = (Player@ p) {
+(Player@) { String@; } ShowPlayer = (Player@ p) {
   p.?(X: Str(Chars|X), O: Str(Chars|O));
 };
 
-(GameStatus@) { Str@; } ShowStatus = (GameStatus@ s) {
-  s.?(playing: Concat<Char@>(List<Str@>([
+(GameStatus@) { String@; } ShowStatus = (GameStatus@ s) {
+  s.?(playing: Concat<Char@>(List<String@>([
         Str(Chars|'Player '),
         ShowPlayer(s.playing),
         Str(Chars|' move:')])),
       ended:
         s.ended.?(
-           win: Concat<Char@>(List<Str@>([
+           win: Concat<Char@>(List<String@>([
                 Str(Chars|'GAME OVER: Player '),
                 ShowPlayer(s.ended.win),
                 Str(Chars|' wins.')])),
            draw: Str(Chars|'GAME OVER: Draw.')));
 };
 
-(Output@) { Str@; } ShowOutput = (Output@ out) {
-  Concat<Char@>(List<Str@>([
+(Output@) { String@; } ShowOutput = (Output@ out) {
+  Concat<Char@>(List<String@>([
     ShowBoard(out.board),
     List<Char@>([Chars.nl]),
     ShowStatus(out.status),
     List<Char@>([Chars.nl])]));
 };
 
-(Str@) { Maybe@<Input@>; } ParseInput = (Str@ in) {
+(String@) { Maybe@<Input@>; } ParseInput = (String@ in) {
   in.?(
       cons: in.cons.head.?(
         'A': in.cons.tail.?(cons: in.cons.tail.cons.head.?(
@@ -98,14 +98,14 @@
 };
 
 # Play a game of tic-tac-toe using the stdio interface.
-Stdio@ TicTacToe = (Get@<Maybe@<Str@>> input, Put@<Str@> output) {
+Stdio@ TicTacToe = (Get@<Maybe@<String@>> input, Put@<String@> output) {
   Get@<Input@> in = {
-    Maybe@<Str@> s := input;
+    Maybe@<String@> s := input;
     s.?(just: {
             Maybe@<Input@> mi = ParseInput(s.just);
             mi.?(just: !(mi.just),
                  nothing: {
-                    Unit@ _ := output(Concat<Char@>(List<Str@>([
+                    Unit@ _ := output(Concat<Char@>(List<String@>([
                       Str(Chars|'invalid input: '),
                       Str(Chars|'expected {A,B,C}{1,2,3}, P, or R'),
                       Str([Chars.nl])])));

@@ -10,11 +10,11 @@
 
 @ Stdio@ = /Stdio%.Stdio@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 
 # The 'cat' program to cat stdin.
-Stdio@ Cat = (Get@<Maybe@<Str@>> stdin, Put@<Str@> stdout) {
-  Maybe@<Str@> line := stdin;
+Stdio@ Cat = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
+  Maybe@<String@> line := stdin;
   line.?(
     just: {
       Unit@ _ := stdout(line.just);

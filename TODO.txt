@@ -1,6 +1,5 @@
 * Clean up fble library
  - Test /Maybe/Eq%.Eq
- - Test /List/Eq%.Eq
  - Implement and test Eq and Show for Str@.
  - Test /Bool/Show%.Show
  - Test /Maybe/Show%.Show

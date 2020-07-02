@@ -8,7 +8,7 @@
 
 <@>@ Show@ = /Show%.Show@;
 
-@ Str@ = /String%.Str@;
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 # ShowTail --
@@ -28,7 +28,7 @@
 ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
   l.?(
     cons:
-      Concat<Char@>(List<Str@>([
+      Concat<Char@>(List<String@>([
           Str(Chars|', '),
           show(l.cons.head),
           ShowTail<T@>(show)(l.cons.tail)])),
@@ -52,7 +52,7 @@ ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Show = <@ T@>(Show@<T@> show)(List@<T@> l) {
   l.?(
-    cons: Concat<Char@>(List<Str@>([
+    cons: Concat<Char@>(List<String@>([
         Str(Chars|'['),
         show(l.cons.head),
         ShowTail<T@>(show)(l.cons.tail)])),
