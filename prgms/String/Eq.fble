@@ -1,0 +1,10 @@
+
+@ Char@ = /Char%.Char@;
+<@>@ Eq@ = /Eq%.Eq@;
+@ String@ = /String%.String@;
+
+# Eq --
+#   Implementation of Eq@ for String@. See documentation of /Eq%.Eq@.
+Eq@<String@> Eq = /List/Eq%.Eq<Char@>(/Char/Eq%.Eq);
+
+@(Eq);

@@ -29,4 +29,8 @@
   List<Char@>(lit);
 };
 
-@(String@, CharLit@, Str);
+# Concat --
+#   Concatenates a list of strings together.
+(List@<String@>) { String@; } Concat = /List%.Concat<Char@>;
+
+@(String@, CharLit@, Str, Concat);

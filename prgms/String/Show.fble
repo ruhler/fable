@@ -1,0 +1,15 @@
+
+% Chars = /Char%.Chars;
+<@>% List = /List%.List;
+<@>@ Show@ = /Show%.Show@;
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+# Show --
+#   Implementation of Show@ for String@. See documentation of /Show%.Show@.
+Show@<String@> Show = (String@ s) {
+  # TODO: Better handling of the case where the string itself contains quotes.
+  /String%.Concat(List<String@>([Str(Chars|'"'), s, Str(Chars|'"')]));
+};
+
+@(Show);

@@ -10,6 +10,8 @@
 % Chars = /Char%.Chars;
 
 <@>@ CharLit@ = /String%.CharLit@;
+@ String@ = /String%.String@;
+% Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestSuite@ = /Test%.TestSuite@;
@@ -81,7 +83,19 @@ TestSuite@ Tests = TestSuite(Chars|Bool, [
   T(Chars|Eq_True_True, !(Eq(True, True))),
   F(Chars|Eq_True_False, !(Eq(True, False))),
   F(Chars|Eq_False_True, !(Eq(False, True))),
-  T(Chars|Eq_False_False, !(Eq(False, False)))
+  T(Chars|Eq_False_False, !(Eq(False, False))),
+
+  Test(Chars|Show_True, !({
+    String@ wnt = Str(Chars|'True');
+    String@ got = /Bool/Show%.Show(True);
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Show_False, !({
+    String@ wnt = Str(Chars|'False');
+    String@ got = /Bool/Show%.Show(False);
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  }))
 ]);
 
 @(Tests);
