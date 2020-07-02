@@ -65,6 +65,8 @@ canonical one.
 
   TODO: Sort by name its imported from or name its imported to?
   TODO: Alphabetic, not like dependency order? Or package grouping?
+  TODO: Is it okay to use module references inside the file, or should
+        everything be imported to a new name?
 
 * TODO: Prefer short names within a module, rely on module qualification to
   distinguish between names?
@@ -79,4 +81,9 @@ canonical one.
   defined in /Str%?
 
 * Use _ as the name of unused variables.
+
+* TODO: Prefer precise types or generic types?
+  - We used to have S@ and P@, but switched to just S@ even though it was less
+    precise.
+  - Should we switch IntP@, IntS@, and Int@ all over to just Int@?
 

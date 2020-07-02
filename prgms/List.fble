@@ -4,57 +4,179 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-<@>@ P@ = <@ T@> { *(T@ head, List@<T@> tail); },
-<@>@ List@ = <@ T@> { +(P@<T@> cons, Unit@ nil); };
+# List@ --
+#   A singly linked list of elements.
+#
+# Type Parameters:
+#   T@ - The type of element to put on the list.
+<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
 
-<@ T@>(T@, List@<T@>){List@<T@>;} Cons = <@ T@>(T@ a, List@<T@> l) {
-  List@<T@>(cons: P@<T@>(a, l));
+# Cons -- 
+#   Prepends an element to a list.
+#
+# Type Parameters:
+#   T@ - The type of element on the list.
+#
+# Arguments:
+#   a - The element to prepend to the list.
+#   l - The list to prepend the element to.
+#
+# Returns:
+#   A new list consisting of the element 'a' followed by the elements of 'l'.
+<@ T@>(T@, List@<T@>) { List@<T@>; } Cons = <@ T@>(T@ a, List@<T@> l) {
+  List@<T@>(cons: @(head: a, tail: l));
 };
 
-# Append list b to the end of list a.
-<@ T@>(List@<T@>, List@<T@>){List@<T@>;} Append = <@ T@>(List@<T@> a, List@<T@> b) {
-  a.?(cons: Cons<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
-};
-
+# Nil --
+#   The empty list of elements of type T@.
+#
+# Example Use:
+#   List@<Foo@> empty = Nil<Foo@>;
 List@ Nil = <@ T@> {
   List@<T@>(nil: Unit);
 };
 
+# List --
+#   Constructs a List from a literal.
+#
+# Type Parameters:
+#   T@ - The type of element on the list.
+#
+# Arguments:
+#   lit - The literal to construct the list from.
+#
+# Returns:
+#   A list with the elements of the literal.
+#
+# Example Use:
+#   List@<ABC@> x = List<ABC@>([A, B, A, C]);
+#   List@<ABC@> y = List<ABC@>(ABCs|ABAC);
 <@ T@>(Lit@<T@>) { List@<T@>; } List = <@ T@>(Lit@<T@> lit) {
   lit<List@<T@>>(Cons<T@>, Nil<T@>);
 };
 
-# InitP - Return all but the last element in 'list'.
-<@ T@>(P@<T@>){List@<T@>;} InitP = <@ T@>(P@<T@> list) {
-  list.tail.?(cons: Cons<T@>(list.head, InitP<T@>(list.tail.cons)), nil: Nil<T@>);
+# Append --
+#   Appends one list to another.
+#
+# Type Parameters:
+#   T@ - The type of elements in the list.
+#
+# Arguments:
+#   a - the first list
+#   b - the second list
+#
+# Returns:
+#   A list that contains the elements of 'a' followed by the elements of 'b'.
+<@ T@>(List@<T@>, List@<T@>) { List@<T@>; }
+Append = <@ T@>(List@<T@> a, List@<T@> b) {
+  a.?(cons: Cons<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
 };
 
-# Init - Return all but the last element in 'list'.
-<@ T@>(List@<T@>){List@<T@>;} Init = <@ T@>(List@<T@> list) {
-  list.?(cons: InitP<T@>(list.cons), nil: Nil<T@>);
+# Init --
+#   Returns all but the last element in a list.
+#
+# Type Parameters:
+#   T@ - The type of element in the list.
+#
+# Arguments:
+#   list - the list to take the initial elements of.
+#
+# Returns:
+#   A new list with all the elements of 'list' except the last element of
+#   list. Returns an empty list if the input list is empty.
+<@ T@>(List@<T@>) { List@<T@>; } Init = <@ T@>(List@<T@> list) {
+  list.?(
+    cons: list.cons.tail.?(
+      cons: Cons<T@>(list.cons.head, Init<T@>(list.cons.tail)),
+      nil: Nil<T@>),
+    nil: Nil<T@>);
 };
 
-# Concat: Flatten a list of lists into a single list of all the elements.
-<@ T@>(List@<List@<T@>>){List@<T@>;} Concat = <@ T@>(List@<List@<T@>> x) {
+# Concat --
+#   Flattens a list of lists into a single list of all the elements.
+#
+# Type Parameters:
+#   T@ - The type of element in the resulting list.
+#
+# Arguments:
+#   x - The list to flatten.
+#
+# Returns:
+#   A list with all elements from the list of lists x, in order.
+<@ T@>(List@<List@<T@>>) { List@<T@>; } Concat = <@ T@>(List@<List@<T@>> x) {
   x.?(cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: Nil<T@>);
 };
 
-<@ A@, @ B@>(List@<A@>, (A@){B@;}){List@<B@>;} Map = <@ A@, @ B@>(List@<A@> a, (A@){B@;} f) {
-  a.?(cons: List@<B@>(cons: MapP<A@, B@>(a.cons, f)), nil: Nil<B@>);
-},
-<@ A@, @ B@>(P@<A@>, (A@){B@;}){P@<B@>;} MapP = <@ A@, @ B@>(P@<A@> a, (A@){B@;} f) {
-  P@<B@>(f(a.head), Map<A@, B@>(a.tail, f));
+# Map --
+#   Applies a function to every element of a list.
+#
+# Type Parameters:
+#   A@ - The type of element of the input list.
+#   B@ - The type of element of the output list.
+#
+# Arguments:
+#   a - The input list
+#   f - the function to apply
+#
+# Result:
+#   A list of elements f(a_i) for each a_i in the input list.
+<@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; }
+Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
+  a.?(
+    cons: Cons<B@>(f(a.cons.head), Map<A@, B@>(a.cons.tail, f)),
+    nil: Nil<B@>);
 };
 
-<@ A@, @ B@>(List@<A@>, B@, (A@, B@){B@;}){ B@;}
-ForEach = <@ A@, @ B@>(List@<A@> l, B@ base, (A@, B@){B@;} body) {
-  l.?(cons: ForEach<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
-      nil: base);
+# ForEach --
+#   Iterate over elements of a list.
+#
+# Type Parameters:
+#   A@ - The type of element on the list.
+#   B@ - The type of value updated and returned by the foreach loop.
+#
+# Arguments:
+#   l - The list to iterate over.
+#   base - The initial value to update and return from the list.
+#   body - The body of the list.
+#
+# Returns:
+#   The result of applying the body consecutively to the base value, once for
+#   each element in the list in list order.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach x in l:
+#     b = body(x, b)
+#   return b
+<@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@; }) { B@; }
+ForEach = <@ A@, @ B@>(List@<A@> l, B@ base, (A@, B@) { B@; } body) {
+  l.?(
+    cons: ForEach<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
+    nil: base);
 };
 
 # ProcessEach
 #  A process version of ForEach.
-<@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@!; }){ B@!; }
+#
+# Type Parameters:
+#   A@ - The type of element on the list.
+#   B@ - The type of value updated and returned by the loop.
+#
+# Arguments:
+#   l - The list to iterate over.
+#   base - The initial value to update and return from the list.
+#   body - The body of the list.
+#
+# Returns:
+#   The result of processing the body consecutively to the base value, once for
+#   each element in the list in list order.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach x in l:
+#     b := body(x, b)
+#   return b
+<@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@!; }) { B@!; }
 ProcessEach = <@ A@, @ B@>(List@<A@> l, B@ base, (A@, B@) { B@!; } body) {
   l.?(
     cons: {
@@ -64,7 +186,4 @@ ProcessEach = <@ A@, @ B@>(List@<A@> l, B@ base, (A@, B@) { B@!; } body) {
     nil: !(base));
 };
 
-@(List@, List,
-  Cons, Append, Nil,
-  Init, Concat, Map,
-  ForEach, ProcessEach);
+@(List@, List, Cons, Nil, Append, Init, Concat, Map, ForEach, ProcessEach);
