@@ -10,7 +10,7 @@
 % Str = /String%.Str;
 
 # PrintTail --
-#   Print the tail part of a list.
+#   Prints the tail part of a list.
 #
 # For example, the list [1, 2, 3] is printed as ", 1, 2, 3]"
 <@ T@>((T@) { Str@; }, List@<T@>) { Str@; }

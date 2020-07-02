@@ -4,23 +4,52 @@
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
 
-# Insert the element 'x' into 'l' at the sorted position based on the le
-# comparision function.
-<@ T@>((T@, T@){Bool@;}, T@, List@<T@>){List@<T@>;} SortInsert =
-  <@ T@>((T@, T@){Bool@;} le, T@ x, List@<T@> l) {
-    l.?(cons: le(x, l.cons.head).?(
-                  true: Cons<T@>(x, l),
-                  false: Cons<T@>(l.cons.head, SortInsert<T@>(le, x, l.cons.tail))),
-         nil: Cons<T@>(x, Nil<T@>));
-  };
+# Insert --
+#   Inserts the element 'x' into 'l' at the sorted position based on the
+#   comparision function.
+#
+# Type Parameters:
+#   T@ - The type of element on the list.
+#
+# Arguments:
+#   le - The <= comparison operation used for sorting.
+#   x - The element to insert.
+#   l - The list to insert into.
+#
+# Returns:
+#   A new list with the element x inserted at the appropriate position given
+#   the comparison operation.
+<@ T@>((T@, T@) { Bool@; }, T@, List@<T@>) { List@<T@>; }
+Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
+  l.?(
+    cons: le(x, l.cons.head).?(
+      true: Cons<T@>(x, l),
+      false: Cons<T@>(l.cons.head, Insert<T@>(le, x, l.cons.tail))),
+    nil: Cons<T@>(x, Nil<T@>));
+};
 
-# Sort the given list of elements, using LE for the comparisons.
-# TODO: Use something more efficient than an insertion sort.
-<@ T@>((T@, T@){Bool@;}, List@<T@>){List@<T@>;} Sort =
-  <@ T@>((T@, T@){Bool@;} le, List@<T@> l) {
-    l.?(
-      cons: SortInsert<T@>(le, l.cons.head, Sort<T@>(le, l.cons.tail)),
-      nil: l);
-  };
+# Sort --
+#   Sorts the given list of elements, using the given comparison operation.
+#
+# Type Parameters:
+#   T@ - The type of element of the list.
+#
+# Arguments:
+#   le - A function that compares two elements of the list, returning True if
+#        the first should be before or the same as the second, False
+#        otherwise.
+#   l - The list to sort.
+#
+# Returns:
+#   A new list with the elements of 'l' sorted in ascending order.
+#
+# TODO:
+#   Use something more efficient than an insertion sort.
+<@ T@>((T@, T@) { Bool@; }, List@<T@>) { List@<T@>; }
+Sort = <@ T@>((T@, T@) { Bool@; } le, List@<T@> l) {
+  l.?(
+    cons: Insert<T@>(le, l.cons.head, Sort<T@>(le, l.cons.tail)),
+    nil: l);
+};
 
 @(Sort);
