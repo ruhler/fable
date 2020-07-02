@@ -9,13 +9,20 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
+<@>@ Eq@ = /Eq%.Eq@;
+
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
+<@>% Append = /List%.Append;
+<@>% Init = /List%.Init;
 <@>% Concat = /List%.Concat;
+<@,@>% Map = /List%.Map;
+<@,@>% ForEach = /List%.ForEach;
 <@>% Sort = /List/Sort%.Sort;
 
-<@>% EqList = /List/Eq%.Eq;
-<@>% Show = /List/Show%.Show;
+<@>@ Show@ = /Show%.Show@;
 
 @ Str@ = /String%.Str@;
 % Str = /String%.Str;
@@ -34,7 +41,7 @@
   D: Elem@(D: Unit),
   E: Elem@(E: Unit));
 
-(Elem@) { Str@; } ElemPrint = (Elem@ e) {
+(Elem@) { Str@; } ElemShow = (Elem@ e) {
   Str(e.?(A: Chars|A, B: Chars|B, C: Chars|C, D: Chars|D, E: Chars|E));
 };
 
@@ -54,17 +61,23 @@
       E: b.?(E: True, : False));
 };
 
+Eq@<List@<Elem@>> Eq = /List/Eq%.Eq<Elem@>(ElemEq);
+Show@<List@<Elem@>> Show = /List/Show%.Show<Elem@>(ElemShow);
+
+(List@<Elem@>, List@<Elem@>) { TestResult@; }
+AssertEquals = (List@<Elem@> a, List@<Elem@> b) {
+  /Test%.AssertEquals<List@<Elem@>>(Eq, Show, a, b);
+};
+
 TestSuite@ Tests = TestSuite(Chars|List, [
   Test@(Str(Chars|'Eq_Same'), !({
     List@<Elem@> a = List<Elem@>(Elems|ABCDE);
     List@<Elem@> b = List<Elem@>(Elems|ABCDE);
 
-    EqList<Elem@>(ElemEq)(a, b).?(
+    Eq(a, b).?(
       true: TestResult@(pass: Unit),
       false: TestResult@(fail: Concat<Char@>(List<Str@>([
-        Show<Elem@>(ElemPrint)(a),
-        Str(Chars|' != '),
-        Show<Elem@>(ElemPrint)(b)
+        Show(a), Str(Chars|' != '), Show(b)
       ]))));
   })),
 
@@ -72,11 +85,9 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     List@<Elem@> a = List<Elem@>(Elems|ABCDE);
     List@<Elem@> b = List<Elem@>(Elems|ABDDE);
 
-    EqList<Elem@>(ElemEq)(a, b).?(
+    Eq(a, b).?(
       true: TestResult@(fail: Concat<Char@>(List<Str@>([
-          Show<Elem@>(ElemPrint)(a),
-          Str(Chars|' == '),
-          Show<Elem@>(ElemPrint)(b)
+          Show(a), Str(Chars|' == '), Show(b)
         ]))),
       false: TestResult@(pass: Unit));
   })),
@@ -85,29 +96,66 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     List@<Elem@> a = List<Elem@>(Elems|ABCDE);
     List@<Elem@> b = List<Elem@>(Elems|ABCD);
 
-    EqList<Elem@>(ElemEq)(a, b).?(
+    Eq(a, b).?(
       true: TestResult@(fail: Concat<Char@>(List<Str@>([
-          Show<Elem@>(ElemPrint)(a),
-          Str(Chars|' == '),
-          Show<Elem@>(ElemPrint)(b)
+          Show(a), Str(Chars|' == '), Show(b)
         ]))),
       false: TestResult@(pass: Unit));
+  })),
+
+  Test@(Str(Chars|'Append'), !({
+    List@<Elem@> a = List<Elem@>(Elems|ABC);
+    List@<Elem@> b = List<Elem@>(Elems|DEE);
+    List@<Elem@> wnt = List<Elem@>(Elems|ABCDEE);
+    List@<Elem@> got = Append<Elem@>(a, b);
+    AssertEquals(wnt, got);
+  })),
+
+  Test@(Str(Chars|'Init'), !({
+    List@<Elem@> l = List<Elem@>(Elems|ABCDE);
+    List@<Elem@> wnt = List<Elem@>(Elems|ABCD);
+    List@<Elem@> got = Init<Elem@>(l);
+    AssertEquals(wnt, got);
+  })),
+
+  Test@(Str(Chars|'Concat'), !({
+    List@<List@<Elem@>> l = List<List@<Elem@>>([
+      List<Elem@>(Elems|ABC),
+      List<Elem@>(Elems|DEA),
+      List<Elem@>(Elems|BB)
+    ]);
+
+    List@<Elem@> wnt = List<Elem@>(Elems|ABCDEABB);
+    List@<Elem@> got = Concat<Elem@>(l);
+    AssertEquals(wnt, got);
+  })),
+
+  Test@(Str(Chars|'Map'), !({
+    List@<Elem@> l = List<Elem@>(Elems|ABCDE);
+    (Elem@) { Elem@; } f = (Elem@ e) {
+      e.?(A: Elems.B, B: Elems.C, C: Elems.D, D: Elems.E, E: Elems.A);
+    };
+
+    List@<Elem@> wnt = List<Elem@>(Elems|BCDEA);
+    List@<Elem@> got = Map<Elem@, Elem@>(l, f);
+    AssertEquals(wnt, got);
+  })),
+
+  Test@(Str(Chars|'ForEach'), !({
+    List@<Elem@> l = List<Elem@>(Elems|ABCDE);
+    List@<Elem@> wnt = List<Elem@>(Elems|EDCBA);
+    List@<Elem@> got =
+      ForEach<Elem@, List@<Elem@>>(l, Nil<Elem@>, (Elem@ e, List@<Elem@> b) {
+        Cons<Elem@>(e, b);
+      });
+    AssertEquals(wnt, got);
   })),
 
   Test@(Str(Chars|'Sort'), !({
     List@<Elem@> unsorted = List<Elem@>(Elems|DABEC);
     List@<Elem@> wnt = List<Elem@>(Elems|ABCDE);
-
-    # TODO: Switch to using AssertEquals here once we've defined Show for
-    # lists.
     List@<Elem@> got = Sort<Elem@>(ElemLe, unsorted);
-    EqList<Elem@>(ElemEq)(wnt, got).?(
-      true: TestResult@(pass: Unit),
-      false: TestResult@(fail: Concat<Char@>(List<Str@>([
-        Show<Elem@>(ElemPrint)(wnt),
-        Str(Chars|' != '),
-        Show<Elem@>(ElemPrint)(got)
-      ]))));
+    AssertEquals(wnt, got);
   }))
 ]);
 
