@@ -29,6 +29,7 @@ List@<Test@> AllTests = Concat<Test@>(List<List@<Test@>>([
   /Int/Int/Tests%.Tests,
   /List/Tests%.Tests,
   /Map/Tests%.Tests,
+  /Maybe/Tests%.Tests,
   /Md5/Tests%.Tests,
   /Primes/Tests%.Tests,
   /Sat/Tests%.Tests,

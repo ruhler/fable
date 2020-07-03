@@ -1,0 +1,81 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% Chars = /Char%.Chars;
+<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Show@ = /Show%.Show@;
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+@ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
+<@>% AssertEquals = /Test%.AssertEquals;
+% TestSuite = /Test%.TestSuite;
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# AB@ --
+#   Helper type to test eq and show of Maybe@.
+@ AB@ = +(Unit@ a, Unit@ b);
+AB@ A = AB@(a: Unit);
+AB@ B = AB@(b: Unit);
+
+# EqAB --
+#   An instance of Eq@ for AB@.
+Eq@<AB@> EqAB = (AB@ x, AB@ y) {
+  x.?(a: y.?(a: True, b: False), b: y.?(a: False, b: True));
+};
+
+# ShowAB --
+#   An instance of Show@ for AB@.
+Show@<AB@> ShowAB = (AB@ x) {
+  Str(x.?(a: Chars|a, b: Chars|b));
+};
+
+Eq@<Maybe@<AB@>> Eq = /Maybe/Eq%.Eq<AB@>(EqAB);
+Show@<Maybe@<AB@>> Show = /Maybe/Show%.Show<AB@>(ShowAB);
+
+# Tests --
+#  A test suite to test the /Maybe% module and friends.
+TestSuite@ Tests = TestSuite(Chars|Maybe, [
+  Test(Chars|Eq_JustEq, !({
+    Bool@ wnt = True;
+    Bool@ got = Eq(Just<AB@>(A), Just<AB@>(A));
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Eq_JustNe, !({
+    Bool@ wnt = False;
+    Bool@ got = Eq(Just<AB@>(A), Just<AB@>(B));
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Eq_JustNothing, !({
+    Bool@ wnt = False;
+    Bool@ got = Eq(Just<AB@>(A), Nothing<AB@>);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Eq_Nothing, !({
+    Bool@ wnt = True;
+    Bool@ got = Eq(Nothing<AB@>, Nothing<AB@>);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Show_Just, !({
+    String@ wnt = Str(Chars|'Just:b');
+    String@ got = Show(Just<AB@>(B));
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Show_Nothing, !({
+    String@ wnt = Str(Chars|'Nothing');
+    String@ got = Show(Nothing<AB@>);
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  }))
+]);
+
+@(Tests);
