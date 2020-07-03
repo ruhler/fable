@@ -1,0 +1,109 @@
+
+% True = /Bool%.True;
+% False = /Bool%.False;
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+<@>% List = /List%.List;
+@ Formula@ = /Sat%.Formula@;
+@ Clause@ = /Sat%.Clause@;
+@ Var@ = /Sat%.Var@;
+
+# c FILE: aim-50-1_6-yes1-1.cnf
+# c
+# c SOURCE: Kazuo Iwama, Eiji Miyano (miyano@cscu.kyushu-u.ac.jp),
+# c          and Yuichi Asahiro
+# c
+# c DESCRIPTION: Artifical instances from generator by source.  Generators
+# c              and more information in sat/contributed/iwama.
+# c
+# c NOTE: Satisfiable
+# c
+# p cnf 50 80
+#
+# TODO: Parse the raw dimacs cnf file automatically rather than use a manual
+# encoding of the problem in fble syntax.
+
+Formula@ Aim = List<Clause@>([
+  List<Var@>([Var@(I(D|5), True), Var@(I(D|28), True), Var@(I(D|41), True)]),
+  List<Var@>([Var@(I(D|5), True), Var@(I(D|28), False), Var@(I(D|41), True)]),
+  List<Var@>([Var@(I(D|10), True), Var@(I(D|30), True), Var@(I(D|41), False)]),
+  List<Var@>([Var@(I(D|5), True), Var@(I(D|10), False), Var@(I(D|41), False)]),
+  List<Var@>([Var@(I(D|5), False), Var@(I(D|25), True), Var@(I(D|30), True)]),
+  List<Var@>([Var@(I(D|5), False), Var@(I(D|25), False), Var@(I(D|30), True)]),
+  List<Var@>([Var@(I(D|11), True), Var@(I(D|30), False), Var@(I(D|33), False)]),
+  List<Var@>([Var@(I(D|11), False), Var@(I(D|30), False), Var@(I(D|33), False)]),
+  List<Var@>([Var@(I(D|7), True), Var@(I(D|30), False), Var@(I(D|33), True)]),
+  List<Var@>([Var@(I(D|7), False), Var@(I(D|14), True), Var@(I(D|33), True)]),
+  List<Var@>([Var@(I(D|4), False), Var@(I(D|7), False), Var@(I(D|14), False)]),
+  List<Var@>([Var@(I(D|4), True), Var@(I(D|14), False), Var@(I(D|29), False)]),
+  List<Var@>([Var@(I(D|1), False), Var@(I(D|14), False), Var@(I(D|32), True)]),
+  List<Var@>([Var@(I(D|1), False), Var@(I(D|4), True), Var@(I(D|32), False)]),
+  List<Var@>([Var@(I(D|1), True), Var@(I(D|24), True), Var@(I(D|29), True)]),
+  List<Var@>([Var@(I(D|1), True), Var@(I(D|24), False), Var@(I(D|34), False)]),
+  List<Var@>([Var@(I(D|6), False), Var@(I(D|24), False), Var@(I(D|34), True)]),
+  List<Var@>([Var@(I(D|6), True), Var@(I(D|24), False), Var@(I(D|38), True)]),
+  List<Var@>([Var@(I(D|6), True), Var@(I(D|32), False), Var@(I(D|38), False)]),
+  List<Var@>([Var@(I(D|32), True), Var@(I(D|44), True), Var@(I(D|48), True)]),
+  List<Var@>([Var@(I(D|38), False), Var@(I(D|44), False), Var@(I(D|48), True)]),
+  List<Var@>([Var@(I(D|22), True), Var@(I(D|29), True), Var@(I(D|48), False)]),
+  List<Var@>([Var@(I(D|22), True), Var@(I(D|29), False), Var@(I(D|32), True)]),
+  List<Var@>([Var@(I(D|22), False), Var@(I(D|25), False), Var@(I(D|48), False)]),
+  List<Var@>([Var@(I(D|22), False), Var@(I(D|25), True), Var@(I(D|40), True)]),
+  List<Var@>([Var@(I(D|18), True), Var@(I(D|22), False), Var@(I(D|40), False)]),
+  List<Var@>([Var@(I(D|18), False), Var@(I(D|20), True), Var@(I(D|40), False)]),
+  List<Var@>([Var@(I(D|18), False), Var@(I(D|28), True), Var@(I(D|40), False)]),
+  List<Var@>([Var@(I(D|18), False), Var@(I(D|28), False), Var@(I(D|39), True)]),
+  List<Var@>([Var@(I(D|28), False), Var@(I(D|35), True), Var@(I(D|39), False)]),
+  List<Var@>([Var@(I(D|35), False), Var@(I(D|39), False), Var@(I(D|43), True)]),
+  List<Var@>([Var@(I(D|35), False), Var@(I(D|43), False), Var@(I(D|50), False)]),
+  List<Var@>([Var@(I(D|43), False), Var@(I(D|45), False), Var@(I(D|50), True)]),
+  List<Var@>([Var@(I(D|31), True), Var@(I(D|45), True), Var@(I(D|50), True)]),
+  List<Var@>([Var@(I(D|31), False), Var@(I(D|44), False), Var@(I(D|45), True)]),
+  List<Var@>([Var@(I(D|15), False), Var@(I(D|44), True), Var@(I(D|49), True)]),
+  List<Var@>([Var@(I(D|15), False), Var@(I(D|31), False), Var@(I(D|49), False)]),
+  List<Var@>([Var@(I(D|15), True), Var@(I(D|31), False), Var@(I(D|36), True)]),
+  List<Var@>([Var@(I(D|15), True), Var@(I(D|23), True), Var@(I(D|36), False)]),
+  List<Var@>([Var@(I(D|23), False), Var@(I(D|36), False), Var@(I(D|46), True)]),
+  List<Var@>([Var@(I(D|20), True), Var@(I(D|27), True), Var@(I(D|46), False)]),
+  List<Var@>([Var@(I(D|20), False), Var@(I(D|23), False), Var@(I(D|27), True)]),
+  List<Var@>([Var@(I(D|16), False), Var@(I(D|27), False), Var@(I(D|46), False)]),
+  List<Var@>([Var@(I(D|16), True), Var@(I(D|26), True), Var@(I(D|27), False)]),
+  List<Var@>([Var@(I(D|16), True), Var@(I(D|17), True), Var@(I(D|26), False)]),
+  List<Var@>([Var@(I(D|2), True), Var@(I(D|13), True), Var@(I(D|17), False)]),
+  List<Var@>([Var@(I(D|2), True), Var@(I(D|13), False), Var@(I(D|26), False)]),
+  List<Var@>([Var@(I(D|5), False), Var@(I(D|17), False), Var@(I(D|26), False)]),
+  List<Var@>([Var@(I(D|2), False), Var@(I(D|17), False), Var@(I(D|42), True)]),
+  List<Var@>([Var@(I(D|2), False), Var@(I(D|12), True), Var@(I(D|13), False)]),
+  List<Var@>([Var@(I(D|2), False), Var@(I(D|12), False), Var@(I(D|42), False)]),
+  List<Var@>([Var@(I(D|8), True), Var@(I(D|13), True), Var@(I(D|42), False)]),
+  List<Var@>([Var@(I(D|8), False), Var@(I(D|10), False), Var@(I(D|13), True)]),
+  List<Var@>([Var@(I(D|3), True), Var@(I(D|8), False), Var@(I(D|10), True)]),
+  List<Var@>([Var@(I(D|3), False), Var@(I(D|10), True), Var@(I(D|37), False)]),
+  List<Var@>([Var@(I(D|3), False), Var@(I(D|10), True), Var@(I(D|47), False)]),
+  List<Var@>([Var@(I(D|10), True), Var@(I(D|19), True), Var@(I(D|47), True)]),
+  List<Var@>([Var@(I(D|12), False), Var@(I(D|19), False), Var@(I(D|47), True)]),
+  List<Var@>([Var@(I(D|12), True), Var@(I(D|19), False), Var@(I(D|21), True)]),
+  List<Var@>([Var@(I(D|9), True), Var@(I(D|19), False), Var@(I(D|21), False)]),
+  List<Var@>([Var@(I(D|9), False), Var@(I(D|11), False), Var@(I(D|21), False)]),
+  List<Var@>([Var@(I(D|9), False), Var@(I(D|11), True), Var@(I(D|49), False)]),
+  List<Var@>([Var@(I(D|11), True), Var@(I(D|41), True), Var@(I(D|49), True)]),
+  List<Var@>([Var@(I(D|19), True), Var@(I(D|32), False), Var@(I(D|37), True)]),
+  List<Var@>([Var@(I(D|1), False), Var@(I(D|39), True), Var@(I(D|50), False)]),
+  List<Var@>([Var@(I(D|8), True), Var@(I(D|17), True), Var@(I(D|40), True)]),
+  List<Var@>([Var@(I(D|38), True), Var@(I(D|43), True), Var@(I(D|49), True)]),
+  List<Var@>([Var@(I(D|23), True), Var@(I(D|42), True), Var@(I(D|47), False)]),
+  List<Var@>([Var@(I(D|13), False), Var@(I(D|29), False), Var@(I(D|37), True)]),
+  List<Var@>([Var@(I(D|34), False), Var@(I(D|37), True), Var@(I(D|47), False)]),
+  List<Var@>([Var@(I(D|33), False), Var@(I(D|37), False), Var@(I(D|50), True)]),
+  List<Var@>([Var@(I(D|6), False), Var@(I(D|14), True), Var@(I(D|34), True)]),
+  List<Var@>([Var@(I(D|9), True), Var@(I(D|20), False), Var@(I(D|50), False)]),
+  List<Var@>([Var@(I(D|35), True), Var@(I(D|36), True), Var@(I(D|38), True)]),
+  List<Var@>([Var@(I(D|3), True), Var@(I(D|31), True), Var@(I(D|46), True)]),
+  List<Var@>([Var@(I(D|7), True), Var@(I(D|16), False), Var@(I(D|21), True)]),
+  List<Var@>([Var@(I(D|6), False), Var@(I(D|17), True), Var@(I(D|26), True)]),
+  List<Var@>([Var@(I(D|23), True), Var@(I(D|24), True), Var@(I(D|46), True)]),
+  List<Var@>([Var@(I(D|18), True), Var@(I(D|24), True), Var@(I(D|45), False)]),
+  List<Var@>([Var@(I(D|4), False), Var@(I(D|6), False), Var@(I(D|7), True)])
+]);
+
+Aim;

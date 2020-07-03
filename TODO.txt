@@ -6,9 +6,8 @@
  - Rename Str to String? Or to S?
 
 * Create a Sat benchmark
- - Implement support for IntP literals.
- - Implement an IntP parser (or IntS or Int?).
  - Implement dimacs cnf parser.
+ - Pick a much harder problem to solve.
 
 * Clean up fble test framework
  - Rename 'Print' to 'Show', which better describes what the function does.

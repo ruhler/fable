@@ -1,0 +1,13 @@
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+@ Assignment@ = /Sat%.Assignment@;
+% Solve = /Sat%.Solve;
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+Unit@! Bench = {
+  Maybe@<Assignment@> solved := !(Solve(/Sat/Aim%));
+  !(Unit);
+};
+
+@(Bench);

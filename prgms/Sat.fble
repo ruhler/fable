@@ -2,9 +2,6 @@
 @ Bool@ = /Bool%.Bool@;
 % Not = /Bool%.Not;
 
-@ IntP@ = /Int/IntP%.IntP@;
-% EqIntP = /Int/IntP/Eq%.Eq;
-
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
@@ -15,8 +12,8 @@
 
 # VarId@ --
 #   A variable identifier.
-@ VarId@ = IntP@;
-% EqId = EqIntP;
+@ VarId@ = /Int/Int%.Int@;
+% EqId = /Int/Int/Eq%.Eq;
 
 # Var@ --
 #   A variable in a boolean formula.
@@ -117,4 +114,5 @@ Naive = (Formula@ f, Assignment@ a) {
   Naive(f, Nil<Var@>);
 };
 
-@(VarId@, Var@, Clause@, Formula@, Assignment@, Solve);
+@(VarId@, Var@, Clause@, Formula@, Assignment@,
+  EqId, Solve);

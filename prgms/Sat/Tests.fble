@@ -6,10 +6,6 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-@ IntP@ = /Int/IntP%.IntP@;
-% EqIntP = /Int/IntP/Eq%.Eq;
-% 1 = /Int/IntP%.1;
-
 <@>% List = /List%.List;
 <@>% Append = /List%.Append;
 
@@ -28,13 +24,17 @@
 
 @ Formula@ = /Sat%.Formula@;
 @ Clause@ = /Sat%.Clause@;
+@ VarId@ = /Sat%.VarId@;
 @ Var@ = /Sat%.Var@;
 @ Assignment@ = /Sat%.Assignment@;
+% EqId = /Sat%.EqId;
 % Solve = /Sat%.Solve;
 
-(IntP@) { String@; } PrintId = (IntP@ x) {
+VarId@ X = /Int/Int%.1;
+
+(VarId@) { String@; } PrintId = (VarId@ x) {
   # TODO: Print variable ids properly.
-  Str(x.?(1: Chars|1, : Chars|'?'));
+  Str(Chars|'?');
 };
 
 (Var@) { String@; } PrintVar = (Var@ v) {
@@ -43,7 +43,7 @@
 };
 
 (Var@, Var@) { Bool@; } EqVar = (Var@ a, Var@ b) {
-  And(EqIntP(a.id, b.id), /Bool/Eq%.Eq(a.polarity, b.polarity));
+  And(EqId(a.id, b.id), /Bool/Eq%.Eq(a.polarity, b.polarity));
 };
 
 (Maybe@<Assignment@>, Maybe@<Assignment@>) { TestResult@; }
@@ -57,17 +57,17 @@ AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
 TestSuite@ Tests = TestSuite(Chars|Sat, [
   Test@(Str(Chars|Sat), !({
     Formula@ f = List<Clause@>([
-      List<Var@>([Var@(1, True)])
+      List<Var@>([Var@(X, True)])
     ]);
-    Maybe@<Assignment@> want = Just<Assignment@>(List<Var@>([Var@(1, True)]));
+    Maybe@<Assignment@> want = Just<Assignment@>(List<Var@>([Var@(X, True)]));
     Maybe@<Assignment@> got = Solve(f);
     AssertEq(want, got);
   })),
 
   Test@(Str(Chars|Unsat), !({
     Formula@ f = List<Clause@>([
-      List<Var@>([Var@(1, True)]),
-      List<Var@>([Var@(1, False)])
+      List<Var@>([Var@(X, True)]),
+      List<Var@>([Var@(X, False)])
     ]);
     Maybe@<Assignment@> want = Nothing<Assignment@>;
     Maybe@<Assignment@> got = Solve(f);
