@@ -5,9 +5,11 @@
  - Add tests for full code coverage of all functions.
  - Rename Str to String? Or to S?
 
-* Create a Sat benchmark
+* Sat solver
+ - Add support for unit propagation.
+ - Add support for pure literal propagation.
+ - Add support for printing the resulting assignments.
  - Implement dimacs cnf parser.
- - Pick a much harder problem to solve.
 
 * Clean up fble test framework
  - Rename 'Print' to 'Show', which better describes what the function does.

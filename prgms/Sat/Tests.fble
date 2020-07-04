@@ -4,8 +4,13 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 <@>@ Eq@ = /Eq%.Eq@;
+@ Int@ = /Int/Int%.Int@;
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
 <@>% List = /List%.List;
 <@>% Append = /List%.Append;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
 <@>@ Show@ = /Show%.Show@;
 @ String@ = /String%.String@;
 % Str = /String%.Str;
@@ -69,7 +74,7 @@ TestSuite@ Tests = TestSuite(Chars|Sat, [
       List<Var@>([Var@(X, True)])
     ]);
     Result@ want = Result@(sat: List<Var@>([Var@(X, True)]));
-    Result@ got = Solve(f);
+    Result@ got = Solve(f, Nothing<Int@>);
     AssertEq(want, got);
   })),
 
@@ -78,8 +83,16 @@ TestSuite@ Tests = TestSuite(Chars|Sat, [
       List<Var@>([Var@(X, True)]),
       List<Var@>([Var@(X, False)])
     ]);
-    Result@ want = Result@(unsat: Unit);
-    Result@ got = Solve(f);
+    Result@ want = Result@(unsat: Nothing<Int@>);
+    Result@ got = Solve(f, Nothing<Int@>);
+    AssertEq(want, got);
+  })),
+
+  Test@(Str(Chars|Timeout), !({
+    # /Sat/Aim% is a real problem. There's no way we should be able to solve
+    # it in 10 ticks.
+    Result@ want = Result@(timeout: Unit);
+    Result@ got = Solve(/Sat/Aim%, Just<Int@>(I(D|10)));
     AssertEq(want, got);
   }))
 ]);

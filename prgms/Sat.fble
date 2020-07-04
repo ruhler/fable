@@ -1,7 +1,8 @@
 
 @ Bool@ = /Bool%.Bool@;
 % Not = /Bool%.Not;
-
+@ Int@ = /Int/Int%.Int@;
+% Dec = /Int/Int%.Dec;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
@@ -15,7 +16,7 @@
 
 # VarId@ --
 #   A variable identifier.
-@ VarId@ = /Int/Int%.Int@;
+@ VarId@ = Int@;
 % EqId = /Int/Int/Eq%.Eq;
 
 # Var@ --
@@ -36,9 +37,16 @@
 #   their polarity.
 @ Assignment@ = List@<Var@>;
 
+# Timeout@ --
+#   A number of steps allowed to be remaining, or Nothing if there is no
+#   timeout.
+@ Timeout@ = Maybe@<Int@>;
+
 # Result@ --
 #   The result of trying to solve a sat problem.
-@ Result@ = +(Assignment@ sat, Unit@ unsat, Unit@ timeout);
+#
+# In the case of unsat, the remaining timeout is returned.
+@ Result@ = +(Assignment@ sat, Timeout@ unsat, Unit@ timeout);
 
 # SubstClause --
 #   Substitute a value for a variable into the given clause.
@@ -75,42 +83,60 @@
     nil: f);
 };
 
+# Countdown --
+#   Count down the timeout.
+#
+# Returns:
+#   The timeout decremented by one, Nothing if time is up.
+(Timeout@) { Maybe@<Timeout@>; } Countdown = (Timeout@ t) {
+  t.?(
+    just: t.just.?(
+      p: Just<Timeout@>(Just<Int@>(Dec(t.just))),
+      : Nothing<Timeout@>),
+    nothing: Just<Timeout@>(t));
+};
+
 # Naive --
 #   Naive, brute force sat solver.
 #
 # Inputs:
 #   f - the formula to solve
 #   a - the assignments made so far
+#   t - a timeout.
 #
 # Returns:
-#   A satisfying assignment, or Nothing if the formula is unsatisfiable.
+#   A satisfying assignment, unsat if the formula is unsatisfiable, or timeout
+#   if we ran out of the allowed time.
 #
 # TODO: Make this less naive by using:
 #   * unit propagation:
 #     prioritize assignments from single variable clauses.
 #   * pure literal elimination:
 #     prioritize assignments to variables that always have the same polarity.
-(Formula@, Assignment@) { Result@; }
-Naive = (Formula@ f, Assignment@ a) {
-  f.?(
-    cons: {
-      f.cons.head.?(
+(Formula@, Assignment@, Timeout@) { Result@; }
+Naive = (Formula@ f, Assignment@ a, Timeout@ t) {
+  Maybe@<Timeout@> nt = Countdown(t);
+  nt.?(
+    just: {
+      f.?(
         cons: {
-          Var@ v = f.cons.head.cons.head;
-          Result@ attempted = Naive(
-            Subst(f, v),
-            Cons<Var@>(v, a));
-          attempted.?(
-            sat: attempted,
-            unsat: {
-              Var@ nv = Var@(v.id, Not(v.polarity));
-              Naive(Subst(f, nv), Cons<Var@>(nv, a));
+          f.cons.head.?(
+            cons: {
+              Var@ v = f.cons.head.cons.head;
+              Result@ attempted = Naive(Subst(f, v), Cons<Var@>(v, a), nt.just);
+              attempted.?(
+                sat: attempted,
+                unsat: {
+                  Var@ nv = Var@(v.id, Not(v.polarity));
+                  Naive(Subst(f, nv), Cons<Var@>(nv, a), attempted.unsat);
+                },
+                timeout: attempted);
             },
-            timeout: attempted);
+            nil: Result@(unsat: nt.just));
         },
-        nil: Result@(unsat: Unit));
+        nil: Result@(sat: a));
     },
-    nil: Result@(sat: a));
+    nothing: Result@(timeout: Unit));
 };
 
 # Solve --
@@ -118,9 +144,9 @@ Naive = (Formula@ f, Assignment@ a) {
 #
 # Returns:
 #   The result of trying to solve the sat problem.
-(Formula@) { Result@; } Solve = (Formula@ f) {
-  Naive(f, Nil<Var@>);
+(Formula@, Timeout@) { Result@; } Solve = (Formula@ f, Timeout@ t) {
+  Naive(f, Nil<Var@>, t);
 };
 
-@(VarId@, Var@, Clause@, Formula@, Assignment@, Result@,
+@(VarId@, Var@, Clause@, Formula@, Assignment@, Result@, Timeout@,
   EqId, Solve);
