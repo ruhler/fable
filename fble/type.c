@@ -1222,9 +1222,9 @@ void FblePrintType(FbleArena* arena, FbleType* type)
         FblePrintType(arena, ft->args.xs[i]);
         comma = ", ";
       }
-      fprintf(stderr, "){");
+      fprintf(stderr, ") { ");
       FblePrintType(arena, ft->rtype);
-      fprintf(stderr, ";}");
+      fprintf(stderr, "; }");
       return;
     }
 

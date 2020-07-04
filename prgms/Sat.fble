@@ -10,6 +10,9 @@
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
 # VarId@ --
 #   A variable identifier.
 @ VarId@ = /Int/Int%.Int@;
@@ -32,6 +35,10 @@
 #   A sets of variables assigned the values True or False as specified by
 #   their polarity.
 @ Assignment@ = List@<Var@>;
+
+# Result@ --
+#   The result of trying to solve a sat problem.
+@ Result@ = +(Assignment@ sat, Unit@ unsat, Unit@ timeout);
 
 # SubstClause --
 #   Substitute a value for a variable into the given clause.
@@ -83,36 +90,37 @@
 #     prioritize assignments from single variable clauses.
 #   * pure literal elimination:
 #     prioritize assignments to variables that always have the same polarity.
-(Formula@, Assignment@) { Maybe@<Assignment@>; }
+(Formula@, Assignment@) { Result@; }
 Naive = (Formula@ f, Assignment@ a) {
   f.?(
     cons: {
       f.cons.head.?(
         cons: {
           Var@ v = f.cons.head.cons.head;
-          Maybe@<Assignment@> attempted = Naive(
+          Result@ attempted = Naive(
             Subst(f, v),
             Cons<Var@>(v, a));
           attempted.?(
-            just: attempted,
-            nothing: {
+            sat: attempted,
+            unsat: {
               Var@ nv = Var@(v.id, Not(v.polarity));
               Naive(Subst(f, nv), Cons<Var@>(nv, a));
-            });
+            },
+            timeout: attempted);
         },
-        nil: Nothing<Assignment@>);
+        nil: Result@(unsat: Unit));
     },
-    nil: Just<Assignment@>(a));
+    nil: Result@(sat: a));
 };
 
 # Solve --
 #   Solve a SAT formula.
 #
 # Returns:
-#   A satisfying assignment, or Nothing if the formula is unsatisfiable.
-(Formula@) { Maybe@<Assignment@>; } Solve = (Formula@ f) {
+#   The result of trying to solve the sat problem.
+(Formula@) { Result@; } Solve = (Formula@ f) {
   Naive(f, Nil<Var@>);
 };
 
-@(VarId@, Var@, Clause@, Formula@, Assignment@,
+@(VarId@, Var@, Clause@, Formula@, Assignment@, Result@,
   EqId, Solve);

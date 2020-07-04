@@ -1,57 +1,66 @@
-@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
 % And = /Bool%.And;
-
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
-
+<@>@ Eq@ = /Eq%.Eq@;
 <@>% List = /List%.List;
 <@>% Append = /List%.Append;
-
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
-
+<@>@ Show@ = /Show%.Show@;
 @ String@ = /String%.String@;
 % Str = /String%.Str;
-
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
 @ TestSuite@ = /Test%.TestSuite@;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
+% Unit = /Unit%.Unit;
 
 @ Formula@ = /Sat%.Formula@;
 @ Clause@ = /Sat%.Clause@;
 @ VarId@ = /Sat%.VarId@;
 @ Var@ = /Sat%.Var@;
 @ Assignment@ = /Sat%.Assignment@;
+@ Result@ = /Sat%.Result@;
 % EqId = /Sat%.EqId;
 % Solve = /Sat%.Solve;
 
 VarId@ X = /Int/Int%.1;
 
-(VarId@) { String@; } PrintId = (VarId@ x) {
+Show@<VarId@> ShowId = (VarId@ x) {
   # TODO: Print variable ids properly.
   Str(Chars|'?');
 };
 
-(Var@) { String@; } PrintVar = (Var@ v) {
+Show@<Var@> ShowVar = (Var@ v) {
   String@ sign = Str(v.polarity.?(true: Chars|'+', false: Chars|'-'));
-  Append<Char@>(sign, PrintId(v.id));
+  Append<Char@>(sign, ShowId(v.id));
 };
 
-(Var@, Var@) { Bool@; } EqVar = (Var@ a, Var@ b) {
+Eq@<Var@> EqVar = (Var@ a, Var@ b) {
   And(EqId(a.id, b.id), /Bool/Eq%.Eq(a.polarity, b.polarity));
 };
 
-(Maybe@<Assignment@>, Maybe@<Assignment@>) { TestResult@; }
-AssertEq = (Maybe@<Assignment@> a, Maybe@<Assignment@> b) {
-  AssertEquals<Maybe@<Assignment@>>(
-    /Maybe/Eq%.Eq<Assignment@>(/List/Eq%.Eq<Var@>(EqVar)),
-    /Maybe/Show%.Show<Assignment@>(/List/Show%.Show<Var@>(PrintVar)),
-    a, b);
+Show@<Assignment@> ShowAssignment = /List/Show%.Show<Var@>(ShowVar);
+Eq@<Assignment@> EqAssignment = /List/Eq%.Eq<Var@>(EqVar);
+
+Eq@<Result@> EqResult = (Result@ a, Result@ b) {
+  a.?(
+    sat: b.?(sat: EqAssignment(a.sat, b.sat), : False),
+    unsat: b.?(unsat: True, : False),
+    timeout: b.?(timeout: True, : False));
+};
+
+Show@<Result@> ShowResult = (Result@ a) {
+  a.?(
+    sat: Append<Char@>(Str(Chars|'sat: '), ShowAssignment(a.sat)),
+    unsat: Str(Chars|'unsat'),
+    timeout: Str(Chars|'timeout'));
+};
+
+(Result@, Result@) { TestResult@; }
+AssertEq = (Result@ a, Result@ b) {
+  AssertEquals<Result@>(EqResult, ShowResult, a, b);
 };
 
 TestSuite@ Tests = TestSuite(Chars|Sat, [
@@ -59,8 +68,8 @@ TestSuite@ Tests = TestSuite(Chars|Sat, [
     Formula@ f = List<Clause@>([
       List<Var@>([Var@(X, True)])
     ]);
-    Maybe@<Assignment@> want = Just<Assignment@>(List<Var@>([Var@(X, True)]));
-    Maybe@<Assignment@> got = Solve(f);
+    Result@ want = Result@(sat: List<Var@>([Var@(X, True)]));
+    Result@ got = Solve(f);
     AssertEq(want, got);
   })),
 
@@ -69,8 +78,8 @@ TestSuite@ Tests = TestSuite(Chars|Sat, [
       List<Var@>([Var@(X, True)]),
       List<Var@>([Var@(X, False)])
     ]);
-    Maybe@<Assignment@> want = Nothing<Assignment@>;
-    Maybe@<Assignment@> got = Solve(f);
+    Result@ want = Result@(unsat: Unit);
+    Result@ got = Solve(f);
     AssertEq(want, got);
   }))
 ]);
