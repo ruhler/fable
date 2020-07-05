@@ -1,0 +1,11 @@
+
+% Chars = /Char%.Chars;
+@ IntS@ = /Int/IntS%.IntS@;
+<@>@ Show@ = /Show%.Show@;
+% Str = /String%.Str;
+
+Show@<IntS@> Show = (IntS@ x) {
+  x.?(0: Str(Chars|0), p: /Int/IntP/Show%.Show(x.p));
+};
+
+@(Show);

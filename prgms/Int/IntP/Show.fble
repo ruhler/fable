@@ -1,0 +1,56 @@
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+@ IntP@ = /Int/IntP%.IntP@;
+% 10 = /Int/IntP%.10;
+% DivMod = / Int/IntP/Div%.DivMod;
+@ IntS@ = /Int/IntS%.IntS@;
+<@>% Append = /List%.Append;
+<@>% Nil = /List%.Nil;
+<@>@ Show@ = /Show%.Show@;
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+# ShowDigit --
+#   Convert the given digit to a string.
+#
+# Behavior is undefined if x is not in the range [0, 9].
+(IntS@) { String@; } ShowDigit = (IntS@ x) {
+  Str(x.?(
+    0: Chars|0,
+    p: x.p.?(
+      1: Chars|1,
+      2p0: x.p.2p0.?( 
+        1: Chars|2,
+        2p0: x.p.2p0.2p0.?(
+          1: Chars|4,
+          2p0: x.p.2p0.2p0.2p0.?(
+            1: Chars|8,
+            : Chars|'?'),
+          : Chars|'?'),
+        2p1: x.p.2p0.2p1.?(
+          1: Chars|6,
+          : Chars|'?')),
+      2p1: x.p.2p1.?( 
+        1: Chars|3,
+        2p0: x.p.2p1.2p0.?(
+          1: Chars|5,
+          2p0: x.p.2p1.2p0.2p0.?(
+            1: Chars|9,
+            : Chars|'?'),
+          : Chars|'?'),
+        2p1: x.p.2p1.2p1.?(
+          1: Chars|7,
+          : Chars|'?')))));
+};
+
+# Show --
+#   Implementation of Show@ for IntP@.
+Show@<IntP@> Show = (IntP@ x) {
+  % qr = DivMod(x, 10);
+  String@ tail = ShowDigit(qr.r);
+  String@ head = qr.q.?(0: Nil<Char@>, p: Show(qr.q.p));
+  Append<Char@>(head, tail);
+};
+
+@(Show);

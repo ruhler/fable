@@ -5,12 +5,15 @@
 % Chars = /Char%.Chars;
 
 <@>@ CharLit@ = /String%.CharLit@;
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
 @ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
 
 % Unit = /Unit%.Unit;
 
@@ -38,7 +41,7 @@
 % I = /Int/Int/Lit%.I;
 
 (CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
-  Test@(Str(name), {
+  Test(name, {
     Bool@ x := p;
     x.?(
       true: !(TestResult@(pass: Unit)),
@@ -47,9 +50,11 @@
   });
 };
 
-(CharLit@, Int@, Int@!){Test@;} TEq = (CharLit@ name, Int@ a, Int@! b) {
-  # TODO: Provide a custom error message
-  T(name, { Int@ x := b; !(Eq(a, x)); });
+(CharLit@, Int@, Int@!) { Test@; } TEq = (CharLit@ name, Int@ a, Int@! b) {
+  Test(name, {
+    Int@ x := b;
+    !(AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, a, x));
+  });
 };
 
 TestSuite@ Tests = TestSuite(Chars|Int, [
@@ -120,7 +125,25 @@ TestSuite@ Tests = TestSuite(Chars|Int, [
   TEq(Chars|Sub_5_3, 2, !(Sub(5, 3))),
   TEq(Chars|Sub_3_5, Neg(2), !(Sub(3, 5))),
   TEq(Chars|Neg_m2, 2, !(Neg(Neg(2)))),
-  TEq(Chars|Mul_3_5, I(D|15), !(Mul(3, 5)))
+  TEq(Chars|Mul_3_5, I(D|15), !(Mul(3, 5))),
+
+  Test(Chars|Show_Positive, !({
+    String@ wnt = Str(Chars|'10325487960');
+    String@ got = /Int/Int/Show%.Show(I(D|10325487960));
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Show_Zero, !({
+    String@ wnt = Str(Chars|'0');
+    String@ got = /Int/Int/Show%.Show(I(D|0));
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Show_Negative, !({
+    String@ wnt = Str(Chars|'-42');
+    String@ got = /Int/Int/Show%.Show(Neg(I(D|42)));
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  }))
 ]);
 
 @(Tests);

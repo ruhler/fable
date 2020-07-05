@@ -32,10 +32,7 @@
 
 VarId@ X = /Int/Int%.1;
 
-Show@<VarId@> ShowId = (VarId@ x) {
-  # TODO: Print variable ids properly.
-  Str(Chars|'?');
-};
+Show@<VarId@> ShowId = /Int/Int/Show%.Show;
 
 Show@<Var@> ShowVar = (Var@ v) {
   String@ sign = Str(v.polarity.?(true: Chars|'+', false: Chars|'-'));
