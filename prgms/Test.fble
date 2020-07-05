@@ -6,6 +6,8 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
+@ IntS@ = /Int/IntS%.IntS@;
+
 <@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;
 <@>% List = /List%.List;
@@ -14,6 +16,7 @@
 <@>% Cons = /List%.Cons;
 <@,@>% ProcessEach = /List%.ProcessEach;
 <@,@>% Map = /List%.Map;
+<@>% Length = /List/Length%.Length;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
@@ -106,9 +109,21 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
   Unit@ _ := ProcessEach<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
     PrintLn(out, Concat<Char@>(List<String@>([f.name, Str(Chars|': FAILED: '), f.msg])));
   });
+  Unit@ _ := PrintLn(out, Nil<Char@>);
+
+  # TODO: It would be nice to show number of tests passed too. It's a bit
+  # tedious at the moment though.
+  IntS@ num_total = Length<Test@>(tests);
+  IntS@ num_failed = Length<Failure@>(failures);
+  Unit@ _ := PrintLn(out, Concat<Char@>(List<String@>([
+    Str(Chars|'Test Summary: '),
+    /Int/IntS/Show%.Show(num_total),
+    Str(Chars|' total, '),
+    /Int/IntS/Show%.Show(num_failed),
+    Str(Chars|' failed')
+  ])));
 
   # TODO: Why do we need this extra output?
-  Unit@ _ := PrintLn(out, Nil<Char@>);
   Unit@ _ := PrintLn(out, Nil<Char@>);
 
   !(failures.?(cons: False, nil: True));

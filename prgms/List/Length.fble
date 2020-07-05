@@ -1,0 +1,24 @@
+
+@ IntS@ = /Int/IntS%.IntS@;
+% 0 = /Int/IntS%.0;
+% Inc = /Int/IntS%.Inc;
+<@>@ List@ = /List%.List@;
+
+# Length --
+#   Returns the length of a list.
+#
+# Type Parameters:
+#   T@ - The type of element on the list.
+#
+# Arguments:
+#   l - the list to get the length of.
+#
+# Returns:
+#   The length of the list.
+<@ T@>(List@<T@>) { IntS@; } Length = <@ T@>(List@<T@> l) {
+  # TODO: This is non tail recursive? Should we implement a more memory
+  # efficient version?
+  l.?(cons: Inc(Length<T@>(l.cons.tail)), nil: 0);
+};
+
+@(Length);

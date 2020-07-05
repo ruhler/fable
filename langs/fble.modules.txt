@@ -198,3 +198,15 @@ convinced it adds much. For example, /Bool/Show%.Show is just as good or
 better to use than locally defining ShowBool. Take a little more risk here and
 see if it leads to any problems.
 
+---
+
+In practice, splitting things up into very fine modules hasn't caused me any
+problems for things like separate Show, Eq, List/Sort, List/Length. It's nice
+to have them separate. They are still organized. It doesn't really cost
+anything in import statements in practice I don't think.
+
+But I will say, picking between IntP@, IntS@, and Int@ is annoying. For
+example, I want to print the number of tests ran, passed, and failed in the
+test runner. A simple thing like computing passed = ran - failed suddenly runs
+into problems if I'm using IntS@ as the type instead of Int@.
+

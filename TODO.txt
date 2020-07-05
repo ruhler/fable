@@ -4,6 +4,7 @@
  - Document all functions.
  - Add tests for full code coverage of all functions.
  - Rename Str to String? Or to S?
+ - Only support Int@ officially, not IntP@ and IntS@ too?
 
 * Sat solver
  - Add support for unit propagation.
@@ -12,9 +13,7 @@
  - Implement dimacs cnf parser.
 
 * Clean up fble test framework
- - Rename 'Print' to 'Show', which better describes what the function does.
  - Use AssertEquals for more of the tests.
- - Print out total tests passed, failed, and run in RunTest.
  - Separate Test tests out into separate module and properly test the test
    infra.
 

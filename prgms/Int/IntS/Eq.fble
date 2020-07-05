@@ -11,6 +11,12 @@
   a.?(0: True, p: False);
 };
 
+(IntS@, IntS@) { Bool@; } Eq = (IntS@ a, IntS@ b) {
+  a.?(
+    0: b.?(0: True, p: False),
+    p: b.?(0: False, p: P.Eq(a.p, b.p)));
+};
+
 (IntS@, IntS@) { Bool@; } Lt = (IntS@ a, IntS@ b) {
   a.?(0: b.?(0: False, p: True),
        p: b.?(0: False, p: P.Lt(a.p, b.p)));
@@ -21,4 +27,4 @@
       p: b.?(0: True, p: P.Gt(a.p, b.p)));
 };
 
-@(IsZero, Gt, Lt);
+@(IsZero, Eq, Gt, Lt);

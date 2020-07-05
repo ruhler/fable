@@ -1,0 +1,37 @@
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+
+@ IntS@ = /Int/IntS%.IntS@;
+% 0 = /Int/IntS%.0;
+% 1 = /Int/IntS%.1;
+% 2P0 = /Int/IntS%.2P0;
+% 2P1 = /Int/IntS%.2P1;
+% Add = /Int/IntS%.Add;
+% Mul = /Int/IntS%.Mul;
+
+IntS@ 2 = 2P0(1);
+IntS@ 3 = 2P1(1);
+IntS@ 4 = 2P0(2);
+IntS@ 5 = 2P1(2);
+IntS@ 6 = 2P0(3);
+IntS@ 7 = 2P1(3);
+IntS@ 8 = 2P0(4);
+IntS@ 9 = 2P1(4);
+IntS@ 10 = 2P0(5);
+
+# Decimal Digits.
+% D = @(0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9);
+
+# Create an Int@ from an Int literal.
+# For example: Int@ 42 = I(D|42)
+# TODO: Can we share this code with /Int/Int/Lit%?
+(Lit@<IntS@>) { IntS@; } I = (Lit@<IntS@> lit) {
+  @ MkIntS@ = (IntS@) { IntS@; };
+  lit<MkIntS@>(
+    (IntS@ d, MkIntS@ mk)(IntS@ msb) {
+      mk(Add(Mul(10, msb), d));
+    },
+    (IntS@ msb) { msb; })(0);
+};
+
+@(I, D);

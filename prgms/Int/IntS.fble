@@ -31,8 +31,12 @@ IntS@ 2 = IntP(P.2);
   a.?(0: 1, p: IntP(P.Add1(a.p)));
 };
 
+(IntS@, IntS@) { IntS@; } Add = (IntS@ a, IntS@ b) {
+  a.?(0: b, p: b.?(0: a, p: IntP(P.Add(a.p, b.p))));
+};
+
 (IntS@, IntS@) { IntS@; } Mul = (IntS@ a, IntS@ b) {
   a.?(0: 0, p: b.?(0: 0, p: IntP(P.Mul(a.p, b.p))));
 };
 
-@(IntS@, IntP, 0, 1, 2, Inc, Mul, 2P0, 2P1);
+@(IntS@, IntP, 0, 1, 2, Inc, Add, Mul, 2P0, 2P1);

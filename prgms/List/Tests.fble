@@ -11,6 +11,10 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
+@ IntS@ = /Int/IntS%.IntS@;
+% I = /Int/IntS/Lit%.I;
+% D = /Int/IntS/Lit%.D;
+
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 <@>% Cons = /List%.Cons;
@@ -20,6 +24,7 @@
 <@>% Concat = /List%.Concat;
 <@,@>% Map = /List%.Map;
 <@,@>% ForEach = /List%.ForEach;
+<@>% Length = /List/Length%.Length;
 <@>% Sort = /List/Sort%.Sort;
 
 <@>@ Show@ = /Show%.Show@;
@@ -156,6 +161,12 @@ TestSuite@ Tests = TestSuite(Chars|List, [
     List@<Elem@> wnt = List<Elem@>(Elems|ABCDE);
     List@<Elem@> got = Sort<Elem@>(ElemLe, unsorted);
     AssertEquals(wnt, got);
+  })),
+
+  Test@(Str(Chars|'Length'), !({
+    IntS@ wnt = I(D|5);
+    IntS@ got = Length<Elem@>(List<Elem@>(Elems|ABCDE));
+    /Test%.AssertEquals<IntS@>(/Int/IntS/Eq%.Eq, /Int/IntS/Show%.Show, wnt, got);
   }))
 ]);
 

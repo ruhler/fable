@@ -1257,3 +1257,18 @@ Notes:
   the module implementors reorder fields or add fields to that type, causing
   the user to break. Is this captured already in the discussions on API
   versioning that we have done before?
+
+* A common question that comes up is whether to fuse two things in a single
+  loop traversal or do them separately.
+
+  For example: in the test runner, should we count the number of tests in the
+  same loop we run them in, or should we call a separate list length function?
+
+  For example: in the sat solver, should we track pure literals and units
+  during substitution, or do those in separate passes?
+
+  This seems like an important place where composition of functionality
+  perhaps doesn't support good performance? Is there a language feature or
+  approach to library design that maintains the flexibility we would like to
+  have: we can specify iterations separately but somehow compose them together
+  for performance reasons if desired?
