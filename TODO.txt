@@ -7,8 +7,8 @@
  - Only support Int@ officially, not IntP@ and IntS@ too?
 
 * Sat solver
- - Add support for unit propagation.
  - Add support for pure literal propagation.
+   Wants better fble library support for sets?
  - Implement dimacs cnf parser.
 
 * Clean up fble test framework

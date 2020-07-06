@@ -6,7 +6,8 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-@ IntS@ = /Int/IntS%.IntS@;
+@ Int@ = /Int/Int%.Int@;
+% Sub = /Int/Int%.Sub;
 
 <@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;
@@ -111,16 +112,17 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
   });
   Unit@ _ := PrintLn(out, Nil<Char@>);
 
-  # TODO: It would be nice to show number of tests passed too. It's a bit
-  # tedious at the moment though.
-  IntS@ num_total = Length<Test@>(tests);
-  IntS@ num_failed = Length<Failure@>(failures);
+  Int@ num_total = Length<Test@>(tests);
+  Int@ num_failed = Length<Failure@>(failures);
+  Int@ num_passed = Sub(num_total, num_failed);
   Unit@ _ := PrintLn(out, Concat<Char@>(List<String@>([
     Str(Chars|'Test Summary: '),
-    /Int/IntS/Show%.Show(num_total),
-    Str(Chars|' total, '),
-    /Int/IntS/Show%.Show(num_failed),
-    Str(Chars|' failed')
+    /Int/Int/Show%.Show(num_passed),
+    Str(Chars|' passed, '),
+    /Int/Int/Show%.Show(num_failed),
+    Str(Chars|' failed, '),
+    /Int/Int/Show%.Show(num_total),
+    Str(Chars|' total')
   ])));
 
   # TODO: Why do we need this extra output?

@@ -11,9 +11,9 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
-@ IntS@ = /Int/IntS%.IntS@;
-% I = /Int/IntS/Lit%.I;
-% D = /Int/IntS/Lit%.D;
+@ Int@ = /Int/Int%.Int@;
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
@@ -164,9 +164,9 @@ TestSuite@ Tests = TestSuite(Chars|List, [
   })),
 
   Test@(Str(Chars|'Length'), !({
-    IntS@ wnt = I(D|5);
-    IntS@ got = Length<Elem@>(List<Elem@>(Elems|ABCDE));
-    /Test%.AssertEquals<IntS@>(/Int/IntS/Eq%.Eq, /Int/IntS/Show%.Show, wnt, got);
+    Int@ wnt = I(D|5);
+    Int@ got = Length<Elem@>(List<Elem@>(Elems|ABCDE));
+    /Test%.AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, wnt, got);
   }))
 ]);
 
