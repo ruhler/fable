@@ -13,8 +13,7 @@
 
 * Clean up fble test framework
  - Use AssertEquals for more of the tests.
- - Separate Test tests out into separate module and properly test the test
-   infra.
+ - Properly test the test infra.
 
 * Figure out why we need an extra print in RunTest.
  Does the program end before we have a chance to put all the output?

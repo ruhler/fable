@@ -152,13 +152,6 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
   });
 };
 
-TestSuite@ Tests = {
-  Test@ pass = Test@(Str(Chars|pass), !(TestResult@(pass: Unit)));
-  Test@ _fail = Test@(Str(Chars|fail), !(TestResult@(fail: Str(Chars|FAILED))));
-
-  TestSuite(Chars|'Test', [pass]);
-};
-
 @(
   String@, TestResult@, Test@, TestSuite@,
-  AssertEquals, Test, TestSuite, RunTests, RunTestsVerbose, Tests);
+  AssertEquals, Test, TestSuite, RunTests, RunTestsVerbose);

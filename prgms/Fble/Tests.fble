@@ -34,7 +34,7 @@ List@<Test@> AllTests = Concat<Test@>(List<List@<Test@>>([
   /Primes/Tests%.Tests,
   /Sat/Tests%.Tests,
   /Sudoku/Tests%.Tests,
-  /Test%.Tests,
+  /Test/Tests%.Tests,
   /TicTacToe/Tests%.Tests
 ]));
 
