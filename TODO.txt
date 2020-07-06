@@ -9,7 +9,6 @@
 * Sat solver
  - Add support for unit propagation.
  - Add support for pure literal propagation.
- - Add support for printing the resulting assignments.
  - Implement dimacs cnf parser.
 
 * Clean up fble test framework

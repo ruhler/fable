@@ -83,6 +83,38 @@
     nil: f);
 };
 
+# GetUnit --
+#   Searches for a clause with a single variable.
+#
+# For example, if we have a clause with the single variable x, we know we can
+# set x to True. This is unit propagation.
+(Formula@) { Maybe@<Var@>; } GetUnit = (Formula@ f) {
+  f.?(
+    cons: {
+      Clause@ clause = f.cons.head;
+      clause.?(
+        cons: clause.cons.tail.?(
+          cons: GetUnit(f.cons.tail),
+          nil: Just<Var@>(clause.cons.head)),
+        nil: GetUnit(f.cons.tail));
+    },
+    nil: Nothing<Var@>);
+};
+
+# Simplify --
+#   Simplify the given formula using unit propagation and (TODO) pure literal
+#   elimination.
+#
+# Returns the simplified formula and any assignments that have been made
+# during the simplification process.
+(Formula@, Assignment@) { *(Formula@ simplified, Assignment@ assigns); }
+Simplify = (Formula@ f, Assignment@ a) {
+  Maybe@<Var@> unit = GetUnit(f);
+  unit.?(
+    just: Simplify(Subst(f, unit.just), Cons<Var@>(unit.just, a)),
+    nothing: @(simplified: f, assigns: a));
+};
+
 # Countdown --
 #   Count down the timeout.
 #
@@ -96,8 +128,8 @@
     nothing: Just<Timeout@>(t));
 };
 
-# Naive --
-#   Naive, brute force sat solver.
+# Search --
+#   Searches for a solution to the given sat formula.
 #
 # Inputs:
 #   f - the formula to solve
@@ -114,7 +146,11 @@
 #   * pure literal elimination:
 #     prioritize assignments to variables that always have the same polarity.
 (Formula@, Assignment@, Timeout@) { Result@; }
-Naive = (Formula@ f, Assignment@ a, Timeout@ t) {
+Search = (Formula@ f, Assignment@ a, Timeout@ t) {
+  % fa = Simplify(f, a);
+  Formula@ f = fa.simplified;
+  Assignment@ a = fa.assigns;
+
   Maybe@<Timeout@> nt = Countdown(t);
   nt.?(
     just: {
@@ -123,12 +159,12 @@ Naive = (Formula@ f, Assignment@ a, Timeout@ t) {
           f.cons.head.?(
             cons: {
               Var@ v = f.cons.head.cons.head;
-              Result@ attempted = Naive(Subst(f, v), Cons<Var@>(v, a), nt.just);
+              Result@ attempted = Search(Subst(f, v), Cons<Var@>(v, a), nt.just);
               attempted.?(
                 sat: attempted,
                 unsat: {
                   Var@ nv = Var@(v.id, Not(v.polarity));
-                  Naive(Subst(f, nv), Cons<Var@>(nv, a), attempted.unsat);
+                  Search(Subst(f, nv), Cons<Var@>(nv, a), attempted.unsat);
                 },
                 timeout: attempted);
             },
@@ -145,7 +181,7 @@ Naive = (Formula@ f, Assignment@ a, Timeout@ t) {
 # Returns:
 #   The result of trying to solve the sat problem.
 (Formula@, Timeout@) { Result@; } Solve = (Formula@ f, Timeout@ t) {
-  Naive(f, Nil<Var@>, t);
+  Search(f, Nil<Var@>, t);
 };
 
 @(VarId@, Var@, Clause@, Formula@, Assignment@, Result@, Timeout@,
