@@ -1,3 +1,7 @@
+* Proof of concept fblf
+ - Implement N bit addition, run on evaluator and compile via llvm to c code
+   and run.
+
 * Clean up fble library
  - Test Eq and Show for Str@.
  - Separate modules as appropriate to reduce false dependencies.
