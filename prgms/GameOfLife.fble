@@ -3,12 +3,6 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 
-@ Data@ = /Data%.Data@;
-% Left = /Data%.Left;
-% Right = /Data%.Right;
-% DUnit = /Data%.Unit;
-% Product = /Data%.Product;
-
 @ IntP@ = /Int/IntP%.IntP@;
 
 @ Int@ = /Int/Int%.Int@;
@@ -27,25 +21,31 @@
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
+% UnitS = /Structure%.UnitS;
+% LeftS = /Structure%.LeftS;
+% RightS = /Structure%.RightS;
+% PairS = /Structure%.PairS;
+<@>@ Structured@ = /Structured%.Structured@;
+
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
 @ Coord@ = *(Int@ row, Int@ col);
 
-(IntP@) { Data@; } DNat = (IntP@ n) {
-  n.?(1: DUnit, 2p0: Left(DNat(n.2p0)), 2p1: Right(DNat(n.2p1)));
+Structured@<IntP@> NatS = (IntP@ n) {
+  n.?(1: UnitS, 2p0: LeftS(NatS(n.2p0)), 2p1: RightS(NatS(n.2p1)));
 };
 
-(Int@){ Data@; } DInt = (Int@ n) {
-  n.?(n: Left(DNat(n.n)), 0: DUnit, p: Right(DNat(n.p)));
+Structured@<Int@> IntS = (Int@ n) {
+  n.?(n: LeftS(NatS(n.n)), 0: UnitS, p: RightS(NatS(n.p)));
 };
 
-(Coord@) { Data@; } DCoord = (Coord@ c) {
-  Product(DInt(c.row), DInt(c.col));
+Structured@<Coord@> CoordS = (Coord@ c) {
+  PairS(IntS(c.row), IntS(c.col));
 };
 
 # The world is a set of Coord@ where there are live cells.
-% MapCoord = Map<Coord@>(DCoord);
+% MapCoord = Map<Coord@>(CoordS);
 @ World@ = MapCoord.Map@<Unit@>;
 % EqWorld = (World@ a, World@ b) {
    MapCoord.Equals<Unit@>((Unit@ _a, Unit@ _b) { True; }, a, b);

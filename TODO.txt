@@ -1,3 +1,10 @@
+* Clean up Map and Set library
+ - Switch over from Data@ to Structure@
+ - Add helper functions and literals to make it easier to define instances of
+   Structured@
+ - Redefine Map@ type.
+ - Add implementations of Structured@ for Int and String.
+
 * Proof of concept fblf
  - Implement N bit addition, run on evaluator and compile via llvm to c code
    and run.

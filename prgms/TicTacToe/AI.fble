@@ -1,9 +1,10 @@
 
-@ Data@ = /Data%.Data@;
-% DUnit = /Data%.Unit;
-% Left = /Data%.Left;
-% Right = /Data%.Right;
-% Product = /Data%.Product;
+@ Structure@ = /Structure%.Structure@;
+% UnitS = /Structure%.UnitS;
+% LeftS = /Structure%.LeftS;
+% RightS = /Structure%.RightS;
+% PairS = /Structure%.PairS;
+<@>@ Structured@ = /Structured%.Structured@;
 
 <@>% Map = /Map%.Map;
 
@@ -31,26 +32,28 @@
 % BoardStatus = /TicTacToe/Board%.BoardStatus;
 % Move = /TicTacToe/Board%.Move;
 
-(Square@) { Data@; } DSquare = {
-  Data@ x = Left(Left(DUnit));
-  Data@ o = Left(Right(DUnit));
-  Data@ e = Right(DUnit);
+Structured@<Square@> SquareS = {
+  Structure@ x = LeftS(LeftS(UnitS));
+  Structure@ o = LeftS(RightS(UnitS));
+  Structure@ e = RightS(UnitS);
   (Square@ s) { s.?(X: x, O: o, E: e); };
 };
 
-(Board@) { Data@; } DBoard = {
-  (Data@, Data@, Data@) { Data@; } D3 = (Data@ a, Data@ b, Data@ c) {
-    Product(Product(a, b), c);
+Structured@<Board@> BoardS = {
+  (Structure@, Structure@, Structure@) { Structure@; }
+  D3 = (Structure@ a, Structure@ b, Structure@ c) {
+    PairS(PairS(a, b), c);
   };
 
-  (Square@, Square@, Square@) { Data@; } DRow = (Square@ a, Square@ b, Square@ c) {
-    D3(DSquare(a), DSquare(b), DSquare(c));
+  (Square@, Square@, Square@) { Structure@; }
+  RowS = (Square@ a, Square@ b, Square@ c) {
+    D3(SquareS(a), SquareS(b), SquareS(c));
   };
 
   (Board@ b) {
-    D3(DRow(b.ul, b.uc, b.ur),
-       DRow(b.ml, b.mc, b.mr),
-       DRow(b.ll, b.lc, b.lr));
+    D3(RowS(b.ul, b.uc, b.ur),
+       RowS(b.ml, b.mc, b.mr),
+       RowS(b.ll, b.lc, b.lr));
   };
 };
 
@@ -153,7 +156,7 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-% BoardMap = Map<Board@>(DBoard);
+% BoardMap = Map<Board@>(BoardS);
 @ MemoTable@ = BoardMap.Map@<PositionResult@>;
 % Empty = BoardMap.Empty<PositionResult@>;
 % Lookup = BoardMap.Lookup<PositionResult@>;

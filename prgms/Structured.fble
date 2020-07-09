@@ -1,0 +1,20 @@
+
+@ Structure@ = /Structure%.Structure@;
+
+# Structured@ --
+#   Common facility for converting values to Structure@.
+#
+# Type Parameters:
+#   T@ - The type of the value to convert to a structure.
+#
+# Arguments:
+#   T@ - The value to convert to a structure.
+#
+# Returns:
+#   The structured representation of the value. Different values should be
+#   represented as having different structures. Otherwise it doesn't matter
+#   much what particular structure is chosen, except it may be more efficient
+#   for some use cases to limit the depth of the structure.
+<@>@ Structured@ = <@ T@>(T@) { Structure@; };
+
+@(Structured@);

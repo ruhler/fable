@@ -23,10 +23,10 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-% Product = /Data%.Product;
-% Left = /Data%.Left;
-% Right = /Data%.Right;
-% DUnit = /Data%.Unit;
+% UnitS = /Structure%.UnitS;
+% LeftS = /Structure%.LeftS;
+% RightS = /Structure%.RightS;
+% PairS = /Structure%.PairS;
 
 <@>% Map = /Map%.Map;
 
@@ -47,9 +47,9 @@ Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
 };
 
 % MapBit2 = Map<Bit2@>((Bit2@ x) {
-  Product(
-    x.h.?(0: Left(DUnit), 1: Right(DUnit)),
-    x.l.?(0: Left(DUnit), 1: Right(DUnit)));
+  PairS(
+    x.h.?(0: LeftS(UnitS), 1: RightS(UnitS)),
+    x.l.?(0: LeftS(UnitS), 1: RightS(UnitS)));
 });
 <@>@ Map@ = MapBit2.Map@;
 <@>% Empty = MapBit2.Empty;
