@@ -1,12 +1,4 @@
 
-@ Structure@ = /Structure%.Structure@;
-% UnitS = /Structure%.UnitS;
-% LeftS = /Structure%.LeftS;
-% RightS = /Structure%.RightS;
-% PairS = /Structure%.PairS;
-% Struct = /Structure/Struct%.Struct;
-<@>@ Structured@ = /Structured%.Structured@;
-
 <@>% Map = /Map%.Map;
 
 <@>@ List@ = /List%.List@;
@@ -22,6 +14,13 @@
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
+@ Structure@ = /Structure%.Structure@;
+% Struct = /Structure/Struct%.Struct;
+% Tag = /Structure/Union%.Tag;
+% Enum = /Structure/Union%.Enum;
+<@>@ Structured@ = /Structured%.Structured@;
+
+
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
@@ -34,9 +33,9 @@
 % Move = /TicTacToe/Board%.Move;
 
 Structured@<Square@> SquareS = {
-  Structure@ x = LeftS(LeftS(UnitS));
-  Structure@ o = LeftS(RightS(UnitS));
-  Structure@ e = RightS(UnitS);
+  Structure@ x = Enum(Tag|00);
+  Structure@ o = Enum(Tag|01);
+  Structure@ e = Enum(Tag|1);
   (Square@ s) { s.?(X: x, O: o, E: e); };
 };
 

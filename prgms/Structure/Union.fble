@@ -1,0 +1,58 @@
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+
+@ Structure@ = /Structure%.Structure@;
+% LeftS = /Structure%.LeftS;
+% RightS = /Structure%.RightS;
+% UnitS = /Structure%.UnitS;
+
+# Tag@ --
+#   Helper type used for describing tags used in the Union function.
+@ Tag@ = (Structure@) { Structure@; };
+
+# Tag --
+#   Helper for constructing tag literals used in the Union function.
+% Tag = @(0: LeftS, 1: RightS);
+
+# Union --
+#   Convenience function for defining structure values representing union
+#   values.
+#
+# Inputs:
+#   tag - the tag for the value.
+#   value - the value being tagged.
+#
+# Returns:
+#   A Structure@ representing the given tagged value.
+#
+# Example Use:
+#   Structure@ x = Union(Tag|00, a);
+#   Structure@ y = Union(Tag|01, b);
+#   Structure@ z = Union(Tag|1, c);
+#
+# Here the tag Tag|00 gets translated to the structure LeftS(LeftS(a)), the
+# tag Tag|01 becomes LeftS(RightS(b)), and Tag|1 is RightS(c).
+(Lit@<Tag@>, Structure@) { Structure@; }
+Union = (Lit@<Tag@> tag, Structure@ value) {
+  tag<Structure@>((Tag@ t, Structure@ s) { t(s); }, value); 
+};
+
+# Enum --
+#   Convenience function for defining structure values representing enum
+#   values.
+#
+# Inputs:
+#   tag - the tag for the enum.
+#
+# Returns:
+#   A Structure@ representing the given tagged enum.
+#
+# Example Use:
+#   Structure@ x = Enum(Tag|00);
+#   Structure@ y = Enum(Tag|01);
+#   Structure@ z = Enum(Tag|1);
+(Lit@<Tag@>) { Structure@; } Enum = (Lit@<Tag@> tag) {
+  Union(tag, UnitS);
+};
+
+@(Tag@, Tag, Union, Enum);
