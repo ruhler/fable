@@ -1,0 +1,56 @@
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@>% Cons = /List%.Cons;
+@ Structure@ = /Structure%.Structure@;
+% PairS = /Structure%.PairS;
+% UnitS = /Structure%.UnitS;
+
+# PairUp --
+#   Pair up adjacent elements in a list. For example, [a, b, c, d, e] turns
+#   into [(a, b), (c, d), e].
+(List@<Structure@>) { List@<Structure@>; } PairUp = (List@<Structure@> list) {
+  list.?(
+    cons: list.cons.tail.?(
+      cons: {
+        Structure@ head = PairS(list.cons.head, list.cons.tail.cons.head);
+        List@<Structure@> tail = PairUp(list.cons.tail.cons.tail);
+        Cons<Structure@>(head, tail);
+      },
+      nil: list),
+    nil: list);
+};
+
+# Build --
+#   Helper function for building a Structure@ representing a struct value.
+#
+# Inputs:
+#   fields - The list of fields in the structure.
+#
+# Returns:
+#   A balanced structure representing the structure of fields.
+(List@<Structure@>) { Structure@; } Build = (List@<Structure@> list) {
+  list.?(
+    cons: list.cons.tail.?(
+      cons: Build(PairUp(list)),
+      nil: list.cons.head),
+    nil: UnitS);
+};
+
+# Struct --
+#   Creates a Structure@ representing a struct value.
+#
+# Inputs:
+#   lit - The list of fields in the structure.
+#
+# Returns:
+#   A balanced structure representing the structure of fields.
+#
+# Example Use:
+#   Struct([field_1, field_2, field_3])
+(Lit@<Structure@>) { Structure@; } Struct = (Lit@<Structure@> lit) {
+  Build(List<Structure@>(lit));
+};
+
+@(Struct);

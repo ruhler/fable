@@ -4,6 +4,7 @@
 % LeftS = /Structure%.LeftS;
 % RightS = /Structure%.RightS;
 % PairS = /Structure%.PairS;
+% Struct = /Structure/Struct%.Struct;
 <@>@ Structured@ = /Structured%.Structured@;
 
 <@>% Map = /Map%.Map;
@@ -40,20 +41,17 @@ Structured@<Square@> SquareS = {
 };
 
 Structured@<Board@> BoardS = {
-  (Structure@, Structure@, Structure@) { Structure@; }
-  D3 = (Structure@ a, Structure@ b, Structure@ c) {
-    PairS(PairS(a, b), c);
-  };
-
   (Square@, Square@, Square@) { Structure@; }
   RowS = (Square@ a, Square@ b, Square@ c) {
-    D3(SquareS(a), SquareS(b), SquareS(c));
+    Struct([SquareS(a), SquareS(b), SquareS(c)]);
   };
 
   (Board@ b) {
-    D3(RowS(b.ul, b.uc, b.ur),
-       RowS(b.ml, b.mc, b.mr),
-       RowS(b.ll, b.lc, b.lr));
+    Struct([
+      RowS(b.ul, b.uc, b.ur),
+      RowS(b.ml, b.mc, b.mr),
+      RowS(b.ll, b.lc, b.lr)
+    ]);
   };
 };
 
