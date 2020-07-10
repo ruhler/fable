@@ -47,9 +47,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 # The world is a set of Coord@ where there are live cells.
 % MapCoord = Map<Coord@>(CoordS);
 @ World@ = MapCoord.Map@<Unit@>;
-% EqWorld = (World@ a, World@ b) {
-   MapCoord.Equals<Unit@>((Unit@ _a, Unit@ _b) { True; }, a, b);
-};
+% EqWorld = /Map/Eq%.Eq<Coord@, Unit@>((Unit@ _a, Unit@ _b) { True; });
 % W = @(
   Empty: /Map%.Empty<Coord@, Unit@>,
   Insert: /Map%.Insert<Coord@>(CoordS)<Unit@>,

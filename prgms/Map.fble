@@ -1,9 +1,4 @@
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
-% And = /Bool%.And;
-
 @ Structure@ = /Structure%.Structure@;
 <@>@ Structured@ = /Structured%.Structured@;
 
@@ -103,44 +98,12 @@ For = <@ K@, @ V@, @ B@>(DataMap@<K@, V@> m, B@ base, (K@, V@, B@) { B@;} body) 
     });
 };
 
-# TODO: Should this be in another module? It's the only reason we need to
-# import Bool%.
-<@ K@, @ V@>((V@, V@) { Bool@; }, DataMap@<K@, V@>, DataMap@<K@, V@>) { Bool@; }
-Equals = <@ K@, @ V@>((V@, V@) { Bool@;} eq, DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
-  a.?(
-      empty: b.?(empty: True, map: False),
-      map: b.?(
-        empty: False,
-        map: {
-          Bool@ unit_eq = a.map.unit.?(
-            just: b.map.unit.?(
-              just: eq(a.map.unit.just.value, b.map.unit.just.value),
-              nothing: False),
-            nothing: b.map.unit.?(just: False, nothing: True)
-          );
-
-          Bool@ sum_eq = And(
-            Equals<K@, V@>(eq, a.map.sum.a, b.map.sum.a),
-            Equals<K@, V@>(eq, a.map.sum.b, b.map.sum.b)
-          );
-
-          Bool@ product_eq = 
-            Equals<Unit@, DataMap@<K@, V@>>(
-              (DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
-                Equals<K@, V@>(eq, a, b);
-              },
-              a.map.product, b.map.product);
-          And(unit_eq, And(sum_eq, product_eq));
-        }));
-};
-
 # Map@ interface parameterized by key type.
 <@>@ Map@ = <@ K@> {
   <@>@ M@ = DataMap@<K@>;
   *(@<M@> Map@,
     <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup,
-    <@ V@>(M@<V@>, K@, (Maybe@<V@>){ V@; }) { M@<V@>; } InsertWith,
-    <@ V@>((V@, V@) { Bool@; }, M@<V@>, M@<V@>) { Bool@; } Equals
+    <@ V@>(M@<V@>, K@, (Maybe@<V@>){ V@; }) { M@<V@>; } InsertWith
    );
 };
   
@@ -154,11 +117,8 @@ Map = <@ K@>((K@) { Structure@; } ToData) {
     },
     <@ V@>(M@<V@> m, K@ k, (Maybe@<V@>) { V@; } w) {
       InsertWith<K@, V@>(m, k, ToData(k), w);
-    },
-    <@ V@>((V@, V@) { Bool@; } eq, M@<V@> a, M@<V@> b) {
-      Equals<K@, V@>(eq, a, b);
     }
   );
 };
 
-@(Map@, Map, Empty, Insert, For);
+@(DataMap@, Map@, Map, Empty, Insert, For);

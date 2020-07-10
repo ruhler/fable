@@ -1,0 +1,40 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+<@>@ Eq@ = /Eq%.Eq@;
+<@,@>@ DataMap@ = /Map%.DataMap@;
+@ Unit@ = /Unit%.Unit@;
+
+# Eq --
+#   Implementation of Eq@ for DataMap@. See documentation of /Eq%.Eq@.
+<@ K@, @ V@>(Eq@<V@>) { Eq@<DataMap@<K@, V@>>; }
+Eq = <@ K@, @ V@>(Eq@<V@> eq)(DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
+  a.?(
+      empty: b.?(empty: True, map: False),
+      map: b.?(
+        empty: False,
+        map: {
+          Bool@ unit_eq = a.map.unit.?(
+            just: b.map.unit.?(
+              just: eq(a.map.unit.just.value, b.map.unit.just.value),
+              nothing: False),
+            nothing: b.map.unit.?(just: False, nothing: True)
+          );
+
+          Bool@ sum_eq = And(
+            Eq<K@, V@>(eq)(a.map.sum.a, b.map.sum.a),
+            Eq<K@, V@>(eq)(a.map.sum.b, b.map.sum.b)
+          );
+
+          Bool@ product_eq = 
+            Eq<Unit@, DataMap@<K@, V@>>(
+              (DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
+                Eq<K@, V@>(eq)(a, b);
+              })(a.map.product, b.map.product);
+          And(unit_eq, And(sum_eq, product_eq));
+        }));
+};
+
+@(Eq);
