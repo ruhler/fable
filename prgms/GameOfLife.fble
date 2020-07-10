@@ -48,7 +48,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 % W = @(
   Empty: /Map%.Empty<Coord@, Unit@>,
   Insert: /Map%.Insert<Coord@>(CoordS)<Unit@>,
-  For: /Map%.For<Coord@, Unit@>
+  ForEach: /Map%.ForEach<Coord@, Unit@>
 );
 
 # Create a world from a list of coordinates of live cells.
@@ -87,7 +87,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 % C = @(
   Empty: /Map%.Empty<Coord@, Status@>,
   InsertWith: /Map%.InsertWith<Coord@>(CoordS)<Status@>,
-  For: /Map%.For<Coord@, Status@>
+  ForEach: /Map%.ForEach<Coord@, Status@>
 );
 
 # Advance the world by one unit of time.
@@ -96,7 +96,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
   #   For each cell in world,
   #     Set this cell alive in candidate
   #     Inc neighbors for each neighbor cell
-  Cand@ candidates = W.For<Cand@>(w, C.Empty,
+  Cand@ candidates = W.ForEach<Cand@>(w, C.Empty,
     (Coord@ coord, Unit@ _, Cand@ cand_in) {
       Cand@ cand_alive = C.InsertWith(cand_in, coord, (Maybe@<Status@> ms) {
         ms.?(just: Status@(True, ms.just.neighbors),
@@ -123,7 +123,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
   );
 
   # 2. Filter live cells from the map.
-  C.For<World@>(candidates, W.Empty,
+  C.ForEach<World@>(candidates, W.Empty,
     (Coord@ coord, Status@ status, World@ w_in) {
     Lives(status).?(
        true: W.Insert(w_in, coord, Unit),
@@ -135,4 +135,4 @@ Structured@<Coord@> CoordS = (Coord@ c) {
   IsZero(n).?(true: w, false: StepN(Dec(n), Step(w)));
 };
 
-@(Coord@, World@, World, ForWorld: W.For, EqWorld, Step, StepN);
+@(Coord@, World@, World, ForWorld: W.ForEach, EqWorld, Step, StepN);

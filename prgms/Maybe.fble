@@ -38,4 +38,22 @@
 #   Maybe@<Foo@> = Nothing<Foo@>;
 Maybe@ Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
 
-@(Maybe@, Just, Nothing);
+# Map --
+#   Apply a function to the value of a Maybe.
+#
+# Type Parameters:
+#   A@ - The type of element of the input maybe.
+#   B@ - The type of element of the output maybe.
+#
+# Arguments:
+#   m - The input maybe
+#   f - the function to apply
+#
+# Result:
+#   A maybe with f(m.just) as the value if m is has a present value.
+<@ A@, @ B@>(Maybe@<A@>, (A@) { B@; }) { Maybe@<B@>; }
+Map = <@ A@, @ B@>(Maybe@<A@> m, (A@) { B@; } f) {
+  m.?(just: Just<B@>(f(m.just)), nothing: Nothing<B@>);
+};
+
+@(Maybe@, Just, Nothing, Map);

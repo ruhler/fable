@@ -135,9 +135,9 @@ Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
 #   B@ - The type of value updated and returned by the foreach loop.
 #
 # Arguments:
-#   l - The list to iterate over.
-#   base - The initial value to update and return from the list.
-#   body - The body of the list.
+#   list - The list to iterate over.
+#   base - The initial value to update and return from the loop.
+#   body - The body of the loop.
 #
 # Returns:
 #   The result of applying the body consecutively to the base value, once for
@@ -145,13 +145,13 @@ Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
 #
 # Conceptually:
 #   B@ b = base
-#   foreach x in l:
+#   foreach x in list:
 #     b = body(x, b)
 #   return b
 <@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@; }) { B@; }
-ForEach = <@ A@, @ B@>(List@<A@> l, B@ base, (A@, B@) { B@; } body) {
-  l.?(
-    cons: ForEach<A@, B@>(l.cons.tail, body(l.cons.head, base), body),
+ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
+  list.?(
+    cons: ForEach<A@, B@>(list.cons.tail, body(list.cons.head, base), body),
     nil: base);
 };
 

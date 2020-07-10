@@ -1,5 +1,4 @@
 * Clean up Map and Set library
- - Cleanup /Map% module.
  - Add implementations of Structured@ for Int, String, and other common types.
 
 * Proof of concept fblf
@@ -13,6 +12,7 @@
  - Add tests for full code coverage of all functions.
  - Rename Str to String? Or to S?
  - Only support Int@ officially, not IntP@ and IntS@ too?
+ - Consider pulling ForEach and Map out into their own class?
 
 * Sat solver
  - Add support for pure literal propagation.

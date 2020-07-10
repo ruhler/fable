@@ -12,29 +12,29 @@
 <@ K@, @ V@>(Eq@<V@>) { Eq@<Map@<K@, V@>>; }
 Eq = <@ K@, @ V@>(Eq@<V@> eq)(Map@<K@, V@> a, Map@<K@, V@> b) {
   a.?(
-      empty: b.?(empty: True, map: False),
-      map: b.?(
-        empty: False,
-        map: {
-          Bool@ unit_eq = a.map.unit.?(
-            just: b.map.unit.?(
-              just: eq(a.map.unit.just.value, b.map.unit.just.value),
-              nothing: False),
-            nothing: b.map.unit.?(just: False, nothing: True)
-          );
+    empty: b.?(empty: True, map: False),
+    map: b.?(
+      empty: False,
+      map: {
+        Bool@ unit_eq = a.map.unit.?(
+          just: b.map.unit.?(
+            just: eq(a.map.unit.just.value, b.map.unit.just.value),
+            nothing: False),
+          nothing: b.map.unit.?(just: False, nothing: True)
+        );
 
-          Bool@ sum_eq = And(
-            Eq<K@, V@>(eq)(a.map.sum.a, b.map.sum.a),
-            Eq<K@, V@>(eq)(a.map.sum.b, b.map.sum.b)
-          );
+        Bool@ sum_eq = And(
+          Eq<K@, V@>(eq)(a.map.either.a, b.map.either.a),
+          Eq<K@, V@>(eq)(a.map.either.b, b.map.either.b)
+        );
 
-          Bool@ product_eq = 
-            Eq<Unit@, Map@<K@, V@>>(
-              (Map@<K@, V@> a, Map@<K@, V@> b) {
-                Eq<K@, V@>(eq)(a, b);
-              })(a.map.product, b.map.product);
-          And(unit_eq, And(sum_eq, product_eq));
-        }));
+        Bool@ pair_eq = 
+          Eq<Unit@, Map@<K@, V@>>(
+            (Map@<K@, V@> a, Map@<K@, V@> b) {
+              Eq<K@, V@>(eq)(a, b);
+            })(a.map.pair, b.map.pair);
+        And(unit_eq, And(sum_eq, pair_eq));
+      }));
 };
 
 @(Eq);

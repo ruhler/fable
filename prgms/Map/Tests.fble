@@ -56,7 +56,7 @@ Structured@<Bit2@> Bit2S = (Bit2@ x) {
 <@>% Empty = /Map%.Empty<Bit2@>;
 <@>% Lookup = /Map%.Lookup<Bit2@>(Bit2S);
 <@>% Insert = /Map%.Insert<Bit2@>(Bit2S);
-<@,@>% For = /Map%.For<Bit2@>;
+<@,@>% ForEach = /Map%.ForEach<Bit2@>;
 
 
 TestSuite@ Tests = TestSuite(Chars|Map, [
@@ -117,7 +117,7 @@ TestSuite@ Tests = TestSuite(Chars|Map, [
           A, True),
         B, False);
     @ Entry@ = *(Bit2@ key, Bool@ value);
-    List@<Entry@> entries = For<Bool@, List@<Entry@>>(map, Nil<Entry@>,
+    List@<Entry@> entries = ForEach<Bool@, List@<Entry@>>(map, Nil<Entry@>,
       (Bit2@ k, Bool@ v, List@<Entry@> l) {
         Cons<Entry@>(Entry@(k, v), l);
       });
