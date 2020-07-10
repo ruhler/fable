@@ -59,7 +59,7 @@ Structured@<Bit2@> Bit2S = (Bit2@ x) {
 <@>% Empty = /Map%.Empty<Bit2@>;
 <@>% Lookup = MapBit2.Lookup;
 <@>% Insert = /Map%.Insert<Bit2@>(Bit2S);
-<@, @>% For = MapBit2.For;
+<@,@>% For = /Map%.For<Bit2@>;
 
 
 TestSuite@ Tests = TestSuite(Chars|Map, [

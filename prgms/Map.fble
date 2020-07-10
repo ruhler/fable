@@ -140,7 +140,6 @@ Equals = <@ K@, @ V@>((V@, V@) { Bool@;} eq, DataMap@<K@, V@> a, DataMap@<K@, V@
   *(@<M@> Map@,
     <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup,
     <@ V@>(M@<V@>, K@, (Maybe@<V@>){ V@; }) { M@<V@>; } InsertWith,
-    <@ V@, @ B@>(M@<V@>, B@, (K@, V@, B@) { B@; }) { B@; } For,
     <@ V@>((V@, V@) { Bool@; }, M@<V@>, M@<V@>) { Bool@; } Equals
    );
 };
@@ -156,13 +155,10 @@ Map = <@ K@>((K@) { Structure@; } ToData) {
     <@ V@>(M@<V@> m, K@ k, (Maybe@<V@>) { V@; } w) {
       InsertWith<K@, V@>(m, k, ToData(k), w);
     },
-    <@ V@, @ B@>(M@<V@> m, B@ b, (K@, V@, B@) { B@; } body) {
-      For<K@, V@, B@>(m, b, body);
-    },
     <@ V@>((V@, V@) { Bool@; } eq, M@<V@> a, M@<V@> b) {
       Equals<K@, V@>(eq, a, b);
     }
   );
 };
 
-@(Map@, Map, Empty, Insert);
+@(Map@, Map, Empty, Insert, For);

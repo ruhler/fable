@@ -53,7 +53,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 % W = @(
   Empty: /Map%.Empty<Coord@, Unit@>,
   Insert: /Map%.Insert<Coord@>(CoordS)<Unit@>,
-  For: MapCoord.For<Unit@>
+  For: /Map%.For<Coord@, Unit@>
 );
 
 # Create a world from a list of coordinates of live cells.
@@ -92,7 +92,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 % C = @(
   Empty: /Map%.Empty<Coord@, Status@>,
   InsertWith: MapCoord.InsertWith<Status@>,
-  For: MapCoord.For<Status@>
+  For: /Map%.For<Coord@, Status@>
 );
 
 # Advance the world by one unit of time.
