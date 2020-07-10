@@ -15,6 +15,8 @@
 
 % Str = /String%.Str;
 
+<@>@ Structured@ = /Structured%.Structured@;
+
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
 @ TestSuite@ = /Test%.TestSuite@;
@@ -46,15 +48,17 @@ Bit2@ C = Bit2@(Bit1@(1: Unit), Bit1@(0: Unit));
   And(EqBit1(a.h, b.h), EqBit1(a.l, b.l));
 };
 
-% MapBit2 = Map<Bit2@>((Bit2@ x) {
+Structured@<Bit2@> Bit2S = (Bit2@ x) {
   PairS(
     x.h.?(0: LeftS(UnitS), 1: RightS(UnitS)),
     x.l.?(0: LeftS(UnitS), 1: RightS(UnitS)));
-});
+};
+
+% MapBit2 = Map<Bit2@>(Bit2S);
 <@>@ Map@ = MapBit2.Map@;
 <@>% Empty = MapBit2.Empty;
 <@>% Lookup = MapBit2.Lookup;
-<@>% Insert = MapBit2.Insert;
+<@>% Insert = /Map%.Insert<Bit2@>(Bit2S);
 <@, @>% For = MapBit2.For;
 
 

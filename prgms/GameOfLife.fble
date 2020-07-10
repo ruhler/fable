@@ -52,7 +52,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 };
 % W = @(
   Empty: MapCoord.Empty<Unit@>,
-  Insert: MapCoord.Insert<Unit@>,
+  Insert: /Map%.Insert<Coord@>(CoordS)<Unit@>,
   For: MapCoord.For<Unit@>
 );
 

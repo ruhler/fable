@@ -5,6 +5,7 @@
 % And = /Bool%.And;
 
 @ Structure@ = /Structure%.Structure@;
+<@>@ Structured@ = /Structured%.Structured@;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -79,9 +80,9 @@ InsertWith = <@ K@, @ V@>(DataMap@<K@, V@> map, K@ key, Structure@ hash, (Maybe@
      }));
 };
 
-<@ K@, @ V@>(DataMap@<K@, V@>, K@, Structure@, V@) { DataMap@<K@, V@>; }
-Insert = <@ K@, @ V@>(DataMap@<K@, V@> map, K@ key, Structure@ hash, V@ value) {
-  InsertWith<K@, V@>(map, key, hash, (Maybe@<V@> _) { value; });
+<@ K@>(Structured@<K@>)<@ V@>(DataMap@<K@, V@>, K@, V@) { DataMap@<K@, V@>; }
+Insert = <@ K@>(Structured@<K@> s)<@ V@>(DataMap@<K@, V@> map, K@ key, V@ value) {
+  InsertWith<K@, V@>(map, key, s(key), (Maybe@<V@> _) { value; });
 };
 
 <@ K@, @ V@, @ B@>(DataMap@<K@, V@>, B@, (K@, V@, B@) { B@;}) { B@; }
@@ -140,7 +141,7 @@ Equals = <@ K@, @ V@>((V@, V@) { Bool@;} eq, DataMap@<K@, V@> a, DataMap@<K@, V@
     M@ Empty,
     <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup,
     <@ V@>(M@<V@>, K@, (Maybe@<V@>){ V@; }) { M@<V@>; } InsertWith,
-    <@ V@>(M@<V@>, K@, V@) { M@<V@>; } Insert,
+    #<@ V@>(M@<V@>, K@, V@) { M@<V@>; } Insert,
     <@ V@, @ B@>(M@<V@>, B@, (K@, V@, B@) { B@; }) { B@; } For,
     <@ V@>((V@, V@) { Bool@; }, M@<V@>, M@<V@>) { Bool@; } Equals
    );
@@ -158,9 +159,7 @@ Map = <@ K@>((K@) { Structure@; } ToData) {
     <@ V@>(M@<V@> m, K@ k, (Maybe@<V@>) { V@; } w) {
       InsertWith<K@, V@>(m, k, ToData(k), w);
     },
-    <@ V@>(M@<V@> m, K@ k, V@ v) {
-      Insert<K@, V@>(m, k, ToData(k), v);
-    },
+    #<@ V@> { Insert<K@, V@>(ToData); },
     <@ V@, @ B@>(M@<V@> m, B@ b, (K@, V@, B@) { B@; } body) {
       For<K@, V@, B@>(m, b, body);
     },
@@ -170,4 +169,4 @@ Map = <@ K@>((K@) { Structure@; } ToData) {
   );
 };
 
-@(Map@, Map);
+@(Map@, Map, Insert);
