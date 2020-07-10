@@ -89,7 +89,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 @ Cand@ = MapCoord.Map@<Status@>;
 % C = @(
   Empty: /Map%.Empty<Coord@, Status@>,
-  InsertWith: MapCoord.InsertWith<Status@>,
+  InsertWith: /Map%.InsertWith<Coord@>(CoordS)<Status@>,
   For: /Map%.For<Coord@, Status@>
 );
 

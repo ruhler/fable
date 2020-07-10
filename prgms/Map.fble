@@ -49,7 +49,7 @@ Lookup = <@ K@, @ V@>(DataMap@<K@, V@> map, Structure@ hash) {
 
 # Insert that transforms the existing value, if any.
 <@ K@, @ V@>(DataMap@<K@, V@>, K@, Structure@, (Maybe@<V@>){ V@; }) { DataMap@<K@, V@>; }
-InsertWith = <@ K@, @ V@>(DataMap@<K@, V@> map, K@ key, Structure@ hash, (Maybe@<V@>){ V@; } with) {
+InsertWithS = <@ K@, @ V@>(DataMap@<K@, V@> map, K@ key, Structure@ hash, (Maybe@<V@>){ V@; } with) {
   DataMapP@<K@, V@> p =
     map.?(
        empty: DataMapP@<K@, V@>(
@@ -65,19 +65,24 @@ InsertWith = <@ K@, @ V@>(DataMap@<K@, V@> map, K@ key, Structure@ hash, (Maybe@
        p.product
      ),
      either: hash.either.?(
-              a: DataMapP@<K@, V@>(p.unit, @(a: InsertWith<K@, V@>(p.sum.a, key, hash.either.a, with), b: p.sum.b), p.product),
-              b: DataMapP@<K@, V@>(p.unit, @(a: p.sum.a, b: InsertWith<K@, V@>(p.sum.b, key, hash.either.b, with)), p.product)),
+              a: DataMapP@<K@, V@>(p.unit, @(a: InsertWithS<K@, V@>(p.sum.a, key, hash.either.a, with), b: p.sum.b), p.product),
+              b: DataMapP@<K@, V@>(p.unit, @(a: p.sum.a, b: InsertWithS<K@, V@>(p.sum.b, key, hash.either.b, with)), p.product)),
      pair: {
        DataMapP@<K@, V@>(p.unit, p.sum,
-         InsertWith<Unit@, DataMap@<K@, V@>>(p.product, Unit, hash.pair.a, (Maybe@<DataMap@<K@, V@>> mm) {
-           InsertWith<K@, V@>(mm.?(just: mm.just, nothing: Empty<K@, V@>), key, hash.pair.b, with);
+         InsertWithS<Unit@, DataMap@<K@, V@>>(p.product, Unit, hash.pair.a, (Maybe@<DataMap@<K@, V@>> mm) {
+           InsertWithS<K@, V@>(mm.?(just: mm.just, nothing: Empty<K@, V@>), key, hash.pair.b, with);
          }));
      }));
 };
 
 <@ K@>(Structured@<K@>)<@ V@>(DataMap@<K@, V@>, K@, V@) { DataMap@<K@, V@>; }
 Insert = <@ K@>(Structured@<K@> s)<@ V@>(DataMap@<K@, V@> map, K@ key, V@ value) {
-  InsertWith<K@, V@>(map, key, s(key), (Maybe@<V@> _) { value; });
+  InsertWithS<K@, V@>(map, key, s(key), (Maybe@<V@> _) { value; });
+};
+
+<@ K@>(Structured@<K@>)<@ V@>(DataMap@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { DataMap@<K@, V@>; }
+InsertWith = <@ K@>(Structured@<K@> s)<@ V@>(DataMap@<K@, V@> m, K@ k, (Maybe@<V@>) { V@; } w) {
+  InsertWithS<K@, V@>(m, k, s(k), w);
 };
 
 <@ K@, @ V@, @ B@>(DataMap@<K@, V@>, B@, (K@, V@, B@) { B@;}) { B@; }
@@ -102,8 +107,7 @@ For = <@ K@, @ V@, @ B@>(DataMap@<K@, V@> m, B@ base, (K@, V@, B@) { B@;} body) 
 <@>@ Map@ = <@ K@> {
   <@>@ M@ = DataMap@<K@>;
   *(@<M@> Map@,
-    <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup,
-    <@ V@>(M@<V@>, K@, (Maybe@<V@>){ V@; }) { M@<V@>; } InsertWith
+    <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup
    );
 };
   
@@ -114,11 +118,8 @@ Map = <@ K@>((K@) { Structure@; } ToData) {
   Map@<K@>(M@,
     <@ V@>(M@<V@> m, K@ k) {
       Lookup<K@, V@>(m, ToData(k));
-    },
-    <@ V@>(M@<V@> m, K@ k, (Maybe@<V@>) { V@; } w) {
-      InsertWith<K@, V@>(m, k, ToData(k), w);
     }
   );
 };
 
-@(DataMap@, Map@, Map, Empty, Insert, For);
+@(DataMap@, Map@, Map, Empty, Insert, InsertWith, For);
