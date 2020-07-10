@@ -58,7 +58,6 @@ Structured@<Bit2@> Bit2S = (Bit2@ x) {
 <@>% Insert = /Map%.Insert<Bit2@>(Bit2S);
 <@,@>% ForEach = /Map%.ForEach<Bit2@>;
 
-
 TestSuite@ Tests = TestSuite(Chars|Map, [
   Test@(Str(Chars|'empty'), !({
     Lookup<Unit@>(Empty<Unit@>, B).?(

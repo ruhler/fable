@@ -1,0 +1,20 @@
+
+<@>@ List@ = /List%.List@;
+@ Structure@ = /Structure%.Structure@;
+% Struct = /Structure/Struct%.Struct;
+% Enum = /Structure/Union%.Enum;
+% Tag = /Structure/Union%.Tag;
+% Union = /Structure/Union%.Union;
+<@>@ Structured@ = /Structured%.Structured@;
+
+<@ T@>(Structured@<T@>) { Structured@<List@<T@>>; }
+Structured = <@ T@>(Structured@<T@> s)(List@<T@> list) {
+  list.?(
+    cons: {
+      Structure@ cons = Struct([s(list.cons.head), Structured<T@>(s)(list.cons.tail)]);
+      Union(Tag|0, cons);
+    },
+    nil: Enum(Tag|1));
+};
+
+@(Structured);
