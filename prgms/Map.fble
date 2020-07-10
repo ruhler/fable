@@ -29,22 +29,27 @@ MValue = <@ K@, @ V@>(Maybe@<Entry@<K@, V@>> m) {
 };
 
 <@ K@, @ V@>(DataMap@<K@, V@>, Structure@) { Maybe@<V@>; }
-Lookup = <@ K@, @ V@>(DataMap@<K@, V@> map, Structure@ hash) {
+LookupS = <@ K@, @ V@>(DataMap@<K@, V@> map, Structure@ hash) {
   map.?(
      empty: Nothing<V@>,
      map: {
        hash.?(
           unit: MValue<K@, V@>(map.map.unit),
           either: hash.either.?(
-                   a: Lookup<K@, V@>(map.map.sum.a, hash.either.a),
-                   b: Lookup<K@, V@>(map.map.sum.b, hash.either.b)),
+                   a: LookupS<K@, V@>(map.map.sum.a, hash.either.a),
+                   b: LookupS<K@, V@>(map.map.sum.b, hash.either.b)),
           pair: {
-            Maybe@<DataMap@<K@, V@>> mm = Lookup<Unit@, DataMap@<K@, V@>>(map.map.product, hash.pair.a);
+            Maybe@<DataMap@<K@, V@>> mm = LookupS<Unit@, DataMap@<K@, V@>>(map.map.product, hash.pair.a);
             mm.?(
-                just: Lookup<K@, V@>(mm.just, hash.pair.b),
+                just: LookupS<K@, V@>(mm.just, hash.pair.b),
                 nothing: Nothing<V@>);
           });
      });
+};
+
+<@ K@>(Structured@<K@>)<@ V@>(DataMap@<K@, V@>, K@) { Maybe@<V@>; }
+Lookup = <@ K@>(Structured@<K@> s)<@ V@>(DataMap@<K@, V@> m, K@ k) {
+  LookupS<K@, V@>(m, s(k));
 };
 
 # Insert that transforms the existing value, if any.
@@ -106,20 +111,14 @@ For = <@ K@, @ V@, @ B@>(DataMap@<K@, V@> m, B@ base, (K@, V@, B@) { B@;} body) 
 # Map@ interface parameterized by key type.
 <@>@ Map@ = <@ K@> {
   <@>@ M@ = DataMap@<K@>;
-  *(@<M@> Map@,
-    <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup
-   );
+  *(@<M@> Map@);
 };
   
 # An implementation of the Map interface.
 <@ K@>((K@) { Structure@; }) { Map@<K@>; }
 Map = <@ K@>((K@) { Structure@; } ToData) {
   <@>@ M@ = DataMap@<K@>;
-  Map@<K@>(M@,
-    <@ V@>(M@<V@> m, K@ k) {
-      Lookup<K@, V@>(m, ToData(k));
-    }
-  );
+  Map@<K@>(M@);
 };
 
-@(DataMap@, Map@, Map, Empty, Insert, InsertWith, For);
+@(DataMap@, Map@, Map, Empty, Lookup, Insert, InsertWith, For);
