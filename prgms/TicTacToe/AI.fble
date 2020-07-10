@@ -155,7 +155,7 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 # game result from playing there.
 % BoardMap = Map<Board@>(BoardS);
 @ MemoTable@ = BoardMap.Map@<PositionResult@>;
-% Empty = BoardMap.Empty<PositionResult@>;
+% Empty = /Map%.Empty<Board@, PositionResult@>;
 % Lookup = BoardMap.Lookup<PositionResult@>;
 % Insert = /Map%.Insert<Board@>(BoardS)<PositionResult@>;
 

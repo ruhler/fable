@@ -56,7 +56,7 @@ Structured@<Bit2@> Bit2S = (Bit2@ x) {
 
 % MapBit2 = Map<Bit2@>(Bit2S);
 <@>@ Map@ = MapBit2.Map@;
-<@>% Empty = MapBit2.Empty;
+<@>% Empty = /Map%.Empty<Bit2@>;
 <@>% Lookup = MapBit2.Lookup;
 <@>% Insert = /Map%.Insert<Bit2@>(Bit2S);
 <@, @>% For = MapBit2.For;

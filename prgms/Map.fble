@@ -138,10 +138,8 @@ Equals = <@ K@, @ V@>((V@, V@) { Bool@;} eq, DataMap@<K@, V@> a, DataMap@<K@, V@
 <@>@ Map@ = <@ K@> {
   <@>@ M@ = DataMap@<K@>;
   *(@<M@> Map@,
-    M@ Empty,
     <@ V@>(M@<V@>, K@) { Maybe@<V@>; } Lookup,
     <@ V@>(M@<V@>, K@, (Maybe@<V@>){ V@; }) { M@<V@>; } InsertWith,
-    #<@ V@>(M@<V@>, K@, V@) { M@<V@>; } Insert,
     <@ V@, @ B@>(M@<V@>, B@, (K@, V@, B@) { B@; }) { B@; } For,
     <@ V@>((V@, V@) { Bool@; }, M@<V@>, M@<V@>) { Bool@; } Equals
    );
@@ -152,14 +150,12 @@ Equals = <@ K@, @ V@>((V@, V@) { Bool@;} eq, DataMap@<K@, V@> a, DataMap@<K@, V@
 Map = <@ K@>((K@) { Structure@; } ToData) {
   <@>@ M@ = DataMap@<K@>;
   Map@<K@>(M@,
-    Empty<K@>,
     <@ V@>(M@<V@> m, K@ k) {
       Lookup<K@, V@>(m, ToData(k));
     },
     <@ V@>(M@<V@> m, K@ k, (Maybe@<V@>) { V@; } w) {
       InsertWith<K@, V@>(m, k, ToData(k), w);
     },
-    #<@ V@> { Insert<K@, V@>(ToData); },
     <@ V@, @ B@>(M@<V@> m, B@ b, (K@, V@, B@) { B@; } body) {
       For<K@, V@, B@>(m, b, body);
     },
@@ -169,4 +165,4 @@ Map = <@ K@>((K@) { Structure@; } ToData) {
   );
 };
 
-@(Map@, Map, Insert);
+@(Map@, Map, Empty, Insert);

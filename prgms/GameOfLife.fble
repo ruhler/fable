@@ -51,7 +51,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
    MapCoord.Equals<Unit@>((Unit@ _a, Unit@ _b) { True; }, a, b);
 };
 % W = @(
-  Empty: MapCoord.Empty<Unit@>,
+  Empty: /Map%.Empty<Coord@, Unit@>,
   Insert: /Map%.Insert<Coord@>(CoordS)<Unit@>,
   For: MapCoord.For<Unit@>
 );
@@ -90,7 +90,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 # Map from Coord to the status of the cell.
 @ Cand@ = MapCoord.Map@<Status@>;
 % C = @(
-  Empty: MapCoord.Empty<Status@>,
+  Empty: /Map%.Empty<Coord@, Status@>,
   InsertWith: MapCoord.InsertWith<Status@>,
   For: MapCoord.For<Status@>
 );
