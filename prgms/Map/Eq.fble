@@ -4,13 +4,13 @@
 % False = /Bool%.False;
 % And = /Bool%.And;
 <@>@ Eq@ = /Eq%.Eq@;
-<@,@>@ DataMap@ = /Map%.DataMap@;
+<@,@>@ Map@ = /Map%.Map@;
 @ Unit@ = /Unit%.Unit@;
 
 # Eq --
-#   Implementation of Eq@ for DataMap@. See documentation of /Eq%.Eq@.
-<@ K@, @ V@>(Eq@<V@>) { Eq@<DataMap@<K@, V@>>; }
-Eq = <@ K@, @ V@>(Eq@<V@> eq)(DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
+#   Implementation of Eq@ for Map@. See documentation of /Eq%.Eq@.
+<@ K@, @ V@>(Eq@<V@>) { Eq@<Map@<K@, V@>>; }
+Eq = <@ K@, @ V@>(Eq@<V@> eq)(Map@<K@, V@> a, Map@<K@, V@> b) {
   a.?(
       empty: b.?(empty: True, map: False),
       map: b.?(
@@ -29,8 +29,8 @@ Eq = <@ K@, @ V@>(Eq@<V@> eq)(DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
           );
 
           Bool@ product_eq = 
-            Eq<Unit@, DataMap@<K@, V@>>(
-              (DataMap@<K@, V@> a, DataMap@<K@, V@> b) {
+            Eq<Unit@, Map@<K@, V@>>(
+              (Map@<K@, V@> a, Map@<K@, V@> b) {
                 Eq<K@, V@>(eq)(a, b);
               })(a.map.product, b.map.product);
           And(unit_eq, And(sum_eq, product_eq));

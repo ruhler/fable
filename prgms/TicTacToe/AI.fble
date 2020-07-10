@@ -1,6 +1,4 @@
 
-<@>% Map = /Map%.Map;
-
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 <@,@>% ForEach = /List%.ForEach;
@@ -153,8 +151,7 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-% BoardMap = Map<Board@>(BoardS);
-@ MemoTable@ = BoardMap.Map@<PositionResult@>;
+@ MemoTable@ = /Map%.Map@<Board@, PositionResult@>;
 % Empty = /Map%.Empty<Board@, PositionResult@>;
 % Lookup = /Map%.Lookup<Board@>(BoardS)<PositionResult@>;
 % Insert = /Map%.Insert<Board@>(BoardS)<PositionResult@>;

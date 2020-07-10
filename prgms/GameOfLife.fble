@@ -17,8 +17,6 @@
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
-<@>% Map = /Map%.Map;
-
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
 % UnitS = /Structure%.UnitS;
@@ -45,8 +43,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 };
 
 # The world is a set of Coord@ where there are live cells.
-% MapCoord = Map<Coord@>(CoordS);
-@ World@ = MapCoord.Map@<Unit@>;
+@ World@ = /Map%.Map@<Coord@, Unit@>;
 % EqWorld = /Map/Eq%.Eq<Coord@, Unit@>((Unit@ _a, Unit@ _b) { True; });
 % W = @(
   Empty: /Map%.Empty<Coord@, Unit@>,
@@ -86,7 +83,7 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 };
 
 # Map from Coord to the status of the cell.
-@ Cand@ = MapCoord.Map@<Status@>;
+@ Cand@ = /Map%.Map@<Coord@, Status@>;
 % C = @(
   Empty: /Map%.Empty<Coord@, Status@>,
   InsertWith: /Map%.InsertWith<Coord@>(CoordS)<Status@>,

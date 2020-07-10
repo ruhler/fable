@@ -1,5 +1,5 @@
 * Clean up Map and Set library
- - Redefine Map@ type.
+ - Cleanup /Map% module.
  - Add implementations of Structured@ for Int, String, and other common types.
 
 * Proof of concept fblf
