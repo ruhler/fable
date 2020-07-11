@@ -101,6 +101,44 @@
     nil: Nothing<Var@>);
 };
 
+# GetPure --
+#   Searches for a pure literal in the given formula.
+#
+# A pure literal is a variable that shows up with the same polarity in every
+# clause that it appears in. We can eliminate any such variable right away by
+# setting its value to the polarity that it shows up with.
+(Formula@) { Maybe@<Var@>; } GetPure = {
+  @ Status@ = +(Bool@ pure, Unit@ impure);
+  @ Map@ = /Map%.Map@<VarId@, Status@>;
+  % Empty = /Map%.Empty<VarId@, Status@>;
+  % InsertWith = /Map%.InsertWith<VarId@>(/Int/Int/Structured%.Structured)<Status@>;
+
+  (Formula@ f) {
+    Map@ map = /List%.ForEach<Clause@, Map@>(f, Empty,
+      (Clause@ clause, Map@ map) {
+        /List%.ForEach<Var@, Map@>(clause, map, (Var@ v, Map@ map) {
+           InsertWith(map, v.id, (Maybe@<Status@> ms) {
+             ms.?(
+               just: ms.just.?(
+                 pure: EqPolarity(ms.just.pure, v.polarity).?(
+                   true: ms.just,
+                   false: Status@(impure: Unit)),
+                 impure: ms.just),
+               nothing: Status@(pure: v.polarity));
+           });
+        });
+      });
+
+    # TODO: It would be nice if we could break out of the for loop right
+    # away instead of always traversing the entire map. Or better yet, return
+    # the list of all pure literals intead of just one.
+    /Map%.ForEach<VarId@, Status@, Maybe@<Var@>>(map, Nothing<Var@>,
+      (VarId@ v, Status@ s, Maybe@<Var@> p) {
+        p.?(just: p, nothing: s.?(pure: Just<Var@>(Var@(v, s.pure)), impure: p));
+    });
+  };
+};
+
 # Simplify --
 #   Simplify the given formula using unit propagation and (TODO) pure literal
 #   elimination.
@@ -112,7 +150,12 @@ Simplify = (Formula@ f, Assignment@ a) {
   Maybe@<Var@> unit = GetUnit(f);
   unit.?(
     just: Simplify(Subst(f, unit.just), Cons<Var@>(unit.just, a)),
-    nothing: @(simplified: f, assigns: a));
+    nothing: {
+      Maybe@<Var@> pure = GetPure(f);
+      pure.?(
+        just: Simplify(Subst(f, pure.just), Cons<Var@>(pure.just, a)),
+        nothing: @(simplified: f, assigns: a));
+    });
 };
 
 # Countdown --

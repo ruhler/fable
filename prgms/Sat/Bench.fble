@@ -9,7 +9,7 @@
 % Unit = /Unit%.Unit;
 
 Unit@! Bench = {
-  Result@ solved := !(Solve(/Sat/Aim%, Just<Int@>(I(D|2000))));
+  Result@ solved := !(Solve(/Sat/Aim%, Just<Int@>(I(D|70))));
   !(Unit);
 };
 

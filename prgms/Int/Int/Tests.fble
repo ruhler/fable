@@ -39,6 +39,7 @@
 
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
+% _Structured = /Int/Int/Structured%.Structured;
 
 (CharLit@, Bool@!){Test@;} T = (CharLit@ name, Bool@! p) {
   Test(name, {

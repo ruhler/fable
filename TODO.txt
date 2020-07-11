@@ -1,6 +1,3 @@
-* Clean up Map and Set library
- - Add implementations of Structured@ for Int, String, and other common types.
-
 * Proof of concept fblf
  - Implement N bit addition, run on evaluator and compile via llvm to c code
    and run.
@@ -15,8 +12,7 @@
  - Reuse Lit@ in the type for the ForEach function?
 
 * Sat solver
- - Add support for pure literal propagation.
-   Wants better fble library support for sets?
+ - Optimize the solver.
  - Implement dimacs cnf parser.
 
 * Clean up fble test framework
