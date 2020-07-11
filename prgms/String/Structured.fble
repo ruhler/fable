@@ -1,0 +1,12 @@
+
+@ Char@ = /Char%.Char@;
+@ String@ = /String%.String@;
+<@>@ Structured@ = /Structured%.Structured@;
+
+
+# Structured --
+#   An instance of Structured@ for String@.
+Structured@<String@>
+Structured = /List/Structured%.Structured<Char@>(/Char/Structured%.Structured);
+
+@(Structured);

@@ -7,6 +7,8 @@
 % Union = /Structure/Union%.Union;
 <@>@ Structured@ = /Structured%.Structured@;
 
+# Structured --
+#   An instance of Structured@ for List@.
 <@ T@>(Structured@<T@>) { Structured@<List@<T@>>; }
 Structured = <@ T@>(Structured@<T@> s)(List@<T@> list) {
   list.?(

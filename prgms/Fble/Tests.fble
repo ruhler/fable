@@ -34,6 +34,7 @@ List@<Test@> AllTests = Concat<Test@>(List<List@<Test@>>([
   /Md5/Tests%.Tests,
   /Primes/Tests%.Tests,
   /Sat/Tests%.Tests,
+  /String/Tests%.Tests,
   /Sudoku/Tests%.Tests,
   /Test/Tests%.Tests,
   /TicTacToe/Tests%.Tests

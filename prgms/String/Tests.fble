@@ -1,0 +1,44 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% Chars = /Char%.Chars;
+<@>% List = /List%.List;
+@ String@ = /String%.String@;
+% Concat = /String%.Concat;
+% Str = /String%.Str;
+% _Structured = /String/Structured%.Structured;
+@ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
+<@>% AssertEquals = /Test%.AssertEquals;
+% TestSuite = /Test%.TestSuite;
+
+# Tests --
+#  A test suite to test the /String% module and friends.
+TestSuite@ Tests = TestSuite(Chars|String, [
+  Test(Chars|Concat, !({
+    String@ wnt = Str(Chars|'hellothere');
+    String@ got = Concat(List<String@>([Str(Chars|'hello'), Str(Chars|there)]));
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Eq, !({
+    Bool@ wnt = True;
+    Bool@ got = /String/Eq%.Eq(Str(Chars|'A string!'), Str(Chars|'A string!'));
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Ne, !({
+    Bool@ wnt = False;
+    Bool@ got = /String/Eq%.Eq(Str(Chars|'A string!'), Str(Chars|'nope'));
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|Show, !({
+    String@ wnt = Str(Chars|'"hello"');
+    String@ got = /String/Show%.Show(Str(Chars|hello));
+    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+  }))
+]);
+
+@(Tests);
