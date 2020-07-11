@@ -1,0 +1,13 @@
+
+% Chars = /Char%.Chars;
+<@>@ Show@ = /Show%.Show@;
+% Str = /String%.Str;
+@ Unit@ = /Unit%.Unit@;
+
+# Show --
+#   Instance of Show@ for Unit@.
+Show@<Unit@> Show = (Unit@ a) {
+  Str(Chars|Unit);
+};
+
+@(Show);

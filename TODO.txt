@@ -1,5 +1,4 @@
 * Clean up Map and Set library
- - Clean up Map/Tests. Use AssertEquals, Test, etc.
  - Add implementations of Structured@ for Int, String, and other common types.
 
 * Proof of concept fblf

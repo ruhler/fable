@@ -1,0 +1,12 @@
+
+% True = /Bool%.True;
+<@>@ Eq@ = /Eq%.Eq@;
+@ Unit@ = /Unit%.Unit@;
+
+# Eq --
+#   Instance of Eq@ for Unit@.
+Eq@<Unit@> Eq = (Unit@ a, Unit@ b) {
+  True;
+};
+
+@(Eq);
