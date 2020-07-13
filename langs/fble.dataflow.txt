@@ -30,7 +30,7 @@ Advantages of data flow for performance:
 * No need for automatic memory management.
 * No need for closures capturing things from local scope.
 
-In other words, it's solves all the performance challenges of fble except for
+In other words, it solves all the performance challenges of fble except for
 taking advantage of primitives and light weight multi-threading. Both of
 which, hopefully, could be solved in practice by having support for
 compilation of some parts of the data flow graph to hardware.
@@ -285,7 +285,7 @@ The questions are:
 * Exactly how much of a subset of fble should we support? For example, should
   we allow modules? Structs of functions?  
 * Will it be reasonable to write programs in fblf, or is it missing key
-  programming abstractions of fble that we really want, and could use if it
+  programming abstractions of fble that we really want, and could use if
   they were statically elaborated away?
 * Can fblf take full advantage of both high performance software and hardware?
   Or will it be overly limiting? For example, will it allow parallel
@@ -294,3 +294,5 @@ The questions are:
 * How fast can we make fblf go in practice? Is it competitive with C code? Or
   is it still missing something important (I'm thinking support for primitive
   operations like integer arithmetic).
+
+See fblf.txt.

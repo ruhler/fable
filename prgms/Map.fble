@@ -42,7 +42,7 @@ GetValue = <@ K@, @ V@>(Maybe@<Entry@<K@, V@>> m) {
 #   K@ - the type of keys in the map.
 #   V@ - the type of values in the map.
 <@,@>@ MapP@ = <@ K@, @ V@> { 
-  *(Maybe@<Entry@<K@,V@>> unit,
+  *(Maybe@<Entry@<K@, V@>> unit,
     *(Map@<K@, V@> a, Map@<K@, V@> b) either,
     Map@<Unit@, Map@<K@, V@>> pair
   );
@@ -59,6 +59,20 @@ GetValue = <@ K@, @ V@>(Maybe@<Entry@<K@, V@>> m) {
 #   Empty<String@, Foo@>
 Map@ Empty = <@ K@, @ V@> {
   Map@<K@, V@>(empty: Unit);
+};
+
+# EmptyP --
+#   A MapP@ without any entries, used when inserting an entry into an empty
+#   map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+MapP@ EmptyP = <@ K@, @ V@> {
+  MapP@<K@, V@>(
+    Nothing<Entry@<K@, V@>>,
+    @(a: Empty<K@, V@>, b: Empty<K@, V@>),
+    Empty<Unit@, Map@<K@, V@>>);
 };
 
 # LookupS --
@@ -144,13 +158,7 @@ Lookup = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key) {
 #   whatever level of the map we are currently traversing.
 <@ K@, @ V@>(Map@<K@, V@>, K@, Structure@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
 InsertWithS = <@ K@, @ V@>(Map@<K@, V@> map, K@ key, Structure@ s, (Maybe@<V@>){ V@; } with) {
-  MapP@<K@, V@> p = map.?(
-    empty: MapP@<K@, V@>(
-      Nothing<Entry@<K@, V@>>,
-      @(a: Empty<K@, V@>, b: Empty<K@, V@>),
-      Empty<Unit@, Map@<K@, V@>>),
-    map: map.map);
-
+  MapP@<K@, V@> p = map.?(empty: EmptyP<K@, V@>, map: map.map);
   Map@<K@, V@>(map: s.?(
     unit: MapP@<K@, V@>(
       Just<Entry@<K@, V@>>(Entry@<K@, V@>(key, with(GetValue<K@, V@>(p.unit)))),

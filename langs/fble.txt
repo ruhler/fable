@@ -964,7 +964,165 @@ The same module hierarchy can be used for a program to run List tests:
   StdLib_List = <StdLib.List>;
   <StdLib.List.Tests>;
 
-10. Abstract Syntax Reference
+10. Inline Computation
+----------------------
+Inline computation is an experimental extension to the language to make it
+possible to describe high performance computations in fble. The idea of inline
+computation is that all data types and all functions can be fully statically
+inlined, resulting in a large dataflow graph that can be compiled to efficient
+software or hardware.
+
+Inline computation is expected to support higher performance computation than
+normal fble programs because storage for all data used in a computation can be
+allocated statically. That means there are no runtime overheads for allocating
+or managing memory.
+
+10.1 Inline Let
+---------------
+Abstract Syntax:
+  Expr ::= inline_let (binding :: (Spec, Name, Expr)) (body :: Expr)
+
+Concrete Syntax:
+  stmt ::= spec name '$=' expr ';'
+
+Example:
+  Int@ x $= mul(3, 3); mul(x, x)
+
+An inline let expressions introduces a variable into an inline computation.
+The types of the variable and the body must be inline struct or
+inline union types.
+
+Unlike normal let expressions, recursive definitions are not allowed. For this
+reason, only a single binding may be specified.
+
+Causes an inline let computation to be constructed. The type of the expression
+is the type of the body.
+
+10.2 Inline Structs
+-------------------
+An inline struct is a new data type that behaves like a normal struct, except
+that all arguments are fully inlined into the value. Inline structs are
+non-recursive and of fixed size. They can only be used to store data, not
+functions or processes.
+
+10.2.1 Inline Struct Type
+-------------------------
+Abstract Syntax:
+  Expr ::= inline_struct_type (fields :: [(Type, Name)])
+
+Concrete Syntax:
+  expr ::= '*$(' [type name [',' type name [...]]] ')'
+
+Examples:
+  *$()                is the Unit type
+  *$(Int@ x, Int@ y)  is the type of a pair of ints x, y.
+
+Struct types are considered equal if their fields are equal, including field
+types, field names, and the order of the fields.
+
+Field types must be either inline struct types or inline union types. No other
+types are supported as fields of inline structs. Recursive inline struct types
+are not allowed.
+
+Runtime is O(1).
+
+10.2.2 Inline Struct Value Explicit Type
+----------------------------------------
+TODO
+
+10.2.2 Inline Struct Value Implicit Type
+----------------------------------------
+TODO
+
+10.2.3 Inline Struct Access
+---------------------------
+Abstract Syntax:
+  Expr ::= inline_struct_access (object :: Expr) (field :: Name)
+
+Concrete Syntax:
+  expr '.' name
+
+Example:
+  x.first
+
+Creates an inline struct access computation that computes the value passed to
+the struct at the corresponding field position when the struct was
+constructed.
+
+The object must be an inline struct value. The field must refer to a field of
+that struct value. The type of the expression is the type of the field being
+accessed.
+
+Runtime is O(1) plus the runtime of the object to create the computation and
+O(log(N)) plus the runtime of the object to compute the result.
+
+10.3 Inline Unions
+------------------
+TODO
+
+10.4 Inline Functions
+---------------------
+TODO
+
+10.5 Inline Evaluate
+--------------------
+Abstract Syntax:
+  Expr ::= inline_evaluate (inline :: Expr)
+
+Concrete Syntax:
+  $(expr)
+
+Example:
+  $(foo)
+
+Evaluates the inline computation described by foo, translating the result to a
+normal fble value.
+
+The inline expression must be an inline struct or inline union value. The
+result is a value of non-inline type that corresponds to the inline type.
+
+For example, given an argument of inline boolean type
+  +$(*$() true, *$() false)
+
+This will return a result of non-inline boolean type
+  +(*() true, *() false)
+
+Runtime is the runtime to evaluate the inline computation plus O(N) to convert
+the result to a normal fble value, where N is the size of the resulting value.
+
+10.6 Inline Compile
+-------------------
+Abstract Syntax:
+  Expr ::= inline_compile (inline :: Expr)
+
+Concrete Syntax:
+  $(expr)
+
+Example:
+  $(f)
+
+The inline expression must refer to an inline function. The inline function is
+compiled into a normal fble function that operates on inline data types.
+
+For example, given an inline function on inline types Int@ and Bool@:
+  (Int@, Int@) ${ Bool@; }
+
+This will return a non-inline function of those same inline types:
+  (Int@, Int@) { Bool@; }
+
+Runtime is polynomial in the size of the function being compiled. Application
+of the resulting function has runtime equal to the runtime of running the
+functions inline computation on the given arguments. A subsequent use of
+inline eval on the result of the function will be O(N) to convert the value to
+a normal fble value. In other words, applying the compiled function causes the
+result to be fully computed.
+
+10.7 TODO
+---------
+Details to work out at a future date include support for loops and side
+effects in inline computations.
+
+11. Abstract Syntax Reference
 ----------------------------
 NormalName ::= (* A string of characters *)
 TypeName ::= (* A string of characters *)
@@ -1025,9 +1183,9 @@ Expr ::=
 
 Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
 
-11. Concrete Syntax
+12. Concrete Syntax
 -------------------
-11.1 Lexical Syntax
+12.1 Lexical Syntax
 -------------------
 We have the following categories of characters:
 1. whitespace: Any whitespace character, as traditionally classified.
@@ -1060,7 +1218,7 @@ three separate words: 'Foo', '.', and 'Bar', not as a single word 'Foo.Bar'.
 The only exception is when consecutive single quote characters are used to
 embed a single quote character in a word.
 
-11.2 Reference
+12.2 Reference
 --------------
 word ::= (* word as described in the section on lexical syntax *)
 normal_name ::= word
@@ -1143,7 +1301,7 @@ Notes:
   subdirectory Foo/ if Foo is a public module and Foo*/ if Foo is a private
   module.
 
-12. Thoughts
+13. Thoughts
 ------------
 * Vague concern: will fble support static evaluation / compilation to
   hardware? Is it bad to support structs and links that can hold functions and
@@ -1154,33 +1312,9 @@ Notes:
   interpreter you are using. If you have a hardware interpreter, for example,
   the resulting function will be a description of a hardware circuit.
 
+  See Inline Computation as an attempt to remedy this.
+
 * Issues that came up when switching to the new unit test format
- - For writing tests, it would be really useful if common data types all had
-   function to convert them to strings.
-
-   How should that be organized? Does that bring in false dependencies between
-   modules? Like, I need to import String to import Unit, but I need to import
-   Unit to import String?
-
-   See fble.modules.txt
-
- - It's not at all obvious when writing tests what part of the test is
-   executed when we define the test and what part of the test is executed when
-   we run the test.
-
-   For example, given something like:
-     { a = ...; b = ...; !(TestResult@(a, b)) }
-
-   I intend for nothing to be run until we execute the test, but I think in
-   practice the test is essentially run when we define the test, and executing
-   the test just returns the results.
-
-   This seems like a subtle trap to get caught with.
-
-   I think it's fine to require !({ a = ...; b = ...; TestResult@(a, b); }).
-   Just so long as it is clearly specified what runs when and we have tests to
-   ensure the implementation obeys the spec.
-
 - Should we have some form of relative reference?
   It seems bad that every time you import a module, you have to duplicate a
   potentially long path from the root. Any change you make in module hierarchy
@@ -1241,13 +1375,12 @@ Notes:
   - closures that capture variables from local scope
   - light weight multithreading
 
+  See Inline Computation as an attempt to remedy this.
+
 * Should we support zero-argument functions now?
   They aren't necessary, because you could always do a single argument
   function that takes a unit. But it seems a little arbitrary to disallow them
   now?
-
-* Should we add built in support for dataflow?
-  See fble.dataflow.txt.
 
 * Should we have support for generics?
   See fble.generics.txt.

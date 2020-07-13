@@ -52,3 +52,193 @@ How to make code that runs fast in practice:
    memory hierarchy
  - Figure out how adding functions to the language could improve performance.
 
+---
+
+I started writing fble code to describe the fblf abstract syntax tree with the
+intention of coding up an abstract syntax tree in fble for fblf based N bit
+adder. I'm hesitant to go this route, though, because the syntax for
+describing the adder will be a pain and we will not get nice error messages.
+
+I once again ask, could we somehow get nice syntax, good error messages, and
+functions for describing fblf code, but still manage to extract the inlined
+bits of it?
+
+Idea: support an abstract interpretation of fble code that results in the
+dataflow graph for a computation.
+
+So, for example, let's say you write an fble expression of type 
+(Bit64@, Bit64@) { Bit64@; }. To compile this to data flow, we do the
+following:
+
+Evaluate this function where the runtime values are represented using the
+abstract syntax tree of fblf. Apply the function to (Var "x").
+
+Let's assume we want to statically elaborate as much as we can. Add a 'Const'
+kind of abstract value that holds a normal fble value. Then evaluate as much
+as we can, keeping track of variables as we go. We'll probably need to keep
+track of types as well.
+
+Abstractly:
+  struct_value creates a STRUCT_VALUE node.
+  union_value creates a UNION_VALUE node.
+  struct_access creates a STRUCT_ACCESS node.
+  union_access creates a UNION_ACCESS node.
+  union_select creates a UNION_SELECT node, executing both sides of the
+    condition.
+  func_value ...
+
+Things that go wrong:
+ - recursive functions fail to terminate because we always take both branches
+   of a condition
+ - unsupported values left over, like poly or function calls that we can't
+   resolve.
+
+Another approach would be, rather than treat it as an abstract interpretation,
+treat it as a compiler pass to inline anything that can't be represented in
+fblf?
+
+Some questions:
+ - Do we really want to statically elaborate as much as possible, or just
+   enough to represent everything in fblf?
+ - How do detect or code that can't be statically elaborated?
+
+---
+
+I think we need to be explicit in the type system about what is statically
+elaborated away.
+
+Could we add a new kind of primitive concept to fble representing a
+computation? (Is this not what I already tried as described in
+fble.dataflow.txt?).
+
+For example, assuming we want non recursive struct and unions with non
+recursive lets and variables.
+
+Abstract syntax:
+
+fblf_var (name :: Name)
+fblf_let (bindings :: [(Spec, Name, Expr)]) (body :: Expr)
+fblf_struct_type (fields :: [(Type, Name)])
+fblf_value_explicit_type (type) (args :: [Expr])
+fblf_struct_access (object :: Expr) (field :: Name)
+fblf_union_type (fields :: [(Type, Name)])
+fblf_union_value (type :: Type) (field :: Name) (arg :: Expr)
+fblf_union_access (object :: Expr) (field :: Name)
+fblf_union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
+
+Do we need a new kind? Can we reuse the same syntax for both normal
+expressions and fblf expressions somehow?
+
+I guess we could write our own functions to convert fble types to fblf types.
+For example, maybe something like:
+
+@ Unit@ = *()
+Unit@ Unit = Unit@(); 
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+(Bool@, Bool@) { Bool@; } And = (Bool@ a, Bool@ b) {
+  a.?(true: b, false: False);
+};
+
+@ UnitF@ = *$();
+UnitF@ Unit = UnitF@();
+
+@ BoolF = +$(UnitF@ true, UnitF@ false);
+BoolF@ TrueF = BoolF@(true: UnitF);
+BoolF@ FalseF = BoolF@(false: UnitF);
+
+(BoolF@, BoolF@) { BoolF@; } AndF = (BoolF@ a, BoolF@ b) {
+  a.?(true: b, false: FalseF);
+};
+
+(Bool@) { BoolF@; } BoolF = (Bool@ x) {
+  x.?(true: TrueF, false: FalseF);
+};
+
+
+The trouble with this is it doesn't let us capture variables in the dataflow
+graph. We need a way to distinguish between normal lets and flbf lets.
+
+For example:
+
+  IntF@ x = AddF(y, y);
+  AddF(x, x);
+
+versus:
+  
+  IntF@ x $= AddF(y, y);
+  AddF(x, x);
+
+Or:
+
+  (IntF@) { IntF@; } DoubleF = (IntF@ $x) {
+     # IntF@ xv $= x;
+     # AddF(xv, xv);
+     AddF(x, x);
+  }
+
+That's pretty annoying, that we would have to do an explicit var rebinding for
+every function call. Ideally we automatically preserve the variableness of the
+value. Maybe it's okay to live with explicit var rebinding to start though.
+It's interesting that that lets you distinguish between replicated compute
+versus non-replicated compute.
+
+Proposed syntactic extensions:
+  +$(...) as a type
+  *$(...) as a type
+  $= as an fblf special let
+
+I'm thinking that could be all we need syntactically.
+
+Except how to express the top level computation? Either support fblf functions
+or have a way to specify a symbolic value that will be the input. How would
+fblf functions look?
+
+A function type, and function value; (...) ${ ... }
+Arguments must be fblf, result must be fblf, automatically preserves
+variables. You can apply a function, which just allocates a call expression.
+
+Now I can compile a value of fblf function type. We can say you cannot have
+fblf variables of function type, nor store them on fblf structs, unions, or
+funcs. The implementation could be to turn function application into let.
+
+I like this, because I think if we don't have an explicit fblf variable, then
+we can be assured that any standalone fblf struct or union expression can be
+evaluated to a concrete value? The point is, it would be great if we could
+convert fble data types to fblf data types, call an fblf function to
+efficiently compute the result, and then convert back to fble. That would give
+us a fully integrated language supporting high expressiveness and high
+performance side by side. Maybe we could auto-convert somehow? Like a syntax
+for:
+
+  $(x) - turns BoolF@ into Bool@, turns (FooF@) ${ BarF@ } into (FooF@) { Bar@; }
+
+We can always go BoolF@ to Bool@ in general. But not always the other way
+around. So require the user to go the other way around. The auto conversion
+from BoolF@ to Bool@ would be where we evaluate the computation and let us see
+its contents.
+
+Summary of concrete syntactic extensions:
+  +$(...) as a type
+  *$(...) as a type
+  (...) ${ ... } as a function type/value
+  $= as an fblf special let
+  $(x) to compile or evaluate an fblf value. (maybe it works on types too)
+  
+
+An initial implementation could be to do it all in the compiler. No runtime
+support necessary. The types are implemented as normal fble types. Let is
+implemented as a normal fble let. And $(x) is implemented as x.
+
+I think this is worth a try. I will be tempted to have support for some form
+of fblf process and loops, but I think now is not yet the time to worry about
+those things. See if I can implement md5 with these extensions. See if I can
+make it run reasonably fast. Learn what I learn. And then think about how to
+add support for loops and processes. And you know what? If it works out, and I
+can figure out how to add loops and processes... maybe I'm done? Maybe I've
+solved it. Full expressively, full performance. Slightly tedious to convert
+fble values to fblf.
+
