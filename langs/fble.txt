@@ -303,7 +303,7 @@ Abstract Syntax:
   Expr ::= struct_value_implicit_type (args :: [(Name, Expr)])
 
 Concrete Syntax:
-  expr ::= '@' '(' [name [':' expr] [',' ...]] ')'         (* struct_value_implicit_type *)
+  expr ::= '@' '(' [name [':' expr] [',' ...]] ')'
 
 Example:
   @(x: 3, y: 5)
@@ -1000,10 +1000,11 @@ is the type of the body.
 
 10.2 Inline Structs
 -------------------
-An inline struct is a new data type that behaves like a normal struct, except
-that all arguments are fully inlined into the value. Inline structs are
-non-recursive and of fixed size. They can only be used to store data, not
-functions or processes.
+An inline struct represents a packed struct value of fixed size that can be
+computed. Inline structs are non-recursive and of fixed size. They can only be
+used to store data, not functions or processes. Operations on inline struct
+values are not performed until the inline struct value is explicitly
+evaluated, which means they can be used for describing computations.
 
 10.2.1 Inline Struct Type
 -------------------------
@@ -1028,11 +1029,35 @@ Runtime is O(1).
 
 10.2.2 Inline Struct Value Explicit Type
 ----------------------------------------
-TODO
+Abstract Syntax:
+  Expr ::= inline_struct_value_explicit_type (type :: Type) (args :: [Expr])
+
+Concrete Syntax:
+  expr ::= type '(' [expr [',' expr [...]]] ')'
+
+Example:
+  Coord@(3, 5)
+
+Same as struct_value_explicit_type, except with an inline struct type. Instead
+of constructing a value of the struct type, this creates a computation for
+computing the value of the struct type.
 
 10.2.2 Inline Struct Value Implicit Type
 ----------------------------------------
-TODO
+Abstract Syntax:
+  Expr ::= inline_struct_value_implicit_type (args :: [(Name, Expr)])
+
+Concrete Syntax:
+  expr ::= '@$' '(' [name [':' expr] [',' ...]] ')'
+
+Example:
+  @$(x: 3, y: 5)
+  @$(Bool@, True, False, Not: NotInternal)
+
+Same as struct_value_implicit_type, except it creates a value of inline struct
+type instead of struct type. Arguments must be inline struct values or inline
+union values. Instead of constructing a value of the struct type, this creates
+a computation for computing the value of the struct type.
 
 10.2.3 Inline Struct Access
 ---------------------------
@@ -1045,29 +1070,85 @@ Concrete Syntax:
 Example:
   x.first
 
-Creates an inline struct access computation that computes the value passed to
-the struct at the corresponding field position when the struct was
-constructed.
-
-The object must be an inline struct value. The field must refer to a field of
-that struct value. The type of the expression is the type of the field being
-accessed.
-
-Runtime is O(1) plus the runtime of the object to create the computation and
-O(log(N)) plus the runtime of the object to compute the result.
+Same as struct_access, except the object is an inline struct value. Creates a
+computation for accessing the field of the struct value.
 
 10.3 Inline Unions
 ------------------
+An inline struct represents a packed union value of fixed size that can be
+computed. Inline unions are non-recursive and of fixed size. They can only be
+used to store data, not functions or processes. Operations on inline union
+values are not performed until the inline union value is explicitly
+evaluated, which means they can be used for describing computations.
+
+10.3.1 Inline Union Type
+------------------------
 TODO
+
+10.3.2 Inline Union Value
+-------------------------
+TODO
+
+10.3.3 Inline Union Access
+--------------------------
+
+10.3.4 Inline Union Select
+--------------------------
+Abstract Syntax:
+  Expr ::= inline_union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
+
+Concrete Syntax:
+  expr ::= expr '.?(' name ':' expr [',' name ':' expr [...]] [',' ':' expr]')'
+
+Example:
+  mfoo.?(Just: mfoo.Just, Nothing: 3)
+  char.?(a: True, b: True, : False)
+
+Inline union select is like normal union select, except that the condition is
+an inline union value and that choices must compute inline struct or union
+values. Instead of choosing one of the branches to execute based on the
+condition, inline union select builds up a union select computation that will
+not be run until computation is explicitly evaluated. In particular, when
+building the computation all branches are evaluated.
 
 10.4 Inline Functions
 ---------------------
 TODO
 
-10.5 Inline Evaluate
---------------------
+10.5 Inline Eval
+----------------
 Abstract Syntax:
-  Expr ::= inline_evaluate (inline :: Expr)
+  Expr ::= inline_*_eval (inline :: Expr)
+
+Concrete Syntax:
+  $(expr)
+
+Depending on the type of the expression, performs some sort of evaluation of
+the inline computation described by the expression. Types get converted to
+non-inline types, value computations get executed and converted to non-inline
+values, and function computations get executed and compiled and converted to
+non-inline functions. The following sections describe these cases in more
+detail.
+
+10.5.1 Inline Type Evaluate
+---------------------------
+Abstract Syntax:
+  Type ::= inline_type_eval (inline :: Type)
+
+Concrete Syntax:
+  $(type)
+
+Example:
+  @ Bool@ = $(InlineBool@); ...
+
+Given an inline type, evaluates to the non-inline type corresponding to the
+inline type. This works by recursively converting all inline struct types to
+non-inline struct types and all inline union types to non-inline union types.
+
+10.5.2 Inline Value Evaluate
+----------------------------
+Abstract Syntax:
+  Expr ::= inline_value_eval (inline :: Expr)
 
 Concrete Syntax:
   $(expr)
@@ -1090,10 +1171,10 @@ This will return a result of non-inline boolean type
 Runtime is the runtime to evaluate the inline computation plus O(N) to convert
 the result to a normal fble value, where N is the size of the resulting value.
 
-10.6 Inline Compile
--------------------
+10.5.3 Inline Function Evaluate
+-------------------------------
 Abstract Syntax:
-  Expr ::= inline_compile (inline :: Expr)
+  Expr ::= inline_func_eval (inline :: Expr)
 
 Concrete Syntax:
   $(expr)
@@ -1117,7 +1198,7 @@ inline eval on the result of the function will be O(N) to convert the value to
 a normal fble value. In other words, applying the compiled function causes the
 result to be fully computed.
 
-10.7 TODO
+10.6 TODO
 ---------
 Details to work out at a future date include support for loops and side
 effects in inline computations.
