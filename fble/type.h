@@ -58,17 +58,11 @@ typedef struct {
   FbleTaggedType* xs;
 } FbleTaggedTypeV;
 
-// FbleStructType -- FBLE_STRUCT_TYPE
+// FbleDataType -- FBLE_STRUCT_TYPE, FBLE_UNION_TYPE
 typedef struct {
   FbleType _base;
   FbleTaggedTypeV fields;
-} FbleStructType;
-
-// FbleUnionType -- FBLE_UNION_TYPE
-typedef struct {
-  FbleType _base;
-  FbleTaggedTypeV fields;
-} FbleUnionType;
+} FbleDataType;
 
 // FbleFuncType -- FBLE_FUNC_TYPE
 typedef struct {

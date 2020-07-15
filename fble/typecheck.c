@@ -776,7 +776,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
-      FbleStructType* struct_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
+      FbleDataType* struct_type = FbleNewType(heap, FbleDataType, FBLE_STRUCT_TYPE, expr->loc);
       FbleVectorInit(arena, struct_type->fields);
 
       size_t argc = struct_expr->args.size;
@@ -842,7 +842,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(heap, type);
+      FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, type);
       if (union_type->_base.tag != FBLE_UNION_TYPE) {
         ReportError(arena, union_value_expr->type->loc,
             "expected a union type, but found %t\n", type);
@@ -907,7 +907,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      FbleUnionType* union_type = (FbleUnionType*)FbleNormalType(heap, condition.type);
+      FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, condition.type);
       if (union_type->_base.tag != FBLE_UNION_TYPE) {
         ReportError(arena, select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
@@ -1268,7 +1268,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      FbleStructType* normal = (FbleStructType*)FbleNormalType(heap, spec.type);
+      FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, spec.type);
       if (normal->_base.tag != FBLE_STRUCT_TYPE) {
         ReportError(arena, literal->spec->loc,
             "expected a struct value, but literal spec has type %t\n",
@@ -1387,10 +1387,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       FbleType* normal = FbleNormalType(heap, obj.type);
       FbleTaggedTypeV* fields = NULL;
-      if (normal->tag == FBLE_STRUCT_TYPE) {
-        fields = &((FbleStructType*)normal)->fields;
-      } else if (normal->tag == FBLE_UNION_TYPE) {
-        fields = &((FbleUnionType*)normal)->fields;
+      if (normal->tag == FBLE_STRUCT_TYPE || normal->tag == FBLE_UNION_TYPE) {
+        fields = &((FbleDataType*)normal)->fields;
       } else {
         ReportError(arena, access_expr->object->loc,
             "expected value of type struct or union, but found value of type %t\n",
@@ -1507,7 +1505,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         FbleReleaseType(heap, normal);
         FreeTc(heap, misc);
 
-        FbleStructType* struct_type = (FbleStructType*)FbleNormalType(heap, vtype);
+        FbleDataType* struct_type = (FbleDataType*)FbleNormalType(heap, vtype);
         if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
           ReportError(arena, apply_expr->misc->loc,
               "expected a struct type, but found %t\n",
@@ -1678,7 +1676,7 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       get_type->type = port_type;
       FbleTypeAddRef(heap, &get_type->_base, get_type->type);
 
-      FbleStructType* unit_type = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, expr->loc);
+      FbleDataType* unit_type = FbleNewType(heap, FbleDataType, FBLE_STRUCT_TYPE, expr->loc);
       FbleVectorInit(arena, unit_type->fields);
 
       FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
@@ -1844,7 +1842,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
 
     case FBLE_STRUCT_TYPE_EXPR: {
       FbleStructTypeExpr* struct_type = (FbleStructTypeExpr*)type;
-      FbleStructType* st = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, type->loc);
+      FbleDataType* st = FbleNewType(heap, FbleDataType, FBLE_STRUCT_TYPE, type->loc);
       FbleVectorInit(arena, st->fields);
 
       for (size_t i = 0; i < struct_type->fields.size; ++i) {
@@ -1884,7 +1882,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
     }
 
     case FBLE_UNION_TYPE_EXPR: {
-      FbleUnionType* ut = FbleNewType(heap, FbleUnionType, FBLE_UNION_TYPE, type->loc);
+      FbleDataType* ut = FbleNewType(heap, FbleDataType, FBLE_UNION_TYPE, type->loc);
       FbleVectorInit(arena, ut->fields);
 
       FbleUnionTypeExpr* union_type = (FbleUnionTypeExpr*)type;

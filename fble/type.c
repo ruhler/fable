@@ -134,18 +134,11 @@ static void Ref(FbleHeapCallback* callback, FbleType* type)
 static void Refs(FbleHeapCallback* callback, FbleType* type)
 {
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE: {
-      FbleStructType* st = (FbleStructType*)type;
-      for (size_t i = 0; i < st->fields.size; ++i) {
-        Ref(callback, st->fields.xs[i].type);
-      }
-      break;
-    }
-
+    case FBLE_STRUCT_TYPE:
     case FBLE_UNION_TYPE: {
-      FbleUnionType* ut = (FbleUnionType*)type;
-      for (size_t i = 0; i < ut->fields.size; ++i) {
-        Ref(callback, ut->fields.xs[i].type);
+      FbleDataType* dt = (FbleDataType*)type;
+      for (size_t i = 0; i < dt->fields.size; ++i) {
+        Ref(callback, dt->fields.xs[i].type);
       }
       break;
     }
@@ -199,21 +192,13 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
   FbleArena* arena = heap->arena;
   FbleFreeLoc(arena, type->loc);
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE: {
-      FbleStructType* st = (FbleStructType*)type;
-      for (size_t i = 0; i < st->fields.size; ++i) {
-        FbleFreeName(arena, st->fields.xs[i].name);
-      }
-      FbleFree(arena, st->fields.xs);
-      return;
-    }
-
+    case FBLE_STRUCT_TYPE:
     case FBLE_UNION_TYPE: {
-      FbleUnionType* ut = (FbleUnionType*)type;
-      for (size_t i = 0; i < ut->fields.size; ++i) {
-        FbleFreeName(arena, ut->fields.xs[i].name);
+      FbleDataType* dt = (FbleDataType*)type;
+      for (size_t i = 0; i < dt->fields.size; ++i) {
+        FbleFreeName(arena, dt->fields.xs[i].name);
       }
-      FbleFree(arena, ut->fields.xs);
+      FbleFree(arena, dt->fields.xs);
       return;
     }
 
@@ -355,20 +340,11 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
   };
 
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE: {
-      FbleStructType* st = (FbleStructType*)type;
-      for (size_t i = 0; i < st->fields.size; ++i) {
-        if (HasParam(st->fields.xs[i].type, param, &nv)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
+    case FBLE_STRUCT_TYPE:
     case FBLE_UNION_TYPE: {
-      FbleUnionType* ut = (FbleUnionType*)type;
-      for (size_t i = 0; i < ut->fields.size; ++i) {
-        if (HasParam(ut->fields.xs[i].type, param, &nv)) {
+      FbleDataType* dt = (FbleDataType*)type;
+      for (size_t i = 0; i < dt->fields.size; ++i) {
+        if (HasParam(dt->fields.xs[i].type, param, &nv)) {
           return true;
         }
       }
@@ -457,39 +433,23 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
   FbleArena* arena = heap->arena;
 
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE: {
-      FbleStructType* st = (FbleStructType*)type;
-      FbleStructType* sst = FbleNewType(heap, FbleStructType, FBLE_STRUCT_TYPE, st->_base.loc);
-      sst->_base.id = st->_base.id;
-
-      FbleVectorInit(arena, sst->fields);
-      for (size_t i = 0; i < st->fields.size; ++i) {
-        FbleTaggedType field = {
-          .name = FbleCopyName(arena, st->fields.xs[i].name),
-          .type = Subst(heap, st->fields.xs[i].type, param, arg, tps)
-        };
-        FbleVectorAppend(arena, sst->fields, field);
-        FbleTypeAddRef(heap, &sst->_base, field.type);
-        FbleReleaseType(heap, field.type);
-      }
-      return &sst->_base;
-    }
-
+    case FBLE_STRUCT_TYPE:
     case FBLE_UNION_TYPE: {
-      FbleUnionType* ut = (FbleUnionType*)type;
-      FbleUnionType* sut = FbleNewType(heap, FbleUnionType, FBLE_UNION_TYPE, ut->_base.loc);
-      sut->_base.id = ut->_base.id;
-      FbleVectorInit(arena, sut->fields);
-      for (size_t i = 0; i < ut->fields.size; ++i) {
+      FbleDataType* dt = (FbleDataType*)type;
+      FbleDataType* sdt = FbleNewType(heap, FbleDataType, type->tag, dt->_base.loc);
+      sdt->_base.id = dt->_base.id;
+
+      FbleVectorInit(arena, sdt->fields);
+      for (size_t i = 0; i < dt->fields.size; ++i) {
         FbleTaggedType field = {
-          .name = FbleCopyName(arena, ut->fields.xs[i].name),
-          .type = Subst(heap, ut->fields.xs[i].type, param, arg, tps)
+          .name = FbleCopyName(arena, dt->fields.xs[i].name),
+          .type = Subst(heap, dt->fields.xs[i].type, param, arg, tps)
         };
-        FbleVectorAppend(arena, sut->fields, field);
-        FbleTypeAddRef(heap, &sut->_base, field.type);
+        FbleVectorAppend(arena, sdt->fields, field);
+        FbleTypeAddRef(heap, &sdt->_base, field.type);
         FbleReleaseType(heap, field.type);
       }
-      return &sut->_base;
+      return &sdt->_base;
     }
 
     case FBLE_FUNC_TYPE: {
@@ -646,52 +606,25 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
   }
 
   switch (a->tag) {
-    case FBLE_STRUCT_TYPE: {
-      FbleStructType* sta = (FbleStructType*)a;
-      FbleStructType* stb = (FbleStructType*)b;
-
-      if (sta->fields.size != stb->fields.size) {
-        FbleReleaseType(heap, a);
-        FbleReleaseType(heap, b);
-        return false;
-      }
-
-      for (size_t i = 0; i < sta->fields.size; ++i) {
-        if (!FbleNamesEqual(sta->fields.xs[i].name, stb->fields.xs[i].name)) {
-          FbleReleaseType(heap, a);
-          FbleReleaseType(heap, b);
-          return false;
-        }
-
-        if (!TypesEqual(heap, sta->fields.xs[i].type, stb->fields.xs[i].type, &neq)) {
-          FbleReleaseType(heap, a);
-          FbleReleaseType(heap, b);
-          return false;
-        }
-      }
-
-      FbleReleaseType(heap, a);
-      FbleReleaseType(heap, b);
-      return true;
-    }
-
+    case FBLE_STRUCT_TYPE:
     case FBLE_UNION_TYPE: {
-      FbleUnionType* uta = (FbleUnionType*)a;
-      FbleUnionType* utb = (FbleUnionType*)b;
-      if (uta->fields.size != utb->fields.size) {
+      FbleDataType* dta = (FbleDataType*)a;
+      FbleDataType* dtb = (FbleDataType*)b;
+
+      if (dta->fields.size != dtb->fields.size) {
         FbleReleaseType(heap, a);
         FbleReleaseType(heap, b);
         return false;
       }
 
-      for (size_t i = 0; i < uta->fields.size; ++i) {
-        if (!FbleNamesEqual(uta->fields.xs[i].name, utb->fields.xs[i].name)) {
+      for (size_t i = 0; i < dta->fields.size; ++i) {
+        if (!FbleNamesEqual(dta->fields.xs[i].name, dtb->fields.xs[i].name)) {
           FbleReleaseType(heap, a);
           FbleReleaseType(heap, b);
           return false;
         }
 
-        if (!TypesEqual(heap, uta->fields.xs[i].type, utb->fields.xs[i].type, &neq)) {
+        if (!TypesEqual(heap, dta->fields.xs[i].type, dtb->fields.xs[i].type, &neq)) {
           FbleReleaseType(heap, a);
           FbleReleaseType(heap, b);
           return false;
@@ -1183,30 +1116,16 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 void FblePrintType(FbleArena* arena, FbleType* type)
 {
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE: {
-      FbleStructType* st = (FbleStructType*)type;
-      fprintf(stderr, "*(");
-      const char* comma = "";
-      for (size_t i = 0; i < st->fields.size; ++i) {
-        fprintf(stderr, "%s", comma);
-        FblePrintType(arena, st->fields.xs[i].type);
-        fprintf(stderr, " ");
-        FblePrintName(stderr, st->fields.xs[i].name);
-        comma = ", ";
-      }
-      fprintf(stderr, ")");
-      return;
-    }
-
+    case FBLE_STRUCT_TYPE:
     case FBLE_UNION_TYPE: {
-      FbleUnionType* ut = (FbleUnionType*)type;
-      fprintf(stderr, "+(");
+      FbleDataType* dt = (FbleDataType*)type;
+      fprintf(stderr, "%c(", type->tag == FBLE_STRUCT_TYPE ? '*' : '+');
       const char* comma = "";
-      for (size_t i = 0; i < ut->fields.size; ++i) {
+      for (size_t i = 0; i < dt->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
-        FblePrintType(arena, ut->fields.xs[i].type);
+        FblePrintType(arena, dt->fields.xs[i].type);
         fprintf(stderr, " ");
-        FblePrintName(stderr, ut->fields.xs[i].name);
+        FblePrintName(stderr, dt->fields.xs[i].name);
         comma = ", ";
       }
       fprintf(stderr, ")");
