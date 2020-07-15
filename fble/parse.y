@@ -360,6 +360,13 @@ expr:
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
+ | '+' '$' '(' tagged_type_p ')' {
+      FbleUnionTypeExpr* union_type = FbleAlloc(arena, FbleUnionTypeExpr);
+      union_type->_base.tag = FBLE_INLINE_UNION_TYPE_EXPR;
+      union_type->_base.loc = FbleCopyLoc(@$);
+      union_type->fields = $4;
+      $$ = &union_type->_base;
+   }
  | expr '(' name ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(arena, FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
