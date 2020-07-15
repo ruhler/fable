@@ -2,6 +2,10 @@
  - Implement N bit addition, run on evaluator and compile via llvm to c code
    and run.
 
+* Follow style guide in fble.txt
+  In particular, union field names should be lowercase: just, true, false, not
+  Just, True, False.
+
 * Clean up fble library
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.

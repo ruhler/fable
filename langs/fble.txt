@@ -414,7 +414,7 @@ Concrete Syntax:
   expr ::= expr '.' name
 
 Example:
-  x.Just
+  x.just
 
 Returns the value passed to the union at the corresponding field position when
 the union was constructed. Behavior is undefined if the union tag does not
@@ -1018,8 +1018,8 @@ Examples:
   *$()                is the Unit type
   *$(Int@ x, Int@ y)  is the type of a pair of ints x, y.
 
-Struct types are considered equal if their fields are equal, including field
-types, field names, and the order of the fields.
+Inline struct types are considered equal if their fields are equal, including
+field types, field names, and the order of the fields.
 
 Field types must be either inline struct types or inline union types. No other
 types are supported as fields of inline structs. Recursive inline struct types
@@ -1083,14 +1083,53 @@ evaluated, which means they can be used for describing computations.
 
 10.3.1 Inline Union Type
 ------------------------
-TODO
+Abstract Syntax:
+  Type ::= inline_union_type (fields :: [(Type, Name)])
+
+Concrete Syntax:
+  type ::= '+$(' type name [',' type name [...]] ')'
+
+Example:
+  +$(Unit@ true, Unit@ false)
+
+Inline union types are considered equal if their fields are equal, including
+field types, field names, and the order of the fields.
+
+Field types must be either inline struct types or inline union types. No other
+types are supported as fields of inline unions. Recursive inline union types
+are not allowed.
+
+Runtime is O(1).
 
 10.3.2 Inline Union Value
 -------------------------
-TODO
+Abstract Syntax:
+  Expr ::= inline_union_value (type :: Type) (field :: Name) (arg :: Expr)
+
+Concrete Syntax:
+  expr ::= type '(' name ':' expr ')'
+
+Example:
+  Maybe@(Just: 3)
+
+The same as union_value, except with an inline union type instead of a normal
+union type. Creates a computation that computes a union value when run.
 
 10.3.3 Inline Union Access
 --------------------------
+Abstract Syntax:
+  Expr ::= inline_union_access (object :: Expr) (field :: Name)
+
+Concrete Syntax:
+  expr '.' name
+
+Example:
+  x.just
+
+Same as union_access, except the object is an inline union value. Creates a
+computation for accessing the field of the union value. Behavior of the
+computation is undefined if the union tag does not match the field being
+accessed when the computation is run.
 
 10.3.4 Inline Union Select
 --------------------------

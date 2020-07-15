@@ -324,11 +324,8 @@ expr:
       $$ = &struct_type->_base;
    }
  | '*' '$' '(' tagged_type_s ')' {
-      assert(false && "TODO: parse inline struct type");
-      //FbleInlineStructTypeExpr* struct_type = FbleAlloc(arena, FbleInlineStructTypeExpr);
-      //struct_type->_base.tag = FBLE_INLINE_STRUCT_TYPE_EXPR;
       FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);
-      struct_type->_base.tag = FBLE_STRUCT_TYPE_EXPR;
+      struct_type->_base.tag = FBLE_INLINE_STRUCT_TYPE_EXPR;
       struct_type->_base.loc = FbleCopyLoc(@$);
       struct_type->fields = $4;
       $$ = &struct_type->_base;

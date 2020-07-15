@@ -209,6 +209,9 @@ typedef enum {
 
   FBLE_MODULE_REF_EXPR,
 
+  FBLE_INLINE_STRUCT_TYPE_EXPR,
+  FBLE_INLINE_UNION_TYPE_EXPR,
+
   FBLE_MISC_ACCESS_EXPR,
   FBLE_MISC_APPLY_EXPR,
 } FbleExprTag;
@@ -252,6 +255,7 @@ typedef struct {
 
 // FbleStructTypeExpr --
 //   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
+//   FBLE_INLINE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleTypeExpr _base;
   FbleTaggedTypeExprV fields;
@@ -281,6 +285,7 @@ typedef struct {
 
 // FbleUnionTypeExpr --
 //   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
+//   FBLE_INLINE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleTypeExpr _base;
   FbleTaggedTypeExprV fields;

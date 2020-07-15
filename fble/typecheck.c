@@ -564,7 +564,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_UNION_TYPE_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
     case FBLE_PROC_TYPE_EXPR:
-    case FBLE_TYPEOF_EXPR: {
+    case FBLE_TYPEOF_EXPR:
+    case FBLE_INLINE_STRUCT_TYPE_EXPR:
+    case FBLE_INLINE_UNION_TYPE_EXPR:
+    {
       FbleType* type = TypeCheckType(heap, scope, expr);
       if (type == NULL) {
         return TC_FAILED;
@@ -1619,6 +1622,8 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_REF_EXPR:
+    case FBLE_INLINE_STRUCT_TYPE_EXPR:
+    case FBLE_INLINE_UNION_TYPE_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
@@ -1959,6 +1964,16 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
       FbleTypeAddRef(heap, &ut->_base, ut->type);
       FbleReleaseType(heap, ut->type);
       return &ut->_base;
+    }
+
+    case FBLE_INLINE_STRUCT_TYPE_EXPR: {
+      assert(false && "TODO: type check inline struct type expr");
+      return NULL;
+    }
+
+    case FBLE_INLINE_UNION_TYPE_EXPR: {
+      assert(false && "TODO: type check inline union type expr");
+      return NULL;
     }
 
     case FBLE_VAR_EXPR:
