@@ -20,6 +20,8 @@ typedef enum {
   FBLE_POLY_APPLY_TYPE,
   FBLE_VAR_TYPE,
   FBLE_TYPE_TYPE,
+  FBLE_INLINE_STRUCT_TYPE,
+  FBLE_INLINE_UNION_TYPE,
 } FbleTypeTag;
 
 // FbleType --
@@ -58,7 +60,11 @@ typedef struct {
   FbleTaggedType* xs;
 } FbleTaggedTypeV;
 
-// FbleDataType -- FBLE_STRUCT_TYPE, FBLE_UNION_TYPE
+// FbleDataType --
+//   FBLE_STRUCT_TYPE
+//   FBLE_UNION_TYPE
+//   FBLE_INLINE_STRUCT_TYPE
+//   FBLE_INLINE_UNION_TYPE
 typedef struct {
   FbleType _base;
   FbleTaggedTypeV fields;

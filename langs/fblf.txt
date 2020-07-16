@@ -242,3 +242,16 @@ can figure out how to add loops and processes... maybe I'm done? Maybe I've
 solved it. Full expressively, full performance. Slightly tedious to convert
 fble values to fblf.
 
+---
+
+Trouble: How to support polymorphic inline types? Because we don't know given
+a kind whether a type parameter is inline or not. Sounds like we'll want to
+add a new kind? '$'? And say that '$' is a subset of the kind '@'? Or kind
+'@$'? That will make things a little more complicated. I do think it is
+necessary. Not sure how much more complicated it will make things though. Kind
+equality now has to be kind compatibility? It's no longer a commutative
+operation.
+
+Do we also need '%$' as a kind?
+
+
