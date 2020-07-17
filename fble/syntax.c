@@ -61,8 +61,10 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
     }
 
     case FBLE_STRUCT_TYPE_EXPR:
-    case FBLE_INLINE_STRUCT_TYPE_EXPR: {
-      FbleStructTypeExpr* e = (FbleStructTypeExpr*)expr;
+    case FBLE_INLINE_STRUCT_TYPE_EXPR:
+    case FBLE_UNION_TYPE_EXPR:
+    case FBLE_INLINE_UNION_TYPE_EXPR: {
+      FbleDataTypeExpr* e = (FbleDataTypeExpr*)expr;
       for (size_t i = 0; i < e->fields.size; ++i) {
         FbleFreeExpr(arena, e->fields.xs[i].type);
         FbleFreeName(arena, e->fields.xs[i].name);
@@ -79,18 +81,6 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
         FbleFreeExpr(arena, e->args.xs[i].expr);
       }
       FbleFree(arena, e->args.xs);
-      FbleFree(arena, expr);
-      return;
-    }
-
-    case FBLE_UNION_TYPE_EXPR:
-    case FBLE_INLINE_UNION_TYPE_EXPR: {
-      FbleUnionTypeExpr* e = (FbleUnionTypeExpr*)expr;
-      for (size_t i = 0; i < e->fields.size; ++i) {
-        FbleFreeExpr(arena, e->fields.xs[i].type);
-        FbleFreeName(arena, e->fields.xs[i].name);
-      }
-      FbleFree(arena, e->fields.xs);
       FbleFree(arena, expr);
       return;
     }

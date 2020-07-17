@@ -1840,78 +1840,80 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
       return TypeCheckExprForType(heap, scope, typeof->expr);
     }
 
-    case FBLE_STRUCT_TYPE_EXPR: {
-      FbleStructTypeExpr* struct_type = (FbleStructTypeExpr*)type;
-      FbleDataType* st = FbleNewType(heap, FbleDataType, FBLE_STRUCT_TYPE, type->loc);
-      FbleVectorInit(arena, st->fields);
+    case FBLE_STRUCT_TYPE_EXPR:
+    case FBLE_INLINE_STRUCT_TYPE_EXPR:
+    case FBLE_UNION_TYPE_EXPR:
+    case FBLE_INLINE_UNION_TYPE_EXPR: {
+      FbleDataTypeExpr* data_type = (FbleDataTypeExpr*)type;
 
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        FbleTaggedTypeExpr* field = struct_type->fields.xs + i;
+      FbleTypeTag tag;
+      bool inline_;
+      if (type->tag == FBLE_STRUCT_TYPE_EXPR) {
+        tag = FBLE_STRUCT_TYPE;
+        inline_ = false;
+      } else if (type->tag == FBLE_UNION_TYPE_EXPR) {
+        tag = FBLE_UNION_TYPE;
+        inline_ = false;
+      } else if (type->tag == FBLE_INLINE_STRUCT_TYPE_EXPR) {
+        tag = FBLE_INLINE_STRUCT_TYPE;
+        inline_ = true;
+      } else if (type->tag == FBLE_INLINE_UNION_TYPE_EXPR) {
+        tag = FBLE_INLINE_UNION_TYPE;
+        inline_ = true;
+      } else {
+        UNREACHABLE("unexpected type tag");
+      }
+
+      FbleDataType* dt = FbleNewType(heap, FbleDataType, tag, type->loc);
+      FbleVectorInit(arena, dt->fields);
+
+      for (size_t i = 0; i < data_type->fields.size; ++i) {
+        FbleTaggedTypeExpr* field = data_type->fields.xs + i;
         FbleType* compiled = TypeCheckType(heap, scope, field->type);
         if (compiled == NULL) {
-          FbleReleaseType(heap, &st->_base);
+          FbleReleaseType(heap, &dt->_base);
           return NULL;
         }
 
         if (!CheckNameSpace(arena, field->name, compiled)) {
           FbleReleaseType(heap, compiled);
-          FbleReleaseType(heap, &st->_base);
+          FbleReleaseType(heap, &dt->_base);
           return NULL;
+        }
+
+        if (inline_) {
+          FbleType* normal = FbleNormalType(heap, compiled);
+          if (normal->tag != FBLE_INLINE_STRUCT_TYPE
+              && normal->tag != FBLE_INLINE_UNION_TYPE) {
+            ReportError(arena, field->type->loc, "expected inline type, but found %t\n", compiled);
+            FbleReleaseType(heap, normal);
+            FbleReleaseType(heap, compiled);
+            FbleReleaseType(heap, &dt->_base);
+            return NULL;
+          }
+          FbleReleaseType(heap, normal);
         }
 
         FbleTaggedType cfield = {
           .name = FbleCopyName(arena, field->name),
           .type = compiled
         };
-        FbleVectorAppend(arena, st->fields, cfield);
+        FbleVectorAppend(arena, dt->fields, cfield);
 
-        FbleTypeAddRef(heap, &st->_base, cfield.type);
+        FbleTypeAddRef(heap, &dt->_base, cfield.type);
         FbleReleaseType(heap, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name, struct_type->fields.xs[j].name)) {
+          if (FbleNamesEqual(field->name, data_type->fields.xs[j].name)) {
             ReportError(arena, field->name.loc,
                 "duplicate field name '%n'\n",
                 field->name);
-            FbleReleaseType(heap, &st->_base);
+            FbleReleaseType(heap, &dt->_base);
             return NULL;
           }
         }
       }
-      return &st->_base;
-    }
-
-    case FBLE_UNION_TYPE_EXPR: {
-      FbleDataType* ut = FbleNewType(heap, FbleDataType, FBLE_UNION_TYPE, type->loc);
-      FbleVectorInit(arena, ut->fields);
-
-      FbleUnionTypeExpr* union_type = (FbleUnionTypeExpr*)type;
-      for (size_t i = 0; i < union_type->fields.size; ++i) {
-        FbleTaggedTypeExpr* field = union_type->fields.xs + i;
-        FbleType* compiled = TypeCheckType(heap, scope, field->type);
-        if (compiled == NULL) {
-          FbleReleaseType(heap, &ut->_base);
-          return NULL;
-        }
-        FbleTaggedType cfield = {
-          .name = FbleCopyName(arena, field->name),
-          .type = compiled
-        };
-        FbleVectorAppend(arena, ut->fields, cfield);
-        FbleTypeAddRef(heap, &ut->_base, cfield.type);
-        FbleReleaseType(heap, cfield.type);
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name, union_type->fields.xs[j].name)) {
-            ReportError(arena, field->name.loc,
-                "duplicate field name '%n'\n",
-                field->name);
-            FbleReleaseType(heap, &ut->_base);
-            return NULL;
-          }
-        }
-      }
-      return &ut->_base;
+      return &dt->_base;
     }
 
     case FBLE_FUNC_TYPE_EXPR: {
@@ -1961,103 +1963,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
       }
       FbleTypeAddRef(heap, &ut->_base, ut->type);
       FbleReleaseType(heap, ut->type);
-      return &ut->_base;
-    }
-
-    case FBLE_INLINE_STRUCT_TYPE_EXPR: {
-      FbleStructTypeExpr* struct_type = (FbleStructTypeExpr*)type;
-      FbleDataType* st = FbleNewType(heap, FbleDataType, FBLE_INLINE_STRUCT_TYPE, type->loc);
-      FbleVectorInit(arena, st->fields);
-
-      for (size_t i = 0; i < struct_type->fields.size; ++i) {
-        FbleTaggedTypeExpr* field = struct_type->fields.xs + i;
-        FbleType* compiled = TypeCheckType(heap, scope, field->type);
-        if (compiled == NULL) {
-          FbleReleaseType(heap, &st->_base);
-          return NULL;
-        }
-
-        if (!CheckNameSpace(arena, field->name, compiled)) {
-          FbleReleaseType(heap, compiled);
-          FbleReleaseType(heap, &st->_base);
-          return NULL;
-        }
-
-        FbleType* normal = FbleNormalType(heap, compiled);
-        if (normal->tag != FBLE_INLINE_STRUCT_TYPE
-            && normal->tag != FBLE_INLINE_UNION_TYPE) {
-          ReportError(arena, field->type->loc, "expected inline type, but found %t\n", compiled);
-          FbleReleaseType(heap, normal);
-          FbleReleaseType(heap, compiled);
-          FbleReleaseType(heap, &st->_base);
-          return NULL;
-        }
-        FbleReleaseType(heap, normal);
-
-        FbleTaggedType cfield = {
-          .name = FbleCopyName(arena, field->name),
-          .type = compiled
-        };
-        FbleVectorAppend(arena, st->fields, cfield);
-
-        FbleTypeAddRef(heap, &st->_base, cfield.type);
-        FbleReleaseType(heap, cfield.type);
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name, struct_type->fields.xs[j].name)) {
-            ReportError(arena, field->name.loc,
-                "duplicate field name '%n'\n",
-                field->name);
-            FbleReleaseType(heap, &st->_base);
-            return NULL;
-          }
-        }
-      }
-      return &st->_base;
-    }
-
-    case FBLE_INLINE_UNION_TYPE_EXPR: {
-      FbleDataType* ut = FbleNewType(heap, FbleDataType, FBLE_INLINE_UNION_TYPE, type->loc);
-      FbleVectorInit(arena, ut->fields);
-
-      FbleUnionTypeExpr* union_type = (FbleUnionTypeExpr*)type;
-      for (size_t i = 0; i < union_type->fields.size; ++i) {
-        FbleTaggedTypeExpr* field = union_type->fields.xs + i;
-        FbleType* compiled = TypeCheckType(heap, scope, field->type);
-        if (compiled == NULL) {
-          FbleReleaseType(heap, &ut->_base);
-          return NULL;
-        }
-
-        FbleType* normal = FbleNormalType(heap, compiled);
-        if (normal->tag != FBLE_INLINE_STRUCT_TYPE
-            && normal->tag != FBLE_INLINE_UNION_TYPE) {
-          ReportError(arena, field->type->loc, "expected inline type, but found %t\n", compiled);
-          FbleReleaseType(heap, normal);
-          FbleReleaseType(heap, compiled);
-          FbleReleaseType(heap, &ut->_base);
-          return NULL;
-        }
-        FbleReleaseType(heap, normal);
-
-        FbleTaggedType cfield = {
-          .name = FbleCopyName(arena, field->name),
-          .type = compiled
-        };
-        FbleVectorAppend(arena, ut->fields, cfield);
-        FbleTypeAddRef(heap, &ut->_base, cfield.type);
-        FbleReleaseType(heap, cfield.type);
-
-        for (size_t j = 0; j < i; ++j) {
-          if (FbleNamesEqual(field->name, union_type->fields.xs[j].name)) {
-            ReportError(arena, field->name.loc,
-                "duplicate field name '%n'\n",
-                field->name);
-            FbleReleaseType(heap, &ut->_base);
-            return NULL;
-          }
-        }
-      }
       return &ut->_base;
     }
 

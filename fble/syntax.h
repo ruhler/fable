@@ -253,13 +253,15 @@ typedef struct {
   FbleTaggedTypeExpr* xs;
 } FbleTaggedTypeExprV;
 
-// FbleStructTypeExpr --
+// FbleDataTypeExpr --
 //   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
 //   FBLE_INLINE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
+//   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
+//   FBLE_INLINE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleTypeExpr _base;
   FbleTaggedTypeExprV fields;
-} FbleStructTypeExpr;
+} FbleDataTypeExpr;
 
 // FbleTaggedExpr --
 //   A pair of (Name, Expr) used in conditional expressions and anonymous
@@ -282,14 +284,6 @@ typedef struct {
   FbleExpr _base;
   FbleTaggedExprV args;
 } FbleStructValueImplicitTypeExpr;
-
-// FbleUnionTypeExpr --
-//   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
-//   FBLE_INLINE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
-typedef struct {
-  FbleTypeExpr _base;
-  FbleTaggedTypeExprV fields;
-} FbleUnionTypeExpr;
 
 // FbleUnionValueExpr --
 //   FBLE_UNION_VALUE_EXPR (type :: Type) (field :: Name) (arg :: Expr)

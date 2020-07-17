@@ -1,15 +1,16 @@
 * Rename 'inline' computation to just 'computation' in fble.txt?
  - And emphasize that computation is deferred and can be rerun multiple times.
 
-* Fix test that we check the kind namespace of union fields like we do for
-  struct fields.
-
 * Anyway we can share code converting {inline,}{struct, union} type
   expressions into types? They do almost the same thing.
 
 * Proof of concept fblf
  - Implement N bit addition, run on evaluator and compile via llvm to c code
    and run.
+
+* Consider adding STRUCT vs UNION and INLINE vs NONINLINE fields to
+  FbleDataType and FbleDataTypeExpr to distinguish between struct and union
+  inline and non inline types rather than with the type tag.
 
 * Follow style guide in fble.txt
   In particular, union field names should be lowercase: just, true, false, not

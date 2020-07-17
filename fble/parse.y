@@ -317,14 +317,14 @@ expr:
       FbleVectorAppend(arena, *module_refs, &mref->ref);
    }
  | '*' '(' tagged_type_s ')' {
-      FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);
+      FbleDataTypeExpr* struct_type = FbleAlloc(arena, FbleDataTypeExpr);
       struct_type->_base.tag = FBLE_STRUCT_TYPE_EXPR;
       struct_type->_base.loc = FbleCopyLoc(@$);
       struct_type->fields = $3;
       $$ = &struct_type->_base;
    }
  | '*' '$' '(' tagged_type_s ')' {
-      FbleStructTypeExpr* struct_type = FbleAlloc(arena, FbleStructTypeExpr);
+      FbleDataTypeExpr* struct_type = FbleAlloc(arena, FbleDataTypeExpr);
       struct_type->_base.tag = FBLE_INLINE_STRUCT_TYPE_EXPR;
       struct_type->_base.loc = FbleCopyLoc(@$);
       struct_type->fields = $4;
@@ -354,14 +354,14 @@ expr:
       $$ = &access_expr->_base;
    }
  | '+' '(' tagged_type_p ')' {
-      FbleUnionTypeExpr* union_type = FbleAlloc(arena, FbleUnionTypeExpr);
+      FbleDataTypeExpr* union_type = FbleAlloc(arena, FbleDataTypeExpr);
       union_type->_base.tag = FBLE_UNION_TYPE_EXPR;
       union_type->_base.loc = FbleCopyLoc(@$);
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
  | '+' '$' '(' tagged_type_p ')' {
-      FbleUnionTypeExpr* union_type = FbleAlloc(arena, FbleUnionTypeExpr);
+      FbleDataTypeExpr* union_type = FbleAlloc(arena, FbleDataTypeExpr);
       union_type->_base.tag = FBLE_INLINE_UNION_TYPE_EXPR;
       union_type->_base.loc = FbleCopyLoc(@$);
       union_type->fields = $4;
