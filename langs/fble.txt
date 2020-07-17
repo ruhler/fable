@@ -977,7 +977,11 @@ normal fble programs because storage for all data used in a computation can be
 allocated statically. That means there are no runtime overheads for allocating
 or managing memory.
 
-10.1 Inline Let
+10.1 Inline Kind
+----------------
+TODO
+
+10.2 Inline Let
 ---------------
 Abstract Syntax:
   Expr ::= inline_let (binding :: (Spec, Name, Expr)) (body :: Expr)
@@ -998,7 +1002,19 @@ reason, only a single binding may be specified.
 Causes an inline let computation to be constructed. The type of the expression
 is the type of the body.
 
-10.2 Inline Structs
+Normal evaluation can be mixed in with the body of an inline let. That normal
+evaluation will occur as part of constructing the inline let computation,
+before any inline part of the computation is executed. For example, assuming f
+is a non-inline function:
+
+  Int@ x $= mul(3, 3);
+  mul(x, add(f(10), x));
+
+In this case, the function f(10) will be evaluated once when creating the
+computation. In contrast, the function mul(3, 3) will be reevaluated each time
+the computation is run.
+
+10.3 Inline Structs
 -------------------
 An inline struct represents a packed struct value of fixed size that can be
 computed. Inline structs are non-recursive and of fixed size. They can only be
@@ -1006,7 +1022,7 @@ used to store data, not functions or processes. Operations on inline struct
 values are not performed until the inline struct value is explicitly
 evaluated, which means they can be used for describing computations.
 
-10.2.1 Inline Struct Type
+10.3.1 Inline Struct Type
 -------------------------
 Abstract Syntax:
   Expr ::= inline_struct_type (fields :: [(Type, Name)])
@@ -1027,7 +1043,7 @@ are not allowed.
 
 Runtime is O(1).
 
-10.2.2 Inline Struct Value Explicit Type
+10.3.2 Inline Struct Value Explicit Type
 ----------------------------------------
 Abstract Syntax:
   Expr ::= inline_struct_value_explicit_type (type :: Type) (args :: [Expr])
@@ -1042,7 +1058,7 @@ Same as struct_value_explicit_type, except with an inline struct type. Instead
 of constructing a value of the struct type, this creates a computation for
 computing the value of the struct type.
 
-10.2.2 Inline Struct Value Implicit Type
+10.3.2 Inline Struct Value Implicit Type
 ----------------------------------------
 Abstract Syntax:
   Expr ::= inline_struct_value_implicit_type (args :: [(Name, Expr)])
@@ -1059,7 +1075,7 @@ type instead of struct type. Arguments must be inline struct values or inline
 union values. Instead of constructing a value of the struct type, this creates
 a computation for computing the value of the struct type.
 
-10.2.3 Inline Struct Access
+10.3.3 Inline Struct Access
 ---------------------------
 Abstract Syntax:
   Expr ::= inline_struct_access (object :: Expr) (field :: Name)
@@ -1073,7 +1089,7 @@ Example:
 Same as struct_access, except the object is an inline struct value. Creates a
 computation for accessing the field of the struct value.
 
-10.3 Inline Unions
+10.4 Inline Unions
 ------------------
 An inline struct represents a packed union value of fixed size that can be
 computed. Inline unions are non-recursive and of fixed size. They can only be
@@ -1081,7 +1097,7 @@ used to store data, not functions or processes. Operations on inline union
 values are not performed until the inline union value is explicitly
 evaluated, which means they can be used for describing computations.
 
-10.3.1 Inline Union Type
+10.4.1 Inline Union Type
 ------------------------
 Abstract Syntax:
   Type ::= inline_union_type (fields :: [(Type, Name)])
@@ -1101,7 +1117,7 @@ are not allowed.
 
 Runtime is O(1).
 
-10.3.2 Inline Union Value
+10.4.2 Inline Union Value
 -------------------------
 Abstract Syntax:
   Expr ::= inline_union_value (type :: Type) (field :: Name) (arg :: Expr)
@@ -1115,7 +1131,7 @@ Example:
 The same as union_value, except with an inline union type instead of a normal
 union type. Creates a computation that computes a union value when run.
 
-10.3.3 Inline Union Access
+10.4.3 Inline Union Access
 --------------------------
 Abstract Syntax:
   Expr ::= inline_union_access (object :: Expr) (field :: Name)
@@ -1131,7 +1147,7 @@ computation for accessing the field of the union value. Behavior of the
 computation is undefined if the union tag does not match the field being
 accessed when the computation is run.
 
-10.3.4 Inline Union Select
+10.4.4 Inline Union Select
 --------------------------
 Abstract Syntax:
   Expr ::= inline_union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
@@ -1150,11 +1166,58 @@ condition, inline union select builds up a union select computation that will
 not be run until computation is explicitly evaluated. In particular, when
 building the computation all branches are evaluated.
 
-10.4 Inline Functions
+10.5 Inline Functions
 ---------------------
-TODO
+Inline functions represent inline computations.
 
-10.5 Inline Eval
+10.5.1 Inline Function Type
+---------------------------
+Abstract Syntax:
+  Type ::= inline_func_type (args :: [Type]) (return :: Type)
+
+Concrete Syntax:
+  block ::= '(' type [',' type [...]] ')$' block
+
+Examples:
+  (Int@, Int@)${ Bool@; }
+
+An inline function type is like a normal function type, except that all
+arguments and the return type must be inline struct or inline data types.
+
+10.5.2 Inline Function Value
+----------------------------
+Abstract Syntax:
+  Expr ::= inline_func_value (args :: [(Type, Name)]) (body :: Expr)
+
+Concrete Syntax:
+  block ::= '(' type name [',' type name [...]] ')$' block
+
+Example:
+  (Bool@ a, Bool@ b)${ a.?(true: b, false: False); }
+
+Creates an inline function value that has a corresponding inline function
+type. The arguments and result must be inline struct or inline union values.
+
+Unlike normal function values, the body of an inline function is evaluated at
+the time of creating the function value (TODO: Is that right?). Arguments are
+bound as if by inline let instead of normal let.
+
+10.5.3 Inline Function Application
+----------------------------------
+Abstract Syntax:
+  Expr ::= inline_apply (func :: Expr) (args :: [Expr])
+
+Concrete Syntax:
+  expr ::= expr '(' expr [',' expr [...]] ')'
+
+Example:
+  foo(x, y)
+
+Inline function application is like normal function application, except that
+it builds up an inline computation rather than execute the function right
+away.
+
+10.6 Inline Eval
 ----------------
 Abstract Syntax:
   Expr ::= inline_*_eval (inline :: Expr)
@@ -1169,7 +1232,7 @@ values, and function computations get executed and compiled and converted to
 non-inline functions. The following sections describe these cases in more
 detail.
 
-10.5.1 Inline Type Evaluate
+10.6.1 Inline Type Evaluate
 ---------------------------
 Abstract Syntax:
   Type ::= inline_type_eval (inline :: Type)
@@ -1184,7 +1247,7 @@ Given an inline type, evaluates to the non-inline type corresponding to the
 inline type. This works by recursively converting all inline struct types to
 non-inline struct types and all inline union types to non-inline union types.
 
-10.5.2 Inline Value Evaluate
+10.6.2 Inline Value Evaluate
 ----------------------------
 Abstract Syntax:
   Expr ::= inline_value_eval (inline :: Expr)
@@ -1210,7 +1273,7 @@ This will return a result of non-inline boolean type
 Runtime is the runtime to evaluate the inline computation plus O(N) to convert
 the result to a normal fble value, where N is the size of the resulting value.
 
-10.5.3 Inline Function Evaluate
+10.6.3 Inline Function Evaluate
 -------------------------------
 Abstract Syntax:
   Expr ::= inline_func_eval (inline :: Expr)
@@ -1237,7 +1300,7 @@ inline eval on the result of the function will be O(N) to convert the value to
 a normal fble value. In other words, applying the compiled function causes the
 result to be fully computed.
 
-10.6 TODO
+10.7 TODO
 ---------
 Details to work out at a future date include support for loops and side
 effects in inline computations.

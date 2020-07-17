@@ -254,4 +254,108 @@ operation.
 
 Do we also need '%$' as a kind?
 
+---
+
+The definition of a non-inline Bool@ contains the same information as the
+definition of an inline Bool@. Can we reuse that information instead of
+requiring the user to copy it?
+
+At the same time, the request is to describe inline computation more as
+computation and less as inline.
+
+Combining these two together, how about a new proposal:
+
+Given some type Foo@, Foo@$ is a computation that evaluates to type Foo@.
+Similar to how Foo@! is a process that returns a value of type Foo@.
+
+  Type ::= comp_type (result :: Type)
+
+But you can only form computations on non-recursive data types, and possibly
+in the future, some restrictive forms of function and process types. You
+cannot perform computation on recursive or polymorphic types. It should be a
+type error to do Foo@$ if Foo@ is not supported for computations.
+
+The concern is: how can you clearly convey that a type can be used in a
+computation? For example, how do you write a library that provides a type and
+ensure that it is 'computable'? Two answers:
+1. We can hopefully give good error messages describing precisely what part
+of the type is not computable.
+2. You can always define some type using Foo@$, or some such in your library
+to enforce that.
+
+Not perfect answers, but perhaps worth not having to duplicate all your type
+definitions, and not having to grow the spec so much to define new kinds of
+struct, union, function, and process types.
+
+We will need to define a new kind. The new kind should be for types that
+satisfy the requirements of computability. For example, Bool@ would have this
+kind. Bool@$ would not, because a computation is not computable, if that makes
+sense. This computable kind will be a subset of the basic kind. I'm not sure
+if we need a special way to refer to the value of a computable kind.
+
+  Kind ::= computable_kind
+
+We have computable struct and union values using same syntax as struct and
+union values, except the types are computations instead of structs and unions.
+We have implicit type computation struct values.
+
+We have a special function value computation constructor and special let.
+
+Now, besides constructing computations, there are two things you can do with
+them: elaborate and compute.
+
+Elaborate: takes a computation of type Foo@$ and returns a new computation of
+type Foo@$ which is a fully elaborated version of the given computation. That
+means as much of the given computation as could be computed is computed. For
+example, if it is a Bool@$, the expectation is we turn it into a constant
+wrapping the single bit representing whether it is true or false.
+
+If given a function computation, elaborate compiles the function as best it
+can.
+
+Compute: takes a computation of type Foo@$ and returns a result of type Foo@
+which is the result of executing the computation.
+
+I think that's all you need. Now, for example, if we want to provide an
+efficient Add32 of type (Int32@, Int32@) { Int32@; }, we can first define it
+as a computation: (Int32@, Int32@) { Int32@; }$, elaborate it to compile it to
+efficient code and compute it to get our desired function.
+
+Or, we can compile the function, then define:
+
+Add32 = (Int32@ a, Int32@ b) {
+  COMPUTE(add32(convert(a), convert(b)));
+};
+
+I'm not sure. Actually, that maybe doesn't work so well. We don't want to
+claim we can convert any function to a computation. We shouldn't support
+automatic conversion to a computation. Which means we shouldn't support
+automatic conversion from a function computation to a normal function, because
+it would have to convert input arguments. Maybe the restrictions we have on
+computable types would save us there.
+
+The key challenging difference between this approach and the currently
+proposed approach is how functions are handled:
+
+     (FooF@)${ BarF@; }   ==>  (FooF@) { BarF@; }
+vs.  (Foo@)${ Bar@; }     ==>  (Foo@) { Bar@; }
+vs.  (Foo@)${ Bar@; }     ==>  (Foo@$) { Bar@$; }
+
+If a function is not a computable type then...
+
+Okay, so we need to be more refined about what we mean by computable:
+A. Foo@ is computable if Foo@$ is legal.
+B. Foo@ is computable if Foo@$ can be represented using a fixed size amount of
+   space during computation. Aka, non-recursive struct or union.
+
+I think (B) is what I'm really going for. Then we want to handle functions and
+presumably processes specially.
+
+(Foo@)${ Bar@; } is not the same as (Foo@) { Bar@; }$. The first represents
+a computation that can be compiled, the second represents a function value
+that could be used during a computation, which is not allowed.
+
+Anyway, it's a worth thinking about, but I think not yet worth changing my
+short term plans. Let's learn more before making this not obviously better
+change.
 

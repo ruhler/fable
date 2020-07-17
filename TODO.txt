@@ -1,3 +1,6 @@
+* Rename 'inline' computation to just 'computation' in fble.txt?
+ - And emphasize that computation is deferred and can be rerun multiple times.
+
 * Proof of concept fblf
  - Implement N bit addition, run on evaluator and compile via llvm to c code
    and run.

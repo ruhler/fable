@@ -1965,8 +1965,55 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
     }
 
     case FBLE_INLINE_STRUCT_TYPE_EXPR: {
-      assert(false && "TODO: type check inline struct type expr");
-      return NULL;
+      FbleStructTypeExpr* struct_type = (FbleStructTypeExpr*)type;
+      FbleDataType* st = FbleNewType(heap, FbleDataType, FBLE_INLINE_STRUCT_TYPE, type->loc);
+      FbleVectorInit(arena, st->fields);
+
+      for (size_t i = 0; i < struct_type->fields.size; ++i) {
+        FbleTaggedTypeExpr* field = struct_type->fields.xs + i;
+        FbleType* compiled = TypeCheckType(heap, scope, field->type);
+        if (compiled == NULL) {
+          FbleReleaseType(heap, &st->_base);
+          return NULL;
+        }
+
+        if (!CheckNameSpace(arena, field->name, compiled)) {
+          FbleReleaseType(heap, compiled);
+          FbleReleaseType(heap, &st->_base);
+          return NULL;
+        }
+
+        FbleType* normal = FbleNormalType(heap, compiled);
+        if (normal->tag != FBLE_INLINE_STRUCT_TYPE
+            && normal->tag != FBLE_INLINE_UNION_TYPE) {
+          ReportError(arena, field->type->loc, "expected inline type, but found %t\n", compiled);
+          FbleReleaseType(heap, normal);
+          FbleReleaseType(heap, compiled);
+          FbleReleaseType(heap, &st->_base);
+          return NULL;
+        }
+        FbleReleaseType(heap, normal);
+
+        FbleTaggedType cfield = {
+          .name = FbleCopyName(arena, field->name),
+          .type = compiled
+        };
+        FbleVectorAppend(arena, st->fields, cfield);
+
+        FbleTypeAddRef(heap, &st->_base, cfield.type);
+        FbleReleaseType(heap, cfield.type);
+
+        for (size_t j = 0; j < i; ++j) {
+          if (FbleNamesEqual(field->name, struct_type->fields.xs[j].name)) {
+            ReportError(arena, field->name.loc,
+                "duplicate field name '%n'\n",
+                field->name);
+            FbleReleaseType(heap, &st->_base);
+            return NULL;
+          }
+        }
+      }
+      return &st->_base;
     }
 
     case FBLE_INLINE_UNION_TYPE_EXPR: {
