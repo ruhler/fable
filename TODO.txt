@@ -1,9 +1,6 @@
 * Rename 'inline' computation to just 'computation' in fble.txt?
  - And emphasize that computation is deferred and can be rerun multiple times.
 
-* Anyway we can share code converting {inline,}{struct, union} type
-  expressions into types? They do almost the same thing.
-
 * Proof of concept fblf
  - Implement N bit addition, run on evaluator and compile via llvm to c code
    and run.

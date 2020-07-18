@@ -1499,16 +1499,17 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       if (normal->tag == FBLE_TYPE_TYPE) {
-        // FBLE_STRUCT_VALUE_EXPR
+        // FBLE_STRUCT_VALUE_EXPR or FBLE_INLINE_STRUCT_VALUE_EXPR
         FbleTypeType* type_type = (FbleTypeType*)normal;
         FbleType* vtype = FbleRetainType(heap, type_type->type);
         FbleReleaseType(heap, normal);
         FreeTc(heap, misc);
 
         FbleDataType* struct_type = (FbleDataType*)FbleNormalType(heap, vtype);
-        if (struct_type->_base.tag != FBLE_STRUCT_TYPE) {
+        if (struct_type->_base.tag != FBLE_STRUCT_TYPE &&
+            struct_type->_base.tag != FBLE_INLINE_STRUCT_TYPE) {
           ReportError(arena, apply_expr->misc->loc,
-              "expected a struct type, but found %t\n",
+              "expected a struct type or inline struct type, but found %t\n",
               vtype);
           FbleReleaseType(heap, &struct_type->_base);
           FbleReleaseType(heap, vtype);
