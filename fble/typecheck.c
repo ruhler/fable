@@ -843,9 +843,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, type);
-      if (union_type->_base.tag != FBLE_UNION_TYPE) {
+      if (union_type->_base.tag != FBLE_UNION_TYPE
+          && union_type->_base.tag != FBLE_INLINE_UNION_TYPE) {
         ReportError(arena, union_value_expr->type->loc,
-            "expected a union type, but found %t\n", type);
+            "expected a union type or inline union type, but found %t\n", type);
         FbleReleaseType(heap, &union_type->_base);
         FbleReleaseType(heap, type);
         return TC_FAILED;
