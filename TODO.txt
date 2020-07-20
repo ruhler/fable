@@ -1,5 +1,15 @@
+* Add support for inline value evaluation
+ - Add FBLE_INLINE_VALUE_EVAL_EXPR
+ - Parse '$(' ... ')' into FBLE_INLINE_VALUE_EVAL_EXPR
+ - Add FBLE_INLINE_VALUE_EVAL_TC
+ - Type check FBLE_INLINE_EVAL_EXPR to FBLE_INLINE_VALUE_EVAL_TC
+ - Add FBLE_INLINE_VALUE_EVAL_INSTR
+ - Compile FBLE_INLINE_VALUE_EVAL_TC to FBLE_INLINE_VALUE_EVAL_INSTR
+ - Implement FBLE_INLINE_VALUE_EVAL_INSTR.
+
 * Rename 'inline' computation to just 'computation' in fble.txt?
  - And emphasize that computation is deferred and can be rerun multiple times.
+ - Or call it 'symbolic'?
 
 * Proof of concept fblf
  - Implement N bit addition, run on evaluator and compile via llvm to c code
