@@ -410,6 +410,22 @@ bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type);
 //   vacuous.
 FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type);
 
+// FbleNonInlinedType --
+//   Return the non-inlined version of the given inline type.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   type - the inline type to deinline.
+//
+// Results:
+//   A new type that is the same as the given type except it is not inline.
+//
+// Side effects:
+//   Allocates a new type that must be released with FbleReleaseType when no
+//   longer needed.
+//   Behavior is undefined if the given type is not an inline type.
+FbleType* FbleNonInlinedType(FbleTypeHeap* heap, FbleType* type);
+
 // FbleValueOfType --
 //   Returns the value of a type given the type of the type.
 //

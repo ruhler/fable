@@ -444,8 +444,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     case FBLE_STRUCT_TYPE:
     case FBLE_UNION_TYPE:
     case FBLE_INLINE_STRUCT_TYPE:
-    case FBLE_INLINE_UNION_TYPE:
-      {
+    case FBLE_INLINE_UNION_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       FbleDataType* sdt = FbleNewType(heap, FbleDataType, type->tag, dt->_base.loc);
       sdt->_base.id = dt->_base.id;
@@ -1101,6 +1100,48 @@ FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
   FbleType* normal = Normal(heap, type, NULL);
   assert(normal != NULL && "vacuous type does not have a normal form");
   return normal;
+}
+
+// FbleNonInlinedType -- See documentation in type.h
+FbleType* FbleNonInlinedType(FbleTypeHeap* heap, FbleType* type)
+{
+  switch (type->tag) {
+    case FBLE_STRUCT_TYPE:
+    case FBLE_UNION_TYPE:
+    case FBLE_FUNC_TYPE:
+    case FBLE_PROC_TYPE:
+    case FBLE_POLY_TYPE:
+    case FBLE_POLY_APPLY_TYPE:
+    case FBLE_VAR_TYPE:
+    case FBLE_TYPE_TYPE: {
+      UNREACHABLE("non-inline type passed to FbleDeInlineType"); 
+      return NULL;
+    }
+
+    case FBLE_INLINE_STRUCT_TYPE:
+    case FBLE_INLINE_UNION_TYPE: {
+      FbleTypeTag tag = type->tag == FBLE_INLINE_STRUCT_TYPE ?
+        FBLE_STRUCT_TYPE : FBLE_UNION_TYPE;
+
+      FbleDataType* dt = (FbleDataType*)type;
+      FbleDataType* sdt = FbleNewType(heap, FbleDataType, tag, dt->_base.loc);
+      sdt->_base.id = dt->_base.id;
+
+      FbleVectorInit(heap->arena, sdt->fields);
+      for (size_t i = 0; i < dt->fields.size; ++i) {
+        FbleTaggedType field = {
+          .name = FbleCopyName(heap->arena, dt->fields.xs[i].name),
+          .type = FbleNonInlinedType(heap, dt->fields.xs[i].type)
+        };
+        FbleVectorAppend(heap->arena, sdt->fields, field);
+        FbleTypeAddRef(heap, &sdt->_base, field.type);
+        FbleReleaseType(heap, field.type);
+      }
+      return &sdt->_base;
+    }
+  }
+  UNREACHABLE("should never get here");
+  return NULL;
 }
 
 // FbleValueOfType -- see documentation in type.h

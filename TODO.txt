@@ -1,6 +1,4 @@
 * Add support for inline value evaluation
- - Add FBLE_INLINE_VALUE_EVAL_EXPR
- - Parse '$(' ... ')' into FBLE_INLINE_VALUE_EVAL_EXPR
  - Add FBLE_INLINE_VALUE_EVAL_TC
  - Type check FBLE_INLINE_EVAL_EXPR to FBLE_INLINE_VALUE_EVAL_TC
  - Add FBLE_INLINE_VALUE_EVAL_INSTR
