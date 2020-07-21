@@ -139,7 +139,8 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       return;
     }
 
-    case FBLE_EVAL_EXPR: {
+    case FBLE_EVAL_EXPR:
+    case FBLE_INLINE_EVAL_EXPR: {
       FbleEvalExpr* e = (FbleEvalExpr*)expr;
       FbleFreeExpr(arena, e->body);
       FbleFree(arena, expr);

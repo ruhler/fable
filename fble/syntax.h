@@ -211,6 +211,7 @@ typedef enum {
 
   FBLE_INLINE_STRUCT_TYPE_EXPR,
   FBLE_INLINE_UNION_TYPE_EXPR,
+  FBLE_INLINE_EVAL_EXPR,
 
   FBLE_MISC_ACCESS_EXPR,
   FBLE_MISC_APPLY_EXPR,
@@ -333,6 +334,7 @@ typedef struct {
 
 // FbleEvalExpr --
 //   FBLE_EVAL_EXPR (body :: Expr)
+//   FBLE_INLINE_EVAL_EXPR (body :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleExpr* body;

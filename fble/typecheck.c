@@ -1378,6 +1378,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(FbleRetainType(heap, var->type), &var_tc->_base);
     }
 
+    case FBLE_INLINE_EVAL_EXPR: {
+      assert(false && "TODO: type check inline eval expr");
+      return TC_FAILED;
+    }
+
     case FBLE_MISC_ACCESS_EXPR: {
       FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
 
@@ -1624,6 +1629,7 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_MODULE_REF_EXPR:
     case FBLE_INLINE_STRUCT_TYPE_EXPR:
     case FBLE_INLINE_UNION_TYPE_EXPR:
+    case FBLE_INLINE_EVAL_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
@@ -1982,6 +1988,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_REF_EXPR:
+    case FBLE_INLINE_EVAL_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {

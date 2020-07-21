@@ -408,6 +408,13 @@ expr:
       eval_expr->body = $3;
       $$ = &eval_expr->_base;
    }
+ | '$' '(' expr ')' {
+      FbleEvalExpr* eval_expr = FbleAlloc(arena, FbleEvalExpr);
+      eval_expr->_base.tag = FBLE_INLINE_EVAL_EXPR;
+      eval_expr->_base.loc = FbleCopyLoc(@$);
+      eval_expr->body = $3;
+      $$ = &eval_expr->_base;
+   }
  | expr '<' expr_p '>' {
       $$ = $1;
       for (size_t i = 0; i < $3.size; ++i) {
