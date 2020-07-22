@@ -20,6 +20,8 @@
 // Side effects:
 // * The returned value must be freed using FbleReleaseValue when no longer in
 //   use.
+// * Behavior is undefined if the expression is not compatible with an inline
+//   value.
 FbleValue* FbleInlineEval(FbleValueHeap* heap, FbleValue* expr);
 
 #endif // FBLE_INTERNAL_INLINE_EVAL_H_

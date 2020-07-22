@@ -1,5 +1,7 @@
-* Add support for inline value evaluation
- - Implement FBLE_INLINE_VALUE_EVAL_INSTR.
+* Add test for inline struct access
+* Add test for inline union access
+* Add test for inline union select
+* Add test for inline let
 
 * Rename 'inline' computation to just 'computation' in fble.txt?
  - And emphasize that computation is deferred and can be rerun multiple times.
