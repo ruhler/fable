@@ -348,6 +348,7 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
   FbleFrameIndex arg;
+  FbleLoc loc;
 } FbleInlineEvalInstr;
 
 // FbleFreeInstr --

@@ -8,6 +8,7 @@
 
 #include "fble.h"
 #include "heap.h"
+#include "inline-eval.h"
 #include "instr.h"
 #include "syntax.h"   // for FbleReportError
 #include "value.h"
@@ -781,8 +782,15 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 //   Execute a FBLE_INLINE_EVAL_INSTR
 static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
-  assert(false && "TODO: execute inline eval instr");
-  return ABORTED;
+  FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
+  FbleValue* value = FrameGet(thread, eval_instr->arg);
+  FbleValue* result = FbleInlineEval(heap, value);
+  thread->stack->locals[eval_instr->dest] = result;
+  if (result == NULL) {
+    FbleReportError("inline evaluation failed\n", eval_instr->loc);
+    return ABORTED;
+  }
+  return RUNNING;
 }
 
 // RunThread --

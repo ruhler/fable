@@ -253,9 +253,12 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 
         case FBLE_INLINE_EVAL_INSTR: {
           FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
-          fprintf(fout, "l%zi = $(%s%zi);\n", eval_instr->dest,
+          fprintf(fout, "l%zi = $(%s%zi", eval_instr->dest,
               sections[eval_instr->arg.section],
               eval_instr->arg.index);
+          fprintf(fout, "); // %s:%i:%i\n",
+              eval_instr->loc.source->str, eval_instr->loc.line,
+              eval_instr->loc.col);
           break;
         }
       }
@@ -289,7 +292,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_REF_DEF_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
-    case FBLE_INLINE_EVAL_INSTR:
       FbleFree(arena, instr);
       return;
 
@@ -336,6 +338,13 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
       FbleFree(arena, fork_instr->args.xs);
       FbleFree(arena, fork_instr->dests.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_INLINE_EVAL_INSTR: {
+      FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
+      FbleFreeLoc(arena, eval_instr->loc);
       FbleFree(arena, instr);
       return;
     }

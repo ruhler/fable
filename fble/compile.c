@@ -942,6 +942,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       instr->_base.profile_ops = NULL;
       instr->arg = arg->index;
       instr->dest = local->index.index;
+      instr->loc = FbleCopyLoc(tc->loc);
       AppendInstr(arena, scope, &instr->_base);
 
       CompileExit(arena, exit, scope, local);
