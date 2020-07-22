@@ -1379,8 +1379,33 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_INLINE_EVAL_EXPR: {
-      assert(false && "TODO: type check inline eval expr");
-      return TC_FAILED;
+      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
+      Tc body = TypeCheckExpr(heap, scope, eval_expr->body);
+      if (body.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleType* normal = FbleNormalType(heap, body.type);
+      if (normal->tag != FBLE_INLINE_STRUCT_TYPE
+          && normal->tag != FBLE_INLINE_UNION_TYPE) {
+        ReportError(arena, eval_expr->body->loc,
+            "expected an inline struct or inline union, but found value of type %t\n",
+            body.type);
+        FbleReleaseType(heap, normal);
+        FreeTc(heap, body);
+        return TC_FAILED;
+      }
+
+      FbleType* non_inlined_type = FbleNonInlinedType(heap, normal);
+      FbleReleaseType(heap, normal);
+      FbleReleaseType(heap, body.type);
+
+      FbleInlineEvalTc* eval_tc = FbleAlloc(arena, FbleInlineEvalTc);
+      eval_tc->_base.tag = FBLE_INLINE_EVAL_TC;
+      eval_tc->_base.loc = FbleCopyLoc(expr->loc);
+      eval_tc->body = body.tc;
+
+      return MkTc(non_inlined_type, &eval_tc->_base);
     }
 
     case FBLE_MISC_ACCESS_EXPR: {
@@ -2190,6 +2215,13 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
       }
       FbleFree(arena, exec_tc->bindings.xs);
       FbleFreeTc(arena, exec_tc->body);
+      FbleFree(arena, tc);
+      return;
+    }
+
+    case FBLE_INLINE_EVAL_TC: {
+      FbleInlineEvalTc* eval_tc = (FbleInlineEvalTc*)tc;
+      FbleFreeTc(arena, eval_tc->body);
       FbleFree(arena, tc);
       return;
     }

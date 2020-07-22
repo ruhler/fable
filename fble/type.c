@@ -1129,10 +1129,12 @@ FbleType* FbleNonInlinedType(FbleTypeHeap* heap, FbleType* type)
 
       FbleVectorInit(heap->arena, sdt->fields);
       for (size_t i = 0; i < dt->fields.size; ++i) {
+        FbleType* normal = FbleNormalType(heap, dt->fields.xs[i].type);
         FbleTaggedType field = {
           .name = FbleCopyName(heap->arena, dt->fields.xs[i].name),
-          .type = FbleNonInlinedType(heap, dt->fields.xs[i].type)
+          .type = FbleNonInlinedType(heap, normal)
         };
+        FbleReleaseType(heap, normal);
         FbleVectorAppend(heap->arena, sdt->fields, field);
         FbleTypeAddRef(heap, &sdt->_base, field.type);
         FbleReleaseType(heap, field.type);
