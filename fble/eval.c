@@ -127,6 +127,7 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
 static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
 //   Implementations of instructions, indexed by instruction tag.
@@ -148,7 +149,8 @@ static InstrImpl sInstrImpls[] = {
   &RefValueInstr,
   &RefDefInstr,
   &ReturnInstr,
-  &TypeInstr
+  &TypeInstr,
+  &InlineEvalInstr,
 };
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
@@ -765,7 +767,7 @@ static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
 }
 
 // TypeInstr -- see documentation of InstrImpl
-//   Execute a TYPE_INSTR.
+//   Execute a FBLE_TYPE_INSTR.
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
@@ -773,6 +775,14 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   value->_base.tag = FBLE_TYPE_VALUE;
   thread->stack->locals[type_instr->dest] = &value->_base;
   return RUNNING;
+}
+
+// InlineEvalInstr -- see documentation of InstrImpl
+//   Execute a FBLE_INLINE_EVAL_INSTR
+static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  assert(false && "TODO: execute inline eval instr");
+  return ABORTED;
 }
 
 // RunThread --
@@ -1020,6 +1030,12 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       case FBLE_TYPE_INSTR: {
         FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
         locals[type_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_INLINE_EVAL_INSTR: {
+        FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
+        locals[eval_instr->dest] = NULL;
         break;
       }
     }

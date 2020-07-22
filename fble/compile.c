@@ -933,8 +933,19 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     }
 
     case FBLE_INLINE_EVAL_TC: {
-      assert(false && "TODO: Compile inline eval tc");
-      return NULL;
+      FbleInlineEvalTc* eval_tc = (FbleInlineEvalTc*)tc;
+      Local* arg = CompileExpr(arena, blocks, false, scope, eval_tc->body);
+
+      Local* local = NewLocal(arena, scope);
+      FbleInlineEvalInstr* instr = FbleAlloc(arena, FbleInlineEvalInstr);
+      instr->_base.tag = FBLE_INLINE_EVAL_INSTR;
+      instr->_base.profile_ops = NULL;
+      instr->arg = arg->index;
+      instr->dest = local->index.index;
+      AppendInstr(arena, scope, &instr->_base);
+
+      CompileExit(arena, exit, scope, local);
+      return local;
     }
 
     case FBLE_PROFILE_TC: {

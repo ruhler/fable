@@ -80,6 +80,7 @@ typedef enum {
   FBLE_REF_DEF_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
+  FBLE_INLINE_EVAL_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -339,6 +340,15 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
 } FbleTypeInstr;
+
+// FbleInlineEvalInstr -- FBLE_INLINE_EVAL_INSTR
+//  *dest = $(arg)
+//
+typedef struct {
+  FbleInstr _base;
+  FbleLocalIndex dest;
+  FbleFrameIndex arg;
+} FbleInlineEvalInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.
