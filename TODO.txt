@@ -1,7 +1,6 @@
-* Add test for inline struct access
-* Add test for inline union access
-* Add test for inline union select
-* Add test for inline let
+
+* Rename 4.3-union-access/basic/* tests, because they seem to have wrong
+  names?
 
 * Rename 'inline' computation to just 'computation' in fble.txt?
  - And emphasize that computation is deferred and can be rerun multiple times.
