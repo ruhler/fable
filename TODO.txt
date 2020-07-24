@@ -14,7 +14,7 @@
    and run.
 
 * Consider adding STRUCT vs UNION and INLINE vs NONINLINE fields to
-  FbleDataType and FbleDataTypeTC to distinguish between struct and union
+  FbleDataTypeTC to distinguish between struct and union
   inline and non inline types rather than with the type tag.
 
 * Follow style guide in fble.txt

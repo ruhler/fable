@@ -134,10 +134,7 @@ static void Ref(FbleHeapCallback* callback, FbleType* type)
 static void Refs(FbleHeapCallback* callback, FbleType* type)
 {
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE:
-    case FBLE_UNION_TYPE:
-    case FBLE_INLINE_STRUCT_TYPE: 
-    case FBLE_INLINE_UNION_TYPE: {
+    case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       for (size_t i = 0; i < dt->fields.size; ++i) {
         Ref(callback, dt->fields.xs[i].type);
@@ -194,10 +191,7 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
   FbleArena* arena = heap->arena;
   FbleFreeLoc(arena, type->loc);
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE:
-    case FBLE_UNION_TYPE:
-    case FBLE_INLINE_STRUCT_TYPE: 
-    case FBLE_INLINE_UNION_TYPE: {
+    case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       for (size_t i = 0; i < dt->fields.size; ++i) {
         FbleFreeName(arena, dt->fields.xs[i].name);
@@ -258,10 +252,7 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normaliz
   };
 
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE: return FbleRetainType(heap, type);
-    case FBLE_UNION_TYPE: return FbleRetainType(heap, type);
-    case FBLE_INLINE_STRUCT_TYPE: return FbleRetainType(heap, type);
-    case FBLE_INLINE_UNION_TYPE: return FbleRetainType(heap, type);
+    case FBLE_DATA_TYPE: return FbleRetainType(heap, type);
     case FBLE_FUNC_TYPE: return FbleRetainType(heap, type);
     case FBLE_PROC_TYPE: return FbleRetainType(heap, type);
 
@@ -346,10 +337,7 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
   };
 
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE:
-    case FBLE_UNION_TYPE:
-    case FBLE_INLINE_STRUCT_TYPE:
-    case FBLE_INLINE_UNION_TYPE: {
+    case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       for (size_t i = 0; i < dt->fields.size; ++i) {
         if (HasParam(dt->fields.xs[i].type, param, &nv)) {
@@ -441,13 +429,12 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
   FbleArena* arena = heap->arena;
 
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE:
-    case FBLE_UNION_TYPE:
-    case FBLE_INLINE_STRUCT_TYPE:
-    case FBLE_INLINE_UNION_TYPE: {
+    case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       FbleDataType* sdt = FbleNewType(heap, FbleDataType, type->tag, dt->_base.loc);
       sdt->_base.id = dt->_base.id;
+      sdt->tag = dt->tag;
+      sdt->inline_ = dt->inline_;
 
       FbleVectorInit(arena, sdt->fields);
       for (size_t i = 0; i < dt->fields.size; ++i) {
@@ -616,14 +603,11 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
   }
 
   switch (a->tag) {
-    case FBLE_STRUCT_TYPE:
-    case FBLE_UNION_TYPE:
-    case FBLE_INLINE_STRUCT_TYPE:
-    case FBLE_INLINE_UNION_TYPE: {
+    case FBLE_DATA_TYPE: {
       FbleDataType* dta = (FbleDataType*)a;
       FbleDataType* dtb = (FbleDataType*)b;
 
-      if (dta->fields.size != dtb->fields.size) {
+      if (dta->tag != dtb->tag || dta->inline_ != dtb->inline_ || dta->fields.size != dtb->fields.size) {
         FbleReleaseType(heap, a);
         FbleReleaseType(heap, b);
         return false;
@@ -745,10 +729,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
 FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
 {
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE:
-    case FBLE_UNION_TYPE:
-    case FBLE_INLINE_STRUCT_TYPE: // TODO: return inline kind?
-    case FBLE_INLINE_UNION_TYPE: // TODO: return inline kind?
+    case FBLE_DATA_TYPE:    // TODO: return inline kind for inline data types?
     case FBLE_FUNC_TYPE:
     case FBLE_PROC_TYPE: {
       FbleBasicKind* kind = FbleAlloc(arena, FbleBasicKind);
@@ -1106,26 +1087,24 @@ FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
 FbleType* FbleNonInlinedType(FbleTypeHeap* heap, FbleType* type)
 {
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE:
-    case FBLE_UNION_TYPE:
     case FBLE_FUNC_TYPE:
     case FBLE_PROC_TYPE:
     case FBLE_POLY_TYPE:
     case FBLE_POLY_APPLY_TYPE:
     case FBLE_VAR_TYPE:
     case FBLE_TYPE_TYPE: {
-      UNREACHABLE("non-inline type passed to FbleDeInlineType"); 
+      UNREACHABLE("non-inline type passed to FbleNonInlinedType"); 
       return NULL;
     }
 
-    case FBLE_INLINE_STRUCT_TYPE:
-    case FBLE_INLINE_UNION_TYPE: {
-      FbleTypeTag tag = type->tag == FBLE_INLINE_STRUCT_TYPE ?
-        FBLE_STRUCT_TYPE : FBLE_UNION_TYPE;
-
+    case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
-      FbleDataType* sdt = FbleNewType(heap, FbleDataType, tag, dt->_base.loc);
+      assert(dt->inline_ && "non-inline type passed to FbleNonInlinedType");
+
+      FbleDataType* sdt = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, dt->_base.loc);
       sdt->_base.id = dt->_base.id;
+      sdt->tag = dt->tag;
+      sdt->inline_ = false;
 
       FbleVectorInit(heap->arena, sdt->fields);
       for (size_t i = 0; i < dt->fields.size; ++i) {
@@ -1174,23 +1153,11 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 void FblePrintType(FbleArena* arena, FbleType* type)
 {
   switch (type->tag) {
-    case FBLE_STRUCT_TYPE:
-    case FBLE_UNION_TYPE:
-    case FBLE_INLINE_STRUCT_TYPE:
-    case FBLE_INLINE_UNION_TYPE: {
-      const char* op = "???";
-      if (type->tag == FBLE_STRUCT_TYPE) {
-        op = "*";
-      } else if (type->tag == FBLE_UNION_TYPE) {
-        op = "+";
-      } else if (type->tag == FBLE_INLINE_STRUCT_TYPE) {
-        op = "*$";
-      } else if (type->tag == FBLE_INLINE_UNION_TYPE) {
-        op = "+$";
-      }
-
+    case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
-      fprintf(stderr, "%s(", op);
+      fprintf(stderr, "%s%s(",
+          dt->tag == FBLE_STRUCT_DATATYPE ? "*" : "+",
+          dt->inline_ ? "$" : "");
       const char* comma = "";
       for (size_t i = 0; i < dt->fields.size; ++i) {
         fprintf(stderr, "%s", comma);

@@ -12,16 +12,13 @@
 // FbleTypeTag --
 //   A tag used to dinstinguish among different kinds of compiled types.
 typedef enum {
-  FBLE_STRUCT_TYPE,
-  FBLE_UNION_TYPE,
+  FBLE_DATA_TYPE,
   FBLE_FUNC_TYPE,
   FBLE_PROC_TYPE,
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
   FBLE_VAR_TYPE,
   FBLE_TYPE_TYPE,
-  FBLE_INLINE_STRUCT_TYPE,
-  FBLE_INLINE_UNION_TYPE,
 } FbleTypeTag;
 
 // FbleType --
@@ -61,12 +58,13 @@ typedef struct {
 } FbleTaggedTypeV;
 
 // FbleDataType --
-//   FBLE_STRUCT_TYPE
-//   FBLE_UNION_TYPE
-//   FBLE_INLINE_STRUCT_TYPE
-//   FBLE_INLINE_UNION_TYPE
+//   FBLE_DATA_TYPE
+//
+// Used for struct/union and inline/non-inline types.
 typedef struct {
   FbleType _base;
+  FbleDataTypeTag tag;
+  bool inline_;
   FbleTaggedTypeV fields;
 } FbleDataType;
 

@@ -773,7 +773,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
-      FbleDataType* struct_type = FbleNewType(heap, FbleDataType, FBLE_STRUCT_TYPE, expr->loc);
+      FbleDataType* struct_type = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, expr->loc);
+      struct_type->tag = FBLE_STRUCT_DATATYPE;
+      struct_type->inline_ = false;
       FbleVectorInit(arena, struct_type->fields);
 
       size_t argc = struct_expr->args.size;
@@ -840,8 +842,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, type);
-      if (union_type->_base.tag != FBLE_UNION_TYPE
-          && union_type->_base.tag != FBLE_INLINE_UNION_TYPE) {
+      if (union_type->tag != FBLE_UNION_DATATYPE) {
         ReportError(arena, union_value_expr->type->loc,
             "expected a union type or inline union type, but found %t\n", type);
         FbleReleaseType(heap, &union_type->_base);
@@ -906,7 +907,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, condition.type);
-      if (union_type->_base.tag != FBLE_UNION_TYPE) {
+      if (union_type->_base.tag != FBLE_DATA_TYPE
+          || union_type->tag != FBLE_UNION_DATATYPE
+          || union_type->inline_) {
         ReportError(arena, select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
             condition.type);
@@ -1267,7 +1270,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, spec.type);
-      if (normal->_base.tag != FBLE_STRUCT_TYPE) {
+      if (normal->_base.tag != FBLE_DATA_TYPE || normal->tag != FBLE_STRUCT_DATATYPE || normal->inline_) {
         ReportError(arena, literal->spec->loc,
             "expected a struct value, but literal spec has type %t\n",
             spec);
@@ -1382,19 +1385,18 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      FbleType* normal = FbleNormalType(heap, body.type);
-      if (normal->tag != FBLE_INLINE_STRUCT_TYPE
-          && normal->tag != FBLE_INLINE_UNION_TYPE) {
+      FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, body.type);
+      if (normal->_base.tag != FBLE_DATA_TYPE || !normal->inline_) {
         ReportError(arena, eval_expr->body->loc,
             "expected an inline struct or inline union, but found value of type %t\n",
             body.type);
-        FbleReleaseType(heap, normal);
+        FbleReleaseType(heap, &normal->_base);
         FreeTc(heap, body);
         return TC_FAILED;
       }
 
-      FbleType* non_inlined_type = FbleNonInlinedType(heap, normal);
-      FbleReleaseType(heap, normal);
+      FbleType* non_inlined_type = FbleNonInlinedType(heap, &normal->_base);
+      FbleReleaseType(heap, &normal->_base);
       FbleReleaseType(heap, body.type);
 
       FbleInlineEvalTc* eval_tc = FbleAlloc(arena, FbleInlineEvalTc);
@@ -1413,27 +1415,25 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      FbleType* normal = FbleNormalType(heap, obj.type);
-      FbleTaggedTypeV* fields = NULL;
-      if (normal->tag == FBLE_STRUCT_TYPE || normal->tag == FBLE_UNION_TYPE) {
-        fields = &((FbleDataType*)normal)->fields;
-      } else {
+      FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, obj.type);
+      if (normal->_base.tag != FBLE_DATA_TYPE || normal->inline_) {
         ReportError(arena, access_expr->object->loc,
             "expected value of type struct or union, but found value of type %t\n",
             obj.type);
 
         FreeTc(heap, obj);
-        FbleReleaseType(heap, normal);
+        FbleReleaseType(heap, &normal->_base);
         return TC_FAILED;
       }
 
+      FbleTaggedTypeV* fields = &normal->fields;
       for (size_t i = 0; i < fields->size; ++i) {
         if (FbleNamesEqual(access_expr->field, fields->xs[i].name)) {
           FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
-          FbleReleaseType(heap, normal);
+          FbleReleaseType(heap, &normal->_base);
 
           FbleAccessTc* access_tc = FbleAlloc(arena, FbleAccessTc);
-          access_tc->_base.tag = (normal->tag == FBLE_STRUCT_TYPE)
+          access_tc->_base.tag = (normal->tag == FBLE_STRUCT_DATATYPE)
             ? FBLE_STRUCT_ACCESS_TC
             : FBLE_UNION_ACCESS_TC;
           access_tc->_base.loc = FbleCopyLoc(expr->loc);
@@ -1449,7 +1449,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           "'%n' is not a field of type %t\n",
           access_expr->field, obj.type);
       FreeTc(heap, obj);
-      FbleReleaseType(heap, normal);
+      FbleReleaseType(heap, &normal->_base);
       return TC_FAILED;
     }
 
@@ -1534,8 +1534,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         FreeTc(heap, misc);
 
         FbleDataType* struct_type = (FbleDataType*)FbleNormalType(heap, vtype);
-        if (struct_type->_base.tag != FBLE_STRUCT_TYPE &&
-            struct_type->_base.tag != FBLE_INLINE_STRUCT_TYPE) {
+        if (struct_type->tag != FBLE_STRUCT_DATATYPE) {
           ReportError(arena, apply_expr->misc->loc,
               "expected a struct type or inline struct type, but found %t\n",
               vtype);
@@ -1703,7 +1702,9 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       get_type->type = port_type;
       FbleTypeAddRef(heap, &get_type->_base, get_type->type);
 
-      FbleDataType* unit_type = FbleNewType(heap, FbleDataType, FBLE_STRUCT_TYPE, expr->loc);
+      FbleDataType* unit_type = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, expr->loc);
+      unit_type->tag = FBLE_STRUCT_DATATYPE;
+      unit_type->inline_ = false;
       FbleVectorInit(arena, unit_type->fields);
 
       FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
@@ -1870,16 +1871,9 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
     case FBLE_DATA_TYPE_EXPR: {
       FbleDataTypeExpr* data_type = (FbleDataTypeExpr*)type;
 
-      FbleTypeTag tag;
-      if (data_type->tag == FBLE_STRUCT_DATATYPE) {
-        tag = data_type->inline_ ? FBLE_INLINE_STRUCT_TYPE : FBLE_STRUCT_TYPE;
-      } else if (data_type->tag == FBLE_UNION_DATATYPE) {
-        tag = data_type->inline_ ? FBLE_INLINE_UNION_TYPE : FBLE_UNION_TYPE;
-      } else {
-        UNREACHABLE("unexpected type tag");
-      }
-
-      FbleDataType* dt = FbleNewType(heap, FbleDataType, tag, type->loc);
+      FbleDataType* dt = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, type->loc);
+      dt->tag = data_type->tag;
+      dt->inline_ = data_type->inline_;
       FbleVectorInit(arena, dt->fields);
 
       for (size_t i = 0; i < data_type->fields.size; ++i) {
@@ -1897,16 +1891,15 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
         }
 
         if (data_type->inline_) {
-          FbleType* normal = FbleNormalType(heap, compiled);
-          if (normal->tag != FBLE_INLINE_STRUCT_TYPE
-              && normal->tag != FBLE_INLINE_UNION_TYPE) {
+          FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, compiled);
+          if (normal->_base.tag != FBLE_DATA_TYPE || !normal->inline_) {
             ReportError(arena, field->type->loc, "expected inline type, but found %t\n", compiled);
-            FbleReleaseType(heap, normal);
+            FbleReleaseType(heap, &normal->_base);
             FbleReleaseType(heap, compiled);
             FbleReleaseType(heap, &dt->_base);
             return NULL;
           }
-          FbleReleaseType(heap, normal);
+          FbleReleaseType(heap, &normal->_base);
         }
 
         FbleTaggedType cfield = {
