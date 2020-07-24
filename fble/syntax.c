@@ -60,10 +60,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       return;
     }
 
-    case FBLE_STRUCT_TYPE_EXPR:
-    case FBLE_INLINE_STRUCT_TYPE_EXPR:
-    case FBLE_UNION_TYPE_EXPR:
-    case FBLE_INLINE_UNION_TYPE_EXPR: {
+    case FBLE_DATA_TYPE_EXPR: {
       FbleDataTypeExpr* e = (FbleDataTypeExpr*)expr;
       for (size_t i = 0; i < e->fields.size; ++i) {
         FbleFreeExpr(arena, e->fields.xs[i].type);

@@ -560,13 +560,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = heap->arena;
   switch (expr->tag) {
-    case FBLE_STRUCT_TYPE_EXPR:
-    case FBLE_UNION_TYPE_EXPR:
+    case FBLE_DATA_TYPE_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
     case FBLE_PROC_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
-    case FBLE_INLINE_STRUCT_TYPE_EXPR:
-    case FBLE_INLINE_UNION_TYPE_EXPR:
     {
       FbleType* type = TypeCheckType(heap, scope, expr);
       if (type == NULL) {
@@ -1639,9 +1636,8 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_TYPEOF_EXPR:
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
-    case FBLE_STRUCT_TYPE_EXPR:
+    case FBLE_DATA_TYPE_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
-    case FBLE_UNION_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
@@ -1652,8 +1648,6 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_REF_EXPR:
-    case FBLE_INLINE_STRUCT_TYPE_EXPR:
-    case FBLE_INLINE_UNION_TYPE_EXPR:
     case FBLE_INLINE_EVAL_EXPR:
     case FBLE_MISC_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
@@ -1873,26 +1867,14 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
       return TypeCheckExprForType(heap, scope, typeof->expr);
     }
 
-    case FBLE_STRUCT_TYPE_EXPR:
-    case FBLE_INLINE_STRUCT_TYPE_EXPR:
-    case FBLE_UNION_TYPE_EXPR:
-    case FBLE_INLINE_UNION_TYPE_EXPR: {
+    case FBLE_DATA_TYPE_EXPR: {
       FbleDataTypeExpr* data_type = (FbleDataTypeExpr*)type;
 
       FbleTypeTag tag;
-      bool inline_;
-      if (type->tag == FBLE_STRUCT_TYPE_EXPR) {
-        tag = FBLE_STRUCT_TYPE;
-        inline_ = false;
-      } else if (type->tag == FBLE_UNION_TYPE_EXPR) {
-        tag = FBLE_UNION_TYPE;
-        inline_ = false;
-      } else if (type->tag == FBLE_INLINE_STRUCT_TYPE_EXPR) {
-        tag = FBLE_INLINE_STRUCT_TYPE;
-        inline_ = true;
-      } else if (type->tag == FBLE_INLINE_UNION_TYPE_EXPR) {
-        tag = FBLE_INLINE_UNION_TYPE;
-        inline_ = true;
+      if (data_type->tag == FBLE_STRUCT_DATATYPE) {
+        tag = data_type->inline_ ? FBLE_INLINE_STRUCT_TYPE : FBLE_STRUCT_TYPE;
+      } else if (data_type->tag == FBLE_UNION_DATATYPE) {
+        tag = data_type->inline_ ? FBLE_INLINE_UNION_TYPE : FBLE_UNION_TYPE;
       } else {
         UNREACHABLE("unexpected type tag");
       }
@@ -1914,7 +1896,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
           return NULL;
         }
 
-        if (inline_) {
+        if (data_type->inline_) {
           FbleType* normal = FbleNormalType(heap, compiled);
           if (normal->tag != FBLE_INLINE_STRUCT_TYPE
               && normal->tag != FBLE_INLINE_UNION_TYPE) {

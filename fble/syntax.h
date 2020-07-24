@@ -182,12 +182,12 @@ typedef enum {
   FBLE_VAR_EXPR,
   FBLE_LET_EXPR,
 
-  FBLE_STRUCT_TYPE_EXPR,
+  FBLE_DATA_TYPE_EXPR,  // inline and non-inline struct and union types.
+
   // FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR
   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
   // FBLE_STRUCT_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR
 
-  FBLE_UNION_TYPE_EXPR,
   FBLE_UNION_VALUE_EXPR,
   // FBLE_UNION_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR
   FBLE_UNION_SELECT_EXPR,
@@ -209,8 +209,6 @@ typedef enum {
 
   FBLE_MODULE_REF_EXPR,
 
-  FBLE_INLINE_STRUCT_TYPE_EXPR,
-  FBLE_INLINE_UNION_TYPE_EXPR,
   FBLE_INLINE_EVAL_EXPR,
 
   FBLE_MISC_ACCESS_EXPR,
@@ -254,13 +252,19 @@ typedef struct {
   FbleTaggedTypeExpr* xs;
 } FbleTaggedTypeExprV;
 
+// FbleDataTypeTag --
+//   Tag used to distinguish between different kinds of data types.
+typedef enum {
+  FBLE_STRUCT_DATATYPE,
+  FBLE_UNION_DATATYPE
+} FbleDataTypeTag;
+
 // FbleDataTypeExpr --
-//   FBLE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
-//   FBLE_INLINE_STRUCT_TYPE_EXPR (fields :: [(Type, Name)])
-//   FBLE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
-//   FBLE_INLINE_UNION_TYPE_EXPR (fields :: [(Type, Name)])
+//   FBLE_DATA_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleTypeExpr _base;
+  FbleDataTypeTag tag;
+  bool inline_;
   FbleTaggedTypeExprV fields;
 } FbleDataTypeExpr;
 
