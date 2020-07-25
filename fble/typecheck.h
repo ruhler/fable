@@ -126,9 +126,12 @@ typedef struct {
 
 // FbleDataAccessTc --
 //   FBLE_DATA_ACCESS_TC
+//
+// Used for inline and non-inline struct and union field access.
 typedef struct {
   FbleTc _base;
   FbleDataTypeTag datatype;
+  bool inline_;
   FbleTc* obj;
   size_t tag;
   FbleLoc loc;    // Location to use for reporting undefined access.

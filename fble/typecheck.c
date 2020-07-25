@@ -1317,6 +1317,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
             access_tc->_base.loc = FbleCopyLoc(loc);
             access_tc->datatype = FBLE_STRUCT_DATATYPE;
+            access_tc->inline_ = false;
             access_tc->obj = &var_tc->_base;
             access_tc->tag = j;
             access_tc->loc = FbleCopyLoc(loc);
@@ -1417,7 +1418,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, obj.type);
-      if (normal->_base.tag != FBLE_DATA_TYPE || normal->inline_) {
+      if (normal->_base.tag != FBLE_DATA_TYPE) {
         ReportError(arena, access_expr->object->loc,
             "expected value of type struct or union, but found value of type %t\n",
             obj.type);
@@ -1437,6 +1438,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
           access_tc->_base.loc = FbleCopyLoc(expr->loc);
           access_tc->datatype = normal->datatype;
+          access_tc->inline_ = normal->inline_;
           access_tc->obj = obj.tc;
           access_tc->tag = i;
           access_tc->loc = FbleCopyLoc(access_expr->field.loc);

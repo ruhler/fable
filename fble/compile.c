@@ -667,6 +667,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleDataAccessTc* access_tc = (FbleDataAccessTc*)tc;
       Local* obj = CompileExpr(arena, blocks, false, scope, access_tc->obj);
 
+      assert(!access_tc->inline_ && "TODO: compile inline FBLE_DATA_ACCESS_TC");
       FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
       access->_base.tag = access_tc->datatype == FBLE_STRUCT_DATATYPE
         ? FBLE_STRUCT_ACCESS_INSTR
