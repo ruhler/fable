@@ -91,7 +91,11 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
         }
 
         case FBLE_STRUCT_ACCESS_INSTR:
-        case FBLE_UNION_ACCESS_INSTR: {
+        case FBLE_UNION_ACCESS_INSTR:
+        case FBLE_INLINE_STRUCT_ACCESS_INSTR:
+        case FBLE_INLINE_UNION_ACCESS_INSTR: {
+          // TODO: Include in the output whether this is struct/union
+          // inline/noninlined.
           FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
           fprintf(fout, "l%zi = %s%zi.%zi; // %s:%i:%i\n",
               access_instr->dest, sections[access_instr->obj.section],
@@ -296,7 +300,9 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       return;
 
     case FBLE_STRUCT_ACCESS_INSTR:
-    case FBLE_UNION_ACCESS_INSTR: {
+    case FBLE_UNION_ACCESS_INSTR:
+    case FBLE_INLINE_STRUCT_ACCESS_INSTR:
+    case FBLE_INLINE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* i = (FbleAccessInstr*)instr;
       FbleFreeLoc(arena, i->loc);
       FbleFree(arena, instr);

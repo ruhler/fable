@@ -114,6 +114,8 @@ static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status InlineStructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status InlineUnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status JumpInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
@@ -137,6 +139,8 @@ static InstrImpl sInstrImpls[] = {
   &UnionValueInstr,
   &StructAccessInstr,
   &UnionAccessInstr,
+  &InlineStructAccessInstr,
+  &InlineUnionAccessInstr,
   &UnionSelectInstr,
   &JumpInstr,
   &FuncValueInstr,
@@ -468,6 +472,22 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
   FbleRetainValue(heap, uv->arg);
   thread->stack->locals[access_instr->dest] = uv->arg;
   return RUNNING;
+}
+
+// InlineStructAccessInstr -- see documentation of InstrImpl
+//   Execute a FBLE_INLINE_STRUCT_ACCESS_INSTR.
+static Status InlineStructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  assert(false && "TODO: InlineStructAccessInstr");
+  return ABORTED;
+}
+
+// InlineUnionAccessInstr -- see documentation of InstrImpl
+//   Execute a FBLE_INLINE_UNION_ACCESS_INSTR.
+static Status InlineUnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  assert(false && "TODO: InlineUnionAccessInstr");
+  return ABORTED;
 }
 
 // UnionSelectInstr -- see documentation of InstrImpl
@@ -914,13 +934,10 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
         break;
       }
 
-      case FBLE_STRUCT_ACCESS_INSTR: {
-        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-        locals[access_instr->dest] = NULL;
-        break;
-      }
-
-      case FBLE_UNION_ACCESS_INSTR: {
+      case FBLE_STRUCT_ACCESS_INSTR:
+      case FBLE_UNION_ACCESS_INSTR:
+      case FBLE_INLINE_STRUCT_ACCESS_INSTR:
+      case FBLE_INLINE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
         locals[access_instr->dest] = NULL;
         break;
