@@ -182,14 +182,13 @@ typedef enum {
   FBLE_VAR_EXPR,
   FBLE_LET_EXPR,
 
-  FBLE_DATA_TYPE_EXPR,  // inline and non-inline struct and union types.
+  FBLE_DATA_TYPE_EXPR,    // inline and non-inline struct and union types.
+  FBLE_DATA_ACCESS_EXPR,  // struct and union field access.
 
   // FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR
   FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR,
-  // FBLE_STRUCT_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR
 
   FBLE_UNION_VALUE_EXPR,
-  // FBLE_UNION_ACCESS_EXPR = FBLE_MISC_ACCESS_EXPR
   FBLE_UNION_SELECT_EXPR,
 
   FBLE_FUNC_TYPE_EXPR,
@@ -211,7 +210,6 @@ typedef enum {
 
   FBLE_INLINE_EVAL_EXPR,
 
-  FBLE_MISC_ACCESS_EXPR,
   FBLE_MISC_APPLY_EXPR,
 } FbleExprTag;
 
@@ -466,15 +464,15 @@ typedef struct {
   FbleExprV args;
 } FbleApplyExpr;
 
-// FbleAccessExpr --
-//   FBLE_MISC_ACCESS_EXPR (object :: Expr) (field :: Name)
-//   FBLE_STRUCT_ACCESS_EXPR (object :: Expr) (field :: Name)
-//   FBLE_UNION_ACCESS_EXPR (object :: Expr) (field :: Name)
+// FbleDataAccessExpr --
+//   FBLE_DATA_ACCESS_EXPR (object :: Expr) (field :: Name)
+//
+// Used for struct and union field access.
 typedef struct {
   FbleExpr _base;
   FbleExpr* object;
   FbleName field;
-} FbleAccessExpr;
+} FbleDataAccessExpr;
 
 // FbleModule --
 //   Represents an individual module.

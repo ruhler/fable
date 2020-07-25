@@ -350,8 +350,8 @@ expr:
       $$ = &expr->_base;
    }
  | expr '.' name {
-      FbleAccessExpr* access_expr = FbleAlloc(arena, FbleAccessExpr);
-      access_expr->_base.tag = FBLE_MISC_ACCESS_EXPR;
+      FbleDataAccessExpr* access_expr = FbleAlloc(arena, FbleDataAccessExpr);
+      access_expr->_base.tag = FBLE_DATA_ACCESS_EXPR;
       access_expr->_base.loc = FbleCopyLoc(@$);
       access_expr->object = $1;
       access_expr->field = $3;

@@ -17,6 +17,9 @@
   FbleDataTypeTC to distinguish between struct and union
   inline and non inline types rather than with the type tag.
 
+* Check that switch statements are in enum order as appropriate
+  - FBLE_DATA_ACCESS_EXPR in particular.
+
 * Follow style guide in fble.txt
   In particular, union field names should be lowercase: just, true, false, not
   Just, True, False.

@@ -1407,8 +1407,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(non_inlined_type, &eval_tc->_base);
     }
 
-    case FBLE_MISC_ACCESS_EXPR: {
-      FbleAccessExpr* access_expr = (FbleAccessExpr*)expr;
+    case FBLE_DATA_ACCESS_EXPR: {
+      FbleDataAccessExpr* access_expr = (FbleDataAccessExpr*)expr;
 
       Tc obj = TypeCheckExpr(heap, scope, access_expr->object);
       if (obj.type == NULL) {
@@ -1636,6 +1636,7 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
     case FBLE_DATA_TYPE_EXPR:
+    case FBLE_DATA_ACCESS_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_UNION_SELECT_EXPR:
@@ -1648,7 +1649,6 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_REF_EXPR:
     case FBLE_INLINE_EVAL_EXPR:
-    case FBLE_MISC_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       Tc proc = TypeCheckExpr(heap, scope, expr);
@@ -1976,6 +1976,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
 
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
+    case FBLE_DATA_ACCESS_EXPR:
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_UNION_SELECT_EXPR:
@@ -1989,7 +1990,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_REF_EXPR:
     case FBLE_INLINE_EVAL_EXPR:
-    case FBLE_MISC_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       FbleExpr* expr = type;
