@@ -478,16 +478,30 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 //   Execute a FBLE_INLINE_STRUCT_ACCESS_INSTR.
 static Status InlineStructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
-  assert(false && "TODO: InlineStructAccessInstr");
-  return ABORTED;
+  FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+  FbleAccessValue* value = FbleNewValue(heap, FbleAccessValue);
+  value->_base.tag = FBLE_STRUCT_ACCESS_VALUE;
+  value->obj = FrameGet(thread, access_instr->obj);
+  value->tag = access_instr->tag;
+  value->loc = FbleCopyLoc(access_instr->loc);
+  FbleValueAddRef(heap, &value->_base, value->obj);
+  thread->stack->locals[access_instr->dest] = &value->_base;
+  return RUNNING;
 }
 
 // InlineUnionAccessInstr -- see documentation of InstrImpl
 //   Execute a FBLE_INLINE_UNION_ACCESS_INSTR.
 static Status InlineUnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
-  assert(false && "TODO: InlineUnionAccessInstr");
-  return ABORTED;
+  FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+  FbleAccessValue* value = FbleNewValue(heap, FbleAccessValue);
+  value->_base.tag = FBLE_UNION_ACCESS_VALUE;
+  value->obj = FrameGet(thread, access_instr->obj);
+  value->tag = access_instr->tag;
+  value->loc = FbleCopyLoc(access_instr->loc);
+  FbleValueAddRef(heap, &value->_base, value->obj);
+  thread->stack->locals[access_instr->dest] = &value->_base;
+  return RUNNING;
 }
 
 // UnionSelectInstr -- see documentation of InstrImpl

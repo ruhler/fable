@@ -54,6 +54,16 @@ FbleValue* FbleInlineEval(FbleValueHeap* heap, FbleValue* expr)
       return &result->_base;
     }
 
+    case FBLE_STRUCT_ACCESS_VALUE: {
+      assert(false && "TODO: inline eval struct access");
+      return NULL;
+    }
+
+    case FBLE_UNION_ACCESS_VALUE: {
+      assert(false && "TODO: inline eval union access");
+      return NULL;
+    }
+
     case FBLE_FUNC_VALUE:
     case FBLE_LINK_VALUE:
     case FBLE_PORT_VALUE:

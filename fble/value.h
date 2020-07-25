@@ -20,6 +20,9 @@ typedef enum {
   FBLE_PORT_VALUE,
   FBLE_REF_VALUE,
   FBLE_TYPE_VALUE,
+
+  FBLE_STRUCT_ACCESS_VALUE,
+  FBLE_UNION_ACCESS_VALUE,
 } FbleValueTag;
 
 // FbleValue --
@@ -120,9 +123,21 @@ typedef struct FbleRefValue {
 //
 // A value representing a type. Because types are compile-time concepts, not
 // runtime concepts, the type value contains no information.
-typedef struct FbleTypeValue {
+typedef struct {
   FbleValue _base;
 } FbleTypeValue;
+
+// FbleAccessValue --
+//   FBLE_STRUCT_ACCESS_VALUE
+//   FBLE_UNION_ACCESS_VALUE
+// 
+// An inline computation for accessing a field from a struct or union value.
+typedef struct {
+  FbleValue _base;
+  FbleValue* obj;
+  size_t tag;
+  FbleLoc loc;
+} FbleAccessValue;
 
 // FbleNewValue --
 //   Allocate a new value of the given type.
