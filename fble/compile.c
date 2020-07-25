@@ -663,13 +663,12 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
-    case FBLE_STRUCT_ACCESS_TC:
-    case FBLE_UNION_ACCESS_TC: {
-      FbleAccessTc* access_tc = (FbleAccessTc*)tc;
+    case FBLE_DATA_ACCESS_TC: {
+      FbleDataAccessTc* access_tc = (FbleDataAccessTc*)tc;
       Local* obj = CompileExpr(arena, blocks, false, scope, access_tc->obj);
 
       FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
-      access->_base.tag = (tc->tag == FBLE_STRUCT_ACCESS_TC)
+      access->_base.tag = access_tc->datatype == FBLE_STRUCT_DATATYPE
         ? FBLE_STRUCT_ACCESS_INSTR
         : FBLE_UNION_ACCESS_INSTR;
       access->_base.profile_ops = NULL;

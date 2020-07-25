@@ -774,7 +774,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
       FbleDataType* struct_type = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, expr->loc);
-      struct_type->tag = FBLE_STRUCT_DATATYPE;
+      struct_type->datatype = FBLE_STRUCT_DATATYPE;
       struct_type->inline_ = false;
       FbleVectorInit(arena, struct_type->fields);
 
@@ -842,7 +842,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, type);
-      if (union_type->tag != FBLE_UNION_DATATYPE) {
+      if (union_type->datatype != FBLE_UNION_DATATYPE) {
         ReportError(arena, union_value_expr->type->loc,
             "expected a union type or inline union type, but found %t\n", type);
         FbleReleaseType(heap, &union_type->_base);
@@ -908,7 +908,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, condition.type);
       if (union_type->_base.tag != FBLE_DATA_TYPE
-          || union_type->tag != FBLE_UNION_DATATYPE
+          || union_type->datatype != FBLE_UNION_DATATYPE
           || union_type->inline_) {
         ReportError(arena, select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
@@ -1270,7 +1270,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, spec.type);
-      if (normal->_base.tag != FBLE_DATA_TYPE || normal->tag != FBLE_STRUCT_DATATYPE || normal->inline_) {
+      if (normal->_base.tag != FBLE_DATA_TYPE || normal->datatype != FBLE_STRUCT_DATATYPE || normal->inline_) {
         ReportError(arena, literal->spec->loc,
             "expected a struct value, but literal spec has type %t\n",
             spec);
@@ -1313,9 +1313,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             var_tc->index.source = FBLE_LOCAL_VAR;
             var_tc->index.index = scope->vars.size;
 
-            FbleAccessTc* access_tc = FbleAlloc(arena, FbleAccessTc);
-            access_tc->_base.tag = FBLE_STRUCT_ACCESS_TC;
+            FbleDataAccessTc* access_tc = FbleAlloc(arena, FbleDataAccessTc);
+            access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
             access_tc->_base.loc = FbleCopyLoc(loc);
+            access_tc->datatype = FBLE_STRUCT_DATATYPE;
             access_tc->obj = &var_tc->_base;
             access_tc->tag = j;
             access_tc->loc = FbleCopyLoc(loc);
@@ -1432,11 +1433,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           FbleType* rtype = FbleRetainType(heap, fields->xs[i].type);
           FbleReleaseType(heap, &normal->_base);
 
-          FbleAccessTc* access_tc = FbleAlloc(arena, FbleAccessTc);
-          access_tc->_base.tag = (normal->tag == FBLE_STRUCT_DATATYPE)
-            ? FBLE_STRUCT_ACCESS_TC
-            : FBLE_UNION_ACCESS_TC;
+          FbleDataAccessTc* access_tc = FbleAlloc(arena, FbleDataAccessTc);
+          access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
           access_tc->_base.loc = FbleCopyLoc(expr->loc);
+          access_tc->datatype = normal->datatype;
           access_tc->obj = obj.tc;
           access_tc->tag = i;
           access_tc->loc = FbleCopyLoc(access_expr->field.loc);
@@ -1534,7 +1534,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         FreeTc(heap, misc);
 
         FbleDataType* struct_type = (FbleDataType*)FbleNormalType(heap, vtype);
-        if (struct_type->tag != FBLE_STRUCT_DATATYPE) {
+        if (struct_type->datatype != FBLE_STRUCT_DATATYPE) {
           ReportError(arena, apply_expr->misc->loc,
               "expected a struct type or inline struct type, but found %t\n",
               vtype);
@@ -1703,7 +1703,7 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleTypeAddRef(heap, &get_type->_base, get_type->type);
 
       FbleDataType* unit_type = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, expr->loc);
-      unit_type->tag = FBLE_STRUCT_DATATYPE;
+      unit_type->datatype = FBLE_STRUCT_DATATYPE;
       unit_type->inline_ = false;
       FbleVectorInit(arena, unit_type->fields);
 
@@ -1872,7 +1872,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
       FbleDataTypeExpr* data_type = (FbleDataTypeExpr*)type;
 
       FbleDataType* dt = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, type->loc);
-      dt->tag = data_type->tag;
+      dt->datatype = data_type->datatype;
       dt->inline_ = data_type->inline_;
       FbleVectorInit(arena, dt->fields);
 
@@ -2129,9 +2129,8 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
       return;
     }
 
-    case FBLE_STRUCT_ACCESS_TC:
-    case FBLE_UNION_ACCESS_TC: {
-      FbleAccessTc* access_tc = (FbleAccessTc*)tc;
+    case FBLE_DATA_ACCESS_TC: {
+      FbleDataAccessTc* access_tc = (FbleDataAccessTc*)tc;
       FbleFreeTc(arena, access_tc->obj);
       FbleFreeLoc(arena, access_tc->loc);
       FbleFree(arena, tc);

@@ -1,5 +1,5 @@
 
-* Add FBLE_INLINE_STRUCT_ACCESS_TC and FBLE_INLINE_UNION_ACCESS_TC
+* Add support for inline struct and union access.
 * Define FBLE_INLINE_LET_EXPR and add parser support
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
@@ -13,12 +13,8 @@
  - Implement N bit addition, run on evaluator and compile via llvm to c code
    and run.
 
-* Consider adding STRUCT vs UNION and INLINE vs NONINLINE fields to
-  FbleDataTypeTC to distinguish between struct and union
-  inline and non inline types rather than with the type tag.
-
 * Check that switch statements are in enum order as appropriate
-  - FBLE_DATA_ACCESS_EXPR in particular.
+  - FBLE_DATA_ACCESS_EXPR, and FBLE_DATA_ACCESS_TC in particular.
 
 * Follow style guide in fble.txt
   In particular, union field names should be lowercase: just, true, false, not

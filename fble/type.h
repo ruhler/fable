@@ -63,7 +63,7 @@ typedef struct {
 // Used for struct/union and inline/non-inline types.
 typedef struct {
   FbleType _base;
-  FbleDataTypeTag tag;
+  FbleDataTypeTag datatype;
   bool inline_;
   FbleTaggedTypeV fields;
 } FbleDataType;

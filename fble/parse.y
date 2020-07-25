@@ -320,7 +320,7 @@ expr:
       FbleDataTypeExpr* struct_type = FbleAlloc(arena, FbleDataTypeExpr);
       struct_type->_base.tag = FBLE_DATA_TYPE_EXPR;
       struct_type->_base.loc = FbleCopyLoc(@$);
-      struct_type->tag = FBLE_STRUCT_DATATYPE;
+      struct_type->datatype = FBLE_STRUCT_DATATYPE;
       struct_type->inline_ = false;
       struct_type->fields = $3;
       $$ = &struct_type->_base;
@@ -329,7 +329,7 @@ expr:
       FbleDataTypeExpr* struct_type = FbleAlloc(arena, FbleDataTypeExpr);
       struct_type->_base.tag = FBLE_DATA_TYPE_EXPR;
       struct_type->_base.loc = FbleCopyLoc(@$);
-      struct_type->tag = FBLE_STRUCT_DATATYPE;
+      struct_type->datatype = FBLE_STRUCT_DATATYPE;
       struct_type->inline_ = true;
       struct_type->fields = $4;
       $$ = &struct_type->_base;
@@ -361,7 +361,7 @@ expr:
       FbleDataTypeExpr* union_type = FbleAlloc(arena, FbleDataTypeExpr);
       union_type->_base.tag = FBLE_DATA_TYPE_EXPR;
       union_type->_base.loc = FbleCopyLoc(@$);
-      union_type->tag = FBLE_UNION_DATATYPE;
+      union_type->datatype = FBLE_UNION_DATATYPE;
       union_type->inline_ = false;
       union_type->fields = $3;
       $$ = &union_type->_base;
@@ -370,7 +370,7 @@ expr:
       FbleDataTypeExpr* union_type = FbleAlloc(arena, FbleDataTypeExpr);
       union_type->_base.tag = FBLE_DATA_TYPE_EXPR;
       union_type->_base.loc = FbleCopyLoc(@$);
-      union_type->tag = FBLE_UNION_DATATYPE;
+      union_type->datatype = FBLE_UNION_DATATYPE;
       union_type->inline_ = true;
       union_type->fields = $4;
       $$ = &union_type->_base;

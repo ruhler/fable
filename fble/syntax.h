@@ -251,7 +251,7 @@ typedef struct {
 } FbleTaggedTypeExprV;
 
 // FbleDataTypeTag --
-//   Tag used to distinguish between different kinds of data types.
+//   Enum used to distinguish between different kinds of data types.
 typedef enum {
   FBLE_STRUCT_DATATYPE,
   FBLE_UNION_DATATYPE
@@ -261,7 +261,7 @@ typedef enum {
 //   FBLE_DATA_TYPE_EXPR (fields :: [(Type, Name)])
 typedef struct {
   FbleTypeExpr _base;
-  FbleDataTypeTag tag;
+  FbleDataTypeTag datatype;
   bool inline_;
   FbleTaggedTypeExprV fields;
 } FbleDataTypeExpr;

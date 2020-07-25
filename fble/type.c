@@ -433,7 +433,7 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       FbleDataType* dt = (FbleDataType*)type;
       FbleDataType* sdt = FbleNewType(heap, FbleDataType, type->tag, dt->_base.loc);
       sdt->_base.id = dt->_base.id;
-      sdt->tag = dt->tag;
+      sdt->datatype = dt->datatype;
       sdt->inline_ = dt->inline_;
 
       FbleVectorInit(arena, sdt->fields);
@@ -607,7 +607,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       FbleDataType* dta = (FbleDataType*)a;
       FbleDataType* dtb = (FbleDataType*)b;
 
-      if (dta->tag != dtb->tag || dta->inline_ != dtb->inline_ || dta->fields.size != dtb->fields.size) {
+      if (dta->datatype != dtb->datatype || dta->inline_ != dtb->inline_ || dta->fields.size != dtb->fields.size) {
         FbleReleaseType(heap, a);
         FbleReleaseType(heap, b);
         return false;
@@ -1103,7 +1103,7 @@ FbleType* FbleNonInlinedType(FbleTypeHeap* heap, FbleType* type)
 
       FbleDataType* sdt = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, dt->_base.loc);
       sdt->_base.id = dt->_base.id;
-      sdt->tag = dt->tag;
+      sdt->datatype = dt->datatype;
       sdt->inline_ = false;
 
       FbleVectorInit(heap->arena, sdt->fields);
@@ -1156,7 +1156,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
     case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       fprintf(stderr, "%s%s(",
-          dt->tag == FBLE_STRUCT_DATATYPE ? "*" : "+",
+          dt->datatype == FBLE_STRUCT_DATATYPE ? "*" : "+",
           dt->inline_ ? "$" : "");
       const char* comma = "";
       for (size_t i = 0; i < dt->fields.size; ++i) {
