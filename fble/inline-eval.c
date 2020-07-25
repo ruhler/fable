@@ -5,6 +5,7 @@
 
 #include "fble-value.h"
 #include "inline-eval.h"
+#include "syntax.h"   // for FbleReportError
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
@@ -55,13 +56,30 @@ FbleValue* FbleInlineEval(FbleValueHeap* heap, FbleValue* expr)
     }
 
     case FBLE_STRUCT_ACCESS_VALUE: {
-      assert(false && "TODO: inline eval struct access");
-      return NULL;
+      FbleAccessValue* access_value = (FbleAccessValue*)expr;
+      FbleStructValue* obj = (FbleStructValue*)FbleInlineEval(heap, access_value->obj);
+      assert(obj->_base.tag == FBLE_STRUCT_VALUE);
+      assert(access_value->tag < obj->fieldc);
+      FbleValue* value = obj->fields[access_value->tag];
+      FbleRetainValue(heap, value);
+      FbleReleaseValue(heap, &obj->_base);
+      return value;
     }
 
     case FBLE_UNION_ACCESS_VALUE: {
-      assert(false && "TODO: inline eval union access");
-      return NULL;
+      FbleAccessValue* access_value = (FbleAccessValue*)expr;
+      FbleUnionValue* obj = (FbleUnionValue*)FbleInlineEval(heap, access_value->obj);
+      assert(obj->_base.tag == FBLE_UNION_VALUE);
+      if (obj->tag != access_value->tag) {
+        FbleReportError("union field access undefined: wrong tag\n", access_value->loc);
+        FbleReleaseValue(heap, &obj->_base);
+        return NULL;
+      }
+
+      FbleValue* value = obj->arg;
+      FbleRetainValue(heap, value);
+      FbleReleaseValue(heap, &obj->_base);
+      return value;
     }
 
     case FBLE_FUNC_VALUE:

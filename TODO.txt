@@ -1,6 +1,6 @@
 
-* Add support for inline struct and union access.
-* Define FBLE_INLINE_LET_EXPR and add parser support
+* Add support for inline union select.
+* Add support for inline let.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?
