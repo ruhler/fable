@@ -711,6 +711,8 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)tc;
       Local* condition = CompileExpr(arena, blocks, false, scope, select_tc->condition);
 
+      assert(!select_tc->inline_ && "TODO: compile inline union select");
+
       if (exit) {
         AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
       }

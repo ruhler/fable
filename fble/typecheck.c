@@ -908,8 +908,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, condition.type);
       if (union_type->_base.tag != FBLE_DATA_TYPE
-          || union_type->datatype != FBLE_UNION_DATATYPE
-          || union_type->inline_) {
+          || union_type->datatype != FBLE_UNION_DATATYPE) {
         ReportError(arena, select_expr->condition->loc,
             "expected value of union type, but found value of type %t\n",
             condition.type);
@@ -922,6 +921,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleUnionSelectTc* select_tc = FbleAlloc(arena, FbleUnionSelectTc);
       select_tc->_base.tag = FBLE_UNION_SELECT_TC;
       select_tc->_base.loc = FbleCopyLoc(expr->loc);
+      select_tc->inline_ = union_type->inline_;
       select_tc->condition = condition.tc;
       FbleVectorInit(arena, select_tc->choices);
       FbleVectorInit(arena, select_tc->branches);
@@ -1000,6 +1000,15 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             "unexpected tag '%n'\n",
             select_expr->choices.xs[branch]);
         error = true;
+      }
+
+      if (target != NULL && select_tc->inline_) {
+        FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, target);
+        if (normal->_base.tag != FBLE_DATA_TYPE || !normal->inline_) {
+          // TODO: What's the right location to use for this error message? 
+          ReportError(arena, expr->loc, "expected inline type, but found %t\n", target);
+          error = true;
+        }
       }
 
       FbleReleaseType(heap, &union_type->_base);

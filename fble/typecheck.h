@@ -156,6 +156,7 @@ typedef struct {
 // union has tag i.
 typedef struct {
   FbleTc _base;
+  bool inline_;
   FbleTc* condition;
   struct { size_t size; size_t* xs; } choices;
   FbleTcV branches;
