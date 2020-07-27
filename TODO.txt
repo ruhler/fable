@@ -1,5 +1,10 @@
 
 * Add support for inline union select.
+ - Define FBLE_INLINE_UNION_SELECT_INSTR with condition, choices, and branches
+ - Compile inline_ select_tc to FBLE_UNION_SELECT_INSTR.
+ - Define FBLE_UNION_SELECT_VALUE with condition, choices, and branches
+ - Implement FBLE_INLINE_UNION_SELECT_INSTR.
+ - Implement inline eval for FBLE_UNION_SELECT_VALUE
 * Add support for inline let.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong

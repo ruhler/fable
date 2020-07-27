@@ -265,6 +265,23 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
               eval_instr->loc.col);
           break;
         }
+
+        case FBLE_INLINE_UNION_SELECT_INSTR: {
+          FbleInlineUnionSelectInstr* select_instr = (FbleInlineUnionSelectInstr*)instr;
+          fprintf(fout, "l%zi = %s%zi.?(",
+              select_instr->dest,
+              sections[select_instr->condition.section],
+              select_instr->condition.index);
+          const char* comma = "";
+          for (size_t i = 0; i < select_instr->choices.size; ++i) {
+            fprintf(fout, "%s%s%zi", comma,
+                sections[select_instr->choices.xs[i].section],
+                select_instr->choices.xs[i].index);
+            comma = ", ";
+          }
+          fprintf(fout, ");\n");
+          break;
+        }
       }
     }
     fprintf(fout, "\n\n");
@@ -351,6 +368,13 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_INLINE_EVAL_INSTR: {
       FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
       FbleFreeLoc(arena, eval_instr->loc);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_INLINE_UNION_SELECT_INSTR: {
+      FbleInlineUnionSelectInstr* select_instr = (FbleInlineUnionSelectInstr*)instr;
+      FbleFree(arena, select_instr->choices.xs);
       FbleFree(arena, instr);
       return;
     }

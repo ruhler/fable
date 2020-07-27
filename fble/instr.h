@@ -83,6 +83,7 @@ typedef enum {
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_INLINE_EVAL_INSTR,
+  FBLE_INLINE_UNION_SELECT_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -349,13 +350,21 @@ typedef struct {
 
 // FbleInlineEvalInstr -- FBLE_INLINE_EVAL_INSTR
 //  *dest = $(arg)
-//
 typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
   FbleFrameIndex arg;
   FbleLoc loc;
 } FbleInlineEvalInstr;
+
+// FbleInlineUnionSelectInstr -- FBLE_INLINE_UNION_SELECT_INSTR
+//  $dest = condition.?(choices)
+typedef struct {
+  FbleInstr _base;
+  FbleLocalIndex dest;
+  FbleFrameIndex condition;
+  FbleFrameIndexV choices;
+} FbleInlineUnionSelectInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.

@@ -131,6 +131,7 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
 static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status InlineUnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
 //   Implementations of instructions, indexed by instruction tag.
@@ -156,6 +157,7 @@ static InstrImpl sInstrImpls[] = {
   &ReturnInstr,
   &TypeInstr,
   &InlineEvalInstr,
+  &InlineUnionSelectInstr,
 };
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
@@ -813,7 +815,7 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 }
 
 // InlineEvalInstr -- see documentation of InstrImpl
-//   Execute a FBLE_INLINE_EVAL_INSTR
+//   Execute FBLE_INLINE_EVAL_INSTR
 static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
@@ -825,6 +827,13 @@ static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* in
     return ABORTED;
   }
   return RUNNING;
+}
+// InlineUnionSelectInstr -- see documentation of InstrImpl
+//   Execute FBLE_INLINE_UNION_SELECT_INSTR
+static Status InlineUnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  assert(false && "TODO: InlineUnionSelectInstr");
+  return ABORTED;
 }
 
 // RunThread --
@@ -1075,6 +1084,12 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       case FBLE_INLINE_EVAL_INSTR: {
         FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
         locals[eval_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_INLINE_UNION_SELECT_INSTR: {
+        FbleInlineUnionSelectInstr* select_instr = (FbleInlineUnionSelectInstr*)instr;
+        locals[select_instr->dest] = NULL;
         break;
       }
     }
