@@ -23,6 +23,7 @@ typedef enum {
 
   FBLE_STRUCT_ACCESS_VALUE,
   FBLE_UNION_ACCESS_VALUE,
+  FBLE_UNION_SELECT_VALUE,
 } FbleValueTag;
 
 // FbleValue --
@@ -138,6 +139,15 @@ typedef struct {
   size_t tag;
   FbleLoc loc;
 } FbleAccessValue;
+
+// FbleUnionSelectValue --
+//   FBLE_UNION_SELECT_VALUE
+typedef struct {
+  FbleValue _base;
+  FbleValue* condition;
+  size_t choicec;
+  FbleValue* choices[];
+} FbleUnionSelectValue;
 
 // FbleNewValue --
 //   Allocate a new value of the given type.

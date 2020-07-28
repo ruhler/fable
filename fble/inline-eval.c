@@ -82,6 +82,11 @@ FbleValue* FbleInlineEval(FbleValueHeap* heap, FbleValue* expr)
       return value;
     }
 
+    case FBLE_UNION_SELECT_VALUE: {
+      assert(false && "TODO: inline eval union select value");
+      return NULL;
+    }
+
     case FBLE_FUNC_VALUE:
     case FBLE_LINK_VALUE:
     case FBLE_PORT_VALUE:

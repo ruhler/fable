@@ -91,6 +91,8 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       FbleFreeLoc(arena, v->loc);
       return;
     }
+
+    case FBLE_UNION_SELECT_VALUE: return;
   }
 
   UNREACHABLE("Should not get here");
@@ -170,6 +172,14 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       FbleAccessValue* v = (FbleAccessValue*)value;
       Ref(callback, v->obj);
       break;
+    }
+
+    case FBLE_UNION_SELECT_VALUE: {
+      FbleUnionSelectValue* v = (FbleUnionSelectValue*)value;
+      Ref(callback, v->condition);
+      for (size_t i = 0; i < v->choicec; ++i) {
+        Ref(callback, v->choices[i]);
+      }
     }
   }
 }

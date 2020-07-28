@@ -832,8 +832,18 @@ static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* in
 //   Execute FBLE_INLINE_UNION_SELECT_INSTR
 static Status InlineUnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
-  assert(false && "TODO: InlineUnionSelectInstr");
-  return ABORTED;
+  FbleInlineUnionSelectInstr* select_instr = (FbleInlineUnionSelectInstr*)instr;
+  FbleUnionSelectValue* value = FbleNewValueExtra(heap, FbleUnionSelectValue, select_instr->choices.size * sizeof(FbleValue*));
+  value->_base.tag = FBLE_UNION_SELECT_VALUE;
+  value->condition = FrameGet(thread, select_instr->condition);
+  FbleValueAddRef(heap, &value->_base, value->condition);
+  value->choicec = select_instr->choices.size;
+  for (size_t i = 0; i < select_instr->choices.size; ++i) {
+    value->choices[i] = FrameGet(thread, select_instr->choices.xs[i]);
+    FbleValueAddRef(heap, &value->_base, value->choices[i]);
+  }
+  thread->stack->locals[select_instr->dest] = &value->_base;
+  return RUNNING;
 }
 
 // RunThread --
