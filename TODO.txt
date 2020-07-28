@@ -5,7 +5,12 @@
  - Define FBLE_UNION_SELECT_VALUE with condition, choices, and branches
  - Implement FBLE_INLINE_UNION_SELECT_INSTR.
  - Implement inline eval for FBLE_UNION_SELECT_VALUE
+* Remove explicit inline let? Use FbleValue* pointers to identified shared
+  variables? That way we kind of get tracking of sharing for free?
 * Add support for inline let.
+
+* Introduce explicit variables for choices of inline union select that refer
+  to the same default branch?
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?

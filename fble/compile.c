@@ -711,7 +711,34 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)tc;
       Local* condition = CompileExpr(arena, blocks, false, scope, select_tc->condition);
 
-      assert(!select_tc->inline_ && "TODO: compile inline union select");
+      if (select_tc->inline_) {
+        Local* branches[select_tc->branches.size];
+        for (size_t i = 0; i < select_tc->branches.size; ++i) {
+          branches[i] = CompileExpr(arena, blocks, false, scope, select_tc->branches.xs[i]);
+        }
+
+        Local* local = NewLocal(arena, scope);
+
+        FbleInlineUnionSelectInstr* instr = FbleAlloc(arena, FbleInlineUnionSelectInstr);
+        instr->_base.tag = FBLE_INLINE_UNION_SELECT_INSTR;
+        instr->_base.profile_ops = NULL;
+        instr->dest = local->index.index;
+        instr->condition = condition->index;
+        FbleVectorInit(arena, instr->choices);
+        for (size_t i = 0; i < select_tc->choices.size; ++i) {
+          FbleVectorAppend(arena, instr->choices, branches[select_tc->choices.xs[i]]->index);
+        }
+
+        AppendInstr(arena, scope, &instr->_base);
+        CompileExit(arena, exit, scope, local);
+
+        LocalRelease(arena, scope, condition, exit);
+        for (size_t i = 0; i < select_tc->branches.size; ++i) {
+          LocalRelease(arena, scope, branches[i], exit);
+        }
+
+        return local;
+      }
 
       if (exit) {
         AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
