@@ -83,8 +83,17 @@ FbleValue* FbleInlineEval(FbleValueHeap* heap, FbleValue* expr)
     }
 
     case FBLE_UNION_SELECT_VALUE: {
-      assert(false && "TODO: inline eval union select value");
-      return NULL;
+      FbleUnionSelectValue* select = (FbleUnionSelectValue*)expr;
+      FbleUnionValue* condition = (FbleUnionValue*)FbleInlineEval(heap, select->condition);
+      if (condition == NULL) {
+        return NULL;
+      }
+
+      assert(condition->_base.tag == FBLE_UNION_VALUE);
+      assert(condition->tag < select->choicec);
+      size_t tag = condition->tag;
+      FbleReleaseValue(heap, &condition->_base);
+      return FbleInlineEval(heap, select->choices[tag]);
     }
 
     case FBLE_FUNC_VALUE:

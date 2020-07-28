@@ -1,6 +1,4 @@
 
-* Add support for inline union select.
- - Implement inline eval for FBLE_UNION_SELECT_VALUE
 * Remove explicit inline let? Use FbleValue* pointers to identified shared
   variables? That way we kind of get tracking of sharing for free?
 * Add support for inline let.

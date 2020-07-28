@@ -1009,6 +1009,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           ReportError(arena, expr->loc, "expected inline type, but found %t\n", target);
           error = true;
         }
+        FbleReleaseType(heap, &normal->_base);
       }
 
       FbleReleaseType(heap, &union_type->_base);
