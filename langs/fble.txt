@@ -983,36 +983,24 @@ TODO
 
 10.2 Inline Let
 ---------------
-Abstract Syntax:
-  Expr ::= inline_let (binding :: (Spec, Name, Expr)) (body :: Expr)
+There is no special inline let construct. Instead, a normal let expression can
+be used to described shared values in the inline computation.
 
-Concrete Syntax:
-  stmt ::= spec name '$=' expr ';'
+For example, consider a computation involving an inline type Int@:
 
-Example:
-  Int@ x $= mul(3, 3); mul(x, x)
-
-An inline let expressions introduces a variable into an inline computation.
-The types of the variable and the body must be inline struct or
-inline union types.
-
-Unlike normal let expressions, recursive definitions are not allowed. For this
-reason, only a single binding may be specified.
-
-Causes an inline let computation to be constructed. The type of the expression
-is the type of the body.
-
-Normal evaluation can be mixed in with the body of an inline let. That normal
-evaluation will occur as part of constructing the inline let computation,
-before any inline part of the computation is executed. For example, assuming f
-is a non-inline function:
-
-  Int@ x $= mul(3, 3);
+  Int@ x = mul(3, 3);
   mul(x, add(f(10), x));
 
-In this case, the function f(10) will be evaluated once when creating the
-computation. In contrast, the function mul(3, 3) will be reevaluated each time
-the computation is run.
+This is equivalent to writing:
+
+  mul(mul(3, 3), add(f(10), mul(3, 3)));
+
+Except that the compiler or interpreter of the inline expression is expected
+to recognize that the same computation mul(3, 3) appears twice and need only
+be computed once, because it was originally described using the variable x.
+
+TODO: Can we assume common subexpression elimination always happens, or should
+we realistically expect a performance difference in the two examples above?
 
 10.3 Inline Structs
 -------------------
@@ -1166,57 +1154,6 @@ condition, inline union select builds up a union select computation that will
 not be run until computation is explicitly evaluated. In particular, when
 building the computation all branches are evaluated.
 
-10.5 Inline Functions
----------------------
-Inline functions represent inline computations.
-
-10.5.1 Inline Function Type
----------------------------
-Abstract Syntax:
-  Type ::= inline_func_type (args :: [Type]) (return :: Type)
-
-Concrete Syntax:
-  block ::= '(' type [',' type [...]] ')$' block
-
-Examples:
-  (Int@, Int@)${ Bool@; }
-
-An inline function type is like a normal function type, except that all
-arguments and the return type must be inline struct or inline data types.
-
-10.5.2 Inline Function Value
-----------------------------
-Abstract Syntax:
-  Expr ::= inline_func_value (args :: [(Type, Name)]) (body :: Expr)
-
-Concrete Syntax:
-  block ::= '(' type name [',' type name [...]] ')$' block
-
-Example:
-  (Bool@ a, Bool@ b)${ a.?(true: b, false: False); }
-
-Creates an inline function value that has a corresponding inline function
-type. The arguments and result must be inline struct or inline union values.
-
-Unlike normal function values, the body of an inline function is evaluated at
-the time of creating the function value (TODO: Is that right?). Arguments are
-bound as if by inline let instead of normal let.
-
-10.5.3 Inline Function Application
-----------------------------------
-Abstract Syntax:
-  Expr ::= inline_apply (func :: Expr) (args :: [Expr])
-
-Concrete Syntax:
-  expr ::= expr '(' expr [',' expr [...]] ')'
-
-Example:
-  foo(x, y)
-
-Inline function application is like normal function application, except that
-it builds up an inline computation rather than execute the function right
-away.
-
 10.6 Inline Eval
 ----------------
 Abstract Syntax:
@@ -1284,21 +1221,9 @@ Concrete Syntax:
 Example:
   $(f)
 
-The inline expression must refer to an inline function. The inline function is
-compiled into a normal fble function that operates on inline data types.
-
-For example, given an inline function on inline types Int@ and Bool@:
-  (Int@, Int@) ${ Bool@; }
-
-This will return a non-inline function of those same inline types:
-  (Int@, Int@) { Bool@; }
-
-Runtime is polynomial in the size of the function being compiled. Application
-of the resulting function has runtime equal to the runtime of running the
-functions inline computation on the given arguments. A subsequent use of
-inline eval on the result of the function will be O(N) to convert the value to
-a normal fble value. In other words, applying the compiled function causes the
-result to be fully computed.
+The inline expression must refer to a non-recursive function whose arguments
+and result are all inline values. The function is compiled into an optimized
+version.
 
 10.7 TODO
 ---------

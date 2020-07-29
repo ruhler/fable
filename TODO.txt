@@ -1,10 +1,8 @@
 
-* Remove explicit inline let? Use FbleValue* pointers to identified shared
-  variables? That way we kind of get tracking of sharing for free?
-* Add support for inline let.
-
-* Introduce explicit variables for choices of inline union select that refer
-  to the same default branch?
+* Clean up inline spec
+ - remove explicit inline let. And remove inline let test case.
+ - remove inline function values
+* Implement inline version of md5 round.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?

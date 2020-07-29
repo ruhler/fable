@@ -359,3 +359,36 @@ Anyway, it's a worth thinking about, but I think not yet worth changing my
 short term plans. Let's learn more before making this not obviously better
 change.
 
+---
+
+Regarding short term plans, do we need a special fblf let construct? Or can we
+just say that an inline value that appears multiple times in an fblf
+computation will always compute the same value, so it's computation can be
+done only once and reused if the fblf compiler thinks that makes the most
+sense?
+
+In other words, it seems like, from a specification point of view, we ought to
+already know everything that is shared without needing a special inline let
+construct. This also means we don't need support for special inline functions,
+because we get the sharing of variables for free.
+
+It does mean the user doesn't have the option of explicitly distinguishing
+between computations that should be shared and those that should not. Well,
+that's not entirely true. They could define a function to create a computation
+that creates a new copy of the computation every time you call it. That would
+make things clearly explicitly not shared.
+
+It does mean we have to do a little extra work during compilation to keep
+track of what variables might be shared or not. And I assume almost none of
+the variables would be shared. It's not clear to me how expensive that would
+be.
+
+My vote is, for the sake of getting a prototype up and running, where we want
+the specification to be as easy as possible and we don't care so much about
+compilation time, let's skip the special inline let construct. Let's also skip
+inline function values. But do keep INLINE_FUNCTION_EVAL as a construct for
+doing compilation that we can add support for later.
+
+Which means, after a cleanup of the spec, I think we're ready to implement an
+MD5 round as an inline computation.
+
