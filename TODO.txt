@@ -1,15 +1,9 @@
 
-* Clean up inline spec
- - remove explicit inline let. And remove inline let test case.
- - remove inline function values
-* Implement inline version of md5 round.
+* Remove all inline support.
+* Figure out next attempt at fblf implementation.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?
-
-* Rename 'inline' computation to just 'computation' in fble.txt?
- - And emphasize that computation is deferred and can be rerun multiple times.
- - Or call it 'symbolic'?
 
 * Proof of concept fblf
  - Implement N bit addition, run on evaluator and compile via llvm to c code

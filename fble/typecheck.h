@@ -38,8 +38,6 @@ typedef enum {
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
 
-  FBLE_INLINE_EVAL_TC,
-
   FBLE_PROFILE_TC,
 } FbleTcTag;
 
@@ -127,11 +125,10 @@ typedef struct {
 // FbleDataAccessTc --
 //   FBLE_DATA_ACCESS_TC
 //
-// Used for inline and non-inline struct and union field access.
+// Used for struct and union field access.
 typedef struct {
   FbleTc _base;
   FbleDataTypeTag datatype;
-  bool inline_;
   FbleTc* obj;
   size_t tag;
   FbleLoc loc;    // Location to use for reporting undefined access.
@@ -156,7 +153,6 @@ typedef struct {
 // union has tag i.
 typedef struct {
   FbleTc _base;
-  bool inline_;
   FbleTc* condition;
   struct { size_t size; size_t* xs; } choices;
   FbleTcV branches;
@@ -201,13 +197,6 @@ typedef struct {
   FbleTcV bindings;
   FbleTc* body;
 } FbleExecTc;
-
-// FbleInlineEvalTc --
-//   FBLE_INLINE_EVAL_TC
-typedef struct {
-  FbleTc _base;
-  FbleTc* body;
-} FbleInlineEvalTc;
 
 // FbleProfileTc --
 //   FBLE_PROFILE_TC

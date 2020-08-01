@@ -182,7 +182,7 @@ typedef enum {
   FBLE_VAR_EXPR,
   FBLE_LET_EXPR,
 
-  FBLE_DATA_TYPE_EXPR,    // inline and non-inline struct and union types.
+  FBLE_DATA_TYPE_EXPR,    // struct and union types.
   FBLE_DATA_ACCESS_EXPR,  // struct and union field access.
 
   // FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR = FBLE_MISC_APPLY_EXPR
@@ -207,8 +207,6 @@ typedef enum {
   FBLE_LITERAL_EXPR,
 
   FBLE_MODULE_REF_EXPR,
-
-  FBLE_INLINE_EVAL_EXPR,
 
   FBLE_MISC_APPLY_EXPR,
 } FbleExprTag;
@@ -262,7 +260,6 @@ typedef enum {
 typedef struct {
   FbleTypeExpr _base;
   FbleDataTypeTag datatype;
-  bool inline_;
   FbleTaggedTypeExprV fields;
 } FbleDataTypeExpr;
 
@@ -336,7 +333,6 @@ typedef struct {
 
 // FbleEvalExpr --
 //   FBLE_EVAL_EXPR (body :: Expr)
-//   FBLE_INLINE_EVAL_EXPR (body :: Expr)
 typedef struct {
   FbleExpr _base;
   FbleExpr* body;

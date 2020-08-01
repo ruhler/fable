@@ -8,7 +8,6 @@
 
 #include "fble.h"
 #include "heap.h"
-#include "inline-eval.h"
 #include "instr.h"
 #include "syntax.h"   // for FbleReportError
 #include "value.h"
@@ -114,8 +113,6 @@ static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
-static Status InlineStructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
-static Status InlineUnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status JumpInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
@@ -130,8 +127,6 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
 static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
-static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
-static Status InlineUnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
 //   Implementations of instructions, indexed by instruction tag.
@@ -140,8 +135,6 @@ static InstrImpl sInstrImpls[] = {
   &UnionValueInstr,
   &StructAccessInstr,
   &UnionAccessInstr,
-  &InlineStructAccessInstr,
-  &InlineUnionAccessInstr,
   &UnionSelectInstr,
   &JumpInstr,
   &FuncValueInstr,
@@ -156,8 +149,6 @@ static InstrImpl sInstrImpls[] = {
   &RefDefInstr,
   &ReturnInstr,
   &TypeInstr,
-  &InlineEvalInstr,
-  &InlineUnionSelectInstr,
 };
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
@@ -476,36 +467,6 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
   return RUNNING;
 }
 
-// InlineStructAccessInstr -- see documentation of InstrImpl
-//   Execute a FBLE_INLINE_STRUCT_ACCESS_INSTR.
-static Status InlineStructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-  FbleAccessValue* value = FbleNewValue(heap, FbleAccessValue);
-  value->_base.tag = FBLE_STRUCT_ACCESS_VALUE;
-  value->obj = FrameGet(thread, access_instr->obj);
-  value->tag = access_instr->tag;
-  value->loc = FbleCopyLoc(access_instr->loc);
-  FbleValueAddRef(heap, &value->_base, value->obj);
-  thread->stack->locals[access_instr->dest] = &value->_base;
-  return RUNNING;
-}
-
-// InlineUnionAccessInstr -- see documentation of InstrImpl
-//   Execute a FBLE_INLINE_UNION_ACCESS_INSTR.
-static Status InlineUnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-  FbleAccessValue* value = FbleNewValue(heap, FbleAccessValue);
-  value->_base.tag = FBLE_UNION_ACCESS_VALUE;
-  value->obj = FrameGet(thread, access_instr->obj);
-  value->tag = access_instr->tag;
-  value->loc = FbleCopyLoc(access_instr->loc);
-  FbleValueAddRef(heap, &value->_base, value->obj);
-  thread->stack->locals[access_instr->dest] = &value->_base;
-  return RUNNING;
-}
-
 // UnionSelectInstr -- see documentation of InstrImpl
 //   Execute a UNION_SELECT_INSTR.
 static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
@@ -814,38 +775,6 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   return RUNNING;
 }
 
-// InlineEvalInstr -- see documentation of InstrImpl
-//   Execute FBLE_INLINE_EVAL_INSTR
-static Status InlineEvalInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
-  FbleValue* value = FrameGet(thread, eval_instr->arg);
-  FbleValue* result = FbleInlineEval(heap, value);
-  thread->stack->locals[eval_instr->dest] = result;
-  if (result == NULL) {
-    FbleReportError("inline evaluation failed\n", eval_instr->loc);
-    return ABORTED;
-  }
-  return RUNNING;
-}
-// InlineUnionSelectInstr -- see documentation of InstrImpl
-//   Execute FBLE_INLINE_UNION_SELECT_INSTR
-static Status InlineUnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FbleInlineUnionSelectInstr* select_instr = (FbleInlineUnionSelectInstr*)instr;
-  FbleUnionSelectValue* value = FbleNewValueExtra(heap, FbleUnionSelectValue, select_instr->choices.size * sizeof(FbleValue*));
-  value->_base.tag = FBLE_UNION_SELECT_VALUE;
-  value->condition = FrameGet(thread, select_instr->condition);
-  FbleValueAddRef(heap, &value->_base, value->condition);
-  value->choicec = select_instr->choices.size;
-  for (size_t i = 0; i < select_instr->choices.size; ++i) {
-    value->choices[i] = FrameGet(thread, select_instr->choices.xs[i]);
-    FbleValueAddRef(heap, &value->_base, value->choices[i]);
-  }
-  thread->stack->locals[select_instr->dest] = &value->_base;
-  return RUNNING;
-}
-
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -968,9 +897,7 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       }
 
       case FBLE_STRUCT_ACCESS_INSTR:
-      case FBLE_UNION_ACCESS_INSTR:
-      case FBLE_INLINE_STRUCT_ACCESS_INSTR:
-      case FBLE_INLINE_UNION_ACCESS_INSTR: {
+      case FBLE_UNION_ACCESS_INSTR: {
         FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
         locals[access_instr->dest] = NULL;
         break;
@@ -1088,18 +1015,6 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       case FBLE_TYPE_INSTR: {
         FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
         locals[type_instr->dest] = NULL;
-        break;
-      }
-
-      case FBLE_INLINE_EVAL_INSTR: {
-        FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
-        locals[eval_instr->dest] = NULL;
-        break;
-      }
-
-      case FBLE_INLINE_UNION_SELECT_INSTR: {
-        FbleInlineUnionSelectInstr* select_instr = (FbleInlineUnionSelectInstr*)instr;
-        locals[select_instr->dest] = NULL;
         break;
       }
     }

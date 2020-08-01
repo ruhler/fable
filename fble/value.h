@@ -131,8 +131,6 @@ typedef struct {
 // FbleAccessValue --
 //   FBLE_STRUCT_ACCESS_VALUE
 //   FBLE_UNION_ACCESS_VALUE
-// 
-// An inline computation for accessing a field from a struct or union value.
 typedef struct {
   FbleValue _base;
   FbleValue* obj;

@@ -434,7 +434,6 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       FbleDataType* sdt = FbleNewType(heap, FbleDataType, type->tag, dt->_base.loc);
       sdt->_base.id = dt->_base.id;
       sdt->datatype = dt->datatype;
-      sdt->inline_ = dt->inline_;
 
       FbleVectorInit(arena, sdt->fields);
       for (size_t i = 0; i < dt->fields.size; ++i) {
@@ -607,7 +606,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       FbleDataType* dta = (FbleDataType*)a;
       FbleDataType* dtb = (FbleDataType*)b;
 
-      if (dta->datatype != dtb->datatype || dta->inline_ != dtb->inline_ || dta->fields.size != dtb->fields.size) {
+      if (dta->datatype != dtb->datatype || dta->fields.size != dtb->fields.size) {
         FbleReleaseType(heap, a);
         FbleReleaseType(heap, b);
         return false;
@@ -729,7 +728,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
 FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
 {
   switch (type->tag) {
-    case FBLE_DATA_TYPE:    // TODO: return inline kind for inline data types?
+    case FBLE_DATA_TYPE:
     case FBLE_FUNC_TYPE:
     case FBLE_PROC_TYPE: {
       FbleBasicKind* kind = FbleAlloc(arena, FbleBasicKind);
@@ -1083,48 +1082,6 @@ FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type)
   return normal;
 }
 
-// FbleNonInlinedType -- See documentation in type.h
-FbleType* FbleNonInlinedType(FbleTypeHeap* heap, FbleType* type)
-{
-  switch (type->tag) {
-    case FBLE_FUNC_TYPE:
-    case FBLE_PROC_TYPE:
-    case FBLE_POLY_TYPE:
-    case FBLE_POLY_APPLY_TYPE:
-    case FBLE_VAR_TYPE:
-    case FBLE_TYPE_TYPE: {
-      UNREACHABLE("non-inline type passed to FbleNonInlinedType"); 
-      return NULL;
-    }
-
-    case FBLE_DATA_TYPE: {
-      FbleDataType* dt = (FbleDataType*)type;
-      assert(dt->inline_ && "non-inline type passed to FbleNonInlinedType");
-
-      FbleDataType* sdt = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, dt->_base.loc);
-      sdt->_base.id = dt->_base.id;
-      sdt->datatype = dt->datatype;
-      sdt->inline_ = false;
-
-      FbleVectorInit(heap->arena, sdt->fields);
-      for (size_t i = 0; i < dt->fields.size; ++i) {
-        FbleType* normal = FbleNormalType(heap, dt->fields.xs[i].type);
-        FbleTaggedType field = {
-          .name = FbleCopyName(heap->arena, dt->fields.xs[i].name),
-          .type = FbleNonInlinedType(heap, normal)
-        };
-        FbleReleaseType(heap, normal);
-        FbleVectorAppend(heap->arena, sdt->fields, field);
-        FbleTypeAddRef(heap, &sdt->_base, field.type);
-        FbleReleaseType(heap, field.type);
-      }
-      return &sdt->_base;
-    }
-  }
-  UNREACHABLE("should never get here");
-  return NULL;
-}
-
 // FbleValueOfType -- see documentation in type.h
 FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof)
 {
@@ -1155,9 +1112,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
-      fprintf(stderr, "%s%s(",
-          dt->datatype == FBLE_STRUCT_DATATYPE ? "*" : "+",
-          dt->inline_ ? "$" : "");
+      fprintf(stderr, "%s(", dt->datatype == FBLE_STRUCT_DATATYPE ? "*" : "+");
       const char* comma = "";
       for (size_t i = 0; i < dt->fields.size; ++i) {
         fprintf(stderr, "%s", comma);

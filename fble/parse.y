@@ -321,17 +321,7 @@ expr:
       struct_type->_base.tag = FBLE_DATA_TYPE_EXPR;
       struct_type->_base.loc = FbleCopyLoc(@$);
       struct_type->datatype = FBLE_STRUCT_DATATYPE;
-      struct_type->inline_ = false;
       struct_type->fields = $3;
-      $$ = &struct_type->_base;
-   }
- | '*' '$' '(' tagged_type_s ')' {
-      FbleDataTypeExpr* struct_type = FbleAlloc(arena, FbleDataTypeExpr);
-      struct_type->_base.tag = FBLE_DATA_TYPE_EXPR;
-      struct_type->_base.loc = FbleCopyLoc(@$);
-      struct_type->datatype = FBLE_STRUCT_DATATYPE;
-      struct_type->inline_ = true;
-      struct_type->fields = $4;
       $$ = &struct_type->_base;
    }
  | expr '(' expr_s ')' {
@@ -362,17 +352,7 @@ expr:
       union_type->_base.tag = FBLE_DATA_TYPE_EXPR;
       union_type->_base.loc = FbleCopyLoc(@$);
       union_type->datatype = FBLE_UNION_DATATYPE;
-      union_type->inline_ = false;
       union_type->fields = $3;
-      $$ = &union_type->_base;
-   }
- | '+' '$' '(' tagged_type_p ')' {
-      FbleDataTypeExpr* union_type = FbleAlloc(arena, FbleDataTypeExpr);
-      union_type->_base.tag = FBLE_DATA_TYPE_EXPR;
-      union_type->_base.loc = FbleCopyLoc(@$);
-      union_type->datatype = FBLE_UNION_DATATYPE;
-      union_type->inline_ = true;
-      union_type->fields = $4;
       $$ = &union_type->_base;
    }
  | expr '(' name ':' expr ')' {
@@ -412,13 +392,6 @@ expr:
  | '!' '(' expr ')' {
       FbleEvalExpr* eval_expr = FbleAlloc(arena, FbleEvalExpr);
       eval_expr->_base.tag = FBLE_EVAL_EXPR;
-      eval_expr->_base.loc = FbleCopyLoc(@$);
-      eval_expr->body = $3;
-      $$ = &eval_expr->_base;
-   }
- | '$' '(' expr ')' {
-      FbleEvalExpr* eval_expr = FbleAlloc(arena, FbleEvalExpr);
-      eval_expr->_base.tag = FBLE_INLINE_EVAL_EXPR;
       eval_expr->_base.loc = FbleCopyLoc(@$);
       eval_expr->body = $3;
       $$ = &eval_expr->_base;

@@ -669,10 +669,10 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       FbleInstrTag tag;
       if (access_tc->datatype == FBLE_STRUCT_DATATYPE) {
-        tag = access_tc->inline_ ? FBLE_INLINE_STRUCT_ACCESS_INSTR : FBLE_STRUCT_ACCESS_INSTR;
+        tag = FBLE_STRUCT_ACCESS_INSTR;
       } else {
         assert(access_tc->datatype == FBLE_UNION_DATATYPE);
-        tag = access_tc->inline_ ? FBLE_INLINE_UNION_ACCESS_INSTR : FBLE_UNION_ACCESS_INSTR;
+        tag = FBLE_UNION_ACCESS_INSTR;
       }
 
       FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
@@ -710,35 +710,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)tc;
       Local* condition = CompileExpr(arena, blocks, false, scope, select_tc->condition);
-
-      if (select_tc->inline_) {
-        Local* branches[select_tc->branches.size];
-        for (size_t i = 0; i < select_tc->branches.size; ++i) {
-          branches[i] = CompileExpr(arena, blocks, false, scope, select_tc->branches.xs[i]);
-        }
-
-        Local* local = NewLocal(arena, scope);
-
-        FbleInlineUnionSelectInstr* instr = FbleAlloc(arena, FbleInlineUnionSelectInstr);
-        instr->_base.tag = FBLE_INLINE_UNION_SELECT_INSTR;
-        instr->_base.profile_ops = NULL;
-        instr->dest = local->index.index;
-        instr->condition = condition->index;
-        FbleVectorInit(arena, instr->choices);
-        for (size_t i = 0; i < select_tc->choices.size; ++i) {
-          FbleVectorAppend(arena, instr->choices, branches[select_tc->choices.xs[i]]->index);
-        }
-
-        AppendInstr(arena, scope, &instr->_base);
-        CompileExit(arena, exit, scope, local);
-
-        LocalRelease(arena, scope, condition, exit);
-        for (size_t i = 0; i < select_tc->branches.size; ++i) {
-          LocalRelease(arena, scope, branches[i], exit);
-        }
-
-        return local;
-      }
 
       if (exit) {
         AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
@@ -963,23 +934,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
         PopVar(arena, scope, exit);
       }
 
-      return local;
-    }
-
-    case FBLE_INLINE_EVAL_TC: {
-      FbleInlineEvalTc* eval_tc = (FbleInlineEvalTc*)tc;
-      Local* arg = CompileExpr(arena, blocks, false, scope, eval_tc->body);
-
-      Local* local = NewLocal(arena, scope);
-      FbleInlineEvalInstr* instr = FbleAlloc(arena, FbleInlineEvalInstr);
-      instr->_base.tag = FBLE_INLINE_EVAL_INSTR;
-      instr->_base.profile_ops = NULL;
-      instr->arg = arg->index;
-      instr->dest = local->index.index;
-      instr->loc = FbleCopyLoc(tc->loc);
-      AppendInstr(arena, scope, &instr->_base);
-
-      CompileExit(arena, exit, scope, local);
       return local;
     }
 

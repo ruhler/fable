@@ -66,8 +66,6 @@ typedef enum {
   FBLE_UNION_VALUE_INSTR,
   FBLE_STRUCT_ACCESS_INSTR,
   FBLE_UNION_ACCESS_INSTR,
-  FBLE_INLINE_STRUCT_ACCESS_INSTR,
-  FBLE_INLINE_UNION_ACCESS_INSTR,
   FBLE_UNION_SELECT_INSTR,
   FBLE_JUMP_INSTR,
   FBLE_FUNC_VALUE_INSTR,
@@ -82,8 +80,6 @@ typedef enum {
   FBLE_REF_DEF_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
-  FBLE_INLINE_EVAL_INSTR,
-  FBLE_INLINE_UNION_SELECT_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -148,8 +144,6 @@ typedef struct {
 // FbleAccessInstr --
 //   FBLE_STRUCT_ACCESS_INSTR
 //   FBLE_UNION_ACCESS_INSTR
-//   FBLE_INLINE_STRUCT_ACCESS_INSTR
-//   FBLE_INLINE_UNION_ACCESS_INSTR
 //   Access a tagged field from an object.
 //
 // *dest = obj.tag
@@ -347,24 +341,6 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
 } FbleTypeInstr;
-
-// FbleInlineEvalInstr -- FBLE_INLINE_EVAL_INSTR
-//  *dest = $(arg)
-typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex dest;
-  FbleFrameIndex arg;
-  FbleLoc loc;
-} FbleInlineEvalInstr;
-
-// FbleInlineUnionSelectInstr -- FBLE_INLINE_UNION_SELECT_INSTR
-//  $dest = condition.?(choices)
-typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex dest;
-  FbleFrameIndex condition;
-  FbleFrameIndexV choices;
-} FbleInlineUnionSelectInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.

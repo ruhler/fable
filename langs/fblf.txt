@@ -392,3 +392,92 @@ doing compilation that we can add support for later.
 Which means, after a cleanup of the spec, I think we're ready to implement an
 MD5 round as an inline computation.
 
+---
+
+It's a pain to have to reimplement code for addition and md5 that I've already
+implemented.
+
+I'll need support for inline kinds, to allow polymorphic definitions of
+Bit2X@.
+
+Instead of inline kinds, it seems like it could be easier just to have a
+generic inline operator that can be applied to any type? Or just have an
+alternate interpreter for fble programs that can run in a symbolic evaluation
+mode?
+
+---
+
+I'm going to nix the approach taken so far, of having separate inline and
+non-inline types. Let me justify why, because this feels like one of those
+spiral situations where I'll come back later on and ask why not explicitly
+separate inline and non-inline types?
+
+* There is no difference in information content of the description for a
+  function that operates on inline types versus non-inline types. This is
+  especially clear now that we got rid of the notion of inline functions and
+  inline lets.
+* It's really annoying to have to duplicate the same specification of a
+  function, for inline and non-inline cases.
+* It adds a layer of complexity to the fble spec and a lot of redundancy.
+
+The main motivations for having separate types was:
+
+* The performance implications for inline computation are very different from
+  normal computation. Most notably, infinite loops could happen in the case of
+  inline computation that wouldn't for normal computation.
+
+  But having separate types doesn't change whether infinite loops can happen
+  or not. It just means the implementation is allowed to go into an infinite
+  loop if it tries to execute something inline that doesn't work well as an
+  inline computation. But that's exactly what it would have done regardless of
+  the type.
+
+* It would be nice to have a compile time check when defining an inline type
+  that it is a non-recursive struct or union type.
+
+  But this is easy to check in the compiler. We could easily add a separate
+  syntax to assert that, or rely on (compile time) error messages at the use
+  site to identify the problem. It doesn't prevent us from changing the
+  meaning, of, say, Bool@ to something that users don't expect.
+
+* It lets you distinguish between inline and non-inline computation when only
+  concrete values are involved.
+
+  But what value this? Why not always do all the computation you can in normal
+  mode?
+
+Instead I propose to have an alternate execution mode in the fble
+implementation that supports symbolic evaluation. We could add language
+support for making use of that mode, but we don't need to yet. If the goal is
+to try compiling some things symbolically, just return a function as the top
+level program and have the compiler evaluate it with symbolic argument values.
+
+I can imagine two potential language features that could take advantage of
+symbolic computation, using the same runtime semantics of symbolic
+computation.
+
+1. Compilation.
+  Given a function f, return a new function f' with the same type as f that
+  is a compiled version of the symbolic value of f when applied with symbolic
+  arguments.
+
+  The idea being that it could take a while to symbolically execute and
+  compile f, but then applying f' should be real fast.
+ 
+  If we want, we can restrict the argument and result types of f to
+  non-recursive struct and union types. Which I think, or I hope, should be
+  enough to guarantee that we don't need any recursive lets or other things,
+  assuming the symbolic computation terminates and produces a finite value.
+
+2. Smten
+  Add a symbolic type, with support for mplus, mempty, join, whatever it
+  needs. Implement it by doing symbolic execution, where we now have a clear
+  specification for what symbolic computation is supported and what not.
+  Convert the result to a SAT query, solve it, and then evaluate the result.
+
+Is there any nice way to add spec tests for symbolic evaluation?
+
+I suppose (1) is exactly what we want. It confirms we can create a symbolic
+computation and that we can evaluate the resulting symbolic computation
+correctly.
+

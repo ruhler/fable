@@ -775,7 +775,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
       FbleDataType* struct_type = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       struct_type->datatype = FBLE_STRUCT_DATATYPE;
-      struct_type->inline_ = false;
       FbleVectorInit(arena, struct_type->fields);
 
       size_t argc = struct_expr->args.size;
@@ -844,7 +843,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(heap, type);
       if (union_type->datatype != FBLE_UNION_DATATYPE) {
         ReportError(arena, union_value_expr->type->loc,
-            "expected a union type or inline union type, but found %t\n", type);
+            "expected a union type, but found %t\n", type);
         FbleReleaseType(heap, &union_type->_base);
         FbleReleaseType(heap, type);
         return TC_FAILED;
@@ -921,7 +920,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleUnionSelectTc* select_tc = FbleAlloc(arena, FbleUnionSelectTc);
       select_tc->_base.tag = FBLE_UNION_SELECT_TC;
       select_tc->_base.loc = FbleCopyLoc(expr->loc);
-      select_tc->inline_ = union_type->inline_;
       select_tc->condition = condition.tc;
       FbleVectorInit(arena, select_tc->choices);
       FbleVectorInit(arena, select_tc->branches);
@@ -1000,16 +998,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             "unexpected tag '%n'\n",
             select_expr->choices.xs[branch]);
         error = true;
-      }
-
-      if (target != NULL && select_tc->inline_) {
-        FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, target);
-        if (normal->_base.tag != FBLE_DATA_TYPE || !normal->inline_) {
-          // TODO: What's the right location to use for this error message? 
-          ReportError(arena, expr->loc, "expected inline type, but found %t\n", target);
-          error = true;
-        }
-        FbleReleaseType(heap, &normal->_base);
       }
 
       FbleReleaseType(heap, &union_type->_base);
@@ -1280,7 +1268,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, spec.type);
-      if (normal->_base.tag != FBLE_DATA_TYPE || normal->datatype != FBLE_STRUCT_DATATYPE || normal->inline_) {
+      if (normal->_base.tag != FBLE_DATA_TYPE || normal->datatype != FBLE_STRUCT_DATATYPE) {
         ReportError(arena, literal->spec->loc,
             "expected a struct value, but literal spec has type %t\n",
             spec);
@@ -1327,7 +1315,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
             access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
             access_tc->_base.loc = FbleCopyLoc(loc);
             access_tc->datatype = FBLE_STRUCT_DATATYPE;
-            access_tc->inline_ = false;
             access_tc->obj = &var_tc->_base;
             access_tc->tag = j;
             access_tc->loc = FbleCopyLoc(loc);
@@ -1390,35 +1377,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       return MkTc(FbleRetainType(heap, var->type), &var_tc->_base);
     }
 
-    case FBLE_INLINE_EVAL_EXPR: {
-      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
-      Tc body = TypeCheckExpr(heap, scope, eval_expr->body);
-      if (body.type == NULL) {
-        return TC_FAILED;
-      }
-
-      FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, body.type);
-      if (normal->_base.tag != FBLE_DATA_TYPE || !normal->inline_) {
-        ReportError(arena, eval_expr->body->loc,
-            "expected an inline struct or inline union, but found value of type %t\n",
-            body.type);
-        FbleReleaseType(heap, &normal->_base);
-        FreeTc(heap, body);
-        return TC_FAILED;
-      }
-
-      FbleType* non_inlined_type = FbleNonInlinedType(heap, &normal->_base);
-      FbleReleaseType(heap, &normal->_base);
-      FbleReleaseType(heap, body.type);
-
-      FbleInlineEvalTc* eval_tc = FbleAlloc(arena, FbleInlineEvalTc);
-      eval_tc->_base.tag = FBLE_INLINE_EVAL_TC;
-      eval_tc->_base.loc = FbleCopyLoc(expr->loc);
-      eval_tc->body = body.tc;
-
-      return MkTc(non_inlined_type, &eval_tc->_base);
-    }
-
     case FBLE_DATA_ACCESS_EXPR: {
       FbleDataAccessExpr* access_expr = (FbleDataAccessExpr*)expr;
 
@@ -1448,7 +1406,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
           access_tc->_base.loc = FbleCopyLoc(expr->loc);
           access_tc->datatype = normal->datatype;
-          access_tc->inline_ = normal->inline_;
           access_tc->obj = obj.tc;
           access_tc->tag = i;
           access_tc->loc = FbleCopyLoc(access_expr->field.loc);
@@ -1539,7 +1496,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       }
 
       if (normal->tag == FBLE_TYPE_TYPE) {
-        // FBLE_STRUCT_VALUE_EXPR or FBLE_INLINE_STRUCT_VALUE_EXPR
+        // FBLE_STRUCT_VALUE_EXPR
         FbleTypeType* type_type = (FbleTypeType*)normal;
         FbleType* vtype = FbleRetainType(heap, type_type->type);
         FbleReleaseType(heap, normal);
@@ -1548,7 +1505,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         FbleDataType* struct_type = (FbleDataType*)FbleNormalType(heap, vtype);
         if (struct_type->datatype != FBLE_STRUCT_DATATYPE) {
           ReportError(arena, apply_expr->misc->loc,
-              "expected a struct type or inline struct type, but found %t\n",
+              "expected a struct type, but found %t\n",
               vtype);
           FbleReleaseType(heap, &struct_type->_base);
           FbleReleaseType(heap, vtype);
@@ -1660,7 +1617,6 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_REF_EXPR:
-    case FBLE_INLINE_EVAL_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       Tc proc = TypeCheckExpr(heap, scope, expr);
@@ -1716,7 +1672,6 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
 
       FbleDataType* unit_type = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       unit_type->datatype = FBLE_STRUCT_DATATYPE;
-      unit_type->inline_ = false;
       FbleVectorInit(arena, unit_type->fields);
 
       FbleProcType* unit_proc_type = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, expr->loc);
@@ -1885,7 +1840,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
 
       FbleDataType* dt = FbleNewType(heap, FbleDataType, FBLE_DATA_TYPE, type->loc);
       dt->datatype = data_type->datatype;
-      dt->inline_ = data_type->inline_;
       FbleVectorInit(arena, dt->fields);
 
       for (size_t i = 0; i < data_type->fields.size; ++i) {
@@ -1900,18 +1854,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
           FbleReleaseType(heap, compiled);
           FbleReleaseType(heap, &dt->_base);
           return NULL;
-        }
-
-        if (data_type->inline_) {
-          FbleDataType* normal = (FbleDataType*)FbleNormalType(heap, compiled);
-          if (normal->_base.tag != FBLE_DATA_TYPE || !normal->inline_) {
-            ReportError(arena, field->type->loc, "expected inline type, but found %t\n", compiled);
-            FbleReleaseType(heap, &normal->_base);
-            FbleReleaseType(heap, compiled);
-            FbleReleaseType(heap, &dt->_base);
-            return NULL;
-          }
-          FbleReleaseType(heap, &normal->_base);
         }
 
         FbleTaggedType cfield = {
@@ -2001,7 +1943,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* heap, Scope* scope, FbleTypeExpr* t
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_REF_EXPR:
-    case FBLE_INLINE_EVAL_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       FbleExpr* expr = type;
@@ -2201,13 +2142,6 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
       }
       FbleFree(arena, exec_tc->bindings.xs);
       FbleFreeTc(arena, exec_tc->body);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_INLINE_EVAL_TC: {
-      FbleInlineEvalTc* eval_tc = (FbleInlineEvalTc*)tc;
-      FbleFreeTc(arena, eval_tc->body);
       FbleFree(arena, tc);
       return;
     }

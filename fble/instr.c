@@ -91,11 +91,8 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
         }
 
         case FBLE_STRUCT_ACCESS_INSTR:
-        case FBLE_UNION_ACCESS_INSTR:
-        case FBLE_INLINE_STRUCT_ACCESS_INSTR:
-        case FBLE_INLINE_UNION_ACCESS_INSTR: {
+        case FBLE_UNION_ACCESS_INSTR: {
           // TODO: Include in the output whether this is struct/union
-          // inline/noninlined.
           FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
           fprintf(fout, "l%zi = %s%zi.%zi; // %s:%i:%i\n",
               access_instr->dest, sections[access_instr->obj.section],
@@ -254,34 +251,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           fprintf(fout, "l%zi = type;\n", type_instr->dest);
           break;
         }
-
-        case FBLE_INLINE_EVAL_INSTR: {
-          FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
-          fprintf(fout, "l%zi = $(%s%zi", eval_instr->dest,
-              sections[eval_instr->arg.section],
-              eval_instr->arg.index);
-          fprintf(fout, "); // %s:%i:%i\n",
-              eval_instr->loc.source->str, eval_instr->loc.line,
-              eval_instr->loc.col);
-          break;
-        }
-
-        case FBLE_INLINE_UNION_SELECT_INSTR: {
-          FbleInlineUnionSelectInstr* select_instr = (FbleInlineUnionSelectInstr*)instr;
-          fprintf(fout, "l%zi = %s%zi.?(",
-              select_instr->dest,
-              sections[select_instr->condition.section],
-              select_instr->condition.index);
-          const char* comma = "";
-          for (size_t i = 0; i < select_instr->choices.size; ++i) {
-            fprintf(fout, "%s%s%zi", comma,
-                sections[select_instr->choices.xs[i].section],
-                select_instr->choices.xs[i].index);
-            comma = ", ";
-          }
-          fprintf(fout, ");\n");
-          break;
-        }
       }
     }
     fprintf(fout, "\n\n");
@@ -317,9 +286,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       return;
 
     case FBLE_STRUCT_ACCESS_INSTR:
-    case FBLE_UNION_ACCESS_INSTR:
-    case FBLE_INLINE_STRUCT_ACCESS_INSTR:
-    case FBLE_INLINE_UNION_ACCESS_INSTR: {
+    case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* i = (FbleAccessInstr*)instr;
       FbleFreeLoc(arena, i->loc);
       FbleFree(arena, instr);
@@ -361,20 +328,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
       FbleFree(arena, fork_instr->args.xs);
       FbleFree(arena, fork_instr->dests.xs);
-      FbleFree(arena, instr);
-      return;
-    }
-
-    case FBLE_INLINE_EVAL_INSTR: {
-      FbleInlineEvalInstr* eval_instr = (FbleInlineEvalInstr*)instr;
-      FbleFreeLoc(arena, eval_instr->loc);
-      FbleFree(arena, instr);
-      return;
-    }
-
-    case FBLE_INLINE_UNION_SELECT_INSTR: {
-      FbleInlineUnionSelectInstr* select_instr = (FbleInlineUnionSelectInstr*)instr;
-      FbleFree(arena, select_instr->choices.xs);
       FbleFree(arena, instr);
       return;
     }
