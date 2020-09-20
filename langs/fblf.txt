@@ -481,3 +481,103 @@ I suppose (1) is exactly what we want. It confirms we can create a symbolic
 computation and that we can evaluate the resulting symbolic computation
 correctly.
 
+---
+
+Revisiting after a month or so off... let me summarize a short term plan.
+
+We generalize the semantics of fble to support symbolic computation. The most
+interesting consequence is that symbolic evaluation of a union select involves
+evaluating all branches of the union select, which could easily lead to
+infinite recursion.
+
+To run a program, you do the following:
+1. Compile the program to code that can evaluate it symbolically.
+This catches any type errors you have in the program. It doesn't evaluate
+anything yet.
+
+2. Run the compiled code.
+No symbolic values have been introduced, so this will be like normal
+evaluation. You can think of this as a first pass to strip out unused
+functions, pull in code you need from different modules, etc. This is not
+expected to be super fast evaluation. The result is expected to be a function
+value in the symbolic value representation.
+
+3. Evaluate the function symbolically.
+That is, make symbolic values for its arguments, call the function on those
+arguments, and evaluate that symbolically. This will only work if the
+function's runtime is O(1) with respect to its arguments, otherwise it will
+get stuck in infinite loops on symbolic conditions. The result is a
+potentially large directed acyclic graph of union and struct operations.
+
+4. Compile the graph to fast execution.
+Turn the union and struct operations into llvm code or some such. It should
+compile to straight line code where all memory is statically evaluated. It
+should preserve sharing of parts of the graph.
+
+5. Execute the fast code with your concrete inputs.
+This should hopefully run very fast.
+
+
+For the purposes of experimenting with how fast a code we can get when it's
+suitable to inline everything, this should be plenty sufficient. That's all we
+need, and we're ready to go. Ignore processes for the time being.
+
+Thinking longer term, this is not satisfying because only functions that can
+get through (3) are supported in the fast execution mode. There are two
+downsides:
+* We can't do fast execution for all the functions we want to. Because there
+  are some functions that are not constant in their input sizes that we could
+  still benefit from running fast. For example, any function that does the
+  bulk of its work in a function that we could generate fast code for.
+* It's not obvious statically which functions will succeed in symbolic
+  execution and which will not.
+
+Wouldn't it be awesome if we could easily tell statically what parts of a
+program support symbolic execution? Then we could say: anything that supports
+symbolic execution will be executed as such. Anything else will be done
+slowly. Or something like that.
+
+Note that whether something runs symbolically or not depends on the context.
+It depends on the arguments. And arguments could be partially symbolic, which
+would make it very complicated to precisely describe when things work and when
+they don't. Almost like you would have to practically know the implementation
+of a function to know when it would or would not work symbolically.
+
+I don't know. I think it's deep murky waters beyond this point. I think I
+should force myself to make a stand here, implement the above sequence of
+computation, and check to see how fast fble can be when fully inlined in those
+cases that do support full inlining.
+
+---
+
+Here's the plan:
+
+1. Add to the spec (possibly temporarily, not sure) a language construct that
+takes a function f and returns a function f' of the same type. The semantics
+are to evaluate the function f symbolically on all of its arguments and
+compile the resulting symbolic expression into a function. This will allow us
+to write spec tests to exercise all of symbolic evaluation and confirm that
+the resulting compilation and evaluation is correct.
+
+2. Add enough support internally so that we can successfully run md5, or some of
+its non-trivial bits, through symbolic compilation.
+
+3. Implement a new top level program, maybe call it fblf, that takes an fble
+program that returns a function, evaluates the function symbolically, then
+does its own compilation of the symbolic value to llvm bitcode or c or
+something that we can compile natively. Try running md5 or some of its
+non-trivial bits in this mode, see how performance compares to running those
+same bits without symbolic computation.
+
+From that we should have learned enough to identify next steps. No point in
+speculating beyond that.
+
+Yet again the question comes up: how do I know I can run a function
+symbolically? How can you distinguish between an infinite loop and a long
+running symbolic computation? Options are:
+1. Use types to enforce statically that a function supports symbolic
+computation.
+2. Detect at runtime if we've got stuck in an infinite loop (due to symbolic
+computation, or more generally).
+3. Don't.
+
