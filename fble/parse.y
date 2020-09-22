@@ -424,6 +424,10 @@ expr:
       literal_expr->word = $3;
       $$ = &literal_expr->_base;
    }
+ | '$' '(' expr ')' {
+      assert(false && "TODO: parse elaborate expression");
+      $$ = $3;
+   }
  | block {
       $$ = $1;
    }
