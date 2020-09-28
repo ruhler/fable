@@ -425,8 +425,11 @@ expr:
       $$ = &literal_expr->_base;
    }
  | '$' '(' expr ')' {
-      assert(false && "TODO: parse elaborate expression");
-      $$ = $3;
+      FbleElaborateExpr* elaborate_expr = FbleAlloc(arena, FbleElaborateExpr);
+      elaborate_expr->_base.tag = FBLE_ELABORATE_EXPR;
+      elaborate_expr->_base.loc = FbleCopyLoc(@$);
+      elaborate_expr->body = $3;
+      $$ = &elaborate_expr->_base;
    }
  | block {
       $$ = $1;

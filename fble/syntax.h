@@ -206,6 +206,8 @@ typedef enum {
   FBLE_LIST_EXPR,
   FBLE_LITERAL_EXPR,
 
+  FBLE_ELABORATE_EXPR,
+
   FBLE_MODULE_REF_EXPR,
 
   FBLE_MISC_APPLY_EXPR,
@@ -449,6 +451,13 @@ typedef struct {
   FbleLoc word_loc;
   const char* word;
 } FbleLiteralExpr;
+
+// FbleElaborateExpr --
+//   FBLE_ELABORATE_EXPR (body :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleExpr* body;
+} FbleElaborateExpr;
 
 // FbleApplyExpr --
 //   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])

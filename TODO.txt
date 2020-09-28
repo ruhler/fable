@@ -1,8 +1,10 @@
 
 * Test and implement symbolic elaboration
+ - Add typechecking of elaborate expression.
+ - Add SYMBOLIC as a kind of value.
+ - Add compiler that transforms values to the same kind of compiled code as
+   the normal compiler does.
  - Starting with whatever we need to get 64 bit addition working.
-* Implement a symbolic value compiler and figure out how to evaluate its
-  performance.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?
