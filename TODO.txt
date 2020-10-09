@@ -1,13 +1,8 @@
 
 * Test and implement symbolic elaboration
- - Add COMPILE_TC - it takes an expression and list of vars (which refer to
-   symbol objects) and compiles it into a function.
- - Implement typechecking of ELABORATE_EXPR
-   For non-function type, just pass it through.
-   For function type, define a let that declares SYMBOL values, calls the
-   function with those values, then does COMPILE_TC with the result.
+ - Implement compilation of SYMBOLIC_VALUE_TC
+ - Implement compilation of SYMBOLIC_COMPILE_TC
  - Continue from there with whatever we need for 64 bit addition.
-   
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?
