@@ -84,6 +84,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     case FBLE_PORT_VALUE: return;
     case FBLE_REF_VALUE: return;
     case FBLE_TYPE_VALUE: return;
+    case FBLE_SYMBOLIC_VALUE: return;
 
     case FBLE_STRUCT_ACCESS_VALUE:
     case FBLE_UNION_ACCESS_VALUE: {
@@ -163,9 +164,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_TYPE_VALUE: {
-      break;
-    }
+    case FBLE_TYPE_VALUE: break;
+    case FBLE_SYMBOLIC_VALUE: break;
 
     case FBLE_STRUCT_ACCESS_VALUE:
     case FBLE_UNION_ACCESS_VALUE: {

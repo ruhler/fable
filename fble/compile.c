@@ -938,8 +938,14 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     }
 
     case FBLE_SYMBOLIC_VALUE_TC: {
-      assert(false && "TODO: Compile FBLE_SYMBOLIC_VALUE_TC");
-      return NULL;
+      Local* local = NewLocal(arena, scope);
+      FbleSymbolicValueInstr* instr = FbleAlloc(arena, FbleSymbolicValueInstr);
+      instr->_base.tag = FBLE_SYMBOLIC_VALUE_INSTR;
+      instr->_base.profile_ops = NULL;
+      instr->dest = local->index.index;
+      AppendInstr(arena, scope, &instr->_base);
+      CompileExit(arena, exit, scope, local);
+      return local;
     }
 
     case FBLE_SYMBOLIC_COMPILE_TC: {

@@ -1,6 +1,5 @@
 
 * Test and implement symbolic elaboration
- - Implement compilation of SYMBOLIC_VALUE_TC
  - Implement compilation of SYMBOLIC_COMPILE_TC
  - Continue from there with whatever we need for 64 bit addition.
 

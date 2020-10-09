@@ -21,6 +21,7 @@ typedef enum {
   FBLE_REF_VALUE,
   FBLE_TYPE_VALUE,
 
+  FBLE_SYMBOLIC_VALUE,
   FBLE_STRUCT_ACCESS_VALUE,
   FBLE_UNION_ACCESS_VALUE,
   FBLE_UNION_SELECT_VALUE,
@@ -129,6 +130,16 @@ typedef struct FbleRefValue {
 typedef struct {
   FbleValue _base;
 } FbleTypeValue;
+
+// FbleSymbolicValue --
+//   FBLE_SYMBOLIC_VALUE
+//
+// A value representing a symbol. A symbolic value contains no information,
+// except that two symbolic values can be compared for equality or not based
+// on their pointers.
+typedef struct {
+  FbleValue _base;
+} FbleSymbolicValue;
 
 // FbleAccessValue --
 //   FBLE_STRUCT_ACCESS_VALUE

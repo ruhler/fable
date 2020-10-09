@@ -127,6 +127,7 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
 static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
 //   Implementations of instructions, indexed by instruction tag.
@@ -149,6 +150,7 @@ static InstrImpl sInstrImpls[] = {
   &RefDefInstr,
   &ReturnInstr,
   &TypeInstr,
+  &SymbolicValueInstr,
 };
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
@@ -775,6 +777,17 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   return RUNNING;
 }
 
+// SymbolicValueInstr -- see documentation of InstrImpl
+//   Execute a FBLE_SYMBOLIC_VALUE_INSTR.
+static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleSymbolicValueInstr* symbolic_value_instr = (FbleSymbolicValueInstr*)instr;
+  FbleSymbolicValue* value = FbleNewValue(heap, FbleSymbolicValue);
+  value->_base.tag = FBLE_SYMBOLIC_VALUE;
+  thread->stack->locals[symbolic_value_instr->dest] = &value->_base;
+  return RUNNING;
+}
+
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -1015,6 +1028,12 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       case FBLE_TYPE_INSTR: {
         FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
         locals[type_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_SYMBOLIC_VALUE_INSTR: {
+        FbleSymbolicValueInstr* symbolic_value_instr = (FbleSymbolicValueInstr*)instr;
+        locals[symbolic_value_instr->dest] = NULL;
         break;
       }
     }

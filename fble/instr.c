@@ -251,6 +251,12 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           fprintf(fout, "l%zi = type;\n", type_instr->dest);
           break;
         }
+
+        case FBLE_SYMBOLIC_VALUE_INSTR: {
+          FbleSymbolicValueInstr* symbolic_value_instr = (FbleSymbolicValueInstr*)instr;
+          fprintf(fout, "l%zi = symbolic;\n", symbolic_value_instr->dest);
+          break;
+        }
       }
     }
     fprintf(fout, "\n\n");
@@ -282,6 +288,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_REF_DEF_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
+    case FBLE_SYMBOLIC_VALUE_INSTR:
       FbleFree(arena, instr);
       return;
 
