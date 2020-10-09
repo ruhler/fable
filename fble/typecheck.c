@@ -2158,6 +2158,14 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
       return;
     }
 
+    case FBLE_SYMBOLIC_COMPILE_TC: {
+      FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)tc;
+      FbleFreeTc(arena, compile_tc->body);
+      FbleFree(arena, compile_tc->args.xs);
+      FbleFree(arena, tc);
+      return;
+    }
+
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
       FbleFreeName(arena, profile_tc->name);

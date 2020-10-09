@@ -942,6 +942,11 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return NULL;
     }
 
+    case FBLE_SYMBOLIC_COMPILE_TC: {
+      assert(false && "TODO: Compile FBLE_SYMBOLIC_COMPILE_TC");
+      return NULL;
+    }
+
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
       EnterBlock(arena, blocks, profile_tc->name, tc->loc, scope);
