@@ -949,8 +949,26 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     }
 
     case FBLE_SYMBOLIC_COMPILE_TC: {
-      assert(false && "TODO: Compile FBLE_SYMBOLIC_COMPILE_TC");
-      return NULL;
+      FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)tc;
+      size_t argc = compile_tc->args.size;
+
+      Local* body = CompileExpr(arena, blocks, false, scope, compile_tc->body);
+
+      Local* local = NewLocal(arena, scope);
+      FbleSymbolicCompileInstr* compile_instr = FbleAlloc(arena, FbleSymbolicCompileInstr);
+      compile_instr->_base.tag = FBLE_SYMBOLIC_COMPILE_INSTR;
+      compile_instr->_base.profile_ops = NULL;
+      compile_instr->body = body->index;
+      compile_instr->dest = local->index.index;
+      FbleVectorInit(arena, compile_instr->args);
+      for (size_t i = 0; i < argc; ++i) {
+        Local* args = GetVar(arena, scope, compile_tc->args.xs[i]);
+        FbleVectorAppend(arena, compile_instr->args, args->index);
+      }
+      AppendInstr(arena, scope, &compile_instr->_base);
+      CompileExit(arena, exit, scope, local);
+      LocalRelease(arena, scope, body, exit);
+      return local;
     }
 
     case FBLE_PROFILE_TC: {

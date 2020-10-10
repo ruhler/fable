@@ -128,29 +128,31 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
 static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
+static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
 //   Implementations of instructions, indexed by instruction tag.
 static InstrImpl sInstrImpls[] = {
-  &StructValueInstr,
-  &UnionValueInstr,
-  &StructAccessInstr,
-  &UnionAccessInstr,
-  &UnionSelectInstr,
-  &JumpInstr,
-  &FuncValueInstr,
-  &ReleaseInstr,
-  &CallInstr,
-  &GetInstr,
-  &PutInstr,
-  &LinkInstr,
-  &ForkInstr,
-  &CopyInstr,
-  &RefValueInstr,
-  &RefDefInstr,
-  &ReturnInstr,
-  &TypeInstr,
-  &SymbolicValueInstr,
+  &StructValueInstr,      // FBLE_STRUCT_VALUE_INSTR
+  &UnionValueInstr,       // FBLE_UNION_VALUE_INSTR
+  &StructAccessInstr,     // FBLE_STRUCT_ACCESS_INSTR
+  &UnionAccessInstr,      // FBLE_UNION_ACCESS_INSTR
+  &UnionSelectInstr,      // FBLE_UNION_SELECT_INSTR
+  &JumpInstr,             // FBLE_JUMP_INSTR
+  &FuncValueInstr,        // FBLE_FUNC_VALUE_INSTR
+  &ReleaseInstr,          // FBLE_RELEASE_INSTR
+  &CallInstr,             // FBLE_CALL_INSTR
+  &GetInstr,              // FBLE_GET_INSTR
+  &PutInstr,              // FBLE_PUT_INSTR
+  &LinkInstr,             // FBLE_LINK_INSTR
+  &ForkInstr,             // FBLE_FORK_INSTR
+  &CopyInstr,             // FBLE_COPY_INSTR
+  &RefValueInstr,         // FBLE_REF_VALUE_INSTR
+  &RefDefInstr,           // FBLE_REF_DEF_INSTR
+  &ReturnInstr,           // FBLE_RETURN_INSTR
+  &TypeInstr,             // FBLE_TYPE_INSTR
+  &SymbolicValueInstr,    // FBLE_SYMBOLIC_VALUE_INSTR
+  &SymbolicCompileInstr,  // FBLE_SYMBOLIC_COMPILE_INSTR
 };
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
@@ -788,6 +790,22 @@ static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr*
   return RUNNING;
 }
 
+// SymbolicCompileInstr -- see documentation of InstrImpl
+//   Execute a FBLE_SYMBOLIC_COMPILE_INSTR.
+static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleSymbolicCompileInstr* compile_instr = (FbleSymbolicCompileInstr*)instr;
+  FbleValue* args[compile_instr->args.size];
+  for (size_t i = 0; i < compile_instr->args.size; ++i) {
+    args[i] = FrameGet(thread, compile_instr->args.xs[i]);
+  }
+  FbleValue* body = FrameGet(thread, compile_instr->body);
+  FbleValueV argv = { .size = compile_instr->args.size, .xs = args };
+  FbleValue* value = FbleSymbolicCompile(heap, argv, body);
+  thread->stack->locals[compile_instr->dest] = value;
+  return RUNNING;
+}
+
 // RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
@@ -1034,6 +1052,12 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       case FBLE_SYMBOLIC_VALUE_INSTR: {
         FbleSymbolicValueInstr* symbolic_value_instr = (FbleSymbolicValueInstr*)instr;
         locals[symbolic_value_instr->dest] = NULL;
+        break;
+      }
+
+      case FBLE_SYMBOLIC_COMPILE_INSTR: {
+        FbleSymbolicCompileInstr* compile_instr = (FbleSymbolicCompileInstr*)instr;
+        locals[compile_instr->dest] = NULL;
         break;
       }
     }

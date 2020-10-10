@@ -257,6 +257,22 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           fprintf(fout, "l%zi = symbolic;\n", symbolic_value_instr->dest);
           break;
         }
+
+        case FBLE_SYMBOLIC_COMPILE_INSTR: {
+          FbleSymbolicCompileInstr* compile_instr = (FbleSymbolicCompileInstr*)instr;
+          fprintf(fout, "l%zi = compile \\", compile_instr->dest);
+          const char* space = "";
+          for (size_t j = 0; j < compile_instr->args.size; ++j) {
+            fprintf(fout, "%s%s%zi",
+                space, sections[compile_instr->args.xs[j].section],
+                compile_instr->args.xs[j].index);
+            space = " ";
+          }
+          fprintf(fout, " -> %s%zi;\n", 
+              sections[compile_instr->body.section],
+              compile_instr->body.index);
+          break;
+        }
       }
     }
     fprintf(fout, "\n\n");
@@ -335,6 +351,13 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
       FbleFree(arena, fork_instr->args.xs);
       FbleFree(arena, fork_instr->dests.xs);
+      FbleFree(arena, instr);
+      return;
+    }
+
+    case FBLE_SYMBOLIC_COMPILE_INSTR: {
+      FbleSymbolicCompileInstr* compile_instr = (FbleSymbolicCompileInstr*)instr;
+      FbleFree(arena, compile_instr->args.xs);
       FbleFree(arena, instr);
       return;
     }

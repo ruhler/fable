@@ -1,6 +1,6 @@
 
 * Test and implement symbolic elaboration
- - Implement compilation of SYMBOLIC_COMPILE_TC
+ - Implement FbleSymbolicCompile function.
  - Continue from there with whatever we need for 64 bit addition.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
