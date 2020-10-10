@@ -241,7 +241,7 @@ typedef struct {
 //
 // Side effects:
 // * Prints messages to stderr in case of failure to type check.
-FbleTc* FbleTypeCheck(FbleArena* arena, FbleProgram* program);
+FbleTc* FbleTypeCheck(FbleArena* arena, struct FbleProgram* program);
 
 // FbleFreeTc --
 //   Free resources assocatied with an FbleTc.

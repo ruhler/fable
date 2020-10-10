@@ -70,12 +70,12 @@ typedef struct FbleCompiledProgram FbleCompiledProgram;
 //   The compiled program, or NULL if the program is not well typed.
 //
 // Side effects:
-//   Prints warning messages to stderr.
-//   Prints a message to stderr if the program fails to compile. Allocates
+// * Prints warning messages to stderr.
+// * Prints a message to stderr if the program fails to compile. Allocates
 //   memory for the instructions which must be freed with FbleFreeInstrBlock when
 //   it is no longer needed.
-//   Adds blocks to the given profile.
-//   The caller should call FbleFreeCompiledProgram to release resources
+// * Adds blocks to the given profile.
+// * The caller should call FbleFreeCompiledProgram to release resources
 //   associated with the returned program when it is no longer needed.
 FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile);
 

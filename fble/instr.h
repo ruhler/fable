@@ -6,6 +6,7 @@
 #define FBLE_INSTR_H_
 
 #include "fble.h"
+#include "typecheck.h"
 
 // FbleFrameSection --
 //   Which section of a frame a value can be found in.
@@ -391,5 +392,23 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 //   Frees memory allocated for the given block of instruction if the refcount
 //   has gone to 0.
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
+
+// FbleCompileTc --
+//   Compile a type-checked expression.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   argc - the number of local variables to reserve for arguments.
+//   tc - the type-checked expression to compile.
+//   profile - profile to populate with blocks. May be NULL.
+//
+// Results:
+//   The compiled program.
+//
+// Side effects:
+// * Adds blocks to the given profile.
+// * The caller should call FbleFreeInstrBlock to release resources
+//   associated with the returned program when it is no longer needed.
+FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FbleProfile* profile);
 
 #endif // FBLE_INSTR_H_

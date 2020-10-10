@@ -1,7 +1,15 @@
 
 * Test and implement symbolic elaboration
- - Implement FbleSymbolicCompile function.
  - Continue from there with whatever we need for 64 bit addition.
+* Add to spec and test that elaborate doesn't lose sharing in values.
+ - for example: y = Y(x, x); z = Z(y, y) should not make 4 copies of x.
+* Add to spec and test that elaborate doesn't rebuild non-symbolic values from
+  scratch every time the elaborated function is called.
+ - for example: \a -> Y(a, b) should reuse 'b' from scope instead of
+   reconstructing it.
+* Figure out how to keep track of locations for symbolic computation.
+ - in particular for getting meaningful profiles out of symbolic compiled
+   code.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?

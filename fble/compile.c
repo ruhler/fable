@@ -984,8 +984,8 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
   return NULL;
 }
 
-// FbleCompile -- see documentation in fble.h
-FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
+// FbleCompileTc -- see documentation in instr.h
+FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FbleProfile* profile)
 {
   bool profiling_disabled = false;
   if (profile == NULL) {
@@ -1001,10 +1001,9 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
   block_stack.profile = profile;
 
   // The entry associated with FBLE_ROOT_BLOCK_ID.
-  // TODO: Does it make sense to use the main program for the location?
   FbleName entry_name = {
     .name = FbleNewString(arena, ""),
-    .loc = program->main->loc,
+    .loc = tc->loc,
     .space = FBLE_NORMAL_NAME_SPACE,
   };
 
@@ -1012,25 +1011,36 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
   Scope scope;
   InitScope(arena, &scope, &code, 0, NULL);
 
-  EnterBlock(arena, &block_stack, entry_name, program->main->loc, &scope);
-  FbleTc* tc = FbleTypeCheck(arena, program);
-  if (tc != NULL) {
-    CompileExpr(arena, &block_stack, true, &scope, tc);
-    FbleFreeTc(arena, tc);
+  for (size_t i = 0; i < argc; ++i) {
+    Local* local = NewLocal(arena, &scope);
+    PushVar(arena, &scope, local);
   }
+
+  EnterBlock(arena, &block_stack, entry_name, tc->loc, &scope);
+  CompileExpr(arena, &block_stack, true, &scope, tc);
   ExitBlock(arena, &block_stack, &scope, true);
+
   FbleFreeString(arena, entry_name.name);
   FreeScope(arena, &scope, true);
-
   assert(block_stack.stack.size == 0);
   FbleFree(arena, block_stack.stack.xs);
-
   if (profiling_disabled) {
     FbleFreeProfile(arena, profile);
   }
+  return code;
+}
+
+// FbleCompile -- see documentation in fble.h
+FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
+{
+  FbleTc* tc = FbleTypeCheck(arena, program);
+  FbleInstrBlock* code = NULL;
+  if (tc != NULL) {
+    code = FbleCompileTc(arena, 0, tc, profile);
+    FbleFreeTc(arena, tc);
+  }
 
-  if (tc == NULL) {
-    FbleFreeInstrBlock(arena, code);
+  if (code == NULL) {
     return NULL;
   }
 
