@@ -1,6 +1,7 @@
-
-* Test and implement symbolic elaboration
- - Continue from there with whatever we need for 64 bit addition.
+* Figure out how to run fble-md5 properly.
+* Implement symbolic elaboration needed for Md5 DoBlock.
+ By fixing failing elaborate tests. 
+ Hopefully at this point we are capable of doing elaboration for Md5 DoBlock.
 * Add to spec and test that elaborate doesn't lose sharing in values.
  - for example: y = Y(x, x); z = Z(y, y) should not make 4 copies of x.
 * Add to spec and test that elaborate doesn't rebuild non-symbolic values from
