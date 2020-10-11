@@ -84,7 +84,7 @@ typedef enum {
 } Status;
 
 static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index);
-static FbleValue* FrameTaggedGet(FbleValueTag tag, Thread* thread, FbleFrameIndex index);
+static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index);
 static FbleValue* FrameMove(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc, bool owner);
 static void FrameRelease(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc, bool owner);
 
@@ -181,17 +181,13 @@ static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index)
   UNREACHABLE("should never get here");
 }
 
-// FrameTaggedGet --
+// FrameGetStrict --
 //   Get and dereference a value from the frame at the top of the given stack.
 //   Dereferences the data value, removing all layers of reference values
 //   until a non-reference value is encountered and returns the non-reference
 //   value.
 //
-//   A tag for the type of dereferenced value should be provided. This
-//   function will assert that the correct kind of value is encountered.
-//
 // Inputs:
-//   tag - the expected tag of the value.
 //   thread - the current thread.
 //   index - the location of the value in the frame.
 //
@@ -202,7 +198,7 @@ static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index)
 // Side effects:
 //   The returned value will only stay alive as long as the original value on
 //   the stack frame.
-static FbleValue* FrameTaggedGet(FbleValueTag tag, Thread* thread, FbleFrameIndex index)
+static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index)
 {
   FbleValue* value = FrameGet(thread, index);
   while (value->tag == FBLE_REF_VALUE) {
@@ -217,7 +213,6 @@ static FbleValue* FrameTaggedGet(FbleValueTag tag, Thread* thread, FbleFrameInde
 
     value = rv->value;
   }
-  assert(value->tag == tag);
   return value;
 }
 
@@ -436,12 +431,13 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-  FbleStructValue* sv = (FbleStructValue*)FrameTaggedGet(FBLE_STRUCT_VALUE, thread, access_instr->obj);
+  FbleStructValue* sv = (FbleStructValue*)FrameGetStrict(thread, access_instr->obj);
   if (sv == NULL) {
     FbleReportError("undefined struct value access\n", access_instr->loc);
     return ABORTED;
   }
 
+  assert(sv->_base.tag == FBLE_STRUCT_VALUE);
   assert(access_instr->tag < sv->fieldc);
   FbleValue* value = sv->fields[access_instr->tag];
   FbleRetainValue(heap, value);
@@ -455,12 +451,13 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-  FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread, access_instr->obj);
+  FbleUnionValue* uv = (FbleUnionValue*)FrameGetStrict(thread, access_instr->obj);
   if (uv == NULL) {
     FbleReportError("undefined union value access\n", access_instr->loc);
     return ABORTED;
   }
 
+  assert(uv->_base.tag == FBLE_UNION_VALUE);
   if (uv->tag != access_instr->tag) {
     FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
     return ABORTED;
@@ -476,11 +473,12 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-  FbleUnionValue* uv = (FbleUnionValue*)FrameTaggedGet(FBLE_UNION_VALUE, thread, select_instr->condition);
+  FbleUnionValue* uv = (FbleUnionValue*)FrameGetStrict(thread, select_instr->condition);
   if (uv == NULL) {
     FbleReportError("undefined union value select\n", select_instr->loc);
     return ABORTED;
   }
+  assert(uv->_base.tag == FBLE_UNION_VALUE);
   thread->stack->pc += select_instr->jumps.xs[uv->tag];
   return RUNNING;
 }
@@ -533,11 +531,12 @@ static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr
 static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-  FbleFuncValue* func = (FbleFuncValue*)FrameTaggedGet(FBLE_FUNC_VALUE, thread, call_instr->func);
+  FbleFuncValue* func = (FbleFuncValue*)FrameGetStrict(thread, call_instr->func);
   if (func == NULL) {
     FbleReportError("called undefined function\n", call_instr->loc);
     return ABORTED;
   };
+  assert(func->_base.tag == FBLE_FUNC_VALUE);
 
 
   if (call_instr->exit) {
@@ -675,11 +674,12 @@ static Status ForkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   FbleVectorInit(heap->arena, thread->children);
 
   for (size_t i = 0; i < fork_instr->args.size; ++i) {
-    FbleProcValue* arg = (FbleProcValue*)FrameTaggedGet(FBLE_PROC_VALUE, thread, fork_instr->args.xs[i]);
+    FbleProcValue* arg = (FbleProcValue*)FrameGetStrict(thread, fork_instr->args.xs[i]);
 
     // You cannot execute a proc in a let binding, so it should be
     // impossible to ever have an undefined proc value.
     assert(arg != NULL && "undefined proc value");
+    assert(arg->_base.tag == FBLE_PROC_VALUE);
 
     FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
 
