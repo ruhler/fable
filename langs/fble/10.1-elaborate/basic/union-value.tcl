@@ -14,7 +14,7 @@ fble-test {
   Unit@ _ = mt.just.true;
 
   Maybe@ mf = g(false);
-  Unit@ _ = mf.just.true;
+  Unit@ _ = mf.just.false;
 
   Unit@();
 }

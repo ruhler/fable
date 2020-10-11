@@ -6,8 +6,32 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+static FbleLoc DummyLoc(FbleArena* arena);
 static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value);
 
+
+// DummyLoc -- 
+//   Create a dummy location instance, for use until we figure out a proper
+//   way to track locations for symbolic compilation.
+//
+// Inputs:
+//   arena - arean to use for allocations.
+//
+// Returns:
+//   A location.
+//
+// Side effects:
+//   The caller must call FbleFreeLoc when the location is no longer needed.
+static FbleLoc DummyLoc(FbleArena* arena)
+{
+  FbleLoc loc = {
+    .source = FbleNewString(arena, __FILE__),
+    .line = __LINE__ - 4,
+    .col = 1,
+  };
+  return loc;
+}
+
 // Compile -- 
 //   Compile an FbleValue to a FbleTc representing an expression to compute
 //   that value.
@@ -24,9 +48,32 @@ static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value);
 //   The returned FbleTc must be freed with FbleFreeTc when no longer needed.
 static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value)
 {
+  // TODO: Avoid rebuilding values from scratch if they don't depend on any of
+  // the function arguments. Store them as part of the function scope instead.
   switch (value->tag) {
-    case FBLE_STRUCT_VALUE: assert(false && "TODO: Compile FBLE_STRUCT_VALUE"); return NULL;
-    case FBLE_UNION_VALUE: assert(false && "TODO: Compile FBLE_UNION_VALUE"); return NULL;
+    case FBLE_STRUCT_VALUE: {
+      FbleStructValue* struct_value = (FbleStructValue*)value;
+      FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
+      struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
+      struct_tc->_base.loc = DummyLoc(arena);
+      FbleVectorInit(arena, struct_tc->args);
+      for (size_t i = 0; i < struct_value->fieldc; ++i) {
+        FbleTc* arg = Compile(arena, args, struct_value->fields[i]);
+        FbleVectorAppend(arena, struct_tc->args, arg);
+      }
+      return &struct_tc->_base;
+    }
+
+    case FBLE_UNION_VALUE: {
+      FbleUnionValue* union_value = (FbleUnionValue*)value;
+      FbleUnionValueTc* union_tc = FbleAlloc(arena, FbleUnionValueTc);
+      union_tc->_base.tag = FBLE_UNION_VALUE_TC;
+      union_tc->_base.loc = DummyLoc(arena);
+      union_tc->tag = union_value->tag;
+      union_tc->arg = Compile(arena, args, union_value->arg);
+      return &union_tc->_base;
+    }
+
     case FBLE_FUNC_VALUE: assert(false && "TODO: Compile FBLE_FUNC_VALUE"); return NULL;
     case FBLE_LINK_VALUE: assert(false && "TODO: Compile FBLE_LINK_VALUE"); return NULL;
     case FBLE_PORT_VALUE: assert(false && "TODO: Compile FBLE_PORT_VALUE"); return NULL;
@@ -43,9 +90,7 @@ static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value)
 
       FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
       var_tc->_base.tag = FBLE_VAR_TC;
-      var_tc->_base.loc.source = FbleNewString(arena, __FILE__);
-      var_tc->_base.loc.line = __LINE__;
-      var_tc->_base.loc.col = 1;
+      var_tc->_base.loc = DummyLoc(arena);
       var_tc->index.source = FBLE_LOCAL_VAR;
       var_tc->index.index = i;
       return &var_tc->_base;
