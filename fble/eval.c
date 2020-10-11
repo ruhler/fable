@@ -437,11 +437,23 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
     return ABORTED;
   }
 
-  assert(sv->_base.tag == FBLE_STRUCT_VALUE);
-  assert(access_instr->tag < sv->fieldc);
-  FbleValue* value = sv->fields[access_instr->tag];
-  FbleRetainValue(heap, value);
-  thread->stack->locals[access_instr->dest] = value;
+  if (sv->_base.tag == FBLE_STRUCT_VALUE) {
+    assert(access_instr->tag < sv->fieldc);
+    FbleValue* value = sv->fields[access_instr->tag];
+    FbleRetainValue(heap, value);
+    thread->stack->locals[access_instr->dest] = value;
+    return RUNNING;
+  }
+
+  // The argument must be symbolic. Create a symbolic struct access value.
+  FbleDataAccessValue* value = FbleNewValue(heap, FbleDataAccessValue);
+  value->_base.tag = FBLE_DATA_ACCESS_VALUE;
+  value->datatype = FBLE_STRUCT_DATATYPE;
+  value->obj = &sv->_base;
+  value->tag = access_instr->tag;
+  value->loc = FbleCopyLoc(access_instr->loc);
+  FbleValueAddRef(heap, &value->_base, &sv->_base);
+  thread->stack->locals[access_instr->dest] = &value->_base;
   return RUNNING;
 }
 
@@ -457,14 +469,26 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
     return ABORTED;
   }
 
-  assert(uv->_base.tag == FBLE_UNION_VALUE);
-  if (uv->tag != access_instr->tag) {
-    FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-    return ABORTED;
+  if (uv->_base.tag == FBLE_UNION_VALUE) {
+    if (uv->tag != access_instr->tag) {
+      FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
+      return ABORTED;
+    }
+
+    FbleRetainValue(heap, uv->arg);
+    thread->stack->locals[access_instr->dest] = uv->arg;
+    return RUNNING;
   }
 
-  FbleRetainValue(heap, uv->arg);
-  thread->stack->locals[access_instr->dest] = uv->arg;
+  // The argument must be symbolic. Create a symbolic union access value.
+  FbleDataAccessValue* value = FbleNewValue(heap, FbleDataAccessValue);
+  value->_base.tag = FBLE_DATA_ACCESS_VALUE;
+  value->datatype = FBLE_UNION_DATATYPE;
+  value->obj = &uv->_base;
+  value->tag = access_instr->tag;
+  value->loc = FbleCopyLoc(access_instr->loc);
+  FbleValueAddRef(heap, &value->_base, &uv->_base);
+  thread->stack->locals[access_instr->dest] = &value->_base;
   return RUNNING;
 }
 

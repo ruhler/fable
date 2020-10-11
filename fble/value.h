@@ -22,8 +22,7 @@ typedef enum {
   FBLE_TYPE_VALUE,
 
   FBLE_SYMBOLIC_VALUE,
-  FBLE_STRUCT_ACCESS_VALUE,
-  FBLE_UNION_ACCESS_VALUE,
+  FBLE_DATA_ACCESS_VALUE,
   FBLE_UNION_SELECT_VALUE,
   // FBLE_FUNC_APPLY_VALUE,
   // FBLE_PROC_EXEC_VALUE,
@@ -141,15 +140,15 @@ typedef struct {
   FbleValue _base;
 } FbleSymbolicValue;
 
-// FbleAccessValue --
-//   FBLE_STRUCT_ACCESS_VALUE
-//   FBLE_UNION_ACCESS_VALUE
+// FbleDataAccessValue --
+//   FBLE_DATA_ACCESS_VALUE
 typedef struct {
   FbleValue _base;
+  FbleDataTypeTag datatype;
   FbleValue* obj;
   size_t tag;
   FbleLoc loc;
-} FbleAccessValue;
+} FbleDataAccessValue;
 
 // FbleUnionSelectValue --
 //   FBLE_UNION_SELECT_VALUE

@@ -96,8 +96,18 @@ static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value)
       return &var_tc->_base;
     }
 
-    case FBLE_STRUCT_ACCESS_VALUE: assert(false && "TODO: Compile FBLE_STRUCT_ACCESS_VALUE"); return NULL;
-    case FBLE_UNION_ACCESS_VALUE: assert(false && "TODO: Compile FBLE_UNION_ACCESS_VALUE"); return NULL;
+    case FBLE_DATA_ACCESS_VALUE: {
+      FbleDataAccessValue* access_value = (FbleDataAccessValue*)value;
+      FbleDataAccessTc* access_tc = FbleAlloc(arena, FbleDataAccessTc);
+      access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
+      access_tc->_base.loc = DummyLoc(arena);
+      access_tc->datatype = access_value->datatype;
+      access_tc->obj = Compile(arena, args, access_value->obj);
+      access_tc->tag = access_value->tag;
+      access_tc->loc = FbleCopyLoc(access_value->loc);
+      return &access_tc->_base;
+    }
+
     case FBLE_UNION_SELECT_VALUE: assert(false && "TODO: Compile FBLE_UNION_SELECT_VALUE"); return NULL;
   }
 

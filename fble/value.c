@@ -86,9 +86,8 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     case FBLE_TYPE_VALUE: return;
     case FBLE_SYMBOLIC_VALUE: return;
 
-    case FBLE_STRUCT_ACCESS_VALUE:
-    case FBLE_UNION_ACCESS_VALUE: {
-      FbleAccessValue* v = (FbleAccessValue*)value;
+    case FBLE_DATA_ACCESS_VALUE: {
+      FbleDataAccessValue* v = (FbleDataAccessValue*)value;
       FbleFreeLoc(arena, v->loc);
       return;
     }
@@ -167,9 +166,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case FBLE_TYPE_VALUE: break;
     case FBLE_SYMBOLIC_VALUE: break;
 
-    case FBLE_STRUCT_ACCESS_VALUE:
-    case FBLE_UNION_ACCESS_VALUE: {
-      FbleAccessValue* v = (FbleAccessValue*)value;
+    case FBLE_DATA_ACCESS_VALUE: {
+      FbleDataAccessValue* v = (FbleDataAccessValue*)value;
       Ref(callback, v->obj);
       break;
     }
