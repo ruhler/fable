@@ -1,3 +1,8 @@
+* Use FbleValue for FbleTc
+ - Add FbleLoc to FbleValue.
+ - Add constructors to FbleValue as needed to represent everything in FbleTc.
+ - Replace FbleTc with FbleValue
+
 * Figure out how to run fble-md5 properly.
 * Implement symbolic elaboration needed for Md5 DoBlock.
  By fixing failing elaborate tests. 

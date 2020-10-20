@@ -581,3 +581,48 @@ computation.
 computation, or more generally).
 3. Don't.
 
+---
+
+The snag: how to compile union select in a way that works both for normal
+elaboration and symbolic elaboration? In particular, how to deal with the tail
+recursive case, where for normal elaboration we have to do a tail recursive
+call, but for symbolic elaboration we have to not do a tail recursive call.
+
+It's probably not too hard to hack around, but having a special case for tail
+recursion already feels like a hack.
+
+So, after much thought and internal debate, I think it's worth taking a big
+leap sideways and reimplementing the evaluator. Instead of compiling to
+instructions, evaluate a value in place. That gets rid of the hack on tail
+recursion, because we'll have separate references to the variables we need to
+retain from each branch of a case expression, and from other expressions still
+to be evaluated. Then case only has to return the branch it needs (thus
+releasing references to anything that we don't need to hold on to), or return
+all symbolically evaluated branches.
+
+In other words, we change the implementation so that a variable is live for as
+long as some expression is referencing it, rather than what we have today
+where a variable is alive for the duration of the body of a let block except
+for the special case of tail recursion.
+
+I suspect things will go slower in this new form of evaluation. The value of
+compiling instructions is:
+1. We defer substitution until we know we need to. For example, we don't do any
+   substitution of values into branches of union select that we don't take.
+2. We batch substitutions together. For example, we don't go
+   (a, b) -> (1, b) -> (1, 2) with its intermediate allocations. We directly go
+   (a, b) -> (1, 2).
+3. We substitute in an order that guarantees we are never substituting into
+   something that has shared values in it, so we don't have to worry about
+   preserving sharing during substitution.
+
+(1) is what leads to the required special casing of tail recursion. So we'll
+have to expect to get rid of that. (2) is what is exactly the opposite of
+static elaboration, so we'll have to expect to get rid of that. (3) is also
+inconsistent with static elaboration.
+
+As a sort of incremental approach to switch over evaluation, replace FbleTc
+with FbleValue. We can change compile.c to go from FbleValue to FbleInstr, and
+use that for symbolic compilation. Then introduce FbleValue based evaluation,
+do that before compilation, until eventually compilation turns into a no-op.
+
