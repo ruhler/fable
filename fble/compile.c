@@ -1000,13 +1000,6 @@ FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FblePro
   FbleVectorInit(arena, block_stack.stack);
   block_stack.profile = profile;
 
-  // The entry associated with FBLE_ROOT_BLOCK_ID.
-  FbleName entry_name = {
-    .name = FbleNewString(arena, ""),
-    .loc = tc->loc,
-    .space = FBLE_NORMAL_NAME_SPACE,
-  };
-
   FbleInstrBlock* code;
   Scope scope;
   InitScope(arena, &scope, &code, 0, NULL);
@@ -1016,11 +1009,21 @@ FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FblePro
     PushVar(arena, &scope, local);
   }
 
-  EnterBlock(arena, &block_stack, entry_name, tc->loc, &scope);
-  CompileExpr(arena, &block_stack, true, &scope, tc);
-  ExitBlock(arena, &block_stack, &scope, true);
+  // CompileExpr assumes it is in a profile block that it needs to exit when
+  // exit is true, so make sure we wrap the top level expression in a profile
+  // block. We don't reuse EnterBlock directly to avoid adding a prefix that
+  // would clutter up every block name. For example, we want block names like
+  // "/Test%.RunTests!", not "<main>./Test%.RunTests!".
+  FbleName entry_name = {
+    .name = FbleNewString(arena, "<main>"),
+    .loc = FbleCopyLoc(tc->loc),
+    .space = FBLE_NORMAL_NAME_SPACE,
+  };
+  size_t entry_id = FbleProfileAddBlock(arena, profile, entry_name);
+  AppendProfileOp(arena, &scope, FBLE_PROFILE_ENTER_OP, entry_id);
 
-  FbleFreeString(arena, entry_name.name);
+  CompileExpr(arena, &block_stack, true, &scope, tc);
+
   FreeScope(arena, &scope, true);
   assert(block_stack.stack.size == 0);
   FbleFree(arena, block_stack.stack.xs);

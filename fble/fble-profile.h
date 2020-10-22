@@ -16,8 +16,8 @@
 typedef size_t FbleBlockId;
 
 // FBLE_ROOT_BLOCK_ID --
-//   The block id for the "root" block, which is assumed to be the entry block
-//   for all threads.
+//   The block id for the "root" block, which is the initial block for new
+//   threads.
 #define FBLE_ROOT_BLOCK_ID 0
 
 // FbleBlockIdV --
@@ -81,13 +81,13 @@ typedef struct {
 } FbleProfile;
 
 // FbleNewProfile --
-//   Creates a new, empty profile.
+//   Creates a new profile with a single root block.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //
 // Results:
-//   A new empty profile.
+//   A new profile with a single root block.
 //
 // Side effects:
 //   Allocates a new profile that should be freed with FbleFreeProfile when
@@ -106,8 +106,8 @@ FbleProfile* FbleNewProfile(FbleArena* arena);
 //   The id of the newly added block.
 //
 // Side effects:
-// * Takes ownership of name.name memory, which will be freed when
-//   FbleFreeProfile is called.
+// * Takes ownership of name, which will be freed when FbleFreeProfile is
+// called.
 FbleBlockId FbleProfileAddBlock(FbleArena* arena, FbleProfile* profile, FbleName name);
 
 // FbleFreeProfile --

@@ -455,6 +455,15 @@ FbleProfile* FbleNewProfile(FbleArena* arena)
 {
   FbleProfile* profile = FbleAlloc(arena, FbleProfile);
   FbleVectorInit(arena, profile->blocks);
+
+  FbleName root = {
+    .name = FbleNewString(arena, "<root>"),
+    .space = FBLE_NORMAL_NAME_SPACE,
+    .loc = { .source = FbleNewString(arena, ""), .line = 0, .col = 0 }
+  };
+  FbleBlockId root_id = FbleProfileAddBlock(arena, profile, root);
+  assert(root_id == FBLE_ROOT_BLOCK_ID);
+
   return profile;
 }
 

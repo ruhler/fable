@@ -60,10 +60,9 @@ static FbleName Name(FbleArena* arena, const char* name)
 //   None.
 static size_t AutoExitMaxMem(size_t n)
 {
-  // 0 -> 1 -> 1 -> ... -> 1
+  // <root> -> 1 -> 1 -> ... -> 1
   FbleArena* arena = FbleNewArena();
   FbleProfile* profile = FbleNewProfile(arena);
-  FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
   FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
 
   FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
@@ -117,12 +116,11 @@ int main(int argc, char* argv[])
 {
   {
     // Test a simple call profile:
-    // 0 -> 1 -> 2 -> 3
-    //             -> 4
-    //        -> 3
+    // <root> -> 1 -> 2 -> 3
+    //                  -> 4
+    //             -> 3
     FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
@@ -194,12 +192,11 @@ int main(int argc, char* argv[])
 
   {
     // Test a profile with tail calls
-    // 0 -> 1 -> 2 => 3 -> 4
-    //                  => 5
-    //        -> 6
+    // <root> -> 1 -> 2 => 3 -> 4
+    //                       => 5
+    //             -> 6
     FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
@@ -288,10 +285,9 @@ int main(int argc, char* argv[])
 
   {
     // Test a profile with self recursion
-    // 0 -> 1 -> 2 -> 2 -> 2 -> 3
+    // <root> -> 1 -> 2 -> 2 -> 2 -> 3
     FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
@@ -354,10 +350,9 @@ int main(int argc, char* argv[])
 
   {
     // Test a profile with self recursion and tail calls
-    // 0 -> 1 => 2 => 2 => 2 => 3
+    // <root> -> 1 => 2 => 2 => 2 => 3
     FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
@@ -420,10 +415,9 @@ int main(int argc, char* argv[])
 
   {
     // Test a profile with mutual recursion
-    // 0 -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
+    // <root> -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
     FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
@@ -505,11 +499,10 @@ int main(int argc, char* argv[])
 
   {
     // Test multithreaded profiling.
-    // a: 0 -> 1 -> 2
-    // b: 0 -> 1 -> 2
+    // a: <root> -> 1 -> 2
+    // b: <root> -> 1 -> 2
     FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
 
@@ -564,11 +557,10 @@ int main(int argc, char* argv[])
 
   {
     // Test forking of threads.
-    // parent: 0 -> 1 -> 2
-    // child:       \--> 3
+    // parent: <root> -> 1 -> 2
+    // child:            \--> 3
     FbleArena* arena = FbleNewArena();
     FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_0")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
     FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
