@@ -2087,6 +2087,9 @@ static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* mo
     return NULL;
   }
 
+  // TODO: Using modules->name.loc here is not terribly useful for users. The
+  // plan eventually is to remove FbleLoc from FbleTc, so hopefully this
+  // weirdness will solve itself by going away sometime in the near future.
   FbleLetTc* let_tc = FbleAlloc(arena, FbleLetTc);
   let_tc->_base.tag = FBLE_LET_TC;
   let_tc->_base.loc = FbleCopyLoc(modules->name.loc);

@@ -1,9 +1,10 @@
-* [profile] fix location used for <main> in FbleCompileTc.
-
-* Use FbleValue for FbleTc
- - Add FbleLoc to FbleValue.
- - Add constructors to FbleValue as needed to represent everything in FbleTc.
- - Replace FbleTc with FbleValue
+* [profile] Pass name to use for profile entry block to FbleCompileTc.
+ - So that the program that calls FbleCompileTc can decide what to name the
+ entry block, and it can give different names to different compiled blocks.
+* Remove FbleLoc from FbleTc
+ - We should be able to get the location from elsewhere in the context.
+* Add constructors to FbleValue as needed to represent everything in FbleTc.
+* Replace FbleTc with FbleValue
 
 * Figure out how to run fble-md5 properly.
 * Implement symbolic elaboration needed for Md5 DoBlock.
