@@ -958,7 +958,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleSymbolicCompileInstr* compile_instr = FbleAlloc(arena, FbleSymbolicCompileInstr);
       compile_instr->_base.tag = FBLE_SYMBOLIC_COMPILE_INSTR;
       compile_instr->_base.profile_ops = NULL;
-      compile_instr->loc = FbleCopyLoc(tc->loc);
+      compile_instr->loc = FbleCopyLoc(compile_tc->loc);
       compile_instr->body = body->index;
       compile_instr->dest = local->index.index;
       FbleVectorInit(arena, compile_instr->args);

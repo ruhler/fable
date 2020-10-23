@@ -4,6 +4,10 @@
 * Replace FbleTc with FbleValue
 
 * Test use of undefined values in case, access, and func apply.
+* Check if it's okay to add new blocks to a profile in progress.
+ - if so, pass the profile to FbleSymbolicCompile so we can get profiling
+   blocks from elaborated code too?
+ - either way, document that clearly.
 
 * Figure out how to run fble-md5 properly.
 * Implement symbolic elaboration needed for Md5 DoBlock.

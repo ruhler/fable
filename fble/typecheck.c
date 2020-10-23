@@ -1420,6 +1420,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleSymbolicCompileTc* compile_tc = FbleAlloc(arena, FbleSymbolicCompileTc);
       compile_tc->_base.tag = FBLE_SYMBOLIC_COMPILE_TC;
       compile_tc->_base.loc = FbleCopyLoc(expr->loc);
+      compile_tc->loc = FbleCopyLoc(expr->loc);
       FbleVectorInit(arena, compile_tc->args);
       for (size_t i = 0; i < argc; ++i) {
         FbleVarIndex arg = { .source = FBLE_LOCAL_VAR, .index = arg_ids + i };
@@ -2232,6 +2233,7 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
 
     case FBLE_SYMBOLIC_COMPILE_TC: {
       FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)tc;
+      FbleFreeLoc(arena, compile_tc->loc);
       FbleFreeTc(arena, compile_tc->body);
       FbleFree(arena, compile_tc->args.xs);
       FbleFree(arena, tc);

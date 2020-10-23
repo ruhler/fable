@@ -210,6 +210,7 @@ typedef struct {
 // An expression to compile a symbolic value into a function.
 typedef struct {
   FbleTc _base;
+  FbleLoc loc;
   FbleVarIndexV args;
   FbleTc* body;
 } FbleSymbolicCompileTc;
