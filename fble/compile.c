@@ -958,6 +958,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleSymbolicCompileInstr* compile_instr = FbleAlloc(arena, FbleSymbolicCompileInstr);
       compile_instr->_base.tag = FBLE_SYMBOLIC_COMPILE_INSTR;
       compile_instr->_base.profile_ops = NULL;
+      compile_instr->loc = FbleCopyLoc(tc->loc);
       compile_instr->body = body->index;
       compile_instr->dest = local->index.index;
       FbleVectorInit(arena, compile_instr->args);
@@ -985,7 +986,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 }
 
 // FbleCompileTc -- see documentation in instr.h
-FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FbleProfile* profile)
+FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
 {
   bool profiling_disabled = false;
   if (profile == NULL) {
@@ -1013,13 +1014,8 @@ FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FblePro
   // exit is true, so make sure we wrap the top level expression in a profile
   // block. We don't reuse EnterBlock directly to avoid adding a prefix that
   // would clutter up every block name. For example, we want block names like
-  // "/Test%.RunTests!", not "<main>./Test%.RunTests!".
-  FbleName entry_name = {
-    .name = FbleNewString(arena, "<main>"),
-    .loc = FbleCopyLoc(tc->loc),
-    .space = FBLE_NORMAL_NAME_SPACE,
-  };
-  size_t entry_id = FbleProfileAddBlock(arena, profile, entry_name);
+  // "/Test%.RunTests!", not "<name>./Test%.RunTests!".
+  size_t entry_id = FbleProfileAddBlock(arena, profile, FbleCopyName(arena, name));
   AppendProfileOp(arena, &scope, FBLE_PROFILE_ENTER_OP, entry_id);
 
   CompileExpr(arena, &block_stack, true, &scope, tc);
@@ -1039,7 +1035,13 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
   FbleTc* tc = FbleTypeCheck(arena, program);
   FbleInstrBlock* code = NULL;
   if (tc != NULL) {
-    code = FbleCompileTc(arena, 0, tc, profile);
+    FbleName entry_name = {
+      .name = FbleNewString(arena, "<main>"),
+      .loc = FbleCopyLoc(program->main->loc),
+      .space = FBLE_NORMAL_NAME_SPACE,
+    };
+    code = FbleCompileTc(arena, 0, tc, entry_name, profile);
+    FbleFreeName(arena, entry_name);
     FbleFreeTc(arena, tc);
   }
 

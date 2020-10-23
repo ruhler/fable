@@ -229,6 +229,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link);
 //          treated as arguments to the function to compile.
 //   body - the body of the function to compile, represented as a symbolic
 //          value.
+//   name - the name of the expression to use in profiling. Borrowed.
 //
 // Results:
 //   A function value compiled from the body.
@@ -236,6 +237,6 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link);
 // Side effects:
 //   The returned value must be freed using FbleReleaseValue when no longer in
 //   use. This function does not take ownership of the arg or body values.
-FbleValue* FbleSymbolicCompile(FbleValueHeap* heap, FbleValueV args, FbleValue* body);
+FbleValue* FbleSymbolicCompile(FbleValueHeap* heap, FbleValueV args, FbleValue* body, FbleName);
 
 #endif // FBLE_INTERNAL_VALUE_H_

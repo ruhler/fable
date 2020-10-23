@@ -1,5 +1,3 @@
-* [profile] Pass name to use for profile entry block to FbleCompileTc.
- - So that the program that calls FbleCompileTc can decide what to name the
  entry block, and it can give different names to different compiled blocks.
 * Remove FbleLoc from FbleTc
  - We should be able to get the location from elsewhere in the context.

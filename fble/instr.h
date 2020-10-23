@@ -361,6 +361,7 @@ typedef struct {
   FbleLocalIndex dest;
   FbleFrameIndexV args;
   FbleFrameIndex body;
+  FbleLoc loc;
 } FbleSymbolicCompileInstr;
 
 // FbleFreeInstr --
@@ -400,6 +401,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 //   arena - arena to use for allocations.
 //   argc - the number of local variables to reserve for arguments.
 //   tc - the type-checked expression to compile.
+//   name - the name of the expression to use in profiling. Borrowed.
 //   profile - profile to populate with blocks. May be NULL.
 //
 // Results:
@@ -409,6 +411,6 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 // * Adds blocks to the given profile.
 // * The caller should call FbleFreeInstrBlock to release resources
 //   associated with the returned program when it is no longer needed.
-FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FbleProfile* profile);
+FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
 
 #endif // FBLE_INSTR_H_

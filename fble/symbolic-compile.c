@@ -115,11 +115,11 @@ static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value)
 }
 
 // FbleSymbolicCompile -- see documentation in value.h
-FbleValue* FbleSymbolicCompile(FbleValueHeap* heap, FbleValueV args, FbleValue* body)
+FbleValue* FbleSymbolicCompile(FbleValueHeap* heap, FbleValueV args, FbleValue* body, FbleName name)
 {
   FbleArena* arena = heap->arena;
   FbleTc* tc = Compile(arena, args, body);
-  FbleInstrBlock* code = FbleCompileTc(arena, args.size, tc, NULL);
+  FbleInstrBlock* code = FbleCompileTc(arena, args.size, tc, name, NULL);
   FbleFreeTc(arena, tc);
 
   FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);

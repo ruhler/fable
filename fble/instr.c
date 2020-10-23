@@ -357,6 +357,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
 
     case FBLE_SYMBOLIC_COMPILE_INSTR: {
       FbleSymbolicCompileInstr* compile_instr = (FbleSymbolicCompileInstr*)instr;
+      FbleFreeLoc(arena, compile_instr->loc);
       FbleFree(arena, compile_instr->args.xs);
       FbleFree(arena, instr);
       return;

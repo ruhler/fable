@@ -825,7 +825,13 @@ static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInst
   }
   FbleValue* body = FrameGet(thread, compile_instr->body);
   FbleValueV argv = { .size = compile_instr->args.size, .xs = args };
-  FbleValue* value = FbleSymbolicCompile(heap, argv, body);
+  FbleName entry_name = {
+    .name = FbleNewString(heap->arena, "<elab>"),
+    .loc = FbleCopyLoc(compile_instr->loc),
+    .space = FBLE_NORMAL_NAME_SPACE,
+  };
+  FbleValue* value = FbleSymbolicCompile(heap, argv, body, entry_name);
+  FbleFreeName(heap->arena, entry_name);
   thread->stack->locals[compile_instr->dest] = value;
   return RUNNING;
 }
