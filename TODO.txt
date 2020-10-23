@@ -1,5 +1,3 @@
-* Remove FbleLoc from FbleTc
- - We should be able to get the location from elsewhere in the context.
 * Add constructors to FbleValue as needed to represent everything in FbleTc.
 * Replace FbleTc with FbleValue
 

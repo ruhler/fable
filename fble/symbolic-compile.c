@@ -6,31 +6,8 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static FbleLoc DummyLoc(FbleArena* arena);
 static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value);
 
-
-// DummyLoc -- 
-//   Create a dummy location instance, for use until we figure out a proper
-//   way to track locations for symbolic compilation.
-//
-// Inputs:
-//   arena - arean to use for allocations.
-//
-// Returns:
-//   A location.
-//
-// Side effects:
-//   The caller must call FbleFreeLoc when the location is no longer needed.
-static FbleLoc DummyLoc(FbleArena* arena)
-{
-  FbleLoc loc = {
-    .source = FbleNewString(arena, __FILE__),
-    .line = __LINE__ - 4,
-    .col = 1,
-  };
-  return loc;
-}
 
 // Compile -- 
 //   Compile an FbleValue to a FbleTc representing an expression to compute
@@ -55,7 +32,6 @@ static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value)
       FbleStructValue* struct_value = (FbleStructValue*)value;
       FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
       struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
-      struct_tc->_base.loc = DummyLoc(arena);
       FbleVectorInit(arena, struct_tc->args);
       for (size_t i = 0; i < struct_value->fieldc; ++i) {
         FbleTc* arg = Compile(arena, args, struct_value->fields[i]);
@@ -68,7 +44,6 @@ static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value)
       FbleUnionValue* union_value = (FbleUnionValue*)value;
       FbleUnionValueTc* union_tc = FbleAlloc(arena, FbleUnionValueTc);
       union_tc->_base.tag = FBLE_UNION_VALUE_TC;
-      union_tc->_base.loc = DummyLoc(arena);
       union_tc->tag = union_value->tag;
       union_tc->arg = Compile(arena, args, union_value->arg);
       return &union_tc->_base;
@@ -90,7 +65,6 @@ static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value)
 
       FbleVarTc* var_tc = FbleAlloc(arena, FbleVarTc);
       var_tc->_base.tag = FBLE_VAR_TC;
-      var_tc->_base.loc = DummyLoc(arena);
       var_tc->index.source = FBLE_LOCAL_VAR;
       var_tc->index.index = i;
       return &var_tc->_base;
@@ -100,7 +74,6 @@ static FbleTc* Compile(FbleArena* arena, FbleValueV args, FbleValue* value)
       FbleDataAccessValue* access_value = (FbleDataAccessValue*)value;
       FbleDataAccessTc* access_tc = FbleAlloc(arena, FbleDataAccessTc);
       access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
-      access_tc->_base.loc = DummyLoc(arena);
       access_tc->datatype = access_value->datatype;
       access_tc->obj = Compile(arena, args, access_value->obj);
       access_tc->tag = access_value->tag;

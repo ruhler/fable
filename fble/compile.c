@@ -796,7 +796,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       Scope func_scope;
       InitScope(arena, &func_scope, &instr->code, func_tc->scope.size, scope);
-      EnterBodyBlock(arena, blocks, func_tc->body->loc, &func_scope);
+      EnterBodyBlock(arena, blocks, func_tc->body_loc, &func_scope);
 
       for (size_t i = 0; i < argc; ++i) {
         Local* local = NewLocal(arena, &func_scope);

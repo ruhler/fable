@@ -44,7 +44,6 @@ typedef enum {
 //   casting to that specific type of tc.
 typedef struct {
   FbleTcTag tag;
-  FbleLoc loc;
 } FbleTc;
 
 // FbleTcV --
@@ -161,6 +160,7 @@ typedef struct {
 // Note: FuncValueTc is used for process values as well as function values.
 typedef struct {
   FbleTc _base;
+  FbleLoc body_loc;
   FbleVarIndexV scope;
   size_t argc;
   FbleTc* body;
