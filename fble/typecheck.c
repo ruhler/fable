@@ -496,6 +496,7 @@ static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args)
     FbleFuncApplyTc* apply = FbleAlloc(arena, FbleFuncApplyTc);
     apply->_base.tag = FBLE_FUNC_APPLY_TC;
     apply->_base.loc = FbleCopyLoc(loc);
+    apply->loc = FbleCopyLoc(loc);
     apply->func = &cons->_base;
     FbleVectorInit(arena, apply->args);
     FbleVectorAppend(arena, apply->args, &x->_base);
@@ -530,6 +531,7 @@ static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args)
   FbleFuncApplyTc* apply_elems = FbleAlloc(arena, FbleFuncApplyTc);
   apply_elems->_base.tag = FBLE_FUNC_APPLY_TC;
   apply_elems->_base.loc = FbleCopyLoc(loc);
+  apply_elems->loc = FbleCopyLoc(loc);
   apply_elems->func = &outer_func->_base;
   FbleVectorInit(arena, apply_elems->args);
   for (size_t i = 0; i < args.size; ++i) {
@@ -1403,6 +1405,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
       apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
       apply_tc->_base.loc = FbleCopyLoc(expr->loc);
+      apply_tc->loc = FbleCopyLoc(expr->loc);
       apply_tc->func = body.tc;
       FbleVectorInit(arena, apply_tc->args);
       for (size_t i = 0; i < argc; ++i) {
@@ -1553,6 +1556,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
         apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
         apply_tc->_base.loc = FbleCopyLoc(expr->loc);
+        apply_tc->loc = FbleCopyLoc(expr->loc);
         apply_tc->func = misc.tc;
         FbleVectorInit(arena, apply_tc->args);
         for (size_t i = 0; i < argc; ++i) {
@@ -1709,6 +1713,7 @@ static Tc TypeCheckExec(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
       apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
       apply_tc->_base.loc = FbleCopyLoc(expr->loc);
+      apply_tc->loc = FbleCopyLoc(expr->loc);
       apply_tc->func = proc.tc;
       FbleVectorInit(arena, apply_tc->args);
 
@@ -2192,6 +2197,7 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
 
     case FBLE_FUNC_APPLY_TC: {
       FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)tc;
+      FbleFreeLoc(arena, apply_tc->loc);
       FbleFreeTc(arena, apply_tc->func);
       for (size_t i = 0; i < apply_tc->args.size; ++i) {
         FbleFreeTc(arena, apply_tc->args.xs[i]);

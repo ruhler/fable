@@ -856,7 +856,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleCallInstr* call_instr = FbleAlloc(arena, FbleCallInstr);
       call_instr->_base.tag = FBLE_CALL_INSTR;
       call_instr->_base.profile_ops = NULL;
-      call_instr->loc = FbleCopyLoc(tc->loc);
+      call_instr->loc = FbleCopyLoc(apply_tc->loc);
       call_instr->exit = exit;
       call_instr->func = func->index;
       FbleVectorInit(arena, call_instr->args);

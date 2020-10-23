@@ -170,6 +170,7 @@ typedef struct {
 //   FBLE_FUNC_APPLY_TC
 typedef struct {
   FbleTc _base;
+  FbleLoc loc;
   FbleTc* func;
   FbleTcV args;
 } FbleFuncApplyTc;
