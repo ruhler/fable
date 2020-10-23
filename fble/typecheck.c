@@ -83,7 +83,7 @@ static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 
 static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* heap, Tc tc);
-static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc);
+static Tc ProfileBlock(FbleArena* arena, FbleName label, FbleLoc loc, Tc tc);
 
 static FbleTc* NewListTc(FbleArena* arena, FbleLoc loc, FbleTcV args);
 
@@ -415,6 +415,7 @@ static void FreeTc(FbleTypeHeap* heap, Tc tc)
 // Inputs:
 //   arena - arena to use for allocations.
 //   label - the label of the profiling block. Borrowed.
+//   loc - the location of the body of the profiling block. Borrowed.
 //   tc - the tc to wrap in a profile block. May be TC_FAILED.
 //
 // Results:
@@ -423,7 +424,7 @@ static void FreeTc(FbleTypeHeap* heap, Tc tc)
 // Side effects:
 //   Forwards ownership of the type and tc in 'tc' to the returned tc.
 //   Does not take ownership of label, makes a copy instead.
-static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc)
+static Tc ProfileBlock(FbleArena* arena, FbleName label, FbleLoc loc, Tc tc)
 {
   if (tc.type == NULL) {
     assert(tc.tc == NULL);
@@ -432,8 +433,8 @@ static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc)
 
   FbleProfileTc* profile_tc = FbleAlloc(arena, FbleProfileTc);
   profile_tc->_base.tag = FBLE_PROFILE_TC;
-  profile_tc->_base.loc = FbleCopyLoc(tc.tc->loc);
-  profile_tc->loc = FbleCopyLoc(tc.tc->loc);
+  profile_tc->_base.loc = FbleCopyLoc(loc);
+  profile_tc->loc = FbleCopyLoc(loc);
   profile_tc->name = FbleCopyName(arena, label);
   profile_tc->body = tc.tc;
   tc.tc = &profile_tc->_base;
@@ -670,7 +671,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         defs[i] = TC_FAILED;
         if (!error) {
           defs[i] = TypeCheckExpr(heap, scope, binding->expr);
-          defs[i] = ProfileBlock(arena, binding->name, defs[i]);
+          defs[i] = ProfileBlock(arena, binding->name, binding->expr->loc, defs[i]);
         }
         error = error || (defs[i].type == NULL);
 
@@ -787,7 +788,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
         args[j] = TypeCheckExpr(heap, scope, arg->expr);
-        args[j] = ProfileBlock(arena, arg->name, args[j]);
+        args[j] = ProfileBlock(arena, arg->name, arg->expr->loc, args[j]);
         error = error || (args[j].type == NULL);
       }
 
@@ -937,7 +938,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
           FbleVectorAppend(arena, select_tc->choices, branch);
 
           Tc result = TypeCheckExpr(heap, scope, select_expr->choices.xs[branch].expr);
-          result = ProfileBlock(arena, select_expr->choices.xs[branch].name, result);
+          result = ProfileBlock(arena, select_expr->choices.xs[branch].name, select_expr->choices.xs[branch].expr->loc, result);
           error = error || (result.type == NULL);
           FbleVectorAppend(arena, select_tc->branches, result.tc);
 
@@ -980,7 +981,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
         };
 
         Tc result = TypeCheckExpr(heap, scope, select_expr->default_);
-        result = ProfileBlock(arena, label, result);
+        result = ProfileBlock(arena, label, select_expr->default_->loc, result);
         FbleFreeName(arena, label);
         error = error || (result.type == NULL);
         FbleVectorAppend(arena, select_tc->branches, result.tc);
@@ -2079,7 +2080,7 @@ static FbleTc* TypeCheckProgram(FbleTypeHeap* heap, Scope* scope, FbleModule* mo
   // the definition of the module.
   PushVar(arena, scope, modules->name, NULL);
   Tc module = TypeCheckExpr(heap, scope, modules->value);
-  module = ProfileBlock(arena, modules->name, module);
+  module = ProfileBlock(arena, modules->name, modules->value->loc, module);
   PopVar(heap, scope);
 
   if (module.type == NULL) {
