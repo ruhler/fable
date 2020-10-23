@@ -718,7 +718,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleUnionSelectInstr* select_instr = FbleAlloc(arena, FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       select_instr->_base.profile_ops = NULL;
-      select_instr->loc = FbleCopyLoc(tc->loc);
+      select_instr->loc = FbleCopyLoc(select_tc->loc);
       select_instr->condition = condition->index;
       FbleVectorInit(arena, select_instr->jumps);
       AppendInstr(arena, scope, &select_instr->_base);

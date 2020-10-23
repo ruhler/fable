@@ -921,6 +921,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* heap, Scope* scope, FbleExpr* expr)
       select_tc->_base.tag = FBLE_UNION_SELECT_TC;
       select_tc->_base.loc = FbleCopyLoc(expr->loc);
       select_tc->condition = condition.tc;
+      select_tc->loc = FbleCopyLoc(expr->loc);
       FbleVectorInit(arena, select_tc->choices);
       FbleVectorInit(arena, select_tc->branches);
 
@@ -2170,6 +2171,7 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
 
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)tc;
+      FbleFreeLoc(arena, select_tc->loc);
       FbleFreeTc(arena, select_tc->condition);
       FbleFree(arena, select_tc->choices.xs);
       for (size_t i = 0; i < select_tc->branches.size; ++i) {

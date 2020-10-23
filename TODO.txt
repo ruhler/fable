@@ -1,8 +1,9 @@
- entry block, and it can give different names to different compiled blocks.
 * Remove FbleLoc from FbleTc
  - We should be able to get the location from elsewhere in the context.
 * Add constructors to FbleValue as needed to represent everything in FbleTc.
 * Replace FbleTc with FbleValue
+
+* Test use of undefined values in case, access, and func apply.
 
 * Figure out how to run fble-md5 properly.
 * Implement symbolic elaboration needed for Md5 DoBlock.
