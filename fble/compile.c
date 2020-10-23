@@ -974,7 +974,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
-      EnterBlock(arena, blocks, profile_tc->name, tc->loc, scope);
+      EnterBlock(arena, blocks, profile_tc->name, profile_tc->loc, scope);
       Local* result = CompileExpr(arena, blocks, exit, scope, profile_tc->body);
       ExitBlock(arena, blocks, scope, exit);
       return result;

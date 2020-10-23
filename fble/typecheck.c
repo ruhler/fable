@@ -433,6 +433,7 @@ static Tc ProfileBlock(FbleArena* arena, FbleName label, Tc tc)
   FbleProfileTc* profile_tc = FbleAlloc(arena, FbleProfileTc);
   profile_tc->_base.tag = FBLE_PROFILE_TC;
   profile_tc->_base.loc = FbleCopyLoc(tc.tc->loc);
+  profile_tc->loc = FbleCopyLoc(tc.tc->loc);
   profile_tc->name = FbleCopyName(arena, label);
   profile_tc->body = tc.tc;
   tc.tc = &profile_tc->_base;
@@ -2242,6 +2243,7 @@ void FbleFreeTc(FbleArena* arena, FbleTc* tc)
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
+      FbleFreeLoc(arena, profile_tc->loc);
       FbleFreeName(arena, profile_tc->name);
       FbleFreeTc(arena, profile_tc->body);
       FbleFree(arena, tc);

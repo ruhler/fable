@@ -222,13 +222,14 @@ typedef struct {
 //
 // Fields:
 //   name - the name of the block for profiling purposes.
+//   loc - the location of the profile block.
 //   body - the body of the profile block.
 //
-// The location of the profiling block is based through _base.loc, not
-// name.loc.
+// The location of the profiling block is passed through loc, not name.loc.
 typedef struct {
   FbleTc _base;
   FbleName name;
+  FbleLoc loc;
   FbleTc* body;
 } FbleProfileTc;
 
