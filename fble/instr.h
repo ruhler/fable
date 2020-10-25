@@ -116,13 +116,6 @@ typedef struct {
   FbleInstrV instrs;
 } FbleInstrBlock;
 
-// FbleCompiledProgram --
-//   Implementation of the abstract type for a compiled program declared in
-//   fble.h
-struct FbleCompiledProgram {
-  FbleInstrBlock* code;
-};
-
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.
 //

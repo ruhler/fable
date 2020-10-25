@@ -77,19 +77,23 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleProfile* profile = FbleNewProfile(arena);
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
+  FbleValue* compiled = FbleCompile(heap, prgm, profile);
   FbleFreeProgram(arena, prgm);
+
   if (compiled == NULL) {
     FbleFreeProfile(arena, profile);
+    FbleFreeValueHeap(heap);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
 
   FbleDisassemble(stdout, compiled, profile);
 
-  FbleFreeCompiledProgram(arena, compiled);
+  FbleReleaseValue(heap, compiled);
   FbleFreeProfile(arena, profile);
+  FbleFreeValueHeap(heap);
   FbleFreeArena(arena);
   return EX_SUCCESS;
 }

@@ -9,6 +9,7 @@
 
 #include "instr.h"
 #include "typecheck.h"
+#include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -1030,8 +1031,9 @@ FbleInstrBlock* FbleCompileTc(FbleArena* arena, size_t argc, FbleTc* tc, FbleNam
 }
 
 // FbleCompile -- see documentation in fble.h
-FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
+FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile)
 {
+  FbleArena* arena = heap->arena;
   FbleTc* tc = FbleTypeCheck(arena, program);
   FbleInstrBlock* code = NULL;
   if (tc != NULL) {
@@ -1049,14 +1051,10 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
     return NULL;
   }
 
-  FbleCompiledProgram* compiled = FbleAlloc(arena, FbleCompiledProgram);
-  compiled->code = code;
-  return compiled;
-}
-
-// FbleFreeCompiledProgram -- see documentation in fble.h
-void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program)
-{
-  FbleFreeInstrBlock(arena, program->code);
-  FbleFree(arena, program);
+  FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
+  func->_base.tag = FBLE_FUNC_VALUE;
+  func->argc = 0;
+  func->code = code;
+  assert(code->statics == 0);
+  return &func->_base;
 }

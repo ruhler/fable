@@ -100,19 +100,20 @@ int main(int argc, char* argv[])
     return failure;
   }
 
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleProfile* profile = report_profile ? FbleNewProfile(arena) : NULL;
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
+  FbleValue* compiled = FbleCompile(heap, prgm, profile);
   FbleFreeProgram(arena, prgm);
 
   if (compiled == NULL) {
     FbleFreeProfile(arena, profile);
+    FbleFreeValueHeap(heap);
     FbleFreeArena(arena);
     return failure;
   }
 
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleValue* result = FbleEval(heap, compiled, profile);
-  FbleFreeCompiledProgram(arena, compiled);
+  FbleReleaseValue(heap, compiled);
 
   // As a special case, if the result of evaluation is a process, execute
   // the process. This allows us to test process execution.

@@ -54,44 +54,29 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root);
 //   Frees resources associated with the given program.
 void FbleFreeProgram(FbleArena* arena, FbleProgram* program);
 
-// FbleCompiledProgram --
-//   Abstract type representing a compiled fble program.
-typedef struct FbleCompiledProgram FbleCompiledProgram;
-
 // FbleCompile --
 //   Type check and compile the given program.
 //
 // Inputs:
-//   arena - arena to use for allocations.
+//   heap - heap used for allocations.
 //   program - the program to compile.
 //   profile - profile to populate with blocks. May be NULL.
 //
 // Results:
-//   The compiled program, or NULL if the program is not well typed.
+//   A zero-argument function representing the compiled program. To run the
+//   program, apply the function. Returns NULL if the program is not well
+//   typed.
 //
 // Side effects:
 // * Prints warning messages to stderr.
-// * Prints a message to stderr if the program fails to compile. Allocates
-//   memory for the instructions which must be freed with FbleFreeInstrBlock when
-//   it is no longer needed.
+// * Prints a message to stderr if the program fails to compile.
 // * Adds blocks to the given profile.
-// * The caller should call FbleFreeCompiledProgram to release resources
+// * The caller should call FbleReleaseValue to release resources
 //   associated with the returned program when it is no longer needed.
-FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile);
-
-// FbleFreeCompiledProgram --
-//   Free resources associated with a compiled program.
-//
-// Inputs:
-//   arena - the arena to use for allocations
-//   program - the program to free.
-//
-// Side effects:
-//   Frees resources associated with the given program.
-void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program);
+FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile);
 
 // FbleDisassemble --
-//   Writing a disassembled version of a compiled program in human readable
+//   Write a disassembled version of a compiled program in human readable
 //   format to the given file. For debugging purposes.
 //
 // Inputs:
@@ -99,15 +84,13 @@ void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program);
 //   program - the program to decompile.
 //   profile - profile to use for profile block information.
 //
-// Results:
-//   True if the program compiled successfully, false otherwise.
-//
 // Side effects:
 //   A disassembled version of the file is printed to fout.
-void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile);
+void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile);
 
 // FbleEval --
-//   Evaluate a compiled program.
+//   Evaluate a compiled program. The program is assumed to be a zero argument
+//   function as returned by FbleCompile.
 //
 // Inputs:
 //   heap - The heap to use for allocating values.
@@ -119,12 +102,12 @@ void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* prof
 //   the program.
 //
 // Side effects:
-//   The returned value must be freed with FbleReleaseValue when no longer in
+// * The returned value must be freed with FbleReleaseValue when no longer in
 //   use.
-//   Prints an error message to stderr in case of a runtime error.
-//   Updates profiling information in profile based on the execution of the
+// * Prints an error message to stderr in case of a runtime error.
+// * Updates profiling information in profile based on the execution of the
 //   program.
-FbleValue* FbleEval(FbleValueHeap* heap, FbleCompiledProgram* program, FbleProfile* profile);
+FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile);
 
 // FbleApply --
 //   Apply a function to the given arguments.
@@ -139,12 +122,12 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleCompiledProgram* program, FbleProfi
 //   The result of applying the function to the given arguments.
 //
 // Side effects:
-//   The returned value must be freed with FbleReleaseValue when no longer in
+// * The returned value must be freed with FbleReleaseValue when no longer in
 //   use.
-//   Does not take ownership of the func. Does not take ownership of the args.
-//   Prints warning messages to stderr.
-//   Prints an error message to stderr in case of error.
-//   Updates the profile with stats from the evaluation.
+// * Does not take ownership of the func. Does not take ownership of the args.
+// * Prints warning messages to stderr.
+// * Prints an error message to stderr in case of error.
+// * Updates the profile with stats from the evaluation.
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
 // FbleIO --

@@ -6,6 +6,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "instr.h"
+#include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -393,7 +394,10 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 }
 
 // FbleDisassmeble -- see documentation in fble.h.
-void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile)
+void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile)
 {
-  DumpInstrBlock(fout, program->code, profile);
+  // TODO: Better document that we require program to be a function?
+  assert(program->tag == FBLE_FUNC_VALUE);
+  FbleFuncValue* func = (FbleFuncValue*)program;
+  DumpInstrBlock(fout, func->code, profile);
 }

@@ -1273,19 +1273,9 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 }
 
 // FbleEval -- see documentation in fble.h
-FbleValue* FbleEval(FbleValueHeap* heap, FbleCompiledProgram* program, FbleProfile* profile)
+FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {
-  FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
-  func->_base.tag = FBLE_FUNC_VALUE;
-  func->argc = 0;
-  func->code = program->code;
-  func->code->refcount++;
-  assert(program->code->statics == 0);
-
-  FbleIO io = { .io = &FbleNoIO };
-  FbleValue* result = Eval(heap, &io, func, NULL, profile);
-  FbleReleaseValue(heap, &func->_base);
-  return result;
+  return FbleApply(heap, program, NULL, profile);
 }
 
 // FbleApply -- see documentation in fble.h

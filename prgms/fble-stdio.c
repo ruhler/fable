@@ -212,19 +212,20 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile(arena);
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
+  FbleValue* compiled = FbleCompile(heap, prgm, profile);
   FbleFreeProgram(arena, prgm);
 
   if (compiled == NULL) {
+    FbleFreeValueHeap(heap);
     FbleFreeProfile(arena, profile);
     FbleFreeArena(arena);
     return 1;
   }
 
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleValue* func = FbleEval(heap, compiled, profile);
-  FbleFreeCompiledProgram(arena, compiled);
+  FbleReleaseValue(heap, compiled);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
