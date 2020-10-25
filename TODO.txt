@@ -1,5 +1,7 @@
-* Add constructors to FbleValue as needed to represent everything in FbleTc.
-* Replace FbleTc with FbleValue
+* Add FbleTcValue and FbleValueTc, and support a mix of both FbleTc and
+  FbleValue when compiling.
+* Migrate All FbleTc over to FbleValue.
+* Remove FbleTc.
 
 * Test use of undefined values in case, access, and func apply.
 * Check if it's okay to add new blocks to a profile in progress.
@@ -7,7 +9,6 @@
    blocks from elaborated code too?
  - either way, document that clearly.
 
-* Figure out how to run fble-md5 properly.
 * Implement symbolic elaboration needed for Md5 DoBlock.
  By fixing failing elaborate tests. 
  Hopefully at this point we are capable of doing elaboration for Md5 DoBlock.
