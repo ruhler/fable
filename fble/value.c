@@ -93,6 +93,12 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     }
 
     case FBLE_UNION_SELECT_VALUE: return;
+
+    case FBLE_TC_VALUE: {
+      FbleTcValue* v = (FbleTcValue*)value;
+      FbleFreeTc(heap, v->tc);
+      return;
+    }
   }
 
   UNREACHABLE("Should not get here");
@@ -179,6 +185,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
         Ref(callback, v->choices[i]);
       }
     }
+
+    case FBLE_TC_VALUE: break;
   }
 }
 

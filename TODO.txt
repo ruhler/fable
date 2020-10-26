@@ -1,7 +1,7 @@
-* Add FbleTcValue and FbleValueTc, and support a mix of both FbleTc and
-  FbleValue when compiling.
+* Track down memory leak.
 * Migrate All FbleTc over to FbleValue.
 * Remove FbleTc.
+* Clean up doc comments in typecheck.h, typecheck.c, compile.c.
 
 * Test use of undefined values in case, access, and func apply.
 * Check if it's okay to add new blocks to a profile in progress.

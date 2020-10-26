@@ -26,6 +26,8 @@ typedef enum {
   FBLE_UNION_SELECT_VALUE,
   // FBLE_FUNC_APPLY_VALUE,
   // FBLE_PROC_EXEC_VALUE,
+
+  FBLE_TC_VALUE,
 } FbleValueTag;
 
 // FbleValue --
@@ -158,6 +160,16 @@ typedef struct {
   size_t choicec;
   FbleValue* choices[];
 } FbleUnionSelectValue;
+
+// FbleTcValue --
+//   FBLE_TC_VALUE
+//
+// A wrapper around an FbleTc. This is a temporary kind of value used to
+// facilitate the replacement of FbleTc with FbleValue.
+typedef struct {
+  FbleValue _base;
+  FbleTc* tc;
+} FbleTcValue;
 
 // FbleNewValue --
 //   Allocate a new value of the given type.

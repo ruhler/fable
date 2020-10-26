@@ -5,6 +5,7 @@
 #define FBLE_INTERNAL_TYPECHECK_H_
 
 #include "fble-alloc.h"
+#include "fble-value.h"
 #include "syntax.h"
 #include "type.h"
 
@@ -45,13 +46,6 @@ typedef enum {
 typedef struct {
   FbleTcTag tag;
 } FbleTc;
-
-// FbleTcV --
-//   A vector of FbleTc.
-typedef struct {
-  size_t size;
-  FbleTc** xs;
-} FbleTcV;
 
 // FbleTypeTc --
 //   FBLE_TYPE_TC
@@ -104,8 +98,8 @@ typedef struct {
 typedef struct {
   FbleTc _base;
   bool recursive;
-  FbleTcV bindings;
-  FbleTc* body;
+  FbleValueV bindings;
+  FbleValue* body;
 } FbleLetTc;
 
 // FbleStructValueTc --
@@ -114,7 +108,7 @@ typedef struct {
 // An expression to allocate a new struct value.
 typedef struct {
   FbleTc _base;
-  FbleTcV args;
+  FbleValueV args;
 } FbleStructValueTc;
 
 // FbleDataAccessTc --
@@ -124,7 +118,7 @@ typedef struct {
 typedef struct {
   FbleTc _base;
   FbleDataTypeTag datatype;
-  FbleTc* obj;
+  FbleValue* obj;
   size_t tag;
   FbleLoc loc;    // Location to use for reporting undefined access.
 } FbleDataAccessTc;
@@ -133,7 +127,7 @@ typedef struct {
 //   FBLE_UNION_VALUE_TC
 typedef struct {
   FbleTc _base;
-  FbleTc* arg;
+  FbleValue* arg;
   size_t tag;
 } FbleUnionValueTc;
 
@@ -149,9 +143,9 @@ typedef struct {
 typedef struct {
   FbleTc _base;
   FbleLoc loc;
-  FbleTc* condition;
+  FbleValue* condition;
   struct { size_t size; size_t* xs; } choices;
-  FbleTcV branches;
+  FbleValueV branches;
 } FbleUnionSelectTc;
 
 // FbleFuncValueTc --
@@ -163,7 +157,7 @@ typedef struct {
   FbleLoc body_loc;
   FbleVarIndexV scope;
   size_t argc;
-  FbleTc* body;
+  FbleValue* body;
 } FbleFuncValueTc;
 
 // FbleFuncApplyTc --
@@ -171,8 +165,8 @@ typedef struct {
 typedef struct {
   FbleTc _base;
   FbleLoc loc;
-  FbleTc* func;
-  FbleTcV args;
+  FbleValue* func;
+  FbleValueV args;
 } FbleFuncApplyTc;
 
 // FbleLinkTc --
@@ -182,7 +176,7 @@ typedef struct {
 // evaluates to the result of the computing the proc value.
 typedef struct {
   FbleTc _base;
-  FbleTc* body;
+  FbleValue* body;
 } FbleLinkTc;
 
 // FbleExecTc --
@@ -192,8 +186,8 @@ typedef struct {
 // evaluates to the result of the computing the proc value.
 typedef struct {
   FbleTc _base;
-  FbleTcV bindings;
-  FbleTc* body;
+  FbleValueV bindings;
+  FbleValue* body;
 } FbleExecTc;
 
 // FbleSymbolicValueTc --
@@ -212,7 +206,7 @@ typedef struct {
   FbleTc _base;
   FbleLoc loc;
   FbleVarIndexV args;
-  FbleTc* body;
+  FbleValue* body;
 } FbleSymbolicCompileTc;
 
 // FbleProfileTc --
@@ -230,8 +224,24 @@ typedef struct {
   FbleTc _base;
   FbleName name;
   FbleLoc loc;
-  FbleTc* body;
+  FbleValue* body;
 } FbleProfileTc;
+
+// FbleNewTcValue --
+//   Create a new FbleTcValue.
+//
+// Inputs:
+//   heap - to use for allocations.
+//   tc - the tc to turn into a value. Consumed.
+//
+// Results:
+//   A new FbleValue wrapping the tc.
+//
+// Side effects:
+//   Caller should call FbleReleaseValue when the value is no longer needed.
+//
+// TODO: Remove this once we fully replace FbleTc with FbleValue.
+FbleValue* FbleNewTcValue(FbleValueHeap* heap, FbleTc* tc);
 
 // FbleTypeCheck -- 
 //   Run typecheck on the given program.
@@ -245,7 +255,7 @@ typedef struct {
 //
 // Side effects:
 // * Prints messages to stderr in case of failure to type check.
-FbleTc* FbleTypeCheck(FbleArena* arena, struct FbleProgram* program);
+FbleValue* FbleTypeCheck(FbleValueHeap* heap, struct FbleProgram* program);
 
 // FbleFreeTc --
 //   Free resources assocatied with an FbleTc.
@@ -256,6 +266,6 @@ FbleTc* FbleTypeCheck(FbleArena* arena, struct FbleProgram* program);
 //
 // Side effects:
 //   Frees resources associated with the given expression.
-void FbleFreeTc(FbleArena* arena, FbleTc* tc);
+void FbleFreeTc(FbleValueHeap* heap, FbleTc* tc);
 
 #endif // FBLE_INTERNAL_TYPECHECK_H_
