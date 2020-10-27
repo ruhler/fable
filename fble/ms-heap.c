@@ -278,18 +278,25 @@ void FullGc(Heap* heap)
   // Finish the GC in progress.
   while (!IncrGc(heap));
 
-  // Do another round of full GC to catch any references that were removed
-  // during the previos GC.
-  while (!IncrGc(heap));
+  // Do repeated rounds of full GC for as long as we are able to free any
+  // objects. It's not enough to run a single additional round of full GC in
+  // case any of the objects freed have on_free functions that release other
+  // objects.
+  bool done;
+  do {
+    // Do a round of full GC to catch any references that were just removed.
+    while (!IncrGc(heap));
 
-  // Clean up all the free objects.
-  while (heap->free->next != heap->free) {
-    Obj* obj = heap->free->next;
-    obj->prev->next = obj->next;
-    obj->next->prev = obj->prev;
-    heap->_base.on_free(&heap->_base, obj->obj);
-    FbleFree(heap->_base.arena, obj);
-  }
+    // Clean up all the free objects.
+    done = heap->free->next == heap->free;
+    while (heap->free->next != heap->free) {
+      Obj* obj = heap->free->next;
+      obj->prev->next = obj->next;
+      obj->next->prev = obj->prev;
+      heap->_base.on_free(&heap->_base, obj->obj);
+      FbleFree(heap->_base.arena, obj);
+    }
+  } while (!done);
 }
 
 // New -- see documentation for FbleHeap.new in heap.h

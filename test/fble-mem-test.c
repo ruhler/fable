@@ -184,15 +184,18 @@ int main(int argc, char* argv[])
     }
   }
 
+  size_t small_n = 100;
+  size_t large_n = 200;
+
   size_t max_small_n = 0;
-  if (!Run(prgm, 100, 200, &max_small_n)) {
+  if (!Run(prgm, small_n, large_n, &max_small_n)) {
     FbleFreeProgram(arena, prgm);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
 
   size_t max_large_n = 0;
-  if (!Run(prgm, 200, 200, &max_large_n)) {
+  if (!Run(prgm, large_n, large_n, &max_large_n)) {
     FbleFreeProgram(arena, prgm);
     FbleFreeArena(arena);
     return EX_FAIL;
@@ -210,7 +213,8 @@ int main(int argc, char* argv[])
   }
 
   if (growth && max_large_n <= max_small_n + noise) {
-    fprintf(stderr, "memory constant\n");
+    fprintf(stderr, "memory constant: M(%zi) = %zi, M(%zi) = %zi\n",
+        small_n, max_small_n, large_n, max_large_n);
     FbleFreeProgram(arena, prgm);
     FbleFreeArena(arena);
     return EX_FAIL;
