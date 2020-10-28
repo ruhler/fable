@@ -819,15 +819,20 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         return TC_FAILED;
       }
 
-      FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
-      struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
-      FbleVectorInit(arena, struct_tc->args);
+      FbleValueV argv;
+      FbleVectorInit(arena, argv);
       for (size_t i = 0; i < argc; ++i) {
         FbleReleaseType(th, args[i].type);
-        FbleVectorAppend(arena, struct_tc->args, args[i].tc);
+        FbleVectorAppend(arena, argv, args[i].tc);
       }
 
-      return MkTc(&struct_type->_base, FbleNewTcValue(vh, &struct_tc->_base));
+      FbleValue* struct_v = FbleNewStructValue(vh, argv);
+
+      for (size_t i = 0; i < argc; ++i) {
+        FbleReleaseValue(vh, argv.xs[i]);
+      }
+      FbleFree(arena, argv.xs);
+      return MkTc(&struct_type->_base, struct_v);
     }
 
     case FBLE_UNION_VALUE_EXPR: {
@@ -1605,15 +1610,20 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           return TC_FAILED;
         }
 
-        FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
-        struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
-        FbleVectorInit(arena, struct_tc->args);
+        FbleValueV argv;
+        FbleVectorInit(arena, argv);
         for (size_t i = 0; i < argc; ++i) {
           FbleReleaseType(th, args[i].type);
-          FbleVectorAppend(arena, struct_tc->args, args[i].tc);
+          FbleVectorAppend(arena, argv, args[i].tc);
         }
 
-        return MkTc(vtype, FbleNewTcValue(vh, &struct_tc->_base));
+        FbleValue* struct_v = FbleNewStructValue(vh, argv);
+
+        for (size_t i = 0; i < argc; ++i) {
+          FbleReleaseValue(vh, argv.xs[i]);
+        }
+        FbleFree(arena, argv.xs);
+        return MkTc(vtype, struct_v);
       }
 
       ReportError(arena, expr->loc,
@@ -2119,16 +2129,6 @@ void FbleFreeTc(FbleValueHeap* heap, FbleTc* tc)
       }
       FbleFree(arena, let_tc->bindings.xs);
       FbleReleaseValue(heap, let_tc->body);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_STRUCT_VALUE_TC: {
-      FbleStructValueTc* struct_tc = (FbleStructValueTc*)tc;
-      for (size_t i = 0; i < struct_tc->args.size; ++i) {
-        FbleReleaseValue(heap, struct_tc->args.xs[i]);
-      }
-      FbleFree(arena, struct_tc->args.xs);
       FbleFree(arena, tc);
       return;
     }

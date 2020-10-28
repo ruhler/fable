@@ -32,14 +32,21 @@ static FbleValue* Compile(FbleValueHeap* heap, FbleValueV args, FbleValue* value
   switch (value->tag) {
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* struct_value = (FbleStructValue*)value;
-      FbleStructValueTc* struct_tc = FbleAlloc(arena, FbleStructValueTc);
-      struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
-      FbleVectorInit(arena, struct_tc->args);
+
+      FbleValueV argv;
+      FbleVectorInit(arena, argv);
       for (size_t i = 0; i < struct_value->fieldc; ++i) {
         FbleValue* arg = Compile(heap, args, struct_value->fields[i]);
-        FbleVectorAppend(arena, struct_tc->args, arg);
+        FbleVectorAppend(arena, argv, arg);
       }
-      return FbleNewTcValue(heap, &struct_tc->_base);
+
+      FbleValue* result = FbleNewStructValue(heap, argv);
+
+      for (size_t i = 0; i < struct_value->fieldc; ++i) {
+        FbleReleaseValue(heap, argv.xs[i]);
+      }
+      FbleFree(arena, argv.xs);
+      return result;
     }
 
     case FBLE_UNION_VALUE: {

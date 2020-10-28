@@ -24,7 +24,6 @@
 typedef enum {
   FBLE_VAR_TC,
   FBLE_LET_TC,
-  FBLE_STRUCT_VALUE_TC,
   FBLE_UNION_SELECT_TC,
   FBLE_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
@@ -89,15 +88,6 @@ typedef struct {
   FbleValueV bindings;
   FbleValue* body;
 } FbleLetTc;
-
-// FbleStructValueTc --
-//   FBLE_STRUCT_VALUE_TC
-//
-// An expression to allocate a new struct value.
-typedef struct {
-  FbleTc _base;
-  FbleValueV args;
-} FbleStructValueTc;
 
 // FbleUnionSelectTc --
 //   FBLE_UNION_SELECT_TC

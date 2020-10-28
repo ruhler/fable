@@ -573,7 +573,32 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result
 static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleValue* v)
 {
   switch (v->tag) {
-    case FBLE_STRUCT_VALUE: assert(false && "TODO: FBLE_STRUCT_VALUE"); return NULL;
+    case FBLE_STRUCT_VALUE: {
+      FbleStructValue* struct_v = (FbleStructValue*)v;
+
+      size_t argc = struct_v->fieldc;
+      Local* args[argc];
+      for (size_t i = 0; i < argc; ++i) {
+        args[i] = CompileExpr(arena, blocks, false, scope, struct_v->fields[i]);
+      }
+
+      Local* local = NewLocal(arena, scope);
+      FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
+      struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+      struct_instr->_base.profile_ops = NULL;
+      struct_instr->dest = local->index.index;
+      FbleVectorInit(arena, struct_instr->args);
+      AppendInstr(arena, scope, &struct_instr->_base);
+      CompileExit(arena, exit, scope, local);
+
+      for (size_t i = 0; i < argc; ++i) {
+        FbleVectorAppend(arena, struct_instr->args, args[i]->index);
+        LocalRelease(arena, scope, args[i], exit);
+      }
+
+      return local;
+    }
+
 
     case FBLE_UNION_VALUE: {
       FbleUnionValue* union_v = (FbleUnionValue*)v;
@@ -695,32 +720,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
           }
 
           return body;
-        }
-
-        case FBLE_STRUCT_VALUE_TC: {
-          FbleStructValueTc* struct_tc = (FbleStructValueTc*)tc;
-
-          size_t argc = struct_tc->args.size;
-          Local* args[argc];
-          for (size_t i = 0; i < argc; ++i) {
-            args[i] = CompileExpr(arena, blocks, false, scope, struct_tc->args.xs[i]);
-          }
-
-          Local* local = NewLocal(arena, scope);
-          FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
-          struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
-          struct_instr->_base.profile_ops = NULL;
-          struct_instr->dest = local->index.index;
-          FbleVectorInit(arena, struct_instr->args);
-          AppendInstr(arena, scope, &struct_instr->_base);
-          CompileExit(arena, exit, scope, local);
-
-          for (size_t i = 0; i < argc; ++i) {
-            FbleVectorAppend(arena, struct_instr->args, args[i]->index);
-            LocalRelease(arena, scope, args[i], exit);
-          }
-
-          return local;
         }
 
         case FBLE_UNION_SELECT_TC: {

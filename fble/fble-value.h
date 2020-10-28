@@ -110,7 +110,7 @@ void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 //
 // Inputs:
 //   heap - The heap to allocate the value on.
-//   args - The arguments to the struct value.
+//   args - The arguments to the struct value. Borrowed.
 //
 // Results:
 //   A newly allocated struct value with given args.
