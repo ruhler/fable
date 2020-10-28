@@ -226,6 +226,11 @@ static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index)
       assert(index.index < scope->statics.size && "invalid static var index");
       return scope->statics.xs[index.index];
     }
+
+    case FBLE_FREE_VAR: {
+      assert(false && "TODO: figure out how to support compilation of free vars");
+      return NULL;
+    }
   }
 
   UNREACHABLE("should never get here");
@@ -633,7 +638,14 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
-    case FBLE_SYMBOLIC_VALUE: assert(false && "TODO: FBLE_SYMBOLIC_VALUE"); return NULL;
+    case FBLE_SYMBOLIC_VALUE: {
+      FbleSymbolicValue* var_v = (FbleSymbolicValue*)v;
+      Local* local = GetVar(arena, scope, var_v->index);
+      local->refcount++;
+      CompileExit(arena, exit, scope, local);
+      return local;
+    }
+
     case FBLE_DATA_ACCESS_VALUE: {
       FbleDataAccessValue* access_v = (FbleDataAccessValue*)v;
       Local* obj = CompileExpr(arena, blocks, false, scope, access_v->obj);

@@ -340,7 +340,6 @@ typedef struct {
 
 // FbleSymbolicValueInstr -- FBLE_SYMBOLIC_VALUE_INSTR
 //  *dest = <symbolic>
-//
 typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;

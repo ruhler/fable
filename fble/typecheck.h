@@ -48,9 +48,11 @@ typedef struct {
 //
 // FBLE_LOCAL_VAR is a local variable.
 // FBLE_STATIC_VAR is a variable captured from the parent scope.
+// FBLE_FREE_VAR is a unbound var introduced for symbolic elaboration.
 typedef enum {
   FBLE_LOCAL_VAR,
-  FBLE_STATIC_VAR
+  FBLE_STATIC_VAR,
+  FBLE_FREE_VAR,
 } FbleVarSource;
 
 // FbleVarIndex --

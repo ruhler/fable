@@ -135,11 +135,10 @@ typedef struct {
 // FbleSymbolicValue --
 //   FBLE_SYMBOLIC_VALUE
 //
-// A value representing a symbol. A symbolic value contains no information,
-// except that two symbolic values can be compared for equality or not based
-// on their pointers.
+// A value representing a symbol.
 typedef struct {
   FbleValue _base;
+  FbleVarIndex index;
 } FbleSymbolicValue;
 
 // FbleDataAccessValue --

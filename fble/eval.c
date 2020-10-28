@@ -810,6 +810,8 @@ static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr*
   FbleSymbolicValueInstr* symbolic_value_instr = (FbleSymbolicValueInstr*)instr;
   FbleSymbolicValue* value = FbleNewValue(heap, FbleSymbolicValue);
   value->_base.tag = FBLE_SYMBOLIC_VALUE;
+  value->index.source = FBLE_FREE_VAR;
+  value->index.index = 0;
   thread->stack->locals[symbolic_value_instr->dest] = &value->_base;
   return RUNNING;
 }
