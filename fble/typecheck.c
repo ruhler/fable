@@ -577,10 +577,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleTypeAddRef(th, &type_type->_base, type_type->type);
       FbleReleaseType(th, type);
 
-      FbleTypeTc* type_tc = FbleAlloc(arena, FbleTypeTc);
-      type_tc->_base.tag = FBLE_TYPE_TC;
-
-      return MkTc(&type_type->_base, FbleNewTcValue(vh, &type_tc->_base));
+      FbleTypeValue* type_v = FbleNewValue(vh, FbleTypeValue);
+      type_v->_base.tag = FBLE_TYPE_VALUE;
+      return MkTc(&type_type->_base, &type_v->_base);
     }
 
     case FBLE_VAR_EXPR: {
@@ -1145,15 +1144,14 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 
       // TODO: Do we really have to allocate a type value here? Can we
       // optimize this away?
-      FbleTypeTc* type_tc = FbleAlloc(arena, FbleTypeTc);
-      type_tc->_base.tag = FBLE_TYPE_TC;
-      FbleValue* type_v = FbleNewTcValue(vh, &type_tc->_base);
+      FbleTypeValue* type_v = FbleNewValue(vh, FbleTypeValue);
+      type_v->_base.tag = FBLE_TYPE_VALUE;
 
       FbleLetTc* let_tc = FbleAlloc(arena, FbleLetTc);
       let_tc->_base.tag = FBLE_LET_TC;
       let_tc->recursive = false;
       FbleVectorInit(arena, let_tc->bindings);
-      FbleVectorAppend(arena, let_tc->bindings, type_v);
+      FbleVectorAppend(arena, let_tc->bindings, &type_v->_base);
       let_tc->body = body.tc;
 
       return MkTc(pt, FbleNewTcValue(vh, &let_tc->_base));
@@ -2105,11 +2103,6 @@ void FbleFreeTc(FbleValueHeap* heap, FbleTc* tc)
   }
 
   switch (tc->tag) {
-    case FBLE_TYPE_TC: {
-      FbleFree(arena, tc);
-      return;
-    }
-
     case FBLE_VAR_TC: {
       FbleFree(arena, tc);
       return;

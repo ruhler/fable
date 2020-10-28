@@ -22,7 +22,6 @@
 //   the result of running the link and exec processes, rather than a
 //   computation that creates link and exec process values.
 typedef enum {
-  FBLE_TYPE_TC,
   FBLE_VAR_TC,
   FBLE_LET_TC,
   FBLE_DATA_ACCESS_TC,
@@ -45,15 +44,6 @@ typedef enum {
 typedef struct {
   FbleTcTag tag;
 } FbleTc;
-
-// FbleTypeTc --
-//   FBLE_TYPE_TC
-//
-// Represents the type value. Used for struct, union, func, proc and all other
-// kinds of types.
-typedef struct {
-  FbleTc _base;
-} FbleTypeTc;
 
 // FbleVarSource
 //   Where to find a variable.

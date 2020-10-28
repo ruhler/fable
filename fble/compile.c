@@ -596,7 +596,18 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     case FBLE_LINK_VALUE: assert(false && "TODO: FBLE_LINK_VALUE"); return NULL;
     case FBLE_PORT_VALUE: assert(false && "TODO: FBLE_PORT_VALUE"); return NULL;
     case FBLE_REF_VALUE: assert(false && "TODO: FBLE_REF_VALUE"); return NULL;
-    case FBLE_TYPE_VALUE: assert(false && "TODO: FBLE_TYPE_VALUE"); return NULL;
+
+    case FBLE_TYPE_VALUE: {
+      Local* local = NewLocal(arena, scope);
+      FbleTypeInstr* instr = FbleAlloc(arena, FbleTypeInstr);
+      instr->_base.tag = FBLE_TYPE_INSTR;
+      instr->_base.profile_ops = NULL;
+      instr->dest = local->index.index;
+      AppendInstr(arena, scope, &instr->_base);
+      CompileExit(arena, exit, scope, local);
+      return local;
+    }
+
     case FBLE_SYMBOLIC_VALUE: assert(false && "TODO: FBLE_SYMBOLIC_VALUE"); return NULL;
     case FBLE_DATA_ACCESS_VALUE: assert(false && "TODO: FBLE_DATA_ACCESS_VALUE"); return NULL;
     case FBLE_UNION_SELECT_VALUE: assert(false && "TODO: FBLE_UNION_SELECT_VALUE"); return NULL;
@@ -606,17 +617,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleTc* tc = tc_value->tc;
 
       switch (tc->tag) {
-        case FBLE_TYPE_TC: {
-          Local* local = NewLocal(arena, scope);
-          FbleTypeInstr* instr = FbleAlloc(arena, FbleTypeInstr);
-          instr->_base.tag = FBLE_TYPE_INSTR;
-          instr->_base.profile_ops = NULL;
-          instr->dest = local->index.index;
-          AppendInstr(arena, scope, &instr->_base);
-          CompileExit(arena, exit, scope, local);
-          return local;
-        }
-
         case FBLE_VAR_TC: {
           FbleVarTc* var_tc = (FbleVarTc*)tc;
           Local* local = GetVar(arena, scope, var_tc->index);
