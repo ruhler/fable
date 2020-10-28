@@ -27,7 +27,6 @@ typedef enum {
   FBLE_LET_TC,
   FBLE_DATA_ACCESS_TC,
   FBLE_STRUCT_VALUE_TC,
-  FBLE_UNION_VALUE_TC,
   FBLE_UNION_SELECT_TC,
   FBLE_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
@@ -122,14 +121,6 @@ typedef struct {
   size_t tag;
   FbleLoc loc;    // Location to use for reporting undefined access.
 } FbleDataAccessTc;
-
-// FbleUnionValueTc --
-//   FBLE_UNION_VALUE_TC
-typedef struct {
-  FbleTc _base;
-  FbleValue* arg;
-  size_t tag;
-} FbleUnionValueTc;
 
 // FbleUnionSelectTc --
 //   FBLE_UNION_SELECT_TC

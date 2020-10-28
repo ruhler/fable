@@ -886,12 +886,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleReleaseType(th, arg.type);
       FbleReleaseType(th, &union_type->_base);
 
-      FbleUnionValueTc* union_tc = FbleAlloc(arena, FbleUnionValueTc);
-      union_tc->_base.tag = FBLE_UNION_VALUE_TC;
-      union_tc->arg = arg.tc;
-      union_tc->tag = tag;
-
-      return MkTc(type, FbleNewTcValue(vh, &union_tc->_base));
+      FbleValue* union_v = FbleNewUnionValue(vh, tag, arg.tc);
+      FbleReleaseValue(vh, arg.tc);
+      return MkTc(type, union_v);
     }
 
     case FBLE_UNION_SELECT_EXPR: {
@@ -2143,13 +2140,6 @@ void FbleFreeTc(FbleValueHeap* heap, FbleTc* tc)
       FbleDataAccessTc* access_tc = (FbleDataAccessTc*)tc;
       FbleReleaseValue(heap, access_tc->obj);
       FbleFreeLoc(arena, access_tc->loc);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_UNION_VALUE_TC: {
-      FbleUnionValueTc* union_tc = (FbleUnionValueTc*)tc;
-      FbleReleaseValue(heap, union_tc->arg);
       FbleFree(arena, tc);
       return;
     }

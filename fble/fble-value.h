@@ -142,7 +142,7 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 // Inputs:
 //   heap - The heap to allocate the value on.
 //   tag - The tag of the union value.
-//   arg - The argument of the union value.
+//   arg - The argument of the union value. Borrowed.
 //
 // Results:
 //   A newly allocated union value with given tag and arg.

@@ -2,7 +2,13 @@
 * Remove FbleTc.
 * Clean up doc comments in typecheck.h, typecheck.c, compile.c.
 
-* Figure out why the memory-growth tests are failing.
+* Figure out how to fix memory growth tests.
+ - I think the problem is we start with a lot more (unreachable) objects on
+   the heap now, which new allocations burn down from. Unless we do more new
+   allocations than we start with on the heap, the memory growth is hidden
+   behind that initial unreachable heap. Would it be reasonable to expose a
+   FullGc API that we can call from the memory test before running the
+   function?
 
 * Test use of undefined values in case, access, and func apply.
 * Check if it's okay to add new blocks to a profile in progress.

@@ -44,11 +44,10 @@ static FbleValue* Compile(FbleValueHeap* heap, FbleValueV args, FbleValue* value
 
     case FBLE_UNION_VALUE: {
       FbleUnionValue* union_value = (FbleUnionValue*)value;
-      FbleUnionValueTc* union_tc = FbleAlloc(arena, FbleUnionValueTc);
-      union_tc->_base.tag = FBLE_UNION_VALUE_TC;
-      union_tc->tag = union_value->tag;
-      union_tc->arg = Compile(heap, args, union_value->arg);
-      return FbleNewTcValue(heap, &union_tc->_base);
+      FbleValue* arg = Compile(heap, args, union_value->arg);
+      FbleValue* result = FbleNewUnionValue(heap, union_value->tag, arg);
+      FbleReleaseValue(heap, arg);
+      return result;
     }
 
     case FBLE_FUNC_VALUE: assert(false && "TODO: Compile FBLE_FUNC_VALUE"); return NULL;
