@@ -73,13 +73,15 @@ static FbleValue* Compile(FbleValueHeap* heap, FbleValueV args, FbleValue* value
 
     case FBLE_DATA_ACCESS_VALUE: {
       FbleDataAccessValue* access_value = (FbleDataAccessValue*)value;
-      FbleDataAccessTc* access_tc = FbleAlloc(arena, FbleDataAccessTc);
-      access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
-      access_tc->datatype = access_value->datatype;
-      access_tc->obj = Compile(heap, args, access_value->obj);
-      access_tc->tag = access_value->tag;
-      access_tc->loc = FbleCopyLoc(access_value->loc);
-      return FbleNewTcValue(heap, &access_tc->_base);
+      FbleDataAccessValue* access_v = FbleNewValue(heap, FbleDataAccessValue);
+      access_v->_base.tag = FBLE_DATA_ACCESS_VALUE;
+      access_v->datatype = access_value->datatype;
+      access_v->obj = Compile(heap, args, access_value->obj);
+      FbleValueAddRef(heap, &access_v->_base, access_v->obj);
+      FbleReleaseValue(heap, access_v->obj);
+      access_v->tag = access_value->tag;
+      access_v->loc = FbleCopyLoc(access_value->loc);
+      return &access_v->_base;
     }
 
     case FBLE_UNION_SELECT_VALUE: assert(false && "TODO: Compile FBLE_UNION_SELECT_VALUE"); return NULL;

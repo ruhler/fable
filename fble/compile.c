@@ -609,7 +609,33 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     }
 
     case FBLE_SYMBOLIC_VALUE: assert(false && "TODO: FBLE_SYMBOLIC_VALUE"); return NULL;
-    case FBLE_DATA_ACCESS_VALUE: assert(false && "TODO: FBLE_DATA_ACCESS_VALUE"); return NULL;
+    case FBLE_DATA_ACCESS_VALUE: {
+      FbleDataAccessValue* access_v = (FbleDataAccessValue*)v;
+      Local* obj = CompileExpr(arena, blocks, false, scope, access_v->obj);
+
+      FbleInstrTag tag;
+      if (access_v->datatype == FBLE_STRUCT_DATATYPE) {
+        tag = FBLE_STRUCT_ACCESS_INSTR;
+      } else {
+        assert(access_v->datatype == FBLE_UNION_DATATYPE);
+        tag = FBLE_UNION_ACCESS_INSTR;
+      }
+
+      FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
+      access->_base.tag = tag;
+      access->_base.profile_ops = NULL;
+      access->obj = obj->index;
+      access->tag = access_v->tag;
+      access->loc = FbleCopyLoc(access_v->loc);
+      AppendInstr(arena, scope, &access->_base);
+
+      Local* local = NewLocal(arena, scope);
+      access->dest = local->index.index;
+      CompileExit(arena, exit, scope, local);
+      LocalRelease(arena, scope, obj, exit);
+      return local;
+    }
+
     case FBLE_UNION_SELECT_VALUE: assert(false && "TODO: FBLE_UNION_SELECT_VALUE"); return NULL;
 
     case FBLE_TC_VALUE: {
@@ -694,33 +720,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
             LocalRelease(arena, scope, args[i], exit);
           }
 
-          return local;
-        }
-
-        case FBLE_DATA_ACCESS_TC: {
-          FbleDataAccessTc* access_tc = (FbleDataAccessTc*)tc;
-          Local* obj = CompileExpr(arena, blocks, false, scope, access_tc->obj);
-
-          FbleInstrTag tag;
-          if (access_tc->datatype == FBLE_STRUCT_DATATYPE) {
-            tag = FBLE_STRUCT_ACCESS_INSTR;
-          } else {
-            assert(access_tc->datatype == FBLE_UNION_DATATYPE);
-            tag = FBLE_UNION_ACCESS_INSTR;
-          }
-
-          FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
-          access->_base.tag = tag;
-          access->_base.profile_ops = NULL;
-          access->obj = obj->index;
-          access->tag = access_tc->tag;
-          access->loc = FbleCopyLoc(access_tc->loc);
-          AppendInstr(arena, scope, &access->_base);
-
-          Local* local = NewLocal(arena, scope);
-          access->dest = local->index.index;
-          CompileExit(arena, exit, scope, local);
-          LocalRelease(arena, scope, obj, exit);
           return local;
         }
 

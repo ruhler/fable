@@ -24,7 +24,6 @@
 typedef enum {
   FBLE_VAR_TC,
   FBLE_LET_TC,
-  FBLE_DATA_ACCESS_TC,
   FBLE_STRUCT_VALUE_TC,
   FBLE_UNION_SELECT_TC,
   FBLE_FUNC_VALUE_TC,
@@ -99,18 +98,6 @@ typedef struct {
   FbleTc _base;
   FbleValueV args;
 } FbleStructValueTc;
-
-// FbleDataAccessTc --
-//   FBLE_DATA_ACCESS_TC
-//
-// Used for struct and union field access.
-typedef struct {
-  FbleTc _base;
-  FbleDataTypeTag datatype;
-  FbleValue* obj;
-  size_t tag;
-  FbleLoc loc;    // Location to use for reporting undefined access.
-} FbleDataAccessTc;
 
 // FbleUnionSelectTc --
 //   FBLE_UNION_SELECT_TC
