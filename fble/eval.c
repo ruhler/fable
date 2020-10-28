@@ -821,20 +821,34 @@ static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr*
 static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleSymbolicCompileInstr* compile_instr = (FbleSymbolicCompileInstr*)instr;
-  FbleValue* args[compile_instr->args.size];
-  for (size_t i = 0; i < compile_instr->args.size; ++i) {
-    args[i] = FrameGet(thread, compile_instr->args.xs[i]);
+
+  size_t argc = compile_instr->args.size;
+  FbleSymbolicValue* args[argc];
+  for (size_t i = 0; i < argc; ++i) {
+    args[i] = (FbleSymbolicValue*)FrameGetStrict(thread, compile_instr->args.xs[i]);
+    assert(args[i]->_base.tag == FBLE_SYMBOLIC_VALUE);
+    args[i]->index.source = FBLE_LOCAL_VAR;
+    args[i]->index.index = i;
   }
   FbleValue* body = FrameGet(thread, compile_instr->body);
-  FbleValueV argv = { .size = compile_instr->args.size, .xs = args };
+
   FbleName entry_name = {
     .name = FbleNewString(heap->arena, "<elab>"),
     .loc = FbleCopyLoc(compile_instr->loc),
     .space = FBLE_NORMAL_NAME_SPACE,
   };
-  FbleValue* value = FbleSymbolicCompile(heap, argv, body, entry_name);
+
+  FbleInstrBlock* code = FbleCompileValue(heap->arena, argc, body, entry_name, NULL);
+  assert(code->statics == 0);
+
   FbleFreeName(heap->arena, entry_name);
-  thread->stack->locals[compile_instr->dest] = value;
+
+  FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
+  func->_base.tag = FBLE_FUNC_VALUE;
+  func->argc = argc;
+  func->code = code;
+
+  thread->stack->locals[compile_instr->dest] = &func->_base;
   return RUNNING;
 }
 
