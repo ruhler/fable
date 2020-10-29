@@ -680,14 +680,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleTc* tc = tc_value->tc;
 
       switch (tc->tag) {
-        case FBLE_VAR_TC: {
-          FbleVarTc* var_tc = (FbleVarTc*)tc;
-          Local* local = GetVar(arena, scope, var_tc->index);
-          local->refcount++;
-          CompileExit(arena, exit, scope, local);
-          return local;
-        }
-
         case FBLE_LET_TC: {
           FbleLetTc* let_tc = (FbleLetTc*)tc;
 

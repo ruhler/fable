@@ -22,7 +22,6 @@
 //   the result of running the link and exec processes, rather than a
 //   computation that creates link and exec process values.
 typedef enum {
-  FBLE_VAR_TC,
   FBLE_LET_TC,
   FBLE_UNION_SELECT_TC,
   FBLE_FUNC_VALUE_TC,
@@ -72,13 +71,6 @@ typedef struct {
   size_t size;
   FbleVarIndex* xs;
 } FbleVarIndexV;
-
-// FbleVarTc --
-//   FBLE_VAR_TC
-typedef struct {
-  FbleTc _base;
-  FbleVarIndex index;
-} FbleVarTc;
 
 // FbleLetTc --
 //   FBLE_LET_TC
