@@ -86,18 +86,14 @@ typedef struct {
 // FbleUnionSelectTc --
 //   FBLE_UNION_SELECT_TC
 //
-// Because of default branches in union select, the number of possible
-// branches to execute may be fewer than the number of fields in the
-// union type.
-//
-// branches.xs[choices.xs[i]] is the branch to execute when the value of the
-// union has tag i.
+// Because of default branches in union select, it is possible that multiple
+// choices point to the same value. Code generation is expected to check for
+// that and avoid generating duplicate code.
 typedef struct {
   FbleTc _base;
   FbleLoc loc;
   FbleValue* condition;
-  struct { size_t size; size_t* xs; } choices;
-  FbleValueV branches;
+  FbleValueV choices;
 } FbleUnionSelectTc;
 
 // FbleFuncValueTc --

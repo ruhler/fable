@@ -919,20 +919,18 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       select_tc->condition = condition.tc;
       select_tc->loc = FbleCopyLoc(expr->loc);
       FbleVectorInit(arena, select_tc->choices);
-      FbleVectorInit(arena, select_tc->branches);
 
       bool error = false;
       FbleType* target = NULL;
+      FbleValue* default_ = NULL;
 
       size_t branch = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         if (branch < select_expr->choices.size && FbleNamesEqual(select_expr->choices.xs[branch].name, union_type->fields.xs[i].name)) {
-          FbleVectorAppend(arena, select_tc->choices, branch);
-
           Tc result = TypeCheckExpr(th, vh, scope, select_expr->choices.xs[branch].expr);
           result = ProfileBlock(vh, select_expr->choices.xs[branch].name, select_expr->choices.xs[branch].expr->loc, result);
           error = error || (result.type == NULL);
-          FbleVectorAppend(arena, select_tc->branches, result.tc);
+          FbleVectorAppend(arena, select_tc->choices, result.tc);
 
           if (target == NULL) {
             target = result.type;
@@ -961,32 +959,36 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           }
         } else {
           // Use the default branch for this field.
-          FbleVectorAppend(arena, select_tc->choices, select_expr->choices.size);
-        }
-      }
+          if (default_ == NULL) {
+            assert(select_expr->default_ != NULL);
 
-      if (select_expr->default_ != NULL) {
-        FbleName label = {
-          .name = FbleNewString(arena, ":"),
-          .space = FBLE_NORMAL_NAME_SPACE,
-          .loc = FbleCopyLoc(select_expr->default_->loc),
-        };
+            FbleName label = {
+              .name = FbleNewString(arena, ":"),
+              .space = FBLE_NORMAL_NAME_SPACE,
+              .loc = FbleCopyLoc(select_expr->default_->loc),
+            };
 
-        Tc result = TypeCheckExpr(th, vh, scope, select_expr->default_);
-        result = ProfileBlock(vh, label, select_expr->default_->loc, result);
-        FbleFreeName(arena, label);
-        error = error || (result.type == NULL);
-        FbleVectorAppend(arena, select_tc->branches, result.tc);
-        if (target == NULL) {
-          target = result.type;
-        } else if (result.type != NULL) {
-          if (!FbleTypesEqual(th, target, result.type)) {
-            ReportError(arena, select_expr->default_->loc,
-                "expected type %t, but found %t\n",
-                target, result.type);
-            error = true;
+            Tc result = TypeCheckExpr(th, vh, scope, select_expr->default_);
+            result = ProfileBlock(vh, label, select_expr->default_->loc, result);
+            FbleFreeName(arena, label);
+            error = error || (result.type == NULL);
+            default_ = result.tc;
+            if (target == NULL) {
+              target = result.type;
+            } else if (result.type != NULL) {
+              if (!FbleTypesEqual(th, target, result.type)) {
+                ReportError(arena, select_expr->default_->loc,
+                    "expected type %t, but found %t\n",
+                    target, result.type);
+                error = true;
+              }
+              FbleReleaseType(th, result.type);
+            }
+          } else {
+            FbleRetainValue(vh, default_);
           }
-          FbleReleaseType(th, result.type);
+
+          FbleVectorAppend(arena, select_tc->choices, default_);
         }
       }
 
@@ -995,6 +997,12 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
             "unexpected tag '%n'\n",
             select_expr->choices.xs[branch]);
         error = true;
+      }
+
+      // TODO: Is it okay to have an unused default branch? If so, should we
+      // still compile it to check for errors?
+      if (!error && select_expr->default_ != NULL && default_ == NULL) {
+        assert(false && "TODO: decide what to do for unused default branch");
       }
 
       FbleReleaseType(th, &union_type->_base);
@@ -2130,11 +2138,10 @@ void FbleFreeTc(FbleValueHeap* heap, FbleTc* tc)
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)tc;
       FbleFreeLoc(arena, select_tc->loc);
       FbleReleaseValue(heap, select_tc->condition);
-      FbleFree(arena, select_tc->choices.xs);
-      for (size_t i = 0; i < select_tc->branches.size; ++i) {
-        FbleReleaseValue(heap, select_tc->branches.xs[i]);
+      for (size_t i = 0; i < select_tc->choices.size; ++i) {
+        FbleReleaseValue(heap, select_tc->choices.xs[i]);
       }
-      FbleFree(arena, select_tc->branches.xs);
+      FbleFree(arena, select_tc->choices.xs);
       FbleFree(arena, tc);
       return;
     }
