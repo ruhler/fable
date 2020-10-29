@@ -84,7 +84,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     case FBLE_PORT_VALUE: return;
     case FBLE_REF_VALUE: return;
     case FBLE_TYPE_VALUE: return;
-    case FBLE_SYMBOLIC_VALUE: return;
+    case FBLE_VAR_VALUE: return;
 
     case FBLE_DATA_ACCESS_VALUE: {
       FbleDataAccessValue* v = (FbleDataAccessValue*)value;
@@ -170,7 +170,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     }
 
     case FBLE_TYPE_VALUE: break;
-    case FBLE_SYMBOLIC_VALUE: break;
+    case FBLE_VAR_VALUE: break;
 
     case FBLE_DATA_ACCESS_VALUE: {
       FbleDataAccessValue* v = (FbleDataAccessValue*)value;

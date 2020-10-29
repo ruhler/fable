@@ -638,8 +638,8 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
-    case FBLE_SYMBOLIC_VALUE: {
-      FbleSymbolicValue* var_v = (FbleSymbolicValue*)v;
+    case FBLE_VAR_VALUE: {
+      FbleVarValue* var_v = (FbleVarValue*)v;
       Local* local = GetVar(arena, scope, var_v->index);
       local->refcount++;
       CompileExit(arena, exit, scope, local);

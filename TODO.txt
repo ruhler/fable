@@ -1,6 +1,9 @@
 * Migrate All FbleTc over to FbleValue.
 * Remove FbleTc.
 * Clean up doc comments in typecheck.h, typecheck.c, compile.c.
+* Reorganize and clean up documentation of value type
+ - Because the difference between a value and an expression is starting to get
+   confusing.
 
 * Figure out how to fix memory growth tests.
  - I think the problem is we start with a lot more (unreachable) objects on
@@ -28,6 +31,10 @@
 * Figure out how to keep track of locations for symbolic computation.
  - in particular for getting meaningful profiles out of symbolic compiled
    code.
+
+* Add test for nested elaborate expressions.
+ - In particular, we need to make sure argument variables don't get mixed up
+   when elaborating multiple functions at the same time.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?

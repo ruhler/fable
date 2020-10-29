@@ -808,8 +808,8 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleSymbolicValueInstr* symbolic_value_instr = (FbleSymbolicValueInstr*)instr;
-  FbleSymbolicValue* value = FbleNewValue(heap, FbleSymbolicValue);
-  value->_base.tag = FBLE_SYMBOLIC_VALUE;
+  FbleVarValue* value = FbleNewValue(heap, FbleVarValue);
+  value->_base.tag = FBLE_VAR_VALUE;
   value->index.source = FBLE_FREE_VAR;
   value->index.index = 0;
   thread->stack->locals[symbolic_value_instr->dest] = &value->_base;
@@ -823,10 +823,10 @@ static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInst
   FbleSymbolicCompileInstr* compile_instr = (FbleSymbolicCompileInstr*)instr;
 
   size_t argc = compile_instr->args.size;
-  FbleSymbolicValue* args[argc];
+  FbleVarValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    args[i] = (FbleSymbolicValue*)FrameGetStrict(thread, compile_instr->args.xs[i]);
-    assert(args[i]->_base.tag == FBLE_SYMBOLIC_VALUE);
+    args[i] = (FbleVarValue*)FrameGetStrict(thread, compile_instr->args.xs[i]);
+    assert(args[i]->_base.tag == FBLE_VAR_VALUE);
     args[i]->index.source = FBLE_LOCAL_VAR;
     args[i]->index.index = i;
   }

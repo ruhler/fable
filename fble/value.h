@@ -21,7 +21,7 @@ typedef enum {
   FBLE_REF_VALUE,
   FBLE_TYPE_VALUE,
 
-  FBLE_SYMBOLIC_VALUE,
+  FBLE_VAR_VALUE,
   FBLE_DATA_ACCESS_VALUE,
   FBLE_UNION_SELECT_VALUE,
   // FBLE_FUNC_APPLY_VALUE,
@@ -132,14 +132,14 @@ typedef struct {
   FbleValue _base;
 } FbleTypeValue;
 
-// FbleSymbolicValue --
-//   FBLE_SYMBOLIC_VALUE
+// FbleVarValue --
+//   FBLE_VAR_VALUE
 //
-// A value representing a symbol.
+// A value representing a specific variable.
 typedef struct {
   FbleValue _base;
   FbleVarIndex index;
-} FbleSymbolicValue;
+} FbleVarValue;
 
 // FbleDataAccessValue --
 //   FBLE_DATA_ACCESS_VALUE
