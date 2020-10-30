@@ -105,6 +105,19 @@ void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 //   Causes the dst value to no longer be retained by src.
 void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 
+// FbleValueFullGc --
+//   Perform a full garbage collection on the value heap. Frees any
+//   unreachable objects currently on the heap.
+//
+// This is an expensive operation intended for test and debug purposes.
+//
+// Inputs:
+//   heap - the heap to perform gc on.
+//
+// Side effects:
+//   Frees any unreachable objects currently on the heap.
+void FbleValueFullGc(FbleValueHeap* heap);
+
 // FbleNewStructValue --
 //   Create a new struct value with given arguments.
 //

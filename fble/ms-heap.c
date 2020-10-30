@@ -110,7 +110,7 @@ typedef struct {
 
 static void MarkRefs(Heap* heap, Obj* obj);
 static bool IncrGc(Heap* heap);
-static void FullGc(Heap* heap);
+static void FullGc(FbleHeap* heap);
 
 // MarkRefs --
 //   Visit the references from the given object for the purposes of marking.
@@ -273,8 +273,10 @@ bool IncrGc(Heap* heap)
 //
 // Side effects:
 //   Does full GC, freeing all unreachable objects.
-void FullGc(Heap* heap)
+void FullGc(FbleHeap* heap_)
 {
+  Heap* heap = (Heap*)heap_;
+
   // Finish the GC in progress.
   while (!IncrGc(heap));
 
@@ -427,6 +429,7 @@ FbleHeap* FbleNewMarkSweepHeap(
   heap->_base.release = &Release;
   heap->_base.add_ref = &AddRef;
   heap->_base.del_ref = &DelRef;
+  heap->_base.full_gc = &FullGc;
 
   heap->to = FbleAlloc(arena, Obj);
   heap->from = FbleAlloc(arena, Obj);
@@ -456,7 +459,7 @@ FbleHeap* FbleNewMarkSweepHeap(
 void FbleFreeMarkSweepHeap(FbleHeap* heap_)
 {
   Heap* heap = (Heap*)heap_;
-  FullGc(heap);
+  FullGc(heap_);
 
   FbleArena* arena = heap->_base.arena;
 

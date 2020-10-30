@@ -94,6 +94,11 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
       FbleReleaseValue(heap, zero);
       FbleReleaseValue(heap, one);
 
+      // Run an explicit full gc before applying the function so that garbage
+      // collection during function application is not impacted by any
+      // allocations made so far.
+      FbleValueFullGc(heap);
+
       FbleValue* result = FbleApply(heap, func, &tail, profile);
 
       // As a special case, if the result of evaluation is a process, execute

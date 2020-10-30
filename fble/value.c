@@ -55,6 +55,12 @@ void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
   heap->del_ref(heap, src, dst);
 }
 
+// FbleValueFullGc -- see documentation in fble-value.h
+void FbleValueFullGc(FbleValueHeap* heap)
+{
+  heap->full_gc(heap);
+}
+
 // OnFree --
 //   The 'on_free' function for values. See documentation in heap.h
 static void OnFree(FbleValueHeap* heap, FbleValue* value)

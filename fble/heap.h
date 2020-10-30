@@ -175,6 +175,20 @@ typedef struct FbleHeap {
   //   Behavior is undefined if there was not a corresponding previous call to
   //   add_ref with the same src and dst objects.
   void (*del_ref)(struct FbleHeap* heap, void* src, void* dst);
+
+  // full_gc --
+  //   Causes the garbage collector to perform a full garbage collection,
+  //   collecting all objects that are currently unreachable.
+  //
+  // Full GC can be a very expensive operation. This method is primarily
+  // intended to be used to help in testing and debugging of memory use.
+  //
+  // Inputs:
+  //   heap - this heap.
+  //
+  // Side effects:
+  //   Causes all currently unreachable objects on the heap to be freed.
+  void (*full_gc)(struct FbleHeap* heap);
 } FbleHeap;
 
 // FbleNewMarkSweepHeap --

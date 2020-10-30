@@ -5,14 +5,6 @@
  - Because the difference between a value and an expression is starting to get
    confusing.
 
-* Figure out how to fix memory growth tests.
- - I think the problem is we start with a lot more (unreachable) objects on
-   the heap now, which new allocations burn down from. Unless we do more new
-   allocations than we start with on the heap, the memory growth is hidden
-   behind that initial unreachable heap. Would it be reasonable to expose a
-   FullGc API that we can call from the memory test before running the
-   function?
-
 * Test use of undefined values in case, access, and func apply.
 * Check if it's okay to add new blocks to a profile in progress.
  - if so, pass the profile to FbleSymbolicCompile so we can get profiling
@@ -38,6 +30,10 @@
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?
+
+* Any way to improve memory growth tests?
+ It feels wrong to me to have to do a full gc for the tests to pass. It feels
+ too specific to the implementation of garbage collection. Anything we can do?
 
 * Proof of concept fblf
  - Implement N bit addition, run on evaluator and compile via llvm to c code
