@@ -453,6 +453,12 @@ same order as they are declared in the union type, regardless of whether or
 not a default value is provided. At least one non-default choice must be
 provided.
 
+A default branch may be specified even if all fields have explicit branches.
+This allows new fields to be added to the union type, defaulting to the
+default branch instead of having to update all union select expressions on
+that type. Any errors in compilation of the default branch are considered
+errors in the program, even if the default branch is unused.
+
 The expression is evaluated by evaluating the condition, then evaluating the
 choice selected by the condition. No other choices are evaluated.
 

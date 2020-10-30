@@ -922,7 +922,22 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 
       bool error = false;
       FbleType* target = NULL;
+
       FbleValue* default_ = NULL;
+      if (select_expr->default_ != NULL) {
+        FbleName label = {
+          .name = FbleNewString(arena, ":"),
+          .space = FBLE_NORMAL_NAME_SPACE,
+          .loc = FbleCopyLoc(select_expr->default_->loc),
+        };
+
+        Tc result = TypeCheckExpr(th, vh, scope, select_expr->default_);
+        result = ProfileBlock(vh, label, select_expr->default_->loc, result);
+        FbleFreeName(arena, label);
+        error = error || (result.type == NULL);
+        default_ = result.tc;
+        target = result.type;
+      }
 
       size_t branch = 0;
       for (size_t i = 0; i < union_type->fields.size; ++i) {
@@ -959,37 +974,15 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           }
         } else {
           // Use the default branch for this field.
-          if (default_ == NULL) {
-            assert(select_expr->default_ != NULL);
-
-            FbleName label = {
-              .name = FbleNewString(arena, ":"),
-              .space = FBLE_NORMAL_NAME_SPACE,
-              .loc = FbleCopyLoc(select_expr->default_->loc),
-            };
-
-            Tc result = TypeCheckExpr(th, vh, scope, select_expr->default_);
-            result = ProfileBlock(vh, label, select_expr->default_->loc, result);
-            FbleFreeName(arena, label);
-            error = error || (result.type == NULL);
-            default_ = result.tc;
-            if (target == NULL) {
-              target = result.type;
-            } else if (result.type != NULL) {
-              if (!FbleTypesEqual(th, target, result.type)) {
-                ReportError(arena, select_expr->default_->loc,
-                    "expected type %t, but found %t\n",
-                    target, result.type);
-                error = true;
-              }
-              FbleReleaseType(th, result.type);
-            }
-          } else {
+          if (default_ != NULL) {
             FbleRetainValue(vh, default_);
+            FbleVectorAppend(arena, select_tc->choices, default_);
           }
-
-          FbleVectorAppend(arena, select_tc->choices, default_);
         }
+      }
+
+      if (default_ != NULL) {
+        FbleReleaseValue(vh, default_);
       }
 
       if (branch < select_expr->choices.size) {
@@ -997,12 +990,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
             "unexpected tag '%n'\n",
             select_expr->choices.xs[branch]);
         error = true;
-      }
-
-      // TODO: Is it okay to have an unused default branch? If so, should we
-      // still compile it to check for errors?
-      if (!error && select_expr->default_ != NULL && default_ == NULL) {
-        assert(false && "TODO: decide what to do for unused default branch");
       }
 
       FbleReleaseType(th, &union_type->_base);

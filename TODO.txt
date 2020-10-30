@@ -1,8 +1,3 @@
-* Clarify in spec if it's allowed to provide an unused default branch, and if
-  the body of that branch should be compiled or not.
- - Fix the existing spec test for this case.
- - And add a spec test for the case where there is an error in the unused
-   default branch.
 * Migrate All FbleTc over to FbleValue.
 * Remove FbleTc.
 * Clean up doc comments in typecheck.h, typecheck.c, compile.c.

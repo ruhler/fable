@@ -1,20 +1,18 @@
-fble-test {
+fble-test-error 17:10 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
-  Bool@ false = Bool@(false: Unit@());
 
   @ Char@ = +(Unit@ a, Unit@ b, Unit@ c, Unit@ d, Unit@ e);
 
   # The default branch isn't used here, because we've provided all the tags.
-  # It's a bit silly to have a default branch in that case, but to leave
-  # things open for future refactorings where new tags are added without
-  # having to change the expression, this is allowed.
+  # Test that errors in an unused default branch are considered errors in the
+  # pogram.
   Char@(b: Unit@()).?(
       a: true,
       b: true,
       c: true,
       d: true,
-      e: false,
-       : false).true;
+      e: true,
+       : zzz).true;
 }
