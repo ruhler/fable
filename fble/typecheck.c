@@ -914,11 +914,17 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       }
       FbleReleaseType(th, condition.type);
 
-      FbleUnionSelectTc* select_tc = FbleAlloc(arena, FbleUnionSelectTc);
-      select_tc->_base.tag = FBLE_UNION_SELECT_TC;
-      select_tc->condition = condition.tc;
-      select_tc->loc = FbleCopyLoc(expr->loc);
-      FbleVectorInit(arena, select_tc->choices);
+      FbleUnionSelectValue* select_v = FbleNewValueExtra(vh, FbleUnionSelectValue, union_type->fields.size * sizeof(FbleValue*));
+      select_v->_base.tag = FBLE_UNION_SELECT_VALUE;
+      select_v->loc = FbleCopyLoc(expr->loc);
+      select_v->condition = condition.tc;
+      select_v->choicec = union_type->fields.size;
+      for (size_t i = 0; i < select_v->choicec; ++i) {
+        select_v->choices[i] = NULL;
+      }
+
+      FbleValueAddRef(vh, &select_v->_base, select_v->condition);
+      FbleReleaseValue(vh, select_v->condition);
 
       bool error = false;
       FbleType* target = NULL;
@@ -945,7 +951,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           Tc result = TypeCheckExpr(th, vh, scope, select_expr->choices.xs[branch].expr);
           result = ProfileBlock(vh, select_expr->choices.xs[branch].name, select_expr->choices.xs[branch].expr->loc, result);
           error = error || (result.type == NULL);
-          FbleVectorAppend(arena, select_tc->choices, result.tc);
+          select_v->choices[i] = result.tc;
+          if (select_v->choices[i] != NULL) {
+            FbleValueAddRef(vh, &select_v->_base, select_v->choices[i]);
+            FbleReleaseValue(vh, select_v->choices[i]);
+          }
 
           if (target == NULL) {
             target = result.type;
@@ -975,8 +985,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         } else {
           // Use the default branch for this field.
           if (default_ != NULL) {
-            FbleRetainValue(vh, default_);
-            FbleVectorAppend(arena, select_tc->choices, default_);
+            select_v->choices[i] = default_;
+            FbleValueAddRef(vh, &select_v->_base, select_v->choices[i]);
           }
         }
       }
@@ -993,7 +1003,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       }
 
       FbleReleaseType(th, &union_type->_base);
-      Tc tc = MkTc(target, FbleNewTcValue(vh, &select_tc->_base));
+      Tc tc = MkTc(target, &select_v->_base);
       if (error) {
         FreeTc(th, vh, tc);
         return TC_FAILED;
@@ -2117,18 +2127,6 @@ void FbleFreeTc(FbleValueHeap* heap, FbleTc* tc)
       }
       FbleFree(arena, let_tc->bindings.xs);
       FbleReleaseValue(heap, let_tc->body);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_UNION_SELECT_TC: {
-      FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)tc;
-      FbleFreeLoc(arena, select_tc->loc);
-      FbleReleaseValue(heap, select_tc->condition);
-      for (size_t i = 0; i < select_tc->choices.size; ++i) {
-        FbleReleaseValue(heap, select_tc->choices.xs[i]);
-      }
-      FbleFree(arena, select_tc->choices.xs);
       FbleFree(arena, tc);
       return;
     }

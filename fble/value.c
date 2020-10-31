@@ -98,7 +98,11 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_UNION_SELECT_VALUE: return;
+    case FBLE_UNION_SELECT_VALUE: {
+      FbleUnionSelectValue* v = (FbleUnionSelectValue*)value;
+      FbleFreeLoc(arena, v->loc);
+      return;
+    }
 
     case FBLE_TC_VALUE: {
       FbleTcValue* v = (FbleTcValue*)value;

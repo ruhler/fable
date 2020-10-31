@@ -23,7 +23,6 @@
 //   computation that creates link and exec process values.
 typedef enum {
   FBLE_LET_TC,
-  FBLE_UNION_SELECT_TC,
   FBLE_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
   FBLE_LINK_TC,
@@ -82,19 +81,6 @@ typedef struct {
   FbleValueV bindings;
   FbleValue* body;
 } FbleLetTc;
-
-// FbleUnionSelectTc --
-//   FBLE_UNION_SELECT_TC
-//
-// Because of default branches in union select, it is possible that multiple
-// choices point to the same value. Code generation is expected to check for
-// that and avoid generating duplicate code.
-typedef struct {
-  FbleTc _base;
-  FbleLoc loc;
-  FbleValue* condition;
-  FbleValueV choices;
-} FbleUnionSelectTc;
 
 // FbleFuncValueTc --
 //   FBLE_FUNC_VALUE_TC

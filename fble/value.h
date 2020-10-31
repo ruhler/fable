@@ -24,8 +24,6 @@ typedef enum {
   FBLE_VAR_VALUE,
   FBLE_DATA_ACCESS_VALUE,
   FBLE_UNION_SELECT_VALUE,
-  // FBLE_FUNC_APPLY_VALUE,
-  // FBLE_PROC_EXEC_VALUE,
 
   FBLE_TC_VALUE,
 } FbleValueTag;
@@ -153,8 +151,13 @@ typedef struct {
 
 // FbleUnionSelectValue --
 //   FBLE_UNION_SELECT_VALUE
+//
+// Because of default branches in union select, it is possible that multiple
+// choices point to the same value. Code generation is expected to check for
+// that and avoid generating duplicate code.
 typedef struct {
   FbleValue _base;
+  FbleLoc loc;
   FbleValue* condition;
   size_t choicec;
   FbleValue* choices[];

@@ -147,7 +147,7 @@ typedef struct FbleHeap {
   // Inputs:
   //   heap - this heap
   //   src - the source object.
-  //   dst - the destination object.
+  //   dst - the destination object. Must not be NULL.
   //
   // Side effects:
   //   Causes the dst object to be retained at least as long as the src object

@@ -3,6 +3,7 @@
 
 #include <assert.h>   // for assert
 #include <stdbool.h>  // for bool
+#include <stdlib.h>   // for NULL
 
 #include "fble-alloc.h"
 #include "heap.h"
@@ -386,6 +387,8 @@ static void Release(FbleHeap* heap_, void* obj_)
 // AddRef -- see documentation for FbleHeap.add_ref in heap.h
 static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
 {
+  assert(dst_ != NULL);
+
   Heap* heap = (Heap*)heap_;
   Obj* src = ToObj(src_);
   Obj* dst = ToObj(dst_);
