@@ -1,12 +1,8 @@
-* Migrate All FbleTc over to FbleValue.
-* Use _TC suffix for FbleValue tag names?
- - So it's easier to distinguish between things representing values and things
-   representing expressions. e.g. FBLE_LINK_VALUE_TC vs. FBLE_LINK_TC.
-* Remove FbleTc.
-* Clean up doc comments in typecheck.h, typecheck.c, compile.c.
-* Reorganize and clean up documentation of value type
- - Because the difference between a value and an expression is starting to get
-   confusing.
+* Major cleanup/reorganization of FbleValue
+ - Rename FbleValue to FbleTc?
+ - Add _TC suffix for all tag names?
+ - Clean up doc comments in typecheck.h, typecheck.c, compile.c.
+ - Reorganize and clean up documentation of value type
 
 * Test use of undefined values in case, access, and func apply.
 * Check if it's okay to add new blocks to a profile in progress.

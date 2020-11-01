@@ -128,9 +128,23 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_TC_VALUE: {
-      FbleTcValue* v = (FbleTcValue*)value;
-      FbleFreeTc(heap, v->tc);
+    case FBLE_LET_TC: {
+      FbleLetTc* let_tc = (FbleLetTc*)value;
+      FbleFree(arena, let_tc->bindings.xs);
+      return;
+    }
+
+    case FBLE_FUNC_VALUE_TC: {
+      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)value;
+      FbleFreeLoc(arena, func_tc->body_loc);
+      FbleFree(arena, func_tc->scope.xs);
+      return;
+    }
+
+    case FBLE_FUNC_APPLY_TC: {
+      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)value;
+      FbleFreeLoc(arena, apply_tc->loc);
+      FbleFree(arena, apply_tc->args.xs);
       return;
     }
   }
@@ -250,7 +264,29 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       return;
     }
 
-    case FBLE_TC_VALUE: break;
+    case FBLE_LET_TC: {
+      FbleLetTc* let_tc = (FbleLetTc*)value;
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        Ref(callback, let_tc->bindings.xs[i]);
+      }
+      Ref(callback, let_tc->body);
+      return;
+    }
+
+    case FBLE_FUNC_VALUE_TC: {
+      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)value;
+      Ref(callback, func_tc->body);
+      return;
+    }
+
+    case FBLE_FUNC_APPLY_TC: {
+      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)value;
+      Ref(callback, apply_tc->func);
+      for (size_t i = 0; i < apply_tc->args.size; ++i) {
+        Ref(callback, apply_tc->args.xs[i]);
+      }
+      return;
+    }
   }
 }
 

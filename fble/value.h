@@ -12,6 +12,15 @@
 
 // FbleValueTag --
 //   A tag used to distinguish among different kinds of values.
+//
+// FbleTc is like FbleExpr, except that:
+// * Field and variable names are replaced with integer indicies.
+// * Types are eliminated.
+// * Processes are treated as zero argument functions.
+// * There is no difference between a function context and a process context.
+//   In particular, LINK_TC and EXEC_TC represent the computation that returns
+//   the result of running the link and exec processes, rather than a
+//   computation that creates link and exec process values.
 typedef enum {
   FBLE_STRUCT_VALUE,
   FBLE_UNION_VALUE,
@@ -31,7 +40,9 @@ typedef enum {
   FBLE_SYMBOLIC_VALUE_TC,
   FBLE_SYMBOLIC_COMPILE_TC,
 
-  FBLE_TC_VALUE,
+  FBLE_LET_TC,
+  FBLE_FUNC_VALUE_TC,
+  FBLE_FUNC_APPLY_TC,
 } FbleValueTag;
 
 // FbleValue --
@@ -227,15 +238,37 @@ typedef struct {
   FbleValue* body;
 } FbleSymbolicCompileTc;
 
-// FbleTcValue --
-//   FBLE_TC_VALUE
+// FbleLetTc --
+//   FBLE_LET_TC
 //
-// A wrapper around an FbleTc. This is a temporary kind of value used to
-// facilitate the replacement of FbleTc with FbleValue.
+// recursive is false if the let is a non-recursive let expression.
 typedef struct {
   FbleValue _base;
-  FbleTc* tc;
-} FbleTcValue;
+  bool recursive;
+  FbleValueV bindings;
+  FbleValue* body;
+} FbleLetTc;
+
+// FbleFuncValueTc --
+//   FBLE_FUNC_VALUE_TC
+//
+// Note: FuncValueTc is used for process values as well as function values.
+typedef struct {
+  FbleValue _base;
+  FbleLoc body_loc;
+  FbleVarIndexV scope;
+  size_t argc;
+  FbleValue* body;
+} FbleFuncValueTc;
+
+// FbleFuncApplyTc --
+//   FBLE_FUNC_APPLY_TC
+typedef struct {
+  FbleValue _base;
+  FbleLoc loc;
+  FbleValue* func;
+  FbleValueV args;
+} FbleFuncApplyTc;
 
 // FbleNewValue --
 //   Allocate a new value of the given type.
