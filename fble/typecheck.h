@@ -25,10 +25,6 @@ typedef enum {
   FBLE_LET_TC,
   FBLE_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
-  FBLE_LINK_TC,
-  FBLE_EXEC_TC,
-  FBLE_SYMBOLIC_VALUE_TC,
-  FBLE_SYMBOLIC_COMPILE_TC,
 } FbleTcTag;
 
 // FbleTc --
@@ -101,46 +97,6 @@ typedef struct {
   FbleValue* func;
   FbleValueV args;
 } FbleFuncApplyTc;
-
-// FbleLinkTc --
-//   FBLE_LINK_TC
-//
-// Unlike FBLE_LINK_EXPR, which evaluates to a proc value, FBLE_LINK_TC
-// evaluates to the result of the computing the proc value.
-typedef struct {
-  FbleTc _base;
-  FbleValue* body;
-} FbleLinkTc;
-
-// FbleExecTc --
-//   FBLE_EXEC_TC
-//
-// Unlike FBLE_EXEC_EXPR, which evaluates to a proc value, FBLE_EXEC_TC
-// evaluates to the result of the computing the proc value.
-typedef struct {
-  FbleTc _base;
-  FbleValueV bindings;
-  FbleValue* body;
-} FbleExecTc;
-
-// FbleSymbolicValueTc --
-//   FBLE_SYMBOLIC_VALUE_TC
-//
-// An expression to allocate a new symbolic value.
-typedef struct {
-  FbleTc _base;
-} FbleSymbolicValueTc;
-
-// FbleSymbolicCompileTc --
-//   FBLE_SYMBOLIC_COMPILE_TC 
-//
-// An expression to compile a symbolic value into a function.
-typedef struct {
-  FbleTc _base;
-  FbleLoc loc;
-  FbleVarIndexV args;
-  FbleValue* body;
-} FbleSymbolicCompileTc;
 
 // FbleNewTcValue --
 //   Create a new FbleTcValue.

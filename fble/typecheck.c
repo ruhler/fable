@@ -1393,10 +1393,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleVectorInit(arena, let_tc->bindings);
       size_t arg_ids = scope->vars.size;
       for (size_t i = 0; i < argc; ++i) {
-        FbleSymbolicValueTc* arg = FbleAlloc(arena, FbleSymbolicValueTc);
+        FbleSymbolicValueTc* arg = FbleNewValue(vh, FbleSymbolicValueTc);
         arg->_base.tag = FBLE_SYMBOLIC_VALUE_TC;
-        FbleValue* arg_v = FbleNewTcValue(vh, &arg->_base);
-        FbleVectorAppend(arena, let_tc->bindings, arg_v);
+        FbleVectorAppend(arena, let_tc->bindings, &arg->_base);
       }
 
       FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
@@ -1412,7 +1411,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         FbleVectorAppend(arena, apply_tc->args, &var_v->_base);
       }
 
-      FbleSymbolicCompileTc* compile_tc = FbleAlloc(arena, FbleSymbolicCompileTc);
+      FbleSymbolicCompileTc* compile_tc = FbleNewValue(vh, FbleSymbolicCompileTc);
       compile_tc->_base.tag = FBLE_SYMBOLIC_COMPILE_TC;
       compile_tc->loc = FbleCopyLoc(expr->loc);
       FbleVectorInit(arena, compile_tc->args);
@@ -1421,7 +1420,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         FbleVectorAppend(arena, compile_tc->args, arg);
       }
       compile_tc->body = FbleNewTcValue(vh, &apply_tc->_base);
-      let_tc->body = FbleNewTcValue(vh, &compile_tc->_base);
+      FbleValueAddRef(vh, &compile_tc->_base, compile_tc->body);
+      FbleReleaseValue(vh, compile_tc->body);
+      let_tc->body = &compile_tc->_base;
 
       return MkTc(body.type, FbleNewTcValue(vh, &let_tc->_base));
     }
@@ -1770,10 +1771,12 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         return TC_FAILED;
       }
 
-      FbleLinkTc* link_tc = FbleAlloc(arena, FbleLinkTc);
+      FbleLinkTc* link_tc = FbleNewValue(vh, FbleLinkTc);
       link_tc->_base.tag = FBLE_LINK_TC;
       link_tc->body = body.tc;
-      return MkTc(body.type, FbleNewTcValue(vh, &link_tc->_base));
+      FbleValueAddRef(vh, &link_tc->_base, link_tc->body);
+      FbleReleaseValue(vh, link_tc->body);
+      return MkTc(body.type, &link_tc->_base);
     }
 
     case FBLE_EXEC_EXPR: {
@@ -1787,7 +1790,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         error = error || (types[i] == NULL);
       }
 
-      FbleExecTc* exec_tc = FbleAlloc(arena, FbleExecTc);
+      FbleExecTc* exec_tc = FbleNewValue(vh, FbleExecTc);
       exec_tc->_base.tag = FBLE_EXEC_TC;
       FbleVectorInit(arena, exec_tc->bindings);
       exec_tc->body = NULL;
@@ -1814,6 +1817,10 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           error = true;
         }
         FbleVectorAppend(arena, exec_tc->bindings, binding.tc);
+        if (binding.tc != NULL) {
+          FbleValueAddRef(vh, &exec_tc->_base, binding.tc);
+          FbleReleaseValue(vh, binding.tc);
+        }
         FbleReleaseType(th, binding.type);
       }
 
@@ -1831,12 +1838,14 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       }
 
       if (body.type == NULL) {
-        FbleFreeTc(vh, &exec_tc->_base);
+        FbleReleaseValue(vh, &exec_tc->_base);
         return TC_FAILED;
       }
 
       exec_tc->body = body.tc;
-      return MkTc(body.type, FbleNewTcValue(vh, &exec_tc->_base));
+      FbleValueAddRef(vh, &exec_tc->_base, body.tc);
+      FbleReleaseValue(vh, body.tc);
+      return MkTc(body.type, &exec_tc->_base);
     }
   }
 
@@ -2150,38 +2159,6 @@ void FbleFreeTc(FbleValueHeap* heap, FbleTc* tc)
         FbleReleaseValue(heap, apply_tc->args.xs[i]);
       }
       FbleFree(arena, apply_tc->args.xs);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_LINK_TC: {
-      FbleLinkTc* link_tc = (FbleLinkTc*)tc;
-      FbleReleaseValue(heap, link_tc->body);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_EXEC_TC: {
-      FbleExecTc* exec_tc = (FbleExecTc*)tc;
-      for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        FbleReleaseValue(heap, exec_tc->bindings.xs[i]);
-      }
-      FbleFree(arena, exec_tc->bindings.xs);
-      FbleReleaseValue(heap, exec_tc->body);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_SYMBOLIC_VALUE_TC: {
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_SYMBOLIC_COMPILE_TC: {
-      FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)tc;
-      FbleFreeLoc(arena, compile_tc->loc);
-      FbleReleaseValue(heap, compile_tc->body);
-      FbleFree(arena, compile_tc->args.xs);
       FbleFree(arena, tc);
       return;
     }

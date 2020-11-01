@@ -764,6 +764,106 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return result;
     }
 
+    case FBLE_LINK_TC: {
+      FbleLinkTc* link_tc = (FbleLinkTc*)v;
+
+      FbleLinkInstr* link = FbleAlloc(arena, FbleLinkInstr);
+      link->_base.tag = FBLE_LINK_INSTR;
+      link->_base.profile_ops = NULL;
+
+      Local* get_local = NewLocal(arena, scope);
+      link->get = get_local->index.index;
+      PushVar(arena, scope, get_local);
+
+      Local* put_local = NewLocal(arena, scope);
+      link->put = put_local->index.index;
+      PushVar(arena, scope, put_local);
+
+      AppendInstr(arena, scope, &link->_base);
+
+      Local* result = CompileExpr(arena, blocks, exit, scope, link_tc->body);
+
+      PopVar(arena, scope, exit);
+      PopVar(arena, scope, exit);
+      return result;
+    }
+
+    case FBLE_EXEC_TC: {
+      FbleExecTc* exec_tc = (FbleExecTc*)v;
+
+      Local* args[exec_tc->bindings.size];
+      for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
+        args[i] = CompileExpr(arena, blocks, false, scope, exec_tc->bindings.xs[i]);
+      }
+
+      FbleForkInstr* fork = FbleAlloc(arena, FbleForkInstr);
+      fork->_base.tag = FBLE_FORK_INSTR;
+      fork->_base.profile_ops = NULL;
+      FbleVectorInit(arena, fork->args);
+      fork->dests.xs = FbleArrayAlloc(arena, FbleLocalIndex, exec_tc->bindings.size);
+      fork->dests.size = exec_tc->bindings.size;
+      AppendInstr(arena, scope, &fork->_base);
+
+      for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
+        // Note: Make sure we call NewLocal before calling LocalRelease on any
+        // of the arguments.
+        Local* local = NewLocal(arena, scope);
+        fork->dests.xs[i] = local->index.index;
+        PushVar(arena, scope, local);
+      }
+
+      for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
+        // TODO: Does this hold on to the bindings longer than we want to?
+        if (args[i] != NULL) {
+          FbleVectorAppend(arena, fork->args, args[i]->index);
+          LocalRelease(arena, scope, args[i], false);
+        }
+      }
+
+      Local* local = CompileExpr(arena, blocks, exit, scope, exec_tc->body);
+
+      for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
+        PopVar(arena, scope, exit);
+      }
+
+      return local;
+    }
+
+    case FBLE_SYMBOLIC_VALUE_TC: {
+      Local* local = NewLocal(arena, scope);
+      FbleSymbolicValueInstr* instr = FbleAlloc(arena, FbleSymbolicValueInstr);
+      instr->_base.tag = FBLE_SYMBOLIC_VALUE_INSTR;
+      instr->_base.profile_ops = NULL;
+      instr->dest = local->index.index;
+      AppendInstr(arena, scope, &instr->_base);
+      CompileExit(arena, exit, scope, local);
+      return local;
+    }
+
+    case FBLE_SYMBOLIC_COMPILE_TC: {
+      FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)v;
+      size_t argc = compile_tc->args.size;
+
+      Local* body = CompileExpr(arena, blocks, false, scope, compile_tc->body);
+
+      Local* local = NewLocal(arena, scope);
+      FbleSymbolicCompileInstr* compile_instr = FbleAlloc(arena, FbleSymbolicCompileInstr);
+      compile_instr->_base.tag = FBLE_SYMBOLIC_COMPILE_INSTR;
+      compile_instr->_base.profile_ops = NULL;
+      compile_instr->loc = FbleCopyLoc(compile_tc->loc);
+      compile_instr->body = body->index;
+      compile_instr->dest = local->index.index;
+      FbleVectorInit(arena, compile_instr->args);
+      for (size_t i = 0; i < argc; ++i) {
+        Local* args = GetVar(arena, scope, compile_tc->args.xs[i]);
+        FbleVectorAppend(arena, compile_instr->args, args->index);
+      }
+      AppendInstr(arena, scope, &compile_instr->_base);
+      CompileExit(arena, exit, scope, local);
+      LocalRelease(arena, scope, body, exit);
+      return local;
+    }
+
     case FBLE_TC_VALUE: {
       FbleTcValue* tc_value = (FbleTcValue*)v;
       FbleTc* tc = tc_value->tc;
@@ -908,105 +1008,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
           return dest;
         }
 
-        case FBLE_LINK_TC: {
-          FbleLinkTc* link_tc = (FbleLinkTc*)tc;
-
-          FbleLinkInstr* link = FbleAlloc(arena, FbleLinkInstr);
-          link->_base.tag = FBLE_LINK_INSTR;
-          link->_base.profile_ops = NULL;
-
-          Local* get_local = NewLocal(arena, scope);
-          link->get = get_local->index.index;
-          PushVar(arena, scope, get_local);
-
-          Local* put_local = NewLocal(arena, scope);
-          link->put = put_local->index.index;
-          PushVar(arena, scope, put_local);
-
-          AppendInstr(arena, scope, &link->_base);
-
-          Local* result = CompileExpr(arena, blocks, exit, scope, link_tc->body);
-
-          PopVar(arena, scope, exit);
-          PopVar(arena, scope, exit);
-          return result;
-        }
-
-        case FBLE_EXEC_TC: {
-          FbleExecTc* exec_tc = (FbleExecTc*)tc;
-
-          Local* args[exec_tc->bindings.size];
-          for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-            args[i] = CompileExpr(arena, blocks, false, scope, exec_tc->bindings.xs[i]);
-          }
-
-          FbleForkInstr* fork = FbleAlloc(arena, FbleForkInstr);
-          fork->_base.tag = FBLE_FORK_INSTR;
-          fork->_base.profile_ops = NULL;
-          FbleVectorInit(arena, fork->args);
-          fork->dests.xs = FbleArrayAlloc(arena, FbleLocalIndex, exec_tc->bindings.size);
-          fork->dests.size = exec_tc->bindings.size;
-          AppendInstr(arena, scope, &fork->_base);
-
-          for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-            // Note: Make sure we call NewLocal before calling LocalRelease on any
-            // of the arguments.
-            Local* local = NewLocal(arena, scope);
-            fork->dests.xs[i] = local->index.index;
-            PushVar(arena, scope, local);
-          }
-
-          for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-            // TODO: Does this hold on to the bindings longer than we want to?
-            if (args[i] != NULL) {
-              FbleVectorAppend(arena, fork->args, args[i]->index);
-              LocalRelease(arena, scope, args[i], false);
-            }
-          }
-
-          Local* local = CompileExpr(arena, blocks, exit, scope, exec_tc->body);
-
-          for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-            PopVar(arena, scope, exit);
-          }
-
-          return local;
-        }
-
-        case FBLE_SYMBOLIC_VALUE_TC: {
-          Local* local = NewLocal(arena, scope);
-          FbleSymbolicValueInstr* instr = FbleAlloc(arena, FbleSymbolicValueInstr);
-          instr->_base.tag = FBLE_SYMBOLIC_VALUE_INSTR;
-          instr->_base.profile_ops = NULL;
-          instr->dest = local->index.index;
-          AppendInstr(arena, scope, &instr->_base);
-          CompileExit(arena, exit, scope, local);
-          return local;
-        }
-
-        case FBLE_SYMBOLIC_COMPILE_TC: {
-          FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)tc;
-          size_t argc = compile_tc->args.size;
-
-          Local* body = CompileExpr(arena, blocks, false, scope, compile_tc->body);
-
-          Local* local = NewLocal(arena, scope);
-          FbleSymbolicCompileInstr* compile_instr = FbleAlloc(arena, FbleSymbolicCompileInstr);
-          compile_instr->_base.tag = FBLE_SYMBOLIC_COMPILE_INSTR;
-          compile_instr->_base.profile_ops = NULL;
-          compile_instr->loc = FbleCopyLoc(compile_tc->loc);
-          compile_instr->body = body->index;
-          compile_instr->dest = local->index.index;
-          FbleVectorInit(arena, compile_instr->args);
-          for (size_t i = 0; i < argc; ++i) {
-            Local* args = GetVar(arena, scope, compile_tc->args.xs[i]);
-            FbleVectorAppend(arena, compile_instr->args, args->index);
-          }
-          AppendInstr(arena, scope, &compile_instr->_base);
-          CompileExit(arena, exit, scope, local);
-          LocalRelease(arena, scope, body, exit);
-          return local;
-        }
       }
 
       UNREACHABLE("should already have returned");
