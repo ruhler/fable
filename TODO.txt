@@ -1,4 +1,7 @@
 * Migrate All FbleTc over to FbleValue.
+* Use _TC suffix for FbleValue tag names?
+ - So it's easier to distinguish between things representing values and things
+   representing expressions. e.g. FBLE_LINK_VALUE_TC vs. FBLE_LINK_TC.
 * Remove FbleTc.
 * Clean up doc comments in typecheck.h, typecheck.c, compile.c.
 * Reorganize and clean up documentation of value type

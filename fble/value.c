@@ -104,6 +104,13 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
+    case FBLE_PROFILE_TC: {
+      FbleProfileTc* profile_tc = (FbleProfileTc*)value;
+      FbleFreeLoc(arena, profile_tc->loc);
+      FbleFreeName(arena, profile_tc->name);
+      return;
+    }
+
     case FBLE_TC_VALUE: {
       FbleTcValue* v = (FbleTcValue*)value;
       FbleFreeTc(heap, v->tc);
@@ -194,6 +201,13 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       for (size_t i = 0; i < v->choicec; ++i) {
         Ref(callback, v->choices[i]);
       }
+      break;
+    }
+
+    case FBLE_PROFILE_TC: {
+      FbleProfileTc* v = (FbleProfileTc*)value;
+      Ref(callback, v->body);
+      break;
     }
 
     case FBLE_TC_VALUE: break;

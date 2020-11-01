@@ -432,12 +432,14 @@ static Tc ProfileBlock(FbleValueHeap* vh, FbleName label, FbleLoc loc, Tc tc)
     return TC_FAILED;
   }
 
-  FbleProfileTc* profile_tc = FbleAlloc(vh->arena, FbleProfileTc);
+  FbleProfileTc* profile_tc = FbleNewValue(vh, FbleProfileTc);
   profile_tc->_base.tag = FBLE_PROFILE_TC;
   profile_tc->loc = FbleCopyLoc(loc);
   profile_tc->name = FbleCopyName(vh->arena, label);
   profile_tc->body = tc.tc;
-  tc.tc = FbleNewTcValue(vh, &profile_tc->_base);
+  FbleValueAddRef(vh, &profile_tc->_base, profile_tc->body);
+  FbleReleaseValue(vh, profile_tc->body);
+  tc.tc = &profile_tc->_base;
   return tc;
 }
 
@@ -2180,15 +2182,6 @@ void FbleFreeTc(FbleValueHeap* heap, FbleTc* tc)
       FbleFreeLoc(arena, compile_tc->loc);
       FbleReleaseValue(heap, compile_tc->body);
       FbleFree(arena, compile_tc->args.xs);
-      FbleFree(arena, tc);
-      return;
-    }
-
-    case FBLE_PROFILE_TC: {
-      FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
-      FbleFreeLoc(arena, profile_tc->loc);
-      FbleFreeName(arena, profile_tc->name);
-      FbleReleaseValue(heap, profile_tc->body);
       FbleFree(arena, tc);
       return;
     }

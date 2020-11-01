@@ -756,6 +756,13 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return target;
     }
 
+    case FBLE_PROFILE_TC: {
+      FbleProfileTc* profile_tc = (FbleProfileTc*)v;
+      EnterBlock(arena, blocks, profile_tc->name, profile_tc->loc, scope);
+      Local* result = CompileExpr(arena, blocks, exit, scope, profile_tc->body);
+      ExitBlock(arena, blocks, scope, exit);
+      return result;
+    }
 
     case FBLE_TC_VALUE: {
       FbleTcValue* tc_value = (FbleTcValue*)v;
@@ -999,14 +1006,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
           CompileExit(arena, exit, scope, local);
           LocalRelease(arena, scope, body, exit);
           return local;
-        }
-
-        case FBLE_PROFILE_TC: {
-          FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
-          EnterBlock(arena, blocks, profile_tc->name, profile_tc->loc, scope);
-          Local* result = CompileExpr(arena, blocks, exit, scope, profile_tc->body);
-          ExitBlock(arena, blocks, scope, exit);
-          return result;
         }
       }
 

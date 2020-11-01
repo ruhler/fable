@@ -24,6 +24,7 @@ typedef enum {
   FBLE_VAR_VALUE,
   FBLE_DATA_ACCESS_VALUE,
   FBLE_UNION_SELECT_VALUE,
+  FBLE_PROFILE_TC,
 
   FBLE_TC_VALUE,
 } FbleValueTag;
@@ -162,6 +163,24 @@ typedef struct {
   size_t choicec;
   FbleValue* choices[];
 } FbleUnionSelectValue;
+
+// FbleProfileTc --
+//   FBLE_PROFILE_TC
+//
+// FbleProfileTc is used to denote a profiling block.
+//
+// Fields:
+//   name - the name of the block for profiling purposes.
+//   loc - the location of the profile block.
+//   body - the body of the profile block.
+//
+// The location of the profiling block is passed through loc, not name.loc.
+typedef struct {
+  FbleValue _base;
+  FbleName name;
+  FbleLoc loc;
+  FbleValue* body;
+} FbleProfileTc;
 
 // FbleTcValue --
 //   FBLE_TC_VALUE

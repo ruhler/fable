@@ -29,7 +29,6 @@ typedef enum {
   FBLE_EXEC_TC,
   FBLE_SYMBOLIC_VALUE_TC,
   FBLE_SYMBOLIC_COMPILE_TC,
-  FBLE_PROFILE_TC,
 } FbleTcTag;
 
 // FbleTc --
@@ -142,24 +141,6 @@ typedef struct {
   FbleVarIndexV args;
   FbleValue* body;
 } FbleSymbolicCompileTc;
-
-// FbleProfileTc --
-//   FBLE_PROFILE_TC
-//
-// FbleProfileTc is used to denote a profiling block.
-//
-// Fields:
-//   name - the name of the block for profiling purposes.
-//   loc - the location of the profile block.
-//   body - the body of the profile block.
-//
-// The location of the profiling block is passed through loc, not name.loc.
-typedef struct {
-  FbleTc _base;
-  FbleName name;
-  FbleLoc loc;
-  FbleValue* body;
-} FbleProfileTc;
 
 // FbleNewTcValue --
 //   Create a new FbleTcValue.
