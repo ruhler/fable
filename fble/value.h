@@ -331,23 +331,4 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
 //   longer in use. This function does not take ownership of the link value.
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link);
 
-// FbleSymbolicCompile --
-//   Compile a function described using a symbolic value.
-//
-// Inputs:
-//   heap - the heap to allocate the value on.
-//   args - a list of expressions that appear in the body that should be
-//          treated as arguments to the function to compile.
-//   body - the body of the function to compile, represented as a symbolic
-//          value.
-//   name - the name of the expression to use in profiling. Borrowed.
-//
-// Results:
-//   A function value compiled from the body.
-//
-// Side effects:
-//   The returned value must be freed using FbleReleaseValue when no longer in
-//   use. This function does not take ownership of the arg or body values.
-FbleValue* FbleSymbolicCompile(FbleValueHeap* heap, FbleValueV args, FbleValue* body, FbleName);
-
 #endif // FBLE_INTERNAL_VALUE_H_
