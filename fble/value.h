@@ -22,27 +22,30 @@
 //   the result of running the link and exec processes, rather than a
 //   computation that creates link and exec process values.
 typedef enum {
+  FBLE_TYPE_VALUE,
+  FBLE_VAR_VALUE,
+  FBLE_LET_TC,
+
   FBLE_STRUCT_VALUE,
   FBLE_UNION_VALUE,
+  FBLE_UNION_SELECT_VALUE,
+  FBLE_DATA_ACCESS_VALUE,
+
+  FBLE_FUNC_VALUE_TC,
   FBLE_FUNC_VALUE,
+  FBLE_FUNC_APPLY_TC,
+
   FBLE_LINK_VALUE,
   FBLE_PORT_VALUE,
-  FBLE_REF_VALUE,
-  FBLE_TYPE_VALUE,
-
-  FBLE_VAR_VALUE,
-  FBLE_DATA_ACCESS_VALUE,
-  FBLE_UNION_SELECT_VALUE,
-  FBLE_PROFILE_TC,
-
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
+
   FBLE_SYMBOLIC_VALUE_TC,
   FBLE_SYMBOLIC_COMPILE_TC,
 
-  FBLE_LET_TC,
-  FBLE_FUNC_VALUE_TC,
-  FBLE_FUNC_APPLY_TC,
+  FBLE_PROFILE_TC,
+
+  FBLE_REF_VALUE,
 } FbleValueTag;
 
 // FbleValue --
