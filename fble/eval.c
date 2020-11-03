@@ -798,8 +798,8 @@ static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-  FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
-  value->_base.tag = FBLE_TYPE_VALUE;
+  FbleTypeValueTc* value = FbleNewValue(heap, FbleTypeValueTc);
+  value->_base.tag = FBLE_TYPE_VALUE_TC;
   thread->stack->locals[type_instr->dest] = &value->_base;
   return RUNNING;
 }

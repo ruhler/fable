@@ -68,6 +68,8 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 {
   FbleArena* arena = heap->arena;
   switch (value->tag) {
+    case FBLE_TYPE_VALUE_TC: return;
+
     case FBLE_STRUCT_VALUE: return;
     case FBLE_UNION_VALUE: return;
 
@@ -90,7 +92,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_PORT_VALUE: return;
     case FBLE_REF_VALUE: return;
-    case FBLE_TYPE_VALUE: return;
     case FBLE_VAR_VALUE: return;
 
     case FBLE_DATA_ACCESS_VALUE: {
@@ -178,6 +179,8 @@ static void Ref(FbleHeapCallback* callback, FbleValue* value)
 static void Refs(FbleHeapCallback* callback, FbleValue* value)
 {
   switch (value->tag) {
+    case FBLE_TYPE_VALUE_TC: break;
+
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;
       for (size_t i = 0; i < sv->fieldc; ++i) {
@@ -218,7 +221,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_TYPE_VALUE: break;
     case FBLE_VAR_VALUE: break;
 
     case FBLE_DATA_ACCESS_VALUE: {

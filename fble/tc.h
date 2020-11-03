@@ -33,7 +33,7 @@ typedef struct FbleValue FbleTc;
 // FbleValueTag --
 //   A tag used to distinguish among different kinds of values.
 typedef enum {
-  FBLE_TYPE_VALUE,
+  FBLE_TYPE_VALUE_TC,
   FBLE_VAR_VALUE,
   FBLE_LET_TC,
 
@@ -67,6 +67,16 @@ typedef enum {
 struct FbleValue {
   FbleValueTag tag;
 };
+
+// FbleTypeValueTc --
+//   FBLE_TYPE_VALUE_TC
+//
+// Represents the type value. Because types are compile-time concepts, not
+// runtime concepts, the type value contains no information.
+typedef struct {
+  FbleTc _base;
+} FbleTypeValueTc;
+
 
 // FbleStructValue --
 //   FBLE_STRUCT_VALUE
@@ -151,15 +161,6 @@ typedef struct FbleRefValue {
   FbleValue _base;
   FbleValue* value;
 } FbleRefValue;
-
-// FbleTypeValue --
-//   FBLE_TYPE_VALUE
-//
-// A value representing a type. Because types are compile-time concepts, not
-// runtime concepts, the type value contains no information.
-typedef struct {
-  FbleValue _base;
-} FbleTypeValue;
 
 // FbleVarSource
 //   Where to find a variable.
