@@ -590,6 +590,14 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
+    case FBLE_VAR_TC: {
+      FbleVarTc* var_tc = (FbleVarTc*)v;
+      Local* local = GetVar(arena, scope, var_tc->index);
+      local->refcount++;
+      CompileExit(arena, exit, scope, local);
+      return local;
+    }
+
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* struct_v = (FbleStructValue*)v;
 
@@ -638,14 +646,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     case FBLE_LINK_VALUE: assert(false && "TODO: FBLE_LINK_VALUE"); return NULL;
     case FBLE_PORT_VALUE: assert(false && "TODO: FBLE_PORT_VALUE"); return NULL;
     case FBLE_REF_VALUE: assert(false && "TODO: FBLE_REF_VALUE"); return NULL;
-
-    case FBLE_VAR_VALUE: {
-      FbleVarValue* var_v = (FbleVarValue*)v;
-      Local* local = GetVar(arena, scope, var_v->index);
-      local->refcount++;
-      CompileExit(arena, exit, scope, local);
-      return local;
-    }
 
     case FBLE_DATA_ACCESS_VALUE: {
       FbleDataAccessValue* access_v = (FbleDataAccessValue*)v;

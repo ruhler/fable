@@ -480,20 +480,20 @@ static FbleValue* NewListTc(FbleValueHeap* vh, FbleLoc loc, FbleValueV args)
   //   
   assert(args.size > 0 && "empty lists not allowed");
 
-  FbleVarValue* nil = FbleNewValue(vh, FbleVarValue);
-  nil->_base.tag = FBLE_VAR_VALUE;
+  FbleVarTc* nil = FbleNewValue(vh, FbleVarTc);
+  nil->_base.tag = FBLE_VAR_TC;
   nil->index.source = FBLE_LOCAL_VAR;
   nil->index.index = 1;
 
   FbleValue* applys = &nil->_base;
   for (size_t i = 0; i < args.size; ++i) {
-    FbleVarValue* cons = FbleNewValue(vh, FbleVarValue);
-    cons->_base.tag = FBLE_VAR_VALUE;
+    FbleVarTc* cons = FbleNewValue(vh, FbleVarTc);
+    cons->_base.tag = FBLE_VAR_TC;
     cons->index.source = FBLE_LOCAL_VAR;
     cons->index.index = 0;
 
-    FbleVarValue* x = FbleNewValue(vh, FbleVarValue);
-    x->_base.tag = FBLE_VAR_VALUE;
+    FbleVarTc* x = FbleNewValue(vh, FbleVarTc);
+    x->_base.tag = FBLE_VAR_TC;
     x->index.source = FBLE_STATIC_VAR;
     x->index.index = args.size - i - 1;
 
@@ -606,10 +606,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         return TC_FAILED;
       }
 
-      FbleVarValue* var_v = FbleNewValue(vh, FbleVarValue);
-      var_v->_base.tag = FBLE_VAR_VALUE;
-      var_v->index = var->index;
-      return MkTc(FbleRetainType(th, var->type), &var_v->_base);
+      FbleVarTc* var_tc = FbleNewValue(vh, FbleVarTc);
+      var_tc->_base.tag = FBLE_VAR_TC;
+      var_tc->index = var->index;
+      return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
     }
 
     case FBLE_LET_EXPR: {
@@ -1334,15 +1334,15 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
               break;
             }
 
-            FbleVarValue* var_v = FbleNewValue(vh, FbleVarValue);
-            var_v->_base.tag = FBLE_VAR_VALUE;
-            var_v->index.source = FBLE_LOCAL_VAR;
-            var_v->index.index = scope->vars.size;
+            FbleVarTc* var_tc = FbleNewValue(vh, FbleVarTc);
+            var_tc->_base.tag = FBLE_VAR_TC;
+            var_tc->index.source = FBLE_LOCAL_VAR;
+            var_tc->index.index = scope->vars.size;
 
             FbleDataAccessValue* access_v = FbleNewValue(vh, FbleDataAccessValue);
             access_v->_base.tag = FBLE_DATA_ACCESS_VALUE;
             access_v->datatype = FBLE_STRUCT_DATATYPE;
-            access_v->obj = &var_v->_base;
+            access_v->obj = &var_tc->_base;
             FbleValueAddRef(vh, &access_v->_base, access_v->obj);
             FbleReleaseValue(vh, access_v->obj);
             access_v->tag = j;
@@ -1441,13 +1441,13 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleValueAddRef(vh, &apply_tc->_base, apply_tc->func);
       FbleReleaseValue(vh, apply_tc->func);
       for (size_t i = 0; i < argc; ++i) {
-        FbleVarValue* var_v = FbleNewValue(vh, FbleVarValue);
-        var_v->_base.tag = FBLE_VAR_VALUE;
-        var_v->index.source = FBLE_LOCAL_VAR;
-        var_v->index.index = arg_ids + i;
-        FbleVectorAppend(arena, apply_tc->args, &var_v->_base);
-        FbleValueAddRef(vh, &apply_tc->_base, &var_v->_base);
-        FbleReleaseValue(vh, &var_v->_base);
+        FbleVarTc* var_tc = FbleNewValue(vh, FbleVarTc);
+        var_tc->_base.tag = FBLE_VAR_TC;
+        var_tc->index.source = FBLE_LOCAL_VAR;
+        var_tc->index.index = arg_ids + i;
+        FbleVectorAppend(arena, apply_tc->args, &var_tc->_base);
+        FbleValueAddRef(vh, &apply_tc->_base, &var_tc->_base);
+        FbleReleaseValue(vh, &var_tc->_base);
       }
 
       FbleSymbolicCompileTc* compile_tc = FbleNewValue(vh, FbleSymbolicCompileTc);
@@ -1477,10 +1477,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       assert(var != NULL && "module not in scope");
       assert(var->type != NULL && "recursive module reference");
 
-      FbleVarValue* var_v = FbleNewValue(vh, FbleVarValue);
-      var_v->_base.tag = FBLE_VAR_VALUE;
-      var_v->index = var->index;
-      return MkTc(FbleRetainType(th, var->type), &var_v->_base);
+      FbleVarTc* var_tc = FbleNewValue(vh, FbleVarTc);
+      var_tc->_base.tag = FBLE_VAR_TC;
+      var_tc->index = var->index;
+      return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
     }
 
     case FBLE_DATA_ACCESS_EXPR: {

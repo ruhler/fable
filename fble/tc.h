@@ -34,7 +34,7 @@ typedef struct FbleValue FbleTc;
 //   A tag used to distinguish among different kinds of values.
 typedef enum {
   FBLE_TYPE_VALUE_TC,
-  FBLE_VAR_VALUE,
+  FBLE_VAR_TC,
   FBLE_LET_TC,
 
   FBLE_STRUCT_VALUE,
@@ -77,91 +77,6 @@ typedef struct {
   FbleTc _base;
 } FbleTypeValueTc;
 
-
-// FbleStructValue --
-//   FBLE_STRUCT_VALUE
-typedef struct {
-  FbleValue _base;
-  size_t fieldc;
-  FbleValue* fields[];
-} FbleStructValue;
-
-// FbleUnionValue --
-//   FBLE_UNION_VALUE
-typedef struct {
-  FbleValue _base;
-  size_t tag;
-  FbleValue* arg;
-} FbleUnionValue;
-
-// FbleFuncValue -- FBLE_FUNC_VALUE
-//
-// Fields:
-//   argc - The number of arguments expected by the function.
-//   code - The code for the function.
-//   scope - The scope at the time the function was created, representing the
-//           lexical context available to the function. The length of this
-//           array is code->statics.
-//
-// Note: Function values are used for both pure functions and processes. We
-// don't distinguish between the two at runtime, except that argc == 0
-// suggests this is for a process instead of a function.
-typedef struct {
-  FbleValue _base;
-  size_t argc;
-  FbleInstrBlock* code;
-  FbleValue* scope[];
-} FbleFuncValue;
-
-// FbleProcValue -- FBLE_PROC_VALUE
-//   A proc value is represented as a function that takes no arguments.
-#define FBLE_PROC_VALUE FBLE_FUNC_VALUE
-typedef FbleFuncValue FbleProcValue;
-
-// FbleValues --
-//   A non-circular singly linked list of values.
-typedef struct FbleValues {
-  FbleValue* value;
-  struct FbleValues* next;
-} FbleValues;
-
-// FbleLinkValue -- FBLE_LINK_VALUE
-//   Holds the list of values on a link. Values are added to the tail and taken
-//   from the head. If there are no values on the list, both head and tail are
-//   set to NULL.
-typedef struct {
-  FbleValue _base;
-  FbleValues* head;
-  FbleValues* tail;
-} FbleLinkValue;
-
-// FblePortValue --
-//   FBLE_PORT_VALUE
-//
-// Use for input and output values linked to external IO.
-//
-// data is a pointer to a value owned externally where data should be put to
-// and got from.
-typedef struct {
-  FbleValue _base;
-  FbleValue** data;
-} FblePortValue;
-
-// FbleRefValue --
-//   FBLE_REF_VALUE
-//
-// A implementation-specific value introduced to support recursive values. A
-// ref value is simply a reference to another value. All values must be
-// dereferenced before being otherwise accessed in case they are reference
-// values.
-//
-// Fields:
-//   value - the value being referenced, or NULL if no value is referenced.
-typedef struct FbleRefValue {
-  FbleValue _base;
-  FbleValue* value;
-} FbleRefValue;
-
 // FbleVarSource
 //   Where to find a variable.
 //
@@ -192,21 +107,108 @@ typedef struct {
   FbleVarIndex* xs;
 } FbleVarIndexV;
 
-// FbleVarValue --
-//   FBLE_VAR_VALUE
+// FbleVarTc --
+//   FBLE_VAR_TC
 //
-// A value representing a specific variable.
+// A variable expression.
+// * Used to represent variables refering to function arguments or local
+//   variables. 
+// * Used to represent pure symbolic values for symbolic elaboration.
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   FbleVarIndex index;
-} FbleVarValue;
+} FbleVarTc;
+
+// FbleStructValue --
+//   FBLE_STRUCT_VALUE
+typedef struct {
+  FbleTc _base;
+  size_t fieldc;
+  FbleTc* fields[];
+} FbleStructValue;
+
+// FbleUnionValue --
+//   FBLE_UNION_VALUE
+typedef struct {
+  FbleTc _base;
+  size_t tag;
+  FbleTc* arg;
+} FbleUnionValue;
+
+// FbleFuncValue -- FBLE_FUNC_VALUE
+//
+// Fields:
+//   argc - The number of arguments expected by the function.
+//   code - The code for the function.
+//   scope - The scope at the time the function was created, representing the
+//           lexical context available to the function. The length of this
+//           array is code->statics.
+//
+// Note: Function values are used for both pure functions and processes. We
+// don't distinguish between the two at runtime, except that argc == 0
+// suggests this is for a process instead of a function.
+typedef struct {
+  FbleTc _base;
+  size_t argc;
+  FbleInstrBlock* code;
+  FbleValue* scope[];
+} FbleFuncValue;
+
+// FbleProcValue -- FBLE_PROC_VALUE
+//   A proc value is represented as a function that takes no arguments.
+#define FBLE_PROC_VALUE FBLE_FUNC_VALUE
+typedef FbleFuncValue FbleProcValue;
+
+// FbleValues --
+//   A non-circular singly linked list of values.
+typedef struct FbleValues {
+  FbleValue* value;
+  struct FbleValues* next;
+} FbleValues;
+
+// FbleLinkValue -- FBLE_LINK_VALUE
+//   Holds the list of values on a link. Values are added to the tail and taken
+//   from the head. If there are no values on the list, both head and tail are
+//   set to NULL.
+typedef struct {
+  FbleTc _base;
+  FbleValues* head;
+  FbleValues* tail;
+} FbleLinkValue;
+
+// FblePortValue --
+//   FBLE_PORT_VALUE
+//
+// Use for input and output values linked to external IO.
+//
+// data is a pointer to a value owned externally where data should be put to
+// and got from.
+typedef struct {
+  FbleTc _base;
+  FbleValue** data;
+} FblePortValue;
+
+// FbleRefValue --
+//   FBLE_REF_VALUE
+//
+// A implementation-specific value introduced to support recursive values. A
+// ref value is simply a reference to another value. All values must be
+// dereferenced before being otherwise accessed in case they are reference
+// values.
+//
+// Fields:
+//   value - the value being referenced, or NULL if no value is referenced.
+typedef struct FbleRefValue {
+  FbleTc _base;
+  FbleValue* value;
+} FbleRefValue;
 
 // FbleDataAccessValue --
 //   FBLE_DATA_ACCESS_VALUE
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   FbleDataTypeTag datatype;
-  FbleValue* obj;
+  FbleTc* obj;
   size_t tag;
   FbleLoc loc;
 } FbleDataAccessValue;
@@ -218,11 +220,11 @@ typedef struct {
 // choices point to the same value. Code generation is expected to check for
 // that and avoid generating duplicate code.
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   FbleLoc loc;
-  FbleValue* condition;
+  FbleTc* condition;
   size_t choicec;
-  FbleValue* choices[];
+  FbleTc* choices[];
 } FbleUnionSelectValue;
 
 // FbleProfileTc --
@@ -237,10 +239,10 @@ typedef struct {
 //
 // The location of the profiling block is passed through loc, not name.loc.
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   FbleName name;
   FbleLoc loc;
-  FbleValue* body;
+  FbleTc* body;
 } FbleProfileTc;
 
 // FbleLinkTc --
@@ -249,8 +251,8 @@ typedef struct {
 // Unlike FBLE_LINK_EXPR, which evaluates to a proc value, FBLE_LINK_TC
 // evaluates to the result of the computing the proc value.
 typedef struct {
-  FbleValue _base;
-  FbleValue* body;
+  FbleTc _base;
+  FbleTc* body;
 } FbleLinkTc;
 
 // FbleExecTc --
@@ -259,9 +261,9 @@ typedef struct {
 // Unlike FBLE_EXEC_EXPR, which evaluates to a proc value, FBLE_EXEC_TC
 // evaluates to the result of the computing the proc value.
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   FbleValueV bindings;
-  FbleValue* body;
+  FbleTc* body;
 } FbleExecTc;
 
 // FbleSymbolicValueTc --
@@ -269,7 +271,7 @@ typedef struct {
 //
 // An expression to allocate a new symbolic value.
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
 } FbleSymbolicValueTc;
 
 // FbleSymbolicCompileTc --
@@ -277,10 +279,10 @@ typedef struct {
 //
 // An expression to compile a symbolic value into a function.
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   FbleLoc loc;
   FbleVarIndexV args;
-  FbleValue* body;
+  FbleTc* body;
 } FbleSymbolicCompileTc;
 
 // FbleLetTc --
@@ -288,10 +290,10 @@ typedef struct {
 //
 // recursive is false if the let is a non-recursive let expression.
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   bool recursive;
   FbleValueV bindings;
-  FbleValue* body;
+  FbleTc* body;
 } FbleLetTc;
 
 // FbleFuncValueTc --
@@ -299,19 +301,19 @@ typedef struct {
 //
 // Note: FuncValueTc is used for process values as well as function values.
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   FbleLoc body_loc;
   FbleVarIndexV scope;
   size_t argc;
-  FbleValue* body;
+  FbleTc* body;
 } FbleFuncValueTc;
 
 // FbleFuncApplyTc --
 //   FBLE_FUNC_APPLY_TC
 typedef struct {
-  FbleValue _base;
+  FbleTc _base;
   FbleLoc loc;
-  FbleValue* func;
+  FbleTc* func;
   FbleValueV args;
 } FbleFuncApplyTc;
 
