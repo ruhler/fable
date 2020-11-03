@@ -6,6 +6,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "instr.h"
+#include "tc.h"
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)

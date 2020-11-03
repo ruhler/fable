@@ -9,6 +9,7 @@
 
 #include "fble-vector.h"
 #include "fble.h"
+#include "tc.h"
 #include "type.h"
 #include "typecheck.h"
 #include "value.h"

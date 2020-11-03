@@ -8,6 +8,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "instr.h"
+#include "tc.h"
 #include "typecheck.h"
 #include "value.h"
 

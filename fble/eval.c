@@ -10,6 +10,7 @@
 #include "heap.h"
 #include "instr.h"
 #include "syntax.h"   // for FbleReportError
+#include "tc.h"
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)

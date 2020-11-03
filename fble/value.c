@@ -6,6 +6,7 @@
 
 #include "fble.h"
 #include "heap.h"
+#include "tc.h"
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
