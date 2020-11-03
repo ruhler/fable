@@ -598,6 +598,52 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
+    case FBLE_LET_TC: {
+      FbleLetTc* let_tc = (FbleLetTc*)v;
+
+      size_t base_index = scope->vars.size;
+
+      Local* vars[let_tc->bindings.size];
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        vars[i] = NULL;
+        if (let_tc->recursive) {
+          vars[i] = NewLocal(arena, scope);
+          FbleRefValueInstr* ref_instr = FbleAlloc(arena, FbleRefValueInstr);
+          ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
+          ref_instr->_base.profile_ops = NULL;
+          ref_instr->dest = vars[i]->index.index;
+          AppendInstr(arena, scope, &ref_instr->_base);
+        }
+        PushVar(arena, scope, vars[i]);
+      }
+
+      // Compile the values of the variables.
+      Local* defs[let_tc->bindings.size];
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        defs[i] = CompileExpr(arena, blocks, false, scope, let_tc->bindings.xs[i]);
+      }
+
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        if (let_tc->recursive) {
+          FbleRefDefInstr* ref_def_instr = FbleAlloc(arena, FbleRefDefInstr);
+          ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
+          ref_def_instr->_base.profile_ops = NULL;
+          ref_def_instr->ref = vars[i]->index.index;
+          ref_def_instr->value = defs[i]->index;
+          AppendInstr(arena, scope, &ref_def_instr->_base);
+        }
+        SetVar(arena, scope, base_index + i, defs[i]);
+      }
+
+      Local* body = CompileExpr(arena, blocks, exit, scope, let_tc->body);
+
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        PopVar(arena, scope, exit);
+      }
+
+      return body;
+    }
+
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* struct_v = (FbleStructValue*)v;
 
@@ -863,52 +909,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       CompileExit(arena, exit, scope, local);
       LocalRelease(arena, scope, body, exit);
       return local;
-    }
-
-    case FBLE_LET_TC: {
-      FbleLetTc* let_tc = (FbleLetTc*)v;
-
-      size_t base_index = scope->vars.size;
-
-      Local* vars[let_tc->bindings.size];
-      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        vars[i] = NULL;
-        if (let_tc->recursive) {
-          vars[i] = NewLocal(arena, scope);
-          FbleRefValueInstr* ref_instr = FbleAlloc(arena, FbleRefValueInstr);
-          ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
-          ref_instr->_base.profile_ops = NULL;
-          ref_instr->dest = vars[i]->index.index;
-          AppendInstr(arena, scope, &ref_instr->_base);
-        }
-        PushVar(arena, scope, vars[i]);
-      }
-
-      // Compile the values of the variables.
-      Local* defs[let_tc->bindings.size];
-      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        defs[i] = CompileExpr(arena, blocks, false, scope, let_tc->bindings.xs[i]);
-      }
-
-      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        if (let_tc->recursive) {
-          FbleRefDefInstr* ref_def_instr = FbleAlloc(arena, FbleRefDefInstr);
-          ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
-          ref_def_instr->_base.profile_ops = NULL;
-          ref_def_instr->ref = vars[i]->index.index;
-          ref_def_instr->value = defs[i]->index;
-          AppendInstr(arena, scope, &ref_def_instr->_base);
-        }
-        SetVar(arena, scope, base_index + i, defs[i]);
-      }
-
-      Local* body = CompileExpr(arena, blocks, exit, scope, let_tc->body);
-
-      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        PopVar(arena, scope, exit);
-      }
-
-      return body;
     }
 
     case FBLE_FUNC_VALUE_TC: {

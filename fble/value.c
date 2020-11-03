@@ -71,6 +71,12 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     case FBLE_TYPE_VALUE_TC: return;
     case FBLE_VAR_TC: return;
 
+    case FBLE_LET_TC: {
+      FbleLetTc* let_tc = (FbleLetTc*)value;
+      FbleFree(arena, let_tc->bindings.xs);
+      return;
+    }
+
     case FBLE_STRUCT_VALUE: return;
     case FBLE_UNION_VALUE: return;
 
@@ -130,12 +136,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_LET_TC: {
-      FbleLetTc* let_tc = (FbleLetTc*)value;
-      FbleFree(arena, let_tc->bindings.xs);
-      return;
-    }
-
     case FBLE_FUNC_VALUE_TC: {
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)value;
       FbleFreeLoc(arena, func_tc->body_loc);
@@ -181,6 +181,15 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
   switch (value->tag) {
     case FBLE_TYPE_VALUE_TC: break;
     case FBLE_VAR_TC: break;
+
+    case FBLE_LET_TC: {
+      FbleLetTc* let_tc = (FbleLetTc*)value;
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        Ref(callback, let_tc->bindings.xs[i]);
+      }
+      Ref(callback, let_tc->body);
+      return;
+    }
 
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;
@@ -263,15 +272,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case FBLE_SYMBOLIC_COMPILE_TC: {
       FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)value;
       Ref(callback, compile_tc->body);
-      return;
-    }
-
-    case FBLE_LET_TC: {
-      FbleLetTc* let_tc = (FbleLetTc*)value;
-      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        Ref(callback, let_tc->bindings.xs[i]);
-      }
-      Ref(callback, let_tc->body);
       return;
     }
 

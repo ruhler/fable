@@ -6,6 +6,7 @@
 #ifndef FBLE_INTERNAL_TC_H_
 #define FBLE_INTERNAL_TC_H_
 
+#include "fble-value.h"     // for FbleValueV
 #include "instr.h"
 
 // FbleTc --
@@ -29,6 +30,10 @@
 // In reality FbleTc is used as the underlying implementation of the FbleValue
 // type, though in theory external users shouldn't know or care about that.
 typedef struct FbleValue FbleTc;
+
+// FbleTcV --
+//   A vector of FbleTc.
+typedef FbleValueV FbleTcV;
 
 // FbleValueTag --
 //   A tag used to distinguish among different kinds of values.
@@ -118,6 +123,24 @@ typedef struct {
   FbleTc _base;
   FbleVarIndex index;
 } FbleVarTc;
+
+// FbleLetTc --
+//   FBLE_LET_TC
+//
+// Represents a let expression.
+//
+// The bindings are bound to variables implicitly based on the position of the
+// binding in the let expression and the position of the let expression in its
+// parent expression as specified for FbleVarIndex.
+//
+// Fields:
+//   recursive - false if the let is a non-recursive let expression.
+typedef struct {
+  FbleTc _base;
+  bool recursive;
+  FbleTcV bindings;
+  FbleTc* body;
+} FbleLetTc;
 
 // FbleStructValue --
 //   FBLE_STRUCT_VALUE
@@ -285,17 +308,6 @@ typedef struct {
   FbleTc* body;
 } FbleSymbolicCompileTc;
 
-// FbleLetTc --
-//   FBLE_LET_TC
-//
-// recursive is false if the let is a non-recursive let expression.
-typedef struct {
-  FbleTc _base;
-  bool recursive;
-  FbleValueV bindings;
-  FbleTc* body;
-} FbleLetTc;
-
 // FbleFuncValueTc --
 //   FBLE_FUNC_VALUE_TC
 //
@@ -314,7 +326,7 @@ typedef struct {
   FbleTc _base;
   FbleLoc loc;
   FbleTc* func;
-  FbleValueV args;
+  FbleTcV args;
 } FbleFuncApplyTc;
 
 #endif // FBLE_INTERNAL_TC_H_
