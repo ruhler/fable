@@ -35,8 +35,8 @@ typedef struct FbleValue FbleTc;
 //   A vector of FbleTc.
 typedef FbleValueV FbleTcV;
 
-// FbleValueTag --
-//   A tag used to distinguish among different kinds of values.
+// FbleTcTag --
+//   A tag used to distinguish among different kinds of FbleTc.
 typedef enum {
   FBLE_TYPE_VALUE_TC,
   FBLE_VAR_TC,
@@ -62,7 +62,7 @@ typedef enum {
   FBLE_PROFILE_TC,
 
   FBLE_REF_VALUE,
-} FbleValueTag;
+} FbleTcTag;
 
 // FbleValue --
 //   A tagged union of value types. All values have the same initial
@@ -70,7 +70,7 @@ typedef enum {
 //   value this is to get access to additional fields of the value
 //   by first casting to that specific type of value.
 struct FbleValue {
-  FbleValueTag tag;
+  FbleTcTag tag;
 };
 
 // FbleTypeValueTc --
