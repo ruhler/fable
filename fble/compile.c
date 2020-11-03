@@ -644,13 +644,13 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return body;
     }
 
-    case FBLE_STRUCT_VALUE: {
-      FbleStructValue* struct_v = (FbleStructValue*)v;
+    case FBLE_STRUCT_VALUE_TC: {
+      FbleStructValueTc* struct_tc = (FbleStructValueTc*)v;
 
-      size_t argc = struct_v->fieldc;
+      size_t argc = struct_tc->fieldc;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(arena, blocks, false, scope, struct_v->fields[i]);
+        args[i] = CompileExpr(arena, blocks, false, scope, struct_tc->fields[i]);
       }
 
       Local* local = NewLocal(arena, scope);
@@ -669,7 +669,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       return local;
     }
-
 
     case FBLE_UNION_VALUE: {
       FbleUnionValue* union_v = (FbleUnionValue*)v;

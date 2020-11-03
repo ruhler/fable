@@ -77,7 +77,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_STRUCT_VALUE: return;
+    case FBLE_STRUCT_VALUE_TC: return;
     case FBLE_UNION_VALUE: return;
 
     case FBLE_FUNC_VALUE: {
@@ -191,8 +191,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       return;
     }
 
-    case FBLE_STRUCT_VALUE: {
-      FbleStructValue* sv = (FbleStructValue*)value;
+    case FBLE_STRUCT_VALUE_TC: {
+      FbleStructValueTc* sv = (FbleStructValueTc*)value;
       for (size_t i = 0; i < sv->fieldc; ++i) {
         Ref(callback, sv->fields[i]);
       }
@@ -295,8 +295,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 // FbleNewStructValue -- see documentation in fble-value.h
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args)
 {
-  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * args.size);
-  value->_base.tag = FBLE_STRUCT_VALUE;
+  FbleStructValueTc* value = FbleNewValueExtra(heap, FbleStructValueTc, sizeof(FbleValue*) * args.size);
+  value->_base.tag = FBLE_STRUCT_VALUE_TC;
   value->fieldc = args.size;
 
   for (size_t i = 0; i < args.size; ++i) {
@@ -309,8 +309,8 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args)
 // FbleStructValueAccess -- see documentation in fble-value.h
 FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 {
-  assert(object->tag == FBLE_STRUCT_VALUE);
-  FbleStructValue* value = (FbleStructValue*)object;
+  assert(object->tag == FBLE_STRUCT_VALUE_TC);
+  FbleStructValueTc* value = (FbleStructValueTc*)object;
   assert(field < value->fieldc);
   return value->fields[field];
 }

@@ -398,8 +398,8 @@ static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
   size_t argc = struct_value_instr->args.size;
 
-  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
-  value->_base.tag = FBLE_STRUCT_VALUE;
+  FbleStructValueTc* value = FbleNewValueExtra(heap, FbleStructValueTc, sizeof(FbleValue*) * argc);
+  value->_base.tag = FBLE_STRUCT_VALUE_TC;
   value->fieldc = argc;
   for (size_t i = 0; i < argc; ++i) {
     value->fields[i] = FrameGet(thread, struct_value_instr->args.xs[i]);
@@ -432,13 +432,13 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-  FbleStructValue* sv = (FbleStructValue*)FrameGetStrict(thread, access_instr->obj);
+  FbleStructValueTc* sv = (FbleStructValueTc*)FrameGetStrict(thread, access_instr->obj);
   if (sv == NULL) {
     FbleReportError("undefined struct value access\n", access_instr->loc);
     return ABORTED;
   }
 
-  if (sv->_base.tag == FBLE_STRUCT_VALUE) {
+  if (sv->_base.tag == FBLE_STRUCT_VALUE_TC) {
     assert(access_instr->tag < sv->fieldc);
     FbleValue* value = sv->fields[access_instr->tag];
     FbleRetainValue(heap, value);
