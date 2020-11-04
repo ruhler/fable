@@ -1339,15 +1339,15 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
             var_tc->index.source = FBLE_LOCAL_VAR;
             var_tc->index.index = scope->vars.size;
 
-            FbleDataAccessValue* access_v = FbleNewValue(vh, FbleDataAccessValue);
-            access_v->_base.tag = FBLE_DATA_ACCESS_VALUE;
-            access_v->datatype = FBLE_STRUCT_DATATYPE;
-            access_v->obj = &var_tc->_base;
-            FbleValueAddRef(vh, &access_v->_base, access_v->obj);
-            FbleReleaseValue(vh, access_v->obj);
-            access_v->tag = j;
-            access_v->loc = FbleCopyLoc(loc);
-            args[i] = &access_v->_base;
+            FbleDataAccessTc* access_tc = FbleNewValue(vh, FbleDataAccessTc);
+            access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
+            access_tc->datatype = FBLE_STRUCT_DATATYPE;
+            access_tc->obj = &var_tc->_base;
+            FbleValueAddRef(vh, &access_tc->_base, access_tc->obj);
+            FbleReleaseValue(vh, access_tc->obj);
+            access_tc->tag = j;
+            access_tc->loc = FbleCopyLoc(loc);
+            args[i] = &access_tc->_base;
             break;
           }
         }
@@ -1508,16 +1508,16 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           FbleType* rtype = FbleRetainType(th, fields->xs[i].type);
           FbleReleaseType(th, &normal->_base);
 
-          FbleDataAccessValue* access_v = FbleNewValue(vh, FbleDataAccessValue);
-          access_v->_base.tag = FBLE_DATA_ACCESS_VALUE;
-          access_v->datatype = normal->datatype;
-          access_v->obj = obj.tc;
-          FbleValueAddRef(vh, &access_v->_base, access_v->obj);
-          FbleReleaseValue(vh, access_v->obj);
-          access_v->tag = i;
-          access_v->loc = FbleCopyLoc(access_expr->field.loc);
+          FbleDataAccessTc* access_tc = FbleNewValue(vh, FbleDataAccessTc);
+          access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
+          access_tc->datatype = normal->datatype;
+          access_tc->obj = obj.tc;
+          FbleValueAddRef(vh, &access_tc->_base, access_tc->obj);
+          FbleReleaseValue(vh, access_tc->obj);
+          access_tc->tag = i;
+          access_tc->loc = FbleCopyLoc(access_expr->field.loc);
           FbleReleaseType(th, obj.type);
-          return MkTc(rtype, &access_v->_base);
+          return MkTc(rtype, &access_tc->_base);
         }
       }
 

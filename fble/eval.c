@@ -447,8 +447,8 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
   }
 
   // The argument must be symbolic. Create a symbolic struct access value.
-  FbleDataAccessValue* value = FbleNewValue(heap, FbleDataAccessValue);
-  value->_base.tag = FBLE_DATA_ACCESS_VALUE;
+  FbleDataAccessTc* value = FbleNewValue(heap, FbleDataAccessTc);
+  value->_base.tag = FBLE_DATA_ACCESS_TC;
   value->datatype = FBLE_STRUCT_DATATYPE;
   value->obj = &sv->_base;
   value->tag = access_instr->tag;
@@ -482,8 +482,8 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
   }
 
   // The argument must be symbolic. Create a symbolic union access value.
-  FbleDataAccessValue* value = FbleNewValue(heap, FbleDataAccessValue);
-  value->_base.tag = FBLE_DATA_ACCESS_VALUE;
+  FbleDataAccessTc* value = FbleNewValue(heap, FbleDataAccessTc);
+  value->_base.tag = FBLE_DATA_ACCESS_TC;
   value->datatype = FBLE_UNION_DATATYPE;
   value->obj = &uv->_base;
   value->tag = access_instr->tag;

@@ -86,6 +86,12 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
+    case FBLE_DATA_ACCESS_TC: {
+      FbleDataAccessTc* v = (FbleDataAccessTc*)value;
+      FbleFreeLoc(arena, v->loc);
+      return;
+    }
+
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
       FbleFreeInstrBlock(arena, v->code);
@@ -105,13 +111,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_PORT_VALUE: return;
     case FBLE_REF_VALUE: return;
-
-    case FBLE_DATA_ACCESS_VALUE: {
-      FbleDataAccessValue* v = (FbleDataAccessValue*)value;
-      FbleFreeLoc(arena, v->loc);
-      return;
-    }
-
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)value;
@@ -215,6 +214,12 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
+    case FBLE_DATA_ACCESS_TC: {
+      FbleDataAccessTc* v = (FbleDataAccessTc*)value;
+      Ref(callback, v->obj);
+      break;
+    }
+
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
       for (size_t i = 0; i < v->code->statics; ++i) {
@@ -241,11 +246,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_DATA_ACCESS_VALUE: {
-      FbleDataAccessValue* v = (FbleDataAccessValue*)value;
-      Ref(callback, v->obj);
-      break;
-    }
 
 
     case FBLE_PROFILE_TC: {

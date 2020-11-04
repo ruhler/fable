@@ -770,21 +770,15 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return target;
     }
 
-
-    case FBLE_FUNC_VALUE: assert(false && "TODO: FBLE_FUNC_VALUE"); return NULL;
-    case FBLE_LINK_VALUE: assert(false && "TODO: FBLE_LINK_VALUE"); return NULL;
-    case FBLE_PORT_VALUE: assert(false && "TODO: FBLE_PORT_VALUE"); return NULL;
-    case FBLE_REF_VALUE: assert(false && "TODO: FBLE_REF_VALUE"); return NULL;
-
-    case FBLE_DATA_ACCESS_VALUE: {
-      FbleDataAccessValue* access_v = (FbleDataAccessValue*)v;
-      Local* obj = CompileExpr(arena, blocks, false, scope, access_v->obj);
+    case FBLE_DATA_ACCESS_TC: {
+      FbleDataAccessTc* access_tc = (FbleDataAccessTc*)v;
+      Local* obj = CompileExpr(arena, blocks, false, scope, access_tc->obj);
 
       FbleInstrTag tag;
-      if (access_v->datatype == FBLE_STRUCT_DATATYPE) {
+      if (access_tc->datatype == FBLE_STRUCT_DATATYPE) {
         tag = FBLE_STRUCT_ACCESS_INSTR;
       } else {
-        assert(access_v->datatype == FBLE_UNION_DATATYPE);
+        assert(access_tc->datatype == FBLE_UNION_DATATYPE);
         tag = FBLE_UNION_ACCESS_INSTR;
       }
 
@@ -792,8 +786,8 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       access->_base.tag = tag;
       access->_base.profile_ops = NULL;
       access->obj = obj->index;
-      access->tag = access_v->tag;
-      access->loc = FbleCopyLoc(access_v->loc);
+      access->tag = access_tc->tag;
+      access->loc = FbleCopyLoc(access_tc->loc);
       AppendInstr(arena, scope, &access->_base);
 
       Local* local = NewLocal(arena, scope);
@@ -802,6 +796,11 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       LocalRelease(arena, scope, obj, exit);
       return local;
     }
+
+    case FBLE_FUNC_VALUE: assert(false && "TODO: FBLE_FUNC_VALUE"); return NULL;
+    case FBLE_LINK_VALUE: assert(false && "TODO: FBLE_LINK_VALUE"); return NULL;
+    case FBLE_PORT_VALUE: assert(false && "TODO: FBLE_PORT_VALUE"); return NULL;
+    case FBLE_REF_VALUE: assert(false && "TODO: FBLE_REF_VALUE"); return NULL;
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)v;
