@@ -43,7 +43,7 @@ typedef enum {
   FBLE_LET_TC,
 
   FBLE_STRUCT_VALUE_TC,
-  FBLE_UNION_VALUE,
+  FBLE_UNION_VALUE_TC,
   FBLE_UNION_SELECT_VALUE,
   FBLE_DATA_ACCESS_VALUE,
 
@@ -152,13 +152,15 @@ typedef struct {
   FbleTc* fields[];
 } FbleStructValueTc;
 
-// FbleUnionValue --
-//   FBLE_UNION_VALUE
+// FbleUnionValueTc --
+//   FBLE_UNION_VALUE_TC
+//
+// Represents a union value or a union value expression.
 typedef struct {
   FbleTc _base;
   size_t tag;
   FbleTc* arg;
-} FbleUnionValue;
+} FbleUnionValueTc;
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //

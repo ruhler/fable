@@ -78,7 +78,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     }
 
     case FBLE_STRUCT_VALUE_TC: return;
-    case FBLE_UNION_VALUE: return;
+    case FBLE_UNION_VALUE_TC: return;
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
@@ -199,8 +199,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_UNION_VALUE: {
-      FbleUnionValue* uv = (FbleUnionValue*)value;
+    case FBLE_UNION_VALUE_TC: {
+      FbleUnionValueTc* uv = (FbleUnionValueTc*)value;
       Ref(callback, uv->arg);
       break;
     }
@@ -318,8 +318,8 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 // FbleNewUnionValue -- see documentation in fble-value.h
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 {
-  FbleUnionValue* union_value = FbleNewValue(heap, FbleUnionValue);
-  union_value->_base.tag = FBLE_UNION_VALUE;
+  FbleUnionValueTc* union_value = FbleNewValue(heap, FbleUnionValueTc);
+  union_value->_base.tag = FBLE_UNION_VALUE_TC;
   union_value->tag = tag;
   union_value->arg = arg;
   FbleValueAddRef(heap, &union_value->_base, arg);
@@ -338,16 +338,16 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 // FbleUnionValueTag -- see documentation in fble-value.h
 size_t FbleUnionValueTag(FbleValue* object)
 {
-  assert(object->tag == FBLE_UNION_VALUE);
-  FbleUnionValue* value = (FbleUnionValue*)object;
+  assert(object->tag == FBLE_UNION_VALUE_TC);
+  FbleUnionValueTc* value = (FbleUnionValueTc*)object;
   return value->tag;
 }
 
 // FbleUnionValueAccess -- see documentation in fble-value.h
 FbleValue* FbleUnionValueAccess(FbleValue* object)
 {
-  assert(object->tag == FBLE_UNION_VALUE);
-  FbleUnionValue* value = (FbleUnionValue*)object;
+  assert(object->tag == FBLE_UNION_VALUE_TC);
+  FbleUnionValueTc* value = (FbleUnionValueTc*)object;
   return value->arg;
 }
 

@@ -416,8 +416,8 @@ static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* in
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
 
-  FbleUnionValue* value = FbleNewValue(heap, FbleUnionValue);
-  value->_base.tag = FBLE_UNION_VALUE;
+  FbleUnionValueTc* value = FbleNewValue(heap, FbleUnionValueTc);
+  value->_base.tag = FBLE_UNION_VALUE_TC;
   value->tag = union_value_instr->tag;
   value->arg = FrameGet(thread, union_value_instr->arg);
   FbleValueAddRef(heap, &value->_base, value->arg);
@@ -464,13 +464,13 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-  FbleUnionValue* uv = (FbleUnionValue*)FrameGetStrict(thread, access_instr->obj);
+  FbleUnionValueTc* uv = (FbleUnionValueTc*)FrameGetStrict(thread, access_instr->obj);
   if (uv == NULL) {
     FbleReportError("undefined union value access\n", access_instr->loc);
     return ABORTED;
   }
 
-  if (uv->_base.tag == FBLE_UNION_VALUE) {
+  if (uv->_base.tag == FBLE_UNION_VALUE_TC) {
     if (uv->tag != access_instr->tag) {
       FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
       return ABORTED;
@@ -498,12 +498,12 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-  FbleUnionValue* uv = (FbleUnionValue*)FrameGetStrict(thread, select_instr->condition);
+  FbleUnionValueTc* uv = (FbleUnionValueTc*)FrameGetStrict(thread, select_instr->condition);
   if (uv == NULL) {
     FbleReportError("undefined union value select\n", select_instr->loc);
     return ABORTED;
   }
-  assert(uv->_base.tag == FBLE_UNION_VALUE);
+  assert(uv->_base.tag == FBLE_UNION_VALUE_TC);
   thread->stack->pc += select_instr->jumps.xs[uv->tag];
   return RUNNING;
 }

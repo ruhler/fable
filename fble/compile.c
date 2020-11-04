@@ -670,15 +670,15 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
-    case FBLE_UNION_VALUE: {
-      FbleUnionValue* union_v = (FbleUnionValue*)v;
-      Local* arg = CompileExpr(arena, blocks, false, scope, union_v->arg);
+    case FBLE_UNION_VALUE_TC: {
+      FbleUnionValueTc* union_tc = (FbleUnionValueTc*)v;
+      Local* arg = CompileExpr(arena, blocks, false, scope, union_tc->arg);
 
       Local* local = NewLocal(arena, scope);
       FbleUnionValueInstr* union_instr = FbleAlloc(arena, FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->_base.profile_ops = NULL;
-      union_instr->tag = union_v->tag;
+      union_instr->tag = union_tc->tag;
       union_instr->arg = arg->index;
       union_instr->dest = local->index.index;
       AppendInstr(arena, scope, &union_instr->_base);
