@@ -935,17 +935,17 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       }
       FbleReleaseType(th, condition.type);
 
-      FbleUnionSelectValue* select_v = FbleNewValueExtra(vh, FbleUnionSelectValue, union_type->fields.size * sizeof(FbleValue*));
-      select_v->_base.tag = FBLE_UNION_SELECT_VALUE;
-      select_v->loc = FbleCopyLoc(expr->loc);
-      select_v->condition = condition.tc;
-      select_v->choicec = union_type->fields.size;
-      for (size_t i = 0; i < select_v->choicec; ++i) {
-        select_v->choices[i] = NULL;
+      FbleUnionSelectTc* select_tc = FbleNewValueExtra(vh, FbleUnionSelectTc, union_type->fields.size * sizeof(FbleValue*));
+      select_tc->_base.tag = FBLE_UNION_SELECT_TC;
+      select_tc->loc = FbleCopyLoc(expr->loc);
+      select_tc->condition = condition.tc;
+      select_tc->choicec = union_type->fields.size;
+      for (size_t i = 0; i < select_tc->choicec; ++i) {
+        select_tc->choices[i] = NULL;
       }
 
-      FbleValueAddRef(vh, &select_v->_base, select_v->condition);
-      FbleReleaseValue(vh, select_v->condition);
+      FbleValueAddRef(vh, &select_tc->_base, select_tc->condition);
+      FbleReleaseValue(vh, select_tc->condition);
 
       bool error = false;
       FbleType* target = NULL;
@@ -972,10 +972,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           Tc result = TypeCheckExpr(th, vh, scope, select_expr->choices.xs[branch].expr);
           result = ProfileBlock(vh, select_expr->choices.xs[branch].name, select_expr->choices.xs[branch].expr->loc, result);
           error = error || (result.type == NULL);
-          select_v->choices[i] = result.tc;
-          if (select_v->choices[i] != NULL) {
-            FbleValueAddRef(vh, &select_v->_base, select_v->choices[i]);
-            FbleReleaseValue(vh, select_v->choices[i]);
+          select_tc->choices[i] = result.tc;
+          if (select_tc->choices[i] != NULL) {
+            FbleValueAddRef(vh, &select_tc->_base, select_tc->choices[i]);
+            FbleReleaseValue(vh, select_tc->choices[i]);
           }
 
           if (target == NULL) {
@@ -1006,8 +1006,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         } else {
           // Use the default branch for this field.
           if (default_ != NULL) {
-            select_v->choices[i] = default_;
-            FbleValueAddRef(vh, &select_v->_base, select_v->choices[i]);
+            select_tc->choices[i] = default_;
+            FbleValueAddRef(vh, &select_tc->_base, select_tc->choices[i]);
           }
         }
       }
@@ -1024,7 +1024,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       }
 
       FbleReleaseType(th, &union_type->_base);
-      Tc tc = MkTc(target, &select_v->_base);
+      Tc tc = MkTc(target, &select_tc->_base);
       if (error) {
         FreeTc(th, vh, tc);
         return TC_FAILED;

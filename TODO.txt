@@ -27,6 +27,7 @@
 * Figure out how to keep track of locations for symbolic computation.
  - in particular for getting meaningful profiles out of symbolic compiled
    code.
+* Be more consistent in FbleTc about use of vector versus FbleTc*[].
 
 * Add test for nested elaborate expressions.
  - In particular, we need to make sure argument variables don't get mixed up

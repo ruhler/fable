@@ -44,7 +44,7 @@ typedef enum {
 
   FBLE_STRUCT_VALUE_TC,
   FBLE_UNION_VALUE_TC,
-  FBLE_UNION_SELECT_VALUE,
+  FBLE_UNION_SELECT_TC,
   FBLE_DATA_ACCESS_VALUE,
 
   FBLE_FUNC_VALUE_TC,
@@ -162,6 +162,22 @@ typedef struct {
   FbleTc* arg;
 } FbleUnionValueTc;
 
+// FbleUnionSelectTc --
+//   FBLE_UNION_SELECT_TC
+//
+// Represents a union select expression.
+//
+// Because of default branches in union select, it is possible that multiple
+// choices point to the same value. Code generation is expected to check for
+// that and avoid generating duplicate code.
+typedef struct {
+  FbleTc _base;
+  FbleLoc loc;
+  FbleTc* condition;
+  size_t choicec;
+  FbleTc* choices[];
+} FbleUnionSelectTc;
+
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
@@ -240,19 +256,6 @@ typedef struct {
   FbleLoc loc;
 } FbleDataAccessValue;
 
-// FbleUnionSelectValue --
-//   FBLE_UNION_SELECT_VALUE
-//
-// Because of default branches in union select, it is possible that multiple
-// choices point to the same value. Code generation is expected to check for
-// that and avoid generating duplicate code.
-typedef struct {
-  FbleTc _base;
-  FbleLoc loc;
-  FbleTc* condition;
-  size_t choicec;
-  FbleTc* choices[];
-} FbleUnionSelectValue;
 
 // FbleProfileTc --
 //   FBLE_PROFILE_TC

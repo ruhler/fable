@@ -80,6 +80,12 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     case FBLE_STRUCT_VALUE_TC: return;
     case FBLE_UNION_VALUE_TC: return;
 
+    case FBLE_UNION_SELECT_TC: {
+      FbleUnionSelectTc* v = (FbleUnionSelectTc*)value;
+      FbleFreeLoc(arena, v->loc);
+      return;
+    }
+
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
       FbleFreeInstrBlock(arena, v->code);
@@ -106,11 +112,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_UNION_SELECT_VALUE: {
-      FbleUnionSelectValue* v = (FbleUnionSelectValue*)value;
-      FbleFreeLoc(arena, v->loc);
-      return;
-    }
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)value;
@@ -205,6 +206,15 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
+    case FBLE_UNION_SELECT_TC: {
+      FbleUnionSelectTc* v = (FbleUnionSelectTc*)value;
+      Ref(callback, v->condition);
+      for (size_t i = 0; i < v->choicec; ++i) {
+        Ref(callback, v->choices[i]);
+      }
+      break;
+    }
+
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
       for (size_t i = 0; i < v->code->statics; ++i) {
@@ -237,14 +247,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_UNION_SELECT_VALUE: {
-      FbleUnionSelectValue* v = (FbleUnionSelectValue*)value;
-      Ref(callback, v->condition);
-      for (size_t i = 0; i < v->choicec; ++i) {
-        Ref(callback, v->choices[i]);
-      }
-      break;
-    }
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* v = (FbleProfileTc*)value;
