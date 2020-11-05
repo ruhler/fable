@@ -398,7 +398,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile)
 {
   // TODO: Better document that we require program to be a function?
-  assert(program->tag == FBLE_FUNC_VALUE);
-  FbleFuncValue* func = (FbleFuncValue*)program;
+  assert(program->tag == FBLE_COMPILED_FUNC_VALUE_TC);
+  FbleCompiledFuncValueTc* func = (FbleCompiledFuncValueTc*)program;
   DumpInstrBlock(fout, func->code, profile);
 }

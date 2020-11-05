@@ -99,8 +99,8 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_FUNC_VALUE: {
-      FbleFuncValue* v = (FbleFuncValue*)value;
+    case FBLE_COMPILED_FUNC_VALUE_TC: {
+      FbleCompiledFuncValueTc* v = (FbleCompiledFuncValueTc*)value;
       FbleFreeInstrBlock(arena, v->code);
       return;
     }
@@ -226,8 +226,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       return;
     }
 
-    case FBLE_FUNC_VALUE: {
-      FbleFuncValue* v = (FbleFuncValue*)value;
+    case FBLE_COMPILED_FUNC_VALUE_TC: {
+      FbleCompiledFuncValueTc* v = (FbleCompiledFuncValueTc*)value;
       for (size_t i = 0; i < v->code->statics; ++i) {
         Ref(callback, v->scope[i]);
       }
@@ -356,8 +356,8 @@ FbleValue* FbleUnionValueAccess(FbleValue* object)
 // FbleIsProcValue -- see documentation in fble-value.h
 bool FbleIsProcValue(FbleValue* value)
 {
-  FbleProcValue* proc = (FbleProcValue*)value;
-  return value->tag == FBLE_PROC_VALUE && proc->argc == 0;
+  FbleCompiledProcValueTc* proc = (FbleCompiledProcValueTc*)value;
+  return value->tag == FBLE_COMPILED_PROC_VALUE_TC && proc->argc == 0;
 }
 
 // FbleNewGetValue -- see documentation in value.h
@@ -389,8 +389,8 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
-  FbleProcValue* get = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*));
-  get->_base.tag = FBLE_PROC_VALUE;
+  FbleCompiledProcValueTc* get = FbleNewValueExtra(heap, FbleCompiledProcValueTc, sizeof(FbleValue*));
+  get->_base.tag = FBLE_COMPILED_PROC_VALUE_TC;
   get->argc = 0;
   get->code = &code;
   get->code->refcount++;
@@ -478,8 +478,8 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   };
   func_code.refcount++;
 
-  FbleFuncValue* put = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*));
-  put->_base.tag = FBLE_FUNC_VALUE;
+  FbleCompiledFuncValueTc* put = FbleNewValueExtra(heap, FbleCompiledFuncValueTc, sizeof(FbleValue*));
+  put->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
   put->argc = 1;
   put->code = &func_code;
   put->scope[0] = link;

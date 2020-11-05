@@ -833,7 +833,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
-    case FBLE_FUNC_VALUE: assert(false && "TODO: FBLE_FUNC_VALUE"); return NULL;
+    case FBLE_COMPILED_FUNC_VALUE_TC: assert(false && "TODO: FBLE_COMPILED_FUNC_VALUE_TC"); return NULL;
     case FBLE_LINK_VALUE: assert(false && "TODO: FBLE_LINK_VALUE"); return NULL;
     case FBLE_PORT_VALUE: assert(false && "TODO: FBLE_PORT_VALUE"); return NULL;
     case FBLE_REF_VALUE: assert(false && "TODO: FBLE_REF_VALUE"); return NULL;
@@ -1073,8 +1073,8 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
     return NULL;
   }
 
-  FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
-  func->_base.tag = FBLE_FUNC_VALUE;
+  FbleCompiledFuncValueTc* func = FbleNewValue(heap, FbleCompiledFuncValueTc);
+  func->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
   func->argc = 0;
   func->code = code;
   assert(code->statics == 0);

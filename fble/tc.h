@@ -48,7 +48,7 @@ typedef enum {
   FBLE_DATA_ACCESS_TC,
 
   FBLE_FUNC_VALUE_TC,
-  FBLE_FUNC_VALUE,
+  FBLE_COMPILED_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
 
   FBLE_LINK_VALUE,
@@ -202,7 +202,7 @@ typedef struct {
   FbleTc* body;
 } FbleFuncValueTc;
 
-// FbleFuncValue -- FBLE_FUNC_VALUE
+// FbleCompiledFuncValueTc -- FBLE_COMPILED_FUNC_VALUE_TC
 //
 // Fields:
 //   argc - The number of arguments expected by the function.
@@ -210,6 +210,8 @@ typedef struct {
 //   scope - The scope at the time the function was created, representing the
 //           lexical context available to the function. The length of this
 //           array is code->statics.
+//
+// Represents a precompiled function value.
 //
 // Note: Function values are used for both pure functions and processes. We
 // don't distinguish between the two at runtime, except that argc == 0
@@ -219,12 +221,12 @@ typedef struct {
   size_t argc;
   FbleInstrBlock* code;
   FbleValue* scope[];
-} FbleFuncValue;
+} FbleCompiledFuncValueTc;
 
-// FbleProcValue -- FBLE_PROC_VALUE
+// FbleCompiledProcValueTc -- FBLE_COMPILED_PROC_VALUE_TC
 //   A proc value is represented as a function that takes no arguments.
-#define FBLE_PROC_VALUE FBLE_FUNC_VALUE
-typedef FbleFuncValue FbleProcValue;
+#define FBLE_COMPILED_PROC_VALUE_TC FBLE_COMPILED_FUNC_VALUE_TC
+typedef FbleCompiledFuncValueTc FbleCompiledProcValueTc;
 
 // FbleValues --
 //   A non-circular singly linked list of values.

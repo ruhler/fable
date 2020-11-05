@@ -39,7 +39,7 @@ typedef struct Stack {
   struct Stack* tail;
   FbleValue** result;
   bool owner;
-  FbleFuncValue* func;
+  FbleCompiledFuncValueTc* func;
   FbleInstr** pc;
   FbleValue* locals[];
 } Stack;
@@ -89,9 +89,9 @@ static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index);
 static FbleValue* FrameMove(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc, bool owner);
 static void FrameRelease(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc, bool owner);
 
-static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleValue** result, Stack* tail);
+static Stack* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, FbleValue** result, Stack* tail);
 static Stack* PopFrame(FbleValueHeap* heap, Stack* stack);
-static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack);
+static Stack* ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, Stack* stack);
 
 // InstrImpl --
 //   A function that executes an instruction.
@@ -159,7 +159,7 @@ static InstrImpl sInstrImpls[] = {
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
 static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted);
-static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile);
+static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc* func, FbleValue** args, FbleProfile* profile);
 
 // FrameGet --
 //   Get a value from the frame on the top of the execution stack.
@@ -298,7 +298,7 @@ static void FrameRelease(FbleHeap* heap, Thread* thread, FbleFrameIndex index, s
 //   Does not take ownership of the function or the args.
 //   It is the caller's responsibility to ensure the function and args remain
 //   valid until the frame is popped.
-static Stack* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleValue** result, Stack* tail)
+static Stack* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, FbleValue** result, Stack* tail)
 {
   FbleArena* arena = heap->arena;
 
@@ -360,7 +360,7 @@ static Stack* PopFrame(FbleValueHeap* heap, Stack* stack)
 //   Takes ownership of func and args.
 //   Exits the current frame, which potentially frees any instructions
 //   belonging to that frame.
-static Stack* ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, Stack* stack)
+static Stack* ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, Stack* stack)
 {
   FbleArena* arena = heap->arena;
 
@@ -524,8 +524,8 @@ static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* ins
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
   size_t scopec = func_value_instr->code->statics;
 
-  FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * scopec);
-  value->_base.tag = FBLE_FUNC_VALUE;
+  FbleCompiledFuncValueTc* value = FbleNewValueExtra(heap, FbleCompiledFuncValueTc, sizeof(FbleValue*) * scopec);
+  value->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
   value->argc = func_value_instr->argc;
   value->code = func_value_instr->code;
   value->code->refcount++;
@@ -556,12 +556,12 @@ static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr
 static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-  FbleFuncValue* func = (FbleFuncValue*)FrameGetStrict(thread, call_instr->func);
+  FbleCompiledFuncValueTc* func = (FbleCompiledFuncValueTc*)FrameGetStrict(thread, call_instr->func);
   if (func == NULL) {
     FbleReportError("called undefined function\n", call_instr->loc);
     return ABORTED;
   };
-  assert(func->_base.tag == FBLE_FUNC_VALUE);
+  assert(func->_base.tag == FBLE_COMPILED_FUNC_VALUE_TC);
 
 
   if (call_instr->exit) {
@@ -699,12 +699,12 @@ static Status ForkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   FbleVectorInit(heap->arena, thread->children);
 
   for (size_t i = 0; i < fork_instr->args.size; ++i) {
-    FbleProcValue* arg = (FbleProcValue*)FrameGetStrict(thread, fork_instr->args.xs[i]);
+    FbleCompiledProcValueTc* arg = (FbleCompiledProcValueTc*)FrameGetStrict(thread, fork_instr->args.xs[i]);
 
     // You cannot execute a proc in a let binding, so it should be
     // impossible to ever have an undefined proc value.
     assert(arg != NULL && "undefined proc value");
-    assert(arg->_base.tag == FBLE_PROC_VALUE);
+    assert(arg->_base.tag == FBLE_COMPILED_PROC_VALUE_TC);
 
     FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
 
@@ -844,8 +844,8 @@ static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInst
 
   FbleFreeName(heap->arena, entry_name);
 
-  FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
-  func->_base.tag = FBLE_FUNC_VALUE;
+  FbleCompiledFuncValueTc* func = FbleNewValue(heap, FbleCompiledFuncValueTc);
+  func->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
   func->argc = argc;
   func->code = code;
 
@@ -1225,7 +1225,7 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
 //   Does not take ownership of the function or the args.
-static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile)
+static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc* func, FbleValue** args, FbleProfile* profile)
 {
   FbleArena* arena = heap->arena;
   FbleValue* final_result = NULL;
@@ -1298,9 +1298,9 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
 // FbleApply -- see documentation in fble.h
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
-  assert(func->tag == FBLE_FUNC_VALUE);
+  assert(func->tag == FBLE_COMPILED_FUNC_VALUE_TC);
   FbleIO io = { .io = &FbleNoIO, };
-  FbleValue* result = Eval(heap, &io, (FbleFuncValue*)func, args, profile);
+  FbleValue* result = Eval(heap, &io, (FbleCompiledFuncValueTc*)func, args, profile);
   return result;
 }
 
@@ -1313,6 +1313,6 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 // FbleExec -- see documentation in fble.h
 FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile)
 {
-  assert(proc->tag == FBLE_PROC_VALUE);
-  return Eval(heap, io, (FbleFuncValue*)proc, NULL, profile);
+  assert(proc->tag == FBLE_COMPILED_PROC_VALUE_TC);
+  return Eval(heap, io, (FbleCompiledFuncValueTc*)proc, NULL, profile);
 }
