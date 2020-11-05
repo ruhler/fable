@@ -615,8 +615,8 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
     return RUNNING;
   }
 
-  if (get_port->tag == FBLE_PORT_VALUE) {
-    FblePortValue* port = (FblePortValue*)get_port;
+  if (get_port->tag == FBLE_PORT_VALUE_TC) {
+    FblePortValueTc* port = (FblePortValueTc*)get_port;
     if (*port->data == NULL) {
       // Blocked on get. Restore the thread state and return before
       // logging progress.
@@ -667,8 +667,8 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
     return RUNNING;
   }
 
-  if (put_port->tag == FBLE_PORT_VALUE) {
-    FblePortValue* port = (FblePortValue*)put_port;
+  if (put_port->tag == FBLE_PORT_VALUE_TC) {
+    FblePortValueTc* port = (FblePortValueTc*)put_port;
 
     if (*port->data != NULL) {
       // Blocked on put. Restore the thread state and return before

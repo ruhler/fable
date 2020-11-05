@@ -123,7 +123,15 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_PORT_VALUE: return;
+    case FBLE_PORT_VALUE_TC: return;
+    case FBLE_LINK_TC: return;
+
+    case FBLE_EXEC_TC: {
+      FbleExecTc* exec_tc = (FbleExecTc*)value;
+      FbleFree(arena, exec_tc->bindings.xs);
+      return;
+    }
+
     case FBLE_REF_VALUE: return;
 
     case FBLE_PROFILE_TC: {
@@ -133,13 +141,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_LINK_TC: return;
-
-    case FBLE_EXEC_TC: {
-      FbleExecTc* exec_tc = (FbleExecTc*)value;
-      FbleFree(arena, exec_tc->bindings.xs);
-      return;
-    }
 
     case FBLE_SYMBOLIC_VALUE_TC: return;
 
@@ -252,21 +253,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_PORT_VALUE: {
-      break;
-    }
-
-    case FBLE_REF_VALUE: {
-      FbleRefValue* rv = (FbleRefValue*)value;
-      Ref(callback, rv->value);
-      break;
-    }
-
-
-
-    case FBLE_PROFILE_TC: {
-      FbleProfileTc* v = (FbleProfileTc*)value;
-      Ref(callback, v->body);
+    case FBLE_PORT_VALUE_TC: {
       break;
     }
 
@@ -282,6 +269,18 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
         Ref(callback, exec_tc->bindings.xs[i]);
       }
       Ref(callback, exec_tc->body);
+      break;
+    }
+
+    case FBLE_REF_VALUE: {
+      FbleRefValue* rv = (FbleRefValue*)value;
+      Ref(callback, rv->value);
+      break;
+    }
+
+    case FBLE_PROFILE_TC: {
+      FbleProfileTc* v = (FbleProfileTc*)value;
+      Ref(callback, v->body);
       break;
     }
 
@@ -388,7 +387,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
     .instrs = { .size = 2, .xs = instrs }
   };
 
-  assert(port->tag == FBLE_LINK_VALUE_TC || port->tag == FBLE_PORT_VALUE);
+  assert(port->tag == FBLE_LINK_VALUE_TC || port->tag == FBLE_PORT_VALUE_TC);
 
   FbleCompiledProcValueTc* get = FbleNewValueExtra(heap, FbleCompiledProcValueTc, sizeof(FbleValue*));
   get->_base.tag = FBLE_COMPILED_PROC_VALUE_TC;
@@ -403,8 +402,8 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 // FbleNewInputPortValue -- see documentation in fble-value.h
 FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data)
 {
-  FblePortValue* get_port = FbleNewValue(heap, FblePortValue);
-  get_port->_base.tag = FBLE_PORT_VALUE;
+  FblePortValueTc* get_port = FbleNewValue(heap, FblePortValueTc);
+  get_port->_base.tag = FBLE_PORT_VALUE_TC;
   get_port->data = data;
 
   FbleValue* get = FbleNewGetValue(heap, &get_port->_base);
@@ -491,8 +490,8 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 // FbleNewOutputPortValue -- see documentation in fble-value.h
 FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data)
 {
-  FblePortValue* port_value = FbleNewValue(heap, FblePortValue);
-  port_value->_base.tag = FBLE_PORT_VALUE;
+  FblePortValueTc* port_value = FbleNewValue(heap, FblePortValueTc);
+  port_value->_base.tag = FBLE_PORT_VALUE_TC;
   port_value->data = data;
   FbleValue* put = FbleNewPutValue(heap, &port_value->_base);
   FbleReleaseValue(heap, &port_value->_base);

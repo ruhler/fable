@@ -52,7 +52,7 @@ typedef enum {
   FBLE_FUNC_APPLY_TC,
 
   FBLE_LINK_VALUE_TC,
-  FBLE_PORT_VALUE,
+  FBLE_PORT_VALUE_TC,
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
 
@@ -256,17 +256,41 @@ typedef struct {
   FbleValues* tail;
 } FbleLinkValueTc;
 
-// FblePortValue --
-//   FBLE_PORT_VALUE
+// FblePortValueTc --
+//   FBLE_PORT_VALUE_TC
 //
 // Use for input and output values linked to external IO.
 //
-// data is a pointer to a value owned externally where data should be put to
-// and got from.
+// Fields:
+//   data - a pointer to a value owned externally where data should be put to
+//          and got from.
 typedef struct {
   FbleTc _base;
   FbleValue** data;
-} FblePortValue;
+} FblePortValueTc;
+
+// FbleLinkTc --
+//   FBLE_LINK_TC
+//
+// Represents a process link expression. Unlike FBLE_LINK_EXPR, which
+// evaluates to a proc value, FBLE_LINK_TC evaluates to the result of the
+// computing the proc value.
+typedef struct {
+  FbleTc _base;
+  FbleTc* body;
+} FbleLinkTc;
+
+// FbleExecTc --
+//   FBLE_EXEC_TC
+//
+// Represents a process exec expression. Unlike FBLE_EXEC_EXPR, which
+// evaluates to a proc value, FBLE_EXEC_TC evaluates to the result of the
+// computing the proc value.
+typedef struct {
+  FbleTc _base;
+  FbleValueV bindings;
+  FbleTc* body;
+} FbleExecTc;
 
 // FbleRefValue --
 //   FBLE_REF_VALUE
@@ -301,27 +325,6 @@ typedef struct {
   FbleLoc loc;
   FbleTc* body;
 } FbleProfileTc;
-
-// FbleLinkTc --
-//   FBLE_LINK_TC
-//
-// Unlike FBLE_LINK_EXPR, which evaluates to a proc value, FBLE_LINK_TC
-// evaluates to the result of the computing the proc value.
-typedef struct {
-  FbleTc _base;
-  FbleTc* body;
-} FbleLinkTc;
-
-// FbleExecTc --
-//   FBLE_EXEC_TC
-//
-// Unlike FBLE_EXEC_EXPR, which evaluates to a proc value, FBLE_EXEC_TC
-// evaluates to the result of the computing the proc value.
-typedef struct {
-  FbleTc _base;
-  FbleValueV bindings;
-  FbleTc* body;
-} FbleExecTc;
 
 // FbleSymbolicValueTc --
 //   FBLE_SYMBOLIC_VALUE_TC
