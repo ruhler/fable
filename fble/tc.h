@@ -228,6 +228,17 @@ typedef struct {
 #define FBLE_COMPILED_PROC_VALUE_TC FBLE_COMPILED_FUNC_VALUE_TC
 typedef FbleCompiledFuncValueTc FbleCompiledProcValueTc;
 
+// FbleFuncApplyTc --
+//   FBLE_FUNC_APPLY_TC
+//
+// Represents a function application expression.
+typedef struct {
+  FbleTc _base;
+  FbleLoc loc;
+  FbleTc* func;
+  FbleTcV args;
+} FbleFuncApplyTc;
+
 // FbleValues --
 //   A non-circular singly linked list of values.
 typedef struct FbleValues {
@@ -330,14 +341,5 @@ typedef struct {
   FbleVarIndexV args;
   FbleTc* body;
 } FbleSymbolicCompileTc;
-
-// FbleFuncApplyTc --
-//   FBLE_FUNC_APPLY_TC
-typedef struct {
-  FbleTc _base;
-  FbleLoc loc;
-  FbleTc* func;
-  FbleTcV args;
-} FbleFuncApplyTc;
 
 #endif // FBLE_INTERNAL_TC_H_

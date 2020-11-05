@@ -14,6 +14,8 @@
  - It would be nice to specify explicitly and be consistent with this kind of
    thing.
 * Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
+* Clarify when FbleFuncValueTc is expected versus FbleCompiledFuncValueTc.
+ - Ideally they can be used interchangeably?
 
 * Implement symbolic elaboration needed for Md5 DoBlock.
  By fixing failing elaborate tests. 

@@ -105,6 +105,13 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
+    case FBLE_FUNC_APPLY_TC: {
+      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)value;
+      FbleFreeLoc(arena, apply_tc->loc);
+      FbleFree(arena, apply_tc->args.xs);
+      return;
+    }
+
     case FBLE_LINK_VALUE: {
       FbleLinkValue* v = (FbleLinkValue*)value;
       FbleValues* curr = v->head;
@@ -143,12 +150,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_FUNC_APPLY_TC: {
-      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)value;
-      FbleFreeLoc(arena, apply_tc->loc);
-      FbleFree(arena, apply_tc->args.xs);
-      return;
-    }
   }
 
   UNREACHABLE("Should not get here");
@@ -234,6 +235,15 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
+    case FBLE_FUNC_APPLY_TC: {
+      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)value;
+      Ref(callback, apply_tc->func);
+      for (size_t i = 0; i < apply_tc->args.size; ++i) {
+        Ref(callback, apply_tc->args.xs[i]);
+      }
+      return;
+    }
+
     case FBLE_LINK_VALUE: {
       FbleLinkValue* v = (FbleLinkValue*)value;
       for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
@@ -280,15 +290,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case FBLE_SYMBOLIC_COMPILE_TC: {
       FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)value;
       Ref(callback, compile_tc->body);
-      return;
-    }
-
-    case FBLE_FUNC_APPLY_TC: {
-      FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)value;
-      Ref(callback, apply_tc->func);
-      for (size_t i = 0; i < apply_tc->args.size; ++i) {
-        Ref(callback, apply_tc->args.xs[i]);
-      }
       return;
     }
   }
