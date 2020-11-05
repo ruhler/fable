@@ -797,6 +797,42 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
+    case FBLE_FUNC_VALUE_TC: {
+      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)v;
+      size_t argc = func_tc->argc;
+
+      FbleFuncValueInstr* instr = FbleAlloc(arena, FbleFuncValueInstr);
+      instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
+      instr->_base.profile_ops = NULL;
+      instr->argc = argc;
+
+      FbleVectorInit(arena, instr->scope);
+      for (size_t i = 0; i < func_tc->scope.size; ++i) {
+        Local* local = GetVar(arena, scope, func_tc->scope.xs[i]);
+        FbleVectorAppend(arena, instr->scope, local->index);
+      }
+
+      Scope func_scope;
+      InitScope(arena, &func_scope, &instr->code, func_tc->scope.size, scope);
+      EnterBodyBlock(arena, blocks, func_tc->body_loc, &func_scope);
+
+      for (size_t i = 0; i < argc; ++i) {
+        Local* local = NewLocal(arena, &func_scope);
+        PushVar(arena, &func_scope, local);
+      }
+
+      Local* func_result = CompileExpr(arena, blocks, true, &func_scope, func_tc->body);
+      ExitBlock(arena, blocks, &func_scope, true);
+      LocalRelease(arena, &func_scope, func_result, true);
+      FreeScope(arena, &func_scope, true);
+
+      Local* local = NewLocal(arena, scope);
+      instr->dest = local->index.index;
+      AppendInstr(arena, scope, &instr->_base);
+      CompileExit(arena, exit, scope, local);
+      return local;
+    }
+
     case FBLE_FUNC_VALUE: assert(false && "TODO: FBLE_FUNC_VALUE"); return NULL;
     case FBLE_LINK_VALUE: assert(false && "TODO: FBLE_LINK_VALUE"); return NULL;
     case FBLE_PORT_VALUE: assert(false && "TODO: FBLE_PORT_VALUE"); return NULL;
@@ -907,42 +943,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       AppendInstr(arena, scope, &compile_instr->_base);
       CompileExit(arena, exit, scope, local);
       LocalRelease(arena, scope, body, exit);
-      return local;
-    }
-
-    case FBLE_FUNC_VALUE_TC: {
-      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)v;
-      size_t argc = func_tc->argc;
-
-      FbleFuncValueInstr* instr = FbleAlloc(arena, FbleFuncValueInstr);
-      instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
-      instr->_base.profile_ops = NULL;
-      instr->argc = argc;
-
-      FbleVectorInit(arena, instr->scope);
-      for (size_t i = 0; i < func_tc->scope.size; ++i) {
-        Local* local = GetVar(arena, scope, func_tc->scope.xs[i]);
-        FbleVectorAppend(arena, instr->scope, local->index);
-      }
-
-      Scope func_scope;
-      InitScope(arena, &func_scope, &instr->code, func_tc->scope.size, scope);
-      EnterBodyBlock(arena, blocks, func_tc->body_loc, &func_scope);
-
-      for (size_t i = 0; i < argc; ++i) {
-        Local* local = NewLocal(arena, &func_scope);
-        PushVar(arena, &func_scope, local);
-      }
-
-      Local* func_result = CompileExpr(arena, blocks, true, &func_scope, func_tc->body);
-      ExitBlock(arena, blocks, &func_scope, true);
-      LocalRelease(arena, &func_scope, func_result, true);
-      FreeScope(arena, &func_scope, true);
-
-      Local* local = NewLocal(arena, scope);
-      instr->dest = local->index.index;
-      AppendInstr(arena, scope, &instr->_base);
-      CompileExit(arena, exit, scope, local);
       return local;
     }
 

@@ -90,6 +90,13 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       FbleDataAccessTc* v = (FbleDataAccessTc*)value;
       FbleFreeLoc(arena, v->loc);
       return;
+    } 
+
+    case FBLE_FUNC_VALUE_TC: {
+      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)value;
+      FbleFreeLoc(arena, func_tc->body_loc);
+      FbleFree(arena, func_tc->scope.xs);
+      return;
     }
 
     case FBLE_FUNC_VALUE: {
@@ -133,13 +140,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)value;
       FbleFreeLoc(arena, compile_tc->loc);
       FbleFree(arena, compile_tc->args.xs);
-      return;
-    }
-
-    case FBLE_FUNC_VALUE_TC: {
-      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)value;
-      FbleFreeLoc(arena, func_tc->body_loc);
-      FbleFree(arena, func_tc->scope.xs);
       return;
     }
 
@@ -220,6 +220,12 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
+    case FBLE_FUNC_VALUE_TC: {
+      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)value;
+      Ref(callback, func_tc->body);
+      return;
+    }
+
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
       for (size_t i = 0; i < v->code->statics; ++i) {
@@ -274,12 +280,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case FBLE_SYMBOLIC_COMPILE_TC: {
       FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)value;
       Ref(callback, compile_tc->body);
-      return;
-    }
-
-    case FBLE_FUNC_VALUE_TC: {
-      FbleFuncValueTc* func_tc = (FbleFuncValueTc*)value;
-      Ref(callback, func_tc->body);
       return;
     }
 

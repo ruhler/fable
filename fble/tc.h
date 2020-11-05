@@ -190,6 +190,18 @@ typedef struct {
   FbleLoc loc;
 } FbleDataAccessTc;
 
+// FbleFuncValueTc --
+//   FBLE_FUNC_VALUE_TC
+//
+// Represents an uncompiled function value or an uncompiled process value.
+typedef struct {
+  FbleTc _base;
+  FbleLoc body_loc;
+  FbleVarIndexV scope;
+  size_t argc;
+  FbleTc* body;
+} FbleFuncValueTc;
+
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
@@ -316,18 +328,6 @@ typedef struct {
   FbleVarIndexV args;
   FbleTc* body;
 } FbleSymbolicCompileTc;
-
-// FbleFuncValueTc --
-//   FBLE_FUNC_VALUE_TC
-//
-// Note: FuncValueTc is used for process values as well as function values.
-typedef struct {
-  FbleTc _base;
-  FbleLoc body_loc;
-  FbleVarIndexV scope;
-  size_t argc;
-  FbleTc* body;
-} FbleFuncValueTc;
 
 // FbleFuncApplyTc --
 //   FBLE_FUNC_APPLY_TC

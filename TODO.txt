@@ -1,6 +1,5 @@
 * Major cleanup/reorganization of FbleValue
- - Rename FbleValue to FbleTc?
- - Add _TC suffix for all tag names?
+ - Add _TC suffix for all tag names
  - Clean up doc comments in typecheck.h, typecheck.c, compile.c.
  - Reorganize and clean up documentation of value type
 
@@ -14,6 +13,7 @@
  - I'm not sure if there's any performance implications.
  - It would be nice to specify explicitly and be consistent with this kind of
    thing.
+* Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
 
 * Implement symbolic elaboration needed for Md5 DoBlock.
  By fixing failing elaborate tests. 
@@ -290,7 +290,7 @@
  - Debug why List Eq test is failing. I want to step through again.
    Sigh. I definitely need a debugger.
 
-   Turns out False was being defined as True instead of False. If figured that
+   Turns out False was being defined as True instead of False. I figured that
    out by changing the body of ListEq to always return False and being
    surprised when the result was as if it returned True.
 
