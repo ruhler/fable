@@ -970,16 +970,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
-    case FBLE_REF_VALUE: assert(false && "TODO: FBLE_REF_VALUE"); return NULL;
-
-    case FBLE_PROFILE_TC: {
-      FbleProfileTc* profile_tc = (FbleProfileTc*)v;
-      EnterBlock(arena, blocks, profile_tc->name, profile_tc->loc, scope);
-      Local* result = CompileExpr(arena, blocks, exit, scope, profile_tc->body);
-      ExitBlock(arena, blocks, scope, exit);
-      return result;
-    }
-
     case FBLE_SYMBOLIC_VALUE_TC: {
       Local* local = NewLocal(arena, scope);
       FbleSymbolicValueInstr* instr = FbleAlloc(arena, FbleSymbolicValueInstr);
@@ -1015,6 +1005,18 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
+    case FBLE_PROFILE_TC: {
+      FbleProfileTc* profile_tc = (FbleProfileTc*)v;
+      EnterBlock(arena, blocks, profile_tc->name, profile_tc->loc, scope);
+      Local* result = CompileExpr(arena, blocks, exit, scope, profile_tc->body);
+      ExitBlock(arena, blocks, scope, exit);
+      return result;
+    }
+
+    case FBLE_REF_VALUE_TC: {
+      assert(false && "TODO: FBLE_REF_VALUE_TC");
+      return NULL;
+    }
   }
 
   UNREACHABLE("should already have returned");

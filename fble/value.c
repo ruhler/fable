@@ -132,16 +132,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_REF_VALUE: return;
-
-    case FBLE_PROFILE_TC: {
-      FbleProfileTc* profile_tc = (FbleProfileTc*)value;
-      FbleFreeLoc(arena, profile_tc->loc);
-      FbleFreeName(arena, profile_tc->name);
-      return;
-    }
-
-
     case FBLE_SYMBOLIC_VALUE_TC: return;
 
     case FBLE_SYMBOLIC_COMPILE_TC: {
@@ -151,6 +141,14 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
+    case FBLE_PROFILE_TC: {
+      FbleProfileTc* profile_tc = (FbleProfileTc*)value;
+      FbleFreeLoc(arena, profile_tc->loc);
+      FbleFreeName(arena, profile_tc->name);
+      return;
+    }
+
+    case FBLE_REF_VALUE_TC: return;
   }
 
   UNREACHABLE("Should not get here");
@@ -272,10 +270,12 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_REF_VALUE: {
-      FbleRefValue* rv = (FbleRefValue*)value;
-      Ref(callback, rv->value);
-      break;
+    case FBLE_SYMBOLIC_VALUE_TC: break;
+
+    case FBLE_SYMBOLIC_COMPILE_TC: {
+      FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)value;
+      Ref(callback, compile_tc->body);
+      return;
     }
 
     case FBLE_PROFILE_TC: {
@@ -284,12 +284,10 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_SYMBOLIC_VALUE_TC: break;
-
-    case FBLE_SYMBOLIC_COMPILE_TC: {
-      FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)value;
-      Ref(callback, compile_tc->body);
-      return;
+    case FBLE_REF_VALUE_TC: {
+      FbleRefValueTc* rv = (FbleRefValueTc*)value;
+      Ref(callback, rv->value);
+      break;
     }
   }
 }

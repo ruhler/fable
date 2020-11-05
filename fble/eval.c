@@ -202,8 +202,8 @@ static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index)
 static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index)
 {
   FbleValue* value = FrameGet(thread, index);
-  while (value->tag == FBLE_REF_VALUE) {
-    FbleRefValue* rv = (FbleRefValue*)value;
+  while (value->tag == FBLE_REF_VALUE_TC) {
+    FbleRefValueTc* rv = (FbleRefValueTc*)value;
 
     if (rv->value == NULL) {
       // We are trying to dereference an abstract value. This is undefined
@@ -757,8 +757,8 @@ static Status LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-  FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);
-  rv->_base.tag = FBLE_REF_VALUE;
+  FbleRefValueTc* rv = FbleNewValue(heap, FbleRefValueTc);
+  rv->_base.tag = FBLE_REF_VALUE_TC;
   rv->value = NULL;
 
   thread->stack->locals[ref_instr->dest] = &rv->_base;
@@ -770,8 +770,8 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
 static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-  FbleRefValue* rv = (FbleRefValue*)thread->stack->locals[ref_def_instr->ref];
-  assert(rv->_base.tag == FBLE_REF_VALUE);
+  FbleRefValueTc* rv = (FbleRefValueTc*)thread->stack->locals[ref_def_instr->ref];
+  assert(rv->_base.tag == FBLE_REF_VALUE_TC);
 
   FbleValue* value = FrameGet(thread, ref_def_instr->value);
   assert(value != NULL);

@@ -1,7 +1,5 @@
-* Major cleanup/reorganization of FbleValue
- - Add _TC suffix for all tag names
- - Clean up doc comments in typecheck.h, typecheck.c, compile.c.
- - Reorganize and clean up documentation of value type
+* Clean up doc comments in typecheck.h, typecheck.c, compile.c.
+ - Now that we are passing value heaps around instead of arenas.
 
 * Test use of undefined values in case, access, and func apply.
 * Check if it's okay to add new blocks to a profile in progress.

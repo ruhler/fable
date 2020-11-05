@@ -61,7 +61,7 @@ typedef enum {
 
   FBLE_PROFILE_TC,
 
-  FBLE_REF_VALUE,
+  FBLE_REF_VALUE_TC,
 } FbleTcTag;
 
 // FbleValue --
@@ -292,21 +292,24 @@ typedef struct {
   FbleTc* body;
 } FbleExecTc;
 
-// FbleRefValue --
-//   FBLE_REF_VALUE
+// FbleSymbolicValueTc --
+//   FBLE_SYMBOLIC_VALUE_TC
 //
-// A implementation-specific value introduced to support recursive values. A
-// ref value is simply a reference to another value. All values must be
-// dereferenced before being otherwise accessed in case they are reference
-// values.
-//
-// Fields:
-//   value - the value being referenced, or NULL if no value is referenced.
-typedef struct FbleRefValue {
+// An expression to allocate a new symbolic value.
+typedef struct {
   FbleTc _base;
-  FbleValue* value;
-} FbleRefValue;
+} FbleSymbolicValueTc;
 
+// FbleSymbolicCompileTc --
+//   FBLE_SYMBOLIC_COMPILE_TC 
+//
+// An expression to compile a symbolic value into a function.
+typedef struct {
+  FbleTc _base;
+  FbleLoc loc;
+  FbleVarIndexV args;
+  FbleTc* body;
+} FbleSymbolicCompileTc; 
 
 // FbleProfileTc --
 //   FBLE_PROFILE_TC
@@ -326,23 +329,20 @@ typedef struct {
   FbleTc* body;
 } FbleProfileTc;
 
-// FbleSymbolicValueTc --
-//   FBLE_SYMBOLIC_VALUE_TC
+// FbleRefValueTc --
+//   FBLE_REF_VALUE_TC
 //
-// An expression to allocate a new symbolic value.
-typedef struct {
+// A implementation-specific value introduced to support recursive values. A
+// ref value is simply a reference to another value. All values must be
+// dereferenced before being otherwise accessed in case they are reference
+// values.
+//
+// Fields:
+//   value - the value being referenced, or NULL if no value is referenced.
+typedef struct FbleRefValueTc {
   FbleTc _base;
-} FbleSymbolicValueTc;
+  FbleValue* value;
+} FbleRefValueTc;
 
-// FbleSymbolicCompileTc --
-//   FBLE_SYMBOLIC_COMPILE_TC 
-//
-// An expression to compile a symbolic value into a function.
-typedef struct {
-  FbleTc _base;
-  FbleLoc loc;
-  FbleVarIndexV args;
-  FbleTc* body;
-} FbleSymbolicCompileTc;
 
 #endif // FBLE_INTERNAL_TC_H_
