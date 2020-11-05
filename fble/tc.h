@@ -51,7 +51,7 @@ typedef enum {
   FBLE_COMPILED_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
 
-  FBLE_LINK_VALUE,
+  FBLE_LINK_VALUE_TC,
   FBLE_PORT_VALUE,
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
@@ -246,7 +246,7 @@ typedef struct FbleValues {
   struct FbleValues* next;
 } FbleValues;
 
-// FbleLinkValue -- FBLE_LINK_VALUE
+// FbleLinkValueTc -- FBLE_LINK_VALUE_TC
 //   Holds the list of values on a link. Values are added to the tail and taken
 //   from the head. If there are no values on the list, both head and tail are
 //   set to NULL.
@@ -254,7 +254,7 @@ typedef struct {
   FbleTc _base;
   FbleValues* head;
   FbleValues* tail;
-} FbleLinkValue;
+} FbleLinkValueTc;
 
 // FblePortValue --
 //   FBLE_PORT_VALUE

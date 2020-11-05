@@ -592,8 +592,8 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
 {
   FbleGetInstr* get_instr = (FbleGetInstr*)instr;
   FbleValue* get_port = FrameGet(thread, get_instr->port);
-  if (get_port->tag == FBLE_LINK_VALUE) {
-    FbleLinkValue* link = (FbleLinkValue*)get_port;
+  if (get_port->tag == FBLE_LINK_VALUE_TC) {
+    FbleLinkValueTc* link = (FbleLinkValueTc*)get_port;
 
     if (link->head == NULL) {
       // Blocked on get. Restore the thread state and return before
@@ -645,8 +645,8 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
   FbleValueV args = { .size = 0, .xs = NULL, };
   FbleValue* unit = FbleNewStructValue(heap, args);
 
-  if (put_port->tag == FBLE_LINK_VALUE) {
-    FbleLinkValue* link = (FbleLinkValue*)put_port;
+  if (put_port->tag == FBLE_LINK_VALUE_TC) {
+    FbleLinkValueTc* link = (FbleLinkValueTc*)put_port;
 
     FbleValues* tail = FbleAlloc(heap->arena, FbleValues);
     tail->value = arg;
@@ -738,8 +738,8 @@ static Status LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 {
   FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
 
-  FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
-  link->_base.tag = FBLE_LINK_VALUE;
+  FbleLinkValueTc* link = FbleNewValue(heap, FbleLinkValueTc);
+  link->_base.tag = FBLE_LINK_VALUE_TC;
   link->head = NULL;
   link->tail = NULL;
 

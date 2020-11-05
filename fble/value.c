@@ -112,8 +112,8 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_LINK_VALUE: {
-      FbleLinkValue* v = (FbleLinkValue*)value;
+    case FBLE_LINK_VALUE_TC: {
+      FbleLinkValueTc* v = (FbleLinkValueTc*)value;
       FbleValues* curr = v->head;
       while (curr != NULL) {
         FbleValues* tmp = curr;
@@ -244,8 +244,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       return;
     }
 
-    case FBLE_LINK_VALUE: {
-      FbleLinkValue* v = (FbleLinkValue*)value;
+    case FBLE_LINK_VALUE_TC: {
+      FbleLinkValueTc* v = (FbleLinkValueTc*)value;
       for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
         Ref(callback, elem->value);
       }
@@ -388,7 +388,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
     .instrs = { .size = 2, .xs = instrs }
   };
 
-  assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
+  assert(port->tag == FBLE_LINK_VALUE_TC || port->tag == FBLE_PORT_VALUE);
 
   FbleCompiledProcValueTc* get = FbleNewValueExtra(heap, FbleCompiledProcValueTc, sizeof(FbleValue*));
   get->_base.tag = FBLE_COMPILED_PROC_VALUE_TC;

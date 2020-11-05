@@ -895,7 +895,11 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return dest;
     }
 
-    case FBLE_LINK_VALUE: assert(false && "TODO: FBLE_LINK_VALUE"); return NULL;
+    case FBLE_LINK_VALUE_TC: {
+      assert(false && "TODO: FBLE_LINK_VALUE_TC");
+      return NULL;
+    }
+
     case FBLE_PORT_VALUE: assert(false && "TODO: FBLE_PORT_VALUE"); return NULL;
     case FBLE_REF_VALUE: assert(false && "TODO: FBLE_REF_VALUE"); return NULL;
 
