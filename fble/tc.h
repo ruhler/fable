@@ -339,12 +339,25 @@ typedef struct {
 // dereferenced before being otherwise accessed in case they are thunk
 // values.
 //
+// For recursive values, 'tail', 'func', and 'pc' will all be NULL and
+// 'locals' will be empty.
+//
+// For partially evaluated expressions, func is the currently executing
+// function, pc the location in that function, locals the list of current
+// local variables, and tail is a thunk to compute after this thunk as
+// finished computing.
+//
 // Fields:
 //   value - the value being referenced, or NULL if no value is referenced.
 typedef struct FbleThunkValueTc {
   FbleTc _base;
   FbleValue* value;
-} FbleThunkValueTc;
 
+  struct FbleThunkValueTc* tail;
+  FbleCompiledFuncValueTc* func;
+  FbleInstr** pc;                 // borrowed from func->code
+  size_t localc;
+  FbleValue* locals[];
+} FbleThunkValueTc;
 
 #endif // FBLE_INTERNAL_TC_H_

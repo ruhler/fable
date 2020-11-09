@@ -287,6 +287,10 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case FBLE_THUNK_VALUE_TC: {
       FbleThunkValueTc* rv = (FbleThunkValueTc*)value;
       Ref(callback, rv->value);
+      Ref(callback, &rv->tail->_base);
+      for (size_t i = 0; i < rv->localc; ++i) {
+        Ref(callback, rv->locals[i]);
+      }
       break;
     }
   }

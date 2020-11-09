@@ -760,6 +760,10 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
   FbleThunkValueTc* rv = FbleNewValue(heap, FbleThunkValueTc);
   rv->_base.tag = FBLE_THUNK_VALUE_TC;
   rv->value = NULL;
+  rv->tail = NULL;
+  rv->func = NULL;
+  rv->pc = NULL;
+  rv->localc = 0;
 
   thread->stack->locals[ref_instr->dest] = &rv->_base;
   return RUNNING;
