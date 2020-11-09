@@ -1013,8 +1013,8 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return result;
     }
 
-    case FBLE_REF_VALUE_TC: {
-      assert(false && "TODO: FBLE_REF_VALUE_TC");
+    case FBLE_THUNK_VALUE_TC: {
+      assert(false && "TODO: FBLE_THUNK_VALUE_TC");
       return NULL;
     }
   }

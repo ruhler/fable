@@ -61,7 +61,7 @@ typedef enum {
 
   FBLE_PROFILE_TC,
 
-  FBLE_REF_VALUE_TC,
+  FBLE_THUNK_VALUE_TC,
 } FbleTcTag;
 
 // FbleValue --
@@ -329,20 +329,22 @@ typedef struct {
   FbleTc* body;
 } FbleProfileTc;
 
-// FbleRefValueTc --
-//   FBLE_REF_VALUE_TC
+// FbleThunkValueTc --
+//   FBLE_THUNK_VALUE_TC
 //
-// A implementation-specific value introduced to support recursive values. A
-// ref value is simply a reference to another value. All values must be
-// dereferenced before being otherwise accessed in case they are reference
+// A implementation-specific value introduced to support recursive values and
+// partially evaluated expressions.
+//
+// A thunk value holds a reference to another value. All values must be
+// dereferenced before being otherwise accessed in case they are thunk
 // values.
 //
 // Fields:
 //   value - the value being referenced, or NULL if no value is referenced.
-typedef struct FbleRefValueTc {
+typedef struct FbleThunkValueTc {
   FbleTc _base;
   FbleValue* value;
-} FbleRefValueTc;
+} FbleThunkValueTc;
 
 
 #endif // FBLE_INTERNAL_TC_H_
