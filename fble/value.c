@@ -47,7 +47,9 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value)
 // FbleValueAddRef -- see documentation in fble-value.h
 void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  heap->add_ref(heap, src, dst);
+  if (dst != NULL) {
+    heap->add_ref(heap, src, dst);
+  }
 }
 
 // FbleValueDelRef -- see documentation in fble-value.h
@@ -148,7 +150,11 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_THUNK_VALUE_TC: return;
+    case FBLE_THUNK_VALUE_TC: {
+      FbleThunkValueTc* thunk_tc = (FbleThunkValueTc*)value;
+      FbleFree(arena, thunk_tc->locals.xs);
+      return;
+    }
   }
 
   UNREACHABLE("Should not get here");
@@ -288,8 +294,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       FbleThunkValueTc* rv = (FbleThunkValueTc*)value;
       Ref(callback, rv->value);
       Ref(callback, &rv->tail->_base);
-      for (size_t i = 0; i < rv->localc; ++i) {
-        Ref(callback, rv->locals[i]);
+      for (size_t i = 0; i < rv->locals.size; ++i) {
+        Ref(callback, rv->locals.xs[i]);
       }
       break;
     }

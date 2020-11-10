@@ -1,11 +1,9 @@
 * Change Stack to be a new FbleThunkValue
- - In preparation from separating threading management from expression
-   evaluation.
- - To have GC keep track of values on the stack and avoid the need for
-   AbortThread.
- - Hopefully not too atrocious for performance?
-   Current benchmark runtime: 3m18s
-
+ - Fix tracking of ownership. Make sure to call AddRef and DelRef any time we
+   assign a value to the stack. Maybe add a helper function?
+ - Remove AbortThread in a followup change.
+ - Consider whether calling FbleValueDelRef is necessary. Seems like a lot of
+   wasted work for the current implementation.
 
 * Can we merge FBLE_FUNC_VALUE_TC and FBLE_COMPILED_FUNC_VALUE_TC?
  - by separating out a notion of FBLE_COMPILED_VALUE_TC and using FBLE_VAR_TC

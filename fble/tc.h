@@ -356,8 +356,7 @@ typedef struct FbleThunkValueTc {
   struct FbleThunkValueTc* tail;
   FbleCompiledFuncValueTc* func;
   FbleInstr** pc;                 // borrowed from func->code
-  size_t localc;
-  FbleValue* locals[];
+  FbleValueV locals;
 } FbleThunkValueTc;
 
 #endif // FBLE_INTERNAL_TC_H_
