@@ -1,5 +1,6 @@
 * Change Stack to be a new FbleThunkValue
- - Fix tracking of ownership. Make sure to call AddRef and DelRef any time we
+ - Fix tracking of ownership in eval.c, starting from the top of the file
+   going down. Make sure to call AddRef and DelRef any time we
    assign a value to the stack. Maybe add a helper function?
  - Remove AbortThread in a followup change.
  - Consider whether calling FbleValueDelRef is necessary. Seems like a lot of

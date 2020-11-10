@@ -64,8 +64,6 @@ typedef enum {
 
 static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index);
 static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index);
-static FbleValue* FrameMove(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc);
-static void FrameRelease(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc);
 
 static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, Thread* thread);
 static void PopFrame(FbleValueHeap* heap, Thread* thread);
@@ -195,68 +193,6 @@ static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index)
   return value;
 }
 
-// FrameMove --
-//   Get a value from the frame on the top of the execution stack, transfering
-//   ownership of the value if we have ownership of it.
-//
-// Inputs:
-//   heap - heap used for allocations.
-//   thread - the current thread.
-//   index - the index of the value to access.
-//   argc - the number of arguments to the currently executing function.
-//
-// Results:
-//   The value in the top stack frame at the given index.
-//
-// Side effects:
-//   Has the effect of taking a reference to the value and releasing the value
-//   on the stack frame if we have ownership of it.
-static FbleValue* FrameMove(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc)
-{
-  switch (index.section) {
-    case FBLE_STATICS_FRAME_SECTION: {
-      FbleValue* value = thread->stack->func->scope[index.index];
-      FbleRetainValue(heap, value);
-      return value;
-    }
-
-    case FBLE_LOCALS_FRAME_SECTION: {
-      FbleValue* value = thread->stack->locals.xs[index.index];
-      if (index.index < argc) {
-        FbleRetainValue(heap, value);
-      }
-      thread->stack->locals.xs[index.index] = NULL;
-      return value;
-    }
-  }
-
-  UNREACHABLE("should never get here");
-  return NULL;
-}
-
-// FrameRelease --
-//   Release a value on the current stack frame if we have ownership of it.
-//
-// Inputs:
-//   heap - heap used for allocations.
-//   thread - the current thread.
-//   index - the index of the value to access.
-//   argc - the number of arguments to the currently executing function.
-//
-// Side effects:
-//   Has the effect of releasing the value on the stack frame if we have
-//   ownership of it.
-static void FrameRelease(FbleHeap* heap, Thread* thread, FbleFrameIndex index, size_t argc)
-{
-  FbleValueDelRef(heap, &thread->stack->_base, thread->stack->locals.xs[index.index]);
-  if (index.section == FBLE_LOCALS_FRAME_SECTION) {
-    if (index.index >= argc) {
-      FbleReleaseValue(heap, thread->stack->locals.xs[index.index]);
-    }
-    thread->stack->locals.xs[index.index] = NULL;
-  }
-}
-
 // PushFrame --
 //   Push a frame onto the execution stack.
 //
@@ -380,6 +316,7 @@ static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
     FbleValueAddRef(heap, &value->_base, value->fields[i]);
   }
 
+  // TODO: Continue fixing up reference tracking from here on down.
   thread->stack->locals.xs[struct_value_instr->dest] = &value->_base;
   return RUNNING;
 }
@@ -540,11 +477,10 @@ static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 
   if (call_instr->exit) {
     FbleRetainValue(heap, &func->_base);
-    FrameRelease(heap, thread, call_instr->func, thread->stack->func->argc);
 
     FbleValue* args[func->argc];
     for (size_t i = 0; i < func->argc; ++i) {
-      args[i] = FrameMove(heap, thread, call_instr->args.xs[i], thread->stack->func->argc);
+      args[i] = FrameGet(thread, call_instr->args.xs[i]);
     }
 
     ReplaceFrame(heap, func, args, thread);
@@ -767,7 +703,7 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
 static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-  thread->stack->value = FrameMove(heap, thread, return_instr->result, thread->stack->func->argc);
+  thread->stack->value = FrameGet(thread, return_instr->result);
   PopFrame(heap, thread);
   if (thread->stack == NULL) {
     return FINISHED;
@@ -993,11 +929,6 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       case FBLE_CALL_INSTR: {
         FbleCallInstr* call_instr = (FbleCallInstr*)instr;
         if (call_instr->exit) {
-          FrameRelease(heap, thread, call_instr->func, thread->stack->func->argc);
-          for (size_t i = 0; i < call_instr->args.size; ++i) {
-            FrameRelease(heap, thread, call_instr->args.xs[i], thread->stack->func->argc);
-          }
-
           thread->stack->value = NULL;
           PopFrame(heap, thread);
           if (thread->stack == NULL) {
@@ -1060,9 +991,6 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
       }
 
       case FBLE_RETURN_INSTR: {
-        FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-        FrameRelease(heap, thread, return_instr->result, thread->stack->func->argc);
-        thread->stack->value = NULL;
         PopFrame(heap, thread);
         if (thread->stack == NULL) {
           return FINISHED;
