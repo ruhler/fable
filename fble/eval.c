@@ -64,6 +64,8 @@ typedef enum {
 
 static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index);
 static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index);
+static void FrameSet(FbleValueHeap* heap, Thread* thread, FbleLocalIndex index, FbleValue* value);
+static void FrameSetAndRelease(FbleValueHeap* heap, Thread* thread, FbleLocalIndex index, FbleValue* value);
 
 static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, Thread* thread);
 static void PopFrame(FbleValueHeap* heap, Thread* thread);
@@ -193,6 +195,42 @@ static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index)
   return value;
 }
 
+// FrameSet -- 
+//   Store a value onto the frame on the top of the stack.
+//
+// Inputs:
+//   heap - the value heap.
+//   thread - the current thread.
+//   index - the index of the value to set.
+//   value - the value to set.
+//
+// Side effects:
+//   Sets the value at the given index in the frame.
+static void FrameSet(FbleValueHeap* heap, Thread* thread, FbleLocalIndex index, FbleValue* value)
+{
+  thread->stack->locals.xs[index] = value;
+  FbleValueAddRef(heap, &thread->stack->_base, value);
+}
+
+// FrameSetAndRelease --
+//   Store a value onto the frame on the top of the stack and call
+//   FbleValueRelease on the value.
+//
+// Inputs:
+//   heap - the value heap.
+//   thread - the current thread.
+//   index - the index of the value to set.
+//   value - the value to set.
+//
+// Side effects:
+//   Sets the value at the given index in the frame and calls FbleValueRelease
+//   on the value.
+static void FrameSetAndRelease(FbleValueHeap* heap, Thread* thread, FbleLocalIndex index, FbleValue* value)
+{
+  FrameSet(heap, thread, index, value);
+  FbleReleaseValue(heap, value);
+}
+
 // PushFrame --
 //   Push a frame onto the execution stack.
 //
@@ -269,35 +307,45 @@ static void PopFrame(FbleValueHeap* heap, Thread* thread)
 //   The stack with new frame.
 //
 // Side effects:
-//   Does not take ownership of func and args.
-//   Exits the current frame, which potentially frees any instructions
+// * Does not take ownership of func and args.
+// * Exits the current frame, which potentially frees any instructions
 //   belonging to that frame.
+// * The caller may assume it is safe for the function and arguments to be
+//   retained solely by the frame that's being replaced when ReplaceFrame is
+//   called.
 static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, Thread* thread)
 {
   FbleArena* arena = heap->arena;
   Stack* stack = thread->stack;
-  size_t old_locals = stack->func->code->locals;
-  size_t locals = func->code->locals;
-  if (locals > old_locals) {
-    // TODO: Do we really need to do this given that FbleValueDelRef is a
-    // no-op on the only GC currenty implemented?
-    for (size_t i = 0; i < stack->locals.size; ++i) {
-      FbleValueDelRef(heap, &stack->_base, stack->locals.xs[i]);
-    }
-    FbleFree(arena, stack->locals.xs);
-    stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, locals);
-    memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
+  size_t old_localc = stack->func->code->locals;
+  size_t localc = func->code->locals;
+
+  // Take references to the function and arguments early to ensure we don't
+  // drop the last reference to them before we get the chance.
+  FbleValueAddRef(heap, &stack->_base, &func->_base);
+  for (size_t i = 0; i < func->argc; ++i) {
+    FbleValueAddRef(heap, &stack->_base, args[i]);
   }
 
   FbleValueDelRef(heap, &stack->_base, &stack->func->_base);
   stack->func = func;
-  FbleValueAddRef(heap, &stack->_base, &func->_base);
-
   stack->pc = func->code->instrs.xs;
+
+  // TODO: Do we really need to do this if FbleValueDelRef doesn't do
+  // anything? Seems a waste of work.
+  for (size_t i = 0; i < old_localc; ++i) {
+    FbleValueDelRef(heap, &stack->_base, stack->locals.xs[i]);
+    stack->locals.xs[i] = NULL;
+  }
+
+  if (localc > old_localc) {
+    FbleFree(arena, stack->locals.xs);
+    stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, localc);
+    memset(stack->locals.xs, 0, localc * sizeof(FbleValue*));
+  }
 
   for (size_t i = 0; i < func->argc; ++i) {
     stack->locals.xs[i] = args[i];
-    FbleValueAddRef(heap, &stack->_base, args[i]);
   }
 }
 
@@ -316,8 +364,7 @@ static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
     FbleValueAddRef(heap, &value->_base, value->fields[i]);
   }
 
-  // TODO: Continue fixing up reference tracking from here on down.
-  thread->stack->locals.xs[struct_value_instr->dest] = &value->_base;
+  FrameSetAndRelease(heap, thread, struct_value_instr->dest, &value->_base);
   return RUNNING;
 }
 
@@ -333,7 +380,7 @@ static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* in
   value->arg = FrameGet(thread, union_value_instr->arg);
   FbleValueAddRef(heap, &value->_base, value->arg);
 
-  thread->stack->locals.xs[union_value_instr->dest] = &value->_base;
+  FrameSetAndRelease(heap, thread, union_value_instr->dest, &value->_base);
   return RUNNING;
 }
 
@@ -351,9 +398,7 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
 
   if (sv->_base.tag == FBLE_STRUCT_VALUE_TC) {
     assert(access_instr->tag < sv->fieldc);
-    FbleValue* value = sv->fields[access_instr->tag];
-    FbleRetainValue(heap, value);
-    thread->stack->locals.xs[access_instr->dest] = value;
+    FrameSet(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
     return RUNNING;
   }
 
@@ -365,7 +410,7 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
   value->tag = access_instr->tag;
   value->loc = FbleCopyLoc(access_instr->loc);
   FbleValueAddRef(heap, &value->_base, &sv->_base);
-  thread->stack->locals.xs[access_instr->dest] = &value->_base;
+  FrameSetAndRelease(heap, thread, access_instr->dest, &value->_base);
   return RUNNING;
 }
 
@@ -387,8 +432,7 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
       return ABORTED;
     }
 
-    FbleRetainValue(heap, uv->arg);
-    thread->stack->locals.xs[access_instr->dest] = uv->arg;
+    FrameSet(heap, thread, access_instr->dest, uv->arg);
     return RUNNING;
   }
 
@@ -400,7 +444,7 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
   value->tag = access_instr->tag;
   value->loc = FbleCopyLoc(access_instr->loc);
   FbleValueAddRef(heap, &value->_base, &uv->_base);
-  thread->stack->locals.xs[access_instr->dest] = &value->_base;
+  FrameSetAndRelease(heap, thread, access_instr->dest, &value->_base);
   return RUNNING;
 }
 
@@ -445,7 +489,7 @@ static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* ins
     value->scope[i] = arg;
     FbleValueAddRef(heap, &value->_base, arg);
   }
-  thread->stack->locals.xs[func_value_instr->dest] = &value->_base;
+  FrameSetAndRelease(heap, thread, func_value_instr->dest, &value->_base);
   return RUNNING;
 }
 
@@ -455,9 +499,7 @@ static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr
 {
   FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
   assert(thread->stack->locals.xs[release->value] != NULL);
-  if (release->value >= thread->stack->func->argc) {
-    FbleReleaseValue(heap, thread->stack->locals.xs[release->value]);
-  }
+  FbleValueDelRef(heap, &thread->stack->_base, thread->stack->locals.xs[release->value]);
   thread->stack->locals.xs[release->value] = NULL;
   return RUNNING;
 }
@@ -474,10 +516,7 @@ static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   };
   assert(func->_base.tag == FBLE_COMPILED_FUNC_VALUE_TC);
 
-
   if (call_instr->exit) {
-    FbleRetainValue(heap, &func->_base);
-
     FbleValue* args[func->argc];
     for (size_t i = 0; i < func->argc; ++i) {
       args[i] = FrameGet(thread, call_instr->args.xs[i]);
@@ -491,8 +530,7 @@ static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
     }
 
     FbleValue* result = PushFrame(heap, func, args, thread);
-    thread->stack->locals.xs[call_instr->dest] = result;
-    FbleValueAddRef(heap, &thread->stack->_base, result);
+    FrameSet(heap, thread, call_instr->dest, result);
   }
   return RUNNING;
 }
@@ -519,8 +557,7 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
       link->tail = NULL;
     }
 
-    FbleRetainValue(heap, head->value);
-    thread->stack->locals.xs[get_instr->dest] = head->value;
+    FrameSet(heap, thread, get_instr->dest, head->value);
     FbleValueDelRef(heap, &link->_base, head->value);
     FbleFree(heap->arena, head);
     return RUNNING;
@@ -535,7 +572,7 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
       return BLOCKED;
     }
 
-    thread->stack->locals.xs[get_instr->dest] = *port->data;
+    FrameSetAndRelease(heap, thread, get_instr->dest, *port->data);
     *port->data = NULL;
     *io_activity = true;
     return RUNNING;
@@ -573,7 +610,7 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
     }
 
     FbleValueAddRef(heap, &link->_base, tail->value);
-    thread->stack->locals.xs[put_instr->dest] = unit;
+    FrameSetAndRelease(heap, thread, put_instr->dest, unit);
     *io_activity = true;
     return RUNNING;
   }
@@ -590,7 +627,7 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
 
     FbleRetainValue(heap, arg);
     *port->data = arg;
-    thread->stack->locals.xs[put_instr->dest] = unit;
+    FrameSetAndRelease(heap, thread, put_instr->dest, unit);
     *io_activity = true;
     return RUNNING;
   }
@@ -627,8 +664,7 @@ static Status ForkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
     FbleVectorAppend(heap->arena, thread->children, child);
 
     FbleValue* result = PushFrame(heap, arg, NULL, child);
-    thread->stack->locals.xs[fork_instr->dests.xs[i]] = result;
-    FbleValueAddRef(heap, &thread->stack->_base, result);
+    FrameSet(heap, thread, fork_instr->dests.xs[i], result);
   }
   thread->next_child = 0;
   return YIELDED;
@@ -640,8 +676,7 @@ static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
   FbleValue* value = FrameGet(thread, copy_instr->source);
-  FbleRetainValue(heap, value);
-  thread->stack->locals.xs[copy_instr->dest] = value;
+  FrameSet(heap, thread, copy_instr->dest, value);
   return RUNNING;
 }
 
@@ -660,8 +695,8 @@ static Status LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   FbleValue* put = FbleNewPutValue(heap, &link->_base);
   FbleReleaseValue(heap, &link->_base);
 
-  thread->stack->locals.xs[link_instr->get] = get;
-  thread->stack->locals.xs[link_instr->put] = put;
+  FrameSetAndRelease(heap, thread, link_instr->get, get);
+  FrameSetAndRelease(heap, thread, link_instr->put, put);
   return RUNNING;
 }
 
@@ -679,7 +714,7 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
   rv->locals.size = 0;
   rv->locals.xs = NULL;
 
-  thread->stack->locals.xs[ref_instr->dest] = &rv->_base;
+  FrameSetAndRelease(heap, thread, ref_instr->dest, &rv->_base);
   return RUNNING;
 }
 
@@ -704,6 +739,7 @@ static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
 {
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
   thread->stack->value = FrameGet(thread, return_instr->result);
+  FbleValueAddRef(heap, &thread->stack->_base, thread->stack->value);
   PopFrame(heap, thread);
   if (thread->stack == NULL) {
     return FINISHED;
@@ -718,7 +754,7 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
   FbleTypeValueTc* value = FbleNewValue(heap, FbleTypeValueTc);
   value->_base.tag = FBLE_TYPE_VALUE_TC;
-  thread->stack->locals.xs[type_instr->dest] = &value->_base;
+  FrameSetAndRelease(heap, thread, type_instr->dest, &value->_base);
   return RUNNING;
 }
 
@@ -731,7 +767,7 @@ static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr*
   value->_base.tag = FBLE_VAR_TC;
   value->index.source = FBLE_FREE_VAR;
   value->index.index = 0;
-  thread->stack->locals.xs[symbolic_value_instr->dest] = &value->_base;
+  FrameSetAndRelease(heap, thread, symbolic_value_instr->dest, &value->_base);
   return RUNNING;
 }
 
@@ -767,7 +803,7 @@ static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInst
   func->argc = argc;
   func->code = code;
 
-  thread->stack->locals.xs[compile_instr->dest] = &func->_base;
+  FrameSetAndRelease(heap, thread, compile_instr->dest, &func->_base);
   return RUNNING;
 }
 
@@ -919,9 +955,7 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-        if (release->value >= thread->stack->func->argc) {
-          FbleReleaseValue(heap, locals[release->value]);
-        }
+        FbleValueDelRef(heap, &thread->stack->_base, locals[release->value]);
         locals[release->value] = NULL;
         break;
       }
@@ -1158,7 +1192,10 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
         assert(thread.children.size == 0);
         assert(thread.children.xs == NULL);
         FbleFreeProfileThread(arena, thread.profile);
-        return final_result->value;
+        FbleValue* result = final_result->value;
+        FbleRetainValue(heap, result);
+        FbleReleaseValue(heap, &final_result->_base);
+        return result;
       }
 
       case BLOCKED: {
