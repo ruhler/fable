@@ -1182,6 +1182,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
   };
   FbleThunkValueTc* final_result = (FbleThunkValueTc*)PushFrame(heap, func, args, &thread);
   assert(final_result->_base.tag == FBLE_THUNK_VALUE_TC);
+  FbleRetainValue(heap, &final_result->_base);
 
   bool aborted = false;
   while (true) {
