@@ -294,6 +294,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       FbleThunkValueTc* rv = (FbleThunkValueTc*)value;
       Ref(callback, rv->value);
       Ref(callback, &rv->tail->_base);
+      Ref(callback, &rv->func->_base);
       for (size_t i = 0; i < rv->locals.size; ++i) {
         Ref(callback, rv->locals.xs[i]);
       }
