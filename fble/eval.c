@@ -1192,8 +1192,11 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
         assert(thread.children.size == 0);
         assert(thread.children.xs == NULL);
         FbleFreeProfileThread(arena, thread.profile);
+
         FbleValue* result = final_result->value;
-        FbleRetainValue(heap, result);
+        if (result != NULL) {
+          FbleRetainValue(heap, result);
+        }
         FbleReleaseValue(heap, &final_result->_base);
         return result;
       }
