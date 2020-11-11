@@ -1014,7 +1014,12 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     }
 
     case FBLE_THUNK_VALUE_TC: {
-      assert(false && "TODO: FBLE_THUNK_VALUE_TC");
+      FbleThunkValueTc* thunk_tc = (FbleThunkValueTc*)v;
+      if (thunk_tc->value != NULL) {
+        return CompileExpr(arena, blocks, exit, scope, thunk_tc->value);
+      }
+
+      assert(false && "TODO: Compile unevaluated FBLE_THUNK_VALUE_TC");
       return NULL;
     }
   }
