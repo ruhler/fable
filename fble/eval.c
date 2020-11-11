@@ -265,7 +265,11 @@ static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, 
   stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, locals);
   memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
 
-  FbleValueAddRef(heap, &stack->_base, &stack->tail->_base);
+  if (stack->tail != NULL) {
+    FbleValueAddRef(heap, &stack->_base, &stack->tail->_base);
+    FbleReleaseValue(heap, &stack->tail->_base);
+  }
+
   FbleValueAddRef(heap, &stack->_base, &stack->func->_base);
   for (size_t i = 0; i < func->argc; ++i) {
     stack->locals.xs[i] = args[i];
