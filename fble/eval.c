@@ -530,7 +530,8 @@ static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
     }
 
     FbleValue* result = PushFrame(heap, func, args, thread);
-    FrameSet(heap, thread, call_instr->dest, result);
+    thread->stack->tail->locals.xs[call_instr->dest] = result;
+    FbleValueAddRef(heap, &thread->stack->tail->_base, result);
   }
   return RUNNING;
 }
