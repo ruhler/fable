@@ -45,6 +45,8 @@ typedef struct FbleHeap {
   FbleArena* arena;
 
   // TODO: add a roots function to traverse over roots if/when desired?
+  // TODO: add back the old del_ref function if/when desired to notify the gc
+  // when we remove a reference?
 
   // refs --
   //   Traverse over the objects referenced by obj.
@@ -153,28 +155,6 @@ typedef struct FbleHeap {
   //   Causes the dst object to be retained at least as long as the src object
   //   is retained.
   void (*add_ref)(struct FbleHeap* heap, void* src, void* dst);
-
-  // del_ref --
-  //   Notify the garbage collector that an existing reference from src to
-  //   dst has been removed. The dst object should not be included in
-  //   the refs callback for the src object when del_ref is called (aside
-  //   from any other references there may be from src to dst).
-  //
-  // This function should be supplied by the implementation of the garbage
-  // collector. It will be called by the user of the heap.
-  //
-  // Inputs:
-  //   heap - this heap.
-  //   src - the source object.
-  //   dst - the destination object.
-  //
-  // Side effects:
-  //   Causes the dst object to no longer be retained at least as long as src
-  //   is retained.
-  //
-  //   Behavior is undefined if there was not a corresponding previous call to
-  //   add_ref with the same src and dst objects.
-  void (*del_ref)(struct FbleHeap* heap, void* src, void* dst);
 
   // full_gc --
   //   Causes the garbage collector to perform a full garbage collection,

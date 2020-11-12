@@ -7,11 +7,6 @@
  - Is it possible we are ending up with long chains of thunks? Can we get rid
    of those somehow?
 
-* Consider whether calling FbleValueDelRef is necessary. Seems like a lot of
-  wasted work for the current implementation.
- - I lean towards removing that api entirely, given it is currently
-   untestable. To force us to revisit it if we ever need to add it for real.
-
 * Remove or trivialize AbortThread.
  - We should be able to simply release the stack now instead of ghost
    executing instructions.

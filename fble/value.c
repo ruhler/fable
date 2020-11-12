@@ -52,12 +52,6 @@ void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
   }
 }
 
-// FbleValueDelRef -- see documentation in fble-value.h
-void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
-{
-  heap->del_ref(heap, src, dst);
-}
-
 // FbleValueFullGc -- see documentation in fble-value.h
 void FbleValueFullGc(FbleValueHeap* heap)
 {

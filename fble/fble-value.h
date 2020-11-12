@@ -93,18 +93,6 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value);
 //   Causes the dst value to be retained for at least as long as the src value.
 void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 
-// FbleValueDelRef --
-//   Notify the value heap of a deleted reference from src to dst.
-//
-// Inputs:
-//   heap - the heap the values are allocated on.
-//   src - the source of the reference.
-//   dst - the destination of the reference.
-//
-// Side effects:
-//   Causes the dst value to no longer be retained by src.
-void FbleValueDelRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
-
 // FbleValueFullGc --
 //   Perform a full garbage collection on the value heap. Frees any
 //   unreachable objects currently on the heap.

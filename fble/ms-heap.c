@@ -410,12 +410,6 @@ static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
   }
 }
 
-// DelRef -- see documentation for FbleHeap.del_ref in heap.h
-static void DelRef(FbleHeap* heap, void* src_, void* dst_)
-{
-  // Nothing to do. Ideally we arrange for this function to never be called.
-}
-
 // FbleNewMarkSweepHeap -- see documentation in heap.h
 FbleHeap* FbleNewMarkSweepHeap(
     FbleArena* arena, 
@@ -431,7 +425,6 @@ FbleHeap* FbleNewMarkSweepHeap(
   heap->_base.retain = &Retain;
   heap->_base.release = &Release;
   heap->_base.add_ref = &AddRef;
-  heap->_base.del_ref = &DelRef;
   heap->_base.full_gc = &FullGc;
 
   heap->to = FbleAlloc(arena, Obj);

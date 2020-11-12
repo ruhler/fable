@@ -318,23 +318,15 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, Fbl
     FbleValueAddRef(heap, &stack->_base, args[i]);
   }
 
-  FbleValueDelRef(heap, &stack->_base, &stack->func->_base);
   stack->func = func;
   stack->locals.size = func->code->locals;
   stack->pc = func->code->instrs.xs;
 
-  // TODO: Do we really need to do this if FbleValueDelRef doesn't do
-  // anything? Seems a waste of work.
-  for (size_t i = 0; i < old_localc; ++i) {
-    FbleValueDelRef(heap, &stack->_base, stack->locals.xs[i]);
-    stack->locals.xs[i] = NULL;
-  }
-
   if (localc > old_localc) {
     FbleFree(arena, stack->locals.xs);
     stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, localc);
-    memset(stack->locals.xs, 0, localc * sizeof(FbleValue*));
   }
+  memset(stack->locals.xs, 0, stack->locals.size * sizeof(FbleValue*));
 
   for (size_t i = 0; i < func->argc; ++i) {
     stack->locals.xs[i] = args[i];
@@ -491,7 +483,6 @@ static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr
 {
   FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
   assert(thread->stack->locals.xs[release->value] != NULL);
-  FbleValueDelRef(heap, &thread->stack->_base, thread->stack->locals.xs[release->value]);
   thread->stack->locals.xs[release->value] = NULL;
   return RUNNING;
 }
@@ -551,7 +542,6 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
     }
 
     FrameSet(heap, thread, get_instr->dest, head->value);
-    FbleValueDelRef(heap, &link->_base, head->value);
     FbleFree(heap->arena, head);
     return RUNNING;
   }
@@ -953,7 +943,6 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
 
       case FBLE_RELEASE_INSTR: {
         FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-        FbleValueDelRef(heap, &thread->stack->_base, locals[release->value]);
         locals[release->value] = NULL;
         break;
       }
