@@ -718,6 +718,7 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
   FbleThunkValueTc* rv = (FbleThunkValueTc*)thread->stack->locals.xs[ref_def_instr->ref];
   assert(rv->_base.tag == FBLE_THUNK_VALUE_TC);
+  assert(rv->tail == NULL && rv->func == NULL && rv->pc == NULL && rv->locals.size == 0);
 
   FbleValue* value = FrameGet(thread, ref_def_instr->value);
   assert(value != NULL);
@@ -733,6 +734,10 @@ static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
   thread->stack->value = FrameGet(thread, return_instr->result);
   FbleValueAddRef(heap, &thread->stack->_base, thread->stack->value);
+
+  // TODO: Clean up thunk computation here.
+  // TODO: Squash thunk chains here?
+
   PopFrame(heap, thread);
   if (thread->stack == NULL) {
     return FINISHED;
