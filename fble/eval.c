@@ -68,7 +68,6 @@ static void FrameSet(FbleValueHeap* heap, Thread* thread, FbleLocalIndex index, 
 static void FrameSetAndRelease(FbleValueHeap* heap, Thread* thread, FbleLocalIndex index, FbleValue* value);
 
 static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, Thread* thread);
-static void PopFrame(FbleValueHeap* heap, Thread* thread);
 static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, Thread* thread);
 
 // InstrImpl --
@@ -234,7 +233,7 @@ static void FrameSetAndRelease(FbleValueHeap* heap, Thread* thread, FbleLocalInd
 //
 // Side effects:
 //   Takes a references to a newly allocated Stack instance that should be
-//   freed with PopFrame when done.
+//   freed when no longer needed.
 //   Does not take ownership of the function or the args.
 static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, Thread* thread)
 {
@@ -264,25 +263,6 @@ static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, 
   }
   thread->stack = stack;
   return &stack->_base;
-}
-
-// PopFrame --
-//   Pop a frame off the execution stack for the given thread.
-//
-// Inputs:
-//   heap - the value heap
-//   thread - the thread to pop the top of the stack from.
-//
-// Side effects:
-//   Pops the top of the stack and releases it.
-static void PopFrame(FbleValueHeap* heap, Thread* thread)
-{
-  Stack* tail = thread->stack->tail;
-  if (tail != NULL) {
-    FbleRetainValue(heap, &tail->_base);
-  }
-  FbleReleaseValue(heap, &thread->stack->_base);
-  thread->stack = tail;
 }
 
 // ReplaceFrame --
@@ -722,17 +702,34 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
 static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-  thread->stack->value = FrameGet(thread, return_instr->result);
-  FbleValueAddRef(heap, &thread->stack->_base, thread->stack->value);
+  FbleValue* result = FrameGet(thread, return_instr->result);
 
-  // TODO: Clean up thunk computation here.
-  // TODO: Squash thunk chains here?
-
-  PopFrame(heap, thread);
-  if (thread->stack == NULL) {
-    return FINISHED;
+  // Unwrap any layers of thunks on the result to avoid long chains of thunks.
+  FbleThunkValueTc* thunk_result = (FbleThunkValueTc*)result;
+  while (result->tag == FBLE_THUNK_VALUE_TC && thunk_result->value != NULL) {
+    result = thunk_result->value;
+    thunk_result = (FbleThunkValueTc*)result;
   }
-  return RUNNING;
+
+  // Pop the top frame from the stack.
+  FbleThunkValueTc* thunk = thread->stack;
+  thread->stack = thread->stack->tail;
+  if (thread->stack != NULL) {
+    FbleRetainValue(heap, &thread->stack->_base);
+  }
+
+  // Save the computed value in its thunk and clean up the computation state.
+  thunk->value = result;
+  FbleValueAddRef(heap, &thunk->_base, result);
+  FbleFree(heap->arena, thunk->locals.xs);
+  thunk->tail = NULL;
+  thunk->func = NULL;
+  thunk->pc = NULL;
+  thunk->locals.size = 0;
+  thunk->locals.xs = NULL;
+  FbleReleaseValue(heap, &thunk->_base);
+
+  return (thread->stack == NULL) ? FINISHED : RUNNING;
 }
 
 // TypeInstr -- see documentation of InstrImpl
