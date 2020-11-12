@@ -7,10 +7,6 @@
  - Is it possible we are ending up with long chains of thunks? Can we get rid
    of those somehow?
 
-* Remove or trivialize AbortThread.
- - We should be able to simply release the stack now instead of ghost
-   executing instructions.
-
 * Separate eval.c into two different files, threading and instruction
   execution.
 
@@ -107,7 +103,7 @@
  - REF_DEFS
 
 * Store function pointer in FbleInstr instead of tag
- - Requires we also store functions for disassembly, abort and freeing of
+ - Requires we also store functions for disassembly and freeing of
    instructions.
 
 * Pull out definition of architectural state and instruction functions.
@@ -115,8 +111,6 @@
 
 * Avoid setting local values to NULL when done?
  - It helps debugging, but otherwise we shouldn't rely on it?
- - Note, we should still set local values to NULL when aborting, so that when
-   we release those NULL values, we aren't releasing garbage.
 
 * Add some conditional instructions for retain and release of values
   Instead of doing things conditionally in return and tail call instructions?
