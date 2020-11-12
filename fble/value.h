@@ -70,4 +70,19 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
 //   longer in use. This function does not take ownership of the link value.
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link);
 
+// FbleStrictValue --
+//   Get the strict value associated with the given value, which will either
+//   be the value itself, or the computed result if the value is a thunk.
+//
+// Inputs:
+//   value - the value to get the strict version of.
+//
+// Results:
+//   The value with all layers of thunks removed. NULL if the value is a thunk
+//   that has not been fully computed.
+//
+// Side effects:
+//   None.
+FbleValue* FbleStrictValue(FbleValue* value);
+
 #endif // FBLE_INTERNAL_VALUE_H_

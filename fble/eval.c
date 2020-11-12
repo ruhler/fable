@@ -179,20 +179,7 @@ static FbleValue* FrameGet(Thread* thread, FbleFrameIndex index)
 //   the stack frame.
 static FbleValue* FrameGetStrict(Thread* thread, FbleFrameIndex index)
 {
-  FbleValue* value = FrameGet(thread, index);
-  while (value->tag == FBLE_THUNK_VALUE_TC) {
-    FbleThunkValueTc* rv = (FbleThunkValueTc*)value;
-
-    if (rv->value == NULL) {
-      // We are trying to dereference an abstract value. This is undefined
-      // behavior according to the spec. Return NULL to indicate to the
-      // caller.
-      return NULL;
-    }
-
-    value = rv->value;
-  }
-  return value;
+  return FbleStrictValue(FrameGet(thread, index));
 }
 
 // FrameSet -- 
@@ -261,7 +248,7 @@ static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, 
   stack->tail = thread->stack;
   stack->func = func;
   stack->pc = func->code->instrs.xs;
-  stack->locals.size = locals;
+  stack->locals.size = func->code->locals;
   stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, locals);
   memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
 
@@ -333,6 +320,7 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, Fbl
 
   FbleValueDelRef(heap, &stack->_base, &stack->func->_base);
   stack->func = func;
+  stack->locals.size = func->code->locals;
   stack->pc = func->code->instrs.xs;
 
   // TODO: Do we really need to do this if FbleValueDelRef doesn't do

@@ -320,7 +320,8 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args)
 // FbleStructValueAccess -- see documentation in fble-value.h
 FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 {
-  assert(object->tag == FBLE_STRUCT_VALUE_TC);
+  object = FbleStrictValue(object);
+  assert(object != NULL && object->tag == FBLE_STRUCT_VALUE_TC);
   FbleStructValueTc* value = (FbleStructValueTc*)object;
   assert(field < value->fieldc);
   return value->fields[field];
@@ -349,7 +350,8 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 // FbleUnionValueTag -- see documentation in fble-value.h
 size_t FbleUnionValueTag(FbleValue* object)
 {
-  assert(object->tag == FBLE_UNION_VALUE_TC);
+  object = FbleStrictValue(object);
+  assert(object != NULL && object->tag == FBLE_UNION_VALUE_TC);
   FbleUnionValueTc* value = (FbleUnionValueTc*)object;
   return value->tag;
 }
@@ -357,7 +359,8 @@ size_t FbleUnionValueTag(FbleValue* object)
 // FbleUnionValueAccess -- see documentation in fble-value.h
 FbleValue* FbleUnionValueAccess(FbleValue* object)
 {
-  assert(object->tag == FBLE_UNION_VALUE_TC);
+  object = FbleStrictValue(object);
+  assert(object != NULL && object->tag == FBLE_UNION_VALUE_TC);
   FbleUnionValueTc* value = (FbleUnionValueTc*)object;
   return value->arg;
 }
@@ -505,4 +508,14 @@ FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data)
   FbleValue* put = FbleNewPutValue(heap, &port_value->_base);
   FbleReleaseValue(heap, &port_value->_base);
   return put;
+}
+
+// FbleStrictValue -- see documentation in value.h
+FbleValue* FbleStrictValue(FbleValue* value)
+{
+  while (value != NULL && value->tag == FBLE_THUNK_VALUE_TC) {
+    FbleThunkValueTc* thunk = (FbleThunkValueTc*)value;
+    value = thunk->value;
+  }
+  return value;
 }
