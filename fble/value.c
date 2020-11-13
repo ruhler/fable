@@ -47,9 +47,7 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value)
 // FbleValueAddRef -- see documentation in fble-value.h
 void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  if (dst != NULL) {
-    heap->add_ref(heap, src, dst);
-  }
+  heap->add_ref(heap, src, dst);
 }
 
 // FbleValueFullGc -- see documentation in fble-value.h

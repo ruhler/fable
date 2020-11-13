@@ -87,7 +87,7 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value);
 // Inputs:
 //   heap - the heap the values are allocated on.
 //   src - the source of the reference.
-//   dst - the destination of the reference. May be NULL.
+//   dst - the destination of the reference. Must not be NULL.
 //
 // Side effects:
 //   Causes the dst value to be retained for at least as long as the src value.

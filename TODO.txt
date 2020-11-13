@@ -1,8 +1,8 @@
 * How about using locals.size to store the capacity and func->code->locals to
   store the relevant size, to avoid reallocating over and over again when
   alternating between small and large stack frames?
-* Require non-NULL dst argument to FbleValueAddRef
-  - Because we can, and in the hopes it improves performance.
+ - profiling suggests the performance benefits are probably pretty small,
+   though I don't see any harm at all.
 
 * Separate eval.c into two different files, threading and instruction
   execution.
