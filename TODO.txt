@@ -1,11 +1,8 @@
-* Profile before and after stack gc change to better understand the
-  performance loss.
-  - And if there's anything obvious we can do to make things better.
-  - My guess: we spent a lot of time in the GC now traversing thunks.
-  - Can we get rid of Release instructions now?
-  - How about using locals.size to store the capacity and func->code->locals
-    to store the relevant size, to avoid reallocating over and over again when
-    alternating between small and large stack frames?
+* How about using locals.size to store the capacity and func->code->locals to
+  store the relevant size, to avoid reallocating over and over again when
+  alternating between small and large stack frames?
+* Require non-NULL dst argument to FbleValueAddRef
+  - Because we can, and in the hopes it improves performance.
 
 * Separate eval.c into two different files, threading and instruction
   execution.
@@ -29,6 +26,9 @@
 * Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
 * Clarify when FbleFuncValueTc is expected versus FbleCompiledFuncValueTc.
  - Ideally they can be used interchangeably?
+
+* Clarify in spec: is it okay to retain a local variable until a function
+  exits, even if that means retaining it longer than its lexical scope?
 
 * Implement symbolic elaboration needed for Md5 DoBlock.
  By fixing failing elaborate tests. 
@@ -112,13 +112,6 @@
 * Avoid setting local values to NULL when done?
  - It helps debugging, but otherwise we shouldn't rely on it?
 
-* Add some conditional instructions for retain and release of values
-  Instead of doing things conditionally in return and tail call instructions?
- - allows us to take advantage of static info about whether a value is a
-   static or an arg or a local.
- - but increases number of generated instructions. It seems like, performance
-   wise, the bigger the individual instructions the better.
-
 * Should 'exec' be a flag passed to compile expression?
  That way we could distinguish between normal let and exec let while reusing a
  lot of the same code: change the body from CompileExpr to CompileExec.
@@ -127,29 +120,10 @@
  - I would guess this is low impact to performance, given how rarely we do let
    of process inside a process?
 
-* Allow the lifetime of a value to depend on the lifetime of another value.
- - Track lifetimes statically. Lazily retain a value only if and when its
-   previous retainer is released.
- - Don't assume all locals are NULL in replace frame?
- - I fear we don't clearly track locals across case branches, which could lead
-   to bugs. Perhaps have the concept of reserving the result local, and
-   require all expressions to leave the locals unchanged except
-   for possibly using the reserved result local?
-
-* Consider dynamically tracking whether returned value is retained by args
-  or not.
- - If returned value is retained by args, lazily retain the returned value only
-   if and when one of the corresponding args is released.
-
 * Should we do function inlining in the compiler?
  - At least when the function being called is known and the call is not behind
    a condition?
  - How to make the tradeoff between runtime performance and program size?
-
-* Distinguish between RELEASE_VALUE_INSTR and RELEASE_ARG_INSTR?
-  Because we can do the check of release->value >= stack->func->argc
-  statically? Or is it as expensive to add another instruction as it is to
-  check if the value is an arg or not?
 
 * Should we avoid capturing an unused 'type' as a static?
   For example, if we have Unit@() in a function body.

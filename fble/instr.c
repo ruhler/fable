@@ -143,12 +143,6 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
           break;
         }
 
-        case FBLE_RELEASE_INSTR: {
-          FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-          fprintf(fout, "release l%zi;\n", release->value);
-          break;
-        }
-
         case FBLE_CALL_INSTR: {
           FbleCallInstr* call_instr = (FbleCallInstr*)instr;
           if (call_instr->exit) {
@@ -297,7 +291,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
   switch (instr->tag) {
     case FBLE_UNION_VALUE_INSTR:
     case FBLE_JUMP_INSTR:
-    case FBLE_RELEASE_INSTR:
     case FBLE_COPY_INSTR:
     case FBLE_GET_INSTR:
     case FBLE_PUT_INSTR:

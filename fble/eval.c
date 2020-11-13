@@ -94,7 +94,6 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status JumpInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
-static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
@@ -118,7 +117,6 @@ static InstrImpl sInstrImpls[] = {
   &UnionSelectInstr,      // FBLE_UNION_SELECT_INSTR
   &JumpInstr,             // FBLE_JUMP_INSTR
   &FuncValueInstr,        // FBLE_FUNC_VALUE_INSTR
-  &ReleaseInstr,          // FBLE_RELEASE_INSTR
   &CallInstr,             // FBLE_CALL_INSTR
   &GetInstr,              // FBLE_GET_INSTR
   &PutInstr,              // FBLE_PUT_INSTR
@@ -454,16 +452,6 @@ static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* ins
     FbleValueAddRef(heap, &value->_base, arg);
   }
   FrameSetAndRelease(heap, thread, func_value_instr->dest, &value->_base);
-  return RUNNING;
-}
-
-// ReleaseInstr -- see documentation of InstrImpl
-//   Execute a RELEASE_INSTR.
-static Status ReleaseInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FbleReleaseInstr* release = (FbleReleaseInstr*)instr;
-  assert(thread->stack->locals.xs[release->value] != NULL);
-  thread->stack->locals.xs[release->value] = NULL;
   return RUNNING;
 }
 

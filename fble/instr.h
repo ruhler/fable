@@ -70,7 +70,6 @@ typedef enum {
   FBLE_UNION_SELECT_INSTR,
   FBLE_JUMP_INSTR,
   FBLE_FUNC_VALUE_INSTR,
-  FBLE_RELEASE_INSTR,
   FBLE_CALL_INSTR,
   FBLE_GET_INSTR,
   FBLE_PUT_INSTR,
@@ -216,16 +215,6 @@ typedef struct {
 //   A proc value is represented as a function that takes no arguments.
 #define FBLE_PROC_VALUE_INSTR FBLE_FUNC_VALUE_INSTR
 typedef FbleFuncValueInstr FbleProcValueInstr;
-
-// FbleReleaseInstr -- FBLE_RELEASE_INSTR
-//   Release and remove a value from the locals section of the stack frame.
-//
-// The value is not released if it is an arg value not owned by the current
-// stack frame.
-typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex value;
-} FbleReleaseInstr;
 
 // FbleCallInstr -- FBLE_CALL_INSTR
 //   Call a function.

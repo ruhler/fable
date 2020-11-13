@@ -459,11 +459,6 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   };
   iproc.code->refcount++;
 
-  static FbleReleaseInstr irls1 = {
-    ._base = { .tag = FBLE_RELEASE_INSTR, .profile_ops = NULL },
-    .value = 0
-  };
-
   static FbleReturnInstr irtn1 = {
     ._base = { .tag = FBLE_RETURN_INSTR, .profile_ops = NULL },
     .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 1 }
@@ -471,7 +466,6 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 
   static FbleInstr* func_instrs[] = {
     &iproc._base,
-    &irls1._base,
     &irtn1._base,
   };
 
@@ -480,7 +474,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
     .magic = FBLE_INSTR_BLOCK_MAGIC,
     .statics = 1,  // port
     .locals = 2,   // arg, result
-    .instrs = { .size = 3, .xs = func_instrs }
+    .instrs = { .size = 2, .xs = func_instrs }
   };
   func_code.refcount++;
 
