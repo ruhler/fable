@@ -12,6 +12,8 @@
 <@ K@, @ V@>(Eq@<V@>) { Eq@<Map@<K@, V@>>; }
 Eq = <@ K@, @ V@>(Eq@<V@> eq)(Map@<K@, V@> a, Map@<K@, V@> b) {
   a.?(
+    # TODO: Don't assume map.map means a non-empty map.
+    # Define an IsEmpty function and use that to test b for empty instead.
     empty: b.?(empty: True, map: False),
     map: b.?(
       empty: False,

@@ -32,11 +32,16 @@ GetValue = <@ K@, @ V@>(Maybe@<Entry@<K@, V@>> m) {
 # Type Parameters:
 #   K@ - the type of keys in the map.
 #   V@ - the type of values in the map.
+#
+# Note: An empty map can be represented using the 'empty' tag, or using the
+# 'map' tag with empty submaps. The 'empty' tag is needed to make the map
+# finite, but sometimes it's convenient when removing elements from an
+# existing map not to collapse the map back down to 'empty'.
 <@,@>@ Map@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); },
 
 # MapP@ --
-#   A non-empty map from K@ to V@, using the Structure@ of K@ to locate the
-#   key value entry in the map.
+#   A (possibly empty) map from K@ to V@, using the Structure@ of K@ to locate
+#   the key value entry in the map.
 #
 # Type Parameters:
 #   K@ - the type of keys in the map.
@@ -136,9 +141,10 @@ Lookup = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key) {
   LookupS<K@, V@>(map, s(key));
 };
 
-# InsertWithS --
-#   Insert a value into a map, taking into account whatever existing value is
-#   in the map for the given key. Uses the given Structure@ of the key to
+# ModifyS --
+#   Modify a value in a map, taking into account whatever existing value is
+#   in the map for the given key, and with the option of inserting or removing
+#   the value from the map. Uses the given Structure@ of the key to
 #   locate the entry in the map.
 #
 # Type Parameters:
@@ -149,31 +155,36 @@ Lookup = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key) {
 #   map - the map to insert the value into up the value in.
 #   key - the value of the key to store with the map entry.
 #   s - the structure to use to locate the map entry.
-#   with - a function that returns the value to insert given the existing
-#          value in the map.
+#   f - a function that returns the value to insert given the existing
+#       value in the map, or Nothing to remove the entry from the map.
 #
 # Note:
-#   's' is only the structure of 'key' at the top level call to InsertWithS.
+#   's' is only the structure of 'key' at the top level call to ModifyS.
 #   In recursive calls, 'key' will stay the same, but 's' will be adjusted for
 #   whatever level of the map we are currently traversing.
-<@ K@, @ V@>(Map@<K@, V@>, K@, Structure@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
-InsertWithS = <@ K@, @ V@>(Map@<K@, V@> map, K@ key, Structure@ s, (Maybe@<V@>){ V@; } with) {
+<@ K@, @ V@>(Map@<K@, V@>, K@, Structure@, (Maybe@<V@>){ Maybe@<V@>; }) { Map@<K@, V@>; }
+ModifyS = <@ K@, @ V@>(Map@<K@, V@> map, K@ key, Structure@ s, (Maybe@<V@>){ Maybe@<V@>; } f) {
   MapP@<K@, V@> p = map.?(empty: EmptyP<K@, V@>, map: map.map);
   Map@<K@, V@>(map: s.?(
     unit: MapP@<K@, V@>(
-      Just<Entry@<K@, V@>>(Entry@<K@, V@>(key, with(GetValue<K@, V@>(p.unit)))),
+      {
+        Maybe@<V@> nv = f(GetValue<K@, V@>(p.unit));
+        nv.?(
+          just: Just<Entry@<K@, V@>>(Entry@<K@, V@>(key, nv.just)),
+          nothing: Nothing<Entry@<K@, V@>>);
+      },
       p.either,
       p.pair
     ),
 
     either: s.either.?(
-      a: MapP@<K@, V@>(p.unit, @(a: InsertWithS<K@, V@>(p.either.a, key, s.either.a, with), b: p.either.b), p.pair),
-      b: MapP@<K@, V@>(p.unit, @(a: p.either.a, b: InsertWithS<K@, V@>(p.either.b, key, s.either.b, with)), p.pair)),
+      a: MapP@<K@, V@>(p.unit, @(a: ModifyS<K@, V@>(p.either.a, key, s.either.a, f), b: p.either.b), p.pair),
+      b: MapP@<K@, V@>(p.unit, @(a: p.either.a, b: ModifyS<K@, V@>(p.either.b, key, s.either.b, f)), p.pair)),
 
     pair: {
       MapP@<K@, V@>(p.unit, p.either,
-        InsertWithS<Unit@, Map@<K@, V@>>(p.pair, Unit, s.pair.a, (Maybe@<Map@<K@, V@>> mm) {
-          InsertWithS<K@, V@>(mm.?(just: mm.just, nothing: Empty<K@, V@>), key, s.pair.b, with);
+        ModifyS<Unit@, Map@<K@, V@>>(p.pair, Unit, s.pair.a, (Maybe@<Map@<K@, V@>> mm) {
+          Just<Map@<K@, V@>>(ModifyS<K@, V@>(mm.?(just: mm.just, nothing: Empty<K@, V@>), key, s.pair.b, f));
         }));
     }));
 };
@@ -200,11 +211,12 @@ InsertWithS = <@ K@, @ V@>(Map@<K@, V@> map, K@ key, Structure@ s, (Maybe@<V@>){
 #   };
 <@ K@>(Structured@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
 InsertWith = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
-  InsertWithS<K@, V@>(map, key, s(key), with);
+  ModifyS<K@, V@>(map, key, s(key), (Maybe@<V@> v) { Just<V@>(with(v)); });
 };
 
 # Insert --
-#   Insert a value into a map.
+#   Insert a value into a map. Any existing value for the key in the map will
+#   be overridden with the new value.
 #
 # Type Parameters:
 #   K@ - the type of keys in the map.
@@ -221,7 +233,23 @@ InsertWith = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V
 #   Insert(map, Str(Chars|foo), 4);
 <@ K@>(Structured@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Insert = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
-  InsertWithS<K@, V@>(map, key, s(key), (Maybe@<V@> _) { value; });
+  ModifyS<K@, V@>(map, key, s(key), (Maybe@<V@> _) { Just<V@>(value); });
+};
+
+# Delete --
+#   Remove a key and its value from the map, if present.
+#
+# Inputs:
+#   s - the Structured@ for the key used to get the structure of a key.
+#   map - the map to insert the value into up the value in.
+#   key - the key of the value to delete from the map.
+#
+# Example Use:
+#   % Delete = /Map%.Delete<String@>(/String/Structured%.Structured)<Int@>;
+#   Delete(map, Str(Chars|foo));
+<@ K@>(Structured@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+Delete = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key) {
+  ModifyS<K@, V@>(map, key, s(key), (Maybe@<V@> _) { Nothing<V@>; });
 };
 
 # ForEach --
@@ -263,4 +291,4 @@ ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@ ;} bod
     });
 };
 
-@(Map@, Empty, Lookup, Insert, InsertWith, ForEach);
+@(Map@, Empty, Lookup, Insert, InsertWith, Delete, ForEach);

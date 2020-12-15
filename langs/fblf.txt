@@ -626,3 +626,15 @@ with FbleValue. We can change compile.c to go from FbleValue to FbleInstr, and
 use that for symbolic compilation. Then introduce FbleValue based evaluation,
 do that before compilation, until eventually compilation turns into a no-op.
 
+---
+
+Summary of challenges for symbolic computation of union select. It revolves
+around the question of how to do efficient substitution of arguments in
+function application.
+
+Option 1: Lazily substitution, eager execution
+ - batches substitution of all variables 
+
+
+
+

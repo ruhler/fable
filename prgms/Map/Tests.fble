@@ -64,6 +64,7 @@ Structured@<Bit2@> Bit2S = (Bit2@ x) {
 <@>% Empty = /Map%.Empty<Bit2@>;
 <@>% Lookup = /Map%.Lookup<Bit2@>(Bit2S);
 <@>% Insert = /Map%.Insert<Bit2@>(Bit2S);
+<@>% Delete = /Map%.Delete<Bit2@>(Bit2S);
 <@,@>% ForEach = /Map%.ForEach<Bit2@>;
 
 TestSuite@ Tests = TestSuite(Chars|Map, [
@@ -104,6 +105,16 @@ TestSuite@ Tests = TestSuite(Chars|Map, [
       B, False),
       B, True);
     Maybe@<Bool@> wnt = Just<Bool@>(True);
+    Maybe@<Bool@> got = Lookup<Bool@>(map, B);
+    AssertEquals<Maybe@<Bool@>>(
+      /Maybe/Eq%.Eq<Bool@>(/Bool/Eq%.Eq),
+      /Maybe/Show%.Show<Bool@>(/Bool/Show%.Show),
+      wnt, got);
+  })),
+
+  Test(Chars|'delete', !({
+    Map@<Bool@> map = Delete<Bool@>(Insert<Bool@>(Empty<Bool@>, B, False), B);
+    Maybe@<Bool@> wnt = Nothing<Bool@>;
     Maybe@<Bool@> got = Lookup<Bool@>(map, B);
     AssertEquals<Maybe@<Bool@>>(
       /Maybe/Eq%.Eq<Bool@>(/Bool/Eq%.Eq),

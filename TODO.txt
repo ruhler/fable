@@ -1,8 +1,17 @@
+Hwdg:
+* Implement and test Map.Delete.
+* Finish Hwdg API and set up test suite.
+
+Exec:
 * How about using locals.size to store the capacity and func->code->locals to
   store the relevant size, to avoid reallocating over and over again when
   alternating between small and large stack frames?
  - profiling suggests the performance benefits are probably pretty small,
    though I don't see any harm at all.
+
+* It looks like a lot of thunks are sticking around in the graph for GC. Can
+  we get rid of them by more eagerly unpeeling them? May be that improves GC
+  performance?
 
 * Separate eval.c into two different files, threading and instruction
   execution.
@@ -223,6 +232,8 @@
  - In particular, test Div and Mod.
 * [lib] Separate Map from DataMap and EqMap.
 * [lib] Add unit tests for /Map%.Equals.
+ - Including the case where you delete all elements of the map and compare it
+   to a new EmptyMap.
 
 * [api] Can fble-stdio check that the function has the right type?
 
