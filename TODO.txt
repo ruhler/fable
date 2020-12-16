@@ -1,5 +1,4 @@
 Hwdg:
-* Implement and test Map.Delete.
 * Finish Hwdg API and set up test suite.
 
 Exec:
@@ -231,9 +230,6 @@ Exec:
 * [lib] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
 * [lib] Separate Map from DataMap and EqMap.
-* [lib] Add unit tests for /Map%.Equals.
- - Including the case where you delete all elements of the map and compare it
-   to a new EmptyMap.
 
 * [api] Can fble-stdio check that the function has the right type?
 

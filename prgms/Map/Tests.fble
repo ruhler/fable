@@ -149,6 +149,67 @@ TestSuite@ Tests = TestSuite(Chars|Map, [
             ]));
       }),
       wnt, got);
+  })),
+
+  Test(Chars|'eq: equal', !({
+    Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
+          Empty<Bool@>, A, True), B, False), C, False);
+    Map@<Bool@> b = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
+          Empty<Bool@>, A, True), B, False), C, False);
+
+    Bool@ wnt = True;
+    Bool@ got = /Map/Eq%.Eq<Bit2@, Bool@>(/Bool/Eq%.Eq)(a, b);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|'eq: value mismatch', !({
+    Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
+          Empty<Bool@>, A, True), B, True), C, False);
+    Map@<Bool@> b = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
+          Empty<Bool@>, A, True), B, False), C, False);
+
+    Bool@ wnt = False;
+    Bool@ got = /Map/Eq%.Eq<Bit2@, Bool@>(/Bool/Eq%.Eq)(a, b);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|'eq: different number of elements', !({
+    Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
+          Empty<Bool@>, A, True), B, False), C, False);
+    Map@<Bool@> b = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>, A, True), B, False);
+
+    Bool@ wnt = False;
+    Bool@ got = /Map/Eq%.Eq<Bit2@, Bool@>(/Bool/Eq%.Eq)(a, b);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|'eq: deleted to empty', !({
+    Map@<Bool@> a = Delete<Bool@>(Insert<Bool@>(Empty<Bool@>, A, True), A);
+    Map@<Bool@> b = Empty<Bool@>;
+
+    Bool@ wnt = True;
+    Bool@ got = /Map/Eq%.Eq<Bit2@, Bool@>(/Bool/Eq%.Eq)(a, b);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|'eq: empty from deleted', !({
+    Map@<Bool@> a = Empty<Bool@>;
+    Map@<Bool@> b = Delete<Bool@>(Insert<Bool@>(Empty<Bool@>, A, True), A);
+
+    Bool@ wnt = True;
+    Bool@ got = /Map/Eq%.Eq<Bit2@, Bool@>(/Bool/Eq%.Eq)(a, b);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|'eq: equal any order', !({
+    Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
+          Empty<Bool@>, B, False), C, False), A, True);
+    Map@<Bool@> b = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
+          Empty<Bool@>, A, True), B, False), C, False);
+
+    Bool@ wnt = True;
+    Bool@ got = /Map/Eq%.Eq<Bit2@, Bool@>(/Bool/Eq%.Eq)(a, b);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
   }))
 ]);
 

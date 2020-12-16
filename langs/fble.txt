@@ -1338,3 +1338,39 @@ Notes:
   approach to library design that maintains the flexibility we would like to
   have: we can specify iterations separately but somehow compose them together
   for performance reasons if desired?
+
+* Sometimes it's pretty tedious writing code.
+  For example, implementing Map.IsEmpty, you test a bunch of conditions, and
+  want to break out as soon as you find any element in the map. In C++, I
+  would write this as a sequence of checks:
+
+  if (there is a value here) {
+    return False;
+  }
+  if (there is a value to the left) {
+    return False;
+  }
+  if (there is a value to the right) {
+    return False;
+  }
+  ...
+
+  But in fble that becomes nested:
+  if (there is a value here) {
+    return false;
+  } else {
+    if (there is a value to the left) {
+      return false;
+    } else {
+      if (there is a value to the right) {
+        return false;
+      } else {
+        ...
+      }
+    }
+  }
+
+  Which is rather a headache to have to read and write. Anything I can do to
+  clean this up while preserving the efficiency of breaking out at first sight
+  of a value?
+

@@ -7,16 +7,33 @@
 <@,@>@ Map@ = /Map%.Map@;
 @ Unit@ = /Unit%.Unit@;
 
+# IsEmpty --
+#   Returns true if the map is empty.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   map - the map to test.
+#
+# Returns:
+#   True if the map is empty, false otherwise.
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; } IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  # TODO: Provide a more efficient implementation of this that avoids
+  # traversing to more than a single element of the map?
+  /Map%.ForEach<K@, V@, Bool@>(map, True, (K@ _k, V@ _v, Bool@ _b) { False; });
+};
+
+
 # Eq --
 #   Implementation of Eq@ for Map@. See documentation of /Eq%.Eq@.
 <@ K@, @ V@>(Eq@<V@>) { Eq@<Map@<K@, V@>>; }
 Eq = <@ K@, @ V@>(Eq@<V@> eq)(Map@<K@, V@> a, Map@<K@, V@> b) {
   a.?(
-    # TODO: Don't assume map.map means a non-empty map.
-    # Define an IsEmpty function and use that to test b for empty instead.
-    empty: b.?(empty: True, map: False),
+    empty: IsEmpty<K@, V@>(b),
     map: b.?(
-      empty: False,
+      empty: IsEmpty<K@, V@>(a),
       map: {
         Bool@ unit_eq = a.map.unit.?(
           just: b.map.unit.?(
@@ -39,4 +56,4 @@ Eq = <@ K@, @ V@>(Eq@<V@> eq)(Map@<K@, V@> a, Map@<K@, V@> b) {
       }));
 };
 
-@(Eq);
+@(IsEmpty, Eq);
