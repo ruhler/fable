@@ -1,5 +1,6 @@
 Hwdg:
-* Finish Hwdg API and set up test suite.
+* Write test suite for Hwdg
+* Implement /Hwdg%.Run function to get test suite to pass.
 
 Exec:
 * How about using locals.size to store the capacity and func->code->locals to

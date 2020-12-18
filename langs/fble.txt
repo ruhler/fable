@@ -1374,3 +1374,7 @@ Notes:
   clean this up while preserving the efficiency of breaking out at first sight
   of a value?
 
+  And it's annoying that it's so much harder to implement something like
+  IsEmpty than it is to implement something like ForEach, if you want to break
+  out of the computation early.
+

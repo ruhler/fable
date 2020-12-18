@@ -1,0 +1,44 @@
+
+% True = /Bool%.True;
+% False = /Bool%.False;
+% Chars = /Char%.Chars;
+<@>@ Eq@ = /Eq%.Eq@;
+% 2 = /Int/Int%.2;
+% 3 = /Int/Int%.3;
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Nothing = /Maybe%.Nothing;
+<@>@ Show@ = /Show%.Show@;
+% Str = /String%.Str;
+@ TestSuite@ = /Test%.TestSuite@;
+<@>% AssertEquals = /Test%.AssertEquals;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+
+@ Coord@ = /Hwdg%.Coord@;
+@ Data@ = /Hwdg%.Data@;
+% Empty = /Hwdg%.Empty;
+% GetData = /Hwdg%.GetData;
+
+Eq@<Data@> EqData = (Data@ a, Data@ b) {
+  a.?(
+    0: b.?(0: True, 1: False),
+    1: b.?(0: False, 1: True));
+};
+
+Show@<Data@> ShowData = (Data@ x) {
+  Str(x.?(0: Chars|0, 1: Chars|1));
+};
+
+TestSuite@ Tests = TestSuite(Chars|Hwdg, [
+  Test(Chars|'empty no data', !({
+    Maybe@<Data@> got = GetData(Empty, Coord@(2, 3));
+    Maybe@<Data@> wnt = Nothing<Data@>;
+
+    AssertEquals<Maybe@<Data@>>(
+      /Maybe/Eq%.Eq<Data@>(EqData),
+      /Maybe/Show%.Show<Data@>(ShowData),
+      wnt, got);
+  }))
+]);
+
+@(Tests);

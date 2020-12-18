@@ -28,3 +28,44 @@ word regardless of the data. But for hardware that cost has already been paid,
 because you need it in the worst case anyway.
 
 Is this something to worry about?
+
+---
+
+Another point of view:
+
+The fundamental feature of hardware is that you have fixed compute and storage
+resources. There is no reuse at the hardware layer. If you say to call some
+function F twice, then you get two copies of the function F in hardware. In
+particular, because you can't reuse things, you can't have arbitrary recursion
+of functions (compute) or data types (storage).
+
+The fundamental feature of software is that you are reusing the fixed compute
+and storage resources for whatever hardware you are targeting. If you say to
+call some function F twice, you may well be reusing the same physical logic to
+execute that function. But not necessarily, if your hardware has multiple
+function F blocks.
+
+A third layer we may be targeting is the description layer. Maybe call it
+devware? This is a set of abstractions provided solely to aid in describing
+the hardware or software. It all goes away at compile time.
+
+Now the difference between how you would express these three things is subtle.
+A function F could be a devware abstraction to help programmers, it could be a
+software abstraction to have a compact description of reusable code that is
+expanded at runtime, and it could be a hardware description of, for example,
+a circular pipeline that instantiates the body once along with logic to feed
+the output back to the input over time.
+
+The interesting question is, can the same source language be used effectively
+for all three scenarios? I think fble can work well as is for devware and
+software: devware is the stuff at the top level fble program execution,
+software is whatever function or proc is returned from interpreting the top
+level fble program execution. In other words, devware can be treated as
+software that when run returns the software description.
+
+For fble to describe hardware, we can restrict things to non-recursive data
+types and functions and inline everything. But that doesn't allow for re-use
+of hardware resources like a circular pipeline. Not unless there's some option
+for iteration at the top level. Perhaps we can allow tail recursive procs that
+are not inlined in a hardware description, along with internal links?
+

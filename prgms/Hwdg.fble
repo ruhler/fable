@@ -1,0 +1,103 @@
+
+@ IntP@ = /Int/IntP%.IntP@;
+
+@ Int@ = /Int/Int%.Int@; 
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+% UnitS = /Structure%.UnitS;
+% LeftS = /Structure%.LeftS;
+% RightS = /Structure%.RightS;
+% PairS = /Structure%.PairS;
+<@>@ Structured@ = /Structured%.Structured@;
+
+@ Unit@ = /Unit%.Unit@;
+
+@ Coord@ = *(Int@ row, Int@ col);
+Structured@<IntP@> NatS = (IntP@ n) {
+  n.?(1: UnitS, 2p0: LeftS(NatS(n.2p0)), 2p1: RightS(NatS(n.2p1)));
+};
+Structured@<Int@> IntS = (Int@ n) {
+  n.?(n: LeftS(NatS(n.n)), 0: UnitS, p: RightS(NatS(n.p)));
+};
+Structured@<Coord@> CoordS = (Coord@ c) {
+  PairS(IntS(c.row), IntS(c.col));
+};
+
+@ Data@ = +(Unit@ 0, Unit@ 1);
+
+@ PortSpec@ = +(Unit@ input, Unit@ output, Unit@ unused);
+<@>@ Ports@ = <@ T@> { *(T@ ul, T@ ur, T@ ll, T@ lr); };
+
+# GateFunction@ --
+#   Describes the behavior of a gate when it is triggered. The input is the
+#   data value for each port, where 0 is passed for any non-input port. The
+#   output is a new data value for each port, where values for non-output
+#   ports are ignored. This allows us to have a uniform gate function
+#   specification regardless of how the gate's ports are configured as
+#   input/output/unused ports.
+@ GateFunction@ = (Ports@<Data@>) { Ports@<Data@>; };
+
+@ Gate@ = *(Ports@<PortSpec@> ports, GateFunction@ function);
+
+@ Cells@ = /Map%.Map@<Coord@, Data@>;
+@ Gates@ = /Map%.Map@<Coord@, Gate@>;
+@ Layout@ = *(Cells@ cells, Gates@ gates);
+
+# Empty -- 
+#  An empty hardware layout with no data or gates set.
+Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
+
+# GetData --
+#   Get the data of a particular cell.
+(Layout@, Coord@) { Maybe@<Data@>; } GetData = {
+  (Cells@, Coord@) { Maybe@<Data@>; } LookupData
+    = /Map%.Lookup<Coord@>(CoordS)<Data@>;
+
+  (Layout@ layout, Coord@ coord) {
+    LookupData(layout.cells, coord);
+  };
+};
+
+# SetData --
+#   Set the data value of the given cell.
+(Layout@, Coord@, Data@) { Layout@; } SetData = {
+  % Insert = /Map%.Insert<Coord@>(CoordS)<Data@>;
+
+  (Layout@ layout, Coord@ coord, Data@ data) {
+    Cells@ ncells = Insert(layout.cells, coord, data);
+    Layout@(ncells, layout.gates);
+  };
+};
+
+# ClearData --
+#   Clear the data value of the given cell, leaving the cell empty.
+(Layout@, Coord@) { Layout@; } ClearData = {
+  % Delete = /Map%.Delete<Coord@>(CoordS)<Data@>;
+
+  (Layout@ layout, Coord@ coord) {
+    Cells@ ncells = Delete(layout.cells, coord);
+    Layout@(ncells, layout.gates);
+  };
+};
+
+# SetGate --
+#   Configure the gate whose upper left corner is at the given coordinates of
+#   the layout.
+(Layout@, Coord@, Gate@) { Layout@; } SetGate = {
+  % Insert = /Map%.Insert<Coord@>(CoordS)<Gate@>;
+
+  (Layout@ layout, Coord@ coord, Gate@ gate) {
+    Gates@ ngates = Insert(layout.gates, coord, gate);
+    Layout@(layout. cells, ngates);
+  };
+};
+
+# Run --
+#   Run the given hardware layout as long as any gates are enabled.
+(Layout@) { Layout@; } Run = (Layout@ layout) {
+  # TODO: Implement me:
+  layout;
+};
+
+@(Layout@, Coord@, Data@, Empty, GetData, SetData, ClearData, SetGate, Run);
