@@ -6,6 +6,7 @@
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
 <@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 <@>@ Show@ = /Show%.Show@;
 % Str = /String%.Str;
@@ -16,8 +17,13 @@
 
 @ Coord@ = /Hwdg%.Coord@;
 @ Data@ = /Hwdg%.Data@;
+@ Layout@ = /Hwdg%.Layout@;
+% Data0 = /Hwdg%.0;
+% Data1 = /Hwdg%.1;
 % Empty = /Hwdg%.Empty;
+% ClearData = /Hwdg%.ClearData;
 % GetData = /Hwdg%.GetData;
+% SetData = /Hwdg%.SetData;
 
 Eq@<Data@> EqData = (Data@ a, Data@ b) {
   a.?(
@@ -31,8 +37,64 @@ Show@<Data@> ShowData = (Data@ x) {
 
 TestSuite@ Tests = TestSuite(Chars|Hwdg, [
   Test(Chars|'empty no data', !({
-    Maybe@<Data@> got = GetData(Empty, Coord@(2, 3));
+    Layout@ layout = Empty;
+    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
     Maybe@<Data@> wnt = Nothing<Data@>;
+
+    AssertEquals<Maybe@<Data@>>(
+      /Maybe/Eq%.Eq<Data@>(EqData),
+      /Maybe/Show%.Show<Data@>(ShowData),
+      wnt, got);
+  })),
+
+  Test(Chars|'set this data to 0', !({
+    Layout@ layout = SetData(Empty, Coord@(2, 3), Data0);
+    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Maybe@<Data@> wnt = Just<Data@>(Data0);
+
+    AssertEquals<Maybe@<Data@>>(
+      /Maybe/Eq%.Eq<Data@>(EqData),
+      /Maybe/Show%.Show<Data@>(ShowData),
+      wnt, got);
+  })),
+
+  Test(Chars|'set this data to 1', !({
+    Layout@ layout = SetData(Empty, Coord@(2, 3), Data1);
+    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Maybe@<Data@> wnt = Just<Data@>(Data1);
+
+    AssertEquals<Maybe@<Data@>>(
+      /Maybe/Eq%.Eq<Data@>(EqData),
+      /Maybe/Show%.Show<Data@>(ShowData),
+      wnt, got);
+  })),
+
+  Test(Chars|'set other data', !({
+    Layout@ layout = SetData(Empty, Coord@(3, 2), Data1);
+    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Maybe@<Data@> wnt = Nothing<Data@>;
+
+    AssertEquals<Maybe@<Data@>>(
+      /Maybe/Eq%.Eq<Data@>(EqData),
+      /Maybe/Show%.Show<Data@>(ShowData),
+      wnt, got);
+  })),
+
+  Test(Chars|'clear data', !({
+    Layout@ layout = ClearData(SetData(Empty, Coord@(2, 3), Data1), Coord@(2, 3));
+    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Maybe@<Data@> wnt = Nothing<Data@>;
+
+    AssertEquals<Maybe@<Data@>>(
+      /Maybe/Eq%.Eq<Data@>(EqData),
+      /Maybe/Show%.Show<Data@>(ShowData),
+      wnt, got);
+  })),
+
+  Test(Chars|'clear other data', !({
+    Layout@ layout = ClearData(SetData(Empty, Coord@(2, 3), Data1), Coord@(3, 2));
+    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Maybe@<Data@> wnt = Just<Data@>(Data1);
 
     AssertEquals<Maybe@<Data@>>(
       /Maybe/Eq%.Eq<Data@>(EqData),

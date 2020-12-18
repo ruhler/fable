@@ -12,6 +12,7 @@
 <@>@ Structured@ = /Structured%.Structured@;
 
 @ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 @ Coord@ = *(Int@ row, Int@ col);
 Structured@<IntP@> NatS = (IntP@ n) {
@@ -25,6 +26,8 @@ Structured@<Coord@> CoordS = (Coord@ c) {
 };
 
 @ Data@ = +(Unit@ 0, Unit@ 1);
+Data@ 0 = Data@(0: Unit);
+Data@ 1 = Data@(1: Unit);
 
 @ PortSpec@ = +(Unit@ input, Unit@ output, Unit@ unused);
 <@>@ Ports@ = <@ T@> { *(T@ ul, T@ ur, T@ ll, T@ lr); };
@@ -100,4 +103,4 @@ Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
   layout;
 };
 
-@(Layout@, Coord@, Data@, Empty, GetData, SetData, ClearData, SetGate, Run);
+@(Layout@, Coord@, Data@, 0, 1, Empty, GetData, SetData, ClearData, SetGate, Run);
