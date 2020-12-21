@@ -1,7 +1,13 @@
 
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% Or = /Bool%.Or;
+
 @ IntP@ = /Int/IntP%.IntP@;
 
 @ Int@ = /Int/Int%.Int@; 
+% Inc = /Int/Int%.Inc;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -100,11 +106,74 @@ Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
   };
 };
 
+# Step --
+#   Run a single step of the hardware.
+@ B@ = *(Layout@ layout, Bool@ updated);
+(Layout@) { B@; } Step = {
+  (PortSpec@, Maybe@<Data@>) { Bool@; } Blocked = (PortSpec@ ps, Maybe@<Data@> d) {
+    ps.?(
+      input: d.?(just: False, nothing: True),
+      output: d.?(just: True, nothing: False),
+      unused: False);
+  };
+
+  (PortSpec@, Maybe@<Data@>) { Data@; } InputData = (PortSpec@ ps, Maybe@<Data@> d) {
+    ps.?(
+      input: d.?(just: d.just, nothing: 0),
+      output: 0,
+      unused: 0);
+  };
+
+  (B@, Coord@, PortSpec@, Data@) { B@; } UpdateResult = (B@ b, Coord@ c, PortSpec@ ps, Data@ d) {
+    ps.?(
+      input: @(layout: ClearData(b.layout, c), updated: True),
+      output: @(layout: SetData(b.layout, c, d), updated: True),
+      unused: b);
+  };
+
+  (Layout@ layout) {
+    /Map%.ForEach<Coord@, Gate@, B@>(layout.gates, B@(layout, False),
+      (Coord@ c, Gate@ g, B@ b) {
+        Ports@<Coord@> coords = Ports@<Coord@>(
+          Coord@(c.row, c.col),
+          Coord@(c.row, Inc(c.col)),
+          Coord@(Inc(c.row), c.col),
+          Coord@(Inc(c. row), Inc(c.col)));
+
+        Ports@<Maybe@<Data@>> cells = Ports@<Maybe@<Data@>>(
+          GetData(b.layout, coords.ul), GetData(b.layout, coords.ur),
+          GetData(b.layout, coords.ll), GetData(b.layout, coords.lr));
+
+        Bool@ blocked_ul = Blocked(g.ports.ul, cells.ul);
+        Bool@ blocked_ur = Or(blocked_ul, Blocked(g.ports.ur, cells.ur));
+        Bool@ blocked_ll = Or(blocked_ur, Blocked(g.ports.ll, cells.ll));
+        Bool@ blocked_lr = Or(blocked_ll, Blocked(g.ports.lr, cells.lr));
+
+        blocked_lr.?(
+          true: b,
+          false: {
+            Ports@<Data@> inputs = Ports@<Data@>(
+              InputData(g.ports.ul, cells.ul),
+              InputData(g.ports.ur, cells.ur),
+              InputData(g.ports.ll, cells.ll),
+              InputData(g.ports.lr, cells.lr));
+
+            Ports@<Data@> outputs = g.function(inputs);
+            B@ b_ul = UpdateResult(b, coords.ul, g.ports.ul, outputs.ul);
+            B@ b_ur = UpdateResult(b_ul, coords.ur, g.ports.ur, outputs.ur);
+            B@ b_ll = UpdateResult(b_ur, coords.ll, g.ports.ll, outputs.ll);
+            B@ b_lr = UpdateResult(b_ll, coords.lr, g.ports.lr, outputs.lr);
+            b_lr;
+          });
+      });
+  };
+};
+
 # Run --
 #   Run the given hardware layout as long as any gates are enabled.
 (Layout@) { Layout@; } Run = (Layout@ layout) {
-  # TODO: Implement me:
-  layout;
+  B@ b = Step(layout);
+  b.updated.?(true: Run(b.layout), false: layout);
 };
 
 @(Layout@, Coord@, Data@, Gate@, Ports@, PortSpec@,

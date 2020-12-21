@@ -5,6 +5,7 @@
 % Chars = /Char%.Chars;
 <@>@ Eq@ = /Eq%.Eq@;
 % 0 = /Int/Int%.0;
+% 1 = /Int/Int%.1;
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
 <@>% List = /List%.List;
@@ -26,6 +27,8 @@
 @ Layout@ = /Hwdg%.Layout@;
 <@>@ Ports@ = /Hwdg%.Ports@;
 @ PortSpec@ = /Hwdg%.PortSpec@;
+% InputPort = /Hwdg%.InputPort;
+% OutputPort = /Hwdg%.OutputPort;
 % UnusedPort = /Hwdg%.UnusedPort;
 % Data0 = /Hwdg%.0;
 % Data1 = /Hwdg%.1;
@@ -141,6 +144,21 @@ TestSuite@ Tests = TestSuite(Chars|Hwdg, [
     Layout@ layout = SetGate(SetData(Empty, Coord@(0, 0), Data1), Coord@(0, 0), gate);
 
     Layout@ wnt = SetData(Empty, Coord@(0, 0), Data1);
+    Layout@ got = Run(layout);
+    AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
+  })),
+
+  Test(Chars|'identity ul to lr', !({
+    Gate@ gate = @(
+      ports: Ports@<PortSpec@>(
+        InputPort, UnusedPort,
+        UnusedPort, OutputPort),
+      function: (Ports@<Data@> x) {
+        Ports@<Data@>(Data0, Data0, Data0, x.ul);
+      });
+    Layout@ layout = SetGate(SetData(Empty, Coord@(0, 0), Data1), Coord@(0, 0), gate);
+
+    Layout@ wnt = SetData(Empty, Coord@(1, 1), Data1);
     Layout@ got = Run(layout);
     AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
   }))
