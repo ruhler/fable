@@ -230,7 +230,7 @@ Exec:
 
 * [lib] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
-* [lib] Separate Map from DataMap and EqMap.
+* [lib] Can we make it easier to put multiple assertions in the same test?
 
 * [api] Can fble-stdio check that the function has the right type?
 

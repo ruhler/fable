@@ -1,14 +1,19 @@
 
+@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
 % Chars = /Char%.Chars;
 <@>@ Eq@ = /Eq%.Eq@;
+% 0 = /Int/Int%.0;
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
+<@>% List = /List%.List;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 <@>@ Show@ = /Show%.Show@;
+@ String@ = /String%.String@;
+% Concat = /String%.Concat;
 % Str = /String%.Str;
 @ TestSuite@ = /Test%.TestSuite@;
 <@>% AssertEquals = /Test%.AssertEquals;
@@ -17,13 +22,19 @@
 
 @ Coord@ = /Hwdg%.Coord@;
 @ Data@ = /Hwdg%.Data@;
+@ Gate@ = /Hwdg%.Gate@;
 @ Layout@ = /Hwdg%.Layout@;
+<@>@ Ports@ = /Hwdg%.Ports@;
+@ PortSpec@ = /Hwdg%.PortSpec@;
+% UnusedPort = /Hwdg%.UnusedPort;
 % Data0 = /Hwdg%.0;
 % Data1 = /Hwdg%.1;
 % Empty = /Hwdg%.Empty;
 % ClearData = /Hwdg%.ClearData;
 % GetData = /Hwdg%.GetData;
 % SetData = /Hwdg%.SetData;
+% SetGate = /Hwdg%.SetGate;
+% Run = /Hwdg%.Run;
 
 Eq@<Data@> EqData = (Data@ a, Data@ b) {
   a.?(
@@ -33,6 +44,25 @@ Eq@<Data@> EqData = (Data@ a, Data@ b) {
 
 Show@<Data@> ShowData = (Data@ x) {
   Str(x.?(0: Chars|0, 1: Chars|1));
+};
+
+Show@<Coord@> ShowCoord = (Coord@ x) {
+  Concat(List<String@>([
+      Str(Chars|'('),
+      /Int/Int/Show%.Show(x.row),
+      Str(Chars|','),
+      /Int/Int/Show%.Show(x.col),
+      Str(Chars|')')]));
+};
+
+(Layout@, Layout@) { Bool@; } EqCells = (Layout@ a, Layout@ b) {
+  # TODO: Should this not be directly accessing the fields of Layout@?
+  /Map/Eq%.Eq<Coord@, Data@>(EqData)(a.cells, b.cells);
+};
+
+Show@<Layout@> ShowCells = (Layout@ x) {
+  # TODO: Should this not be directly accessing the fields of Layout@?
+  /Map/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x.cells);
 };
 
 TestSuite@ Tests = TestSuite(Chars|Hwdg, [
@@ -100,6 +130,19 @@ TestSuite@ Tests = TestSuite(Chars|Hwdg, [
       /Maybe/Eq%.Eq<Data@>(EqData),
       /Maybe/Show%.Show<Data@>(ShowData),
       wnt, got);
+  })),
+
+  Test(Chars|'empty gate', !({
+    # Make sure we don't get stuck in an infinite loop if there is an empty
+    # gate.
+    Gate@ gate = @(
+      ports: Ports@<PortSpec@>(UnusedPort, UnusedPort, UnusedPort, UnusedPort),
+      function: (Ports@<Data@> unused) { unused; });
+    Layout@ layout = SetGate(SetData(Empty, Coord@(0, 0), Data1), Coord@(0, 0), gate);
+
+    Layout@ wnt = SetData(Empty, Coord@(0, 0), Data1);
+    Layout@ got = Run(layout);
+    AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
   }))
 ]);
 

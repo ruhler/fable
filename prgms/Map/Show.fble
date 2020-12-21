@@ -1,0 +1,30 @@
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+<@>% List = /List%.List;
+<@>% Append = /List%.Append;
+<@,@>@ Map@ = /Map%.Map@;
+<@,@,@>% ForEach = /Map%.ForEach;
+<@>@ Show@ = /Show%.Show@;
+@ String@ = /String%.String@;
+% Concat = /String%.Concat;
+% Str = /String%.Str;
+
+# Show --
+#   Implementation of Show@ for Map@<K@, V@>. See documentation of
+#   /Show%.Show@.
+#
+#   { }
+#   { a => b; }
+#   { a => b; c => d; }
+#
+<@ K@, @ V@>(Show@<K@>, Show@<V@>) { Show@<Map@<K@, V@>>; }
+Show = <@ K@, @ V@>(Show@<K@> show_key, Show@<V@> show_value)(Map@<K@, V@> m) {
+  Append<Char@>(
+    ForEach<K@, V@, String@>(m, Str(Chars|'{ '), (K@ k, V@ v, String@ s) {
+      Concat(List<String@>([s, show_key(k), Str(Chars|' => '), show_value(v), Str(Chars|'; ')]));
+    }),
+    Str(Chars|'}'));
+};
+
+@(Show);

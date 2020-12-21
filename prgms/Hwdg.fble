@@ -30,6 +30,10 @@ Data@ 0 = Data@(0: Unit);
 Data@ 1 = Data@(1: Unit);
 
 @ PortSpec@ = +(Unit@ input, Unit@ output, Unit@ unused);
+PortSpec@ InputPort = PortSpec@(input: Unit);
+PortSpec@ OutputPort = PortSpec@(output: Unit);
+PortSpec@ UnusedPort = PortSpec@(unused: Unit);
+
 <@>@ Ports@ = <@ T@> { *(T@ ul, T@ ur, T@ ll, T@ lr); };
 
 # GateFunction@ --
@@ -103,4 +107,6 @@ Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
   layout;
 };
 
-@(Layout@, Coord@, Data@, 0, 1, Empty, GetData, SetData, ClearData, SetGate, Run);
+@(Layout@, Coord@, Data@, Gate@, Ports@, PortSpec@,
+  0, 1, InputPort, OutputPort, UnusedPort,
+  Empty, GetData, SetData, ClearData, SetGate, Run);
