@@ -161,6 +161,42 @@ TestSuite@ Tests = TestSuite(Chars|Hwdg, [
     Layout@ wnt = SetData(Empty, Coord@(1, 1), Data1);
     Layout@ got = Run(layout);
     AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
+  })),
+
+  Test(Chars|'identity ul to lr input blocked', !({
+    Gate@ gate = @(
+      ports: Ports@<PortSpec@>(
+        InputPort, UnusedPort,
+        UnusedPort, OutputPort),
+      function: (Ports@<Data@> x) {
+        Ports@<Data@>(Data0, Data0, Data0, x.ul);
+      });
+    Layout@ layout = SetGate(SetData(Empty, Coord@(0, 1), Data1), Coord@(0, 0), gate);
+
+    # The gate doesn't have it's input available, so we don't expect it to
+    # trigger.
+    Layout@ wnt = layout;
+    Layout@ got = Run(layout);
+    AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
+  })),
+
+  Test(Chars|'identity ul to lr output blocked', !({
+    Gate@ gate = @(
+      ports: Ports@<PortSpec@>(
+        InputPort, UnusedPort,
+        UnusedPort, OutputPort),
+      function: (Ports@<Data@> x) {
+        Ports@<Data@>(Data0, Data0, Data0, x.ul);
+      });
+    Layout@ layout = SetGate(SetData(SetData(Empty,
+          Coord@(0, 0), Data1),
+          Coord@(1, 1), Data0),
+          Coord@(0, 0), gate);
+
+    # The gate's output port is blockd, so we don't expect it to trigger.
+    Layout@ wnt = layout;
+    Layout@ got = Run(layout);
+    AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
   }))
 ]);
 

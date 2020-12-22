@@ -230,6 +230,9 @@ Exec:
 * [lib] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
 * [lib] Can we make it easier to put multiple assertions in the same test?
+ - Part of the trouble is having an easy way to identify which assert failed.
+   Perhaps change Test to be a single assertion or a test suite, so it's
+   easier to write a collection of subtests that share common state?
 
 * [api] Can fble-stdio check that the function has the right type?
 

@@ -1,0 +1,144 @@
+Abstract Data Types
+===================
+Perhaps the most significant deficiency in the expressive power of fble today
+is that there is no way to define an abstract data type. Anyone who has access
+to the name of your type or a value of your type and can guess what the data
+structure of the type is can construct and access internal implementation
+details of the type.
+
+We want some way to say the fields of a data type are private to the developer
+of the data type. The developer can use them to construct, access, and
+condition on, but nobody else can. The developer can expose the functionality
+that fields provides to users in a controlled fashion by providing helper
+functions to construct and deconstruct the data type.
+
+There are two kinds of access control mechanisms in fble today: scopes and
+private modules. I use scopes all over the place. I don't yet use private
+modules, because I can self enforce. In theory I can self enforce on accessing
+fields of types that should be private, but in practice it isn't working out.
+
+Is there any simple access mechanism we can provide to make it easy to specify
+private data types? In particular, there should be a way to share the
+internals to a hierarchy of modules.
+
+A strawman proposal is to have syntax such as:
+  @ Foo@ ?= *(...);
+  ...
+
+Where the fields of Foo@ are visible in the body of the let, but not outside
+of the body of the let. The trouble here is you don't have a way to make the
+fields visible to a hierarchy of modules.
+
+It would be a huge pain to have to pack and unpack data types all over the
+place if we were to have two different types FooImpl@ and Foo@ that we could
+convert between.
+
+Using a data type like C++ where the fields are member functions also seems
+tedious. But maybe it's worth a try? For example, how would I implement the
+Map@ data type? And what's to keep the user from providing their own function
+implementations that mess up a bunch of invariants?
+
+How can we say: if you have access to some thing X, then you can use the
+fields for a type T, otherwise you can't. It's almost like we want different
+names for the type and how you access its fields. But today you can access its
+fields without any name at all, just from the value of the type.
+
+Let's imagine when we define a type we get two names: the type name, and
+something representing the fields of the type.
+
+Foo@ and FooImpl@.
+
+Seems a lot like we just want two different types and a way to convert between
+them:
+
+Foo@ - the publicly visible type.
+FooImpl@ - the private type.
+FooToImpl: Foo@ -> FooImpl@
+FooFromImpl: FooImpl@ -> Foo@.
+
+Then we can say:
+
+Foo@ f = FooFromImpl(FooImpl@(...));
+FooToImpl(f).x;
+FooToimpl(f).?(...)
+
+That's not too bad if we provide a special syntax and only ever use the
+accessors in the leaf instances. That suggests we maybe want a type Foo@, and
+the access for the type. It's when you combine the two that you can access the
+type. The special syntax can be, any time you use .x, .?, or Foo@(...), it
+requires the accessor for the type be in scope. We just need a different name
+for the type and the accessor so that we can choose to export one or the
+other? Or just some way to choose to export the accessor with the type or not.
+
+But what's to keep a user from guessing the value of the accessor and using
+that themselves? I think we need a notion of a type name, where each new type
+name is unique. Something like:
+
+@ T1@ = ABSTRACT(T@);
+@ T2@ = ABSTRACT(T@);
+
+Where in this case, T1@ and T2@ are considered incompatible types. And really
+we want two identifiers:
+
+@ T1@, T1.* = ABSTRACT(T@);
+@ T2@, T2.* = ABSTRACT(T@);
+
+If T1.* is in scope, you have access to the fields of type T1@.
+If T2.* is in scope, you have access to the fields of type T2@. T1@ and T2@
+are incompatible types.
+
+So, your implementation module would export T1@ and T1.*. Your public API
+would export only T1@.
+
+We shouldn't need to reference T1.* explicitly, so no need to pick a syntax
+for it. Just as long as we can indicate whether to export it or not. Maybe we
+just need a notion of an abstract type with the following operations:
+
+NEWTYPE(T@) - creates a unique new type with the same interface as the type T@
+  (but is considered a different type).
+OPAQUE(T@) - returns a type considered identical to T@, except no field access
+  is allowed.
+
+Both are needed. If you just had NEWTYPE, you have full access to the type. If
+you just have OPAQUE, you could always construct things using T@, which can be
+used for an identical type.
+
+Type values are a thing, so this should be semantically meaningful in terms of
+identifying types. All I need is to add a couple of syntactic expressions.
+
+To summarize:
+
+ T@ is the normal, fully accessible, create out of thin air type.
+ NEWTYPE(T@) is the unique, fully accessible type that cannot be created out
+   of thin air.
+ OPAQUE(NEWTYPE(T@)) is the unique, opaque type that cannot be created out of
+   thin air.
+
+Possible syntax for NEWTYPE(T@): &T@
+Possible syntax for OPAQUE(T@): T@.?    (static view of T@)
+
+For example:
+
+@ Point@ = &*(Int@ x, Int@ y);
+@ Point@ = &+(Int@ x, Int@ y);
+@ Point@ = &Foo@;
+
+@(Point@: Point@.?);
+
+Is it okay that & is part of an expression and not a statement? How could you
+ever use the result of & unless you take the name of it? You could pass it to
+a struct value and access it by field. So that's fine.
+
+Should it have parens? &T@ vs &(T@)? Do parens suggest it is more like a
+function? That's why I lean towards no parens.
+
+Will Foo@.? conflict with Foo.?(...) syntax? Should it bee Foo@.& instead?
+Things to experiment with anyway.
+
+Note that this idea depends on a guarantee that when you include a module
+value, you get a reference to the unique module value and not a separate copy.
+I think that's reasonable. Certainly with today's implementation of
+modules. In other words, to the extent you are guaranteed unique values at
+runtime, this should work for types. The big difference being that uniqueness
+of values is now more than just a question of performance.
+

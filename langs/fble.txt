@@ -1296,6 +1296,8 @@ Notes:
   Where the '?=' means Foo@ is abstract outside the body of the type let.
   Easy. Does it let you split things across submodules?
 
+  See fble.adt.txt
+
 * How can we make a fast implementation of the language?
   Like, really fast? This, to me, feels like the single most major fundamental
   problem with the language. Can we make it fast.
