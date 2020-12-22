@@ -1,6 +1,5 @@
 Hwdg:
-* Write test suite for Hwdg
-* Implement /Hwdg%.Run function to get test suite to pass.
+* Finish test suite for Hwdg
 
 Exec:
 * How about using locals.size to store the capacity and func->code->locals to
@@ -288,4 +287,7 @@ Exec:
    Turns out False was being defined as True instead of False. I figured that
    out by changing the body of ListEq to always return False and being
    surprised when the result was as if it returned True.
+
+ - Debug why map equality is failing when show shows identical maps
+   { (1,1) => 1; } vs. { (1,1) => 1; }
 

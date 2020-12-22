@@ -201,6 +201,24 @@ TestSuite@ Tests = TestSuite(Chars|Map, [
     AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
   })),
 
+  Test(Chars|'eq: empty from deleted pair second', !({
+    Map@<Bool@> a = Insert<Bool@>(Empty<Bool@>, A, True);
+    Map@<Bool@> b = Delete<Bool@>(Insert<Bool@>(a, B, True), B);
+
+    Bool@ wnt = True;
+    Bool@ got = /Map/Eq%.Eq<Bit2@, Bool@>(/Bool/Eq%.Eq)(a, b);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|'eq: empty from deleted pair first', !({
+    Map@<Bool@> a = Insert<Bool@>(Empty<Bool@>, A, True);
+    Map@<Bool@> b = Delete<Bool@>(Insert<Bool@>(a, C, True), C);
+
+    Bool@ wnt = True;
+    Bool@ got = /Map/Eq%.Eq<Bit2@, Bool@>(/Bool/Eq%.Eq)(a, b);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
   Test(Chars|'eq: equal any order', !({
     Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
           Empty<Bool@>, B, False), C, False), A, True);

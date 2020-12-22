@@ -20,9 +20,7 @@
 # Returns:
 #   True if the map is empty, false otherwise.
 <@ K@, @ V@>(Map@<K@, V@>) { Bool@; } IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
-  # TODO: Provide a more efficient implementation of this that avoids
-  # traversing to more than a single element of the map?
-  /Map%.ForEach<K@, V@, Bool@>(map, True, (K@ _k, V@ _v, Bool@ _b) { False; });
+  map.?(empty: True, map: False);
 };
 
 
@@ -31,9 +29,9 @@
 <@ K@, @ V@>(Eq@<V@>) { Eq@<Map@<K@, V@>>; }
 Eq = <@ K@, @ V@>(Eq@<V@> eq)(Map@<K@, V@> a, Map@<K@, V@> b) {
   a.?(
-    empty: IsEmpty<K@, V@>(b),
+    empty: b.?(empty: True, map: False),
     map: b.?(
-      empty: IsEmpty<K@, V@>(a),
+      empty: False,
       map: {
         Bool@ unit_eq = a.map.unit.?(
           just: b.map.unit.?(

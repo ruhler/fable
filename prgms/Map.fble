@@ -32,20 +32,20 @@ GetValue = <@ K@, @ V@>(Maybe@<Entry@<K@, V@>> m) {
 # Type Parameters:
 #   K@ - the type of keys in the map.
 #   V@ - the type of values in the map.
-#
-# Note: An empty map can be represented using the 'empty' tag, or using the
-# 'map' tag with empty submaps. The 'empty' tag is needed to make the map
-# finite, but sometimes it's convenient when removing elements from an
-# existing map not to collapse the map back down to 'empty'.
 <@,@>@ Map@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); },
 
 # MapP@ --
-#   A (possibly empty) map from K@ to V@, using the Structure@ of K@ to locate
+#   A non-empty map from K@ to V@, using the Structure@ of K@ to locate
 #   the key value entry in the map.
 #
 # Type Parameters:
 #   K@ - the type of keys in the map.
 #   V@ - the type of values in the map.
+#
+# Invariants to ensure canonical representations:
+# * There is always at least one element in a MapP@.
+# * The 'pair' is an empty map if there are no pair elements.
+# * There are no empty values on the pair map.
 <@,@>@ MapP@ = <@ K@, @ V@> { 
   *(Maybe@<Entry@<K@, V@>> unit,
     *(Map@<K@, V@> a, Map@<K@, V@> b) either,
@@ -64,20 +64,6 @@ GetValue = <@ K@, @ V@>(Maybe@<Entry@<K@, V@>> m) {
 #   Empty<String@, Foo@>
 Map@ Empty = <@ K@, @ V@> {
   Map@<K@, V@>(empty: Unit);
-};
-
-# EmptyP --
-#   A MapP@ without any entries, used when inserting an entry into an empty
-#   map.
-#
-# Type Parameters:
-#   K@ - the type of keys in the map.
-#   V@ - the type of values in the map.
-MapP@ EmptyP = <@ K@, @ V@> {
-  MapP@<K@, V@>(
-    Nothing<Entry@<K@, V@>>,
-    @(a: Empty<K@, V@>, b: Empty<K@, V@>),
-    Empty<Unit@, Map@<K@, V@>>);
 };
 
 # LookupS --
@@ -164,8 +150,11 @@ Lookup = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key) {
 #   whatever level of the map we are currently traversing.
 <@ K@, @ V@>(Map@<K@, V@>, K@, Structure@, (Maybe@<V@>){ Maybe@<V@>; }) { Map@<K@, V@>; }
 ModifyS = <@ K@, @ V@>(Map@<K@, V@> map, K@ key, Structure@ s, (Maybe@<V@>){ Maybe@<V@>; } f) {
-  MapP@<K@, V@> p = map.?(empty: EmptyP<K@, V@>, map: map.map);
-  Map@<K@, V@>(map: s.?(
+  MapP@<K@, V@> p = map.?(
+    empty: MapP@<K@, V@>(Nothing<Entry@<K@, V@>>, @(a: Empty<K@, V@>, b: Empty<K@, V@>), Empty<Unit@, Map@<K@, V@>>),
+    map: map.map);
+
+  MapP@<K@, V@> np = s.?(
     unit: MapP@<K@, V@>(
       {
         Maybe@<V@> nv = f(GetValue<K@, V@>(p.unit));
@@ -184,9 +173,23 @@ ModifyS = <@ K@, @ V@>(Map@<K@, V@> map, K@ key, Structure@ s, (Maybe@<V@>){ May
     pair: {
       MapP@<K@, V@>(p.unit, p.either,
         ModifyS<Unit@, Map@<K@, V@>>(p.pair, Unit, s.pair.a, (Maybe@<Map@<K@, V@>> mm) {
-          Just<Map@<K@, V@>>(ModifyS<K@, V@>(mm.?(just: mm.just, nothing: Empty<K@, V@>), key, s.pair.b, f));
+          # Here we preserve the invariant that there are no empty values on
+          # the pair map.
+          Map@<K@, V@> nm = ModifyS<K@, V@>(mm.?(just: mm.just, nothing: Empty<K@, V@>), key, s.pair.b, f);
+          nm.?(empty: Nothing<Map@<K@, V@>>, map: Just<Map@<K@, V@>>(nm));
         }));
-    }));
+    });
+
+  # Here we preserve the invariant that there is always at least one element
+  # in a MapP.
+  Map@<K@, V@> nmap = Map@<K@, V@>(map: np);
+  np.unit.?(
+    just: nmap,
+    nothing: np.either.a.?(
+      empty: np.either.b.?(
+        empty: np.pair.?(empty: Empty<K@, V@>, map: nmap),
+        map: nmap),
+      map: nmap));
 };
 
 # InsertWith --
