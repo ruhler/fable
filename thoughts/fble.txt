@@ -1,0 +1,146 @@
+Fble Language Thoughts
+----------------------
+* Vague concern: will fble support static evaluation / compilation to
+  hardware? Is it bad to support structs and links that can hold functions and
+  processes?
+
+  I envision static evaluation as follows: you evaluate a program to, say, a
+  function. That's the static evaluation pass. The result will be based on the
+  interpreter you are using. If you have a hardware interpreter, for example,
+  the resulting function will be a description of a hardware circuit.
+
+  See Symbolic Elaboration as an attempt to remedy this.
+
+* Issues that came up when switching to the new unit test format
+- Should we have some form of relative reference?
+  It seems bad that every time you import a module, you have to duplicate a
+  potentially long path from the root. Any change you make in module hierarchy
+  would require rewriting all references into that module hierarchy. If we had
+  some way to write a path relative to some other path, maybe that could be
+  avoided.
+
+- Static analysis to detect obvious invalid union accesses might be nice. I've
+  already run into that kind of bug multiple times. Though to be honest,
+  comprehensive test coverage makes it really easy to spot and fix these bugs.
+
+  And there is now precedent for emitting warnings from the compiler.
+
+- Fairness
+  I think it would be cool if children were executed fairly. In particular,
+  the amount of runtime a child gets is independent of how many children its
+  siblings has.
+  
+* It would be awesome to have a well defined style guide for programming in
+  fble. And maybe an automatic re-formatter.
+ 
+  Goal would be a balance between not having too much or too little on a
+  single line. Propose some width limit on line, such as 80 chars, but to
+  avoid too little as things are squished to the right, make that 80 chars
+  past the indent of the line.
+
+  For each expression, figure out how to lay it out assuming all components
+  are really big. Then implement some packing algorithm to move things to a
+  single line if it fits.
+
+  Working style guide proposed in fble.style.txt.
+
+* There's no good support for abstract data types. You can't export a union or
+  struct type abstractly without also exporting the fields and constructors
+  and deconstructors. That seems bad, because it means you can't easily
+  control the invariants with which your data type is constructed.
+
+  From the point of view of the type system, it wouldn't be hard to turn a
+  struct or union type into an abstract type. We just need some way to express
+  that in the language?
+
+  Proposal:
+    @ Foo@ ?= *(...);
+    ...
+
+  Where the '?=' means Foo@ is abstract outside the body of the type let.
+  Easy. Does it let you split things across submodules?
+
+  See fble.adt.txt
+
+* How can we make a fast implementation of the language?
+  Like, really fast? This, to me, feels like the single most major fundamental
+  problem with the language. Can we make it fast.
+
+  Some particular disadvantages we face, compared to, say, c:
+  - no primitive types or operations
+  - automatic reference vs. value
+  - immutable data types
+  - automatic memory management
+  - closures that capture variables from local scope
+  - light weight multithreading
+
+  See Static Elaboration as an attempt to remedy this.
+
+* Should we support zero-argument functions now?
+  They aren't necessary, because you could always do a single argument
+  function that takes a unit. But it seems a little arbitrary to disallow them
+  now?
+
+* Should we have support for generics?
+  See fble.generics.txt.
+
+* Should we add support for unordered struct types?
+  The concern is that someone writes down an explicit type for a module, then
+  the module implementors reorder fields or add fields to that type, causing
+  the user to break. Is this captured already in the discussions on API
+  versioning that we have done before?
+
+* A common question that comes up is whether to fuse two things in a single
+  loop traversal or do them separately.
+
+  For example: in the test runner, should we count the number of tests in the
+  same loop we run them in, or should we call a separate list length function?
+
+  For example: in the sat solver, should we track pure literals and units
+  during substitution, or do those in separate passes?
+
+  This seems like an important place where composition of functionality
+  perhaps doesn't support good performance? Is there a language feature or
+  approach to library design that maintains the flexibility we would like to
+  have: we can specify iterations separately but somehow compose them together
+  for performance reasons if desired?
+
+* Sometimes it's pretty tedious writing code.
+  For example, implementing Map.IsEmpty, you test a bunch of conditions, and
+  want to break out as soon as you find any element in the map. In C++, I
+  would write this as a sequence of checks:
+
+  if (there is a value here) {
+    return False;
+  }
+  if (there is a value to the left) {
+    return False;
+  }
+  if (there is a value to the right) {
+    return False;
+  }
+  ...
+
+  But in fble that becomes nested:
+  if (there is a value here) {
+    return false;
+  } else {
+    if (there is a value to the left) {
+      return false;
+    } else {
+      if (there is a value to the right) {
+        return false;
+      } else {
+        ...
+      }
+    }
+  }
+
+  Which is rather a headache to have to read and write. Anything I can do to
+  clean this up while preserving the efficiency of breaking out at first sight
+  of a value?
+
+  And it's annoying that it's so much harder to implement something like
+  IsEmpty than it is to implement something like ForEach, if you want to break
+  out of the computation early.
+
