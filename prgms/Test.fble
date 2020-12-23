@@ -103,7 +103,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       },
       suite: {
         String@ nprefix = Concat<Char@>(List<String@>([
-            prefix, Str(Chars|'.'), test.suite.name]));
+            prefix, test.suite.name, Str(Chars|'.')]));
         ProcessEach<Test@, Status@>(test.suite.tests, status,
           (Test@ t, Status@ s) {
             Run(t, nprefix, s);
@@ -164,7 +164,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       },
       suite: {
         String@ nprefix = Concat<Char@>(List<String@>([
-            prefix, Str(Chars|'.'), test.suite.name]));
+            prefix, test.suite.name, Str(Chars|'.')]));
         ProcessEach<Test@, Bool@>(test.suite.tests, passing,
           (Test@ test, Bool@ passing) {
             Run(test, nprefix, passing);
