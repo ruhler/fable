@@ -14,10 +14,9 @@
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
-@ TestSuite@ = /Test%.TestSuite@;
 % Test = /Test%.Test;
-<@>% AssertEquals = /Test%.AssertEquals;
 % TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
 
 # T --
 #  Tests that a boolean expression evaluates to True.
@@ -63,7 +62,7 @@
 
 # Tests --
 #  A test suite to test the /Bool% module.
-TestSuite@ Tests = TestSuite(Chars|Bool, [
+Test@ Tests = TestSuite(Chars|Bool, [
   T(Chars|True, !(True)),
   F(Chars|False, !(False)),
 

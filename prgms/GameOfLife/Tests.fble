@@ -14,7 +14,7 @@
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
-@ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 
 % Unit = /Unit%.Unit;
@@ -62,8 +62,8 @@ TestResult@! AcornStep = !({
   );
 });
 
-TestSuite@ Tests = TestSuite(Chars|GameOfLife, [
-  Test@(Str(Chars|AcornStep), AcornStep)
+Test@ Tests = TestSuite(Chars|GameOfLife, [
+  Test(Chars|AcornStep, AcornStep)
   ]);
 
 @(Tests);

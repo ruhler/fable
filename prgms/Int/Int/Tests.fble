@@ -10,7 +10,6 @@
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
-@ TestSuite@ = /Test%.TestSuite@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
@@ -58,7 +57,7 @@
   });
 };
 
-TestSuite@ Tests = TestSuite(Chars|Int, [
+Test@ Tests = TestSuite(Chars|Int, [
   T(Chars|Eq_0_0, !(Eq(0, 0))),
   T(Chars|Eq_0_1, !(Not(Eq(0, 1)))),
   T(Chars|Eq_4_4, !(Eq(4, 4))),

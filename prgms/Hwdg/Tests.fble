@@ -16,7 +16,7 @@
 @ String@ = /String%.String@;
 % Concat = /String%.Concat;
 % Str = /String%.Str;
-@ TestSuite@ = /Test%.TestSuite@;
+@ Test@ = /Test%.Test@;
 <@>% AssertEquals = /Test%.AssertEquals;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
@@ -68,7 +68,7 @@ Show@<Layout@> ShowCells = (Layout@ x) {
   /Map/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x.cells);
 };
 
-TestSuite@ Tests = TestSuite(Chars|Hwdg, [
+Test@ Tests = TestSuite(Chars|Hwdg, [
   Test(Chars|'empty no data', !({
     Layout@ layout = Empty;
     Maybe@<Data@> got = GetData(layout, Coord@(2, 3));

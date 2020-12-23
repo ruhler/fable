@@ -1,7 +1,5 @@
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@>% Concat = /List%.Concat;
+% Chars = /Char%.Chars;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -13,6 +11,7 @@
 @ String@ = /String%.String@;
 
 @ Test@ = /Test%.Test@;
+% TestSuite = /Test%.TestSuite;
 
 # Import to test compilation.
 % _ = /DataFlow/Counter%;
@@ -23,7 +22,7 @@
 % _ = /Snake%;
 % _ = /Stdio/Cat%;
 
-List@<Test@> AllTests = Concat<Test@>(List<List@<Test@>>([
+Test@ AllTests = TestSuite(Chars|Fble, [
   /Bool/Tests%.Tests,
   /GameOfLife/Tests%.Tests,
   /Hwdg/Tests%.Tests,
@@ -38,7 +37,7 @@ List@<Test@> AllTests = Concat<Test@>(List<List@<Test@>>([
   /Sudoku/Tests%.Tests,
   /Test/Tests%.Tests,
   /TicTacToe/Tests%.Tests
-]));
+]);
 
 Stdio@ Main = (Get@<Maybe@<String@>> in, Put@<String@> out) {
   /Test%.RunTests(out, AllTests);

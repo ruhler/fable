@@ -22,10 +22,10 @@
 % RightS = /Structure%.RightS;
 % PairS = /Structure%.PairS;
 <@>@ Structured@ = /Structured%.Structured@;
-@ TestSuite@ = /Test%.TestSuite@;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Test%.Test@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
@@ -67,7 +67,7 @@ Structured@<Bit2@> Bit2S = (Bit2@ x) {
 <@>% Delete = /Map%.Delete<Bit2@>(Bit2S);
 <@,@>% ForEach = /Map%.ForEach<Bit2@>;
 
-TestSuite@ Tests = TestSuite(Chars|Map, [
+Test@ Tests = TestSuite(Chars|Map, [
   Test(Chars|'empty', !({
     Maybe@<Unit@> wnt = Nothing<Unit@>;
     Maybe@<Unit@> got = Lookup<Unit@>(Empty<Unit@>, B);

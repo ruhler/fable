@@ -3,7 +3,7 @@
 
 % Chars = /Char%.Chars;
 
-@ String@ = /String%.String@;
+<@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
 @ IntP@ = /Int/IntP%.IntP@;
@@ -20,11 +20,11 @@
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
-@ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 
-(String@, IntP@, IntP@){Test@;} TEq = (String@ name, IntP@ a, IntP@ b) {
-  Test@(name, !({
+(CharLit@, IntP@, IntP@){ Test@; } TEq = (CharLit@ name, IntP@ a, IntP@ b) {
+  Test(name, !({
     # TODO: Better error message in case of failure.
     Eq(a, b).?(
         true: TestResult@(pass: Unit),
@@ -32,8 +32,8 @@
   }));
 };
 
-Test@ NthPrime_1_10 = TEq(Str(Chars|'NthPrime_1_10'), Lit2(3, 1), NthPrime(1, IntS@(p: 10)));
+Test@ NthPrime_1_10 = TEq(Chars|'NthPrime_1_10', Lit2(3, 1), NthPrime(1, IntS@(p: 10)));
 
-TestSuite@ Tests = TestSuite(Chars|Primes, [NthPrime_1_10]);
+Test@ Tests = TestSuite(Chars|Primes, [NthPrime_1_10]);
 
 @(Tests);

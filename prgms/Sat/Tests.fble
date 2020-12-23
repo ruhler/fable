@@ -16,7 +16,7 @@
 % Str = /String%.Str;
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
-@ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
 % Unit = /Unit%.Unit;
@@ -65,8 +65,8 @@ AssertEq = (Result@ a, Result@ b) {
   AssertEquals<Result@>(EqResult, ShowResult, a, b);
 };
 
-TestSuite@ Tests = TestSuite(Chars|Sat, [
-  Test@(Str(Chars|Sat), !({
+Test@ Tests = TestSuite(Chars|Sat, [
+  Test(Chars|Sat, !({
     Formula@ f = List<Clause@>([
       List<Var@>([Var@(X, True)])
     ]);
@@ -75,7 +75,7 @@ TestSuite@ Tests = TestSuite(Chars|Sat, [
     AssertEq(want, got);
   })),
 
-  Test@(Str(Chars|Unsat), !({
+  Test(Chars|Unsat, !({
     Formula@ f = List<Clause@>([
       List<Var@>([Var@(X, True)]),
       List<Var@>([Var@(X, False)])
@@ -85,7 +85,7 @@ TestSuite@ Tests = TestSuite(Chars|Sat, [
     AssertEq(want, got);
   })),
 
-  Test@(Str(Chars|Timeout), !({
+  Test(Chars|Timeout, !({
     # /Sat/Aim% is a real problem. There's no way we should be able to solve
     # it in 10 ticks.
     Result@ want = Result@(timeout: Unit);

@@ -8,14 +8,14 @@
 % Concat = /String%.Concat;
 % Str = /String%.Str;
 % _Structured = /String/Structured%.Structured;
-@ TestSuite@ = /Test%.TestSuite@;
+@ Test@ = /Test%.Test@;
 % Test = /Test%.Test;
-<@>% AssertEquals = /Test%.AssertEquals;
 % TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
 
 # Tests --
 #  A test suite to test the /String% module and friends.
-TestSuite@ Tests = TestSuite(Chars|String, [
+Test@ Tests = TestSuite(Chars|String, [
   Test(Chars|Concat, !({
     String@ wnt = Str(Chars|'hellothere');
     String@ got = Concat(List<String@>([Str(Chars|'hello'), Str(Chars|there)]));

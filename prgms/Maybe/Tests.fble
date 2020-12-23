@@ -10,10 +10,10 @@
 <@>% Nothing = /Maybe%.Nothing;
 @ String@ = /String%.String@;
 % Str = /String%.Str;
-@ TestSuite@ = /Test%.TestSuite@;
+@ Test@ = /Test%.Test@;
 % Test = /Test%.Test;
-<@>% AssertEquals = /Test%.AssertEquals;
 % TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
@@ -40,7 +40,7 @@ Show@<Maybe@<AB@>> Show = /Maybe/Show%.Show<AB@>(ShowAB);
 
 # Tests --
 #  A test suite to test the /Maybe% module and friends.
-TestSuite@ Tests = TestSuite(Chars|Maybe, [
+Test@ Tests = TestSuite(Chars|Maybe, [
   Test(Chars|Eq_JustEq, !({
     Bool@ wnt = True;
     Bool@ got = Eq(Just<AB@>(A), Just<AB@>(A));

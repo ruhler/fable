@@ -3,15 +3,15 @@
 % Str = /String%.Str;
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
-@ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 % Unit = /Unit%.Unit;
 
 # TODO: Test the test runner output. Don't just test that a passing test can
 # be written and passes.
-TestSuite@ Tests = {
-  Test@ pass = Test@(Str(Chars|pass), !(TestResult@(pass: Unit)));
-  Test@ _fail = Test@(Str(Chars|fail), !(TestResult@(fail: Str(Chars|FAILED))));
+Test@ Tests = {
+  Test@ pass = Test(Chars|pass, !(TestResult@(pass: Unit)));
+  Test@ _fail = Test(Chars|fail, !(TestResult@(fail: Str(Chars|FAILED))));
 
   TestSuite(Chars|'Test', [pass]);
 };

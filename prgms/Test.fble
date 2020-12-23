@@ -7,6 +7,8 @@
 % Chars = /Char%.Chars;
 
 @ Int@ = /Int/Int%.Int@;
+% 0 = /Int/Int%.0;
+% Inc = /Int/Int%.Inc;
 % Sub = /Int/Int%.Sub;
 
 <@>@ List@ = /List%.List@;
@@ -16,7 +18,6 @@
 <@>% Concat = /List%.Concat;
 <@>% Cons = /List%.Cons;
 <@,@>% ProcessEach = /List%.ProcessEach;
-<@,@>% Map = /List%.Map;
 <@>% Length = /List/Length%.Length;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
@@ -31,8 +32,9 @@
 % Unit = /Unit%.Unit;
 
 @ TestResult@ = +(Unit@ pass, String@ fail);
-@ Test@ = *(String@ name, TestResult@! test);
-@ TestSuite@ = List@<Test@>;
+@ TestCase@ = *(String@ name, TestResult@! test);
+@ TestSuite@ = *(String@ name, List@<Test@> tests),
+@ Test@ = +(TestCase@ case, TestSuite@ suite);
 
 # Test --
 #   Creates a test.
@@ -44,7 +46,7 @@
 #   name - the name of the test
 #   test - a process that returns the result of the test
 (CharLit@, TestResult@!) { Test@; } Test = (CharLit@ name, TestResult@! test) {
-  Test@(Str(name), test);
+  Test@(case: TestCase@(Str(name), test));
 };
 
 # TestSuite --
@@ -53,12 +55,9 @@
 # Inputs:
 #   name - the name of the test suite.
 #   tests - the list of tests in the test suite.
-(CharLit@, Lit@<Test@>) { TestSuite@; }
+(CharLit@, Lit@<Test@>) { Test@; }
 TestSuite = (CharLit@ name, Lit@<Test@> tests) {
-  String@ prefix = Append<Char@>(Str(name), Str(Chars|'.'));
-  Map<Test@, Test@>(List<Test@>(tests), (Test@ test) {
-    Test@(Append<Char@>(prefix, test.name), test.test);
-  });
+  Test@(suite: TestSuite@(Str(name), List<Test@>(tests)));
 };
 
 <@ T@>((T@, T@) { Bool@; }, (T@) { String@; }, T@, T@) { TestResult@; }
@@ -82,29 +81,38 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
   out(Append<Char@>(str, Str([Chars.nl])));
 };
 
-# Returns True if the tests all pass, false otherwise.
-(Put@<String@>, TestSuite@) { Bool@!; } RunTests = (Put@<String@> out, TestSuite@ tests) {
+# Returns True if the test passes, false otherwise.
+(Put@<String@>, Test@) { Bool@!; } RunTests = (Put@<String@> out, Test@ test) {
   @ Failure@ = *(String@ name, String@ msg);
 
   # Run all the tests, given a list of tests that failed so far.
-  # Returns the list of failing tests.
-  (TestSuite@, List@<Failure@>) { List@<Failure@>!; }
-  Run = (TestSuite@ ts, List@<Failure@> failed) {
-    ts.?(
-      cons: {
-        Test@ t = ts.cons.head;
+  # Returns the number of total tests executed and the list of failing tests.
+  @ Status@ = *(Int@ total, List@<Failure@> failures);
+  (Test@, String@, Status@) { Status@!; }
+  Run = (Test@ test, String@ prefix, Status@ status) {
+    test.?(
+      case: {
+        TestCase@ t = test.case;
         TestResult@ tr := t.test;
-        String@ status = Str(tr.?(pass: Chars|'.', fail: Chars|'F'));
-        Unit@ _ := out(status);
+        String@ short = Str(tr.?(pass: Chars|'.', fail: Chars|'F'));
+        Unit@ _ := out(short);
         List@<Failure@> nfailed = tr.?(
-          pass: failed,
-          fail: Cons<Failure@>(Failure@(t.name, tr.fail), failed));
-        Run(ts.cons.tail, nfailed);
+          pass: status.failures,
+          fail: Cons<Failure@>(Failure@(Append<Char@>(prefix, t.name), tr.fail), status.failures));
+        !(Status@(Inc(status.total), nfailed));
       },
-      nil: !(failed));
+      suite: {
+        String@ nprefix = Concat<Char@>(List<String@>([
+            prefix, Str(Chars|'.'), test.suite.name]));
+        ProcessEach<Test@, Status@>(test.suite.tests, status,
+          (Test@ t, Status@ s) {
+            Run(t, nprefix, s);
+          });
+      });
   };
 
-  List@<Failure@> failures := Run(tests, Nil<Failure@>);
+  Status@ status := Run(test, Nil<Char@>, Status@(0, Nil<Failure@>));
+  List@<Failure@> failures = status.failures;
 
   Unit@ _ := PrintLn(out, Nil<Char@>);
   Unit@ _ := ProcessEach<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
@@ -112,7 +120,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
   });
   Unit@ _ := PrintLn(out, Nil<Char@>);
 
-  Int@ num_total = Length<Test@>(tests);
+  Int@ num_total = status.total;
   Int@ num_failed = Length<Failure@>(failures);
   Int@ num_passed = Sub(num_total, num_failed);
   Unit@ _ := PrintLn(out, Concat<Char@>(List<String@>([
@@ -132,26 +140,41 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 };
 
 # Returns True if the tests all pass, false otherwise.
-(Put@<String@>, TestSuite@) { Bool@!; } RunTestsVerbose = (Put@<String@> out, TestSuite@ tests) {
-  ProcessEach<Test@, Bool@>(tests, True, (Test@ test, Bool@ passing) {
-    Unit@ _ := Print(out, test.name);
-    TestResult@ tr := test.test;
-    tr.?(
-      pass: {
-        Unit@ _ := PrintLn(out, Nil<Char@>);
-        !(passing);
+(Put@<String@>, Test@) { Bool@!; } RunTestsVerbose = (Put@<String@> out, Test@ test) {
+
+  (Test@, String@, Bool@) { Bool@!; }
+  Run = (Test@ test, String@ prefix, Bool@ passing) {
+    test.?(
+      case: {
+        Unit@ _ := Print(out, Append<Char@>(prefix, test.case.name));
+        TestResult@ tr := test.case.test;
+        tr.?(
+          pass: {
+            Unit@ _ := PrintLn(out, Nil<Char@>);
+            !(passing);
+          },
+          fail: {
+            Unit@ _ := PrintLn(
+              out,
+              Concat<Char@>(List<String@>([
+                Str(Chars|': FAILED: '),
+                tr.fail])));
+            !(False);
+          });
       },
-      fail: {
-        Unit@ _ := PrintLn(
-          out,
-          Concat<Char@>(List<String@>([
-            Str(Chars|': FAILED: '),
-            tr.fail])));
-        !(False);
+      suite: {
+        String@ nprefix = Concat<Char@>(List<String@>([
+            prefix, Str(Chars|'.'), test.suite.name]));
+        ProcessEach<Test@, Bool@>(test.suite.tests, passing,
+          (Test@ test, Bool@ passing) {
+            Run(test, nprefix, passing);
+          });
       });
-  });
+  };
+
+  Run(test, Nil<Char@>, True);
 };
 
 @(
-  String@, TestResult@, Test@, TestSuite@,
+  String@, TestResult@, Test@,
   AssertEquals, Test, TestSuite, RunTests, RunTestsVerbose);

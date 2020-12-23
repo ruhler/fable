@@ -22,7 +22,7 @@
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
-@ TestSuite@ = /Test%.TestSuite@;
+% Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 
 @ Unit@ = /Unit%.Unit@;
@@ -227,8 +227,8 @@ Input@ ExpertInput = {
     Array<S@>(_,9,_,  _,_,_,  _,8,_));
 };
 
-TestSuite@ Tests = TestSuite(Chars|Sudoku, [
-  Test@(Str(Chars|sample), !({
+Test@ Tests = TestSuite(Chars|Sudoku, [
+  Test(Chars|sample, !({
     Maybe@<Solved@> ms = Solve(SampleInput);
     ms.?(
        just: {
