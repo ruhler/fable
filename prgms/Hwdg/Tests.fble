@@ -197,6 +197,42 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
     Layout@ wnt = layout;
     Layout@ got = Run(layout);
     AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
+  })),
+
+  Test(Chars|'identity chain', !({
+    # Test a chain of identity gates.
+    # -> -> -| .
+    # .  .   v .
+    # <- <- -| .
+    # .  .  .  .
+    Gate@ ul_to_ur = @(
+      ports: Ports@<PortSpec@>(InputPort, OutputPort, UnusedPort, UnusedPort),
+      function: (Ports@<Data@> x) { Ports@<Data@>(Data0, x.ul, Data0, Data0); });
+    Gate@ ul_to_ll = @(
+      ports: Ports@<PortSpec@>( InputPort, UnusedPort, OutputPort, UnusedPort),
+      function: (Ports@<Data@> x) { Ports@<Data@>(Data0, Data0, x.ul, Data0); });
+    Gate@ ur_to_ul = @(
+      ports: Ports@<PortSpec@>( OutputPort, InputPort, UnusedPort, UnusedPort),
+      function: (Ports@<Data@> x) { Ports@<Data@>(x.ur, Data0, Data0, Data0); });
+
+    Layout@ gates = SetGate(SetGate(SetGate(SetGate(SetGate(SetGate(Empty,
+          Coord@(0, 0), ul_to_ur),
+          Coord@(0, 1), ul_to_ur),
+          Coord@(0, 2), ul_to_ll),
+          Coord@(1, 2), ul_to_ll),
+          Coord@(2, 1), ur_to_ul),
+          Coord@(2, 0), ur_to_ul);
+
+    # Send '0' and '1' down the wire together.
+    Layout@ layout = SetData(SetData(gates,
+          Coord@(0, 0), Data1),
+          Coord@(0, 1), Data0);
+
+    Layout@ wnt = SetData(SetData(Empty,
+          Coord@(2, 0), Data0),
+          Coord@(2, 1), Data1);
+    Layout@ got = Run(layout);
+    AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
   }))
 ]);
 
