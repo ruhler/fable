@@ -15,12 +15,12 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-@ Coord@ = *(Int@ row, Int@ col);
+@ Coord@ = *(Int@ x, Int@ y);
 
 Structured@<Coord@> CoordS = {
   % IntS = /Int/Int/Structured%.Structured;
   (Coord@ c) {
-    PairS(IntS(c.row), IntS(c.col));
+    PairS(IntS(c.x), IntS(c.y));
   };
 };
 
@@ -128,10 +128,10 @@ Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
     /Map%.ForEach<Coord@, Gate@, B@>(layout.gates, B@(layout, False),
       (Coord@ c, Gate@ g, B@ b) {
         Ports@<Coord@> coords = Ports@<Coord@>(
-          Coord@(c.row, c.col),
-          Coord@(c.row, Inc(c.col)),
-          Coord@(Inc(c.row), c.col),
-          Coord@(Inc(c. row), Inc(c.col)));
+          Coord@(c.x, c.y),
+          Coord@(Inc(c.x), c.y),
+          Coord@(c.x, Inc(c.y)),
+          Coord@(Inc(c.x), Inc(c.y)));
 
         Ports@<Maybe@<Data@>> cells = Ports@<Maybe@<Data@>>(
           GetData(b.layout, coords.ul), GetData(b.layout, coords.ur),

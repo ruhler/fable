@@ -1,5 +1,4 @@
 Hwdg:
-* Swap row an column for Coord@?
 * Separate gates and cells? It feels awkward to be comparing cells by layout
   ignoring the gates.
 * Have an easier way to set a bunch of cells and gates at once, like SetGates

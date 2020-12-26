@@ -52,9 +52,9 @@ Show@<Data@> ShowData = (Data@ x) {
 Show@<Coord@> ShowCoord = (Coord@ x) {
   Concat(List<String@>([
       Str(Chars|'('),
-      /Int/Int/Show%.Show(x.row),
+      /Int/Int/Show%.Show(x.x),
       Str(Chars|','),
-      /Int/Int/Show%.Show(x.col),
+      /Int/Int/Show%.Show(x.y),
       Str(Chars|')')]));
 };
 
@@ -71,7 +71,7 @@ Show@<Layout@> ShowCells = (Layout@ x) {
 Test@ Tests = TestSuite(Chars|Hwdg, [
   Test(Chars|'empty no data', !({
     Layout@ layout = Empty;
-    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Maybe@<Data@> got = GetData(layout, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
@@ -81,8 +81,8 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
   })),
 
   Test(Chars|'set this data to 0', !({
-    Layout@ layout = SetData(Empty, Coord@(2, 3), Data0);
-    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Layout@ layout = SetData(Empty, Coord@(3, 2), Data0);
+    Maybe@<Data@> got = GetData(layout, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data0);
 
     AssertEquals<Maybe@<Data@>>(
@@ -92,8 +92,8 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
   })),
 
   Test(Chars|'set this data to 1', !({
-    Layout@ layout = SetData(Empty, Coord@(2, 3), Data1);
-    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Layout@ layout = SetData(Empty, Coord@(3, 2), Data1);
+    Maybe@<Data@> got = GetData(layout, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data1);
 
     AssertEquals<Maybe@<Data@>>(
@@ -103,8 +103,8 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
   })),
 
   Test(Chars|'set other data', !({
-    Layout@ layout = SetData(Empty, Coord@(3, 2), Data1);
-    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Layout@ layout = SetData(Empty, Coord@(2, 3), Data1);
+    Maybe@<Data@> got = GetData(layout, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
@@ -114,8 +114,8 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
   })),
 
   Test(Chars|'clear data', !({
-    Layout@ layout = ClearData(SetData(Empty, Coord@(2, 3), Data1), Coord@(2, 3));
-    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Layout@ layout = ClearData(SetData(Empty, Coord@(3, 2), Data1), Coord@(3, 2));
+    Maybe@<Data@> got = GetData(layout, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
@@ -125,8 +125,8 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
   })),
 
   Test(Chars|'clear other data', !({
-    Layout@ layout = ClearData(SetData(Empty, Coord@(2, 3), Data1), Coord@(3, 2));
-    Maybe@<Data@> got = GetData(layout, Coord@(2, 3));
+    Layout@ layout = ClearData(SetData(Empty, Coord@(3, 2), Data1), Coord@(2, 3));
+    Maybe@<Data@> got = GetData(layout, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data1);
 
     AssertEquals<Maybe@<Data@>>(
@@ -171,7 +171,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
       function: (Ports@<Data@> x) {
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
-    Layout@ layout = SetGate(SetData(Empty, Coord@(0, 1), Data1), Coord@(0, 0), gate);
+    Layout@ layout = SetGate(SetData(Empty, Coord@(1, 0), Data1), Coord@(0, 0), gate);
 
     # The gate doesn't have it's input available, so we don't expect it to
     # trigger.
@@ -217,20 +217,20 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
 
     Layout@ gates = SetGate(SetGate(SetGate(SetGate(SetGate(SetGate(Empty,
           Coord@(0, 0), ul_to_ur),
-          Coord@(0, 1), ul_to_ur),
-          Coord@(0, 2), ul_to_ll),
-          Coord@(1, 2), ul_to_ll),
-          Coord@(2, 1), ur_to_ul),
-          Coord@(2, 0), ur_to_ul);
+          Coord@(1, 0), ul_to_ur),
+          Coord@(2, 0), ul_to_ll),
+          Coord@(2, 1), ul_to_ll),
+          Coord@(1, 2), ur_to_ul),
+          Coord@(0, 2), ur_to_ul);
 
     # Send '0' and '1' down the wire together.
     Layout@ layout = SetData(SetData(gates,
           Coord@(0, 0), Data1),
-          Coord@(0, 1), Data0);
+          Coord@(1, 0), Data0);
 
     Layout@ wnt = SetData(SetData(Empty,
-          Coord@(2, 0), Data0),
-          Coord@(2, 1), Data1);
+          Coord@(0, 2), Data0),
+          Coord@(1, 2), Data1);
     Layout@ got = Run(layout);
     AssertEquals<Layout@>(EqCells, ShowCells, wnt, got);
   }))
