@@ -1,0 +1,204 @@
+
+@ App@ = /App%.App@;
+@ Event@ = /App%.Event@;
+@ Effect@ = /App%.Effect@;
+
+@ Bool@ = /Bool%.Bool@;
+% False = /Bool%.False;
+% True = /Bool%.True;
+
+@ Drawing@ = /Drawing%.Drawing@;
+@ Color@ = /Drawing%.Color@;
+@ Point@ = /Drawing%.Point@;
+% Rect = /Drawing%.Rect;
+% Over = /Drawing%.Over;
+% Transform = /Drawing%.Transform;
+
+@ Coord@ = /Hwdg%.Coord@;
+@ Data@ = /Hwdg%.Data@;
+@ Gate@ = /Hwdg%.Gate@;
+@ Gates@ = /Hwdg%.Gates@;
+@ Cells@ = /Hwdg%.Cells@;
+@ PortSpec@ = /Hwdg%.PortSpec@;
+<@>@ Ports@ = /Hwdg%.Ports@;
+% InputPort = /Hwdg%.InputPort;
+% OutputPort = /Hwdg%.OutputPort;
+% UnusedPort = /Hwdg%.UnusedPort;
+% Data0 = /Hwdg%.0;
+% Data1 = /Hwdg%.1;
+% SetGate = /Hwdg%.SetGate;
+% SetData = /Hwdg%.SetData;
+% EmptyGates = /Hwdg%.EmptyGates;
+% EmptyCells = /Hwdg%.EmptyCells;
+
+@ Int@ = /Int/Int%.Int@;
+% 0 = /Int/Int%.0;
+% 1 = /Int/Int%.1;
+% 2 = /Int/Int%.2;
+% 3 = /Int/Int%.3;
+% Inc = /Int/Int%.Inc;
+% Add = /Int/Int%.Add;
+% Mul = /Int/Int%.Mul;
+% Dec = /Int/Int%.Dec;
+% Neg = /Int/Int%.Neg;
+% Sub = /Int/Int%.Sub;
+
+% Div = /Int/Int/Div%.Div;
+
+% IsZero = /Int/Int/Eq%.IsZero;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+Int@ XMin = Neg(I(D|10));
+Int@ XMax = I(D|10);
+Int@ YMin = Neg(I(D|10));
+Int@ YMax = I(D|10);
+Int@ Width = Sub(XMax, XMin);
+Int@ Height = Sub(YMax, YMin);
+
+# Gates --
+#   The particular gates for the hardware layout to simulate.
+Gates@ Gates = {
+  # A circular chain of identity gates.
+  #   0 1  2  3  4
+  # 0 . .  .  .  .
+  # 1 . |> -> -| .
+  # 2 . ^  .   v .
+  # 3 . |- <- -| .
+  # 4 . .  .  .  .
+  Gate@ ll_to_lr = @(
+    ports: Ports@<PortSpec@>(UnusedPort, UnusedPort, InputPort, OutputPort),
+    function: (Ports@<Data@> x) { Ports@<Data@>(Data0, Data0, Data0, x.ll); });
+  Gate@ ul_to_ll = @(
+    ports: Ports@<PortSpec@>( InputPort, UnusedPort, OutputPort, UnusedPort),
+    function: (Ports@<Data@> x) { Ports@<Data@>(Data0, Data0, x.ul, Data0); });
+  Gate@ ur_to_ul = @(
+    ports: Ports@<PortSpec@>( OutputPort, InputPort, UnusedPort, UnusedPort),
+    function: (Ports@<Data@> x) { Ports@<Data@>(x.ur, Data0, Data0, Data0); });
+  Gate@ lr_to_ur = @(
+    ports: Ports@<PortSpec@>( UnusedPort, OutputPort, UnusedPort, InputPort),
+    function: (Ports@<Data@> x) { Ports@<Data@>(Data0, x.lr, Data0, Data0); });
+
+  SetGate(SetGate(SetGate(SetGate(SetGate(SetGate(SetGate(SetGate(EmptyGates,
+    Coord@(1, 0), ll_to_lr),
+    Coord@(2, 0), ll_to_lr),
+    Coord@(3, 1), ul_to_ll),
+    Coord@(3, 2), ul_to_ll),
+    Coord@(2, 3), ur_to_ul),
+    Coord@(1, 3), ur_to_ul),
+    Coord@(0, 2), lr_to_ur),
+    Coord@(0, 1), lr_to_ur);
+};
+
+# Cells --
+#   The initial data configuration of the hardware to simulate
+Cells@ Cells = {
+  # Send '0' and '1' around the loop together.
+  SetData(SetData(EmptyCells, Coord@(1, 1), Data1), Coord@(2, 1), Data0);
+};
+
+# Draw --
+#   Draw the current hardware configuration.
+(Gates@, Cells@) { Drawing@; } Draw = (Gates@ gates, Cells@ cells) {
+  # 1. Clear the background.
+  Drawing@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
+
+  # 2. For each input or output port of a gate, draw a white unit square.
+  # TODO: Don't assume Gates is a /Map%.Map@?
+ Drawing@ io = /Map%.ForEach<Coord@, Gate@, Drawing@>(gates, clear,
+   (Coord@ p, Gate@ g, Drawing@ d) {
+     Ports@<Coord@> coords = Ports@<Coord@>(
+       Coord@(p.x, p.y), Coord@(Inc(p.x), p.y),
+       Coord@(p.x, Inc(p.y)), Coord@(Inc(p.x), Inc(p.y)));
+
+     Ports@<Bool@> used = Ports@<Bool@>(
+       g.ports.ul.?(unused: False, : True),
+       g.ports.ur.?(unused: False, : True),
+       g.ports.ll.?(unused: False, : True),
+       g.ports.lr.?(unused: False, : True));
+
+     Ports@<Drawing@> fills = Ports@<Drawing@>(
+       Rect(coords.ul.x, coords.ul.y, 1, 1, Color@(white: Unit)),
+       Rect(coords.ur.x, coords.ur.y, 1, 1, Color@(white: Unit)),
+       Rect(coords.ll.x, coords.ll.y, 1, 1, Color@(white: Unit)),
+       Rect(coords.lr.x, coords.lr.y, 1, 1, Color@(white: Unit)));
+
+     Drawing@ d_ul = used.ul.?(true: Over(d, fills.ul), false: d);
+     Drawing@ d_ur = used.ur.?(true: Over(d_ul, fills.ur), false: d_ul);
+     Drawing@ d_ll = used.ll.?(true: Over(d_ur, fills.ll), false: d_ur);
+     Drawing@ d_lr = used.lr.?(true: Over(d_ll, fills.lr), false: d_ll);
+     d_lr;
+   });
+    
+  # 3. Draw a green square for 1 and a red square for 0.
+  # TODO: Don't assume Cells@ is a /Map%.Map@?
+  /Map%.ForEach<Coord@, Data@, Drawing@>(cells, io,
+    (Coord@ p, Data@ data, Drawing@ d) {
+      Color@ color = data.?(0: Color@(red: Unit), 1: Color@(green: Unit));
+      Over(d, Rect(p.x, p.y, 1, 1, color));
+    });
+};
+
+@ Input@ = +(Unit@ quit, Unit@ step);
+
+(Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
+  Event@ e := in;
+  e.?(tick: !(Input@(step: Unit)),
+      key_down: e.key_down.?(q: !(Input@(quit: Unit)), : GetInput(in)),
+      key_up: GetInput(in));
+};
+
+(Gates@, Cells@) { Cells@; } Step = (Gates@ gates, Cells@ cells) {
+  Maybe@<Cells@> mcells = /Hwdg%.Step(gates, cells);
+  mcells.?(just: mcells.just, nothing: cells);
+};
+
+(Get@<Input@>, Put@<Effect@>, Int@, Gates@, Cells@) { Unit@!; }
+StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Gates@ gates, Cells@ cells) {
+  Unit@ _ := out(Effect@(draw: Draw(gates, cells)));
+  Unit@ _ := out(Effect@(tick: I(D|400)));
+  Input@ x := in;
+  x.?(quit: !(Unit),
+      step: IsZero(n).?(
+              true: !(Unit),
+              false: StepUI(in, out, Dec(n), gates, Step(gates, cells))));
+};
+
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+  # Map game coordinates into screen coordinate.
+  Int@ ax = Div(width, Width);
+  Int@ bx = Div(width, 2);
+  Int@ ay = Div(height, Height);
+  Int@ by = Div(height, 2);
+
+  (Point@) { Point@; } f = (Point@ p) {
+    @(x: Add(Mul(ax, p.x), bx), 
+      y: Add(Mul(ay, p.y), by));
+  };
+
+  Put@<Effect@> game_out = (Effect@ e) {
+    Effect@ transformed = e.?(
+      tick: e,
+      draw: Effect@(draw: Transform(f, e.draw)));
+    out(transformed);
+  };
+
+  Unit@ _ := StepUI(GetInput(in), game_out, I(D|200), Gates, Cells);
+
+  Unit@! WaitForKeyPress = {
+    Event@ e := in;
+    e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
+  };
+  WaitForKeyPress;
+};
+
+Main;

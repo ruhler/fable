@@ -160,4 +160,4 @@ Gates@ EmptyGates = /Map%.Empty<Coord@, Gate@>;
 
 @(Cells@, Gates@, Coord@, Data@, Gate@, Ports@, PortSpec@,
   0, 1, InputPort, OutputPort, UnusedPort,
-  EmptyCells, GetData, SetData, ClearData, EmptyGates, SetGate, Run);
+  EmptyCells, GetData, SetData, ClearData, EmptyGates, SetGate, Step, Run);

@@ -17,6 +17,7 @@
 % _ = /DataFlow/Counter%;
 % _ = /Fble/Bench%;
 % _ = /Fble/StackSmasher%;
+% _ = /Hwdg/App%;
 % _ = /Invaders/App%;
 % _ = /Invaders/ScreenshotApp%;
 % _ = /Snake%;
