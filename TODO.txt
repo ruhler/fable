@@ -1,7 +1,9 @@
 Hwdg:
 * Have an easier way to set a bunch of cells and gates at once, like SetGates
   and SetCells?
-* Change Step to do updates based on original map instead of updated map?
+* Add test case for nondeterministic/conflicting gates case.
+* Should we allow multiple gates at the same coordinates as long as they have
+  compatible port specs?
 
 Exec:
 * How about using locals.size to store the capacity and func->code->locals to
