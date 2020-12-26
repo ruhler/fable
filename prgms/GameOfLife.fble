@@ -3,8 +3,6 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 
-@ IntP@ = /Int/IntP%.IntP@;
-
 @ Int@ = /Int/Int%.Int@;
 % Inc = /Int/Int%.Inc;
 % Dec = /Int/Int%.Dec;
@@ -19,9 +17,6 @@
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
-% UnitS = /Structure%.UnitS;
-% LeftS = /Structure%.LeftS;
-% RightS = /Structure%.RightS;
 % PairS = /Structure%.PairS;
 <@>@ Structured@ = /Structured%.Structured@;
 
@@ -30,16 +25,11 @@
 
 @ Coord@ = *(Int@ row, Int@ col);
 
-Structured@<IntP@> NatS = (IntP@ n) {
-  n.?(1: UnitS, 2p0: LeftS(NatS(n.2p0)), 2p1: RightS(NatS(n.2p1)));
-};
-
-Structured@<Int@> IntS = (Int@ n) {
-  n.?(n: LeftS(NatS(n.n)), 0: UnitS, p: RightS(NatS(n.p)));
-};
-
-Structured@<Coord@> CoordS = (Coord@ c) {
-  PairS(IntS(c.row), IntS(c.col));
+Structured@<Coord@> CoordS = {
+  % IntS = /Int/Int/Structured%.Structured;
+  (Coord@ c) {
+    PairS(IntS(c.row), IntS(c.col));
+  };
 };
 
 # The world is a set of Coord@ where there are live cells.
