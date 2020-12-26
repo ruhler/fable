@@ -8,6 +8,8 @@
 % Inc = /Int/Int%.Inc;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
 
 % PairS = /Structure%.PairS;
 <@>@ Structured@ = /Structured%.Structured@;
@@ -48,61 +50,46 @@ PortSpec@ UnusedPort = PortSpec@(unused: Unit);
 
 @ Cells@ = /Map%.Map@<Coord@, Data@>;
 @ Gates@ = /Map%.Map@<Coord@, Gate@>;
-@ Layout@ = *(Cells@ cells, Gates@ gates);
 
-# Empty -- 
-#  An empty hardware layout with no data or gates set.
-Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
+# EmptyCells -- 
+#  An empty array of data cells.
+Cells@ EmptyCells = /Map%.Empty<Coord@, Data@>;
+
+# EmptyGates --
+#  An empty array of gates.
+Gates@ EmptyGates = /Map%.Empty<Coord@, Gate@>;
 
 # GetData --
 #   Get the data of a particular cell.
-(Layout@, Coord@) { Maybe@<Data@>; } GetData = {
-  (Cells@, Coord@) { Maybe@<Data@>; } LookupData
-    = /Map%.Lookup<Coord@>(CoordS)<Data@>;
-
-  (Layout@ layout, Coord@ coord) {
-    LookupData(layout.cells, coord);
-  };
+(Cells@, Coord@) { Maybe@<Data@>; } GetData = {
+  /Map%.Lookup<Coord@>(CoordS)<Data@>;
 };
 
 # SetData --
 #   Set the data value of the given cell.
-(Layout@, Coord@, Data@) { Layout@; } SetData = {
-  % Insert = /Map%.Insert<Coord@>(CoordS)<Data@>;
-
-  (Layout@ layout, Coord@ coord, Data@ data) {
-    Cells@ ncells = Insert(layout.cells, coord, data);
-    Layout@(ncells, layout.gates);
-  };
+(Cells@, Coord@, Data@) { Cells@; } SetData = {
+  /Map%.Insert<Coord@>(CoordS)<Data@>;
 };
 
 # ClearData --
 #   Clear the data value of the given cell, leaving the cell empty.
-(Layout@, Coord@) { Layout@; } ClearData = {
-  % Delete = /Map%.Delete<Coord@>(CoordS)<Data@>;
-
-  (Layout@ layout, Coord@ coord) {
-    Cells@ ncells = Delete(layout.cells, coord);
-    Layout@(ncells, layout.gates);
-  };
+(Cells@, Coord@) { Cells@; } ClearData = {
+  /Map%.Delete<Coord@>(CoordS)<Data@>;
 };
 
 # SetGate --
 #   Configure the gate whose upper left corner is at the given coordinates of
 #   the layout.
-(Layout@, Coord@, Gate@) { Layout@; } SetGate = {
-  % Insert = /Map%.Insert<Coord@>(CoordS)<Gate@>;
-
-  (Layout@ layout, Coord@ coord, Gate@ gate) {
-    Gates@ ngates = Insert(layout.gates, coord, gate);
-    Layout@(layout. cells, ngates);
-  };
+(Gates@, Coord@, Gate@) { Gates@; } SetGate = {
+  /Map%.Insert<Coord@>(CoordS)<Gate@>;
 };
 
 # Step --
 #   Run a single step of the hardware.
-@ B@ = *(Layout@ layout, Bool@ updated);
-(Layout@) { B@; } Step = {
+#
+# Returns the update data cells, or Nothing if no gates are enabled. The exact
+# meaning of a single step is not currently well specified.
+(Gates@, Cells@) { Maybe@<Cells@>; } Step = {
   (PortSpec@, Maybe@<Data@>) { Bool@; } Blocked = (PortSpec@ ps, Maybe@<Data@> d) {
     ps.?(
       input: d.?(just: False, nothing: True),
@@ -117,15 +104,16 @@ Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
       unused: 0);
   };
 
+  @ B@ = *(Cells@ cells, Bool@ updated);
   (B@, Coord@, PortSpec@, Data@) { B@; } UpdateResult = (B@ b, Coord@ c, PortSpec@ ps, Data@ d) {
     ps.?(
-      input: @(layout: ClearData(b.layout, c), updated: True),
-      output: @(layout: SetData(b.layout, c, d), updated: True),
+      input: @(cells: ClearData(b.cells, c), updated: True),
+      output: @(cells: SetData(b.cells, c, d), updated: True),
       unused: b);
   };
 
-  (Layout@ layout) {
-    /Map%.ForEach<Coord@, Gate@, B@>(layout.gates, B@(layout, False),
+  (Gates@ gates, Cells@ cells) {
+    B@ b = /Map%.ForEach<Coord@, Gate@, B@>(gates, B@(cells, False),
       (Coord@ c, Gate@ g, B@ b) {
         Ports@<Coord@> coords = Ports@<Coord@>(
           Coord@(c.x, c.y),
@@ -134,8 +122,8 @@ Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
           Coord@(Inc(c.x), Inc(c.y)));
 
         Ports@<Maybe@<Data@>> cells = Ports@<Maybe@<Data@>>(
-          GetData(b.layout, coords.ul), GetData(b.layout, coords.ur),
-          GetData(b.layout, coords.ll), GetData(b.layout, coords.lr));
+          GetData(b.cells, coords.ul), GetData(b.cells, coords.ur),
+          GetData(b.cells, coords.ll), GetData(b.cells, coords.lr));
 
         Bool@ blocked_ul = Blocked(g.ports.ul, cells.ul);
         Bool@ blocked_ur = Or(blocked_ul, Blocked(g.ports.ur, cells.ur));
@@ -159,16 +147,17 @@ Layout@ Empty = Layout@(/Map%.Empty<Coord@, Data@>, /Map%.Empty<Coord@, Gate@>);
             b_lr;
           });
       });
+    b.updated.?(true: Just<Cells@>(b.cells), false: Nothing<Cells@>);
   };
 };
 
 # Run --
 #   Run the given hardware layout as long as any gates are enabled.
-(Layout@) { Layout@; } Run = (Layout@ layout) {
-  B@ b = Step(layout);
-  b.updated.?(true: Run(b.layout), false: layout);
+(Gates@, Cells@) { Cells@; } Run = (Gates@ gates, Cells@ cells) {
+  Maybe@<Cells@> mc = Step(gates, cells);
+  mc.?(just: Run(gates, mc.just), nothing: cells);
 };
 
-@(Layout@, Coord@, Data@, Gate@, Ports@, PortSpec@,
+@(Cells@, Gates@, Coord@, Data@, Gate@, Ports@, PortSpec@,
   0, 1, InputPort, OutputPort, UnusedPort,
-  Empty, GetData, SetData, ClearData, SetGate, Run);
+  EmptyCells, GetData, SetData, ClearData, EmptyGates, SetGate, Run);

@@ -1,6 +1,4 @@
 Hwdg:
-* Separate gates and cells? It feels awkward to be comparing cells by layout
-  ignoring the gates.
 * Have an easier way to set a bunch of cells and gates at once, like SetGates
   and SetCells?
 * Add simulation viewer.
