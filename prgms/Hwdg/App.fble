@@ -19,11 +19,7 @@
 @ Gate@ = /Hwdg%.Gate@;
 @ Gates@ = /Hwdg%.Gates@;
 @ Cells@ = /Hwdg%.Cells@;
-@ PortSpec@ = /Hwdg%.PortSpec@;
 <@>@ Ports@ = /Hwdg%.Ports@;
-% InputPort = /Hwdg%.InputPort;
-% OutputPort = /Hwdg%.OutputPort;
-% UnusedPort = /Hwdg%.UnusedPort;
 % Data0 = /Hwdg%.0;
 % Data1 = /Hwdg%.1;
 % SetData = /Hwdg%.SetData;
@@ -35,6 +31,7 @@
 % 1 = /Int/Int%.1;
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
+% 4 = /Int/Int%.4;
 % Inc = /Int/Int%.Inc;
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
@@ -66,43 +63,16 @@ Int@ Height = Sub(YMax, YMin);
 
 # Gates --
 #   The particular gates for the hardware layout to simulate.
-Gates@ Gates = {
-  # A circular chain of identity gates.
-  #   0 1  2  3  4
-  # 0 . .  .  .  .
-  # 1 . |> -> -| .
-  # 2 . ^  .   v .
-  # 3 . |- <- -| .
-  # 4 . .  .  .  .
-  Gate@ ll_to_lr = @(
-    ports: Ports@<PortSpec@>(UnusedPort, UnusedPort, InputPort, OutputPort),
-    function: (Ports@<Data@> x) { Ports@<Data@>(Data0, Data0, Data0, x.ll); });
-  Gate@ ul_to_ll = @(
-    ports: Ports@<PortSpec@>( InputPort, UnusedPort, OutputPort, UnusedPort),
-    function: (Ports@<Data@> x) { Ports@<Data@>(Data0, Data0, x.ul, Data0); });
-  Gate@ ur_to_ul = @(
-    ports: Ports@<PortSpec@>( OutputPort, InputPort, UnusedPort, UnusedPort),
-    function: (Ports@<Data@> x) { Ports@<Data@>(x.ur, Data0, Data0, Data0); });
-  Gate@ lr_to_ur = @(
-    ports: Ports@<PortSpec@>( UnusedPort, OutputPort, UnusedPort, InputPort),
-    function: (Ports@<Data@> x) { Ports@<Data@>(Data0, x.lr, Data0, Data0); });
-
-  /Hwdg%.Gates([
-    @(coord: Coord@(1, 0), gate: ll_to_lr),
-    @(coord: Coord@(2, 0), gate: ll_to_lr),
-    @(coord: Coord@(3, 1), gate: ul_to_ll),
-    @(coord: Coord@(3, 2), gate: ul_to_ll),
-    @(coord: Coord@(2, 3), gate: ur_to_ul),
-    @(coord: Coord@(1, 3), gate: ur_to_ul),
-    @(coord: Coord@(0, 2), gate: lr_to_ur),
-    @(coord: Coord@(0, 1), gate: lr_to_ur)]);
-};
+Gates@ Gates = /Hwdg/Adder%.Adder1;
 
 # Cells --
 #   The initial data configuration of the hardware to simulate
 Cells@ Cells = {
-  # Send '0' and '1' around the loop together.
-  SetData(SetData(EmptyCells, Coord@(1, 1), Data1), Coord@(2, 1), Data0);
+  # Add a=1, b=0, c=1
+  SetData(SetData(SetData(EmptyCells,
+    Coord@(0, 0), Data1),
+    Coord@(3, 0), Data0),
+    Coord@(4, 2), Data1);
 };
 
 # Draw --
@@ -191,7 +161,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     out(transformed);
   };
 
-  Unit@ _ := StepUI(GetInput(in), game_out, I(D|200), Gates, Cells);
+  Unit@ _ := StepUI(GetInput(in), game_out, I(D|2000), Gates, Cells);
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;
