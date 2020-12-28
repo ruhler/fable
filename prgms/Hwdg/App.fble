@@ -26,9 +26,7 @@
 % UnusedPort = /Hwdg%.UnusedPort;
 % Data0 = /Hwdg%.0;
 % Data1 = /Hwdg%.1;
-% SetGate = /Hwdg%.SetGate;
 % SetData = /Hwdg%.SetData;
-% EmptyGates = /Hwdg%.EmptyGates;
 % EmptyCells = /Hwdg%.EmptyCells;
 <@>% ForEachGate = /Hwdg%.ForEachGate;
 
@@ -89,15 +87,15 @@ Gates@ Gates = {
     ports: Ports@<PortSpec@>( UnusedPort, OutputPort, UnusedPort, InputPort),
     function: (Ports@<Data@> x) { Ports@<Data@>(Data0, x.lr, Data0, Data0); });
 
-  SetGate(SetGate(SetGate(SetGate(SetGate(SetGate(SetGate(SetGate(EmptyGates,
-    Coord@(1, 0), ll_to_lr),
-    Coord@(2, 0), ll_to_lr),
-    Coord@(3, 1), ul_to_ll),
-    Coord@(3, 2), ul_to_ll),
-    Coord@(2, 3), ur_to_ul),
-    Coord@(1, 3), ur_to_ul),
-    Coord@(0, 2), lr_to_ur),
-    Coord@(0, 1), lr_to_ur);
+  /Hwdg%.Gates([
+    @(coord: Coord@(1, 0), gate: ll_to_lr),
+    @(coord: Coord@(2, 0), gate: ll_to_lr),
+    @(coord: Coord@(3, 1), gate: ul_to_ll),
+    @(coord: Coord@(3, 2), gate: ul_to_ll),
+    @(coord: Coord@(2, 3), gate: ur_to_ul),
+    @(coord: Coord@(1, 3), gate: ur_to_ul),
+    @(coord: Coord@(0, 2), gate: lr_to_ur),
+    @(coord: Coord@(0, 1), gate: lr_to_ur)]);
 };
 
 # Cells --

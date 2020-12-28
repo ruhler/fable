@@ -1,6 +1,5 @@
 Hwdg:
-* Have an easier way to set a bunch of cells and gates at once, like SetGates
-  and SetCells?
+* Have an easier way to set a bunch of cells at once?
 * Add test case for nondeterministic/conflicting gates case.
 * Implement a 4 bit adder and try simulating it on some additions.
 
