@@ -49,7 +49,8 @@ PortSpec@ UnusedPort = PortSpec@(unused: Unit);
 @ Gate@ = *(Ports@<PortSpec@> ports, GateFunction@ function);
 
 @ Cells@ = /Map%.Map@<Coord@, Data@>;
-@ Gates@ = /Map%.Map@<Coord@, Gate@>;
+@ GateEntry@ = *(Coord@ coord, Gate@ gate);
+@ Gates@ = /List%.List@<GateEntry@>;
 
 # EmptyCells -- 
 #  An empty array of data cells.
@@ -57,7 +58,7 @@ Cells@ EmptyCells = /Map%.Empty<Coord@, Data@>;
 
 # EmptyGates --
 #  An empty array of gates.
-Gates@ EmptyGates = /Map%.Empty<Coord@, Gate@>;
+Gates@ EmptyGates = /List%.Nil<GateEntry@>;
 
 # GetData --
 #   Get the data of a particular cell.
@@ -80,8 +81,9 @@ Gates@ EmptyGates = /Map%.Empty<Coord@, Gate@>;
 # SetGate --
 #   Configure the gate whose upper left corner is at the given coordinates of
 #   the layout.
-(Gates@, Coord@, Gate@) { Gates@; } SetGate = {
-  /Map%.Insert<Coord@>(CoordS)<Gate@>;
+(Gates@, Coord@, Gate@) { Gates@; }
+SetGate = (Gates@ gates, Coord@ coord, Gate@ gate) {
+  /List%.Cons<GateEntry@>(@(coord, gate), gates);
 };
 
 # ForEachGate --
@@ -94,7 +96,9 @@ Gates@ EmptyGates = /Map%.Empty<Coord@, Gate@>;
 #   return b
 <@ B@>(Gates@, B@, (Coord@, Gate@, B@) { B@; }) { B@; }
 ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
-  /Map%.ForEach<Coord@, Gate@, B@>(gates, base, body);
+  /List%.ForEach<GateEntry@, B@>(gates, base, (GateEntry@ ge, B@ b) {
+    body(ge.coord, ge.gate, b);
+  });
 };
 
 # Step --

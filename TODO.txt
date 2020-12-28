@@ -2,8 +2,6 @@ Hwdg:
 * Have an easier way to set a bunch of cells and gates at once, like SetGates
   and SetCells?
 * Add test case for nondeterministic/conflicting gates case.
-* Should we allow multiple gates at the same coordinates as long as they have
-  compatible port specs?
 * Implement a 4 bit adder and try simulating it on some additions.
 
 Exec:
