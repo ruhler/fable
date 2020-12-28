@@ -30,6 +30,7 @@
 % SetData = /Hwdg%.SetData;
 % EmptyGates = /Hwdg%.EmptyGates;
 % EmptyCells = /Hwdg%.EmptyCells;
+<@>% ForEachGate = /Hwdg%.ForEachGate;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
@@ -114,7 +115,7 @@ Cells@ Cells = {
 
   # 2. For each input or output port of a gate, draw a white unit square.
   # TODO: Don't assume Gates is a /Map%.Map@?
- Drawing@ io = /Map%.ForEach<Coord@, Gate@, Drawing@>(gates, clear,
+ Drawing@ io = ForEachGate<Drawing@>(gates, clear,
    (Coord@ p, Gate@ g, Drawing@ d) {
      Ports@<Coord@> coords = Ports@<Coord@>(
        Coord@(p.x, p.y), Coord@(Inc(p.x), p.y),

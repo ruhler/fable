@@ -278,7 +278,7 @@ Delete = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key) {
 #     b = body(k, v, b)
 #   return b
 <@ K@, @ V@, @ B@>(Map@<K@, V@>, B@, (K@, V@, B@) { B@; }) { B@; }
-ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@ ; } body) {
+ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@; } body) {
   map.?(
     empty: base,
     map: {

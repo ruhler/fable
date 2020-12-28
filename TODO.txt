@@ -4,6 +4,7 @@ Hwdg:
 * Add test case for nondeterministic/conflicting gates case.
 * Should we allow multiple gates at the same coordinates as long as they have
   compatible port specs?
+* Implement a 4 bit adder and try simulating it on some additions.
 
 Exec:
 * How about using locals.size to store the capacity and func->code->locals to

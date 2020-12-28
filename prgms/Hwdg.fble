@@ -84,6 +84,19 @@ Gates@ EmptyGates = /Map%.Empty<Coord@, Gate@>;
   /Map%.Insert<Coord@>(CoordS)<Gate@>;
 };
 
+# ForEachGate --
+#   Iterate over a set of gates.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach (coord, gate) in gates:
+#     b = body(coord, gates, b)
+#   return b
+<@ B@>(Gates@, B@, (Coord@, Gate@, B@) { B@; }) { B@; }
+ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
+  /Map%.ForEach<Coord@, Gate@, B@>(gates, base, body);
+};
+
 # Step --
 #   Run a single step of the hardware.
 #
@@ -116,7 +129,7 @@ Gates@ EmptyGates = /Map%.Empty<Coord@, Gate@>;
   };
 
   (Gates@ gates, Cells@ cells) {
-    B@ b = /Map%.ForEach<Coord@, Gate@, B@>(gates, B@(cells, False),
+    B@ b = ForEachGate<B@>(gates, B@(cells, False),
       (Coord@ c, Gate@ g, B@ b) {
         Ports@<Coord@> coords = Ports@<Coord@>(
           Coord@(c.x, c.y),
@@ -163,4 +176,5 @@ Gates@ EmptyGates = /Map%.Empty<Coord@, Gate@>;
 
 @(Cells@, Gates@, Coord@, Data@, Gate@, Ports@, PortSpec@,
   0, 1, InputPort, OutputPort, UnusedPort,
-  EmptyCells, GetData, SetData, ClearData, EmptyGates, SetGate, Step, Run);
+  EmptyCells, GetData, SetData, ClearData, EmptyGates, SetGate, ForEachGate,
+  Step, Run);
