@@ -22,6 +22,7 @@
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
 % 4 = /Int/Int%.4;
+% 8 = /Int/Int%.8;
 % Add = /Int/Int%.Add;
 
 # Adder1 - A one bit full adder.
@@ -255,5 +256,33 @@ Gates@ Adder2 = {
   });
 };
 
-@(Adder1, Adder2);
+# Adder4 - A four bit adder.
+#
+# Inputs: 
+#   a3, a2, a1, a0 - the bits of the first operand.
+#   b3, b2, b1, b0 - the bits of the second operand
+#   c - carry in
+#
+# Outputs:
+#   z3, z2, z1, z0 - the bits of the sum of a and b.
+#   x - the carry out.
+#
+# Geometry:
+#      0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16
+#   0 a3  _  _ b3 a2  _  _ b2 a1  _  _ b1 a0  _  _ b0
+#   1  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _
+#   2  x  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  c
+#   3     _  _  _     _  _  _     _  _  _     _  _  _
+#   4        _ z3        _ z2        _ z1        _ z0
+Gates@ Adder4 = {
+  ForEachGate<Gates@>(Adder2, EmptyGates, (Coord@ p, Gate@ g, Gates@ gates) {
+    # Gates for the most significant 2 bits of addition.
+    Gates@ g1 = SetGate(gates, p, g);
+
+    # Gates for the least significant 2 bits of addition.
+    SetGate(g1, Coord@(Add(8, p.x), p.y), g);
+  });
+};
+
+@(Adder1, Adder2, Adder4);
 

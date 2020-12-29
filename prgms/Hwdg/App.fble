@@ -30,10 +30,6 @@
 % 0 = /Int/Int%.0;
 % 1 = /Int/Int%.1;
 % 2 = /Int/Int%.2;
-% 3 = /Int/Int%.3;
-% 4 = /Int/Int%.4;
-% 7 = /Int/Int%.7;
-% 8 = /Int/Int%.8;
 % Inc = /Int/Int%.Inc;
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
@@ -56,28 +52,30 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-Int@ XMin = Neg(I(D|10));
-Int@ XMax = I(D|10);
-Int@ YMin = Neg(I(D|10));
-Int@ YMax = I(D|10);
+Int@ XMin = Neg(I(D|20));
+Int@ XMax = I(D|20);
+Int@ YMin = Neg(I(D|20));
+Int@ YMax = I(D|20);
 Int@ Width = Sub(XMax, XMin);
 Int@ Height = Sub(YMax, YMin);
 
 # Gates --
 #   The particular gates for the hardware layout to simulate.
-Gates@ Gates = /Hwdg/Adder%.Adder2;
+Gates@ Gates = /Hwdg/Adder%.Adder4;
 
 # Cells --
 #   The initial data configuration of the hardware to simulate
 Cells@ Cells = {
-  # Add A=0, a=1, B=1, b=0, c=1
-  # Expected results: Z=0, z=0, x=1
-  SetData(SetData(SetData(SetData(SetData(EmptyCells,
-    Coord@(0, 0), Data0), # A = 0
-    Coord@(3, 0), Data1), # B = 1
-    Coord@(4, 0), Data1), # a = 1
-    Coord@(7, 0), Data0), # b = 0
-    Coord@(8, 2), Data1); # c = 1
+  SetData(SetData(SetData(SetData(SetData(SetData(SetData(SetData(SetData(EmptyCells,
+    Coord@(I(D|0), 0), Data0), # a3
+    Coord@(I(D|4), 0), Data1), # a2
+    Coord@(I(D|8), 0), Data0), # a1
+    Coord@(I(D|12), 0), Data1), # a0
+    Coord@(I(D|3), 0), Data0), # b3
+    Coord@(I(D|7), 0), Data1), # b2
+    Coord@(I(D|11), 0), Data1), # b1
+    Coord@(I(D|15), 0), Data1), # b0
+    Coord@(I(D|16), 2), Data0); # c
 };
 
 # Draw --
@@ -166,12 +164,15 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     out(transformed);
   };
 
-  Unit@ _ := StepUI(GetInput(in), game_out, I(D|2000), Gates, Cells);
-
   Unit@! WaitForKeyPress = {
     Event@ e := in;
     e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
+
+  Unit@ _ := game_out(Effect@(draw: Draw(Gates, Cells)));
+  Unit@ _ := WaitForKeyPress;
+  Unit@ _ := StepUI(GetInput(in), game_out, I(D|2000), Gates, Cells);
+
   WaitForKeyPress;
 };
 

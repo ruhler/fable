@@ -1,7 +1,7 @@
 Hwdg:
+* Improve the API for describing a bunch of gates with modules.
 * Have an easier way to set a bunch of cells at once?
 * Add test case for nondeterministic/conflicting gates case.
-* Implement a 4 bit adder and try simulating it on some additions.
 
 Exec:
 * How about using locals.size to store the capacity and func->code->locals to
