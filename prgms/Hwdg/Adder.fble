@@ -12,12 +12,17 @@
 % Gates = /Hwdg%.Gates;
 % Data0 = /Hwdg%.0;
 % Data1 = /Hwdg%.1;
+% SetGate = /Hwdg%.SetGate;
+% EmptyGates = /Hwdg%.EmptyGates;
+<@>% ForEachGate = /Hwdg%.ForEachGate;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
 % 1 = /Int/Int%.1;
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
+% 4 = /Int/Int%.4;
+% Add = /Int/Int%.Add;
 
 # Adder1 - A one bit full adder.
 #
@@ -219,5 +224,36 @@ Gates@ Adder1 = {
   ]);
 };
 
-@(Adder1);
+# Adder2 - A two bit adder.
+#
+# Inputs: 
+#   A - the most significant bit of the first operand
+#   a - the least significant bit of the first operand
+#   B - the most significant bit of the second operand
+#   b - the least significant bit of the second operand
+#   c - carry in
+#
+# Outputs:
+#   Z - the most significant bit of the sum of a and b.
+#   z - the least significant bit of the sum of a and b.
+#   x - the carry out.
+#
+# Geometry:
+#     0 1 2 3 4 5 6 7 8 9
+#   0 A _ _ B a _ _ b
+#   1 _ _ _ _ _ _ _ _
+#   2 x _ _ _ _ _ _ _ c
+#   3   _ _ _   _ _ _ 
+#   4     _ Z     _ z
+Gates@ Adder2 = {
+  ForEachGate<Gates@>(Adder1, EmptyGates, (Coord@ p, Gate@ g, Gates@ gates) {
+    # Gates for the most significant bit addition.
+    Gates@ g1 = SetGate(gates, p, g);
+
+    # Gates for the least significant bit addition.
+    SetGate(g1, Coord@(Add(4, p.x), p.y), g);
+  });
+};
+
+@(Adder1, Adder2);
 

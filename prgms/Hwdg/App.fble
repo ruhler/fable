@@ -32,6 +32,8 @@
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
 % 4 = /Int/Int%.4;
+% 7 = /Int/Int%.7;
+% 8 = /Int/Int%.8;
 % Inc = /Int/Int%.Inc;
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
@@ -63,16 +65,19 @@ Int@ Height = Sub(YMax, YMin);
 
 # Gates --
 #   The particular gates for the hardware layout to simulate.
-Gates@ Gates = /Hwdg/Adder%.Adder1;
+Gates@ Gates = /Hwdg/Adder%.Adder2;
 
 # Cells --
 #   The initial data configuration of the hardware to simulate
 Cells@ Cells = {
-  # Add a=1, b=0, c=1
-  SetData(SetData(SetData(EmptyCells,
-    Coord@(0, 0), Data1),
-    Coord@(3, 0), Data0),
-    Coord@(4, 2), Data1);
+  # Add A=0, a=1, B=1, b=0, c=1
+  # Expected results: Z=0, z=0, x=1
+  SetData(SetData(SetData(SetData(SetData(EmptyCells,
+    Coord@(0, 0), Data0), # A = 0
+    Coord@(3, 0), Data1), # B = 1
+    Coord@(4, 0), Data1), # a = 1
+    Coord@(7, 0), Data0), # b = 0
+    Coord@(8, 2), Data1); # c = 1
 };
 
 # Draw --
