@@ -1,0 +1,82 @@
+The State of Fble
+=================
+Here we take a step back and look at the overall state of the fble project.
+
+Language
+--------
+The language has mostly stabilized. It's not changing much. It's starting to
+be my preferred language to write programs in. It's actually pretty nice to
+use.
+
+The biggest issues with the language at this point are:
+* It's too slow to run programs. This is a pretty hard blocker for things like
+  the space invaders game.
+
+* Poor modularity support. Most notably no support for abstract data types.
+  That may be the reason I haven't made use of the module access controls at
+  all. Who knows what the story will be for modular compilation or package
+  version control.
+
+* It feels like more cognitive overhead to program in than it ought to. I
+  think this could be related to how, with nested conditions, the flow of code
+  jumps all over the source file. Compare to C programs, where you can write
+  programs in a much more linear fashion by returning early in if statements.
+
+If we can focus on addressing these three things next, that would be great.
+
+For the performance issue we have under way the experimental elaborate feature
+of the language. It's is not fully flushed out how that feature will work for
+things like loops and processes. It's really in an exploratory phase. I should
+push forward with the exploration to see what we learn.
+
+Honestly, even under my most optimistic interpretation, I don't expect the
+elaborate feature to address the performance issue. There's something
+fundamental about a 64 bit add taking on the order of 64 operations instead of
+a single native machine instruction. Performance is the biggest risk for fble.
+
+For modularity, I have a proposal in the works for abstract data types. It
+would be good to get an initial version of the proposal implemented and play
+around with it.
+
+For cognitive overhead, I haven't thought about how we could improve things
+yet. It's worth spending some thought on it. I think this is a relatively
+minor issue at this point compared to performance.
+
+Library
+-------
+The library has intentionally been left to grow organically as needed by the
+fble programs I write. It's got some nice stuff, but deserves a well thought
+reworking of all the APIs when the time comes. Mostly I want to wait on
+language support for abstract data types before even thinking about how to
+clean up the library.
+
+Tools
+-----
+Running, profiling and code coverage feel good to me. The biggest thing
+missing is a debugger, which I've wanted many times. But every time I've
+figured out the issue with much less effort than developing a debug entails.
+
+I don't think I'm ready to take on the project of a debugger yet. It might be
+good to wait until we've made more progress on language performance, in case
+that means using compiled code in such a way that we can reuse a standard
+debugger.
+
+Apps
+----
+The only app that really matters at this point is the invaders game. We should
+finish the app so we can use it to understand how far we have to go
+performance wise to make fble useful.
+
+Summary
+-------
+I suggest the following areas of focus for fble next, in no particular order:
+
+* Finish invaders game functionally.
+* Implement proposal for abstract data types.
+* Continue exploration of elaborate feature to improve performance.
+* Burn down easy to fix TODOs.
+* Spend some time thinking about cognitive overheads and what, if anything, we
+  can do to address them.
+
+That's plenty of different stuff to work on. I wouldn't take on any more
+before these things are closed out.

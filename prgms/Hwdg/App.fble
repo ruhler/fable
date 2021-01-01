@@ -67,12 +67,12 @@ Gates@ Gates = /Hwdg/Adder%.Adder4;
 #   The initial data configuration of the hardware to simulate
 Cells@ Cells = {
   SetData(SetData(SetData(SetData(SetData(SetData(SetData(SetData(SetData(EmptyCells,
-    Coord@(I(D|0), 0), Data0), # a3
+    Coord@(I(D|0), 0), Data1), # a3
     Coord@(I(D|4), 0), Data1), # a2
-    Coord@(I(D|8), 0), Data0), # a1
+    Coord@(I(D|8), 0), Data1), # a1
     Coord@(I(D|12), 0), Data1), # a0
-    Coord@(I(D|3), 0), Data0), # b3
-    Coord@(I(D|7), 0), Data1), # b2
+    Coord@(I(D|3), 0), Data1), # b3
+    Coord@(I(D|7), 0), Data0), # b2
     Coord@(I(D|11), 0), Data1), # b1
     Coord@(I(D|15), 0), Data1), # b0
     Coord@(I(D|16), 2), Data0); # c

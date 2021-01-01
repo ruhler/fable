@@ -142,3 +142,516 @@ modules. In other words, to the extent you are guaranteed unique values at
 runtime, this should work for types. The big difference being that uniqueness
 of values is now more than just a question of performance.
 
+---
+
+Discussion on NEWTYPE.
+
+For newtype to make sense, you have to have some way to associate the newtype
+with values constructed of that type. This makes sense for struct and union
+types, because you specify the type explicitly when constructing them. It
+doesn't make sense for function or process types, because there's no way to
+specify the newtype when constructing them. It also doesn't make sense for
+implicit type struct values.
+
+So let's restrict the discussion of newtype to struct and union types. I
+think that's fine. You can always wrap any other type in a single argument
+struct type if need be.
+
+If we ignore polymorphic types and implicit type struct values for the moment,
+I could argue that union and struct types should always be newtype.
+
+@ Foo@ = *(Unit@ x, Unit@ y);
+@ Bar@ = *(Unit@ x, Unit@ y);
+
+Don't consider Foo@ and Bar@ to be equal.
+
+You only need types to be equal when sharing them across APIs, but in that
+case, you can share the type declaration as well. You might even say you ought
+to share the type declaration as well. So there's no harm making them always
+newtype. The language would be simpler then, and we wouldn't need a special
+operator at all for newtype.
+
+The challenges with this view are:
+* What about implicit type struct values?
+* Does polymorphism still work this way?
+ 
+Implicit type struct values are used for:
+* Defining namespace structs, where you don't want to specify the types
+  explicitly.
+* Convenience for returning pairs from functions.
+* Convenience to avoid naming a type like a pair explicitly.
+* Convenience for specifying a value with explicit field names, or implicit
+  field names.
+
+We could say implicit type struct values give you the canonical implicit type,
+but then you need to name that canonical implicit type. That's the same as
+saying a struct type can be either newtype or not.
+
+We could say implicit type struct values give you a newtype. You can recover
+the type using typeof. For namespace structs, that should be fine. There's no
+name for the type anyway. You do miss out on the convenience use cases, but
+honestly those seem like minor losses.
+
+Here's a survey of where I use the convenience cases today:
+* Unnamed tuple field of a compound type. (4)
+* Type inference, to avoid writing out a type name.
+* To list explicit field names when constructing a value, for clarity. (2)
+* To avoid naming a pair type when constructing it. (3)
+* To return a pair type from a function without having to name the type. (2)
+* For defining character literal specs (not a convenience case).
+
+So, mostly to avoid naming a type and to explicitly list field names. Nice
+conveniences we could do without. Maybe we could compromise and allow field:
+value syntax in the explicit type struct value for clarity? And you could
+always use a single letter named type like P@ for tuple fields you don't want
+to write out.
+
+
+How would polymorphic types work with newtype?
+
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+Maybe@<Foo@> has to be considered the same as Maybe@<Foo@>. But suddenly it's
+not clear. Because if you do the substitution, you would think you'd end up
+with +(Foo@ just, Unit@ nothing) versus +(Foo@ just, Unit@ nothing), which
+under newtype interpretation would be different types. In other words, things
+get confusing with polymorphic newtype. Very confusing.
+
+Given we'll often want to have polymorphic abstract data types, this is
+something we have to deal with regardless of whether we always or only
+sometimes use the newtype interpretation. Polymorphic types work by creating
+existing types out of thin air. Abstract data types work by preventing that.
+How can they be reconciled?
+
+The only way that comes to mind is to treat polymorphic type constructors
+specially, to say the 'newtype' is associated with the polymorphic type
+constructor, not the constructed type. But that just doesn't make sense from a
+semantic point of view.
+
+I'm starting to think the newtype approach is incompatible with the existing
+language design. Perhaps I should start exploring other ways to support
+abstract data types.
+
+---
+
+How about the functional interface approach?
+
+Let's say I have an internal struct type:
+
+@ Foo@ = *(A@ a, B@ b)
+
+I want to expose some methods on it:
+
+ Foo, A, X
+
+Hmm...
+
+I guess the point is, any public API for constructing or accessing a type
+would have to be part of the type.
+
+Consider the Map@ type as an abstract type. It gets pretty big if we have a
+separate field for each method on the type :(. I really just want to say: you
+can name the type, but you can't construct, condition, or access fields from
+it.
+
+Imagine a special abstract type declaration for struct types:
+
+% Foo = *?(A@ a, B@ b);
+
+Where: Foo._@ is ...
+
+Imagine a completely different way of defining struct and union types:
+
+Foo@, Foo(A, B) = *(A@, B@);
+
+Where Foo@ is the name of the type.
+Foo is a function to construct values of the type.
+A and B are functions to access fields of the type. You can pick any names you
+want for Foo@, Foo, A, and B. A and B would be different kinds of things than
+normal functions: they would be tied to type type Foo@ and could only be used
+as field accessors. Or maybe we should have a general way to define fields for
+a type?
+
+Foo@, Foo, .A, .B = *(A@, B@);
+
+We could come up with a nicer syntax. The key point is just that the name of
+the type is different from the constructor function of the type, and that
+fields are a special kind of thing. Declaring the type gives you a type name,
+a constructor function, and all the field names. Then you always use the
+constructor.
+
+Foo@ = *(A@ a, B@ b);
+
+Anyway, regardless of the syntax, the important point here is that Foo@ is a
+newtype. Otherwise someone could define their own type Bar@ with the same
+fields as Foo@ and they would be the same types. So we need to answer the
+question of polymorphism. And I still don't have an answer for it.
+
+Maybe the best way to move forward is first figure out how bad it really is to
+use a class method based approach.
+
+---
+
+A class method based approach for Map@.
+
+<@,@>@ MapImpl@ = <@ K@, @ V@> { ... };
+
+<@,@>@ Map@ = <@ K@, @ V@> { 
+  *(
+    (K@) { Maybe@<V@>; } Lookup,
+    (K@, V@) { Map@<K@, V@>; } Insert,
+    ...
+   );
+
+To implement it is pretty easy. Define 
+
+<@,@> LookupImpl = <@ K@, @ V@>(MapImpl@<K@, V@>)(K@) { ... };
+
+Then you can write your own constructor:
+<@ K@, @ V@>(MapImpl@<K@, V@>) { Map@<K@, V@>; } Map =
+  <@ K@, @V@>(MapImpl@<K@, V@> impl) {
+    @(Lookup = LookupImpl(impl),
+      Insert = InsertImpl(impl),
+      ...)
+   };
+
+It's tedious, but it gives you full control over the public abstract
+operations of the data type. The 'primitives' of the type, if you will. No
+extra language support needed.
+
+The downside is that you are now passing around a struct full of functions for
+each instance of Map@. If there are N functions, now a map takes O(N) space
+before you've put anything on it. And it means you can have a dynamic
+implementation for the map type at runtime, which is perhaps a little more
+powerful than I want. For example, even if the internal data type can be
+packed into bits, the abstract data type requires you store functions.
+
+---
+
+What if we could have user defined keys for types. You can construct,
+condition, and access values of a type, but only if you have access to the
+key. To solve for polymorphism, we allow multiple different types to share the
+same key. Maybe there is an implicit default global key.
+
+When I declare a type, I give my own key. Keys are unique.
+
+Or, even easier, I just use the same access controls in use for module
+visibility for types field visibility.
+
+Define a type in a public module, the type is public. Define a type in a
+private module, the type is abstract. Because it uses existing hierarchy, it's
+easy to give restricted access to the type to multiple modules.
+
+I guess the difference is, normally you can re-export internal functions to
+make them public. Now your saying you have to define those functions in a
+public module? No. Better if we can have a key that we can export like any
+other function.
+
+So, every struct and union type is declared with a key. You can access the
+type if you access to the key in scope. The key can be passed around as a
+field of a struct for you to export?
+
+But then, we could pick a completely different syntax that makes things look
+like they are today. Bundle the key with the type name, and give two versions
+of the type name: one with the key, one without.
+
+And I suppose the fundamental idea here is that if you define the same type
+with different keys, they are considered different types. That's how you can
+get away with polymorphism.
+
+---
+
+Proposed solution to newtype polymorphism: define equality of newtypes based
+on the syntactic location where the type is defined. If it uses the same
+syntactic type declaration, it's the same type. It's slightly, but not
+entirely convoluted. We just identify the type with its declaration's initial
+syntax node.
+
+With that problem solved, I propose we separate the concept of newtype from
+struct and union type. Think of a newtype as an opaque single field struct
+type.
+
+So we only introduce a single concept: opaque type and opaque type
+construction.
+
+An opaque type is one that behaves like an type variable - you can't do
+anything with it except refer to it and test for equality. An opaque type is
+associated with an internal concrete type. Two opaque types are considered
+equal if their internal concrete types are equal and they share the same
+opaque type declaration syntax node.
+
+You declare an opaque type using an opaque type declaration statement:
+  
+  Expr ::= opaque_type (typename :: Name) (to :: Name) (from :: Name) (body :: Type)
+
+This adds to the scope three new entities:
+  'typename' is a type variable referring to the newly declared opaque type.
+  'to' is a variable referring to a function that converts values of body type
+       to the opaque type.
+  'from' is a variable referring to a function that converts values of opaque
+       type to the body type.
+  'body' is the internal type associated with the opaque type.
+
+For example:
+
+  MapImpl@ = ...;
+
+  Map@, ToMap, FromMap &= MapImpl@;
+  ...
+
+Anyone who has access to ToMap and FromMap can make use of the internal type.
+Otherwise, even if you have access to Map@ and MapImpl@, there's no way to
+extract the internal value out of an opaque value.
+  
+I think this is straight forward, orthogonal to the existing language, so we
+don't make things super complicated and don't loose and features of the
+existing language. It relies on existing scoping mechanisms for access
+control. The only downsides I see are minor: the weirdness of defining
+equality based on syntactic declaration, a little tediousness of having to
+convert to and from the opaque type everywhere, and uncertainty as to what a
+nice concrete syntax to use is.
+
+Here's how to make this work on a polymorphic type:
+
+<@>% OpaqueList = <@ T@> { 
+  List@, ToList, FromList &= ListImpl@<T@>;
+  @(List@, ToList, FromList);
+};
+
+<@>@ List@ = <@ T@> { OpaqueList<T@>.List@; }
+
+So let's brainstorm concrete syntax.
+
+A. It's similar to link statements, in that you define multiple values in one
+construct. We can do something similar as suggested above. It's just
+syntactically awkward. Directly analogous would like something like:
+
+  MapImpl@ & Map@, ToMap, FromMap; ...
+
+B. Return a namespace struct with predefined field names. This same approach
+could be used for link expression too:
+
+  ~(Foo@) could return a value of type:
+      *(Get@<Foo@> get, Put@<Foo@> put)!
+  &(Foo@) could return a value of type:
+      *(@<_@> _@, (Foo@) { _@; } unpack, (_@) { Foo@; } pack)
+
+Now you can use link like any other process with exec:
+
+  Link@<Foo@> foo := ~(Foo@);
+  foo.put(...);
+  foo.get(...);
+
+That's pretty nice. Note that we can define a helper type Link@ to name the
+type.
+
+And abstract types:
+
+@ Foo = &(MyFoo@);
+Foo._@ foo = Foo.pack(MyFoo@(...));
+MyFoo@ = Foo.unpack(foo);
+
+In this case, there isn't a way to define a helper type to name the type.
+ 
+C. Return a namespace struct with user provided field names.
+
+  @ foo := ~Foo@(get, put);
+
+  @ Foo = &Foo@(T, pack, unpack);
+
+I like this less. It's not clear from the syntax what it means. Is it so bad
+to hard code names into the language?
+
+D. Return a polymorphic function that gets the values being declared?
+
+I'm just thinking that the same approach could be used for list literals too,
+instead of turning them into polymorphic functions.
+
+When it comes down to it, when returning multiple results, we can either
+distinguish them by name or by position. Why is position better than name?
+
+Well, I suppose we need to specify position regardless. Why not name too?
+
+For link, 'put' and 'get' are obvious names to use.
+
+For list literal... we either leave it as is, or define a custom list type.
+Honestly, I'm fine leaving as is. The custom list type does not have obvious
+names to use.
+
+For opaque type... we don't have obvious names to use.
+
+If we did everything like list literal, then we could say:
+
+Link: you give a function from (Get@<X@>, Put@<X@>) { T@! }, and we'll give
+you a T@!. In other words, if Link were expressed as a pure function, it would
+be:
+  ((Get@<X@>, Put@<X@>) { T@!; }) { T@!; }
+
+Then we would write things like:
+
+  Foo@ ~ get, put; ...(get, put);
+
+Becomes:
+  ~((Get@<Foo@> get, Put@<Foo@> put) { ... (get,put); })
+
+Which is fine, except we introduce a level of nesting that's rather annoying.
+It's better if we have bind syntax like was proposed previously:
+
+Get@<Foo@> get, Put@<Foo@> put <- ~<T@>();
+... (get, put);
+
+List literal could use this too? No. List is something different. It takes
+both a function to construct list elements and a tail. Maybe you have to
+provide the literal and the tail. Then you could write something like:
+
+  MyList@ l = {
+    (T@ x, MyList@ xs) <- [a, b, c](MyNilList);
+    MyCons(x, xs);
+  };
+
+But that doesn't add any clarity about anything. Easer just to pass the list.
+It's more a case of we give the pieces, list literal fills things out. Where
+as link is we fill things out, list literal gives the pieces.
+
+Opaque types are like we fill things out, it gives the pieces.
+
+Note: a user library could be used to rename get and put for link. But user
+libraries can't be used to hide opaque declarations, because where the
+declaration appears matters. You cannot hide it behind an abstraction. That's
+the problem with that kind of 'this depends on where it appears' thing. It
+doesn't compose well with other abstractions.
+
+The trouble with a bind syntax is you have to be explicit about the return
+type.
+
+Brainstorm for opaque namespace struct field names:
+
+  Foo._@ foo = Foo.'<'(MyFoo@(...));
+  MyFoo@ = Foo.'>'(foo);
+
+  Foo._@ foo = Foo.t(MyFoo@(...));
+  MyFoo@ = Foo.f(foo);
+
+  Foo._@ foo = Foo.to(MyFoo@(...));
+  MyFoo@ = Foo.fr(foo);
+
+  Foo._@ foo = Foo.to(MyFoo@(...));
+  MyFoo@ = Foo.from(foo);
+
+  Foo.T@ foo = Foo.pack(MyFoo@(...));
+  MyFoo@ = Foo.unpack(foo);
+
+  Foo.T@ foo = Foo.hide(MyFoo@(...));
+  MyFoo@ = Foo.unhide(foo);
+
+  Foo.T@ foo = Foo.to_(MyFoo@(...));
+  MyFoo@ = Foo._to(foo);
+
+  Foo._@ foo = Foo._(MyFoo@(...));
+  MyFoo@ = Foo.__(foo);
+
+  Foo._@ foo = Foo.'->'(MyFoo@(...));
+  MyFoo@ = Foo.'<-'(foo);
+
+  Foo.T@ foo = Foo.put(MyFoo@(...));
+  MyFoo@ = Foo.get(foo);
+
+---
+
+Could we make the polymorphic case a little nicer by having builtin support
+for abstract polymorphic data types?
+
+Let's say you want an opaque version of some type Foo@ of kind <@>@. Should
+that give you an opaque type of kind @, or an opaque type of kind <@>@?
+
+Before I guess I was thinking you would only give it a type of kind @. But why
+not allow other kinds? Given a type MyFoo@ of kind <@>@, we could give you:
+
+* Foo@ opaque type of kind <@>@.
+* <@ T@>(Foo@<T@>) { MyFoo@<T@>; } get function
+* <@ T@>(MyFoo@<T@>) { Foo@<T@>; } put function
+
+Implications of this:
+* We store values of kind @, not of kind <@>@. If you want to store values of
+  kind <@>@, I guess you could wrap them in a struct value of kind @?
+* There is clearly a single opaque type for all polymorphic instantiations of
+  the type, so we work our way out of that mess.
+
+Then we can say things like:
+  MyFoo@<Int@> myfoo = ...;
+  Foo@<Int@> foo = Put<Int@>(myfoo);
+  MyFoo@<Int@> myfoo = Get<Int@>(foo);
+
+Contrast this with an alternate, perhaps more natural, interpretation:
+
+* Foo@ opaque type of kind @.
+* (Foo@) { MyFoo@; } get function
+* (MyFoo@) { Foo@; } put function
+
+Is this meaningful? I don't think it is. The kinds don't match up.
+
+We can store a value of kind <@>@ as a field. We can pass it around. But can
+we use it in a polymorphic function that expects something of kind @? That's
+an interesting question. Can I work with lists of polymorphic values?
+
+No. We get a kind error. You can't pass something of kind <@>@ when something
+of kind @ is expected. But you can always wrap it in a struct value. That's
+weird. Is that a bug?
+
+Let's assume that's working as intended. Does that tell us anything about how
+we ought to make opaque polymorphic types?
+
+The struct trick means we always have a back door for the case when we
+want to store polymorphic values in the opaque type.
+
+How about:
+
+* Foo@ opaque type of kind <@>@.
+* (Foo@) { MyFoo@; } get function
+* (MyFoo@) { Foo@; } put function
+
+That's a natural conversion. Does it give us what we want to put and get?
+
+I want to put a MyFoo@<T@>, but I can only put MyFoo@. So... no, that doesn't
+give me what I want.
+
+Let's say we use the polymorphic aware translation:
+
+* Foo@ opaque type of kind <@>@.
+* <@ T@>(Foo@<T@>) { MyFoo@<T@>; } get function
+* <@ T@>(MyFoo@<T@>) { Foo@<T@>; } put function
+
+What would be a nice syntax to get names for Foo@, Get, and Put functions
+given the type MyFoo@? It's annoying to go through a hard coded field named
+namespace struct value. I would rather list them directly.
+
+More brainstorming:
+
+  Map@ &= MapImpl@(Put, Get);
+  MapImpl@ & Map@, Put, Get;
+  
+The last one is kind of nice. It's consistent with the link statement: info
+type followed by names to declare. And this makes it look kind of like we are
+defining the abstract interface to the MapImpl@ type as Map@, Put, and Get. I
+like that. Let's just do the put and get in the same order as the link
+statement. If it turns out we can find a better syntax, we should use that
+better syntax for link statement too.
+
+Abstract Syntax:
+  Expr ::= abstract_type (type :: Type) (typename :: Name) (get :: Name) (put :: Name) (body :: Expr)
+
+Concrete Syntax:
+  stmt ::= type '&' name ',' name ',' name ';' expr
+
+Example:
+  FooImpl@ & Foo@, Get, Put;
+  ...
+  @(Foo@);
+
+
+I think that's enough of an initial proposal to get started specing and
+implementing this up. This should maybe go just after the section on
+polymorphism, because we need to know about polymorphism to explain the
+translation. And as we have seen, abstract types are tied up pretty
+significantly with polymorphism in terms of making sense semantically, so that
+seems reasonable. Maybe even it should go in the section on polymorphism?

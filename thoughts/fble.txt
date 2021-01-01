@@ -144,3 +144,18 @@ Fble Language Thoughts
   IsEmpty than it is to implement something like ForEach, if you want to break
   out of the computation early.
 
+* A funny thing about kind restrictions.
+  Something of kind @ cannot be used in a polymorphic function where <@>@ is
+  expected. That makes sense.
+
+  As a consequence of the kind restrictions we put in place on polymorphic
+  functions to prevent that, something of kind <@>@ cannot be used in a
+  polymorphic function where @ is expected.
+  
+  This means, for example, that I can't work with lists of polymorphic values.
+  Is this a bad thing? I'm not sure.
+
+  What's funny is, we can define a struct type of kind @ that has a single
+  field of kind <@>@, and then use that struct type where something of kind @
+  is expected. Is this a bad thing? It seems weird. Is it?
+
