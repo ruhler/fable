@@ -1,5 +1,9 @@
 Invaders:
 * It's way way way too slow. Figure out how to make it go much faster.
+ - Set up a benchmark for the game. Say, draw 10 frames worth or some such.
+ - Profile the benchmark to see what's up.
+ - Figure out if this is a problem with the code written in fble or if it's a
+   problem with the fble implementation.
 * The aliens look like they are too far down the screen to start. Double check
   their initial coordinates.
 * Once it is fast enough to be reasonable to develop, finish writing the game.

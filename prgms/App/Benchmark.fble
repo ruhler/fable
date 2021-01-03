@@ -1,0 +1,54 @@
+
+@ App@ = /App%.App@;
+@ Event@ = /App%.Event@;
+@ Effect@ = /App%.Effect@;
+
+@ Int@ = /Int/Int%.Int@;
+% Dec = /Int/Int%.Dec;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# Benchmark --
+#   Convenience function for turning apps into benchmarks. This works by
+#   feeding the app with tick events for a given number of cycles, ignoring
+#   any outputs from the app, and then sending it a quit event.
+#
+# Inputs:
+#   app - the app to benchmark.
+#   n - the number of iterations to run the benchmark.
+#   quit - an event that will cause the app to quit when sent to the app.
+(App@, Int@, Event@) { Unit@!; } Benchmark = (App@ app, Int@ n, Event@ quit) {
+  Int@ w = I(D|640);
+  Int@ h = I(D|480);
+
+  Event@ ~ get_event, put_event;
+  Effect@ ~ get_effect, put_effect;
+
+  (Int@) { Unit@!; } Feed = (Int@ n) {
+    n.?(n: {
+         # TODO: Why do we need to send the quit event twice in practice to
+         # avoid deadlock?
+         Unit@ _ := put_event(quit);
+         Unit@ _ := put_event(quit);
+         !(Unit);
+       }, : {
+         # TODO: this will deadlock if the app finishes early. Is there any
+         # reasonable way to avoid that?
+         Effect@ e := get_effect;
+         e.?(tick: {
+               Unit@ _ := put_event(Event@(tick: Unit));
+               Feed(Dec(n));
+             },
+             draw: Feed(n));
+       });
+  };
+
+  Unit@ _ := app(w, h, get_event, put_effect), Unit@ _ := Feed(n);
+  !(Unit);
+};
+
+@(Benchmark);

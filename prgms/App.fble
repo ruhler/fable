@@ -52,6 +52,6 @@
 #
 # Results:
 #   None.
-@ App@ = (Int@, Int@, Get@<Event@>, Put@<Effect@>){Unit@!;};
+@ App@ = (Int@, Int@, Get@<Event@>, Put@<Effect@>){ Unit@!; };
 
 @(App@, Key@, Event@, Effect@);
