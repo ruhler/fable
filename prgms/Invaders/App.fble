@@ -78,7 +78,8 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   };
 
   # The target is 60 FPS, or 16 millseconds per frame.
-  Int@ frame_period = I(D|16);
+  #Int@ frame_period = I(D|16);
+  Int@ frame_period = I(D|1000);
   Unit@! tick = out(Effect@(tick: frame_period));
 
   (Game@) { Unit@!; } draw = (Game@ g) {

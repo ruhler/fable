@@ -1,83 +1,323 @@
 
-
 @ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% Or = /Bool%.Or;
 
-@ IntP@ = /Int/IntP%.IntP@;
-% AddP = /Int/IntP%.Add;
+@ Drawing@ = /Drawing%.Drawing@;
+% Blank = /Drawing%.Blank;
+% Over = /Drawing%.Over;
+% Translate = /Drawing%.Translate;
+
+% Alien1A = /Invaders/Graphics%.Aliens.Alien1A;
+% Alien1B = /Invaders/Graphics%.Aliens.Alien1B;
+% Alien2A = /Invaders/Graphics%.Aliens.Alien2A;
+% Alien2B = /Invaders/Graphics%.Aliens.Alien2B;
+% Alien3A = /Invaders/Graphics%.Aliens.Alien3A;
+% Alien3B = /Invaders/Graphics%.Aliens.Alien3B;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+% Dec = /Int/Int%.Dec;
+% Inc = /Int/Int%.Inc;
+% Mul = /Int/Int%.Mul;
+% Div = /Int/Int/Div%.Div;
+% Mod = /Int/Int/Div%.Mod;
+% Eq = /Int/Int/Eq%.Eq;
+% Lt = /Int/Int/Eq%.Lt;
+% Gt = /Int/Int/Eq%.Gt;
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+<@,@>% DoWhile = /Loop%.DoWhile;
+<@,@>% For = /Loop%.For;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
+<@>@ Structured@ = /Structured%.Structured@;
+
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-# An individual alien is identified by its position in the group.
-# There are 5 rows and 11 columns of aliens.
-# Row 0 is the bottom row of aliens, column 0 is the left column.
-@ Row@ = IntP@;
-@ Col@ = IntP@;
-@ Alien@ = *(Row@ row, Col@ col);
-% NumRows = I(D|5);
-% NumCols = I(D|11);
+# Aliens move together in a group of rows and columns. They decide which
+# direction to move. Then each live alien, in turn, makes a move. They go 4
+# pixels side by side in a move, or 16 pixels down. Time between moves starts
+# at 8 units, then gradually goes down to 2 units depending on how many aliens
+# are alive. After a full round of moves, if any live alien has reached an
+# edge, as a group they go down and plan to switch direction.
 
-# A set of aliens.
-@ Set@ = ; # TODO!
+# NumRows --
+#   The number of rows of aliens in the group.
+Int@ NumRows = I(D|5);
 
-# Next -- returns the next alien in the group, or Nothing if we are at the
-# end.
+# NumCols --
+#   The number of columns of aliens in the group.
+Int@ NumCols = I(D|11);
+
+# NumAliens --
+#   The total number of aliens in the group.
+Int@ NumAliens = Mul(NumRows, NumCols);
+
+# Alien@ --
+#   An individual alien is identified by its position in the group, in the
+#   order that they move: left to right, bottom to top.
+@ Alien@ = Int@;
+
+# Row -- 
+#   Which row the given alien belongs to. Row 0 is the bottom row.
+(Alien@) { Int@; } Row = (Alien@ a) {
+  Div(a, NumCols);
+};
+
+# Col --
+#   Which column the given alien belongs to. Col 0 is the left column.
+(Alien@) { Int@; } Col = (Alien@ a) {
+  Mod(a, NumCols);
+};
+
+# Next --
+#   Iteration over aliens in order.
 (Alien@) { Maybe@<Alien@>; } Next = (Alien@ a) {
-  Col@ ncol = AddP(a.col);
-  ?(Lt(ncol, NumCols);
-    true: Just<Alien@>(@(row: a.row, col: ncol)),
-    false: {
-      Row@ nrow = AddP(a.row);
-      ?(Lt(nrow, NumRows);
-        true: Just<Alien@>(@(row: nrow, col: 0)),
-        false: Nothing<Alien@>);
-    }
-  );
+  Alien@ next = Inc(a);
+  Lt(next, NumAliens).?(true: Just<Alien@>(next), false: Nothing<Alien@>);
 };
 
-# NextAlive -- returns the next live alien in the group, or Nothing if we have
-# reached the end of live aliens.
+# Set@ --
+#   A set of aliens, to keep track of which aliens are alive or dead.
+# A set of aliens.
+@ Set@ = /Map%.Map@<Alien@, Unit@>;
+
+# AlienS -- 
+#   The definition of Structured@ for AlienS, required to make use of the set
+#   of aliens.
+Structured@<Alien@> AlienS = /Int/Int/Structured%.Structured;
+
+# AllAliens --
+#   The set of all aliens.
+Set@ AllAliens = {
+  % Insert = /Map%.Insert<Alien@>(AlienS)<Unit@>;
+  DoWhile<Alien@, Set@>(I(D|0), Next, /Map%.Empty<Alien@, Unit@>, 
+    (Alien@ a, Set@ s) {
+      Insert(s, a, Unit);
+    });
+};
+
+# Contains --
+#   Returns true if the set contains the given alien, false otherwise.
+(Set@, Alien@) { Bool@; } Contains = {
+  % Lookup = /Map%.Lookup<Alien@>(AlienS)<Unit@>;
+  (Set@ set, Alien@ alien) {
+    Lookup(set, alien).?(just: True, nothing: False);
+  };
+};
+
+# NextAlive --
+#   Returns the next live alien in the given set, or Nothing if we have
+#   reached the end of live aliens.
 (Set@, Alien@) { Maybe@<Alien@>; } NextAlive = (Set@ alive, Alien@ a) {
-  # TODO!
+  Maybe@<Alien@> mnext = Next(a);
+  mnext.?(
+    just: {
+      Alien@ next = mnext.just;
+      Contains(alive, next).?(
+        true: Just<Alien@>(next),
+        false: NextAlive(alive, next));
+    },
+    nothing: Nothing<Alien@>);
 };
 
-# Phase specifies which graphic to use for the alien. It toggles back and
-# forth between a and b.
+# FirstAlive --
+#   Returns the first live alien in the given set, or Nothing if there are no
+#   live aliens.
+(Set@) { Maybe@<Alien@>; } FirstAlive = (Set@ alive) {
+  Alien@ first = I(D|0);
+  Contains(alive, first).?(
+    true: Just<Alien@>(first),
+    false: NextAlive(alive, first));
+};
+
+# Phase@ --
+#   Which graphic to use for the alien. It toggles back and forth between 'a'
+#   and 'b'.
 @ Phase@ = +(Unit@ a, Unit@ b);
 
+# FlipPhase --
+#   Switch to the other phase.
+(Phase@) { Phase@; } FlipPhase = (Phase@ p) {
+  p.?(a: Phase@(b: Unit), b: Phase@(a: Unit));
+};
+
+# Dir@ --
+#   The direction the alien's are currently facing.
 @ Dir@ = +(Unit@ left, Unit@ right);
 
-# Aliens move as a group. They decide which direction to move. Then each live
-# alien, in turn, makes a move. They go 4 pixels side by side in a move, or
-# 16 pixels down. Time between moves starts at 8 units, then gradually goes
-# down to 2 units depending on how many aliens are alive. After a full round
-# of moves, if any alien has reached an edge, as a group they go down and
-# plan to switch direction.
+# FlipDir --
+#   Switch to the other direction.
+(Dir@) { Dir@; } FlipDir = (Dir@ d) {
+  d.?(left: Dir@(right: Unit), right: Dir@(left: Unit));
+};
+
+# Wait@ --
+#   Keeps track of the number of ticks to wait before the next alien moves.
+@ Wait@ = Int@;
+
+# Wait --
+#   Determines how long to wait before the next alien moves, as a function of
+#   how many aliens are still alive.
+(Int@) { Wait@; } Wait = (Int@ num_live_aliens) {
+  Div(Add(num_live_aliens, I(D|35)), I(D|10));
+};
+
+# LeftEdge --
+#   The furthest left, in game coordinates, the left edge of an alien will go.
+Int@ LeftEdge = I(D|92);
+
+# RightEdge --
+#   The furthest right, in game coordinates, the left edge of an alien will go.
+Int@ RightEdge = I(D|524);
+
+# StrideX --
+#   The horizontal distance, in game coordinates, between the left edge of an
+#   alien and the left edge of its immediately adjacent alien.
+Int@ StrideX = I(D|30);
+
+# StrideY --
+#   The vertical distance, in game coordinates, between the bottom edge of an
+#   alien and the bottom edge of its immediately adjacent alien.
+Int@ StrideY = I(D|32);
+
+# MoveX --
+#   How far an alien moves side to side, in game coordinates, in a single
+#   step.
+Int@ MoveX = I(D|4);
+
+# MoveY --
+#   How far an alien moves down, in game coordinates, in a single step.
+Int@ MoveY = I(D|16);
+
+# Aliens@ --
+#   The state of a group of aliens.
 @ Aliens@ = *(
-  Int@ x;                # The x position of the left edge of the group.
-  Int@ y;                # The y position of the bottom of the group.
-  Dir@ dir;              # The current direction of the group.
-  Bool@ advance;         # True if the group is moving down this round.
-  Phase@ phase;          # The phase that the group is moving to.
-  Alien@ current;        # The next alien in the group whose turn it is to move.
-  Bool@ should_advance;  # True if we should advance in the next full round.
-  Set@ dead;             # The set of aliens in the group that are dead.
-  IntP@ num_alive;       # The number of aliens in the group that are alive.
-  Int@ wait;             # The number of ticks to wait before the next alien
-                         # moves.
+  # The number of ticks to wait before the next alien moves.
+  Wait@ wait,
+
+  # The (x, y) position of the bottom left edge of the group of aliens,
+  # independent of which aliens are alive or dead, for those aliens in the
+  # group that have not moved yet.
+  Int@ src_x,
+  Int@ src_y,
+
+  # The (x, y) position of the bottom left edge of the group of aliens,
+  # independent of which aliens are alive or dead, for those aliens in the
+  # group that have already moved.
+  Int@ dst_x,
+  Int@ dst_y,
+
+  # The set of aliens in the group that are alive.
+  Set@ alive,            
+
+  # The number of aliens in the group that are alive.
+  Int@ num_aliens_alive,
+
+  # The direction the aliens are currently moving.
+  Dir@ dir,
+
+  # The phase that the group is moving to.
+  Phase@ phase,          
+
+  # The next alien to move, or Nothing if we have finished iterating through
+  # all of the aliens. All aliens before 'next' have been (conceptually) moved
+  # to relative to the group coordinates (x, y). All aliens 'next' and later
+  # have yet to be moved.
+  Maybe@<Alien@> next,
+
+  # Set to true if we should change direction in the next full round.
+  Bool@ turn
 );
-  
+
+# Initial --
+#   The initial set of aliens.
+Aliens@ Initial = @(
+  wait: Wait(NumAliens),
+  src_x: LeftEdge,
+  src_y: I(D|128),
+  dst_x: Add(LeftEdge, MoveX),
+  dst_y: I(D|128),
+  alive: AllAliens,
+  num_aliens_alive: NumAliens,
+  dir: Dir@(right: Unit),
+  phase: Phase@(b: Unit),
+  next: Just<Alien@>(I(D|0)),
+  turn: False);
+
 # Tick --
 #   Advance the aliens by one unit of time tick.
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
-  ?(a.wait;
-    0: { # TODO
+  Eq(I(D|0), a.wait).?(
+    true: {
+      Wait@ wait = Wait(a.num_aliens_alive);
+      a.next.?(
+        just: {
+          Int@ left = Add(a.dst_x, Mul(StrideX, Col(a.next.just)));
+          Bool@ turn = Or(a.turn, a.dir.?(
+            left: Lt(left, LeftEdge),
+            right: Gt(left, RightEdge)));
+          Maybe@<Alien@> next = NextAlive(a.alive, a.next.just);
+          Aliens@(wait, a.src_x, a.src_y, a.dst_x, a.dst_y, a.alive,
+            a.num_aliens_alive, a.dir, a.phase, next, turn);
+        },
+        nothing: {
+          *(Int@ x, Int@ y, Dir@ dir) updates = a.turn.?(
+            true: @(
+              x: a.dst_x,
+              y: Sub(a.dst_y, MoveY),
+              dir: FlipDir(a.dir)),
+            false: @(
+              x: a.dir.?(left: Sub(a.dst_x, MoveX), right: Add(a.dst_x, MoveX)),
+              y: a.dst_y,
+              dir: a.dir));
+          Maybe@<Alien@> next = FirstAlive(a.alive);
+          Aliens@(wait, a.dst_x, a.dst_y, updates.x, updates.y,
+            a.alive, a.num_aliens_alive, updates.dir, FlipPhase(a.phase),
+            next, False);
+        });
     },
-    p: Aliens@(
-         a.x, a.y, a.dir, a.advance, a.phase, a.current,
-         a.should_advance, a.alive, a.num_alive, Dec(a.wait)));
+    false: Aliens@(
+         Dec(a.wait), a.src_x, a.src_y, a.dst_x, a.dst_y, a.alive,
+         a.num_aliens_alive, a.dir, a.phase, a.next, a.turn));
 };
+
+# Sprite --
+#   Return the alien sprite for an alien in the given row with the given
+#   phase.
+(Int@, Phase@) { Drawing@; } Sprite = (Int@ row, Phase@ phase) {
+  Int@ half_row = Div(row, I(D|2));
+  Eq(I(D|0), half_row).?(
+    true: phase.?(a: Alien1A, b: Alien1B),
+    false: Eq(I(D|1), half_row).?(
+      true: phase.?(a: Alien2A, b: Alien2B),
+      false: phase.?(a: Alien3A, b: Alien3B)));
+};
+
+# Draw --
+#   Make a drawing of the aliens in their current location.
+(Aliens@) { Drawing@; } Draw = (Aliens@ as) {
+  For<Alien@, Drawing@>(
+    FirstAlive(as.alive),
+    (Alien@ a) { NextAlive(as.alive, a); },
+    Blank,
+    (Alien@ a, Drawing@ d) {
+      Bool@ moved = as.next.?(just: Lt(a, as.next.just), nothing: True);
+      Int@ group_x = moved.?(true: as.dst_x, false: as.src_x);
+      Int@ group_y = moved.?(true: as.dst_y, false: as.src_y);
+      Int@ alien_x = Add(group_x, Mul(StrideX, Col(a)));
+      Int@ alien_y = Add(group_y, Mul(StrideY, Row(a)));
+      Phase@ phase = moved.?(true: as.phase, false: FlipPhase(as.phase));
+      Over(d, Translate(alien_x, alien_y, Sprite(Row(a), phase)));
+    });
+};
+
+@(Aliens@, Initial, Tick, Draw);

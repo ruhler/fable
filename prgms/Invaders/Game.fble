@@ -13,6 +13,9 @@
 
 % Graphics = /Invaders/Graphics%;
 
+% Aliens = /Invaders/Aliens%;
+@ Aliens@ = Aliens.Aliens@;
+
 % Ship = /Invaders/Ship%;
 @ Dir@ = Ship.Dir@;
 @ Ship@ = Ship.Ship@;
@@ -26,21 +29,23 @@
 @ Game@ = *(
   Int@ score,
   Lives@ lives,
-  Ship@ ship
+  Ship@ ship,
+  Aliens@ aliens
 );
 
 Game@ Initial = @(
   score: I(D|920),
   lives: Lives@(3: Unit),
-  ship: Ship.Initial
+  ship: Ship.Initial,
+  aliens: Aliens.Initial
 );
 
 (Game@) { Game@; } Tick = (Game@ g) {
-  Game@(g.score, g.lives, Ship.Tick(g.ship));
+  Game@(g.score, g.lives, Ship.Tick(g.ship), Aliens.Tick(g.aliens));
 };
 
 (Game@, Dir@) { Game@; } Input = (Game@ g, Dir@ d) {
-  Game@(g.score, g.lives, Ship.Input(g.ship, d));
+  Game@(g.score, g.lives, Ship.Input(g.ship, d), g.aliens);
 };
 
 (Int@) { Drawing@; } DrawScore = {
@@ -112,7 +117,8 @@ Game@ Initial = @(
     DrawScore(g.score),
     DrawLives(g.lives),
     Graphics.Background,
-    Ship.Draw(g.ship)
+    Ship.Draw(g.ship),
+    Aliens.Draw(g.aliens)
   ]);
 };
 

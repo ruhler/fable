@@ -1,3 +1,9 @@
+Invaders:
+* It's way way way too slow. Figure out how to make it go much faster.
+* The aliens look like they are too far down the screen to start. Double check
+  their initial coordinates.
+* Once it is fast enough to be reasonable to develop, finish writing the game.
+
 Hwdg:
 * Improve the API for describing a bunch of gates with modules.
 * Have an easier way to set a bunch of cells at once?
@@ -206,8 +212,6 @@ Exec:
    everything regardless and it would be nice to avoid drawing a bunch of
    stuff and then covering it up right away.
 
-* [invaders] Implement space invaders game.
- - Add aliens to the game.
 
 * [compile] Figure out why Normal is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.

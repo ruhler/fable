@@ -144,6 +144,11 @@ Fble Language Thoughts
   IsEmpty than it is to implement something like ForEach, if you want to break
   out of the computation early.
 
+  Another good example is the Alien Tick function for the Invaders game, which
+  describes a single step of a finite state machine. Each state updates a
+  small number of fields, but we have to mention every field in every state
+  update because we can't do updates in place.
+
 * A funny thing about kind restrictions.
   Something of kind @ cannot be used in a polymorphic function where <@>@ is
   expected. That makes sense.

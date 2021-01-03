@@ -424,6 +424,8 @@ Drawing@ Alien3B = Path(
   Color@(white: Unit)
 );
 
+% Aliens = @(Alien1A, Alien1B, Alien2A, Alien2B, Alien3A, Alien3B);
+
 Drawing@ UFO = Path(
   List<Point@>([
     Point@(I(D|8), I(D|0)),
@@ -1351,4 +1353,4 @@ Drawing@ Screenshot = Drawings([
   Translate(I(D|296), I(D|22), DeadShipB)
 ]);
 
-@(Ship, Background, Digits, Screenshot);
+@(Ship, Aliens, Background, Digits, Screenshot);
