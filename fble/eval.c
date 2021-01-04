@@ -467,19 +467,14 @@ static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   };
   assert(func->_base.tag == FBLE_COMPILED_FUNC_VALUE_TC);
 
-  if (call_instr->exit) {
-    FbleValue* args[func->argc];
-    for (size_t i = 0; i < func->argc; ++i) {
-      args[i] = FrameGet(thread, call_instr->args.xs[i]);
-    }
+  FbleValue* args[func->argc];
+  for (size_t i = 0; i < func->argc; ++i) {
+    args[i] = FrameGet(thread, call_instr->args.xs[i]);
+  }
 
+  if (call_instr->exit) {
     ReplaceFrame(heap, func, args, thread);
   } else {
-    FbleValue* args[func->argc];
-    for (size_t i = 0; i < func->argc; ++i) {
-      args[i] = FrameGet(thread, call_instr->args.xs[i]);
-    }
-
     FbleValue* result = PushFrame(heap, func, args, thread);
     thread->stack->tail->locals.xs[call_instr->dest] = result;
     FbleValueAddRef(heap, &thread->stack->tail->_base, result);

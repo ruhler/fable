@@ -299,3 +299,6 @@ Exec:
  - Debug why map equality is failing when show shows identical maps
    { (1,1) => 1; } vs. { (1,1) => 1; }
 
+   Turns out it was a bug in map quality, not too hard to find by code
+   inspection.
+
