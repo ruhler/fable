@@ -26,6 +26,9 @@ bench:
 	gcov out/obj/*.o > fble.gcov
 	mv *.gcov out/cov/bench/
 
+.PHONY: benchprof
+benchprof:
+	./out/bin/fble-test --profile prgms/Fble/Bench.fble prgms > bench.prof
 
 .PHONY: perf
 perf:
