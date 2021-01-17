@@ -1,0 +1,125 @@
+Fble Performance
+================
+Right now is pretty bad. How can we make things better?
+
+Some things I notice from profiling:
+* A lot of GC related things.
+* A lot of call/return instruction related things.
+* Note that we have profile arcs and no optimization turned on, though that
+  seems to only be a 2x speedup.
+
+It's a lot of little things being called a ton, rather than a few big calls.
+That's a bit annoying, because it makes me want to do low level optimizations
+that aren't very general, and it makes it hard to figure out what to focus on.
+
+Remember the disadvantages we expect versus, say, C:
+- no primitive types or operations
+- automatic reference vs. value
+- immutable data types
+- automatic memory management
+- closures that capture variables from local scope
+- light weight multithreading
+
+Add to that the fact that we are currently running an interpreter instead of
+compiled code. The space invaders game looks to be running over 100x slower
+than it needs to be. How can I get a factor of 100x improvement?
+
+It's got to come from big, high level changes. I don't think it will come from
+lots of little low level hacks. I don't want it to come from lots of little
+low level hacks.
+
+Some obvious things to try:
+* Compile instead of interpret.
+* Inline function calls.
+* Have a variation of the language with zero cost abstraction, mutable data
+  types, and explicit memory management.
+* Try to do lots of tiny little cleanup/optimizations and see if they can add
+  up anywhere.
+
+---
+
+Here's a proposal for a different programming language that I believe I could
+implement efficiently, without garbage collection or function calls at run
+time.
+
+We have struct and union types as in fble, except non-recursive.
+We have a reference type T@&, which is a reference type values of type T@.
+We have a program.
+
+You have the following operations in the program:
+
+Access:
+  Given a reference to a struct and a field, returns a reference to the field.
+  S@& -> Field -> F@&
+
+Assign:
+  Given two references of the same type, copy the data in one reference to
+  another.
+
+  T@& -> T@& -> Prog@
+Condition:
+  Select a program to run based on the tag of a referenced union value.
+
+  U@& -> Prog@, Prog@, ... Prog@ -> Prog@
+
+Loop:
+  Run a program repeatedly as long as the tag of a referenced union value is
+  0.
+
+  U@& -> Prog@ -> Prog@
+
+Var:
+  Create a reference to a variable of a given type, and use that in a given
+  program.
+
+  T@ -> Prog@ -> Prog@
+
+Sequence:
+  Given two programs, run one program after the other.
+
+  Prog@ -> Prog@ -> Prog@
+
+Parallel:
+  Given two programs, run both programs in parallel and wait for them both to
+  finish.
+
+  Prog@ -> Prog@ -> Prog@
+
+For multithreading, we may also want:
+
+Swap:
+  Given two references of the same type, swap their values. Possibly needed
+  for multithreaded synchronization.
+
+Block:
+  Wait for a referenced value to have a given tag before continuing.
+
+
+Why this can be done efficiently:
+* There are no function calls, so no cost of call/return.
+* The total amount of memory used by a program is constant. So we can
+  pre-allocate all memory and don't need runtime GC.
+* Non-recursive and non-sharing values mean we can pack values into bits for
+  efficient copying.
+
+We still have to support multithreading, but the number of threads is constant
+and the burden of synchronization is on the programmer, so it shouldn't be too
+hard I hope. Just round robin execute commands among the currently running
+threads.
+
+The key bits are: working with finite, non-shared values. Using constant
+memory for the entire program. Anything unbounded has to be done broken up
+into bits by time.
+
+Now we have two paths we can pursue: My newly proposed language, or fble with
+elaborate.
+
+For fble elaborate to be useful, you practically have to limit yourself to
+non-recursive values. I don't have a great story for loops though.
+
+For my newly proposed language to be useful, we need programming level
+abstractions (e.g. functions, polymorphic types, program modules).
+
+If I truly want something to go fast, then I'll allow you to define primitive
+program modules in different languages (e.g. C), and build apps on top of
+those.
