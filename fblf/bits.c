@@ -1,66 +1,62 @@
 
+#include <stdlib.h>   // for malloc, free
+#include <string.h>   // for strlen
+
 #include "bits.h"
 
 typedef enum {
   BIT_0, BIT_1
 } Bit;
 
-static Bit GetBit(FblfBits bits, FblfBitIndex index);
-static void SetBit(FblfBits bits, FblfBitIndex index, Bit value);
-
+struct FblfBits {
+  size_t unused;
+  Bit bits[];
+};
 
-// GetBit --
-//   Get the bit at the given index of the given bit sequence.
-//
-// Inputs:
-//   bits - the bit sequence to get from.
-//   index - the index of the bit to get.
-//
-// Returns: 
-//   The bit ad the given index of the bit sequence.
-//
-// Side effects:
-//   Behavior is undefined if the index is not in range of the bit sequence.
-static Bit GetBit(FblfBits bits, FblfBitIndex index)
+// FblfNewBits -- see documentation in bits.h
+FblfBits* FblfNewBits(size_t n)
 {
-  FblfBitsWord word = bits[index / sizeof(FblfBitsWord)];
-  word >>= (sizeof(FblfBitsWord) - (index % sizeof(FblfBitsWord)) - 1);
-  return (word & 0x1 == 0) ? BIT_0 : BIT_1;
+  return (FblfBits*)malloc(sizeof(FblfBits) + n * sizeof(Bit));
 }
 
-// SetBit --
-//   Set the bit at the given index of the given bit sequence to the given
-//   value.
-//
-// Inputs:
-//   bits - the bit sequence to set a bit in from.
-//   index - the index of the bit to set.
-//   value - the value to set the bit to.
-//
-// Side effects:
-//   Behavior is undefined if the index is not in range of the bit sequence.
-static void SetBit(FblfBits bits, FblfBitIndex index, Bit value)
+// FblfNewBitsFromBinary -- see documentation in bits.h
+FblfBits* FblfNewBitsFromBinary(const char* bitstr)
 {
-  FblfBitsWord bit = 1 << (sizeof(FblfBitsWord) - (index % sizeof(FblfBitsWord)) - 1);
-  bits[index / sizeof(FblfBitsWord)] |= bit;
+  size_t n = strlen(bitstr);
+  FblfBits* bits = FblfNewBits(n);
+  for (size_t i = 0; i < n; ++i) {
+    bits->bits[i] = bitstr[i] - '0';
+  }
+  return bits;
+}
+
+// FblfFreeBits -- see documentation in bits.h
+void FblfFreeBits(FblfBits* bits)
+{
+  free(bits);
+}
+
+// FblfGetBitRef -- see documentation in bits.h
+FblfBitRef FblfGetBitRef(FblfBits* bits, size_t i)
+{
+  FblfBitRef ref = { .bits = bits, .i = i };
+  return ref;
 }
 
 // FblfCopyBits -- See documentation in bits.h
-void FblfCopyBits(FblfBits dest, FblfBitIndex dest_index, FblfBitIndex src, FblfBitIndex src_index, size_t count)
+void FblfCopyBits(FblfBitRef dest, FblfBitRef src, size_t count)
 {
-  // TODO: Make sure we properly handle the alias case.
-  // TODO: can this be made more efficient by bulk comparing bits somehow?
+  // TODO: Properly handle aliasing/overlap case.
   for (size_t i = 0; i < count; ++i) {
-    SetBit(dest, dest_index+i, GetBit(src, src_index+i));
+    dest.bits->bits[dest.i + i] = src.bits->bits[src.i + i];
   }
 }
 
 // FblfBitsEqual -- See documentation in bits.h
-bool FblfBitsEqual(FblfBits dest, FblfBitIndex dest_index, FblfBits src, FblfBitIndex src_index, size_t count)
+bool FblfBitsEqual(FblfBitRef a, FblfBitRef b, size_t count)
 {
-  // TODO: can this be made more efficient by bulk comparing bits somehow?
   for (size_t i = 0; i < count; ++i) {
-    if (GetBit(dest, dest_index + i) != GetBit(src, src_index+i)) {
+    if (a.bits->bits[a.i + i] != b.bits->bits[b.i + i]) {
       return false;
     }
   }
