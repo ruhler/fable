@@ -1,3 +1,6 @@
+Fblf:
+* Add tests for bits function, including aliasing case.
+
 Invaders:
 * It's way way way too slow. Figure out how to make it go much faster.
  - Profile the benchmark to see what's up.

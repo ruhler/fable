@@ -1,0 +1,121 @@
+Fable F
+=======
+Richard Uhler <ruhler@degralder.com>
+
+1. Introduction
+---------------
+Fblf is intended to be a high performance, Turing-complete imperative
+programming language with support for concurrent processes. It is designed
+with a hardware philosophy that storage and data paths for the program are
+all fixed statically.
+
+Fblf disallows memory allocations, functions, and unbounded data types at run
+time. It allows partial in-place updates of values. This should address the
+biggest challenges fble faces performance wise: function calls, dynamic memory
+allocation, automatic memory management, and immutable data types.
+
+Fblf includes support for grained multithreading because, while it introduces
+some runtime performance challenges, it is necessary for the composition
+story: If fblf programmers are designed to interact with users in a concurrent
+fashion, then fblf programs must have some way of being composed together in a
+concurrent fashion.
+
+Abstractions designed for programmers will be entirely done in a meta language
+that is statically evaluated away at compile time. There will be no runtime
+cost to these programmer abstractions.
+
+The big question is whether fblf is expressive enough to describe interesting
+programs. We shall see.
+
+2.0 Abstract Syntax Reference
+-----------------------------
+Name ::= (* A string of characters *)
+TypeName ::= (* A string of characters *)
+
+Type ::=
+   name (name :: TypeName)
+ | struct_type (fields :: [(Type, Name)])
+ | enum_type (fields :: [Name])
+ | union_type (fields :: [(Type, Name)])
+ ;
+
+Const ::=
+   struct_value (type :: Type) (fields :: [Const])
+ | union_value (type :: Type) (field :: Name) (value :: Const)
+ | enum_value (type :: Type) (field :: Name)
+ ;
+
+Ref ::= 
+   ref (name :: Name)
+ | access (ref :: Ref) (field :: Name)
+ ;
+
+Value ::= ref | Const ;
+
+Cond ::=
+   equals (a :: Value) (b :: Value)
+ | not_equals (a :: Value) (b :: Value)
+ ;
+
+Prog ::=
+   assign (ref :: Ref) (value :: Const)
+ | if (cond :: Cond) (body :: Prog)
+ | while (cond :: Cond) (body :: Prog)
+ | wait (cond :: Cond)
+ | seq (a :: Prog) (b :: Prog)
+ | par (a :: Prog) (b :: Prog)
+ | typedef (name :: TypeName) (value :: Type) (body :: Prog)
+ | vardef (name :: Name) (type :: Type) (initial_value :: Maybe(Value)) (body Prog)
+ ;
+
+3.0 Concrete Syntax Reference
+-----------------------------
+name ::= word
+type_name ::= word '@'
+
+type ::=
+   type_name
+ | '*(' [type name [',' type name [...]]] ')'
+ | '+(' type name [',' type name [...]] ')'
+ | '?(' name [',' name [...]] ')'
+ ;
+
+const ::=
+   type '(' const [',' const [...]] ')'
+ | type '(' name ':' const [',' name ':' const [...]] ')'
+ | type '.' name
+ ; 
+
+ref ::=
+   name
+ | ref '.' name
+ ;
+
+value ::= ref | const ;
+
+cond ::=
+   '(' value '==' value ')'
+ | '(' value '!=' value ')'
+ ;
+
+expr ::=
+ | ref '=' value
+ | '?' cond block
+ | '*' cond block
+ | '!' cond
+ | expr ',' expr
+ | expr ';' expr
+ | block
+ ;
+
+block ::=
+   '{' stmt '}'
+ ;
+
+stmt ::=
+   expr ';'
+ | '@' type_name '=' type ';' stmt
+ | type name ';' stmt
+ | type name '=' value ';' stmt
+ ;
+ 
