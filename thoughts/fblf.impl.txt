@@ -1,0 +1,32 @@
+Implementing Fblf so that it runs fast.
+
+For a true potential for speed, we've got to compile to C code:
+* translate fblf struct, enum, and union types to corresponding C types.
+* define equality functions for all struct and union types.
+ - struct is field by field.
+ - union is whichever field is the most number of bits.
+* translate literal assignment to appropriate sequence of assignment statements.
+* translate ref assignment to normal assignment in C.
+* translate if statements to if statements.
+* translate loops to loops.
+
+* translate a 'par' statement for threads 'a' and 'b' by defining separate
+  functions for 'a' and 'b'. The function takes the global state as input and
+  returns a PC, which is a number specific to that program which identifies
+  the current program counter. Wrap calls to both functions in a loop:
+    state->pc_a = 0, state->pc_b = 0;
+    do {
+      func_a(state);
+      func_b(state);
+    } while (state.pc_a != DONE || state.pc_b != DONE);
+   
+  where the functions func_a and func_b update the pc state before they
+  return, and read the state, jumping to the right place in the code to start
+  using a switch statement that is interleaved with the rest of the code of
+  the function.
+
+  I guess another option would be to assign program fragments to threads
+  statically, then define one function per thread and run them all with a
+  single top level while loop in round robin fashion. That sounds good. That's
+  maybe better. Scales better to more threads? Depends actually. Maybe doesn't
+  scale better.
