@@ -1,0 +1,640 @@
+Fable F
+=======
+Fble is a nice language, designed from the perspective of how to describe
+programs. There are challenges to making fble run fast.
+
+Fblf is about designing a language from the other direction. Design a language
+that we can make run fast, and try to add features to it to get closer to
+fble.
+
+Phase 1
+-------
+The first phase is to write a significant program in fblf and demonstrate that
+we can make it run fast. We'll start by modeling the language in fble and use
+fble to describe the fblf program. That should give us access to the basic
+programming abstractions we want without unduly influencing the meat of the
+fblf language.
+
+The simplest place to start is a purely functional static dataflow language
+without support for conditionals or loops. Think of it as combinatorial logic
+(back to fable A ...).
+
+A key difference between fble and fblf, to start, will be that fblf does not
+specify an order of operations.
+
+To start, we'll include the following features:
+* Non-recursive union and struct types.
+ - Including construction, field access, and union select
+ - We'll treat union select as not short circuiting - you always evaluate all
+   branches of the union select.
+* Variables and non-recursive let expressions.
+
+We will specifically not include the following features:
+* Functions, Processes, Polymorphism
+
+Some kinds of programs we could try writing in this language:
+* Fixed width integer addition, subtraction, multiplication, division, etc.
+* Floating point arithmetic.
+* md5 of bounded length files.
+
+Bounded length Md5 sounds like a great place to start. We can compare its
+performance against fble and C code. It includes relevant integer operations.
+The fact that everything is inlined will likely reduce performance compared to
+C code, which will give clear motivation for the next phase of fblf once we
+finish with the first phase.
+
+How to make code that runs fast in practice:
+* Generate llvm code and compile with llvm.
+* First attempt: Just dump to a raw ssa graph and see what llvm can do with it
+  schedule wise.
+* Subsequent attempts
+ - Perhaps pick a different schedule for the graph based on a model of a
+   memory hierarchy
+ - Figure out how adding functions to the language could improve performance.
+
+---
+
+I started writing fble code to describe the fblf abstract syntax tree with the
+intention of coding up an abstract syntax tree in fble for fblf based N bit
+adder. I'm hesitant to go this route, though, because the syntax for
+describing the adder will be a pain and we will not get nice error messages.
+
+I once again ask, could we somehow get nice syntax, good error messages, and
+functions for describing fblf code, but still manage to extract the inlined
+bits of it?
+
+Idea: support an abstract interpretation of fble code that results in the
+dataflow graph for a computation.
+
+So, for example, let's say you write an fble expression of type 
+(Bit64@, Bit64@) { Bit64@; }. To compile this to data flow, we do the
+following:
+
+Evaluate this function where the runtime values are represented using the
+abstract syntax tree of fblf. Apply the function to (Var "x").
+
+Let's assume we want to statically elaborate as much as we can. Add a 'Const'
+kind of abstract value that holds a normal fble value. Then evaluate as much
+as we can, keeping track of variables as we go. We'll probably need to keep
+track of types as well.
+
+Abstractly:
+  struct_value creates a STRUCT_VALUE node.
+  union_value creates a UNION_VALUE node.
+  struct_access creates a STRUCT_ACCESS node.
+  union_access creates a UNION_ACCESS node.
+  union_select creates a UNION_SELECT node, executing both sides of the
+    condition.
+  func_value ...
+
+Things that go wrong:
+ - recursive functions fail to terminate because we always take both branches
+   of a condition
+ - unsupported values left over, like poly or function calls that we can't
+   resolve.
+
+Another approach would be, rather than treat it as an abstract interpretation,
+treat it as a compiler pass to inline anything that can't be represented in
+fblf?
+
+Some questions:
+ - Do we really want to statically elaborate as much as possible, or just
+   enough to represent everything in fblf?
+ - How do detect or code that can't be statically elaborated?
+
+---
+
+I think we need to be explicit in the type system about what is statically
+elaborated away.
+
+Could we add a new kind of primitive concept to fble representing a
+computation? (Is this not what I already tried as described in
+fble.dataflow.txt?).
+
+For example, assuming we want non recursive struct and unions with non
+recursive lets and variables.
+
+Abstract syntax:
+
+fblf_var (name :: Name)
+fblf_let (bindings :: [(Spec, Name, Expr)]) (body :: Expr)
+fblf_struct_type (fields :: [(Type, Name)])
+fblf_value_explicit_type (type) (args :: [Expr])
+fblf_struct_access (object :: Expr) (field :: Name)
+fblf_union_type (fields :: [(Type, Name)])
+fblf_union_value (type :: Type) (field :: Name) (arg :: Expr)
+fblf_union_access (object :: Expr) (field :: Name)
+fblf_union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
+
+Do we need a new kind? Can we reuse the same syntax for both normal
+expressions and fblf expressions somehow?
+
+I guess we could write our own functions to convert fble types to fblf types.
+For example, maybe something like:
+
+@ Unit@ = *()
+Unit@ Unit = Unit@(); 
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+(Bool@, Bool@) { Bool@; } And = (Bool@ a, Bool@ b) {
+  a.?(true: b, false: False);
+};
+
+@ UnitF@ = *$();
+UnitF@ Unit = UnitF@();
+
+@ BoolF = +$(UnitF@ true, UnitF@ false);
+BoolF@ TrueF = BoolF@(true: UnitF);
+BoolF@ FalseF = BoolF@(false: UnitF);
+
+(BoolF@, BoolF@) { BoolF@; } AndF = (BoolF@ a, BoolF@ b) {
+  a.?(true: b, false: FalseF);
+};
+
+(Bool@) { BoolF@; } BoolF = (Bool@ x) {
+  x.?(true: TrueF, false: FalseF);
+};
+
+
+The trouble with this is it doesn't let us capture variables in the dataflow
+graph. We need a way to distinguish between normal lets and flbf lets.
+
+For example:
+
+  IntF@ x = AddF(y, y);
+  AddF(x, x);
+
+versus:
+  
+  IntF@ x $= AddF(y, y);
+  AddF(x, x);
+
+Or:
+
+  (IntF@) { IntF@; } DoubleF = (IntF@ $x) {
+     # IntF@ xv $= x;
+     # AddF(xv, xv);
+     AddF(x, x);
+  }
+
+That's pretty annoying, that we would have to do an explicit var rebinding for
+every function call. Ideally we automatically preserve the variableness of the
+value. Maybe it's okay to live with explicit var rebinding to start though.
+It's interesting that that lets you distinguish between replicated compute
+versus non-replicated compute.
+
+Proposed syntactic extensions:
+  +$(...) as a type
+  *$(...) as a type
+  $= as an fblf special let
+
+I'm thinking that could be all we need syntactically.
+
+Except how to express the top level computation? Either support fblf functions
+or have a way to specify a symbolic value that will be the input. How would
+fblf functions look?
+
+A function type, and function value; (...) ${ ... }
+Arguments must be fblf, result must be fblf, automatically preserves
+variables. You can apply a function, which just allocates a call expression.
+
+Now I can compile a value of fblf function type. We can say you cannot have
+fblf variables of function type, nor store them on fblf structs, unions, or
+funcs. The implementation could be to turn function application into let.
+
+I like this, because I think if we don't have an explicit fblf variable, then
+we can be assured that any standalone fblf struct or union expression can be
+evaluated to a concrete value? The point is, it would be great if we could
+convert fble data types to fblf data types, call an fblf function to
+efficiently compute the result, and then convert back to fble. That would give
+us a fully integrated language supporting high expressiveness and high
+performance side by side. Maybe we could auto-convert somehow? Like a syntax
+for:
+
+  $(x) - turns BoolF@ into Bool@, turns (FooF@) ${ BarF@ } into (FooF@) { Bar@; }
+
+We can always go BoolF@ to Bool@ in general. But not always the other way
+around. So require the user to go the other way around. The auto conversion
+from BoolF@ to Bool@ would be where we evaluate the computation and let us see
+its contents.
+
+Summary of concrete syntactic extensions:
+  +$(...) as a type
+  *$(...) as a type
+  (...) ${ ... } as a function type/value
+  $= as an fblf special let
+  $(x) to compile or evaluate an fblf value. (maybe it works on types too)
+  
+
+An initial implementation could be to do it all in the compiler. No runtime
+support necessary. The types are implemented as normal fble types. Let is
+implemented as a normal fble let. And $(x) is implemented as x.
+
+I think this is worth a try. I will be tempted to have support for some form
+of fblf process and loops, but I think now is not yet the time to worry about
+those things. See if I can implement md5 with these extensions. See if I can
+make it run reasonably fast. Learn what I learn. And then think about how to
+add support for loops and processes. And you know what? If it works out, and I
+can figure out how to add loops and processes... maybe I'm done? Maybe I've
+solved it. Full expressively, full performance. Slightly tedious to convert
+fble values to fblf.
+
+---
+
+Trouble: How to support polymorphic inline types? Because we don't know given
+a kind whether a type parameter is inline or not. Sounds like we'll want to
+add a new kind? '$'? And say that '$' is a subset of the kind '@'? Or kind
+'@$'? That will make things a little more complicated. I do think it is
+necessary. Not sure how much more complicated it will make things though. Kind
+equality now has to be kind compatibility? It's no longer a commutative
+operation.
+
+Do we also need '%$' as a kind?
+
+---
+
+The definition of a non-inline Bool@ contains the same information as the
+definition of an inline Bool@. Can we reuse that information instead of
+requiring the user to copy it?
+
+At the same time, the request is to describe inline computation more as
+computation and less as inline.
+
+Combining these two together, how about a new proposal:
+
+Given some type Foo@, Foo@$ is a computation that evaluates to type Foo@.
+Similar to how Foo@! is a process that returns a value of type Foo@.
+
+  Type ::= comp_type (result :: Type)
+
+But you can only form computations on non-recursive data types, and possibly
+in the future, some restrictive forms of function and process types. You
+cannot perform computation on recursive or polymorphic types. It should be a
+type error to do Foo@$ if Foo@ is not supported for computations.
+
+The concern is: how can you clearly convey that a type can be used in a
+computation? For example, how do you write a library that provides a type and
+ensure that it is 'computable'? Two answers:
+1. We can hopefully give good error messages describing precisely what part
+of the type is not computable.
+2. You can always define some type using Foo@$, or some such in your library
+to enforce that.
+
+Not perfect answers, but perhaps worth not having to duplicate all your type
+definitions, and not having to grow the spec so much to define new kinds of
+struct, union, function, and process types.
+
+We will need to define a new kind. The new kind should be for types that
+satisfy the requirements of computability. For example, Bool@ would have this
+kind. Bool@$ would not, because a computation is not computable, if that makes
+sense. This computable kind will be a subset of the basic kind. I'm not sure
+if we need a special way to refer to the value of a computable kind.
+
+  Kind ::= computable_kind
+
+We have computable struct and union values using same syntax as struct and
+union values, except the types are computations instead of structs and unions.
+We have implicit type computation struct values.
+
+We have a special function value computation constructor and special let.
+
+Now, besides constructing computations, there are two things you can do with
+them: elaborate and compute.
+
+Elaborate: takes a computation of type Foo@$ and returns a new computation of
+type Foo@$ which is a fully elaborated version of the given computation. That
+means as much of the given computation as could be computed is computed. For
+example, if it is a Bool@$, the expectation is we turn it into a constant
+wrapping the single bit representing whether it is true or false.
+
+If given a function computation, elaborate compiles the function as best it
+can.
+
+Compute: takes a computation of type Foo@$ and returns a result of type Foo@
+which is the result of executing the computation.
+
+I think that's all you need. Now, for example, if we want to provide an
+efficient Add32 of type (Int32@, Int32@) { Int32@; }, we can first define it
+as a computation: (Int32@, Int32@) { Int32@; }$, elaborate it to compile it to
+efficient code and compute it to get our desired function.
+
+Or, we can compile the function, then define:
+
+Add32 = (Int32@ a, Int32@ b) {
+  COMPUTE(add32(convert(a), convert(b)));
+};
+
+I'm not sure. Actually, that maybe doesn't work so well. We don't want to
+claim we can convert any function to a computation. We shouldn't support
+automatic conversion to a computation. Which means we shouldn't support
+automatic conversion from a function computation to a normal function, because
+it would have to convert input arguments. Maybe the restrictions we have on
+computable types would save us there.
+
+The key challenging difference between this approach and the currently
+proposed approach is how functions are handled:
+
+     (FooF@)${ BarF@; }   ==>  (FooF@) { BarF@; }
+vs.  (Foo@)${ Bar@; }     ==>  (Foo@) { Bar@; }
+vs.  (Foo@)${ Bar@; }     ==>  (Foo@$) { Bar@$; }
+
+If a function is not a computable type then...
+
+Okay, so we need to be more refined about what we mean by computable:
+A. Foo@ is computable if Foo@$ is legal.
+B. Foo@ is computable if Foo@$ can be represented using a fixed size amount of
+   space during computation. Aka, non-recursive struct or union.
+
+I think (B) is what I'm really going for. Then we want to handle functions and
+presumably processes specially.
+
+(Foo@)${ Bar@; } is not the same as (Foo@) { Bar@; }$. The first represents
+a computation that can be compiled, the second represents a function value
+that could be used during a computation, which is not allowed.
+
+Anyway, it's a worth thinking about, but I think not yet worth changing my
+short term plans. Let's learn more before making this not obviously better
+change.
+
+---
+
+Regarding short term plans, do we need a special fblf let construct? Or can we
+just say that an inline value that appears multiple times in an fblf
+computation will always compute the same value, so it's computation can be
+done only once and reused if the fblf compiler thinks that makes the most
+sense?
+
+In other words, it seems like, from a specification point of view, we ought to
+already know everything that is shared without needing a special inline let
+construct. This also means we don't need support for special inline functions,
+because we get the sharing of variables for free.
+
+It does mean the user doesn't have the option of explicitly distinguishing
+between computations that should be shared and those that should not. Well,
+that's not entirely true. They could define a function to create a computation
+that creates a new copy of the computation every time you call it. That would
+make things clearly explicitly not shared.
+
+It does mean we have to do a little extra work during compilation to keep
+track of what variables might be shared or not. And I assume almost none of
+the variables would be shared. It's not clear to me how expensive that would
+be.
+
+My vote is, for the sake of getting a prototype up and running, where we want
+the specification to be as easy as possible and we don't care so much about
+compilation time, let's skip the special inline let construct. Let's also skip
+inline function values. But do keep INLINE_FUNCTION_EVAL as a construct for
+doing compilation that we can add support for later.
+
+Which means, after a cleanup of the spec, I think we're ready to implement an
+MD5 round as an inline computation.
+
+---
+
+It's a pain to have to reimplement code for addition and md5 that I've already
+implemented.
+
+I'll need support for inline kinds, to allow polymorphic definitions of
+Bit2X@.
+
+Instead of inline kinds, it seems like it could be easier just to have a
+generic inline operator that can be applied to any type? Or just have an
+alternate interpreter for fble programs that can run in a symbolic evaluation
+mode?
+
+---
+
+I'm going to nix the approach taken so far, of having separate inline and
+non-inline types. Let me justify why, because this feels like one of those
+spiral situations where I'll come back later on and ask why not explicitly
+separate inline and non-inline types?
+
+* There is no difference in information content of the description for a
+  function that operates on inline types versus non-inline types. This is
+  especially clear now that we got rid of the notion of inline functions and
+  inline lets.
+* It's really annoying to have to duplicate the same specification of a
+  function, for inline and non-inline cases.
+* It adds a layer of complexity to the fble spec and a lot of redundancy.
+
+The main motivations for having separate types was:
+
+* The performance implications for inline computation are very different from
+  normal computation. Most notably, infinite loops could happen in the case of
+  inline computation that wouldn't for normal computation.
+
+  But having separate types doesn't change whether infinite loops can happen
+  or not. It just means the implementation is allowed to go into an infinite
+  loop if it tries to execute something inline that doesn't work well as an
+  inline computation. But that's exactly what it would have done regardless of
+  the type.
+
+* It would be nice to have a compile time check when defining an inline type
+  that it is a non-recursive struct or union type.
+
+  But this is easy to check in the compiler. We could easily add a separate
+  syntax to assert that, or rely on (compile time) error messages at the use
+  site to identify the problem. It doesn't prevent us from changing the
+  meaning, of, say, Bool@ to something that users don't expect.
+
+* It lets you distinguish between inline and non-inline computation when only
+  concrete values are involved.
+
+  But what value this? Why not always do all the computation you can in normal
+  mode?
+
+Instead I propose to have an alternate execution mode in the fble
+implementation that supports symbolic evaluation. We could add language
+support for making use of that mode, but we don't need to yet. If the goal is
+to try compiling some things symbolically, just return a function as the top
+level program and have the compiler evaluate it with symbolic argument values.
+
+I can imagine two potential language features that could take advantage of
+symbolic computation, using the same runtime semantics of symbolic
+computation.
+
+1. Compilation.
+  Given a function f, return a new function f' with the same type as f that
+  is a compiled version of the symbolic value of f when applied with symbolic
+  arguments.
+
+  The idea being that it could take a while to symbolically execute and
+  compile f, but then applying f' should be real fast.
+ 
+  If we want, we can restrict the argument and result types of f to
+  non-recursive struct and union types. Which I think, or I hope, should be
+  enough to guarantee that we don't need any recursive lets or other things,
+  assuming the symbolic computation terminates and produces a finite value.
+
+2. Smten
+  Add a symbolic type, with support for mplus, mempty, join, whatever it
+  needs. Implement it by doing symbolic execution, where we now have a clear
+  specification for what symbolic computation is supported and what not.
+  Convert the result to a SAT query, solve it, and then evaluate the result.
+
+Is there any nice way to add spec tests for symbolic evaluation?
+
+I suppose (1) is exactly what we want. It confirms we can create a symbolic
+computation and that we can evaluate the resulting symbolic computation
+correctly.
+
+---
+
+Revisiting after a month or so off... let me summarize a short term plan.
+
+We generalize the semantics of fble to support symbolic computation. The most
+interesting consequence is that symbolic evaluation of a union select involves
+evaluating all branches of the union select, which could easily lead to
+infinite recursion.
+
+To run a program, you do the following:
+1. Compile the program to code that can evaluate it symbolically.
+This catches any type errors you have in the program. It doesn't evaluate
+anything yet.
+
+2. Run the compiled code.
+No symbolic values have been introduced, so this will be like normal
+evaluation. You can think of this as a first pass to strip out unused
+functions, pull in code you need from different modules, etc. This is not
+expected to be super fast evaluation. The result is expected to be a function
+value in the symbolic value representation.
+
+3. Evaluate the function symbolically.
+That is, make symbolic values for its arguments, call the function on those
+arguments, and evaluate that symbolically. This will only work if the
+function's runtime is O(1) with respect to its arguments, otherwise it will
+get stuck in infinite loops on symbolic conditions. The result is a
+potentially large directed acyclic graph of union and struct operations.
+
+4. Compile the graph to fast execution.
+Turn the union and struct operations into llvm code or some such. It should
+compile to straight line code where all memory is statically evaluated. It
+should preserve sharing of parts of the graph.
+
+5. Execute the fast code with your concrete inputs.
+This should hopefully run very fast.
+
+
+For the purposes of experimenting with how fast a code we can get when it's
+suitable to inline everything, this should be plenty sufficient. That's all we
+need, and we're ready to go. Ignore processes for the time being.
+
+Thinking longer term, this is not satisfying because only functions that can
+get through (3) are supported in the fast execution mode. There are two
+downsides:
+* We can't do fast execution for all the functions we want to. Because there
+  are some functions that are not constant in their input sizes that we could
+  still benefit from running fast. For example, any function that does the
+  bulk of its work in a function that we could generate fast code for.
+* It's not obvious statically which functions will succeed in symbolic
+  execution and which will not.
+
+Wouldn't it be awesome if we could easily tell statically what parts of a
+program support symbolic execution? Then we could say: anything that supports
+symbolic execution will be executed as such. Anything else will be done
+slowly. Or something like that.
+
+Note that whether something runs symbolically or not depends on the context.
+It depends on the arguments. And arguments could be partially symbolic, which
+would make it very complicated to precisely describe when things work and when
+they don't. Almost like you would have to practically know the implementation
+of a function to know when it would or would not work symbolically.
+
+I don't know. I think it's deep murky waters beyond this point. I think I
+should force myself to make a stand here, implement the above sequence of
+computation, and check to see how fast fble can be when fully inlined in those
+cases that do support full inlining.
+
+---
+
+Here's the plan:
+
+1. Add to the spec (possibly temporarily, not sure) a language construct that
+takes a function f and returns a function f' of the same type. The semantics
+are to evaluate the function f symbolically on all of its arguments and
+compile the resulting symbolic expression into a function. This will allow us
+to write spec tests to exercise all of symbolic evaluation and confirm that
+the resulting compilation and evaluation is correct.
+
+2. Add enough support internally so that we can successfully run md5, or some of
+its non-trivial bits, through symbolic compilation.
+
+3. Implement a new top level program, maybe call it fblf, that takes an fble
+program that returns a function, evaluates the function symbolically, then
+does its own compilation of the symbolic value to llvm bitcode or c or
+something that we can compile natively. Try running md5 or some of its
+non-trivial bits in this mode, see how performance compares to running those
+same bits without symbolic computation.
+
+From that we should have learned enough to identify next steps. No point in
+speculating beyond that.
+
+Yet again the question comes up: how do I know I can run a function
+symbolically? How can you distinguish between an infinite loop and a long
+running symbolic computation? Options are:
+1. Use types to enforce statically that a function supports symbolic
+computation.
+2. Detect at runtime if we've got stuck in an infinite loop (due to symbolic
+computation, or more generally).
+3. Don't.
+
+---
+
+The snag: how to compile union select in a way that works both for normal
+elaboration and symbolic elaboration? In particular, how to deal with the tail
+recursive case, where for normal elaboration we have to do a tail recursive
+call, but for symbolic elaboration we have to not do a tail recursive call.
+
+It's probably not too hard to hack around, but having a special case for tail
+recursion already feels like a hack.
+
+So, after much thought and internal debate, I think it's worth taking a big
+leap sideways and reimplementing the evaluator. Instead of compiling to
+instructions, evaluate a value in place. That gets rid of the hack on tail
+recursion, because we'll have separate references to the variables we need to
+retain from each branch of a case expression, and from other expressions still
+to be evaluated. Then case only has to return the branch it needs (thus
+releasing references to anything that we don't need to hold on to), or return
+all symbolically evaluated branches.
+
+In other words, we change the implementation so that a variable is live for as
+long as some expression is referencing it, rather than what we have today
+where a variable is alive for the duration of the body of a let block except
+for the special case of tail recursion.
+
+I suspect things will go slower in this new form of evaluation. The value of
+compiling instructions is:
+1. We defer substitution until we know we need to. For example, we don't do any
+   substitution of values into branches of union select that we don't take.
+2. We batch substitutions together. For example, we don't go
+   (a, b) -> (1, b) -> (1, 2) with its intermediate allocations. We directly go
+   (a, b) -> (1, 2).
+3. We substitute in an order that guarantees we are never substituting into
+   something that has shared values in it, so we don't have to worry about
+   preserving sharing during substitution.
+
+(1) is what leads to the required special casing of tail recursion. So we'll
+have to expect to get rid of that. (2) is what is exactly the opposite of
+static elaboration, so we'll have to expect to get rid of that. (3) is also
+inconsistent with static elaboration.
+
+As a sort of incremental approach to switch over evaluation, replace FbleTc
+with FbleValue. We can change compile.c to go from FbleValue to FbleInstr, and
+use that for symbolic compilation. Then introduce FbleValue based evaluation,
+do that before compilation, until eventually compilation turns into a no-op.
+
+---
+
+Summary of challenges for symbolic computation of union select. It revolves
+around the question of how to do efficient substitution of arguments in
+function application.
+
+Option 1: Lazily substitution, eager execution
+ - batches substitution of all variables 
+
+
+
+

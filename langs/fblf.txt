@@ -94,17 +94,17 @@ ref ::=
 value ::= ref | const ;
 
 cond ::=
-   '(' value '==' value ')'
- | '(' value '!=' value ')'
+   '(' value '==' value ')'     (* equals *)
+ | '(' value '!=' value ')'     (* not_equals *)
  ;
 
 expr ::=
- | ref '=' value
- | '?' cond block
- | '*' cond block
- | '!' cond
- | expr ',' expr
- | expr ';' expr
+ | ref '=' value            (* assign *)
+ | '?' cond block           (* if *)
+ | '*' cond block           (* while *)
+ | '!' cond                 (* wait *)
+ | expr ';' expr            (* seq *)
+ | expr ',' expr            (* par *)
  | block
  ;
 
@@ -114,8 +114,8 @@ block ::=
 
 stmt ::=
    expr ';'
- | '@' type_name '=' type ';' stmt
- | type name ';' stmt
- | type name '=' value ';' stmt
+ | '@' type_name '=' type ';' stmt      (* typedef *)
+ | type name ';' stmt                   (* vardef uninitialized *)
+ | type name '=' value ';' stmt         (* vardef initialized *)
  ;
  

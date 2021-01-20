@@ -15,6 +15,27 @@ typedef struct {
 } Bit4;
 
 typedef struct {
+  Bit b3 : 1;
+  Bit b2 : 1;
+  Bit b1 : 1;
+  Bit b0 : 1;
+} BitfieldBit4;
+
+typedef struct {
+  Bit b3;
+  Bit b2;
+  Bit b1;
+  Bit b0;
+} __attribute__ ((__packed__)) PackedBit4;
+
+typedef struct {
+  unsigned int b3 : 1;
+  unsigned int b2 : 1;
+  unsigned int b1 : 1;
+  unsigned int b0 : 1;
+} NonEnumBitFieldBit4;
+
+typedef struct {
   Bit is_valid;
   Bit4 data;
 } Maybe;
@@ -82,6 +103,13 @@ int main()
   //   Default equality of struct not supported.
   //   Default equality of enum is supported.
   bool eq = (u.maybe.is_valid == u2.maybe.is_valid);
+
+  // Bitfield packing
+  printf("sizeof Bit: %i\n", sizeof(Bit));
+  printf("sizeof Bit4: %i\n", sizeof(Bit4));
+  printf("sizeof BitfieldBit4: %i\n", sizeof(BitfieldBit4));
+  printf("sizeof PackedBit4: %i\n", sizeof(PackedBit4));
+  printf("sizeof NonEnumBitFieldBit4: %i\n", sizeof(NonEnumBitFieldBit4));
 
   // Demonstration of two interleaved threads.
   int s1, s2;

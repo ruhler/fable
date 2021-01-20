@@ -1,0 +1,128 @@
+
+# Test a 4 bit adder.
+@ Bit@ = ?(0, 1);
+@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+
+Bit4@ a = Bit4@(Bit@.0, Bit@.1, Bit@.0, Bit@.0);  # a = 4
+Bit4@ b = Bit4@(Bit@.0, Bit@.1, Bit@.1, Bit@.1);  # b = 7
+
+Bit@ carry;
+Bit4@ z;
+
+# Compute first bit and carry.
+?(a.0 == Bit@.0) {
+  z.0 = b.0;
+  carry = Bit@.0;
+};
+
+?(a.0 == Bit@.1) {
+  carry = b.0;
+  ?(b.0 == Bit@.0) {
+    z.0 = Bit@.1;
+  };
+
+  ?(b.0 == Bit@.1) {
+    z.0 = Bit@.0;
+  };
+};
+
+# Compute second bit and carry.
+?(a.1 == Bit@.0) {
+  ?(b.1 == Bit@.0) {
+    z.1 = carry;
+    carry = Bit@.0;
+  };
+  ?(b.1 == Bit@.1) {
+    ?(carry == Bit@.0) {
+      z.1 = Bit@.1;
+    };
+    ?(carry == Bit@.1) {
+      z.1 = Bit@.0;
+    };
+  };
+};
+
+?(a.1 == Bit@.1) {
+  ?(b.1 == Bit@.0) {
+    ?(carry == Bit@.0) {
+      z.1 = Bit@.1;
+    };
+    ?(carry == Bit@.1) {
+      z.1 = Bit@.0;
+    };
+  };
+
+  ?(b.1 == Bit@.1) {
+    z.1 = carry;
+    carry = Bit@.1;
+  };
+};
+
+# Compute third bit and carry.
+?(a.2 == Bit@.0) {
+  ?(b.2 == Bit@.0) {
+    z.2 = carry;
+    carry = Bit@.0;
+  };
+  ?(b.2 == Bit@.1) {
+    ?(carry == Bit@.0) {
+      z.2 = Bit@.1;
+    };
+    ?(carry == Bit@.1) {
+      z.2 = Bit@.0;
+    };
+  };
+};
+
+?(a.2 == Bit@.1) {
+  ?(b.2 == Bit@.0) {
+    ?(carry == Bit@.0) {
+      z.2 = Bit@.1;
+    };
+    ?(carry == Bit@.1) {
+      z.2 = Bit@.0;
+    };
+  };
+
+  ?(b.2 == Bit@.1) {
+    z.2 = carry;
+    carry = Bit@.1;
+  };
+};
+
+# Compute fourth bit
+?(a.3 == Bit@.0) {
+  ?(b.3 == Bit@.0) {
+    z.3 = carry;
+  };
+  ?(b.3 == Bit@.1) {
+    ?(carry == Bit@.0) {
+      z.3 = Bit@.1;
+    };
+    ?(carry == Bit@.1) {
+      z.3 = Bit@.0;
+    };
+  };
+};
+
+?(a.3 == Bit@.1) {
+  ?(b.3 == Bit@.0) {
+    ?(carry == Bit@.0) {
+      z.3 = Bit@.1;
+    };
+    ?(carry == Bit@.1) {
+      z.3 = Bit@.0;
+    };
+  };
+
+  ?(b.3 == Bit@.1) {
+    z.3 = carry;
+  };
+};
+
+# Test that we got the right answer.
+# TODO: Figure out a better way to output the result of the program to the
+# test harness? For now we block forever if the wrong answer is computed.
+# Maybe the implementation will have deadlock detection?
+!(z == Bit4@(Bit@.1, Bit@.0, Bit@.1, Bit@.1));
+

@@ -30,3 +30,11 @@ For a true potential for speed, we've got to compile to C code:
   single top level while loop in round robin fashion. That sounds good. That's
   maybe better. Scales better to more threads? Depends actually. Maybe doesn't
   scale better.
+
+---
+
+Use of bitfields to improve memory overheads looks suspect to me. gcc isn't
+doing things I expect. If I want things to be packed, I should probably
+implement that explicitly myself with bitwise operations. Should be possible,
+if annoying, as a future optimization (if it actually turns out to be an
+improvement).
