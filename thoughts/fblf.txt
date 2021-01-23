@@ -20,3 +20,138 @@ Initial reactions trying to program in fblf:
   But maybe I should be comparing with fble instead of c? Fble already does
   this, right? It just hides it much better behind abstractions.
 
+---
+
+We run into some interesting things if we think about how to take advantage of
+integer arithmetic in c for fblf performance.
+
+Let's say we can provide our own substitute implementation of a module. I will
+not make ints primitive in fblf, because it is too arbitrary. But we can say
+any module you write in fblf, you could provide your own, manual
+implementation for in C that could be based on the use of ints.
+
+This implies we have a notion of modules that can be compiled separately. I
+propose we define the interface to a module something like:
+
+struct FblfModule {
+  bool Run(FblfModule* this);
+  void Free(FblfModule* this);
+}
+
+FblfModule* Foo(Arg* a, Arg* b, ...);
+
+The function 'Foo' creates an instance of the module Foo by dynamically
+allocating any memory it will need and returning a handle to it. It takes as
+argument pointers to whatever external registers it needs to read and write.
+
+The 'Run' function runs the module for some finite time and returns whether
+the module has completed running or not. If you Run the module after it has
+completed, it starts over again from the beginning to facilitate loop
+statements.
+
+The 'Free' function frees the dynamic memory allocation.
+
+This raises the question: how do we do efficient synchronization between
+threads? A naive busy loop may work in practice to start, but it's going to
+lead to unhappiness pretty quickly. Imagine a game waiting for input from a
+user. I don't want that to spin the CPU full throttle while waiting.
+
+What we want is some mechanism to put a thread to sleep and wake it up when
+some change has occurred to the register it's waiting on. That means whoever
+is writing to the register is responsible for notifying who is waiting on it.
+That's expensive if we do it for every register write. We would like to limit
+that to just the registers we synchronize on. But that means the module has to
+know which of its arguments is one of these 'synchronizing' registers and
+change code appropriately. That suggests synchronization should be part of the
+type of a register at the language level.
+
+Perhaps if we have some type Foo@!, we take that to mean Foo@ is a register
+with some associated synchronizing flag that you must trigger any time you
+write to any part of the register.
+
+The next question we run into when asking how to define a primitive int add
+implementation. It only makes sense performance wise if the type is
+represented as a packed sequence of bits in the right order. This suggests
+some requirement for packing on user defined data types. It also means we'll
+want to choose the type of Bit32@ in the fblf library in such a way that it
+packs to a uint32_t in c.
+
+When you start packing bits, that means you can no longer take a standard C
+pointer to an arbitrary module argument. The argument registers may or may not
+be packed together depending on where they come from. You may have multiple
+arguments that refer to the same underlying register and not know it from the
+point of view of the module.
+
+What we need is a bit-addressable pointer with well defined packing semantics.
+There's no way we can guarantee a pointer is byte aligned, so it will need
+some preprocessing before we can align it for use in C arithmetic. Perhaps
+that's not too difficult, and perhaps that gives us an easy implementation for
+what I thought was going to be very tricky.
+
+Say we have some BitPointer type. We just want some functions:
+
+uint64_t GetBits(BitPointer, size_t n);
+void SetBits(BitPointer, uint64_t, size_t n);
+
+To get and set n bits worth starting at the given pointer. If I can implement
+these efficiently, then equality and assignment are easy:
+
+Assign:
+  for (int i = 0; i < n/64; ++i) {
+    SetBits(a, GetBits(b, 64), 64);
+    a += 64;
+    b += 64;
+  }
+  SetBits(a, GetBits(b, n%64), n%64);
+
+Compare:
+  for (int i = 0; i < n/64; ++i) {
+    if (GetBits(a, 64) != GetBits(b, 64)) {
+      return false;
+    }
+    a += 64;
+    b += 64;
+  }
+  if (GetBits(a, n%64) != GetBits(b, n%64)) {
+    return false;
+  }
+  return true;
+
+How do we implement GetBits and SetBits?
+
+For GetBits, assuming an underlying storage of 64 bit words, and the pointer
+is somewhere between words... It's doable with some number of shifts and masks
+and stuff. I'm confident of that.
+
+In summary:
+* Don't try to reuse existing c struct and enum type. Pack everything into
+  bits, and have a custom BitPointer type.
+* It would be good to have a basic notion of a module at the language level,
+  to have a meaningful notion of modular compilation and the option to define
+  my own module.
+* Registers used for synchronization should be have an explicitly different
+  type.
+
+---
+
+To provide a primitive implementation of, for example, 32 bit arithmetic, we
+want to be able to write our own module in C. We can do this if the language
+supports modular compilation. Compile the fblf module to a C module, throw
+away that C module and replace it with a hand crafted one. As long as the
+interface is well defined at the C boundary, we can totally do this.
+
+Note that different target platforms would want and need different API
+boundaries. For example, you could imagine modular compilation to verilog.
+Then we need a clearly defined module boundary for verilog.
+
+So in general:
+* We need a notion of modules in fblf.
+* We need a notion of modules in whatever target abstraction layer we want to
+  give overrides in (C, verilog, Java, assembly, pick your favorite).
+* We need modular compilation: a module at the fblf level corresponds in a
+  well defined fashion to a module at the target abstraction layer.
+* We need a target level linker to link the target abstraction layer modules
+  together into a single blob that can be run at the target abstraction layer.
+
+I find that to be very interesting.
+

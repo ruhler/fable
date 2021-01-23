@@ -1,5 +1,10 @@
 Fblf:
-* Add tests for bits function, including aliasing case.
+* Debug and fix failing test case.
+* Add tests for bits function.
+ - Including cross word boundary set and get.
+ - Including alias case.
+* Address potential bug where we try to access out of bounds on the last
+  couple words of the heap when setting the last bits in the heap?
 
 Invaders:
 * It's way way way too slow. Figure out how to make it go much faster.
