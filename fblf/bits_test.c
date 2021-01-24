@@ -56,7 +56,7 @@ int main()
     FblfBitPtr b = FblfNewBitsFromBinary("10101100101100101010");
     FblfBitPtr expected = FblfNewBitsFromBinary("10100101100111101110");
 
-    FblfCopyBits(a + 2, b + 5, 9);
+    FblfCopyBits(b + 5, a + 2, 9);
     assert(FblfBitsEqual(a, expected, 20));
   
     FblfFreeBits(a);
