@@ -106,10 +106,10 @@ uint64_t FblfGetBits(FblfBitPtr ptr, size_t n);
 //
 // Inputs:
 //   ptr - A pointer to the first bit in the sequence to write.
-//   n - The number of bits to read. Must be less than or equal to 64.
 //   value - The bits to write, specified in the least significant n bits of
 //   the value in order from most significant bit to least significant bit.
 //   The remaining unused most significant bits of the value must be set to 0.
+//   n - The number of bits to read. Must be less than or equal to 64.
 //
 // Side effects:
 // * Sets the value of the n bits starting at ptr.
@@ -117,7 +117,7 @@ uint64_t FblfGetBits(FblfBitPtr ptr, size_t n);
 //   allocated sequence of bits.
 // * Behavior is undefined if n > 64.
 // * Behavior is undefined if the unused bits of value are not set to 0.
-void FblfSetBits(FblfBitPtr ptr, size_t n, uint64_t value);
+void FblfSetBits(FblfBitPtr ptr, uint64_t value, size_t n);
 
 // FblfCopyBits --
 //   Copy n bits from src to dst.

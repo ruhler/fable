@@ -32,7 +32,7 @@ FblfBitPtr FblfNewBitsFromBinary(const char* binstr)
   FblfBitPtr bits = FblfNewBits(n);
   for (size_t i = 0; i < n; ++i) {
     uint64_t bit = (binstr[i] == '0') ? 0 : 1;
-    FblfSetBits(bits+i, 1, bit);
+    FblfSetBits(bits+i, bit, 1);
   }
   return bits;
 }
@@ -52,7 +52,7 @@ FblfBitPtr FblfNewBitsFromHex(const char* hexstr)
     } else {
       assert(false && "non-hex digit");
     }
-    FblfSetBits(bits+4*i, 4, value);
+    FblfSetBits(bits+4*i, value, 4);
   }
   return bits;
 }
@@ -78,7 +78,7 @@ uint64_t FblfGetBits(FblfBitPtr ptr, size_t n)
 }
 
 // FblfSetBits -- see documentation in bits.h
-void FblfSetBits(FblfBitPtr ptr, size_t n, uint64_t value)
+void FblfSetBits(FblfBitPtr ptr, uint64_t value, size_t n)
 {
   assert(n <= 64 && "Invalid argument");
   size_t unused_value_bits = BITS_PER_WORD - n;
@@ -106,12 +106,12 @@ void FblfSetBits(FblfBitPtr ptr, size_t n, uint64_t value)
 void FblfCopyBits(FblfBitPtr src, FblfBitPtr dst, size_t n)
 {
   while (n > BITS_PER_WORD) {
-    FblfSetBits(dst, BITS_PER_WORD, FblfGetBits(src, BITS_PER_WORD));
+    FblfSetBits(dst, FblfGetBits(src, BITS_PER_WORD), BITS_PER_WORD);
     dst += BITS_PER_WORD;
     src += BITS_PER_WORD;
     n -= BITS_PER_WORD;
   }
-  FblfSetBits(dst, n, FblfGetBits(src, n));
+  FblfSetBits(dst, FblfGetBits(src, n), n);
 }
 
 // FblfBitsEqual -- See documentation in bits.h
