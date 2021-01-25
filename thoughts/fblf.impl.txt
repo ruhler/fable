@@ -38,3 +38,8 @@ doing things I expect. If I want things to be packed, I should probably
 implement that explicitly myself with bitwise operations. Should be possible,
 if annoying, as a future optimization (if it actually turns out to be an
 improvement).
+
+---
+
+Manually packing things into bits has its own overheads. If I'm storing a 32 or
+64 bit bit pointer for each bit, that gives us the same overheads.

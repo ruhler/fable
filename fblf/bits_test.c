@@ -28,7 +28,6 @@ int main()
     assert(0x3d2 == FblfGetBits(a+5, 11));
   }
 
-
   { // Test gets of various position and size from a hex string.
     FblfBitPtr a = FblfNewBitsFromHex("d3d24544c");
     assert(0x0 == FblfGetBits(a, 0));
@@ -38,6 +37,22 @@ int main()
     assert(0x0 == FblfGetBits(a+5, 0));
     assert(0x7 == FblfGetBits(a+5, 4));
     assert(0x3d2 == FblfGetBits(a+5, 11));
+  }
+
+  { // Test get across 64 bit boundary.
+    FblfBitPtr a = FblfNewBits(128);
+    FblfSetBits(a, 64, 0x123456789ABCDEF0);
+    FblfSetBits(a + 64, 64, 0xABCDEF0123456789);
+    assert(0xF0ABC == FblfGetBits(a + 56, 20));
+  }
+
+  { // Test set across 64 bit boundary.
+    FblfBitPtr a = FblfNewBits(128);
+    FblfSetBits(a, 64, 0x0);
+    FblfSetBits(a + 64, 64, 0x0);
+    FblfSetBits(a + 56, 20, 0xF0ABC);
+    assert(0xF0 == FblfGetBits(a, 64));
+    assert(0xABC == FblfGetBits(a + 64, 12));
   }
 
   { // Test basic bit equality

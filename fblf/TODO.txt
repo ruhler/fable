@@ -1,0 +1,5 @@
+* Swap order of value and n in SetBits function.
+* Add tests for copy bits in alias case.
+* Address potential bug where we try to access out of bounds on the last
+  couple words of the heap when setting the last bits in the heap?
+
