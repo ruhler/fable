@@ -1,0 +1,18 @@
+
+% Chars = /Char%.Chars;
+
+@ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+
+% Unit = /Unit%.Unit;
+
+# Import to test compilation.
+% _ = /Fblf/Add%;
+
+Test@ Tests = TestSuite(Chars|Fblf, [
+  Test(Chars|Dummy, !(TestResult@(pass: Unit)))
+  ]);
+
+@(Tests);

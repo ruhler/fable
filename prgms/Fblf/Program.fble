@@ -1,11 +1,18 @@
 
+@ Int@ = /Int/Int%.Int@;
+
+<@>@ List@ = /List%.List@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
 # Bit@ --
 #   Represents a single bit of information.
 @ Bit@ = +(Unit@ 0, Unit@ 1);
 
 # Bits@ --
 #   A sequence of bits.
-@ Bits@ = List@<Bit@>
+@ Bits@ = List@<Bit@>;
 
 # Addr@ --
 #   A reference to a bit on the bit heap.
@@ -15,6 +22,14 @@
 #   A value that is specified as either a reference to a sequence of bits on
 #   the heap or a literal sequence of bits.
 @ Value@ = +(Addr@ ref, Bits@ const);
+
+(Addr@) { Value@; } Ref = (Addr@ x) {
+  Value@(ref: x);
+};
+
+(Bits@) { Value@; } Const = (Bits@ x) {
+  Value@(const: x);
+};
 
 # ConditionOp@ --
 #   A conditional operator.
@@ -33,6 +48,14 @@
 #   b - The second operand.
 #   n - The number of bits to compare.
 @ Condition@ = *(ConditionOp@ op, Value@ a, Value@ b, Int@ n);
+
+(Value@, Value@, Int@) { Condition@; } Eq = (Value@ a, Value@ b, Int@ n) {
+  Condition@(ConditionOp@(eq: Unit), a, b, n);
+};
+
+(Value@, Value@, Int@) { Condition@; } Ne = (Value@ a, Value@ b, Int@ n) {
+  Condition@(ConditionOp@(ne: Unit), a, b, n);
+};
 
 # Assign@ --
 #   Set the contents of ref to the given value.
@@ -67,5 +90,24 @@
   While@ while
 );
 
-@(Bit@, Bits@, Addr@, Value@, ConditionOp@, Condition@,
-  Assign@, Sequence@, If@, While@, Program@);
+(Addr@, Value@, Int@) { Program@; } Assign = (Addr@ x, Value@ v, Int@ n) {
+  Program@(assign: Assign@(x, v, n));
+};
+
+(Condition@, Program@) { Program@; } If = (Condition@ p, Program@ body) {
+  Program@(if: If@(p, body));
+};
+
+(Program@, Program@) { Program@; } Seq = (Program@ a, Program@ b) {
+  Program@(sequence: Sequence@(a, b));
+};
+
+(Condition@, Program@) { Program@; } While = (Condition@ p, Program@ body) {
+  Program@(while: While@(p, body));
+};
+
+@(
+  Bit@, Bits@, Addr@, Value@, ConditionOp@, Condition@,
+  Assign@, Sequence@, If@, While@, Program@,
+  Const, Ref, Eq, Ne, Assign, If, Seq, While
+);

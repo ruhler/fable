@@ -1,3 +1,19 @@
+Fblf:
+* Implement and test a bit heap library.
+* Implement an fblf interpreter.
+* Write a test case for 4 bit adder.
+* Separate out Bit@ and a bit string type and literal from Fblf?
+* Factor out code to describe iterators and an iterator over a range of ints?
+* Implement md5 in fblf.
+* Implement a compiler from fblf to C code.
+  - See how much faster it is compared to native fble md5.
+* Figure out how to replace fblf integer arithmetic with a native c
+  implementation at compile time.
+  - See how much faster it is now.
+* Implement space invaders in fblf.
+  - Do whatever is necessary to make it easier to write the program as I go
+    along with regards to types and syntax.
+
 Invaders:
 * It's way way way too slow. Figure out how to make it go much faster.
  - Profile the benchmark to see what's up.
