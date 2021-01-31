@@ -1,0 +1,71 @@
+
+# Bit@ --
+#   Represents a single bit of information.
+@ Bit@ = +(Unit@ 0, Unit@ 1);
+
+# Bits@ --
+#   A sequence of bits.
+@ Bits@ = List@<Bit@>
+
+# Addr@ --
+#   A reference to a bit on the bit heap.
+@ Addr@ = Int@;
+
+# Value@ --
+#   A value that is specified as either a reference to a sequence of bits on
+#   the heap or a literal sequence of bits.
+@ Value@ = +(Addr@ ref, Bits@ const);
+
+# ConditionOp@ --
+#   A conditional operator.
+#
+# Fields:
+#   eq - The condition is satisfied if the arguments are equal.
+#   ne - The condition is satisfied if the arguments are not equal.
+@ ConditionOp@ = +(Unit@ eq, Unit@ ne);
+
+# Condition@ --
+#   A conditional expression: a == b or a != b
+#
+# Fields:
+#   op - The operation to use.
+#   a - The first operand.
+#   b - The second operand.
+#   n - The number of bits to compare.
+@ Condition@ = *(ConditionOp@ op, Value@ a, Value@ b, Int@ n);
+
+# Assign@ --
+#   Set the contents of ref to the given value.
+#
+# If value is a reference, behavior is undefined of the sequences of bits of
+# the ref and value are overlapping.
+#
+# Fields:
+#   ref - Reference to the sequence of bits to be assigned to.
+#   value - The value of the bits to set.
+#   n - The number of bits to be assigned.
+@ Assign@ = *(Addr@ ref, Value@ value, Int@ n);
+
+# Sequence@ -- 
+#   Executes program a followed by program b.
+@ Sequence@ = *(Program@ a, Program@ b),
+
+# If@ --
+#   Executes the body if the condition is satisfied.
+@ If@ = *(Condition@ condition, Program@ body),
+
+# While@ --
+#   Executes the body repeatedly for as long as the condition is satisfied.
+@ While@ = *(Condition@ condition, Program@ body),
+
+# Program@ --
+#   A program that performs computation on the bit heap.
+@ Program@ = +(
+  Assign@ assign,
+  Sequence@ sequence,
+  If@ if,
+  While@ while
+);
+
+@(Bit@, Bits@, Addr@, Value@, ConditionOp@, Condition@,
+  Assign@, Sequence@, If@, While@, Program@);

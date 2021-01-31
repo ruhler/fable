@@ -155,3 +155,277 @@ So in general:
 
 I find that to be very interesting.
 
+---
+
+Idea: what if we didn't allow parallel composition of fblf programs? What if,
+instead of re-using state by looping, where the state has to be re-initialized
+from scratch each time, we have a notion of persistent state?
+
+In this view, we declare some persistent state, and then expose to users one
+or more functions they can call to modify that state. It's up to the top level
+user to schedule use of those functions.
+
+For any of the interactive games I've written in fble so far, there's no issue
+with manually scheduling like this: wait in C for an event, then call into
+the fblf code. For md5 sum too, the top level can just say: pad 16 words
+worth, then do a block.
+
+This way the otherwise implicit program state will be explicit state. We avoid
+the implementation overheads of fine grain multithreading. Maybe it's a little
+restrictive in what you can write, but isn't that the point of fblf? To err on
+the side of fast but inexpressive, and then see how big a limitation that
+inexpressiveness is?
+
+Imagine we inlined everything in an fblf program. What would the top level
+look like? We want a type to describe the state. We have a single, sequential
+program that manipulates the state.
+
+To interact with the outside world, we would want to take some registers from
+the outside world, or expose some of our internal registers to the outside
+world. And the outside world gets to choose when we run.
+
+Note that we will be running repeatedly, but potentially on different state
+values each time. That's intentional.
+
+There's a question of whether we expose a single run method, or multiple run
+methods that the outside world can choose to execute in whatever order they
+like. They are sort of equivalent in the sense that you could model multiple
+run methods as a single method plus an externally visible register with an
+enum set to the run method we actually want to use. From a programmer point of
+view, multiple run methods seems much more convenient.
+
+So let's say a module is:
+* You give it some registers as input.
+* It declares its own internal state.
+* It gives you pack a list of methods you can run. Each method is like void
+  Foo() - no inputs or outputs. Everything is done through the state.
+* You can call the methods in any order. They operate on the current value of
+  the state visible to the module.
+
+Modules compose naturally: allow a module to instantiate another module,
+passing in some registers, and be able to call the methods of the instantiated
+module in your own module's programs.
+
+We'll want to distinguish between defining a module and instantiating a
+module.
+
+The language is a bit more complex than before. We have the following kinds of
+things:
+
+* Data type definitions: structs, unions, enums that can be packed into
+  registers. Happens at the top level.
+* Register declarations: from within a module declaration.
+* Module definitions. Happens at the top level.
+* Module instantiations: from within a module declaration.
+* Function definitions: from within a module declaration.
+* Function calls: from within a function definition.
+
+
+Sounds like we have three different syntactic contexts:
+1. Top level (for types, module declarations)
+2. Module definition (for registers, function definitions, module instantiations)
+3. Functions (for program statements)
+
+It doesn't make sense to define a type or a module within a function, because
+you could never use them. But it does make sense to define a type or a module
+within another module definition. It just means the type and module have
+limited external scope. So let's say the top level is a module definition.
+Then we have two syntactic contexts:
+
+1. Module definition.
+2. Function definition.
+
+A function definition is just a sequence of program statements:
+  assign, if, while, seq, call
+
+A module definition is something that takes args and returns a list of
+functions you can call. Maybe some of the functions are private and internal.
+So, perhaps something like:
+
+Module foo = (Foo@ a, Bar@ b, ...) {
+  
+
+  @(A, B, C);
+};
+
+Which suggests we want a module type, which is a list of names of methods to
+call? And a meta-function type, which is a function from register types to
+module type?
+
+Let's sketch some more. The environment contains:
+ * type names, module type names, module names, instance names, register names, function names.
+
+Each of these things can be declared. Note that instance names and register
+names are special because they have a side effect / identity. type names,
+module type names, module names, and function names are just names for things
+you could otherwise write out manually: they have referential transparency.
+
+statement ::=
+  '@' type_name '=' type ';'        (* type name declaration *)
+| '!' module_name '=' module ';'    (* module name declaration *)
+| '$' module_type_name '=' module_type ';' (* module type name declaration *)
+| '%' instance_name ':=' module ';' (* instantiate a module *)
+| '&' register_name ':=' type ';'   (* instantiate a register *)
+| '^' function_name '=' function ';' (* function name declaration *)
+| '(' function, ... ')'             (* module definition *)
+
+Whatever arbitrary concrete syntax you want to use. It seems rather more
+complicated than fble. Don't forget literals. We'll need those too. Perhaps we
+should have a single syntax for naming things. So, like, have a notion of a
+variable whose type says if it is data, module, function, or what. We could
+skip the part where you can give referentially transparent names to things to
+help focus on the core features. Names are really just about re-use at the
+meta programming level.
+
+I should draft an abstract syntax next.
+
+---
+Name ::= (* A string of characters *)
+InstanceName ::= (* A string of characters *)
+
+Type ::= 
+ | struct_type (fields :: [(Type, Name)])
+ | enum_type (fields :: [Name])
+ | union_type (fields :: [(Type, Name)])
+ ;
+
+ModuleField ::=
+   module_method
+ | module_field (type :: ModuleType)
+ ;
+
+ModuleFieldValue ::=
+   module_method_value (value :: MethodStmt)
+ | module_field_value (value :: ModuleValue)
+
+ModuleType ::=
+   module_type (fields :: [(ModuleField, Name)])
+ ;
+
+ModuleValue ::=
+   module_type (fields :: [(ModuleFieldValue, Name)])
+ ;
+
+Const ::=
+   struct_value (type :: Type) (fields :: [Const])
+ | union_value (type :: Type) (field :: Name) (value :: Const)
+ | enum_value (type :: Type) (field :: Name)
+ ;
+
+Ref ::= 
+   ref (name :: Name)
+ | access (ref :: Ref) (field :: Name)
+ ;
+
+Value ::= ref | Const ;
+
+Cond ::=
+   equals (a :: Value) (b :: Value)
+ | not_equals (a :: Value) (b :: Value)
+ ;
+
+Instance ::=
+   named_instance (name :: InstanceName)
+ | sub_instance (instance :: Instance) (field :: Name)
+ ;
+
+MethodStmt ::=
+   assign (ref :: Ref) (value :: Const)
+ | method (instance :: Instance) (method :: Name)
+ | seq (a :: MethodStmt) (b :: MethodStmt)
+ | if (cond :: Cond) (body :: MethodStmt)
+ | while (cond :: Cond) (body :: MethodStmt)
+ ;
+
+ModuleStmt ::=
+   vardef (type :: Type) (name :: Name) (body :: ModuleStmt)
+ | instantiate (type :: ModuleType) (name :: Name) (value :: Module) (body :: ModuleStmt)
+ | module_value (value :: ModuleValue)
+ ;
+
+Okay, so this is an odd choice of how much abstraction we allow. If we can't
+give names to parameterized module declarations, what's the point of having
+modules internally? We may as well just say you give a bunch of variable
+declarations, then return some methods that refer to those variables.
+
+This seems terribly complicated.
+
+Could we mix it all into a single program syntax, and just have vardef and
+module instantiation behave like static variables in C?
+
+Prog ::=
+   assign (ref :: Ref) (value :: Const)
+ | run (instance :: InstanceName)
+ | seq (a :: Prog) (b :: Prog)
+ | if (cond :: Cond) (body :: Prog)
+ | while (cond :: Cond) (body :: Prog)
+ | typedef (name :: TypeName) (value :: Type) (body :: Prog)
+ | vardef (name :: Name) (type :: Type) (value :: Value) (body Prog)
+ | progdef (name :: ProgName) (args :: [(Type, Name)]) (body :: Prog)
+ | instdef (name :: InstanceName) (prog :: ProgName) (args :: [Ref])
+ ;
+
+That's much simpler syntactically. It's a little weird to have register and
+module instantiations that happen statically mixed in with dynamic code. And
+we are limiting ourself to a single method per module. You could use data
+types and registers to implement submethods in the language.
+
+---
+
+Some changes I would like to suggest:
+* We want a meta language with support for types, namespaces, and modules as
+  values.
+* Don't allow initial values for registers. The module should take a reset
+  signal as input if necessary to know when to reinitialize its values.
+* Maybe, to start, have all reg and module instantiations at the top of a
+  program.
+
+If we're going to have namespaces anyway, why not allow a module to return a
+namespace of methods, types, and registers? Isn't a module just a thing that
+instantiates registers and submodules and returns a collection of functions
+that make use of those registers and submodules?
+
+Now I'm going in circles.
+
+Could I use fble as my meta language? I've tried this before. Let's think
+again.
+
+A module is a function that takes registers of a given type and returns a
+collection of programs that can be run as part of a function.
+
+A register is typed. Because you can access particular fields of a register
+and define constant values. In practice, under the hood, a register is a
+unique id and range of bits. Access to a register extracts range of bits.
+Allocating a register creates a new unique id.
+
+So then, an enum type is a collection of named ranges of bits and sizes.
+A struct type is a collection of named types.
+A union type is a collection of named types. I could probably make a syntax
+work out for that.
+
+Consider a struct type and struct access. Struct access should like:
+
+Access = (Reg@ r, Field@ f) { Reg@; }
+
+Where a register is a bitslice, and a field is a bit offset and size. But we
+also need to check somewhere that the field belongs to the type of the
+register. The Reg@ could hold its type, and Field@ could be an index into the
+type identifying the field. But really we would want the Field@ to hold its
+type too, and if the type of the Reg@ doesn't match the type of the Field@,
+then what? How do we report the type error?
+
+Could we embed things in the fble type?
+
+For example, let's say Reg@ is parameterized by an fble type, and Field@ is
+parameterized by an fble type. Or a pair of types. Then:
+
+Access = <@ S@, @ T@>(Reg@<S@> r, Field@<S@, T@> f) { Reg@<S@>; }
+
+Now when we define an fblf type, it gives us a collection of fields?
+
+  Type@ Bool = @(
+    @<...> T@ - The bool type,
+    Field@<T@, Unit.T@> true,
+    Field@<T@, Unit.T@> false,
+  );
+

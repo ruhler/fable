@@ -1,0 +1,88 @@
+
+# Add1 --
+#   A 1-bit adder.
+#
+# Inputs:
+#   a - The address of the first operand.
+#   b - The address of the second operand.
+#   c - The address of carry bit in.
+#   x - The address of the carry bit out.
+#   z - The address of where to store the result of the addition.
+#
+# Results:
+#   A program that sets x and z based on the one bit addition a + b + c.
+(Addr@, Addr@, Addr@, Addr@, Addr@) { Program; }
+Add1 = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
+  Int@ n1 = I(D|1);
+  Value@ b0 = ConstV(Cons<Bit@>(Bit@(0: Unit), Nil<Bit@>));
+  Value@ b1 = ConstV(Cons<Bit@>(Bit@(0: Unit), Nil<Bit@>));
+  Seq(
+    If(Eq(RefV(a), b0, n1),
+      Seq(
+        If(Eq(RefV(b), b0, n1),
+          Seq(
+            Assign(z, RefV(c), n1),
+            Assign(x, b0, n1))),
+        If(Eq(RefV(b), b1, n1),
+          Seq(
+            If(Eq(RefV(c), b0, n1),
+              Seq(
+                Assign(z, b1, n1),
+                Assign(x, b0, n1))),
+            If(Eq(RefV(c), b1, n1),
+              Seq(
+                Assign(z, b0, n1),
+                Assign(x, b1, n1))))))),
+    If(Eq(RefV(a), b1, n1),
+      Seq(
+        If(Eq(RefV(b), b0, n1),
+          Seq(
+            If(Eq(RefV(c), b0, n1),
+              Seq(
+                Assign(z, b1, n1),
+                Assign(x, b0, n1))),
+            If(Eq(RefV(c), b1, n1),
+              Seq(
+                Assign(z, b0, n1),
+                Assign(x, b1, n1))))),
+        If(Eq(RefV(b), b1, n1),
+          Seq(
+            Assign(z, RefV(c), n1),
+            Assign(x, b1, n1))))));
+};
+
+# Adder -- 
+#   An n-bit adder, with most significant bit first.
+#
+# Inputs:
+#   heap - The next available address on the heap.
+#   n - The number of bits to add together.
+#   a - The address of the first operand.
+#   b - The address of the second operand.
+#   z - The address of where to store the result of the addition.
+#
+# Results:
+#   heap - An updated value for the next available address on the heap.
+#   prgm - A program that, when executed, sets z = a + b.
+(Addr@, IntP@, Addr@, Addr@, Addr@) { *(Addr@ heap, Program@ prgm); }
+Adder = (Addr@ heap, IntP@ n, Addr@ a, Addr@ b, Addr@ z) {
+  # We need a single bit of internal state to store the carry bit as we do
+  # the addition.
+  Addr@ carry = heap;
+  Addr@ nheap = Add(heap, I(D|1));
+
+  Value@ b0 = ConstV(Cons<Bit@>(Bit@(0: Unit), Nil<Bit@>));
+  Program@ initialize_carry = Assign(carry, b0, I(D|1));
+
+  Program@ p = DoWhile<Int@, Program@>(
+    Sub(n, I(D|1)),
+    (Int@ i) {
+      Eq(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
+    },
+    initialize_carry,
+    (Int@ i, Program@ program_start) {
+      Seq(program_start, Add1(Add(a, i), Add(b, i), carry, carry, Add(z, i))); 
+    });
+
+  @(heap: nheap, prgm: p);
+};

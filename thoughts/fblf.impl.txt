@@ -42,4 +42,92 @@ improvement).
 ---
 
 Manually packing things into bits has its own overheads. If I'm storing a 32 or
-64 bit bit pointer for each bit, that gives us the same overheads.
+64 bit bit pointer for each bit, that gives us the same overheads? Perhaps not
+entirely if we allocated things in chunks and use math to compute intermediate
+addresses. I'm not sure.
+
+---
+
+If we introduce module compilation, which I think we need in order to have
+efficient integer operations by providing primitive C implementations, then a
+question comes up about whether a program might yield or not.
+
+If a program could yield, then whenever we execute it we have to put it around
+a loop and add another program state to track. If the program can't yield,
+then we don't have to do that. Something like a 64 bit addition implemented as
+modules shouldn't have to yield at all. It shouldn't have to store program
+state at all. But if it's implemented with modules, either it has to be
+conservative and do a lot of looping and potentially yielding, or we have to
+capture in the type of the module whether the program can yield or not.
+
+One way to capture explicitly if a program can yield or not would be to have
+an explicit yield statement. If you use yield or wait, then the program is
+interruptible. Otherwise it isn't. I like that, in the sense that as a
+programmer I know what loops need to allow concurrency and what loops will
+finish all on their own. The trouble is, this would imply that we have to do
+all non-yields atomically. And that feels unlike how the real world works, and
+the original motivation for introducing concurrency in the language.
+
+In my md5 sketch prototype, I did distinguish between Run and RunI methods.
+Explicit yielding could make for more explicit scheduling behavior. Maybe we
+say, in a parallel program, we always start with the first, when it yields we
+go to the second, when that yields we go back to the first, until all are
+done. Any way to control when a parent thread yields as opposed to switching
+back to another child thread?
+
+If we had global state that persisted beyond a particular program, maybe we
+don't need concurrency in the language? Everything can be simulated?
+
+How would Pad and Compute look in md5?
+
+Compute: you call it, it runs on whatever existing block exists. Then we can
+write:
+
+Pad;
+Pad;
+Pad;
+Pad;
+...
+Compute;
+Pad;
+...
+
+But then we need to distinguish between instantiating the state for a module,
+and instantiating the program for the module. Because we are saying we can
+rerun the program for the module repeatedly on the same state.
+
+We sort of already do that in fblf with loops, but this would be a less
+restricted form. Imagine, if we can avoid having concurrency built into the
+language, it feels like that's the last bit we need to really make it fast.
+
+What would that look like?
+
+Perhaps a program is parameterized by a segment of state.
+Perhaps we define state and program separately. You can rerun the same program
+on different states?
+
+Well, that's kind of what we already have, except instead of having the
+program declare its own internal state, you give it the state it needs to
+compute.
+
+Maybe the thing we want to define and compose is some thing with its own state
+that you instantiate and repeatedly run. Perhaps that's the module we want to
+introduce to the language anyway.
+
+module Foo(args ...) {
+  declare state.
+
+  Run = {
+  };
+};
+
+This is starting to look a lot like a class. Why have only one program we can
+run over the state? Why not allow multiple programs to run over the same
+internal state?
+
+In other words, we require the user to explicitly code concurrency in their
+program when desired. That probably means the top level interface to a program
+should be one where someone else is driving the program. The program shouldn't
+assume it has full control while something else magically pokes register
+values.
+
