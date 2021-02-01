@@ -3,6 +3,9 @@
 @ Int@ = /Int/Int%.Int@;
 
 <@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -24,8 +27,13 @@
   Value@(ref: x);
 };
 
-(Bits@) { Value@; } Const = (Bits@ x) {
-  Value@(const: x);
+# Const --
+#   A constant value.
+#
+# Example Use:
+#   Value@ v = Const(Bit|01110001);
+(Lit@<Bit@>) { Value@; } Const = (Lit@<Bit@> bits) {
+  Value@(const: List<Bit@>(bits));
 };
 
 # ConditionOp@ --

@@ -1,6 +1,7 @@
 
+% B = /Digits%.Bit;
+
 @ Addr@ = /Fblf/Program%.Addr@;
-@ Bit@ = /Fblf/Program%.Bit@;
 @ Program@ = /Fblf/Program%.Program@;
 @ Value@ = /Fblf/Program%.Value@;
 % Assign = /Fblf/Program%.Assign;
@@ -22,12 +23,7 @@
 
 @ IntP@ = /Int/IntP%.IntP@;
 
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
-
 <@,@>% DoWhile = /Loop%.DoWhile;
-
-% Unit = /Unit%.Unit;
 
 # Add1 --
 #   A 1-bit adder.
@@ -44,8 +40,8 @@
 (Addr@, Addr@, Addr@, Addr@, Addr@) { Program@; }
 Add1 = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
   Int@ n1 = I(D|1);
-  Value@ b0 = Const(Cons<Bit@>(Bit@(0: Unit), Nil<Bit@>));
-  Value@ b1 = Const(Cons<Bit@>(Bit@(0: Unit), Nil<Bit@>));
+  Value@ b0 = Const(B|0);
+  Value@ b1 = Const(B|1);
   Seq(
     If(Eq(Ref(a), b0, n1),
       Seq(
@@ -101,7 +97,7 @@ Adder = (Addr@ heap, IntP@ n, Addr@ a, Addr@ b, Addr@ z) {
   Addr@ carry = heap;
   Addr@ nheap = Add(heap, I(D|1));
 
-  Value@ b0 = Const(Cons<Bit@>(Bit@(0: Unit), Nil<Bit@>));
+  Value@ b0 = Const(B|0);
   Program@ initialize_carry = Assign(carry, b0, I(D|1));
 
   Program@ p = DoWhile<Int@, Program@>(
