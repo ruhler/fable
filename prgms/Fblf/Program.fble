@@ -1,14 +1,11 @@
 
+@ Bit@ = /Digits%.Bit@;
 @ Int@ = /Int/Int%.Int@;
 
 <@>@ List@ = /List%.List@;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
-
-# Bit@ --
-#   Represents a single bit of information.
-@ Bit@ = +(Unit@ 0, Unit@ 1);
 
 # Bits@ --
 #   A sequence of bits.

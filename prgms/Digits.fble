@@ -1,0 +1,91 @@
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# Bit@ --
+#   A binary digit.
+@ Bit@ = +(
+  Unit@ 0,
+  Unit@ 1
+);
+
+# Bit --
+#   A collection of all the binary digits.
+% Bit = @(
+  0: Bit@(0: Unit),
+  1: Bit@(1: Unit)
+);
+
+# Decimal@ --
+#   A decimal digit.
+@ Decimal@ = +(
+  Unit@ 0,
+  Unit@ 1,
+  Unit@ 2,
+  Unit@ 3,
+  Unit@ 4,
+  Unit@ 5,
+  Unit@ 6,
+  Unit@ 7,
+  Unit@ 8,
+  Unit@ 9
+);
+
+# Decimal --
+#   A collection of all the decimal digits.
+% Decimal = @(
+  0: Decimal@(0: Unit),
+  1: Decimal@(1: Unit),
+  2: Decimal@(2: Unit),
+  3: Decimal@(3: Unit),
+  4: Decimal@(4: Unit),
+  5: Decimal@(5: Unit),
+  6: Decimal@(6: Unit),
+  7: Decimal@(7: Unit),
+  8: Decimal@(8: Unit),
+  9: Decimal@(9: Unit)
+);
+
+# Hex@ --
+#   A hexidecimal digit.
+@ Hex@ = +(
+  Unit@ 0,
+  Unit@ 1,
+  Unit@ 2,
+  Unit@ 3,
+  Unit@ 4,
+  Unit@ 5,
+  Unit@ 6,
+  Unit@ 7,
+  Unit@ 8,
+  Unit@ 9,
+  Unit@ A,
+  Unit@ B,
+  Unit@ C,
+  Unit@ D,
+  Unit@ E,
+  Unit@ F
+);
+
+# Hex --
+#   A collection of all the hexidecimal digits.
+% Hex = @(
+  0: Hex@(0: Unit),
+  1: Hex@(1: Unit),
+  2: Hex@(2: Unit),
+  3: Hex@(3: Unit),
+  4: Hex@(4: Unit),
+  5: Hex@(5: Unit),
+  6: Hex@(6: Unit),
+  7: Hex@(7: Unit),
+  8: Hex@(8: Unit),
+  9: Hex@(9: Unit),
+  A: Hex@(A: Unit),
+  B: Hex@(B: Unit),
+  C: Hex@(C: Unit),
+  D: Hex@(D: Unit),
+  E: Hex@(E: Unit),
+  F: Hex@(F: Unit)
+);
+
+@(Bit@, Bit, Decimal@, Decimal, Hex@, Hex);

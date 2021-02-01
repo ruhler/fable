@@ -1,9 +1,6 @@
 
-@ Unit@ = /Unit%.Unit@;
-
 @ Bool@ = /Bool%.Bool@;
-
-@ Bit@ = +(Unit@ 0, Unit@ 1);
+@ Bit@ = /Digits%.Bit@;
 
 <@>@ BitN@ = <@ T@> {
   @ Result@ = *(T@ z, Bit@ cout);

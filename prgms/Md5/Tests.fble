@@ -5,8 +5,8 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-@ Hex@ = /Hex%.Hex@;
-% Hex = /Hex%.Hex;
+@ Hex@ = /Digits%.Hex@;
+% Hex = /Digits%.Hex;
 
 <@>@ List@ = /List%.List@;
 <@>% Cons = /List%.Cons;

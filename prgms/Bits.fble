@@ -1,8 +1,8 @@
 
 % Unit = /Unit%.Unit;
 
-@ Hex@ = /Hex%.Hex@;
-% 0 = /Hex%.Hex.0;
+@ Hex@ = /Digits%.Hex@;
+% 0 = /Digits%.Hex.0;
 
 @ Bit@ = /Bits/BitN%.Bit@;
 
