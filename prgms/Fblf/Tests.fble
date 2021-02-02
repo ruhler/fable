@@ -10,6 +10,7 @@
 
 # Import to test compilation.
 % _ = /Fblf/Add%;
+% _ = /Fblf/Heap%;
 
 Test@ Tests = TestSuite(Chars|Fblf, [
   Test(Chars|Dummy, !(TestResult@(pass: Unit)))

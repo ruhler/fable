@@ -1,0 +1,95 @@
+
+@ Bool@ = /Bool%.Bool@;
+
+@ Int@ = /Int/Int%.Int@;
+% Dec = /Int/Int%.Dec;
+% 0 = /Int/Int%.0;
+% Le = /Int/Int/Eq%.Le;
+
+<@>@ List@ = /List%.List@;
+<@>% Nil = /List%.Nil;
+<@>% Cons = /List%.Cons;
+
+@ Bit@ = /Digits%.Bit@;
+% B = /Digits%.Bit;
+
+# Heap@ --
+#   A bit-addressable heap of bits.
+#
+# This should be treated as an opaque type externally.
+@ Heap@ = List@<Bit@>;
+
+# Addr@ --
+#   The address of a bit on the heap.
+@ Addr@ = Int@;
+
+# Ref@ --
+#   A pair of heap and address that identifies a particular sequence of bits.
+@ Ref@ = *(Heap@ heap, Addr@ addr);
+
+# Heap --
+#   Create a heap of n uninitialized bits.
+(Int@) { Heap@; } Heap = (Int@ n) {
+  # We simulate uninitialized by using a bit pattern 010101010101010...
+  n.?(
+    n: Nil<Bit@>,
+    0: Nil<Bit@>,
+    p: {
+      List@<Bit@> tail = Heap(Dec(n));
+      tail.?(
+        cons: tail.cons.head.?(0: Cons<Bit@>(B.1, tail), 1: Cons<Bit@>(B.0, tail)),
+        nil: Cons<Bit@>(B.0, tail));
+    }); 
+};
+
+# HeapFromBits --
+#   Create a preinitialized heap of bits.
+(List@<Bit@>) { Heap@; } HeapFromBits = (List@<Bit@> bits) {
+  bits;
+};
+
+# GetBits --
+#   Get n bits from the bit heap.
+#
+# Behavior is undefined if there are't enough bits in the heap to get n.
+(Ref@, Int@) { List@<Bit@>; }
+GetBits = (Ref@ ref, Int@ n) {
+  Le(ref.addr, 0).?(
+    true: Le(n, 0).?(
+      true: Nil<Bit@>,
+      false: Cons<Bit@>(
+        ref.heap.cons.head,
+        GetBits(Ref@(ref.heap.cons.tail, ref.addr), Dec(n)))),
+    false: GetBits(Ref@(ref.heap.cons.tail, Dec(ref.addr)), n));
+};
+
+# Equals --
+#   Return true if the n bits referred to by reference a and b are equal.
+#
+# Behavior is undefined if there aren't n bits in a and b to compare.
+(Ref@, Ref@, Int@) { Bool@; } Equals = (Ref@ a, Ref@ b, Int@ n) {
+  /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit)(GetBits(a, n), GetBits(b, n));
+};
+
+# Assign --
+#   Assign the first n bits at ref with the value of the first n bits from val.
+#
+# Behavior is undefined if there aren't n bits to assign from or to.
+(Ref@, Ref@, Int@) { Heap@; } Assign = (Ref@ ref, Ref@ val, Int@ n) {
+  Le(n, 0).?(
+    true: ref.heap,
+    false: Le(ref.addr, 0).?(
+      true: Le(val.addr, 0).?(
+        true: Cons<Bit@>(
+          val.heap.cons.head,
+          Assign(
+            Ref@(ref.heap.cons.tail, ref.addr),
+            Ref@(val.heap.cons.tail, val.addr),
+            Dec(n))),
+        false: Assign(ref, Ref@(val.heap.cons.tail, Dec(val.addr)), n)),
+      false: Cons<Bit@>(
+        ref.heap.cons.head,
+        Assign(Ref@(ref.heap.cons.tail, Dec(ref.addr)), val, n))));
+};
+
+@(Heap@, Heap, HeapFromBits, Equals, Assign);

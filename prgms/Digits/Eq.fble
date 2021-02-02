@@ -1,0 +1,14 @@
+
+% True = /Bool%.True;
+% False = /Bool%.False;
+<@>@ Eq@ = /Eq%.Eq@;
+
+@ Bit@ = /Digits%.Bit@;
+
+Eq@<Bit@> EqBit = (Bit@ a, Bit@ b) {
+  a.?(
+    0: b.?(0: True, 1: False),
+    1: b.?(0: False, 1: True));
+};
+
+@(EqBit);
