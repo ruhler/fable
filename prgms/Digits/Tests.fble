@@ -1,0 +1,43 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% Chars = /Char%.Chars;
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
+
+% Bit = /Digits%.Bit;
+% EqBit = /Digits/Eq%.EqBit;
+
+# Tests --
+#  A test suite to test the /Maybe% module and friends.
+Test@ Tests = TestSuite(Chars|Digits, [
+  TestSuite(Chars|EqBit, [
+    Test(Chars|00, !({
+      Bool@ wnt = True;
+      Bool@ got = EqBit(Bit.0, Bit.0);
+      AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+    })),
+
+    Test(Chars|01, !({
+      Bool@ wnt = False;
+      Bool@ got = EqBit(Bit.0, Bit.1);
+      AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+    })),
+
+    Test(Chars|10, !({
+      Bool@ wnt = False;
+      Bool@ got = EqBit(Bit.1, Bit.0);
+      AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+    })),
+
+    Test(Chars|11, !({
+      Bool@ wnt = True;
+      Bool@ got = EqBit(Bit.1, Bit.1);
+      AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+    }))])
+]);
+
+@(Tests);

@@ -25,6 +25,7 @@
 
 Test@ AllTests = TestSuite(Chars|Fble, [
   /Bool/Tests%.Tests,
+  /Digits/Tests%.Tests,
   /GameOfLife/Tests%.Tests,
   /Fblf/Tests%.Tests,
   /Hwdg/Tests%.Tests,
