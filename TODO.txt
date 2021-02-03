@@ -1,5 +1,4 @@
 Fblf:
-* Implement and test a bit heap library.
 * Implement an fblf interpreter.
 * Write a test case for 4 bit adder.
 * Separate out Bit@ and a bit string type and literal from Fblf?

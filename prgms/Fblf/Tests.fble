@@ -2,18 +2,13 @@
 % Chars = /Char%.Chars;
 
 @ Test@ = /Test%.Test@;
-@ TestResult@ = /Test%.TestResult@;
-% Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
-
-% Unit = /Unit%.Unit;
 
 # Import to test compilation.
 % _ = /Fblf/Add%;
-% _ = /Fblf/Heap%;
 
 Test@ Tests = TestSuite(Chars|Fblf, [
-  Test(Chars|Dummy, !(TestResult@(pass: Unit)))
+  /Fblf/Heap/Tests%.Tests
   ]);
 
 @(Tests);

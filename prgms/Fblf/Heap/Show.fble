@@ -1,0 +1,14 @@
+
+
+<@,@>% Map = /List%.Map;
+<@>@ Show@ = /Show%.Show@;
+@ String@ = /String%.String@;
+
+@ Bit@ = /Digits%.Bit@;
+@ Heap@ = /Fblf/Heap%.Heap@;
+
+Show@<Heap@> Show = (Heap@ heap) {
+  /String%.Concat(Map<Bit@, String@>(heap, /Digits/Show%.ShowBit));
+};
+
+@(Show);

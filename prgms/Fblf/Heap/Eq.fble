@@ -1,0 +1,11 @@
+
+<@>@ Eq@ = /Eq%.Eq@;
+
+@ Bit@ = /Digits%.Bit@;
+@ Heap@ = /Fblf/Heap%.Heap@;
+
+# Eq --
+#   Implementation of Eq@ for Heap@. See documentation of /Eq%.Eq@.
+Eq@<Heap@> Eq = /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit);
+
+@(Eq);

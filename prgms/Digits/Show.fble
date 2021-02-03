@@ -1,0 +1,11 @@
+
+% Chars = /Char%.Chars;
+@ Bit@ = /Digits%.Bit@;
+<@>@ Show@ = /Show%.Show@;
+% Str = /String%.Str;
+
+Show@<Bit@> ShowBit = (Bit@ b) {
+  b.?(0: Str(Chars|0), 1: Str(Chars|1));
+};
+
+@(ShowBit);

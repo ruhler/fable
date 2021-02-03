@@ -11,8 +11,6 @@
 % Bit = /Digits%.Bit;
 % EqBit = /Digits/Eq%.EqBit;
 
-# Tests --
-#  A test suite to test the /Maybe% module and friends.
 Test@ Tests = TestSuite(Chars|Digits, [
   TestSuite(Chars|EqBit, [
     Test(Chars|00, !({
