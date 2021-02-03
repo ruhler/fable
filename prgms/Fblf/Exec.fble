@@ -1,0 +1,61 @@
+
+@ Bool@ = /Bool%.Bool@;
+% Not = /Bool%.Not;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+@ Heap@ = /Fblf/Heap%.Heap@;
+@ Ptr@ = /Fblf/Heap%.Ptr@;
+% HeapFromBits = /Fblf/Heap%.HeapFromBits;
+% Assign = /Fblf/Heap%.Assign;
+% Equals = /Fblf/Heap%.Equals;
+
+@ Program@ = /Fblf/Program%.Program@;
+@ Value@ = /Fblf/Program%.Value@;
+@ Condition@ = /Fblf/Program%.Condition@;
+
+# Value --
+#   Get the value of a value as a Ptr@.
+(Value@, Heap@) { Ptr@; } Value = (Value@ value, Heap@ heap) {
+  value.?(
+    ref: Ptr@(heap, value.ref),
+    const: Ptr@(HeapFromBits(value.const), I(D|0)));
+};
+
+# Eval --
+#   Evaluate a condition.
+(Condition@, Heap@) { Bool@; } Eval = (Condition@ cond, Heap@ heap) {
+  Bool@ equals = Equals(Value(cond.a, heap), Value(cond.b, heap), cond.n);
+  cond.op.?(eq: equals, ne: Not(equals));
+};
+
+# Exec --
+#   Execute a program on the given heap.
+#
+# Behavior is undefined if the heap is not big enough for the program.
+(Program@, Heap@) { Heap@; } Exec = (Program@ prgm, Heap@ heap) {
+  prgm.?(
+    assign: {
+      Ptr@ value = Value(prgm.assign.value, heap);
+      Assign(Ptr@(heap, prgm.assign.ref), value, prgm.assign.n);
+    },
+
+    sequence: {
+      Exec(prgm.sequence.b, Exec(prgm.sequence.a, heap));
+    },
+
+    if: {
+      Eval(prgm.if.condition, heap).?(
+        true: Exec(prgm.if.body, heap),
+        false: heap);
+    },
+
+    while: {
+      Eval(prgm.while.condition, heap).?(
+        true: Exec(prgm, Exec(prgm.while.body, heap)),
+        false: heap);
+    });
+};
+
+@(Exec);

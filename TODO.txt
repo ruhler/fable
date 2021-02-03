@@ -1,7 +1,4 @@
 Fblf:
-* Implement an fblf interpreter.
-* Write a test case for 4 bit adder.
-* Separate out Bit@ and a bit string type and literal from Fblf?
 * Factor out code to describe iterators and an iterator over a range of ints?
 * Implement md5 in fblf.
 * Implement a compiler from fblf to C code.
