@@ -14,6 +14,7 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
+% Lt = /Int/Int/Eq%.Lt;
 
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
@@ -139,4 +140,30 @@ NotF = (Int@ n, Addr@ a, Addr@ z)(Addr@ free) {
     });
 };
 
-@(AndF, OrF, XorF, NotF);
+# ClsF --
+#   n-bit circular left shift.
+#
+# Inputs:
+#   n - The number of bits in the operand.
+#   s - The number of bits to shift left.
+#   a - The address of the operand.
+#   z - The address of the result.
+(Int@, Int@, Addr@, Addr@) { Module@; }
+ClsF = (Int@ n, Int@ s, Addr@ a, Addr@ z)(Addr@ free) {
+  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
+    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
+  };
+
+  For<Int@, ProgramM@>(next(n), next, ProgramM@(free, Noop),
+    (Int@ i, ProgramM@ ss) {
+      Addr@ ai = Add(a, i);
+      Int@ offset = Lt(i, s).?(
+        true: Sub(Add(n, i), s),
+        false: Sub(i, s));
+      Addr@ zi = Add(z, offset);
+
+      ProgramM@(ss.free, Seq([ss.program, Assign(zi, Ref(ai), I(D|1))]));
+    });
+};
+
+@(AndF, OrF, XorF, NotF, ClsF);

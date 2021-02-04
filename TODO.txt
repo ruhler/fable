@@ -1,5 +1,4 @@
 Fblf:
-* Implement bitwise Xor, Not, and circular left shift.
 * Implement md5 in fblf.
 * Implement a compiler from fblf to C code.
   - See how much faster it is compared to native fble md5.
