@@ -21,6 +21,7 @@
 % IncF = /Fblf/Lib/Add%.IncF;
 % AndF = /Fblf/Lib/Bitwise%.AndF;
 % OrF = /Fblf/Lib/Bitwise%.OrF;
+% NotF = /Fblf/Lib/Bitwise%.NotF;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
 @ Ptr@ = /Fblf/Heap%.Ptr@;
@@ -146,6 +147,30 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ wnt = HeapFromBitStr(B|001101100111);
     % Eq = (Heap@ a, Heap@ b) {
        Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
+    };
+
+    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|NotF, !({
+    Addr@ a = I(D|0);
+    Addr@ z = I(D|4);
+    Addr@ free = I(D|8);
+
+    ProgramM@ not = NotF(I(D|4), a, z)(free);
+
+    Program@ prgm = Seq([
+      Assign(a, Const(B|0011), I(D|4)),
+      Assign(z, Const(B|0000), I(D|4)),
+      not.program
+    ]);
+
+    Heap@ heap = Heap(not.free);
+    Heap@ got = Exec(prgm, heap);
+
+    Heap@ wnt = HeapFromBitStr(B|00111100);
+    % Eq = (Heap@ a, Heap@ b) {
+       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|8));
     };
 
     AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);

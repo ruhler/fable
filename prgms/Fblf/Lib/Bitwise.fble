@@ -82,4 +82,31 @@ OrF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
     });
 };
 
-@(AndF, OrF);
+# NotF --
+#   n-bit bitwise NOT.
+#
+# Inputs:
+#   n - The number of bits in the operand.
+#   a - The address of the operand.
+#   z - The address of the result.
+(Int@, Addr@, Addr@) { Module@; }
+NotF = (Int@ n, Addr@ a, Addr@ z)(Addr@ free) {
+  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
+    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
+  };
+
+  For<Int@, ProgramM@>(next(n), next, ProgramM@(free, Noop),
+    (Int@ i, ProgramM@ s) {
+      Addr@ ai = Add(a, i);
+      Addr@ zi = Add(z, i);
+
+      # TODO: The caller better not alias a and z, or this won't work!
+      ProgramM@(s.free, Seq([s.program, 
+        If(Eq(Ref(ai), Const(B|1), I(D|1)),
+          Assign(zi, Const(B|0), I(D|1))),
+        If(Eq(Ref(ai), Const(B|0), I(D|1)),
+          Assign(zi, Const(B|1), I(D|1)))]));
+    });
+};
+
+@(AndF, OrF, NotF);
