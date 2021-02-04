@@ -19,6 +19,8 @@
 
 % AddF = /Fblf/Lib/Add%.AddF;
 % IncF = /Fblf/Lib/Add%.IncF;
+% AndF = /Fblf/Lib/Bitwise%.AndF;
+% OrF = /Fblf/Lib/Bitwise%.OrF;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
 @ Ptr@ = /Fblf/Heap%.Ptr@;
@@ -92,6 +94,58 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ wnt = HeapFromBitStr(B|00000);
     % Eq = (Heap@ a, Heap@ b) {
        Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|5));
+    };
+
+    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|AndF, !({
+    Addr@ a = I(D|0);
+    Addr@ b = I(D|4);
+    Addr@ z = I(D|8);
+    Addr@ free = I(D|12);
+
+    ProgramM@ and = AndF(I(D|4), a, b, z)(free);
+
+    Program@ prgm = Seq([
+      Assign(a, Const(B|0011), I(D|4)),
+      Assign(b, Const(B|0110), I(D|4)),
+      Assign(z, Const(B|0000), I(D|4)),
+      and.program
+    ]);
+
+    Heap@ heap = Heap(and.free);
+    Heap@ got = Exec(prgm, heap);
+
+    Heap@ wnt = HeapFromBitStr(B|001101100010);
+    % Eq = (Heap@ a, Heap@ b) {
+       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
+    };
+
+    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|OrF, !({
+    Addr@ a = I(D|0);
+    Addr@ b = I(D|4);
+    Addr@ z = I(D|8);
+    Addr@ free = I(D|12);
+
+    ProgramM@ or = OrF(I(D|4), a, b, z)(free);
+
+    Program@ prgm = Seq([
+      Assign(a, Const(B|0011), I(D|4)),
+      Assign(b, Const(B|0110), I(D|4)),
+      Assign(z, Const(B|0000), I(D|4)),
+      or.program
+    ]);
+
+    Heap@ heap = Heap(or.free);
+    Heap@ got = Exec(prgm, heap);
+
+    Heap@ wnt = HeapFromBitStr(B|001101100111);
+    % Eq = (Heap@ a, Heap@ b) {
+       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
     };
 
     AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
