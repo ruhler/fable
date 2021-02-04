@@ -47,10 +47,10 @@
       ForEach<Program@, Heap@>(prgm.sequence, heap, Exec);
     },
 
-    if: {
-      Eval(prgm.if.condition, heap).?(
-        true: Exec(prgm.if.body, heap),
-        false: heap);
+    ifelse: {
+      Eval(prgm.ifelse.condition, heap).?(
+        true: Exec(prgm.ifelse.if_body, heap),
+        false: Exec(prgm.ifelse.else_body, heap));
     },
 
     while: {

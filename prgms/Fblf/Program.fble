@@ -79,9 +79,10 @@
 #   Executes a sequence of zero or more programs in order.
 @ Sequence@ = List@<Program@>,
 
-# If@ --
-#   Executes the body if the condition is satisfied.
-@ If@ = *(Condition@ condition, Program@ body),
+# IfElse@ --
+#   Executes the if_body if the condition is satisfied, the else_body
+#   otherwise.
+@ IfElse@ = *(Condition@ condition, Program@ if_body, Program@ else_body),
 
 # While@ --
 #   Executes the body repeatedly for as long as the condition is satisfied.
@@ -92,7 +93,7 @@
 @ Program@ = +(
   Assign@ assign,
   Sequence@ sequence,
-  If@ if,
+  IfElse@ ifelse,
   While@ while
 );
 
@@ -100,8 +101,9 @@
   Program@(assign: Assign@(x, v, n));
 };
 
-(Condition@, Program@) { Program@; } If = (Condition@ p, Program@ body) {
-  Program@(if: If@(p, body));
+(Condition@, Program@, Program@) { Program@; }
+IfElse = (Condition@ p, Program@ if_body, Program@ else_body) {
+  Program@(ifelse: IfElse@(p, if_body, else_body));
 };
 
 (Lit@<Program@>) { Program@; } Seq = (Lit@<Program@> prgms) {
@@ -109,6 +111,10 @@
 };
 
 Program@ Noop = Program@(sequence: Nil<Program@>);
+
+(Condition@, Program@) { Program@; } If = (Condition@ p, Program@ body) {
+  IfElse(p, body, Noop);
+};
 
 (Condition@, Program@) { Program@; } While = (Condition@ p, Program@ body) {
   Program@(while: While@(p, body));
@@ -132,6 +138,6 @@ Program@ Noop = Program@(sequence: Nil<Program@>);
 
 @(
   Bit@, Bits@, Addr@, Value@, ConditionOp@, Condition@,
-  Assign@, Sequence@, If@, While@, Program@, ProgramM@, Module@,
-  Const, Ref, Eq, Ne, Assign, If, Seq, Noop, While
+  Assign@, Sequence@, IfElse@, While@, Program@, ProgramM@, Module@,
+  Const, Ref, Eq, Ne, Assign, If, IfElse, Seq, Noop, While
 );
