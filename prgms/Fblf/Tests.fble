@@ -16,8 +16,8 @@
 % Const = /Fblf/Program%.Const;
 % Seq = /Fblf/Program%.Seq;
 
-% AddF = /Fblf/Add%.AddF;
-% IncF = /Fblf/Add%.IncF;
+% AddF = /Fblf/Lib/Add%.AddF;
+% IncF = /Fblf/Lib/Add%.IncF;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
 @ Ptr@ = /Fblf/Heap%.Ptr@;
