@@ -114,8 +114,24 @@ Program@ Noop = Program@(sequence: Nil<Program@>);
   Program@(while: While@(p, body));
 };
 
+# Module@ --
+#   By convention, to support easy composition of programs, we define them in
+#   terms of modules.
+#
+# Inputs:
+#   free - The first address in the heap available for allocating space on the
+#          heap. The module may reserve any addrs for internal use greater
+#          than or equal to 'free'.
+#
+# Results:
+#   free - The first address in the heap available for allocations after the
+#          module has completed all its own allocations.
+#   program - The program.
+@ ProgramM@ = *(Addr@ free, Program@ program);
+@ Module@ = (Addr@) { ProgramM@; };
+
 @(
   Bit@, Bits@, Addr@, Value@, ConditionOp@, Condition@,
-  Assign@, Sequence@, If@, While@, Program@,
+  Assign@, Sequence@, If@, While@, Program@, ProgramM@, Module@,
   Const, Ref, Eq, Ne, Assign, If, Seq, Noop, While
 );

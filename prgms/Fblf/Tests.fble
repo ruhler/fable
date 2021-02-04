@@ -12,6 +12,7 @@
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
+@ ProgramM@ = /Fblf/Program%.ProgramM@;
 % Assign = /Fblf/Program%.Assign;
 % Const = /Fblf/Program%.Const;
 % Seq = /Fblf/Program%.Seq;
@@ -34,18 +35,18 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ a = I(D|0);
     Addr@ b = I(D|4);
     Addr@ z = I(D|8);
-    Addr@ next = I(D|12);
+    Addr@ free = I(D|12);
 
-    % A = AddF(next, I(D|4), a, b, z);
+    ProgramM@ add = AddF(I(D|4), a, b, z)(free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0010), I(D|4)),   # a = 2
       Assign(b, Const(B|0111), I(D|4)),   # b = 7
       Assign(z, Const(B|0000), I(D|4)),   # clear z
-      A.prgm                              # z = a + b
+      add.program                         # z = a + b
     ]);
 
-    Heap@ heap = Heap(A.heap);
+    Heap@ heap = Heap(add.free);
     Heap@ got = Exec(prgm, heap);
 
     # We only want to check the first 12 bits to make sure they contain
@@ -60,13 +61,13 @@ Test@ Tests = TestSuite(Chars|Fblf, [
 
   Test(Chars|IncF, !({
     Addr@ a = I(D|0);
-    Addr@ next = I(D|5);
+    Addr@ free = I(D|5);
 
-    % i = IncF(next, I(D|5), a);
+    ProgramM@ inc = IncF(I(D|5), a)(free);
 
-    Program@ prgm = Seq([Assign(a, Const(B|10011), I(D|5)), i.prgm]);
+    Program@ prgm = Seq([Assign(a, Const(B|10011), I(D|5)), inc.program]);
 
-    Heap@ heap = Heap(i.heap);
+    Heap@ heap = Heap(inc.free);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|10100);
@@ -79,13 +80,13 @@ Test@ Tests = TestSuite(Chars|Fblf, [
 
   Test(Chars|'IncF Overflow', !({
     Addr@ a = I(D|0);
-    Addr@ next = I(D|5);
+    Addr@ free = I(D|5);
 
-    % i = IncF(next, I(D|5), a);
+    ProgramM@ inc = IncF(I(D|5), a)(free);
 
-    Program@ prgm = Seq([Assign(a, Const(B|11111), I(D|5)), i.prgm]);
+    Program@ prgm = Seq([Assign(a, Const(B|11111), I(D|5)), inc.program]);
 
-    Heap@ heap = Heap(i.heap);
+    Heap@ heap = Heap(inc.free);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|00000);
