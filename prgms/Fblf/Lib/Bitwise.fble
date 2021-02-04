@@ -6,6 +6,7 @@
 % Assign = /Fblf/Program%.Assign;
 % Eq = /Fblf/Program%.Eq;
 % If = /Fblf/Program%.If;
+% IfElse = /Fblf/Program%.IfElse;
 % Seq = /Fblf/Program%.Seq;
 % Noop = /Fblf/Program%.Noop;
 % Const = /Fblf/Program%.Const;
@@ -45,11 +46,9 @@ AndF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
       Addr@ bi = Add(b, i);
       Addr@ zi = Add(z, i);
 
-      # TODO: The caller better not alias a and z, or this won't work!
-      ProgramM@(s.free, Seq([s.program, 
-        If(Eq(Ref(ai), Const(B|0), I(D|1)),
-          Assign(zi, Const(B|0), I(D|1))),
-        If(Eq(Ref(ai), Const(B|1), I(D|1)),
+      ProgramM@(s.free, Seq([s.program,
+        IfElse(Eq(Ref(ai), Const(B|0), I(D|1)),
+          Assign(zi, Const(B|0), I(D|1)),
           Assign(zi, Ref(bi), I(D|1)))]));
     });
 };
@@ -74,11 +73,9 @@ OrF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
       Addr@ bi = Add(b, i);
       Addr@ zi = Add(z, i);
 
-      # TODO: The caller better not alias a and z, or this won't work!
-      ProgramM@(s.free, Seq([s.program, 
-        If(Eq(Ref(ai), Const(B|1), I(D|1)),
-          Assign(zi, Const(B|1), I(D|1))),
-        If(Eq(Ref(ai), Const(B|0), I(D|1)),
+      ProgramM@(s.free, Seq([s.program,
+        IfElse(Eq(Ref(ai), Const(B|1), I(D|1)),
+          Assign(zi, Const(B|1), I(D|1)),
           Assign(zi, Ref(bi), I(D|1)))]));
     });
 };
@@ -104,6 +101,7 @@ XorF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
       Addr@ zi = Add(z, i);
 
       # TODO: The caller better not alias a and z, or this won't work!
+      # Switch to IfElse to fix that?
       ProgramM@(s.free, Seq([s.program, 
         Assign(zi, Const(B|0), I(D|1)),
         If(Eq(Ref(ai), Const(B|0), I(D|1)),
@@ -133,9 +131,8 @@ NotF = (Int@ n, Addr@ a, Addr@ z)(Addr@ free) {
 
       # TODO: The caller better not alias a and z, or this won't work!
       ProgramM@(s.free, Seq([s.program, 
-        If(Eq(Ref(ai), Const(B|1), I(D|1)),
-          Assign(zi, Const(B|0), I(D|1))),
-        If(Eq(Ref(ai), Const(B|0), I(D|1)),
+        IfElse(Eq(Ref(ai), Const(B|1), I(D|1)),
+          Assign(zi, Const(B|0), I(D|1)),
           Assign(zi, Const(B|1), I(D|1)))]));
     });
 };

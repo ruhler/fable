@@ -1,4 +1,5 @@
 Fblf:
+* Use IfElse to avoid aliasing issue with XorF?
 * Implement md5 in fblf.
 * Implement a compiler from fblf to C code.
   - See how much faster it is compared to native fble md5.

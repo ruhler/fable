@@ -7,7 +7,7 @@
 @ Module@ = /Fblf/Program%.Module@;
 % Assign = /Fblf/Program%.Assign;
 % Eq = /Fblf/Program%.Eq;
-% If = /Fblf/Program%.If;
+% IfElse = /Fblf/Program%.IfElse;
 % Seq = /Fblf/Program%.Seq;
 % Noop = /Fblf/Program%.Noop;
 % Const = /Fblf/Program%.Const;
@@ -45,27 +45,18 @@ Add1F = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z)(Addr@ free) {
   Value@ b0 = Const(B|0);
   Value@ b1 = Const(B|1);
   @(free: free,
-    program: Seq([
-      If(Eq(Ref(a), b0, n1),
-        Seq([
-          If(Eq(Ref(b), b0, n1),
-            Seq([Assign(z, Ref(c), n1), Assign(x, b0, n1)])),
-          If(Eq(Ref(b), b1, n1),
-            Seq([
-              If(Eq(Ref(c), b0, n1),
-                Seq([Assign(z, b1, n1), Assign(x, b0, n1)])),
-              If(Eq(Ref(c), b1, n1),
-                Seq([Assign(z, b0, n1), Assign(x, b1, n1)]))]))])),
-      If(Eq(Ref(a), b1, n1),
-        Seq([
-          If(Eq(Ref(b), b0, n1),
-            Seq([
-              If(Eq(Ref(c), b0, n1),
-                Seq([Assign(z, b1, n1), Assign(x, b0, n1)])),
-              If(Eq(Ref(c), b1, n1),
-                Seq([Assign(z, b0, n1), Assign(x, b1, n1)]))])),
-          If(Eq(Ref(b), b1, n1),
-            Seq([Assign(z, Ref(c), n1), Assign(x, b1, n1)]))]))]));
+    program:
+      IfElse(Eq(Ref(a), b0, n1),
+        IfElse(Eq(Ref(b), b0, n1),
+          Seq([Assign(z, Ref(c), n1), Assign(x, b0, n1)]),
+          IfElse(Eq(Ref(c), b0, n1),
+            Seq([Assign(z, b1, n1), Assign(x, b0, n1)]),
+            Seq([Assign(z, b0, n1), Assign(x, b1, n1)]))),
+        IfElse(Eq(Ref(b), b0, n1),
+          IfElse(Eq(Ref(c), b0, n1),
+            Seq([Assign(z, b1, n1), Assign(x, b0, n1)]),
+            Seq([Assign(z, b0, n1), Assign(x, b1, n1)])),
+          Seq([Assign(z, Ref(c), n1), Assign(x, b1, n1)]))));
 };
 
 # AddF -- 
@@ -109,14 +100,11 @@ IncF = (Int@ n, Addr@ a)(Addr@ free) {
     false: {
       Int@ nm1 = Sub(n, I(D|1));
       Addr@ lsb = Add(a, nm1);
-      Addr@ tmp = free;
-      ProgramM@ s = IncF(nm1, a)(Add(free, I(D|1)));
-      ProgramM@(s.free, Seq([
-          Assign(tmp, Ref(lsb), I(D|1)),
-          If(Eq(Ref(tmp), Const(B|0), I(D|1)),
-            Assign(lsb, Const(B|1), I(D|1))),
-          If(Eq(Ref(tmp), Const(B|1), I(D|1)),
-            Seq([Assign(lsb, Const(B|0), I(D|1)), s.program]))]));
+      ProgramM@ s = IncF(nm1, a)(free);
+      ProgramM@(s.free,
+          IfElse(Eq(Ref(lsb), Const(B|0), I(D|1)),
+            Assign(lsb, Const(B|1), I(D|1)),
+            Seq([Assign(lsb, Const(B|0), I(D|1)), s.program])));
     });
 };
 
