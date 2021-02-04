@@ -8,24 +8,25 @@
 % Eq = /Fblf/Program%.Eq;
 % If = /Fblf/Program%.If;
 % Seq = /Fblf/Program%.Seq;
+% Noop = /Fblf/Program%.Noop;
 % Const = /Fblf/Program%.Const;
 % Ref = /Fblf/Program%.Ref;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
+% Le = /Int/Int/Eq%.Le;
 
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
 
+<@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-@ IntP@ = /Int/IntP%.IntP@;
+<@,@>% For = /Loop%.For;
 
-<@,@>% DoWhile = /Loop%.DoWhile;
-
-# Add1 --
+# Add1F --
 #   A 1-bit adder.
 #
 # Inputs:
@@ -38,46 +39,34 @@
 # Results:
 #   A program that sets x and z based on the one bit addition a + b + c.
 (Addr@, Addr@, Addr@, Addr@, Addr@) { Program@; }
-Add1 = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
+Add1F = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
   Int@ n1 = I(D|1);
   Value@ b0 = Const(B|0);
   Value@ b1 = Const(B|1);
-  Seq(
+  Seq([
     If(Eq(Ref(a), b0, n1),
-      Seq(
+      Seq([
         If(Eq(Ref(b), b0, n1),
-          Seq(
-            Assign(z, Ref(c), n1),
-            Assign(x, b0, n1))),
+          Seq([Assign(z, Ref(c), n1), Assign(x, b0, n1)])),
         If(Eq(Ref(b), b1, n1),
-          Seq(
+          Seq([
             If(Eq(Ref(c), b0, n1),
-              Seq(
-                Assign(z, b1, n1),
-                Assign(x, b0, n1))),
+              Seq([Assign(z, b1, n1), Assign(x, b0, n1)])),
             If(Eq(Ref(c), b1, n1),
-              Seq(
-                Assign(z, b0, n1),
-                Assign(x, b1, n1))))))),
+              Seq([Assign(z, b0, n1), Assign(x, b1, n1)]))]))])),
     If(Eq(Ref(a), b1, n1),
-      Seq(
+      Seq([
         If(Eq(Ref(b), b0, n1),
-          Seq(
+          Seq([
             If(Eq(Ref(c), b0, n1),
-              Seq(
-                Assign(z, b1, n1),
-                Assign(x, b0, n1))),
+              Seq([Assign(z, b1, n1), Assign(x, b0, n1)])),
             If(Eq(Ref(c), b1, n1),
-              Seq(
-                Assign(z, b0, n1),
-                Assign(x, b1, n1))))),
+              Seq([Assign(z, b0, n1), Assign(x, b1, n1)]))])),
         If(Eq(Ref(b), b1, n1),
-          Seq(
-            Assign(z, Ref(c), n1),
-            Assign(x, b1, n1))))));
+          Seq([Assign(z, Ref(c), n1), Assign(x, b1, n1)]))]))]);
 };
 
-# Adder -- 
+# AddF -- 
 #   An n-bit adder, with most significant bit first.
 #
 # Inputs:
@@ -90,8 +79,8 @@ Add1 = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
 # Results:
 #   heap - An updated value for the next available address on the heap.
 #   prgm - A program that, when executed, sets z = a + b.
-(Addr@, IntP@, Addr@, Addr@, Addr@) { *(Addr@ heap, Program@ prgm); }
-Adder = (Addr@ heap, IntP@ n, Addr@ a, Addr@ b, Addr@ z) {
+(Addr@, Int@, Addr@, Addr@, Addr@) { *(Addr@ heap, Program@ prgm); }
+AddF = (Addr@ heap, Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   # We need a single bit of internal state to store the carry bit as we do
   # the addition.
   Addr@ carry = heap;
@@ -100,17 +89,47 @@ Adder = (Addr@ heap, IntP@ n, Addr@ a, Addr@ b, Addr@ z) {
   Value@ b0 = Const(B|0);
   Program@ initialize_carry = Assign(carry, b0, I(D|1));
 
-  Program@ p = DoWhile<Int@, Program@>(
-    Sub(Int@(p: n), I(D|1)),
-    (Int@ i) {
-      /Int/Int/Eq%.Eq(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
-    },
-    initialize_carry,
+  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
+    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
+  };
+
+  Program@ p = For<Int@, Program@>(next(n), next, initialize_carry,
     (Int@ i, Program@ program_start) {
-      Seq(program_start, Add1(Add(a, i), Add(b, i), carry, carry, Add(z, i))); 
+      Seq([program_start, Add1F(Add(a, i), Add(b, i), carry, carry, Add(z, i))]); 
     });
 
   @(heap: nheap, prgm: p);
 };
 
-@(Adder);
+# IncF --
+#   Increment an n-bit number by 1.
+#
+# Inputs:
+#   heap - The next available address on the heap.
+#   n - The number of bits of the number to increment.
+#   a - The address of the value to increment. The value is most significant
+#       bit first.
+#
+# Results:
+#   heap - An updated value for the next available address on the heap.
+#   prgm - A program that, when executed, sets a = a + 1.
+(Addr@, Int@, Addr@) { *(Addr@ heap, Program@ prgm); }
+IncF = (Addr@ heap, Int@ n, Addr@ a) {
+  Le(n, I(D|0)).?(
+    true: @(heap: heap, prgm: Noop),
+    false: {
+      Int@ nm1 = Sub(n, I(D|1));
+      Addr@ lsb = Add(a, nm1);
+      Addr@ tmp = heap;
+      % s = IncF(Add(heap, I(D|1)), nm1, a);
+      @(heap: s.heap,
+        prgm: Seq([
+          Assign(tmp, Ref(lsb), I(D|1)),
+          If(Eq(Ref(tmp), Const(B|0), I(D|1)),
+            Assign(lsb, Const(B|1), I(D|1))),
+          If(Eq(Ref(tmp), Const(B|1), I(D|1)),
+            Seq([Assign(lsb, Const(B|0), I(D|1)), s.prgm]))]));
+    });
+};
+
+@(AddF, IncF);

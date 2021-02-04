@@ -11,6 +11,8 @@
 % Assign = /Fblf/Heap%.Assign;
 % Equals = /Fblf/Heap%.Equals;
 
+<@,@>% ForEach = /List%.ForEach;
+
 @ Program@ = /Fblf/Program%.Program@;
 @ Value@ = /Fblf/Program%.Value@;
 @ Condition@ = /Fblf/Program%.Condition@;
@@ -42,7 +44,7 @@
     },
 
     sequence: {
-      Exec(prgm.sequence.b, Exec(prgm.sequence.a, heap));
+      ForEach<Program@, Heap@>(prgm.sequence, heap, Exec);
     },
 
     if: {

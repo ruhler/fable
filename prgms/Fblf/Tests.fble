@@ -16,7 +16,8 @@
 % Const = /Fblf/Program%.Const;
 % Seq = /Fblf/Program%.Seq;
 
-% Adder = /Fblf/Add%.Adder;
+% AddF = /Fblf/Add%.AddF;
+% IncF = /Fblf/Add%.IncF;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
 @ Ptr@ = /Fblf/Heap%.Ptr@;
@@ -29,19 +30,20 @@
 Test@ Tests = TestSuite(Chars|Fblf, [
   /Fblf/Heap/Tests%.Tests,
 
-  Test(Chars|Adder, !({
+  Test(Chars|AddF, !({
     Addr@ a = I(D|0);
     Addr@ b = I(D|4);
     Addr@ z = I(D|8);
     Addr@ next = I(D|12);
 
-    % A = Adder(next, I(D|4).p, a, b, z);
+    % A = AddF(next, I(D|4), a, b, z);
 
-    Program@ prgm =
-      Seq(Assign(a, Const(B|0010), I(D|4)),   # a = 2
-      Seq(Assign(b, Const(B|0111), I(D|4)),   # b = 7
-      Seq(Assign(z, Const(B|0000), I(D|4)),   # clear z
-          A.prgm)));                          # z = a + b
+    Program@ prgm = Seq([
+      Assign(a, Const(B|0010), I(D|4)),   # a = 2
+      Assign(b, Const(B|0111), I(D|4)),   # b = 7
+      Assign(z, Const(B|0000), I(D|4)),   # clear z
+      A.prgm                              # z = a + b
+    ]);
 
     Heap@ heap = Heap(A.heap);
     Heap@ got = Exec(prgm, heap);
@@ -51,6 +53,44 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ wnt = HeapFromBitStr(B|001001111001);
     % Eq = (Heap@ a, Heap@ b) {
        Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
+    };
+
+    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|IncF, !({
+    Addr@ a = I(D|0);
+    Addr@ next = I(D|5);
+
+    % i = IncF(next, I(D|5), a);
+
+    Program@ prgm = Seq([Assign(a, Const(B|10011), I(D|5)), i.prgm]);
+
+    Heap@ heap = Heap(i.heap);
+    Heap@ got = Exec(prgm, heap);
+
+    Heap@ wnt = HeapFromBitStr(B|10100);
+    % Eq = (Heap@ a, Heap@ b) {
+       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|5));
+    };
+
+    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|'IncF Overflow', !({
+    Addr@ a = I(D|0);
+    Addr@ next = I(D|5);
+
+    % i = IncF(next, I(D|5), a);
+
+    Program@ prgm = Seq([Assign(a, Const(B|11111), I(D|5)), i.prgm]);
+
+    Heap@ heap = Heap(i.heap);
+    Heap@ got = Exec(prgm, heap);
+
+    Heap@ wnt = HeapFromBitStr(B|00000);
+    % Eq = (Heap@ a, Heap@ b) {
+       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|5));
     };
 
     AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);

@@ -3,6 +3,10 @@ Fblf:
 * Implement md5 in fblf.
 * Implement a compiler from fblf to C code.
   - See how much faster it is compared to native fble md5.
+* Add support for else branches to fblf?
+  Otherwise, for example, we may need to add an extra bit of state to keep
+  track of whether executing the if branch would cause the 'else' branch
+  condition to become true when we don't want to execute both branches.
 * Figure out how to replace fblf integer arithmetic with a native c
   implementation at compile time.
   - See how much faster it is now.
