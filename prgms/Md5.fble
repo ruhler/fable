@@ -378,41 +378,22 @@ B32 =
       a.lo.hi.hi.lo.lo, a.lo.hi.lo.hi.hi, a.lo.hi.lo.hi.lo, a.lo.hi.lo.lo.hi));
 };
 
-(Bit32@, Bit32@, Bit32@) { Bit32@; } F = (Bit32@ x, Bit32@ y, Bit32@ z) {
-  or(and(x, y), and(not(x), z));
+@ X@ = (Bit32@, Bit32@, Bit32@) { Bit32@; };
+@ XX@ = (Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@) { Bit32@; };
+
+(X@) { XX@; } XX = (X@ xf)(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
+  add(b, cls(add(add(a, xf(b, c, d)), add(x, t)), s));
 };
 
-(Bit32@, Bit32@, Bit32@) { Bit32@; } G = (Bit32@ x, Bit32@ y, Bit32@ z) {
-  or(and(x, z), and(y, not(z)));
-};
+X@ F = (Bit32@ x, Bit32@ y, Bit32@ z) { or(and(x, y), and(not(x), z)); };
+X@ G = (Bit32@ x, Bit32@ y, Bit32@ z) { or(and(x, z), and(y, not(z))); };
+X@ H = (Bit32@ x, Bit32@ y, Bit32@ z) { xor(x, xor(y, z)); };
+X@ I = (Bit32@ x, Bit32@ y, Bit32@ z) { xor(y, or(x, not(z))); };
 
-(Bit32@, Bit32@, Bit32@) { Bit32@; } H = (Bit32@ x, Bit32@ y, Bit32@ z) {
-  xor(x, xor(y, z));
-};
-
-(Bit32@, Bit32@, Bit32@) { Bit32@; } I = (Bit32@ x, Bit32@ y, Bit32@ z) {
-  xor(y, or(x, not(z)));
-};
-
-(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@) { Bit32@; } FF =
-  (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-    add(b, cls(add(add(a, F(b, c, d)), add(x, t)), s));
-  };
-
-(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@) { Bit32@; } GG =
-  (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-    add(b, cls(add(add(a, G(b, c, d)), add(x, t)), s));
-  };
-
-(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@) { Bit32@; } HH =
-  (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-    add(b, cls(add(add(a, H(b, c, d)), add(x, t)), s));
-  };
-
-(Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@){Bit32@;} II =
-  (Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-    add(b, cls(add(add(a, I(b, c, d)), add(x, t)), s));
-  };
+XX@ FF = XX(F);
+XX@ GG = XX(G);
+XX@ HH = XX(H);
+XX@ II = XX(I);
 
 (Bit32@, Bit32@, Bit32@, Bit32@, Block@) { ABCD@; } Round1 =
   (Bit32@ a0, Bit32@ b0, Bit32@ c0, Bit32@ d0, Block@ block) {

@@ -33,6 +33,9 @@
 
 % Exec = /Fblf/Exec%.Exec;
 
+# Import to test compilation.
+% _ = /Fblf/Lib/Md5%;
+
 Test@ Tests = TestSuite(Chars|Fblf, [
   /Fblf/Heap/Tests%.Tests,
 
