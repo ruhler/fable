@@ -12,10 +12,12 @@
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
-@ ProgramM@ = /Fblf/Program%.ProgramM@;
 % Assign = /Fblf/Program%.Assign;
 % Const = /Fblf/Program%.Const;
 % Seq = /Fblf/Program%.Seq;
+
+@ Instance@ = /Fblf/Module%.Instance@;
+% Instantiate = /Fblf/Module%.Instantiate;
 
 % AddF = /Fblf/Lib/Add%.AddF;
 % IncF = /Fblf/Lib/Add%.IncF;
@@ -45,7 +47,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    ProgramM@ add = AddF(I(D|4), a, b, z)(free);
+    Instance@ add = Instantiate(AddF(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0010), I(D|4)),   # a = 2
@@ -54,7 +56,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
       add.program                         # z = a + b
     ]);
 
-    Heap@ heap = Heap(add.free);
+    Heap@ heap = Heap(add.heap);
     Heap@ got = Exec(prgm, heap);
 
     # We only want to check the first 12 bits to make sure they contain
@@ -71,11 +73,11 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ a = I(D|0);
     Addr@ free = I(D|5);
 
-    ProgramM@ inc = IncF(I(D|5), a)(free);
+    Instance@ inc = Instantiate(IncF(I(D|5), a), free);
 
     Program@ prgm = Seq([Assign(a, Const(B|10011), I(D|5)), inc.program]);
 
-    Heap@ heap = Heap(inc.free);
+    Heap@ heap = Heap(inc.heap);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|10100);
@@ -90,11 +92,11 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ a = I(D|0);
     Addr@ free = I(D|5);
 
-    ProgramM@ inc = IncF(I(D|5), a)(free);
+    Instance@ inc = Instantiate(IncF(I(D|5), a), free);
 
     Program@ prgm = Seq([Assign(a, Const(B|11111), I(D|5)), inc.program]);
 
-    Heap@ heap = Heap(inc.free);
+    Heap@ heap = Heap(inc.heap);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|00000);
@@ -111,7 +113,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    ProgramM@ and = AndF(I(D|4), a, b, z)(free);
+    Instance@ and = Instantiate(AndF(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
@@ -120,7 +122,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
       and.program
     ]);
 
-    Heap@ heap = Heap(and.free);
+    Heap@ heap = Heap(and.heap);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|001101100010);
@@ -137,7 +139,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    ProgramM@ or = OrF(I(D|4), a, b, z)(free);
+    Instance@ or = Instantiate(OrF(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
@@ -146,7 +148,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
       or.program
     ]);
 
-    Heap@ heap = Heap(or.free);
+    Heap@ heap = Heap(or.heap);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|001101100111);
@@ -163,7 +165,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    ProgramM@ xor = XorF(I(D|4), a, b, z)(free);
+    Instance@ xor = Instantiate(XorF(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
@@ -172,7 +174,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
       xor.program
     ]);
 
-    Heap@ heap = Heap(xor.free);
+    Heap@ heap = Heap(xor.heap);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|001101100101);
@@ -188,7 +190,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|4);
     Addr@ free = I(D|8);
 
-    ProgramM@ not = NotF(I(D|4), a, z)(free);
+    Instance@ not = Instantiate(NotF(I(D|4), a, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
@@ -196,7 +198,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
       not.program
     ]);
 
-    Heap@ heap = Heap(not.free);
+    Heap@ heap = Heap(not.heap);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|00111100);
@@ -212,7 +214,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|5);
     Addr@ free = I(D|10);
 
-    ProgramM@ cls = ClsF(I(D|5), I(D|3), a, z)(free);
+    Instance@ cls = Instantiate(ClsF(I(D|5), I(D|3), a, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|10011), I(D|5)),
@@ -220,7 +222,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
       cls.program
     ]);
 
-    Heap@ heap = Heap(cls.free);
+    Heap@ heap = Heap(cls.heap);
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|1001111100);

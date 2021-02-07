@@ -1,12 +1,13 @@
 
-% Add = /Int/Int%.Add;
+@ Int@ = /Int/Int%.Int@;
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
 
 @ Addr@ = /Fblf/Program%.Addr@;
-@ ProgramM@ = /Fblf/Program%.ProgramM@;
-@ Module@ = /Fblf/Program%.Module@;
-% Seq = /Fblf/Program%.Seq;
+
+@ Module@ = /Fblf/Module%.Module@;
+% AllocM = /Fblf/Module%.AllocM;
+% SeqM = /Fblf/Module%.SeqM;
 
 % AddF = /Fblf/Lib/Add%.AddF;
 % AndF = /Fblf/Lib/Bitwise%.AndF;
@@ -14,71 +15,61 @@
 % XorF = /Fblf/Lib/Bitwise%.XorF;
 % NotF = /Fblf/Lib/Bitwise%.NotF;
 
+Int@ 32 = I(D|32);
+
 (Addr@, Addr@, Addr@, Addr@) { Module@; }
-RoundF = (Addr@ x, Addr@ y, Addr@ z, Addr@ r)(Addr@ free) {
+RoundF = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = or(and(x, y), and(not(x), z));
-  Addr@ nx = free;
-  Addr@ anxz = Add(free, I(D|32));
-  Addr@ xy = Add(free, I(D|64));
-
-  ProgramM@ nxM = NotF(I(D|32), x, nx)(Add(free, I(D|96)));
-  ProgramM@ anxzM = AddF(I(D|32), nx, z, anxz)(nxM.free);
-  ProgramM@ xyM = AndF(I(D|32), x, y, xy)(anxzM.free);
-  ProgramM@ rM = OrF(I(D|32), xy, anxz, r)(xyM.free);
-  ProgramM@(rM.free, Seq([
-      nxM.program,
-      anxzM.program,
-      xyM.program,
-      rM.program
-  ]));
+  AllocM(32, (Addr@ nx) {
+    AllocM(32, (Addr@ anxz) {
+      AllocM(32, (Addr@ xy) {
+        SeqM([
+          NotF(32, x, nx),
+          AddF(32, nx, z, anxz),
+          AndF(32, x, y, xy),
+          OrF(32, xy, anxz, r)]);
+      });
+    });
+  });
 };
 
 (Addr@, Addr@, Addr@, Addr@) { Module@; }
-RoundG = (Addr@ x, Addr@ y, Addr@ z, Addr@ r)(Addr@ free) {
+RoundG = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = or(and(x, z), and(y, not(z)));
-  Addr@ nz = free;
-  Addr@ aynz = Add(free, I(D|32));
-  Addr@ xz = Add(free, I(D|64));
-
-  ProgramM@ nzM = NotF(I(D|32), z, nz)(Add(free, I(D|96)));
-  ProgramM@ anyzM = AddF(I(D|32), y, nz, aynz)(nzM.free);
-  ProgramM@ xzM = AndF(I(D|32), x, z, xz)(anyzM.free);
-  ProgramM@ rM = OrF(I(D|32), xz, aynz, r)(xzM.free);
-  ProgramM@(rM.free, Seq([
-      nzM.program,
-      anyzM.program,
-      xzM.program,
-      rM.program
-  ]));
+  AllocM(32, (Addr@ nz) {
+    AllocM(32, (Addr@ aynz) {
+      AllocM(32, (Addr@ xz) {
+        SeqM([
+          NotF(32, z, nz),
+          AddF(32, y, nz, aynz),
+          AndF(32, x, z, xz),
+          OrF(32, xz, aynz, r)]);
+      });
+    });
+  });
 };
 
 (Addr@, Addr@, Addr@, Addr@) { Module@; }
-RoundH = (Addr@ x, Addr@ y, Addr@ z, Addr@ r)(Addr@ free) {
+RoundH = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = xor(x, xor(y, z));
-  Addr@ yz = free;
-
-  ProgramM@ yzM = XorF(I(D|32), y, z, yz)(Add(free, I(D|32)));
-  ProgramM@ rM = XorF(I(D|32), x, yz, r)(yzM.free);
-  ProgramM@(rM.free, Seq([
-      yzM.program,
-      rM.program
-  ]));
+  AllocM(32, (Addr@ yz) {
+    SeqM([
+      XorF(32, y, z, yz),
+      XorF(32, x, yz, r)]);
+  });
 };
 
 (Addr@, Addr@, Addr@, Addr@) { Module@; }
-RoundI = (Addr@ x, Addr@ y, Addr@ z, Addr@ r)(Addr@ free) {
+RoundI = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = xor(y, or(x, not(z)));
-  Addr@ nz = free;
-  Addr@ xnz = Add(free, I(D|32));
-
-  ProgramM@ nzM = NotF(I(D|32), z, nz)(Add(free, I(D|64)));
-  ProgramM@ xnzM = OrF(I(D|32), x, nz, xnz)(nzM.free);
-  ProgramM@ rM = XorF(I(D|32), y, xnz, r)(xnzM.free);
-  ProgramM@(rM.free, Seq([
-      nzM.program,
-      xnzM.program,
-      rM.program
-  ]));
+  AllocM(32, (Addr@ nz) {
+    AllocM(32, (Addr@ xnz) {
+      SeqM([
+        NotF(32, z, nz),
+        OrF(32, x, nz, xnz),
+        XorF(32, y, xnz, r)]);
+    });
+  });
 };
 
 @(RoundF, RoundG, RoundH, RoundI);

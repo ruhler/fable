@@ -1,0 +1,71 @@
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+
+@ Program@ = /Fblf/Program%.Program@;
+@ Addr@ = /Fblf/Program%.Addr@;
+% Noop = /Fblf/Program%.Noop;
+% Seq = /Fblf/Program%.Seq;
+
+# Module@ --
+#   By convention, to support easy composition of programs, we define them in
+#   terms of modules.
+#
+# Inputs:
+#   free - The first address in the heap available for allocating space on the
+#          heap. The module may reserve any addrs for internal use greater
+#          than or equal to 'free'.
+#
+# Results:
+#   heap - The first address in the heap available for allocations after the
+#          module has completed all its own allocations. Also, the size of the
+#          heap reqired to run the program.
+#   program - The program.
+@ Instance@ = *(Addr@ heap, Program@ program);
+@ Module@ = (Addr@) { Instance@; };
+
+# AllocM --
+#   Allocate n bits on the heap for use in a module.
+(Int@, (Addr@) { Module@; }) { Module@; }
+AllocM = (Int@ n, (Addr@) { Module@; } f) {
+  (Addr@ free) {
+    f(free)(Add(free, n));
+  };
+};
+
+# InstM --
+#   Instantiate a module for use in another module.
+(Module@, (Program@) { Module@; }) { Module@; }
+InstM = (Module@ m, (Program@) { Module@; } f) {
+  (Addr@ free) {
+    Instance@ mr = m(free);
+    f(mr.program)(mr.heap);
+  };
+};
+
+# PureM --
+#   A module that does not need to allocate space on the heap or instantiate
+#   other modules.
+(Program@) { Module@; } PureM = (Program@ program) {
+  (Addr@ free) { Instance@(free, program); };
+};
+
+# SeqM --
+#   Instantite a list of modules and run their programs in order.
+(Lit@<Module@>) { Module@; } SeqM = (Lit@<Module@> ms) {
+  ms<Module@>((Module@ aM, Module@ bM) {
+    InstM(aM, (Program@ a) {
+      InstM(bM, (Program@ b) {
+        PureM(Seq([a, b]));
+      });
+    });
+  }, PureM(Noop));
+};
+
+(Module@, Addr@) { Instance@; } Instantiate = (Module@ m, Addr@ free) {
+  m(free);
+};
+
+@(Module@, Instance@, AllocM, InstM, PureM, SeqM, Instantiate);

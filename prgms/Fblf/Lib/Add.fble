@@ -2,9 +2,8 @@
 % B = /Digits%.Bit;
 
 @ Addr@ = /Fblf/Program%.Addr@;
+@ Program@ = /Fblf/Program%.Program@;
 @ Value@ = /Fblf/Program%.Value@;
-@ ProgramM@ = /Fblf/Program%.ProgramM@;
-@ Module@ = /Fblf/Program%.Module@;
 % Assign = /Fblf/Program%.Assign;
 % Eq = /Fblf/Program%.Eq;
 % IfElse = /Fblf/Program%.IfElse;
@@ -12,6 +11,10 @@
 % Noop = /Fblf/Program%.Noop;
 % Const = /Fblf/Program%.Const;
 % Ref = /Fblf/Program%.Ref;
+
+@ Module@ = /Fblf/Module%.Module@;
+% AllocM = /Fblf/Module%.AllocM;
+% PureM = /Fblf/Module%.PureM;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -27,8 +30,8 @@
 
 <@,@>% For = /Loop%.For;
 
-# Add1F --
-#   A 1-bit adder.
+# Add1P --
+#   A pure 1-bit adder.
 #
 # Inputs:
 #   a - The address of the first operand.
@@ -39,24 +42,23 @@
 #
 # Results:
 #   A program that sets x and z based on the one bit addition a + b + c.
-(Addr@, Addr@, Addr@, Addr@, Addr@) { Module@; }
-Add1F = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z)(Addr@ free) {
+(Addr@, Addr@, Addr@, Addr@, Addr@) { Program@; }
+Add1P = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
   Int@ n1 = I(D|1);
   Value@ b0 = Const(B|0);
   Value@ b1 = Const(B|1);
-  @(free: free,
-    program:
-      IfElse(Eq(Ref(a), b0, n1),
-        IfElse(Eq(Ref(b), b0, n1),
-          Seq([Assign(z, Ref(c), n1), Assign(x, b0, n1)]),
-          IfElse(Eq(Ref(c), b0, n1),
-            Seq([Assign(z, b1, n1), Assign(x, b0, n1)]),
-            Seq([Assign(z, b0, n1), Assign(x, b1, n1)]))),
-        IfElse(Eq(Ref(b), b0, n1),
-          IfElse(Eq(Ref(c), b0, n1),
-            Seq([Assign(z, b1, n1), Assign(x, b0, n1)]),
-            Seq([Assign(z, b0, n1), Assign(x, b1, n1)])),
-          Seq([Assign(z, Ref(c), n1), Assign(x, b1, n1)]))));
+
+  IfElse(Eq(Ref(a), b0, n1),
+    IfElse(Eq(Ref(b), b0, n1),
+      Seq([Assign(z, Ref(c), n1), Assign(x, b0, n1)]),
+      IfElse(Eq(Ref(c), b0, n1),
+        Seq([Assign(z, b1, n1), Assign(x, b0, n1)]),
+        Seq([Assign(z, b0, n1), Assign(x, b1, n1)]))),
+    IfElse(Eq(Ref(b), b0, n1),
+      IfElse(Eq(Ref(c), b0, n1),
+        Seq([Assign(z, b1, n1), Assign(x, b0, n1)]),
+        Seq([Assign(z, b0, n1), Assign(x, b1, n1)])),
+      Seq([Assign(z, Ref(c), n1), Assign(x, b1, n1)])));
 };
 
 # AddF -- 
@@ -68,21 +70,42 @@ Add1F = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z)(Addr@ free) {
 #   b - The address of the second operand.
 #   z - The address of where to store the result of the addition.
 (Int@, Addr@, Addr@, Addr@) { Module@; }
-AddF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
+AddF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   # We need a single bit of internal state to store the carry bit as we do
   # the addition.
-  Addr@ carry = free;
+  AllocM(I(D|1), (Addr@ carry) {
+    (Int@) { Maybe@<Int@>; } next = (Int@ i) {
+      /Int/Int/Eq%.Le(i, I(D|0)).?(
+        true: Nothing<Int@>,
+        false: Just<Int@>(Sub(i, I(D|1))));
+    };
 
-  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
-    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
-  };
+    Value@ b0 = Const(B|0);
+    PureM(For<Int@, Program@>(next(n), next, Assign(carry, b0, I(D|1)),
+      (Int@ i, Program@ s) {
+        Program@ add1 = Add1P(Add(a, i), Add(b, i), carry, carry, Add(z, i));
+        Seq([s, add1]); 
+      }));
+  });
+};
 
-  Value@ b0 = Const(B|0);
-  For<Int@, ProgramM@>(next(n), next,
-    ProgramM@(Add(free, I(D|1)), Assign(carry, b0, I(D|1))),
-    (Int@ i, ProgramM@ s) {
-      ProgramM@ add1 = Add1F(Add(a, i), Add(b, i), carry, carry, Add(z, i))(s.free);
-      ProgramM@(add1.free, Seq([s.program, add1.program])); 
+# IncP --
+#   Increment an n-bit number by 1.
+#
+# Inputs:
+#   n - The number of bits of the number to increment.
+#   a - The address of the value to increment. The value is most significant
+#       bit first.
+(Int@, Addr@) { Program@; }
+IncP = (Int@ n, Addr@ a) {
+  Le(n, I(D|0)).?(
+    true: Noop,
+    false: {
+      Int@ nm1 = Sub(n, I(D|1));
+      Addr@ lsb = Add(a, nm1);
+      IfElse(Eq(Ref(lsb), Const(B|0), I(D|1)),
+        Assign(lsb, Const(B|1), I(D|1)),
+        Seq([Assign(lsb, Const(B|0), I(D|1)), IncP(nm1, a)]));
     });
 };
 
@@ -93,19 +116,8 @@ AddF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
 #   n - The number of bits of the number to increment.
 #   a - The address of the value to increment. The value is most significant
 #       bit first.
-(Int@, Addr@) { Module@; }
-IncF = (Int@ n, Addr@ a)(Addr@ free) {
-  Le(n, I(D|0)).?(
-    true: ProgramM@(free, Noop),
-    false: {
-      Int@ nm1 = Sub(n, I(D|1));
-      Addr@ lsb = Add(a, nm1);
-      ProgramM@ s = IncF(nm1, a)(free);
-      ProgramM@(s.free,
-          IfElse(Eq(Ref(lsb), Const(B|0), I(D|1)),
-            Assign(lsb, Const(B|1), I(D|1)),
-            Seq([Assign(lsb, Const(B|0), I(D|1)), s.program])));
-    });
+(Int@, Addr@) { Module@; } IncF = (Int@ n, Addr@ a) {
+  PureM(IncP(n, a));
 };
 
 @(AddF, IncF);

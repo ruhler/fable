@@ -1,8 +1,7 @@
 % B = /Digits%.Bit;
 
 @ Addr@ = /Fblf/Program%.Addr@;
-@ ProgramM@ = /Fblf/Program%.ProgramM@;
-@ Module@ = /Fblf/Program%.Module@;
+@ Program@ = /Fblf/Program%.Program@;
 % Assign = /Fblf/Program%.Assign;
 % Eq = /Fblf/Program%.Eq;
 % If = /Fblf/Program%.If;
@@ -11,6 +10,9 @@
 % Noop = /Fblf/Program%.Noop;
 % Const = /Fblf/Program%.Const;
 % Ref = /Fblf/Program%.Ref;
+
+@ Module@ = /Fblf/Module%.Module@;
+% PureM = /Fblf/Module%.PureM;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -26,6 +28,28 @@
 
 <@,@>% For = /Loop%.For;
 
+# Bitwise --
+#   Helper function for describing modules that implement bitwise computation.
+#
+# Inputs:
+#   n - the number of bits.
+#   f - the program to execute to compute the ith bit.
+#
+# Results:
+#   A module that computes each bit in sequence.
+(Int@, (Int@) { Program@; }) { Module@; }
+Bitwise = (Int@ n, (Int@) { Program@; } f) {
+  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
+    /Int/Int/Eq%.Le(i, I(D|0)).?(
+      true: Nothing<Int@>,
+      false: Just<Int@>(Sub(i, I(D|1))));
+  };
+
+  PureM(For<Int@, Program@>(next(n), next, Noop, (Int@ i, Program@ s) {
+    Seq([s, f(i)]);
+  }));
+};
+
 # AndF --
 #   n-bit bitwise AND.
 #
@@ -35,22 +59,16 @@
 #   b - The address of the second operand.
 #   z - The address of the result.
 (Int@, Addr@, Addr@, Addr@) { Module@; }
-AndF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
-  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
-    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
-  };
+AndF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
+  Bitwise(n, (Int@ i) {
+    Addr@ ai = Add(a, i);
+    Addr@ bi = Add(b, i);
+    Addr@ zi = Add(z, i);
 
-  For<Int@, ProgramM@>(next(n), next, ProgramM@(free, Noop),
-    (Int@ i, ProgramM@ s) {
-      Addr@ ai = Add(a, i);
-      Addr@ bi = Add(b, i);
-      Addr@ zi = Add(z, i);
-
-      ProgramM@(s.free, Seq([s.program,
-        IfElse(Eq(Ref(ai), Const(B|0), I(D|1)),
-          Assign(zi, Const(B|0), I(D|1)),
-          Assign(zi, Ref(bi), I(D|1)))]));
-    });
+    IfElse(Eq(Ref(ai), Const(B|0), I(D|1)),
+      Assign(zi, Const(B|0), I(D|1)),
+      Assign(zi, Ref(bi), I(D|1)));
+  });
 };
 
 # OrF --
@@ -62,22 +80,16 @@ AndF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
 #   b - The address of the second operand.
 #   z - The address of the result.
 (Int@, Addr@, Addr@, Addr@) { Module@; }
-OrF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
-  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
-    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
-  };
+OrF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
+  Bitwise(n, (Int@ i) {
+    Addr@ ai = Add(a, i);
+    Addr@ bi = Add(b, i);
+    Addr@ zi = Add(z, i);
 
-  For<Int@, ProgramM@>(next(n), next, ProgramM@(free, Noop),
-    (Int@ i, ProgramM@ s) {
-      Addr@ ai = Add(a, i);
-      Addr@ bi = Add(b, i);
-      Addr@ zi = Add(z, i);
-
-      ProgramM@(s.free, Seq([s.program,
-        IfElse(Eq(Ref(ai), Const(B|1), I(D|1)),
-          Assign(zi, Const(B|1), I(D|1)),
-          Assign(zi, Ref(bi), I(D|1)))]));
-    });
+    IfElse(Eq(Ref(ai), Const(B|1), I(D|1)),
+      Assign(zi, Const(B|1), I(D|1)),
+      Assign(zi, Ref(bi), I(D|1)));
+  });
 };
 
 # XorF --
@@ -89,26 +101,21 @@ OrF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
 #   b - The address of the second operand.
 #   z - The address of the result.
 (Int@, Addr@, Addr@, Addr@) { Module@; }
-XorF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
-  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
-    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
-  };
+XorF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
+  Bitwise(n, (Int@ i) {
+    Addr@ ai = Add(a, i);
+    Addr@ bi = Add(b, i);
+    Addr@ zi = Add(z, i);
 
-  For<Int@, ProgramM@>(next(n), next, ProgramM@(free, Noop),
-    (Int@ i, ProgramM@ s) {
-      Addr@ ai = Add(a, i);
-      Addr@ bi = Add(b, i);
-      Addr@ zi = Add(z, i);
-
-      # TODO: The caller better not alias a and z, or this won't work!
-      # Switch to IfElse to fix that?
-      ProgramM@(s.free, Seq([s.program, 
-        Assign(zi, Const(B|0), I(D|1)),
-        If(Eq(Ref(ai), Const(B|0), I(D|1)),
-          Assign(zi, Ref(bi), I(D|1))),
-        If(Eq(Ref(bi), Const(B|0), I(D|1)),
-          Assign(zi, Ref(ai), I(D|1)))]));
-    });
+    # TODO: The caller better not alias a and z, or this won't work!
+    # Switch to IfElse to fix that?
+    Seq([
+      Assign(zi, Const(B|0), I(D|1)),
+      If(Eq(Ref(ai), Const(B|0), I(D|1)),
+        Assign(zi, Ref(bi), I(D|1))),
+      If(Eq(Ref(bi), Const(B|0), I(D|1)),
+        Assign(zi, Ref(ai), I(D|1)))]);
+  });
 };
 
 # NotF --
@@ -119,22 +126,15 @@ XorF = (Int@ n, Addr@ a, Addr@ b, Addr@ z)(Addr@ free) {
 #   a - The address of the operand.
 #   z - The address of the result.
 (Int@, Addr@, Addr@) { Module@; }
-NotF = (Int@ n, Addr@ a, Addr@ z)(Addr@ free) {
-  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
-    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
-  };
+NotF = (Int@ n, Addr@ a, Addr@ z) {
+  Bitwise(n, (Int@ i) {
+    Addr@ ai = Add(a, i);
+    Addr@ zi = Add(z, i);
 
-  For<Int@, ProgramM@>(next(n), next, ProgramM@(free, Noop),
-    (Int@ i, ProgramM@ s) {
-      Addr@ ai = Add(a, i);
-      Addr@ zi = Add(z, i);
-
-      # TODO: The caller better not alias a and z, or this won't work!
-      ProgramM@(s.free, Seq([s.program, 
-        IfElse(Eq(Ref(ai), Const(B|1), I(D|1)),
-          Assign(zi, Const(B|0), I(D|1)),
-          Assign(zi, Const(B|1), I(D|1)))]));
-    });
+    IfElse(Eq(Ref(ai), Const(B|1), I(D|1)),
+      Assign(zi, Const(B|0), I(D|1)),
+      Assign(zi, Const(B|1), I(D|1)));
+  });
 };
 
 # ClsF --
@@ -146,21 +146,16 @@ NotF = (Int@ n, Addr@ a, Addr@ z)(Addr@ free) {
 #   a - The address of the operand.
 #   z - The address of the result.
 (Int@, Int@, Addr@, Addr@) { Module@; }
-ClsF = (Int@ n, Int@ s, Addr@ a, Addr@ z)(Addr@ free) {
-  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
-    /Int/Int/Eq%.Le(i, I(D|0)).?(true: Nothing<Int@>, false: Just<Int@>(Sub(i, I(D|1))));
-  };
+ClsF = (Int@ n, Int@ s, Addr@ a, Addr@ z) {
+  Bitwise(n, (Int@ i) {
+    Addr@ ai = Add(a, i);
+    Int@ offset = Lt(i, s).?(
+      true: Sub(Add(n, i), s),
+      false: Sub(i, s));
+    Addr@ zi = Add(z, offset);
 
-  For<Int@, ProgramM@>(next(n), next, ProgramM@(free, Noop),
-    (Int@ i, ProgramM@ ss) {
-      Addr@ ai = Add(a, i);
-      Int@ offset = Lt(i, s).?(
-        true: Sub(Add(n, i), s),
-        false: Sub(i, s));
-      Addr@ zi = Add(z, offset);
-
-      ProgramM@(ss.free, Seq([ss.program, Assign(zi, Ref(ai), I(D|1))]));
-    });
+    Assign(zi, Ref(ai), I(D|1));
+  });
 };
 
 @(AndF, OrF, XorF, NotF, ClsF);
