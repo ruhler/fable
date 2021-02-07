@@ -560,19 +560,62 @@ Abstract Syntax:
 Concrete Syntax:
   stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
 
-Example
-  Int@ x <- map(l);
+Example:
+  Int@ x <- Map(l);
   f(x, y)
 
-Bind is syntactic sugar for applying a single argument function to a function
-value.
-
-It is equivalent to:
+Function bind is syntactic sugar for calling a function with an anonymous
+function as its only argument. It is equivalent to:
 
   func_apply func (func_value args [body])
 
-The example desugars to:
+For example, the expression:
+
+  Int@ x <- Map(l);
+  f(x, y)
+
+Desugars to:
+
   map(l)((Int@ x) { f(x, y); });
+
+Function bind is particularly suited for abstracting glue logic that
+manipulates how program statements are combined. For example, it can be used
+to hide error propagation based on a Maybe monad.
+
+Instead of:
+  Maybe@ a = f(x);
+  a.?(
+    just: {
+      Maybe@ b = g(a.just);
+      b.?(just: h(b.just), nothing: Nothing);
+    },
+    nothing: Nothing);
+
+And instead of the slightly better:
+
+  (Maybe@, (X@) { Maybe@; }) { Maybe@; }
+  Maybe = (Maybe@ m, (X@) { Maybe@; } f) {
+    m.?(just: f(x.just), nothing: Nothing);
+  };
+
+  Maybe(f(x), (X@ a) {
+    Maybe(g(a), (X@ b) {
+      h(b);
+    };
+  };
+
+You can write:
+  
+  (Maybe@)((X@) { Maybe@; }) { Maybe@; }
+  Maybe = (Maybe@ m)((X@) { Maybe@; } f) {
+    m.?(just: f(x.just), nothing: Nothing);
+  };
+
+  X@ a <- Maybe(f(x));
+  X@ b <- Maybe(g(x));
+  h(b);
+
+Which more clearly separates the glue logic from the meat of the program.
 
 6 Processes
 -----------
