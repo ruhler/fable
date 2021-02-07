@@ -28,8 +28,12 @@
 
 # AllocM --
 #   Allocate n bits on the heap for use in a module.
-(Int@, (Addr@) { Module@; }) { Module@; }
-AllocM = (Int@ n, (Addr@) { Module@; } f) {
+#
+# Example use:
+#   Addr@ x <- AllocM(I(D|32));
+#   ...
+(Int@)((Addr@) { Module@; }) { Module@; }
+AllocM = (Int@ n)((Addr@) { Module@; } f) {
   (Addr@ free) {
     f(free)(Add(free, n));
   };
@@ -37,8 +41,12 @@ AllocM = (Int@ n, (Addr@) { Module@; } f) {
 
 # InstM --
 #   Instantiate a module for use in another module.
-(Module@, (Program@) { Module@; }) { Module@; }
-InstM = (Module@ m, (Program@) { Module@; } f) {
+#
+# Example use:
+#   Program@ p <- InstM(m);
+#   ...
+(Module@)((Program@) { Module@; }) { Module@; }
+InstM = (Module@ m)((Program@) { Module@; } f) {
   (Addr@ free) {
     Instance@ mr = m(free);
     f(mr.program)(mr.heap);
@@ -56,11 +64,9 @@ InstM = (Module@ m, (Program@) { Module@; } f) {
 #   Instantite a list of modules and run their programs in order.
 (Lit@<Module@>) { Module@; } SeqM = (Lit@<Module@> ms) {
   ms<Module@>((Module@ aM, Module@ bM) {
-    InstM(aM, (Program@ a) {
-      InstM(bM, (Program@ b) {
-        PureM(Seq([a, b]));
-      });
-    });
+    Program@ a <- InstM(aM);
+    Program@ b <- InstM(bM);
+    PureM(Seq([a, b]));
   }, PureM(Noop));
 };
 

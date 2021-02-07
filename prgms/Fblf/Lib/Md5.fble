@@ -20,56 +20,47 @@ Int@ 32 = I(D|32);
 (Addr@, Addr@, Addr@, Addr@) { Module@; }
 RoundF = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = or(and(x, y), and(not(x), z));
-  AllocM(32, (Addr@ nx) {
-    AllocM(32, (Addr@ anxz) {
-      AllocM(32, (Addr@ xy) {
-        SeqM([
-          NotF(32, x, nx),
-          AddF(32, nx, z, anxz),
-          AndF(32, x, y, xy),
-          OrF(32, xy, anxz, r)]);
-      });
-    });
-  });
+  Addr@ nx <- AllocM(32);
+  Addr@ anxz <- AllocM(32);
+  Addr@ xy <- AllocM(32);
+  SeqM([
+    NotF(32, x, nx),
+    AddF(32, nx, z, anxz),
+    AndF(32, x, y, xy),
+    OrF(32, xy, anxz, r)]);
 };
 
 (Addr@, Addr@, Addr@, Addr@) { Module@; }
 RoundG = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = or(and(x, z), and(y, not(z)));
-  AllocM(32, (Addr@ nz) {
-    AllocM(32, (Addr@ aynz) {
-      AllocM(32, (Addr@ xz) {
-        SeqM([
-          NotF(32, z, nz),
-          AddF(32, y, nz, aynz),
-          AndF(32, x, z, xz),
-          OrF(32, xz, aynz, r)]);
-      });
-    });
-  });
+  Addr@ nz <- AllocM(32);
+  Addr@ aynz <- AllocM(32);
+  Addr@ xz <- AllocM(32);
+  SeqM([
+    NotF(32, z, nz),
+    AddF(32, y, nz, aynz),
+    AndF(32, x, z, xz),
+    OrF(32, xz, aynz, r)]);
 };
 
 (Addr@, Addr@, Addr@, Addr@) { Module@; }
 RoundH = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = xor(x, xor(y, z));
-  AllocM(32, (Addr@ yz) {
-    SeqM([
-      XorF(32, y, z, yz),
-      XorF(32, x, yz, r)]);
-  });
+  Addr@ yz <- AllocM(32);
+  SeqM([
+    XorF(32, y, z, yz),
+    XorF(32, x, yz, r)]);
 };
 
 (Addr@, Addr@, Addr@, Addr@) { Module@; }
 RoundI = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = xor(y, or(x, not(z)));
-  AllocM(32, (Addr@ nz) {
-    AllocM(32, (Addr@ xnz) {
-      SeqM([
-        NotF(32, z, nz),
-        OrF(32, x, nz, xnz),
-        XorF(32, y, xnz, r)]);
-    });
-  });
+  Addr@ nz <- AllocM(32);
+  Addr@ xnz <- AllocM(32);
+  SeqM([
+    NotF(32, z, nz),
+    OrF(32, x, nz, xnz),
+    XorF(32, y, xnz, r)]);
 };
 
 @(RoundF, RoundG, RoundH, RoundI);

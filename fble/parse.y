@@ -483,6 +483,21 @@ stmt:
       let_expr->body = $3;
       $$ = &let_expr->_base;
     }  
+  | tagged_type_p '<' '-' expr ';' stmt {
+      FbleFuncValueExpr* func_value_expr = FbleAlloc(arena, FbleFuncValueExpr);
+      func_value_expr->_base.tag = FBLE_FUNC_VALUE_EXPR;
+      func_value_expr->_base.loc = FbleCopyLoc(@$);
+      func_value_expr->args = $1;
+      func_value_expr->body = $6;
+
+      FbleApplyExpr* apply_expr = FbleAlloc(arena, FbleApplyExpr);
+      apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
+      apply_expr->_base.loc = FbleCopyLoc(@$);
+      apply_expr->misc = $4;
+      FbleVectorInit(arena, apply_expr->args);
+      FbleVectorAppend(arena, apply_expr->args, &func_value_expr->_base);
+      $$ = &apply_expr->_base;
+    }
   | expr '~' name ',' name ';' stmt {
       FbleLinkExpr* link_expr = FbleAlloc(arena, FbleLinkExpr);
       link_expr->_base.tag = FBLE_LINK_EXPR;

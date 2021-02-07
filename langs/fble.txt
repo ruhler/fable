@@ -552,6 +552,28 @@ Runtime is O(log(N + M)) plus the runtime of func, the runtimes of each of the
 arguments, and the runtime of the body, where N is the number of arguments to
 the function and M is the number of variables captured by the function.
 
+5.4 Function Bind
+-----------------
+Abstract Syntax:
+  Expr ::= func_bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+
+Concrete Syntax:
+  stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
+
+Example
+  Int@ x <- map(l);
+  f(x, y)
+
+Bind is syntactic sugar for applying a single argument function to a function
+value.
+
+It is equivalent to:
+
+  func_apply func (func_value args [body])
+
+The example desugars to:
+  map(l)((Int@ x) { f(x, y); });
+
 6 Processes
 -----------
 A process is a computation with side effects that produces a value. Side
@@ -1217,6 +1239,7 @@ block ::=
 stmt ::=
    expr ';'
  | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
+ | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
  | type '~' name ',' name ';' stmt                                   (* proc_link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
  ;
