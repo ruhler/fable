@@ -1,5 +1,5 @@
 Fblf:
-* Consider adding back bind syntax to fble?
+* Rename fooF modules to fooM.
 * Use IfElse to avoid aliasing issue with XorF.
  - And add test cases for aliasing for things in general.
 * Implement md5 in fblf.

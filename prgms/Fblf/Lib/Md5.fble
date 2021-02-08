@@ -4,9 +4,12 @@
 % I = /Int/Int/Lit%.I;
 
 @ Addr@ = /Fblf/Program%.Addr@;
+@ Value@ = /Fblf/Program%.Value@;
+% Assign = /Fblf/Program%.Assign;
 
 @ Module@ = /Fblf/Module%.Module@;
 % AllocM = /Fblf/Module%.AllocM;
+% PureM = /Fblf/Module%.PureM;
 % SeqM = /Fblf/Module%.SeqM;
 
 % AddF = /Fblf/Lib/Add%.AddF;
@@ -14,11 +17,46 @@
 % OrF = /Fblf/Lib/Bitwise%.OrF;
 % XorF = /Fblf/Lib/Bitwise%.XorF;
 % NotF = /Fblf/Lib/Bitwise%.NotF;
+% ClsF = /Fblf/Lib/Bitwise%.ClsF;
 
 Int@ 32 = I(D|32);
 
-(Addr@, Addr@, Addr@, Addr@) { Module@; }
-RoundF = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
+# X@ -- 
+#   The type of functions F, G, H, I.
+#
+# Inputs: x, y, z, r
+#   Computes r = X(x, y, z)
+@ X@ = (Addr@, Addr@, Addr@, Addr@) { Module@; };
+
+# XX@ --
+#   The type of functions FF, GG, HH, II.
+#
+# Inputs: a, b, c, d, x, s, t, r
+#
+#   Computes r = X(a, b, c, d, x, s, t);
+@ XX@ = (Addr@, Addr@, Addr@, Addr@, Addr@, Int@, Value@, Addr@) { Module@; };
+
+(X@) { XX@; }
+XX = (X@ xf)(Addr@ a, Addr@ b, Addr@ c, Addr@ d, Addr@ x, Int@ s, Value@ t, Addr@ r) {
+  # r = add(b, cls(add(add(a, xf(b, c, d)), add(x, t)), s));
+  Addr@ tv <- AllocM(32);
+  Addr@ xtv <- AllocM(32);
+  Addr@ xfv <- AllocM(32);
+  Addr@ axfv <- AllocM(32);
+  Addr@ axfxtv <- AllocM(32);
+  Addr@ clsv <- AllocM(32);
+  SeqM([
+    PureM(Assign(tv, t, 32)),
+    AddF(32, x, tv, xtv),
+    xf(b, c, d, xfv),
+    AddF(32, a, xfv, axfv),
+    AddF(32, axfv, xtv, axfxtv),
+    ClsF(32, s, axfxtv, clsv),
+    AddF(32, b, clsv, r)
+  ]);
+};
+
+XX@ FF = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = or(and(x, y), and(not(x), z));
   Addr@ nx <- AllocM(32);
   Addr@ anxz <- AllocM(32);
@@ -28,10 +66,9 @@ RoundF = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
     AddF(32, nx, z, anxz),
     AndF(32, x, y, xy),
     OrF(32, xy, anxz, r)]);
-};
+});
 
-(Addr@, Addr@, Addr@, Addr@) { Module@; }
-RoundG = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
+XX@ GG = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = or(and(x, z), and(y, not(z)));
   Addr@ nz <- AllocM(32);
   Addr@ aynz <- AllocM(32);
@@ -41,19 +78,17 @@ RoundG = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
     AddF(32, y, nz, aynz),
     AndF(32, x, z, xz),
     OrF(32, xz, aynz, r)]);
-};
+});
 
-(Addr@, Addr@, Addr@, Addr@) { Module@; }
-RoundH = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
+XX@ HH = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = xor(x, xor(y, z));
   Addr@ yz <- AllocM(32);
   SeqM([
     XorF(32, y, z, yz),
     XorF(32, x, yz, r)]);
-};
+});
 
-(Addr@, Addr@, Addr@, Addr@) { Module@; }
-RoundI = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
+XX@ II = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = xor(y, or(x, not(z)));
   Addr@ nz <- AllocM(32);
   Addr@ xnz <- AllocM(32);
@@ -61,6 +96,6 @@ RoundI = (Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
     NotF(32, z, nz),
     OrF(32, x, nz, xnz),
     XorF(32, y, xnz, r)]);
-};
+});
 
-@(RoundF, RoundG, RoundH, RoundI);
+@(FF, GG, HH, II);
