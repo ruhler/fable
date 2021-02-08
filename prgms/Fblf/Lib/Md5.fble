@@ -12,12 +12,12 @@
 % PureM = /Fblf/Module%.PureM;
 % SeqM = /Fblf/Module%.SeqM;
 
-% AddF = /Fblf/Lib/Add%.AddF;
-% AndF = /Fblf/Lib/Bitwise%.AndF;
-% OrF = /Fblf/Lib/Bitwise%.OrF;
-% XorF = /Fblf/Lib/Bitwise%.XorF;
-% NotF = /Fblf/Lib/Bitwise%.NotF;
-% ClsF = /Fblf/Lib/Bitwise%.ClsF;
+% AddM = /Fblf/Lib/Add%.AddM;
+% AndM = /Fblf/Lib/Bitwise%.AndM;
+% OrM = /Fblf/Lib/Bitwise%.OrM;
+% XorM = /Fblf/Lib/Bitwise%.XorM;
+% NotM = /Fblf/Lib/Bitwise%.NotM;
+% ClsM = /Fblf/Lib/Bitwise%.ClsM;
 
 Int@ 32 = I(D|32);
 
@@ -47,12 +47,12 @@ XX = (X@ xf)(Addr@ a, Addr@ b, Addr@ c, Addr@ d, Addr@ x, Int@ s, Value@ t, Addr
   Addr@ clsv <- AllocM(32);
   SeqM([
     PureM(Assign(tv, t, 32)),
-    AddF(32, x, tv, xtv),
+    AddM(32, x, tv, xtv),
     xf(b, c, d, xfv),
-    AddF(32, a, xfv, axfv),
-    AddF(32, axfv, xtv, axfxtv),
-    ClsF(32, s, axfxtv, clsv),
-    AddF(32, b, clsv, r)
+    AddM(32, a, xfv, axfv),
+    AddM(32, axfv, xtv, axfxtv),
+    ClsM(32, s, axfxtv, clsv),
+    AddM(32, b, clsv, r)
   ]);
 };
 
@@ -62,10 +62,10 @@ XX@ FF = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   Addr@ anxz <- AllocM(32);
   Addr@ xy <- AllocM(32);
   SeqM([
-    NotF(32, x, nx),
-    AddF(32, nx, z, anxz),
-    AndF(32, x, y, xy),
-    OrF(32, xy, anxz, r)]);
+    NotM(32, x, nx),
+    AddM(32, nx, z, anxz),
+    AndM(32, x, y, xy),
+    OrM(32, xy, anxz, r)]);
 });
 
 XX@ GG = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
@@ -74,18 +74,18 @@ XX@ GG = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   Addr@ aynz <- AllocM(32);
   Addr@ xz <- AllocM(32);
   SeqM([
-    NotF(32, z, nz),
-    AddF(32, y, nz, aynz),
-    AndF(32, x, z, xz),
-    OrF(32, xz, aynz, r)]);
+    NotM(32, z, nz),
+    AddM(32, y, nz, aynz),
+    AndM(32, x, z, xz),
+    OrM(32, xz, aynz, r)]);
 });
 
 XX@ HH = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   # r = xor(x, xor(y, z));
   Addr@ yz <- AllocM(32);
   SeqM([
-    XorF(32, y, z, yz),
-    XorF(32, x, yz, r)]);
+    XorM(32, y, z, yz),
+    XorM(32, x, yz, r)]);
 });
 
 XX@ II = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
@@ -93,9 +93,9 @@ XX@ II = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
   Addr@ nz <- AllocM(32);
   Addr@ xnz <- AllocM(32);
   SeqM([
-    NotF(32, z, nz),
-    OrF(32, x, nz, xnz),
-    XorF(32, y, xnz, r)]);
+    NotM(32, z, nz),
+    OrM(32, x, nz, xnz),
+    XorM(32, y, xnz, r)]);
 });
 
 @(FF, GG, HH, II);

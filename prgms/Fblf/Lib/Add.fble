@@ -61,7 +61,7 @@ Add1P = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
       Seq([Assign(z, Ref(c), n1), Assign(x, b1, n1)])));
 };
 
-# AddF -- 
+# AddM -- 
 #   An n-bit adder, with most significant bit first.
 #
 # Inputs:
@@ -70,7 +70,7 @@ Add1P = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
 #   b - The address of the second operand.
 #   z - The address of where to store the result of the addition.
 (Int@, Addr@, Addr@, Addr@) { Module@; }
-AddF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
+AddM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   # We need a single bit of internal state to store the carry bit as we do
   # the addition.
   Addr@ carry <- AllocM(I(D|1));
@@ -109,15 +109,15 @@ IncP = (Int@ n, Addr@ a) {
     });
 };
 
-# IncF --
+# IncM --
 #   Increment an n-bit number by 1.
 #
 # Inputs:
 #   n - The number of bits of the number to increment.
 #   a - The address of the value to increment. The value is most significant
 #       bit first.
-(Int@, Addr@) { Module@; } IncF = (Int@ n, Addr@ a) {
+(Int@, Addr@) { Module@; } IncM = (Int@ n, Addr@ a) {
   PureM(IncP(n, a));
 };
 
-@(AddF, IncF);
+@(AddM, IncM);

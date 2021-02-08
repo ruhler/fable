@@ -50,7 +50,7 @@ Bitwise = (Int@ n, (Int@) { Program@; } f) {
   }));
 };
 
-# AndF --
+# AndM --
 #   n-bit bitwise AND.
 #
 # Inputs:
@@ -59,7 +59,7 @@ Bitwise = (Int@ n, (Int@) { Program@; } f) {
 #   b - The address of the second operand.
 #   z - The address of the result.
 (Int@, Addr@, Addr@, Addr@) { Module@; }
-AndF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
+AndM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
     Addr@ bi = Add(b, i);
@@ -71,7 +71,7 @@ AndF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   });
 };
 
-# OrF --
+# OrM --
 #   n-bit bitwise OR.
 #
 # Inputs:
@@ -80,7 +80,7 @@ AndF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
 #   b - The address of the second operand.
 #   z - The address of the result.
 (Int@, Addr@, Addr@, Addr@) { Module@; }
-OrF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
+OrM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
     Addr@ bi = Add(b, i);
@@ -92,7 +92,7 @@ OrF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   });
 };
 
-# XorF --
+# XorM --
 #   n-bit bitwise XOR.
 #
 # Inputs:
@@ -101,7 +101,7 @@ OrF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
 #   b - The address of the second operand.
 #   z - The address of the result.
 (Int@, Addr@, Addr@, Addr@) { Module@; }
-XorF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
+XorM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
     Addr@ bi = Add(b, i);
@@ -118,7 +118,7 @@ XorF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   });
 };
 
-# NotF --
+# NotM --
 #   n-bit bitwise NOT.
 #
 # Inputs:
@@ -126,7 +126,7 @@ XorF = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
 #   a - The address of the operand.
 #   z - The address of the result.
 (Int@, Addr@, Addr@) { Module@; }
-NotF = (Int@ n, Addr@ a, Addr@ z) {
+NotM = (Int@ n, Addr@ a, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
     Addr@ zi = Add(z, i);
@@ -137,7 +137,7 @@ NotF = (Int@ n, Addr@ a, Addr@ z) {
   });
 };
 
-# ClsF --
+# ClsM --
 #   n-bit circular left shift.
 #
 # Inputs:
@@ -146,7 +146,7 @@ NotF = (Int@ n, Addr@ a, Addr@ z) {
 #   a - The address of the operand.
 #   z - The address of the result.
 (Int@, Int@, Addr@, Addr@) { Module@; }
-ClsF = (Int@ n, Int@ s, Addr@ a, Addr@ z) {
+ClsM = (Int@ n, Int@ s, Addr@ a, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
     Int@ offset = Lt(i, s).?(
@@ -158,4 +158,4 @@ ClsF = (Int@ n, Int@ s, Addr@ a, Addr@ z) {
   });
 };
 
-@(AndF, OrF, XorF, NotF, ClsF);
+@(AndM, OrM, XorM, NotM, ClsM);

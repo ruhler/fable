@@ -19,13 +19,13 @@
 @ Instance@ = /Fblf/Module%.Instance@;
 % Instantiate = /Fblf/Module%.Instantiate;
 
-% AddF = /Fblf/Lib/Add%.AddF;
-% IncF = /Fblf/Lib/Add%.IncF;
-% AndF = /Fblf/Lib/Bitwise%.AndF;
-% OrF = /Fblf/Lib/Bitwise%.OrF;
-% XorF = /Fblf/Lib/Bitwise%.XorF;
-% NotF = /Fblf/Lib/Bitwise%.NotF;
-% ClsF = /Fblf/Lib/Bitwise%.ClsF;
+% AddM = /Fblf/Lib/Add%.AddM;
+% IncM = /Fblf/Lib/Add%.IncM;
+% AndM = /Fblf/Lib/Bitwise%.AndM;
+% OrM = /Fblf/Lib/Bitwise%.OrM;
+% XorM = /Fblf/Lib/Bitwise%.XorM;
+% NotM = /Fblf/Lib/Bitwise%.NotM;
+% ClsM = /Fblf/Lib/Bitwise%.ClsM;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
 @ Ptr@ = /Fblf/Heap%.Ptr@;
@@ -47,7 +47,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    Instance@ add = Instantiate(AddF(I(D|4), a, b, z), free);
+    Instance@ add = Instantiate(AddM(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0010), I(D|4)),   # a = 2
@@ -73,7 +73,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ a = I(D|0);
     Addr@ free = I(D|5);
 
-    Instance@ inc = Instantiate(IncF(I(D|5), a), free);
+    Instance@ inc = Instantiate(IncM(I(D|5), a), free);
 
     Program@ prgm = Seq([Assign(a, Const(B|10011), I(D|5)), inc.program]);
 
@@ -92,7 +92,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ a = I(D|0);
     Addr@ free = I(D|5);
 
-    Instance@ inc = Instantiate(IncF(I(D|5), a), free);
+    Instance@ inc = Instantiate(IncM(I(D|5), a), free);
 
     Program@ prgm = Seq([Assign(a, Const(B|11111), I(D|5)), inc.program]);
 
@@ -113,7 +113,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    Instance@ and = Instantiate(AndF(I(D|4), a, b, z), free);
+    Instance@ and = Instantiate(AndM(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
@@ -139,7 +139,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    Instance@ or = Instantiate(OrF(I(D|4), a, b, z), free);
+    Instance@ or = Instantiate(OrM(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
@@ -165,7 +165,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    Instance@ xor = Instantiate(XorF(I(D|4), a, b, z), free);
+    Instance@ xor = Instantiate(XorM(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
@@ -190,7 +190,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|4);
     Addr@ free = I(D|8);
 
-    Instance@ not = Instantiate(NotF(I(D|4), a, z), free);
+    Instance@ not = Instantiate(NotM(I(D|4), a, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
@@ -214,7 +214,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|5);
     Addr@ free = I(D|10);
 
-    Instance@ cls = Instantiate(ClsF(I(D|5), I(D|3), a, z), free);
+    Instance@ cls = Instantiate(ClsM(I(D|5), I(D|3), a, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|10011), I(D|5)),
