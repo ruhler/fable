@@ -31,28 +31,42 @@ Int@ 32 = I(D|32);
     T@ 12, T@ 13, T@ 14, T@ 15);
 };
 
-BlockOf@<Value@> T1 = BlockOf@<Value@>(
+# Addr32@ --
+#   An fblf Addr@ that points to a 32 bit value.
+#
+# For now this is only for documentation purposes. It isn't enforced at the
+# type level.
+@ Addr32@ = Addr@;
+
+# Value32@ --
+#   An fblf Value@ that has 32 bits.
+#
+# For now this is only for documentation purposes. It isn't enforced at the
+# type level.
+@ Value32@ = Value@;
+
+BlockOf@<Value32@> T1 = BlockOf@<Value32@>(
   H(Hex|D76AA478), H(Hex|E8C7B756), H(Hex|242070DB), H(Hex|C1BDCEEE),
   H(Hex|F57C0FAF), H(Hex|4787C62A), H(Hex|A8304613), H(Hex|FD469501),
   H(Hex|698098D8), H(Hex|8B44F7AF), H(Hex|FFFF5BB1), H(Hex|895CD7BE),
   H(Hex|6B901122), H(Hex|FD987193), H(Hex|A679438E), H(Hex|49B40821)
 );
 
-BlockOf@<Value@> T2 = BlockOf@<Value@>(
+BlockOf@<Value32@> T2 = BlockOf@<Value32@>(
   H(Hex|F61E2562), H(Hex|C040B340), H(Hex|265E5A51), H(Hex|E9B6C7AA),
   H(Hex|D62F105D), H(Hex|02441453), H(Hex|D8A1E681), H(Hex|E7D3FBC8),
   H(Hex|21E1CDE6), H(Hex|C33707D6), H(Hex|F4D50D87), H(Hex|455A14ED),
   H(Hex|A9E3E905), H(Hex|FCEFA3F8), H(Hex|676F02D9), H(Hex|8D2A4C8A)
 );
 
-BlockOf@<Value@> T3 = BlockOf@<Value@>(
+BlockOf@<Value32@> T3 = BlockOf@<Value32@>(
   H(Hex|FFFA3942), H(Hex|8771F681), H(Hex|6D9D6122), H(Hex|FDE5380C),
   H(Hex|A4BEEA44), H(Hex|4BDECFA9), H(Hex|F6BB4B60), H(Hex|BEBFBC70),
   H(Hex|289B7EC6), H(Hex|EAA127FA), H(Hex|D4EF3085), H(Hex|04881D05),
   H(Hex|D9D4D039), H(Hex|E6DB99E5), H(Hex|1FA27CF8), H(Hex|C4AC5665)
 );
 
-BlockOf@<Value@> T4 = BlockOf@<Value@>(
+BlockOf@<Value32@> T4 = BlockOf@<Value32@>(
   H(Hex|F4292244), H(Hex|432AFF97), H(Hex|AB9423A7), H(Hex|FC93A039),
   H(Hex|655B59C3), H(Hex|8F0CCC92), H(Hex|FFEFF47D), H(Hex|85845DD1),
   H(Hex|6FA87E4F), H(Hex|FE2CE6E0), H(Hex|A3014314), H(Hex|4E0811A1),
@@ -64,7 +78,7 @@ BlockOf@<Value@> T4 = BlockOf@<Value@>(
 #
 # Inputs: x, y, z, r
 #   Computes r = X(x, y, z)
-@ X@ = (Addr@, Addr@, Addr@, Addr@) { Module@; };
+@ X@ = (Addr32@, Addr32@, Addr32@, Addr32@) { Module@; };
 
 # XX@ --
 #   The type of functions FF, GG, HH, II.
@@ -72,17 +86,17 @@ BlockOf@<Value@> T4 = BlockOf@<Value@>(
 # Inputs: a, b, c, d, x, s, t, r
 #
 #   Computes r = X(a, b, c, d, x, s, t);
-@ XX@ = (Addr@, Addr@, Addr@, Addr@, Addr@, Int@, Value@, Addr@) { Module@; };
+@ XX@ = (Addr32@, Addr32@, Addr32@, Addr32@, Addr32@, Int@, Value32@, Addr32@) { Module@; };
 
 (X@) { XX@; }
-XX = (X@ xf)(Addr@ a, Addr@ b, Addr@ c, Addr@ d, Addr@ x, Int@ s, Value@ t, Addr@ r) {
+XX = (X@ xf)(Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr32@ x, Int@ s, Value32@ t, Addr32@ r) {
   # r = add(b, cls(add(add(a, xf(b, c, d)), add(x, t)), s));
-  Addr@ tv <- AllocM(32);
-  Addr@ xtv <- AllocM(32);
-  Addr@ xfv <- AllocM(32);
-  Addr@ axfv <- AllocM(32);
-  Addr@ axfxtv <- AllocM(32);
-  Addr@ clsv <- AllocM(32);
+  Addr32@ tv <- AllocM(32);
+  Addr32@ xtv <- AllocM(32);
+  Addr32@ xfv <- AllocM(32);
+  Addr32@ axfv <- AllocM(32);
+  Addr32@ axfxtv <- AllocM(32);
+  Addr32@ clsv <- AllocM(32);
   SeqM([
     PureM(Assign(tv, t, 32)),
     AddM(32, x, tv, xtv),
@@ -94,11 +108,11 @@ XX = (X@ xf)(Addr@ a, Addr@ b, Addr@ c, Addr@ d, Addr@ x, Int@ s, Value@ t, Addr
   ]);
 };
 
-XX@ FF = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
+XX@ FF = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = or(and(x, y), and(not(x), z));
-  Addr@ nx <- AllocM(32);
-  Addr@ anxz <- AllocM(32);
-  Addr@ xy <- AllocM(32);
+  Addr32@ nx <- AllocM(32);
+  Addr32@ anxz <- AllocM(32);
+  Addr32@ xy <- AllocM(32);
   SeqM([
     NotM(32, x, nx),
     AddM(32, nx, z, anxz),
@@ -106,11 +120,11 @@ XX@ FF = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
     OrM(32, xy, anxz, r)]);
 });
 
-XX@ GG = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
+XX@ GG = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = or(and(x, z), and(y, not(z)));
-  Addr@ nz <- AllocM(32);
-  Addr@ aynz <- AllocM(32);
-  Addr@ xz <- AllocM(32);
+  Addr32@ nz <- AllocM(32);
+  Addr32@ aynz <- AllocM(32);
+  Addr32@ xz <- AllocM(32);
   SeqM([
     NotM(32, z, nz),
     AddM(32, y, nz, aynz),
@@ -118,18 +132,18 @@ XX@ GG = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
     OrM(32, xz, aynz, r)]);
 });
 
-XX@ HH = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
+XX@ HH = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = xor(x, xor(y, z));
-  Addr@ yz <- AllocM(32);
+  Addr32@ yz <- AllocM(32);
   SeqM([
     XorM(32, y, z, yz),
     XorM(32, x, yz, r)]);
 });
 
-XX@ II = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
+XX@ II = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = xor(y, or(x, not(z)));
-  Addr@ nz <- AllocM(32);
-  Addr@ xnz <- AllocM(32);
+  Addr32@ nz <- AllocM(32);
+  Addr32@ xnz <- AllocM(32);
   SeqM([
     NotM(32, z, nz),
     OrM(32, x, nz, xnz),
@@ -144,7 +158,7 @@ XX@ II = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
 #   block - The input block.
 #
 # Updates values of ABCD in place based on the input block.
-@ Round@ = (Addr@, Addr@, Addr@, Addr@, BlockOf@<Addr@>) { Module@; };
+@ Round@ = (Addr32@, Addr32@, Addr32@, Addr32@, BlockOf@<Addr32@>) { Module@; };
 
 # RoundX --
 #   Returns the round module based on the given parameters.
@@ -154,10 +168,10 @@ XX@ II = XX((Addr@ x, Addr@ y, Addr@ z, Addr@ r) {
 #   s0, s1, s2, s3 - The four shift values used in the round.
 #   t - The T constants to use in the round.
 #   permute - How to permute the input block.
-(XX@, Int@, Int@, Int@, Int@, BlockOf@<Value@>, (BlockOf@<Addr@>) { BlockOf@<Addr@>; }) { Round@; }
-RoundX = (XX@ xx, Int@ s0, Int@ s1, Int@ s2, Int@ s3, BlockOf@<Value@> t, (BlockOf@<Addr@>) { BlockOf@<Addr@>; } permute)
-(Addr@ a, Addr@ b, Addr@ c, Addr@ d, BlockOf@<Addr@> block) {
-  BlockOf@<Addr@> permuted = permute(block);
+(XX@, Int@, Int@, Int@, Int@, BlockOf@<Value32@>, (BlockOf@<Addr32@>) { BlockOf@<Addr32@>; }) { Round@; }
+RoundX = (XX@ xx, Int@ s0, Int@ s1, Int@ s2, Int@ s3, BlockOf@<Value32@> t, (BlockOf@<Addr32@>) { BlockOf@<Addr32@>; } permute)
+(Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) {
+  BlockOf@<Addr32@> permuted = permute(block);
   SeqM([
     xx(a, b, c, d, permuted.00, s0, t.00, a),
     xx(d, a, b, c, permuted.01, s1, t.01, d),
@@ -177,28 +191,28 @@ RoundX = (XX@ xx, Int@ s0, Int@ s1, Int@ s2, Int@ s3, BlockOf@<Value@> t, (Block
     xx(b, c, d, a, permuted.15, s3, t.15, b)]);
 };
 
-Round@ Round1 = RoundX(FF, I(D|7), I(D|12), I(D|17), I(D|22), T1, (BlockOf@<Addr@> b) {
+Round@ Round1 = RoundX(FF, I(D|7), I(D|12), I(D|17), I(D|22), T1, (BlockOf@<Addr32@> b) {
   b;
 });
 
-Round@ Round2 = RoundX(GG, I(D|5), I(D|9), I(D|14), I(D|20), T2, (BlockOf@<Addr@> b) {
-  BlockOf@<Addr@>(
+Round@ Round2 = RoundX(GG, I(D|5), I(D|9), I(D|14), I(D|20), T2, (BlockOf@<Addr32@> b) {
+  BlockOf@<Addr32@>(
     b.01, b.06, b.11, b.00,
     b.05, b.10, b.15, b.04,
     b.09, b.14, b.03, b.08,
     b.13, b.02, b.07, b.12);
 });
 
-Round@ Round3 = RoundX(HH, I(D|4), I(D|11), I(D|16), I(D|23), T3, (BlockOf@<Addr@> b) {
-  BlockOf@<Addr@>(
+Round@ Round3 = RoundX(HH, I(D|4), I(D|11), I(D|16), I(D|23), T3, (BlockOf@<Addr32@> b) {
+  BlockOf@<Addr32@>(
     b.05, b.08, b.11, b.14,
     b.01, b.04, b.07, b.10,
     b.13, b.00, b.03, b.06,
     b.09, b.12, b.15, b.02);
 });
 
-Round@ Round4 = RoundX(II, I(D|6), I(D|10), I(D|15), I(D|21), T4, (BlockOf@<Addr@> b) {
-  BlockOf@<Addr@>(
+Round@ Round4 = RoundX(II, I(D|6), I(D|10), I(D|15), I(D|21), T4, (BlockOf@<Addr32@> b) {
+  BlockOf@<Addr32@>(
     b.00, b.07, b.14, b.05,
     b.12, b.03, b.10, b.01,
     b.08, b.15, b.06, b.13,
