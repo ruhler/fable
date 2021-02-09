@@ -1,4 +1,6 @@
 Fblf:
+* Replace /Loop%.For with /Iter%.For.
+ - Because the /Iter%.For is a nicer API I think.
 * Add test cases for aliasing for things in general.
 * Implement md5 in fblf.
 * Implement a compiler from fblf to C code.
@@ -9,7 +11,6 @@ Fblf:
 * Implement space invaders in fblf.
   - Do whatever is necessary to make it easier to write the program as I go
     along with regards to types and syntax.
-* Factor out code to describe iterators and an iterator over a range of ints?
 
 Invaders:
 * It's way way way too slow. Figure out how to make it go much faster.

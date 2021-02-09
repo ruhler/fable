@@ -1,0 +1,47 @@
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# IterH@ --
+#   An iterator that points to a value.
+<@>@ IterH@ = <@ T@> { *(T@ value, Iter@<T@> next); },
+
+# IterM@ --
+#   An iterator that may point to a value or may have reached the end of the
+#   sequence.
+<@>@ IterM@ = <@ T@> { +(IterH@<T@> has, Unit@ end); },
+
+# Iter@ --
+#   An iterator over a sequence of values.
+<@>@ Iter@ = <@ T@>(Unit@) { IterM@<T@>; };
+
+<@ T@>(T@, Iter@<T@>) { IterM@<T@>; } Has = <@ T@>(T@ value, Iter@<T@> next) {
+  IterM@<T@>(has: IterH@<T@>(value, next));
+};
+
+IterM@ End = <@ T@> { IterM@<T@>(end: Unit); };
+
+# For --
+#   Apply the body of the loop to each iterator value in turn.
+#
+# Type Parameters:
+#   I@ - The type of iterator value.
+#   B@ - The type of the result of the for loop.
+#
+# Arguments:
+#   iter - The iterator to iterate over.
+#   base - The initial loop state.
+#   body - The body of the loop.
+#
+# Conceptually:
+#   B@ b = base
+#   for x in iter:
+#     b = body(x, b)
+#   return b
+<@ I@, @ B@>(Iter@<I@>, B@, (I@, B@) { B@; }) { B@; }
+For = <@ I@, @ B@>(Iter@<I@> iter, B@ base, (I@, B@) { B@; } body) {
+  IterM@<I@> m = iter(Unit);
+  m.?(has: For<I@, B@>(m.has.next, body(m.has.value, base), body), end: base);
+};
+
+@(Iter@, IterH@, IterM@, Has, End, For);
