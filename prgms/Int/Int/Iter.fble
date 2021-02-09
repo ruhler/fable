@@ -1,0 +1,32 @@
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Lt = /Int/Int/Eq%.Lt;
+
+% D = /Int/Int/Lit%.D;
+% I = /Int/Int/Lit%.I;
+
+<@>@ Iter@ = /Iter%.Iter@;
+<@>% Has = /Iter%.Has;
+<@>% End = /Iter%.End;
+
+@ Unit@ = /Unit%.Unit@;
+
+# Range --
+#   An iterator over the range of integers [lo, hi).
+(Int@, Int@) { Iter@<Int@>; } Range = (Int@ lo, Int@ hi) {
+  (Unit@ _) {
+    Lt(lo, hi).?(
+      true: Has<Int@>(lo, Range(Add(lo, I(D|1)), hi)),
+      false: End<Int@>);
+  };
+};
+
+# CountTo --
+#   An iterator over the range of integers [0, n).
+(Int@) { Iter@<Int@>; } CountTo = (Int@ n) {
+  Range(I(D|0), n);
+};
+
+@(Range, CountTo);
+

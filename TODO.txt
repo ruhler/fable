@@ -1,5 +1,5 @@
 Fblf:
-* Replace /Loop%.For with /Iter%.For.
+* Replace /Loop%.For and /Loop%.DoWhile with /Iter%.For.
  - Because the /Iter%.For is a nicer API I think.
 * Add test cases for aliasing for things in general.
 * Implement md5 in fblf.

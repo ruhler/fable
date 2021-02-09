@@ -21,11 +21,8 @@
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
-
-<@,@>% For = /Loop%.For;
+% CountTo = /Int/Int/Iter%.CountTo;
+<@,@>% For = /Iter%.For;
 
 # Bitwise --
 #   Helper function for describing modules that implement bitwise computation.
@@ -38,13 +35,7 @@
 #   A module that computes each bit in sequence.
 (Int@, (Int@) { Program@; }) { Module@; }
 Bitwise = (Int@ n, (Int@) { Program@; } f) {
-  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
-    /Int/Int/Eq%.Le(i, I(D|0)).?(
-      true: Nothing<Int@>,
-      false: Just<Int@>(Sub(i, I(D|1))));
-  };
-
-  PureM(For<Int@, Program@>(next(n), next, Noop, (Int@ i, Program@ s) {
+  PureM(For<Int@, Program@>(CountTo(n), Noop, (Int@ i, Program@ s) {
     Seq([s, f(i)]);
   }));
 };
