@@ -9,31 +9,24 @@
 % Noop = /Fblf/Program%.Noop;
 % Seq = /Fblf/Program%.Seq;
 
-# Module@ --
-#   By convention, to support easy composition of programs, we define them in
-#   terms of modules.
+# Instance@, Module@ --
+#   Module@ is a monad for tracking allocation of objects on a heap. It is
+#   implemented as a state monad over an Addr@ tracking the size in bits of
+#   the heap allocated so far.
 #
-# Inputs:
-#   free - The first address in the heap available for allocating space on the
-#          heap. The module may reserve any addrs for internal use greater
-#          than or equal to 'free'.
-#
-# Results:
-#   heap - The first address in the heap available for allocations after the
-#          module has completed all its own allocations. Also, the size of the
-#          heap reqired to run the program.
-#   program - The program.
-@ Instance@ = *(Addr@ heap, Program@ program);
-@ Module@ = (Addr@) { Instance@; };
+#   Instance@ is the part of the Module@ monad that represents an instantiated
+#   Module@.
+<@>@ Instance@ = <@ T@> { *(Addr@ heap, T@ instance); };
+<@>@ Module@ = <@ T@>(Addr@) { Instance@<T@>; };
 
 # AllocM --
-#   Allocate n bits on the heap for use in a module.
+#   Allocate n bits on the heap.
 #
 # Example use:
 #   Addr@ x <- AllocM(I(D|32));
 #   ...
-(Int@)((Addr@) { Module@; }) { Module@; }
-AllocM = (Int@ n)((Addr@) { Module@; } f) {
+<@ T@>(Int@)((Addr@) { Module@<T@>; }) { Module@<T@>; }
+AllocM = <@ T@>(Int@ n)((Addr@) { Module@<T@>; } f) {
   (Addr@ free) {
     f(free)(Add(free, n));
   };
@@ -45,32 +38,35 @@ AllocM = (Int@ n)((Addr@) { Module@; } f) {
 # Example use:
 #   Program@ p <- InstM(m);
 #   ...
-(Module@)((Program@) { Module@; }) { Module@; }
-InstM = (Module@ m)((Program@) { Module@; } f) {
+<@ A@, @ B@>(Module@<A@>)((A@) { Module@<B@>; }) { Module@<B@>; }
+InstM = <@ A@, @ B@>(Module@<A@> m)((A@) { Module@<B@>; } f) {
   (Addr@ free) {
-    Instance@ mr = m(free);
-    f(mr.program)(mr.heap);
+    Instance@<A@> mr = m(free);
+    f(mr.instance)(mr.heap);
   };
 };
 
 # PureM --
 #   A module that does not need to allocate space on the heap or instantiate
 #   other modules.
-(Program@) { Module@; } PureM = (Program@ program) {
-  (Addr@ free) { Instance@(free, program); };
+<@ T@>(T@) { Module@<T@>; } PureM = <@ T@>(T@ instance) {
+  (Addr@ free) { Instance@<T@>(free, instance); };
 };
 
 # SeqM --
-#   Instantite a list of modules and run their programs in order.
-(Lit@<Module@>) { Module@; } SeqM = (Lit@<Module@> ms) {
-  ms<Module@>((Module@ aM, Module@ bM) {
-    Program@ a <- InstM(aM);
-    Program@ b <- InstM(bM);
-    PureM(Seq([a, b]));
-  }, PureM(Noop));
+#   Instantite a list of modules.
+#
+# TODO: generalize this to arbitrary T@.
+(Lit@<Module@<Program@>>) { Module@<Program@>; } SeqM = (Lit@<Module@<Program@>> ms) {
+  ms<Module@<Program@>>((Module@<Program@> aM, Module@<Program@> bM) {
+    Program@ a <- InstM<Program@, Program@>(aM);
+    Program@ b <- InstM<Program@, Program@>(bM);
+    PureM<Program@>(Seq([a, b]));
+  }, PureM<Program@>(Noop));
 };
 
-(Module@, Addr@) { Instance@; } Instantiate = (Module@ m, Addr@ free) {
+<@ T@>(Module@<T@>, Addr@) { Instance@<T@>; }
+Instantiate = <@ T@>(Module@<T@> m, Addr@ free) {
   m(free);
 };
 

@@ -16,8 +16,8 @@
 % Const = /Fblf/Program%.Const;
 % Seq = /Fblf/Program%.Seq;
 
-@ Instance@ = /Fblf/Module%.Instance@;
-% Instantiate = /Fblf/Module%.Instantiate;
+<@>@ Instance@ = /Fblf/Module%.Instance@;
+<@>% Instantiate = /Fblf/Module%.Instantiate;
 
 % AddM = /Fblf/Lib/Add%.AddM;
 % IncM = /Fblf/Lib/Add%.IncM;
@@ -47,13 +47,13 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    Instance@ add = Instantiate(AddM(I(D|4), a, b, z), free);
+    Instance@<Program@> add = Instantiate<Program@>(AddM(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0010), I(D|4)),   # a = 2
       Assign(b, Const(B|0111), I(D|4)),   # b = 7
       Assign(z, Const(B|0000), I(D|4)),   # clear z
-      add.program                         # z = a + b
+      add.instance                         # z = a + b
     ]);
 
     Heap@ heap = Heap(add.heap);
@@ -73,9 +73,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ a = I(D|0);
     Addr@ free = I(D|5);
 
-    Instance@ inc = Instantiate(IncM(I(D|5), a), free);
+    Instance@<Program@> inc = Instantiate<Program@>(IncM(I(D|5), a), free);
 
-    Program@ prgm = Seq([Assign(a, Const(B|10011), I(D|5)), inc.program]);
+    Program@ prgm = Seq([Assign(a, Const(B|10011), I(D|5)), inc.instance]);
 
     Heap@ heap = Heap(inc.heap);
     Heap@ got = Exec(prgm, heap);
@@ -92,9 +92,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ a = I(D|0);
     Addr@ free = I(D|5);
 
-    Instance@ inc = Instantiate(IncM(I(D|5), a), free);
+    Instance@<Program@> inc = Instantiate<Program@>(IncM(I(D|5), a), free);
 
-    Program@ prgm = Seq([Assign(a, Const(B|11111), I(D|5)), inc.program]);
+    Program@ prgm = Seq([Assign(a, Const(B|11111), I(D|5)), inc.instance]);
 
     Heap@ heap = Heap(inc.heap);
     Heap@ got = Exec(prgm, heap);
@@ -113,13 +113,13 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    Instance@ and = Instantiate(AndM(I(D|4), a, b, z), free);
+    Instance@<Program@> and = Instantiate<Program@>(AndM(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
-      and.program
+      and.instance
     ]);
 
     Heap@ heap = Heap(and.heap);
@@ -139,13 +139,13 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    Instance@ or = Instantiate(OrM(I(D|4), a, b, z), free);
+    Instance@<Program@> or = Instantiate<Program@>(OrM(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
-      or.program
+      or.instance
     ]);
 
     Heap@ heap = Heap(or.heap);
@@ -165,13 +165,13 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|8);
     Addr@ free = I(D|12);
 
-    Instance@ xor = Instantiate(XorM(I(D|4), a, b, z), free);
+    Instance@<Program@> xor = Instantiate<Program@>(XorM(I(D|4), a, b, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
-      xor.program
+      xor.instance
     ]);
 
     Heap@ heap = Heap(xor.heap);
@@ -190,12 +190,12 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|4);
     Addr@ free = I(D|8);
 
-    Instance@ not = Instantiate(NotM(I(D|4), a, z), free);
+    Instance@<Program@> not = Instantiate<Program@>(NotM(I(D|4), a, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|0011), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
-      not.program
+      not.instance
     ]);
 
     Heap@ heap = Heap(not.heap);
@@ -214,12 +214,12 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Addr@ z = I(D|5);
     Addr@ free = I(D|10);
 
-    Instance@ cls = Instantiate(ClsM(I(D|5), I(D|3), a, z), free);
+    Instance@<Program@> cls = Instantiate<Program@>(ClsM(I(D|5), I(D|3), a, z), free);
 
     Program@ prgm = Seq([
       Assign(a, Const(B|10011), I(D|5)),
       Assign(z, Const(B|00000), I(D|5)),
-      cls.program
+      cls.instance
     ]);
 
     Heap@ heap = Heap(cls.heap);

@@ -5,15 +5,16 @@
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
 
+@ Program@ = /Fblf/Program%.Program@;
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Value@ = /Fblf/Program%.Value@;
 % Assign = /Fblf/Program%.Assign;
 % Ref = /Fblf/Program%.Ref;
 % H = /Fblf/Program%.ConstHex;
 
-@ Module@ = /Fblf/Module%.Module@;
-% AllocM = /Fblf/Module%.AllocM;
-% PureM = /Fblf/Module%.PureM;
+<@>@ Module@ = /Fblf/Module%.Module@;
+<@>% AllocM = /Fblf/Module%.AllocM;
+<@>% PureM = /Fblf/Module%.PureM;
 % SeqM = /Fblf/Module%.SeqM;
 
 % AddM = /Fblf/Lib/Add%.AddM;
@@ -79,7 +80,7 @@ BlockOf@<Value32@> T4 = BlockOf@<Value32@>(
 #
 # Inputs: x, y, z, r
 #   Computes r = X(x, y, z)
-@ X@ = (Addr32@, Addr32@, Addr32@, Addr32@) { Module@; };
+@ X@ = (Addr32@, Addr32@, Addr32@, Addr32@) { Module@<Program@>; };
 
 # XX@ --
 #   The type of functions FF, GG, HH, II.
@@ -87,19 +88,19 @@ BlockOf@<Value32@> T4 = BlockOf@<Value32@>(
 # Inputs: a, b, c, d, x, s, t, r
 #
 #   Computes r = X(a, b, c, d, x, s, t);
-@ XX@ = (Addr32@, Addr32@, Addr32@, Addr32@, Addr32@, Int@, Value32@, Addr32@) { Module@; };
+@ XX@ = (Addr32@, Addr32@, Addr32@, Addr32@, Addr32@, Int@, Value32@, Addr32@) { Module@<Program@>; };
 
 (X@) { XX@; }
 XX = (X@ xf)(Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr32@ x, Int@ s, Value32@ t, Addr32@ r) {
   # r = add(b, cls(add(add(a, xf(b, c, d)), add(x, t)), s));
-  Addr32@ tv <- AllocM(32);
-  Addr32@ xtv <- AllocM(32);
-  Addr32@ xfv <- AllocM(32);
-  Addr32@ axfv <- AllocM(32);
-  Addr32@ axfxtv <- AllocM(32);
-  Addr32@ clsv <- AllocM(32);
+  Addr32@ tv <- AllocM<Program@>(32);
+  Addr32@ xtv <- AllocM<Program@>(32);
+  Addr32@ xfv <- AllocM<Program@>(32);
+  Addr32@ axfv <- AllocM<Program@>(32);
+  Addr32@ axfxtv <- AllocM<Program@>(32);
+  Addr32@ clsv <- AllocM<Program@>(32);
   SeqM([
-    PureM(Assign(tv, t, 32)),
+    PureM<Program@>(Assign(tv, t, 32)),
     AddM(32, x, tv, xtv),
     xf(b, c, d, xfv),
     AddM(32, a, xfv, axfv),
@@ -111,9 +112,9 @@ XX = (X@ xf)(Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr32@ x, Int@ s, Valu
 
 XX@ FF = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = or(and(x, y), and(not(x), z));
-  Addr32@ nx <- AllocM(32);
-  Addr32@ anxz <- AllocM(32);
-  Addr32@ xy <- AllocM(32);
+  Addr32@ nx <- AllocM<Program@>(32);
+  Addr32@ anxz <- AllocM<Program@>(32);
+  Addr32@ xy <- AllocM<Program@>(32);
   SeqM([
     NotM(32, x, nx),
     AddM(32, nx, z, anxz),
@@ -123,9 +124,9 @@ XX@ FF = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
 
 XX@ GG = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = or(and(x, z), and(y, not(z)));
-  Addr32@ nz <- AllocM(32);
-  Addr32@ aynz <- AllocM(32);
-  Addr32@ xz <- AllocM(32);
+  Addr32@ nz <- AllocM<Program@>(32);
+  Addr32@ aynz <- AllocM<Program@>(32);
+  Addr32@ xz <- AllocM<Program@>(32);
   SeqM([
     NotM(32, z, nz),
     AddM(32, y, nz, aynz),
@@ -135,7 +136,7 @@ XX@ GG = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
 
 XX@ HH = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = xor(x, xor(y, z));
-  Addr32@ yz <- AllocM(32);
+  Addr32@ yz <- AllocM<Program@>(32);
   SeqM([
     XorM(32, y, z, yz),
     XorM(32, x, yz, r)]);
@@ -143,8 +144,8 @@ XX@ HH = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
 
 XX@ II = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = xor(y, or(x, not(z)));
-  Addr32@ nz <- AllocM(32);
-  Addr32@ xnz <- AllocM(32);
+  Addr32@ nz <- AllocM<Program@>(32);
+  Addr32@ xnz <- AllocM<Program@>(32);
   SeqM([
     NotM(32, z, nz),
     OrM(32, x, nz, xnz),
@@ -159,7 +160,7 @@ XX@ II = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
 #   block - The input block.
 #
 # Updates values of ABCD in place based on the input block.
-@ Round@ = (Addr32@, Addr32@, Addr32@, Addr32@, BlockOf@<Addr32@>) { Module@; };
+@ Round@ = (Addr32@, Addr32@, Addr32@, Addr32@, BlockOf@<Addr32@>) { Module@<Program@>; };
 
 # RoundX --
 #   Returns the round module based on the given parameters.
@@ -220,17 +221,17 @@ Round@ Round4 = RoundX(II, I(D|6), I(D|10), I(D|15), I(D|21), T4, (BlockOf@<Addr
     b.04, b.11, b.02, b.09);
 });
 
-(Addr32@, Addr32@, Addr32@, Addr32@, BlockOf@<Addr32@>) { Module@; }
+(Addr32@, Addr32@, Addr32@, Addr32@, BlockOf@<Addr32@>) { Module@<Program@>; }
 DoBlock = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) {
-  Addr32@ save_a <- AllocM(32);
-  Addr32@ save_b <- AllocM(32);
-  Addr32@ save_c <- AllocM(32);
-  Addr32@ save_d <- AllocM(32);
+  Addr32@ save_a <- AllocM<Program@>(32);
+  Addr32@ save_b <- AllocM<Program@>(32);
+  Addr32@ save_c <- AllocM<Program@>(32);
+  Addr32@ save_d <- AllocM<Program@>(32);
   SeqM([
-    PureM(Assign(save_a, Ref(a), 32)),
-    PureM(Assign(save_b, Ref(b), 32)),
-    PureM(Assign(save_c, Ref(c), 32)),
-    PureM(Assign(save_d, Ref(d), 32)),
+    PureM<Program@>(Assign(save_a, Ref(a), 32)),
+    PureM<Program@>(Assign(save_b, Ref(b), 32)),
+    PureM<Program@>(Assign(save_c, Ref(c), 32)),
+    PureM<Program@>(Assign(save_d, Ref(d), 32)),
     Round1(a, b, c, d, block),
     Round2(a, b, c, d, block),
     Round3(a, b, c, d, block),

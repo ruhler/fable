@@ -10,8 +10,8 @@
 % Const = /Fblf/Program%.Const;
 % Ref = /Fblf/Program%.Ref;
 
-@ Module@ = /Fblf/Module%.Module@;
-% PureM = /Fblf/Module%.PureM;
+<@>@ Module@ = /Fblf/Module%.Module@;
+<@>% PureM = /Fblf/Module%.PureM;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -33,9 +33,9 @@
 #
 # Results:
 #   A module that computes each bit in sequence.
-(Int@, (Int@) { Program@; }) { Module@; }
+(Int@, (Int@) { Program@; }) { Module@<Program@>; }
 Bitwise = (Int@ n, (Int@) { Program@; } f) {
-  PureM(For<Int@, Program@>(CountUpTo(n), Noop, (Int@ i, Program@ s) {
+  PureM<Program@>(For<Int@, Program@>(CountUpTo(n), Noop, (Int@ i, Program@ s) {
     Seq([s, f(i)]);
   }));
 };
@@ -48,7 +48,7 @@ Bitwise = (Int@ n, (Int@) { Program@; } f) {
 #   a - The address of the first operand.
 #   b - The address of the second operand.
 #   z - The address of the result.
-(Int@, Addr@, Addr@, Addr@) { Module@; }
+(Int@, Addr@, Addr@, Addr@) { Module@<Program@>; }
 AndM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
@@ -69,7 +69,7 @@ AndM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
 #   a - The address of the first operand.
 #   b - The address of the second operand.
 #   z - The address of the result.
-(Int@, Addr@, Addr@, Addr@) { Module@; }
+(Int@, Addr@, Addr@, Addr@) { Module@<Program@>; }
 OrM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
@@ -90,7 +90,7 @@ OrM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
 #   a - The address of the first operand.
 #   b - The address of the second operand.
 #   z - The address of the result.
-(Int@, Addr@, Addr@, Addr@) { Module@; }
+(Int@, Addr@, Addr@, Addr@) { Module@<Program@>; }
 XorM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
@@ -112,7 +112,7 @@ XorM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
 #   n - The number of bits in the operand.
 #   a - The address of the operand.
 #   z - The address of the result.
-(Int@, Addr@, Addr@) { Module@; }
+(Int@, Addr@, Addr@) { Module@<Program@>; }
 NotM = (Int@ n, Addr@ a, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);
@@ -132,7 +132,7 @@ NotM = (Int@ n, Addr@ a, Addr@ z) {
 #   s - The number of bits to shift left.
 #   a - The address of the operand.
 #   z - The address of the result.
-(Int@, Int@, Addr@, Addr@) { Module@; }
+(Int@, Int@, Addr@, Addr@) { Module@<Program@>; }
 ClsM = (Int@ n, Int@ s, Addr@ a, Addr@ z) {
   Bitwise(n, (Int@ i) {
     Addr@ ai = Add(a, i);

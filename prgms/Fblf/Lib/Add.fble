@@ -12,9 +12,9 @@
 % Const = /Fblf/Program%.Const;
 % Ref = /Fblf/Program%.Ref;
 
-@ Module@ = /Fblf/Module%.Module@;
-% AllocM = /Fblf/Module%.AllocM;
-% PureM = /Fblf/Module%.PureM;
+<@>@ Module@ = /Fblf/Module%.Module@;
+<@>% AllocM = /Fblf/Module%.AllocM;
+<@>% PureM = /Fblf/Module%.PureM;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -67,14 +67,14 @@ Add1P = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
 #   a - The address of the first operand.
 #   b - The address of the second operand.
 #   z - The address of where to store the result of the addition.
-(Int@, Addr@, Addr@, Addr@) { Module@; }
+(Int@, Addr@, Addr@, Addr@) { Module@<Program@>; }
 AddM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   # We need a single bit of internal state to store the carry bit as we do
   # the addition.
-  Addr@ carry <- AllocM(I(D|1));
+  Addr@ carry <- AllocM<Program@>(I(D|1));
 
   Value@ b0 = Const(B|0);
-  PureM(For<Int@, Program@>(CountDownFrom(n), Assign(carry, b0, I(D|1)),
+  PureM<Program@>(For<Int@, Program@>(CountDownFrom(n), Assign(carry, b0, I(D|1)),
     (Int@ i, Program@ s) {
       Program@ add1 = Add1P(Add(a, i), Add(b, i), carry, carry, Add(z, i));
       Seq([s, add1]); 
@@ -108,8 +108,8 @@ IncP = (Int@ n, Addr@ a) {
 #   n - The number of bits of the number to increment.
 #   a - The address of the value to increment. The value is most significant
 #       bit first.
-(Int@, Addr@) { Module@; } IncM = (Int@ n, Addr@ a) {
-  PureM(IncP(n, a));
+(Int@, Addr@) { Module@<Program@>; } IncM = (Int@ n, Addr@ a) {
+  PureM<Program@>(IncP(n, a));
 };
 
 @(AddM, IncM);
