@@ -21,7 +21,7 @@
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
 
-% CountTo = /Int/Int/Iter%.CountTo;
+% CountUpTo = /Int/Int/Iter%.CountUpTo;
 <@,@>% For = /Iter%.For;
 
 # Bitwise --
@@ -35,7 +35,7 @@
 #   A module that computes each bit in sequence.
 (Int@, (Int@) { Program@; }) { Module@; }
 Bitwise = (Int@ n, (Int@) { Program@; } f) {
-  PureM(For<Int@, Program@>(CountTo(n), Noop, (Int@ i, Program@ s) {
+  PureM(For<Int@, Program@>(CountUpTo(n), Noop, (Int@ i, Program@ s) {
     Seq([s, f(i)]);
   }));
 };

@@ -24,11 +24,9 @@
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+% CountDownFrom = /Int/Int/Iter%.CountDownFrom;
 
-<@,@>% For = /Loop%.For;
+<@,@>% For = /Iter%.For;
 
 # Add1P --
 #   A pure 1-bit adder.
@@ -75,14 +73,8 @@ AddM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   # the addition.
   Addr@ carry <- AllocM(I(D|1));
 
-  (Int@) { Maybe@<Int@>; } next = (Int@ i) {
-    /Int/Int/Eq%.Le(i, I(D|0)).?(
-      true: Nothing<Int@>,
-      false: Just<Int@>(Sub(i, I(D|1))));
-  };
-
   Value@ b0 = Const(B|0);
-  PureM(For<Int@, Program@>(next(n), next, Assign(carry, b0, I(D|1)),
+  PureM(For<Int@, Program@>(CountDownFrom(n), Assign(carry, b0, I(D|1)),
     (Int@ i, Program@ s) {
       Program@ add1 = Add1P(Add(a, i), Add(b, i), carry, carry, Add(z, i));
       Seq([s, add1]); 

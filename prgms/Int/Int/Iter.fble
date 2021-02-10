@@ -1,6 +1,7 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
 % Lt = /Int/Int/Eq%.Lt;
 
 % D = /Int/Int/Lit%.D;
@@ -22,11 +23,21 @@
   };
 };
 
-# CountTo --
+# CountUpTo --
 #   An iterator over the range of integers [0, n).
-(Int@) { Iter@<Int@>; } CountTo = (Int@ n) {
+(Int@) { Iter@<Int@>; } CountUpTo = (Int@ n) {
   Range(I(D|0), n);
 };
 
-@(Range, CountTo);
+# CountDownFrom --
+#   An iterator over the range of integers (n, 0]
+(Int@) { Iter@<Int@>; } CountDownFrom = (Int@ n) {
+  (Unit@ _) {
+    Lt(n, I(D|0)).?(
+      true: End<Int@>,
+      false: Has<Int@>(n, CountDownFrom(Sub(n, I(D|1)))));
+  };
+};
+
+@(Range, CountUpTo, CountDownFrom);
 
