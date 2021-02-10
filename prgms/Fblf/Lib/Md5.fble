@@ -8,6 +8,7 @@
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Value@ = /Fblf/Program%.Value@;
 % Assign = /Fblf/Program%.Assign;
+% Ref = /Fblf/Program%.Ref;
 % H = /Fblf/Program%.ConstHex;
 
 @ Module@ = /Fblf/Module%.Module@;
@@ -219,4 +220,26 @@ Round@ Round4 = RoundX(II, I(D|6), I(D|10), I(D|15), I(D|21), T4, (BlockOf@<Addr
     b.04, b.11, b.02, b.09);
 });
 
-@(Round1, Round2, Round3, Round4);
+(Addr32@, Addr32@, Addr32@, Addr32@, BlockOf@<Addr32@>) { Module@; }
+DoBlock = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) {
+  Addr32@ save_a <- AllocM(32);
+  Addr32@ save_b <- AllocM(32);
+  Addr32@ save_c <- AllocM(32);
+  Addr32@ save_d <- AllocM(32);
+  SeqM([
+    PureM(Assign(save_a, Ref(a), 32)),
+    PureM(Assign(save_b, Ref(b), 32)),
+    PureM(Assign(save_c, Ref(c), 32)),
+    PureM(Assign(save_d, Ref(d), 32)),
+    Round1(a, b, c, d, block),
+    Round2(a, b, c, d, block),
+    Round3(a, b, c, d, block),
+    Round4(a, b, c, d, block),
+    AddM(32, a, save_a, a),
+    AddM(32, b, save_b, b),
+    AddM(32, c, save_c, c),
+    AddM(32, d, save_d, d)]);
+};
+
+@(DoBlock);
+
