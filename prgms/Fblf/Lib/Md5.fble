@@ -1,7 +1,12 @@
 
+% B = /Digits%.Bit;
 % Hex = /Digits%.Hex;
 
 @ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+% Mul = /Int/Int%.Mul;
+% Exp2 = /Int/Int%.Exp2;
 % D = /Int/Int/Lit%.D;
 % I = /Int/Int/Lit%.I;
 
@@ -9,7 +14,12 @@
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Value@ = /Fblf/Program%.Value@;
 % Assign = /Fblf/Program%.Assign;
+% Eq = /Fblf/Program%.Eq;
+% IfElse = /Fblf/Program%.IfElse;
+% Const = /Fblf/Program%.Const;
 % Ref = /Fblf/Program%.Ref;
+% Seq = /Fblf/Program%.Seq;
+% Noop = /Fblf/Program%.Noop;
 % H = /Fblf/Program%.ConstHex;
 
 <@>@ Module@ = /Fblf/Module%.Module@;
@@ -242,5 +252,71 @@ DoBlock = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) 
     AddM(32, d, save_d, d)]);
 };
 
-@(DoBlock);
+@ Addr8@ = Addr@;
+@ Addr64@ = Addr@;
+
+# Md5@ -- 
+#   Interface to an Md5 compute module.
+#
+# To use the Md5 compute module:
+# 1. Run the 'reset' program
+# 2. For each byte of the input in order, 
+#   Set the 'byte' register to the value of the byte.
+#   Run the 'feed' program.
+# 3. Run the 'finish' program.
+#
+# The result of the Md5 computation will be in the 'abcd' register.
+# The module can be reused for multiple Md5 computations by rerunning the
+# above instructions for each computation.
+@ Md5@ = *(Program@ reset, Program@ feed, Program@ finish);
+
+# Store --
+#   Stores a single word in a 2^k-element array of n-bit words.
+#
+# When run, the program does:
+#   memory[addr] = value;
+(Int@, Int@, Addr@, Addr@, Addr@) { Program@; }
+Store = (Int@ k, Int@ n, Addr@ memory, Addr@ addr, Addr@ value) {
+  /Int/Int/Eq%.Eq(k, I(D|0)).?(
+    true: Assign(memory, Ref(value), n),
+    false: {
+      Int@ sk = Sub(k, I(D|1));
+      Addr@ saddr = Add(addr, I(D|1));
+      IfElse(Eq(Ref(addr), Const(B|0), I(D|1)),
+        Store(sk, n, memory, saddr, value),
+        Store(sk, n, Add(memory, Mul(n, Exp2(sk))), saddr, value));
+    });
+};
+
+# Md5 -- 
+#   The Md5 computation.
+#
+# Inputs:
+#   a - The address of the 'A' value of the computed Md5.
+#   b - The address of the 'B' value of the computed Md5.
+#   c - The address of the 'C' value of the computed Md5.
+#   d - The address of the 'D' value of the computed Md5.
+#   byte - The address of the input byte passed to the feed program.
+(Addr32@, Addr32@, Addr32@, Addr32@, Addr8@) { Module@<Md5@>; }
+Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
+
+  # Count of the number of bytes bytes of input that have been processed.
+  Addr64@ length <- AllocM<Md5@>(I(D|64));
+
+  # Note: the spec lists the initial values for A, B, C, and D low-order byte
+  # first, but H takes high order byte first.
+  Program@ reset = Seq([
+    Assign(length, H(Hex|0000000000000000), I(D|64)),
+    Assign(a, H(Hex|67452301), 32),
+    Assign(b, H(Hex|EFCDAB89), 32),
+    Assign(c, H(Hex|98BADCFE), 32),
+    Assign(d, H(Hex|10325476), 32)]);
+
+  Program@ feed = Noop; # TODO
+  Program@ finish = Noop; # TODO
+
+  PureM<Md5@>(Md5@(reset, feed, finish));
+};
+
+@(Md5);
 

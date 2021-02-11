@@ -62,8 +62,16 @@ IntP@ 10 = 2P0(5);
         2p1: 2P1(Add(2P0(Mul(a.2p1, b.2p1)), Add(a.2p1, b.2p1)))));
 };
 
+# Exp2(a) = 2^a
+(IntP@) { IntP@; } Exp2 = (IntP@ a) {
+  a.?(
+    1: 2,
+    2p0: { IntP@ s = Exp2(a.2p0); Mul(s, s); },
+    2p1: Mul(2, Exp2(IntP@(2p0: a.2p1))));
+};
+
 (IntP@, IntP@){IntP@;} Lit2 = (IntP@ a, IntP@ b) {
   Add(Mul(10, a), b);
 };
 
-@(IntP@, 2P0, 2P1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Add, Add1, Mul, Lit2);
+@(IntP@, 2P0, 2P1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, Add, Add1, Mul, Exp2, Lit2);

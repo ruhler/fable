@@ -3,6 +3,7 @@
 @ IntP@ = IntP.IntP@;
 % AddP = IntP.Add;
 % MulP = IntP.Mul;
+% Exp2P = IntP.Exp2;
 
 % Sub1 = /Int/IntP/Sub%.Sub1;
 
@@ -90,18 +91,18 @@ Int@ 10 = P(IntP.10);
 };
 
 # -a 
-(Int@){ Int@; } Neg = (Int@ a) {
+(Int@) { Int@; } Neg = (Int@ a) {
   a.?(n: P(a.n), 0: a, p: N(a.p));
 };
 
 # a - b 
-(Int@, Int@){ Int@; } Sub = (Int@ a, Int@ b) {
+(Int@, Int@) { Int@; } Sub = (Int@ a, Int@ b) {
   # a - b = a + (-b)
   Add(a, Neg(b));
 };
 
 # a * b
-(Int@, Int@){ Int@; } Mul = (Int@ a, Int@ b) {
+(Int@, Int@) { Int@; } Mul = (Int@ a, Int@ b) {
   a.?(
     n: b.?(n: P(MulP(a.n, b.n)),
            0: 0,
@@ -112,5 +113,10 @@ Int@ 10 = P(IntP.10);
             p: P(MulP(a.p, b.p))));
 };
 
+# 2^a
+(Int@) { Int@; } Exp2 = (Int@ a) {
+  a.?(n: 0, 0: 1, p: P(Exp2P(a.p)));
+};
+
 @(Int@, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-  Inc, Dec, Add, Sub, Neg, Mul);
+  Inc, Dec, Add, Sub, Neg, Mul, Exp2);
