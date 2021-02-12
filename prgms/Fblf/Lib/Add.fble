@@ -112,4 +112,35 @@ IncP = (Int@ n, Addr@ a) {
   PureM<Program@>(IncP(n, a));
 };
 
-@(AddM, IncM);
+# DecP --
+#   Decrement an n-bit number by 1.
+#
+# Inputs:
+#   n - The number of bits of the number to decrement.
+#   a - The address of the value to decrement. The value is most significant
+#       bit first.
+(Int@, Addr@) { Program@; }
+DecP = (Int@ n, Addr@ a) {
+  Le(n, I(D|0)).?(
+    true: Noop,
+    false: {
+      Int@ nm1 = Sub(n, I(D|1));
+      Addr@ lsb = Add(a, nm1);
+      IfElse(Eq(Ref(lsb), Const(B|1), I(D|1)),
+        Assign(lsb, Const(B|0), I(D|1)),
+        Seq([Assign(lsb, Const(B|1), I(D|1)), DecP(nm1, a)]));
+    });
+};
+
+# DecM --
+#   Increment an n-bit number by 1.
+#
+# Inputs:
+#   n - The number of bits of the number to decrement.
+#   a - The address of the value to decrement. The value is most significant
+#       bit first.
+(Int@, Addr@) { Module@<Program@>; } DecM = (Int@ n, Addr@ a) {
+  PureM<Program@>(DecP(n, a));
+};
+
+@(AddM, IncM, DecM);

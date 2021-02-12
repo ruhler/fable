@@ -303,6 +303,12 @@ Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
   # Count of the number of bytes bytes of input that have been processed.
   Addr64@ length <- AllocM<Md5@>(I(D|64));
 
+  # Space to assemble the next 32 bit word of input.
+  Addr32@ word <- AllocM<Md5@>(32);
+
+  # Space to assemble the next block of 16 32-bit words of input.
+  Addr@ block <- AllocM<Md5@>(Mul(I(D|16), I(D|32)));
+
   # Note: the spec lists the initial values for A, B, C, and D low-order byte
   # first, but H takes high order byte first.
   Program@ reset = Seq([
@@ -313,6 +319,7 @@ Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
     Assign(d, H(Hex|10325476), 32)]);
 
   Program@ feed = Noop; # TODO
+
   Program@ finish = Noop; # TODO
 
   PureM<Md5@>(Md5@(reset, feed, finish));

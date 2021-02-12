@@ -21,6 +21,7 @@
 
 % AddM = /Fblf/Lib/Add%.AddM;
 % IncM = /Fblf/Lib/Add%.IncM;
+% DecM = /Fblf/Lib/Add%.DecM;
 % AndM = /Fblf/Lib/Bitwise%.AndM;
 % OrM = /Fblf/Lib/Bitwise%.OrM;
 % XorM = /Fblf/Lib/Bitwise%.XorM;
@@ -69,7 +70,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|IncF, !({
+  Test(Chars|IncM, !({
     Addr@ a = I(D|0);
     Addr@ free = I(D|5);
 
@@ -88,7 +89,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|'IncF Overflow', !({
+  Test(Chars|'IncM Overflow', !({
     Addr@ a = I(D|0);
     Addr@ free = I(D|5);
 
@@ -100,6 +101,25 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ got = Exec(prgm, heap);
 
     Heap@ wnt = HeapFromBitStr(B|00000);
+    % Eq = (Heap@ a, Heap@ b) {
+       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|5));
+    };
+
+    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+  })),
+
+  Test(Chars|DecM, !({
+    Addr@ a = I(D|0);
+    Addr@ free = I(D|5);
+
+    Instance@<Program@> dec = Instantiate<Program@>(DecM(I(D|5), a), free);
+
+    Program@ prgm = Seq([Assign(a, Const(B|10100), I(D|5)), dec.instance]);
+
+    Heap@ heap = Heap(dec.heap);
+    Heap@ got = Exec(prgm, heap);
+
+    Heap@ wnt = HeapFromBitStr(B|10011);
     % Eq = (Heap@ a, Heap@ b) {
        Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|5));
     };
