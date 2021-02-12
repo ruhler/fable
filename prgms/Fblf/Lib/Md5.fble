@@ -12,6 +12,7 @@
 
 @ Program@ = /Fblf/Program%.Program@;
 @ Addr@ = /Fblf/Program%.Addr@;
+@ Condition@ = /Fblf/Program%.Condition@;
 @ Value@ = /Fblf/Program%.Value@;
 % Assign = /Fblf/Program%.Assign;
 % Eq = /Fblf/Program%.Eq;
@@ -286,7 +287,9 @@ Store = (Int@ k, Int@ n, Addr@ memory, Addr@ addr, Addr@ value) {
 #   Set the 'byte' register to the value of the byte.
 #   Run the 'feed' program.
 # The packed 'word' should be read after every 4 bytes are fed.
-@ PackWord@ = *(Program@ reset, Program@ feed);
+# The 'packed' condition can be used to check after feeding an input byte
+# whether a full word has been assembled.
+@ PackWord@ = *(Program@ reset, Program@ feed, Condition@ packed);
 
 (Addr32@, Addr8@) { Module@<PackWord@>; }
 PackWord = (Addr32@ word, Addr8@ byte) {
@@ -299,7 +302,83 @@ PackWord = (Addr32@ word, Addr8@ byte) {
     DecP(I(D|2), addr)
   ]);
 
-  PureM<PackWord@>(@(reset, feed));
+  Condition@ packed = Eq(Ref(addr), Const(B|11), I(D|2));
+
+  PureM<PackWord@>(@(reset, feed, packed));
+};
+
+# PaddedMd5@ -- 
+#   Interface to a PaddedMd5 compute module.
+#
+# PaddedMd5 computes md5sum for a pre-padded input.
+#
+# To use the PaddedMd5 compute module:
+# 1. Run the 'reset' program
+# 2. For each byte of the input in order, 
+#   Set the 'byte' register to the value of the byte.
+#   Run the 'feed' program.
+#
+# The result of the Md5 computation will be in the 'abcd' register, which will
+# be updated after every 64 bytes of input.
+# The module can be reused for multiple Md5 computations by rerunning the
+# above instructions for each computation.
+@ PaddedMd5@ = *(Program@ reset, Program@ feed);
+
+# PaddedMd5 -- 
+#   The PaddedMd5 computation.
+#
+# Inputs:
+#   a - The address of the 'A' value of the computed Md5.
+#   b - The address of the 'B' value of the computed Md5.
+#   c - The address of the 'C' value of the computed Md5.
+#   d - The address of the 'D' value of the computed Md5.
+#   byte - The address of the input byte passed to the feed program.
+(Addr32@, Addr32@, Addr32@, Addr32@, Addr8@) { Module@<PaddedMd5@>; }
+PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
+
+  # Count of the number of 32-bit words of input that have been processed in
+  # the current block.
+  Addr@ count <- AllocM<PaddedMd5@>(I(D|4));
+
+  # Space to assemble the next 32 bit word of input.
+  Addr32@ word <- AllocM<PaddedMd5@>(32);
+  PackWord@ wpack <- InstM<PackWord@, PaddedMd5@>(PackWord(word, byte));
+
+  # Space to assemble the next block of 16 32-bit words of input.
+  Addr@ block <- AllocM<PaddedMd5@>(Mul(I(D|16), I(D|32)));
+  BlockOf@<Addr32@> blockof = BlockOf@<Addr32@>(
+    Add(block, Mul(I(D|0), I(D|32))), Add(block, Mul(I(D|1), I(D|32))),
+    Add(block, Mul(I(D|2), I(D|32))), Add(block, Mul(I(D|3), I(D|32))),
+    Add(block, Mul(I(D|4), I(D|32))), Add(block, Mul(I(D|5), I(D|32))),
+    Add(block, Mul(I(D|6), I(D|32))), Add(block, Mul(I(D|7), I(D|32))),
+    Add(block, Mul(I(D|8), I(D|32))), Add(block, Mul(I(D|9), I(D|32))),
+    Add(block, Mul(I(D|10), I(D|32))), Add(block, Mul(I(D|11), I(D|32))),
+    Add(block, Mul(I(D|12), I(D|32))), Add(block, Mul(I(D|13), I(D|32))),
+    Add(block, Mul(I(D|14), I(D|32))), Add(block, Mul(I(D|15), I(D|32))));
+  Program@ doblock <- InstM<Program@, PaddedMd5@>(DoBlock(a, b, c, d, blockof));
+
+  # Note: the spec lists the initial values for A, B, C, and D low-order byte
+  # first, but H takes high order byte first.
+  Program@ reset = Seq([
+    Assign(count, Const(B|0000), I(D|4)),
+    Assign(a, H(Hex|67452301), 32),
+    Assign(b, H(Hex|EFCDAB89), 32),
+    Assign(c, H(Hex|98BADCFE), 32),
+    Assign(d, H(Hex|10325476), 32),
+    wpack.reset
+  ]);
+
+  Program@ feed = Seq([
+    wpack.feed,
+    If(wpack.packed,
+      Seq([
+        Store(I(D|4), I(D|32), block, count, word),
+        If(Eq(Ref(count), Const(B|1111), I(D|4)),
+          doblock),
+      IncP(I(D|4), count)]))
+  ]);
+
+  PureM<PaddedMd5@>(@(reset, feed));
 };
 
 # Md5@ -- 
@@ -328,48 +407,27 @@ PackWord = (Addr32@ word, Addr8@ byte) {
 #   byte - The address of the input byte passed to the feed program.
 (Addr32@, Addr32@, Addr32@, Addr32@, Addr8@) { Module@<Md5@>; }
 Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
+  PaddedMd5@ padded <- InstM<PaddedMd5@, Md5@>(PaddedMd5(a, b, c, d, byte));
 
   # Count of the number of bytes bytes of input that have been processed.
   Addr64@ length <- AllocM<Md5@>(I(D|64));
 
-  # Space to assemble the next 32 bit word of input.
-  Addr32@ word <- AllocM<Md5@>(32);
-  PackWord@ wpack <- InstM<PackWord@, Md5@>(PackWord(word, byte));
-
-  # Space to assemble the next block of 16 32-bit words of input.
-  Addr@ block <- AllocM<Md5@>(Mul(I(D|16), I(D|32)));
-  BlockOf@<Addr32@> blockof = BlockOf@<Addr32@>(
-    Add(block, Mul(I(D|0), I(D|32))), Add(block, Mul(I(D|1), I(D|32))),
-    Add(block, Mul(I(D|2), I(D|32))), Add(block, Mul(I(D|3), I(D|32))),
-    Add(block, Mul(I(D|4), I(D|32))), Add(block, Mul(I(D|5), I(D|32))),
-    Add(block, Mul(I(D|6), I(D|32))), Add(block, Mul(I(D|7), I(D|32))),
-    Add(block, Mul(I(D|8), I(D|32))), Add(block, Mul(I(D|9), I(D|32))),
-    Add(block, Mul(I(D|10), I(D|32))), Add(block, Mul(I(D|11), I(D|32))),
-    Add(block, Mul(I(D|12), I(D|32))), Add(block, Mul(I(D|13), I(D|32))),
-    Add(block, Mul(I(D|14), I(D|32))), Add(block, Mul(I(D|15), I(D|32))));
-  Program@ doblock <- InstM<Program@, Md5@>(DoBlock(a, b, c, d, blockof));
-
-  # Note: the spec lists the initial values for A, B, C, and D low-order byte
-  # first, but H takes high order byte first.
   Program@ reset = Seq([
     Assign(length, H(Hex|0000000000000000), I(D|64)),
-    Assign(a, H(Hex|67452301), 32),
-    Assign(b, H(Hex|EFCDAB89), 32),
-    Assign(c, H(Hex|98BADCFE), 32),
-    Assign(d, H(Hex|10325476), 32),
-    wpack.reset
+    padded.reset
   ]);
 
-  Program@ feed = Seq([
-    wpack.feed,
-    If(Eq(Ref(Add(length, I(D|62))), Const(B|11), I(D|2)),
-      Store(I(D|4), I(D|32), block, Add(length, I(D|58)), word)),
-    If(Eq(Ref(Add(length, I(D|58))), Const(B|1111), I(D|4)),
-      doblock),
-    IncP(I(D|64), length)
-  ]);
+  Program@ feed = padded.feed;
 
-  Program@ finish = Noop; # TODO
+  Program@ finish = Seq([
+    Noop
+    # TODO:
+    # 1. Make a copy of the length.
+    # 2. feed byte 0x80.
+    # 3. feed byte 0x00 until 64 bits shy of end of block.
+    # 4. feed copied length as next 8 bytes (least significant byte first).
+    # 5. doblock one more time.
+  ]);
 
   PureM<Md5@>(Md5@(reset, feed, finish));
 };

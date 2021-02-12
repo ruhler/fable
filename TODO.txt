@@ -1,5 +1,8 @@
 Fblf:
 * Implement md5 in fblf.
+ - Factor out module for 'PaddedMd5' that takes abcd, byte, and exposes
+   length.
+ - Implement Md5 on top of PaddedMd5, taking care of the 'finish' program.
 * Implement a compiler from fblf to C code.
   - See how much faster it is compared to native fble md5.
 * Figure out how to replace fblf integer arithmetic with a native c
