@@ -143,4 +143,4 @@ DecP = (Int@ n, Addr@ a) {
   PureM<Program@>(DecP(n, a));
 };
 
-@(AddM, IncM, DecM);
+@(AddM, IncP, IncM, DecP, DecM);
