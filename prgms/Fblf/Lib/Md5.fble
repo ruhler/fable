@@ -460,5 +460,5 @@ Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
   PureM<Md5@>(Md5@(reset, feed, finish));
 };
 
-@(Md5);
+@(Md5@, Md5);
 

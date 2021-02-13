@@ -1,6 +1,9 @@
 Fblf:
 * Implement md5 in fblf.
- - Implement a test driver for Md5 and write some tests.
+ - Make benchmark for fblf Md5 
+ - Debug performance issues with fblf Md5.
+* Come up with a better name for SeqL?
+* Factor out common code for convertig Hex lits to Bit lits.
 * Implement a compiler from fblf to C code.
   - See how much faster it is compared to native fble md5.
 * Figure out how to replace fblf integer arithmetic with a native c

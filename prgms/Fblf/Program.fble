@@ -128,8 +128,12 @@ IfElse = (Condition@ p, Program@ if_body, Program@ else_body) {
   Program@(ifelse: IfElse@(p, if_body, else_body));
 };
 
+(List@<Program@>) { Program@; } SeqL = (List@<Program@> prgms) {
+  Program@(sequence: prgms);
+};
+
 (Lit@<Program@>) { Program@; } Seq = (Lit@<Program@> prgms) {
-  Program@(sequence: List<Program@>(prgms));
+  SeqL(List<Program@>(prgms));
 };
 
 Program@ Noop = Program@(sequence: Nil<Program@>);
@@ -145,5 +149,5 @@ Program@ Noop = Program@(sequence: Nil<Program@>);
 @(
   Bit@, Bits@, Addr@, Value@, ConditionOp@, Condition@,
   Assign@, Sequence@, IfElse@, While@, Program@,
-  Const, ConstHex, Ref, Eq, Ne, Assign, If, IfElse, Seq, Noop, While
+  Const, ConstHex, Ref, Eq, Ne, Assign, If, IfElse, SeqL, Seq, Noop, While
 );

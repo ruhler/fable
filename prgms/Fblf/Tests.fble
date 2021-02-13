@@ -32,12 +32,12 @@
 @ Ptr@ = /Fblf/Heap%.Ptr@;
 % Heap = /Fblf/Heap%.Heap;
 % HeapFromBitStr = /Fblf/Heap%.HeapFromBitStr;
-% Equals = /Fblf/Heap%.Equals;
+% HeapFromPtr = /Fblf/Heap%.HeapFromPtr;
 
 % Exec = /Fblf/Exec%.Exec;
 
-# Import to test compilation.
-% _ = /Fblf/Lib/Md5%;
+# Include to test compilation
+% _ = /Fblf/Lib/Md5/Tests%;
 
 Test@ Tests = TestSuite(Chars|Fblf, [
   /Fblf/Heap/Tests%.Tests,
@@ -62,12 +62,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
 
     # We only want to check the first 12 bits to make sure they contain
     # a = 0010, b = 0111, but now z = 1001.
-    Heap@ wnt = HeapFromBitStr(B|001001111001);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|001001111001);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|12));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
   Test(Chars|IncM, !({
@@ -81,12 +78,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ heap = Heap(inc.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt = HeapFromBitStr(B|10100);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|5));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|10100);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|5));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
   Test(Chars|'IncM Overflow', !({
@@ -100,12 +94,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ heap = Heap(inc.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt = HeapFromBitStr(B|00000);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|5));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|00000);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|5));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
   Test(Chars|DecM, !({
@@ -119,12 +110,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ heap = Heap(dec.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt = HeapFromBitStr(B|10011);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|5));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|10011);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|5));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
   Test(Chars|AndF, !({
@@ -145,12 +133,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ heap = Heap(and.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt = HeapFromBitStr(B|001101100010);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|001101100010);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|12));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
   Test(Chars|OrF, !({
@@ -171,12 +156,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ heap = Heap(or.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt = HeapFromBitStr(B|001101100111);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|001101100111);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|12));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
   Test(Chars|XorF, !({
@@ -197,12 +179,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ heap = Heap(xor.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt = HeapFromBitStr(B|001101100101);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|001101100101);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|12));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
   Test(Chars|NotF, !({
@@ -221,12 +200,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ heap = Heap(not.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt = HeapFromBitStr(B|00111100);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|8));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|00111100);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|8));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
   Test(Chars|ClsF, !({
@@ -245,13 +221,13 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ heap = Heap(cls.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt = HeapFromBitStr(B|1001111100);
-    % Eq = (Heap@ a, Heap@ b) {
-       Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|10));
-    };
-
-    AssertEquals<Heap@>(Eq, /Fblf/Heap/Show%.Show, wnt, got);
+    Heap@ wnt_ = HeapFromBitStr(B|1001111100);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|10));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   }))
+
+  # TODO: This is too slow to include in the regular unit tests right now.
+  # /Fblf/Lib/Md5/Tests%.Tests
 ]);
 
 @(Tests);

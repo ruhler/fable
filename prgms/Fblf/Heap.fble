@@ -12,8 +12,11 @@
 <@>% List = /List%.List;
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
+<@>% Concat = /List%.Concat;
+<@,@>% Map = /List%.Map;
 
 @ Bit@ = /Digits%.Bit@;
+@ Hex@ = /Digits%.Hex@;
 % B = /Digits%.Bit;
 
 # Heap@ --
@@ -57,6 +60,19 @@
   HeapFromBits(List<Bit@>(bits));
 };
 
+# HeapFromHexStr --
+(Lit@<Hex@>) { Heap@; } HeapFromHexStr = (Lit@<Hex@> hex) {
+  List@<Hex@> l = List<Hex@>(hex);
+  List@<Bit@> bits = Concat<Bit@>(Map<Hex@, List@<Bit@>>(l, (Hex@ h) {
+    List<Bit@>(h.?(
+      0: B|0000, 1: B|0001, 2: B|0010, 3: B|0011,
+      4: B|0100, 5: B|0101, 6: B|0110, 7: B|0111,
+      8: B|1000, 9: B|1001, A: B|1010, B: B|1011,
+      C: B|1100, D: B|1101, E: B|1110, F: B|1111));
+  }));
+  HeapFromBits(bits);
+};
+
 # GetBits --
 #   Get n bits from the bit heap.
 #
@@ -71,6 +87,10 @@ GetBits = (Ptr@ ptr, Int@ n) {
         GetBits(Ptr@(ptr.heap.cons.tail, ptr.addr), Dec(n)))),
     false: GetBits(Ptr@(ptr.heap.cons.tail, Dec(ptr.addr)), n));
 };
+
+# HeapFromPtr --
+#   Create a heap initialized with the bits pointed to by ptr.
+(Ptr@, Int@) { Heap@; } HeapFromPtr = GetBits;
 
 # Equals --
 #   Return true if the n bits referred to by pointers a and b are equal.
@@ -103,4 +123,4 @@ GetBits = (Ptr@ ptr, Int@ n) {
         Assign(Ptr@(ptr.heap.cons.tail, Dec(ptr.addr)), val, n))));
 };
 
-@(Heap@, Ptr@, Heap, HeapFromBits, HeapFromBitStr, Equals, Assign);
+@(Heap@, Ptr@, Heap, HeapFromBits, HeapFromBitStr, HeapFromHexStr, HeapFromPtr, Equals, Assign);
