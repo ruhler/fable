@@ -16,12 +16,13 @@
 @ Value@ = /Fblf/Program%.Value@;
 % Assign = /Fblf/Program%.Assign;
 % Eq = /Fblf/Program%.Eq;
+% Ne = /Fblf/Program%.Ne;
 % IfElse = /Fblf/Program%.IfElse;
 % If = /Fblf/Program%.If;
+% While = /Fblf/Program%.While;
 % Const = /Fblf/Program%.Const;
 % Ref = /Fblf/Program%.Ref;
 % Seq = /Fblf/Program%.Seq;
-% Noop = /Fblf/Program%.Noop;
 % H = /Fblf/Program%.ConstHex;
 
 <@>@ Module@ = /Fblf/Module%.Module@;
@@ -394,6 +395,9 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 # The result of the Md5 computation will be in the 'abcd' register.
 # The module can be reused for multiple Md5 computations by rerunning the
 # above instructions for each computation.
+#
+# Note that the 'finish' program may modified the 'byte' register in
+# unspecified ways.
 @ Md5@ = *(Program@ reset, Program@ feed, Program@ finish);
 
 # Md5 -- 
@@ -409,24 +413,48 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
   PaddedMd5@ padded <- InstM<PaddedMd5@, Md5@>(PaddedMd5(a, b, c, d, byte));
 
-  # Count of the number of bytes bytes of input that have been processed.
+  # Count of the number of bytes of input that have been processed.
   Addr64@ length <- AllocM<Md5@>(I(D|64));
+
+  # While padding, keeps track of how many bytes have been added to the final
+  # block so far.
+  Addr@ padding <- AllocM<Md5@>(I(D|6));
 
   Program@ reset = Seq([
     Assign(length, H(Hex|0000000000000000), I(D|64)),
     padded.reset
   ]);
 
-  Program@ feed = padded.feed;
+  Program@ feed = Seq([
+    padded.feed,
+    IncP(I(D|64), length)
+  ]);
 
   Program@ finish = Seq([
-    Noop
-    # TODO:
-    # 1. Make a copy of the length.
-    # 2. feed byte 0x80.
-    # 3. feed byte 0x00 until 64 bits shy of end of block.
-    # 4. feed copied length as next 8 bytes (least significant byte first).
-    # 5. doblock one more time.
+    # Start tracking how many bytes we've added to the final block.
+    Assign(padding, Ref(Add(length, I(D|58))), I(D|6)),
+
+    # Feed byte 0x80
+    Assign(byte, H(Hex|80), I(D|8)),
+    padded.feed,
+    IncP(I(D|6), padding),
+
+    # Feed byte 0x00 until 8 bytes shy of end of block.
+    Assign(byte, H(Hex|00), I(D|8)),
+    While(Ne(Ref(padding), Const(B|111000), I(D|6)), Seq([
+      padded.feed,
+      IncP(I(D|6), padding)
+    ])),
+
+    # Feed length as next 8 bytes, least significant byte first.
+    Assign(byte, Ref(Add(length, I(D|56))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|48))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|40))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|32))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|24))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|16))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|8))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|0))), I(D|8)), padded.feed
   ]);
 
   PureM<Md5@>(Md5@(reset, feed, finish));
