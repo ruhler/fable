@@ -19,9 +19,13 @@
 <@>@ CharLit@ = /String%.CharLit@;
 
 @ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
@@ -127,4 +131,13 @@ Test@ Tests = TestSuite(Chars|Md5, [
     Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);
 
-@(Tests);
+Unit@! Bench = {
+  Test@ test = TestStr(
+    Chars|empty,
+    Hex|D41D8CD98F00B204E9800998ECF8427E,
+    Empty<Hex@>);
+  TestResult@ result := test.case.test;
+  !(Unit);
+};
+
+@(Tests, Bench);
