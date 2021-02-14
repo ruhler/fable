@@ -6,9 +6,10 @@
 
 @ Bit@ = /Digits%.Bit@;
 @ Heap@ = /Fblf/Heap%.Heap@;
+% GetAllBits = /Fblf/Heap%.GetAllBits;
 
 Show@<Heap@> Show = (Heap@ heap) {
-  /String%.Concat(Map<Bit@, String@>(heap, /Digits/Show%.ShowBit));
+  /String%.Concat(Map<Bit@, String@>(GetAllBits(heap), /Digits/Show%.ShowBit));
 };
 
 @(Show);

@@ -3,9 +3,12 @@
 
 @ Bit@ = /Digits%.Bit@;
 @ Heap@ = /Fblf/Heap%.Heap@;
+% GetAllBits = /Fblf/Heap%.GetAllBits;
 
 # Eq --
 #   Implementation of Eq@ for Heap@. See documentation of /Eq%.Eq@.
-Eq@<Heap@> Eq = /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit);
+Eq@<Heap@> Eq = (Heap@ a, Heap@ b) {
+  /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit)(GetAllBits(a), GetAllBits(b));
+};
 
 @(Eq);
