@@ -19,7 +19,6 @@
 <@>@ CharLit@ = /String%.CharLit@;
 
 @ Test@ = /Test%.Test@;
-@ TestResult@ = /Test%.TestResult@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
@@ -74,7 +73,7 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
 
     Program@ feed = SeqL(Map<Value@, Program@>(
       Bytes(List<Hex@>(bytes)), (Value@ b) {
-        Seq([Assign(byte, b, I(D|9)), md5.feed]);
+        Seq([Assign(byte, b, I(D|8)), md5.feed]);
     }));
 
     Program@ prgm = Seq([md5.reset, feed, md5.finish]);
@@ -131,13 +130,40 @@ Test@ Tests = TestSuite(Chars|Md5, [
     Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);
 
-Unit@! Bench = {
-  Test@ test = TestStr(
-    Chars|empty,
-    Hex|D41D8CD98F00B204E9800998ECF8427E,
-    Empty<Hex@>);
-  TestResult@ result := test.case.test;
-  !(Unit);
-};
+Unit@! Bench = !({
+  (List@<Hex@>) { List@<Value@>; } Bytes = (List@<Hex@> hl) {
+    hl.?(
+      cons: {
+        Cons<Value@>(
+          ConstHex([hl.cons.head, hl.cons.tail.cons.head]),
+          Bytes(hl.cons.tail.cons.tail));
+      },
+      nil: Nil<Value@>);
+  };
+
+  Addr@ a = I(D|0);
+  Addr@ b = I(D|32);
+  Addr@ c = I(D|64);
+  Addr@ d = I(D|96);
+  Addr@ byte = I(D|128);
+  Addr@ free = I(D|136);
+
+  Instance@<Md5@> md5I = Instantiate<Md5@>(Md5(a, b, c, d, byte), free);
+  Md5@ md5 = md5I.instance;
+
+  Lit@<Hex@> bytes = Hex|6D65737361676520646967657374;
+
+  Program@ feed = SeqL(Map<Value@, Program@>(
+    Bytes(List<Hex@>(bytes)), (Value@ b) {
+      Seq([Assign(byte, b, I(D|8)), md5.feed]);
+  }));
+
+  #Program@ prgm = Seq([md5.reset, feed, md5.finish]);
+  Program@ prgm = Seq([md5.reset, feed]);
+
+  Heap@ heap = Heap(md5I.heap);
+  Heap@ _ = Exec(prgm, heap);
+  Unit;
+});
 
 @(Tests, Bench);
