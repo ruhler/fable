@@ -33,10 +33,9 @@
 # This should be treated as an opaque type externally.
 #
 # Fields:
-#   size - the number of elements in the heap.
-@ HeapB@ = *(Heap@ left, Heap@ right),
-@ HeapD@ = +(Bit@ value, HeapB@ binary),
-@ Heap@ = *(Int@ size, HeapD@ data);
+#   m - The size of 'left' and the address of the first value in 'right'.
+@ HeapB@ = *(Heap@ left, Int@ m, Heap@ right),
+@ Heap@ = +(Bit@ value, HeapB@ binary);
 
 # Addr@ --
 #   The address of a bit on the heap.
@@ -53,19 +52,15 @@
 (Int@, List@<Bit@>) { *(Heap@ heap, List@<Bit@> unused); }
 MkHeap = (Int@ n, List@<Bit@> bits) {
   Le(n, I(D|0)).?(
-    true: @(
-      heap: Heap@(n, HeapD@(value: B.1)),
-      unused: bits),
+    true: @(heap: Heap@(value: B.1), unused: bits),
     false: Eq(n, I(D|1)).?(
-      true: @(
-        heap: Heap@(n, HeapD@(value: bits.cons.head)),
-        unused: bits.cons.tail),
+      true: @(heap: Heap@(value: bits.cons.head), unused: bits.cons.tail),
       false: {
         Int@ m = Div(n, I(D|2));
         % left = MkHeap(m, bits);
         % right = MkHeap(Sub(n, m), left.unused);
         @(
-          heap: Heap@(n, HeapD@(binary: HeapB@(left.heap, right.heap))),
+          heap: Heap@(binary: HeapB@(left.heap, m, right.heap)),
           unused: right.unused);
       }));
 };
@@ -110,22 +105,22 @@ MkHeap = (Int@ n, List@<Bit@> bits) {
 # Behavior is undefined if there are't enough bits in the heap to get n.
 (Ptr@, Int@, List@<Bit@>) { List@<Bit@>; }
 GetBits = (Ptr@ ptr, Int@ n, List@<Bit@> tail) {
-  ptr.heap.data.?(
+  ptr.heap.?(
     value: Le(n, 0).?(
       true: tail,
-      false: Cons<Bit@>(ptr.heap.data.value, tail)),
+      false: Cons<Bit@>(ptr.heap.value, tail)),
     binary: {
       Int@ m = Add(ptr.addr, n);
-      Le(m, ptr.heap.data.binary.left.size).?(
-        true: GetBits(Ptr@(ptr.heap.data.binary.left, ptr.addr), n, tail),
-        false: Ge(ptr.addr, ptr.heap.data.binary.left.size).?(
-          true: GetBits(Ptr@(ptr.heap.data.binary.right,
-              Sub(ptr.addr, ptr.heap.data.binary.left.size)), n, tail),
+      Le(m, ptr.heap.binary.m).?(
+        true: GetBits(Ptr@(ptr.heap.binary.left, ptr.addr), n, tail),
+        false: Ge(ptr.addr, ptr.heap.binary.m).?(
+          true: GetBits(Ptr@(ptr.heap.binary.right,
+              Sub(ptr.addr, ptr.heap.binary.m)), n, tail),
           false: {
-            Int@ nl = Sub(ptr.heap.data.binary.left.size, ptr.addr);
+            Int@ nl = Sub(ptr.heap.binary.m, ptr.addr);
             Int@ nr = Sub(n, nl);
-            GetBits(Ptr@(ptr.heap.data.binary.left, ptr.addr), nl,
-              GetBits(Ptr@(ptr.heap.data.binary.right, I(D|0)), nr, tail));
+            GetBits(Ptr@(ptr.heap.binary.left, ptr.addr), nl,
+              GetBits(Ptr@(ptr.heap.binary.right, I(D|0)), nr, tail));
           }));
     });
 };
@@ -136,36 +131,33 @@ GetBits = (Ptr@ ptr, Int@ n, List@<Bit@> tail) {
 # Behavior is undefined if there are't enough bits in the heap to set n.
 (Ptr@, Int@, List@<Bit@>) { *(Heap@ heap, List@<Bit@> unused); }
 SetBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
-  ptr.heap.data.?(
+  ptr.heap.?(
     value: Le(n, 0).?(
       true: @(heap: ptr.heap, unused: bits),
-      false: @(
-        heap: Heap@(ptr.heap.size, HeapD@(value: bits.cons.head)),
-        unused: bits.cons.tail)),
+      false: @(heap: Heap@(value: bits.cons.head), unused: bits.cons.tail)),
     binary: {
       Int@ m = Add(ptr.addr, n);
-      Le(m, ptr.heap.data.binary.left.size).?(
+      Le(m, ptr.heap.binary.m).?(
         true: {
-          % left = SetBits(Ptr@(ptr.heap.data.binary.left, ptr.addr), n, bits);
-          @(heap: Heap@(ptr.heap.size, HeapD@(binary:
-                HeapB@(left.heap, ptr.heap.data.binary.right))),
+          % left = SetBits(Ptr@(ptr.heap.binary.left, ptr.addr), n, bits);
+          @(heap: Heap@(binary:
+                HeapB@(left.heap, ptr.heap.binary.m, ptr.heap.binary.right)),
             unused: left.unused);
         },
-        false: Ge(ptr.addr, ptr.heap.data.binary.left.size).?(
+        false: Ge(ptr.addr, ptr.heap.binary.m).?(
           true: {
-            % right = SetBits(Ptr@(ptr.heap.data.binary.right,
-                Sub(ptr.addr, ptr.heap.data.binary.left.size)), n, bits);
-            @(heap: Heap@(ptr.heap.size, HeapD@(binary:
-                  HeapB@(ptr.heap.data.binary.left, right.heap))),
+            % right = SetBits(Ptr@(ptr.heap.binary.right,
+                Sub(ptr.addr, ptr.heap.binary.m)), n, bits);
+            @(heap: Heap@(binary:
+                  HeapB@(ptr.heap.binary.left, ptr.heap.binary.m, right.heap)),
               unused: right.unused);
           },
           false: {
-            Int@ nl = Sub(ptr.heap.data.binary.left.size, ptr.addr);
+            Int@ nl = Sub(ptr.heap.binary.m, ptr.addr);
             Int@ nr = Sub(n, nl);
-            % left = SetBits(Ptr@(ptr.heap.data.binary.left, ptr.addr), nl, bits);
-            % right = SetBits(Ptr@(ptr.heap.data.binary.right, I(D|0)), nr, left.unused);
-            @(heap: Heap@(ptr.heap.size, HeapD@(binary:
-                  HeapB@(left.heap, right.heap))),
+            % left = SetBits(Ptr@(ptr.heap.binary.left, ptr.addr), nl, bits);
+            % right = SetBits(Ptr@(ptr.heap.binary.right, I(D|0)), nr, left.unused);
+            @(heap: Heap@(binary: HeapB@(left.heap, ptr.heap.binary.m, right.heap)),
               unused: right.unused);
           }));
     });
@@ -197,8 +189,18 @@ SetBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
 
 # GetAllBits --
 #   Get all of the bits of a heap in order.
-(Heap@) { List@<Bit@>; } GetAllBits = (Heap@ h) {
-  GetBits(Ptr@(h, I(D|0)), h.size, Nil<Bit@>);
+#
+# TODO: This doesn't work for an empty heap?
+(Heap@) { List@<Bit@>; } GetAllBits = {
+  (Heap@, List@<Bit@>) { List@<Bit@>; } F = (Heap@ h, List@<Bit@> tail) {
+    h.?(
+      value: Cons<Bit@>(h.value, tail),
+      binary: F(h.binary.left, F(h.binary.right, tail)));
+  };
+
+  (Heap@ h) {
+    F(h, Nil<Bit@>);
+  };
 };
 
 @(Heap@, Ptr@, Heap, HeapFromBits, HeapFromBitStr, HeapFromHexStr, HeapFromPtr, Equals, Assign, GetAllBits);
