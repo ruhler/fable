@@ -27,9 +27,6 @@
 @ Hex@ = /Digits%.Hex@;
 % B = /Digits%.Bit;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
-
 # Heap@ --
 #   A bit-addressable heap of bits.
 #
@@ -38,7 +35,7 @@
 # Fields:
 #   size - the number of elements in the heap.
 @ HeapB@ = *(Heap@ left, Heap@ right),
-@ HeapD@ = +(Unit@ empty, Bit@ value, HeapB@ binary),
+@ HeapD@ = +(Bit@ value, HeapB@ binary),
 @ Heap@ = *(Int@ size, HeapD@ data);
 
 # Addr@ --
@@ -57,7 +54,7 @@
 MkHeap = (Int@ n, List@<Bit@> bits) {
   Le(n, I(D|0)).?(
     true: @(
-      heap: Heap@(n, HeapD@(empty: Unit)),
+      heap: Heap@(n, HeapD@(value: B.1)),
       unused: bits),
     false: Eq(n, I(D|1)).?(
       true: @(
@@ -114,7 +111,6 @@ MkHeap = (Int@ n, List@<Bit@> bits) {
 (Ptr@, Int@, List@<Bit@>) { List@<Bit@>; }
 GetBits = (Ptr@ ptr, Int@ n, List@<Bit@> tail) {
   ptr.heap.data.?(
-    empty: tail,
     value: Le(n, 0).?(
       true: tail,
       false: Cons<Bit@>(ptr.heap.data.value, tail)),
@@ -141,7 +137,6 @@ GetBits = (Ptr@ ptr, Int@ n, List@<Bit@> tail) {
 (Ptr@, Int@, List@<Bit@>) { *(Heap@ heap, List@<Bit@> unused); }
 SetBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
   ptr.heap.data.?(
-    empty: @(heap: ptr.heap, unused: bits),
     value: Le(n, 0).?(
       true: @(heap: ptr.heap, unused: bits),
       false: @(
