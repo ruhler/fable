@@ -158,8 +158,7 @@ Unit@! Bench = !({
       Seq([Assign(byte, b, I(D|8)), md5.feed]);
   }));
 
-  #Program@ prgm = Seq([md5.reset, feed, md5.finish]);
-  Program@ prgm = Seq([md5.reset, feed]);
+  Program@ prgm = Seq([md5.reset, feed, md5.finish]);
 
   Heap@ heap = Heap(md5I.heap);
   Heap@ _ = Exec(prgm, heap);

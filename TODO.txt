@@ -1,8 +1,7 @@
 Fblf:
 * Implement md5 in fblf.
- - Optimize implementation of Heap%.Assign and Heap%.Equals
-   So that time, ideally, is linear in the size passed instead of the entire
-   heap size.
+ - Optimize implementation of Heap%.Assign and Heap%.Equal more.
+ - Debug test failures.
 * Come up with a better name for SeqL?
 * Factor out common code for converting Hex lits to Bit lits.
 * Implement a compiler from fblf to C code.
