@@ -10,6 +10,8 @@
 % HeapFromBits = /Fblf/Heap%.HeapFromBits;
 % Assign = /Fblf/Heap%.Assign;
 % Equals = /Fblf/Heap%.Equals;
+% AssignBits = /Fblf/Heap%.AssignBits;
+% EqualsBits = /Fblf/Heap%.EqualsBits;
 
 <@,@>% ForEach = /List%.ForEach;
 
@@ -28,7 +30,10 @@
 # Eval --
 #   Evaluate a condition.
 (Condition@, Heap@) { Bool@; } Eval = (Condition@ cond, Heap@ heap) {
-  Bool@ equals = Equals(Value(cond.a, heap), Value(cond.b, heap), cond.n);
+  Ptr@ a = Value(cond.a, heap);
+  Bool@ equals = cond.b.?(
+    ref: Equals(a, Ptr@(heap, cond.b.ref), cond.n),
+    const: EqualsBits(a, cond.b.const, cond.n));
   cond.op.?(eq: equals, ne: Not(equals));
 };
 
@@ -39,8 +44,10 @@
 (Program@, Heap@) { Heap@; } Exec = (Program@ prgm, Heap@ heap) {
   prgm.?(
     assign: {
-      Ptr@ value = Value(prgm.assign.value, heap);
-      Assign(Ptr@(heap, prgm.assign.ref), value, prgm.assign.n);
+      Ptr@ dest = Ptr@(heap, prgm.assign.ref);
+      prgm.assign.value.?(
+        ref: Assign(dest, Ptr@(heap, prgm.assign.value.ref), prgm.assign.n),
+        const: AssignBits(dest, prgm.assign.value.const, prgm.assign.n));
     },
 
     sequence: {

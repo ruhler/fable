@@ -1,5 +1,6 @@
 
 @ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -163,6 +164,36 @@ SetBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
     });
 };
 
+# EqBits --
+#   Test for n bits worth of equality.
+#
+# Behavior is undefined if there are't enough bits in the heap to set n.
+(Ptr@, Int@, List@<Bit@>) { *(Bool@ equals, List@<Bit@> unused); }
+EqBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
+  ptr.heap.?(
+    value: Le(n, 0).?(
+      true: @(equals: True, unused: bits),
+      false: @(
+        equals: /Digits/Eq%.EqBit(ptr.heap.value, bits.cons.head),
+        unused: bits.cons.tail)),
+    binary: {
+      Int@ m = Add(ptr.addr, n);
+      Le(m, ptr.heap.binary.m).?(
+        true: EqBits(Ptr@(ptr.heap.binary.left, ptr.addr), n, bits),
+        false: Ge(ptr.addr, ptr.heap.binary.m).?(
+          true: EqBits(Ptr@(ptr.heap.binary.right,
+                Sub(ptr.addr, ptr.heap.binary.m)), n, bits),
+          false: {
+            Int@ nl = Sub(ptr.heap.binary.m, ptr.addr);
+            Int@ nr = Sub(n, nl);
+            % left = EqBits(Ptr@(ptr.heap.binary.left, ptr.addr), nl, bits);
+            left.equals.?(
+              true: EqBits(Ptr@(ptr.heap.binary.right, I(D|0)), nr, left.unused),
+              false: left);
+          }));
+    });
+};
+
 # HeapFromPtr --
 #   Create a heap initialized with the bits pointed to by ptr.
 (Ptr@, Int@) { Heap@; } HeapFromPtr = (Ptr@ ptr, Int@ n) {
@@ -171,10 +202,27 @@ SetBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
 
 # Equals --
 #   Return true if the n bits referred to by pointers a and b are equal.
+(Ptr@, List@<Bit@>, Int@) { Bool@; } EqualsBits = (Ptr@ a, List@<Bit@> b, Int@ n) {
+  EqBits(a, n, b).equals;
+};
+
+# Equals --
+#   Return true if the n bits referred to by pointers a and b are equal.
 #
 # Behavior is undefined if there aren't n bits in a and b to compare.
 (Ptr@, Ptr@, Int@) { Bool@; } Equals = (Ptr@ a, Ptr@ b, Int@ n) {
-  /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit)(GetBits(a, n, Nil<Bit@>), GetBits(b, n, Nil<Bit@>));
+  EqBits(a, n, GetBits(b, n, Nil<Bit@>)).equals;
+};
+
+# AssignBits --
+#   Assign the first n bits at ptr with the value of the given bits.
+#
+# Returns the updated Heap for ptr after the assignment.
+#
+# Behavior is undefined if there aren't n bits to assign from or to.
+(Ptr@, List@<Bit@>, Int@) { Heap@; }
+AssignBits = (Ptr@ ptr, List@<Bit@> bits, Int@ n) {
+  SetBits(ptr, n, bits).heap;
 };
 
 # Assign --
@@ -203,4 +251,4 @@ SetBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
   };
 };
 
-@(Heap@, Ptr@, Heap, HeapFromBits, HeapFromBitStr, HeapFromHexStr, HeapFromPtr, Equals, Assign, GetAllBits);
+@(Heap@, Ptr@, Heap, HeapFromBits, HeapFromBitStr, HeapFromHexStr, HeapFromPtr, EqualsBits, Equals, AssignBits, Assign, GetAllBits);
