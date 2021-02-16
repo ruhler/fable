@@ -36,9 +36,6 @@
 
 % Exec = /Fblf/Exec%.Exec;
 
-# Include to test compilation
-% _ = /Fblf/Lib/Md5/Tests%;
-
 Test@ Tests = TestSuite(Chars|Fblf, [
   /Fblf/Heap/Tests%.Tests,
 
@@ -224,10 +221,9 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     Heap@ wnt_ = HeapFromBitStr(B|1001111100);
     Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|10));
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
-  }))
+  })),
 
-  # TODO: This is too slow to include in the regular unit tests right now.
-  # /Fblf/Lib/Md5/Tests%.Tests
+  /Fblf/Lib/Md5/Tests%.Tests
 ]);
 
 @(Tests);

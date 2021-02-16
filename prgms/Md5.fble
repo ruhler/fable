@@ -4,13 +4,25 @@
 % False = /Bool%.False;
 % True = /Bool%.True;
 
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
+<@>% Concat = /List%.Concat;
 <@,@>% ForEach = /List%.ForEach;
+<@,@>% Map = /List%.Map;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
+
+@ String@ = /String%.String@;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -594,4 +606,30 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
     True, And);
 };
 
-@(Md5Hash@, Md5, Eq);
+Test@ Md5InternalTests = TestSuite(Chars|Internal, [
+  Test(Chars|FF, !({
+    Bit32@ got = FF(
+      H8(Hex|67452301),
+      H8(Hex|EFCDAB89),
+      H8(Hex|98BADCFE),
+      H8(Hex|10325476),
+      H8(Hex|00000080),
+      S@(7: Unit),
+      H8(Hex|D76AA478));
+
+    Bit32@ wnt = H8(Hex|A5202774);
+
+    (Bit32@) { String@; } show = (Bit32@ x) {
+      HexPair@ a = HexFromByte(x.lo.lo);
+      HexPair@ b = HexFromByte(x.lo.hi);
+      HexPair@ c = HexFromByte(x.hi.lo);
+      HexPair@ d = HexFromByte(x.hi.hi);
+      List@<Hex@> hex = List<Hex@>([d.hi, d.lo, c.hi, c.lo, b.hi, b.lo, a.hi, a.lo]);
+      Concat<Char@>(Map<Hex@, String@>(hex, /Digits/Show%.ShowHex));
+    };
+
+    AssertEquals<Bit32@>(/Bits%.Bit32.BitN.eq, show, wnt, got);
+  }))
+]);
+
+@(Md5Hash@, Md5, Eq, Md5InternalTests);

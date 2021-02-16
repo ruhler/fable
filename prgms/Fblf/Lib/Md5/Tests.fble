@@ -4,6 +4,8 @@
 
 @ Hex@ = /Digits%.Hex@;
 % Hex = /Digits%.Hex;
+
+@ Int@ = /Int/Int%.Int@;
 % I = /Int/Int/Lit%.I;
 % D = /Int/Int/Lit%.D;
 
@@ -33,12 +35,14 @@
 % ConstHex = /Fblf/Program%.ConstHex;
 % Seq = /Fblf/Program%.Seq;
 % SeqL = /Fblf/Program%.SeqL;
+% H = /Fblf/Program%.ConstHex;
 
 <@>@ Instance@ = /Fblf/Module%.Instance@;
 <@>% Instantiate = /Fblf/Module%.Instantiate;
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5 = /Fblf/Lib/Md5%.Md5;
+% FF = /Fblf/Lib/Md5%.Internal.FF;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
 @ Ptr@ = /Fblf/Heap%.Ptr@;
@@ -87,7 +91,39 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
   }));
 };
 
-Test@ Tests = TestSuite(Chars|Md5, [
+Test@ InternalTests = TestSuite(Chars|'Md5 Internal', [
+  Test(Chars|FF, !({
+    Addr@ a = I(D|0);
+    Addr@ b = I(D|32);
+    Addr@ c = I(D|64);
+    Addr@ d = I(D|96);
+    Addr@ x = I(D|128);
+    Addr@ r = I(D|160);
+    Addr@ free = I(D|192);
+    Int@ s = I(D|7);
+    Value@ t = H(Hex|D76AA478);
+
+    Instance@<Program@> ffI = Instantiate<Program@>(FF(a, b, c, d, x, s, t, r), free);
+
+    Program@ prgm = Seq([
+      Assign(a, H(Hex|67452301), I(D|32)),
+      Assign(b, H(Hex|EFCDAB89), I(D|32)),
+      Assign(c, H(Hex|98BADCFE), I(D|32)),
+      Assign(d, H(Hex|10325476), I(D|32)),
+      Assign(x, H(Hex|00000080), I(D|32)),
+      ffI.instance
+    ]);
+
+    Heap@ heap = Heap(ffI.heap);
+    Heap@ got = Exec(prgm, heap);
+
+    Heap@ wnt_ = HeapFromHexStr(Hex|A5202774);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, r), I(D|32));
+    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
+  }))
+]);
+
+Test@ Md5Tests = TestSuite(Chars|Md5, [
   TestStr(
     Chars|empty,
     Hex|D41D8CD98F00B204E9800998ECF8427E,
@@ -129,6 +165,9 @@ Test@ Tests = TestSuite(Chars|Md5, [
     Hex|57EDF4A22BE3C955AC49DA2E2107B67A,
     Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);
+
+# TODO: Include Md5Tests once they are fast enough to run.
+Test@ Tests = InternalTests;
 
 Unit@! Bench = !({
   (List@<Hex@>) { List@<Value@>; } Bytes = (List@<Hex@> hl) {

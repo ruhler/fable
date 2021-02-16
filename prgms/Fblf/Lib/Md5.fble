@@ -133,7 +133,7 @@ XX@ FF = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   Addr32@ xy <- AllocM<Program@>(32);
   SeqM([
     NotM(32, x, nx),
-    AddM(32, nx, z, anxz),
+    AndM(32, nx, z, anxz),
     AndM(32, x, y, xy),
     OrM(32, xy, anxz, r)]);
 });
@@ -145,7 +145,7 @@ XX@ GG = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   Addr32@ xz <- AllocM<Program@>(32);
   SeqM([
     NotM(32, z, nz),
-    AddM(32, y, nz, aynz),
+    AndM(32, y, nz, aynz),
     AndM(32, x, z, xz),
     OrM(32, xz, aynz, r)]);
 });
@@ -460,5 +460,9 @@ Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
   PureM<Md5@>(Md5@(reset, feed, finish));
 };
 
-@(Md5@, Md5);
+# Interal --
+#   Expose internal modules for testing purposes only.
+% Internal = @(FF);
+
+@(Md5@, Md5, Internal);
 

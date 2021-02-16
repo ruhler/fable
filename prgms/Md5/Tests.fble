@@ -138,6 +138,8 @@
 };
 
 Test@ Tests = TestSuite(Chars|Md5, [
+  /Md5%.Md5InternalTests,
+
   # ""
   TestStr(
     Chars|empty,

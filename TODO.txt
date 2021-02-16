@@ -1,7 +1,6 @@
 Fblf:
-* Implement md5 in fblf.
- - Optimize implementation of Heap%.Assign and Heap%.Equal more.
- - Debug test failures.
+* Expand test coverage for fblf md5 to track down test failures.
+ - Fix test harness endianism for Md5Hash.
 * Come up with a better name for SeqL?
 * Factor out common code for converting Hex lits to Bit lits.
 * Implement a compiler from fblf to C code.
