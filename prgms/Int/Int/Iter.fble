@@ -2,6 +2,7 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
+% Le = /Int/Int/Eq%.Le;
 % Lt = /Int/Int/Eq%.Lt;
 
 % D = /Int/Int/Lit%.D;
@@ -33,9 +34,12 @@
 #   An iterator over the range of integers (n, 0]
 (Int@) { Iter@<Int@>; } CountDownFrom = (Int@ n) {
   (Unit@ _) {
-    Lt(n, I(D|0)).?(
+    Le(n, I(D|0)).?(
       true: End<Int@>,
-      false: Has<Int@>(n, CountDownFrom(Sub(n, I(D|1)))));
+      false: {
+        Int@ first = Sub(n, I(D|1));
+        Has<Int@>(first, CountDownFrom(first));
+      });
   };
 };
 

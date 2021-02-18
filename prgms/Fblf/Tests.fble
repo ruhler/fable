@@ -39,28 +39,28 @@
 Test@ Tests = TestSuite(Chars|Fblf, [
   /Fblf/Heap/Tests%.Tests,
 
-  Test(Chars|AddF, !({
+  Test(Chars|AddM, !({
     Addr@ a = I(D|0);
-    Addr@ b = I(D|4);
-    Addr@ z = I(D|8);
-    Addr@ free = I(D|12);
+    Addr@ b = I(D|5);
+    Addr@ z = I(D|10);
+    Addr@ free = I(D|15);
 
     Instance@<Program@> add = Instantiate<Program@>(AddM(I(D|4), a, b, z), free);
 
+    # Note: we put an extra '1' bit after each value as a regression test for
+    # a bug we had where it was reading one bit off the end of the values.
     Program@ prgm = Seq([
-      Assign(a, Const(B|0010), I(D|4)),   # a = 2
-      Assign(b, Const(B|0111), I(D|4)),   # b = 7
-      Assign(z, Const(B|0000), I(D|4)),   # clear z
-      add.instance                         # z = a + b
+      Assign(a, Const(B|00101), I(D|5)),
+      Assign(b, Const(B|10111), I(D|5)),
+      Assign(z, Const(B|11111), I(D|5)),
+      add.instance
     ]);
 
     Heap@ heap = Heap(add.heap);
     Heap@ got = Exec(prgm, heap);
 
-    # We only want to check the first 12 bits to make sure they contain
-    # a = 0010, b = 0111, but now z = 1001.
-    Heap@ wnt_ = HeapFromBitStr(B|001001111001);
-    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|12));
+    Heap@ wnt_ = HeapFromBitStr(B|001011011111011);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|15));
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
@@ -112,7 +112,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
-  Test(Chars|AndF, !({
+  Test(Chars|AndM, !({
     Addr@ a = I(D|0);
     Addr@ b = I(D|4);
     Addr@ z = I(D|8);
@@ -135,7 +135,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
-  Test(Chars|OrF, !({
+  Test(Chars|OrM, !({
     Addr@ a = I(D|0);
     Addr@ b = I(D|4);
     Addr@ z = I(D|8);
@@ -158,7 +158,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
-  Test(Chars|XorF, !({
+  Test(Chars|XorM, !({
     Addr@ a = I(D|0);
     Addr@ b = I(D|4);
     Addr@ z = I(D|8);
@@ -181,7 +181,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
-  Test(Chars|NotF, !({
+  Test(Chars|NotM, !({
     Addr@ a = I(D|0);
     Addr@ z = I(D|4);
     Addr@ free = I(D|8);
@@ -202,7 +202,7 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   })),
 
-  Test(Chars|ClsF, !({
+  Test(Chars|ClsM, !({
     Addr@ a = I(D|0);
     Addr@ z = I(D|5);
     Addr@ free = I(D|10);
