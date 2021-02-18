@@ -13,7 +13,7 @@ checkerr:
 
 .PHONY: foo
 foo:
-	./out/bin/fble-app prgms/Invaders/App.fble prgms
+	./out/bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms
 
 .PHONY: test
 test:

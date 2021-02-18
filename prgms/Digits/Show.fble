@@ -1,12 +1,23 @@
 
 % Chars = /Char%.Chars;
+
 @ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
+
+<@>@ List@ = /List%.List@;
+<@,@>% Map = /List%.Map;
+
 <@>@ Show@ = /Show%.Show@;
+
+@ String@ = /String%.String@;
 % Str = /String%.Str;
 
 Show@<Bit@> ShowBit = (Bit@ b) {
   b.?(0: Str(Chars|0), 1: Str(Chars|1));
+};
+
+Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
+  /String%.Concat(Map<Bit@, String@>(bits, ShowBit));
 };
 
 Show@<Hex@> ShowHex = (Hex@ h) {
@@ -17,4 +28,4 @@ Show@<Hex@> ShowHex = (Hex@ h) {
     C: Str(Chars|C), D: Str(Chars|D), E: Str(Chars|E), F: Str(Chars|F));
 };
 
-@(ShowBit, ShowHex);
+@(ShowBit, ShowBits, ShowHex);

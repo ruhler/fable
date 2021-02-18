@@ -1,0 +1,92 @@
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+@ Addr@ = /Fblf/Program%.Addr@;
+@ Assign@ = /Fblf/Program%.Assign@;
+@ Condition@ = /Fblf/Program%.Condition@;
+@ IfElse@ = /Fblf/Program%.IfElse@;
+@ Sequence@ = /Fblf/Program%.Sequence@;
+@ While@ = /Fblf/Program%.While@;
+@ Value@ = /Fblf/Program%.Value@;
+@ Program@ = /Fblf/Program%.Program@;
+
+<@>% List = /List%.List;
+<@,@>% Map = /List%.Map;
+<@>% Cons = /List%.Cons;
+<@>% Concat = /List%.Concat;
+
+<@>@ Show@ = /Show%.Show@;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+Show@<Addr@> ShowAddr = (Addr@ addr) {
+  Cons<Char@>(Chars.'@', /Int/Int/Show%.Show(addr));
+};
+
+Show@<Value@> ShowValue = (Value@ value) {
+  value.?(
+    ref: ShowAddr(value.ref),
+    const: /Digits/Show%.ShowBits(value.const));
+};
+
+Show@<Condition@> ShowCondition = (Condition@ cond) {
+  String@ op = cond.op.?(
+    eq: Str(Chars|' == '),
+    ne: Str(Chars|' != '));
+  Concat<Char@>(List<String@>([
+      ShowValue(cond.a), op, ShowValue(cond.b),
+      Str(Chars|' :: '), /Int/Int/Show%.Show(cond.n)]));
+};
+
+(String@) { Show@<Assign@>; } ShowAssign = (String@ indent)(Assign@ assign) {
+  Concat<Char@>(List<String@>([
+    indent,
+    ShowAddr(assign.ref),
+    Str(Chars|' = '),
+    ShowValue(assign.value),
+    Str(Chars|' :: '),
+    /Int/Int/Show%.Show(assign.n),
+    Str(Chars|';
+')
+  ]));
+};
+
+(String@) { Show@<Sequence@>; } ShowSequence = (String@ indent)(Sequence@ seq) {
+  Concat<Char@>(Map<Program@, String@>(seq, ShowProgram(indent)));
+},
+
+(String@) { Show@<IfElse@>; } ShowIfElse = (String@ indent)(IfElse@ ifelse) {
+  String@ nested = Concat<Char@>(List<String@>([indent, Str(Chars|'  ')]));
+  Concat<Char@>(List<String@>([
+      indent, Str(Chars|'if ('), ShowCondition(ifelse.condition), Str(Chars|') {
+'),
+      ShowProgram(nested)(ifelse.if_body),
+      indent, Str(Chars|'} else {
+'),
+      ShowProgram(nested)(ifelse.else_body),
+      indent, Str(Chars|'}
+')]));
+},
+
+(String@) { Show@<While@>; } ShowWhile = (String@ indent)(While@ while) {
+  String@ nested = Concat<Char@>(List<String@>([indent, Str(Chars|'  ')]));
+  Concat<Char@>(List<String@>([
+      indent, Str(Chars|'while ('), ShowCondition(while.condition), Str(Chars|') {
+'),
+      ShowProgram(nested)(while.body),
+      indent, Str(Chars|'}
+')]));
+},
+
+(String@) { Show@<Program@>; } ShowProgram = (String@ indent)(Program@ prgm) {
+  prgm.?(
+    assign: ShowAssign(indent)(prgm.assign),
+    sequence: ShowSequence(indent)(prgm.sequence),
+    ifelse: ShowIfElse(indent)(prgm.ifelse),
+    while: ShowWhile(indent)(prgm.while));
+};
+
+@(ShowAddr, ShowValue, ShowProgram, ShowAssign, ShowSequence, ShowIfElse,
+  ShowWhile, ShowCondition);

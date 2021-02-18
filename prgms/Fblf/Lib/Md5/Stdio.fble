@@ -1,0 +1,57 @@
+
+% True = /Bool%.True;
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+<@>% Nil = /List%.Nil;
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+@ Stdio@ = /Stdio%.Stdio@;
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+@ Unit@ = /Unit%.Unit@;
+
+@ Addr@ = /Fblf/Program%.Addr@;
+@ Program@ = /Fblf/Program%.Program@;
+@ Value@ = /Fblf/Program%.Value@;
+% Assign = /Fblf/Program%.Assign;
+% Seq = /Fblf/Program%.Seq;
+% H = /Fblf/Program%.ConstHex;
+% Hex = /Digits%.Hex;
+% ShowProgram = /Fblf/Program/Show%.ShowProgram;
+@ Int@ = /Int/Int%.Int@;
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+<@>@ Instance@ = /Fblf/Module%.Instance@;
+<@>% Instantiate = /Fblf/Module%.Instantiate;
+% FF = /Fblf/Lib/Md5%.Internal.FF;
+
+Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> output) {
+  Addr@ a = I(D|0);
+  Addr@ b = I(D|32);
+  Addr@ c = I(D|64);
+  Addr@ d = I(D|96);
+  Addr@ x = I(D|128);
+  Addr@ r = I(D|160);
+  Addr@ free = I(D|192);
+  Int@ s = I(D|7);
+  Value@ t = H(Hex|D76AA478);
+
+  Instance@<Program@> ffI = Instantiate<Program@>(FF(a, b, c, d, x, s, t, r), free);
+
+  Program@ prgm = Seq([
+    Assign(a, H(Hex|67452301), I(D|32)),
+    Assign(b, H(Hex|EFCDAB89), I(D|32)),
+    Assign(c, H(Hex|98BADCFE), I(D|32)),
+    Assign(d, H(Hex|10325476), I(D|32)),
+    Assign(x, H(Hex|00000080), I(D|32)),
+    ffI.instance
+  ]);
+
+  Unit@ _ := output(Str(Chars|'DUMPING...'));
+  Unit@ _ := output(ShowProgram(Nil<Char@>)(prgm));
+  Unit@ _ := output(Str(Chars|'ALL DONE'));
+  !(True);
+};
+
+Md5;
