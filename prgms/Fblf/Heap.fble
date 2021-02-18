@@ -251,4 +251,4 @@ AssignBits = (Ptr@ ptr, List@<Bit@> bits, Int@ n) {
   };
 };
 
-@(Heap@, Ptr@, Heap, HeapFromBits, HeapFromBitStr, HeapFromHexStr, HeapFromPtr, EqualsBits, Equals, AssignBits, Assign, GetAllBits);
+@(Heap@, Ptr@, Heap, HeapFromBits, HeapFromBitStr, HeapFromHexStr, HeapFromPtr, EqualsBits, Equals, AssignBits, Assign, GetAllBits, GetBits);

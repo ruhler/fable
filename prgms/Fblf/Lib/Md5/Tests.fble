@@ -2,10 +2,12 @@
 
 % Chars = /Char%.Chars;
 
+@ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
 % Hex = /Digits%.Hex;
 
 @ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
 % I = /Int/Int/Lit%.I;
 % D = /Int/Int/Lit%.D;
 
@@ -49,6 +51,8 @@
 % Heap = /Fblf/Heap%.Heap;
 % HeapFromHexStr = /Fblf/Heap%.HeapFromHexStr;
 % HeapFromPtr = /Fblf/Heap%.HeapFromPtr;
+% HeapFromBits = /Fblf/Heap%.HeapFromBits;
+% GetBits = /Fblf/Heap%.GetBits;
 
 % Exec = /Fblf/Exec%.Exec;
 
@@ -85,8 +89,27 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
     Heap@ heap = Heap(md5I.heap);
     Heap@ got = Exec(prgm, heap);
 
+    # The MD5 hash is the concatenation of the words a, b, c, d, least
+    # significant byte first.
+    List@<Bit@> hash = GetBits(Ptr@(got, Add(a, I(D|24))), I(D|8),
+    GetBits(Ptr@(got, Add(a, I(D|16))), I(D|8),
+    GetBits(Ptr@(got, Add(a, I(D|8))), I(D|8),
+    GetBits(Ptr@(got, Add(a, I(D|0))), I(D|8),
+    GetBits(Ptr@(got, Add(b, I(D|24))), I(D|8),
+    GetBits(Ptr@(got, Add(b, I(D|16))), I(D|8),
+    GetBits(Ptr@(got, Add(b, I(D|8))), I(D|8),
+    GetBits(Ptr@(got, Add(b, I(D|0))), I(D|8),
+    GetBits(Ptr@(got, Add(c, I(D|24))), I(D|8),
+    GetBits(Ptr@(got, Add(c, I(D|16))), I(D|8),
+    GetBits(Ptr@(got, Add(c, I(D|8))), I(D|8),
+    GetBits(Ptr@(got, Add(c, I(D|0))), I(D|8),
+    GetBits(Ptr@(got, Add(d, I(D|24))), I(D|8),
+    GetBits(Ptr@(got, Add(d, I(D|16))), I(D|8),
+    GetBits(Ptr@(got, Add(d, I(D|8))), I(D|8),
+    GetBits(Ptr@(got, Add(d, I(D|0))), I(D|8), Nil<Bit@>))))))))))))))));
+
     Heap@ wnt_ = HeapFromHexStr(wnt);
-    Heap@ got_ = HeapFromPtr(Ptr@(got, I(D|0)), I(D|128));
+    Heap@ got_ = HeapFromBits(hash);
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   }));
 };
@@ -167,6 +190,7 @@ Test@ Md5Tests = TestSuite(Chars|Md5, [
 ]);
 
 # TODO: Include Md5Tests once they are fast enough to run.
+#Test@ Tests = Md5Tests;
 Test@ Tests = InternalTests;
 
 Unit@! Bench = !({
