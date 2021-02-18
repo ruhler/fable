@@ -190,8 +190,8 @@ Test@ Md5Tests = TestSuite(Chars|Md5, [
 ]);
 
 # TODO: Include Md5Tests once they are fast enough to run.
-#Test@ Tests = Md5Tests;
-Test@ Tests = InternalTests;
+Test@ Tests = Md5Tests;
+#Test@ Tests = InternalTests;
 
 Unit@! Bench = !({
   (List@<Hex@>) { List@<Value@>; } Bytes = (List@<Hex@> hl) {

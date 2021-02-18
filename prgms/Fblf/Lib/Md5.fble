@@ -413,21 +413,21 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
   PaddedMd5@ padded <- InstM<PaddedMd5@, Md5@>(PaddedMd5(a, b, c, d, byte));
 
-  # Count of the number of bytes of input that have been processed.
-  Addr64@ length <- AllocM<Md5@>(I(D|64));
+  # Count of the number of bits of input that have been processed.
+  Addr64@ length <- AllocM<Md5@>(I(D|67));
 
   # While padding, keeps track of how many bytes have been added to the final
   # block so far.
   Addr@ padding <- AllocM<Md5@>(I(D|6));
 
   Program@ reset = Seq([
-    Assign(length, H(Hex|0000000000000000), I(D|64)),
+    Assign(length, H(Hex|00000000000000000), I(D|67)),
     padded.reset
   ]);
 
   Program@ feed = Seq([
     padded.feed,
-    IncP(I(D|64), length)
+    IncP(I(D|64), length) # Increment by one bytes worth.
   ]);
 
   Program@ finish = Seq([
@@ -446,15 +446,15 @@ Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
       IncP(I(D|6), padding)
     ])),
 
-    # Feed length as next 8 bytes, least significant byte first.
-    Assign(byte, Ref(Add(length, I(D|56))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|48))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|40))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|32))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|24))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|16))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|8))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|0))), I(D|8)), padded.feed
+    # Feed length (in bits) as next 8 bytes, least significant byte first.
+    Assign(byte, Ref(Add(length, I(D|59))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|51))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|43))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|35))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|27))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|19))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|11))), I(D|8)), padded.feed,
+    Assign(byte, Ref(Add(length, I(D|3))), I(D|8)), padded.feed
   ]);
 
   PureM<Md5@>(Md5@(reset, feed, finish));
@@ -465,4 +465,3 @@ Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 % Internal = @(FF);
 
 @(Md5@, Md5, Internal);
-
