@@ -2,12 +2,9 @@
 
 % Chars = /Char%.Chars;
 
-@ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
 % Hex = /Digits%.Hex;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
 % I = /Int/Int/Lit%.I;
 % D = /Int/Int/Lit%.D;
 
@@ -23,6 +20,7 @@
 <@>@ CharLit@ = /String%.CharLit@;
 
 @ Test@ = /Test%.Test@;
+@ TestResult@ = /Test%.TestResult@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
@@ -37,22 +35,18 @@
 % ConstHex = /Fblf/Program%.ConstHex;
 % Seq = /Fblf/Program%.Seq;
 % SeqL = /Fblf/Program%.SeqL;
-% H = /Fblf/Program%.ConstHex;
 
 <@>@ Instance@ = /Fblf/Module%.Instance@;
 <@>% Instantiate = /Fblf/Module%.Instantiate;
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5 = /Fblf/Lib/Md5%.Md5;
-% FF = /Fblf/Lib/Md5%.Internal.FF;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
 @ Ptr@ = /Fblf/Heap%.Ptr@;
 % Heap = /Fblf/Heap%.Heap;
 % HeapFromHexStr = /Fblf/Heap%.HeapFromHexStr;
 % HeapFromPtr = /Fblf/Heap%.HeapFromPtr;
-% HeapFromBits = /Fblf/Heap%.HeapFromBits;
-% GetBits = /Fblf/Heap%.GetBits;
 
 % Exec = /Fblf/Exec%.Exec;
 
@@ -69,19 +63,16 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
   };
 
   Test(name, !({
-    Addr@ a = I(D|0);
-    Addr@ b = I(D|32);
-    Addr@ c = I(D|64);
-    Addr@ d = I(D|96);
-    Addr@ byte = I(D|128);
+    Addr@ input = I(D|0);
+    Addr@ hash = I(D|8);
     Addr@ free = I(D|136);
 
-    Instance@<Md5@> md5I = Instantiate<Md5@>(Md5(a, b, c, d, byte), free);
+    Instance@<Md5@> md5I = Instantiate<Md5@>(Md5(input, hash), free);
     Md5@ md5 = md5I.instance;
 
     Program@ feed = SeqL(Map<Value@, Program@>(
       Bytes(List<Hex@>(bytes)), (Value@ b) {
-        Seq([Assign(byte, b, I(D|8)), md5.feed]);
+        Seq([Assign(input, b, I(D|8)), md5.feed]);
     }));
 
     Program@ prgm = Seq([md5.reset, feed, md5.finish]);
@@ -89,99 +80,50 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
     Heap@ heap = Heap(md5I.heap);
     Heap@ got = Exec(prgm, heap);
 
-    # The MD5 hash is the concatenation of the words a, b, c, d, least
-    # significant byte first.
-    List@<Bit@> hash = GetBits(Ptr@(got, Add(a, I(D|24))), I(D|8),
-    GetBits(Ptr@(got, Add(a, I(D|16))), I(D|8),
-    GetBits(Ptr@(got, Add(a, I(D|8))), I(D|8),
-    GetBits(Ptr@(got, Add(a, I(D|0))), I(D|8),
-    GetBits(Ptr@(got, Add(b, I(D|24))), I(D|8),
-    GetBits(Ptr@(got, Add(b, I(D|16))), I(D|8),
-    GetBits(Ptr@(got, Add(b, I(D|8))), I(D|8),
-    GetBits(Ptr@(got, Add(b, I(D|0))), I(D|8),
-    GetBits(Ptr@(got, Add(c, I(D|24))), I(D|8),
-    GetBits(Ptr@(got, Add(c, I(D|16))), I(D|8),
-    GetBits(Ptr@(got, Add(c, I(D|8))), I(D|8),
-    GetBits(Ptr@(got, Add(c, I(D|0))), I(D|8),
-    GetBits(Ptr@(got, Add(d, I(D|24))), I(D|8),
-    GetBits(Ptr@(got, Add(d, I(D|16))), I(D|8),
-    GetBits(Ptr@(got, Add(d, I(D|8))), I(D|8),
-    GetBits(Ptr@(got, Add(d, I(D|0))), I(D|8), Nil<Bit@>))))))))))))))));
-
     Heap@ wnt_ = HeapFromHexStr(wnt);
-    Heap@ got_ = HeapFromBits(hash);
+    Heap@ got_ = HeapFromPtr(Ptr@(got, hash), I(D|128));
     AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
   }));
 };
 
-Test@ InternalTests = TestSuite(Chars|'Md5 Internal', [
-  Test(Chars|FF, !({
-    Addr@ a = I(D|0);
-    Addr@ b = I(D|32);
-    Addr@ c = I(D|64);
-    Addr@ d = I(D|96);
-    Addr@ x = I(D|128);
-    Addr@ r = I(D|160);
-    Addr@ free = I(D|192);
-    Int@ s = I(D|7);
-    Value@ t = H(Hex|D76AA478);
-
-    Instance@<Program@> ffI = Instantiate<Program@>(FF(a, b, c, d, x, s, t, r), free);
-
-    Program@ prgm = Seq([
-      Assign(a, H(Hex|67452301), I(D|32)),
-      Assign(b, H(Hex|EFCDAB89), I(D|32)),
-      Assign(c, H(Hex|98BADCFE), I(D|32)),
-      Assign(d, H(Hex|10325476), I(D|32)),
-      Assign(x, H(Hex|00000080), I(D|32)),
-      ffI.instance
-    ]);
-
-    Heap@ heap = Heap(ffI.heap);
-    Heap@ got = Exec(prgm, heap);
-
-    Heap@ wnt_ = HeapFromHexStr(Hex|A5202774);
-    Heap@ got_ = HeapFromPtr(Ptr@(got, r), I(D|32));
-    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
-  }))
-]);
-
-Test@ Md5Tests = TestSuite(Chars|Md5, [
-  TestStr(
-    Chars|empty,
-    Hex|D41D8CD98F00B204E9800998ECF8427E,
-    Empty<Hex@>),
-
-  # "a"
-  TestStr(
-    Chars|a,
-    Hex|0CC175B9C0F1B6A831C399E269772661,
-    Hex|61),
-
-  # "abc"
-  TestStr(
-    Chars|abc,
-    Hex|900150983CD24FB0D6963F7D28E17F72,
-    Hex|616263),
-
-  # "message digest"
-  TestStr(
-    Chars|message,
-    Hex|F96B697D7CB7938D525A2F31AAF161D0,
-    Hex|6D65737361676520646967657374),
-
-  # "abcdefghijklmnopqrstuvwxyz"
-  TestStr(
-    Chars|a_to_z,
-    Hex|C3FCD3D76192E4007DFB496CCA67E13B,
-    Hex|6162636465666768696A6B6C6D6E6F707172737475767778797A),
-
-  # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
-  TestStr(
-    Chars|A_to_9,
-    Hex|D174AB98D277D9F5A5611C2C9F419D9F,
-    Hex|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
-
+Test@ Tests = TestSuite(Chars|Md5, [
+# Unfortunately it takes too long to run all of these tests.
+  
+#  TestStr(
+#    Chars|empty,
+#    Hex|D41D8CD98F00B204E9800998ECF8427E,
+#    Empty<Hex@>),
+#
+#  # "a"
+#  TestStr(
+#    Chars|a,
+#    Hex|0CC175B9C0F1B6A831C399E269772661,
+#    Hex|61),
+#
+#  # "abc"
+#  TestStr(
+#    Chars|abc,
+#    Hex|900150983CD24FB0D6963F7D28E17F72,
+#    Hex|616263),
+#
+#  # "message digest"
+#  TestStr(
+#    Chars|message,
+#    Hex|F96B697D7CB7938D525A2F31AAF161D0,
+#    Hex|6D65737361676520646967657374),
+#
+#  # "abcdefghijklmnopqrstuvwxyz"
+#  TestStr(
+#    Chars|a_to_z,
+#    Hex|C3FCD3D76192E4007DFB496CCA67E13B,
+#    Hex|6162636465666768696A6B6C6D6E6F707172737475767778797A),
+#
+#  # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
+#  TestStr(
+#    Chars|A_to_9,
+#    Hex|D174AB98D277D9F5A5611C2C9F419D9F,
+#    Hex|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
+#
   # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
   TestStr(
     Chars|1_to_0,
@@ -189,43 +131,13 @@ Test@ Md5Tests = TestSuite(Chars|Md5, [
     Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);
 
-# TODO: Include Md5Tests once they are fast enough to run.
-Test@ Tests = Md5Tests;
-#Test@ Tests = InternalTests;
-
-Unit@! Bench = !({
-  (List@<Hex@>) { List@<Value@>; } Bytes = (List@<Hex@> hl) {
-    hl.?(
-      cons: {
-        Cons<Value@>(
-          ConstHex([hl.cons.head, hl.cons.tail.cons.head]),
-          Bytes(hl.cons.tail.cons.tail));
-      },
-      nil: Nil<Value@>);
-  };
-
-  Addr@ a = I(D|0);
-  Addr@ b = I(D|32);
-  Addr@ c = I(D|64);
-  Addr@ d = I(D|96);
-  Addr@ byte = I(D|128);
-  Addr@ free = I(D|136);
-
-  Instance@<Md5@> md5I = Instantiate<Md5@>(Md5(a, b, c, d, byte), free);
-  Md5@ md5 = md5I.instance;
-
-  Lit@<Hex@> bytes = Hex|6D65737361676520646967657374;
-
-  Program@ feed = SeqL(Map<Value@, Program@>(
-    Bytes(List<Hex@>(bytes)), (Value@ b) {
-      Seq([Assign(byte, b, I(D|8)), md5.feed]);
-  }));
-
-  Program@ prgm = Seq([md5.reset, feed, md5.finish]);
-
-  Heap@ heap = Heap(md5I.heap);
-  Heap@ _ = Exec(prgm, heap);
-  Unit;
-});
+Unit@! Bench = {
+  TestResult@ _ := TestStr(
+    Chars|1_to_0,
+    Hex|57EDF4A22BE3C955AC49DA2E2107B67A,
+    Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
+    .case.test;
+  !(Unit);
+};
 
 @(Tests, Bench);

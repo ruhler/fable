@@ -388,15 +388,16 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 # To use the Md5 compute module:
 # 1. Run the 'reset' program
 # 2. For each byte of the input in order, 
-#   Set the 'byte' register to the value of the byte.
+#   Set the 'input' register to the value of the byte.
 #   Run the 'feed' program.
 # 3. Run the 'finish' program.
 #
-# The result of the Md5 computation will be in the 'abcd' register.
-# The module can be reused for multiple Md5 computations by rerunning the
-# above instructions for each computation.
+# The result of the Md5 computation will be stored at the given output hash
+# address as a sequence of 128 bits in order of the sequence of hex digits
+# typically used to display an md5 hash. The module can be reused for multiple
+# Md5 computations by rerunning the above instructions for each computation.
 #
-# Note that the 'finish' program may modified the 'byte' register in
+# Note that the 'finish' program may modified the 'input' register in
 # unspecified ways.
 @ Md5@ = *(Program@ reset, Program@ feed, Program@ finish);
 
@@ -404,16 +405,19 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 #   The Md5 computation.
 #
 # Inputs:
-#   a - The address of the 'A' value of the computed Md5.
-#   b - The address of the 'B' value of the computed Md5.
-#   c - The address of the 'C' value of the computed Md5.
-#   d - The address of the 'D' value of the computed Md5.
-#   byte - The address of the input byte passed to the feed program.
-(Addr32@, Addr32@, Addr32@, Addr32@, Addr8@) { Module@<Md5@>; }
-Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
-  PaddedMd5@ padded <- InstM<PaddedMd5@, Md5@>(PaddedMd5(a, b, c, d, byte));
+#   input - The address of the 8-bit input byte passed to the feed program.
+#   hash - The address to store the 128 bit computed Md5 hash.
+(Addr8@, Addr@) { Module@<Md5@>; }
+Md5 = (Addr8@ input, Addr@ hash) {
+  Addr32@ a <- AllocM<Md5@>(I(D|32));
+  Addr32@ b <- AllocM<Md5@>(I(D|32));
+  Addr32@ c <- AllocM<Md5@>(I(D|32));
+  Addr32@ d <- AllocM<Md5@>(I(D|32));
+
+  PaddedMd5@ padded <- InstM<PaddedMd5@, Md5@>(PaddedMd5(a, b, c, d, input));
 
   # Count of the number of bits of input that have been processed.
+  # TODO: Why store 67 bits. Isn't 64 bits enough?
   Addr64@ length <- AllocM<Md5@>(I(D|67));
 
   # While padding, keeps track of how many bytes have been added to the final
@@ -435,33 +439,49 @@ Md5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
     Assign(padding, Ref(Add(length, I(D|58))), I(D|6)),
 
     # Feed byte 0x80
-    Assign(byte, H(Hex|80), I(D|8)),
+    Assign(input, H(Hex|80), I(D|8)),
     padded.feed,
     IncP(I(D|6), padding),
 
     # Feed byte 0x00 until 8 bytes shy of end of block.
-    Assign(byte, H(Hex|00), I(D|8)),
+    Assign(input, H(Hex|00), I(D|8)),
     While(Ne(Ref(padding), Const(B|111000), I(D|6)), Seq([
       padded.feed,
       IncP(I(D|6), padding)
     ])),
 
     # Feed length (in bits) as next 8 bytes, least significant byte first.
-    Assign(byte, Ref(Add(length, I(D|59))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|51))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|43))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|35))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|27))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|19))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|11))), I(D|8)), padded.feed,
-    Assign(byte, Ref(Add(length, I(D|3))), I(D|8)), padded.feed
+    Assign(input, Ref(Add(length, I(D|59))), I(D|8)), padded.feed,
+    Assign(input, Ref(Add(length, I(D|51))), I(D|8)), padded.feed,
+    Assign(input, Ref(Add(length, I(D|43))), I(D|8)), padded.feed,
+    Assign(input, Ref(Add(length, I(D|35))), I(D|8)), padded.feed,
+    Assign(input, Ref(Add(length, I(D|27))), I(D|8)), padded.feed,
+    Assign(input, Ref(Add(length, I(D|19))), I(D|8)), padded.feed,
+    Assign(input, Ref(Add(length, I(D|11))), I(D|8)), padded.feed,
+    Assign(input, Ref(Add(length, I(D|3))), I(D|8)), padded.feed,
+
+    # Extract the hash from a, b, c, d.
+    # Note that the hash is output in order ABCD, least significant byte
+    # first.
+    Assign(Add(hash, I(D|0)),   Ref(Add(a, I(D|24))), I(D|8)),
+    Assign(Add(hash, I(D|8)),   Ref(Add(a, I(D|16))), I(D|8)),
+    Assign(Add(hash, I(D|16)),  Ref(Add(a, I(D|8))),  I(D|8)),
+    Assign(Add(hash, I(D|24)),  Ref(Add(a, I(D|0))),  I(D|8)),
+    Assign(Add(hash, I(D|32)),  Ref(Add(b, I(D|24))), I(D|8)),
+    Assign(Add(hash, I(D|40)),  Ref(Add(b, I(D|16))), I(D|8)),
+    Assign(Add(hash, I(D|48)),  Ref(Add(b, I(D|8))),  I(D|8)),
+    Assign(Add(hash, I(D|56)),  Ref(Add(b, I(D|0))),  I(D|8)),
+    Assign(Add(hash, I(D|64)),  Ref(Add(c, I(D|24))), I(D|8)),
+    Assign(Add(hash, I(D|72)),  Ref(Add(c, I(D|16))), I(D|8)),
+    Assign(Add(hash, I(D|80)),  Ref(Add(c, I(D|8))),  I(D|8)),
+    Assign(Add(hash, I(D|88)),  Ref(Add(c, I(D|0))),  I(D|8)),
+    Assign(Add(hash, I(D|96)),  Ref(Add(d, I(D|24))), I(D|8)),
+    Assign(Add(hash, I(D|104)), Ref(Add(d, I(D|16))), I(D|8)),
+    Assign(Add(hash, I(D|112)), Ref(Add(d, I(D|8))),  I(D|8)),
+    Assign(Add(hash, I(D|120)), Ref(Add(d, I(D|0))),  I(D|8))
   ]);
 
   PureM<Md5@>(Md5@(reset, feed, finish));
 };
 
-# Interal --
-#   Expose internal modules for testing purposes only.
-% Internal = @(FF);
-
-@(Md5@, Md5, Internal);
+@(Md5@, Md5);

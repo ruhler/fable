@@ -1,6 +1,10 @@
 Fblf:
-* Change fblf Md5 interface to take a single 128 bit address to store the md5
-  sum in proper order, rather than 4 separate 32 bit words.
+* In md5, store 64 bits for length instead of 67.
+  Because we never read those three most significant bits.
+* Clean up Heap@ API
+ - Heap@, Addr@, Heap, Read, Write, Equal, Equals, Copy,
+ - Remove Eq@ and Show@. Tests should compare list equality, not heap
+   equality.
 * Test based on raw bits of heap rather than equality of heap?
  - Exposing GetBits seems a bit hackish to me.
 * Come up with a better name for SeqL?
