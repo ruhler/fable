@@ -1,8 +1,8 @@
 Fblf:
-* Clean up Heap@ API
- - Heap@, Addr@, Heap, Read, Write, Equal, Equals, Copy,
- - Remove Eq@ and Show@. Tests should compare list equality, not heap
-   equality.
+* Rewrite tests for /Fblf/Heap%.
+* Try re-implenting /Fblf/Heap%.Write_ to avoid returning unused bits?
+ - By taking however many bits are needed from the list before doing the
+   recursive call, using some form of split or take/drop function?
 * Test based on raw bits of heap rather than equality of heap?
  - Exposing GetBits seems a bit hackish to me.
 * Come up with a better name for SeqL?

@@ -2,38 +2,29 @@
 @ Bool@ = /Bool%.Bool@;
 % Not = /Bool%.Not;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
-
 @ Heap@ = /Fblf/Heap%.Heap@;
-@ Ptr@ = /Fblf/Heap%.Ptr@;
-% HeapFromBits = /Fblf/Heap%.HeapFromBits;
-% Assign = /Fblf/Heap%.Assign;
+% Copy = /Fblf/Heap%.Copy;
+% Write = /Fblf/Heap%.Write;
 % Equals = /Fblf/Heap%.Equals;
-% AssignBits = /Fblf/Heap%.AssignBits;
-% EqualsBits = /Fblf/Heap%.EqualsBits;
+% Equal = /Fblf/Heap%.Equal;
 
 <@,@>% ForEach = /List%.ForEach;
 
 @ Program@ = /Fblf/Program%.Program@;
-@ Value@ = /Fblf/Program%.Value@;
 @ Condition@ = /Fblf/Program%.Condition@;
-
-# Value --
-#   Get the value of a value as a Ptr@.
-(Value@, Heap@) { Ptr@; } Value = (Value@ value, Heap@ heap) {
-  value.?(
-    ref: Ptr@(heap, value.ref),
-    const: Ptr@(HeapFromBits(value.const), I(D|0)));
-};
 
 # Eval --
 #   Evaluate a condition.
 (Condition@, Heap@) { Bool@; } Eval = (Condition@ cond, Heap@ heap) {
-  Ptr@ a = Value(cond.a, heap);
-  Bool@ equals = cond.b.?(
-    ref: Equals(a, Ptr@(heap, cond.b.ref), cond.n),
-    const: EqualsBits(a, cond.b.const, cond.n));
+  Bool@ equals = cond.a.?(
+    ref: cond.b.?(
+      ref: Equal(heap, cond.a.ref, cond.b.ref, cond.n),
+      const: Equals(heap, cond.a.ref, cond.b.const, cond.n)),
+    const: cond.b.?(
+      ref: Equals(heap, cond.b.ref, cond.a.const, cond.n),
+      const: /Maybe%.Nothing<Bool@>.just  # TODO: Implement this case.
+  ));
+
   cond.op.?(eq: equals, ne: Not(equals));
 };
 
@@ -44,10 +35,9 @@
 (Program@, Heap@) { Heap@; } Exec = (Program@ prgm, Heap@ heap) {
   prgm.?(
     assign: {
-      Ptr@ dest = Ptr@(heap, prgm.assign.ref);
       prgm.assign.value.?(
-        ref: Assign(dest, Ptr@(heap, prgm.assign.value.ref), prgm.assign.n),
-        const: AssignBits(dest, prgm.assign.value.const, prgm.assign.n));
+        ref: Copy(heap, prgm.assign.ref, prgm.assign.value.ref, prgm.assign.n),
+        const: Write(heap, prgm.assign.ref, prgm.assign.value.const, prgm.assign.n));
     },
 
     sequence: {

@@ -2,6 +2,7 @@
 
 % Chars = /Char%.Chars;
 
+@ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
 % Hex = /Digits%.Hex;
 
@@ -42,10 +43,8 @@
 % Md5 = /Fblf/Lib/Md5%.Md5;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
-@ Ptr@ = /Fblf/Heap%.Ptr@;
 % Heap = /Fblf/Heap%.Heap;
-% HeapFromHexStr = /Fblf/Heap%.HeapFromHexStr;
-% HeapFromPtr = /Fblf/Heap%.HeapFromPtr;
+% Read = /Fblf/Heap%.Read;
 
 % Exec = /Fblf/Exec%.Exec;
 
@@ -79,9 +78,12 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
     Heap@ heap = Heap(md5I.heap);
     Heap@ got = Exec(prgm, heap);
 
-    Heap@ wnt_ = HeapFromHexStr(wnt);
-    Heap@ got_ = HeapFromPtr(Ptr@(got, hash), I(D|128));
-    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt_, got_);
+    List@<Bit@> wnt_ = /Digits/String%.HexToBits(List<Hex@>(wnt));
+    List@<Bit@> got_ = Read(got, hash, I(D|128));
+    AssertEquals<List@<Bit@>>(
+      /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit),
+      /Digits/Show%.ShowBits,
+      wnt_, got_);
   }));
 };
 

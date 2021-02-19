@@ -1,0 +1,24 @@
+
+@ Bit@ = /Digits%.Bit@;
+@ Hex@ = /Digits%.Hex@;
+% B = /Digits%.Bit;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@>% Concat = /List%.Concat;
+<@,@>% Map = /List%.Map;
+
+# HexToBits --
+#   Convert a string of hex digits to a string of binary digits.
+(List@<Hex@>) { List@<Bit@>; } HexToBits = (List@<Hex@> hex) {
+  Concat<Bit@>(Map<Hex@, List@<Bit@>>(hex, (Hex@ h) {
+    List<Bit@>(h.?(
+        0: B|0000, 1: B|0001, 2: B|0010, 3: B|0011,
+        4: B|0100, 5: B|0101, 6: B|0110, 7: B|0111,
+        8: B|1000, 9: B|1001, A: B|1010, B: B|1011,
+        C: B|1100, D: B|1101, E: B|1110, F: B|1111));
+  }));
+};
+
+@(HexToBits);
+

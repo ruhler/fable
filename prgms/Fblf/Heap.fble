@@ -1,12 +1,15 @@
 
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
+% False = /Bool%.False;
+
+@ Bit@ = /Digits%.Bit@;
+% B = /Digits%.Bit;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % 0 = /Int/Int%.0;
-% Eq = /Int/Int/Eq%.Eq;
 % Le = /Int/Int/Eq%.Le;
 % Ge = /Int/Int/Eq%.Ge;
 % Div = /Int/Int/Div%.Div;
@@ -14,19 +17,14 @@
 % I = /Int/Int/Lit%.I;
 % D = /Int/Int/Lit%.D;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
-
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
-<@>% Concat = /List%.Concat;
-<@,@>% Map = /List%.Map;
-<@>% Length = /List/Length%.Length;
 
-@ Bit@ = /Digits%.Bit@;
-@ Hex@ = /Digits%.Hex@;
-% B = /Digits%.Bit;
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
 
 # Heap@ --
 #   A bit-addressable heap of bits.
@@ -42,213 +40,162 @@
 #   The address of a bit on the heap.
 @ Addr@ = Int@;
 
-# Ptr@ --
-#   A pair of heap and address that identifies a particular sequence of bits.
-@ Ptr@ = *(Heap@ heap, Addr@ addr);
-
-# MkHeap --
-#   Create a heap of n bits initialized from the given list of bits in order.
-#
-# Returns the heap and the list of bits not used for initialization.
-(Int@, List@<Bit@>) { *(Heap@ heap, List@<Bit@> unused); }
-MkHeap = (Int@ n, List@<Bit@> bits) {
-  Le(n, I(D|0)).?(
-    true: @(heap: Heap@(value: B.1), unused: bits),
-    false: Eq(n, I(D|1)).?(
-      true: @(heap: Heap@(value: bits.cons.head), unused: bits.cons.tail),
-      false: {
-        Int@ m = Div(n, I(D|2));
-        % left = MkHeap(m, bits);
-        % right = MkHeap(Sub(n, m), left.unused);
-        @(
-          heap: Heap@(binary: HeapB@(left.heap, m, right.heap)),
-          unused: right.unused);
-      }));
-};
-
 # Heap --
-#   Create a heap of n uninitialized bits.
+#   Create a heap of at least n uninitialized bits.
 (Int@) { Heap@; } Heap = (Int@ n) {
-  # We simulate uninitialized bits using the sequence 0101010101010...
-  List@<Bit@> uninit = Cons<Bit@>(B.0, Cons<Bit@>(B.1, uninit));
-  MkHeap(n, uninit).heap;
+  Le(n, I(D|1)).?(
+    true: Heap@(value: B.1),
+    false: {
+      Int@ m = Div(n, I(D|2));
+      Heap@(binary: HeapB@(Heap(m), m, Heap(Sub(n, m))));
+    });
 };
 
-# HeapFromBits --
-#   Create a preinitialized heap of bits.
-(List@<Bit@>) { Heap@; } HeapFromBits = (List@<Bit@> bits) {
-  Int@ n = Length<Bit@>(bits);
-  MkHeap(n, bits).heap;
-};
-
-# HeapFromBitStr --
-#   Create a preinitialized heap of bits.
-(Lit@<Bit@>) { Heap@; } HeapFromBitStr = (Lit@<Bit@> bits) {
-  HeapFromBits(List<Bit@>(bits));
-};
-
-# HeapFromHexStr --
-(Lit@<Hex@>) { Heap@; } HeapFromHexStr = (Lit@<Hex@> hex) {
-  List@<Hex@> l = List<Hex@>(hex);
-  List@<Bit@> bits = Concat<Bit@>(Map<Hex@, List@<Bit@>>(l, (Hex@ h) {
-    List<Bit@>(h.?(
-      0: B|0000, 1: B|0001, 2: B|0010, 3: B|0011,
-      4: B|0100, 5: B|0101, 6: B|0110, 7: B|0111,
-      8: B|1000, 9: B|1001, A: B|1010, B: B|1011,
-      C: B|1100, D: B|1101, E: B|1110, F: B|1111));
-  }));
-  HeapFromBits(bits);
-};
-
-# GetBits --
-#   Get n bits from the bit heap.
+# Read_ --
+#   Read n bits from the bit heap starting at the given address.
 #
+# Prepends the bits to the given list of bits.
 # Behavior is undefined if there are't enough bits in the heap to get n.
-(Ptr@, Int@, List@<Bit@>) { List@<Bit@>; }
-GetBits = (Ptr@ ptr, Int@ n, List@<Bit@> tail) {
-  ptr.heap.?(
+(Heap@, Addr@, Int@, List@<Bit@>) { List@<Bit@>; }
+Read_ = (Heap@ heap, Addr@ addr, Int@ n, List@<Bit@> tail) {
+  heap.?(
     value: Le(n, 0).?(
       true: tail,
-      false: Cons<Bit@>(ptr.heap.value, tail)),
+      false: Cons<Bit@>(heap.value, tail)),
     binary: {
-      Int@ m = Add(ptr.addr, n);
-      Le(m, ptr.heap.binary.m).?(
-        true: GetBits(Ptr@(ptr.heap.binary.left, ptr.addr), n, tail),
-        false: Ge(ptr.addr, ptr.heap.binary.m).?(
-          true: GetBits(Ptr@(ptr.heap.binary.right,
-              Sub(ptr.addr, ptr.heap.binary.m)), n, tail),
+      Int@ m = Add(addr, n);
+      Le(m, heap.binary.m).?(
+        true: Read_(heap.binary.left, addr, n, tail),
+        false: Ge(addr, heap.binary.m).?(
+          true: Read_(heap.binary.right, Sub(addr, heap.binary.m), n, tail),
           false: {
-            Int@ nl = Sub(ptr.heap.binary.m, ptr.addr);
+            Int@ nl = Sub(heap.binary.m, addr);
             Int@ nr = Sub(n, nl);
-            GetBits(Ptr@(ptr.heap.binary.left, ptr.addr), nl,
-              GetBits(Ptr@(ptr.heap.binary.right, I(D|0)), nr, tail));
+            Read_(heap.binary.left, addr, nl,
+              Read_(heap.binary.right, I(D|0), nr, tail));
           }));
     });
 };
 
-# SetBits --
-#   Set n bits of the bit heap.
+# Read --
+#   Read n bits from the bit heap starting at the given address.
 #
+# Behavior is undefined if there are't enough bits in the heap to get n.
+(Heap@, Addr@, Int@) { List@<Bit@>; }
+Read = (Heap@ heap, Addr@ addr, Int@ n) {
+  Read_(heap, addr, n, Nil<Bit@>);
+};
+
+# Write_ --
+#   Set n bits of the bit heap to the bits from the given value.
+#
+# Returns the updated heap and the list of input bits not yet consumed.
 # Behavior is undefined if there are't enough bits in the heap to set n.
-(Ptr@, Int@, List@<Bit@>) { *(Heap@ heap, List@<Bit@> unused); }
-SetBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
-  ptr.heap.?(
+(Heap@, Addr@, List@<Bit@>, Int@) { *(Heap@ heap, List@<Bit@> unused); }
+Write_ = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
+  heap.?(
     value: Le(n, 0).?(
-      true: @(heap: ptr.heap, unused: bits),
+      true: @(heap: heap, unused: bits),
       false: @(heap: Heap@(value: bits.cons.head), unused: bits.cons.tail)),
     binary: {
-      Int@ m = Add(ptr.addr, n);
-      Le(m, ptr.heap.binary.m).?(
+      Int@ m = Add(addr, n);
+      Le(m, heap.binary.m).?(
         true: {
-          % left = SetBits(Ptr@(ptr.heap.binary.left, ptr.addr), n, bits);
+          % left = Write_(heap.binary.left, addr, bits, n);
           @(heap: Heap@(binary:
-                HeapB@(left.heap, ptr.heap.binary.m, ptr.heap.binary.right)),
+                HeapB@(left.heap, heap.binary.m, heap.binary.right)),
             unused: left.unused);
         },
-        false: Ge(ptr.addr, ptr.heap.binary.m).?(
+        false: Ge(addr, heap.binary.m).?(
           true: {
-            % right = SetBits(Ptr@(ptr.heap.binary.right,
-                Sub(ptr.addr, ptr.heap.binary.m)), n, bits);
+            % right = Write_(heap.binary.right, Sub(addr, heap.binary.m), bits, n);
             @(heap: Heap@(binary:
-                  HeapB@(ptr.heap.binary.left, ptr.heap.binary.m, right.heap)),
+                  HeapB@(heap.binary.left, heap.binary.m, right.heap)),
               unused: right.unused);
           },
           false: {
-            Int@ nl = Sub(ptr.heap.binary.m, ptr.addr);
+            Int@ nl = Sub(heap.binary.m, addr);
             Int@ nr = Sub(n, nl);
-            % left = SetBits(Ptr@(ptr.heap.binary.left, ptr.addr), nl, bits);
-            % right = SetBits(Ptr@(ptr.heap.binary.right, I(D|0)), nr, left.unused);
-            @(heap: Heap@(binary: HeapB@(left.heap, ptr.heap.binary.m, right.heap)),
+            % left = Write_(heap.binary.left, addr, bits, nl);
+            % right = Write_(heap.binary.right, I(D|0), left.unused, nr);
+            @(heap: Heap@(binary: HeapB@(left.heap, heap.binary.m, right.heap)),
               unused: right.unused);
           }));
     });
 };
 
-# EqBits --
-#   Test for n bits worth of equality.
-#
-# Behavior is undefined if there are't enough bits in the heap to set n.
-(Ptr@, Int@, List@<Bit@>) { *(Bool@ equals, List@<Bit@> unused); }
-EqBits = (Ptr@ ptr, Int@ n, List@<Bit@> bits) {
-  ptr.heap.?(
-    value: Le(n, 0).?(
-      true: @(equals: True, unused: bits),
-      false: @(
-        equals: /Digits/Eq%.EqBit(ptr.heap.value, bits.cons.head),
-        unused: bits.cons.tail)),
-    binary: {
-      Int@ m = Add(ptr.addr, n);
-      Le(m, ptr.heap.binary.m).?(
-        true: EqBits(Ptr@(ptr.heap.binary.left, ptr.addr), n, bits),
-        false: Ge(ptr.addr, ptr.heap.binary.m).?(
-          true: EqBits(Ptr@(ptr.heap.binary.right,
-                Sub(ptr.addr, ptr.heap.binary.m)), n, bits),
-          false: {
-            Int@ nl = Sub(ptr.heap.binary.m, ptr.addr);
-            Int@ nr = Sub(n, nl);
-            % left = EqBits(Ptr@(ptr.heap.binary.left, ptr.addr), nl, bits);
-            left.equals.?(
-              true: EqBits(Ptr@(ptr.heap.binary.right, I(D|0)), nr, left.unused),
-              false: left);
-          }));
-    });
-};
-
-# HeapFromPtr --
-#   Create a heap initialized with the bits pointed to by ptr.
-(Ptr@, Int@) { Heap@; } HeapFromPtr = (Ptr@ ptr, Int@ n) {
-  HeapFromBits(GetBits(ptr, n, Nil<Bit@>));
-};
-
-# Equals --
-#   Return true if the n bits referred to by pointers a and b are equal.
-(Ptr@, List@<Bit@>, Int@) { Bool@; } EqualsBits = (Ptr@ a, List@<Bit@> b, Int@ n) {
-  EqBits(a, n, b).equals;
-};
-
-# Equals --
-#   Return true if the n bits referred to by pointers a and b are equal.
-#
-# Behavior is undefined if there aren't n bits in a and b to compare.
-(Ptr@, Ptr@, Int@) { Bool@; } Equals = (Ptr@ a, Ptr@ b, Int@ n) {
-  EqBits(a, n, GetBits(b, n, Nil<Bit@>)).equals;
-};
-
-# AssignBits --
+# Write --
 #   Assign the first n bits at ptr with the value of the given bits.
 #
 # Returns the updated Heap for ptr after the assignment.
 #
 # Behavior is undefined if there aren't n bits to assign from or to.
-(Ptr@, List@<Bit@>, Int@) { Heap@; }
-AssignBits = (Ptr@ ptr, List@<Bit@> bits, Int@ n) {
-  SetBits(ptr, n, bits).heap;
+(Heap@, Addr@, List@<Bit@>, Int@) { Heap@; }
+Write = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
+  Write_(heap, addr, bits, n).heap;
 };
 
-# Assign --
+# Equals_ --
+#   Test for n bits worth of equality.
+#
+# Returns the list of unchecked bits in case of equality.
+# Returns Nothing if the bits aren't equal.
+#
+# Behavior is undefined if there are't enough bits in the heap to set n.
+(Heap@, Addr@, List@<Bit@>, Int@) { Maybe@<List@<Bit@>>; }
+Equals_ = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
+  heap.?(
+    value: Le(n, 0).?(
+      true: Just<List@<Bit@>>(bits),
+      false: /Digits/Eq%.EqBit(heap.value, bits.cons.head).?(
+        true: Just<List@<Bit@>>(bits.cons.tail),
+        false: Nothing<List@<Bit@>>)),
+    binary: {
+      Int@ m = Add(addr, n);
+      Le(m, heap.binary.m).?(
+        true: Equals_(heap.binary.left, addr, bits, n),
+        false: Ge(addr, heap.binary.m).?(
+          true: Equals_(heap.binary.right, Sub(addr, heap.binary.m), bits, n),
+          false: {
+            Int@ nl = Sub(heap.binary.m, addr);
+            Int@ nr = Sub(n, nl);
+            Maybe@<List@<Bit@>> left = Equals_(heap.binary.left, addr, bits, nl);
+            left.?(
+              just: Equals_(heap.binary.right, I(D|0), left.just, nr),
+              nothing: Nothing<List@<Bit@>>);
+          }));
+    });
+};
+
+# Copy --
 #   Assign the first n bits at ptr with the value of the first n bits from val.
 #
-# Returns the updated Heap for ptr after the assignment.
+# Returns the updated Heap after the assignment.
 #
 # Behavior is undefined if there aren't n bits to assign from or to.
-(Ptr@, Ptr@, Int@) { Heap@; } Assign = (Ptr@ ptr, Ptr@ val, Int@ n) {
-  SetBits(ptr, n, GetBits(val, n, Nil<Bit@>)).heap;
+(Heap@, Addr@, Addr@, Int@) { Heap@; }
+Copy = (Heap@ heap, Addr@ dest, Addr@ src, Int@ n) {
+  Write(heap, dest, Read(heap, src, n), n);
 };
 
-# GetAllBits --
-#   Get all of the bits of a heap in order.
+# Equals --
+#   Return true if the n bits at the given address match the first n given
+#   bits.
 #
-# TODO: This doesn't work for an empty heap?
-(Heap@) { List@<Bit@>; } GetAllBits = {
-  (Heap@, List@<Bit@>) { List@<Bit@>; } F = (Heap@ h, List@<Bit@> tail) {
-    h.?(
-      value: Cons<Bit@>(h.value, tail),
-      binary: F(h.binary.left, F(h.binary.right, tail)));
-  };
-
-  (Heap@ h) {
-    F(h, Nil<Bit@>);
-  };
+# Behavior is undefined if there aren't enough bits in the heap or list to
+# compare.
+(Heap@, Addr@, List@<Bit@>, Int@) { Bool@; }
+Equals = (Heap@ heap, Addr@ a, List@<Bit@> b, Int@ n) {
+  Equals_(heap, a, b, n).?(just: True, nothing: False);
 };
 
-@(Heap@, Ptr@, Heap, HeapFromBits, HeapFromBitStr, HeapFromHexStr, HeapFromPtr, EqualsBits, Equals, AssignBits, Assign, GetAllBits, GetBits);
+# Equal --
+#   Return true if the n bits at a and b are the same.
+#
+# Behavior is undefined if there aren't n bits in a and b to compare.
+(Heap@, Addr@, Addr@, Int@) { Bool@; }
+Equal = (Heap@ heap, Addr@ a, Addr@ b, Int@ n) {
+  Equals(heap, a, Read(heap, b, n), n);
+};
+
+@(Heap@, Addr@, Heap, Read, Write, Copy, Equals, Equal);
