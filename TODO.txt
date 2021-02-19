@@ -1,6 +1,4 @@
 Fblf:
-* In md5, store 64 bits for length instead of 67.
-  Because we never read those three most significant bits.
 * Clean up Heap@ API
  - Heap@, Addr@, Heap, Read, Write, Equal, Equals, Copy,
  - Remove Eq@ and Show@. Tests should compare list equality, not heap

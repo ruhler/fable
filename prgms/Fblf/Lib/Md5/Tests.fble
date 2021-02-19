@@ -15,7 +15,6 @@
 <@,@>% Map = /List%.Map;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
-<@,@>% Empty = /Literal%.Empty;
 
 <@>@ CharLit@ = /String%.CharLit@;
 
@@ -92,7 +91,7 @@ Test@ Tests = TestSuite(Chars|Md5, [
 #  TestStr(
 #    Chars|empty,
 #    Hex|D41D8CD98F00B204E9800998ECF8427E,
-#    Empty<Hex@>),
+#    /Literal%.Empty<Hex@>),
 #
 #  # "a"
 #  TestStr(
