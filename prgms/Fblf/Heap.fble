@@ -20,6 +20,7 @@
 <@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
+<@>% Drop = /List/Length%.Drop;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
@@ -86,44 +87,6 @@ Read = (Heap@ heap, Addr@ addr, Int@ n) {
   Read_(heap, addr, n, Nil<Bit@>);
 };
 
-# Write_ --
-#   Set n bits of the bit heap to the bits from the given value.
-#
-# Returns the updated heap and the list of input bits not yet consumed.
-# Behavior is undefined if there are't enough bits in the heap to set n.
-(Heap@, Addr@, List@<Bit@>, Int@) { *(Heap@ heap, List@<Bit@> unused); }
-Write_ = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
-  heap.?(
-    value: Le(n, 0).?(
-      true: @(heap: heap, unused: bits),
-      false: @(heap: Heap@(value: bits.cons.head), unused: bits.cons.tail)),
-    binary: {
-      Int@ m = Add(addr, n);
-      Le(m, heap.binary.m).?(
-        true: {
-          % left = Write_(heap.binary.left, addr, bits, n);
-          @(heap: Heap@(binary:
-                HeapB@(left.heap, heap.binary.m, heap.binary.right)),
-            unused: left.unused);
-        },
-        false: Ge(addr, heap.binary.m).?(
-          true: {
-            % right = Write_(heap.binary.right, Sub(addr, heap.binary.m), bits, n);
-            @(heap: Heap@(binary:
-                  HeapB@(heap.binary.left, heap.binary.m, right.heap)),
-              unused: right.unused);
-          },
-          false: {
-            Int@ nl = Sub(heap.binary.m, addr);
-            Int@ nr = Sub(n, nl);
-            % left = Write_(heap.binary.left, addr, bits, nl);
-            % right = Write_(heap.binary.right, I(D|0), left.unused, nr);
-            @(heap: Heap@(binary: HeapB@(left.heap, heap.binary.m, right.heap)),
-              unused: right.unused);
-          }));
-    });
-};
-
 # Write --
 #   Assign the first n bits at ptr with the value of the given bits.
 #
@@ -132,7 +95,30 @@ Write_ = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
 # Behavior is undefined if there aren't n bits to assign from or to.
 (Heap@, Addr@, List@<Bit@>, Int@) { Heap@; }
 Write = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
-  Write_(heap, addr, bits, n).heap;
+  heap.?(
+    value: Le(n, 0).?(
+      true: heap,
+      false: Heap@(value: bits.cons.head)),
+    binary: {
+      Int@ m = Add(addr, n);
+      Le(m, heap.binary.m).?(
+        true: {
+          Heap@ left = Write(heap.binary.left, addr, bits, n);
+          Heap@(binary: HeapB@(left, heap.binary.m, heap.binary.right));
+        },
+        false: Ge(addr, heap.binary.m).?(
+          true: {
+            Heap@ right = Write(heap.binary.right, Sub(addr, heap.binary.m), bits, n);
+            Heap@(binary: HeapB@(heap.binary.left, heap.binary.m, right));
+          },
+          false: {
+            Int@ nl = Sub(heap.binary.m, addr);
+            Int@ nr = Sub(n, nl);
+            Heap@ left = Write(heap.binary.left, addr, bits, nl);
+            Heap@ right = Write(heap.binary.right, I(D|0), Drop<Bit@>(nl, bits), nr);
+            Heap@(binary: HeapB@(left, heap.binary.m, right));
+          }));
+    });
 };
 
 # Equals_ --
