@@ -92,164 +92,102 @@ Test@ Tests = TestSuite(Chars|Fblf, [
     PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001011011111011)));
   }),
 
-  Test(Chars|IncM, !({
-    Addr@ a = I(D|0);
-    Addr@ free = I(D|5);
+  FblfTest(Chars|IncM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|5));
+    Program@ inc <- InstM<Program@, FblfTest@>(IncM(I(D|5), a));
+    Program@ test = Seq([Assign(a, Const(B|10011), I(D|5)), inc]);
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|10100)));
+  }),
 
-    Instance@<Program@> inc = Instantiate<Program@>(IncM(I(D|5), a), free);
+  FblfTest(Chars|'IncM Overflow', {
+    Addr@ a <- AllocM<FblfTest@>(I(D|5));
+    Program@ inc <- InstM<Program@, FblfTest@>(IncM(I(D|5), a));
+    Program@ test = Seq([Assign(a, Const(B|11111), I(D|5)), inc]);
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|00000)));
+  }),
 
-    Program@ prgm = Seq([Assign(a, Const(B|10011), I(D|5)), inc.instance]);
+  FblfTest(Chars|DecM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|5));
+    Program@ dec <- InstM<Program@, FblfTest@>(DecM(I(D|5), a));
+    Program@ test = Seq([Assign(a, Const(B|10100), I(D|5)), dec]);
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|10011)));
+  }),
 
-    Heap@ heap = Heap(inc.heap);
-    Heap@ got = Exec(prgm, heap);
+  FblfTest(Chars|AndM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|4));
+    Addr@ b <- AllocM<FblfTest@>(I(D|4));
+    Addr@ z <- AllocM<FblfTest@>(I(D|4));
+    Program@ and <- InstM<Program@, FblfTest@>(AndM(I(D|4), a, b, z));
 
-    Bits@ wnt_ = List<Bit@>(B|10100);
-    Bits@ got_ = Read(got, I(D|0), I(D|5));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
-
-  Test(Chars|'IncM Overflow', !({
-    Addr@ a = I(D|0);
-    Addr@ free = I(D|5);
-
-    Instance@<Program@> inc = Instantiate<Program@>(IncM(I(D|5), a), free);
-
-    Program@ prgm = Seq([Assign(a, Const(B|11111), I(D|5)), inc.instance]);
-
-    Heap@ heap = Heap(inc.heap);
-    Heap@ got = Exec(prgm, heap);
-
-    Bits@ wnt_ = List<Bit@>(B|00000);
-    Bits@ got_ = Read(got, I(D|0), I(D|5));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
-
-  Test(Chars|DecM, !({
-    Addr@ a = I(D|0);
-    Addr@ free = I(D|5);
-
-    Instance@<Program@> dec = Instantiate<Program@>(DecM(I(D|5), a), free);
-
-    Program@ prgm = Seq([Assign(a, Const(B|10100), I(D|5)), dec.instance]);
-
-    Heap@ heap = Heap(dec.heap);
-    Heap@ got = Exec(prgm, heap);
-
-    Bits@ wnt_ = List<Bit@>(B|10011);
-    Bits@ got_ = Read(got, I(D|0), I(D|5));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
-
-  Test(Chars|AndM, !({
-    Addr@ a = I(D|0);
-    Addr@ b = I(D|4);
-    Addr@ z = I(D|8);
-    Addr@ free = I(D|12);
-
-    Instance@<Program@> and = Instantiate<Program@>(AndM(I(D|4), a, b, z), free);
-
-    Program@ prgm = Seq([
+    Program@ test = Seq([
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
-      and.instance
+      and
     ]);
 
-    Heap@ heap = Heap(and.heap);
-    Heap@ got = Exec(prgm, heap);
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001101100010)));
+  }),
 
-    Bits@ wnt_ = List<Bit@>(B|001101100010);
-    Bits@ got_ = Read(got, I(D|0), I(D|12));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
+  FblfTest(Chars|OrM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|4));
+    Addr@ b <- AllocM<FblfTest@>(I(D|4));
+    Addr@ z <- AllocM<FblfTest@>(I(D|4));
+    Program@ or <- InstM<Program@, FblfTest@>(OrM(I(D|4), a, b, z));
 
-  Test(Chars|OrM, !({
-    Addr@ a = I(D|0);
-    Addr@ b = I(D|4);
-    Addr@ z = I(D|8);
-    Addr@ free = I(D|12);
-
-    Instance@<Program@> or = Instantiate<Program@>(OrM(I(D|4), a, b, z), free);
-
-    Program@ prgm = Seq([
+    Program@ test = Seq([
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
-      or.instance
+      or
     ]);
 
-    Heap@ heap = Heap(or.heap);
-    Heap@ got = Exec(prgm, heap);
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001101100111)));
+  }),
 
-    Bits@ wnt_ = List<Bit@>(B|001101100111);
-    Bits@ got_ = Read(got, I(D|0), I(D|12));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
+  FblfTest(Chars|XorM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|4));
+    Addr@ b <- AllocM<FblfTest@>(I(D|4));
+    Addr@ z <- AllocM<FblfTest@>(I(D|4));
+    Program@ xor <- InstM<Program@, FblfTest@>(XorM(I(D|4), a, b, z));
 
-  Test(Chars|XorM, !({
-    Addr@ a = I(D|0);
-    Addr@ b = I(D|4);
-    Addr@ z = I(D|8);
-    Addr@ free = I(D|12);
-
-    Instance@<Program@> xor = Instantiate<Program@>(XorM(I(D|4), a, b, z), free);
-
-    Program@ prgm = Seq([
+    Program@ test = Seq([
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
-      xor.instance
+      xor
     ]);
 
-    Heap@ heap = Heap(xor.heap);
-    Heap@ got = Exec(prgm, heap);
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001101100101)));
+  }),
 
-    Bits@ wnt_ = List<Bit@>(B|001101100101);
-    Bits@ got_ = Read(got, I(D|0), I(D|12));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
+  FblfTest(Chars|NotM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|4));
+    Addr@ z <- AllocM<FblfTest@>(I(D|4));
+    Program@ not <- InstM<Program@, FblfTest@>(NotM(I(D|4), a, z));
 
-  Test(Chars|NotM, !({
-    Addr@ a = I(D|0);
-    Addr@ z = I(D|4);
-    Addr@ free = I(D|8);
-
-    Instance@<Program@> not = Instantiate<Program@>(NotM(I(D|4), a, z), free);
-
-    Program@ prgm = Seq([
+    Program@ test = Seq([
       Assign(a, Const(B|0011), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
-      not.instance
+      not
     ]);
 
-    Heap@ heap = Heap(not.heap);
-    Heap@ got = Exec(prgm, heap);
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|00111100)));
+  }),
 
-    Bits@ wnt_ = List<Bit@>(B|00111100);
-    Bits@ got_ = Read(got, I(D|0), I(D|8));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
+  FblfTest(Chars|ClsM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|5));
+    Addr@ z <- AllocM<FblfTest@>(I(D|5));
+    Program@ cls <- InstM<Program@, FblfTest@>(ClsM(I(D|5), I(D|3), a, z));
 
-  Test(Chars|ClsM, !({
-    Addr@ a = I(D|0);
-    Addr@ z = I(D|5);
-    Addr@ free = I(D|10);
-
-    Instance@<Program@> cls = Instantiate<Program@>(ClsM(I(D|5), I(D|3), a, z), free);
-
-    Program@ prgm = Seq([
+    Program@ test = Seq([
       Assign(a, Const(B|10011), I(D|5)),
       Assign(z, Const(B|00000), I(D|5)),
-      cls.instance
+      cls
     ]);
 
-    Heap@ heap = Heap(cls.heap);
-    Heap@ got = Exec(prgm, heap);
-
-    Bits@ wnt_ = List<Bit@>(B|1001111100);
-    Bits@ got_ = Read(got, I(D|0), I(D|10));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|1001111100)));
+  }),
 
   /Fblf/Lib/Md5/Tests%.Tests
 ]);
