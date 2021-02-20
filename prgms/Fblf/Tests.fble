@@ -1,18 +1,9 @@
 
+@ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
 @ Bit@ = /Digits%.Bit@;
 % B = /Digits%.Bit;
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
-
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
-<@>% AssertEquals = /Test%.AssertEquals;
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
@@ -21,7 +12,24 @@
 % Seq = /Fblf/Program%.Seq;
 
 <@>@ Instance@ = /Fblf/Module%.Instance@;
+<@>@ Module@ = /Fblf/Module%.Module@;
+<@>% AllocM = /Fblf/Module%.AllocM;
+<@>% PureM = /Fblf/Module%.PureM;
+<@,@>% InstM = /Fblf/Module%.InstM;
 <@>% Instantiate = /Fblf/Module%.Instantiate;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
 
 % AddM = /Fblf/Lib/Add%.AddM;
 % IncM = /Fblf/Lib/Add%.IncM;
@@ -42,33 +50,47 @@
 /Eq%.Eq@<Bits@> EqBits = /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit);
 /Show%.Show@<Bits@> ShowBits = /Digits/Show%.ShowBits;
 
+# FblfTest@ --
+#   An fblf test.
+#
+# The test runs the program and asserts that the n bits of result match the
+# expected bits, where n is the number of given expected bits.
+@ FblfTest@ = *(Program@ program, Addr@ result, Bits@ expected);
+
+(Lit@<Char@>, Module@<FblfTest@>) { Test@; }
+FblfTest = (Lit@<Char@> name, Module@<FblfTest@> m) {
+  Test(name, !({
+    Instance@<FblfTest@> i = Instantiate<FblfTest@>(m, I(D|0));
+    FblfTest@ mI = i.instance;
+    Heap@ heap = Exec(mI.program, Heap(i.heap));
+
+    Bits@ wnt = mI.expected;
+    Bits@ got = Read(heap, mI.result, /List/Length%.Length<Bit@>(wnt));
+    AssertEquals<Bits@>(EqBits, ShowBits, wnt, got);
+  }));
+};
+
 Test@ Tests = TestSuite(Chars|Fblf, [
   /Fblf/Heap/Tests%.Tests,
 
-  Test(Chars|AddM, !({
-    Addr@ a = I(D|0);
-    Addr@ b = I(D|5);
-    Addr@ z = I(D|10);
-    Addr@ free = I(D|15);
+  FblfTest(Chars|AddM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|5));
+    Addr@ b <- AllocM<FblfTest@>(I(D|5));
+    Addr@ z <- AllocM<FblfTest@>(I(D|5));
 
-    Instance@<Program@> add = Instantiate<Program@>(AddM(I(D|4), a, b, z), free);
+    Program@ add <- InstM<Program@, FblfTest@>(AddM(I(D|4), a, b, z));
 
     # Note: we put an extra '1' bit after each value as a regression test for
     # a bug we had where it was reading one bit off the end of the values.
-    Program@ prgm = Seq([
+    Program@ test = Seq([
       Assign(a, Const(B|00101), I(D|5)),
       Assign(b, Const(B|10111), I(D|5)),
       Assign(z, Const(B|11111), I(D|5)),
-      add.instance
+      add
     ]);
 
-    Heap@ heap = Heap(add.heap);
-    Heap@ got = Exec(prgm, heap);
-
-    Bits@ wnt_ = List<Bit@>(B|001011011111011);
-    Bits@ got_ = Read(got, I(D|0), I(D|15));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt_, got_);
-  })),
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001011011111011)));
+  }),
 
   Test(Chars|IncM, !({
     Addr@ a = I(D|0);
