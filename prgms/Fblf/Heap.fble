@@ -22,11 +22,6 @@
 <@>% Cons = /List%.Cons;
 <@>% Drop = /List/Length%.Drop;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
-
-
 # Heap@ --
 #   A bit-addressable heap of bits.
 #
@@ -121,34 +116,32 @@ Write = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
     });
 };
 
-# Equals_ --
-#   Test for n bits worth of equality.
+# Equals --
+#   Return true if the n bits at the given address match the first n given
+#   bits.
 #
-# Returns the list of unchecked bits in case of equality.
-# Returns Nothing if the bits aren't equal.
-#
-# Behavior is undefined if there are't enough bits in the heap to set n.
-(Heap@, Addr@, List@<Bit@>, Int@) { Maybe@<List@<Bit@>>; }
-Equals_ = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
+# Behavior is undefined if there aren't enough bits in the heap or list to
+# compare.
+(Heap@, Addr@, List@<Bit@>, Int@) { Bool@; }
+Equals = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
   heap.?(
     value: Le(n, 0).?(
-      true: Just<List@<Bit@>>(bits),
-      false: /Digits/Eq%.EqBit(heap.value, bits.cons.head).?(
-        true: Just<List@<Bit@>>(bits.cons.tail),
-        false: Nothing<List@<Bit@>>)),
+      true: True,
+      false: /Digits/Eq%.EqBit(heap.value, bits.cons.head)),
     binary: {
       Int@ m = Add(addr, n);
       Le(m, heap.binary.m).?(
-        true: Equals_(heap.binary.left, addr, bits, n),
+        true: Equals(heap.binary.left, addr, bits, n),
         false: Ge(addr, heap.binary.m).?(
-          true: Equals_(heap.binary.right, Sub(addr, heap.binary.m), bits, n),
+          true: Equals(heap.binary.right, Sub(addr, heap.binary.m), bits, n),
           false: {
             Int@ nl = Sub(heap.binary.m, addr);
-            Int@ nr = Sub(n, nl);
-            Maybe@<List@<Bit@>> left = Equals_(heap.binary.left, addr, bits, nl);
-            left.?(
-              just: Equals_(heap.binary.right, I(D|0), left.just, nr),
-              nothing: Nothing<List@<Bit@>>);
+            Equals(heap.binary.left, addr, bits, nl).?(
+              true: {
+                Int@ nr = Sub(n, nl);
+                Equals(heap.binary.right, I(D|0), Drop<Bit@>(nl, bits), nr);
+              }, 
+              false: False);
           }));
     });
 };
@@ -162,17 +155,6 @@ Equals_ = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
 (Heap@, Addr@, Addr@, Int@) { Heap@; }
 Copy = (Heap@ heap, Addr@ dest, Addr@ src, Int@ n) {
   Write(heap, dest, Read(heap, src, n), n);
-};
-
-# Equals --
-#   Return true if the n bits at the given address match the first n given
-#   bits.
-#
-# Behavior is undefined if there aren't enough bits in the heap or list to
-# compare.
-(Heap@, Addr@, List@<Bit@>, Int@) { Bool@; }
-Equals = (Heap@ heap, Addr@ a, List@<Bit@> b, Int@ n) {
-  Equals_(heap, a, b, n).?(just: True, nothing: False);
 };
 
 # Equal --
