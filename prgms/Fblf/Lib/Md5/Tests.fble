@@ -48,6 +48,9 @@
 
 % Exec = /Fblf/Exec%.Exec;
 
+# Import to make sure it compiles.
+% _ = /Fblf/Lib/Md5/Stdio%;
+
 (CharLit@, Lit@<Hex@>, Lit@<Hex@>) { Test@; }
 TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
   (List@<Hex@>) { List@<Value@>; } Bytes = (List@<Hex@> hl) {

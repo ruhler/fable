@@ -4,7 +4,10 @@
 % Inc = /Int/Int%.Inc;
 % Dec = /Int/Int%.Dec;
 % Le = /Int/Int/Eq%.Le;
+
 <@>@ List@ = /List%.List@;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
 
 # Drop --
 #   Remove the first n elements from the list.
@@ -12,6 +15,18 @@
 # Returns an empty list if there are less than n elements on the list.
 <@ T@>(Int@, List@<T@>) { List@<T@>; } Drop = <@ T@>(Int@ n, List@<T@> l) {
   Le(n, 0).?(true: l, false: l.?(cons: Drop<T@>(Dec(n), l.cons.tail), nil: l));
+};
+
+# Take --
+#   Returns the first n elements on the list.
+#
+# Returns fewer than n elements if there are less than n elements on the list.
+<@ T@>(Int@, List@<T@>) { List@<T@>; } Take = <@ T@>(Int@ n, List@<T@> l) {
+  Le(n, 0).?(
+    true: Nil<T@>,
+    false: l.?(
+      cons: Cons<T@>(l.cons.head, Take<T@>(Dec(n), l.cons.tail)),
+      nil: Nil<T@>));
 };
 
 # Length --
@@ -31,4 +46,4 @@
   l.?(cons: Inc(Length<T@>(l.cons.tail)), nil: 0);
 };
 
-@(Drop, Length);
+@(Take, Drop, Length);

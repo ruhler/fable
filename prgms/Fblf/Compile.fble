@@ -1,0 +1,253 @@
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+@ Bit@ = /Digits%.Bit@;
+% Bit = /Digits%.Bit;
+
+@ Addr@ = /Fblf/Program%.Addr@;
+@ Assign@ = /Fblf/Program%.Assign@;
+@ Condition@ = /Fblf/Program%.Condition@;
+@ IfElse@ = /Fblf/Program%.IfElse@;
+@ Sequence@ = /Fblf/Program%.Sequence@;
+@ While@ = /Fblf/Program%.While@;
+@ Value@ = /Fblf/Program%.Value@;
+@ Program@ = /Fblf/Program%.Program@;
+% Ref = /Fblf/Program%.Ref;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+% Eq = /Int/Int/Eq%.Eq;
+% Le = /Int/Int/Eq%.Le;
+% Mod = /Int/Int/Div%.Mod;
+% D = /Int/Int/Lit%.D;
+% I = /Int/Int/Lit%.I;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@,@>% Map = /List%.Map;
+<@>% Nil = /List%.Nil;
+<@>% Cons = /List%.Cons;
+<@>% Concat = /List%.Concat;
+
+<@>% Drop = /List/Length%.Drop;
+<@>% Length = /List/Length%.Length;
+<@>% Take = /List/Length%.Take;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+Int@ BitsPerWord = I(D|64);
+
+(Addr@) { String@; } CompileAddr = /Int/Int/Show%.Show;
+
+# Compile a constant that is assumed to fit within BitsPerWord.
+(List@<Bit@>) { String@; } 
+CompileSmallConstant = {
+  # Convert a list of bits to hex string, assuming the number of elements on
+  # the list is a multiple of 4.
+  (List@<Bit@>) { String@; } ToHex = (List@<Bit@> l) {
+    l.?(
+      cons: {
+        Bit@ a = l.cons.head;
+        Bit@ b = l.cons.tail.cons.head;
+        Bit@ c = l.cons.tail.cons.tail.cons.head;
+        Bit@ d = l.cons.tail.cons.tail.cons.tail.cons.head;
+        String@ tail = ToHex(l.cons.tail.cons.tail.cons.tail.cons.tail);
+        Char@ h = a.?(
+          0: b.?(
+            0: c.?(0: d.?(0: Chars.0, 1: Chars.1), 1: d.?(0: Chars.2, 1: Chars.3)),
+            1: c.?(0: d.?(0: Chars.4, 1: Chars.5), 1: d.?(0: Chars.6, 1: Chars.7))),
+          1: b.?(
+            0: c.?(0: d.?(0: Chars.8, 1: Chars.9), 1: d.?(0: Chars.A, 1: Chars.B)),
+            1: c.?(0: d.?(0: Chars.C, 1: Chars.D), 1: d.?(0: Chars.E, 1: Chars.F))));
+        Cons<Char@>(h, tail);
+      },
+      nil: Nil<Char@>);
+  };
+
+  (List@<Bit@> c) {
+    Int@ length = Length<Bit@>(c);
+    Eq(Mod(length, I(D|4)), I(D|0)).?(
+      true: Concat<Char@>(List<String@>([Str(Chars|'0x'), ToHex(c)])),
+      false: {
+        # TODO: We could improve performance by adding just the right number
+        # of bits here, instead of having to recompute the length of the list
+        # each time.
+        CompileSmallConstant(Cons<Bit@>(Bit.0, c));
+      });
+  };
+};
+
+# Compile an equals condition into an atomic boolean expression in C, where
+# the number of bits is assumed to fit within BitsPerWord.
+(Value@, Value@, Int@) { String@; }
+CompileSmallEquals = (Value@ a, Value@ b, Int@ n) {
+  a.?(
+    ref: b.?(
+      ref: Concat<Char@>(List<String@>([
+        Str(Chars|'FblfHeapEqual(heap, '),
+        CompileAddr(a.ref),
+        Str(Chars|', '),
+        CompileAddr(b.ref),
+        Str(Chars|', '),
+        /Int/Int/Show%.Show(n),
+        Str(Chars|')')])),
+      const: Concat<Char@>(List<String@>([
+        Str(Chars|'FblfHeapEquals(heap, '),
+        CompileAddr(a.ref),
+        Str(Chars|', '),
+        CompileSmallConstant(b.const),
+        Str(Chars|', '),
+        /Int/Int/Show%.Show(n),
+        Str(Chars|')')]))),
+    const: b.?(
+      ref: Concat<Char@>(List<String@>([
+        Str(Chars|'FblfHeapEquals(heap, '),
+        CompileAddr(b.ref),
+        Str(Chars|', '),
+        CompileSmallConstant(a.const),
+        Str(Chars|', '),
+        /Int/Int/Show%.Show(n),
+        Str(Chars|')')])),
+      const: Concat<Char@>(List<String@>([
+        Str(Chars|'('),
+        CompileSmallConstant(a.const),
+        Str(Chars|' == '),
+        CompileSmallConstant(b.const),
+        Str(Chars|')')]))));
+};
+
+# Split the first n bits off of the given value, returning the n most
+# significant bits of the value as 'hi', and the remaining least significant
+# bits of the value in 'lo'.
+(Value@, Int@) { *(Value@ hi, Value@ lo); } Split = (Value@ v, Int@ n) {
+  v.?(
+    ref: @(
+      hi: v,
+      lo: Ref(Add(v.ref, n))),
+    const: @(
+      hi: Value@(const: Take<Bit@>(n, v.const)),
+      lo: Value@(const: Drop<Bit@>(n, v.const))));
+};
+
+# Compile an equals condition into an atomic boolean expression in C.
+(Value@, Value@, Int@) { String@; }
+CompileEquals = (Value@ a, Value@ b, Int@ n) {
+  Le(n, BitsPerWord).?(
+    true: CompileSmallEquals(a, b, n),
+    false: {
+      % as = Split(a, BitsPerWord);
+      % bs = Split(b, BitsPerWord);
+      String@ hi = CompileSmallEquals(as.hi, bs.hi, BitsPerWord);
+      String@ lo = CompileEquals(as.lo, bs.lo, Sub(n, BitsPerWord));
+      Concat<Char@>(List<String@>([
+        Str(Chars|'('), hi, Str(Chars|' && '), lo, Str(Chars|')')]));
+    });
+};
+
+# Compile a condition into an expression suitable for use in the condition of
+# an if or while statement in C.
+(Condition@) { String@; } CompileCondition = (Condition@ cond) {
+  String@ equals = CompileEquals(cond.a, cond.b, cond.n);
+  cond.op.?(
+    eq: equals,
+    ne: Cons<Char@>(Chars.'!', equals));
+};
+
+# Compile an assignment statement assuming the number of bits fits within
+# BitsPerWord.
+(String@, Assign@) { String@; }
+CompileSmallAssign = (String@ indent, Assign@ assign) {
+  assign.value.?(
+    ref: Concat<Char@>(List<String@>([
+      indent,
+      Str(Chars|'FblfHeapCopy(heap, '),
+      CompileAddr(assign.ref),
+      Str(Chars|', '),
+      CompileAddr(assign.value.ref),
+      Str(Chars|', '),
+      /Int/Int/Show%.Show(assign.n),
+      Str(Chars|');
+')])),
+    const: Concat<Char@>(List<String@>([
+      indent,
+      Str(Chars|'FblfHeapWrite(heap, '),
+      CompileAddr(assign.ref),
+      Str(Chars|', '),
+      CompileSmallConstant(assign.value.const),
+      Str(Chars|', '),
+      /Int/Int/Show%.Show(assign.n),
+      Str(Chars|');
+')])));
+};
+
+# Compile an assignment statement into a sequence of statements in C.
+(String@, Assign@) { String@; } CompileAssign = (String@ indent, Assign@ assign) {
+  Le(assign.n, BitsPerWord).?(
+    true: CompileSmallAssign(indent, assign),
+    false: {
+      % vs = Split(assign.value, BitsPerWord);
+      Concat<Char@>(List<String@>([
+        CompileSmallAssign(indent, Assign@(assign.ref, vs.hi, BitsPerWord)),
+        CompileSmallAssign(indent, Assign@(Add(assign.ref, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord)))]));
+    });
+};
+
+(String@, Sequence@) { String@; } CompileSequence = (String@ indent, Sequence@ seq) {
+  Concat<Char@>(Map<Program@, String@>(seq, (Program@ p) { CompileProgram(indent, p); }));
+},
+
+(String@, IfElse@) { String@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
+  String@ nested = Concat<Char@>(List<String@>([indent, Str(Chars|'  ')]));
+  Concat<Char@>(List<String@>([
+      indent, Str(Chars|'if ('), CompileCondition(ifelse.condition), Str(Chars|') {
+'),
+      CompileProgram(nested, ifelse.if_body),
+      indent, Str(Chars|'} else {
+'),
+      CompileProgram(nested, ifelse.else_body),
+      indent, Str(Chars|'}
+')]));
+},
+
+(String@, While@) { String@; } CompileWhile = (String@ indent, While@ while) {
+  String@ nested = Concat<Char@>(List<String@>([indent, Str(Chars|'  ')]));
+  Concat<Char@>(List<String@>([
+      indent, Str(Chars|'while ('), CompileCondition(while.condition), Str(Chars|') {
+'),
+      CompileProgram(nested, while.body),
+      indent, Str(Chars|'}
+')]));
+},
+
+(String@, Program@) { String@; } CompileProgram = (String@ indent, Program@ prgm) {
+  prgm.?(
+    assign: CompileAssign(indent, prgm.assign),
+    sequence: CompileSequence(indent, prgm.sequence),
+    ifelse: CompileIfElse(indent, prgm.ifelse),
+    while: CompileWhile(indent, prgm.while));
+};
+
+# Compile --
+#   Compile an fblf program to a C function with the given name.
+#
+# The signature of a function named 'Foo' will be:
+#   void Foo(FblfHeap* heap);
+(Lit@<Char@>, Program@) { String@; }
+Compile = (Lit@<Char@> name, Program@ program) {
+  Concat<Char@>(List<String@>([
+    Str(Chars|'void '),
+    List<Char@>(name),
+    Str(Chars|'(FblfHeap* heap)
+{
+'),
+    CompileProgram(Str(Chars|'  '), program),
+    Str(Chars|'}
+')]));
+};
+
+@(Compile);

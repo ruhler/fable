@@ -1,5 +1,5 @@
 Fblf:
-* Draft compiler for fblf.
+* Figure out how to deal with the memory issues for fblf md5.
 * Rewrite tests for /Fblf/Heap%.
 * Come up with a better name for SeqL?
 * Factor out common code for converting Hex lits to Bit lits.
