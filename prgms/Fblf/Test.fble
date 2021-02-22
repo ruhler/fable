@@ -1,0 +1,54 @@
+
+@ Char@ = /Char%.Char@;
+
+@ Bit@ = /Digits%.Bit@;
+
+@ Addr@ = /Fblf/Program%.Addr@;
+@ Program@ = /Fblf/Program%.Program@;
+
+<@>@ Instance@ = /Fblf/Module%.Instance@;
+<@>@ Module@ = /Fblf/Module%.Module@;
+<@>% Instantiate = /Fblf/Module%.Instantiate;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+<@>@ List@ = /List%.List@;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+<@>% AssertEquals = /Test%.AssertEquals;
+
+@ Heap@ = /Fblf/Heap%.Heap@;
+% Heap = /Fblf/Heap%.Heap;
+% Read = /Fblf/Heap%.Read;
+
+% Exec = /Fblf/Exec%.Exec;
+
+@ Bits@ = List@<Bit@>;
+/Eq%.Eq@<Bits@> EqBits = /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit);
+/Show%.Show@<Bits@> ShowBits = /Digits/Show%.ShowBits;
+
+# FblfTest@ --
+#   An fblf test.
+#
+# The test runs the program and asserts that the n bits of result match the
+# expected bits, where n is the number of given expected bits.
+@ FblfTest@ = *(Program@ program, Addr@ result, Bits@ expected);
+
+(Lit@<Char@>, Module@<FblfTest@>) { Test@; }
+FblfTest = (Lit@<Char@> name, Module@<FblfTest@> m) {
+  Test(name, !({
+    Instance@<FblfTest@> i = Instantiate<FblfTest@>(m, I(D|0));
+    FblfTest@ mI = i.instance;
+    Heap@ heap = Exec(mI.program, Heap(i.heap));
+
+    Bits@ wnt = mI.expected;
+    Bits@ got = Read(heap, mI.result, /List/Length%.Length<Bit@>(wnt));
+    AssertEquals<Bits@>(EqBits, ShowBits, wnt, got);
+  }));
+};
+
+@(FblfTest@, FblfTest);

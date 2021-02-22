@@ -1,0 +1,148 @@
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+
+@ Bit@ = /Digits%.Bit@;
+% B = /Digits%.Bit;
+
+@ Addr@ = /Fblf/Program%.Addr@;
+@ Program@ = /Fblf/Program%.Program@;
+% Assign = /Fblf/Program%.Assign;
+% Const = /Fblf/Program%.Const;
+% Seq = /Fblf/Program%.Seq;
+
+<@>@ Instance@ = /Fblf/Module%.Instance@;
+<@>@ Module@ = /Fblf/Module%.Module@;
+<@>% AllocM = /Fblf/Module%.AllocM;
+<@>% PureM = /Fblf/Module%.PureM;
+<@,@>% InstM = /Fblf/Module%.InstM;
+<@>% Instantiate = /Fblf/Module%.Instantiate;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+
+<@,@>@ Lit@ = /Literal%.Lit@;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
+
+% AndM = /Fblf/Lib/Bitwise%.AndM;
+% OrM = /Fblf/Lib/Bitwise%.OrM;
+% XorM = /Fblf/Lib/Bitwise%.XorM;
+% NotM = /Fblf/Lib/Bitwise%.NotM;
+% ClsM = /Fblf/Lib/Bitwise%.ClsM;
+
+@ Heap@ = /Fblf/Heap%.Heap@;
+% Heap = /Fblf/Heap%.Heap;
+% Read = /Fblf/Heap%.Read;
+
+% Exec = /Fblf/Exec%.Exec;
+
+@ Bits@ = List@<Bit@>;
+/Eq%.Eq@<Bits@> EqBits = /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit);
+/Show%.Show@<Bits@> ShowBits = /Digits/Show%.ShowBits;
+
+# FblfTest@ --
+#   An fblf test.
+#
+# The test runs the program and asserts that the n bits of result match the
+# expected bits, where n is the number of given expected bits.
+@ FblfTest@ = *(Program@ program, Addr@ result, Bits@ expected);
+
+(Lit@<Char@>, Module@<FblfTest@>) { Test@; }
+FblfTest = (Lit@<Char@> name, Module@<FblfTest@> m) {
+  Test(name, !({
+    Instance@<FblfTest@> i = Instantiate<FblfTest@>(m, I(D|0));
+    FblfTest@ mI = i.instance;
+    Heap@ heap = Exec(mI.program, Heap(i.heap));
+
+    Bits@ wnt = mI.expected;
+    Bits@ got = Read(heap, mI.result, /List/Length%.Length<Bit@>(wnt));
+    AssertEquals<Bits@>(EqBits, ShowBits, wnt, got);
+  }));
+};
+
+Test@ Tests = TestSuite(Chars|'Lib.Bitwise', [
+  FblfTest(Chars|AndM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|4));
+    Addr@ b <- AllocM<FblfTest@>(I(D|4));
+    Addr@ z <- AllocM<FblfTest@>(I(D|4));
+    Program@ and <- InstM<Program@, FblfTest@>(AndM(I(D|4), a, b, z));
+
+    Program@ test = Seq([
+      Assign(a, Const(B|0011), I(D|4)),
+      Assign(b, Const(B|0110), I(D|4)),
+      Assign(z, Const(B|0000), I(D|4)),
+      and
+    ]);
+
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001101100010)));
+  }),
+
+  FblfTest(Chars|OrM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|4));
+    Addr@ b <- AllocM<FblfTest@>(I(D|4));
+    Addr@ z <- AllocM<FblfTest@>(I(D|4));
+    Program@ or <- InstM<Program@, FblfTest@>(OrM(I(D|4), a, b, z));
+
+    Program@ test = Seq([
+      Assign(a, Const(B|0011), I(D|4)),
+      Assign(b, Const(B|0110), I(D|4)),
+      Assign(z, Const(B|0000), I(D|4)),
+      or
+    ]);
+
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001101100111)));
+  }),
+
+  FblfTest(Chars|XorM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|4));
+    Addr@ b <- AllocM<FblfTest@>(I(D|4));
+    Addr@ z <- AllocM<FblfTest@>(I(D|4));
+    Program@ xor <- InstM<Program@, FblfTest@>(XorM(I(D|4), a, b, z));
+
+    Program@ test = Seq([
+      Assign(a, Const(B|0011), I(D|4)),
+      Assign(b, Const(B|0110), I(D|4)),
+      Assign(z, Const(B|0000), I(D|4)),
+      xor
+    ]);
+
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001101100101)));
+  }),
+
+  FblfTest(Chars|NotM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|4));
+    Addr@ z <- AllocM<FblfTest@>(I(D|4));
+    Program@ not <- InstM<Program@, FblfTest@>(NotM(I(D|4), a, z));
+
+    Program@ test = Seq([
+      Assign(a, Const(B|0011), I(D|4)),
+      Assign(z, Const(B|0000), I(D|4)),
+      not
+    ]);
+
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|00111100)));
+  }),
+
+  FblfTest(Chars|ClsM, {
+    Addr@ a <- AllocM<FblfTest@>(I(D|5));
+    Addr@ z <- AllocM<FblfTest@>(I(D|5));
+    Program@ cls <- InstM<Program@, FblfTest@>(ClsM(I(D|5), I(D|3), a, z));
+
+    Program@ test = Seq([
+      Assign(a, Const(B|10011), I(D|5)),
+      Assign(z, Const(B|00000), I(D|5)),
+      cls
+    ]);
+
+    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|1001111100)));
+  })
+]);
+
+@(Tests);
