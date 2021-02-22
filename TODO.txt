@@ -1,4 +1,7 @@
 Fblf:
+* Set up fblf compilation test infrastructure.
+* Rewrite fblf compiler to use abstraction that lets us output one line at a
+  time instead of having to build up the program all in one string?
 * Figure out how to deal with the memory issues for fblf md5.
  - It's because we duplicate the same exact program repeatedly when fully
    inlining, leading to a sort of exponential blowup of logic.
@@ -6,8 +9,6 @@ Fblf:
 * Rewrite tests for /Fblf/Heap%.
 * Come up with a better name for SeqL?
 * Factor out common code for converting Hex lits to Bit lits.
-* Implement a compiler from fblf to C code.
-  - See how much faster it is compared to native fble md5.
 * Figure out how to replace fblf integer arithmetic with a native c
   implementation at compile time.
   - See how much faster it is now.

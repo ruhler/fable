@@ -21,9 +21,7 @@
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
-% Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
-<@>% AssertEquals = /Test%.AssertEquals;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -36,61 +34,50 @@
 % Seq = /Fblf/Program%.Seq;
 % SeqL = /Fblf/Program%.SeqL;
 
-<@>@ Instance@ = /Fblf/Module%.Instance@;
-<@>% Instantiate = /Fblf/Module%.Instantiate;
+<@>% AllocM = /Fblf/Module%.AllocM;
+<@>% PureM = /Fblf/Module%.PureM;
+<@,@>% InstM = /Fblf/Module%.InstM;
+
+@ FblfTest@ = /Fblf/Test%.FblfTest@;
+% FblfTest = /Fblf/Test%.FblfTest;
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5 = /Fblf/Lib/Md5%.Md5;
 
-@ Heap@ = /Fblf/Heap%.Heap@;
-% Heap = /Fblf/Heap%.Heap;
-% Read = /Fblf/Heap%.Read;
-
-% Exec = /Fblf/Exec%.Exec;
-
 # Import to make sure it compiles.
 % _ = /Fblf/Lib/Md5/Stdio%;
 
+# Converts a sequece of Hex@ digits to a sequence of corresponding bytes.
+(List@<Hex@>) { List@<Value@>; } ToBytes = (List@<Hex@> hl) {
+  hl.?(
+    cons: {
+      Cons<Value@>(
+        ConstHex([hl.cons.head, hl.cons.tail.cons.head]),
+        ToBytes(hl.cons.tail.cons.tail));
+    },
+    nil: Nil<Value@>);
+};
+
 (CharLit@, Lit@<Hex@>, Lit@<Hex@>) { Test@; }
 TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
-  (List@<Hex@>) { List@<Value@>; } Bytes = (List@<Hex@> hl) {
-    hl.?(
-      cons: {
-        Cons<Value@>(
-          ConstHex([hl.cons.head, hl.cons.tail.cons.head]),
-          Bytes(hl.cons.tail.cons.tail));
-      },
-      nil: Nil<Value@>);
-  };
-
-  Test(name, !({
-    Addr@ input = I(D|0);
-    Addr@ hash = I(D|8);
-    Addr@ free = I(D|136);
-
-    Instance@<Md5@> md5I = Instantiate<Md5@>(Md5(input, hash), free);
-    Md5@ md5 = md5I.instance;
+  FblfTest(name, {
+    Addr@ input <- AllocM<FblfTest@>(I(D|8));
+    Addr@ hash <- AllocM<FblfTest@>(I(D|128));
+    Md5@ md5 <- InstM<Md5@, FblfTest@>(Md5(input, hash));
 
     Program@ feed = SeqL(Map<Value@, Program@>(
-      Bytes(List<Hex@>(bytes)), (Value@ b) {
+      ToBytes(List<Hex@>(bytes)), (Value@ b) {
         Seq([Assign(input, b, I(D|8)), md5.feed]);
     }));
 
-    Program@ prgm = Seq([md5.reset, feed, md5.finish]);
-
-    Heap@ heap = Heap(md5I.heap);
-    Heap@ got = Exec(prgm, heap);
+    Program@ test = Seq([md5.reset, feed, md5.finish]);
 
     List@<Bit@> wnt_ = /Digits/String%.HexToBits(List<Hex@>(wnt));
-    List@<Bit@> got_ = Read(got, hash, I(D|128));
-    AssertEquals<List@<Bit@>>(
-      /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit),
-      /Digits/Show%.ShowBits,
-      wnt_, got_);
-  }));
+    PureM<FblfTest@>(FblfTest@(test, hash, wnt_));
+  });
 };
 
-Test@ Tests = TestSuite(Chars|Md5, [
+Test@ Tests = TestSuite(Chars|'Lib.Md5', [
 # Unfortunately it takes too long to run all of these tests.
   
 #  TestStr(
@@ -135,7 +122,8 @@ Test@ Tests = TestSuite(Chars|Md5, [
     Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);
 
-Test@ DummyTests = TestSuite(Chars|Md5, /Literal%.Empty<Test@>);
+# TODO: Re-enable md5 tests once they are fast enough.
+Test@ Tests = TestSuite(Chars|Md5, /Literal%.Empty<Test@>);
 
 Unit@! Bench = {
   TestResult@ _ := TestStr(
@@ -146,5 +134,4 @@ Unit@! Bench = {
   !(Unit);
 };
 
-# TODO: Re-enable the md5 tests once they are fast enough.
-@(Tests: DummyTests, Bench);
+@(Tests, Bench);
