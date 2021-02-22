@@ -2,12 +2,15 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 
+<@>@ List@ = /List%.List@;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
+
 <@,@>@ Lit@ = /Literal%.Lit@;
 
 @ Program@ = /Fblf/Program%.Program@;
 @ Addr@ = /Fblf/Program%.Addr@;
-% Noop = /Fblf/Program%.Noop;
-% Seq = /Fblf/Program%.Seq;
+% SeqL = /Fblf/Program%.SeqL;
 
 # Instance@, Module@ --
 #   Module@ is a monad for tracking allocation of objects on a heap. It is
@@ -56,13 +59,16 @@ InstM = <@ A@, @ B@>(Module@<A@> m)((A@) { Module@<B@>; } f) {
 # SeqM --
 #   Instantite a list of modules.
 #
-# TODO: generalize this to arbitrary T@.
+# TODO: generalize this to arbitrary T@?
 (Lit@<Module@<Program@>>) { Module@<Program@>; } SeqM = (Lit@<Module@<Program@>> ms) {
-  ms<Module@<Program@>>((Module@<Program@> aM, Module@<Program@> bM) {
-    Program@ a <- InstM<Program@, Program@>(aM);
-    Program@ b <- InstM<Program@, Program@>(bM);
-    PureM<Program@>(Seq([a, b]));
-  }, PureM<Program@>(Noop));
+  Module@<List@<Program@>> ml = ms<Module@<List@<Program@>>>((Module@<Program@> aM, Module@<List@<Program@>> bM) {
+    Program@ a <- InstM<Program@, List@<Program@>>(aM);
+    List@<Program@> b <- InstM<List@<Program@>, List@<Program@>>(bM);
+    PureM<List@<Program@>>(Cons<Program@>(a, b));
+  }, PureM<List@<Program@>>(Nil<Program@>));
+
+  List@<Program@> l <- InstM<List@<Program@>, Program@>(ml);
+  PureM<Program@>(SeqL(l));
 };
 
 <@ T@>(Module@<T@>, Addr@) { Instance@<T@>; }

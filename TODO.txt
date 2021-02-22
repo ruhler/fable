@@ -1,5 +1,8 @@
 Fblf:
 * Figure out how to deal with the memory issues for fblf md5.
+ - It's because we duplicate the same exact program repeatedly when fully
+   inlining, leading to a sort of exponential blowup of logic.
+ - But what's a good approach to solving it?
 * Rewrite tests for /Fblf/Heap%.
 * Come up with a better name for SeqL?
 * Factor out common code for converting Hex lits to Bit lits.
