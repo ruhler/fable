@@ -4,38 +4,37 @@
 @ Bit@ = /Digits%.Bit@;
 % B = /Digits%.Bit;
 
+% AddM = /Fblf/Lib/Add%.AddM;
+% IncM = /Fblf/Lib/Add%.IncM;
+% DecM = /Fblf/Lib/Add%.DecM;
+
+<@>% AllocM = /Fblf/Module%.AllocM;
+<@>% PureM = /Fblf/Module%.PureM;
+<@,@>% InstM = /Fblf/Module%.InstM;
+
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
 % Assign = /Fblf/Program%.Assign;
 % Const = /Fblf/Program%.Const;
 % Seq = /Fblf/Program%.Seq;
 
-<@>% AllocM = /Fblf/Module%.AllocM;
-<@>% PureM = /Fblf/Module%.PureM;
-<@,@>% InstM = /Fblf/Module%.InstM;
+@ Test@ = /Fblf/Test%.Test@;
+@ TestInstance@ = /Fblf/Test%.TestInstance@;
+% Test = /Fblf/Test%.Test;
+% TestSuite = /Fblf/Test%.TestSuite;
 
 % I = /Int/Int/Lit%.I;
 % D = /Int/Int/Lit%.D;
 
 <@>% List = /List%.List;
 
-@ Test@ = /Test%.Test@;
-% TestSuite = /Test%.TestSuite;
+Test@ Tests = TestSuite(Chars|'Add', [
+  Test(Chars|AddM, {
+    Addr@ a <- AllocM<TestInstance@>(I(D|5));
+    Addr@ b <- AllocM<TestInstance@>(I(D|5));
+    Addr@ z <- AllocM<TestInstance@>(I(D|5));
 
-% AddM = /Fblf/Lib/Add%.AddM;
-% IncM = /Fblf/Lib/Add%.IncM;
-% DecM = /Fblf/Lib/Add%.DecM;
-
-@ FblfTest@ = /Fblf/Test%.FblfTest@;
-% FblfTest = /Fblf/Test%.FblfTest;
-
-Test@ Tests = TestSuite(Chars|'Lib.Add', [
-  FblfTest(Chars|AddM, {
-    Addr@ a <- AllocM<FblfTest@>(I(D|5));
-    Addr@ b <- AllocM<FblfTest@>(I(D|5));
-    Addr@ z <- AllocM<FblfTest@>(I(D|5));
-
-    Program@ add <- InstM<Program@, FblfTest@>(AddM(I(D|4), a, b, z));
+    Program@ add <- InstM<Program@, TestInstance@>(AddM(I(D|4), a, b, z));
 
     # Note: we put an extra '1' bit after each value as a regression test for
     # a bug we had where it was reading one bit off the end of the values.
@@ -46,28 +45,28 @@ Test@ Tests = TestSuite(Chars|'Lib.Add', [
       add
     ]);
 
-    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|001011011111011)));
+    PureM<TestInstance@>(TestInstance@(test, I(D|0), List<Bit@>(B|001011011111011)));
   }),
 
-  FblfTest(Chars|IncM, {
-    Addr@ a <- AllocM<FblfTest@>(I(D|5));
-    Program@ inc <- InstM<Program@, FblfTest@>(IncM(I(D|5), a));
+  Test(Chars|IncM, {
+    Addr@ a <- AllocM<TestInstance@>(I(D|5));
+    Program@ inc <- InstM<Program@, TestInstance@>(IncM(I(D|5), a));
     Program@ test = Seq([Assign(a, Const(B|10011), I(D|5)), inc]);
-    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|10100)));
+    PureM<TestInstance@>(TestInstance@(test, I(D|0), List<Bit@>(B|10100)));
   }),
 
-  FblfTest(Chars|'IncM Overflow', {
-    Addr@ a <- AllocM<FblfTest@>(I(D|5));
-    Program@ inc <- InstM<Program@, FblfTest@>(IncM(I(D|5), a));
+  Test(Chars|'IncM Overflow', {
+    Addr@ a <- AllocM<TestInstance@>(I(D|5));
+    Program@ inc <- InstM<Program@, TestInstance@>(IncM(I(D|5), a));
     Program@ test = Seq([Assign(a, Const(B|11111), I(D|5)), inc]);
-    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|00000)));
+    PureM<TestInstance@>(TestInstance@(test, I(D|0), List<Bit@>(B|00000)));
   }),
 
-  FblfTest(Chars|DecM, {
-    Addr@ a <- AllocM<FblfTest@>(I(D|5));
-    Program@ dec <- InstM<Program@, FblfTest@>(DecM(I(D|5), a));
+  Test(Chars|DecM, {
+    Addr@ a <- AllocM<TestInstance@>(I(D|5));
+    Program@ dec <- InstM<Program@, TestInstance@>(DecM(I(D|5), a));
     Program@ test = Seq([Assign(a, Const(B|10100), I(D|5)), dec]);
-    PureM<FblfTest@>(FblfTest@(test, I(D|0), List<Bit@>(B|10011)));
+    PureM<TestInstance@>(TestInstance@(test, I(D|0), List<Bit@>(B|10011)));
   })
 ]);
 

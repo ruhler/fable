@@ -176,5 +176,5 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 };
 
 @(
-  String@, TestResult@, Test@,
+  String@, TestResult@, Test@, TestSuite@, TestCase@,
   AssertEquals, Test, TestSuite, RunTests, RunTestsVerbose);

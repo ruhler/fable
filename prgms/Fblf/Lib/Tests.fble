@@ -1,0 +1,13 @@
+
+% Chars = /Char%.Chars;
+
+@ Test@ = /Fblf/Test%.Test@;
+% TestSuite = /Fblf/Test%.TestSuite;
+
+Test@ Tests = TestSuite(Chars|'Lib', [
+  /Fblf/Lib/Add/Tests%.Tests,
+  /Fblf/Lib/Bitwise/Tests%.Tests,
+  /Fblf/Lib/Md5/Tests%.Tests
+]);
+
+@(Tests);

@@ -19,13 +19,6 @@
 
 <@>@ CharLit@ = /String%.CharLit@;
 
-@ Test@ = /Test%.Test@;
-@ TestResult@ = /Test%.TestResult@;
-% TestSuite = /Test%.TestSuite;
-
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
-
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
 @ Value@ = /Fblf/Program%.Value@;
@@ -38,11 +31,17 @@
 <@>% PureM = /Fblf/Module%.PureM;
 <@,@>% InstM = /Fblf/Module%.InstM;
 
-@ FblfTest@ = /Fblf/Test%.FblfTest@;
-% FblfTest = /Fblf/Test%.FblfTest;
+@ Test@ = /Fblf/Test%.Test@;
+@ TestInstance@ = /Fblf/Test%.TestInstance@;
+% Test = /Fblf/Test%.Test;
+% TestSuite = /Fblf/Test%.TestSuite;
+% RunTests = /Fblf/Test%.RunTests;
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5 = /Fblf/Lib/Md5%.Md5;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 # Import to make sure it compiles.
 % _ = /Fblf/Lib/Md5/Stdio%;
@@ -60,10 +59,10 @@
 
 (CharLit@, Lit@<Hex@>, Lit@<Hex@>) { Test@; }
 TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
-  FblfTest(name, {
-    Addr@ input <- AllocM<FblfTest@>(I(D|8));
-    Addr@ hash <- AllocM<FblfTest@>(I(D|128));
-    Md5@ md5 <- InstM<Md5@, FblfTest@>(Md5(input, hash));
+  Test(name, {
+    Addr@ input <- AllocM<TestInstance@>(I(D|8));
+    Addr@ hash <- AllocM<TestInstance@>(I(D|128));
+    Md5@ md5 <- InstM<Md5@, TestInstance@>(Md5(input, hash));
 
     Program@ feed = SeqL(Map<Value@, Program@>(
       ToBytes(List<Hex@>(bytes)), (Value@ b) {
@@ -73,11 +72,11 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
     Program@ test = Seq([md5.reset, feed, md5.finish]);
 
     List@<Bit@> wnt_ = /Digits/String%.HexToBits(List<Hex@>(wnt));
-    PureM<FblfTest@>(FblfTest@(test, hash, wnt_));
+    PureM<TestInstance@>(TestInstance@(test, hash, wnt_));
   });
 };
 
-Test@ Tests = TestSuite(Chars|'Lib.Md5', [
+Test@ Tests = TestSuite(Chars|'Md5', [
 # Unfortunately it takes too long to run all of these tests.
   
 #  TestStr(
@@ -126,10 +125,10 @@ Test@ Tests = TestSuite(Chars|'Lib.Md5', [
 Test@ Tests = TestSuite(Chars|Md5, /Literal%.Empty<Test@>);
 
 Unit@! Bench = {
-  TestResult@ _ := TestStr(
+  /Test%.TestResult@ _ := RunTests(TestStr(
     Chars|1_to_0,
     Hex|57EDF4A22BE3C955AC49DA2E2107B67A,
-    Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
+    Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930))
     .case.test;
   !(Unit);
 };

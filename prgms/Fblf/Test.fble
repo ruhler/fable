@@ -3,6 +3,12 @@
 
 @ Bit@ = /Digits%.Bit@;
 
+% Exec = /Fblf/Exec%.Exec;
+
+@ Heap@ = /Fblf/Heap%.Heap@;
+% Heap = /Fblf/Heap%.Heap;
+% Read = /Fblf/Heap%.Read;
+
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
 
@@ -14,41 +20,62 @@
 % D = /Int/Int/Lit%.D;
 
 <@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@,@>% Map = /List%.Map;
 
 <@,@>@ Lit@ = /Literal%.Lit@;
 
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
+@ String@ = /String%.String@;
+<@>@ CharLit@ = /String%.CharLit@;
+% Str = /String%.Str;
+
 <@>% AssertEquals = /Test%.AssertEquals;
 
-@ Heap@ = /Fblf/Heap%.Heap@;
-% Heap = /Fblf/Heap%.Heap;
-% Read = /Fblf/Heap%.Read;
-
-% Exec = /Fblf/Exec%.Exec;
 
 @ Bits@ = List@<Bit@>;
 /Eq%.Eq@<Bits@> EqBits = /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit);
 /Show%.Show@<Bits@> ShowBits = /Digits/Show%.ShowBits;
 
-# FblfTest@ --
-#   An fblf test.
-#
 # The test runs the program and asserts that the n bits of result match the
 # expected bits, where n is the number of given expected bits.
-@ FblfTest@ = *(Program@ program, Addr@ result, Bits@ expected);
+@ TestInstance@ = *(Program@ program, Addr@ result, Bits@ expected);
+@ TestCase@ = *(String@ name, Module@<TestInstance@> test);
+@ TestSuite@ = *(String@ name, List@<Test@> tests),
+@ Test@ = +(TestCase@ case, TestSuite@ suite);
 
-(Lit@<Char@>, Module@<FblfTest@>) { Test@; }
-FblfTest = (Lit@<Char@> name, Module@<FblfTest@> m) {
-  Test(name, !({
-    Instance@<FblfTest@> i = Instantiate<FblfTest@>(m, I(D|0));
-    FblfTest@ mI = i.instance;
-    Heap@ heap = Exec(mI.program, Heap(i.heap));
-
-    Bits@ wnt = mI.expected;
-    Bits@ got = Read(heap, mI.result, /List/Length%.Length<Bit@>(wnt));
-    AssertEquals<Bits@>(EqBits, ShowBits, wnt, got);
-  }));
+# Test --
+#   Creates a test.
+(Lit@<Char@>, Module@<TestInstance@>) { Test@; }
+Test = (Lit@<Char@> name, Module@<TestInstance@> test) {
+  Test@(case: TestCase@(Str(name), test));
 };
 
-@(FblfTest@, FblfTest);
+# TestSuite --
+(CharLit@, Lit@<Test@>) { Test@; }
+TestSuite = (CharLit@ name, Lit@<Test@> tests) {
+  Test@(suite: TestSuite@(Str(name), List<Test@>(tests)));
+};
+
+# Convert an Fblf Test into an Fble Test.
+(Test@) { /Test%.Test@; } RunTests = (Test@ t) {
+  t.?(
+    case: {
+      Module@<TestInstance@> m = t.case.test;
+      /Test%.TestResult@! body = !({
+        Instance@<TestInstance@> i = Instantiate<TestInstance@>(m, I(D|0));
+        TestInstance@ mI = i.instance;
+        Heap@ heap = Exec(mI.program, Heap(i.heap));
+
+        Bits@ wnt = mI.expected;
+        Bits@ got = Read(heap, mI.result, /List/Length%.Length<Bit@>(wnt));
+        AssertEquals<Bits@>(EqBits, ShowBits, wnt, got);
+      });
+      /Test%.Test@(case: /Test%.TestCase@(t.case.name, body));
+    },
+    suite: {
+      /Test%.Test@(suite: /Test%.TestSuite@(t.suite.name,
+          Map<Test@, /Test%.Test@>(t.suite.tests, RunTests)));
+    });
+};
+
+@(Test@, TestInstance@, TestCase@, TestSuite@, Test, TestSuite, RunTests);

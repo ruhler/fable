@@ -1,14 +1,9 @@
 
 % Chars = /Char%.Chars;
 
-@ Test@ = /Test%.Test@;
-% TestSuite = /Test%.TestSuite;
-
-Test@ Tests = TestSuite(Chars|Fblf, [
+/Test%.Test@ Tests = /Test%.TestSuite(Chars|'Fblf', [
   /Fblf/Heap/Tests%.Tests,
-  /Fblf/Lib/Add/Tests%.Tests,
-  /Fblf/Lib/Bitwise/Tests%.Tests,
-  /Fblf/Lib/Md5/Tests%.Tests
+  /Fblf/Test%.RunTests(/Fblf/Lib/Tests%.Tests)
 ]);
 
 @(Tests);
