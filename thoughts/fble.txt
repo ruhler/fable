@@ -177,3 +177,72 @@ Fble Language Thoughts
   overhead. S|'foo' is nicer? Perhaps revisit the idea of combining the set of
   symbols with the combinator in literals.
 
+  What if we said the spec for a literal has two fields, 'letters' and
+  'construct'. The translation of S|'foo' would be:
+   S.construct([S.letter.f, S.letter.o, S.letter.o])
+
+  The benefit being you could know write something like
+  S|'foo' or I|23 instead of Str(Chars|'foo') and I(D|23).
+
+  And you could always leave 'construct' as an identity function that returns
+  the value as a Lit@.
+
+  One of the reasons against such a thing is it gives special privileged to
+  the names 'letter' and 'construct'. If we are willing to do that, why not
+  have list literal actually return a List@, with names 'cons' and 'nil'? Or,
+  perhaps, we could allow you to write S[ ... ], where 'S' is a literal with
+  'construct' function? How is that different from S( ... )? Well, we could
+  require you supply an S to compose to a given type. Then the literal could
+  supply the functions for composition directly. We wouldn't need a builtin
+  type like Lit@. Just a convention for the names to use for fields of 'S'.
+  Like we sort of already do for literal specs.
+
+  Here's what we want then. Share literal spec. Have S[...] be a list.
+  Have S|... be a literal. Where S as a spec contains three fields:
+   1. A struct containing a field for each letter that may appear in the
+      literal. Say of spec-specific type Letter@.
+   2. The value of an empty literal. Say of spec-specific type Literal@.
+   3. A function to prepend a letter to a literal.
+      Of type (Letter@, Literal@) { Literal@; }.
+
+  You know what's great about this?
+  * We can now have empty list literals.
+  * We can reuse the same spec for list and normal literals.
+    For example, S|'hello', S[Chars.nl].
+  * We don't have to have this notion of Lit@.
+  * We don't have to do this I(D|...) thing, where we need two names in order to
+    write a literal.
+
+  The downside?
+  * We need to come up with names for the fields.
+  * We can't describe the 'type' of a spec as an fble type. Not that we could
+    anyway because of the letters. But we could describe some of it.
+
+  I think it's totally worth a try. What names should I give to our three
+  fields?
+  
+  Brainstorm:
+  1. 'letters', 'x', '?',
+  2. 'empty', ''
+  3. 'prepend', ','
+
+  If I want to go symbols, I think: '?', '', ',' are good.
+  If I want to go words, I think: 'letters', 'empty', and 'prepend' are good.
+
+  Let's try symbols to start. It seems better fitting to me, and somewhat
+  natural.
+
+  On further thought, we'll want one more field. In case we want the thing we
+  are returning to be different from the sequence type, like is the case for
+  integer literals today.
+
+  Maybe call it '[]'? No. That looks like the empty list.
+  Maybe '|'?
+
+  S|'Foo' ==>   S.'|'(S.','(S.'?'.F, S.','(S.'?'.o, S.','(S.'?'.o, S.''))))
+  
+  Or... S|'Foo' ==> S[S.'?'.F, S.'?'.o, S.'?'.o]
+        S[a, b, c] ==> S.'|'(S.','(a, S.','(b, S.','(c, S.''))))
+
+  letter, cons, nil, reduce
+  '?', ',', '', '|'

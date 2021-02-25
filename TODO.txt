@@ -1,3 +1,8 @@
+* Experiment with revision to fble literals.
+ - Write new spec.
+ - Implement new behavior.
+ - Port all of the existing code...
+
 Fblf:
 * Set up fblf compilation test infrastructure.
  - Set up build files to generate and run the compiled fblf tests.
