@@ -29,16 +29,53 @@
 <@,@>% Map = /List%.Map;
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
+<@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
 
 <@>% Drop = /List/Length%.Drop;
 <@>% Length = /List/Length%.Length;
 <@>% Take = /List/Length%.Take;
 
+<@,@>@ Lit@ = /Literal%.Lit@;
+
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
 Int@ BitsPerWord = I(D|64);
+
+# Lines@ -- 
+#   Abstract data type for outputting a sequence of lines of text from
+#   compilation.
+@ Lines@ = String@;
+
+# Line --
+#   Output the given line of text.
+(String@) { Lines@; } Line = (String@ line) {
+  Append<Char@>(line, Str([Chars.nl]));
+};
+
+# Lines_ --
+#   Output multiple lines of text in order.
+(List@<Lines@>) { Lines@; } Lines_ = (List@<Lines@> lines) {
+  Concat<Char@>(lines);
+};
+
+# Lines --
+#   Output multiple lines of text in order.
+(Lit@<Lines@>) { Lines@; } Lines = (Lit@<Lines@> lines) {
+  Lines_(List<Lines@>(lines));
+};
+
+# Do --
+#   Function bind compatible function for outputting some lines after some
+#   other lines.
+(Lines@)((Unit@) { Lines@; }) { Lines@; }
+Do = (Lines@ lines)((Unit@) { Lines@; } f) {
+  Append<Char@>(lines, f(Unit));
+};
 
 (Addr@) { String@; } CompileAddr = /Int/Int/Show%.Show;
 
@@ -158,10 +195,10 @@ CompileEquals = (Value@ a, Value@ b, Int@ n) {
 
 # Compile an assignment statement assuming the number of bits fits within
 # BitsPerWord.
-(String@, Assign@) { String@; }
+(String@, Assign@) { Lines@; }
 CompileSmallAssign = (String@ indent, Assign@ assign) {
   assign.value.?(
-    ref: Concat<Char@>(List<String@>([
+    ref: Line(Concat<Char@>(List<String@>([
       indent,
       Str(Chars|'FblfHeapCopy(heap, '),
       CompileAddr(assign.ref),
@@ -169,9 +206,8 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
       CompileAddr(assign.value.ref),
       Str(Chars|', '),
       /Int/Int/Show%.Show(assign.n),
-      Str(Chars|');
-')])),
-    const: Concat<Char@>(List<String@>([
+      Str(Chars|');')]))),
+    const: Line(Concat<Char@>(List<String@>([
       indent,
       Str(Chars|'FblfHeapWrite(heap, '),
       CompileAddr(assign.ref),
@@ -179,50 +215,53 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
       CompileSmallConstant(assign.value.const),
       Str(Chars|', '),
       /Int/Int/Show%.Show(assign.n),
-      Str(Chars|');
-')])));
+      Str(Chars|');')]))));
 };
 
 # Compile an assignment statement into a sequence of statements in C.
-(String@, Assign@) { String@; } CompileAssign = (String@ indent, Assign@ assign) {
+(String@, Assign@) { Lines@; } CompileAssign = (String@ indent, Assign@ assign) {
   Le(assign.n, BitsPerWord).?(
     true: CompileSmallAssign(indent, assign),
     false: {
       % vs = Split(assign.value, BitsPerWord);
-      Concat<Char@>(List<String@>([
+      Lines([
         CompileSmallAssign(indent, Assign@(assign.ref, vs.hi, BitsPerWord)),
-        CompileSmallAssign(indent, Assign@(Add(assign.ref, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord)))]));
+        CompileSmallAssign(indent, Assign@(Add(assign.ref, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord)))]);
     });
 };
 
-(String@, Sequence@) { String@; } CompileSequence = (String@ indent, Sequence@ seq) {
-  Concat<Char@>(Map<Program@, String@>(seq, (Program@ p) { CompileProgram(indent, p); }));
+(String@, Sequence@) { Lines@; } CompileSequence = (String@ indent, Sequence@ seq) {
+  Lines_(Map<Program@, Lines@>(seq, (Program@ p) { CompileProgram(indent, p); }));
 },
 
-(String@, IfElse@) { String@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
+(String@, IfElse@) { Lines@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
   String@ nested = Concat<Char@>(List<String@>([indent, Str(Chars|'  ')]));
-  Concat<Char@>(List<String@>([
-      indent, Str(Chars|'if ('), CompileCondition(ifelse.condition), Str(Chars|') {
-'),
-      CompileProgram(nested, ifelse.if_body),
-      indent, Str(Chars|'} else {
-'),
-      CompileProgram(nested, ifelse.else_body),
-      indent, Str(Chars|'}
-')]));
+  Lines([
+    Line(Concat<Char@>(List<String@>([
+      indent,
+      Str(Chars|'if ('),
+      CompileCondition(ifelse.condition),
+      Str(Chars|') {')]))),
+    CompileProgram(nested, ifelse.if_body),
+    Line(Concat<Char@>(List<String@>([
+      indent, Str(Chars|'} else {')]))),
+    CompileProgram(nested, ifelse.else_body),
+    Line(Concat<Char@>(List<String@>([indent, Str(Chars|'}')])))]);
 },
 
-(String@, While@) { String@; } CompileWhile = (String@ indent, While@ while) {
+(String@, While@) { Lines@; } CompileWhile = (String@ indent, While@ while) {
   String@ nested = Concat<Char@>(List<String@>([indent, Str(Chars|'  ')]));
-  Concat<Char@>(List<String@>([
-      indent, Str(Chars|'while ('), CompileCondition(while.condition), Str(Chars|') {
-'),
-      CompileProgram(nested, while.body),
-      indent, Str(Chars|'}
-')]));
+  Lines([
+    Concat<Char@>(List<String@>([
+      indent,
+      Str(Chars|'while ('),
+      CompileCondition(while.condition),
+      Str(Chars|') {')])),
+    CompileProgram(nested, while.body),
+    Concat<Char@>(List<String@>([indent, Str(Chars|'}')]))]);
 },
 
-(String@, Program@) { String@; } CompileProgram = (String@ indent, Program@ prgm) {
+(String@, Program@) { Lines@; } CompileProgram = (String@ indent, Program@ prgm) {
   prgm.?(
     assign: CompileAssign(indent, prgm.assign),
     sequence: CompileSequence(indent, prgm.sequence),
@@ -230,22 +269,28 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
     while: CompileWhile(indent, prgm.while));
 };
 
+# Compile_ --
+#   Compile an fblf program to a C function with the given name.
+#
+# The signature of a function named 'Foo' will be:
+#   void Foo(FblfHeap* heap);
+(String@, Program@) { Lines@; }
+Compile_ = (String@ name, Program@ program) {
+  Lines([
+    Line(Concat<Char@>(List<String@>([
+      Str(Chars|'void '),
+      name,
+      Str(Chars|'(FblfHeap* heap)')]))),
+    Line(Str(Chars|'{')),
+    CompileProgram(Str(Chars|'  '), program),
+    Line(Str(Chars|'}'))]);
+};
+
 # Compile --
 #   Compile an fblf program to a C function with the given name.
 #
 # The signature of a function named 'Foo' will be:
 #   void Foo(FblfHeap* heap);
-(String@, Program@) { String@; }
-Compile = (String@ name, Program@ program) {
-  Concat<Char@>(List<String@>([
-    Str(Chars|'void '),
-    name,
-    Str(Chars|'(FblfHeap* heap)
-{
-'),
-    CompileProgram(Str(Chars|'  '), program),
-    Str(Chars|'}
-')]));
-};
+(String@, Program@) { String@; } Compile = Compile_;
 
 @(Compile);
