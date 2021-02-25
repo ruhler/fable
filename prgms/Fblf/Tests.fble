@@ -1,6 +1,9 @@
 
 % Chars = /Char%.Chars;
 
+# Import to test compilation.
+% _ = /Fblf/Lib/Tests/Compile%;
+
 /Test%.Test@ Tests = /Test%.TestSuite(Chars|'Fblf', [
   /Fblf/Heap/Tests%.Tests,
   /Fblf/Test%.RunTests(/Fblf/Lib/Tests%.Tests)

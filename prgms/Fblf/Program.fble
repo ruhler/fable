@@ -42,7 +42,7 @@
   Value@(const: List<Bit@>(bits));
 };
 
-# Const --
+# ConstHex --
 #   A constant value from Hex.
 #
 # Example Use:

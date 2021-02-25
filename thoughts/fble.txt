@@ -164,3 +164,16 @@ Fble Language Thoughts
   field of kind <@>@, and then use that struct type where something of kind @
   is expected. Is this a bad thing? It seems weird. Is it?
 
+* Issues with literals.
+  I often want to specify things as Lit@ and store them as List@. This makes
+  it awkward because I need to variations of constructor functions for
+  everything I want to construct. Perhaps revisit the idea of having a list
+  literal produce a List@? Or Iter@? Or storing things in terms of Lit@?
+
+  Non-list literals are pretty clunky to use with things like I(D|134). It
+  would really be nice if I could combine the set of symbols with the combiner
+  and define a single name. For example: Int|134. HexInt|3AF. Maybe? I don't
+  know. It's all this Str(Char|foo)) stuff that I wish had less syntactic
+  overhead. S|'foo' is nicer? Perhaps revisit the idea of combining the set of
+  symbols with the combinator in literals.
+

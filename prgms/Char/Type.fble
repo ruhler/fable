@@ -1,0 +1,39 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% Or = /Bool%.Or;
+
+@ Char@ = /Char%.Char@;
+
+(Char@) { Bool@; } IsUpper = (Char@ c) {
+  c.?(
+    A: True, B: True, C: True, D: True, E: True, F: True, G: True,
+    H: True, I: True, J: True, K: True, L: True, M: True, N: True,
+    O: True, P: True, Q: True, R: True, S: True, T: True, U: True,
+    V: True, W: True, X: True, Y: True, Z: True, : False);
+};
+      
+(Char@) { Bool@; } IsLower = (Char@ c) {
+  c.?(
+    a: True, b: True, c: True, d: True, e: True, f: True, g: True,
+    h: True, i: True, j: True, k: True, l: True, m: True, n: True,
+    o: True, p: True, q: True, r: True, s: True, t: True, u: True,
+    v: True, w: True, x: True, y: True, z: True, : False);
+};
+
+(Char@) { Bool@; } IsAlpha = (Char@ c) {
+  Or(IsUpper(c), IsLower(c));
+};
+
+(Char@) { Bool@; } IsDigit = (Char@ c) {
+  c.?(
+    0: True, 1: True, 2: True, 3: True, 4: True,
+    5: True, 6: True, 7: True, 8: True, 9: True, : False);
+};
+
+(Char@) { Bool@; } IsAlNum = (Char@ c) {
+  Or(IsAlpha(c), IsDigit(c));
+};
+
+@(IsUpper, IsLower, IsAlpha, IsDigit, IsAlNum);

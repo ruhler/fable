@@ -1,4 +1,6 @@
 
+#include <assert.h>
+
 #include "heap.h"
 
 // See documentation of FblfHeapRead in heap.h.
@@ -55,7 +57,7 @@ void FblfHeapCopy(FblfHeap* heap, FblfHeapAddr dest, FblfHeapAddr src, size_t n)
 // See documentation of FblfHeapEquals in heap.h
 bool FblfHeapEquals(FblfHeap* heap, FblfHeapAddr a, FblfHeapWord b, size_t n)
 {
-  return FblfGetBits(heap, a, n) == b;
+  return FblfHeapRead(heap, a, n) == b;
 }
 
 // See documentation of FblfHeapEqual in heap.h

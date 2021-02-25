@@ -35,8 +35,6 @@
 <@>% Length = /List/Length%.Length;
 <@>% Take = /List/Length%.Take;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
-
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 
@@ -237,11 +235,11 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 #
 # The signature of a function named 'Foo' will be:
 #   void Foo(FblfHeap* heap);
-(Lit@<Char@>, Program@) { String@; }
-Compile = (Lit@<Char@> name, Program@ program) {
+(String@, Program@) { String@; }
+Compile = (String@ name, Program@ program) {
   Concat<Char@>(List<String@>([
     Str(Chars|'void '),
-    List<Char@>(name),
+    name,
     Str(Chars|'(FblfHeap* heap)
 {
 '),

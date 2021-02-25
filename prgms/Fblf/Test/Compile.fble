@@ -1,0 +1,145 @@
+
+@ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
+% IsAlNum = /Char/Type%.IsAlNum;
+
+@ Bit@ = /Digits%.Bit@;
+% B = /Digits%.Bit;
+
+% I = /Int/Int/Lit%.I;
+% D = /Int/Int/Lit%.D;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
+<@>% Append = /List%.Append;
+<@>% Concat = /List%.Concat;
+<@,@>% Map = /List%.Map;
+
+<@>% Length = /List/Length%.Length;
+
+<@>@ Module@ = /Fblf/Module%.Module@;
+<@>@ Instance@ = /Fblf/Module%.Instance@;
+<@>% Instantiate = /Fblf/Module%.Instantiate;
+<@,@>% InstM = /Fblf/Module%.InstM;
+<@>% AllocM = /Fblf/Module%.AllocM;
+<@>% PureM = /Fblf/Module%.PureM;
+
+@ Addr@ = /Fblf/Program%.Addr@;
+@ Program@ = /Fblf/Program%.Program@;
+@ Value@ = /Fblf/Program%.Value@;
+% Assign = /Fblf/Program%.Assign;
+% Const = /Fblf/Program%.Const;
+% Ref = /Fblf/Program%.Ref;
+% Seq = /Fblf/Program%.Seq;
+% IfElse = /Fblf/Program%.IfElse;
+% Eq = /Fblf/Program%.Eq;
+
+@ Test@ = /Fblf/Test%.Test@;
+@ TestInstance@ = /Fblf/Test%.TestInstance@;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+# Case@ --
+#   Represents an instantiated test case.
+#
+# Fields:
+#   name - the user supplied name of the test, including the test suite
+#          prefixes if any.
+#   instance - A program that runs the test, setting address 0 to '1' if the
+#              test passed, '0' otherwise.
+@ Case@ = *(String@ name, Instance@<Program@> instance);
+
+# Collect all the individual test cases from a test suite into a list of
+# instantiated test cases.
+(String@, Test@) { List@<Case@>; } Collect = (String@ prefix, Test@ test) {
+  test.?(
+    case: {
+      String@ name = Append<Char@>(prefix, test.case.name);
+      Module@<Program@> wrapped = {
+        Addr@ pass <- AllocM<Program@>(I(D|1));
+        TestInstance@ ti <- InstM<TestInstance@, Program@>(test.case.test);
+
+        PureM<Program@>(Seq([
+          Assign(pass, Const(B|0), I(D|1)),
+          ti.program,
+          IfElse(Eq(Ref(ti.result), Value@(const: ti.expected), Length<Bit@>(ti.expected)),
+            Assign(pass, Const(B|1), I(D|1)),
+            Assign(pass, Const(B|0), I(D|1)))
+        ]));
+      };
+
+      Instance@<Program@> instance = Instantiate<Program@>(wrapped, I(D|0));
+      List<Case@>([@(name, instance)]);
+    },
+    suite: {
+      String@ nprefix = Concat<Char@>(List<String@>([
+        prefix, test.suite.name, Str(Chars|'.')]));
+      Concat<Case@>(Map<Test@, List@<Case@>>(test.suite.tests, (Test@ t) {
+          Collect(nprefix, t);
+      }));
+    });
+};
+
+# Santize the characters in the given string so that it is suitable for use as
+# a C identifier.
+# TODO: Ieally this is an injective function.
+(String@) { String@; } ToCId = (String@ s) {
+  (Char@) { Char@; } FixChar = (Char@ c) {
+    IsAlNum(c).?(true: c, false: Chars.'_');
+  };
+
+  Cons<Char@>(Chars.'_', Map<Char@, Char@>(s, FixChar));
+};
+
+# Compile --
+#   Compiles an fblf test suite into a C file that runs all the tests.
+(Test@) { String@; } Compile = (Test@ t) {
+  List@<Case@> cases = Collect(Nil<Char@>, t);
+
+  String@ header = Str(Chars|'
+#include <assert.h>
+
+#include "heap.h"
+
+typedef void (*FblfProgram)(FblfHeap* heap);
+
+static void RunTest(FblfProgram program, int heapsize)
+{
+  FblfHeapWord heap[FBLF_HEAP_WORDS_FOR_BITS(heapsize)];
+  program(heap);
+  assert(FblfHeapRead(heap, 0, 1) == 1);
+}
+
+');
+
+  String@ lib = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
+    /Fblf/Compile%.Compile(ToCId(case.name), case.instance.instance);
+  }));
+
+  String@ main_header = Str(Chars|'
+int main()
+{
+');
+  String@ main = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
+    Concat<Char@>(List<String@>([
+        Str(Chars|'  RunTest(&'),
+        ToCId(case.name),
+        Str(Chars|', '),
+        /Int/Int/Show%.Show(case.instance.heap),
+        Str(Chars|');'),
+        Str([Chars.nl])
+    ]));
+  }));
+
+  String@ main_footer = Str(Chars|'
+  return 0;
+}
+');
+
+  Concat<Char@>(List<String@>([header, lib, main_header, main, main_footer]));
+};
+
+@(Compile);

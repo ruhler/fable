@@ -1,5 +1,7 @@
 Fblf:
 * Set up fblf compilation test infrastructure.
+ - Set up build files to generate and run the compiled fblf tests.
+ - Add nicer summary and error messages in compiled test runner.
 * Rewrite fblf compiler to use abstraction that lets us output one line at a
   time instead of having to build up the program all in one string?
 * Figure out how to deal with the memory issues for fblf md5.

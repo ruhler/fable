@@ -1,0 +1,26 @@
+
+% True = /Bool%.True;
+
+% Chars = /Char%.Chars;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Stdio@ = /Stdio%.Stdio@;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+@ Unit@ = /Unit%.Unit@;
+
+
+Stdio@ Main = (Get@<Maybe@<String@>> _, Put@<String@> output) {
+  Unit@ _ := output(/Fblf/Test/Compile%.Compile(/Fblf/Lib/Add/Tests%.Tests));
+  Unit@ _ := output(Str([Chars.nl]));
+  Unit@ _ := output(Str([Chars.nl]));
+  !(True);
+};
+
+Main;
