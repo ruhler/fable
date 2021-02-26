@@ -1,29 +1,21 @@
 
-# Lit@ -- 
-#  The builtin type of a list or literal expression.
-#
-# Type Parameters:
-#  T@ - The type of elements of the list.
-#  L@ - The type of a list to produce.
-#
-# Arguments:
-#  (T@, L@) { L@; } - A cons function to prepend an element to the produced list.
-#  L@ - The tail of the list.
-#
-# Example Use:
-#  Lit@<ABC@> lit1 = [A, C, B, A];
-#  Lit@<ABC@> lit2 = ABCs|ACBA;
-#  MyList@<ABC@> = lit1<MyList@>(MyCons<ABC@>, MyNil<ABC@>);
-<@,@>@ Lit@ = <@ T@, @ L@>((T@, L@){ L@; }, L@) { L@; };
+<@,@,@,@>@ Lit@ = <@ Elem@, @ List@, @ Result@, @ Letters@> {
+  *(
+    (List@) { Result@; } '|',
+    (Elem@, List@) { List@; } ',',
+    List@ '',
+    Letters@ '?'
+  );
+};
 
-# EmptyLit --
-#  A empty literal. The fble syntax does not support empty list or literal
-#  expressions. This function provides an equivalent alternative to the empty
-#  list or empty literal. It is what you should use if you have the desire
-#  to write [] or Foo|''.
-#
-# Example Use:
-#   Lit@<ABC@> lit = Empty<ABC@>;
-Lit@ Empty = <@ T@, @ L@>((T@, L@) { L@; } _, L@ l) { l; };
+<@ Elem@, @ List@, @ Result@, @ Letters@>
+((List@) { Result@; }, (Elem@, List@) { List@; }, List@, Letters@) { Lit@<Elem@, List@, Result@, Letters@>; }
+Lit = <@ Elem@, @ List@, @ Result@, Letters@>(
+  (List@) { Result@; } apply,
+  (Elem@, List@) { List@; } cons,
+  List@ empty,
+  Letters@ letters) {
+  @('|': apply, ',': cons, '': empty, '?': letters);
+};
 
-@(Lit@, Empty);
+@(Lit@, Lit);

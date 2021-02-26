@@ -51,8 +51,12 @@ List@ Nil = <@ T@> {
 # Example Use:
 #   List@<ABC@> x = List<ABC@>([A, B, A, C]);
 #   List@<ABC@> y = List<ABC@>(ABCs|ABAC);
-<@ T@>(Lit@<T@>) { List@<T@>; } List = <@ T@>(Lit@<T@> lit) {
-  lit<List@<T@>>(Cons<T@>, Nil<T@>);
+<@ T@> { Lit@<T@, List@<T@>, List@<T@>, Unit@>; } List = <@ T@> {
+  Lit<T@, List@<T@>, List@<T@>, Unit@>(
+    (List@<T@> l) { l; },
+    Cons<T@>,
+    Nil<T@>,
+    Unit);
 };
 
 # Append --

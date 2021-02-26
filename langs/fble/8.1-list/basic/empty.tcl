@@ -4,7 +4,7 @@ fble-test {
 
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ True = Bool@(true: Unit);
-  Bool@ False = Bool@(false: Unit);
+  Bool@ False = Bool@(False: Unit);
 
   (Bool@) { Bool@; } Id = (Bool@ x) { x; };
   (Bool@, Bool@) { Bool@; } Cons = (Bool@ a, Bool@ b) { True; };
@@ -12,7 +12,6 @@ fble-test {
 
   % L = @('|': Id, ',': Cons, '': Nil);
 
-  # Empty literals are allowed, and in this case do not require any letters to
-  # be provided in the spec.
-  L|''.false;
+  # Empty lists are allowed.
+  L[].false;
 }

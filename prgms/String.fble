@@ -29,6 +29,14 @@
   List<Char@>(lit);
 };
 
+Lit@<Char@, String@, String@, @<Chars>> Str = {
+  Lit<Char@, String@, String@, @<Chars>>(
+    List<Char@>.'}',
+    List<Char@>.',',
+    List<Char@>.'',
+    Chars);
+};
+
 # Concat --
 #   Concatenates a list of strings together.
 (List@<String@>) { String@; } Concat = /List%.Concat<Char@>;

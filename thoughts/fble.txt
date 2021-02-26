@@ -206,7 +206,7 @@ Fble Language Thoughts
       Of type (Letter@, Literal@) { Literal@; }.
 
   You know what's great about this?
-  * We can now have empty list literals.
+  * We can now have empty lists and empty literals.
   * We can reuse the same spec for list and normal literals.
     For example, S|'hello', S[Chars.nl].
   * We don't have to have this notion of Lit@.
@@ -216,7 +216,10 @@ Fble Language Thoughts
   The downside?
   * We need to come up with names for the fields.
   * We can't describe the 'type' of a spec as an fble type. Not that we could
-    anyway because of the letters. But we could describe some of it.
+    anyway because of the letters. But we could describe some of it. Well,
+    actually, we can as long as we parameterize it on the type of letters.
+    It's a little wordy, but the normal user shouldn't have to worry about
+    that at all.
 
   I think it's totally worth a try. What names should I give to our three
   fields?

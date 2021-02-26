@@ -1,4 +1,4 @@
-fble-test-error 14:3 {
+fble-test-error 21:3 {
   @ Unit@ = *();
   Unit@ Unit = Unit@();
 
@@ -8,8 +8,15 @@ fble-test-error 14:3 {
 ': Enum@('
 ': Unit));
 
+  % L = @(
+    '|': (Unit@ x) { x; },
+    ',': (Enum@ e, Unit@ x) { x; },
+    '': Unit@(),
+    '?': Enums
+  );
+
   # The letter X is not part of Enum@. Insert a newline into the word to make
   # sure we do proper tracking of the error location.
-  Enums|'BAC
+  L|'BAC
 CAX'; 
 }

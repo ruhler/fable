@@ -818,43 +818,42 @@ sequences of data without the overhead of punctuation between data elements.
 8.1 List
 --------
 Abstract Syntax:
-  Expr ::= list (args :: [Expr])
+  Expr ::= list (spec :: Expr) (args :: [Expr])
   
 Concrete Syntax:
-  expr ::= '['expr [',' expr [...]] ']'
+  expr ::= expr '['[expr [',' expr [...]]] ']'
 
 Examples: 
-  [x]
-  [x, f(y), z]
+  List<Int@>[]
+  List<Int@>[x]
+  List<Int@>[x, f(y), z]
 
-A list describes a sequence of one or more values of the same type. The value
-of a list is a polymorphic function that can be used to construct any type of
-list of the given elements. Assuming the values have type T@, the type of this
-function is:
+A list describes a sequence of one or more values of the same type. The spec
+describes how to combine the elements of the list into a value. This is done
+by desugaring a list expression that references fields of the supplied spec.
 
-  <@ L@>((T@, L@){ L@; }, L@){ L@; }
+For example, the list expression S[a, b, c] is conceptually desugared to:
 
-The type parameter L@ represents the type of the list that can be produced by
-calling the function. The first argument to the function is a function that
-prepends a single element to a list of type L@, and the second argument
-represents the empty list.
+  S.'|'(S.','(a, S.','(b, S.','(c, S.''))))
 
-For example, an expression such as
-    
-  [a, b, c, d]
+This references the following three fields of the struct value S:
+  '' - Represents the empty sequence. Has type L@, where L@ is the type used
+       for collecting the sequence of elements into a single value.
+  ',' - Prepends an element to a sequence. Has type (T@, L@) { L@; }, where T@
+        is the type of elements of the list and L@ is the type used for
+        collecting the sequence of elements into a single value.
+  '|' - Performs final transformation of the sequence of elements. 
+        Has type (L@) { S@; }, where S@ is the type of the overall list
+        expression, and L@ is the type used for collecting the sequence of
+        elements into a single value.
 
-would desugar to something like:
+The expression is evaluated by evaluating the spec and all arguments and
+then performing the sequence of function applications shown in the desugaring
+above. The arguments may be evaluated in any order, sequentially or in
+parallel.
 
-  <@ L@>((T@, L@){L@;} cons, L@ nil) {
-     cons(a, cons(b, cons(c, cons(d, nil))));
-  }
-
-The expression is evaluated by evaluating all arguments and creating the
-polymorphic function value with the results. The arguments may be evaluated in
-any order, sequentially or in parallel.
-
-Runtime is the runtimes of the arguments plus the runtime of creating the
-function value.
+Runtime is the runtimes of the arguments plus the runtime of performing the
+desugared function applications.
 
 8.2 Literal
 -----------
@@ -865,18 +864,19 @@ Concrete Syntax:
   expr ::= expr '|' word
 
 Example:
-  Octals|177
-  Chars|'hello there!'
+  Octal|177
+  Str|'hello there!'
 
 A literal is syntax that allows you to express a raw sequence of data without
 the overhead of punctuation between data elements.
 
-The spec used in a literal is a struct value that describes the value
+The spec used in a literal is the same as for a list expression, except with
+an addition field, named '?', that is a struct value that describes the value
 corresponding to each legal letter in the literal.
 
 For example, the struct value for an octal literal might be defined as:
 
-  Octals = @(
+  OctalLetters = @(
     0: Octal@(0: *()()),
     1: Octal@(1: *()()),
     2: Octal@(2: *()()),
@@ -893,18 +893,13 @@ literal string. For example, an expression such as:
 
 would desugar to something like:
 
-  [Octals.1, Octals.3, Octals.2]
+  Octals[Octals.'?'.1, Octals.'?'.3, Octals.'?'.2]
   
-Because this is turned into a list, it will have a polymorphic function type
-that accepts a prepend function and empty list:
-
-  <@ L@>((Octal@, L@){L@;}, L@){L@;}
-
 It is a type error if the word contains a letter for which there is no
-corresponding field in the struct value. Empty literals are not allowed.
+corresponding field in the '?' field struct value.
 
-Runtime is the runtime of the desugared literal, except that the struct value
-expr is only evaluated once.
+Runtime is the runtime of the desugared list, except that the spec is only
+evaluated once.
 
 9. Modules
 ----------
@@ -1171,8 +1166,8 @@ Expr ::=
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
 
- | list (args :: [Expr])
- | literal (expr :: Expr) (letters :: word)
+ | list (spec :: Expr) (args :: [Expr])
+ | literal (spec :: Expr) (letters :: word)
 
  | elaborate (body :: Expr)
  ;
@@ -1264,7 +1259,7 @@ expr ::=
 
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
- | '['[expr [',' expr [...]] ']'                   (* list *)
+ | expr '['[expr [',' expr [...]] ']'              (* list *)
  | expr '|' word                                   (* literal *)
 
  | '$(' expr ')'                                   (* elaborate *)

@@ -465,22 +465,22 @@ Md5 = (Addr8@ input, Addr@ hash) {
     # Extract the hash from a, b, c, d.
     # Note that the hash is output in order ABCD, least significant byte
     # first.
-    Assign(Add(hash, I(D|0)),   Ref(Add(a, I(D|24))), I(D|8)),
-    Assign(Add(hash, I(D|8)),   Ref(Add(a, I(D|16))), I(D|8)),
-    Assign(Add(hash, I(D|16)),  Ref(Add(a, I(D|8))),  I(D|8)),
-    Assign(Add(hash, I(D|24)),  Ref(Add(a, I(D|0))),  I(D|8)),
-    Assign(Add(hash, I(D|32)),  Ref(Add(b, I(D|24))), I(D|8)),
-    Assign(Add(hash, I(D|40)),  Ref(Add(b, I(D|16))), I(D|8)),
-    Assign(Add(hash, I(D|48)),  Ref(Add(b, I(D|8))),  I(D|8)),
-    Assign(Add(hash, I(D|56)),  Ref(Add(b, I(D|0))),  I(D|8)),
-    Assign(Add(hash, I(D|64)),  Ref(Add(c, I(D|24))), I(D|8)),
-    Assign(Add(hash, I(D|72)),  Ref(Add(c, I(D|16))), I(D|8)),
-    Assign(Add(hash, I(D|80)),  Ref(Add(c, I(D|8))),  I(D|8)),
-    Assign(Add(hash, I(D|88)),  Ref(Add(c, I(D|0))),  I(D|8)),
-    Assign(Add(hash, I(D|96)),  Ref(Add(d, I(D|24))), I(D|8)),
-    Assign(Add(hash, I(D|104)), Ref(Add(d, I(D|16))), I(D|8)),
-    Assign(Add(hash, I(D|112)), Ref(Add(d, I(D|8))),  I(D|8)),
-    Assign(Add(hash, I(D|120)), Ref(Add(d, I(D|0))),  I(D|8))
+    Assign(Add(hash, I(D|0)),   Ref(Add(a, I(D|24))), I|8),
+    Assign(Add(hash, I(D|8)),   Ref(Add(a, I(D|16))), I|8),
+    Assign(Add(hash, I(D|16)),  Ref(Add(a, I(D|8))),  I|8),
+    Assign(Add(hash, I(D|24)),  Ref(Add(a, I(D|0))),  I|8),
+    Assign(Add(hash, I(D|32)),  Ref(Add(b, I(D|24))), I|8),
+    Assign(Add(hash, I(D|40)),  Ref(Add(b, I(D|16))), I|8),
+    Assign(Add(hash, I(D|48)),  Ref(Add(b, I(D|8))),  I|8),
+    Assign(Add(hash, I(D|56)),  Ref(Add(b, I(D|0))),  I|8),
+    Assign(Add(hash, I(D|64)),  Ref(Add(c, I(D|24))), I|8),
+    Assign(Add(hash, I(D|72)),  Ref(Add(c, I(D|16))), I|8),
+    Assign(Add(hash, I(D|80)),  Ref(Add(c, I(D|8))),  I|8),
+    Assign(Add(hash, I(D|88)),  Ref(Add(c, I(D|0))),  I|8),
+    Assign(Add(hash, I(D|96)),  Ref(Add(d, I(D|24))), I|8),
+    Assign(Add(hash, I(D|104)), Ref(Add(d, I(D|16))), I|8),
+    Assign(Add(hash, I(D|112)), Ref(Add(d, I(D|8))),  I|8),
+    Assign(Add(hash, I(D|120)), Ref(Add(d, I(D|0))),  I|8)
   ]);
 
   PureM<Md5@>(Md5@(reset, feed, finish));
