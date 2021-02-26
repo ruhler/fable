@@ -1,7 +1,8 @@
 * Experiment with revision to fble literals.
- - Write new spec.
- - Implement new behavior.
- - Port all of the existing code...
+ - Update the abstract syntax and parser for list expressions.
+ - Update implementation of list expression to use spec
+ - Update implementation of literal expression.
+ - Port the fble library over to the new spec.
 
 Fblf:
 * Set up fblf compilation test infrastructure.
