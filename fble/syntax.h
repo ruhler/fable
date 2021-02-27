@@ -437,9 +437,10 @@ typedef struct {
 } FblePolyApplyExpr;
 
 // FbleListExpr --
-//   FBLE_LIST_EXPR (args :: [Expr])
+//   FBLE_LIST_EXPR (spec :: Expr) (args :: [Expr])
 typedef struct {
   FbleExpr _base;
+  FbleExpr* spec;
   FbleExprV args;
 } FbleListExpr;
 

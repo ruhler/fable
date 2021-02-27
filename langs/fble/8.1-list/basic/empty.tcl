@@ -4,7 +4,7 @@ fble-test {
 
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ True = Bool@(true: Unit);
-  Bool@ False = Bool@(False: Unit);
+  Bool@ False = Bool@(false: Unit);
 
   (Bool@) { Bool@; } Id = (Bool@ x) { x; };
   (Bool@, Bool@) { Bool@; } Cons = (Bool@ a, Bool@ b) { True; };

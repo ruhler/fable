@@ -4,7 +4,7 @@ fble-test {
 
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ True = Bool@(true: Unit);
-  Bool@ False = Bool@(False: Unit);
+  Bool@ False = Bool@(false: Unit);
 
   @ Enum@ = +(Unit@ A, Unit@ B);
   Enum@ A = Enum@(A: Unit);

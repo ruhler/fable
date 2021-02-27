@@ -409,10 +409,10 @@ expr:
       FbleFree(arena, $3.xs);
    }
  | expr '[' expr_s ']' {
-      assert($1 && false && "TODO: New List expression");
       FbleListExpr* list_expr = FbleAlloc(arena, FbleListExpr);
       list_expr->_base.tag = FBLE_LIST_EXPR;
       list_expr->_base.loc = FbleCopyLoc(@$);
+      list_expr->spec = $1;
       list_expr->args = $3;
       $$ = &list_expr->_base;
    }

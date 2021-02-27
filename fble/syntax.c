@@ -187,6 +187,7 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
 
     case FBLE_LIST_EXPR: {
       FbleListExpr* e = (FbleListExpr*)expr;
+      FbleFreeExpr(arena, e->spec);
       for (size_t i = 0; i < e->args.size; ++i) {
         FbleFreeExpr(arena, e->args.xs[i]);
       }

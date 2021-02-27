@@ -1252,6 +1252,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 
     case FBLE_LIST_EXPR: {
       FbleListExpr* list_expr = (FbleListExpr*)expr;
+      assert(false && "TODO: Properly handle spec");
 
       bool error = false;
       FbleType* type = NULL;
