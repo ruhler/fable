@@ -1273,7 +1273,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       size_t nil_tag;
       FbleType* apply_type = NULL;  // owned by spec_type
       FbleType* cons_type = NULL;   // owned by spec_type
-      FbleType* elem_type = NULL;   // owned by spec_type
+      FbleType* nil_type = NULL;   // owned by spec_type
       for (size_t i = 0; i < spec_type->fields.size; ++i) {
         const char* field_name = spec_type->fields.xs[i].name.name->str;
         FbleType* field_type = spec_type->fields.xs[i].type;
@@ -1285,11 +1285,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           cons_type = field_type;
         } else if (strcmp("", field_name) == 0) {
           nil_tag = i;
-          elem_type = field_type;
+          nil_type = field_type;
         }
       }
 
-      if (elem_type == NULL) {
+      if (nil_type == NULL) {
         ReportError(arena, list_expr->spec->loc,
             "'' field not found in list spec of type %t\n",
             spec.type);
@@ -1328,10 +1328,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         return TC_FAILED;
       }
 
-      if (!FbleTypesEqual(th, elem_type, cons_func_type->args.xs[0])) {
+      if (!FbleTypesEqual(th, nil_type, cons_func_type->args.xs[1])) {
         ReportError(arena, list_expr->spec->loc,
-            "expected element type %t, but first argument of ',' field of list spec has type %t\n",
-            elem_type, cons_func_type->args.xs[0]);
+            "expected type %t, but second argument of ',' field of list spec has type %t\n",
+            nil_type, cons_func_type->args.xs[1]);
         FreeTc(th, vh, spec);
         FbleReleaseType(th, &spec_type->_base);
         FbleReleaseType(th, &cons_func_type->_base);
@@ -1393,6 +1393,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       }
 
       bool error = false;
+      FbleType* elem_type = cons_func_type->args.xs[0];
       FbleValue* args[list_expr->args.size];
       for (size_t i = 0; i < list_expr->args.size; ++i) {
         Tc tc = TypeCheckExpr(th, vh, scope, list_expr->args.xs[i]);
