@@ -1,4 +1,4 @@
-fble-test-error 16:12 {
+fble-test-error 16:8 {
   @ Unit@ = *();
   Unit@ Unit = Unit@();
 
@@ -13,5 +13,5 @@ fble-test-error 16:12 {
   );
 
   # The letter X is not part of Enum@.
-  Enums|BACX; 
+  L|BACX; 
 }

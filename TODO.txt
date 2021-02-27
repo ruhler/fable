@@ -1,7 +1,7 @@
 * Experiment with revision to fble literals.
- - Update the abstract syntax and parser for list expressions.
- - Update implementation of list expression to use spec
  - Update implementation of literal expression.
+ - Update spec and impl to be more restrictive on what can be used as a spec.
+   Specify field order and don't allow additional fields for spec type.
  - Port the fble library over to the new spec.
 
 Fblf:
@@ -286,6 +286,8 @@ Exec:
 * [lang] Document and test that put ports don't retain link values.
 
 * [release] Better error messages on types that have the same name but different values?
+* [release] Quote funny names in types. For example, the field ',' should have
+  quotes in type error messages.
 * [release] Write man pages for fble and friends?
 * [release] Better error message for importing something from a module that
   is not defined in the module?
