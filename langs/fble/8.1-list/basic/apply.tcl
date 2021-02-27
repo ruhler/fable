@@ -21,7 +21,7 @@ fble-test {
     e.?(A: EnumSet@(True, s.B), B: EnumSet@(s.A, True));
   };
 
-  EnumSet@ Nil = EnumSet(False, False);
+  EnumSet@ Nil = EnumSet@(False, False);
 
   # L here represents a literal that has the value True if both A and B are
   # included in the list, False otherwise.

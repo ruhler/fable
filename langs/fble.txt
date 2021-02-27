@@ -847,6 +847,9 @@ This references the following three fields of the struct value S:
         expression, and L@ is the type used for collecting the sequence of
         elements into a single value.
 
+TODO: Is the spec allowed to have additional fields?
+TODO: Can these be in any order, or should we enforce the order of fields?
+
 The expression is evaluated by evaluating the spec and all arguments and
 then performing the sequence of function applications shown in the desugaring
 above. The arguments may be evaluated in any order, sequentially or in
@@ -873,6 +876,11 @@ the overhead of punctuation between data elements.
 The spec used in a literal is the same as for a list expression, except with
 an addition field, named '?', that is a struct value that describes the value
 corresponding to each legal letter in the literal.
+
+TODO: Is the spec allowed to have additional fields?
+TODO: Is the letters struct allowed to have non-letter fields?
+TODO: Do all the fields of the letters struct have to have a type that matches
+      the nil type in the spec?
 
 For example, the struct value for an octal literal might be defined as:
 
