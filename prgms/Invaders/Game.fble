@@ -90,7 +90,7 @@ Game@ Initial = @(
     Drawing@ d1 = Digit(Mod(s100, 10));
     Drawing@ d2 = Digit(Mod(s10, 10));
     Drawing@ d3 = Digit(Mod(s1, 10));
-    Drawings([
+    Drawings(List<Drawing@>[
       Translate(I(D|80), I(D|440), d3),
       Translate(I(D|96), I(D|440), d2),
       Translate(I(D|112), I(D|440), d1),
@@ -106,9 +106,9 @@ Game@ Initial = @(
   (Lives@ l) {
     l.?(
       0: Blank,
-      1: Drawings([l1]),
-      2: Drawings([l1, l2]),
-      3: Drawings([l1, l2, l3]));
+      1: Drawings(List<Drawing@>[l1]),
+      2: Drawings(List<Drawing@>[l1, l2]),
+      3: Drawings(List<Drawing@>[l1, l2, l3]));
   };
 };
 

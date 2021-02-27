@@ -10,10 +10,10 @@
 # TODO: Test the test runner output. Don't just test that a passing test can
 # be written and passes.
 Test@ Tests = {
-  Test@ pass = Test(Chars|pass, !(TestResult@(pass: Unit)));
-  Test@ _fail = Test(Chars|fail, !(TestResult@(fail: Str(Chars|FAILED))));
+  Test@ pass = Test(Str|pass, !(TestResult@(pass: Unit)));
+  Test@ _fail = Test(Str|fail, !(TestResult@(fail: Str|FAILED)));
 
-  TestSuite(Chars|'Test', [pass]);
+  TestSuite(Str|'Test', List<Test@>[pass]);
 };
 
 @(Tests);

@@ -62,10 +62,10 @@ TestResult@! TestChooseBestMoveNoLose = {
 };
 
 
-Test@ Tests = TestSuite(Chars|TicTacToe, [
-  Test(Chars|TestBoardStatus, TestBoardStatus),
-  Test(Chars|TestChooseBestMoveWin, TestChooseBestMoveWin),
-  Test(Chars|TestChooseBestMoveNoLose, TestChooseBestMoveNoLose)
+Test@ Tests = TestSuite(Str|TicTacToe, List<Test@>[
+  Test(Str|TestBoardStatus, TestBoardStatus),
+  Test(Str|TestChooseBestMoveWin, TestChooseBestMoveWin),
+  Test(Str|TestChooseBestMoveNoLose, TestChooseBestMoveNoLose)
 ]);
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.

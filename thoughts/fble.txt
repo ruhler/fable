@@ -277,4 +277,25 @@ Fble Language Thoughts
   deferring until we try to use the spec. But I don't know. I worry that will
   open up a slew of questions I rather not deal with, like whether the list of
   supported characters is part of the type.
+
+  As I start to use this new approach for literals, some comments:
+  * I have to be careful now not to turn functions that take a single list
+    argument into literals, because those functions wouldn't work with list
+    values as input. That's a little awkward. What's the point of being able
+    to do the final application if you can't easily reuse that for given list
+    literals?
+
+    Maybe, if we had a custom literal type, we could provide a syntax for
+    applying the final transformation to a literal given a collection as
+    input?
+
+    Or I suppose you could always do: Foo.'|'(...) for that case. That's not
+    too bad, is it?
+
+  * I kind of like that it's more obvious now what the type of elements on a
+    list is. For example, List<Int@>[a, b, c], instead of [a, b, c].
+
+  * It's maybe a little worrisome that the cost of constructing literal is not
+    obvious from the syntax. Str|'foo' looks like a constant kind of thing,
+    but buried inside is a potentially very complex function call.
   

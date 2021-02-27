@@ -30,8 +30,8 @@
 % Test = /Fblf/Test%.Test;
 % TestSuite = /Fblf/Test%.TestSuite;
 
-Test@ Tests = TestSuite(Chars|'Bitwise', [
-  Test(Chars|AndM, {
+Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
+  Test(Str|AndM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|4));
     Addr@ b <- AllocM<TestInstance@>(I(D|4));
     Addr@ z <- AllocM<TestInstance@>(I(D|4));
@@ -47,7 +47,7 @@ Test@ Tests = TestSuite(Chars|'Bitwise', [
     PureM<TestInstance@>(TestInstance@(test, I(D|0), List<Bit@>(B|001101100010)));
   }),
 
-  Test(Chars|OrM, {
+  Test(Str|OrM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|4));
     Addr@ b <- AllocM<TestInstance@>(I(D|4));
     Addr@ z <- AllocM<TestInstance@>(I(D|4));
@@ -63,7 +63,7 @@ Test@ Tests = TestSuite(Chars|'Bitwise', [
     PureM<TestInstance@>(TestInstance@(test, I(D|0), List<Bit@>(B|001101100111)));
   }),
 
-  Test(Chars|XorM, {
+  Test(Str|XorM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|4));
     Addr@ b <- AllocM<TestInstance@>(I(D|4));
     Addr@ z <- AllocM<TestInstance@>(I(D|4));
@@ -79,7 +79,7 @@ Test@ Tests = TestSuite(Chars|'Bitwise', [
     PureM<TestInstance@>(TestInstance@(test, I(D|0), List<Bit@>(B|001101100101)));
   }),
 
-  Test(Chars|NotM, {
+  Test(Str|NotM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|4));
     Addr@ z <- AllocM<TestInstance@>(I(D|4));
     Program@ not <- InstM<Program@, TestInstance@>(NotM(I(D|4), a, z));
@@ -93,7 +93,7 @@ Test@ Tests = TestSuite(Chars|'Bitwise', [
     PureM<TestInstance@>(TestInstance@(test, I(D|0), List<Bit@>(B|00111100)));
   }),
 
-  Test(Chars|ClsM, {
+  Test(Str|ClsM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|5));
     Addr@ z <- AllocM<TestInstance@>(I(D|5));
     Program@ cls <- InstM<Program@, TestInstance@>(ClsM(I(D|5), I(D|3), a, z));

@@ -15,7 +15,7 @@
 % Unit = /Unit%.Unit;
 
 Drawing@ Ship = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|10)),
     Point@(I(D|2), I(D|10)),
@@ -31,12 +31,12 @@ Drawing@ Ship = Path(
     Point@(I(D|28), I(D|12)),
     Point@(I(D|28), I(D|10)),
     Point@(I(D|30), I(D|10)),
-    Point@(I(D|30), I(D|0))]),
+    Point@(I(D|30), I(D|0))],
   Color@(green: Unit)
 );
 
 Drawing@ Base = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|24)),
     Point@(I(D|2), I(D|24)),
@@ -68,14 +68,14 @@ Drawing@ Base = Path(
     Point@(I(D|12), I(D|6)),
     Point@(I(D|12), I(D|4)),
     Point@(I(D|10), I(D|4)),
-    Point@(I(D|10), I(D|0))]),
+    Point@(I(D|10), I(D|0))],
   Color@(green: Unit)
 );
 
 Drawing@ Ground = Rect(I(D|0), I(D|0), I(D|480), I(D|4), Color@(green: Unit));
 
 Drawing@ Alien1A = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|4), I(D|0)),
     Point@(I(D|4), I(D|2)),
@@ -123,12 +123,12 @@ Drawing@ Alien1A = Path(
     Point@(I(D|10), I(D|4)),
     Point@(I(D|6), I(D|4)),
     Point@(I(D|6), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Alien1B = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|4), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|2)),
@@ -176,12 +176,12 @@ Drawing@ Alien1B = Path(
     Point@(I(D|10), I(D|4)),
     Point@(I(D|8), I(D|4)),
     Point@(I(D|8), I(D|2)),
-    Point@(I(D|4), I(D|2))]),
+    Point@(I(D|4), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Alien2A = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|10), I(D|0)),
     Point@(I(D|6), I(D|0)),
     Point@(I(D|6), I(D|2)),
@@ -237,12 +237,12 @@ Drawing@ Alien2A = Path(
     Point@(I(D|8), I(D|10)),
     Point@(I(D|6), I(D|10)),
     Point@(I(D|6), I(D|2)),
-    Point@(I(D|10), I(D|2))]),
+    Point@(I(D|10), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Alien2B = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|4), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -298,12 +298,12 @@ Drawing@ Alien2B = Path(
     Point@(I(D|8), I(D|10)),
     Point@(I(D|6), I(D|10)),
     Point@(I(D|6), I(D|2)),
-    Point@(I(D|4), I(D|2))]),
+    Point@(I(D|4), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Alien3A = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|4), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -355,12 +355,12 @@ Drawing@ Alien3A = Path(
     Point@(I(D|4), I(D|4)),
     Point@(I(D|2), I(D|4)),
     Point@(I(D|2), I(D|2)),
-    Point@(I(D|4), I(D|2))]),
+    Point@(I(D|4), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Alien3B = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|2), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|2)),
@@ -420,14 +420,14 @@ Drawing@ Alien3B = Path(
     Point@(I(D|6), I(D|4)),
     Point@(I(D|4), I(D|4)),
     Point@(I(D|4), I(D|2)),
-    Point@(I(D|2), I(D|2))]),
+    Point@(I(D|2), I(D|2))],
   Color@(white: Unit)
 );
 
 % Aliens = @(Alien1A, Alien1B, Alien2A, Alien2B, Alien3A, Alien3B);
 
 Drawing@ UFO = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|6), I(D|0)),
     Point@(I(D|6), I(D|2)),
@@ -483,12 +483,12 @@ Drawing@ UFO = Path(
     Point@(I(D|14), I(D|4)),
     Point@(I(D|10), I(D|4)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(red: Unit)
 );
 
 Drawing@ Digit0 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|2), I(D|2)),
     Point@(I(D|0), I(D|2)),
     Point@(I(D|0), I(D|12)),
@@ -516,12 +516,12 @@ Drawing@ Digit0 = Path(
     Point@(I(D|2), I(D|2)),
     Point@(I(D|8), I(D|2)),
     Point@(I(D|8), I(D|0)),
-    Point@(I(D|2), I(D|0))]),
+    Point@(I(D|2), I(D|0))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit1 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
     Point@(I(D|4), I(D|2)),
@@ -532,12 +532,12 @@ Drawing@ Digit1 = Path(
     Point@(I(D|6), I(D|14)),
     Point@(I(D|6), I(D|2)),
     Point@(I(D|8), I(D|2)),
-    Point@(I(D|8), I(D|0))]),
+    Point@(I(D|8), I(D|0))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit2 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|10), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|6)),
@@ -559,12 +559,12 @@ Drawing@ Digit2 = Path(
     Point@(I(D|8), I(D|6)),
     Point@(I(D|2), I(D|6)),
     Point@(I(D|2), I(D|2)),
-    Point@(I(D|10), I(D|2))]),
+    Point@(I(D|10), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit3 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -592,12 +592,12 @@ Drawing@ Digit3 = Path(
     Point@(I(D|8), I(D|6)),
     Point@(I(D|10), I(D|6)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit4 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|6), I(D|0)),
     Point@(I(D|6), I(D|6)),
@@ -611,12 +611,12 @@ Drawing@ Digit4 = Path(
     Point@(I(D|8), I(D|8)),
     Point@(I(D|10), I(D|8)),
     Point@(I(D|10), I(D|6)),
-    Point@(I(D|8), I(D|6))]),
+    Point@(I(D|8), I(D|6))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit5 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -636,12 +636,12 @@ Drawing@ Digit5 = Path(
     Point@(I(D|8), I(D|8)),
     Point@(I(D|10), I(D|8)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit6 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -665,12 +665,12 @@ Drawing@ Digit6 = Path(
     Point@(I(D|8), I(D|6)),
     Point@(I(D|2), I(D|6)),
     Point@(I(D|2), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit7 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|4), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|6)),
@@ -688,12 +688,12 @@ Drawing@ Digit7 = Path(
     Point@(I(D|8), I(D|8)),
     Point@(I(D|6), I(D|8)),
     Point@(I(D|6), I(D|6)),
-    Point@(I(D|4), I(D|6))]),
+    Point@(I(D|4), I(D|6))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit8 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -721,12 +721,12 @@ Drawing@ Digit8 = Path(
     Point@(I(D|8), I(D|6)),
     Point@(I(D|10), I(D|6)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ Digit9 = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -750,7 +750,7 @@ Drawing@ Digit9 = Path(
     Point@(I(D|8), I(D|12)),
     Point@(I(D|10), I(D|12)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
@@ -761,7 +761,7 @@ Drawing@ Digit9 = Path(
 );
 
 Drawing@ LetterA = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|2), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|10)),
@@ -785,7 +785,7 @@ Drawing@ LetterA = Path(
     Point@(I(D|10), I(D|0)),
     Point@(I(D|8), I(D|0)),
     Point@(I(D|8), I(D|6)),
-    Point@(I(D|2), I(D|6))]),
+    Point@(I(D|2), I(D|6))],
   Color@(white: Unit)
 );
 

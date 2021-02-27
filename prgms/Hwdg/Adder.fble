@@ -57,7 +57,7 @@ Gates@ Adder1 = {
   #   2 x C Z C c
   #   3   C Z C
   #   4     C z
-  Gates([
+  List<Gate@>[
     # Duplicate the input 'a' to cells (1, 0) and (0, 1).
     #   0 1 2 3 4
     # 0   A   b
@@ -222,7 +222,7 @@ Gates@ Adder1 = {
           Ports@<Data@>( _, _, x, _);
         }))
 
-  ]);
+  ];
 };
 
 # Adder2 - A two bit adder.

@@ -15,10 +15,10 @@
 
 # Tests --
 #  A test suite to test the /String% module and friends.
-Test@ Tests = TestSuite(Chars|String, [
-  Test(Chars|Concat, !({
-    String@ wnt = Str(Chars|'hellothere');
-    String@ got = Concat(List<String@>([Str(Chars|'hello'), Str(Chars|there)]));
+Test@ Tests = TestSuite(Str|String, List<Test@>[
+  Test(Str|Concat, !({
+    String@ wnt = Str|'hellothere';
+    String@ got = Concat(List<String@>[Str|'hello', Str|'there']);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   })),
 

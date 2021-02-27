@@ -109,7 +109,7 @@ Int@ MaxCol = I(D|60);
 };
 
 (State@) { Drawing@; } Draw = (State@ s) {
-  Drawings([
+  Drawings(List<Drawing@>[
     Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit)),
     DrawSnakeS(s.snake),
     DrawCell(s.food, Cell@(food: Unit))
@@ -127,7 +127,7 @@ State@ InitialState = {
     Dir@(right: Unit),
     Pos@(r4, c1),
     I(D|1),
-    List<Pos@>([Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)]),
+    List<Pos@>[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
     I(D|40));
 };
 

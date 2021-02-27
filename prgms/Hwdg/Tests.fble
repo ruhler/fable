@@ -47,16 +47,16 @@ Eq@<Data@> EqData = (Data@ a, Data@ b) {
 };
 
 Show@<Data@> ShowData = (Data@ x) {
-  Str(x.?(0: Chars|0, 1: Chars|1));
+  x.?(0: Str|0, 1: Str|1);
 };
 
 Show@<Coord@> ShowCoord = (Coord@ x) {
-  Concat(List<String@>([
-      Str(Chars|'('),
+  Concat(List<String@>[
+      Str|'(',
       /Int/Int/Show%.Show(x.x),
-      Str(Chars|','),
+      Str|',',
       /Int/Int/Show%.Show(x.y),
-      Str(Chars|')')]));
+      Str|')']);
 };
 
 (Cells@, Cells@) { Bool@; } EqCells = (Cells@ a, Cells@ b) {
@@ -67,8 +67,8 @@ Show@<Cells@> ShowCells = (Cells@ x) {
   /Map/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x);
 };
 
-Test@ Tests = TestSuite(Chars|Hwdg, [
-  Test(Chars|'empty no data', !({
+Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
+  Test(Str|'empty no data', !({
     Cells@ cells = EmptyCells;
     Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
@@ -79,7 +79,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
       wnt, got);
   })),
 
-  Test(Chars|'set this data to 0', !({
+  Test(Str|'set this data to 0', !({
     Cells@ cells = SetData(EmptyCells, Coord@(3, 2), Data0);
     Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data0);
@@ -90,7 +90,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
       wnt, got);
   })),
 
-  Test(Chars|'set this data to 1', !({
+  Test(Str|'set this data to 1', !({
     Cells@ cells = SetData(EmptyCells, Coord@(3, 2), Data1);
     Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data1);
@@ -101,7 +101,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
       wnt, got);
   })),
 
-  Test(Chars|'set other data', !({
+  Test(Str|'set other data', !({
     Cells@ cells = SetData(EmptyCells, Coord@(2, 3), Data1);
     Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
@@ -112,7 +112,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
       wnt, got);
   })),
 
-  Test(Chars|'clear data', !({
+  Test(Str|'clear data', !({
     Cells@ cells = ClearData(SetData(EmptyCells, Coord@(3, 2), Data1), Coord@(3, 2));
     Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
@@ -123,7 +123,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
       wnt, got);
   })),
 
-  Test(Chars|'clear other data', !({
+  Test(Str|'clear other data', !({
     Cells@ cells = ClearData(SetData(EmptyCells, Coord@(3, 2), Data1), Coord@(2, 3));
     Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data1);
@@ -134,13 +134,13 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
       wnt, got);
   })),
 
-  Test(Chars|'empty gate', !({
+  Test(Str|'empty gate', !({
     # Make sure we don't get stuck in an infinite loop if there is an empty
     # gate.
     Gate@ gate = @(
       ports: Ports@<PortSpec@>(UnusedPort, UnusedPort, UnusedPort, UnusedPort),
       function: (Ports@<Data@> unused) { unused; });
-    Gates@ gates = Gates([@(coord: Coord@(0, 0), gate: gate)]);
+    Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
     Cells@ cells = SetData(EmptyCells, Coord@(0, 0), Data1);
 
     Cells@ wnt = SetData(EmptyCells, Coord@(0, 0), Data1);
@@ -148,7 +148,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
     AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
   })),
 
-  Test(Chars|'identity ul to lr', !({
+  Test(Str|'identity ul to lr', !({
     Gate@ gate = @(
       ports: Ports@<PortSpec@>(
         InputPort, UnusedPort,
@@ -156,7 +156,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
       function: (Ports@<Data@> x) {
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
-    Gates@ gates = Gates([@(coord: Coord@(0, 0), gate: gate)]);
+    Gates@ gates = Gates(List<GateEntry>[@(coord: Coord@(0, 0), gate: gate)]);
     Cells@ cells = SetData(EmptyCells, Coord@(0, 0), Data1);
 
     Cells@ wnt = SetData(EmptyCells, Coord@(1, 1), Data1);
@@ -164,7 +164,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
     AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
   })),
 
-  Test(Chars|'identity ul to lr input blocked', !({
+  Test(Str|'identity ul to lr input blocked', !({
     Gate@ gate = @(
       ports: Ports@<PortSpec@>(
         InputPort, UnusedPort,
@@ -182,7 +182,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
     AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
   })),
 
-  Test(Chars|'identity ul to lr output blocked', !({
+  Test(Str|'identity ul to lr output blocked', !({
     Gate@ gate = @(
       ports: Ports@<PortSpec@>(
         InputPort, UnusedPort,
@@ -201,7 +201,7 @@ Test@ Tests = TestSuite(Chars|Hwdg, [
     AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
   })),
 
-  Test(Chars|'identity chain', !({
+  Test(Str|'identity chain', !({
     # Test a chain of identity gates.
     # -> -> -| .
     # .  .   v .

@@ -62,7 +62,7 @@
         Addr@ pass <- AllocM<Program@>(I(D|1));
         TestInstance@ ti <- InstM<TestInstance@, Program@>(test.case.test);
 
-        PureM<Program@>(Seq([
+        PureM<Program@>(Seq(List<Program@>[
           Assign(pass, Const(B|0), I(D|1)),
           ti.program,
           IfElse(Eq(Ref(ti.result), Value@(const: ti.expected), Length<Bit@>(ti.expected)),
@@ -76,7 +76,7 @@
     },
     suite: {
       String@ nprefix = Concat<Char@>(List<String@>([
-        prefix, test.suite.name, Str(Chars|'.')]));
+        prefix, test.suite.name, Str|'.']));
       Concat<Case@>(Map<Test@, List@<Case@>>(test.suite.tests, (Test@ t) {
           Collect(nprefix, t);
       }));
@@ -99,7 +99,7 @@
 (Test@) { String@; } Compile = (Test@ t) {
   List@<Case@> cases = Collect(Nil<Char@>, t);
 
-  String@ header = Str(Chars|'
+  String@ header = Str|'
 #include <assert.h>
 
 #include "heap.h"
@@ -113,33 +113,33 @@ static void RunTest(FblfProgram program, int heapsize)
   assert(FblfHeapRead(heap, 0, 1) == 1);
 }
 
-');
+';
 
   String@ lib = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
     /Fblf/Compile%.Compile(ToCId(case.name), case.instance.instance);
   }));
 
-  String@ main_header = Str(Chars|'
+  String@ main_header = Str|'
 int main()
 {
-');
+';
   String@ main = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
     Concat<Char@>(List<String@>([
-        Str(Chars|'  RunTest(&'),
+        Str|'  RunTest(&',
         ToCId(case.name),
-        Str(Chars|', '),
+        Str|', ',
         /Int/Int/Show%.Show(case.instance.heap),
         Str(Chars|');'),
         Str([Chars.nl])
     ]));
   }));
 
-  String@ main_footer = Str(Chars|'
+  String@ main_footer = Str|'
   return 0;
 }
-');
+';
 
-  Concat<Char@>(List<String@>([header, lib, main_header, main, main_footer]));
+  Concat<Char@>(List<String@>[header, lib, main_header, main, main_footer]);
 };
 
 @(Compile);

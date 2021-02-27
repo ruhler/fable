@@ -51,7 +51,7 @@
   hl.?(
     cons: {
       Cons<Value@>(
-        ConstHex([hl.cons.head, hl.cons.tail.cons.head]),
+        ConstHex(List<Hex@>[hl.cons.head, hl.cons.tail.cons.head]),
         ToBytes(hl.cons.tail.cons.tail));
     },
     nil: Nil<Value@>);
@@ -66,10 +66,10 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
 
     Program@ feed = SeqL(Map<Value@, Program@>(
       ToBytes(List<Hex@>(bytes)), (Value@ b) {
-        Seq([Assign(input, b, I(D|8)), md5.feed]);
+        Seq(List<Program@>[Assign(input, b, I(D|8)), md5.feed]);
     }));
 
-    Program@ test = Seq([md5.reset, feed, md5.finish]);
+    Program@ test = Seq(List<Program@>[md5.reset, feed, md5.finish]);
 
     List@<Bit@> wnt_ = /Digits/String%.HexToBits(List<Hex@>(wnt));
     PureM<TestInstance@>(TestInstance@(test, hash, wnt_));

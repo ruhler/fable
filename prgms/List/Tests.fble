@@ -48,7 +48,7 @@
   E: Elem@(E: Unit));
 
 (Elem@) { String@; } ElemShow = (Elem@ e) {
-  Str(e.?(A: Chars|A, B: Chars|B, C: Chars|C, D: Chars|D, E: Chars|E));
+  e.?(A: Str|A, B: Str|B, C: Str|C, D: Str|D, E: Str|E);
 };
 
 (Elem@, Elem@) { Bool@; } ElemLe = (Elem@ a, Elem@ b) {
@@ -75,41 +75,41 @@ AssertEquals = (List@<Elem@> a, List@<Elem@> b) {
   /Test%.AssertEquals<List@<Elem@>>(Eq, Show, a, b);
 };
 
-Test@ Tests = TestSuite(Chars|List, [
-  Test(Chars|'Eq_Same', !({
+Test@ Tests = TestSuite(Str|List, List<Test@>[
+  Test(Str|'Eq_Same', !({
     List@<Elem@> a = List<Elem@>(Elems|ABCDE);
     List@<Elem@> b = List<Elem@>(Elems|ABCDE);
 
     Eq(a, b).?(
       true: TestResult@(pass: Unit),
-      false: TestResult@(fail: Concat<Char@>(List<String@>([
-        Show(a), Str(Chars|' != '), Show(b)
-      ]))));
+      false: TestResult@(fail: Concat<Char@>(List<String@>[
+        Show(a), Str|' != ', Show(b)
+      ])));
   })),
 
-  Test(Chars|'Eq_DiffElem', !({
+  Test(Str|'Eq_DiffElem', !({
     List@<Elem@> a = List<Elem@>(Elems|ABCDE);
     List@<Elem@> b = List<Elem@>(Elems|ABDDE);
 
     Eq(a, b).?(
-      true: TestResult@(fail: Concat<Char@>(List<String@>([
-          Show(a), Str(Chars|' == '), Show(b)
-        ]))),
+      true: TestResult@(fail: Concat<Char@>(List<String@>[
+          Show(a), Str|' == ', Show(b)
+        ])),
       false: TestResult@(pass: Unit));
   })),
 
-  Test(Chars|'Eq_DiffSize', !({
+  Test(Str|'Eq_DiffSize', !({
     List@<Elem@> a = List<Elem@>(Elems|ABCDE);
     List@<Elem@> b = List<Elem@>(Elems|ABCD);
 
     Eq(a, b).?(
       true: TestResult@(fail: Concat<Char@>(List<String@>([
-          Show(a), Str(Chars|' == '), Show(b)
+          Show(a), Str|' == ', Show(b)
         ]))),
       false: TestResult@(pass: Unit));
   })),
 
-  Test(Chars|'Append', !({
+  Test(Str|'Append', !({
     List@<Elem@> a = List<Elem@>(Elems|ABC);
     List@<Elem@> b = List<Elem@>(Elems|DEE);
     List@<Elem@> wnt = List<Elem@>(Elems|ABCDEE);
@@ -117,14 +117,14 @@ Test@ Tests = TestSuite(Chars|List, [
     AssertEquals(wnt, got);
   })),
 
-  Test(Chars|'Init', !({
+  Test(Str|'Init', !({
     List@<Elem@> l = List<Elem@>(Elems|ABCDE);
     List@<Elem@> wnt = List<Elem@>(Elems|ABCD);
     List@<Elem@> got = Init<Elem@>(l);
     AssertEquals(wnt, got);
   })),
 
-  Test(Chars|'Concat', !({
+  Test(Str|'Concat', !({
     List@<List@<Elem@>> l = List<List@<Elem@>>([
       List<Elem@>(Elems|ABC),
       List<Elem@>(Elems|DEA),
@@ -136,7 +136,7 @@ Test@ Tests = TestSuite(Chars|List, [
     AssertEquals(wnt, got);
   })),
 
-  Test(Chars|'Map', !({
+  Test(Str|'Map', !({
     List@<Elem@> l = List<Elem@>(Elems|ABCDE);
     (Elem@) { Elem@; } f = (Elem@ e) {
       e.?(A: Elems.B, B: Elems.C, C: Elems.D, D: Elems.E, E: Elems.A);
@@ -147,7 +147,7 @@ Test@ Tests = TestSuite(Chars|List, [
     AssertEquals(wnt, got);
   })),
 
-  Test(Chars|'ForEach', !({
+  Test(Str|'ForEach', !({
     List@<Elem@> l = List<Elem@>(Elems|ABCDE);
     List@<Elem@> wnt = List<Elem@>(Elems|EDCBA);
     List@<Elem@> got =
@@ -157,14 +157,14 @@ Test@ Tests = TestSuite(Chars|List, [
     AssertEquals(wnt, got);
   })),
 
-  Test(Chars|'Sort', !({
+  Test(Str|'Sort', !({
     List@<Elem@> unsorted = List<Elem@>(Elems|DABEC);
     List@<Elem@> wnt = List<Elem@>(Elems|ABCDE);
     List@<Elem@> got = Sort<Elem@>(ElemLe, unsorted);
     AssertEquals(wnt, got);
   })),
 
-  Test(Chars|'Length', !({
+  Test(Str|'Length', !({
     Int@ wnt = I(D|5);
     Int@ got = Length<Elem@>(List<Elem@>(Elems|ABCDE));
     /Test%.AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, wnt, got);

@@ -50,15 +50,15 @@
 
 (Md5Hash@){String@;} Md5Hash2Str = (Md5Hash@ x) {
   Concat<Char@>(
-    List<String@>([
-      Str([Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)]),
-      Str([Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)]),
-      Str([Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)]),
-      Str([Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)]),
-      Str([Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)]),
-      Str([Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)]),
-      Str([Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)]),
-      Str([Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)])]));
+    List<String@>[
+      Str[Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)],
+      Str[Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)],
+      Str[Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)],
+      Str[Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)],
+      Str[Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)],
+      Str[Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)],
+      Str[Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)],
+      Str[Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)]]);
 };
 
 (Lit@<Hex@>) { Md5Hash@; } Str2Md5Hash = (Lit@<Hex@> lit) {
@@ -137,46 +137,46 @@
   });
 };
 
-Test@ Tests = TestSuite(Chars|Md5, [
+Test@ Tests = TestSuite(Str|Md5, List<Test@>[
   # ""
   TestStr(
-    Chars|empty,
+    Str|empty,
     Hex|D41D8CD98F00B204E9800998ECF8427E,
     Empty<Hex@>),
 
   # "a"
   TestStr(
-    Chars|a,
+    Str|a,
     Hex|0CC175B9C0F1B6A831C399E269772661,
     Hex|61),
 
   # "abc"
   TestStr(
-    Chars|abc,
+    Str|abc,
     Hex|900150983CD24FB0D6963F7D28E17F72,
     Hex|616263),
 
   # "message digest"
   TestStr(
-    Chars|message,
+    Str|message,
     Hex|F96B697D7CB7938D525A2F31AAF161D0,
     Hex|6D65737361676520646967657374),
 
   # "abcdefghijklmnopqrstuvwxyz"
   TestStr(
-    Chars|a_to_z,
+    Str|a_to_z,
     Hex|C3FCD3D76192E4007DFB496CCA67E13B,
     Hex|6162636465666768696A6B6C6D6E6F707172737475767778797A),
 
   # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
   TestStr(
-    Chars|A_to_9,
+    Str|A_to_9,
     Hex|D174AB98D277D9F5A5611C2C9F419D9F,
     Hex|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
 
   # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
   TestStr(
-    Chars|1_to_0,
+    Str|1_to_0,
     Hex|57EDF4A22BE3C955AC49DA2E2107B67A,
     Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);

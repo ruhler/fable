@@ -65,17 +65,17 @@ AssertEq = (Result@ a, Result@ b) {
   AssertEquals<Result@>(EqResult, ShowResult, a, b);
 };
 
-Test@ Tests = TestSuite(Chars|Sat, [
-  Test(Chars|Sat, !({
-    Formula@ f = List<Clause@>([
-      List<Var@>([Var@(X, True)])
-    ]);
+Test@ Tests = TestSuite(Str|Sat, List<Test@>[
+  Test(Str|Sat, !({
+    Formula@ f = List<Clause@>[
+      List<Var@>[Var@(X, True)]
+    ];
     Result@ want = Result@(sat: List<Var@>([Var@(X, True)]));
     Result@ got = Solve(f, Nothing<Int@>);
     AssertEq(want, got);
   })),
 
-  Test(Chars|Unsat, !({
+  Test(Str|Unsat, !({
     Formula@ f = List<Clause@>([
       List<Var@>([Var@(X, True)]),
       List<Var@>([Var@(X, False)])
@@ -85,7 +85,7 @@ Test@ Tests = TestSuite(Chars|Sat, [
     AssertEq(want, got);
   })),
 
-  Test(Chars|Timeout, !({
+  Test(Str|Timeout, !({
     # /Sat/Aim% is a real problem. There's no way we should be able to solve
     # it in 10 ticks.
     Result@ want = Result@(timeout: Unit);

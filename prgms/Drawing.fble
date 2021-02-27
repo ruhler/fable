@@ -52,11 +52,11 @@ Drawing@ Blank = Drawing@(blank: Unit);
 Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
   Drawing@(path: @(
     points:
-      List<Point@>([
+      List<Point@>[
         Point@(x, y),
         Point@(Add(x, w), y),
         Point@(Add(x, w), Add(y, h)),
-        Point@(x, Add(y, h))]),
+        Point@(x, Add(y, h))],
     color: color));
 };
 

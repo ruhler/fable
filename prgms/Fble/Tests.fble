@@ -1,6 +1,8 @@
 
 % Chars = /Char%.Chars;
 
+<@>% List = /List%.List;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
 <@>@ Get@ = /Process%.Get@;
@@ -9,6 +11,7 @@
 @ Stdio@ = /Stdio%.Stdio@;
 
 @ String@ = /String%.String@;
+% Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 % TestSuite = /Test%.TestSuite;
@@ -23,7 +26,7 @@
 % _ = /Snake%;
 % _ = /Stdio/Cat%;
 
-Test@ AllTests = TestSuite(Chars|Fble, [
+Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Bool/Tests%.Tests,
   /Digits/Tests%.Tests,
   /GameOfLife/Tests%.Tests,

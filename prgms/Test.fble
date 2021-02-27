@@ -64,11 +64,9 @@ TestSuite = (CharLit@ name, Lit@<Test@> tests) {
 AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ actual) {
   eq(expected, actual).?(
     true: TestResult@(pass: Unit),
-    false: TestResult@(fail: Concat<Char@>(List<String@>([
-          Str(Chars|'expected: '),
-          show(expected),
-          Str(Chars|', but got: '),
-          show(actual)]))));
+    false: TestResult@(fail: Concat<Char@>(List<String@>[
+      Str|'expected: ', show(expected),
+      Str|', but got: ', show(actual)])));
 };
 
 # Print a string to the given output stream.
@@ -78,7 +76,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 
 # Print a string and newline to the given output stream.
 (Put@<String@>, String@) { Unit@!; } PrintLn = (Put@<String@> out, String@ str) {
-  out(Append<Char@>(str, Str([Chars.nl])));
+  out(Append<Char@>(str, Str[Chars.nl]));
 };
 
 # Returns True if the test passes, false otherwise.
@@ -102,8 +100,8 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
         !(Status@(Inc(status.total), nfailed));
       },
       suite: {
-        String@ nprefix = Concat<Char@>(List<String@>([
-            prefix, test.suite.name, Str(Chars|'.')]));
+        String@ nprefix = Concat<Char@>(List<String@>[
+            prefix, test.suite.name, Str|'.']);
         ProcessEach<Test@, Status@>(test.suite.tests, status,
           (Test@ t, Status@ s) {
             Run(t, nprefix, s);
@@ -116,22 +114,19 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 
   Unit@ _ := PrintLn(out, Nil<Char@>);
   Unit@ _ := ProcessEach<Failure@, Unit@>(failures, Unit, (Failure@ f, Unit@ _) {
-    PrintLn(out, Concat<Char@>(List<String@>([f.name, Str(Chars|': FAILED: '), f.msg])));
+    PrintLn(out, Concat<Char@>(List<String@>[f.name, Str|': FAILED: ', f.msg]));
   });
   Unit@ _ := PrintLn(out, Nil<Char@>);
 
   Int@ num_total = status.total;
   Int@ num_failed = Length<Failure@>(failures);
   Int@ num_passed = Sub(num_total, num_failed);
-  Unit@ _ := PrintLn(out, Concat<Char@>(List<String@>([
-    Str(Chars|'Test Summary: '),
-    /Int/Int/Show%.Show(num_passed),
-    Str(Chars|' passed, '),
-    /Int/Int/Show%.Show(num_failed),
-    Str(Chars|' failed, '),
-    /Int/Int/Show%.Show(num_total),
-    Str(Chars|' total')
-  ])));
+  Unit@ _ := PrintLn(out, Concat<Char@>(List<String@>[
+    Str|'Test Summary: ',
+    /Int/Int/Show%.Show(num_passed), Str|' passed, ',
+    /Int/Int/Show%.Show(num_failed), Str|' failed, ',
+    /Int/Int/Show%.Show(num_total), Str|' total'
+  ]));
 
   # TODO: Why do we need this extra output?
   Unit@ _ := PrintLn(out, Nil<Char@>);
@@ -156,15 +151,13 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
           fail: {
             Unit@ _ := PrintLn(
               out,
-              Concat<Char@>(List<String@>([
-                Str(Chars|': FAILED: '),
-                tr.fail])));
+              Concat<Char@>(List<String@>[Str|': FAILED: ', tr.fail]));
             !(False);
           });
       },
       suite: {
-        String@ nprefix = Concat<Char@>(List<String@>([
-            prefix, test.suite.name, Str(Chars|'.')]));
+        String@ nprefix = Concat<Char@>(List<String@>[
+            prefix, test.suite.name, Str|'.']);
         ProcessEach<Test@, Bool@>(test.suite.tests, passing,
           (Test@ test, Bool@ passing) {
             Run(test, nprefix, passing);

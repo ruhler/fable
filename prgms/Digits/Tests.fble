@@ -11,27 +11,27 @@
 % Bit = /Digits%.Bit;
 % EqBit = /Digits/Eq%.EqBit;
 
-Test@ Tests = TestSuite(Chars|Digits, [
-  TestSuite(Chars|EqBit, [
-    Test(Chars|00, !({
+Test@ Tests = TestSuite(Str|Digits, List<Test@>[
+  TestSuite(Str|EqBit, List<Test@>[
+    Test(Str|00, !({
       Bool@ wnt = True;
       Bool@ got = EqBit(Bit.0, Bit.0);
       AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
     })),
 
-    Test(Chars|01, !({
+    Test(Str|01, !({
       Bool@ wnt = False;
       Bool@ got = EqBit(Bit.0, Bit.1);
       AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
     })),
 
-    Test(Chars|10, !({
+    Test(Str|10, !({
       Bool@ wnt = False;
       Bool@ got = EqBit(Bit.1, Bit.0);
       AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
     })),
 
-    Test(Chars|11, !({
+    Test(Str|11, !({
       Bool@ wnt = True;
       Bool@ got = EqBit(Bit.1, Bit.1);
       AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);

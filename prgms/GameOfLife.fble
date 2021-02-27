@@ -93,7 +93,7 @@ Structured@<Coord@> CoordS = {
              nothing: Status@(True, Count@(0: Unit)));
       });
 
-      List@<Coord@> neighbors = List<Coord@>([
+      List@<Coord@> neighbors = List<Coord@>[
         Coord@(Dec(coord.row), Dec(coord.col)),
         Coord@(Dec(coord.row),     coord.col ),
         Coord@(Dec(coord.row), Inc(coord.col)),
@@ -101,7 +101,7 @@ Structured@<Coord@> CoordS = {
         Coord@(    coord.row , Inc(coord.col)),
         Coord@(Inc(coord.row), Dec(coord.col)),
         Coord@(Inc(coord.row),     coord.col ),
-        Coord@(Inc(coord.row), Inc(coord.col))]);
+        Coord@(Inc(coord.row), Inc(coord.col))];
 
       ForEach<Coord@, Cand@>(neighbors, cand_alive, (Coord@ n, Cand@ c) {
         C.InsertWith(c, n, (Maybe@<Status@> ms) {

@@ -40,39 +40,39 @@ Show@<Maybe@<AB@>> Show = /Maybe/Show%.Show<AB@>(ShowAB);
 
 # Tests --
 #  A test suite to test the /Maybe% module and friends.
-Test@ Tests = TestSuite(Chars|Maybe, [
-  Test(Chars|Eq_JustEq, !({
+Test@ Tests = TestSuite(Str|Maybe, List<Test@>[
+  Test(Str|Eq_JustEq, !({
     Bool@ wnt = True;
     Bool@ got = Eq(Just<AB@>(A), Just<AB@>(A));
     AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Eq_JustNe, !({
+  Test(Str|Eq_JustNe, !({
     Bool@ wnt = False;
     Bool@ got = Eq(Just<AB@>(A), Just<AB@>(B));
     AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Eq_JustNothing, !({
+  Test(Str|Eq_JustNothing, !({
     Bool@ wnt = False;
     Bool@ got = Eq(Just<AB@>(A), Nothing<AB@>);
     AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Eq_Nothing, !({
+  Test(Str|Eq_Nothing, !({
     Bool@ wnt = True;
     Bool@ got = Eq(Nothing<AB@>, Nothing<AB@>);
     AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Show_Just, !({
-    String@ wnt = Str(Chars|'Just:b');
+  Test(Str|Show_Just, !({
+    String@ wnt = Str|'Just:b';
     String@ got = Show(Just<AB@>(B));
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Show_Nothing, !({
-    String@ wnt = Str(Chars|'Nothing');
+  Test(Str|Show_Nothing, !({
+    String@ wnt = Str|'Nothing';
     String@ got = Show(Nothing<AB@>);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   }))

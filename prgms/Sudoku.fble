@@ -232,7 +232,7 @@ XS@ EmptyXS = XS@(empty: Unit);
   (Symbol@) { CellId@; } boxCellOf = (Symbol@ pos) { CellOfPos(box, pos); };
   XS@ xBox = Group(isThisPos, boxCellOf);
 
-  CatXS([xCell, xRow, xCol, xBox]);
+  CatXS(List<XS@>[xCell, xRow, xCol, xBox]);
 };
 
 # A board and additional constraints.
@@ -280,7 +280,7 @@ XS@ EmptyXS = XS@(empty: Unit);
         just: Assign(CellOfPos(box, single.just), x.symbol),
         nothing: EmptyXS);
 
-      BoardX@(nboard, CatXS([xCell, xRow, xCol, xBox]));
+      BoardX@(nboard, CatXS(List<XS@>[xCell, xRow, xCol, xBox]));
     },
     false: BoardX@(board, EmptyXS));
 };

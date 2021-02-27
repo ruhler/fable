@@ -28,8 +28,8 @@
 
 <@>% List = /List%.List;
 
-Test@ Tests = TestSuite(Chars|'Add', [
-  Test(Chars|AddM, {
+Test@ Tests = TestSuite(Str|'Add', List<Test@>[
+  Test(Str|AddM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|5));
     Addr@ b <- AllocM<TestInstance@>(I(D|5));
     Addr@ z <- AllocM<TestInstance@>(I(D|5));
@@ -48,21 +48,21 @@ Test@ Tests = TestSuite(Chars|'Add', [
     PureM<TestInstance@>(TestInstance@(test, a, List<Bit@>(B|001011011111011)));
   }),
 
-  Test(Chars|IncM, {
+  Test(Str|IncM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|5));
     Program@ inc <- InstM<Program@, TestInstance@>(IncM(I(D|5), a));
     Program@ test = Seq([Assign(a, Const(B|10011), I(D|5)), inc]);
     PureM<TestInstance@>(TestInstance@(test, a, List<Bit@>(B|10100)));
   }),
 
-  Test(Chars|'IncM Overflow', {
+  Test(Str|'IncM Overflow', {
     Addr@ a <- AllocM<TestInstance@>(I(D|5));
     Program@ inc <- InstM<Program@, TestInstance@>(IncM(I(D|5), a));
     Program@ test = Seq([Assign(a, Const(B|11111), I(D|5)), inc]);
     PureM<TestInstance@>(TestInstance@(test, a, List<Bit@>(B|00000)));
   }),
 
-  Test(Chars|DecM, {
+  Test(Str|DecM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|5));
     Program@ dec <- InstM<Program@, TestInstance@>(DecM(I(D|5), a));
     Program@ test = Seq([Assign(a, Const(B|10100), I(D|5)), dec]);

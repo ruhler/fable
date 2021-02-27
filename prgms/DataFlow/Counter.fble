@@ -67,14 +67,14 @@ Count = (In@<Unit@> in, Out@<Count@> out) {
   End@<Unit@> ~ on2_get, on2_put;
   End@<Unit@> ~ on3_get, on3_put;
 
-  Compose([
+  Compose(List<DataFlow@>[
     Once<Count@>(Count@(3: Unit), prev_put),
     Forward<Count@>(in, prev_get, sel_put),
     Select(sel_get, on1_put, on2_put, on3_put),
     Const<Count@>(Count@(2: Unit), on1_get, next_put),
     Const<Count@>(Count@(3: Unit), on2_get, next_put),
     Const<Count@>(Count@(1: Unit), on3_get, next_put),
-    Copy<Count@>(next_get, [prev_put, out])]);
+    Copy<Count@>(next_get, List<Out@<Count@>>[prev_put, out])]);
 };
 
 (Get@<End@<Unit@>>, Put@<End@<Count@>>) { DataFlow@; }

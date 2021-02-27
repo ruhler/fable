@@ -62,36 +62,36 @@
 
 # Tests --
 #  A test suite to test the /Bool% module.
-Test@ Tests = TestSuite(Chars|Bool, [
-  T(Chars|True, !(True)),
-  F(Chars|False, !(False)),
+Test@ Tests = TestSuite(Str|Bool, List<Test@>[
+  T(Str|True, !(True)),
+  F(Str|False, !(False)),
 
-  F(Chars|Not_True, !(Not(True))),
-  T(Chars|Not_False, !(Not(False))),
+  F(Str|Not_True, !(Not(True))),
+  T(Str|Not_False, !(Not(False))),
 
-  T(Chars|And_True_True, !(And(True, True))),
-  F(Chars|And_True_False, !(And(True, False))),
-  F(Chars|And_False_True, !(And(False, True))),
-  F(Chars|And_False_False, !(And(False, False))),
+  T(Str|And_True_True, !(And(True, True))),
+  F(Str|And_True_False, !(And(True, False))),
+  F(Str|And_False_True, !(And(False, True))),
+  F(Str|And_False_False, !(And(False, False))),
 
-  T(Chars|Or_True_True, !(Or(True, True))),
-  T(Chars|Or_True_False, !(Or(True, False))),
-  T(Chars|Or_False_True, !(Or(False, True))),
-  F(Chars|Or_False_False, !(Or(False, False))),
+  T(Str|Or_True_True, !(Or(True, True))),
+  T(Str|Or_True_False, !(Or(True, False))),
+  T(Str|Or_False_True, !(Or(False, True))),
+  F(Str|Or_False_False, !(Or(False, False))),
 
-  T(Chars|Eq_True_True, !(Eq(True, True))),
-  F(Chars|Eq_True_False, !(Eq(True, False))),
-  F(Chars|Eq_False_True, !(Eq(False, True))),
-  T(Chars|Eq_False_False, !(Eq(False, False))),
+  T(Str|Eq_True_True, !(Eq(True, True))),
+  F(Str|Eq_True_False, !(Eq(True, False))),
+  F(Str|Eq_False_True, !(Eq(False, True))),
+  T(Str|Eq_False_False, !(Eq(False, False))),
 
-  Test(Chars|Show_True, !({
-    String@ wnt = Str(Chars|'True');
+  Test(Str|Show_True, !({
+    String@ wnt = Str|'True';
     String@ got = /Bool/Show%.Show(True);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Show_False, !({
-    String@ wnt = Str(Chars|'False');
+  Test(Str|Show_False, !({
+    String@ wnt = Str|'False';
     String@ got = /Bool/Show%.Show(False);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   }))

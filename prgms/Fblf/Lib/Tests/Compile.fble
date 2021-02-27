@@ -18,8 +18,8 @@
 
 Stdio@ Main = (Get@<Maybe@<String@>> _, Put@<String@> output) {
   Unit@ _ := output(/Fblf/Test/Compile%.Compile(/Fblf/Lib/Add/Tests%.Tests));
-  Unit@ _ := output(Str([Chars.nl]));
-  Unit@ _ := output(Str([Chars.nl]));
+  Unit@ _ := output(Str[Chars.nl]);
+  Unit@ _ := output(Str[Chars.nl]);
   !(True);
 };
 

@@ -50,7 +50,7 @@ Int@ YMax = I(D|50);
 Int@ Width = Sub(XMax, XMin);
 Int@ Height = Sub(YMax, YMin);
 
-World@ acorn = World([
+World@ acorn = World(List<Coord@>[
   C(I(D|0), I(D|1)),
 
   C(I(D|1), I(D|3)),

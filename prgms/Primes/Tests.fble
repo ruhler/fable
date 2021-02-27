@@ -32,8 +32,8 @@
   }));
 };
 
-Test@ NthPrime_1_10 = TEq(Chars|'NthPrime_1_10', Lit2(3, 1), NthPrime(1, IntS@(p: 10)));
+Test@ NthPrime_1_10 = TEq(Str|'NthPrime_1_10', Lit2(3, 1), NthPrime(1, IntS@(p: 10)));
 
-Test@ Tests = TestSuite(Chars|Primes, [NthPrime_1_10]);
+Test@ Tests = TestSuite(Str|Primes, List<Test@>[NthPrime_1_10]);
 
 @(Tests);

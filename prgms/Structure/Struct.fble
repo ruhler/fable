@@ -42,14 +42,14 @@
 #   Creates a Structure@ representing a struct value.
 #
 # Inputs:
-#   lit - The list of fields in the structure.
+#   list - The list of fields in the structure.
 #
 # Returns:
 #   A balanced structure representing the structure of fields.
 #
 # Example Use:
-#   Struct([field_1, field_2, field_3])
-(Lit@<Structure@>) { Structure@; } Struct = (Lit@<Structure@> lit) {
+#   Struct(List<Structure@>[field_1, field_2, field_3])
+(List@<Structure@>) { Structure@; } Struct = (List@<Structure@> lit) {
   Build(List<Structure@>(lit));
 };
 

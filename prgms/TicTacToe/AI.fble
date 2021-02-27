@@ -40,11 +40,11 @@ Structured@<Square@> SquareS = {
 Structured@<Board@> BoardS = {
   (Square@, Square@, Square@) { Structure@; }
   RowS = (Square@ a, Square@ b, Square@ c) {
-    Struct([SquareS(a), SquareS(b), SquareS(c)]);
+    Struct(List<Structure@>[SquareS(a), SquareS(b), SquareS(c)]);
   };
 
   (Board@ b) {
-    Struct([
+    Struct(List<Structure@>[
       RowS(b.ul, b.uc, b.ur),
       RowS(b.ml, b.mc, b.mr),
       RowS(b.ll, b.lc, b.lr)
@@ -129,7 +129,7 @@ AllSymmetries = (BoardPositionResult@ bpr) {
   BoardPositionResult@ f1 = RotateBPR(f0);
   BoardPositionResult@ f2 = RotateBPR(f1);
   BoardPositionResult@ f3 = RotateBPR(f2);
-  List<BoardPositionResult@>([b0, b1, b2, b3, f0, f1, f2, f3]);
+  List<BoardPositionResult@>[b0, b1, b2, b3, f0, f1, f2, f3];
 };
 
 (PositionResult@, PositionResult@) { PositionResult@; }

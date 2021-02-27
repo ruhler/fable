@@ -129,7 +129,7 @@ Exec:
  - Use AssertEquals for more of the tests.
  - Properly test the test infra.
 
-* Figure out why we need an extra print in RunTest.
+* Figure out why we need an extra print in RunTest and other Stdio apps.
  Does the program end before we have a chance to put all the output?
 
 * Figure out memory leak when 3 Bool Or tests were set to failing.
