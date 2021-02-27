@@ -815,6 +815,36 @@ We introduce syntax for describing lists and literals to make it less tedious
 to write code involving sequences of elements of the same type and raw
 sequences of data without the overhead of punctuation between data elements.
 
+A literal describes a sequence of zero or more values of the same type that
+are combined together. The syntax for literals includes an expression,
+called the spec, that specifies how the elements of a literal are combined
+together into a value. Conceptually, each element of the literal is collected
+together before applying a final transformation on the collection of elements
+to produce the literal value.
+
+For the purposes of discussion, let E@ refer to the type of elements, let C@
+refer to the type of collection of elements, and let V@ refer to the type of
+produced literal value. The spec for a literal is a struct value that must
+consist of exactly the following four fields in order:
+
+  1. name: '|', type: (C@) { V@ }
+    A function that performs the final transformation from collection of
+    elements to literal value.
+
+  2. name: ',', type: (E@, C@) { C@; }
+    A function that collects elements together by prepending an element to a
+    collection to form a new collection.
+
+  3. name: '', type: C@
+    Represents an empty collection.
+
+  4. name: '?', type: a struct value with fields corresponding to letters.
+    Represents a mapping from individual letters to elements. See section 8.2
+    for more details.
+
+There are two variations of literals, list expressions and literal
+expressions.
+  
 8.1 List
 --------
 Abstract Syntax:
@@ -828,35 +858,21 @@ Examples:
   List<Int@>[x]
   List<Int@>[x, f(y), z]
 
-A list describes a sequence of one or more values of the same type. The spec
-describes how to combine the elements of the list into a value. This is done
-by desugaring a list expression that references fields of the supplied spec.
-
-For example, the list expression S[a, b, c] is conceptually desugared to:
+A list describes a sequence of one or more values of the same type.
+Conceptually, the list expression S[a, b, c] is desugared to:
 
   S.'|'(S.','(a, S.','(b, S.','(c, S.''))))
 
-This references the following three fields of the struct value S:
-  '' - Represents the empty sequence. Has type L@, where L@ is the type used
-       for collecting the sequence of elements into a single value.
-  ',' - Prepends an element to a sequence. Has type (T@, L@) { L@; }, where T@
-        is the type of elements of the list and L@ is the type used for
-        collecting the sequence of elements into a single value.
-  '|' - Performs final transformation of the sequence of elements. 
-        Has type (L@) { S@; }, where S@ is the type of the overall list
-        expression, and L@ is the type used for collecting the sequence of
-        elements into a single value.
-
-TODO: Is the spec allowed to have additional fields?
-TODO: Can these be in any order, or should we enforce the order of fields?
+The '?' field of the spec, though unused for list expressions, is still
+required for consistency with literal expressions.
 
 The expression is evaluated by evaluating the spec and all arguments and
 then performing the sequence of function applications shown in the desugaring
-above. The arguments may be evaluated in any order, sequentially or in
-parallel.
+above. The spec is only evaluated once. The arguments may be evaluated in any
+order, sequentially or in parallel.
 
-Runtime is the runtimes of the arguments plus the runtime of performing the
-desugared function applications.
+Runtime is the runtime of evaluating the spec and each of the arguments plus
+the runtime of performing the desugared function applications.
 
 8.2 Literal
 -----------
@@ -873,16 +889,9 @@ Example:
 A literal is syntax that allows you to express a raw sequence of data without
 the overhead of punctuation between data elements.
 
-The spec used in a literal is the same as for a list expression, except with
-an addition field, named '?', that is a struct value that describes the value
-corresponding to each legal letter in the literal.
-
-TODO: Is the spec allowed to have additional fields?
-TODO: Is the letters struct allowed to have non-letter fields?
-TODO: Do all the fields of the letters struct have to have a type that matches
-      the nil type in the spec?
-
-For example, the struct value for an octal literal might be defined as:
+The '?' field of the spec describes the value corresponding to each legal
+letter in the literal. For example, it's value for an octal literal might look
+like:
 
   OctalLetters = @(
     0: Octal@(0: *()()),
@@ -894,17 +903,18 @@ For example, the struct value for an octal literal might be defined as:
     6: Octal@(6: *()()),
     7: Octal@(7: *()()));
 
-The value of a literal is a list of values described by the struct value and
-literal string. For example, an expression such as:
+Literal expressions conceptually desugar into list expressions. For example,
+the literal expression S|abc conceptually desugars into list expression:
 
-  Octals|132
+  S[S.?.a, S.?.b, S.?.c]
 
-would desugar to something like:
-
-  Octals[Octals.'?'.1, Octals.'?'.3, Octals.'?'.2]
-  
 It is a type error if the word contains a letter for which there is no
-corresponding field in the '?' field struct value.
+corresponding field in the '?' field of the spec, or if the type of the type
+of the letter's value does not match the expected element type of the spec.
+
+The '?' field of the spec containing the mapping from letters to values has no
+restriction on the order of fields and may contain additional fields of any
+type not used in the literal expression.
 
 Runtime is the runtime of the desugared list, except that the spec is only
 evaluated once.

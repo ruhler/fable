@@ -10,9 +10,8 @@ fble-test {
   (Bool@, Bool@) { Bool@; } Cons = (Bool@ a, Bool@ b) { True; };
   Bool@ Nil = False;
 
-  % L = @('|': Id, ',': Cons, '': Nil);
+  % L = @('|': Id, ',': Cons, '': Nil, '?': Unit);
 
-  # Empty literals are allowed, and in this case do not require any letters to
-  # be provided in the spec.
+  # Empty literals are allowed.
   L|''.false;
 }

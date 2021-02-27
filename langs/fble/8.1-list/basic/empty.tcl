@@ -10,7 +10,7 @@ fble-test {
   (Bool@, Bool@) { Bool@; } Cons = (Bool@ a, Bool@ b) { True; };
   Bool@ Nil = False;
 
-  % L = @('|': Id, ',': Cons, '': Nil);
+  % L = @('|': Id, ',': Cons, '': Nil, '?': Unit);
 
   # Empty lists are allowed.
   L[].false;

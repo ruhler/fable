@@ -25,7 +25,7 @@ fble-test {
 
   # L here represents a literal that has the value True if both A and B are
   # included in the list, False otherwise.
-  % L = @('|': HasBoth, ',': Cons, '': Nil);
+  % L = @('|': HasBoth, ',': Cons, '': Nil, '?': Unit);
 
   Unit@ _ = L[A, A, A].false;
   Unit@ _ = L[A, B, A].true;
