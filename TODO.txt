@@ -1,7 +1,5 @@
 * Experiment with revision to fble literals.
- - Update spec and tests and impl to be more restrictive on what can be used
-   as a spec.
-   Specify field order and don't allow additional fields for spec type.
+ - Add spec tests to expand coverage of literal compilation code.
  - Port the fble library over to the new spec.
 
 Fblf:

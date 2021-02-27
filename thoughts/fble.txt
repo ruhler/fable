@@ -271,4 +271,10 @@ Fble Language Thoughts
     position of the fields in spec types. But I think having explicit names is
     better, to force a little more consistency. And these names are not so
     unreasonable I don't think.
+
+  I do wonder if we shouldn't have a special type for literal specs. That way
+  we can enforce these restrictions when we create the spec, instead of
+  deferring until we try to use the spec. But I don't know. I worry that will
+  open up a slew of questions I rather not deal with, like whether the list of
+  supported characters is part of the type.
   

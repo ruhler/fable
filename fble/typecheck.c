@@ -1155,44 +1155,34 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         return TC_FAILED;
       }
 
-      size_t apply_tag;
-      size_t cons_tag;
-      size_t nil_tag;
-      size_t letters_tag;
-      FbleType* apply_type = NULL;    // owned by spec_type
-      FbleType* cons_type = NULL;     // owned by spec_type
-      FbleType* nil_type = NULL;      // owned by spec_type
-      FbleType* letters_type = NULL;  // owned by spec_type
-      for (size_t i = 0; i < spec_type->fields.size; ++i) {
-        const char* field_name = spec_type->fields.xs[i].name.name->str;
-        FbleType* field_type = spec_type->fields.xs[i].type;
-        if (strcmp("|", field_name) == 0) {
-          apply_tag = i;
-          apply_type = field_type;
-        } else if (strcmp(",", field_name) == 0) {
-          cons_tag = i;
-          cons_type = field_type;
-        } else if (strcmp("", field_name) == 0) {
-          nil_tag = i;
-          nil_type = field_type;
-        } else if (strcmp("?", field_name) == 0) {
-          letters_tag = i;
-          letters_type = field_type;
+      if (spec_type->fields.size != 4) {
+        ReportError(arena, spec_expr->loc, "expected spec to have exactly four fields, but %t has %i\n", spec, spec_type->fields.size);
+        FreeTc(th, vh, spec);
+        FbleReleaseType(th, &spec_type->_base);
+        return TC_FAILED;
+      }
+
+      size_t apply_tag = 0;
+      size_t cons_tag = 1;
+      size_t nil_tag = 2;
+      size_t letters_tag = 3;
+
+      FbleType* apply_type = spec_type->fields.xs[apply_tag].type;
+      FbleType* cons_type = spec_type->fields.xs[cons_tag].type;
+      FbleType* nil_type = spec_type->fields.xs[nil_tag].type;
+      FbleType* letters_type = spec_type->fields.xs[letters_tag].type;
+
+      const char* expected_field_names[] = {"|", ",", "", "?"};
+      const char* which_field_names[] = {"first", "second", "third", "fourth"};
+      for (size_t i = 0; i < 4; ++i) {
+        if (strcmp(expected_field_names[i], spec_type->fields.xs[i].name.name->str) != 0) {
+          ReportError(arena, spec_expr->loc, "expected %s field to be named '%s', but found '%n' in spec type %t\n",
+              which_field_names[i], expected_field_names[i],
+              spec_type->fields.xs[i].name, spec.type);
+          FreeTc(th, vh, spec);
+          FbleReleaseType(th, &spec_type->_base);
+          return TC_FAILED;
         }
-      }
-
-      if (nil_type == NULL) {
-        ReportError(arena, spec_expr->loc, "'' field not found in spec of type %t\n", spec.type);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        return TC_FAILED;
-      }
-
-      if (cons_type == NULL) {
-        ReportError(arena, spec_expr->loc, "',' field not found in spec of type %t\n", spec.type);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        return TC_FAILED;
       }
 
       FbleFuncType* cons_func_type = (FbleFuncType*)FbleNormalType(th, cons_type);
@@ -1229,14 +1219,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         return TC_FAILED;
       }
 
-      if (apply_type == NULL) {
-        ReportError(arena, spec_expr->loc, "'|' field not found in spec of type %t\n", spec.type);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        return TC_FAILED;
-      }
-
       FbleFuncType* apply_func_type = (FbleFuncType*)FbleNormalType(th, apply_type);
       if (apply_func_type->_base.tag != FBLE_FUNC_TYPE) {
         ReportError(arena, spec_expr->loc, "expected function type, but '|' field of spec has type %t\n", apply_type);
@@ -1267,27 +1249,15 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
         return TC_FAILED;
       }
 
-      FbleDataType* letters_data_type = NULL;
-      if (expr->tag == FBLE_LITERAL_EXPR) {
-        if (letters_type == NULL) {
-          ReportError(arena, spec_expr->loc, "'?' field not found in spec of type %t\n", spec.type);
-          FreeTc(th, vh, spec);
-          FbleReleaseType(th, &spec_type->_base);
-          FbleReleaseType(th, &cons_func_type->_base);
-          FbleReleaseType(th, &apply_func_type->_base);
-          return TC_FAILED;
-        }
-
-        letters_data_type = (FbleDataType*)FbleNormalType(th, letters_type);
-        if (letters_data_type->_base.tag != FBLE_DATA_TYPE || letters_data_type->datatype != FBLE_STRUCT_DATATYPE) {
-          ReportError(arena, spec_expr->loc, "expected struct type, but '?' field of spec has type %t\n", letters_type);
-          FreeTc(th, vh, spec);
-          FbleReleaseType(th, &spec_type->_base);
-          FbleReleaseType(th, &cons_func_type->_base);
-          FbleReleaseType(th, &apply_func_type->_base);
-          FbleReleaseType(th, &letters_data_type->_base);
-          return TC_FAILED;
-        }
+      FbleDataType* letters_data_type = (FbleDataType*)FbleNormalType(th, letters_type);
+      if (letters_data_type->_base.tag != FBLE_DATA_TYPE || letters_data_type->datatype != FBLE_STRUCT_DATATYPE) {
+        ReportError(arena, spec_expr->loc, "expected struct type, but '?' field of spec has type %t\n", letters_type);
+        FreeTc(th, vh, spec);
+        FbleReleaseType(th, &spec_type->_base);
+        FbleReleaseType(th, &cons_func_type->_base);
+        FbleReleaseType(th, &apply_func_type->_base);
+        FbleReleaseType(th, &letters_data_type->_base);
+        return TC_FAILED;
       }
 
       bool error = false;
