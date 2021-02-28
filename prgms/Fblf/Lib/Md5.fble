@@ -115,7 +115,7 @@ XX = (X@ xf)(Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr32@ x, Int@ s, Valu
   Addr32@ axfv <- AllocM<Program@>(32);
   Addr32@ axfxtv <- AllocM<Program@>(32);
   Addr32@ clsv <- AllocM<Program@>(32);
-  SeqM([
+  SeqM(List<Module@<Program@>>[
     PureM<Program@>(Assign(tv, t, 32)),
     AddM(32, x, tv, xtv),
     xf(b, c, d, xfv),
@@ -131,7 +131,7 @@ XX@ FF = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   Addr32@ nx <- AllocM<Program@>(32);
   Addr32@ anxz <- AllocM<Program@>(32);
   Addr32@ xy <- AllocM<Program@>(32);
-  SeqM([
+  SeqM(List<Module@<Program@>>[
     NotM(32, x, nx),
     AndM(32, nx, z, anxz),
     AndM(32, x, y, xy),
@@ -143,7 +143,7 @@ XX@ GG = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   Addr32@ nz <- AllocM<Program@>(32);
   Addr32@ aynz <- AllocM<Program@>(32);
   Addr32@ xz <- AllocM<Program@>(32);
-  SeqM([
+  SeqM(List<Module@<Program@>>[
     NotM(32, z, nz),
     AndM(32, y, nz, aynz),
     AndM(32, x, z, xz),
@@ -153,7 +153,7 @@ XX@ GG = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
 XX@ HH = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = xor(x, xor(y, z));
   Addr32@ yz <- AllocM<Program@>(32);
-  SeqM([
+  SeqM(List<Module@<Program@>>[
     XorM(32, y, z, yz),
     XorM(32, x, yz, r)]);
 });
@@ -162,7 +162,7 @@ XX@ II = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = xor(y, or(x, not(z)));
   Addr32@ nz <- AllocM<Program@>(32);
   Addr32@ xnz <- AllocM<Program@>(32);
-  SeqM([
+  SeqM(List<Module@<Program@>>[
     NotM(32, z, nz),
     OrM(32, x, nz, xnz),
     XorM(32, y, xnz, r)]);
@@ -190,7 +190,7 @@ XX@ II = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
 RoundX = (XX@ xx, Int@ s0, Int@ s1, Int@ s2, Int@ s3, BlockOf@<Value32@> t, (BlockOf@<Addr32@>) { BlockOf@<Addr32@>; } permute)
 (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) {
   BlockOf@<Addr32@> permuted = permute(block);
-  SeqM([
+  SeqM(List<Module@<Program@>>[
     xx(a, b, c, d, permuted.00, s0, t.00, a),
     xx(d, a, b, c, permuted.01, s1, t.01, d),
     xx(c, d, a, b, permuted.02, s2, t.02, c),
@@ -243,7 +243,7 @@ DoBlock = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) 
   Addr32@ save_b <- AllocM<Program@>(32);
   Addr32@ save_c <- AllocM<Program@>(32);
   Addr32@ save_d <- AllocM<Program@>(32);
-  SeqM([
+  SeqM(List<Module@<Program@>>[
     PureM<Program@>(Assign(save_a, Ref(a), 32)),
     PureM<Program@>(Assign(save_b, Ref(b), 32)),
     PureM<Program@>(Assign(save_c, Ref(c), 32)),
@@ -298,7 +298,7 @@ PackWord = (Addr32@ word, Addr8@ byte) {
 
   Program@ reset = Assign(addr, Const(B|11), I(D|2));
 
-  Program@ feed = Seq([
+  Program@ feed = Seq(List<Program@>[
     Store(I(D|2), I(D|8), word, addr, byte),
     DecP(I(D|2), addr)
   ]);
@@ -360,7 +360,7 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 
   # Note: the spec lists the initial values for A, B, C, and D low-order byte
   # first, but H takes high order byte first.
-  Program@ reset = Seq([
+  Program@ reset = Seq(List<Program@>[
     Assign(count, Const(B|0000), I(D|4)),
     Assign(a, H(Hex|67452301), 32),
     Assign(b, H(Hex|EFCDAB89), 32),
@@ -369,10 +369,10 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
     wpack.reset
   ]);
 
-  Program@ feed = Seq([
+  Program@ feed = Seq(List<Program@>[
     wpack.feed,
     If(wpack.packed,
-      Seq([
+      Seq(List<Program@>[
         Store(I(D|4), I(D|32), block, count, word),
         If(Eq(Ref(count), Const(B|1111), I(D|4)),
           doblock),
@@ -423,12 +423,12 @@ Md5 = (Addr8@ input, Addr@ hash) {
   # block so far.
   Addr@ padding <- AllocM<Md5@>(I(D|6));
 
-  Program@ reset = Seq([
+  Program@ reset = Seq(List<Program@>[
     Assign(length, H(Hex|0000000000000000), I(D|64)),
     padded.reset
   ]);
 
-  Program@ feed = Seq([
+  Program@ feed = Seq(List<Program@>[
     padded.feed,
 
     # Increment the length by one bytes worth by incrementing all but the last
@@ -436,7 +436,7 @@ Md5 = (Addr8@ input, Addr@ hash) {
     IncP(I(D|61), length)
   ]);
 
-  Program@ finish = Seq([
+  Program@ finish = Seq(List<Program@>[
     # Start tracking how many bytes we've added to the final block.
     Assign(padding, Ref(Add(length, I(D|55))), I(D|6)),
 
@@ -447,7 +447,7 @@ Md5 = (Addr8@ input, Addr@ hash) {
 
     # Feed byte 0x00 until 8 bytes shy of end of block.
     Assign(input, H(Hex|00), I(D|8)),
-    While(Ne(Ref(padding), Const(B|111000), I(D|6)), Seq([
+    While(Ne(Ref(padding), Const(B|111000), I(D|6)), Seq(List<Program@>[
       padded.feed,
       IncP(I(D|6), padding)
     ])),

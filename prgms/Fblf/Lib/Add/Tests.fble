@@ -38,7 +38,7 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
 
     # Note: we put an extra '1' bit after each value as a regression test for
     # a bug we had where it was reading one bit off the end of the values.
-    Program@ test = Seq([
+    Program@ test = Seq(List<Program@>[
       Assign(a, Const(B|00101), I(D|5)),
       Assign(b, Const(B|10111), I(D|5)),
       Assign(z, Const(B|11111), I(D|5)),
@@ -51,21 +51,21 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
   Test(Str|IncM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|5));
     Program@ inc <- InstM<Program@, TestInstance@>(IncM(I(D|5), a));
-    Program@ test = Seq([Assign(a, Const(B|10011), I(D|5)), inc]);
+    Program@ test = Seq(List<Program@>[Assign(a, Const(B|10011), I(D|5)), inc]);
     PureM<TestInstance@>(TestInstance@(test, a, List<Bit@>(B|10100)));
   }),
 
   Test(Str|'IncM Overflow', {
     Addr@ a <- AllocM<TestInstance@>(I(D|5));
     Program@ inc <- InstM<Program@, TestInstance@>(IncM(I(D|5), a));
-    Program@ test = Seq([Assign(a, Const(B|11111), I(D|5)), inc]);
+    Program@ test = Seq(List<Program@>[Assign(a, Const(B|11111), I(D|5)), inc]);
     PureM<TestInstance@>(TestInstance@(test, a, List<Bit@>(B|00000)));
   }),
 
   Test(Str|DecM, {
     Addr@ a <- AllocM<TestInstance@>(I(D|5));
     Program@ dec <- InstM<Program@, TestInstance@>(DecM(I(D|5), a));
-    Program@ test = Seq([Assign(a, Const(B|10100), I(D|5)), dec]);
+    Program@ test = Seq(List<Program@>[Assign(a, Const(B|10100), I(D|5)), dec]);
     PureM<TestInstance@>(TestInstance@(test, a, List<Bit@>(B|10011)));
   })
 ]);

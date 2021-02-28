@@ -298,4 +298,33 @@ Fble Language Thoughts
   * It's maybe a little worrisome that the cost of constructing literal is not
     obvious from the syntax. Str|'foo' looks like a constant kind of thing,
     but buried inside is a potentially very complex function call.
+
+  I think there is always going to be a fundamental choice for the user when
+  we have the option to have user defined literals like this. They could
+  define a function that operates on a value that could be specified as a
+  literal as a normal function or as a user defined literal.
+
+  If it's a normal function, the literal needs to be standalone, so it has to
+  be annotated with some syntactic overhead like Str|. That means you end up
+  calling the user function as foo(Str|...), or foo(Str[...]).
+
+  If the user decides to make it a user defined literal, then they ought to
+  provide to variants of the function: a normal one and a user defined literal
+  one. Otherwise it doesn't compose so well. That means the user could end up
+  writing something like: foo(Str|...) or fooL|..., where foo is the normal
+  version of the function and fooL is the literal version.
+
+  Having to define two variations of functions everywhere doesn't scale.
+  What's important is that we make it as easy as possible to define stand
+  alone literal values so that foo(Str|...) syntax is more attractive. That's
+  what my proposed update to literals does, which is why I think (though
+  unfortunately still with a little bit of hesitation) this is a good change
+  to make.
+
+  I don't think we should provide special syntax to call a literal as a normal
+  function. It's too special a case. We would only support single argument
+  functions this way, which doesn't seem worth special casing. I think 
+  foo.'|'(...) is fine for users who want to use that style to avoid
+  specialization. A slightly awkward syntax for a slightly awkward programming
+  style.
   

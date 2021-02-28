@@ -33,24 +33,24 @@ Show@<Value@> ShowValue = (Value@ value) {
 
 Show@<Condition@> ShowCondition = (Condition@ cond) {
   String@ op = cond.op.?(
-    eq: Str(Chars|' == '),
-    ne: Str(Chars|' != '));
-  Concat<Char@>(List<String@>([
+    eq: Str|' == ',
+    ne: Str|' != ');
+  Concat<Char@>(List<String@>[
       ShowValue(cond.a), op, ShowValue(cond.b),
-      Str(Chars|' :: '), /Int/Int/Show%.Show(cond.n)]));
+      |' :: ', /Int/Int/Show%.Show(cond.n)]);
 };
 
 (String@) { Show@<Assign@>; } ShowAssign = (String@ indent)(Assign@ assign) {
-  Concat<Char@>(List<String@>([
+  Concat<Char@>(List<String@>[
     indent,
     ShowAddr(assign.ref),
-    Str(Chars|' = '),
+    Str|' = ',
     ShowValue(assign.value),
-    Str(Chars|' :: '),
+    Str|' :: ',
     /Int/Int/Show%.Show(assign.n),
-    Str(Chars|';
-')
-  ]));
+    Str|';
+'
+  ]);
 };
 
 (String@) { Show@<Sequence@>; } ShowSequence = (String@ indent)(Sequence@ seq) {
@@ -58,26 +58,26 @@ Show@<Condition@> ShowCondition = (Condition@ cond) {
 },
 
 (String@) { Show@<IfElse@>; } ShowIfElse = (String@ indent)(IfElse@ ifelse) {
-  String@ nested = Concat<Char@>(List<String@>([indent, Str(Chars|'  ')]));
-  Concat<Char@>(List<String@>([
-      indent, Str(Chars|'if ('), ShowCondition(ifelse.condition), Str(Chars|') {
-'),
+  String@ nested = Concat<Char@>(List<String@>[indent, |'  ']);
+  Concat<Char@>(List<String@>[
+      indent, Str|'if (', ShowCondition(ifelse.condition), Str|') {
+',
       ShowProgram(nested)(ifelse.if_body),
-      indent, Str(Chars|'} else {
-'),
+      indent, Str|'} else {
+',
       ShowProgram(nested)(ifelse.else_body),
-      indent, Str(Chars|'}
-')]));
+      indent, Str|'}
+']);
 },
 
 (String@) { Show@<While@>; } ShowWhile = (String@ indent)(While@ while) {
-  String@ nested = Concat<Char@>(List<String@>([indent, Str(Chars|'  ')]));
-  Concat<Char@>(List<String@>([
-      indent, Str(Chars|'while ('), ShowCondition(while.condition), Str(Chars|') {
-'),
+  String@ nested = Concat<Char@>(List<String@>[indent, Str|'  ']);
+  Concat<Char@>(List<String@>[
+      indent, Str|'while (', ShowCondition(while.condition), Str|') {
+',
       ShowProgram(nested)(while.body),
-      indent, Str(Chars|'}
-')]));
+      indent, Str|'}
+']));
 },
 
 (String@) { Show@<Program@>; } ShowProgram = (String@ indent)(Program@ prgm) {

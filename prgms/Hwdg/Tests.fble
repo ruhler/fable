@@ -172,7 +172,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       function: (Ports@<Data@> x) {
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
-    Gates@ gates = Gates([@(coord: Coord@(0, 0), gate: gate)]);
+    Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
     Cells@ cells = SetData(EmptyCells, Coord@(1, 0), Data1);
 
     # The gate doesn't have it's input available, so we don't expect it to
@@ -190,7 +190,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       function: (Ports@<Data@> x) {
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
-    Gates@ gates = Gates([@(coord: Coord@(0, 0), gate: gate)]);
+    Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
     Cells@ cells = SetData(SetData(EmptyCells,
         Coord@(0, 0), Data1),
         Coord@(1, 1), Data0);
@@ -217,7 +217,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       ports: Ports@<PortSpec@>( OutputPort, InputPort, UnusedPort, UnusedPort),
       function: (Ports@<Data@> x) { Ports@<Data@>(x.ur, Data0, Data0, Data0); });
 
-    Gates@ gates = Gates([
+    Gates@ gates = Gates(List<GateEntry@>[
       @(coord: Coord@(0, 0), gate: ul_to_ur),
       @(coord: Coord@(1, 0), gate: ul_to_ur),
       @(coord: Coord@(2, 0), gate: ul_to_ll),

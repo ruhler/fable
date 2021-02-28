@@ -49,8 +49,7 @@ List@ Nil = <@ T@> {
 #   A list with the elements of the literal.
 #
 # Example Use:
-#   List@<ABC@> x = List<ABC@>([A, B, A, C]);
-#   List@<ABC@> y = List<ABC@>(ABCs|ABAC);
+#   List@<ABC@> x = List<ABC@>[A, B, A, C];
 <@ T@> { Lit@<T@, List@<T@>, List@<T@>, Unit@>; } List = <@ T@> {
   Lit<T@, List@<T@>, List@<T@>, Unit@>(
     (List@<T@> l) { l; },

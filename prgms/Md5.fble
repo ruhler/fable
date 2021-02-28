@@ -582,7 +582,7 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
 
 (Md5Hash@, Md5Hash@) { Bool@; } Eq = (Md5Hash@ a, Md5Hash@ b) {
   ForEach<Bool@, Bool@>(
-    List<Bool@>([
+    List<Bool@>[
       EqHex(a.0, b.0), EqHex(a.1, b.1), EqHex(a.2, b.2), EqHex(a.3, b.3),
       EqHex(a.4, b.4), EqHex(a.5, b.5), EqHex(a.6, b.6), EqHex(a.7, b.7),
       EqHex(a.8, b.8), EqHex(a.9, b.9), EqHex(a.10, b.10), EqHex(a.11, b.11),
@@ -590,7 +590,7 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
       EqHex(a.16, b.16), EqHex(a.17, b.17), EqHex(a.18, b.18), EqHex(a.19, b.19),
       EqHex(a.20, b.20), EqHex(a.21, b.21), EqHex(a.22, b.22), EqHex(a.23, b.23),
       EqHex(a.24, b.24), EqHex(a.25, b.25), EqHex(a.26, b.26), EqHex(a.27, b.27),
-      EqHex(a.28, b.28), EqHex(a.29, b.29), EqHex(a.30, b.30), EqHex(a.31, b.31)]),
+      EqHex(a.28, b.28), EqHex(a.29, b.29), EqHex(a.30, b.30), EqHex(a.31, b.31)],
     True, And);
 };
 

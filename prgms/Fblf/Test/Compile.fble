@@ -72,11 +72,11 @@
       };
 
       Instance@<Program@> instance = Instantiate<Program@>(wrapped, I(D|0));
-      List<Case@>([@(name, instance)]);
+      List<Case@>[@(name, instance)];
     },
     suite: {
-      String@ nprefix = Concat<Char@>(List<String@>([
-        prefix, test.suite.name, Str|'.']));
+      String@ nprefix = Concat<Char@>(List<String@>[
+        prefix, test.suite.name, Str|'.']);
       Concat<Case@>(Map<Test@, List@<Case@>>(test.suite.tests, (Test@ t) {
           Collect(nprefix, t);
       }));
@@ -124,14 +124,14 @@ int main()
 {
 ';
   String@ main = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
-    Concat<Char@>(List<String@>([
+    Concat<Char@>(List<String@>[
         Str|'  RunTest(&',
         ToCId(case.name),
         Str|', ',
         /Int/Int/Show%.Show(case.instance.heap),
         Str(Chars|');'),
-        Str([Chars.nl])
-    ]));
+        Str[Chars.nl]
+    ]);
   }));
 
   String@ main_footer = Str|'

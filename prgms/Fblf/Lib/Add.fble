@@ -48,15 +48,15 @@ Add1P = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
 
   IfElse(Eq(Ref(a), b0, n1),
     IfElse(Eq(Ref(b), b0, n1),
-      Seq([Assign(z, Ref(c), n1), Assign(x, b0, n1)]),
+      Seq(List<Program@>[Assign(z, Ref(c), n1), Assign(x, b0, n1)]),
       IfElse(Eq(Ref(c), b0, n1),
-        Seq([Assign(z, b1, n1), Assign(x, b0, n1)]),
-        Seq([Assign(z, b0, n1), Assign(x, b1, n1)]))),
+        Seq(List<Program@>[Assign(z, b1, n1), Assign(x, b0, n1)]),
+        Seq(List<Program@>[Assign(z, b0, n1), Assign(x, b1, n1)]))),
     IfElse(Eq(Ref(b), b0, n1),
       IfElse(Eq(Ref(c), b0, n1),
-        Seq([Assign(z, b1, n1), Assign(x, b0, n1)]),
-        Seq([Assign(z, b0, n1), Assign(x, b1, n1)])),
-      Seq([Assign(z, Ref(c), n1), Assign(x, b1, n1)])));
+        Seq(List<Program@>[Assign(z, b1, n1), Assign(x, b0, n1)]),
+        Seq(List<Program@>[Assign(z, b0, n1), Assign(x, b1, n1)])),
+      Seq(List<Program@>[Assign(z, Ref(c), n1), Assign(x, b1, n1)])));
 };
 
 # AddM -- 
@@ -77,7 +77,7 @@ AddM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   PureM<Program@>(For<Int@, Program@>(CountDownFrom(n), Assign(carry, b0, I(D|1)),
     (Int@ i, Program@ s) {
       Program@ add1 = Add1P(Add(a, i), Add(b, i), carry, carry, Add(z, i));
-      Seq([s, add1]); 
+      Seq(List<Program@>[s, add1]); 
     }));
 };
 
@@ -97,7 +97,7 @@ IncP = (Int@ n, Addr@ a) {
       Addr@ lsb = Add(a, nm1);
       IfElse(Eq(Ref(lsb), Const(B|0), I(D|1)),
         Assign(lsb, Const(B|1), I(D|1)),
-        Seq([Assign(lsb, Const(B|0), I(D|1)), IncP(nm1, a)]));
+        Seq(List<Program@>[Assign(lsb, Const(B|0), I(D|1)), IncP(nm1, a)]));
     });
 };
 
@@ -128,7 +128,7 @@ DecP = (Int@ n, Addr@ a) {
       Addr@ lsb = Add(a, nm1);
       IfElse(Eq(Ref(lsb), Const(B|1), I(D|1)),
         Assign(lsb, Const(B|0), I(D|1)),
-        Seq([Assign(lsb, Const(B|1), I(D|1)), DecP(nm1, a)]));
+        Seq(List<Program@>[Assign(lsb, Const(B|1), I(D|1)), DecP(nm1, a)]));
     });
 };
 

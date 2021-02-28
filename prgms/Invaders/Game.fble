@@ -113,7 +113,7 @@ Game@ Initial = @(
 };
 
 (Game@) { Drawing@; } Draw = (Game@ g) {
-  Drawings([
+  Drawings(List<Drawing@>[
     DrawScore(g.score),
     DrawLives(g.lives),
     Graphics.Background,

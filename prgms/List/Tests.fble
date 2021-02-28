@@ -103,9 +103,9 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> b = List<Elem@>(Elems|ABCD);
 
     Eq(a, b).?(
-      true: TestResult@(fail: Concat<Char@>(List<String@>([
+      true: TestResult@(fail: Concat<Char@>(List<String@>[
           Show(a), Str|' == ', Show(b)
-        ]))),
+        ])),
       false: TestResult@(pass: Unit));
   })),
 
@@ -125,11 +125,11 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   })),
 
   Test(Str|'Concat', !({
-    List@<List@<Elem@>> l = List<List@<Elem@>>([
+    List@<List@<Elem@>> l = List<List@<Elem@>>[
       List<Elem@>(Elems|ABC),
       List<Elem@>(Elems|DEA),
       List<Elem@>(Elems|BB)
-    ]);
+    ];
 
     List@<Elem@> wnt = List<Elem@>(Elems|ABCDEABB);
     List@<Elem@> got = Concat<Elem@>(l);

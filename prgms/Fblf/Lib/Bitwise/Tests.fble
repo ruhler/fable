@@ -37,7 +37,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Addr@ z <- AllocM<TestInstance@>(I(D|4));
     Program@ and <- InstM<Program@, TestInstance@>(AndM(I(D|4), a, b, z));
 
-    Program@ test = Seq([
+    Program@ test = Seq(List<Program@>[
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
@@ -53,7 +53,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Addr@ z <- AllocM<TestInstance@>(I(D|4));
     Program@ or <- InstM<Program@, TestInstance@>(OrM(I(D|4), a, b, z));
 
-    Program@ test = Seq([
+    Program@ test = Seq(List<Program@>[
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
@@ -69,7 +69,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Addr@ z <- AllocM<TestInstance@>(I(D|4));
     Program@ xor <- InstM<Program@, TestInstance@>(XorM(I(D|4), a, b, z));
 
-    Program@ test = Seq([
+    Program@ test = Seq(List<Program@>[
       Assign(a, Const(B|0011), I(D|4)),
       Assign(b, Const(B|0110), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
@@ -84,7 +84,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Addr@ z <- AllocM<TestInstance@>(I(D|4));
     Program@ not <- InstM<Program@, TestInstance@>(NotM(I(D|4), a, z));
 
-    Program@ test = Seq([
+    Program@ test = Seq(List<Program@>[
       Assign(a, Const(B|0011), I(D|4)),
       Assign(z, Const(B|0000), I(D|4)),
       not
@@ -98,7 +98,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Addr@ z <- AllocM<TestInstance@>(I(D|5));
     Program@ cls <- InstM<Program@, TestInstance@>(ClsM(I(D|5), I(D|3), a, z));
 
-    Program@ test = Seq([
+    Program@ test = Seq(List<Program@>[
       Assign(a, Const(B|10011), I(D|5)),
       Assign(z, Const(B|00000), I(D|5)),
       cls

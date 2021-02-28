@@ -28,10 +28,10 @@
 ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
   l.?(
     cons:
-      Concat<Char@>(List<String@>([
+      Concat<Char@>(List<String@>[
           Str(Chars|', '),
           show(l.cons.head),
-          ShowTail<T@>(show)(l.cons.tail)])),
+          ShowTail<T@>(show)(l.cons.tail)]),
     nil: Str(Chars|']'));
 };
 
@@ -52,10 +52,10 @@ ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Show = <@ T@>(Show@<T@> show)(List@<T@> l) {
   l.?(
-    cons: Concat<Char@>(List<String@>([
+    cons: Concat<Char@>(List<String@>[
         Str(Chars|'['),
         show(l.cons.head),
-        ShowTail<T@>(show)(l.cons.tail)])),
+        ShowTail<T@>(show)(l.cons.tail)]),
     nil: Str(Chars|'[]'));
 };
 

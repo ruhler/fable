@@ -790,7 +790,7 @@ Drawing@ LetterA = Path(
 );
 
 Drawing@ LetterC = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -810,12 +810,12 @@ Drawing@ LetterC = Path(
     Point@(I(D|8), I(D|4)),
     Point@(I(D|10), I(D|4)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterE = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|10), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|14)),
@@ -827,12 +827,12 @@ Drawing@ LetterE = Path(
     Point@(I(D|8), I(D|6)),
     Point@(I(D|2), I(D|6)),
     Point@(I(D|2), I(D|2)),
-    Point@(I(D|10), I(D|2))]),
+    Point@(I(D|10), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterG = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -854,12 +854,12 @@ Drawing@ LetterG = Path(
     Point@(I(D|4), I(D|8)),
     Point@(I(D|10), I(D|8)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterI = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -871,23 +871,23 @@ Drawing@ LetterI = Path(
     Point@(I(D|8), I(D|12)),
     Point@(I(D|6), I(D|12)),
     Point@(I(D|6), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterL = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|10), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|14)),
     Point@(I(D|2), I(D|14)),
     Point@(I(D|2), I(D|2)),
-    Point@(I(D|10), I(D|2))]),
+    Point@(I(D|10), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterM = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|2), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|14)),
@@ -907,12 +907,12 @@ Drawing@ LetterM = Path(
     Point@(I(D|6), I(D|6)),
     Point@(I(D|4), I(D|6)),
     Point@(I(D|4), I(D|10)),
-    Point@(I(D|2), I(D|10))]),
+    Point@(I(D|2), I(D|10))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterO = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -928,12 +928,12 @@ Drawing@ LetterO = Path(
     Point@(I(D|8), I(D|12)),
     Point@(I(D|10), I(D|12)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterR = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|2), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|14)),
@@ -959,12 +959,12 @@ Drawing@ LetterR = Path(
     Point@(I(D|6), I(D|4)),
     Point@(I(D|4), I(D|4)),
     Point@(I(D|4), I(D|6)),
-    Point@(I(D|2), I(D|6))]),
+    Point@(I(D|2), I(D|6))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterS = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|8), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -992,12 +992,12 @@ Drawing@ LetterS = Path(
     Point@(I(D|8), I(D|6)),
     Point@(I(D|10), I(D|6)),
     Point@(I(D|10), I(D|2)),
-    Point@(I(D|8), I(D|2))]),
+    Point@(I(D|8), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ LetterV = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|6), I(D|0)),
     Point@(I(D|4), I(D|0)),
     Point@(I(D|4), I(D|2)),
@@ -1017,21 +1017,21 @@ Drawing@ LetterV = Path(
     Point@(I(D|10), I(D|4)),
     Point@(I(D|8), I(D|4)),
     Point@(I(D|8), I(D|2)),
-    Point@(I(D|6), I(D|2))]),
+    Point@(I(D|6), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ YourBullet = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|2), I(D|0)),
     Point@(I(D|0), I(D|0)),
     Point@(I(D|0), I(D|8)),
-    Point@(I(D|2), I(D|8))]),
+    Point@(I(D|2), I(D|8))],
   Color@(white: Unit)
 );
 
 Drawing@ TheirBullet = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|4), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -1043,12 +1043,12 @@ Drawing@ TheirBullet = Path(
     Point@(I(D|4), I(D|4)),
     Point@(I(D|6), I(D|4)),
     Point@(I(D|6), I(D|2)),
-    Point@(I(D|4), I(D|2))]),
+    Point@(I(D|4), I(D|2))],
   Color@(white: Unit)
 );
 
 Drawing@ TheirSquiggle = Path(
-  List<Point@>([
+  List<Point@>[
     Point@(I(D|4), I(D|0)),
     Point@(I(D|2), I(D|0)),
     Point@(I(D|2), I(D|2)),
@@ -1068,21 +1068,21 @@ Drawing@ TheirSquiggle = Path(
     Point@(I(D|4), I(D|4)),
     Point@(I(D|6), I(D|4)),
     Point@(I(D|6), I(D|2)),
-    Point@(I(D|4), I(D|2))]),
+    Point@(I(D|4), I(D|2))],
   Color@(white: Unit)
 );
 
-Drawing@ DeadAlien = Drawings([
+Drawing@ DeadAlien = Drawings(ListDrawing@[
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|14), I(D|0)),
       Point@(I(D|12), I(D|0)),
       Point@(I(D|12), I(D|4)),
-      Point@(I(D|14), I(D|4))]),
+      Point@(I(D|14), I(D|4))],
     Color@(white: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|4), I(D|2)),
       Point@(I(D|2), I(D|2)),
       Point@(I(D|2), I(D|4)),
@@ -1094,11 +1094,11 @@ Drawing@ DeadAlien = Drawings([
       Point@(I(D|10), I(D|6)),
       Point@(I(D|8), I(D|6)),
       Point@(I(D|8), I(D|4)),
-      Point@(I(D|4), I(D|4))]),
+      Point@(I(D|4), I(D|4))],
     Color@(white: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|4), I(D|8)),
       Point@(I(D|0), I(D|8)),
       Point@(I(D|0), I(D|10)),
@@ -1110,19 +1110,19 @@ Drawing@ DeadAlien = Drawings([
       Point@(I(D|4), I(D|12)),
       Point@(I(D|6), I(D|12)),
       Point@(I(D|6), I(D|10)),
-      Point@(I(D|4), I(D|10))]),
+      Point@(I(D|4), I(D|10))],
     Color@(white: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|12), I(D|12)),
       Point@(I(D|10), I(D|12)),
       Point@(I(D|10), I(D|16)),
-      Point@(I(D|12), I(D|16))]),
+      Point@(I(D|12), I(D|16))],
     Color@(white: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|16), I(D|10)),
       Point@(I(D|14), I(D|10)),
       Point@(I(D|14), I(D|12)),
@@ -1138,19 +1138,19 @@ Drawing@ DeadAlien = Drawings([
       Point@(I(D|20), I(D|10)),
       Point@(I(D|18), I(D|10)),
       Point@(I(D|18), I(D|12)),
-      Point@(I(D|16), I(D|12))]),
+      Point@(I(D|16), I(D|12))],
     Color@(white: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|24), I(D|6)),
       Point@(I(D|20), I(D|6)),
       Point@(I(D|20), I(D|8)),
-      Point@(I(D|24), I(D|8))]),
+      Point@(I(D|24), I(D|8))],
     Color@(white: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|22), I(D|0)),
       Point@(I(D|20), I(D|0)),
       Point@(I(D|20), I(D|2)),
@@ -1162,14 +1162,14 @@ Drawing@ DeadAlien = Drawings([
       Point@(I(D|18), I(D|4)),
       Point@(I(D|20), I(D|4)),
       Point@(I(D|20), I(D|2)),
-      Point@(I(D|22), I(D|2))]),
+      Point@(I(D|22), I(D|2))],
     Color@(white: Unit)
   )
 ]);
 
-Drawing@ DeadShipA = Drawings([
+Drawing@ DeadShipA = Drawings(List<Drawing@>[
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|28), I(D|0)),
       Point@(I(D|2), I(D|0)),
       Point@(I(D|2), I(D|2)),
@@ -1189,46 +1189,46 @@ Drawing@ DeadShipA = Drawings([
       Point@(I(D|18), I(D|6)),
       Point@(I(D|22), I(D|6)),
       Point@(I(D|22), I(D|2)),
-      Point@(I(D|28), I(D|2))]),
+      Point@(I(D|28), I(D|2))],
     Color@(green: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|6), I(D|12)),
       Point@(I(D|4), I(D|12)),
       Point@(I(D|4), I(D|14)),
-      Point@(I(D|6), I(D|14))]),
+      Point@(I(D|6), I(D|14))],
     Color@(green: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|16), I(D|14)),
       Point@(I(D|14), I(D|14)),
       Point@(I(D|14), I(D|16)),
-      Point@(I(D|16), I(D|16))]),
+      Point@(I(D|16), I(D|16))],
     Color@(green: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|24), I(D|14)),
       Point@(I(D|22), I(D|14)),
       Point@(I(D|22), I(D|16)),
-      Point@(I(D|24), I(D|16))]),
+      Point@(I(D|24), I(D|16))],
     Color@(green: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|22), I(D|8)),
       Point@(I(D|20), I(D|8)),
       Point@(I(D|20), I(D|10)),
-      Point@(I(D|22), I(D|10))]),
+      Point@(I(D|22), I(D|10))],
     Color@(green: Unit)
   )
 ]);
 
-Drawing@ DeadShipB = Drawings([
+Drawing@ DeadShipB = Drawings(List<Drawing@>[
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|28), I(D|0)),
       Point@(I(D|2), I(D|0)),
       Point@(I(D|2), I(D|2)),
@@ -1256,36 +1256,36 @@ Drawing@ DeadShipB = Drawings([
       Point@(I(D|20), I(D|4)),
       Point@(I(D|24), I(D|4)),
       Point@(I(D|24), I(D|2)),
-      Point@(I(D|28), I(D|2))]),
+      Point@(I(D|28), I(D|2))],
     Color@(green: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|8), I(D|14)),
       Point@(I(D|6), I(D|14)),
       Point@(I(D|6), I(D|16)),
-      Point@(I(D|8), I(D|16))]),
+      Point@(I(D|8), I(D|16))],
     Color@(green: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|24), I(D|10)),
       Point@(I(D|22), I(D|10)),
       Point@(I(D|22), I(D|12)),
-      Point@(I(D|24), I(D|12))]),
+      Point@(I(D|24), I(D|12))],
     Color@(green: Unit)
   ),
   Path(
-    List<Point@>([
+    List<Point@>[
       Point@(I(D|26), I(D|6)),
       Point@(I(D|24), I(D|6)),
       Point@(I(D|24), I(D|8)),
-      Point@(I(D|26), I(D|8))]),
+      Point@(I(D|26), I(D|8))],
     Color@(green: Unit)
   )
 ]);
 
-Drawing@ Background = Drawings([
+Drawing@ Background = Drawings(List<Drawing@>[
     Translate(I(D|80), I(D|464), LetterS),
     Translate(I(D|96), I(D|464), LetterC),
     Translate(I(D|112), I(D|464), LetterO),
@@ -1301,7 +1301,7 @@ Drawing@ Background = Drawings([
     Translate(I(D|80), I(D|0), Ground)
 ]);
 
-Drawing@ Screenshot = Drawings([
+Drawing@ Screenshot = Drawings(List<Drawing@>[
   Background,
 
   Translate(I(D|80), I(D|440), Digit0),

@@ -238,11 +238,11 @@ Test@ Tests = TestSuite(Str|Sudoku, List<Test@>[
              },
              SampleSolved, ms.just).?(
            true: TestResult@(pass: Unit),
-           false: TestResult@(fail: Concat<Char@>(List<String@>([
+           false: TestResult@(fail: Concat<Char@>(List<String@>[
                    Str|'incorrect solution. expected:', Str[Chars.nl],
                    ShowBoard(False)(SampleSolved), Str[Chars.nl],
                    Str|'but got:', Str[Chars.nl],
-                   ShowBoard(False)(ms.just)]))));
+                   ShowBoard(False)(ms.just)])));
        },
        nothing: TestResult@(fail: Str|'failed to solve board'));
   }))

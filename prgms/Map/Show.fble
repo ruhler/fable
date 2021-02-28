@@ -22,9 +22,9 @@
 Show = <@ K@, @ V@>(Show@<K@> show_key, Show@<V@> show_value)(Map@<K@, V@> m) {
   Append<Char@>(
     ForEach<K@, V@, String@>(m, Str(Chars|'{ '), (K@ k, V@ v, String@ s) {
-      Concat(List<String@>([s, show_key(k), Str(Chars|' => '), show_value(v), Str(Chars|'; ')]));
+      Concat(List<String@>[s, show_key(k), Str(Chars|' => '), show_value(v), Str(Chars|'; ')]);
     }),
-    Str(Chars|'}'));
+    Str|'}');
 };
 
 @(Show);

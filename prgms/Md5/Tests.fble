@@ -184,9 +184,9 @@ Test@ Tests = TestSuite(Str|Md5, List<Test@>[
 # Benchmark for md5 sum that takes about 1 minute to run.
 Unit@! Bench = {
   List@<Hex@> d0 = List<Hex@>(Hex|3132333435363738393031323334353637383930313233);
-  List@<Hex@> d1 = Concat<Hex@>(List<List@<Hex@>>([d0, d0, d0, d0, d0, d0, d0, d0]));
-  List@<Hex@> d2 = Concat<Hex@>(List<List@<Hex@>>([d1, d1, d1, d1, d1, d1, d1, d1]));
-  List@<Hex@> d3 = Concat<Hex@>(List<List@<Hex@>>([d2, d2, d2, d2]));
+  List@<Hex@> d1 = Concat<Hex@>(List<List@<Hex@>>[d0, d0, d0, d0, d0, d0, d0, d0]);
+  List@<Hex@> d2 = Concat<Hex@>(List<List@<Hex@>>[d1, d1, d1, d1, d1, d1, d1, d1]);
+  List@<Hex@> d3 = Concat<Hex@>(List<List@<Hex@>>[d2, d2, d2, d2]);
   Md5Hash@ _ := Md5Str(Hex2Bytes(d3));
   !(Unit);
 };

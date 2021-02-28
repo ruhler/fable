@@ -76,7 +76,7 @@ TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
   });
 };
 
-Test@ Tests = TestSuite(Chars|'Md5', [
+Test@ Tests = TestSuite(Chars|'Md5', List<Test@>[
 # Unfortunately it takes too long to run all of these tests.
   
 #  TestStr(

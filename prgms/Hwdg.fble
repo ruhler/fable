@@ -92,7 +92,7 @@ SetGate = (Gates@ gates, Coord@ coord, Gate@ gate) {
 #   Specify a complete Gates configuration.
 #
 # Example Use:
-#   Gates@ gates = Gates([@(coord: c1, gate: g1), @(coord: c2, gate: g2), ...]);
+#   Gates@ gates = Gates(List<GateEntry@>[@(coord: c1, gate: g1), @(coord: c2, gate: g2), ...]);
 (Lit@<GateEntry@>) { Gates@; } Gates = /List%.List<GateEntry@>;
 
 # ForEachGate --

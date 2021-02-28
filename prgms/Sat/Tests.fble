@@ -70,16 +70,16 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
     Formula@ f = List<Clause@>[
       List<Var@>[Var@(X, True)]
     ];
-    Result@ want = Result@(sat: List<Var@>([Var@(X, True)]));
+    Result@ want = Result@(sat: List<Var@>[Var@(X, True)]);
     Result@ got = Solve(f, Nothing<Int@>);
     AssertEq(want, got);
   })),
 
   Test(Str|Unsat, !({
-    Formula@ f = List<Clause@>([
-      List<Var@>([Var@(X, True)]),
-      List<Var@>([Var@(X, False)])
-    ]);
+    Formula@ f = List<Clause@>[
+      List<Var@>[Var@(X, True)],
+      List<Var@>[Var@(X, False)]
+    ];
     Result@ want = Result@(unsat: Nothing<Int@>);
     Result@ got = Solve(f, Nothing<Int@>);
     AssertEq(want, got);

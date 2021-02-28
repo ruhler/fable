@@ -82,7 +82,7 @@ Main = (Get@<End@<Unit@>> in, Put@<End@<Count@>> out) {
   End@<Unit@> ~ in_get, in_put;
   End@<Count@> ~ out_get, out_put;
 
-  Compose([
+  Compose(List<DataFlow@>[
     Input<Unit@>(in, in_put),
     Count(in_get, out_put),
     Output<Count@>(out, out_get)]);
