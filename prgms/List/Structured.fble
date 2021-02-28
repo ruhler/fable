@@ -3,7 +3,6 @@
 @ Structure@ = /Structure%.Structure@;
 % Struct = /Structure/Struct%.Struct;
 % Enum = /Structure/Union%.Enum;
-% Tag = /Structure/Union%.Tag;
 % Union = /Structure/Union%.Union;
 <@>@ Structured@ = /Structured%.Structured@;
 
@@ -13,13 +12,13 @@
 Structured = <@ T@>(Structured@<T@> s)(List@<T@> list) {
   list.?(
     cons: {
-      Structure@ cons = Struct(List<Structure@>[
+      Structure@ cons = Struct[
         s(list.cons.head),
         Structured<T@>(s)(list.cons.tail)
-      ]);
-      Union(Tag|0, cons);
+      ];
+      Union|0(cons);
     },
-    nil: Enum(Tag|1));
+    nil: Enum|1);
 };
 
 @(Structured);

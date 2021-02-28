@@ -14,7 +14,6 @@
 
 @ Structure@ = /Structure%.Structure@;
 % Struct = /Structure/Struct%.Struct;
-% Tag = /Structure/Union%.Tag;
 % Enum = /Structure/Union%.Enum;
 <@>@ Structured@ = /Structured%.Structured@;
 
@@ -31,24 +30,24 @@
 % Move = /TicTacToe/Board%.Move;
 
 Structured@<Square@> SquareS = {
-  Structure@ x = Enum(Tag|00);
-  Structure@ o = Enum(Tag|01);
-  Structure@ e = Enum(Tag|1);
+  Structure@ x = Enum|00;
+  Structure@ o = Enum|01;
+  Structure@ e = Enum|1;
   (Square@ s) { s.?(X: x, O: o, E: e); };
 };
 
 Structured@<Board@> BoardS = {
   (Square@, Square@, Square@) { Structure@; }
   RowS = (Square@ a, Square@ b, Square@ c) {
-    Struct(List<Structure@>[SquareS(a), SquareS(b), SquareS(c)]);
+    Struct[SquareS(a), SquareS(b), SquareS(c)];
   };
 
   (Board@ b) {
-    Struct(List<Structure@>[
+    Struct[
       RowS(b.ul, b.uc, b.ur),
       RowS(b.ml, b.mc, b.mr),
       RowS(b.ll, b.lc, b.lr)
-    ]);
+    ];
   };
 };
 

@@ -1,5 +1,5 @@
 
-<@,@>@ Lit@ = /Literal%.Lit@;
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 @ Structure@ = /Structure%.Structure@;
 % LeftS = /Structure%.LeftS;
@@ -26,16 +26,15 @@
 #   A Structure@ representing the given tagged value.
 #
 # Example Use:
-#   Structure@ x = Union(Tag|00, a);
-#   Structure@ y = Union(Tag|01, b);
-#   Structure@ z = Union(Tag|1, c);
-#
-# Here the tag Tag|00 gets translated to the structure LeftS(LeftS(a)), the
-# tag Tag|01 becomes LeftS(RightS(b)), and Tag|1 is RightS(c).
-(Lit@<Tag@>, Structure@) { Structure@; }
-Union = (Lit@<Tag@> tag, Structure@ value) {
-  tag<Structure@>((Tag@ t, Structure@ s) { t(s); }, value); 
-};
+#   Structure@ x = Union|00(a); // LeftS(LeftS(a))
+#   Structure@ y = Union|01(b); // LeftS(RightS(b))
+#   Structure@ z = Union|1(c);  // RightS(c)
+Literal@<Tag@, Tag@, Tag@, @<Tag>> Union = @(
+  '|': (Tag@ x) { x; },
+  ',': (Tag@ a, Tag@ b) (Structure@ s) { a(b(s)); },
+  '': (Structure@ s) { s; },
+  '?': Tag
+);
 
 # Enum --
 #   Convenience function for defining structure values representing enum
@@ -48,11 +47,15 @@ Union = (Lit@<Tag@> tag, Structure@ value) {
 #   A Structure@ representing the given tagged enum.
 #
 # Example Use:
-#   Structure@ x = Enum(Tag|00);
-#   Structure@ y = Enum(Tag|01);
-#   Structure@ z = Enum(Tag|1);
-(Lit@<Tag@>) { Structure@; } Enum = (Lit@<Tag@> tag) {
-  Union(tag, UnitS);
-};
+#   Structure@ x = Enum|00;
+#   Structure@ y = Enum|01;
+#   Structure@ z = Enum|1;
+Literal@<Tag@, Tag@, Structure@, @<Tag>>
+Enum = @(
+  '|': (Tag@ t) { t(UnitS); },
+  ',': Union.',',
+  '': Union.'',
+  '?': Union.'?'
+);
 
-@(Tag@, Tag, Union, Enum);
+@(Union, Enum);

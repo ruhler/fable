@@ -1,5 +1,6 @@
 
-<@,@>@ Lit@ = /Literal%.Lit@;
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
+<@,@,@,@>% Literal = /Literal%.Literal;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -36,26 +37,28 @@ List@ Nil = <@ T@> {
   List@<T@>(nil: Unit);
 };
 
+# ListLiteral --
+#   A literal spec that forms a list.
+#
+# Type Parameters:
+#   L@ - The letters of the literal to support.
+#   T@ - The type of element on the list.
+<@ T@, @ L@>(L@) { Literal@<T@, List@<T@>, List@<T@>, L@>; }
+ListLiteral = <@ T@, @ L@>(L@ letters) {
+  Literal<T@, List@<T@>, List@<T@>, L@>(
+    (List@<T@> l) { l; }, Cons<T@>, Nil<T@>, letters);
+};
+
 # List --
-#   Constructs a List from a literal.
+#   A literal spec that forms a list.
 #
 # Type Parameters:
 #   T@ - The type of element on the list.
 #
-# Arguments:
-#   lit - The literal to construct the list from.
-#
-# Returns:
-#   A list with the elements of the literal.
-#
 # Example Use:
 #   List@<ABC@> x = List<ABC@>[A, B, A, C];
-<@ T@> { Lit@<T@, List@<T@>, List@<T@>, Unit@>; } List = <@ T@> {
-  Lit<T@, List@<T@>, List@<T@>, Unit@>(
-    (List@<T@> l) { l; },
-    Cons<T@>,
-    Nil<T@>,
-    Unit);
+<@ T@> { Literal@<T@, List@<T@>, List@<T@>, Unit@>; } List = <@ T@> {
+  ListLiteral<T@, Unit@>(Unit);
 };
 
 # Append --
@@ -189,4 +192,4 @@ ProcessEach = <@ A@, @ B@>(List@<A@> l, B@ base, (A@, B@) { B@!; } body) {
     nil: !(base));
 };
 
-@(List@, List, Cons, Nil, Append, Init, Concat, Map, ForEach, ProcessEach);
+@(List@, ListLiteral, List, Cons, Nil, Append, Init, Concat, Map, ForEach, ProcessEach);

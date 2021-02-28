@@ -1,11 +1,14 @@
 
-<@,@>@ Lit@ = /Literal%.Lit@;
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 <@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
 @ Structure@ = /Structure%.Structure@;
 % PairS = /Structure%.PairS;
 % UnitS = /Structure%.UnitS;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 # PairUp --
 #   Pair up adjacent elements in a list. For example, [a, b, c, d, e] turns
@@ -48,9 +51,12 @@
 #   A balanced structure representing the structure of fields.
 #
 # Example Use:
-#   Struct(List<Structure@>[field_1, field_2, field_3])
-(List@<Structure@>) { Structure@; } Struct = (List@<Structure@> lit) {
-  Build(List<Structure@>(lit));
-};
+#   Struct[field_1, field_2, field_3]
+Literal@<Structure@, List@<Structure@>, Structure@, Unit@> Struct = @(
+  '|': Build,
+  ',': Cons<Structure@>,
+  '': Nil<Structure@>,
+  '?': Unit
+);
 
 @(Struct);

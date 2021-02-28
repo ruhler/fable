@@ -3,7 +3,7 @@
 % False = /Bool%.False;
 % True = /Bool%.True;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 <@,@>% DoWhile = /Loop%.DoWhile; 
 
@@ -188,9 +188,13 @@ XS@ EmptyXS = XS@(empty: Unit);
   AppendXS(XS@(single: x), xs);
 };
 
-(Lit@<XS@>){ XS@; } CatXS = (Lit@<XS@> lit) {
-  lit<XS@>(AppendXS, EmptyXS);
-};
+# CatXS --
+Literal@<XS@, XS@, XS@, Unit@> CatXS = @(
+  '|': (XS@ xs) { xs; },
+  ',': AppendXS,
+  '': EmptyXS,
+  '?': Unit
+);
 
 # Generate the set of constraints that result from setting the value of the
 # given cell to s.
@@ -232,7 +236,7 @@ XS@ EmptyXS = XS@(empty: Unit);
   (Symbol@) { CellId@; } boxCellOf = (Symbol@ pos) { CellOfPos(box, pos); };
   XS@ xBox = Group(isThisPos, boxCellOf);
 
-  CatXS(List<XS@>[xCell, xRow, xCol, xBox]);
+  CatXS[xCell, xRow, xCol, xBox];
 };
 
 # A board and additional constraints.
@@ -280,7 +284,7 @@ XS@ EmptyXS = XS@(empty: Unit);
         just: Assign(CellOfPos(box, single.just), x.symbol),
         nothing: EmptyXS);
 
-      BoardX@(nboard, CatXS(List<XS@>[xCell, xRow, xCol, xBox]));
+      BoardX@(nboard, CatXS[xCell, xRow, xCol, xBox]);
     },
     false: BoardX@(board, EmptyXS));
 };

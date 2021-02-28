@@ -2,7 +2,6 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
-% Chars = /Char%.Chars;
 <@>% List = /List%.List;
 @ String@ = /String%.String@;
 % Concat = /String%.Concat;
@@ -22,21 +21,21 @@ Test@ Tests = TestSuite(Str|String, List<Test@>[
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Eq, !({
+  Test(Str|Eq, !({
     Bool@ wnt = True;
-    Bool@ got = /String/Eq%.Eq(Str(Chars|'A string!'), Str(Chars|'A string!'));
+    Bool@ got = /String/Eq%.Eq(Str|'A string!', Str|'A string!');
     AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Ne, !({
+  Test(Str|Ne, !({
     Bool@ wnt = False;
-    Bool@ got = /String/Eq%.Eq(Str(Chars|'A string!'), Str(Chars|'nope'));
+    Bool@ got = /String/Eq%.Eq(Str|'A string!', Str|'nope');
     AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
   })),
 
-  Test(Chars|Show, !({
-    String@ wnt = Str(Chars|'"hello"');
-    String@ got = /String/Show%.Show(Str(Chars|hello));
+  Test(Str|Show, !({
+    String@ wnt = Str|'"hello"';
+    String@ got = /String/Show%.Show(Str|hello);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   }))
 ]);

@@ -1,44 +1,27 @@
 
 @ Char@ = /Char%.Char@;
+% Chars = /Char%.Chars;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
+<@,@>% ListLiteral = /List%.ListLiteral;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 # String@ --
 #   A character string.
 @ String@ = List@<Char@>;
 
-# CharLit@ --
-#   A character string literal.
-#
-# Example Use:
-#   CharLit@ chars = Chars|'hello, world'
-<@>@ CharLit@ = Lit@<Char@>;
-
 # Str --
-#   Creates a string from a character string literal.
-#
-# Inputs:
-#   lit - the string literal.
+#   A string literal.
 #
 # Example Use:
-#   String@ s = Str(Chars|'hello, world')
-(CharLit@) { List@<Char@>; } Str = (CharLit@ lit) {
-  List<Char@>(lit);
-};
-
-Lit@<Char@, String@, String@, @<Chars>> Str = {
-  Lit<Char@, String@, String@, @<Chars>>(
-    List<Char@>.'}',
-    List<Char@>.',',
-    List<Char@>.'',
-    Chars);
+#   String@ s = Str|'hello, world'
+Literal@<Char@, String@, String@, @<Chars>> Str = {
+  ListLiteral<Char@, @<Chars>>(Chars);
 };
 
 # Concat --
 #   Concatenates a list of strings together.
 (List@<String@>) { String@; } Concat = /List%.Concat<Char@>;
 
-@(String@, CharLit@, Str, Concat);
+@(String@, Str, Concat);

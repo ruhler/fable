@@ -1,6 +1,5 @@
 
 @ Int@ = /Int/Int%.Int@;
-% Tag = /Structure/Union%.Tag;
 % Enum = /Structure/Union%.Enum;
 % Union = /Structure/Union%.Union;
 <@>@ Structured@ = /Structured%.Structured@;
@@ -9,9 +8,9 @@
 #   Instance of Structured@ for Int@.
 Structured@<Int@> Structured = (Int@ x) {
   x.?(
-    n: Union(Tag|10, /Int/IntP/Structured%.Structured(x.n)),
-    0: Enum(Tag|0),
-    p: Union(Tag|11, /Int/IntP/Structured%.Structured(x.p)));
+    n: Union|10(/Int/IntP/Structured%.Structured(x.n)),
+    0: Enum|0,
+    p: Union|11(/Int/IntP/Structured%.Structured(x.p)));
 };
 
 @(Structured);

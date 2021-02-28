@@ -20,12 +20,9 @@
 <@,@>% ProcessEach = /List%.ProcessEach;
 <@>% Length = /List/Length%.Length;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
-
 <@>@ Put@ = /Process%.Put@;
 
 @ String@ = /String%.String@;
-<@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
 @ Unit@ = /Unit%.Unit@;
@@ -37,16 +34,13 @@
 @ Test@ = +(TestCase@ case, TestSuite@ suite);
 
 # Test --
-#   Creates a test.
-#
-# In particular, this is more convenient to use than Test@(...) if you want to
-# specify the name of the test using a CharLit@ instead of a String@.
+#   Creates an individual test.
 #
 # Inputs:
 #   name - the name of the test
 #   test - a process that returns the result of the test
-(CharLit@, TestResult@!) { Test@; } Test = (CharLit@ name, TestResult@! test) {
-  Test@(case: TestCase@(Str(name), test));
+(String@, TestResult@!) { Test@; } Test = (String@ name, TestResult@! test) {
+  Test@(case: TestCase@(name, test));
 };
 
 # TestSuite --
@@ -55,9 +49,9 @@
 # Inputs:
 #   name - the name of the test suite.
 #   tests - the list of tests in the test suite.
-(CharLit@, Lit@<Test@>) { Test@; }
-TestSuite = (CharLit@ name, Lit@<Test@> tests) {
-  Test@(suite: TestSuite@(Str(name), List<Test@>(tests)));
+(String@, List@<Test@>) { Test@; }
+TestSuite = (String@ name, List@<Test@> tests) {
+  Test@(suite: TestSuite@(name, tests));
 };
 
 <@ T@>((T@, T@) { Bool@; }, (T@) { String@; }, T@, T@) { TestResult@; }
@@ -92,7 +86,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       case: {
         TestCase@ t = test.case;
         TestResult@ tr := t.test;
-        String@ short = Str(tr.?(pass: Chars|'.', fail: Chars|'F'));
+        String@ short = tr.?(pass: Str|'.', fail: Str|'F');
         Unit@ _ := out(short);
         List@<Failure@> nfailed = tr.?(
           pass: status.failures,

@@ -1,7 +1,6 @@
 
 @ Decimal@ = /Digits%.Decimal@;
-
-<@,@>@ Lit@ = /Literal%.Lit@;
+% Decimal = /Digits%.Decimal;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
@@ -18,23 +17,29 @@
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
 
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
+
 (Decimal@) { Int@; } DtoI = (Decimal@ d) { 
   d.?(0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9);
 };
 
-# A more convenient name for the decimal digits when writing integer literals.
-% D = /Digits%.Decimal;
+# MkInt@ -- 
+#   Helper type for constructing integer literals.
+#
+# TODO: Figure out a decent way to describe how this works.
+@ MkInt@ = (Int@) { Int@; };
 
-# Create an Int@ from an Int literal.
-# For example: Int@ 42 = I(D|42)
-(Lit@<Decimal@>) { Int@; } I = (Lit@<Decimal@> lit) {
-  # Ahahaha! See if you can figure out how this works. :)
-  @ MkInt@ = (Int@) { Int@; };
-  lit<MkInt@>(
-    (Decimal@ d, MkInt@ mk)(Int@ msb) {
-      mk(Add(Mul(10, msb), DtoI(d)));
-    },
-    (Int@ msb) { msb; })(0);
-};
+# Int --
+#   Create an Int@ from a positive decimal integer literal.
+#
+# For example: Int@ 42 = Int|42;
+Literal@<Decimal@, MkInt@, Int@, @<Decimal>> Int = @(
+  '|': (MkInt@ mk) { mk(0); },
+  ',': (Decimal@ d, MkInt@ mk)(Int@ msb) {
+         mk(Add(Mul(10, msb), DtoI(d)));
+       },
+  '': (Int@ msb) { msb; },
+  '?': Decimal
+);
 
-@(I, D);
+@(Int);

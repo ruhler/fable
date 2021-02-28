@@ -1,6 +1,5 @@
 
 @ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
 @ IntP@ = /Int/IntP%.IntP@;
 % 10 = /Int/IntP%.10;
 % DivMod = / Int/IntP/Div%.DivMod;
@@ -16,32 +15,32 @@
 #
 # Behavior is undefined if x is not in the range [0, 9].
 (IntS@) { String@; } ShowDigit = (IntS@ x) {
-  Str(x.?(
-    0: Chars|0,
+  x.?(
+    0: Str|0,
     p: x.p.?(
-      1: Chars|1,
+      1: Str|1,
       2p0: x.p.2p0.?( 
-        1: Chars|2,
+        1: Str|2,
         2p0: x.p.2p0.2p0.?(
-          1: Chars|4,
+          1: Str|4,
           2p0: x.p.2p0.2p0.2p0.?(
-            1: Chars|8,
-            : Chars|'?'),
-          : Chars|'?'),
+            1: Str|8,
+            : Str|'?'),
+          : Str|'?'),
         2p1: x.p.2p0.2p1.?(
-          1: Chars|6,
-          : Chars|'?')),
+          1: Str|6,
+          : Str|'?')),
       2p1: x.p.2p1.?( 
-        1: Chars|3,
+        1: Str|3,
         2p0: x.p.2p1.2p0.?(
-          1: Chars|5,
+          1: Str|5,
           2p0: x.p.2p1.2p0.2p0.?(
-            1: Chars|9,
-            : Chars|'?'),
-          : Chars|'?'),
+            1: Str|9,
+            : Str|'?'),
+          : Str|'?'),
         2p1: x.p.2p1.2p1.?(
-          1: Chars|7,
-          : Chars|'?')))));
+          1: Str|7,
+          : Str|'?'))));
 };
 
 # Show --

@@ -7,7 +7,6 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-<@>% Nil = /List%.Nil;
 <@>% List = /List%.List;
 <@>% Concat = /List%.Concat;
 
@@ -71,9 +70,9 @@ EqArray = <@ T@>((T@, T@) { Bool@; } eq, Array@<T@> a, Array@<T@> b) {
 # Otherwise, don't include any whitespace in the output.
 (Bool@)(Solved@) { String@; } ShowBoard = (Bool@ spaced) {
   (Symbol@) { String@; } ShowCell = (Symbol@ s) {
-    s.?(1: Str(Chars|1), 2: Str(Chars|2), 3: Str(Chars|3),
-        4: Str(Chars|4), 5: Str(Chars|5), 6: Str(Chars|6),
-        7: Str(Chars|7), 8: Str(Chars|8), 9: Str(Chars|9));
+    s.?(1: Str|1, 2: Str|2, 3: Str|3,
+        4: Str|4, 5: Str|5, 6: Str|6,
+        7: Str|7, 8: Str|8, 9: Str|9);
   };
 
   String@ space = spaced.?(true: Str|' ', false: Str|'');

@@ -1,0 +1,281 @@
+Fble Literal Revision
+
+Issues with literals:
+
+I often want to specify things as Lit@ and store them as List@. This makes
+it awkward because I need to variations of constructor functions for
+everything I want to construct. Perhaps revisit the idea of having a list
+literal produce a List@? Or Iter@? Or storing things in terms of Lit@?
+
+Non-list literals are pretty clunky to use with things like I(D|134). It
+would really be nice if I could combine the set of symbols with the combiner
+and define a single name. For example: Int|134. HexInt|3AF. Maybe? I don't
+know. It's all this Str(Char|foo)) stuff that I wish had less syntactic
+overhead. S|'foo' is nicer? Perhaps revisit the idea of combining the set of
+symbols with the combinator in literals.
+
+What if we said the spec for a literal has two fields, 'letters' and
+'construct'. The translation of S|'foo' would be:
+ S.construct([S.letter.f, S.letter.o, S.letter.o])
+
+The benefit being you could know write something like
+S|'foo' or I|23 instead of Str(Chars|'foo') and I(D|23).
+
+And you could always leave 'construct' as an identity function that returns
+the value as a Lit@.
+
+One of the reasons against such a thing is it gives special privileged to
+the names 'letter' and 'construct'. If we are willing to do that, why not
+have list literal actually return a List@, with names 'cons' and 'nil'? Or,
+perhaps, we could allow you to write S[ ... ], where 'S' is a literal with
+'construct' function? How is that different from S( ... )? Well, we could
+require you supply an S to compose to a given type. Then the literal could
+supply the functions for composition directly. We wouldn't need a builtin
+type like Lit@. Just a convention for the names to use for fields of 'S'.
+Like we sort of already do for literal specs.
+
+Here's what we want then. Share literal spec. Have S[...] be a list.
+Have S|... be a literal. Where S as a spec contains three fields:
+ 1. A struct containing a field for each letter that may appear in the
+    literal. Say of spec-specific type Letter@.
+ 2. The value of an empty literal. Say of spec-specific type Literal@.
+ 3. A function to prepend a letter to a literal.
+    Of type (Letter@, Literal@) { Literal@; }.
+
+You know what's great about this?
+* We can now have empty lists and empty literals.
+* We can reuse the same spec for list and normal literals.
+  For example, S|'hello', S[Chars.nl].
+* We don't have to have this notion of Lit@.
+* We don't have to do this I(D|...) thing, where we need two names in order to
+  write a literal.
+
+The downside?
+* We need to come up with names for the fields.
+* We can't describe the 'type' of a spec as an fble type. Not that we could
+  anyway because of the letters. But we could describe some of it. Well,
+  actually, we can as long as we parameterize it on the type of letters.
+  It's a little wordy, but the normal user shouldn't have to worry about
+  that at all.
+
+I think it's totally worth a try. What names should I give to our three
+fields?
+
+Brainstorm:
+1. 'letters', 'x', '?',
+2. 'empty', ''
+3. 'prepend', ','
+
+If I want to go symbols, I think: '?', '', ',' are good.
+If I want to go words, I think: 'letters', 'empty', and 'prepend' are good.
+
+Let's try symbols to start. It seems better fitting to me, and somewhat
+natural.
+
+On further thought, we'll want one more field. In case we want the thing we
+are returning to be different from the sequence type, like is the case for
+integer literals today.
+
+Maybe call it '[]'? No. That looks like the empty list.
+Maybe '|'?
+
+S|'Foo' ==>   S.'|'(S.','(S.'?'.F, S.','(S.'?'.o, S.','(S.'?'.o, S.''))))
+
+Or... S|'Foo' ==> S[S.'?'.F, S.'?'.o, S.'?'.o]
+      S[a, b, c] ==> S.'|'(S.','(a, S.','(b, S.','(c, S.''))))
+
+letter, cons, nil, reduce
+'?', ',', '', '|'
+
+Thinking about how restrictive I want to be on the types of the spec and
+letters, I think it would be good to specify:
+- The spec must have exactly four fields, in the prescribed order, with the
+  prescribed name. Because why not?
+- We should require letters, even for pure list literals, for the sake of
+  consistency. You can always specify Unit as the value.
+- Unlike the spec, I think it's fine for letters to have extra stuff in it.
+  The primary motivation being that way we can add a field like 'newline' to
+  Chars and share the letters value with the user convenience of saying
+  Chars.newline without having to write out all the chars again. In other
+  words, spec has 4 fields, so it's fine to make people write them out
+  again. Letters could have large numbers of fields, so better to let user
+  reuse letters for other things.
+- Given letters can have extra fields, I think it's fine to allow single
+  letter fields to have unexpected types. You could even use this to reuse a
+  single letters struct for multiple disjoint literals? Though I doubt that
+  matters.
+- We could avoid coming up with names at all if we just looked at the
+  position of the fields in spec types. But I think having explicit names is
+  better, to force a little more consistency. And these names are not so
+  unreasonable I don't think.
+
+I do wonder if we shouldn't have a special type for literal specs. That way
+we can enforce these restrictions when we create the spec, instead of
+deferring until we try to use the spec. But I don't know. I worry that will
+open up a slew of questions I rather not deal with, like whether the list of
+supported characters is part of the type.
+
+As I start to use this new approach for literals, some comments:
+* I have to be careful now not to turn functions that take a single list
+  argument into literals, because those functions wouldn't work with list
+  values as input. That's a little awkward. What's the point of being able
+  to do the final application if you can't easily reuse that for given list
+  literals?
+
+  Maybe, if we had a custom literal type, we could provide a syntax for
+  applying the final transformation to a literal given a collection as
+  input?
+
+  Or I suppose you could always do: Foo.'|'(...) for that case. That's not
+  too bad, is it?
+
+* I kind of like that it's more obvious now what the type of elements on a
+  list is. For example, List<Int@>[a, b, c], instead of [a, b, c].
+
+* It's maybe a little worrisome that the cost of constructing literal is not
+  obvious from the syntax. Str|'foo' looks like a constant kind of thing,
+  but buried inside is a potentially very complex function call.
+
+I think there is always going to be a fundamental choice for the user when
+we have the option to have user defined literals like this. They could
+define a function that operates on a value that could be specified as a
+literal as a normal function or as a user defined literal.
+
+If it's a normal function, the literal needs to be standalone, so it has to
+be annotated with some syntactic overhead like Str|. That means you end up
+calling the user function as foo(Str|...), or foo(Str[...]).
+
+If the user decides to make it a user defined literal, then they ought to
+provide to variants of the function: a normal one and a user defined literal
+one. Otherwise it doesn't compose so well. That means the user could end up
+writing something like: foo(Str|...) or fooL|..., where foo is the normal
+version of the function and fooL is the literal version.
+
+Having to define two variations of functions everywhere doesn't scale.
+What's important is that we make it as easy as possible to define stand
+alone literal values so that foo(Str|...) syntax is more attractive. That's
+what my proposed update to literals does, which is why I think (though
+unfortunately still with a little bit of hesitation) this is a good change
+to make.
+
+I don't think we should provide special syntax to call a literal as a normal
+function. It's too special a case. We would only support single argument
+functions this way, which doesn't seem worth special casing. I think 
+foo.'|'(...) is fine for users who want to use that style to avoid
+specialization. A slightly awkward syntax for a slightly awkward programming
+style.
+
+---
+
+I think this spec is right from the user point of view. It's important that
+literal specs can only be applied to a single argument, and that they don't
+look like function calls. This is because of the principle that you should be
+able to tell what the type of a thing is in isolation.
+
+Consider: Foo(|blah).
+
+We can't tell the type of |blah without knowing about Foo. That's bad. It
+shows up more in more complex situations: Foo(a, b, c, |blah, d, e);
+
+The literal syntax avoids this issue by making the 'Foo' part of the atomic
+unit. Foo|blah, Foo[a, b, c]
+
+---
+
+Idea for making literals much easier to define:
+1. Have a special syntax for 'letter' enums. For example, something like:
+   @|0123456789 is syntactic sugar for:
+
+   +(*() 0, *() 1, *() 2, ...)
+
+2. Make use of the List@ type as a builtin thing. Tedious, but doable.
+3. Define a literal in terms of a function from List@<@|...> to value type.
+
+We can reuse @|... for the definition of things like Char@, Digit@, Hex@.
+We can reuse functions to convert them to particular things.
+And you can to define a single function.
+
+Now it's more obvious that instantiating a literal is calling a function, and
+it's not unreasonable to reuse that literal function as a function.
+
+So, we could define, for instance:
+
+@ Char@ = @|'...'  (super long type definition).
+
+(List@<Char@>) { String@; } Str = (List@<Char@> l) { l; };
+
+Str|'hello' now feels more meaningful. More straight forward. Less hacky. Less
+magic struct fields. Less questions about restrictions and funny types. Less
+funny syntactic desugaring. A literal is literally a function applied to a
+concrete data type.
+
+Note, we still want to have Str|'hello' instead of Str(|'hello'), because the
+type of the string depends on the value of Str.
+
+This only effects how literals are defined, now how they are used, so it is
+consistent and compatible with the current changes under way.
+
+---
+
+Alternatively, what if we had a builtin 'every character' union? Then we could
+just have syntax [a, b, c, ...] turns into a List@ (empty lists not allowed)
+  and |'abc' turns into a List@<AnyChar@>, and you would start writing
+  Str(|'hello'), Int(|'hi').
+
+The difference here now is:
+1. Empty lists are not allowed, because we couldn't infer their type.
+2. You don't get error checking, for example, if you put a funny character in
+an integer literal. Someone would have to deal with that.
+
+Both of these are arguably minor. Nil<Foo@> is easy enough instead of the
+empty list. And you don't get error checking for things that aren't restricted
+to what letters you use. For example, think of how we would want to write
+positive or negative integer literals. Then we want '+' and '-' in the
+literal, but now we can have invalid '14-12' literals with no obvious way to
+handle them.
+
+To work with AnyChar@, you can construct specific values: AnyChar@('x': *()()).
+
+You can put a case expression, as long as it has a default and you know what
+order to put the characters in. Maybe unicode order? Or ascii order? Depending
+on what character set you are writing in.
+
+Then we could have custom error checking. For example, 
+
+(List@<AnyChar@>) { Maybe@<Int@>; } Int = ...
+
+Or just abort or assert or have undefined behavior at runtime.
+
+This means we have to presume a builtin list type and the list of characters
+supported by a front end gets tied to the language runtime? The latter seems
+worrying.
+
+---
+
+/Structure/Union% is an interesting case for defining literals, because we
+would like to define an Enum literal that is a variation on a Union literal.
+It's a little clunky now:
+
+  Enum = @(
+    '|': (Tag@ t) { t(UnitS); },
+    ',': Union.',',
+    '': Union.'',
+    '?': Union.'?'
+  );
+
+Would this be easier if a literal was defined as a function? Something like:
+  Enum = (List@<Tag@> tag) { Union(tag)(UnitS); }
+
+Yeah. That's much more in the style of composition that we have in fble.
+Otherwise composition is inside out. I should make that improvement to
+definitions after I've update the users of literals.
+
+Same thing for /Structure/Struct%. It would be much nicer to write:
+  Struct = (List@<Structure@> l) { Build(List<Structure@>(l)) } than the current:
+
+  Struct = @(
+    '|': Build,
+    ',': Cons<Structure@>,
+    '': Nil<Structure@>,
+    '?': Unit
+  );

@@ -32,11 +32,11 @@
 @ Output@ = /TicTacToe/Game%.Output@;
 
 (Square@) { String@; } ShowSquare = (Square@ s) {
-  s.?(X: Str(Chars|X), O: Str(Chars|O), E: Str(Chars|_));
+  s.?(X: Str|X, O: Str|O, E: Str|_);
 };
 
 (Board@) { String@; } ShowBoard = (Board@ b) {
-  String@ _ = Str(Chars|' ');
+  String@ _ = Str|' ';
   Concat<Char@>(List<String@>[
     Str|'  1 2 3', Str[Chars.nl],
     Str|'A ', ShowSquare(b.ul), _, ShowSquare(b.uc), _, ShowSquare(b.ur), Str[Chars.nl],
@@ -45,7 +45,7 @@
 };
 
 (Player@) { String@; } ShowPlayer = (Player@ p) {
-  p.?(X: Str(Chars|X), O: Str(Chars|O));
+  p.?(X: Str|X, O: Str|O);
 };
 
 (GameStatus@) { String@; } ShowStatus = (GameStatus@ s) {

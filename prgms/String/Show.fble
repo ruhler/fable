@@ -1,5 +1,4 @@
 
-% Chars = /Char%.Chars;
 <@>% List = /List%.List;
 <@>@ Show@ = /Show%.Show@;
 @ String@ = /String%.String@;

@@ -1,12 +1,11 @@
 
 @ Bool@ = /Bool%.Bool@;
-% Chars = /Char%.Chars;
 <@>@ Show@ = /Show%.Show@;
 % Str = /String%.Str;
 
 # Show -- see documentation of /Show%.Show@.
 Show@<Bool@> Show = (Bool@ x) {
-  Str(x.?(true: Chars|True, false: Chars|False));
+  x.?(true: Str|True, false: Str|False);
 };
 
 @(Show);
