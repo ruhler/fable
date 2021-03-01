@@ -279,3 +279,104 @@ Same thing for /Structure/Struct%. It would be much nicer to write:
     '': Nil<Structure@>,
     '?': Unit
   );
+
+---
+
+Note the function approach to literals relies on using the type as the
+specification for how to build the collection of elements. That's nice in the
+sense that we know it's just pure construction of values and not calling
+potentially complex functions. The concern is that the user doesn't really
+have good ways to make abstract constructors. They have to know exactly what
+order and name the constructors have to use them. For letter types that means
+potentially defining an extra union type and map from constructor to value.
+For the list type that means hard coding somewhere either the name of the
+constructors, the order of the constructors, or both.
+
+What if we had a GADT like thing for types in fble? Would that help here, and
+potentially other places where I've run into similar concerns, namely for
+abstract data types?
+
+For example, maybe instead of struct and union types, we have a single data
+type spec, where you give a named list of function types? No. I don't see that
+going anywhere. Not without some form of pattern matching to let us
+deconstruct the arguments to a constructor.
+
+A struct type could be defined solely in terms of constructor and accessor
+functions. There's no reason you couldn't give multiple names for the same
+constructor or accessor.
+
+A union type could be defined in terms of a constructor functions, accessor
+functions, and ... well, that's the hard one. Figuring what the tag of a union
+is. If we did primarily if/else, it's not hard to do a linear chain. That's
+what pattern matching does. But if we want log dispatch instead of linear
+dispatch... Or if we want it to be obvious what all the possible options are,
+then we need to know the full, primitive set of constructors.
+
+What if a type is defined solely in terms of the primitive operations you can
+perform on it? And we could have special syntax to make it easy to define case
+functions where we want to lazily evaluate the body of the case instead of
+passing normal args?
+
+@ Bool@;
+
+Bool@ True;   // Primitive
+Bool@ False;  // Primitive
+
+<@ T@>(Bool@, T@!, T@!) { T@!; } If:
+  If(True, a, b) = a,
+  If(False, a, b) = b
+
+No. More thought suggests that line of reasoning isn't going to go places.
+Somewhere we have to specify what the underlying concrete representation for a
+type is. May as well say that's what normal struct and union types are for,
+and you can always wrap something in a struct and make it polymorphic in the
+type to support abstract types, if you think it's worth it.
+
+---
+
+Proposal for type version of literals:
+
+Letters:
+  Any union type can be used. To be a valid literal, for each letter in the
+  literal, there must exist a field of type *(). The letter x is converted to
+  Letter@(x: *()());
+
+List:
+  A struct type is required that matches the definition:
+
+  @ List@ = { +(*(T@ head, List@ tail) cons, Unit@ nil); };
+
+  Where T@ can be anything, this becomes the element type. And the names of the
+  fields 'head', 'tail', 'cons', 'nil' can be anything. What matters is field
+  order, not name.
+
+For lists, we say the field order must be fixed instead of names, because that
+gives users a lot more freedom in how they define their list types. Field
+order has only two choices: cons or nil first, head or tail first.
+
+Having 'head' before 'tail' makes sense by any left to right reading of a
+sequence.
+
+Having 'cons' before 'nil' is more ambiguous.
+
+Arguments for 'nil' before 'cons':
+ * base case before inductive case.
+ * 0 before 1
+ * matches haskell definition of list.
+
+Arguments for 'cons' before 'nil':
+ * If we think of 'nil' as the tail, it's consistent with head before tail.
+ * It's more in line with 'True' before 'False' from if statements.
+ * It's what I currently have implemented.
+ * matches haskell definition of Maybe.
+
+We could support either order. It's not hard for the compiler to figure out
+which has type *() and which doesn't. But that kind of magic seems too magical
+and for little value.
+  
+@ C@ = { +(*(E@ _, C@ _) _, *() _); };
+@ C@ = { *() _, +(*(E@ _, C@ _) _); };
+
+I see no clear theoretical winner for order of cons vs. nil, so let's just go
+with the strong practical winner of cons before nil so I don't have to rewrite
+all of my existing library code.

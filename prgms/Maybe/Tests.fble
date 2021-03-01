@@ -2,12 +2,12 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
-% Chars = /Char%.Chars;
 <@>@ Eq@ = /Eq%.Eq@;
-<@>@ Show@ = /Show%.Show@;
+<@>% List = /List%.List;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
+<@>@ Show@ = /Show%.Show@;
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 @ Test@ = /Test%.Test@;
@@ -32,7 +32,7 @@ Eq@<AB@> EqAB = (AB@ x, AB@ y) {
 # ShowAB --
 #   An instance of Show@ for AB@.
 Show@<AB@> ShowAB = (AB@ x) {
-  Str(x.?(a: Chars|a, b: Chars|b));
+  x.?(a: Str|a, b: Str|b);
 };
 
 Eq@<Maybe@<AB@>> Eq = /Maybe/Eq%.Eq<AB@>(EqAB);

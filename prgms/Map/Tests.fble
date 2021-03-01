@@ -4,7 +4,6 @@
 % False = /Bool%.False;
 % And = /Bool%.And;
 @ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
 <@>@ Eq@ = /Eq%.Eq@;
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;

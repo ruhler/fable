@@ -1,24 +1,33 @@
 
 @ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
-% B = /Digits%.Bit;
+% Bit = /Digits%.Bit;
+% Hex = /Digits%.Hex;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 <@>% Concat = /List%.Concat;
 <@,@>% Map = /List%.Map;
+<@,@>% ListLiteral = /List%.ListLiteral;
+
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
+
+# A literal spec for a list of binary digits.
+Literal@<Bit@, List@<Bit@>, List@<Bit@>, @<Bit>> BitStr = ListLiteral<Bit@, @<Bit>>(Bit);
+
+# A literal spec for a list of hex digits.
+Literal@<Hex@, List@<Hex@>, List@<Hex@>, @<Hex>> HexStr = ListLiteral<Hex@, @<Hex>>(Hex);
 
 # HexToBits --
 #   Convert a string of hex digits to a string of binary digits.
 (List@<Hex@>) { List@<Bit@>; } HexToBits = (List@<Hex@> hex) {
   Concat<Bit@>(Map<Hex@, List@<Bit@>>(hex, (Hex@ h) {
-    List<Bit@>(h.?(
-        0: B|0000, 1: B|0001, 2: B|0010, 3: B|0011,
-        4: B|0100, 5: B|0101, 6: B|0110, 7: B|0111,
-        8: B|1000, 9: B|1001, A: B|1010, B: B|1011,
-        C: B|1100, D: B|1101, E: B|1110, F: B|1111));
+    h.?(
+        0: BitStr|0000, 1: BitStr|0001, 2: BitStr|0010, 3: BitStr|0011,
+        4: BitStr|0100, 5: BitStr|0101, 6: BitStr|0110, 7: BitStr|0111,
+        8: BitStr|1000, 9: BitStr|1001, A: BitStr|1010, B: BitStr|1011,
+        C: BitStr|1100, D: BitStr|1101, E: BitStr|1110, F: BitStr|1111);
   }));
 };
 
-@(HexToBits);
+@(BitStr, HexStr, HexToBits);
 

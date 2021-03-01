@@ -6,9 +6,11 @@
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
 <@,@>% ForEach = /List%.ForEach;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -42,18 +44,22 @@
 <@>@ Put@ = /Process%.Put@;
 
 # Construct a Bit32 in hex, with high-order byte first.
-(Lit@<Hex@>) { Bit32@; } H8 = (Lit@<Hex@> lit) {
-  List@<Hex@> s = List<Hex@>(lit);
-  Hex@ 7 = s.cons.head;
-  Hex@ 6 = s.cons.tail.cons.head;
-  Hex@ 5 = s.cons.tail.cons.tail.cons.head;
-  Hex@ 4 = s.cons.tail.cons.tail.cons.tail.cons.head;
-  Hex@ 3 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-  Hex@ 2 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-  Hex@ 1 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-  Hex@ 0 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-  Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
-};
+Literal@<Hex@, List@<Hex@>, Bit32@, @<Hex>> H8 = @(
+  '|': (List@<Hex@> s) {
+         Hex@ 7 = s.cons.head;
+         Hex@ 6 = s.cons.tail.cons.head;
+         Hex@ 5 = s.cons.tail.cons.tail.cons.head;
+         Hex@ 4 = s.cons.tail.cons.tail.cons.tail.cons.head;
+         Hex@ 3 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+         Hex@ 2 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+         Hex@ 1 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+         Hex@ 0 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+         Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
+       },
+  ',': Cons<Hex@>,
+  '': Nil<Hex@>,
+  '?': Hex
+);
 
 @ Block@ = *(
   Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,
@@ -62,31 +68,31 @@
   Bit32@ 12, Bit32@ 13, Bit32@ 14, Bit32@ 15);
 
 Block@ T1 = Block@(
-  H8(Hex|D76AA478), H8(Hex|E8C7B756), H8(Hex|242070DB), H8(Hex|C1BDCEEE),
-  H8(Hex|F57C0FAF), H8(Hex|4787C62A), H8(Hex|A8304613), H8(Hex|FD469501),
-  H8(Hex|698098D8), H8(Hex|8B44F7AF), H8(Hex|FFFF5BB1), H8(Hex|895CD7BE),
-  H8(Hex|6B901122), H8(Hex|FD987193), H8(Hex|A679438E), H8(Hex|49B40821)
+  H8|D76AA478, H8|E8C7B756, H8|242070DB, H8|C1BDCEEE,
+  H8|F57C0FAF, H8|4787C62A, H8|A8304613, H8|FD469501,
+  H8|698098D8, H8|8B44F7AF, H8|FFFF5BB1, H8|895CD7BE,
+  H8|6B901122, H8|FD987193, H8|A679438E, H8|49B40821
 );
 
 Block@ T2 = Block@(
-  H8(Hex|F61E2562), H8(Hex|C040B340), H8(Hex|265E5A51), H8(Hex|E9B6C7AA),
-  H8(Hex|D62F105D), H8(Hex|02441453), H8(Hex|D8A1E681), H8(Hex|E7D3FBC8),
-  H8(Hex|21E1CDE6), H8(Hex|C33707D6), H8(Hex|F4D50D87), H8(Hex|455A14ED),
-  H8(Hex|A9E3E905), H8(Hex|FCEFA3F8), H8(Hex|676F02D9), H8(Hex|8D2A4C8A)
+  H8|F61E2562, H8|C040B340, H8|265E5A51, H8|E9B6C7AA,
+  H8|D62F105D, H8|02441453, H8|D8A1E681, H8|E7D3FBC8,
+  H8|21E1CDE6, H8|C33707D6, H8|F4D50D87, H8|455A14ED,
+  H8|A9E3E905, H8|FCEFA3F8, H8|676F02D9, H8|8D2A4C8A
 );
 
 Block@ T3 = Block@(
-  H8(Hex|FFFA3942), H8(Hex|8771F681), H8(Hex|6D9D6122), H8(Hex|FDE5380C),
-  H8(Hex|A4BEEA44), H8(Hex|4BDECFA9), H8(Hex|F6BB4B60), H8(Hex|BEBFBC70),
-  H8(Hex|289B7EC6), H8(Hex|EAA127FA), H8(Hex|D4EF3085), H8(Hex|04881D05),
-  H8(Hex|D9D4D039), H8(Hex|E6DB99E5), H8(Hex|1FA27CF8), H8(Hex|C4AC5665)
+  H8|FFFA3942, H8|8771F681, H8|6D9D6122, H8|FDE5380C,
+  H8|A4BEEA44, H8|4BDECFA9, H8|F6BB4B60, H8|BEBFBC70,
+  H8|289B7EC6, H8|EAA127FA, H8|D4EF3085, H8|04881D05,
+  H8|D9D4D039, H8|E6DB99E5, H8|1FA27CF8, H8|C4AC5665
 );
 
 Block@ T4 = Block@(
-  H8(Hex|F4292244), H8(Hex|432AFF97), H8(Hex|AB9423A7), H8(Hex|FC93A039),
-  H8(Hex|655B59C3), H8(Hex|8F0CCC92), H8(Hex|FFEFF47D), H8(Hex|85845DD1),
-  H8(Hex|6FA87E4F), H8(Hex|FE2CE6E0), H8(Hex|A3014314), H8(Hex|4E0811A1),
-  H8(Hex|F7537E82), H8(Hex|BD3AF235), H8(Hex|2AD7D2BB), H8(Hex|EB86D391)
+  H8|F4292244, H8|432AFF97, H8|AB9423A7, H8|FC93A039,
+  H8|655B59C3, H8|8F0CCC92, H8|FFEFF47D, H8|85845DD1,
+  H8|6FA87E4F, H8|FE2CE6E0, H8|A3014314, H8|4E0811A1,
+  H8|F7537E82, H8|BD3AF235, H8|2AD7D2BB, H8|EB86D391
 );
 
 @ Md5Hash@ = *(
@@ -527,10 +533,10 @@ Pad = (Get@<Maybe@<Bit8@>> input, Put@<Streamed@<Bit8@>> output, Bit64@ length) 
 ABCD@ ABCD0 = ABCD@(
   # Note: the spec lists these low-order byte first, but H8 takes high
   # order byte first.
-  H8(Hex|67452301),
-  H8(Hex|EFCDAB89),
-  H8(Hex|98BADCFE),
-  H8(Hex|10325476));
+  H8|67452301,
+  H8|EFCDAB89,
+  H8|98BADCFE,
+  H8|10325476);
 
 (Bit@, Bit@, Bit@, Bit@) { Hex@; }
 HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {

@@ -7,16 +7,15 @@
 % False = /Bool%.False;
 
 @ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
 
 <@>@ Eq@ = /Eq%.Eq@;
 
 @ Int@ = /Int/Int%.Int@;
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
+<@,@>% ListLiteral = /List%.ListLiteral;
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 <@>% Append = /List%.Append;
@@ -27,6 +26,8 @@
 <@>% Length = /List/Length%.Length;
 <@>% Sort = /List/Sort%.Sort;
 <@>% _Structured = /List/Structured%.Structured;
+
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 <@>@ Show@ = /Show%.Show@;
 
@@ -46,6 +47,8 @@
   C: Elem@(C: Unit),
   D: Elem@(D: Unit),
   E: Elem@(E: Unit));
+
+Literal@<Elem@, List@<Elem@>, List@<Elem@>, @<Elems>> EL = ListLiteral<Elem@, @<Elems>>(Elems);
 
 (Elem@) { String@; } ElemShow = (Elem@ e) {
   e.?(A: Str|A, B: Str|B, C: Str|C, D: Str|D, E: Str|E);
@@ -77,8 +80,8 @@ AssertEquals = (List@<Elem@> a, List@<Elem@> b) {
 
 Test@ Tests = TestSuite(Str|List, List<Test@>[
   Test(Str|'Eq_Same', !({
-    List@<Elem@> a = List<Elem@>(Elems|ABCDE);
-    List@<Elem@> b = List<Elem@>(Elems|ABCDE);
+    List@<Elem@> a = EL|ABCDE;
+    List@<Elem@> b = EL|ABCDE;
 
     Eq(a, b).?(
       true: TestResult@(pass: Unit),
@@ -88,8 +91,8 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   })),
 
   Test(Str|'Eq_DiffElem', !({
-    List@<Elem@> a = List<Elem@>(Elems|ABCDE);
-    List@<Elem@> b = List<Elem@>(Elems|ABDDE);
+    List@<Elem@> a = EL|ABCDE;
+    List@<Elem@> b = EL|ABDDE;
 
     Eq(a, b).?(
       true: TestResult@(fail: Concat<Char@>(List<String@>[
@@ -99,8 +102,8 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   })),
 
   Test(Str|'Eq_DiffSize', !({
-    List@<Elem@> a = List<Elem@>(Elems|ABCDE);
-    List@<Elem@> b = List<Elem@>(Elems|ABCD);
+    List@<Elem@> a = EL|ABCDE;
+    List@<Elem@> b = EL|ABCD;
 
     Eq(a, b).?(
       true: TestResult@(fail: Concat<Char@>(List<String@>[
@@ -110,46 +113,46 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   })),
 
   Test(Str|'Append', !({
-    List@<Elem@> a = List<Elem@>(Elems|ABC);
-    List@<Elem@> b = List<Elem@>(Elems|DEE);
-    List@<Elem@> wnt = List<Elem@>(Elems|ABCDEE);
+    List@<Elem@> a = EL|ABC;
+    List@<Elem@> b = EL|DEE;
+    List@<Elem@> wnt = EL|ABCDEE;
     List@<Elem@> got = Append<Elem@>(a, b);
     AssertEquals(wnt, got);
   })),
 
   Test(Str|'Init', !({
-    List@<Elem@> l = List<Elem@>(Elems|ABCDE);
-    List@<Elem@> wnt = List<Elem@>(Elems|ABCD);
+    List@<Elem@> l = EL|ABCDE;
+    List@<Elem@> wnt = EL|ABCD;
     List@<Elem@> got = Init<Elem@>(l);
     AssertEquals(wnt, got);
   })),
 
   Test(Str|'Concat', !({
     List@<List@<Elem@>> l = List<List@<Elem@>>[
-      List<Elem@>(Elems|ABC),
-      List<Elem@>(Elems|DEA),
-      List<Elem@>(Elems|BB)
+      EL|ABC,
+      EL|DEA,
+      EL|BB
     ];
 
-    List@<Elem@> wnt = List<Elem@>(Elems|ABCDEABB);
+    List@<Elem@> wnt = EL|ABCDEABB;
     List@<Elem@> got = Concat<Elem@>(l);
     AssertEquals(wnt, got);
   })),
 
   Test(Str|'Map', !({
-    List@<Elem@> l = List<Elem@>(Elems|ABCDE);
+    List@<Elem@> l = EL|ABCDE;
     (Elem@) { Elem@; } f = (Elem@ e) {
       e.?(A: Elems.B, B: Elems.C, C: Elems.D, D: Elems.E, E: Elems.A);
     };
 
-    List@<Elem@> wnt = List<Elem@>(Elems|BCDEA);
+    List@<Elem@> wnt = EL|BCDEA;
     List@<Elem@> got = Map<Elem@, Elem@>(l, f);
     AssertEquals(wnt, got);
   })),
 
   Test(Str|'ForEach', !({
-    List@<Elem@> l = List<Elem@>(Elems|ABCDE);
-    List@<Elem@> wnt = List<Elem@>(Elems|EDCBA);
+    List@<Elem@> l = EL|ABCDE;
+    List@<Elem@> wnt = EL|EDCBA;
     List@<Elem@> got =
       ForEach<Elem@, List@<Elem@>>(l, Nil<Elem@>, (Elem@ e, List@<Elem@> b) {
         Cons<Elem@>(e, b);
@@ -158,15 +161,15 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   })),
 
   Test(Str|'Sort', !({
-    List@<Elem@> unsorted = List<Elem@>(Elems|DABEC);
-    List@<Elem@> wnt = List<Elem@>(Elems|ABCDE);
+    List@<Elem@> unsorted = EL|DABEC;
+    List@<Elem@> wnt = EL|ABCDE;
     List@<Elem@> got = Sort<Elem@>(ElemLe, unsorted);
     AssertEquals(wnt, got);
   })),
 
   Test(Str|'Length', !({
-    Int@ wnt = I(D|5);
-    Int@ got = Length<Elem@>(List<Elem@>(Elems|ABCDE));
+    Int@ wnt = Int|5;
+    Int@ got = Length<Elem@>(EL|ABCDE);
     /Test%.AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, wnt, got);
   }))
 ]);

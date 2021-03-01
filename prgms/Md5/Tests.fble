@@ -3,10 +3,10 @@
 % H2 = /Bits%.Bit8.H2;
 
 @ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
 
 @ Hex@ = /Digits%.Hex@;
 % Hex = /Digits%.Hex;
+% HexStr = /Digits/String%.HexStr;
 
 <@>@ List@ = /List%.List@;
 <@>% Cons = /List%.Cons;
@@ -14,8 +14,7 @@
 <@>% List = /List%.List;
 <@>% Concat = /List%.Concat;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
-<@,@>% Empty = /Literal%.Empty;
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -26,7 +25,6 @@
 <@>@ Put@ = /Process%.Put@;
 
 @ String@ = /String%.String@;
-<@>@ CharLit@ = /String%.CharLit@;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
@@ -61,46 +59,51 @@
       Str[Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)]]);
 };
 
-(Lit@<Hex@>) { Md5Hash@; } Str2Md5Hash = (Lit@<Hex@> lit) {
-  List@<Hex@> s00 = List<Hex@>(lit);
-  Hex@ h00 = s00.cons.head; List@<Hex@> s01 = s00.cons.tail;
-  Hex@ h01 = s01.cons.head; List@<Hex@> s02 = s01.cons.tail;
-  Hex@ h02 = s02.cons.head; List@<Hex@> s03 = s02.cons.tail;
-  Hex@ h03 = s03.cons.head; List@<Hex@> s04 = s03.cons.tail;
-  Hex@ h04 = s04.cons.head; List@<Hex@> s05 = s04.cons.tail;
-  Hex@ h05 = s05.cons.head; List@<Hex@> s06 = s05.cons.tail;
-  Hex@ h06 = s06.cons.head; List@<Hex@> s07 = s06.cons.tail;
-  Hex@ h07 = s07.cons.head; List@<Hex@> s08 = s07.cons.tail;
-  Hex@ h08 = s08.cons.head; List@<Hex@> s09 = s08.cons.tail;
-  Hex@ h09 = s09.cons.head; List@<Hex@> s10 = s09.cons.tail;
-  Hex@ h10 = s10.cons.head; List@<Hex@> s11 = s10.cons.tail;
-  Hex@ h11 = s11.cons.head; List@<Hex@> s12 = s11.cons.tail;
-  Hex@ h12 = s12.cons.head; List@<Hex@> s13 = s12.cons.tail;
-  Hex@ h13 = s13.cons.head; List@<Hex@> s14 = s13.cons.tail;
-  Hex@ h14 = s14.cons.head; List@<Hex@> s15 = s14.cons.tail;
-  Hex@ h15 = s15.cons.head; List@<Hex@> s16 = s15.cons.tail;
-  Hex@ h16 = s16.cons.head; List@<Hex@> s17 = s16.cons.tail;
-  Hex@ h17 = s17.cons.head; List@<Hex@> s18 = s17.cons.tail;
-  Hex@ h18 = s18.cons.head; List@<Hex@> s19 = s18.cons.tail;
-  Hex@ h19 = s19.cons.head; List@<Hex@> s20 = s19.cons.tail;
-  Hex@ h20 = s20.cons.head; List@<Hex@> s21 = s20.cons.tail;
-  Hex@ h21 = s21.cons.head; List@<Hex@> s22 = s21.cons.tail;
-  Hex@ h22 = s22.cons.head; List@<Hex@> s23 = s22.cons.tail;
-  Hex@ h23 = s23.cons.head; List@<Hex@> s24 = s23.cons.tail;
-  Hex@ h24 = s24.cons.head; List@<Hex@> s25 = s24.cons.tail;
-  Hex@ h25 = s25.cons.head; List@<Hex@> s26 = s25.cons.tail;
-  Hex@ h26 = s26.cons.head; List@<Hex@> s27 = s26.cons.tail;
-  Hex@ h27 = s27.cons.head; List@<Hex@> s28 = s27.cons.tail;
-  Hex@ h28 = s28.cons.head; List@<Hex@> s29 = s28.cons.tail;
-  Hex@ h29 = s29.cons.head; List@<Hex@> s30 = s29.cons.tail;
-  Hex@ h30 = s30.cons.head; List@<Hex@> s31 = s30.cons.tail;
-  Hex@ h31 = s31.cons.head;
-  Md5Hash@(
-    h00, h01, h02, h03, h04, h05, h06, h07,
-    h08, h09, h10, h11, h12, h13, h14, h15,
-    h16, h17, h18, h19, h20, h21, h22, h23,
-    h24, h25, h26, h27, h28, h29, h30, h31);
-};
+# An Md5Hash literal. It should consist of 32 hex digits.
+Literal@<Hex@, List@<Hex@>, Md5Hash@, @<Hex>> Md5Hash = @(
+  '|': (List@<Hex@> s00) {
+         Hex@ h00 = s00.cons.head; List@<Hex@> s01 = s00.cons.tail;
+         Hex@ h01 = s01.cons.head; List@<Hex@> s02 = s01.cons.tail;
+         Hex@ h02 = s02.cons.head; List@<Hex@> s03 = s02.cons.tail;
+         Hex@ h03 = s03.cons.head; List@<Hex@> s04 = s03.cons.tail;
+         Hex@ h04 = s04.cons.head; List@<Hex@> s05 = s04.cons.tail;
+         Hex@ h05 = s05.cons.head; List@<Hex@> s06 = s05.cons.tail;
+         Hex@ h06 = s06.cons.head; List@<Hex@> s07 = s06.cons.tail;
+         Hex@ h07 = s07.cons.head; List@<Hex@> s08 = s07.cons.tail;
+         Hex@ h08 = s08.cons.head; List@<Hex@> s09 = s08.cons.tail;
+         Hex@ h09 = s09.cons.head; List@<Hex@> s10 = s09.cons.tail;
+         Hex@ h10 = s10.cons.head; List@<Hex@> s11 = s10.cons.tail;
+         Hex@ h11 = s11.cons.head; List@<Hex@> s12 = s11.cons.tail;
+         Hex@ h12 = s12.cons.head; List@<Hex@> s13 = s12.cons.tail;
+         Hex@ h13 = s13.cons.head; List@<Hex@> s14 = s13.cons.tail;
+         Hex@ h14 = s14.cons.head; List@<Hex@> s15 = s14.cons.tail;
+         Hex@ h15 = s15.cons.head; List@<Hex@> s16 = s15.cons.tail;
+         Hex@ h16 = s16.cons.head; List@<Hex@> s17 = s16.cons.tail;
+         Hex@ h17 = s17.cons.head; List@<Hex@> s18 = s17.cons.tail;
+         Hex@ h18 = s18.cons.head; List@<Hex@> s19 = s18.cons.tail;
+         Hex@ h19 = s19.cons.head; List@<Hex@> s20 = s19.cons.tail;
+         Hex@ h20 = s20.cons.head; List@<Hex@> s21 = s20.cons.tail;
+         Hex@ h21 = s21.cons.head; List@<Hex@> s22 = s21.cons.tail;
+         Hex@ h22 = s22.cons.head; List@<Hex@> s23 = s22.cons.tail;
+         Hex@ h23 = s23.cons.head; List@<Hex@> s24 = s23.cons.tail;
+         Hex@ h24 = s24.cons.head; List@<Hex@> s25 = s24.cons.tail;
+         Hex@ h25 = s25.cons.head; List@<Hex@> s26 = s25.cons.tail;
+         Hex@ h26 = s26.cons.head; List@<Hex@> s27 = s26.cons.tail;
+         Hex@ h27 = s27.cons.head; List@<Hex@> s28 = s27.cons.tail;
+         Hex@ h28 = s28.cons.head; List@<Hex@> s29 = s28.cons.tail;
+         Hex@ h29 = s29.cons.head; List@<Hex@> s30 = s29.cons.tail;
+         Hex@ h30 = s30.cons.head; List@<Hex@> s31 = s30.cons.tail;
+         Hex@ h31 = s31.cons.head;
+         Md5Hash@(
+           h00, h01, h02, h03, h04, h05, h06, h07,
+           h08, h09, h10, h11, h12, h13, h14, h15,
+           h16, h17, h18, h19, h20, h21, h22, h23,
+           h24, h25, h26, h27, h28, h29, h30, h31);
+       },
+  ',': Cons<Hex@>,
+  '': Nil<Hex@>,
+  '?': Hex
+);
 
 # Put all the bytes onto the output port, followed by nothing.
 (Put@<Maybe@<Bit8@>>, List@<Bit8@>) { Unit@!; } PutAll = (Put@<Maybe@<Bit8@>> out, List@<Bit8@> bytes) {
@@ -130,10 +133,10 @@
     nil: Nil<Bit8@>);
 };
       
-(CharLit@, Lit@<Hex@>, Lit@<Hex@>) { Test@; } TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
+(String@, Md5Hash@, List@<Hex@>) { Test@; } TestStr = (String@ name, Md5Hash@ wnt, List@<Hex@> bytes) {
   Test(name, {
-    Md5Hash@ got := Md5Str(Hex2Bytes(List<Hex@>(bytes)));
-    !(AssertEquals<Md5Hash@>(Eq, Md5Hash2Str, Str2Md5Hash(wnt), got));
+    Md5Hash@ got := Md5Str(Hex2Bytes(bytes));
+    !(AssertEquals<Md5Hash@>(Eq, Md5Hash2Str, wnt, got));
   });
 };
 
@@ -141,49 +144,49 @@ Test@ Tests = TestSuite(Str|Md5, List<Test@>[
   # ""
   TestStr(
     Str|empty,
-    Hex|D41D8CD98F00B204E9800998ECF8427E,
-    Empty<Hex@>),
+    Md5Hash|D41D8CD98F00B204E9800998ECF8427E,
+    HexStr|''),
 
   # "a"
   TestStr(
     Str|a,
-    Hex|0CC175B9C0F1B6A831C399E269772661,
-    Hex|61),
+    Md5Hash|0CC175B9C0F1B6A831C399E269772661,
+    HexStr|61),
 
   # "abc"
   TestStr(
     Str|abc,
-    Hex|900150983CD24FB0D6963F7D28E17F72,
-    Hex|616263),
+    Md5Hash|900150983CD24FB0D6963F7D28E17F72,
+    HexStr|616263),
 
   # "message digest"
   TestStr(
     Str|message,
-    Hex|F96B697D7CB7938D525A2F31AAF161D0,
-    Hex|6D65737361676520646967657374),
+    Md5Hash|F96B697D7CB7938D525A2F31AAF161D0,
+    HexStr|6D65737361676520646967657374),
 
   # "abcdefghijklmnopqrstuvwxyz"
   TestStr(
     Str|a_to_z,
-    Hex|C3FCD3D76192E4007DFB496CCA67E13B,
-    Hex|6162636465666768696A6B6C6D6E6F707172737475767778797A),
+    Md5Hash|C3FCD3D76192E4007DFB496CCA67E13B,
+    HexStr|6162636465666768696A6B6C6D6E6F707172737475767778797A),
 
   # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
   TestStr(
     Str|A_to_9,
-    Hex|D174AB98D277D9F5A5611C2C9F419D9F,
-    Hex|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
+    Md5Hash|D174AB98D277D9F5A5611C2C9F419D9F,
+    HexStr|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
 
   # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
   TestStr(
     Str|1_to_0,
-    Hex|57EDF4A22BE3C955AC49DA2E2107B67A,
-    Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
+    Md5Hash|57EDF4A22BE3C955AC49DA2E2107B67A,
+    HexStr|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);
 
 # Benchmark for md5 sum that takes about 1 minute to run.
 Unit@! Bench = {
-  List@<Hex@> d0 = List<Hex@>(Hex|3132333435363738393031323334353637383930313233);
+  List@<Hex@> d0 = HexStr|3132333435363738393031323334353637383930313233;
   List@<Hex@> d1 = Concat<Hex@>(List<List@<Hex@>>[d0, d0, d0, d0, d0, d0, d0, d0]);
   List@<Hex@> d2 = Concat<Hex@>(List<List@<Hex@>>[d1, d1, d1, d1, d1, d1, d1, d1]);
   List@<Hex@> d3 = Concat<Hex@>(List<List@<Hex@>>[d2, d2, d2, d2]);

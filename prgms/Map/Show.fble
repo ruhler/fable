@@ -1,6 +1,5 @@
 
 @ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
 <@>% List = /List%.List;
 <@>% Append = /List%.Append;
 <@,@>@ Map@ = /Map%.Map@;
@@ -21,8 +20,8 @@
 <@ K@, @ V@>(Show@<K@>, Show@<V@>) { Show@<Map@<K@, V@>>; }
 Show = <@ K@, @ V@>(Show@<K@> show_key, Show@<V@> show_value)(Map@<K@, V@> m) {
   Append<Char@>(
-    ForEach<K@, V@, String@>(m, Str(Chars|'{ '), (K@ k, V@ v, String@ s) {
-      Concat(List<String@>[s, show_key(k), Str(Chars|' => '), show_value(v), Str(Chars|'; ')]);
+    ForEach<K@, V@, String@>(m, Str|'{ ', (K@ k, V@ v, String@ s) {
+      Concat(List<String@>[s, show_key(k), Str|' => ', show_value(v), Str|'; ']);
     }),
     Str|'}');
 };

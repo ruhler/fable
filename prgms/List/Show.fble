@@ -1,6 +1,5 @@
 
 @ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
@@ -29,10 +28,10 @@ ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
   l.?(
     cons:
       Concat<Char@>(List<String@>[
-          Str(Chars|', '),
+          Str|', ',
           show(l.cons.head),
           ShowTail<T@>(show)(l.cons.tail)]),
-    nil: Str(Chars|']'));
+    nil: Str|']');
 };
 
 # Show --
@@ -53,10 +52,10 @@ ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
 Show = <@ T@>(Show@<T@> show)(List@<T@> l) {
   l.?(
     cons: Concat<Char@>(List<String@>[
-        Str(Chars|'['),
+        Str|'[',
         show(l.cons.head),
         ShowTail<T@>(show)(l.cons.tail)]),
-    nil: Str(Chars|'[]'));
+    nil: Str|'[]');
 };
 
 @(Show);

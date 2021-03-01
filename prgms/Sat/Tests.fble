@@ -2,11 +2,9 @@
 % False = /Bool%.False;
 % And = /Bool%.And;
 @ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
 <@>@ Eq@ = /Eq%.Eq@;
 @ Int@ = /Int/Int%.Int@;
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 <@>% List = /List%.List;
 <@>% Append = /List%.Append;
 <@>% Just = /Maybe%.Just;
@@ -35,7 +33,7 @@ VarId@ X = /Int/Int%.1;
 Show@<VarId@> ShowId = /Int/Int/Show%.Show;
 
 Show@<Var@> ShowVar = (Var@ v) {
-  String@ sign = Str(v.polarity.?(true: Chars|'+', false: Chars|'-'));
+  String@ sign = v.polarity.?(true: Str|'+', false: Str|'-');
   Append<Char@>(sign, ShowId(v.id));
 };
 
@@ -55,9 +53,9 @@ Eq@<Result@> EqResult = (Result@ a, Result@ b) {
 
 Show@<Result@> ShowResult = (Result@ a) {
   a.?(
-    sat: Append<Char@>(Str(Chars|'sat: '), ShowAssignment(a.sat)),
-    unsat: Str(Chars|'unsat'),
-    timeout: Str(Chars|'timeout'));
+    sat: Append<Char@>(Str|'sat: ', ShowAssignment(a.sat)),
+    unsat: Str|'unsat',
+    timeout: Str|'timeout');
 };
 
 (Result@, Result@) { TestResult@; }
@@ -89,7 +87,7 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
     # /Sat/Aim% is a real problem. There's no way we should be able to solve
     # it in 10 ticks.
     Result@ want = Result@(timeout: Unit);
-    Result@ got = Solve(/Sat/Aim%, Just<Int@>(I(D|10)));
+    Result@ got = Solve(/Sat/Aim%, Just<Int@>(Int|10));
     AssertEq(want, got);
   }))
 ]);

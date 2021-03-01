@@ -1,10 +1,4 @@
 
-% Unit = /Unit%.Unit;
-
-% Chars = /Char%.Chars;
-
-<@>@ CharLit@ = /String%.CharLit@;
-% Str = /String%.Str;
 
 @ IntP@ = /Int/IntP%.IntP@;
 % 1 = /Int/IntP%.1;
@@ -16,19 +10,26 @@
 
 @ IntS@ = /Int/IntS%.IntS@;
 
+<@>% List = /List%.List;
+
 % NthPrime = /Primes%.NthPrime;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 @ TestResult@ = /Test%.TestResult@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 
-(CharLit@, IntP@, IntP@){ Test@; } TEq = (CharLit@ name, IntP@ a, IntP@ b) {
+% Unit = /Unit%.Unit;
+
+(String@, IntP@, IntP@){ Test@; } TEq = (String@ name, IntP@ a, IntP@ b) {
   Test(name, !({
     # TODO: Better error message in case of failure.
     Eq(a, b).?(
         true: TestResult@(pass: Unit),
-        false: TestResult@(fail: Str(Chars|failed)));
+        false: TestResult@(fail: Str|failed));
   }));
 };
 

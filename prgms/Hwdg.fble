@@ -7,7 +7,7 @@
 @ Int@ = /Int/Int%.Int@; 
 % Inc = /Int/Int%.Inc;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
+<@>@ List@ = /List%.List@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
@@ -93,7 +93,7 @@ SetGate = (Gates@ gates, Coord@ coord, Gate@ gate) {
 #
 # Example Use:
 #   Gates@ gates = Gates(List<GateEntry@>[@(coord: c1, gate: g1), @(coord: c2, gate: g2), ...]);
-(Lit@<GateEntry@>) { Gates@; } Gates = /List%.List<GateEntry@>;
+(List@<GateEntry@>) { Gates@; } Gates = (List@<GateEntry@> l) { l; };
 
 # ForEachGate --
 #   Iterate over a set of gates.
