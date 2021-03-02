@@ -1,13 +1,10 @@
 
 
-% Chars = /Char%.Chars;
-
 @ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
-% Hex = /Digits%.Hex;
+% HexStr = /Digits/String%.HexStr;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
 <@>% Cons = /List%.Cons;
@@ -15,17 +12,12 @@
 <@>% List = /List%.List;
 <@,@>% Map = /List%.Map;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
-
-<@>@ CharLit@ = /String%.CharLit@;
-
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
 @ Value@ = /Fblf/Program%.Value@;
 % Assign = /Fblf/Program%.Assign;
 % ConstHex = /Fblf/Program%.ConstHex;
 % Seq = /Fblf/Program%.Seq;
-% SeqL = /Fblf/Program%.SeqL;
 
 <@>% AllocM = /Fblf/Module%.AllocM;
 <@>% PureM = /Fblf/Module%.PureM;
@@ -39,6 +31,9 @@
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5 = /Fblf/Lib/Md5%.Md5;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -57,78 +52,78 @@
     nil: Nil<Value@>);
 };
 
-(CharLit@, Lit@<Hex@>, Lit@<Hex@>) { Test@; }
-TestStr = (CharLit@ name, Lit@<Hex@> wnt, Lit@<Hex@> bytes) {
+(String@, List@<Hex@>, List@<Hex@>) { Test@; }
+TestStr = (String@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
   Test(name, {
-    Addr@ input <- AllocM<TestInstance@>(I(D|8));
-    Addr@ hash <- AllocM<TestInstance@>(I(D|128));
+    Addr@ input <- AllocM<TestInstance@>(Int|8);
+    Addr@ hash <- AllocM<TestInstance@>(Int|128);
     Md5@ md5 <- InstM<Md5@, TestInstance@>(Md5(input, hash));
 
-    Program@ feed = SeqL(Map<Value@, Program@>(
-      ToBytes(List<Hex@>(bytes)), (Value@ b) {
-        Seq(List<Program@>[Assign(input, b, I(D|8)), md5.feed]);
+    Program@ feed = Seq(Map<Value@, Program@>(
+      ToBytes(bytes), (Value@ b) {
+        Seq(List<Program@>[Assign(input, b, Int|8), md5.feed]);
     }));
 
     Program@ test = Seq(List<Program@>[md5.reset, feed, md5.finish]);
 
-    List@<Bit@> wnt_ = /Digits/String%.HexToBits(List<Hex@>(wnt));
+    List@<Bit@> wnt_ = /Digits/String%.HexToBits(wnt);
     PureM<TestInstance@>(TestInstance@(test, hash, wnt_));
   });
 };
 
-Test@ Tests = TestSuite(Chars|'Md5', List<Test@>[
+Test@ Tests = TestSuite(Str|'Md5', List<Test@>[
 # Unfortunately it takes too long to run all of these tests.
   
 #  TestStr(
-#    Chars|empty,
-#    Hex|D41D8CD98F00B204E9800998ECF8427E,
-#    /Literal%.Empty<Hex@>),
+#    Str|empty,
+#    HexStr|D41D8CD98F00B204E9800998ECF8427E,
+#    HexStr|''),
 #
 #  # "a"
 #  TestStr(
-#    Chars|a,
-#    Hex|0CC175B9C0F1B6A831C399E269772661,
-#    Hex|61),
+#    Str|a,
+#    HexStr|0CC175B9C0F1B6A831C399E269772661,
+#    HexStr|61),
 #
 #  # "abc"
 #  TestStr(
-#    Chars|abc,
-#    Hex|900150983CD24FB0D6963F7D28E17F72,
-#    Hex|616263),
+#    Str|abc,
+#    HexStr|900150983CD24FB0D6963F7D28E17F72,
+#    HexStr|616263),
 #
 #  # "message digest"
 #  TestStr(
-#    Chars|message,
-#    Hex|F96B697D7CB7938D525A2F31AAF161D0,
-#    Hex|6D65737361676520646967657374),
+#    Str|message,
+#    HexStr|F96B697D7CB7938D525A2F31AAF161D0,
+#    HexStr|6D65737361676520646967657374),
 #
 #  # "abcdefghijklmnopqrstuvwxyz"
 #  TestStr(
-#    Chars|a_to_z,
-#    Hex|C3FCD3D76192E4007DFB496CCA67E13B,
-#    Hex|6162636465666768696A6B6C6D6E6F707172737475767778797A),
+#    Str|a_to_z,
+#    HexStr|C3FCD3D76192E4007DFB496CCA67E13B,
+#    HexStr|6162636465666768696A6B6C6D6E6F707172737475767778797A),
 #
 #  # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
 #  TestStr(
-#    Chars|A_to_9,
-#    Hex|D174AB98D277D9F5A5611C2C9F419D9F,
-#    Hex|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
+#    Str|A_to_9,
+#    HexStr|D174AB98D277D9F5A5611C2C9F419D9F,
+#    HexStr|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
 #
   # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
   TestStr(
-    Chars|1_to_0,
-    Hex|57EDF4A22BE3C955AC49DA2E2107B67A,
-    Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
+    Str|1_to_0,
+    HexStr|57EDF4A22BE3C955AC49DA2E2107B67A,
+    HexStr|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930)
 ]);
 
 # TODO: Re-enable md5 tests once they are fast enough.
-Test@ Tests = TestSuite(Chars|Md5, /Literal%.Empty<Test@>);
+Test@ Tests = TestSuite(Str|Md5, List<Test@>[]);
 
 Unit@! Bench = {
   /Test%.TestResult@ _ := RunTests(TestStr(
-    Chars|1_to_0,
-    Hex|57EDF4A22BE3C955AC49DA2E2107B67A,
-    Hex|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930))
+    Str|1_to_0,
+    HexStr|57EDF4A22BE3C955AC49DA2E2107B67A,
+    HexStr|3132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930313233343536373839303132333435363738393031323334353637383930))
     .case.test;
   !(Unit);
 };

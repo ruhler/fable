@@ -5,8 +5,7 @@
 % Le = /Int/Int/Eq%.Le;
 % Lt = /Int/Int/Eq%.Lt;
 
-% D = /Int/Int/Lit%.D;
-% I = /Int/Int/Lit%.I;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ Iter@ = /Iter%.Iter@;
 <@>% Has = /Iter%.Has;
@@ -19,7 +18,7 @@
 (Int@, Int@) { Iter@<Int@>; } Range = (Int@ lo, Int@ hi) {
   (Unit@ _) {
     Lt(lo, hi).?(
-      true: Has<Int@>(lo, Range(Add(lo, I(D|1)), hi)),
+      true: Has<Int@>(lo, Range(Add(lo, Int|1), hi)),
       false: End<Int@>);
   };
 };
@@ -27,17 +26,17 @@
 # CountUpTo --
 #   An iterator over the range of integers [0, n).
 (Int@) { Iter@<Int@>; } CountUpTo = (Int@ n) {
-  Range(I(D|0), n);
+  Range(Int|0, n);
 };
 
 # CountDownFrom --
 #   An iterator over the range of integers (n, 0]
 (Int@) { Iter@<Int@>; } CountDownFrom = (Int@ n) {
   (Unit@ _) {
-    Le(n, I(D|0)).?(
+    Le(n, Int|0).?(
       true: End<Int@>,
       false: {
-        Int@ first = Sub(n, I(D|1));
+        Int@ first = Sub(n, Int|1);
         Has<Int@>(first, CountDownFrom(first));
       });
   };

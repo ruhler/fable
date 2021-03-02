@@ -1,4 +1,4 @@
-% B = /Digits%.Bit;
+% BitStr = /Digits/String%.BitStr;
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
@@ -18,11 +18,12 @@
 % Sub = /Int/Int%.Sub;
 % Lt = /Int/Int/Eq%.Lt;
 
-% D = /Int/Int/Lit%.D;
-% I = /Int/Int/Lit%.I;
+% Int = /Int/Int/Lit%.Int;
 
 % CountUpTo = /Int/Int/Iter%.CountUpTo;
 <@,@>% For = /Iter%.For;
+
+<@>% List = /List%.List;
 
 # Bitwise --
 #   Helper function for describing modules that implement bitwise computation.
@@ -55,9 +56,9 @@ AndM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
     Addr@ bi = Add(b, i);
     Addr@ zi = Add(z, i);
 
-    IfElse(Eq(Ref(ai), Const(B|0), I(D|1)),
-      Assign(zi, Const(B|0), I(D|1)),
-      Assign(zi, Ref(bi), I(D|1)));
+    IfElse(Eq(Ref(ai), Const(BitStr|0), Int|1),
+      Assign(zi, Const(BitStr|0), Int|1),
+      Assign(zi, Ref(bi), Int|1));
   });
 };
 
@@ -76,9 +77,9 @@ OrM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
     Addr@ bi = Add(b, i);
     Addr@ zi = Add(z, i);
 
-    IfElse(Eq(Ref(ai), Const(B|1), I(D|1)),
-      Assign(zi, Const(B|1), I(D|1)),
-      Assign(zi, Ref(bi), I(D|1)));
+    IfElse(Eq(Ref(ai), Const(BitStr|1), Int|1),
+      Assign(zi, Const(BitStr|1), Int|1),
+      Assign(zi, Ref(bi), Int|1));
   });
 };
 
@@ -97,11 +98,11 @@ XorM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
     Addr@ bi = Add(b, i);
     Addr@ zi = Add(z, i);
 
-    IfElse(Eq(Ref(ai), Const(B|0), I(D|1)),
-      Assign(zi, Ref(bi), I(D|1)),
-      IfElse(Eq(Ref(bi), Const(B|0), I(D|1)),
-        Assign(zi, Const(B|1), I(D|1)),
-        Assign(zi, Const(B|0), I(D|1))));
+    IfElse(Eq(Ref(ai), Const(BitStr|0), Int|1),
+      Assign(zi, Ref(bi), Int|1),
+      IfElse(Eq(Ref(bi), Const(BitStr|0), Int|1),
+        Assign(zi, Const(BitStr|1), Int|1),
+        Assign(zi, Const(BitStr|0), Int|1)));
   });
 };
 
@@ -118,9 +119,9 @@ NotM = (Int@ n, Addr@ a, Addr@ z) {
     Addr@ ai = Add(a, i);
     Addr@ zi = Add(z, i);
 
-    IfElse(Eq(Ref(ai), Const(B|1), I(D|1)),
-      Assign(zi, Const(B|0), I(D|1)),
-      Assign(zi, Const(B|1), I(D|1)));
+    IfElse(Eq(Ref(ai), Const(BitStr|1), Int|1),
+      Assign(zi, Const(BitStr|0), Int|1),
+      Assign(zi, Const(BitStr|1), Int|1));
   });
 };
 
@@ -141,7 +142,7 @@ ClsM = (Int@ n, Int@ s, Addr@ a, Addr@ z) {
       false: Sub(i, s));
     Addr@ zi = Add(z, offset);
 
-    Assign(zi, Ref(ai), I(D|1));
+    Assign(zi, Ref(ai), Int|1);
   });
 };
 

@@ -1,6 +1,4 @@
 
-% Chars = /Char%.Chars;
-
 @ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
 
@@ -13,7 +11,7 @@
 % Str = /String%.Str;
 
 Show@<Bit@> ShowBit = (Bit@ b) {
-  b.?(0: Str(Chars|0), 1: Str(Chars|1));
+  b.?(0: Str|0, 1: Str|1);
 };
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
@@ -22,10 +20,10 @@ Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
 
 Show@<Hex@> ShowHex = (Hex@ h) {
   h.?(
-    0: Str(Chars|0), 1: Str(Chars|1), 2: Str(Chars|2), 3: Str(Chars|3),
-    4: Str(Chars|4), 5: Str(Chars|5), 6: Str(Chars|6), 7: Str(Chars|7),
-    8: Str(Chars|8), 9: Str(Chars|9), A: Str(Chars|A), B: Str(Chars|B),
-    C: Str(Chars|C), D: Str(Chars|D), E: Str(Chars|E), F: Str(Chars|F));
+    0: Str|0, 1: Str|1, 2: Str|2, 3: Str|3,
+    4: Str|4, 5: Str|5, 6: Str|6, 7: Str|7,
+    8: Str|8, 9: Str|9, A: Str|A, B: Str|B,
+    C: Str|C, D: Str|D, E: Str|E, F: Str|F);
 };
 
 @(ShowBit, ShowBits, ShowHex);

@@ -1,5 +1,7 @@
 
-% Chars = /Char%.Chars;
+<@>% List = /List%.List;
+
+% Str = /String%.Str;
 
 @ Test@ = /Fblf/Test%.Test@;
 % TestSuite = /Fblf/Test%.TestSuite;

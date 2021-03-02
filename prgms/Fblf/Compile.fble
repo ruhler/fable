@@ -21,8 +21,7 @@
 % Eq = /Int/Int/Eq%.Eq;
 % Le = /Int/Int/Eq%.Le;
 % Mod = /Int/Int/Div%.Mod;
-% D = /Int/Int/Lit%.D;
-% I = /Int/Int/Lit%.I;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
@@ -36,7 +35,7 @@
 <@>% Length = /List/Length%.Length;
 <@>% Take = /List/Length%.Take;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
@@ -44,11 +43,14 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-Int@ BitsPerWord = I(D|64);
+Int@ BitsPerWord = Int|64;
 
-(Lit@<String@>) { String@; } Strs = (Lit@<String@> l) {
-  Concat<Char@>(List<String@>(l));
-};
+Literal@<String@, List@<String@>, String@, Unit@> Strs = @(
+  '|': Concat<Char@>,
+  ',': Cons<String@>,
+  '': Nil<String@>,
+  '?': Unit
+);
 
 # Lines@ -- 
 #   Abstract data type for outputting a sequence of lines of text from
@@ -61,16 +63,10 @@ Int@ BitsPerWord = I(D|64);
   Append<Char@>(line, Str[Chars.nl]);
 };
 
-# Lines_ --
-#   Output multiple lines of text in order.
-(List@<Lines@>) { Lines@; } Lines_ = (List@<Lines@> lines) {
-  Concat<Char@>(lines);
-};
-
 # Lines --
 #   Output multiple lines of text in order.
-(Lit@<Lines@>) { Lines@; } Lines = (Lit@<Lines@> lines) {
-  Lines_(List<Lines@>(lines));
+(List@<Lines@>) { Lines@; } Lines = (List@<Lines@> lines) {
+  Concat<Char@>(lines);
 };
 
 (Addr@) { String@; } CompileAddr = /Int/Int/Show%.Show;
@@ -102,8 +98,8 @@ CompileSmallConstant = {
 
   (List@<Bit@> c) {
     Int@ length = Length<Bit@>(c);
-    Eq(Mod(length, I(D|4)), I(D|0)).?(
-      true: Strs[Str(Chars|'0x'), ToHex(c)],
+    Eq(Mod(length, Int|4), Int|0).?(
+      true: Strs[Str|'0x', ToHex(c)],
       false: {
         # TODO: We could improve performance by adding just the right number
         # of bits here, instead of having to recompute the length of the list
@@ -120,36 +116,27 @@ CompileSmallEquals = (Value@ a, Value@ b, Int@ n) {
   a.?(
     ref: b.?(
       ref: Strs[
-        Str(Chars|'FblfHeapEqual(heap, '),
-        CompileAddr(a.ref),
-        Str(Chars|', '),
-        CompileAddr(b.ref),
-        Str(Chars|', '),
-        /Int/Int/Show%.Show(n),
-        Str(Chars|')')],
+        Str|'FblfHeapEqual(heap, ',
+        CompileAddr(a.ref), Str|', ',
+        CompileAddr(b.ref), Str|', ',
+        /Int/Int/Show%.Show(n), Str|')'],
       const: Strs[
-        Str(Chars|'FblfHeapEquals(heap, '),
-        CompileAddr(a.ref),
-        Str(Chars|', '),
-        CompileSmallConstant(b.const),
-        Str(Chars|', '),
-        /Int/Int/Show%.Show(n),
-        Str(Chars|')')]),
+        Str|'FblfHeapEquals(heap, ',
+        CompileAddr(a.ref), Str|', ',
+        CompileSmallConstant(b.const), Str|', ',
+        /Int/Int/Show%.Show(n), Str|')']),
     const: b.?(
       ref: Strs[
-        Str(Chars|'FblfHeapEquals(heap, '),
-        CompileAddr(b.ref),
-        Str(Chars|', '),
-        CompileSmallConstant(a.const),
-        Str(Chars|', '),
-        /Int/Int/Show%.Show(n),
-        Str(Chars|')')],
+        Str|'FblfHeapEquals(heap, ',
+        CompileAddr(b.ref), Str|', ',
+        CompileSmallConstant(a.const), Str|', ',
+        /Int/Int/Show%.Show(n), Str|')'],
       const: Strs[
-        Str(Chars|'('),
+        Str|'(',
         CompileSmallConstant(a.const),
-        Str(Chars|' == '),
+        Str|' == ',
         CompileSmallConstant(b.const),
-        Str(Chars|')')]));
+        Str|')']));
 };
 
 # Split the first n bits off of the given value, returning the n most
@@ -226,22 +213,22 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 };
 
 (String@, Sequence@) { Lines@; } CompileSequence = (String@ indent, Sequence@ seq) {
-  Lines_(Map<Program@, Lines@>(seq, (Program@ p) { CompileProgram(indent, p); }));
+  Lines(Map<Program@, Lines@>(seq, (Program@ p) { CompileProgram(indent, p); }));
 },
 
 (String@, IfElse@) { Lines@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
-  String@ nested = Strs[indent, Str(Chars|'  ')];
+  String@ nested = Strs[indent, Str|'  '];
   Lines(List<Lines@>[
     Line(Strs[
       indent,
-      Str(Chars|'if ('),
+      Str|'if (',
       CompileCondition(ifelse.condition),
-      Str(Chars|') {')]),
+      Str|') {']),
     CompileProgram(nested, ifelse.if_body),
     Line(Strs[
-      indent, Str(Chars|'} else {')]),
+      indent, Str|'} else {']),
     CompileProgram(nested, ifelse.else_body),
-    Line(Strs[indent, Str(Chars|'}')])]);
+    Line(Strs[indent, Str|'}'])]);
 },
 
 (String@, While@) { Lines@; } CompileWhile = (String@ indent, While@ while) {
@@ -253,7 +240,7 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
       CompileCondition(while.condition),
       Str|') {'],
     CompileProgram(nested, while.body),
-    Strs[indent, Str(Chars|'}')]]);
+    Strs[indent, Str|'}']]);
 },
 
 (String@, Program@) { Lines@; } CompileProgram = (String@ indent, Program@ prgm) {
@@ -276,9 +263,9 @@ Compile_ = (String@ name, Program@ program) {
       Str|'void ',
       name,
       Str|'(FblfHeap* heap)']),
-    Line(Str(Chars|'{')),
-    CompileProgram(Str(Chars|'  '), program),
-    Line(Str(Chars|'}'))]);
+    Line(Str|'{'),
+    CompileProgram(Str|'  ', program),
+    Line(Str|'}')]);
 };
 
 # Compile --

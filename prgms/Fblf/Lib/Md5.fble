@@ -1,14 +1,14 @@
 
-% B = /Digits%.Bit;
+@ Hex@ = /Digits%.Hex@;
 % Hex = /Digits%.Hex;
+% BitStr = /Digits/String%.BitStr;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
 % Exp2 = /Int/Int%.Exp2;
-% D = /Int/Int/Lit%.D;
-% I = /Int/Int/Lit%.I;
+% Int = /Int/Int/Lit%.Int;
 
 @ Program@ = /Fblf/Program%.Program@;
 @ Addr@ = /Fblf/Program%.Addr@;
@@ -23,7 +23,6 @@
 % Const = /Fblf/Program%.Const;
 % Ref = /Fblf/Program%.Ref;
 % Seq = /Fblf/Program%.Seq;
-% H = /Fblf/Program%.ConstHex;
 
 <@>@ Module@ = /Fblf/Module%.Module@;
 <@>% AllocM = /Fblf/Module%.AllocM;
@@ -40,7 +39,14 @@
 % NotM = /Fblf/Lib/Bitwise%.NotM;
 % ClsM = /Fblf/Lib/Bitwise%.ClsM;
 
-Int@ 32 = I(D|32);
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
+
+<@,@,@,@>@ Literal@ = /Literal%.Literal@;
+
+Int@ 32 = Int|32;
 
 <@>@ BlockOf@ = <@ T@> {
   *(T@ 00, T@ 01, T@ 02, T@ 03,
@@ -63,32 +69,39 @@ Int@ 32 = I(D|32);
 # type level.
 @ Value32@ = Value@;
 
+Literal@<Hex@, List@<Hex@>, Value32@, @<Hex>> H = @(
+  '|': /Fblf/Program%.ConstHex,
+  ',': Cons<Hex@>,
+  '': Nil<Hex@>,
+  '?': Hex
+);
+
 BlockOf@<Value32@> T1 = BlockOf@<Value32@>(
-  H(Hex|D76AA478), H(Hex|E8C7B756), H(Hex|242070DB), H(Hex|C1BDCEEE),
-  H(Hex|F57C0FAF), H(Hex|4787C62A), H(Hex|A8304613), H(Hex|FD469501),
-  H(Hex|698098D8), H(Hex|8B44F7AF), H(Hex|FFFF5BB1), H(Hex|895CD7BE),
-  H(Hex|6B901122), H(Hex|FD987193), H(Hex|A679438E), H(Hex|49B40821)
+  H|D76AA478, H|E8C7B756, H|242070DB, H|C1BDCEEE,
+  H|F57C0FAF, H|4787C62A, H|A8304613, H|FD469501,
+  H|698098D8, H|8B44F7AF, H|FFFF5BB1, H|895CD7BE,
+  H|6B901122, H|FD987193, H|A679438E, H|49B40821
 );
 
 BlockOf@<Value32@> T2 = BlockOf@<Value32@>(
-  H(Hex|F61E2562), H(Hex|C040B340), H(Hex|265E5A51), H(Hex|E9B6C7AA),
-  H(Hex|D62F105D), H(Hex|02441453), H(Hex|D8A1E681), H(Hex|E7D3FBC8),
-  H(Hex|21E1CDE6), H(Hex|C33707D6), H(Hex|F4D50D87), H(Hex|455A14ED),
-  H(Hex|A9E3E905), H(Hex|FCEFA3F8), H(Hex|676F02D9), H(Hex|8D2A4C8A)
+  H|F61E2562, H|C040B340, H|265E5A51, H|E9B6C7AA,
+  H|D62F105D, H|02441453, H|D8A1E681, H|E7D3FBC8,
+  H|21E1CDE6, H|C33707D6, H|F4D50D87, H|455A14ED,
+  H|A9E3E905, H|FCEFA3F8, H|676F02D9, H|8D2A4C8A
 );
 
 BlockOf@<Value32@> T3 = BlockOf@<Value32@>(
-  H(Hex|FFFA3942), H(Hex|8771F681), H(Hex|6D9D6122), H(Hex|FDE5380C),
-  H(Hex|A4BEEA44), H(Hex|4BDECFA9), H(Hex|F6BB4B60), H(Hex|BEBFBC70),
-  H(Hex|289B7EC6), H(Hex|EAA127FA), H(Hex|D4EF3085), H(Hex|04881D05),
-  H(Hex|D9D4D039), H(Hex|E6DB99E5), H(Hex|1FA27CF8), H(Hex|C4AC5665)
+  H|FFFA3942, H|8771F681, H|6D9D6122, H|FDE5380C,
+  H|A4BEEA44, H|4BDECFA9, H|F6BB4B60, H|BEBFBC70,
+  H|289B7EC6, H|EAA127FA, H|D4EF3085, H|04881D05,
+  H|D9D4D039, H|E6DB99E5, H|1FA27CF8, H|C4AC5665
 );
 
 BlockOf@<Value32@> T4 = BlockOf@<Value32@>(
-  H(Hex|F4292244), H(Hex|432AFF97), H(Hex|AB9423A7), H(Hex|FC93A039),
-  H(Hex|655B59C3), H(Hex|8F0CCC92), H(Hex|FFEFF47D), H(Hex|85845DD1),
-  H(Hex|6FA87E4F), H(Hex|FE2CE6E0), H(Hex|A3014314), H(Hex|4E0811A1),
-  H(Hex|F7537E82), H(Hex|BD3AF235), H(Hex|2AD7D2BB), H(Hex|EB86D391)
+  H|F4292244, H|432AFF97, H|AB9423A7, H|FC93A039,
+  H|655B59C3, H|8F0CCC92, H|FFEFF47D, H|85845DD1,
+  H|6FA87E4F, H|FE2CE6E0, H|A3014314, H|4E0811A1,
+  H|F7537E82, H|BD3AF235, H|2AD7D2BB, H|EB86D391
 );
 
 # X@ -- 
@@ -209,11 +222,11 @@ RoundX = (XX@ xx, Int@ s0, Int@ s1, Int@ s2, Int@ s3, BlockOf@<Value32@> t, (Blo
     xx(b, c, d, a, permuted.15, s3, t.15, b)]);
 };
 
-Round@ Round1 = RoundX(FF, I(D|7), I(D|12), I(D|17), I(D|22), T1, (BlockOf@<Addr32@> b) {
+Round@ Round1 = RoundX(FF, Int|7, Int|12, Int|17, Int|22, T1, (BlockOf@<Addr32@> b) {
   b;
 });
 
-Round@ Round2 = RoundX(GG, I(D|5), I(D|9), I(D|14), I(D|20), T2, (BlockOf@<Addr32@> b) {
+Round@ Round2 = RoundX(GG, Int|5, Int|9, Int|14, Int|20, T2, (BlockOf@<Addr32@> b) {
   BlockOf@<Addr32@>(
     b.01, b.06, b.11, b.00,
     b.05, b.10, b.15, b.04,
@@ -221,7 +234,7 @@ Round@ Round2 = RoundX(GG, I(D|5), I(D|9), I(D|14), I(D|20), T2, (BlockOf@<Addr3
     b.13, b.02, b.07, b.12);
 });
 
-Round@ Round3 = RoundX(HH, I(D|4), I(D|11), I(D|16), I(D|23), T3, (BlockOf@<Addr32@> b) {
+Round@ Round3 = RoundX(HH, Int|4, Int|11, Int|16, Int|23, T3, (BlockOf@<Addr32@> b) {
   BlockOf@<Addr32@>(
     b.05, b.08, b.11, b.14,
     b.01, b.04, b.07, b.10,
@@ -229,7 +242,7 @@ Round@ Round3 = RoundX(HH, I(D|4), I(D|11), I(D|16), I(D|23), T3, (BlockOf@<Addr
     b.09, b.12, b.15, b.02);
 });
 
-Round@ Round4 = RoundX(II, I(D|6), I(D|10), I(D|15), I(D|21), T4, (BlockOf@<Addr32@> b) {
+Round@ Round4 = RoundX(II, Int|6, Int|10, Int|15, Int|21, T4, (BlockOf@<Addr32@> b) {
   BlockOf@<Addr32@>(
     b.00, b.07, b.14, b.05,
     b.12, b.03, b.10, b.01,
@@ -268,12 +281,12 @@ DoBlock = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) 
 #   memory[addr] = value;
 (Int@, Int@, Addr@, Addr@, Addr@) { Program@; }
 Store = (Int@ k, Int@ n, Addr@ memory, Addr@ addr, Addr@ value) {
-  /Int/Int/Eq%.Eq(k, I(D|0)).?(
+  /Int/Int/Eq%.Eq(k, Int|0).?(
     true: Assign(memory, Ref(value), n),
     false: {
-      Int@ sk = Sub(k, I(D|1));
-      Addr@ saddr = Add(addr, I(D|1));
-      IfElse(Eq(Ref(addr), Const(B|0), I(D|1)),
+      Int@ sk = Sub(k, Int|1);
+      Addr@ saddr = Add(addr, Int|1);
+      IfElse(Eq(Ref(addr), Const(BitStr|0), Int|1),
         Store(sk, n, memory, saddr, value),
         Store(sk, n, Add(memory, Mul(n, Exp2(sk))), saddr, value));
     });
@@ -294,16 +307,16 @@ Store = (Int@ k, Int@ n, Addr@ memory, Addr@ addr, Addr@ value) {
 
 (Addr32@, Addr8@) { Module@<PackWord@>; }
 PackWord = (Addr32@ word, Addr8@ byte) {
-  Addr@ addr <- AllocM<PackWord@>(I(D|2));
+  Addr@ addr <- AllocM<PackWord@>(Int|2);
 
-  Program@ reset = Assign(addr, Const(B|11), I(D|2));
+  Program@ reset = Assign(addr, Const(BitStr|11), Int|2);
 
   Program@ feed = Seq(List<Program@>[
-    Store(I(D|2), I(D|8), word, addr, byte),
-    DecP(I(D|2), addr)
+    Store(Int|2, Int|8, word, addr, byte),
+    DecP(Int|2, addr)
   ]);
 
-  Condition@ packed = Eq(Ref(addr), Const(B|11), I(D|2));
+  Condition@ packed = Eq(Ref(addr), Const(BitStr|11), Int|2);
 
   PureM<PackWord@>(@(reset, feed, packed));
 };
@@ -339,33 +352,33 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 
   # Count of the number of 32-bit words of input that have been processed in
   # the current block.
-  Addr@ count <- AllocM<PaddedMd5@>(I(D|4));
+  Addr@ count <- AllocM<PaddedMd5@>(Int|4);
 
   # Space to assemble the next 32 bit word of input.
   Addr32@ word <- AllocM<PaddedMd5@>(32);
   PackWord@ wpack <- InstM<PackWord@, PaddedMd5@>(PackWord(word, byte));
 
   # Space to assemble the next block of 16 32-bit words of input.
-  Addr@ block <- AllocM<PaddedMd5@>(Mul(I(D|16), I(D|32)));
+  Addr@ block <- AllocM<PaddedMd5@>(Mul(Int|16, Int|32));
   BlockOf@<Addr32@> blockof = BlockOf@<Addr32@>(
-    Add(block, Mul(I(D|0), I(D|32))), Add(block, Mul(I(D|1), I(D|32))),
-    Add(block, Mul(I(D|2), I(D|32))), Add(block, Mul(I(D|3), I(D|32))),
-    Add(block, Mul(I(D|4), I(D|32))), Add(block, Mul(I(D|5), I(D|32))),
-    Add(block, Mul(I(D|6), I(D|32))), Add(block, Mul(I(D|7), I(D|32))),
-    Add(block, Mul(I(D|8), I(D|32))), Add(block, Mul(I(D|9), I(D|32))),
-    Add(block, Mul(I(D|10), I(D|32))), Add(block, Mul(I(D|11), I(D|32))),
-    Add(block, Mul(I(D|12), I(D|32))), Add(block, Mul(I(D|13), I(D|32))),
-    Add(block, Mul(I(D|14), I(D|32))), Add(block, Mul(I(D|15), I(D|32))));
+    Add(block, Mul(Int|0, Int|32)), Add(block, Mul(Int|1, Int|32)),
+    Add(block, Mul(Int|2, Int|32)), Add(block, Mul(Int|3, Int|32)),
+    Add(block, Mul(Int|4, Int|32)), Add(block, Mul(Int|5, Int|32)),
+    Add(block, Mul(Int|6, Int|32)), Add(block, Mul(Int|7, Int|32)),
+    Add(block, Mul(Int|8, Int|32)), Add(block, Mul(Int|9, Int|32)),
+    Add(block, Mul(Int|10, Int|32)), Add(block, Mul(Int|11, Int|32)),
+    Add(block, Mul(Int|12, Int|32)), Add(block, Mul(Int|13, Int|32)),
+    Add(block, Mul(Int|14, Int|32)), Add(block, Mul(Int|15, Int|32)));
   Program@ doblock <- InstM<Program@, PaddedMd5@>(DoBlock(a, b, c, d, blockof));
 
   # Note: the spec lists the initial values for A, B, C, and D low-order byte
   # first, but H takes high order byte first.
   Program@ reset = Seq(List<Program@>[
-    Assign(count, Const(B|0000), I(D|4)),
-    Assign(a, H(Hex|67452301), 32),
-    Assign(b, H(Hex|EFCDAB89), 32),
-    Assign(c, H(Hex|98BADCFE), 32),
-    Assign(d, H(Hex|10325476), 32),
+    Assign(count, Const(BitStr|0000), Int|4),
+    Assign(a, H|67452301, 32),
+    Assign(b, H|EFCDAB89, 32),
+    Assign(c, H|98BADCFE, 32),
+    Assign(d, H|10325476, 32),
     wpack.reset
   ]);
 
@@ -373,10 +386,10 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
     wpack.feed,
     If(wpack.packed,
       Seq(List<Program@>[
-        Store(I(D|4), I(D|32), block, count, word),
-        If(Eq(Ref(count), Const(B|1111), I(D|4)),
+        Store(Int|4, Int|32, block, count, word),
+        If(Eq(Ref(count), Const(BitStr|1111), Int|4),
           doblock),
-      IncP(I(D|4), count)]))
+      IncP(Int|4, count)]))
   ]);
 
   PureM<PaddedMd5@>(@(reset, feed));
@@ -409,22 +422,22 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 #   hash - The address to store the 128 bit computed Md5 hash.
 (Addr8@, Addr@) { Module@<Md5@>; }
 Md5 = (Addr8@ input, Addr@ hash) {
-  Addr32@ a <- AllocM<Md5@>(I(D|32));
-  Addr32@ b <- AllocM<Md5@>(I(D|32));
-  Addr32@ c <- AllocM<Md5@>(I(D|32));
-  Addr32@ d <- AllocM<Md5@>(I(D|32));
+  Addr32@ a <- AllocM<Md5@>(Int|32);
+  Addr32@ b <- AllocM<Md5@>(Int|32);
+  Addr32@ c <- AllocM<Md5@>(Int|32);
+  Addr32@ d <- AllocM<Md5@>(Int|32);
 
   PaddedMd5@ padded <- InstM<PaddedMd5@, Md5@>(PaddedMd5(a, b, c, d, input));
 
   # Count of the number of bits of input that have been processed.
-  Addr64@ length <- AllocM<Md5@>(I(D|64));
+  Addr64@ length <- AllocM<Md5@>(Int|64);
 
   # While padding, keeps track of how many bytes have been added to the final
   # block so far.
-  Addr@ padding <- AllocM<Md5@>(I(D|6));
+  Addr@ padding <- AllocM<Md5@>(Int|6);
 
   Program@ reset = Seq(List<Program@>[
-    Assign(length, H(Hex|0000000000000000), I(D|64)),
+    Assign(length, H|0000000000000000, Int|64),
     padded.reset
   ]);
 
@@ -433,54 +446,54 @@ Md5 = (Addr8@ input, Addr@ hash) {
 
     # Increment the length by one bytes worth by incrementing all but the last
     # three bits by 1.
-    IncP(I(D|61), length)
+    IncP(Int|61, length)
   ]);
 
   Program@ finish = Seq(List<Program@>[
     # Start tracking how many bytes we've added to the final block.
-    Assign(padding, Ref(Add(length, I(D|55))), I(D|6)),
+    Assign(padding, Ref(Add(length, Int|55)), Int|6),
 
     # Feed byte 0x80
-    Assign(input, H(Hex|80), I(D|8)),
+    Assign(input, H|80, Int|8),
     padded.feed,
-    IncP(I(D|6), padding),
+    IncP(Int|6, padding),
 
     # Feed byte 0x00 until 8 bytes shy of end of block.
-    Assign(input, H(Hex|00), I(D|8)),
-    While(Ne(Ref(padding), Const(B|111000), I(D|6)), Seq(List<Program@>[
+    Assign(input, H|00, Int|8),
+    While(Ne(Ref(padding), Const(BitStr|111000), Int|6), Seq(List<Program@>[
       padded.feed,
-      IncP(I(D|6), padding)
+      IncP(Int|6, padding)
     ])),
 
     # Feed length (in bits) as next 8 bytes, least significant byte first.
-    Assign(input, Ref(Add(length, I(D|56))), I(D|8)), padded.feed,
-    Assign(input, Ref(Add(length, I(D|48))), I(D|8)), padded.feed,
-    Assign(input, Ref(Add(length, I(D|40))), I(D|8)), padded.feed,
-    Assign(input, Ref(Add(length, I(D|32))), I(D|8)), padded.feed,
-    Assign(input, Ref(Add(length, I(D|24))), I(D|8)), padded.feed,
-    Assign(input, Ref(Add(length, I(D|16))), I(D|8)), padded.feed,
-    Assign(input, Ref(Add(length, I(D|8))), I(D|8)), padded.feed,
-    Assign(input, Ref(Add(length, I(D|0))), I(D|8)), padded.feed,
+    Assign(input, Ref(Add(length, Int|56)), Int|8), padded.feed,
+    Assign(input, Ref(Add(length, Int|48)), Int|8), padded.feed,
+    Assign(input, Ref(Add(length, Int|40)), Int|8), padded.feed,
+    Assign(input, Ref(Add(length, Int|32)), Int|8), padded.feed,
+    Assign(input, Ref(Add(length, Int|24)), Int|8), padded.feed,
+    Assign(input, Ref(Add(length, Int|16)), Int|8), padded.feed,
+    Assign(input, Ref(Add(length, Int|8)), Int|8), padded.feed,
+    Assign(input, Ref(Add(length, Int|0)), Int|8), padded.feed,
 
     # Extract the hash from a, b, c, d.
     # Note that the hash is output in order ABCD, least significant byte
     # first.
-    Assign(Add(hash, I(D|0)),   Ref(Add(a, I(D|24))), I|8),
-    Assign(Add(hash, I(D|8)),   Ref(Add(a, I(D|16))), I|8),
-    Assign(Add(hash, I(D|16)),  Ref(Add(a, I(D|8))),  I|8),
-    Assign(Add(hash, I(D|24)),  Ref(Add(a, I(D|0))),  I|8),
-    Assign(Add(hash, I(D|32)),  Ref(Add(b, I(D|24))), I|8),
-    Assign(Add(hash, I(D|40)),  Ref(Add(b, I(D|16))), I|8),
-    Assign(Add(hash, I(D|48)),  Ref(Add(b, I(D|8))),  I|8),
-    Assign(Add(hash, I(D|56)),  Ref(Add(b, I(D|0))),  I|8),
-    Assign(Add(hash, I(D|64)),  Ref(Add(c, I(D|24))), I|8),
-    Assign(Add(hash, I(D|72)),  Ref(Add(c, I(D|16))), I|8),
-    Assign(Add(hash, I(D|80)),  Ref(Add(c, I(D|8))),  I|8),
-    Assign(Add(hash, I(D|88)),  Ref(Add(c, I(D|0))),  I|8),
-    Assign(Add(hash, I(D|96)),  Ref(Add(d, I(D|24))), I|8),
-    Assign(Add(hash, I(D|104)), Ref(Add(d, I(D|16))), I|8),
-    Assign(Add(hash, I(D|112)), Ref(Add(d, I(D|8))),  I|8),
-    Assign(Add(hash, I(D|120)), Ref(Add(d, I(D|0))),  I|8)
+    Assign(Add(hash, Int|0),   Ref(Add(a, Int|24)), Int|8),
+    Assign(Add(hash, Int|8),   Ref(Add(a, Int|16)), Int|8),
+    Assign(Add(hash, Int|16),  Ref(Add(a, Int|8)),  Int|8),
+    Assign(Add(hash, Int|24),  Ref(Add(a, Int|0)),  Int|8),
+    Assign(Add(hash, Int|32),  Ref(Add(b, Int|24)), Int|8),
+    Assign(Add(hash, Int|40),  Ref(Add(b, Int|16)), Int|8),
+    Assign(Add(hash, Int|48),  Ref(Add(b, Int|8)),  Int|8),
+    Assign(Add(hash, Int|56),  Ref(Add(b, Int|0)),  Int|8),
+    Assign(Add(hash, Int|64),  Ref(Add(c, Int|24)), Int|8),
+    Assign(Add(hash, Int|72),  Ref(Add(c, Int|16)), Int|8),
+    Assign(Add(hash, Int|80),  Ref(Add(c, Int|8)),  Int|8),
+    Assign(Add(hash, Int|88),  Ref(Add(c, Int|0)),  Int|8),
+    Assign(Add(hash, Int|96),  Ref(Add(d, Int|24)), Int|8),
+    Assign(Add(hash, Int|104), Ref(Add(d, Int|16)), Int|8),
+    Assign(Add(hash, Int|112), Ref(Add(d, Int|8)),  Int|8),
+    Assign(Add(hash, Int|120), Ref(Add(d, Int|0)),  Int|8)
   ]);
 
   PureM<Md5@>(Md5@(reset, feed, finish));

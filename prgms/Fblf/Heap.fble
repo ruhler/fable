@@ -14,8 +14,7 @@
 % Ge = /Int/Int/Eq%.Ge;
 % Div = /Int/Int/Div%.Div;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;
@@ -39,10 +38,10 @@
 # Heap --
 #   Create a heap of at least n uninitialized bits.
 (Int@) { Heap@; } Heap = (Int@ n) {
-  Le(n, I(D|1)).?(
+  Le(n, Int|1).?(
     true: Heap@(value: B.1),
     false: {
-      Int@ m = Div(n, I(D|2));
+      Int@ m = Div(n, Int|2);
       Heap@(binary: HeapB@(Heap(m), m, Heap(Sub(n, m))));
     });
 };
@@ -68,7 +67,7 @@ Read_ = (Heap@ heap, Addr@ addr, Int@ n, List@<Bit@> tail) {
             Int@ nl = Sub(heap.binary.m, addr);
             Int@ nr = Sub(n, nl);
             Read_(heap.binary.left, addr, nl,
-              Read_(heap.binary.right, I(D|0), nr, tail));
+              Read_(heap.binary.right, Int|0, nr, tail));
           }));
     });
 };
@@ -110,7 +109,7 @@ Write = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
             Int@ nl = Sub(heap.binary.m, addr);
             Int@ nr = Sub(n, nl);
             Heap@ left = Write(heap.binary.left, addr, bits, nl);
-            Heap@ right = Write(heap.binary.right, I(D|0), Drop<Bit@>(nl, bits), nr);
+            Heap@ right = Write(heap.binary.right, Int|0, Drop<Bit@>(nl, bits), nr);
             Heap@(binary: HeapB@(left, heap.binary.m, right));
           }));
     });
@@ -139,7 +138,7 @@ Equals = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
             Equals(heap.binary.left, addr, bits, nl).?(
               true: {
                 Int@ nr = Sub(n, nl);
-                Equals(heap.binary.right, I(D|0), Drop<Bit@>(nl, bits), nr);
+                Equals(heap.binary.right, Int|0, Drop<Bit@>(nl, bits), nr);
               }, 
               false: False);
           }));

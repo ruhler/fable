@@ -16,18 +16,12 @@
 <@>@ Module@ = /Fblf/Module%.Module@;
 <@>% Instantiate = /Fblf/Module%.Instantiate;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 <@,@>% Map = /List%.Map;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
-
 @ String@ = /String%.String@;
-<@>@ CharLit@ = /String%.CharLit@;
-% Str = /String%.Str;
 
 <@>% AssertEquals = /Test%.AssertEquals;
 
@@ -45,15 +39,15 @@
 
 # Test --
 #   Creates a test.
-(Lit@<Char@>, Module@<TestInstance@>) { Test@; }
-Test = (Lit@<Char@> name, Module@<TestInstance@> test) {
-  Test@(case: TestCase@(Str(name), test));
+(List@<Char@>, Module@<TestInstance@>) { Test@; }
+Test = (List@<Char@> name, Module@<TestInstance@> test) {
+  Test@(case: TestCase@(name, test));
 };
 
 # TestSuite --
-(CharLit@, Lit@<Test@>) { Test@; }
-TestSuite = (CharLit@ name, Lit@<Test@> tests) {
-  Test@(suite: TestSuite@(Str(name), List<Test@>(tests)));
+(String@, List@<Test@>) { Test@; }
+TestSuite = (String@ name, List@<Test@> tests) {
+  Test@(suite: TestSuite@(name, tests));
 };
 
 # Convert an Fblf Test into an Fble Test.
@@ -62,7 +56,7 @@ TestSuite = (CharLit@ name, Lit@<Test@> tests) {
     case: {
       Module@<TestInstance@> m = t.case.test;
       /Test%.TestResult@! body = !({
-        Instance@<TestInstance@> i = Instantiate<TestInstance@>(m, I(D|0));
+        Instance@<TestInstance@> i = Instantiate<TestInstance@>(m, Int|0);
         TestInstance@ mI = i.instance;
         Heap@ heap = Exec(mI.program, Heap(i.heap));
 

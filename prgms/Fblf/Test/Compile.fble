@@ -4,10 +4,9 @@
 % IsAlNum = /Char/Type%.IsAlNum;
 
 @ Bit@ = /Digits%.Bit@;
-% B = /Digits%.Bit;
+% BitStr = /Digits/String%.BitStr;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
@@ -59,19 +58,19 @@
     case: {
       String@ name = Append<Char@>(prefix, test.case.name);
       Module@<Program@> wrapped = {
-        Addr@ pass <- AllocM<Program@>(I(D|1));
+        Addr@ pass <- AllocM<Program@>(Int|1);
         TestInstance@ ti <- InstM<TestInstance@, Program@>(test.case.test);
 
         PureM<Program@>(Seq(List<Program@>[
-          Assign(pass, Const(B|0), I(D|1)),
+          Assign(pass, Const(BitStr|0), Int|1),
           ti.program,
           IfElse(Eq(Ref(ti.result), Value@(const: ti.expected), Length<Bit@>(ti.expected)),
-            Assign(pass, Const(B|1), I(D|1)),
-            Assign(pass, Const(B|0), I(D|1)))
+            Assign(pass, Const(BitStr|1), Int|1),
+            Assign(pass, Const(BitStr|0), Int|1))
         ]));
       };
 
-      Instance@<Program@> instance = Instantiate<Program@>(wrapped, I(D|0));
+      Instance@<Program@> instance = Instantiate<Program@>(wrapped, Int|0);
       List<Case@>[@(name, instance)];
     },
     suite: {
@@ -129,7 +128,7 @@ int main()
         ToCId(case.name),
         Str|', ',
         /Int/Int/Show%.Show(case.instance.heap),
-        Str(Chars|');'),
+        Str|');',
         Str[Chars.nl]
     ]);
   }));

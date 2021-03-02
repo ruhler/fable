@@ -1,17 +1,14 @@
 
 @ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
-% B = /Digits%.Bit;
+% BitStr = /Digits/String%.BitStr;
 
 @ Int@ = /Int/Int%.Int@;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 <@>% Nil = /List%.Nil;
 <@>% Concat = /List%.Concat;
 <@,@>% Map = /List%.Map;
-
-<@,@>@ Lit@ = /Literal%.Lit@;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -38,8 +35,8 @@
 #
 # Example Use:
 #   Value@ v = Const(Bit|01110001);
-(Lit@<Bit@>) { Value@; } Const = (Lit@<Bit@> bits) {
-  Value@(const: List<Bit@>(bits));
+(List@<Bit@>) { Value@; } Const = (List@<Bit@> bits) {
+  Value@(const: bits);
 };
 
 # ConstHex --
@@ -47,14 +44,13 @@
 #
 # Example Use:
 #   Value@ v = Const(Bit|A71);
-(Lit@<Hex@>) { Value@; } ConstHex = (Lit@<Hex@> hex) {
-  List@<Hex@> l = List<Hex@>(hex);
+(List@<Hex@>) { Value@; } ConstHex = (List@<Hex@> l) {
   List@<Bit@> bits = Concat<Bit@>(Map<Hex@, List@<Bit@>>(l, (Hex@ h) {
-    List<Bit@>(h.?(
-      0: B|0000, 1: B|0001, 2: B|0010, 3: B|0011,
-      4: B|0100, 5: B|0101, 6: B|0110, 7: B|0111,
-      8: B|1000, 9: B|1001, A: B|1010, B: B|1011,
-      C: B|1100, D: B|1101, E: B|1110, F: B|1111));
+    h.?(
+      0: BitStr|0000, 1: BitStr|0001, 2: BitStr|0010, 3: BitStr|0011,
+      4: BitStr|0100, 5: BitStr|0101, 6: BitStr|0110, 7: BitStr|0111,
+      8: BitStr|1000, 9: BitStr|1001, A: BitStr|1010, B: BitStr|1011,
+      C: BitStr|1100, D: BitStr|1101, E: BitStr|1110, F: BitStr|1111);
   }));
   Value@(const: bits);
 };
@@ -128,12 +124,8 @@ IfElse = (Condition@ p, Program@ if_body, Program@ else_body) {
   Program@(ifelse: IfElse@(p, if_body, else_body));
 };
 
-(List@<Program@>) { Program@; } SeqL = (List@<Program@> prgms) {
+(List@<Program@>) { Program@; } Seq = (List@<Program@> prgms) {
   Program@(sequence: prgms);
-};
-
-(Lit@<Program@>) { Program@; } Seq = (Lit@<Program@> prgms) {
-  SeqL(List<Program@>(prgms));
 };
 
 Program@ Noop = Program@(sequence: Nil<Program@>);
@@ -149,5 +141,5 @@ Program@ Noop = Program@(sequence: Nil<Program@>);
 @(
   Bit@, Bits@, Addr@, Value@, ConditionOp@, Condition@,
   Assign@, Sequence@, IfElse@, While@, Program@,
-  Const, ConstHex, Ref, Eq, Ne, Assign, If, IfElse, SeqL, Seq, Noop, While
+  Const, ConstHex, Ref, Eq, Ne, Assign, If, IfElse, Seq, Noop, While
 );

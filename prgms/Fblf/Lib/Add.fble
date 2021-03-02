@@ -1,5 +1,5 @@
 
-% B = /Digits%.Bit;
+% BitStr = /Digits/String%.BitStr;
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Program@ = /Fblf/Program%.Program@;
@@ -21,12 +21,13 @@
 % Sub = /Int/Int%.Sub;
 % Le = /Int/Int/Eq%.Le;
 
-% D = /Int/Int/Lit%.D;
-% I = /Int/Int/Lit%.I;
+% Int = /Int/Int/Lit%.Int;
 
 % CountDownFrom = /Int/Int/Iter%.CountDownFrom;
 
 <@,@>% For = /Iter%.For;
+
+<@>% List = /List%.List;
 
 # Add1P --
 #   A pure 1-bit adder.
@@ -42,9 +43,9 @@
 #   A program that sets x and z based on the one bit addition a + b + c.
 (Addr@, Addr@, Addr@, Addr@, Addr@) { Program@; }
 Add1P = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
-  Int@ n1 = I(D|1);
-  Value@ b0 = Const(B|0);
-  Value@ b1 = Const(B|1);
+  Int@ n1 = Int|1;
+  Value@ b0 = Const(BitStr|0);
+  Value@ b1 = Const(BitStr|1);
 
   IfElse(Eq(Ref(a), b0, n1),
     IfElse(Eq(Ref(b), b0, n1),
@@ -71,10 +72,10 @@ Add1P = (Addr@ a, Addr@ b, Addr@ c, Addr@ x, Addr@ z) {
 AddM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   # We need a single bit of internal state to store the carry bit as we do
   # the addition.
-  Addr@ carry <- AllocM<Program@>(I(D|1));
+  Addr@ carry <- AllocM<Program@>(Int|1);
 
-  Value@ b0 = Const(B|0);
-  PureM<Program@>(For<Int@, Program@>(CountDownFrom(n), Assign(carry, b0, I(D|1)),
+  Value@ b0 = Const(BitStr|0);
+  PureM<Program@>(For<Int@, Program@>(CountDownFrom(n), Assign(carry, b0, Int|1),
     (Int@ i, Program@ s) {
       Program@ add1 = Add1P(Add(a, i), Add(b, i), carry, carry, Add(z, i));
       Seq(List<Program@>[s, add1]); 
@@ -90,14 +91,14 @@ AddM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
 #       bit first.
 (Int@, Addr@) { Program@; }
 IncP = (Int@ n, Addr@ a) {
-  Le(n, I(D|0)).?(
+  Le(n, Int|0).?(
     true: Noop,
     false: {
-      Int@ nm1 = Sub(n, I(D|1));
+      Int@ nm1 = Sub(n, Int|1);
       Addr@ lsb = Add(a, nm1);
-      IfElse(Eq(Ref(lsb), Const(B|0), I(D|1)),
-        Assign(lsb, Const(B|1), I(D|1)),
-        Seq(List<Program@>[Assign(lsb, Const(B|0), I(D|1)), IncP(nm1, a)]));
+      IfElse(Eq(Ref(lsb), Const(BitStr|0), Int|1),
+        Assign(lsb, Const(BitStr|1), Int|1),
+        Seq(List<Program@>[Assign(lsb, Const(BitStr|0), Int|1), IncP(nm1, a)]));
     });
 };
 
@@ -121,14 +122,14 @@ IncP = (Int@ n, Addr@ a) {
 #       bit first.
 (Int@, Addr@) { Program@; }
 DecP = (Int@ n, Addr@ a) {
-  Le(n, I(D|0)).?(
+  Le(n, Int|0).?(
     true: Noop,
     false: {
-      Int@ nm1 = Sub(n, I(D|1));
+      Int@ nm1 = Sub(n, Int|1);
       Addr@ lsb = Add(a, nm1);
-      IfElse(Eq(Ref(lsb), Const(B|1), I(D|1)),
-        Assign(lsb, Const(B|0), I(D|1)),
-        Seq(List<Program@>[Assign(lsb, Const(B|1), I(D|1)), DecP(nm1, a)]));
+      IfElse(Eq(Ref(lsb), Const(BitStr|1), Int|1),
+        Assign(lsb, Const(BitStr|0), Int|1),
+        Seq(List<Program@>[Assign(lsb, Const(BitStr|1), Int|1), DecP(nm1, a)]));
     });
 };
 
