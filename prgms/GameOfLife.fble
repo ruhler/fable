@@ -13,8 +13,6 @@
 <@>% List = /List%.List;
 <@,@>% ForEach = /List%.ForEach;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
-
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
 % PairS = /Structure%.PairS;
@@ -42,12 +40,10 @@ Structured@<Coord@> CoordS = {
 );
 
 # Create a world from a list of coordinates of live cells.
-(Lit@<Coord@>){ World@; } World = (Lit@<Coord@> mkCells) {
-  mkCells<World@>(
-    (Coord@ c, World@ w) {
-      W.Insert(w, c, Unit);
-    },
-    W.Empty);
+(List@<Coord@>){ World@; } World = (List@<Coord@> mkCells) {
+  mkCells.?(
+    cons: W.Insert(World(mkCells.cons.tail), mkCells.cons.head, Unit),
+    nil: W.Empty);
 };
 
 # A count of neighboring cells. 4p stands for anything greater than or equal

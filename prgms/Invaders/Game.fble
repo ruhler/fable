@@ -8,8 +8,7 @@
 % Div = /Int/Int/Div%.Div;
 % Mod = /Int/Int/Div%.Mod;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;
 
@@ -19,6 +18,8 @@
 % Ship = /Invaders/Ship%;
 @ Dir@ = Ship.Dir@;
 @ Ship@ = Ship.Ship@;
+
+<@>% List = /List%.List;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -34,7 +35,7 @@
 );
 
 Game@ Initial = @(
-  score: I(D|920),
+  score: Int|920,
   lives: Lives@(3: Unit),
   ship: Ship.Initial,
   aliens: Aliens.Initial
@@ -78,7 +79,7 @@ Game@ Initial = @(
             : Blank))));
   };
 
-  Int@ 10 = I(D|10);
+  Int@ 10 = Int|10;
 
   (Int@ score) {
     # We only print 4 digits for the score.
@@ -91,18 +92,18 @@ Game@ Initial = @(
     Drawing@ d2 = Digit(Mod(s10, 10));
     Drawing@ d3 = Digit(Mod(s1, 10));
     Drawings(List<Drawing@>[
-      Translate(I(D|80), I(D|440), d3),
-      Translate(I(D|96), I(D|440), d2),
-      Translate(I(D|112), I(D|440), d1),
-      Translate(I(D|128), I(D|440), d0)
+      Translate(Int|80, Int|440, d3),
+      Translate(Int|96, Int|440, d2),
+      Translate(Int|112, Int|440, d1),
+      Translate(Int|128, Int|440, d0)
     ]);
   };
 };
 
 (Lives@) { Drawing@; } DrawLives = {
-  Drawing@ l1 = Translate(I(D|320), I(D|440), Graphics.Ship);
-  Drawing@ l2 = Translate(I(D|360), I(D|440), Graphics.Ship);
-  Drawing@ l3 = Translate(I(D|400), I(D|440), Graphics.Ship);
+  Drawing@ l1 = Translate(Int|320, Int|440, Graphics.Ship);
+  Drawing@ l2 = Translate(Int|360, Int|440, Graphics.Ship);
+  Drawing@ l3 = Translate(Int|400, Int|440, Graphics.Ship);
   (Lives@ l) {
     l.?(
       0: Blank,

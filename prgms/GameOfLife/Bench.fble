@@ -2,8 +2,7 @@
 @ Key@ = /App%.Key@;
 @ Event@ = /App%.Event@;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -13,6 +12,6 @@
 # Note: To avoid deadlock, make sure this is less than the number of
 # iterations that the GameOfLife App runs for (200 last time I looked).
 Unit@! Bench = /App/Benchmark%.Benchmark(
-  /GameOfLife/App%, I(D|100), Event@(key_down: Key@(q: Unit)));
+  /GameOfLife/App%, Int|100, Event@(key_down: Key@(q: Unit)));
 
 @(Bench);

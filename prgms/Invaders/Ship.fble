@@ -9,8 +9,7 @@
 % Lt = /Int/Int/Eq%.Lt;
 % Gt = /Int/Int/Eq%.Gt;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;
 
@@ -19,14 +18,14 @@
 
 # The ships moves side to side, but not forward or backwards.
 # This is the Y coordinate of the bottom edge of the ship.
-Int@ ShipY = I(D|22);
+Int@ ShipY = Int|22;
 
 # The velocity of the ship when it is moving, in pixels per tick.
-Int@ ShipV = I(D|2);
+Int@ ShipV = Int|2;
 
 # The range of values allowed for the left edge of the ship.
-Int@ MinX = I(D|96);
-Int@ MaxX = I(D|514);
+Int@ MinX = Int|96;
+Int@ MaxX = Int|514;
 
 @ Dir@ = +(
   Unit@ left,

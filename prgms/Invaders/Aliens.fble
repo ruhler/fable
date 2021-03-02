@@ -27,8 +27,7 @@
 % Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
 % Gt = /Int/Int/Eq%.Gt;
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 <@,@>% DoWhile = /Loop%.DoWhile;
 <@,@>% For = /Loop%.For;
@@ -51,11 +50,11 @@
 
 # NumRows --
 #   The number of rows of aliens in the group.
-Int@ NumRows = I(D|5);
+Int@ NumRows = Int|5;
 
 # NumCols --
 #   The number of columns of aliens in the group.
-Int@ NumCols = I(D|11);
+Int@ NumCols = Int|11;
 
 # NumAliens --
 #   The total number of aliens in the group.
@@ -99,7 +98,7 @@ Structured@<Alien@> AlienS = /Int/Int/Structured%.Structured;
 #   The set of all aliens.
 Set@ AllAliens = {
   % Insert = /Map%.Insert<Alien@>(AlienS)<Unit@>;
-  DoWhile<Alien@, Set@>(I(D|0), Next, /Map%.Empty<Alien@, Unit@>, 
+  DoWhile<Alien@, Set@>(Int|0, Next, /Map%.Empty<Alien@, Unit@>, 
     (Alien@ a, Set@ s) {
       Insert(s, a, Unit);
     });
@@ -133,7 +132,7 @@ Set@ AllAliens = {
 #   Returns the first live alien in the given set, or Nothing if there are no
 #   live aliens.
 (Set@) { Maybe@<Alien@>; } FirstAlive = (Set@ alive) {
-  Alien@ first = I(D|0);
+  Alien@ first = Int|0;
   Contains(alive, first).?(
     true: Just<Alien@>(first),
     false: NextAlive(alive, first));
@@ -168,35 +167,35 @@ Set@ AllAliens = {
 #   Determines how long to wait before the next alien moves, as a function of
 #   how many aliens are still alive.
 (Int@) { Wait@; } Wait = (Int@ num_live_aliens) {
-  Div(Add(num_live_aliens, I(D|35)), I(D|10));
+  Div(Add(num_live_aliens, Int|35), Int|10);
 };
 
 # LeftEdge --
 #   The furthest left, in game coordinates, the left edge of an alien will go.
-Int@ LeftEdge = I(D|92);
+Int@ LeftEdge = Int|92;
 
 # RightEdge --
 #   The furthest right, in game coordinates, the left edge of an alien will go.
-Int@ RightEdge = I(D|524);
+Int@ RightEdge = Int|524;
 
 # StrideX --
 #   The horizontal distance, in game coordinates, between the left edge of an
 #   alien and the left edge of its immediately adjacent alien.
-Int@ StrideX = I(D|30);
+Int@ StrideX = Int|30;
 
 # StrideY --
 #   The vertical distance, in game coordinates, between the bottom edge of an
 #   alien and the bottom edge of its immediately adjacent alien.
-Int@ StrideY = I(D|32);
+Int@ StrideY = Int|32;
 
 # MoveX --
 #   How far an alien moves side to side, in game coordinates, in a single
 #   step.
-Int@ MoveX = I(D|4);
+Int@ MoveX = Int|4;
 
 # MoveY --
 #   How far an alien moves down, in game coordinates, in a single step.
-Int@ MoveY = I(D|16);
+Int@ MoveY = Int|16;
 
 # Aliens@ --
 #   The state of a group of aliens.
@@ -243,20 +242,20 @@ Int@ MoveY = I(D|16);
 Aliens@ Initial = @(
   wait: Wait(NumAliens),
   src_x: LeftEdge,
-  src_y: I(D|128),
+  src_y: Int|128,
   dst_x: Add(LeftEdge, MoveX),
-  dst_y: I(D|128),
+  dst_y: Int|128,
   alive: AllAliens,
   num_aliens_alive: NumAliens,
   dir: Dir@(right: Unit),
   phase: Phase@(b: Unit),
-  next: Just<Alien@>(I(D|0)),
+  next: Just<Alien@>(Int|0),
   turn: False);
 
 # Tick --
 #   Advance the aliens by one unit of time tick.
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
-  Eq(I(D|0), a.wait).?(
+  Eq(Int|0, a.wait).?(
     true: {
       Wait@ wait = Wait(a.num_aliens_alive);
       a.next.?(
@@ -294,10 +293,10 @@ Aliens@ Initial = @(
 #   Return the alien sprite for an alien in the given row with the given
 #   phase.
 (Int@, Phase@) { Drawing@; } Sprite = (Int@ row, Phase@ phase) {
-  Int@ half_row = Div(row, I(D|2));
-  Eq(I(D|0), half_row).?(
+  Int@ half_row = Div(row, Int|2);
+  Eq(Int|0, half_row).?(
     true: phase.?(a: Alien1A, b: Alien1B),
-    false: Eq(I(D|1), half_row).?(
+    false: Eq(Int|1, half_row).?(
       true: phase.?(a: Alien2A, b: Alien2B),
       false: phase.?(a: Alien3A, b: Alien3B)));
 };

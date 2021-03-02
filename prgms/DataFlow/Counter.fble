@@ -3,8 +3,6 @@
 #
 % True = /Bool%.True;
 
-% Chars = /Char%.Chars;
-
 @ DataFlow@ = /DataFlow%.DataFlow@;
 <@>@ In@ = /DataFlow%.In@;
 <@>@ Out@ = /DataFlow%.Out@;
@@ -19,6 +17,8 @@
 <@>% Input = /DataFlow%.Input;
 <@>% Output = /DataFlow%.Output;
 % Run = /DataFlow%.Run;
+
+<@>% List = /List%.List;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -101,10 +101,10 @@ Stdio@ Stdio = (Get@<Maybe@<String@>> in, Put@<String@> out) {
   Put@<End@<Count@>> result = (End@<Count@> x) {
     x.?(
       data: x.data.?(
-        1: out(Str(Chars|1)),
-        2: out(Str(Chars|2)),
-        3: out(Str(Chars|3))),
-      end: out(Str(Chars|E)));
+        1: out(Str|1),
+        2: out(Str|2),
+        3: out(Str|3)),
+      end: out(Str|E));
   };
 
   End@<Unit@> ~ get, put;

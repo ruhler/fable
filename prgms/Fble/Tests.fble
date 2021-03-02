@@ -1,6 +1,4 @@
 
-% Chars = /Char%.Chars;
-
 <@>% List = /List%.List;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;

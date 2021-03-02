@@ -9,8 +9,6 @@
 <@>% List = /List%.List;
 <@,@>% Map = /List%.Map;
 
-<@,@>@ Lit@ = /Literal%.Lit@;
-
 @ Color@ = +(
   Unit@ black,
   Unit@ red,
@@ -67,8 +65,10 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 
 # Combing a list of drawings into a single drawing by drawing each subsequent
 # drawing on top of the previous drawing.
-(Lit@<Drawing@>) { Drawing@; } Drawings = (Lit@<Drawing@> drawings) {
-  drawings<Drawing@>(Over, Blank);
+(List@<Drawing@>) { Drawing@; } Drawings = (List@<Drawing@> drawings) {
+  drawings.?(
+    cons: Over(drawings.cons.head, Drawings(drawings.cons.tail)),
+    nil: Blank);
 };
 
 # Transform all of the coordinates in the given drawing.

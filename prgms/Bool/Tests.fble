@@ -7,9 +7,8 @@
 % Or = /Bool%.Or;
 % Eq = /Bool/Eq%.Eq;
 
-% Chars = /Char%.Chars;
+<@>% List = /List%.List;
 
-<@>@ CharLit@ = /String%.CharLit@;
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 
@@ -31,8 +30,8 @@
 #  True.
 #
 # Example Use:
-#  T(Chars|Test_True_Is_True, !(True));
-(CharLit@, Bool@!) { Test@; } T = (CharLit@ name, Bool@! p) {
+#  T(Str|Test_True_Is_True, !(True));
+(String@, Bool@!) { Test@; } T = (String@ name, Bool@! p) {
   Test(name, {
     Bool@ x := p;
     !(AssertEquals<Bool@>(Eq, /Bool/Show%.Show, True, x));
@@ -52,8 +51,8 @@
 #  False.
 #
 # Example Use:
-#  F(Chars|Test_False_Is_False, !(False));
-(CharLit@, Bool@!) { Test@; } F = (CharLit@ name, Bool@! p) {
+#  F(Str|Test_False_Is_False, !(False));
+(String@, Bool@!) { Test@; } F = (String@ name, Bool@! p) {
   Test(name, {
     Bool@ x := p;
     !(AssertEquals<Bool@>(Eq, /Bool/Show%.Show, False, x));

@@ -6,8 +6,7 @@
 @ Int@ = /Int/Int%.Int@;
 % Dec = /Int/Int%.Dec;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -22,8 +21,8 @@
 #   n - the number of iterations to run the benchmark.
 #   quit - an event that will cause the app to quit when sent to the app.
 (App@, Int@, Event@) { Unit@!; } Benchmark = (App@ app, Int@ n, Event@ quit) {
-  Int@ w = I(D|640);
-  Int@ h = I(D|480);
+  Int@ w = Int|640;
+  Int@ h = Int|480;
 
   Event@ ~ get_event, put_event;
   Effect@ ~ get_effect, put_effect;

@@ -32,8 +32,9 @@
 % IsZero = /Int/Int/Eq%.IsZero;
 % Lt = /Int/Int/Eq%.Lt;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
+
+<@>% List = /List%.List;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -43,23 +44,23 @@
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
 
-Int@ XMin = Neg(I(D|50));
-Int@ XMax = I(D|50);
-Int@ YMin = Neg(I(D|50));
-Int@ YMax = I(D|50);
+Int@ XMin = Neg(Int|50);
+Int@ XMax = Int|50;
+Int@ YMin = Neg(Int|50);
+Int@ YMax = Int|50;
 Int@ Width = Sub(XMax, XMin);
 Int@ Height = Sub(YMax, YMin);
 
 World@ acorn = World(List<Coord@>[
-  C(I(D|0), I(D|1)),
+  C(Int|0, Int|1),
 
-  C(I(D|1), I(D|3)),
+  C(Int|1, Int|3),
 
-  C(I(D|2), I(D|0)),
-  C(I(D|2), I(D|1)),
-  C(I(D|2), I(D|4)),
-  C(I(D|2), I(D|5)),
-  C(I(D|2), I(D|6))
+  C(Int|2, Int|0),
+  C(Int|2, Int|1),
+  C(Int|2, Int|4),
+  C(Int|2, Int|5),
+  C(Int|2, Int|6)
 ]);
 
 (World@) { Drawing@; } DrawWorld = (World@ w) {
@@ -88,7 +89,7 @@ World@ acorn = World(List<Coord@>[
 (Get@<Input@>, Put@<Effect@>, Int@, World@) { Unit@!; }
 StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, World@ w) {
   Unit@ _ := out(Effect@(draw: DrawWorld(w)));
-  Unit@ _ := out(Effect@(tick: I(D|200)));
+  Unit@ _ := out(Effect@(tick: Int|200));
   Input@ x := in;
   x.?(quit: !(Unit),
       step: IsZero(n).?(
@@ -115,7 +116,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     out(transformed);
   };
 
-  Unit@ _ := StepUI(GetInput(in), game_out, I(D|200), acorn);
+  Unit@ _ := StepUI(GetInput(in), game_out, Int|200, acorn);
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;

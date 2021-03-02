@@ -43,8 +43,7 @@
 % Lt = /Int/Int/Eq%.Lt;
 % Abs = /Int/Int/Eq%.Abs;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 % Div = /Int/Int/Div%.Div;
 % Mod = /Int/Int/Div%.Mod;
@@ -53,9 +52,9 @@
 % Unit = /Unit%.Unit;
 
 Int@ MinRow = 0;
-Int@ MaxRow = I(D|20);
+Int@ MaxRow = Int|20;
 Int@ MinCol = 0;
-Int@ MaxCol = I(D|60);
+Int@ MaxCol = Int|60;
 
 @ Pos@ = *(Int@ row, Int@ col);
 
@@ -126,9 +125,9 @@ State@ InitialState = {
   State@(
     Dir@(right: Unit),
     Pos@(r4, c1),
-    I(D|1),
+    Int|1,
     List<Pos@>[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
-    I(D|40));
+    Int|40);
 };
 
 @ MoveResultM@ = +(Unit@ dead, State@ state);
@@ -144,16 +143,16 @@ State@ InitialState = {
 # Update the random number for where the next food will be generate.
 # Takes the current direction of the snake to add some randomness to the
 # update.
-Int@ Max64 = I(D|18446744073709551616);
+Int@ Max64 = Int|18446744073709551616;
 (Dir@, Int@) { Int@; } StepRand = (Dir@ d, Int@ s) {
   Int@ offset = d.?(up: 0, down: 1, left: 2, right: 3);
-  Mod(Add(Mul(s, I(D|1103515245)), Add(I(D|12345), offset)), Max64);
+  Mod(Add(Mul(s, Int|1103515245), Add(Int|12345, offset)), Max64);
 };
 
 # Pick the position of the next food randomly, given the random bits and the
 # snakes position.
 (Int@, List@<Pos@>) { Pos@; } GetNextFood = (Int@ rand, List@<Pos@> snake) {
-  Int@ x = Mod(Div(rand, I(D|65536)), I(D|32768));
+  Int@ x = Mod(Div(rand, Int|65536), Int|32768);
   Int@ row = Inc(Mod(x, Dec(MaxRow)));
   Int@ col = Inc(Mod(Div(x, MaxRow), Dec(MaxCol)));
   Pos@ pos = Pos@(row, col);
@@ -229,7 +228,7 @@ Int@ Max64 = I(D|18446744073709551616);
          InPosS(s.snake, pos));
 
     # The cost of death is very high.
-    Int@ death = dead.?(true: I(D|100000), false: 0);
+    Int@ death = dead.?(true: Int|100000, false: 0);
 
     # The further away from the food, the worse we are.
     Int@ food = Mul(2, Add(Abs(Sub(pos.row, s.food.row)),
@@ -308,7 +307,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   Unit@ _ := game_out(Effect@(draw: Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit))));
   Unit@ _ := game_out(Effect@(draw: Draw(s)));
-  Unit@ _ := out(Effect@(tick: I(D|16)));
+  Unit@ _ := out(Effect@(tick: Int|16));
   Unit@ _ := Snake(GetInput(in), game_out, s);
 
   Unit@! WaitForKeyPress = {

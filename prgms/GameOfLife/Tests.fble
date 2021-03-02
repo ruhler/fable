@@ -1,6 +1,4 @@
 
-% Chars = /Char%.Chars;
-
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
 % 1 = /Int/Int%.1;
@@ -9,6 +7,8 @@
 % 4 = /Int/Int%.4;
 % 5 = /Int/Int%.5;
 % 6 = /Int/Int%.6;
+
+<@>% List = /List%.List;
 
 % Str = /String%.Str;
 

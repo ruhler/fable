@@ -12,8 +12,7 @@
 % Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -25,10 +24,10 @@
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
-  Int@ ax = I(D|1);
-  Int@ bx = I(D|0);
-  Int@ ay = Neg(I(D|1));
-  Int@ by = I(D|480);
+  Int@ ax = Int|1;
+  Int@ bx = Int|0;
+  Int@ ay = Neg(Int|1);
+  Int@ by = Int|480;
 
   (Point@) { Point@; } f = (Point@ p) {
     @(x: Add(Mul(ax, p.x), bx), 

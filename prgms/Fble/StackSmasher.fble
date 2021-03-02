@@ -14,15 +14,16 @@ Unit@ Unit = Unit@();
 @ BitS@ = +(BitP@ cons, Unit@ nil),
 @ BitP@ = *(Bit@ lsb, BitS@ tail);
 
-(Bit@, BitS@){BitS@;} BitP = (Bit@ lsb, BitS@ tail) {
+(Bit@, BitS@) { BitS@; } BitP = (Bit@ lsb, BitS@ tail) {
   BitS@(cons: BitP@(lsb, tail));
 };
 
-<@>@ List@ = <@ L@>((Bit@, L@){L@;}, L@){L@;};
-
-(List@){BitS@;} BitS = (List@ mkList) {
-  mkList<BitS@>(BitP, BitS@(nil: Unit));
-};
+% BitStr = @(
+  '|': (BitS@ l) { l; },
+  ',': BitP,
+  '': BitS@(nil: Unit),
+  '?': Bit
+);
 
 (BitS@){ BitS@; } Decr = (BitS@ s) {
   s.?(
@@ -66,7 +67,7 @@ Unit@ Unit = Unit@();
 
 
 # Note: the least significant bit is listed first in this representation.
-BitS@ n = BitS(Bit|00000000001);
+BitS@ n = BitStr|00000000001;
 
 BitS@ _ = G1(n);
 BitS@ _ = G2(n);

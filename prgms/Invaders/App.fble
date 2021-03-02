@@ -15,8 +15,7 @@
 % Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -67,10 +66,10 @@ Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
-  Int@ ax = I(D|1);
-  Int@ bx = I(D|0);
-  Int@ ay = Neg(I(D|1));
-  Int@ by = I(D|480);
+  Int@ ax = Int|1;
+  Int@ bx = Int|0;
+  Int@ ay = Neg(Int|1);
+  Int@ by = Int|480;
 
   (Point@) { Point@; } f = (Point@ p) {
     @(x: Add(Mul(ax, p.x), bx), 
@@ -78,8 +77,8 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   };
 
   # The target is 60 FPS, or 16 millseconds per frame.
-  #Int@ frame_period = I(D|16);
-  Int@ frame_period = I(D|1000);
+  #Int@ frame_period = Int|16;
+  Int@ frame_period = Int|1000;
   Unit@! tick = out(Effect@(tick: frame_period));
 
   (Game@) { Unit@!; } draw = (Game@ g) {
@@ -89,7 +88,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   };
 
   Game@ game = Game.Initial;
-  Unit@ _ := out(Effect@(tick: I(D|0)));
+  Unit@ _ := out(Effect@(tick: Int|0));
   Run(GetInput(in), draw, tick, game); 
 };
 
