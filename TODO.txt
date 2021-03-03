@@ -137,6 +137,8 @@ Exec:
 
 * Figure out memory leak when 3 Bool Or tests were set to failing.
 
+* Use PushAnonVar in typecheck.c for elaborate expression instead of accessing
+  scope->vars.size directly.
 
 * Improve type error in case of this?
   <@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };

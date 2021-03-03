@@ -815,40 +815,10 @@ We introduce syntax for describing lists and literals to make it less tedious
 to write code involving sequences of elements of the same type and raw
 sequences of data without the overhead of punctuation between data elements.
 
-A literal describes a sequence of zero or more values of the same type that
-are combined together. The syntax for literals includes an expression,
-called the spec, that specifies how the elements of a literal are combined
-together into a value. Conceptually, each element of the literal is collected
-together before applying a final transformation on the collection of elements
-to produce the literal value.
-
-For the purposes of discussion, let E@ refer to the type of elements, let C@
-refer to the type of collection of elements, and let V@ refer to the type of
-produced literal value. The spec for a literal is a struct value that must
-consist of exactly the following four fields in order:
-
-  1. name: '|', type: (C@) { V@ }
-    A function that performs the final transformation from collection of
-    elements to literal value.
-
-  2. name: ',', type: (E@, C@) { C@; }
-    A function that collects elements together by prepending an element to a
-    collection to form a new collection.
-
-  3. name: '', type: C@
-    Represents an empty collection.
-
-  4. name: '?', type: a struct value with fields corresponding to letters.
-    Represents a mapping from individual letters to elements. See section 8.2
-    for more details.
-
-There are two variations of literals, list expressions and literal
-expressions.
-  
 8.1 List
 --------
 Abstract Syntax:
-  Expr ::= list (spec :: Expr) (args :: [Expr])
+  Expr ::= list (func :: Expr) (args :: [Expr])
   
 Concrete Syntax:
   expr ::= expr '['[expr [',' expr [...]]] ']'
@@ -858,26 +828,43 @@ Examples:
   List<Int@>[x]
   List<Int@>[x, f(y), z]
 
-A list describes a sequence of one or more values of the same type.
-Conceptually, the list expression S[a, b, c] is desugared to:
+A list expression describes a sequence of one or more values of the same type
+that are combined together according to a user supplied function. It is
+syntactic sugar for constructing a list value and passing it as a single
+argument to a function.
 
-  S.'|'(S.','(a, S.','(b, S.','(c, S.''))))
+The list expression can be used with any function that has a single argument
+of list type. A list type is any type matching the structure of the following
+type L@:
 
-The '?' field of the spec, though unused for list expressions, is still
-required for consistency with literal expressions.
+  @ L@ = +(*(E@ head, L@ tail) cons, *() nil);
 
-The expression is evaluated by evaluating the spec and all arguments and
-then performing the sequence of function applications shown in the desugaring
-above. The spec is only evaluated once. The arguments may be evaluated in any
-order, sequentially or in parallel.
+The fields can be named anything, but the order of the fields must match that
+shown above. Any type E@ of list elements may be used.
 
-Runtime is the runtime of evaluating the spec and each of the arguments plus
-the runtime of performing the desugared function applications.
+The list expression f[a, b, c], assuming the type of f is (L@) { V@; } for
+some type V@, is desugared to:
+
+  f(L@(cons: @(head: a, tail:
+    L@(cons: @(head: b, tail:
+    L@(cons: @(head: c, tail:
+    L@(nil: *()()))))))));
+
+Each argument to the list expression must have a type E@ matching the element
+type of the list type L@ expected by the function f.
+
+The motivation for requiring a function to be supplied as part of the list
+expression, instead of having stand alone list expressions like [a, b, c], is:
+* It allows the user to specify what type of list to build instead of assuming
+  a single builtin list type.
+* It make it possible to specify the type for empty lists.
+* For consistency with literal expressions, which require a user defined
+  letter type to be supplied.
 
 8.2 Literal
 -----------
 Abstract Syntax:
-  Expr ::= literal (spec :: Expr) (letters :: word)
+  Expr ::= literal (func :: Expr) (letters :: word)
 
 Concrete Syntax:
   expr ::= expr '|' word
@@ -886,38 +873,62 @@ Example:
   Octal|177
   Str|'hello there!'
 
-A literal is syntax that allows you to express a raw sequence of data without
-the overhead of punctuation between data elements.
+The literal expression is syntax that allows you to express a raw sequence of
+data without the overhead of punctuation between data elements. It is
+syntactic sugar for a list expression with a separate list element for each
+individual letter of the literal expression's word.
 
-The '?' field of the spec describes the value corresponding to each legal
-letter in the literal. For example, it's value for an octal literal might look
-like:
+As with the list expression, the literal expression is used with a function
+that has a single argument of list type. The element type of the list must be
+a union type with fields of type *() for each letter in the word.
 
-  OctalLetters = @(
-    0: Octal@(0: *()()),
-    1: Octal@(1: *()()),
-    2: Octal@(2: *()()),
-    3: Octal@(3: *()()),
-    4: Octal@(4: *()()),
-    5: Octal@(5: *()()),
-    6: Octal@(6: *()()),
-    7: Octal@(7: *()()));
+For example, the element type for an octal literal might look like:
 
-Literal expressions conceptually desugar into list expressions. For example,
-the literal expression S|abc conceptually desugars into list expression:
+  @OctalLetters = +(*() 0, *() 1, *() 2, *() 3, *() 4, *() 5, *() 6, *() 7);
 
-  S[S.?.a, S.?.b, S.?.c]
+The literal expression f|abc, assuming the element type for the list argument
+to f is E@, is desugared to:
+
+  f[E@(a: *()()), E@(b: *()()), E@(c: *()())];
 
 It is a type error if the word contains a letter for which there is no
-corresponding field in the '?' field of the spec, or if the type of the type
-of the letter's value does not match the expected element type of the spec.
+corresponding field in the element type E@.
 
-The '?' field of the spec containing the mapping from letters to values has no
-restriction on the order of fields and may contain additional fields of any
-type not used in the literal expression.
+8.3 Example
+-----------
+To better illustrate the intended use of list and literal expressions, imagine
+we want to define a binary integer literal.
 
-Runtime is the runtime of the desugared list, except that the spec is only
-evaluated once.
+The type of letter is a bit:
+
+  @ Unit@ = *();
+  @ Bit@ = +(Unit@ 0, Unit@ 1);
+
+The literal will be formed of lists of bits:
+
+  @ Bits@ = +(*(Bit@ head, Bits@ tail) cons, Unit@ nil);
+
+The function specifies how to transform a list of bits into an integer,
+assuming some int type Int@:
+
+  (Int@, Bits@) { Int@; } Helper = (Int@ n, Bits@ bits) {
+    bits.?(
+      cons: {
+        Int@ m = Add(Mul(2, n), bits.cons.head.?(0: 0, 1: 1))
+        Helper(m, bit.cons.tail);
+      } ,
+      nil: n);
+  };
+
+  (Bits@) { Int@; } Binary = (Bits@ bits) {
+    Helper(0, bits);
+  };
+
+Now we can form binary literals using list or literal expressions. For
+example:
+
+ Int@ 6 = Binary|110;
+ Int@ x = Binary[first_bit, second_bit, third_bit];
 
 9. Modules
 ----------
@@ -1184,8 +1195,8 @@ Expr ::=
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
 
- | list (spec :: Expr) (args :: [Expr])
- | literal (spec :: Expr) (letters :: word)
+ | list (func :: Expr) (args :: [Expr])
+ | literal (func :: Expr) (letters :: word)
 
  | elaborate (body :: Expr)
  ;
