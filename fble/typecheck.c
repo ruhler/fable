@@ -50,6 +50,7 @@ typedef struct {
 //   statics - variables captured from the parent scope.
 //     Takes ownership of the Vars.
 //   vars - stack of local variables in scope order.
+//     Variables may be NULL to indicate they are anonymous.
 //     Takes ownership of the Vars.
 //   captured - Collects the source of variables captured from the parent
 //              scope. May be NULL to indicate that operations on this scope
@@ -63,6 +64,7 @@ typedef struct Scope {
 } Scope;
 
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
+static size_t PushAnonVar(FbleArena* arena, Scope* scope);
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
 
@@ -125,6 +127,25 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
   return var;
 }
 
+// PushAnonVar --
+//   Push an anonymous variable onto the current scope.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   scope - the scope to push the variable on to.
+//
+// Results:
+//   The local index of the variable.
+//
+// Side effects:
+//   Pushes a new anonymous variable onto the scope.
+static size_t PushAnonVar(FbleArena* arena, Scope* scope)
+{
+  size_t index = scope->vars.size;
+  FbleVectorAppend(arena, scope->vars, NULL);
+  return index;
+}
+
 // PopVar --
 //   Pops a var off the given scope.
 //
@@ -144,8 +165,10 @@ static void PopVar(FbleTypeHeap* heap, Scope* scope)
 
   scope->vars.size--;
   Var* var = scope->vars.xs[scope->vars.size];
-  FbleReleaseType(heap, var->type);
-  FbleFree(arena, var);
+  if (var != NULL) {
+    FbleReleaseType(heap, var->type);
+    FbleFree(arena, var);
+  }
 }
 
 // GetVar --
@@ -169,7 +192,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
   for (size_t i = 0; i < scope->vars.size; ++i) {
     size_t j = scope->vars.size - i - 1;
     Var* var = scope->vars.xs[j];
-    if (FbleNamesEqual(name, var->name)) {
+    if (var != NULL && FbleNamesEqual(name, var->name)) {
       var->accessed = true;
       if (!phantom) {
         var->used = true;
@@ -180,7 +203,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
 
   for (size_t i = 0; i < scope->statics.size; ++i) {
     Var* var = scope->statics.xs[i];
-    if (FbleNamesEqual(name, var->name)) {
+    if (var != NULL && FbleNamesEqual(name, var->name)) {
       var->accessed = true;
       if (!phantom) {
         var->used = true;
@@ -1265,6 +1288,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       size_t argc = expr->tag == FBLE_LIST_EXPR ? list_expr->args.size : strlen(literal_expr->word);
       FbleValue* args[argc];
 
+      size_t spec_var_index = PushAnonVar(arena, scope);
+      size_t cons_var_index = PushAnonVar(arena, scope);
+
       if (expr->tag == FBLE_LIST_EXPR) {
         for (size_t i = 0; i < argc; ++i) {
           Tc tc = TypeCheckExpr(th, vh, scope, list_expr->args.xs[i]);
@@ -1282,6 +1308,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           args[i] = tc.tc;
         }
       } else if (expr->tag == FBLE_LITERAL_EXPR) {
+        size_t letters_var_index = PushAnonVar(arena, scope);
+
         FbleLoc loc = literal_expr->word_loc;
         for (size_t i = 0; i < argc; ++i) {
           char field_str[2] = { literal_expr->word[i], '\0' };
@@ -1299,7 +1327,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
               FbleVarTc* letters_var_tc = FbleNewValue(vh, FbleVarTc);
               letters_var_tc->_base.tag = FBLE_VAR_TC;
               letters_var_tc->index.source = FBLE_LOCAL_VAR;
-              letters_var_tc->index.index = scope->vars.size + 2;
+              letters_var_tc->index.index = letters_var_index;
 
               FbleDataAccessTc* access_tc = FbleNewValue(vh, FbleDataAccessTc);
               access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
@@ -1326,7 +1354,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
           }
           loc.col++;
         }
+        PopVar(vh, scope);    // letters var
       }
+      PopVar(vh, scope);  // cons var
+      PopVar(vh, scope);  // spec var
 
       FbleType* result_type = FbleRetainType(th, apply_func_type->rtype);
       FbleReleaseType(th, spec.type);
@@ -1354,12 +1385,12 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleVarTc* spec_var_tc = FbleNewValue(vh, FbleVarTc);
       spec_var_tc->_base.tag = FBLE_VAR_TC;
       spec_var_tc->index.source = FBLE_LOCAL_VAR;
-      spec_var_tc->index.index = scope->vars.size;
+      spec_var_tc->index.index = spec_var_index;
 
       FbleVarTc* cons_var_tc = FbleNewValue(vh, FbleVarTc);
       cons_var_tc->_base.tag = FBLE_VAR_TC;
       cons_var_tc->index.source = FBLE_LOCAL_VAR;
-      cons_var_tc->index.index = scope->vars.size + 1;
+      cons_var_tc->index.index = cons_var_index;
 
       FbleDataAccessTc* cons_def_tc = FbleNewValue(vh, FbleDataAccessTc);
       cons_def_tc->_base.tag = FBLE_DATA_ACCESS_TC;

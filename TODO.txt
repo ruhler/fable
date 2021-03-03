@@ -1,8 +1,5 @@
 * Experiment with revision to fble literals.
- - Debug, test, and fix issue with literals.
-
  - Experiment with next revision to how literals are defined.
-   Based on +|... union type syntax and builtin list type.
  - Figure out why error message "expected spec to have exactly four fields, but %t has %i\n" ... seems to give bogus number of actual fields.
    If not obsolete
  - Add spec tests to expand coverage of literal compilation code.
