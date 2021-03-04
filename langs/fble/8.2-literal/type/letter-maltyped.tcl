@@ -1,17 +1,15 @@
-fble-test-error 16:6 {
+fble-test-error 13:13 {
   @ Unit@ = *();
   Unit@ Unit = Unit@();
+  @ Bool@ = +(Unit@ true, Unit@ false);
+  @ Enum@ = +(Unit@ A, Bool@ B, Unit@ C);
+  @ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+  (L@) { L@; } f = (L@ l) { l; };
 
-  @ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
-  % Enums = @(A: Unit, B: Enum@(B: Unit), C: Enum@(C: Unit));
+  # This use of the literal is fine, because the letter B is not involved:
+  L@ _ = L|AC; 
 
-  % L = @(
-    '|': (Unit@ x) { x; },
-    ',': (Enum@ e, Unit@ x) { x; },
-    '': Unit@(),
-    '?': Enums
-  );
-
-  # All letters in the literal have to have the same type.
-  L|BAC; 
+  # This use is not allowed, because the letter B doesn't have type *();
+  L@ _ = L|ABC;
+  Unit;
 }

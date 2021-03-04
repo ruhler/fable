@@ -2,16 +2,20 @@ fble-test {
   @ Unit@ = *();
   Unit@ Unit = Unit@();
 
+  @ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+
+  @ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ True = Bool@(true: Unit);
   Bool@ False = Bool@(false: Unit);
 
-  (Bool@) { Bool@; } Id = (Bool@ x) { x; };
-  (Bool@, Bool@) { Bool@; } Cons = (Bool@ a, Bool@ b) { True; };
-  Bool@ Nil = False;
-
-  % L = @('|': Id, ',': Cons, '': Nil, '?': Unit);
+  (L@) { Bool@; } IsEmpty = (L@ l) {
+    l.?(cons: False, nil: True);
+  };
 
   # Empty literals are allowed.
-  L|''.false;
+  Unit@ _ = IsEmpty|''.true;
+  Unit@ _ = IsEmpty|'ABB'.false;
+  Unit;
 }

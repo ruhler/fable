@@ -2,12 +2,7 @@ fble-test {
   @ Unit@ = *();
   Unit@ Unit = Unit@();
 
-  @ Bool@ = +(Unit@ true, Unit@ false);
-  Bool@ True = Bool@(true: Unit);
-  Bool@ False = Bool@(false: Unit);
-
-  # It's fine if letters contains a bunch of extra unrelated fields.
-  @ Enum@ = +(Unit@ A, Bool@ x, Unit@ B, Unit@ C, Unit@ abc);
+  @ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
 
   @ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
 
@@ -19,5 +14,7 @@ fble-test {
     Unit;
   };
 
-  f|BAC;
+  # Basic use of a list expression.
+  Unit@ _ = f[Enum@(B: Unit), Enum@(A: Unit), Enum@(C: Unit)];
+  Unit;
 }
