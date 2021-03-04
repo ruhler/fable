@@ -380,3 +380,10 @@ and for little value.
 I see no clear theoretical winner for order of cons vs. nil, so let's just go
 with the strong practical winner of cons before nil so I don't have to rewrite
 all of my existing library code.
+
+---
+
+Switching to this newly proposed spec for literals is much much nicer. The
+spec is simpler, the compiler is simpler, and the definitions of literals is
+simpler. I am very happy. Let's go with this.
+

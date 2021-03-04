@@ -3,9 +3,9 @@
 % False = /Bool%.False;
 % True = /Bool%.True;
 
-<@,@,@,@>@ Literal@ = /Literal%.Literal@;
-
 <@,@>% DoWhile = /Loop%.DoWhile; 
+
+<@>@ List@ = /List%.List@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
@@ -189,12 +189,9 @@ XS@ EmptyXS = XS@(empty: Unit);
 };
 
 # CatXS --
-Literal@<XS@, XS@, XS@, Unit@> CatXS = @(
-  '|': (XS@ xs) { xs; },
-  ',': AppendXS,
-  '': EmptyXS,
-  '?': Unit
-);
+(List@<XS@>) { XS@; } CatXS = (List@<XS@> xs) {
+  xs.?(cons: AppendXS(xs.cons.head, CatXS(xs.cons.tail)), nil: EmptyXS);
+};
 
 # Generate the set of constraints that result from setting the value of the
 # given cell to s.

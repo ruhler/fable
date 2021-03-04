@@ -35,22 +35,12 @@
 <@>% Length = /List/Length%.Length;
 <@>% Take = /List/Length%.Take;
 
-<@,@,@,@>@ Literal@ = /Literal%.Literal@;
-
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
-
 Int@ BitsPerWord = Int|64;
 
-Literal@<String@, List@<String@>, String@, Unit@> Strs = @(
-  '|': Concat<Char@>,
-  ',': Cons<String@>,
-  '': Nil<String@>,
-  '?': Unit
-);
+(List@<String@>) { String@; } Strs = Concat<Char@>;
 
 # Lines@ -- 
 #   Abstract data type for outputting a sequence of lines of text from

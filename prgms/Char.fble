@@ -8,7 +8,8 @@
 # TODO:
 #   Add more characters as needed.
 @ Char@ = +(
-  Unit@ nl,  # Newline
+  Unit@ '
+',
 
   Unit@ '	', Unit@ ' ', Unit@ '!', Unit@ '"', Unit@ '#', Unit@ '$', Unit@ '%',
   Unit@ '&', Unit@ '''', Unit@ '(', Unit@ ')', Unit@ '*', Unit@ '+', Unit@ ',',
@@ -35,15 +36,14 @@
   Unit@ '{', Unit@ '|', Unit@ '}', Unit@ '~'
 );
 
+Char@ newline = Char@('
+': Unit);
+
 # Chars --
-#   A collection of characters that can be used for character literals.
-#
-# Example Use:
-#   Str@ str = Str(Chars|'hello, world')
+#   A collection of characters that can be referenced more easily than
+#   creating character values directly.
 % Chars = @(
-  '
-': Char@(nl: Unit),
-  nl: Char@(nl: Unit),
+  nl: newline,
 
   '	': Char@('	': Unit),
 

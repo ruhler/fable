@@ -1,6 +1,5 @@
 
 @ Decimal@ = /Digits%.Decimal@;
-% Decimal = /Digits%.Decimal;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
@@ -17,29 +16,28 @@
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
 
-<@,@,@,@>@ Literal@ = /Literal%.Literal@;
+<@>@ List@ = /List%.List@;
 
 (Decimal@) { Int@; } DtoI = (Decimal@ d) { 
   d.?(0: 0, 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 8, 9: 9);
 };
 
-# MkInt@ -- 
-#   Helper type for constructing integer literals.
-#
-# TODO: Figure out a decent way to describe how this works.
-@ MkInt@ = (Int@) { Int@; };
+# IntHelper --
+#   Helper for Int function. Construct an int from a list of decimal digits,
+#   assuming the most significant digits have already been turned into the
+#   given integer.
+(Int@, List@<Decimal@>) { Int@; } IntHelper = (Int@ msb, List@<Decimal@> ds) {
+  ds.?(
+    cons: IntHelper(Add(Mul(10, msb), DtoI(ds.cons.head)), ds.cons.tail),
+    nil: msb);
+};
 
 # Int --
 #   Create an Int@ from a positive decimal integer literal.
 #
 # For example: Int@ 42 = Int|42;
-Literal@<Decimal@, MkInt@, Int@, @<Decimal>> Int = @(
-  '|': (MkInt@ mk) { mk(0); },
-  ',': (Decimal@ d, MkInt@ mk)(Int@ msb) {
-         mk(Add(Mul(10, msb), DtoI(d)));
-       },
-  '': (Int@ msb) { msb; },
-  '?': Decimal
-);
+(List@<Decimal@>) { Int@; } Int = (List@<Decimal@> ds) {
+  IntHelper(0, ds);
+};
 
 @(Int);

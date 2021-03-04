@@ -11,7 +11,8 @@
 #   character.
 Structured@<Char@> Structured = (Char@ c) {
   c.?(
-    nl:   Enum|00001010,
+    '
+':   Enum|00001010,
     '	':  Enum|00001001,
     ' ':  Enum|00100000,
     '!':  Enum|00100001,

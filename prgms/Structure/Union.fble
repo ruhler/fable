@@ -1,18 +1,16 @@
 
-<@,@,@,@>@ Literal@ = /Literal%.Literal@;
+<@>@ List@ = /List%.List@;
 
 @ Structure@ = /Structure%.Structure@;
 % LeftS = /Structure%.LeftS;
 % RightS = /Structure%.RightS;
 % UnitS = /Structure%.UnitS;
 
+@ Unit@ = /Unit%.Unit@;
+
 # Tag@ --
 #   Helper type used for describing tags used in the Union function.
-@ Tag@ = (Structure@) { Structure@; };
-
-# Tag --
-#   Helper for constructing tag literals used in the Union function.
-% Tag = @(0: LeftS, 1: RightS);
+@ Tag@ = +(Unit@ 0, Unit@ 1);
 
 # Union --
 #   Convenience function for defining structure values representing union
@@ -29,12 +27,14 @@
 #   Structure@ x = Union|00(a); // LeftS(LeftS(a))
 #   Structure@ y = Union|01(b); // LeftS(RightS(b))
 #   Structure@ z = Union|1(c);  // RightS(c)
-Literal@<Tag@, Tag@, Tag@, @<Tag>> Union = @(
-  '|': (Tag@ x) { x; },
-  ',': (Tag@ a, Tag@ b) (Structure@ s) { a(b(s)); },
-  '': (Structure@ s) { s; },
-  '?': Tag
-);
+(List@<Tag@>)(Structure@) { Structure@; } Union = (List@<Tag@> tag)(Structure@ v) {
+  tag.?(
+    cons: {
+      Structure@ tail = Union(tag.cons.tail)(v);
+      tag.cons.head.?(0: LeftS(tail), 1: RightS(tail));
+    },
+    nil: v);
+};
 
 # Enum --
 #   Convenience function for defining structure values representing enum
@@ -50,12 +50,8 @@ Literal@<Tag@, Tag@, Tag@, @<Tag>> Union = @(
 #   Structure@ x = Enum|00;
 #   Structure@ y = Enum|01;
 #   Structure@ z = Enum|1;
-Literal@<Tag@, Tag@, Structure@, @<Tag>>
-Enum = @(
-  '|': (Tag@ t) { t(UnitS); },
-  ',': Union.',',
-  '': Union.'',
-  '?': Union.'?'
-);
+(List@<Tag@>) { Structure@; } Enum = (List@<Tag@> tag) {
+  Union(tag)(UnitS);
+};
 
 @(Union, Enum);

@@ -1,6 +1,5 @@
 
 @ Hex@ = /Digits%.Hex@;
-% Hex = /Digits%.Hex;
 % BitStr = /Digits/String%.BitStr;
 
 @ Int@ = /Int/Int%.Int@;
@@ -41,10 +40,6 @@
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
-
-<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 Int@ 32 = Int|32;
 
@@ -69,12 +64,7 @@ Int@ 32 = Int|32;
 # type level.
 @ Value32@ = Value@;
 
-Literal@<Hex@, List@<Hex@>, Value32@, @<Hex>> H = @(
-  '|': /Fblf/Program%.ConstHex,
-  ',': Cons<Hex@>,
-  '': Nil<Hex@>,
-  '?': Hex
-);
+(List@<Hex@>) { Value@; } H = /Fblf/Program%.ConstHex;
 
 BlockOf@<Value32@> T1 = BlockOf@<Value32@>(
   H|D76AA478, H|E8C7B756, H|242070DB, H|C1BDCEEE,

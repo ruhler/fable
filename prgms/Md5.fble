@@ -6,11 +6,7 @@
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
 <@,@>% ForEach = /List%.ForEach;
-
-<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
@@ -44,22 +40,17 @@
 <@>@ Put@ = /Process%.Put@;
 
 # Construct a Bit32 in hex, with high-order byte first.
-Literal@<Hex@, List@<Hex@>, Bit32@, @<Hex>> H8 = @(
-  '|': (List@<Hex@> s) {
-         Hex@ 7 = s.cons.head;
-         Hex@ 6 = s.cons.tail.cons.head;
-         Hex@ 5 = s.cons.tail.cons.tail.cons.head;
-         Hex@ 4 = s.cons.tail.cons.tail.cons.tail.cons.head;
-         Hex@ 3 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-         Hex@ 2 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-         Hex@ 1 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-         Hex@ 0 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-         Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
-       },
-  ',': Cons<Hex@>,
-  '': Nil<Hex@>,
-  '?': Hex
-);
+(List@<Hex@>) { Bit32@; } H8 = (List@<Hex@> s) {
+  Hex@ 7 = s.cons.head;
+  Hex@ 6 = s.cons.tail.cons.head;
+  Hex@ 5 = s.cons.tail.cons.tail.cons.head;
+  Hex@ 4 = s.cons.tail.cons.tail.cons.tail.cons.head;
+  Hex@ 3 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+  Hex@ 2 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+  Hex@ 1 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+  Hex@ 0 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
+  Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
+};
 
 @ Block@ = *(
   Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,

@@ -1,12 +1,3 @@
-* Experiment with revision to fble literals.
- - Add test for wrong order list fields.
- - Add test for different name list fields. 
- - Add test that list literal doesn't need to consist of letters.
- - Add tests to increase code coverage.
- - Add test that element type for empty literal has to be a union?
-   And clarify this in the spec.
- - Add spec tests to expand coverage of literal compilation code.
-
 Fblf:
 * Set up fblf compilation test infrastructure.
  - Set up build files to generate and run the compiled fblf tests.
@@ -29,6 +20,15 @@ Fblf:
 * Add test cases for aliasing for things in general?
 * Replace /Loop%.For and /Loop%.DoWhile with /Iter%.For?
  - Because the /Iter%.For is a nicer API I think.
+
+* Expand test coverage of literals
+ - Add test for wrong order list fields.
+ - Add test for different name list fields. 
+ - Add test that list literal doesn't need to consist of letters.
+ - Add tests to increase code coverage.
+ - Add test that element type for empty literal has to be a union?
+   And clarify this in the spec.
+ - Add spec tests to expand coverage of literal compilation code.
 
 Invaders:
 * It's way way way too slow. Figure out how to make it go much faster.

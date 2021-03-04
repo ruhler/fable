@@ -18,12 +18,7 @@ Unit@ Unit = Unit@();
   BitS@(cons: BitP@(lsb, tail));
 };
 
-% BitStr = @(
-  '|': (BitS@ l) { l; },
-  ',': BitP,
-  '': BitS@(nil: Unit),
-  '?': Bit
-);
+(BitS@) { BitS@; } BitStr = (BitS@ s) { s; };
 
 (BitS@){ BitS@; } Decr = (BitS@ s) {
   s.?(

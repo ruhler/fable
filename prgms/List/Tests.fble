@@ -15,7 +15,6 @@
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
-<@,@>% ListLiteral = /List%.ListLiteral;
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 <@>% Append = /List%.Append;
@@ -26,8 +25,6 @@
 <@>% Length = /List/Length%.Length;
 <@>% Sort = /List/Sort%.Sort;
 <@>% _Structured = /List/Structured%.Structured;
-
-<@,@,@,@>@ Literal@ = /Literal%.Literal@;
 
 <@>@ Show@ = /Show%.Show@;
 
@@ -48,7 +45,7 @@
   D: Elem@(D: Unit),
   E: Elem@(E: Unit));
 
-Literal@<Elem@, List@<Elem@>, List@<Elem@>, @<Elems>> EL = ListLiteral<Elem@, @<Elems>>(Elems);
+(List@<Elem@>) { List@<Elem@>; } EL = List<Elem@>;
 
 (Elem@) { String@; } ElemShow = (Elem@ e) {
   e.?(A: Str|A, B: Str|B, C: Str|C, D: Str|D, E: Str|E);
