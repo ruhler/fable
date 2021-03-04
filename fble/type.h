@@ -359,22 +359,6 @@ FbleType* FbleNewPolyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* arg, FbleTy
 //   passed poly or arg types.
 FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, FbleType* arg);
 
-// FbleNewListType --
-//   Convenience function for creating the type of an fble list expression.
-//
-// Inputs:
-//   heap - heap to use for allocations
-//   elem_type - the type of the elements of the list. Borrowed.
-//
-// Results:
-//   The type of an fble list of elements.
-//
-// Side effects:
-//   The caller is responsible for calling FbleReleaseType on the returned type
-//   when it is no longer needed. This function does not take ownership of the
-//   passed elem_type.
-FbleType* FbleNewListType(FbleTypeHeap* heap, FbleType* elem_type);
-
 // FbleTypeIsVacuous --
 //   Check if a type will reduce to normal form.
 //

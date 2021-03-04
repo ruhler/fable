@@ -1007,52 +1007,6 @@ FbleType* FbleNewPolyApplyType(FbleTypeHeap* heap, FbleLoc loc, FbleType* poly, 
   return &pat->_base;
 }
 
-// FbleNewListType -- see documentation in type.h
-FbleType* FbleNewListType(FbleTypeHeap* heap, FbleType* elem_type)
-{
-  // Assuming the values have type T@, the type of the list is:
-  //   <@ L@>((T@, L@){L@;}, L@){ L@; }
-  FbleBasicKind* kind = FbleAlloc(heap->arena, FbleBasicKind);
-  kind->_base.tag = FBLE_BASIC_KIND;
-  kind->_base.loc = FbleCopyLoc(elem_type->loc);
-  kind->_base.refcount = 1;
-  kind->level = 0;
-
-  FbleName l_name = {
-    .name = FbleNewString(heap->arena, "L"),
-    .space = FBLE_TYPE_NAME_SPACE,
-    .loc = FbleCopyLoc(elem_type->loc),
-  };
-
-  FbleType* l = FbleNewVarType(heap, elem_type->loc, &kind->_base, l_name);
-  FbleFreeName(heap->arena, l_name);
-  FbleFreeKind(heap->arena, &kind->_base);
-
-  FbleFuncType* cons_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, elem_type->loc);
-  FbleVectorInit(heap->arena, cons_type->args);
-  FbleVectorAppend(heap->arena, cons_type->args, elem_type);
-  FbleTypeAddRef(heap, &cons_type->_base, elem_type);
-  FbleVectorAppend(heap->arena, cons_type->args, l);
-  FbleTypeAddRef(heap, &cons_type->_base, l);
-  cons_type->rtype = l;
-  FbleTypeAddRef(heap, &cons_type->_base, l);
-
-  FbleFuncType* func_type = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, elem_type->loc);
-  FbleVectorInit(heap->arena, func_type->args);
-  FbleVectorAppend(heap->arena, func_type->args, &cons_type->_base);
-  FbleTypeAddRef(heap, &func_type->_base, &cons_type->_base);
-  FbleVectorAppend(heap->arena, func_type->args, l);
-  FbleTypeAddRef(heap, &func_type->_base, l);
-  func_type->rtype = l;
-  FbleTypeAddRef(heap, &func_type->_base, l);
-
-  FbleType* list_type = FbleNewPolyType(heap, elem_type->loc, l, &func_type->_base);
-  FbleReleaseType(heap, l);
-  FbleReleaseType(heap, &cons_type->_base);
-  FbleReleaseType(heap, &func_type->_base);
-  return list_type;
-}
-
 // FbleTypeIsVacuous -- see documentation in type.h
 bool FbleTypeIsVacuous(FbleTypeHeap* heap, FbleType* type)
 {
