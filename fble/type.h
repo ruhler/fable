@@ -407,6 +407,23 @@ FbleType* FbleNormalType(FbleTypeHeap* heap, FbleType* type);
 //   needed.
 FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof);
 
+// FbleListElementType --
+//   Returns the element type of a type matching the structure needed for list
+//   literals.
+//
+// Inputs:
+//   heap - the heap to use for allocations.
+//   type - the list type to get the element type of.
+//
+// Results:
+//   The element type of the list, or NULL if the type does not match the
+//   structured needed for list listerals.
+//
+// Side effects:
+//   The returned type must be released using FbleReleaseType when no longer
+//   needed.
+FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type);
+
 // FbleTypesEqual --
 //   Test whether the two given evaluated types are equal.
 //

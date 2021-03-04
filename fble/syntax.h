@@ -437,18 +437,18 @@ typedef struct {
 } FblePolyApplyExpr;
 
 // FbleListExpr --
-//   FBLE_LIST_EXPR (spec :: Expr) (args :: [Expr])
+//   FBLE_LIST_EXPR (func :: Expr) (args :: [Expr])
 typedef struct {
   FbleExpr _base;
-  FbleExpr* spec;
+  FbleExpr* func;
   FbleExprV args;
 } FbleListExpr;
 
 // FbleLiteralExpr --
-//   FBLE_LITERAL_EXPR (spec :: Expr) (word :: Word)
+//   FBLE_LITERAL_EXPR (func :: Expr) (word :: Word)
 typedef struct {
   FbleExpr _base;
-  FbleExpr* spec;
+  FbleExpr* func;
   FbleLoc word_loc;
   const char* word;
 } FbleLiteralExpr;

@@ -3,8 +3,6 @@ fble-test {
   Unit@ Unit = Unit@();
 
   @ Bool@ = +(Unit@ true, Unit@ false);
-  Bool@ True = Bool@(true: Unit);
-  Bool@ False = Bool@(false: Unit);
 
   # It's fine if letters contains a bunch of extra unrelated fields.
   @ Enum@ = +(Unit@ A, Bool@ x, Unit@ B, Unit@ C, Unit@ abc);

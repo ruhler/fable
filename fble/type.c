@@ -867,7 +867,7 @@ void FblePrintKind(FbleKind* kind)
   }
 }
 
-// FbleNewTypeHeap -- see documentation in fble-types.h
+// FbleNewTypeHeap -- see documentation in type.h
 FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
 {
   return FbleNewMarkSweepHeap(arena,
@@ -875,7 +875,7 @@ FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
       (void (*)(FbleHeap*, void*))&OnFree);
 }
 
-// FbleFreeTypeHeap -- see documentation in fble-types.h
+// FbleFreeTypeHeap -- see documentation in type.h
 void FbleFreeTypeHeap(FbleTypeHeap* heap)
 {
   FbleFreeMarkSweepHeap(heap);
@@ -1047,7 +1047,49 @@ FbleType* FbleValueOfType(FbleTypeHeap* heap, FbleType* typeof)
   return NULL;
 }
 
-// FbleTypesEqual -- see documentation in fble-types.h
+// FbleListElementType -- see documentation in type.h
+FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type)
+{
+  FbleDataType* data_type = (FbleDataType*)FbleNormalType(heap, type);
+  if (data_type->_base.tag != FBLE_DATA_TYPE
+      || data_type->datatype != FBLE_UNION_DATATYPE
+      || data_type->fields.size != 2) {
+    FbleReleaseType(heap, &data_type->_base);
+    return NULL;
+  }
+
+  FbleDataType* nil_data_type = (FbleDataType*)FbleNormalType(heap, data_type->fields.xs[1].type);
+  if (nil_data_type->_base.tag != FBLE_DATA_TYPE
+      || nil_data_type->datatype != FBLE_STRUCT_DATATYPE
+      || nil_data_type->fields.size != 0) {
+    FbleReleaseType(heap, &nil_data_type->_base);
+    FbleReleaseType(heap, &data_type->_base);
+    return NULL;
+  }
+  FbleReleaseType(heap, &nil_data_type->_base);
+
+  FbleDataType* cons_data_type = (FbleDataType*)FbleNormalType(heap, data_type->fields.xs[0].type);
+  if (cons_data_type->_base.tag != FBLE_DATA_TYPE
+      || cons_data_type->datatype != FBLE_STRUCT_DATATYPE
+      || cons_data_type->fields.size != 2) {
+    FbleReleaseType(heap, &cons_data_type->_base);
+    FbleReleaseType(heap, &data_type->_base);
+    return NULL;
+  }
+
+  if (!FbleTypesEqual(heap, type, cons_data_type->fields.xs[1].type)) {
+    FbleReleaseType(heap, &cons_data_type->_base);
+    FbleReleaseType(heap, &data_type->_base);
+    return NULL;
+  }
+
+  FbleType* element_type = FbleRetainType(heap, cons_data_type->fields.xs[0].type);
+  FbleReleaseType(heap, &cons_data_type->_base);
+  FbleReleaseType(heap, &data_type->_base);
+  return element_type;
+}
+
+// FbleTypesEqual -- see documentation in type.h
 bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 {
   return TypesEqual(heap, a, b, NULL);

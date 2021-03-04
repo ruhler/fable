@@ -7,9 +7,9 @@ fble-test-error 13:13 {
   (L@) { L@; } f = (L@ l) { l; };
 
   # This use of the literal is fine, because the letter B is not involved:
-  L@ _ = L|AC; 
+  L@ _ = f|AC; 
 
   # This use is not allowed, because the letter B doesn't have type *();
-  L@ _ = L|ABC;
+  L@ _ = f|ABC;
   Unit;
 }

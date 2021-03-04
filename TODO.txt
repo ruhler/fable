@@ -1,9 +1,10 @@
 * Experiment with revision to fble literals.
- - Update implementation for updated spec.
  - Add test for wrong order list fields.
  - Add test for different name list fields. 
  - Add test that list literal doesn't need to consist of letters.
  - Add tests to increase code coverage.
+ - Add test that element type for empty literal has to be a union?
+   And clarify this in the spec.
  - Add spec tests to expand coverage of literal compilation code.
 
 Fblf:

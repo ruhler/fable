@@ -412,7 +412,7 @@ expr:
       FbleListExpr* list_expr = FbleAlloc(arena, FbleListExpr);
       list_expr->_base.tag = FBLE_LIST_EXPR;
       list_expr->_base.loc = FbleCopyLoc(@$);
-      list_expr->spec = $1;
+      list_expr->func = $1;
       list_expr->args = $3;
       $$ = &list_expr->_base;
    }
@@ -420,7 +420,7 @@ expr:
       FbleLiteralExpr* literal_expr = FbleAlloc(arena, FbleLiteralExpr);
       literal_expr->_base.tag = FBLE_LITERAL_EXPR;
       literal_expr->_base.loc = FbleCopyLoc(@$);
-      literal_expr->spec = $1;
+      literal_expr->func = $1;
       literal_expr->word_loc = FbleCopyLoc(@3);
       literal_expr->word = $3;
       $$ = &literal_expr->_base;

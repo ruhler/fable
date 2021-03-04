@@ -64,7 +64,6 @@ typedef struct Scope {
 } Scope;
 
 static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
-static size_t PushAnonVar(FbleArena* arena, Scope* scope);
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
 
@@ -73,7 +72,7 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 
 static void ReportError(FbleArena* arena, FbleLoc loc, const char* fmt, ...);
 static bool CheckNameSpace(FbleArena* arena, FbleName name, FbleType* type);
-
+
 // Tc --
 //   A pair of returned type and type checked expression.
 typedef struct {
@@ -88,6 +87,7 @@ static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 static Tc MkTc(FbleType* type, FbleValue* tc);
 static void FreeTc(FbleTypeHeap* th, FbleValueHeap* vh, Tc tc);
 static Tc ProfileBlock(FbleValueHeap* vh, FbleName label, FbleLoc loc, Tc tc);
+static FbleValue* ListExpr(FbleValueHeap* vh, FbleLoc loc, FbleValue* func, FbleValue** args, size_t argc);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleExpr* expr);
@@ -125,25 +125,6 @@ static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* typ
   var->index.index = scope->vars.size;
   FbleVectorAppend(arena, scope->vars, var);
   return var;
-}
-
-// PushAnonVar --
-//   Push an anonymous variable onto the current scope.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   scope - the scope to push the variable on to.
-//
-// Results:
-//   The local index of the variable.
-//
-// Side effects:
-//   Pushes a new anonymous variable onto the scope.
-static size_t PushAnonVar(FbleArena* arena, Scope* scope)
-{
-  size_t index = scope->vars.size;
-  FbleVectorAppend(arena, scope->vars, NULL);
-  return index;
 }
 
 // PopVar --
@@ -463,6 +444,51 @@ static Tc ProfileBlock(FbleValueHeap* vh, FbleName label, FbleLoc loc, Tc tc)
   FbleReleaseValue(vh, profile_tc->body);
   tc.tc = &profile_tc->_base;
   return tc;
+}
+
+// ListExpr --
+//   Form a list expression of the form func[arg0, arg1, ...]
+//
+// Inputs:
+//   vh - the heap to use for allocations.
+//   loc - the location of the literal. Borrowed.
+//   func - the function. Consumed by this function.
+//   args - the args. Each arg is consumed by the function. The array of args
+//          is borrowed.
+//   argc - the number of args.
+static FbleValue* ListExpr(FbleValueHeap* vh, FbleLoc loc, FbleValue* func, FbleValue** args, size_t argc)
+{
+  // Construct an expression of the form:
+  // f(@(0: @(arg0, @(0: @(arg1, ... @(1: *()())...)))));
+  FbleValueV argv = { .xs = NULL, .size = 0 };
+  FbleValue* unit = FbleNewStructValue(vh, argv);
+
+  FbleValue* tail = FbleNewUnionValue(vh, 1, unit);
+  FbleReleaseValue(vh, unit);
+
+  for (int i = 0; i < argc; ++i) {
+    int j = argc - i - 1;
+    FbleValue* cons_args[] = { args[j], tail };
+    FbleValueV argv = { .xs = cons_args, .size = 2 };
+    FbleValue* cons = FbleNewStructValue(vh, argv);
+    FbleReleaseValue(vh, args[j]);
+    FbleReleaseValue(vh, tail);
+
+    tail = FbleNewUnionValue(vh, 0, cons);
+    FbleReleaseValue(vh, cons);
+  }
+
+  FbleFuncApplyTc* apply = FbleNewValue(vh, FbleFuncApplyTc);
+  apply->_base.tag = FBLE_FUNC_APPLY_TC;
+  apply->loc = FbleCopyLoc(loc);
+  apply->func = func;
+  FbleVectorInit(vh->arena, apply->args);
+  FbleVectorAppend(vh->arena, apply->args, tail);
+  FbleValueAddRef(vh, &apply->_base, func);
+  FbleValueAddRef(vh, &apply->_base, tail);
+  FbleReleaseValue(vh, func);
+  FbleReleaseValue(vh, tail);
+  return &apply->_base;
 }
 
 // TypeCheckExpr --
@@ -1158,358 +1184,162 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       return MkTc(pat, poly.tc);
     }
 
-    case FBLE_LIST_EXPR:
-    case FBLE_LITERAL_EXPR: {
+    case FBLE_LIST_EXPR: {
       FbleListExpr* list_expr = (FbleListExpr*)expr;
-      FbleLiteralExpr* literal_expr = (FbleLiteralExpr*)expr;
 
-      FbleExpr* spec_expr = expr->tag == FBLE_LIST_EXPR ? list_expr->spec : literal_expr->spec;
-
-      Tc spec = TypeCheckExpr(th, vh, scope, spec_expr);
-      if (spec.type == NULL) {
+      Tc func = TypeCheckExpr(th, vh, scope, list_expr->func);
+      if (func.type == NULL) {
         return TC_FAILED;
       }
 
-      FbleDataType* spec_type = (FbleDataType*)FbleNormalType(th, spec.type);
-      if (spec_type->_base.tag != FBLE_DATA_TYPE || spec_type->datatype != FBLE_STRUCT_DATATYPE) {
-        ReportError(arena, spec_expr->loc, "expected a struct value, but spec has type %t\n", spec);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
+      FbleFuncType* func_type = (FbleFuncType*)FbleNormalType(th, func.type);
+      if (func_type->_base.tag != FBLE_FUNC_TYPE || func_type->args.size != 1) {
+        ReportError(arena, list_expr->func->loc, "expected a function of one argument, but found something of type %t\n", func.type);
+        FreeTc(th, vh, func);
+        FbleReleaseType(th, &func_type->_base);
         return TC_FAILED;
       }
 
-      if (spec_type->fields.size != 4) {
-        ReportError(arena, spec_expr->loc, "expected spec to have exactly four fields, but %t has %i\n", spec, spec_type->fields.size);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        return TC_FAILED;
-      }
-
-      size_t apply_tag = 0;
-      size_t cons_tag = 1;
-      size_t nil_tag = 2;
-      size_t letters_tag = 3;
-
-      FbleType* apply_type = spec_type->fields.xs[apply_tag].type;
-      FbleType* cons_type = spec_type->fields.xs[cons_tag].type;
-      FbleType* nil_type = spec_type->fields.xs[nil_tag].type;
-      FbleType* letters_type = spec_type->fields.xs[letters_tag].type;
-
-      const char* expected_field_names[] = {"|", ",", "", "?"};
-      const char* which_field_names[] = {"first", "second", "third", "fourth"};
-      for (size_t i = 0; i < 4; ++i) {
-        if (strcmp(expected_field_names[i], spec_type->fields.xs[i].name.name->str) != 0) {
-          ReportError(arena, spec_expr->loc, "expected %s field to be named '%s', but found '%n' in spec type %t\n",
-              which_field_names[i], expected_field_names[i],
-              spec_type->fields.xs[i].name, spec.type);
-          FreeTc(th, vh, spec);
-          FbleReleaseType(th, &spec_type->_base);
-          return TC_FAILED;
-        }
-      }
-
-      FbleFuncType* cons_func_type = (FbleFuncType*)FbleNormalType(th, cons_type);
-      if (cons_func_type->_base.tag != FBLE_FUNC_TYPE) {
-        ReportError(arena, spec_expr->loc, "expected function type, but ',' field of spec has type %t\n", cons_type);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        return TC_FAILED;
-      }
-
-      if (cons_func_type->args.size != 2) {
-        ReportError(arena, spec_expr->loc, "expected two argument function type, but ',' field of spec has type %t\n", cons_type);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        return TC_FAILED;
-      }
-
-      if (!FbleTypesEqual(th, nil_type, cons_func_type->args.xs[1])) {
-        ReportError(arena, spec_expr->loc, "expected type %t, but second argument of ',' field of spec has type %t\n", nil_type, cons_func_type->args.xs[1]);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        return TC_FAILED;
-      }
-
-      if (!FbleTypesEqual(th, cons_func_type->args.xs[1], cons_func_type->rtype)) {
-        ReportError(arena, spec_expr->loc, "the type %t of the second argument of ',' field of spec doesn't match the return type %t\n",
-            cons_func_type->args.xs[1], cons_func_type->rtype);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        return TC_FAILED;
-      }
-
-      FbleFuncType* apply_func_type = (FbleFuncType*)FbleNormalType(th, apply_type);
-      if (apply_func_type->_base.tag != FBLE_FUNC_TYPE) {
-        ReportError(arena, spec_expr->loc, "expected function type, but '|' field of spec has type %t\n", apply_type);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        FbleReleaseType(th, &apply_func_type->_base);
-        return TC_FAILED;
-      }
-
-      if (apply_func_type->args.size != 1) {
-        ReportError(arena, spec_expr->loc,
-            "expected single argument function type, but '|' field of spec has type %t\n", apply_type);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        FbleReleaseType(th, &apply_func_type->_base);
-        return TC_FAILED;
-      }
-
-      if (!FbleTypesEqual(th, cons_func_type->rtype, apply_func_type->args.xs[0])) {
-        ReportError(arena, spec_expr->loc, "the argument type %t of '|' does not match the return type %t of ','\n",
-            apply_func_type->args.xs[0], cons_func_type->rtype);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        FbleReleaseType(th, &apply_func_type->_base);
-        return TC_FAILED;
-      }
-
-      FbleDataType* letters_data_type = (FbleDataType*)FbleNormalType(th, letters_type);
-      if (letters_data_type->_base.tag != FBLE_DATA_TYPE || letters_data_type->datatype != FBLE_STRUCT_DATATYPE) {
-        ReportError(arena, spec_expr->loc, "expected struct type, but '?' field of spec has type %t\n", letters_type);
-        FreeTc(th, vh, spec);
-        FbleReleaseType(th, &spec_type->_base);
-        FbleReleaseType(th, &cons_func_type->_base);
-        FbleReleaseType(th, &apply_func_type->_base);
-        FbleReleaseType(th, &letters_data_type->_base);
+      FbleType* elem_type = FbleListElementType(th, func_type->args.xs[0]);
+      if (elem_type == NULL) {
+        ReportError(arena, list_expr->func->loc, "expected a list type, but the input to the function has type %t\n", func_type->args.xs[0]);
+        FreeTc(th, vh, func);
+        FbleReleaseType(th, &func_type->_base);
         return TC_FAILED;
       }
 
       bool error = false;
-      FbleType* elem_type = cons_func_type->args.xs[0];
-      size_t argc = expr->tag == FBLE_LIST_EXPR ? list_expr->args.size : strlen(literal_expr->word);
+      size_t argc = list_expr->args.size;
       FbleValue* args[argc];
+      for (size_t i = 0; i < argc; ++i) {
+        Tc tc = TypeCheckExpr(th, vh, scope, list_expr->args.xs[i]);
+        error = error || (tc.type == NULL);
 
-      size_t spec_var_index = PushAnonVar(arena, scope);
-      size_t cons_var_index = PushAnonVar(arena, scope);
-
-      if (expr->tag == FBLE_LIST_EXPR) {
-        for (size_t i = 0; i < argc; ++i) {
-          Tc tc = TypeCheckExpr(th, vh, scope, list_expr->args.xs[i]);
-          error = error || (tc.type == NULL);
-
-          if (tc.type != NULL) {
-            if (!FbleTypesEqual(th, elem_type, tc.type)) {
-              error = true;
-              ReportError(arena, list_expr->args.xs[i]->loc,
-                  "expected type %t, but found something of type %t\n",
-                  elem_type, tc.type);
-            }
-            FbleReleaseType(th, tc.type);
+        if (tc.type != NULL) {
+          if (!FbleTypesEqual(th, elem_type, tc.type)) {
+            error = true;
+            ReportError(arena, list_expr->args.xs[i]->loc,
+                "expected type %t, but found something of type %t\n",
+                elem_type, tc.type);
           }
-          args[i] = tc.tc;
+          FbleReleaseType(th, tc.type);
         }
-      } else if (expr->tag == FBLE_LITERAL_EXPR) {
-        size_t letters_var_index = PushAnonVar(arena, scope);
-
-        FbleLoc loc = literal_expr->word_loc;
-        for (size_t i = 0; i < argc; ++i) {
-          char field_str[2] = { literal_expr->word[i], '\0' };
-          args[i] = NULL;
-          bool found = false;
-          for (size_t j = 0; j < letters_data_type->fields.size; ++j) {
-            if (strcmp(field_str, letters_data_type->fields.xs[j].name.name->str) == 0) {
-              found = true;
-              if (!FbleTypesEqual(th, elem_type, letters_data_type->fields.xs[j].type)) {
-                ReportError(arena, loc, "expected type %t, but found something of type %t\n",
-                    elem_type, letters_data_type->fields.xs[j].type);
-                break;
-              }
-
-              FbleVarTc* letters_var_tc = FbleNewValue(vh, FbleVarTc);
-              letters_var_tc->_base.tag = FBLE_VAR_TC;
-              letters_var_tc->index.source = FBLE_LOCAL_VAR;
-              letters_var_tc->index.index = letters_var_index;
-
-              FbleDataAccessTc* access_tc = FbleNewValue(vh, FbleDataAccessTc);
-              access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
-              access_tc->datatype = FBLE_STRUCT_DATATYPE;
-              access_tc->obj = &letters_var_tc->_base;
-              FbleValueAddRef(vh, &access_tc->_base, access_tc->obj);
-              FbleReleaseValue(vh, access_tc->obj);
-              access_tc->tag = j;
-              access_tc->loc = FbleCopyLoc(loc);
-              args[i] = &access_tc->_base;
-              break;
-            }
-          }
-          error = error || (args[i] == NULL);
-
-          if (!found) {
-            ReportError(arena, loc, "'%s' is not a field of type %t\n",
-                field_str, spec.type);
-          }
-
-          if (literal_expr->word[i] == '\n') {
-            loc.line++;
-            loc.col = 0;
-          }
-          loc.col++;
-        }
-        PopVar(vh, scope);    // letters var
+        args[i] = tc.tc;
       }
-      PopVar(vh, scope);  // cons var
-      PopVar(vh, scope);  // spec var
 
-      FbleType* result_type = FbleRetainType(th, apply_func_type->rtype);
-      FbleReleaseType(th, spec.type);
-      FbleReleaseType(th, &spec_type->_base);
-      FbleReleaseType(th, &cons_func_type->_base);
-      FbleReleaseType(th, &apply_func_type->_base);
-      FbleReleaseType(th, &letters_data_type->_base);
+      FbleType* result_type = FbleRetainType(th, func_type->rtype);
+      FbleReleaseType(th, func.type);
+      FbleReleaseType(th, &func_type->_base);
+      FbleReleaseType(th, elem_type);
 
       if (error) {
         for (size_t i = 0; i < argc; ++i) {
           FbleReleaseValue(vh, args[i]);
         }
 
-        FbleReleaseValue(vh, spec.tc);
+        FbleReleaseValue(vh, func.tc);
         FbleReleaseType(th, result_type);
         return TC_FAILED;
       }
 
-      // Now that we know everything is well typed, desugar the list
-      // expression L()[a, b, c] into:
-      //   let spec = L();
-      //   let cons = spec.',';
-      //   let letters = spec.'?';
-      //   spec.'|'(cons(a, cons(b, cons( c, spec.''))))
-      FbleVarTc* spec_var_tc = FbleNewValue(vh, FbleVarTc);
-      spec_var_tc->_base.tag = FBLE_VAR_TC;
-      spec_var_tc->index.source = FBLE_LOCAL_VAR;
-      spec_var_tc->index.index = spec_var_index;
+      return MkTc(result_type, ListExpr(vh, expr->loc, func.tc, args, argc));
+    }
 
-      FbleVarTc* cons_var_tc = FbleNewValue(vh, FbleVarTc);
-      cons_var_tc->_base.tag = FBLE_VAR_TC;
-      cons_var_tc->index.source = FBLE_LOCAL_VAR;
-      cons_var_tc->index.index = cons_var_index;
+    case FBLE_LITERAL_EXPR: {
+      FbleLiteralExpr* literal_expr = (FbleLiteralExpr*)expr;
 
-      FbleDataAccessTc* cons_def_tc = FbleNewValue(vh, FbleDataAccessTc);
-      cons_def_tc->_base.tag = FBLE_DATA_ACCESS_TC;
-      cons_def_tc->datatype = FBLE_STRUCT_DATATYPE;
-      cons_def_tc->obj = &spec_var_tc->_base;
-      FbleValueAddRef(vh, &cons_def_tc->_base, cons_def_tc->obj);
-      cons_def_tc->tag = cons_tag;
-      cons_def_tc->loc = FbleCopyLoc(spec_expr->loc);
+      Tc func = TypeCheckExpr(th, vh, scope, literal_expr->func);
+      if (func.type == NULL) {
+        return TC_FAILED;
+      }
 
-      FbleDataAccessTc* nil_tc = FbleNewValue(vh, FbleDataAccessTc);
-      nil_tc->_base.tag = FBLE_DATA_ACCESS_TC;
-      nil_tc->datatype = FBLE_STRUCT_DATATYPE;
-      nil_tc->obj = &spec_var_tc->_base;
-      FbleValueAddRef(vh, &nil_tc->_base, nil_tc->obj);
-      nil_tc->tag = nil_tag;
-      nil_tc->loc = FbleCopyLoc(spec_expr->loc);
+      FbleFuncType* func_type = (FbleFuncType*)FbleNormalType(th, func.type);
+      if (func_type->_base.tag != FBLE_FUNC_TYPE || func_type->args.size != 1) {
+        ReportError(arena, literal_expr->func->loc, "expected a function of one argument, but found something of type %t\n", func.type);
+        FreeTc(th, vh, func);
+        FbleReleaseType(th, &func_type->_base);
+        return TC_FAILED;
+      }
 
-      FbleValue* tail = &nil_tc->_base;
+      FbleType* elem_type = FbleListElementType(th, func_type->args.xs[0]);
+      if (elem_type == NULL) {
+        ReportError(arena, literal_expr->func->loc, "expected a list type, but the input to the function has type %t\n", func_type->args.xs[0]);
+        FreeTc(th, vh, func);
+        FbleReleaseType(th, &func_type->_base);
+        return TC_FAILED;
+      }
+
+      FbleDataType* elem_data_type = (FbleDataType*)FbleNormalType(th, elem_type);
+      if (elem_data_type->_base.tag != FBLE_DATA_TYPE || elem_data_type->datatype != FBLE_UNION_DATATYPE) {
+        ReportError(arena, literal_expr->func->loc, "expected union type, but element type of literal expression is %t\n", elem_type);
+        FreeTc(th, vh, func);
+        FbleReleaseType(th, &func_type->_base);
+        FbleReleaseType(th, elem_type);
+        FbleReleaseType(th, &elem_data_type->_base);
+        return TC_FAILED;
+      }
+
+      size_t argc = strlen(literal_expr->word);
+      FbleValue* args[argc];
+
+      FbleValueV argv = { .xs = NULL, .size = 0 };
+      FbleValue* unit = FbleNewStructValue(vh, argv);
+
+      FbleDataType* unit_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
+      unit_type->datatype = FBLE_STRUCT_DATATYPE;
+      FbleVectorInit(arena, unit_type->fields);
+
+      bool error = false;
+      FbleLoc loc = literal_expr->word_loc;
       for (size_t i = 0; i < argc; ++i) {
-        size_t j = argc - i - 1;
+        char field_str[2] = { literal_expr->word[i], '\0' };
+        args[i] = NULL;
+        bool found = false;
+        for (size_t j = 0; j < elem_data_type->fields.size; ++j) {
+          if (strcmp(field_str, elem_data_type->fields.xs[j].name.name->str) == 0) {
+            found = true;
+            if (!FbleTypesEqual(th, &unit_type->_base, elem_data_type->fields.xs[j].type)) {
+              ReportError(arena, loc, "expected field type %t, but letter '%s' has field type %t\n",
+                  unit_type, field_str, elem_data_type->fields.xs[j].type);
+              break;
+            }
 
-        FbleFuncApplyTc* apply = FbleNewValue(vh, FbleFuncApplyTc);
-        apply->_base.tag = FBLE_FUNC_APPLY_TC;
-        apply->loc = FbleCopyLoc(expr->loc);
-        apply->func = NULL;
-        FbleVectorInit(arena, apply->args);
+            args[i] = FbleNewUnionValue(vh, j, unit);
+            break;
+          }
+        }
+        error = error || (args[i] == NULL);
 
-        FbleVectorAppend(arena, apply->args, args[j]);
-        FbleValueAddRef(vh, &apply->_base, args[j]);
-        FbleReleaseValue(vh, args[j]);
+        if (!found) {
+          ReportError(arena, loc, "'%s' is not a field of type %t\n", field_str, elem_type);
+        }
 
-        FbleVectorAppend(arena, apply->args, tail);
-        FbleValueAddRef(vh, &apply->_base, tail);
-        FbleReleaseValue(vh, tail);
-        tail = &apply->_base;
-
-        apply->func = &cons_var_tc->_base;
-        FbleValueAddRef(vh, &apply->_base, apply->func);
-      }
-      FbleReleaseValue(vh, &cons_var_tc->_base);
-
-      FbleDataAccessTc* app_tc = FbleNewValue(vh, FbleDataAccessTc);
-      app_tc->_base.tag = FBLE_DATA_ACCESS_TC;
-      app_tc->datatype = FBLE_STRUCT_DATATYPE;
-      app_tc->obj = &spec_var_tc->_base;
-      FbleValueAddRef(vh, &app_tc->_base, app_tc->obj);
-      FbleReleaseValue(vh, &spec_var_tc->_base);
-      app_tc->tag = apply_tag;
-      app_tc->loc = FbleCopyLoc(spec_expr->loc);
-
-      FbleFuncApplyTc* apply = FbleNewValue(vh, FbleFuncApplyTc);
-      apply->_base.tag = FBLE_FUNC_APPLY_TC;
-      apply->loc = FbleCopyLoc(expr->loc);
-      apply->func = NULL;
-      FbleVectorInit(arena, apply->args);
-
-      FbleVectorAppend(arena, apply->args, tail);
-      FbleValueAddRef(vh, &apply->_base, tail);
-      FbleReleaseValue(vh, tail);
-
-      apply->func = &app_tc->_base;
-      FbleValueAddRef(vh, &apply->_base, apply->func);
-      FbleReleaseValue(vh, apply->func);
-
-      FbleValue* body = &apply->_base;
-      if (expr->tag == FBLE_LITERAL_EXPR) {
-        FbleDataAccessTc* letters_def_tc = FbleNewValue(vh, FbleDataAccessTc);
-        letters_def_tc->_base.tag = FBLE_DATA_ACCESS_TC;
-        letters_def_tc->datatype = FBLE_STRUCT_DATATYPE;
-        letters_def_tc->obj = &spec_var_tc->_base;
-        FbleValueAddRef(vh, &letters_def_tc->_base, letters_def_tc->obj);
-        letters_def_tc->tag = letters_tag;
-        letters_def_tc->loc = FbleCopyLoc(spec_expr->loc);
-
-        FbleLetTc* let_letters_tc = FbleNewValue(vh, FbleLetTc);
-        let_letters_tc->_base.tag = FBLE_LET_TC;
-        let_letters_tc->recursive = false;
-        let_letters_tc->body = NULL;
-        FbleVectorInit(arena, let_letters_tc->bindings);
-
-        FbleVectorAppend(arena, let_letters_tc->bindings, &letters_def_tc->_base);
-        FbleValueAddRef(vh, &let_letters_tc->_base, &letters_def_tc->_base);
-        FbleReleaseValue(vh, &letters_def_tc->_base);
-
-        let_letters_tc->body = body;
-        FbleValueAddRef(vh, &let_letters_tc->_base, let_letters_tc->body);
-        FbleReleaseValue(vh, body);
-        body = &let_letters_tc->_base;
+        if (literal_expr->word[i] == '\n') {
+          loc.line++;
+          loc.col = 0;
+        }
+        loc.col++;
       }
 
-      FbleLetTc* let_cons_tc = FbleNewValue(vh, FbleLetTc);
-      let_cons_tc->_base.tag = FBLE_LET_TC;
-      let_cons_tc->recursive = false;
-      let_cons_tc->body = NULL;
-      FbleVectorInit(arena, let_cons_tc->bindings);
+      FbleType* result_type = FbleRetainType(th, func_type->rtype);
+      FbleReleaseType(th, func.type);
+      FbleReleaseType(th, &func_type->_base);
+      FbleReleaseType(th, elem_type);
+      FbleReleaseType(th, &elem_data_type->_base);
+      FbleReleaseType(th, &unit_type->_base);
+      FbleReleaseValue(vh, unit);
 
-      FbleVectorAppend(arena, let_cons_tc->bindings, &cons_def_tc->_base);
-      FbleValueAddRef(vh, &let_cons_tc->_base, &cons_def_tc->_base);
-      FbleReleaseValue(vh, &cons_def_tc->_base);
+      if (error) {
+        for (size_t i = 0; i < argc; ++i) {
+          FbleReleaseValue(vh, args[i]);
+        }
 
-      let_cons_tc->body = body;
-      FbleValueAddRef(vh, &let_cons_tc->_base, let_cons_tc->body);
-      FbleReleaseValue(vh, body);
+        FbleReleaseValue(vh, func.tc);
+        FbleReleaseType(th, result_type);
+        return TC_FAILED;
+      }
 
-      FbleLetTc* let_spec_tc = FbleNewValue(vh, FbleLetTc);
-      let_spec_tc->_base.tag = FBLE_LET_TC;
-      let_spec_tc->recursive = false;
-      let_spec_tc->body = NULL;
-      FbleVectorInit(arena, let_spec_tc->bindings);
-
-      FbleVectorAppend(arena, let_spec_tc->bindings, spec.tc);
-      FbleValueAddRef(vh, &let_spec_tc->_base, spec.tc);
-      FbleReleaseValue(vh, spec.tc);
-
-      let_spec_tc->body = &let_cons_tc->_base;
-      FbleValueAddRef(vh, &let_spec_tc->_base, let_spec_tc->body);
-      FbleReleaseValue(vh, let_spec_tc->body);
-
-      return MkTc(result_type, &let_spec_tc->_base);
+      return MkTc(result_type, ListExpr(vh, expr->loc, func.tc, args, argc));
     }
 
     case FBLE_ELABORATE_EXPR: {
