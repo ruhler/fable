@@ -429,3 +429,13 @@ Now when we define an fblf type, it gives us a collection of fields?
     Field@<T@, Unit.T@> false,
   );
 
+---
+
+Fblf as an untyped embedded DSL in fble is working well to start. I'll have to
+figure out types later. But it was nice enough to implement (untyped) md5 in
+fblf embedded in fble.
+
+But we need a way to add more runtime level abstraction capability to the
+language. We'll see if it continues to be nice to express embedded in fble, or
+if the added runtime abstractions start to lead to awkward duplication of
+existing fble abstractions.

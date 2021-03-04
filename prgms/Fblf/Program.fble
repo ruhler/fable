@@ -1,14 +1,12 @@
 
 @ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
-% BitStr = /Digits/String%.BitStr;
+% HexToBits = /Digits/String%.HexToBits;
 
 @ Int@ = /Int/Int%.Int@;
 
 <@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;
-<@>% Concat = /List%.Concat;
-<@,@>% Map = /List%.Map;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -45,14 +43,7 @@
 # Example Use:
 #   Value@ v = Const(Bit|A71);
 (List@<Hex@>) { Value@; } ConstHex = (List@<Hex@> l) {
-  List@<Bit@> bits = Concat<Bit@>(Map<Hex@, List@<Bit@>>(l, (Hex@ h) {
-    h.?(
-      0: BitStr|0000, 1: BitStr|0001, 2: BitStr|0010, 3: BitStr|0011,
-      4: BitStr|0100, 5: BitStr|0101, 6: BitStr|0110, 7: BitStr|0111,
-      8: BitStr|1000, 9: BitStr|1001, A: BitStr|1010, B: BitStr|1011,
-      C: BitStr|1100, D: BitStr|1101, E: BitStr|1110, F: BitStr|1111);
-  }));
-  Value@(const: bits);
+  Const(HexToBits(l));
 };
 
 # ConditionOp@ --

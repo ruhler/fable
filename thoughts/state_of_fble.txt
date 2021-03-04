@@ -80,3 +80,29 @@ I suggest the following areas of focus for fble next, in no particular order:
 
 That's plenty of different stuff to work on. I wouldn't take on any more
 before these things are closed out.
+
+The State of Fble Update
+========================
+I've made enough progress on the invaders game to see that addressing
+the performance issue is critical for fble to be viable. It is the top
+priority.
+
+Current status on performance:
+* I've proposed an fblf language to embed in fble that, hopefully, address all
+  the performance concerns of fble. I've implemented md5 in fblf, but run into
+  memory issues with the fblf compiler that need some modifications to the
+  fblf language to properly resolve, namely: don't inline everything in fblf.
+
+* I've proposed an fble elaborate expression and started adding support to it
+  in fble. It's blocked on updates to the interpreter to make it easier to
+  compile a symbolic case expression. But I worry this approach won't address
+  a number of important concerns that fblf does (which was the motivation for
+  fblf), and I'm realizing from the work on fblf that this approach is going
+  to run into the same problem that we can't just inline everything
+  completely.
+
+I will continue to focus on fblf, revising the language to address the
+inlining problem, and go from there. Everything we learn from fblf can
+hopefully be transferred to improve fble performance (possibly via elaborate
+expression) eventually.
+
