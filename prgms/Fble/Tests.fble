@@ -15,7 +15,6 @@
 % TestSuite = /Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /DataFlow/Counter%;
 % _ = /Fble/Bench%;
 % _ = /Fble/StackSmasher%;
 % _ = /Hwdg/App%;
@@ -35,7 +34,6 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Map/Tests%.Tests,
   /Maybe/Tests%.Tests,
   /Md5/Tests%.Tests,
-  /Primes/Tests%.Tests,
   /Sat/Tests%.Tests,
   /String/Tests%.Tests,
   /Sudoku/Tests%.Tests,
