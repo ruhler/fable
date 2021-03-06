@@ -7,11 +7,14 @@
 <@>% List = /List%.List;
 
 @ Program@ = /Fblf/Program%.Program@;
+@ ProgramId@ = /Fblf/Program%.ProgramId@;
 @ Addr@ = /Fblf/Program%.Addr@;
 @ Env@ = /Fblf/Program%.Env@;
 % EmptyEnv = /Fblf/Program%.EmptyEnv;
+% PutProgram = /Fblf/Program%.PutProgram;
 % Seq = /Fblf/Program%.Seq;
 % Noop = /Fblf/Program%.Noop;
+% Shared = /Fblf/Program%.Shared;
 
 # Instance@, Module@ --
 #   Module@ is a monad for tracking program environment and allocation of
@@ -19,8 +22,13 @@
 #
 #   Instance@ is the part of the Module@ monad that represents an instantiated
 #   Module@.
-<@>@ Instance@ = <@ T@> { *(Env@ env, Addr@ heap, T@ instance); };
-<@>@ Module@ = <@ T@>(Env@, Addr@) { Instance@<T@>; };
+#
+# Fields:
+#   env - the program environment.
+#   pid - the next available program id. aka the number of programs in the env.
+#   heap - the next available heap address. aka the number of bits in the heap.
+<@>@ Instance@ = <@ T@> { *(Env@ env, ProgramId@ pid, Addr@ heap, T@ instance); };
+<@>@ Module@ = <@ T@>(Env@, ProgramId@, Addr@) { Instance@<T@>; };
 
 # AllocM --
 #   Allocate n bits on the heap.
@@ -30,8 +38,21 @@
 #   ...
 <@ T@>(Int@)((Addr@) { Module@<T@>; }) { Module@<T@>; }
 AllocM = <@ T@>(Int@ n)((Addr@) { Module@<T@>; } f) {
-  (Env@ env, Addr@ free) {
-    f(free)(env, Add(free, n));
+  (Env@ env, ProgramId@ pid, Addr@ free) {
+    f(free)(env, pid, Add(free, n));
+  };
+};
+
+# SharedM --
+#   Get a shared reference to a program.
+#
+# This is important any time a program will be reused in more than one place
+# to avoid duplicating the identical program, which could lead to an
+# exponential blowup in program size.
+<@ M@>(Program@)((Program@) { Module@<M@>; }) { Module@<M@>; }
+SharedM = <@ M@>(Program@ p)((Program@) { Module@<M@>; } f) {
+  (Env@ env, ProgramId@ pid, Addr@ free) {
+    f(Shared(pid))(PutProgram(env, pid, p), Add(pid, Int|1), free);
   };
 };
 
@@ -46,9 +67,9 @@ AllocM = <@ T@>(Int@ n)((Addr@) { Module@<T@>; } f) {
 #   ...
 <@ A@, @ B@>(Module@<A@>)((A@) { Module@<B@>; }) { Module@<B@>; }
 InstM = <@ A@, @ B@>(Module@<A@> m)((A@) { Module@<B@>; } f) {
-  (Env@ env, Addr@ free) {
-    Instance@<A@> mr = m(env, free);
-    f(mr.instance)(mr.env, mr.heap);
+  (Env@ env, ProgramId@ pid, Addr@ free) {
+    Instance@<A@> mr = m(env, pid, free);
+    f(mr.instance)(mr.env, mr.pid, mr.heap);
   };
 };
 
@@ -56,7 +77,7 @@ InstM = <@ A@, @ B@>(Module@<A@> m)((A@) { Module@<B@>; } f) {
 #   A module that does not need to allocate space on the heap or instantiate
 #   other modules.
 <@ T@>(T@) { Module@<T@>; } PureM = <@ T@>(T@ instance) {
-  (Env@ env, Addr@ free) { Instance@<T@>(env, free, instance); };
+  (Env@ env, ProgramId@ pid, Addr@ free) { Instance@<T@>(env, pid, free, instance); };
 };
 
 # SeqM --
@@ -76,7 +97,7 @@ InstM = <@ A@, @ B@>(Module@<A@> m)((A@) { Module@<B@>; } f) {
 # Instantiate a module, with the first object allocated at address 0.
 <@ T@>(Module@<T@>) { Instance@<T@>; }
 Instantiate = <@ T@>(Module@<T@> m) {
-  m(EmptyEnv, Int|0);
+  m(EmptyEnv, Int|0, Int|0);
 };
 
-@(Module@, Instance@, AllocM, InstM, PureM, SeqM, Instantiate);
+@(Module@, Instance@, AllocM, SharedM, InstM, PureM, SeqM, Instantiate);

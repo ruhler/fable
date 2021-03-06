@@ -1,14 +1,13 @@
 Fblf:
+* Fix compilation of md5
+ - We need to compile the program environment too.
 * Set up fblf compilation test infrastructure.
  - Set up build files to generate and run the compiled fblf tests.
  - Add nicer summary and error messages in compiled test runner.
 * Rewrite fblf compiler to use abstraction that lets us output one line at a
   time instead of having to build up the program all in one string?
-* Figure out how to deal with the memory issues for fblf md5.
- - It's because we duplicate the same exact program repeatedly when fully
-   inlining, leading to a sort of exponential blowup of logic.
- - But what's a good approach to solving it?
 * Rewrite tests for /Fblf/Heap%.
+* Add tests for /Fblf/Module%.SharedM
 * Figure out how to replace fblf integer arithmetic with a native c
   implementation at compile time.
   - See how much faster it is now.

@@ -71,7 +71,7 @@ TestStr = (String@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
   });
 };
 
-Test@ Tests = TestSuite(Str|'Md5', List<Test@>[
+Test@ Md5Tests = TestSuite(Str|'Md5', List<Test@>[
 # Unfortunately it takes too long to run all of these tests.
   
 #  TestStr(
@@ -117,7 +117,8 @@ Test@ Tests = TestSuite(Str|'Md5', List<Test@>[
 ]);
 
 # TODO: Re-enable md5 tests once they are fast enough.
-Test@ Tests = TestSuite(Str|Md5, List<Test@>[]);
+Test@ DummyTests = TestSuite(Str|Md5, List<Test@>[]);
+Test@ Tests = /Bool%.False.?(true: Md5Tests, false: DummyTests);
 
 Unit@! Bench = {
   /Test%.TestResult@ _ := RunTests(TestStr(

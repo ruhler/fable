@@ -25,6 +25,7 @@
 
 <@>@ Module@ = /Fblf/Module%.Module@;
 <@>% AllocM = /Fblf/Module%.AllocM;
+<@>% SharedM = /Fblf/Module%.SharedM;
 <@, @>% InstM = /Fblf/Module%.InstM;
 <@>% PureM = /Fblf/Module%.PureM;
 % SeqM = /Fblf/Module%.SeqM;
@@ -299,12 +300,12 @@ Store = (Int@ k, Int@ n, Addr@ memory, Addr@ addr, Addr@ value) {
 PackWord = (Addr32@ word, Addr8@ byte) {
   Addr@ addr <- AllocM<PackWord@>(Int|2);
 
-  Program@ reset = Assign(addr, Const(BitStr|11), Int|2);
+  Program@ reset <- SharedM<PackWord@>(Assign(addr, Const(BitStr|11), Int|2));
 
-  Program@ feed = Seq(List<Program@>[
+  Program@ feed <- SharedM<PackWord@>(Seq(List<Program@>[
     Store(Int|2, Int|8, word, addr, byte),
     DecP(Int|2, addr)
-  ]);
+  ]));
 
   Condition@ packed = Eq(Ref(addr), Const(BitStr|11), Int|2);
 
@@ -363,16 +364,16 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 
   # Note: the spec lists the initial values for A, B, C, and D low-order byte
   # first, but H takes high order byte first.
-  Program@ reset = Seq(List<Program@>[
+  Program@ reset <- SharedM<PaddedMd5@>(Seq(List<Program@>[
     Assign(count, Const(BitStr|0000), Int|4),
     Assign(a, H|67452301, 32),
     Assign(b, H|EFCDAB89, 32),
     Assign(c, H|98BADCFE, 32),
     Assign(d, H|10325476, 32),
     wpack.reset
-  ]);
+  ]));
 
-  Program@ feed = Seq(List<Program@>[
+  Program@ feed <- SharedM<PaddedMd5@>(Seq(List<Program@>[
     wpack.feed,
     If(wpack.packed,
       Seq(List<Program@>[
@@ -380,7 +381,7 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
         If(Eq(Ref(count), Const(BitStr|1111), Int|4),
           doblock),
       IncP(Int|4, count)]))
-  ]);
+  ]));
 
   PureM<PaddedMd5@>(@(reset, feed));
 };
@@ -426,20 +427,20 @@ Md5 = (Addr8@ input, Addr@ hash) {
   # block so far.
   Addr@ padding <- AllocM<Md5@>(Int|6);
 
-  Program@ reset = Seq(List<Program@>[
+  Program@ reset <- SharedM<Md5@>(Seq(List<Program@>[
     Assign(length, H|0000000000000000, Int|64),
     padded.reset
-  ]);
+  ]));
 
-  Program@ feed = Seq(List<Program@>[
+  Program@ feed <- SharedM<Md5@>(Seq(List<Program@>[
     padded.feed,
 
     # Increment the length by one bytes worth by incrementing all but the last
     # three bits by 1.
     IncP(Int|61, length)
-  ]);
+  ]));
 
-  Program@ finish = Seq(List<Program@>[
+  Program@ finish <- SharedM<Md5@>(Seq(List<Program@>[
     # Start tracking how many bytes we've added to the final block.
     Assign(padding, Ref(Add(length, Int|55)), Int|6),
 
@@ -484,7 +485,7 @@ Md5 = (Addr8@ input, Addr@ hash) {
     Assign(Add(hash, Int|104), Ref(Add(d, Int|16)), Int|8),
     Assign(Add(hash, Int|112), Ref(Add(d, Int|8)),  Int|8),
     Assign(Add(hash, Int|120), Ref(Add(d, Int|0)),  Int|8)
-  ]);
+  ]));
 
   PureM<Md5@>(Md5@(reset, feed, finish));
 };
