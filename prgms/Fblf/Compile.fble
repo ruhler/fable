@@ -5,6 +5,10 @@
 @ Bit@ = /Digits%.Bit@;
 % Bit = /Digits%.Bit;
 
+@ Output@ = /Fblf/Compile/Output%.Output@;
+% Line = /Fblf/Compile/Output%.Line;
+% Lines = /Fblf/Compile/Output%.Lines;
+
 @ Addr@ = /Fblf/Program%.Addr@;
 @ ProgramId@ = /Fblf/Program%.ProgramId@;
 @ Env@ = /Fblf/Program%.Env@;
@@ -28,11 +32,9 @@
 % Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 <@,@>% Map = /List%.Map;
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
-<@>% Append = /List%.Append;
 <@>% Concat = /List%.Concat;
 
 <@>% Drop = /List/Length%.Drop;
@@ -45,23 +47,6 @@
 Int@ BitsPerWord = Int|64;
 
 (List@<String@>) { String@; } Strs = Concat<Char@>;
-
-# Lines@ -- 
-#   Abstract data type for outputting a sequence of lines of text from
-#   compilation.
-@ Lines@ = String@;
-
-# Line --
-#   Output the given line of text.
-(String@) { Lines@; } Line = (String@ line) {
-  Append<Char@>(line, Str[Chars.nl]);
-};
-
-# Lines --
-#   Output multiple lines of text in order.
-(List@<Lines@>) { Lines@; } Lines = (List@<Lines@> lines) {
-  Concat<Char@>(lines);
-};
 
 (Addr@) { String@; } CompileAddr = /Int/Int/Show%.Show;
 
@@ -171,7 +156,7 @@ CompileEquals = (Value@ a, Value@ b, Int@ n) {
 
 # Compile an assignment statement assuming the number of bits fits within
 # BitsPerWord.
-(String@, Assign@) { Lines@; }
+(String@, Assign@) { Output@; }
 CompileSmallAssign = (String@ indent, Assign@ assign) {
   assign.value.?(
     ref: Line(Strs[
@@ -201,29 +186,29 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
   Strs[Str|'__prog_', /Int/Int/Show%.Show(id)];
 };
 
-(String@, Shared@) { Lines@; } CompileShared = (String@ indent, Shared@ id) {
+(String@, Shared@) { Output@; } CompileShared = (String@ indent, Shared@ id) {
   Line(Strs[indent, SharedFuncName(id), Str|'(heap);']);
 };
 
 # Compile an assignment statement into a sequence of statements in C.
-(String@, Assign@) { Lines@; } CompileAssign = (String@ indent, Assign@ assign) {
+(String@, Assign@) { Output@; } CompileAssign = (String@ indent, Assign@ assign) {
   Le(assign.n, BitsPerWord).?(
     true: CompileSmallAssign(indent, assign),
     false: {
       % vs = Split(assign.value, BitsPerWord);
-      Lines(List<Lines@>[
+      Lines[
         CompileSmallAssign(indent, Assign@(assign.ref, vs.hi, BitsPerWord)),
-        CompileSmallAssign(indent, Assign@(Add(assign.ref, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord)))]);
+        CompileSmallAssign(indent, Assign@(Add(assign.ref, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord)))];
     });
 };
 
-(String@, Sequence@) { Lines@; } CompileSequence = (String@ indent, Sequence@ seq) {
-  Lines(Map<Program@, Lines@>(seq, (Program@ p) { CompileProgram(indent, p); }));
+(String@, Sequence@) { Output@; } CompileSequence = (String@ indent, Sequence@ seq) {
+  Lines(Map<Program@, Output@>(seq, (Program@ p) { CompileProgram(indent, p); }));
 },
 
-(String@, IfElse@) { Lines@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
+(String@, IfElse@) { Output@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
   String@ nested = Strs[indent, Str|'  '];
-  Lines(List<Lines@>[
+  Lines[
     Line(Strs[
       indent,
       Str|'if (',
@@ -233,22 +218,22 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
     Line(Strs[
       indent, Str|'} else {']),
     CompileProgram(nested, ifelse.else_body),
-    Line(Strs[indent, Str|'}'])]);
+    Line(Strs[indent, Str|'}'])];
 },
 
-(String@, While@) { Lines@; } CompileWhile = (String@ indent, While@ while) {
+(String@, While@) { Output@; } CompileWhile = (String@ indent, While@ while) {
   String@ nested = Strs[indent, Str|'  '];
-  Lines(List<Lines@>[
+  Lines[
     Strs[
       indent,
       Str|'while (',
       CompileCondition(while.condition),
       Str|') {'],
     CompileProgram(nested, while.body),
-    Strs[indent, Str|'}']]);
+    Strs[indent, Str|'}']];
 },
 
-(String@, Program@) { Lines@; } CompileProgram = (String@ indent, Program@ prgm) {
+(String@, Program@) { Output@; } CompileProgram = (String@ indent, Program@ prgm) {
   prgm.?(
     assign: CompileAssign(indent, prgm.assign),
     sequence: CompileSequence(indent, prgm.sequence),
@@ -260,41 +245,29 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 # Compile_ --
 #   Compile an fblf program to a C function with the given name.
 #
+# TODO: Clarify in documentation the dependence on CompileEnv.
+#
 # The signature of a function named 'Foo' will be:
 #   void Foo(FblfHeap* heap);
-(String@, Program@) { Lines@; }
-Compile_ = (String@ name, Program@ program) {
-  Lines(List<Lines@>[
+(String@, Program@) { Output@; }
+Compile = (String@ name, Program@ program) {
+  Lines[
     Line(Strs[
       Str|'void ',
       name,
       Str|'(FblfHeap* heap)']),
     Line(Str|'{'),
     CompileProgram(Str|'  ', program),
-    Line(Str|'}')]);
+    Line(Str|'}')];
 };
-
-# CompileEnv_ --
-#   Compile an fblf program environment to static C function that can be
-#   referenced from programs compiled with Compile.
-(Env@) { Lines@; } CompileEnv_ = (Env@ env) {
-  ForEachProgram<Lines@>(env, Str|'', (ProgramId@ id, Program@ p, Lines@ l) {
-    Lines[l, Compile_(SharedFuncName(id), p)];
-  });
-};
-
-# Compile --
-#   Compile an fblf program to a C function with the given name.
-#
-# TODO: Clarify in documentation the dependence on CompileEnv.
-#
-# The signature of a function named 'Foo' will be:
-#   void Foo(FblfHeap* heap);
-(String@, Program@) { String@; } Compile = Compile_;
 
 # CompileEnv --
 #   Compile an fblf program environment to static C function that can be
 #   referenced from programs compiled with Compile.
-(Env@) { String@; } CompileEnv = CompileEnv_;
+(Env@) { Output@; } CompileEnv = (Env@ env) {
+  ForEachProgram<Output@>(env, Str|'', (ProgramId@ id, Program@ p, Output@ o) {
+    Lines[o, Compile(SharedFuncName(id), p)];
+  });
+};
 
-@(CompileEnv, Compile);
+@(Compile, CompileEnv);
