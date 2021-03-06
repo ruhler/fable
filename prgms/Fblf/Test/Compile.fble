@@ -114,6 +114,11 @@ static void RunTest(FblfProgram program, int heapsize)
 
 ';
 
+  # TODO: Have 1 env for all tests? How else to avoid duplication?
+  String@ env = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
+    /Fblf/Compile%.CompileEnv(case.instance.env);
+  }));
+
   String@ lib = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
     /Fblf/Compile%.Compile(ToCId(case.name), case.instance.instance);
   }));
@@ -138,7 +143,7 @@ int main()
 }
 ';
 
-  Concat<Char@>(List<String@>[header, lib, main_header, main, main_footer]);
+  Concat<Char@>(List<String@>[header, env, lib, main_header, main, main_footer]);
 };
 
 @(Compile);

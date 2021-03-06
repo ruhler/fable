@@ -1,11 +1,10 @@
 Fblf:
-* Fix compilation of md5
- - We need to compile the program environment too.
-* Set up fblf compilation test infrastructure.
+* Rewrite fblf compiler to use abstraction that lets us output one line at a
+  time instead of having to build up the program all in one string.
+* Clean up fblf compilation test infrastructure.
+ - Fix it so we can have multiple tests with non-empty environments.
  - Set up build files to generate and run the compiled fblf tests.
  - Add nicer summary and error messages in compiled test runner.
-* Rewrite fblf compiler to use abstraction that lets us output one line at a
-  time instead of having to build up the program all in one string?
 * Rewrite tests for /Fblf/Heap%.
 * Add tests for /Fblf/Module%.SharedM
 * Figure out how to replace fblf integer arithmetic with a native c
@@ -17,6 +16,8 @@ Fblf:
 * Add test cases for aliasing for things in general?
 * Replace /Loop%.For and /Loop%.DoWhile with /Iter%.For?
  - Because the /Iter%.For is a nicer API I think.
+* Add test for /Fblf/Program/Show%, which I don't think is currently even
+  compiled when tests are run.
 
 * Expand test coverage of literals
  - Add test for wrong order list fields.

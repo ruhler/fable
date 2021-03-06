@@ -7,6 +7,7 @@
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ ProgramId@ = /Fblf/Program%.ProgramId@;
+@ Env@ = /Fblf/Program%.Env@;
 @ Assign@ = /Fblf/Program%.Assign@;
 @ Condition@ = /Fblf/Program%.Condition@;
 @ IfElse@ = /Fblf/Program%.IfElse@;
@@ -16,6 +17,7 @@
 @ Value@ = /Fblf/Program%.Value@;
 @ Program@ = /Fblf/Program%.Program@;
 % Ref = /Fblf/Program%.Ref;
+<@>% ForEachProgram = /Fblf/Program%.ForEachProgram;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -200,7 +202,7 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 };
 
 (String@, Shared@) { Lines@; } CompileShared = (String@ indent, Shared@ id) {
-  Line(Strs[indent, SharedFuncName(id), Str|'(heap)']);
+  Line(Strs[indent, SharedFuncName(id), Str|'(heap);']);
 };
 
 # Compile an assignment statement into a sequence of statements in C.
@@ -272,11 +274,27 @@ Compile_ = (String@ name, Program@ program) {
     Line(Str|'}')]);
 };
 
+# CompileEnv_ --
+#   Compile an fblf program environment to static C function that can be
+#   referenced from programs compiled with Compile.
+(Env@) { Lines@; } CompileEnv_ = (Env@ env) {
+  ForEachProgram<Lines@>(env, Str|'', (ProgramId@ id, Program@ p, Lines@ l) {
+    Lines[l, Compile_(SharedFuncName(id), p)];
+  });
+};
+
 # Compile --
 #   Compile an fblf program to a C function with the given name.
+#
+# TODO: Clarify in documentation the dependence on CompileEnv.
 #
 # The signature of a function named 'Foo' will be:
 #   void Foo(FblfHeap* heap);
 (String@, Program@) { String@; } Compile = Compile_;
 
-@(Compile);
+# CompileEnv --
+#   Compile an fblf program environment to static C function that can be
+#   referenced from programs compiled with Compile.
+(Env@) { String@; } CompileEnv = CompileEnv_;
+
+@(CompileEnv, Compile);
