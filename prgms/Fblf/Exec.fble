@@ -10,8 +10,10 @@
 
 <@,@>% ForEach = /List%.ForEach;
 
+@ Env@ = /Fblf/Program%.Env@;
 @ Program@ = /Fblf/Program%.Program@;
 @ Condition@ = /Fblf/Program%.Condition@;
+% GetProgram = /Fblf/Program%.GetProgram;
 
 # Eval --
 #   Evaluate a condition.
@@ -32,7 +34,7 @@
 #   Execute a program on the given heap.
 #
 # Behavior is undefined if the heap is not big enough for the program.
-(Program@, Heap@) { Heap@; } Exec = (Program@ prgm, Heap@ heap) {
+(Env@, Program@, Heap@) { Heap@; } Exec = (Env@ env, Program@ prgm, Heap@ heap) {
   prgm.?(
     assign: {
       prgm.assign.value.?(
@@ -41,19 +43,25 @@
     },
 
     sequence: {
-      ForEach<Program@, Heap@>(prgm.sequence, heap, Exec);
+      ForEach<Program@, Heap@>(prgm.sequence, heap, (Program@ p, Heap@ h) {
+        Exec(env, p, h);
+      });
     },
 
     ifelse: {
       Eval(prgm.ifelse.condition, heap).?(
-        true: Exec(prgm.ifelse.if_body, heap),
-        false: Exec(prgm.ifelse.else_body, heap));
+        true: Exec(env, prgm.ifelse.if_body, heap),
+        false: Exec(env, prgm.ifelse.else_body, heap));
     },
 
     while: {
       Eval(prgm.while.condition, heap).?(
-        true: Exec(prgm, Exec(prgm.while.body, heap)),
+        true: Exec(env, prgm, Exec(env, prgm.while.body, heap)),
         false: heap);
+    },
+
+    shared: {
+      Exec(env, GetProgram(env, prgm.shared), heap);
     });
 };
 

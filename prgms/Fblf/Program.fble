@@ -72,6 +72,10 @@
   Condition@(ConditionOp@(ne: Unit), a, b, n);
 };
 
+# ProgramId@ --
+#   Identifies a program in the context of an environment of programs.
+@ ProgramId@ = Int@;
+
 # Assign@ --
 #   Set the contents of ref to the given value.
 #
@@ -97,14 +101,56 @@
 #   Executes the body repeatedly for as long as the condition is satisfied.
 @ While@ = *(Condition@ condition, Program@ body),
 
+# Shared@ --
+#   Execute the program with the given id in the context of a program
+#   environment.
+@ Shared@ = ProgramId@,
+
 # Program@ --
 #   A program that performs computation on the bit heap.
 @ Program@ = +(
   Assign@ assign,
   Sequence@ sequence,
   IfElse@ ifelse,
-  While@ while
+  While@ while,
+  Shared@ shared
 );
+
+# Env@ --
+#   A program environment mapping program id to program.
+@ Env@ = /Map%.Map@<ProgramId@, Program@>;
+
+# EmptyEnv --
+#   An empty program environment.
+Env@ EmptyEnv = /Map%.Empty<ProgramId@, Program@>;
+
+# GetProgram --
+#   Gets the program with given id from the program environment.
+#
+# Behavior is undefined if there is no program in the environment with that
+# id.
+(Env@, ProgramId@) { Program@; } GetProgram = {
+  % Lookup = /Map%.Lookup<ProgramId@>(/Int/Int/Structured%.Structured)<Program@>;
+  (Env@ env, ProgramId@ id) {
+    Lookup(env, id).just;
+  };
+};
+
+# PutProgram --
+#   Puts the program with given id into the program environment.
+(Env@, ProgramId@, Program@) { Env@; }
+PutProgram = /Map%.Insert<ProgramId@>(/Int/Int/Structured%.Structured)<Program@>;
+
+# ForEachProgram --
+#   Iterate over all the programs in the given program environment.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach (id, prog) in map:
+#     b = body(id, prog, b)
+#   return b
+<@ B@>(Env@, B@, (ProgramId@, Program@, B@) { B@; }) { B@; }
+ForEachProgram = <@ B@> { /Map%.ForEach<ProgramId@, Program@, B@>; };
 
 (Addr@, Value@, Int@) { Program@; } Assign = (Addr@ x, Value@ v, Int@ n) {
   Program@(assign: Assign@(x, v, n));
@@ -129,8 +175,13 @@ Program@ Noop = Program@(sequence: Nil<Program@>);
   Program@(while: While@(p, body));
 };
 
+(ProgramId@) { Program@; } Shared = (ProgramId@ id) {
+  Program@(shared: id);
+};
+
 @(
-  Bit@, Bits@, Addr@, Value@, ConditionOp@, Condition@,
-  Assign@, Sequence@, IfElse@, While@, Program@,
-  Const, ConstHex, Ref, Eq, Ne, Assign, If, IfElse, Seq, Noop, While
+  Bit@, Bits@, Addr@, Env@, ProgramId@, Value@, ConditionOp@, Condition@,
+  Assign@, Sequence@, IfElse@, While@, Program@, Shared@,
+  Const, ConstHex, Ref, Eq, Ne, Assign, If, IfElse, Seq, Noop, While, Shared,
+  EmptyEnv, GetProgram, PutProgram, ForEachProgram
 );

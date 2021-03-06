@@ -8,6 +8,7 @@
 
 <@>@ Instance@ = /Fblf/Module%.Instance@;
 <@>% Instantiate = /Fblf/Module%.Instantiate;
+<@>% AllocM = /Fblf/Module%.AllocM;
 
 @ Addr@ = /Fblf/Program%.Addr@;
 
@@ -26,11 +27,11 @@
 @ Unit@ = /Unit%.Unit@;
 
 Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> output) {
-  Addr@ input = Int|0;
-  Addr@ hash = Int|8;
-  Addr@ free = Int|136;
-
-  Instance@<Md5@> md5I = Instantiate<Md5@>(Md5M(input, hash), free);
+  Instance@<Md5@> md5I = Instantiate<Md5@>({
+    Addr@ input <- AllocM<Md5@>(Int|8);
+    Addr@ hash <- AllocM<Md5@>(Int|128);
+    Md5M(input, hash);
+  });
   Md5@ md5 = md5I.instance;
 
   Unit@ _ := output(Compile(Str|'FblfMd5Reset', md5.reset));

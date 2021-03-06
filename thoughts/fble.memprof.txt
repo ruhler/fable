@@ -1,0 +1,92 @@
+Fble Memory Profiling
+=====================
+There have been a few times where I wished I had some form of memory profiling
+for fble, to see what objects were allocated on the heap and why.
+
+For the most part I want this to answer the question "why does my program take
+so much memory to run?" Is it a bug somewhere that could be fixed? If not,
+what should I focus on optimizing to improve memory use?
+
+It's always a little difficult to tease out what's important for memory
+profiling. If I were to be honest, there are only two things that ought to
+matter:
+
+1. How many things we allocate in total during the course of the program,
+because allocations are slow, so lots of allocations will slow down the
+program. But this can be tracked entirely as a runtime performance question
+which we already have good tools for.
+
+2. What objects are contributing to the maximum memory use of the program and
+why.
+
+So maximum memory use is what we really care about. If we spike memory up for
+1 second and then spend the rest of the time at low memory, we care about the
+very tip of that spike. Because that's what's going to prevent the program
+from working if I don't have enough memory on my device.
+
+Dealing with maximum values is unpleasant, because they don't compose well.
+You could have a bunch of peaks spread out across the program, and if you
+focus on the max, you only see one of them. You would have to tackle them one
+at a time. If you have concurrency, like fble, then maximum memory depends on
+the specific timing of when peaks are reached. That means maximum memory is
+not modular. You can't fix one thing in isolation and expect it to fix the
+maximum memory.
+
+Another challenge with memory profiling is knowing whether to care about who
+allocated the memory or who is retaining the memory.
+
+Another challenge is understanding what information would actually be useful
+to do whatever it is you are trying to do (e.g. identify a bug or optimize
+memory use).
+
+Another challenge is that memory changes during the course of a program and
+can be expensive to sample.
+
+Anyway, here are some ideas for how to do memory profiling in Fble.
+
+* It's tough to get type names in fble, because types can have no name at all
+  or multiple different names or names formed from polymorphic applications of
+  types. I vote we try using the location (i.e. profiling block) where the
+  memory was allocated to identify what the type of memory is. This should
+  give us even finer grain breakdown than you would get if there was some
+  unique type name associated with every type.
+
+* It should be relatively easy to count objects by type on the heap and give
+  that kind of breakdown. Just have a bucket for each type and during the
+  course of a GC, count objects traversed. But I'm not sure how actionable
+  this information is. So a lot of memory is spent on ints. How does that tell
+  you if there's a bug or you should be optimizing things that use ints? You
+  don't even know what is holding on to those ints.
+
+* I think we can reuse runtime profiling for a heap snapshot if we did a depth
+  first search based full GC. This would tell us what type of objects are
+  retaining what other types of objects in a nice summary view. It could tell
+  us, for example, if most of the ints are being held on to be other ints or
+  by programs.
+
+* We could do a full heap dump. I'm not sure that gives significantly more
+  useful information than we would get from the summary profile. I would
+  rather start with summary info and see if that isn't enough.
+
+* We could try to automatically sample the heap when it is at its maximum
+  value. For maximum value, just sample the heap at every GC and discard any
+  sample that isn't max value. Or do a quick pass to count objects and do a
+  full GC only if the heap is bigger than last time. It might be a little expensive to do all that
+  work and throw away most of it, but maybe it isn't that bad or we don't mind
+  things running slowly.
+
+* If it's too expensive to sample heap every time we hit a maximum value, we
+  could try to get close. Because honestly, if I see the sample for when the
+  heap is at 40MB, that's probably going to tell me just about the same
+  information as if I sample it at 50MB. We could try sampling every time the
+  heap reaches some new threshold of maximum, like 50% more than before, or 2x
+  more than before.
+
+In summary, I think we have all the underlying technology we need to get a
+nice memory profile of around the maximum size heap in fble. It's mostly a
+matter of working out the awkward glue details, like:
+  * How do you enable memory profiling?
+  * What name should we give to internally allocated objects, like stacks?
+  * Any way we can get type names in the memory profile, or do we have to deal
+    with the extra indirection of locations?
+

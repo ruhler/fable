@@ -16,8 +16,6 @@
 <@>@ Module@ = /Fblf/Module%.Module@;
 <@>% Instantiate = /Fblf/Module%.Instantiate;
 
-% Int = /Int/Int/Lit%.Int;
-
 <@>@ List@ = /List%.List@;
 <@,@>% Map = /List%.Map;
 
@@ -56,9 +54,9 @@ TestSuite = (String@ name, List@<Test@> tests) {
     case: {
       Module@<TestInstance@> m = t.case.test;
       /Test%.TestResult@! body = !({
-        Instance@<TestInstance@> i = Instantiate<TestInstance@>(m, Int|0);
+        Instance@<TestInstance@> i = Instantiate<TestInstance@>(m);
         TestInstance@ mI = i.instance;
-        Heap@ heap = Exec(mI.program, Heap(i.heap));
+        Heap@ heap = Exec(i.env, mI.program, Heap(i.heap));
 
         Bits@ wnt = mI.expected;
         Bits@ got = Read(heap, mI.result, /List/Length%.Length<Bit@>(wnt));

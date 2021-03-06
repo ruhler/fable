@@ -70,7 +70,7 @@
         ]));
       };
 
-      Instance@<Program@> instance = Instantiate<Program@>(wrapped, Int|0);
+      Instance@<Program@> instance = Instantiate<Program@>(wrapped);
       List<Case@>[@(name, instance)];
     },
     suite: {

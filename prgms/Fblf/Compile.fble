@@ -6,11 +6,13 @@
 % Bit = /Digits%.Bit;
 
 @ Addr@ = /Fblf/Program%.Addr@;
+@ ProgramId@ = /Fblf/Program%.ProgramId@;
 @ Assign@ = /Fblf/Program%.Assign@;
 @ Condition@ = /Fblf/Program%.Condition@;
 @ IfElse@ = /Fblf/Program%.IfElse@;
 @ Sequence@ = /Fblf/Program%.Sequence@;
 @ While@ = /Fblf/Program%.While@;
+@ Shared@ = /Fblf/Program%.Shared@;
 @ Value@ = /Fblf/Program%.Value@;
 @ Program@ = /Fblf/Program%.Program@;
 % Ref = /Fblf/Program%.Ref;
@@ -190,6 +192,17 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
       Str|');']));
 };
 
+# SharedFuncName --
+#   The C function name used for the implementation of the program with given
+#   id.
+(ProgramId@) { String@; } SharedFuncName = (ProgramId@ id) {
+  Strs[Str|'__prog_', /Int/Int/Show%.Show(id)];
+};
+
+(String@, Shared@) { Lines@; } CompileShared = (String@ indent, Shared@ id) {
+  Line(Strs[indent, SharedFuncName(id), Str|'(heap)']);
+};
+
 # Compile an assignment statement into a sequence of statements in C.
 (String@, Assign@) { Lines@; } CompileAssign = (String@ indent, Assign@ assign) {
   Le(assign.n, BitsPerWord).?(
@@ -238,7 +251,8 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
     assign: CompileAssign(indent, prgm.assign),
     sequence: CompileSequence(indent, prgm.sequence),
     ifelse: CompileIfElse(indent, prgm.ifelse),
-    while: CompileWhile(indent, prgm.while));
+    while: CompileWhile(indent, prgm.while),
+    shared: CompileShared(indent, prgm.shared));
 };
 
 # Compile_ --
