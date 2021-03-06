@@ -266,9 +266,18 @@ Compile = (String@ name, Program@ program) {
 #   Compile an fblf program environment to static C function that can be
 #   referenced from programs compiled with Compile.
 (Env@) { Output@; } CompileEnv = (Env@ env) {
-  ForEachProgram<Output@>(env, NoOutput, (ProgramId@ id, Program@ p, Output@ o) {
+  Output@ protos = ForEachProgram<Output@>(env, NoOutput, (ProgramId@ id, Program@ p, Output@ o) {
+    Lines[o, Line(Strs[
+      Str|'void ',
+      SharedFuncName(id),
+      Str|'(FblfHeap* heap);'])];
+  });
+
+  Output@ impls = ForEachProgram<Output@>(env, NoOutput, (ProgramId@ id, Program@ p, Output@ o) {
     Lines[o, Compile(SharedFuncName(id), p)];
   });
+
+  Lines[protos, impls];
 };
 
 @(Compile, CompileEnv);

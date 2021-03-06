@@ -1,12 +1,19 @@
 Fblf:
-* Rewrite fblf compiler to use abstraction that lets us output one line at a
-  time instead of having to build up the program all in one string.
+* Figure out how to compile full Md5 with the memory available on my computer.
+  Right now restricting into 1 of the 16 XX calls in the Round function makes
+  it so compilation only takes 50% of my computers memory.
+
+* Re-enable full Md5.
+
 * Clean up fblf compilation test infrastructure.
  - Fix it so we can have multiple tests with non-empty environments.
  - Set up build files to generate and run the compiled fblf tests.
  - Add nicer summary and error messages in compiled test runner.
 * Rewrite tests for /Fblf/Heap%.
 * Add tests for /Fblf/Module%.SharedM
+ - Including something that compiles to enough subprograms that it would catch
+   the bug that the order of Map iteration for Int@ is not in the order you
+   would expect.
 * Figure out how to replace fblf integer arithmetic with a native c
   implementation at compile time.
   - See how much faster it is now.

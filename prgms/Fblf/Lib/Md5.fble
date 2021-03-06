@@ -195,21 +195,21 @@ RoundX = (XX@ xx, Int@ s0, Int@ s1, Int@ s2, Int@ s3, BlockOf@<Value32@> t, (Blo
 (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) {
   BlockOf@<Addr32@> permuted = permute(block);
   SeqM(List<Module@<Program@>>[
-    xx(a, b, c, d, permuted.00, s0, t.00, a),
-    xx(d, a, b, c, permuted.01, s1, t.01, d),
-    xx(c, d, a, b, permuted.02, s2, t.02, c),
-    xx(b, c, d, a, permuted.03, s3, t.03, b),
-    xx(a, b, c, d, permuted.04, s0, t.04, a),
-    xx(d, a, b, c, permuted.05, s1, t.05, d),
-    xx(c, d, a, b, permuted.06, s2, t.06, c),
-    xx(b, c, d, a, permuted.07, s3, t.07, b),
-    xx(a, b, c, d, permuted.08, s0, t.08, a),
-    xx(d, a, b, c, permuted.09, s1, t.09, d),
-    xx(c, d, a, b, permuted.10, s2, t.10, c),
-    xx(b, c, d, a, permuted.11, s3, t.11, b),
-    xx(a, b, c, d, permuted.12, s0, t.12, a),
-    xx(d, a, b, c, permuted.13, s1, t.13, d),
-    xx(c, d, a, b, permuted.14, s2, t.14, c),
+#    xx(a, b, c, d, permuted.00, s0, t.00, a),
+#    xx(d, a, b, c, permuted.01, s1, t.01, d),
+#    xx(c, d, a, b, permuted.02, s2, t.02, c),
+#    xx(b, c, d, a, permuted.03, s3, t.03, b),
+#    xx(a, b, c, d, permuted.04, s0, t.04, a),
+#    xx(d, a, b, c, permuted.05, s1, t.05, d),
+#    xx(c, d, a, b, permuted.06, s2, t.06, c),
+#    xx(b, c, d, a, permuted.07, s3, t.07, b),
+#    xx(a, b, c, d, permuted.08, s0, t.08, a),
+#    xx(d, a, b, c, permuted.09, s1, t.09, d),
+#    xx(c, d, a, b, permuted.10, s2, t.10, c),
+#    xx(b, c, d, a, permuted.11, s3, t.11, b),
+#    xx(a, b, c, d, permuted.12, s0, t.12, a),
+#    xx(d, a, b, c, permuted.13, s1, t.13, d),
+#    xx(c, d, a, b, permuted.14, s2, t.14, c),
     xx(b, c, d, a, permuted.15, s3, t.15, b)]);
 };
 
