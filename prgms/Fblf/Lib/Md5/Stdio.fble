@@ -2,6 +2,11 @@
 % True = /Bool%.True;
 
 % Compile = /Fblf/Compile%.Compile;
+% CompileEnv = /Fblf/Compile%.CompileEnv;
+
+@ Output@ = /Fblf/Compile/Output%.Output@;
+% Lines = /Fblf/Compile/Output%.Lines;
+% Output = /Fblf/Compile/Output%.Output;
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5M = /Fblf/Lib/Md5%.Md5;
@@ -26,7 +31,7 @@
 
 @ Unit@ = /Unit%.Unit@;
 
-Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> output) {
+Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
   Instance@<Md5@> md5I = Instantiate<Md5@>({
     Addr@ input <- AllocM<Md5@>(Int|8);
     Addr@ hash <- AllocM<Md5@>(Int|128);
@@ -34,9 +39,15 @@ Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> output) {
   });
   Md5@ md5 = md5I.instance;
 
-  Unit@ _ := output(Compile(Str|'FblfMd5Reset', md5.reset));
-  Unit@ _ := output(Compile(Str|'FblfMd5Feed', md5.feed));
-  Unit@ _ := output(Compile(Str|'FblfMd5Finish', md5.finish));
+  Output@ output = Lines[
+    CompileEnv(md5I.env),
+    Compile(Str|'FblfMd5Reset', md5.reset),
+    Compile(Str|'FblfMd5Feed', md5.feed),
+    Compile(Str|'FblfMd5Finish', md5.finish)
+  ];
+
+  Unit@ _ := Output(put, output);
+
   !(True);
 };
 

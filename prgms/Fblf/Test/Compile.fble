@@ -18,6 +18,10 @@
 
 <@>% Length = /List/Length%.Length;
 
+@ Output@ = /Fblf/Compile/Output%.Output@;
+% Line = /Fblf/Compile/Output%.Line;
+% Lines = /Fblf/Compile/Output%.Lines;
+
 <@>@ Module@ = /Fblf/Module%.Module@;
 <@>@ Instance@ = /Fblf/Module%.Instance@;
 <@>% Instantiate = /Fblf/Module%.Instantiate;
@@ -95,10 +99,10 @@
 
 # Compile --
 #   Compiles an fblf test suite into a C file that runs all the tests.
-(Test@) { String@; } Compile = (Test@ t) {
+(Test@) { Output@; } Compile = (Test@ t) {
   List@<Case@> cases = Collect(Nil<Char@>, t);
 
-  String@ header = Str|'
+  Output@ header = Line(Str|'
 #include <assert.h>
 
 #include "heap.h"
@@ -112,38 +116,38 @@ static void RunTest(FblfProgram program, int heapsize)
   assert(FblfHeapRead(heap, 0, 1) == 1);
 }
 
-';
+');
 
   # TODO: Have 1 env for all tests? How else to avoid duplication?
-  String@ env = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
+  Output@ env = Lines(Map<Case@, Output@>(cases, (Case@ case) {
     /Fblf/Compile%.CompileEnv(case.instance.env);
   }));
 
-  String@ lib = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
+  Output@ lib = Lines(Map<Case@, Output@>(cases, (Case@ case) {
     /Fblf/Compile%.Compile(ToCId(case.name), case.instance.instance);
   }));
 
-  String@ main_header = Str|'
+  Output@ main_header = Line(Str|'
 int main()
 {
-';
-  String@ main = Concat<Char@>(Map<Case@, String@>(cases, (Case@ case) {
-    Concat<Char@>(List<String@>[
+');
+
+  Output@ main = Lines(Map<Case@, Output@>(cases, (Case@ case) {
+    Line(Concat<Char@>(List<String@>[
         Str|'  RunTest(&',
         ToCId(case.name),
         Str|', ',
         /Int/Int/Show%.Show(case.instance.heap),
-        Str|');',
-        Str[Chars.nl]
-    ]);
+        Str|');'
+    ]));
   }));
 
-  String@ main_footer = Str|'
+  Output@ main_footer = Line(Str|'
   return 0;
 }
-';
+');
 
-  Concat<Char@>(List<String@>[header, env, lib, main_header, main, main_footer]);
+  Lines[header, env, lib, main_header, main, main_footer];
 };
 
 @(Compile);

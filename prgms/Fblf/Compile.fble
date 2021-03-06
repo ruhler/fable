@@ -8,6 +8,7 @@
 @ Output@ = /Fblf/Compile/Output%.Output@;
 % Line = /Fblf/Compile/Output%.Line;
 % Lines = /Fblf/Compile/Output%.Lines;
+% NoOutput = /Fblf/Compile/Output%.NoOutput;
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ ProgramId@ = /Fblf/Program%.ProgramId@;
@@ -224,13 +225,13 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 (String@, While@) { Output@; } CompileWhile = (String@ indent, While@ while) {
   String@ nested = Strs[indent, Str|'  '];
   Lines[
-    Strs[
+    Line(Strs[
       indent,
       Str|'while (',
       CompileCondition(while.condition),
-      Str|') {'],
+      Str|') {']),
     CompileProgram(nested, while.body),
-    Strs[indent, Str|'}']];
+    Line(Strs[indent, Str|'}'])];
 },
 
 (String@, Program@) { Output@; } CompileProgram = (String@ indent, Program@ prgm) {
@@ -265,7 +266,7 @@ Compile = (String@ name, Program@ program) {
 #   Compile an fblf program environment to static C function that can be
 #   referenced from programs compiled with Compile.
 (Env@) { Output@; } CompileEnv = (Env@ env) {
-  ForEachProgram<Output@>(env, Str|'', (ProgramId@ id, Program@ p, Output@ o) {
+  ForEachProgram<Output@>(env, NoOutput, (ProgramId@ id, Program@ p, Output@ o) {
     Lines[o, Compile(SharedFuncName(id), p)];
   });
 };
