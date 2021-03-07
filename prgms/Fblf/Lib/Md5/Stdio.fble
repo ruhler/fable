@@ -5,7 +5,8 @@
 % CompileEnv = /Fblf/Compile%.CompileEnv;
 
 @ Output@ = /Fblf/Compile/Output%.Output@;
-% Lines = /Fblf/Compile/Output%.Lines;
+% Do = /Fblf/Compile/Output%.Do;
+% Return = /Fblf/Compile/Output%.Return;
 % Output = /Fblf/Compile/Output%.Output;
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
@@ -39,12 +40,13 @@ Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
   });
   Md5@ md5 = md5I.instance;
 
-  Output@ output = Lines[
-    CompileEnv(md5I.env),
-    Compile(Str|'FblfMd5Reset', md5.reset),
-    Compile(Str|'FblfMd5Feed', md5.feed),
-    Compile(Str|'FblfMd5Finish', md5.finish)
-  ];
+  Output@ output = {
+    Unit@ _ <- Do(CompileEnv(md5I.env));
+    Unit@ _ <- Do(Compile(Str|'FblfMd5Reset', md5.reset));
+    Unit@ _ <- Do(Compile(Str|'FblfMd5Feed', md5.feed));
+    Unit@ _ <- Do(Compile(Str|'FblfMd5Finish', md5.finish));
+    Return;
+  };
 
   Unit@ _ := Output(put, output);
 

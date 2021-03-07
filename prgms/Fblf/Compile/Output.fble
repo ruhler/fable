@@ -2,7 +2,6 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-<@>@ List@ = /List%.List@;
 <@>% Append = /List%.Append;
 
 <@>@ Put@ = /Process%.Put@;
@@ -24,20 +23,15 @@
   put(Append<Char@>(line, Str[Chars.nl]));
 };
 
-# Lines --
-#   Output multiple lines of text in order.
-(List@<Output@>) { Output@; } Lines = (List@<Output@> lines)(Put@<String@> put) {
-  lines.?(
-    cons: {
-      Unit@ _ := lines.cons.head(put);
-      Lines(lines.cons.tail)(put);
-    },
-    nil: !(Unit));
+(Output@)((Unit@) { Output@; }) { Output@; }
+Do = (Output@ m)((Unit@) { Output@; } f)(Put@<String@> put) {
+  Unit@ _ := m(put);
+  f(Unit)(put);
 };
 
-# NoOutput --
-#   Empty output.
-Output@ NoOutput = (Put@<String@> _) { !(Unit); };
+# Return --
+#   Output nothing.
+Output@ Return = (Put@<String@> _) { !(Unit); };
 
 # Output --
 #   Output the output to the given port.
@@ -45,4 +39,4 @@ Output@ NoOutput = (Put@<String@> _) { !(Unit); };
   output(put);
 };
 
-@(Output@, Line, Lines, NoOutput, Output);
+@(Output@, Line, Do, Return, Output);

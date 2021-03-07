@@ -20,7 +20,8 @@
 
 @ Output@ = /Fblf/Compile/Output%.Output@;
 % Line = /Fblf/Compile/Output%.Line;
-% Lines = /Fblf/Compile/Output%.Lines;
+% Do = /Fblf/Compile/Output%.Do;
+% Return = /Fblf/Compile/Output%.Return;
 
 <@>@ Module@ = /Fblf/Module%.Module@;
 <@>@ Instance@ = /Fblf/Module%.Instance@;
@@ -44,6 +45,8 @@
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
+
+@ Unit@ = /Unit%.Unit@;
 
 # Case@ --
 #   Represents an instantiated test case.
@@ -97,12 +100,23 @@
   Cons<Char@>(Chars.'_', Map<Char@, Char@>(s, FixChar));
 };
 
+(List@<Case@>, (Case@) { Output@; }) { Output@; }
+ForEachCase = (List@<Case@> l, (Case@) { Output@; } f) {
+  l.?(
+    cons: {
+      Unit@ _ <- Do(f(l.cons.head));
+      Unit@ _ <- Do(ForEachCase(l.cons.tail, f));
+      Return;
+    },
+    nil: Return);
+};
+
 # Compile --
 #   Compiles an fblf test suite into a C file that runs all the tests.
 (Test@) { Output@; } Compile = (Test@ t) {
   List@<Case@> cases = Collect(Nil<Char@>, t);
 
-  Output@ header = Line(Str|'
+  Unit@ _ <- Do(Line(Str|'
 #include <assert.h>
 
 #include "heap.h"
@@ -116,38 +130,38 @@ static void RunTest(FblfProgram program, int heapsize)
   assert(FblfHeapRead(heap, 0, 1) == 1);
 }
 
-');
+'));
 
   # TODO: Have 1 env for all tests? How else to avoid duplication?
-  Output@ env = Lines(Map<Case@, Output@>(cases, (Case@ case) {
+  Unit@ _ <- Do(ForEachCase(cases, (Case@ case) {
     /Fblf/Compile%.CompileEnv(case.instance.env);
   }));
 
-  Output@ lib = Lines(Map<Case@, Output@>(cases, (Case@ case) {
+  Unit@ _ <- Do(ForEachCase(cases, (Case@ case) {
     /Fblf/Compile%.Compile(ToCId(case.name), case.instance.instance);
   }));
 
-  Output@ main_header = Line(Str|'
+  Unit@ _ <- Do(Line(Str|'
 int main()
 {
-');
+'));
 
-  Output@ main = Lines(Map<Case@, Output@>(cases, (Case@ case) {
+  Unit@ _ <- Do(ForEachCase(cases, (Case@ case) {
     Line(Concat<Char@>(List<String@>[
-        Str|'  RunTest(&',
-        ToCId(case.name),
-        Str|', ',
-        /Int/Int/Show%.Show(case.instance.heap),
-        Str|');'
+      Str|'  RunTest(&',
+      ToCId(case.name),
+      Str|', ',
+      /Int/Int/Show%.Show(case.instance.heap),
+      Str|');'
     ]));
   }));
 
-  Output@ main_footer = Line(Str|'
+  Unit@ _ <- Do(Line(Str|'
   return 0;
 }
-');
+'));
 
-  Lines[header, env, lib, main_header, main, main_footer];
+  Return;
 };
 
 @(Compile);

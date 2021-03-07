@@ -7,8 +7,8 @@
 
 @ Output@ = /Fblf/Compile/Output%.Output@;
 % Line = /Fblf/Compile/Output%.Line;
-% Lines = /Fblf/Compile/Output%.Lines;
-% NoOutput = /Fblf/Compile/Output%.NoOutput;
+% Do = /Fblf/Compile/Output%.Do;
+% Return = /Fblf/Compile/Output%.Return;
 
 @ Addr@ = /Fblf/Program%.Addr@;
 @ ProgramId@ = /Fblf/Program%.ProgramId@;
@@ -33,7 +33,6 @@
 % Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
-<@,@>% Map = /List%.Map;
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
 <@>% Concat = /List%.Concat;
@@ -44,6 +43,8 @@
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
+
+@ Unit@ = /Unit%.Unit@;
 
 Int@ BitsPerWord = Int|64;
 
@@ -197,41 +198,38 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
     true: CompileSmallAssign(indent, assign),
     false: {
       % vs = Split(assign.value, BitsPerWord);
-      Lines[
-        CompileSmallAssign(indent, Assign@(assign.ref, vs.hi, BitsPerWord)),
-        CompileSmallAssign(indent, Assign@(Add(assign.ref, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord)))];
+      Unit@ _ <- Do(CompileSmallAssign(indent, Assign@(assign.ref, vs.hi, BitsPerWord)));
+      Unit@ _ <- Do(CompileSmallAssign(indent, Assign@(Add(assign.ref, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord))));
+      Return;
     });
 };
 
 (String@, Sequence@) { Output@; } CompileSequence = (String@ indent, Sequence@ seq) {
-  Lines(Map<Program@, Output@>(seq, (Program@ p) { CompileProgram(indent, p); }));
+  seq.?(
+    cons: {
+      Unit@ _ <- Do(CompileProgram(indent, seq.cons.head));
+      Unit@ _ <- Do(CompileSequence(indent, seq.cons.tail));
+      Return;
+    },
+    nil: Return);
 },
 
 (String@, IfElse@) { Output@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
   String@ nested = Strs[indent, Str|'  '];
-  Lines[
-    Line(Strs[
-      indent,
-      Str|'if (',
-      CompileCondition(ifelse.condition),
-      Str|') {']),
-    CompileProgram(nested, ifelse.if_body),
-    Line(Strs[
-      indent, Str|'} else {']),
-    CompileProgram(nested, ifelse.else_body),
-    Line(Strs[indent, Str|'}'])];
+  Unit@ _ <- Do(Line(Strs[indent, Str|'if (', CompileCondition(ifelse.condition), Str|') {']));
+  Unit@ _ <- Do(CompileProgram(nested, ifelse.if_body));
+  Unit@ _ <- Do(Line(Strs[indent, Str|'} else {']));
+  Unit@ _ <- Do(CompileProgram(nested, ifelse.else_body));
+  Unit@ _ <- Do(Line(Strs[indent, Str|'}']));
+  Return;
 },
 
 (String@, While@) { Output@; } CompileWhile = (String@ indent, While@ while) {
   String@ nested = Strs[indent, Str|'  '];
-  Lines[
-    Line(Strs[
-      indent,
-      Str|'while (',
-      CompileCondition(while.condition),
-      Str|') {']),
-    CompileProgram(nested, while.body),
-    Line(Strs[indent, Str|'}'])];
+  Unit@ _ <- Do(Line(Strs[ indent, Str|'while (', CompileCondition(while.condition), Str|') {']));
+  Unit@ _ <- Do(CompileProgram(nested, while.body));
+  Unit@ _ <- Do(Line(Strs[indent, Str|'}']));
+  Return;
 },
 
 (String@, Program@) { Output@; } CompileProgram = (String@ indent, Program@ prgm) {
@@ -252,32 +250,30 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 #   void Foo(FblfHeap* heap);
 (String@, Program@) { Output@; }
 Compile = (String@ name, Program@ program) {
-  Lines[
-    Line(Strs[
-      Str|'void ',
-      name,
-      Str|'(FblfHeap* heap)']),
-    Line(Str|'{'),
-    CompileProgram(Str|'  ', program),
-    Line(Str|'}')];
+  Unit@ _ <- Do(Line(Strs[ Str|'void ', name, Str|'(FblfHeap* heap)']));
+  Unit@ _ <- Do(Line(Str|'{'));
+  Unit@ _ <- Do(CompileProgram(Str|'  ', program));
+  Unit@ _ <- Do(Line(Str|'}'));
+  Return;
 };
 
 # CompileEnv --
 #   Compile an fblf program environment to static C function that can be
 #   referenced from programs compiled with Compile.
 (Env@) { Output@; } CompileEnv = (Env@ env) {
-  Output@ protos = ForEachProgram<Output@>(env, NoOutput, (ProgramId@ id, Program@ p, Output@ o) {
-    Lines[o, Line(Strs[
-      Str|'void ',
-      SharedFuncName(id),
-      Str|'(FblfHeap* heap);'])];
-  });
+  Unit@ _ <- Do(ForEachProgram<Output@>(env, Return, (ProgramId@ id, Program@ p, Output@ o) {
+    Unit@ _ <- Do(o);
+    Unit@ _ <- Do(Line(Strs[ Str|'void ', SharedFuncName(id), Str|'(FblfHeap* heap);']));
+    Return;
+  }));
 
-  Output@ impls = ForEachProgram<Output@>(env, NoOutput, (ProgramId@ id, Program@ p, Output@ o) {
-    Lines[o, Compile(SharedFuncName(id), p)];
-  });
+  Unit@ _ <- Do(ForEachProgram<Output@>(env, Return, (ProgramId@ id, Program@ p, Output@ o) {
+    Unit@ _ <- Do(o);
+    Unit@ _ <- Do(Compile(SharedFuncName(id), p));
+    Return;
+  }));
 
-  Lines[protos, impls];
+  Return;
 };
 
 @(Compile, CompileEnv);
