@@ -439,3 +439,26 @@ But we need a way to add more runtime level abstraction capability to the
 language. We'll see if it continues to be nice to express embedded in fble, or
 if the added runtime abstractions start to lead to awkward duplication of
 existing fble abstractions.
+
+---
+
+So a fair bit more runtime level abstraction is needed. For example, take Md5.
+In my current, reasonable description of it, we instantiate 260 32-bit adders.
+These adders all operate on different parts of the heap. It takes 865
+statements to implement a single adder, which is not unreasonable: about 30
+lines of if/else and assignment for each bit. But with 260 of them, that's
+224900 lines of generated code, which is too much.
+
+In short, we need to be able, at runtime, to reuse the same code on different
+parts of the bit heap. Thus I propose revising fblf.
+
+Focusing on the pure runtime aspects, where we don't care about encapsulation
+or types or names.
+
+An fblf program is a list of procedures.
+
+A procedure takes zero or more arguments, where an argument refers to an
+address on the heap. The body of a procedure is a program like we currently
+have defined for fblf, except you can call other procedures. And that's it.
+Should be very simple to describe.
+

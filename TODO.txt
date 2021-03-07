@@ -1,6 +1,8 @@
 Fblf:
 * Figure out how to make the compiled fblf md5 program small enough for the C
   compiler to compile on my computer.
+ - If we could factor out the logic for a 32-bit adder, that should be enough
+   in this case.
 
 * Clean up fblf compilation test infrastructure.
  - Fix it so we can have multiple tests with non-empty environments.

@@ -1,0 +1,37 @@
+How many lines of code we expect for PaddedMd5.feed program:
+
+wpack.feed,                                           // 1
+If(wpack.packed,                                      // 3
+  Seq(List<Program@>[
+    Store(Int|4, Int|32, block, count, word),         // 2^6-3 = 61
+    If(Eq(Ref(count), Const(BitStr|1111), Int|4),     // 3
+      doblock),                                       // 266440
+  IncP(Int|4, count)]))                               // 4 * (3 + 1 + 1) = 20
+
+doblock = 4*1 + (Round1 + Round2 + Round3 + Round4) + 4*(AddM32:865)
+AddM32 = 1 + 32 * (3*5 + 12) = 865   
+
+RoundX = 16 * (XX)
+
+XX = 1 + 4 * (Add32:865) + (Cls32:32) + X = 3493 + X
+
+F = Not32 + And32 + And32 + Or32 = 640
+G = Not32 + And32 + And32 + Or32 = 640
+H = Xor32 + Xor32 = 576
+I = Not32 + Or32 + Xor32 = 608
+
+FF = 4133
+GG = 4133
+HH = 4069
+II = 4101
+
+AllRounds = 262976
+
+Not32 = 32 * (3 + 2) = 160
+And32 = 32 * (3 + 2) = 160
+Or32 = 32 * (3 + 2) = 160  
+Xor32 = 32 * (6 + 3) = 288
+Cls32 = 32
+
+Note: This is dominated by 260 32-bit adders, which take a total of 224900
+statements.

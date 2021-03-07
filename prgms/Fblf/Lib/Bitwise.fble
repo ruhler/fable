@@ -23,7 +23,6 @@
 % CountUpTo = /Int/Int/Iter%.CountUpTo;
 <@,@>% For = /Iter%.For;
 
-<@>% List = /List%.List;
 
 # Bitwise --
 #   Helper function for describing modules that implement bitwise computation.
@@ -37,7 +36,7 @@
 (Int@, (Int@) { Program@; }) { Module@<Program@>; }
 Bitwise = (Int@ n, (Int@) { Program@; } f) {
   PureM<Program@>(For<Int@, Program@>(CountUpTo(n), Noop, (Int@ i, Program@ s) {
-    Seq(List<Program@>[s, f(i)]);
+    Seq[s, f(i)];
   }));
 };
 

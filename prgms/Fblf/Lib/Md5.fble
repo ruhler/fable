@@ -40,7 +40,6 @@
 % ClsM = /Fblf/Lib/Bitwise%.ClsM;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 
 Int@ 32 = Int|32;
 
@@ -119,7 +118,7 @@ XX = (X@ xf)(Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr32@ x, Int@ s, Valu
   Addr32@ axfv <- AllocM<Program@>(32);
   Addr32@ axfxtv <- AllocM<Program@>(32);
   Addr32@ clsv <- AllocM<Program@>(32);
-  SeqM(List<Module@<Program@>>[
+  SeqM[
     PureM<Program@>(Assign(tv, t, 32)),
     AddM(32, x, tv, xtv),
     xf(b, c, d, xfv),
@@ -127,7 +126,7 @@ XX = (X@ xf)(Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr32@ x, Int@ s, Valu
     AddM(32, axfv, xtv, axfxtv),
     ClsM(32, s, axfxtv, clsv),
     AddM(32, b, clsv, r)
-  ]);
+  ];
 };
 
 XX@ FF = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
@@ -135,11 +134,11 @@ XX@ FF = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   Addr32@ nx <- AllocM<Program@>(32);
   Addr32@ anxz <- AllocM<Program@>(32);
   Addr32@ xy <- AllocM<Program@>(32);
-  SeqM(List<Module@<Program@>>[
+  SeqM[
     NotM(32, x, nx),
     AndM(32, nx, z, anxz),
     AndM(32, x, y, xy),
-    OrM(32, xy, anxz, r)]);
+    OrM(32, xy, anxz, r)];
 });
 
 XX@ GG = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
@@ -147,29 +146,29 @@ XX@ GG = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   Addr32@ nz <- AllocM<Program@>(32);
   Addr32@ aynz <- AllocM<Program@>(32);
   Addr32@ xz <- AllocM<Program@>(32);
-  SeqM(List<Module@<Program@>>[
+  SeqM[
     NotM(32, z, nz),
     AndM(32, y, nz, aynz),
     AndM(32, x, z, xz),
-    OrM(32, xz, aynz, r)]);
+    OrM(32, xz, aynz, r)];
 });
 
 XX@ HH = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = xor(x, xor(y, z));
   Addr32@ yz <- AllocM<Program@>(32);
-  SeqM(List<Module@<Program@>>[
+  SeqM[
     XorM(32, y, z, yz),
-    XorM(32, x, yz, r)]);
+    XorM(32, x, yz, r)];
 });
 
 XX@ II = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
   # r = xor(y, or(x, not(z)));
   Addr32@ nz <- AllocM<Program@>(32);
   Addr32@ xnz <- AllocM<Program@>(32);
-  SeqM(List<Module@<Program@>>[
+  SeqM[
     NotM(32, z, nz),
     OrM(32, x, nz, xnz),
-    XorM(32, y, xnz, r)]);
+    XorM(32, y, xnz, r)];
 });
 
 # Round@ --
@@ -194,7 +193,7 @@ XX@ II = XX((Addr32@ x, Addr32@ y, Addr32@ z, Addr32@ r) {
 RoundX = (XX@ xx, Int@ s0, Int@ s1, Int@ s2, Int@ s3, BlockOf@<Value32@> t, (BlockOf@<Addr32@>) { BlockOf@<Addr32@>; } permute)
 (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) {
   BlockOf@<Addr32@> permuted = permute(block);
-  SeqM(List<Module@<Program@>>[
+  SeqM[
     xx(a, b, c, d, permuted.00, s0, t.00, a),
     xx(d, a, b, c, permuted.01, s1, t.01, d),
     xx(c, d, a, b, permuted.02, s2, t.02, c),
@@ -210,7 +209,7 @@ RoundX = (XX@ xx, Int@ s0, Int@ s1, Int@ s2, Int@ s3, BlockOf@<Value32@> t, (Blo
     xx(a, b, c, d, permuted.12, s0, t.12, a),
     xx(d, a, b, c, permuted.13, s1, t.13, d),
     xx(c, d, a, b, permuted.14, s2, t.14, c),
-    xx(b, c, d, a, permuted.15, s3, t.15, b)]);
+    xx(b, c, d, a, permuted.15, s3, t.15, b)];
 };
 
 Round@ Round1 = RoundX(FF, Int|7, Int|12, Int|17, Int|22, T1, (BlockOf@<Addr32@> b) {
@@ -247,7 +246,7 @@ DoBlock = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) 
   Addr32@ save_b <- AllocM<Program@>(32);
   Addr32@ save_c <- AllocM<Program@>(32);
   Addr32@ save_d <- AllocM<Program@>(32);
-  SeqM(List<Module@<Program@>>[
+  SeqM[
     PureM<Program@>(Assign(save_a, Ref(a), 32)),
     PureM<Program@>(Assign(save_b, Ref(b), 32)),
     PureM<Program@>(Assign(save_c, Ref(c), 32)),
@@ -259,7 +258,7 @@ DoBlock = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, BlockOf@<Addr32@> block) 
     AddM(32, a, save_a, a),
     AddM(32, b, save_b, b),
     AddM(32, c, save_c, c),
-    AddM(32, d, save_d, d)]);
+    AddM(32, d, save_d, d)];
 };
 
 @ Addr8@ = Addr@;
@@ -302,10 +301,10 @@ PackWord = (Addr32@ word, Addr8@ byte) {
 
   Program@ reset <- SharedM<PackWord@>(Assign(addr, Const(BitStr|11), Int|2));
 
-  Program@ feed <- SharedM<PackWord@>(Seq(List<Program@>[
+  Program@ feed <- SharedM<PackWord@>(Seq[
     Store(Int|2, Int|8, word, addr, byte),
     DecP(Int|2, addr)
-  ]));
+  ]);
 
   Condition@ packed = Eq(Ref(addr), Const(BitStr|11), Int|2);
 
@@ -364,24 +363,24 @@ PaddedMd5 = (Addr32@ a, Addr32@ b, Addr32@ c, Addr32@ d, Addr8@ byte) {
 
   # Note: the spec lists the initial values for A, B, C, and D low-order byte
   # first, but H takes high order byte first.
-  Program@ reset <- SharedM<PaddedMd5@>(Seq(List<Program@>[
+  Program@ reset <- SharedM<PaddedMd5@>(Seq[
     Assign(count, Const(BitStr|0000), Int|4),
     Assign(a, H|67452301, 32),
     Assign(b, H|EFCDAB89, 32),
     Assign(c, H|98BADCFE, 32),
     Assign(d, H|10325476, 32),
     wpack.reset
-  ]));
+  ]);
 
-  Program@ feed <- SharedM<PaddedMd5@>(Seq(List<Program@>[
+  Program@ feed <- SharedM<PaddedMd5@>(Seq[
     wpack.feed,
     If(wpack.packed,
-      Seq(List<Program@>[
+      Seq[
         Store(Int|4, Int|32, block, count, word),
         If(Eq(Ref(count), Const(BitStr|1111), Int|4),
           doblock),
-      IncP(Int|4, count)]))
-  ]));
+      IncP(Int|4, count)])
+  ]);
 
   PureM<PaddedMd5@>(@(reset, feed));
 };
@@ -427,20 +426,20 @@ Md5 = (Addr8@ input, Addr@ hash) {
   # block so far.
   Addr@ padding <- AllocM<Md5@>(Int|6);
 
-  Program@ reset <- SharedM<Md5@>(Seq(List<Program@>[
+  Program@ reset <- SharedM<Md5@>(Seq[
     Assign(length, H|0000000000000000, Int|64),
     padded.reset
-  ]));
+  ]);
 
-  Program@ feed <- SharedM<Md5@>(Seq(List<Program@>[
+  Program@ feed <- SharedM<Md5@>(Seq[
     padded.feed,
 
     # Increment the length by one bytes worth by incrementing all but the last
     # three bits by 1.
     IncP(Int|61, length)
-  ]));
+  ]);
 
-  Program@ finish <- SharedM<Md5@>(Seq(List<Program@>[
+  Program@ finish <- SharedM<Md5@>(Seq[
     # Start tracking how many bytes we've added to the final block.
     Assign(padding, Ref(Add(length, Int|55)), Int|6),
 
@@ -451,10 +450,10 @@ Md5 = (Addr8@ input, Addr@ hash) {
 
     # Feed byte 0x00 until 8 bytes shy of end of block.
     Assign(input, H|00, Int|8),
-    While(Ne(Ref(padding), Const(BitStr|111000), Int|6), Seq(List<Program@>[
+    While(Ne(Ref(padding), Const(BitStr|111000), Int|6), Seq[
       padded.feed,
       IncP(Int|6, padding)
-    ])),
+    ]),
 
     # Feed length (in bits) as next 8 bytes, least significant byte first.
     Assign(input, Ref(Add(length, Int|56)), Int|8), padded.feed,
@@ -485,7 +484,7 @@ Md5 = (Addr8@ input, Addr@ hash) {
     Assign(Add(hash, Int|104), Ref(Add(d, Int|16)), Int|8),
     Assign(Add(hash, Int|112), Ref(Add(d, Int|8)),  Int|8),
     Assign(Add(hash, Int|120), Ref(Add(d, Int|0)),  Int|8)
-  ]));
+  ]);
 
   PureM<Md5@>(Md5@(reset, feed, finish));
 };

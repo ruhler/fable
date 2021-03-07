@@ -78,7 +78,7 @@ AddM = (Int@ n, Addr@ a, Addr@ b, Addr@ z) {
   PureM<Program@>(For<Int@, Program@>(CountDownFrom(n), Assign(carry, b0, Int|1),
     (Int@ i, Program@ s) {
       Program@ add1 = Add1P(Add(a, i), Add(b, i), carry, carry, Add(z, i));
-      Seq(List<Program@>[s, add1]); 
+      Seq[s, add1]; 
     }));
 };
 
