@@ -10,32 +10,36 @@
 % Do = /Fblf/Compile/Output%.Do;
 % Return = /Fblf/Compile/Output%.Return;
 
-@ Addr@ = /Fblf/Program%.Addr@;
-@ ProgramId@ = /Fblf/Program%.ProgramId@;
-@ Env@ = /Fblf/Program%.Env@;
+@ Var@ = /Fblf/Program%.Var@;
+@ Proc@ = /Fblf/Program%.Proc@;
+@ ProcId@ = /Fblf/Program%.ProcId@;
+@ Stmt@ = /Fblf/Program%.Stmt@;
 @ Assign@ = /Fblf/Program%.Assign@;
-@ Condition@ = /Fblf/Program%.Condition@;
+@ Cond@ = /Fblf/Program%.Cond@;
 @ IfElse@ = /Fblf/Program%.IfElse@;
 @ Sequence@ = /Fblf/Program%.Sequence@;
 @ While@ = /Fblf/Program%.While@;
-@ Shared@ = /Fblf/Program%.Shared@;
+@ Call@ = /Fblf/Program%.Call@;
 @ Value@ = /Fblf/Program%.Value@;
 @ Program@ = /Fblf/Program%.Program@;
-% Ref = /Fblf/Program%.Ref;
-<@>% ForEachProgram = /Fblf/Program%.ForEachProgram;
+% Offset = /Fblf/Program%.Offset;
+% Var = /Fblf/Program%.Var;
 
 @ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % Eq = /Int/Int/Eq%.Eq;
 % Le = /Int/Int/Eq%.Le;
 % Mod = /Int/Int/Div%.Mod;
 % Int = /Int/Int/Lit%.Int;
 
+% CountUpTo = /Int/Int/Iter%.CountUpTo;
+<@,@>% For = /Iter%.For;
+
 <@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;
 <@>% Cons = /List%.Cons;
-<@>% Concat = /List%.Concat;
+<@,@>% ForEach = /List%.ForEach;
+<@,@>% Map = /List%.Map;
 
 <@>% Drop = /List/Length%.Drop;
 <@>% Length = /List/Length%.Length;
@@ -43,14 +47,16 @@
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
+% Strs = /String%.Strs;
 
 @ Unit@ = /Unit%.Unit@;
 
 Int@ BitsPerWord = Int|64;
 
-(List@<String@>) { String@; } Strs = Concat<Char@>;
-
-(Addr@) { String@; } CompileAddr = /Int/Int/Show%.Show;
+(Var@) { String@; } CompileVar = (Var@ v) {
+  Strs[Str|'(x', /Int/Int/Show%.Show(v.id),
+    Str|' + ', /Int/Int/Show%.Show(v.offset), Str|')'];
+};
 
 # Compile a constant that is assumed to fit within BitsPerWord.
 (List@<Bit@>) { String@; } 
@@ -95,21 +101,21 @@ CompileSmallConstant = {
 (Value@, Value@, Int@) { String@; }
 CompileSmallEquals = (Value@ a, Value@ b, Int@ n) {
   a.?(
-    ref: b.?(
-      ref: Strs[
+    var: b.?(
+      var: Strs[
         Str|'FblfHeapEqual(heap, ',
-        CompileAddr(a.ref), Str|', ',
-        CompileAddr(b.ref), Str|', ',
+        CompileVar(a.var), Str|', ',
+        CompileVar(b.var), Str|', ',
         /Int/Int/Show%.Show(n), Str|')'],
       const: Strs[
         Str|'FblfHeapEquals(heap, ',
-        CompileAddr(a.ref), Str|', ',
+        CompileVar(a.var), Str|', ',
         CompileSmallConstant(b.const), Str|', ',
         /Int/Int/Show%.Show(n), Str|')']),
     const: b.?(
-      ref: Strs[
+      var: Strs[
         Str|'FblfHeapEquals(heap, ',
-        CompileAddr(b.ref), Str|', ',
+        CompileVar(b.var), Str|', ',
         CompileSmallConstant(a.const), Str|', ',
         /Int/Int/Show%.Show(n), Str|')'],
       const: Strs[
@@ -125,9 +131,9 @@ CompileSmallEquals = (Value@ a, Value@ b, Int@ n) {
 # bits of the value in 'lo'.
 (Value@, Int@) { *(Value@ hi, Value@ lo); } Split = (Value@ v, Int@ n) {
   v.?(
-    ref: @(
+    var: @(
       hi: v,
-      lo: Ref(Add(v.ref, n))),
+      lo: Var(Offset(v.var, n))),
     const: @(
       hi: Value@(const: Take<Bit@>(n, v.const)),
       lo: Value@(const: Drop<Bit@>(n, v.const))));
@@ -149,7 +155,7 @@ CompileEquals = (Value@ a, Value@ b, Int@ n) {
 
 # Compile a condition into an expression suitable for use in the condition of
 # an if or while statement in C.
-(Condition@) { String@; } CompileCondition = (Condition@ cond) {
+(Cond@) { String@; } CompileCondition = (Cond@ cond) {
   String@ equals = CompileEquals(cond.a, cond.b, cond.n);
   cond.op.?(
     eq: equals,
@@ -161,19 +167,19 @@ CompileEquals = (Value@ a, Value@ b, Int@ n) {
 (String@, Assign@) { Output@; }
 CompileSmallAssign = (String@ indent, Assign@ assign) {
   assign.value.?(
-    ref: Line(Strs[
+    var: Line(Strs[
       indent,
       Str|'FblfHeapCopy(heap, ',
-      CompileAddr(assign.ref),
+      CompileVar(assign.var),
       Str|', ',
-      CompileAddr(assign.value.ref),
+      CompileVar(assign.value.var),
       Str|', ',
       /Int/Int/Show%.Show(assign.n),
       Str|');']),
     const: Line(Strs[
       indent,
       Str|'FblfHeapWrite(heap, ',
-      CompileAddr(assign.ref),
+      CompileVar(assign.var),
       Str|', ',
       CompileSmallConstant(assign.value.const),
       Str|', ',
@@ -181,15 +187,23 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
       Str|');']));
 };
 
-# SharedFuncName --
-#   The C function name used for the implementation of the program with given
+# CProcName --
+#   The C function name used for the implementation of the procedure with given
 #   id.
-(ProgramId@) { String@; } SharedFuncName = (ProgramId@ id) {
-  Strs[Str|'__prog_', /Int/Int/Show%.Show(id)];
+(ProcId@) { String@; } CProcName = (ProcId@ id) {
+  # TODO: Sanitize the function name in a way that ensures we end up with a
+  # unique name for each ProcId.
+  Strs[Str|'__proc_', Map<Char@, Char@>(id, (Char@ c) {
+    /Char/Type%.IsAlNum(c).?(true: c, false: Chars.'_');
+  })];
 };
 
-(String@, Shared@) { Output@; } CompileShared = (String@ indent, Shared@ id) {
-  Line(Strs[indent, SharedFuncName(id), Str|'(heap);']);
+(String@, Call@) { Output@; } CompileCall = (String@ indent, Call@ call) {
+  String@ args = Strs(Map<Var@, String@>(call.args, (Var@ v) {
+    Strs[Str|', ', CompileVar(v)];
+  }));
+
+  Line(Strs[indent, CProcName(call.proc), Str|'(heap', args, Str|');']);
 };
 
 # Compile an assignment statement into a sequence of statements in C.
@@ -198,8 +212,8 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
     true: CompileSmallAssign(indent, assign),
     false: {
       % vs = Split(assign.value, BitsPerWord);
-      Unit@ _ <- Do(CompileSmallAssign(indent, Assign@(assign.ref, vs.hi, BitsPerWord)));
-      Unit@ _ <- Do(CompileSmallAssign(indent, Assign@(Add(assign.ref, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord))));
+      Unit@ _ <- Do(CompileSmallAssign(indent, Assign@(assign.var, vs.hi, BitsPerWord)));
+      Unit@ _ <- Do(CompileSmallAssign(indent, Assign@(Offset(assign.var, BitsPerWord), vs.lo, Sub(assign.n, BitsPerWord))));
       Return;
     });
 };
@@ -207,7 +221,7 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 (String@, Sequence@) { Output@; } CompileSequence = (String@ indent, Sequence@ seq) {
   seq.?(
     cons: {
-      Unit@ _ <- Do(CompileProgram(indent, seq.cons.head));
+      Unit@ _ <- Do(CompileStmt(indent, seq.cons.head));
       Unit@ _ <- Do(CompileSequence(indent, seq.cons.tail));
       Return;
     },
@@ -217,9 +231,9 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 (String@, IfElse@) { Output@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
   String@ nested = Strs[indent, Str|'  '];
   Unit@ _ <- Do(Line(Strs[indent, Str|'if (', CompileCondition(ifelse.condition), Str|') {']));
-  Unit@ _ <- Do(CompileProgram(nested, ifelse.if_body));
+  Unit@ _ <- Do(CompileStmt(nested, ifelse.if_body));
   Unit@ _ <- Do(Line(Strs[indent, Str|'} else {']));
-  Unit@ _ <- Do(CompileProgram(nested, ifelse.else_body));
+  Unit@ _ <- Do(CompileStmt(nested, ifelse.else_body));
   Unit@ _ <- Do(Line(Strs[indent, Str|'}']));
   Return;
 },
@@ -227,53 +241,63 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 (String@, While@) { Output@; } CompileWhile = (String@ indent, While@ while) {
   String@ nested = Strs[indent, Str|'  '];
   Unit@ _ <- Do(Line(Strs[ indent, Str|'while (', CompileCondition(while.condition), Str|') {']));
-  Unit@ _ <- Do(CompileProgram(nested, while.body));
+  Unit@ _ <- Do(CompileStmt(nested, while.body));
   Unit@ _ <- Do(Line(Strs[indent, Str|'}']));
   Return;
 },
 
-(String@, Program@) { Output@; } CompileProgram = (String@ indent, Program@ prgm) {
+(String@, Stmt@) { Output@; } CompileStmt = (String@ indent, Stmt@ prgm) {
   prgm.?(
     assign: CompileAssign(indent, prgm.assign),
     sequence: CompileSequence(indent, prgm.sequence),
     ifelse: CompileIfElse(indent, prgm.ifelse),
     while: CompileWhile(indent, prgm.while),
-    shared: CompileShared(indent, prgm.shared));
+    call: CompileCall(indent, prgm.call));
 };
 
-# Compile_ --
-#   Compile an fblf program to a C function with the given name.
-#
-# TODO: Clarify in documentation the dependence on CompileEnv.
+# Proto --
+#   Generates the prototype for an fblf function with given name and number of
+#   arguments.
+(String@, Int@) { String@; } Proto = (String@ name, Int@ argc) {
+  String@ args = For<Int@, String@>(CountUpTo(argc), Str|'',
+    (Int@ i, String@ s) {
+      Strs[s, Str|', int x', /Int/Int/Show%.Show(i)];
+    });
+
+  Strs[Str|'void ', name, Str|'(FblfHeap* heap', args, Str|')'];
+};
+
+# CompileProc --
+#   Compile an fblf statement to a C function with the given name.
 #
 # The signature of a function named 'Foo' will be:
-#   void Foo(FblfHeap* heap);
-(String@, Program@) { Output@; }
-Compile = (String@ name, Program@ program) {
-  Unit@ _ <- Do(Line(Strs[ Str|'void ', name, Str|'(FblfHeap* heap)']));
+#   void Foo(FblfHeap* heap, int x0, int x1, ...);
+(String@, Int@, Stmt@) { Output@; }
+CompileProc = (String@ name, Int@ argc, Stmt@ stmt) {
+  Unit@ _ <- Do(Line(Proto(name, argc)));
   Unit@ _ <- Do(Line(Str|'{'));
-  Unit@ _ <- Do(CompileProgram(Str|'  ', program));
+  Unit@ _ <- Do(CompileStmt(Str|'  ', stmt));
   Unit@ _ <- Do(Line(Str|'}'));
   Return;
 };
 
-# CompileEnv --
-#   Compile an fblf program environment to static C function that can be
-#   referenced from programs compiled with Compile.
-(Env@) { Output@; } CompileEnv = (Env@ env) {
-  Unit@ _ <- Do(ForEachProgram<Output@>(env, Return, (ProgramId@ id, Program@ p, Output@ o) {
+# Compile --
+#   Compile an fblf program to C function.
+(Program@) { Output@; } Compile = (Program@ prog) {
+  Unit@ _ <- Do(ForEach<Proc@, Output@>(prog, Return, (Proc@ proc, Output@ o) {
     Unit@ _ <- Do(o);
-    Unit@ _ <- Do(Line(Strs[ Str|'void ', SharedFuncName(id), Str|'(FblfHeap* heap);']));
+    Unit@ _ <- Do(Line(Strs[Proto(CProcName(proc.id), proc.argc), Str|';']));
     Return;
   }));
 
-  Unit@ _ <- Do(ForEachProgram<Output@>(env, Return, (ProgramId@ id, Program@ p, Output@ o) {
+  Unit@ _ <- Do(ForEach<Proc@, Output@>(prog, Return, (Proc@ proc, Output@ o) {
     Unit@ _ <- Do(o);
-    Unit@ _ <- Do(Compile(SharedFuncName(id), p));
+    Unit@ _ <- Do(CompileProc(CProcName(proc.id), proc.argc, proc.body));
     Return;
   }));
 
   Return;
 };
 
-@(Compile, CompileEnv);
+@(Compile);
+

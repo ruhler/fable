@@ -122,6 +122,7 @@ Exec:
   Just, True, False.
 
 * Clean up fble library
+ - Remove /String%.Concat in favor of /String%.Strs.
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.
  - Add tests for full code coverage of all functions.

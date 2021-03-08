@@ -4,57 +4,73 @@
 % HexToBits = /Digits/String%.HexToBits;
 
 @ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
 
 <@>@ List@ = /List%.List@;
-<@>% Nil = /List%.Nil;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+@ String@ = /String%.String@;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-# Bits@ --
-#   A sequence of bits.
-@ Bits@ = List@<Bit@>;
+@ VarId@ = Int@;
 
-# Addr@ --
-#   A reference to a bit on the bit heap.
-@ Addr@ = Int@;
+@ ProcId@ = String@;
+
+# Var@ --
+#   Identifies an address on the heap relative to a procedure variable.
+#
+# Fields:
+#   id - the index of the procedure argument in the list of args to the
+#        procedure. The first argument is index 0, the second index 1, and so
+#        on.
+#   offset - the offset relative to apply relative to the argument value.
+#
+# For example, @(id: 3, offset: 5) means 5 bits after whatever is pointed to
+# by the fourth argument to the procedure.
+@ Var@ = *(VarId@ id, Int@ offset);
+
+# Offset a var by the given number of bits.
+(Var@, Int@) { Var@; } Offset = (Var@ v, Int@ n) {
+  Var@(v.id, Add(v.offset, n));
+};
+
+# Const@ --
+#   A constant sequence of bits.
+@ Const@ = List@<Bit@>;
 
 # Value@ --
 #   A value that is specified as either a reference to a sequence of bits on
 #   the heap or a literal sequence of bits.
-@ Value@ = +(Addr@ ref, Bits@ const);
+@ Value@ = +(Var@ var, Const@ const);
 
-(Addr@) { Value@; } Ref = (Addr@ x) {
-  Value@(ref: x);
+(Var@) { Value@; } Var = (Var@ v) {
+  Value@(var: v);
 };
 
-# Const --
-#   A constant value.
-#
-# Example Use:
-#   Value@ v = Const(Bit|01110001);
-(List@<Bit@>) { Value@; } Const = (List@<Bit@> bits) {
-  Value@(const: bits);
+# A binary constant.
+(Const@) { Value@; } Binary = (Const@ c) {
+  Value@(const: c);
 };
 
-# ConstHex --
-#   A constant value from Hex.
-#
-# Example Use:
-#   Value@ v = Const(Bit|A71);
-(List@<Hex@>) { Value@; } ConstHex = (List@<Hex@> l) {
-  Const(HexToBits(l));
+# A hex constant.
+(List@<Hex@>) { Value@; } Hex = (List@<Hex@> h) {
+  Binary(HexToBits(h));
 };
 
-# ConditionOp@ --
+# CondOp@ --
 #   A conditional operator.
 #
 # Fields:
 #   eq - The condition is satisfied if the arguments are equal.
 #   ne - The condition is satisfied if the arguments are not equal.
-@ ConditionOp@ = +(Unit@ eq, Unit@ ne);
+@ CondOp@ = +(Unit@ eq, Unit@ ne);
 
-# Condition@ --
+# Cond@ --
 #   A conditional expression: a == b or a != b
 #
 # Fields:
@@ -62,126 +78,99 @@
 #   a - The first operand.
 #   b - The second operand.
 #   n - The number of bits to compare.
-@ Condition@ = *(ConditionOp@ op, Value@ a, Value@ b, Int@ n);
+@ Cond@ = *(CondOp@ op, Value@ a, Value@ b, Int@ n);
 
-(Value@, Value@, Int@) { Condition@; } Eq = (Value@ a, Value@ b, Int@ n) {
-  Condition@(ConditionOp@(eq: Unit), a, b, n);
+(Value@, Value@, Int@) { Cond@; } Eq = (Value@ a, Value@ b, Int@ n) {
+  Cond@(CondOp@(eq: Unit), a, b, n);
 };
 
-(Value@, Value@, Int@) { Condition@; } Ne = (Value@ a, Value@ b, Int@ n) {
-  Condition@(ConditionOp@(ne: Unit), a, b, n);
+(Value@, Value@, Int@) { Cond@; } Ne = (Value@ a, Value@ b, Int@ n) {
+  Cond@(CondOp@(ne: Unit), a, b, n);
 };
-
-# ProgramId@ --
-#   Identifies a program in the context of an environment of programs.
-@ ProgramId@ = Int@;
 
 # Assign@ --
 #   Set the contents of ref to the given value.
 #
-# If value is a reference, behavior is undefined of the sequences of bits of
-# the ref and value are overlapping.
+# If value is a variable, behavior is undefined of the sequences of bits of
+# the var and value are overlapping.
 #
 # Fields:
-#   ref - Reference to the sequence of bits to be assigned to.
+#   var - Reference to the sequence of bits to be assigned to.
 #   value - The value of the bits to set.
 #   n - The number of bits to be assigned.
-@ Assign@ = *(Addr@ ref, Value@ value, Int@ n);
+@ Assign@ = *(Var@ var, Value@ value, Int@ n);
 
 # Sequence@ -- 
 #   Executes a sequence of zero or more programs in order.
-@ Sequence@ = List@<Program@>,
+@ Sequence@ = List@<Stmt@>,
 
 # IfElse@ --
 #   Executes the if_body if the condition is satisfied, the else_body
 #   otherwise.
-@ IfElse@ = *(Condition@ condition, Program@ if_body, Program@ else_body),
+@ IfElse@ = *(Cond@ condition, Stmt@ if_body, Stmt@ else_body),
 
 # While@ --
 #   Executes the body repeatedly for as long as the condition is satisfied.
-@ While@ = *(Condition@ condition, Program@ body),
+@ While@ = *(Cond@ condition, Stmt@ body),
 
-# Shared@ --
-#   Execute the program with the given id in the context of a program
-#   environment.
-@ Shared@ = ProgramId@,
+# Call@ --
+#   Execute the procedure with the given id.
+@ Call@ = *(ProcId@ proc, List@<Var@> args),
 
-# Program@ --
-#   A program that performs computation on the bit heap.
-@ Program@ = +(
+# Stmt@ --
+@ Stmt@ = +(
   Assign@ assign,
   Sequence@ sequence,
   IfElse@ ifelse,
   While@ while,
-  Shared@ shared
+  Call@ call
 );
 
-# Env@ --
-#   A program environment mapping program id to program.
-@ Env@ = /Map%.Map@<ProgramId@, Program@>;
-
-# EmptyEnv --
-#   An empty program environment.
-Env@ EmptyEnv = /Map%.Empty<ProgramId@, Program@>;
-
-# GetProgram --
-#   Gets the program with given id from the program environment.
-#
-# Behavior is undefined if there is no program in the environment with that
-# id.
-(Env@, ProgramId@) { Program@; } GetProgram = {
-  % Lookup = /Map%.Lookup<ProgramId@>(/Int/Int/Structured%.Structured)<Program@>;
-  (Env@ env, ProgramId@ id) {
-    Lookup(env, id).just;
-  };
+(Var@, Value@, Int@) { Stmt@; } Assign = (Var@ x, Value@ v, Int@ n) {
+  Stmt@(assign: Assign@(x, v, n));
 };
 
-# PutProgram --
-#   Puts the program with given id into the program environment.
-(Env@, ProgramId@, Program@) { Env@; }
-PutProgram = /Map%.Insert<ProgramId@>(/Int/Int/Structured%.Structured)<Program@>;
-
-# ForEachProgram --
-#   Iterate over all the programs in the given program environment.
-#
-# Conceptually:
-#   B@ b = base
-#   foreach (id, prog) in map:
-#     b = body(id, prog, b)
-#   return b
-<@ B@>(Env@, B@, (ProgramId@, Program@, B@) { B@; }) { B@; }
-ForEachProgram = <@ B@> { /Map%.ForEach<ProgramId@, Program@, B@>; };
-
-(Addr@, Value@, Int@) { Program@; } Assign = (Addr@ x, Value@ v, Int@ n) {
-  Program@(assign: Assign@(x, v, n));
+(Cond@, Stmt@, Stmt@) { Stmt@; }
+IfElse = (Cond@ p, Stmt@ if_body, Stmt@ else_body) {
+  Stmt@(ifelse: IfElse@(p, if_body, else_body));
 };
 
-(Condition@, Program@, Program@) { Program@; }
-IfElse = (Condition@ p, Program@ if_body, Program@ else_body) {
-  Program@(ifelse: IfElse@(p, if_body, else_body));
+(List@<Stmt@>) { Stmt@; } Seq = (List@<Stmt@> stmts) {
+  Stmt@(sequence: stmts);
 };
 
-(List@<Program@>) { Program@; } Seq = (List@<Program@> prgms) {
-  Program@(sequence: prgms);
+(Cond@, Stmt@) { Stmt@; } If = (Cond@ p, Stmt@ body) {
+  IfElse(p, body, Seq[]);
 };
 
-Program@ Noop = Program@(sequence: Nil<Program@>);
-
-(Condition@, Program@) { Program@; } If = (Condition@ p, Program@ body) {
-  IfElse(p, body, Noop);
+(Cond@, Stmt@) { Stmt@; } While = (Cond@ p, Stmt@ body) {
+  Stmt@(while: While@(p, body));
 };
 
-(Condition@, Program@) { Program@; } While = (Condition@ p, Program@ body) {
-  Program@(while: While@(p, body));
+(ProcId@)(List@<Var@>) { Stmt@; } Call = (ProcId@ id)(List@<Var@> args) {
+  Stmt@(call: Call@(id, args));
 };
 
-(ProgramId@) { Program@; } Shared = (ProgramId@ id) {
-  Program@(shared: id);
+@ Proc@ = *(ProcId@ id, Int@ argc, Stmt@ body);
+
+@ Program@ = List@<Proc@>;
+
+# Look up a procedure in the program.
+(ProcId@, Program@) { Maybe@<Proc@>; }
+LookupProc = (ProcId@ id, Program@ p) {
+  p.?(
+    cons: {
+      /String/Eq%.Eq(id, p.cons.head.id).?(
+        true: Just<Proc@>(p.cons.head),
+        false: LookupProc(id, p.cons.tail));
+    },
+    nil: Nothing<Proc@>);
 };
 
 @(
-  Bit@, Bits@, Addr@, Env@, ProgramId@, Value@, ConditionOp@, Condition@,
-  Assign@, Sequence@, IfElse@, While@, Program@, Shared@,
-  Const, ConstHex, Ref, Eq, Ne, Assign, If, IfElse, Seq, Noop, While, Shared,
-  EmptyEnv, GetProgram, PutProgram, ForEachProgram
+  Bit@, VarId@, ProcId@, Var@, Const@, Value@, CondOp@, Cond@,
+  Assign@, Sequence@, IfElse@, While@, Call@, Stmt@,
+  Proc@, Program@,
+  Binary, Hex, Var, Offset, Eq, Ne, Assign, If, IfElse, Seq, While, Call,
+  LookupProc
 );

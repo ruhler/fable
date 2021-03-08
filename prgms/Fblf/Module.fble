@@ -1,103 +1,217 @@
 
+@ Program@ = /Fblf/Program%.Program@;
+@ Proc@ = /Fblf/Program%.Proc@;
+@ Var@ = /Fblf/Program%.Var@;
+@ Stmt@ = /Fblf/Program%.Stmt@;
+% Call = /Fblf/Program%.Call;
+% LookupProc = /Fblf/Program%.LookupProc;
+
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
 
-@ Program@ = /Fblf/Program%.Program@;
-@ ProgramId@ = /Fblf/Program%.ProgramId@;
-@ Addr@ = /Fblf/Program%.Addr@;
-@ Env@ = /Fblf/Program%.Env@;
-% EmptyEnv = /Fblf/Program%.EmptyEnv;
-% PutProgram = /Fblf/Program%.PutProgram;
-% Seq = /Fblf/Program%.Seq;
-% Noop = /Fblf/Program%.Noop;
-% Shared = /Fblf/Program%.Shared;
+@ String@ = /String%.String@;
+% Concat = /String%.Concat;
+% Str = /String%.Str;
 
-# Instance@, Module@ --
-#   Module@ is a monad for tracking program environment and allocation of
-#   objects on a heap. It is implemented as a state monad.
-#
-#   Instance@ is the part of the Module@ monad that represents an instantiated
-#   Module@.
+# ModuleM@ -- 
+#   Monadic API used to define a collection of fblf procedures that share the
+#   same internal state and module arguments.
 #
 # Fields:
-#   env - the program environment.
-#   pid - the next available program id. aka the number of programs in the env.
-#   heap - the next available heap address. aka the number of bits in the heap.
-<@>@ Instance@ = <@ T@> { *(Env@ env, ProgramId@ pid, Addr@ heap, T@ instance); };
-<@>@ Module@ = <@ T@>(Env@, ProgramId@, Addr@) { Instance@<T@>; };
+#   name - the globally unique name of the current module.
+#   args - the list of arguments passed to the module when it was instantiated.
+#          Includes the 'this' argument as the first element of the list.
+#   heap - the number of bits allocated on the heap so far for the internal
+#          state of this module.
+#   methods - the number of methods defined in the module so far.
+#   program - the program procedures defined so far.
+@ State@ = *(
+  String@ name,
+  List@<Var@> args,
+  Int@ heap,
+  Int@ methods,
+  Program@ program
+);
+<@>@ ModuleR@ = <@ T@>{ *(State@ s, T@ r); };
+<@>@ ModuleM@ = <@ T@>(State@) { ModuleR@<T@>; };
 
-# AllocM --
-#   Allocate n bits on the heap.
+# Module@ --
+#   A module defined using ModuleM@ with a name and the list of arguments
+#   supplied to it when the module was instantiated.
 #
-# Example use:
-#   Addr@ x <- AllocM(I(D|32));
-#   ...
-<@ T@>(Int@)((Addr@) { Module@<T@>; }) { Module@<T@>; }
-AllocM = <@ T@>(Int@ n)((Addr@) { Module@<T@>; } f) {
-  (Env@ env, ProgramId@ pid, Addr@ free) {
-    f(free)(env, pid, Add(free, n));
-  };
-};
+# Fields:
+#   name - A globally unique name of the module.
+#   body - The body of the module.
+#   args - List of arguments passed to the module, from the perspective of the
+#          module that instantiates this module. Not including 'this'.
+<@>@ Module@ = <@ T@> { *(String@ name, ModuleM@<T@> body, List@<Var@> args); };
 
-# SharedM --
-#   Get a shared reference to a program.
+# Module --
+#   Helper to define a module with unverified number of arguments.
 #
-# This is important any time a program will be reused in more than one place
-# to avoid duplicating the identical program, which could lead to an
-# exponential blowup in program size.
-<@ M@>(Program@)((Program@) { Module@<M@>; }) { Module@<M@>; }
-SharedM = <@ M@>(Program@ p)((Program@) { Module@<M@>; } f) {
-  (Env@ env, ProgramId@ pid, Addr@ free) {
-    f(Shared(pid))(PutProgram(env, pid, p), Add(pid, Int|1), free);
-  };
-};
-
-# InstM --
-#   Instantiate a module for use in another module.
+# The list of args provided should be the list of explicit arguments, not
+# including 'this', all from the perspective of the module that instantiates
+# this module.
 #
-# TODO: Re-work this API or add other APIs to allow us to start using the
-# program environment for programs.
+# It is the users responsibility to ensure the number of arguments provided to
+# the module match the number expected to be used by the module.
 #
-# Example use:
-#   Program@ p <- InstM(m);
-#   ...
-<@ A@, @ B@>(Module@<A@>)((A@) { Module@<B@>; }) { Module@<B@>; }
-InstM = <@ A@, @ B@>(Module@<A@> m)((A@) { Module@<B@>; } f) {
-  (Env@ env, ProgramId@ pid, Addr@ free) {
-    Instance@<A@> mr = m(env, pid, free);
-    f(mr.instance)(mr.env, mr.pid, mr.heap);
-  };
+# The provided module name must be globally unique.
+<@ T@>(String@, ModuleM@<T@>)(List@<Var@>) { Module@<T@>; }
+Module = <@ T@>(String@ name, ModuleM@<T@> body)(List@<Var@> args) {
+  Module@<T@>(name, body, args);
 };
 
-# PureM --
-#   A module that does not need to allocate space on the heap or instantiate
-#   other modules.
-<@ T@>(T@) { Module@<T@>; } PureM = <@ T@>(T@ instance) {
-  (Env@ env, ProgramId@ pid, Addr@ free) { Instance@<T@>(env, pid, free, instance); };
+# Module0 --
+#   Define a module that takes no arguments.
+<@ T@>(String@, ModuleM@<T@>) { Module@<T@>; }
+Module0 = <@ T@>(String@ name, ModuleM@<T@> body) {
+  Module<T@>(name, body)[];
 };
 
-# SeqM --
-#   Instantite a list of modules.
+# Module1 --
+#   Define a module that takes 1 argument.
+<@ T@>(String@, (Var@) { ModuleM@<T@>; }) { (Var@) { Module@<T@>; }; }
+Module1 = <@ T@>(String@ name, (Var@) { ModuleM@<T@>; } m)(Var@ arg) {
+  # Arg id 0 is reserved for local state.
+  Module<T@>(name, m(Var@(Int|1, Int|0)))[arg];
+};
+
+# Module2 --
+#   Define a module that takes 2 arguments.
+<@ T@>(String@, (Var@, Var@) { ModuleM@<T@>; }) { (Var@, Var@) { Module@<T@>; }; }
+Module2 = <@ T@>(String@ name, (Var@, Var@) { ModuleM@<T@>; } m)(Var@ arg1, Var@ arg2) {
+  # Arg id 0 is reserved for local state.
+  Module<T@>(name, m(Var@(Int|1, Int|0), Var@(Int|2, Int|0)))[arg1, arg2];
+};
+
+# Module3 --
+#   Define a module that takes 3 arguments.
+<@ T@>(String@, (Var@, Var@, Var@) { ModuleM@<T@>; }) { (Var@, Var@, Var@) { Module@<T@>; }; }
+Module3 = <@ T@>(String@ name, (Var@, Var@, Var@) { ModuleM@<T@>; } m)(Var@ arg1, Var@ arg2, Var@ arg3) {
+  # Arg id 0 is reserved for local state.
+  Module<T@>(name, m(Var@(Int|1, Int|0), Var@(Int|2, Int|0), Var@(Int|3, Int|0)))[arg1, arg2, arg3];
+};
+
+# Module4 --
+#   Define a module that takes 4 arguments.
+<@ T@>(String@, (Var@, Var@, Var@, Var@) { ModuleM@<T@>; }) { (Var@, Var@, Var@, Var@) { Module@<T@>; }; }
+Module4 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@) { ModuleM@<T@>; } m)
+  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4) {
+  # Arg id 0 is reserved for local state.
+  Module<T@>(name, m(
+      Var@(Int|1, Int|0),
+      Var@(Int|2, Int|0),
+      Var@(Int|3, Int|0),
+      Var@(Int|4, Int|0)))[arg1, arg2, arg3, arg4];
+};
+
+# Module5 --
+#   Define a module that takes 5 arguments.
+<@ T@>(String@, (Var@, Var@, Var@, Var@, Var@) { ModuleM@<T@>; }) { (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }; }
+Module5 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@, Var@) { ModuleM@<T@>; } m)
+  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4, Var@ arg5) {
+  # Arg id 0 is reserved for local state.
+  Module<T@>(name, m(
+      Var@(Int|1, Int|0),
+      Var@(Int|2, Int|0),
+      Var@(Int|3, Int|0),
+      Var@(Int|4, Int|0),
+      Var@(Int|5, Int|0)))[arg1, arg2, arg3, arg4, arg5];
+};
+
+# Do --
+#   Monadic bind for ModuleM monad.
+<@ A@, @ B@>(ModuleM@<A@>)((A@) { ModuleM@<B@>; }) { ModuleM@<B@>; }
+Do = <@ A@, @ B@>(ModuleM@<A@> m)((A@) { ModuleM@<B@>; } f)(State@ s) {
+  ModuleR@<A@> a = m(s);
+  f(a.r)(a.s);
+};
+
+# Return --
+#   Monadic return for ModuleM monad.
+<@ T@>(T@) { ModuleM@<T@>; }
+Return = <@ T@>(T@ r)(State@ s) {
+  ModuleR@<T@>(s, r);
+};
+
+# Helper function to make a variable that's relative to the intrernal state of
+# a module.
+(Int@) { Var@; } Local = (Int@ offset) {
+  # The retured variable is relative to arg '0', which corresponds to 'this'.
+  Var@(Int|0, offset);
+};
+
+# Alloc --
+#   Allocate n bits on the heap for use in an instance of this module.
+(Int@) { ModuleM@<Var@>; } Alloc = (Int@ n)(State@ s) {
+  ModuleR@<Var@>(State@(s.name, s.args, Add(s.heap, n), s.methods, s.program), Local(s.heap));
+};
+
+<@ T@>(Int@)((Var@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
+DoAlloc = <@ T@>(Int@ n) { Do<Var@, T@>(Alloc(n)); };
+
+# Inst --
+#   Instantiate a module for use in an instance of this module.
+<@ T@>(Module@<T@>) { ModuleM@<T@>; }
+Inst = <@ T@>(Module@<T@> m)(State@ s) {
+  List@<Var@> args = Cons<Var@>(Local(s.heap), m.args);
+  ModuleR@<T@> mr = m.body(State@(m.name, args, Int|0, Int|0, s.program));
+  ModuleR@<T@>(State@(s.name, s.args, Add(s.heap, mr.s.heap), s.methods, mr.s.program), mr.r);
+}; 
+
+<@ A@, @ B@>(Module@<A@>)((A@) { ModuleM@<B@>; }) { ModuleM@<B@>; }
+DoInst = <@ A@, @ B@>(Module@<A@> m) {
+  Do<A@, B@>(Inst<A@>(m));
+};
+
+# Method --
+#   Define a module method.
+@ Method@ = Stmt@;
+
+# Note: The returned method can only be used for defining methods in the
+# module that instantiates this module. It cannot be used for defining local
+# methods or returned to the instantiator of the instantiator of this module.
 #
-# TODO: generalize this to arbitrary T@?
-(List@<Module@<Program@>>) { Module@<Program@>; } SeqM = (List@<Module@<Program@>> ms) {
-  ms.?(
-    cons: {
-      Program@ a <- InstM<Program@, Program@>(ms.cons.head);
-      Program@ b <- InstM<Program@, Program@>(SeqM(ms.cons.tail));
-      PureM<Program@>(Seq(List<Program@>[a, b]));
-    },
-    nil: PureM<Program@>(Noop));
+# TODO: Any way to get around the above pitfall or add some security to
+# prevent misuse from happening accidentally?
+(Stmt@) { ModuleM@<Method@>; }
+Method = (Stmt@ stmt)(State@ s) {
+  String@ proc_id = Concat[s.name, Str|'.', /Int/Int/Show%.Show(s.methods)];
+  
+  # Add the method to the program only if it hasn't already been defined.
+  Program@ program = LookupProc(proc_id, s.program).?(
+    just: s.program,
+    nothing: {
+      Int@ argc = /List/Length%.Length<Var@>(s.args);
+      Proc@ proc = Proc@(proc_id, argc, stmt);
+      Cons<Proc@>(proc, s.program);
+    });
+
+  Stmt@ call = Call(proc_id)(s.args);
+  ModuleR@<Method@>(State@(s.name, s.args, s.heap, Add(s.methods, Int|1), program), call);
 };
 
-# Instantiate a module, with the first object allocated at address 0.
-<@ T@>(Module@<T@>) { Instance@<T@>; }
-Instantiate = <@ T@>(Module@<T@> m) {
-  m(EmptyEnv, Int|0, Int|0);
+<@ T@>(Stmt@)((Method@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
+DoMethod = <@ T@>(Stmt@ body) { Do<Stmt@, T@>(Method(body)); };
+
+# Run --
+#   Runs a module, returning the generated program, the size of the heap
+#   required by the module, and whatever the module returns.
+<@>@ Ran@ = <@ T@> { *(Program@ program, Int@ heap, T@ x); };
+
+<@ T@>(Module@<T@>) { Ran@<T@>; } Run = <@ T@>(Module@<T@> m) {
+  List@<Var@> args = Cons<Var@>(Local(Int|0), m.args);
+  ModuleR@<T@> mr = m.body(State@(m.name, args, Int|0, Int|0, Nil<Proc@>));
+  Ran@<T@>(mr.s.program, mr.s.heap, mr.r);
 };
 
-@(Module@, Instance@, AllocM, SharedM, InstM, PureM, SeqM, Instantiate);
+@(ModuleM@, Module@, Method@, Ran@,
+  Module0, Module1, Module2, Module3, Module4, Module5,
+  Do, Return, Alloc, DoAlloc, Inst, DoInst, Method,
+  DoMethod, Run);

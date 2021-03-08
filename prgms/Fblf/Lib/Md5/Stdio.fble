@@ -2,7 +2,6 @@
 % True = /Bool%.True;
 
 % Compile = /Fblf/Compile%.Compile;
-% CompileEnv = /Fblf/Compile%.CompileEnv;
 
 @ Output@ = /Fblf/Compile/Output%.Output@;
 % Do = /Fblf/Compile/Output%.Do;
@@ -12,11 +11,15 @@
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5M = /Fblf/Lib/Md5%.Md5;
 
-<@>@ Instance@ = /Fblf/Module%.Instance@;
-<@>% Instantiate = /Fblf/Module%.Instantiate;
-<@>% AllocM = /Fblf/Module%.AllocM;
+<@>@ Ran@ = /Fblf/Module%.Ran@;
+@ Method@ = /Fblf/Module%.Method@;
+<@>% Module0 = /Fblf/Module%.Module0;
+<@>% Run = /Fblf/Module%.Run;
+<@>% DoAlloc = /Fblf/Module%.DoAlloc;
+<@>% DoMethod = /Fblf/Module%.DoMethod;
+<@,@>% DoInst = /Fblf/Module%.DoInst;
 
-@ Addr@ = /Fblf/Program%.Addr@;
+@ Var@ = /Fblf/Program%.Var@;
 
 % Int = /Int/Int/Lit%.Int;
 
@@ -31,20 +34,23 @@
 % Str = /String%.Str;
 
 @ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
-  Instance@<Md5@> md5I = Instantiate<Md5@>({
-    Addr@ input <- AllocM<Md5@>(Int|8);
-    Addr@ hash <- AllocM<Md5@>(Int|128);
-    Md5M(input, hash);
-  });
-  Md5@ md5 = md5I.instance;
+  Ran@<Unit@> ran = Run<Unit@>(Module0<Unit@>(Str|'Md5Stdio', {
+    Var@ input <- DoAlloc<Unit@>(Int|8);
+    Var@ hash <- DoAlloc<Unit@>(Int|128);
+    Md5@ md5 <- DoInst<Md5@, Unit@>(Md5M(input, hash));
+
+    # We have to re-export the methods to make them relative to this module.
+    Method@ reset <- DoMethod<Unit@>(md5.reset);
+    Method@ feed <- DoMethod<Unit@>(md5.feed);
+    Method@ finish <- DoMethod<Unit@>(md5.finish);
+    /Fblf/Module%.Return<Unit@>(Unit);
+  }));
 
   Output@ output = {
-    Unit@ _ <- Do(CompileEnv(md5I.env));
-    Unit@ _ <- Do(Compile(Str|'FblfMd5Reset', md5.reset));
-    Unit@ _ <- Do(Compile(Str|'FblfMd5Feed', md5.feed));
-    Unit@ _ <- Do(Compile(Str|'FblfMd5Finish', md5.finish));
+    Unit@ _ <- Do(Compile(ran.program));
     Return;
   };
 

@@ -17,6 +17,12 @@
 
 # Concat --
 #   Concatenates a list of strings together.
+#
+# TODO: Remove this in favor of Strs.
 (List@<String@>) { String@; } Concat = /List%.Concat<Char@>;
 
-@(String@, Str, Concat);
+# Strs --
+#   Concatenates a list of strings together.
+(List@<String@>) { String@; } Strs = /List%.Concat<Char@>;
+
+@(String@, Str, Strs, Concat);

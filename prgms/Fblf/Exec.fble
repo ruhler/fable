@@ -2,28 +2,46 @@
 @ Bool@ = /Bool%.Bool@;
 % Not = /Bool%.Not;
 
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+% Int = /Int/Int/Lit%.Int;
+% Le = /Int/Int/Eq%.Le;
+
 @ Heap@ = /Fblf/Heap%.Heap@;
 % Copy = /Fblf/Heap%.Copy;
 % Write = /Fblf/Heap%.Write;
 % Equals = /Fblf/Heap%.Equals;
 % Equal = /Fblf/Heap%.Equal;
 
-<@,@>% ForEach = /List%.ForEach;
-
-@ Env@ = /Fblf/Program%.Env@;
 @ Program@ = /Fblf/Program%.Program@;
-@ Condition@ = /Fblf/Program%.Condition@;
-% GetProgram = /Fblf/Program%.GetProgram;
+@ Proc@ = /Fblf/Program%.Proc@;
+@ Stmt@ = /Fblf/Program%.Stmt@;
+@ Cond@ = /Fblf/Program%.Cond@;
+@ Var@ = /Fblf/Program%.Var@;
+% LookupProc = /Fblf/Program%.LookupProc;
+
+<@>@ List@ = /List%.List@;
+<@,@>% ForEach = /List%.ForEach;
+<@,@>% Map = /List%.Map;
+
+# Look up the value of a variable in scope.
+(List@<Int@>, Var@) { Int@; } Var = (List@<Int@> args, Var@ var) {
+  Le(var.id, Int|0).?(
+    true: Add(args.cons.head, var.offset),
+    false: Var(args.cons.tail, Var@(Sub(var.id, Int|1), var.offset)));
+};
 
 # Eval --
 #   Evaluate a condition.
-(Condition@, Heap@) { Bool@; } Eval = (Condition@ cond, Heap@ heap) {
+(List@<Int@>, Cond@, Heap@) { Bool@; }
+Eval = (List@<Int@> args, Cond@ cond, Heap@ heap) {
   Bool@ equals = cond.a.?(
-    ref: cond.b.?(
-      ref: Equal(heap, cond.a.ref, cond.b.ref, cond.n),
-      const: Equals(heap, cond.a.ref, cond.b.const, cond.n)),
+    var: cond.b.?(
+      var: Equal(heap, Var(args, cond.a.var), Var(args, cond.b.var), cond.n),
+      const: Equals(heap, Var(args, cond.a.var), cond.b.const, cond.n)),
     const: cond.b.?(
-      ref: Equals(heap, cond.b.ref, cond.a.const, cond.n),
+      var: Equals(heap, Var(args, cond.b.var), cond.a.const, cond.n),
       const: /Maybe%.Nothing<Bool@>.just  # TODO: Implement this case.
   ));
 
@@ -31,37 +49,42 @@
 };
 
 # Exec --
-#   Execute a program on the given heap.
+#   Execute a statement on the given heap.
 #
 # Behavior is undefined if the heap is not big enough for the program.
-(Env@, Program@, Heap@) { Heap@; } Exec = (Env@ env, Program@ prgm, Heap@ heap) {
-  prgm.?(
+(Program@, List@<Int@>, Stmt@, Heap@) { Heap@; }
+Exec = (Program@ prog, List@<Int@> args, Stmt@ stmt, Heap@ heap) {
+  stmt.?(
     assign: {
-      prgm.assign.value.?(
-        ref: Copy(heap, prgm.assign.ref, prgm.assign.value.ref, prgm.assign.n),
-        const: Write(heap, prgm.assign.ref, prgm.assign.value.const, prgm.assign.n));
+      stmt.assign.value.?(
+        var: Copy(heap, Var(args, stmt.assign.var), Var(args, stmt.assign.value.var), stmt.assign.n),
+        const: Write(heap, Var(args, stmt.assign.var), stmt.assign.value.const, stmt.assign.n));
     },
 
     sequence: {
-      ForEach<Program@, Heap@>(prgm.sequence, heap, (Program@ p, Heap@ h) {
-        Exec(env, p, h);
+      ForEach<Stmt@, Heap@>(stmt.sequence, heap, (Stmt@ p, Heap@ h) {
+        Exec(prog, args, p, h);
       });
     },
 
     ifelse: {
-      Eval(prgm.ifelse.condition, heap).?(
-        true: Exec(env, prgm.ifelse.if_body, heap),
-        false: Exec(env, prgm.ifelse.else_body, heap));
+      Eval(args, stmt.ifelse.condition, heap).?(
+        true: Exec(prog, args, stmt.ifelse.if_body, heap),
+        false: Exec(prog, args, stmt.ifelse.else_body, heap));
     },
 
     while: {
-      Eval(prgm.while.condition, heap).?(
-        true: Exec(env, prgm, Exec(env, prgm.while.body, heap)),
+      Eval(args, stmt.while.condition, heap).?(
+        true: Exec(prog, args, stmt, Exec(prog, args, stmt.while.body, heap)),
         false: heap);
     },
 
-    shared: {
-      Exec(env, GetProgram(env, prgm.shared), heap);
+    call: {
+      Proc@ proc = LookupProc(stmt.call.proc, prog).just;
+      List@<Int@> nargs = Map<Var@, Int@>(stmt.call.args, (Var@ v) {
+        Var(args, v);
+      });
+      Exec(prog, nargs, proc.body, heap);
     });
 };
 
