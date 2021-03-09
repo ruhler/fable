@@ -1,10 +1,25 @@
 Fblf:
-* Debug failures in fblf md5 test.
-* Figure out how to deal with 'Method' and 'Export' issues in a nicer way.
-  This is way too easy to mess up.
+* Another round of fblf rewrites
+ - Change ProcId to be Int.
+ - Compile should take:
+    String@ prefix to use for internal names of procedures to avoid conflict
+            with user defined functions.
+    Program@ with the program to compile.
+ - CompileCall should take:
+    String@ prefix used for internal names of procedures.
+    String@ name to use for heap argument.
+    ProcId@ proc to call.
+    List@<Int@> args to the call.
+ - Module should call body once for declaration of procedures with args (0,0),
+   (1,0), ..., And then again every time it is instantiated with args
+   initialized from the callers. That way it's safe to use variables and
+   fields and statements locally and return them as is and use them in
+   callers.
+ - Running a module should return a List<Int@> which are the args (including
+   this) to pass to any high level methods returned by the module. Or give an
+   easy way to extract that from a method returned at the top level.
 
 * Clean up fblf compilation test infrastructure.
- - Come up with better defined API between Module, Compile, and C driver code.
  - Set up build files to generate and run the compiled fblf tests.
  - Add nicer summary and error messages in compiled test runner.
 

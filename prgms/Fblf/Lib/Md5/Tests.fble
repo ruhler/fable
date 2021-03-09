@@ -120,7 +120,7 @@ Test@ Md5Tests = TestSuite(Str|'Md5', List<Test@>[
 
 # TODO: Re-enable md5 tests once they are fast enough.
 Test@ DummyTests = TestSuite(Str|Md5, List<Test@>[]);
-Test@ Tests = /Bool%.True.?(true: Md5Tests, false: DummyTests);
+Test@ Tests = /Bool%.False.?(true: Md5Tests, false: DummyTests);
 
 Unit@! Bench = {
   /Test%.TestResult@ _ := RunTests(TestStr(

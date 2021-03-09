@@ -83,8 +83,10 @@
 # Compile --
 #   Compiles an fblf test suite into a C file that runs all the tests.
 (Test@) { Output@; } Compile = (Test@ t) {
-  Unit@ _ <- Do(Line(Str|'#include <assert.h>'));
-  Unit@ _ <- Do(Line(Str|'#include "heap.h"'));
+  Unit@ _ <- Do(Line|'#include <assert.h>');
+  Unit@ _ <- Do(Line|'');
+  Unit@ _ <- Do(Line|'#include "heap.h"');
+  Unit@ _ <- Do(Line|'');
 
   Module@<List@<Method@>> test_module = Module0<List@<Method@>>(Str|'TestsModule', {
     Var@ pass <- DoAlloc<TM@>(Int|1);
@@ -95,24 +97,24 @@
 
   Unit@ _ <- Do(/Fblf/Compile%.Compile(ran.program));
 
-  Unit@ _ <- Do(Line(Str|'int main()'));
-  Unit@ _ <- Do(Line(Str|'{'));
+  Unit@ _ <- Do(Line|'int main()');
+  Unit@ _ <- Do(Line|'{');
   Unit@ _ <- Do(Line(Strs[
     Str|'  FblfHeapWord heap[FBLF_HEAP_WORDS_FOR_BITS(',
     /Int/Int/Show%.Show(ran.heap),
     Str|')];'
   ]));
-  Unit@ _ <- Do(Line(Str|'  int x0 = 0;'));
+  Unit@ _ <- Do(Line|'  int x0 = 0;');
     
   Unit@ _ <- Do(ForEach<Method@, Output@>(ran.x, Return, (Method@ method, Output@ o) {
     Unit@ _ <- Do(o);
     Unit@ _ <- Do(/Fblf/Compile%.CompileStmt(Str|'  ', method));
-    Unit@ _ <- Do(Line(Str|'  assert(FblfHeapRead(heap, 0, 1) == 1);'));
+    Unit@ _ <- Do(Line|'  assert(FblfHeapRead(heap, 0, 1) == 1);');
     Return;
   }));
 
-  Unit@ _ <- Do(Line(Str|'  return 0;'));
-  Unit@ _ <- Do(Line(Str|'}'));
+  Unit@ _ <- Do(Line|'  return 0;');
+  Unit@ _ <- Do(Line|'}');
   Return;
 };
 

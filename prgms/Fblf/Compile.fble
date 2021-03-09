@@ -275,9 +275,10 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 (String@, Int@, Stmt@) { Output@; }
 CompileProc = (String@ name, Int@ argc, Stmt@ stmt) {
   Unit@ _ <- Do(Line(Proto(name, argc)));
-  Unit@ _ <- Do(Line(Str|'{'));
+  Unit@ _ <- Do(Line|'{');
   Unit@ _ <- Do(CompileStmt(Str|'  ', stmt));
-  Unit@ _ <- Do(Line(Str|'}'));
+  Unit@ _ <- Do(Line|'}');
+  Unit@ _ <- Do(Line|'');
   Return;
 };
 
@@ -289,6 +290,8 @@ CompileProc = (String@ name, Int@ argc, Stmt@ stmt) {
     Unit@ _ <- Do(Line(Strs[Proto(CProcName(proc.id), proc.argc), Str|';']));
     Return;
   }));
+
+  Unit@ _ <- Do(Line|'');
 
   Unit@ _ <- Do(ForEach<Proc@, Output@>(prog, Return, (Proc@ proc, Output@ o) {
     Unit@ _ <- Do(o);
