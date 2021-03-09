@@ -1,7 +1,7 @@
 Fblf:
 * Another round of fblf rewrites
+ - Track test names in compiled fblf tests.
  - Change ProcId to be Int.
- - Top level export from Exec should be proc_id + args, not Stmt.
  - Module should call body once for declaration of procedures with args (0,0),
    (1,0), ..., And then again every time it is instantiated with args
    initialized from the callers. That way it's safe to use variables and

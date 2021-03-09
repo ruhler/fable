@@ -3,9 +3,6 @@
 
 @ Bit@ = /Digits%.Bit@;
 
-@ Int@ = /Int/Int%.Int@;
-% Int = /Int/Int/Lit%.Int;
-
 % Exec = /Fblf/Exec%.Exec;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
@@ -21,7 +18,6 @@
 <@>% Run = /Fblf/Module%.Run;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 <@,@>% Map = /List%.Map;
 
 @ String@ = /String%.String@;
@@ -61,7 +57,7 @@ TestSuite = (String@ name, List@<Test@> tests) {
       /Test%.TestResult@! body = !({
         Ran@<TestInstance@> i = Run<TestInstance@>(m);
         TestInstance@ mI = i.x;
-        Heap@ heap = Exec(i.program, MethodArgs(mI.method), mI.method, Heap(i.heap));
+        Heap@ heap = Exec(i.program, mI.method.call.proc, MethodArgs(mI.method), Heap(i.heap));
 
         Bits@ wnt = mI.expected;
         Bits@ got = Read(heap, mI.result.offset, /List/Length%.Length<Bit@>(wnt));

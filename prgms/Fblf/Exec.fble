@@ -15,7 +15,7 @@
 % Equal = /Fblf/Heap%.Equal;
 
 @ Program@ = /Fblf/Program%.Program@;
-@ Proc@ = /Fblf/Program%.Proc@;
+@ ProcId@ = /Fblf/Program%.ProcId@;
 @ Stmt@ = /Fblf/Program%.Stmt@;
 @ Cond@ = /Fblf/Program%.Cond@;
 @ Var@ = /Fblf/Program%.Var@;
@@ -48,12 +48,12 @@ Eval = (List@<Int@> args, Cond@ cond, Heap@ heap) {
   cond.op.?(eq: equals, ne: Not(equals));
 };
 
-# Exec --
+# ExecStmt --
 #   Execute a statement on the given heap.
 #
 # Behavior is undefined if the heap is not big enough for the program.
 (Program@, List@<Int@>, Stmt@, Heap@) { Heap@; }
-Exec = (Program@ prog, List@<Int@> args, Stmt@ stmt, Heap@ heap) {
+ExecStmt = (Program@ prog, List@<Int@> args, Stmt@ stmt, Heap@ heap) {
   stmt.?(
     assign: {
       stmt.assign.value.?(
@@ -63,29 +63,37 @@ Exec = (Program@ prog, List@<Int@> args, Stmt@ stmt, Heap@ heap) {
 
     sequence: {
       ForEach<Stmt@, Heap@>(stmt.sequence, heap, (Stmt@ p, Heap@ h) {
-        Exec(prog, args, p, h);
+        ExecStmt(prog, args, p, h);
       });
     },
 
     ifelse: {
       Eval(args, stmt.ifelse.condition, heap).?(
-        true: Exec(prog, args, stmt.ifelse.if_body, heap),
-        false: Exec(prog, args, stmt.ifelse.else_body, heap));
+        true: ExecStmt(prog, args, stmt.ifelse.if_body, heap),
+        false: ExecStmt(prog, args, stmt.ifelse.else_body, heap));
     },
 
     while: {
       Eval(args, stmt.while.condition, heap).?(
-        true: Exec(prog, args, stmt, Exec(prog, args, stmt.while.body, heap)),
+        true: ExecStmt(prog, args, stmt, ExecStmt(prog, args, stmt.while.body, heap)),
         false: heap);
     },
 
     call: {
-      Proc@ proc = LookupProc(stmt.call.proc, prog).just;
-      List@<Int@> nargs = Map<Var@, Int@>(stmt.call.args, (Var@ v) {
+      List@<Int@> call_args = Map<Var@, Int@>(stmt.call.args, (Var@ v) {
         Var(args, v);
       });
-      Exec(prog, nargs, proc.body, heap);
+      Exec(prog, stmt.call.proc, call_args, heap);
     });
+},
+
+# Exec --
+#   Execute a procedure from the given program.
+#
+# Behavior is undefined if the heap is not big enough for the program.
+(Program@, ProcId@, List@<Int@>, Heap@) { Heap@; }
+Exec = (Program@ prog, ProcId@ proc, List@<Int@> args, Heap@ heap) {
+  ExecStmt(prog, args, LookupProc(proc, prog).just.body, heap);
 };
 
 @(Exec);
