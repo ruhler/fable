@@ -4,6 +4,7 @@
 @ Var@ = /Fblf/Program%.Var@;
 @ Stmt@ = /Fblf/Program%.Stmt@;
 % Call = /Fblf/Program%.Call;
+% Offset = /Fblf/Program%.Offset;
 % LookupProc = /Fblf/Program%.LookupProc;
 
 @ Int@ = /Int/Int%.Int@;
@@ -200,6 +201,19 @@ Method = (Stmt@ stmt)(State@ s) {
 <@ T@>(Stmt@)((Method@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
 DoMethod = <@ T@>(Stmt@ body) { Do<Stmt@, T@>(Method(body)); };
 
+# Export a local Var@ to the equivalent variable from the point of view of the
+# parent module.
+#
+# TODO: The need for this is annoying. Anything we can do to get around it?
+(Var@) { ModuleM@<Var@>; }
+Export = (Var@ var)(State@ s) {
+  Var@ arg = /List/Length%.Drop<Var@>(var.id, s.args).cons.head;
+  ModuleR@<Var@>(s, Offset(arg, var.offset));
+};
+
+<@ T@>(Var@)((Var@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
+DoExport = <@ T@>(Var@ v) { Do<Var@, T@>(Export(v)); };
+
 # Run --
 #   Runs a module, returning the generated program, the size of the heap
 #   required by the module, and whatever the module returns.
@@ -213,5 +227,5 @@ DoMethod = <@ T@>(Stmt@ body) { Do<Stmt@, T@>(Method(body)); };
 
 @(ModuleM@, Module@, Method@, Ran@,
   Module0, Module1, Module2, Module3, Module4, Module5,
-  Do, Return, Alloc, DoAlloc, Inst, DoInst, Method,
-  DoMethod, Run);
+  Do, Return, Alloc, DoAlloc, Inst, DoInst, Method, DoMethod,
+  Export, DoExport, Run);

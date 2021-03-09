@@ -1,10 +1,16 @@
 Fblf:
 * Debug failures in fblf md5 test.
+* Figure out how to deal with 'Method' and 'Export' issues in a nicer way.
+  This is way too easy to mess up.
 
 * Clean up fblf compilation test infrastructure.
  - Come up with better defined API between Module, Compile, and C driver code.
  - Set up build files to generate and run the compiled fblf tests.
  - Add nicer summary and error messages in compiled test runner.
+
+* Implement or generate an fblf-md5.c program that works on files, and see how
+  fast it goes compared to md5sum.
+
 * Rewrite tests for /Fblf/Heap%.
 * Figure out how to replace fblf integer arithmetic with a native c
   implementation at compile time.

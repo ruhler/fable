@@ -28,6 +28,7 @@
 <@>% Module5 = /Fblf/Module%.Module5;
 <@>% DoAlloc = /Fblf/Module%.DoAlloc;
 <@>% DoMethod = /Fblf/Module%.DoMethod;
+<@>% DoExport = /Fblf/Module%.DoExport;
 <@,@>% Do = /Fblf/Module%.Do;
 <@>% Inst = /Fblf/Module%.Inst;
 <@,@>% DoInst = /Fblf/Module%.DoInst;
@@ -309,7 +310,9 @@ PackWord = Module2<PackWord@>(Str|'Md5.PackWord', (Var@ word, Var@ byte) {
     DecI(Int|2, addr)
   ]);
 
-  Cond@ packed = Eq(Var(addr), Binary|11, Int|2);
+  Var@ exported_addr <- DoExport<PackWord@>(addr);
+
+  Cond@ packed = Eq(Var(exported_addr), Binary|11, Int|2);
 
   Return<PackWord@>(@(reset, feed, packed));
 });
