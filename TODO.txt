@@ -1,6 +1,5 @@
 Fblf:
 * Another round of fblf rewrites
- - Track test names in compiled fblf tests.
  - Change ProcId to be Int.
  - Module should call body once for declaration of procedures with args (0,0),
    (1,0), ..., And then again every time it is instantiated with args

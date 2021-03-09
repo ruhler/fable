@@ -22,7 +22,7 @@
 <@>@ ModuleM@ = /Fblf/Module%.ModuleM@;
 <@>@ Ran@ = /Fblf/Module%.Ran@;
 @ Method@ = /Fblf/Module%.Method@;
-% Method = /Fblf/Module%.Method;
+<@>% DoMethod = /Fblf/Module%.DoMethod;
 % MethodArgs = /Fblf/Module%.MethodArgs;
 <@>% Module0 = /Fblf/Module%.Module0;
 <@>% Module1 = /Fblf/Module%.Module1;
@@ -49,33 +49,36 @@
 
 # Test Module: given single bit variable 'pass', sets it to true if the test
 # succeeds, false otherwise.
-@ TM@ = List@<Method@>;
+@ TestMethod@ = *(String@ name, Method@ method);
+@ TMs@ = List@<TestMethod@>;
 
 # Collect all the individual test cases from a test suite into a single module.
-(Var@, String@, Test@, List@<Method@>) { ModuleM@<TM@>; } Collect = (Var@ pass, String@ prefix, Test@ test, List@<Method@> tail) {
+(Var@, String@, Test@, TMs@) { ModuleM@<TMs@>; } Collect = (Var@ pass, String@ prefix, Test@ test, TMs@ tail) {
   test.?(
     case: {
       String@ name = Append<Char@>(prefix, test.case.name);
-      (Var@) { Module@<Method@>; } tm = Module1<Method@>(name, (Var@ pass) {
-        TestInstance@ ti <- DoInst<TestInstance@, Method@>(test.case.test);
+      (Var@) { Module@<TestMethod@>; } tm = Module1<TestMethod@>(name, (Var@ pass) {
+        TestInstance@ ti <- DoInst<TestInstance@, TestMethod@>(test.case.test);
 
-        Method(Seq[
+        Method@ method <- DoMethod<TestMethod@>(Seq[
           Assign(pass, Binary|0, Int|1),
           ti.method,
           IfElse(Eq(Var(ti.result), Binary(ti.expected), Length<Bit@>(ti.expected)),
             Assign(pass, Binary|1, Int|1),
             Assign(pass, Binary|0, Int|1))
         ]);
+
+        /Fblf/Module%.Return<TestMethod@>(TestMethod@(name, method));
       });
 
-      Method@ method <- DoInst<Method@, TM@>(tm(pass));
-      /Fblf/Module%.Return<TM@>(Cons<Method@>(method, tail));
+      TestMethod@ method <- DoInst<TestMethod@, TMs@>(tm(pass));
+      /Fblf/Module%.Return<TMs@>(Cons<TestMethod@>(method, tail));
     },
     suite: {
       String@ nprefix = Strs[prefix, test.suite.name, Str|'.'];
-      ModuleM@<TM@> base = /Fblf/Module%.Return<TM@>(tail);
-      ForEach<Test@, ModuleM@<TM@>>(test.suite.tests, base, (Test@ t, ModuleM@<TM@> m) {
-        List@<Method@> as <- /Fblf/Module%.Do<List@<Method@>, TM@>(m);
+      ModuleM@<TMs@> base = /Fblf/Module%.Return<TMs@>(tail);
+      ForEach<Test@, ModuleM@<TMs@>>(test.suite.tests, base, (Test@ t, ModuleM@<TMs@> m) {
+        TMs@ as <- /Fblf/Module%.Do<TMs@, TMs@>(m);
         Collect(pass, nprefix, t, as);
       });
     });
@@ -89,12 +92,12 @@
   Unit@ _ <- Do(Line|'#include "heap.h"');
   Unit@ _ <- Do(Line|'');
 
-  Module@<List@<Method@>> test_module = Module0<List@<Method@>>(Str|'TestsModule', {
-    Var@ pass <- DoAlloc<TM@>(Int|1);
-    Collect(pass, Str|'', t, Nil<Method@>);
+  Module@<TMs@> test_module = Module0<TMs@>(Str|'TestsModule', {
+    Var@ pass <- DoAlloc<TMs@>(Int|1);
+    Collect(pass, Str|'', t, Nil<TestMethod@>);
   });
 
-  Ran@<List@<Method@>> ran = Run<List@<Method@>>(test_module);
+  Ran@<TMs@> ran = Run<TMs@>(test_module);
 
   Unit@ _ <- Do(/Fblf/Compile%.Compile(Str|'_prog', ran.program));
 
@@ -105,11 +108,17 @@
     /Int/Int/Show%.Show(ran.heap),
     Str|')];'
   ]));
+  Unit@ _ <- Do(Line|'');
     
-  Unit@ _ <- Do(ForEach<Method@, Output@>(ran.x, Return, (Method@ method, Output@ o) {
+  Unit@ _ <- Do(ForEach<TestMethod@, Output@>(ran.x, Return, (TestMethod@ tm, Output@ o) {
     Unit@ _ <- Do(o);
-    Unit@ _ <- Do(/Fblf/Compile%.CompileUserCall(Str|'_prog', Str|'  ', Str|'heap', method.call.proc, MethodArgs(method)));
-    Unit@ _ <- Do(Line|'  assert(FblfHeapRead(heap, 0, 1) == 1);');
+    Unit@ _ <- Do(/Fblf/Compile%.CompileUserCall(Str|'_prog', Str|'  ', Str|'heap', tm.method.call.proc, MethodArgs(tm.method)));
+    Unit@ _ <- Do(Line(Strs[
+      Str|'  assert(FblfHeapRead(heap, 0, 1) == 1 && "',
+      tm.name,  # TODO: Hopefully there are no funny characters in the name.
+      Str|' FAILED");'
+    ]));
+    Unit@ _ <- Do(Line|'');
     Return;
   }));
 
