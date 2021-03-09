@@ -187,23 +187,23 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
       Str|');']));
 };
 
-# CProcName --
+# Name --
 #   The C function name used for the implementation of the procedure with given
 #   id.
-(ProcId@) { String@; } CProcName = (ProcId@ id) {
+(String@, ProcId@) { String@; } Name = (String@ prefix, ProcId@ id) {
   # TODO: Sanitize the function name in a way that ensures we end up with a
   # unique name for each ProcId.
-  Strs[Str|'__proc_', Map<Char@, Char@>(id, (Char@ c) {
+  Strs[prefix, Map<Char@, Char@>(id, (Char@ c) {
     /Char/Type%.IsAlNum(c).?(true: c, false: Chars.'_');
   })];
 };
 
-(String@, Call@) { Output@; } CompileCall = (String@ indent, Call@ call) {
+(String@, String@, Call@) { Output@; } CompileCall = (String@ prefix, String@ indent, Call@ call) {
   String@ args = Strs(Map<Var@, String@>(call.args, (Var@ v) {
     Strs[Str|', ', CompileVar(v)];
   }));
 
-  Line(Strs[indent, CProcName(call.proc), Str|'(heap', args, Str|');']);
+  Line(Strs[indent, Name(prefix, call.proc), Str|'(heap', args, Str|');']);
 };
 
 # Compile an assignment statement into a sequence of statements in C.
@@ -218,53 +218,53 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
     });
 };
 
-(String@, Sequence@) { Output@; } CompileSequence = (String@ indent, Sequence@ seq) {
+(String@, String@, Sequence@) { Output@; } CompileSequence = (String@ prefix, String@ indent, Sequence@ seq) {
   seq.?(
     cons: {
-      Unit@ _ <- Do(CompileStmt(indent, seq.cons.head));
-      Unit@ _ <- Do(CompileSequence(indent, seq.cons.tail));
+      Unit@ _ <- Do(CompileStmt(prefix, indent, seq.cons.head));
+      Unit@ _ <- Do(CompileSequence(prefix, indent, seq.cons.tail));
       Return;
     },
     nil: Return);
 },
 
-(String@, IfElse@) { Output@; } CompileIfElse = (String@ indent, IfElse@ ifelse) {
+(String@, String@, IfElse@) { Output@; } CompileIfElse = (String@ prefix, String@ indent, IfElse@ ifelse) {
   String@ nested = Strs[indent, Str|'  '];
   Unit@ _ <- Do(Line(Strs[indent, Str|'if (', CompileCondition(ifelse.condition), Str|') {']));
-  Unit@ _ <- Do(CompileStmt(nested, ifelse.if_body));
+  Unit@ _ <- Do(CompileStmt(prefix, nested, ifelse.if_body));
   Unit@ _ <- Do(Line(Strs[indent, Str|'} else {']));
-  Unit@ _ <- Do(CompileStmt(nested, ifelse.else_body));
+  Unit@ _ <- Do(CompileStmt(prefix, nested, ifelse.else_body));
   Unit@ _ <- Do(Line(Strs[indent, Str|'}']));
   Return;
 },
 
-(String@, While@) { Output@; } CompileWhile = (String@ indent, While@ while) {
+(String@, String@, While@) { Output@; } CompileWhile = (String@ prefix, String@ indent, While@ while) {
   String@ nested = Strs[indent, Str|'  '];
-  Unit@ _ <- Do(Line(Strs[ indent, Str|'while (', CompileCondition(while.condition), Str|') {']));
-  Unit@ _ <- Do(CompileStmt(nested, while.body));
+  Unit@ _ <- Do(Line(Strs[indent, Str|'while (', CompileCondition(while.condition), Str|') {']));
+  Unit@ _ <- Do(CompileStmt(prefix, nested, while.body));
   Unit@ _ <- Do(Line(Strs[indent, Str|'}']));
   Return;
 },
 
-(String@, Stmt@) { Output@; } CompileStmt = (String@ indent, Stmt@ prgm) {
+(String@, String@, Stmt@) { Output@; } CompileStmt = (String@ prefix, String@ indent, Stmt@ prgm) {
   prgm.?(
     assign: CompileAssign(indent, prgm.assign),
-    sequence: CompileSequence(indent, prgm.sequence),
-    ifelse: CompileIfElse(indent, prgm.ifelse),
-    while: CompileWhile(indent, prgm.while),
-    call: CompileCall(indent, prgm.call));
+    sequence: CompileSequence(prefix, indent, prgm.sequence),
+    ifelse: CompileIfElse(prefix, indent, prgm.ifelse),
+    while: CompileWhile(prefix, indent, prgm.while),
+    call: CompileCall(prefix, indent, prgm.call));
 };
 
 # Proto --
 #   Generates the prototype for an fblf function with given name and number of
 #   arguments.
-(String@, Int@) { String@; } Proto = (String@ name, Int@ argc) {
+(String@, ProcId@, Int@) { String@; } Proto = (String@ prefix, ProcId@ proc, Int@ argc) {
   String@ args = For<Int@, String@>(CountUpTo(argc), Str|'',
     (Int@ i, String@ s) {
       Strs[s, Str|', int x', /Int/Int/Show%.Show(i)];
     });
 
-  Strs[Str|'void ', name, Str|'(FblfHeap* heap', args, Str|')'];
+  Strs[Str|'static void ', Name(prefix, proc), Str|'(FblfHeap* heap', args, Str|')'];
 };
 
 # CompileProc --
@@ -272,22 +272,28 @@ CompileSmallAssign = (String@ indent, Assign@ assign) {
 #
 # The signature of a function named 'Foo' will be:
 #   void Foo(FblfHeap* heap, int x0, int x1, ...);
-(String@, Int@, Stmt@) { Output@; }
-CompileProc = (String@ name, Int@ argc, Stmt@ stmt) {
-  Unit@ _ <- Do(Line(Proto(name, argc)));
+(String@, String@, Int@, Stmt@) { Output@; }
+CompileProc = (String@ prefix, String@ name, Int@ argc, Stmt@ stmt) {
+  Unit@ _ <- Do(Line(Proto(prefix, name, argc)));
   Unit@ _ <- Do(Line|'{');
-  Unit@ _ <- Do(CompileStmt(Str|'  ', stmt));
+  Unit@ _ <- Do(CompileStmt(prefix, Str|'  ', stmt));
   Unit@ _ <- Do(Line|'}');
   Unit@ _ <- Do(Line|'');
   Return;
 };
 
 # Compile --
-#   Compile an fblf program to C function.
-(Program@) { Output@; } Compile = (Program@ prog) {
+#   Compile an fblf program to a collection static C functions.
+#
+# Inputs:
+#   prefix - A prefix to use for the defined functions, to avoid name
+#            conflicts with user defined functions. This should be a valid C
+#            function name.
+#   program - The program to compile.
+(String@, Program@) { Output@; } Compile = (String@ prefix, Program@ prog) {
   Unit@ _ <- Do(ForEach<Proc@, Output@>(prog, Return, (Proc@ proc, Output@ o) {
     Unit@ _ <- Do(o);
-    Unit@ _ <- Do(Line(Strs[Proto(CProcName(proc.id), proc.argc), Str|';']));
+    Unit@ _ <- Do(Line(Strs[Proto(prefix, proc.id, proc.argc), Str|';']));
     Return;
   }));
 
@@ -295,12 +301,33 @@ CompileProc = (String@ name, Int@ argc, Stmt@ stmt) {
 
   Unit@ _ <- Do(ForEach<Proc@, Output@>(prog, Return, (Proc@ proc, Output@ o) {
     Unit@ _ <- Do(o);
-    Unit@ _ <- Do(CompileProc(CProcName(proc.id), proc.argc, proc.body));
+    Unit@ _ <- Do(CompileProc(prefix, proc.id, proc.argc, proc.body));
     Return;
   }));
 
   Return;
 };
 
-@(Compile, CompileStmt);
+# CompileUserCall --
+#   Compile a call into a program procedure from user code.
+#
+# Inputs:
+#   prefix - the prefix that the program was compiled with.
+#   indent - whitespace to indent the compiled statement with.
+#   heap - the expression to pass for the heap argument.
+#   proc - the id of the procedure to call.
+#   args - the args to pass to the procedure.
+#
+# Result:
+#   A C statement to call the procedure.
+(String@, String@, String@, ProcId@, List@<Int@>) { Output@; }
+CompileUserCall = (String@ prefix, String@ indent, String@ heap, ProcId@ proc, List@<Int@> args) {
+  String@ cargs = Strs(Map<Int@, String@>(args, (Int@ arg) {
+    Strs[Str|', ', /Int/Int/Show%.Show(arg)];
+  }));
+
+  Line(Strs[indent, Name(prefix, proc), Str|'(', heap, cargs, Str|');']);
+};
+
+@(Compile, CompileUserCall);
 

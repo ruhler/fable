@@ -50,7 +50,7 @@ Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
   }));
 
   Output@ output = {
-    Unit@ _ <- Do(Compile(ran.program));
+    Unit@ _ <- Do(Compile(Str|'_prog', ran.program));
     Return;
   };
 

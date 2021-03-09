@@ -1,15 +1,7 @@
 Fblf:
 * Another round of fblf rewrites
  - Change ProcId to be Int.
- - Compile should take:
-    String@ prefix to use for internal names of procedures to avoid conflict
-            with user defined functions.
-    Program@ with the program to compile.
- - CompileCall should take:
-    String@ prefix used for internal names of procedures.
-    String@ name to use for heap argument.
-    ProcId@ proc to call.
-    List@<Int@> args to the call.
+ - Top level export from Exec should be proc_id + args, not Stmt.
  - Module should call body once for declaration of procedures with args (0,0),
    (1,0), ..., And then again every time it is instantiated with args
    initialized from the callers. That way it's safe to use variables and

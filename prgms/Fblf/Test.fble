@@ -17,6 +17,7 @@
 <@>@ Ran@ = /Fblf/Module%.Ran@;
 <@>@ Module@ = /Fblf/Module%.Module@;
 @ Method@ = /Fblf/Module%.Method@;
+% MethodArgs = /Fblf/Module%.MethodArgs;
 <@>% Run = /Fblf/Module%.Run;
 
 <@>@ List@ = /List%.List@;
@@ -60,7 +61,7 @@ TestSuite = (String@ name, List@<Test@> tests) {
       /Test%.TestResult@! body = !({
         Ran@<TestInstance@> i = Run<TestInstance@>(m);
         TestInstance@ mI = i.x;
-        Heap@ heap = Exec(i.program, List<Int@>[Int|0], mI.method, Heap(i.heap));
+        Heap@ heap = Exec(i.program, MethodArgs(mI.method), mI.method, Heap(i.heap));
 
         Bits@ wnt = mI.expected;
         Bits@ got = Read(heap, mI.result.offset, /List/Length%.Length<Bit@>(wnt));

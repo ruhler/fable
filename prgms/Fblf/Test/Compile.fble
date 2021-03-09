@@ -23,6 +23,7 @@
 <@>@ Ran@ = /Fblf/Module%.Ran@;
 @ Method@ = /Fblf/Module%.Method@;
 % Method = /Fblf/Module%.Method;
+% MethodArgs = /Fblf/Module%.MethodArgs;
 <@>% Module0 = /Fblf/Module%.Module0;
 <@>% Module1 = /Fblf/Module%.Module1;
 <@>% Run = /Fblf/Module%.Run;
@@ -95,7 +96,7 @@
 
   Ran@<List@<Method@>> ran = Run<List@<Method@>>(test_module);
 
-  Unit@ _ <- Do(/Fblf/Compile%.Compile(ran.program));
+  Unit@ _ <- Do(/Fblf/Compile%.Compile(Str|'_prog', ran.program));
 
   Unit@ _ <- Do(Line|'int main()');
   Unit@ _ <- Do(Line|'{');
@@ -104,11 +105,10 @@
     /Int/Int/Show%.Show(ran.heap),
     Str|')];'
   ]));
-  Unit@ _ <- Do(Line|'  int x0 = 0;');
     
   Unit@ _ <- Do(ForEach<Method@, Output@>(ran.x, Return, (Method@ method, Output@ o) {
     Unit@ _ <- Do(o);
-    Unit@ _ <- Do(/Fblf/Compile%.CompileStmt(Str|'  ', method));
+    Unit@ _ <- Do(/Fblf/Compile%.CompileUserCall(Str|'_prog', Str|'  ', Str|'heap', method.call.proc, MethodArgs(method)));
     Unit@ _ <- Do(Line|'  assert(FblfHeapRead(heap, 0, 1) == 1);');
     Return;
   }));

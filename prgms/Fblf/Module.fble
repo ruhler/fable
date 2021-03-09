@@ -10,14 +10,18 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Int = /Int/Int/Lit%.Int;
+% Eq = /Int/Int/Eq%.Eq;
 
 <@>@ List@ = /List%.List@;
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
+<@,@>% Map = /List%.Map;
 
 @ String@ = /String%.String@;
 % Concat = /String%.Concat;
 % Str = /String%.Str;
+
+@ Unit@ = /Unit%.Unit@;
 
 # ModuleM@ -- 
 #   Monadic API used to define a collection of fblf procedures that share the
@@ -201,6 +205,16 @@ Method = (Stmt@ stmt)(State@ s) {
 <@ T@>(Stmt@)((Method@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
 DoMethod = <@ T@>(Stmt@ body) { Do<Stmt@, T@>(Method(body)); };
 
+# Extract the value of the arguments to a method, assuming they are all
+# relative to 'this'.
+# TODO: Give a better explanation of what this is for.
+(Method@) { List@<Int@>; } MethodArgs = (Method@ method) {
+  Map<Var@, Int@>(method.call.args, (Var@ v) {
+    Unit@ _ = Eq(Int|0, v.id).true;  # Assert
+    v.offset;
+  });
+};
+
 # Export a local Var@ to the equivalent variable from the point of view of the
 # parent module.
 #
@@ -227,5 +241,5 @@ DoExport = <@ T@>(Var@ v) { Do<Var@, T@>(Export(v)); };
 
 @(ModuleM@, Module@, Method@, Ran@,
   Module0, Module1, Module2, Module3, Module4, Module5,
-  Do, Return, Alloc, DoAlloc, Inst, DoInst, Method, DoMethod,
+  Do, Return, Alloc, DoAlloc, Inst, DoInst, Method, DoMethod, MethodArgs,
   Export, DoExport, Run);
