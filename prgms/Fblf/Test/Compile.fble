@@ -1,20 +1,15 @@
 
 @ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
-% IsAlNum = /Char/Type%.IsAlNum;
 
 @ Bit@ = /Digits%.Bit@;
-% BitStr = /Digits/String%.BitStr;
 
 % Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 <@>% Append = /List%.Append;
-<@>% Concat = /List%.Concat;
-<@,@>% Map = /List%.Map;
+<@,@>% ForEach = /List%.ForEach;
 
 <@>% Length = /List/Length%.Length;
 
@@ -24,18 +19,20 @@
 % Return = /Fblf/Compile/Output%.Return;
 
 <@>@ Module@ = /Fblf/Module%.Module@;
-<@>@ Instance@ = /Fblf/Module%.Instance@;
-<@>% Instantiate = /Fblf/Module%.Instantiate;
-<@,@>% InstM = /Fblf/Module%.InstM;
-<@>% AllocM = /Fblf/Module%.AllocM;
-<@>% PureM = /Fblf/Module%.PureM;
+<@>@ ModuleM@ = /Fblf/Module%.ModuleM@;
+<@>@ Ran@ = /Fblf/Module%.Ran@;
+@ Method@ = /Fblf/Module%.Method@;
+% Method = /Fblf/Module%.Method;
+<@>% Module0 = /Fblf/Module%.Module0;
+<@>% Module1 = /Fblf/Module%.Module1;
+<@>% Run = /Fblf/Module%.Run;
+<@,@>% DoInst = /Fblf/Module%.DoInst;
+<@>% DoAlloc = /Fblf/Module%.DoAlloc;
 
-@ Addr@ = /Fblf/Program%.Addr@;
-@ Program@ = /Fblf/Program%.Program@;
-@ Value@ = /Fblf/Program%.Value@;
+@ Var@ = /Fblf/Program%.Var@;
 % Assign = /Fblf/Program%.Assign;
-% Const = /Fblf/Program%.Const;
-% Ref = /Fblf/Program%.Ref;
+% Binary = /Fblf/Program%.Binary;
+% Var = /Fblf/Program%.Var;
 % Seq = /Fblf/Program%.Seq;
 % IfElse = /Fblf/Program%.IfElse;
 % Eq = /Fblf/Program%.Eq;
@@ -45,122 +42,77 @@
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
+% Strs = /String%.Strs;
 
 @ Unit@ = /Unit%.Unit@;
 
-# Case@ --
-#   Represents an instantiated test case.
-#
-# Fields:
-#   name - the user supplied name of the test, including the test suite
-#          prefixes if any.
-#   instance - A program that runs the test, setting address 0 to '1' if the
-#              test passed, '0' otherwise.
-@ Case@ = *(String@ name, Instance@<Program@> instance);
+# Test Module: given single bit variable 'pass', sets it to true if the test
+# succeeds, false otherwise.
+@ TM@ = List@<Method@>;
 
-# Collect all the individual test cases from a test suite into a list of
-# instantiated test cases.
-(String@, Test@) { List@<Case@>; } Collect = (String@ prefix, Test@ test) {
+# Collect all the individual test cases from a test suite into a single module.
+(Var@, String@, Test@, List@<Method@>) { ModuleM@<TM@>; } Collect = (Var@ pass, String@ prefix, Test@ test, List@<Method@> tail) {
   test.?(
     case: {
       String@ name = Append<Char@>(prefix, test.case.name);
-      Module@<Program@> wrapped = {
-        Addr@ pass <- AllocM<Program@>(Int|1);
-        TestInstance@ ti <- InstM<TestInstance@, Program@>(test.case.test);
+      (Var@) { Module@<Method@>; } tm = Module1<Method@>(name, (Var@ pass) {
+        TestInstance@ ti <- DoInst<TestInstance@, Method@>(test.case.test);
 
-        PureM<Program@>(Seq(List<Program@>[
-          Assign(pass, Const(BitStr|0), Int|1),
-          ti.program,
-          IfElse(Eq(Ref(ti.result), Value@(const: ti.expected), Length<Bit@>(ti.expected)),
-            Assign(pass, Const(BitStr|1), Int|1),
-            Assign(pass, Const(BitStr|0), Int|1))
-        ]));
-      };
+        Method(Seq[
+          Assign(pass, Binary|0, Int|1),
+          ti.method,
+          IfElse(Eq(Var(ti.result), Binary(ti.expected), Length<Bit@>(ti.expected)),
+            Assign(pass, Binary|1, Int|1),
+            Assign(pass, Binary|0, Int|1))
+        ]);
+      });
 
-      Instance@<Program@> instance = Instantiate<Program@>(wrapped);
-      List<Case@>[@(name, instance)];
+      Method@ method <- DoInst<Method@, TM@>(tm(pass));
+      /Fblf/Module%.Return<TM@>(Cons<Method@>(method, tail));
     },
     suite: {
-      String@ nprefix = Concat<Char@>(List<String@>[
-        prefix, test.suite.name, Str|'.']);
-      Concat<Case@>(Map<Test@, List@<Case@>>(test.suite.tests, (Test@ t) {
-          Collect(nprefix, t);
-      }));
+      String@ nprefix = Strs[prefix, test.suite.name, Str|'.'];
+      ModuleM@<TM@> base = /Fblf/Module%.Return<TM@>(tail);
+      ForEach<Test@, ModuleM@<TM@>>(test.suite.tests, base, (Test@ t, ModuleM@<TM@> m) {
+        List@<Method@> as <- /Fblf/Module%.Do<List@<Method@>, TM@>(m);
+        Collect(pass, nprefix, t, as);
+      });
     });
-};
-
-# Santize the characters in the given string so that it is suitable for use as
-# a C identifier.
-# TODO: Ieally this is an injective function.
-(String@) { String@; } ToCId = (String@ s) {
-  (Char@) { Char@; } FixChar = (Char@ c) {
-    IsAlNum(c).?(true: c, false: Chars.'_');
-  };
-
-  Cons<Char@>(Chars.'_', Map<Char@, Char@>(s, FixChar));
-};
-
-(List@<Case@>, (Case@) { Output@; }) { Output@; }
-ForEachCase = (List@<Case@> l, (Case@) { Output@; } f) {
-  l.?(
-    cons: {
-      Unit@ _ <- Do(f(l.cons.head));
-      Unit@ _ <- Do(ForEachCase(l.cons.tail, f));
-      Return;
-    },
-    nil: Return);
 };
 
 # Compile --
 #   Compiles an fblf test suite into a C file that runs all the tests.
 (Test@) { Output@; } Compile = (Test@ t) {
-  List@<Case@> cases = Collect(Nil<Char@>, t);
+  Unit@ _ <- Do(Line(Str|'#include <assert.h>'));
+  Unit@ _ <- Do(Line(Str|'#include "heap.h"'));
 
-  Unit@ _ <- Do(Line(Str|'
-#include <assert.h>
+  Module@<List@<Method@>> test_module = Module0<List@<Method@>>(Str|'TestsModule', {
+    Var@ pass <- DoAlloc<TM@>(Int|1);
+    Collect(pass, Str|'', t, Nil<Method@>);
+  });
 
-#include "heap.h"
+  Ran@<List@<Method@>> ran = Run<List@<Method@>>(test_module);
 
-typedef void (*FblfProgram)(FblfHeap* heap);
+  Unit@ _ <- Do(/Fblf/Compile%.Compile(ran.program));
 
-static void RunTest(FblfProgram program, int heapsize)
-{
-  FblfHeapWord heap[FBLF_HEAP_WORDS_FOR_BITS(heapsize)];
-  program(heap);
-  assert(FblfHeapRead(heap, 0, 1) == 1);
-}
-
-'));
-
-  # TODO: Have 1 env for all tests? How else to avoid duplication?
-  Unit@ _ <- Do(ForEachCase(cases, (Case@ case) {
-    /Fblf/Compile%.CompileEnv(case.instance.env);
+  Unit@ _ <- Do(Line(Str|'int main()'));
+  Unit@ _ <- Do(Line(Str|'{'));
+  Unit@ _ <- Do(Line(Strs[
+    Str|'  FblfHeapWord heap[FBLF_HEAP_WORDS_FOR_BITS(',
+    /Int/Int/Show%.Show(ran.heap),
+    Str|')];'
+  ]));
+  Unit@ _ <- Do(Line(Str|'  int x0 = 0;'));
+    
+  Unit@ _ <- Do(ForEach<Method@, Output@>(ran.x, Return, (Method@ method, Output@ o) {
+    Unit@ _ <- Do(o);
+    Unit@ _ <- Do(/Fblf/Compile%.CompileStmt(Str|'  ', method));
+    Unit@ _ <- Do(Line(Str|'  assert(FblfHeapRead(heap, 0, 1) == 1);'));
+    Return;
   }));
 
-  Unit@ _ <- Do(ForEachCase(cases, (Case@ case) {
-    /Fblf/Compile%.Compile(ToCId(case.name), case.instance.instance);
-  }));
-
-  Unit@ _ <- Do(Line(Str|'
-int main()
-{
-'));
-
-  Unit@ _ <- Do(ForEachCase(cases, (Case@ case) {
-    Line(Concat<Char@>(List<String@>[
-      Str|'  RunTest(&',
-      ToCId(case.name),
-      Str|', ',
-      /Int/Int/Show%.Show(case.instance.heap),
-      Str|');'
-    ]));
-  }));
-
-  Unit@ _ <- Do(Line(Str|'
-  return 0;
-}
-'));
-
+  Unit@ _ <- Do(Line(Str|'  return 0;'));
+  Unit@ _ <- Do(Line(Str|'}'));
   Return;
 };
 

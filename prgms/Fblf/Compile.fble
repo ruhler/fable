@@ -299,5 +299,5 @@ CompileProc = (String@ name, Int@ argc, Stmt@ stmt) {
   Return;
 };
 
-@(Compile);
+@(Compile, CompileStmt);
 

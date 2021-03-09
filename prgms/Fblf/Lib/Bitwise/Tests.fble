@@ -1,25 +1,28 @@
 
 % BitStr = /Digits/String%.BitStr;
 
-@ Addr@ = /Fblf/Program%.Addr@;
-@ Program@ = /Fblf/Program%.Program@;
+@ Var@ = /Fblf/Program%.Var@;
+@ Stmt@ = /Fblf/Program%.Stmt@;
 % Assign = /Fblf/Program%.Assign;
-% Const = /Fblf/Program%.Const;
+% Binary = /Fblf/Program%.Binary;
 % Seq = /Fblf/Program%.Seq;
 
-<@>% AllocM = /Fblf/Module%.AllocM;
-<@>% PureM = /Fblf/Module%.PureM;
-<@,@>% InstM = /Fblf/Module%.InstM;
+@ Method@ = /Fblf/Module%.Method@;
+<@>% Module0 = /Fblf/Module%.Module0;
+<@>% DoAlloc = /Fblf/Module%.DoAlloc;
+<@>% DoMethod = /Fblf/Module%.DoMethod;
+<@>% Return = /Fblf/Module%.Return;
+<@,@>% DoInst = /Fblf/Module%.DoInst;
 
 % Int = /Int/Int/Lit%.Int;
 
 <@>% List = /List%.List;
 
-% AndM = /Fblf/Lib/Bitwise%.AndM;
-% OrM = /Fblf/Lib/Bitwise%.OrM;
-% XorM = /Fblf/Lib/Bitwise%.XorM;
-% NotM = /Fblf/Lib/Bitwise%.NotM;
-% ClsM = /Fblf/Lib/Bitwise%.ClsM;
+% And = /Fblf/Lib/Bitwise%.And;
+% Or = /Fblf/Lib/Bitwise%.Or;
+% Xor = /Fblf/Lib/Bitwise%.Xor;
+% Not = /Fblf/Lib/Bitwise%.Not;
+% Cls = /Fblf/Lib/Bitwise%.Cls;
 
 @ Test@ = /Fblf/Test%.Test@;
 @ TestInstance@ = /Fblf/Test%.TestInstance@;
@@ -29,81 +32,86 @@
 % Str = /String%.Str;
 
 Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
-  Test(Str|AndM, {
-    Addr@ a <- AllocM<TestInstance@>(Int|4);
-    Addr@ b <- AllocM<TestInstance@>(Int|4);
-    Addr@ z <- AllocM<TestInstance@>(Int|4);
-    Program@ and <- InstM<Program@, TestInstance@>(AndM(Int|4, a, b, z));
+  Test(Str|And, Module0<TestInstance@>(Str|'BitwiseTest.And', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|4);
+    Var@ b <- DoAlloc<TestInstance@>(Int|4);
+    Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
-    Program@ test = Seq(List<Program@>[
-      Assign(a, Const(BitStr|0011), Int|4),
-      Assign(b, Const(BitStr|0110), Int|4),
-      Assign(z, Const(BitStr|0000), Int|4),
+    Method@ and <- DoInst<Method@, TestInstance@>(And(Int|4)(a, b, z));
+
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|0011, Int|4),
+      Assign(b, Binary|0110, Int|4),
+      Assign(z, Binary|0000, Int|4),
       and
     ]);
 
-    PureM<TestInstance@>(TestInstance@(test, Int|0, BitStr|001101100010));
-  }),
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|001101100010));
+  })),
 
-  Test(Str|OrM, {
-    Addr@ a <- AllocM<TestInstance@>(Int|4);
-    Addr@ b <- AllocM<TestInstance@>(Int|4);
-    Addr@ z <- AllocM<TestInstance@>(Int|4);
-    Program@ or <- InstM<Program@, TestInstance@>(OrM(Int|4, a, b, z));
+  Test(Str|Or, Module0<TestInstance@>(Str|'BitwiseTest.Or', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|4);
+    Var@ b <- DoAlloc<TestInstance@>(Int|4);
+    Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
-    Program@ test = Seq(List<Program@>[
-      Assign(a, Const(BitStr|0011), Int|4),
-      Assign(b, Const(BitStr|0110), Int|4),
-      Assign(z, Const(BitStr|0000), Int|4),
+    Method@ or <- DoInst<Method@, TestInstance@>(Or(Int|4)(a, b, z));
+
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|0011, Int|4),
+      Assign(b, Binary|0110, Int|4),
+      Assign(z, Binary|0000, Int|4),
       or
     ]);
 
-    PureM<TestInstance@>(TestInstance@(test, Int|0, BitStr|001101100111));
-  }),
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|001101100111));
+  })),
 
-  Test(Str|XorM, {
-    Addr@ a <- AllocM<TestInstance@>(Int|4);
-    Addr@ b <- AllocM<TestInstance@>(Int|4);
-    Addr@ z <- AllocM<TestInstance@>(Int|4);
-    Program@ xor <- InstM<Program@, TestInstance@>(XorM(Int|4, a, b, z));
+  Test(Str|Xor, Module0<TestInstance@>(Str|'BitwiseTest.Xor', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|4);
+    Var@ b <- DoAlloc<TestInstance@>(Int|4);
+    Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
-    Program@ test = Seq(List<Program@>[
-      Assign(a, Const(BitStr|0011), Int|4),
-      Assign(b, Const(BitStr|0110), Int|4),
-      Assign(z, Const(BitStr|0000), Int|4),
+    Stmt@ xor <- DoInst<Stmt@, TestInstance@>(Xor(Int|4)(a, b, z));
+
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|0011, Int|4),
+      Assign(b, Binary|0110, Int|4),
+      Assign(z, Binary|0000, Int|4),
       xor
     ]);
 
-    PureM<TestInstance@>(TestInstance@(test, Int|0, BitStr|001101100101));
-  }),
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|001101100101));
+  })),
 
-  Test(Str|NotM, {
-    Addr@ a <- AllocM<TestInstance@>(Int|4);
-    Addr@ z <- AllocM<TestInstance@>(Int|4);
-    Program@ not <- InstM<Program@, TestInstance@>(NotM(Int|4, a, z));
+  Test(Str|Not, Module0<TestInstance@>(Str|'BitwiseTest.Not', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|4);
+    Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
-    Program@ test = Seq(List<Program@>[
-      Assign(a, Const(BitStr|0011), Int|4),
-      Assign(z, Const(BitStr|0000), Int|4),
+    Stmt@ not <- DoInst<Stmt@, TestInstance@>(Not(Int|4)(a, z));
+
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|0011, Int|4),
+      Assign(z, Binary|0000, Int|4),
       not
     ]);
 
-    PureM<TestInstance@>(TestInstance@(test, Int|0, BitStr|00111100));
-  }),
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|00111100));
+  })),
 
-  Test(Str|ClsM, {
-    Addr@ a <- AllocM<TestInstance@>(Int|5);
-    Addr@ z <- AllocM<TestInstance@>(Int|5);
-    Program@ cls <- InstM<Program@, TestInstance@>(ClsM(Int|5, Int|3, a, z));
+  Test(Str|Cls, Module0<TestInstance@>(Str|'BitwiseTest.Cls', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|5);
+    Var@ z <- DoAlloc<TestInstance@>(Int|5);
 
-    Program@ test = Seq(List<Program@>[
-      Assign(a, Const(BitStr|10011), Int|5),
-      Assign(z, Const(BitStr|00000), Int|5),
+    Stmt@ cls <- DoInst<Stmt@, TestInstance@>(Cls(Int|5, Int|3)(a, z));
+
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|10011, Int|5),
+      Assign(z, Binary|00000, Int|5),
       cls
     ]);
 
-    PureM<TestInstance@>(TestInstance@(test, Int|0, BitStr|1001111100));
-  })
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|1001111100));
+  }))
 ]);
 
 @(Tests);

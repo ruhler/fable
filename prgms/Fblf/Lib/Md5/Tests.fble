@@ -12,16 +12,19 @@
 <@>% List = /List%.List;
 <@,@>% Map = /List%.Map;
 
-@ Addr@ = /Fblf/Program%.Addr@;
-@ Program@ = /Fblf/Program%.Program@;
+@ Var@ = /Fblf/Program%.Var@;
+@ Stmt@ = /Fblf/Program%.Stmt@;
 @ Value@ = /Fblf/Program%.Value@;
 % Assign = /Fblf/Program%.Assign;
-% ConstHex = /Fblf/Program%.ConstHex;
+% Hex = /Fblf/Program%.Hex;
 % Seq = /Fblf/Program%.Seq;
 
-<@>% AllocM = /Fblf/Module%.AllocM;
-<@>% PureM = /Fblf/Module%.PureM;
-<@,@>% InstM = /Fblf/Module%.InstM;
+@ Method@ = /Fblf/Module%.Method@;
+<@>% Module0 = /Fblf/Module%.Module0;
+<@>% DoAlloc = /Fblf/Module%.DoAlloc;
+<@,@>% DoInst = /Fblf/Module%.DoInst;
+<@>% DoMethod = /Fblf/Module%.DoMethod;
+<@>% Return = /Fblf/Module%.Return;
 
 @ Test@ = /Fblf/Test%.Test@;
 @ TestInstance@ = /Fblf/Test%.TestInstance@;
@@ -34,6 +37,7 @@
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
+% Strs = /String%.Strs;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -46,7 +50,7 @@
   hl.?(
     cons: {
       Cons<Value@>(
-        ConstHex(List<Hex@>[hl.cons.head, hl.cons.tail.cons.head]),
+        Hex[hl.cons.head, hl.cons.tail.cons.head],
         ToBytes(hl.cons.tail.cons.tail));
     },
     nil: Nil<Value@>);
@@ -54,61 +58,59 @@
 
 (String@, List@<Hex@>, List@<Hex@>) { Test@; }
 TestStr = (String@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
-  Test(name, {
-    Addr@ input <- AllocM<TestInstance@>(Int|8);
-    Addr@ hash <- AllocM<TestInstance@>(Int|128);
-    Md5@ md5 <- InstM<Md5@, TestInstance@>(Md5(input, hash));
+  Test(name, Module0<TestInstance@>(Strs[Str|'Md5Test.', name], {
+    Var@ input <- DoAlloc<TestInstance@>(Int|8);
+    Var@ hash <- DoAlloc<TestInstance@>(Int|128);
+    Md5@ md5 <- DoInst<Md5@, TestInstance@>(Md5(input, hash));
 
-    Program@ feed = Seq(Map<Value@, Program@>(
+    Stmt@ feed = Seq(Map<Value@, Stmt@>(
       ToBytes(bytes), (Value@ b) {
-        Seq(List<Program@>[Assign(input, b, Int|8), md5.feed]);
+        Seq[Assign(input, b, Int|8), md5.feed];
     }));
 
-    Program@ test = Seq(List<Program@>[md5.reset, feed, md5.finish]);
+    Method@ test <- DoMethod<TestInstance@>(Seq[md5.reset, feed, md5.finish]);
 
     List@<Bit@> wnt_ = /Digits/String%.HexToBits(wnt);
-    PureM<TestInstance@>(TestInstance@(test, hash, wnt_));
-  });
+    Return<TestInstance@>(TestInstance@(test, hash, wnt_));
+  }));
 };
 
 Test@ Md5Tests = TestSuite(Str|'Md5', List<Test@>[
-# Unfortunately it takes too long to run all of these tests.
-  
-#  TestStr(
-#    Str|empty,
-#    HexStr|D41D8CD98F00B204E9800998ECF8427E,
-#    HexStr|''),
-#
-#  # "a"
-#  TestStr(
-#    Str|a,
-#    HexStr|0CC175B9C0F1B6A831C399E269772661,
-#    HexStr|61),
-#
-#  # "abc"
-#  TestStr(
-#    Str|abc,
-#    HexStr|900150983CD24FB0D6963F7D28E17F72,
-#    HexStr|616263),
-#
-#  # "message digest"
-#  TestStr(
-#    Str|message,
-#    HexStr|F96B697D7CB7938D525A2F31AAF161D0,
-#    HexStr|6D65737361676520646967657374),
-#
-#  # "abcdefghijklmnopqrstuvwxyz"
-#  TestStr(
-#    Str|a_to_z,
-#    HexStr|C3FCD3D76192E4007DFB496CCA67E13B,
-#    HexStr|6162636465666768696A6B6C6D6E6F707172737475767778797A),
-#
-#  # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
-#  TestStr(
-#    Str|A_to_9,
-#    HexStr|D174AB98D277D9F5A5611C2C9F419D9F,
-#    HexStr|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
-#
+  TestStr(
+    Str|empty,
+    HexStr|D41D8CD98F00B204E9800998ECF8427E,
+    HexStr|''),
+
+  # "a"
+  TestStr(
+    Str|a,
+    HexStr|0CC175B9C0F1B6A831C399E269772661,
+    HexStr|61),
+
+  # "abc"
+  TestStr(
+    Str|abc,
+    HexStr|900150983CD24FB0D6963F7D28E17F72,
+    HexStr|616263),
+
+  # "message digest"
+  TestStr(
+    Str|message,
+    HexStr|F96B697D7CB7938D525A2F31AAF161D0,
+    HexStr|6D65737361676520646967657374),
+
+  # "abcdefghijklmnopqrstuvwxyz"
+  TestStr(
+    Str|a_to_z,
+    HexStr|C3FCD3D76192E4007DFB496CCA67E13B,
+    HexStr|6162636465666768696A6B6C6D6E6F707172737475767778797A),
+
+  # "ABCDEFGHIJKLMNOPQRS0TUVWXYZabcdefghijklmnopqrstuvwxyz012345678@9"
+  TestStr(
+    Str|A_to_9,
+    HexStr|D174AB98D277D9F5A5611C2C9F419D9F,
+    HexStr|4142434445464748494A4B4C4D4E4F505152535455565758595A6162636465666768696A6B6C6D6E6F707172737475767778797A30313233343536373839),
+
   # "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
   TestStr(
     Str|1_to_0,

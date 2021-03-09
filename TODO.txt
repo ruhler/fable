@@ -1,18 +1,11 @@
 Fblf:
-* Figure out how to make the compiled fblf md5 program small enough for the C
-  compiler to compile on my computer.
- - If we could factor out the logic for a 32-bit adder, that should be enough
-   in this case.
+* Debug failures in fblf md5 test.
 
 * Clean up fblf compilation test infrastructure.
- - Fix it so we can have multiple tests with non-empty environments.
+ - Come up with better defined API between Module, Compile, and C driver code.
  - Set up build files to generate and run the compiled fblf tests.
  - Add nicer summary and error messages in compiled test runner.
 * Rewrite tests for /Fblf/Heap%.
-* Add tests for /Fblf/Module%.SharedM
- - Including something that compiles to enough subprograms that it would catch
-   the bug that the order of Map iteration for Int@ is not in the order you
-   would expect.
 * Figure out how to replace fblf integer arithmetic with a native c
   implementation at compile time.
   - See how much faster it is now.

@@ -3,20 +3,24 @@
 
 @ Bit@ = /Digits%.Bit@;
 
+@ Int@ = /Int/Int%.Int@;
+% Int = /Int/Int/Lit%.Int;
+
 % Exec = /Fblf/Exec%.Exec;
 
 @ Heap@ = /Fblf/Heap%.Heap@;
 % Heap = /Fblf/Heap%.Heap;
 % Read = /Fblf/Heap%.Read;
 
-@ Addr@ = /Fblf/Program%.Addr@;
-@ Program@ = /Fblf/Program%.Program@;
+@ Var@ = /Fblf/Program%.Var@;
 
-<@>@ Instance@ = /Fblf/Module%.Instance@;
+<@>@ Ran@ = /Fblf/Module%.Ran@;
 <@>@ Module@ = /Fblf/Module%.Module@;
-<@>% Instantiate = /Fblf/Module%.Instantiate;
+@ Method@ = /Fblf/Module%.Method@;
+<@>% Run = /Fblf/Module%.Run;
 
 <@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 <@,@>% Map = /List%.Map;
 
 @ String@ = /String%.String@;
@@ -30,7 +34,7 @@
 
 # The test runs the program and asserts that the n bits of result match the
 # expected bits, where n is the number of given expected bits.
-@ TestInstance@ = *(Program@ program, Addr@ result, Bits@ expected);
+@ TestInstance@ = *(Method@ method, Var@ result, Bits@ expected);
 @ TestCase@ = *(String@ name, Module@<TestInstance@> test);
 @ TestSuite@ = *(String@ name, List@<Test@> tests),
 @ Test@ = +(TestCase@ case, TestSuite@ suite);
@@ -54,12 +58,12 @@ TestSuite = (String@ name, List@<Test@> tests) {
     case: {
       Module@<TestInstance@> m = t.case.test;
       /Test%.TestResult@! body = !({
-        Instance@<TestInstance@> i = Instantiate<TestInstance@>(m);
-        TestInstance@ mI = i.instance;
-        Heap@ heap = Exec(i.env, mI.program, Heap(i.heap));
+        Ran@<TestInstance@> i = Run<TestInstance@>(m);
+        TestInstance@ mI = i.x;
+        Heap@ heap = Exec(i.program, List<Int@>[Int|0], mI.method, Heap(i.heap));
 
         Bits@ wnt = mI.expected;
-        Bits@ got = Read(heap, mI.result, /List/Length%.Length<Bit@>(wnt));
+        Bits@ got = Read(heap, mI.result.offset, /List/Length%.Length<Bit@>(wnt));
         AssertEquals<Bits@>(EqBits, ShowBits, wnt, got);
       });
       /Test%.Test@(case: /Test%.TestCase@(t.case.name, body));

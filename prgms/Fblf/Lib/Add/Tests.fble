@@ -1,18 +1,21 @@
 
 % BitStr = /Digits/String%.BitStr;
 
-% AddM = /Fblf/Lib/Add%.AddM;
-% IncM = /Fblf/Lib/Add%.IncM;
-% DecM = /Fblf/Lib/Add%.DecM;
+% Add = /Fblf/Lib/Add%.Add;
+% Inc = /Fblf/Lib/Add%.Inc;
+% Dec = /Fblf/Lib/Add%.Dec;
 
-<@>% AllocM = /Fblf/Module%.AllocM;
-<@>% PureM = /Fblf/Module%.PureM;
-<@,@>% InstM = /Fblf/Module%.InstM;
+@ Method@ = /Fblf/Module%.Method@;
+<@>% Module0 = /Fblf/Module%.Module0;
+<@>% DoAlloc = /Fblf/Module%.DoAlloc;
+<@>% Return = /Fblf/Module%.Return;
+<@>% DoMethod = /Fblf/Module%.DoMethod;
+<@,@>% DoInst = /Fblf/Module%.DoInst;
 
-@ Addr@ = /Fblf/Program%.Addr@;
-@ Program@ = /Fblf/Program%.Program@;
+@ Var@ = /Fblf/Program%.Var@;
+@ Stmt@ = /Fblf/Program%.Stmt@;
 % Assign = /Fblf/Program%.Assign;
-% Const = /Fblf/Program%.Const;
+% Binary = /Fblf/Program%.Binary;
 % Seq = /Fblf/Program%.Seq;
 
 @ Test@ = /Fblf/Test%.Test@;
@@ -27,45 +30,54 @@
 % Str = /String%.Str;
 
 Test@ Tests = TestSuite(Str|'Add', List<Test@>[
-  Test(Str|AddM, {
-    Addr@ a <- AllocM<TestInstance@>(Int|5);
-    Addr@ b <- AllocM<TestInstance@>(Int|5);
-    Addr@ z <- AllocM<TestInstance@>(Int|5);
+  Test(Str|Add, Module0<TestInstance@>(Str|'TestAdd.Add', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|5);
+    Var@ b <- DoAlloc<TestInstance@>(Int|5);
+    Var@ z <- DoAlloc<TestInstance@>(Int|5);
 
-    Program@ add <- InstM<Program@, TestInstance@>(AddM(Int|4, a, b, z));
+    Stmt@ add <- DoInst<Stmt@, TestInstance@>(Add(Int|4)(a, b, z));
 
     # Note: we put an extra '1' bit after each value as a regression test for
     # a bug we had where it was reading one bit off the end of the values.
-    Program@ test = Seq(List<Program@>[
-      Assign(a, Const(BitStr|00101), Int|5),
-      Assign(b, Const(BitStr|10111), Int|5),
-      Assign(z, Const(BitStr|11111), Int|5),
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|00101, Int|5),
+      Assign(b, Binary|10111, Int|5),
+      Assign(z, Binary|11111, Int|5),
       add
     ]);
 
-    PureM<TestInstance@>(TestInstance@(test, a, BitStr|001011011111011));
-  }),
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|001011011111011));
+  })),
 
-  Test(Str|IncM, {
-    Addr@ a <- AllocM<TestInstance@>(Int|5);
-    Program@ inc <- InstM<Program@, TestInstance@>(IncM(Int|5, a));
-    Program@ test = Seq(List<Program@>[Assign(a, Const(BitStr|10011), Int|5), inc]);
-    PureM<TestInstance@>(TestInstance@(test, a, BitStr|10100));
-  }),
+  Test(Str|Inc, Module0<TestInstance@>(Str|'TestAdd.Inc', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|5);
+    Stmt@ inc <- DoInst<Stmt@, TestInstance@>(Inc(Int|5)(a));
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|10011, Int|5),
+      inc
+    ]);
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|10100));
+  })),
 
-  Test(Str|'IncM Overflow', {
-    Addr@ a <- AllocM<TestInstance@>(Int|5);
-    Program@ inc <- InstM<Program@, TestInstance@>(IncM(Int|5, a));
-    Program@ test = Seq(List<Program@>[Assign(a, Const(BitStr|11111), Int|5), inc]);
-    PureM<TestInstance@>(TestInstance@(test, a, BitStr|00000));
-  }),
+  Test(Str|'Inc Overflow', Module0<TestInstance@>(Str|'TestAdd.Inc Overflow', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|5);
+    Stmt@ inc <- DoInst<Stmt@, TestInstance@>(Inc(Int|5)(a));
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|11111, Int|5),
+      inc
+    ]);
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|00000));
+  })),
 
-  Test(Str|DecM, {
-    Addr@ a <- AllocM<TestInstance@>(Int|5);
-    Program@ dec <- InstM<Program@, TestInstance@>(DecM(Int|5, a));
-    Program@ test = Seq(List<Program@>[Assign(a, Const(BitStr|10100), Int|5), dec]);
-    PureM<TestInstance@>(TestInstance@(test, a, BitStr|10011));
-  })
+  Test(Str|Dec, Module0<TestInstance@>(Str|'TestAdd.Dec', {
+    Var@ a <- DoAlloc<TestInstance@>(Int|5);
+    Stmt@ dec <- DoInst<Stmt@, TestInstance@>(Dec(Int|5)(a));
+    Method@ test <- DoMethod<TestInstance@>(Seq[
+      Assign(a, Binary|10100, Int|5),
+      dec
+    ]);
+    Return<TestInstance@>(TestInstance@(test, a, BitStr|10011));
+  }))
 ]);
 
 @(Tests);
