@@ -6,9 +6,6 @@ Fblf:
    initialized from the callers. That way it's safe to use variables and
    fields and statements locally and return them as is and use them in
    callers.
- - Running a module should return a List<Int@> which are the args (including
-   this) to pass to any high level methods returned by the module. Or give an
-   easy way to extract that from a method returned at the top level.
 
 * Clean up fblf compilation test infrastructure.
  - Set up build files to generate and run the compiled fblf tests.

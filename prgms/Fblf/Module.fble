@@ -176,7 +176,9 @@ DoInst = <@ A@, @ B@>(Module@<A@> m) {
 };
 
 # Method --
-#   Define a module method.
+#   Method@ is used to represent a Call Stmt@.
+#
+# This is user documentation only. It is not enforced by the type system.
 @ Method@ = Stmt@;
 
 # Note: The returned method can only be used for defining methods in the
@@ -205,9 +207,15 @@ Method = (Stmt@ stmt)(State@ s) {
 <@ T@>(Stmt@)((Method@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
 DoMethod = <@ T@>(Stmt@ body) { Do<Stmt@, T@>(Method(body)); };
 
-# Extract the value of the arguments to a method, assuming they are all
-# relative to 'this'.
-# TODO: Give a better explanation of what this is for.
+# MethodArgs --
+#   Extract the concrete arguments to supply to a method call for a method
+#   returned from running the top level module.
+#
+# If a method is returned from the top level module, its args should all be
+# relative to the 'this' var with id 0, which refers to bit 0 of the heap of a
+# top level module.
+#
+# Behavior is undefined if the given method is not from a top level module.
 (Method@) { List@<Int@>; } MethodArgs = (Method@ method) {
   Map<Var@, Int@>(method.call.args, (Var@ v) {
     Unit@ _ = Eq(Int|0, v.id).true;  # Assert
