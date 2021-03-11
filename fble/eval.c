@@ -1017,6 +1017,10 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
         assert(thread.stack == NULL);
         assert(thread.children.size == 0);
         assert(thread.children.xs == NULL);
+
+        // Give a chance to process any remaining io before exiting.
+        io->io(io, heap, false);
+
         FbleFreeProfileThread(arena, thread.profile);
 
         FbleValue* result = final_result->value;

@@ -122,9 +122,6 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
     /Int/Int/Show%.Show(num_total), Str|' total'
   ]));
 
-  # TODO: Why do we need this extra output?
-  Unit@ _ := PrintLn(out, Nil<Char@>);
-
   !(failures.?(cons: False, nil: True));
 };
 

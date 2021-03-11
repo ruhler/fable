@@ -1,0 +1,22 @@
+
+@ Unit@ = /Unit%.Unit@;
+
+% True = /Bool%.True;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Stdio@ = /Stdio%.Stdio@;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+Stdio@ Test = (Get@<Maybe@<String@>> _, Put@<String@> stdout) {
+  # Output a single line to test that we don't drop trailing outputs.
+  Unit@ _ := stdout(Str|'PASSED');
+  !(True);
+};
+
+Test;

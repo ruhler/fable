@@ -95,9 +95,6 @@ Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
   };
 
   Unit@ _ := Output(put, output);
-  Unit@ _ := put(Str|'');
-  Unit@ _ := put(Str|'');
-  Unit@ _ := put(Str|'');
 
   !(True);
 };

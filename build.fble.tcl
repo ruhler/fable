@@ -162,6 +162,7 @@ testn fble-disassemble exec $::bin/fble-disassemble prgms/Fble/Tests.fble prgms 
 testn fble-tests exec $::bin/fble-stdio --profile out/test/fble-tests.prof prgms/Fble/Tests.fble prgms >@ stdout
 testn fble-md5 exec $::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null
 testn fble-cat exec $::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -
+testn fble-stdio exec $::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED
 
 exec mkdir -p out/cov/all
 run -ignorestderr gcov {*}$::fble_objs > out/cov/all/fble.gcov

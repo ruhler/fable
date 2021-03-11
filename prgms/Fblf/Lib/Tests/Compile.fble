@@ -1,8 +1,6 @@
 
 % True = /Bool%.True;
 
-% Chars = /Char%.Chars;
-
 @ Output@ = /Fblf/Compile/Output%.Output@;
 % Output = /Fblf/Compile/Output%.Output;
 
@@ -14,7 +12,6 @@
 @ Stdio@ = /Stdio%.Stdio@;
 
 @ String@ = /String%.String@;
-% Str = /String%.Str;
 
 @ Unit@ = /Unit%.Unit@;
 
@@ -22,8 +19,6 @@
 Stdio@ Main = (Get@<Maybe@<String@>> _, Put@<String@> put) {
   Output@ output = /Fblf/Test/Compile%.Compile(/Fblf/Lib/Tests%.Tests);
   Unit@ _ := Output(put, output);
-  Unit@ _ := put(Str[Chars.nl]);
-  Unit@ _ := put(Str[Chars.nl]);
   !(True);
 };
 

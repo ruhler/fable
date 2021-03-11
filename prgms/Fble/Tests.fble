@@ -22,6 +22,7 @@
 % _ = /Invaders/ScreenshotApp%;
 % _ = /Snake%;
 % _ = /Stdio/Cat%;
+% _ = /Stdio/Test%;
 
 Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Bool/Tests%.Tests,
