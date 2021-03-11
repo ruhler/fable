@@ -1,7 +1,7 @@
 
 #include <assert.h>
 
-#include "heap.h"
+#include "fblf-heap.h"
 
 // See documentation of FblfHeapRead in heap.h.
 FblfHeapWord FblfHeapRead(FblfHeap* heap, FblfHeapAddr addr, size_t n)

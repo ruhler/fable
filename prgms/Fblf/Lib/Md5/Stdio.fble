@@ -55,7 +55,7 @@ Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
   Output@ output = {
     Unit@ _ <- Do(Line|'#include <stdio.h>');
     Unit@ _ <- Do(Line|'');
-    Unit@ _ <- Do(Line|'#include "heap.h"');
+    Unit@ _ <- Do(Line|'#include "fblf-heap.h"');
     Unit@ _ <- Do(Line|'');
     Unit@ _ <- Do(Compile(Str|'_prog', ran.program));
 

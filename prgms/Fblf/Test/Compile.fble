@@ -89,7 +89,7 @@
 (Test@) { Output@; } Compile = (Test@ t) {
   Unit@ _ <- Do(Line|'#include <assert.h>');
   Unit@ _ <- Do(Line|'');
-  Unit@ _ <- Do(Line|'#include "heap.h"');
+  Unit@ _ <- Do(Line|'#include "fblf-heap.h"');
   Unit@ _ <- Do(Line|'');
 
   Module@<TMs@> test_module = Module0<TMs@>(Str|'TestsModule', {

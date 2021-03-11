@@ -7,9 +7,7 @@ Fblf:
    fields and statements locally and return them as is and use them in
    callers.
 
-* Clean up fblf compilation test infrastructure.
- - Set up build files to generate and run the compiled fblf tests.
- - Add nicer summary and error messages in compiled test runner.
+* Add nicer summary and error messages in compiled fblf test runner.
 
 * Rewrite tests for /Fblf/Heap%.
 * Figure out how to replace fblf integer arithmetic with a native c

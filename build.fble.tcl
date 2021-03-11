@@ -164,6 +164,19 @@ testn fble-md5 exec $::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null
 testn fble-cat exec $::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -
 testn fble-stdio exec $::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED
 
+# fblf compilation tests.
+gcc_prgm -c -o $::obj/fblf-heap.o -I prgms/Fblf prgms/Fblf/fblf-heap.c
+testn fblf-tests-gen exec $::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > out/src/fblf-tests.c
+gcc_prgm -c -o $::obj/fblf-tests.o -I prgms/Fblf out/src/fblf-tests.c
+gcc_prgm -o $::bin/fblf-tests $::obj/fblf-tests.o $obj/fblf-heap.o
+testn fblf-tests exec $::bin/fblf-tests
+
+# fblf md5 compilation tests.
+testn fblf-md5-gen exec $::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > out/src/fblf-md5.c
+gcc_prgm -c -o $::obj/fblf-md5.o -I prgms/Fblf out/src/fblf-md5.c
+gcc_prgm -o $::bin/fblf-md5 $::obj/fblf-md5.o $obj/fblf-heap.o
+testn fblf-md5 exec $::bin/fblf-md5 /dev/null
+
 exec mkdir -p out/cov/all
 run -ignorestderr gcov {*}$::fble_objs > out/cov/all/fble.gcov
 exec mv {*}[glob *.gcov] out/cov/all
