@@ -2,9 +2,11 @@
 % True = /Bool%.True;
 
 % Compile = /Fblf/Compile%.Compile;
+% CompileUserCall = /Fblf/Compile%.CompileUserCall;
 
 @ Output@ = /Fblf/Compile/Output%.Output@;
 % Do = /Fblf/Compile/Output%.Do;
+% Line = /Fblf/Compile/Output%.Line;
 % Return = /Fblf/Compile/Output%.Return;
 % Output = /Fblf/Compile/Output%.Output;
 
@@ -14,6 +16,7 @@
 <@>@ Ran@ = /Fblf/Module%.Ran@;
 @ Method@ = /Fblf/Module%.Method@;
 <@>% Module0 = /Fblf/Module%.Module0;
+% MethodArgs = /Fblf/Module%.MethodArgs;
 <@>% Run = /Fblf/Module%.Run;
 <@>% DoAlloc = /Fblf/Module%.DoAlloc;
 <@>% DoMethod = /Fblf/Module%.DoMethod;
@@ -32,29 +35,69 @@
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
+% Strs = /String%.Strs;
 
 @ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
 
 Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
-  Ran@<Unit@> ran = Run<Unit@>(Module0<Unit@>(Str|'Md5Stdio', {
-    Var@ input <- DoAlloc<Unit@>(Int|8);
-    Var@ hash <- DoAlloc<Unit@>(Int|128);
-    Md5@ md5 <- DoInst<Md5@, Unit@>(Md5M(input, hash));
+  Ran@<Md5@> ran = Run<Md5@>(Module0<Md5@>(Str|'Md5Stdio', {
+    Var@ input <- DoAlloc<Md5@>(Int|8);
+    Var@ hash <- DoAlloc<Md5@>(Int|128);
+    Md5@ md5 <- DoInst<Md5@, Md5@>(Md5M(input, hash));
 
     # We have to re-export the methods to make them relative to this module.
-    Method@ reset <- DoMethod<Unit@>(md5.reset);
-    Method@ feed <- DoMethod<Unit@>(md5.feed);
-    Method@ finish <- DoMethod<Unit@>(md5.finish);
-    /Fblf/Module%.Return<Unit@>(Unit);
+    Method@ reset <- DoMethod<Md5@>(md5.reset);
+    Method@ feed <- DoMethod<Md5@>(md5.feed);
+    Method@ finish <- DoMethod<Md5@>(md5.finish);
+    /Fblf/Module%.Return<Md5@>(Md5@(reset, feed, finish));
   }));
 
   Output@ output = {
+    Unit@ _ <- Do(Line|'#include <stdio.h>');
+    Unit@ _ <- Do(Line|'');
+    Unit@ _ <- Do(Line|'#include "heap.h"');
+    Unit@ _ <- Do(Line|'');
     Unit@ _ <- Do(Compile(Str|'_prog', ran.program));
+
+    Unit@ _ <- Do(Line|'int main(int argc, char* argv[])');
+    Unit@ _ <- Do(Line|'{');
+    Unit@ _ <- Do(Line(Strs[
+        Str|'  FblfHeapWord heap[FBLF_HEAP_WORDS_FOR_BITS(',
+          /Int/Int/Show%.Show(ran.heap),
+          Str|')];'
+    ]));
+    Unit@ _ <- Do(CompileUserCall(Str|'_prog', Str|'  ', Str|'heap', ran.x.reset.call.proc, MethodArgs(ran.x.reset)));
+    Unit@ _ <- Do(Line|'');
+    Unit@ _ <- Do(Line|'
+  FILE* fin = fopen(argv[1], "rb");
+  if (fin == NULL) {
+    fprintf(stderr, "unable to open input file %s\n", argv[1]);
+    return 1;
+  }
+
+  int c;
+  while ((c = fgetc(fin)) != EOF) {
+    FblfHeapWrite(heap, 0, c, 8);
+');
+    Unit@ _ <- Do(CompileUserCall(Str|'_prog', Str|'    ', Str|'heap', ran.x.feed.call.proc, MethodArgs(ran.x.feed)));
+    Unit@ _ <- Do(Line|'  }');
+    Unit@ _ <- Do(CompileUserCall(Str|'_prog', Str|'  ', Str|'heap', ran.x.finish.call.proc, MethodArgs(ran.x.finish)));
+    Unit@ _ <- Do(Line|'
+  fclose(fin);
+  for (int i = 0; i < 16; ++i) {
+    printf("%02x", (unsigned int)FblfHeapRead(heap, 8 + i*8, 8));
+  }
+  printf(" %s\n", argv[1]);
+  return 0;
+}');
+    
     Return;
   };
 
   Unit@ _ := Output(put, output);
+  Unit@ _ := put(Str|'');
+  Unit@ _ := put(Str|'');
+  Unit@ _ := put(Str|'');
 
   !(True);
 };

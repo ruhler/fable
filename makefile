@@ -13,7 +13,8 @@ checkerr:
 
 .PHONY: foo
 foo:
-	./out/bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > fblf/tests.c
+	#./out/bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > fblf/tests.c
+	./out/bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > fblf/md5.c
 
 .PHONY: test
 test:
