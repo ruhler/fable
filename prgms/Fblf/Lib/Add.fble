@@ -73,7 +73,7 @@ Add = (Int@ n) {
     # the addition.
     Var@ carry <- DoAlloc<Method@>(Int|1);
 
-    Method(For<Int@, Stmt@>(CountDownFrom(n), Assign(carry, Binary|0, Int|1),
+    Method(Str|'main', For<Int@, Stmt@>(CountDownFrom(n), Assign(carry, Binary|0, Int|1),
       (Int@ i, Stmt@ s) {
         Seq[s, Add1(Offset(a, i), Offset(b, i), carry, carry, Offset(z, i))];
       }));
@@ -107,8 +107,8 @@ Add = (Int@ n) {
 #   a - The address of the value to increment. The value is most significant
 #       bit first.
 (Int@)(Var@) { Module@<Method@>; } Inc = (Int@ n) {
-  String@ name = Strs[Str|'Add/Inc', /Int/Int/Show%.Show(n)];
-  Module1<Method@>(name, (Var@ a) { Method(IncI(n, a)); });
+  String@ name = Strs[Str|'/Fblf/Lib/Add%.Inc', /Int/Int/Show%.Show(n)];
+  Module1<Method@>(name, (Var@ a) { Method(Str|'main', IncI(n, a)); });
 };
 
 # DecI --
@@ -139,8 +139,8 @@ DecI = (Int@ n, Var@ a) {
 #   a - The address of the value to decrement. The value is most significant
 #       bit first.
 (Int@)(Var@) { Module@<Method@>; } Dec = (Int@ n) {
-  String@ name = Strs[Str|'Add/Dec', /Int/Int/Show%.Show(n)];
-  Module1<Method@>(name, (Var@ a) { Method(DecI(n, a)); });
+  String@ name = Strs[Str|'/Fblf/Lib/Add%.Dec', /Int/Int/Show%.Show(n)];
+  Module1<Method@>(name, (Var@ a) { Method(Str|'main', DecI(n, a)); });
 };
 
 @(Add, IncI, Inc, DecI, Dec);

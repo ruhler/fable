@@ -14,13 +14,10 @@
 % Md5M = /Fblf/Lib/Md5%.Md5;
 
 <@>@ Ran@ = /Fblf/Module%.Ran@;
-@ Method@ = /Fblf/Module%.Method@;
 <@>% Module0 = /Fblf/Module%.Module0;
 % MethodArgs = /Fblf/Module%.MethodArgs;
 <@>% Run = /Fblf/Module%.Run;
 <@>% DoAlloc = /Fblf/Module%.DoAlloc;
-<@>% DoMethod = /Fblf/Module%.DoMethod;
-<@,@>% DoInst = /Fblf/Module%.DoInst;
 
 @ Var@ = /Fblf/Program%.Var@;
 
@@ -43,13 +40,7 @@ Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
   Ran@<Md5@> ran = Run<Md5@>(Module0<Md5@>(Str|'Md5Stdio', {
     Var@ input <- DoAlloc<Md5@>(Int|8);
     Var@ hash <- DoAlloc<Md5@>(Int|128);
-    Md5@ md5 <- DoInst<Md5@, Md5@>(Md5M(input, hash));
-
-    # We have to re-export the methods to make them relative to this module.
-    Method@ reset <- DoMethod<Md5@>(md5.reset);
-    Method@ feed <- DoMethod<Md5@>(md5.feed);
-    Method@ finish <- DoMethod<Md5@>(md5.finish);
-    /Fblf/Module%.Return<Md5@>(Md5@(reset, feed, finish));
+    Md5M(input, hash);
   }));
 
   Output@ output = {

@@ -1,4 +1,5 @@
 
+@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
 <@>@ Eq@ = /Eq%.Eq@;
@@ -19,4 +20,15 @@ Eq = <@ T@>(Eq@<T@> eq)(List@<T@> a, List@<T@> b) {
     nil: b.?(cons: False, nil: True));
 };
 
-@(Eq);
+# Contains --
+#   Return true if the list contains the given element, false otherwise.
+<@ T@>(Eq@<T@>)(List@<T@>, T@) { Bool@; }
+Contains = <@ T@>(Eq@<T@> eq)(List@<T@> l, T@ e) {
+  l.?(
+    cons: eq(l.cons.head, e).?(
+      true: True,
+      false: Contains<T@>(eq)(l.cons.tail, e)),
+    nil: False);
+};
+
+@(Eq, Contains);

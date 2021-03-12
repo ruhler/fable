@@ -22,16 +22,12 @@
 % Seq = /Fblf/Program%.Seq;
 
 <@>@ Module@ = /Fblf/Module%.Module@;
-<@>@ ModuleM@ = /Fblf/Module%.ModuleM@;
 @ Method@ = /Fblf/Module%.Method@;
 <@>% Module2 = /Fblf/Module%.Module2;
 <@>% Module5 = /Fblf/Module%.Module5;
 <@>% DoAlloc = /Fblf/Module%.DoAlloc;
 <@>% DoMethod = /Fblf/Module%.DoMethod;
-<@>% DoExport = /Fblf/Module%.DoExport;
 <@,@>% Do = /Fblf/Module%.Do;
-<@>% Inst = /Fblf/Module%.Inst;
-<@,@>% DoInst = /Fblf/Module%.DoInst;
 <@>% Return = /Fblf/Module%.Return;
 
 % Add = /Fblf/Lib/Add%.Add;
@@ -85,8 +81,8 @@ BlockOf@<Value@> T4 = BlockOf@<Value@>(
 # SeqM --
 #   Helper function for instantiating a list of modules and executing the
 #   methods from each in order in a single statement.
-(List@<ModuleM@<Stmt@>>) { ModuleM@<Stmt@>; }
-SeqM = (List@<ModuleM@<Stmt@>> ms) {
+(List@<Module@<Stmt@>>) { Module@<Stmt@>; }
+SeqM = (List@<Module@<Stmt@>> ms) {
   ms.?(
     cons: {
       Stmt@ x <- Do<Stmt@, Stmt@>(ms.cons.head);
@@ -101,7 +97,7 @@ SeqM = (List@<ModuleM@<Stmt@>> ms) {
 #
 # Inputs: x, y, z, r
 #   Computes r = X(x, y, z)
-@ X@ = (Var@, Var@, Var@, Var@) { ModuleM@<Stmt@>; };
+@ X@ = (Var@, Var@, Var@, Var@) { Module@<Stmt@>; };
 
 # XX@ --
 #   The type of functions FF, GG, HH, II.
@@ -109,7 +105,7 @@ SeqM = (List@<ModuleM@<Stmt@>> ms) {
 # Inputs: a, b, c, d, x, s, t, r
 #
 #   Computes r = X(a, b, c, d, x, s, t);
-@ XX@ = (Var@, Var@, Var@, Var@, Var@, Int@, Value@, Var@) { ModuleM@<Stmt@>; };
+@ XX@ = (Var@, Var@, Var@, Var@, Var@, Int@, Value@, Var@) { Module@<Stmt@>; };
 
 (X@) { XX@; }
 XX = (X@ xf)(Var@ a, Var@ b, Var@ c, Var@ d, Var@ x, Int@ s, Value@ t, Var@ r) {
@@ -123,12 +119,12 @@ XX = (X@ xf)(Var@ a, Var@ b, Var@ c, Var@ d, Var@ x, Int@ s, Value@ t, Var@ r) {
 
   SeqM[
     Return<Stmt@>(Assign(tv, t, Int|32)),
-    Inst<Stmt@>(Add(Int|32)(x, tv, xtv)),
+    Add(Int|32)(x, tv, xtv),
     xf(b, c, d, xfv),
-    Inst<Stmt@>(Add(Int|32)(a, xfv, axfv)),
-    Inst<Stmt@>(Add(Int|32)(axfv, xtv, axfxtv)),
-    Inst<Stmt@>(Cls(Int|32, s)(axfxtv, clsv)),
-    Inst<Stmt@>(Add(Int|32)(b, clsv, r))];
+    Add(Int|32)(a, xfv, axfv),
+    Add(Int|32)(axfv, xtv, axfxtv),
+    Cls(Int|32, s)(axfxtv, clsv),
+    Add(Int|32)(b, clsv, r)];
 };
 
 XX@ FF = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
@@ -138,10 +134,10 @@ XX@ FF = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
   Var@ xy <- DoAlloc<Stmt@>(Int|32);
 
   SeqM[
-    Inst<Stmt@>(Not(Int|32)(x, nx)),
-    Inst<Stmt@>(And(Int|32)(nx, z, anxz)),
-    Inst<Stmt@>(And(Int|32)(x, y, xy)),
-    Inst<Stmt@>(Or(Int|32)(xy, anxz, r))];
+    Not(Int|32)(x, nx),
+    And(Int|32)(nx, z, anxz),
+    And(Int|32)(x, y, xy),
+    Or(Int|32)(xy, anxz, r)];
 });
 
 XX@ GG = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
@@ -151,10 +147,10 @@ XX@ GG = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
   Var@ xz <- DoAlloc<Stmt@>(Int|32);
 
   SeqM[
-    Inst<Stmt@>(Not(Int|32)(z, nz)),
-    Inst<Stmt@>(And(Int|32)(y, nz, aynz)),
-    Inst<Stmt@>(And(Int|32)(x, z, xz)),
-    Inst<Stmt@>(Or(Int|32)(xz, aynz, r))];
+    Not(Int|32)(z, nz),
+    And(Int|32)(y, nz, aynz),
+    And(Int|32)(x, z, xz),
+    Or(Int|32)(xz, aynz, r)];
 });
 
 XX@ HH = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
@@ -162,8 +158,8 @@ XX@ HH = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
   Var@ yz <- DoAlloc<Stmt@>(Int|32);
 
   SeqM[
-    Inst<Stmt@>(Xor(Int|32)(y, z, yz)),
-    Inst<Stmt@>(Xor(Int|32)(x, yz, r))];
+    Xor(Int|32)(y, z, yz),
+    Xor(Int|32)(x, yz, r)];
 });
 
 XX@ II = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
@@ -172,9 +168,9 @@ XX@ II = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
   Var@ xnz <- DoAlloc<Stmt@>(Int|32);
 
   SeqM[
-    Inst<Stmt@>(Not(Int|32)(z, nz)),
-    Inst<Stmt@>(Or(Int|32)(x, nz, xnz)),
-    Inst<Stmt@>(Xor(Int|32)(y, xnz, r))];
+    Not(Int|32)(z, nz),
+    Or(Int|32)(x, nz, xnz),
+    Xor(Int|32)(y, xnz, r)];
 });
 
 # Round@ --
@@ -185,7 +181,7 @@ XX@ II = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
 #   block - The input block.
 #
 # Updates values of ABCD in place based on the input block.
-@ Round@ = (Var@, Var@, Var@, Var@, BlockOf@<Var@>) { ModuleM@<Stmt@>; };
+@ Round@ = (Var@, Var@, Var@, Var@, BlockOf@<Var@>) { Module@<Stmt@>; };
 
 # RoundX --
 #   Returns the round module based on the given parameters.
@@ -246,7 +242,7 @@ Round@ Round4 = RoundX(II, Int|6, Int|10, Int|15, Int|21, T4, (BlockOf@<Var@> b)
     b.04, b.11, b.02, b.09);
 });
 
-(Var@, Var@, Var@, Var@, BlockOf@<Var@>) { ModuleM@<Stmt@>; }
+(Var@, Var@, Var@, Var@, BlockOf@<Var@>) { Module@<Stmt@>; }
 DoBlock = (Var@ a, Var@ b, Var@ c, Var@ d, BlockOf@<Var@> block) {
   Var@ save_a <- DoAlloc<Stmt@>(Int|32);
   Var@ save_b <- DoAlloc<Stmt@>(Int|32);
@@ -262,10 +258,10 @@ DoBlock = (Var@ a, Var@ b, Var@ c, Var@ d, BlockOf@<Var@> block) {
     Round2(a, b, c, d, block),
     Round3(a, b, c, d, block),
     Round4(a, b, c, d, block),
-    Inst<Stmt@>(Add(Int|32)(a, save_a, a)),
-    Inst<Stmt@>(Add(Int|32)(b, save_b, b)),
-    Inst<Stmt@>(Add(Int|32)(c, save_c, c)),
-    Inst<Stmt@>(Add(Int|32)(d, save_d, d))];
+    Add(Int|32)(a, save_a, a),
+    Add(Int|32)(b, save_b, b),
+    Add(Int|32)(c, save_c, c),
+    Add(Int|32)(d, save_d, d)];
 };
 
 # Store --
@@ -303,16 +299,14 @@ Store = (Int@ k, Int@ n, Var@ memory, Var@ addr, Var@ value) {
 PackWord = Module2<PackWord@>(Str|'Md5.PackWord', (Var@ word, Var@ byte) {
   Var@ addr <- DoAlloc<PackWord@>(Int|2);
 
-  Method@ reset <- DoMethod<PackWord@>(Assign(addr, Binary|11, Int|2));
+  Method@ reset <- DoMethod<PackWord@>(Str|'reset', Assign(addr, Binary|11, Int|2));
 
-  Method@ feed <- DoMethod<PackWord@>(Seq[
+  Method@ feed <- DoMethod<PackWord@>(Str|'feed', Seq[
     Store(Int|2, Int|8, word, addr, byte),
     DecI(Int|2, addr)
   ]);
 
-  Var@ exported_addr <- DoExport<PackWord@>(addr);
-
-  Cond@ packed = Eq(Var(exported_addr), Binary|11, Int|2);
+  Cond@ packed = Eq(Var(addr), Binary|11, Int|2);
 
   Return<PackWord@>(@(reset, feed, packed));
 });
@@ -352,7 +346,7 @@ PaddedMd5 = Module5<PaddedMd5@>(Str|'Md5.PaddedMd5',
 
     # Space to assemble the next 32 bit word of input.
     Var@ word <- DoAlloc<PaddedMd5@>(Int|32);
-    PackWord@ wpack <- DoInst<PackWord@, PaddedMd5@>(PackWord(word, byte));
+    PackWord@ wpack <- Do<PackWord@, PaddedMd5@>(PackWord(word, byte));
 
     # Space to assemble the next block of 16 32-bit words of input.
     Var@ block <- DoAlloc<PaddedMd5@>(Mul(Int|16, Int|32));
@@ -370,7 +364,7 @@ PaddedMd5 = Module5<PaddedMd5@>(Str|'Md5.PaddedMd5',
 
     # Note: the spec lists the initial values for A, B, C, and D low-order byte
     # first, but H takes high order byte first.
-    Method@ reset <- DoMethod<PaddedMd5@>(Seq[
+    Method@ reset <- DoMethod<PaddedMd5@>(Str|'reset', Seq[
       Assign(count, Binary|0000, Int|4),
       Assign(a, Hex|67452301, Int|32),
       Assign(b, Hex|EFCDAB89, Int|32),
@@ -379,7 +373,7 @@ PaddedMd5 = Module5<PaddedMd5@>(Str|'Md5.PaddedMd5',
       wpack.reset
     ]);
 
-    Method@ feed <- DoMethod<PaddedMd5@>(Seq[
+    Method@ feed <- DoMethod<PaddedMd5@>(Str|'feed', Seq[
       wpack.feed,
       If(wpack.packed,
         Seq[
@@ -424,7 +418,7 @@ Md5 = Module2<Md5@>(Str|'Md5.Md5', (Var@ input, Var@ hash) {
   Var@ c <- DoAlloc<Md5@>(Int|32);
   Var@ d <- DoAlloc<Md5@>(Int|32);
 
-  PaddedMd5@ padded <- DoInst<PaddedMd5@, Md5@>(PaddedMd5(a, b, c, d, input));
+  PaddedMd5@ padded <- Do<PaddedMd5@, Md5@>(PaddedMd5(a, b, c, d, input));
 
   # Count of the number of bits of input that have been processed.
   Var@ length <- DoAlloc<Md5@>(Int|64);
@@ -433,12 +427,12 @@ Md5 = Module2<Md5@>(Str|'Md5.Md5', (Var@ input, Var@ hash) {
   # block so far.
   Var@ padding <- DoAlloc<Md5@>(Int|6);
 
-  Method@ reset <- DoMethod<Md5@>(Seq[
+  Method@ reset <- DoMethod<Md5@>(Str|'reset', Seq[
     Assign(length, Hex|0000000000000000, Int|64),
     padded.reset
   ]);
 
-  Method@ feed <- DoMethod<Md5@>(Seq[
+  Method@ feed <- DoMethod<Md5@>(Str|'feed', Seq[
     padded.feed,
 
     # Increment the length by one bytes worth by incrementing all but the last
@@ -446,7 +440,7 @@ Md5 = Module2<Md5@>(Str|'Md5.Md5', (Var@ input, Var@ hash) {
     IncI(Int|61, length)
   ]);
 
-  Method@ finish <- DoMethod<Md5@>(Seq[
+  Method@ finish <- DoMethod<Md5@>(Str|'finish', Seq[
     # Start tracking how many bytes we've added to the final block.
     Assign(padding, Var(Offset(length, Int|55)), Int|6),
 

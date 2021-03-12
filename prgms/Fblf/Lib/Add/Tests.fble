@@ -10,7 +10,7 @@
 <@>% DoAlloc = /Fblf/Module%.DoAlloc;
 <@>% Return = /Fblf/Module%.Return;
 <@>% DoMethod = /Fblf/Module%.DoMethod;
-<@,@>% DoInst = /Fblf/Module%.DoInst;
+<@,@>% Do = /Fblf/Module%.Do;
 
 @ Var@ = /Fblf/Program%.Var@;
 @ Stmt@ = /Fblf/Program%.Stmt@;
@@ -35,11 +35,11 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
     Var@ b <- DoAlloc<TestInstance@>(Int|5);
     Var@ z <- DoAlloc<TestInstance@>(Int|5);
 
-    Stmt@ add <- DoInst<Stmt@, TestInstance@>(Add(Int|4)(a, b, z));
+    Stmt@ add <- Do<Stmt@, TestInstance@>(Add(Int|4)(a, b, z));
 
     # Note: we put an extra '1' bit after each value as a regression test for
     # a bug we had where it was reading one bit off the end of the values.
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|00101, Int|5),
       Assign(b, Binary|10111, Int|5),
       Assign(z, Binary|11111, Int|5),
@@ -51,8 +51,8 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
 
   Test(Str|Inc, Module0<TestInstance@>(Str|'TestAdd.Inc', {
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
-    Stmt@ inc <- DoInst<Stmt@, TestInstance@>(Inc(Int|5)(a));
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Stmt@ inc <- Do<Stmt@, TestInstance@>(Inc(Int|5)(a));
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|10011, Int|5),
       inc
     ]);
@@ -61,8 +61,8 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
 
   Test(Str|'Inc Overflow', Module0<TestInstance@>(Str|'TestAdd.Inc Overflow', {
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
-    Stmt@ inc <- DoInst<Stmt@, TestInstance@>(Inc(Int|5)(a));
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Stmt@ inc <- Do<Stmt@, TestInstance@>(Inc(Int|5)(a));
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|11111, Int|5),
       inc
     ]);
@@ -71,8 +71,8 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
 
   Test(Str|Dec, Module0<TestInstance@>(Str|'TestAdd.Dec', {
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
-    Stmt@ dec <- DoInst<Stmt@, TestInstance@>(Dec(Int|5)(a));
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Stmt@ dec <- Do<Stmt@, TestInstance@>(Dec(Int|5)(a));
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|10100, Int|5),
       dec
     ]);

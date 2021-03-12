@@ -9,7 +9,6 @@
 % Offset = /Fblf/Program%.Offset;
 % Var = /Fblf/Program%.Var;
 
-<@>@ ModuleM@ = /Fblf/Module%.ModuleM@;
 <@>@ Module@ = /Fblf/Module%.Module@;
 @ Method@ = /Fblf/Module%.Method@;
 <@>% Module2 = /Fblf/Module%.Module2;
@@ -43,9 +42,9 @@
 #
 # Results:
 #   A statement that calls f on each bit.
-(Int@, (Int@) { Stmt@; }) { ModuleM@<Method@>; }
+(Int@, (Int@) { Stmt@; }) { Module@<Method@>; }
 Bitwise = (Int@ n, (Int@) { Stmt@; } f) {
-  Method(Seq(For<Int@, List@<Stmt@>>(CountUpTo(n), Nil<Stmt@>,
+  Method(Str|'main', Seq(For<Int@, List@<Stmt@>>(CountUpTo(n), Nil<Stmt@>,
     (Int@ i, List@<Stmt@> l) {
       Cons<Stmt@>(f(i), l);
     }))); 

@@ -1,11 +1,13 @@
 
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
 @ Program@ = /Fblf/Program%.Program@;
 @ Proc@ = /Fblf/Program%.Proc@;
 @ Var@ = /Fblf/Program%.Var@;
 @ Stmt@ = /Fblf/Program%.Stmt@;
 % Call = /Fblf/Program%.Call;
-% Offset = /Fblf/Program%.Offset;
-% LookupProc = /Fblf/Program%.LookupProc;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -16,6 +18,7 @@
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 <@,@>% Map = /List%.Map;
+<@>% Contains = /List/Eq%.Contains;
 
 @ String@ = /String%.String@;
 % Concat = /String%.Concat;
@@ -23,127 +26,25 @@
 
 @ Unit@ = /Unit%.Unit@;
 
-# ModuleM@ -- 
+# Module@ -- 
 #   Monadic API used to define a collection of fblf procedures that share the
 #   same internal state and module arguments.
 #
 # Fields:
 #   name - the globally unique name of the current module.
-#   args - the list of arguments passed to the module when it was instantiated.
-#          Includes the 'this' argument as the first element of the list.
+#   this - pointer to 'this' internal state variable.
+#   args - the list of arguments, not including 'this', passed to the module
+#          when it was instantiated.
+#   define - set to true if we should define methods on this module, false
+#            otherwise.
 #   heap - the number of bits allocated on the heap so far for the internal
 #          state of this module.
-#   methods - the number of methods defined in the module so far.
+#   modules - the list of modules that have already been defined.
 #   program - the program procedures defined so far.
-@ State@ = *(
-  String@ name,
-  List@<Var@> args,
-  Int@ heap,
-  Int@ methods,
-  Program@ program
-);
-<@>@ ModuleR@ = <@ T@>{ *(State@ s, T@ r); };
-<@>@ ModuleM@ = <@ T@>(State@) { ModuleR@<T@>; };
-
-# Module@ --
-#   A module defined using ModuleM@ with a name and the list of arguments
-#   supplied to it when the module was instantiated.
-#
-# Fields:
-#   name - A globally unique name of the module.
-#   body - The body of the module.
-#   args - List of arguments passed to the module, from the perspective of the
-#          module that instantiates this module. Not including 'this'.
-<@>@ Module@ = <@ T@> { *(String@ name, ModuleM@<T@> body, List@<Var@> args); };
-
-# Module --
-#   Helper to define a module with unverified number of arguments.
-#
-# The list of args provided should be the list of explicit arguments, not
-# including 'this', all from the perspective of the module that instantiates
-# this module.
-#
-# It is the users responsibility to ensure the number of arguments provided to
-# the module match the number expected to be used by the module.
-#
-# The provided module name must be globally unique.
-<@ T@>(String@, ModuleM@<T@>)(List@<Var@>) { Module@<T@>; }
-Module = <@ T@>(String@ name, ModuleM@<T@> body)(List@<Var@> args) {
-  Module@<T@>(name, body, args);
-};
-
-# Module0 --
-#   Define a module that takes no arguments.
-<@ T@>(String@, ModuleM@<T@>) { Module@<T@>; }
-Module0 = <@ T@>(String@ name, ModuleM@<T@> body) {
-  Module<T@>(name, body)[];
-};
-
-# Module1 --
-#   Define a module that takes 1 argument.
-<@ T@>(String@, (Var@) { ModuleM@<T@>; }) { (Var@) { Module@<T@>; }; }
-Module1 = <@ T@>(String@ name, (Var@) { ModuleM@<T@>; } m)(Var@ arg) {
-  # Arg id 0 is reserved for local state.
-  Module<T@>(name, m(Var@(Int|1, Int|0)))[arg];
-};
-
-# Module2 --
-#   Define a module that takes 2 arguments.
-<@ T@>(String@, (Var@, Var@) { ModuleM@<T@>; }) { (Var@, Var@) { Module@<T@>; }; }
-Module2 = <@ T@>(String@ name, (Var@, Var@) { ModuleM@<T@>; } m)(Var@ arg1, Var@ arg2) {
-  # Arg id 0 is reserved for local state.
-  Module<T@>(name, m(Var@(Int|1, Int|0), Var@(Int|2, Int|0)))[arg1, arg2];
-};
-
-# Module3 --
-#   Define a module that takes 3 arguments.
-<@ T@>(String@, (Var@, Var@, Var@) { ModuleM@<T@>; }) { (Var@, Var@, Var@) { Module@<T@>; }; }
-Module3 = <@ T@>(String@ name, (Var@, Var@, Var@) { ModuleM@<T@>; } m)(Var@ arg1, Var@ arg2, Var@ arg3) {
-  # Arg id 0 is reserved for local state.
-  Module<T@>(name, m(Var@(Int|1, Int|0), Var@(Int|2, Int|0), Var@(Int|3, Int|0)))[arg1, arg2, arg3];
-};
-
-# Module4 --
-#   Define a module that takes 4 arguments.
-<@ T@>(String@, (Var@, Var@, Var@, Var@) { ModuleM@<T@>; }) { (Var@, Var@, Var@, Var@) { Module@<T@>; }; }
-Module4 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@) { ModuleM@<T@>; } m)
-  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4) {
-  # Arg id 0 is reserved for local state.
-  Module<T@>(name, m(
-      Var@(Int|1, Int|0),
-      Var@(Int|2, Int|0),
-      Var@(Int|3, Int|0),
-      Var@(Int|4, Int|0)))[arg1, arg2, arg3, arg4];
-};
-
-# Module5 --
-#   Define a module that takes 5 arguments.
-<@ T@>(String@, (Var@, Var@, Var@, Var@, Var@) { ModuleM@<T@>; }) { (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }; }
-Module5 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@, Var@) { ModuleM@<T@>; } m)
-  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4, Var@ arg5) {
-  # Arg id 0 is reserved for local state.
-  Module<T@>(name, m(
-      Var@(Int|1, Int|0),
-      Var@(Int|2, Int|0),
-      Var@(Int|3, Int|0),
-      Var@(Int|4, Int|0),
-      Var@(Int|5, Int|0)))[arg1, arg2, arg3, arg4, arg5];
-};
-
-# Do --
-#   Monadic bind for ModuleM monad.
-<@ A@, @ B@>(ModuleM@<A@>)((A@) { ModuleM@<B@>; }) { ModuleM@<B@>; }
-Do = <@ A@, @ B@>(ModuleM@<A@> m)((A@) { ModuleM@<B@>; } f)(State@ s) {
-  ModuleR@<A@> a = m(s);
-  f(a.r)(a.s);
-};
-
-# Return --
-#   Monadic return for ModuleM monad.
-<@ T@>(T@) { ModuleM@<T@>; }
-Return = <@ T@>(T@ r)(State@ s) {
-  ModuleR@<T@>(s, r);
-};
+@ Read@ = *(String@ name, Var@ this, List@<Var@> args, Bool@ define);
+@ State@ = *(Int@ heap, List@<String@> modules, Program@ program);
+<@>@ ModuleR@ = <@ T@> { *(State@ s, T@ x); };
+<@>@ Module@ = <@ T@>(Read@, State@) { ModuleR@<T@>; };
 
 # Helper function to make a variable that's relative to the intrernal state of
 # a module.
@@ -152,60 +53,151 @@ Return = <@ T@>(T@ r)(State@ s) {
   Var@(Int|0, offset);
 };
 
+# LocalArgs --
+#   Given a list of vars [x, y, z], produce a list of vars [n, n+1, n+2].
+(Int@, List@<Var@>) { List@<Var@>; } LocalArgs = (Int@ n, List@<Var@> l) {
+  l.?(
+    cons: Cons<Var@>(Var@(n, Int|0), LocalArgs(Add(n, Int|1), l.cons.tail)),
+    nil: Nil<Var@>);
+};
+
+<@ T@>(String@, (List@<Var@>) { Module@<T@>; })(List@<Var@>) { Module@<T@>; }
+Module = <@ T@>(String@ name, (List@<Var@>) { Module@<T@>; } body)(List@<Var@> args)(Read@ r, State@ s) {
+  # Add the procedures from this module to the program if this is the first
+  # time we've encountered the module.
+  State@ ns = r.define.?(
+    true: Contains<String@>(/String/Eq%.Eq)(s.modules, name).?(
+      true: s,
+      false: {
+        List@<Var@> local_args = LocalArgs(Int|1, args);
+        State@ ns = body(local_args)(
+          Read@(name, Var@(Int|0, Int|0), local_args, True),
+          State@(Int|0, s.modules, s.program)).s;
+        State@(s.heap, Cons<String@>(name, ns.modules), ns.program);
+      }),
+    false: s);
+
+  # Run the body of the module inline to get its returned value relative to
+  # whatever module is instantiating it.
+  body(args)(Read@(name, Local(s.heap), args, False), ns);
+};
+
+# Module0 --
+#   Define a module that takes no arguments.
+<@ T@>(String@, Module@<T@>) { Module@<T@>; }
+Module0 = <@ T@>(String@ name, Module@<T@> body) {
+  Module<T@>(name, (List@<Var@> _) { body; })[];
+};
+
+# Module1 --
+#   Define a module that takes 1 argument.
+<@ T@>(String@, (Var@) { Module@<T@>; }) { (Var@) { Module@<T@>; }; }
+Module1 = <@ T@>(String@ name, (Var@) { Module@<T@>; } m)(Var@ arg) {
+  Module<T@>(name, (List@<Var@> l) { m(l.cons.head); })[arg];
+};
+
+# Module2 --
+#   Define a module that takes 2 arguments.
+<@ T@>(String@, (Var@, Var@) { Module@<T@>; }) { (Var@, Var@) { Module@<T@>; }; }
+Module2 = <@ T@>(String@ name, (Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ arg2) {
+  Module<T@>(name, (List@<Var@> l) {
+    m(l.cons.head,
+      l.cons.tail.cons.head);
+    })[arg1, arg2];
+};
+
+# Module3 --
+#   Define a module that takes 3 arguments.
+<@ T@>(String@, (Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@) { Module@<T@>; }; }
+Module3 = <@ T@>(String@ name, (Var@, Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ arg2, Var@ arg3) {
+  Module<T@>(name, (List@<Var@> l) {
+    m(l.cons.head,
+      l.cons.tail.cons.head,
+      l.cons.tail.cons.tail.cons.head);
+    })[arg1, arg2, arg3];
+};
+
+# Module4 --
+#   Define a module that takes 4 arguments.
+<@ T@>(String@, (Var@, Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@, Var@) { Module@<T@>; }; }
+Module4 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@) { Module@<T@>; } m)
+  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4) {
+  Module<T@>(name, (List@<Var@> l) {
+    m(l.cons.head,
+      l.cons.tail.cons.head,
+      l.cons.tail.cons.tail.cons.head,
+      l.cons.tail.cons.tail.cons.tail.cons.head);
+    })[arg1, arg2, arg3, arg4];
+};
+
+# Module5 --
+#   Define a module that takes 5 arguments.
+<@ T@>(String@, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }; }
+Module5 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; } m)
+  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4, Var@ arg5) {
+  Module<T@>(name, (List@<Var@> l) {
+    m(l.cons.head,
+      l.cons.tail.cons.head,
+      l.cons.tail.cons.tail.cons.head,
+      l.cons.tail.cons.tail.cons.tail.cons.head,
+      l.cons.tail.cons.tail.cons.tail.cons.tail.cons.head);
+    })[arg1, arg2, arg3, arg4, arg5];
+};
+
+# Do --
+#   Monadic bind for Module@ monad.
+<@ A@, @ B@>(Module@<A@>)((A@) { Module@<B@>; }) { Module@<B@>; }
+Do = <@ A@, @ B@>(Module@<A@> m)((A@) { Module@<B@>; } f)(Read@ r, State@ s) {
+  ModuleR@<A@> a = m(r, s);
+  f(a.x)(r, a.s);
+};
+
+# Return --
+#   Monadic return for Module@ monad.
+<@ T@>(T@) { Module@<T@>; }
+Return = <@ T@>(T@ x)(Read@ r, State@ s) {
+  ModuleR@<T@>(s, x);
+};
+
 # Alloc --
 #   Allocate n bits on the heap for use in an instance of this module.
-(Int@) { ModuleM@<Var@>; } Alloc = (Int@ n)(State@ s) {
-  ModuleR@<Var@>(State@(s.name, s.args, Add(s.heap, n), s.methods, s.program), Local(s.heap));
+(Int@) { Module@<Var@>; } Alloc = (Int@ n)(Read@ r, State@ s) {
+  ModuleR@<Var@>(State@(Add(s.heap, n), s.modules, s.program), Local(s.heap));
 };
 
-<@ T@>(Int@)((Var@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
+<@ T@>(Int@)((Var@) { Module@<T@>; }) { Module@<T@>; }
 DoAlloc = <@ T@>(Int@ n) { Do<Var@, T@>(Alloc(n)); };
 
-# Inst --
-#   Instantiate a module for use in an instance of this module.
-<@ T@>(Module@<T@>) { ModuleM@<T@>; }
-Inst = <@ T@>(Module@<T@> m)(State@ s) {
-  List@<Var@> args = Cons<Var@>(Local(s.heap), m.args);
-  ModuleR@<T@> mr = m.body(State@(m.name, args, Int|0, Int|0, s.program));
-  ModuleR@<T@>(State@(s.name, s.args, Add(s.heap, mr.s.heap), s.methods, mr.s.program), mr.r);
-}; 
-
-<@ A@, @ B@>(Module@<A@>)((A@) { ModuleM@<B@>; }) { ModuleM@<B@>; }
-DoInst = <@ A@, @ B@>(Module@<A@> m) {
-  Do<A@, B@>(Inst<A@>(m));
-};
-
-# Method --
+# Method@ --
 #   Method@ is used to represent a Call Stmt@.
 #
 # This is user documentation only. It is not enforced by the type system.
 @ Method@ = Stmt@;
 
-# Note: The returned method can only be used for defining methods in the
-# module that instantiates this module. It cannot be used for defining local
-# methods or returned to the instantiator of the instantiator of this module.
+# Method --
+#   Define a method of a module.
 #
-# TODO: Any way to get around the above pitfall or add some security to
-# prevent misuse from happening accidentally?
-(Stmt@) { ModuleM@<Method@>; }
-Method = (Stmt@ stmt)(State@ s) {
-  String@ proc_id = Concat[s.name, Str|'.', /Int/Int/Show%.Show(s.methods)];
+# Inputs:
+#   name - the name of the method.
+#   stmt - the body of the method.
+(String@, Stmt@) { Module@<Method@>; }
+Method = (String@ name, Stmt@ stmt)(Read@ r, State@ s) {
+  String@ proc_id = Concat[r.name, Str|'.', name];
   
-  # Add the method to the program only if it hasn't already been defined.
-  Program@ program = LookupProc(proc_id, s.program).?(
-    just: s.program,
-    nothing: {
-      Int@ argc = /List/Length%.Length<Var@>(s.args);
+  Program@ program = r.define.?(
+    true: {
+      Int@ argc = Add(/List/Length%.Length<Var@>(r.args), Int|1);
       Proc@ proc = Proc@(proc_id, argc, stmt);
       Cons<Proc@>(proc, s.program);
-    });
+    },
+    false: s.program);
 
-  Stmt@ call = Call(proc_id)(s.args);
-  ModuleR@<Method@>(State@(s.name, s.args, s.heap, Add(s.methods, Int|1), program), call);
+  Stmt@ call = Call(proc_id)(Cons<Var@>(r.this, r.args));
+  ModuleR@<Method@>(State@(s.heap, s.modules, program), call);
 };
 
-<@ T@>(Stmt@)((Method@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
-DoMethod = <@ T@>(Stmt@ body) { Do<Stmt@, T@>(Method(body)); };
+<@ T@>(String@, Stmt@)((Method@) { Module@<T@>; }) { Module@<T@>; }
+DoMethod = <@ T@>(String@ name, Stmt@ body) { Do<Stmt@, T@>(Method(name, body)); };
 
 # MethodArgs --
 #   Extract the concrete arguments to supply to a method call for a method
@@ -223,31 +215,19 @@ DoMethod = <@ T@>(Stmt@ body) { Do<Stmt@, T@>(Method(body)); };
   });
 };
 
-# Export a local Var@ to the equivalent variable from the point of view of the
-# parent module.
-#
-# TODO: The need for this is annoying. Anything we can do to get around it?
-(Var@) { ModuleM@<Var@>; }
-Export = (Var@ var)(State@ s) {
-  Var@ arg = /List/Length%.Drop<Var@>(var.id, s.args).cons.head;
-  ModuleR@<Var@>(s, Offset(arg, var.offset));
-};
-
-<@ T@>(Var@)((Var@) { ModuleM@<T@>; }) { ModuleM@<T@>; }
-DoExport = <@ T@>(Var@ v) { Do<Var@, T@>(Export(v)); };
-
 # Run --
 #   Runs a module, returning the generated program, the size of the heap
 #   required by the module, and whatever the module returns.
 <@>@ Ran@ = <@ T@> { *(Program@ program, Int@ heap, T@ x); };
 
 <@ T@>(Module@<T@>) { Ran@<T@>; } Run = <@ T@>(Module@<T@> m) {
-  List@<Var@> args = Cons<Var@>(Local(Int|0), m.args);
-  ModuleR@<T@> mr = m.body(State@(m.name, args, Int|0, Int|0, Nil<Proc@>));
-  Ran@<T@>(mr.s.program, mr.s.heap, mr.r);
+  ModuleR@<T@> mr = m(
+    Read@(Str|'', Local(Int|0), Nil<Var@>, True),
+    State@(Int|0, Nil<String@>, Nil<Proc@>));
+  Ran@<T@>(mr.s.program, mr.s.heap, mr.x);
 };
 
-@(ModuleM@, Module@, Method@, Ran@,
+@(Module@, Method@, Ran@,
   Module0, Module1, Module2, Module3, Module4, Module5,
-  Do, Return, Alloc, DoAlloc, Inst, DoInst, Method, DoMethod, MethodArgs,
-  Export, DoExport, Run);
+  Do, Return, Alloc, DoAlloc, Method, DoMethod, MethodArgs,
+  Run);

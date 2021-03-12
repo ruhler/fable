@@ -19,7 +19,6 @@
 % Return = /Fblf/Compile/Output%.Return;
 
 <@>@ Module@ = /Fblf/Module%.Module@;
-<@>@ ModuleM@ = /Fblf/Module%.ModuleM@;
 <@>@ Ran@ = /Fblf/Module%.Ran@;
 @ Method@ = /Fblf/Module%.Method@;
 <@>% DoMethod = /Fblf/Module%.DoMethod;
@@ -27,7 +26,6 @@
 <@>% Module0 = /Fblf/Module%.Module0;
 <@>% Module1 = /Fblf/Module%.Module1;
 <@>% Run = /Fblf/Module%.Run;
-<@,@>% DoInst = /Fblf/Module%.DoInst;
 <@>% DoAlloc = /Fblf/Module%.DoAlloc;
 
 @ Var@ = /Fblf/Program%.Var@;
@@ -53,14 +51,14 @@
 @ TMs@ = List@<TestMethod@>;
 
 # Collect all the individual test cases from a test suite into a single module.
-(Var@, String@, Test@, TMs@) { ModuleM@<TMs@>; } Collect = (Var@ pass, String@ prefix, Test@ test, TMs@ tail) {
+(Var@, String@, Test@, TMs@) { Module@<TMs@>; } Collect = (Var@ pass, String@ prefix, Test@ test, TMs@ tail) {
   test.?(
     case: {
       String@ name = Append<Char@>(prefix, test.case.name);
       (Var@) { Module@<TestMethod@>; } tm = Module1<TestMethod@>(name, (Var@ pass) {
-        TestInstance@ ti <- DoInst<TestInstance@, TestMethod@>(test.case.test);
+        TestInstance@ ti <- /Fblf/Module%.Do<TestInstance@, TestMethod@>(test.case.test);
 
-        Method@ method <- DoMethod<TestMethod@>(Seq[
+        Method@ method <- DoMethod<TestMethod@>(Str|'test', Seq[
           Assign(pass, Binary|0, Int|1),
           ti.method,
           IfElse(Eq(Var(ti.result), Binary(ti.expected), Length<Bit@>(ti.expected)),
@@ -71,13 +69,13 @@
         /Fblf/Module%.Return<TestMethod@>(TestMethod@(name, method));
       });
 
-      TestMethod@ method <- DoInst<TestMethod@, TMs@>(tm(pass));
+      TestMethod@ method <- /Fblf/Module%.Do<TestMethod@, TMs@>(tm(pass));
       /Fblf/Module%.Return<TMs@>(Cons<TestMethod@>(method, tail));
     },
     suite: {
       String@ nprefix = Strs[prefix, test.suite.name, Str|'.'];
-      ModuleM@<TMs@> base = /Fblf/Module%.Return<TMs@>(tail);
-      ForEach<Test@, ModuleM@<TMs@>>(test.suite.tests, base, (Test@ t, ModuleM@<TMs@> m) {
+      Module@<TMs@> base = /Fblf/Module%.Return<TMs@>(tail);
+      ForEach<Test@, Module@<TMs@>>(test.suite.tests, base, (Test@ t, Module@<TMs@> m) {
         TMs@ as <- /Fblf/Module%.Do<TMs@, TMs@>(m);
         Collect(pass, nprefix, t, as);
       });

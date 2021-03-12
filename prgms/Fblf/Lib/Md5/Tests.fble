@@ -22,8 +22,8 @@
 @ Method@ = /Fblf/Module%.Method@;
 <@>% Module0 = /Fblf/Module%.Module0;
 <@>% DoAlloc = /Fblf/Module%.DoAlloc;
-<@,@>% DoInst = /Fblf/Module%.DoInst;
 <@>% DoMethod = /Fblf/Module%.DoMethod;
+<@,@>% Do = /Fblf/Module%.Do;
 <@>% Return = /Fblf/Module%.Return;
 
 @ Test@ = /Fblf/Test%.Test@;
@@ -61,14 +61,14 @@ TestStr = (String@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
   Test(name, Module0<TestInstance@>(Strs[Str|'Md5Test.', name], {
     Var@ input <- DoAlloc<TestInstance@>(Int|8);
     Var@ hash <- DoAlloc<TestInstance@>(Int|128);
-    Md5@ md5 <- DoInst<Md5@, TestInstance@>(Md5(input, hash));
+    Md5@ md5 <- Do<Md5@, TestInstance@>(Md5(input, hash));
 
     Stmt@ feed = Seq(Map<Value@, Stmt@>(
       ToBytes(bytes), (Value@ b) {
         Seq[Assign(input, b, Int|8), md5.feed];
     }));
 
-    Method@ test <- DoMethod<TestInstance@>(Seq[md5.reset, feed, md5.finish]);
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[md5.reset, feed, md5.finish]);
 
     List@<Bit@> wnt_ = /Digits/String%.HexToBits(wnt);
     Return<TestInstance@>(TestInstance@(test, hash, wnt_));

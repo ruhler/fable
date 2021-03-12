@@ -12,7 +12,7 @@
 <@>% DoAlloc = /Fblf/Module%.DoAlloc;
 <@>% DoMethod = /Fblf/Module%.DoMethod;
 <@>% Return = /Fblf/Module%.Return;
-<@,@>% DoInst = /Fblf/Module%.DoInst;
+<@,@>% Do = /Fblf/Module%.Do;
 
 % Int = /Int/Int/Lit%.Int;
 
@@ -37,9 +37,9 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Var@ b <- DoAlloc<TestInstance@>(Int|4);
     Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
-    Method@ and <- DoInst<Method@, TestInstance@>(And(Int|4)(a, b, z));
+    Method@ and <- Do<Method@, TestInstance@>(And(Int|4)(a, b, z));
 
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|0011, Int|4),
       Assign(b, Binary|0110, Int|4),
       Assign(z, Binary|0000, Int|4),
@@ -54,9 +54,9 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Var@ b <- DoAlloc<TestInstance@>(Int|4);
     Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
-    Method@ or <- DoInst<Method@, TestInstance@>(Or(Int|4)(a, b, z));
+    Method@ or <- Do<Method@, TestInstance@>(Or(Int|4)(a, b, z));
 
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|0011, Int|4),
       Assign(b, Binary|0110, Int|4),
       Assign(z, Binary|0000, Int|4),
@@ -71,9 +71,9 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Var@ b <- DoAlloc<TestInstance@>(Int|4);
     Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
-    Stmt@ xor <- DoInst<Stmt@, TestInstance@>(Xor(Int|4)(a, b, z));
+    Stmt@ xor <- Do<Stmt@, TestInstance@>(Xor(Int|4)(a, b, z));
 
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|0011, Int|4),
       Assign(b, Binary|0110, Int|4),
       Assign(z, Binary|0000, Int|4),
@@ -87,9 +87,9 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Var@ a <- DoAlloc<TestInstance@>(Int|4);
     Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
-    Stmt@ not <- DoInst<Stmt@, TestInstance@>(Not(Int|4)(a, z));
+    Stmt@ not <- Do<Stmt@, TestInstance@>(Not(Int|4)(a, z));
 
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|0011, Int|4),
       Assign(z, Binary|0000, Int|4),
       not
@@ -102,9 +102,9 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
     Var@ z <- DoAlloc<TestInstance@>(Int|5);
 
-    Stmt@ cls <- DoInst<Stmt@, TestInstance@>(Cls(Int|5, Int|3)(a, z));
+    Stmt@ cls <- Do<Stmt@, TestInstance@>(Cls(Int|5, Int|3)(a, z));
 
-    Method@ test <- DoMethod<TestInstance@>(Seq[
+    Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
       Assign(a, Binary|10011, Int|5),
       Assign(z, Binary|00000, Int|5),
       cls
