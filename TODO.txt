@@ -1,5 +1,7 @@
 Fblf:
-* Track down memory bug in Fblf modules.
+* Figure out how to avoid duplication of module definitions.
+  For the case like Add, and Bitwise modules that take a non-var argument as a
+  function to the module.
 
 * Add nicer summary and error messages in compiled fblf test runner.
 

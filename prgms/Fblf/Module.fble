@@ -91,62 +91,68 @@ Module = <@ T@>(Export@<T@> export, String@ name, Int@ argc, (List@<Var@>) { Mod
 #   Define a module that takes no arguments.
 <@ T@>(Export@<T@>, String@, Module@<T@>) { Module@<T@>; }
 Module0 = <@ T@>(Export@<T@> export, String@ name, Module@<T@> body) {
-  Module<T@>(export, name, Int|0, (List@<Var@> _) { body; })[];
+  (List@<Var@>) { Module@<T@>; } f = Module<T@>(export, name, Int|0, (List@<Var@> _) { body; });
+  f[];
 };
 
 # Module1 --
 #   Define a module that takes 1 argument.
 <@ T@>(Export@<T@>, String@, (Var@) { Module@<T@>; }) { (Var@) { Module@<T@>; }; }
-Module1 = <@ T@>(Export@<T@> export, String@ name, (Var@) { Module@<T@>; } m)(Var@ arg) {
-  Module<T@>(export, name, Int|1, (List@<Var@> l) { m(l.cons.head); })[arg];
+Module1 = <@ T@>(Export@<T@> export, String@ name, (Var@) { Module@<T@>; } m) {
+  (List@<Var@>) { Module@<T@>; } f = Module<T@>(export, name, Int|1, (List@<Var@> l) { m(l.cons.head); });
+  (Var@ arg) { f[arg]; };
 };
 
 # Module2 --
 #   Define a module that takes 2 arguments.
 <@ T@>(Export@<T@>, String@, (Var@, Var@) { Module@<T@>; }) { (Var@, Var@) { Module@<T@>; }; }
-Module2 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ arg2) {
-  Module<T@>(export, name, Int|2, (List@<Var@> l) {
+Module2 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@) { Module@<T@>; } m) {
+  (List@<Var@>) { Module@<T@>; } f = Module<T@>(export, name, Int|2, (List@<Var@> l) {
     m(l.cons.head,
       l.cons.tail.cons.head);
-    })[arg1, arg2];
+    });
+  (Var@ arg1, Var@ arg2) { f[arg1, arg2]; };
 };
 
 # Module3 --
 #   Define a module that takes 3 arguments.
 <@ T@>(Export@<T@>, String@, (Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@) { Module@<T@>; }; }
-Module3 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ arg2, Var@ arg3) {
-  Module<T@>(export, name, Int|3, (List@<Var@> l) {
+Module3 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@) { Module@<T@>; } m) {
+  (List@<Var@>) { Module@<T@>; } f = Module<T@>(export, name, Int|3, (List@<Var@> l) {
     m(l.cons.head,
       l.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.head);
-    })[arg1, arg2, arg3];
+    });
+
+  (Var@ arg1, Var@ arg2, Var@ arg3) { f[arg1, arg2, arg3]; };
 };
 
 # Module4 --
 #   Define a module that takes 4 arguments.
 <@ T@>(Export@<T@>, String@, (Var@, Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@, Var@) { Module@<T@>; }; }
-Module4 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@, Var@) { Module@<T@>; } m)
-  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4) {
-  Module<T@>(export, name, Int|4, (List@<Var@> l) {
+Module4 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@, Var@) { Module@<T@>; } m) {
+  (List@<Var@>) { Module@<T@>; } f = Module<T@>(export, name, Int|4, (List@<Var@> l) {
     m(l.cons.head,
       l.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.tail.cons.head);
-    })[arg1, arg2, arg3, arg4];
+    });
+  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4) { f[arg1, arg2, arg3, arg4]; };
 };
 
 # Module5 --
 #   Define a module that takes 5 arguments.
 <@ T@>(Export@<T@>, String@, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }; }
-Module5 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; } m)
-  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4, Var@ arg5) {
-  Module<T@>(export, name, Int|5, (List@<Var@> l) {
+Module5 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; } m) {
+  (List@<Var@>) { Module@<T@>; } f = Module<T@>(export, name, Int|5, (List@<Var@> l) {
     m(l.cons.head,
       l.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.tail.cons.tail.cons.head);
-    })[arg1, arg2, arg3, arg4, arg5];
+    });
+
+  (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4, Var@ arg5) { f[arg1, arg2, arg3, arg4, arg5]; };
 };
 
 # Do --

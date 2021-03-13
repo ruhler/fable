@@ -82,6 +82,8 @@ Add = (Int@ n) {
   });
 };
 
+(Var@, Var@, Var@) { Module@<Method@>; } Add32 = Add(Int|32);
+
 # IncStmt --
 #   Increment an n-bit number by 1.
 #
@@ -145,4 +147,4 @@ DecI = (Int@ n, Var@ a) {
   Module1<Method@>(ExportStmt, name, (Var@ a) { Method(Str|'main', DecI(n, a)); });
 };
 
-@(Add, IncI, Inc, DecI, Dec);
+@(Add, Add32, IncI, Inc, DecI, Dec);

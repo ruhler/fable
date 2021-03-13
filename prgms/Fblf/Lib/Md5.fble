@@ -34,7 +34,7 @@
 <@,@>% Do = /Fblf/Module%.Do;
 <@>% Return = /Fblf/Module%.Return;
 
-% Add = /Fblf/Lib/Add%.Add;
+% Add32 = /Fblf/Lib/Add%.Add32;
 % IncI = /Fblf/Lib/Add%.IncI;
 % DecI = /Fblf/Lib/Add%.DecI;
 % And = /Fblf/Lib/Bitwise%.And;
@@ -123,12 +123,12 @@ XX = (X@ xf)(Var@ a, Var@ b, Var@ c, Var@ d, Var@ x, Int@ s, Value@ t, Var@ r) {
 
   SeqM[
     Return<Stmt@>(Assign(tv, t, Int|32)),
-    Add(Int|32)(x, tv, xtv),
+    Add32(x, tv, xtv),
     xf(b, c, d, xfv),
-    Add(Int|32)(a, xfv, axfv),
-    Add(Int|32)(axfv, xtv, axfxtv),
+    Add32(a, xfv, axfv),
+    Add32(axfv, xtv, axfxtv),
     Cls(Int|32, s)(axfxtv, clsv),
-    Add(Int|32)(b, clsv, r)];
+    Add32(b, clsv, r)];
 };
 
 XX@ FF = XX((Var@ x, Var@ y, Var@ z, Var@ r) {
@@ -262,10 +262,10 @@ DoBlock = (Var@ a, Var@ b, Var@ c, Var@ d, BlockOf@<Var@> block) {
     Round2(a, b, c, d, block),
     Round3(a, b, c, d, block),
     Round4(a, b, c, d, block),
-    Add(Int|32)(a, save_a, a),
-    Add(Int|32)(b, save_b, b),
-    Add(Int|32)(c, save_c, c),
-    Add(Int|32)(d, save_d, d)];
+    Add32(a, save_a, a),
+    Add32(b, save_b, b),
+    Add32(c, save_c, c),
+    Add32(d, save_d, d)];
 };
 
 # Store --
