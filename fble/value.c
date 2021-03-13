@@ -126,15 +126,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case FBLE_SYMBOLIC_VALUE_TC: return;
-
-    case FBLE_SYMBOLIC_COMPILE_TC: {
-      FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)value;
-      FbleFreeLoc(arena, compile_tc->loc);
-      FbleFree(arena, compile_tc->args.xs);
-      return;
-    }
-
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)value;
       FbleFreeLoc(arena, profile_tc->loc);
@@ -266,14 +257,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       }
       Ref(callback, exec_tc->body);
       break;
-    }
-
-    case FBLE_SYMBOLIC_VALUE_TC: break;
-
-    case FBLE_SYMBOLIC_COMPILE_TC: {
-      FbleSymbolicCompileTc* compile_tc = (FbleSymbolicCompileTc*)value;
-      Ref(callback, compile_tc->body);
-      return;
     }
 
     case FBLE_PROFILE_TC: {

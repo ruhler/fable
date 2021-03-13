@@ -123,3 +123,19 @@ abstractions (e.g. functions, polymorphic types, program modules).
 If I truly want something to go fast, then I'll allow you to define primitive
 program modules in different languages (e.g. C), and build apps on top of
 those.
+
+---
+
+I am going to retire the efforts on fble elaborate. What I've learned from
+fblf is that full inlining of all functions, even if they are finite, is going
+to blow up code size far beyond what's practical. For elaborate to be useful,
+then, it would have to be up to the implementation to choose how much gets
+inlined. That's completely opaque to the developer. Then the question is what
+is the spec for elaborate? You call it and it takes an arbitrary amount of
+time to return a value that takes an arbitrary different amount of time to run
+than the input? How can you do anything with that?
+
+It had a good run, but I no longer think fble elaborate is the answer. I don't
+see any reason not to keep the internal changes to the interpreter that we
+made for symbolic elaboration, where a type checked expression is a value.
+Unless it gets in the way.

@@ -56,9 +56,6 @@ typedef enum {
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
 
-  FBLE_SYMBOLIC_VALUE_TC,
-  FBLE_SYMBOLIC_COMPILE_TC,
-
   FBLE_PROFILE_TC,
 
   FBLE_THUNK_VALUE_TC,
@@ -291,25 +288,6 @@ typedef struct {
   FbleValueV bindings;
   FbleTc* body;
 } FbleExecTc;
-
-// FbleSymbolicValueTc --
-//   FBLE_SYMBOLIC_VALUE_TC
-//
-// An expression to allocate a new symbolic value.
-typedef struct {
-  FbleTc _base;
-} FbleSymbolicValueTc;
-
-// FbleSymbolicCompileTc --
-//   FBLE_SYMBOLIC_COMPILE_TC 
-//
-// An expression to compile a symbolic value into a function.
-typedef struct {
-  FbleTc _base;
-  FbleLoc loc;
-  FbleVarIndexV args;
-  FbleTc* body;
-} FbleSymbolicCompileTc; 
 
 // FbleProfileTc --
 //   FBLE_PROFILE_TC

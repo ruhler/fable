@@ -104,8 +104,6 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
 static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
-static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
-static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
 //   Implementations of instructions, indexed by instruction tag.
@@ -127,8 +125,6 @@ static InstrImpl sInstrImpls[] = {
   &RefDefInstr,           // FBLE_REF_DEF_INSTR
   &ReturnInstr,           // FBLE_RETURN_INSTR
   &TypeInstr,             // FBLE_TYPE_INSTR
-  &SymbolicValueInstr,    // FBLE_SYMBOLIC_VALUE_INSTR
-  &SymbolicCompileInstr,  // FBLE_SYMBOLIC_COMPILE_INSTR
 };
 
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
@@ -723,55 +719,6 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   FbleTypeValueTc* value = FbleNewValue(heap, FbleTypeValueTc);
   value->_base.tag = FBLE_TYPE_VALUE_TC;
   FrameSetAndRelease(heap, thread, type_instr->dest, &value->_base);
-  return RUNNING;
-}
-
-// SymbolicValueInstr -- see documentation of InstrImpl
-//   Execute a FBLE_SYMBOLIC_VALUE_INSTR.
-static Status SymbolicValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FbleSymbolicValueInstr* symbolic_value_instr = (FbleSymbolicValueInstr*)instr;
-  FbleVarTc* value = FbleNewValue(heap, FbleVarTc);
-  value->_base.tag = FBLE_VAR_TC;
-  value->index.source = FBLE_FREE_VAR;
-  value->index.index = 0;
-  FrameSetAndRelease(heap, thread, symbolic_value_instr->dest, &value->_base);
-  return RUNNING;
-}
-
-// SymbolicCompileInstr -- see documentation of InstrImpl
-//   Execute a FBLE_SYMBOLIC_COMPILE_INSTR.
-static Status SymbolicCompileInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FbleSymbolicCompileInstr* compile_instr = (FbleSymbolicCompileInstr*)instr;
-
-  size_t argc = compile_instr->args.size;
-  FbleVarTc* args[argc];
-  for (size_t i = 0; i < argc; ++i) {
-    args[i] = (FbleVarTc*)FrameGetStrict(thread, compile_instr->args.xs[i]);
-    assert(args[i]->_base.tag == FBLE_VAR_TC);
-    args[i]->index.source = FBLE_LOCAL_VAR;
-    args[i]->index.index = i;
-  }
-  FbleValue* body = FrameGet(thread, compile_instr->body);
-
-  FbleName entry_name = {
-    .name = FbleNewString(heap->arena, "<elab>"),
-    .loc = FbleCopyLoc(compile_instr->loc),
-    .space = FBLE_NORMAL_NAME_SPACE,
-  };
-
-  FbleInstrBlock* code = FbleCompileValue(heap->arena, argc, body, entry_name, NULL);
-  assert(code->statics == 0);
-
-  FbleFreeName(heap->arena, entry_name);
-
-  FbleCompiledFuncValueTc* func = FbleNewValue(heap, FbleCompiledFuncValueTc);
-  func->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
-  func->argc = argc;
-  func->code = code;
-
-  FrameSetAndRelease(heap, thread, compile_instr->dest, &func->_base);
   return RUNNING;
 }
 

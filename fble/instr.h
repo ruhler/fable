@@ -80,8 +80,6 @@ typedef enum {
   FBLE_REF_DEF_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
-  FBLE_SYMBOLIC_VALUE_INSTR,
-  FBLE_SYMBOLIC_COMPILE_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -326,24 +324,6 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
 } FbleTypeInstr;
-
-// FbleSymbolicValueInstr -- FBLE_SYMBOLIC_VALUE_INSTR
-//  *dest = <symbolic>
-typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex dest;
-} FbleSymbolicValueInstr;
-
-// FbleSymbolicCompileInstr -- FBLE_SYMBOLIC_COMPILE_INSTR
-//  *dest = compile \arg0 arg1 arg2 ... -> body
-//
-typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex dest;
-  FbleFrameIndexV args;
-  FbleFrameIndex body;
-  FbleLoc loc;
-} FbleSymbolicCompileInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.

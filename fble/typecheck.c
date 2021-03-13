@@ -1342,80 +1342,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       return MkTc(result_type, ListExpr(vh, expr->loc, func.tc, args, argc));
     }
 
-    case FBLE_ELABORATE_EXPR: {
-      FbleElaborateExpr* elaborate = (FbleElaborateExpr*)expr;
-
-      Tc body = TypeCheckExpr(th, vh, scope, elaborate->body);
-      if (body.type == NULL) {
-        return TC_FAILED;
-      }
-      
-      FbleFuncType* normal = (FbleFuncType*)FbleNormalType(th, body.type);
-      if (normal->_base.tag == FBLE_PROC_TYPE) {
-        ReportError(arena, expr->loc,
-            "support for elaboration of proc types not yet implemented");
-        FreeTc(th, vh, body);
-        return TC_FAILED;
-      }
-
-      if (normal->_base.tag != FBLE_FUNC_TYPE) {
-        // There's nothing symbolic involved in elaborating this kind of
-        // expression, so we can just evaluate it directly.
-        return body;
-      }
-
-      size_t argc = normal->args.size;
-      FbleReleaseType(th, &normal->_base);
-
-      FbleLetTc* let_tc = FbleNewValue(vh, FbleLetTc);
-      let_tc->_base.tag = FBLE_LET_TC;
-      let_tc->recursive = false;
-      let_tc->body = NULL;
-      FbleVectorInit(arena, let_tc->bindings);
-      size_t arg_ids = scope->vars.size;
-      for (size_t i = 0; i < argc; ++i) {
-        FbleSymbolicValueTc* arg = FbleNewValue(vh, FbleSymbolicValueTc);
-        arg->_base.tag = FBLE_SYMBOLIC_VALUE_TC;
-        FbleVectorAppend(arena, let_tc->bindings, &arg->_base);
-        FbleValueAddRef(vh, &let_tc->_base, &arg->_base);
-        FbleReleaseValue(vh, &arg->_base);
-      }
-
-      FbleFuncApplyTc* apply_tc = FbleNewValue(vh, FbleFuncApplyTc);
-      apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
-      apply_tc->loc = FbleCopyLoc(expr->loc);
-      apply_tc->func = body.tc;
-      FbleVectorInit(arena, apply_tc->args);
-      FbleValueAddRef(vh, &apply_tc->_base, apply_tc->func);
-      FbleReleaseValue(vh, apply_tc->func);
-      for (size_t i = 0; i < argc; ++i) {
-        FbleVarTc* var_tc = FbleNewValue(vh, FbleVarTc);
-        var_tc->_base.tag = FBLE_VAR_TC;
-        var_tc->index.source = FBLE_LOCAL_VAR;
-        var_tc->index.index = arg_ids + i;
-        FbleVectorAppend(arena, apply_tc->args, &var_tc->_base);
-        FbleValueAddRef(vh, &apply_tc->_base, &var_tc->_base);
-        FbleReleaseValue(vh, &var_tc->_base);
-      }
-
-      FbleSymbolicCompileTc* compile_tc = FbleNewValue(vh, FbleSymbolicCompileTc);
-      compile_tc->_base.tag = FBLE_SYMBOLIC_COMPILE_TC;
-      compile_tc->loc = FbleCopyLoc(expr->loc);
-      FbleVectorInit(arena, compile_tc->args);
-      for (size_t i = 0; i < argc; ++i) {
-        FbleVarIndex arg = { .source = FBLE_LOCAL_VAR, .index = arg_ids + i };
-        FbleVectorAppend(arena, compile_tc->args, arg);
-      }
-      compile_tc->body = &apply_tc->_base;
-      FbleValueAddRef(vh, &compile_tc->_base, compile_tc->body);
-      FbleReleaseValue(vh, compile_tc->body);
-      let_tc->body = &compile_tc->_base;
-      FbleValueAddRef(vh, &let_tc->_base, let_tc->body);
-      FbleReleaseValue(vh, let_tc->body);
-
-      return MkTc(body.type, &let_tc->_base);
-    }
-
     case FBLE_MODULE_REF_EXPR: {
       FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
 
@@ -1679,7 +1605,6 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
-    case FBLE_ELABORATE_EXPR:
     case FBLE_MODULE_REF_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
@@ -2014,7 +1939,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
-    case FBLE_ELABORATE_EXPR:
     case FBLE_MODULE_REF_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {

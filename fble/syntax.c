@@ -205,13 +205,6 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       return;
     }
 
-    case FBLE_ELABORATE_EXPR: {
-      FbleElaborateExpr* e = (FbleElaborateExpr*)expr;
-      FbleFreeExpr(arena, e->body);
-      FbleFree(arena, expr);
-      return;
-    }
-
     case FBLE_DATA_ACCESS_EXPR: {
       FbleDataAccessExpr* e = (FbleDataAccessExpr*)expr;
       FbleFreeExpr(arena, e->object);

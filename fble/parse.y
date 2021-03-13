@@ -425,13 +425,6 @@ expr:
       literal_expr->word = $3;
       $$ = &literal_expr->_base;
    }
- | '$' '(' expr ')' {
-      FbleElaborateExpr* elaborate_expr = FbleAlloc(arena, FbleElaborateExpr);
-      elaborate_expr->_base.tag = FBLE_ELABORATE_EXPR;
-      elaborate_expr->_base.loc = FbleCopyLoc(@$);
-      elaborate_expr->body = $3;
-      $$ = &elaborate_expr->_base;
-   }
  | block {
       $$ = $1;
    }

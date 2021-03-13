@@ -1,0 +1,71 @@
+Fblg
+----
+
+Early language exploration for what it would look like to combine the best of
+fble and fblf into a single coherent language, rather than a fblf embedded in
+fble.
+
+I think the key idea of fblf is that there is no notion of returning values.
+The only thing we can do is have side effects. That is a fundamentally
+different way of thinking about things than fble. Fble is all about
+expressions that return values. Fblg should be all about statements that have
+side effects.
+
+To the extent fblg has a kind of expression, it will be an expression that
+returns references to values, and, if we are true to the current version of
+fblf, it will be an expression whose value does not depend on runtime data. In
+other words, it's like a pointer whose value can be computed as a compile time
+constant offset from some input pointer.
+
+Sketch:
+* We have struct and union types as in fble. But let's say they are finite in
+  size. So, non-recursive. Or, when you first construct the value you can
+  initialize it to a finite depth, hard coding some union tag such that you
+  can pack everything into a finite number of bits.
+
+* We have expressions for references. It could be:
+ - var - refers to an allocated value or an argument to a procedure.
+ - access - refers to an offset from a given reference, as computed based on
+            the type of the reference.
+
+* Question: should union tags be explicit or implicit? If explicit, maybe we
+  have struct, enum, and untagged unions.
+
+* We have statements that have side effects.
+  assignment: ref = value
+  condition: union .? (tag: ..., tag: ..., ...)
+  call: func(ref, ref, ...), where func is statically defined in scope.
+
+* Question: do we use loops or recursive procedure calls? Loops are a special
+  case, and they would want some form of special casing of type with two tags:
+  true and false. Could we generalize while loops somehow? Maybe:
+
+  while: union .?* (tag: ..., tag: ...)
+
+  Say it repeatedly executes until it gets a tag that's not present in the
+  body of the while? Like:
+    Le(i, n).?*(
+      true: {
+      });
+
+  Maybe conditional statements could have the same idea: by default do
+  nothing.
+
+  Of course, in practice it would have to be more like:
+  Bool@ condition;
+  Le(i, n, condition);
+  condition.?*( 
+    true: ... Le(i, n, condition)
+  );
+
+  Because remember, we can't return boolean values. We only have side effects.
+
+* Define variables like automatic variables in C. Their lifetime is the
+  lifetime of the scope they are defined in.
+
+* We can define and use constant values.
+
+Maybe expressions could be side effecting things that return references? The
+reference returned is guaranteed to be in scope because you can't declare new
+variables in expressions?
+

@@ -1059,88 +1059,7 @@ The same module hierarchy can be used for a program to run List tests:
   StdLib_List = <StdLib.List>;
   <StdLib.List.Tests>;
 
-10. Symbolic Elaboration
-------------------------
-As an experimental feature, fble supports symbolic elaboration.
-
-When running under symbolic elaboration, elaborated values can contain symbols
-representing unknown values along with partially unevaluated fble syntactic
-terms. Symbolic elaboration provides a way to pre-compute as much of an
-expression as possible before all inputs to the expression are known. After
-symbolic elaboration, the value of the expression can be computed more
-efficiently for given input values because parts of the expression have
-already been precomputed.
-
-We say an elaborated value is symbolic if it is a symbol representing an
-unknown value or it is partially evaluated with references to other symbolic
-values.
-
-The following fble constructs behave differently during static elaboration:
-
-* Struct Access - if the object to access is symbolic, creates a symbolic
-  value representing the struct access instead of performing the struct
-  access.
-
-* Union Access - if the object to access is symbolic, creates a symbolic value
-  representing the union access instead of performing the union access.
-
-* Union Select - if the condition is symbolic, evaluates all branches of the
-  union select, then creates a symbolic value representing the union select
-  over the evaluated branch values.
-
-* Function Application - if the function is symbolic, evaluates all arguments
-  to the function, then creates a symbolic value representing the function
-  application on the evaluated arguments instead of applying the function.
-
-* Process Link - Symbolically evaluates the body of the link with get and put
-  ports represented as symbolic functions, then creates a symbolic value
-  representing the link using the symbolic body in place of the original body.
-
-* Process Exec - Symbolically evaluates the bindings of the exec, symbolically
-  evaluates the body of the exec using symbols for bound variables that are
-  not clearly determined from the symbolic execution of the bindings, then
-  creates a symbolic value representing the exec using the symbolic bindings and
-  body in place of the original bindings and body.
-
-Note, in particular, that recursive functions and processes that terminate
-under normal evaluation may not terminate under symbolic elaboration.
-
-10.1 Elaborate
---------------
-Abstract Syntax:
-  Expr ::= elaborate (body :: Expr)
-
-Concrete Syntax:
-  expr ::= '$(' expr ')'
-
-Example:
-  (Int@) { Int@; } f = $((Int@ x) { g(x, 2); })
-  Int@! p0 = $(p(0));
-
-The elaborate expression returns the result of symbolically evaluating its
-body. If the expression to elaborate is a function, symbolic values are
-provided as the arguments to the function for elaboration. If the expression
-to elaborate is a process, symbolic values are introduced when elaborating
-link and exec processes.
-
-The type of the elaborate expression is equal to the type of its body
-expression.
-
-10.2 TODO
----------
-Consider the following function:
-
-(Bool@ p) { 
-  Maybe@<Int@> m = p.?(true: Just<Int@>(2), false: Just<Int@>(3));
-  m.?(just: True, nothing: InfiniteLoop());
-};
-
-According to the description of symbolic elaboration above, symbolic
-elaboration of this function will attempt to elaborate the InfiniteLoop
-branch. But in this case it's clear that the InfiniteLoop branch is
-unreachable. Should symbolic elaboration be refined to recognize this case?
-
-11. Abstract Syntax Reference
+10. Abstract Syntax Reference
 ----------------------------
 NormalName ::= (* A string of characters *)
 TypeName ::= (* A string of characters *)
@@ -1197,15 +1116,13 @@ Expr ::=
 
  | list (func :: Expr) (args :: [Expr])
  | literal (func :: Expr) (letters :: word)
-
- | elaborate (body :: Expr)
  ;
 
 Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
 
-12. Concrete Syntax
+11. Concrete Syntax
 -------------------
-12.1 Lexical Syntax
+11.1 Lexical Syntax
 -------------------
 We have the following categories of characters:
 1. whitespace: Any whitespace character, as traditionally classified.
@@ -1238,7 +1155,7 @@ three separate words: 'Foo', '.', and 'Bar', not as a single word 'Foo.Bar'.
 The only exception is when consecutive single quote characters are used to
 embed a single quote character in a word.
 
-12.2 Reference
+11.2 Reference
 --------------
 word ::= (* word as described in the section on lexical syntax *)
 normal_name ::= word
@@ -1290,8 +1207,6 @@ expr ::=
 
  | expr '['[expr [',' expr [...]] ']'              (* list *)
  | expr '|' word                                   (* literal *)
-
- | '$(' expr ')'                                   (* elaborate *)
 
  | block
  ;
