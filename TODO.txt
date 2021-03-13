@@ -1,6 +1,6 @@
 Fblf:
-* Think about whether it's worth optimizing modules to avoid traversing
-  submodules for every parent in a module's hierarchy.
+* Optimize modules to avoid traversing submodules for every parent in a
+  module's hierarchy.
 
 * Add nicer summary and error messages in compiled fblf test runner.
 
@@ -337,4 +337,7 @@ Exec:
 
    Turns out it was a bug in map quality, not too hard to find by code
    inspection.
+
+ - Debug where we're getting stuck in an infinite recursion in fble that
+   exhibits as a fast memory leak followed by OOM kill.
 
