@@ -1,9 +1,12 @@
 
+<@>@ Export@ = /Fblf/Export%.Export@;
+
 @ Program@ = /Fblf/Program%.Program@;
 @ Proc@ = /Fblf/Program%.Proc@;
 @ Var@ = /Fblf/Program%.Var@;
 @ Stmt@ = /Fblf/Program%.Stmt@;
 % Call = /Fblf/Program%.Call;
+% Offset = /Fblf/Program%.Offset;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -63,45 +66,46 @@
     false: Nil<Var@>);
 };
 
-<@ T@>(String@, Int@, (List@<Var@>) { Module@<T@>; })(List@<Var@>) { Module@<T@>; }
-Module = <@ T@>(String@ name, Int@ argc, (List@<Var@>) { Module@<T@>; } body) {
+(List@<Var@>)(Var@) { Var@; } ExportVarImpl = (List@<Var@> args)(Var@ v) {
+  Offset(/List/Length%.Drop<Var@>(v.id, args).cons.head, v.offset);
+};
+
+<@ T@>(Export@<T@>, String@, Int@, (List@<Var@>) { Module@<T@>; })(List@<Var@>) { Module@<T@>; }
+Module = <@ T@>(Export@<T@> export, String@ name, Int@ argc, (List@<Var@>) { Module@<T@>; } body) {
   # Run the module in isolation to get it's definition.
   List@<Var@> local_args = LocalArgs(Int|1, argc);
-  ModuleS@ module = body(local_args)(
+  ModuleR@<T@> module = body(local_args)(
     Read@(Local(Int|0), local_args),
-    ModuleS@(name, Int|0, Nil<Proc@>, Nil<ModuleS@>)).s;
+    ModuleS@(name, Int|0, Nil<Proc@>, Nil<ModuleS@>));
 
   # Return a function to the body of the module to get its returned value
   # relative to whatever module is instantiating it.
   (List@<Var@> args)(Read@ r, ModuleS@ s) {
-    # TODO: Ideally we save the result returned above and transform that
-    # directly based on args rather than re-running the entire body.
-    ModuleR@<T@> mr = body(args)(Read@(Local(s.heap), args), s);
-    ModuleR@<T@>(
-      ModuleS@(s.name, Add(s.heap, module.heap), s.procs, Cons<ModuleS@>(module, s.deps)),
-      mr.x);
+    # TODO: Avoid adding duplicate modules to deps?
+    T@ x = export(ExportVarImpl(Cons<Var@>(Local(s.heap), args)), module.x);
+    ModuleR@<T@>(ModuleS@(s.name, Add(s.heap, module.s.heap), s.procs, Cons<ModuleS@>(module.s, s.deps)), x);
   };
 };
 
 # Module0 --
 #   Define a module that takes no arguments.
-<@ T@>(String@, Module@<T@>) { Module@<T@>; }
-Module0 = <@ T@>(String@ name, Module@<T@> body) {
-  Module<T@>(name, Int|0, (List@<Var@> _) { body; })[];
+<@ T@>(Export@<T@>, String@, Module@<T@>) { Module@<T@>; }
+Module0 = <@ T@>(Export@<T@> export, String@ name, Module@<T@> body) {
+  Module<T@>(export, name, Int|0, (List@<Var@> _) { body; })[];
 };
 
 # Module1 --
 #   Define a module that takes 1 argument.
-<@ T@>(String@, (Var@) { Module@<T@>; }) { (Var@) { Module@<T@>; }; }
-Module1 = <@ T@>(String@ name, (Var@) { Module@<T@>; } m)(Var@ arg) {
-  Module<T@>(name, Int|1, (List@<Var@> l) { m(l.cons.head); })[arg];
+<@ T@>(Export@<T@>, String@, (Var@) { Module@<T@>; }) { (Var@) { Module@<T@>; }; }
+Module1 = <@ T@>(Export@<T@> export, String@ name, (Var@) { Module@<T@>; } m)(Var@ arg) {
+  Module<T@>(export, name, Int|1, (List@<Var@> l) { m(l.cons.head); })[arg];
 };
 
 # Module2 --
 #   Define a module that takes 2 arguments.
-<@ T@>(String@, (Var@, Var@) { Module@<T@>; }) { (Var@, Var@) { Module@<T@>; }; }
-Module2 = <@ T@>(String@ name, (Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ arg2) {
-  Module<T@>(name, Int|2, (List@<Var@> l) {
+<@ T@>(Export@<T@>, String@, (Var@, Var@) { Module@<T@>; }) { (Var@, Var@) { Module@<T@>; }; }
+Module2 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ arg2) {
+  Module<T@>(export, name, Int|2, (List@<Var@> l) {
     m(l.cons.head,
       l.cons.tail.cons.head);
     })[arg1, arg2];
@@ -109,9 +113,9 @@ Module2 = <@ T@>(String@ name, (Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ 
 
 # Module3 --
 #   Define a module that takes 3 arguments.
-<@ T@>(String@, (Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@) { Module@<T@>; }; }
-Module3 = <@ T@>(String@ name, (Var@, Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ arg2, Var@ arg3) {
-  Module<T@>(name, Int|3, (List@<Var@> l) {
+<@ T@>(Export@<T@>, String@, (Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@) { Module@<T@>; }; }
+Module3 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@) { Module@<T@>; } m)(Var@ arg1, Var@ arg2, Var@ arg3) {
+  Module<T@>(export, name, Int|3, (List@<Var@> l) {
     m(l.cons.head,
       l.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.head);
@@ -120,10 +124,10 @@ Module3 = <@ T@>(String@ name, (Var@, Var@, Var@) { Module@<T@>; } m)(Var@ arg1,
 
 # Module4 --
 #   Define a module that takes 4 arguments.
-<@ T@>(String@, (Var@, Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@, Var@) { Module@<T@>; }; }
-Module4 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@) { Module@<T@>; } m)
+<@ T@>(Export@<T@>, String@, (Var@, Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@, Var@) { Module@<T@>; }; }
+Module4 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@, Var@) { Module@<T@>; } m)
   (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4) {
-  Module<T@>(name, Int|4, (List@<Var@> l) {
+  Module<T@>(export, name, Int|4, (List@<Var@> l) {
     m(l.cons.head,
       l.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.head,
@@ -133,10 +137,10 @@ Module4 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@) { Module@<T@>; } m)
 
 # Module5 --
 #   Define a module that takes 5 arguments.
-<@ T@>(String@, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }; }
-Module5 = <@ T@>(String@ name, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; } m)
+<@ T@>(Export@<T@>, String@, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }) { (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; }; }
+Module5 = <@ T@>(Export@<T@> export, String@ name, (Var@, Var@, Var@, Var@, Var@) { Module@<T@>; } m)
   (Var@ arg1, Var@ arg2, Var@ arg3, Var@ arg4, Var@ arg5) {
-  Module<T@>(name, Int|5, (List@<Var@> l) {
+  Module<T@>(export, name, Int|5, (List@<Var@> l) {
     m(l.cons.head,
       l.cons.tail.cons.head,
       l.cons.tail.cons.tail.cons.head,
@@ -236,7 +240,6 @@ Collect = (ModuleS@ module, Collected@ collected) {
 #   required by the module, and whatever the module returns.
 <@>@ Ran@ = <@ T@> { *(Program@ program, Int@ heap, T@ x); };
 <@ T@>(Module@<T@>) { Ran@<T@>; } Run = <@ T@>(Module@<T@> m) {
-  # TODO: avoid rerunning the body of the program.
   ModuleR@<T@> mr = m(
     Read@(Local(Int|0), Nil<Var@>),
     ModuleS@(Str|'', Int|0, Nil<Proc@>, Nil<ModuleS@>));

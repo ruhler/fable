@@ -9,6 +9,10 @@
 % Heap = /Fblf/Heap%.Heap;
 % Read = /Fblf/Heap%.Read;
 
+<@>@ Export@ = /Fblf/Export%.Export@;
+% ExportStmt = /Fblf/Export%.ExportStmt;
+% ExportVar = /Fblf/Export%.ExportVar;
+
 @ Var@ = /Fblf/Program%.Var@;
 
 <@>@ Ran@ = /Fblf/Module%.Ran@;
@@ -71,4 +75,10 @@ TestSuite = (String@ name, List@<Test@> tests) {
     });
 };
 
-@(Test@, TestInstance@, TestCase@, TestSuite@, Test, TestSuite, RunTests);
+Export@<TestInstance@>
+ExportTestInstance = ((Var@) { Var@; } f, TestInstance@ x) {
+  TestInstance@(ExportStmt(f, x.method), ExportVar(f, x.result), x.expected);
+};
+
+@(Test@, TestInstance@, TestCase@, TestSuite@, Test, TestSuite, RunTests,
+  ExportTestInstance);

@@ -1,4 +1,6 @@
 
+% ExportStmt = /Fblf/Export%.ExportStmt;
+
 @ Stmt@ = /Fblf/Program%.Stmt@;
 @ Var@ = /Fblf/Program%.Var@;
 % Assign = /Fblf/Program%.Assign;
@@ -68,7 +70,7 @@ Add1 = (Var@ a, Var@ b, Var@ c, Var@ x, Var@ z) {
 (Int@)(Var@, Var@, Var@) { Module@<Method@>; }
 Add = (Int@ n) {
   String@ name = Strs[Str|'Add/Add', /Int/Int/Show%.Show(n)];
-  Module3<Method@>(name, (Var@ a, Var@ b, Var@ z) {
+  Module3<Method@>(ExportStmt, name, (Var@ a, Var@ b, Var@ z) {
     # We need a single bit of internal state to store the carry bit as we do
     # the addition.
     Var@ carry <- DoAlloc<Method@>(Int|1);
@@ -108,7 +110,7 @@ Add = (Int@ n) {
 #       bit first.
 (Int@)(Var@) { Module@<Method@>; } Inc = (Int@ n) {
   String@ name = Strs[Str|'/Fblf/Lib/Add%.Inc', /Int/Int/Show%.Show(n)];
-  Module1<Method@>(name, (Var@ a) { Method(Str|'main', IncI(n, a)); });
+  Module1<Method@>(ExportStmt, name, (Var@ a) { Method(Str|'main', IncI(n, a)); });
 };
 
 # DecI --
@@ -140,7 +142,7 @@ DecI = (Int@ n, Var@ a) {
 #       bit first.
 (Int@)(Var@) { Module@<Method@>; } Dec = (Int@ n) {
   String@ name = Strs[Str|'/Fblf/Lib/Add%.Dec', /Int/Int/Show%.Show(n)];
-  Module1<Method@>(name, (Var@ a) { Method(Str|'main', DecI(n, a)); });
+  Module1<Method@>(ExportStmt, name, (Var@ a) { Method(Str|'main', DecI(n, a)); });
 };
 
 @(Add, IncI, Inc, DecI, Dec);

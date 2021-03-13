@@ -31,6 +31,7 @@
 % Test = /Fblf/Test%.Test;
 % TestSuite = /Fblf/Test%.TestSuite;
 % RunTests = /Fblf/Test%.RunTests;
+% ExportTestInstance = /Fblf/Test%.ExportTestInstance;
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5 = /Fblf/Lib/Md5%.Md5;
@@ -58,7 +59,7 @@
 
 (String@, List@<Hex@>, List@<Hex@>) { Test@; }
 TestStr = (String@ name, List@<Hex@> wnt, List@<Hex@> bytes) {
-  Test(name, Module0<TestInstance@>(Strs[Str|'Md5Test.', name], {
+  Test(name, Module0<TestInstance@>(ExportTestInstance, Strs[Str|'Md5Test.', name], {
     Var@ input <- DoAlloc<TestInstance@>(Int|8);
     Var@ hash <- DoAlloc<TestInstance@>(Int|128);
     Md5@ md5 <- Do<Md5@, TestInstance@>(Md5(input, hash));

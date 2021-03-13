@@ -1,6 +1,5 @@
 Fblf:
-* Optimize modules to avoid traversing submodules for every parent in a
-  module's hierarchy.
+* Track down memory bug in Fblf modules.
 
 * Add nicer summary and error messages in compiled fblf test runner.
 

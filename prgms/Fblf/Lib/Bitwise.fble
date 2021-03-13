@@ -1,4 +1,6 @@
 
+% ExportStmt = /Fblf/Export%.ExportStmt;
+
 @ Var@ = /Fblf/Program%.Var@;
 @ Stmt@ = /Fblf/Program%.Stmt@;
 % Assign = /Fblf/Program%.Assign;
@@ -61,7 +63,7 @@ Bitwise = (Int@ n, (Int@) { Stmt@; } f) {
 (Int@)(Var@, Var@, Var@) { Module@<Method@>; }
 And = (Int@ n) {
   String@ name = Strs[Str|'Bitwise/And', /Int/Int/Show%.Show(n)];
-  Module3<Method@>(name, (Var@ a, Var@ b, Var@ z) {
+  Module3<Method@>(ExportStmt, name, (Var@ a, Var@ b, Var@ z) {
     Bitwise(n, (Int@ i) {
       Var@ ai = Offset(a, i);
       Var@ bi = Offset(b, i);
@@ -85,7 +87,7 @@ And = (Int@ n) {
 (Int@)(Var@, Var@, Var@) { Module@<Method@>; }
 Or = (Int@ n) {
   String@ name = Strs[Str|'Bitwise/Or', /Int/Int/Show%.Show(n)];
-  Module3<Method@>(name, (Var@ a, Var@ b, Var@ z) {
+  Module3<Method@>(ExportStmt, name, (Var@ a, Var@ b, Var@ z) {
     Bitwise(n, (Int@ i) {
       Var@ ai = Offset(a, i);
       Var@ bi = Offset(b, i);
@@ -109,7 +111,7 @@ Or = (Int@ n) {
 (Int@)(Var@, Var@, Var@) { Module@<Method@>; }
 Xor = (Int@ n) {
   String@ name = Strs[Str|'Bitwise/Xor', /Int/Int/Show%.Show(n)];
-  Module3<Method@>(name, (Var@ a, Var@ b, Var@ z) {
+  Module3<Method@>(ExportStmt, name, (Var@ a, Var@ b, Var@ z) {
     Bitwise(n, (Int@ i) {
       Var@ ai = Offset(a, i);
       Var@ bi = Offset(b, i);
@@ -134,7 +136,7 @@ Xor = (Int@ n) {
 (Int@)(Var@, Var@) { Module@<Method@>; }
 Not = (Int@ n) {
   String@ name = Strs[Str|'Bitwise/Not', /Int/Int/Show%.Show(n)];
-  Module2<Method@>(name, (Var@ a, Var@ z) {
+  Module2<Method@>(ExportStmt, name, (Var@ a, Var@ z) {
     Bitwise(n, (Int@ i) {
       Var@ ai = Offset(a, i);
       Var@ zi = Offset(z, i);
@@ -162,7 +164,7 @@ Cls = (Int@ n, Int@ s) {
     Str|'_',
     /Int/Int/Show%.Show(s)
   ];
-  Module2<Method@>(name, (Var@ a, Var@ z) {
+  Module2<Method@>(ExportStmt, name, (Var@ a, Var@ z) {
     Bitwise(n, (Int@ i) {
       Var@ ai = Offset(a, i);
       Int@ offset = Lt(i, s).?(

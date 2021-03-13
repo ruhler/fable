@@ -10,6 +10,7 @@
 <@>% Nil = /List%.Nil;
 <@>% Append = /List%.Append;
 <@,@>% ForEach = /List%.ForEach;
+<@,@>% Map = /List%.Map;
 
 <@>% Length = /List/Length%.Length;
 
@@ -17,6 +18,9 @@
 % Line = /Fblf/Compile/Output%.Line;
 % Do = /Fblf/Compile/Output%.Do;
 % Return = /Fblf/Compile/Output%.Return;
+
+<@>@ Export@ = /Fblf/Export%.Export@;
+% ExportStmt = /Fblf/Export%.ExportStmt;
 
 <@>@ Module@ = /Fblf/Module%.Module@;
 <@>@ Ran@ = /Fblf/Module%.Ran@;
@@ -50,12 +54,20 @@
 @ TestMethod@ = *(String@ name, Method@ method);
 @ TMs@ = List@<TestMethod@>;
 
+Export@<TestMethod@> ExportTestMethod = ((Var@) { Var@; } f, TestMethod@ x) {
+  TestMethod@(x.name, ExportStmt(f, x.method));
+};
+
+Export@<TMs@> ExportTMs = ((Var@) { Var@; } f, TMs@ x) {
+  Map<TestMethod@, TestMethod@>(x, (TestMethod@ tm) { ExportTestMethod(f, tm); });
+};
+
 # Collect all the individual test cases from a test suite into a single module.
 (Var@, String@, Test@, TMs@) { Module@<TMs@>; } Collect = (Var@ pass, String@ prefix, Test@ test, TMs@ tail) {
   test.?(
     case: {
       String@ name = Append<Char@>(prefix, test.case.name);
-      (Var@) { Module@<TestMethod@>; } tm = Module1<TestMethod@>(name, (Var@ pass) {
+      (Var@) { Module@<TestMethod@>; } tm = Module1<TestMethod@>(ExportTestMethod, name, (Var@ pass) {
         TestInstance@ ti <- /Fblf/Module%.Do<TestInstance@, TestMethod@>(test.case.test);
 
         Method@ method <- DoMethod<TestMethod@>(Str|'test', Seq[
@@ -90,7 +102,7 @@
   Unit@ _ <- Do(Line|'#include "fblf-heap.h"');
   Unit@ _ <- Do(Line|'');
 
-  Module@<TMs@> test_module = Module0<TMs@>(Str|'TestsModule', {
+  Module@<TMs@> test_module = Module0<TMs@>(ExportTMs, Str|'TestsModule', {
     Var@ pass <- DoAlloc<TMs@>(Int|1);
     Collect(pass, Str|'', t, Nil<TestMethod@>);
   });

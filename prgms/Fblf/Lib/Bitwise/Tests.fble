@@ -28,11 +28,12 @@
 @ TestInstance@ = /Fblf/Test%.TestInstance@;
 % Test = /Fblf/Test%.Test;
 % TestSuite = /Fblf/Test%.TestSuite;
+% ExportTestInstance = /Fblf/Test%.ExportTestInstance;
 
 % Str = /String%.Str;
 
 Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
-  Test(Str|And, Module0<TestInstance@>(Str|'BitwiseTest.And', {
+  Test(Str|And, Module0<TestInstance@>(ExportTestInstance, Str|'BitwiseTest.And', {
     Var@ a <- DoAlloc<TestInstance@>(Int|4);
     Var@ b <- DoAlloc<TestInstance@>(Int|4);
     Var@ z <- DoAlloc<TestInstance@>(Int|4);
@@ -49,7 +50,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Return<TestInstance@>(TestInstance@(test, a, BitStr|001101100010));
   })),
 
-  Test(Str|Or, Module0<TestInstance@>(Str|'BitwiseTest.Or', {
+  Test(Str|Or, Module0<TestInstance@>(ExportTestInstance, Str|'BitwiseTest.Or', {
     Var@ a <- DoAlloc<TestInstance@>(Int|4);
     Var@ b <- DoAlloc<TestInstance@>(Int|4);
     Var@ z <- DoAlloc<TestInstance@>(Int|4);
@@ -66,7 +67,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Return<TestInstance@>(TestInstance@(test, a, BitStr|001101100111));
   })),
 
-  Test(Str|Xor, Module0<TestInstance@>(Str|'BitwiseTest.Xor', {
+  Test(Str|Xor, Module0<TestInstance@>(ExportTestInstance, Str|'BitwiseTest.Xor', {
     Var@ a <- DoAlloc<TestInstance@>(Int|4);
     Var@ b <- DoAlloc<TestInstance@>(Int|4);
     Var@ z <- DoAlloc<TestInstance@>(Int|4);
@@ -83,7 +84,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Return<TestInstance@>(TestInstance@(test, a, BitStr|001101100101));
   })),
 
-  Test(Str|Not, Module0<TestInstance@>(Str|'BitwiseTest.Not', {
+  Test(Str|Not, Module0<TestInstance@>(ExportTestInstance, Str|'BitwiseTest.Not', {
     Var@ a <- DoAlloc<TestInstance@>(Int|4);
     Var@ z <- DoAlloc<TestInstance@>(Int|4);
 
@@ -98,7 +99,7 @@ Test@ Tests = TestSuite(Str|'Bitwise', List<Test@>[
     Return<TestInstance@>(TestInstance@(test, a, BitStr|00111100));
   })),
 
-  Test(Str|Cls, Module0<TestInstance@>(Str|'BitwiseTest.Cls', {
+  Test(Str|Cls, Module0<TestInstance@>(ExportTestInstance, Str|'BitwiseTest.Cls', {
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
     Var@ z <- DoAlloc<TestInstance@>(Int|5);
 

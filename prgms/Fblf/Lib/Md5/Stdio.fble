@@ -12,6 +12,7 @@
 
 @ Md5@ = /Fblf/Lib/Md5%.Md5@;
 % Md5M = /Fblf/Lib/Md5%.Md5;
+% ExportMd5 = /Fblf/Lib/Md5%.ExportMd5;
 
 <@>@ Ran@ = /Fblf/Module%.Ran@;
 <@>% Module0 = /Fblf/Module%.Module0;
@@ -37,7 +38,7 @@
 @ Unit@ = /Unit%.Unit@;
 
 Stdio@ Md5 = (Get@<Maybe@<String@>> _, Put@<String@> put) {
-  Ran@<Md5@> ran = Run<Md5@>(Module0<Md5@>(Str|'Md5Stdio', {
+  Ran@<Md5@> ran = Run<Md5@>(Module0<Md5@>(ExportMd5, Str|'Md5Stdio', {
     Var@ input <- DoAlloc<Md5@>(Int|8);
     Var@ hash <- DoAlloc<Md5@>(Int|128);
     Md5M(input, hash);

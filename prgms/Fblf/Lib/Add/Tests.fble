@@ -22,6 +22,7 @@
 @ TestInstance@ = /Fblf/Test%.TestInstance@;
 % Test = /Fblf/Test%.Test;
 % TestSuite = /Fblf/Test%.TestSuite;
+% ExportTestInstance = /Fblf/Test%.ExportTestInstance;
 
 % Int = /Int/Int/Lit%.Int;
 
@@ -30,7 +31,7 @@
 % Str = /String%.Str;
 
 Test@ Tests = TestSuite(Str|'Add', List<Test@>[
-  Test(Str|Add, Module0<TestInstance@>(Str|'TestAdd.Add', {
+  Test(Str|Add, Module0<TestInstance@>(ExportTestInstance, Str|'TestAdd.Add', {
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
     Var@ b <- DoAlloc<TestInstance@>(Int|5);
     Var@ z <- DoAlloc<TestInstance@>(Int|5);
@@ -49,7 +50,7 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
     Return<TestInstance@>(TestInstance@(test, a, BitStr|001011011111011));
   })),
 
-  Test(Str|Inc, Module0<TestInstance@>(Str|'TestAdd.Inc', {
+  Test(Str|Inc, Module0<TestInstance@>(ExportTestInstance, Str|'TestAdd.Inc', {
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
     Stmt@ inc <- Do<Stmt@, TestInstance@>(Inc(Int|5)(a));
     Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
@@ -59,7 +60,7 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
     Return<TestInstance@>(TestInstance@(test, a, BitStr|10100));
   })),
 
-  Test(Str|'Inc Overflow', Module0<TestInstance@>(Str|'TestAdd.Inc Overflow', {
+  Test(Str|'Inc Overflow', Module0<TestInstance@>(ExportTestInstance, Str|'TestAdd.Inc Overflow', {
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
     Stmt@ inc <- Do<Stmt@, TestInstance@>(Inc(Int|5)(a));
     Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[
@@ -69,7 +70,7 @@ Test@ Tests = TestSuite(Str|'Add', List<Test@>[
     Return<TestInstance@>(TestInstance@(test, a, BitStr|00000));
   })),
 
-  Test(Str|Dec, Module0<TestInstance@>(Str|'TestAdd.Dec', {
+  Test(Str|Dec, Module0<TestInstance@>(ExportTestInstance, Str|'TestAdd.Dec', {
     Var@ a <- DoAlloc<TestInstance@>(Int|5);
     Stmt@ dec <- Do<Stmt@, TestInstance@>(Dec(Int|5)(a));
     Method@ test <- DoMethod<TestInstance@>(Str|'test', Seq[

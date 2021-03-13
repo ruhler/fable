@@ -5,6 +5,10 @@
 % Exp2 = /Int/Int%.Exp2;
 % Int = /Int/Int/Lit%.Int;
 
+<@>@ Export@ = /Fblf/Export%.Export@;
+% ExportCond = /Fblf/Export%.ExportCond;
+% ExportStmt = /Fblf/Export%.ExportStmt;
+
 @ Var@ = /Fblf/Program%.Var@;
 @ Cond@ = /Fblf/Program%.Cond@;
 @ Stmt@ = /Fblf/Program%.Stmt@;
@@ -295,8 +299,15 @@ Store = (Int@ k, Int@ n, Var@ memory, Var@ addr, Var@ value) {
 # whether a full word has been assembled.
 @ PackWord@ = *(Method@ reset, Method@ feed, Cond@ packed);
 
+Export@<PackWord@> ExportPackWord = ((Var@) { Var@; } f, PackWord@ x) {
+  PackWord@(
+    ExportStmt(f, x.reset),
+    ExportStmt(f, x.feed),
+    ExportCond(f, x.packed));
+};
+
 (Var@, Var@) { Module@<PackWord@>; }
-PackWord = Module2<PackWord@>(Str|'Md5.PackWord', (Var@ word, Var@ byte) {
+PackWord = Module2<PackWord@>(ExportPackWord, Str|'Md5.PackWord', (Var@ word, Var@ byte) {
   Var@ addr <- DoAlloc<PackWord@>(Int|2);
 
   Method@ reset <- DoMethod<PackWord@>(Str|'reset', Assign(addr, Binary|11, Int|2));
@@ -328,6 +339,12 @@ PackWord = Module2<PackWord@>(Str|'Md5.PackWord', (Var@ word, Var@ byte) {
 # above instructions for each computation.
 @ PaddedMd5@ = *(Method@ reset, Method@ feed);
 
+Export@<PaddedMd5@> ExportPaddedMd5 = ((Var@) { Var@; } f, PaddedMd5@ x) {
+  PaddedMd5@(
+    ExportStmt(f, x.reset),
+    ExportStmt(f, x.feed));
+};
+
 # PaddedMd5 -- 
 #   The PaddedMd5 computation.
 #
@@ -338,7 +355,7 @@ PackWord = Module2<PackWord@>(Str|'Md5.PackWord', (Var@ word, Var@ byte) {
 #   d - The address of the 'D' value of the computed Md5.
 #   byte - The address of the input byte passed to the feed program.
 (Var@, Var@, Var@, Var@, Var@) { Module@<PaddedMd5@>; }
-PaddedMd5 = Module5<PaddedMd5@>(Str|'Md5.PaddedMd5',
+PaddedMd5 = Module5<PaddedMd5@>(ExportPaddedMd5, Str|'Md5.PaddedMd5',
   (Var@ a, Var@ b, Var@ c, Var@ d, Var@ byte) {
     # Count of the number of 32-bit words of input that have been processed in
     # the current block.
@@ -405,6 +422,13 @@ PaddedMd5 = Module5<PaddedMd5@>(Str|'Md5.PaddedMd5',
 # unspecified ways.
 @ Md5@ = *(Method@ reset, Method@ feed, Method@ finish);
 
+Export@<Md5@> ExportMd5 = ((Var@) { Var@; } f, Md5@ x) {
+  Md5@(
+    ExportStmt(f, x.reset),
+    ExportStmt(f, x.feed),
+    ExportStmt(f, x.finish));
+};
+
 # Md5 -- 
 #   The Md5 computation.
 #
@@ -412,7 +436,7 @@ PaddedMd5 = Module5<PaddedMd5@>(Str|'Md5.PaddedMd5',
 #   input - The address of the 8-bit input byte passed to the feed program.
 #   hash - The address to store the 128 bit computed Md5 hash.
 (Var@, Var@) { Module@<Md5@>; }
-Md5 = Module2<Md5@>(Str|'Md5.Md5', (Var@ input, Var@ hash) {
+Md5 = Module2<Md5@>(ExportMd5, Str|'Md5.Md5', (Var@ input, Var@ hash) {
   Var@ a <- DoAlloc<Md5@>(Int|32);
   Var@ b <- DoAlloc<Md5@>(Int|32);
   Var@ c <- DoAlloc<Md5@>(Int|32);
@@ -490,4 +514,4 @@ Md5 = Module2<Md5@>(Str|'Md5.Md5', (Var@ input, Var@ hash) {
   Return<Md5@>(Md5@(reset, feed, finish));
 });
 
-@(Md5@, Md5);
+@(Md5@, Md5, ExportMd5);
