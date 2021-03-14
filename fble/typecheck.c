@@ -715,7 +715,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleValueAddRef(vh, &let_tc->_base, body.tc);
       FbleReleaseValue(vh, body.tc);
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleVectorAppend(arena, let_tc->bindings, defs[i].tc);
+        FbleLocTc ltc = {
+          .loc = FbleCopyLoc(let_expr->bindings.xs[i].name.loc),
+          .tc = defs[i].tc
+        };
+        FbleVectorAppend(arena, let_tc->bindings, ltc);
         FbleValueAddRef(vh, &let_tc->_base, defs[i].tc);
         FbleReleaseValue(vh, defs[i].tc);
       }
@@ -1122,7 +1126,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleValueAddRef(vh, &let_tc->_base, body.tc);
       FbleReleaseValue(vh, body.tc);
       FbleVectorInit(arena, let_tc->bindings);
-      FbleVectorAppend(arena, let_tc->bindings, &type_tc->_base);
+      FbleLocTc ltc = {
+        .loc = FbleCopyLoc(poly->arg.name.loc),
+        .tc = &type_tc->_base
+      };
+      FbleVectorAppend(arena, let_tc->bindings, ltc);
       FbleValueAddRef(vh, &let_tc->_base, &type_tc->_base);
       FbleReleaseValue(vh, &type_tc->_base);
 
@@ -2016,14 +2024,15 @@ static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* s
     return NULL;
   }
 
-  // TODO: Using modules->name.loc here is not terribly useful for users. The
-  // plan eventually is to remove FbleLoc from FbleTc, so hopefully this
-  // weirdness will solve itself by going away sometime in the near future.
   FbleLetTc* let_tc = FbleNewValue(vh, FbleLetTc);
   let_tc->_base.tag = FBLE_LET_TC;
   let_tc->recursive = false;
   FbleVectorInit(arena, let_tc->bindings);
-  FbleVectorAppend(arena, let_tc->bindings, module.tc);
+  FbleLocTc ltc = {
+    .loc = FbleCopyLoc(modules->name.loc),
+    .tc = module.tc
+  };
+  FbleVectorAppend(arena, let_tc->bindings, ltc);
   let_tc->body = body_tc;
   FbleValueAddRef(vh, &let_tc->_base, module.tc);
   FbleReleaseValue(vh, module.tc);

@@ -227,10 +227,12 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 
         case FBLE_REF_DEF_INSTR: {
           FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-          fprintf(fout, "l%zi ~= %s%zi;\n",
+          fprintf(fout, "l%zi ~= %s%zi; // %s:%i:%i\n",
               ref_def_instr->ref,
               sections[ref_def_instr->value.section],
-              ref_def_instr->value.index);
+              ref_def_instr->value.index,
+              ref_def_instr->loc.source->str, ref_def_instr->loc.line,
+              ref_def_instr->loc.col);
           break;
         }
 
@@ -274,11 +276,17 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_PUT_INSTR:
     case FBLE_LINK_INSTR:
     case FBLE_REF_VALUE_INSTR:
-    case FBLE_REF_DEF_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
       FbleFree(arena, instr);
       return;
+
+    case FBLE_REF_DEF_INSTR: {
+      FbleRefDefInstr* i = (FbleRefDefInstr*)instr;
+      FbleFreeLoc(arena, i->loc);
+      FbleFree(arena, instr);
+      return;
+    }
 
     case FBLE_STRUCT_ACCESS_INSTR:
     case FBLE_UNION_ACCESS_INSTR: {

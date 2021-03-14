@@ -69,3 +69,120 @@ Maybe expressions could be side effecting things that return references? The
 reference returned is guaranteed to be in scope because you can't declare new
 variables in expressions?
 
+---
+
+Proposed addition to fble for fblg. Take the concrete syntax with a huge grain
+of salt.
+
+Packed Types
+------------
+Abstract Syntax:
+  Type ::= packed (type :: Type)
+
+Concrete Syntax:
+  type ::= type '$'
+
+Example:
+  Bool@$
+
+A packed version of an fble type. The argument type must be non-recursive
+structs and unions only. The packed version is guaranteed to be packed into a
+well determined sequence of bits of a fixed size. There is no sharing of
+subfields within a packed type. Fblg computations will operate on values of
+packed type.
+
+You can convert between normal and packed fble types:
+
+Abstract Syntax:
+  Expr ::= pack (expr :: Expr)
+        |  unpack (expr :: Expr)
+
+Concrete Syntax:
+  expr ::= expr '.$'
+
+Example:
+  Bool@ b = True;
+  Bool@$ bp = b.$;
+  Bool@ b2 = bp.$;
+
+If expr is a packed type, you get the unpacked version. If expr is unpacked,
+you get the packed version. Converting to and from a packed type will cause
+any sharing of subfields to be discarded.
+
+There's no way to interact with packed types aside from packing, unpacking,
+and passing them to and from fblg computations.
+
+Pointer Types
+-------------
+Abstract Syntax:
+  Type :: pointer (type :: Type)
+
+Concrete syntax:
+  type ::= type '*'
+
+Example:
+  Bool@*
+
+Represents a pointer to a value of the given (packed) type. As with packed
+types, the type is limited to non-recursive struct/union types.
+
+Statements
+----------
+Abstract Syntax:
+  Type :: statement
+
+Concrete syntax:
+  type ::= '$$'
+
+There is a primitive type of value called a statement, which represents an
+fblg program. A statement can be run, which will cause the statement's side
+effects to take place.
+
+Abstract Syntax:
+  Expr :: copy (dst :: Expr) (src :: Expr)
+        | set (dst :: Expr) (src :: Expr)
+
+Copy takes dst of type T@* and src of type T@*. It copies the full contents of
+src into dst. It has type Statement.
+
+Set takes dst of type T@* and src of type T@&. It copies the full contents of
+src into dst. It has type Statement.
+
+Conditional expressions can be used with object of type T@*, for union type
+T@. Similar to normal condition expressions, except not all tags need to be
+present, and the body of the condition must be of type Statement. Behaves like
+a condition on the value of the type pointed to by obj. For tags left out of
+the list of tags, it is treated as if the branch has no action.
+
+We introduce a while expression, with syntax foo.?*(tag1: ..., tag2: ...).
+Here, 'foo' has union type T@*. Not all fields need tags present. The behavior
+is to repeatedly execute the associated body of the while until foo takes on
+one of the tag values not mentioned in the body of the while.
+
+We have an fblg let expression: letg <name> <type> <stmt>. The behavior is to
+allocate a packed value on the stack for the given type T@ and set name to be
+a pointer to that value. The initial contents of the value are undefined (or
+maybe you have to initialize it?). The value stays alive for as long as the
+statement is executing, then the value goes out of scope.
+
+You can define a procedure. Given fble function of type
+  A@* -> B@* -> ... -> Statement, gives you back an fble function of identical
+type that refers to the same shared value every time it is called. Think of it
+like a synthesis boundary for fblg procedures.
+
+You can convert fble function to fblg, and fblg function to fble:
+
+call_fble: (T@& -> T@&) -> (T@* -> Stmt)
+  Calls the fble function, gets the new value, and updates the original
+  pointer to have that new value.
+
+call_fblg: (T@* -> Stmt) -> (T@& -> T@&)
+  Runs the fblg computation on the given value and returns the result of the
+  value after the computation has finished.
+
+For C API, let's say you can pass things of type Stmt as arguments to an fble
+function, where the value is an arbitrary C function call. That should give us
+a nice API that gives everything we need to replace procs.
+
+Maybe a decent next step would be to start sketching an implementation of md5
+in fblg.

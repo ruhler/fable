@@ -2,6 +2,8 @@ Fblf:
 * Figure out how to avoid duplication of module definitions.
   For the case like Add, and Bitwise modules that take a non-var argument as a
   function to the module.
+  - I'm pretty sure the solution is to separate the definition of the module
+    procs from the definition of the module interface. It's just annoying.
 
 * Add nicer summary and error messages in compiled fblf test runner.
 
@@ -78,23 +80,7 @@ Exec:
 * Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?
 
-* Implement symbolic elaboration needed for Md5 DoBlock.
- By fixing failing elaborate tests. 
- Hopefully at this point we are capable of doing elaboration for Md5 DoBlock.
-* Add to spec and test that elaborate doesn't lose sharing in values.
- - for example: y = Y(x, x); z = Z(y, y) should not make 4 copies of x.
-* Add to spec and test that elaborate doesn't rebuild non-symbolic values from
-  scratch every time the elaborated function is called.
- - for example: \a -> Y(a, b) should reuse 'b' from scope instead of
-   reconstructing it.
-* Figure out how to keep track of locations for symbolic computation.
- - in particular for getting meaningful profiles out of symbolic compiled
-   code.
 * Be more consistent in FbleTc about use of vector versus FbleTc*[].
-
-* Add test for nested elaborate expressions.
- - In particular, we need to make sure argument variables don't get mixed up
-   when elaborating multiple functions at the same time.
 
 * Rename 4.3-union-access/basic/* tests, because they seem to have wrong
   names?
@@ -102,10 +88,6 @@ Exec:
 * Any way to improve memory growth tests?
  It feels wrong to me to have to do a full gc for the tests to pass. It feels
  too specific to the implementation of garbage collection. Anything we can do?
-
-* Proof of concept fblf
- - Implement N bit addition, run on evaluator and compile via llvm to c code
-   and run.
 
 * Check that switch statements are in enum order as appropriate
   - FBLE_DATA_ACCESS_EXPR, and FBLE_DATA_ACCESS_TC in particular.
@@ -149,12 +131,6 @@ Exec:
 
   We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
   Should we instead get: expected type Maybe@<Bool@>? 
-
-* Make VLIW like instructions to reduce overhead of dispatching instructions?
- - RETURN + RELEASES
- - CALL + RELEASES
- - REF_VALS 
- - REF_DEFS
 
 * Store function pointer in FbleInstr instead of tag
  - Requires we also store functions for disassembly and freeing of
@@ -205,11 +181,7 @@ Exec:
   More generally, we don't get warnings about variables that are referenced
   only by unused variables.
 
-* Fix broken vacuous_value test.
- - is this feasible to fix, now that we no longer allow errors in compile.c? 
- - is this feasible to fix in general? Try adding a more complicated test
-   where we define a function and apply it to get a vacuous value?
- - Make the test more obviously failing, by trying to use the resulting value?
+* Clarify spec on when vacuous value error should be reported.
 
 * Add coverage for parse destructors
  - names, module_ref, kinds, tagged_kinds, tagged_type, tagged_expr
@@ -341,4 +313,8 @@ Exec:
 
  - Debug where we're getting stuck in an infinite recursion in fble that
    exhibits as a fast memory leak followed by OOM kill.
+
+   This turned out to be big memory use, not infinite recursion. I tracked it
+   down by minimizing the test case enough to run it to completion, and using
+   profiling to see how many times different functions were being called.
 

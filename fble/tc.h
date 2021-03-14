@@ -121,6 +121,20 @@ typedef struct {
   FbleVarIndex index;
 } FbleVarTc;
 
+// FbleLocTc --
+//   A value bundled together with a location.
+typedef struct {
+  FbleLoc loc;
+  FbleTc* tc;
+} FbleLocTc;
+
+// FbleLocTcV --
+//   A vector of FbleLocTc.
+typedef struct {
+  size_t size;
+  FbleLocTc* xs;
+} FbleLocTcV;
+
 // FbleLetTc --
 //   FBLE_LET_TC
 //
@@ -132,10 +146,12 @@ typedef struct {
 //
 // Fields:
 //   recursive - false if the let is a non-recursive let expression.
+//   bindings - the values of the variable being defined, with the location of
+//              the variable being defined.
 typedef struct {
   FbleTc _base;
   bool recursive;
-  FbleTcV bindings;
+  FbleLocTcV bindings;
   FbleTc* body;
 } FbleLetTc;
 
@@ -322,7 +338,7 @@ typedef struct {
 //
 // For partially evaluated expressions, func is the currently executing
 // function, pc the location in that function, locals the list of current
-// local variables, and tail is a thunk to compute after this thunk as
+// local variables, and tail is a thunk to compute after this thunk is
 // finished computing.
 //
 // Fields:

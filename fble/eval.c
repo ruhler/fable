@@ -667,10 +667,25 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
   FbleThunkValueTc* rv = (FbleThunkValueTc*)thread->stack->locals.xs[ref_def_instr->ref];
   assert(rv->_base.tag == FBLE_THUNK_VALUE_TC);
+  assert(rv->value == NULL);
   assert(rv->tail == NULL && rv->func == NULL && rv->pc == NULL && rv->locals.size == 0);
 
   FbleValue* value = FrameGet(thread, ref_def_instr->value);
   assert(value != NULL);
+
+  // Unwrap any accumulated layers of thunks on the returned value, and, more
+  // importantly, make sure we aren't forming a vacuous value.
+  FbleThunkValueTc* thunk = (FbleThunkValueTc*)value;
+  while (value->tag == FBLE_THUNK_VALUE_TC && thunk->value != NULL) {
+    value = thunk->value;
+    thunk = (FbleThunkValueTc*)value;
+  }
+
+  if (thunk == rv) {
+    FbleReportError("vacuous value\n", ref_def_instr->loc);
+    return ABORTED;
+  }
+
   rv->value = value;
   FbleValueAddRef(heap, &rv->_base, rv->value);
   return RUNNING;

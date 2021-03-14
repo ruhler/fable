@@ -231,6 +231,13 @@ somewhere, such as:
    @ T@ = +(T@ x);
    <@>@ F@ = <@ T@>{ *(F@<F@<T@>> x); }
 
+TODO: Clarify what we mean by "must not be". Is it that vacuous types are
+reported as compile errors and vacuous values reported as runtime errors?
+Because I don't think we can detect vacuous values in general at compile time.
+Or do we want to require the compiler to do conservative analysis to say any
+code path (reachable or unreachable) that could lead to a vacuous value gets
+flagged as a compile time error?
+
 Bindings are allowed to defined variables with the same name as variables
 already in scope, thus shadowing the variable already in scope. Except that
 the variables defined in a single let expression must have distinct names.

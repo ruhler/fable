@@ -233,3 +233,62 @@ expression.
 
 Well, if it's any consolation, we get 1m12.644s with -O3 turned on and no
 profiling arcs.
+
+---
+
+Starting up again to try and get an fble compiler.
+
+Let's start as simple and basic as we can. Generate C code which the user can
+compile using a C compiler. No need to bother with llvm at this point. I can
+make my own abstractions for representing C programs if I don't want to just
+output strings everywhere.
+
+Primary goal: replace the interpreter while loop with straight line code that
+calls the same exact exec functions the current interpreter does.
+
+Today we have two kinds of functions:
+* FbleFuncValueTc,
+* FbleCompiledFuncValueTc
+
+The first represents a function value as an abstract syntax tree of values
+after type check. The second represents a function value as an fble
+instruction block. Maybe we can add a third type that represents a function
+value as pointer to a C function to call?
+
+It's starting to come back to me now.
+
+Goal is to separate thread scheduling from function execution. We currently
+track thread state in thunk values. It would be nice if we could have two
+kinds of thunk values: one tracking func, pc, and locals for interpreted code,
+and one with a function pointer and locals for compiled code?
+
+Maybe what we want is an abstract data type representing thing that can be
+partially computed.
+
+ Inputs: 'this', heap, thread, io_activity
+ Results: updated 'this' or finished or aborted, etc.
+
+With a single method to 'run some finite amount of time'.
+
+Or, change instructions to hold the actual C function pointer for executing a
+function. Then the compiler could merge adjacent instructions that can be
+compiled together into new C functions and insert them into the instruction
+stream?
+
+I don't know. I need to think on it a bunch more.
+
+---
+
+Two big challenges for compiling fble that I keep getting stuck on:
+1. Fine grained multithreading. Which is painful, because I feel like I could
+get away without it fble in practice, but that we really want it in theory.
+
+2. General support for tail calls not smashing the stack. I double checked.
+gcc and llvm can be made to support a special kind of tail call where the
+function being called has the same prototype as the caller. Is this good
+enough? Maybe, depending on how we abstract away function calls.
+
+But I can't get a simple example to work for gcc using -O2 and
+-foptimize-sibling-calls if the calls span across multiple .o files. Seems
+frighteningly restrictive.
+

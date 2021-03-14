@@ -595,7 +595,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       // Compile the values of the variables.
       Local* defs[let_tc->bindings.size];
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        defs[i] = CompileExpr(arena, blocks, false, scope, let_tc->bindings.xs[i]);
+        defs[i] = CompileExpr(arena, blocks, false, scope, let_tc->bindings.xs[i].tc);
       }
 
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
@@ -603,6 +603,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
           FbleRefDefInstr* ref_def_instr = FbleAlloc(arena, FbleRefDefInstr);
           ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
           ref_def_instr->_base.profile_ops = NULL;
+          ref_def_instr->loc = FbleCopyLoc(let_tc->bindings.xs[i].loc);
           ref_def_instr->ref = vars[i]->index.index;
           ref_def_instr->value = defs[i]->index;
           AppendInstr(arena, scope, &ref_def_instr->_base);

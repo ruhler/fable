@@ -300,12 +300,9 @@ typedef struct {
 //   Set the value of a reference.
 //
 // ref->value = value
-//
-// Note: it is important performance optimization not to set the value of a
-// reference if the reference is unused, because the assignment triggers a
-// pathological case in the cyclic reference counting approach we use.
 typedef struct {
   FbleInstr _base;
+  FbleLoc loc;
   FbleLocalIndex ref;
   FbleFrameIndex value;
 } FbleRefDefInstr;

@@ -67,6 +67,9 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_LET_TC: {
       FbleLetTc* let_tc = (FbleLetTc*)value;
+      for (size_t i = 0; i < let_tc->bindings.size; ++i) {
+        FbleFreeLoc(arena, let_tc->bindings.xs[i].loc);
+      }
       FbleFree(arena, let_tc->bindings.xs);
       return;
     }
@@ -174,7 +177,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case FBLE_LET_TC: {
       FbleLetTc* let_tc = (FbleLetTc*)value;
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        Ref(callback, let_tc->bindings.xs[i]);
+        Ref(callback, let_tc->bindings.xs[i].tc);
       }
       Ref(callback, let_tc->body);
       return;
