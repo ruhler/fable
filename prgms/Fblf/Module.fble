@@ -23,8 +23,8 @@
 <@>% Contains = /List/Eq%.Contains;
 
 @ String@ = /String%.String@;
-% Concat = /String%.Concat;
 % Str = /String%.Str;
+% Strs = /String%.Strs;
 
 @ Unit@ = /Unit%.Unit@;
 
@@ -193,7 +193,7 @@ DoAlloc = <@ T@>(Int@ n) { Do<Var@, T@>(Alloc(n)); };
 #   stmt - the body of the method.
 (String@, Stmt@) { Module@<Method@>; }
 Method = (String@ name, Stmt@ stmt)(Read@ r, ModuleS@ s) {
-  String@ proc_id = Concat[s.name, Str|'.', name];
+  String@ proc_id = Strs[s.name, Str|'.', name];
   Int@ argc = Add(/List/Length%.Length<Var@>(r.args), Int|1);
   Proc@ proc = Proc@(proc_id, argc, stmt);
   Stmt@ call = Call(proc_id)(Cons<Var@>(r.this, r.args));

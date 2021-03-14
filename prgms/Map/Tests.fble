@@ -141,8 +141,7 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
         And(EqBit2(a.key, b.key), /Bool/Eq%.Eq(a.value, b.value));
       }),
       /List/Show%.Show<Entry@>((Entry@ e) {
-        /String%.Concat(List<String@>[
-            ShowBit2(e.key), Str|': ', /Bool/Show%.Show(e.value)]);
+        /String%.Strs[ShowBit2(e.key), Str|': ', /Bool/Show%.Show(e.value)];
       }),
       wnt, got);
   })),

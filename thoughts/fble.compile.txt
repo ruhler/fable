@@ -292,3 +292,76 @@ But I can't get a simple example to work for gcc using -O2 and
 -foptimize-sibling-calls if the calls span across multiple .o files. Seems
 frighteningly restrictive.
 
+---
+
+Here's my initial proposal. We support multithreading and tail recursion to
+start. There will be, perhaps, modest performance gains initially, but
+hopefully there's lots of opportunity to improve from there.
+
+Well generate a C function for each InstrBlock. The C function is the compiled
+form of the vector of FbleInstrs of the InstrBlock.
+
+The C function has the following API:
+
+Status F(FbleValueHeap* heap, Thread* thread, bool* io_activity);
+
+The function will read the value of the pc from the top of the stack to
+determine where to start executing from. Given instructions a, b, c, ...,
+we'll use a case statement to allow the function to jump directly to the
+current pc. For example:
+  
+  switch(thread->stack->pc) {
+    case 0: a;
+    case 1: b;
+    case 2: c;
+    ...
+  }
+
+This will incur an overhead when resuming a function after a context switch.
+Hopefully the overhead is small in the default case when we start from pc 0,
+or we could always add an explicit check at the start of the function to try
+and optimize that case. Once the function finds where to start, I assume
+fall through to the next instruction will be as if we didn't have the switch
+statement at all.
+
+Initially we should add logic around every instruction to check for profile
+sample and time slice yield. We should emit profiling op instructions directly
+too to support profiling.
+
+If we need to yield or block, it should be as easy as returning the status
+code, because we'll keep the thread state up to date in the Thread* pointer at
+every instruction.
+
+To do a normal function call, we can update the thread state for the new
+function and then directly call that function's compiled C function. To do a
+tail call, we can update the thread state for the new function and then return
+'RUNNING' to the caller. Then it's the callers job to call back in to whatever
+is on the top of the stack? It's certainly doable, but some details need to be
+worked out. Like, how does it know if the function that it called finished or
+has a continuation? And we would need special logic every time you call a
+function to wait for the continuation to be completed.
+
+To ease the transition, maybe we can add another field to FbleThunkValueTc
+which is the native C function to call to execute it. Initially they all share
+the same native function: the equivalent of RunThread, but that only executes
+code from the one function, not any functions being called. That way we get
+the API in place, and deal with having to call functions recursively and
+handling tail calls, but without having to worry about compilation yet.
+
+Once we have compilation, we can switch to the native function and ignore the
+FbleInstr** pc. Hmm... Maybe FbleInstr** pc should change to an int pc that we
+read from func->code if needed. Maybe better to add the native function to
+FbleCompiledFuncValueTc. And once we switch to native, we can ignore the
+'code' field or set it to NULL. Yeah. That sounds good.
+
+We can do initial work in the interpreter to prepare the way so the switch
+compilation is easy:
+
+Add function pointer to FbleCompiledFuncValueTc that should be called to
+execute the body of the function instead of RunThread (or in collaboration
+with RunThread). Initially everything FbleCompiledFuncValueTc should use the
+same generic C function. We'll have to figure out how to manage function
+calls, tail calls, continuations at this stage. It's probably a good time,
+too, to factor out the code for running the body of a function from the thread
+scheduler.
+

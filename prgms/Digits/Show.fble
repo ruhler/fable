@@ -15,7 +15,7 @@ Show@<Bit@> ShowBit = (Bit@ b) {
 };
 
 Show@<List@<Bit@>> ShowBits = (List@<Bit@> bits) {
-  /String%.Concat(Map<Bit@, String@>(bits, ShowBit));
+  /String%.Strs(Map<Bit@, String@>(bits, ShowBit));
 };
 
 Show@<Hex@> ShowHex = (Hex@ h) {

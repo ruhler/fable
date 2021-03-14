@@ -1,3 +1,12 @@
+Fble Compilation:
+* Design how to split up RunThread into function calls that are specific to a
+  specific function frame.
+* Implement above design, with frame function hard coded.
+* Change FbleThunkValueTc to store pc instead of FbleInstr**.
+* Add frame function to FbleCompiledFuncTc and use that instead of hard coded
+  one.
+* Try compiling FbleInstrV to C code. See if I can hack up a way to use it.
+
 Fblf:
 * Figure out how to avoid duplication of module definitions.
   For the case like Add, and Bitwise modules that take a non-var argument as a
@@ -97,14 +106,12 @@ Exec:
   Just, True, False.
 
 * Clean up fble library
- - Remove /String%.Concat in favor of /String%.Strs.
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.
  - Add tests for full code coverage of all functions.
  - Rename Str to String? Or to S?
  - Only support Int@ officially, not IntP@ and IntS@ too?
  - Consider pulling ForEach and Map out into their own class?
- - Reuse Lit@ in the type for the ForEach function?
 
 * Sat solver
  - Optimize the solver.

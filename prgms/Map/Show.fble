@@ -1,13 +1,12 @@
 
 @ Char@ = /Char%.Char@;
-<@>% List = /List%.List;
 <@>% Append = /List%.Append;
 <@,@>@ Map@ = /Map%.Map@;
 <@,@,@>% ForEach = /Map%.ForEach;
 <@>@ Show@ = /Show%.Show@;
 @ String@ = /String%.String@;
-% Concat = /String%.Concat;
 % Str = /String%.Str;
+% Strs = /String%.Strs;
 
 # Show --
 #   Implementation of Show@ for Map@<K@, V@>. See documentation of
@@ -21,7 +20,7 @@
 Show = <@ K@, @ V@>(Show@<K@> show_key, Show@<V@> show_value)(Map@<K@, V@> m) {
   Append<Char@>(
     ForEach<K@, V@, String@>(m, Str|'{ ', (K@ k, V@ v, String@ s) {
-      Concat(List<String@>[s, show_key(k), Str|' => ', show_value(v), Str|'; ']);
+      Strs[s, show_key(k), Str|' => ', show_value(v), Str|'; '];
     }),
     Str|'}');
 };

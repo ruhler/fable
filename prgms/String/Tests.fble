@@ -4,8 +4,8 @@
 % False = /Bool%.False;
 <@>% List = /List%.List;
 @ String@ = /String%.String@;
-% Concat = /String%.Concat;
 % Str = /String%.Str;
+% Strs = /String%.Strs;
 % _Structured = /String/Structured%.Structured;
 @ Test@ = /Test%.Test@;
 % Test = /Test%.Test;
@@ -15,9 +15,9 @@
 # Tests --
 #  A test suite to test the /String% module and friends.
 Test@ Tests = TestSuite(Str|String, List<Test@>[
-  Test(Str|Concat, !({
+  Test(Str|Strs, !({
     String@ wnt = Str|'hellothere';
-    String@ got = Concat(List<String@>[Str|'hello', Str|'there']);
+    String@ got = Strs[Str|'hello', Str|'there'];
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   })),
 

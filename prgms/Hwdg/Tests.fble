@@ -2,19 +2,25 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
+
 <@>@ Eq@ = /Eq%.Eq@;
+
 % 0 = /Int/Int%.0;
 % 1 = /Int/Int%.1;
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
+
 <@>% List = /List%.List;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
+
 <@>@ Show@ = /Show%.Show@;
-@ String@ = /String%.String@;
-% Concat = /String%.Concat;
+
 % Str = /String%.Str;
+% Strs = /String%.Strs;
+
 @ Test@ = /Test%.Test@;
 <@>% AssertEquals = /Test%.AssertEquals;
 % Test = /Test%.Test;
@@ -51,12 +57,7 @@ Show@<Data@> ShowData = (Data@ x) {
 };
 
 Show@<Coord@> ShowCoord = (Coord@ x) {
-  Concat(List<String@>[
-      Str|'(',
-      /Int/Int/Show%.Show(x.x),
-      Str|',',
-      /Int/Int/Show%.Show(x.y),
-      Str|')']);
+  Strs[Str|'(', /Int/Int/Show%.Show(x.x), Str|',', /Int/Int/Show%.Show(x.y), Str|')'];
 };
 
 (Cells@, Cells@) { Bool@; } EqCells = (Cells@ a, Cells@ b) {

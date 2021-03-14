@@ -15,14 +15,11 @@
 #   String@ s = Str|'hello, world'
 (List@<Char@>) { String@; } Str = List<Char@>;
 
-# Concat --
-#   Concatenates a list of strings together.
-#
-# TODO: Remove this in favor of Strs.
-(List@<String@>) { String@; } Concat = /List%.Concat<Char@>;
-
 # Strs --
 #   Concatenates a list of strings together.
+#
+# Example Use:
+#   String@ s = Strs[Str|'x is ', Show(x), Str|'.']
 (List@<String@>) { String@; } Strs = /List%.Concat<Char@>;
 
-@(String@, Str, Strs, Concat);
+@(String@, Str, Strs);
