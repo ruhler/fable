@@ -1,11 +1,12 @@
+* Clean up lingering support for symbolic computation in eval.c
+
 Fble Compilation:
-* Design how to split up RunThread into function calls that are specific to a
-  specific function frame.
-* Implement above design, with frame function hard coded.
 * Change FbleThunkValueTc to store pc instead of FbleInstr**.
 * Add frame function to FbleCompiledFuncTc and use that instead of hard coded
   one.
 * Try compiling FbleInstrV to C code. See if I can hack up a way to use it.
+  For now, just call the same functions as we do for the raw instructions,
+  passing the Instr* as an argument for the function to deal with.
 
 Fblf:
 * Figure out how to avoid duplication of module definitions.

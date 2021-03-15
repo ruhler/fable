@@ -51,14 +51,18 @@ struct Thread {
 };
 
 // Status -- 
-//   The status after running a thread.
+//   Shared status code used for returning status from running an instruction,
+//   running a frame, running a thread, or running multiple threads.
+//
+// Not all status options are relevant in all cases. See documentation for the
+// particular function for details on how the status options are used.
 typedef enum {
   FINISHED,       // The thread has finished running.
   BLOCKED,        // The thread is blocked on I/O.
   YIELDED,        // The thread yielded, but is not blocked on I/O.
-
-  // Relevant only to RunThread:
   RUNNING,        // The thread is actively running.
+  CONTINUE,       // The frame has returned for its caller to invoke a tail
+                  // call on behalf of the frame.
   ABORTED,        // The thread needs to be aborted.
 } Status;
 
@@ -81,10 +85,16 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, Fbl
 //                 unblock another thread.
 //
 // Results:
-//   The status of the thread resulting from execution of the function.
+//   FINISHED - if we have just returned from the current stack frame.
+//   BLOCKED - if the thread is blocked on I/O.
+//   YIELDED - if our time slice for executing instructions is over.
+//   RUNNING - if there are more instructions in the frame to execute.
+//   CONTINUE - to indicate the frame has just been replaced by its tail
+//              call.
+//   ABORTED - if the thread should be aborted.
 //
 // Side effects:
-//   Executes the release instruction.
+//   Executes the instruction.
 typedef Status (*InstrImpl)(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
 
 static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity);
@@ -127,6 +137,8 @@ static InstrImpl sInstrImpls[] = {
   &TypeInstr,             // FBLE_TYPE_INSTR
 };
 
+static Status RunFrame(FbleValueHeap* heap, Thread* thread, bool* io_activity);
+static Status RunFrameFully(FbleValueHeap* heap, Thread* thread, bool* io_activity);
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
 static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted);
@@ -361,6 +373,7 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
   }
 
   // The argument must be symbolic. Create a symbolic struct access value.
+  // TODO: Remove this code!
   FbleDataAccessTc* value = FbleNewValue(heap, FbleDataAccessTc);
   value->_base.tag = FBLE_DATA_ACCESS_TC;
   value->datatype = FBLE_STRUCT_DATATYPE;
@@ -395,6 +408,7 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
   }
 
   // The argument must be symbolic. Create a symbolic union access value.
+  // TODO: Remove this code.
   FbleDataAccessTc* value = FbleNewValue(heap, FbleDataAccessTc);
   value->_base.tag = FBLE_DATA_ACCESS_TC;
   value->datatype = FBLE_UNION_DATATYPE;
@@ -470,12 +484,13 @@ static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 
   if (call_instr->exit) {
     ReplaceFrame(heap, func, args, thread);
-  } else {
-    FbleValue* result = PushFrame(heap, func, args, thread);
-    thread->stack->tail->locals.xs[call_instr->dest] = result;
-    FbleValueAddRef(heap, &thread->stack->tail->_base, result);
+    return CONTINUE;
   }
-  return RUNNING;
+
+  FbleValue* result = PushFrame(heap, func, args, thread);
+  thread->stack->tail->locals.xs[call_instr->dest] = result;
+  FbleValueAddRef(heap, &thread->stack->tail->_base, result);
+  return RunFrameFully(heap, thread, io_activity);
 }
 
 // GetInstr -- see documentation of InstrImpl
@@ -699,6 +714,7 @@ static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
   FbleValue* result = FrameGet(thread, return_instr->result);
 
   // Unwrap any layers of thunks on the result to avoid long chains of thunks.
+  // TODO: Is this redundant with the thunk unwrapping we do in RefDefInstr?
   FbleThunkValueTc* thunk_result = (FbleThunkValueTc*)result;
   while (result->tag == FBLE_THUNK_VALUE_TC && thunk_result->value != NULL) {
     result = thunk_result->value;
@@ -723,7 +739,7 @@ static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
   thunk->locals.xs = NULL;
   FbleReleaseValue(heap, &thunk->_base);
 
-  return (thread->stack == NULL) ? FINISHED : RUNNING;
+  return FINISHED;
 }
 
 // TypeInstr -- see documentation of InstrImpl
@@ -737,31 +753,31 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   return RUNNING;
 }
 
-// RunThread --
-//   Run the given thread to completion or until it can no longer make
-//   progress.
+// RunFrame --
+//   Run the frame on the top of the stack to completion or until it can no
+//   longer make progress.
 //
 // Inputs:
 //   heap - the value heap.
 //   thread - the thread to run.
 //   io_activity - set to true if the thread does any i/o activity that could
 //                 unblock another thread.
-//   aborted - if true, abort the thread. set to true if thread aborts.
 //
 // Results:
-//   The status of the thread.
+//   FINISHED - if we have just returned from the current stack frame.
+//   BLOCKED - if the thread is blocked on I/O.
+//   YIELDED - if our time slice for executing instructions is over.
+//   RUNNING - not used.
+//   CONTINUE - to indicate the frame has just been replaced by it's tail
+//              call.
+//   ABORTED - if the thread should be aborted.
 //
 // Side effects:
-//   The thread is executed, updating its stack.
-//   io_activity is set to true if the thread does any i/o activity that could
+// * The frame is executed, updating its stack.
+// * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-//   aborted is set to true if the thread aborts.
-static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted)
+static Status RunFrame(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 {
-  if (*aborted) {
-    return AbortThread(heap, thread, aborted);
-  }
-
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
 
@@ -806,15 +822,87 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
       return BLOCKED;
     }
 
+    return status;
+  }
+
+  UNREACHABLE("should never get here");
+  return FINISHED;
+}
+
+// RunFrameFully --
+//   Same as RunFrame, except repeatedly calls RunFrame as long as CONTINUE is
+//   returned to process tail calls.
+//
+// Inputs:
+//   heap - the value heap.
+//   thread - the thread to run.
+//   io_activity - set to true if the thread does any i/o activity that could
+//                 unblock another thread.
+//
+// Results:
+//   FINISHED - if we have just returned from the current stack frame.
+//   BLOCKED - if the thread is blocked on I/O.
+//   YIELDED - if our time slice for executing instructions is over.
+//   RUNNING - not used.
+//   CONTINUE - not used.
+//   ABORTED - if the thread should be aborted.
+//
+// Side effects:
+// * The frame is executed, updating its stack.
+// * io_activity is set to true if the thread does any i/o activity that could
+//   unblock another thread.
+static Status RunFrameFully(FbleValueHeap* heap, Thread* thread, bool* io_activity)
+{
+  Status status = CONTINUE;
+  while (status == CONTINUE) {
+    status = RunFrame(heap, thread, io_activity);
+  }
+  return status;
+}
+
+// RunThread --
+//   Run the given thread to completion or until it can no longer make
+//   progress.
+//
+// Inputs:
+//   heap - the value heap.
+//   thread - the thread to run.
+//   io_activity - set to true if the thread does any i/o activity that could
+//                 unblock another thread.
+//   aborted - if true, abort the thread. set to true if thread aborts.
+//
+// Results:
+//   FINISHED - if the thread has finished running.
+//   BLOCKED - if the thread is blocked on I/O.
+//   YIELDED - if our time slice for executing instructions is over.
+//   RUNNING - not used.
+//   CONTINUE - not used.
+//   ABORTED - not used.
+//
+// Side effects:
+// * The thread is executed, updating its stack.
+// * io_activity is set to true if the thread does any i/o activity that could
+//   unblock another thread.
+// * aborted is set to true if the thread aborts, then FINISHED is returned.
+static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted)
+{
+  if (*aborted) {
+    return AbortThread(heap, thread, aborted);
+  }
+
+  while (thread->stack != NULL) {
+    Status status = RunFrameFully(heap, thread, io_activity);
+
+    if (status == FINISHED) {
+      continue;
+    }
+
     if (status == ABORTED) {
-      thread->stack->pc--;
       return AbortThread(heap, thread, aborted);
     }
 
     return status;
   }
-
-  UNREACHABLE("should never get here");
   return FINISHED;
 }
 
@@ -831,10 +919,9 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
 //   FINISHED
 //
 // Side effects:
-//   Cleans up the thread state by unwinding the thread. The state of the
-//   thread after this function is the same as if it had completed normally,
-//   except that it will not have produced a return value.
-//   Sets aborted to true.
+//   Cleans up the thread state. The state of the thread after this function
+//   is the same as if it had completed normally, except that it will not have
+//   produced a return value. Sets aborted to true.
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
 {
   *aborted = true;
@@ -856,7 +943,12 @@ static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted)
 //             set to true if the thread is aborted.
 //
 // Results:
-//   The status of running the threads.
+//   FINISHED - if we have finished running the threads.
+//   BLOCKED - if we are blocked on I/O.
+//   YIELDED - if our time slice for executing instructions is over.
+//   RUNNING - not used.
+//   CONTINUE - not used.
+//   ABORTED - not used.
 //
 // Side effects:
 //   The thread and its children are executed and updated.
@@ -884,7 +976,7 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
         case FINISHED: {
           unblocked = true;
           if (thread->parent == NULL) {
-            return status;
+            return FINISHED;
           }
 
           Thread* parent = thread->parent;
@@ -918,19 +1010,9 @@ static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted)
           break;
         }
 
-        case RUNNING: {
-          // If the thread is actively running, it should not have returned
-          // control to this point.
-          UNREACHABLE("should never get here");
-          break;
-        }
-
-        case ABORTED: {
-          // RunThread should have converted this into FINISHED after
-          // unwinding the thread.
-          UNREACHABLE("should never get here");
-          break;
-        }
+        case RUNNING: UNREACHABLE("unexpected status"); break;
+        case ABORTED: UNREACHABLE("unexpected status"); break;
+        case CONTINUE: UNREACHABLE("unexpected status"); break;
       }
     }
   }
@@ -1012,19 +1094,9 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
         break;
       }
 
-      case RUNNING: {
-        // If the thread is actively running, it should not have returned
-        // control to this point.
-        UNREACHABLE("should never get here");
-        break;
-      }
-
-      case ABORTED: {
-        // RunThread should have converted this into FINISHED after
-        // unwinding the thread.
-        UNREACHABLE("should never get here");
-        break;
-      }
+      case RUNNING: UNREACHABLE("unexpected status"); break;
+      case ABORTED: UNREACHABLE("unexpected status"); break;
+      case CONTINUE: UNREACHABLE("unexpected status"); break;
     }
   }
 
