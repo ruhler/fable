@@ -137,8 +137,8 @@ static InstrImpl sInstrImpls[] = {
   &TypeInstr,             // FBLE_TYPE_INSTR
 };
 
-static Status RunFrame(FbleValueHeap* heap, Thread* thread, bool* io_activity);
-static Status RunFrameFully(FbleValueHeap* heap, Thread* thread, bool* io_activity);
+static Status RunFunction(FbleValueHeap* heap, Thread* thread, bool* io_activity);
+static Status RunFunctionFully(FbleValueHeap* heap, Thread* thread, bool* io_activity);
 static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, bool* aborted);
 static Status AbortThread(FbleValueHeap* heap, Thread* thread, bool* aborted);
 static Status RunThreads(FbleValueHeap* heap, Thread* thread, bool* aborted);
@@ -464,7 +464,7 @@ static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   FbleValue* result = PushFrame(heap, func, args, thread);
   thread->stack->tail->locals.xs[call_instr->dest] = result;
   FbleValueAddRef(heap, &thread->stack->tail->_base, result);
-  return RunFrameFully(heap, thread, io_activity);
+  return RunFunctionFully(heap, thread, io_activity);
 }
 
 // GetInstr -- see documentation of InstrImpl
@@ -727,8 +727,8 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   return RUNNING;
 }
 
-// RunFrame --
-//   Run the frame on the top of the stack to completion or until it can no
+// RunFunction --
+//   Run the function on the top of the stack to completion or until it can no
 //   longer make progress.
 //
 // Inputs:
@@ -742,15 +742,15 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 //   BLOCKED - if the thread is blocked on I/O.
 //   YIELDED - if our time slice for executing instructions is over.
 //   RUNNING - not used.
-//   CONTINUE - to indicate the frame has just been replaced by it's tail
+//   CONTINUE - to indicate the function has just been replaced by it's tail
 //              call.
 //   ABORTED - if the thread should be aborted.
 //
 // Side effects:
-// * The frame is executed, updating its stack.
+// * The function is executed, updating its stack.
 // * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-static Status RunFrame(FbleValueHeap* heap, Thread* thread, bool* io_activity)
+static Status RunFunction(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
@@ -803,9 +803,9 @@ static Status RunFrame(FbleValueHeap* heap, Thread* thread, bool* io_activity)
   return FINISHED;
 }
 
-// RunFrameFully --
-//   Same as RunFrame, except repeatedly calls RunFrame as long as CONTINUE is
-//   returned to process tail calls.
+// RunFunctionFully --
+//   Same as RunFunction, except repeatedly calls RunFunction as long as
+//   CONTINUE is returned to process tail calls.
 //
 // Inputs:
 //   heap - the value heap.
@@ -822,14 +822,14 @@ static Status RunFrame(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 //   ABORTED - if the thread should be aborted.
 //
 // Side effects:
-// * The frame is executed, updating its stack.
+// * The function is executed, updating its stack.
 // * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-static Status RunFrameFully(FbleValueHeap* heap, Thread* thread, bool* io_activity)
+static Status RunFunctionFully(FbleValueHeap* heap, Thread* thread, bool* io_activity)
 {
   Status status = CONTINUE;
   while (status == CONTINUE) {
-    status = RunFrame(heap, thread, io_activity);
+    status = RunFunction(heap, thread, io_activity);
   }
   return status;
 }
@@ -865,7 +865,7 @@ static Status RunThread(FbleValueHeap* heap, Thread* thread, bool* io_activity, 
   }
 
   while (thread->stack != NULL) {
-    Status status = RunFrameFully(heap, thread, io_activity);
+    Status status = RunFunctionFully(heap, thread, io_activity);
 
     if (status == FINISHED) {
       continue;

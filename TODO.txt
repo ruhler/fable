@@ -1,6 +1,5 @@
 Fble Compilation:
-* Rename RunFrame to RunFunction.
-* Consider updating pc in InstrImpls instead of RunFrame.
+* Consider updating pc in InstrImpls instead of Runfunction.
 * Add frame function to FbleCompiledFuncTc and use that instead of hard coded
   one.
   - Export data types to exec.h as needed to be available?
