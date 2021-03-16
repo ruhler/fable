@@ -252,7 +252,7 @@ static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, 
   stack->value = NULL;
   stack->tail = thread->stack;
   stack->func = func;
-  stack->pc = func->code->instrs.xs;
+  stack->pc = 0;
   stack->locals.size = func->code->locals;
   stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, locals);
   memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
@@ -306,7 +306,7 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, Fbl
 
   stack->func = func;
   stack->locals.size = func->code->locals;
-  stack->pc = func->code->instrs.xs;
+  stack->pc = 0;
 
   if (localc > old_localc) {
     FbleFree(arena, stack->locals.xs);
@@ -651,7 +651,7 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
   rv->value = NULL;
   rv->tail = NULL;
   rv->func = NULL;
-  rv->pc = NULL;
+  rv->pc = 0;
   rv->locals.size = 0;
   rv->locals.xs = NULL;
 
@@ -668,7 +668,7 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
   FbleThunkValueTc* rv = (FbleThunkValueTc*)thread->stack->locals.xs[ref_def_instr->ref];
   assert(rv->_base.tag == FBLE_THUNK_VALUE_TC);
   assert(rv->value == NULL);
-  assert(rv->tail == NULL && rv->func == NULL && rv->pc == NULL && rv->locals.size == 0);
+  assert(rv->tail == NULL && rv->func == NULL && rv->pc == 0 && rv->locals.size == 0);
 
   FbleValue* value = FrameGet(thread, ref_def_instr->value);
   assert(value != NULL);
@@ -720,7 +720,7 @@ static Status ReturnInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
   FbleFree(heap->arena, thunk->locals.xs);
   thunk->tail = NULL;
   thunk->func = NULL;
-  thunk->pc = NULL;
+  thunk->pc = 0;
   thunk->locals.size = 0;
   thunk->locals.xs = NULL;
   FbleReleaseValue(heap, &thunk->_base);
@@ -768,9 +768,11 @@ static Status RunFunction(FbleValueHeap* heap, Thread* thread, bool* io_activity
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
 
+  FbleInstr** code = thread->stack->func->code->instrs.xs;
+
   Status status = RUNNING;
   while (status == RUNNING) {
-    FbleInstr* instr = *thread->stack->pc;
+    FbleInstr* instr = code[thread->stack->pc];
     if (rand() % TIME_SLICE == 0) {
       if (profile != NULL) {
         FbleProfileSample(arena, profile, 1);

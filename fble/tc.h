@@ -333,7 +333,7 @@ typedef struct {
 // dereferenced before being otherwise accessed in case they are thunk
 // values.
 //
-// For recursive values, 'tail', 'func', and 'pc' will all be NULL and
+// For recursive values, 'tail' and 'func' will be NULL, 'pc' will be 0 and
 // 'locals' will be empty.
 //
 // For partially evaluated expressions, func is the currently executing
@@ -349,7 +349,7 @@ typedef struct FbleThunkValueTc {
 
   struct FbleThunkValueTc* tail;
   FbleCompiledFuncValueTc* func;
-  FbleInstr** pc;                 // borrowed from func->code
+  size_t pc;                       // Instruction offset into func->code.
   FbleValueV locals;
 } FbleThunkValueTc;
 
