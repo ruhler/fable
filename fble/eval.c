@@ -335,6 +335,7 @@ static Status StructValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
   }
 
   FrameSetAndRelease(heap, thread, struct_value_instr->dest, &value->_base);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -351,6 +352,7 @@ static Status UnionValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* in
   FbleValueAddRef(heap, &value->_base, value->arg);
 
   FrameSetAndRelease(heap, thread, union_value_instr->dest, &value->_base);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -369,6 +371,7 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
   assert(sv->_base.tag == FBLE_STRUCT_VALUE_TC);
   assert(access_instr->tag < sv->fieldc);
   FrameSet(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -391,6 +394,7 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
   }
 
   FrameSet(heap, thread, access_instr->dest, uv->arg);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -405,7 +409,7 @@ static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
     return ABORTED;
   }
   assert(uv->_base.tag == FBLE_UNION_VALUE_TC);
-  thread->stack->pc += select_instr->jumps.xs[uv->tag];
+  thread->stack->pc += 1 + select_instr->jumps.xs[uv->tag];
   return RUNNING;
 }
 
@@ -414,7 +418,7 @@ static Status UnionSelectInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
 static Status JumpInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-  thread->stack->pc += jump_instr->count;
+  thread->stack->pc += 1 + jump_instr->count;
   return RUNNING;
 }
 
@@ -436,6 +440,7 @@ static Status FuncValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* ins
     FbleValueAddRef(heap, &value->_base, arg);
   }
   FrameSetAndRelease(heap, thread, func_value_instr->dest, &value->_base);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -461,6 +466,7 @@ static Status CallInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
     return CONTINUE;
   }
 
+  thread->stack->pc++;
   FbleValue* result = PushFrame(heap, func, args, thread);
   thread->stack->tail->locals.xs[call_instr->dest] = result;
   FbleValueAddRef(heap, &thread->stack->tail->_base, result);
@@ -477,9 +483,8 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
     FbleLinkValueTc* link = (FbleLinkValueTc*)get_port;
 
     if (link->head == NULL) {
-      // Blocked on get. Restore the thread state and return before
-      // logging progress.
-      assert(instr->profile_ops == NULL);
+      // Blocked on get.
+      assert(instr->profile_ops == NULL && "profile op might run twice");
       return BLOCKED;
     }
 
@@ -491,21 +496,22 @@ static Status GetInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
 
     FrameSet(heap, thread, get_instr->dest, head->value);
     FbleFree(heap->arena, head);
+    thread->stack->pc++;
     return RUNNING;
   }
 
   if (get_port->tag == FBLE_PORT_VALUE_TC) {
     FblePortValueTc* port = (FblePortValueTc*)get_port;
     if (*port->data == NULL) {
-      // Blocked on get. Restore the thread state and return before
-      // logging progress.
-      assert(instr->profile_ops == NULL);
+      // Blocked on get.
+      assert(instr->profile_ops == NULL && "profile op might run twice");
       return BLOCKED;
     }
 
     FrameSetAndRelease(heap, thread, get_instr->dest, *port->data);
     *port->data = NULL;
     *io_activity = true;
+    thread->stack->pc++;
     return RUNNING;
   }
 
@@ -543,6 +549,7 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
     FbleValueAddRef(heap, &link->_base, tail->value);
     FrameSetAndRelease(heap, thread, put_instr->dest, unit);
     *io_activity = true;
+    thread->stack->pc++;
     return RUNNING;
   }
 
@@ -550,9 +557,8 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
     FblePortValueTc* port = (FblePortValueTc*)put_port;
 
     if (*port->data != NULL) {
-      // Blocked on put. Restore the thread state and return before
-      // logging progress.
-      assert(instr->profile_ops == NULL);
+      // Blocked on put.
+      assert(instr->profile_ops == NULL && "profile op might run twice");
       return BLOCKED;
     }
 
@@ -560,6 +566,7 @@ static Status PutInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, bo
     *port->data = arg;
     FrameSetAndRelease(heap, thread, put_instr->dest, unit);
     *io_activity = true;
+    thread->stack->pc++;
     return RUNNING;
   }
 
@@ -598,6 +605,7 @@ static Status ForkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
     FrameSet(heap, thread, fork_instr->dests.xs[i], result);
   }
   thread->next_child = 0;
+  thread->stack->pc++;
   return YIELDED;
 }
 
@@ -608,6 +616,7 @@ static Status CopyInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
   FbleValue* value = FrameGet(thread, copy_instr->source);
   FrameSet(heap, thread, copy_instr->dest, value);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -628,6 +637,7 @@ static Status LinkInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
 
   FrameSetAndRelease(heap, thread, link_instr->get, get);
   FrameSetAndRelease(heap, thread, link_instr->put, put);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -646,6 +656,7 @@ static Status RefValueInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* inst
   rv->locals.xs = NULL;
 
   FrameSetAndRelease(heap, thread, ref_instr->dest, &rv->_base);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -677,6 +688,7 @@ static Status RefDefInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr,
 
   rv->value = value;
   FbleValueAddRef(heap, &rv->_base, rv->value);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -724,6 +736,7 @@ static Status TypeInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* instr, b
   FbleTypeValueTc* value = FbleNewValue(heap, FbleTypeValueTc);
   value->_base.tag = FBLE_TYPE_VALUE_TC;
   FrameSetAndRelease(heap, thread, type_instr->dest, &value->_base);
+  thread->stack->pc++;
   return RUNNING;
 }
 
@@ -755,14 +768,13 @@ static Status RunFunction(FbleValueHeap* heap, Thread* thread, bool* io_activity
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
 
-  while (true) {
-    FbleInstr* instr = *thread->stack->pc++;
+  Status status = RUNNING;
+  while (status == RUNNING) {
+    FbleInstr* instr = *thread->stack->pc;
     if (rand() % TIME_SLICE == 0) {
       if (profile != NULL) {
         FbleProfileSample(arena, profile, 1);
       }
-
-      thread->stack->pc--;
       return YIELDED;
     }
 
@@ -785,22 +797,9 @@ static Status RunFunction(FbleValueHeap* heap, Thread* thread, bool* io_activity
       }
     }
 
-    Status status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
-
-    if (status == RUNNING) {
-      continue;
-    }
-
-    if (status == BLOCKED) {
-      thread->stack->pc--;
-      return BLOCKED;
-    }
-
-    return status;
+    status = sInstrImpls[instr->tag](heap, thread, instr, io_activity);
   }
-
-  UNREACHABLE("should never get here");
-  return FINISHED;
+  return status;
 }
 
 // RunFunctionFully --
