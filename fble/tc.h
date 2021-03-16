@@ -7,6 +7,7 @@
 #define FBLE_INTERNAL_TC_H_
 
 #include "fble-value.h"     // for FbleValueV
+#include "eval.h"           // for FbleRunFunction
 #include "instr.h"
 
 // FbleTc --
@@ -223,6 +224,7 @@ typedef struct {
 //   scope - The scope at the time the function was created, representing the
 //           lexical context available to the function. The length of this
 //           array is code->statics.
+//   run - A native function to use to evaluate this fble function.
 //
 // Represents a precompiled function value.
 //
@@ -233,6 +235,7 @@ typedef struct {
   FbleTc _base;
   size_t argc;
   FbleInstrBlock* code;
+  FbleRunFunction* run;
   FbleValue* scope[];
 } FbleCompiledFuncValueTc;
 

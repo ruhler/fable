@@ -5,6 +5,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "fble.h"
+#include "eval.h"     // for FbleStandardRunFunction
 #include "heap.h"
 #include "tc.h"
 #include "value.h"
@@ -384,6 +385,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
   get->argc = 0;
   get->code = &code;
   get->code->refcount++;
+  get->run = &FbleStandardRunFunction;
   get->scope[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
   return &get->_base;
@@ -466,6 +468,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   put->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
   put->argc = 1;
   put->code = &func_code;
+  put->run = &FbleStandardRunFunction;
   put->scope[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
   return &put->_base;

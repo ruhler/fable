@@ -1,7 +1,8 @@
 // value.h --
 //   Header file describing the internal interface for working with fble
 //   values.
-//   This is an internal library interface.
+//
+// This is an internal library interface.
 
 #ifndef FBLE_INTERNAL_VALUE_H_
 #define FBLE_INTERNAL_VALUE_H_

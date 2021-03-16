@@ -1,7 +1,4 @@
 Fble Compilation:
-* Add frame function to FbleCompiledFuncTc and use that instead of hard coded
-  one.
-  - Export data types to exec.h as needed to be available?
 * Write code to compile an FbleCompiledFuncValueTc to C code that, when given
   an FbleHeap, returns that same value.
   Set up fble-test variant that goes through the compilation path.

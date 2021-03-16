@@ -7,6 +7,7 @@
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
+#include "eval.h"       // for FbleStandardRunFunction
 #include "instr.h"
 #include "tc.h"
 #include "typecheck.h"
@@ -1016,6 +1017,7 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
   func->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
   func->argc = 0;
   func->code = code;
+  func->run = &FbleStandardRunFunction;
   assert(code->statics == 0);
   return &func->_base;
 }
