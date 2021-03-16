@@ -1,12 +1,16 @@
-* Clean up lingering support for symbolic computation in eval.c
-
 Fble Compilation:
-* Change FbleThunkValueTc to store pc instead of FbleInstr**.
+* Rename RunFrame to RunFunction.
+* Consider updating pc in InstrImpls instead of RunFrame.
 * Add frame function to FbleCompiledFuncTc and use that instead of hard coded
   one.
-* Try compiling FbleInstrV to C code. See if I can hack up a way to use it.
-  For now, just call the same functions as we do for the raw instructions,
-  passing the Instr* as an argument for the function to deal with.
+  - Export data types to exec.h as needed to be available?
+* Write code to compile an FbleCompiledFuncValueTc to C code that, when given
+  an FbleHeap, returns that same value.
+  Set up fble-test variant that goes through the compilation path.
+* Change FbleThunkValueTc to store pc instead of FbleInstr**.
+* Generate custom run functions in compiled code that just calls existing
+  InstrImpl functions.
+* Now we should be off and running with tons of optimization opportunities.
 
 Fblf:
 * Figure out how to avoid duplication of module definitions.

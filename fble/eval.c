@@ -366,22 +366,9 @@ static Status StructAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* 
     return ABORTED;
   }
 
-  if (sv->_base.tag == FBLE_STRUCT_VALUE_TC) {
-    assert(access_instr->tag < sv->fieldc);
-    FrameSet(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
-    return RUNNING;
-  }
-
-  // The argument must be symbolic. Create a symbolic struct access value.
-  // TODO: Remove this code!
-  FbleDataAccessTc* value = FbleNewValue(heap, FbleDataAccessTc);
-  value->_base.tag = FBLE_DATA_ACCESS_TC;
-  value->datatype = FBLE_STRUCT_DATATYPE;
-  value->obj = &sv->_base;
-  value->tag = access_instr->tag;
-  value->loc = FbleCopyLoc(access_instr->loc);
-  FbleValueAddRef(heap, &value->_base, &sv->_base);
-  FrameSetAndRelease(heap, thread, access_instr->dest, &value->_base);
+  assert(sv->_base.tag == FBLE_STRUCT_VALUE_TC);
+  assert(access_instr->tag < sv->fieldc);
+  FrameSet(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
   return RUNNING;
 }
 
@@ -397,26 +384,13 @@ static Status UnionAccessInstr(FbleValueHeap* heap, Thread* thread, FbleInstr* i
     return ABORTED;
   }
 
-  if (uv->_base.tag == FBLE_UNION_VALUE_TC) {
-    if (uv->tag != access_instr->tag) {
-      FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-      return ABORTED;
-    }
-
-    FrameSet(heap, thread, access_instr->dest, uv->arg);
-    return RUNNING;
+  assert(uv->_base.tag == FBLE_UNION_VALUE_TC);
+  if (uv->tag != access_instr->tag) {
+    FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
+    return ABORTED;
   }
 
-  // The argument must be symbolic. Create a symbolic union access value.
-  // TODO: Remove this code.
-  FbleDataAccessTc* value = FbleNewValue(heap, FbleDataAccessTc);
-  value->_base.tag = FBLE_DATA_ACCESS_TC;
-  value->datatype = FBLE_UNION_DATATYPE;
-  value->obj = &uv->_base;
-  value->tag = access_instr->tag;
-  value->loc = FbleCopyLoc(access_instr->loc);
-  FbleValueAddRef(heap, &value->_base, &uv->_base);
-  FrameSetAndRelease(heap, thread, access_instr->dest, &value->_base);
+  FrameSet(heap, thread, access_instr->dest, uv->arg);
   return RUNNING;
 }
 
