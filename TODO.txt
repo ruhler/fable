@@ -1,7 +1,8 @@
 Fble Compilation:
-* Write code to compile an FbleCompiledFuncValueTc to C code that, when given
-  an FbleHeap, returns that same value.
-  Set up fble-test variant that goes through the compilation path.
+* Write code to compile an FbleValue to C code that, when given
+  an FbleHeap, creates that same value.
+  - Set up fble-test variant that goes through the compilation path.
+  - Maybe ignore concerns about sharing of values for now?
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.
 * Now we should be off and running with tons of optimization opportunities.

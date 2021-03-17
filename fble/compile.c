@@ -216,11 +216,6 @@ static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index)
       assert(index.index < scope->statics.size && "invalid static var index");
       return scope->statics.xs[index.index];
     }
-
-    case FBLE_FREE_VAR: {
-      assert(false && "TODO: figure out how to support compilation of free vars");
-      return NULL;
-    }
   }
 
   UNREACHABLE("should never get here");
