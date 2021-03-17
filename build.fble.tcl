@@ -46,7 +46,7 @@ run ar rcs out/lib/libfble.a {*}$fble_objs
 exec cp {*}[glob fble/fble*.h] out/include
 
 # Compile the remaining executables
-foreach {x} [glob test/*.c prgms/*.c] {
+foreach {x} [glob tools/*.c prgms/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
   gcc_prgm -c -o $object $x
 }
