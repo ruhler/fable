@@ -1,5 +1,5 @@
-// fble-compile.c --
-//   This file implements the main entry point for the fble-compile program,
+// fble-native.c --
+//   This file implements the main entry point for the fble-native program,
 //   which compiles *.fble code to *.c code.
 
 #include <string.h>   // for strcmp
@@ -27,7 +27,7 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-compile entry FILE [PATH]\n"
+      "Usage: fble-native entry FILE [PATH]\n"
       "Compile the fble program to C code.\n"
       "  entry - the name of the C function to generate.\n"
       "  FILE - the name of the .fble file to compile.\n"

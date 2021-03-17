@@ -1,5 +1,7 @@
+* Try switching (back?) to ninja?
+  Because redundant build work is starting to slow down development.
+
 Fble Compilation:
-* Rename fble-compile to fble-native?
 * Write code to compile an FbleValue to C code that, when given
   an FbleHeap, creates that same value.
   - Set up fble-test variant that goes through the compilation path.
