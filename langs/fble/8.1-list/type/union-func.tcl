@@ -5,6 +5,6 @@ fble-test-error 9:3 {
   @ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
   Enum@ enum = Enum@(A: Unit);
 
-  # A union value cannot be used for a list spec.
+  # A union value cannot be used for a literal function.
   enum[Unit, Unit]; 
 }

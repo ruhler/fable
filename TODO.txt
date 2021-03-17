@@ -29,15 +29,6 @@ Fblf:
 * Add test for /Fblf/Program/Show%, which I don't think is currently even
   compiled when tests are run.
 
-* Expand test coverage of literals
- - Add test for wrong order list fields.
- - Add test for different name list fields. 
- - Add test that list literal doesn't need to consist of letters.
- - Add tests to increase code coverage.
- - Add test that element type for empty literal has to be a union?
-   And clarify this in the spec.
- - Add spec tests to expand coverage of literal compilation code.
-
 Invaders:
 * It's way way way too slow. Figure out how to make it go much faster.
  - Profile the benchmark to see what's up.
