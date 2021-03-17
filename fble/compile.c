@@ -1,5 +1,5 @@
 // compile.c --
-//   This file implements the fble compilation routines.
+//   This file describes code to compile fble values into fble instructions.
 
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_arg, va_end

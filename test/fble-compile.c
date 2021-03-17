@@ -1,5 +1,6 @@
-// fble-disassemble.c --
-//   This file implements the main entry point for the fble-disassemble program.
+// fble-compile.c --
+//   This file implements the main entry point for the fble-compile program,
+//   which compiles *.fble code to *.c code.
 
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
@@ -26,9 +27,11 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-disassemble FILE [PATH]\n"
-      "Disassemble the fble program from FILE.\n"
-      "PATH is an optional include search path.\n"
+      "Usage: fble-compile entry FILE [PATH]\n"
+      "Compile the fble program to C code.\n"
+      "  entry - the name of the C function to generate.\n"
+      "  FILE - the name of the .fble file to compile.\n"
+      "  PATH - an optional include search path.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
 }
@@ -53,6 +56,15 @@ int main(int argc, char* argv[])
     PrintUsage(stdout);
     return EX_SUCCESS;
   }
+
+  if (argc < 1) {
+    fprintf(stderr, "not entry name given.\n");
+    PrintUsage(stderr);
+    return EX_USAGE;
+  }
+  const char* entry = *argv;
+  argc--;
+  argv++;
 
   if (argc < 1) {
     fprintf(stderr, "no input file.\n");
@@ -88,7 +100,7 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleDisassemble(stdout, compiled, profile);
+  FbleNative(stdout, entry, compiled);
 
   FbleReleaseValue(heap, compiled);
   FbleFreeProfile(arena, profile);

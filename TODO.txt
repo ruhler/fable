@@ -1,4 +1,6 @@
 Fble Compilation:
+* Rename fble/test directory to fble/tools?
+* Rename fble-compile to fble-native?
 * Write code to compile an FbleValue to C code that, when given
   an FbleHeap, creates that same value.
   - Set up fble-test variant that goes through the compilation path.
@@ -6,6 +8,9 @@ Fble Compilation:
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.
 * Now we should be off and running with tons of optimization opportunities.
+* Come up with better names than 'compile' and 'native' to distinguish between
+  the different variations of the compiler.
+
 
 Fblf:
 * Figure out how to avoid duplication of module definitions.
@@ -65,8 +70,6 @@ Exec:
 
 * Test use of undefined values in case, access, and func apply.
 * Check if it's okay to add new blocks to a profile in progress.
- - if so, pass the profile to FbleSymbolicCompile so we can get profiling
-   blocks from elaborated code too?
  - either way, document that clearly.
 * For things like FbleValueAddRef, is it okay if dst is NULL?
  - It would be convenient for constructing things in case of error.
@@ -165,7 +168,7 @@ Exec:
   - It feels sketchy to me to remove code that could contain errors. For
     example: ??? is there an example?
 
-* Consistently document ownership of args to functions?
+* Consistently document ownership of args to C functions?
  Borrowed: no transfer of ownership.
  Consumed: ownership transferred from caller to callee.
  Outlives: caller responsible for keeping alive as long as returned result is.

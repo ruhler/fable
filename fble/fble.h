@@ -88,6 +88,35 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
 //   A disassembled version of the file is printed to fout.
 void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile);
 
+// FbleNative --
+//   Compile an fble value to C.
+//
+// The generated C code will export a single function named entry with the
+// following signature:
+//  
+//   FbleValue* Entry(FbleValueHeap* heap);
+//
+// Calling this function will allocate a new value on the heap that is
+// the same as the value provided to FbleNative, except with function values
+// optimized for better performance where possible.
+//
+// TODO: Document the flags needed to compile the generated C code, including
+// what header files are expected to be available. Document restrictions on
+// what names can be used in the generated C code to avoid name conflicts.
+//
+// Inputs:
+//   fout - the output stream to write the C code to.
+//   entry - the name of the C function to export.
+//   value - the value to compile.
+//
+// Results:
+//   true on success, false on error.
+//
+// Side effects:
+// * Generates C code for the given value.
+// * An error message is printed to stderr in case of error.
+bool FbleNative(FILE* fout, const char* entry, FbleValue* value);
+
 // FbleEval --
 //   Evaluate a compiled program. The program is assumed to be a zero argument
 //   function as returned by FbleCompile.
