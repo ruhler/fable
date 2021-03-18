@@ -1,5 +1,4 @@
 Ninja:
-* Add automatic header dependencies?
 * Figure out how to run tests this way.
 * Figure out how to do code coverage this way.
 

@@ -20,7 +20,9 @@ cFlags = -std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb
 
 rule obj
   description = $out
-  command = gcc $cFlags $iflags -c -o $out $in
+  depfile = $out.d
+  deps = gcc
+  command = gcc -MMD -MF $out.d $cFlags $iflags -c -o $out $in
   
 rule parser
   description = $tab_c
@@ -32,7 +34,9 @@ rule lib
 
 rule exe
   description = $out
-  command = gcc $cFlags $lflags -o $out $in $libs
+  depfile = $out.d
+  deps = gcc
+  command = gcc -MMD -MF $cFlags $lflags -o $out $in $libs
 
 rule copy
   description = $out
@@ -41,45 +45,42 @@ rule copy
 
 puts "build ninja/build.ninja: build_ninja build.ninja.tcl"
 
-set internal_headers [glob fble/*.h]
 set obj ninja/obj
 set fble_objs [list]
 foreach {x} [glob fble/*.c] {
   set object $obj/[string map {.c .o} [file tail $x]]
   lappend fble_objs $object
-  # TODO: Use gcc to generate better header dependencies.
-  puts "build $object: obj $x | $internal_headers"
+  puts "build $object: obj $x"
   puts "  iflags = -I fble"
 }
 
-# TODO: Use gcc to generate better header dependencies somehow?
-puts "build ninja/src/parse.tab.c ninja/src/parse.tab.report.txt: parser fble/parse.y | $internal_headers"
+# For any changes to how parser_includes works, please update the comment
+# above the local includes in fble/parse.y.
+set parser_includes "fble/fble.h fble/syntax.h"
+puts "build ninja/src/parse.tab.c ninja/src/parse.tab.report.txt: parser fble/parse.y | $parser_includes"
 puts "  tab_c = ninja/src/parse.tab.c"
 puts "  report = ninja/src/parse.tab.report.txt"
 
-# TODO: Use gcc to generate better header dependencies somehow?
-puts "build $obj/parse.tab.o: obj ninja/src/parse.tab.c | $internal_headers"
+puts "build $obj/parse.tab.o: obj ninja/src/parse.tab.c"
 puts "  iflags = -I fble"
 lappend fble_objs $obj/parse.tab.o
 
 puts "build ninja/lib/libfble: lib $fble_objs"
 
-set public_headers [list]
 foreach {x} [glob fble/fble*.h] {
-  lappend public_headers "ninja/include/[file tail $x]"
   puts "build ninja/include/[file tail $x]: copy $x"
 }
 
 foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
-  puts "build ninja/obj/$base.o: obj $x | $public_headers"
+  puts "build ninja/obj/$base.o: obj $x"
   puts "  iflags = -I ninja/include"
   puts "build ninja/bin/$base: exe ninja/obj/$base.o | ninja/lib/libfble"
   puts "  lflags = -L ninja/lib"
   puts "  libs = -lfble"
 }
 
-puts "build ninja/obj/fble-app.o: obj prgms/fble-app.c | $public_headers"
+puts "build ninja/obj/fble-app.o: obj prgms/fble-app.c"
 puts "  iflags = -I ninja/include -I /usr/include/SDL2"
 puts "build ninja/bin/fble-app: exe ninja/obj/fble-app.o | ninja/lib/libfble"
 puts "  lflags = -L ninja/lib"

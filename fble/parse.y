@@ -7,6 +7,8 @@
   #include <stdio.h>    // for FILE, fprintf, stderr
   #include <string.h>   // for strchr, strcpy
 
+  // For any changes to this list of includes, please update the
+  // 'parser_includes' variable in build.ninja.tcl.
   #include "fble.h"
   #include "syntax.h"
 
