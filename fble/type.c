@@ -870,7 +870,7 @@ void FblePrintKind(FbleKind* kind)
 // FbleNewTypeHeap -- see documentation in type.h
 FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
 {
-  return FbleNewMarkSweepHeap(arena,
+  return FbleNewHeap(arena,
       (void (*)(FbleHeapCallback*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
 }
@@ -878,7 +878,7 @@ FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
 // FbleFreeTypeHeap -- see documentation in type.h
 void FbleFreeTypeHeap(FbleTypeHeap* heap)
 {
-  FbleFreeMarkSweepHeap(heap);
+  FbleFreeHeap(heap);
 }
 
 // FbleNewType -- see documentation in type.h

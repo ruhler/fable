@@ -45,7 +45,7 @@ puts "build ninja/build.ninja: build_ninja build.ninja.tcl"
 
 # .c files used to implement libfble.
 set libfblesrcs {
-  alloc.c compile.c eval.c generate_c.c instr.c load.c ms-heap.c
+  alloc.c compile.c eval.c generate_c.c instr.c load.c heap.c
   profile.c syntax.c type.c typecheck.c value.c vector.c
 }
 

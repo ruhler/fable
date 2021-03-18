@@ -1,6 +1,9 @@
+* Rename eval.c to execute.c?
+
 Ninja:
 * Figure out how to run tests this way.
 * Figure out how to do code coverage this way.
+* Switch back to glob with directory dependencies?
 
 Fble Compilation:
 * Write code to compile an FbleValue to C code that, when given

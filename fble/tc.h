@@ -25,8 +25,7 @@
 //
 // FbleTc is like FbleValue, except that:
 // * It can represent expressions like union select and function application,
-//   for the purpose of describing values that have not yet been computed and
-//   for describing symbolic values.
+//   for the purpose of describing values that have not yet been computed.
 //
 // In reality FbleTc is used as the underlying implementation of the FbleValue
 // type, though in theory external users shouldn't know or care about that.

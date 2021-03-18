@@ -1,4 +1,4 @@
-// ms-heap.c --
+// heap.c --
 //   This file implements a mark-sweep based heap.
 
 #include <assert.h>   // for assert
@@ -410,8 +410,8 @@ static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
   }
 }
 
-// FbleNewMarkSweepHeap -- see documentation in heap.h
-FbleHeap* FbleNewMarkSweepHeap(
+// FbleNewHeap -- see documentation in heap.h
+FbleHeap* FbleNewHeap(
     FbleArena* arena, 
     void (*refs)(FbleHeapCallback*, void*),
     void (*on_free)(FbleHeap*, void*))
@@ -451,8 +451,8 @@ FbleHeap* FbleNewMarkSweepHeap(
   return &heap->_base;
 }
 
-// FbleFreeMarkSweepHeap -- see documentation in heap.h
-void FbleFreeMarkSweepHeap(FbleHeap* heap_)
+// FbleFreeHeap -- see documentation in heap.h
+void FbleFreeHeap(FbleHeap* heap_)
 {
   Heap* heap = (Heap*)heap_;
   FullGc(heap_);

@@ -171,8 +171,8 @@ typedef struct FbleHeap {
   void (*full_gc)(struct FbleHeap* heap);
 } FbleHeap;
 
-// FbleNewMarkSweepHeap --
-//   Create a new mark sweep based heap.
+// FbleNewHeap --
+//   Create a new heap.
 //
 // Inputs:
 //   arena - The underlying arena to use for allocations
@@ -184,13 +184,13 @@ typedef struct FbleHeap {
 //
 //  Side effects:
 //    Allocates a new mark sweep heap. The caller is resposible for
-//    calling FbleFreeMarkSweepHeap when the heap is no longer needed.
-FbleHeap* FbleNewMarkSweepHeap(
+//    calling FbleFreeHeap when the heap is no longer needed.
+FbleHeap* FbleNewHeap(
     FbleArena* arena, 
     void (*refs)(FbleHeapCallback*, void*),
     void (*on_free)(FbleHeap*, void*));
 
-// FbleFreeMarkSweepHeap --
+// FbleFreeHeap --
 //   Free a mark sweep heap that is no longer in use.
 //
 // Inputs:
@@ -205,6 +205,6 @@ FbleHeap* FbleNewMarkSweepHeap(
 //
 //   Does not free objects that are still being retained on the heap. Those
 //   will be leaked.
-void FbleFreeMarkSweepHeap(FbleHeap* heap);
+void FbleFreeHeap(FbleHeap* heap);
 
 #endif // FBLE_INTERNAL_HEAP_H_
