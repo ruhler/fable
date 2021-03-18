@@ -45,12 +45,18 @@ rule copy
 
 puts "build ninja/build.ninja: build_ninja build.ninja.tcl"
 
+# .c files used to implement libfble.
+set libfblesrcs {
+  alloc.c compile.c eval.c instr.c load.c ms-heap.c native.c
+  profile.c syntax.c type.c typecheck.c value.c vector.c
+}
+
 set obj ninja/obj
 set fble_objs [list]
-foreach {x} [glob fble/*.c] {
-  set object $obj/[string map {.c .o} [file tail $x]]
+foreach {x} $libfblesrcs {
+  set object $obj/[string map {.c .o} $x]
   lappend fble_objs $object
-  puts "build $object: obj $x"
+  puts "build $object: obj fble/$x"
   puts "  iflags = -I fble"
 }
 
@@ -67,11 +73,21 @@ lappend fble_objs $obj/parse.tab.o
 
 puts "build ninja/lib/libfble: lib $fble_objs"
 
-foreach {x} [glob fble/fble*.h] {
-  puts "build ninja/include/[file tail $x]: copy $x"
+# public header files for libfble.
+set libfblehdrs {
+  fble-alloc.h fble-name.h fble-profile.h fble-value.h fble-vector.h
+}
+foreach {x} $libfblehdrs {
+  puts "build ninja/include/$x: copy fble/$x"
 }
 
-foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
+set prgms {
+  tools/fble-disassemble.c tools/fble-mem-test.c tools/fble-native.c
+  tools/fble-profile-test.c tools/fble-test.c
+  prgms/fble-md5.c prgms/fble-stdio.c
+}
+
+foreach {x} $prgms {
   set base [file rootname [file tail $x]]
   puts "build ninja/obj/$base.o: obj $x"
   puts "  iflags = -I ninja/include"
