@@ -1,6 +1,6 @@
 Ninja:
 * Add automatic header dependencies?
-* Compile the rest of the tools.
+* Give nicer descriptions of what's being run?
 * Figure out how to run tests this way.
 
 Fble Compilation:
