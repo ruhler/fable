@@ -13,23 +13,29 @@ puts "builddir = $builddir"
 
 puts {
 rule build_ninja 
+  description = $out
   command = tclsh $in > $out
 
 cFlags = -std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb
 
 rule obj
+  description = $out
   command = gcc $cFlags $iflags -c -o $out $in
   
 rule parser
+  description = $tab_c
   command = bison --report=all --report-file=$report -o $tab_c $in
 
 rule lib
+  description = $out
   command = ar rcs $out $in
 
 rule exe
+  description = $out
   command = gcc $cFlags $lflags -o $out $in $libs
 
 rule copy
+  description = $out
   command = cp $in $out
 }
 

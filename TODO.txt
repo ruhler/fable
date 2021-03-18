@@ -1,7 +1,7 @@
 Ninja:
 * Add automatic header dependencies?
-* Give nicer descriptions of what's being run?
 * Figure out how to run tests this way.
+* Figure out how to do code coverage this way.
 
 Fble Compilation:
 * Write code to compile an FbleValue to C code that, when given
