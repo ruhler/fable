@@ -1,5 +1,7 @@
-* Try switching (back?) to ninja?
-  Because redundant build work is starting to slow down development.
+Ninja:
+* Add automatic header dependencies?
+* Compile the rest of the tools.
+* Figure out how to run tests this way.
 
 Fble Compilation:
 * Write code to compile an FbleValue to C code that, when given

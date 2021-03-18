@@ -46,3 +46,10 @@ prof:
 	mv *.gcov prof/
 	rm gmon.out
 
+ninja/build.ninja: build.ninja.tcl
+	mkdir -p ninja
+	tclsh $< > $@
+
+.PHONY: ninja
+ninja: ninja/build.ninja
+	ninja -f $<
