@@ -1,5 +1,5 @@
-// eval.c --
-//   This file implements the fble evaluation routines.
+// execute.c --
+//   Code for executing fble instructions, functions, and processes.
 
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
@@ -8,7 +8,7 @@
 
 #include "fble.h"
 #include "heap.h"
-#include "eval.h"
+#include "execute.h"
 #include "instr.h"
 #include "syntax.h"   // for FbleReportError
 #include "tc.h"
@@ -69,35 +69,35 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, Fbl
 //                 unblock another thread.
 //
 // Results:
-//   FBLE_EVAL_FINISHED - if we have just returned from the current stack frame.
-//   FBLE_EVAL_BLOCKED - if the thread is blocked on I/O.
-//   FBLE_EVAL_YIELDED - if our time slice for executing instructions is over.
-//   FBLE_EVAL_RUNNING - if there are more instructions in the frame to execute.
-//   FBLE_EVAL_CONTINUE - to indicate the frame has just been replaced by its tail
+//   FBLE_EXEC_FINISHED - if we have just returned from the current stack frame.
+//   FBLE_EXEC_BLOCKED - if the thread is blocked on I/O.
+//   FBLE_EXEC_YIELDED - if our time slice for executing instructions is over.
+//   FBLE_EXEC_RUNNING - if there are more instructions in the frame to execute.
+//   FBLE_EXEC_CONTINUE - to indicate the frame has just been replaced by its tail
 //              call.
-//   FBLE_EVAL_ABORTED - if the thread should be aborted.
+//   FBLE_EXEC_ABORTED - if the thread should be aborted.
 //
 // Side effects:
 //   Executes the instruction.
-typedef FbleEvalStatus (*InstrImpl)(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+typedef FbleExecStatus (*InstrImpl)(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 
-static FbleEvalStatus StructValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus UnionValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus StructAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus UnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus UnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus JumpInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus FuncValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus CallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus CopyInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus LinkInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus ForkInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus RefValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus RefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus ReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleEvalStatus TypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus StructValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus UnionValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus StructAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus UnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus UnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus JumpInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus CopyInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus LinkInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus RefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
 //   Implementations of instructions, indexed by instruction tag.
@@ -121,10 +121,10 @@ static InstrImpl sInstrImpls[] = {
   &TypeInstr,             // FBLE_TYPE_INSTR
 };
 
-static FbleEvalStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool* io_activity);
-static FbleEvalStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted);
-static FbleEvalStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
-static FbleEvalStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
+static FbleExecStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool* io_activity);
+static FbleExecStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted);
+static FbleExecStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
+static FbleExecStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc* func, FbleValue** args, FbleProfile* profile);
 
 // FrameGet --
@@ -304,7 +304,7 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, Fbl
 
 // StructValueInstr -- see documentation of InstrImpl.
 //   Execute a STRUCT_VALUE_INSTR.
-static FbleEvalStatus StructValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus StructValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
   size_t argc = struct_value_instr->args.size;
@@ -319,12 +319,12 @@ static FbleEvalStatus StructValueInstr(FbleValueHeap* heap, FbleThread* thread, 
 
   FrameSetAndRelease(heap, thread, struct_value_instr->dest, &value->_base);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // UnionValueInstr -- see documentation of InstrImpl
 //   Execute a UNION_VALUE_INSTR.
-static FbleEvalStatus UnionValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus UnionValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
 
@@ -336,78 +336,78 @@ static FbleEvalStatus UnionValueInstr(FbleValueHeap* heap, FbleThread* thread, F
 
   FrameSetAndRelease(heap, thread, union_value_instr->dest, &value->_base);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // StructAccessInstr -- see documentation of InstrImpl
 //   Execute a STRUCT_ACCESS_INSTR.
-static FbleEvalStatus StructAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus StructAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
   FbleStructValueTc* sv = (FbleStructValueTc*)FrameGetStrict(thread, access_instr->obj);
   if (sv == NULL) {
     FbleReportError("undefined struct value access\n", access_instr->loc);
-    return FBLE_EVAL_ABORTED;
+    return FBLE_EXEC_ABORTED;
   }
 
   assert(sv->_base.tag == FBLE_STRUCT_VALUE_TC);
   assert(access_instr->tag < sv->fieldc);
   FrameSet(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // UnionAccessInstr -- see documentation of InstrImpl
 //   Execute a UNION_ACCESS_INSTR.
-static FbleEvalStatus UnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus UnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
   FbleUnionValueTc* uv = (FbleUnionValueTc*)FrameGetStrict(thread, access_instr->obj);
   if (uv == NULL) {
     FbleReportError("undefined union value access\n", access_instr->loc);
-    return FBLE_EVAL_ABORTED;
+    return FBLE_EXEC_ABORTED;
   }
 
   assert(uv->_base.tag == FBLE_UNION_VALUE_TC);
   if (uv->tag != access_instr->tag) {
     FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-    return FBLE_EVAL_ABORTED;
+    return FBLE_EXEC_ABORTED;
   }
 
   FrameSet(heap, thread, access_instr->dest, uv->arg);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // UnionSelectInstr -- see documentation of InstrImpl
 //   Execute a UNION_SELECT_INSTR.
-static FbleEvalStatus UnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus UnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
   FbleUnionValueTc* uv = (FbleUnionValueTc*)FrameGetStrict(thread, select_instr->condition);
   if (uv == NULL) {
     FbleReportError("undefined union value select\n", select_instr->loc);
-    return FBLE_EVAL_ABORTED;
+    return FBLE_EXEC_ABORTED;
   }
   assert(uv->_base.tag == FBLE_UNION_VALUE_TC);
   thread->stack->pc += 1 + select_instr->jumps.xs[uv->tag];
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // JumpInstr -- see documentation of InstrImpl
 //   Execute a JUMP_INSTR.
-static FbleEvalStatus JumpInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus JumpInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
   thread->stack->pc += 1 + jump_instr->count;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // FuncValueInstr -- see documentation of InstrImpl
 //   Execute a FUNC_VALUE_INSTR.
-static FbleEvalStatus FuncValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
   size_t scopec = func_value_instr->code->statics;
@@ -425,18 +425,18 @@ static FbleEvalStatus FuncValueInstr(FbleValueHeap* heap, FbleThread* thread, Fb
   }
   FrameSetAndRelease(heap, thread, func_value_instr->dest, &value->_base);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // CallInstr -- see documentation of InstrImpl
 //   Execute a CALL_INSTR.
-static FbleEvalStatus CallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleCallInstr* call_instr = (FbleCallInstr*)instr;
   FbleCompiledFuncValueTc* func = (FbleCompiledFuncValueTc*)FrameGetStrict(thread, call_instr->func);
   if (func == NULL) {
     FbleReportError("called undefined function\n", call_instr->loc);
-    return FBLE_EVAL_ABORTED;
+    return FBLE_EXEC_ABORTED;
   };
   assert(func->_base.tag == FBLE_COMPILED_FUNC_VALUE_TC);
 
@@ -447,7 +447,7 @@ static FbleEvalStatus CallInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
 
   if (call_instr->exit) {
     ReplaceFrame(heap, func, args, thread);
-    return FBLE_EVAL_CONTINUE;
+    return FBLE_EXEC_CONTINUE;
   }
 
   thread->stack->pc++;
@@ -459,7 +459,7 @@ static FbleEvalStatus CallInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
 
 // GetInstr -- see documentation of InstrImpl
 //   Execute a GET_INSTR.
-static FbleEvalStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleGetInstr* get_instr = (FbleGetInstr*)instr;
   FbleValue* get_port = FrameGet(thread, get_instr->port);
@@ -469,7 +469,7 @@ static FbleEvalStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
     if (link->head == NULL) {
       // Blocked on get.
       assert(instr->profile_ops == NULL && "profile op might run twice");
-      return FBLE_EVAL_BLOCKED;
+      return FBLE_EXEC_BLOCKED;
     }
 
     FbleValues* head = link->head;
@@ -481,7 +481,7 @@ static FbleEvalStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
     FrameSet(heap, thread, get_instr->dest, head->value);
     FbleFree(heap->arena, head);
     thread->stack->pc++;
-    return FBLE_EVAL_RUNNING;
+    return FBLE_EXEC_RUNNING;
   }
 
   if (get_port->tag == FBLE_PORT_VALUE_TC) {
@@ -489,23 +489,23 @@ static FbleEvalStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
     if (*port->data == NULL) {
       // Blocked on get.
       assert(instr->profile_ops == NULL && "profile op might run twice");
-      return FBLE_EVAL_BLOCKED;
+      return FBLE_EXEC_BLOCKED;
     }
 
     FrameSetAndRelease(heap, thread, get_instr->dest, *port->data);
     *port->data = NULL;
     *io_activity = true;
     thread->stack->pc++;
-    return FBLE_EVAL_RUNNING;
+    return FBLE_EXEC_RUNNING;
   }
 
   UNREACHABLE("get port must be an input or port value");
-  return FBLE_EVAL_ABORTED;
+  return FBLE_EXEC_ABORTED;
 }
 
 // PutInstr -- see documentation of InstrImpl
 //   Execute a PUT_INSTR.
-static FbleEvalStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FblePutInstr* put_instr = (FblePutInstr*)instr;
   FbleValue* put_port = FrameGet(thread, put_instr->port);
@@ -534,7 +534,7 @@ static FbleEvalStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
     FrameSetAndRelease(heap, thread, put_instr->dest, unit);
     *io_activity = true;
     thread->stack->pc++;
-    return FBLE_EVAL_RUNNING;
+    return FBLE_EXEC_RUNNING;
   }
 
   if (put_port->tag == FBLE_PORT_VALUE_TC) {
@@ -543,7 +543,7 @@ static FbleEvalStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
     if (*port->data != NULL) {
       // Blocked on put.
       assert(instr->profile_ops == NULL && "profile op might run twice");
-      return FBLE_EVAL_BLOCKED;
+      return FBLE_EXEC_BLOCKED;
     }
 
     FbleRetainValue(heap, arg);
@@ -551,16 +551,16 @@ static FbleEvalStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
     FrameSetAndRelease(heap, thread, put_instr->dest, unit);
     *io_activity = true;
     thread->stack->pc++;
-    return FBLE_EVAL_RUNNING;
+    return FBLE_EXEC_RUNNING;
   }
 
   UNREACHABLE("put port must be an output or port value");
-  return FBLE_EVAL_ABORTED;
+  return FBLE_EXEC_ABORTED;
 }
 
 // ForkInstr -- see documentation of InstrImpl
 //   Execute a FORK_INSTR.
-static FbleEvalStatus ForkInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
 
@@ -590,23 +590,23 @@ static FbleEvalStatus ForkInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
   }
   thread->next_child = 0;
   thread->stack->pc++;
-  return FBLE_EVAL_YIELDED;
+  return FBLE_EXEC_YIELDED;
 }
 
 // CopyInstr -- see documentation of InstrImpl
 //   Execute a COPY_INSTR.
-static FbleEvalStatus CopyInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus CopyInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
   FbleValue* value = FrameGet(thread, copy_instr->source);
   FrameSet(heap, thread, copy_instr->dest, value);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // LinkInstr -- see documentation of InstrImpl
 //   Execute a LINK_INSTR.
-static FbleEvalStatus LinkInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus LinkInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
 
@@ -622,12 +622,12 @@ static FbleEvalStatus LinkInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
   FrameSetAndRelease(heap, thread, link_instr->get, get);
   FrameSetAndRelease(heap, thread, link_instr->put, put);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // RefValueInstr -- see documentation of InstrImpl
 //   Execute a REF_VALUE_INSTR.
-static FbleEvalStatus RefValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
   FbleThunkValueTc* rv = FbleNewValue(heap, FbleThunkValueTc);
@@ -641,12 +641,12 @@ static FbleEvalStatus RefValueInstr(FbleValueHeap* heap, FbleThread* thread, Fbl
 
   FrameSetAndRelease(heap, thread, ref_instr->dest, &rv->_base);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // RefDefInstr -- see documentation of InstrImpl
 //   Execute a REF_DEF_INSTR.
-static FbleEvalStatus RefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus RefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
   FbleThunkValueTc* rv = (FbleThunkValueTc*)thread->stack->locals.xs[ref_def_instr->ref];
@@ -667,18 +667,18 @@ static FbleEvalStatus RefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleI
 
   if (thunk == rv) {
     FbleReportError("vacuous value\n", ref_def_instr->loc);
-    return FBLE_EVAL_ABORTED;
+    return FBLE_EXEC_ABORTED;
   }
 
   rv->value = value;
   FbleValueAddRef(heap, &rv->_base, rv->value);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // ReturnInstr -- see documentation of InstrImpl
 //   Execute a RETURN_INSTR.
-static FbleEvalStatus ReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
   FbleValue* result = FrameGet(thread, return_instr->result);
@@ -709,19 +709,19 @@ static FbleEvalStatus ReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleI
   thunk->locals.xs = NULL;
   FbleReleaseValue(heap, &thunk->_base);
 
-  return FBLE_EVAL_FINISHED;
+  return FBLE_EXEC_FINISHED;
 }
 
 // TypeInstr -- see documentation of InstrImpl
 //   Execute a FBLE_TYPE_INSTR.
-static FbleEvalStatus TypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
   FbleTypeValueTc* value = FbleNewValue(heap, FbleTypeValueTc);
   value->_base.tag = FBLE_TYPE_VALUE_TC;
   FrameSetAndRelease(heap, thread, type_instr->dest, &value->_base);
   thread->stack->pc++;
-  return FBLE_EVAL_RUNNING;
+  return FBLE_EXEC_RUNNING;
 }
 
 // RunFunction --
@@ -735,21 +735,21 @@ static FbleEvalStatus TypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
 //                 unblock another thread.
 //
 // Results:
-//   FBLE_EVAL_FINISHED - if we have just returned from the current stack frame.
-//   FBLE_EVAL_BLOCKED - if the thread is blocked on I/O.
-//   FBLE_EVAL_YIELDED - if our time slice for executing instructions is over.
-//   FBLE_EVAL_RUNNING - not used.
-//   FBLE_EVAL_CONTINUE - not used.
-//   FBLE_EVAL_ABORTED - if the thread should be aborted.
+//   FBLE_EXEC_FINISHED - if we have just returned from the current stack frame.
+//   FBLE_EXEC_BLOCKED - if the thread is blocked on I/O.
+//   FBLE_EXEC_YIELDED - if our time slice for executing instructions is over.
+//   FBLE_EXEC_RUNNING - not used.
+//   FBLE_EXEC_CONTINUE - not used.
+//   FBLE_EXEC_ABORTED - if the thread should be aborted.
 //
 // Side effects:
 // * The function is executed, updating its stack.
 // * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-static FbleEvalStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool* io_activity)
+static FbleExecStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool* io_activity)
 {
-  FbleEvalStatus status = FBLE_EVAL_CONTINUE;
-  while (status == FBLE_EVAL_CONTINUE) {
+  FbleExecStatus status = FBLE_EXEC_CONTINUE;
+  while (status == FBLE_EXEC_CONTINUE) {
     status = thread->stack->func->run(heap, thread, io_activity);
   }
   return status;
@@ -767,38 +767,38 @@ static FbleEvalStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool*
 //   aborted - if true, abort the thread. set to true if thread aborts.
 //
 // Results:
-//   FBLE_EVAL_FINISHED - if the thread has finished running.
-//   FBLE_EVAL_BLOCKED - if the thread is blocked on I/O.
-//   FBLE_EVAL_YIELDED - if our time slice for executing instructions is over.
-//   FBLE_EVAL_RUNNING - not used.
-//   FBLE_EVAL_CONTINUE - not used.
-//   FBLE_EVAL_ABORTED - not used.
+//   FBLE_EXEC_FINISHED - if the thread has finished running.
+//   FBLE_EXEC_BLOCKED - if the thread is blocked on I/O.
+//   FBLE_EXEC_YIELDED - if our time slice for executing instructions is over.
+//   FBLE_EXEC_RUNNING - not used.
+//   FBLE_EXEC_CONTINUE - not used.
+//   FBLE_EXEC_ABORTED - not used.
 //
 // Side effects:
 // * The thread is executed, updating its stack.
 // * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-// * aborted is set to true if the thread aborts, then FBLE_EVAL_FINISHED is returned.
-static FbleEvalStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted)
+// * aborted is set to true if the thread aborts, then FBLE_EXEC_FINISHED is returned.
+static FbleExecStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted)
 {
   if (*aborted) {
     return AbortFbleThread(heap, thread, aborted);
   }
 
   while (thread->stack != NULL) {
-    FbleEvalStatus status = RunFunction(heap, thread, io_activity);
+    FbleExecStatus status = RunFunction(heap, thread, io_activity);
 
-    if (status == FBLE_EVAL_FINISHED) {
+    if (status == FBLE_EXEC_FINISHED) {
       continue;
     }
 
-    if (status == FBLE_EVAL_ABORTED) {
+    if (status == FBLE_EXEC_ABORTED) {
       return AbortFbleThread(heap, thread, aborted);
     }
 
     return status;
   }
-  return FBLE_EVAL_FINISHED;
+  return FBLE_EXEC_FINISHED;
 }
 
 // AbortFbleThread --
@@ -811,20 +811,20 @@ static FbleEvalStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, boo
 //   aborted - set to true.
 //
 // Results:
-//   FBLE_EVAL_FINISHED
+//   FBLE_EXEC_FINISHED
 //
 // Side effects:
 //   Cleans up the thread state. The state of the thread after this function
 //   is the same as if it had completed normally, except that it will not have
 //   produced a return value. Sets aborted to true.
-static FbleEvalStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted)
+static FbleExecStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted)
 {
   *aborted = true;
   if (thread->stack != NULL) {
     FbleReleaseValue(heap, &thread->stack->_base);
     thread->stack = NULL;
   }
-  return FBLE_EVAL_FINISHED;
+  return FBLE_EXEC_FINISHED;
 }
 
 // RunFbleThreads --
@@ -838,18 +838,18 @@ static FbleEvalStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, b
 //             set to true if the thread is aborted.
 //
 // Results:
-//   FBLE_EVAL_FINISHED - if we have finished running the threads.
-//   FBLE_EVAL_BLOCKED - if we are blocked on I/O.
-//   FBLE_EVAL_YIELDED - if our time slice for executing instructions is over.
-//   FBLE_EVAL_RUNNING - not used.
-//   FBLE_EVAL_CONTINUE - not used.
-//   FBLE_EVAL_ABORTED - not used.
+//   FBLE_EXEC_FINISHED - if we have finished running the threads.
+//   FBLE_EXEC_BLOCKED - if we are blocked on I/O.
+//   FBLE_EXEC_YIELDED - if our time slice for executing instructions is over.
+//   FBLE_EXEC_RUNNING - not used.
+//   FBLE_EXEC_CONTINUE - not used.
+//   FBLE_EXEC_ABORTED - not used.
 //
 // Side effects:
 //   The thread and its children are executed and updated.
 //   Updates the profile based on the execution.
 //   Sets aborted to true in case of abort.
-static FbleEvalStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted)
+static FbleExecStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted)
 {
   FbleArena* arena = heap->arena;
 
@@ -866,12 +866,12 @@ static FbleEvalStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bo
     } else {
       // Run the leaf thread, then go back up to the parent for the rest of
       // the threads to process.
-      FbleEvalStatus status = RunFbleThread(heap, thread, &unblocked, aborted);
+      FbleExecStatus status = RunFbleThread(heap, thread, &unblocked, aborted);
       switch (status) {
-        case FBLE_EVAL_FINISHED: {
+        case FBLE_EXEC_FINISHED: {
           unblocked = true;
           if (thread->parent == NULL) {
-            return FBLE_EVAL_FINISHED;
+            return FBLE_EXEC_FINISHED;
           }
 
           FbleThread* parent = thread->parent;
@@ -894,24 +894,24 @@ static FbleEvalStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bo
           break;
         }
 
-        case FBLE_EVAL_BLOCKED: {
+        case FBLE_EXEC_BLOCKED: {
           thread = thread->parent;
           break;
         }
 
-        case FBLE_EVAL_YIELDED: {
+        case FBLE_EXEC_YIELDED: {
           unblocked = true;
           thread = thread->parent;
           break;
         }
 
-        case FBLE_EVAL_RUNNING: UNREACHABLE("unexpected status"); break;
-        case FBLE_EVAL_ABORTED: UNREACHABLE("unexpected status"); break;
-        case FBLE_EVAL_CONTINUE: UNREACHABLE("unexpected status"); break;
+        case FBLE_EXEC_RUNNING: UNREACHABLE("unexpected status"); break;
+        case FBLE_EXEC_ABORTED: UNREACHABLE("unexpected status"); break;
+        case FBLE_EXEC_CONTINUE: UNREACHABLE("unexpected status"); break;
       }
     }
   }
-  return unblocked ? FBLE_EVAL_YIELDED : FBLE_EVAL_BLOCKED;
+  return unblocked ? FBLE_EXEC_YIELDED : FBLE_EXEC_BLOCKED;
 }
 
 // Eval --
@@ -949,9 +949,9 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
 
   bool aborted = false;
   while (true) {
-    FbleEvalStatus status = RunFbleThreads(heap, &thread, &aborted);
+    FbleExecStatus status = RunFbleThreads(heap, &thread, &aborted);
     switch (status) {
-      case FBLE_EVAL_FINISHED: {
+      case FBLE_EXEC_FINISHED: {
         assert(aborted || final_result->value != NULL);
         assert(thread.stack == NULL);
         assert(thread.children.size == 0);
@@ -970,7 +970,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
         return result;
       }
 
-      case FBLE_EVAL_BLOCKED: {
+      case FBLE_EXEC_BLOCKED: {
         // The thread is not making forward progress anymore. Block for I/O.
         if (!io->io(io, heap, true)) {
           FbleString* source = FbleNewString(arena, __FILE__);
@@ -982,16 +982,16 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
         break;
       }
 
-      case FBLE_EVAL_YIELDED: {
+      case FBLE_EXEC_YIELDED: {
         // Give a chance to do some I/O, but don't block, because the thread
         // is making progress anyway.
         io->io(io, heap, false);
         break;
       }
 
-      case FBLE_EVAL_RUNNING: UNREACHABLE("unexpected status"); break;
-      case FBLE_EVAL_ABORTED: UNREACHABLE("unexpected status"); break;
-      case FBLE_EVAL_CONTINUE: UNREACHABLE("unexpected status"); break;
+      case FBLE_EXEC_RUNNING: UNREACHABLE("unexpected status"); break;
+      case FBLE_EXEC_ABORTED: UNREACHABLE("unexpected status"); break;
+      case FBLE_EXEC_CONTINUE: UNREACHABLE("unexpected status"); break;
     }
   }
 
@@ -1000,21 +1000,21 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
 }
 
 // FbleStandardRunFunction -- see documentation in eval.h
-FbleEvalStatus FbleStandardRunFunction(FbleValueHeap* heap, FbleThread* thread, bool* io_activity)
+FbleExecStatus FbleStandardRunFunction(FbleValueHeap* heap, FbleThread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
 
   FbleInstr** code = thread->stack->func->code->instrs.xs;
 
-  FbleEvalStatus status = FBLE_EVAL_RUNNING;
-  while (status == FBLE_EVAL_RUNNING) {
+  FbleExecStatus status = FBLE_EXEC_RUNNING;
+  while (status == FBLE_EXEC_RUNNING) {
     FbleInstr* instr = code[thread->stack->pc];
     if (rand() % TIME_SLICE == 0) {
       if (profile != NULL) {
         FbleProfileSample(arena, profile, 1);
       }
-      return FBLE_EVAL_YIELDED;
+      return FBLE_EXEC_YIELDED;
     }
 
     if (profile != NULL) {

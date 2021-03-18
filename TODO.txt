@@ -1,9 +1,8 @@
-* Rename eval.c to execute.c?
-
 Ninja:
-* Figure out how to run tests this way.
-* Figure out how to do code coverage this way.
-* Switch back to glob with directory dependencies?
+* Switch back to glob with directory dependencies.
+ - because updating the build.ninja.tcl for every file change is annoying.
+* Figure out how to run tests with ninja.
+* Figure out how to do code coverage with ninja.
 
 Fble Compilation:
 * Write code to compile an FbleValue to C code that, when given

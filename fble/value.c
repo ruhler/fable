@@ -5,7 +5,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "fble.h"
-#include "eval.h"     // for FbleStandardRunFunction
+#include "execute.h"     // for FbleStandardRunFunction
 #include "heap.h"
 #include "tc.h"
 #include "value.h"

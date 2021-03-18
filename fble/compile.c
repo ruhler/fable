@@ -7,7 +7,7 @@
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
-#include "eval.h"       // for FbleStandardRunFunction
+#include "execute.h"       // for FbleStandardRunFunction
 #include "instr.h"
 #include "tc.h"
 #include "typecheck.h"

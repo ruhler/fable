@@ -7,7 +7,7 @@
 #define FBLE_INTERNAL_TC_H_
 
 #include "fble-value.h"     // for FbleValueV
-#include "eval.h"           // for FbleRunFunction
+#include "execute.h"        // for FbleRunFunction
 #include "instr.h"
 
 // FbleTc --
