@@ -21,7 +21,6 @@ cFlags = -std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb
 rule obj
   description = $out
   depfile = $out.d
-  deps = gcc
   command = gcc -MMD -MF $out.d $cFlags $iflags -c -o $out $in
   
 rule parser
@@ -35,7 +34,6 @@ rule lib
 rule exe
   description = $out
   depfile = $out.d
-  deps = gcc
   command = gcc -MMD -MF $cFlags $lflags -o $out $in $libs
 
 rule copy
@@ -47,7 +45,7 @@ puts "build ninja/build.ninja: build_ninja build.ninja.tcl"
 
 # .c files used to implement libfble.
 set libfblesrcs {
-  alloc.c compile.c eval.c instr.c load.c ms-heap.c native.c
+  alloc.c compile.c eval.c generate_c.c instr.c load.c ms-heap.c
   profile.c syntax.c type.c typecheck.c value.c vector.c
 }
 
@@ -71,18 +69,18 @@ puts "build $obj/parse.tab.o: obj ninja/src/parse.tab.c"
 puts "  iflags = -I fble"
 lappend fble_objs $obj/parse.tab.o
 
-puts "build ninja/lib/libfble: lib $fble_objs"
+puts "build ninja/lib/libfble.a: lib $fble_objs"
 
 # public header files for libfble.
 set libfblehdrs {
-  fble-alloc.h fble-name.h fble-profile.h fble-value.h fble-vector.h
+  fble.h fble-alloc.h fble-name.h fble-profile.h fble-value.h fble-vector.h
 }
 foreach {x} $libfblehdrs {
   puts "build ninja/include/$x: copy fble/$x"
 }
 
 set prgms {
-  tools/fble-disassemble.c tools/fble-mem-test.c tools/fble-native.c
+  tools/fble-disassemble.c tools/fble-mem-test.c tools/fble-compile.c
   tools/fble-profile-test.c tools/fble-test.c
   prgms/fble-md5.c prgms/fble-stdio.c
 }
@@ -91,14 +89,14 @@ foreach {x} $prgms {
   set base [file rootname [file tail $x]]
   puts "build ninja/obj/$base.o: obj $x"
   puts "  iflags = -I ninja/include"
-  puts "build ninja/bin/$base: exe ninja/obj/$base.o | ninja/lib/libfble"
+  puts "build ninja/bin/$base: exe ninja/obj/$base.o | ninja/lib/libfble.a"
   puts "  lflags = -L ninja/lib"
   puts "  libs = -lfble"
 }
 
 puts "build ninja/obj/fble-app.o: obj prgms/fble-app.c"
 puts "  iflags = -I ninja/include -I /usr/include/SDL2"
-puts "build ninja/bin/fble-app: exe ninja/obj/fble-app.o | ninja/lib/libfble"
+puts "build ninja/bin/fble-app: exe ninja/obj/fble-app.o | ninja/lib/libfble.a"
 puts "  lflags = -L ninja/lib"
 puts "  libs = -lfble -lSDL2"
 

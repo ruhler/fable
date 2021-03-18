@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleNative(stdout, entry, compiled);
+  FbleGenerateC(stdout, entry, compiled);
 
   FbleReleaseValue(heap, compiled);
   FbleFreeProfile(arena, profile);

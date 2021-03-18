@@ -88,8 +88,8 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
 //   A disassembled version of the file is printed to fout.
 void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile);
 
-// FbleNative --
-//   Compile an fble value to C.
+// FbleGenerateC --
+//   Generate C code for an fble value.
 //
 // The generated C code will export a single function named entry with the
 // following signature:
@@ -97,7 +97,7 @@ void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile);
 //   FbleValue* Entry(FbleValueHeap* heap);
 //
 // Calling this function will allocate a new value on the heap that is
-// the same as the value provided to FbleNative, except with function values
+// the same as the value provided to FbleGenerateC, except with function values
 // optimized for better performance where possible.
 //
 // TODO: Document the flags needed to compile the generated C code, including
@@ -115,7 +115,7 @@ void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile);
 // Side effects:
 // * Generates C code for the given value.
 // * An error message is printed to stderr in case of error.
-bool FbleNative(FILE* fout, const char* entry, FbleValue* value);
+bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value);
 
 // FbleEval --
 //   Evaluate a compiled program. The program is assumed to be a zero argument

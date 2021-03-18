@@ -54,7 +54,7 @@ foreach {x} [glob tools/*.c prgms/*.c] {
 set ::bin out/bin
 exec mkdir -p $::bin
 gcc_prgm -o $::bin/fble-disassemble $::obj/fble-disassemble.o -lfble
-gcc_prgm -o $::bin/fble-native $::obj/fble-native.o -lfble
+gcc_prgm -o $::bin/fble-compile $::obj/fble-compile.o -lfble
 gcc_prgm -o $::bin/fble-test $::obj/fble-test.o -lfble
 gcc_prgm -o $::bin/fble-mem-test $::obj/fble-mem-test.o -lfble
 gcc_prgm -o $::bin/fble-profile-test $::obj/fble-profile-test.o -lfble
