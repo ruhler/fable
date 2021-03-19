@@ -1,6 +1,7 @@
+* Rename alloc.c to allocate.c?
+* Rename instr.c to instruction.c?
+
 Ninja:
-* Switch back to glob with directory dependencies.
- - because updating the build.ninja.tcl for every file change is annoying.
 * Figure out how to run tests with ninja.
 * Figure out how to do code coverage with ninja.
 
