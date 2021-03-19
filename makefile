@@ -53,3 +53,4 @@ ninja/build.ninja: build.ninja.tcl
 .PHONY: ninja
 ninja: ninja/build.ninja
 	ninja -f $<
+	tail -n 3 ninja/tests/summary.txt

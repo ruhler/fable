@@ -1,6 +1,7 @@
 
 Ninja:
-* Start running all the tests in ninja.
+* Start running spec tests in ninja.
+* Figure out how to track dependencies for prgms/*.fble.
 * Figure out how to do code coverage with ninja.
 
 Fble Compilation:

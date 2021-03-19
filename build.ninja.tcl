@@ -90,13 +90,19 @@ puts "build ninja/bin/fble-app: exe ninja/obj/fble-app.o | ninja/lib/libfble.a"
 puts "  lflags = -L ninja/lib"
 puts "  libs = -lfble -lSDL2"
 
+set tests [list]
+
+lappend tests ninja/tests/true.tr
 puts "build ninja/tests/true.tr: test"
 puts "  cmd = true"
 
+# lappend tests ninja/tests/false.tr
 puts "build ninja/tests/false.tr: test"
 puts "  cmd = false"
 
-#set tests [list ninja/tests/true.tr ninja/tests/false.tr]
-set tests [list ninja/tests/true.tr]
+lappend tests ninja/tests/fble-profile-test.tr
+puts "build ninja/tests/fble-profile-test.tr: test | ninja/bin/fble-profile-test"
+puts "  cmd = ./ninja/bin/fble-profile-test"
+
 puts "build ninja/tests/summary.txt: tclsh tools/tests.tcl $tests"
 
