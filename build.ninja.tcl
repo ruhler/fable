@@ -33,8 +33,7 @@ rule lib
 
 rule exe
   description = $out
-  depfile = $out.d
-  command = gcc -MMD -MF $cFlags $lflags -o $out $in $libs
+  command = gcc $cFlags $lflags -o $out $in $libs
 
 rule copy
   description = $out

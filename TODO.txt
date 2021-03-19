@@ -1,6 +1,5 @@
 
 Ninja:
-* Figure out why no-op change rebuilds a bunch of stuff.
 * Start running all the tests in ninja.
 * Figure out how to do code coverage with ninja.
 
