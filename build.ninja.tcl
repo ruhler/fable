@@ -39,6 +39,10 @@ rule copy
   description = $out
   command = cp $in $out
 
+rule dir
+  description = $out
+  command = mkdir -p $out
+
 rule test
   description = $out
   command = $cmd > $out 2>&1 && echo PASSED >> $out || echo FAILED >> $out
@@ -99,6 +103,17 @@ puts "  cmd = true"
 # lappend tests ninja/tests/false.tr
 puts "build ninja/tests/false.tr: test"
 puts "  cmd = false"
+
+lappend tests ninja/tests/0-test/no-error.tr
+set t "tools/spec-test.tcl \
+  ninja/bin/fble-test \
+  ninja/bin/fble-mem-test \
+  langs/fble/Nat.fble \
+  ninja/tests/0-test/no-error \
+  langs/fble/0-test/no-error.tcl"
+puts "build ninja/tests/0-test/no-error: dir"
+puts "build ninja/tests/0-test/no-error.tr: test | $t"
+puts "  cmd = tclsh $t"
 
 lappend tests ninja/tests/fble-profile-test.tr
 puts "build ninja/tests/fble-profile-test.tr: test | ninja/bin/fble-profile-test"

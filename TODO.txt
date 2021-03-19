@@ -1,6 +1,8 @@
 
 Ninja:
 * Start running spec tests in ninja.
+* Add the rest of the spec tests to ninja.
+* Have failed spec tests output an error message pointing to the test file.
 * Figure out how to track dependencies for prgms/*.fble.
 * Figure out how to do code coverage with ninja.
 
