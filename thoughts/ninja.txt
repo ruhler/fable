@@ -1,0 +1,66 @@
+Switch back to ninja for build system.
+
+Motivations:
+* For the fun of it.
+* To avoid having to rebuild and retest everything for small changes.
+ - Don't rerun spec tests for changes to prgms.
+ - Don't rerun all tests for changes to some spec tests, or new spec tests.
+
+The problem is: I'm going to mess up the dependencies, because it's impossible
+not to, and it's going to be very frustrating.
+
+Anyway, the build description isn't too bad to start, generating the ninja
+file from tcl. Looks pretty much like my original build file.
+
+The big question next is how to do tests. Let's ignore code coverage for now.
+I suggest:
+* Let's have ninja in charge of running the tests, so we only have to rerun
+  tests that have changed instead of always having to run them all or nothing.
+* For an individual test, we could either do it all in one go, or split it up
+  into paces if we want to reuse, for example, ninja to build intermediate
+  artifacts.
+* I still want to have a summary of number of tests passed and failed, to help
+  double check a new test I ran was actually run.
+* I think we don't want build to fail for a test failure, because we want to
+  easily see all the tests failing at once, and often I like to check things
+  in with test failures. It's fine to fail build for test errors, but probably
+  not test failures, if that distinction is clear.
+
+It would be nice to have one common way to describe tests that can be reused
+for spec tests and one-off tests. I propose the following interface:
+
+A test is any command that outputs a test result file indicating if the test
+passed or failed. The file should include the unique name of the test, whether
+it passed or failed, and if it failed, what the error message was.
+
+Maybe encode the test name as the name of the file. Add a '.tr' extension for
+'test result'. Contents of the file should be PASSED if the test passes, an
+error message otherwise? How about, first line is 'PASSED' or 'FAILED'. The
+error message or any other info comes on subsequent lines?
+
+You kind of which there was an easy way to convert the contents to a possibly
+empty message and a status code.
+
+How about just: 'PASSED', single line, for success. Anything else is failure.
+For command line stuff we could do something like:
+
+  foo x 2> foo.tr && echo 'PASSED' > foo.tr
+
+Let's try it. Then, for a summary, we have a script that is passed the list of
+tr files and reads through them looking for failures, summarizing the status
+and results, and returning status code 0 or 1 depending.
+
+Alternatively, to make it easy to output stuff when passed, maybe we always
+generate two files: .testresult is 'PASSED' or 'FAILED'. .testlog is whatever
+output the test produces? Yeah. That's good. Good to separate the status from
+the test log, so that we don't accidentally interfere. The script to summarize
+takes as input a list of test names? How about a list of .testresult files,
+and .testlog is optionally assumed to be adjacent. Reasonable? Let's give it a
+shot.
+
+Let's start simple. A build rule to turn a command into a test, two initial
+tests: true and false, and a test summarizer.
+
+It's a little annoying to deal with multiple tests. How about log is all
+except the last line, last line is status PASSED or FAILED otherwise it's
+treated as a test error?

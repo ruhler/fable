@@ -12,7 +12,7 @@ set builddir "ninja"
 puts "builddir = $builddir"
 
 puts {
-rule build_ninja 
+rule tclsh 
   description = $out
   command = tclsh $in > $out
 
@@ -39,11 +39,15 @@ rule exe
 rule copy
   description = $out
   command = cp $in $out
+
+rule test
+  description = $out
+  command = $cmd > $out 2>&1 && echo PASSED >> $out || echo FAILED >> $out
 }
 
 # Make sure to include a dependency for every directory we use with glob here.
 set globs { fble tools }
-puts "build ninja/build.ninja: build_ninja build.ninja.tcl | $globs"
+puts "build ninja/build.ninja: tclsh build.ninja.tcl | $globs"
 
 set obj ninja/obj
 set fble_objs [list]
@@ -86,4 +90,14 @@ puts "  iflags = -I ninja/include -I /usr/include/SDL2"
 puts "build ninja/bin/fble-app: exe ninja/obj/fble-app.o | ninja/lib/libfble.a"
 puts "  lflags = -L ninja/lib"
 puts "  libs = -lfble -lSDL2"
+
+puts "build ninja/tests/true.tr: test"
+puts "  cmd = true"
+
+puts "build ninja/tests/false.tr: test"
+puts "  cmd = false"
+
+#set tests [list ninja/tests/true.tr ninja/tests/false.tr]
+set tests [list ninja/tests/true.tr]
+puts "build ninja/tests/summary.txt: tclsh tools/tests.tcl $tests"
 
