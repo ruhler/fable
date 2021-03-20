@@ -34,11 +34,14 @@ rule rule
 #   targets - the list of targets produced by the command.
 #   dependencies - the list of targets this depends on.
 #   command - the command to run to produce the targets.
-#   args - optional value to use for ninja 'depfile'
+#   args - optional additional "key = argument" pairs to use for ninja rule.
 proc build { targets dependencies command args } {
   puts "build [join $targets]: rule [join $dependencies]"
-  puts "  depfile = [join $args]"
   puts "  cmd = $command"
+
+  foreach kv $args {
+    puts "  $kv"
+  }
 }
 
 # obj --
@@ -52,7 +55,7 @@ proc build { targets dependencies command args } {
 proc obj { obj src iflags args } {
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
   set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
-  build $obj "$src $args" $cmd $obj.d
+  build $obj "$src $args" $cmd "depfile = $obj.d"
 }
 
 # bin --
@@ -176,7 +179,7 @@ foreach x {
 } {
   build $prgms/$x.d "$::bin/fble-deps prgms/$x" \
     "$::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d" \
-    $prgms/$x.d
+    "depfile = $prgms/$x.d"
 }
 
 # fble-disassemble test

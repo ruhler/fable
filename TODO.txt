@@ -4,6 +4,7 @@ Ninja:
  - to avoid duplicating outputs.
 * See if I can figure out how to show incremental output for my long running
   test.
+ - pool=console works if we don't redirect output of fble-test to a file.
 * Pass file with lists of tests to tools/tests.tcl instead of on the command
   line? To avoid a massive glob of text in the output when any single test
   fails.
