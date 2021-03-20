@@ -45,10 +45,6 @@ rule copy
 rule dir
   description = $out
   command = mkdir -p $out
-
-rule test
-  description = $out
-  command = $cmd > $out 2>&1 && echo PASSED >> $out || echo FAILED >> $out
 }
 
 # build --
@@ -90,6 +86,22 @@ proc obj { obj src iflags args } {
 proc bin { bin objs lflags args } {
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
   build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
+}
+
+# test --
+#   Build a test result.
+#
+# Inputs:
+#   tr - the .tr file to output the results to.
+#   deps - depencies for the test.
+#   cmd - the test command to run, which should exit 0 for PASSED.
+#
+# Adds the .tr file to global list of tests to run.
+set ::tests [list]
+proc test { tr deps cmd } {
+  build $tr $deps \
+    "$cmd > $tr 2>&1 && echo PASSED >> $tr || echo FAILED >> $tr"
+  lappend ::tests $tr
 }
 
 # Any time we run glob over a directory, add that directory to this list.
@@ -139,15 +151,8 @@ foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
 obj $::obj/fble-app.o prgms/fble-app.c "-I $::include -I /usr/include/SDL2" $hdrs
 bin $::bin/fble-app $::obj/fble-app.o "-L $::lib -lfble -lSDL2" $::libfble
 
-set ::tests [list]
-
-lappend ::tests $::test/true.tr
-puts "build $::test/true.tr: test"
-puts "  cmd = true"
-
-# lappend ::tests $::test/false.tr
-puts "build $::test/false.tr: test"
-puts "  cmd = false"
+test $::test/true.tr "" true
+#test $::test/false.tr "" false
 
 # Returns the list of all subdirectories, recursively, of the given directory.
 # The 'root' directory will not be included as a prefix in the returned list
@@ -168,7 +173,6 @@ foreach dir [dirs langs/fble ""] {
     set root [file rootname $t]
     set tcl langs/fble/$t
     set tr $::test/$root.tr
-    lappend ::tests $tr
     set x "tools/spec-test.tcl \
       $::bin/fble-test \
       $::bin/fble-mem-test \
@@ -176,14 +180,12 @@ foreach dir [dirs langs/fble ""] {
       $::test/$root \
       $tcl"
     puts "build $::test/$root: dir"
-    puts "build $tr: test | $x"
-    puts "  cmd = tclsh $x"
+    test $tr $x "tclsh $x"
   }
 }
 
-lappend ::tests $::test/fble-profile-test.tr
-puts "build $::test/fble-profile-test.tr: test | $::bin/fble-profile-test"
-puts "  cmd = ./$::bin/fble-profile-test"
+test $::test/fble-profile-test.tr $::bin/fble-profile-test \
+  "./$::bin/fble-profile-test"
 
 set ::mains {
   Fble/Tests.fble
@@ -199,44 +201,36 @@ foreach x $::mains {
   puts "  command = $::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d"
 }
 
-lappend ::tests $::test/fble-disassemble.tr
-puts "build $::test/fble-disassemble.tr: test | $::bin/fble-disassemble $::prgms/Fble/Tests.fble.d"
-puts "  cmd = ./$::bin/fble-disassemble prgms/Fble/Tests.fble prgms"
+test $::test/fble-disassemble.tr \
+  "$::bin/fble-disassemble $::prgms/Fble/Tests.fble.d" \
+  "./$::bin/fble-disassemble prgms/Fble/Tests.fble prgms"
 
-lappend ::tests $::test/fble-tests.tr
-puts "build $::test/fble-tests.tr: test | $::bin/fble-stdio $::prgms/Fble/Tests.fble.d"
-puts "  cmd = ./$::bin/fble-stdio prgms/Fble/Tests.fble prgms"
+test $::test/fble-tests.tr "$::bin/fble-stdio $::prgms/Fble/Tests.fble.d" \
+  "./$::bin/fble-stdio prgms/Fble/Tests.fble prgms"
 
-lappend ::tests $::test/fble-md5.tr
-puts "build $::test/fble-md5.tr: test | $::bin/fble-md5 $::prgms/Md5/Main.fble.d"
-puts "  cmd = ./$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null"
+test $::test/fble-md5.tr "$::bin/fble-md5 $::prgms/Md5/Main.fble.d" \
+  "./$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null"
 
-lappend ::tests $::test/fble-cat.tr
-puts "build $::test/fble-cat.tr: test | $::bin/fble-stdio $::prgms/Stdio/Cat.fble.d"
-puts "  cmd = ./$::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -"
+test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
+  "./$::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -"
 
-lappend ::tests $::test/fble-stdio.tr
-puts "build $::test/fble-stdio.tr: test | $::bin/fble-stdio $::prgms/Stdio/Test.fble.d"
-puts "  cmd = ./$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED"
+test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
+  "./$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED"
 
-lappend ::tests $::test/fblf-tests.tr
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
 build $::src/fblf-tests.c \
   "$::bin/fble-stdio $::prgms/Fblf/Lib/Tests/Compile.fble.d" \
   "./$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c"
 obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
 bin $::bin/fblf-tests "$::obj/fblf-tests.o $::obj/fblf-heap.o" ""
-puts "build $::test/fblf-tests.tr: test | $::bin/fblf-tests"
-puts "  cmd = ./$::bin/fblf-tests"
+test $::test/fblf-tests.tr $::bin/fblf-tests ./$::bin/fblf-tests
 
-lappend ::tests $::test/fblf-md5.tr
 build $::src/fblf-md5.c \
   "$::bin/fble-stdio $::prgms/Fblf/Lib/Md5/Stdio.fble.d" \
   "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
 obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
 bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
-puts "build $::test/fblf-md5.tr: test | $::bin/fblf-md5"
-puts "  cmd = ./$::bin/fblf-md5 /dev/null"
+test $::test/fblf-md5.tr $::bin/fblf-md5 "./$::bin/fblf-md5 /dev/null"
 
 build $::test/summary.txt "tools/tests.tcl $::tests" \
   "tclsh tools/tests.tcl $::tests > $::test/summary.txt"
