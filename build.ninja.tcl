@@ -44,10 +44,6 @@ rule rule
   description = $out
   command = $cmd
 
-rule parser
-  description = $tab_c
-  command = bison --report=all --report-file=$report -o $tab_c $in
-
 rule lib
   description = $out
   command = ar rcs $out $in
@@ -65,13 +61,15 @@ rule test
   command = $cmd > $out 2>&1 && echo PASSED >> $out || echo FAILED >> $out
 }
 
-# A rule to build generic targets.
+# build --
+#   Builds generic targets.
+#
 # Inputs:
 #   targets - the list of targets produced by the command.
 #   dependencies - the list of targets this depends on.
 #   command - the command to run to produce the targets.
 #   args - optional value to use for 'depfile'
-proc build { targets dependencies command args} {
+proc build { targets dependencies command args } {
   puts "build [join $targets]: rule [join $dependencies]"
   puts "  depfile = [join $args]"
   puts "  cmd = $command"
@@ -113,16 +111,19 @@ set ::fble_objs [list]
 lappend ::globs "fble"
 foreach {x} [glob fble/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
-  lappend ::fble_objs $object
   obj $object $x "-I fble"
+  lappend ::fble_objs $object
 }
 
-# For any changes to how parser_includes works, please update the comment
-# above the local includes in fble/parse.y.
-set ::parser_includes "fble/fble.h fble/syntax.h"
-puts "build $src/parse.tab.c $src/parse.tab.report.txt: parser fble/parse.y | $::parser_includes"
-puts "  tab_c = $src/parse.tab.c"
-puts "  report = $src/parse.tab.report.txt"
+eval {
+  # Update local includes for fble/parse.y here.
+  # See comment in fble/parse.y.
+  set includes "fble/fble.h fble/syntax.h"
+  set report $::src/parse.tab.report.txt
+  set tabc $src/parse.tab.c
+  set cmd "bison --report=all --report-file=$report -o $tabc fble/parse.y"
+  build "$tabc $report" "fble/parse.y $includes" $cmd
+}
 
 obj $::obj/parse.tab.o $src/parse.tab.c "-I fble"
 lappend ::fble_objs $::obj/parse.tab.o
