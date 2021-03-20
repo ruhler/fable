@@ -1,8 +1,11 @@
 
 Ninja:
-* Add fblf and fblf md5 compilation tests to build.ninja.
+* See if I can switch to a single global rule and do most things at the tcl
+  level instead of directly outputting strings.
 * See if I can clean up reporting for tests
  - to avoid duplicating outputs.
+* See if I can figure out how to show incremental output for my long running
+  test.
 * Pass file with lists of tests to tools/tests.tcl instead of on the command
   line? To avoid a massive glob of text in the output when any single test
   fails.

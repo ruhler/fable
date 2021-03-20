@@ -18,6 +18,10 @@ rule tclsh
 
 cFlags = -std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb
 
+rule rule
+  description = $out
+  command = $cmd
+
 rule obj
   description = $out
   depfile = $out.d
@@ -185,6 +189,26 @@ puts "  cmd = ./ninja/bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | c
 lappend tests ninja/tests/fble-stdio.tr
 puts "build ninja/tests/fble-stdio.tr: test | ninja/bin/fble-stdio ninja/Stdio/Test.fble.d"
 puts "  cmd = ./ninja/bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED"
+
+lappend tests ninja/tests/fblf-tests.tr
+puts "build ninja/obj/fblf-heap.o: obj prgms/Fblf/fblf-heap.c"
+puts "  iflags = -I prgms/Fblf"
+puts "build ninja/src/fblf-tests.c: rule | ninja/bin/fble-stdio ninja/Fblf/Lib/Tests/Compile.fble.d"
+puts "  cmd = ./ninja/bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > ninja/src/fblf-tests.c"
+puts "build ninja/obj/fblf-tests.o: obj ninja/src/fblf-tests.c"
+puts "  iflags = -I prgms/Fblf"
+puts "build ninja/bin/fblf-tests: exe ninja/obj/fblf-tests.o ninja/obj/fblf-heap.o"
+puts "build ninja/tests/fblf-tests.tr: test | ninja/bin/fblf-tests"
+puts "  cmd = ./ninja/bin/fblf-tests"
+
+lappend tests ninja/tests/fblf-md5.tr
+puts "build ninja/src/fblf-md5.c: rule | ninja/bin/fble-stdio ninja/Fblf/Lib/Md5/Stdio.fble.d"
+puts "  cmd = ./ninja/bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > ninja/src/fblf-md5.c"
+puts "build ninja/obj/fblf-md5.o: obj ninja/src/fblf-md5.c"
+puts "  iflags = -I prgms/Fblf"
+puts "build ninja/bin/fblf-md5: exe ninja/obj/fblf-md5.o ninja/obj/fblf-heap.o"
+puts "build ninja/tests/fblf-md5.tr: test | ninja/bin/fblf-md5"
+puts "  cmd = ./ninja/bin/fblf-md5 /dev/null"
 
 puts "build ninja/tests/summary.txt: tclsh tools/tests.tcl $tests"
 
