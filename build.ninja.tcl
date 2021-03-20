@@ -32,15 +32,10 @@ set ::prgms "$::out/prgms"
 set ::test "$::out/test"
 
 puts "builddir = $::out"
-
 puts {
 rule rule
   description = $out
   command = $cmd
-
-rule copy
-  description = $out
-  command = cp $in $out
 }
 
 # build --
@@ -134,7 +129,7 @@ set hdrs [list]
 foreach {x} [glob fble/fble*.h] {
   set hdr "$::include/[file tail $x]"
   lappend hdrs $hdr
-  puts "build $hdr: copy $x"
+  build $hdr $x "cp $x $hdr"
 }
 
 lappend globs "tools"
@@ -192,9 +187,9 @@ set ::mains {
   Fblf/Lib/Md5/Stdio.fble
 }
 foreach x $::mains {
-  puts "build $prgms/$x.d: rule $::bin/fble-deps prgms/$x"
-  puts "  depfile = $prgms/$x.d"
-  puts "  command = $::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d"
+  build $prgms/$x.d "$::bin/fble-deps prgms/$x" \
+    "$::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d" \
+    $prgms/$x.d
 }
 
 test $::test/fble-disassemble.tr \

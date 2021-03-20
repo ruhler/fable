@@ -1,10 +1,7 @@
 
 Ninja:
-* See if I can switch to a single global rule and do most things at the tcl
-  level instead of directly outputting strings.
 * Any way to clean up the need to generate and depend on public headers
   specially?
-* switch from 'ninja' to 'out' for output directory.
 * See if I can clean up reporting for tests
  - to avoid duplicating outputs.
 * See if I can figure out how to show incremental output for my long running
