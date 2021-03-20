@@ -1,15 +1,4 @@
 
-Ninja:
-* See if I can clean up reporting for tests
- - to avoid duplicating outputs.
-* See if I can figure out how to show incremental output for my long running
-  test.
- - pool=console works if we don't redirect output of fble-test to a file.
-* Pass file with lists of tests to tools/tests.tcl instead of on the command
-  line? To avoid a massive glob of text in the output when any single test
-  fails.
-* Figure out how to do code coverage with ninja.
-
 Fble Compilation:
 * Write code to compile an FbleValue to C code that, when given
   an FbleHeap, creates that same value.
@@ -78,6 +67,7 @@ Exec:
 * Clean up doc comments in typecheck.h, typecheck.c, compile.c.
  - Now that we are passing value heaps around instead of arenas.
 
+* Figure out how to do code coverage with ninja.
 * Test use of undefined values in case, access, and func apply.
 * Check if it's okay to add new blocks to a profile in progress.
  - either way, document that clearly.

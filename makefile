@@ -8,7 +8,6 @@ out/build.ninja: build.ninja.tcl
 .PHONY: all
 all: out/build.ninja
 	ninja -f out/build.ninja
-	tail -n 3 out/test/summary.txt
 
 .PHONY: clean
 clean:
@@ -20,7 +19,6 @@ full:
 	mkdir -p out
 	tclsh build.ninja.tcl > out/build.ninja
 	ninja -f out/build.ninja
-	tail -n 3 out/test/summary.txt
 
 .PHONY: bench
 bench:

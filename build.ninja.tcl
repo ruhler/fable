@@ -77,14 +77,15 @@ proc bin { bin objs lflags args } {
 # Inputs:
 #   tr - the .tr file to output the results to.
 #   deps - depencies for the test.
-#   cmd - the test command to run, which should exit 0 for PASSED.
+#   cmd - the test command to run, which should exit 0 to indicate the test
+#         passed and non-zero to indicate the test failed.
+#   args - optional additional "key = argument" pairs to use for ninja rule.
 #
-# Adds the .tr file to global list of tests to run.
+# Adds the .tr file to global list of tests.
 set ::tests [list]
-proc test { tr deps cmd } {
+proc test { tr deps cmd args} {
   lappend ::tests $tr
-  build $tr $deps \
-    "$cmd > $tr 2>&1 && echo PASSED >> $tr || echo FAILED >> $tr"
+  build $tr $deps "$cmd && echo PASSED > $tr || echo FAILED > $tr" {*}$args
 }
 
 # Any time we run glob over a directory, add that directory to this list.
@@ -166,7 +167,7 @@ foreach dir [dirs langs/fble ""] {
 
 # fble-profile-test
 test $::test/fble-profile-test.tr $::bin/fble-profile-test \
-  "./$::bin/fble-profile-test"
+  "./$::bin/fble-profile-test > /dev/null"
 
 # dependency files for the top level .fble files used in tests
 foreach x {
@@ -185,15 +186,15 @@ foreach x {
 # fble-disassemble test
 test $::test/fble-disassemble.tr \
   "$::bin/fble-disassemble $::prgms/Fble/Tests.fble.d" \
-  "./$::bin/fble-disassemble prgms/Fble/Tests.fble prgms"
+  "./$::bin/fble-disassemble prgms/Fble/Tests.fble prgms > /dev/null"
 
 # Fble/Tests.fble tests
 test $::test/fble-tests.tr "$::bin/fble-stdio $::prgms/Fble/Tests.fble.d" \
-  "./$::bin/fble-stdio prgms/Fble/Tests.fble prgms"
+  "./$::bin/fble-stdio prgms/Fble/Tests.fble prgms" "pool = console"
 
 # fble-md5 test
 test $::test/fble-md5.tr "$::bin/fble-md5 $::prgms/Md5/Main.fble.d" \
-  "./$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null"
+  "./$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null | grep d41d8cd98f00b204e9800998ecf8427e > /dev/null"
 
 # fble-cat test
 test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
@@ -201,7 +202,7 @@ test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
 
 # fble-stdio test
 test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
-  "./$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED"
+  "./$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
 
 # fblf compilation test
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
@@ -218,11 +219,13 @@ build $::src/fblf-md5.c \
   "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
 obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
 bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
-test $::test/fblf-md5.tr $::bin/fblf-md5 "./$::bin/fblf-md5 /dev/null"
+test $::test/fblf-md5.tr $::bin/fblf-md5 \
+  "./$::bin/fblf-md5 /dev/null | grep d41d8cd98f00b204e9800998ecf8427e > /dev/null"
 
 # test summary
-build $::test/summary.txt "tools/tests.tcl $::tests" \
-  "tclsh tools/tests.tcl $::tests > $::test/summary.txt"
+build $::test/tests.txt "$::tests" "echo $::tests > $::test/tests.txt"
+build $::test/summary.tr "tools/tests.tcl $::test/tests.txt" \
+  "tclsh tools/tests.tcl $::test/tests.txt && echo PASSED > $::test/summary.tr"
 
 # build.ninja
 build $::out/build.ninja "build.ninja.tcl $::globs" \

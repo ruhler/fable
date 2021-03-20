@@ -150,3 +150,16 @@ the right direction. And the build script is abstract enough that we could
 probably replace it with something that runs commands directly if desired.
 It's not too tied to ninja.
 
+---
+
+Cleanup for handling of output and tests:
+* let's just store PASSED or FAILED in the .tr file, not the test output
+* put the test output into the build log instead.
+* if we really want the output to be generated and saved, it shouldn't be as
+  part of a test, it should be a separate build rule.
+* test error messages will go to the build log. No need to save them
+  elsewhere.
+* tests.tcl just needs to count tests and pass/fail, no need to re-output logs
+  from failed tests.
+
+Let's give it a try.

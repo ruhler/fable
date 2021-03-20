@@ -40,7 +40,7 @@ proc fble-test-run { cmd expr modules } {
   exec echo $expr > $fprgm
   exec ln -f $::natfble $::dir/Nat.fble
   write_modules $::dir $modules
-  exec {*}$cmd $fprgm $::dir
+  exec {*}$cmd $fprgm $::dir > $::dir/test.out
 }
 
 # See langs/fble/README.txt for the description of this function
@@ -73,7 +73,8 @@ proc fble-test-memory-growth { expr } {
   fble-test-run "$::fblememtest --growth" $expr {}
 }
 
-# Output a message that makes it easy to jump to the test from logs if it
-# fails.
-puts "$::testtcl:1:0"
-source $::testtcl
+if { [catch {source $::testtcl} msg] } {
+  puts "$::testtcl:1: error: test failed"
+  puts "$msg"
+  exit 1
+}
