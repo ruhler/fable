@@ -52,10 +52,6 @@ rule lib
   description = $out
   command = ar rcs $out $in
 
-rule exe
-  description = $out
-  command = gcc $cFlags $lflags -o $out $in $libs
-
 rule copy
   description = $out
   command = cp $in $out
@@ -108,8 +104,9 @@ proc obj { obj src iflags args } {
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 #   args - optional additional dependencies.
 proc bin { bin objs lflags args } {
-  puts "build $bin: exe $objs | $args"
-  puts "  libs = $lflags"
+  set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
+  puts "build $bin: rule | $objs $args"
+  puts "  command = gcc $cflags -o $bin $objs $lflags"
 }
 
 # Any time we run glob over a directory, add that directory to this list.
