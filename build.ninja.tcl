@@ -44,10 +44,6 @@ rule rule
   description = $out
   command = $cmd
 
-rule lib
-  description = $out
-  command = ar rcs $out $in
-
 rule copy
   description = $out
   command = cp $in $out
@@ -129,7 +125,7 @@ obj $::obj/parse.tab.o $src/parse.tab.c "-I fble"
 lappend ::fble_objs $::obj/parse.tab.o
 
 set ::libfble "$::lib/libfble.a"
-puts "build $::libfble: lib $::fble_objs"
+build $::libfble $::fble_objs "ar rcs $::libfble $::fble_objs"
 
 # public header files for libfble.
 set hdrs [list]
