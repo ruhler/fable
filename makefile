@@ -18,7 +18,7 @@ clean:
 full:
 	rm -rf out/
 	mkdir -p out
-	tclsh $< > $@
+	tclsh build.ninja.tcl > out/build.ninja
 	ninja -f out/build.ninja
 	tail -n 3 out/test/summary.txt
 
