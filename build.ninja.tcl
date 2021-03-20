@@ -94,7 +94,7 @@ proc build { targets dependencies command } {
 #   src - the .c file to build the .o file from.
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
-proc build_obj { obj src iflags args } {
+proc obj { obj src iflags args } {
   puts "build $obj: obj $src | [join $args]"
   puts "  iflags = $iflags"
 }
@@ -109,7 +109,7 @@ lappend ::globs "fble"
 foreach {x} [glob fble/*.c] {
   set object $::obj/[string map {.c .o} [file tail $x]]
   lappend ::fble_objs $object
-  build_obj $object $x "-I fble"
+  obj $object $x "-I fble"
 }
 
 # For any changes to how parser_includes works, please update the comment
@@ -119,7 +119,7 @@ puts "build $src/parse.tab.c $src/parse.tab.report.txt: parser fble/parse.y | $:
 puts "  tab_c = $src/parse.tab.c"
 puts "  report = $src/parse.tab.report.txt"
 
-build_obj $::obj/parse.tab.o $src/parse.tab.c "-I fble"
+obj $::obj/parse.tab.o $src/parse.tab.c "-I fble"
 lappend ::fble_objs $::obj/parse.tab.o
 
 set ::libfble "$::lib/libfble.a"
@@ -136,13 +136,13 @@ foreach {x} [glob fble/fble*.h] {
 lappend globs "tools"
 foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
-  build_obj $::obj/$base.o $x "-I $::include" $hdrs
+  obj $::obj/$base.o $x "-I $::include" $hdrs
   puts "build $::bin/$base: exe $::obj/$base.o | $::libfble"
   puts "  lflags = -L $::lib"
   puts "  libs = -lfble"
 }
 
-build_obj $::obj/fble-app.o prgms/fble-app.c "-I $::include -I /usr/include/SDL2" $hdrs
+obj $::obj/fble-app.o prgms/fble-app.c "-I $::include -I /usr/include/SDL2" $hdrs
 puts "build $::bin/fble-app: exe $::obj/fble-app.o | $::libfble"
 puts "  lflags = -L $::lib"
 puts "  libs = -lfble -lSDL2"
@@ -228,7 +228,7 @@ puts "build $::test/fble-stdio.tr: test | $::bin/fble-stdio $::prgms/Stdio/Test.
 puts "  cmd = ./$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED"
 
 lappend ::tests $::test/fblf-tests.tr
-build_obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
+obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
 
 build $::src/fblf-tests.c {
   $::bin/fble-stdio
@@ -237,7 +237,7 @@ build $::src/fblf-tests.c {
   ./$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c
 }
 
-build_obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
+obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
 puts "build $::bin/fblf-tests: exe $::obj/fblf-tests.o $::obj/fblf-heap.o"
 puts "build $::test/fblf-tests.tr: test | $::bin/fblf-tests"
 puts "  cmd = ./$::bin/fblf-tests"
@@ -248,7 +248,7 @@ build $::src/fblf-md5.c {
   $::prgms/Fblf/Lib/Md5/Stdio.fble.d
 } "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
 
-build_obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
+obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
 puts "build $::bin/fblf-md5: exe $::obj/fblf-md5.o $::obj/fblf-heap.o"
 puts "build $::test/fblf-md5.tr: test | $::bin/fblf-md5"
 puts "  cmd = ./$::bin/fblf-md5 /dev/null"
