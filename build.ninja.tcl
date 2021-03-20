@@ -84,6 +84,9 @@ proc build { targets dependencies command } {
   puts "  cmd = [subst [join $command]]"
 }
 
+# obj --
+#   Builds a .o file.
+#
 # Inputs:
 #   obj - the .o file to build (include $::obj directory).
 #   src - the .c file to build the .o file from.
@@ -94,6 +97,19 @@ proc obj { obj src iflags args } {
   puts "build $obj: rule $src | [join $args]"
   puts "  depfile = $obj.d"
   puts "  command = gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
+}
+
+# bin --
+#   Build a binary.
+#
+# Inputs:
+#   bin - the binary file to build (include $::bin directory).
+#   objs - the list of .o files to build from.
+#   lflags - library flags, e.g. "-L foo/ -lfoo".
+#   args - optional additional dependencies.
+proc bin { bin objs lflags args } {
+  puts "build $bin: exe $objs | $args"
+  puts "  libs = $lflags"
 }
 
 # Any time we run glob over a directory, add that directory to this list.
@@ -134,15 +150,11 @@ lappend globs "tools"
 foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
   obj $::obj/$base.o $x "-I $::include" $hdrs
-  puts "build $::bin/$base: exe $::obj/$base.o | $::libfble"
-  puts "  lflags = -L $::lib"
-  puts "  libs = -lfble"
+  bin $::bin/$base $::obj/$base.o "-L $::lib -lfble" $::libfble
 }
 
 obj $::obj/fble-app.o prgms/fble-app.c "-I $::include -I /usr/include/SDL2" $hdrs
-puts "build $::bin/fble-app: exe $::obj/fble-app.o | $::libfble"
-puts "  lflags = -L $::lib"
-puts "  libs = -lfble -lSDL2"
+bin $::bin/fble-app $::obj/fble-app.o "-L $::lib -lfble -lSDL2" $::libfble
 
 set ::tests [list]
 
@@ -235,7 +247,7 @@ build $::src/fblf-tests.c {
 }
 
 obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
-puts "build $::bin/fblf-tests: exe $::obj/fblf-tests.o $::obj/fblf-heap.o"
+bin $::bin/fblf-tests "$::obj/fblf-tests.o $::obj/fblf-heap.o" ""
 puts "build $::test/fblf-tests.tr: test | $::bin/fblf-tests"
 puts "  cmd = ./$::bin/fblf-tests"
 
@@ -246,7 +258,7 @@ build $::src/fblf-md5.c {
 } "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
 
 obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
-puts "build $::bin/fblf-md5: exe $::obj/fblf-md5.o $::obj/fblf-heap.o"
+bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
 puts "build $::test/fblf-md5.tr: test | $::bin/fblf-md5"
 puts "  cmd = ./$::bin/fblf-md5 /dev/null"
 
