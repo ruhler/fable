@@ -221,25 +221,18 @@ puts "  cmd = ./$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED"
 
 lappend ::tests $::test/fblf-tests.tr
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
-
-eval {
-  set deps "$::bin/fble-stdio $::prgms/Fblf/Lib/Tests/Compile.fble.d"
-  set cmd "./$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c"
-  build $::src/fblf-tests.c $deps $cmd
-}
-
+build $::src/fblf-tests.c \
+  "$::bin/fble-stdio $::prgms/Fblf/Lib/Tests/Compile.fble.d" \
+  "./$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c"
 obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
 bin $::bin/fblf-tests "$::obj/fblf-tests.o $::obj/fblf-heap.o" ""
 puts "build $::test/fblf-tests.tr: test | $::bin/fblf-tests"
 puts "  cmd = ./$::bin/fblf-tests"
 
 lappend ::tests $::test/fblf-md5.tr
-eval {
-  set deps "$::bin/fble-stdio $::prgms/Fblf/Lib/Md5/Stdio.fble.d"
-  set cmd "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
-  build $::src/fblf-md5.c $deps $cmd
-}
-
+build $::src/fblf-md5.c \
+  "$::bin/fble-stdio $::prgms/Fblf/Lib/Md5/Stdio.fble.d" \
+  "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
 obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
 bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
 puts "build $::test/fblf-md5.tr: test | $::bin/fblf-md5"
