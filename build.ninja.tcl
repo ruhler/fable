@@ -72,14 +72,6 @@ rule dir
 rule test
   description = $out
   command = $cmd > $out 2>&1 && echo PASSED >> $out || echo FAILED >> $out
-
-# Sample usage:
-#  build Foo.fble.d: fbledeps Foo.fble | ninja/bin/fble-deps
-#    dir = prgms
-rule fbledeps
-  description = $out
-  depfile = $out
-  command = ./ninja/bin/fble-deps $out $in $dir > $out
 }
 
 # A rule to build generic targets.
@@ -202,8 +194,9 @@ set ::mains {
   Fblf/Lib/Md5/Stdio.fble
 }
 foreach x $::mains {
-  puts "build $prgms/$x.d: fbledeps prgms/$x | $::bin/fble-deps"
-  puts "  dir = prgms"
+  puts "build $prgms/$x.d: rule | $::bin/fble-deps prgms/$x"
+  puts "  depfile = $prgms/$x.d"
+  puts "  command = $::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d"
 }
 
 lappend ::tests $::test/fble-disassemble.tr
