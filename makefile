@@ -1,32 +1,32 @@
 
 default: all
 
-ninja/build.ninja: build.ninja.tcl
-	mkdir -p ninja
+out/build.ninja: build.ninja.tcl
+	mkdir -p out
 	tclsh $< > $@
 
 .PHONY: all
-all: ninja/build.ninja
-	ninja -f ninja/build.ninja
-	tail -n 3 ninja/test/summary.txt
+all: out/build.ninja
+	ninja -f out/build.ninja
+	tail -n 3 out/test/summary.txt
 
 .PHONY: clean
 clean:
-	rm -rf ninja/
+	rm -rf out/
 
 .PHONY: full
 full:
-	rm -rf ninja/
-	mkdir -p ninja
+	rm -rf out/
+	mkdir -p out
 	tclsh $< > $@
-	ninja -f ninja/build.ninja
-	tail -n 3 ninja/test/summary.txt
+	ninja -f out/build.ninja
+	tail -n 3 out/test/summary.txt
 
 .PHONY: bench
 bench:
-	./ninja/bin/fble-test prgms/Fble/Bench.fble prgms
+	./out/bin/fble-test prgms/Fble/Bench.fble prgms
 
 .PHONY: benchprof
 benchprof:
-	./ninja/bin/fble-test --profile prgms/Fble/Bench.fble prgms > bench.prof
+	./out/bin/fble-test --profile prgms/Fble/Bench.fble prgms > bench.prof
 

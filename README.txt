@@ -2,7 +2,7 @@ Directory Structure
 -------------------
 fble/ - Source code for an fble interpreter implemented in C.
 langs/ - Specifications of the fable languages.
-ninja/ - Directory where ninja build outputs are placed, created as needed.
+out/ - Directory where build outputs are placed, created as needed.
 prgms/ - Sample fble programs.
 tools/ - Source code for fble tools and test drivers.
 thoughts/ - A collection of discussions about fble.
@@ -13,5 +13,5 @@ To build and test everything, run:
 
   $ make
 
-The results are placed in the ninja/ directory.
+The results are placed in the out/ directory.
 

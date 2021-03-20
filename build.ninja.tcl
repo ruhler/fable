@@ -1,11 +1,11 @@
 # ninja-based description of how to build fble and friends.
 #
 # First time setup:
-#   mkdir -p ninja
-#   tclsh build.ninja.tcl > build.ninja
+#   mkdir -p out
+#   tclsh build.ninja.tcl > out/build.ninja
 #
 # Afterwards:
-#   ninja -f ninja/build.ninja
+#   ninja -f out/build.ninja
 
 # TODO: Add coverage a profiling variants of things?
 #
@@ -22,7 +22,7 @@
 # * run gcov and move *.gcov files where preferred as described for coverage.
 # * remove gmon.out
 
-set ::out "ninja"
+set ::out "out"
 set ::bin "$::out/bin"
 set ::obj "$::out/obj"
 set ::lib "$::out/lib"
