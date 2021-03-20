@@ -13,7 +13,6 @@ set ::bin "$::out/bin"
 set ::obj "$::out/obj"
 set ::lib "$::out/lib"
 set ::src "$::out/src"
-set ::include "$::out/include"
 set ::prgms "$::out/prgms"
 set ::test "$::out/test"
 
@@ -92,24 +91,24 @@ set ::globs [list]
 
 # .o files used to implement libfble.a
 set ::fble_objs [list]
-lappend ::globs "fble"
-foreach {x} [glob fble/*.c] {
-  set object $::obj/[string map {.c .o} [file tail $x]]
-  obj $object $x "-I fble"
+lappend ::globs "fble/src"
+foreach {x} [glob -tails -directory fble/src *.c] {
+  set object $::obj/[string map {.c .o} $x]
+  obj $object fble/src/$x "-I fble/include -I fble/src"
   lappend ::fble_objs $object
 }
 
 # parser
 eval {
-  # Update local includes for fble/parse.y here.
-  # See comment in fble/parse.y.
-  set includes "fble/fble.h fble/syntax.h"
+  # Update local includes for fble/src/parse.y here.
+  # See comment in fble/src/parse.y.
+  set includes "fble/include/fble.h fble/src/syntax.h"
   set report $::src/parse.tab.report.txt
   set tabc $src/parse.tab.c
-  set cmd "bison --report=all --report-file=$report -o $tabc fble/parse.y"
-  build "$tabc $report" "fble/parse.y $includes" $cmd
+  set cmd "bison --report=all --report-file=$report -o $tabc fble/src/parse.y"
+  build "$tabc $report" "fble/src/parse.y $includes" $cmd
 
-  obj $::obj/parse.tab.o $src/parse.tab.c "-I fble"
+  obj $::obj/parse.tab.o $src/parse.tab.c "-I fble/include -I fble/src"
   lappend ::fble_objs $::obj/parse.tab.o
 }
 
@@ -117,22 +116,14 @@ eval {
 set ::libfble "$::lib/libfble.a"
 build $::libfble $::fble_objs "ar rcs $::libfble $::fble_objs"
 
-# public header files for libfble
-set hdrs [list]
-foreach {x} [glob fble/fble*.h] {
-  set hdr "$::include/[file tail $x]"
-  lappend hdrs $hdr
-  build $hdr $x "cp $x $hdr"
-}
-
 # fble tool binaries
 lappend globs "tools"
 foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
-  obj $::obj/$base.o $x "-I $::include" $hdrs
+  obj $::obj/$base.o $x "-I fble/include"
   bin $::bin/$base $::obj/$base.o "-L $::lib -lfble" $::libfble
 }
-obj $::obj/fble-app.o prgms/fble-app.c "-I $::include -I /usr/include/SDL2" $hdrs
+obj $::obj/fble-app.o prgms/fble-app.c "-I fble/include -I /usr/include/SDL2"
 bin $::bin/fble-app $::obj/fble-app.o "-L $::lib -lfble -lSDL2" $::libfble
 
 # tests

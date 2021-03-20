@@ -140,3 +140,13 @@ Looks like that will work.
 
 Boy is it annoying not to see the incremental output of my big slow fble tests
 test.
+
+---
+
+I cleaned up the build.ninja.tcl file. It looks pretty nice to me now. I think
+we're ready to start developing normal fble code with it to see how things go.
+There are a few minor issues to resolve, but I think this is a decent step in
+the right direction. And the build script is abstract enough that we could
+probably replace it with something that runs commands directly if desired.
+It's not too tied to ninja.
+

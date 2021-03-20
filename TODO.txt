@@ -1,7 +1,5 @@
 
 Ninja:
-* Any way to clean up the need to generate and depend on public headers
-  specially?
 * See if I can clean up reporting for tests
  - to avoid duplicating outputs.
 * See if I can figure out how to show incremental output for my long running
