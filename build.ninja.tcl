@@ -48,12 +48,14 @@ rule test
   command = $cmd > $out 2>&1 && echo PASSED >> $out || echo FAILED >> $out
 }
 
-# Make sure to include a dependency for every directory we use with glob here.
-set globs { fble tools }
-puts "build ninja/build.ninja: tclsh build.ninja.tcl | $globs"
+# Any time we run glob over a directory, add that directory to this list.
+# We need to make sure to include these directories as a dependency on the
+# generation of build.ninja.
+set globs [list]
 
 set obj ninja/obj
 set fble_objs [list]
+lappend globs "fble"
 foreach {x} [glob fble/*.c] {
   set object $obj/[string map {.c .o} [file tail $x]]
   lappend fble_objs $object
@@ -79,6 +81,7 @@ foreach {x} [glob fble/fble*.h] {
   puts "build ninja/include/[file tail $x]: copy $x"
 }
 
+lappend globs "tools"
 foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
   puts "build ninja/obj/$base.o: obj $x"
@@ -104,20 +107,45 @@ puts "  cmd = true"
 puts "build ninja/tests/false.tr: test"
 puts "  cmd = false"
 
-lappend tests ninja/tests/0-test/no-error.tr
-set t "tools/spec-test.tcl \
-  ninja/bin/fble-test \
-  ninja/bin/fble-mem-test \
-  langs/fble/Nat.fble \
-  ninja/tests/0-test/no-error \
-  langs/fble/0-test/no-error.tcl"
-puts "build ninja/tests/0-test/no-error: dir"
-puts "build ninja/tests/0-test/no-error.tr: test | $t"
-puts "  cmd = tclsh $t"
+# Returns the list of all subdirectories, recursively, of the given directory.
+# The 'root' directory will not be included as a prefix in the returned list
+# of directories.
+# 'dir' should be empty or end with '/'.
+proc dirs { root dir } {
+  set l [list]
+  foreach {x} [lsort [glob -tails -directory $root -nocomplain -type d $dir*]] {
+    lappend l $x
+    set l [concat $l [dirs $root "$dir$x/"]]
+  }
+  return $l
+}
+
+set spectestdirs [dirs langs/fble ""]
+
+foreach dir $spectestdirs {
+  lappend globs "langs/fble/$dir"
+  foreach {t} [lsort [glob -tails -directory langs/fble -nocomplain -type f $dir/*.tcl]] {
+    set root [file rootname $t]
+    set tcl langs/fble/$t
+    set tr ninja/tests/$root.tr
+    lappend tests $tr
+    set x "tools/spec-test.tcl \
+      ninja/bin/fble-test \
+      ninja/bin/fble-mem-test \
+      langs/fble/Nat.fble \
+      ninja/tests/$root \
+      $tcl"
+    puts "build ninja/tests/$root: dir"
+    puts "build $tr: test | $x"
+    puts "  cmd = tclsh $x"
+  }
+}
 
 lappend tests ninja/tests/fble-profile-test.tr
 puts "build ninja/tests/fble-profile-test.tr: test | ninja/bin/fble-profile-test"
 puts "  cmd = ./ninja/bin/fble-profile-test"
 
 puts "build ninja/tests/summary.txt: tclsh tools/tests.tcl $tests"
+
+puts "build ninja/build.ninja: tclsh build.ninja.tcl | $globs"
 

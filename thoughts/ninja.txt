@@ -64,3 +64,28 @@ tests: true and false, and a test summarizer.
 It's a little annoying to deal with multiple tests. How about log is all
 except the last line, last line is status PASSED or FAILED otherwise it's
 treated as a test error?
+
+That seems to work fine.
+
+---
+
+Thoughts on testing with and without profiling: it's a little annoying, and
+seems redundant to run all the spec tests with and without profiling. It looks
+like I originally added with and without profiling to catch a bug that showed
+up for spec tests with profiling enabled. Since then, I don't think we've ever
+caught a bug in one mode that didn't show up the same in the other mode.
+
+My vote is this:
+* Run with profiling on for spec tests.
+* Run with profiling off for the Fble tests.
+
+That way we get coverage of profiling in all the various expressions, and
+coverage of turning off profiling. We don't want to run profiling on for the
+Fble tests anyway because it runs slower.
+
+---
+
+It's a little annoying that we don't get to see error messages from tests as
+they are produced. Seems we have to wait until the summary to see them all. I
+can probably make that better.
+

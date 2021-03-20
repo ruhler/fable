@@ -63,7 +63,7 @@ proc fble-test-error { loc expr args } {
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test-memory-constant { expr } {
-  fble-test-run $fblememtest $expr {}
+  fble-test-run $::fblememtest $expr {}
 }
 
 # See langs/fble/README.txt for the description of this function
@@ -71,4 +71,7 @@ proc fble-test-memory-growth { expr } {
   fble-test-run "$::fblememtest --growth" $expr {}
 }
 
+# Output a message that makes it easy to jump to the test from logs if it
+# fails.
+puts "$::testtcl:1:0"
 source $::testtcl
