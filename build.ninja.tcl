@@ -41,10 +41,6 @@ rule rule
 rule copy
   description = $out
   command = cp $in $out
-
-rule dir
-  description = $out
-  command = mkdir -p $out
 }
 
 # build --
@@ -179,7 +175,7 @@ foreach dir [dirs langs/fble ""] {
       langs/fble/Nat.fble \
       $::test/$root \
       $tcl"
-    puts "build $::test/$root: dir"
+    build $::test/$root "" "mkdir -p $::test/$root"
     test $tr $x "tclsh $x"
   }
 }
