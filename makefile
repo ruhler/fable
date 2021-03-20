@@ -8,7 +8,7 @@ ninja/build.ninja: build.ninja.tcl
 .PHONY: all
 all: ninja/build.ninja
 	ninja -f ninja/build.ninja
-	tail -n 3 ninja/tests/summary.txt
+	tail -n 3 ninja/test/summary.txt
 
 .PHONY: clean
 clean:
@@ -20,7 +20,7 @@ full:
 	mkdir -p ninja
 	tclsh $< > $@
 	ninja -f ninja/build.ninja
-	tail -n 3 ninja/tests/summary.txt
+	tail -n 3 ninja/test/summary.txt
 
 .PHONY: bench
 bench:
