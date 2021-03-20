@@ -45,7 +45,9 @@ proc fble-test-run { cmd expr modules } {
 
 # See langs/fble/README.txt for the description of this function
 proc fble-test { expr args } {
-  fble-test-run $::fbletest $expr $args
+  # We test with profiling turned on to cover the profiling logic, which
+  # depends heavily on the program being run.
+  fble-test-run "$::fbletest --profile" $expr $args
 }
 
 # See langs/fble/README.txt for the description of this function

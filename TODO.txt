@@ -3,6 +3,9 @@ Ninja:
 * See if I can clean up reporting for tests
  - to avoid duplicating outputs.
 * Figure out how to track dependencies for prgms/*.fble.
+* Pass file with lists of tests to tools/tests.tcl instead of on the command
+  line? To avoid a massive glob of text in the output when any single test
+  fails.
 * Figure out how to do code coverage with ninja.
 
 Fble Compilation:
