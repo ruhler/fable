@@ -70,14 +70,11 @@ rule test
 #   targets - the list of targets produced by the command.
 #   dependencies - the list of targets this depends on.
 #   command - the command to run to produce the targets.
-#
-# The lists have variable substitution performed on them, so you can use
-# variable substitutions in multi-line brace delimited lists.
-#
-# TODO: This is kind of ugly. Remove it?
-proc build { targets dependencies command } {
-  puts "build [subst [join $targets]]: rule | [subst [join $dependencies]]"
-  puts "  cmd = [subst [join $command]]"
+#   args - optional value to use for 'depfile'
+proc build { targets dependencies command args} {
+  puts "build [join $targets]: rule [join $dependencies]"
+  puts "  depfile = [join $args]"
+  puts "  cmd = $command"
 }
 
 # obj --
@@ -90,9 +87,8 @@ proc build { targets dependencies command } {
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
-  puts "build $obj: rule $src | [join $args]"
-  puts "  depfile = $obj.d"
-  puts "  command = gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
+  set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
+  build $obj "$src $args" $cmd $obj.d
 }
 
 # bin --
@@ -105,8 +101,7 @@ proc obj { obj src iflags args } {
 #   args - optional additional dependencies.
 proc bin { bin objs lflags args } {
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
-  puts "build $bin: rule | $objs $args"
-  puts "  command = gcc $cflags -o $bin $objs $lflags"
+  build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
 }
 
 # Any time we run glob over a directory, add that directory to this list.
@@ -208,7 +203,7 @@ set ::mains {
   Fblf/Lib/Md5/Stdio.fble
 }
 foreach x $::mains {
-  puts "build $prgms/$x.d: rule | $::bin/fble-deps prgms/$x"
+  puts "build $prgms/$x.d: rule $::bin/fble-deps prgms/$x"
   puts "  depfile = $prgms/$x.d"
   puts "  command = $::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d"
 }
@@ -236,11 +231,10 @@ puts "  cmd = ./$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED"
 lappend ::tests $::test/fblf-tests.tr
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
 
-build $::src/fblf-tests.c {
-  $::bin/fble-stdio
-  $::prgms/Fblf/Lib/Tests/Compile.fble.d
-} {
-  ./$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c
+eval {
+  set deps "$::bin/fble-stdio $::prgms/Fblf/Lib/Tests/Compile.fble.d"
+  set cmd "./$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c"
+  build $::src/fblf-tests.c $deps $cmd
 }
 
 obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
@@ -249,10 +243,11 @@ puts "build $::test/fblf-tests.tr: test | $::bin/fblf-tests"
 puts "  cmd = ./$::bin/fblf-tests"
 
 lappend ::tests $::test/fblf-md5.tr
-build $::src/fblf-md5.c {
-  $::bin/fble-stdio
-  $::prgms/Fblf/Lib/Md5/Stdio.fble.d
-} "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
+eval {
+  set deps "$::bin/fble-stdio $::prgms/Fblf/Lib/Md5/Stdio.fble.d"
+  set cmd "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
+  build $::src/fblf-md5.c $deps $cmd
+}
 
 obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
 bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
