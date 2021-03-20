@@ -7,6 +7,21 @@
 # Afterwards:
 #   ninja -f ninja/build.ninja
 
+# TODO: Add coverage a profiling variants of things?
+#
+# For coverage:
+# * add to gcc flags: -fprofile-arcs -ftest-coverage
+# * run tests as desired.
+# * run gcov passing all the libfble .o files on the command line.
+# * move *.gcov to wherever I prefer they end up.
+#
+# For profiling:
+# * add to gcc flags: -pg
+# * run benchmark as desired.
+# * run gprof passing the benchmark executable run on the command line.
+# * run gcov and move *.gcov files where preferred as described for coverage.
+# * remove gmon.out
+
 # Store ninja output files in ninja/ directory.
 set builddir "ninja"
 puts "builddir = $builddir"
@@ -89,21 +104,24 @@ lappend fble_objs $obj/parse.tab.o
 puts "build ninja/lib/libfble.a: lib $fble_objs"
 
 # public header files for libfble.
+set hdrs [list]
 foreach {x} [glob fble/fble*.h] {
-  puts "build ninja/include/[file tail $x]: copy $x"
+  set hdr "ninja/include/[file tail $x]"
+  lappend hdrs $hdr
+  puts "build $hdr: copy $x"
 }
 
 lappend globs "tools"
 foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
-  puts "build ninja/obj/$base.o: obj $x"
+  puts "build ninja/obj/$base.o: obj $x | $hdrs"
   puts "  iflags = -I ninja/include"
   puts "build ninja/bin/$base: exe ninja/obj/$base.o | ninja/lib/libfble.a"
   puts "  lflags = -L ninja/lib"
   puts "  libs = -lfble"
 }
 
-puts "build ninja/obj/fble-app.o: obj prgms/fble-app.c"
+puts "build ninja/obj/fble-app.o: obj prgms/fble-app.c | $hdrs"
 puts "  iflags = -I ninja/include -I /usr/include/SDL2"
 puts "build ninja/bin/fble-app: exe ninja/obj/fble-app.o | ninja/lib/libfble.a"
 puts "  lflags = -L ninja/lib"
