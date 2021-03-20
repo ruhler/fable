@@ -34,12 +34,6 @@ set ::test "$::out/test"
 puts "builddir = $::out"
 
 puts {
-rule tclsh 
-  description = $out
-  command = tclsh $in > $out
-
-cFlags = -std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb
-
 rule rule
   description = $out
   command = $cmd
@@ -251,7 +245,9 @@ bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
 puts "build $::test/fblf-md5.tr: test | $::bin/fblf-md5"
 puts "  cmd = ./$::bin/fblf-md5 /dev/null"
 
-puts "build $::test/summary.txt: tclsh tools/tests.tcl $::tests"
+build $::test/summary.txt "tools/tests.tcl $::tests" \
+  "tclsh tools/tests.tcl $::tests > $::test/summary.txt"
 
-puts "build $::out/build.ninja: tclsh build.ninja.tcl | $::globs"
+build $::out/build.ninja "build.ninja.tcl $::globs" \
+  "tclsh build.ninja.tcl > $::out/build.ninja"
 
