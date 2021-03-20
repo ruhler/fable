@@ -44,11 +44,6 @@ rule rule
   description = $out
   command = $cmd
 
-rule obj
-  description = $out
-  depfile = $out.d
-  command = gcc -MMD -MF $out.d $cFlags $iflags -c -o $out $in
-  
 rule parser
   description = $tab_c
   command = bison --report=all --report-file=$report -o $tab_c $in
@@ -95,8 +90,10 @@ proc build { targets dependencies command } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
-  puts "build $obj: obj $src | [join $args]"
-  puts "  iflags = $iflags"
+  set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
+  puts "build $obj: rule $src | [join $args]"
+  puts "  depfile = $obj.d"
+  puts "  command = gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
 }
 
 # Any time we run glob over a directory, add that directory to this list.
