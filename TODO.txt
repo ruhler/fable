@@ -1,8 +1,8 @@
 
 Ninja:
+* Add fblf and fblf md5 compilation tests to build.ninja.
 * See if I can clean up reporting for tests
  - to avoid duplicating outputs.
-* Figure out how to track dependencies for prgms/*.fble.
 * Pass file with lists of tests to tools/tests.tcl instead of on the command
   line? To avoid a massive glob of text in the output when any single test
   fails.

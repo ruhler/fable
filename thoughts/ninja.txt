@@ -89,3 +89,54 @@ It's a little annoying that we don't get to see error messages from tests as
 they are produced. Seems we have to wait until the summary to see them all. I
 can probably make that better.
 
+I think there are only two big things before we can switch over entirely to
+ninja (with the understanding that I can always rebuild full by removing the
+ninja directory and rebuilding if I'm worried about broken dependencies):
+
+1. How to track dependencies for .fble files.
+2. How to run code coverage / profiling.
+
+For code coverage, I don't see anything else reasonable available aside from
+gcov. gcov will be annoying to integrate into the build system I think. I'm
+worried about gcovs ability to support multiple processes trying to update the
+database at the same time. And we want to limit the scope of the gcov data to
+just the spec tests.
+
+I'm thinking it would be easier to avoid gcov by default. Just have it as a
+special mode when needed. So I could run it mostly manually. Maybe we have a
+way to build a profiling version of libfble. And then maybe add a script which
+is a wrapper around all the spec tests to run and gather code coverage. It can
+pass in profiling enabled variants of fble-test and fble-mem-test and reuse
+the spec_test.tcl code.
+
+Yeah. Let's do that for coverage:
+* Add build rules to generate fble-test.prof and fble-mem-test.prof
+  executables. Don't build these by default.
+* Add a tcl script to run all of the spec tests using profiling and extract
+  the ...?
+
+It's awkward because using code coverage really depends on knowing how things
+were compiled. That suggests it would be good to have ninja rules to run gcov
+and output the result.
+
+For fble dependencies, maybe we could come up with build rules to generate
+some file foo.fble.d that depends on all the .fble files that foo.fble
+depends on. We could have the contents of foo.fble.d be a depsfile compatible
+thing for ninja to read in. Then we just have to add an implicit dependency on
+any target that reads foo.fble: depend on foo.fble.d.
+
+I think we can do one-off things. That is, just generate a .d for each top
+level fble program we use. Not for every individual .fble file.
+
+So then I just need to write a program that, given a .fble file and search
+path, generates a depsfile for given foo.fble.d that depends on the list of
+files loaded for the .fble file. I think add a special function to load.c that
+exports this functionality.
+
+Maybe a nice API would be to add an optional pointer to a vector of
+FbleStrings listing all of the dependencies. Let me give that a try.
+
+Looks like that will work.
+
+Boy is it annoying not to see the incremental output of my big slow fble tests
+test.

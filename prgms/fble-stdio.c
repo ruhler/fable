@@ -206,7 +206,7 @@ int main(int argc, char* argv[])
   const char* include_path = argv[2];
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path);
+  FbleProgram* prgm = FbleLoad(arena, path, include_path, NULL);
   if (prgm == NULL) {
     FbleFreeArena(arena);
     return 1;

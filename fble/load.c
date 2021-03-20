@@ -312,7 +312,7 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
 }
 
 // FbleLoad -- see documentation in fble.h
-FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
+FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root, FbleStringV* deps)
 {
   FbleProgram* program = FbleAlloc(arena, FbleProgram);
   FbleVectorInit(arena, program->modules);
@@ -322,6 +322,9 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   stack->path.size = 0;
   stack->tail = NULL;
   FbleString* filename_str = FbleNewString(arena, filename);
+  if (deps != NULL) {
+    FbleVectorAppend(arena, *deps, FbleCopyString(filename_str));
+  }
   stack->value = FbleParse(arena, filename_str, &stack->module_refs);
   FbleFreeString(arena, filename_str);
   bool error = (stack->value == NULL);
@@ -412,6 +415,9 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     stack->value = NULL;
 
     if (filename_str != NULL) {
+      if (deps != NULL) {
+        FbleVectorAppend(arena, *deps, FbleCopyString(filename_str));
+      }
       stack->value = FbleParse(arena, filename_str, &stack->module_refs);
       FbleFreeString(arena, filename_str);
     }

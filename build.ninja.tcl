@@ -46,6 +46,14 @@ rule dir
 rule test
   description = $out
   command = $cmd > $out 2>&1 && echo PASSED >> $out || echo FAILED >> $out
+
+# Sample usage:
+#  build Foo.fble.d: fbledeps Foo.fble | ninja/bin/fble-deps
+#    dir = prgms
+rule fbledeps
+  description = $out
+  depfile = $out
+  command = ./ninja/bin/fble-deps $out $in $dir > $out
 }
 
 # Any time we run glob over a directory, add that directory to this list.
@@ -144,6 +152,39 @@ foreach dir $spectestdirs {
 lappend tests ninja/tests/fble-profile-test.tr
 puts "build ninja/tests/fble-profile-test.tr: test | ninja/bin/fble-profile-test"
 puts "  cmd = ./ninja/bin/fble-profile-test"
+
+set mains {
+  Fble/Tests.fble
+  Md5/Main.fble
+  Stdio/Cat.fble
+  Stdio/Test.fble
+  Fblf/Lib/Tests/Compile.fble
+  Fblf/Lib/Md5/Stdio.fble
+}
+foreach x $mains {
+  puts "build ninja/$x.d: fbledeps prgms/$x | ninja/bin/fble-deps"
+  puts "  dir = prgms"
+}
+
+lappend tests ninja/tests/fble-disassemble.tr
+puts "build ninja/tests/fble-disassemble.tr: test | ninja/bin/fble-disassemble ninja/Fble/Tests.fble.d"
+puts "  cmd = ./ninja/bin/fble-disassemble prgms/Fble/Tests.fble prgms"
+
+lappend tests ninja/tests/fble-tests.tr
+puts "build ninja/tests/fble-tests.tr: test | ninja/bin/fble-stdio ninja/Fble/Tests.fble.d"
+puts "  cmd = ./ninja/bin/fble-stdio prgms/Fble/Tests.fble prgms"
+
+lappend tests ninja/tests/fble-md5.tr
+puts "build ninja/tests/fble-md5.tr: test | ninja/bin/fble-md5 ninja/Md5/Main.fble.d"
+puts "  cmd = ./ninja/bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null"
+
+lappend tests ninja/tests/fble-cat.tr
+puts "build ninja/tests/fble-cat.tr: test | ninja/bin/fble-stdio ninja/Stdio/Cat.fble.d"
+puts "  cmd = ./ninja/bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -"
+
+lappend tests ninja/tests/fble-stdio.tr
+puts "build ninja/tests/fble-stdio.tr: test | ninja/bin/fble-stdio ninja/Stdio/Test.fble.d"
+puts "  cmd = ./ninja/bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED"
 
 puts "build ninja/tests/summary.txt: tclsh tools/tests.tcl $tests"
 

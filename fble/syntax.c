@@ -374,11 +374,13 @@ void FbleFreeKind(FbleArena* arena, FbleKind* kind)
 // FbleFreeProgram -- see documentation in fble.h
 void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
 {
-  for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleFreeName(arena, program->modules.xs[i].name);
-    FbleFreeExpr(arena, program->modules.xs[i].value);
+  if (program != NULL) {
+    for (size_t i = 0; i < program->modules.size; ++i) {
+      FbleFreeName(arena, program->modules.xs[i].name);
+      FbleFreeExpr(arena, program->modules.xs[i].value);
+    }
+    FbleFree(arena, program->modules.xs);
+    FbleFreeExpr(arena, program->main);
+    FbleFree(arena, program);
   }
-  FbleFree(arena, program->modules.xs);
-  FbleFreeExpr(arena, program->main);
-  FbleFree(arena, program);
 }

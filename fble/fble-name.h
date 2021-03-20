@@ -22,6 +22,13 @@ typedef struct {
   char str[];
 } FbleString;
 
+// FbleStringV --
+//   A vector of FbleString. 
+typedef struct {
+  size_t size;
+  FbleString** xs;
+} FbleStringV;
+
 // FbleNewString --
 //   Allocate a new FbleString.
 //

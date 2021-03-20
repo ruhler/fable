@@ -170,7 +170,7 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path);
+  FbleProgram* prgm = FbleLoad(arena, path, include_path, NULL);
   if (prgm == NULL) {
     FbleFreeArena(arena);
     return EX_FAIL;

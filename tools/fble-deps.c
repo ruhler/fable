@@ -1,16 +1,17 @@
-// fble-disassemble.c --
-//   This file implements the main entry point for the fble-disassemble program.
+// fble-deps.c --
+//   The implementation of the fble-deps program, which generates gcc -MD
+//   compatible dependencies for an .fble file.
 
-#include <string.h>   // for strcmp
+#include <string.h>   // for strcmp, strlen
 #include <stdio.h>    // for FILE, fprintf, stderr
 
 #include "fble.h"
 
 #define EX_SUCCESS 0
-#define EX_FAIL 1
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
+int main(int argc, char* argv[]);
 
 // PrintUsage --
 //   Prints help info to the given output stream.
@@ -26,15 +27,15 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-disassemble FILE [PATH]\n"
-      "Disassemble the fble program from FILE.\n"
-      "PATH is an optional include search path.\n"
-      "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
+      "Usage: fble-deps target FILE [PATH]\n"
+      "  target - the name of the target of the output deps.\n"
+      "  FILE - the .fble file to get dependencies for.\n"
+      "  PATH - an optional include search path.\n"
   );
 }
 
 // main --
-//   The main entry point for the fble-disassemble program.
+//   The main entry point for the fble-deps program.
 //
 // Inputs:
 //   argc - The number of command line arguments.
@@ -55,6 +56,15 @@ int main(int argc, char* argv[])
   }
 
   if (argc < 1) {
+    fprintf(stderr, "no target specified.\n");
+    PrintUsage(stderr);
+    return EX_USAGE;
+  }
+  const char* target = *argv;
+  argc--;
+  argv++;
+
+  if (argc < 1) {
     fprintf(stderr, "no input file.\n");
     PrintUsage(stderr);
     return EX_USAGE;
@@ -70,29 +80,30 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path, NULL);
-  if (prgm == NULL) {
-    FbleFreeArena(arena);
-    return EX_FAIL;
-  }
 
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
-  FbleProfile* profile = FbleNewProfile(arena);
-  FbleValue* compiled = FbleCompile(heap, prgm, profile);
+  FbleStringV deps;
+  FbleVectorInit(arena, deps);
+
+  FbleProgram* prgm = FbleLoad(arena, path, include_path, &deps);
   FbleFreeProgram(arena, prgm);
 
-  if (compiled == NULL) {
-    FbleFreeProfile(arena, profile);
-    FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
-    return EX_FAIL;
+  size_t cols = 0;
+  cols += strlen(target);
+  printf("%s:", target);
+  for (size_t i = 0; i < deps.size; ++i) {
+    size_t len = 1 + strlen(deps.xs[i]->str);
+    if (cols + len > 78) {
+      printf(" \\\n");
+      cols = 0;
+    }
+    cols += len;
+
+    printf(" %s", deps.xs[i]->str);
+    FbleFreeString(arena, deps.xs[i]);
   }
+  printf("\n");
+  FbleFree(arena, deps.xs);
 
-  FbleDisassemble(stdout, compiled, profile);
-
-  FbleReleaseValue(heap, compiled);
-  FbleFreeProfile(arena, profile);
-  FbleFreeValueHeap(heap);
   FbleFreeArena(arena);
   return EX_SUCCESS;
 }
