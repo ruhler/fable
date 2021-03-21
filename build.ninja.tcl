@@ -205,9 +205,13 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
   "$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
 
 # fble compilation test
-#build $::src/fble-tests.c \
-#  "$::bin/fble-compile $::prgms/Fble/Tests.fble.d" \
-#  "$::bin/fble-compile FbleTests prgms/Fble/Tests.fble prgms > $::src/fble-tests.c"
+build $::src/fble-tests.c \
+  "$::bin/fble-compile $::prgms/Fble/Tests.fble.d" \
+  "$::bin/fble-compile FbleTests prgms/Fble/Tests.fble prgms > $::src/fble-tests.c"
+
+# TODO: Export the necessary headers in include instead of accessing internal
+# headers directly.
+#obj $::obj/fble-tests.o $::src/fble-tests.c "-I fble/include -I fble/src"
 
 # fblf compilation test
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"

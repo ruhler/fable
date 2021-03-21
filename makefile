@@ -5,6 +5,10 @@ out/build.ninja: build.ninja.tcl
 	mkdir -p out
 	tclsh $< > $@
 
+.PHONY: foo
+foo:
+	ninja -f out/build.ninja out/obj/fble-tests.o
+
 .PHONY: all
 all: out/build.ninja
 	ninja -f out/build.ninja

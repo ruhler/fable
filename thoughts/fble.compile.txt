@@ -365,3 +365,25 @@ calls, tail calls, continuations at this stage. It's probably a good time,
 too, to factor out the code for running the body of a function from the thread
 scheduler.
 
+---
+
+Well, we have a problem. I tried compiling Fble/Tests.fble to a C function
+that allocates the corresponding FbleCompiledFuncValueTc. It's over a million
+lines of C code, and gcc isn't too happy about that (I gave up after 2.5 hours
+compiling and 64% of my computer's total memory).
+
+Perhaps we loose some sharing by compiling. I don't think for InstrBlocks or
+Instrs. Maybe Locs? Or at least source file names. But I don't feel like that
+would account for a million lines of code. More like we just have a lot of
+instructions. Think about a literal string for example. Lots of instructions
+there. I should disassemble Fble/Tests.fble to see how many instructions.
+Maybe multiply by 5 or 10 or so to get expected number of lines of C code?
+
+I'm thinking we're going to need some form of modular compilation. Would it be
+enough to put each FbleFuncValueTc* into its own C function all in the same
+file? It will still be over a millions lines of source code though. That seems
+unrealistic.
+
+Can we do per-fble module compilation? That sounds complicated, but is almost
+certainly what we'll want eventually.
+

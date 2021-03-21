@@ -163,3 +163,9 @@ Cleanup for handling of output and tests:
   from failed tests.
 
 Let's give it a try.
+
+---
+
+One nice benefit of ninja that I didn't anticipate: if I'm working on a
+particular piece of code, I can specify a target explicitly to just compile
+that rather than have to try compiling everything.
