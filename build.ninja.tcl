@@ -167,7 +167,7 @@ foreach dir [dirs langs/fble ""] {
 
 # fble-profile-test
 test $::test/fble-profile-test.tr $::bin/fble-profile-test \
-  "./$::bin/fble-profile-test > /dev/null"
+  "$::bin/fble-profile-test > /dev/null"
 
 # dependency files for the top level .fble files used in tests
 foreach x {
@@ -186,41 +186,46 @@ foreach x {
 # fble-disassemble test
 test $::test/fble-disassemble.tr \
   "$::bin/fble-disassemble $::prgms/Fble/Tests.fble.d" \
-  "./$::bin/fble-disassemble prgms/Fble/Tests.fble prgms > /dev/null"
+  "$::bin/fble-disassemble prgms/Fble/Tests.fble prgms > /dev/null"
 
 # Fble/Tests.fble tests
 test $::test/fble-tests.tr "$::bin/fble-stdio $::prgms/Fble/Tests.fble.d" \
-  "./$::bin/fble-stdio prgms/Fble/Tests.fble prgms" "pool = console"
+  "$::bin/fble-stdio prgms/Fble/Tests.fble prgms" "pool = console"
 
 # fble-md5 test
 test $::test/fble-md5.tr "$::bin/fble-md5 $::prgms/Md5/Main.fble.d" \
-  "./$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null | grep d41d8cd98f00b204e9800998ecf8427e > /dev/null"
+  "$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null | grep d41d8cd98f00b204e9800998ecf8427e > /dev/null"
 
 # fble-cat test
 test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
-  "./$::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -"
+  "$::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -"
 
 # fble-stdio test
 test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
-  "./$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
+  "$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
+
+# fble compilation test
+#build $::src/fble-tests.c \
+#  "$::bin/fble-compile $::prgms/Fble/Tests.fble.d" \
+#  "$::bin/fble-compile FbleTests prgms/Fble/Tests.fble prgms > $::src/fble-tests.c"
 
 # fblf compilation test
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
 build $::src/fblf-tests.c \
   "$::bin/fble-stdio $::prgms/Fblf/Lib/Tests/Compile.fble.d" \
-  "./$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c"
+  "$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c"
 obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
 bin $::bin/fblf-tests "$::obj/fblf-tests.o $::obj/fblf-heap.o" ""
-test $::test/fblf-tests.tr $::bin/fblf-tests ./$::bin/fblf-tests
+test $::test/fblf-tests.tr $::bin/fblf-tests $::bin/fblf-tests
 
 # fblf md5 compilation test
 build $::src/fblf-md5.c \
   "$::bin/fble-stdio $::prgms/Fblf/Lib/Md5/Stdio.fble.d" \
-  "./$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
+  "$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
 obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
 bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
 test $::test/fblf-md5.tr $::bin/fblf-md5 \
-  "./$::bin/fblf-md5 /dev/null | grep d41d8cd98f00b204e9800998ecf8427e > /dev/null"
+  "$::bin/fblf-md5 /dev/null | grep d41d8cd98f00b204e9800998ecf8427e > /dev/null"
 
 # test summary
 build $::test/tests.txt "$::tests" "echo $::tests > $::test/tests.txt"
