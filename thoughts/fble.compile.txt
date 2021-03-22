@@ -387,3 +387,160 @@ unrealistic.
 Can we do per-fble module compilation? That sounds complicated, but is almost
 certainly what we'll want eventually.
 
+---
+
+Disassembly of Fble/Tests.fble shows:
+* 1073 instruction blocks
+* 14204 profiling ops
+* 115267 lines.
+
+More worrying is that the main instruction block is over 60% of the entire
+thing. It has 65K instructions. A lot from the sat solver test and invaders
+graphics. That means even if we output each instruction block in a separate
+file, we're not going to be able to compile the result.
+
+Two ideas come to mind:
+1. Run the main function in the interpreter, compile the resulting function to
+C code. That should work around needing to compile the main function.
+Hopefully the rest is small things and pre-computed values. Those precomputed
+values could be pretty expensive to serialize though, and we would definitely
+have to preserve sharing in the generated code.
+
+2. Compile each module's code into a separate C program. In other words,
+figure out how to support modular compilation.
+
+---
+
+Modular Compilation
+
+Here is what I'm thinking.
+
+Module Interfaces
+-----------------
+The interface to a module is its type. When you reference a module, we really
+only need to read its interface, not its entire value. But we can derive the
+interface from the value if needed. I propose for a module path /Foo/Bar%, we
+can track that to two possible .fble files, one containing the implementation
+(Foo/Bar.fble), and one containing the type (Foo/Bar.@.fble?).
+
+If the type is present, we use that without reading the implementation. This
+is where you get the savings from modular compilation. If the type is not
+present, we read the implementation and get the type from there. When we
+compile a module we check its type against its type file (if any). The
+compiler has an option to output a type file for a module automatically from
+its implementation if you don't want to do one by hand.
+
+Ideally the type file is a normal .fble file. It describes a module whose
+value is a type that you could refer to normally in the implementation file if
+you wanted to. That leads to the tricky question: given a module /Foo/Bar%,
+what should be the name of its type module? Maybe /Foo/Bar@%?
+
+Alternatively, it seems like you would never need the type of a type file,
+because it contains the same content as the original type file. Then maybe
+it's okay to, for example, use '.fble' for implementation and '.fbli' for
+interface. Perhaps if you try to reference the '.fbli' from the '.fble' it
+automatically figures out the right thing?
+
+TODO:
+* Try writing some of these interface files by hand. See how it looks. Would
+  we ever want to write them by hand? Would we always want to write them by
+  hand?
+* Experiment with different mappings from implementation module path to type
+  module path.
+
+Generated Module
+----------------
+We need to compile fble modules to C modules. What does such a C module look
+like? I propose we generate a C module with 3 functions:
+
+1. 'Load' - for internal use. A function to lazily allocates and caches an
+FbleValue* corresponding to the fble module, given a FbleValueHeap* pointer. I
+guess we cache per heap, unless we want an implicit global FbleValueHeap.
+
+This loads dependent modules as a side effect. Multiple calls to Load
+increment a reference count.
+
+2. 'Unload' - for internal use. Decrements the Load reference count. If that
+reference count drops to 0, frees the cached FbleValue* so that GC can reclaim
+it. Unloads any dependent modules.
+
+3. 'Value' - for external use. Calls Load, grabs a reference to the value,
+then calls 'Unload'.
+
+This way we don't have to explicitly provide values for dependencies. It's all
+done implicitly, with internal sharing as appropriate. We Load, Unload, and
+Value functions are named based on the module path. We can compile .fble to
+.c, compile .c to .o, link all the .o together, and everything just magically
+works if you call 'Value' for the top level module that you want.
+
+TODO:
+* Figure out how to map module path to C function name for 'Load', 'Unload',
+  and 'Value'.
+
+And that's it. Modular compilation solved.
+
+It's unclear to me if we want to maintain the interpreter separately from
+modular compilation or not. Extra burden. Extra testing. But the interpreter
+is much more convenient to use than compilation, no? Let's see if I can't
+share as much code between them as I can as long as I can before giving up on
+the interpreter.
+
+---
+
+It's not too bad to define a type interface for a module, except:
+* You kind of have to redefine any types in both the interface and definition.
+  You need the type in the interface to get the type of it. You need it again
+  in the implementation to return it, but you can't reuse what you define in
+  the header for the implementation.
+
+* It's annoying to have to worry about what order things are defined in.
+
+I'm not convinced this is something that should be forced on the programmer.
+It sounds like you would want three things
+ 1. type declarations.
+ 2. interface (depends on types)
+ 3. implementation (depends on types)
+
+Or, in other words, types are always defined separately. The interface and
+implementation only deal with collections of values.
+
+Or we could make the interface polymorphic in types, but then it doesn't match
+the type of the implementation.
+
+This suggests to me that, perhaps, we ought to always generate the interface
+during compilation, by the compiler, and for the compiler. That way we have
+some more confidence it matches the implementation. The user can always
+separate interface from implementation manually if they want to do it for
+other reasons. No reason to tie that together with module compilation.
+
+So maybe compiling /Foo/Bar% gives generates an interface file Foo/Bar.fble.@
+that the compiler can use, that just happens to be a normal fble file? I'm not
+sure. It probably wants all the same information as a type declaration, but it
+could pack that some special way. Keeping it a straight fble file would just
+be an implementation detail.
+
+For list, I would expect...
+
+@ Unit@ = *();
+<@>@ List@ = <@ T@> { +(*(T@ head, List@<T@> tail) cons, Unit@ nil); };
+*(
+  @<List@> List@,
+  <@ T@>(List@<T@>) { List@<T@>; } List,
+  <@ T@>(T@, List@<T@>) { List@<T@>; } Cons,
+  List@ Nil,
+  <@ T@>(List@<T@>, List@<T@>) { List@<T@>; } Append,
+  <@ T@>(List@<T@>) { List@<T@>; } Init,
+  <@ T@>(List@<List@<T@>>) { List@<T@>; } Concat,
+  <@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; } Map,
+  <@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@; }) { B@; } ForEach,
+  <@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@!; }) { B@!; } ProcessEach
+);
+
+So we still have names and lets, but it's all inlined. That's pretty cool to
+see. And then we save more time by not reading a whole bunch of dependencies
+just to get type declarations. I think that's good. No change needed for the
+user.
+
+For the first version of modular compilation, we can always read the
+implementation file to get its type. Worry about generating these .fble.@
+files later as an optimization.

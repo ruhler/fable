@@ -1,16 +1,13 @@
 
 Fble Compilation:
-* Double check whether we expect 1.2 million lines of C code generated for
-  Fble/Tests.fble by looking at the disassembly for it.
-* Try generating a different C function for every InstrBlock. See if that
-  makes gcc any happier. Let's say initial goal is it takes no more than 10
-  minutes to compile the generated C code with gcc.
+* Add support for modular compilation.
 
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.
 * Now we should be off and running with tons of optimization opportunities.
 * Come up with better names than 'compile' and 'native' to distinguish between
   the different variations of the compiler.
+* Generate .fble.@ type files to have true modular compilation.
 
 
 Fblf:
