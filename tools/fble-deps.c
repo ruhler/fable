@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 
   FbleArena* arena = FbleNewArena();
 
-  FbleProgram* prgm = FbleLoad(arena, path, include_path, NULL);
+  FbleProgram* prgm = FbleLoad(arena, path, include_path);
 
   size_t cols = 0;
   cols += strlen(target);

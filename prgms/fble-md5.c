@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
   const char* file = argv[3];
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path, NULL);
+  FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
     FbleFreeArena(arena);
     return 1;

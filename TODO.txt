@@ -1,6 +1,8 @@
 
 Fble Compilation:
 * Add support for modular compilation.
+ - Change FbleProgram to just FbleModuleV.
+ - Go from there as suggested in fble.compile.txt.
 
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.

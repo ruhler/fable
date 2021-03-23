@@ -49,7 +49,6 @@ typedef struct {
 //   arena - The arena to use for allocating the parsed program.
 //   filename - The name of the file to parse the program from.
 //   root - The directory to search for modules in. May be NULL.
-//   deps - optional vector to gather dependencies.
 //
 // Results:
 //   The parsed program, or NULL in case of error.
@@ -63,14 +62,12 @@ typedef struct {
 // Allocations:
 // * The user should call FbleFreeProgram to free resources associated with
 //   the given program when it is no longer needed.
-// * The user should call FbleFreeString on every string in deps when no
-//   longer needed.
 //
 // Note:
 //   A copy of the filename will be made for use in locations. The user need
 //   not ensure that filename remains valid for the duration of the lifetime
 //   of the program.
-FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root, FbleStringV* deps);
+FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root);
 
 // FbleFreeProgram --
 //   Free resources associated with the given program.
