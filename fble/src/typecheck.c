@@ -2042,7 +2042,7 @@ static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* s
 }
 
 // FbleTypeCheck -- see documentation in typecheck.h
-FbleValue* FbleTypeCheck(FbleValueHeap* heap, struct FbleProgram* program)
+FbleValue* FbleTypeCheck(FbleValueHeap* heap, FbleProgram* program)
 {
   Scope scope;
   InitScope(heap->arena, &scope, NULL, NULL);

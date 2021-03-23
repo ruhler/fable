@@ -10,6 +10,7 @@
 
 #include "fble-alloc.h"
 #include "fble-name.h"
+#include "fble-syntax.h"
 
 // FbleReportWarning --
 //   Report a warning message associated with a location in a source file.
@@ -216,10 +217,10 @@ typedef enum {
 //   layout as FbleExpr. The tag can be used to determine what kind of
 //   expr this is to get access to additional fields of the expr
 //   by first casting to that specific type of expr.
-typedef struct {
+struct FbleExpr {
   FbleExprTag tag;
   FbleLoc loc;
-} FbleExpr;
+};
 
 // FbleExprV --
 //   A vector of FbleExpr.
@@ -471,41 +472,6 @@ typedef struct {
   FbleName field;
 } FbleDataAccessExpr;
 
-// FbleModule --
-//   Represents an individual module.
-// 
-// Fields:
-//   filename - the filename of the module. Used for ownership of all loc
-//              references in the module value.
-//   name - the canonical name of the module. This is the resolved path to the
-//          module with "/" used as a separator. For example, the module Foo/Bar% has
-//          name "Foo/Bar" in the MODULE name space.
-//   value - the value of the module
-typedef struct {
-  FbleName name;
-  FbleExpr* value;
-} FbleModule;
-
-// FbleModuleV -- A vector of modules
-typedef struct {
-  size_t size;
-  FbleModule* xs;
-} FbleModuleV;
-
-// FbleProgram --
-//   Represents a complete parsed and loaded fble program.
-//
-// Fields:
-//   modules - List of dependant modules in topological dependancy order. Later
-//             modules in the list may depend on earlier modules in the list,
-//             but not the other way around.
-//   filename - The filename of the main program. Used for ownership of all
-//              references to the filename in locs in main.
-//   main - The value of the program, which may depend on any of the modules.
-struct FbleProgram {
-  FbleModuleV modules;
-  FbleExpr* main;
-};
 
 // FbleParse --
 //   Parse an expression from a file.

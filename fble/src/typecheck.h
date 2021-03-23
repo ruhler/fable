@@ -5,7 +5,7 @@
 #define FBLE_INTERNAL_TYPECHECK_H_
 
 #include "fble-value.h"
-#include "syntax.h"
+#include "fble-syntax.h"
 
 // FbleTypeCheck -- 
 //   Run typecheck on the given program.
@@ -19,6 +19,6 @@
 //
 // Side effects:
 // * Prints messages to stderr in case of failure to type check.
-FbleValue* FbleTypeCheck(FbleValueHeap* heap, struct FbleProgram* program);
+FbleValue* FbleTypeCheck(FbleValueHeap* heap, FbleProgram* program);
 
 #endif // FBLE_INTERNAL_TYPECHECK_H_

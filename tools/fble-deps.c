@@ -81,29 +81,25 @@ int main(int argc, char* argv[])
 
   FbleArena* arena = FbleNewArena();
 
-  FbleStringV deps;
-  FbleVectorInit(arena, deps);
-
-  FbleProgram* prgm = FbleLoad(arena, path, include_path, &deps);
-  FbleFreeProgram(arena, prgm);
+  FbleProgram* prgm = FbleLoad(arena, path, include_path, NULL);
 
   size_t cols = 0;
   cols += strlen(target);
   printf("%s:", target);
-  for (size_t i = 0; i < deps.size; ++i) {
-    size_t len = 1 + strlen(deps.xs[i]->str);
+  for (size_t i = 0; i < prgm->modules.size; ++i) {
+    const char* name = prgm->modules.xs[i].name.name->str;
+    size_t len = 1 + strlen(name);
     if (cols + len > 78) {
       printf(" \\\n");
       cols = 0;
     }
     cols += len;
 
-    printf(" %s", deps.xs[i]->str);
-    FbleFreeString(arena, deps.xs[i]);
+    printf(" %s", name);
   }
   printf("\n");
-  FbleFree(arena, deps.xs);
 
+  FbleFreeProgram(arena, prgm);
   FbleFreeArena(arena);
   return EX_SUCCESS;
 }

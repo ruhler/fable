@@ -544,3 +544,154 @@ user.
 For the first version of modular compilation, we can always read the
 implementation file to get its type. Worry about generating these .fble.@
 files later as an optimization.
+
+---
+
+There's a slightly awkward issue that fble-compile takes a .fble file, not a
+module path. That way you can pass a .fble file not in the module hierarchy.
+But then what name do we pick for the generated C function?
+
+How about we have two things we can do when we compile:
+1. Generate C functions to use the compiled value as a module.
+2. Generate a C function to use the compiled value as an end user.
+
+For (1) we provide the module path on the command line, something like
+  fble-compile -m /Foo/Bar% Foo/Bar.fble
+
+For (2) we let the user pick whatever name they want.
+  fble-compile -e FooBar Foo/Bar.fble
+
+As long as we can reserve a prefix for the compiler to generate the module
+names in a deterministic way from their path.
+
+To summarize, there are three ways you could compile: export module only,
+export top level only, or export module and top level. You have to give an
+explicit module path to export module, and you have to give an explicit
+function name to do top level.
+
+A nice thing about this is that users should never have to call the module
+entry functions. That's only called internally. So users shouldn't have to
+know how we map module path to function name.
+
+What prefix to pick for reserved? Maybe __Fble_Load_XXX, __Fble_Unload_XXX?
+
+/Foo/Bar/Sludge_Thing% turns into... something like:
+
+__Fble_Load_Foo_2f_Bar_2f_Sludge_95_Thing
+
+This is a mapping with:
+
+a-z, A-Z, 0-9: unchanged
+
+All other characters:  _XX_, where XX is the hex representation of the ascii
+code for the character. Which I guess is assuming ascii instead of general
+unicode. I suppose if we want to do unicode, we could say anything outside of
+what you could fit in _XX_ you do _XXXX_ instead. We don't have to be able to
+go backwards or have unique encodings. Just so long as we can go from the name
+to the encoded value in an agreed upon deterministic way.
+
+---
+
+Next step is to work out how to go about implementing all this. My vote is to
+not worry about .fble.@ to start. The only difference when we go to switch is
+whether we compile an expression for its type, or compile an expression for
+its value which must be a type.
+
+We'll want to merge modules after compilation instead of before. We can
+compile a module namespace variable to something that looks up a global static
+variable in scope for the function and return an InstrBlock with statics equal
+to the number of module dependencies and the list of module dependencies.
+
+If we want to compile, now it's easy: load the module dependencies, add them
+to the scope of a CompiledFuncValueTc and return that. If we want to
+interpret, same thing, but use 'let' to load?
+
+So perhaps the first step should be convert the interpreter to join modules
+after compilation instead of before.
+
+---
+
+Here's a strawman:
+
+* LoadModule - loads a Module as:
+  - a module path,
+  - a reference count,
+  - an FbleExpr* with the body of the module (optional),
+  - an FbleExpr* with the type of the module (optional),
+  - the list of Module* that this module depends on.
+
+The body will be provided when loading a module directly, or when loading all
+modules in a program. The type will be provided when loading a .fble.@ file
+with the type of a module when you don't also need the body of the module.
+
+* LoadProgram - loads all modules in the program.
+  Let's us share the results of searching for modules across the entire
+  program, which is much more efficient than doing one at a time.
+
+* CompileModule - given a list of types to use for the module's dependencies
+  and a loaded module, returns a CompiledModule. A CompiledModule stores the
+  list of dependent modules as a list of paths and an InstrBlock with the body
+  of the module. Err... maybe the compiler should be responsible for figuring
+  out the types of dependant modules. Yeah. So we take a Module, compile
+  bodies and types of other modules as needed to find dependencies, then
+  produce an InstrBlock and list of dependencies for the module.
+
+  The InstrBlock will be for a function that takes zero arguments and one
+  static variable for each immediate module dependency in order.
+
+* CompileProgram - compiles all loaded modules.
+  Let's us share the types of modules across he entire program, which is much
+  more efficient than doing one at a time.
+
+* Link - takes a list of CompiledModules and produces an FbleValue
+  representing the value as a CompiledFuncValueTc.
+
+* GenerateC - takes a single CompiledModule and generates C code for it.
+
+Use cases:
+1. interpreting code - LoadProgram, CompileProgram, Link, Exec.
+2. compiling code - LoadModule, CompileModule, GenerateC, gcc.
+
+For handling of .fble.@ files, let's say we only try to read them when you
+call LoadModule, not when you call LoadProgram. If a .fble.@ file does not
+exist but the corresponding .fble file does, too bad. Report that as an error
+to load the module.
+
+Allow .fble.@ files to be searched in a different directory? Well, probably we
+expect the user to pass the directory with the .fble.@ files instead of the
+directory with .fble files, so that's fine.
+
+When you call fble-compile, you pass in the name of the .fble.@ file you want
+to generate for the compiled file. fble-compile will be smart enough to only
+update the .fble.@ file if it has changed, to help with build dependency
+systems. fble-compile should have an option to generate gcc style .d
+dependencies to replace fble-deps.
+
+This means we probably want a CompiledModule to include the module's type as
+well as it's implementation. Then maybe instead of attaching an FbleExpr with
+a module's type to Module, we directly attach an FbleType, and expose a
+separate function that makes use of Load and Compile to read a type from a
+.fble.@ file. Maybe that's the same place we put the logic for writing a type
+to a .fble.@ file. Call it interface.c? FbleLoadInterface? FbleWriteInterface?
+Yeah.
+
+For the first round, let's not bother with interfaces. We'll always call
+LoadProgram? I'm not sure.
+
+Changes needed:
+ - Store a list of FbleName module dependencies in FbleModule.
+ - Change FbleProgram to just FbleModuleV, where the module name for the main
+   module is NULL or some such sentinel value. So it reuses the list of given
+   dependencies.
+ - Remove deps argument to FbleLoad. We should be able to get that from the
+   list of loaded modules.
+ - Define CompiledModule, which is FbleName, FbleType*, InstrBlock*, and list
+   of dependencies by name for a module.
+ - Define CompiledProgram as a list of CompiledModule's in dependency order.
+ - Change FbleCompile to return a CompiledProgram.
+ - Define Link, that takes a CompiledProgram and produces an FbleValue.
+ - Change FbleGenerateC to take a CompiledModule as input.
+
+So there are a few details about whose job it is to tell the compiler what the
+type of a dependent module is that need to be worked out. But I think this
+should get us a pretty good step in the right direction.

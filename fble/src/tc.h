@@ -9,6 +9,7 @@
 #include "fble-value.h"     // for FbleValueV
 #include "execute.h"        // for FbleRunFunction
 #include "instr.h"
+#include "syntax.h"
 
 // FbleTc --
 //   An already type-checked representation of an fble value or syntactic
