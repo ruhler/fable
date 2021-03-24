@@ -113,7 +113,6 @@ void FbleFreeLoc(FbleArena* arena, FbleLoc loc);
 typedef enum {
   FBLE_NORMAL_NAME_SPACE,
   FBLE_TYPE_NAME_SPACE,
-  FBLE_MODULE_NAME_SPACE,
 } FbleNameSpace;
 
 // FbleName -- 

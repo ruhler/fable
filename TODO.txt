@@ -1,11 +1,14 @@
 
 Fble Compilation:
+* Track down memory leak.
+
 * Add module dependency list to FbleModule.
 * Compile to CompiledProgram = FbleCompiledModuleV instead of FbleValue
 * Add an FbleLink function to link the compiled modules into an FbleValue.
 * Change fble-compile to just compile the main module.
   Now it should possible to try compiling again.
 * Add support for .fble.@ files needed to do true module compilation.
+
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.
 * Now we should be off and running with tons of optimization opportunities.

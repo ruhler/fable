@@ -39,7 +39,7 @@
   const char* word;
   FbleName name;
   FbleNameV names;
-  FbleModuleRef module_ref;
+  FbleModulePath* module_path;
   FbleKind* kind;
   FbleKindV kinds;
   FbleTaggedKindV tagged_kinds;
@@ -59,14 +59,14 @@
   static bool IsNormalChar(int c);
   static void ReadNextChar(Lex* lex);
   static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex);
-  static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg);
+  static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, FbleModulePathV* deps, const char* msg);
 %}
 
 %locations
 %define api.pure
 %define parse.error verbose
 %param {FbleArena* arena} {Lex* lex}
-%parse-param {FbleExpr** result} {FbleModuleRefV* module_refs}
+%parse-param {FbleExpr** result} {FbleModulePathV* deps}
 
 %token END 0 "end of file"
 %token INVALID "invalid character"
@@ -74,8 +74,7 @@
 %token <word> WORD
 
 %type <name> name
-%type <names> path
-%type <module_ref> module_ref
+%type <module_path> path module_path
 %type <kind> tkind nkind kind
 %type <kinds> tkind_p
 %type <tagged_kinds> tagged_kind_p
@@ -103,11 +102,8 @@
 } <names>
 
 %destructor {
-  for (size_t i = 0; i < $$.path.size; ++i) {
-    FbleFreeName(arena, $$.path.xs[i]);
-  }
-  FbleFree(arena, $$.path.xs);
-} <module_ref>
+  FbleFreeModulePath(arena, $$);
+} <module_path>
 
 %destructor {
   FbleFreeKind(arena, $$);
@@ -194,24 +190,26 @@ name:
 
 path:
    WORD {
-     FbleVectorInit(arena, $$);
-     FbleName* name = FbleVectorExtend(arena, $$);
+     $$ = FbleNewModulePath(arena, @$);
+     FbleVectorInit(arena, $$->path);
+     FbleName* name = FbleVectorExtend(arena, $$->path);
      name->name = ToString(arena, $1);
-     name->space = FBLE_NORMAL_NAME_SPACE;  // arbitrary choice
+     name->space = FBLE_NORMAL_NAME_SPACE;
      name->loc = FbleCopyLoc(@$);
    }
  | path '/' WORD {
      $$ = $1;
-     FbleName* name = FbleVectorExtend(arena, $$);
+     FbleName* name = FbleVectorExtend(arena, $$->path);
      name->name = ToString(arena, $3);
-     name->space = FBLE_NORMAL_NAME_SPACE;  // arbitrary choice
+     name->space = FBLE_NORMAL_NAME_SPACE;
      name->loc = FbleCopyLoc(@$);
    };
 
-module_ref:
+module_path:
    '/' path '%' {
-      $$.path = $2;
-      $$.resolved.name = NULL;
+      $$ = $2;
+      FbleFreeLoc(arena, $$->loc);
+      $$->loc = FbleCopyLoc(@$);
    }
  ;
 
@@ -310,13 +308,23 @@ expr:
       var_expr->var = $1;
       $$ = &var_expr->_base;
    }
- | module_ref {
-      FbleModuleRefExpr* mref = FbleAlloc(arena, FbleModuleRefExpr);
-      mref->_base.tag = FBLE_MODULE_REF_EXPR;
-      mref->_base.loc = FbleCopyLoc(@$);
-      mref->ref = $1;
-      $$ = &mref->_base;
-      FbleVectorAppend(arena, *module_refs, &mref->ref);
+ | module_path {
+      FbleModulePathExpr* path_expr = FbleAlloc(arena, FbleModulePathExpr);
+      path_expr->_base.tag = FBLE_MODULE_PATH_EXPR;
+      path_expr->_base.loc = FbleCopyLoc(@$);
+      path_expr->path = $1;
+      $$ = &path_expr->_base;
+
+      bool found = false;
+      for (size_t i = 0; i < deps->size; ++i) {
+        if (FbleModulePathsEqual(deps->xs[i], path_expr->path)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        FbleVectorAppend(arena, *deps, FbleCopyModulePath(path_expr->path));
+      }
    }
  | '*' '(' tagged_type_s ')' {
       FbleDataTypeExpr* struct_type = FbleAlloc(arena, FbleDataTypeExpr);
@@ -846,13 +854,13 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, FbleArena* arena, Lex* lex)
 //
 // Side effects:
 //   An error message is printed to stderr.
-static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, FbleModuleRefV* module_refs, const char* msg)
+static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** result, FbleModulePathV* deps, const char* msg)
 {
   FbleReportError("%s\n", *llocp, msg);
 }
 
 // FbleParse -- see documentation in syntax.h
-FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModuleRefV* module_refs)
+FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModulePathV* deps)
 {
   FILE* fin = fopen(filename->str, "r");
   if (fin == NULL) {
@@ -866,6 +874,6 @@ FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModuleRefV* modu
     .fin = fin,
   };
   FbleExpr* result = NULL;
-  yyparse(arena, &lex, &result, module_refs);
+  yyparse(arena, &lex, &result, deps);
   return result;
 }

@@ -31,48 +31,19 @@ struct Tree {
 //
 // Fields:
 //   deps - other modules that this module immediately depends on.
-//   path - the resolved path to the module.
-//   value - the value of the module.
+//   deps_loaded - the number of deps we have attempted to load so far.
+//   module - the value of the module.
 //   tail - the rest of the stack of modules.
 typedef struct Stack {
-  FbleModuleRefV deps;
-  FbleNameV path;
-  FbleExpr* value;
+  FbleModulePathV deps;
+  size_t deps_loaded;
+  FbleModule module;
   struct Stack* tail;
 } Stack;
 
-static void PrintModuleName(FILE* fout, FbleNameV path);
-static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target);
+static bool AccessAllowed(Tree* tree, FbleModulePath* source, FbleModulePath* target);
 static void FreeTree(FbleArena* arena, Tree* tree);
-static bool PathsEqual(FbleNameV a, FbleNameV b);
-static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name);
-static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleNameV path);
-
-// PrintModuleName --
-//   Print the name of a module to the given stream.
-//
-// Inputs: 
-//   fout - the stream to print to.
-//   path - the path to the module.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints the module name to the given stream.
-static void PrintModuleName(FILE* fout, FbleNameV path)
-{
-  if (path.size == 0) {
-    fprintf(fout, "/");
-  }
-  for (size_t i = 0; i < path.size; ++i) {
-    // TODO: Use quotes if the name contains any special characters, and
-    // escape quotes as needed so the user can distinguish, for example,
-    // between /Foo/Bar% and /'Foo/Bar'%.
-    fprintf(fout, "/%s", path.xs[i].name->str);
-  }
-  fprintf(fout, "%%");
-}
+static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleModulePath* path);
 
 // AccessAllowed --
 //   Check if the module at the given source path is allowed to access the
@@ -89,21 +60,21 @@ static void PrintModuleName(FILE* fout, FbleNameV path)
 //
 // Side effects:
 //   none.
-static bool AccessAllowed(Tree* tree, FbleNameV source, FbleNameV target)
+static bool AccessAllowed(Tree* tree, FbleModulePath* source, FbleModulePath* target)
 {
   // Count how many nodes in the path to the target from the root are visible
   // to the source thanks to it being under a sibling node.
   size_t visible = 0;
-  while (visible < source.size && visible < target.size
-      && FbleNamesEqual(source.xs[visible], target.xs[visible])) {
+  while (source != NULL && visible < source->path.size && visible < target->path.size
+      && FbleNamesEqual(source->path.xs[visible], target->path.xs[visible])) {
     visible++;
   }
 
   // Ensure all nodes that aren't visible due to sibling state are public.
-  for (size_t i = 0; i < target.size; ++i) {
+  for (size_t i = 0; i < target->path.size; ++i) {
     Tree* child = NULL;
     for (size_t j = 0; j < tree->children.size; ++j) {
-      if (FbleNamesEqual(tree->children.xs[j]->name, target.xs[i])) {
+      if (FbleNamesEqual(tree->children.xs[j]->name, target->path.xs[i])) {
         child = tree->children.xs[j];
         break;
       }
@@ -140,79 +111,6 @@ void FreeTree(FbleArena* arena, Tree* tree)
   FbleFree(arena, tree);
 }
 
-// PathsEqual --
-//   Checks if two absolute moduel paths are equal.
-//
-// Inputs:
-//   a - the first module path
-//   b - the second module path
-//
-// Results:
-//   true if the given module paths are equal, false otherwise.
-//
-// Side effects:
-//   None.
-static bool PathsEqual(FbleNameV a, FbleNameV b)
-{
-  if (a.size != b.size) {
-    return false;
-  }
-
-  for (size_t i = 0; i < a.size; ++i) {
-    if (!FbleNamesEqual(a.xs[i], b.xs[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// PathToName --
-//   Convert an absolute module path to the corresponding canonical module
-//   name.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   path - an absolute path to a module.
-//   name - output parameter set to the canonical name for the module.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Sets name to the canonical name for the module.
-static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
-{
-  FbleLoc loc = {
-    .source = NULL,
-    .line = 0,
-    .col = 0
-  };
-
-  if (path.size > 0) {
-    loc = FbleCopyLoc(path.xs[path.size - 1].loc);
-  } else {
-    loc.source = FbleNewString(arena, "???");
-  }
-
-  size_t len = 1;
-  for (size_t i = 0; i < path.size; ++i) {
-    len += 1 + strlen(path.xs[i].name->str);
-  }
-
-  FbleString* name_name = FbleAllocExtra(arena, FbleString, len);
-  name_name->refcount = 1;
-  name_name->magic = FBLE_STRING_MAGIC;
-  name->name = name_name;
-  name->loc = loc;
-  name->space = FBLE_MODULE_NAME_SPACE;
-
-  name_name->str[0] = '\0';
-  for (size_t i = 0; i < path.size; ++i) {
-    strcat(name_name->str, "/");
-    strcat(name_name->str, path.xs[i].name->str);
-  }
-}
-
 // Find  -- 
 //  Locate the file associated with the given module path, enforcing
 //  visibility rules in the process.
@@ -227,32 +125,32 @@ static void PathToName(FbleArena* arena, FbleNameV path, FbleName* name)
 //   The file path to the source code of the module, or NULL in case of error.
 //
 // Side effects:
-//   Prints an error message to stderr in case of error.
-//   Updates the tree with new module hierarchy information.
-//   The user should call FbleFreeString when the returned string is no
+// * Prints an error message to stderr in case of error.
+// * Updates the tree with new module hierarchy information.
+// * The user should call FbleFreeString when the returned string is no
 //   longer needed.
-static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleNameV path)
+static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleModulePath* path)
 {
   if (root == NULL) {
-    FbleReportError("module ", path.xs[0].loc);
-    PrintModuleName(stderr, path);
+    FbleReportError("module ", path->loc);
+    FblePrintModulePath(stderr, path);
     fprintf(stderr, " not found\n");
     return NULL;
   }
 
   // Compute an upper bound on the length of the filename for the module.
   size_t len = strlen(root) + strlen(".fble") + 1;
-  for (size_t i = 0; i < path.size; ++i) {
+  for (size_t i = 0; i < path->path.size; ++i) {
     // "/name*"
-    len += 1 + strlen(path.xs[i].name->str) + 1;
+    len += 1 + strlen(path->path.xs[i].name->str) + 1;
 
-    if (strchr(path.xs[i].name->str, '/') != NULL) {
+    if (strchr(path->path.xs[i].name->str, '/') != NULL) {
       // There's nothing in the fble language spec that says you can't have a
       // forward slash in a module name, but there's no way on a posix system
       // to put the slash in the filename where we would look for the module,
       // so don't even try looking for it.
-      FbleReportError("module ", path.xs[0].loc);
-      PrintModuleName(stderr, path);
+      FbleReportError("module ", path->loc);
+      FblePrintModulePath(stderr, path);
       fprintf(stderr, " not found\n");
       return NULL;
     }
@@ -263,13 +161,13 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
   char filename[len];
   filename[0] = '\0';
   strcat(filename, root);
-  for (size_t i = 0; i < path.size; ++i) {
+  for (size_t i = 0; i < path->path.size; ++i) {
     strcat(filename, "/");
-    strcat(filename, path.xs[i].name->str);
+    strcat(filename, path->path.xs[i].name->str);
 
     bool treed = false;
     for (size_t c = 0; c < tree->children.size; ++c) {
-      if (FbleNamesEqual(path.xs[i], tree->children.xs[c]->name)) {
+      if (FbleNamesEqual(path->path.xs[i], tree->children.xs[c]->name)) {
         treed = true;
         tree = tree->children.xs[c];
         break;
@@ -278,7 +176,7 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
 
     if (!treed) {
       Tree* child = FbleAlloc(arena, Tree);
-      child->name = path.xs[i];
+      child->name = path->path.xs[i];
       FbleVectorInit(arena, child->children);
       FbleVectorAppend(arena, tree->children, child);
       tree = child;
@@ -286,32 +184,34 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
       char* tail = filename + strlen(filename);
       assert(*tail == '\0');
 
-      if (i + 1 == path.size) {
+      if (i + 1 == path->path.size) {
         strcat(filename, ".fble");
       }
       bool public = (access(filename, F_OK) == 0);
       *tail = '\0';
 
       strcat(filename, "*");
-      if (i + 1 == path.size) {
+      if (i + 1 == path->path.size) {
         strcat(filename, ".fble");
       }
       bool private = (access(filename, F_OK) == 0);
       *tail = '\0';
 
       if (public && private) {
-        FbleReportError("module ", path.xs[0].loc);
-        FbleNameV prefix = { .xs = path.xs, .size = i + 1 };
-        PrintModuleName(stderr, prefix);
+        FbleReportError("module ", path->loc);
+        size_t size = path->path.size;
+        path->path.size = i + 1;
+        FblePrintModulePath(stderr, path);
         fprintf(stderr, " is marked as both public and private\n");
+        path->path.size = size;
         return NULL;
       } else if (public) {
         child->private = false;
       } else if (private) {
         child->private = true;
       } else {
-        FbleReportError("module ", path.xs[0].loc);
-        PrintModuleName(stderr, path);
+        FbleReportError("module ", path->loc);
+        FblePrintModulePath(stderr, path);
         fprintf(stderr, " not found\n");
         return NULL;
       }
@@ -331,17 +231,19 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FbleProgram* program = FbleAlloc(arena, FbleProgram);
   FbleVectorInit(arena, program->modules);
 
+  bool error = false;
+  FbleString* filename_str = FbleNewString(arena, filename);
   Stack* stack = FbleAlloc(arena, Stack);
   FbleVectorInit(arena, stack->deps);
-  stack->path.size = 0;
+  stack->deps_loaded = 0;
+  stack->module.path = NULL;
   stack->tail = NULL;
-  FbleString* filename_str = FbleNewString(arena, filename);
-  stack->value = FbleParse(arena, filename_str, &stack->deps);
-  FbleFreeString(arena, filename_str);
-  bool error = (stack->value == NULL);
-  if (stack->value == NULL) {
-    stack->deps.size = 0;
+  stack->module.value = FbleParse(arena, filename_str, &stack->deps);
+  if (stack->module.value == NULL) {
+    error = true;
+    stack->deps_loaded = stack->deps.size;
   }
+  FbleFreeString(arena, filename_str);
 
   Tree* tree = FbleAlloc(arena, Tree);
   tree->name.name = FbleNewString(arena, "");
@@ -352,62 +254,59 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FbleVectorInit(arena, tree->children);
 
   while (stack != NULL) {
-    if (stack->deps.size == 0) {
+    if (stack->deps_loaded == stack->deps.size) {
       // We have loaded all the dependencies for this module.
-      FbleModule* module = FbleVectorExtend(arena, program->modules);
-      PathToName(arena, stack->path, &module->name);
-      module->value = stack->value;
+      FbleVectorAppend(arena, program->modules, stack->module);
       Stack* tail = stack->tail;
+      for (size_t i = 0; i < stack->deps.size; ++i) {
+        FbleFreeModulePath(arena, stack->deps.xs[i]);
+      }
       FbleFree(arena, stack->deps.xs);
       FbleFree(arena, stack);
       stack = tail;
       continue;
     }
     
-    FbleModuleRef* ref = stack->deps.xs[stack->deps.size-1];
+    FbleModulePath* ref = stack->deps.xs[stack->deps_loaded];
 
     // Check to see if we have already loaded this path.
-    FbleName resolved_name;
-    PathToName(arena, ref->path, &resolved_name);
     bool found = false;
     for (size_t i = 0; i < program->modules.size; ++i) {
-      if (FbleNamesEqual(resolved_name, program->modules.xs[i].name)) {
+      if (FbleModulePathsEqual(ref, program->modules.xs[i].path)) {
         // We may have failed to load a module previously. Check to see if the
         // module has been loaded before doing the access allowed check.
         // There's no point checking access against a module that failed to
         // load, and if the module failed to load, we may not have updated the
         // Tree in the way AccessAllowed expects.
         if (program->modules.xs[i].value != NULL
-            && !AccessAllowed(tree, stack->path, ref->path)) {
-          FbleReportError("module ", ref->path.xs[0].loc);
-          PrintModuleName(stderr, stack->path);
+            && !AccessAllowed(tree, stack->module.path, ref)) {
+          FbleReportError("module ", ref->loc);
+          FblePrintModulePath(stderr, stack->module.path);
           fprintf(stderr, " is not allowed to reference private module ");
-          PrintModuleName(stderr, ref->path);
+          FblePrintModulePath(stderr, ref);
           fprintf(stderr, "\n");
           error = true;
         }
 
-        ref->resolved = program->modules.xs[i].name;
-        stack->deps.size--;
+        stack->deps_loaded++;
         found = true;
         break;
       }
     }
-    FbleFreeName(arena, resolved_name);
     if (found) {
       continue;
     }
 
     bool recursive = false;
-    for (Stack* s = stack; s != NULL; s = s->tail) {
-      if (PathsEqual(ref->path, s->path)) {
-        FbleName* module = ref->path.xs + ref->path.size - 1;
-        FbleReportError("module ", module->loc);
-        PrintModuleName(stderr, ref->path);
+    for (Stack* s = stack; s->tail != NULL; s = s->tail) {
+      assert(s->module.path != NULL);
+      if (FbleModulePathsEqual(ref, s->module.path)) {
+        FbleReportError("module ", ref->loc);
+        FblePrintModulePath(stderr, ref);
         fprintf(stderr, " recursively depends on itself\n");
         error = true;
         recursive = true;
-        stack->deps.size = 0;
+        stack->deps_loaded = stack->deps.size;
         break;
       }
     }
@@ -420,19 +319,20 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     Stack* tail = stack;
     stack = FbleAlloc(arena, Stack);
     FbleVectorInit(arena, stack->deps);
-    stack->path = ref->path;
+    stack->deps_loaded = 0;
+    stack->module.path = FbleCopyModulePath(ref);
+    stack->module.value = NULL;
     stack->tail = tail;
-    FbleString* filename_str = Find(arena, root, tree, stack->path);
-    stack->value = NULL;
 
+    FbleString* filename_str = Find(arena, root, tree, stack->module.path);
     if (filename_str != NULL) {
-      stack->value = FbleParse(arena, filename_str, &stack->deps);
+      stack->module.value = FbleParse(arena, filename_str, &stack->deps);
       FbleFreeString(arena, filename_str);
     }
 
-    if (stack->value == NULL) {
+    if (stack->module.value == NULL) {
       error = true;
-      stack->deps.size = 0;
+      stack->deps_loaded = stack->deps.size;
     }
   }
   FbleFreeString(arena, tree->name.name);

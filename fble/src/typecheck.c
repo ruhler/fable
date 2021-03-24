@@ -16,6 +16,16 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// VarName --
+//   Variables can refer to normal values or module values.
+//
+// module == NULL means this is a normal value with name in 'normal'.
+// module != NULL means this is a module value with path in 'module'.
+typedef struct {
+  FbleName normal;
+  FbleModulePath* module;
+} VarName;
+
 // Var --
 //   Information about a variable visible during type checking.
 //
@@ -29,7 +39,8 @@
 // accessed - true if the variable is referenced anywhere, false otherwise.
 // index - the index of the variable.
 typedef struct {
-  FbleName name;
+  VarName name;
+  FbleModulePath* path;
   FbleType* type;
   bool used;
   bool accessed;
@@ -63,9 +74,10 @@ typedef struct Scope {
   struct Scope* parent;
 } Scope;
 
-static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type);
+static bool VarNamesEqual(VarName a, VarName b);
+static Var* PushVar(FbleArena* arena, Scope* scope, VarName name, FbleType* type);
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
-static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom);
+static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom);
 
 static void InitScope(FbleArena* arena, Scope* scope, FbleVarIndexV* captured, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
@@ -94,6 +106,32 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 static FbleType* TypeCheckType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleExpr* expr);
 static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleModule* modules, size_t modulec);
+
+
+// VarNamesEqual --
+//   Test whether two variable names are equal.
+//
+// Inputs:
+//   a - the first variable name.
+//   b - the second variable name.
+//
+// Results:
+//   true if the names are equal, false otherwise.
+//
+// Side effects:
+//   None.
+static bool VarNamesEqual(VarName a, VarName b)
+{
+  if (a.module == NULL && b.module == NULL) {
+    return FbleNamesEqual(a.normal, b.normal);
+  }
+
+  if (a.module != NULL && b.module != NULL) {
+    return FbleModulePathsEqual(a.module, b.module);
+  }
+
+  return false;
+}
 
 // PushVar --
 //   Push a variable onto the current scope.
@@ -114,7 +152,7 @@ static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* s
 //   ownership of the given type, which will be released when the variable is
 //   freed. Does not take owner ship of name. It is the callers responsibility
 //   to ensure that 'name' outlives the returned Var.
-static Var* PushVar(FbleArena* arena, Scope* scope, FbleName name, FbleType* type)
+static Var* PushVar(FbleArena* arena, Scope* scope, VarName name, FbleType* type)
 {
   Var* var = FbleAlloc(arena, Var);
   var->name = name;
@@ -168,12 +206,12 @@ static void PopVar(FbleTypeHeap* heap, Scope* scope)
 //
 // Side effects:
 //   Marks variable as used and for capture if necessary and not phantom.
-static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom)
+static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
 {
   for (size_t i = 0; i < scope->vars.size; ++i) {
     size_t j = scope->vars.size - i - 1;
     Var* var = scope->vars.xs[j];
-    if (var != NULL && FbleNamesEqual(name, var->name)) {
+    if (var != NULL && VarNamesEqual(name, var->name)) {
       var->accessed = true;
       if (!phantom) {
         var->used = true;
@@ -184,7 +222,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, FbleName name, bool phantom
 
   for (size_t i = 0; i < scope->statics.size; ++i) {
     Var* var = scope->statics.xs[i];
-    if (var != NULL && FbleNamesEqual(name, var->name)) {
+    if (var != NULL && VarNamesEqual(name, var->name)) {
       var->accessed = true;
       if (!phantom) {
         var->used = true;
@@ -534,7 +572,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 
     case FBLE_VAR_EXPR: {
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
-      Var* var = GetVar(th, scope, var_expr->var, false);
+      VarName name = { .normal = var_expr->var, .module = NULL };
+      Var* var = GetVar(th, scope, name, false);
       if (var == NULL) {
         ReportError(arena, var_expr->var.loc, "variable '%n' not defined\n", var_expr->var);
         return TC_FAILED;
@@ -605,7 +644,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 
       Var* vars[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        vars[i] = PushVar(arena, scope, let_expr->bindings.xs[i].name, types[i]);
+        VarName name = { .normal = let_expr->bindings.xs[i].name, .module = NULL };
+        vars[i] = PushVar(arena, scope, name, types[i]);
       }
 
       // Compile the values of the variables.
@@ -687,9 +727,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 
       if (body.type != NULL) {
         for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-          if (!vars[i]->accessed && vars[i]->name.name->str[0] != '_') {
-            FbleReportWarning("variable '", vars[i]->name.loc);
-            FblePrintName(stderr, vars[i]->name);
+          if (!vars[i]->accessed
+              && vars[i]->name.module == NULL
+              && vars[i]->name.normal.name->str[0] != '_') {
+            FbleReportWarning("variable '", vars[i]->name.normal.loc);
+            FblePrintName(stderr, vars[i]->name.normal);
             fprintf(stderr, "' defined but not used\n");
           }
         }
@@ -1007,7 +1049,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       InitScope(arena, &func_scope, &captured, scope);
 
       for (size_t i = 0; i < argc; ++i) {
-        PushVar(arena, &func_scope, func_value_expr->args.xs[i].name, arg_types.xs[i]);
+        VarName name = { .normal = func_value_expr->args.xs[i].name, .module = NULL };
+        PushVar(arena, &func_scope, name, arg_types.xs[i]);
       }
 
       Tc func_result = TypeCheckExpr(th, vh, &func_scope, func_value_expr->body);
@@ -1095,7 +1138,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleType* arg = FbleValueOfType(th, arg_type);
       assert(arg != NULL);
 
-      PushVar(arena, scope, poly->arg.name, arg_type);
+      VarName name = { .normal = poly->arg.name, .module = NULL };
+      PushVar(arena, scope, name, arg_type);
       Tc body = TypeCheckExpr(th, vh, scope, poly->body);
       PopVar(th, scope);
 
@@ -1350,10 +1394,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       return MkTc(result_type, ListExpr(vh, expr->loc, func.tc, args, argc));
     }
 
-    case FBLE_MODULE_REF_EXPR: {
-      FbleModuleRefExpr* module_ref_expr = (FbleModuleRefExpr*)expr;
+    case FBLE_MODULE_PATH_EXPR: {
+      FbleModulePathExpr* path_expr = (FbleModulePathExpr*)expr;
 
-      Var* var = GetVar(th, scope, module_ref_expr->ref.resolved, false);
+      VarName name = { .module = path_expr->path };
+      Var* var = GetVar(th, scope, name, false);
 
       // We should have resolved all modules at program load time.
       assert(var != NULL && "module not in scope");
@@ -1613,7 +1658,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
-    case FBLE_MODULE_REF_EXPR:
+    case FBLE_MODULE_PATH_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       Tc proc = TypeCheckExpr(th, vh, scope, expr);
@@ -1687,8 +1732,10 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       FbleTypeAddRef(th, &put_type->_base, put_type->rtype);
       FbleReleaseType(th, &unit_proc_type->_base);
 
-      PushVar(arena, scope, link_expr->get, &get_type->_base);
-      PushVar(arena, scope, link_expr->put, &put_type->_base);
+      VarName get_var = { .normal = link_expr->get, .module = NULL };
+      VarName put_var = { .normal = link_expr->put, .module = NULL };
+      PushVar(arena, scope, get_var, &get_type->_base);
+      PushVar(arena, scope, put_var, &put_type->_base);
 
       Tc body = TypeCheckExec(th, vh, scope, link_expr->body);
 
@@ -1753,7 +1800,8 @@ static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
       }
 
       for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        PushVar(arena, scope, exec_expr->bindings.xs[i].name, types[i]);
+        VarName name = { .normal = exec_expr->bindings.xs[i].name, .module = NULL };
+        PushVar(arena, scope, name, types[i]);
       }
 
       Tc body = TC_FAILED;
@@ -1947,7 +1995,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
-    case FBLE_MODULE_REF_EXPR:
+    case FBLE_MODULE_PATH_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       FbleExpr* expr = type;
@@ -2005,16 +2053,42 @@ static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* s
   // index is consumed by the thing being defined. The module loading process
   // is responsible for ensuring we will never try to access the variable in
   // the definition of the module.
-  PushVar(arena, scope, modules->name, NULL);
+  VarName name = { .module = modules->path };
+  PushVar(arena, scope, name, NULL);
   Tc module = TypeCheckExpr(th, vh, scope, modules->value);
-  module = ProfileBlock(vh, modules->name, modules->value->loc, module);
+
+  // Create a profiling label for the module.
+  size_t len = 2;
+  for (size_t i = 0; i < modules->path->path.size; ++i) {
+    len += 1 + strlen(modules->path->path.xs[i].name->str);
+  }
+
+  FbleString* label_name = FbleAllocExtra(arena, FbleString, len);
+  label_name->refcount = 1;
+  label_name->magic = FBLE_STRING_MAGIC;
+  FbleName label = {
+    .name = label_name,
+    .loc = modules->path->loc,
+    .space = FBLE_NORMAL_NAME_SPACE
+  };
+
+  label_name->str[0] = '\0';
+  for (size_t i = 0; i < modules->path->path.size; ++i) {
+    strcat(label_name->str, "/");
+    strcat(label_name->str, modules->path->path.xs[i].name->str);
+  }
+  strcat(label_name->str, "%");
+
+  module = ProfileBlock(vh, label, modules->value->loc, module);
+  FbleFreeString(arena, label_name);
+
   PopVar(th, scope);
 
   if (module.type == NULL) {
     return NULL;
   }
 
-  PushVar(arena, scope, modules->name, module.type);
+  PushVar(arena, scope, name, module.type);
   FbleValue* body_tc = TypeCheckProgram(th, vh, scope, modules + 1, modulec - 1);
   PopVar(th, scope);
 
@@ -2028,7 +2102,7 @@ static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* s
   let_tc->recursive = false;
   FbleVectorInit(arena, let_tc->bindings);
   FbleLocTc ltc = {
-    .loc = FbleCopyLoc(modules->name.loc),
+    .loc = FbleCopyLoc(modules->path->loc),
     .tc = module.tc
   };
   FbleVectorAppend(arena, let_tc->bindings, ltc);

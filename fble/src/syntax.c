@@ -50,12 +50,9 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       return;
     }
 
-    case FBLE_MODULE_REF_EXPR: {
-      FbleModuleRefExpr* e = (FbleModuleRefExpr*)expr;
-      for (size_t i = 0; i < e->ref.path.size; ++i) {
-        FbleFreeName(arena, e->ref.path.xs[i]);
-      }
-      FbleFree(arena, e->ref.path.xs);
+    case FBLE_MODULE_PATH_EXPR: {
+      FbleModulePathExpr* e = (FbleModulePathExpr*)expr;
+      FbleFreeModulePath(arena, e->path);
       FbleFree(arena, expr);
       return;
     }
@@ -330,11 +327,71 @@ void FblePrintName(FILE* stream, FbleName name)
     case FBLE_TYPE_NAME_SPACE:
       fprintf(stream, "@");
       break;
-
-    case FBLE_MODULE_NAME_SPACE:
-      fprintf(stream, "%%");
-      break;
   }
+}
+
+// FbleNewModulePath -- see documentation in syntax.h
+FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc)
+{
+  FbleModulePath* path = FbleAlloc(arena, FbleModulePath);
+  path->refcount = 1;
+  path->magic = FBLE_MODULE_PATH_MAGIC;
+  path->loc = FbleCopyLoc(loc);
+  FbleVectorInit(arena, path->path);
+  return path;
+}
+
+// FbleCopyModulePath -- see documentation in syntax.h
+FbleModulePath* FbleCopyModulePath(FbleModulePath* path)
+{
+  path->refcount++;
+  return path;
+}
+
+// FbleFreeModulePath -- see documentation in syntax.h
+void FbleFreeModulePath(FbleArena* arena, FbleModulePath* path)
+{
+  if (path != NULL) {
+    assert(path->magic == FBLE_MODULE_PATH_MAGIC && "corrupt FbleModulePath");
+    if (--path->refcount == 0) {
+      FbleFreeLoc(arena, path->loc);
+      for (size_t i = 0; i < path->path.size; ++i) {
+        FbleFreeName(arena, path->path.xs[i]);
+      }
+      FbleFree(arena, path->path.xs);
+      FbleFree(arena, path);
+    }
+  }
+}
+
+// FblePrintModulePath -- see documentation in syntax.h
+void FblePrintModulePath(FILE* fout, FbleModulePath* path)
+{
+  if (path->path.size == 0) {
+    fprintf(fout, "/");
+  }
+  for (size_t i = 0; i < path->path.size; ++i) {
+    // TODO: Use quotes if the name contains any special characters, and
+    // escape quotes as needed so the user can distinguish, for example,
+    // between /Foo/Bar% and /'Foo/Bar'%.
+    fprintf(fout, "/%s", path->path.xs[i].name->str);
+  }
+  fprintf(fout, "%%");
+}
+
+// FbleModulePathsEqual -- see documentation in syntax.h
+bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b)
+{
+  if (a->path.size != b->path.size) {
+    return false;
+  }
+
+  for (size_t i = 0; i < a->path.size; ++i) {
+    if (!FbleNamesEqual(a->path.xs[i], b->path.xs[i])) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // FbleCopyKind -- see documentation in syntax.h
@@ -376,7 +433,7 @@ void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
 {
   if (program != NULL) {
     for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleFreeName(arena, program->modules.xs[i].name);
+      FbleFreeModulePath(arena, program->modules.xs[i].path);
       FbleFreeExpr(arena, program->modules.xs[i].value);
     }
     FbleFree(arena, program->modules.xs);

@@ -1005,7 +1005,7 @@ named children from the root of the module hierarchy.
 
 Abstract Syntax:
   Path ::= abs_path (name :: [Name])
-  Expr ::= module_ref (ref :: Path)
+  Expr ::= module_path (ref :: Path)
 
 Concrete Syntax:
   path ::= '/' name ['/' name [...]] '%'
@@ -1030,41 +1030,41 @@ deemed suitable by whoever is executing the program. Commonly this could be:
 A program is formed of a module and all of its direct and indirect
 dependencies. For example, consider the following module hierarchy:
 
-  StdLib
+  StdLib/
     Unit
-    List
+    List/
       Tests
-  Md5
+  Md5/
     Tests
 
 With the following dependency graph:
 
-  StdLib.List -> StdLib.Unit
-  StdLib.List.Tests -> StdLib.List, StdLib.Unit
-  Md5 -> StdLib.Unit, StdLib.List
-  Md5.Tests -> StdLib.Unit, Md5
+  /StdLib/List% -> StdLib/Unit%
+  /StdLib/List/Tests% -> /StdLib/List%, /StdLib/Unit%
+  /Md5% -> /StdLib/Unit%, /StdLib/List%
+  /Md5/Tests% -> /StdLib/Unit%, /Md5%
 
-The module Md5.Tests can be turned into a program to run Md5 tests
+The module /Md5/Tests% can be turned into a program to run Md5 tests
 conceptually by forming a let expression in topological sort dependency order:
 
-  StdLib_Unit = <StdLib.Unit>;
-  StdLib_List = <StdLib.List>;
-  Md5 = <Md5>;
-  <Md5.Tests>;
+  StdLib_Unit = </StdLib/Unit%>;
+  StdLib_List = </StdLib/List%>;
+  Md5 = </Md5%>;
+  </Md5/Tests%>;
 
-Where <Foo> is the fble expression describing the value of module Foo and we
-assume references to a module Foo.Bar% in the expression are replaced with
+Where </Foo%> is the fble expression describing the value of module /Foo% and
+we assume references to a module /Foo/Bar% in the expression are replaced with
 variables named Foo_Bar.
 
-Notice in this case that the value of StdLib.List.Tests is not used.
+Notice in this case that the value of /StdLib/List/Tests% is not used.
 
 The modules may be combined in any order that satisfies their dependencies.
 
 The same module hierarchy can be used for a program to run List tests:
  
-  StdLib_Unit = <Stdlib.Unit>;
-  StdLib_List = <StdLib.List>;
-  <StdLib.List.Tests>;
+  StdLib_Unit = </Stdlib/Unit%>;
+  StdLib_List = </StdLib/List%>;
+  </StdLib/List/Tests%>;
 
 10. Abstract Syntax Reference
 ----------------------------
@@ -1097,7 +1097,7 @@ Expr ::=
    typeof (expr :: Expr)
  | var (name :: Name)
  | let (bindings :: [(Spec, Name, Expr)]) (body :: Expr)
- | module_ref (ref :: Path)
+ | module_path (path :: Path)
 
  | struct_type (fields :: [(Type, Name)])
  | struct_value_explicit_type (type :: Type) (args :: [Expr])
@@ -1191,7 +1191,7 @@ spec ::=
 expr ::= 
    '@' '<' expr '>'                                (* typeof *)
  | name                                            (* var *)
- | path                                            (* module_ref *)
+ | path                                            (* module_path *)
 
  | '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
  | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type *)

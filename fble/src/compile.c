@@ -419,7 +419,6 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
   switch (name.space) {
     case FBLE_NORMAL_NAME_SPACE: break;
     case FBLE_TYPE_NAME_SPACE: strcat(str->str, "@"); break;
-    case FBLE_MODULE_NAME_SPACE: strcat(str->str, "%"); break;
   }
 
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };

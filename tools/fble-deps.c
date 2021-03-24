@@ -83,19 +83,25 @@ int main(int argc, char* argv[])
 
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
 
-  size_t cols = 0;
-  cols += strlen(target);
+  int cols = 1 + strlen(target);
   printf("%s:", target);
-  for (size_t i = 0; i < prgm->modules.size; ++i) {
-    const char* name = prgm->modules.xs[i].name.name->str;
-    size_t len = 1 + strlen(name);
-    if (cols + len > 78) {
-      printf(" \\\n");
-      cols = 0;
-    }
-    cols += len;
+  if (prgm->modules.size > 1) {
+    for (size_t i = 0; i < prgm->modules.size - 1; ++i) {
+      FbleModulePath* mpath = prgm->modules.xs[i].path;
+      if (cols > 80) {
+        printf(" \\\n");
+        cols = 1;
+      }
 
-    printf(" %s", name);
+      cols += 1 + strlen(include_path);
+      printf(" %s", include_path);
+      for (size_t j = 0; j < mpath->path.size; ++j) {
+        cols += 1 + strlen(mpath->path.xs[j].name->str);
+        printf("/%s", mpath->path.xs[j].name->str);
+      }
+      cols += 5;
+      printf(".fble");
+    }
   }
   printf("\n");
 

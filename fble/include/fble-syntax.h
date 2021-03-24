@@ -4,6 +4,31 @@
 #ifndef FBLE_SYNTAX_H_
 #define FBLE_SYNTAX_H_
 
+#include "fble-name.h"
+
+// FbleModulePath --
+//   A module path, such as /Foo/Bar%.
+//
+// Pass by pointer. Explicitly copy and free required.
+//
+// By convention, all names in the path belong to the FBLE_NORMAL_NAME_SPACE.
+// 
+// The magic field is set to FBLE_MODULE_PATH_MAGIC and is used to detect
+// double frees of FbleModulePath.
+#define FBLE_MODULE_PATH_MAGIC 0x77806584
+typedef struct {
+  size_t refcount;
+  size_t magic;
+  FbleLoc loc;
+  FbleNameV path;
+} FbleModulePath;
+
+// FbleModulePathV -- A vector of FbleModulePath.
+typedef struct {
+  size_t size;
+  FbleModulePath** xs;
+} FbleModulePathV;
+
 // FbleExpr --
 //   Abstract type representing an fble expression.
 typedef struct FbleExpr FbleExpr;
@@ -12,12 +37,10 @@ typedef struct FbleExpr FbleExpr;
 //   Represents an individual module.
 // 
 // Fields:
-//   name - the canonical name of the module. This is the resolved path to the
-//          module with "/" used as a separator. For example, the module Foo/Bar% has
-//          name "Foo/Bar" in the MODULE name space.
+//   path - the path to the module.
 //   value - the value of the module
 typedef struct {
-  FbleName name;
+  FbleModulePath* path;
   FbleExpr* value;
 } FbleModule;
 
@@ -34,8 +57,8 @@ typedef struct {
 // dependancy order. Later modules in the list may depend on earlier modules
 // in the list, but not the other way around.
 //
-// The last module in the list is the main program. The name of the main
-// module is undefined.
+// The last module in the list is the main program. The module path for the
+// main module is NULL.
 typedef struct {
   FbleModuleV modules;
 } FbleProgram;
