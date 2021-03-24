@@ -66,6 +66,9 @@ static void PrintModuleName(FILE* fout, FbleNameV path)
     fprintf(fout, "/");
   }
   for (size_t i = 0; i < path.size; ++i) {
+    // TODO: Use quotes if the name contains any special characters, and
+    // escape quotes as needed so the user can distinguish, for example,
+    // between /Foo/Bar% and /'Foo/Bar'%.
     fprintf(fout, "/%s", path.xs[i].name->str);
   }
   fprintf(fout, "%%");
@@ -242,6 +245,17 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleName
   for (size_t i = 0; i < path.size; ++i) {
     // "/name*"
     len += 1 + strlen(path.xs[i].name->str) + 1;
+
+    if (strchr(path.xs[i].name->str, '/') != NULL) {
+      // There's nothing in the fble language spec that says you can't have a
+      // forward slash in a module name, but there's no way on a posix system
+      // to put the slash in the filename where we would look for the module,
+      // so don't even try looking for it.
+      FbleReportError("module ", path.xs[0].loc);
+      PrintModuleName(stderr, path);
+      fprintf(stderr, " not found\n");
+      return NULL;
+    }
   }
 
   // Find the path to the module on disk, which depends on the access

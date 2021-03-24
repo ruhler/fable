@@ -995,7 +995,7 @@ other modules.
 --------
 Modules may depend on other modules independent of the tree hierarchy of
 modules. A program can include a module without having to depend on any
-descendants of that module. The only restrictions on module dependencies is
+descendants of that module. The only restrictions on module dependencies are
 that there must not be any cyclic dependencies and module visibility rules
 must be obeyed. A module may not reference itself, as that is considered a
 form of cyclic dependency.
