@@ -380,7 +380,6 @@ void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
       FbleFreeExpr(arena, program->modules.xs[i].value);
     }
     FbleFree(arena, program->modules.xs);
-    FbleFreeExpr(arena, program->main);
     FbleFree(arena, program);
   }
 }

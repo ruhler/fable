@@ -93,7 +93,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleExpr* expr);
-static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleModule* modules, size_t modulec, FbleExpr* body);
+static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleModule* modules, size_t modulec);
 
 // PushVar --
 //   Push a variable onto the current scope.
@@ -1981,7 +1981,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope
 //   scope - the list of variables in scope.
 //   modules - the modules of the program.
 //   modulec - the number of modules to check.
-//   body - the main body of the program.
 //
 // Results:
 //   The type checked program, or NULL if the program failed to type check.
@@ -1991,12 +1990,12 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope
 // * Prints a message to stderr if the program fails to type check.
 // * The user is responsible for calling FbleFreeTc on the returned program
 //   when it is no longer needed.
-static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleModule* modules, size_t modulec, FbleExpr* body)
+static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleModule* modules, size_t modulec)
 {
   FbleArena* arena = vh->arena;
 
-  if (modulec == 0) {
-    Tc result = TypeCheckExpr(th, vh, scope, body);
+  if (modulec == 1) {
+    Tc result = TypeCheckExpr(th, vh, scope, modules->value);
     FbleReleaseType(th, result.type);
     return result.tc;
   }
@@ -2016,7 +2015,7 @@ static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* s
   }
 
   PushVar(arena, scope, modules->name, module.type);
-  FbleValue* body_tc = TypeCheckProgram(th, vh, scope, modules + 1, modulec - 1, body);
+  FbleValue* body_tc = TypeCheckProgram(th, vh, scope, modules + 1, modulec - 1);
   PopVar(th, scope);
 
   if (body_tc == NULL) {
@@ -2048,7 +2047,7 @@ FbleValue* FbleTypeCheck(FbleValueHeap* heap, FbleProgram* program)
   InitScope(heap->arena, &scope, NULL, NULL);
 
   FbleTypeHeap* th = FbleNewTypeHeap(heap->arena);
-  FbleValue* result = TypeCheckProgram(th, heap, &scope, program->modules.xs, program->modules.size, program->main);
+  FbleValue* result = TypeCheckProgram(th, heap, &scope, program->modules.xs, program->modules.size);
   FreeScope(th, &scope);
   FbleFreeTypeHeap(th);
   return result;

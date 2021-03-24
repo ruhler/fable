@@ -12,8 +12,6 @@ typedef struct FbleExpr FbleExpr;
 //   Represents an individual module.
 // 
 // Fields:
-//   filename - the filename of the module. Used for ownership of all loc
-//              references in the module value.
 //   name - the canonical name of the module. This is the resolved path to the
 //          module with "/" used as a separator. For example, the module Foo/Bar% has
 //          name "Foo/Bar" in the MODULE name space.
@@ -32,14 +30,14 @@ typedef struct {
 // FbleProgram --
 //   Represents a complete parsed and loaded fble program.
 //
-// Fields:
-//   modules - List of dependant modules in topological dependancy order. Later
-//             modules in the list may depend on earlier modules in the list,
-//             but not the other way around.
-//   main - The value of the program, which may depend on any of the modules.
+// The program is represented as a list of dependant module in topological
+// dependancy order. Later modules in the list may depend on earlier modules
+// in the list, but not the other way around.
+//
+// The last module in the list is the main program. The name of the main
+// module is undefined.
 typedef struct {
   FbleModuleV modules;
-  FbleExpr* main;
 } FbleProgram;
 
 // FbleLoad --

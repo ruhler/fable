@@ -996,7 +996,7 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
   if (tc != NULL) {
     FbleName entry_name = {
       .name = FbleNewString(arena, "<main>"),
-      .loc = FbleCopyLoc(program->main->loc),
+      .loc = FbleCopyLoc(program->modules.xs[program->modules.size-1].value->loc),
       .space = FBLE_NORMAL_NAME_SPACE,
     };
     code = FbleCompileValue(arena, 0, tc, entry_name, profile);

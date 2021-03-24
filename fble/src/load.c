@@ -425,11 +425,6 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FbleFreeString(arena, tree->name.loc.source);
   FreeTree(arena, tree);
 
-  // The last module loaded should be the main entry point.
-  program->modules.size--;
-  FbleFreeName(arena, program->modules.xs[program->modules.size].name);
-  program->main = program->modules.xs[program->modules.size].value;
-
   if (error) {
     FbleFreeProgram(arena, program);
     return NULL;
