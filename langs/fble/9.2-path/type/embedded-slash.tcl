@@ -1,4 +1,4 @@
-fble-test-error 4:13 {
+fble-test-error 4:12 {
   # /'Bool/Unit'% is not the same as /Bool/Unit%.
   # This should give a "no such module" error.
   % Unit = /'Bool/Unit'%.Unit;

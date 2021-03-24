@@ -38,7 +38,6 @@
 %union {
   const char* word;
   FbleName name;
-  FbleNameV names;
   FbleModulePath* module_path;
   FbleKind* kind;
   FbleKindV kinds;
@@ -93,13 +92,6 @@
 %destructor {
   FbleFreeName(arena, $$);
 } <name>
-
-%destructor {
-  for (size_t i = 0; i < $$.size; ++i) {
-    FbleFreeName(arena, $$.xs[i]);
-  }
-  FbleFree(arena, $$.xs);
-} <names>
 
 %destructor {
   FbleFreeModulePath(arena, $$);
@@ -191,7 +183,6 @@ name:
 path:
    WORD {
      $$ = FbleNewModulePath(arena, @$);
-     FbleVectorInit(arena, $$->path);
      FbleName* name = FbleVectorExtend(arena, $$->path);
      name->name = ToString(arena, $1);
      name->space = FBLE_NORMAL_NAME_SPACE;

@@ -281,10 +281,8 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
         if (program->modules.xs[i].value != NULL
             && !AccessAllowed(tree, stack->module.path, ref)) {
           FbleReportError("module ", ref->loc);
-          FblePrintModulePath(stderr, stack->module.path);
-          fprintf(stderr, " is not allowed to reference private module ");
           FblePrintModulePath(stderr, ref);
-          fprintf(stderr, "\n");
+          fprintf(stderr, " is private\n");
           error = true;
         }
 

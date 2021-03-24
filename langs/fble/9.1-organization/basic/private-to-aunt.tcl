@@ -1,4 +1,4 @@
-fble-test-error 2:12 {
+fble-test-error 2:11 {
   # A private module X is not visible to its aunt.
   #
   # . -> P -> X*

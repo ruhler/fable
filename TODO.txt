@@ -1,7 +1,5 @@
 
 Fble Compilation:
-* Track down memory leak.
-
 * Add module dependency list to FbleModule.
 * Compile to CompiledProgram = FbleCompiledModuleV instead of FbleValue
 * Add an FbleLink function to link the compiled modules into an FbleValue.
@@ -190,7 +188,7 @@ Exec:
 * Clarify spec on when vacuous value error should be reported.
 
 * Add coverage for parse destructors
- - names, module_ref, kinds, tagged_kinds, tagged_type, tagged_expr
+ - path, kinds, tagged_kinds, tagged_type, tagged_expr
 
 * Move implementations corresponding to fble-name.h to name.c?
 
