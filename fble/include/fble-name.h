@@ -129,6 +129,13 @@ typedef struct {
   FbleLoc loc;
 } FbleName;
 
+// FbleNameV --
+//   A vector of FbleNames.
+typedef struct {
+  size_t size;
+  FbleName* xs;
+} FbleNameV;
+
 // FbleCopyName --
 //   Make a (possibly shared) copy of the name.
 //

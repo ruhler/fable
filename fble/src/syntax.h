@@ -42,12 +42,6 @@ void FbleReportWarning(const char* format, FbleLoc loc, ...);
 //   Prints an error message to stderr with error location.
 void FbleReportError(const char* format, FbleLoc loc, ...);
 
-// FbleNameV --
-//   A vector of FbleNames.
-typedef struct {
-  size_t size;
-  FbleName* xs;
-} FbleNameV;
 
 // FbleNamesEqual --
 //   Test whether two names are equal. Two names are considered equal if they
