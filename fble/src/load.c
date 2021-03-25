@@ -35,9 +35,8 @@ struct Tree {
 //   module - the value of the module.
 //   tail - the rest of the stack of modules.
 typedef struct Stack {
-  FbleModulePathV deps;
-  size_t deps_loaded;
   FbleModule module;
+  size_t deps_loaded;
   struct Stack* tail;
 } Stack;
 
@@ -234,14 +233,14 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   bool error = false;
   FbleString* filename_str = FbleNewString(arena, filename);
   Stack* stack = FbleAlloc(arena, Stack);
-  FbleVectorInit(arena, stack->deps);
   stack->deps_loaded = 0;
   stack->module.path = NULL;
+  FbleVectorInit(arena, stack->module.deps);
   stack->tail = NULL;
-  stack->module.value = FbleParse(arena, filename_str, &stack->deps);
+  stack->module.value = FbleParse(arena, filename_str, &stack->module.deps);
   if (stack->module.value == NULL) {
     error = true;
-    stack->deps_loaded = stack->deps.size;
+    stack->deps_loaded = stack->module.deps.size;
   }
   FbleFreeString(arena, filename_str);
 
@@ -254,20 +253,16 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FbleVectorInit(arena, tree->children);
 
   while (stack != NULL) {
-    if (stack->deps_loaded == stack->deps.size) {
+    if (stack->deps_loaded == stack->module.deps.size) {
       // We have loaded all the dependencies for this module.
       FbleVectorAppend(arena, program->modules, stack->module);
       Stack* tail = stack->tail;
-      for (size_t i = 0; i < stack->deps.size; ++i) {
-        FbleFreeModulePath(arena, stack->deps.xs[i]);
-      }
-      FbleFree(arena, stack->deps.xs);
       FbleFree(arena, stack);
       stack = tail;
       continue;
     }
     
-    FbleModulePath* ref = stack->deps.xs[stack->deps_loaded];
+    FbleModulePath* ref = stack->module.deps.xs[stack->deps_loaded];
 
     // Check to see if we have already loaded this path.
     bool found = false;
@@ -304,7 +299,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
         fprintf(stderr, " recursively depends on itself\n");
         error = true;
         recursive = true;
-        stack->deps_loaded = stack->deps.size;
+        stack->deps_loaded = stack->module.deps.size;
         break;
       }
     }
@@ -316,21 +311,21 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     // Parse the new module, placing it on the stack for processing.
     Stack* tail = stack;
     stack = FbleAlloc(arena, Stack);
-    FbleVectorInit(arena, stack->deps);
     stack->deps_loaded = 0;
     stack->module.path = FbleCopyModulePath(ref);
+    FbleVectorInit(arena, stack->module.deps);
     stack->module.value = NULL;
     stack->tail = tail;
 
     FbleString* filename_str = Find(arena, root, tree, stack->module.path);
     if (filename_str != NULL) {
-      stack->module.value = FbleParse(arena, filename_str, &stack->deps);
+      stack->module.value = FbleParse(arena, filename_str, &stack->module.deps);
       FbleFreeString(arena, filename_str);
     }
 
     if (stack->module.value == NULL) {
       error = true;
-      stack->deps_loaded = stack->deps.size;
+      stack->deps_loaded = stack->module.deps.size;
     }
   }
   FbleFreeString(arena, tree->name.name);

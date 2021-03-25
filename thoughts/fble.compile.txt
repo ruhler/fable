@@ -695,3 +695,27 @@ Changes needed:
 So there are a few details about whose job it is to tell the compiler what the
 type of a dependent module is that need to be worked out. But I think this
 should get us a pretty good step in the right direction.
+
+---
+
+A bug in the above design: loading a module shouldn't load the module value,
+it should load a function to compute the module value. But that means we can't
+have every module execute its dependency module functions, because we would
+end up duplicating execution of any module used more than once.
+
+Instead, loading a module should add that CompiledModule to a deduplicated
+list of modules. Once we have that list, we link the modules together into a
+single FbleValue function that we can execute.
+
+To start, let me defer on the modular compilation stuff. It just seems easier.
+So do it like this:
+* Internally in FbleCompile, we compile each module separately, then link them
+  together. The FbleValue we produce will not have one massive top level
+  function.
+* In GenerateC, let's generate a separate C function for each InstrBlock in
+  the program. We should no longer have any really big functions; hopefully
+  gcc can handle lots of medium sized functions much better than one big
+  function. If gcc can't handle that, I can try manually splitting the c code
+  into one function per c file. If gcc can't handle those on their own, then
+  I'm going to have to go back to the drawing board.
+

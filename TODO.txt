@@ -1,18 +1,11 @@
-
 Fble Compilation:
-* Add module dependency list to FbleModule.
-* Compile to CompiledProgram = FbleCompiledModuleV instead of FbleValue
-* Add an FbleLink function to link the compiled modules into an FbleValue.
-* Change fble-compile to just compile the main module.
-  Now it should possible to try compiling again.
-* Add support for .fble.@ files needed to do true module compilation.
+* Compile modules separately in FbleCompile.
+* Change GenerateC to generate a separate function for each InstrBlock.
+  See if we can compile Fble/Tests.fble now.
 
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.
-* Now we should be off and running with tons of optimization opportunities.
-* Come up with better names than 'compile' and 'native' to distinguish between
-  the different variations of the compiler.
-
+* Add support for .fble.@ files and module compilation.
 
 Fblf:
 * Figure out how to avoid duplication of module definitions.
@@ -136,10 +129,6 @@ Exec:
   We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
   Should we instead get: expected type Maybe@<Bool@>? 
 
-* Store function pointer in FbleInstr instead of tag
- - Requires we also store functions for disassembly and freeing of
-   instructions.
-
 * Pull out definition of architectural state and instruction functions.
  - Would be nice to separate them from the evaluator I think.
 
@@ -176,10 +165,15 @@ Exec:
  Consumed: ownership transferred from caller to callee.
  Outlives: caller responsible for keeping alive as long as returned result is.
 
+* Clean up what we export in fble-syntax.h versus syntax.h.
+  Same for the rest of the fble API.
+
 * Move FblePrintName and FbleNamesEqual to fble-name.h?
   The question is if they should be public or private.
   If they should be private, they should go into name.h rather than syntax.h,
   right?
+
+* Make FbleModulePath* functions part of the public API?
 
 * We don't get a warning about an unused self recursive function.
   More generally, we don't get warnings about variables that are referenced

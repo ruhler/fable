@@ -38,9 +38,11 @@ typedef struct FbleExpr FbleExpr;
 // 
 // Fields:
 //   path - the path to the module.
+//   deps - a list of distinct modules this module depends on.
 //   value - the value of the module
 typedef struct {
   FbleModulePath* path;
+  FbleModulePathV deps;
   FbleExpr* value;
 } FbleModule;
 

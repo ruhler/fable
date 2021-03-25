@@ -9,8 +9,6 @@ Fble Language Thoughts
   interpreter you are using. If you have a hardware interpreter, for example,
   the resulting function will be a description of a hardware circuit.
 
-  See Symbolic Elaboration as an attempt to remedy this.
-
 * Issues that came up when switching to the new unit test format
 - Should we have some form of relative reference?
   It seems bad that every time you import a module, you have to duplicate a
@@ -74,7 +72,7 @@ Fble Language Thoughts
   - closures that capture variables from local scope
   - light weight multithreading
 
-  See Static Elaboration as an attempt to remedy this.
+  See fble.performance.txt and friends.
 
 * Should we support zero-argument functions now?
   They aren't necessary, because you could always do a single argument

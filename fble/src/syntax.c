@@ -433,8 +433,13 @@ void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
 {
   if (program != NULL) {
     for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleFreeModulePath(arena, program->modules.xs[i].path);
-      FbleFreeExpr(arena, program->modules.xs[i].value);
+      FbleModule* module = program->modules.xs + i;
+      FbleFreeModulePath(arena, module->path);
+      for (size_t j = 0; j < module->deps.size; ++j) {
+        FbleFreeModulePath(arena, module->deps.xs[j]);
+      }
+      FbleFree(arena, module->deps.xs);
+      FbleFreeExpr(arena, module->value);
     }
     FbleFree(arena, program->modules.xs);
     FbleFree(arena, program);
