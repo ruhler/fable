@@ -1,11 +1,9 @@
 Fble Compilation:
 * Factor out common logic in typecheck and compile for looking up a module
   dependency's index.
-* Avoid duplicating code between fble-stdio and fble-compiled-stdio.
 
 * Compile modules separately in FbleCompile.
-* Change GenerateC to generate a separate function for each InstrBlock.
-  See if we can compile Fble/Tests.fble now.
+* Avoid duplicating code between fble-stdio and fble-compiled-stdio.
 
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.
