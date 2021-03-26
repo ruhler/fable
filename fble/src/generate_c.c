@@ -17,7 +17,6 @@ static VarId GenLoc(FILE* fout, VarId* var_id, FbleLoc loc);
 static VarId GenFrameIndex(FILE* fout, VarId* var_id, FbleFrameIndex index);
 static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr);
 static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code);
-static VarId GenCompiledFuncValue(FILE* fout, VarId* var_id, FbleCompiledFuncValueTc* tc);
 
 // GenLoc --
 //   Generate code for a FbleLoc.
@@ -362,39 +361,14 @@ static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code)
   return id;
 }
 
-// GenCompiledFuncValue --
-//   Generate code for an FbleCompiledFuncValueTc.
-//
-// Assumes there is a C variable 'FbleValueHeap* heap' in scope for allocating
-// the value.
-//
-// Inputs:
-//   fout - the output stream to write the code to.
-//   var_id - pointer to next available variable id for use.
-//   tc - the value to generate code for.
-//
-// Results:
-//   The variable id of the generated value.
-//
-// Side effects:
-// * Outputs code to fout with two space indent.
-// * Increments var_id based on the number of internal variables used.
-static VarId GenCompiledFuncValue(FILE* fout, VarId* var_id, FbleCompiledFuncValueTc* tc)
-{
-  assert(tc->argc == 0 && "TODO: support arguments to compiled funcs");
-  VarId func = (*var_id)++;
-  fprintf(fout, "  FbleCompiledFuncValueTc* v%x = FbleNewValue(heap, FbleCompiledFuncValueTc);\n", func);
-  fprintf(fout, "  v%x->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;\n", func);
-  fprintf(fout, "  v%x->argc = %i;\n", func, tc->argc);
-  VarId code = GenInstrBlock(fout, var_id, tc->code);
-  fprintf(fout, "  v%x->code = v%x;\n", func, code);
-  fprintf(fout, "  v%x->run = &FbleStandardRunFunction;\n\n", func);
-  return func;
-}
-
 // FbleGenerateC -- see documentation in fble.h
 bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
 {
+  // TODO: Either change the type of FbleGenerateC to take an InstrBlock as
+  // input instead of an FbleValue, or support compilation of all kinds of
+  // values.
+  assert(value->tag == FBLE_COMPILED_FUNC_VALUE_TC && "TODO");
+
   VarId var_id = 0;
 
   fprintf(fout, "#include \"fble.h\"\n");
@@ -403,32 +377,17 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
   fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", entry);
   fprintf(fout, "{\n");
 
-  VarId result_id;
-  switch (value->tag) {
-    case FBLE_TYPE_VALUE_TC: assert(false && "TODO"); return false;
-    case FBLE_VAR_TC: assert(false && "TODO"); return false;
-    case FBLE_LET_TC: assert(false && "TODO"); return false;
-    case FBLE_STRUCT_VALUE_TC: assert(false && "TODO"); return false;
-    case FBLE_UNION_VALUE_TC: assert(false && "TODO"); return false;
-    case FBLE_UNION_SELECT_TC: assert(false && "TODO"); return false;
-    case FBLE_DATA_ACCESS_TC: assert(false && "TODO"); return false;
-    case FBLE_FUNC_VALUE_TC: assert(false && "TODO"); return false;
+  FbleCompiledFuncValueTc* tc = (FbleCompiledFuncValueTc*)value;
+  assert(tc->argc == 0 && "TODO: support arguments to compiled funcs?");
+  VarId func = var_id++;
+  fprintf(fout, "  FbleCompiledFuncValueTc* v%x = FbleNewValue(heap, FbleCompiledFuncValueTc);\n", func);
+  fprintf(fout, "  v%x->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;\n", func);
+  fprintf(fout, "  v%x->argc = %i;\n", func, tc->argc);
+  VarId code = GenInstrBlock(fout, &var_id, tc->code);
+  fprintf(fout, "  v%x->code = v%x;\n", func, code);
+  fprintf(fout, "  v%x->run = &FbleStandardRunFunction;\n\n", func);
 
-    case FBLE_COMPILED_FUNC_VALUE_TC: {
-      result_id = GenCompiledFuncValue(fout, &var_id, (FbleCompiledFuncValueTc*)value);
-      break;
-    }
-
-    case FBLE_FUNC_APPLY_TC: assert(false && "TODO"); return false;
-    case FBLE_LINK_VALUE_TC: assert(false && "TODO"); return false;
-    case FBLE_PORT_VALUE_TC: assert(false && "TODO"); return false;
-    case FBLE_LINK_TC: assert(false && "TODO"); return false;
-    case FBLE_EXEC_TC: assert(false && "TODO"); return false;
-    case FBLE_PROFILE_TC: assert(false && "TODO"); return false;
-    case FBLE_THUNK_VALUE_TC: assert(false && "TODO"); return false;
-  }
-
-  fprintf(fout, "  return v%x;\n", result_id);
+  fprintf(fout, "  return v%x;\n", func);
   fprintf(fout, "}\n");
   return true;
 }
