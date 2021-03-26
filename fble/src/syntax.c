@@ -344,7 +344,9 @@ FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc)
 // FbleCopyModulePath -- see documentation in syntax.h
 FbleModulePath* FbleCopyModulePath(FbleModulePath* path)
 {
-  path->refcount++;
+  if (path != NULL) {
+    path->refcount++;
+  }
   return path;
 }
 

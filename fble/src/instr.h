@@ -105,13 +105,13 @@ typedef struct {
 // The magic field is set to FBLE_INSTR_BLOCK_MAGIC to help detect double
 // free.
 #define FBLE_INSTR_BLOCK_MAGIC 0xB10CE
-typedef struct {
+struct FbleInstrBlock {
   size_t refcount;
   size_t magic;
   size_t statics;     // The number of statics used by this frame.
   size_t locals;      // The number of locals required by this stack frame.
   FbleInstrV instrs;
-} FbleInstrBlock;
+};
 
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.

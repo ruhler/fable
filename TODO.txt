@@ -1,5 +1,4 @@
 Fble Compilation:
-* Change FbleDisassmble to take an FbleCompiledProgram (or module?).
 * Change FbleGenerateC to take an FbleCompiledProgram (or module?).
 * Generate separate .c file per module.
 

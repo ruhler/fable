@@ -65,11 +65,15 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
 
   bool success = false;
   FbleArena* arena = FbleNewArena();
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleProfile* profile = FbleNewProfile(arena);
-  FbleValue* compiled = FbleCompile(heap, prgm, profile);
+  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
   if (compiled != NULL) {
-    FbleValue* func = FbleEval(heap, compiled, profile);
+    FbleValueHeap* heap = FbleNewValueHeap(arena);
+    FbleValue* linked = FbleLink(heap, compiled);
+    FbleFreeCompiledProgram(arena, compiled);
+
+    FbleValue* func = FbleEval(heap, linked, profile);
+    FbleReleaseValue(heap, linked);
     if (func != NULL) {
       // Number type is BitS@ from:
       // Unit@ Unit = Unit@();
@@ -116,9 +120,8 @@ bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
     }
 
     FbleReleaseValue(heap, func);
+    FbleFreeValueHeap(heap);
   }
-  FbleReleaseValue(heap, compiled);
-  FbleFreeValueHeap(heap);
   FbleFreeProfile(arena, profile);
 
   *max_bytes = FbleArenaMaxSize(arena);

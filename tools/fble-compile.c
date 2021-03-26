@@ -88,21 +88,23 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
   FbleProfile* profile = FbleNewProfile(arena);
-  FbleValue* compiled = FbleCompile(heap, prgm, profile);
+  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
   FbleFreeProgram(arena, prgm);
 
   if (compiled == NULL) {
     FbleFreeProfile(arena, profile);
-    FbleFreeValueHeap(heap);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
 
-  FbleGenerateC(stdout, entry, compiled);
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
+  FbleValue* linked = FbleLink(heap, compiled);
+  FbleFreeCompiledProgram(arena, compiled);
 
-  FbleReleaseValue(heap, compiled);
+  FbleGenerateC(stdout, entry, linked);
+
+  FbleReleaseValue(heap, linked);
   FbleFreeProfile(arena, profile);
   FbleFreeValueHeap(heap);
   FbleFreeArena(arena);

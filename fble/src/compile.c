@@ -986,10 +986,28 @@ FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleValue* tc, F
   return code;
 }
 
-// FbleCompile -- see documentation in fble-compile.h
-FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile)
+// FbleFreeCompiledProgram -- see documentation in fble-compile.h
+void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program)
 {
-  FbleArena* arena = heap->arena;
+  if (program != NULL) {
+    for (size_t i = 0; i < program->modules.size; ++i) {
+      FbleCompiledModule* module = program->modules.xs + i;
+      FbleFreeModulePath(arena, module->path);
+      for (size_t j = 0; j < module->deps.size; ++j) {
+        FbleFreeModulePath(arena, module->deps.xs[j]);
+      }
+      FbleFree(arena, module->deps.xs);
+      FbleFreeInstrBlock(arena, module->code);
+    }
+    FbleFree(arena, program->modules.xs);
+    FbleFree(arena, program);
+  }
+}
+
+// FbleCompile -- see documentation in fble-compile.h
+FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
+{
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
 
   FbleValueV typechecked;
   FbleVectorInit(arena, typechecked);
@@ -998,28 +1016,22 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
       FbleReleaseValue(heap, typechecked.xs[i]);
     }
     FbleFree(arena, typechecked.xs);
+    FbleFreeValueHeap(heap);
     return NULL;
   }
 
-  FbleInstrBlock* code;
-  Scope scope;
-  InitScope(arena, &scope, &code, 0, NULL);
+  FbleCompiledProgram* compiled = FbleAlloc(arena, FbleCompiledProgram);
+  FbleVectorInit(arena, compiled->modules);
 
-  Local* values[program->modules.size];
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleModule* module = program->modules.xs + i;
 
-    // Append an instruction to allocate a zero-arg function value for
-    // computing the result of the module.
-    Local* func_local = NewLocal(arena, &scope);
-
-    FbleFuncValueInstr* func = FbleAlloc(arena, FbleFuncValueInstr);
-    func->_base.tag = FBLE_FUNC_VALUE_INSTR;
-    func->_base.profile_ops = NULL;
-    func->argc = module->deps.size;
-    func->code = NULL;
-    func->dest = func_local->index.index;
-    FbleVectorInit(arena, func->scope);
+    FbleCompiledModule* compiled_module = FbleVectorExtend(arena, compiled->modules);
+    compiled_module->path = FbleCopyModulePath(module->path);
+    FbleVectorInit(arena, compiled_module->deps);
+    for (size_t d = 0; d < module->deps.size; ++d) {
+      FbleVectorAppend(arena, compiled_module->deps, FbleCopyModulePath(module->deps.xs[d]));
+    }
 
     FbleName label;
     if (module->path == NULL) {
@@ -1031,10 +1043,41 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
     } else {
       label = FbleModulePathName(arena, module->path);
     }
-    func->code = FbleCompileValue(arena, func->argc, typechecked.xs[i], label, profile);
+    compiled_module->code = FbleCompileValue(arena, module->deps.size, typechecked.xs[i], label, profile);
     FbleReleaseValue(heap, typechecked.xs[i]);
     FbleFreeName(arena, label);
+  }
 
+  FbleFree(arena, typechecked.xs);
+  FbleFreeValueHeap(heap);
+  return compiled;
+}
+
+// FbleLink -- see documentation in fble-compile.h
+FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program)
+{
+  FbleArena* arena = heap->arena;
+
+  FbleInstrBlock* code;
+  Scope scope;
+  InitScope(arena, &scope, &code, 0, NULL);
+
+  Local* values[program->modules.size];
+  for (size_t i = 0; i < program->modules.size; ++i) {
+    FbleCompiledModule* module = program->modules.xs + i;
+
+    // Append an instruction to allocate a zero-arg function value for
+    // computing the result of the module.
+    Local* func_local = NewLocal(arena, &scope);
+
+    FbleFuncValueInstr* func = FbleAlloc(arena, FbleFuncValueInstr);
+    func->_base.tag = FBLE_FUNC_VALUE_INSTR;
+    func->_base.profile_ops = NULL;
+    func->argc = module->deps.size;
+    func->code = module->code;
+    func->code->refcount++;
+    func->dest = func_local->index.index;
+    FbleVectorInit(arena, func->scope);
     AppendInstr(arena, &scope, &func->_base);
 
     // Append an instruction to call the function to compute the value of the
@@ -1044,7 +1087,9 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
     FbleCallInstr* call = FbleAlloc(arena, FbleCallInstr);
     call->_base.tag = FBLE_CALL_INSTR;
     call->_base.profile_ops = NULL;
-    call->loc = FbleCopyLoc(module->value->loc);
+    call->loc.source = FbleNewString(arena, __FILE__);
+    call->loc.line = __LINE__ - 1;
+    call->loc.col = 5;
     call->exit = false;
     call->func = func_local->index;
     FbleVectorInit(arena, call->args);
@@ -1074,8 +1119,6 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
   }
 
   FreeScope(arena, &scope);
-
-  FbleFree(arena, typechecked.xs);
 
   FbleCompiledFuncValueTc* func = FbleNewValue(heap, FbleCompiledFuncValueTc);
   func->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;

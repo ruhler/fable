@@ -484,17 +484,18 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
-  FbleValue* compiled = FbleCompile(heap, prgm, NULL);
+  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
   FbleFreeProgram(arena, prgm);
   if (compiled == NULL) {
-    FbleFreeValueHeap(heap);
     FbleFreeArena(arena);
     return 1;
   }
 
-  FbleValue* func = FbleEval(heap, compiled, NULL);
-  FbleReleaseValue(heap, compiled);
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
+  FbleValue* linked = FbleLink(heap, compiled);
+  FbleFreeCompiledProgram(arena, compiled);
+  FbleValue* func = FbleEval(heap, linked, NULL);
+  FbleReleaseValue(heap, linked);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);

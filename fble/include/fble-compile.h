@@ -11,26 +11,91 @@
 #include "fble-syntax.h"
 #include "fble-value.h"
 
+// FbleInstrBlock --
+//   Abstract type representing compiled code.
+typedef struct FbleInstrBlock FbleInstrBlock;
+
+// FbleCompiledModule --
+//   Represents a compiled module.
+// 
+// Fields:
+//   path - the path to the module.
+//   deps - a list of distinct modules this module depends on.
+//   code - code to compute the value of the module, suitable for use in the
+//          body of a function takes the computed module values for each
+//          module listed in module->deps as arguments to the function.
+typedef struct {
+  FbleModulePath* path;
+  FbleModulePathV deps;
+  FbleInstrBlock* code;
+} FbleCompiledModule;
+
+// FbleCompiledModuleV -- A vector of compiled modules.
+typedef struct {
+  size_t size;
+  FbleCompiledModule* xs;
+} FbleCompiledModuleV;
+
+// FbleCompiledProgram --
+//   A compiled program.
+//
+// The program is represented as a list of compiled modules in topological
+// dependancy order. Later modules in the list may depend on earlier modules
+// in the list, but not the other way around.
+//
+// The last module in the list is the main program. The module path for the
+// main module is NULL.
+typedef struct {
+  FbleCompiledModuleV modules;
+} FbleCompiledProgram;
+
+// FbleFreeCompiledProgram --
+//   Free resources associated with the given program.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   program - the program to free, may be NULL.
+//
+// Side effects:
+//   Frees resources associated with the given program.
+void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program);
+
 // FbleCompile --
 //   Type check and compile the given program.
 //
 // Inputs:
-//   heap - heap used for allocations.
+//   arena - arena used for allocations.
 //   program - the program to compile.
 //   profile - profile to populate with blocks. May be NULL.
 //
 // Results:
-//   A zero-argument function representing the compiled program. To run the
-//   program, apply the function. Returns NULL if the program is not well
-//   typed.
+//   The compiled program, or NULL if the program is not well typed.
 //
 // Side effects:
 // * Prints warning messages to stderr.
 // * Prints a message to stderr if the program fails to compile.
 // * Adds blocks to the given profile.
-// * The caller should call FbleReleaseValue to release resources
+// * The caller should call FbleFreeCompiledProgram to release resources
 //   associated with the returned program when it is no longer needed.
-FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile);
+FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile);
+
+// FbleLink --
+//   Link the modules of a compiled program together into a single FbleValue
+//   representing a zero-argument function that can be used to compute the
+//   value of the program.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   program - the compiled program to link.
+//
+// Results:
+//   An FbleValue representing a zero-argument function that can be used to
+//   compute the value of the program.
+//
+// Side effects:
+//   Allocates an FbleValue* that should be freed using FbleReleaseValue when
+//   no longer needed.
+FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program);
 
 // FbleDisassemble --
 //   Write a disassembled version of a compiled program in human readable
@@ -38,12 +103,12 @@ FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* p
 //
 // Inputs:
 //   fout - the file to write the disassembled program to.
-//   program - the program to decompile.
+//   program - the program to disassemble.
 //   profile - profile to use for profile block information.
 //
 // Side effects:
 //   A disassembled version of the file is printed to fout.
-void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile);
+void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile);
 
 // FbleGenerateC --
 //   Generate C code for an fble value.

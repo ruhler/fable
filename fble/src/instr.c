@@ -365,10 +365,18 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 }
 
 // FbleDisassmeble -- see documentation in fble-compile.h.
-void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile)
+void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile)
 {
-  // TODO: Better document that we require program to be a function?
-  assert(program->tag == FBLE_COMPILED_FUNC_VALUE_TC);
-  FbleCompiledFuncValueTc* func = (FbleCompiledFuncValueTc*)program;
-  DumpInstrBlock(fout, func->code, profile);
+  for (size_t i = 0; i < program->modules.size; ++i) {
+    FbleCompiledModule* module = program->modules.xs + i;
+    if (module->path == NULL) {
+      assert(i == program->modules.size - 1);
+      fprintf(fout, "// <main>\n");
+    } else {
+      fprintf(fout, "// ");
+      FblePrintModulePath(fout, module->path);
+      fprintf(fout, ":\n");
+    }
+    DumpInstrBlock(fout, module->code, profile);
+  }
 }
