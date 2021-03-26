@@ -4,6 +4,8 @@ Fble Compilation:
 
 * Compile modules separately in FbleCompile.
 * Avoid duplicating code between fble-stdio and fble-compiled-stdio.
+* Make public headers available for compiled code to use so we don't have to
+  give direct access to internal header files.
 
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.

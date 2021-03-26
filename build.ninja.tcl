@@ -204,13 +204,10 @@ test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
 test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
   "$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
 
-# fble compilation test
+# /Stdio/Test% compilation test
 build $::src/fble-stdio-test.c \
   "$::bin/fble-compile $::prgms/Stdio/Test.fble.d" \
   "$::bin/fble-compile FbleStdioMain prgms/Stdio/Test.fble prgms > $::src/fble-stdio-test.c"
-
-# TODO: Export the necessary headers in include instead of accessing internal
-# headers directly.
 obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"
 obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
 bin $::bin/fble-stdio-test \
@@ -218,6 +215,17 @@ bin $::bin/fble-stdio-test \
   "-L $::lib -lfble" $::libfble
 test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
   "$::bin/fble-stdio-test | grep PASSED > /dev/null"
+
+# /Fble/Tests% compilation test
+#build $::src/fble-tests.c \
+#  "$::bin/fble-compile $::prgms/Fble/Tests.fble.d" \
+#  "$::bin/fble-compile FbleStdioMain prgms/Fble/Tests.fble prgms > $::src/fble-tests.c"
+#obj $::obj/fble-tests.o $::src/fble-tests.c "-I fble/include -I fble/src"
+#bin $::bin/fble-tests \
+#  "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o" \
+#  "-L $::lib -lfble" $::libfble
+#test $::test/fble-compiled-tests.tr $::bin/fble-tests \
+#  "$::bin/fble-compiled-tests" "pool = console"
 
 # fblf compilation test
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"

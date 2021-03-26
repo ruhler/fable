@@ -719,3 +719,10 @@ So do it like this:
   into one function per c file. If gcc can't handle those on their own, then
   I'm going to have to go back to the drawing board.
 
+---
+
+Generating a separate C function for each InstrBlock is not enough. gcc still
+needs more memory than I have on my computer to compile the c program. I'm
+going to have to manually split it into different C files. I'm confident that
+will solve the problem. It's just annoying and tedious.
+
