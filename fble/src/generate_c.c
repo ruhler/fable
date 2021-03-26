@@ -3,6 +3,7 @@
 
 #include <assert.h>   // for assert
 
+#include "fble-compile.h"
 #include "tc.h"
 
 #define UNREACHABLE(x) assert(false && x)
@@ -407,7 +408,7 @@ static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code)
   return id;
 }
 
-// FbleGenerateC -- see documentation in fble.h
+// FbleGenerateC -- see documentation in fble-compile.h
 bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
 {
   // TODO: Either change the type of FbleGenerateC to take an InstrBlock as

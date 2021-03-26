@@ -986,7 +986,7 @@ FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleValue* tc, F
   return code;
 }
 
-// FbleCompile -- see documentation in fble.h
+// FbleCompile -- see documentation in fble-compile.h
 FbleValue* FbleCompile(FbleValueHeap* heap, FbleProgram* program, FbleProfile* profile)
 {
   FbleArena* arena = heap->arena;

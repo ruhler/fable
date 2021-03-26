@@ -1,11 +1,14 @@
 Fble Compilation:
-* Factor out common logic in typecheck and compile for looking up a module
-  dependency's index.
+* Change FbleDisassmble to take an FbleCompiledProgram (or module?).
+* Change FbleGenerateC to take an FbleCompiledProgram (or module?).
+* Generate separate .c file per module.
 
-* Compile modules separately in FbleCompile.
+* Figure out what to do about FbleProfile* for the compilation code path.
 * Avoid duplicating code between fble-stdio and fble-compiled-stdio.
 * Make public headers available for compiled code to use so we don't have to
   give direct access to internal header files.
+* Factor out common logic in typecheck and compile for looking up a module
+  dependency's index.
 
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.

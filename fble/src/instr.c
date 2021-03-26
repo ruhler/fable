@@ -364,7 +364,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
   }
 }
 
-// FbleDisassmeble -- see documentation in fble.h.
+// FbleDisassmeble -- see documentation in fble-compile.h.
 void FbleDisassemble(FILE* fout, FbleValue* program, FbleProfile* profile)
 {
   // TODO: Better document that we require program to be a function?
