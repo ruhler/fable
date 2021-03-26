@@ -113,6 +113,21 @@ FbleModulePath* FbleCopyModulePath(FbleModulePath* path);
 //   Frees resources associated with the path and its contents.
 void FbleFreeModulePath(FbleArena* arena, FbleModulePath* path);
 
+// FbleModulePathName --
+//   Construct an FbleName describing a module path.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   path - the path to construct an FbleName for.
+//
+// Results:
+//   An FbleName describing the full module path. For example: "/Foo/Bar%".
+//
+// Side effects:
+//   The caller should call FbleFreeName on the returned name when no longer
+//   needed.
+FbleName FbleModulePathName(FbleArena* arena, FbleModulePath* path);
+
 // FblePrintModulePath --
 //   Print a module path in human readable form to the given stream.
 //

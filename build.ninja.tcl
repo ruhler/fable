@@ -186,7 +186,7 @@ foreach x {
 # fble-disassemble test
 test $::test/fble-disassemble.tr \
   "$::bin/fble-disassemble $::prgms/Fble/Tests.fble.d" \
-  "$::bin/fble-disassemble prgms/Fble/Tests.fble prgms > /dev/null"
+  "$::bin/fble-disassemble prgms/Fble/Tests.fble prgms > $::prgms/Fble/Tests.fble.s"
 
 # Fble/Tests.fble tests
 test $::test/fble-tests.tr "$::bin/fble-stdio $::prgms/Fble/Tests.fble.d" \

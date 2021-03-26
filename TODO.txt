@@ -1,4 +1,7 @@
 Fble Compilation:
+* Factor out common logic in typecheck and compile for looking up a module
+  dependency's index.
+
 * Compile modules separately in FbleCompile.
 * Change GenerateC to generate a separate function for each InstrBlock.
   See if we can compile Fble/Tests.fble now.

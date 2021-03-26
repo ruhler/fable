@@ -105,7 +105,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleE
 static Tc TypeCheckExec(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleExpr* expr);
-static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleModule* modules, size_t modulec);
+static Tc TypeCheckModule(FbleTypeHeap* th, FbleValueHeap* vh, FbleModule* module, FbleType** deps);
 
 
 // VarNamesEqual --
@@ -150,7 +150,7 @@ static bool VarNamesEqual(VarName a, VarName b)
 // Side effects:
 //   Pushes a new variable with given name and type onto the scope. Takes
 //   ownership of the given type, which will be released when the variable is
-//   freed. Does not take owner ship of name. It is the callers responsibility
+//   freed. Does not take ownership of name. It is the callers responsibility
 //   to ensure that 'name' outlives the returned Var.
 static Var* PushVar(FbleArena* arena, Scope* scope, VarName name, FbleType* type)
 {
@@ -2021,108 +2021,84 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope
   return NULL;
 }
 
-// TypeCheckProgram --
-//   Type check a program.
+// TypeCheckModule --
+//   Type check a module.
 //
 // Inputs:
 //   heap - heap to use for allocations.
-//   scope - the list of variables in scope.
-//   modules - the modules of the program.
-//   modulec - the number of modules to check.
+//   module - the module to check.
+//   deps - the type of each module this module depends on, in the same order
+//          as module->deps. size is module->deps.size.
 //
 // Results:
-//   The type checked program, or NULL if the program failed to type check.
+//   The type checked module, as the body of a function that takes module
+//   dependencies as arguments and computes the value of the module. TC_FAILED
+//   if the module failed to type check.
 //
 // Side effects:
 // * Prints warning messages to stderr.
-// * Prints a message to stderr if the program fails to type check.
-// * The user is responsible for calling FbleFreeTc on the returned program
-//   when it is no longer needed.
-static FbleValue* TypeCheckProgram(FbleTypeHeap* th, FbleValueHeap* vh, Scope* scope, FbleModule* modules, size_t modulec)
+// * Prints a message to stderr if the module fails to type check.
+// * The caller should call FbleFreeTc when the returned result is no longer
+//   needed and FbleReleaseType when the returned FbleType is no longer
+//   needed.
+static Tc TypeCheckModule(FbleTypeHeap* th, FbleValueHeap* vh, FbleModule* module, FbleType** deps)
 {
   FbleArena* arena = vh->arena;
 
-  if (modulec == 1) {
-    Tc result = TypeCheckExpr(th, vh, scope, modules->value);
-    FbleReleaseType(th, result.type);
-    return result.tc;
+  Scope scope;
+  InitScope(arena, &scope, NULL, NULL);
+
+  for (int i = 0; i < module->deps.size; ++i) {
+    VarName name = { .module = module->deps.xs[i] };
+    PushVar(arena, &scope, name, FbleRetainType(th, deps[i]));
   }
 
-  // Push a dummy variable representing the value of the computed module,
-  // because we'll be turning this into a LET_TC, which assumes a variable
-  // index is consumed by the thing being defined. The module loading process
-  // is responsible for ensuring we will never try to access the variable in
-  // the definition of the module.
-  VarName name = { .module = modules->path };
-  PushVar(arena, scope, name, NULL);
-  Tc module = TypeCheckExpr(th, vh, scope, modules->value);
-
-  // Create a profiling label for the module.
-  size_t len = 2;
-  for (size_t i = 0; i < modules->path->path.size; ++i) {
-    len += 1 + strlen(modules->path->path.xs[i].name->str);
-  }
-
-  FbleString* label_name = FbleAllocExtra(arena, FbleString, len);
-  label_name->refcount = 1;
-  label_name->magic = FBLE_STRING_MAGIC;
-  FbleName label = {
-    .name = label_name,
-    .loc = modules->path->loc,
-    .space = FBLE_NORMAL_NAME_SPACE
-  };
-
-  label_name->str[0] = '\0';
-  for (size_t i = 0; i < modules->path->path.size; ++i) {
-    strcat(label_name->str, "/");
-    strcat(label_name->str, modules->path->path.xs[i].name->str);
-  }
-  strcat(label_name->str, "%");
-
-  module = ProfileBlock(vh, label, modules->value->loc, module);
-  FbleFreeString(arena, label_name);
-
-  PopVar(th, scope);
-
-  if (module.type == NULL) {
-    return NULL;
-  }
-
-  PushVar(arena, scope, name, module.type);
-  FbleValue* body_tc = TypeCheckProgram(th, vh, scope, modules + 1, modulec - 1);
-  PopVar(th, scope);
-
-  if (body_tc == NULL) {
-    FbleReleaseValue(vh, module.tc);
-    return NULL;
-  }
-
-  FbleLetTc* let_tc = FbleNewValue(vh, FbleLetTc);
-  let_tc->_base.tag = FBLE_LET_TC;
-  let_tc->recursive = false;
-  FbleVectorInit(arena, let_tc->bindings);
-  FbleLocTc ltc = {
-    .loc = FbleCopyLoc(modules->path->loc),
-    .tc = module.tc
-  };
-  FbleVectorAppend(arena, let_tc->bindings, ltc);
-  let_tc->body = body_tc;
-  FbleValueAddRef(vh, &let_tc->_base, module.tc);
-  FbleReleaseValue(vh, module.tc);
-  FbleValueAddRef(vh, &let_tc->_base, let_tc->body);
-  FbleReleaseValue(vh, let_tc->body);
-  return &let_tc->_base;
+  Tc tc = TypeCheckExpr(th, vh, &scope, module->value);
+  FreeScope(th, &scope);
+  return tc;
 }
 
 // FbleTypeCheck -- see documentation in typecheck.h
-FbleValue* FbleTypeCheck(FbleValueHeap* heap, FbleProgram* program)
+bool FbleTypeCheck(FbleValueHeap* heap, FbleProgram* program, FbleValueV* result)
 {
-  Scope scope;
-  InitScope(heap->arena, &scope, NULL, NULL);
-
+  bool error = false;
   FbleTypeHeap* th = FbleNewTypeHeap(heap->arena);
-  FbleValue* result = TypeCheckProgram(th, heap, &scope, program->modules.xs, program->modules.size);
-  FreeScope(th, &scope);
+  FbleType* types[program->modules.size];
+
+  for (int i = 0; i < program->modules.size; ++i) {
+    FbleModule* module = program->modules.xs + i;
+    FbleType* deps[module->deps.size];
+
+    bool skip = false;
+    for (int d = 0; d < module->deps.size; ++d) {
+      deps[d] = NULL;
+      for (int t = 0; t < i; ++t) {
+        if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[t].path)) {
+          deps[d] = types[t];
+          break;
+        }
+      }
+
+      if (deps[d] == NULL) {
+        skip = true;
+        break;
+      }
+    }
+
+    Tc tc = skip ? TC_FAILED : TypeCheckModule(th, heap, module, deps);
+    if (tc.type == NULL) {
+      error = true;
+      types[i] = NULL;
+    } else {
+      types[i] = tc.type;
+      FbleVectorAppend(heap->arena, *result, tc.tc);
+    }
+  }
+
+  for (int i = 0; i < program->modules.size; ++i) {
+    FbleReleaseType(th, types[i]);
+  }
   FbleFreeTypeHeap(th);
-  return result;
+
+  return !error;
 }

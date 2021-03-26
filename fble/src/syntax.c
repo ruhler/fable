@@ -364,6 +364,32 @@ void FbleFreeModulePath(FbleArena* arena, FbleModulePath* path)
   }
 }
 
+// FbleModulePathName -- see documentation in syntax.h
+FbleName FbleModulePathName(FbleArena* arena, FbleModulePath* path)
+{
+  size_t len = 2;
+  for (size_t i = 0; i < path->path.size; ++i) {
+    len += 1 + strlen(path->path.xs[i].name->str);
+  }
+
+  FbleString* string = FbleAllocExtra(arena, FbleString, len);
+  string->refcount = 1;
+  string->magic = FBLE_STRING_MAGIC;
+  FbleName name = {
+    .name = string,
+    .loc = FbleCopyLoc(path->loc),
+    .space = FBLE_NORMAL_NAME_SPACE
+  };
+
+  string->str[0] = '\0';
+  for (size_t i = 0; i < path->path.size; ++i) {
+    strcat(string->str, "/");
+    strcat(string->str, path->path.xs[i].name->str);
+  }
+  strcat(string->str, "%");
+  return name;
+}
+
 // FblePrintModulePath -- see documentation in syntax.h
 void FblePrintModulePath(FILE* fout, FbleModulePath* path)
 {
