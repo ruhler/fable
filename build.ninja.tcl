@@ -205,14 +205,19 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
   "$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
 
 # fble compilation test
-# TODO: Switch from /Stdio/Test% program to /Fble/Tests% program.
-build $::src/fble-tests.c \
+build $::src/fble-stdio-test.c \
   "$::bin/fble-compile $::prgms/Stdio/Test.fble.d" \
-  "$::bin/fble-compile FbleTests prgms/Stdio/Test.fble prgms > $::src/fble-tests.c"
+  "$::bin/fble-compile FbleStdioMain prgms/Stdio/Test.fble prgms > $::src/fble-stdio-test.c"
 
 # TODO: Export the necessary headers in include instead of accessing internal
 # headers directly.
-obj $::obj/fble-tests.o $::src/fble-tests.c "-I fble/include -I fble/src"
+obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"
+obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
+bin $::bin/fble-stdio-test \
+  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
+  "-L $::lib -lfble" $::libfble
+test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
+  "$::bin/fble-stdio-test | grep PASSED > /dev/null"
 
 # fblf compilation test
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
