@@ -38,7 +38,7 @@ static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code);
 static VarId GenLoc(FILE* fout, VarId* var_id, FbleLoc loc)
 {
   VarId source = (*var_id)++;
-  fprintf(fout, "  FbleString v%x = FbleNewString(heap->arena, \"%s\");\n",
+  fprintf(fout, "  FbleString* v%x = FbleNewString(heap->arena, \"%s\");\n",
       source, loc.source->str);
 
   VarId id = (*var_id)++;
@@ -99,7 +99,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
   switch (instr->tag) {
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      fprintf(fout, "  FbleStructValueInstr* v%x = FbleAlloc(arena, FbleStructValueInstr);\n", instr_id);
+      fprintf(fout, "  FbleStructValueInstr* v%x = FbleAlloc(heap->arena, FbleStructValueInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_STRUCT_VALUE_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  FbleVectorInit(heap->arena, v%x->args);\n", instr_id);
@@ -113,7 +113,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_UNION_VALUE_INSTR: {
       FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-      fprintf(fout, "  FbleUnionValueInstr* v%x = FbleAlloc(arena, FbleUnionValueInstr);\n", instr_id);
+      fprintf(fout, "  FbleUnionValueInstr* v%x = FbleAlloc(heap->arena, FbleUnionValueInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_UNION_VALUE_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  v%x->tag = %i;\n", instr_id, union_instr->tag);
@@ -125,7 +125,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "  FbleAccessInstr* v%x = FbleAlloc(arena, FbleAccessInstr);\n", instr_id);
+      fprintf(fout, "  FbleAccessInstr* v%x = FbleAlloc(heap->arena, FbleAccessInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_STRUCT_ACCESS_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       VarId loc = GenLoc(fout, var_id, access_instr->loc);
@@ -139,7 +139,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "  FbleAccessInstr* v%x = FbleAlloc(arena, FbleAccessInstr);\n", instr_id);
+      fprintf(fout, "  FbleAccessInstr* v%x = FbleAlloc(heap->arena, FbleAccessInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_UNION_ACCESS_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       VarId loc = GenLoc(fout, var_id, access_instr->loc);
@@ -153,7 +153,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  FbleUnionSelectInstr* v%x = FbleAlloc(arena, FbleUnionSelectInstr);\n", instr_id);
+      fprintf(fout, "  FbleUnionSelectInstr* v%x = FbleAlloc(heap->arena, FbleUnionSelectInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_UNION_SELECT_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       VarId loc = GenLoc(fout, var_id, select_instr->loc);
@@ -169,7 +169,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_JUMP_INSTR: {
       FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      fprintf(fout, "  FbleJumpInstr* v%x = FbleAlloc(arena, FbleJumpInstr);\n", instr_id);
+      fprintf(fout, "  FbleJumpInstr* v%x = FbleAlloc(heap->arena, FbleJumpInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_JUMP_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  v%x->count = %i;\n\n", instr_id, jump_instr->count);
@@ -178,7 +178,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-      fprintf(fout, "  FbleFuncValueInstr* v%x = FbleAlloc(arena, FbleFuncValueInstr);\n", instr_id);
+      fprintf(fout, "  FbleFuncValueInstr* v%x = FbleAlloc(heap->arena, FbleFuncValueInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_FUNC_VALUE_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  v%x->argc = %i;\n", instr_id, func_instr->argc);
@@ -196,7 +196,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      fprintf(fout, "  FbleCallInstr* v%x = FbleAlloc(arena, FbleCallInstr);\n", instr_id);
+      fprintf(fout, "  FbleCallInstr* v%x = FbleAlloc(heap->arena, FbleCallInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_CALL_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       VarId loc = GenLoc(fout, var_id, call_instr->loc);
@@ -219,7 +219,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_LINK_INSTR: {
       FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-      fprintf(fout, "  FbleLinkInstr* v%x = FbleAlloc(arena, FbleLinkInstr);\n", instr_id);
+      fprintf(fout, "  FbleLinkInstr* v%x = FbleAlloc(heap->arena, FbleLinkInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_LINK_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  v%x->get = %i;\n", instr_id, link_instr->get);
@@ -229,7 +229,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_FORK_INSTR: {
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      fprintf(fout, "  FbleForkInstr* v%x = FbleAlloc(arena, FbleForkInstr);\n", instr_id);
+      fprintf(fout, "  FbleForkInstr* v%x = FbleAlloc(heap->arena, FbleForkInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_FORK_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  FbleVectorInit(heap->arena, v%x->args);\n", instr_id);
@@ -248,7 +248,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_COPY_INSTR: {
       FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-      fprintf(fout, "  FbleCopyInstr* v%x = FbleAlloc(arena, FbleCopyInstr);\n", instr_id);
+      fprintf(fout, "  FbleCopyInstr* v%x = FbleAlloc(heap->arena, FbleCopyInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_COPY_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       VarId source = GenFrameIndex(fout, var_id, copy_instr->source);
@@ -259,7 +259,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_REF_VALUE_INSTR: {
       FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-      fprintf(fout, "  FbleRefValueInstr* v%x = FbleAlloc(arena, FbleRefValueInstr);\n", instr_id);
+      fprintf(fout, "  FbleRefValueInstr* v%x = FbleAlloc(heap->arena, FbleRefValueInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_REF_VALUE_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  v%x->dest = %i;\n\n", instr_id, ref_instr->dest);
@@ -268,7 +268,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
-      fprintf(fout, "  FbleRefDefInstr* v%x = FbleAlloc(arena, FbleRefDefInstr);\n", instr_id);
+      fprintf(fout, "  FbleRefDefInstr* v%x = FbleAlloc(heap->arena, FbleRefDefInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_REF_DEF_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       VarId loc = GenLoc(fout, var_id, ref_instr->loc);
@@ -281,7 +281,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      fprintf(fout, "  FbleReturnInstr* v%x = FbleAlloc(arena, FbleReturnInstr);\n", instr_id);
+      fprintf(fout, "  FbleReturnInstr* v%x = FbleAlloc(heap->arena, FbleReturnInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_RETURN_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       VarId result = GenFrameIndex(fout, var_id, return_instr->result);
@@ -291,7 +291,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
 
     case FBLE_TYPE_INSTR: {
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-      fprintf(fout, "  FbleTypeInstr* v%x = FbleAlloc(arena, FbleTypeInstr);\n", instr_id);
+      fprintf(fout, "  FbleTypeInstr* v%x = FbleAlloc(heap->arena, FbleTypeInstr);\n", instr_id);
       fprintf(fout, "  v%x->_base.tag = FBLE_TYPE_INSTR;\n", instr_id);
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  v%x->dest = %i;\n\n", instr_id, type_instr->dest);
@@ -317,7 +317,7 @@ static VarId GenInstr(FILE* fout, VarId* var_id, FbleInstr* instr)
     };
 
     fprintf(fout, "  v%x = FbleAlloc(heap->arena, FbleProfileOp);\n", op_id);
-    fprintf(fout, "  v%x->tag = %s\n", op_id, op_tags[op->tag]);
+    fprintf(fout, "  v%x->tag = %s;\n", op_id, op_tags[op->tag]);
     fprintf(fout, "  v%x->block = %i;\n", op_id, op->block);
     fprintf(fout, "  v%x->next = NULL;\n", op_id);
     fprintf(fout, "  *v%x = v%x;\n", next, op_id);
@@ -373,6 +373,8 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
 
   fprintf(fout, "#include \"fble.h\"\n");
   fprintf(fout, "#include \"instr.h\"\n");
+  fprintf(fout, "#include \"tc.h\"\n");
+  fprintf(fout, "#include \"value.h\"\n");
 
   fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", entry);
   fprintf(fout, "{\n");
@@ -387,7 +389,7 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
   fprintf(fout, "  v%x->code = v%x;\n", func, code);
   fprintf(fout, "  v%x->run = &FbleStandardRunFunction;\n\n", func);
 
-  fprintf(fout, "  return v%x;\n", func);
+  fprintf(fout, "  return &v%x->_base;\n", func);
   fprintf(fout, "}\n");
   return true;
 }
