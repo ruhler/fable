@@ -954,9 +954,9 @@ FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleValue* tc, F
     profile = FbleNewProfile(arena);
   }
 
-  Blocks block_stack;
-  FbleVectorInit(arena, block_stack.stack);
-  block_stack.profile = profile;
+  Blocks blocks;
+  FbleVectorInit(arena, blocks.stack);
+  blocks.profile = profile;
 
   FbleInstrBlock* code;
   Scope scope;
@@ -969,17 +969,14 @@ FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleValue* tc, F
 
   // CompileExpr assumes it is in a profile block that it needs to exit when
   // exit is true, so make sure we wrap the top level expression in a profile
-  // block. We don't reuse EnterBlock directly to avoid adding a prefix that
-  // would clutter up every block name. For example, we want block names like
-  // "/Test%.RunTests!", not "<name>./Test%.RunTests!".
-  size_t entry_id = FbleProfileAddBlock(arena, profile, FbleCopyName(arena, name));
-  AppendProfileOp(arena, &scope, FBLE_PROFILE_ENTER_OP, entry_id);
-
-  CompileExpr(arena, &block_stack, true, &scope, tc);
+  // block.
+  EnterBlock(arena, &blocks, name, name.loc, &scope);
+  CompileExpr(arena, &blocks, true, &scope, tc);
+  ExitBlock(arena, &blocks, &scope, true);
 
   FreeScope(arena, &scope);
-  assert(block_stack.stack.size == 0);
-  FbleFree(arena, block_stack.stack.xs);
+  assert(blocks.stack.size == 0);
+  FbleFree(arena, blocks.stack.xs);
   if (profiling_disabled) {
     FbleFreeProfile(arena, profile);
   }

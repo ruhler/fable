@@ -1,4 +1,9 @@
 Fble Compilation:
+* Use empty path instead of NULL path for top level module?
+  Because I don't think /% is otherwise a valid path.
+* Looks like profiling is missing module paths on names. See if we can fix
+  that.
+
 * Change FbleGenerateC to take an FbleCompiledProgram (or module?).
 * Generate separate .c file per module.
 
