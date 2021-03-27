@@ -423,7 +423,7 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
 
   FbleInstrBlockV blocks;
   FbleVectorInit(arena, blocks);
-  CollectBlocks(arena, &blocks, func_value->code);
+  CollectBlocks(arena, &blocks, func_value->code->code);
 
   fprintf(fout, "#include \"fble.h\"\n");
   fprintf(fout, "#include \"isa.h\"\n");
@@ -457,9 +457,10 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
   fprintf(fout, "  FbleFuncValue* v%x = FbleNewValue(heap, FbleFuncValue);\n", func_id);
   fprintf(fout, "  v%x->_base.tag = FBLE_FUNC_VALUE;\n", func_id);
   fprintf(fout, "  v%x->argc = %i;\n", func_id, func_value->argc);
-  VarId code = GetInstrBlock(fout, &var_id, func_value->code);
-  fprintf(fout, "  v%x->code = v%x;\n", func_id, code);
-  fprintf(fout, "  v%x->run = &FbleStandardRunFunction;\n\n", func_id);
+  VarId code = GetInstrBlock(fout, &var_id, func_value->code->code);
+  fprintf(fout, "  v%x->code = FbleAlloc(arena, FbleCode);\n", func_id);
+  fprintf(fout, "  v%x->code->code = v%x;\n", func_id, code);
+  fprintf(fout, "  v%x->code->run = &FbleStandardRunFunction;\n\n", func_id);
 
   fprintf(fout, "  return &v%x->_base;\n", func_id);
   fprintf(fout, "}\n");

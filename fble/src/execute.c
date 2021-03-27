@@ -228,7 +228,7 @@ static FbleValue* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue*
 {
   FbleArena* arena = heap->arena;
 
-  size_t locals = func->code->locals;
+  size_t locals = func->code->code->locals;
 
   Stack* stack = FbleNewValue(heap, FbleThunkValue);
   stack->_base.tag = FBLE_THUNK_VALUE;
@@ -236,7 +236,7 @@ static FbleValue* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue*
   stack->tail = thread->stack;
   stack->func = func;
   stack->pc = 0;
-  stack->locals.size = func->code->locals;
+  stack->locals.size = func->code->code->locals;
   stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, locals);
   memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
 
@@ -277,8 +277,8 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** a
 {
   FbleArena* arena = heap->arena;
   Stack* stack = thread->stack;
-  size_t old_localc = stack->func->code->locals;
-  size_t localc = func->code->locals;
+  size_t old_localc = stack->func->code->code->locals;
+  size_t localc = func->code->code->locals;
 
   // Take references to the function and arguments early to ensure we don't
   // drop the last reference to them before we get the chance.
@@ -288,7 +288,7 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** a
   }
 
   stack->func = func;
-  stack->locals.size = func->code->locals;
+  stack->locals.size = func->code->code->locals;
   stack->pc = 0;
 
   if (localc > old_localc) {
@@ -415,9 +415,10 @@ static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThread* thread, Fb
   FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * scopec);
   value->_base.tag = FBLE_FUNC_VALUE;
   value->argc = func_value_instr->argc;
-  value->code = func_value_instr->code;
-  value->code->refcount++;
-  value->run = &FbleStandardRunFunction;
+  value->code = FbleAlloc(heap->arena, FbleCode);
+  value->code->code = func_value_instr->code;
+  value->code->code->refcount++;
+  value->code->run = &FbleStandardRunFunction;
   for (size_t i = 0; i < scopec; ++i) {
     FbleValue* arg = FrameGet(thread, func_value_instr->scope.xs[i]);
     value->scope[i] = arg;
@@ -750,7 +751,7 @@ static FbleExecStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool*
 {
   FbleExecStatus status = FBLE_EXEC_CONTINUE;
   while (status == FBLE_EXEC_CONTINUE) {
-    status = thread->stack->func->run(heap, thread, io_activity);
+    status = thread->stack->func->code->run(heap, thread, io_activity);
   }
   return status;
 }
@@ -1005,7 +1006,7 @@ FbleExecStatus FbleStandardRunFunction(FbleValueHeap* heap, FbleThread* thread, 
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
 
-  FbleInstr** code = thread->stack->func->code->instrs.xs;
+  FbleInstr** code = thread->stack->func->code->code->instrs.xs;
 
   FbleExecStatus status = FBLE_EXEC_RUNNING;
   while (status == FBLE_EXEC_RUNNING) {

@@ -1,5 +1,8 @@
 Fble Compilation:
+* Change FbleGenerateC to take an FbleInstrBlock* as input instead of an
+  FbleValue*.
 * Define FbleThread type in, say, thread.h.
+* Don't rely on FbleCode* for the size of a function scope.
 * Define FbleCode and FbleThunkContext types and use them for FbleThunkValue.
   These can go in thread.h I think.
 * Change instruction implementations to access thread state through either the
@@ -7,9 +10,7 @@ Fble Compilation:
 * Move instruction implementations into a separate file from execute.c
   Let's say, thread.h/thread.c for RunThread and Eval functions.
   Move FbleApply and FbleExec to value.c
-  instr.h/instr.c for instruction implementations. Or isa.h, isa.c?
-    Think of it as an internal instruction set architecture, where the user is
-    the compiler for the most part and execution is done as FbleThunkContext.
+  isa.h/isa.c for instruction implementations.
 
 * Change FbleGenerateC to take an FbleCompiledProgram (or module?).
 * Generate separate .c file per module.

@@ -61,6 +61,20 @@ typedef struct {
   FbleValue* arg;
 } FbleUnionValue;
 
+// FbleCode --
+//   Represents function code.
+//
+// TODO: Turn this into an abstract data type that allows multiple
+// implementations.
+//
+// Fields:
+//   code - The code for the function.
+//   run - A native function to use to evaluate this fble function.
+typedef struct {
+  FbleInstrBlock* code;
+  FbleRunFunction* run;
+} FbleCode;
+
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
@@ -77,8 +91,7 @@ typedef struct {
 typedef struct {
   FbleValue _base;
   size_t argc;
-  FbleInstrBlock* code;
-  FbleRunFunction* run;
+  FbleCode* code;
   FbleValue* scope[];
 } FbleFuncValue;
 
