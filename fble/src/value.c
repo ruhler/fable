@@ -7,7 +7,7 @@
 #include "fble.h"
 #include "execute.h"     // for FbleStandardRunFunction
 #include "heap.h"
-#include "instr.h"
+#include "isa.h"
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)

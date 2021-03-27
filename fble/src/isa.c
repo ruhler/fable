@@ -1,11 +1,12 @@
-// instr.c --
-//   This file implements routines related to fble instructions.
+// isa.c --
+//   This file implements routines related to the internal fble instruction
+//   set architecture.
 
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf
 #include <stdlib.h>   // for NULL
 
-#include "instr.h"
+#include "isa.h"
 #include "tc.h"
 #include "value.h"
 
@@ -258,7 +259,7 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
   FbleFreeArena(arena);
 }
 
-// FbleFreeInstr -- see documentation in instr.h
+// FbleFreeInstr -- see documentation in isa.h
 void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
 {
   assert(instr != NULL);
@@ -339,7 +340,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
   UNREACHABLE("invalid instruction");
 }
 
-// FbleFreeInstrBlock -- see documentation in instr.h
+// FbleFreeInstrBlock -- see documentation in isa.h
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 {
   if (block == NULL) {

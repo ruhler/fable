@@ -4,7 +4,7 @@
 #include <assert.h>   // for assert
 
 #include "fble-compile.h"
-#include "instr.h"
+#include "isa.h"
 #include "tc.h"
 #include "value.h"
 
@@ -426,7 +426,7 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
   CollectBlocks(arena, &blocks, func_value->code);
 
   fprintf(fout, "#include \"fble.h\"\n");
-  fprintf(fout, "#include \"instr.h\"\n");
+  fprintf(fout, "#include \"isa.h\"\n");
   fprintf(fout, "#include \"tc.h\"\n");
   fprintf(fout, "#include \"value.h\"\n");
   fprintf(fout, "\n");

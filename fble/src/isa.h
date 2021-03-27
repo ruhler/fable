@@ -1,12 +1,13 @@
-// instr.h --
-//   Header file describing the interface for working with fble instructions.
+// isa.h --
+//   Header file describing the interface for working with an internal
+//   instruction set architecture used for executing fble programs.
 //   This is an internal library interface.
 
-#ifndef FBLE_INSTR_H_
-#define FBLE_INSTR_H_
+#ifndef FBLE_INTERNAL_ISA_H_
+#define FBLE_INTERNAL_ISA_H_
 
-#include "fble.h"
-#include "typecheck.h"
+#include "fble-compile.h"   // for FbleInstrBlock forward declaration.
+#include "fble-profile.h"   // for FbleBlockId
 
 // FbleFrameSection --
 //   Which section of a frame a value can be found in.
@@ -113,6 +114,13 @@ struct FbleInstrBlock {
   FbleInstrV instrs;
 };
 
+// FbleInstrBlockV --
+//   A vector of FbleInstrBlock.
+typedef struct {
+  size_t size;
+  FbleInstrBlock** xs;
+} FbleInstrBlockV;
+
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.
 //
@@ -139,7 +147,7 @@ typedef struct {
 //   FBLE_UNION_ACCESS_INSTR
 //   Access a tagged field from an object.
 //
-// *dest = obj.tag
+// *dest = obj.<tag>
 typedef struct {
   FbleInstr _base;
   FbleLoc loc;
@@ -147,11 +155,6 @@ typedef struct {
   size_t tag;
   FbleLocalIndex dest;
 } FbleAccessInstr;
-
-typedef struct {
-  size_t size;
-  FbleInstrBlock** xs;
-} FbleInstrBlockV;
 
 // FbleOffsetV --
 //   A vector of offsets.
@@ -316,7 +319,6 @@ typedef struct {
 
 // FbleTypeInstr -- FBLE_TYPE_INSTR
 //  *dest = @<>
-//
 typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
@@ -352,4 +354,4 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 //   has gone to 0.
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 
-#endif // FBLE_INSTR_H_
+#endif // FBLE_INTERNAL_ISA_H_

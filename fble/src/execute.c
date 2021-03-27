@@ -9,7 +9,7 @@
 #include "fble.h"
 #include "heap.h"
 #include "execute.h"
-#include "instr.h"
+#include "isa.h"
 #include "syntax.h"   // for FbleReportError
 #include "tc.h"
 #include "value.h"

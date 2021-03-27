@@ -6,7 +6,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "execute.h"       // for FbleStandardRunFunction
-#include "instr.h"
+#include "isa.h"
 #include "tc.h"
 #include "typecheck.h"
 #include "value.h"

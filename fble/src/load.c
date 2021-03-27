@@ -6,7 +6,7 @@
 #include <unistd.h>   // for access, F_OK
 
 #include "fble.h"
-#include "instr.h"
+#include "isa.h"
 #include "syntax.h"
 
 typedef struct Tree Tree;
