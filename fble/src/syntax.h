@@ -92,7 +92,7 @@ FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc);
 //   Make a (possibly shared) copy of the given module path.
 //
 // Inputs:
-//   path - the path to copy, may be NULL.
+//   path - the path to copy.
 // 
 // Results:
 //   The new (possibly shared) copy of the path.

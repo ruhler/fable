@@ -369,14 +369,9 @@ void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* prof
 {
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleCompiledModule* module = program->modules.xs + i;
-    if (module->path == NULL) {
-      assert(i == program->modules.size - 1);
-      fprintf(fout, "// <main>\n");
-    } else {
-      fprintf(fout, "// ");
-      FblePrintModulePath(fout, module->path);
-      fprintf(fout, ":\n");
-    }
+    fprintf(fout, "// ");
+    FblePrintModulePath(fout, module->path);
+    fprintf(fout, ":\n");
     DumpInstrBlock(fout, module->code, profile);
   }
 }

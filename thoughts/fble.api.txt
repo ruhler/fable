@@ -1,0 +1,163 @@
+Fble API
+--------
+
+The api for libfble is getting a bit messy. I think it's worth a round of
+cleanup.
+
+The guiding principle, I guess, is that I want you to be able to write any
+program dealing with fble related stuff using only the public API of libfble.
+Including things like fble-test, fble-compile, fble-stdio, fble-md5, etc.
+
+What's messy now?
+* Some things are in public headers and some in internal headers, without
+  clear consistency. For example, FbleModulePath is public, but all the
+  functions for dealing with it a private.
+* Understanding whether we should distinguish between FbleInstrBlock* as data
+  representing code for a function versus some abstract executable that's
+  capable of executing code for a function without the ability to introspect
+  it.
+  - This impacts the apis of things like FbleCompile, FbleLoad,
+    FbleDisassemble, FbleGenerateC, etc.
+* FbleValue and FbleTc are currently the same type, but the initial motivation
+  for that, symbolic elaboration, is no longer in the plans for fble. Maybe it
+  makes sense to split them up.
+* It seems like a lot of programs have to do the same thing to load, compile,
+  and link before they can run an fble program. Are we exposing too many
+  details in the public API?
+* Introducing modular compilation requires exposing some internals about
+  modules. What should they be?
+* For generated C code, should it have access to internal headers, or should
+  we define a clear public API for generated C code to use?
+
+I think we should try to minimize public API, restricting it to what actions
+are supported for users of fble. Here is a brainstorm of actions:
+
+* Read a whole fble program from source, given .fble and search path, into a
+  form that can be executed.
+
+* Interact with fble values:
+ - create structs and unions.
+ - access fields of structs and unions.
+ - create IO ports.
+ - apply functions.
+ - run processes.
+ - create functions?
+ - create processes?
+
+* Syntax
+ - programmatic access to the abstract syntax, for creation or inspection?
+
+* Profiling
+ - dump a profiling report.
+ - specify what things execute with what profiles or not.
+ - programmatic access to the generated profile?
+
+* Compilation
+ - disassemble code
+ - generate C code per module
+ - generate top level code.
+
+Clearly we need:
+* Ability to read, load, and use .fble files as described in the language
+  spec.
+* Ability to manipulate FbleValues.
+
+Utilities like allocation and vector come out of that fairly naturally.
+
+It's not clear to me to what extent we should export profiling and
+disassembly APIs. Profiles and disassembly are terribly useful tools, and being
+able to write fble-profile-test is practically very nice.
+
+And there's the question of whether users should be able to construct their
+own fble function values for execution. If yes, that makes a natural story for
+the compiler. But it also means exposing a fair bit of implementation specific
+detail about function state and how we execute functions.
+
+Modular compilation implies exposing some internal details about modules so
+that users can compile one module at a time, save the resulting output, and
+then reuse that as input to some linker call.
+
+Basic Value API
+---------------
+FbleValue, FbleValueV,
+FbleValueHeap, FbleNewValueHeap, FbleFreeValueHeap,
+FbleRetainValue, FbleReleaseValue, FbleValueAddRef,
+FbleNewStructValue, FbleStructValueAccess,
+FbleNewUnionValue, FbleNewEnumValue, FbleUnionValueTag, FbleUnionValueAccess,
+FbleNewInputPortValue, FbleNewOutputPortValue,
+
+This depends on FbleArena and friends. It's in pretty good shape.
+
+Execution Value API
+-------------------
+I would argue this belongs with the basic value API, for interacting with
+functions and processes.
+
+FbleIO, FbleEval, FbleApply, FbleExec.
+
+This depends on being able to pass FbleProfile, at least as an abstract
+entity. I think that's fair, to do profiling, it has to be associated with
+whatever execution you do.
+
+Profiling API
+-------------
+There is sort of a few sides to the profile API.
+
+End user: FbleNewProfile, FbleFreeProfile, FbleProfileReport.
+Compiler: FbleProfileAddBlock
+Executioner: FbleNewProfileThread, FbleForkProfileThread,
+  FbleFreeProfileThread, FbleProfileEnterBlock, FbleProfileSample,
+  FbleProfileExitBlock, FbleProfileAutoExitBlock.
+
+And for test: we want access to the raw profile data. I'm not sure if that
+ought to be public or not.
+
+Either way, access to names with locations for debugging is pretty important
+here for the execution to add blocks.
+
+I'm tempted to say that only end user should be public API. Then we can keep
+names and locations and all the other stuff internal. Maybe add a public
+FbleTestProfiles option to expose the test, which has access to internal
+details?
+
+Internal Execution API
+----------------------
+What API would we need to give for interacting with execution state? It's
+anything that we need to run a function, that StandardRunFunction does today.
+This includes:
+
+* Checking for whether we should yield or not.
+* Initiating profile samples.
+* Manipulating the profiling state: enter, exit, auto exit.
+* Let's assume the user maintains their own local variable state, so they can
+  access that no problem. Same for pc.
+* Abort, block, yield, etc.
+* Notify of IO progress.
+* Allocate a function value.
+* Call or tail call a function, passing args.
+* Access static variables and arguments to the function. Perhaps passed as
+  part of initial state?
+* Link allocation, Get and Put.
+* Forking children threads.
+* Returning a value.
+
+That's actually not so bad. Assuming we group Link, Put, Get, etc. with the
+Value API and the user keeps track of their own local variables. How do we
+interact with the garbage collector though, given we may have cycles through
+the context? The user will need to provide their own traversal and free
+functions.
+
+Compilation API
+---------------
+Use cases are:
+* Load an entire program into a zero-argument function to run.
+* Compile a module to C code that can be used by other generated C code.
+* Compile a top level program to C code that can be used to make a
+  zero-argument function to run.
+* Compile a module to disassembly to view.
+* Maybe generate some dependencies.
+
+I don't actually see a need to have an internal InstrBlock step. It means you
+would have to recompile from source if you want both to generate C code and
+disassemble. So what?
+

@@ -1030,16 +1030,7 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
       FbleVectorAppend(arena, compiled_module->deps, FbleCopyModulePath(module->deps.xs[d]));
     }
 
-    FbleName label;
-    if (module->path == NULL) {
-      // The main program has no module path associated with it.
-      assert(i == program->modules.size - 1);
-      label.name = FbleNewString(arena, "<main>");
-      label.loc = FbleCopyLoc(module->value->loc);
-      label.space = FBLE_NORMAL_NAME_SPACE;
-    } else {
-      label = FbleModulePathName(arena, module->path);
-    }
+    FbleName label = FbleModulePathName(arena, module->path);
     compiled_module->code = FbleCompileValue(arena, module->deps.size, typechecked.xs[i], label, profile);
     FbleReleaseValue(heap, typechecked.xs[i]);
     FbleFreeName(arena, label);

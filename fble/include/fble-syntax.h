@@ -60,7 +60,7 @@ typedef struct {
 // in the list, but not the other way around.
 //
 // The last module in the list is the main program. The module path for the
-// main module is NULL.
+// main module is the empty path /%.
 typedef struct {
   FbleModuleV modules;
 } FbleProgram;

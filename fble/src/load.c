@@ -234,7 +234,9 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FbleString* filename_str = FbleNewString(arena, filename);
   Stack* stack = FbleAlloc(arena, Stack);
   stack->deps_loaded = 0;
-  stack->module.path = NULL;
+  FbleLoc loc = { .source = FbleNewString(arena, filename), .line = 1, .col = 0 };
+  stack->module.path = FbleNewModulePath(arena, loc);
+  FbleFreeLoc(arena, loc);
   FbleVectorInit(arena, stack->module.deps);
   stack->tail = NULL;
   stack->module.value = FbleParse(arena, filename_str, &stack->module.deps);
@@ -291,8 +293,7 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
     }
 
     bool recursive = false;
-    for (Stack* s = stack; s->tail != NULL; s = s->tail) {
-      assert(s->module.path != NULL);
+    for (Stack* s = stack; s != NULL; s = s->tail) {
       if (FbleModulePathsEqual(ref, s->module.path)) {
         FbleReportError("module ", ref->loc);
         FblePrintModulePath(stderr, ref);
