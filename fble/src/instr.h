@@ -352,23 +352,4 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 //   has gone to 0.
 void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 
-// FbleCompileValue --
-//   Compile a type-checked expression.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   argc - the number of local variables to reserve for arguments.
-//   tc - the type-checked expression to compile.
-//   name - the name of the expression to use in profiling. Borrowed.
-//   profile - profile to populate with blocks. May be NULL.
-//
-// Results:
-//   The compiled program.
-//
-// Side effects:
-// * Adds blocks to the given profile.
-// * The caller should call FbleFreeInstrBlock to release resources
-//   associated with the returned program when it is no longer needed.
-FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
-
 #endif // FBLE_INSTR_H_

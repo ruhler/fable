@@ -82,6 +82,7 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleTc* tc);
+static FbleInstrBlock* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
 
 // NewLocal --
 //   Allocate space for an anonymous local variable on the stack frame.
@@ -915,8 +916,24 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
   return NULL;
 }
 
-// FbleCompileValue -- see documentation in instr.h
-FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
+// Compile --
+//   Compile a type-checked expression.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   argc - the number of local variables to reserve for arguments.
+//   tc - the type-checked expression to compile.
+//   name - the name of the expression to use in profiling. Borrowed.
+//   profile - profile to populate with blocks. May be NULL.
+//
+// Results:
+//   The compiled program.
+//
+// Side effects:
+// * Adds blocks to the given profile.
+// * The caller should call FbleFreeInstrBlock to release resources
+//   associated with the returned program when it is no longer needed.
+static FbleInstrBlock* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
 {
   bool profiling_disabled = false;
   if (profile == NULL) {
@@ -1001,7 +1018,7 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
     }
 
     FbleName label = FbleModulePathName(arena, module->path);
-    compiled_module->code = FbleCompileValue(arena, module->deps.size, typechecked.xs[i], label, profile);
+    compiled_module->code = Compile(arena, module->deps.size, typechecked.xs[i], label, profile);
     FbleFreeTc(arena, typechecked.xs[i]);
     FbleFreeName(arena, label);
   }
