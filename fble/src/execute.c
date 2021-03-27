@@ -122,9 +122,9 @@ static InstrImpl sInstrImpls[] = {
 };
 
 static FbleExecStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool* io_activity);
-static FbleExecStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted);
-static FbleExecStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
-static FbleExecStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
+static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted);
+static FbleExecStatus AbortThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
+static FbleExecStatus RunThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile);
 
 // FrameGet --
@@ -755,7 +755,7 @@ static FbleExecStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool*
   return status;
 }
 
-// RunFbleThread --
+// RunThread --
 //   Run the given thread to completion or until it can no longer make
 //   progress.
 //
@@ -779,10 +779,10 @@ static FbleExecStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool*
 // * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
 // * aborted is set to true if the thread aborts, then FBLE_EXEC_FINISHED is returned.
-static FbleExecStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted)
+static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted)
 {
   if (*aborted) {
-    return AbortFbleThread(heap, thread, aborted);
+    return AbortThread(heap, thread, aborted);
   }
 
   while (thread->stack != NULL) {
@@ -793,7 +793,7 @@ static FbleExecStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, boo
     }
 
     if (status == FBLE_EXEC_ABORTED) {
-      return AbortFbleThread(heap, thread, aborted);
+      return AbortThread(heap, thread, aborted);
     }
 
     return status;
@@ -801,7 +801,7 @@ static FbleExecStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, boo
   return FBLE_EXEC_FINISHED;
 }
 
-// AbortFbleThread --
+// AbortThread --
 //   Unwind the given thread, cleaning the stack and children threads as
 //   appropriate.
 //
@@ -817,7 +817,7 @@ static FbleExecStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, boo
 //   Cleans up the thread state. The state of the thread after this function
 //   is the same as if it had completed normally, except that it will not have
 //   produced a return value. Sets aborted to true.
-static FbleExecStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted)
+static FbleExecStatus AbortThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted)
 {
   *aborted = true;
   if (thread->stack != NULL) {
@@ -827,7 +827,7 @@ static FbleExecStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, b
   return FBLE_EXEC_FINISHED;
 }
 
-// RunFbleThreads --
+// RunThreads --
 //   Run the given thread and its children to completion or until it can no
 //   longer make progress.
 //
@@ -849,7 +849,7 @@ static FbleExecStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, b
 //   The thread and its children are executed and updated.
 //   Updates the profile based on the execution.
 //   Sets aborted to true in case of abort.
-static FbleExecStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted)
+static FbleExecStatus RunThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted)
 {
   FbleArena* arena = heap->arena;
 
@@ -860,13 +860,13 @@ static FbleExecStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bo
         thread->next_child = 0;
         thread = thread->parent;
       } else {
-        // RunFbleThreads on the next child thread.
+        // RunThreads on the next child thread.
         thread = thread->children.xs[thread->next_child++];
       }
     } else {
       // Run the leaf thread, then go back up to the parent for the rest of
       // the threads to process.
-      FbleExecStatus status = RunFbleThread(heap, thread, &unblocked, aborted);
+      FbleExecStatus status = RunThread(heap, thread, &unblocked, aborted);
       switch (status) {
         case FBLE_EXEC_FINISHED: {
           unblocked = true;
@@ -949,7 +949,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 
   bool aborted = false;
   while (true) {
-    FbleExecStatus status = RunFbleThreads(heap, &thread, &aborted);
+    FbleExecStatus status = RunThreads(heap, &thread, &aborted);
     switch (status) {
       case FBLE_EXEC_FINISHED: {
         assert(aborted || final_result->value != NULL);

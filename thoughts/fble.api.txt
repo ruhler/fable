@@ -177,3 +177,65 @@ void FbleDisassemble(FILE* fout, const char* path, const char* include);
 
 I don't know. Seems much less flexible. Is that better?
 
+---
+
+Thoughts on the abstract execution API for values.
+
+FbleFuncValue has:
+  size_t argc;
+  Code* code;
+  FbleValue* scope[];
+
+Where Code represents the code of the function in a user defined way.
+
+FbleThunkValue has:
+  tail - the tail of the stack.
+  Context* context;
+
+Where Context is the user defined data representing the state, including, say,
+pc and local variables.
+
+Context* is completely abstract. It's just data that will be passed to methods
+supplied by Code*.
+
+Code* supplies the following methods:
+
+void FreeCode(FbleArena* arena, Code* this);
+  To free the code when we are done with it.
+
+Context* CreateContext(Code* this, FbleValueHeap* heap, argc, FbleValue** args);
+  Creates a new context for executing the function. Sets pc to 0,
+  initializes local variables as desired.
+
+void FreeContext(FbleValueHeap* heap, Context* context);
+  Called when we are done with the context.
+
+void ContextRefs(FbleHeapCallback* callback, Context* context);
+  For gc tracking of any values held by the context.
+
+FbleExecStatus RunContext(heap, thread, io_activity);
+  To run the context. It should put whatever result value it wants on the
+  thread as needed.
+
+One implementation of Code* and Context* is what we have now: InstrBlock,
+locals, pc. But you could implement any custom thing you want too for when we
+start generating better C code for it.
+
+I'm not sure about all the names. Code is code. Context is questionable. But I
+like the approach. The trick is going to be figuring out how to disentangle
+everything.
+
+Perhaps a decent way to go about it is to start introducing functions for the
+things I want to abstract across boundaries. Once those are all in place,
+hopefully we can pull Instr specific stuff out of execute into a separate
+file. Then we can change concrete functions and Code* types into abstract data
+types.
+
+I suppose for now we keep InstrBlock* in FuncValueInstr. Something that's
+going to come up is how we can link a bunch of modules implemented using
+generic Code*. But maybe, once we have the flexibility, it won't be too hard
+to define a custom LinkerCode* that tracks modules as FbleFuncValues instead
+of InstrBlocks, and uses something other than InstrBlocks to combine them.
+
+I think ThunkContext is an appropriate term to use for the context, in line
+with "context switching" and setcontext/getcontext APIs.  

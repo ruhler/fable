@@ -1,4 +1,16 @@
 Fble Compilation:
+* Define FbleThread type in, say, thread.h.
+* Define FbleCode and FbleThunkContext types and use them for FbleThunkValue.
+  These can go in thread.h I think.
+* Change instruction implementations to access thread state through either the
+  FbleThunkContext or FbleThread APIs.
+* Move instruction implementations into a separate file from execute.c
+  Let's say, thread.h/thread.c for RunThread and Eval functions.
+  Move FbleApply and FbleExec to value.c
+  instr.h/instr.c for instruction implementations. Or isa.h, isa.c?
+    Think of it as an internal instruction set architecture, where the user is
+    the compiler for the most part and execution is done as FbleThunkContext.
+
 * Change FbleGenerateC to take an FbleCompiledProgram (or module?).
 * Generate separate .c file per module.
 
@@ -12,6 +24,8 @@ Fble Compilation:
 * Generate custom run functions in compiled code that just calls existing
   InstrImpl functions.
 * Add support for .fble.@ files and module compilation.
+* Decide whether individual test failures should fail to build or not.
+  If they should fail to build, then tools/tests.tcl could be simplified?
 
 Fblf:
 * Figure out how to avoid duplication of module definitions.
