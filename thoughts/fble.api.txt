@@ -161,3 +161,19 @@ I don't actually see a need to have an internal InstrBlock step. It means you
 would have to recompile from source if you want both to generate C code and
 disassemble. So what?
 
+So, proposal is: hmm... You see why it's annoying to merge everything into one
+thing? We need to provide: heap, path, include_path, and profile. Maybe that's
+not so bad? What would I call it? What's a name to summarize: load, type
+check, compile, and link?
+
+FbleValue* FbleLoadProgram(FbleValueHeap* heap, const char* path, const char* include, FbleProfile* profile);
+
+Yeah, I think FbleLoad is the right general purpose term. That means we need
+to think of a different term for what is currently called load?
+
+bool FbleCompileModule(FILE* fout, const char* path, const char* include);
+bool FbleCompileMain(FILE* fout, const char* path, const char* include);
+void FbleDisassemble(FILE* fout, const char* path, const char* include);
+
+I don't know. Seems much less flexible. Is that better?
+

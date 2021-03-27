@@ -6,14 +6,10 @@
 #ifndef FBLE_INTERNAL_TC_H_
 #define FBLE_INTERNAL_TC_H_
 
-#include "fble-value.h"     // for FbleValueV
-#include "execute.h"        // for FbleRunFunction
-#include "instr.h"
 #include "syntax.h"
 
 // FbleTc --
-//   An already type-checked representation of an fble value or syntactic
-//   expression.
+//   An already type-checked representation of an fble syntactic expression.
 //
 // FbleTc is like FbleExpr, except that:
 // * Field and variable names are replaced with integer indicies.
@@ -24,17 +20,14 @@
 //   the result of running the link and exec processes, rather than a
 //   computation that creates link and exec process values.
 //
-// FbleTc is like FbleValue, except that:
-// * It can represent expressions like union select and function application,
-//   for the purpose of describing values that have not yet been computed.
-//
-// In reality FbleTc is used as the underlying implementation of the FbleValue
-// type, though in theory external users shouldn't know or care about that.
-typedef struct FbleValue FbleTc;
+typedef struct FbleTc FbleTc;
 
 // FbleTcV --
 //   A vector of FbleTc.
-typedef FbleValueV FbleTcV;
+typedef struct {
+  size_t size;
+  FbleTc** xs;
+} FbleTcV;
 
 // FbleTcTag --
 //   A tag used to distinguish among different kinds of FbleTc.
@@ -42,40 +35,30 @@ typedef enum {
   FBLE_TYPE_VALUE_TC,
   FBLE_VAR_TC,
   FBLE_LET_TC,
-
   FBLE_STRUCT_VALUE_TC,
   FBLE_UNION_VALUE_TC,
   FBLE_UNION_SELECT_TC,
   FBLE_DATA_ACCESS_TC,
-
   FBLE_FUNC_VALUE_TC,
-  FBLE_COMPILED_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
-
-  FBLE_LINK_VALUE_TC,
-  FBLE_PORT_VALUE_TC,
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
-
   FBLE_PROFILE_TC,
-
-  FBLE_THUNK_VALUE_TC,
 } FbleTcTag;
 
-// FbleValue --
-//   A tagged union of value types. All values have the same initial
-//   layout as FbleValue. The tag can be used to determine what kind of
-//   value this is to get access to additional fields of the value
-//   by first casting to that specific type of value.
-struct FbleValue {
+// FbleTc --
+//   A tagged union of tc types. All tcs have the same initial
+//   layout as FbleTc. The tag can be used to determine what kind of
+//   tc this is to get access to additional fields of the value
+//   by first casting to that specific type of tc.
+struct FbleTc {
   FbleTcTag tag;
 };
 
 // FbleTypeValueTc --
 //   FBLE_TYPE_VALUE_TC
 //
-// Represents the type value. Because types are compile-time concepts, not
-// runtime concepts, the type value contains no information.
+// An expression to compute the type value.
 typedef struct {
   FbleTc _base;
 } FbleTypeValueTc;
@@ -114,7 +97,6 @@ typedef struct {
 // A variable expression.
 // * Used to represent variables refering to function arguments or local
 //   variables. 
-// * Used to represent pure symbolic values for symbolic elaboration.
 typedef struct {
   FbleTc _base;
   FbleVarIndex index;
@@ -122,6 +104,8 @@ typedef struct {
 
 // FbleLocTc --
 //   A value bundled together with a location.
+//
+// Note: this is not an FbleTc subtype.
 typedef struct {
   FbleLoc loc;
   FbleTc* tc;
@@ -157,7 +141,7 @@ typedef struct {
 // FbleStructValueTc --
 //   FBLE_STRUCT_VALUE_TC
 //
-// Represents a struct value or a struct value expression.
+// Represents a struct value expression.
 typedef struct {
   FbleTc _base;
   size_t fieldc;
@@ -167,7 +151,7 @@ typedef struct {
 // FbleUnionValueTc --
 //   FBLE_UNION_VALUE_TC
 //
-// Represents a union value or a union value expression.
+// Represents a union value expression.
 typedef struct {
   FbleTc _base;
   size_t tag;
@@ -205,7 +189,7 @@ typedef struct {
 // FbleFuncValueTc --
 //   FBLE_FUNC_VALUE_TC
 //
-// Represents an uncompiled function value or an uncompiled process value.
+// Represents a function or process value.
 typedef struct {
   FbleTc _base;
   FbleLoc body_loc;
@@ -213,34 +197,6 @@ typedef struct {
   size_t argc;
   FbleTc* body;
 } FbleFuncValueTc;
-
-// FbleCompiledFuncValueTc -- FBLE_COMPILED_FUNC_VALUE_TC
-//
-// Fields:
-//   argc - The number of arguments expected by the function.
-//   code - The code for the function.
-//   scope - The scope at the time the function was created, representing the
-//           lexical context available to the function. The length of this
-//           array is code->statics.
-//   run - A native function to use to evaluate this fble function.
-//
-// Represents a precompiled function value.
-//
-// Note: Function values are used for both pure functions and processes. We
-// don't distinguish between the two at runtime, except that argc == 0
-// suggests this is for a process instead of a function.
-typedef struct {
-  FbleTc _base;
-  size_t argc;
-  FbleInstrBlock* code;
-  FbleRunFunction* run;
-  FbleValue* scope[];
-} FbleCompiledFuncValueTc;
-
-// FbleCompiledProcValueTc -- FBLE_COMPILED_PROC_VALUE_TC
-//   A proc value is represented as a function that takes no arguments.
-#define FBLE_COMPILED_PROC_VALUE_TC FBLE_COMPILED_FUNC_VALUE_TC
-typedef FbleCompiledFuncValueTc FbleCompiledProcValueTc;
 
 // FbleFuncApplyTc --
 //   FBLE_FUNC_APPLY_TC
@@ -253,41 +209,11 @@ typedef struct {
   FbleTcV args;
 } FbleFuncApplyTc;
 
-// FbleValues --
-//   A non-circular singly linked list of values.
-typedef struct FbleValues {
-  FbleValue* value;
-  struct FbleValues* next;
-} FbleValues;
-
-// FbleLinkValueTc -- FBLE_LINK_VALUE_TC
-//   Holds the list of values on a link. Values are added to the tail and taken
-//   from the head. If there are no values on the list, both head and tail are
-//   set to NULL.
-typedef struct {
-  FbleTc _base;
-  FbleValues* head;
-  FbleValues* tail;
-} FbleLinkValueTc;
-
-// FblePortValueTc --
-//   FBLE_PORT_VALUE_TC
-//
-// Use for input and output values linked to external IO.
-//
-// Fields:
-//   data - a pointer to a value owned externally where data should be put to
-//          and got from.
-typedef struct {
-  FbleTc _base;
-  FbleValue** data;
-} FblePortValueTc;
-
 // FbleLinkTc --
 //   FBLE_LINK_TC
 //
 // Represents a process link expression. Unlike FBLE_LINK_EXPR, which
-// evaluates to a proc value, FBLE_LINK_TC evaluates to the result of the
+// evaluates to a proc value, FBLE_LINK_TC evaluates to the result of
 // computing the proc value.
 typedef struct {
   FbleTc _base;
@@ -298,11 +224,11 @@ typedef struct {
 //   FBLE_EXEC_TC
 //
 // Represents a process exec expression. Unlike FBLE_EXEC_EXPR, which
-// evaluates to a proc value, FBLE_EXEC_TC evaluates to the result of the
+// evaluates to a proc value, FBLE_EXEC_TC evaluates to the result of
 // computing the proc value.
 typedef struct {
   FbleTc _base;
-  FbleValueV bindings;
+  FbleTcV bindings;
   FbleTc* body;
 } FbleExecTc;
 
@@ -324,34 +250,15 @@ typedef struct {
   FbleTc* body;
 } FbleProfileTc;
 
-// FbleThunkValueTc --
-//   FBLE_THUNK_VALUE_TC
+// FbleFreeTc --
+//   Free resources associated with an FbleTc.
 //
-// A implementation-specific value introduced to support recursive values and
-// partially evaluated expressions.
+// Inputs:
+//   arena - arena to use for allocations.
+//   tc - the tc to free. May be NULL.
 //
-// A thunk value holds a reference to another value. All values must be
-// dereferenced before being otherwise accessed in case they are thunk
-// values.
-//
-// For recursive values, 'tail' and 'func' will be NULL, 'pc' will be 0 and
-// 'locals' will be empty.
-//
-// For partially evaluated expressions, func is the currently executing
-// function, pc the location in that function, locals the list of current
-// local variables, and tail is a thunk to compute after this thunk is
-// finished computing.
-//
-// Fields:
-//   value - the value being referenced, or NULL if no value is referenced.
-typedef struct FbleThunkValueTc {
-  FbleTc _base;
-  FbleValue* value;
-
-  struct FbleThunkValueTc* tail;
-  FbleCompiledFuncValueTc* func;
-  size_t pc;                       // Instruction offset into func->code.
-  FbleValueV locals;
-} FbleThunkValueTc;
+// Side effects:
+//   Frees all resources associated with the given tc.
+void FbleFreeTc(FbleArena* arena, FbleTc* tc);
 
 #endif // FBLE_INTERNAL_TC_H_

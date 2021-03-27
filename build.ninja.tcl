@@ -85,7 +85,7 @@ proc bin { bin objs lflags args } {
 set ::tests [list]
 proc test { tr deps cmd args} {
   lappend ::tests $tr
-  build $tr $deps "$cmd && echo PASSED > $tr || echo FAILED > $tr" {*}$args
+  build $tr $deps "$cmd && echo PASSED > $tr" {*}$args
 }
 
 # Any time we run glob over a directory, add that directory to this list.

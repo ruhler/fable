@@ -369,6 +369,6 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
 // * Adds blocks to the given profile.
 // * The caller should call FbleFreeInstrBlock to release resources
 //   associated with the returned program when it is no longer needed.
-FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleValue* tc, FbleName name, FbleProfile* profile);
+FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
 
 #endif // FBLE_INSTR_H_

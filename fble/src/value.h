@@ -8,7 +8,144 @@
 #define FBLE_INTERNAL_VALUE_H_
 
 #include "fble-value.h"
+#include "execute.h"    // for FbleRunFunction
 #include "heap.h"
+
+// FbleValueTag --
+//   A tag used to distinguish among different kinds of FbleValue.
+typedef enum {
+  FBLE_TYPE_VALUE,
+  FBLE_STRUCT_VALUE,
+  FBLE_UNION_VALUE,
+  FBLE_FUNC_VALUE,
+  FBLE_LINK_VALUE,
+  FBLE_PORT_VALUE,
+  FBLE_THUNK_VALUE,
+} FbleValueTag;
+
+// FbleValue --
+//   A tagged union of value types. All values have the same initial
+//   layout as FbleValue. The tag can be used to determine what kind of
+//   value this is to get access to additional fields of the value
+//   by first casting to that specific type of value.
+struct FbleValue {
+  FbleValueTag tag;
+};
+
+// FbleTypeValue --
+//   FBLE_TYPE_VALUE
+//
+// Represents the type value. Because types are compile-time concepts, not
+// runtime concepts, the type value contains no information.
+typedef struct {
+  FbleValue _base;
+} FbleTypeValue;
+
+// FbleStructValue --
+//   FBLE_STRUCT_VALUE
+//
+// Represents a struct value.
+typedef struct {
+  FbleValue _base;
+  size_t fieldc;
+  FbleValue* fields[];
+} FbleStructValue;
+
+// FbleUnionValue --
+//   FBLE_UNION_VALUE
+//
+// Represents a union value.
+typedef struct {
+  FbleValue _base;
+  size_t tag;
+  FbleValue* arg;
+} FbleUnionValue;
+
+// FbleFuncValue -- FBLE_FUNC_VALUE
+//
+// Fields:
+//   argc - The number of arguments expected by the function.
+//   code - The code for the function.
+//   scope - The scope at the time the function was created, representing the
+//           lexical context available to the function. The length of this
+//           array is code->statics.
+//   run - A native function to use to evaluate this fble function.
+//
+// Note: Function values are used for both pure functions and processes. We
+// don't distinguish between the two at runtime, except that argc == 0
+// suggests this is for a process instead of a function.
+typedef struct {
+  FbleValue _base;
+  size_t argc;
+  FbleInstrBlock* code;
+  FbleRunFunction* run;
+  FbleValue* scope[];
+} FbleFuncValue;
+
+// FbleProcValue -- FBLE_PROC_VALUE
+//   A proc value is represented as a function that takes no arguments.
+#define FBLE_PROC_VALUE FBLE_FUNC_VALUE
+typedef FbleFuncValue FbleProcValue;
+
+// FbleValues --
+//   A non-circular singly linked list of values.
+typedef struct FbleValues {
+  FbleValue* value;
+  struct FbleValues* next;
+} FbleValues;
+
+// FbleLinkValue -- FBLE_LINK_VALUE
+//   Holds the list of values on a link. Values are added to the tail and taken
+//   from the head. If there are no values on the list, both head and tail are
+//   set to NULL.
+typedef struct {
+  FbleValue _base;
+  FbleValues* head;
+  FbleValues* tail;
+} FbleLinkValue;
+
+// FblePortValue --
+//   FBLE_PORT_VALUE
+//
+// Use for input and output values linked to external IO.
+//
+// Fields:
+//   data - a pointer to a value owned externally where data should be put to
+//          and got from.
+typedef struct {
+  FbleValue _base;
+  FbleValue** data;
+} FblePortValue;
+
+// FbleThunkValue --
+//   FBLE_THUNK_VALUE
+//
+// A implementation-specific value introduced to support recursive values and
+// partially evaluated expressions.
+//
+// A thunk value holds a reference to another value. All values must be
+// dereferenced before being otherwise accessed in case they are thunk
+// values.
+//
+// For recursive values, 'tail' and 'func' will be NULL, 'pc' will be 0 and
+// 'locals' will be empty.
+//
+// For partially evaluated expressions, func is the currently executing
+// function, pc the location in that function, locals the list of current
+// local variables, and tail is a thunk to compute after this thunk is
+// finished computing.
+//
+// Fields:
+//   value - the value being referenced, or NULL if no value is referenced.
+typedef struct FbleThunkValue {
+  FbleValue _base;
+  FbleValue* value;
+
+  struct FbleThunkValue* tail;
+  FbleFuncValue* func;
+  size_t pc;                       // Instruction offset into func->code.
+  FbleValueV locals;
+} FbleThunkValue;
 
 // FbleNewValue --
 //   Allocate a new value of the given type.

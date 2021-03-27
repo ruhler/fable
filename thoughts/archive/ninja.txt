@@ -169,3 +169,14 @@ Let's give it a try.
 One nice benefit of ninja that I didn't anticipate: if I'm working on a
 particular piece of code, I can specify a target explicitly to just compile
 that rather than have to try compiling everything.
+
+---
+
+I wish I could see the list of all failing tests in the case of memory leaks,
+to help identify the source of the leak. But because memory leak turns into a
+crash, the build stops before it gets to the test summary.
+
+And it's annoying that once the test has run, we throw away the error messages
+and it won't run again because it claims it has already run. Which means I'm
+tempted to fail the build for an individual failed test. Then test summary is
+just counting the tests and printing them, it can never show failed tests?

@@ -4,7 +4,9 @@
 #include <assert.h>   // for assert
 
 #include "fble-compile.h"
+#include "instr.h"
 #include "tc.h"
+#include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -414,14 +416,14 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
   // TODO: Either change the type of FbleGenerateC to take an InstrBlock as
   // input instead of an FbleValue, or support compilation of all kinds of
   // values.
-  assert(value->tag == FBLE_COMPILED_FUNC_VALUE_TC && "TODO");
-  FbleCompiledFuncValueTc* tc = (FbleCompiledFuncValueTc*)value;
+  assert(value->tag == FBLE_FUNC_VALUE && "TODO");
+  FbleFuncValue* func_value = (FbleFuncValue*)value;
 
   FbleArena* arena = FbleNewArena();
 
   FbleInstrBlockV blocks;
   FbleVectorInit(arena, blocks);
-  CollectBlocks(arena, &blocks, tc->code);
+  CollectBlocks(arena, &blocks, func_value->code);
 
   fprintf(fout, "#include \"fble.h\"\n");
   fprintf(fout, "#include \"instr.h\"\n");
@@ -449,17 +451,17 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
   fprintf(fout, "{\n");
   VarId var_id = 0;
 
-  assert(tc->argc == 0 && "TODO: support arguments to compiled funcs?");
-  VarId func = var_id++;
+  assert(func_value->argc == 0 && "TODO: support arguments to compiled funcs?");
+  VarId func_id = var_id++;
   fprintf(fout, "  FbleArena* arena = heap->arena;\n");
-  fprintf(fout, "  FbleCompiledFuncValueTc* v%x = FbleNewValue(heap, FbleCompiledFuncValueTc);\n", func);
-  fprintf(fout, "  v%x->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;\n", func);
-  fprintf(fout, "  v%x->argc = %i;\n", func, tc->argc);
-  VarId code = GetInstrBlock(fout, &var_id, tc->code);
-  fprintf(fout, "  v%x->code = v%x;\n", func, code);
-  fprintf(fout, "  v%x->run = &FbleStandardRunFunction;\n\n", func);
+  fprintf(fout, "  FbleFuncValue* v%x = FbleNewValue(heap, FbleFuncValue);\n", func_id);
+  fprintf(fout, "  v%x->_base.tag = FBLE_FUNC_VALUE;\n", func_id);
+  fprintf(fout, "  v%x->argc = %i;\n", func_id, func_value->argc);
+  VarId code = GetInstrBlock(fout, &var_id, func_value->code);
+  fprintf(fout, "  v%x->code = v%x;\n", func_id, code);
+  fprintf(fout, "  v%x->run = &FbleStandardRunFunction;\n\n", func_id);
 
-  fprintf(fout, "  return &v%x->_base;\n", func);
+  fprintf(fout, "  return &v%x->_base;\n", func_id);
   fprintf(fout, "}\n");
 
   return true;

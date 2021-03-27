@@ -22,7 +22,7 @@
 //   instructions executed.
 #define TIME_SLICE 1024
 
-typedef FbleThunkValueTc Stack;
+typedef FbleThunkValue Stack;
 
 // FbleThreadV --
 //   A vector of threads.
@@ -55,8 +55,8 @@ static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index);
 static void FrameSet(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
 static void FrameSetAndRelease(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
 
-static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, FbleThread* thread);
-static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, FbleThread* thread);
+static FbleValue* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
+static void ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
 
 // InstrImpl --
 //   A function that executes an instruction.
@@ -125,7 +125,7 @@ static FbleExecStatus RunFunction(FbleValueHeap* heap, FbleThread* thread, bool*
 static FbleExecStatus RunFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* io_activity, bool* aborted);
 static FbleExecStatus AbortFbleThread(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
 static FbleExecStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bool* aborted);
-static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc* func, FbleValue** args, FbleProfile* profile);
+static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile);
 
 // FrameGet --
 //   Get a value from the frame on the top of the execution stack.
@@ -224,14 +224,14 @@ static void FrameSetAndRelease(FbleValueHeap* heap, FbleThread* thread, FbleLoca
 //   Takes a references to a newly allocated Stack instance that should be
 //   freed when no longer needed.
 //   Does not take ownership of the function or the args.
-static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, FbleThread* thread)
+static FbleValue* PushFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleArena* arena = heap->arena;
 
   size_t locals = func->code->locals;
 
-  Stack* stack = FbleNewValue(heap, FbleThunkValueTc);
-  stack->_base.tag = FBLE_THUNK_VALUE_TC;
+  Stack* stack = FbleNewValue(heap, FbleThunkValue);
+  stack->_base.tag = FBLE_THUNK_VALUE;
   stack->value = NULL;
   stack->tail = thread->stack;
   stack->func = func;
@@ -273,7 +273,7 @@ static FbleValue* PushFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, 
 // * The caller may assume it is safe for the function and arguments to be
 //   retained solely by the frame that's being replaced when ReplaceFrame is
 //   called.
-static void ReplaceFrame(FbleValueHeap* heap, FbleCompiledFuncValueTc* func, FbleValue** args, FbleThread* thread)
+static void ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleArena* arena = heap->arena;
   Stack* stack = thread->stack;
@@ -309,8 +309,8 @@ static FbleExecStatus StructValueInstr(FbleValueHeap* heap, FbleThread* thread, 
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
   size_t argc = struct_value_instr->args.size;
 
-  FbleStructValueTc* value = FbleNewValueExtra(heap, FbleStructValueTc, sizeof(FbleValue*) * argc);
-  value->_base.tag = FBLE_STRUCT_VALUE_TC;
+  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
+  value->_base.tag = FBLE_STRUCT_VALUE;
   value->fieldc = argc;
   for (size_t i = 0; i < argc; ++i) {
     value->fields[i] = FrameGet(thread, struct_value_instr->args.xs[i]);
@@ -328,8 +328,8 @@ static FbleExecStatus UnionValueInstr(FbleValueHeap* heap, FbleThread* thread, F
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
 
-  FbleUnionValueTc* value = FbleNewValue(heap, FbleUnionValueTc);
-  value->_base.tag = FBLE_UNION_VALUE_TC;
+  FbleUnionValue* value = FbleNewValue(heap, FbleUnionValue);
+  value->_base.tag = FBLE_UNION_VALUE;
   value->tag = union_value_instr->tag;
   value->arg = FrameGet(thread, union_value_instr->arg);
   FbleValueAddRef(heap, &value->_base, value->arg);
@@ -345,13 +345,13 @@ static FbleExecStatus StructAccessInstr(FbleValueHeap* heap, FbleThread* thread,
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-  FbleStructValueTc* sv = (FbleStructValueTc*)FrameGetStrict(thread, access_instr->obj);
+  FbleStructValue* sv = (FbleStructValue*)FrameGetStrict(thread, access_instr->obj);
   if (sv == NULL) {
     FbleReportError("undefined struct value access\n", access_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
 
-  assert(sv->_base.tag == FBLE_STRUCT_VALUE_TC);
+  assert(sv->_base.tag == FBLE_STRUCT_VALUE);
   assert(access_instr->tag < sv->fieldc);
   FrameSet(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
   thread->stack->pc++;
@@ -364,13 +364,13 @@ static FbleExecStatus UnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, 
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-  FbleUnionValueTc* uv = (FbleUnionValueTc*)FrameGetStrict(thread, access_instr->obj);
+  FbleUnionValue* uv = (FbleUnionValue*)FrameGetStrict(thread, access_instr->obj);
   if (uv == NULL) {
     FbleReportError("undefined union value access\n", access_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
 
-  assert(uv->_base.tag == FBLE_UNION_VALUE_TC);
+  assert(uv->_base.tag == FBLE_UNION_VALUE);
   if (uv->tag != access_instr->tag) {
     FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
     return FBLE_EXEC_ABORTED;
@@ -386,12 +386,12 @@ static FbleExecStatus UnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, 
 static FbleExecStatus UnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-  FbleUnionValueTc* uv = (FbleUnionValueTc*)FrameGetStrict(thread, select_instr->condition);
+  FbleUnionValue* uv = (FbleUnionValue*)FrameGetStrict(thread, select_instr->condition);
   if (uv == NULL) {
     FbleReportError("undefined union value select\n", select_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
-  assert(uv->_base.tag == FBLE_UNION_VALUE_TC);
+  assert(uv->_base.tag == FBLE_UNION_VALUE);
   thread->stack->pc += 1 + select_instr->jumps.xs[uv->tag];
   return FBLE_EXEC_RUNNING;
 }
@@ -412,8 +412,8 @@ static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThread* thread, Fb
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
   size_t scopec = func_value_instr->code->statics;
 
-  FbleCompiledFuncValueTc* value = FbleNewValueExtra(heap, FbleCompiledFuncValueTc, sizeof(FbleValue*) * scopec);
-  value->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
+  FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * scopec);
+  value->_base.tag = FBLE_FUNC_VALUE;
   value->argc = func_value_instr->argc;
   value->code = func_value_instr->code;
   value->code->refcount++;
@@ -433,12 +433,12 @@ static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThread* thread, Fb
 static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-  FbleCompiledFuncValueTc* func = (FbleCompiledFuncValueTc*)FrameGetStrict(thread, call_instr->func);
+  FbleFuncValue* func = (FbleFuncValue*)FrameGetStrict(thread, call_instr->func);
   if (func == NULL) {
     FbleReportError("called undefined function\n", call_instr->loc);
     return FBLE_EXEC_ABORTED;
   };
-  assert(func->_base.tag == FBLE_COMPILED_FUNC_VALUE_TC);
+  assert(func->_base.tag == FBLE_FUNC_VALUE);
 
   FbleValue* args[func->argc];
   for (size_t i = 0; i < func->argc; ++i) {
@@ -463,8 +463,8 @@ static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
 {
   FbleGetInstr* get_instr = (FbleGetInstr*)instr;
   FbleValue* get_port = FrameGet(thread, get_instr->port);
-  if (get_port->tag == FBLE_LINK_VALUE_TC) {
-    FbleLinkValueTc* link = (FbleLinkValueTc*)get_port;
+  if (get_port->tag == FBLE_LINK_VALUE) {
+    FbleLinkValue* link = (FbleLinkValue*)get_port;
 
     if (link->head == NULL) {
       // Blocked on get.
@@ -484,8 +484,8 @@ static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
     return FBLE_EXEC_RUNNING;
   }
 
-  if (get_port->tag == FBLE_PORT_VALUE_TC) {
-    FblePortValueTc* port = (FblePortValueTc*)get_port;
+  if (get_port->tag == FBLE_PORT_VALUE) {
+    FblePortValue* port = (FblePortValue*)get_port;
     if (*port->data == NULL) {
       // Blocked on get.
       assert(instr->profile_ops == NULL && "profile op might run twice");
@@ -514,8 +514,8 @@ static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
   FbleValueV args = { .size = 0, .xs = NULL, };
   FbleValue* unit = FbleNewStructValue(heap, args);
 
-  if (put_port->tag == FBLE_LINK_VALUE_TC) {
-    FbleLinkValueTc* link = (FbleLinkValueTc*)put_port;
+  if (put_port->tag == FBLE_LINK_VALUE) {
+    FbleLinkValue* link = (FbleLinkValue*)put_port;
 
     FbleValues* tail = FbleAlloc(heap->arena, FbleValues);
     tail->value = arg;
@@ -537,8 +537,8 @@ static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThread* thread, FbleInst
     return FBLE_EXEC_RUNNING;
   }
 
-  if (put_port->tag == FBLE_PORT_VALUE_TC) {
-    FblePortValueTc* port = (FblePortValueTc*)put_port;
+  if (put_port->tag == FBLE_PORT_VALUE) {
+    FblePortValue* port = (FblePortValue*)put_port;
 
     if (*port->data != NULL) {
       // Blocked on put.
@@ -569,12 +569,12 @@ static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
   FbleVectorInit(heap->arena, thread->children);
 
   for (size_t i = 0; i < fork_instr->args.size; ++i) {
-    FbleCompiledProcValueTc* arg = (FbleCompiledProcValueTc*)FrameGetStrict(thread, fork_instr->args.xs[i]);
+    FbleProcValue* arg = (FbleProcValue*)FrameGetStrict(thread, fork_instr->args.xs[i]);
 
     // You cannot execute a proc in a let binding, so it should be
     // impossible to ever have an undefined proc value.
     assert(arg != NULL && "undefined proc value");
-    assert(arg->_base.tag == FBLE_COMPILED_PROC_VALUE_TC);
+    assert(arg->_base.tag == FBLE_PROC_VALUE);
 
     FbleThread* child = FbleAlloc(heap->arena, FbleThread);
     child->stack = NULL;
@@ -610,8 +610,8 @@ static FbleExecStatus LinkInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
 {
   FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
 
-  FbleLinkValueTc* link = FbleNewValue(heap, FbleLinkValueTc);
-  link->_base.tag = FBLE_LINK_VALUE_TC;
+  FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
+  link->_base.tag = FBLE_LINK_VALUE;
   link->head = NULL;
   link->tail = NULL;
 
@@ -630,8 +630,8 @@ static FbleExecStatus LinkInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
 static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-  FbleThunkValueTc* rv = FbleNewValue(heap, FbleThunkValueTc);
-  rv->_base.tag = FBLE_THUNK_VALUE_TC;
+  FbleThunkValue* rv = FbleNewValue(heap, FbleThunkValue);
+  rv->_base.tag = FBLE_THUNK_VALUE;
   rv->value = NULL;
   rv->tail = NULL;
   rv->func = NULL;
@@ -649,8 +649,8 @@ static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThread* thread, Fbl
 static FbleExecStatus RefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-  FbleThunkValueTc* rv = (FbleThunkValueTc*)thread->stack->locals.xs[ref_def_instr->ref];
-  assert(rv->_base.tag == FBLE_THUNK_VALUE_TC);
+  FbleThunkValue* rv = (FbleThunkValue*)thread->stack->locals.xs[ref_def_instr->ref];
+  assert(rv->_base.tag == FBLE_THUNK_VALUE);
   assert(rv->value == NULL);
   assert(rv->tail == NULL && rv->func == NULL && rv->pc == 0 && rv->locals.size == 0);
 
@@ -659,10 +659,10 @@ static FbleExecStatus RefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleI
 
   // Unwrap any accumulated layers of thunks on the returned value, and, more
   // importantly, make sure we aren't forming a vacuous value.
-  FbleThunkValueTc* thunk = (FbleThunkValueTc*)value;
-  while (value->tag == FBLE_THUNK_VALUE_TC && thunk->value != NULL) {
+  FbleThunkValue* thunk = (FbleThunkValue*)value;
+  while (value->tag == FBLE_THUNK_VALUE && thunk->value != NULL) {
     value = thunk->value;
-    thunk = (FbleThunkValueTc*)value;
+    thunk = (FbleThunkValue*)value;
   }
 
   if (thunk == rv) {
@@ -685,14 +685,14 @@ static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleI
 
   // Unwrap any layers of thunks on the result to avoid long chains of thunks.
   // TODO: Is this redundant with the thunk unwrapping we do in RefDefInstr?
-  FbleThunkValueTc* thunk_result = (FbleThunkValueTc*)result;
-  while (result->tag == FBLE_THUNK_VALUE_TC && thunk_result->value != NULL) {
+  FbleThunkValue* thunk_result = (FbleThunkValue*)result;
+  while (result->tag == FBLE_THUNK_VALUE && thunk_result->value != NULL) {
     result = thunk_result->value;
-    thunk_result = (FbleThunkValueTc*)result;
+    thunk_result = (FbleThunkValue*)result;
   }
 
   // Pop the top frame from the stack.
-  FbleThunkValueTc* thunk = thread->stack;
+  FbleThunkValue* thunk = thread->stack;
   thread->stack = thread->stack->tail;
   if (thread->stack != NULL) {
     FbleRetainValue(heap, &thread->stack->_base);
@@ -717,8 +717,8 @@ static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleI
 static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-  FbleTypeValueTc* value = FbleNewValue(heap, FbleTypeValueTc);
-  value->_base.tag = FBLE_TYPE_VALUE_TC;
+  FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
+  value->_base.tag = FBLE_TYPE_VALUE;
   FrameSetAndRelease(heap, thread, type_instr->dest, &value->_base);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -933,7 +933,7 @@ static FbleExecStatus RunFbleThreads(FbleValueHeap* heap, FbleThread* thread, bo
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
 //   Does not take ownership of the function or the args.
-static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc* func, FbleValue** args, FbleProfile* profile)
+static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile)
 {
   FbleArena* arena = heap->arena;
   FbleThread thread = {
@@ -943,8 +943,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleCompiledFuncValueTc*
     .next_child = 0,
     .parent = NULL,
   };
-  FbleThunkValueTc* final_result = (FbleThunkValueTc*)PushFrame(heap, func, args, &thread);
-  assert(final_result->_base.tag == FBLE_THUNK_VALUE_TC);
+  FbleThunkValue* final_result = (FbleThunkValue*)PushFrame(heap, func, args, &thread);
+  assert(final_result->_base.tag == FBLE_THUNK_VALUE);
   FbleRetainValue(heap, &final_result->_base);
 
   bool aborted = false;
@@ -1050,9 +1050,9 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
 // FbleApply -- see documentation in fble.h
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
-  assert(func->tag == FBLE_COMPILED_FUNC_VALUE_TC);
+  assert(func->tag == FBLE_FUNC_VALUE);
   FbleIO io = { .io = &FbleNoIO, };
-  FbleValue* result = Eval(heap, &io, (FbleCompiledFuncValueTc*)func, args, profile);
+  FbleValue* result = Eval(heap, &io, (FbleFuncValue*)func, args, profile);
   return result;
 }
 
@@ -1065,6 +1065,6 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 // FbleExec -- see documentation in fble.h
 FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile)
 {
-  assert(proc->tag == FBLE_COMPILED_PROC_VALUE_TC);
-  return Eval(heap, io, (FbleCompiledFuncValueTc*)proc, NULL, profile);
+  assert(proc->tag == FBLE_PROC_VALUE);
+  return Eval(heap, io, (FbleFuncValue*)proc, NULL, profile);
 }

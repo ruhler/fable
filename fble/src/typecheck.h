@@ -5,12 +5,12 @@
 #define FBLE_INTERNAL_TYPECHECK_H_
 
 #include "fble-syntax.h"
-#include "fble-value.h"
+#include "tc.h"
 
 // FbleTypeCheck -- 
 //   Run typecheck on the given program.
 //
-// An FbleValue is produced for each module in the program. The FbleValue
+// An FbleTc is produced for each module in the program. The FbleTc
 // produced is a type checked expression suitable for use in the body of a
 // function that takes the computed module values for each module listed in
 // module->deps as arguments to the function.
@@ -30,6 +30,6 @@
 // * The user is responsible for freeing any values added to the result vector
 //   when they are no longer needed, including in the case when FbleTypeCheck
 //   fails.
-bool FbleTypeCheck(FbleValueHeap* heap, FbleProgram* program, FbleValueV* result);
+bool FbleTypeCheck(FbleArena* arena, FbleProgram* program, FbleTcV* result);
 
 #endif // FBLE_INTERNAL_TYPECHECK_H_

@@ -2,8 +2,6 @@
 //   This file describes code to compile fble values into fble instructions.
 
 #include <assert.h>   // for assert
-#include <stdarg.h>   // for va_list, va_start, va_arg, va_end
-#include <stdio.h>    // for fprintf, stderr
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
@@ -83,7 +81,7 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit);
 
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result);
-static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleValue* tc);
+static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleTc* tc);
 
 // NewLocal --
 //   Allocate space for an anonymous local variable on the stack frame.
@@ -546,7 +544,7 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result
 // * The caller should call LocalRelease when the returned results are no
 //   longer needed. Note that FreeScope calls LocalRelease for all locals
 //   allocated to the scope, so that can also be used to clean up the local.
-static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleValue* v)
+static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 {
   switch (v->tag) {
     case FBLE_TYPE_VALUE_TC: {
@@ -804,11 +802,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       return local;
     }
 
-    case FBLE_COMPILED_FUNC_VALUE_TC: {
-      assert(false && "TODO: FBLE_COMPILED_FUNC_VALUE_TC");
-      return NULL;
-    }
-
     case FBLE_FUNC_APPLY_TC: {
       FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)v;
       Local* func = CompileExpr(arena, blocks, false, scope, apply_tc->func);
@@ -842,16 +835,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       }
 
       return dest;
-    }
-
-    case FBLE_LINK_VALUE_TC: {
-      assert(false && "TODO: FBLE_LINK_VALUE_TC");
-      return NULL;
-    }
-
-    case FBLE_PORT_VALUE_TC: {
-      assert(false && "TODO: FBLE_PORT_VALUE_TC");
-      return NULL;
     }
 
     case FBLE_LINK_TC: {
@@ -926,16 +909,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       ExitBlock(arena, blocks, scope, exit);
       return result;
     }
-
-    case FBLE_THUNK_VALUE_TC: {
-      FbleThunkValueTc* thunk_tc = (FbleThunkValueTc*)v;
-      if (thunk_tc->value != NULL) {
-        return CompileExpr(arena, blocks, exit, scope, thunk_tc->value);
-      }
-
-      assert(false && "TODO: Compile unevaluated FBLE_THUNK_VALUE_TC");
-      return NULL;
-    }
   }
 
   UNREACHABLE("should already have returned");
@@ -943,7 +916,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 }
 
 // FbleCompileValue -- see documentation in instr.h
-FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleValue* tc, FbleName name, FbleProfile* profile)
+FbleInstrBlock* FbleCompileValue(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
 {
   bool profiling_disabled = false;
   if (profile == NULL) {
@@ -1004,16 +977,13 @@ void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program)
 // FbleCompile -- see documentation in fble-compile.h
 FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
 {
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
-
-  FbleValueV typechecked;
+  FbleTcV typechecked;
   FbleVectorInit(arena, typechecked);
-  if (!FbleTypeCheck(heap, program, &typechecked)) { 
+  if (!FbleTypeCheck(arena, program, &typechecked)) { 
     for (size_t i = 0; i < typechecked.size; ++i) {
-      FbleReleaseValue(heap, typechecked.xs[i]);
+      FbleFreeTc(arena, typechecked.xs[i]);
     }
     FbleFree(arena, typechecked.xs);
-    FbleFreeValueHeap(heap);
     return NULL;
   }
 
@@ -1032,12 +1002,11 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
 
     FbleName label = FbleModulePathName(arena, module->path);
     compiled_module->code = FbleCompileValue(arena, module->deps.size, typechecked.xs[i], label, profile);
-    FbleReleaseValue(heap, typechecked.xs[i]);
+    FbleFreeTc(arena, typechecked.xs[i]);
     FbleFreeName(arena, label);
   }
 
   FbleFree(arena, typechecked.xs);
-  FbleFreeValueHeap(heap);
   return compiled;
 }
 
@@ -1108,8 +1077,8 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program)
 
   FreeScope(arena, &scope);
 
-  FbleCompiledFuncValueTc* func = FbleNewValue(heap, FbleCompiledFuncValueTc);
-  func->_base.tag = FBLE_COMPILED_FUNC_VALUE_TC;
+  FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
+  func->_base.tag = FBLE_FUNC_VALUE;
   func->argc = 0;
   func->code = code;
   func->run = &FbleStandardRunFunction;
