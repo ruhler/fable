@@ -205,11 +205,11 @@ build $::src/fble-stdio-test.c \
   "$::bin/fble-compile FbleStdioMain prgms/Stdio/Test.fble prgms > $::src/fble-stdio-test.c"
 obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"
 obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
-bin $::bin/fble-stdio-test \
-  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
-  "-L $::lib -lfble" $::libfble
-test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
-  "$::bin/fble-stdio-test | grep PASSED > /dev/null"
+#bin $::bin/fble-stdio-test \
+#  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
+#  "-L $::lib -lfble" $::libfble
+#test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
+#  "$::bin/fble-stdio-test | grep PASSED > /dev/null"
 
 # /Fble/Tests% compilation test
 #build $::src/fble-tests.c \

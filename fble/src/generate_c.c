@@ -411,19 +411,13 @@ static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code)
 }
 
 // FbleGenerateC -- see documentation in fble-compile.h
-bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
+bool FbleGenerateC(FILE* fout, const char* entry, FbleInstrBlock* code)
 {
-  // TODO: Either change the type of FbleGenerateC to take an InstrBlock as
-  // input instead of an FbleValue, or support compilation of all kinds of
-  // values.
-  assert(value->tag == FBLE_FUNC_VALUE && "TODO");
-  FbleFuncValue* func_value = (FbleFuncValue*)value;
-
   FbleArena* arena = FbleNewArena();
 
   FbleInstrBlockV blocks;
   FbleVectorInit(arena, blocks);
-  CollectBlocks(arena, &blocks, func_value->code->code);
+  CollectBlocks(arena, &blocks, code);
 
   fprintf(fout, "#include \"fble.h\"\n");
   fprintf(fout, "#include \"isa.h\"\n");
@@ -451,15 +445,14 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value)
   fprintf(fout, "{\n");
   VarId var_id = 0;
 
-  assert(func_value->argc == 0 && "TODO: support arguments to compiled funcs?");
   VarId func_id = var_id++;
   fprintf(fout, "  FbleArena* arena = heap->arena;\n");
   fprintf(fout, "  FbleFuncValue* v%x = FbleNewValue(heap, FbleFuncValue);\n", func_id);
   fprintf(fout, "  v%x->_base.tag = FBLE_FUNC_VALUE;\n", func_id);
-  fprintf(fout, "  v%x->argc = %i;\n", func_id, func_value->argc);
-  VarId code = GetInstrBlock(fout, &var_id, func_value->code->code);
+  fprintf(fout, "  v%x->argc = %i;\n", func_id, 0);   // TODO: don't assume this?
+  VarId code_id = GetInstrBlock(fout, &var_id, code);
   fprintf(fout, "  v%x->code = FbleAlloc(arena, FbleCode);\n", func_id);
-  fprintf(fout, "  v%x->code->code = v%x;\n", func_id, code);
+  fprintf(fout, "  v%x->code->code = v%x;\n", func_id, code_id);
   fprintf(fout, "  v%x->code->run = &FbleStandardRunFunction;\n\n", func_id);
 
   fprintf(fout, "  return &v%x->_base;\n", func_id);

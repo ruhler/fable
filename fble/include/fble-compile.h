@@ -111,7 +111,10 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program);
 void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile);
 
 // FbleGenerateC --
-//   Generate C code for an fble value.
+//   Generate C code for an fble instruction block.
+//
+// TODO: Compile code to something meaningful and update this documentation
+// appropriately.
 //
 // The generated C code will export a single function named entry with the
 // following signature:
@@ -129,7 +132,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* prof
 // Inputs:
 //   fout - the output stream to write the C code to.
 //   entry - the name of the C function to export.
-//   value - the value to compile.
+//   code - the code to compile.
 //
 // Results:
 //   true on success, false on error.
@@ -137,6 +140,6 @@ void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* prof
 // Side effects:
 // * Generates C code for the given value.
 // * An error message is printed to stderr in case of error.
-bool FbleGenerateC(FILE* fout, const char* entry, FbleValue* value);
+bool FbleGenerateC(FILE* fout, const char* entry, FbleInstrBlock* code);
 
 #endif // FBLE_COMPILE_H_
