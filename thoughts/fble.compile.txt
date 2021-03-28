@@ -732,3 +732,18 @@ Actually, we may still run into trouble. The Graphics.fble module, which is
 1300 lines of .fble, turns into 220,000 lines of .c code. Is there something
 very wrong going on? Let's see if gcc can do anything with it...
 
+The good news is it doesn't take long at all to generate .c code for all the
+.fble modules, even though we aren't doing modular compilation. I guess I
+thought the long startup time for /Fble/Tests% was compilation. It must be the
+time to generate the tests before we start running them.
+
+Nope. We're not there yet. A lot of the modules compile fine. But a lot of
+them are using upwards of 50% or more of the memory on my computer. It's
+getting stuck on /Sat/Aim% right now. That's only 429 lines of .fble. It's
+using lots of lists and literals.
+
+I need to sit down and understand why we have so much code blow up for
+literals. Perhaps there's a bug where we are duplicating code? Or perhaps we
+can choose some smart helper functions to drastically reduce the size of the
+generated code.
+

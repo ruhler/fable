@@ -181,6 +181,9 @@ foreach dir [dirs prgms ""] {
     build $::prgms/$x.c \
       "$::bin/fble-compile $::prgms/$x.d" \
       "$::bin/fble-compile Foo prgms/$x prgms > $::prgms/$x.c"
+
+    # Generate a .o file.
+    #obj $::prgms/$x.o $::prgms/$x.c "-I fble/include -I fble/src"
   }
 }
 
