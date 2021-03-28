@@ -105,9 +105,12 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleGenerateC(stdout, mpath, compiled->modules.xs[compiled->modules.size - 1].code);
+  FbleCompiledModule* module = compiled->modules.xs + compiled->modules.size - 1;
+  FbleFreeModulePath(arena, module->path);
+  module->path = mpath;
 
-  FbleFreeModulePath(arena, mpath);
+  FbleGenerateC(stdout, module);
+
   FbleFreeCompiledProgram(arena, compiled);
   FbleFreeArena(arena);
   return EX_SUCCESS;

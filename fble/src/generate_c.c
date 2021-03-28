@@ -22,6 +22,8 @@ typedef unsigned int VarId;
 static void CollectBlocks(FbleArena* arena, FbleInstrBlockV* blocks, FbleInstrBlock* code);
 
 static VarId GenLoc(FILE* fout, VarId* var_id, FbleLoc loc);
+static VarId GenName(FILE* fout, VarId* var_id, FbleName name);
+static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static VarId GenFrameIndex(FILE* fout, VarId* var_id, FbleFrameIndex index);
 static void AppendInstr(FILE* fout, VarId* var_id, VarId block_id, FbleInstr* instr);
 static VarId GetInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code);
@@ -74,6 +76,73 @@ static VarId GenLoc(FILE* fout, VarId* var_id, FbleLoc loc)
   fprintf(fout, "  FbleLoc v%x = { .source = v%x, .line = %i, .col = %i };\n",
       id, source, loc.line, loc.col);
   return id;
+}
+
+// GenName --
+//   Generate code for a FbleName.
+//
+// Assumes there is a C variable 'FbleArena* arena' in scope for allocating
+// FbleName.
+//
+// Inputs:
+//   fout - the output stream to write the code to.
+//   var_id - pointer to next available variable id for use.
+//   name - the FbleName to generate code for.
+//
+// Results:
+//   The variable id of the generated FbleName.
+//
+// Side effects:
+// * Outputs code to fout with two space indent.
+// * Increments var_id based on the number of internal variables used.
+static VarId GenName(FILE* fout, VarId* var_id, FbleName name)
+{
+  static const char* spaces[] = {
+    "FBLE_NORMAL_NAME_SPACE",
+    "FBLE_TYPE_NAME_SPACE"
+  };
+
+  VarId loc_id = GenLoc(fout, var_id, name.loc);
+
+  VarId id = (*var_id)++;
+  fprintf(fout, "  FbleName v%x = {\n", id);
+  // TODO: Handle funny chars in the string literal properly.
+  fprintf(fout, "    .name = FbleNewString(arena, \"%s\"),\n", name.name->str);
+  fprintf(fout, "    .space = %s,\n", spaces[name.space]);
+  fprintf(fout, "    .loc = v%x\n", loc_id);
+  fprintf(fout, "  };\n");
+  return id;
+}
+
+// GenModulePath --
+//   Generate code for a FbleModulePath..
+//
+// Assumes there is a C variable 'FbleArena* arena' in scope for allocating
+// the FbleModulePath.
+//
+// Inputs:
+//   fout - the output stream to write the code to.
+//   var_id - pointer to next available variable id for use.
+//   path - the FbleModulePath to generate code for.
+//
+// Results:
+//   The variable id of the generated FbleModulePath.
+//
+// Side effects:
+// * Outputs code to fout with two space indent.
+// * Increments var_id based on the number of internal variables used.
+static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
+{
+  VarId loc_id = GenLoc(fout, var_id, path->loc);
+  VarId path_id = (*var_id)++;
+  fprintf(fout, "  FbleModulePath* v%x = FbleNewModulePath(arena, v%x);\n", path_id, loc_id);
+  fprintf(fout, "  FbleFreeLoc(arena, v%x);\n", loc_id);
+
+  for (size_t i = 0; i < path->path.size; ++i) {
+    VarId name_id = GenName(fout, var_id, path->path.xs[i]);
+    fprintf(fout, "  FbleVectorAppend(arena, v%x->path, v%x);\n", path_id, name_id);
+  }
+  return path_id;
 }
 
 // GenFrameIndex --
@@ -484,18 +553,32 @@ static FbleString* FuncNameForPath(FbleArena* arena, FbleModulePath* path)
 }
 
 // FbleGenerateC -- see documentation in fble-compile.h
-bool FbleGenerateC(FILE* fout, FbleModulePath* path, FbleInstrBlock* code)
+bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 {
   FbleArena* arena = FbleNewArena();
 
   FbleInstrBlockV blocks;
   FbleVectorInit(arena, blocks);
-  CollectBlocks(arena, &blocks, code);
+  CollectBlocks(arena, &blocks, module->code);
 
   fprintf(fout, "#include \"fble.h\"\n");
   fprintf(fout, "#include \"isa.h\"\n");
   fprintf(fout, "#include \"tc.h\"\n");
   fprintf(fout, "#include \"value.h\"\n");
+  fprintf(fout, "\n");
+
+  // Prototypes for module dependencies.
+  for (size_t i = 0; i < module->deps.size; ++i) {
+    FbleString* dep_name = FuncNameForPath(arena, module->deps.xs[i]);
+    fprintf(fout, "  void %s(FbleArena* arena, FbleCompiledProgram* program);\n", dep_name->str);
+    FbleFreeString(arena, dep_name);
+  }
+  fprintf(fout, "\n");
+
+  // Prototypes for FbleInstrBlock* functions.
+  for (int i = 0; i < blocks.size; ++i) {
+    fprintf(fout, "static FbleInstrBlock* _block_%p(FbleArena* arena);\n", (void*)blocks.xs[i]);
+  }
   fprintf(fout, "\n");
 
   // Helper function for appending zero-argument struct value instructions,
@@ -578,11 +661,6 @@ bool FbleGenerateC(FILE* fout, FbleModulePath* path, FbleInstrBlock* code)
   fprintf(fout, "}\n\n");
 
   for (int i = 0; i < blocks.size; ++i) {
-    fprintf(fout, "static FbleInstrBlock* _block_%p(FbleArena* arena);\n", (void*)blocks.xs[i]);
-  }
-  fprintf(fout, "\n");
-
-  for (int i = 0; i < blocks.size; ++i) {
     fprintf(fout, "static FbleInstrBlock* _block_%p(FbleArena* arena)\n", (void*)blocks.xs[i]);
     fprintf(fout, "{\n");
     VarId var_id = 0;
@@ -592,8 +670,8 @@ bool FbleGenerateC(FILE* fout, FbleModulePath* path, FbleInstrBlock* code)
   }
   FbleFree(arena, blocks.xs);
 
-  FbleString* func_name = FuncNameForPath(arena, path);
-  fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", func_name->str);
+  FbleString* func_name = FuncNameForPath(arena, module->path);
+  fprintf(fout, "void %s(FbleArena* arena, FbleCompiledProgram* program)\n", func_name->str);
   FbleFreeString(arena, func_name);
 
   fprintf(fout, "{\n");
@@ -603,21 +681,43 @@ bool FbleGenerateC(FILE* fout, FbleModulePath* path, FbleInstrBlock* code)
   fprintf(fout, "  (void)AppendStruct2Instr;\n");
   fprintf(fout, "  (void)AppendUnionInstr;\n");
   fprintf(fout, "  (void)AppendCall1Instr;\n");
-  fprintf(fout, "  (void)AppendAccessInstr;\n");
+  fprintf(fout, "  (void)AppendAccessInstr;\n\n");
 
   VarId var_id = 0;
 
-  VarId func_id = var_id++;
-  fprintf(fout, "  FbleArena* arena = heap->arena;\n");
-  fprintf(fout, "  FbleFuncValue* v%x = FbleNewValue(heap, FbleFuncValue);\n", func_id);
-  fprintf(fout, "  v%x->_base.tag = FBLE_FUNC_VALUE;\n", func_id);
-  fprintf(fout, "  v%x->argc = %i;\n", func_id, 0);   // TODO: don't assume this?
-  VarId code_id = GetInstrBlock(fout, &var_id, code);
-  fprintf(fout, "  v%x->code = FbleAlloc(arena, FbleCode);\n", func_id);
-  fprintf(fout, "  v%x->code->code = v%x;\n", func_id, code_id);
-  fprintf(fout, "  v%x->code->run = &FbleStandardRunFunction;\n\n", func_id);
+  // Check if the module has already been loaded. If so, there's nothing to
+  // do.
+  VarId path_id = GenModulePath(fout, &var_id, module->path);
+  fprintf(fout, "  for (size_t i = 0; i < program->modules.size; ++i) {\n");
+  fprintf(fout, "    if (FbleModulePathsEqual(v%x, program->modules.xs[i].path)) {\n", path_id);
+  fprintf(fout, "      FbleFreeModulePath(arena, v%x);\n", path_id);
+  fprintf(fout, "      return;\n");
+  fprintf(fout, "    }\n");
+  fprintf(fout, "  }\n\n");
 
-  fprintf(fout, "  return &v%x->_base;\n", func_id);
+  // Make sure all dependencies have been loaded.
+  for (size_t i = 0; i < module->deps.size; ++i) {
+    FbleString* dep_name = FuncNameForPath(arena, module->deps.xs[i]);
+    fprintf(fout, "  %s(arena, program);\n", dep_name->str);
+    FbleFreeString(arena, dep_name);
+  }
+  fprintf(fout, "\n");
+
+  // Add this module to the program.
+
+  VarId module_id = var_id++;
+  fprintf(fout, "  FbleCompiledModule* v%x = FbleVectorExtend(arena, program->modules);\n", module_id);
+  fprintf(fout, "  v%x->path = v%x;\n", module_id, path_id);
+  fprintf(fout, "  FbleVectorInit(arena, v%x->deps);\n", module_id);
+
+  for (size_t i = 0; i < module->deps.size; ++i) {
+    VarId dep_id = GenModulePath(fout, &var_id, module->deps.xs[i]);
+    fprintf(fout, "  FbleVectorAppend(arena, v%x->deps, v%x);\n", module_id, dep_id);
+  }
+
+  VarId code_id = GetInstrBlock(fout, &var_id, module->code);
+  fprintf(fout, "  v%x->code = v%x;\n", module_id, code_id);
+
   fprintf(fout, "}\n");
 
   FbleFreeArena(arena);

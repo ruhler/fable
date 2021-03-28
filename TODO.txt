@@ -1,9 +1,7 @@
 Fble Compilation:
-* Change .c files to generate a program that adds an FbleCompiledModule to an
-  FbleCompiledProgram.
-* Write an fble-compile-main program that takes a module path and a C function
-  and generates a function that calls FbleLink on the modules loaded by
-  calling the load function for that C program.
+* Add -e option to fble-compile takes a C function name and 
+  generates a function that calls FbleLink on the modules loaded by
+  calling the load function for that C module.
 * Now we should be able to make fble-stdio-test and fble-tests work.
 
 * Define FbleThread type in, say, thread.h.
