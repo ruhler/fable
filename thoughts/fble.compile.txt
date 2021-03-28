@@ -747,3 +747,103 @@ literals. Perhaps there's a bug where we are duplicating code? Or perhaps we
 can choose some smart helper functions to drastically reduce the size of the
 generated code.
 
+---
+
+Understanding /Sat/Aim%.
+
+The input is very regular.
+A list of clauses, each of which is a list of three variables, each of which
+uses an Int literal consisting of up to 3 digits.
+
+There are 426 clauses.
+
+Int|22: 
+  l11 = struct();
+  l12 = union(2: l11);      // the digit '2'
+  l11 = struct();
+  l13 = union(2: l11);      // the digit '2'
+  l11 = struct();
+  l14 = union(1: l11);      // nil to mark end of list
+  l11 = struct(l13, l14);
+  l13 = union(0: l11);      // cons 
+  l11 = struct(l12, l13);
+  l12 = union(0: l11);      // cons
+
+This works out to:
+  2 for nil at the end of the list.
+  for each digit:
+    2 for the letter
+    2 for the cons
+
+So we expect 10 instructions for a two digit int literal.
+We expect 14 instructions for a three digit int literal.
+
+401 * 3 * 14 = 16842 instructions solely to describe the int literals,
+assuming 3 digits for each literal.
+
+The first clause is 53 instructions total. Sounds reasonable. And enough to
+lead to explain the 20000 total instructions needed for all of /Sat/Aim%.
+
+Now let's see how we go from 20,000 instructions to  200,000 lines of C code.
+
+l11 = struct();
+  FbleStructValueInstr* v3b = FbleAlloc(arena, FbleStructValueInstr);
+  v3b->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+  v3b->_base.profile_ops = NULL;
+  FbleVectorInit(arena, v3b->args);
+  v3b->dest = 11;
+
+  FbleInstr* v3c = &v3b->_base;
+  FbleVectorAppend(arena, v0->instrs, v3c);
+
+l13 = union(2: l11);
+  FbleUnionValueInstr* v3f = FbleAlloc(arena, FbleUnionValueInstr);
+  v3f->_base.tag = FBLE_UNION_VALUE_INSTR;
+  v3f->_base.profile_ops = NULL;
+  v3f->tag = 2;
+  FbleFrameIndex v40 = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 11 };
+  v3f->arg = v40;
+  v3f->dest = 13;
+
+  FbleInstr* v41 = &v3f->_base;
+  FbleVectorAppend(arena, v0->instrs, v41);
+
+There you have it. For the union, 10 lines of C code. That looks reasonable.
+
+I think the best we can do is to try and make helper functions for building
+these instructions.
+
+What if, to start, we ignore profiling ops. We don't have a mechanism in place
+to load the profile yet anyway. If you want profiling, run the interpreter?
+It's a bit hacky. But maybe we start this way, we optimize, and then we can
+add profiling back later when we have a complete story for it. Let me give
+that a try.
+
+That's not going to be enough. It doesn't change the size of Sat/Aim.fble.c
+noticeably at all. But it should make it easier to start using helper
+functions.
+
+For example, now we can reasonably say something like:
+
+AppendUnionValueInstr(arena, 2, FBLE_LOCALS_FRAME_SECTION, 11, 12, v0->instrs);
+
+Then you get a 10x improvement. Let's give that a try.
+
+And the other thing I need: empty struct and 2 argument struct. That should
+cover all the literal cases. Oh, and 1 argument call. That gets us down to
+21000 lines of code generated for Sat/Aim.fble.c, which gcc should have no
+trouble with.
+
+Okay. Now we can deal with it, if we compile one at a time. The worst is
+/Md5%, which has a lot of struct access instructions. Let me add a helper
+function for that too.
+
+Yeah, now things are looking okay. My computer overheats if I run with default
+number of threads, but I don't think it will run out of memory now. I call
+that a success for now.
+
+For the record, it takes about 3m30s to do a full build, including all the .o
+files for all the .fble files on my computer with -j 2. That's definitely
+acceptable, and should get better as I start to generate real C code instead
+of C code that builds instructions.
+
