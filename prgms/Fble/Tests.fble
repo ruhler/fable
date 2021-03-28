@@ -20,8 +20,10 @@
 % _ = /Fble/StackSmasher%;
 % _ = /Hwdg/App%;
 % _ = /Invaders/App%;
+% _ = /Invaders/Bench%;
 % _ = /Invaders/ScreenshotApp%;
 % _ = /Snake%;
+% _ = /Snake/Bench%;
 % _ = /Stdio/Cat%;
 % _ = /Stdio/Test%;
 

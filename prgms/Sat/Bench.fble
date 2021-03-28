@@ -1,7 +1,6 @@
 
 @ Int@ = /Int/Int%.Int@;
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 <@>% Just = /Maybe%.Just;
 @ Result@ = /Sat%.Result@;
 % Solve = /Sat%.Solve;
@@ -9,7 +8,7 @@
 % Unit = /Unit%.Unit;
 
 Unit@! Bench = {
-  Result@ solved := !(Solve(/Sat/Aim%, Just<Int@>(I(D|70))));
+  Result@ solved := !(Solve(/Sat/Aim%, Just<Int@>(Int|70)));
   !(Unit);
 };
 

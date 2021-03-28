@@ -28,6 +28,9 @@
 % EqId = /Sat%.EqId;
 % Solve = /Sat%.Solve;
 
+# Import to test compilation
+% _ = /Sat/Bench%;
+
 VarId@ X = /Int/Int%.1;
 
 Show@<VarId@> ShowId = /Int/Int/Show%.Show;

@@ -1,6 +1,4 @@
 Fble Compilation:
-* Generate .c files for all .fble modules, changing generate_c to only compile
-  the main module.
 * Generate .o files for all .fble modules.
   This will tell us whether gcc can compile them or not.
 * Generate a libfbleprgms.a with all the .o files.

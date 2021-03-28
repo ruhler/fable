@@ -168,13 +168,19 @@ foreach dir [dirs langs/fble ""] {
 test $::test/fble-profile-test.tr $::bin/fble-profile-test \
   "$::bin/fble-profile-test > /dev/null"
 
-# Generate .d files for each .fble module in the prgms directory.
+# Compile each .fble module in the prgms directory.
 foreach dir [dirs prgms ""] {
   lappend globs "prgms/$dir"
   foreach {x} [glob -tails -directory prgms -nocomplain -type f $dir/*.fble] {
-    build $prgms/$x.d "$::bin/fble-deps prgms/$x" \
-      "$::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d" \
-      "depfile = $prgms/$x.d"
+    # Generate a .d file to capture dependencies.
+    build $::prgms/$x.d "$::bin/fble-deps prgms/$x" \
+      "$::bin/fble-deps $::prgms/$x.d prgms/$x prgms > $::prgms/$x.d" \
+      "depfile = $::prgms/$x.d"
+
+    # Generate a .c file.
+    build $::prgms/$x.c \
+      "$::bin/fble-compile $::prgms/$x.d" \
+      "$::bin/fble-compile Foo prgms/$x prgms > $::prgms/$x.c"
   }
 }
 
@@ -200,11 +206,11 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
   "$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
 
 # /Stdio/Test% compilation test
-build $::src/fble-stdio-test.c \
-  "$::bin/fble-compile $::prgms/Stdio/Test.fble.d" \
-  "$::bin/fble-compile FbleStdioMain prgms/Stdio/Test.fble prgms > $::src/fble-stdio-test.c"
-obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"
-obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
+#build $::src/fble-stdio-test.c \
+#  "$::bin/fble-compile $::prgms/Stdio/Test.fble.d" \
+#  "$::bin/fble-compile FbleStdioMain prgms/Stdio/Test.fble prgms > $::src/fble-stdio-test.c"
+#obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"
+#obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
 #bin $::bin/fble-stdio-test \
 #  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
 #  "-L $::lib -lfble" $::libfble

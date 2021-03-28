@@ -2,8 +2,7 @@
 @ Key@ = /App%.Key@;
 @ Event@ = /App%.Event@;
 
-% I = /Int/Int/Lit%.I;
-% D = /Int/Int/Lit%.D;
+% Int = /Int/Int/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -12,6 +11,6 @@
 # order of 1 minute to run. The target goal for invaders is 60 frames a
 # second. We're not quite there yet.
 Unit@! Bench = /App/Benchmark%.Benchmark(
-  /Invaders/App%, I(D|32), Event@(key_down: Key@(q: Unit)));
+  /Invaders/App%, Int|32, Event@(key_down: Key@(q: Unit)));
 
 @(Bench);
