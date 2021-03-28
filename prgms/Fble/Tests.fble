@@ -15,6 +15,7 @@
 % TestSuite = /Test%.TestSuite;
 
 # Import to test compilation.
+% _ = /Char/Show%;
 % _ = /Fble/Bench%;
 % _ = /Fble/StackSmasher%;
 % _ = /Hwdg/App%;

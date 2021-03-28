@@ -8,6 +8,7 @@
 #include "fble.h"
 
 #define EX_SUCCESS 0
+#define EX_FAIL 1
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
@@ -82,6 +83,10 @@ int main(int argc, char* argv[])
   FbleArena* arena = FbleNewArena();
 
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
+  if (prgm == NULL) {
+    FbleFreeArena(arena);
+    return EX_FAIL;
+  }
 
   int cols = 1 + strlen(target);
   printf("%s:", target);

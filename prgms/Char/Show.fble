@@ -6,7 +6,7 @@
 # Show --
 #   Implementation of Show@ for Char@. See documentation of /Show%.Show@.
 Show@<Char@> Show = (Char@ x) {
-  Str[x]
+  Str[x];
 };
 
 @(Show);

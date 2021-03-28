@@ -1,4 +1,16 @@
 Fble Compilation:
+* Generate .c files for all .fble modules, changing generate_c to only compile
+  the main module.
+* Generate .o files for all .fble modules.
+  This will tell us whether gcc can compile them or not.
+* Generate a libfbleprgms.a with all the .o files.
+* Change .c files to generate a program that adds an FbleCompiledModule to an
+  FbleCompiledProgram.
+* Write an fble-compile-main program that takes a module path and a C function
+  and generates a function that calls FbleLink on the modules loaded by
+  calling the load function for that C program.
+* Now we should be able to make fble-stdio-test and fble-tests work.
+
 * Change FbleGenerateC to take an FbleInstrBlock* as input instead of an
   FbleValue*.
 * Define FbleThread type in, say, thread.h.

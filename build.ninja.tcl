@@ -139,10 +139,9 @@ test $::test/true.tr "" true
 # of directories.
 # 'dir' should be empty or end with '/'.
 proc dirs { root dir } {
-  set l [list]
-  foreach {x} [lsort [glob -tails -directory $root -nocomplain -type d $dir*]] {
-    lappend l $x
-    set l [concat $l [dirs $root "$dir$x/"]]
+  set l [list $dir]
+  foreach {x} [glob -tails -directory $root -nocomplain -type d $dir*] {
+    set l [concat $l [dirs $root "$x/"]]
   }
   return $l
 }
@@ -169,18 +168,14 @@ foreach dir [dirs langs/fble ""] {
 test $::test/fble-profile-test.tr $::bin/fble-profile-test \
   "$::bin/fble-profile-test > /dev/null"
 
-# dependency files for the top level .fble files used in tests
-foreach x {
-  Fble/Tests.fble
-  Md5/Main.fble
-  Stdio/Cat.fble
-  Stdio/Test.fble
-  Fblf/Lib/Tests/Compile.fble
-  Fblf/Lib/Md5/Stdio.fble
-} {
-  build $prgms/$x.d "$::bin/fble-deps prgms/$x" \
-    "$::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d" \
-    "depfile = $prgms/$x.d"
+# Generate .d files for each .fble module in the prgms directory.
+foreach dir [dirs prgms ""] {
+  lappend globs "prgms/$dir"
+  foreach {x} [glob -tails -directory prgms -nocomplain -type f $dir/*.fble] {
+    build $prgms/$x.d "$::bin/fble-deps prgms/$x" \
+      "$::bin/fble-deps $prgms/$x.d prgms/$x prgms > $prgms/$x.d" \
+      "depfile = $prgms/$x.d"
+  }
 }
 
 # fble-disassemble test
