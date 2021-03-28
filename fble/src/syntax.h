@@ -102,17 +102,6 @@ FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc);
 //   copy when it is no longer needed.
 FbleModulePath* FbleCopyModulePath(FbleModulePath* path);
 
-// FbleFreeModulePath --
-//   Free resource associated with a module path.
-//
-// Inputs:
-//   arena - the arena to use for allocations.
-//   path - the path to free.
-//
-// Side effects:
-//   Frees resources associated with the path and its contents.
-void FbleFreeModulePath(FbleArena* arena, FbleModulePath* path);
-
 // FbleModulePathName --
 //   Construct an FbleName describing a module path.
 //

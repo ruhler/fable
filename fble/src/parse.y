@@ -19,11 +19,13 @@
   //   c - The next character in the input stream. EOF is used to indicate the
   //   end of the input stream.
   //   loc - The location corresponding to the character c.
-  //   fin - The input stream.
+  //   fin - The input stream, if reading from a file. NULL otherwise.
+  //   sin - The input stream, if reading from a string. NULL otherwise.
   typedef struct {
     int c;
     FbleLoc loc;
     FILE* fin;
+    const char* sin;
   } Lex;
 
   #define YYLTYPE FbleLoc
@@ -713,7 +715,7 @@ static bool IsSpaceChar(int c)
 //   None.
 static bool IsPunctuationChar(int c)
 {
-  return strchr("(){}[];,:?=.<>+*-!$@~&|%/", c) != NULL;
+  return c == EOF || strchr("(){}[];,:?=.<>+*-!$@~&|%/", c) != NULL;
 }
 
 // IsNormalChar --
@@ -751,7 +753,20 @@ static bool IsNormalChar(int c)
 static void ReadNextChar(Lex* lex)
 {
   int c = lex->c;
-  lex->c = fgetc(lex->fin);
+
+  if (lex->fin != NULL) {
+    assert(lex->sin == NULL);
+    lex->c = fgetc(lex->fin);
+  } else {
+    assert(lex->sin != NULL);
+    if (*lex->sin == '\0') {
+      lex->c = EOF;
+    } else {
+      lex->c = *lex->sin;
+      lex->sin++;
+    }
+  }
+
   if (c == '\n') {
     lex->loc.line++;
     lex->loc.col = 1;
@@ -863,8 +878,77 @@ FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModulePathV* dep
     .c = ' ',
     .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
+    .sin = NULL,
   };
   FbleExpr* result = NULL;
   yyparse(arena, &lex, &result, deps);
   return result;
+}
+
+// FbleParseModulePath -- see documentation in syntax.h
+FbleModulePath* FbleParseModulePath(FbleArena* arena, const char* string)
+{
+  Lex lex = {
+    .c = ' ',
+    .loc = { .source = FbleNewString(arena, string), .line = 1, .col = 0 },
+    .fin = NULL,
+    .sin = string,
+  };
+
+  FbleModulePath* path = FbleNewModulePath(arena, lex.loc);
+
+  YYSTYPE val;
+  FbleLoc loc;
+
+  int tok = yylex(&val, &loc, arena, &lex);
+  if (tok != '/') {
+    yyerror(&loc, arena, &lex, NULL, NULL, "expected '/'");
+    if (tok == WORD) {
+      FbleFree(arena, (char*)val.word);
+    }
+    FbleFreeModulePath(arena, path);
+    FbleFreeLoc(arena, lex.loc);
+    return NULL;
+  }
+
+  while (tok == '/') {
+    tok = yylex(&val, &loc, arena, &lex);
+    if (tok != WORD) {
+      yyerror(&loc, arena, &lex, NULL, NULL, "expected WORD");
+      FbleFreeModulePath(arena, path);
+      FbleFreeLoc(arena, lex.loc);
+      return NULL;
+    }
+   
+    FbleName* name = FbleVectorExtend(arena, path->path);
+    name->name = ToString(arena, val.word);
+    name->space = FBLE_NORMAL_NAME_SPACE;
+    name->loc = FbleCopyLoc(loc);
+  
+    tok = yylex(&val, &loc, arena, &lex);
+  }
+
+  if (tok != '%') {
+    yyerror(&loc, arena, &lex, NULL, NULL, "expected '%'");
+    if (tok == WORD) {
+      FbleFree(arena, (char*)val.word);
+    }
+    FbleFreeModulePath(arena, path);
+    FbleFreeLoc(arena, lex.loc);
+    return NULL;
+  }
+
+  tok = yylex(&val, &loc, arena, &lex);
+  if (tok != END) {
+    yyerror(&loc, arena, &lex, NULL, NULL, "expected EOF");
+    if (tok == WORD) {
+      FbleFree(arena, (char*)val.word);
+    }
+    FbleFreeModulePath(arena, path);
+    FbleFreeLoc(arena, lex.loc);
+    return NULL;
+  }
+
+  FbleFreeLoc(arena, lex.loc);
+  return path;
 }

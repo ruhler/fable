@@ -29,6 +29,31 @@ typedef struct {
   FbleModulePath** xs;
 } FbleModulePathV;
 
+// FbleParseModulePath --
+//   Parse an FbleModulePath from a string.
+//
+// Inputs:
+//   arena - The arena to use for allocating the parsed path.
+//   string - The string to parse the path from.
+//
+// Results:
+//   The parsed path, or NULL in case of error.
+//
+// Side effects:
+// * Prints an error message to stderr if the path cannot be parsed.
+FbleModulePath* FbleParseModulePath(FbleArena* arena, const char* string);
+
+// FbleFreeModulePath --
+//   Free resource associated with a module path.
+//
+// Inputs:
+//   arena - the arena to use for allocations.
+//   path - the path to free.
+//
+// Side effects:
+//   Frees resources associated with the path and its contents.
+void FbleFreeModulePath(FbleArena* arena, FbleModulePath* path);
+
 // FbleExpr --
 //   Abstract type representing an fble expression.
 typedef struct FbleExpr FbleExpr;

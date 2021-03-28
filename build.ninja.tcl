@@ -169,6 +169,7 @@ test $::test/fble-profile-test.tr $::bin/fble-profile-test \
   "$::bin/fble-profile-test > /dev/null"
 
 # Compile each .fble module in the prgms directory.
+set ::fble_prgms_objs [list]
 foreach dir [dirs prgms ""] {
   lappend globs "prgms/$dir"
   foreach {x} [glob -tails -directory prgms -nocomplain -type f $dir/*.fble] {
@@ -178,14 +179,20 @@ foreach dir [dirs prgms ""] {
       "depfile = $::prgms/$x.d"
 
     # Generate a .c file.
+    set path "/[file rootname $x]%"
     build $::prgms/$x.c \
       "$::bin/fble-compile $::prgms/$x.d" \
-      "$::bin/fble-compile Foo prgms/$x prgms > $::prgms/$x.c"
+      "$::bin/fble-compile $path prgms/$x prgms > $::prgms/$x.c"
 
     # Generate a .o file.
     obj $::prgms/$x.o $::prgms/$x.c "-I fble/include -I fble/src"
+    lappend ::fble_prgms_objs $::prgms/$x.o
   }
 }
+
+# libfbleprgms.a
+set ::libfbleprgms "$::lib/libfbleprgms.a"
+build $::libfbleprgms $::fble_prgms_objs "ar rcs $::libfbleprgms $::fble_prgms_objs"
 
 # fble-disassemble test
 test $::test/fble-disassemble.tr \

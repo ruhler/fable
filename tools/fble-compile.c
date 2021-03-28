@@ -26,10 +26,10 @@ static void PrintUsage(FILE* stream);
 //   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream)
 {
-  fprintf(stream,
-      "Usage: fble-native entry FILE [PATH]\n"
+  fprintf(stream, "%s",
+      "Usage: fble-native path FILE [PATH]\n"
       "Compile the fble program to C code.\n"
-      "  entry - the name of the C function to generate.\n"
+      "  path - the fble module path associated with FILE. For example: /Foo/Bar%\n"
       "  FILE - the name of the .fble file to compile.\n"
       "  PATH - an optional include search path.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
@@ -58,11 +58,11 @@ int main(int argc, char* argv[])
   }
 
   if (argc < 1) {
-    fprintf(stderr, "not entry name given.\n");
+    fprintf(stderr, "no path.\n");
     PrintUsage(stderr);
     return EX_USAGE;
   }
-  const char* entry = *argv;
+  const char* mpath_string = *argv;
   argc--;
   argv++;
 
@@ -82,8 +82,16 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* arena = FbleNewArena();
+
+  FbleModulePath* mpath = FbleParseModulePath(arena, mpath_string);
+  if (mpath == NULL) {
+    FbleFreeArena(arena);
+    return EX_FAIL;
+  }
+
   FbleProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
+    FbleFreeModulePath(arena, mpath);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
@@ -92,12 +100,14 @@ int main(int argc, char* argv[])
   FbleFreeProgram(arena, prgm);
 
   if (compiled == NULL) {
+    FbleFreeModulePath(arena, mpath);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
 
-  FbleGenerateC(stdout, entry, compiled->modules.xs[compiled->modules.size - 1].code);
+  FbleGenerateC(stdout, mpath, compiled->modules.xs[compiled->modules.size - 1].code);
 
+  FbleFreeModulePath(arena, mpath);
   FbleFreeCompiledProgram(arena, compiled);
   FbleFreeArena(arena);
   return EX_SUCCESS;

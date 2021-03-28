@@ -2,6 +2,9 @@
 //   This file describes code to generate c code for fble values.
 
 #include <assert.h>   // for assert
+#include <ctype.h>    // for isalnum
+#include <stdio.h>    // for sprintf
+#include <string.h>   // for strlen, strcat
 
 #include "fble-compile.h"
 #include "isa.h"
@@ -23,6 +26,7 @@ static VarId GenFrameIndex(FILE* fout, VarId* var_id, FbleFrameIndex index);
 static void AppendInstr(FILE* fout, VarId* var_id, VarId block_id, FbleInstr* instr);
 static VarId GetInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code);
 static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code);
+static FbleString* FuncNameForPath(FbleArena* arena, FbleModulePath* path);
 
 // CollectBlocks --
 //   Get the list of all instruction blocks referenced from the given block of
@@ -417,8 +421,70 @@ static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code)
   return id;
 }
 
+// FuncNameForPath --
+//   Returns a name suitable for use as a C function identifier to use for the
+//   give module path.
+//
+// Inputs:
+//   arena - arena to use for allocations.
+//   path - the path to get the name for.
+//
+// Results:
+//   A C function name for the module path.
+//
+// Side effects:
+//   Allocates an FbleString* that should be freed with FbleFreeString when no
+//   longer needed.
+static FbleString* FuncNameForPath(FbleArena* arena, FbleModulePath* path)
+{
+  // The conversion from path to name works as followed:
+  // * We add _Fble as a prefix.
+  // * Characters [0-9], [a-z], [A-Z] are kept as is.
+  // * Other characters are translated to _XX_, where XX is the 2 digit hex
+  //   representation of the ascii value of the character.
+  // * We include translated '/' and '%' characters where expected in the
+  //   path.
+
+  // Determine the length of the name.
+  size_t len = strlen("_Fble") + 1; // prefix and terminating '\0'.
+  for (size_t i = 0; i < path->path.size; ++i) {
+    len += 4;   // translated '/' character.
+    for (const char* p = path->path.xs[i].name->str; *p != '\0'; p++) {
+      if (isalnum(*p)) {
+        len++;        // untranslated character
+      } else {
+        len += 4;     // translated character
+      }
+    }
+  }
+  len += 4; // translated '%' character.
+
+  // Construct the name.
+  char name[len];
+  char translated[5]; 
+  name[0] = '\0';
+  strcat(name, "_Fble");
+  for (size_t i = 0; i < path->path.size; ++i) {
+    sprintf(translated, "_%02x_", '/');
+    strcat(name, translated);
+    for (const char* p = path->path.xs[i].name->str; *p != '\0'; p++) {
+      if (isalnum(*p)) {
+        sprintf(translated, "%c", *p);
+        strcat(name, translated);
+      } else {
+        sprintf(translated, "_%02x_", *p);
+        strcat(name, translated);
+      }
+    }
+  }
+  sprintf(translated, "_%02x_", '%');
+  strcat(name, translated);
+
+  return FbleNewString(arena, name);
+}
+
 // FbleGenerateC -- see documentation in fble-compile.h
-bool FbleGenerateC(FILE* fout, const char* entry, FbleInstrBlock* code)
+bool FbleGenerateC(FILE* fout, FbleModulePath* path, FbleInstrBlock* code)
 {
   FbleArena* arena = FbleNewArena();
 
@@ -525,9 +591,11 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleInstrBlock* code)
     fprintf(fout, "}\n\n");
   }
   FbleFree(arena, blocks.xs);
-  FbleFreeArena(arena);
 
-  fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", entry);
+  FbleString* func_name = FuncNameForPath(arena, path);
+  fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", func_name->str);
+  FbleFreeString(arena, func_name);
+
   fprintf(fout, "{\n");
 
   // Prevent warnings about unused helper functions.
@@ -552,5 +620,6 @@ bool FbleGenerateC(FILE* fout, const char* entry, FbleInstrBlock* code)
   fprintf(fout, "  return &v%x->_base;\n", func_id);
   fprintf(fout, "}\n");
 
+  FbleFreeArena(arena);
   return true;
 }

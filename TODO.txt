@@ -1,7 +1,6 @@
 Fble Compilation:
 * Change .c files to generate a program that adds an FbleCompiledModule to an
   FbleCompiledProgram.
-* Generate a libfbleprgms.a with all the .o files.
 * Write an fble-compile-main program that takes a module path and a C function
   and generates a function that calls FbleLink on the modules loaded by
   calling the load function for that C program.

@@ -113,17 +113,12 @@ void FbleDisassemble(FILE* fout, FbleInstrBlock* code, FbleProfile* profile);
 // FbleGenerateC --
 //   Generate C code for an fble instruction block.
 //
-// TODO: Compile code to something meaningful and update this documentation
-// appropriately.
-//
-// The generated C code will export a single function named entry with the
-// following signature:
+// The generated C code will export a single function named based on the
+// module path with the following signature:
 //  
-//   FbleValue* Entry(FbleValueHeap* heap);
+//   (TODO)
 //
-// Calling this function will allocate a new value on the heap that is
-// the same as the value provided to FbleGenerateC, except with function values
-// optimized for better performance where possible.
+// Calling this function will (TODO).
 //
 // TODO: Document the flags needed to compile the generated C code, including
 // what header files are expected to be available. Document restrictions on
@@ -131,15 +126,15 @@ void FbleDisassemble(FILE* fout, FbleInstrBlock* code, FbleProfile* profile);
 //
 // Inputs:
 //   fout - the output stream to write the C code to.
-//   entry - the name of the C function to export.
+//   path - the module path to use for the main module.
 //   code - the code to compile.
 //
 // Results:
 //   true on success, false on error.
 //
 // Side effects:
-// * Generates C code for the given value.
+// * Generates C code for the given code.
 // * An error message is printed to stderr in case of error.
-bool FbleGenerateC(FILE* fout, const char* entry, FbleInstrBlock* code);
+bool FbleGenerateC(FILE* fout, FbleModulePath* path, FbleInstrBlock* code);
 
 #endif // FBLE_COMPILE_H_
