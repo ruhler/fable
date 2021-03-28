@@ -88,20 +88,6 @@ void FblePrintName(FILE* stream, FbleName name);
 //   FbleFreeModulePath when no longer needed.
 FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc);
 
-// FbleCopyModulePath -- 
-//   Make a (possibly shared) copy of the given module path.
-//
-// Inputs:
-//   path - the path to copy.
-// 
-// Results:
-//   The new (possibly shared) copy of the path.
-//
-// Side effects:
-//   The user should arrange for FbleFreeModulePath to be called on this path
-//   copy when it is no longer needed.
-FbleModulePath* FbleCopyModulePath(FbleModulePath* path);
-
 // FbleModulePathName --
 //   Construct an FbleName describing a module path.
 //

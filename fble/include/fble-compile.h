@@ -137,4 +137,29 @@ void FbleDisassemble(FILE* fout, FbleInstrBlock* code, FbleProfile* profile);
 // * An error message is printed to stderr in case of error.
 bool FbleGenerateC(FILE* fout, FbleCompiledModule* module);
 
+// FbleGenerateCExport --
+//   Generate C code to export the code for a compiled module.
+//
+// The generated C code will export a single function with the given name with
+// the following signature
+//  
+//   FbleValue* <name>(FbleValueHeap* heap);
+//
+// Calling this function will allocate an FbleValue representing a zero
+// argument function that can be executed to compute the value of the given
+// module.
+//
+// TODO: Document the flags needed to compile the generated C code, including
+// what header files are expected to be available. Document restrictions on
+// what names can be used in the generated C code to avoid name conflicts.
+//
+// Inputs:
+//   fout - the output stream to write the C code to.
+//   name - the name of the function to generate.
+//   path - the path to the module to export.
+//
+// Side effects:
+// * Generates C code for the given code.
+void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
+
 #endif // FBLE_COMPILE_H_

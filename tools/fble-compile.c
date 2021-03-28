@@ -27,11 +27,15 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-native path FILE [PATH]\n"
-      "Compile the fble program to C code.\n"
+      "Usage: fble-native path [--export NAME] [FILE [PATH]]\n"
+      "Compile an fble module to C code.\n"
       "  path - the fble module path associated with FILE. For example: /Foo/Bar%\n"
       "  FILE - the name of the .fble file to compile.\n"
       "  PATH - an optional include search path.\n"
+      "Options:\n"
+      "  --export NAME\n"
+      "    Generates a C function with the given NAME to export the module\n"
+      "At least one of [--export NAME] or [FILE [PATH]] must be provided.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
 }
@@ -66,15 +70,25 @@ int main(int argc, char* argv[])
   argc--;
   argv++;
 
-  if (argc < 1) {
+  const char* export = NULL;
+  if (argc > 1 && strcmp("--export", argv[0]) == 0) {
+    export = argv[1];
+    argc -= 2;
+    argv += 2;
+  }
+
+  const char* path = NULL;
+  if (export == NULL && argc < 1) {
     fprintf(stderr, "no input file.\n");
     PrintUsage(stderr);
     return EX_USAGE;
   }
-  
-  const char* path = *argv;
-  argc--;
-  argv++;
+
+  if (argc > 0) {
+    path = *argv;
+    argc--;
+    argv++;
+  }
 
   const char* include_path = NULL;
   if (argc > 0) {
@@ -89,29 +103,37 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleProgram* prgm = FbleLoad(arena, path, include_path);
-  if (prgm == NULL) {
-    FbleFreeModulePath(arena, mpath);
-    FbleFreeArena(arena);
-    return EX_FAIL;
+  if (export != NULL) {
+    FbleGenerateCExport(stdout, export, mpath);
   }
 
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
-  FbleFreeProgram(arena, prgm);
+  if (path != NULL) {
+    FbleProgram* prgm = FbleLoad(arena, path, include_path);
+    if (prgm == NULL) {
+      FbleFreeModulePath(arena, mpath);
+      FbleFreeArena(arena);
+      return EX_FAIL;
+    }
 
-  if (compiled == NULL) {
-    FbleFreeModulePath(arena, mpath);
-    FbleFreeArena(arena);
-    return EX_FAIL;
+    FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
+    FbleFreeProgram(arena, prgm);
+
+    if (compiled == NULL) {
+      FbleFreeModulePath(arena, mpath);
+      FbleFreeArena(arena);
+      return EX_FAIL;
+    }
+
+    FbleCompiledModule* module = compiled->modules.xs + compiled->modules.size - 1;
+    FbleFreeModulePath(arena, module->path);
+    module->path = FbleCopyModulePath(mpath);
+
+    FbleGenerateC(stdout, module);
+
+    FbleFreeCompiledProgram(arena, compiled);
   }
 
-  FbleCompiledModule* module = compiled->modules.xs + compiled->modules.size - 1;
-  FbleFreeModulePath(arena, module->path);
-  module->path = mpath;
-
-  FbleGenerateC(stdout, module);
-
-  FbleFreeCompiledProgram(arena, compiled);
+  FbleFreeModulePath(arena, mpath);
   FbleFreeArena(arena);
   return EX_SUCCESS;
 }

@@ -1,9 +1,4 @@
 Fble Compilation:
-* Add -e option to fble-compile takes a C function name and 
-  generates a function that calls FbleLink on the modules loaded by
-  calling the load function for that C module.
-* Now we should be able to make fble-stdio-test and fble-tests work.
-
 * Define FbleThread type in, say, thread.h.
 * Don't rely on FbleCode* for the size of a function scope.
 * Define FbleCode and FbleThunkContext types and use them for FbleThunkValue.

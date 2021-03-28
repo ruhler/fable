@@ -847,3 +847,11 @@ files for all the .fble files on my computer with -j 2. That's definitely
 acceptable, and should get better as I start to generate real C code instead
 of C code that builds instructions.
 
+---
+
+It's working now. We can generate c code for .fble files and run it and it
+works.
+
+The next step, which will require some cleanup prep first, is to start
+generating some custom C code to execute functions, instead of just allocating
+FbleInstrs for the interpreter.

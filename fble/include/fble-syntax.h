@@ -43,6 +43,21 @@ typedef struct {
 // * Prints an error message to stderr if the path cannot be parsed.
 FbleModulePath* FbleParseModulePath(FbleArena* arena, const char* string);
 
+// FbleCopyModulePath -- 
+//   Make a (possibly shared) copy of the given module path.
+//
+// Inputs:
+//   path - the path to copy.
+// 
+// Results:
+//   The new (possibly shared) copy of the path.
+//
+// Side effects:
+//   The user should arrange for FbleFreeModulePath to be called on this path
+//   copy when it is no longer needed.
+FbleModulePath* FbleCopyModulePath(FbleModulePath* path);
+
+
 // FbleFreeModulePath --
 //   Free resource associated with a module path.
 //

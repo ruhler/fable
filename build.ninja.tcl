@@ -216,27 +216,25 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
   "$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
 
 # /Stdio/Test% compilation test
-#build $::src/fble-stdio-test.c \
-#  "$::bin/fble-compile $::prgms/Stdio/Test.fble.d" \
-#  "$::bin/fble-compile FbleStdioMain prgms/Stdio/Test.fble prgms > $::src/fble-stdio-test.c"
-#obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"
-#obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
-#bin $::bin/fble-stdio-test \
-#  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
-#  "-L $::lib -lfble" $::libfble
-#test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
-#  "$::bin/fble-stdio-test | grep PASSED > /dev/null"
+obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
+build $::src/fble-stdio-test.c $::bin/fble-compile \
+  "$::bin/fble-compile /Stdio/Test% --export FbleStdioMain > $::src/fble-stdio-test.c"
+obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"
+bin $::bin/fble-stdio-test \
+  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
+  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
+test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
+  "$::bin/fble-stdio-test | grep PASSED > /dev/null"
 
 # /Fble/Tests% compilation test
-#build $::src/fble-tests.c \
-#  "$::bin/fble-compile $::prgms/Fble/Tests.fble.d" \
-#  "$::bin/fble-compile FbleStdioMain prgms/Fble/Tests.fble prgms > $::src/fble-tests.c"
-#obj $::obj/fble-tests.o $::src/fble-tests.c "-I fble/include -I fble/src"
-#bin $::bin/fble-tests \
-#  "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o" \
-#  "-L $::lib -lfble" $::libfble
-#test $::test/fble-compiled-tests.tr $::bin/fble-tests \
-#  "$::bin/fble-compiled-tests" "pool = console"
+build $::src/fble-tests.c $::bin/fble-compile \
+  "$::bin/fble-compile /Fble/Tests% --export FbleStdioMain > $::src/fble-tests.c"
+obj $::obj/fble-tests.o $::src/fble-tests.c "-I fble/include -I fble/src"
+bin $::bin/fble-tests \
+  "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o" \
+  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
+test $::test/fble-compiled-tests.tr $::bin/fble-tests \
+  "$::bin/fble-tests" "pool = console"
 
 # fblf compilation test
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
