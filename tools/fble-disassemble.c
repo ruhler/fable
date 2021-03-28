@@ -86,7 +86,8 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleDisassemble(stdout, compiled, profile);
+  FbleDisassemble(stdout, compiled->modules.xs[compiled->modules.size - 1].code, profile);
+
   FbleFreeCompiledProgram(arena, compiled);
   FbleFreeProfile(arena, profile);
   FbleFreeArena(arena);

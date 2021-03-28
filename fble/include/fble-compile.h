@@ -98,17 +98,17 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
 FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program);
 
 // FbleDisassemble --
-//   Write a disassembled version of a compiled program in human readable
+//   Write a disassembled version of an instruction block in human readable
 //   format to the given file. For debugging purposes.
 //
 // Inputs:
 //   fout - the file to write the disassembled program to.
-//   program - the program to disassemble.
+//   code - the code to disassemble.
 //   profile - profile to use for profile block information.
 //
 // Side effects:
-//   A disassembled version of the file is printed to fout.
-void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile);
+//   A disassembled version of the code is printed to fout.
+void FbleDisassemble(FILE* fout, FbleInstrBlock* code, FbleProfile* profile);
 
 // FbleGenerateC --
 //   Generate C code for an fble instruction block.

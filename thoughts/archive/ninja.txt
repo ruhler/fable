@@ -180,3 +180,9 @@ And it's annoying that once the test has run, we throw away the error messages
 and it won't run again because it claims it has already run. Which means I'm
 tempted to fail the build for an individual failed test. Then test summary is
 just counting the tests and printing them, it can never show failed tests?
+
+---
+
+Just ran into mysterious build failure that went away after full build.
+Something like renaming a .c file followed by change in a tool that used it.
+

@@ -366,13 +366,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 }
 
 // FbleDisassmeble -- see documentation in fble-compile.h.
-void FbleDisassemble(FILE* fout, FbleCompiledProgram* program, FbleProfile* profile)
+void FbleDisassemble(FILE* fout, FbleInstrBlock* code, FbleProfile* profile)
 {
-  for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleCompiledModule* module = program->modules.xs + i;
-    fprintf(fout, "// ");
-    FblePrintModulePath(fout, module->path);
-    fprintf(fout, ":\n");
-    DumpInstrBlock(fout, module->code, profile);
-  }
+  DumpInstrBlock(fout, code, profile);
 }
