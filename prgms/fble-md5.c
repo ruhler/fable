@@ -140,23 +140,13 @@ int main(int argc, char* argv[])
   const char* file = argv[3];
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path);
-  if (prgm == NULL) {
-    FbleFreeArena(arena);
-    return 1;
-  }
-
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
-  FbleFreeProgram(arena, prgm);
-
-  if (compiled == NULL) {
-    FbleFreeArena(arena);
-    return 1;
-  }
-
   FbleValueHeap* heap = FbleNewValueHeap(arena);
-  FbleValue* linked = FbleLink(heap, compiled);
-  FbleFreeCompiledProgram(arena, compiled);
+  FbleValue* linked = FbleLinkFromSource(heap, path, include_path, NULL);
+  if (linked == NULL) {
+    FbleFreeValueHeap(heap);
+    FbleFreeArena(arena);
+    return 1;
+  }
 
   FbleValue* func = FbleEval(heap, linked, NULL);
   FbleReleaseValue(heap, linked);

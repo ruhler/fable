@@ -118,9 +118,6 @@ typedef struct {
 //   The parsed program, or NULL in case of error.
 //
 // Side effects:
-// * If deps is not NULL, fills in deps with the list of files read while
-//   loading the program. This can be used to get dependencies for use with
-//   build systems.
 // * Prints an error message to stderr if the program cannot be parsed.
 //
 // Allocations:

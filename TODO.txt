@@ -1,4 +1,6 @@
 Fble Compilation:
+* Make fble-syntax.h into fble-program.h and syntax.h,c into expr.h,c.
+
 * Define FbleThread type in, say, thread.h.
 * Don't rely on FbleCode* for the size of a function scope.
 * Define FbleCode and FbleThunkContext types and use them for FbleThunkValue.

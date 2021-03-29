@@ -206,24 +206,17 @@ int main(int argc, char* argv[])
   const char* include_path = argv[2];
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path);
-  if (prgm == NULL) {
-    FbleFreeArena(arena);
-    return 1;
-  }
-
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile(arena);
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
-  FbleFreeProgram(arena, prgm);
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
 
-  if (compiled == NULL) {
+  FbleValue* linked = FbleLinkFromSource(heap, path, include_path, profile);
+  if (linked == NULL) {
+    FbleFreeValueHeap(heap);
+    FbleFreeProfile(arena, profile);
     FbleFreeArena(arena);
     return 1;
   }
 
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
-  FbleValue* linked = FbleLink(heap, compiled);
-  FbleFreeCompiledProgram(arena, compiled);
   FbleValue* func = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
 

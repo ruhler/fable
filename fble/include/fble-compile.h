@@ -97,6 +97,25 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
 //   no longer needed.
 FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program);
 
+// FbleLinkFromSource --
+//   Load, compile, and link a full program from source.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   filename - The name of the file to parse the program from.
+//   root - The directory to search for modules in. May be NULL.
+//   profile - profile to populate with blocks. May be NULL.
+//
+// Returns: 
+//   A zero-argument function that computes the value of the program when
+//   executed, or NULL in case of error.
+//
+// Side effects:
+// * Prints an error message to stderr if the program fails to load.
+// * The user should call FbleReleaseValue on the returned value when it is no
+//   longer needed.
+FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const char* root, FbleProfile* profile);
+
 // FbleDisassemble --
 //   Write a disassembled version of an instruction block in human readable
 //   format to the given file. For debugging purposes.

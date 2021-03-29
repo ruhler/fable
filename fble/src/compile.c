@@ -1103,3 +1103,24 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program)
   assert(code->statics == 0);
   return &func->_base;
 }
+
+// FbleLinkFromSource -- see documentation in fble-compile.h
+FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const char* root, FbleProfile* profile)
+{
+  FbleArena* arena = heap->arena;
+
+  FbleProgram* program = FbleLoad(arena, filename, root);
+  if (program == NULL) {
+    return NULL;
+  }
+
+  FbleCompiledProgram* compiled = FbleCompile(arena, program, profile);
+  FbleFreeProgram(arena, program);
+  if (compiled == NULL) {
+   return NULL;
+  }
+
+  FbleValue* linked = FbleLink(heap, compiled);
+  FbleFreeCompiledProgram(arena, compiled);
+  return linked;
+}

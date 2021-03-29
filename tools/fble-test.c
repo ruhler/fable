@@ -93,26 +93,15 @@ int main(int argc, char* argv[])
   int failure = expect_error ? EX_SUCCESS : EX_FAIL;
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path);
-
-  if (prgm == NULL) {
-    FbleFreeArena(arena);
-    return failure;
-  }
-
   FbleProfile* profile = report_profile ? FbleNewProfile(arena) : NULL;
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
-  FbleFreeProgram(arena, prgm);
-
-  if (compiled == NULL) {
+  FbleValueHeap* heap = FbleNewValueHeap(arena);
+  FbleValue* linked = FbleLinkFromSource(heap, path, include_path, profile);
+  if (linked == NULL) {
+    FbleFreeValueHeap(heap);
     FbleFreeProfile(arena, profile);
     FbleFreeArena(arena);
     return failure;
   }
-
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
-  FbleValue* linked = FbleLink(heap, compiled);
-  FbleFreeCompiledProgram(arena, compiled);
 
   FbleValue* result = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
