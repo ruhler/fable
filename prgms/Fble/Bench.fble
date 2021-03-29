@@ -2,13 +2,13 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-#Unit@ _gameoflife := /GameOfLife/Bench%.Bench;
-#Unit@ _invaders := /Invaders/Bench%.Bench;
-#Unit@ _md5 := /Md5/Tests%.Bench;
-Unit@ _fblf_md5 := /Fblf/Lib/Md5/Tests%.Bench;
-#Unit@ _sat := /Sat/Bench%.Bench;
-#Unit@ _snake := /Snake/Bench%.Bench;
-#Unit@ _sudoku := /Sudoku/Tests%.Bench;
-#Unit@ _tictactoe := /TicTacToe/Tests%.Bench;
+Unit@ _gameoflife := /GameOfLife/Bench%.Bench;
+Unit@ _invaders := /Invaders/Bench%.Bench;
+Unit@ _md5 := /Md5/Tests%.Bench;
+#Unit@ _fblf_md5 := /Fblf/Lib/Md5/Tests%.Bench;
+Unit@ _sat := /Sat/Bench%.Bench;
+Unit@ _snake := /Snake/Bench%.Bench;
+Unit@ _sudoku := /Sudoku/Tests%.Bench;
+Unit@ _tictactoe := /TicTacToe/Tests%.Bench;
 
 !(Unit);
