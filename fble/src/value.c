@@ -69,8 +69,8 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
-      FbleFreeInstrBlock(arena, v->code->code);
-      FbleFree(arena, v->code);
+      FbleFreeInstrBlock(arena, v->executable->code);
+      FbleFree(arena, v->executable);
       return;
     }
 
@@ -140,7 +140,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
-      for (size_t i = 0; i < v->code->code->statics; ++i) {
+      for (size_t i = 0; i < v->executable->code->statics; ++i) {
         Ref(callback, v->scope[i]);
       }
       break;
@@ -272,10 +272,10 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
   FbleProcValue* get = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*));
   get->_base.tag = FBLE_PROC_VALUE;
   get->argc = 0;
-  get->code = FbleAlloc(heap->arena, FbleCode);
-  get->code->code = &code;
-  get->code->code->refcount++;
-  get->code->run = &FbleStandardRunFunction;
+  get->executable = FbleAlloc(heap->arena, FbleExecutable);
+  get->executable->code = &code;
+  get->executable->code->refcount++;
+  get->executable->run = &FbleStandardRunFunction;
   get->scope[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
   return &get->_base;
@@ -357,9 +357,9 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   FbleFuncValue* put = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*));
   put->_base.tag = FBLE_FUNC_VALUE;
   put->argc = 1;
-  put->code = FbleAlloc(heap->arena, FbleCode);
-  put->code->code = &func_code;
-  put->code->run = &FbleStandardRunFunction;
+  put->executable = FbleAlloc(heap->arena, FbleExecutable);
+  put->executable->code = &func_code;
+  put->executable->run = &FbleStandardRunFunction;
   put->scope[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
   return &put->_base;

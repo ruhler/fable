@@ -1097,9 +1097,9 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program)
   FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
   func->_base.tag = FBLE_FUNC_VALUE;
   func->argc = 0;
-  func->code = FbleAlloc(arena, FbleCode);
-  func->code->code = code;
-  func->code->run = &FbleStandardRunFunction;
+  func->executable = FbleAlloc(arena, FbleExecutable);
+  func->executable->code = code;
+  func->executable->run = &FbleStandardRunFunction;
   assert(code->statics == 0);
   return &func->_base;
 }

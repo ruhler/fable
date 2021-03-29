@@ -1,16 +1,6 @@
 Fble Compilation:
-* Make fble-syntax.h into fble-program.h and syntax.h,c into expr.h,c.
-
-* Define FbleThread type in, say, thread.h.
-* Don't rely on FbleCode* for the size of a function scope.
-* Define FbleCode and FbleThunkContext types and use them for FbleThunkValue.
-  These can go in thread.h I think.
-* Change instruction implementations to access thread state through either the
-  FbleThunkContext or FbleThread APIs.
-* Move instruction implementations into a separate file from execute.c
-  Let's say, thread.h/thread.c for RunThread and Eval functions.
-  Move FbleApply and FbleExec to value.c
-  isa.h/isa.c for instruction implementations.
+* Have FbleLink take FbleExecutable instead of FbleInstrBlock.
+  And associated cleanup.
 
 * Figure out what to do about FbleProfile* for the compilation code path.
 * Avoid duplicating code between fble-stdio and fble-compiled-stdio.

@@ -61,8 +61,7 @@ typedef struct {
   FbleValue* arg;
 } FbleUnionValue;
 
-// FbleCode --
-//   Represents function code.
+// FbleExecutable --
 //
 // TODO: Turn this into an abstract data type that allows multiple
 // implementations.
@@ -73,13 +72,13 @@ typedef struct {
 typedef struct {
   FbleInstrBlock* code;
   FbleRunFunction* run;
-} FbleCode;
+} FbleExecutable;
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
 //   argc - The number of arguments expected by the function.
-//   code - The code for the function.
+//   executable - The code for the function.
 //   scope - The scope at the time the function was created, representing the
 //           lexical context available to the function. The length of this
 //           array is code->statics.
@@ -91,7 +90,7 @@ typedef struct {
 typedef struct {
   FbleValue _base;
   size_t argc;
-  FbleCode* code;
+  FbleExecutable* executable;
   FbleValue* scope[];
 } FbleFuncValue;
 
