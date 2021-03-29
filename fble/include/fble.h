@@ -9,9 +9,9 @@
 
 #include "fble-alloc.h"
 #include "fble-compile.h"
+#include "fble-module-path.h"
 #include "fble-name.h"
 #include "fble-profile.h"
-#include "fble-syntax.h"
 #include "fble-value.h"
 #include "fble-vector.h"
 

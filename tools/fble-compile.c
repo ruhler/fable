@@ -108,7 +108,7 @@ int main(int argc, char* argv[])
   }
 
   if (path != NULL) {
-    FbleProgram* prgm = FbleLoad(arena, path, include_path);
+    FbleLoadedProgram* prgm = FbleLoad(arena, path, include_path);
     if (prgm == NULL) {
       FbleFreeModulePath(arena, mpath);
       FbleFreeArena(arena);
@@ -116,7 +116,7 @@ int main(int argc, char* argv[])
     }
 
     FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
-    FbleFreeProgram(arena, prgm);
+    FbleFreeLoadedProgram(arena, prgm);
 
     if (compiled == NULL) {
       FbleFreeModulePath(arena, mpath);

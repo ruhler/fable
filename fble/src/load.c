@@ -1,12 +1,14 @@
 // load.c --
 //   This file implements routines for loading an fble program.
 
+#include "fble-load.h"
+
 #include <assert.h>   // for assert
 #include <string.h>   // for strcat
 #include <unistd.h>   // for access, F_OK
 
-#include "fble.h"
-#include "isa.h"
+#include "fble-alloc.h"
+#include "fble-vector.h"
 #include "syntax.h"
 
 typedef struct Tree Tree;
@@ -35,7 +37,7 @@ struct Tree {
 //   module - the value of the module.
 //   tail - the rest of the stack of modules.
 typedef struct Stack {
-  FbleModule module;
+  FbleLoadedModule module;
   size_t deps_loaded;
   struct Stack* tail;
 } Stack;
@@ -224,10 +226,10 @@ static FbleString* Find(FbleArena* arena, const char* root, Tree* tree, FbleModu
   return FbleNewString(arena, filename);
 }
 
-// FbleLoad -- see documentation in fble.h
-FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
+// FbleLoad -- see documentation in fble-load.h
+FbleLoadedProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
 {
-  FbleProgram* program = FbleAlloc(arena, FbleProgram);
+  FbleLoadedProgram* program = FbleAlloc(arena, FbleLoadedProgram);
   FbleVectorInit(arena, program->modules);
 
   bool error = false;
@@ -334,8 +336,26 @@ FbleProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root)
   FreeTree(arena, tree);
 
   if (error) {
-    FbleFreeProgram(arena, program);
+    FbleFreeLoadedProgram(arena, program);
     return NULL;
   }
   return program;
+}
+
+// FbleFreeLoadedProgram -- see documentation in fble-load.h
+void FbleFreeLoadedProgram(FbleArena* arena, FbleLoadedProgram* program)
+{
+  if (program != NULL) {
+    for (size_t i = 0; i < program->modules.size; ++i) {
+      FbleLoadedModule* module = program->modules.xs + i;
+      FbleFreeModulePath(arena, module->path);
+      for (size_t j = 0; j < module->deps.size; ++j) {
+        FbleFreeModulePath(arena, module->deps.xs[j]);
+      }
+      FbleFree(arena, module->deps.xs);
+      FbleFreeExpr(arena, module->value);
+    }
+    FbleFree(arena, program->modules.xs);
+    FbleFree(arena, program);
+  }
 }

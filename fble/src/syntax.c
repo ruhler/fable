@@ -224,97 +224,6 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
   UNREACHABLE("should never get here");
 }
 
-// FbleNewModulePath -- see documentation in syntax.h
-FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc)
-{
-  FbleModulePath* path = FbleAlloc(arena, FbleModulePath);
-  path->refcount = 1;
-  path->magic = FBLE_MODULE_PATH_MAGIC;
-  path->loc = FbleCopyLoc(arena, loc);
-  FbleVectorInit(arena, path->path);
-  return path;
-}
-
-// FbleCopyModulePath -- see documentation in syntax.h
-FbleModulePath* FbleCopyModulePath(FbleModulePath* path)
-{
-  path->refcount++;
-  return path;
-}
-
-// FbleFreeModulePath -- see documentation in syntax.h
-void FbleFreeModulePath(FbleArena* arena, FbleModulePath* path)
-{
-  assert(path->magic == FBLE_MODULE_PATH_MAGIC && "corrupt FbleModulePath");
-  if (--path->refcount == 0) {
-    FbleFreeLoc(arena, path->loc);
-    for (size_t i = 0; i < path->path.size; ++i) {
-      FbleFreeName(arena, path->path.xs[i]);
-    }
-    FbleFree(arena, path->path.xs);
-    FbleFree(arena, path);
-  }
-}
-
-// FbleModulePathName -- see documentation in syntax.h
-FbleName FbleModulePathName(FbleArena* arena, FbleModulePath* path)
-{
-  size_t len = 3;   // We at least need 3 chars: '/', '%', '\0'
-  for (size_t i = 0; i < path->path.size; ++i) {
-    len += 1 + strlen(path->path.xs[i].name->str);
-  }
-
-  FbleString* string = FbleAllocExtra(arena, FbleString, len);
-  string->refcount = 1;
-  string->magic = FBLE_STRING_MAGIC;
-  FbleName name = {
-    .name = string,
-    .loc = FbleCopyLoc(arena, path->loc),
-    .space = FBLE_NORMAL_NAME_SPACE
-  };
-
-  string->str[0] = '\0';
-  if (path->path.size == 0) {
-    strcat(string->str, "/");
-  }
-  for (size_t i = 0; i < path->path.size; ++i) {
-    strcat(string->str, "/");
-    strcat(string->str, path->path.xs[i].name->str);
-  }
-  strcat(string->str, "%");
-  return name;
-}
-
-// FblePrintModulePath -- see documentation in syntax.h
-void FblePrintModulePath(FILE* fout, FbleModulePath* path)
-{
-  if (path->path.size == 0) {
-    fprintf(fout, "/");
-  }
-  for (size_t i = 0; i < path->path.size; ++i) {
-    // TODO: Use quotes if the name contains any special characters, and
-    // escape quotes as needed so the user can distinguish, for example,
-    // between /Foo/Bar% and /'Foo/Bar'%.
-    fprintf(fout, "/%s", path->path.xs[i].name->str);
-  }
-  fprintf(fout, "%%");
-}
-
-// FbleModulePathsEqual -- see documentation in syntax.h
-bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b)
-{
-  if (a->path.size != b->path.size) {
-    return false;
-  }
-
-  for (size_t i = 0; i < a->path.size; ++i) {
-    if (!FbleNamesEqual(a->path.xs[i], b->path.xs[i])) {
-      return false;
-    }
-  }
-  return true;
-}
-
 // FbleCopyKind -- see documentation in syntax.h
 FbleKind* FbleCopyKind(FbleArena* arena, FbleKind* kind)
 {
@@ -346,23 +255,5 @@ void FbleFreeKind(FbleArena* arena, FbleKind* kind)
         }
       }
     }
-  }
-}
-
-// FbleFreeProgram -- see documentation in fble.h
-void FbleFreeProgram(FbleArena* arena, FbleProgram* program)
-{
-  if (program != NULL) {
-    for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleModule* module = program->modules.xs + i;
-      FbleFreeModulePath(arena, module->path);
-      for (size_t j = 0; j < module->deps.size; ++j) {
-        FbleFreeModulePath(arena, module->deps.xs[j]);
-      }
-      FbleFree(arena, module->deps.xs);
-      FbleFreeExpr(arena, module->value);
-    }
-    FbleFree(arena, program->modules.xs);
-    FbleFree(arena, program);
   }
 }

@@ -7,8 +7,9 @@
 #include <stdbool.h>      // for bool
 #include <stdio.h>        // for FILE
 
+#include "fble-load.h"
+#include "fble-module-path.h"
 #include "fble-profile.h"
-#include "fble-syntax.h"
 #include "fble-value.h"
 
 // FbleInstrBlock --
@@ -77,7 +78,7 @@ void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program);
 // * Adds blocks to the given profile.
 // * The caller should call FbleFreeCompiledProgram to release resources
 //   associated with the returned program when it is no longer needed.
-FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile);
+FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleLoadedProgram* program, FbleProfile* profile);
 
 // FbleLink --
 //   Link the modules of a compiled program together into a single FbleValue

@@ -865,7 +865,7 @@ static void yyerror(YYLTYPE* llocp, FbleArena* arena, Lex* lex, FbleExpr** resul
   FbleReportError("%s\n", *llocp, msg);
 }
 
-// FbleParse -- see documentation in syntax.h
+// FbleParse -- see documentation in fble-load.h
 FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModulePathV* deps)
 {
   FILE* fin = fopen(filename->str, "r");
@@ -885,7 +885,7 @@ FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModulePathV* dep
   return result;
 }
 
-// FbleParseModulePath -- see documentation in syntax.h
+// FbleParseModulePath -- see documentation in fble-module-path.h
 FbleModulePath* FbleParseModulePath(FbleArena* arena, const char* string)
 {
   Lex lex = {

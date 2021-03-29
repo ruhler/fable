@@ -53,7 +53,7 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects: 
 //   Sets max_bytes to the maximum bytes used during the run.
-bool Run(FbleProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
+bool Run(FbleLoadedProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
 {
   assert(use_n <= alloc_n);
 
@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path);
+  FbleLoadedProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
     FbleFreeArena(arena);
     return EX_FAIL;
@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
     for (size_t i = 0; i <= 200; ++i) {
       size_t max_n = 0;
       if (!Run(prgm, i, 200, &max_n)) {
-        FbleFreeProgram(arena, prgm);
+        FbleFreeLoadedProgram(arena, prgm);
         FbleFreeArena(arena);
         return EX_FAIL;
       }
@@ -197,14 +197,14 @@ int main(int argc, char* argv[])
 
   size_t max_small_n = 0;
   if (!Run(prgm, small_n, large_n, &max_small_n)) {
-    FbleFreeProgram(arena, prgm);
+    FbleFreeLoadedProgram(arena, prgm);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
 
   size_t max_large_n = 0;
   if (!Run(prgm, large_n, large_n, &max_large_n)) {
-    FbleFreeProgram(arena, prgm);
+    FbleFreeLoadedProgram(arena, prgm);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
   size_t noise = 10 * max_small_n / 100;
   if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
-    FbleFreeProgram(arena, prgm);
+    FbleFreeLoadedProgram(arena, prgm);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
@@ -223,12 +223,12 @@ int main(int argc, char* argv[])
   if (growth && max_large_n <= max_small_n + noise) {
     fprintf(stderr, "memory constant: M(%zi) = %zi, M(%zi) = %zi\n",
         small_n, max_small_n, large_n, max_large_n);
-    FbleFreeProgram(arena, prgm);
+    FbleFreeLoadedProgram(arena, prgm);
     FbleFreeArena(arena);
     return EX_FAIL;
   }
 
-  FbleFreeProgram(arena, prgm);
+  FbleFreeLoadedProgram(arena, prgm);
   FbleFreeArena(arena);
   return EX_SUCCESS;
 }

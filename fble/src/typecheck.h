@@ -4,7 +4,7 @@
 #ifndef FBLE_INTERNAL_TYPECHECK_H_
 #define FBLE_INTERNAL_TYPECHECK_H_
 
-#include "fble-syntax.h"
+#include "fble-load.h"
 #include "tc.h"
 
 // FbleTypeCheck -- 
@@ -30,6 +30,6 @@
 // * The user is responsible for freeing any values added to the result vector
 //   when they are no longer needed, including in the case when FbleTypeCheck
 //   fails.
-bool FbleTypeCheck(FbleArena* arena, FbleProgram* program, FbleTcV* result);
+bool FbleTypeCheck(FbleArena* arena, FbleLoadedProgram* program, FbleTcV* result);
 
 #endif // FBLE_INTERNAL_TYPECHECK_H_

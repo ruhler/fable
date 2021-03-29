@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
   }
 
   FbleArena* arena = FbleNewArena();
-  FbleProgram* prgm = FbleLoad(arena, path, include_path);
+  FbleLoadedProgram* prgm = FbleLoad(arena, path, include_path);
   if (prgm == NULL) {
     FbleFreeArena(arena);
     return EX_FAIL;
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
 
   FbleProfile* profile = FbleNewProfile(arena);
   FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
-  FbleFreeProgram(arena, prgm);
+  FbleFreeLoadedProgram(arena, prgm);
 
   if (compiled == NULL) {
     FbleFreeProfile(arena, profile);

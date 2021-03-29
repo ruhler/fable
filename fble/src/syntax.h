@@ -9,70 +9,9 @@
 #include <sys/types.h>    // for size_t
 
 #include "fble-alloc.h"
+#include "fble-load.h"
 #include "fble-name.h"
-#include "fble-syntax.h"
 
-
-// FbleNewModulePath --
-//   Allocate a new, empty module path.
-//
-// Inputs:
-//   arena - the arena to use for allocations.
-//   loc - the location of the module path. Borrowed.
-//
-// Results:
-//   A newly allocated empty module path.
-//
-// Side effects:
-//   Allocates a new module path that the user should free with
-//   FbleFreeModulePath when no longer needed.
-FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc);
-
-// FbleModulePathName --
-//   Construct an FbleName describing a module path.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   path - the path to construct an FbleName for.
-//
-// Results:
-//   An FbleName describing the full module path. For example: "/Foo/Bar%".
-//
-// Side effects:
-//   The caller should call FbleFreeName on the returned name when no longer
-//   needed.
-FbleName FbleModulePathName(FbleArena* arena, FbleModulePath* path);
-
-// FblePrintModulePath --
-//   Print a module path in human readable form to the given stream.
-//
-// Inputs:
-//   stream - the stream to print to
-//   path - the path to print
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Prints the given path to the given stream.
-void FblePrintModulePath(FILE* stream, FbleModulePath* path);
-
-// FbleModulePathsEqual --
-//   Test whether two paths are equal. Two paths are considered equal if they
-//   have the same sequence of module names. Locations are not relevant for
-//   this check.
-//
-// Inputs:
-//   a - The first path.
-//   b - The second path.
-//
-// Results:
-//   true if the first path equals the second, false otherwise.
-//
-// Side effects:
-//   None.
-bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b);
-
 // FbleKindTag --
 //   A tag used to distinguish between the two kinds of kinds.
 typedef enum {
@@ -449,26 +388,6 @@ typedef struct {
   FbleExpr* object;
   FbleName field;
 } FbleDataAccessExpr;
-
-
-// FbleParse --
-//   Parse an expression from a file.
-//
-// Inputs:
-//   arena - The arena to use for allocating the parsed program.
-//   filename - The name of the file to parse the program from.
-//   deps - Output param: A list of the modules that the parsed expression
-//          references. Modules will appear at most once in the list.
-//
-// Results:
-//   The parsed program, or NULL in case of error.
-//
-// Side effects:
-// * Prints an error message to stderr if the program cannot be parsed.
-// * Appends module paths in the parsed expression to deps, which
-//   is assumed to be a pre-initialized vector. The caller is responsible for
-//   calling FbleFreeModulePath on each path when it is no longer needed.
-FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModulePathV* deps);
 
 // FbleFreeExpr --
 //   Free resources associated with an expression.

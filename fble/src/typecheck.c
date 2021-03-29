@@ -103,7 +103,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
-static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps);
+static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps);
 
 
 // VarNamesEqual --
@@ -2000,7 +2000,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
 // * The caller should call FbleFreeTc when the returned result is no longer
 //   needed and FbleReleaseType when the returned FbleType is no longer
 //   needed.
-static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps)
+static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps)
 {
   FbleArena* arena = th->arena;
 
@@ -2018,14 +2018,14 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleModule* module, FbleType** deps)
 }
 
 // FbleTypeCheck -- see documentation in typecheck.h
-bool FbleTypeCheck(FbleArena* arena, FbleProgram* program, FbleTcV* result)
+bool FbleTypeCheck(FbleArena* arena, FbleLoadedProgram* program, FbleTcV* result)
 {
   bool error = false;
   FbleTypeHeap* th = FbleNewTypeHeap(arena);
   FbleType* types[program->modules.size];
 
   for (int i = 0; i < program->modules.size; ++i) {
-    FbleModule* module = program->modules.xs + i;
+    FbleLoadedModule* module = program->modules.xs + i;
     FbleType* deps[module->deps.size];
 
     bool skip = false;

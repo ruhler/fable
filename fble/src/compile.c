@@ -992,7 +992,7 @@ void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program)
 }
 
 // FbleCompile -- see documentation in fble-compile.h
-FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FbleProfile* profile)
+FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleLoadedProgram* program, FbleProfile* profile)
 {
   FbleTcV typechecked;
   FbleVectorInit(arena, typechecked);
@@ -1008,7 +1008,7 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleProgram* program, FblePro
   FbleVectorInit(arena, compiled->modules);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleModule* module = program->modules.xs + i;
+    FbleLoadedModule* module = program->modules.xs + i;
 
     FbleCompiledModule* compiled_module = FbleVectorExtend(arena, compiled->modules);
     compiled_module->path = FbleCopyModulePath(module->path);
@@ -1109,13 +1109,13 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const c
 {
   FbleArena* arena = heap->arena;
 
-  FbleProgram* program = FbleLoad(arena, filename, root);
+  FbleLoadedProgram* program = FbleLoad(arena, filename, root);
   if (program == NULL) {
     return NULL;
   }
 
   FbleCompiledProgram* compiled = FbleCompile(arena, program, profile);
-  FbleFreeProgram(arena, program);
+  FbleFreeLoadedProgram(arena, program);
   if (compiled == NULL) {
    return NULL;
   }
