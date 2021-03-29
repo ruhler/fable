@@ -473,7 +473,7 @@ static Tc ProfileBlock(FbleArena* arena, FbleName label, FbleLoc loc, Tc tc)
 
   FbleProfileTc* profile_tc = FbleAlloc(arena, FbleProfileTc);
   profile_tc->_base.tag = FBLE_PROFILE_TC;
-  profile_tc->loc = FbleCopyLoc(loc);
+  profile_tc->loc = FbleCopyLoc(arena, loc);
   profile_tc->name = FbleCopyName(arena, label);
   profile_tc->body = tc.tc;
   tc.tc = &profile_tc->_base;
@@ -519,7 +519,7 @@ static FbleTc* ListExpr(FbleArena* arena, FbleLoc loc, FbleTc* func, FbleTc** ar
 
   FbleFuncApplyTc* apply = FbleAlloc(arena, FbleFuncApplyTc);
   apply->_base.tag = FBLE_FUNC_APPLY_TC;
-  apply->loc = FbleCopyLoc(loc);
+  apply->loc = FbleCopyLoc(arena, loc);
   apply->func = func;
   FbleVectorInit(arena, apply->args);
   FbleVectorAppend(arena, apply->args, &tail->_base);
@@ -753,7 +753,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       let_tc->body = body.tc;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         FbleLocTc ltc = {
-          .loc = FbleCopyLoc(let_expr->bindings.xs[i].name.loc),
+          .loc = FbleCopyLoc(arena, let_expr->bindings.xs[i].name.loc),
           .tc = defs[i].tc
         };
         FbleVectorAppend(arena, let_tc->bindings, ltc);
@@ -907,7 +907,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleUnionSelectTc* select_tc = FbleAllocExtra(arena, FbleUnionSelectTc, union_type->fields.size * sizeof(FbleTc*));
       select_tc->_base.tag = FBLE_UNION_SELECT_TC;
-      select_tc->loc = FbleCopyLoc(expr->loc);
+      select_tc->loc = FbleCopyLoc(arena, expr->loc);
       select_tc->condition = condition.tc;
       select_tc->choicec = union_type->fields.size;
       for (size_t i = 0; i < select_tc->choicec; ++i) {
@@ -923,7 +923,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         FbleName label = {
           .name = FbleNewString(arena, ":"),
           .space = FBLE_NORMAL_NAME_SPACE,
-          .loc = FbleCopyLoc(select_expr->default_->loc),
+          .loc = FbleCopyLoc(arena, select_expr->default_->loc),
         };
 
         Tc result = TypeCheckExpr(th, scope, select_expr->default_);
@@ -1057,7 +1057,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleFuncValueTc* func_tc = FbleAlloc(arena, FbleFuncValueTc);
       func_tc->_base.tag = FBLE_FUNC_VALUE_TC;
-      func_tc->body_loc = FbleCopyLoc(func_value_expr->body->loc);
+      func_tc->body_loc = FbleCopyLoc(arena, func_value_expr->body->loc);
       func_tc->scope = captured;
       func_tc->argc = argc;
       func_tc->body = func_result.tc;
@@ -1088,7 +1088,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleFuncValueTc* proc_tc = FbleAlloc(arena, FbleFuncValueTc);
       proc_tc->_base.tag = FBLE_FUNC_VALUE_TC;
-      proc_tc->body_loc = FbleCopyLoc(expr->loc);
+      proc_tc->body_loc = FbleCopyLoc(arena, expr->loc);
       proc_tc->scope = captured;
       proc_tc->argc = 0;
       proc_tc->body = body.tc;
@@ -1149,7 +1149,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       let_tc->body = body.tc;
       FbleVectorInit(arena, let_tc->bindings);
       FbleLocTc ltc = {
-        .loc = FbleCopyLoc(poly->arg.name.loc),
+        .loc = FbleCopyLoc(arena, poly->arg.name.loc),
         .tc = &type_tc->_base
       };
       FbleVectorAppend(arena, let_tc->bindings, ltc);
@@ -1421,7 +1421,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           access_tc->datatype = normal->datatype;
           access_tc->obj = obj.tc;
           access_tc->tag = i;
-          access_tc->loc = FbleCopyLoc(access_expr->field.loc);
+          access_tc->loc = FbleCopyLoc(arena, access_expr->field.loc);
           FbleReleaseType(th, obj.type);
           return MkTc(rtype, &access_tc->_base);
         }
@@ -1498,7 +1498,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
         FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
         apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
-        apply_tc->loc = FbleCopyLoc(expr->loc);
+        apply_tc->loc = FbleCopyLoc(arena, expr->loc);
         apply_tc->func = misc.tc;
         FbleVectorInit(arena, apply_tc->args);
         for (size_t i = 0; i < argc; ++i) {
@@ -1651,7 +1651,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleFuncApplyTc* apply_tc = FbleAlloc(arena, FbleFuncApplyTc);
       apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
-      apply_tc->loc = FbleCopyLoc(expr->loc);
+      apply_tc->loc = FbleCopyLoc(arena, expr->loc);
       apply_tc->func = proc.tc;
       FbleVectorInit(arena, apply_tc->args);
 

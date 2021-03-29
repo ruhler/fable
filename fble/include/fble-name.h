@@ -46,6 +46,7 @@ FbleString* FbleNewString(FbleArena* arena, const char* str);
 //   Make a (possibly shared) copy of the given string.
 //
 // Inputs:
+//   arena - arena to use for allocations.
 //   string - the string to copy.
 // 
 // Results:
@@ -54,7 +55,7 @@ FbleString* FbleNewString(FbleArena* arena, const char* str);
 // Side effects:
 //   The user should arrange for FbleFreeString to be called on this string
 //   copy when it is no longer needed.
-FbleString* FbleCopyString(FbleString* string);
+FbleString* FbleCopyString(FbleArena* arena, FbleString* string);
 
 // FbleFreeString -- 
 //   Free resources associated with the given string.
@@ -66,7 +67,7 @@ FbleString* FbleCopyString(FbleString* string);
 // Side effects:
 //   Frees resources associated the string and its contents.
 void FbleFreeString(FbleArena* arena, FbleString* string);
-
+
 // FbleLoc --
 //   Represents a location in a source file.
 //
@@ -87,6 +88,7 @@ typedef struct {
 //   Make a (possibly shared) copy of a location.
 //
 // Inputs:
+//   arena - arena to use for allocations.
 //   loc - the loc to copy.
 //
 // Result:
@@ -95,7 +97,7 @@ typedef struct {
 // Side effects:
 //   The user should call FbleFreeLoc on the returned loc when it is no longer
 //   needed.
-FbleLoc FbleCopyLoc(FbleLoc loc);
+FbleLoc FbleCopyLoc(FbleArena* arena, FbleLoc loc);
 
 // FbleFreeLoc --
 //   Free resources associated with the given loc.

@@ -87,7 +87,7 @@ static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increme
 
       FbleBasicKind* adjusted = FbleAlloc(arena, FbleBasicKind);
       adjusted->_base.tag = FBLE_BASIC_KIND;
-      adjusted->_base.loc = FbleCopyLoc(kind->loc);
+      adjusted->_base.loc = FbleCopyLoc(arena, kind->loc);
       adjusted->_base.refcount = 1;
       adjusted->level = basic->level + increment;
       return &adjusted->_base;
@@ -97,7 +97,7 @@ static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increme
       FblePolyKind* poly = (FblePolyKind*)kind;
       FblePolyKind* adjusted = FbleAlloc(arena, FblePolyKind);
       adjusted->_base.tag = FBLE_POLY_KIND;
-      adjusted->_base.loc = FbleCopyLoc(kind->loc);
+      adjusted->_base.loc = FbleCopyLoc(arena, kind->loc);
       adjusted->_base.refcount = 1;
       adjusted->arg = FbleCopyKind(arena, poly->arg);
       adjusted->rkind = LevelAdjustedKind(arena, poly->rkind, increment);
@@ -733,7 +733,7 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
     case FBLE_PROC_TYPE: {
       FbleBasicKind* kind = FbleAlloc(arena, FbleBasicKind);
       kind->_base.tag = FBLE_BASIC_KIND;
-      kind->_base.loc = FbleCopyLoc(type->loc);
+      kind->_base.loc = FbleCopyLoc(arena, type->loc);
       kind->_base.refcount = 1;
       kind->level = 0;
       return &kind->_base;
@@ -743,7 +743,7 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
       FblePolyType* poly = (FblePolyType*)type;
       FblePolyKind* kind = FbleAlloc(arena, FblePolyKind);
       kind->_base.tag = FBLE_POLY_KIND;
-      kind->_base.loc = FbleCopyLoc(type->loc);
+      kind->_base.loc = FbleCopyLoc(arena, type->loc);
       kind->_base.refcount = 1;
 
       // This is tricky. Consider: <@ A@> { ... }
@@ -886,7 +886,7 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
 {
   FbleType* type = (FbleType*)heap->new(heap, size);
   type->tag = tag;
-  type->loc = FbleCopyLoc(loc);
+  type->loc = FbleCopyLoc(heap->arena, loc);
 
   // TODO: Don't use a static variable for this. Static variables are bad.
   // What am I thinking? Surely there is a better way to do this.

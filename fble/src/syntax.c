@@ -236,7 +236,7 @@ FbleString* FbleNewString(FbleArena* arena, const char* str)
 }
 
 // FbleCopyString -- see documentation in fble-name.h
-FbleString* FbleCopyString(FbleString* string)
+FbleString* FbleCopyString(FbleArena* arena, FbleString* string)
 {
   string->refcount++;
   return string;
@@ -255,10 +255,10 @@ void FbleFreeString(FbleArena* arena, FbleString* string)
 }
 
 // FbleCopyLoc -- see documentation in fble-name.h
-FbleLoc FbleCopyLoc(FbleLoc loc)
+FbleLoc FbleCopyLoc(FbleArena* arena, FbleLoc loc)
 {
   FbleLoc copy = {
-    .source = FbleCopyString(loc.source),
+    .source = FbleCopyString(arena, loc.source),
     .line = loc.line,
     .col = loc.col,
   };
@@ -301,9 +301,9 @@ bool FbleNamesEqual(FbleName a, FbleName b)
 FbleName FbleCopyName(FbleArena* arena, FbleName name)
 {
   FbleName copy = {
-    .name = FbleCopyString(name.name),
+    .name = FbleCopyString(arena, name.name),
     .space = name.space,
-    .loc = FbleCopyLoc(name.loc)
+    .loc = FbleCopyLoc(arena, name.loc)
   };
   return copy;
 }
@@ -336,7 +336,7 @@ FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc)
   FbleModulePath* path = FbleAlloc(arena, FbleModulePath);
   path->refcount = 1;
   path->magic = FBLE_MODULE_PATH_MAGIC;
-  path->loc = FbleCopyLoc(loc);
+  path->loc = FbleCopyLoc(arena, loc);
   FbleVectorInit(arena, path->path);
   return path;
 }
@@ -375,7 +375,7 @@ FbleName FbleModulePathName(FbleArena* arena, FbleModulePath* path)
   string->magic = FBLE_STRING_MAGIC;
   FbleName name = {
     .name = string,
-    .loc = FbleCopyLoc(path->loc),
+    .loc = FbleCopyLoc(arena, path->loc),
     .space = FBLE_NORMAL_NAME_SPACE
   };
 
