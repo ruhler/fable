@@ -9,6 +9,7 @@
 
 #include "fble-alloc.h"
 #include "fble-compile.h"
+#include "fble-link.h"
 #include "fble-module-path.h"
 #include "fble-name.h"
 #include "fble-profile.h"
