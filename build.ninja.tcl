@@ -106,7 +106,16 @@ foreach {x} [glob -tails -directory fble/src *.c] {
 eval {
   # Update local includes for fble/src/parse.y here.
   # See comment in fble/src/parse.y.
-  set includes "fble/include/fble.h fble/src/syntax.h"
+  set includes {
+    fble/include/fble-alloc.h
+    fble/include/fble-load.h
+    fble/include/fble-loc.h
+    fble/include/fble-module-path.h
+    fble/include/fble-name.h
+    fble/include/fble-string.h
+    fble/include/fble-vector.h
+    fble/src/expr.h
+  }
   set report $::src/parse.tab.report.txt
   set tabc $src/parse.tab.c
   set cmd "bison --report=all --report-file=$report -o $tabc fble/src/parse.y"

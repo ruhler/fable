@@ -8,9 +8,15 @@
   #include <string.h>   // for strchr, strcpy
 
   // For any changes to this list of includes, please update the
-  // 'parser_includes' variable in build.ninja.tcl.
-  #include "fble.h"
-  #include "syntax.h"
+  // parser 'includes' variable in build.ninja.tcl.
+  #include "fble-alloc.h"
+  #include "fble-load.h"
+  #include "fble-loc.h"
+  #include "fble-module-path.h"
+  #include "fble-name.h"
+  #include "fble-string.h"
+  #include "fble-vector.h"
+  #include "expr.h"
 
   // Lex --
   //   State for the lexer.

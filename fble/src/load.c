@@ -7,9 +7,10 @@
 #include <string.h>   // for strcat
 #include <unistd.h>   // for access, F_OK
 
+#include "expr.h"
 #include "fble-alloc.h"
+#include "fble-name.h"
 #include "fble-vector.h"
-#include "syntax.h"
 
 typedef struct Tree Tree;
 

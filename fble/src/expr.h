@@ -1,15 +1,13 @@
-// syntax.h --
-//   Header file for the fble abstract syntax.
+// expr.h --
+//   Header file for FbleExpr, the fble abstract syntax.
 
-#ifndef FBLE_INTERNAL_SYNTAX_H_
-#define FBLE_INTERNAL_SYNTAX_H_
+#ifndef FBLE_INTERNAL_EXPR_H_
+#define FBLE_INTERNAL_EXPR_H_
 
-#include <stdbool.h>      // for bool
-#include <stdio.h>        // for FILE
 #include <sys/types.h>    // for size_t
 
 #include "fble-alloc.h"
-#include "fble-load.h"
+#include "fble-load.h"    // for public typedef of FbleExpr.
 #include "fble-name.h"
 
 // FbleKindTag --
@@ -400,4 +398,4 @@ typedef struct {
 //   Frees resources associated with expr.
 void FbleFreeExpr(FbleArena* arena, FbleExpr* expr);
 
-#endif // FBLE_INTERNAL_SYNTAX_H_
+#endif // FBLE_INTERNAL_EXPR_H_

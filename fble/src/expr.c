@@ -1,15 +1,45 @@
-// syntax.c --
+// expr.c --
 //   This file implements the fble abstract syntax routines.
 
-#include <assert.h>   // for assert
-#include <stdio.h>    // for fprintf, vfprintf, stderr
-#include <string.h>   // for strcmp
+#include "expr.h"
 
-#include "fble.h"
-#include "syntax.h"
+#include <assert.h>   // for assert
 
 #define UNREACHABLE(x) assert(false && x)
 
+// FbleCopyKind -- see documentation in syntax.h
+FbleKind* FbleCopyKind(FbleArena* arena, FbleKind* kind)
+{
+  assert(kind != NULL);
+  kind->refcount++;
+  return kind;
+}
+
+// FbleFreeKind -- see documentation in syntax.h
+void FbleFreeKind(FbleArena* arena, FbleKind* kind)
+{
+  if (kind != NULL) {
+    assert(kind->refcount > 0);
+    kind->refcount--;
+    if (kind->refcount == 0) {
+      FbleFreeLoc(arena, kind->loc);
+      switch (kind->tag) {
+        case FBLE_BASIC_KIND: {
+          FbleFree(arena, kind);
+          break;
+        }
+
+        case FBLE_POLY_KIND: {
+          FblePolyKind* poly = (FblePolyKind*)kind;
+          FbleFreeKind(arena, poly->arg);
+          FbleFreeKind(arena, poly->rkind);
+          FbleFree(arena, poly);
+          break;
+        }
+      }
+    }
+  }
+}
 
 // FbleFreeExpr -- see documentation in syntax.h
 void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
@@ -222,38 +252,4 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
   }
 
   UNREACHABLE("should never get here");
-}
-
-// FbleCopyKind -- see documentation in syntax.h
-FbleKind* FbleCopyKind(FbleArena* arena, FbleKind* kind)
-{
-  assert(kind != NULL);
-  kind->refcount++;
-  return kind;
-}
-
-// FbleFreeKind -- see documentation in syntax.h
-void FbleFreeKind(FbleArena* arena, FbleKind* kind)
-{
-  if (kind != NULL) {
-    assert(kind->refcount > 0);
-    kind->refcount--;
-    if (kind->refcount == 0) {
-      FbleFreeLoc(arena, kind->loc);
-      switch (kind->tag) {
-        case FBLE_BASIC_KIND: {
-          FbleFree(arena, kind);
-          break;
-        }
-
-        case FBLE_POLY_KIND: {
-          FblePolyKind* poly = (FblePolyKind*)kind;
-          FbleFreeKind(arena, poly->arg);
-          FbleFreeKind(arena, poly->rkind);
-          FbleFree(arena, poly);
-          break;
-        }
-      }
-    }
-  }
 }
