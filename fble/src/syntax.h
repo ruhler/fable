@@ -12,66 +12,6 @@
 #include "fble-name.h"
 #include "fble-syntax.h"
 
-// FbleReportWarning --
-//   Report a warning message associated with a location in a source file.
-//
-// Inputs:
-//   format - A printf format string for the warning message.
-//   loc - The location of the warning message to report.
-//   ... - printf arguments as specified by the format string.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints a warning message to stderr with error location.
-void FbleReportWarning(const char* format, FbleLoc loc, ...);
-
-// FbleReportError --
-//   Report an error message associated with a location in a source file.
-//
-// Inputs:
-//   format - A printf format string for the error message.
-//   loc - The location of the error message to report.
-//   ... - printf arguments as specified by the format string.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints an error message to stderr with error location.
-void FbleReportError(const char* format, FbleLoc loc, ...);
-
-
-// FbleNamesEqual --
-//   Test whether two names are equal. Two names are considered equal if they
-//   have the same name and belong to the same namespace. Location is not
-//   relevant for this check.
-//
-// Inputs:
-//   a - The first name.
-//   b - The second name.
-//
-// Results:
-//   true if the first name equals the second, false otherwise.
-//
-// Side effects:
-//   None.
-bool FbleNamesEqual(FbleName a, FbleName b);
-
-// FblePrintName --
-//   Print a name in human readable form to the given stream.
-//
-// Inputs:
-//   stream - the stream to print to
-//   name - the name to print
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Prints the given name to the given stream.
-void FblePrintName(FILE* stream, FbleName name);
 
 // FbleNewModulePath --
 //   Allocate a new, empty module path.

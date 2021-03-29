@@ -2,7 +2,6 @@
 //   This file implements the fble abstract syntax routines.
 
 #include <assert.h>   // for assert
-#include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdio.h>    // for fprintf, vfprintf, stderr
 #include <string.h>   // for strcmp
 
@@ -223,111 +222,6 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
   }
 
   UNREACHABLE("should never get here");
-}
-
-// FbleNewString -- see documentation in fble-name.h
-FbleString* FbleNewString(FbleArena* arena, const char* str)
-{
-  FbleString* string = FbleAllocExtra(arena, FbleString, strlen(str) + 1);
-  string->refcount = 1;
-  string->magic = FBLE_STRING_MAGIC;
-  strcpy(string->str, str);
-  return string;
-}
-
-// FbleCopyString -- see documentation in fble-name.h
-FbleString* FbleCopyString(FbleArena* arena, FbleString* string)
-{
-  string->refcount++;
-  return string;
-}
-
-// FbleFreeString -- see documentation in fble-name.h
-void FbleFreeString(FbleArena* arena, FbleString* string)
-{
-  // If the string magic is wrong, the string is corrupted. That suggests we
-  // have already freed this string, and that something is messed up with
-  // tracking FbleString refcounts. 
-  assert(string->magic == FBLE_STRING_MAGIC && "corrupt FbleString");
-  if (--string->refcount == 0) {
-    FbleFree(arena, string);
-  }
-}
-
-// FbleCopyLoc -- see documentation in fble-name.h
-FbleLoc FbleCopyLoc(FbleArena* arena, FbleLoc loc)
-{
-  FbleLoc copy = {
-    .source = FbleCopyString(arena, loc.source),
-    .line = loc.line,
-    .col = loc.col,
-  };
-  return copy;
-}
-
-// FbleFreeLoc -- see documentation in fble-name.h
-void FbleFreeLoc(FbleArena* arena, FbleLoc loc)
-{
-  FbleFreeString(arena, loc.source);
-}
-
-// FbleReportWarning -- see documentation in syntax.h
-void FbleReportWarning(const char* format, FbleLoc loc, ...)
-{
-  va_list ap;
-  va_start(ap, loc);
-  fprintf(stderr, "%s:%d:%d: warning: ", loc.source->str, loc.line, loc.col);
-  vfprintf(stderr, format, ap);
-  va_end(ap);
-}
-
-// FbleReportError -- see documentation in syntax.h
-void FbleReportError(const char* format, FbleLoc loc, ...)
-{
-  va_list ap;
-  va_start(ap, loc);
-  fprintf(stderr, "%s:%d:%d: error: ", loc.source->str, loc.line, loc.col);
-  vfprintf(stderr, format, ap);
-  va_end(ap);
-}
-
-// FbleNamesEqual -- see documentation in syntax.h
-bool FbleNamesEqual(FbleName a, FbleName b)
-{
-  return a.space == b.space && strcmp(a.name->str, b.name->str) == 0;
-}
-
-// FbleCopyName -- see documentation in fble-name.h
-FbleName FbleCopyName(FbleArena* arena, FbleName name)
-{
-  FbleName copy = {
-    .name = FbleCopyString(arena, name.name),
-    .space = name.space,
-    .loc = FbleCopyLoc(arena, name.loc)
-  };
-  return copy;
-}
-
-// FbleFreeName -- see documentation in fble-name.h
-void FbleFreeName(FbleArena* arena, FbleName name)
-{
-  FbleFreeString(arena, name.name);
-  FbleFreeLoc(arena, name.loc);
-}
-
-// FblePrintName -- see documentation in syntax.h
-void FblePrintName(FILE* stream, FbleName name)
-{
-  fprintf(stream, "%s", name.name->str);
-  switch (name.space) {
-    case FBLE_NORMAL_NAME_SPACE:
-      // Nothing to add here
-      break;
-
-    case FBLE_TYPE_NAME_SPACE:
-      fprintf(stream, "@");
-      break;
-  }
 }
 
 // FbleNewModulePath -- see documentation in syntax.h

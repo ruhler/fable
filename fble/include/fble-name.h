@@ -4,112 +4,14 @@
 #ifndef FBLE_NAME_H_
 #define FBLE_NAME_H_
 
+#include <stdbool.h>      // for bool
+#include <stdio.h>        // for FILE
 #include <sys/types.h>    // for size_t
 
-#include "fble-alloc.h"
+#include "fble-alloc.h"   // for FbleArena
+#include "fble-loc.h"     // for FbleLoc
+#include "fble-string.h"  // for FbleString
 
-// FbleString --
-//   A string of characters.
-//
-// Pass by pointer. Explicit copy and free required.
-//
-// Note: The magic field is set to FBLE_STRING_MAGIC and is used to detect
-// double frees of FbleString, which we have had trouble with in the past.
-#define FBLE_STRING_MAGIC 0x516179
-typedef struct {
-  size_t refcount;
-  size_t magic;
-  char str[];
-} FbleString;
-
-// FbleStringV --
-//   A vector of FbleString. 
-typedef struct {
-  size_t size;
-  FbleString** xs;
-} FbleStringV;
-
-// FbleNewString --
-//   Allocate a new FbleString.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   str - the contents of the string.
-//
-// Results:
-//   A newly allocated string with a reference count that should be released
-//   using FbleFreeString when no longer needed.
-//   Does not take ownership of str - makes a copy instead.
-FbleString* FbleNewString(FbleArena* arena, const char* str);
-
-// FbleCopyString -- 
-//   Make a (possibly shared) copy of the given string.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   string - the string to copy.
-// 
-// Results:
-//   The new (possibly shared) copy of the string.
-//
-// Side effects:
-//   The user should arrange for FbleFreeString to be called on this string
-//   copy when it is no longer needed.
-FbleString* FbleCopyString(FbleArena* arena, FbleString* string);
-
-// FbleFreeString -- 
-//   Free resources associated with the given string.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   string - the string to free.
-//
-// Side effects:
-//   Frees resources associated the string and its contents.
-void FbleFreeString(FbleArena* arena, FbleString* string);
-
-// FbleLoc --
-//   Represents a location in a source file.
-//
-// Pass by value. Explicit copy and free required.
-//
-// Fields:
-//   source - The name of the source file or other description of the source
-//            of the program text. Owned by this FbleLoc.
-//   line - The line within the file for the location.
-//   col - The column within the line for the location.
-typedef struct {
-  FbleString* source;
-  int line;
-  int col;
-} FbleLoc;
-
-// FbleCopyLoc --
-//   Make a (possibly shared) copy of a location.
-//
-// Inputs:
-//   arena - arena to use for allocations.
-//   loc - the loc to copy.
-//
-// Result:
-//   A (possibly shared) copy of the loc.
-//
-// Side effects:
-//   The user should call FbleFreeLoc on the returned loc when it is no longer
-//   needed.
-FbleLoc FbleCopyLoc(FbleArena* arena, FbleLoc loc);
-
-// FbleFreeLoc --
-//   Free resources associated with the given loc.
-//
-// Inputs:
-//   arena - arena to use for allocations
-//   loc - the location to free resources of.
-//
-// Side effects
-//   Frees resources associated with the given loc.
-void FbleFreeLoc(FbleArena* arena, FbleLoc loc);
-
 // FbleNamespace --
 //   Enum used to distinguish among different name spaces.
 typedef enum {
@@ -162,5 +64,35 @@ FbleName FbleCopyName(FbleArena* arena, FbleName name);
 // Side effects:
 //   Frees resources associated with the name.
 void FbleFreeName(FbleArena* arena, FbleName name);
+
+// FbleNamesEqual --
+//   Test whether two names are equal. Two names are considered equal if they
+//   have the same name and belong to the same namespace. Location is not
+//   relevant for this check.
+//
+// Inputs:
+//   a - The first name.
+//   b - The second name.
+//
+// Results:
+//   true if the first name equals the second, false otherwise.
+//
+// Side effects:
+//   None.
+bool FbleNamesEqual(FbleName a, FbleName b);
+
+// FblePrintName --
+//   Print a name in human readable form to the given stream.
+//
+// Inputs:
+//   stream - the stream to print to
+//   name - the name to print
+//
+// Results:
+//   none.
+//
+// Side effects:
+//   Prints the given name to the given stream.
+void FblePrintName(FILE* stream, FbleName name);
 
 #endif // FBLE_NAME_H_

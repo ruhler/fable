@@ -179,11 +179,6 @@ Exec:
 * Clean up what we export in fble-syntax.h versus syntax.h.
   Same for the rest of the fble API.
 
-* Move FblePrintName and FbleNamesEqual to fble-name.h?
-  The question is if they should be public or private.
-  If they should be private, they should go into name.h rather than syntax.h,
-  right?
-
 * Make FbleModulePath* functions part of the public API?
 
 * We don't get a warning about an unused self recursive function.

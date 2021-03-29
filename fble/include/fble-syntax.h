@@ -4,7 +4,8 @@
 #ifndef FBLE_SYNTAX_H_
 #define FBLE_SYNTAX_H_
 
-#include "fble-name.h"
+#include "fble-loc.h"    // for FbleLoc
+#include "fble-name.h"    // for FbleName
 
 // FbleModulePath --
 //   A module path, such as /Foo/Bar%.
