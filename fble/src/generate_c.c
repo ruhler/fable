@@ -570,7 +570,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   // Prototypes for module dependencies.
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleString* dep_name = FuncNameForPath(arena, module->deps.xs[i]);
-    fprintf(fout, "void %s(FbleArena* arena, FbleCompiledProgram* program);\n", dep_name->str);
+    fprintf(fout, "void %s(FbleArena* arena, FbleExecutableProgram* program);\n", dep_name->str);
     FbleFreeString(arena, dep_name);
   }
   fprintf(fout, "\n");
@@ -671,7 +671,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   FbleFree(arena, blocks.xs);
 
   FbleString* func_name = FuncNameForPath(arena, module->path);
-  fprintf(fout, "void %s(FbleArena* arena, FbleCompiledProgram* program)\n", func_name->str);
+  fprintf(fout, "void %s(FbleArena* arena, FbleExecutableProgram* program)\n", func_name->str);
   FbleFreeString(arena, func_name);
 
   fprintf(fout, "{\n");
@@ -706,7 +706,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   // Add this module to the program.
 
   VarId module_id = var_id++;
-  fprintf(fout, "  FbleCompiledModule* v%x = FbleVectorExtend(arena, program->modules);\n", module_id);
+  fprintf(fout, "  FbleExecutableModule* v%x = FbleVectorExtend(arena, program->modules);\n", module_id);
   fprintf(fout, "  v%x->path = v%x;\n", module_id, path_id);
   fprintf(fout, "  FbleVectorInit(arena, v%x->deps);\n", module_id);
 
@@ -716,7 +716,8 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   }
 
   VarId code_id = GetInstrBlock(fout, &var_id, module->code);
-  fprintf(fout, "  v%x->code = v%x;\n", module_id, code_id);
+  fprintf(fout, "  v%x->executable = FbleInterpretCode(arena, v%x);\n", module_id, code_id);
+  fprintf(fout, "  FbleFreeInstrBlock(arena, v%x);\n", code_id);
 
   fprintf(fout, "}\n");
 
@@ -729,22 +730,20 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
   FbleArena* arena = FbleNewArena();
 
   fprintf(fout, "#include \"fble.h\"\n");
-  fprintf(fout, "#include \"isa.h\"\n");
-  fprintf(fout, "#include \"tc.h\"\n");
   fprintf(fout, "#include \"value.h\"\n");
   fprintf(fout, "\n");
 
   // Prototype for the exported module.
   FbleString* module_name = FuncNameForPath(arena, path);
-  fprintf(fout, "void %s(FbleArena* arena, FbleCompiledProgram* program);\n\n", module_name->str);
+  fprintf(fout, "void %s(FbleArena* arena, FbleExecutableProgram* program);\n\n", module_name->str);
 
   fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", name);
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleCompiledProgram* program = FbleAlloc(heap->arena, FbleCompiledProgram);\n");
+  fprintf(fout, "  FbleExecutableProgram* program = FbleAlloc(heap->arena, FbleExecutableProgram);\n");
   fprintf(fout, "  FbleVectorInit(heap->arena, program->modules);\n");
   fprintf(fout, "  %s(heap->arena, program);\n", module_name->str);
   fprintf(fout, "  FbleValue* value = FbleLink(heap, program);\n");
-  fprintf(fout, "  FbleFreeCompiledProgram(heap->arena, program);\n");
+  fprintf(fout, "  FbleFreeExecutableProgram(heap->arena, program);\n");
   fprintf(fout, "  return value;\n");
   fprintf(fout, "}\n\n");
 

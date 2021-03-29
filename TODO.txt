@@ -1,6 +1,6 @@
 Fble Compilation:
-* Have FbleLink take FbleExecutable instead of FbleInstrBlock.
-  And associated cleanup.
+* Rename FbleInstrBlock to FbleCode.
+* Make FbleExecutable a proper abstract type.
 
 * Figure out what to do about FbleProfile* for the compilation code path.
 * Avoid duplicating code between fble-stdio and fble-compiled-stdio.

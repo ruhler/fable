@@ -7,8 +7,9 @@
 #ifndef FBLE_INTERNAL_VALUE_H_
 #define FBLE_INTERNAL_VALUE_H_
 
+#include "fble-link.h"    // for typedef of FbleExecutable
 #include "fble-value.h"
-#include "execute.h"    // for FbleRunFunction
+#include "execute.h"      // for FbleRunFunction
 #include "heap.h"
 
 // FbleValueTag --
@@ -69,10 +70,10 @@ typedef struct {
 // Fields:
 //   code - The code for the function.
 //   run - A native function to use to evaluate this fble function.
-typedef struct {
+struct FbleExecutable {
   FbleInstrBlock* code;
   FbleRunFunction* run;
-} FbleExecutable;
+};
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //

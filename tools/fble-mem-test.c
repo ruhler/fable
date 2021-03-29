@@ -68,9 +68,11 @@ bool Run(FbleLoadedProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_byte
   FbleProfile* profile = FbleNewProfile(arena);
   FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
   if (compiled != NULL) {
-    FbleValueHeap* heap = FbleNewValueHeap(arena);
-    FbleValue* linked = FbleLink(heap, compiled);
+    FbleExecutableProgram* executable = FbleInterpret(arena, compiled);
     FbleFreeCompiledProgram(arena, compiled);
+    FbleValueHeap* heap = FbleNewValueHeap(arena);
+    FbleValue* linked = FbleLink(heap, executable);
+    FbleFreeExecutableProgram(arena, executable);
 
     FbleValue* func = FbleEval(heap, linked, profile);
     FbleReleaseValue(heap, linked);

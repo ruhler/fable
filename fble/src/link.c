@@ -3,11 +3,31 @@
 
 #include <assert.h>     // for assert
 
+#include "fble-interpret.h"
 #include "isa.h"
 #include "value.h"
 
+// FbleFreeExecutableProgram -- see documentation in fble-link.h
+void FbleFreeExecutableProgram(FbleArena* arena, FbleExecutableProgram* program)
+{
+  if (program != NULL) {
+    for (size_t i = 0; i < program->modules.size; ++i) {
+      FbleExecutableModule* module = program->modules.xs + i;
+      FbleFreeModulePath(arena, module->path);
+      for (size_t j = 0; j < module->deps.size; ++j) {
+        FbleFreeModulePath(arena, module->deps.xs[j]);
+      }
+      FbleFree(arena, module->deps.xs);
+      FbleFreeInstrBlock(arena, module->executable->code);
+      FbleFree(arena, module->executable);
+    }
+    FbleFree(arena, program->modules.xs);
+    FbleFree(arena, program);
+  }
+}
+
 // FbleLink -- see documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program)
+FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
 {
   FbleArena* arena = heap->arena;
   size_t modulec = program->modules.size;
@@ -20,9 +40,9 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program)
     func->_base.tag = FBLE_FUNC_VALUE;
     func->argc = program->modules.xs[i].deps.size;
     func->executable = FbleAlloc(arena, FbleExecutable);
-    func->executable->code = program->modules.xs[i].code;
+    func->executable->code = program->modules.xs[i].executable->code;
     func->executable->code->refcount++;
-    func->executable->run = &FbleStandardRunFunction;
+    func->executable->run = program->modules.xs[i].executable->run;
     funcs[i] = &func->_base;
   }
 
@@ -37,7 +57,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleCompiledProgram* program)
   FbleVectorInit(arena, code->instrs);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleCompiledModule* module = program->modules.xs + i;
+    FbleExecutableModule* module = program->modules.xs + i;
 
     FbleCallInstr* call = FbleAlloc(arena, FbleCallInstr);
     call->_base.tag = FBLE_CALL_INSTR;
@@ -106,7 +126,10 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const c
    return NULL;
   }
 
-  FbleValue* linked = FbleLink(heap, compiled);
+  FbleExecutableProgram* executable = FbleInterpret(arena, compiled);
   FbleFreeCompiledProgram(arena, compiled);
+
+  FbleValue* linked = FbleLink(heap, executable);
+  FbleFreeExecutableProgram(arena, executable);
   return linked;
 }
