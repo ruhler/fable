@@ -12,9 +12,9 @@
 #include "fble-profile.h"
 #include "fble-value.h"
 
-// FbleInstrBlock --
+// FbleCode
 //   Abstract type representing compiled code.
-typedef struct FbleInstrBlock FbleInstrBlock;
+typedef struct FbleCode FbleCode;
 
 // FbleCompiledModule --
 //   Represents a compiled module.
@@ -28,7 +28,7 @@ typedef struct FbleInstrBlock FbleInstrBlock;
 typedef struct {
   FbleModulePath* path;
   FbleModulePathV deps;
-  FbleInstrBlock* code;
+  FbleCode* code;
 } FbleCompiledModule;
 
 // FbleCompiledModuleV -- A vector of compiled modules.
@@ -91,7 +91,7 @@ FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleLoadedProgram* program, F
 //
 // Side effects:
 //   A disassembled version of the code is printed to fout.
-void FbleDisassemble(FILE* fout, FbleInstrBlock* code, FbleProfile* profile);
+void FbleDisassemble(FILE* fout, FbleCode* code, FbleProfile* profile);
 
 // FbleGenerateC --
 //   Generate C code for an fble compiled module.

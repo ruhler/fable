@@ -1,16 +1,18 @@
 Fble Compilation:
-* Rename FbleInstrBlock to FbleCode.
+* Rename isa.h,c to code.h,c.
 * Make FbleExecutable a proper abstract type.
+* Move standard run function to interpret.c.
+
+* Generate custom RbleExecutable in GenerateC rather than reusing the
+  interpreter.
 
 * Figure out what to do about FbleProfile* for the compilation code path.
 * Avoid duplicating code between fble-stdio and fble-compiled-stdio.
 * Make public headers available for compiled code to use so we don't have to
   give direct access to internal header files.
 * Factor out common logic in typecheck and compile for looking up a module
-  dependency's index.
+  dependency's index?
 
-* Generate custom run functions in compiled code that just calls existing
-  InstrImpl functions.
 * Add support for .fble.@ files and module compilation.
 * Decide whether individual test failures should fail to build or not.
   If they should fail to build, then tools/tests.tcl could be simplified?
@@ -52,22 +54,8 @@ Hwdg:
 * Add test case for nondeterministic/conflicting gates case.
 
 Exec:
-* How about using locals.size to store the capacity and func->code->locals to
-  store the relevant size, to avoid reallocating over and over again when
-  alternating between small and large stack frames?
- - profiling suggests the performance benefits are probably pretty small,
-   though I don't see any harm at all.
-
-* It looks like a lot of thunks are sticking around in the graph for GC. Can
-  we get rid of them by more eagerly unpeeling them? May be that improves GC
-  performance?
-
 * Separate eval.c into two different files, threading and instruction
   execution.
-
-* Can we merge FBLE_FUNC_VALUE_TC and FBLE_COMPILED_FUNC_VALUE_TC?
- - by separating out a notion of FBLE_COMPILED_VALUE_TC and using FBLE_VAR_TC
-   for the scope?
 * Clean up doc comments in typecheck.h, typecheck.c, compile.c.
  - Now that we are passing value heaps around instead of arenas.
 
@@ -81,9 +69,6 @@ Exec:
  - It would be nice to specify explicitly and be consistent with this kind of
    thing.
 * Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
-* Clarify when FbleFuncValueTc is expected versus FbleCompiledFuncValueTc.
- - Ideally they can be used interchangeably?
-
 * Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?
 
@@ -132,8 +117,6 @@ Exec:
   We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
   Should we instead get: expected type Maybe@<Bool@>? 
 
-* Pull out definition of architectural state and instruction functions.
- - Would be nice to separate them from the evaluator I think.
 
 * Avoid setting local values to NULL when done?
  - It helps debugging, but otherwise we shouldn't rely on it?
@@ -168,28 +151,15 @@ Exec:
  Consumed: ownership transferred from caller to callee.
  Outlives: caller responsible for keeping alive as long as returned result is.
 
-* Clean up what we export in fble-syntax.h versus syntax.h.
-  Same for the rest of the fble API.
-
-* Make FbleModulePath* functions part of the public API?
-
 * We don't get a warning about an unused self recursive function.
   More generally, we don't get warnings about variables that are referenced
   only by unused variables.
 
-* Clarify spec on when vacuous value error should be reported.
+* Clarify spec on when (compile vs runtime) vacuous value error should be
+  reported.
 
 * Add coverage for parse destructors
  - path, kinds, tagged_kinds, tagged_type, tagged_expr
-
-* Move implementations corresponding to fble-name.h to name.c?
-
-* [eval] Would it improve performance to merge statics into the locals array?
-  We don't have to own them. Just copy them all over when we push a frame.
-  Then we avoid the need to switch when looking up a value, and we can store a
-  frame index in a single word. FrameGet goes away.
-
-* [eval] Have option to turn off checking for nulls and other runtime errors?
 
 * Clean up how we track io activity?
 
@@ -222,10 +192,6 @@ Exec:
 * [compile] Figure out why Normal is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
  - Profiling said its all in TypeEquals. Maybe something pathological?
-
-* [cc] Implement .fble -> .o compiler
- - Goal is to significantly increase performance by removing the instruction
-   fetch decode logic.
 
 * [snake] Switch to a target 60 FPS?
 * [snake] Test and fix bug when snake eats its tail.

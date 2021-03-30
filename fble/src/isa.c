@@ -12,9 +12,9 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profile);
+static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile);
 
-// DumpInstrBlock -- 
+// DumpCode -- 
 //   For debugging purposes, dump the given code block in human readable
 //   format to the given file.
 //
@@ -28,18 +28,18 @@ static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profil
 //
 // Side effects:
 //   Prints the code block in human readable format to stderr.
-static void DumpInstrBlock(FILE* fout, FbleInstrBlock* code, FbleProfile* profile)
+static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
 {
   // Map from FbleFrameSection to short descriptor of the section.
   static const char* sections[] = {"s", "l"};
 
   FbleArena* arena = FbleNewArena();
-  struct { size_t size; FbleInstrBlock** xs; } blocks;
+  struct { size_t size; FbleCode** xs; } blocks;
   FbleVectorInit(arena, blocks);
   FbleVectorAppend(arena, blocks, code);
 
   while (blocks.size > 0) {
-    FbleInstrBlock* block = blocks.xs[--blocks.size];
+    FbleCode* block = blocks.xs[--blocks.size];
     fprintf(fout, "%p statics[%zi] locals[%zi]:\n",
         (void*)block, block->statics, block->locals);
     for (size_t i = 0; i < block->instrs.size; ++i) {
@@ -314,7 +314,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-      FbleFreeInstrBlock(arena, func_value_instr->code);
+      FbleFreeCode(arena, func_value_instr->code);
       FbleFree(arena, func_value_instr->scope.xs);
       FbleFree(arena, func_value_instr);
       return;
@@ -340,8 +340,8 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
   UNREACHABLE("invalid instruction");
 }
 
-// FbleFreeInstrBlock -- see documentation in isa.h
-void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
+// FbleFreeCode -- see documentation in isa.h
+void FbleFreeCode(FbleArena* arena, FbleCode* block)
 {
   if (block == NULL) {
     return;
@@ -352,7 +352,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
   // probably already freed this instruction block and decrementing the
   // refcount could end up corrupting whatever is now making use of the memory
   // that was previously used for the instruction block.
-  assert(block->magic == FBLE_INSTR_BLOCK_MAGIC && "corrupt FbleInstrBlock");
+  assert(block->magic == FBLE_INSTR_BLOCK_MAGIC && "corrupt FbleCode");
 
   assert(block->refcount > 0);
   block->refcount--;
@@ -366,7 +366,7 @@ void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block)
 }
 
 // FbleDisassmeble -- see documentation in fble-compile.h.
-void FbleDisassemble(FILE* fout, FbleInstrBlock* code, FbleProfile* profile)
+void FbleDisassemble(FILE* fout, FbleCode* code, FbleProfile* profile)
 {
-  DumpInstrBlock(fout, code, profile);
+  DumpCode(fout, code, profile);
 }

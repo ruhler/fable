@@ -6,7 +6,7 @@
 #include "value.h"
 
 // FbleInterpretCode -- see documentation in fble-interpret.h
-FbleExecutable* FbleInterpretCode(FbleArena* arena, FbleInstrBlock* code)
+FbleExecutable* FbleInterpretCode(FbleArena* arena, FbleCode* code)
 {
   FbleExecutable* executable = FbleAlloc(arena, FbleExecutable);
   executable->code = code;

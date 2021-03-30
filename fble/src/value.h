@@ -71,7 +71,7 @@ typedef struct {
 //   code - The code for the function.
 //   run - A native function to use to evaluate this fble function.
 struct FbleExecutable {
-  FbleInstrBlock* code;
+  FbleCode* code;
   FbleRunFunction* run;
 };
 
@@ -83,7 +83,6 @@ struct FbleExecutable {
 //   scope - The scope at the time the function was created, representing the
 //           lexical context available to the function. The length of this
 //           array is code->statics.
-//   run - A native function to use to evaluate this fble function.
 //
 // Note: Function values are used for both pure functions and processes. We
 // don't distinguish between the two at runtime, except that argc == 0

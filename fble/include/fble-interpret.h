@@ -22,7 +22,7 @@
 // Side effects:
 //   Allocates an FbleExecutable that should be freed using (TODO) when no
 //   longer needed.
-FbleExecutable* FbleInterpretCode(FbleArena* arena, FbleInstrBlock* code);
+FbleExecutable* FbleInterpretCode(FbleArena* arena, FbleCode* code);
 
 // FbleInterpret --
 //   Turn a compiled program into an executable program based on use of an

@@ -239,3 +239,43 @@ of InstrBlocks, and uses something other than InstrBlocks to combine them.
 
 I think ThunkContext is an appropriate term to use for the context, in line
 with "context switching" and setcontext/getcontext APIs.  
+
+---
+
+New choice of names: 
+  FbleExecutable for what was proposed as FbleCode.
+  FbleExecutionContext for what was proposed as ThunkContext.
+  FbleCode for what was FbleInstrBlock.
+
+To detangle thread execution from instruction interpreter:
+* thread execution maintains locals array currently, so it needs to know how
+  much to allocate for that.
+* thread execution calls 'run' function, which should go through a function
+  call that takes FbleExecutable* instead.
+
+To detangle instruction interpreter from thread execution:
+* interpreter needs access to function static variables and locals.
+* interpreter needs to ReplaceFrame / PushFrame for function calls.
+* interpreter needs to be able to Fork the thread.
+* interpreter needs to be able to return.
+* interpreter needs to be able to take profiling samples and otherwise
+  manipulate profiles.
+
+Other potential changes:
+* FbleFuncValue needs to store scopec itself, for gc purposes.
+* FbleFuncValue maybe doesn't need to know argc? That could be internal to
+  FbleExecutable*?
+* I think func, pc, and locals should be part of ExecutionContext?
+
+A downside to having locals be part of ExecutionContext is we can no longer
+optimize tail calls to reuse the locals array. How big a deal is that
+performance wise? It's a little hard to know, because I can't envision any
+implementation that isn't based on having locals as an array.
+
+Well, it's not hard to test the performance impact of the optimization to
+reuse locals on tail calls. I'll probably feel better if I try it and find it
+doesn't make much of a difference performance wise.
+
+5m10s -> 5m16s.
+
+So, it doesn't make enough of a difference to block a cleaner interface.

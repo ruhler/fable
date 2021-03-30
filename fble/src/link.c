@@ -18,7 +18,7 @@ void FbleFreeExecutableProgram(FbleArena* arena, FbleExecutableProgram* program)
         FbleFreeModulePath(arena, module->deps.xs[j]);
       }
       FbleFree(arena, module->deps.xs);
-      FbleFreeInstrBlock(arena, module->executable->code);
+      FbleFreeCode(arena, module->executable->code);
       FbleFree(arena, module->executable);
     }
     FbleFree(arena, program->modules.xs);
@@ -49,7 +49,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   // Write some code to call each of module functions in turn with the
   // appropriate module arguments. The function for module i will be static
   // variable i, and the value computed for module i will be local variable i.
-  FbleInstrBlock* code = FbleAlloc(arena, FbleInstrBlock);
+  FbleCode* code = FbleAlloc(arena, FbleCode);
   code->refcount = 1;
   code->magic = FBLE_INSTR_BLOCK_MAGIC;
   code->statics = modulec;

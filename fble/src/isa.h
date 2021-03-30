@@ -6,7 +6,7 @@
 #ifndef FBLE_INTERNAL_ISA_H_
 #define FBLE_INTERNAL_ISA_H_
 
-#include "fble-compile.h"   // for FbleInstrBlock forward declaration.
+#include "fble-compile.h"   // for FbleCode forward declaration.
 #include "fble-profile.h"   // for FbleBlockId
 
 // FbleFrameSection --
@@ -100,13 +100,13 @@ typedef struct {
   FbleInstr** xs;
 } FbleInstrV;
 
-// FbleInstrBlock --
+// FbleCode --
 //   A reference counted block of instructions.
 //
 // The magic field is set to FBLE_INSTR_BLOCK_MAGIC to help detect double
 // free.
 #define FBLE_INSTR_BLOCK_MAGIC 0xB10CE
-struct FbleInstrBlock {
+struct FbleCode {
   size_t refcount;
   size_t magic;
   size_t statics;     // The number of statics used by this frame.
@@ -114,12 +114,12 @@ struct FbleInstrBlock {
   FbleInstrV instrs;
 };
 
-// FbleInstrBlockV --
-//   A vector of FbleInstrBlock.
+// FbleCodeV --
+//   A vector of FbleCode.
 typedef struct {
   size_t size;
-  FbleInstrBlock** xs;
-} FbleInstrBlockV;
+  FbleCode** xs;
+} FbleCodeV;
 
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.
@@ -208,7 +208,7 @@ typedef struct {
   FbleInstr _base;
   size_t argc;
   FbleLocalIndex dest;
-  FbleInstrBlock* code;
+  FbleCode* code;
   FbleFrameIndexV scope;
 } FbleFuncValueInstr;
 
@@ -338,7 +338,7 @@ typedef struct {
 //   Frees memory allocated for the given instruction.
 void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 
-// FbleFreeInstrBlock --
+// FbleFreeCode --
 //   Decrement the refcount on the given block of instructions and free it if
 //   appropriate.
 //
@@ -352,6 +352,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 // Side effect:
 //   Frees memory allocated for the given block of instruction if the refcount
 //   has gone to 0.
-void FbleFreeInstrBlock(FbleArena* arena, FbleInstrBlock* block);
+void FbleFreeCode(FbleArena* arena, FbleCode* block);
 
 #endif // FBLE_INTERNAL_ISA_H_

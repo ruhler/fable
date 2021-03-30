@@ -48,7 +48,7 @@ typedef struct Scope {
   LocalV statics;
   LocalV vars;
   LocalV locals;
-  FbleInstrBlock* code;
+  FbleCode* code;
   FbleProfileOp* pending_profile_ops;
   struct Scope* parent;
 } Scope;
@@ -60,7 +60,7 @@ static void PopVar(FbleArena* arena, Scope* scope);
 static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index);
 static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local);
 
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, size_t statics, Scope* parent);
+static void InitScope(FbleArena* arena, Scope* scope, FbleCode** code, size_t statics, Scope* parent);
 static void FreeScope(FbleArena* arena, Scope* scope);
 static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
 static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
@@ -82,7 +82,7 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 
 static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleTc* tc);
-static FbleInstrBlock* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
+static FbleCode* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
 
 // NewLocal --
 //   Allocate space for an anonymous local variable on the stack frame.
@@ -257,9 +257,9 @@ static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local)
 //   Initializes scope based on parent. FreeScope should be
 //   called to free the allocations for scope. The lifetimes of the code block
 //   and the parent scope must exceed the lifetime of this scope.
-//   The caller is responsible for calling FbleFreeInstrBlock on *code when it
+//   The caller is responsible for calling FbleFreeCode on *code when it
 //   is no longer needed.
-static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, size_t statics, Scope* parent)
+static void InitScope(FbleArena* arena, Scope* scope, FbleCode** code, size_t statics, Scope* parent)
 {
   FbleVectorInit(arena, scope->statics);
   for (size_t i = 0; i < statics; ++i) {
@@ -273,7 +273,7 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleInstrBlock** code, siz
   FbleVectorInit(arena, scope->vars);
   FbleVectorInit(arena, scope->locals);
 
-  scope->code = FbleAlloc(arena, FbleInstrBlock);
+  scope->code = FbleAlloc(arena, FbleCode);
   scope->code->refcount = 1;
   scope->code->magic = FBLE_INSTR_BLOCK_MAGIC;
   scope->code->statics = statics;
@@ -931,9 +931,9 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 //
 // Side effects:
 // * Adds blocks to the given profile.
-// * The caller should call FbleFreeInstrBlock to release resources
+// * The caller should call FbleFreeCode to release resources
 //   associated with the returned program when it is no longer needed.
-static FbleInstrBlock* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
+static FbleCode* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
 {
   bool profiling_disabled = false;
   if (profile == NULL) {
@@ -948,7 +948,7 @@ static FbleInstrBlock* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleNa
   FbleVectorInit(arena, blocks.stack);
   blocks.profile = profile;
 
-  FbleInstrBlock* code;
+  FbleCode* code;
   Scope scope;
   InitScope(arena, &scope, &code, 0, NULL);
 
@@ -984,7 +984,7 @@ void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program)
         FbleFreeModulePath(arena, module->deps.xs[j]);
       }
       FbleFree(arena, module->deps.xs);
-      FbleFreeInstrBlock(arena, module->code);
+      FbleFreeCode(arena, module->code);
     }
     FbleFree(arena, program->modules.xs);
     FbleFree(arena, program);

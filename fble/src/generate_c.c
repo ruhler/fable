@@ -19,15 +19,15 @@
 // The number is turned into a C variable name using printf format "v%x".
 typedef unsigned int VarId;
 
-static void CollectBlocks(FbleArena* arena, FbleInstrBlockV* blocks, FbleInstrBlock* code);
+static void CollectBlocks(FbleArena* arena, FbleCodeV* blocks, FbleCode* code);
 
 static VarId GenLoc(FILE* fout, VarId* var_id, FbleLoc loc);
 static VarId GenName(FILE* fout, VarId* var_id, FbleName name);
 static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static VarId GenFrameIndex(FILE* fout, VarId* var_id, FbleFrameIndex index);
 static void AppendInstr(FILE* fout, VarId* var_id, VarId block_id, FbleInstr* instr);
-static VarId GetInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code);
-static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code);
+static VarId GetCode(FILE* fout, VarId* var_id, FbleCode* code);
+static VarId GenCode(FILE* fout, VarId* var_id, FbleCode* code);
 static FbleString* FuncNameForPath(FbleArena* arena, FbleModulePath* path);
 
 // CollectBlocks --
@@ -38,7 +38,7 @@ static FbleString* FuncNameForPath(FbleArena* arena, FbleModulePath* path);
 //   arena - arena to use for allocations.
 //   blocks - the collection of blocks to add to.
 //   code - the code to collect the blocks from.
-static void CollectBlocks(FbleArena* arena, FbleInstrBlockV* blocks, FbleInstrBlock* code)
+static void CollectBlocks(FbleArena* arena, FbleCodeV* blocks, FbleCode* code)
 {
   FbleVectorAppend(arena, *blocks, code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
@@ -183,7 +183,7 @@ static VarId GenFrameIndex(FILE* fout, VarId* var_id, FbleFrameIndex index)
 // Inputs:
 //   fout - the output stream to write the code to.
 //   var_id - pointer to next available variable id for use.
-//   block_id - id of the variable for the FbleInstrBlock to add the
+//   block_id - id of the variable for the FbleCode to add the
 //              instruction to.
 //   instr - the FbleInstr to add to the block.
 //
@@ -292,7 +292,7 @@ static void AppendInstr(FILE* fout, VarId* var_id, VarId block_id, FbleInstr* in
       fprintf(fout, "  v%x->_base.profile_ops = NULL;\n", instr_id);
       fprintf(fout, "  v%x->argc = %i;\n", instr_id, func_instr->argc);
       fprintf(fout, "  v%x->dest = %i;\n", instr_id, func_instr->dest);
-      VarId code = GetInstrBlock(fout, var_id, func_instr->code);
+      VarId code = GetCode(fout, var_id, func_instr->code);
       fprintf(fout, "  v%x->code = v%x;\n", instr_id, code);
       fprintf(fout, "  FbleVectorInit(arena, v%x->scope);\n", instr_id);
       for (size_t i = 0; i < func_instr->scope.size; ++i) {
@@ -433,51 +433,51 @@ static void AppendInstr(FILE* fout, VarId* var_id, VarId block_id, FbleInstr* in
   }
 }
 
-// GetInstrBlock --
-//   Generate code for getting an FbleInstrBlock.
+// GetCode --
+//   Generate code for getting an FbleCode.
 //
 // Assumes there is a C variable 'FbleArena* arena' in scope for allocating
-// FbleInstrBlock.
+// FbleCode.
 //
 // Inputs:
 //   fout - the output stream to write the code to.
 //   var_id - pointer to next available variable id for use.
-//   code - the FbleInstrBlock to get.
+//   code - the FbleCode to get.
 //
 // Results:
-//   The variable id of the generated FbleInstrBlock.
+//   The variable id of the generated FbleCode.
 //
 // Side effects:
 // * Outputs code to fout with two space indent.
 // * Increments var_id based on the number of internal variables used.
-static VarId GetInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code)
+static VarId GetCode(FILE* fout, VarId* var_id, FbleCode* code)
 {
   VarId id = (*var_id)++;
-  fprintf(fout, "  FbleInstrBlock* v%x = _block_%p(arena);\n", id, (void*)code);
+  fprintf(fout, "  FbleCode* v%x = _block_%p(arena);\n", id, (void*)code);
   return id;
 }
 
-// GenInstrBlock --
-//   Generate code for an FbleInstrBlock.
+// GenCode --
+//   Generate code for an FbleCode.
 //
 // Assumes there is a C variable 'FbleArena* arena' in scope for allocating
-// FbleInstrBlock.
+// FbleCode.
 //
 // Inputs:
 //   fout - the output stream to write the code to.
 //   var_id - pointer to next available variable id for use.
-//   code - the FbleInstrBlock to generate code for.
+//   code - the FbleCode to generate code for.
 //
 // Results:
-//   The variable id of the generated FbleInstrBlock.
+//   The variable id of the generated FbleCode.
 //
 // Side effects:
 // * Outputs code to fout with two space indent.
 // * Increments var_id based on the number of internal variables used.
-static VarId GenInstrBlock(FILE* fout, VarId* var_id, FbleInstrBlock* code)
+static VarId GenCode(FILE* fout, VarId* var_id, FbleCode* code)
 {
   VarId id = (*var_id)++;
-  fprintf(fout, "  FbleInstrBlock* v%x = FbleAlloc(arena, FbleInstrBlock);\n", id);
+  fprintf(fout, "  FbleCode* v%x = FbleAlloc(arena, FbleCode);\n", id);
   fprintf(fout, "  v%x->refcount = 1;\n", id);
   fprintf(fout, "  v%x->magic = FBLE_INSTR_BLOCK_MAGIC;\n", id);
   fprintf(fout, "  v%x->statics = %i;\n", id, code->statics);
@@ -557,7 +557,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 {
   FbleArena* arena = FbleNewArena();
 
-  FbleInstrBlockV blocks;
+  FbleCodeV blocks;
   FbleVectorInit(arena, blocks);
   CollectBlocks(arena, &blocks, module->code);
 
@@ -575,15 +575,15 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   }
   fprintf(fout, "\n");
 
-  // Prototypes for FbleInstrBlock* functions.
+  // Prototypes for FbleCode* functions.
   for (int i = 0; i < blocks.size; ++i) {
-    fprintf(fout, "static FbleInstrBlock* _block_%p(FbleArena* arena);\n", (void*)blocks.xs[i]);
+    fprintf(fout, "static FbleCode* _block_%p(FbleArena* arena);\n", (void*)blocks.xs[i]);
   }
   fprintf(fout, "\n");
 
   // Helper function for appending zero-argument struct value instructions,
   // which can take up a lot of space from literals.
-  fprintf(fout, "static void AppendStruct0Instr(FbleArena* arena, FbleLocalIndex dest, FbleInstrBlock* block)\n");
+  fprintf(fout, "static void AppendStruct0Instr(FbleArena* arena, FbleLocalIndex dest, FbleCode* block)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleStructValueInstr* si = FbleAlloc(arena, FbleStructValueInstr);\n");
   fprintf(fout, "  si->_base.tag = FBLE_STRUCT_VALUE_INSTR;\n");
@@ -595,7 +595,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   // Helper function for appending two-argument struct value instructions,
   // which can take up a lot of space from literals.
-  fprintf(fout, "static void AppendStruct2Instr(FbleArena* arena, FbleFrameSection arg0_section, size_t arg0_index, FbleFrameSection arg1_section, size_t arg1_index, FbleLocalIndex dest, FbleInstrBlock* block)\n");
+  fprintf(fout, "static void AppendStruct2Instr(FbleArena* arena, FbleFrameSection arg0_section, size_t arg0_index, FbleFrameSection arg1_section, size_t arg1_index, FbleLocalIndex dest, FbleCode* block)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleStructValueInstr* si = FbleAlloc(arena, FbleStructValueInstr);\n");
   fprintf(fout, "  si->_base.tag = FBLE_STRUCT_VALUE_INSTR;\n");
@@ -611,7 +611,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   // Helper function for appending union value instructions, which can take up
   // a lot of space from literals.
-  fprintf(fout, "static void AppendUnionInstr(FbleArena* arena, size_t tag, FbleFrameSection arg_section, size_t arg_index, FbleLocalIndex dest, FbleInstrBlock* block)\n");
+  fprintf(fout, "static void AppendUnionInstr(FbleArena* arena, size_t tag, FbleFrameSection arg_section, size_t arg_index, FbleLocalIndex dest, FbleCode* block)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleUnionValueInstr* ui = FbleAlloc(arena, FbleUnionValueInstr);\n");
   fprintf(fout, "  ui->_base.tag = FBLE_UNION_VALUE_INSTR;\n");
@@ -625,7 +625,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   // Helper function for appending one-argument call instructions,
   // which can take up a lot of space from literals.
-  fprintf(fout, "static void AppendCall1Instr(FbleArena* arena, const char* src, size_t line, size_t col, bool exit, FbleFrameSection func_section, size_t func_index, FbleFrameSection arg_section, size_t arg_index, FbleLocalIndex dest, FbleInstrBlock* block)\n");
+  fprintf(fout, "static void AppendCall1Instr(FbleArena* arena, const char* src, size_t line, size_t col, bool exit, FbleFrameSection func_section, size_t func_index, FbleFrameSection arg_section, size_t arg_index, FbleLocalIndex dest, FbleCode* block)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleCallInstr* i = FbleAlloc(arena, FbleCallInstr);\n");
   fprintf(fout, "  i->_base.tag = FBLE_CALL_INSTR;\n");
@@ -645,7 +645,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   // Helper function for appending an access instruction, which has
   // caused problems taking up a lot of space in the past.
-  fprintf(fout, "static void AppendAccessInstr(FbleArena* arena, FbleInstrTag itag, const char* src, size_t line, size_t col, FbleFrameSection obj_section, size_t obj_index, size_t tag, FbleLocalIndex dest, FbleInstrBlock* block)\n");
+  fprintf(fout, "static void AppendAccessInstr(FbleArena* arena, FbleInstrTag itag, const char* src, size_t line, size_t col, FbleFrameSection obj_section, size_t obj_index, size_t tag, FbleLocalIndex dest, FbleCode* block)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleAccessInstr* i = FbleAlloc(arena, FbleAccessInstr);\n");
   fprintf(fout, "  i->_base.tag = itag;\n");
@@ -661,10 +661,10 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "}\n\n");
 
   for (int i = 0; i < blocks.size; ++i) {
-    fprintf(fout, "static FbleInstrBlock* _block_%p(FbleArena* arena)\n", (void*)blocks.xs[i]);
+    fprintf(fout, "static FbleCode* _block_%p(FbleArena* arena)\n", (void*)blocks.xs[i]);
     fprintf(fout, "{\n");
     VarId var_id = 0;
-    VarId result = GenInstrBlock(fout, &var_id, blocks.xs[i]);
+    VarId result = GenCode(fout, &var_id, blocks.xs[i]);
     fprintf(fout, "  return v%x;\n", result);
     fprintf(fout, "}\n\n");
   }
@@ -715,9 +715,9 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     fprintf(fout, "  FbleVectorAppend(arena, v%x->deps, v%x);\n", module_id, dep_id);
   }
 
-  VarId code_id = GetInstrBlock(fout, &var_id, module->code);
+  VarId code_id = GetCode(fout, &var_id, module->code);
   fprintf(fout, "  v%x->executable = FbleInterpretCode(arena, v%x);\n", module_id, code_id);
-  fprintf(fout, "  FbleFreeInstrBlock(arena, v%x);\n", code_id);
+  fprintf(fout, "  FbleFreeCode(arena, v%x);\n", code_id);
 
   fprintf(fout, "}\n");
 

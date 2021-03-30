@@ -69,7 +69,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
-      FbleFreeInstrBlock(arena, v->executable->code);
+      FbleFreeCode(arena, v->executable->code);
       FbleFree(arena, v->executable);
       return;
     }
@@ -259,7 +259,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
     &irtn._base,
   };
 
-  static FbleInstrBlock code = {
+  static FbleCode code = {
     .refcount = 1,
     .magic = FBLE_INSTR_BLOCK_MAGIC,
     .statics = 1,  // port
@@ -313,7 +313,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
     &irtn0._base,
   };
 
-  static FbleInstrBlock proc_code = {
+  static FbleCode proc_code = {
     .refcount = 1,
     .magic = FBLE_INSTR_BLOCK_MAGIC,
     .statics = 2,  // port, arg
@@ -345,7 +345,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
     &irtn1._base,
   };
 
-  static FbleInstrBlock func_code = {
+  static FbleCode func_code = {
     .refcount = 1,
     .magic = FBLE_INSTR_BLOCK_MAGIC,
     .statics = 1,  // port
