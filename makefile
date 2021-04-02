@@ -7,7 +7,7 @@ out/build.ninja: build.ninja.tcl
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja -j 2 out/bin/fble-test
+	ninja -f out/build.ninja -j 2 -k 0
 
 .PHONY: all
 all: out/build.ninja

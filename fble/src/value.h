@@ -139,8 +139,8 @@ typedef struct {
 // dereferenced before being otherwise accessed in case they are thunk
 // values.
 //
-// For recursive values, 'tail' and 'func' will be NULL, 'pc' will be 0 and
-// 'locals' will be empty.
+// For recursive values, 'tail' and 'func' will be NULL, 'joins' and 'pc' will
+// be 0 and 'locals' will be empty.
 //
 // For partially evaluated expressions, func is the currently executing
 // function, pc the location in that function, locals the list of current
@@ -149,13 +149,19 @@ typedef struct {
 //
 // Fields:
 //   value - the value being referenced, or NULL if no value is referenced.
+//   tail - the next thunk to compute after this one.
+//   joins - the number of threads to join before continuing with this thunk.
+//   func - the function being executed.
+//   pc - offset into func->code.
+//   locals - vector of local variables.
 typedef struct FbleThunkValue {
   FbleValue _base;
   FbleValue* value;
 
   struct FbleThunkValue* tail;
+  size_t joins;
   FbleFuncValue* func;
-  size_t pc;                       // Instruction offset into func->code.
+  size_t pc;
   FbleValueV locals;
 } FbleThunkValue;
 
