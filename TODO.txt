@@ -1,6 +1,4 @@
 Fble Compilation:
-* Update all the documentation for execute APIs.
-
 * Does it make sense to have one thunk type for both refs and computations?
   Should we have two different types instead, or some other distinction?
 

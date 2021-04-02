@@ -132,7 +132,7 @@ typedef struct {
 // FbleThunkValue --
 //   FBLE_THUNK_VALUE
 //
-// A implementation-specific value introduced to support recursive values and
+// An implementation-specific value introduced to support recursive values and
 // partially evaluated expressions.
 //
 // A thunk value holds a reference to another value. All values must be

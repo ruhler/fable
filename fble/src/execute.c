@@ -49,16 +49,17 @@ static void ReplaceFrame(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** a
 // Inputs:
 //   heap - heap to use for allocations.
 //   instr - the instruction to execute.
-//   thread - the thread state.
+//   threads - the thread list, for forking new threads.
+//   thread - the current thread state.
 //   io_activity - set to true if the thread does any i/o activity that could
 //                 unblock another thread.
 //
 // Results:
-//   FBLE_EXEC_FINISHED - if we have just returned from the current stack frame.
+//   FBLE_EXEC_FINISHED - if the function is done executing.
 //   FBLE_EXEC_BLOCKED - if the thread is blocked on I/O.
 //   FBLE_EXEC_YIELDED - if our time slice for executing instructions is over.
-//   FBLE_EXEC_RUNNING - if there are more instructions in the frame to execute.
-//   FBLE_EXEC_ABORTED - if the thread should be aborted.
+//   FBLE_EXEC_RUNNING - if there are more instructions in the function to execute.
+//   FBLE_EXEC_ABORTED - if execution should be aborted.
 //
 // Side effects:
 //   Executes the instruction.
@@ -711,23 +712,22 @@ static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 //
 // Inputs:
 //   heap - the value heap.
+//   threads - the thread list, for forking threads.
 //   thread - the thread to run.
 //   io_activity - set to true if the thread does any i/o activity that could
 //                 unblock another thread.
-//   aborted - if true, abort the thread. set to true if thread aborts.
 //
 // Results:
 //   FBLE_EXEC_FINISHED - if the thread has finished running.
 //   FBLE_EXEC_BLOCKED - if the thread is blocked on I/O.
 //   FBLE_EXEC_YIELDED - if our time slice for executing instructions is over.
 //   FBLE_EXEC_RUNNING - not used.
-//   FBLE_EXEC_ABORTED - not used.
+//   FBLE_EXEC_ABORTED - if execution should be aborted.
 //
 // Side effects:
 // * The thread is executed, updating its stack.
 // * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
-// * aborted is set to true if the thread aborts, then FBLE_EXEC_FINISHED is returned.
 static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
   FbleExecStatus status = FBLE_EXEC_FINISHED;
@@ -862,7 +862,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
   return result;
 }
 
-// FbleStandardRunFunction -- see documentation in eval.h
+// FbleStandardRunFunction -- see documentation in execute.h
 FbleExecStatus FbleStandardRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
