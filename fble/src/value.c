@@ -4,10 +4,9 @@
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for NULL
 
-#include "fble.h"
+#include "code.h"
 #include "execute.h"     // for FbleStandardRunFunction
 #include "heap.h"
-#include "isa.h"
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)

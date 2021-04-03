@@ -6,10 +6,10 @@
 #include <stdlib.h>   // for NULL, abort, rand
 #include <string.h>   // for memset
 
+#include "code.h"
 #include "fble.h"
 #include "heap.h"
 #include "execute.h"
-#include "isa.h"
 #include "tc.h"
 #include "value.h"
 

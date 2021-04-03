@@ -1,13 +1,22 @@
 Fble Compilation:
-* Does it make sense to have one thunk type for both refs and computations?
-  Should we have two different types instead, or some other distinction?
-
-* Rename isa.h,c to code.h,c.
 * Make FbleExecutable a proper abstract type.
 * Move standard run function to interpret.c.
 
-* Generate custom RbleExecutable in GenerateC rather than reusing the
+* Generate custom FbleExecutable in GenerateC rather than reusing the
   interpreter.
+
+* Does it make sense to have one thunk type for both refs and computations?
+  Should we have two different types instead, or some other distinction?
+   I guess func, pc, and locals will all go as part of ExecutionContext.
+   That leaves tail and joins. Probably it's fine as is.
+
+* Add back managed/native stack optimization?
+  The idea is we can reuse the native stack to quickly get back into a callers
+  context. If we are about to execute a thread that is identical to what is on
+  the stack below us, just return instead of calling into it. Just make sure
+  we don't put the same frame on the native stack more than once and we should
+  be fine. I'm not convinced this will buy us much performance given its
+  complexity though.
 
 * Figure out what to do about FbleProfile* for the compilation code path.
 * Avoid duplicating code between fble-stdio and fble-compiled-stdio.

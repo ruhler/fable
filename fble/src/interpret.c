@@ -1,8 +1,8 @@
 
 #include "fble-interpret.h"
 
+#include "code.h"
 #include "execute.h"
-#include "isa.h"
 #include "value.h"
 
 // FbleInterpretCode -- see documentation in fble-interpret.h

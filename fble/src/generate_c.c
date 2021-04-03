@@ -6,8 +6,8 @@
 #include <stdio.h>    // for sprintf
 #include <string.h>   // for strlen, strcat
 
+#include "code.h"
 #include "fble-compile.h"
-#include "isa.h"
 #include "tc.h"
 #include "value.h"
 
@@ -562,7 +562,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   CollectBlocks(arena, &blocks, module->code);
 
   fprintf(fout, "#include \"fble.h\"\n");
-  fprintf(fout, "#include \"isa.h\"\n");
+  fprintf(fout, "#include \"code.h\"\n");
   fprintf(fout, "#include \"tc.h\"\n");
   fprintf(fout, "#include \"value.h\"\n");
   fprintf(fout, "\n");

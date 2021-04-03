@@ -1,10 +1,9 @@
-// isa.h --
-//   Header file describing the interface for working with an internal
-//   instruction set architecture used for executing fble programs.
-//   This is an internal library interface.
+// code.h --
+//   Defines FbleInstr and FbleCode types, describing an internal instruction
+//   set that can be used to run fble programs.
 
-#ifndef FBLE_INTERNAL_ISA_H_
-#define FBLE_INTERNAL_ISA_H_
+#ifndef FBLE_INTERNAL_CODE_H_
+#define FBLE_INTERNAL_CODE_H_
 
 #include "fble-compile.h"   // for FbleCode forward declaration.
 #include "fble-profile.h"   // for FbleBlockId
@@ -354,4 +353,4 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 //   has gone to 0.
 void FbleFreeCode(FbleArena* arena, FbleCode* block);
 
-#endif // FBLE_INTERNAL_ISA_H_
+#endif // FBLE_INTERNAL_CODE_H_

@@ -5,8 +5,8 @@
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
+#include "code.h"
 #include "execute.h"       // for FbleStandardRunFunction
-#include "isa.h"
 #include "tc.h"
 #include "typecheck.h"
 #include "value.h"

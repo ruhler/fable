@@ -3,8 +3,8 @@
 
 #include <assert.h>     // for assert
 
+#include "code.h"
 #include "fble-interpret.h"
-#include "isa.h"
 #include "value.h"
 
 // FbleFreeExecutableProgram -- see documentation in fble-link.h

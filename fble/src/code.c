@@ -1,12 +1,12 @@
-// isa.c --
-//   This file implements routines related to the internal fble instruction
-//   set architecture.
+// code.c --
+//   This file implements routines related to fble instructions.
+
+#include "code.h"
 
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf
 #include <stdlib.h>   // for NULL
 
-#include "isa.h"
 #include "tc.h"
 #include "value.h"
 
