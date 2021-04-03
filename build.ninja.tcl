@@ -58,6 +58,23 @@ proc obj { obj src iflags args } {
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
 
+# tobj --
+#   Builds a .o file using tcc.
+#
+# Used for compiling large generated .c files, where tcc has much nicer memory
+# requirements than gcc does. 
+#
+# Inputs:
+#   obj - the .o file to build (include $::obj directory).
+#   src - the .c file to build the .o file from.
+#   iflags - include flags, e.g. "-I foo".
+#   args - optional additional dependencies.
+proc tobj { obj src iflags args } {
+  set cflags "-pedantic -Wall -Werror"
+  set cmd "tcc -MD -MF $obj.d $cflags $iflags -c -o $obj $src"
+  build $obj "$src $args" $cmd "depfile = $obj.d"
+}
+
 # bin --
 #   Build a binary.
 #
@@ -194,7 +211,7 @@ foreach dir [dirs prgms ""] {
       "$::bin/fble-compile $path prgms/$x prgms > $::prgms/$x.c"
 
     # Generate a .o file.
-    obj $::prgms/$x.o $::prgms/$x.c "-I fble/include -I fble/src"
+    tobj $::prgms/$x.o $::prgms/$x.c "-I fble/include -I fble/src"
     lappend ::fble_prgms_objs $::prgms/$x.o
   }
 }

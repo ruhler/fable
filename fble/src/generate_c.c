@@ -105,12 +105,11 @@ static VarId GenName(FILE* fout, VarId* var_id, FbleName name)
   VarId loc_id = GenLoc(fout, var_id, name.loc);
 
   VarId id = (*var_id)++;
-  fprintf(fout, "  FbleName v%x = {\n", id);
+  fprintf(fout, "  FbleName v%x;\n", id);
   // TODO: Handle funny chars in the string literal properly.
-  fprintf(fout, "    .name = FbleNewString(arena, \"%s\"),\n", name.name->str);
-  fprintf(fout, "    .space = %s,\n", spaces[name.space]);
-  fprintf(fout, "    .loc = v%x\n", loc_id);
-  fprintf(fout, "  };\n");
+  fprintf(fout, "  v%x.name = FbleNewString(arena, \"%s\");\n", id, name.name->str);
+  fprintf(fout, "  v%x.space = %s;\n", id, spaces[name.space]);
+  fprintf(fout, "  v%x.loc = v%x;\n", id, loc_id);
   return id;
 }
 
