@@ -87,12 +87,12 @@ struct FbleExecutable {
 // Note: Function values are used for both pure functions and processes. We
 // don't distinguish between the two at runtime, except that argc == 0
 // suggests this is for a process instead of a function.
-typedef struct {
+struct FbleFuncValue {
   FbleValue _base;
   size_t argc;
   FbleExecutable* executable;
   FbleValue* scope[];
-} FbleFuncValue;
+};
 
 // FbleProcValue -- FBLE_PROC_VALUE
 //   A proc value is represented as a function that takes no arguments.
@@ -154,7 +154,7 @@ typedef struct {
 //   func - the function being executed.
 //   pc - offset into func->code.
 //   locals - vector of local variables.
-typedef struct FbleThunkValue {
+struct FbleThunkValue {
   FbleValue _base;
   FbleValue* value;
 
@@ -163,7 +163,7 @@ typedef struct FbleThunkValue {
   FbleFuncValue* func;
   size_t pc;
   FbleValueV locals;
-} FbleThunkValue;
+};
 
 // FbleNewValue --
 //   Allocate a new value of the given type.

@@ -18,8 +18,8 @@
 #include "fble-vector.h"
 
 // FbleEval --
-//   Evaluate a compiled program. The program is assumed to be a zero argument
-//   function as returned by FbleCompile.
+//   Evaluate a linked program. The program is assumed to be a zero argument
+//   function as returned by FbleLink.
 //
 // Inputs:
 //   heap - The heap to use for allocating values.

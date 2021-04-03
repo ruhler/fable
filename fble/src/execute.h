@@ -9,7 +9,11 @@
 
 #include <stdbool.h>      // for bool
 
-#include "fble-value.h"   // for FbleValueHeap
+#include "fble-profile.h"   // for FbleProfileThread
+#include "fble-value.h"     // for FbleValueHeap
+
+typedef struct FbleFuncValue FbleFuncValue;
+typedef struct FbleThunkValue FbleThunkValue;
 
 // FbleExecStatus -- 
 //   Shared status code used for returning status from running an instruction,
@@ -25,8 +29,17 @@ typedef enum {
   FBLE_EXEC_ABORTED,        // Execution needs to be aborted.
 } FbleExecStatus;
 
-// Forward declaration of FbleThread type.
-typedef struct FbleThread FbleThread;
+// FbleThread --
+//   Represents a thread of execution.
+//
+// Fields:
+//   stack - the execution stack.
+//   profile - the profile thread associated with this thread. May be NULL to
+//             disable profiling.
+typedef struct {
+  FbleThunkValue* stack;
+  FbleProfileThread* profile;
+} FbleThread;
 
 // FbleThreadV --
 //   A vector of threads.
@@ -34,6 +47,47 @@ typedef struct {
   size_t size;
   FbleThread** xs;
 } FbleThreadV;
+
+// FbleThreadCall --
+//   Push a frame onto the execution stack.
+//
+// Inputs:
+//   arena - the arena to use for allocations
+//   func - the function to execute.
+//   args - arguments to pass to the function. length == func->argc.
+//   thread - the thread whose stack to push the frame on to.
+//
+// Result:
+//   A thunk value that will refer to the computed result when the frame 
+//   completes its execution. The thread will hold a strong reference to the
+//   returned thunk value.
+//
+// Side effects:
+//   Takes a references to a newly allocated FbleThunkValue instance that
+//   should be freed when no longer needed.
+//   Does not take ownership of the function or the args.
+FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
+
+// FbleThreadTailCall --
+//   Replace the current frame with a new one.
+//
+// Inputs:
+//   heap - the value heap.
+//   func - the function to execute.
+//   args - args to the function. length == func->argc.
+//   thread - the thread with the stack to change.
+//
+// Result:
+//   The stack with new frame.
+//
+// Side effects:
+// * Does not take ownership of func and args.
+// * Exits the current frame, which potentially frees any instructions
+//   belonging to that frame.
+// * The caller may assume it is safe for the function and arguments to be
+//   retained solely by the frame that's being replaced when ReplaceFrame is
+//   called.
+void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
 
 // FbleRunFunction --
 //   A C function to run the fble function on the top of the thread stack to
