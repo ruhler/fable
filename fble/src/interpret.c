@@ -98,7 +98,7 @@ static InstrImpl sInstrImpls[] = {
 static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index)
 {
   switch (index.section) {
-    case FBLE_STATICS_FRAME_SECTION: return thread->stack->func->scope[index.index];
+    case FBLE_STATICS_FRAME_SECTION: return thread->stack->func->statics[index.index];
     case FBLE_LOCALS_FRAME_SECTION: return thread->stack->locals.xs[index.index];
   }
   UNREACHABLE("should never get here");
@@ -281,7 +281,7 @@ static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, 
   value->executable->run = &FbleStandardRunFunction;
   for (size_t i = 0; i < scopec; ++i) {
     FbleValue* arg = FrameGet(thread, func_value_instr->scope.xs[i]);
-    value->scope[i] = arg;
+    value->statics[i] = arg;
     FbleValueAddRef(heap, &value->_base, arg);
   }
   FrameSetAndRelease(heap, thread, func_value_instr->dest, &value->_base);

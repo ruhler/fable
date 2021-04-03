@@ -141,7 +141,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
       for (size_t i = 0; i < v->executable->code->statics; ++i) {
-        Ref(callback, v->scope[i]);
+        Ref(callback, v->statics[i]);
       }
       break;
     }
@@ -281,7 +281,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
   get->executable->code = &code;
   get->executable->code->refcount++;
   get->executable->run = &FbleStandardRunFunction;
-  get->scope[0] = port;
+  get->statics[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
   return &get->_base;
 }
@@ -365,7 +365,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   put->executable = FbleAlloc(heap->arena, FbleExecutable);
   put->executable->code = &func_code;
   put->executable->run = &FbleStandardRunFunction;
-  put->scope[0] = link;
+  put->statics[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
   return &put->_base;
 }

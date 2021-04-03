@@ -81,9 +81,8 @@ struct FbleExecutable {
 // Fields:
 //   argc - The number of arguments expected by the function.
 //   executable - The code for the function.
-//   scope - The scope at the time the function was created, representing the
-//           lexical context available to the function. The length of this
-//           array is code->statics.
+//   statics - static variables captured by the function. The length is
+//             executable->code->statics.
 //
 // Note: Function values are used for both pure functions and processes. We
 // don't distinguish between the two at runtime, except that argc == 0
@@ -92,7 +91,7 @@ struct FbleFuncValue {
   FbleValue _base;
   size_t argc;
   FbleExecutable* executable;
-  FbleValue* scope[];
+  FbleValue* statics[];
 };
 
 // FbleProcValue -- FBLE_PROC_VALUE

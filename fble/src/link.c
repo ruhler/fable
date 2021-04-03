@@ -102,7 +102,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   linked->executable->code = code;
   linked->executable->run = &FbleStandardRunFunction;
   for (size_t i = 0; i < modulec; ++i) {
-    linked->scope[i] = funcs[i];
+    linked->statics[i] = funcs[i];
     FbleValueAddRef(heap, &linked->_base, funcs[i]);
     FbleReleaseValue(heap, funcs[i]);
   }
