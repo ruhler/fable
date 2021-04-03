@@ -85,9 +85,10 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
     }
 
     case FBLE_PORT_VALUE: return;
+    case FBLE_REF_VALUE: return;
 
-    case FBLE_THUNK_VALUE: {
-      FbleThunkValue* v = (FbleThunkValue*)value;
+    case FBLE_STACK_VALUE: {
+      FbleStackValue* v = (FbleStackValue*)value;
       FbleFree(arena, v->locals.xs);
       return;
     }
@@ -157,13 +158,18 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       break;
     }
 
-    case FBLE_THUNK_VALUE: {
-      FbleThunkValue* rv = (FbleThunkValue*)value;
-      Ref(callback, rv->value);
-      Ref(callback, &rv->tail->_base);
-      Ref(callback, &rv->func->_base);
-      for (size_t i = 0; i < rv->locals.size; ++i) {
-        Ref(callback, rv->locals.xs[i]);
+    case FBLE_REF_VALUE: {
+      FbleRefValue* v = (FbleRefValue*)value;
+      Ref(callback, v->value);
+      break;
+    }
+
+    case FBLE_STACK_VALUE: {
+      FbleStackValue* v = (FbleStackValue*)value;
+      Ref(callback, &v->tail->_base);
+      Ref(callback, &v->func->_base);
+      for (size_t i = 0; i < v->locals.size; ++i) {
+        Ref(callback, v->locals.xs[i]);
       }
       break;
     }
@@ -378,9 +384,9 @@ FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data)
 // FbleStrictValue -- see documentation in value.h
 FbleValue* FbleStrictValue(FbleValue* value)
 {
-  while (value != NULL && value->tag == FBLE_THUNK_VALUE) {
-    FbleThunkValue* thunk = (FbleThunkValue*)value;
-    value = thunk->value;
+  while (value != NULL && value->tag == FBLE_REF_VALUE) {
+    FbleRefValue* ref = (FbleRefValue*)value;
+    value = ref->value;
   }
   return value;
 }

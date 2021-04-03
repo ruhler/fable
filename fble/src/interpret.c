@@ -106,8 +106,8 @@ static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index)
 
 // FrameGetStrict --
 //   Get and dereference a value from the frame at the top of the given stack.
-//   Dereferences the data value, removing all layers of thunk values
-//   until a non-thunk value is encountered and returns the non-reference
+//   Dereferences the data value, removing all layers of ref values
+//   until a non-ref value is encountered and returns the non-reference
 //   value.
 //
 // Inputs:
@@ -116,7 +116,7 @@ static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index)
 //
 // Results:
 //   The dereferenced value. Returns null in case of abstract value or
-//   unevaluated thunk dereference.
+//   unevaluated ref dereference.
 //
 // Side effects:
 //   The returned value will only stay alive as long as the original value on
@@ -312,9 +312,10 @@ static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   }
 
   thread->stack->pc++;
-  FbleValue* result = FbleThreadCall(heap, func, args, thread);
-  thread->stack->tail->locals.xs[call_instr->dest] = result;
-  FbleValueAddRef(heap, &thread->stack->tail->_base, result);
+  FbleRefValue* result = FbleThreadCall(heap, func, args, thread);
+  thread->stack->tail->locals.xs[call_instr->dest] = &result->_base;
+  FbleValueAddRef(heap, &thread->stack->tail->_base, &result->_base);
+  FbleReleaseValue(heap, &result->_base);
   return FBLE_EXEC_FINISHED;
 }
 
@@ -440,8 +441,8 @@ static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
     child->stack->joins++;
     FbleVectorAppend(heap->arena, *threads, child);
 
-    FbleValue* result = FbleThreadCall(heap, arg, NULL, child);
-    FrameSet(heap, thread, fork_instr->dests.xs[i], result);
+    FbleRefValue* result = FbleThreadCall(heap, arg, NULL, child);
+    FrameSetAndRelease(heap, thread, fork_instr->dests.xs[i], &result->_base);
   }
   thread->stack->pc++;
   return FBLE_EXEC_YIELDED;
@@ -484,15 +485,9 @@ static FbleExecStatus LinkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-  FbleThunkValue* rv = FbleNewValue(heap, FbleThunkValue);
-  rv->_base.tag = FBLE_THUNK_VALUE;
+  FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);
+  rv->_base.tag = FBLE_REF_VALUE;
   rv->value = NULL;
-  rv->tail = NULL;
-  rv->joins = 0;
-  rv->func = NULL;
-  rv->pc = 0;
-  rv->locals.size = 0;
-  rv->locals.xs = NULL;
 
   FrameSetAndRelease(heap, thread, ref_instr->dest, &rv->_base);
   thread->stack->pc++;
@@ -504,27 +499,22 @@ static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThreadV* threads, F
 static FbleExecStatus RefDefInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-  FbleThunkValue* rv = (FbleThunkValue*)thread->stack->locals.xs[ref_def_instr->ref];
-  assert(rv->_base.tag == FBLE_THUNK_VALUE);
+  FbleRefValue* rv = (FbleRefValue*)thread->stack->locals.xs[ref_def_instr->ref];
+  assert(rv->_base.tag == FBLE_REF_VALUE);
   assert(rv->value == NULL);
-  assert(rv->tail == NULL
-      && rv->func == NULL
-      && rv->joins == 0
-      && rv->pc == 0
-      && rv->locals.size == 0);
 
   FbleValue* value = FrameGet(thread, ref_def_instr->value);
   assert(value != NULL);
 
-  // Unwrap any accumulated layers of thunks on the returned value, and, more
-  // importantly, make sure we aren't forming a vacuous value.
-  FbleThunkValue* thunk = (FbleThunkValue*)value;
-  while (value->tag == FBLE_THUNK_VALUE && thunk->value != NULL) {
-    value = thunk->value;
-    thunk = (FbleThunkValue*)value;
+  // Unwrap any accumulated layers of references on the returned value, and,
+  // more importantly, make sure we aren't forming a vacuous value.
+  FbleRefValue* ref = (FbleRefValue*)value;
+  while (value->tag == FBLE_REF_VALUE && ref->value != NULL) {
+    value = ref->value;
+    ref = (FbleRefValue*)value;
   }
 
-  if (thunk == rv) {
+  if (ref == rv) {
     FbleReportError("vacuous value\n", ref_def_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
@@ -542,32 +532,25 @@ static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, Fbl
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
   FbleValue* result = FrameGet(thread, return_instr->result);
 
-  // Unwrap any layers of thunks on the result to avoid long chains of thunks.
-  // TODO: Is this redundant with the thunk unwrapping we do in RefDefInstr?
-  FbleThunkValue* thunk_result = (FbleThunkValue*)result;
-  while (result->tag == FBLE_THUNK_VALUE && thunk_result->value != NULL) {
-    result = thunk_result->value;
-    thunk_result = (FbleThunkValue*)result;
+  // Unwrap any layers of refs on the result to avoid long chains of refs.
+  // TODO: Is this redundant with the ref unwrapping we do in RefDefInstr?
+  FbleRefValue* ref_result = (FbleRefValue*)result;
+  while (result->tag == FBLE_REF_VALUE && ref_result->value != NULL) {
+    result = ref_result->value;
+    ref_result = (FbleRefValue*)result;
   }
 
   // Pop the top frame from the stack.
-  FbleThunkValue* thunk = thread->stack;
+  FbleStackValue* stack = thread->stack;
   thread->stack = thread->stack->tail;
   if (thread->stack != NULL) {
     FbleRetainValue(heap, &thread->stack->_base);
   }
 
-  // Save the computed value in its thunk and clean up the computation state.
-  thunk->value = result;
-  FbleValueAddRef(heap, &thunk->_base, result);
-  FbleFree(heap->arena, thunk->locals.xs);
-  thunk->tail = NULL;
-  thunk->func = NULL;
-  thunk->pc = 0;
-  thunk->locals.size = 0;
-  thunk->locals.xs = NULL;
-  FbleReleaseValue(heap, &thunk->_base);
-
+  // Save the computed value and pop up the computation state.
+  stack->result->value = result;
+  FbleValueAddRef(heap, &stack->result->_base, result);
+  FbleReleaseValue(heap, &stack->_base);
   return FBLE_EXEC_FINISHED;
 }
 

@@ -13,7 +13,8 @@
 #include "fble-value.h"     // for FbleValueHeap
 
 typedef struct FbleFuncValue FbleFuncValue;
-typedef struct FbleThunkValue FbleThunkValue;
+typedef struct FbleRefValue FbleRefValue;
+typedef struct FbleStackValue FbleStackValue;
 
 // FbleExecStatus -- 
 //   Shared status code used for returning status from running an instruction,
@@ -37,7 +38,7 @@ typedef enum {
 //   profile - the profile thread associated with this thread. May be NULL to
 //             disable profiling.
 typedef struct {
-  FbleThunkValue* stack;
+  FbleStackValue* stack;
   FbleProfileThread* profile;
 } FbleThread;
 
@@ -58,15 +59,13 @@ typedef struct {
 //   thread - the thread whose stack to push the frame on to.
 //
 // Result:
-//   A thunk value that will refer to the computed result when the frame 
-//   completes its execution. The thread will hold a strong reference to the
-//   returned thunk value.
+//   A ref value that will refer to the computed result when the frame 
+//   completes its execution.
 //
 // Side effects:
-//   Takes a references to a newly allocated FbleThunkValue instance that
-//   should be freed when no longer needed.
-//   Does not take ownership of the function or the args.
-FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
+//   Allocates a new FbleValue instance that should be freed with
+//   FbleReleaseValue when no longer needed.
+FbleRefValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
 
 // FbleThreadTailCall --
 //   Replace the current frame with a new one.
@@ -76,9 +75,6 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** 
 //   func - the function to execute.
 //   args - args to the function. length == func->argc.
 //   thread - the thread with the stack to change.
-//
-// Result:
-//   The stack with new frame.
 //
 // Side effects:
 // * Does not take ownership of func and args.

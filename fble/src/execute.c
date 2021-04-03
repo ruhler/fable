@@ -107,9 +107,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
   main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(arena, profile);
   FbleVectorAppend(arena, threads, main_thread);
 
-  FbleThunkValue* final_result = (FbleThunkValue*)FbleThreadCall(heap, func, args, main_thread);
-  assert(final_result->_base.tag == FBLE_THUNK_VALUE);
-  FbleRetainValue(heap, &final_result->_base);
+  FbleRefValue* final_result = FbleThreadCall(heap, func, args, main_thread);
 
   while (threads.size > 0) {
     bool unblocked = false;
@@ -176,42 +174,52 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 }
 
 // FbleThreadCall -- see documentation in execute.h
-FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
+FbleRefValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleArena* arena = heap->arena;
 
   size_t locals = func->executable->code->locals;
 
-  FbleThunkValue* stack = FbleNewValue(heap, FbleThunkValue);
-  stack->_base.tag = FBLE_THUNK_VALUE;
-  stack->value = NULL;
-  stack->tail = thread->stack;
+  FbleRefValue* result = FbleNewValue(heap, FbleRefValue);
+  result->_base.tag = FBLE_REF_VALUE;
+  result->value = NULL;
+
+  FbleStackValue* stack = FbleNewValue(heap, FbleStackValue);
+  stack->_base.tag = FBLE_STACK_VALUE;
+
   stack->joins = 0;
+
   stack->func = func;
+  FbleValueAddRef(heap, &stack->_base, &func->_base);
+
   stack->pc = 0;
+
   stack->locals.size = func->executable->code->locals;
   stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, locals);
   memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
 
+  stack->result = result;
+  FbleValueAddRef(heap, &stack->_base, &result->_base);
+
+  stack->tail = thread->stack;
   if (stack->tail != NULL) {
     FbleValueAddRef(heap, &stack->_base, &stack->tail->_base);
     FbleReleaseValue(heap, &stack->tail->_base);
   }
 
-  FbleValueAddRef(heap, &stack->_base, &stack->func->_base);
   for (size_t i = 0; i < func->argc; ++i) {
     stack->locals.xs[i] = args[i];
     FbleValueAddRef(heap, &stack->_base, args[i]);
   }
   thread->stack = stack;
-  return &stack->_base;
+  return result;
 }
 
 // FbleThreadTailCall -- see documentation in execute.h
 void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleArena* arena = heap->arena;
-  FbleThunkValue* stack = thread->stack;
+  FbleStackValue* stack = thread->stack;
   size_t old_localc = stack->func->executable->code->locals;
   size_t localc = func->executable->code->locals;
 

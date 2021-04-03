@@ -7,11 +7,11 @@ out/build.ninja: build.ninja.tcl
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja -j 2 -k 0
+	ninja -f out/build.ninja
 
 .PHONY: all
 all: out/build.ninja
-	ninja -f out/build.ninja -j 2
+	ninja -f out/build.ninja
 
 .PHONY: clean
 clean:

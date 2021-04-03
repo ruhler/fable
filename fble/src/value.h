@@ -21,7 +21,8 @@ typedef enum {
   FBLE_FUNC_VALUE,
   FBLE_LINK_VALUE,
   FBLE_PORT_VALUE,
-  FBLE_THUNK_VALUE,
+  FBLE_REF_VALUE,
+  FBLE_STACK_VALUE,
 } FbleValueTag;
 
 // FbleValue --
@@ -129,40 +130,44 @@ typedef struct {
   FbleValue** data;
 } FblePortValue;
 
-// FbleThunkValue --
-//   FBLE_THUNK_VALUE
+// FbleRefValue --
+//   FBLE_REF_VALUE
 //
 // An implementation-specific value introduced to support recursive values and
-// partially evaluated expressions.
+// not yet computed values.
 //
-// A thunk value holds a reference to another value. All values must be
-// dereferenced before being otherwise accessed in case they are thunk
+// A ref value holds a reference to another value. All values must be
+// dereferenced before being otherwise accessed in case they are ref
 // values.
-//
-// For recursive values, 'tail' and 'func' will be NULL, 'joins' and 'pc' will
-// be 0 and 'locals' will be empty.
-//
-// For partially evaluated expressions, func is the currently executing
-// function, pc the location in that function, locals the list of current
-// local variables, and tail is a thunk to compute after this thunk is
-// finished computing.
 //
 // Fields:
 //   value - the value being referenced, or NULL if no value is referenced.
-//   tail - the next thunk to compute after this one.
-//   joins - the number of threads to join before continuing with this thunk.
-//   func - the function being executed.
-//   pc - offset into func->code.
-//   locals - vector of local variables.
-struct FbleThunkValue {
+struct FbleRefValue {
   FbleValue _base;
   FbleValue* value;
+};
 
-  struct FbleThunkValue* tail;
+// FbleStackValue --
+//   FBLE_STACK_VALUE
+//
+// An implementation-specific value used to describe a thread's stack.
+//
+// Fields:
+//   joins - the number of threads to wait for joining before resuming
+//           execution of this frame of the stack.
+//   func - the function being executed at this frame of the stack.
+//   pc - the next instruction in func->code to execute.
+//   locals - vector of local variables.
+//   result - where to store the result of executing the current frame.
+//   tail - the next frame down in the stack.
+struct FbleStackValue {
+  FbleValue _base;
   size_t joins;
   FbleFuncValue* func;
   size_t pc;
   FbleValueV locals;
+  FbleRefValue* result;
+  struct FbleStackValue* tail;
 };
 
 // FbleNewValue --
@@ -228,14 +233,15 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link);
 
 // FbleStrictValue --
 //   Get the strict value associated with the given value, which will either
-//   be the value itself, or the computed result if the value is a thunk.
+//   be the value itself, or the dereferenced value if the value is a
+//   reference.
 //
 // Inputs:
 //   value - the value to get the strict version of.
 //
 // Results:
-//   The value with all layers of thunks removed. NULL if the value is a thunk
-//   that has not been fully computed.
+//   The value with all layers of reference indirection removed. NULL if the
+//   value is a reference that has no value yet.
 //
 // Side effects:
 //   None.
