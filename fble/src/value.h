@@ -79,18 +79,22 @@ struct FbleExecutable {
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
-//   argc - The number of arguments expected by the function.
 //   executable - The code for the function.
-//   statics - static variables captured by the function. The length is
-//             executable->code->statics.
+//   argc - The number of arguments expected by the function.
+//   localc - the number of local variable slots needed to execute the
+//            function.
+//   staticc - the number of static variables captured by the function.
+//   statics - static variables captured by the function.
 //
 // Note: Function values are used for both pure functions and processes. We
 // don't distinguish between the two at runtime, except that argc == 0
 // suggests this is for a process instead of a function.
 struct FbleFuncValue {
   FbleValue _base;
-  size_t argc;
   FbleExecutable* executable;
+  size_t argc;
+  size_t localc;
+  size_t staticc;
   FbleValue* statics[];
 };
 

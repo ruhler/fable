@@ -38,11 +38,13 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   for (size_t i = 0; i < modulec; ++i) {
     FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
     func->_base.tag = FBLE_FUNC_VALUE;
-    func->argc = program->modules.xs[i].deps.size;
     func->executable = FbleAlloc(arena, FbleExecutable);
     func->executable->code = program->modules.xs[i].executable->code;
     func->executable->code->refcount++;
     func->executable->run = program->modules.xs[i].executable->run;
+    func->argc = program->modules.xs[i].deps.size;
+    func->localc = program->modules.xs[i].executable->code->locals;
+    func->staticc = program->modules.xs[i].executable->code->statics;
     funcs[i] = &func->_base;
   }
 
@@ -97,10 +99,12 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   // Wrap that all up into an FbleFuncValue.
   FbleFuncValue* linked = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * modulec);
   linked->_base.tag = FBLE_FUNC_VALUE;
-  linked->argc = 0;
   linked->executable = FbleAlloc(arena, FbleExecutable);
   linked->executable->code = code;
   linked->executable->run = &FbleStandardRunFunction;
+  linked->argc = 0;
+  linked->localc = code->locals;
+  linked->staticc = code->statics;
   for (size_t i = 0; i < modulec; ++i) {
     linked->statics[i] = funcs[i];
     FbleValueAddRef(heap, &linked->_base, funcs[i]);

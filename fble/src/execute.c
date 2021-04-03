@@ -7,7 +7,6 @@
 #include <stdlib.h>   // for NULL
 #include <string.h>   // for memset
 
-#include "code.h"
 #include "fble.h"     // for FbleIO.
 #include "heap.h"
 #include "tc.h"
@@ -178,7 +177,7 @@ FbleRefValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue
 {
   FbleArena* arena = heap->arena;
 
-  size_t locals = func->executable->code->locals;
+  size_t locals = func->localc;
 
   FbleRefValue* result = FbleNewValue(heap, FbleRefValue);
   result->_base.tag = FBLE_REF_VALUE;
@@ -194,7 +193,7 @@ FbleRefValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue
 
   stack->pc = 0;
 
-  stack->locals.size = func->executable->code->locals;
+  stack->locals.size = func->localc;
   stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, locals);
   memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
 
@@ -220,8 +219,8 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 {
   FbleArena* arena = heap->arena;
   FbleStackValue* stack = thread->stack;
-  size_t old_localc = stack->func->executable->code->locals;
-  size_t localc = func->executable->code->locals;
+  size_t old_localc = stack->func->localc;
+  size_t localc = func->localc;
 
   // Take references to the function and arguments early to ensure we don't
   // drop the last reference to them before we get the chance.
@@ -231,7 +230,7 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
   }
 
   stack->func = func;
-  stack->locals.size = func->executable->code->locals;
+  stack->locals.size = func->localc;
   stack->pc = 0;
 
   if (localc > old_localc) {

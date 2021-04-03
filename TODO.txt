@@ -1,5 +1,4 @@
 Fble Compilation:
-* Remove execute.c dependency on code.h.
 * Make FbleExecutable a proper abstract type.
 * Move standard run function to interpret.c.
 * Can I cleanup/break the dependency cycle between execute.h and value.h?

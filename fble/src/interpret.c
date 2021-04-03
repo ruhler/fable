@@ -270,16 +270,18 @@ static FbleExecStatus JumpInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-  size_t scopec = func_value_instr->code->statics;
+  size_t staticc = func_value_instr->code->statics;
 
-  FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * scopec);
+  FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * staticc);
   value->_base.tag = FBLE_FUNC_VALUE;
-  value->argc = func_value_instr->argc;
   value->executable = FbleAlloc(heap->arena, FbleExecutable);
   value->executable->code = func_value_instr->code;
   value->executable->code->refcount++;
   value->executable->run = &FbleStandardRunFunction;
-  for (size_t i = 0; i < scopec; ++i) {
+  value->argc = func_value_instr->argc;
+  value->localc = func_value_instr->code->locals;
+  value->staticc = staticc;
+  for (size_t i = 0; i < staticc; ++i) {
     FbleValue* arg = FrameGet(thread, func_value_instr->scope.xs[i]);
     value->statics[i] = arg;
     FbleValueAddRef(heap, &value->_base, arg);
