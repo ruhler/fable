@@ -871,3 +871,14 @@ No. gcc just isn't happy.
 
 What improvements can I make to the compiled code? It seems like instruction
 dispatch isn't a major contributor to the runtime.
+
+Looking at a profile for fble-bench interpreted, almost all of the top
+contributors are allocation related: MarkRef, AddRef, IncrGc, FbleFree,
+FbleValueAddRef, Release, FbleRawAlloc.
+
+Let's try running the compiled code with profiling. I'm not sure what it will
+do with the tcc compiled .o files. I get nothing. gprof segfaults. Maybe I can
+try shrinking those modules that gcc has trouble compiling, so I can run them
+all with profiling? No. gcc is being pretty stubborn. And I don't want to
+introduce helper functions in the compiled code just to make gcc happy.
+

@@ -221,7 +221,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       fprintf(fout, "      FbleStructValue* sv = (FbleStructValue*)"); FrameGetStrict(fout, access_instr->obj); fprintf(fout, ";\n");
       fprintf(fout, "      if (sv == NULL) {\n");
-      VarId loc_id = GenLoc(fout, "      ", var_id, access_instr->loc);
+      VarId loc_id = GenLoc(fout, "        ", var_id, access_instr->loc);
       fprintf(fout, "        FbleReportError(\"undefined struct value access\\n\", v%x);\n", loc_id);
       fprintf(fout, "        FbleFreeLoc(heap->arena, v%x);\n", loc_id);
       fprintf(fout, "        return FBLE_EXEC_ABORTED;\n");

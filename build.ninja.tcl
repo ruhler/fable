@@ -53,6 +53,7 @@ proc build { targets dependencies command args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
+  #set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
   set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
@@ -84,6 +85,7 @@ proc tobj { obj src iflags args } {
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 #   args - optional additional dependencies.
 proc bin { bin objs lflags args } {
+  #set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
   build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
 }
@@ -300,15 +302,16 @@ build $::out/build.ninja "build.ninja.tcl $::globs" \
 # TODO: Add coverage a profiling variants of things?
 #
 # For coverage:
-# * add to gcc flags: -fprofile-arcs -ftest-coverage
+# * add to gcc flags: -fprofile-arcs -ftest-coverage to obj and bin rules.
 # * run tests as desired.
-# * run gcov passing all the libfble .o files on the command line.
+# * run gcov out/obj/*.o
 # * move *.gcov to wherever I prefer they end up.
 #
 # For profiling:
-# * add to gcc flags: -pg
+# * add to gcc flags: -fprofile-arcs -ftest-coverage -pg to obj and bin rules.
+# * remove all the generated .gcda files to start fresh.
 # * run benchmark as desired.
 # * run gprof passing the benchmark executable run on the command line.
-# * run gcov and move *.gcov files where preferred as described for coverage.
+# * run gcov out/obj/*.o and move *.gcov files where preferred.
 # * remove gmon.out
 
