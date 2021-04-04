@@ -19,6 +19,7 @@ static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index);
 static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index);
 static void FrameSet(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
 static void FrameSetAndRelease(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
+static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 
 // InstrImpl --
 //   A function that executes an instruction.
@@ -276,7 +277,7 @@ static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, 
   value->executable = FbleAlloc(heap->arena, FbleExecutable);
   value->executable->code = func_value_instr->code;
   value->executable->code->refcount++;
-  value->executable->run = &FbleStandardRunFunction;
+  value->executable->run = &InterpretedRunFunction;
   value->argc = func_value_instr->argc;
   value->localc = func_value_instr->code->locals;
   value->staticc = staticc;
@@ -569,8 +570,12 @@ static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   return FBLE_EXEC_RUNNING;
 }
 
-// FbleStandardRunFunction -- see documentation in execute.h
-FbleExecStatus FbleStandardRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
+// InterpretedRunFunction --
+//   An standard run function that runs an fble function by interpreting the
+//   instructions in its instruction block.
+//
+// See documentation of FbleRunFunction in execute.h.
+static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
   FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
@@ -614,8 +619,20 @@ FbleExecutable* FbleInterpretCode(FbleArena* arena, FbleCode* code)
   FbleExecutable* executable = FbleAlloc(arena, FbleExecutable);
   executable->code = code;
   executable->code->refcount++;
-  executable->run = &FbleStandardRunFunction;
+  executable->run = &InterpretedRunFunction;
   return executable;
+}
+
+// FbleNewInterpretedFuncValue -- see documentation in fble-interpret.h
+FbleFuncValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, size_t argc, FbleCode* code)
+{
+  FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * code->statics);
+  v->_base.tag = FBLE_FUNC_VALUE;
+  v->executable = FbleInterpretCode(heap->arena, code);
+  v->argc = argc;
+  v->localc = code->locals;
+  v->staticc = code->statics;
+  return v;
 }
 
 // FbleInterpret -- see documentation in fble-interpret.h

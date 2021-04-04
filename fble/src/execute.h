@@ -12,7 +12,6 @@
 #include "fble-profile.h"   // for FbleProfileThread
 #include "fble-value.h"     // for FbleValueHeap
 
-typedef struct FbleFuncValue FbleFuncValue;
 typedef struct FbleRefValue FbleRefValue;
 typedef struct FbleStackValue FbleStackValue;
 
@@ -109,12 +108,5 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 // * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
 typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
-
-// FbleStandardRunFunction --
-//   An standard run function that runs an fble function by interpreting the
-//   instructions in its instruction block.
-//
-// See documentation of FbleRunFunction above.
-FbleExecStatus FbleStandardRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 
 #endif // FBLE_INTERNAL_EXECUTE_H_

@@ -5,7 +5,7 @@
 #include <stdlib.h>   // for NULL
 
 #include "code.h"
-#include "execute.h"     // for FbleStandardRunFunction
+#include "fble-interpret.h"
 #include "heap.h"
 #include "value.h"
 
@@ -275,15 +275,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
-  FbleProcValue* get = FbleNewValueExtra(heap, FbleProcValue, sizeof(FbleValue*));
-  get->_base.tag = FBLE_PROC_VALUE;
-  get->executable = FbleAlloc(heap->arena, FbleExecutable);
-  get->executable->code = &code;
-  get->executable->code->refcount++;
-  get->executable->run = &FbleStandardRunFunction;
-  get->argc = 0;
-  get->localc = code.locals;
-  get->staticc = code.statics;
+  FbleProcValue* get = FbleNewInterpretedFuncValue(heap, 0, &code);
   get->statics[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
   return &get->_base;
@@ -362,14 +354,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   };
   func_code.refcount++;
 
-  FbleFuncValue* put = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*));
-  put->_base.tag = FBLE_FUNC_VALUE;
-  put->executable = FbleAlloc(heap->arena, FbleExecutable);
-  put->executable->code = &func_code;
-  put->executable->run = &FbleStandardRunFunction;
-  put->argc = 1;
-  put->localc = func_code.locals;
-  put->staticc = func_code.statics;
+  FbleFuncValue* put = FbleNewInterpretedFuncValue(heap, 1, &func_code);
   put->statics[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
   return &put->_base;

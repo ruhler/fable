@@ -15,6 +15,10 @@ typedef struct FbleHeap FbleValueHeap;
 //   An fble value.
 typedef struct FbleValue FbleValue;
 
+// FbleFuncValue --
+//   An fble function value.
+typedef struct FbleFuncValue FbleFuncValue;
+
 // FbleValueV --
 //   A vector of FbleValue*
 typedef struct {

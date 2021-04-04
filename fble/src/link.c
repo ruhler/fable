@@ -97,19 +97,13 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   FbleVectorAppend(arena, code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
-  FbleFuncValue* linked = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * modulec);
-  linked->_base.tag = FBLE_FUNC_VALUE;
-  linked->executable = FbleAlloc(arena, FbleExecutable);
-  linked->executable->code = code;
-  linked->executable->run = &FbleStandardRunFunction;
-  linked->argc = 0;
-  linked->localc = code->locals;
-  linked->staticc = code->statics;
+  FbleFuncValue* linked = FbleNewInterpretedFuncValue(heap, 0, code);
   for (size_t i = 0; i < modulec; ++i) {
     linked->statics[i] = funcs[i];
     FbleValueAddRef(heap, &linked->_base, funcs[i]);
     FbleReleaseValue(heap, funcs[i]);
   }
+  FbleFreeCode(arena, code);
 
   return &linked->_base;
 }
