@@ -7,7 +7,7 @@ out/build.ninja: build.ninja.tcl
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja out/test/fble-stdio-test.tr
+	ninja -f out/build.ninja out/bin/fble-bench
 
 .PHONY: all
 all: out/build.ninja
@@ -26,7 +26,7 @@ full:
 
 .PHONY: bench
 bench:
-	./out/bin/fble-test prgms/Fble/Bench.fble prgms
+	./out/bin/fble-stdio prgms/Fble/Bench.fble prgms
 
 .PHONY: benchprof
 benchprof:

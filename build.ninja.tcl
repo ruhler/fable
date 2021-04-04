@@ -262,6 +262,14 @@ bin $::bin/fble-tests \
 test $::test/fble-compiled-tests.tr $::bin/fble-tests \
   "$::bin/fble-tests" "pool = console"
 
+# /Fble/Bench% compiled binary
+build $::src/fble-bench.c $::bin/fble-compile \
+  "$::bin/fble-compile /Fble/Bench% --export FbleStdioMain > $::src/fble-bench.c"
+obj $::obj/fble-bench.o $::src/fble-bench.c "-I fble/include -I fble/src"
+bin $::bin/fble-bench \
+  "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
+  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
+
 # fblf compilation test
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
 build $::src/fblf-tests.c \

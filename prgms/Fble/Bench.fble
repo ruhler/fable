@@ -1,14 +1,48 @@
 
+% True = /Bool%.True;
+
+% Chars = /Char%.Chars;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Stdio@ = /Stdio%.Stdio@;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+% Strs = /String%.Strs;
+
 @ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
 
-Unit@ _gameoflife := /GameOfLife/Bench%.Bench;
-Unit@ _invaders := /Invaders/Bench%.Bench;
-Unit@ _md5 := /Md5/Tests%.Bench;
-#Unit@ _fblf_md5 := /Fblf/Lib/Md5/Tests%.Bench;
-Unit@ _sat := /Sat/Bench%.Bench;
-Unit@ _snake := /Snake/Bench%.Bench;
-Unit@ _sudoku := /Sudoku/Tests%.Bench;
-Unit@ _tictactoe := /TicTacToe/Tests%.Bench;
+Stdio@ Bench = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
+  Unit@ _ := stdout(Str|'GameOfLife...');
+  Unit@ _gameoflife := /GameOfLife/Bench%.Bench;
 
-!(Unit);
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Invaders...']);
+  Unit@ _invaders := /Invaders/Bench%.Bench;
+
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Md5...']);
+  Unit@ _md5 := /Md5/Tests%.Bench;
+
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Fblf Md5 SKIPPED']);
+  #Unit@ _fblf_md5 := /Fblf/Lib/Md5/Tests%.Bench;
+  
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Sat...']);
+  Unit@ _sat := /Sat/Bench%.Bench;
+
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Snake...']);
+  Unit@ _snake := /Snake/Bench%.Bench;
+
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Sudoku...']);
+  Unit@ _sudoku := /Sudoku/Tests%.Bench;
+
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'TicTacToe...']);
+  Unit@ _tictactoe := /TicTacToe/Tests%.Bench;
+
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'DONE', Str[Chars.nl]]);
+  !(True);
+};
+
+Bench;

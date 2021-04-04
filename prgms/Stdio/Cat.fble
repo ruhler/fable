@@ -1,6 +1,4 @@
 
-@ Unit@ = /Unit%.Unit@;
-
 % True = /Bool%.True;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
@@ -11,6 +9,8 @@
 @ Stdio@ = /Stdio%.Stdio@;
 
 @ String@ = /String%.String@;
+
+@ Unit@ = /Unit%.Unit@;
 
 # The 'cat' program to cat stdin.
 Stdio@ Cat = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
