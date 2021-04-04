@@ -10,11 +10,6 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// TIME_SLICE --
-//   The number of instructions a thread is allowed to run before switching to
-//   another thread.
-#define TIME_SLICE 1024
-
 // PROFILE_SAMPLE_PERIOD --
 //   The approximate number of instructions to execute before taking another
 //   profiling sample.
@@ -402,28 +397,30 @@ static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleTh
     FrameSetAndRelease(heap, thread, put_instr->dest, unit);
     *io_activity = true;
     thread->stack->pc++;
-    return FBLE_EXEC_RUNNING;
+
+    // We yield in this case instead of continuing to execute instructions
+    // from this function. This is an arbitrary thing to do, motivated by the
+    // fear (not seen in practice thus far) that a producer/consumer pipeline
+    // will blow up memory producing everything before the consumer gets a
+    // chance to consume anything. It's probably worth figuring out a better
+    // reason to yield here.
+    return FBLE_EXEC_YIELDED;
   }
 
-  if (put_port->tag == FBLE_PORT_VALUE) {
-    FblePortValue* port = (FblePortValue*)put_port;
-
-    if (*port->data != NULL) {
-      // Blocked on put.
-      assert(instr->profile_ops == NULL && "profile op might run twice");
-      return FBLE_EXEC_BLOCKED;
-    }
-
-    FbleRetainValue(heap, arg);
-    *port->data = arg;
-    FrameSetAndRelease(heap, thread, put_instr->dest, unit);
-    *io_activity = true;
-    thread->stack->pc++;
-    return FBLE_EXEC_RUNNING;
+  assert(put_port->tag == FBLE_PORT_VALUE);
+  FblePortValue* port = (FblePortValue*)put_port;
+  if (*port->data != NULL) {
+    // Blocked on put.
+    assert(instr->profile_ops == NULL && "profile op might run twice");
+    return FBLE_EXEC_BLOCKED;
   }
 
-  UNREACHABLE("put port must be an output or port value");
-  return FBLE_EXEC_ABORTED;
+  FbleRetainValue(heap, arg);
+  *port->data = arg;
+  FrameSetAndRelease(heap, thread, put_instr->dest, unit);
+  *io_activity = true;
+  thread->stack->pc++;
+  return FBLE_EXEC_RUNNING;
 }
 
 // ForkInstr -- see documentation of InstrImpl
@@ -583,10 +580,6 @@ FbleExecStatus FbleStandardRunFunction(FbleValueHeap* heap, FbleThreadV* threads
   FbleExecStatus status = FBLE_EXEC_RUNNING;
   while (status == FBLE_EXEC_RUNNING) {
     FbleInstr* instr = code[thread->stack->pc];
-    if (rand() % TIME_SLICE == 0) {
-      return FBLE_EXEC_YIELDED;
-    }
-
     if (profile != NULL) {
       if (rand() % PROFILE_SAMPLE_PERIOD == 0) {
         FbleProfileSample(arena, profile, 1);

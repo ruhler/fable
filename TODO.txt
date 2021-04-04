@@ -1,6 +1,9 @@
 Fble Compilation:
+* Make FbleStandardRunFunction private to interpret.c
 * Figure out memory leak that happens when moving time slice check to
   execute.c.
+* Figure out why splitting ThunkValue into RefValue and StackValue hurt
+  performance so much? Just double the number of allocations?
 
 * Make FbleExecutable a proper abstract type.
 * Can I cleanup/break the dependency cycle between execute.h and value.h?
@@ -221,6 +224,12 @@ Exec:
 * [compile] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced
    abstract type?
+
+* [eval] Thread execution should be at least somewhat fair.
+  In the current implementation, in theory, a long running non-IO computation
+  could cause IO threads to get blocked. That's certainly against the spirit
+  of the spec, but I don't have a clear definition for how things ought to
+  behave or a decent way to test that. Figure out something better here.
 
 * [eval] Make child thread execution fair.
   Children should be time multiplexed, where priority is assigned based on how
