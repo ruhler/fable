@@ -441,7 +441,7 @@ static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
     FbleThread* child = FbleAlloc(heap->arena, FbleThread);
     child->stack = thread->stack;
     child->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(heap->arena, thread->profile);
-    FbleRetainValue(heap, &thread->stack->_base);
+    FbleRetainValue(heap, &child->stack->_base);
     child->stack->joins++;
     FbleVectorAppend(heap->arena, *threads, child);
 
