@@ -102,12 +102,12 @@ typedef struct {
 // FbleCode --
 //   A reference counted block of instructions.
 //
-// The magic field is set to FBLE_INSTR_BLOCK_MAGIC to help detect double
+// The magic field is set to FBLE_CODE_MAGIC to help detect double
 // free.
-#define FBLE_INSTR_BLOCK_MAGIC 0xB10CE
+#define FBLE_CODE_MAGIC 0xB10CE
 struct FbleCode {
   size_t refcount;
-  size_t magic;
+  size_t magic;       // FBLE_CODE_MAGIC
   size_t statics;     // The number of statics used by this frame.
   size_t locals;      // The number of locals required by this stack frame.
   FbleInstrV instrs;

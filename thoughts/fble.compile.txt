@@ -855,3 +855,15 @@ works.
 The next step, which will require some cleanup prep first, is to start
 generating some custom C code to execute functions, instead of just allocating
 FbleInstrs for the interpreter.
+
+---
+
+Okay! Now we're generating some real C code. The results? A little more modest
+than I was hoping.
+
+Without compilation, fble bench is 5m49s. With compilation, 5m27s. This is
+using tcc to compile the fble code instead of gcc.
+
+I wonder if I can get gcc to work, perhaps by turning off some of the debug
+info flags.
+

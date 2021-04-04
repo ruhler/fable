@@ -274,7 +274,7 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleCode** code, size_t st
 
   scope->code = FbleAlloc(arena, FbleCode);
   scope->code->refcount = 1;
-  scope->code->magic = FBLE_INSTR_BLOCK_MAGIC;
+  scope->code->magic = FBLE_CODE_MAGIC;
   scope->code->statics = statics;
   scope->code->locals = 0;
   FbleVectorInit(arena, scope->code->instrs);

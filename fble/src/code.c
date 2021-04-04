@@ -352,7 +352,7 @@ void FbleFreeCode(FbleArena* arena, FbleCode* block)
   // probably already freed this instruction block and decrementing the
   // refcount could end up corrupting whatever is now making use of the memory
   // that was previously used for the instruction block.
-  assert(block->magic == FBLE_INSTR_BLOCK_MAGIC && "corrupt FbleCode");
+  assert(block->magic == FBLE_CODE_MAGIC && "corrupt FbleCode");
 
   assert(block->refcount > 0);
   block->refcount--;

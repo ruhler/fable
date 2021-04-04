@@ -53,7 +53,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   // variable i, and the value computed for module i will be local variable i.
   FbleCode* code = FbleAlloc(arena, FbleCode);
   code->refcount = 1;
-  code->magic = FBLE_INSTR_BLOCK_MAGIC;
+  code->magic = FBLE_CODE_MAGIC;
   code->statics = modulec;
   code->locals = modulec;
   FbleVectorInit(arena, code->instrs);
