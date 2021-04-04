@@ -322,7 +322,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      }\n");
 
       fprintf(fout, "      assert(func->_base.tag == FBLE_FUNC_VALUE);\n");
-      fprintf(fout, "      FbleValue* args[%i];\n", call_instr->args.size);
+      fprintf(fout, "      FbleValue* args[%i];\n", call_instr->args.size == 0 ? 1 : call_instr->args.size);
       for (size_t i = 0; i < call_instr->args.size; ++i) {
         fprintf(fout, "      args[%i] = ", i); FrameGet(fout, call_instr->args.xs[i]); fprintf(fout, ";\n");
       }

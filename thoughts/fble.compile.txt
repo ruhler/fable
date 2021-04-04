@@ -867,3 +867,7 @@ using tcc to compile the fble code instead of gcc.
 I wonder if I can get gcc to work, perhaps by turning off some of the debug
 info flags.
 
+No. gcc just isn't happy.
+
+What improvements can I make to the compiled code? It seems like instruction
+dispatch isn't a major contributor to the runtime.
