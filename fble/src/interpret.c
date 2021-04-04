@@ -12,9 +12,13 @@
 
 // TIME_SLICE --
 //   The number of instructions a thread is allowed to run before switching to
-//   another thread. Also used as the profiling sample period in number of
-//   instructions executed.
+//   another thread.
 #define TIME_SLICE 1024
+
+// PROFILE_SAMPLE_PERIOD --
+//   The approximate number of instructions to execute before taking another
+//   profiling sample.
+#define PROFILE_SAMPLE_PERIOD 1024
 
 static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index);
 static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index);
@@ -580,13 +584,14 @@ FbleExecStatus FbleStandardRunFunction(FbleValueHeap* heap, FbleThreadV* threads
   while (status == FBLE_EXEC_RUNNING) {
     FbleInstr* instr = code[thread->stack->pc];
     if (rand() % TIME_SLICE == 0) {
-      if (profile != NULL) {
-        FbleProfileSample(arena, profile, 1);
-      }
       return FBLE_EXEC_YIELDED;
     }
 
     if (profile != NULL) {
+      if (rand() % PROFILE_SAMPLE_PERIOD == 0) {
+        FbleProfileSample(arena, profile, 1);
+      }
+
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP:

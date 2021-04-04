@@ -1,6 +1,8 @@
 Fble Compilation:
+* Figure out memory leak that happens when moving time slice check to
+  execute.c.
+
 * Make FbleExecutable a proper abstract type.
-* Move standard run function to interpret.c.
 * Can I cleanup/break the dependency cycle between execute.h and value.h?
 * Should definition of FbleThread* be private to execute.c?
 
