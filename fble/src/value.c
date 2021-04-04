@@ -166,11 +166,12 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 
     case FBLE_STACK_VALUE: {
       FbleStackValue* v = (FbleStackValue*)value;
-      Ref(callback, &v->tail->_base);
       Ref(callback, &v->func->_base);
       for (size_t i = 0; i < v->locals.size; ++i) {
         Ref(callback, v->locals.xs[i]);
       }
+      Ref(callback, &v->result->_base);
+      Ref(callback, &v->tail->_base);
       break;
     }
   }
