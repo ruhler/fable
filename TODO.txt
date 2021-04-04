@@ -184,9 +184,6 @@ Exec:
  - Low priority, because experiments suggest at best we save like, 8 seconds
    on fble bench.
 
-* [eval] Thread management cleanup
- - Use fair thread traversal by starting over from root when yield occurs.
-
 * [app] Change App% back to drawing over the previous screen?
  - It can figure out how to double buffer appropriately on the implementation
    side, for example by drawing the last two updates to the buffer.
