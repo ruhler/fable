@@ -1,4 +1,6 @@
 Fble Compilation:
+* Rename FBLE_INSTR_BLOCK_MAGIC to FBLE_CODE_MAGIC.
+
 * Figure out memory leak that happens when moving time slice check to
   execute.c.
 * Figure out why splitting ThunkValue into RefValue and StackValue hurt

@@ -291,7 +291,12 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * %i);\n", staticc);
       fprintf(fout, "      v->_base.tag = FBLE_FUNC_VALUE;\n");
       fprintf(fout, "      v->executable = FbleAlloc(heap->arena, FbleExecutable);\n");
-      fprintf(fout, "      v->executable->code = NULL;\n");
+      fprintf(fout, "      v->executable->code = FbleAlloc(heap->arena, FbleCode);\n");
+      fprintf(fout, "      v->executable->code->refcount = 1;\n");
+      fprintf(fout, "      v->executable->code->magic = FBLE_INSTR_BLOCK_MAGIC;\n");
+      fprintf(fout, "      v->executable->code->statics = %i;\n", staticc);
+      fprintf(fout, "      v->executable->code->locals = %i;\n", func_instr->code->locals);
+      fprintf(fout, "      FbleVectorInit(heap->arena, v->executable->code->instrs);\n");
       fprintf(fout, "      v->executable->run = &_block_%p;\n", (void*)func_instr->code);
       fprintf(fout, "      v->argc = %i;\n", func_instr->argc);
       fprintf(fout, "      v->localc = %i;\n", func_instr->code->locals);
@@ -370,7 +375,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
         fprintf(fout, "      FbleThread* child_%i = FbleAlloc(heap->arena, FbleThread);\n", i);
         fprintf(fout, "      child_%i->stack = thread->stack;\n", i);
-        fprintf(fout, "      child_%i->profile = NULL ? NULL : FbleForkProfileThread(heap->arena, thread->profile);\n", i);
+        fprintf(fout, "      child_%i->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(heap->arena, thread->profile);\n", i);
         fprintf(fout, "      FbleRetainValue(heap, &child_%i->stack->_base);\n", i);
         fprintf(fout, "      child_%i->stack->joins++;\n", i);
         fprintf(fout, "      FbleVectorAppend(heap->arena, *threads, child_%i);\n", i);
@@ -620,7 +625,12 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   }
 
   fprintf(fout, "  v%x->executable = FbleAlloc(arena, FbleExecutable);\n", module_id);
-  fprintf(fout, "  v%x->executable->code = NULL;\n", module_id);
+  fprintf(fout, "  v%x->executable->code = FbleAlloc(arena, FbleCode);\n", module_id);
+  fprintf(fout, "  v%x->executable->code->refcount = 1;\n", module_id);
+  fprintf(fout, "  v%x->executable->code->magic = FBLE_INSTR_BLOCK_MAGIC;\n", module_id);
+  fprintf(fout, "  v%x->executable->code->statics = %i;\n", module_id, module->code->statics);
+  fprintf(fout, "  v%x->executable->code->locals = %i;\n", module_id, module->code->locals);
+  fprintf(fout, "  FbleVectorInit(arena, v%x->executable->code->instrs);\n", module_id);
   fprintf(fout, "  v%x->executable->run = &_block_%p;\n", module_id, (void*)module->code);
 
   fprintf(fout, "}\n");
