@@ -23,6 +23,8 @@ static void CollectBlocks(FbleArena* arena, FbleCodeV* blocks, FbleCode* code);
 
 static void FrameGet(FILE* fout, FbleFrameIndex index);
 static void FrameGetStrict(FILE* fout, FbleFrameIndex index);
+static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
+static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
 
 static VarId GenLoc(FILE* fout, const char* indent, VarId* var_id, FbleLoc loc);
 static VarId GenName(FILE* fout, VarId* var_id, FbleName name);
@@ -49,6 +51,16 @@ static void CollectBlocks(FbleArena* arena, FbleCodeV* blocks, FbleCode* code)
   }
 }
 
+// FrameGet --
+//   Emit code to get a value from the stack frame.
+//
+// Inputs:
+//   fout - the output stream.
+//   index - the index of the value to get.
+//
+// Side effects:
+//   Outputs to fout an atomic C expression that gets the value from the
+//   frame.
 static void FrameGet(FILE* fout, FbleFrameIndex index)
 {
   fprintf(fout, "thread->stack->");
@@ -65,11 +77,58 @@ static void FrameGet(FILE* fout, FbleFrameIndex index)
   }
 }
 
+// FrameGetStrict --
+//   Emit code to get a strict value from the stack frame.
+//
+// Inputs:
+//   fout - the output stream.
+//   index - the index of the value to get.
+//
+// Side effects:
+//   Outputs to fout an atomic C expression that gets the dereferenced value
+//   from the frame.
 static void FrameGetStrict(FILE* fout, FbleFrameIndex index)
 {
   fprintf(fout, "FbleStrictValue(");
   FrameGet(fout, index);
   fprintf(fout, ")");
+}
+
+// FrameSetBorrowed --
+//   Emit code to set a borrowed value in the stack frame.
+//
+// Inputs:
+//   fout - the output stream.
+//   indent - indent to use at beginning of lines.
+//   index - the index of the value to set.
+//   value - an atomic C expression describing the value to set.
+//
+// Side effects:
+//   Outputs to fout an atomic C expression that sets the value in the frame,
+//   taking care of releasing any existing values as necessary.
+static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value)
+{
+  fprintf(fout, "%sFbleRetainValue(heap, %s);\n", indent, value);
+  fprintf(fout, "%sFbleReleaseValue(heap, thread->stack->locals.xs[%i]);\n", indent, index);
+  fprintf(fout, "%sthread->stack->locals.xs[%i] = %s;\n", indent, index, value);
+}
+
+// FrameSetBorrowed --
+//   Emit code to set a consumed value in the stack frame.
+//
+// Inputs:
+//   fout - the output stream.
+//   indent - indent to use at beginning of lines.
+//   index - the index of the value to set.
+//   value - an atomic C expression describing the value to set.
+//
+// Side effects:
+//   Outputs to fout an atomic C expression that sets the value in the frame,
+//   taking care of releasing any existing values as necessary.
+static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value)
+{
+  fprintf(fout, "%sFbleReleaseValue(heap, thread->stack->locals.xs[%i]);\n", indent, index);
+  fprintf(fout, "%sthread->stack->locals.xs[%i] = %s;\n", indent, index, value);
 }
 
 // GenLoc --
@@ -198,9 +257,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
         fprintf(fout, "      FbleValueAddRef(heap, &v->_base, v->fields[%i]);\n", i);
       }
 
-      fprintf(fout, "      thread->stack->locals.xs[%i] = &v->_base;\n", struct_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, &v->_base);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, &v->_base);\n");
+      FrameSetConsumed(fout, "      ", struct_instr->dest, "&v->_base");
       return;
     }
 
@@ -211,9 +268,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      v->tag = %i;\n", union_instr->tag);
       fprintf(fout, "      v->arg = "); FrameGet(fout, union_instr->arg); fprintf(fout, ";\n");
       fprintf(fout, "      FbleValueAddRef(heap, &v->_base, v->arg);\n");
-      fprintf(fout, "      thread->stack->locals.xs[%i] = &v->_base;\n", union_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, &v->_base);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, &v->_base);\n");
+      FrameSetConsumed(fout, "      ", union_instr->dest, "&v->_base");
       return;
     }
 
@@ -230,8 +285,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      assert(sv->_base.tag == FBLE_STRUCT_VALUE);\n");
       fprintf(fout, "      assert(%i < sv->fieldc);\n", access_instr->tag);
       fprintf(fout, "      FbleValue* value = sv->fields[%i];\n", access_instr->tag);
-      fprintf(fout, "      thread->stack->locals.xs[%i] = value;\n", access_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, value);\n");
+      FrameSetBorrowed(fout, "      ", access_instr->dest, "value");
       return;
     }
 
@@ -253,8 +307,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "        return FBLE_EXEC_ABORTED;\n");
       fprintf(fout, "      };\n");
 
-      fprintf(fout, "      thread->stack->locals.xs[%i] = uv->arg;\n", access_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, uv->arg);\n");
+      FrameSetBorrowed(fout, "      ", access_instr->dest, "uv->arg");
       return;
     }
 
@@ -305,9 +358,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
         fprintf(fout, "      v->statics[%i] = ", i); FrameGet(fout, func_instr->scope.xs[i]); fprintf(fout, ";\n");
         fprintf(fout, "      FbleValueAddRef(heap, &v->_base, v->statics[%i]);\n", i);
       }
-      fprintf(fout, "      thread->stack->locals.xs[%i] = &v->_base;\n", func_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, &v->_base);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, &v->_base);\n");
+      FrameSetConsumed(fout, "      ", func_instr->dest, "&v->_base");
       return;
     };
 
@@ -334,10 +385,11 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       }
 
       fprintf(fout, "      thread->stack->pc = %i;\n", pc+1);
-      fprintf(fout, "      FbleRefValue* result = FbleThreadCall(heap, func, args, thread);\n");
-      fprintf(fout, "      thread->stack->tail->locals.xs[%i] = &result->_base;\n", call_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->tail->_base, &result->_base);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, &result->_base);\n");
+
+      fprintf(fout, "      FbleValue** result = thread->stack->locals.xs + %i;", call_instr->dest);
+      fprintf(fout, "      FbleReleaseValue(heap, *result);\n");
+      fprintf(fout, "      *result = NULL;\n");
+      fprintf(fout, "      FbleThreadCall(heap, result, func, args, thread);\n");
       fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
       return;
     }
@@ -356,34 +408,32 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      FbleValue* put = FbleNewPutValue(heap, &link->_base);\n");
       fprintf(fout, "      FbleReleaseValue(heap, &link->_base);\n");
 
-      fprintf(fout, "      thread->stack->locals.xs[%i] = get;\n", link_instr->get);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, get);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, get);\n");
-
-      fprintf(fout, "      thread->stack->locals.xs[%i] = put;\n", link_instr->put);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, put);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, put);\n");
+      FrameSetConsumed(fout, "      ", link_instr->get, "get");
+      FrameSetConsumed(fout, "      ", link_instr->put, "put");
       return;
     }
 
     case FBLE_FORK_INSTR: {
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+      fprintf(fout, "      FbleProcValue* arg;\n");
+      fprintf(fout, "      FbleThread* child;\n");
+      fprintf(fout, "      FbleValue** result;\n");
+
       for (size_t i = 0; i < fork_instr->args.size; ++i) {
-        fprintf(fout, "      FbleProcValue* arg_%i = (FbleProcValue*)", i); FrameGetStrict(fout, fork_instr->args.xs[i]); fprintf(fout, ";\n");
-        fprintf(fout, "      assert(arg_%i != NULL && \"undefined proc value\");", i);
-        fprintf(fout, "      assert(arg_%i->_base.tag == FBLE_PROC_VALUE);\n", i);
+        fprintf(fout, "      arg = (FbleProcValue*)"); FrameGetStrict(fout, fork_instr->args.xs[i]); fprintf(fout, ";\n");
+        fprintf(fout, "      assert(arg != NULL && \"undefined proc value\");");
+        fprintf(fout, "      assert(arg->_base.tag == FBLE_PROC_VALUE);\n");
 
-        fprintf(fout, "      FbleThread* child_%i = FbleAlloc(heap->arena, FbleThread);\n", i);
-        fprintf(fout, "      child_%i->stack = thread->stack;\n", i);
-        fprintf(fout, "      child_%i->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(heap->arena, thread->profile);\n", i);
-        fprintf(fout, "      FbleRetainValue(heap, &child_%i->stack->_base);\n", i);
-        fprintf(fout, "      child_%i->stack->joins++;\n", i);
-        fprintf(fout, "      FbleVectorAppend(heap->arena, *threads, child_%i);\n", i);
+        fprintf(fout, "      child = FbleAlloc(heap->arena, FbleThread);\n");
+        fprintf(fout, "      child->stack = thread->stack;\n");
+        fprintf(fout, "      child->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(heap->arena, thread->profile);\n");
+        fprintf(fout, "      child->stack->joins++;\n");
+        fprintf(fout, "      FbleVectorAppend(heap->arena, *threads, child);\n");
 
-        fprintf(fout, "      FbleRefValue* result_%i = FbleThreadCall(heap, arg_%i, NULL, child_%i);\n", i, i, i);
-        fprintf(fout, "      thread->stack->locals.xs[%i] = &result_%i->_base;\n", fork_instr->dests.xs[i], i);
-        fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, &result_%i->_base);\n", i);
-        fprintf(fout, "      FbleReleaseValue(heap, &result_%i->_base);\n", i);
+        fprintf(fout, "      result = thread->stack->locals.xs + %i;", fork_instr->dests.xs[i]);
+        fprintf(fout, "      FbleReleaseValue(heap, *result);\n");
+        fprintf(fout, "      *result = NULL;\n");
+        fprintf(fout, "      FbleThreadCall(heap, result, arg, NULL, child);\n");
       }
 
       fprintf(fout, "      thread->stack->pc = %i;\n", pc+1);
@@ -394,8 +444,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
     case FBLE_COPY_INSTR: {
       FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
       fprintf(fout, "      FbleValue* v = "); FrameGet(fout, copy_instr->source); fprintf(fout, ";\n");
-      fprintf(fout, "      thread->stack->locals.xs[%i] = v;\n", copy_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, v);\n");
+      FrameSetBorrowed(fout, "      ", copy_instr->dest, "v");
       return;
     }
 
@@ -405,9 +454,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      v->_base.tag = FBLE_REF_VALUE;\n");
       fprintf(fout, "      v->value = NULL;\n");
 
-      fprintf(fout, "      thread->stack->locals.xs[%i] = &v->_base;\n", ref_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, &v->_base);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, &v->_base);\n");
+      FrameSetConsumed(fout, "      ", ref_instr->dest, "&v->_base");
       return;
     }
 
@@ -447,15 +494,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "        ref_result = (FbleRefValue*)result;\n");
       fprintf(fout, "      }\n");
 
-      fprintf(fout, "      FbleStackValue* stack = thread->stack;\n");
-      fprintf(fout, "      thread->stack = thread->stack->tail;\n");
-      fprintf(fout, "      if (thread->stack != NULL) {\n");
-      fprintf(fout, "        FbleRetainValue(heap, &thread->stack->_base);\n");
-      fprintf(fout, "      }\n");
-
-      fprintf(fout, "      stack->result->value = result;\n");
-      fprintf(fout, "      FbleValueAddRef(heap, &stack->result->_base, result);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, &stack->_base);\n");
+      fprintf(fout, "      FbleThreadReturn(heap, thread, result);\n");
       fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
       return;
     }
@@ -464,9 +503,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
       fprintf(fout, "      FbleTypeValue* v = FbleNewValue(heap, FbleTypeValue);\n");
       fprintf(fout, "      v->_base.tag = FBLE_TYPE_VALUE;\n");
-      fprintf(fout, "      thread->stack->locals.xs[%i] = &v->_base;\n", type_instr->dest);
-      fprintf(fout, "      FbleValueAddRef(heap, &thread->stack->_base, &v->_base);\n");
-      fprintf(fout, "      FbleReleaseValue(heap, &v->_base);\n");
+      FrameSetConsumed(fout, "      ", type_instr->dest, "&v->_base");
       return;
     }
   }
@@ -639,6 +676,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   return true;
 }
 
+// FbleGenerateCExport -- see documentation in fble-compile.h
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
   FbleArena* arena = FbleNewArena();

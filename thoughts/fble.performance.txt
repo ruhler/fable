@@ -139,3 +139,65 @@ It had a good run, but I no longer think fble elaborate is the answer. I don't
 see any reason not to keep the internal changes to the interpreter that we
 made for symbolic elaboration, where a type checked expression is a value.
 Unless it gets in the way.
+
+---
+
+I now compile fble instructions to c code, to hopefully avoid the overheads of
+instruction dispatch. It doesn't look like that's the big bottleneck though.
+The big bottleneck appears to be doing a lot of function calls, each of which
+requires allocating a stack frame. And for every stack frame allocated we do
+incremental gc, which means traversing more objects.
+
+I bet, if we could avoid doing so many allocations for function calls, we
+would spend much less time doing gc, which would improve performance a bunch.
+
+---
+
+The profile for fble bench says:
+* 107,519,013 new objects allocated, of which 30,928,572, or almost 30% are
+  FbleStackValues. That's more than the number of union values we allocate for
+  the entire program. So, 108M total allocations, 31M stack values, 31M ref
+  values (for the stack result), 26M union values, 16M struct values, and 4M
+  function values.
+* We call MarkRef 134M times. That's maybe 30% more than once per allocated
+  object. MarkRef is the top entry on the profile. AddRef is second, IncrGc is
+  third.
+
+The point is, we are spending a lot of time doing GC, because we have a lot of
+allocations, the majority of which are not even a visible part to the end
+users program. Here's what I propose to fix this:
+
+1. StackValue should not be an FbleValue. It should not have garbage
+collection. It's not longer mixed up with thunk values, so I don't see any
+issue with this.
+
+2. StackValue's result should be stored as a pointer to something that expects
+to receive a strong reference to the value. Not as a RefValue.
+
+Assuming I haven't missed something that prevents (1) and (2) from working,
+this will cut down number of gc object allocations by over 50%, which will cut
+down gc by over 50%. Which should give, I would estimate a 10% improvement in
+performance of the fble benchmark. In other words, from 5m45s to ... about
+5m0s? Okay, doesn't feel like a lot. Especially when before the split of
+ThunkValue into RefValue and StackValue we were at 5m10s. But on the flip
+side, if you think adding 31M StackValue's slowed down the program from 5m10s
+by a minute, then removing 31M would speed it up by a minute, leading to a
+runtime around 4m10s, which is much better. Anyway, it's worth a shot.
+
+Step 1: Confirm that the references to stack values we need are strong
+references, and the only references to stack value results we need are strong
+references.
+
+Yeah. Looks like that's the case. So we'll want locals to be an array of
+strongly retained values or NULL. We have to set it to NULL when we release
+it, if we do. We'll have to release any time we overwrite a value.
+
+Note: this effectively will undo a change we did to make stacks into gc values
+in the first place. But I don't think things need to be as complicated as they
+were before. We can track live values on the stack using NULL versus non-NULL.
+Clean up values when we overwrite a non-NULL and when we free the stack. We
+saw a 1 minute increase in fble bench time when we made that switch. I'm
+hopeful we can see a 2 minute improvement in fble bench time when we switch
+back.
+
+Yes. As expected, we're down to a 4 minute runtime with this change.

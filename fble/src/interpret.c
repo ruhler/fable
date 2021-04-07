@@ -17,8 +17,8 @@
 
 static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index);
 static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index);
-static void FrameSet(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
-static void FrameSetAndRelease(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
+static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
+static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
 static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 
 // InstrImpl --
@@ -126,40 +126,44 @@ static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index)
   return FbleStrictValue(FrameGet(thread, index));
 }
 
-// FrameSet -- 
-//   Store a value onto the frame on the top of the stack.
+// FrameSetBorrowed -- 
+//   Store a value onto the frame on the top of the stack without consuming
+//   ownership of the value.
 //
 // Inputs:
 //   heap - the value heap.
 //   thread - the current thread.
 //   index - the index of the value to set.
-//   value - the value to set.
+//   value - the value to set. Borrowed.
 //
 // Side effects:
 //   Sets the value at the given index in the frame.
-static void FrameSet(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
+static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
 {
+  FbleRetainValue(heap, value);
+  FbleReleaseValue(heap, thread->stack->locals.xs[index]);
   thread->stack->locals.xs[index] = value;
-  FbleValueAddRef(heap, &thread->stack->_base, value);
 }
 
-// FrameSetAndRelease --
-//   Store a value onto the frame on the top of the stack and call
-//   FbleValueRelease on the value.
+// FrameSetConsumed --
+//   Store a value onto the frame on the top of the stack.
+//
+//   The caller should hold a strong reference to the value that will be
+//   transfered to the stack.
 //
 // Inputs:
 //   heap - the value heap.
 //   thread - the current thread.
 //   index - the index of the value to set.
-//   value - the value to set.
+//   value - the value to set. Consumed.
 //
 // Side effects:
-//   Sets the value at the given index in the frame and calls FbleValueRelease
-//   on the value.
-static void FrameSetAndRelease(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
+//   Sets the value at the given index in the frame, taking over strong
+//   reference ownership of the value.
+static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
 {
-  FrameSet(heap, thread, index, value);
-  FbleReleaseValue(heap, value);
+  FbleReleaseValue(heap, thread->stack->locals.xs[index]);
+  thread->stack->locals.xs[index] = value;
 }
 
 // StructValueInstr -- see documentation of InstrImpl.
@@ -177,7 +181,7 @@ static FbleExecStatus StructValueInstr(FbleValueHeap* heap, FbleThreadV* threads
     FbleValueAddRef(heap, &value->_base, value->fields[i]);
   }
 
-  FrameSetAndRelease(heap, thread, struct_value_instr->dest, &value->_base);
+  FrameSetConsumed(heap, thread, struct_value_instr->dest, &value->_base);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -194,7 +198,7 @@ static FbleExecStatus UnionValueInstr(FbleValueHeap* heap, FbleThreadV* threads,
   value->arg = FrameGet(thread, union_value_instr->arg);
   FbleValueAddRef(heap, &value->_base, value->arg);
 
-  FrameSetAndRelease(heap, thread, union_value_instr->dest, &value->_base);
+  FrameSetConsumed(heap, thread, union_value_instr->dest, &value->_base);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -213,7 +217,7 @@ static FbleExecStatus StructAccessInstr(FbleValueHeap* heap, FbleThreadV* thread
 
   assert(sv->_base.tag == FBLE_STRUCT_VALUE);
   assert(access_instr->tag < sv->fieldc);
-  FrameSet(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
+  FrameSetBorrowed(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -236,7 +240,7 @@ static FbleExecStatus UnionAccessInstr(FbleValueHeap* heap, FbleThreadV* threads
     return FBLE_EXEC_ABORTED;
   }
 
-  FrameSet(heap, thread, access_instr->dest, uv->arg);
+  FrameSetBorrowed(heap, thread, access_instr->dest, uv->arg);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -286,7 +290,7 @@ static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, 
     value->statics[i] = arg;
     FbleValueAddRef(heap, &value->_base, arg);
   }
-  FrameSetAndRelease(heap, thread, func_value_instr->dest, &value->_base);
+  FrameSetConsumed(heap, thread, func_value_instr->dest, &value->_base);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -314,10 +318,12 @@ static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   }
 
   thread->stack->pc++;
-  FbleRefValue* result = FbleThreadCall(heap, func, args, thread);
-  thread->stack->tail->locals.xs[call_instr->dest] = &result->_base;
-  FbleValueAddRef(heap, &thread->stack->tail->_base, &result->_base);
-  FbleReleaseValue(heap, &result->_base);
+
+  FbleValue** result = thread->stack->locals.xs + call_instr->dest;
+  FbleReleaseValue(heap, *result);
+  *result = NULL;
+
+  FbleThreadCall(heap, result, func, args, thread);
   return FBLE_EXEC_FINISHED;
 }
 
@@ -342,7 +348,7 @@ static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleTh
       link->tail = NULL;
     }
 
-    FrameSet(heap, thread, get_instr->dest, head->value);
+    FrameSetBorrowed(heap, thread, get_instr->dest, head->value);
     FbleFree(heap->arena, head);
     thread->stack->pc++;
     return FBLE_EXEC_RUNNING;
@@ -356,7 +362,7 @@ static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleTh
       return FBLE_EXEC_BLOCKED;
     }
 
-    FrameSetAndRelease(heap, thread, get_instr->dest, *port->data);
+    FrameSetConsumed(heap, thread, get_instr->dest, *port->data);
     *port->data = NULL;
     *io_activity = true;
     thread->stack->pc++;
@@ -395,7 +401,7 @@ static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleTh
     }
 
     FbleValueAddRef(heap, &link->_base, tail->value);
-    FrameSetAndRelease(heap, thread, put_instr->dest, unit);
+    FrameSetConsumed(heap, thread, put_instr->dest, unit);
     *io_activity = true;
     thread->stack->pc++;
 
@@ -418,7 +424,7 @@ static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleTh
 
   FbleRetainValue(heap, arg);
   *port->data = arg;
-  FrameSetAndRelease(heap, thread, put_instr->dest, unit);
+  FrameSetConsumed(heap, thread, put_instr->dest, unit);
   *io_activity = true;
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -441,12 +447,13 @@ static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
     FbleThread* child = FbleAlloc(heap->arena, FbleThread);
     child->stack = thread->stack;
     child->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(heap->arena, thread->profile);
-    FbleRetainValue(heap, &child->stack->_base);
     child->stack->joins++;
     FbleVectorAppend(heap->arena, *threads, child);
 
-    FbleRefValue* result = FbleThreadCall(heap, arg, NULL, child);
-    FrameSetAndRelease(heap, thread, fork_instr->dests.xs[i], &result->_base);
+    FbleValue** result = thread->stack->locals.xs + fork_instr->dests.xs[i];
+    FbleReleaseValue(heap, *result);
+    *result = NULL;
+    FbleThreadCall(heap, result, arg, NULL, child);
   }
   thread->stack->pc++;
   return FBLE_EXEC_YIELDED;
@@ -458,7 +465,7 @@ static FbleExecStatus CopyInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
   FbleValue* value = FrameGet(thread, copy_instr->source);
-  FrameSet(heap, thread, copy_instr->dest, value);
+  FrameSetBorrowed(heap, thread, copy_instr->dest, value);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -478,8 +485,8 @@ static FbleExecStatus LinkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   FbleValue* put = FbleNewPutValue(heap, &link->_base);
   FbleReleaseValue(heap, &link->_base);
 
-  FrameSetAndRelease(heap, thread, link_instr->get, get);
-  FrameSetAndRelease(heap, thread, link_instr->put, put);
+  FrameSetConsumed(heap, thread, link_instr->get, get);
+  FrameSetConsumed(heap, thread, link_instr->put, put);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -493,7 +500,7 @@ static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThreadV* threads, F
   rv->_base.tag = FBLE_REF_VALUE;
   rv->value = NULL;
 
-  FrameSetAndRelease(heap, thread, ref_instr->dest, &rv->_base);
+  FrameSetConsumed(heap, thread, ref_instr->dest, &rv->_base);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -544,17 +551,7 @@ static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, Fbl
     ref_result = (FbleRefValue*)result;
   }
 
-  // Pop the top frame from the stack.
-  FbleStackValue* stack = thread->stack;
-  thread->stack = thread->stack->tail;
-  if (thread->stack != NULL) {
-    FbleRetainValue(heap, &thread->stack->_base);
-  }
-
-  // Save the computed value and pop up the computation state.
-  stack->result->value = result;
-  FbleValueAddRef(heap, &stack->result->_base, result);
-  FbleReleaseValue(heap, &stack->_base);
+  FbleThreadReturn(heap, thread, result);
   return FBLE_EXEC_FINISHED;
 }
 
@@ -565,7 +562,7 @@ static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
   FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
   value->_base.tag = FBLE_TYPE_VALUE;
-  FrameSetAndRelease(heap, thread, type_instr->dest, &value->_base);
+  FrameSetConsumed(heap, thread, type_instr->dest, &value->_base);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

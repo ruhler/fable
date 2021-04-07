@@ -12,8 +12,35 @@
 #include "fble-profile.h"   // for FbleProfileThread
 #include "fble-value.h"     // for FbleValueHeap
 
-typedef struct FbleRefValue FbleRefValue;
-typedef struct FbleStackValue FbleStackValue;
+// FbleStack --
+//
+// Fields:
+//   joins - the number of threads to wait for joining before resuming
+//           execution of this frame of the stack.
+//   func - the function being executed at this frame of the stack.
+//   pc - the next instruction in func->code to execute.
+//   locals - vector of local variables.
+//   result - where to store the result of executing the current frame.
+//   tail - the next frame down in the stack.
+//
+// Memory Management:
+//   Each thread owns its stack. The stack owns its tail. Except that we have
+//   a cactus stack structure where multiple threads can reuse parts of the
+//   same stack. In that case, 'joins' will be greater than 0. The total
+//   number of threads (or their stacks) that hold a reference to a stack
+//   frame is 1 + joins.
+//
+//   The stack holds a strong reference to func and any non-NULL locals.
+//   'result' is a pointer to something that is initially NULL and expects to
+//   receive a strong reference to the return value.
+typedef struct FbleStack {
+  size_t joins;
+  FbleFuncValue* func;
+  size_t pc;
+  FbleValueV locals;
+  FbleValue** result;
+  struct FbleStack* tail;
+} FbleStack;
 
 // FbleExecStatus -- 
 //   Shared status code used for returning status from running an instruction,
@@ -37,7 +64,7 @@ typedef enum {
 //   profile - the profile thread associated with this thread. May be NULL to
 //             disable profiling.
 typedef struct {
-  FbleStackValue* stack;
+  FbleStack* stack;
   FbleProfileThread* profile;
 } FbleThread;
 
@@ -53,36 +80,42 @@ typedef struct {
 //
 // Inputs:
 //   arena - the arena to use for allocations
-//   func - the function to execute.
-//   args - arguments to pass to the function. length == func->argc.
+//   dest - where to store a strong reference to the result of executing the
+//          function.
+//   func - the function to execute. Borrowed.
+//   args - arguments to pass to the function. length == func->argc. Borrowed.
 //   thread - the thread whose stack to push the frame on to.
 //
-// Result:
-//   A ref value that will refer to the computed result when the frame 
-//   completes its execution.
-//
 // Side effects:
-//   Allocates a new FbleValue instance that should be freed with
-//   FbleReleaseValue when no longer needed.
-FbleRefValue* FbleThreadCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
+//   Updates the threads stack.
+void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
 
 // FbleThreadTailCall --
 //   Replace the current frame with a new one.
 //
 // Inputs:
 //   heap - the value heap.
-//   func - the function to execute.
-//   args - args to the function. length == func->argc.
+//   func - the function to execute. Borrowed.
+//   args - args to the function. length == func->argc. Borrowed.
 //   thread - the thread with the stack to change.
 //
 // Side effects:
-// * Does not take ownership of func and args.
 // * Exits the current frame, which potentially frees any instructions
 //   belonging to that frame.
 // * The caller may assume it is safe for the function and arguments to be
 //   retained solely by the frame that's being replaced when ReplaceFrame is
 //   called.
 void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
+
+// FbleThreadReturn --
+//   Return from the current frame on the thread's stack.
+//
+// Inputs:
+//   heap - the value heap.
+//   thread - the thread to do the return on.
+//   result - the result to return. Borrowed.
+//
+void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result);
 
 // FbleRunFunction --
 //   A C function to run the fble function on the top of the thread stack to

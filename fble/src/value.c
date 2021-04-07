@@ -86,12 +86,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_PORT_VALUE: return;
     case FBLE_REF_VALUE: return;
-
-    case FBLE_STACK_VALUE: {
-      FbleStackValue* v = (FbleStackValue*)value;
-      FbleFree(arena, v->locals.xs);
-      return;
-    }
   }
 
   UNREACHABLE("Should not get here");
@@ -161,17 +155,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
     case FBLE_REF_VALUE: {
       FbleRefValue* v = (FbleRefValue*)value;
       Ref(callback, v->value);
-      break;
-    }
-
-    case FBLE_STACK_VALUE: {
-      FbleStackValue* v = (FbleStackValue*)value;
-      Ref(callback, &v->func->_base);
-      for (size_t i = 0; i < v->locals.size; ++i) {
-        Ref(callback, v->locals.xs[i]);
-      }
-      Ref(callback, &v->result->_base);
-      Ref(callback, &v->tail->_base);
       break;
     }
   }

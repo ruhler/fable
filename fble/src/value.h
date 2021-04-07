@@ -22,7 +22,6 @@ typedef enum {
   FBLE_LINK_VALUE,
   FBLE_PORT_VALUE,
   FBLE_REF_VALUE,
-  FBLE_STACK_VALUE,
 } FbleValueTag;
 
 // FbleValue --
@@ -145,33 +144,10 @@ typedef struct {
 //
 // Fields:
 //   value - the value being referenced, or NULL if no value is referenced.
-struct FbleRefValue {
+typedef struct {
   FbleValue _base;
   FbleValue* value;
-};
-
-// FbleStackValue --
-//   FBLE_STACK_VALUE
-//
-// An implementation-specific value used to describe a thread's stack.
-//
-// Fields:
-//   joins - the number of threads to wait for joining before resuming
-//           execution of this frame of the stack.
-//   func - the function being executed at this frame of the stack.
-//   pc - the next instruction in func->code to execute.
-//   locals - vector of local variables.
-//   result - where to store the result of executing the current frame.
-//   tail - the next frame down in the stack.
-struct FbleStackValue {
-  FbleValue _base;
-  size_t joins;
-  FbleFuncValue* func;
-  size_t pc;
-  FbleValueV locals;
-  FbleRefValue* result;
-  struct FbleStackValue* tail;
-};
+} FbleRefValue;
 
 // FbleNewValue --
 //   Allocate a new value of the given type.
