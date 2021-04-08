@@ -1,11 +1,10 @@
+* Get generated C code to compile with gcc again.
+ - /Sat/Aim% is the next blocker. 0 arg and 2 arg structs should help.
+
 * Reorganize TODO file.
 
 * Figure out memory leak that happens when moving time slice check to
   execute.c.
-* Figure out why splitting ThunkValue into RefValue and StackValue hurt
-  performance so much? Just double the number of allocations?
-  - 30% more allocations means 30% more time doing GC. That could certainly be
-    enough to explain the performance cost.
 
 * Make FbleExecutable a proper abstract type.
 * Can I cleanup/break the dependency cycle between execute.h and value.h?

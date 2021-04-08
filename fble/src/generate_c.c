@@ -344,12 +344,9 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
     case FBLE_UNION_VALUE_INSTR: {
       FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-      fprintf(fout, "      FbleUnionValue* v = FbleNewValue(heap, FbleUnionValue);\n");
-      fprintf(fout, "      v->_base.tag = FBLE_UNION_VALUE;\n");
-      fprintf(fout, "      v->tag = %i;\n", union_instr->tag);
-      fprintf(fout, "      v->arg = "); FrameGet(fout, union_instr->arg); fprintf(fout, ";\n");
-      fprintf(fout, "      FbleValueAddRef(heap, &v->_base, v->arg);\n");
-      FrameSetConsumed(fout, "      ", union_instr->dest, "&v->_base");
+      const char* section = union_instr->arg.section == FBLE_LOCALS_FRAME_SECTION ?  "Locals" : "Statics";
+      fprintf(fout, "      UnionValueInstr%s(heap, thread, %i, %i, %i);\n",
+          section, union_instr->tag, union_instr->arg.index, union_instr->dest);
       return;
     }
 
@@ -359,11 +356,8 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      if (sv == NULL) {\n");
       ReturnAbort(fout, "        ", "UndefinedStructValue", access_instr->loc);
       fprintf(fout, "      };\n");
-
-      fprintf(fout, "      assert(sv->_base.tag == FBLE_STRUCT_VALUE);\n");
-      fprintf(fout, "      assert(%i < sv->fieldc);\n", access_instr->tag);
-      fprintf(fout, "      FbleValue* value = sv->fields[%i];\n", access_instr->tag);
-      FrameSetBorrowed(fout, "      ", access_instr->dest, "value");
+      fprintf(fout, "      StructAccess(heap, thread, sv, %i, %i);\n",
+          access_instr->tag, access_instr->dest);
       return;
     }
 
@@ -756,6 +750,38 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "{\n");
   fprintf(fout, "  assert(false && \"should never get here.\");\n");
   fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
+  fprintf(fout, "}\n\n");
+
+  fprintf(fout, "static void UnionValueInstrStatics(FbleValueHeap* heap, FbleThread* thread, size_t tag, size_t arg, size_t dest)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  FbleUnionValue* v = FbleNewValue(heap, FbleUnionValue);\n");
+  fprintf(fout, "  v->_base.tag = FBLE_UNION_VALUE;\n");
+  fprintf(fout, "  v->tag = tag;\n");
+  fprintf(fout, "  v->arg = thread->stack->func->statics[arg];\n");
+  fprintf(fout, "  FbleValueAddRef(heap, &v->_base, v->arg);\n");
+  fprintf(fout, "  FbleReleaseValue(heap, thread->stack->locals.xs[dest]);\n");
+  fprintf(fout, "  thread->stack->locals.xs[dest] = &v->_base;\n");
+  fprintf(fout, "}\n\n");
+
+  fprintf(fout, "static void UnionValueInstrLocals(FbleValueHeap* heap, FbleThread* thread, size_t tag, size_t arg, size_t dest)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  FbleUnionValue* v = FbleNewValue(heap, FbleUnionValue);\n");
+  fprintf(fout, "  v->_base.tag = FBLE_UNION_VALUE;\n");
+  fprintf(fout, "  v->tag = tag;\n");
+  fprintf(fout, "  v->arg = thread->stack->locals.xs[arg];\n");
+  fprintf(fout, "  FbleValueAddRef(heap, &v->_base, v->arg);\n");
+  fprintf(fout, "  FbleReleaseValue(heap, thread->stack->locals.xs[dest]);\n");
+  fprintf(fout, "  thread->stack->locals.xs[dest] = &v->_base;\n");
+  fprintf(fout, "}\n\n");
+
+  fprintf(fout, "static void StructAccess(FbleValueHeap* heap, FbleThread* thread, FbleStructValue* sv, size_t tag, size_t dest)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  assert(sv->_base.tag == FBLE_STRUCT_VALUE);\n");
+  fprintf(fout, "  assert(tag < sv->fieldc);\n");
+  fprintf(fout, "  FbleValue* value = sv->fields[tag];\n");
+  fprintf(fout, "  FbleRetainValue(heap, value);\n");
+  fprintf(fout, "  FbleReleaseValue(heap, thread->stack->locals.xs[dest]);\n");
+  fprintf(fout, "  thread->stack->locals.xs[dest] = value;\n");
   fprintf(fout, "}\n\n");
 
   for (int i = 0; i < blocks.size; ++i) {
