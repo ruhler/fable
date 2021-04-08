@@ -828,14 +828,30 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     fprintf(fout, "  FbleArena* arena = heap->arena;\n");
     VarId var_id = 0;
 
+    // Output a jump table to jump into the right place in the function to
+    // resume. We'll only ever resume into a place that's after a normal call
+    // or fork instruction, so that's all we need to check for.
     fprintf(fout, "  switch (thread->stack->pc) {\n");
-
+    fprintf(fout, "    case 0: goto _pc_0;\n");
     for (size_t i = 0; i < code->instrs.size; ++i) {
-      fprintf(fout, "    case %i: _pc_%i: {\n", i, i);
+      FbleInstr* instr = code->instrs.xs[i];
+      if (instr->tag == FBLE_CALL_INSTR) {
+        FbleCallInstr* call = (FbleCallInstr*)instr;
+        if (!call->exit) {
+          fprintf(fout, "    case %i: goto _pc_%i;\n", i+1, i+1);
+        }
+      } else if (instr->tag == FBLE_FORK_INSTR) {
+        fprintf(fout, "    case %i: goto _pc_%i;\n", i+1, i+1);
+      }
+    }
+    fprintf(fout, "  };\n");
+
+    // Output code to execute the individual instructions.
+    for (size_t i = 0; i < code->instrs.size; ++i) {
+      fprintf(fout, "    _pc_%i: {\n", i);
       EmitInstr(fout, &var_id, i, code->instrs.xs[i]);
       fprintf(fout, "    }\n");
     }
-    fprintf(fout, "  };\n");
     fprintf(fout, "  return Unreachable();\n");
     fprintf(fout, "}\n\n");
   }
