@@ -19,7 +19,15 @@
 // The number is turned into a C variable name using printf format "v%x".
 typedef unsigned int VarId;
 
-static void CollectBlocks(FbleArena* arena, FbleCodeV* blocks, FbleCode* code);
+typedef struct {
+  size_t size;
+  const char** xs;
+} LocV;
+
+static void AddLoc(FbleArena* arena, const char* source, LocV* locs);
+static void CollectBlocksAndLocs(FbleArena* arena, FbleCodeV* blocks, LocV* locs, FbleCode* code);
+
+static void ReturnAbort(FILE* fout, const char* indent, const char* msg, FbleLoc loc);
 
 static void FrameGet(FILE* fout, FbleFrameIndex index);
 static void FrameGetStrict(FILE* fout, FbleFrameIndex index);
@@ -30,25 +38,98 @@ static VarId GenLoc(FILE* fout, const char* indent, VarId* var_id, FbleLoc loc);
 static VarId GenName(FILE* fout, VarId* var_id, FbleName name);
 static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
-static FbleString* FuncNameForPath(FbleArena* arena, FbleModulePath* path);
+static int CIdentifierForLocSize(const char* str);
+static void CIdentifierForLocStr(const char* str, char* dest);
+static FbleString* CIdentifierForPath(FbleArena* arena, FbleModulePath* path);
 
-// CollectBlocks --
-//   Get the list of all instruction blocks referenced from the given block of
-//   code, including the code itself.
+// AddLoc --
+//   Add a source location to the list of locations.
+//
+// Inputs:
+//   arena - arena to use for allocations
+//   source - the source file name to add
+//   locs - the list of locs to add to.
+//
+// Side effects:
+//   Adds the source filename to the list of locations if it is not already
+//   present in the list.
+static void AddLoc(FbleArena* arena, const char* source, LocV* locs)
+{
+  for (size_t i = 0; i < locs->size; ++i) {
+    if (strcmp(source, locs->xs[i]) == 0) {
+      return;
+    }
+  }
+  FbleVectorAppend(arena, *locs, source);
+}
+
+// CollectBlocksAndLocs --
+//   Get the list of all instruction blocks and location source file names
+//   referenced from the given block of code, including the code itself.
 //
 // Inputs:
 //   arena - arena to use for allocations.
 //   blocks - the collection of blocks to add to.
+//   locs - the collection of location source names to add to.
 //   code - the code to collect the blocks from.
-static void CollectBlocks(FbleArena* arena, FbleCodeV* blocks, FbleCode* code)
+static void CollectBlocksAndLocs(FbleArena* arena, FbleCodeV* blocks, LocV* locs, FbleCode* code)
 {
   FbleVectorAppend(arena, *blocks, code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    if (code->instrs.xs[i]->tag == FBLE_FUNC_VALUE_INSTR) {
-      FbleFuncValueInstr* instr = (FbleFuncValueInstr*)code->instrs.xs[i];
-      CollectBlocks(arena, blocks, instr->code);
+    switch (code->instrs.xs[i]->tag) {
+      case FBLE_FUNC_VALUE_INSTR: {
+        FbleFuncValueInstr* instr = (FbleFuncValueInstr*)code->instrs.xs[i];
+        CollectBlocksAndLocs(arena, blocks, locs, instr->code);
+        break;
+      }
+
+      case FBLE_STRUCT_ACCESS_INSTR:
+      case FBLE_UNION_ACCESS_INSTR: {
+        FbleAccessInstr* instr = (FbleAccessInstr*)code->instrs.xs[i];
+        AddLoc(arena, instr->loc.source->str, locs);
+        break;
+      }
+
+      case FBLE_UNION_SELECT_INSTR: {
+        FbleUnionSelectInstr* instr = (FbleUnionSelectInstr*)code->instrs.xs[i];
+        AddLoc(arena, instr->loc.source->str, locs);
+        break;
+      }
+
+      case FBLE_CALL_INSTR: {
+        FbleCallInstr* instr = (FbleCallInstr*)code->instrs.xs[i];
+        AddLoc(arena, instr->loc.source->str, locs);
+        break;
+      }
+
+      case FBLE_REF_DEF_INSTR: {
+        FbleRefDefInstr* instr = (FbleRefDefInstr*)code->instrs.xs[i];
+        AddLoc(arena, instr->loc.source->str, locs);
+        break;
+      }
+
+      default: break;
     }
   }
+}
+
+// ReturnAbort --
+//   Emit code to return an error.
+//
+// Inputs:
+//   fout - the output stream.
+//   indent - indent to use at start of line.
+//   msg - the name of a variable in scope containing the error message.
+//   loc - the location to report with the error message.
+//
+// Side effects:
+//   Emit code to return the error.
+static void ReturnAbort(FILE* fout, const char* indent, const char* msg, FbleLoc loc)
+{
+  size_t size = CIdentifierForLocSize(loc.source->str);
+  char source[size];
+  CIdentifierForLocStr(loc.source->str, source);
+  fprintf(fout, "%sreturn Abort(%s, %s, %i, %i);\n", indent, msg, source, loc.line, loc.col);
 }
 
 // FrameGet --
@@ -276,10 +357,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       fprintf(fout, "      FbleStructValue* sv = (FbleStructValue*)"); FrameGetStrict(fout, access_instr->obj); fprintf(fout, ";\n");
       fprintf(fout, "      if (sv == NULL) {\n");
-      VarId loc_id = GenLoc(fout, "        ", var_id, access_instr->loc);
-      fprintf(fout, "        FbleReportError(\"undefined struct value access\\n\", v%x);\n", loc_id);
-      fprintf(fout, "        FbleFreeLoc(heap->arena, v%x);\n", loc_id);
-      fprintf(fout, "        return FBLE_EXEC_ABORTED;\n");
+      ReturnAbort(fout, "        ", "UndefinedStructValue", access_instr->loc);
       fprintf(fout, "      };\n");
 
       fprintf(fout, "      assert(sv->_base.tag == FBLE_STRUCT_VALUE);\n");
@@ -293,18 +371,12 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       fprintf(fout, "      FbleUnionValue* uv = (FbleUnionValue*)"); FrameGetStrict(fout, access_instr->obj); fprintf(fout, ";\n");
       fprintf(fout, "      if (uv == NULL) {\n");
-      VarId loc_id = GenLoc(fout, "      ", var_id, access_instr->loc);
-      fprintf(fout, "        FbleReportError(\"undefined union value access\\n\", v%x);\n", loc_id);
-      fprintf(fout, "        FbleFreeLoc(heap->arena, v%x);\n", loc_id);
-      fprintf(fout, "        return FBLE_EXEC_ABORTED;\n");
+      ReturnAbort(fout, "        ", "UndefinedUnionValue", access_instr->loc);
       fprintf(fout, "      };\n");
 
       fprintf(fout, "      assert(uv->_base.tag == FBLE_UNION_VALUE);\n");
       fprintf(fout, "      if (uv->tag != %i) {;\n", access_instr->tag);
-      loc_id = GenLoc(fout, "      ", var_id, access_instr->loc);
-      fprintf(fout, "        FbleReportError(\"union field access undefined: wrong tag\\n\", v%x);\n", loc_id);
-      fprintf(fout, "        FbleFreeLoc(heap->arena, v%x);\n", loc_id);
-      fprintf(fout, "        return FBLE_EXEC_ABORTED;\n");
+      ReturnAbort(fout, "        ", "WrongUnionTag", access_instr->loc);
       fprintf(fout, "      };\n");
 
       FrameSetBorrowed(fout, "      ", access_instr->dest, "uv->arg");
@@ -317,10 +389,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FrameGetStrict(fout, select_instr->condition);
       fprintf(fout, ";\n");
       fprintf(fout, "      if (v == NULL) {\n");
-      VarId loc_id = GenLoc(fout, "      ", var_id, select_instr->loc);
-      fprintf(fout, "        FbleReportError(\"undefined union value select\\n\", v%x);\n", loc_id);
-      fprintf(fout, "        FbleFreeLoc(heap->arena, v%x);\n", loc_id);
-      fprintf(fout, "        return FBLE_EXEC_ABORTED;\n");
+      ReturnAbort(fout, "        ", "UndefinedUnionSelect", select_instr->loc);
       fprintf(fout, "      };\n");
 
       fprintf(fout, "      assert(v->_base.tag == FBLE_UNION_VALUE);\n");
@@ -366,10 +435,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       fprintf(fout, "      FbleFuncValue* func = (FbleFuncValue*)"); FrameGetStrict(fout, call_instr->func); fprintf(fout, ";\n");
       fprintf(fout, "      if (func == NULL) {\n");
-      VarId loc_id = GenLoc(fout, "      ", var_id, call_instr->loc);
-      fprintf(fout, "        FbleReportError(\"called undefined function\\n\", v%x);\n", loc_id);
-      fprintf(fout, "        FbleFreeLoc(heap->arena, v%x);\n", loc_id);
-      fprintf(fout, "        return FBLE_EXEC_ABORTED;\n");
+      ReturnAbort(fout, "        ", "UndefinedFunctionValue", call_instr->loc);
       fprintf(fout, "      }\n");
 
       fprintf(fout, "      assert(func->_base.tag == FBLE_FUNC_VALUE);\n");
@@ -474,10 +540,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      }\n");
 
       fprintf(fout, "      if (ref == rv) {\n");
-      VarId loc_id = GenLoc(fout, "      ", var_id, ref_instr->loc);
-      fprintf(fout, "        FbleReportError(\"vacuous value\\n\", v%x);\n", loc_id);
-      fprintf(fout, "        FbleFreeLoc(heap->arena, v%x);\n", loc_id);
-      fprintf(fout, "        return FBLE_EXEC_ABORTED;\n");
+      ReturnAbort(fout, "        ", "VacuousValue", ref_instr->loc);
       fprintf(fout, "      }\n");
 
       fprintf(fout, "      rv->value = v;\n");
@@ -509,7 +572,66 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
   }
 }
 
-// FuncNameForPath --
+// CIdentifierForLocSize --
+//   Returns the size of a buffer needed to hold the c identifier for a
+//   location source file name string.
+//
+// Inputs:
+//   str - the location source file name string.
+//
+// Results:
+//   The buffer size needed to hold the identifier.
+//
+// Side effects:
+//   None.
+static int CIdentifierForLocSize(const char* str)
+{
+  // The conversion from string to identifier works as followed:
+  // * We add _loc_ as a prefix.
+  // * Characters [0-9], [a-z], [A-Z] are kept as is.
+  // * Other characters are translated to _XX_, where XX is the 2 digit hex
+  //   representation of the ascii value of the character.
+
+  // Determine the length of the name.
+  size_t len = strlen("_loc_") + 1; // prefix and terminating '\0'.
+  for (const char* p = str; *p != '\0'; p++) {
+    if (isalnum(*p)) {
+      len++;        // untranslated character
+    } else {
+      len += 4;     // translated character
+    }
+  }
+  return len;
+}
+
+// CIdentifierForLocStr --
+//   Fill in a buffer to hold the c identifier for a location source file name
+//   string.
+//
+// Inputs:
+//   str - the location source file name string.
+//   dest - the buffer to fill in. Should be CIdentifierForLocSize(str) in
+//          length.
+//
+// Side effects:
+//   Sets dest to the c identifier to use for the location source file name.
+static void CIdentifierForLocStr(const char* str, char* dest)
+{
+  char translated[5]; 
+  dest[0] = '\0';
+  strcat(dest, "_loc_");
+  for (const char* p = str; *p != '\0'; p++) {
+    if (isalnum(*p)) {
+      sprintf(translated, "%c", *p);
+      strcat(dest, translated);
+    } else {
+      sprintf(translated, "_%02x_", *p);
+      strcat(dest, translated);
+    }
+  }
+}
+
+// CIdentifierForPath --
 //   Returns a name suitable for use as a C function identifier to use for the
 //   give module path.
 //
@@ -523,7 +645,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 // Side effects:
 //   Allocates an FbleString* that should be freed with FbleFreeString when no
 //   longer needed.
-static FbleString* FuncNameForPath(FbleArena* arena, FbleModulePath* path)
+static FbleString* CIdentifierForPath(FbleArena* arena, FbleModulePath* path)
 {
   // The conversion from path to name works as followed:
   // * We add _Fble as a prefix.
@@ -578,7 +700,11 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   FbleCodeV blocks;
   FbleVectorInit(arena, blocks);
-  CollectBlocks(arena, &blocks, module->code);
+
+  LocV locs;
+  FbleVectorInit(arena, locs);
+
+  CollectBlocksAndLocs(arena, &blocks, &locs, module->code);
 
   fprintf(fout, "#include \"assert.h\"\n\n");
 
@@ -590,17 +716,47 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   // Prototypes for module dependencies.
   for (size_t i = 0; i < module->deps.size; ++i) {
-    FbleString* dep_name = FuncNameForPath(arena, module->deps.xs[i]);
+    FbleString* dep_name = CIdentifierForPath(arena, module->deps.xs[i]);
     fprintf(fout, "void %s(FbleArena* arena, FbleExecutableProgram* program);\n", dep_name->str);
     FbleFreeString(arena, dep_name);
   }
   fprintf(fout, "\n");
 
   // Prototypes for FbleRunFunction functions.
-  for (int i = 0; i < blocks.size; ++i) {
+  for (size_t i = 0; i < blocks.size; ++i) {
     fprintf(fout, "static FbleExecStatus _block_%p(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);\n", (void*)blocks.xs[i]);
   }
   fprintf(fout, "\n");
+
+  // Definitions of source code locations.
+  for (size_t i = 0; i < locs.size; ++i) {
+    size_t size = CIdentifierForLocSize(locs.xs[i]);
+    char source[size];
+    CIdentifierForLocStr(locs.xs[i], source);
+    fprintf(fout, "static const char* %s = \"%s\";\n", source, locs.xs[i]);
+  }
+  fprintf(fout, "\n");
+  FbleFree(arena, locs.xs);
+
+  // Helper functions to reduce generated code size so it is easier for the
+  // compiler to deal with.
+  fprintf(fout, "static const char* UndefinedStructValue = \"undefined struct value access\\n\";\n");
+  fprintf(fout, "static const char* UndefinedUnionValue = \"undefined union value access\\n\";\n");
+  fprintf(fout, "static const char* UndefinedUnionSelect = \"undefined union value select\\n\";\n");
+  fprintf(fout, "static const char* WrongUnionTag = \"union field access undefined: wrong tag\\n\";\n");
+  fprintf(fout, "static const char* UndefinedFunctionValue = \"called undefined function\\n\";\n");
+  fprintf(fout, "static const char* VacuousValue = \"vacuous value\\n\";\n\n");
+  fprintf(fout, "static FbleExecStatus Abort(const char* msg, const char* source, size_t line, size_t col)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  fprintf(stderr, \"%%s:%%d:%%d: error: %%s\", source, line, col, msg);\n");
+  fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
+  fprintf(fout, "}\n\n");
+
+  fprintf(fout, "static FbleExecStatus Unreachable()\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  assert(false && \"should never get here.\");\n");
+  fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
+  fprintf(fout, "}\n\n");
 
   for (int i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
@@ -618,13 +774,12 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
       fprintf(fout, "    }\n");
     }
     fprintf(fout, "  };\n");
-    fprintf(fout, "  assert(false && \"should never get here.\");\n");
-    fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
+    fprintf(fout, "  return Unreachable();\n");
     fprintf(fout, "}\n\n");
   }
   FbleFree(arena, blocks.xs);
 
-  FbleString* func_name = FuncNameForPath(arena, module->path);
+  FbleString* func_name = CIdentifierForPath(arena, module->path);
   fprintf(fout, "void %s(FbleArena* arena, FbleExecutableProgram* program)\n", func_name->str);
   FbleFreeString(arena, func_name);
 
@@ -644,7 +799,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   // Make sure all dependencies have been loaded.
   for (size_t i = 0; i < module->deps.size; ++i) {
-    FbleString* dep_name = FuncNameForPath(arena, module->deps.xs[i]);
+    FbleString* dep_name = CIdentifierForPath(arena, module->deps.xs[i]);
     fprintf(fout, "  %s(arena, program);\n", dep_name->str);
     FbleFreeString(arena, dep_name);
   }
@@ -686,7 +841,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
   fprintf(fout, "\n");
 
   // Prototype for the exported module.
-  FbleString* module_name = FuncNameForPath(arena, path);
+  FbleString* module_name = CIdentifierForPath(arena, path);
   fprintf(fout, "void %s(FbleArena* arena, FbleExecutableProgram* program);\n\n", module_name->str);
 
   fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", name);

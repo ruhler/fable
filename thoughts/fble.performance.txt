@@ -201,3 +201,15 @@ hopeful we can see a 2 minute improvement in fble bench time when we switch
 back.
 
 Yes. As expected, we're down to a 4 minute runtime with this change.
+
+--
+
+What's next for performance? It would be nice if I could profile the compiled
+code...
+
+The interpreted code shows time in InterpretedRunFunction, Release, Retain,
+FrameGet, FbleReleaseValue, MarkRef, IncrGc, CallInstr, FbleFree,
+FbleRawAlloc, PopStackFrame, FbleRetainValue, FbleStrictValue, FbleThreadCall,
+FbleThreadTailCall, FrameSetBorrowed, FrameGetStrict.
+
+It's hard to say. Clearly GC is still an issue.

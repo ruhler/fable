@@ -71,6 +71,7 @@ proc obj { obj src iflags args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc tobj { obj src iflags args } {
+  #set cflags "-std=c99 -pedantic -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -pg"
   set cflags "-pedantic -Wall -Werror -g -I /usr/include"
   set cmd "tcc -MD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
