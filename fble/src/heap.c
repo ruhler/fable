@@ -76,8 +76,7 @@ typedef struct Obj {
 // Notes: defined as a macro instead of a function to improve performance.
 #define ToObj(obj) (((Obj*)obj)-1)
 
-// Heap --
-//   The FbleHeap for the mark sweek heap.
+// FbleHeap -- see documentation in heap.h.
 //
 // GC traverses objects in the "from" space, moving any of those objects that
 // are reachable to the "to" space. Objects are "pending" when they have been
@@ -86,6 +85,9 @@ typedef struct Obj {
 // The Obj fields are dummy nodes for a list of objects.
 //
 // Fields:
+//   refs - The refs callback to traverse reference from an object.
+//   on_free - The on_free callback to indicate an object has been freed.
+//
 //   to - List of non-root objects in the "to" space.
 //   from - List of non-root objects in the "from" space.
 //   pending - List of non-root objects in the PENDING space.
@@ -95,8 +97,9 @@ typedef struct Obj {
 //
 //   to_space - Which space, A or B, is currently the "to" space.
 //   from_space - Which space, A or B, is currently the "from" space.
-typedef struct {
-  FbleHeap _base;
+struct FbleHeap {
+  void (*refs)(FbleHeapCallback* callback, void* obj);
+  void (*on_free)(FbleHeap* heap, void* obj);
 
   Obj* to;
   Obj* from;
@@ -107,11 +110,10 @@ typedef struct {
 
   Space to_space;
   Space from_space;
-} Heap;
+};
 
-static void MarkRefs(Heap* heap, Obj* obj);
-static bool IncrGc(Heap* heap);
-static void FullGc(FbleHeap* heap);
+static void MarkRefs(FbleHeap* heap, Obj* obj);
+static bool IncrGc(FbleHeap* heap);
 
 // MarkRefs --
 //   Visit the references from the given object for the purposes of marking.
@@ -125,13 +127,13 @@ static void FullGc(FbleHeap* heap);
 //   appropriate.
 typedef struct {
   FbleHeapCallback _base;
-  Heap* heap;
+  FbleHeap* heap;
 } MarkRefsCallback;
 
 static void MarkRef(MarkRefsCallback* this, void* obj_)
 {
   Obj* obj = ToObj(obj_);
-  Heap* heap = this->heap;
+  FbleHeap* heap = this->heap;
 
   // Move "from" space objects to pending.
   if (obj->space == heap->from_space) {
@@ -148,13 +150,13 @@ static void MarkRef(MarkRefsCallback* this, void* obj_)
   }
 }
 
-static void MarkRefs(Heap* heap, Obj* obj)
+static void MarkRefs(FbleHeap* heap, Obj* obj)
 {
   MarkRefsCallback callback = {
     ._base = { .callback = (void(*)(FbleHeapCallback*, void*))&MarkRef },
     .heap = heap
   };
-  heap->_base.refs(&callback._base, obj->obj);
+  heap->refs(&callback._base, obj->obj);
 }
 
 // IncrGc --
@@ -168,7 +170,7 @@ static void MarkRefs(Heap* heap, Obj* obj)
 // Side effects:
 //   Does some GC work, which may involve moving objects around, traversing
 //   objects, freeing objects, etc.
-bool IncrGc(Heap* heap)
+bool IncrGc(FbleHeap* heap)
 {
   // Free a couple of objects on the free list.
   // If we free less than one object, we won't be able to keep up with
@@ -180,7 +182,7 @@ bool IncrGc(Heap* heap)
     Obj* obj = heap->free->next;
     obj->prev->next = obj->next;
     obj->next->prev = obj->prev;
-    heap->_base.on_free(&heap->_base, obj->obj);
+    heap->on_free(heap, obj->obj);
     FbleFree(obj);
   }
 
@@ -263,47 +265,56 @@ bool IncrGc(Heap* heap)
   return false;
 }
 
-// FullGc --
-//   Do a full GC, collecting all objects that are unreachable at the time of
-//   this call.
-//
-// Inputs:
-//   heap - the heap to do GC on.
-//
-// Side effects:
-//   Does full GC, freeing all unreachable objects.
-void FullGc(FbleHeap* heap_)
+// FbleNewHeap -- see documentation in heap.h
+FbleHeap* FbleNewHeap(
+    void (*refs)(FbleHeapCallback*, void*),
+    void (*on_free)(FbleHeap*, void*))
 {
-  Heap* heap = (Heap*)heap_;
+  FbleHeap* heap = FbleAlloc(FbleHeap);
+  heap->refs = refs;
+  heap->on_free = on_free;
 
-  // Finish the GC in progress.
-  while (!IncrGc(heap));
+  heap->to = FbleAlloc(Obj);
+  heap->from = FbleAlloc(Obj);
+  heap->pending = FbleAlloc(Obj);
+  heap->roots_to = FbleAlloc(Obj);
+  heap->roots_from = FbleAlloc(Obj);
+  heap->free = FbleAlloc(Obj);
 
-  // Do repeated rounds of full GC for as long as we are able to free any
-  // objects. It's not enough to run a single additional round of full GC in
-  // case any of the objects freed have on_free functions that release other
-  // objects.
-  bool done;
-  do {
-    // Do a round of full GC to catch any references that were just removed.
-    while (!IncrGc(heap));
-
-    // Clean up all the free objects.
-    done = heap->free->next == heap->free;
-    while (heap->free->next != heap->free) {
-      Obj* obj = heap->free->next;
-      obj->prev->next = obj->next;
-      obj->next->prev = obj->prev;
-      heap->_base.on_free(&heap->_base, obj->obj);
-      FbleFree(obj);
-    }
-  } while (!done);
+  heap->to->prev = heap->to;
+  heap->to->next = heap->to;
+  heap->from->prev = heap->from;
+  heap->from->next = heap->from;
+  heap->pending->prev = heap->pending;
+  heap->pending->next = heap->pending;
+  heap->roots_to->prev = heap->roots_to;
+  heap->roots_to->next = heap->roots_to;
+  heap->roots_from->prev = heap->roots_from;
+  heap->roots_from->next = heap->roots_from;
+  heap->free->prev = heap->free;
+  heap->free->next = heap->free;
+  heap->to_space = A;
+  heap->from_space = B;
+  return heap;
 }
 
-// New -- see documentation for FbleHeap.new in heap.h
-static void* New(FbleHeap* heap_, size_t size)
+// FbleFreeHeap -- see documentation in heap.h
+void FbleFreeHeap(FbleHeap* heap)
 {
-  Heap* heap = (Heap*)heap_;
+  FbleHeapFullGc(heap);
+
+  FbleFree(heap->to);
+  FbleFree(heap->from);
+  FbleFree(heap->pending);
+  FbleFree(heap->roots_to);
+  FbleFree(heap->roots_from);
+  FbleFree(heap->free);
+  FbleFree(heap);
+}
+
+// FbleNewHeapObject -- see documentation in heap.h
+void* FbleNewHeapObject(FbleHeap* heap, size_t size)
+{
   IncrGc(heap);
 
   // Objects are allocated as roots.
@@ -317,10 +328,9 @@ static void* New(FbleHeap* heap_, size_t size)
   return obj->obj;
 }
 
-// Retain -- see documentation for FbleHeap.retain in heap.h
-static void Retain(FbleHeap* heap_, void* obj_)
+// FbleRetainHeapObject -- see documentation in heap.h
+void FbleRetainHeapObject(FbleHeap* heap, void* obj_)
 {
-  Heap* heap = (Heap*)heap_;
   Obj* obj = ToObj(obj_);
   if (obj->refcount++ == 0) {
     // This is a new root.
@@ -345,10 +355,9 @@ static void Retain(FbleHeap* heap_, void* obj_)
   }
 }
 
-// Release -- see documentation for FbleHeap.release in heap.h
-static void Release(FbleHeap* heap_, void* obj_)
+// FbleReleaseHeapObject -- see documentation in heap.h
+void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
 {
-  Heap* heap = (Heap*)heap_;
   Obj* obj = ToObj(obj_);
   if (--obj->refcount == 0) {
     // This is no longer a root.
@@ -382,12 +391,11 @@ static void Release(FbleHeap* heap_, void* obj_)
   }
 }
 
-// AddRef -- see documentation for FbleHeap.add_ref in heap.h
-static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
+// FbleHeapObjectAddRef -- see documentation in heap.h
+void FbleHeapObjectAddRef(FbleHeap* heap, void* src_, void* dst_)
 {
   assert(dst_ != NULL);
 
-  Heap* heap = (Heap*)heap_;
   Obj* src = ToObj(src_);
   Obj* dst = ToObj(dst_);
 
@@ -408,56 +416,29 @@ static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
   }
 }
 
-// FbleNewHeap -- see documentation in heap.h
-FbleHeap* FbleNewHeap(
-    void (*refs)(FbleHeapCallback*, void*),
-    void (*on_free)(FbleHeap*, void*))
+// FbleHeapFullGc -- see documentation in heap.h
+void FbleHeapFullGc(FbleHeap* heap)
 {
-  Heap* heap = FbleAlloc(Heap);
-  heap->_base.refs = refs;
-  heap->_base.on_free = on_free;
+  // Finish the GC in progress.
+  while (!IncrGc(heap));
 
-  heap->_base.new = &New;
-  heap->_base.retain = &Retain;
-  heap->_base.release = &Release;
-  heap->_base.add_ref = &AddRef;
-  heap->_base.full_gc = &FullGc;
+  // Do repeated rounds of full GC for as long as we are able to free any
+  // objects. It's not enough to run a single additional round of full GC in
+  // case any of the objects freed have on_free functions that release other
+  // objects.
+  bool done;
+  do {
+    // Do a round of full GC to catch any references that were just removed.
+    while (!IncrGc(heap));
 
-  heap->to = FbleAlloc(Obj);
-  heap->from = FbleAlloc(Obj);
-  heap->pending = FbleAlloc(Obj);
-  heap->roots_to = FbleAlloc(Obj);
-  heap->roots_from = FbleAlloc(Obj);
-  heap->free = FbleAlloc(Obj);
-
-  heap->to->prev = heap->to;
-  heap->to->next = heap->to;
-  heap->from->prev = heap->from;
-  heap->from->next = heap->from;
-  heap->pending->prev = heap->pending;
-  heap->pending->next = heap->pending;
-  heap->roots_to->prev = heap->roots_to;
-  heap->roots_to->next = heap->roots_to;
-  heap->roots_from->prev = heap->roots_from;
-  heap->roots_from->next = heap->roots_from;
-  heap->free->prev = heap->free;
-  heap->free->next = heap->free;
-  heap->to_space = A;
-  heap->from_space = B;
-  return &heap->_base;
-}
-
-// FbleFreeHeap -- see documentation in heap.h
-void FbleFreeHeap(FbleHeap* heap_)
-{
-  Heap* heap = (Heap*)heap_;
-  FullGc(heap_);
-
-  FbleFree(heap->to);
-  FbleFree(heap->from);
-  FbleFree(heap->pending);
-  FbleFree(heap->roots_to);
-  FbleFree(heap->roots_from);
-  FbleFree(heap->free);
-  FbleFree(heap);
+    // Clean up all the free objects.
+    done = heap->free->next == heap->free;
+    while (heap->free->next != heap->free) {
+      Obj* obj = heap->free->next;
+      obj->prev->next = obj->next;
+      obj->next->prev = obj->prev;
+      heap->on_free(heap, obj->obj);
+      FbleFree(obj);
+    }
+  } while (!done);
 }

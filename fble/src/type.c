@@ -879,7 +879,7 @@ void FbleFreeTypeHeap(FbleTypeHeap* heap)
 // FbleNewType -- see documentation in type.h
 FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleLoc loc)
 {
-  FbleType* type = (FbleType*)heap->new(heap, size);
+  FbleType* type = (FbleType*)FbleNewHeapObject(heap, size);
   type->tag = tag;
   type->loc = FbleCopyLoc(loc);
 
@@ -894,7 +894,7 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
 FbleType* FbleRetainType(FbleTypeHeap* heap, FbleType* type)
 {
   if (type != NULL) {
-    heap->retain(heap, type);
+    FbleRetainHeapObject(heap, type);
   }
   return type;
 }
@@ -903,13 +903,13 @@ FbleType* FbleRetainType(FbleTypeHeap* heap, FbleType* type)
 void FbleReleaseType(FbleTypeHeap* heap, FbleType* type)
 {
   if (type != NULL) {
-    heap->release(heap, type);
+    FbleReleaseHeapObject(heap, type);
   }
 }
 // FbleTypeAddRef -- see documentation in type.h
 void FbleTypeAddRef(FbleTypeHeap* heap, FbleType* src, FbleType* dst)
 {
-  heap->add_ref(heap, src, dst);
+  FbleHeapObjectAddRef(heap, src, dst);
 }
 
 // FbleNewVarType -- see documentation in type.h

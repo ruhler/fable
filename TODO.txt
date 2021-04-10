@@ -1,5 +1,12 @@
-* [heap] Make FbleHeap* a private data type.
- - There is no need to support multiple gc implementations simultaneously.
+* [perf] Try inlining FbleRetainValue and FbleReleaseValue calls.
+ - See if it makes a noticeable performance difference.
+
+* [perf] Don't bother trying to reuse a stack frame in tail call. I bet
+  performance is better if we allocate a whole new frame if it lets us avoid
+  two allocations instead of one every time we allocate a stack frame.
+
+* [perf] Consider making a custom stack-based allocator to use for the
+  execution stacks?
 
 * [compilation] Cleanup API between execute/value/interpret/generated code?
  - Make FbleExecutable a proper abstract type.

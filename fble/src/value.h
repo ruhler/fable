@@ -161,7 +161,7 @@ typedef struct {
 //
 // Side effects:
 //   Allocates a value that should be released when it is no longer needed.
-#define FbleNewValue(heap, T) ((T*) heap->new(heap, sizeof(T)))
+#define FbleNewValue(heap, T) ((T*) FbleNewHeapObject(heap, sizeof(T)))
 
 // FbleNewValueExtra --
 //   Allocate a new value of the given type with some extra space.
@@ -177,7 +177,7 @@ typedef struct {
 //
 // Side effects:
 //   Allocates a value that should be released when it is no longer needed.
-#define FbleNewValueExtra(heap, T, size) ((T*) heap->new(heap, sizeof(T) + size))
+#define FbleNewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
 
 // FbleNewGetValue --
 //   Create a new get proc value for the given link.

@@ -33,27 +33,27 @@ void FbleFreeValueHeap(FbleValueHeap* heap)
 // FbleRetainValue -- see documentation in fble-value.h
 void FbleRetainValue(FbleValueHeap* heap, FbleValue* value)
 {
-  heap->retain(heap, value);
+  FbleRetainHeapObject(heap, value);
 }
 
 // FbleReleaseValue -- see documentation in fble-value.h
 void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value)
 {
   if (value != NULL) {
-    heap->release(heap, value);
+    FbleReleaseHeapObject(heap, value);
   }
 }
 
 // FbleValueAddRef -- see documentation in fble-value.h
 void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst)
 {
-  heap->add_ref(heap, src, dst);
+  FbleHeapObjectAddRef(heap, src, dst);
 }
 
 // FbleValueFullGc -- see documentation in fble-value.h
 void FbleValueFullGc(FbleValueHeap* heap)
 {
-  heap->full_gc(heap);
+  FbleHeapFullGc(heap);
 }
 
 // OnFree --
