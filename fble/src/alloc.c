@@ -17,13 +17,13 @@ typedef struct Alloc {
   // msg, size, and arena are all for debugging purposes only.
   const char* msg;
   size_t size;
-  struct FbleArena* arena;
+  struct Arena* arena;
 
   // The allocation returned to the caller.
   char data[];
 } Alloc;
 
-// FbleArena
+// Arena
 //   Tracks all the current fble based memory allocations.
 //
 // Fields:
@@ -31,13 +31,13 @@ typedef struct Alloc {
 //            linked list with the first node a dummy node.
 //   size - the sum of the sizes of current allocations.
 //   max_size - the maximum historic sum of the sizes of allocations.
-typedef struct FbleArena {
+typedef struct Arena {
   struct Alloc* allocs;
   size_t size;
   size_t max_size;
-} FbleArena;
+} Arena;
 
-FbleArena* gArena = NULL;
+Arena* gArena = NULL;
 
 static void Init();
 static void Exit();
@@ -53,7 +53,7 @@ void Init()
 {
   assert(gArena == NULL);
 
-  gArena = malloc(sizeof(FbleArena));
+  gArena = malloc(sizeof(Arena));
   gArena->allocs = malloc(sizeof(Alloc));
   gArena->allocs->next = gArena->allocs;
   gArena->allocs->prev = gArena->allocs;

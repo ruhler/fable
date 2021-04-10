@@ -1,5 +1,5 @@
-* Clean up alloc.c now that the API enforces only a single instance of
-  FbleArena*.
+* [heap] Make FbleHeap* a private data type.
+ - There is no need to support multiple gc implementations simultaneously.
 
 * [compilation] Cleanup API between execute/value/interpret/generated code?
  - Make FbleExecutable a proper abstract type.
