@@ -31,7 +31,7 @@ static void PrintUsage(FILE* stream)
       "Usage: fble-mem-test [--growth] FILE [PATH]\n"
       "FILE is an fble program evaluating to a function that takes a unary natural number.\n"
       "Exist status is 0 if running the function uses O(1) memory, 1 otherwise.\n"
-      "Running the function means evaluating the function, and if it results in.\n"
+      "Running the function means evaluating the function, and if it results in\n"
       "a process, executing the process.\n"
       "If --growth is specified, 0 if the function use > O(1) memory, 1 otherwise.\n"
       "PATH is an optional include search path.\n"
@@ -42,18 +42,19 @@ static void PrintUsage(FILE* stream)
 //   Run the program, measuring maximum memory needed to evaluate f[n].
 //
 // Inputs:
-//   prgm - the program to run.
+//   heap - heap to use for allocations.
+//   func - the function f to run.
+//   profile - the profile to run with.
 //   use_n - the value of n to run for.
 //   alloc_n - the value of n to allocate, which should match on all runs if
 //             we want a fair memory comparison.
-//   max_bytes - output set to the maximum bytes of memory used during the run.
 //
-// Results:
-//   true if the program ran successfully, false otherwise.
+// Returns:
+//   The maximum number of bytes allocated while running the function.
 //
-// Side effects: 
-//   Sets max_bytes to the maximum bytes used during the run.
-bool Run(FbleLoadedProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_bytes)
+// Side effects:
+//   Resets the max total allocated bytes on the heap.
+size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
 {
   assert(use_n <= alloc_n);
 
@@ -63,71 +64,49 @@ bool Run(FbleLoadedProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_byte
     alloc_n /= 2;
   }
 
-  bool success = false;
-  FbleProfile* profile = FbleNewProfile();
-  FbleCompiledProgram* compiled = FbleCompile(prgm, profile);
-  if (compiled != NULL) {
-    FbleExecutableProgram* executable = FbleInterpret(compiled);
-    FbleFreeCompiledProgram(compiled);
-    FbleValueHeap* heap = FbleNewValueHeap();
-    FbleValue* linked = FbleLink(heap, executable);
-    FbleFreeExecutableProgram(executable);
-
-    FbleValue* func = FbleEval(heap, linked, profile);
-    FbleReleaseValue(heap, linked);
-    if (func != NULL) {
-      // Number type is BitS@ from:
-      // Unit@ Unit = Unit@();
-      // @ Bit@ = +(Unit@ 0, Unit@ 1);
-      // @ BitS@ = +(BitP@ cons, Unit@ nil),
-      // @ BitP@ = *(Bit@ msb, BitS@ tail);
-      FbleValue* zero = FbleNewEnumValue(heap, 0);
-      FbleValue* one = FbleNewEnumValue(heap, 1);
-      FbleValue* tail = FbleNewEnumValue(heap, 1);
-      for (size_t i = 0; i < num_bits; ++i) {
-        FbleValue* bit = (use_n % 2 == 0) ? zero : one;
-        use_n /= 2;
-        FbleRetainValue(heap, bit);
-        FbleValue* xs[2] = { bit, tail };
-        FbleValueV args = { .size = 2, .xs = xs };
-        FbleValue* cons = FbleNewStructValue(heap, args);
-        FbleReleaseValue(heap, bit);
-        FbleReleaseValue(heap, tail);
-        tail = FbleNewUnionValue(heap, 0, cons);
-        FbleReleaseValue(heap, cons);
-      }
-      FbleReleaseValue(heap, zero);
-      FbleReleaseValue(heap, one);
-
-      // Run an explicit full gc before applying the function so that garbage
-      // collection during function application is not impacted by any
-      // allocations made so far.
-      FbleValueFullGc(heap);
-
-      FbleResetMaxTotalBytesAllocated();
-      FbleValue* result = FbleApply(heap, func, &tail, profile);
-
-      // As a special case, if the result of evaluation is a process, execute
-      // the process. This allows us to test process execution.
-      if (result != NULL && FbleIsProcValue(result)) {
-        FbleIO io = { .io = &FbleNoIO };
-        FbleValue* exec_result = FbleExec(heap, &io, result, profile);
-        FbleReleaseValue(heap, result);
-        result = exec_result;
-      }
-
-      success = (result != NULL);
-      FbleReleaseValue(heap, result);
-      FbleReleaseValue(heap, tail);
-
-      *max_bytes = FbleMaxTotalBytesAllocated();
-    }
-
-    FbleReleaseValue(heap, func);
-    FbleFreeValueHeap(heap);
+  // Number type is BitS@ from:
+  // Unit@ Unit = Unit@();
+  // @ Bit@ = +(Unit@ 0, Unit@ 1);
+  // @ BitS@ = +(BitP@ cons, Unit@ nil),
+  // @ BitP@ = *(Bit@ msb, BitS@ tail);
+  FbleValue* zero = FbleNewEnumValue(heap, 0);
+  FbleValue* one = FbleNewEnumValue(heap, 1);
+  FbleValue* tail = FbleNewEnumValue(heap, 1);
+  for (size_t i = 0; i < num_bits; ++i) {
+    FbleValue* bit = (use_n % 2 == 0) ? zero : one;
+    use_n /= 2;
+    FbleRetainValue(heap, bit);
+    FbleValue* xs[2] = { bit, tail };
+    FbleValueV args = { .size = 2, .xs = xs };
+    FbleValue* cons = FbleNewStructValue(heap, args);
+    FbleReleaseValue(heap, bit);
+    FbleReleaseValue(heap, tail);
+    tail = FbleNewUnionValue(heap, 0, cons);
+    FbleReleaseValue(heap, cons);
   }
-  FbleFreeProfile(profile);
-  return success;
+  FbleReleaseValue(heap, zero);
+  FbleReleaseValue(heap, one);
+
+  // Run an explicit full gc before applying the function so that garbage
+  // collection during function application is not impacted by any
+  // allocations made so far.
+  FbleValueFullGc(heap);
+
+  FbleResetMaxTotalBytesAllocated();
+  FbleValue* result = FbleApply(heap, func, &tail, profile);
+
+  // As a special case, if the result of evaluation is a process, execute
+  // the process. This allows us to test process execution.
+  if (result != NULL && FbleIsProcValue(result)) {
+    FbleIO io = { .io = &FbleNoIO };
+    FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+    FbleReleaseValue(heap, result);
+    result = exec_result;
+  }
+
+  FbleReleaseValue(heap, result);
+  FbleReleaseValue(heap, tail);
+  return FbleMaxTotalBytesAllocated();
 }
 
 // main --
@@ -173,19 +152,29 @@ int main(int argc, char* argv[])
     include_path = *argv;
   }
 
-  FbleLoadedProgram* prgm = FbleLoad(path, include_path);
-  if (prgm == NULL) {
+  // Use a profile during tests to ensure memory behavior works properly with
+  // profiling turned on.
+  FbleProfile* profile = FbleNewProfile();
+  FbleValueHeap* heap = FbleNewValueHeap();
+  FbleValue* linked = FbleLinkFromSource(heap, path, include_path, profile);
+  if (linked == NULL) {
+    FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
+    return EX_FAIL;
+  }
+
+  FbleValue* func = FbleEval(heap, linked, profile);
+  FbleReleaseValue(heap, linked);
+  if (func == NULL) {
+    FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
     return EX_FAIL;
   }
 
   bool debug = false;
   if (debug) {
     for (size_t i = 0; i <= 200; ++i) {
-      size_t max_n = 0;
-      if (!Run(prgm, i, 200, &max_n)) {
-        FbleFreeLoadedProgram(prgm);
-        return EX_FAIL;
-      }
+      size_t max_n = Run(heap, func, profile, i, 200);
       fprintf(stderr, "% 4zi: %zi\n", i, max_n);
     }
   }
@@ -193,17 +182,12 @@ int main(int argc, char* argv[])
   size_t small_n = 100;
   size_t large_n = 200;
 
-  size_t max_small_n = 0;
-  if (!Run(prgm, small_n, large_n, &max_small_n)) {
-    FbleFreeLoadedProgram(prgm);
-    return EX_FAIL;
-  }
+  size_t max_small_n = Run(heap, func, profile, small_n, large_n);
+  size_t max_large_n = Run(heap, func, profile, large_n, large_n);
 
-  size_t max_large_n = 0;
-  if (!Run(prgm, large_n, large_n, &max_large_n)) {
-    FbleFreeLoadedProgram(prgm);
-    return EX_FAIL;
-  }
+  FbleReleaseValue(heap, func);
+  FbleFreeValueHeap(heap);
+  FbleFreeProfile(profile);
 
   // The memory samples can be a little bit noisy. Be lenient to that.
   // Hopefully small memory growth will not be able to hide within 10% of the
@@ -211,17 +195,14 @@ int main(int argc, char* argv[])
   size_t noise = 10 * max_small_n / 100;
   if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
-    FbleFreeLoadedProgram(prgm);
     return EX_FAIL;
   }
 
   if (growth && max_large_n <= max_small_n + noise) {
     fprintf(stderr, "memory constant: M(%zi) = %zi, M(%zi) = %zi\n",
         small_n, max_small_n, large_n, max_large_n);
-    FbleFreeLoadedProgram(prgm);
     return EX_FAIL;
   }
 
-  FbleFreeLoadedProgram(prgm);
   return EX_SUCCESS;
 }
