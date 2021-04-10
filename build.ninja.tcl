@@ -74,6 +74,8 @@ proc tobj { obj src iflags args } {
   #set cflags "-std=c99 -pedantic -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -pg"
   #set cflags "-std=c99 -pedantic -gdwarf-3 -ggdb"
   #set cmd "gcc -MD -MF $obj.d $cflags $iflags -c -o $obj $src"
+  #set cflags "-pedantic -g -I /usr/include"
+  #set cmd "clang -MD -MF $obj.d $cflags $iflags -c -o $obj $src"
   set cflags "-pedantic -Wall -Werror -g -I /usr/include"
   set cmd "tcc -MD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"

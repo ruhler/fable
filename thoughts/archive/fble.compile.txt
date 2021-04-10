@@ -882,3 +882,11 @@ try shrinking those modules that gcc has trouble compiling, so I can run them
 all with profiling? No. gcc is being pretty stubborn. And I don't want to
 introduce helper functions in the compiled code just to make gcc happy.
 
+---
+
+I managed to get gcc just happy enough to be able to compile with profiling,
+by introducing helper functions.
+
+I would say we now have compilation. Further improvements will be incremental
+on top of this. We can come back to true modular compilation support some time
+in the future.

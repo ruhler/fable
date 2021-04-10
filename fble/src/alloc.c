@@ -28,11 +28,7 @@ typedef struct Alloc {
 // Fields:
 //   allocs - The list of allocations for this arena. It is a circular, doubly
 //            linked list with the first node a dummy node.
-//   parent - the parent arena for this arena, or NULL.
-//   children - The list of child arenas for this arena. It is a circular,
-//              doubly linked list with the first node a dummy node.
-//   size - the sum of the sizes of current allocations, including allocations
-//          on child arenas.
+//   size - the sum of the sizes of current allocations.
 //   max_size - the maximum historic sum of the sizes of allocations.
 struct FbleArena {
   struct Alloc* allocs;
