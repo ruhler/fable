@@ -30,5 +30,5 @@ bench:
 
 .PHONY: benchprof
 benchprof:
-	./out/bin/fble-test --profile prgms/Fble/Bench.fble prgms > bench.prof
+	./out/bin/fble-stdio --profile bench.prof prgms/Fble/Bench.fble prgms
 

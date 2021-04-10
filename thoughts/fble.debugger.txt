@@ -1,0 +1,50 @@
+Fble Debugger
+=============
+Features:
+ - Set a breakpoint at a line in a file.
+ - Step through code line by line.
+ - Evaluate expressions in the context of the current scope and print the
+   results.
+ - Auto breakpoint at undefined behavior?
+ - Any way we could do this just by using dwarf + gdb?
+
+Times in the past I wished I have an fble debugger:
+ - Debug why sudoku solver isn't working properly by stepping through a line
+   at a time and printing intermediate values.
+
+   Turns out it wasn't too hard to figure out the problem in this case without
+   a debugger.
+
+ - Debug why snake AI wasn't working.
+
+   It turns out we were using the wrong direction. A debugger to step through
+   code and print variable values would have found this more quickly than my
+   guess and check approach, which was pretty tedious.
+
+ - Debug why sat solver test is failing.
+   Manual code inspection doesn't reveal the issue. I really want to trace the
+   code to see which unexpected branch is being taken.
+
+   Manually tracing through the code by profiling block led straight to the
+   problem: bad implementation of boolean Eq.
+
+ - Debug why List Eq test is failing. I want to step through again.
+   Sigh. I definitely need a debugger.
+
+   Turns out False was being defined as True instead of False. I figured that
+   out by changing the body of ListEq to always return False and being
+   surprised when the result was as if it returned True.
+
+ - Debug why map equality is failing when show shows identical maps
+   { (1,1) => 1; } vs. { (1,1) => 1; }
+
+   Turns out it was a bug in map quality, not too hard to find by code
+   inspection.
+
+ - Debug where we're getting stuck in an infinite recursion in fble that
+   exhibits as a fast memory leak followed by OOM kill.
+
+   This turned out to be big memory use, not infinite recursion. I tracked it
+   down by minimizing the test case enough to run it to completion, and using
+   profiling to see how many times different functions were being called.
+

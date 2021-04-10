@@ -1,191 +1,54 @@
-* Get generated C code to compile with gcc again.
- - /Sat/Aim% is the next blocker. 0 arg and 2 arg structs should help.
-
-* Reorganize TODO file.
-
-* Figure out memory leak that happens when moving time slice check to
-  execute.c.
-
-* Make FbleExecutable a proper abstract type.
-* Can I cleanup/break the dependency cycle between execute.h and value.h?
-* Should definition of FbleThread* be private to execute.c?
-
-* Add back managed/native stack optimization?
-  The idea is we can reuse the native stack to quickly get back into a callers
-  context. If we are about to execute a thread that is identical to what is on
-  the stack below us, just return instead of calling into it. Just make sure
-  we don't put the same frame on the native stack more than once and we should
-  be fine. I'm not convinced this will buy us much performance given its
-  complexity though.
-
-* Figure out what to do about FbleProfile* for the compilation code path.
-* Avoid duplicating code between fble-stdio and fble-compiled-stdio.
-* Make public headers available for compiled code to use so we don't have to
+* [compilation] Cleanup API between execute/value/interpret/generated code?
+ - Make FbleExecutable a proper abstract type.
+ - Can I cleanup/break the dependency cycle between execute.h and value.h?
+ - Should definition of FbleThread* be private to execute.c?
+* [compilation] Make public headers available for compiled code to use so we don't have to
   give direct access to internal header files.
-* Factor out common logic in typecheck and compile for looking up a module
-  dependency's index?
+* [compilation] Figure out what to do about FbleProfile* for the compilation code path.
+* [compilation] Add support for .fble.@ files and module compilation.
 
-* Add support for .fble.@ files and module compilation.
-* Decide whether individual test failures should fail to build or not.
-  If they should fail to build, then tools/tests.tcl could be simplified?
-
-Fblf:
-* Figure out how to avoid duplication of module definitions.
-  For the case like Add, and Bitwise modules that take a non-var argument as a
-  function to the module.
-  - I'm pretty sure the solution is to separate the definition of the module
-    procs from the definition of the module interface. It's just annoying.
-
-* Add nicer summary and error messages in compiled fblf test runner.
-
-* Rewrite tests for /Fblf/Heap%.
-* Figure out how to replace fblf integer arithmetic with a native c
-  implementation at compile time.
-  - See how much faster it is now.
-* Implement space invaders in fblf.
-  - Do whatever is necessary to make it easier to write the program as I go
-    along with regards to types and syntax.
-* Add test cases for aliasing for things in general?
-* Replace /Loop%.For and /Loop%.DoWhile with /Iter%.For?
- - Because the /Iter%.For is a nicer API I think.
-* Add test for /Fblf/Program/Show%, which I don't think is currently even
-  compiled when tests are run.
-
-Invaders:
-* It's way way way too slow. Figure out how to make it go much faster.
- - Profile the benchmark to see what's up.
- - Figure out if this is a problem with the code written in fble or if it's a
-   problem with the fble implementation.
-* The aliens look like they are too far down the screen to start. Double check
-  their initial coordinates.
-* Once it is fast enough to be reasonable to develop, finish writing the game.
-
-Hwdg:
-* Improve the API for describing a bunch of gates with modules.
-* Have an easier way to set a bunch of cells at once?
-* Add test case for nondeterministic/conflicting gates case.
-
-Exec:
-* Separate eval.c into two different files, threading and instruction
-  execution.
-* Clean up doc comments in typecheck.h, typecheck.c, compile.c.
+* [cleanup] Rename 4.3-union-access/basic/* tests, because they seem to have wrong
+  names?
+* [cleanup] Clean up doc comments in typecheck.h, typecheck.c, compile.c.
  - Now that we are passing value heaps around instead of arenas.
+* [cleanup] Check that switch statements are in enum order as appropriate
+  - FBLE_DATA_ACCESS_EXPR, and FBLE_DATA_ACCESS_TC in particular.
 
-* Figure out how to do code coverage with ninja.
-* Test use of undefined values in case, access, and func apply.
-* Check if it's okay to add new blocks to a profile in progress.
- - either way, document that clearly.
-* For things like FbleValueAddRef, is it okay if dst is NULL?
+* [cleanup] Avoid duplicating code between fble-stdio and fble-compiled-stdio.
+* [cleanup] Factor out common logic in typecheck and compile for looking up a
+  module dependency's index?
+* [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?
  - It would be convenient for constructing things in case of error.
  - I'm not sure if there's any performance implications.
  - It would be nice to specify explicitly and be consistent with this kind of
    thing.
-* Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
-* Clarify in spec: is it okay to retain a local variable until a function
-  exits, even if that means retaining it longer than its lexical scope?
+* [cleanup] Consistently document ownership of args to C functions?
+ Borrowed: no transfer of ownership.
+ Consumed: ownership transferred from caller to callee.
+ Outlives: caller responsible for keeping alive as long as returned result is.
 
-* Be more consistent in FbleTc about use of vector versus FbleTc*[].
+* [build] Decide whether individual test failures should fail to build or not.
+  If they should fail to build, then tools/tests.tcl could be simplified?
+* [build] Figure out how to do code coverage with ninja.
 
-* Rename 4.3-union-access/basic/* tests, because they seem to have wrong
-  names?
-
-* Any way to improve memory growth tests?
+* [tests] Test use of undefined values in case, access, and func apply.
+* [tests] Any way to improve memory growth tests?
  It feels wrong to me to have to do a full gc for the tests to pass. It feels
  too specific to the implementation of garbage collection. Anything we can do?
+* [tests] Add coverage for parse destructors
+ - path, kinds, tagged_kinds, tagged_type, tagged_expr
 
-* Check that switch statements are in enum order as appropriate
-  - FBLE_DATA_ACCESS_EXPR, and FBLE_DATA_ACCESS_TC in particular.
-
-* Follow style guide in fble.txt
+* [/*%] Follow style guide in fble.txt
   In particular, union field names should be lowercase: just, true, false, not
   Just, True, False.
-
-* Clean up fble library
+* [/*%] Clean up fble library
  - Separate modules as appropriate to reduce false dependencies.
  - Document all functions.
  - Add tests for full code coverage of all functions.
  - Rename Str to String? Or to S?
  - Only support Int@ officially, not IntP@ and IntS@ too?
  - Consider pulling ForEach and Map out into their own class?
-
-* Sat solver
- - Optimize the solver.
- - Implement dimacs cnf parser.
-
-* Clean up fble test framework
- - Use AssertEquals for more of the tests.
- - Properly test the test infra.
- - Add way to write 'skip' test and/or 'expect_fail' test?
-   For example, so we can have the fblf md5 tests, compile them, skip them
-   because they are too slow, and report on how many were skipped and why.
-
-
-* Figure out memory leak when 3 Bool Or tests were set to failing.
-
-* Improve type error in case of this?
-  <@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
-  True.?(true: Nothing<Bool@>, false: True);
-
-  We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
-  Should we instead get: expected type Maybe@<Bool@>? 
-
-
-* Avoid setting local values to NULL when done?
- - It helps debugging, but otherwise we shouldn't rely on it?
-
-* Should 'exec' be a flag passed to compile expression?
- That way we could distinguish between normal let and exec let while reusing a
- lot of the same code: change the body from CompileExpr to CompileExec.
- Otherwise we create a process function only to immediately apply it, when we
- could inline the body of the process directly.
- - I would guess this is low impact to performance, given how rarely we do let
-   of process inside a process?
-
-* Should we do function inlining in the compiler?
- - At least when the function being called is known and the call is not behind
-   a condition?
- - How to make the tradeoff between runtime performance and program size?
-
-* Should we avoid capturing an unused 'type' as a static?
-  For example, if we have Unit@() in a function body.
-  Proposal: whenever we look up a variable, if the kind is a type kind, return
-  a special FBLE_TYPE_VAR type and don't mark the variable as accessed.
-  Eliminate all let bindings of type kind.
-
-  The trouble is:
-  - This is such a small fraction of runtime, I don't expect any significant
-    performance improvement in practice.
-  - It feels sketchy to me to remove code that could contain errors. For
-    example: ??? is there an example?
-
-* Consistently document ownership of args to C functions?
- Borrowed: no transfer of ownership.
- Consumed: ownership transferred from caller to callee.
- Outlives: caller responsible for keeping alive as long as returned result is.
-
-* We don't get a warning about an unused self recursive function.
-  More generally, we don't get warnings about variables that are referenced
-  only by unused variables.
-
-* Clarify spec on when (compile vs runtime) vacuous value error should be
-  reported.
-
-* Add coverage for parse destructors
- - path, kinds, tagged_kinds, tagged_type, tagged_expr
-
-* Clean up how we track io activity?
-
-* [profile] Cleanup
- - Switch to convention that caller is responsible for enter block?
- - Replace AutoExitBlock with ReplaceBlock?
-
-* [type] Inline fields and args data into FbleType objects?
-
-* [gc] Implement generational gc?
- - Low priority, because experiments suggest at best we save like, 8 seconds
-   on fble bench.
-
-* [app] Change App% back to drawing over the previous screen?
+* [/App%] Change App% back to drawing over the previous screen?
  - It can figure out how to double buffer appropriately on the implementation
    side, for example by drawing the last two updates to the buffer.
  - Because presumably, if not much has changed, that can be much more
@@ -196,102 +59,105 @@ Exec:
    better. If your point of view is changing, you probably have to redraw
    everything regardless and it would be nice to avoid drawing a bunch of
    stuff and then covering it up right away.
-
-
-* [compile] Figure out why Normal is called so often
- - See if we can fix that to reduce the now annoyingly long compile times.
- - Profiling said its all in TypeEquals. Maybe something pathological?
-
-* [snake] Switch to a target 60 FPS?
-* [snake] Test and fix bug when snake eats its tail.
-* [snake] Ignore moves that aren't orthogonal to current snake direction.
-* [snake] Keep track of and report score.
-* [snake] Figure out why the background box gets lost some times.
-* [pingpong] Render a static 3D table tennis scene.
-* [gameoflife] Switch to a target 60 FPS?
-* [invaders] Optimize space invaders game.
- - Figure out how I'm going to get to 60 FPS.
-   Maybe try getting 60 FPS on the C implementation to see if it's reasonable?
- - Implement and test Alien simulation
-
-* [lib] Add test coverage for the Int routines.
+* [/Int%] Add test coverage for the Int routines.
  - In particular, test Div and Mod.
+* [/Fble/Test%] Clean up fble test framework
+ - Use AssertEquals for more of the tests.
+ - Properly test the test infra.
+ - Add way to write 'skip' test and/or 'expect_fail' test?
+   For example, so we can have the fblf md5 tests, compile them, skip them
+   because they are too slow, and report on how many were skipped and why.
+* [/Fblf%] Figure out how to avoid duplication of module definitions.
+  For the case like Add, and Bitwise modules that take a non-var argument as a
+  function to the module.
+  - I'm pretty sure the solution is to separate the definition of the module
+    procs from the definition of the module interface. It's just annoying.
+* [/Fblf%] Add nicer summary and error messages in compiled fblf test runner.
+* [/Fblf%] Rewrite tests for /Fblf/Heap%.
+* [/Fblf%] Figure out how to replace fblf integer arithmetic with a native c
+  implementation at compile time.
+  - See how much faster it is now.
+* [/Fblf%] Implement space invaders in fblf.
+  - Do whatever is necessary to make it easier to write the program as I go
+    along with regards to types and syntax.
+* [/Fblf%] Add test cases for aliasing for things in general?
+* [/Fblf%] Replace /Loop%.For and /Loop%.DoWhile with /Iter%.For?
+ - Because the /Iter%.For is a nicer API I think.
+* [/Fblf%] Add test for /Fblf/Program/Show%, which I don't think is currently even
+  compiled when tests are run.
+* [/GameOfLife%] Switch to a target 60 FPS?
+* [/Hwdg%] Improve the API for describing a bunch of gates with modules.
+* [/Hwdg%] Have an easier way to set a bunch of cells at once?
+* [/Hwdg%] Add test case for nondeterministic/conflicting gates case.
+* [/Invaders%] It's way way way too slow. Figure out how to make it go much faster.
+ - Profile the benchmark to see what's up.
+ - Figure out if this is a problem with the code written in fble or if it's a
+   problem with the fble implementation.
+* [/Invaders%] The aliens look like they are too far down the screen to start. Double check
+  their initial coordinates.
+* [/Invaders%] Once it is fast enough to be reasonable to develop, finish writing the game.
+* [/Sat%] Optimize the solver.
+* [/Sat%] Implement dimacs cnf parser.
+* [/Snake%] Switch to a target 60 FPS?
+* [/Snake%] Test and fix bug when snake eats its tail.
+* [/Snake%] Ignore moves that aren't orthogonal to current snake direction.
+* [/Snake%] Keep track of and report score.
+* [/Snake%] Figure out why the background box gets lost some times.
 
-* [api] Can fble-stdio check that the function has the right type?
+* [libfble] Can fble-stdio check that the function has the right type?
 
-* [compile] Test and fix error message for type of anonymous type let values.
+* [lang] Clarify in spec: is it okay to retain a local variable until a function
+  exits, even if that means retaining it longer than its lexical scope?
+* [lang] Clarify spec on when (compile vs runtime) vacuous value error should be
+  reported.
+* [lang] Add support for abstract types?
+* [lang] Document the runtime memory model,
+  - Including that tail recursive functions should not smash the stack.
+* [lang] Document and test that put ports don't retain link values.
+
+* [typecheck] Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
+* [typecheck] Be more consistent in FbleTc about use of vector versus FbleTc*[].
+* [typecheck] We don't get a warning about an unused self recursive function.
+  More generally, we don't get warnings about variables that are referenced
+  only by unused variables.
+* [typecheck] Better error messages on types that have the same name but different values?
+* [typecheck] Quote funny names in types. For example, the field ',' should have
+  quotes in type error messages.
+* [typecheck] Better error message for importing something from a module that
+  is not defined in the module?
+* [typecheck] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced
    abstract type?
+* [typecheck] Figure out why Normal is called so often
+ - See if we can fix that to reduce the now annoyingly long compile times.
+ - Profiling said its all in TypeEquals. Maybe something pathological?
+* [typecheck] Improve type error in case of this?
+  <@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
+  True.?(true: Nothing<Bool@>, false: True);
 
+  We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
+  Should we instead get: expected type Maybe@<Bool@>? 
+
+* [eval] Clean up how we track io activity?
 * [eval] Thread execution should be at least somewhat fair.
   In the current implementation, in theory, a long running non-IO computation
   could cause IO threads to get blocked. That's certainly against the spirit
   of the spec, but I don't have a clear definition for how things ought to
   behave or a decent way to test that. Figure out something better here.
-
 * [eval] Make child thread execution fair.
   Children should be time multiplexed, where priority is assigned based on how
   far down the family tree the child belongs. The amount of time a family gets
   to spend evaluating should be independent of the number of children in the
   family.
 
-* [lang] Add support for abstract types?
-* [lang] Document the runtime memory model,
-  - Including that tail recursive functions should not smash the stack.
-* [lang] Document and test that put ports don't retain link values.
+* [profile] Cleanup
+ - either way, document that clearly.
+ - Switch to convention that caller is responsible for enter block?
+ - Replace AutoExitBlock with ReplaceBlock?
+* [profile] Check if it's okay to add new blocks to a profile in progress.
 
-* [release] Better error messages on types that have the same name but different values?
-* [release] Quote funny names in types. For example, the field ',' should have
-  quotes in type error messages.
+* [debugger] Implement an fble debugger?
+  see thoughts/fble.debugger.txt
+
 * [release] Write man pages for fble and friends?
-* [release] Better error message for importing something from a module that
-  is not defined in the module?
-
-* [debugger] Implement an fble debugger. Features:
- - Set a breakpoint at a line in a file.
- - Step through code line by line.
- - Evaluate expressions in the context of the current scope and print the
-   results.
- - Auto breakpoint at undefined behavior?
- - Any way we could do this just by using dwarf + gdb?
  
- Use cases:
- - Debug why sudoku solver isn't working properly by stepping through a line
-   at a time and printing intermediate values.
-
-   Turns out it wasn't too hard to figure out the problem in this case without
-   a debugger.
-
- - Debug why snake AI wasn't working.
-
-   It turns out we were using the wrong direction. A debugger to step through
-   code and print variable values would have found this more quickly than my
-   guess and check approach, which was pretty tedious.
-
- - Debug why sat solver test is failing.
-   Manual code inspection doesn't reveal the issue. I really want to trace the
-   code to see which unexpected branch is being taken.
-
-   Manually tracing through the code by profiling block led straight to the
-   problem: bad implementation of boolean Eq.
-
- - Debug why List Eq test is failing. I want to step through again.
-   Sigh. I definitely need a debugger.
-
-   Turns out False was being defined as True instead of False. I figured that
-   out by changing the body of ListEq to always return False and being
-   surprised when the result was as if it returned True.
-
- - Debug why map equality is failing when show shows identical maps
-   { (1,1) => 1; } vs. { (1,1) => 1; }
-
-   Turns out it was a bug in map quality, not too hard to find by code
-   inspection.
-
- - Debug where we're getting stuck in an infinite recursion in fble that
-   exhibits as a fast memory leak followed by OOM kill.
-
-   This turned out to be big memory use, not infinite recursion. I tracked it
-   down by minimizing the test case enough to run it to completion, and using
-   profiling to see how many times different functions were being called.
-
