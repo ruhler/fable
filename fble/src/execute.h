@@ -19,9 +19,10 @@
 //           execution of this frame of the stack.
 //   func - the function being executed at this frame of the stack.
 //   pc - the next instruction in func->code to execute.
-//   locals - vector of local variables.
 //   result - where to store the result of executing the current frame.
 //   tail - the next frame down in the stack.
+//   localc - the number of local variables.
+//   locals - array of local variables.
 //
 // Memory Management:
 //   Each thread owns its stack. The stack owns its tail. Except that we have
@@ -37,9 +38,10 @@ typedef struct FbleStack {
   size_t joins;
   FbleFuncValue* func;
   size_t pc;
-  FbleValueV locals;
   FbleValue** result;
   struct FbleStack* tail;
+  size_t localc;
+  FbleValue* locals[];
 } FbleStack;
 
 // FbleExecStatus -- 

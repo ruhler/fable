@@ -34,10 +34,9 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
   thread->stack = thread->stack->tail;
 
   FbleReleaseValue(heap, &stack->func->_base);
-  for (size_t i = 0; i < stack->locals.size; ++i) {
-    FbleReleaseValue(heap, stack->locals.xs[i]);
+  for (size_t i = 0; i < stack->localc; ++i) {
+    FbleReleaseValue(heap, stack->locals[i]);
   }
-  FbleFree(stack->locals.xs);
   FbleFree(stack);
 }
 
@@ -200,19 +199,18 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
 {
   size_t locals = func->localc;
 
-  FbleStack* stack = FbleAlloc(FbleStack);
+  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
   stack->joins = 0;
   stack->func = func;
   FbleRetainValue(heap, &func->_base);
   stack->pc = 0;
-  stack->locals.size = func->localc;
-  stack->locals.xs = FbleArrayAlloc(FbleValue*, locals);
-  memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
   stack->result = result;
   stack->tail = thread->stack;
+  stack->localc = locals;
+  memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   for (size_t i = 0; i < func->argc; ++i) {
-    stack->locals.xs[i] = args[i];
+    stack->locals[i] = args[i];
     FbleRetainValue(heap, args[i]);
   }
   thread->stack = stack;
@@ -221,35 +219,27 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
 // FbleThreadTailCall -- see documentation in execute.h
 void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
-  FbleStack* stack = thread->stack;
-  size_t old_localc = stack->func->localc;
-  size_t localc = func->localc;
+  size_t locals = func->localc;
+
+  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
+  stack->joins = 0;
+  stack->func = func;
+  FbleRetainValue(heap, &func->_base);
+  stack->pc = 0;
+  stack->result = thread->stack->result;
+  stack->tail = thread->stack->tail;
+  stack->localc = locals;
+  memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   // Take references to the function and arguments early to ensure we don't
   // drop the last reference to them before we get the chance.
-  FbleRetainValue(heap, &func->_base);
   for (size_t i = 0; i < func->argc; ++i) {
+    stack->locals[i] = args[i];
     FbleRetainValue(heap, args[i]);
   }
 
-  FbleReleaseValue(heap, &stack->func->_base);
-  for (size_t i = 0; i < stack->locals.size; ++i) {
-    FbleReleaseValue(heap, stack->locals.xs[i]);
-  }
-
-  stack->func = func;
-  stack->locals.size = func->localc;
-  stack->pc = 0;
-
-  if (localc > old_localc) {
-    FbleFree(stack->locals.xs);
-    stack->locals.xs = FbleArrayAlloc(FbleValue*, localc);
-  }
-  memset(stack->locals.xs, 0, stack->locals.size * sizeof(FbleValue*));
-
-  for (size_t i = 0; i < func->argc; ++i) {
-    stack->locals.xs[i] = args[i];
-  }
+  PopStackFrame(heap, thread);
+  thread->stack = stack;
 }
 
 // FbleThreadReturn -- see documentation in execute.h

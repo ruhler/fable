@@ -99,7 +99,7 @@ static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index)
 {
   switch (index.section) {
     case FBLE_STATICS_FRAME_SECTION: return thread->stack->func->statics[index.index];
-    case FBLE_LOCALS_FRAME_SECTION: return thread->stack->locals.xs[index.index];
+    case FBLE_LOCALS_FRAME_SECTION: return thread->stack->locals[index.index];
   }
   UNREACHABLE("should never get here");
 }
@@ -141,8 +141,8 @@ static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index)
 static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
 {
   FbleRetainValue(heap, value);
-  FbleReleaseValue(heap, thread->stack->locals.xs[index]);
-  thread->stack->locals.xs[index] = value;
+  FbleReleaseValue(heap, thread->stack->locals[index]);
+  thread->stack->locals[index] = value;
 }
 
 // FrameSetConsumed --
@@ -162,8 +162,8 @@ static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalI
 //   reference ownership of the value.
 static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
 {
-  FbleReleaseValue(heap, thread->stack->locals.xs[index]);
-  thread->stack->locals.xs[index] = value;
+  FbleReleaseValue(heap, thread->stack->locals[index]);
+  thread->stack->locals[index] = value;
 }
 
 // StructValueInstr -- see documentation of InstrImpl.
@@ -319,7 +319,7 @@ static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 
   thread->stack->pc++;
 
-  FbleValue** result = thread->stack->locals.xs + call_instr->dest;
+  FbleValue** result = thread->stack->locals + call_instr->dest;
   FbleReleaseValue(heap, *result);
   *result = NULL;
 
@@ -450,7 +450,7 @@ static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
     child->stack->joins++;
     FbleVectorAppend(*threads, child);
 
-    FbleValue** result = thread->stack->locals.xs + fork_instr->dests.xs[i];
+    FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
     FbleReleaseValue(heap, *result);
     *result = NULL;
     FbleThreadCall(heap, result, arg, NULL, child);
@@ -510,7 +510,7 @@ static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThreadV* threads, F
 static FbleExecStatus RefDefInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-  FbleRefValue* rv = (FbleRefValue*)thread->stack->locals.xs[ref_def_instr->ref];
+  FbleRefValue* rv = (FbleRefValue*)thread->stack->locals[ref_def_instr->ref];
   assert(rv->_base.tag == FBLE_REF_VALUE);
   assert(rv->value == NULL);
 
