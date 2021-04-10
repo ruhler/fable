@@ -6,7 +6,6 @@
 
 #include <sys/types.h>    // for size_t
 
-#include "fble-alloc.h"   // for FbleArena
 #include "fble-string.h"  // for FbleString
 
 // FbleLoc --
@@ -29,7 +28,6 @@ typedef struct {
 //   Make a (possibly shared) copy of a location.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   loc - the loc to copy.
 //
 // Result:
@@ -38,18 +36,17 @@ typedef struct {
 // Side effects:
 //   The user should call FbleFreeLoc on the returned loc when it is no longer
 //   needed.
-FbleLoc FbleCopyLoc(FbleArena* arena, FbleLoc loc);
+FbleLoc FbleCopyLoc(FbleLoc loc);
 
 // FbleFreeLoc --
 //   Free resources associated with the given loc.
 //
 // Inputs:
-//   arena - arena to use for allocations
 //   loc - the location to free resources of.
 //
 // Side effects
 //   Frees resources associated with the given loc.
-void FbleFreeLoc(FbleArena* arena, FbleLoc loc);
+void FbleFreeLoc(FbleLoc loc);
 
 // FbleReportWarning --
 //   Report a warning message associated with a location in a source file.

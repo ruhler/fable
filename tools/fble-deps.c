@@ -80,11 +80,8 @@ int main(int argc, char* argv[])
     include_path = *argv;
   }
 
-  FbleArena* arena = FbleNewArena();
-
-  FbleLoadedProgram* prgm = FbleLoad(arena, path, include_path);
+  FbleLoadedProgram* prgm = FbleLoad(path, include_path);
   if (prgm == NULL) {
-    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
@@ -110,7 +107,6 @@ int main(int argc, char* argv[])
   }
   printf("\n");
 
-  FbleFreeLoadedProgram(arena, prgm);
-  FbleFreeArena(arena);
+  FbleFreeLoadedProgram(prgm);
   return EX_SUCCESS;
 }

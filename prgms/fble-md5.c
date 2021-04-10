@@ -139,12 +139,10 @@ int main(int argc, char* argv[])
   const char* include_path = argv[2];
   const char* file = argv[3];
 
-  FbleArena* arena = FbleNewArena();
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
+  FbleValueHeap* heap = FbleNewValueHeap();
   FbleValue* linked = FbleLinkFromSource(heap, path, include_path, NULL);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
@@ -153,7 +151,6 @@ int main(int argc, char* argv[])
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
@@ -162,7 +159,6 @@ int main(int argc, char* argv[])
     fprintf(stderr, "unable to open %s\n", file);
     FbleReleaseValue(heap, func);
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
@@ -179,7 +175,6 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
@@ -200,6 +195,5 @@ int main(int argc, char* argv[])
 
   FbleReleaseValue(heap, value);
   FbleFreeValueHeap(heap);
-  FbleFreeArena(arena);
   return 0;
 }

@@ -79,7 +79,6 @@ typedef struct {
 //   Push a frame onto the execution stack.
 //
 // Inputs:
-//   arena - the arena to use for allocations
 //   dest - where to store a strong reference to the result of executing the
 //          function.
 //   func - the function to execute. Borrowed.

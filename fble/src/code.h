@@ -327,7 +327,6 @@ typedef struct {
 //   Free the given instruction.
 //
 // Inputs:
-//   arena - the arena used to allocation the instructions.
 //   instr - the instruction to free.
 //
 // Result:
@@ -335,14 +334,13 @@ typedef struct {
 //
 // Side effect:
 //   Frees memory allocated for the given instruction.
-void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
+void FbleFreeInstr(FbleInstr* instr);
 
 // FbleFreeCode --
 //   Decrement the refcount on the given block of instructions and free it if
 //   appropriate.
 //
 // Inputs:
-//   arena - the arena used to allocation the instructions.
 //   block - the block of instructions to free. May be NULL.
 //
 // Result:
@@ -351,6 +349,6 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr);
 // Side effect:
 //   Frees memory allocated for the given block of instruction if the refcount
 //   has gone to 0.
-void FbleFreeCode(FbleArena* arena, FbleCode* block);
+void FbleFreeCode(FbleCode* block);
 
 #endif // FBLE_INTERNAL_CODE_H_

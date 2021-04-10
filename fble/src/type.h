@@ -143,7 +143,6 @@ typedef struct {
 //   Get the kind of a value with the given type.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   type - the type of the value to get the kind of.
 //
 // Results:
@@ -152,7 +151,7 @@ typedef struct {
 // Side effects:
 //   The caller is responsible for calling FbleFreeKind on the returned
 //   kind when it is no longer needed.
-FbleKind* FbleGetKind(FbleArena* arena, FbleType* type);
+FbleKind* FbleGetKind(FbleType* type);
 
 // FbleGetKindLevel --
 //   Returns the level of the fully applied version of this kind.
@@ -197,10 +196,7 @@ void FblePrintKind(FbleKind* type);
 typedef FbleHeap FbleTypeHeap;
 
 // FbleNewTypeHeap --
-//   Creates a new type heap backed by the given arena.
-//
-// Inputs:
-//   arena - the arena to back the type heap.
+//   Creates a new type heap.
 //
 // Results:
 //   A newly allocated type heap.
@@ -208,7 +204,7 @@ typedef FbleHeap FbleTypeHeap;
 // Side effects:
 //   Allocates a new type heap that should be freed with FbleFreeTypeHeap
 //   when no longer in use.
-FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena);
+FbleTypeHeap* FbleNewTypeHeap();
 
 // FbleFreeTypeHeap --
 //   Frees resources associated with the given type heap.
@@ -308,7 +304,6 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
 //   Assign a value to the given abstract type.
 //
 // Inputs:
-//   arena - the heap to use for allocations.
 //   var - the type to assign the value of. This type should have been created
 //         with FbleNewVarTYpe.
 //   value - the value to assign to the type.
@@ -445,7 +440,6 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
 //   Print the given compiled type in human readable form to stderr.
 //
 // Inputs:
-//   heap - arena to use for internal allocations.
 //   type - the type to print.
 //
 // Result:
@@ -453,6 +447,6 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
 //
 // Side effect:
 //   Prints the given type in human readable form to stderr.
-void FblePrintType(FbleArena* arena, FbleType* type);
+void FblePrintType(FbleType* type);
 
 #endif // FBLE_INTERNAL_TYPE_H_

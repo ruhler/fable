@@ -1,3 +1,14 @@
+* Arena cleanup arguments
+ - You could always call FbleNewArena and FbleFreeArena internally anyway.
+   This way we ensure all fble based allocations are tracked for memory leaks
+   and max memory use.
+ - Don't need FbleHeap to make FbleArena visible.
+ - Don't have to worry about keeping track of who is using which arena.
+ - Don't have to pass FbleArena* around everywhere explicitly.
+
+* Clean up fble-mem-test now that we don't have to use separate arenas for
+  different phases of compilation.
+
 * [compilation] Cleanup API between execute/value/interpret/generated code?
  - Make FbleExecutable a proper abstract type.
  - Can I cleanup/break the dependency cycle between execute.h and value.h?

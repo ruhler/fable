@@ -8,28 +8,27 @@
 #include "value.h"
 
 // FbleFreeExecutableProgram -- see documentation in fble-link.h
-void FbleFreeExecutableProgram(FbleArena* arena, FbleExecutableProgram* program)
+void FbleFreeExecutableProgram(FbleExecutableProgram* program)
 {
   if (program != NULL) {
     for (size_t i = 0; i < program->modules.size; ++i) {
       FbleExecutableModule* module = program->modules.xs + i;
-      FbleFreeModulePath(arena, module->path);
+      FbleFreeModulePath(module->path);
       for (size_t j = 0; j < module->deps.size; ++j) {
-        FbleFreeModulePath(arena, module->deps.xs[j]);
+        FbleFreeModulePath(module->deps.xs[j]);
       }
-      FbleFree(arena, module->deps.xs);
-      FbleFreeCode(arena, module->executable->code);
-      FbleFree(arena, module->executable);
+      FbleFree(module->deps.xs);
+      FbleFreeCode(module->executable->code);
+      FbleFree(module->executable);
     }
-    FbleFree(arena, program->modules.xs);
-    FbleFree(arena, program);
+    FbleFree(program->modules.xs);
+    FbleFree(program);
   }
 }
 
 // FbleLink -- see documentation in fble-link.h
 FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
 {
-  FbleArena* arena = heap->arena;
   size_t modulec = program->modules.size;
 
   // Make an FbleFuncValue for each module that computes the value of the
@@ -38,7 +37,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   for (size_t i = 0; i < modulec; ++i) {
     FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
     func->_base.tag = FBLE_FUNC_VALUE;
-    func->executable = FbleAlloc(arena, FbleExecutable);
+    func->executable = FbleAlloc(FbleExecutable);
     func->executable->code = program->modules.xs[i].executable->code;
     func->executable->code->refcount++;
     func->executable->run = program->modules.xs[i].executable->run;
@@ -51,26 +50,26 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   // Write some code to call each of module functions in turn with the
   // appropriate module arguments. The function for module i will be static
   // variable i, and the value computed for module i will be local variable i.
-  FbleCode* code = FbleAlloc(arena, FbleCode);
+  FbleCode* code = FbleAlloc(FbleCode);
   code->refcount = 1;
   code->magic = FBLE_CODE_MAGIC;
   code->statics = modulec;
   code->locals = modulec;
-  FbleVectorInit(arena, code->instrs);
+  FbleVectorInit(code->instrs);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleExecutableModule* module = program->modules.xs + i;
 
-    FbleCallInstr* call = FbleAlloc(arena, FbleCallInstr);
+    FbleCallInstr* call = FbleAlloc(FbleCallInstr);
     call->_base.tag = FBLE_CALL_INSTR;
     call->_base.profile_ops = NULL;
-    call->loc.source = FbleNewString(arena, __FILE__);
+    call->loc.source = FbleNewString(__FILE__);
     call->loc.line = __LINE__ - 1;
     call->loc.col = 5;
     call->exit = false;
     call->func.section = FBLE_STATICS_FRAME_SECTION;
     call->func.index = i;
-    FbleVectorInit(arena, call->args);
+    FbleVectorInit(call->args);
     for (size_t d = 0; d < module->deps.size; ++d) {
       for (size_t v = 0; v < i; ++v) {
         if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[v].path)) {
@@ -78,7 +77,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
             .section = FBLE_LOCALS_FRAME_SECTION,
             .index = v
           };
-          FbleVectorAppend(arena, call->args, index);
+          FbleVectorAppend(call->args, index);
           break;
         }
       }
@@ -86,15 +85,15 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
     assert(call->args.size == module->deps.size);
 
     call->dest = i;
-    FbleVectorAppend(arena, code->instrs, &call->_base);
+    FbleVectorAppend(code->instrs, &call->_base);
   }
 
-  FbleReturnInstr* return_instr = FbleAlloc(arena, FbleReturnInstr);
+  FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
   return_instr->_base.tag = FBLE_RETURN_INSTR;
   return_instr->_base.profile_ops = NULL;
   return_instr->result.section = FBLE_LOCALS_FRAME_SECTION;
   return_instr->result.index = modulec - 1;
-  FbleVectorAppend(arena, code->instrs, &return_instr->_base);
+  FbleVectorAppend(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
   FbleFuncValue* linked = FbleNewInterpretedFuncValue(heap, 0, code);
@@ -103,7 +102,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
     FbleValueAddRef(heap, &linked->_base, funcs[i]);
     FbleReleaseValue(heap, funcs[i]);
   }
-  FbleFreeCode(arena, code);
+  FbleFreeCode(code);
 
   return &linked->_base;
 }
@@ -111,23 +110,21 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
 // FbleLinkFromSource -- see documentation in fble-link.h
 FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const char* root, FbleProfile* profile)
 {
-  FbleArena* arena = heap->arena;
-
-  FbleLoadedProgram* program = FbleLoad(arena, filename, root);
+  FbleLoadedProgram* program = FbleLoad(filename, root);
   if (program == NULL) {
     return NULL;
   }
 
-  FbleCompiledProgram* compiled = FbleCompile(arena, program, profile);
-  FbleFreeLoadedProgram(arena, program);
+  FbleCompiledProgram* compiled = FbleCompile(program, profile);
+  FbleFreeLoadedProgram(program);
   if (compiled == NULL) {
    return NULL;
   }
 
-  FbleExecutableProgram* executable = FbleInterpret(arena, compiled);
-  FbleFreeCompiledProgram(arena, compiled);
+  FbleExecutableProgram* executable = FbleInterpret(compiled);
+  FbleFreeCompiledProgram(compiled);
 
   FbleValue* linked = FbleLink(heap, executable);
-  FbleFreeExecutableProgram(arena, executable);
+  FbleFreeExecutableProgram(executable);
   return linked;
 }

@@ -4,8 +4,6 @@
 #ifndef FBLE_INTERNAL_HEAP_H_
 #define FBLE_INTERNAL_HEAP_H_
 
-#include "fble-alloc.h"   // for FbleArena
-
 // FbleHeapCallback --
 //   A callback function used when traversing objects on a heap.
 //
@@ -41,9 +39,6 @@ typedef struct FbleHeapCallback {
 // the value type that provide type safety you don't get when passing void*
 // arguments directly.
 typedef struct FbleHeap {
-  // arena -- arena to use for underlying allocations.
-  FbleArena* arena;
-
   // TODO: add a roots function to traverse over roots if/when desired?
   // TODO: add back the old del_ref function if/when desired to notify the gc
   // when we remove a reference?
@@ -175,7 +170,6 @@ typedef struct FbleHeap {
 //   Create a new heap.
 //
 // Inputs:
-//   arena - The underlying arena to use for allocations
 //   refs - The refs function associated with the object type.
 //   on_free - The on_free function associated with the object type.
 //
@@ -186,7 +180,6 @@ typedef struct FbleHeap {
 //    Allocates a new mark sweep heap. The caller is resposible for
 //    calling FbleFreeHeap when the heap is no longer needed.
 FbleHeap* FbleNewHeap(
-    FbleArena* arena, 
     void (*refs)(FbleHeapCallback*, void*),
     void (*on_free)(FbleHeap*, void*));
 

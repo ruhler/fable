@@ -170,10 +170,10 @@ typedef enum {
   DESCENDING
 } Order;
 
-static Call* CallStackPush(FbleArena* arena, FbleProfileThread* thread);
-static void CallStackPop(FbleArena* arena, FbleProfileThread* thread);
+static Call* CallStackPush(FbleProfileThread* thread);
+static void CallStackPop(FbleProfileThread* thread);
 
-static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile, FbleBlockId caller, FbleBlockId callee);
+static FbleCallData* GetCallData(FbleProfile* profile, FbleBlockId caller, FbleBlockId callee);
 static void MergeSortCallData(Order order, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
 static void SortCallData(Order order, FbleCallData** data, size_t size);
 static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id);
@@ -185,7 +185,6 @@ static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, s
 //   Push an uninitialized Call onto the call stack for the thread.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
 //   thread - the thread whose call stack to push a value on.
 //
 // Results:
@@ -194,12 +193,12 @@ static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, s
 // Side effects:
 //   Pushes a value on the stack that should be freed using CallStackPop when
 //   no longer needed.
-static Call* CallStackPush(FbleArena* arena, FbleProfileThread* thread)
+static Call* CallStackPush(FbleProfileThread* thread)
 {
   if (++thread->calls->top == thread->calls->end) {
     if (thread->calls->next == NULL) {
       size_t chunk_size = 2 * (thread->calls->end - thread->calls->data);
-      CallStack* next = FbleAllocExtra(arena, CallStack, chunk_size * sizeof(Call));
+      CallStack* next = FbleAllocExtra(CallStack, chunk_size * sizeof(Call));
       next->tail = thread->calls;
       next->next = NULL;
       next->top = next->data;
@@ -215,17 +214,16 @@ static Call* CallStackPush(FbleArena* arena, FbleProfileThread* thread)
 //   Pop a Call off of the call stack for the thread.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
 //   thread - the thread whose call stack to pop.
 //
 // Side effects:
 //   Pops a value on the stack that. Potentially invalidates any pointers
 //   previously returned from CallStackPush.
-static void CallStackPop(FbleArena* arena, FbleProfileThread* thread)
+static void CallStackPop(FbleProfileThread* thread)
 {
   if (thread->calls->top == thread->calls->data) {
     if (thread->calls->next != NULL) {
-      FbleFree(arena, thread->calls->next);
+      FbleFree(thread->calls->next);
       thread->calls->next = NULL;
     }
     thread->calls = thread->calls->tail;
@@ -239,7 +237,6 @@ static void CallStackPop(FbleArena* arena, FbleProfileThread* thread)
 //   required.
 //
 // Inputs:
-//   arena - arena to use for allocations
 //   profile - the profile to get the data for
 //   caller - the caller of the call
 //   callee - the callee of the call
@@ -250,7 +247,7 @@ static void CallStackPop(FbleArena* arena, FbleProfileThread* thread)
 //
 // Side effects:
 //   Allocates new empty call data and adds it to the profile if necessary.
-static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
+static FbleCallData* GetCallData(FbleProfile* profile,
     FbleBlockId caller, FbleBlockId callee)
 {
   FbleCallDataV* callees = &profile->blocks.xs[caller]->callees;
@@ -272,7 +269,7 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
   }
 
   // Nothing was found. Allocate new call data for this callee.
-  FbleCallData* call = FbleAlloc(arena, FbleCallData);
+  FbleCallData* call = FbleAlloc(FbleCallData);
   call->id = callee;
   call->time = 0;
   call->count = 0;
@@ -285,7 +282,7 @@ static FbleCallData* GetCallData(FbleArena* arena, FbleProfile* profile,
     xs[i] = data;
     data = tmp;
   }
-  FbleVectorAppend(arena, *callees, data);
+  FbleVectorAppend(*callees, data);
 
   return call;
 }
@@ -451,38 +448,38 @@ static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, s
 }
 
 // FbleNewProfile -- see documentation in fble-profile.h
-FbleProfile* FbleNewProfile(FbleArena* arena)
+FbleProfile* FbleNewProfile()
 {
-  FbleProfile* profile = FbleAlloc(arena, FbleProfile);
-  FbleVectorInit(arena, profile->blocks);
+  FbleProfile* profile = FbleAlloc(FbleProfile);
+  FbleVectorInit(profile->blocks);
 
   FbleName root = {
-    .name = FbleNewString(arena, "<root>"),
+    .name = FbleNewString("<root>"),
     .space = FBLE_NORMAL_NAME_SPACE,
-    .loc = { .source = FbleNewString(arena, ""), .line = 0, .col = 0 }
+    .loc = { .source = FbleNewString(""), .line = 0, .col = 0 }
   };
-  FbleBlockId root_id = FbleProfileAddBlock(arena, profile, root);
+  FbleBlockId root_id = FbleProfileAddBlock(profile, root);
   assert(root_id == FBLE_ROOT_BLOCK_ID);
 
   return profile;
 }
 
 // FbleProfileAddBlock -- see documentation in fble-profile.h
-FbleBlockId FbleProfileAddBlock(FbleArena* arena, FbleProfile* profile, FbleName name)
+FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name)
 {
   FbleBlockId id = profile->blocks.size;
-  FbleBlockProfile* block = FbleAlloc(arena, FbleBlockProfile);
+  FbleBlockProfile* block = FbleAlloc(FbleBlockProfile);
   block->name = name;
   block->block.id = id;
   block->block.count = 0;
   block->block.time = 0;
-  FbleVectorInit(arena, block->callees);
-  FbleVectorAppend(arena, profile->blocks, block);
+  FbleVectorInit(block->callees);
+  FbleVectorAppend(profile->blocks, block);
   return id;
 }
 
 // FbleFreeProfile -- see documentation in fble-profile.h
-void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
+void FbleFreeProfile(FbleProfile* profile)
 {
   if (profile == NULL) {
     return;
@@ -490,30 +487,30 @@ void FbleFreeProfile(FbleArena* arena, FbleProfile* profile)
 
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     FbleBlockProfile* block = profile->blocks.xs[i];
-    FbleFreeName(arena, block->name);
+    FbleFreeName(block->name);
     for (size_t j = 0; j < block->callees.size; ++j) {
-      FbleFree(arena, block->callees.xs[j]);
+      FbleFree(block->callees.xs[j]);
     }
-    FbleFree(arena, block->callees.xs);
-    FbleFree(arena, block);
+    FbleFree(block->callees.xs);
+    FbleFree(block);
   }
-  FbleFree(arena, profile->blocks.xs);
-  FbleFree(arena, profile);
+  FbleFree(profile->blocks.xs);
+  FbleFree(profile);
 }
 
 // FbleNewProfileThread -- see documentation in fble-profile.h
-FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
+FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
 {
-  FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
+  FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
   thread->profile = profile;
   thread->auto_exit = false;
 
   thread->table.capacity = 10;
   thread->table.size = 0;
-  thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
+  thread->table.xs = FbleArrayAlloc(Entry, thread->table.capacity);
   memset(thread->table.xs, 0, thread->table.capacity * sizeof(Entry));
 
-  thread->calls = FbleAllocExtra(arena, CallStack, 8 * sizeof(CallStack));
+  thread->calls = FbleAllocExtra(CallStack, 8 * sizeof(CallStack));
   thread->calls->tail = NULL;
   thread->calls->next = NULL;
   thread->calls->top = thread->calls->data;
@@ -523,22 +520,22 @@ FbleProfileThread* FbleNewProfileThread(FbleArena* arena, FbleProfile* profile)
 
   thread->sample.capacity = 8;
   thread->sample.size = 0;
-  thread->sample.xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
+  thread->sample.xs = FbleArrayAlloc(Sample, thread->sample.capacity);
 
   thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.count++;
   return thread;
 }
 
 // FbleForkProfileThread -- see documentation in fble-profile.h
-FbleProfileThread* FbleForkProfileThread(FbleArena* arena, FbleProfileThread* parent)
+FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent)
 {
-  FbleProfileThread* thread = FbleAlloc(arena, FbleProfileThread);
+  FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
   thread->profile = parent->profile;
   thread->auto_exit = false;
 
   thread->table.capacity = parent->table.capacity;
   thread->table.size = parent->table.size;
-  thread->table.xs = FbleArrayAlloc(arena, Entry, thread->table.capacity);
+  thread->table.xs = FbleArrayAlloc(Entry, thread->table.capacity);
   memcpy(thread->table.xs, parent->table.xs, thread->table.capacity * sizeof(Entry));
 
   // Copy the call stack.
@@ -546,7 +543,7 @@ FbleProfileThread* FbleForkProfileThread(FbleArena* arena, FbleProfileThread* pa
     CallStack* next = NULL;
     for (CallStack* p = parent->calls; p != NULL; p = p->tail) {
       size_t chunk_size = p->end - p->data;
-      CallStack* c = FbleAllocExtra(arena, CallStack, chunk_size * sizeof(Call));
+      CallStack* c = FbleAllocExtra(CallStack, chunk_size * sizeof(Call));
       if (next == NULL) {
         thread->calls = c;
       } else {
@@ -565,13 +562,13 @@ FbleProfileThread* FbleForkProfileThread(FbleArena* arena, FbleProfileThread* pa
   // Copy the sample stack.
   thread->sample.capacity = parent->sample.capacity;
   thread->sample.size = parent->sample.size;
-  thread->sample.xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
+  thread->sample.xs = FbleArrayAlloc(Sample, thread->sample.capacity);
   memcpy(thread->sample.xs, parent->sample.xs, parent->sample.size * sizeof(Sample));
   return thread;
 }
 
 // FbleFreeProfileThread -- see documentation in fble-profile.h
-void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
+void FbleFreeProfileThread(FbleProfileThread* thread)
 {
   if (thread == NULL) {
     return;
@@ -583,17 +580,17 @@ void FbleFreeProfileThread(FbleArena* arena, FbleProfileThread* thread)
   }
   while (calls != NULL) {
     CallStack* tail = calls->tail;
-    FbleFree(arena, calls);
+    FbleFree(calls);
     calls = tail;
   }
 
-  FbleFree(arena, thread->table.xs);
-  FbleFree(arena, thread->sample.xs);
-  FbleFree(arena, thread);
+  FbleFree(thread->table.xs);
+  FbleFree(thread->sample.xs);
+  FbleFree(thread);
 }
 
 // FbleProfileEnterBlock -- see documentation in fble-profile.h
-void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBlockId block)
+void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block)
 {
   Call* call = thread->calls->top;
   FbleBlockId caller = call->id;
@@ -608,7 +605,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     // Entry not found. Insert it now.
     entry->sample = thread->sample.size;
     entry->caller = caller;
-    entry->data = GetCallData(arena, thread->profile, caller, callee);
+    entry->data = GetCallData(thread->profile, caller, callee);
     thread->table.size++;
 
     // Check now if we should resize after this insertion. We won't resize
@@ -619,7 +616,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
   entry->data->count++;
 
   if (!thread->auto_exit) {
-    call = CallStackPush(arena, thread);
+    call = CallStackPush(thread);
     call->exit = 0;
   }
   call->id = callee;
@@ -636,9 +633,9 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
 
     if (thread->sample.size == thread->sample.capacity) {
       thread->sample.capacity *= 2;
-      Sample* xs = FbleArrayAlloc(arena, Sample, thread->sample.capacity);
+      Sample* xs = FbleArrayAlloc(Sample, thread->sample.capacity);
       memcpy(xs, thread->sample.xs, thread->sample.size * sizeof(Sample));
-      FbleFree(arena, thread->sample.xs);
+      FbleFree(thread->sample.xs);
       thread->sample.xs = xs;
     }
     Sample* sample = thread->sample.xs + thread->sample.size++;
@@ -652,7 +649,7 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
     Table new_table;
     new_table.capacity = 2 * thread->table.capacity - 1;
     new_table.size = thread->table.size;
-    new_table.xs = FbleArrayAlloc(arena, Entry, new_table.capacity);
+    new_table.xs = FbleArrayAlloc(Entry, new_table.capacity);
     memset(new_table.xs, 0, new_table.capacity * sizeof(Entry));
 
     for (size_t i = 0; i < thread->table.capacity; ++i) {
@@ -662,13 +659,13 @@ void FbleProfileEnterBlock(FbleArena* arena, FbleProfileThread* thread, FbleBloc
       }
     }
 
-    FbleFree(arena, thread->table.xs);
+    FbleFree(thread->table.xs);
     thread->table = new_table;
   }
 }
 
 // FbleProfileSample -- see documentation in fble-profile.h
-void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t time)
+void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
 {
   // Charge calls in the stack for their time.
   bool block_seen[thread->profile->blocks.size];
@@ -687,15 +684,15 @@ void FbleProfileSample(FbleArena* arena, FbleProfileThread* thread, uint64_t tim
 }
 
 // FbleProfileExitBlock -- see documentation in fble-profile.h
-void FbleProfileExitBlock(FbleArena* arena, FbleProfileThread* thread)
+void FbleProfileExitBlock(FbleProfileThread* thread)
 {
   // TODO: Consider shrinking the sample stack occasionally to recover memory?
   thread->sample.size -= thread->calls->top->exit;
-  CallStackPop(arena, thread);
+  CallStackPop(thread);
 }
 
 // FbleProfileAutoExitBlock -- see documentation in fble-profile.h
-void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
+void FbleProfileAutoExitBlock(FbleProfileThread* thread)
 {
   thread->auto_exit = true;
 }
@@ -703,7 +700,6 @@ void FbleProfileAutoExitBlock(FbleArena* arena, FbleProfileThread* thread)
 // FbleProfileReport -- see documentation in fble-profile.h
 void FbleProfileReport(FILE* fout, FbleProfile* profile)
 {
-  FbleArena* arena = FbleNewArena();
   FbleCallData* calls[profile->blocks.size];
 
   // Number of blocks covered.
@@ -711,7 +707,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
 
   FbleCallDataV callers[profile->blocks.size];
   for (size_t i = 0; i < profile->blocks.size; ++i) {
-    FbleVectorInit(arena, callers[i]);
+    FbleVectorInit(callers[i]);
   }
 
   for (size_t i = 0; i < profile->blocks.size; ++i) {
@@ -723,11 +719,11 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
 
     for (size_t j = 0; j < profile->blocks.xs[i]->callees.size; ++j) {
       FbleCallData* call = profile->blocks.xs[i]->callees.xs[j];
-      FbleCallData* called = FbleAlloc(arena, FbleCallData);
+      FbleCallData* called = FbleAlloc(FbleCallData);
       called->id = i;
       called->count = call->count;
       called->time = call->time;
-      FbleVectorAppend(arena, callers[call->id], called);
+      FbleVectorAppend(callers[call->id], called);
     }
   }
   SortCallData(DESCENDING, calls, profile->blocks.size);
@@ -778,12 +774,11 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
     }
 
     for (size_t j = 0; j < callers[id].size; ++j) {
-      FbleFree(arena, callers[id].xs[j]);
+      FbleFree(callers[id].xs[j]);
     }
-    FbleFree(arena, callers[id].xs);
+    FbleFree(callers[id].xs);
   }
   fprintf(fout, "\n");
-  FbleFreeArena(arena);
 
   // Locations
   fprintf(fout, "Block Locations\n");

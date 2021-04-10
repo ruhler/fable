@@ -257,11 +257,10 @@ typedef struct {
 //   Free resources associated with an FbleTc.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   tc - the tc to free. May be NULL.
 //
 // Side effects:
 //   Frees all resources associated with the given tc.
-void FbleFreeTc(FbleArena* arena, FbleTc* tc);
+void FbleFreeTc(FbleTc* tc);
 
 #endif // FBLE_INTERNAL_TC_H_

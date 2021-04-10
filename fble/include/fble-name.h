@@ -8,7 +8,6 @@
 #include <stdio.h>        // for FILE
 #include <sys/types.h>    // for size_t
 
-#include "fble-alloc.h"   // for FbleArena
 #include "fble-loc.h"     // for FbleLoc
 #include "fble-string.h"  // for FbleString
 
@@ -43,7 +42,6 @@ typedef struct {
 //   Make a (possibly shared) copy of the name.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
 //   name - the name to copy.
 //
 // Results:
@@ -52,18 +50,17 @@ typedef struct {
 // Side effects:
 //   The user should call FbleFreeName on the returned name when it is no
 //   longer needed.
-FbleName FbleCopyName(FbleArena* arena, FbleName name);
+FbleName FbleCopyName(FbleName name);
 
 // FbleFreeName --
 //   Free resources associated with a name.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   name - the name to free resources of.
 //
 // Side effects:
 //   Frees resources associated with the name.
-void FbleFreeName(FbleArena* arena, FbleName name);
+void FbleFreeName(FbleName name);
 
 // FbleNamesEqual --
 //   Test whether two names are equal. Two names are considered equal if they

@@ -205,15 +205,13 @@ int main(int argc, char* argv[])
   const char* path = argv[1];
   const char* include_path = argv[2];
 
-  FbleArena* arena = FbleNewArena();
-  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile(arena);
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
+  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
+  FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* linked = FbleLinkFromSource(heap, path, include_path, profile);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
     return 1;
   }
 
@@ -222,8 +220,7 @@ int main(int argc, char* argv[])
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
     return 1;
   }
 
@@ -244,8 +241,7 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
     return 1;
   }
 
@@ -264,7 +260,6 @@ int main(int argc, char* argv[])
     FbleProfileReport(fprofile, profile);
   }
 
-  FbleFreeProfile(arena, profile);
-  FbleFreeArena(arena);
+  FbleFreeProfile(profile);
   return result;
 }

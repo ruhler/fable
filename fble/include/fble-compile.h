@@ -54,18 +54,16 @@ typedef struct {
 //   Free resources associated with the given program.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   program - the program to free, may be NULL.
 //
 // Side effects:
 //   Frees resources associated with the given program.
-void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program);
+void FbleFreeCompiledProgram(FbleCompiledProgram* program);
 
 // FbleCompile --
 //   Type check and compile the given program.
 //
 // Inputs:
-//   arena - arena used for allocations.
 //   program - the program to compile.
 //   profile - profile to populate with blocks. May be NULL.
 //
@@ -78,7 +76,7 @@ void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program);
 // * Adds blocks to the given profile.
 // * The caller should call FbleFreeCompiledProgram to release resources
 //   associated with the returned program when it is no longer needed.
-FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleLoadedProgram* program, FbleProfile* profile);
+FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program, FbleProfile* profile);
 
 // FbleDisassemble --
 //   Write a disassembled version of an instruction block in human readable
@@ -99,7 +97,7 @@ void FbleDisassemble(FILE* fout, FbleCode* code, FbleProfile* profile);
 // The generated C code will export a single function named based on the
 // module path with the following signature:
 //  
-//   void <name>(FbleArena* arena, FbleCompiledProgram* program);
+//   void <name>(FbleCompiledProgram* program);
 //
 // Calling this function will append this module to the given program if it
 // does not already belong to the given program.

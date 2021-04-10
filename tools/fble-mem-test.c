@@ -64,15 +64,14 @@ bool Run(FbleLoadedProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_byte
   }
 
   bool success = false;
-  FbleArena* arena = FbleNewArena();
-  FbleProfile* profile = FbleNewProfile(arena);
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
+  FbleProfile* profile = FbleNewProfile();
+  FbleCompiledProgram* compiled = FbleCompile(prgm, profile);
   if (compiled != NULL) {
-    FbleExecutableProgram* executable = FbleInterpret(arena, compiled);
-    FbleFreeCompiledProgram(arena, compiled);
-    FbleValueHeap* heap = FbleNewValueHeap(arena);
+    FbleExecutableProgram* executable = FbleInterpret(compiled);
+    FbleFreeCompiledProgram(compiled);
+    FbleValueHeap* heap = FbleNewValueHeap();
     FbleValue* linked = FbleLink(heap, executable);
-    FbleFreeExecutableProgram(arena, executable);
+    FbleFreeExecutableProgram(executable);
 
     FbleValue* func = FbleEval(heap, linked, profile);
     FbleReleaseValue(heap, linked);
@@ -105,6 +104,7 @@ bool Run(FbleLoadedProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_byte
       // allocations made so far.
       FbleValueFullGc(heap);
 
+      FbleResetMaxTotalBytesAllocated();
       FbleValue* result = FbleApply(heap, func, &tail, profile);
 
       // As a special case, if the result of evaluation is a process, execute
@@ -119,15 +119,14 @@ bool Run(FbleLoadedProgram* prgm, size_t use_n, size_t alloc_n, size_t* max_byte
       success = (result != NULL);
       FbleReleaseValue(heap, result);
       FbleReleaseValue(heap, tail);
+
+      *max_bytes = FbleMaxTotalBytesAllocated();
     }
 
     FbleReleaseValue(heap, func);
     FbleFreeValueHeap(heap);
   }
-  FbleFreeProfile(arena, profile);
-
-  *max_bytes = FbleArenaMaxSize(arena);
-  FbleFreeArena(arena);
+  FbleFreeProfile(profile);
   return success;
 }
 
@@ -174,10 +173,8 @@ int main(int argc, char* argv[])
     include_path = *argv;
   }
 
-  FbleArena* arena = FbleNewArena();
-  FbleLoadedProgram* prgm = FbleLoad(arena, path, include_path);
+  FbleLoadedProgram* prgm = FbleLoad(path, include_path);
   if (prgm == NULL) {
-    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
@@ -186,8 +183,7 @@ int main(int argc, char* argv[])
     for (size_t i = 0; i <= 200; ++i) {
       size_t max_n = 0;
       if (!Run(prgm, i, 200, &max_n)) {
-        FbleFreeLoadedProgram(arena, prgm);
-        FbleFreeArena(arena);
+        FbleFreeLoadedProgram(prgm);
         return EX_FAIL;
       }
       fprintf(stderr, "% 4zi: %zi\n", i, max_n);
@@ -199,15 +195,13 @@ int main(int argc, char* argv[])
 
   size_t max_small_n = 0;
   if (!Run(prgm, small_n, large_n, &max_small_n)) {
-    FbleFreeLoadedProgram(arena, prgm);
-    FbleFreeArena(arena);
+    FbleFreeLoadedProgram(prgm);
     return EX_FAIL;
   }
 
   size_t max_large_n = 0;
   if (!Run(prgm, large_n, large_n, &max_large_n)) {
-    FbleFreeLoadedProgram(arena, prgm);
-    FbleFreeArena(arena);
+    FbleFreeLoadedProgram(prgm);
     return EX_FAIL;
   }
 
@@ -217,20 +211,17 @@ int main(int argc, char* argv[])
   size_t noise = 10 * max_small_n / 100;
   if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
-    FbleFreeLoadedProgram(arena, prgm);
-    FbleFreeArena(arena);
+    FbleFreeLoadedProgram(prgm);
     return EX_FAIL;
   }
 
   if (growth && max_large_n <= max_small_n + noise) {
     fprintf(stderr, "memory constant: M(%zi) = %zi, M(%zi) = %zi\n",
         small_n, max_small_n, large_n, max_large_n);
-    FbleFreeLoadedProgram(arena, prgm);
-    FbleFreeArena(arena);
+    FbleFreeLoadedProgram(prgm);
     return EX_FAIL;
   }
 
-  FbleFreeLoadedProgram(arena, prgm);
-  FbleFreeArena(arena);
+  FbleFreeLoadedProgram(prgm);
   return EX_SUCCESS;
 }

@@ -16,7 +16,6 @@
 // module->deps as arguments to the function.
 //
 // Inputs:
-//   arena - arena to use for allocations
 //   program - the program to typecheck
 //   result - output variable assumed to be a pre-initialized vector.
 //
@@ -30,6 +29,6 @@
 // * The user is responsible for freeing any values added to the result vector
 //   when they are no longer needed, including in the case when FbleTypeCheck
 //   fails.
-bool FbleTypeCheck(FbleArena* arena, FbleLoadedProgram* program, FbleTcV* result);
+bool FbleTypeCheck(FbleLoadedProgram* program, FbleTcV* result);
 
 #endif // FBLE_INTERNAL_TYPECHECK_H_

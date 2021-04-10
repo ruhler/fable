@@ -28,16 +28,13 @@ typedef struct {
 
 // FbleNewValueHeap --
 //   Create a new heap for allocation of values.
-// 
-// Inputs: 
-//   arena - the arena to use for underlying allocations.
 //
 // Results:
 //   A heap that can be used to allocate values.
 //
 // Side effects:
 //   Allocates a heap that should be freed using FbleFreeValueHeap.
-FbleValueHeap* FbleNewValueHeap(FbleArena* arena);
+FbleValueHeap* FbleNewValueHeap();
 
 // FbleFreeValueHeap --
 //   Reclaim resources associated with a value heap.
@@ -58,7 +55,6 @@ void FbleFreeValueHeap(FbleValueHeap* heap);
 //   called.
 //
 // Inputs:
-//   arena - The heap used to allocate the value.
 //   value - The value to retain.
 //
 // Side effects:

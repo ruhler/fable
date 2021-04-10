@@ -50,12 +50,11 @@ typedef struct {
 //   Free resources associated with the given program.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   program - the program to free, may be NULL.
 //
 // Side effects:
 //   Frees resources associated with the given program.
-void FbleFreeExecutableProgram(FbleArena* arena, FbleExecutableProgram* program);
+void FbleFreeExecutableProgram(FbleExecutableProgram* program);
 
 // FbleLink --
 //   Link the modules of an executable program together into a single FbleValue

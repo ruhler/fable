@@ -34,7 +34,6 @@ typedef struct {
 //   Allocate a new, empty module path.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
 //   loc - the location of the module path. Borrowed.
 //
 // Results:
@@ -43,13 +42,12 @@ typedef struct {
 // Side effects:
 //   Allocates a new module path that the user should free with
 //   FbleFreeModulePath when no longer needed.
-FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc);
+FbleModulePath* FbleNewModulePath(FbleLoc loc);
 
 // FbleModulePathName --
 //   Construct an FbleName describing a module path.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   path - the path to construct an FbleName for.
 //
 // Results:
@@ -58,7 +56,7 @@ FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc);
 // Side effects:
 //   The caller should call FbleFreeName on the returned name when no longer
 //   needed.
-FbleName FbleModulePathName(FbleArena* arena, FbleModulePath* path);
+FbleName FbleModulePathName(FbleModulePath* path);
 
 // FblePrintModulePath --
 //   Print a module path in human readable form to the given stream.
@@ -94,7 +92,6 @@ bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b);
 //   Parse an FbleModulePath from a string.
 //
 // Inputs:
-//   arena - The arena to use for allocating the parsed path.
 //   string - The string to parse the path from.
 //
 // Results:
@@ -102,7 +99,7 @@ bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b);
 //
 // Side effects:
 // * Prints an error message to stderr if the path cannot be parsed.
-FbleModulePath* FbleParseModulePath(FbleArena* arena, const char* string);
+FbleModulePath* FbleParseModulePath(const char* string);
 
 // FbleCopyModulePath -- 
 //   Make a (possibly shared) copy of the given module path.
@@ -122,11 +119,10 @@ FbleModulePath* FbleCopyModulePath(FbleModulePath* path);
 //   Free resource associated with a module path.
 //
 // Inputs:
-//   arena - the arena to use for allocations.
 //   path - the path to free.
 //
 // Side effects:
 //   Frees resources associated with the path and its contents.
-void FbleFreeModulePath(FbleArena* arena, FbleModulePath* path);
+void FbleFreeModulePath(FbleModulePath* path);
 
 #endif // FBLE_MODULE_PATH_H_

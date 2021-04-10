@@ -8,13 +8,13 @@
 #include "fble-vector.h"
 
 // FbleNewModulePath -- see documentation in fble-module-path.h
-FbleModulePath* FbleNewModulePath(FbleArena* arena, FbleLoc loc)
+FbleModulePath* FbleNewModulePath(FbleLoc loc)
 {
-  FbleModulePath* path = FbleAlloc(arena, FbleModulePath);
+  FbleModulePath* path = FbleAlloc(FbleModulePath);
   path->refcount = 1;
   path->magic = FBLE_MODULE_PATH_MAGIC;
-  path->loc = FbleCopyLoc(arena, loc);
-  FbleVectorInit(arena, path->path);
+  path->loc = FbleCopyLoc(loc);
+  FbleVectorInit(path->path);
   return path;
 }
 
@@ -26,33 +26,33 @@ FbleModulePath* FbleCopyModulePath(FbleModulePath* path)
 }
 
 // FbleFreeModulePath -- see documentation in fble-module-path.h
-void FbleFreeModulePath(FbleArena* arena, FbleModulePath* path)
+void FbleFreeModulePath(FbleModulePath* path)
 {
   assert(path->magic == FBLE_MODULE_PATH_MAGIC && "corrupt FbleModulePath");
   if (--path->refcount == 0) {
-    FbleFreeLoc(arena, path->loc);
+    FbleFreeLoc(path->loc);
     for (size_t i = 0; i < path->path.size; ++i) {
-      FbleFreeName(arena, path->path.xs[i]);
+      FbleFreeName(path->path.xs[i]);
     }
-    FbleFree(arena, path->path.xs);
-    FbleFree(arena, path);
+    FbleFree(path->path.xs);
+    FbleFree(path);
   }
 }
 
 // FbleModulePathName -- see documentation in fble-module-path.h
-FbleName FbleModulePathName(FbleArena* arena, FbleModulePath* path)
+FbleName FbleModulePathName(FbleModulePath* path)
 {
   size_t len = 3;   // We at least need 3 chars: '/', '%', '\0'
   for (size_t i = 0; i < path->path.size; ++i) {
     len += 1 + strlen(path->path.xs[i].name->str);
   }
 
-  FbleString* string = FbleAllocExtra(arena, FbleString, len);
+  FbleString* string = FbleAllocExtra(FbleString, len);
   string->refcount = 1;
   string->magic = FBLE_STRING_MAGIC;
   FbleName name = {
     .name = string,
-    .loc = FbleCopyLoc(arena, path->loc),
+    .loc = FbleCopyLoc(path->loc),
     .space = FBLE_NORMAL_NAME_SPACE
   };
 

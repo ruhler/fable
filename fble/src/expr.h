@@ -65,7 +65,6 @@ typedef struct {
 //   Makes a (refcount) copy of a kind.
 //
 // Inputs:
-//   arena - for allocations.
 //   kind - the kind to copy.
 //
 // Results:
@@ -74,13 +73,12 @@ typedef struct {
 // Side effects:
 //   The returned kind must be freed using FbleFreeKind when no longer in
 //   use.
-FbleKind* FbleCopyKind(FbleArena* arena, FbleKind* kind);
+FbleKind* FbleCopyKind(FbleKind* kind);
 
 // FbleFreeKind --
 //   Frees a (refcount) copy of a compiled kind.
 //
 // Inputs:
-//   arena - for deallocations.
 //   kind - the kind to free. May be NULL.
 //
 // Results:
@@ -89,7 +87,7 @@ FbleKind* FbleCopyKind(FbleArena* arena, FbleKind* kind);
 // Side effects:
 //   Decrements the refcount for the kind and frees it if there are no
 //   more references to it.
-void FbleFreeKind(FbleArena* arena, FbleKind* kind);
+void FbleFreeKind(FbleKind* kind);
 
 // FbleExprTag --
 //   A tag used to distinguish among different kinds of expressions.
@@ -391,11 +389,10 @@ typedef struct {
 //   Free resources associated with an expression.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   expr - expression to free. May be NULL.
 //
 // Side effect:
 //   Frees resources associated with expr.
-void FbleFreeExpr(FbleArena* arena, FbleExpr* expr);
+void FbleFreeExpr(FbleExpr* expr);
 
 #endif // FBLE_INTERNAL_EXPR_H_

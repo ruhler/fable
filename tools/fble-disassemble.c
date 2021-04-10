@@ -69,27 +69,23 @@ int main(int argc, char* argv[])
     include_path = *argv;
   }
 
-  FbleArena* arena = FbleNewArena();
-  FbleLoadedProgram* prgm = FbleLoad(arena, path, include_path);
+  FbleLoadedProgram* prgm = FbleLoad(path, include_path);
   if (prgm == NULL) {
-    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
-  FbleProfile* profile = FbleNewProfile(arena);
-  FbleCompiledProgram* compiled = FbleCompile(arena, prgm, profile);
-  FbleFreeLoadedProgram(arena, prgm);
+  FbleProfile* profile = FbleNewProfile();
+  FbleCompiledProgram* compiled = FbleCompile(prgm, profile);
+  FbleFreeLoadedProgram(prgm);
 
   if (compiled == NULL) {
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
     return EX_FAIL;
   }
 
   FbleDisassemble(stdout, compiled->modules.xs[compiled->modules.size - 1].code, profile);
 
-  FbleFreeCompiledProgram(arena, compiled);
-  FbleFreeProfile(arena, profile);
-  FbleFreeArena(arena);
+  FbleFreeCompiledProgram(compiled);
+  FbleFreeProfile(profile);
   return EX_SUCCESS;
 }

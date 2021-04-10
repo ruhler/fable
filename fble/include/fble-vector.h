@@ -25,7 +25,6 @@
 //   Initialize a vector for construction.
 //
 // Inputs:
-//   arena - The arena to use for allocations.
 //   vector - A reference to an uninitialized vector.
 //
 // Results:
@@ -36,15 +35,14 @@
 //
 // Implementation notes:
 //   The array initially has size 0 and capacity 1.
-#define FbleVectorInit(arena, vector) \
+#define FbleVectorInit(vector) \
   (vector).size = 0; \
-  (vector).xs = FbleRawAlloc(arena, sizeof(*((vector).xs)), FbleAllocMsg(__FILE__, __LINE__))
+  (vector).xs = FbleRawAlloc(sizeof(*((vector).xs)), FbleAllocMsg(__FILE__, __LINE__))
 
 // FbleVectorExtend --
 //   Append an uninitialized element to the vector.
 //
 // Inputs:
-//   arena - The arena to use for allocations.
 //   vector - A reference to a vector that was initialized using FbleVectorInit.
 //
 // Results:
@@ -54,14 +52,13 @@
 //   A new uninitialized element is appended to the array and the size is
 //   incremented. If necessary, the array is re-allocated to make space for
 //   the new element.
-#define FbleVectorExtend(arena, vector) \
-  (FbleVectorIncrSize(arena, sizeof(*((vector).xs)), &(vector).size, (void**)&(vector).xs), (vector).xs + (vector).size - 1)
+#define FbleVectorExtend(vector) \
+  (FbleVectorIncrSize(sizeof(*((vector).xs)), &(vector).size, (void**)&(vector).xs), (vector).xs + (vector).size - 1)
 
 // FbleVectorAppend --
 //   Append an element to a vector.
 //
 // Inputs:
-//   arena - The arena to use for allocations.
 //   vector - A reference to a vector that was initialized using FbleVectorInit.
 //   elem - An element of type T to append to the array.
 //
@@ -72,8 +69,8 @@
 //   The given element is appended to the array and the size is incremented.
 //   If necessary, the array is re-allocated to make space for the new
 //   element.
-#define FbleVectorAppend(arena, vector, elem) \
-  (*FbleVectorExtend(arena, vector) = elem)
+#define FbleVectorAppend(vector, elem) \
+  (*FbleVectorExtend(vector) = elem)
 
 // FbleVectorIncrSize --
 //   Increase the size of an fble vector by a single element.
@@ -83,7 +80,6 @@
 //   provide the same level of type safety the macros provide.
 //
 // Inputs:
-//   arena - The arena used for allocations.
 //   elem_size - The sizeof the element type in bytes.
 //   size - A pointer to the size field of the vector.
 //   xs - A pointer to the xs field of the vector.
@@ -92,9 +88,9 @@
 //   None.
 //
 // Side effects:
-//   A new uninitialized element is appended to the vector and the size is
+// * A new uninitialized element is appended to the vector and the size is
 //   incremented. If necessary, the array is re-allocated to make space for
 //   the new element.
-void FbleVectorIncrSize(FbleArena* arena, size_t elem_size, size_t* size, void** xs);
+void FbleVectorIncrSize(size_t elem_size, size_t* size, void** xs);
 
 #endif // FBLE_VECTOR_H_

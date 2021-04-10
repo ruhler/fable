@@ -14,7 +14,6 @@
 //   the compiled code.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   code - the compiled code to interpret.
 //
 // Results:
@@ -23,7 +22,7 @@
 // Side effects:
 //   Allocates an FbleExecutable that should be freed using (TODO) when no
 //   longer needed.
-FbleExecutable* FbleInterpretCode(FbleArena* arena, FbleCode* code);
+FbleExecutable* FbleInterpretCode(FbleCode* code);
 
 // FbleNewInterpretedFuncValue -- see documentation in fble-interpret.h
 //   Allocates a new FbleFuncValue that runs the given code with the
@@ -48,7 +47,6 @@ FbleFuncValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, size_t argc, Fbl
 //   interpreter to interpret the compiled code.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   program - the compiled program to interpret.
 //
 // Results:
@@ -57,7 +55,7 @@ FbleFuncValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, size_t argc, Fbl
 // Side effects:
 //   Allocates an FbleExecutableProgram that should be freed using
 //   FbleFreeExecutableProgram when no longer needed.
-FbleExecutableProgram* FbleInterpret(FbleArena* arena, FbleCompiledProgram* program);
+FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program);
 
 #endif // FBLE_INTERPRET_H_
 

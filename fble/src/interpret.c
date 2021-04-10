@@ -278,7 +278,7 @@ static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, 
 
   FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * staticc);
   value->_base.tag = FBLE_FUNC_VALUE;
-  value->executable = FbleAlloc(heap->arena, FbleExecutable);
+  value->executable = FbleAlloc(FbleExecutable);
   value->executable->code = func_value_instr->code;
   value->executable->code->refcount++;
   value->executable->run = &InterpretedRunFunction;
@@ -349,7 +349,7 @@ static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleTh
     }
 
     FrameSetBorrowed(heap, thread, get_instr->dest, head->value);
-    FbleFree(heap->arena, head);
+    FbleFree(head);
     thread->stack->pc++;
     return FBLE_EXEC_RUNNING;
   }
@@ -387,7 +387,7 @@ static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleTh
   if (put_port->tag == FBLE_LINK_VALUE) {
     FbleLinkValue* link = (FbleLinkValue*)put_port;
 
-    FbleValues* tail = FbleAlloc(heap->arena, FbleValues);
+    FbleValues* tail = FbleAlloc(FbleValues);
     tail->value = arg;
     tail->next = NULL;
 
@@ -444,11 +444,11 @@ static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
     assert(arg != NULL && "undefined proc value");
     assert(arg->_base.tag == FBLE_PROC_VALUE);
 
-    FbleThread* child = FbleAlloc(heap->arena, FbleThread);
+    FbleThread* child = FbleAlloc(FbleThread);
     child->stack = thread->stack;
-    child->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(heap->arena, thread->profile);
+    child->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(thread->profile);
     child->stack->joins++;
-    FbleVectorAppend(heap->arena, *threads, child);
+    FbleVectorAppend(*threads, child);
 
     FbleValue** result = thread->stack->locals.xs + fork_instr->dests.xs[i];
     FbleReleaseValue(heap, *result);
@@ -574,7 +574,6 @@ static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 // See documentation of FbleRunFunction in execute.h.
 static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
-  FbleArena* arena = heap->arena;
   FbleProfileThread* profile = thread->profile;
 
   FbleInstr** code = thread->stack->func->executable->code->instrs.xs;
@@ -584,21 +583,21 @@ static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* t
     FbleInstr* instr = code[thread->stack->pc];
     if (profile != NULL) {
       if (rand() % PROFILE_SAMPLE_PERIOD == 0) {
-        FbleProfileSample(arena, profile, 1);
+        FbleProfileSample(profile, 1);
       }
 
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP:
-            FbleProfileEnterBlock(arena, profile, op->block);
+            FbleProfileEnterBlock(profile, op->block);
             break;
 
           case FBLE_PROFILE_EXIT_OP:
-            FbleProfileExitBlock(arena, profile);
+            FbleProfileExitBlock(profile);
             break;
 
           case FBLE_PROFILE_AUTO_EXIT_OP: {
-            FbleProfileAutoExitBlock(arena, profile);
+            FbleProfileAutoExitBlock(profile);
             break;
           }
         }
@@ -611,9 +610,9 @@ static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* t
 }
 
 // FbleInterpretCode -- see documentation in fble-interpret.h
-FbleExecutable* FbleInterpretCode(FbleArena* arena, FbleCode* code)
+FbleExecutable* FbleInterpretCode(FbleCode* code)
 {
-  FbleExecutable* executable = FbleAlloc(arena, FbleExecutable);
+  FbleExecutable* executable = FbleAlloc(FbleExecutable);
   executable->code = code;
   executable->code->refcount++;
   executable->run = &InterpretedRunFunction;
@@ -625,7 +624,7 @@ FbleFuncValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, size_t argc, Fbl
 {
   FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * code->statics);
   v->_base.tag = FBLE_FUNC_VALUE;
-  v->executable = FbleInterpretCode(heap->arena, code);
+  v->executable = FbleInterpretCode(code);
   v->argc = argc;
   v->localc = code->locals;
   v->staticc = code->statics;
@@ -633,22 +632,22 @@ FbleFuncValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, size_t argc, Fbl
 }
 
 // FbleInterpret -- see documentation in fble-interpret.h
-FbleExecutableProgram* FbleInterpret(FbleArena* arena, FbleCompiledProgram* program)
+FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
 {
-  FbleExecutableProgram* executable = FbleAlloc(arena, FbleExecutableProgram);
-  FbleVectorInit(arena, executable->modules);
+  FbleExecutableProgram* executable = FbleAlloc(FbleExecutableProgram);
+  FbleVectorInit(executable->modules);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleCompiledModule* module = program->modules.xs + i;
 
-    FbleExecutableModule* executable_module = FbleVectorExtend(arena, executable->modules);
+    FbleExecutableModule* executable_module = FbleVectorExtend(executable->modules);
     executable_module->path = FbleCopyModulePath(module->path);
-    FbleVectorInit(arena, executable_module->deps);
+    FbleVectorInit(executable_module->deps);
     for (size_t d = 0; d < module->deps.size; ++d) {
-      FbleVectorAppend(arena, executable_module->deps, FbleCopyModulePath(module->deps.xs[d]));
+      FbleVectorAppend(executable_module->deps, FbleCopyModulePath(module->deps.xs[d]));
     }
 
-    executable_module->executable = FbleInterpretCode(arena, module->code);
+    executable_module->executable = FbleInterpretCode(module->code);
   }
 
   return executable;

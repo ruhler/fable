@@ -477,12 +477,10 @@ int main(int argc, char* argv[])
   const char* path = argv[1];
   const char* include_path = argv[2];
 
-  FbleArena* arena = FbleNewArena();
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
+  FbleValueHeap* heap = FbleNewValueHeap();
   FbleValue* linked = FbleLinkFromSource(heap, path, include_path, NULL);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
@@ -491,14 +489,12 @@ int main(int argc, char* argv[])
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
@@ -550,7 +546,6 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 1;
@@ -565,7 +560,6 @@ int main(int argc, char* argv[])
 
   FbleReleaseValue(heap, value);
   FbleFreeValueHeap(heap);
-  FbleFreeArena(arena);
 
   SDL_DestroyWindow(window);
   SDL_Quit();

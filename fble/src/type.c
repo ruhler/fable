@@ -47,7 +47,7 @@ typedef struct TypeIdPairs {
   struct TypeIdPairs* next;
 } TypeIdPairs;
 
-static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increment);
+static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment);
 
 static void Ref(FbleHeapCallback* callback, FbleType* type);
 static void Refs(FbleHeapCallback* callback, FbleType* type);
@@ -62,7 +62,6 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
 //   Construct a kind that is a level adjusted version of the given kind.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   kind - the kind to use as the basis.
 //   increment - the kind level increment amount. May be negative to decrease
 //               the kind level.
@@ -78,16 +77,16 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
 //
 //   Behavior is undefined if the increment causes the resulting kind level
 //   to be less than 0.
-static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increment)
+static FbleKind* LevelAdjustedKind(FbleKind* kind, int increment)
 {
   switch (kind->tag) {
     case FBLE_BASIC_KIND: {
       FbleBasicKind* basic = (FbleBasicKind*)kind;
       assert((int)basic->level + increment >= 0);
 
-      FbleBasicKind* adjusted = FbleAlloc(arena, FbleBasicKind);
+      FbleBasicKind* adjusted = FbleAlloc(FbleBasicKind);
       adjusted->_base.tag = FBLE_BASIC_KIND;
-      adjusted->_base.loc = FbleCopyLoc(arena, kind->loc);
+      adjusted->_base.loc = FbleCopyLoc(kind->loc);
       adjusted->_base.refcount = 1;
       adjusted->level = basic->level + increment;
       return &adjusted->_base;
@@ -95,12 +94,12 @@ static FbleKind* LevelAdjustedKind(FbleArena* arena, FbleKind* kind, int increme
 
     case FBLE_POLY_KIND: {
       FblePolyKind* poly = (FblePolyKind*)kind;
-      FblePolyKind* adjusted = FbleAlloc(arena, FblePolyKind);
+      FblePolyKind* adjusted = FbleAlloc(FblePolyKind);
       adjusted->_base.tag = FBLE_POLY_KIND;
-      adjusted->_base.loc = FbleCopyLoc(arena, kind->loc);
+      adjusted->_base.loc = FbleCopyLoc(kind->loc);
       adjusted->_base.refcount = 1;
-      adjusted->arg = FbleCopyKind(arena, poly->arg);
-      adjusted->rkind = LevelAdjustedKind(arena, poly->rkind, increment);
+      adjusted->arg = FbleCopyKind(poly->arg);
+      adjusted->rkind = LevelAdjustedKind(poly->rkind, increment);
       return &adjusted->_base;
     }
   }
@@ -188,21 +187,20 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
 //   The on_free function for types. See documentation in heap.h
 static void OnFree(FbleTypeHeap* heap, FbleType* type)
 {
-  FbleArena* arena = heap->arena;
-  FbleFreeLoc(arena, type->loc);
+  FbleFreeLoc(type->loc);
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
       for (size_t i = 0; i < dt->fields.size; ++i) {
-        FbleFreeName(arena, dt->fields.xs[i].name);
+        FbleFreeName(dt->fields.xs[i].name);
       }
-      FbleFree(arena, dt->fields.xs);
+      FbleFree(dt->fields.xs);
       return;
     }
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
-      FbleFree(arena, ft->args.xs);
+      FbleFree(ft->args.xs);
       return;
     }
 
@@ -212,8 +210,8 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      FbleFreeKind(arena, var->kind);
-      FbleFreeName(arena, var->name);
+      FbleFreeKind(var->kind);
+      FbleFreeName(var->name);
       return;
     }
 
@@ -426,8 +424,6 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     return FbleRetainType(heap, type);
   }
 
-  FbleArena* arena = heap->arena;
-
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
       FbleDataType* dt = (FbleDataType*)type;
@@ -435,13 +431,13 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       sdt->_base.id = dt->_base.id;
       sdt->datatype = dt->datatype;
 
-      FbleVectorInit(arena, sdt->fields);
+      FbleVectorInit(sdt->fields);
       for (size_t i = 0; i < dt->fields.size; ++i) {
         FbleTaggedType field = {
-          .name = FbleCopyName(arena, dt->fields.xs[i].name),
+          .name = FbleCopyName(dt->fields.xs[i].name),
           .type = Subst(heap, dt->fields.xs[i].type, param, arg, tps)
         };
-        FbleVectorAppend(arena, sdt->fields, field);
+        FbleVectorAppend(sdt->fields, field);
         FbleTypeAddRef(heap, &sdt->_base, field.type);
         FbleReleaseType(heap, field.type);
       }
@@ -455,14 +451,14 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 
       FbleFuncType* sft = FbleNewType(heap, FbleFuncType, FBLE_FUNC_TYPE, ft->_base.loc);
       sft->_base.id = ft->_base.id;
-      FbleVectorInit(arena, sft->args);
+      FbleVectorInit(sft->args);
       sft->rtype = rtype;
       FbleTypeAddRef(heap, &sft->_base, sft->rtype);
       FbleReleaseType(heap, sft->rtype);
 
       for (size_t i = 0; i < ft->args.size; ++i) {
         FbleType* farg = Subst(heap, ft->args.xs[i], param, arg, tps);
-        FbleVectorAppend(arena, sft->args, farg);
+        FbleVectorAppend(sft->args, farg);
         FbleTypeAddRef(heap, &sft->_base, farg);
         FbleReleaseType(heap, farg);
       }
@@ -667,18 +663,17 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       FblePolyType* pta = (FblePolyType*)a;
       FblePolyType* ptb = (FblePolyType*)b;
 
-      FbleArena* arena = heap->arena;
-      FbleKind* ka = FbleGetKind(arena, pta->arg);
-      FbleKind* kb = FbleGetKind(arena, ptb->arg);
+      FbleKind* ka = FbleGetKind(pta->arg);
+      FbleKind* kb = FbleGetKind(ptb->arg);
       if (!FbleKindsEqual(ka, kb)) {
-        FbleFreeKind(arena, ka);
-        FbleFreeKind(arena, kb);
+        FbleFreeKind(ka);
+        FbleFreeKind(kb);
         FbleReleaseType(heap, a);
         FbleReleaseType(heap, b);
         return false;
       }
-      FbleFreeKind(arena, ka);
-      FbleFreeKind(arena, kb);
+      FbleFreeKind(ka);
+      FbleFreeKind(kb);
   
       TypeIdPairs pneq = {
         .a = pta->arg->id,
@@ -725,15 +720,15 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
 }
 
 // FbleGetKind -- see documentation in type.h
-FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
+FbleKind* FbleGetKind(FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE:
     case FBLE_FUNC_TYPE:
     case FBLE_PROC_TYPE: {
-      FbleBasicKind* kind = FbleAlloc(arena, FbleBasicKind);
+      FbleBasicKind* kind = FbleAlloc(FbleBasicKind);
       kind->_base.tag = FBLE_BASIC_KIND;
-      kind->_base.loc = FbleCopyLoc(arena, type->loc);
+      kind->_base.loc = FbleCopyLoc(type->loc);
       kind->_base.refcount = 1;
       kind->level = 0;
       return &kind->_base;
@@ -741,9 +736,9 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
 
     case FBLE_POLY_TYPE: {
       FblePolyType* poly = (FblePolyType*)type;
-      FblePolyKind* kind = FbleAlloc(arena, FblePolyKind);
+      FblePolyKind* kind = FbleAlloc(FblePolyKind);
       kind->_base.tag = FBLE_POLY_KIND;
-      kind->_base.loc = FbleCopyLoc(arena, type->loc);
+      kind->_base.loc = FbleCopyLoc(type->loc);
       kind->_base.refcount = 1;
 
       // This is tricky. Consider: <@ A@> { ... }
@@ -756,35 +751,35 @@ FbleKind* FbleGetKind(FbleArena* arena, FbleType* type)
       //
       // In short, we have to increment the level of the argument kind to get
       // the proper kind for the poly.
-      FbleKind* arg_kind = FbleGetKind(arena, poly->arg);
-      kind->arg = LevelAdjustedKind(arena, arg_kind, 1);
-      FbleFreeKind(arena, arg_kind);
+      FbleKind* arg_kind = FbleGetKind(poly->arg);
+      kind->arg = LevelAdjustedKind(arg_kind, 1);
+      FbleFreeKind(arg_kind);
 
-      kind->rkind = FbleGetKind(arena, poly->body);
+      kind->rkind = FbleGetKind(poly->body);
       return &kind->_base;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
-      FblePolyKind* kind = (FblePolyKind*)FbleGetKind(arena, pat->poly);
+      FblePolyKind* kind = (FblePolyKind*)FbleGetKind(pat->poly);
       assert(kind->_base.tag == FBLE_POLY_KIND);
 
-      FbleKind* rkind = FbleCopyKind(arena, kind->rkind);
-      FbleFreeKind(arena, &kind->_base);
+      FbleKind* rkind = FbleCopyKind(kind->rkind);
+      FbleFreeKind(&kind->_base);
       return rkind;
     }
 
     case FBLE_VAR_TYPE: {
       FbleVarType* var = (FbleVarType*)type;
-      return FbleCopyKind(arena, var->kind);
+      return FbleCopyKind(var->kind);
     }
 
     case FBLE_TYPE_TYPE: {
       FbleTypeType* type_type = (FbleTypeType*)type;
 
-      FbleKind* arg_kind = FbleGetKind(arena, type_type->type);
-      FbleKind* kind = LevelAdjustedKind(arena, arg_kind, 1);
-      FbleFreeKind(arena, arg_kind);
+      FbleKind* arg_kind = FbleGetKind(type_type->type);
+      FbleKind* kind = LevelAdjustedKind(arg_kind, 1);
+      FbleFreeKind(arg_kind);
       return kind;
     }
   }
@@ -868,9 +863,9 @@ void FblePrintKind(FbleKind* kind)
 }
 
 // FbleNewTypeHeap -- see documentation in type.h
-FbleTypeHeap* FbleNewTypeHeap(FbleArena* arena)
+FbleTypeHeap* FbleNewTypeHeap()
 {
-  return FbleNewHeap(arena,
+  return FbleNewHeap(
       (void (*)(FbleHeapCallback*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
 }
@@ -886,7 +881,7 @@ FbleType* FbleNewTypeRaw(FbleTypeHeap* heap, size_t size, FbleTypeTag tag, FbleL
 {
   FbleType* type = (FbleType*)heap->new(heap, size);
   type->tag = tag;
-  type->loc = FbleCopyLoc(heap->arena, loc);
+  type->loc = FbleCopyLoc(loc);
 
   // TODO: Don't use a static variable for this. Static variables are bad.
   // What am I thinking? Surely there is a better way to do this.
@@ -922,13 +917,11 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
 {
   assert(name.space == FBLE_TYPE_NAME_SPACE && "bad namespace for var type");
 
-  FbleArena* arena = heap->arena;
-
   size_t level = FbleGetKindLevel(kind);
 
   FbleVarType* var = FbleNewType(heap, FbleVarType, FBLE_VAR_TYPE, loc);
-  var->name = FbleCopyName(arena, name);
-  var->kind = LevelAdjustedKind(arena, kind, -(int)level);
+  var->name = FbleCopyName(name);
+  var->kind = LevelAdjustedKind(kind, -(int)level);
   var->value = NULL;
 
   FbleType* type = &var->_base;
@@ -1103,7 +1096,7 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 //   worry about infinite recursion when trying to print a type: all recursion
 //   must happen through a var type, and we don't ever go through a var type
 //   when printing.
-void FblePrintType(FbleArena* arena, FbleType* type)
+void FblePrintType(FbleType* type)
 {
   switch (type->tag) {
     case FBLE_DATA_TYPE: {
@@ -1112,7 +1105,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
       const char* comma = "";
       for (size_t i = 0; i < dt->fields.size; ++i) {
         fprintf(stderr, "%s", comma);
-        FblePrintType(arena, dt->fields.xs[i].type);
+        FblePrintType(dt->fields.xs[i].type);
         fprintf(stderr, " ");
         FblePrintName(stderr, dt->fields.xs[i].name);
         comma = ", ";
@@ -1127,18 +1120,18 @@ void FblePrintType(FbleArena* arena, FbleType* type)
       const char* comma = "";
       for (size_t i = 0; i < ft->args.size; ++i) {
         fprintf(stderr, "%s", comma);
-        FblePrintType(arena, ft->args.xs[i]);
+        FblePrintType(ft->args.xs[i]);
         comma = ", ";
       }
       fprintf(stderr, ") { ");
-      FblePrintType(arena, ft->rtype);
+      FblePrintType(ft->rtype);
       fprintf(stderr, "; }");
       return;
     }
 
     case FBLE_PROC_TYPE: {
       FbleProcType* ut = (FbleProcType*)type;
-      FblePrintType(arena, ut->type);
+      FblePrintType(ut->type);
       fprintf(stderr, "!");
       return;
     }
@@ -1149,43 +1142,43 @@ void FblePrintType(FbleArena* arena, FbleType* type)
         FblePolyType* pt = (FblePolyType*)type;
         fprintf(stderr, "%s", prefix);
 
-        FbleKind* value_kind = FbleGetKind(arena, pt->arg);
-        FbleKind* type_kind = LevelAdjustedKind(arena, value_kind, 1);
+        FbleKind* value_kind = FbleGetKind(pt->arg);
+        FbleKind* type_kind = LevelAdjustedKind(value_kind, 1);
         FblePrintKind(type_kind);
-        FbleFreeKind(arena, type_kind);
-        FbleFreeKind(arena, value_kind);
+        FbleFreeKind(type_kind);
+        FbleFreeKind(value_kind);
 
         fprintf(stderr, " ");
-        FblePrintType(arena, pt->arg);
+        FblePrintType(pt->arg);
         prefix = ", ";
         type = pt->body;
       }
       fprintf(stderr, "> { ");
-      FblePrintType(arena, type);
+      FblePrintType(type);
       fprintf(stderr, "; }");
       return;
     }
 
     case FBLE_POLY_APPLY_TYPE: {
       FbleTypeV args;
-      FbleVectorInit(arena, args);
+      FbleVectorInit(args);
 
       while (type->tag == FBLE_POLY_APPLY_TYPE) {
         FblePolyApplyType* pat = (FblePolyApplyType*)type;
-        FbleVectorAppend(arena, args, pat->arg);
+        FbleVectorAppend(args, pat->arg);
         type = pat->poly;
       }
 
-      FblePrintType(arena, type);
+      FblePrintType(type);
       const char* prefix = "<";
       for (size_t i = 0; i < args.size; ++i) {
         size_t j = args.size - i - 1;
         fprintf(stderr, "%s", prefix);
-        FblePrintType(arena, args.xs[j]);
+        FblePrintType(args.xs[j]);
         prefix = ", ";
       }
       fprintf(stderr, ">");
-      FbleFree(arena, args.xs);
+      FbleFree(args.xs);
       return;
     }
 
@@ -1198,7 +1191,7 @@ void FblePrintType(FbleArena* arena, FbleType* type)
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tt = (FbleTypeType*)type;
       fprintf(stderr, "@<");
-      FblePrintType(arena, tt->type);
+      FblePrintType(tt->type);
       fprintf(stderr, ">");
       return;
     }

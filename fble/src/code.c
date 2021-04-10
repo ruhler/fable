@@ -33,10 +33,9 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
   // Map from FbleFrameSection to short descriptor of the section.
   static const char* sections[] = {"s", "l"};
 
-  FbleArena* arena = FbleNewArena();
   struct { size_t size; FbleCode** xs; } blocks;
-  FbleVectorInit(arena, blocks);
-  FbleVectorAppend(arena, blocks, code);
+  FbleVectorInit(blocks);
+  FbleVectorAppend(blocks, code);
 
   while (blocks.size > 0) {
     FbleCode* block = blocks.xs[--blocks.size];
@@ -140,7 +139,7 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
             comma = ", ";
           }
           fprintf(fout, "] %zi;\n", func_value_instr->argc);
-          FbleVectorAppend(arena, blocks, func_value_instr->code);
+          FbleVectorAppend(blocks, func_value_instr->code);
           break;
         }
 
@@ -256,18 +255,17 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
     fprintf(fout, "\n\n");
   }
 
-  FbleFree(arena, blocks.xs);
-  FbleFreeArena(arena);
+  FbleFree(blocks.xs);
 }
 
 // FbleFreeInstr -- see documentation in isa.h
-void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
+void FbleFreeInstr(FbleInstr* instr)
 {
   assert(instr != NULL);
   while (instr->profile_ops != NULL) {
     FbleProfileOp* op = instr->profile_ops;
     instr->profile_ops = op->next;
-    FbleFree(arena, op);
+    FbleFree(op);
   }
 
   switch (instr->tag) {
@@ -280,60 +278,60 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
     case FBLE_REF_VALUE_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
-      FbleFree(arena, instr);
+      FbleFree(instr);
       return;
 
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* i = (FbleRefDefInstr*)instr;
-      FbleFreeLoc(arena, i->loc);
-      FbleFree(arena, instr);
+      FbleFreeLoc(i->loc);
+      FbleFree(instr);
       return;
     }
 
     case FBLE_STRUCT_ACCESS_INSTR:
     case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* i = (FbleAccessInstr*)instr;
-      FbleFreeLoc(arena, i->loc);
-      FbleFree(arena, instr);
+      FbleFreeLoc(i->loc);
+      FbleFree(instr);
       return;
     }
 
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      FbleFree(arena, struct_instr->args.xs);
-      FbleFree(arena, instr);
+      FbleFree(struct_instr->args.xs);
+      FbleFree(instr);
       return;
     }
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      FbleFreeLoc(arena, select_instr->loc);
-      FbleFree(arena, select_instr->jumps.xs);
-      FbleFree(arena, instr);
+      FbleFreeLoc(select_instr->loc);
+      FbleFree(select_instr->jumps.xs);
+      FbleFree(instr);
       return;
     }
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-      FbleFreeCode(arena, func_value_instr->code);
-      FbleFree(arena, func_value_instr->scope.xs);
-      FbleFree(arena, func_value_instr);
+      FbleFreeCode(func_value_instr->code);
+      FbleFree(func_value_instr->scope.xs);
+      FbleFree(func_value_instr);
       return;
     }
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      FbleFreeLoc(arena, call_instr->loc);
-      FbleFree(arena, call_instr->args.xs);
-      FbleFree(arena, instr);
+      FbleFreeLoc(call_instr->loc);
+      FbleFree(call_instr->args.xs);
+      FbleFree(instr);
       return;
     }
 
     case FBLE_FORK_INSTR: {
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      FbleFree(arena, fork_instr->args.xs);
-      FbleFree(arena, fork_instr->dests.xs);
-      FbleFree(arena, instr);
+      FbleFree(fork_instr->args.xs);
+      FbleFree(fork_instr->dests.xs);
+      FbleFree(instr);
       return;
     }
   }
@@ -342,7 +340,7 @@ void FbleFreeInstr(FbleArena* arena, FbleInstr* instr)
 }
 
 // FbleFreeCode -- see documentation in isa.h
-void FbleFreeCode(FbleArena* arena, FbleCode* block)
+void FbleFreeCode(FbleCode* block)
 {
   if (block == NULL) {
     return;
@@ -359,10 +357,10 @@ void FbleFreeCode(FbleArena* arena, FbleCode* block)
   block->refcount--;
   if (block->refcount == 0) {
     for (size_t i = 0; i < block->instrs.size; ++i) {
-      FbleFreeInstr(arena, block->instrs.xs[i]);
+      FbleFreeInstr(block->instrs.xs[i]);
     }
-    FbleFree(arena, block->instrs.xs);
-    FbleFree(arena, block);
+    FbleFree(block->instrs.xs);
+    FbleFree(block);
   }
 }
 

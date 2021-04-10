@@ -37,8 +37,8 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
   for (size_t i = 0; i < stack->locals.size; ++i) {
     FbleReleaseValue(heap, stack->locals.xs[i]);
   }
-  FbleFree(heap->arena, stack->locals.xs);
-  FbleFree(heap->arena, stack);
+  FbleFree(stack->locals.xs);
+  FbleFree(stack);
 }
 
 // RunThread --
@@ -100,8 +100,8 @@ static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
       PopStackFrame(heap, thread);
     }
 
-    FbleFreeProfileThread(heap->arena, thread->profile);
-    FbleFree(heap->arena, thread);
+    FbleFreeProfileThread(thread->profile);
+    FbleFree(thread);
   }
   threads->size = 0;
 }
@@ -127,14 +127,13 @@ static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
 //   Does not take ownership of the function or the args.
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, FbleValue** args, FbleProfile* profile)
 {
-  FbleArena* arena = heap->arena;
   FbleThreadV threads;
-  FbleVectorInit(arena, threads);
+  FbleVectorInit(threads);
 
-  FbleThread* main_thread = FbleAlloc(arena, FbleThread);
+  FbleThread* main_thread = FbleAlloc(FbleThread);
   main_thread->stack = NULL;
-  main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(arena, profile);
-  FbleVectorAppend(arena, threads, main_thread);
+  main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
+  FbleVectorAppend(threads, main_thread);
 
   FbleValue* result = NULL;
   FbleThreadCall(heap, &result, func, args, main_thread);
@@ -148,8 +147,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
         case FBLE_EXEC_FINISHED: {
           unblocked = true;
           assert(thread->stack == NULL);
-          FbleFreeProfileThread(arena, thread->profile);
-          FbleFree(arena, thread);
+          FbleFreeProfileThread(thread->profile);
+          FbleFree(thread);
 
           threads.xs[i] = threads.xs[threads.size - 1];
           threads.size--;
@@ -170,7 +169,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
         case FBLE_EXEC_ABORTED: {
           AbortThreads(heap, &threads);
           FbleReleaseValue(heap, result);
-          FbleFree(arena, threads.xs);
+          FbleFree(threads.xs);
           return NULL;
         }
       }
@@ -178,38 +177,36 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 
     bool blocked = !unblocked;
     if (!io->io(io, heap, blocked) && blocked) {
-      FbleString* source = FbleNewString(arena, __FILE__);
+      FbleString* source = FbleNewString(__FILE__);
       FbleLoc loc = { .source = source, .line = 0, .col = 0 };
       FbleReportError("deadlock\n", loc);
-      FbleFreeString(arena, source);
+      FbleFreeString(source);
 
       AbortThreads(heap, &threads);
       FbleReleaseValue(heap, result);
-      FbleFree(arena, threads.xs);
+      FbleFree(threads.xs);
       return NULL;
     }
   }
 
   // Give a chance to process any remaining io before exiting.
   io->io(io, heap, false);
-  FbleFree(arena, threads.xs);
+  FbleFree(threads.xs);
   return result;
 }
 
 // FbleThreadCall -- see documentation in execute.h
 void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
-  FbleArena* arena = heap->arena;
-
   size_t locals = func->localc;
 
-  FbleStack* stack = FbleAlloc(arena, FbleStack);
+  FbleStack* stack = FbleAlloc(FbleStack);
   stack->joins = 0;
   stack->func = func;
   FbleRetainValue(heap, &func->_base);
   stack->pc = 0;
   stack->locals.size = func->localc;
-  stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, locals);
+  stack->locals.xs = FbleArrayAlloc(FbleValue*, locals);
   memset(stack->locals.xs, 0, locals * sizeof(FbleValue*));
   stack->result = result;
   stack->tail = thread->stack;
@@ -224,7 +221,6 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
 // FbleThreadTailCall -- see documentation in execute.h
 void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
-  FbleArena* arena = heap->arena;
   FbleStack* stack = thread->stack;
   size_t old_localc = stack->func->localc;
   size_t localc = func->localc;
@@ -246,8 +242,8 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
   stack->pc = 0;
 
   if (localc > old_localc) {
-    FbleFree(arena, stack->locals.xs);
-    stack->locals.xs = FbleArrayAlloc(arena, FbleValue*, localc);
+    FbleFree(stack->locals.xs);
+    stack->locals.xs = FbleArrayAlloc(FbleValue*, localc);
   }
   memset(stack->locals.xs, 0, stack->locals.size * sizeof(FbleValue*));
 

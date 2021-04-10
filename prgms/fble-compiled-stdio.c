@@ -159,15 +159,13 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 //   standard error if an error is encountered.
 int main(int argc, char* argv[])
 {
-  FbleArena* arena = FbleNewArena();
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
+  FbleValueHeap* heap = FbleNewValueHeap();
   FbleValue* compiled = FbleStdioMain(heap);
   FbleValue* func = FbleEval(heap, compiled, NULL);
   FbleReleaseValue(heap, compiled);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
@@ -188,7 +186,6 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeArena(arena);
     return 1;
   }
 
@@ -202,6 +199,5 @@ int main(int argc, char* argv[])
 
   FbleReleaseValue(heap, value);
   FbleFreeValueHeap(heap);
-  FbleFreeArena(arena);
   return result;
 }

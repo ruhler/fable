@@ -17,9 +17,9 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value);
 
 
 // FbleNewValueHeap -- see documentation in fble-.h
-FbleValueHeap* FbleNewValueHeap(FbleArena* arena)
+FbleValueHeap* FbleNewValueHeap()
 {
-  return FbleNewHeap(arena,
+  return FbleNewHeap(
       (void (*)(FbleHeapCallback*, void*))&Refs,
       (void (*)(FbleHeap*, void*))&OnFree);
 }
@@ -60,7 +60,6 @@ void FbleValueFullGc(FbleValueHeap* heap)
 //   The 'on_free' function for values. See documentation in heap.h
 static void OnFree(FbleValueHeap* heap, FbleValue* value)
 {
-  FbleArena* arena = heap->arena;
   switch (value->tag) {
     case FBLE_TYPE_VALUE: return;
     case FBLE_STRUCT_VALUE: return;
@@ -68,8 +67,8 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
-      FbleFreeCode(arena, v->executable->code);
-      FbleFree(arena, v->executable);
+      FbleFreeCode(v->executable->code);
+      FbleFree(v->executable);
       return;
     }
 
@@ -79,7 +78,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       while (curr != NULL) {
         FbleValues* tmp = curr;
         curr = curr->next;
-        FbleFree(arena, tmp);
+        FbleFree(tmp);
       }
       return;
     }

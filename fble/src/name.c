@@ -4,21 +4,21 @@
 #include <string.h>   // for strcmp
 
 // FbleCopyName -- see documentation in fble-name.h
-FbleName FbleCopyName(FbleArena* arena, FbleName name)
+FbleName FbleCopyName(FbleName name)
 {
   FbleName copy = {
-    .name = FbleCopyString(arena, name.name),
+    .name = FbleCopyString(name.name),
     .space = name.space,
-    .loc = FbleCopyLoc(arena, name.loc)
+    .loc = FbleCopyLoc(name.loc)
   };
   return copy;
 }
 
 // FbleFreeName -- see documentation in fble-name.h
-void FbleFreeName(FbleArena* arena, FbleName name)
+void FbleFreeName(FbleName name)
 {
-  FbleFreeString(arena, name.name);
-  FbleFreeLoc(arena, name.loc);
+  FbleFreeString(name.name);
+  FbleFreeLoc(name.loc);
 }
 
 // FbleNamesEqual -- see documentation in fble-name.h

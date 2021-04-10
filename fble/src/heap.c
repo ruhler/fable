@@ -170,8 +170,6 @@ static void MarkRefs(Heap* heap, Obj* obj)
 //   objects, freeing objects, etc.
 bool IncrGc(Heap* heap)
 {
-  FbleArena* arena = heap->_base.arena;
-
   // Free a couple of objects on the free list.
   // If we free less than one object, we won't be able to keep up with
   // allocations and the heap will grow unbounded. If we free exactly one
@@ -183,7 +181,7 @@ bool IncrGc(Heap* heap)
     obj->prev->next = obj->next;
     obj->next->prev = obj->prev;
     heap->_base.on_free(&heap->_base, obj->obj);
-    FbleFree(arena, obj);
+    FbleFree(obj);
   }
 
   // Traverse some objects on the heap.
@@ -297,7 +295,7 @@ void FullGc(FbleHeap* heap_)
       obj->prev->next = obj->next;
       obj->next->prev = obj->prev;
       heap->_base.on_free(&heap->_base, obj->obj);
-      FbleFree(heap->_base.arena, obj);
+      FbleFree(obj);
     }
   } while (!done);
 }
@@ -309,7 +307,7 @@ static void* New(FbleHeap* heap_, size_t size)
   IncrGc(heap);
 
   // Objects are allocated as roots.
-  Obj* obj = FbleAllocExtra(heap->_base.arena, Obj, size);
+  Obj* obj = FbleAllocExtra(Obj, size);
   obj->next = heap->roots_to->next;
   obj->prev = heap->roots_to;
   obj->space = heap->to_space;
@@ -412,12 +410,10 @@ static void AddRef(FbleHeap* heap_, void* src_, void* dst_)
 
 // FbleNewHeap -- see documentation in heap.h
 FbleHeap* FbleNewHeap(
-    FbleArena* arena, 
     void (*refs)(FbleHeapCallback*, void*),
     void (*on_free)(FbleHeap*, void*))
 {
-  Heap* heap = FbleAlloc(arena, Heap);
-  heap->_base.arena = arena;
+  Heap* heap = FbleAlloc(Heap);
   heap->_base.refs = refs;
   heap->_base.on_free = on_free;
 
@@ -427,12 +423,12 @@ FbleHeap* FbleNewHeap(
   heap->_base.add_ref = &AddRef;
   heap->_base.full_gc = &FullGc;
 
-  heap->to = FbleAlloc(arena, Obj);
-  heap->from = FbleAlloc(arena, Obj);
-  heap->pending = FbleAlloc(arena, Obj);
-  heap->roots_to = FbleAlloc(arena, Obj);
-  heap->roots_from = FbleAlloc(arena, Obj);
-  heap->free = FbleAlloc(arena, Obj);
+  heap->to = FbleAlloc(Obj);
+  heap->from = FbleAlloc(Obj);
+  heap->pending = FbleAlloc(Obj);
+  heap->roots_to = FbleAlloc(Obj);
+  heap->roots_from = FbleAlloc(Obj);
+  heap->free = FbleAlloc(Obj);
 
   heap->to->prev = heap->to;
   heap->to->next = heap->to;
@@ -457,13 +453,11 @@ void FbleFreeHeap(FbleHeap* heap_)
   Heap* heap = (Heap*)heap_;
   FullGc(heap_);
 
-  FbleArena* arena = heap->_base.arena;
-
-  FbleFree(arena, heap->to);
-  FbleFree(arena, heap->from);
-  FbleFree(arena, heap->pending);
-  FbleFree(arena, heap->roots_to);
-  FbleFree(arena, heap->roots_from);
-  FbleFree(arena, heap->free);
-  FbleFree(arena, heap);
+  FbleFree(heap->to);
+  FbleFree(heap->from);
+  FbleFree(heap->pending);
+  FbleFree(heap->roots_to);
+  FbleFree(heap->roots_from);
+  FbleFree(heap->free);
+  FbleFree(heap);
 }

@@ -7,7 +7,7 @@
 #include "fble-vector.h"
 
 // FbleVectorIncrSize -- see fble.h for documentation of this function.
-void FbleVectorIncrSize(FbleArena* arena, size_t elem_size, size_t* size, void** xs)
+void FbleVectorIncrSize(size_t elem_size, size_t* size, void** xs)
 {
   // We assume the capacity of the array is the smallest power of 2 that holds
   // size elements. If size is equal to the capacity of the array, we double
@@ -15,9 +15,9 @@ void FbleVectorIncrSize(FbleArena* arena, size_t elem_size, size_t* size, void**
   // incremented.
   size_t s = (*size)++;
   if (s > 0 && (s & (s - 1)) == 0) {
-    void* resized = FbleRawAlloc(arena, 2 * s * elem_size, FbleAllocMsg(__FILE__, __LINE__));
+    void* resized = FbleRawAlloc(2 * s * elem_size, FbleAllocMsg(__FILE__, __LINE__));
     memcpy(resized, *xs, s * elem_size);
-    FbleFree(arena, *xs);
+    FbleFree(*xs);
     *xs = resized;
   }
 }

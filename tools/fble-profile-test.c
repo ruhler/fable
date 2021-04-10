@@ -27,7 +27,6 @@ static void Fail(const char* file, int line, const char* msg)
 //   Create a name to use in FbleProfileAddBlock.
 //
 // Inputs:
-//   arena - The arena to use for allocations.
 //   name - The name to use for the block. Typically a string literal.
 //
 // Results:
@@ -36,11 +35,11 @@ static void Fail(const char* file, int line, const char* msg)
 // Side effects:
 //   Allocates memory for the name that we expect to be freed by
 //   FbleFreeProfile.
-static FbleName Name(FbleArena* arena, const char* name)
+static FbleName Name(const char* name)
 {
   FbleName nm = {
-    .name = FbleNewString(arena, name),
-    .loc = { .source = FbleNewString(arena, __FILE__), .line = rand(), .col = rand() }
+    .name = FbleNewString(name),
+    .loc = { .source = FbleNewString(__FILE__), .line = rand(), .col = rand() }
   };
   return nm;
 }
@@ -60,22 +59,23 @@ static FbleName Name(FbleArena* arena, const char* name)
 //   None.
 static size_t AutoExitMaxMem(size_t n)
 {
-  // <root> -> 1 -> 1 -> ... -> 1
-  FbleArena* arena = FbleNewArena();
-  FbleProfile* profile = FbleNewProfile(arena);
-  FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
+  FbleResetMaxTotalBytesAllocated();
 
-  FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
-  FbleProfileEnterBlock(arena, thread, 1);
-  FbleProfileSample(arena, thread, 10);
+  // <root> -> 1 -> 1 -> ... -> 1
+  FbleProfile* profile = FbleNewProfile();
+  FbleProfileAddBlock(profile, Name("_1")); 
+
+  FbleProfileThread* thread = FbleNewProfileThread(profile);
+  FbleProfileEnterBlock(thread, 1);
+  FbleProfileSample(thread, 10);
 
   for (size_t i = 0; i < n; ++i) {
-    FbleProfileAutoExitBlock(arena, thread);
-    FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileSample(arena, thread, 10);
+    FbleProfileAutoExitBlock(thread);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
   }
-  FbleProfileExitBlock(arena, thread);
-  FbleFreeProfileThread(arena, thread);
+  FbleProfileExitBlock(thread);
+  FbleFreeProfileThread(thread);
 
   ASSERT(profile->blocks.size == 2);
   ASSERT(profile->blocks.xs[0]->block.id == 0);
@@ -94,10 +94,8 @@ static size_t AutoExitMaxMem(size_t n)
   ASSERT(profile->blocks.xs[1]->callees.xs[0]->count == n);
   ASSERT(profile->blocks.xs[1]->callees.xs[0]->time == 10 * n);
 
-  FbleFreeProfile(arena, profile);
-  size_t memory = FbleArenaMaxSize(arena);
-  FbleFreeArena(arena);
-  return memory;
+  FbleFreeProfile(profile);
+  return FbleMaxTotalBytesAllocated();
 }
 
 // main --
@@ -119,30 +117,29 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 -> 3
     //                  -> 4
     //             -> 3
-    FbleArena* arena = FbleNewArena();
-    FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_4")); 
+    FbleProfile* profile = FbleNewProfile();
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileAddBlock(profile, Name("_2")); 
+    FbleProfileAddBlock(profile, Name("_3")); 
+    FbleProfileAddBlock(profile, Name("_4")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
-    FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileSample(arena, thread, 10);
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileSample(arena, thread, 30);
-    FbleProfileExitBlock(arena, thread); // 3
-    FbleProfileEnterBlock(arena, thread, 4);
-    FbleProfileSample(arena, thread, 40);
-    FbleProfileExitBlock(arena, thread); // 4
-    FbleProfileExitBlock(arena, thread); // 2
-    FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileSample(arena, thread, 31);
-    FbleProfileExitBlock(arena, thread); // 3
-    FbleProfileExitBlock(arena, thread); // 1
-    FbleFreeProfileThread(arena, thread);
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 30);
+    FbleProfileExitBlock(thread); // 3
+    FbleProfileEnterBlock(thread, 4);
+    FbleProfileSample(thread, 40);
+    FbleProfileExitBlock(thread); // 4
+    FbleProfileExitBlock(thread); // 2
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 31);
+    FbleProfileExitBlock(thread); // 3
+    FbleProfileExitBlock(thread); // 1
+    FbleFreeProfileThread(thread);
 
     ASSERT(profile->blocks.size == 5);
     ASSERT(profile->blocks.xs[0]->block.id == 0);
@@ -186,8 +183,7 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[4]->callees.size == 0);
 
     FbleProfileReport(stdout, profile);
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
   }
 
   {
@@ -195,35 +191,34 @@ int main(int argc, char* argv[])
     // <root> -> 1 -> 2 => 3 -> 4
     //                       => 5
     //             -> 6
-    FbleArena* arena = FbleNewArena();
-    FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_4")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_5")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_6")); 
+    FbleProfile* profile = FbleNewProfile();
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileAddBlock(profile, Name("_2")); 
+    FbleProfileAddBlock(profile, Name("_3")); 
+    FbleProfileAddBlock(profile, Name("_4")); 
+    FbleProfileAddBlock(profile, Name("_5")); 
+    FbleProfileAddBlock(profile, Name("_6")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
-    FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileSample(arena, thread, 10);
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileAutoExitBlock(arena, thread);  // 2
-    FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileSample(arena, thread, 30);
-    FbleProfileEnterBlock(arena, thread, 4);
-    FbleProfileSample(arena, thread, 40);
-    FbleProfileExitBlock(arena, thread); // 4
-    FbleProfileAutoExitBlock(arena, thread);  // 3
-    FbleProfileEnterBlock(arena, thread, 5);
-    FbleProfileSample(arena, thread, 50);
-    FbleProfileExitBlock(arena, thread); // 5
-    FbleProfileEnterBlock(arena, thread, 6);
-    FbleProfileSample(arena, thread, 60);
-    FbleProfileExitBlock(arena, thread); // 6
-    FbleProfileExitBlock(arena, thread); // 1
-    FbleFreeProfileThread(arena, thread);
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileAutoExitBlock(thread);  // 2
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 30);
+    FbleProfileEnterBlock(thread, 4);
+    FbleProfileSample(thread, 40);
+    FbleProfileExitBlock(thread); // 4
+    FbleProfileAutoExitBlock(thread);  // 3
+    FbleProfileEnterBlock(thread, 5);
+    FbleProfileSample(thread, 50);
+    FbleProfileExitBlock(thread); // 5
+    FbleProfileEnterBlock(thread, 6);
+    FbleProfileSample(thread, 60);
+    FbleProfileExitBlock(thread); // 6
+    FbleProfileExitBlock(thread); // 1
+    FbleFreeProfileThread(thread);
 
     ASSERT(profile->blocks.size == 7);
     ASSERT(profile->blocks.xs[0]->block.id == 0);
@@ -279,36 +274,34 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[6]->block.time == 60);
     ASSERT(profile->blocks.xs[6]->callees.size == 0);
 
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
   }
 
   {
     // Test a profile with self recursion
     // <root> -> 1 -> 2 -> 2 -> 2 -> 3
-    FbleArena* arena = FbleNewArena();
-    FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
+    FbleProfile* profile = FbleNewProfile();
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileAddBlock(profile, Name("_2")); 
+    FbleProfileAddBlock(profile, Name("_3")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
-    FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileSample(arena, thread, 10);
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileSample(arena, thread, 30);
-    FbleProfileExitBlock(arena, thread); // 3
-    FbleProfileExitBlock(arena, thread); // 2
-    FbleProfileExitBlock(arena, thread); // 2
-    FbleProfileExitBlock(arena, thread); // 2
-    FbleProfileExitBlock(arena, thread); // 1
-    FbleFreeProfileThread(arena, thread);
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 30);
+    FbleProfileExitBlock(thread); // 3
+    FbleProfileExitBlock(thread); // 2
+    FbleProfileExitBlock(thread); // 2
+    FbleProfileExitBlock(thread); // 2
+    FbleProfileExitBlock(thread); // 1
+    FbleFreeProfileThread(thread);
 
     ASSERT(profile->blocks.size == 4);
     ASSERT(profile->blocks.xs[0]->block.id == 0);
@@ -344,36 +337,34 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
     FbleProfileReport(stdout, profile);
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
   }
 
   {
     // Test a profile with self recursion and tail calls
     // <root> -> 1 => 2 => 2 => 2 => 3
-    FbleArena* arena = FbleNewArena();
-    FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
+    FbleProfile* profile = FbleNewProfile();
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileAddBlock(profile, Name("_2")); 
+    FbleProfileAddBlock(profile, Name("_3")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
-    FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileSample(arena, thread, 10);
-    FbleProfileAutoExitBlock(arena, thread);  // 1
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileAutoExitBlock(arena, thread); // 2
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileAutoExitBlock(arena, thread); // 2
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileAutoExitBlock(arena, thread); // 2
-    FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileSample(arena, thread, 30);
-    FbleProfileExitBlock(arena, thread); // 3
-    FbleFreeProfileThread(arena, thread);
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
+    FbleProfileAutoExitBlock(thread);  // 1
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileAutoExitBlock(thread); // 2
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileAutoExitBlock(thread); // 2
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileAutoExitBlock(thread); // 2
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 30);
+    FbleProfileExitBlock(thread); // 3
+    FbleFreeProfileThread(thread);
 
     ASSERT(profile->blocks.size == 4);
     ASSERT(profile->blocks.xs[0]->block.id == 0);
@@ -409,40 +400,38 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
     FbleProfileReport(stdout, profile);
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
   }
 
   {
     // Test a profile with mutual recursion
     // <root> -> 1 -> 2 -> 3 -> 2 -> 3 -> 4
-    FbleArena* arena = FbleNewArena();
-    FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_4")); 
+    FbleProfile* profile = FbleNewProfile();
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileAddBlock(profile, Name("_2")); 
+    FbleProfileAddBlock(profile, Name("_3")); 
+    FbleProfileAddBlock(profile, Name("_4")); 
 
-    FbleProfileThread* thread = FbleNewProfileThread(arena, profile);
-    FbleProfileEnterBlock(arena, thread, 1);
-    FbleProfileSample(arena, thread, 10);
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileSample(arena, thread, 30);
-    FbleProfileEnterBlock(arena, thread, 2);
-    FbleProfileSample(arena, thread, 20);
-    FbleProfileEnterBlock(arena, thread, 3);
-    FbleProfileSample(arena, thread, 30);
-    FbleProfileEnterBlock(arena, thread, 4);
-    FbleProfileSample(arena, thread, 40);
-    FbleProfileExitBlock(arena, thread); // 4
-    FbleProfileExitBlock(arena, thread); // 3
-    FbleProfileExitBlock(arena, thread); // 2
-    FbleProfileExitBlock(arena, thread); // 3
-    FbleProfileExitBlock(arena, thread); // 2
-    FbleProfileExitBlock(arena, thread); // 1
-    FbleFreeProfileThread(arena, thread);
+    FbleProfileThread* thread = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(thread, 1);
+    FbleProfileSample(thread, 10);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 30);
+    FbleProfileEnterBlock(thread, 2);
+    FbleProfileSample(thread, 20);
+    FbleProfileEnterBlock(thread, 3);
+    FbleProfileSample(thread, 30);
+    FbleProfileEnterBlock(thread, 4);
+    FbleProfileSample(thread, 40);
+    FbleProfileExitBlock(thread); // 4
+    FbleProfileExitBlock(thread); // 3
+    FbleProfileExitBlock(thread); // 2
+    FbleProfileExitBlock(thread); // 3
+    FbleProfileExitBlock(thread); // 2
+    FbleProfileExitBlock(thread); // 1
+    FbleFreeProfileThread(thread);
 
     ASSERT(profile->blocks.size == 5);
     ASSERT(profile->blocks.xs[0]->block.id == 0);
@@ -486,8 +475,7 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[4]->callees.size == 0);
 
     FbleProfileReport(stdout, profile);
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
   }
 
   {
@@ -501,33 +489,32 @@ int main(int argc, char* argv[])
     // Test multithreaded profiling.
     // a: <root> -> 1 -> 2
     // b: <root> -> 1 -> 2
-    FbleArena* arena = FbleNewArena();
-    FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
+    FbleProfile* profile = FbleNewProfile();
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileAddBlock(profile, Name("_2")); 
 
-    FbleProfileThread* a = FbleNewProfileThread(arena, profile);
-    FbleProfileThread* b = FbleNewProfileThread(arena, profile);
+    FbleProfileThread* a = FbleNewProfileThread(profile);
+    FbleProfileThread* b = FbleNewProfileThread(profile);
 
-    FbleProfileEnterBlock(arena, a, 1);
-    FbleProfileSample(arena, a, 1);
-    FbleProfileEnterBlock(arena, a, 2);
-    FbleProfileSample(arena, a, 2);
+    FbleProfileEnterBlock(a, 1);
+    FbleProfileSample(a, 1);
+    FbleProfileEnterBlock(a, 2);
+    FbleProfileSample(a, 2);
 
     // We had a bug in the past where this sample wouldn't count everything
     // because it thought it was nested under the sample from thread a.
-    FbleProfileEnterBlock(arena, b, 1);
-    FbleProfileSample(arena, b, 10);
-    FbleProfileEnterBlock(arena, b, 2);
-    FbleProfileSample(arena, b, 20);
+    FbleProfileEnterBlock(b, 1);
+    FbleProfileSample(b, 10);
+    FbleProfileEnterBlock(b, 2);
+    FbleProfileSample(b, 20);
 
-    FbleProfileExitBlock(arena, a); // 2
-    FbleProfileExitBlock(arena, a); // 1
-    FbleFreeProfileThread(arena, a);
+    FbleProfileExitBlock(a); // 2
+    FbleProfileExitBlock(a); // 1
+    FbleFreeProfileThread(a);
 
-    FbleProfileExitBlock(arena, b); // 2
-    FbleProfileExitBlock(arena, b); // 1
-    FbleFreeProfileThread(arena, b);
+    FbleProfileExitBlock(b); // 2
+    FbleProfileExitBlock(b); // 1
+    FbleFreeProfileThread(b);
 
     ASSERT(profile->blocks.size == 3);
     ASSERT(profile->blocks.xs[0]->block.id == 0);
@@ -551,38 +538,36 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[2]->block.time == 22);
     ASSERT(profile->blocks.xs[2]->callees.size == 0);
 
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
   }
 
   {
     // Test forking of threads.
     // parent: <root> -> 1 -> 2
     // child:            \--> 3
-    FbleArena* arena = FbleNewArena();
-    FbleProfile* profile = FbleNewProfile(arena);
-    FbleProfileAddBlock(arena, profile, Name(arena, "_1")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_2")); 
-    FbleProfileAddBlock(arena, profile, Name(arena, "_3")); 
+    FbleProfile* profile = FbleNewProfile();
+    FbleProfileAddBlock(profile, Name("_1")); 
+    FbleProfileAddBlock(profile, Name("_2")); 
+    FbleProfileAddBlock(profile, Name("_3")); 
 
-    FbleProfileThread* parent = FbleNewProfileThread(arena, profile);
-    FbleProfileEnterBlock(arena, parent, 1);
-    FbleProfileSample(arena, parent, 1);
+    FbleProfileThread* parent = FbleNewProfileThread(profile);
+    FbleProfileEnterBlock(parent, 1);
+    FbleProfileSample(parent, 1);
 
-    FbleProfileThread* child = FbleForkProfileThread(arena, parent);
+    FbleProfileThread* child = FbleForkProfileThread(parent);
 
-    FbleProfileEnterBlock(arena, parent, 2);
-    FbleProfileSample(arena, parent, 2);
+    FbleProfileEnterBlock(parent, 2);
+    FbleProfileSample(parent, 2);
 
-    FbleProfileEnterBlock(arena, child, 3);
-    FbleProfileSample(arena, child, 30);
+    FbleProfileEnterBlock(child, 3);
+    FbleProfileSample(child, 30);
 
-    FbleProfileExitBlock(arena, parent); // 2
-    FbleProfileExitBlock(arena, parent); // 1
-    FbleFreeProfileThread(arena, parent);
+    FbleProfileExitBlock(parent); // 2
+    FbleProfileExitBlock(parent); // 1
+    FbleFreeProfileThread(parent);
 
-    FbleProfileExitBlock(arena, child); // 3
-    FbleFreeProfileThread(arena, child);
+    FbleProfileExitBlock(child); // 3
+    FbleFreeProfileThread(child);
 
     ASSERT(profile->blocks.size == 4);
     ASSERT(profile->blocks.xs[0]->block.id == 0);
@@ -614,8 +599,7 @@ int main(int argc, char* argv[])
     ASSERT(profile->blocks.xs[3]->block.time == 30);
     ASSERT(profile->blocks.xs[3]->callees.size == 0);
 
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
   }
 
   return sTestsFailed ? 1 : 0;

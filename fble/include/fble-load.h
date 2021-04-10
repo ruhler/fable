@@ -46,7 +46,6 @@ typedef struct {
 //   Parse an expression from a file.
 //
 // Inputs:
-//   arena - The arena to use for allocating the parsed program.
 //   filename - The name of the file to parse the program from.
 //   deps - Output param: A list of the modules that the parsed expression
 //          references. Modules will appear at most once in the list.
@@ -59,13 +58,12 @@ typedef struct {
 // * Appends module paths in the parsed expression to deps, which
 //   is assumed to be a pre-initialized vector. The caller is responsible for
 //   calling FbleFreeModulePath on each path when it is no longer needed.
-FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModulePathV* deps);
+FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
 
 // FbleLoad --
 //   Load an fble program.
 //
 // Inputs:
-//   arena - The arena to use for allocating the parsed program.
 //   filename - The name of the file to parse the program from.
 //   root - The directory to search for modules in. May be NULL.
 //
@@ -78,17 +76,16 @@ FbleExpr* FbleParse(FbleArena* arena, FbleString* filename, FbleModulePathV* dep
 // Allocations:
 // * The user should call FbleFreeLoadedProgram to free resources associated
 //   with the given program when it is no longer needed.
-FbleLoadedProgram* FbleLoad(FbleArena* arena, const char* filename, const char* root);
+FbleLoadedProgram* FbleLoad(const char* filename, const char* root);
 
 // FbleFreeLoadedProgram --
 //   Free resources associated with the given program.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   program - the program to free, may be NULL.
 //
 // Side effects:
 //   Frees resources associated with the given program.
-void FbleFreeLoadedProgram(FbleArena* arena, FbleLoadedProgram* program);
+void FbleFreeLoadedProgram(FbleLoadedProgram* program);
 
 #endif // FBLE_LOAD_H_

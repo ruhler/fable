@@ -8,10 +8,10 @@
 #include "fble-string.h"
 
 // FbleCopyLoc -- see documentation in fble-loc.h
-FbleLoc FbleCopyLoc(FbleArena* arena, FbleLoc loc)
+FbleLoc FbleCopyLoc(FbleLoc loc)
 {
   FbleLoc copy = {
-    .source = FbleCopyString(arena, loc.source),
+    .source = FbleCopyString(loc.source),
     .line = loc.line,
     .col = loc.col,
   };
@@ -19,9 +19,9 @@ FbleLoc FbleCopyLoc(FbleArena* arena, FbleLoc loc)
 }
 
 // FbleFreeLoc -- see documentation in fble-loc.h
-void FbleFreeLoc(FbleArena* arena, FbleLoc loc)
+void FbleFreeLoc(FbleLoc loc)
 {
-  FbleFreeString(arena, loc.source);
+  FbleFreeString(loc.source);
 }
 
 // FbleReportWarning -- see documentation in fble-loc.h

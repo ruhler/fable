@@ -95,11 +95,8 @@ int main(int argc, char* argv[])
     include_path = *argv;
   }
 
-  FbleArena* arena = FbleNewArena();
-
-  FbleModulePath* mpath = FbleParseModulePath(arena, mpath_string);
+  FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {
-    FbleFreeArena(arena);
     return EX_FAIL;
   }
 
@@ -108,32 +105,29 @@ int main(int argc, char* argv[])
   }
 
   if (path != NULL) {
-    FbleLoadedProgram* prgm = FbleLoad(arena, path, include_path);
+    FbleLoadedProgram* prgm = FbleLoad(path, include_path);
     if (prgm == NULL) {
-      FbleFreeModulePath(arena, mpath);
-      FbleFreeArena(arena);
+      FbleFreeModulePath(mpath);
       return EX_FAIL;
     }
 
-    FbleCompiledProgram* compiled = FbleCompile(arena, prgm, NULL);
-    FbleFreeLoadedProgram(arena, prgm);
+    FbleCompiledProgram* compiled = FbleCompile(prgm, NULL);
+    FbleFreeLoadedProgram(prgm);
 
     if (compiled == NULL) {
-      FbleFreeModulePath(arena, mpath);
-      FbleFreeArena(arena);
+      FbleFreeModulePath(mpath);
       return EX_FAIL;
     }
 
     FbleCompiledModule* module = compiled->modules.xs + compiled->modules.size - 1;
-    FbleFreeModulePath(arena, module->path);
+    FbleFreeModulePath(module->path);
     module->path = FbleCopyModulePath(mpath);
 
     FbleGenerateC(stdout, module);
 
-    FbleFreeCompiledProgram(arena, compiled);
+    FbleFreeCompiledProgram(compiled);
   }
 
-  FbleFreeModulePath(arena, mpath);
-  FbleFreeArena(arena);
+  FbleFreeModulePath(mpath);
   return EX_SUCCESS;
 }

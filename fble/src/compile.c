@@ -52,17 +52,17 @@ typedef struct Scope {
   struct Scope* parent;
 } Scope;
 
-static Local* NewLocal(FbleArena* arena, Scope* scope);
-static void LocalRelease(FbleArena* arena, Scope* scope, Local* local);
-static void PushVar(FbleArena* arena, Scope* scope, Local* local);
-static void PopVar(FbleArena* arena, Scope* scope);
-static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index);
-static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local);
+static Local* NewLocal(Scope* scope);
+static void LocalRelease(Scope* scope, Local* local);
+static void PushVar(Scope* scope, Local* local);
+static void PopVar(Scope* scope);
+static Local* GetVar(Scope* scope, FbleVarIndex index);
+static void SetVar(Scope* scope, size_t index, Local* local);
 
-static void InitScope(FbleArena* arena, Scope* scope, FbleCode** code, size_t statics, Scope* parent);
-static void FreeScope(FbleArena* arena, Scope* scope);
-static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr);
-static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
+static void InitScope(Scope* scope, FbleCode** code, size_t statics, Scope* parent);
+static void FreeScope(Scope* scope);
+static void AppendInstr(Scope* scope, FbleInstr* instr);
+static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
 
 // Blocks --
 //   A stack of block frames tracking the current block for profiling.
@@ -75,19 +75,18 @@ typedef struct {
   FbleProfile* profile;
 } Blocks;
 
-static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
-static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope);
-static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit);
+static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
+static void EnterBodyBlock(Blocks* blocks, FbleLoc loc, Scope* scope);
+static void ExitBlock(Blocks* blocks, Scope* scope, bool exit);
 
-static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result);
-static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleTc* tc);
-static FbleCode* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
+static void CompileExit(bool exit, Scope* scope, Local* result);
+static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* tc);
+static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
 
 // NewLocal --
 //   Allocate space for an anonymous local variable on the stack frame.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   scope - the scope to allocate the local on.
 //
 // Results:
@@ -96,7 +95,7 @@ static FbleCode* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName nam
 // Side effects:
 //   Allocates a space on the scope's locals for the local. The local should
 //   be freed with LocalRelease when no longer in use.
-static Local* NewLocal(FbleArena* arena, Scope* scope)
+static Local* NewLocal(Scope* scope)
 {
   size_t index = scope->locals.size;
   for (size_t i = 0; i < scope->locals.size; ++i) {
@@ -107,11 +106,11 @@ static Local* NewLocal(FbleArena* arena, Scope* scope)
   }
 
   if (index == scope->locals.size) {
-    FbleVectorAppend(arena, scope->locals, NULL);
+    FbleVectorAppend(scope->locals, NULL);
     scope->code->locals = scope->locals.size;
   }
 
-  Local* local = FbleAlloc(arena, Local);
+  Local* local = FbleAlloc(Local);
   local->index.section = FBLE_LOCALS_FRAME_SECTION;
   local->index.index = index;
   local->refcount = 1;
@@ -124,7 +123,6 @@ static Local* NewLocal(FbleArena* arena, Scope* scope)
 //   Decrement the reference count on a local and free it if appropriate.
 //
 // Inputs:
-//   arena - the arena for allocations
 //   scope - the scope that the local belongs to
 //   local - the local to release. May be NULL.
 //
@@ -134,7 +132,7 @@ static Local* NewLocal(FbleArena* arena, Scope* scope)
 // Side effects:
 //   Decrements the reference count on the local and frees it if the refcount
 //   drops to 0.
-static void LocalRelease(FbleArena* arena, Scope* scope, Local* local)
+static void LocalRelease(Scope* scope, Local* local)
 {
   if (local == NULL) {
     return;
@@ -145,7 +143,7 @@ static void LocalRelease(FbleArena* arena, Scope* scope, Local* local)
     assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
     assert(scope->locals.xs[local->index.index] == local);
     scope->locals.xs[local->index.index] = NULL;
-    FbleFree(arena, local);
+    FbleFree(local);
   }
 }
 
@@ -153,7 +151,6 @@ static void LocalRelease(FbleArena* arena, Scope* scope, Local* local)
 //   Push a variable onto the current scope.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   scope - the scope to push the variable on to.
 //   local - the local address of the variable. Consumed.
 //
@@ -164,16 +161,15 @@ static void LocalRelease(FbleArena* arena, Scope* scope, Local* local)
 //   Pushes a new variable onto the scope. Takes ownership of the given local,
 //   which will be released when the variable is freed by a call to PopVar or
 //   FreeScope.
-static void PushVar(FbleArena* arena, Scope* scope, Local* local)
+static void PushVar(Scope* scope, Local* local)
 {
-  FbleVectorAppend(arena, scope->vars, local);
+  FbleVectorAppend(scope->vars, local);
 }
 
 // PopVar --
 //   Pops a var off the given scope.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   scope - the scope to pop from.
 //
 // Results:
@@ -181,18 +177,17 @@ static void PushVar(FbleArena* arena, Scope* scope, Local* local)
 //
 // Side effects:
 //   Pops the top var off the scope.
-static void PopVar(FbleArena* arena, Scope* scope)
+static void PopVar(Scope* scope)
 {
   scope->vars.size--;
   Local* var = scope->vars.xs[scope->vars.size];
-  LocalRelease(arena, scope, var);
+  LocalRelease(scope, var);
 }
 
 // GetVar --
 //   Lookup a var in the given scope.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   scope - the scope to look in.
 //   index - the index of the variable to look up.
 //
@@ -202,7 +197,7 @@ static void PopVar(FbleArena* arena, Scope* scope)
 //
 // Side effects:
 //   Behavior is undefined if there is no such variable at the given index.
-static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index)
+static Local* GetVar(Scope* scope, FbleVarIndex index)
 {
   switch (index.source) {
     case FBLE_LOCAL_VAR: {
@@ -224,7 +219,6 @@ static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index)
 //   Change the value of a variable in scope.
 //
 // Inputs:
-//   arena - arena to use for allocations
 //   scope - scope of variables
 //   index - the index of the local variable to change
 //   local - the new value for the local variable
@@ -233,10 +227,10 @@ static Local* GetVar(FbleArena* arena, Scope* scope, FbleVarIndex index)
 // * Frees the existing local value of the variable.
 // * Sets the value of the variable to the given local.
 // * Takes ownership of the given local.
-static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local)
+static void SetVar(Scope* scope, size_t index, Local* local)
 {
   assert(index < scope->vars.size);
-  LocalRelease(arena, scope, scope->vars.xs[index]);
+  LocalRelease(scope, scope->vars.xs[index]);
   scope->vars.xs[index] = local;
 }
 
@@ -244,7 +238,6 @@ static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local)
 //   Initialize a new scope.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   scope - the scope to initialize.
 //   code - a pointer to store the allocated code block for this scope.
 //   parent - the parent of the scope to initialize. May be NULL.
@@ -258,26 +251,26 @@ static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local)
 //   and the parent scope must exceed the lifetime of this scope.
 // * The caller is responsible for calling FbleFreeCode on *code when it
 //   is no longer needed.
-static void InitScope(FbleArena* arena, Scope* scope, FbleCode** code, size_t statics, Scope* parent)
+static void InitScope(Scope* scope, FbleCode** code, size_t statics, Scope* parent)
 {
-  FbleVectorInit(arena, scope->statics);
+  FbleVectorInit(scope->statics);
   for (size_t i = 0; i < statics; ++i) {
-    Local* local = FbleAlloc(arena, Local);
+    Local* local = FbleAlloc(Local);
     local->index.section = FBLE_STATICS_FRAME_SECTION;
     local->index.index = i;
     local->refcount = 1;
-    FbleVectorAppend(arena, scope->statics, local);
+    FbleVectorAppend(scope->statics, local);
   }
 
-  FbleVectorInit(arena, scope->vars);
-  FbleVectorInit(arena, scope->locals);
+  FbleVectorInit(scope->vars);
+  FbleVectorInit(scope->locals);
 
-  scope->code = FbleAlloc(arena, FbleCode);
+  scope->code = FbleAlloc(FbleCode);
   scope->code->refcount = 1;
   scope->code->magic = FBLE_CODE_MAGIC;
   scope->code->statics = statics;
   scope->code->locals = 0;
-  FbleVectorInit(arena, scope->code->instrs);
+  FbleVectorInit(scope->code->instrs);
   scope->pending_profile_ops = NULL;
   scope->parent = parent;
 
@@ -288,34 +281,33 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleCode** code, size_t st
 //   Free memory associated with a Scope.
 //
 // Inputs:
-//   arena - arena to use for allocations
 //   scope - the scope to finish.
 //
 // Side effects:
 //   * Frees memory associated with scope.
-static void FreeScope(FbleArena* arena, Scope* scope)
+static void FreeScope(Scope* scope)
 {
   for (size_t i = 0; i < scope->statics.size; ++i) {
-    FbleFree(arena, scope->statics.xs[i]);
+    FbleFree(scope->statics.xs[i]);
   }
-  FbleFree(arena, scope->statics.xs);
+  FbleFree(scope->statics.xs);
 
   while (scope->vars.size > 0) {
-    PopVar(arena, scope);
+    PopVar(scope);
   }
-  FbleFree(arena, scope->vars.xs);
+  FbleFree(scope->vars.xs);
 
   for (size_t i = 0; i < scope->locals.size; ++i) {
     if (scope->locals.xs[i] != NULL) {
-      FbleFree(arena, scope->locals.xs[i]);
+      FbleFree(scope->locals.xs[i]);
     }
   }
-  FbleFree(arena, scope->locals.xs);
+  FbleFree(scope->locals.xs);
 
   while (scope->pending_profile_ops != NULL) {
     FbleProfileOp* op = scope->pending_profile_ops;
     scope->pending_profile_ops = op->next;
-    FbleFree(arena, op);
+    FbleFree(op);
   }
 }
 
@@ -323,35 +315,33 @@ static void FreeScope(FbleArena* arena, Scope* scope)
 //   Append an instruction to the code block for the given scope.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   scope - the scope to append the instruction to.
 //   instr - the instruction to append.
 //
 // Side effects:
 //   Appends instr to the code block for the given scope, thus taking
 //   ownership of the instr.
-static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr)
+static void AppendInstr(Scope* scope, FbleInstr* instr)
 {
   assert(instr->profile_ops == NULL);
   instr->profile_ops = scope->pending_profile_ops;
   scope->pending_profile_ops = NULL;
-  FbleVectorAppend(arena, scope->code->instrs, instr);
+  FbleVectorAppend(scope->code->instrs, instr);
 }
 
 // AppendProfileOp --
 //   Append a profile op to the code block for the given scope.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   scope - the scope to append the instruction to.
 //   tag - the tag of the profile op to insert.
 //   block - the block id if relevant.
 //
 // Side effects:
 //   Appends the profile op to the code block for the given scope.
-static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag, FbleBlockId block)
+static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block)
 {
-  FbleProfileOp* op = FbleAlloc(arena, FbleProfileOp);
+  FbleProfileOp* op = FbleAlloc(FbleProfileOp);
   op->tag = tag;
   op->block = block;
   op->next = NULL;
@@ -371,7 +361,6 @@ static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag
 //   Enter a new profiling block.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   blocks - the blocks stack.
 //   name - name to add to the current block path for naming the new block.
 //   loc - the location of the block.
@@ -381,7 +370,7 @@ static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag
 //   Adds a new block to the blocks stack. Change the current block to the new
 //   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
 //   exited when no longer in scope using ExitBlock.
-static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope)
+static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope)
 {
   const char* curr = NULL;
   size_t currlen = 0;
@@ -393,7 +382,7 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
 
   // Append ".name" to the current block name to figure out the new block
   // name.
-  FbleString* str = FbleAllocExtra(arena, FbleString, currlen + strlen(name.name->str) + 3);
+  FbleString* str = FbleAllocExtra(FbleString, currlen + strlen(name.name->str) + 3);
   str->refcount = 1;
   str->magic = FBLE_STRING_MAGIC;
   str->str[0] = '\0';
@@ -407,11 +396,11 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
     case FBLE_TYPE_NAME_SPACE: strcat(str->str, "@"); break;
   }
 
-  FbleName nm = { .name = str, .loc = FbleCopyLoc(arena, loc) };
-  size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
+  FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
+  size_t id = FbleProfileAddBlock(blocks->profile, nm);
 
-  AppendProfileOp(arena, scope, FBLE_PROFILE_ENTER_OP, id);
-  FbleVectorAppend(arena, blocks->stack, id);
+  AppendProfileOp(scope, FBLE_PROFILE_ENTER_OP, id);
+  FbleVectorAppend(blocks->stack, id);
 }
 
 // EnterBodyBlock --
@@ -420,7 +409,6 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
 //   defined.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   blocks - the blocks stack.
 //   loc - The location of the new block.
 //   scope - where to add the ENTER_BLOCK instruction to.
@@ -430,7 +418,7 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
 //   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
 //   exited when no longer in scope using ExitBlock or one of the other
 //   functions that exit a block.
-static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope* scope)
+static void EnterBodyBlock(Blocks* blocks, FbleLoc loc, Scope* scope)
 {
   const char* curr = "";
   if (blocks->stack.size > 0) {
@@ -439,25 +427,24 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
   }
 
   // Append "!" to the current block name to figure out the new block name.
-  FbleString* str = FbleAllocExtra(arena, FbleString, strlen(curr) + 2);
+  FbleString* str = FbleAllocExtra(FbleString, strlen(curr) + 2);
   str->refcount = 1;
   str->magic = FBLE_STRING_MAGIC;
   str->str[0] = '\0';
   strcat(str->str, curr);
   strcat(str->str, "!");
 
-  FbleName nm = { .name = str, .loc = FbleCopyLoc(arena, loc) };
-  size_t id = FbleProfileAddBlock(arena, blocks->profile, nm);
+  FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
+  size_t id = FbleProfileAddBlock(blocks->profile, nm);
 
-  AppendProfileOp(arena, scope, FBLE_PROFILE_ENTER_OP, id);
-  FbleVectorAppend(arena, blocks->stack, id);
+  AppendProfileOp(scope, FBLE_PROFILE_ENTER_OP, id);
+  FbleVectorAppend(blocks->stack, id);
 }
 
 // ExitBlock --
 //   Exit the current profiling block frame.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   blocks - the blocks stack.
 //   scope - where to append the profile exit op.
 //   exit - whether the frame has already been exited.
@@ -465,13 +452,13 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 // Side effects:
 //   Pops the top block frame off the blocks stack and append a
 //   profile exit op to the scope if exit is false.
-static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
+static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
 {
   assert(blocks->stack.size > 0);
   blocks->stack.size--;
 
   if (!exit) {
-    AppendProfileOp(arena, scope, FBLE_PROFILE_EXIT_OP, 0);
+    AppendProfileOp(scope, FBLE_PROFILE_EXIT_OP, 0);
   }
 }
 
@@ -479,7 +466,6 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 //   If exit is true, appends an exit scope instruction to instrs.
 //
 // Inputs:
-//   arena - arena for allocations.
 //   blocks - the blocks stack.
 //   exit - whether we actually want to exit.
 //   scope - the scope to append the instructions to.
@@ -487,16 +473,16 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 //
 // Side effects:
 //   If exit is true, appends an exit scope instruction to instrs
-static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result)
+static void CompileExit(bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
-    AppendProfileOp(arena, scope, FBLE_PROFILE_EXIT_OP, 0);
+    AppendProfileOp(scope, FBLE_PROFILE_EXIT_OP, 0);
 
-    FbleReturnInstr* return_instr = FbleAlloc(arena, FbleReturnInstr);
+    FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
     return_instr->_base.tag = FBLE_RETURN_INSTR;
     return_instr->_base.profile_ops = NULL;
     return_instr->result = result->index;
-    AppendInstr(arena, scope, &return_instr->_base);
+    AppendInstr(scope, &return_instr->_base);
   }
 }
 
@@ -506,7 +492,6 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result
 //   value of that expression at runtime.
 //
 // Inputs:
-//   arena - arena to use for type allocations.
 //   blocks - the blocks stack.
 //   exit - if true, generate instructions to exit the current scope.
 //   scope - the list of variables in scope.
@@ -523,25 +508,25 @@ static void CompileExit(FbleArena* arena, bool exit, Scope* scope, Local* result
 // * The caller should call LocalRelease when the returned results are no
 //   longer needed. Note that FreeScope calls LocalRelease for all locals
 //   allocated to the scope, so that can also be used to clean up the local.
-static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
+static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 {
   switch (v->tag) {
     case FBLE_TYPE_VALUE_TC: {
-      Local* local = NewLocal(arena, scope);
-      FbleTypeInstr* instr = FbleAlloc(arena, FbleTypeInstr);
+      Local* local = NewLocal(scope);
+      FbleTypeInstr* instr = FbleAlloc(FbleTypeInstr);
       instr->_base.tag = FBLE_TYPE_INSTR;
       instr->_base.profile_ops = NULL;
       instr->dest = local->index.index;
-      AppendInstr(arena, scope, &instr->_base);
-      CompileExit(arena, exit, scope, local);
+      AppendInstr(scope, &instr->_base);
+      CompileExit(exit, scope, local);
       return local;
     }
 
     case FBLE_VAR_TC: {
       FbleVarTc* var_tc = (FbleVarTc*)v;
-      Local* local = GetVar(arena, scope, var_tc->index);
+      Local* local = GetVar(scope, var_tc->index);
       local->refcount++;
-      CompileExit(arena, exit, scope, local);
+      CompileExit(exit, scope, local);
       return local;
     }
 
@@ -554,39 +539,39 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
         vars[i] = NULL;
         if (let_tc->recursive) {
-          vars[i] = NewLocal(arena, scope);
-          FbleRefValueInstr* ref_instr = FbleAlloc(arena, FbleRefValueInstr);
+          vars[i] = NewLocal(scope);
+          FbleRefValueInstr* ref_instr = FbleAlloc(FbleRefValueInstr);
           ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
           ref_instr->_base.profile_ops = NULL;
           ref_instr->dest = vars[i]->index.index;
-          AppendInstr(arena, scope, &ref_instr->_base);
+          AppendInstr(scope, &ref_instr->_base);
         }
-        PushVar(arena, scope, vars[i]);
+        PushVar(scope, vars[i]);
       }
 
       // Compile the values of the variables.
       Local* defs[let_tc->bindings.size];
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        defs[i] = CompileExpr(arena, blocks, false, scope, let_tc->bindings.xs[i].tc);
+        defs[i] = CompileExpr(blocks, false, scope, let_tc->bindings.xs[i].tc);
       }
 
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
         if (let_tc->recursive) {
-          FbleRefDefInstr* ref_def_instr = FbleAlloc(arena, FbleRefDefInstr);
+          FbleRefDefInstr* ref_def_instr = FbleAlloc(FbleRefDefInstr);
           ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
           ref_def_instr->_base.profile_ops = NULL;
-          ref_def_instr->loc = FbleCopyLoc(arena, let_tc->bindings.xs[i].loc);
+          ref_def_instr->loc = FbleCopyLoc(let_tc->bindings.xs[i].loc);
           ref_def_instr->ref = vars[i]->index.index;
           ref_def_instr->value = defs[i]->index;
-          AppendInstr(arena, scope, &ref_def_instr->_base);
+          AppendInstr(scope, &ref_def_instr->_base);
         }
-        SetVar(arena, scope, base_index + i, defs[i]);
+        SetVar(scope, base_index + i, defs[i]);
       }
 
-      Local* body = CompileExpr(arena, blocks, exit, scope, let_tc->body);
+      Local* body = CompileExpr(blocks, exit, scope, let_tc->body);
 
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        PopVar(arena, scope);
+        PopVar(scope);
       }
 
       return body;
@@ -598,21 +583,21 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       size_t argc = struct_tc->fieldc;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(arena, blocks, false, scope, struct_tc->fields[i]);
+        args[i] = CompileExpr(blocks, false, scope, struct_tc->fields[i]);
       }
 
-      Local* local = NewLocal(arena, scope);
-      FbleStructValueInstr* struct_instr = FbleAlloc(arena, FbleStructValueInstr);
+      Local* local = NewLocal(scope);
+      FbleStructValueInstr* struct_instr = FbleAlloc(FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
       struct_instr->_base.profile_ops = NULL;
       struct_instr->dest = local->index.index;
-      FbleVectorInit(arena, struct_instr->args);
-      AppendInstr(arena, scope, &struct_instr->_base);
-      CompileExit(arena, exit, scope, local);
+      FbleVectorInit(struct_instr->args);
+      AppendInstr(scope, &struct_instr->_base);
+      CompileExit(exit, scope, local);
 
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(arena, struct_instr->args, args[i]->index);
-        LocalRelease(arena, scope, args[i]);
+        FbleVectorAppend(struct_instr->args, args[i]->index);
+        LocalRelease(scope, args[i]);
       }
 
       return local;
@@ -620,40 +605,40 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
     case FBLE_UNION_VALUE_TC: {
       FbleUnionValueTc* union_tc = (FbleUnionValueTc*)v;
-      Local* arg = CompileExpr(arena, blocks, false, scope, union_tc->arg);
+      Local* arg = CompileExpr(blocks, false, scope, union_tc->arg);
 
-      Local* local = NewLocal(arena, scope);
-      FbleUnionValueInstr* union_instr = FbleAlloc(arena, FbleUnionValueInstr);
+      Local* local = NewLocal(scope);
+      FbleUnionValueInstr* union_instr = FbleAlloc(FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
       union_instr->_base.profile_ops = NULL;
       union_instr->tag = union_tc->tag;
       union_instr->arg = arg->index;
       union_instr->dest = local->index.index;
-      AppendInstr(arena, scope, &union_instr->_base);
-      CompileExit(arena, exit, scope, local);
-      LocalRelease(arena, scope, arg);
+      AppendInstr(scope, &union_instr->_base);
+      CompileExit(exit, scope, local);
+      LocalRelease(scope, arg);
       return local;
     }
 
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)v;
-      Local* condition = CompileExpr(arena, blocks, false, scope, select_tc->condition);
+      Local* condition = CompileExpr(blocks, false, scope, select_tc->condition);
 
       if (exit) {
-        AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
+        AppendProfileOp(scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
       }
 
-      FbleUnionSelectInstr* select_instr = FbleAlloc(arena, FbleUnionSelectInstr);
+      FbleUnionSelectInstr* select_instr = FbleAlloc(FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       select_instr->_base.profile_ops = NULL;
-      select_instr->loc = FbleCopyLoc(arena, select_tc->loc);
+      select_instr->loc = FbleCopyLoc(select_tc->loc);
       select_instr->condition = condition->index;
-      FbleVectorInit(arena, select_instr->jumps);
-      AppendInstr(arena, scope, &select_instr->_base);
+      FbleVectorInit(select_instr->jumps);
+      AppendInstr(scope, &select_instr->_base);
 
       size_t select_instr_pc = scope->code->instrs.size;
       size_t branch_offsets[select_tc->choicec];
-      Local* target = exit ? NULL : NewLocal(arena, scope);
+      Local* target = exit ? NULL : NewLocal(scope);
       FbleJumpInstr* exit_jumps[select_tc->choicec];
 
       for (size_t i = 0; i < select_tc->choicec; ++i) {
@@ -674,29 +659,29 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
           // the target directly instead of in some cases allocating a new
           // local and then copying that to target?
           branch_offsets[i] = scope->code->instrs.size - select_instr_pc;
-          Local* result = CompileExpr(arena, blocks, exit, scope, select_tc->choices[i]);
+          Local* result = CompileExpr(blocks, exit, scope, select_tc->choices[i]);
 
           if (!exit) {
-            FbleCopyInstr* copy = FbleAlloc(arena, FbleCopyInstr);
+            FbleCopyInstr* copy = FbleAlloc(FbleCopyInstr);
             copy->_base.tag = FBLE_COPY_INSTR;
             copy->_base.profile_ops = NULL;
             copy->source = result->index;
             copy->dest = target->index.index;
-            AppendInstr(arena, scope, &copy->_base);
+            AppendInstr(scope, &copy->_base);
           }
 
-          LocalRelease(arena, scope, result);
+          LocalRelease(scope, result);
 
           if (!exit) {
-            exit_jumps[i] = FbleAlloc(arena, FbleJumpInstr);
+            exit_jumps[i] = FbleAlloc(FbleJumpInstr);
             exit_jumps[i]->_base.tag = FBLE_JUMP_INSTR;
             exit_jumps[i]->_base.profile_ops = NULL;
             exit_jumps[i]->count = scope->code->instrs.size + 1;
-            AppendInstr(arena, scope, &exit_jumps[i]->_base);
+            AppendInstr(scope, &exit_jumps[i]->_base);
           }
         }
 
-        FbleVectorAppend(arena, select_instr->jumps, branch_offsets[i]);
+        FbleVectorAppend(select_instr->jumps, branch_offsets[i]);
       }
 
       // Fix up exit jumps now that all the branch code is generated.
@@ -714,13 +699,13 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       // appear to be a violation of the language spec, because it only
       // effects constants in runtime. But we probably ought to fix it
       // anyway.
-      LocalRelease(arena, scope, condition);
+      LocalRelease(scope, condition);
       return target;
     }
 
     case FBLE_DATA_ACCESS_TC: {
       FbleDataAccessTc* access_tc = (FbleDataAccessTc*)v;
-      Local* obj = CompileExpr(arena, blocks, false, scope, access_tc->obj);
+      Local* obj = CompileExpr(blocks, false, scope, access_tc->obj);
 
       FbleInstrTag tag;
       if (access_tc->datatype == FBLE_STRUCT_DATATYPE) {
@@ -730,18 +715,18 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
         tag = FBLE_UNION_ACCESS_INSTR;
       }
 
-      FbleAccessInstr* access = FbleAlloc(arena, FbleAccessInstr);
+      FbleAccessInstr* access = FbleAlloc(FbleAccessInstr);
       access->_base.tag = tag;
       access->_base.profile_ops = NULL;
       access->obj = obj->index;
       access->tag = access_tc->tag;
-      access->loc = FbleCopyLoc(arena, access_tc->loc);
-      AppendInstr(arena, scope, &access->_base);
+      access->loc = FbleCopyLoc(access_tc->loc);
+      AppendInstr(scope, &access->_base);
 
-      Local* local = NewLocal(arena, scope);
+      Local* local = NewLocal(scope);
       access->dest = local->index.index;
-      CompileExit(arena, exit, scope, local);
-      LocalRelease(arena, scope, obj);
+      CompileExit(exit, scope, local);
+      LocalRelease(scope, obj);
       return local;
     }
 
@@ -749,68 +734,68 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)v;
       size_t argc = func_tc->argc;
 
-      FbleFuncValueInstr* instr = FbleAlloc(arena, FbleFuncValueInstr);
+      FbleFuncValueInstr* instr = FbleAlloc(FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
       instr->_base.profile_ops = NULL;
       instr->argc = argc;
 
-      FbleVectorInit(arena, instr->scope);
+      FbleVectorInit(instr->scope);
       for (size_t i = 0; i < func_tc->scope.size; ++i) {
-        Local* local = GetVar(arena, scope, func_tc->scope.xs[i]);
-        FbleVectorAppend(arena, instr->scope, local->index);
+        Local* local = GetVar(scope, func_tc->scope.xs[i]);
+        FbleVectorAppend(instr->scope, local->index);
       }
 
       Scope func_scope;
-      InitScope(arena, &func_scope, &instr->code, func_tc->scope.size, scope);
-      EnterBodyBlock(arena, blocks, func_tc->body_loc, &func_scope);
+      InitScope(&func_scope, &instr->code, func_tc->scope.size, scope);
+      EnterBodyBlock(blocks, func_tc->body_loc, &func_scope);
 
       for (size_t i = 0; i < argc; ++i) {
-        Local* local = NewLocal(arena, &func_scope);
-        PushVar(arena, &func_scope, local);
+        Local* local = NewLocal(&func_scope);
+        PushVar(&func_scope, local);
       }
 
-      Local* func_result = CompileExpr(arena, blocks, true, &func_scope, func_tc->body);
-      ExitBlock(arena, blocks, &func_scope, true);
-      LocalRelease(arena, &func_scope, func_result);
-      FreeScope(arena, &func_scope);
+      Local* func_result = CompileExpr(blocks, true, &func_scope, func_tc->body);
+      ExitBlock(blocks, &func_scope, true);
+      LocalRelease(&func_scope, func_result);
+      FreeScope(&func_scope);
 
-      Local* local = NewLocal(arena, scope);
+      Local* local = NewLocal(scope);
       instr->dest = local->index.index;
-      AppendInstr(arena, scope, &instr->_base);
-      CompileExit(arena, exit, scope, local);
+      AppendInstr(scope, &instr->_base);
+      CompileExit(exit, scope, local);
       return local;
     }
 
     case FBLE_FUNC_APPLY_TC: {
       FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)v;
-      Local* func = CompileExpr(arena, blocks, false, scope, apply_tc->func);
+      Local* func = CompileExpr(blocks, false, scope, apply_tc->func);
 
       size_t argc = apply_tc->args.size;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(arena, blocks, false, scope, apply_tc->args.xs[i]);
+        args[i] = CompileExpr(blocks, false, scope, apply_tc->args.xs[i]);
       }
 
       if (exit) {
-        AppendProfileOp(arena, scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
+        AppendProfileOp(scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
       }
 
-      Local* dest = exit ? NULL : NewLocal(arena, scope);
+      Local* dest = exit ? NULL : NewLocal(scope);
 
-      FbleCallInstr* call_instr = FbleAlloc(arena, FbleCallInstr);
+      FbleCallInstr* call_instr = FbleAlloc(FbleCallInstr);
       call_instr->_base.tag = FBLE_CALL_INSTR;
       call_instr->_base.profile_ops = NULL;
-      call_instr->loc = FbleCopyLoc(arena, apply_tc->loc);
+      call_instr->loc = FbleCopyLoc(apply_tc->loc);
       call_instr->exit = exit;
       call_instr->func = func->index;
-      FbleVectorInit(arena, call_instr->args);
+      FbleVectorInit(call_instr->args);
       call_instr->dest = exit ? 0 : dest->index.index;
-      AppendInstr(arena, scope, &call_instr->_base);
+      AppendInstr(scope, &call_instr->_base);
 
-      LocalRelease(arena, scope, func);
+      LocalRelease(scope, func);
       for (size_t i = 0; i < argc; ++i) {
-        FbleVectorAppend(arena, call_instr->args, args[i]->index);
-        LocalRelease(arena, scope, args[i]);
+        FbleVectorAppend(call_instr->args, args[i]->index);
+        LocalRelease(scope, args[i]);
       }
 
       return dest;
@@ -819,24 +804,24 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
     case FBLE_LINK_TC: {
       FbleLinkTc* link_tc = (FbleLinkTc*)v;
 
-      FbleLinkInstr* link = FbleAlloc(arena, FbleLinkInstr);
+      FbleLinkInstr* link = FbleAlloc(FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
       link->_base.profile_ops = NULL;
 
-      Local* get_local = NewLocal(arena, scope);
+      Local* get_local = NewLocal(scope);
       link->get = get_local->index.index;
-      PushVar(arena, scope, get_local);
+      PushVar(scope, get_local);
 
-      Local* put_local = NewLocal(arena, scope);
+      Local* put_local = NewLocal(scope);
       link->put = put_local->index.index;
-      PushVar(arena, scope, put_local);
+      PushVar(scope, put_local);
 
-      AppendInstr(arena, scope, &link->_base);
+      AppendInstr(scope, &link->_base);
 
-      Local* result = CompileExpr(arena, blocks, exit, scope, link_tc->body);
+      Local* result = CompileExpr(blocks, exit, scope, link_tc->body);
 
-      PopVar(arena, scope);
-      PopVar(arena, scope);
+      PopVar(scope);
+      PopVar(scope);
       return result;
     }
 
@@ -845,37 +830,37 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
       Local* args[exec_tc->bindings.size];
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        args[i] = CompileExpr(arena, blocks, false, scope, exec_tc->bindings.xs[i]);
+        args[i] = CompileExpr(blocks, false, scope, exec_tc->bindings.xs[i]);
       }
 
-      FbleForkInstr* fork = FbleAlloc(arena, FbleForkInstr);
+      FbleForkInstr* fork = FbleAlloc(FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
       fork->_base.profile_ops = NULL;
-      FbleVectorInit(arena, fork->args);
-      fork->dests.xs = FbleArrayAlloc(arena, FbleLocalIndex, exec_tc->bindings.size);
+      FbleVectorInit(fork->args);
+      fork->dests.xs = FbleArrayAlloc(FbleLocalIndex, exec_tc->bindings.size);
       fork->dests.size = exec_tc->bindings.size;
-      AppendInstr(arena, scope, &fork->_base);
+      AppendInstr(scope, &fork->_base);
 
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
         // Note: Make sure we call NewLocal before calling LocalRelease on any
         // of the arguments.
-        Local* local = NewLocal(arena, scope);
+        Local* local = NewLocal(scope);
         fork->dests.xs[i] = local->index.index;
-        PushVar(arena, scope, local);
+        PushVar(scope, local);
       }
 
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
         // TODO: Does this hold on to the bindings longer than we want to?
         if (args[i] != NULL) {
-          FbleVectorAppend(arena, fork->args, args[i]->index);
-          LocalRelease(arena, scope, args[i]);
+          FbleVectorAppend(fork->args, args[i]->index);
+          LocalRelease(scope, args[i]);
         }
       }
 
-      Local* local = CompileExpr(arena, blocks, exit, scope, exec_tc->body);
+      Local* local = CompileExpr(blocks, exit, scope, exec_tc->body);
 
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        PopVar(arena, scope);
+        PopVar(scope);
       }
 
       return local;
@@ -883,9 +868,9 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 
     case FBLE_PROFILE_TC: {
       FbleProfileTc* profile_tc = (FbleProfileTc*)v;
-      EnterBlock(arena, blocks, profile_tc->name, profile_tc->loc, scope);
-      Local* result = CompileExpr(arena, blocks, exit, scope, profile_tc->body);
-      ExitBlock(arena, blocks, scope, exit);
+      EnterBlock(blocks, profile_tc->name, profile_tc->loc, scope);
+      Local* result = CompileExpr(blocks, exit, scope, profile_tc->body);
+      ExitBlock(blocks, scope, exit);
       return result;
     }
   }
@@ -898,7 +883,6 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 //   Compile a type-checked expression.
 //
 // Inputs:
-//   arena - arena to use for allocations.
 //   argc - the number of local variables to reserve for arguments.
 //   tc - the type-checked expression to compile.
 //   name - the name of the expression to use in profiling. Borrowed.
@@ -911,7 +895,7 @@ static Local* CompileExpr(FbleArena* arena, Blocks* blocks, bool exit, Scope* sc
 // * Adds blocks to the given profile.
 // * The caller should call FbleFreeCode to release resources
 //   associated with the returned program when it is no longer needed.
-static FbleCode* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
+static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
 {
   bool profiling_disabled = false;
   if (profile == NULL) {
@@ -919,88 +903,88 @@ static FbleCode* Compile(FbleArena* arena, size_t argc, FbleTc* tc, FbleName nam
     // compilation so we don't have to special case the code for emitting
     // profiling information.
     profiling_disabled = true;
-    profile = FbleNewProfile(arena);
+    profile = FbleNewProfile();
   }
 
   Blocks blocks;
-  FbleVectorInit(arena, blocks.stack);
+  FbleVectorInit(blocks.stack);
   blocks.profile = profile;
 
   FbleCode* code;
   Scope scope;
-  InitScope(arena, &scope, &code, 0, NULL);
+  InitScope(&scope, &code, 0, NULL);
 
   for (size_t i = 0; i < argc; ++i) {
-    Local* local = NewLocal(arena, &scope);
-    PushVar(arena, &scope, local);
+    Local* local = NewLocal(&scope);
+    PushVar(&scope, local);
   }
 
   // CompileExpr assumes it is in a profile block that it needs to exit when
   // exit is true, so make sure we wrap the top level expression in a profile
   // block.
-  EnterBlock(arena, &blocks, name, name.loc, &scope);
-  CompileExpr(arena, &blocks, true, &scope, tc);
-  ExitBlock(arena, &blocks, &scope, true);
+  EnterBlock(&blocks, name, name.loc, &scope);
+  CompileExpr(&blocks, true, &scope, tc);
+  ExitBlock(&blocks, &scope, true);
 
-  FreeScope(arena, &scope);
+  FreeScope(&scope);
   assert(blocks.stack.size == 0);
-  FbleFree(arena, blocks.stack.xs);
+  FbleFree(blocks.stack.xs);
   if (profiling_disabled) {
-    FbleFreeProfile(arena, profile);
+    FbleFreeProfile(profile);
   }
   return code;
 }
 
 // FbleFreeCompiledProgram -- see documentation in fble-compile.h
-void FbleFreeCompiledProgram(FbleArena* arena, FbleCompiledProgram* program)
+void FbleFreeCompiledProgram(FbleCompiledProgram* program)
 {
   if (program != NULL) {
     for (size_t i = 0; i < program->modules.size; ++i) {
       FbleCompiledModule* module = program->modules.xs + i;
-      FbleFreeModulePath(arena, module->path);
+      FbleFreeModulePath(module->path);
       for (size_t j = 0; j < module->deps.size; ++j) {
-        FbleFreeModulePath(arena, module->deps.xs[j]);
+        FbleFreeModulePath(module->deps.xs[j]);
       }
-      FbleFree(arena, module->deps.xs);
-      FbleFreeCode(arena, module->code);
+      FbleFree(module->deps.xs);
+      FbleFreeCode(module->code);
     }
-    FbleFree(arena, program->modules.xs);
-    FbleFree(arena, program);
+    FbleFree(program->modules.xs);
+    FbleFree(program);
   }
 }
 
 // FbleCompile -- see documentation in fble-compile.h
-FbleCompiledProgram* FbleCompile(FbleArena* arena, FbleLoadedProgram* program, FbleProfile* profile)
+FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program, FbleProfile* profile)
 {
   FbleTcV typechecked;
-  FbleVectorInit(arena, typechecked);
-  if (!FbleTypeCheck(arena, program, &typechecked)) { 
+  FbleVectorInit(typechecked);
+  if (!FbleTypeCheck(program, &typechecked)) { 
     for (size_t i = 0; i < typechecked.size; ++i) {
-      FbleFreeTc(arena, typechecked.xs[i]);
+      FbleFreeTc(typechecked.xs[i]);
     }
-    FbleFree(arena, typechecked.xs);
+    FbleFree(typechecked.xs);
     return NULL;
   }
 
-  FbleCompiledProgram* compiled = FbleAlloc(arena, FbleCompiledProgram);
-  FbleVectorInit(arena, compiled->modules);
+  FbleCompiledProgram* compiled = FbleAlloc(FbleCompiledProgram);
+  FbleVectorInit(compiled->modules);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleLoadedModule* module = program->modules.xs + i;
 
-    FbleCompiledModule* compiled_module = FbleVectorExtend(arena, compiled->modules);
+    FbleCompiledModule* compiled_module = FbleVectorExtend(compiled->modules);
     compiled_module->path = FbleCopyModulePath(module->path);
-    FbleVectorInit(arena, compiled_module->deps);
+    FbleVectorInit(compiled_module->deps);
     for (size_t d = 0; d < module->deps.size; ++d) {
-      FbleVectorAppend(arena, compiled_module->deps, FbleCopyModulePath(module->deps.xs[d]));
+      FbleVectorAppend(compiled_module->deps, FbleCopyModulePath(module->deps.xs[d]));
     }
 
-    FbleName label = FbleModulePathName(arena, module->path);
-    compiled_module->code = Compile(arena, module->deps.size, typechecked.xs[i], label, profile);
-    FbleFreeTc(arena, typechecked.xs[i]);
-    FbleFreeName(arena, label);
+    FbleName label = FbleModulePathName(module->path);
+    compiled_module->code = Compile(module->deps.size, typechecked.xs[i], label, profile);
+    FbleFreeTc(typechecked.xs[i]);
+    FbleFreeName(label);
   }
 
-  FbleFree(arena, typechecked.xs);
+  FbleFree(typechecked.xs);
   return compiled;
 }

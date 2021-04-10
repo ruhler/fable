@@ -92,14 +92,12 @@ int main(int argc, char* argv[])
   stderr = expect_error ? stdout : stderr;
   int failure = expect_error ? EX_SUCCESS : EX_FAIL;
 
-  FbleArena* arena = FbleNewArena();
-  FbleProfile* profile = report_profile ? FbleNewProfile(arena) : NULL;
-  FbleValueHeap* heap = FbleNewValueHeap(arena);
+  FbleProfile* profile = report_profile ? FbleNewProfile() : NULL;
+  FbleValueHeap* heap = FbleNewValueHeap();
   FbleValue* linked = FbleLinkFromSource(heap, path, include_path, profile);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
-    FbleFreeProfile(arena, profile);
-    FbleFreeArena(arena);
+    FbleFreeProfile(profile);
     return failure;
   }
 
@@ -120,10 +118,8 @@ int main(int argc, char* argv[])
 
   if (report_profile) {
     FbleProfileReport(stdout, profile);
-    FbleFreeProfile(arena, profile);
+    FbleFreeProfile(profile);
   }
-
-  FbleFreeArena(arena);
 
   if (result == NULL) {
     return failure;
