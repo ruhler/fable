@@ -7,8 +7,6 @@
 * [compilation] Figure out what to do about FbleProfile* for the compilation code path.
 * [compilation] Add support for .fble.@ files and module compilation.
 
-* [cleanup] Clean up doc comments in typecheck.h, typecheck.c, compile.c.
- - Now that we are passing value heaps around instead of arenas.
 * [cleanup] Check that switch statements are in enum order as appropriate
   - FBLE_DATA_ACCESS_EXPR, and FBLE_DATA_ACCESS_TC in particular.
 

@@ -253,10 +253,10 @@ static void SetVar(FbleArena* arena, Scope* scope, size_t index, Local* local)
 //   None.
 //
 // Side effects:
-//   Initializes scope based on parent. FreeScope should be
+// * Initializes scope based on parent. FreeScope should be
 //   called to free the allocations for scope. The lifetimes of the code block
 //   and the parent scope must exceed the lifetime of this scope.
-//   The caller is responsible for calling FbleFreeCode on *code when it
+// * The caller is responsible for calling FbleFreeCode on *code when it
 //   is no longer needed.
 static void InitScope(FbleArena* arena, Scope* scope, FbleCode** code, size_t statics, Scope* parent)
 {
@@ -290,9 +290,6 @@ static void InitScope(FbleArena* arena, Scope* scope, FbleCode** code, size_t st
 // Inputs:
 //   arena - arena to use for allocations
 //   scope - the scope to finish.
-//
-// Results:
-//   None.
 //
 // Side effects:
 //   * Frees memory associated with scope.
@@ -330,9 +327,6 @@ static void FreeScope(FbleArena* arena, Scope* scope)
 //   scope - the scope to append the instruction to.
 //   instr - the instruction to append.
 //
-// Result:
-//   none.
-//
 // Side effects:
 //   Appends instr to the code block for the given scope, thus taking
 //   ownership of the instr.
@@ -352,9 +346,6 @@ static void AppendInstr(FbleArena* arena, Scope* scope, FbleInstr* instr)
 //   scope - the scope to append the instruction to.
 //   tag - the tag of the profile op to insert.
 //   block - the block id if relevant.
-//
-// Result:
-//   none.
 //
 // Side effects:
 //   Appends the profile op to the code block for the given scope.
@@ -385,9 +376,6 @@ static void AppendProfileOp(FbleArena* arena, Scope* scope, FbleProfileOpTag tag
 //   name - name to add to the current block path for naming the new block.
 //   loc - the location of the block.
 //   scope - where to add the ENTER_BLOCK instruction to.
-//
-// Results:
-//   none.
 //
 // Side effects:
 //   Adds a new block to the blocks stack. Change the current block to the new
@@ -437,9 +425,6 @@ static void EnterBlock(FbleArena* arena, Blocks* blocks, FbleName name, FbleLoc 
 //   loc - The location of the new block.
 //   scope - where to add the ENTER_BLOCK instruction to.
 //
-// Results:
-//   none.
-//
 // Side effects:
 //   Adds a new block to the blocks stack. Change the current block to the new
 //   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
@@ -477,9 +462,6 @@ static void EnterBodyBlock(FbleArena* arena, Blocks* blocks, FbleLoc loc, Scope*
 //   scope - where to append the profile exit op.
 //   exit - whether the frame has already been exited.
 //
-// Results:
-//   none.
-//
 // Side effects:
 //   Pops the top block frame off the blocks stack and append a
 //   profile exit op to the scope if exit is false.
@@ -502,9 +484,6 @@ static void ExitBlock(FbleArena* arena, Blocks* blocks, Scope* scope, bool exit)
 //   exit - whether we actually want to exit.
 //   scope - the scope to append the instructions to.
 //   result - the result to return when exiting. May be NULL.
-//
-// Results:
-//   none.
 //
 // Side effects:
 //   If exit is true, appends an exit scope instruction to instrs

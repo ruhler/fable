@@ -438,7 +438,7 @@ static Tc MkTc(FbleType* type, FbleTc* tc)
 //   Convenience function to free the type and tc fields of a Tc.
 //
 // Inputs:
-//   heap - heap to use for allocations
+//   th - heap to use for allocations
 //   tc - tc to free the fields of. May be TC_FAILED.
 //
 // Side effects:
@@ -530,7 +530,7 @@ static FbleTc* ListExpr(FbleArena* arena, FbleLoc loc, FbleTc* func, FbleTc** ar
 //   Type check the given expression.
 //
 // Inputs:
-//   heap - heap to use for type allocations.
+//   th - heap to use for type allocations.
 //   scope - the list of variables in scope.
 //   expr - the expression to type check.
 //
@@ -1593,7 +1593,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 //   Type check the given process expression.
 //
 // Inputs:
-//   heap - heap to use for type allocations.
+//   th - heap to use for type allocations.
 //   scope - the list of variables in scope.
 //   expr - the expression to compile.
 //
@@ -1799,7 +1799,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 //   variables that are actually used to get their type.
 //
 // Inputs:
-//   heap - heap to use for allocations.
+//   th - heap to use for allocations.
 //   scope - the list of variables in scope.
 //   expr - the expression to compile.
 //
@@ -1807,10 +1807,9 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 //   The type of the expression, or NULL if the expression is not well typed.
 //
 // Side effects:
-//   Resolves field tags and MISC_*_EXPRs.
-//   Prints a message to stderr if the expression fails to compile.
-//   Allocates a reference-counted type that must be freed using
-//   FbleReleaseType when it is no longer needed.
+// * Prints a message to stderr if the expression fails to compile.
+// * Allocates an FbleType that must be freed using FbleReleaseType when it is
+//   no longer needed.
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 {
   FbleArena* arena = th->arena;
@@ -1827,7 +1826,7 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* 
 //   Type check a type, returning its value.
 //
 // Inputs:
-//   heap - heap to use for allocations.
+//   th - heap to use for allocations.
 //   scope - the value of variables in scope.
 //   type - the type to compile.
 //
@@ -1835,9 +1834,9 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* 
 //   The type checked and evaluated type, or NULL in case of error.
 //
 // Side effects:
-//   Prints a message to stderr if the type fails to compile or evalute.
-//   Allocates a reference-counted type that must be freed using
-//   FbleReleaseType when it is no longer needed.
+// * Prints a message to stderr if the type fails to compile or evalute.
+// * Allocates an FbleType that must be freed using FbleReleaseType when it is
+//   no longer needed.
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type)
 {
   FbleArena* arena = th->arena;
@@ -1984,7 +1983,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
 //   Type check a module.
 //
 // Inputs:
-//   heap - heap to use for allocations.
+//   th - heap to use for allocations.
 //   module - the module to check.
 //   deps - the type of each module this module depends on, in the same order
 //          as module->deps. size is module->deps.size.
