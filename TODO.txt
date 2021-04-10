@@ -7,9 +7,6 @@
 * [compilation] Figure out what to do about FbleProfile* for the compilation code path.
 * [compilation] Add support for .fble.@ files and module compilation.
 
-* [cleanup] Check that switch statements are in enum order as appropriate
-  - FBLE_DATA_ACCESS_EXPR, and FBLE_DATA_ACCESS_TC in particular.
-
 * [cleanup] Avoid duplicating code between fble-stdio and fble-compiled-stdio.
 * [cleanup] Factor out common logic in typecheck and compile for looking up a
   module dependency's index?

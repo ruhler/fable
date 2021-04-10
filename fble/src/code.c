@@ -170,15 +170,6 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
           break;
         }
 
-        case FBLE_COPY_INSTR: {
-          FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-          fprintf(fout, "l%zi = %s%zi;\n",
-              copy_instr->dest,
-              sections[copy_instr->source.section],
-              copy_instr->source.index);
-          break;
-        }
-
         case FBLE_GET_INSTR: {
           FbleGetInstr* get_instr = (FbleGetInstr*)instr;
           fprintf(fout, "l%zi := get(%s%zi);\n",
@@ -219,6 +210,16 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
           fprintf(fout, "];\n");
           break;
         }
+
+        case FBLE_COPY_INSTR: {
+          FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+          fprintf(fout, "l%zi = %s%zi;\n",
+              copy_instr->dest,
+              sections[copy_instr->source.section],
+              copy_instr->source.index);
+          break;
+        }
+
 
         case FBLE_REF_VALUE_INSTR: {
           FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;

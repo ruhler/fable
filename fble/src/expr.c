@@ -79,13 +79,6 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       return;
     }
 
-    case FBLE_MODULE_PATH_EXPR: {
-      FbleModulePathExpr* e = (FbleModulePathExpr*)expr;
-      FbleFreeModulePath(arena, e->path);
-      FbleFree(arena, expr);
-      return;
-    }
-
     case FBLE_DATA_TYPE_EXPR: {
       FbleDataTypeExpr* e = (FbleDataTypeExpr*)expr;
       for (size_t i = 0; i < e->fields.size; ++i) {
@@ -93,6 +86,14 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
         FbleFreeName(arena, e->fields.xs[i].name);
       }
       FbleFree(arena, e->fields.xs);
+      FbleFree(arena, expr);
+      return;
+    }
+
+    case FBLE_DATA_ACCESS_EXPR: {
+      FbleDataAccessExpr* e = (FbleDataAccessExpr*)expr;
+      FbleFreeExpr(arena, e->object);
+      FbleFreeName(arena, e->field);
       FbleFree(arena, expr);
       return;
     }
@@ -231,10 +232,9 @@ void FbleFreeExpr(FbleArena* arena, FbleExpr* expr)
       return;
     }
 
-    case FBLE_DATA_ACCESS_EXPR: {
-      FbleDataAccessExpr* e = (FbleDataAccessExpr*)expr;
-      FbleFreeExpr(arena, e->object);
-      FbleFreeName(arena, e->field);
+    case FBLE_MODULE_PATH_EXPR: {
+      FbleModulePathExpr* e = (FbleModulePathExpr*)expr;
+      FbleFreeModulePath(arena, e->path);
       FbleFree(arena, expr);
       return;
     }

@@ -77,11 +77,8 @@ static void CollectBlocksAndLocs(FbleArena* arena, FbleCodeV* blocks, LocV* locs
   FbleVectorAppend(arena, *blocks, code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
     switch (code->instrs.xs[i]->tag) {
-      case FBLE_FUNC_VALUE_INSTR: {
-        FbleFuncValueInstr* instr = (FbleFuncValueInstr*)code->instrs.xs[i];
-        CollectBlocksAndLocs(arena, blocks, locs, instr->code);
-        break;
-      }
+      case FBLE_STRUCT_VALUE_INSTR: break;
+      case FBLE_UNION_VALUE_INSTR: break;
 
       case FBLE_STRUCT_ACCESS_INSTR:
       case FBLE_UNION_ACCESS_INSTR: {
@@ -96,11 +93,26 @@ static void CollectBlocksAndLocs(FbleArena* arena, FbleCodeV* blocks, LocV* locs
         break;
       }
 
+      case FBLE_JUMP_INSTR: break;
+
+      case FBLE_FUNC_VALUE_INSTR: {
+        FbleFuncValueInstr* instr = (FbleFuncValueInstr*)code->instrs.xs[i];
+        CollectBlocksAndLocs(arena, blocks, locs, instr->code);
+        break;
+      }
+
       case FBLE_CALL_INSTR: {
         FbleCallInstr* instr = (FbleCallInstr*)code->instrs.xs[i];
         AddLoc(arena, instr->loc.source->str, locs);
         break;
       }
+
+      case FBLE_GET_INSTR: break;
+      case FBLE_PUT_INSTR: break;
+      case FBLE_LINK_INSTR: break;
+      case FBLE_FORK_INSTR: break;
+      case FBLE_COPY_INSTR: break;
+      case FBLE_REF_VALUE_INSTR: break;
 
       case FBLE_REF_DEF_INSTR: {
         FbleRefDefInstr* instr = (FbleRefDefInstr*)code->instrs.xs[i];
@@ -108,7 +120,8 @@ static void CollectBlocksAndLocs(FbleArena* arena, FbleCodeV* blocks, LocV* locs
         break;
       }
 
-      default: break;
+      case FBLE_RETURN_INSTR: break;
+      case FBLE_TYPE_INSTR: break;
     }
   }
 }
