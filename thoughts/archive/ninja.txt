@@ -217,3 +217,8 @@ It looks gcov-tool could be used to merge profile data, though I'm not sure
 how to install it. It looks like clang does have a better interface for code
 coverage. Maybe it's worth giving clang and its profiling capabilities a try.
 
+---
+
+I'll just go with gcov for ow and not worry about the fact that changes to
+spec tests could include stale coverage info.
+

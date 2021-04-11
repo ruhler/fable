@@ -23,7 +23,6 @@
 
 * [build] Decide whether individual test failures should fail to build or not.
   If they should fail to build, then tools/tests.tcl could be simplified?
-* [build] Figure out a nice way to do code coverage with ninja.
 
 * [tests] Test use of undefined values in case, access, and func apply.
 * [tests] Any way to improve memory growth tests?

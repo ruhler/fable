@@ -15,6 +15,7 @@ set ::lib "$::out/lib"
 set ::src "$::out/src"
 set ::prgms "$::out/prgms"
 set ::test "$::out/test"
+set ::cov "$::out/cov"
 
 # build.ninja header.
 puts "builddir = $::out"
@@ -53,9 +54,23 @@ proc build { targets dependencies command args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
-  #set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb"
   set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
+  build $obj "$src $args" $cmd "depfile = $obj.d"
+}
+
+# obj_cov --
+#   Builds a .o file with test coverage enabled.
+#
+# Inputs:
+#   obj - the .o file to build (include $::obj directory).
+#   src - the .c file to build the .o file from.
+#   iflags - include flags, e.g. "-I foo".
+#   args - optional additional dependencies.
+proc obj_cov { obj src iflags args } {
+  set gcda $::obj/[string map {.o .gcda} $obj]
+  set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
+  set cmd "rm -f $gcda ; gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
 
@@ -105,6 +120,19 @@ proc bin { bin objs lflags args } {
   build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
 }
 
+# bin_cov --
+#   Build a binary with test coverage enabled.
+#
+# Inputs:
+#   bin - the binary file to build (include $::bin directory).
+#   objs - the list of .o files to build from.
+#   lflags - library flags, e.g. "-L foo/ -lfoo".
+#   args - optional additional dependencies.
+proc bin_cov { bin objs lflags args } {
+  set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
+  build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
+}
+
 # test --
 #   Build a test result.
 #
@@ -129,11 +157,15 @@ set ::globs [list]
 
 # .o files used to implement libfble.a
 set ::fble_objs [list]
+set ::fble_objs_cov [list]
 lappend ::globs "fble/src"
 foreach {x} [glob -tails -directory fble/src *.c] {
   set object $::obj/[string map {.c .o} $x]
+  set object_cov $::obj/[string map {.c .cov.o} $x]
   obj $object fble/src/$x "-I fble/include -I fble/src"
+  obj_cov $object_cov fble/src/$x "-I fble/include -I fble/src"
   lappend ::fble_objs $object
+  lappend ::fble_objs_cov $object_cov
 }
 
 # parser
@@ -156,12 +188,17 @@ eval {
   build "$tabc $report" "fble/src/parse.y $includes" $cmd
 
   obj $::obj/parse.tab.o $src/parse.tab.c "-I fble/include -I fble/src"
+  obj_cov $::obj/parse.tab.cov.o $src/parse.tab.c "-I fble/include -I fble/src"
   lappend ::fble_objs $::obj/parse.tab.o
+  lappend ::fble_objs_cov $::obj/parse.tab.cov.o
 }
 
 # libfble.a
 set ::libfble "$::lib/libfble.a"
 lib $::libfble $::fble_objs
+
+set ::libfblecov "$::lib/libfble.cov.a"
+lib $::libfblecov $::fble_objs_cov
 
 # fble tool binaries
 lappend globs "tools"
@@ -169,6 +206,7 @@ foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
   obj $::obj/$base.o $x "-I fble/include"
   bin $::bin/$base $::obj/$base.o "-L $::lib -lfble" $::libfble
+  bin_cov $::bin/$base.cov $::obj/$base.o "-L $::lib -lfble.cov" $::libfblecov
 }
 obj $::obj/fble-app.o prgms/fble-app.c "-I fble/include -I /usr/include/SDL2"
 bin $::bin/fble-app $::obj/fble-app.o "-L $::lib -lfble -lSDL2" $::libfble
@@ -190,6 +228,7 @@ proc dirs { root dir } {
 }
 
 # fble language spec tests
+set ::spec_tests [list]
 foreach dir [dirs langs/fble ""] {
   lappend globs "langs/fble/$dir"
   foreach {t} [lsort [glob -tails -directory langs/fble -nocomplain -type f $dir/*.tcl]] {
@@ -197,15 +236,20 @@ foreach dir [dirs langs/fble ""] {
     set tcl langs/fble/$t
     set tr $::test/$root.tr
     set x "tools/spec-test.tcl \
-      $::bin/fble-test \
-      $::bin/fble-mem-test \
+      $::bin/fble-test.cov \
+      $::bin/fble-mem-test.cov \
       langs/fble/Nat.fble \
       $::test/$root \
       $tcl"
     build $::test/$root "" "mkdir -p $::test/$root"
     test $tr $x "tclsh $x"
+    lappend ::spec_tests $tr
   }
 }
+
+# Code coverage from spec tests.
+build $::cov/gcov.txt "$::fble_objs_cov $::spec_tests" \
+  "gcov $::fble_objs_cov > $::cov/gcov.txt && mv *.gcov $::cov"
 
 # fble-profile-test
 test $::test/fble-profile-test.tr $::bin/fble-profile-test \
@@ -314,13 +358,7 @@ build $::test/summary.tr "tools/tests.tcl $::test/tests.txt" \
 build $::out/build.ninja "build.ninja.tcl $::globs" \
   "tclsh build.ninja.tcl > $::out/build.ninja"
 
-# TODO: Add coverage a profiling variants of things?
-#
-# For coverage:
-# * add to gcc flags: -fprofile-arcs -ftest-coverage to obj and bin rules.
-# * run tests as desired.
-# * run gcov out/obj/*.o
-# * move *.gcov to wherever I prefer they end up.
+# TODO: Add a profiling variant of things?
 #
 # For profiling:
 # * add to gcc flags: -fprofile-arcs -ftest-coverage -pg to obj and bin rules.
@@ -329,4 +367,3 @@ build $::out/build.ninja "build.ninja.tcl $::globs" \
 # * run gprof passing the benchmark executable run on the command line.
 # * run gcov out/obj/*.o and move *.gcov files where preferred.
 # * remove gmon.out
-
