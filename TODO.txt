@@ -24,12 +24,11 @@
 * [build] Decide whether individual test failures should fail to build or not.
   If they should fail to build, then tools/tests.tcl could be simplified?
 
-* [tests] Test use of undefined values in case, access, and func apply.
 * [tests] Any way to improve memory growth tests?
  It feels wrong to me to have to do a full gc for the tests to pass. It feels
  too specific to the implementation of garbage collection. Anything we can do?
-* [tests] Add coverage for parse destructors
- - path, kinds, tagged_kinds, tagged_type, tagged_expr
+* [tests] Add coverage for tagged_type and tagged_expr parse destructors
+ - if only I could figure out how to exercise them.
 
 * [/*%] Follow style guide in fble.txt
   In particular, union field names should be lowercase: just, true, false, not
