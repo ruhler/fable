@@ -81,6 +81,16 @@ proc tobj { obj src iflags args } {
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
 
+# lib --
+#   Build a library.
+#
+# Inputs:
+#   lib - the library file to build
+#   objs - the list of .o files to include in the library.
+proc lib { lib objs } {
+  build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
+}
+
 # bin --
 #   Build a binary.
 #
@@ -151,7 +161,7 @@ eval {
 
 # libfble.a
 set ::libfble "$::lib/libfble.a"
-build $::libfble $::fble_objs "ar rcs $::libfble $::fble_objs"
+lib $::libfble $::fble_objs
 
 # fble tool binaries
 lappend globs "tools"
@@ -225,7 +235,7 @@ foreach dir [dirs prgms ""] {
 
 # libfbleprgms.a
 set ::libfbleprgms "$::lib/libfbleprgms.a"
-build $::libfbleprgms $::fble_prgms_objs "ar rcs $::libfbleprgms $::fble_prgms_objs"
+lib $::libfbleprgms $::fble_prgms_objs
 
 # fble-disassemble test
 test $::test/fble-disassemble.tr \

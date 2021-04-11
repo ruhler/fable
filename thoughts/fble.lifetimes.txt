@@ -21,3 +21,204 @@ decrement the reference count on a.lo. But because we know that 'a' is alive
 for the duration of the function, there is no need to increment and decrement
 the refcount on a.lo.
 
+---
+
+I have an idea I would like to explore.
+
+The motivation is performance. Currently the most significant thing that shows
+up in profiling is the cost of calling Retain on arguments when passed to a
+function and of calling Release on each local value when we return from a
+function.
+
+We could try optimizing Retain/Release, and I could try using a smarter
+allocator for stack memory, but I think the real issue is having to call some
+form of constructor/destructor for each value individually.  Contrast this
+with something like C, where all you need to do is update the stack pointer
+when you leave a function.
+
+The idea is, any object allocated while executing a function will either be
+reachable from the function's return value or not. If the object is not
+reachable from the function's return value, then it should be freed when the
+function exits. If the object is reachable from the function's return value,
+then it is the caller's job to free that object.
+
+In this case, an object's lifetime is tied to a particular stack frame. That
+is, all objects (under this simplified view), are freed when some particular
+function exits. So what if we make sure when we allocate the object in the
+first place, we allocate it in the stack frame for the function that will free
+it?
+
+In a simplified view, if we did this, we wouldn't need garbage collection at
+all. We know when we allocate an object how long it will need to live. We free
+it when we already know no references will outlast it. Feels sort of like
+lifetimes tracked in RUST maybe?
+
+Now, there are a lot of details to work out. Let's look at some of them.
+
+Basic approach
+--------------
+When a function is called, it is supplied by the caller with
+an allocator that it should use for any object that might be returned from the
+function. We do some analysis at compile time to determine which local
+variables in the function could possibly be returned from the function or not.
+Any local variables that could be returned from the function should be
+allocated using the allocator supplied by the caller. Any other local
+variables should be allocated using the functions local allocator.
+
+We can conceptually pass an allocator to the expression used to define a local
+variable. If that expression is StructValue, UnionValue or some such, it just
+allocates with the allocator. If the expression is a function, we pass the
+allocator to that function to use.
+
+When the function exits, we bulk free everything allocated with its local
+allocator (no gc needed, no traversal, no destructors).
+
+For example:
+
+(Int@) { X@; } Foo = (Int@ x) {
+  Int@ y = Int@(2: Unit);
+  Bool@ p = f(x, y);
+  p.?(true: X@(foo: Unit), X@(bar: Unit));
+};
+
+In this case, y is allocated locally. p is allocated locally by passing the
+local allocator to f. But the X@ are allocated using the caller supplied
+allocator. 
+
+Returning Arguments
+-------------------
+Sometimes a function will return one of the arguments input to it as part of
+the result. For example:
+
+(IntP@) { Int@; } N = (IntP@ x) {
+  Int@(n: x);
+};
+
+The return result in this case includes both the Int@ allocated locally and
+the IntP@ passed as an argument. In this case we need to ensure that the
+argument x will stay alive as long as the returned result. Consider a caller:
+
+(...) { X@; } Foo = (...) {
+  IntP@ i = ...;
+  Int@ x = N(i);
+  x;
+};
+
+For this case to work, we must ensure that i is allocated using the caller's
+supplied allocator, because x may take a reference to i. A different function
+N may never return the argument as part of its result, in which case i could
+be allocated using the local function's allocator.
+
+This demonstrates that the caller needs to do something differently depending
+on the implementation of the function it is calling. So we probably want to
+capture that information in the type of the function. I think we could do it
+with a simple boolean flag for each argument to a function: could this
+argument be returned as part of the function result or not.
+
+Dynamic Behavior
+----------------
+Sometimes we may not know statically whether a value is returned from a
+function or not. For example:
+
+(...) { X@; } Foo = (...) {
+  X@ x1 = ...;
+  X@ x2 = ...;
+  Bool@ p = ...;
+  p.?(true: x1, false: x2);
+};
+
+We don't know which one of x1 or x2 we should allocate locally and which one
+we should allocate to the caller. In this case, let's just allocate both to
+the caller. Then whatever happens, we know we'll be okay.
+
+Of course, this means the one that doesn't get returned to the caller is going
+to live longer than you would think. Maybe that's okay?
+
+Well, consider this malicious case:
+
+(X@) { X@; } Foo = (X@ x1) {
+  X@ x2 = ...;
+  Bool@ p = ...;
+  p.?(true: x1, false: x2);
+};
+
+A function that allocates x2, but in practice never returns it. If we were to
+call it repeatedly somehow, every time we called it we would allocate a new x2
+to the caller, and that would grow memory indefinitely. But any normal
+reading of object lifetimes we would always collect the x2 shortly after
+allocating, so we could repeatedly call Foo forever without running out of
+memory. In other words, this does matter.
+
+So, in that case, perhaps we give an option to a function to explicitly free
+an allocated object (and every other object allocated for the purposes of that
+allocated object). In this example, once we compute that we are returning x1,
+at runtime we call explicitly free all the objects allocated for x2 out of the
+caller supplied allocator.
+
+It's too bad that we have to do an explicit free here, but I'm hoping this is
+a rare case and we still get the benefit that we allocated the object to its
+final resting place instead of allocating it locally and potentially having to
+copy or move it elsewhere.
+
+Things get a little confusing if we may or may not return the argument. It
+seems in this case the caller may need to be involved in explicitly freeing
+the argument from its caller if the callee doesn't end up using an argument in
+the result that the caller thought might be returned to its caller.
+
+Returning Static Variables
+--------------------------
+A static variable seems kind of like an argument. How do we return it? Who is
+responsible for ensuring that it stays alive as long as its result? Can we
+figure that out with analysis somehow? Like, if you call a function in order
+to determine a result to some caller, then you must guarantee the function,
+and thus any static variable it references, is also allocated to that caller
+or some other lifetime that will outlast that caller. I think that's probably
+doable.
+
+Unknown Functions
+-----------------
+We have to know something about the function to make sure its arguments are
+allocated the right place. What if we don't know exactly what the function is
+at runtime, because it depends on the result of a dynamically computed value?
+Well, we could either require from the user that they have the same type with
+regards to returning arguments, or just be conservative and say any arg that
+any function we could be calling that might be returnable we'll allocate to
+the caller.
+
+Tail Calls
+----------
+In the case of a tail call, I guess the callee inherits the allocator from the
+caller? I suspect we'll need to handle this specially somehow. I'm not sure
+how.
+
+Puts and Gets
+-------------
+If you put a value on a port, how do you know where that value should be
+allocated? And how does the caller know, if it's an argument? This sounds
+like a rather complicated case. Maybe I shouldn't worry about it to start. We
+could probably work around it given Puts and Gets aren't that fundamental a
+language feature. Either by making copies or remove Put/Get or being
+conservative, or something.
+
+Partial Return
+--------------
+Let's say I call a function, get some struct back, then return only one field
+of the struct. How long should the other fields live? I could come up with a
+pathological case where the other fields should not live beyond the function
+call. But how can we say: free all objects allocated for the other fields that
+aren't allocated for this field? Doesn't that need some kind of GC or
+traversal of objects?
+
+Or what if a function uses just one field of an argument passed in. How does
+the caller know to free the rest of the fields, and which rest of the fields
+to free? This sounds pretty complicated.
+
+---
+
+I think the high level summary is we want to do some static analysis to track
+which values flow where. The type of a function will need to encode whatever
+info the static analysis needs to figure things out based on arguments and
+results. Then we can figure out where we ought to allocate an object. And if
+we allocated it to a place where we later discover it didn't need to live so
+long, we explicitly free it, hopefully rarely, but probably okay even if not.
+

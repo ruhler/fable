@@ -186,3 +186,34 @@ just counting the tests and printing them, it can never show failed tests?
 Just ran into mysterious build failure that went away after full build.
 Something like renaming a .c file followed by change in a tool that used it.
 
+---
+
+Proposal for getting code coverage is...
+
+We only care about code coverage for the spec tests. Build a separate library,
+call it libfble-cov.a, with code coverage enabled. Don't worry about profiling
+right now. Build separate tools for spec tests fble-test-cov,
+fble-mem-test-cov, etc and use those when running the spec tests.
+
+My hope is that if we recompile a .o file, we will replace the code counts for
+it. Maybe I can do that manually. Have the build rule that calls gcov depend
+on the .tr files for all the spec tests. So if we change any .o, we rerun all
+the tests.
+
+If we modify a test and re-run it, we don't want to reset the coverage info,
+otherwise we would have to rerun every other test to recreate the coverage
+info. Instead, I think, use the coverage just to tell which lines were
+executed or not, so the actual count doesn't matter. Then the only thing I
+think we have to worry about is if we change a test, we may still see coverage
+for the previous version of the test. Hopefully that's rare.
+
+In an ideal world we could save the coverage info for each test run separately
+and merge them all together only at the end. Sigh.
+
+I wonder if llvm supports code coverage with a better interface that allows us
+to merge runs separately. Would it be worth trying to switch to llvm?
+
+It looks gcov-tool could be used to merge profile data, though I'm not sure
+how to install it. It looks like clang does have a better interface for code
+coverage. Maybe it's worth giving clang and its profiling capabilities a try.
+
