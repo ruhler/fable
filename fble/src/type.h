@@ -6,10 +6,11 @@
 
 #include <stdint.h>   // for uintptr_t
 
-#include "expr.h"     // for FbleDataTypeTag
 #include "fble-loc.h"
 #include "fble-name.h"
+
 #include "heap.h"
+#include "kind.h"     // for FbleKind
 
 // FbleTypeTag --
 //   A tag used to dinstinguish among different kinds of compiled types.

@@ -1,5 +1,4 @@
 * See if I can't do a round of cleanup for what belongs in which header files.
- - Remove dependence of type.h and tc.h on expr.h?
  - Move FbleExecutable, FbleFreeExecutable to execute.h.
  - Change code.h to depend on execute.h, not value.h.
  - Introduce interpret.h for FbleInterpreterRunFunction.

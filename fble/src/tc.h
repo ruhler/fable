@@ -6,7 +6,7 @@
 #ifndef FBLE_INTERNAL_TC_H_
 #define FBLE_INTERNAL_TC_H_
 
-#include "expr.h"       // for FbleDataTypeTag
+#include "kind.h"       // for FbleDataTypeTag
 #include "fble-loc.h"
 #include "fble-name.h"
 

@@ -8,6 +8,8 @@
 #include <stdlib.h>   // for NULL
 
 #include "fble-vector.h"
+
+#include "expr.h"
 #include "tc.h"
 #include "type.h"
 #include "typecheck.h"
