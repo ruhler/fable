@@ -3,9 +3,8 @@
  - Remove dependence of generated code on value.h.
    Making value functions public as necessary to support this.
 
-* Generate FbleExecutable instead of FbleCode for FbleNewGetValue,
-  FbleNewPutValue
- - Then we no longer need get and put instructions, right?
+* Remove PUT and GET instructions.
+* value.c should no longer need to depend on code.h
 
 * Add 'abort' function to FbleExecutable for cleaning up the stack.
  - And use it to unwind frame by frame instead of whatever we do now.

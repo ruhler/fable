@@ -197,7 +197,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
 //
 // Inputs:
 //   heap - the heap to allocate the value on.
-//   link - the link to put to.
+//   link - the link to put to. Borrowed.
 //
 // Results:
 //   A newly allocated put value.

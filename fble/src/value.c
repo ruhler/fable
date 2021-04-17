@@ -18,6 +18,8 @@ static void Ref(FbleHeapCallback* callback, FbleValue* value);
 static void Refs(FbleHeapCallback* callback, FbleValue* value);
 
 static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
+static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
+static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 static void ExecutableOnFree(FbleExecutable* executable);
 
 
@@ -264,25 +266,103 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
     }
 
     FbleThreadReturn(heap, thread, head->value);
+    FbleReleaseValue(heap, head->value);
     FbleFree(head);
     return FBLE_EXEC_FINISHED;
   }
 
-  if (get_port->tag == FBLE_PORT_VALUE) {
-    FblePortValue* port = (FblePortValue*)get_port;
-    if (*port->data == NULL) {
-      // Blocked on get.
-      return FBLE_EXEC_BLOCKED;
+  assert(get_port->tag == FBLE_PORT_VALUE);
+  FblePortValue* port = (FblePortValue*)get_port;
+  if (*port->data == NULL) {
+    // Blocked on get.
+    return FBLE_EXEC_BLOCKED;
+  }
+
+  FbleThreadReturn(heap, thread, *port->data);
+  FbleReleaseValue(heap, *port->data);
+  *port->data = NULL;
+  *io_activity = true;
+  return FBLE_EXEC_FINISHED;
+}
+
+// PutRunFunction --
+//   FbleExecutable.run function for Put value.
+//
+// See documentation of FbleExecutable.run in execute.h.
+static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
+{
+  FbleValue* put_port = thread->stack->func->statics[0];
+  FbleValue* arg = thread->stack->func->statics[1];
+
+  FbleValueV args = { .size = 0, .xs = NULL, };
+  FbleValue* unit = FbleNewStructValue(heap, args);
+
+  if (put_port->tag == FBLE_LINK_VALUE) {
+    FbleLinkValue* link = (FbleLinkValue*)put_port;
+
+    FbleValues* tail = FbleAlloc(FbleValues);
+    tail->value = arg;
+    tail->next = NULL;
+
+    if (link->head == NULL) {
+      link->head = tail;
+      link->tail = tail;
+    } else {
+      assert(link->tail != NULL);
+      link->tail->next = tail;
+      link->tail = tail;
     }
 
-    FbleThreadReturn(heap, thread, *port->data);
-    *port->data = NULL;
+    FbleValueAddRef(heap, &link->_base, tail->value);
+    FbleThreadReturn(heap, thread, unit);
+    FbleReleaseValue(heap, unit);
     *io_activity = true;
     return FBLE_EXEC_FINISHED;
   }
 
-  UNREACHABLE("get port must be an input or port value");
-  return FBLE_EXEC_ABORTED;
+  assert(put_port->tag == FBLE_PORT_VALUE);
+  FblePortValue* port = (FblePortValue*)put_port;
+  if (*port->data != NULL) {
+    // Blocked on put.
+    return FBLE_EXEC_BLOCKED;
+  }
+
+  FbleRetainValue(heap, arg);
+  *port->data = arg;
+  FbleThreadReturn(heap, thread, unit);
+  FbleReleaseValue(heap, unit);
+  *io_activity = true;
+  return FBLE_EXEC_FINISHED;
+}
+
+// PartialPutRunFunction --
+//   FbleExecutable.run function for partially applied put value.
+//
+// See documentation of FbleExecutable.run in execute.h.
+static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
+{
+  FbleExecutable* exec = FbleAlloc(FbleExecutable);
+  exec->refcount = 1;
+  exec->magic = FBLE_EXECUTABLE_MAGIC;
+  exec->args = 0;
+  exec->statics = 2;
+  exec->locals = 0;
+  exec->run = &PutRunFunction;
+  exec->on_free = &ExecutableOnFree;
+
+  FbleFuncValue* put = FbleNewFuncValue(heap, exec);
+  FbleFreeExecutable(exec);
+
+  FbleValue* link = thread->stack->func->statics[0];
+  FbleValue* arg = thread->stack->locals[0];
+  put->statics[0] = link;
+  FbleValueAddRef(heap, &put->_base, link);
+  put->statics[1] = arg;
+  FbleValueAddRef(heap, &put->_base, arg);
+
+  FbleThreadReturn(heap, thread, &put->_base);
+  FbleReleaseValue(heap, &put->_base);
+  return FBLE_EXEC_FINISHED;
 }
 
 // ExecutableOnFree --
@@ -290,8 +370,7 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
 //
 // See documentation of FbleExecutable.on_free in execute.h
 static void ExecutableOnFree(FbleExecutable* executable)
-{
-}
+{}
 
 // FbleNewGetValue -- see documentation in value.h
 FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
@@ -330,59 +409,19 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data)
 // FbleNewPutValue -- see documentation in value.h
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 {
-  // statics[0] is port
-  // statics[1] is arg
-  // locals[0] is result.
-  FbleCode* proc_code = FbleNewCode(0, 2, 1);
+  FbleExecutable* exec = FbleAlloc(FbleExecutable);
+  exec->refcount = 1;
+  exec->magic = FBLE_EXECUTABLE_MAGIC;
+  exec->args = 1;
+  exec->statics = 1;
+  exec->locals = 1;
+  exec->run = &PartialPutRunFunction;
+  exec->on_free = &ExecutableOnFree;
 
-  FblePutInstr* iput = FbleAlloc(FblePutInstr);
-  iput->_base.tag = FBLE_PUT_INSTR;
-  iput->_base.profile_ops = NULL;
-  iput->port.section = FBLE_STATICS_FRAME_SECTION;
-  iput->port.index = 0;
-  iput->arg.section = FBLE_STATICS_FRAME_SECTION;
-  iput->arg.index = 1;
-  iput->dest = 0;
-  FbleVectorAppend(proc_code->instrs, &iput->_base);
-
-  FbleReturnInstr* irtn0 = FbleAlloc(FbleReturnInstr);
-  irtn0->_base.tag = FBLE_RETURN_INSTR;
-  irtn0->_base.profile_ops = NULL;
-  irtn0->result.section = FBLE_LOCALS_FRAME_SECTION;
-  irtn0->result.index = 0;
-  FbleVectorAppend(proc_code->instrs, &irtn0->_base);
-
-  // statics[0] = port
-  // locals[0] = arg
-  // locals[1] = result
-  FbleCode* func_code = FbleNewCode(1, 1, 2);
-
-  FbleProcValueInstr* iproc = FbleAlloc(FbleProcValueInstr);
-  iproc->_base.tag = FBLE_PROC_VALUE_INSTR;
-  iproc->_base.profile_ops = NULL;
-  iproc->code = proc_code;
-  FbleVectorInit(iproc->scope);
-
-  FbleFrameIndex port_index = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0 };
-  FbleVectorAppend(iproc->scope, port_index);
-
-  FbleFrameIndex arg_index = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0 };
-  FbleVectorAppend(iproc->scope, arg_index);
-  iproc->dest = 1;
-
-  FbleVectorAppend(func_code->instrs, &iproc->_base);
-
-  FbleReturnInstr* irtn1 = FbleAlloc(FbleReturnInstr);
-  irtn1->_base.tag = FBLE_RETURN_INSTR;
-  irtn1->_base.profile_ops = NULL;
-  irtn1->result.section = FBLE_LOCALS_FRAME_SECTION;
-  irtn1->result.index = 1;
-  FbleVectorAppend(func_code->instrs, &irtn1->_base);
-
-  FbleFuncValue* put = FbleNewFuncValue(heap, &func_code->_base);
+  FbleFuncValue* put = FbleNewFuncValue(heap, exec);
   put->statics[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
-  FbleFreeCode(func_code);
+  FbleFreeExecutable(exec);
   return &put->_base;
 }
 

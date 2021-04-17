@@ -292,15 +292,15 @@ test $::test/fble-tests.tr "$::bin/fble-stdio $::prgms/Fble/Tests.fble.d" \
 
 # fble-md5 test
 test $::test/fble-md5.tr "$::bin/fble-md5 $::prgms/Md5/Main.fble.d" \
-  "$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null | grep d41d8cd98f00b204e9800998ecf8427e > /dev/null"
+  "$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null > $::test/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::test/fble-md5.out > /dev/null"
 
 # fble-cat test
 test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
-  "$::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt | cmp README.txt -"
+  "$::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt > $::test/fble-cat.out && cmp $::test/fble-cat.out README.txt"
 
 # fble-stdio test
 test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
-  "$::bin/fble-stdio prgms/Stdio/Test.fble prgms | grep PASSED > /dev/null"
+  "$::bin/fble-stdio prgms/Stdio/Test.fble prgms > $::test/fble-stdio.out && grep PASSED $::test/fble-stdio.out > /dev/null"
 
 # /Stdio/Test% compilation test
 obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
@@ -311,7 +311,7 @@ bin $::bin/fble-stdio-test \
   "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
-  "$::bin/fble-stdio-test | grep PASSED > /dev/null"
+  "$::bin/fble-stdio-test > $::test/fble-stdio-test.out && grep PASSED $::test/fble-stdio-test.out > /dev/null"
 
 # /Fble/Tests% compilation test
 build $::src/fble-tests.c $::bin/fble-compile \
@@ -347,7 +347,7 @@ build $::src/fblf-md5.c \
 obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
 bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
 test $::test/fblf-md5.tr $::bin/fblf-md5 \
-  "$::bin/fblf-md5 /dev/null | grep d41d8cd98f00b204e9800998ecf8427e > /dev/null"
+  "$::bin/fblf-md5 /dev/null > $::test/fblf-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::test/fblf-md5.out > /dev/null"
 
 # test summary
 build $::test/tests.txt "$::tests" "echo $::tests > $::test/tests.txt"
