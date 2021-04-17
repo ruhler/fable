@@ -6,7 +6,8 @@
 
 #include <SDL.h>        // for SDL_*
 
-#include "fble.h"
+#include "fble-link.h"    // for FbleLinkFromSource.
+#include "fble-value.h"   // for FbleValue, etc.
 
 // AppIO - Implementation of FbleIO for App, with some additional parameters
 // to pass to the IO function.
@@ -330,8 +331,8 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
 }
 
 // IO --
-//   io function for external ports.
-//   See the corresponding documentation in fble.h.
+//   FbleIO.io function for external ports.
+//   See the corresponding documentation in fble-value.h.
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   AppIO* app = (AppIO*)io;

@@ -19,7 +19,8 @@
 #include <string.h>     // for strcmp
 #include <stdlib.h>     // for free
 
-#include "fble.h"
+#include "fble-link.h"    // for FbleLinkFromSource.
+#include "fble-value.h"   // for FbleValue, etc.
 
 typedef struct {
   FbleIO io;
@@ -108,8 +109,8 @@ static FbleValue* WriteChar(FbleValueHeap* heap, char c)
 }
 
 // IO --
-//   io function for external ports.
-//   See the corresponding documentation in fble.h.
+//   FbleIO.io function for external ports.
+//   See the corresponding documentation in fble-value.h.
 //
 // Ports:
 //  input: Maybe@<Str@>-  Read a line from stdin. Nothing on end of file.

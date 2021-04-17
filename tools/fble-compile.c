@@ -5,7 +5,8 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble.h"
+#include "fble-compile.h"       // for FbleCompile, etc.
+#include "fble-module-path.h"   // for FbleParseModulePath
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

@@ -7,7 +7,8 @@
 #include <stdint.h>     // for uint64_t
 #include <string.h>     // for strcmp
 
-#include "fble.h"
+#include "fble-link.h"    // for FbleLinkFromSource.
+#include "fble-value.h"   // for FbleValue, etc.
 
 // Md5IO --
 //   The FbleIO for Md5.
@@ -76,8 +77,8 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 }
 
 // IO --
-//   io function for external ports.
-//   See the corresponding documentation in fble.h.
+//   FbleIo.io function for external ports.
+//   See the corresponding documentation in fble-value.h.
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   Md5IO* mio = (Md5IO*)io;

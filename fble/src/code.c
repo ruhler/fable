@@ -7,6 +7,9 @@
 #include <stdio.h>    // for fprintf
 #include <stdlib.h>   // for NULL
 
+#include "fble-alloc.h"   // for FbleAlloc, FbleFree, etc.
+#include "fble-vector.h"  // for FbleVectorInit, etc.
+
 #include "tc.h"
 #include "value.h"
 

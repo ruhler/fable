@@ -2,10 +2,13 @@
 //   This file implements the main entry point for the fble-test program.
 
 #include <assert.h>   // for assert
+#include <stdbool.h>   // for bool
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble.h"
+#include "fble-link.h"      // for FbleLinkFromSource.
+#include "fble-profile.h"   // for FbleNewProfile, etc.
+#include "fble-value.h"     // for FbleValue, etc.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

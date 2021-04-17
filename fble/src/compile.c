@@ -5,6 +5,9 @@
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
+#include "fble-alloc.h"     // for FbleAlloc, etc.
+#include "fble-vector.h"    // for FbleVectorInit, etc.
+
 #include "code.h"
 #include "tc.h"
 #include "typecheck.h"

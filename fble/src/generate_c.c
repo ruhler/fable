@@ -6,6 +6,8 @@
 #include <stdio.h>    // for sprintf
 #include <string.h>   // for strlen, strcat
 
+#include "fble-vector.h"    // for FbleVectorInit, etc.
+
 #include "code.h"
 #include "fble-compile.h"
 #include "tc.h"
@@ -709,9 +711,11 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   fprintf(fout, "#include \"assert.h\"\n\n");
 
-  fprintf(fout, "#include \"fble.h\"\n");
-  fprintf(fout, "#include \"execute.h\"\n");    // for FbleThread, etc.
-  fprintf(fout, "#include \"value.h\"\n");      // for FbleStructValue, etc.
+  fprintf(fout, "#include \"fble-alloc.h\"\n");  // for FbleAlloc, etc.
+  fprintf(fout, "#include \"fble-value.h\"\n");  // for FbleValue, etc.
+  fprintf(fout, "#include \"fble-vector.h\"\n"); // for FbleVectorInit, etc.
+  fprintf(fout, "#include \"execute.h\"\n");     // for FbleThread, etc.
+  fprintf(fout, "#include \"value.h\"\n");       // for FbleStructValue, etc.
   fprintf(fout, "\n");
 
   // Prototypes for module dependencies.
@@ -907,7 +911,9 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 // FbleGenerateCExport -- see documentation in fble-compile.h
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
-  fprintf(fout, "#include \"fble.h\"\n");
+  fprintf(fout, "#include \"fble-link.h\"\n");    // for FbleLink
+  fprintf(fout, "#include \"fble-value.h\"\n");   // for FbleValue
+  fprintf(fout, "#include \"fble-vector.h\"\n");  // for FbleVectorInit, etc.
   fprintf(fout, "\n");
 
   // Prototype for the exported module.

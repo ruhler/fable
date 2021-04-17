@@ -7,7 +7,10 @@
 #include <stdlib.h>   // for NULL
 #include <string.h>   // for memset
 
-#include "fble.h"     // for FbleIO.
+#include "fble-alloc.h"     // for FbleAlloc, FbleFree, etc.
+#include "fble-value.h"     // for FbleValue, etc.
+#include "fble-vector.h"    // for FbleVectorInit, etc.
+
 #include "heap.h"
 #include "tc.h"
 #include "value.h"

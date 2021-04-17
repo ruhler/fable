@@ -4,7 +4,9 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble.h"
+#include "fble-compile.h"   // for FbleCompile, FbleDisassemble.
+#include "fble-load.h"      // for FbleLoad
+#include "fble-profile.h"   // for FbleNewProfile, etc.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

@@ -5,7 +5,7 @@
 #include <string.h>   // for strcmp, strlen
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble.h"
+#include "fble-load.h"    // for FbleLoad.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

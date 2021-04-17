@@ -3,8 +3,11 @@
 
 #include <assert.h>     // for assert
 
+#include "fble-alloc.h"     // for FbleAlloc, etc.
+#include "fble-interpret.h" // for FbleInterpret
+#include "fble-vector.h"    // for FbleVectorInit, etc.
+
 #include "code.h"
-#include "fble-interpret.h"
 #include "value.h"
 
 // FbleLink -- see documentation in fble-link.h

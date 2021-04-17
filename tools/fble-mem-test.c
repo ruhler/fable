@@ -5,7 +5,9 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble.h"
+#include "fble-alloc.h"   // for FbleMaxTotalBytesAllocated.
+#include "fble-link.h"    // for FbleLinkFromSource.
+#include "fble-value.h"   // for FbleValue, etc.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
