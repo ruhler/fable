@@ -5,7 +5,7 @@
 #define FBLE_INTERPRET_H_
 
 #include "fble-compile.h"
-#include "fble-link.h"
+#include "fble-execute.h"
 
 // FbleInterpret --
 //   Turn a compiled program into an executable program based on use of an

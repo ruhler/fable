@@ -275,3 +275,21 @@ FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfil
   assert(proc->tag == FBLE_PROC_VALUE);
   return Eval(heap, io, (FbleFuncValue*)proc, NULL, profile);
 }
+
+// FbleFreeExecutableProgram -- see documentation in fble-execute.h
+void FbleFreeExecutableProgram(FbleExecutableProgram* program)
+{
+  if (program != NULL) {
+    for (size_t i = 0; i < program->modules.size; ++i) {
+      FbleExecutableModule* module = program->modules.xs + i;
+      FbleFreeModulePath(module->path);
+      for (size_t j = 0; j < module->deps.size; ++j) {
+        FbleFreeModulePath(module->deps.xs[j]);
+      }
+      FbleFree(module->deps.xs);
+      FbleFreeExecutable(module->executable);
+    }
+    FbleFree(program->modules.xs);
+    FbleFree(program);
+  }
+}

@@ -7,24 +7,6 @@
 #include "fble-interpret.h"
 #include "value.h"
 
-// FbleFreeExecutableProgram -- see documentation in fble-link.h
-void FbleFreeExecutableProgram(FbleExecutableProgram* program)
-{
-  if (program != NULL) {
-    for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleExecutableModule* module = program->modules.xs + i;
-      FbleFreeModulePath(module->path);
-      for (size_t j = 0; j < module->deps.size; ++j) {
-        FbleFreeModulePath(module->deps.xs[j]);
-      }
-      FbleFree(module->deps.xs);
-      FbleFreeExecutable(module->executable);
-    }
-    FbleFree(program->modules.xs);
-    FbleFree(program);
-  }
-}
-
 // FbleLink -- see documentation in fble-link.h
 FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
 {
