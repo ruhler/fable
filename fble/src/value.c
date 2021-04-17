@@ -17,6 +17,9 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value);
 static void Ref(FbleHeapCallback* callback, FbleValue* value);
 static void Refs(FbleHeapCallback* callback, FbleValue* value);
 
+static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
+static void ExecutableOnFree(FbleExecutable* executable);
+
 
 // FbleNewValueHeap -- see documentation in fble-.h
 FbleValueHeap* FbleNewValueHeap()
@@ -239,35 +242,76 @@ bool FbleIsProcValue(FbleValue* value)
   return value->tag == FBLE_PROC_VALUE && proc->executable->args == 0;
 }
 
+// GetRunFunction --
+//   FbleExecutable.run function for Get value.
+//
+// See documentation of FbleExecutable.run in execute.h.
+static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
+{
+  FbleValue* get_port = thread->stack->func->statics[0];
+  if (get_port->tag == FBLE_LINK_VALUE) {
+    FbleLinkValue* link = (FbleLinkValue*)get_port;
+
+    if (link->head == NULL) {
+      // Blocked on get.
+      return FBLE_EXEC_BLOCKED;
+    }
+
+    FbleValues* head = link->head;
+    link->head = link->head->next;
+    if (link->head == NULL) {
+      link->tail = NULL;
+    }
+
+    FbleThreadReturn(heap, thread, head->value);
+    FbleFree(head);
+    return FBLE_EXEC_FINISHED;
+  }
+
+  if (get_port->tag == FBLE_PORT_VALUE) {
+    FblePortValue* port = (FblePortValue*)get_port;
+    if (*port->data == NULL) {
+      // Blocked on get.
+      return FBLE_EXEC_BLOCKED;
+    }
+
+    FbleThreadReturn(heap, thread, *port->data);
+    *port->data = NULL;
+    *io_activity = true;
+    return FBLE_EXEC_FINISHED;
+  }
+
+  UNREACHABLE("get port must be an input or port value");
+  return FBLE_EXEC_ABORTED;
+}
+
+// ExecutableOnFree --
+//   FbleExecutable.on_free function that does nothing.
+//
+// See documentation of FbleExecutable.on_free in execute.h
+static void ExecutableOnFree(FbleExecutable* executable)
+{
+}
+
 // FbleNewGetValue -- see documentation in value.h
 FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 {
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
-  // statics[0] is the port.
-  // locals[0] is the result.
-  FbleCode* code = FbleNewCode(0, 1, 1);
+  FbleExecutable* exec = FbleAlloc(FbleExecutable);
+  exec->refcount = 1;
+  exec->magic = FBLE_EXECUTABLE_MAGIC;
+  exec->args = 0;
+  exec->statics = 1;
+  exec->locals = 0;
+  exec->run = &GetRunFunction;
+  exec->on_free = &ExecutableOnFree;
 
-  FbleGetInstr* iget = FbleAlloc(FbleGetInstr);
-  iget->_base.tag = FBLE_GET_INSTR;
-  iget->_base.profile_ops = NULL;
-  iget->port.section = FBLE_STATICS_FRAME_SECTION;
-  iget->port.index = 0;
-  iget->dest = 0;
-  FbleVectorAppend(code->instrs, &iget->_base);
-
-  FbleReturnInstr* irtn = FbleAlloc(FbleReturnInstr);
-  irtn->_base.tag = FBLE_RETURN_INSTR;
-  irtn->_base.profile_ops = NULL;
-  irtn->result.section = FBLE_LOCALS_FRAME_SECTION;
-  irtn->result.index = 0;
-  FbleVectorAppend(code->instrs, &irtn->_base);
-
-  FbleProcValue* get = FbleNewFuncValue(heap, &code->_base);
+  FbleProcValue* get = FbleNewFuncValue(heap, exec);
   get->statics[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
 
-  FbleFreeCode(code);
+  FbleFreeExecutable(exec);
   return &get->_base;
 }
 
