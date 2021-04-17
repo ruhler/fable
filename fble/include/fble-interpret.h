@@ -4,10 +4,8 @@
 #ifndef FBLE_INTERPRET_H_
 #define FBLE_INTERPRET_H_
 
-#include "fble-alloc.h"
 #include "fble-compile.h"
 #include "fble-link.h"
-#include "fble-value.h"
 
 // FbleInterpret --
 //   Turn a compiled program into an executable program based on use of an

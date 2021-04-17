@@ -6,7 +6,6 @@
 
 #include <stdbool.h>    // for bool
 
-#include "fble-alloc.h"
 #include "fble-vector.h"
 
 typedef struct FbleHeap FbleValueHeap;

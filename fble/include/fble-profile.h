@@ -8,7 +8,6 @@
 #include <stdint.h>   // for uint64_t
 #include <stdio.h>    // for FILE
 
-#include "fble-alloc.h"
 #include "fble-name.h"
 
 // FbleBlockId --

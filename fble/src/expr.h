@@ -6,7 +6,6 @@
 
 #include <sys/types.h>    // for size_t
 
-#include "fble-alloc.h"
 #include "fble-load.h"    // for public typedef of FbleExpr.
 #include "fble-name.h"
 

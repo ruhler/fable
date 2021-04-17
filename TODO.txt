@@ -1,4 +1,12 @@
 * See if I can't do a round of cleanup for what belongs in which header files.
+ - Introduce fble-execute.h, have fble-link and fble-interpret share that.
+ - Move FbleEval, FbleApply, FbleExec to fble-value.h, remove fble.h.
+ - Remove dependence of type.h and tc.h on expr.h?
+ - Move FbleExecutable, FbleFreeExecutable to execute.h.
+ - Change code.h to depend on execute.h, not value.h.
+ - Introduce interpret.h for FbleInterpreterRunFunction.
+ - Remove dependence of generated code on value.h.
+   Making value functions public as necessary to support this.
 
 * Generate FbleExecutable instead of FbleCode for FbleNewGetValue,
   FbleNewPutValue

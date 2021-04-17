@@ -1,6 +1,5 @@
 Fble API
 --------
-
 The api for libfble is getting a bit messy. I think it's worth a round of
 cleanup.
 
@@ -279,3 +278,67 @@ doesn't make much of a difference performance wise.
 5m10s -> 5m16s.
 
 So, it doesn't make enough of a difference to block a cleaner interface.
+
+---
+
+The header files are getting all confusing now. Let's check for layering, and
+see if there aren't any obvious cleanups.
+
+In "layering" order:
+
+PUBLIC:
+
+fble-alloc.h: FbleAlloc and friends.        GOOD.
+fble-vector.h: FbleVectorInit and friends.  GOOD.
+
+fble-string.h: FbleString and friends.      GOOD.
+fble-loc.h: FbleLoc and friends.            GOOD.
+fble-name.h: FbleName and friends.          GOOD.
+fble-module-path.h: FbleModulePath and friends. GOOD.
+
+fble-profile.h: FbleProfile and friends.    GOOD.
+
+fble-load: Abstract FbleExpr. FbleParse, FbleLoad.  OKAY.
+fble-compile: Abstract FbleCode. FbleCompile, FbleDisassemble, FbleGenerateC.  OKAY.
+fble-value: Abstract FbleValue. OKAY.
+fble-link: Abstract FbleExecutable. FbleLink. FbleLinkFromSource. OKAY.
+fble-interpret: FbleInterpret.  A bit awkward that it depends on fble-link.
+
+* Consider introducing fble-execute that both fble-link and fble-interpret
+  depend on separately?
+
+fble.h: FbleEval, FbleApply, FbleExec 
+* Should probably move these to fble-value.h, and remove fble.h entirely.
+
+INTERNAL:
+
+heap.h: GOOD.
+fble/src/expr.h: GOOD.
+fble/src/type.h: Strange to depend on expr.h
+ * Consider pulling out FbleDataTypeTag somewhere to avoid this?
+fble/src/tc.h: Strange to depend on expr.h.
+ * Consider pulling out FbleDataTypeTag somewhere to avoid this?
+fble/src/typecheck.h: Good.
+fble/src/execute.h: OKAY. Depends on abstract FbleValue.
+fble/src/value.h
+ * Moving FbleExecutable into execute.h.
+fble/src/code.h
+ * Depend on execute.h, not value.h.
+
+
+Okay, so that's not so unreasonable. One question is how much of the stuff
+that is private ought to just be public?
+* Why does generated code need to include tc.h and value.h?
+
+heap.h can stay internal.
+expr, type, tc, typecheck seem fine to keep internal for now. 
+code can stay internal.
+
+But I think execute.h and enough of the functions from value.h as needed for
+interpret.c and generated code should be moved to fble-value.h. We will
+probably need to add some more functions to fble-value.h.
+
+This would mean exposing RefValues publicly and threads and stacks. That's all
+stuff I sort of rather have be internal, because they are so implementation
+specific. But the generated code needs to know them.
+

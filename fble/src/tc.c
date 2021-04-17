@@ -1,7 +1,11 @@
+// tc.c --
+//   This file implements routines dealing with the FbleTc type.
+
+#include "tc.h"
 
 #include <assert.h>     // for assert
 
-#include "tc.h"
+#include "fble-alloc.h"   // for FbleFree
 
 #define UNREACHABLE(x) assert(false && x)
 

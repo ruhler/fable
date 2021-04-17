@@ -10,7 +10,6 @@
 #include "fble-load.h"
 #include "fble-module-path.h"
 #include "fble-profile.h"
-#include "fble-value.h"
 
 // FbleCode
 //   Abstract type representing compiled code.

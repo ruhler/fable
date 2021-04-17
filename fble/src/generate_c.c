@@ -710,8 +710,8 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "#include \"assert.h\"\n\n");
 
   fprintf(fout, "#include \"fble.h\"\n");
-  fprintf(fout, "#include \"tc.h\"\n");
-  fprintf(fout, "#include \"value.h\"\n");
+  fprintf(fout, "#include \"execute.h\"\n");    // for FbleThread, etc.
+  fprintf(fout, "#include \"value.h\"\n");      // for FbleStructValue, etc.
   fprintf(fout, "\n");
 
   // Prototypes for module dependencies.
@@ -908,7 +908,6 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
   fprintf(fout, "#include \"fble.h\"\n");
-  fprintf(fout, "#include \"value.h\"\n");
   fprintf(fout, "\n");
 
   // Prototype for the exported module.
