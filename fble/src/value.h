@@ -63,37 +63,48 @@ typedef struct {
 } FbleUnionValue;
 
 // FbleExecutable --
+//   A reference counted, partially abstract data type describing how to
+//   execute a function.
 //
-// TODO: Turn this into an abstract data type that allows multiple
-// implementations.
-//
-// Fields:
-//   code - The code for the function.
-//   run - A native function to use to evaluate this fble function.
+// The 'on_free' function is called passing this as an argument just before
+// the FbleExecutable object is freed. Subclasses should use this to free any
+// custom state.
+#define FBLE_EXECUTABLE_MAGIC 0xB10CE
 struct FbleExecutable {
-  FbleCode* code;
-  FbleRunFunction* run;
+  size_t refcount;        // reference count.
+  size_t magic;           // FBLE_EXECUTABLE_MAGIC.
+  size_t args;            // The number of arguments expected by the function.
+  size_t statics;         // The number of statics used by the function.
+  size_t locals;          // The number of locals used by the function.
+  FbleRunFunction* run;   // How to run the function.
+  void (*on_free)(struct FbleExecutable* this);
 };
+
+// FbleFreeExecutable --
+//   Decrement the refcount and, if necessary, free resources associated with
+//   the given executable.
+//
+// Inputs:
+//   executable - the executable to free. May be NULL.
+//
+// Side effects:
+//   Decrements the refcount and, if necessary, calls executable->on_free and
+//   free resources associated with the given executable.
+void FbleFreeExecutable(FbleExecutable* executable);
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
 // Fields:
 //   executable - The code for the function.
-//   argc - The number of arguments expected by the function.
-//   localc - the number of local variable slots needed to execute the
-//            function.
-//   staticc - the number of static variables captured by the function.
 //   statics - static variables captured by the function.
+//             Size is executable->statics
 //
 // Note: Function values are used for both pure functions and processes. We
-// don't distinguish between the two at runtime, except that argc == 0
-// suggests this is for a process instead of a function.
+// don't distinguish between the two at runtime, except that
+// executable->args == 0 suggests this is for a process instead of a function.
 struct FbleFuncValue {
   FbleValue _base;
   FbleExecutable* executable;
-  size_t argc;
-  size_t localc;
-  size_t staticc;
   FbleValue* statics[];
 };
 
@@ -178,6 +189,22 @@ typedef struct {
 // Side effects:
 //   Allocates a value that should be released when it is no longer needed.
 #define FbleNewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
+
+// FbleNewFuncValue --
+//   Allocates a new FbleFuncValue that runs the given executable.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   executable - the executable to run. Borrowed.
+//
+// Results:
+//   A newly allocated FbleFuncValue that is fully initialized except for
+//   statics.
+//
+// Side effects:
+//   Allocates a new FbleFuncValue that should be freed using FbleReleaseValue
+//   when it is no longer needed.
+FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable);
 
 // FbleNewGetValue --
 //   Create a new get proc value for the given link.

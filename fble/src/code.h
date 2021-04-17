@@ -6,7 +6,8 @@
 #define FBLE_INTERNAL_CODE_H_
 
 #include "fble-compile.h"   // for FbleCode forward declaration.
-#include "fble-profile.h"   // for FbleBlockId
+#include "fble-profile.h"   // for FbleBlockId.
+#include "value.h"          // for FbleExecutable.
 
 // FbleFrameSection --
 //   Which section of a frame a value can be found in.
@@ -100,16 +101,10 @@ typedef struct {
 } FbleInstrV;
 
 // FbleCode --
-//   A reference counted block of instructions.
-//
-// The magic field is set to FBLE_CODE_MAGIC to help detect double
-// free.
-#define FBLE_CODE_MAGIC 0xB10CE
+//   A subclass of FbleExecutable that executes code by interpreting
+//   instructions.
 struct FbleCode {
-  size_t refcount;
-  size_t magic;       // FBLE_CODE_MAGIC
-  size_t statics;     // The number of statics used by this frame.
-  size_t locals;      // The number of locals required by this stack frame.
+  FbleExecutable _base;
   FbleInstrV instrs;
 };
 
@@ -193,7 +188,6 @@ typedef struct {
 // *dest = code[v1, v2, ...](argc)
 //
 // Fields:
-//   argc - The number of arguments to the function.
 //   dest - Where to store the allocated function.
 //   code - A block of instructions that will execute the body of the function
 //          in the context of its scope and arguments. The instruction should
@@ -205,7 +199,6 @@ typedef struct {
 // function values.
 typedef struct {
   FbleInstr _base;
-  size_t argc;
   FbleLocalIndex dest;
   FbleCode* code;
   FbleFrameIndexV scope;
@@ -336,12 +329,28 @@ typedef struct {
 //   Frees memory allocated for the given instruction.
 void FbleFreeInstr(FbleInstr* instr);
 
+// FbleNewCode --
+//   Allocate a new, empty FbleCode instance.
+//
+// Inputs:
+//   args - the number of arguments to the function.
+//   statics - the number of statics captured by the function.
+//   locals - the number of locals used by the function.
+//
+// Returns:
+//   A newly allocated FbleCode object with no initial instructions.
+//
+// Side effects:
+//   Allocates a new FbleCode object that should be freed with FbleFreeCode or
+//   FbleFreeExecutable when no longer needed.
+FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals);
+
 // FbleFreeCode --
 //   Decrement the refcount on the given block of instructions and free it if
 //   appropriate.
 //
 // Inputs:
-//   block - the block of instructions to free. May be NULL.
+//   code - the code to free. May be NULL.
 //
 // Result:
 //   none.
@@ -349,6 +358,6 @@ void FbleFreeInstr(FbleInstr* instr);
 // Side effect:
 //   Frees memory allocated for the given block of instruction if the refcount
 //   has gone to 0.
-void FbleFreeCode(FbleCode* block);
+void FbleFreeCode(FbleCode* code);
 
 #endif // FBLE_INTERNAL_CODE_H_

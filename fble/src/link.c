@@ -18,8 +18,7 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program)
         FbleFreeModulePath(module->deps.xs[j]);
       }
       FbleFree(module->deps.xs);
-      FbleFreeCode(module->executable->code);
-      FbleFree(module->executable);
+      FbleFreeExecutable(module->executable);
     }
     FbleFree(program->modules.xs);
     FbleFree(program);
@@ -35,28 +34,15 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   // module given values of the modules it depends on.
   FbleValue* funcs[modulec];
   for (size_t i = 0; i < modulec; ++i) {
-    FbleFuncValue* func = FbleNewValue(heap, FbleFuncValue);
-    func->_base.tag = FBLE_FUNC_VALUE;
-    func->executable = FbleAlloc(FbleExecutable);
-    func->executable->code = program->modules.xs[i].executable->code;
-    func->executable->code->refcount++;
-    func->executable->run = program->modules.xs[i].executable->run;
-    func->argc = program->modules.xs[i].deps.size;
-    func->localc = program->modules.xs[i].executable->code->locals;
-    func->staticc = program->modules.xs[i].executable->code->statics;
+    assert(program->modules.xs[i].executable->statics == 0);
+    FbleFuncValue* func = FbleNewFuncValue(heap, program->modules.xs[i].executable);
     funcs[i] = &func->_base;
   }
 
   // Write some code to call each of module functions in turn with the
   // appropriate module arguments. The function for module i will be static
   // variable i, and the value computed for module i will be local variable i.
-  FbleCode* code = FbleAlloc(FbleCode);
-  code->refcount = 1;
-  code->magic = FBLE_CODE_MAGIC;
-  code->statics = modulec;
-  code->locals = modulec;
-  FbleVectorInit(code->instrs);
-
+  FbleCode* code = FbleNewCode(0, modulec, modulec);
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleExecutableModule* module = program->modules.xs + i;
 
@@ -96,7 +82,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   FbleVectorAppend(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
-  FbleFuncValue* linked = FbleNewInterpretedFuncValue(heap, 0, code);
+  FbleFuncValue* linked = FbleNewFuncValue(heap, &code->_base);
   for (size_t i = 0; i < modulec; ++i) {
     linked->statics[i] = funcs[i];
     FbleValueAddRef(heap, &linked->_base, funcs[i]);

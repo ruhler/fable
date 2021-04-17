@@ -21,8 +21,7 @@
 //   pc - the next instruction in func->code to execute.
 //   result - where to store the result of executing the current frame.
 //   tail - the next frame down in the stack.
-//   localc - the number of local variables.
-//   locals - array of local variables.
+//   locals - array of local variables. Size is func->executable->locals.
 //
 // Memory Management:
 //   Each thread owns its stack. The stack owns its tail. Except that we have
@@ -40,7 +39,6 @@ typedef struct FbleStack {
   size_t pc;
   FbleValue** result;
   struct FbleStack* tail;
-  size_t localc;
   FbleValue* locals[];
 } FbleStack;
 

@@ -222,3 +222,288 @@ results. Then we can figure out where we ought to allocate an object. And if
 we allocated it to a place where we later discover it didn't need to live so
 long, we explicitly free it, hopefully rarely, but probably okay even if not.
 
+---
+
+In C, the lifetimes of different kinds of objects are managed differently.
+
+* Small, fixed sized values are allocated on the stack and passed by value to
+  and from a function.
+* Large, fixed sized values can be allocated on the stack and passed by
+  pointer to a function, which can update the value in place.
+* Variable sized arrays can be allocated on the stack. It's the programmers
+  job to ensure no pointers into the array are returned from the function.
+* Otherwise Large or dynamically sized values are allocated on the heap with
+  small fixed size pointers passed around.
+  - If there is a single owner, these are freed explicitly by their owner.
+  - If there can be multiple owners, use reference counting.
+  - If there can be cycles with multiple owners, use garbage collection.
+
+In some sense, single owner is like multiple owners reference counting, except
+we can elide reference increments and decrements if we know there is another
+reference to it for the entire duration.
+
+I feel like what constitutes small versus large depends on the machine you are
+running on. It's a tradeoff in the cost of copying data versus copying a
+pointer and managing the memory. Better, in theory, then to have the language
+implementation decide what's small or large.
+
+The fble implementation has access to whether values are fixed size or
+variable size, and how big fixed size values are.
+
+The question is, can an fble implementation reasonably pick between these
+different strategies for managing objects based on what it knows about the
+objects? Rather than the current conservative approach of allocating
+everything on the heap, passing pointers around, and using gc to collect
+things. And how much performance benefit could we get from that?
+
+Brainstorm of information the programmer provides in C that an fble
+implementation would not have access to:
+* The implicit contract for functions with regards to whether they expect to
+  be the last user of an argument, or whether they may return an argument as
+  part of the result. Probably this ought to be part of the type of the
+  function, because you can't properly use the function without knowing this
+  information.
+* When it's okay to hold on to some memory longer than it is otherwise needed.
+  In the extreme case, for example, leaking a static singleton.
+* Which operations are more performance sensitive. For example, maybe it's
+  better to copy a large object if the only time we need to copy isn't
+  performance sensitive, but the times we would need to retain/release are.
+
+---
+
+Here's a possible first step: let's add support for allocation and passing
+around small, fixed sized values on the stack in fble. For example, a Bit32@
+could be passed around as an actual 32 bit int instead of more than 64
+separate FbleValue objects.
+
+The expected benefits are:
+* Less time spent allocating FbleValue objects, because there are hopefully
+  much less that we need to allocate as FbleValue objects.
+* Less time spent in gc, because we are allocating fewer FbleValue objects.
+* Less time spent in retain/release because we don't have to retain/release
+  the small fixed size objects.
+* Small, fixed sized objects could potentially all be freed together in bulk,
+  without having to visit each individual one.
+
+I think this would qualify as a fundamental performance improvement, given
+that we can change a linear time traversal of all objects we need to free into
+a single bulk free. And the fact that we may end up doing 30x fewer object
+allocations.
+
+This is going to be a big change. We'll need type information now to be able
+to construct and access values. For polymorphic functions, we probably need to
+pass type information for abstract types (like, the size in number of bits) to
+the function. We probably want to support accessing values at arbitrary bit
+offsets into memory. A stack frame will be a mix of values and pointers that
+we'll have to keep track of offsets for. We'll need to update the FbleCode*
+instructions and architectural state.
+
+I think it's worth a try. I think it's reasonable to limit scope to just this
+for now, and save until later concerns about how to elide retain/release, or
+use reference counting instead of gc to track acyclic objects.
+
+---
+
+Design brainstorm.
+
+Ideally we pack structs into bits, so that, for example, a Bit32@ fits in 32
+bits. This suggests struct fields are packed with bit alignment, not, for
+example, byte alignment. This means we'll want to be able to access a value at
+bit alignment.
+
+Stack frames will store data as a bundle of bits. Data values will be a bundle
+of bits, or a pointer to a bundle of bits.
+
+To start, I want to assume the size of a value in bits is determined solely by
+the value's type, and whether we use a pointer or not for the value is
+determined solely by the value's type.
+
+Given we'll have values of different sizes at different bit aligned offsets in
+stack frames and data structures, we'll need information about the size and
+bit offset of a value when accessing it. For example, UnionSelectInstr should
+take a bit offset and size in number of bits for the tag.
+
+Values that use pointers will need to be treated differently from those that
+don't. For example, StructAccess for a non-pointer value can just turn into a
+different offset,size variable, but StructAccess for a pointer value should
+load the relevant data from the pointer into the stack frame.
+
+We'll need some way to keep track of where the pointers are in a stack frame
+or data value for gc purposes. Otherwise I assume when we move things around,
+like passing args or return results, we'll know statically whether we are
+dealing with a pointer or non-pointer type so that we can do the
+Retain/Release necessary.
+
+Polymorphic functions will need to behave differently based on the types
+passed to them, because those types will have different sizes. This could be
+tricky, because we already said pointer versus non-pointer types need to be
+treated differently, and we can't know if a type will be pointer or
+non-pointer before we know the type arguments passed to it. Perhaps we'll want
+to do piecewise implementations of the function that can handle all variants
+of pointer vs. non-pointer types depending on the arguments? We'll also need a
+way to calculate the size of a data type based on the poly argument type, so
+we'll need a way to represent that computation.
+
+The C API for interfacing with fble values will have to change, because you'll
+need type information to work with them. Maybe they are different sizes, then
+maybe we need to generate different C types corresponding to the different
+fble types?
+
+If I were to summarize:
+* Tracking pointers in objects for GC.
+* Tracking pointers in stack frames for aborts.
+* Changing the C API to work with fble values.
+* Figuring out how to deal with polymorphic types.
+
+Aside from that, hopefully it's a mostly straight forward change to populate
+the FbleTc with bit sizes and offsets in typecheck, to propagate those down to
+FbleCode in compile, and to update the fble instructions to support these
+things.
+
+---
+
+1. Tracking pointers in objects for GC.
+
+The type of an object contains all the information needed to track pointers in
+the object. For start, let's say we only do funny packing for struct and union
+values. The type of a struct value should contain a list of bit offsets
+describing where the pointers are, if any. The type of a union value should
+contain a bit offset describing where the pointer is, if any.
+
+Given that structs and values can be packed inside each other, ideally the
+type of the object describes all the nested, packed pointers with a list of
+bit offsets.
+
+When you free an object, you'll need to know its type somehow. Hopefully
+whoever does the freeing knows that.
+
+2. Tracking pointers in stack frames for aborts.
+Same idea as for values, except now we have a list of bit offsets describing
+the stack frame. I guess we'll also need to know the types of each pointer to
+be able to free it recursively?
+
+The only question here is how to store the information so that it's easy to
+determine, for any pc, what the list of offsets and types is. We have a few
+different options:
+* Each instruction that needs it has an explicit list computed at compile
+  time.
+* We maintain a running list at runtime which individual instructions need to
+  update as they go.
+* We encode the information in some way so that we can recreate the list given
+  a pc on demand.
+
+My feeling is that the most efficient thing would be to encode the list
+explicitly for the return and tail call instructions, which are expected
+cases, and then write some program that can be used to compute the list for a
+given pc for the abort cases. To start that program could just be a lookup
+table from pc to (hopefully partially shared) list.
+
+3. Changing the C API
+There are two considerations: how to convey the type information necessary to
+manipulate values and how to refer to values.
+
+We could either require the user to provide the type information, or we could
+bundle the type information with the value at the interface. I feel like
+having the user provide the type information will be better for the long run,
+so maybe start by trying that.
+
+How to refer to values? Well, we have a maximum fixed size for a value, so we
+could define some FbleValue type passed around by value that is at least that
+size. Seems like a waste for describing smaller size values though. We could
+use a pointer and a bit offset to describe an arbitrary bit in memory. Then
+it's a question of who keeps track of the backing memory for non-pointer
+values?
+
+No. Seems like if we deem our maximum fixed sized value small enough to be
+worth copying at runtime, it should be fine for the user, even in the worst
+case of only using one of the bits available.
+
+Or perhaps we should provide the user with some sort of heap API they can
+allocate their own values out of, then always pass around pointer and bit
+offset? The user can have them allocated on the stack that way if they want.
+
+Another possibility would be to use different C types for different fble
+types. I worry about polymorphic types though.
+
+4. How to deal with polymorphic types.
+
+It's tedious, but I think straight forward. We'll need some way to describe
+and execute a program to compute field offsets given the size of a polymorphic
+type passed in. That program needs to handle integer variables, max and sum.
+
+---
+
+(2) sounds the most independent from everything else. What if we start there?
+What if we use dwarf, or some dwarf like thing to describe the location and
+live values for every instruction in a function? That's information that could
+be useful to a debugger and also for unwinding the stack.
+
+One cool thing about this is we could show stack traces for aborts, not just
+the last frame. Assuming we'll unwind one frame at a time.
+
+The following instructions need to support abort:
+ STRUCT_ACCESS, UNION_ACCESS, UNION_SELECT, CALL, REF_DEF, FORK.
+
+The following instructions don't:
+ STRUCT_VALUE, UNION_VALUE, JUMP, FUNC_VALUE, GET, PUT, LINK, COPY, REF_VALUE,
+ RETURN, TYPE.
+
+Is it worth special casing individual instructions, or should we provide the
+info for all the instructions just because we can? My preference would be not
+to be instruction specific, except for return and tail call, where they need
+the info for normal operation.
+
+I guess the high level idea is:
+* Add some info to FbleCode that can be used to give the location and list of
+  live variables for any pc in the code block. Remove location fields of
+  individual instructions.
+* On abort, unwind the stack a frame at a time using this information instead
+  of checking for NULL / non-NULL values to release.
+* Sounds like we'll want explicit release of all values using instructions,
+  as part of RETURN and TAIL_CALL, and, perhaps, adding back explicit
+  RELEASE instructions?
+* Then we don't need to NULL out stack frames when we initialize them.
+* Let's print full stack traces on abort instead of just the last location,
+  just because we can.
+
+We could consider using the dwarf spec for line locations. Let's see if that
+isn't overly complicated for my case. It might not be enough for maintaining
+stack maps. No, I think dwarf is overly general for my needs. Just start with
+something simple and worry about optimizing or integrating with dwarf later.
+
+---
+
+For a compact way of representing stack maps for all instructions, we could
+have a little language with the following instructions:
+
+For the sequence of ops to apply to get to a particular pc:
+ * incr pc - to say when the next pc starts
+ * branch - to say to jump over a number of instructions if the goal is to
+            find a pc in a particular range.
+    The branch condition will be based on the target pc to reach.
+ * jump - to say to jump to a specific instruction.
+
+For tracking location:
+ * set file
+ * set line
+ * set col
+
+For tracking stackmaps:
+ * add pointer
+ * remove pointer
+
+Idea is you run the program from the start targeting a particular pc, as a
+result you get a location and list of offsets. That's your stackmap. Hopefully
+there isn't too much redundancy when expressed as a diff this way.
+
+That said, there's no reason to start with something fancy like this. We
+already have all the location information needed. The real new functionality
+to add is stackmaps for aborts. The easiest way to start is to just add to
+each instruction (or each instruction that might abort?) what the stackmap is.
+We only need a more compressed version if memory becomes an issue.
+
+Perhaps, in terms of API, we want to add a new function analogous to the
+FbleExecutable 'run' function, called 'abort', which aborts the thread at a
+given pc.
+
+

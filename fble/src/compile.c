@@ -59,7 +59,7 @@ static void PopVar(Scope* scope);
 static Local* GetVar(Scope* scope, FbleVarIndex index);
 static void SetVar(Scope* scope, size_t index, Local* local);
 
-static void InitScope(Scope* scope, FbleCode** code, size_t statics, Scope* parent);
+static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
@@ -107,7 +107,7 @@ static Local* NewLocal(Scope* scope)
 
   if (index == scope->locals.size) {
     FbleVectorAppend(scope->locals, NULL);
-    scope->code->locals = scope->locals.size;
+    scope->code->_base.locals = scope->locals.size;
   }
 
   Local* local = FbleAlloc(Local);
@@ -240,6 +240,8 @@ static void SetVar(Scope* scope, size_t index, Local* local)
 // Inputs:
 //   scope - the scope to initialize.
 //   code - a pointer to store the allocated code block for this scope.
+//   args - the number of arguments to the function the scope is for.
+//   statics - the number of statics captured by the scope (??).
 //   parent - the parent of the scope to initialize. May be NULL.
 //
 // Results:
@@ -251,7 +253,7 @@ static void SetVar(Scope* scope, size_t index, Local* local)
 //   and the parent scope must exceed the lifetime of this scope.
 // * The caller is responsible for calling FbleFreeCode on *code when it
 //   is no longer needed.
-static void InitScope(Scope* scope, FbleCode** code, size_t statics, Scope* parent)
+static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, Scope* parent)
 {
   FbleVectorInit(scope->statics);
   for (size_t i = 0; i < statics; ++i) {
@@ -265,12 +267,7 @@ static void InitScope(Scope* scope, FbleCode** code, size_t statics, Scope* pare
   FbleVectorInit(scope->vars);
   FbleVectorInit(scope->locals);
 
-  scope->code = FbleAlloc(FbleCode);
-  scope->code->refcount = 1;
-  scope->code->magic = FBLE_CODE_MAGIC;
-  scope->code->statics = statics;
-  scope->code->locals = 0;
-  FbleVectorInit(scope->code->instrs);
+  scope->code = FbleNewCode(args, statics, 0);
   scope->pending_profile_ops = NULL;
   scope->parent = parent;
 
@@ -737,7 +734,6 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       FbleFuncValueInstr* instr = FbleAlloc(FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
       instr->_base.profile_ops = NULL;
-      instr->argc = argc;
 
       FbleVectorInit(instr->scope);
       for (size_t i = 0; i < func_tc->scope.size; ++i) {
@@ -746,7 +742,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       }
 
       Scope func_scope;
-      InitScope(&func_scope, &instr->code, func_tc->scope.size, scope);
+      InitScope(&func_scope, &instr->code, argc, func_tc->scope.size, scope);
       EnterBodyBlock(blocks, func_tc->body_loc, &func_scope);
 
       for (size_t i = 0; i < argc; ++i) {
@@ -912,7 +908,7 @@ static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name, FbleProfile* pr
 
   FbleCode* code;
   Scope scope;
-  InitScope(&scope, &code, 0, NULL);
+  InitScope(&scope, &code, argc, 0, NULL);
 
   for (size_t i = 0; i < argc; ++i) {
     Local* local = NewLocal(&scope);

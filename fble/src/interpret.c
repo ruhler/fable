@@ -19,7 +19,6 @@ static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index);
 static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index);
 static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
 static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
-static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 
 // InstrImpl --
 //   A function that executes an instruction.
@@ -274,18 +273,8 @@ static FbleExecStatus JumpInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-  size_t staticc = func_value_instr->code->statics;
-
-  FbleFuncValue* value = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * staticc);
-  value->_base.tag = FBLE_FUNC_VALUE;
-  value->executable = FbleAlloc(FbleExecutable);
-  value->executable->code = func_value_instr->code;
-  value->executable->code->refcount++;
-  value->executable->run = &InterpretedRunFunction;
-  value->argc = func_value_instr->argc;
-  value->localc = func_value_instr->code->locals;
-  value->staticc = staticc;
-  for (size_t i = 0; i < staticc; ++i) {
+  FbleFuncValue* value = FbleNewFuncValue(heap, &func_value_instr->code->_base);
+  for (size_t i = 0; i < func_value_instr->scope.size; ++i) {
     FbleValue* arg = FrameGet(thread, func_value_instr->scope.xs[i]);
     value->statics[i] = arg;
     FbleValueAddRef(heap, &value->_base, arg);
@@ -307,8 +296,8 @@ static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   };
   assert(func->_base.tag == FBLE_FUNC_VALUE);
 
-  FbleValue* args[func->argc];
-  for (size_t i = 0; i < func->argc; ++i) {
+  FbleValue* args[func->executable->args];
+  for (size_t i = 0; i < func->executable->args; ++i) {
     args[i] = FrameGet(thread, call_instr->args.xs[i]);
   }
 
@@ -567,16 +556,16 @@ static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   return FBLE_EXEC_RUNNING;
 }
 
-// InterpretedRunFunction --
+// FbleInterprerRunFunction --
 //   An standard run function that runs an fble function by interpreting the
 //   instructions in its instruction block.
 //
 // See documentation of FbleRunFunction in execute.h.
-static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
+FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
   FbleProfileThread* profile = thread->profile;
 
-  FbleInstr** code = thread->stack->func->executable->code->instrs.xs;
+  FbleInstr** code = ((FbleCode*)thread->stack->func->executable)->instrs.xs;
 
   FbleExecStatus status = FBLE_EXEC_RUNNING;
   while (status == FBLE_EXEC_RUNNING) {
@@ -609,28 +598,6 @@ static FbleExecStatus InterpretedRunFunction(FbleValueHeap* heap, FbleThreadV* t
   return status;
 }
 
-// FbleInterpretCode -- see documentation in fble-interpret.h
-FbleExecutable* FbleInterpretCode(FbleCode* code)
-{
-  FbleExecutable* executable = FbleAlloc(FbleExecutable);
-  executable->code = code;
-  executable->code->refcount++;
-  executable->run = &InterpretedRunFunction;
-  return executable;
-}
-
-// FbleNewInterpretedFuncValue -- see documentation in fble-interpret.h
-FbleFuncValue* FbleNewInterpretedFuncValue(FbleValueHeap* heap, size_t argc, FbleCode* code)
-{
-  FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * code->statics);
-  v->_base.tag = FBLE_FUNC_VALUE;
-  v->executable = FbleInterpretCode(code);
-  v->argc = argc;
-  v->localc = code->locals;
-  v->staticc = code->statics;
-  return v;
-}
-
 // FbleInterpret -- see documentation in fble-interpret.h
 FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
 {
@@ -647,7 +614,8 @@ FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
       FbleVectorAppend(executable_module->deps, FbleCopyModulePath(module->deps.xs[d]));
     }
 
-    executable_module->executable = FbleInterpretCode(module->code);
+    executable_module->executable = &module->code->_base;
+    executable_module->executable->refcount++;
   }
 
   return executable;

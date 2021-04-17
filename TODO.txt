@@ -1,13 +1,29 @@
-* [perf] Consider making a custom stack-based allocator to use for the
-  execution stacks?
+* See if I can't do a round of cleanup for what belongs in which header files.
+
+* Generate FbleExecutable instead of FbleCode for FbleNewGetValue,
+  FbleNewPutValue
+ - Then we no longer need get and put instructions, right?
+
+* Add 'abort' function to FbleExecutable for cleaning up the stack.
+ - And use it to unwind frame by frame instead of whatever we do now.
+* Change ReleaseInstr to always return from a local.
+* Add explicit Release instructions to free values during normal flow
+ - Set to NULL on release so we can properly cleanup based on NULLs in abort.
+* Track info necessary to know what to release on abort without checking if
+  something is NULL or not.
+* Remove setting of NULL on release to test that we don't rely on it. 
+  And maybe get a tiny speed boost?
+
+* [compilation] Switch over entirely to compilation use case?
+ - We'll want to add profiling support to the compilation use case.
+ - Remove interpreter entirely? Any significant downside?
 
 * [compilation] Cleanup API between execute/value/interpret/generated code.
- - Make FbleExecutable a proper abstract type.
  - Can I cleanup/break the dependency cycle between execute.h and value.h?
  - Should definition of FbleThread* be private to execute.c?
 * [compilation] Make public headers available for compiled code to use so we don't have to
   give direct access to internal header files.
-* [compilation] Figure out what to do about FbleProfile* for the compilation code path.
+* [compilation] Figure out what to do about profiling for the compilation code path.
 * [compilation] Add support for .fble.@ files and module compilation.
 
 * [cleanup] Avoid duplicating code between fble-stdio and fble-compiled-stdio.

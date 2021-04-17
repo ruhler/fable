@@ -12,7 +12,22 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// TODO: Find a better home for this prototype.
+FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
+
+static void OnFree(FbleExecutable* executable);
 static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile);
+
+// OnFree --
+//   The FbleExecutable.on_free function for FbleCode.
+static void OnFree(FbleExecutable* executable)
+{
+  FbleCode* code = (FbleCode*)executable;
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    FbleFreeInstr(code->instrs.xs[i]);
+  }
+  FbleFree(code->instrs.xs);
+}
 
 // DumpCode -- 
 //   For debugging purposes, dump the given code block in human readable
@@ -39,8 +54,8 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
 
   while (blocks.size > 0) {
     FbleCode* block = blocks.xs[--blocks.size];
-    fprintf(fout, "%p statics[%zi] locals[%zi]:\n",
-        (void*)block, block->statics, block->locals);
+    fprintf(fout, "%p args[%zi] statics[%zi] locals[%zi]:\n",
+        (void*)block, block->_base.args, block->_base.statics, block->_base.locals);
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];
 
@@ -138,7 +153,7 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
                 func_value_instr->scope.xs[j].index);
             comma = ", ";
           }
-          fprintf(fout, "] %zi;\n", func_value_instr->argc);
+          fprintf(fout, "];\n");
           FbleVectorAppend(blocks, func_value_instr->code);
           break;
         }
@@ -339,29 +354,25 @@ void FbleFreeInstr(FbleInstr* instr)
   UNREACHABLE("invalid instruction");
 }
 
-// FbleFreeCode -- see documentation in isa.h
-void FbleFreeCode(FbleCode* block)
+// FbleNewCode -- see documentation in code.h
+FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals)
 {
-  if (block == NULL) {
-    return;
-  }
-
-  // We've had trouble with double free of instr blocks in the past. Check to
-  // make sure the magic in the block hasn't been corrupted. Otherwise we've
-  // probably already freed this instruction block and decrementing the
-  // refcount could end up corrupting whatever is now making use of the memory
-  // that was previously used for the instruction block.
-  assert(block->magic == FBLE_CODE_MAGIC && "corrupt FbleCode");
-
-  assert(block->refcount > 0);
-  block->refcount--;
-  if (block->refcount == 0) {
-    for (size_t i = 0; i < block->instrs.size; ++i) {
-      FbleFreeInstr(block->instrs.xs[i]);
-    }
-    FbleFree(block->instrs.xs);
-    FbleFree(block);
-  }
+  FbleCode* code = FbleAlloc(FbleCode);
+  code->_base.refcount = 1;
+  code->_base.magic = FBLE_EXECUTABLE_MAGIC;
+  code->_base.args = args;
+  code->_base.statics = statics;
+  code->_base.locals = locals;
+  code->_base.run = &FbleInterpreterRunFunction;
+  code->_base.on_free = &OnFree;
+  FbleVectorInit(code->instrs);
+  return code;
+}
+
+// FbleFreeCode -- see documentation in code.h
+void FbleFreeCode(FbleCode* code)
+{
+  FbleFreeExecutable(&code->_base);
 }
 
 // FbleDisassmeble -- see documentation in fble-compile.h.

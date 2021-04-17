@@ -416,20 +416,17 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-      size_t staticc = func_instr->code->statics;
-      fprintf(fout, "      FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * %i);\n", staticc);
-      fprintf(fout, "      v->_base.tag = FBLE_FUNC_VALUE;\n");
-      fprintf(fout, "      v->executable = FbleAlloc(FbleExecutable);\n");
-      fprintf(fout, "      v->executable->code = FbleAlloc(FbleCode);\n");
-      fprintf(fout, "      v->executable->code->refcount = 1;\n");
-      fprintf(fout, "      v->executable->code->magic = FBLE_CODE_MAGIC;\n");
-      fprintf(fout, "      v->executable->code->statics = %i;\n", staticc);
-      fprintf(fout, "      v->executable->code->locals = %i;\n", func_instr->code->locals);
-      fprintf(fout, "      FbleVectorInit(v->executable->code->instrs);\n");
-      fprintf(fout, "      v->executable->run = &_block_%p;\n", (void*)func_instr->code);
-      fprintf(fout, "      v->argc = %i;\n", func_instr->argc);
-      fprintf(fout, "      v->localc = %i;\n", func_instr->code->locals);
-      fprintf(fout, "      v->staticc = %i;\n", staticc);
+      size_t staticc = func_instr->code->_base.statics;
+      fprintf(fout, "      FbleExecutable* executable = FbleAlloc(FbleExecutable);\n");
+      fprintf(fout, "      executable->refcount = 1;\n");
+      fprintf(fout, "      executable->magic = FBLE_EXECUTABLE_MAGIC;\n");
+      fprintf(fout, "      executable->args = %i;\n", func_instr->code->_base.args);
+      fprintf(fout, "      executable->statics = %i;\n", func_instr->code->_base.statics);
+      fprintf(fout, "      executable->locals = %i;\n", func_instr->code->_base.locals);
+      fprintf(fout, "      executable->run = &_block_%p;\n", (void*)func_instr->code);
+      fprintf(fout, "      executable->on_free = &OnFree;\n");
+      fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, executable);\n");
+      fprintf(fout, "      FbleFreeExecutable(executable);\n");
       for (size_t i = 0; i < staticc; ++i) {
         fprintf(fout, "      v->statics[%i] = ", i); FrameGet(fout, func_instr->scope.xs[i]); fprintf(fout, ";\n");
         fprintf(fout, "      FbleValueAddRef(heap, &v->_base, v->statics[%i]);\n", i);
@@ -713,7 +710,6 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "#include \"assert.h\"\n\n");
 
   fprintf(fout, "#include \"fble.h\"\n");
-  fprintf(fout, "#include \"code.h\"\n");
   fprintf(fout, "#include \"tc.h\"\n");
   fprintf(fout, "#include \"value.h\"\n");
   fprintf(fout, "\n");
@@ -741,6 +737,11 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   }
   fprintf(fout, "\n");
   FbleFree(locs.xs);
+
+  // Definition of OnFree function for FbleExecutable.
+  fprintf(fout, "static void OnFree(FbleExecutable* executable)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "}\n\n");
 
   // Helper functions to reduce generated code size so it is easier for the
   // compiler to deal with.
@@ -890,13 +891,13 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   }
 
   fprintf(fout, "  v%x->executable = FbleAlloc(FbleExecutable);\n", module_id);
-  fprintf(fout, "  v%x->executable->code = FbleAlloc(FbleCode);\n", module_id);
-  fprintf(fout, "  v%x->executable->code->refcount = 1;\n", module_id);
-  fprintf(fout, "  v%x->executable->code->magic = FBLE_CODE_MAGIC;\n", module_id);
-  fprintf(fout, "  v%x->executable->code->statics = %i;\n", module_id, module->code->statics);
-  fprintf(fout, "  v%x->executable->code->locals = %i;\n", module_id, module->code->locals);
-  fprintf(fout, "  FbleVectorInit(v%x->executable->code->instrs);\n", module_id);
+  fprintf(fout, "  v%x->executable->refcount = 1;\n", module_id);
+  fprintf(fout, "  v%x->executable->magic = FBLE_EXECUTABLE_MAGIC;\n", module_id);
+  fprintf(fout, "  v%x->executable->args = %i;\n", module_id, module->code->_base.args);
+  fprintf(fout, "  v%x->executable->statics = %i;\n", module_id, module->code->_base.statics);
+  fprintf(fout, "  v%x->executable->locals = %i;\n", module_id, module->code->_base.locals);
   fprintf(fout, "  v%x->executable->run = &_block_%p;\n", module_id, (void*)module->code);
+  fprintf(fout, "  v%x->executable->on_free = &OnFree;\n", module_id);
 
   fprintf(fout, "}\n");
 

@@ -67,8 +67,7 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
-      FbleFreeCode(v->executable->code);
-      FbleFree(v->executable);
+      FbleFreeExecutable(v->executable);
       return;
     }
 
@@ -133,7 +132,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 
     case FBLE_FUNC_VALUE: {
       FbleFuncValue* v = (FbleFuncValue*)value;
-      for (size_t i = 0; i < v->staticc; ++i) {
+      for (size_t i = 0; i < v->executable->statics; ++i) {
         Ref(callback, v->statics[i]);
       }
       break;
@@ -220,46 +219,74 @@ FbleValue* FbleUnionValueAccess(FbleValue* object)
   FbleUnionValue* value = (FbleUnionValue*)object;
   return value->arg;
 }
+// FbleFreeExecutable -- see documentation in value.h
+void FbleFreeExecutable(FbleExecutable* executable)
+{
+  if (executable == NULL) {
+    return;
+  }
+
+  // We've had trouble with double free in the past. Check to make sure the
+  // magic in the block hasn't been corrupted. Otherwise we've probably
+  // already freed this executable and decrementing the refcount could end up
+  // corrupting whatever is now making use of the memory that was previously
+  // used for the instruction block.
+  assert(executable->magic == FBLE_EXECUTABLE_MAGIC && "corrupt FbleExecutable");
+
+  assert(executable->refcount > 0);
+  executable->refcount--;
+  if (executable->refcount == 0) {
+    executable->on_free(executable);
+    FbleFree(executable);
+  }
+}
+
+// FbleNewFuncValue -- see documentation in value.h
+FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable)
+{
+  FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * executable->statics);
+  v->_base.tag = FBLE_FUNC_VALUE;
+  v->executable = executable;
+  v->executable->refcount++;
+  return v;
+}
 
 // FbleIsProcValue -- see documentation in fble-value.h
 bool FbleIsProcValue(FbleValue* value)
 {
   FbleProcValue* proc = (FbleProcValue*)value;
-  return value->tag == FBLE_PROC_VALUE && proc->argc == 0;
+  return value->tag == FBLE_PROC_VALUE && proc->executable->args == 0;
 }
 
 // FbleNewGetValue -- see documentation in value.h
 FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 {
-  static FbleGetInstr iget = {
-    ._base = { .tag = FBLE_GET_INSTR, .profile_ops = NULL },
-    .port = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0},
-    .dest = 0,
-  };
-
-  static FbleReturnInstr irtn = {
-    ._base = { .tag = FBLE_RETURN_INSTR, .profile_ops = NULL },
-    .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0}
-  };
-
-  static FbleInstr* instrs[] = {
-    &iget._base,
-    &irtn._base,
-  };
-
-  static FbleCode code = {
-    .refcount = 1,
-    .magic = FBLE_CODE_MAGIC,
-    .statics = 1,  // port
-    .locals = 1,   // result
-    .instrs = { .size = 2, .xs = instrs }
-  };
-
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
-  FbleProcValue* get = FbleNewInterpretedFuncValue(heap, 0, &code);
+  // statics[0] is the port.
+  // locals[0] is the result.
+  FbleCode* code = FbleNewCode(0, 1, 1);
+
+  FbleGetInstr* iget = FbleAlloc(FbleGetInstr);
+  iget->_base.tag = FBLE_GET_INSTR;
+  iget->_base.profile_ops = NULL;
+  iget->port.section = FBLE_STATICS_FRAME_SECTION;
+  iget->port.index = 0;
+  iget->dest = 0;
+  FbleVectorAppend(code->instrs, &iget->_base);
+
+  FbleReturnInstr* irtn = FbleAlloc(FbleReturnInstr);
+  irtn->_base.tag = FBLE_RETURN_INSTR;
+  irtn->_base.profile_ops = NULL;
+  irtn->result.section = FBLE_LOCALS_FRAME_SECTION;
+  irtn->result.index = 0;
+  FbleVectorAppend(code->instrs, &irtn->_base);
+
+  FbleProcValue* get = FbleNewFuncValue(heap, &code->_base);
   get->statics[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
+
+  FbleFreeCode(code);
   return &get->_base;
 }
 
@@ -278,67 +305,59 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data)
 // FbleNewPutValue -- see documentation in value.h
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 {
-  static FblePutInstr iput = {
-    ._base = { .tag = FBLE_PUT_INSTR, .profile_ops = NULL },
-    .port = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0},
-    .arg = { .section = FBLE_STATICS_FRAME_SECTION, .index = 1},
-    .dest = 0,
-  };
+  // statics[0] is port
+  // statics[1] is arg
+  // locals[0] is result.
+  FbleCode* proc_code = FbleNewCode(0, 2, 1);
 
-  static FbleReturnInstr irtn0 = {
-    ._base = { .tag = FBLE_RETURN_INSTR, .profile_ops = NULL },
-    .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0}
-  };
+  FblePutInstr* iput = FbleAlloc(FblePutInstr);
+  iput->_base.tag = FBLE_PUT_INSTR;
+  iput->_base.profile_ops = NULL;
+  iput->port.section = FBLE_STATICS_FRAME_SECTION;
+  iput->port.index = 0;
+  iput->arg.section = FBLE_STATICS_FRAME_SECTION;
+  iput->arg.index = 1;
+  iput->dest = 0;
+  FbleVectorAppend(proc_code->instrs, &iput->_base);
 
-  static FbleInstr* proc_instrs[] = {
-    &iput._base,
-    &irtn0._base,
-  };
+  FbleReturnInstr* irtn0 = FbleAlloc(FbleReturnInstr);
+  irtn0->_base.tag = FBLE_RETURN_INSTR;
+  irtn0->_base.profile_ops = NULL;
+  irtn0->result.section = FBLE_LOCALS_FRAME_SECTION;
+  irtn0->result.index = 0;
+  FbleVectorAppend(proc_code->instrs, &irtn0->_base);
 
-  static FbleCode proc_code = {
-    .refcount = 1,
-    .magic = FBLE_CODE_MAGIC,
-    .statics = 2,  // port, arg
-    .locals = 1,   // result
-    .instrs = { .size = 2, .xs = proc_instrs }
-  };
+  // statics[0] = port
+  // locals[0] = arg
+  // locals[1] = result
+  FbleCode* func_code = FbleNewCode(1, 1, 2);
 
-  static FbleFrameIndex proc_scope[] = {
-    { .section = FBLE_STATICS_FRAME_SECTION, .index = 0 },  // port
-    { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0 },   // arg
-  };
+  FbleProcValueInstr* iproc = FbleAlloc(FbleProcValueInstr);
+  iproc->_base.tag = FBLE_PROC_VALUE_INSTR;
+  iproc->_base.profile_ops = NULL;
+  iproc->code = proc_code;
+  FbleVectorInit(iproc->scope);
 
-  static FbleProcValueInstr iproc = {
-    ._base = { .tag = FBLE_PROC_VALUE_INSTR, .profile_ops = NULL },
-    .argc = 0,
-    .code = &proc_code,
-    .scope = { .size = 2, .xs = proc_scope },
-    .dest = 1,
-  };
-  iproc.code->refcount++;
+  FbleFrameIndex port_index = { .section = FBLE_STATICS_FRAME_SECTION, .index = 0 };
+  FbleVectorAppend(iproc->scope, port_index);
 
-  static FbleReturnInstr irtn1 = {
-    ._base = { .tag = FBLE_RETURN_INSTR, .profile_ops = NULL },
-    .result = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 1 }
-  };
+  FbleFrameIndex arg_index = { .section = FBLE_LOCALS_FRAME_SECTION, .index = 0 };
+  FbleVectorAppend(iproc->scope, arg_index);
+  iproc->dest = 1;
 
-  static FbleInstr* func_instrs[] = {
-    &iproc._base,
-    &irtn1._base,
-  };
+  FbleVectorAppend(func_code->instrs, &iproc->_base);
 
-  static FbleCode func_code = {
-    .refcount = 1,
-    .magic = FBLE_CODE_MAGIC,
-    .statics = 1,  // port
-    .locals = 2,   // arg, result
-    .instrs = { .size = 2, .xs = func_instrs }
-  };
-  func_code.refcount++;
+  FbleReturnInstr* irtn1 = FbleAlloc(FbleReturnInstr);
+  irtn1->_base.tag = FBLE_RETURN_INSTR;
+  irtn1->_base.profile_ops = NULL;
+  irtn1->result.section = FBLE_LOCALS_FRAME_SECTION;
+  irtn1->result.index = 1;
+  FbleVectorAppend(func_code->instrs, &irtn1->_base);
 
-  FbleFuncValue* put = FbleNewInterpretedFuncValue(heap, 1, &func_code);
+  FbleFuncValue* put = FbleNewFuncValue(heap, &func_code->_base);
   put->statics[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
+  FbleFreeCode(func_code);
   return &put->_base;
 }
 
