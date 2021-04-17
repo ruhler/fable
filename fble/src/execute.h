@@ -9,6 +9,7 @@
 
 #include <stdbool.h>      // for bool
 
+#include "fble-execute.h"   // for FbleExecutable typedef.
 #include "fble-profile.h"   // for FbleProfileThread
 #include "fble-value.h"     // for FbleValueHeap
 
@@ -140,5 +141,35 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
 // * io_activity is set to true if the thread does any i/o activity that could
 //   unblock another thread.
 typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
+
+// FbleExecutable --
+//   A reference counted, partially abstract data type describing how to
+//   execute a function.
+//
+// The 'on_free' function is called passing this as an argument just before
+// the FbleExecutable object is freed. Subclasses should use this to free any
+// custom state.
+#define FBLE_EXECUTABLE_MAGIC 0xB10CE
+struct FbleExecutable {
+  size_t refcount;        // reference count.
+  size_t magic;           // FBLE_EXECUTABLE_MAGIC.
+  size_t args;            // The number of arguments expected by the function.
+  size_t statics;         // The number of statics used by the function.
+  size_t locals;          // The number of locals used by the function.
+  FbleRunFunction* run;   // How to run the function.
+  void (*on_free)(struct FbleExecutable* this);
+};
+
+// FbleFreeExecutable --
+//   Decrement the refcount and, if necessary, free resources associated with
+//   the given executable.
+//
+// Inputs:
+//   executable - the executable to free. May be NULL.
+//
+// Side effects:
+//   Decrements the refcount and, if necessary, calls executable->on_free and
+//   free resources associated with the given executable.
+void FbleFreeExecutable(FbleExecutable* executable);
 
 #endif // FBLE_INTERNAL_EXECUTE_H_

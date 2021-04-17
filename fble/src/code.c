@@ -11,7 +11,7 @@
 #include "fble-vector.h"  // for FbleVectorInit, etc.
 
 #include "tc.h"
-#include "value.h"
+#include "execute.h"
 
 #define UNREACHABLE(x) assert(false && x)
 

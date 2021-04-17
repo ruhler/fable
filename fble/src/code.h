@@ -7,7 +7,7 @@
 
 #include "fble-compile.h"   // for FbleCode forward declaration.
 #include "fble-profile.h"   // for FbleBlockId.
-#include "value.h"          // for FbleExecutable.
+#include "execute.h"        // for FbleExecutable.
 
 // FbleFrameSection --
 //   Which section of a frame a value can be found in.

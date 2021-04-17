@@ -221,27 +221,6 @@ FbleValue* FbleUnionValueAccess(FbleValue* object)
   FbleUnionValue* value = (FbleUnionValue*)object;
   return value->arg;
 }
-// FbleFreeExecutable -- see documentation in value.h
-void FbleFreeExecutable(FbleExecutable* executable)
-{
-  if (executable == NULL) {
-    return;
-  }
-
-  // We've had trouble with double free in the past. Check to make sure the
-  // magic in the block hasn't been corrupted. Otherwise we've probably
-  // already freed this executable and decrementing the refcount could end up
-  // corrupting whatever is now making use of the memory that was previously
-  // used for the instruction block.
-  assert(executable->magic == FBLE_EXECUTABLE_MAGIC && "corrupt FbleExecutable");
-
-  assert(executable->refcount > 0);
-  executable->refcount--;
-  if (executable->refcount == 0) {
-    executable->on_free(executable);
-    FbleFree(executable);
-  }
-}
 
 // FbleNewFuncValue -- see documentation in value.h
 FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable)
