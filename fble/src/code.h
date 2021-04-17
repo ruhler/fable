@@ -72,8 +72,6 @@ typedef enum {
   FBLE_JUMP_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_CALL_INSTR,
-  FBLE_GET_INSTR,
-  FBLE_PUT_INSTR,
   FBLE_LINK_INSTR,
   FBLE_FORK_INSTR,
   FBLE_COPY_INSTR,
@@ -227,27 +225,6 @@ typedef struct {
   FbleFrameIndex func;
   FbleFrameIndexV args;
 } FbleCallInstr;
-
-// FbleGetInstr -- FBLE_GET_INSTR
-//   Get a value from a port.
-//
-//  *dest := get(port)
-typedef struct {
-  FbleInstr _base;
-  FbleFrameIndex port;
-  FbleLocalIndex dest;
-} FbleGetInstr;
-
-// FblePutInstr -- FBLE_PUT_INSTR
-//   Put a value to a port.
-//
-// *dest = put(port, arg);
-typedef struct {
-  FbleInstr _base;
-  FbleFrameIndex port;
-  FbleFrameIndex arg;
-  FbleLocalIndex dest;
-} FblePutInstr;
 
 // FbleLinkInstr -- FBLE_LINK_INSTR
 //   Allocate a new link with get and put ports.

@@ -107,8 +107,6 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
         break;
       }
 
-      case FBLE_GET_INSTR: break;
-      case FBLE_PUT_INSTR: break;
       case FBLE_LINK_INSTR: break;
       case FBLE_FORK_INSTR: break;
       case FBLE_COPY_INSTR: break;
@@ -465,9 +463,6 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
       return;
     }
-
-    case FBLE_GET_INSTR: assert(false && "TODO"); break;
-    case FBLE_PUT_INSTR: assert(false && "TODO"); break;
 
     case FBLE_LINK_INSTR: {
       FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;

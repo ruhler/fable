@@ -187,26 +187,6 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
           break;
         }
 
-        case FBLE_GET_INSTR: {
-          FbleGetInstr* get_instr = (FbleGetInstr*)instr;
-          fprintf(fout, "l%zi := get(%s%zi);\n",
-              get_instr->dest,
-              sections[get_instr->port.section],
-              get_instr->port.index);
-          break;
-        }
-
-        case FBLE_PUT_INSTR: {
-          FblePutInstr* put_instr = (FblePutInstr*)instr;
-          fprintf(fout, "l%zi := put(%s%zi, %s%zi);\n",
-              put_instr->dest,
-              sections[put_instr->port.section],
-              put_instr->port.index,
-              sections[put_instr->arg.section],
-              put_instr->arg.index);
-          break;
-        }
-
         case FBLE_LINK_INSTR: {
           FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
           fprintf(fout, "l%zi, l%zi = link;\n", link_instr->get, link_instr->put);
@@ -290,8 +270,6 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_UNION_VALUE_INSTR:
     case FBLE_JUMP_INSTR:
     case FBLE_COPY_INSTR:
-    case FBLE_GET_INSTR:
-    case FBLE_PUT_INSTR:
     case FBLE_LINK_INSTR:
     case FBLE_REF_VALUE_INSTR:
     case FBLE_RETURN_INSTR:

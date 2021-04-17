@@ -7,7 +7,6 @@
 #include "fble-alloc.h"   // for FbleAlloc, FbleFree, etc.
 #include "fble-vector.h"  // for FbleVectorInit, etc.
 
-#include "code.h"
 #include "heap.h"
 #include "value.h"
 

@@ -53,8 +53,6 @@ static FbleExecStatus UnionSelectInstr(FbleValueHeap* heap, FbleThreadV* threads
 static FbleExecStatus JumpInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus FuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
-static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus CopyInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus LinkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus ForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
@@ -74,8 +72,6 @@ static InstrImpl sInstrImpls[] = {
   &JumpInstr,             // FBLE_JUMP_INSTR
   &FuncValueInstr,        // FBLE_FUNC_VALUE_INSTR
   &CallInstr,             // FBLE_CALL_INSTR
-  &GetInstr,              // FBLE_GET_INSTR
-  &PutInstr,              // FBLE_PUT_INSTR
   &LinkInstr,             // FBLE_LINK_INSTR
   &ForkInstr,             // FBLE_FORK_INSTR
   &CopyInstr,             // FBLE_COPY_INSTR
@@ -317,109 +313,6 @@ static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 
   FbleThreadCall(heap, result, func, args, thread);
   return FBLE_EXEC_FINISHED;
-}
-
-// GetInstr -- see documentation of InstrImpl
-//   Execute a GET_INSTR.
-static FbleExecStatus GetInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FbleGetInstr* get_instr = (FbleGetInstr*)instr;
-  FbleValue* get_port = FrameGet(thread, get_instr->port);
-  if (get_port->tag == FBLE_LINK_VALUE) {
-    FbleLinkValue* link = (FbleLinkValue*)get_port;
-
-    if (link->head == NULL) {
-      // Blocked on get.
-      assert(instr->profile_ops == NULL && "profile op might run twice");
-      return FBLE_EXEC_BLOCKED;
-    }
-
-    FbleValues* head = link->head;
-    link->head = link->head->next;
-    if (link->head == NULL) {
-      link->tail = NULL;
-    }
-
-    FrameSetBorrowed(heap, thread, get_instr->dest, head->value);
-    FbleFree(head);
-    thread->stack->pc++;
-    return FBLE_EXEC_RUNNING;
-  }
-
-  if (get_port->tag == FBLE_PORT_VALUE) {
-    FblePortValue* port = (FblePortValue*)get_port;
-    if (*port->data == NULL) {
-      // Blocked on get.
-      assert(instr->profile_ops == NULL && "profile op might run twice");
-      return FBLE_EXEC_BLOCKED;
-    }
-
-    FrameSetConsumed(heap, thread, get_instr->dest, *port->data);
-    *port->data = NULL;
-    *io_activity = true;
-    thread->stack->pc++;
-    return FBLE_EXEC_RUNNING;
-  }
-
-  UNREACHABLE("get port must be an input or port value");
-  return FBLE_EXEC_ABORTED;
-}
-
-// PutInstr -- see documentation of InstrImpl
-//   Execute a PUT_INSTR.
-static FbleExecStatus PutInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
-{
-  FblePutInstr* put_instr = (FblePutInstr*)instr;
-  FbleValue* put_port = FrameGet(thread, put_instr->port);
-  FbleValue* arg = FrameGet(thread, put_instr->arg);
-
-  FbleValueV args = { .size = 0, .xs = NULL, };
-  FbleValue* unit = FbleNewStructValue(heap, args);
-
-  if (put_port->tag == FBLE_LINK_VALUE) {
-    FbleLinkValue* link = (FbleLinkValue*)put_port;
-
-    FbleValues* tail = FbleAlloc(FbleValues);
-    tail->value = arg;
-    tail->next = NULL;
-
-    if (link->head == NULL) {
-      link->head = tail;
-      link->tail = tail;
-    } else {
-      assert(link->tail != NULL);
-      link->tail->next = tail;
-      link->tail = tail;
-    }
-
-    FbleValueAddRef(heap, &link->_base, tail->value);
-    FrameSetConsumed(heap, thread, put_instr->dest, unit);
-    *io_activity = true;
-    thread->stack->pc++;
-
-    // We yield in this case instead of continuing to execute instructions
-    // from this function. This is an arbitrary thing to do, motivated by the
-    // fear (not seen in practice thus far) that a producer/consumer pipeline
-    // will blow up memory producing everything before the consumer gets a
-    // chance to consume anything. It's probably worth figuring out a better
-    // reason to yield here.
-    return FBLE_EXEC_YIELDED;
-  }
-
-  assert(put_port->tag == FBLE_PORT_VALUE);
-  FblePortValue* port = (FblePortValue*)put_port;
-  if (*port->data != NULL) {
-    // Blocked on put.
-    assert(instr->profile_ops == NULL && "profile op might run twice");
-    return FBLE_EXEC_BLOCKED;
-  }
-
-  FbleRetainValue(heap, arg);
-  *port->data = arg;
-  FrameSetConsumed(heap, thread, put_instr->dest, unit);
-  *io_activity = true;
-  thread->stack->pc++;
-  return FBLE_EXEC_RUNNING;
 }
 
 // ForkInstr -- see documentation of InstrImpl
