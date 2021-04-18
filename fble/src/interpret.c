@@ -204,15 +204,14 @@ static FbleExecStatus StructAccessInstr(FbleValueHeap* heap, FbleThreadV* thread
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-  FbleStructValue* sv = (FbleStructValue*)FrameGetStrict(thread, access_instr->obj);
+  FbleValue* sv = FrameGetStrict(thread, access_instr->obj);
   if (sv == NULL) {
     FbleReportError("undefined struct value access\n", access_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
 
-  assert(sv->_base.tag == FBLE_STRUCT_VALUE);
-  assert(access_instr->tag < sv->fieldc);
-  FrameSetBorrowed(heap, thread, access_instr->dest, sv->fields[access_instr->tag]);
+  FbleValue* v = FbleStructValueAccess(sv, access_instr->tag);
+  FrameSetBorrowed(heap, thread, access_instr->dest, v);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

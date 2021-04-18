@@ -1,7 +1,8 @@
 * Remove dependence of interpret.c and generated code on value.h.
   Making value functions public as necessary to support this.
   - Need public access to FbleFuncValue.statics.
-  - Need FbleStrictValue.
+  - Need FbleStrictValue. Or should this be done inside the value functions?
+  - Use FbleStructValueAccess for generated code.
   - Use FbleNewStructValue for interpret.c somehow.
   and so on...
 

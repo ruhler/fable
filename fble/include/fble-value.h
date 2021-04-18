@@ -130,12 +130,14 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...);
 //   field - the field to access.
 //
 // Results:
-//   The value of the given field of the struct value object.
+//   The value of the given field of the struct value object. The returned
+//   value will stay alive as long as the given struct value. The caller is
+//   responsible for calling FbleRetainValue on the returned value to keep it
+//   alive longer if necessary.
 //
 // Side effects:
 //   Behavior is undefined if the object is not a struct value or the field
 //   is invalid.
-//   
 FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 
 // FbleNewUnionValue --
