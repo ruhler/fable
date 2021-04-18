@@ -66,13 +66,11 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 
   assert(n % 2 == 0 && "Invalid n supplied");
   int halfn = n / 2;
-  FbleValue* xs[2];
-  xs[1] = MkBitN(heap, halfn, data);
-  xs[0] = MkBitN(heap, halfn, (data >> halfn));
-  FbleValueV args = { .size = 2, .xs = xs };
-  FbleValue* result = FbleNewStructValue(heap, args);
-  FbleReleaseValue(heap, xs[0]);
-  FbleReleaseValue(heap, xs[1]);
+  FbleValue* hi = MkBitN(heap, halfn, (data >> halfn));
+  FbleValue* lo = MkBitN(heap, halfn, data);
+  FbleValue* result = FbleNewStructValue(heap, 2, hi, lo);
+  FbleReleaseValue(heap, hi);
+  FbleReleaseValue(heap, lo);
   return result;
 }
 

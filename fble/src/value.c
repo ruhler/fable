@@ -2,6 +2,7 @@
 //   This file implements routines associated with fble values.
 
 #include <assert.h>   // for assert
+#include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdlib.h>   // for NULL
 
 #include "fble-alloc.h"   // for FbleAlloc, FbleFree, etc.
@@ -164,16 +165,22 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 }
 
 // FbleNewStructValue -- see documentation in fble-value.h
-FbleValue* FbleNewStructValue(FbleValueHeap* heap, FbleValueV args)
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...)
 {
-  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * args.size);
+  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
   value->_base.tag = FBLE_STRUCT_VALUE;
-  value->fieldc = args.size;
+  value->fieldc = argc;
 
-  for (size_t i = 0; i < args.size; ++i) {
-    value->fields[i] = args.xs[i];
-    FbleValueAddRef(heap, &value->_base, args.xs[i]);
+  va_list ap;
+  va_start(ap, argc);
+  for (size_t i = 0; i < argc; ++i) {
+    FbleValue* arg = va_arg(ap, FbleValue*);
+    value->fields[i] = arg;
+    if (arg != NULL) {
+      FbleValueAddRef(heap, &value->_base, arg);
+    }
   }
+  va_end(ap);
   return &value->_base;
 }
 
@@ -200,8 +207,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 // FbleNewEnumValue -- see documentation in fble-value.h
 FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 {
-  FbleValueV args = { .size = 0, .xs = NULL, };
-  FbleValue* unit = FbleNewStructValue(heap, args);
+  FbleValue* unit = FbleNewStructValue(heap, 0);
   FbleValue* result = FbleNewUnionValue(heap, tag, unit);
   FbleReleaseValue(heap, unit);
   return result;
@@ -291,9 +297,7 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
 {
   FbleValue* put_port = thread->stack->func->statics[0];
   FbleValue* arg = thread->stack->func->statics[1];
-
-  FbleValueV args = { .size = 0, .xs = NULL, };
-  FbleValue* unit = FbleNewStructValue(heap, args);
+  FbleValue* unit = FbleNewStructValue(heap, 0);
 
   if (put_port->tag == FBLE_LINK_VALUE) {
     FbleLinkValue* link = (FbleLinkValue*)put_port;

@@ -2,8 +2,7 @@
   Making value functions public as necessary to support this.
   - Need public access to FbleFuncValue.statics.
   - Need FbleStrictValue.
-  - Make FbleNewStructValue more easily reusable by not having to supply args
-    up front.
+  - Use FbleNewStructValue.
   and so on...
 
 * Change FbleLink to use FbleExecutable directly instead of FbleCode?

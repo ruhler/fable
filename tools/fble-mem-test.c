@@ -77,11 +77,7 @@ size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t us
   for (size_t i = 0; i < num_bits; ++i) {
     FbleValue* bit = (use_n % 2 == 0) ? zero : one;
     use_n /= 2;
-    FbleRetainValue(heap, bit);
-    FbleValue* xs[2] = { bit, tail };
-    FbleValueV args = { .size = 2, .xs = xs };
-    FbleValue* cons = FbleNewStructValue(heap, args);
-    FbleReleaseValue(heap, bit);
+    FbleValue* cons = FbleNewStructValue(heap, 2, bit, tail);
     FbleReleaseValue(heap, tail);
     tail = FbleNewUnionValue(heap, 0, cons);
     FbleReleaseValue(heap, cons);

@@ -148,9 +148,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       FbleValue* charS = FbleNewEnumValue(heap, 1);
       for (size_t i = 0; i < read; ++i) {
         FbleValue* charV = WriteChar(heap, line[read - i - 1]);
-        FbleValue* xs[] = { charV, charS };
-        FbleValueV args = { .size = 2, .xs = xs };
-        FbleValue* charP = FbleNewStructValue(heap, args);
+        FbleValue* charP = FbleNewStructValue(heap, 2, charV, charS);
         FbleReleaseValue(heap, charV);
         FbleReleaseValue(heap, charS);
         charS = FbleNewUnionValue(heap, 0, charP);
