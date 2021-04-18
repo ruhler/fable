@@ -113,8 +113,14 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 // Inputs:
 //   heap - the value heap.
 //   thread - the thread to do the return on.
-//   result - the result to return. Borrowed.
+//   result - the result to return. Consumed.
 //
+// Side effects:
+// * Sets the return result for the current stack frame and pops the frame off
+//   the stack. 
+// * Takes over ownership of result. FbleThreadReturn will call
+//   FbleReleaseValue on the result on behalf of the caller when the result is
+//   no longer needed.
 void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result);
 
 // FbleRunFunction --

@@ -246,7 +246,6 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 // FbleThreadReturn -- see documentation in execute.h
 void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result)
 {
-  FbleRetainValue(heap, result);
   *(thread->stack->result) = result;
   PopStackFrame(heap, thread);
 }

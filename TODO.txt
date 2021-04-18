@@ -1,15 +1,4 @@
-* Remove dependence of interpret.c and generated code on value.h.
-  Making value functions public as necessary to support this.
-  - Need public access to FbleFuncValue.statics.
-  - Need FbleStrictValue. Or should this be done inside the value functions?
-  - Use FbleStructValueAccess for generated code.
-  - Use FbleNewStructValue for interpret.c somehow.
-  and so on...
-
-* Change FbleLink to use FbleExecutable directly instead of FbleCode?
-
-* Change ReleaseInstr to always return from a local.
- - Change FbleThreadReturn to consume ownership of the returned value.
+* Avoid redundant Retain in ReleaseInstr for local values.
 
 * Add 'abort' function to FbleExecutable for cleaning up the stack.
  - And use it to unwind frame by frame instead of whatever we do now.
@@ -19,6 +8,16 @@
   something is NULL or not.
 * Remove setting of NULL on release to test that we don't rely on it. 
   And maybe get a tiny speed boost?
+
+* Remove dependence of interpret.c and generated code on value.h.
+  Making value functions public as necessary to support this.
+  - Need public access to FbleFuncValue.statics.
+  - Need FbleStrictValue. Or should this be done inside the value functions?
+  - Use FbleStructValueAccess for generated code.
+  - Use FbleNewStructValue for interpret.c somehow.
+  and so on...
+
+* Change FbleLink to use FbleExecutable directly instead of FbleCode?
 
 * [compilation] Switch over entirely to compilation use case?
  - We'll want to add profiling support to the compilation use case.

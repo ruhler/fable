@@ -270,7 +270,6 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
     }
 
     FbleThreadReturn(heap, thread, head->value);
-    FbleReleaseValue(heap, head->value);
     FbleFree(head);
     return FBLE_EXEC_FINISHED;
   }
@@ -283,7 +282,6 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   }
 
   FbleThreadReturn(heap, thread, *port->data);
-  FbleReleaseValue(heap, *port->data);
   *port->data = NULL;
   *io_activity = true;
   return FBLE_EXEC_FINISHED;
@@ -317,7 +315,6 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
 
     FbleValueAddRef(heap, &link->_base, tail->value);
     FbleThreadReturn(heap, thread, unit);
-    FbleReleaseValue(heap, unit);
     *io_activity = true;
     return FBLE_EXEC_FINISHED;
   }
@@ -332,7 +329,6 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   FbleRetainValue(heap, arg);
   *port->data = arg;
   FbleThreadReturn(heap, thread, unit);
-  FbleReleaseValue(heap, unit);
   *io_activity = true;
   return FBLE_EXEC_FINISHED;
 }
@@ -363,7 +359,6 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
   FbleValueAddRef(heap, &put->_base, arg);
 
   FbleThreadReturn(heap, thread, &put->_base);
-  FbleReleaseValue(heap, &put->_base);
   return FBLE_EXEC_FINISHED;
 }
 

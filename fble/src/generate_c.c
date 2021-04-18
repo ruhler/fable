@@ -555,6 +555,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "        ref_result = (FbleRefValue*)result;\n");
       fprintf(fout, "      }\n");
 
+      fprintf(fout, "      FbleRetainValue(heap, result);\n");
       fprintf(fout, "      FbleThreadReturn(heap, thread, result);\n");
       fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
       return;

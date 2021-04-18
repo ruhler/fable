@@ -432,6 +432,7 @@ static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, Fbl
     ref_result = (FbleRefValue*)result;
   }
 
+  FbleRetainValue(heap, result);
   FbleThreadReturn(heap, thread, result);
   return FBLE_EXEC_FINISHED;
 }
