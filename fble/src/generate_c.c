@@ -362,7 +362,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "      FbleStructValue* sv = (FbleStructValue*)"); FrameGetStrict(fout, access_instr->obj); fprintf(fout, ";\n");
+      fprintf(fout, "      FbleValue* sv = "); FrameGetStrict(fout, access_instr->obj); fprintf(fout, ";\n");
       fprintf(fout, "      if (sv == NULL) {\n");
       ReturnAbort(fout, "        ", "UndefinedStructValue", access_instr->loc);
       fprintf(fout, "      };\n");
@@ -782,11 +782,9 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
-  fprintf(fout, "static void StructAccess(FbleValueHeap* heap, FbleThread* thread, FbleStructValue* sv, size_t tag, size_t dest)\n");
+  fprintf(fout, "static void StructAccess(FbleValueHeap* heap, FbleThread* thread, FbleValue* sv, size_t tag, size_t dest)\n");
   fprintf(fout, "{\n");
-  fprintf(fout, "  assert(sv->_base.tag == FBLE_STRUCT_VALUE);\n");
-  fprintf(fout, "  assert(tag < sv->fieldc);\n");
-  fprintf(fout, "  FbleValue* value = sv->fields[tag];\n");
+  fprintf(fout, "  FbleValue* value = FbleStructValueAccess(sv, tag);\n");
   fprintf(fout, "  FbleRetainValue(heap, value);\n");
   fprintf(fout, "  FbleReleaseValue(heap, thread->stack->locals[dest]);\n");
   fprintf(fout, "  thread->stack->locals[dest] = value;\n");
