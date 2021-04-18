@@ -1,3 +1,12 @@
+* Could I emit #line pragmas to get gcov and gprof at .fble file level?
+
+* Looks like profiling is broken. Fix it? Add a test?
+ - I suspect auto exit calling into nothing.
+   /GameOfLife/App%.game_out tail calls a put value, which we expect to have
+   this broken behavior.
+ - And we're also missing better labeling for exec bindings.
+ - Maybe worth thinking about in the context of profiling for compilation?
+
 * Add 'abort' function to FbleExecutable for cleaning up the stack.
  - And use it to unwind frame by frame instead of whatever we do now.
 * Add explicit Release instructions to free values during normal flow

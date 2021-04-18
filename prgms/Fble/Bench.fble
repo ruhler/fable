@@ -26,8 +26,8 @@ Stdio@ Bench = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
   Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Md5...']);
   Unit@ _md5 := /Md5/Tests%.Bench;
 
-  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Fblf Md5 SKIPPED']);
-  #Unit@ _fblf_md5 := /Fblf/Lib/Md5/Tests%.Bench;
+  Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Fblf Md5...']);
+  Unit@ _fblf_md5 := /Fblf/Lib/Md5/Tests%.Bench;
   
   Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Sat...']);
   Unit@ _sat := /Sat/Bench%.Bench;

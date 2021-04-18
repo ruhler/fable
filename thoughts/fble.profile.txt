@@ -1,0 +1,67 @@
+Revisiting Fble Profiling
+=========================
+For two reasons:
+1. We've hit the bug where we say AUTO_EXIT, but fail to do an ENTER right
+after that, which messes up the stack and is producing bad profile data.
+
+In this case because we do a tail call of a PUT value, and the PUT function
+doesn't do a profile ENTER.
+
+More generally, I've known that AUTO_EXIT is dangerous for a while and that we
+should switch to REPLACE. Maybe now's the time to figure that out.
+
+2. We ought to support profiling with compiled code. So that we can get rid of
+the interpreter entirely if we want, and because we just ought to.
+
+Let's start with (1).
+
+To be clear about the bug, we have the following call structure:
+
+R calls A
+  A calls B
+    B tail calls C
+  A calls D
+
+So the profile should say:
+  R called A
+  A called B, D
+  B called C
+
+Normally this is done as:
+
+(init)              R
+ENTER_A             R->A
+ENTER B             R->A->B
+AUTO_EXIT (B)       R->A->B
+ENTER C             R->A->B->C
+EXIT (C)            R->A
+ENTER D             R->A->D
+EXIT (D)            R->A
+EXIT (A)            R
+
+But in this case we don't have the ENTER C or EXIT (C). So instead we get:
+
+(init)              R
+ENTER_A             R->A
+ENTER B             R->A->B
+AUTO_EXIT (B)       R->A->B
+ENTER D             R->A->B->D
+EXIT (D)            R->A
+EXIT (A)            R
+
+And now it looks like B called D, when it did not.
+
+The proposed fix is to replace AUTO_EXIT with REPLACE:
+
+(init)              R
+ENTER_A             R->A
+ENTER B             R->A->B
+REPLACE C           R->A(->B)->C
+EXIT (C)            R->A
+ENTER D             R->A->D
+EXIT (D)            R->A
+EXIT (A)            R
+
+But that requires more coordination between B and C than we currently have
+infrastructure for in the fble ISA. IN particular, B has to say if it's a tail
+call or not, and C has to say what block is being called into.
