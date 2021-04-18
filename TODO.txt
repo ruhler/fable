@@ -6,6 +6,7 @@
    this broken behavior.
  - And we're also missing better labeling for exec bindings.
  - Maybe worth thinking about in the context of profiling for compilation?
+ See thoughts/fble.profile.txt.
 
 * Add 'abort' function to FbleExecutable for cleaning up the stack.
  - And use it to unwind frame by frame instead of whatever we do now.
