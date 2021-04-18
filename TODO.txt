@@ -1,5 +1,10 @@
-* Remove dependence of generated code on value.h.
+* Remove dependence of interpret.c and generated code on value.h.
   Making value functions public as necessary to support this.
+  - Need public access to FbleFuncValue.statics.
+  - Need FbleStrictValue.
+  - Make FbleNewStructValue more easily reusable by not having to supply args
+    up front.
+  and so on...
 
 * Change FbleLink to use FbleExecutable directly instead of FbleCode?
 

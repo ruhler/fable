@@ -190,14 +190,10 @@ static FbleExecStatus StructValueInstr(FbleValueHeap* heap, FbleThreadV* threads
 static FbleExecStatus UnionValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-
-  FbleUnionValue* value = FbleNewValue(heap, FbleUnionValue);
-  value->_base.tag = FBLE_UNION_VALUE;
-  value->tag = union_value_instr->tag;
-  value->arg = FrameGet(thread, union_value_instr->arg);
-  FbleValueAddRef(heap, &value->_base, value->arg);
-
-  FrameSetConsumed(heap, thread, union_value_instr->dest, &value->_base);
+  size_t tag = union_value_instr->tag;
+  FbleValue* arg = FrameGet(thread, union_value_instr->arg);
+  FbleValue* value = FbleNewUnionValue(heap, tag, arg);
+  FrameSetConsumed(heap, thread, union_value_instr->dest, value);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

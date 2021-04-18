@@ -781,24 +781,16 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   fprintf(fout, "static void UnionValueInstrStatics(FbleValueHeap* heap, FbleThread* thread, size_t tag, size_t arg, size_t dest)\n");
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleUnionValue* v = FbleNewValue(heap, FbleUnionValue);\n");
-  fprintf(fout, "  v->_base.tag = FBLE_UNION_VALUE;\n");
-  fprintf(fout, "  v->tag = tag;\n");
-  fprintf(fout, "  v->arg = thread->stack->func->statics[arg];\n");
-  fprintf(fout, "  FbleValueAddRef(heap, &v->_base, v->arg);\n");
+  fprintf(fout, "  FbleValue* v = FbleNewUnionValue(heap, tag, thread->stack->func->statics[arg]);\n");
   fprintf(fout, "  FbleReleaseValue(heap, thread->stack->locals[dest]);\n");
-  fprintf(fout, "  thread->stack->locals[dest] = &v->_base;\n");
+  fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
   fprintf(fout, "static void UnionValueInstrLocals(FbleValueHeap* heap, FbleThread* thread, size_t tag, size_t arg, size_t dest)\n");
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleUnionValue* v = FbleNewValue(heap, FbleUnionValue);\n");
-  fprintf(fout, "  v->_base.tag = FBLE_UNION_VALUE;\n");
-  fprintf(fout, "  v->tag = tag;\n");
-  fprintf(fout, "  v->arg = thread->stack->locals[arg];\n");
-  fprintf(fout, "  FbleValueAddRef(heap, &v->_base, v->arg);\n");
+  fprintf(fout, "  FbleValue* v = FbleNewUnionValue(heap, tag, thread->stack->locals[arg]);\n");
   fprintf(fout, "  FbleReleaseValue(heap, thread->stack->locals[dest]);\n");
-  fprintf(fout, "  thread->stack->locals[dest] = &v->_base;\n");
+  fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
   fprintf(fout, "static void StructAccess(FbleValueHeap* heap, FbleThread* thread, FbleStructValue* sv, size_t tag, size_t dest)\n");
