@@ -157,7 +157,7 @@ struct FbleExecutable {
   size_t statics;         // The number of statics used by the function.
   size_t locals;          // The number of locals used by the function.
   FbleRunFunction* run;   // How to run the function.
-  void (*on_free)(struct FbleExecutable* this);
+  void (*on_free)(FbleExecutable* this);
 };
 
 // FbleFreeExecutable --
@@ -171,5 +171,11 @@ struct FbleExecutable {
 //   Decrements the refcount and, if necessary, calls executable->on_free and
 //   free resources associated with the given executable.
 void FbleFreeExecutable(FbleExecutable* executable);
+
+// FbleExecutableNothingOnFree --
+//   Implementation of a no-op FbleExecutable.on_free function.
+//
+// See documentation of FbleExecutable.on_free above.
+void FbleExecutableNothingOnFree(FbleExecutable* this);
 
 #endif // FBLE_INTERNAL_EXECUTE_H_

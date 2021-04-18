@@ -3,9 +3,11 @@
  - Remove dependence of generated code on value.h.
    Making value functions public as necessary to support this.
 
+* Change ReleaseInstr to always return from a local.
+ - Change FbleThreadReturn to consume ownership of the returned value.
+
 * Add 'abort' function to FbleExecutable for cleaning up the stack.
  - And use it to unwind frame by frame instead of whatever we do now.
-* Change ReleaseInstr to always return from a local.
 * Add explicit Release instructions to free values during normal flow
  - Set to NULL on release so we can properly cleanup based on NULLs in abort.
 * Track info necessary to know what to release on abort without checking if

@@ -301,6 +301,10 @@ void FbleFreeExecutable(FbleExecutable* executable)
   }
 }
 
+// FbleExecutableNothingOnFree -- see documentation in execute.h
+void FbleExecutableNothingOnFree(FbleExecutable* this)
+{}
+
 // FbleFreeExecutableProgram -- see documentation in fble-execute.h
 void FbleFreeExecutableProgram(FbleExecutableProgram* program)
 {

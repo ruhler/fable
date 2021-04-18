@@ -19,7 +19,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value);
 static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
-static void ExecutableOnFree(FbleExecutable* executable);
 
 
 // FbleNewValueHeap -- see documentation in fble-.h
@@ -347,7 +346,7 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
   exec->statics = 2;
   exec->locals = 0;
   exec->run = &PutRunFunction;
-  exec->on_free = &ExecutableOnFree;
+  exec->on_free = &FbleExecutableNothingOnFree;
 
   FbleFuncValue* put = FbleNewFuncValue(heap, exec);
   FbleFreeExecutable(exec);
@@ -364,13 +363,6 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
   return FBLE_EXEC_FINISHED;
 }
 
-// ExecutableOnFree --
-//   FbleExecutable.on_free function that does nothing.
-//
-// See documentation of FbleExecutable.on_free in execute.h
-static void ExecutableOnFree(FbleExecutable* executable)
-{}
-
 // FbleNewGetValue -- see documentation in value.h
 FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 {
@@ -383,7 +375,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
   exec->statics = 1;
   exec->locals = 0;
   exec->run = &GetRunFunction;
-  exec->on_free = &ExecutableOnFree;
+  exec->on_free = &FbleExecutableNothingOnFree;
 
   FbleProcValue* get = FbleNewFuncValue(heap, exec);
   get->statics[0] = port;
@@ -415,7 +407,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   exec->statics = 1;
   exec->locals = 1;
   exec->run = &PartialPutRunFunction;
-  exec->on_free = &ExecutableOnFree;
+  exec->on_free = &FbleExecutableNothingOnFree;
 
   FbleFuncValue* put = FbleNewFuncValue(heap, exec);
   put->statics[0] = link;

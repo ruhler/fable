@@ -424,7 +424,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      executable->statics = %i;\n", func_instr->code->_base.statics);
       fprintf(fout, "      executable->locals = %i;\n", func_instr->code->_base.locals);
       fprintf(fout, "      executable->run = &_block_%p;\n", (void*)func_instr->code);
-      fprintf(fout, "      executable->on_free = &OnFree;\n");
+      fprintf(fout, "      executable->on_free = &FbleExecutableNothingOnFree;\n");
       fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, executable);\n");
       fprintf(fout, "      FbleFreeExecutable(executable);\n");
       for (size_t i = 0; i < staticc; ++i) {
@@ -737,11 +737,6 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "\n");
   FbleFree(locs.xs);
 
-  // Definition of OnFree function for FbleExecutable.
-  fprintf(fout, "static void OnFree(FbleExecutable* executable)\n");
-  fprintf(fout, "{\n");
-  fprintf(fout, "}\n\n");
-
   // Helper functions to reduce generated code size so it is easier for the
   // compiler to deal with.
   fprintf(fout, "static const char* UndefinedStructValue = \"undefined struct value access\\n\";\n");
@@ -896,7 +891,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  v%x->executable->statics = %i;\n", module_id, module->code->_base.statics);
   fprintf(fout, "  v%x->executable->locals = %i;\n", module_id, module->code->_base.locals);
   fprintf(fout, "  v%x->executable->run = &_block_%p;\n", module_id, (void*)module->code);
-  fprintf(fout, "  v%x->executable->on_free = &OnFree;\n", module_id);
+  fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
 
   fprintf(fout, "}\n");
 
