@@ -359,6 +359,7 @@ void FbleRetainHeapObject(FbleHeap* heap, void* obj_)
 void FbleReleaseHeapObject(FbleHeap* heap, void* obj_)
 {
   Obj* obj = ToObj(obj_);
+  assert(obj->refcount > 0);
   if (--obj->refcount == 0) {
     // This is no longer a root.
     if (obj->space == heap->to_space) {

@@ -254,6 +254,12 @@ bool FbleIsProcValue(FbleValue* value)
 // See documentation of FbleExecutable.run in execute.h.
 static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
+  assert(thread->stack->pc == 0);
+  assert(thread->stack->func->executable->args == 0);
+  assert(thread->stack->func->executable->statics == 1);
+  assert(thread->stack->func->executable->locals == 0);
+  assert(thread->stack->func->executable->run == &GetRunFunction);
+
   FbleValue* get_port = thread->stack->func->statics[0];
   if (get_port->tag == FBLE_LINK_VALUE) {
     FbleLinkValue* link = (FbleLinkValue*)get_port;
@@ -269,6 +275,7 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
       link->tail = NULL;
     }
 
+    FbleRetainValue(heap, head->value);
     FbleThreadReturn(heap, thread, head->value);
     FbleFree(head);
     return FBLE_EXEC_FINISHED;
@@ -293,10 +300,14 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
 // See documentation of FbleExecutable.run in execute.h.
 static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
+  assert(thread->stack->pc == 0);
+  assert(thread->stack->func->executable->args == 0);
+  assert(thread->stack->func->executable->statics == 2);
+  assert(thread->stack->func->executable->locals == 0);
+  assert(thread->stack->func->executable->run == &PutRunFunction);
+
   FbleValue* put_port = thread->stack->func->statics[0];
   FbleValue* arg = thread->stack->func->statics[1];
-  FbleValue* unit = FbleNewStructValue(heap, 0);
-
   if (put_port->tag == FBLE_LINK_VALUE) {
     FbleLinkValue* link = (FbleLinkValue*)put_port;
 
@@ -314,7 +325,7 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
     }
 
     FbleValueAddRef(heap, &link->_base, tail->value);
-    FbleThreadReturn(heap, thread, unit);
+    FbleThreadReturn(heap, thread, FbleNewStructValue(heap, 0));
     *io_activity = true;
     return FBLE_EXEC_FINISHED;
   }
@@ -328,7 +339,7 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
 
   FbleRetainValue(heap, arg);
   *port->data = arg;
-  FbleThreadReturn(heap, thread, unit);
+  FbleThreadReturn(heap, thread, FbleNewStructValue(heap, 0));
   *io_activity = true;
   return FBLE_EXEC_FINISHED;
 }
@@ -339,6 +350,12 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
 // See documentation of FbleExecutable.run in execute.h.
 static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
+  assert(thread->stack->pc == 0);
+  assert(thread->stack->func->executable->args == 1);
+  assert(thread->stack->func->executable->statics == 1);
+  assert(thread->stack->func->executable->locals == 1);
+  assert(thread->stack->func->executable->run == &PartialPutRunFunction);
+
   FbleExecutable* exec = FbleAlloc(FbleExecutable);
   exec->refcount = 1;
   exec->magic = FBLE_EXECUTABLE_MAGIC;
