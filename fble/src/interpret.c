@@ -422,17 +422,21 @@ static FbleExecStatus RefDefInstr(FbleValueHeap* heap, FbleThreadV* threads, Fbl
 static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-  FbleValue* result = FrameGet(thread, return_instr->result);
+  FbleValue* result = NULL;
+  switch (return_instr->result.section) {
+    case FBLE_STATICS_FRAME_SECTION: {
+      result = thread->stack->func->statics[return_instr->result.index];
+      FbleRetainValue(heap, result);
+      break;
+    }
 
-  // Unwrap any layers of refs on the result to avoid long chains of refs.
-  // TODO: Is this redundant with the ref unwrapping we do in RefDefInstr?
-  FbleRefValue* ref_result = (FbleRefValue*)result;
-  while (result->tag == FBLE_REF_VALUE && ref_result->value != NULL) {
-    result = ref_result->value;
-    ref_result = (FbleRefValue*)result;
+    case FBLE_LOCALS_FRAME_SECTION: {
+      result = thread->stack->locals[return_instr->result.index];
+      thread->stack->locals[return_instr->result.index] = NULL;
+      break;
+    }
   }
 
-  FbleRetainValue(heap, result);
   FbleThreadReturn(heap, thread, result);
   return FBLE_EXEC_FINISHED;
 }

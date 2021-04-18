@@ -1,9 +1,8 @@
-* Avoid redundant Retain in ReleaseInstr for local values.
-
 * Add 'abort' function to FbleExecutable for cleaning up the stack.
  - And use it to unwind frame by frame instead of whatever we do now.
 * Add explicit Release instructions to free values during normal flow
- - Set to NULL on release so we can properly cleanup based on NULLs in abort.
+ - Set to NULL on release so we can properly cleanup based on NULLs in abort
+   for the time being.
 * Track info necessary to know what to release on abort without checking if
   something is NULL or not.
 * Remove setting of NULL on release to test that we don't rely on it. 
@@ -18,10 +17,13 @@
   and so on...
 
 * Change FbleLink to use FbleExecutable directly instead of FbleCode?
+ - Does this mean making a copy of the FbleExecutableProgram? That's tedious.
 
 * [compilation] Switch over entirely to compilation use case?
  - We'll want to add profiling support to the compilation use case.
  - Remove interpreter entirely? Any significant downside?
+ - We could always write a wrapper script that calls tcc, for example, to give
+   the same user experience as the interpreter currently gives us.
 
 * [compilation] Cleanup API between execute/value/interpret/generated code.
  - Can I cleanup/break the dependency cycle between execute.h and value.h?
@@ -29,7 +31,7 @@
 * [compilation] Make public headers available for compiled code to use so we don't have to
   give direct access to internal header files.
 * [compilation] Figure out what to do about profiling for the compilation code path.
-* [compilation] Add support for .fble.@ files and module compilation.
+* [compilation] Add support for .fble.@ files and modular compilation.
 
 * [cleanup] Avoid duplicating code between fble-stdio and fble-compiled-stdio.
 * [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?
@@ -164,10 +166,10 @@
   family.
 
 * [profile] Cleanup
- - either way, document that clearly.
  - Switch to convention that caller is responsible for enter block?
  - Replace AutoExitBlock with ReplaceBlock?
 * [profile] Check if it's okay to add new blocks to a profile in progress.
+ - either way, document that clearly.
 
 * [debugger] Implement an fble debugger?
   see thoughts/fble.debugger.txt

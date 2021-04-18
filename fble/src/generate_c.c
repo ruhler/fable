@@ -548,16 +548,23 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      fprintf(fout, "      FbleValue* result = "); FrameGet(fout, return_instr->result); fprintf(fout, ";\n");
-      fprintf(fout, "      FbleRefValue* ref_result = (FbleRefValue*)result;\n");
-      fprintf(fout, "      while (result->tag == FBLE_REF_VALUE && ref_result->value != NULL) {;\n");
-      fprintf(fout, "        result = ref_result->value;\n");
-      fprintf(fout, "        ref_result = (FbleRefValue*)result;\n");
-      fprintf(fout, "      }\n");
+      switch (return_instr->result.section) {
+        case FBLE_STATICS_FRAME_SECTION: {
+          fprintf(fout, "      FbleValue* result = thread->stack->func->statics[%i];\n", return_instr->result.index);
+          fprintf(fout, "      FbleRetainValue(heap, result);\n");
+          fprintf(fout, "      FbleThreadReturn(heap, thread, result);\n");
+          fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
+          break;
+        }
 
-      fprintf(fout, "      FbleRetainValue(heap, result);\n");
-      fprintf(fout, "      FbleThreadReturn(heap, thread, result);\n");
-      fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
+        case FBLE_LOCALS_FRAME_SECTION: {
+          fprintf(fout, "      FbleValue* result = thread->stack->locals[%i];\n", return_instr->result.index);
+          fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", return_instr->result.index);
+          fprintf(fout, "      FbleThreadReturn(heap, thread, result);\n");
+          fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
+          break;
+        }
+      }
       return;
     }
 
