@@ -2,7 +2,7 @@
   Making value functions public as necessary to support this.
   - Need public access to FbleFuncValue.statics.
   - Need FbleStrictValue.
-  - Use FbleNewStructValue.
+  - Use FbleNewStructValue for interpret.c somehow.
   and so on...
 
 * Change FbleLink to use FbleExecutable directly instead of FbleCode?

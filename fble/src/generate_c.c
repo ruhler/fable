@@ -343,15 +343,12 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
         return;
       }
 
-      fprintf(fout, "      FbleStructValue* v = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * %i);\n", argc);
-      fprintf(fout, "      v->_base.tag = FBLE_STRUCT_VALUE;\n");
-      fprintf(fout, "      v->fieldc = %i;\n", argc);
+      fprintf(fout, "      FbleValue* v = FbleNewStructValue(heap, %i", argc);
       for (size_t i = 0; i < argc; ++i) {
-        fprintf(fout, "      v->fields[%i] = ", i); FrameGet(fout, struct_instr->args.xs[i]); fprintf(fout, ";\n");
-        fprintf(fout, "      FbleValueAddRef(heap, &v->_base, v->fields[%i]);\n", i);
+        fprintf(fout, ", "); FrameGet(fout, struct_instr->args.xs[i]);
       }
-
-      FrameSetConsumed(fout, "      ", struct_instr->dest, "&v->_base");
+      fprintf(fout, ");\n");
+      FrameSetConsumed(fout, "      ", struct_instr->dest, "v");
       return;
     }
 
@@ -759,24 +756,16 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   fprintf(fout, "static void Struct0ValueInstr(FbleValueHeap* heap, FbleThread* thread, size_t dest)\n");
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleStructValue* v = FbleNewValue(heap, FbleStructValue);\n");
-  fprintf(fout, "  v->_base.tag = FBLE_STRUCT_VALUE;\n");
-  fprintf(fout, "  v->fieldc = 0;\n");
+  fprintf(fout, "  FbleValue* v = FbleNewStructValue(heap, 0);\n");
   fprintf(fout, "  FbleReleaseValue(heap, thread->stack->locals[dest]);\n");
-  fprintf(fout, "  thread->stack->locals[dest] = &v->_base;\n");
+  fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
   fprintf(fout, "static void Struct2LLValueInstr(FbleValueHeap* heap, FbleThread* thread, size_t arg0, size_t arg1, size_t dest)\n");
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleStructValue* v = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * 2);\n");
-  fprintf(fout, "  v->_base.tag = FBLE_STRUCT_VALUE;\n");
-  fprintf(fout, "  v->fieldc = 2;\n");
-  fprintf(fout, "  v->fields[0] = thread->stack->locals[arg0];\n");
-  fprintf(fout, "  FbleValueAddRef(heap, &v->_base, v->fields[0]);\n");
-  fprintf(fout, "  v->fields[1] = thread->stack->locals[arg1];\n");
-  fprintf(fout, "  FbleValueAddRef(heap, &v->_base, v->fields[1]);\n");
+  fprintf(fout, "  FbleValue* v = FbleNewStructValue(heap, 2, thread->stack->locals[arg0], thread->stack->locals[arg1]);\n");
   fprintf(fout, "  FbleReleaseValue(heap, thread->stack->locals[dest]);\n");
-  fprintf(fout, "  thread->stack->locals[dest] = &v->_base;\n");
+  fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
   fprintf(fout, "static void UnionValueInstrStatics(FbleValueHeap* heap, FbleThread* thread, size_t tag, size_t arg, size_t dest)\n");
