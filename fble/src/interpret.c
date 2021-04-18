@@ -1,10 +1,11 @@
 
-#include "fble-interpret.h"
+#include "interpret.h"
 
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for rand
 
 #include "fble-alloc.h"   // for FbleAlloc, FbleFree
+#include "fble-interpret.h"
 #include "fble-vector.h"  // for FbleVectorInit, etc.
 
 #include "code.h"
@@ -452,11 +453,7 @@ static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   return FBLE_EXEC_RUNNING;
 }
 
-// FbleInterprerRunFunction --
-//   An standard run function that runs an fble function by interpreting the
-//   instructions in its instruction block.
-//
-// See documentation of FbleRunFunction in execute.h.
+// See documentation in interpret.h
 FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
   FbleProfileThread* profile = thread->profile;

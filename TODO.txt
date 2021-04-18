@@ -1,7 +1,7 @@
-* See if I can't do a round of cleanup for what belongs in which header files.
- - Introduce interpret.h for FbleInterpreterRunFunction.
- - Remove dependence of generated code on value.h.
-   Making value functions public as necessary to support this.
+* Remove dependence of generated code on value.h.
+  Making value functions public as necessary to support this.
+
+* Change FbleLink to use FbleExecutable directly instead of FbleCode?
 
 * Change ReleaseInstr to always return from a local.
  - Change FbleThreadReturn to consume ownership of the returned value.

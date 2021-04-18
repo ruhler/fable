@@ -12,11 +12,9 @@
 
 #include "tc.h"
 #include "execute.h"
+#include "interpret.h"
 
 #define UNREACHABLE(x) assert(false && x)
-
-// TODO: Find a better home for this prototype.
-FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 
 static void OnFree(FbleExecutable* executable);
 static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile);
