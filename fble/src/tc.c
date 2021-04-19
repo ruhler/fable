@@ -121,7 +121,9 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_EXEC_TC: {
       FbleExecTc* exec_tc = (FbleExecTc*)tc;
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        FbleFreeTc(exec_tc->bindings.xs[i]);
+        FbleFreeName(exec_tc->bindings.xs[i].profile_name);
+        FbleFreeLoc(exec_tc->bindings.xs[i].profile_loc);
+        FbleFreeTc(exec_tc->bindings.xs[i].tc);
       }
       FbleFree(exec_tc->bindings.xs);
       FbleFreeTc(exec_tc->body);

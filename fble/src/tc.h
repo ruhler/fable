@@ -163,20 +163,20 @@ typedef struct {
   FbleTc* arg;
 } FbleUnionValueTc;
 
-// FbleUnionSelectTcChoice --
-//   Information about a choice used in FbleUnionSelectTc.
+// FbleTcProfiled --
+//   An FbleTc along with information needed to wrap it in a profiling block.
 typedef struct {
   FbleName profile_name;
   FbleLoc profile_loc;
   FbleTc* tc;
-} FbleUnionSelectTcChoice;
+} FbleTcProfiled;
 
-// FbleUnionSelectTcChoiceV --
-//   Vector of FbleUnionSelectTcChoice.
+// FbleTcProfiledV --
+//   Vector of FbleTcProfiled.
 typedef struct {
   size_t size;
-  FbleUnionSelectTcChoice* xs;
-} FbleUnionSelectTcChoiceV;
+  FbleTcProfiled* xs;
+} FbleTcProfiledV;
 
 // FbleUnionSelectTc --
 //   FBLE_UNION_SELECT_TC
@@ -188,12 +188,12 @@ typedef struct {
 // choices point to the same tc. Code generation is expected to check for
 // that and avoid generating duplicate code. FbleFreeTc, FbleFreeLoc and
 // FbleFreeName should be called only once on the fields of the
-// FbleUnionSelectTcChoice for each unique tc referred to by choices.
+// FbleTcProfiled for each unique tc referred to by choices.
 typedef struct {
   FbleTc _base;
   FbleLoc loc;
   FbleTc* condition;
-  FbleUnionSelectTcChoiceV choices;
+  FbleTcProfiledV choices;
 } FbleUnionSelectTc;
 
 // FbleDataAccessTc --
@@ -250,7 +250,7 @@ typedef struct {
 // computing the proc value.
 typedef struct {
   FbleTc _base;
-  FbleTcV bindings;
+  FbleTcProfiledV bindings;
   FbleTc* body;
 } FbleExecTc;
 

@@ -17,4 +17,15 @@ Bool@ t = Not(False);
 Bool@ f = Not(True);
 Bool@ f2 = Not(True);
 
-@(t, f, f2);
+# Make sure we don't output blocks per field here, which we used to do in the
+# past.
+% _ = @(t, f, f2);
+
+(Bool@) { Bool@; } Id = (Bool@ x) {
+  x;
+};
+
+Bool@ e1 := !(Id(True)), Bool@ e2 := !(Id(False));
+Bool@ e3 := !(Id(True));
+!(e3);
+

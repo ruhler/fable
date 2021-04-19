@@ -874,7 +874,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       bool error = false;
       FbleType* target = NULL;
 
-      FbleUnionSelectTcChoice default_ = { .tc = NULL };
+      FbleTcProfiled default_ = { .tc = NULL };
       bool default_used = false;
       if (select_expr->default_ != NULL) {
         Tc result = TypeCheckExpr(th, scope, select_expr->default_);
@@ -899,7 +899,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           error = error || (result.type == NULL);
 
           if (result.type != NULL) {
-            FbleUnionSelectTcChoice choice = {
+            FbleTcProfiled choice = {
               .profile_name = FbleCopyName(select_expr->choices.xs[branch].name),
               .profile_loc = FbleCopyLoc(select_expr->choices.xs[branch].expr->loc),
               .tc = result.tc,
@@ -1724,7 +1724,12 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         } else {
           error = true;
         }
-        FbleVectorAppend(exec_tc->bindings, binding.tc);
+        FbleTcProfiled pb = {
+          .profile_name = FbleCopyName(exec_expr->bindings.xs[i].name),
+          .profile_loc = FbleCopyLoc(exec_expr->bindings.xs[i].expr->loc),
+          .tc = binding.tc,
+        };
+        FbleVectorAppend(exec_tc->bindings, pb);
         FbleReleaseType(th, binding.type);
       }
 

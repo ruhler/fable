@@ -830,7 +830,9 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       Local* args[exec_tc->bindings.size];
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        args[i] = CompileExpr(blocks, false, scope, exec_tc->bindings.xs[i]);
+        EnterBlock(blocks, exec_tc->bindings.xs[i].profile_name, exec_tc->bindings.xs[i].profile_loc, scope, false);
+        args[i] = CompileExpr(blocks, false, scope, exec_tc->bindings.xs[i].tc);
+        ExitBlock(blocks, scope, false);
       }
 
       FbleForkInstr* fork = FbleAlloc(FbleForkInstr);

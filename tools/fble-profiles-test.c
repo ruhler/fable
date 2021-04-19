@@ -196,6 +196,13 @@ int main(int argc, char* argv[])
   assert(2 == Calls(profile, "/%.Not!", "/%.Not!.true"));
   assert(1 == Calls(profile, "/%.Not!", "/%.Not!.false"));
 
+  // The Id function was executed three times, once from each of e1, e2, and
+  // e3 execution.
+  assert(3 == Count(profile, "/%.Id!"));
+  assert(1 == Calls(profile, "/%!.e1!", "/%.Id!"));
+  assert(1 == Calls(profile, "/%!.e2!", "/%.Id!"));
+  assert(1 == Calls(profile, "/%!.e3!", "/%.Id!"));
+
   FbleFreeProfile(profile);
   return EX_SUCCESS;
 }
