@@ -98,7 +98,6 @@ static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 
 static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* th, Tc tc);
-static Tc ProfileBlock(FbleName label, FbleLoc loc, Tc tc);
 static FbleTc* ListExpr(FbleLoc loc, FbleTc* func, FbleTc** args, size_t argc);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
@@ -441,36 +440,6 @@ static void FreeTc(FbleTypeHeap* th, Tc tc)
 {
   FbleReleaseType(th, tc.type);
   FbleFreeTc(tc.tc);
-}
-
-// ProfileBlock --
-//   Wrap the given tc in a profile block.
-//
-// Inputs:
-//   label - the label of the profiling block. Borrowed.
-//   loc - the location of the body of the profiling block. Borrowed.
-//   tc - the tc to wrap in a profile block. May be TC_FAILED.
-//
-// Results:
-//   The given tc wrapped in a profile block.
-//
-// Side effects:
-//   Forwards ownership of the type and tc in 'tc' to the returned tc.
-//   Does not take ownership of label, makes a copy instead.
-static Tc ProfileBlock(FbleName label, FbleLoc loc, Tc tc)
-{
-  if (tc.type == NULL) {
-    assert(tc.tc == NULL);
-    return TC_FAILED;
-  }
-
-  FbleProfileTc* profile_tc = FbleAlloc(FbleProfileTc);
-  profile_tc->_base.tag = FBLE_PROFILE_TC;
-  profile_tc->loc = FbleCopyLoc(loc);
-  profile_tc->name = FbleCopyName(label);
-  profile_tc->body = tc.tc;
-  tc.tc = &profile_tc->_base;
-  return tc;
 }
 
 // ListExpr --
@@ -900,28 +869,26 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       select_tc->_base.tag = FBLE_UNION_SELECT_TC;
       select_tc->loc = FbleCopyLoc(expr->loc);
       select_tc->condition = condition.tc;
-      select_tc->choicec = union_type->fields.size;
-      for (size_t i = 0; i < select_tc->choicec; ++i) {
-        select_tc->choices[i] = NULL;
-      }
+      FbleVectorInit(select_tc->choices);
 
       bool error = false;
       FbleType* target = NULL;
 
-      FbleTc* default_ = NULL;
+      FbleUnionSelectTcChoice default_ = { .tc = NULL };
       bool default_used = false;
       if (select_expr->default_ != NULL) {
-        FbleName label = {
-          .name = FbleNewString(":"),
-          .space = FBLE_NORMAL_NAME_SPACE,
-          .loc = FbleCopyLoc(select_expr->default_->loc),
-        };
-
         Tc result = TypeCheckExpr(th, scope, select_expr->default_);
-        result = ProfileBlock(label, select_expr->default_->loc, result);
-        FbleFreeName(label);
         error = error || (result.type == NULL);
-        default_ = result.tc;
+        if (result.type != NULL) {
+          FbleName label = {
+            .name = FbleNewString(":"),
+            .space = FBLE_NORMAL_NAME_SPACE,
+            .loc = FbleCopyLoc(select_expr->default_->loc),
+          };
+          default_.profile_name = label;
+          default_.profile_loc = FbleCopyLoc(select_expr->default_->loc);
+          default_.tc = result.tc;
+        }
         target = result.type;
       }
 
@@ -929,9 +896,16 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       for (size_t i = 0; i < union_type->fields.size; ++i) {
         if (branch < select_expr->choices.size && FbleNamesEqual(select_expr->choices.xs[branch].name, union_type->fields.xs[i].name)) {
           Tc result = TypeCheckExpr(th, scope, select_expr->choices.xs[branch].expr);
-          result = ProfileBlock(select_expr->choices.xs[branch].name, select_expr->choices.xs[branch].expr->loc, result);
           error = error || (result.type == NULL);
-          select_tc->choices[i] = result.tc;
+
+          if (result.type != NULL) {
+            FbleUnionSelectTcChoice choice = {
+              .profile_name = FbleCopyName(select_expr->choices.xs[branch].name),
+              .profile_loc = FbleCopyLoc(select_expr->choices.xs[branch].expr->loc),
+              .tc = result.tc,
+            };
+            FbleVectorAppend(select_tc->choices, choice);
+          }
 
           if (target == NULL) {
             target = result.type;
@@ -960,15 +934,17 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           }
         } else {
           // Use the default branch for this field.
-          if (default_ != NULL) {
+          if (default_.tc != NULL) {
             default_used = true;
-            select_tc->choices[i] = default_;
+            FbleVectorAppend(select_tc->choices, default_);
           }
         }
       }
 
-      if (default_ != NULL && !default_used) {
-        FbleFreeTc(default_);
+      if (default_.tc != NULL && !default_used) {
+        FbleFreeName(default_.profile_name);
+        FbleFreeLoc(default_.profile_loc);
+        FbleFreeTc(default_.tc);
       }
 
       if (branch < select_expr->choices.size) {

@@ -61,20 +61,23 @@ void FbleFreeTc(FbleTc* tc)
       FbleUnionSelectTc* v = (FbleUnionSelectTc*)tc;
       FbleFreeTc(v->condition);
       FbleFreeLoc(v->loc);
-      for (size_t i = 0; i < v->choicec; ++i) {
+      for (size_t i = 0; i < v->choices.size; ++i) {
         // The default branch may appear multiple times in choices. Make sure
         // we only free it once.
         bool freed = false;
         for (size_t j = 0; j < i; ++j) {
-          if (v->choices[j] == v->choices[i]) {
+          if (v->choices.xs[j].tc == v->choices.xs[i].tc) {
             freed = true;
             break;
           }
         }
         if (!freed) {
-          FbleFreeTc(v->choices[i]);
+          FbleFreeName(v->choices.xs[i].profile_name);
+          FbleFreeLoc(v->choices.xs[i].profile_loc);
+          FbleFreeTc(v->choices.xs[i].tc);
         }
       }
+      FbleFree(v->choices.xs);
       FbleFree(tc);
       return;
     }

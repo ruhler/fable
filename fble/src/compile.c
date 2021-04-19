@@ -639,17 +639,17 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       AppendInstr(scope, &select_instr->_base);
 
       size_t select_instr_pc = scope->code->instrs.size;
-      size_t branch_offsets[select_tc->choicec];
+      size_t branch_offsets[select_tc->choices.size];
       Local* target = exit ? NULL : NewLocal(scope);
-      FbleJumpInstr* exit_jumps[select_tc->choicec];
+      FbleJumpInstr* exit_jumps[select_tc->choices.size];
 
-      for (size_t i = 0; i < select_tc->choicec; ++i) {
+      for (size_t i = 0; i < select_tc->choices.size; ++i) {
         exit_jumps[i] = NULL;
 
         // Check if we have already generated the code for this branch.
         bool already_done = false;
         for (size_t j = 0; j < i; ++j) {
-          if (select_tc->choices[i] == select_tc->choices[j]) {
+          if (select_tc->choices.xs[i].tc == select_tc->choices.xs[j].tc) {
             branch_offsets[i] = branch_offsets[j];
             already_done = true;
             break;
@@ -661,7 +661,8 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
           // the target directly instead of in some cases allocating a new
           // local and then copying that to target?
           branch_offsets[i] = scope->code->instrs.size - select_instr_pc;
-          Local* result = CompileExpr(blocks, exit, scope, select_tc->choices[i]);
+          EnterBlock(blocks, select_tc->choices.xs[i].profile_name, select_tc->choices.xs[i].profile_loc, scope);
+          Local* result = CompileExpr(blocks, exit, scope, select_tc->choices.xs[i].tc);
 
           if (!exit) {
             FbleCopyInstr* copy = FbleAlloc(FbleCopyInstr);
@@ -671,6 +672,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
             copy->dest = target->index.index;
             AppendInstr(scope, &copy->_base);
           }
+          ExitBlock(blocks, scope, exit);
 
           LocalRelease(scope, result);
 
@@ -688,7 +690,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       // Fix up exit jumps now that all the branch code is generated.
       if (!exit) {
-        for (size_t i = 0; i < select_tc->choicec; ++i) {
+        for (size_t i = 0; i < select_tc->choices.size; ++i) {
           if (exit_jumps[i] != NULL) {
             exit_jumps[i]->count = scope->code->instrs.size - exit_jumps[i]->count;
           }

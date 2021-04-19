@@ -164,20 +164,37 @@ typedef struct {
   FbleTc* arg;
 } FbleUnionValueTc;
 
+// FbleUnionSelectTcChoice --
+//   Information about a choice used in FbleUnionSelectTc.
+typedef struct {
+  FbleName profile_name;
+  FbleLoc profile_loc;
+  FbleTc* tc;
+} FbleUnionSelectTcChoice;
+
+// FbleUnionSelectTcChoiceV --
+//   Vector of FbleUnionSelectTcChoice.
+typedef struct {
+  size_t size;
+  FbleUnionSelectTcChoice* xs;
+} FbleUnionSelectTcChoiceV;
+
 // FbleUnionSelectTc --
 //   FBLE_UNION_SELECT_TC
 //
-// Represents a union select expression.
+// Represents a union select expression. There will be one element in the
+// choices vector for each possible tag of the condition.
 //
 // Because of default branches in union select, it is possible that multiple
-// choices point to the same value. Code generation is expected to check for
-// that and avoid generating duplicate code.
+// choices point to the same tc. Code generation is expected to check for
+// that and avoid generating duplicate code. FbleFreeTc, FbleFreeLoc and
+// FbleFreeName should be called only once on the fields of the
+// FbleUnionSelectTcChoice for each unique tc referred to by choices.
 typedef struct {
   FbleTc _base;
   FbleLoc loc;
   FbleTc* condition;
-  size_t choicec;
-  FbleTc* choices[];
+  FbleUnionSelectTcChoiceV choices;
 } FbleUnionSelectTc;
 
 // FbleDataAccessTc --
