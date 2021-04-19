@@ -44,6 +44,7 @@ typedef struct {
 //   Enum used to distinguish among different kinds of FbleProfileOps.
 typedef enum {
   FBLE_PROFILE_ENTER_OP,
+  FBLE_PROFILE_REPLACE_OP,
   FBLE_PROFILE_EXIT_OP,
   FBLE_PROFILE_AUTO_EXIT_OP,
 } FbleProfileOpTag;

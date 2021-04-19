@@ -589,6 +589,25 @@ void FbleFreeProfileThread(FbleProfileThread* thread)
   FbleFree(thread);
 }
 
+// FbleProfileSample -- see documentation in fble-profile.h
+void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
+{
+  // Charge calls in the stack for their time.
+  bool block_seen[thread->profile->blocks.size];
+  memset(block_seen, 0, thread->profile->blocks.size * sizeof(bool));
+  for (size_t i = 0; i < thread->sample.size; ++i) {
+    Sample* sample = thread->sample.xs + i;
+    FbleCallData* data = sample->call;
+    if (!block_seen[sample->callee]) {
+      block_seen[sample->callee] = true;
+      thread->profile->blocks.xs[sample->callee]->block.time += time;
+    }
+    data->time += time;
+  }
+
+  thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.time += time;
+}
+
 // FbleProfileEnterBlock -- see documentation in fble-profile.h
 void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block)
 {
@@ -664,23 +683,11 @@ void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block)
   }
 }
 
-// FbleProfileSample -- see documentation in fble-profile.h
-void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
+// FbleProfileReplaceBlock -- see documentation in fble-profile.h
+void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block)
 {
-  // Charge calls in the stack for their time.
-  bool block_seen[thread->profile->blocks.size];
-  memset(block_seen, 0, thread->profile->blocks.size * sizeof(bool));
-  for (size_t i = 0; i < thread->sample.size; ++i) {
-    Sample* sample = thread->sample.xs + i;
-    FbleCallData* data = sample->call;
-    if (!block_seen[sample->callee]) {
-      block_seen[sample->callee] = true;
-      thread->profile->blocks.xs[sample->callee]->block.time += time;
-    }
-    data->time += time;
-  }
-
-  thread->profile->blocks.xs[FBLE_ROOT_BLOCK_ID]->block.time += time;
+  FbleProfileAutoExitBlock(thread);
+  FbleProfileEnterBlock(thread, block);
 }
 
 // FbleProfileExitBlock -- see documentation in fble-profile.h

@@ -474,6 +474,10 @@ FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* thre
             FbleProfileEnterBlock(profile, op->block);
             break;
 
+          case FBLE_PROFILE_REPLACE_OP:
+            FbleProfileReplaceBlock(profile, op->block);
+            break;
+
           case FBLE_PROFILE_EXIT_OP:
             FbleProfileExitBlock(profile);
             break;

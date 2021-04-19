@@ -78,7 +78,7 @@ typedef struct {
   FbleProfile* profile;
 } Blocks;
 
-static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope);
+static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace);
 static void EnterBodyBlock(Blocks* blocks, FbleLoc loc, Scope* scope);
 static void ExitBlock(Blocks* blocks, Scope* scope, bool exit);
 
@@ -365,12 +365,13 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId bloc
 //   name - name to add to the current block path for naming the new block.
 //   loc - the location of the block.
 //   scope - where to add the ENTER_BLOCK instruction to.
+//   replace - if true, emit a REPLACE_BLOCK instruction instead of ENTER_BLOCK.
 //
 // Side effects:
 //   Adds a new block to the blocks stack. Change the current block to the new
 //   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
 //   exited when no longer in scope using ExitBlock.
-static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope)
+static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace)
 {
   const char* curr = NULL;
   size_t currlen = 0;
@@ -399,7 +400,7 @@ static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope)
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
   size_t id = FbleProfileAddBlock(blocks->profile, nm);
 
-  AppendProfileOp(scope, FBLE_PROFILE_ENTER_OP, id);
+  AppendProfileOp(scope, replace ? FBLE_PROFILE_REPLACE_OP : FBLE_PROFILE_ENTER_OP, id);
   FbleVectorAppend(blocks->stack, id);
 }
 
@@ -552,7 +553,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       // Compile the values of the variables.
       Local* defs[let_tc->bindings.size];
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        EnterBlock(blocks, let_tc->bindings.xs[i].profile_name, let_tc->bindings.xs[i].profile_loc, scope);
+        EnterBlock(blocks, let_tc->bindings.xs[i].profile_name, let_tc->bindings.xs[i].profile_loc, scope, false);
         defs[i] = CompileExpr(blocks, false, scope, let_tc->bindings.xs[i].tc);
         ExitBlock(blocks, scope, false);
       }
@@ -626,10 +627,6 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)v;
       Local* condition = CompileExpr(blocks, false, scope, select_tc->condition);
 
-      if (exit) {
-        AppendProfileOp(scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
-      }
-
       FbleUnionSelectInstr* select_instr = FbleAlloc(FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       select_instr->_base.profile_ops = NULL;
@@ -661,7 +658,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
           // the target directly instead of in some cases allocating a new
           // local and then copying that to target?
           branch_offsets[i] = scope->code->instrs.size - select_instr_pc;
-          EnterBlock(blocks, select_tc->choices.xs[i].profile_name, select_tc->choices.xs[i].profile_loc, scope);
+          EnterBlock(blocks, select_tc->choices.xs[i].profile_name, select_tc->choices.xs[i].profile_loc, scope, exit);
           Local* result = CompileExpr(blocks, exit, scope, select_tc->choices.xs[i].tc);
 
           if (!exit) {
@@ -917,7 +914,7 @@ static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name, FbleProfile* pr
   // CompileExpr assumes it is in a profile block that it needs to exit when
   // exit is true, so make sure we wrap the top level expression in a profile
   // block.
-  EnterBlock(&blocks, name, name.loc, &scope);
+  EnterBlock(&blocks, name, name.loc, &scope, false);
   CompileExpr(&blocks, true, &scope, tc);
   ExitBlock(&blocks, &scope, true);
 

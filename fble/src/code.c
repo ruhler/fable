@@ -71,6 +71,15 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
             break;
           }
 
+          case FBLE_PROFILE_REPLACE_OP: {
+            FbleBlockId block = op->block;
+            FbleName* name = &profile->blocks.xs[block]->name;
+            fprintf(fout, "    .  profile replace [%04x]; ", block);
+            fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name->str, block,
+                name->loc.source->str, name->loc.line, name->loc.col);
+            break;
+          }
+
           case FBLE_PROFILE_EXIT_OP: {
             fprintf(fout, "    .  profile exit;\n");
             break;

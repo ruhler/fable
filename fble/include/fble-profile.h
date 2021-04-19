@@ -110,9 +110,6 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
 // Input:
 //   profile - the profile to free. May be NULL.
 //
-// Results:
-//   none.
-//
 // Side effects:
 //   Frees the memory resources associated with the given profile, including
 //   the memory for the block names supplied to FbleProfileAddBlock.
@@ -163,28 +160,9 @@ FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent);
 // Inputs:
 //   thread - thread to free. May be NULL.
 //
-// Results:
-//   none.
-//
 // Side effects:
 //   Frees resources associated with the given profile thread.
 void FbleFreeProfileThread(FbleProfileThread* thread);
-
-// FbleProfileEnterBlock -- 
-//   Enter a block on the given profile thread.
-//
-// Inputs:
-//   thread - the thread to do the call on.
-//   block - the block to call into.
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   A corresponding call to FbleProfileExitBlock or FbleProfileAutoExitBlock
-//   should be made when the call leaves, for proper accounting and resource
-//   management.
-void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
 
 // FbleProfileSample --
 //   Take an explicit profiling sample.
@@ -197,14 +175,39 @@ void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
 //   Charges calls on the current thread with the given time.
 void FbleProfileSample(FbleProfileThread* thread, uint64_t time);
 
+// FbleProfileEnterBlock -- 
+//   Enter a block on the given profile thread.
+//
+// Inputs:
+//   thread - the thread to do the call on.
+//   block - the block to call into.
+//
+// Side effects:
+//   A corresponding call to FbleProfileExitBlock, FbleProfileAutoExitBlock,
+//   or FbleProfileReplaceBlock should be made when the call leaves, for
+//   proper accounting and resource management.
+void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
+
+// FbleProfileReplaceBlock -- 
+//   Replace a block on the given profile thread.
+//
+// Inputs:
+//   thread - the thread to do the call on.
+//   block - the block to tail call into.
+//
+// Side effects:
+//   Replaces the current profiling block with the new block. Frees resources
+//   associated with the block being replaced, but the a corresponding call to
+//   FbleProfileExitBlock, FbleProfileAutoExitBlock, or
+//   FbleProfileReplaceBlock will still needed to free resources associated
+//   with the replacement block.
+void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
+
 // FbleProfileExitBlock --
 //   Exits the current block on the given profile thread.
 //
 // Inputs:
 //   thread - the thread to exit the call on.
-//
-// Results:
-//   none.
 //
 // Side effects:
 //   Updates the profile data associated with the given thread.
@@ -217,9 +220,6 @@ void FbleProfileExitBlock(FbleProfileThread* thread);
 // Inputs:
 //   thread - the thread to exit the call on.
 //
-// Results:
-//   none.
-//
 // Side effects:
 //   Updates the profile data associated with the given thread.
 void FbleProfileAutoExitBlock(FbleProfileThread* thread);
@@ -230,9 +230,6 @@ void FbleProfileAutoExitBlock(FbleProfileThread* thread);
 // Inputs:
 //   fout - the file to output the profile report to.
 //   profile - the profile to generate a report for.
-//
-// Results:
-//   none.
 //
 // Side effects:
 //   Writes a profile report to the given file.
