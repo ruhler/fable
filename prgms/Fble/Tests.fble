@@ -17,6 +17,7 @@
 # Import to test compilation.
 % _ = /Char/Show%;
 % _ = /Fble/Bench%;
+% _ = /Fble/ProfilesTest%;
 % _ = /Fble/StackSmasher%;
 % _ = /Hwdg/App%;
 % _ = /Invaders/App%;

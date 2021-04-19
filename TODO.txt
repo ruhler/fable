@@ -1,3 +1,10 @@
+* Add profiling test that tests profiling calls introduced by compiler.
+* Remove PROFILE_TC. Instead embed the necessary names and locations in FbleTc
+  - For let bindings, union select choices, and exec bindings.
+  - In particular, not for struct args.
+* Introduce FbleProfileReplaceBlock API and use it for union select calls
+  instead of auto exit.
+
 * Looks like profiling is broken. Fix it? Add a test?
  - I suspect auto exit calling into nothing.
    /GameOfLife/App%.game_out tail calls a put value, which we expect to have

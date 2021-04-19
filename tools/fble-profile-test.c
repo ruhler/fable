@@ -1,6 +1,5 @@
 // fble-profile-test.c --
-//   This file implements the main entry point for the fble-profile-test
-//   program.
+//   A program that runs unit tests for the FbleProfile APIs.
 
 #include <string.h>   // for strcpy
 #include <stdlib.h>   // for rand

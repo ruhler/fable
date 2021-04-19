@@ -1,0 +1,20 @@
+
+# This file is used as input to fble-profiles-test to test profiling
+# instrumentation of .fble code.
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+Bool@ False = Bool@(false: Unit);
+
+(Bool@) { Bool@; } Not = (Bool@ x) {
+  x.?(true: False, false: True);
+};
+
+Bool@ t = Not(False);
+Bool@ f = Not(True);
+Bool@ f2 = Not(True);
+
+@(t, f, f2);

@@ -137,3 +137,72 @@ I wonder if this notion of a phantom block ID could be an easy fix for the
 AUTO_EXIT issue? No. We would need a phantom EXIT call that corresponds to a
 phantom REPLACE call, and that's what we are missing today.
 
+---
+
+How do we get to the end target?
+
+End target:
+* BlockId for each FbleExecutable.
+* Call, TailCall do implicit ENTER, REPLACE.
+* Return does implicit EXIT.
+* May as well make the profiling ops into instructions instead of separate
+  ops.
+* Profile loaded as part of loading compiled code.
+* Replace instead of AutoExit in profiling API.
+* FbleExecutable block id relative block ids.
+* PUT/GET block ID comes from Link instruction.
+* Phantom block ID?
+
+Certainly there are some parts of this I can do separately and incrementally.
+For example:
+* We can add an FbleProfileReplaceBlock function to wrap AutoExit + Enter.
+ - And maybe figure out how to use that for union select?
+* We can add PUT/GET block IDs from the instruction.
+* We could turn PROFILE_OPs into FbleInstrs.
+
+But the big one that sounds hard is requiring all FbleExecutable to have block
+IDs and making other block id references relative to those block ids.
+
+---
+
+While I'm at it, perhaps I should clean up handling of profiling in
+typecheck.c versus compile.c? I feel like typecheck.c has the job of giving
+labels and locations for those expressions we want to wrap in profiling blocks
+while compile has the job of actually emitting the profiling ops. Might work
+better if the two were coordinated. For example, build profiling into to the
+FbleTc data type: typecheck.c populates the information needed by the
+compiler. Both agree on exactly what gets labelled for profiling. 
+
+And as part of that, consider going through FbleTc to cover what should be
+labelled for profiling. Perhaps anywhere we have a multiple sub FbleTc*? That
+would give us:
+* let bindings (body is default)
+* struct args? Is this useful for anything?
+* union select choices
+* func args? Is this useful? What names to use?
+* exec bindings (body is default)
+
+I would say, ditch struct and func args. I don't think those are too useful.
+And as long as we have let, you could always wrap it in a variable if you
+prefer.
+
+Definitely let bindings. Definitely union select choices, because we want to
+know which ones calls and time goes to. And I think exec bindings, for the
+benchmark example I ran into above. Nothing else is needed.
+
+In terms of execution:
+- top level body
+- function body
+
+So the block id for a function will be named after whatever labels
+(let/exec/union select) the function value is defined in.
+
+That sounds like a nice place to start to me.
+
+I guess the issue I'm running into with benchmark exec labels missing is
+because the labels are for a function returned from another function. We
+aren't defining a new function (or process), so we don't get a new name.
+Hopefully, if we at least add labels for exec bindings and make sure to wrap
+them in Enter/Exit blocks in compile.c, then we'll see the exec binding
+labelled block calling into whatever that function being returned was.
+

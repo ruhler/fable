@@ -255,6 +255,11 @@ build $::cov/gcov.txt "$::fble_objs_cov $::spec_tests" \
 test $::test/fble-profile-test.tr $::bin/fble-profile-test \
   "$::bin/fble-profile-test > /dev/null"
 
+# fble-profiles-test
+test $::test/fble-profiles-test.tr \
+  "$::bin/fble-profiles-test prgms/Fble/ProfilesTest.fble" \
+  "$::bin/fble-profiles-test prgms/Fble/ProfilesTest.fble > $::test/fble-profiles-test.prof"
+
 # Compile each .fble module in the prgms directory.
 set ::fble_prgms_objs [list]
 foreach dir [dirs prgms ""] {
