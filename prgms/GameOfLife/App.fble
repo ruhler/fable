@@ -113,7 +113,11 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     Effect@ transformed = e.?(
       tick: e,
       draw: Effect@(draw: Transform(f, e.draw)));
-    out(transformed);
+
+    # Note: we don't just use out(transformed) here because of a bug in
+    # profiling tail calls of PUT values.
+    Unit@ _ := out(transformed);
+    !(Unit);
   };
 
   Unit@ _ := StepUI(GetInput(in), game_out, Int|200, acorn);

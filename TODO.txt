@@ -1,5 +1,3 @@
-* Could I emit #line pragmas to get gcov and gprof at .fble file level?
-
 * Looks like profiling is broken. Fix it? Add a test?
  - I suspect auto exit calling into nothing.
    /GameOfLife/App%.game_out tail calls a put value, which we expect to have
@@ -17,6 +15,10 @@
   something is NULL or not.
 * Remove setting of NULL on release to test that we don't rely on it. 
   And maybe get a tiny speed boost?
+
+* Could I emit #line pragmas to get gcov and gprof at .fble file level?
+ - But we would want more comprehensive line number information, instead of
+   just line numbers for aborts.
 
 * Remove dependence of interpret.c and generated code on value.h.
   Making value functions public as necessary to support this.
