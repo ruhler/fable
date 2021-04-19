@@ -30,7 +30,9 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_LET_TC: {
       FbleLetTc* let_tc = (FbleLetTc*)tc;
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        FbleFreeLoc(let_tc->bindings.xs[i].loc);
+        FbleFreeLoc(let_tc->bindings.xs[i].var_loc);
+        FbleFreeName(let_tc->bindings.xs[i].profile_name);
+        FbleFreeLoc(let_tc->bindings.xs[i].profile_loc);
         FbleFreeTc(let_tc->bindings.xs[i].tc);
       }
       FbleFree(let_tc->bindings.xs);

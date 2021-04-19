@@ -644,7 +644,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         defs[i] = TC_FAILED;
         if (!error) {
           defs[i] = TypeCheckExpr(th, scope, binding->expr);
-          defs[i] = ProfileBlock(binding->name, binding->expr->loc, defs[i]);
         }
         error = error || (defs[i].type == NULL);
 
@@ -743,8 +742,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleVectorInit(let_tc->bindings);
       let_tc->body = body.tc;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleLocTc ltc = {
-          .loc = FbleCopyLoc(let_expr->bindings.xs[i].name.loc),
+        FbleLetTcBinding ltc = {
+          .var_loc = FbleCopyLoc(let_expr->bindings.xs[i].name.loc),
+          .profile_name = FbleCopyName(let_expr->bindings.xs[i].name),
+          .profile_loc = FbleCopyLoc(let_expr->bindings.xs[i].expr->loc),
           .tc = defs[i].tc
         };
         FbleVectorAppend(let_tc->bindings, ltc);
@@ -1138,8 +1139,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       let_tc->recursive = false;
       let_tc->body = body.tc;
       FbleVectorInit(let_tc->bindings);
-      FbleLocTc ltc = {
-        .loc = FbleCopyLoc(poly->arg.name.loc),
+      FbleLetTcBinding ltc = {
+        .var_loc = FbleCopyLoc(poly->arg.name.loc),
+        .profile_name = FbleCopyName(poly->arg.name),
+        .profile_loc = FbleCopyLoc(poly->arg.name.loc),
         .tc = &type_tc->_base
       };
       FbleVectorAppend(let_tc->bindings, ltc);

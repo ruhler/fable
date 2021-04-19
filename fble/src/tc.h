@@ -104,21 +104,26 @@ typedef struct {
   FbleVarIndex index;
 } FbleVarTc;
 
-// FbleLocTc --
-//   A value bundled together with a location.
+// FbleLetTcBinding --
+//   Information for a binding used in FbleLetTc.
 //
-// Note: this is not an FbleTc subtype.
+// var_loc - The location of the variable, used to report vacuous values.
+// profile_name - The name of the profile block to use for the binding.
+// profile_loc - The location of the profile block to use for the binding.
+// tc - The value of the binding.
 typedef struct {
-  FbleLoc loc;
+  FbleLoc var_loc;
+  FbleName profile_name;
+  FbleLoc profile_loc;
   FbleTc* tc;
-} FbleLocTc;
+} FbleLetTcBinding;
 
-// FbleLocTcV --
-//   A vector of FbleLocTc.
+// FbleLetTcBindingV --
+//   A vector of FbleLetTcBinding.
 typedef struct {
   size_t size;
-  FbleLocTc* xs;
-} FbleLocTcV;
+  FbleLetTcBinding* xs;
+} FbleLetTcBindingV;
 
 // FbleLetTc --
 //   FBLE_LET_TC
@@ -131,12 +136,11 @@ typedef struct {
 //
 // Fields:
 //   recursive - false if the let is a non-recursive let expression.
-//   bindings - the values of the variable being defined, with the location of
-//              the variable being defined.
+//   bindings - the variables being defined.
 typedef struct {
   FbleTc _base;
   bool recursive;
-  FbleLocTcV bindings;
+  FbleLetTcBindingV bindings;
   FbleTc* body;
 } FbleLetTc;
 
