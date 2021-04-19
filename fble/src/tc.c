@@ -128,15 +128,6 @@ void FbleFreeTc(FbleTc* tc)
       FbleFree(tc);
       return;
     }
-
-    case FBLE_PROFILE_TC: {
-      FbleProfileTc* profile_tc = (FbleProfileTc*)tc;
-      FbleFreeLoc(profile_tc->loc);
-      FbleFreeName(profile_tc->name);
-      FbleFreeTc(profile_tc->body);
-      FbleFree(tc);
-      return;
-    }
   }
 
   UNREACHABLE("should never get here");

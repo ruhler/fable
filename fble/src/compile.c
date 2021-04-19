@@ -868,14 +868,6 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       return local;
     }
-
-    case FBLE_PROFILE_TC: {
-      FbleProfileTc* profile_tc = (FbleProfileTc*)v;
-      EnterBlock(blocks, profile_tc->name, profile_tc->loc, scope);
-      Local* result = CompileExpr(blocks, exit, scope, profile_tc->body);
-      ExitBlock(blocks, scope, exit);
-      return result;
-    }
   }
 
   UNREACHABLE("should already have returned");

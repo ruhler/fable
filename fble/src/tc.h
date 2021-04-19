@@ -45,7 +45,6 @@ typedef enum {
   FBLE_FUNC_APPLY_TC,
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
-  FBLE_PROFILE_TC,
 } FbleTcTag;
 
 // FbleTc --
@@ -254,24 +253,6 @@ typedef struct {
   FbleTcV bindings;
   FbleTc* body;
 } FbleExecTc;
-
-// FbleProfileTc --
-//   FBLE_PROFILE_TC
-//
-// FbleProfileTc is used to denote a profiling block.
-//
-// Fields:
-//   name - the name of the block for profiling purposes.
-//   loc - the location of the profile block.
-//   body - the body of the profile block.
-//
-// The location of the profiling block is passed through loc, not name.loc.
-typedef struct {
-  FbleTc _base;
-  FbleName name;
-  FbleLoc loc;
-  FbleTc* body;
-} FbleProfileTc;
 
 // FbleFreeTc --
 //   Free resources associated with an FbleTc.

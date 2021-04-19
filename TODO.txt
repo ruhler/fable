@@ -1,7 +1,6 @@
-* Remove PROFILE_TC. Instead embed the necessary names and locations in FbleTc
-  - For let bindings, union select choices, and exec bindings.
 * Introduce FbleProfileReplaceBlock API and use it for union select calls
   instead of auto exit.
+* Figure out how to get the profiling block I want around exec bindings?
 
 * Looks like profiling is broken. Fix it? Add a test?
  - I suspect auto exit calling into nothing.
