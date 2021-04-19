@@ -73,7 +73,6 @@ typedef struct {
 //   Profiling information for a program.
 //
 // Fields:
-//   last - the wall clock time of the last sample.
 //   blocks - blocks.xs[i] contains block and callee information for block i.
 typedef struct {
   FbleBlockProfileV blocks;

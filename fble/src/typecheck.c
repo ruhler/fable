@@ -766,7 +766,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
         args[j] = TypeCheckExpr(th, scope, arg->expr);
-        args[j] = ProfileBlock(arg->name, arg->expr->loc, args[j]);
         error = error || (args[j].type == NULL);
       }
 

@@ -14,6 +14,9 @@
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
+static size_t Count(FbleProfile* profile, const char* name);
+static size_t Calls(FbleProfile* profile, const char* caller, const char* callee);
+
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -34,6 +37,80 @@ static void PrintUsage(FILE* stream)
       "Run the fble-profiles-test using the given ProfilesTest.fble file.\n"
       "Exit status is 0 on success, non-zero on test failure.\n"
   );
+}
+
+// Count --
+//   Return the total number of times the profiling block with the given name
+//   was called in the profile.
+//
+// Inputs:
+//   profile - the profile to get the count from.
+//   name - the name of the block to get the count for.
+//
+// Results:
+//   The number of times the block was called.
+//
+// Side effects:
+//   Asserts with failure if there are no blocks with the given name or there
+//   is more than one block with the given name.
+static size_t Count(FbleProfile* profile, const char* name)
+{
+  FbleCallData* data = NULL;
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    FbleBlockProfile* block = profile->blocks.xs[i];
+    if (strcmp(block->name.name->str, name) == 0) {
+      assert(data == NULL && "duplicate entries with name");
+      data = &block->block;
+    }
+  }
+  assert(data != NULL && "no block found with given name");
+  return data->count;
+}
+
+// Calls --
+//   Return the total number of times the callee block called the caller
+//   block.
+//
+// Inputs:
+//   profile - the profile to get the count from.
+//   caller - the name of the caller block.
+//   callee - the name of the callee block.
+//
+// Results:
+//   The number of times the callee directly called the caller.
+//
+// Side effects:
+//   Asserts with failure if there are no blocks matching the names of callee
+//   and caller or if there are multiple blocks matching the names.
+static size_t Calls(FbleProfile* profile, const char* caller, const char* callee)
+{
+  FbleBlockProfile* caller_block = NULL;
+  FbleBlockId caller_id = profile->blocks.size;
+  FbleBlockId callee_id = profile->blocks.size;
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    FbleBlockProfile* block = profile->blocks.xs[i];
+    if (strcmp(block->name.name->str, caller) == 0) {
+      assert(caller_id == profile->blocks.size && "duplicate named caller");
+      caller_block = block;
+      caller_id = block->block.id;
+      assert(caller_id != profile->blocks.size && "bad assumption for test");
+    }
+    if (strcmp(block->name.name->str, callee) == 0) {
+      assert(callee_id == profile->blocks.size && "duplicate named callee");
+      callee_id = block->block.id;
+      assert(callee_id != profile->blocks.size && "bad assumption for test");
+    }
+  }
+  assert(callee_id != profile->blocks.size && "no block matching callee name");
+  assert(caller_id != profile->blocks.size && "no block matching caller name");
+
+  for (size_t i = 0; i < caller_block->callees.size; ++i) {
+    FbleCallData* call = caller_block->callees.xs[i];
+    if (call->id == callee_id) {
+      return call->count;
+    }
+  }
+  return 0;
 }
 
 // main --
@@ -98,11 +175,26 @@ int main(int argc, char* argv[])
   // follow.
   FbleProfileReport(stdout, profile);
 
-  // TODO: Add tests here.
-  // * t, f, f2 each called once from the main block.
-  // * Not created once.
-  // * Not executed three times, once from t, once from f, and once from f2
-  // * Not.true branch executed twice, Not.false branch executed once.
+  // Each of these top level let bindings were executed once when the main
+  // program ran.
+  assert(1 == Calls(profile, "/%", "/%.Not"));
+  assert(1 == Calls(profile, "/%", "/%.t"));
+  assert(1 == Calls(profile, "/%", "/%.f"));
+  assert(1 == Calls(profile, "/%", "/%.f2"));
+
+  // The Not function was executed three times, once from each of t, f, and
+  // f2.
+  assert(1 == Calls(profile, "/%.t", "/%.Not!"));
+  assert(1 == Calls(profile, "/%.f", "/%.Not!"));
+  assert(1 == Calls(profile, "/%.f2", "/%.Not!"));
+
+  // In total, we created Not once and executed three times. 
+  assert(1 == Count(profile, "/%.Not"));
+  assert(3 == Count(profile, "/%.Not!"));
+
+  // The true branch of Not was executed twice, the false branch once.
+  assert(2 == Calls(profile, "/%.Not!", "/%.Not!.true"));
+  assert(1 == Calls(profile, "/%.Not!", "/%.Not!.false"));
 
   FbleFreeProfile(profile);
   return EX_SUCCESS;
