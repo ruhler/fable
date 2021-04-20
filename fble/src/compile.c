@@ -56,7 +56,7 @@ typedef struct Scope {
 } Scope;
 
 static Local* NewLocal(Scope* scope);
-static void LocalRelease(Scope* scope, Local* local);
+static void ReleaseLocal(Scope* scope, Local* local);
 static void PushVar(Scope* scope, Local* local);
 static void PopVar(Scope* scope);
 static Local* GetVar(Scope* scope, FbleVarIndex index);
@@ -97,7 +97,7 @@ static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name, FbleProfile* pr
 //
 // Side effects:
 //   Allocates a space on the scope's locals for the local. The local should
-//   be freed with LocalRelease when no longer in use.
+//   be freed with ReleaseLocal when no longer in use.
 static Local* NewLocal(Scope* scope)
 {
   size_t index = scope->locals.size;
@@ -122,7 +122,7 @@ static Local* NewLocal(Scope* scope)
   return local;
 }
 
-// LocalRelease --
+// ReleaseLocal --
 //   Decrement the reference count on a local and free it if appropriate.
 //
 // Inputs:
@@ -132,7 +132,7 @@ static Local* NewLocal(Scope* scope)
 // Side effects:
 //   Decrements the reference count on the local and frees it if the refcount
 //   drops to 0. Emits a RELEASE instruction if appropriate.
-static void LocalRelease(Scope* scope, Local* local)
+static void ReleaseLocal(Scope* scope, Local* local)
 {
   if (local == NULL) {
     return;
@@ -187,7 +187,7 @@ static void PopVar(Scope* scope)
 {
   scope->vars.size--;
   Local* var = scope->vars.xs[scope->vars.size];
-  LocalRelease(scope, var);
+  ReleaseLocal(scope, var);
 }
 
 // GetVar --
@@ -236,7 +236,7 @@ static Local* GetVar(Scope* scope, FbleVarIndex index)
 static void SetVar(Scope* scope, size_t index, Local* local)
 {
   assert(index < scope->vars.size);
-  LocalRelease(scope, scope->vars.xs[index]);
+  ReleaseLocal(scope, scope->vars.xs[index]);
   scope->vars.xs[index] = local;
 }
 
@@ -510,8 +510,8 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
 // * Appends instructions to the scope for executing the given expression.
 //   There is no gaurentee about what instructions have been appended to
 //   the scope if the expression fails to compile.
-// * The caller should call LocalRelease when the returned results are no
-//   longer needed. Note that FreeScope calls LocalRelease for all locals
+// * The caller should call ReleaseLocal when the returned results are no
+//   longer needed. Note that FreeScope calls ReleaseLocal for all locals
 //   allocated to the scope, so that can also be used to clean up the local.
 static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 {
@@ -604,7 +604,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       for (size_t i = 0; i < argc; ++i) {
         FbleVectorAppend(struct_instr->args, args[i]->index);
-        LocalRelease(scope, args[i]);
+        ReleaseLocal(scope, args[i]);
       }
 
       return local;
@@ -623,7 +623,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       union_instr->dest = local->index.index;
       AppendInstr(scope, &union_instr->_base);
       CompileExit(exit, scope, local);
-      LocalRelease(scope, arg);
+      ReleaseLocal(scope, arg);
       return local;
     }
 
@@ -675,7 +675,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
           }
           ExitBlock(blocks, scope, exit);
 
-          LocalRelease(scope, result);
+          ReleaseLocal(scope, result);
 
           if (!exit) {
             exit_jumps[i] = FbleAlloc(FbleJumpInstr);
@@ -704,7 +704,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       // appear to be a violation of the language spec, because it only
       // effects constants in runtime. But we probably ought to fix it
       // anyway.
-      LocalRelease(scope, condition);
+      ReleaseLocal(scope, condition);
       return target;
     }
 
@@ -731,7 +731,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       Local* local = NewLocal(scope);
       access->dest = local->index.index;
       CompileExit(exit, scope, local);
-      LocalRelease(scope, obj);
+      ReleaseLocal(scope, obj);
       return local;
     }
 
@@ -760,7 +760,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       Local* func_result = CompileExpr(blocks, true, &func_scope, func_tc->body);
       ExitBlock(blocks, &func_scope, true);
-      LocalRelease(&func_scope, func_result);
+      ReleaseLocal(&func_scope, func_result);
       FreeScope(&func_scope);
 
       Local* local = NewLocal(scope);
@@ -798,10 +798,10 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       call_instr->dest = exit ? 0 : dest->index.index;
       AppendInstr(scope, &call_instr->_base);
 
-      LocalRelease(scope, func);
+      ReleaseLocal(scope, func);
       for (size_t i = 0; i < argc; ++i) {
         FbleVectorAppend(call_instr->args, args[i]->index);
-        LocalRelease(scope, args[i]);
+        ReleaseLocal(scope, args[i]);
       }
 
       return dest;
@@ -850,7 +850,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       AppendInstr(scope, &fork->_base);
 
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        // Note: Make sure we call NewLocal before calling LocalRelease on any
+        // Note: Make sure we call NewLocal before calling ReleaseLocal on any
         // of the arguments.
         Local* local = NewLocal(scope);
         fork->dests.xs[i] = local->index.index;
@@ -861,7 +861,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
         // TODO: Does this hold on to the bindings longer than we want to?
         if (args[i] != NULL) {
           FbleVectorAppend(fork->args, args[i]->index);
-          LocalRelease(scope, args[i]);
+          ReleaseLocal(scope, args[i]);
         }
       }
 
