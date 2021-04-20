@@ -793,9 +793,26 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
         args[i] = CompileExpr(blocks, false, scope, apply_tc->args.xs[i]);
       }
 
-      // TODO: Free locals not used in call instruction for tail calls?
-
       if (exit) {
+        // Release any remaining unused locals before tail calling.
+        for (size_t i = 0; i < scope->locals.size; ++i) {
+          Local* local = scope->locals.xs[i];
+          if (local != NULL) {
+            bool used = (local == func);
+            for (size_t j = 0; !used && j < argc; ++j) {
+              used = (local == args[j]);
+            }
+
+            if (!used) {
+              FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
+              release_instr->_base.tag = FBLE_RELEASE_INSTR;
+              release_instr->_base.profile_ops = NULL;
+              release_instr->target = local->index.index;
+              AppendInstr(scope, &release_instr->_base);
+            }
+          }
+        }
+
         AppendProfileOp(scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
       }
 
