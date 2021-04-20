@@ -59,6 +59,14 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
     FbleVectorAppend(code->instrs, &call->_base);
   }
 
+  for (size_t i = 0; i + 1 < program->modules.size; ++i) {
+    FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
+    release_instr->_base.tag = FBLE_RELEASE_INSTR;
+    release_instr->_base.profile_ops = NULL;
+    release_instr->target = i;
+    FbleVectorAppend(code->instrs, &release_instr->_base);
+  }
+
   FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
   return_instr->_base.tag = FBLE_RETURN_INSTR;
   return_instr->_base.profile_ops = NULL;

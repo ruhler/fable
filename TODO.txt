@@ -1,9 +1,3 @@
-* Add explicit Release instructions to free values during normal flow
- - Make sure to release args as well as other locals in CompileExit.
- - Avoid FbleReleaseValue calls in pop stack frame. It shouldn't be necessary
-   anymore (except for abort case, which should use its own separate code to
-   do so).
-
 * Add a test case that exercises a TAIL_CALL where the same local is used for
   multiple args to the tail call.
 
@@ -27,8 +21,8 @@
  - And use it to unwind frame by frame instead of whatever we do now.
 * Track info necessary to know what to release on abort without checking if
   something is NULL or not.
-* Remove setting of NULL on release to test that we don't rely on it. 
-  And maybe get a tiny speed boost?
+* Remove setting and checking of NULL on release to test that we don't rely on
+  it. And maybe get a (tiny?) speed boost?
 
 * Could I emit #line pragmas to get gcov and gprof at .fble file level?
  - But we would want more comprehensive line number information, instead of

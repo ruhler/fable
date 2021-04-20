@@ -37,7 +37,7 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
   thread->stack = thread->stack->tail;
 
   for (size_t i = 0; i < stack->func->executable->locals; ++i) {
-    FbleReleaseValue(heap, stack->locals[i]);
+    assert(stack->locals[i] == NULL);
   }
   FbleReleaseValue(heap, &stack->func->_base);
   FbleFree(stack);
@@ -98,6 +98,11 @@ static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
         thread->stack->joins--;
         thread->stack = NULL;
         break;
+      }
+
+      for (size_t i = 0; i < thread->stack->func->executable->locals; ++i) {
+        FbleReleaseValue(heap, thread->stack->locals[i]);
+        thread->stack->locals[i] = NULL;
       }
       PopStackFrame(heap, thread);
     }

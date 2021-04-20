@@ -375,6 +375,9 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
   put->statics[1] = arg;
   FbleValueAddRef(heap, &put->_base, arg);
 
+  FbleReleaseValue(heap, thread->stack->locals[0]);
+  thread->stack->locals[0] = NULL;
+
   FbleThreadReturn(heap, thread, &put->_base);
   return FBLE_EXEC_FINISHED;
 }
