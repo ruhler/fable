@@ -56,9 +56,9 @@ typedef struct Scope {
 } Scope;
 
 static Local* NewLocal(Scope* scope);
-static void ReleaseLocal(Scope* scope, Local* local);
+static void ReleaseLocal(Scope* scope, Local* local, bool exit);
 static void PushVar(Scope* scope, Local* local);
-static void PopVar(Scope* scope);
+static void PopVar(Scope* scope, bool exit);
 static Local* GetVar(Scope* scope, FbleVarIndex index);
 static void SetVar(Scope* scope, size_t index, Local* local);
 
@@ -128,11 +128,13 @@ static Local* NewLocal(Scope* scope)
 // Inputs:
 //   scope - the scope that the local belongs to
 //   local - the local to release. May be NULL.
+//   exit - whether the stack frame has already been exited or not.
 //
 // Side effects:
 //   Decrements the reference count on the local and frees it if the refcount
-//   drops to 0. Emits a RELEASE instruction if appropriate.
-static void ReleaseLocal(Scope* scope, Local* local)
+//   drops to 0. Emits a RELEASE instruction if this is the last reference the
+//   local and the stack frame hasn't already been exited.
+static void ReleaseLocal(Scope* scope, Local* local, bool exit)
 {
   if (local == NULL) {
     return;
@@ -140,11 +142,13 @@ static void ReleaseLocal(Scope* scope, Local* local)
 
   local->refcount--;
   if (local->refcount == 0) {
-    FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
-    release_instr->_base.tag = FBLE_RELEASE_INSTR;
-    release_instr->_base.profile_ops = NULL;
-    release_instr->target = local->index.index;
-    AppendInstr(scope, &release_instr->_base);
+    if (!exit) {
+      FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
+      release_instr->_base.tag = FBLE_RELEASE_INSTR;
+      release_instr->_base.profile_ops = NULL;
+      release_instr->target = local->index.index;
+      AppendInstr(scope, &release_instr->_base);
+    }
 
     assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
     assert(scope->locals.xs[local->index.index] == local);
@@ -177,17 +181,15 @@ static void PushVar(Scope* scope, Local* local)
 //
 // Inputs:
 //   scope - the scope to pop from.
-//
-// Results:
-//   none.
+//   exit - whether the stack frame has already been exited or not.
 //
 // Side effects:
 //   Pops the top var off the scope.
-static void PopVar(Scope* scope)
+static void PopVar(Scope* scope, bool exit)
 {
   scope->vars.size--;
   Local* var = scope->vars.xs[scope->vars.size];
-  ReleaseLocal(scope, var);
+  ReleaseLocal(scope, var, exit);
 }
 
 // GetVar --
@@ -236,7 +238,7 @@ static Local* GetVar(Scope* scope, FbleVarIndex index)
 static void SetVar(Scope* scope, size_t index, Local* local)
 {
   assert(index < scope->vars.size);
-  ReleaseLocal(scope, scope->vars.xs[index]);
+  ReleaseLocal(scope, scope->vars.xs[index], false);
   scope->vars.xs[index] = local;
 }
 
@@ -296,7 +298,7 @@ static void FreeScope(Scope* scope)
   FbleFree(scope->statics.xs);
 
   while (scope->vars.size > 0) {
-    PopVar(scope);
+    PopVar(scope, true);
   }
   FbleFree(scope->vars.xs);
 
@@ -578,7 +580,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       Local* body = CompileExpr(blocks, exit, scope, let_tc->body);
 
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        PopVar(scope);
+        PopVar(scope, exit);
       }
 
       return body;
@@ -604,7 +606,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       for (size_t i = 0; i < argc; ++i) {
         FbleVectorAppend(struct_instr->args, args[i]->index);
-        ReleaseLocal(scope, args[i]);
+        ReleaseLocal(scope, args[i], exit);
       }
 
       return local;
@@ -623,7 +625,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       union_instr->dest = local->index.index;
       AppendInstr(scope, &union_instr->_base);
       CompileExit(exit, scope, local);
-      ReleaseLocal(scope, arg);
+      ReleaseLocal(scope, arg, exit);
       return local;
     }
 
@@ -675,7 +677,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
           }
           ExitBlock(blocks, scope, exit);
 
-          ReleaseLocal(scope, result);
+          ReleaseLocal(scope, result, exit);
 
           if (!exit) {
             exit_jumps[i] = FbleAlloc(FbleJumpInstr);
@@ -704,7 +706,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       // appear to be a violation of the language spec, because it only
       // effects constants in runtime. But we probably ought to fix it
       // anyway.
-      ReleaseLocal(scope, condition);
+      ReleaseLocal(scope, condition, exit);
       return target;
     }
 
@@ -731,7 +733,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       Local* local = NewLocal(scope);
       access->dest = local->index.index;
       CompileExit(exit, scope, local);
-      ReleaseLocal(scope, obj);
+      ReleaseLocal(scope, obj, exit);
       return local;
     }
 
@@ -760,7 +762,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       Local* func_result = CompileExpr(blocks, true, &func_scope, func_tc->body);
       ExitBlock(blocks, &func_scope, true);
-      ReleaseLocal(&func_scope, func_result);
+      ReleaseLocal(&func_scope, func_result, true);
       FreeScope(&func_scope);
 
       Local* local = NewLocal(scope);
@@ -798,10 +800,10 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       call_instr->dest = exit ? 0 : dest->index.index;
       AppendInstr(scope, &call_instr->_base);
 
-      ReleaseLocal(scope, func);
+      ReleaseLocal(scope, func, exit);
       for (size_t i = 0; i < argc; ++i) {
         FbleVectorAppend(call_instr->args, args[i]->index);
-        ReleaseLocal(scope, args[i]);
+        ReleaseLocal(scope, args[i], exit);
       }
 
       return dest;
@@ -826,8 +828,8 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       Local* result = CompileExpr(blocks, exit, scope, link_tc->body);
 
-      PopVar(scope);
-      PopVar(scope);
+      PopVar(scope, exit);
+      PopVar(scope, exit);
       return result;
     }
 
@@ -861,14 +863,14 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
         // TODO: Does this hold on to the bindings longer than we want to?
         if (args[i] != NULL) {
           FbleVectorAppend(fork->args, args[i]->index);
-          ReleaseLocal(scope, args[i]);
+          ReleaseLocal(scope, args[i], false);
         }
       }
 
       Local* local = CompileExpr(blocks, exit, scope, exec_tc->body);
 
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        PopVar(scope);
+        PopVar(scope, exit);
       }
 
       return local;
