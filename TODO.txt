@@ -7,8 +7,6 @@
  - Make sure to release unused locals for tail call.
    Tail call should properly transfer ownership of all local args, analogous
    to how RETURN transfers ownership of the result.
- - Avoid FbleReleaseValue call before overwrite, it shouldn't be necessary
-   anymore.
  - Avoid FbleReleaseValue calls in pop stack frame. It shouldn't be necessary
    anymore (except for abort case, which should use its own separate code to
    do so).

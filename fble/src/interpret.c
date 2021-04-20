@@ -141,8 +141,8 @@ static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index)
 //   Sets the value at the given index in the frame.
 static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
 {
+  assert(NULL == thread->stack->locals[index]);
   FbleRetainValue(heap, value);
-  FbleReleaseValue(heap, thread->stack->locals[index]);
   thread->stack->locals[index] = value;
 }
 
@@ -163,7 +163,7 @@ static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalI
 //   reference ownership of the value.
 static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
 {
-  FbleReleaseValue(heap, thread->stack->locals[index]);
+  assert(NULL == thread->stack->locals[index]);
   thread->stack->locals[index] = value;
 }
 
@@ -460,6 +460,7 @@ static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 static FbleExecStatus ReleaseInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
+  assert(NULL != thread->stack->locals[release_instr->target]);
   FbleReleaseValue(heap, thread->stack->locals[release_instr->target]);
   thread->stack->locals[release_instr->target] = NULL;
   thread->stack->pc++;
