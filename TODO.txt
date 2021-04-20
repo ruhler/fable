@@ -1,7 +1,5 @@
 * Add explicit Release instructions to free values during normal flow
- - Set to NULL on release so we can properly cleanup based on NULLs in abort
-   for the time being.
- - Make sure to release unused locals in CompileExit.
+ - Make sure to release args as well as other locals in CompileExit.
  - Make sure to release unused locals for tail call.
    Tail call should properly transfer ownership of all local args, analogous
    to how RETURN transfers ownership of the result.

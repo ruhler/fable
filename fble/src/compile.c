@@ -482,7 +482,18 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
 static void CompileExit(bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
-    // TODO: Release locals that aren't result here?
+    // Release any remaining local variables before returning.
+    for (size_t i = 0; i < scope->locals.size; ++i) {
+      Local* local = scope->locals.xs[i];
+      if (local != NULL && local != result) {
+        FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
+        release_instr->_base.tag = FBLE_RELEASE_INSTR;
+        release_instr->_base.profile_ops = NULL;
+        release_instr->target = local->index.index;
+        AppendInstr(scope, &release_instr->_base);
+      }
+    }
+
     AppendProfileOp(scope, FBLE_PROFILE_EXIT_OP, 0);
 
     FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
