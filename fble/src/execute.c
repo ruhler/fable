@@ -226,17 +226,13 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
   FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
   stack->joins = 0;
   stack->func = func;
-  FbleRetainValue(heap, &func->_base);
   stack->pc = 0;
   stack->result = thread->stack->result;
   stack->tail = thread->stack->tail;
   memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
-  // Take references to the function and arguments early to ensure we don't
-  // drop the last reference to them before we get the chance.
   for (size_t i = 0; i < func->executable->args; ++i) {
     stack->locals[i] = args[i];
-    FbleRetainValue(heap, args[i]);
   }
 
   PopStackFrame(heap, thread);

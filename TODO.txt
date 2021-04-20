@@ -1,10 +1,17 @@
 * Add explicit Release instructions to free values during normal flow
  - Make sure to release args as well as other locals in CompileExit.
- - Tail call should properly transfer ownership of all local args, analogous
-   to how RETURN transfers ownership of the result.
  - Avoid FbleReleaseValue calls in pop stack frame. It shouldn't be necessary
    anymore (except for abort case, which should use its own separate code to
    do so).
+
+* Add a test case that exercises a TAIL_CALL where the same local is used for
+  multiple args to the tail call.
+
+* Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
+  Their implementations may be different enough now to warrant it?
+
+* Consider adding a RETAIN instruction and using it to do the FbleRetainValue
+  calls on statics used in RETURN and TAIL_CALL?
 
 * Figure out how to get the profiling block I want around exec bindings?
  - I think the way it's setup, either we'll get no block in some cases, or

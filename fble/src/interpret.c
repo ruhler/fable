@@ -299,6 +299,23 @@ static FbleExecStatus CallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   }
 
   if (call_instr->exit) {
+    FbleRetainValue(heap, &func->_base);
+    for (size_t i = 0; i < func->executable->args; ++i) {
+      FbleRetainValue(heap, args[i]);
+    }
+
+   if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+     FbleReleaseValue(heap, thread->stack->locals[call_instr->func.index]);
+     thread->stack->locals[call_instr->func.index] = NULL;
+   }
+
+   for (size_t i = 0; i < func->executable->args; ++i) {
+     if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
+       FbleReleaseValue(heap, thread->stack->locals[call_instr->args.xs[i].index]);
+       thread->stack->locals[call_instr->args.xs[i].index] = NULL;
+     }
+   }
+
     FbleThreadTailCall(heap, func, args, thread);
     return FBLE_EXEC_FINISHED;
   }

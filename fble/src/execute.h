@@ -95,16 +95,17 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
 //
 // Inputs:
 //   heap - the value heap.
-//   func - the function to execute. Borrowed.
-//   args - args to the function. length == func->argc. Borrowed.
+//   func - the function to execute. Consumed.
+//   args - args to the function. length == func->argc.
+//          Array borrowed, elements consumed.
 //   thread - the thread with the stack to change.
 //
 // Side effects:
 // * Exits the current frame, which potentially frees any instructions
 //   belonging to that frame.
-// * The caller may assume it is safe for the function and arguments to be
-//   retained solely by the frame that's being replaced when ReplaceFrame is
-//   called.
+// * The func and all args have their ownership transferred to
+//   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
+//   doing an FbleReleaseValue call for func and args.
 void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
 
 // FbleThreadReturn --

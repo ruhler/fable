@@ -447,6 +447,23 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       }
 
       if (call_instr->exit) {
+        fprintf(fout, "      FbleRetainValue(heap, &func->_base);\n");
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          fprintf(fout, "      FbleRetainValue(heap, args[%i]);\n", i);
+        }
+
+        if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+          fprintf(fout, "      FbleReleaseValue(heap, thread->stack->locals[%i]);\n", call_instr->func.index);
+          fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", call_instr->func.index);
+        }
+
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
+            fprintf(fout, "      FbleReleaseValue(heap, thread->stack->locals[%i]);\n", call_instr->args.xs[i].index);
+            fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", call_instr->args.xs[i].index);
+          }
+        }
+
         fprintf(fout, "      FbleThreadTailCall(heap, func, args, thread);\n");
         fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
         return;
@@ -455,8 +472,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      thread->stack->pc = %i;\n", pc+1);
 
       fprintf(fout, "      FbleValue** result = thread->stack->locals + %i;", call_instr->dest);
-      fprintf(fout, "      FbleReleaseValue(heap, *result);\n");
-      fprintf(fout, "      *result = NULL;\n");
+      fprintf(fout, "      assert(*result == NULL);\n");
       fprintf(fout, "      FbleThreadCall(heap, result, func, args, thread);\n");
       fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
       return;
