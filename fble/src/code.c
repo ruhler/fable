@@ -255,6 +255,12 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
           fprintf(fout, "l%zi = type;\n", type_instr->dest);
           break;
         }
+
+        case FBLE_RELEASE_INSTR: {
+          FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
+          fprintf(fout, "release l%zi;\n", release_instr->target);
+          break;
+        }
       }
     }
     fprintf(fout, "\n\n");
@@ -281,6 +287,7 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_REF_VALUE_INSTR:
     case FBLE_RETURN_INSTR:
     case FBLE_TYPE_INSTR:
+    case FBLE_RELEASE_INSTR:
       FbleFree(instr);
       return;
 

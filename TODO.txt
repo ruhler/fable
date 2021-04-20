@@ -1,18 +1,30 @@
-* Figure out how to get the profiling block I want around exec bindings?
+* Add explicit Release instructions to free values during normal flow
+ - Set to NULL on release so we can properly cleanup based on NULLs in abort
+   for the time being.
+ - Avoid release instructions after exit. Probably by not emitting release
+   instructions in finish scope.
+ - Make sure to release unused locals in CompileExit.
+ - Make sure to release unused locals for tail call.
+   Tail call should properly transfer ownership of all local args, analogous
+   to how RETURN transfers ownership of the result.
+ - Avoid FbleReleaseValue call before overwrite, it shouldn't be necessary
+   anymore.
+ - Avoid FbleReleaseValue calls in pop stack frame. It shouldn't be necessary
+   anymore (except for abort case, which should use its own separate code to
+   do so).
 
-* Looks like profiling is broken. Fix it? Add a test?
- - I suspect auto exit calling into nothing.
-   /GameOfLife/App%.game_out tail calls a put value, which we expect to have
-   this broken behavior.
- - And we're also missing better labeling for exec bindings.
- - Maybe worth thinking about in the context of profiling for compilation?
+* Figure out how to get the profiling block I want around exec bindings?
+ - I think the way it's setup, either we'll get no block in some cases, or
+   double blocks in some cases. Is it really that important to fix?
+ - Maybe add a test case at least to show the problem in ProfileTests.fble?
+
+* Add test demonstrating issue with tail call of PUT to ProfileTests.fble.
+
+* Fix profiling issue.
  See thoughts/fble.profile.txt.
 
 * Add 'abort' function to FbleExecutable for cleaning up the stack.
  - And use it to unwind frame by frame instead of whatever we do now.
-* Add explicit Release instructions to free values during normal flow
- - Set to NULL on release so we can properly cleanup based on NULLs in abort
-   for the time being.
 * Track info necessary to know what to release on abort without checking if
   something is NULL or not.
 * Remove setting of NULL on release to test that we don't rely on it. 

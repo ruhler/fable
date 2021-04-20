@@ -80,6 +80,7 @@ typedef enum {
   FBLE_REF_DEF_INSTR,
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
+  FBLE_RELEASE_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -293,6 +294,13 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex dest;
 } FbleTypeInstr;
+
+// FbleReleaseInstr -- FBLE_RELEASE_INSTR
+//  FbleReleaseValue(target)
+typedef struct {
+  FbleInstr _base;
+  FbleLocalIndex target;
+} FbleReleaseInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.

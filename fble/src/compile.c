@@ -129,12 +129,9 @@ static Local* NewLocal(Scope* scope)
 //   scope - the scope that the local belongs to
 //   local - the local to release. May be NULL.
 //
-// Results:
-//   none
-//
 // Side effects:
 //   Decrements the reference count on the local and frees it if the refcount
-//   drops to 0.
+//   drops to 0. Emits a RELEASE instruction if appropriate.
 static void LocalRelease(Scope* scope, Local* local)
 {
   if (local == NULL) {
@@ -143,6 +140,12 @@ static void LocalRelease(Scope* scope, Local* local)
 
   local->refcount--;
   if (local->refcount == 0) {
+    FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
+    release_instr->_base.tag = FBLE_RELEASE_INSTR;
+    release_instr->_base.profile_ops = NULL;
+    release_instr->target = local->index.index;
+    AppendInstr(scope, &release_instr->_base);
+
     assert(local->index.section == FBLE_LOCALS_FRAME_SECTION);
     assert(scope->locals.xs[local->index.index] == local);
     scope->locals.xs[local->index.index] = NULL;
@@ -464,7 +467,7 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
 }
 
 // CompileExit --
-//   If exit is true, appends an exit scope instruction to instrs.
+//   If exit is true, appends a return instruction to instrs.
 //
 // Inputs:
 //   blocks - the blocks stack.
@@ -473,10 +476,11 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
 //   result - the result to return when exiting. May be NULL.
 //
 // Side effects:
-//   If exit is true, appends an exit scope instruction to instrs
+//   If exit is true, appends a return instruction to instrs
 static void CompileExit(bool exit, Scope* scope, Local* result)
 {
   if (exit && result != NULL) {
+    // TODO: Release locals that aren't result here?
     AppendProfileOp(scope, FBLE_PROFILE_EXIT_OP, 0);
 
     FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
@@ -775,6 +779,8 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       for (size_t i = 0; i < argc; ++i) {
         args[i] = CompileExpr(blocks, false, scope, apply_tc->args.xs[i]);
       }
+
+      // TODO: Free locals not used in call instruction for tail calls?
 
       if (exit) {
         AppendProfileOp(scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);

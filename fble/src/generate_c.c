@@ -120,6 +120,7 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 
       case FBLE_RETURN_INSTR: break;
       case FBLE_TYPE_INSTR: break;
+      case FBLE_RELEASE_INSTR: break;
     }
   }
 }
@@ -573,6 +574,13 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      FbleTypeValue* v = FbleNewValue(heap, FbleTypeValue);\n");
       fprintf(fout, "      v->_base.tag = FBLE_TYPE_VALUE;\n");
       FrameSetConsumed(fout, "      ", type_instr->dest, "&v->_base");
+      return;
+    }
+
+    case FBLE_RELEASE_INSTR: {
+      FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
+      fprintf(fout, "      FbleReleaseValue(heap, thread->stack->locals[%i]);\n", release_instr->target);
+      fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", release_instr->target);
       return;
     }
   }

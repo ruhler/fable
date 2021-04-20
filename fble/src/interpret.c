@@ -61,6 +61,7 @@ static FbleExecStatus RefValueInstr(FbleValueHeap* heap, FbleThreadV* threads, F
 static FbleExecStatus RefDefInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus ReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus ReleaseInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 
 // sInstrImpls --
 //   Implementations of instructions, indexed by instruction tag.
@@ -80,6 +81,7 @@ static InstrImpl sInstrImpls[] = {
   &RefDefInstr,           // FBLE_REF_DEF_INSTR
   &ReturnInstr,           // FBLE_RETURN_INSTR
   &TypeInstr,             // FBLE_TYPE_INSTR
+  &ReleaseInstr,          // FBLE_RELEASE_INSTR
 };
 
 // FrameGet --
@@ -449,6 +451,17 @@ static FbleExecStatus TypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleT
   FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
   value->_base.tag = FBLE_TYPE_VALUE;
   FrameSetConsumed(heap, thread, type_instr->dest, &value->_base);
+  thread->stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
+// ReleaseInstr -- see documentation of InstrImpl
+//   Execute a FBLE_RELEASE_INSTR.
+static FbleExecStatus ReleaseInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
+  FbleReleaseValue(heap, thread->stack->locals[release_instr->target]);
+  thread->stack->locals[release_instr->target] = NULL;
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
