@@ -1,6 +1,10 @@
-* Avoid redundant retain/release where possible for tail call arg transfers.
- - We should be able to remove the first RETAIN and the RELEASE of a local
-   arg. We will need the subsequence retains though.
+
+* Add 'abort' function to FbleExecutable for cleaning up the stack.
+ - And use it to unwind frame by frame instead of whatever we do now.
+* Track info necessary to know what to release on abort without checking if
+  something is NULL or not.
+* Remove setting and checking of NULL on release to test that we don't rely on
+  it. And maybe get a speed boost?
 
 * Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
   Their implementations may be different enough now to warrant it?
@@ -21,13 +25,6 @@
 
 * Fix profiling issue.
  See thoughts/fble.profile.txt.
-
-* Add 'abort' function to FbleExecutable for cleaning up the stack.
- - And use it to unwind frame by frame instead of whatever we do now.
-* Track info necessary to know what to release on abort without checking if
-  something is NULL or not.
-* Remove setting and checking of NULL on release to test that we don't rely on
-  it. And maybe get a (tiny?) speed boost?
 
 * Could I emit #line pragmas to get gcov and gprof at .fble file level?
  - But we would want more comprehensive line number information, instead of

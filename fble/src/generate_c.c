@@ -448,8 +448,24 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
       if (call_instr->exit) {
         fprintf(fout, "      FbleRetainValue(heap, &func->_base);\n");
+
         for (size_t i = 0; i < call_instr->args.size; ++i) {
-          fprintf(fout, "      FbleRetainValue(heap, args[%i]);\n", i);
+          // We need to do a Retain on every arg from statics. For args from
+          // locals, we don't need to do a Retain on the arg the first time we
+          // see the local, because we can transfer the caller's ownership of
+          // the local to the callee for that arg.
+          bool retain = call_instr->args.xs[i].section != FBLE_LOCALS_FRAME_SECTION;
+          for (size_t j = 0; j < i; ++j) {
+            if (call_instr->args.xs[i].section == call_instr->args.xs[j].section
+                && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
+              retain = true;
+              break;
+            }
+          }
+
+          if (retain) {
+            fprintf(fout, "      FbleRetainValue(heap, args[%i]);\n", i);
+          }
         }
 
         if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
@@ -459,7 +475,6 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
-            fprintf(fout, "      FbleReleaseValue(heap, thread->stack->locals[%i]);\n", call_instr->args.xs[i].index);
             fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", call_instr->args.xs[i].index);
           }
         }
