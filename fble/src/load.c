@@ -228,6 +228,11 @@ static FbleString* Find(const char* root, Tree* tree, FbleModulePath* path)
 // FbleLoad -- see documentation in fble-load.h
 FbleLoadedProgram* FbleLoad(const char* filename, const char* root)
 {
+  if (filename == NULL) {
+    fprintf(stderr, "no input file\n");
+    return NULL;
+  }
+
   FbleLoadedProgram* program = FbleAlloc(FbleLoadedProgram);
   FbleVectorInit(program->modules);
 

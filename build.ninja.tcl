@@ -308,7 +308,7 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
   "$::bin/fble-stdio prgms/Stdio/Test.fble prgms > $::test/fble-stdio.out && grep PASSED $::test/fble-stdio.out > /dev/null"
 
 # /Stdio/Test% compilation test
-obj $::obj/fble-compiled-stdio.o prgms/fble-compiled-stdio.c "-I fble/include"
+obj $::obj/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleStdioMain -I fble/include"
 build $::src/fble-stdio-test.c $::bin/fble-compile \
   "$::bin/fble-compile /Stdio/Test% --export FbleStdioMain > $::src/fble-stdio-test.c"
 obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"

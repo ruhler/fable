@@ -32,6 +32,7 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static char ReadChar(FbleValue* c);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
+static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -163,6 +164,28 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
   return change;
 }
 
+// Main --
+//   Load the main fble program.
+//
+// See documentation of FbleLinkFromSource in fble-link.h
+//
+// #define FbleCompileMain to the exported name of the compiled fble code to
+// load if you want to load compiled .fble code. Otherwise we'll load
+// interpreted .fble code.
+#ifdef FbleCompiledMain
+FbleValue* FbleCompiledMain(FbleValueHeap* heap);
+
+static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
+{
+  return FbleCompiledMain(heap);
+}
+#else
+static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
+{
+  return FbleLinkFromSource(heap, file, dir, profile);
+}
+#endif // FbleCompiledMain
+
 // main --
 //   The main entry point for fble-tests.
 //
@@ -195,19 +218,13 @@ int main(int argc, char* argv[])
     argv += 2;
   }
 
-  if (argc <= 1) {
-    fprintf(stderr, "no input file.\n");
-    PrintUsage(stderr);
-    return 1;
-  }
-
-  const char* path = argv[1];
-  const char* include_path = argv[2];
+  const char* path = argc <= 1 ? NULL : argv[1];
+  const char* include_path = argc <= 2 ? NULL : argv[2];
 
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* linked = FbleLinkFromSource(heap, path, include_path, profile);
+  FbleValue* linked = Main(heap, path, include_path, profile);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
