@@ -359,6 +359,7 @@ FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals)
   code->_base.statics = statics;
   code->_base.locals = locals;
   code->_base.run = &FbleInterpreterRunFunction;
+  code->_base.abort = &FbleExecutableStandardAbortFunction;
   code->_base.on_free = &OnFree;
   FbleVectorInit(code->instrs);
   return code;

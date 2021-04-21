@@ -363,6 +363,7 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
   exec->statics = 2;
   exec->locals = 0;
   exec->run = &PutRunFunction;
+  exec->abort = &FbleExecutableStandardAbortFunction;
   exec->on_free = &FbleExecutableNothingOnFree;
 
   FbleFuncValue* put = FbleNewFuncValue(heap, exec);
@@ -394,6 +395,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
   exec->statics = 1;
   exec->locals = 0;
   exec->run = &GetRunFunction;
+  exec->abort = &FbleExecutableStandardAbortFunction;
   exec->on_free = &FbleExecutableNothingOnFree;
 
   FbleProcValue* get = FbleNewFuncValue(heap, exec);
@@ -426,6 +428,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   exec->statics = 1;
   exec->locals = 1;
   exec->run = &PartialPutRunFunction;
+  exec->abort = &FbleExecutableStandardAbortFunction;
   exec->on_free = &FbleExecutableNothingOnFree;
 
   FbleFuncValue* put = FbleNewFuncValue(heap, exec);

@@ -100,10 +100,8 @@ static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
         break;
       }
 
-      for (size_t i = 0; i < thread->stack->func->executable->locals; ++i) {
-        FbleReleaseValue(heap, thread->stack->locals[i]);
-        thread->stack->locals[i] = NULL;
-      }
+
+      thread->stack->func->executable->abort(heap, thread->stack);
       PopStackFrame(heap, thread);
     }
 
@@ -298,6 +296,15 @@ void FbleFreeExecutable(FbleExecutable* executable)
   if (executable->refcount == 0) {
     executable->on_free(executable);
     FbleFree(executable);
+  }
+}
+
+// FbleExecutableStandardAbortFunction -- see documentation in execute.h
+void FbleExecutableStandardAbortFunction(FbleValueHeap* heap, FbleStack* stack)
+{
+  for (size_t i = 0; i < stack->func->executable->locals; ++i) {
+    FbleReleaseValue(heap, stack->locals[i]);
+    stack->locals[i] = NULL;
   }
 }
 

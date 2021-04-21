@@ -149,6 +149,18 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
 //   unblock another thread.
 typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 
+// FbleAbortFunction --
+//   A C function to abort and clean up the fble function on the top of the
+//   thread stack.
+//
+// Inputs:
+//   heap - the value heap.
+//   stack - the stack frame to clean up.
+//
+// Side effects:
+// * Local variables and intermediate execution state should be freed.
+typedef void FbleAbortFunction(FbleValueHeap* heap, FbleStack* stack);
+
 // FbleExecutable --
 //   A reference counted, partially abstract data type describing how to
 //   execute a function.
@@ -158,12 +170,13 @@ typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThreadV* threads
 // custom state.
 #define FBLE_EXECUTABLE_MAGIC 0xB10CE
 struct FbleExecutable {
-  size_t refcount;        // reference count.
-  size_t magic;           // FBLE_EXECUTABLE_MAGIC.
-  size_t args;            // The number of arguments expected by the function.
-  size_t statics;         // The number of statics used by the function.
-  size_t locals;          // The number of locals used by the function.
-  FbleRunFunction* run;   // How to run the function.
+  size_t refcount;            // reference count.
+  size_t magic;               // FBLE_EXECUTABLE_MAGIC.
+  size_t args;                // The number of arguments expected by the function.
+  size_t statics;             // The number of statics used by the function.
+  size_t locals;              // The number of locals used by the function.
+  FbleRunFunction* run;       // How to run the function.
+  FbleAbortFunction* abort;   // How to abort the function.
   void (*on_free)(FbleExecutable* this);
 };
 
@@ -178,6 +191,13 @@ struct FbleExecutable {
 //   Decrements the refcount and, if necessary, calls executable->on_free and
 //   free resources associated with the given executable.
 void FbleFreeExecutable(FbleExecutable* executable);
+
+// FbleExecutableStandardAbortFunction --
+//   A standard implementation of the FbleAbortFunction that calls
+//   FbleReleaseValue on all non-NULL locals.
+//
+// See documentation of FbleExecutable.abort above.
+void FbleExecutableStandardAbortFunction(FbleValueHeap* heap, FbleStack* stack);
 
 // FbleExecutableNothingOnFree --
 //   Implementation of a no-op FbleExecutable.on_free function.

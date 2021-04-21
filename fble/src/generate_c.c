@@ -422,6 +422,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      executable->statics = %i;\n", func_instr->code->_base.statics);
       fprintf(fout, "      executable->locals = %i;\n", func_instr->code->_base.locals);
       fprintf(fout, "      executable->run = &_block_%p;\n", (void*)func_instr->code);
+      fprintf(fout, "      executable->abort = &FbleExecutableStandardAbortFunction;\n");
       fprintf(fout, "      executable->on_free = &FbleExecutableNothingOnFree;\n");
       fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, executable);\n");
       fprintf(fout, "      FbleFreeExecutable(executable);\n");
@@ -917,6 +918,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  v%x->executable->statics = %i;\n", module_id, module->code->_base.statics);
   fprintf(fout, "  v%x->executable->locals = %i;\n", module_id, module->code->_base.locals);
   fprintf(fout, "  v%x->executable->run = &_block_%p;\n", module_id, (void*)module->code);
+  fprintf(fout, "  v%x->executable->abort = &FbleExecutableStandardAbortFunction;\n", module_id);
   fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
 
   fprintf(fout, "}\n");
