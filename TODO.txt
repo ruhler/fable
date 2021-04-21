@@ -1,8 +1,13 @@
-* Add a test case that exercises a TAIL_CALL where the same local is used for
-  multiple args to the tail call.
+* Avoid redundant retain/release where possible for tail call arg transfers.
+ - We should be able to remove the first RETAIN and the RELEASE of a local
+   arg. We will need the subsequence retains though.
 
 * Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
   Their implementations may be different enough now to warrant it?
+
+* Consider changing RELEASE_INSTR to take a vector of args to release?
+  - Just to speed up interpreted code for the case where we are freeing a
+    bunch of values in a row before returning or tail calling.
 
 * Consider adding a RETAIN instruction and using it to do the FbleRetainValue
   calls on statics used in RETURN and TAIL_CALL?
