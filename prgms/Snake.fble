@@ -16,7 +16,7 @@
 % Drawings = /Drawing%.Drawings;
 % Rect = /Drawing%.Rect;
 % Over = /Drawing%.Over;
-% Transform = /Drawing%.Transform;
+% Affine = /Drawing%.Affine;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
@@ -36,7 +36,6 @@
 % Dec = /Int/Int%.Dec;
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
-% Neg = /Int/Int%.Neg;
 % Sub = /Int/Int%.Sub;
 
 % Eq = /Int/Int/Eq%.Eq;
@@ -288,20 +287,13 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   State@ s = InitialState;
   
   # Map game coordinates into screen coordinates.
-  Int@ ax = Div(width, Add(3, MaxCol));
-  Int@ bx = ax;
-  Int@ ay = Neg(Div(height, Add(3, MaxRow)));
-  Int@ by = Add(height, ay);
-
-  (Point@) { Point@; } f = (Point@ p) {
-    @(x: Add(Mul(ax, p.x), bx), 
-      y: Add(Mul(ay, p.y), by));
-  };
+  Point@ a = @(x: Div(width, Add(3, MaxCol)), y: Div(height, Add(3, MaxRow)));
+  Point@ b = @(x: a.x, y: Add(height, a.y));
 
   Put@<Effect@> game_out = (Effect@ e) {
     Effect@ transformed = e.?(
       tick: e,
-      draw: Effect@(draw: Transform(f, e.draw)));
+      draw: Effect@(draw: Affine(a, b, e.draw)));
     out(transformed);
   };
 

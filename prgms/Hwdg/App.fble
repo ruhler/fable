@@ -12,7 +12,7 @@
 @ Point@ = /Drawing%.Point@;
 % Rect = /Drawing%.Rect;
 % Over = /Drawing%.Over;
-% Transform = /Drawing%.Transform;
+% Affine = /Drawing%.Affine;
 
 @ Coord@ = /Hwdg%.Coord@;
 @ Data@ = /Hwdg%.Data@;
@@ -31,8 +31,6 @@
 % 1 = /Int/Int%.1;
 % 2 = /Int/Int%.2;
 % Inc = /Int/Int%.Inc;
-% Add = /Int/Int%.Add;
-% Mul = /Int/Int%.Mul;
 % Dec = /Int/Int%.Dec;
 % Neg = /Int/Int%.Neg;
 % Sub = /Int/Int%.Sub;
@@ -146,20 +144,13 @@ StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Gates@ gates, Cells@ cells
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
-  Int@ ax = Div(width, Width);
-  Int@ bx = Div(width, 2);
-  Int@ ay = Div(height, Height);
-  Int@ by = Div(height, 2);
-
-  (Point@) { Point@; } f = (Point@ p) {
-    @(x: Add(Mul(ax, p.x), bx), 
-      y: Add(Mul(ay, p.y), by));
-  };
+  Point@ a = @(x: Div(width, Width), y: Div(height, Height));
+  Point@ b = @(x: Div(width, 2), y: Div(height, 2));
 
   Put@<Effect@> game_out = (Effect@ e) {
     Effect@ transformed = e.?(
       tick: e,
-      draw: Effect@(draw: Transform(f, e.draw)));
+      draw: Effect@(draw: Affine(a, b, e.draw)));
     # Note: we don't just use 'out(transformed)' here because of a bug in
     # profiling when tail calling a PUT value function.
     Unit@ _ := out(transformed);

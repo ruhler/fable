@@ -7,12 +7,10 @@
 @ Point@ = /Drawing%.Point@;
 % Over = /Drawing%.Over;
 % Rect = /Drawing%.Rect;
-% Transform = /Drawing%.Transform;
+% Affine = /Drawing%.Affine;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
-% Add = /Int/Int%.Add;
-% Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
 
 % Int = /Int/Int/Lit%.Int;
@@ -66,15 +64,8 @@ Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
-  Int@ ax = Int|1;
-  Int@ bx = Int|0;
-  Int@ ay = Neg(Int|1);
-  Int@ by = Int|480;
-
-  (Point@) { Point@; } f = (Point@ p) {
-    @(x: Add(Mul(ax, p.x), bx), 
-      y: Add(Mul(ay, p.y), by));
-  };
+  Point@ a = @(x: Int|1, y: Neg(Int|1));
+  Point@ b = @(x: Int|0, y: Int|480);
 
   # The target is 60 FPS, or 16 millseconds per frame.
   #Int@ frame_period = Int|16;
@@ -86,7 +77,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     # calls of PUT values.
     Unit@ _ := out(Effect@(draw: Over(
       Rect(0, 0, width, height, Color@(black: Unit)),
-      Transform(f, Game.Draw(g)))));
+      Affine(a, b, Game.Draw(g)))));
     !(Unit);
   };
 

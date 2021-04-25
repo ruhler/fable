@@ -5,11 +5,9 @@
 
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
-% Transform = /Drawing%.Transform;
+% Affine = /Drawing%.Affine;
 
 @ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
 
 % Int = /Int/Int/Lit%.Int;
@@ -24,18 +22,11 @@
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
-  Int@ ax = Int|1;
-  Int@ bx = Int|0;
-  Int@ ay = Neg(Int|1);
-  Int@ by = Int|480;
-
-  (Point@) { Point@; } f = (Point@ p) {
-    @(x: Add(Mul(ax, p.x), bx), 
-      y: Add(Mul(ay, p.y), by));
-  };
+  Point@ a = @(x: Int|1, y: Neg(Int|1));
+  Point@ b = @(x: Int|0, y: Int|480);
 
   Drawing@ screenshot = Screenshot;
-  Unit@ _ := out(Effect@(draw: Transform(f, screenshot)));
+  Unit@ _ := out(Effect@(draw: Affine(a, b, screenshot)));
 
   Unit@! WaitForKeyPress = {
     Event@ e := in;

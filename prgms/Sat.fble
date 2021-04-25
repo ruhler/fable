@@ -140,7 +140,7 @@
 };
 
 # Simplify --
-#   Simplify the given formula using unit propagation and (TODO) pure literal
+#   Simplify the given formula using unit propagation and pure literal
 #   elimination.
 #
 # Returns the simplified formula and any assignments that have been made
@@ -182,12 +182,6 @@ Simplify = (Formula@ f, Assignment@ a) {
 # Returns:
 #   A satisfying assignment, unsat if the formula is unsatisfiable, or timeout
 #   if we ran out of the allowed time.
-#
-# TODO: Make this less naive by using:
-#   * unit propagation:
-#     prioritize assignments from single variable clauses.
-#   * pure literal elimination:
-#     prioritize assignments to variables that always have the same polarity.
 (Formula@, Assignment@, Timeout@) { Result@; }
 Search = (Formula@ f, Assignment@ a, Timeout@ t) {
   % fa = Simplify(f, a);
