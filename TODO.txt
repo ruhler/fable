@@ -1,3 +1,11 @@
+* Implement a variation on Drawing that uses a stack of matrices
+  So that we only have to transform each point once, instead of multiple
+  times. With the hopes that it significantly improves performance?
+  For example, we draw an alien directly to where it needs to go on the screen
+  rather than draw a point around the center of the alien, translate it to
+  wherever the alien is in the game, and translate it again to wherever that
+  maps to on the screen.
+
 * Set up compilation spec tests.
 
 * Start using custom abort functions

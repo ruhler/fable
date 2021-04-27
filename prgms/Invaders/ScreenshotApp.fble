@@ -1,9 +1,10 @@
 
-@ App@ = /App%.App@;
+@ NativeApp@ = /App%.NativeApp@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
+% RunNative = /App%.RunNative;
 
-@ Drawing@ = /Drawing%.Drawing@;
+@ Draw@ = /Drawing%.Draw@;
 @ Point@ = /Drawing%.Point@;
 % Affine = /Drawing%.Affine;
 
@@ -20,12 +21,12 @@
 
 % Screenshot = /Invaders/Graphics%.Screenshot;
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|1, y: Neg(Int|1));
   Point@ b = @(x: Int|0, y: Int|480);
 
-  Drawing@ screenshot = Screenshot;
+  Draw@ screenshot = Screenshot;
   Unit@ _ := out(Effect@(draw: Affine(a, b, screenshot)));
 
   Unit@! WaitForKeyPress = {
@@ -33,6 +34,6 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
-};
+});
 
 Main;

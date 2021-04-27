@@ -1,5 +1,5 @@
 
-@ Drawing@ = /Drawing%.Drawing@;
+@ Draw@ = /Drawing%.Draw@;
 % Blank = /Drawing%.Blank;
 % Drawings = /Drawing%.Drawings;
 % Translate = /Drawing%.Translate;
@@ -18,8 +18,6 @@
 % Ship = /Invaders/Ship%;
 @ Dir@ = Ship.Dir@;
 @ Ship@ = Ship.Ship@;
-
-<@>% List = /List%.List;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -49,10 +47,10 @@ Game@ Initial = @(
   Game@(g.score, g.lives, Ship.Input(g.ship, d), g.aliens);
 };
 
-(Int@) { Drawing@; } DrawScore = {
+(Int@) { Draw@; } DrawScore = {
   # Digit -- Get the drawing associated with the digit corresponding to d.
   # Returns a blank drawing if d is not in [0-9].
-  (Int@) { Drawing@; } Digit = (Int@ d) {
+  (Int@) { Draw@; } Digit = (Int@ d) {
     d.?(n: Blank, 0: Graphics.Digits.0, p: d.p.?(
         1: Graphics.Digits.1,
         2p0: d.p.2p0.?( 
@@ -87,40 +85,40 @@ Game@ Initial = @(
     Int@ s100 = Div(s1000, 10);
     Int@ s10 = Div(s100, 10);
     Int@ s1 = Div(s10, 10);
-    Drawing@ d0 = Digit(Mod(s1000, 10));
-    Drawing@ d1 = Digit(Mod(s100, 10));
-    Drawing@ d2 = Digit(Mod(s10, 10));
-    Drawing@ d3 = Digit(Mod(s1, 10));
-    Drawings(List<Drawing@>[
+    Draw@ d0 = Digit(Mod(s1000, 10));
+    Draw@ d1 = Digit(Mod(s100, 10));
+    Draw@ d2 = Digit(Mod(s10, 10));
+    Draw@ d3 = Digit(Mod(s1, 10));
+    Drawings[
       Translate(Int|80, Int|440, d3),
       Translate(Int|96, Int|440, d2),
       Translate(Int|112, Int|440, d1),
       Translate(Int|128, Int|440, d0)
-    ]);
+    ];
   };
 };
 
-(Lives@) { Drawing@; } DrawLives = {
-  Drawing@ l1 = Translate(Int|320, Int|440, Graphics.Ship);
-  Drawing@ l2 = Translate(Int|360, Int|440, Graphics.Ship);
-  Drawing@ l3 = Translate(Int|400, Int|440, Graphics.Ship);
+(Lives@) { Draw@; } DrawLives = {
+  Draw@ l1 = Translate(Int|320, Int|440, Graphics.Ship);
+  Draw@ l2 = Translate(Int|360, Int|440, Graphics.Ship);
+  Draw@ l3 = Translate(Int|400, Int|440, Graphics.Ship);
   (Lives@ l) {
     l.?(
       0: Blank,
-      1: Drawings(List<Drawing@>[l1]),
-      2: Drawings(List<Drawing@>[l1, l2]),
-      3: Drawings(List<Drawing@>[l1, l2, l3]));
+      1: Drawings[l1],
+      2: Drawings[l1, l2],
+      3: Drawings[l1, l2, l3]);
   };
 };
 
-(Game@) { Drawing@; } Draw = (Game@ g) {
-  Drawings(List<Drawing@>[
+(Game@) { Draw@; } Draw = (Game@ g) {
+  Drawings[
     DrawScore(g.score),
     DrawLives(g.lives),
     Graphics.Background,
     Ship.Draw(g.ship),
     Aliens.Draw(g.aliens)
-  ]);
+  ];
 };
 
 @(Game@, Initial, Input, Tick, Draw);

@@ -1,7 +1,8 @@
 
-@ App@ = /App%.App@;
+@ NativeApp@ = /App%.NativeApp@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
+% RunNative = /App%.RunNative;
 
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
@@ -10,7 +11,7 @@
 % Or = /Bool%.Or;
 
 @ Color@ = /Drawing%.Color@;
-@ Drawing@ = /Drawing%.Drawing@;
+@ Draw@ = /Drawing%.Draw@;
 @ Point@ = /Drawing%.Point@;
 % Blank = /Drawing%.Blank;
 % Drawings = /Drawing%.Drawings;
@@ -75,7 +76,7 @@ Int@ MaxCol = Int|60;
 
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 
-(Pos@, Cell@) { Drawing@; } DrawCell = (Pos@ pos, Cell@ cell) {
+(Pos@, Cell@) { Draw@; } DrawCell = (Pos@ pos, Cell@ cell) {
   Color@ c = cell.?(
     empty: Color@(blue: Unit),
     snake: Color@(cyan: Unit),
@@ -100,18 +101,18 @@ Int@ MaxCol = Int|60;
   Int@ speed
 );
 
-(List@<Pos@>) { Drawing@; } DrawSnakeS = (List@<Pos@> s) {
-  ForEach<Pos@, Drawing@>(s, Blank, (Pos@ p, Drawing@ d) {
+(List@<Pos@>) { Draw@; } DrawSnakeS = (List@<Pos@> s) {
+  ForEach<Pos@, Draw@>(s, Blank, (Pos@ p, Draw@ d) {
     Over(DrawCell(p, Cell@(snake: Unit)), d);
   });
 };
 
-(State@) { Drawing@; } Draw = (State@ s) {
-  Drawings(List<Drawing@>[
+(State@) { Draw@; } Draw = (State@ s) {
+  Drawings[
     Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit)),
     DrawSnakeS(s.snake),
     DrawCell(s.food, Cell@(food: Unit))
-  ]);
+  ];
 };
 
 State@ InitialState = {
@@ -283,7 +284,7 @@ Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   );
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   State@ s = InitialState;
   
   # Map game coordinates into screen coordinates.
@@ -307,6 +308,6 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
-};
+});
 
 Main;

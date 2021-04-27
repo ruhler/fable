@@ -1,13 +1,14 @@
 
-@ App@ = /App%.App@;
+@ NativeApp@ = /App%.NativeApp@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
+% RunNative = /App%.RunNative;
 
 @ Bool@ = /Bool%.Bool@;
 % False = /Bool%.False;
 % True = /Bool%.True;
 
-@ Drawing@ = /Drawing%.Drawing@;
+@ Draw@ = /Drawing%.Draw@;
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
 % Rect = /Drawing%.Rect;
@@ -77,14 +78,14 @@ Cells@ Cells = {
 
 # Draw --
 #   Draw the current hardware configuration.
-(Gates@, Cells@) { Drawing@; } Draw = (Gates@ gates, Cells@ cells) {
+(Gates@, Cells@) { Draw@; } Draw = (Gates@ gates, Cells@ cells) {
   # 1. Clear the background.
-  Drawing@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
+  Draw@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
 
   # 2. For each input or output port of a gate, draw a white unit square.
   # TODO: Don't assume Gates is a /Map%.Map@?
- Drawing@ io = ForEachGate<Drawing@>(gates, clear,
-   (Coord@ p, Gate@ g, Drawing@ d) {
+ Draw@ io = ForEachGate<Draw@>(gates, clear,
+   (Coord@ p, Gate@ g, Draw@ d) {
      Ports@<Coord@> coords = Ports@<Coord@>(
        Coord@(p.x, p.y), Coord@(Inc(p.x), p.y),
        Coord@(p.x, Inc(p.y)), Coord@(Inc(p.x), Inc(p.y)));
@@ -95,23 +96,23 @@ Cells@ Cells = {
        g.ports.ll.?(unused: False, : True),
        g.ports.lr.?(unused: False, : True));
 
-     Ports@<Drawing@> fills = Ports@<Drawing@>(
+     Ports@<Draw@> fills = Ports@<Draw@>(
        Rect(coords.ul.x, coords.ul.y, 1, 1, Color@(white: Unit)),
        Rect(coords.ur.x, coords.ur.y, 1, 1, Color@(white: Unit)),
        Rect(coords.ll.x, coords.ll.y, 1, 1, Color@(white: Unit)),
        Rect(coords.lr.x, coords.lr.y, 1, 1, Color@(white: Unit)));
 
-     Drawing@ d_ul = used.ul.?(true: Over(d, fills.ul), false: d);
-     Drawing@ d_ur = used.ur.?(true: Over(d_ul, fills.ur), false: d_ul);
-     Drawing@ d_ll = used.ll.?(true: Over(d_ur, fills.ll), false: d_ur);
-     Drawing@ d_lr = used.lr.?(true: Over(d_ll, fills.lr), false: d_ll);
+     Draw@ d_ul = used.ul.?(true: Over(d, fills.ul), false: d);
+     Draw@ d_ur = used.ur.?(true: Over(d_ul, fills.ur), false: d_ul);
+     Draw@ d_ll = used.ll.?(true: Over(d_ur, fills.ll), false: d_ur);
+     Draw@ d_lr = used.lr.?(true: Over(d_ll, fills.lr), false: d_ll);
      d_lr;
    });
     
   # 3. Draw a green square for 1 and a red square for 0.
   # TODO: Don't assume Cells@ is a /Map%.Map@?
-  /Map%.ForEach<Coord@, Data@, Drawing@>(cells, io,
-    (Coord@ p, Data@ data, Drawing@ d) {
+  /Map%.ForEach<Coord@, Data@, Draw@>(cells, io,
+    (Coord@ p, Data@ data, Draw@ d) {
       Color@ color = data.?(0: Color@(red: Unit), 1: Color@(green: Unit));
       Over(d, Rect(p.x, p.y, 1, 1, color));
     });
@@ -142,7 +143,7 @@ StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Gates@ gates, Cells@ cells
               false: StepUI(in, out, Dec(n), gates, Step(gates, cells))));
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Div(width, Width), y: Div(height, Height));
   Point@ b = @(x: Div(width, 2), y: Div(height, 2));
@@ -167,6 +168,6 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   Unit@ _ := StepUI(GetInput(in), game_out, Int|2000, Gates, Cells);
 
   WaitForKeyPress;
-};
+});
 
 Main;

@@ -1,11 +1,12 @@
 
-@ App@ = /App%.App@;
+@ NativeApp@ = /App%.NativeApp@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
+% RunNative = /App%.RunNative;
 
 % And = /Bool%.And;
 
-@ Drawing@ = /Drawing%.Drawing@;
+@ Draw@ = /Drawing%.Draw@;
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
 % Rect = /Drawing%.Rect;
@@ -61,11 +62,11 @@ World@ acorn = World(List<Coord@>[
   C(Int|2, Int|6)
 ]);
 
-(World@) { Drawing@; } DrawWorld = (World@ w) {
-  Drawing@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
+(World@) { Draw@; } DrawWorld = (World@ w) {
+  Draw@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
     
   # 2. For each live cell in range, draw a green unit square.
-  ForWorld<Drawing@>(w, clear, (Coord@ coord, Unit@ _, Drawing@ d) {
+  ForWorld<Draw@>(w, clear, (Coord@ coord, Unit@ _, Draw@ d) {
     Int@ r = coord.row;
     Int@ c = coord.col;
     And(And(Lt(YMin, r), Lt(XMin, c)),
@@ -95,7 +96,7 @@ StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, World@ w) {
               false: StepUI(in, out, Dec(n), Step(w))));
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Div(width, Width), y: Div(height, Height));
   Point@ b = @(x: Div(width, 2), y: Div(height, 2));
@@ -118,6 +119,6 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
-};
+});
 
 Main;

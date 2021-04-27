@@ -1,4 +1,5 @@
 
+@ Draw@ = /Drawing%.Draw@;
 @ Drawing@ = /Drawing%.Drawing@;
 
 @ Int@ = /Int/Int%.Int@;
@@ -15,7 +16,7 @@
 );
 @ Event@ = +(Unit@ tick, Key@ key_down, Key@ key_up);
 
-@ Effect@ = +(
+@ NativeEffect@ = +(
   # Request for a tick Event@ to occur after the given number of milliseconds.
   # Time is relative to the time of the previously delivered tick event. The
   # tick will be delivered immediately if the more time has passed since the
@@ -34,8 +35,47 @@
   Drawing@ draw
 );
 
-# App@ --
+@ Effect@ = +(
+  # Request for a tick Event@ to occur after the given number of milliseconds.
+  # Time is relative to the time of the previously delivered tick event. The
+  # tick will be delivered immediately if the more time has passed since the
+  # previous tick event then requested.
+  Int@ tick,
+
+  # Draw to the screen.
+  #
+  # Coordinate (0, 0) is the upper left of the screen, with the positive x
+  # access going towards the right edge of the screen and the positive y
+  # access going towards the bottom edge of the screen.
+  # 
+  # The drawing is clipped to fit in the screen area.
+  #
+  # It is undefined how pixels not specified in the drawing will be displayed.
+  Draw@ draw
+);
+
+# NativeApp@ --
 #   Type of fble programs that can be used with the fble-app driver.
+#
+# Inputs:
+#   width - The width of the screen.
+#   height - The height of the screen.
+#   in - Get the next input event.
+#   out - Draw to the screen.
+#      Draws on top of whatever was there before.
+#
+#      Coordinate (0, 0) is the upper left of the screen, with the positive x
+#      access going towards the right edge of the screen and the positive y
+#      access going towards the bottom edge of the screen.
+# 
+#      The drawing is clipped to fit in the screen area.
+#
+# Results:
+#   None.
+@ NativeApp@ = (Int@, Int@, Get@<Event@>, Put@<NativeEffect@>){ Unit@!; };
+
+# App@ --
+#   User API for describing an App.
 #
 # Inputs:
 #   width - The width of the screen.
@@ -54,4 +94,14 @@
 #   None.
 @ App@ = (Int@, Int@, Get@<Event@>, Put@<Effect@>){ Unit@!; };
 
-@(App@, Key@, Event@, Effect@);
+(App@) { NativeApp@; }
+RunNative = (App@ app)(Int@ w, Int@ h, Get@<Event@> in, Put@<NativeEffect@> out) {
+  Put@<Effect@> pout = (Effect@ e) {
+    out(e.?(
+      tick: NativeEffect@(tick: e.tick),
+      draw: NativeEffect@(draw: /Drawing%.Draw(e.draw))));
+  };
+  app(w, h, in, pout);
+};
+
+@(App@, NativeApp@, Key@, Event@, NativeEffect@, Effect@, RunNative);
