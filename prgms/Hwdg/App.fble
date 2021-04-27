@@ -1,8 +1,7 @@
 
-@ NativeApp@ = /App%.NativeApp@;
+@ App@ = /App%.App@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
-% RunNative = /App%.RunNative;
 
 @ Bool@ = /Bool%.Bool@;
 % False = /Bool%.False;
@@ -143,7 +142,7 @@ StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Gates@ gates, Cells@ cells
               false: StepUI(in, out, Dec(n), gates, Step(gates, cells))));
 };
 
-NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Div(width, Width), y: Div(height, Height));
   Point@ b = @(x: Div(width, 2), y: Div(height, 2));
@@ -168,6 +167,6 @@ NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effe
   Unit@ _ := StepUI(GetInput(in), game_out, Int|2000, Gates, Cells);
 
   WaitForKeyPress;
-});
+};
 
 Main;

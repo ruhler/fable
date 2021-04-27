@@ -1,8 +1,7 @@
 
-@ NativeApp@ = /App%.NativeApp@;
+@ App@ = /App%.App@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
-% RunNative = /App%.RunNative;
 
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
@@ -63,7 +62,7 @@ Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
      dir: Run(in, draw, tick, Game.Input(game, i.dir)));
 };
 
-NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|1, y: Neg(Int|1));
   Point@ b = @(x: Int|0, y: Int|480);
@@ -85,6 +84,6 @@ NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effe
   Game@ game = Game.Initial;
   Unit@ _ := out(Effect@(tick: Int|0));
   Run(GetInput(in), draw, tick, game); 
-});
+};
 
 Main;

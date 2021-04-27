@@ -1,7 +1,10 @@
 
-@ NativeApp@ = /App%.NativeApp@;
+@ App@ = /App%.App@;
 @ Event@ = /App%.Event@;
-@ NativeEffect@ = /App%.NativeEffect@;
+@ Effect@ = /App%.Effect@;
+
+@ Drawing@ = /Drawing%.Drawing@;
+% Draw = /Drawing%.Draw;
 
 @ Int@ = /Int/Int%.Int@;
 % Dec = /Int/Int%.Dec;
@@ -20,12 +23,12 @@
 #   app - the app to benchmark.
 #   n - the number of iterations to run the benchmark.
 #   quit - an event that will cause the app to quit when sent to the app.
-(NativeApp@, Int@, Event@) { Unit@!; } Benchmark = (NativeApp@ app, Int@ n, Event@ quit) {
+(App@, Int@, Event@) { Unit@!; } Benchmark = (App@ app, Int@ n, Event@ quit) {
   Int@ w = Int|640;
   Int@ h = Int|480;
 
   Event@ ~ get_event, put_event;
-  NativeEffect@ ~ get_effect, put_effect;
+  Effect@ ~ get_effect, put_effect;
 
   (Int@) { Unit@!; } Feed = (Int@ n) {
     n.?(n: {
@@ -37,12 +40,18 @@
        }, : {
          # TODO: this will deadlock if the app finishes early. Is there any
          # reasonable way to avoid that?
-         NativeEffect@ e := get_effect;
-         e.?(tick: {
-               Unit@ _ := put_event(Event@(tick: Unit));
-               Feed(Dec(n));
-             },
-             draw: Feed(n));
+         Effect@ e := get_effect;
+         e.?(
+           tick: {
+             Unit@ _ := put_event(Event@(tick: Unit));
+             Feed(Dec(n));
+           },
+           draw: {
+             # Do the drawing like we would if executing this as a native app,
+             # to make sure that's counted in the benchmark time.
+             Drawing@ _ := !(Draw(e.draw));
+             Feed(n);
+           });
        });
   };
 

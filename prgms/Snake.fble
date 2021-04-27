@@ -1,8 +1,7 @@
 
-@ NativeApp@ = /App%.NativeApp@;
+@ App@ = /App%.App@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
-% RunNative = /App%.RunNative;
 
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
@@ -284,7 +283,7 @@ Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   );
 };
 
-NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   State@ s = InitialState;
   
   # Map game coordinates into screen coordinates.
@@ -308,6 +307,6 @@ NativeApp@ Main = RunNative((Int@ width, Int@ height, Get@<Event@> in, Put@<Effe
     e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;
-});
+};
 
 Main;
