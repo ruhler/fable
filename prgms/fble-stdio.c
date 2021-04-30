@@ -267,9 +267,12 @@ int main(int argc, char* argv[])
   FbleReleaseValue(heap, io.input);
   FbleReleaseValue(heap, io.output);
 
-  size_t result = FbleUnionValueTag(value);
+  size_t result = 1;
+  if (value != NULL) {
+    result = FbleUnionValueTag(value);
+    FbleReleaseValue(heap, value);
+  }
 
-  FbleReleaseValue(heap, value);
   FbleFreeValueHeap(heap);
 
   if (fprofile != NULL) {

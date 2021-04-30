@@ -48,3 +48,15 @@ Times in the past I wished I have an fble debugger:
    down by minimizing the test case enough to run it to completion, and using
    profiling to see how many times different functions were being called.
 
+ - Debug wrong tag in fble tests, where the invariants for what the tag should
+   be are a bit complicated.
+   
+   Ideally we can run until we hit the error, then get a stack trace in the
+   debugger and have a way to look at local variables and the stack trace to
+   figure out where things are going wrong.
+
+   Turned out to be a flaw in the code. Identified by minimizing the test case
+   and working out the issue on paper. It would have been much easier if I
+   could have stepped through the code and printed values of local variables
+   along the way.
+

@@ -9,6 +9,7 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
+% Neg = /Int/Int%.Neg;
 % 0 = /Int/Int%.0;
 % Le = /Int/Int/Eq%.Le;
 % Ge = /Int/Int/Eq%.Ge;
@@ -123,26 +124,23 @@ Write = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
 # compare.
 (Heap@, Addr@, List@<Bit@>, Int@) { Bool@; }
 Equals = (Heap@ heap, Addr@ addr, List@<Bit@> bits, Int@ n) {
-  heap.?(
-    value: Le(n, 0).?(
-      true: True,
-      false: /Digits/Eq%.EqBit(heap.value, bits.cons.head)),
-    binary: {
-      Int@ m = Add(addr, n);
-      Le(m, heap.binary.m).?(
-        true: Equals(heap.binary.left, addr, bits, n),
-        false: Ge(addr, heap.binary.m).?(
-          true: Equals(heap.binary.right, Sub(addr, heap.binary.m), bits, n),
-          false: {
-            Int@ nl = Sub(heap.binary.m, addr);
-            Equals(heap.binary.left, addr, bits, nl).?(
-              true: {
-                Int@ nr = Sub(n, nl);
-                Equals(heap.binary.right, Int|0, Drop<Bit@>(nl, bits), nr);
-              }, 
-              false: False);
-          }));
-    });
+  n.?(
+    p: {
+      heap.?(
+        value: /Digits/Eq%.EqBit(heap.value, bits.cons.head),
+        binary: {
+          Int@ dm = Sub(heap.binary.m, addr);
+          Int@ nl = dm.?(p: Le(n, dm).?(true: n, false: dm), : Int|0);
+          Equals(heap.binary.left, addr, bits, nl).?(
+            true: {
+              Int@ nr = Sub(n, nl);
+              Int@ right_addr = dm.?(p: Int|0, : Neg(dm));
+              Equals(heap.binary.right, right_addr, Drop<Bit@>(nl, bits), nr);
+            },
+            false: False);
+        });
+    },
+    : True);
 };
 
 # Copy --

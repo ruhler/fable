@@ -1,86 +1,73 @@
 
-#@ Bool@ = /Bool%.Bool@;
-#% True = /Bool%.True;
-#% False = /Bool%.False;
-<@>% List = /List%.List;
-% Str = /String%.Str;
-@ Test@ = /Test%.Test@;
-#% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
-#<@>% AssertEquals = /Test%.AssertEquals;
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
 
-#% B = /Digits%.Bit;
-#
-#% D = /Int/Int/Lit%.D;
-#% I = /Int/Int/Lit%.I;
-#
-#@ Heap@ = /Fblf/Heap%.Heap@;
-#% Equals = /Fblf/Heap%.Equals;
-#% Copy = /Fblf/Heap%.Copy;
+@ Bit@ = /Digits%.Bit@;
+% BitStr = /Digits/String%.BitStr;
+
+% Int = /Int/Int/Lit%.Int;
+
+@ Heap@ = /Fblf/Heap%.Heap@;
+% Heap = /Fblf/Heap%.Heap;
+% Read = /Fblf/Heap%.Read;
+% Write = /Fblf/Heap%.Write;
+% Equals = /Fblf/Heap%.Equals;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
 
 # TODO: Rewrite these tests.
-Test@ Tests = TestSuite(Str|Heap, List<Test@>[]);
-#[
-#  Test(Str|D, !({
-#    Heap@ a = HeapFromBitStr(B|001011100101);
-#    Bool@ wnt = True;
-#    Bool@ got = Equals(a, I(D|0), I(D|0), I(D|12));
-#    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
-#  })),
-#
-#  Test(Str|NotEquals, !({
-#    Heap@ a = HeapFromBitStr(B|001011100101);
-#    Heap@ b = HeapFromBitStr(B|001100101001);
-#    Bool@ wnt = False;
-#    Bool@ got = Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|12));
-#    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
-#  })),
-#
-#  Test(Str|PartiallyEquals, !({
-#    Heap@ a = HeapFromBitStr(B|001011100101);
-#    Heap@ b = HeapFromBitStr(B|001100101001);
-#    Bool@ wnt = True;
-#    Bool@ got = Equals(Ptr@(a, I(D|0)), Ptr@(b, I(D|0)), I(D|3));
-#    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
-#  })),
-#
-#  Test(Str|InternalEquals, !({
-#    Heap@ a = HeapFromBitStr(B|001011100101);
-#    Heap@ b = HeapFromBitStr(B|001100101001);
-#    Bool@ wnt = True;
-#    Bool@ got = Equals(Ptr@(a, I(D|3)), Ptr@(b, I(D|1)), I(D|3));
-#    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
-#  })),
-#
-#  Test(Str|InternalNotEquals, !({
-#    Heap@ a = HeapFromBitStr(B|001011100101);
-#    Heap@ b = HeapFromBitStr(B|001100101001);
-#    Bool@ wnt = False;
-#    Bool@ got = Equals(Ptr@(a, I(D|3)), Ptr@(b, I(D|1)), I(D|4));
-#    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
-#  })),
-#
-#  Test(Str|SelfOffsetEquals, !({
-#    Heap@ a = HeapFromBitStr(B|001011100101);
-#    Bool@ wnt = True;
-#    Bool@ got = Equals(Ptr@(a, I(D|0)), Ptr@(a, I(D|7)), I(D|5));
-#    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
-#  })),
-#
-#  Test(Str|SelfOffsetNotEquals, !({
-#    Heap@ a = HeapFromBitStr(B|001011100101);
-#    Bool@ wnt = False;
-#    Bool@ got = Equals(Ptr@(a, I(D|0)), Ptr@(a, I(D|6)), I(D|5));
-#    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
-#  })),
-#
-#  Test(Str|Assign, !({
-#    Heap@ a = HeapFromBitStr(B|001011100101);
-#    Heap@ b = HeapFromBitStr(B|010000000101);
-#    Heap@ wnt = HeapFromBitStr(B|011100100101);
-#    Heap@ got = Assign(Ptr@(b, I(D|2)), Ptr@(a, I(D|5)), I(D|5));
-#    AssertEquals<Heap@>(/Fblf/Heap/Eq%.Eq, /Fblf/Heap/Show%.Show, wnt, got);
-#  }))
-#]);
+Test@ Tests = TestSuite(Str|Heap, List<Test@>[
+  Test(Str|Equals, !({
+    Heap@ a = Write(Heap(Int|12), Int|0, BitStr|001011100101, Int|12);
+    Bool@ wnt = True;
+    Bool@ got = Equals(a, Int|0, BitStr|001011100101, Int|12);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Str|NotEquals, !({
+    Heap@ a = Write(Heap(Int|12), Int|0, BitStr|001011100101, Int|12);
+    Bool@ wnt = False;
+    Bool@ got = Equals(a, Int|0, BitStr|001100101001, Int|12);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Str|PartialRead, !({
+    Heap@ a = Write(Heap(Int|12), Int|0, BitStr|001011100101, Int|12);
+    List@<Bit@> x = Read(a, Int|0, Int|3);
+    List@<Bit@> y = BitStr|001;
+    AssertEquals<List@<Bit@>>(/List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit),
+      /Digits/Show%.ShowBits, x, y);
+  })),
+
+  Test(Str|PartialEquals, !({
+    Heap@ a = Write(Heap(Int|8), Int|0, BitStr|00101110, Int|8);
+    Bool@ wnt = True;
+    Bool@ got = Equals(a, Int|0, BitStr|001, Int|3);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Str|InternalEquals, !({
+    Heap@ a = Write(Heap(Int|12), Int|0, BitStr|001011100101, Int|12);
+    Bool@ wnt = True;
+    Bool@ got = Equals(a, Int|3, BitStr|01100101001, Int|3);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  })),
+
+  Test(Str|InternalNotEquals, !({
+    Heap@ a = Write(Heap(Int|12), Int|0, BitStr|001011100101, Int|12);
+    Bool@ wnt = False;
+    Bool@ got = Equals(a, Int|3, BitStr|01100101001, Int|4);
+    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+  }))
+]);
 
 @(Tests);
