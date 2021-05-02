@@ -153,12 +153,12 @@ proc test { tr deps cmd args} {
 # Any time we run glob over a directory, add that directory to this list.
 # We need to make sure to include these directories as a dependency on the
 # generation of build.ninja.
-set ::globs [list]
+set ::build_ninja_deps [list]
 
 # .o files used to implement libfble.a
 set ::fble_objs [list]
 set ::fble_objs_cov [list]
-lappend ::globs "fble/src"
+lappend ::build_ninja_deps "fble/src"
 foreach {x} [glob -tails -directory fble/src *.c] {
   set object $::obj/[string map {.c .o} $x]
   set object_cov $::obj/[string map {.c .cov.o} $x]
@@ -201,7 +201,7 @@ set ::libfblecov "$::lib/libfble.cov.a"
 lib $::libfblecov $::fble_objs_cov
 
 # fble tool binaries
-lappend globs "tools"
+lappend build_ninja_deps "tools"
 foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
   obj $::obj/$base.o $x "-I fble/include"
@@ -230,20 +230,46 @@ proc dirs { root dir } {
 # fble language spec tests
 set ::spec_tests [list]
 foreach dir [dirs langs/fble ""] {
-  lappend globs "langs/fble/$dir"
+  lappend build_ninja_deps "langs/fble/$dir"
   foreach {t} [lsort [glob -tails -directory langs/fble -nocomplain -type f $dir/*.tcl]] {
-    set root [file rootname $t]
-    set tcl langs/fble/$t
-    set tr $::test/$root.tr
-    set x "tools/spec-test.tcl \
-      $::bin/fble-test.cov \
-      $::bin/fble-mem-test.cov \
-      langs/fble/Nat.fble \
-      $::test/$root \
-      $tcl"
-    build $::test/$root "" "mkdir -p $::test/$root"
-    test $tr $x "tclsh $x"
-    lappend ::spec_tests $tr
+    set ::specroot [file rootname $t]
+    set ::spectestdir $::test/$specroot
+    set ::spectcl langs/fble/$t
+    lappend build_ninja_deps $::spectcl
+
+    proc spec-test-extract {} {
+      build $::spectestdir/test.fble \
+        "tools/extract-spec-test.tcl $::spectcl langs/fble/Nat.fble" \
+        "tclsh tools/extract-spec-test.tcl $::spectcl $::spectestdir langs/fble/Nat.fble"
+      lappend ::spec_tests $::spectestdir/test.tr
+    }
+
+    proc fble-test { expr args } {
+      spec-test-extract
+
+      # We run with --profile to get better test coverage for profiling.
+      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --profile $::spectestdir/test.fble $::spectestdir"
+    }
+
+    proc fble-test-error { loc expr args } {
+      spec-test-extract
+      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --error $::spectestdir/test.fble $::spectestdir"
+    }
+
+    proc fble-test-memory-constant { expr } {
+      spec-test-extract
+      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-mem-test.cov $::spectestdir/test.fble" \
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov $::spectestdir/test.fble $::spectestdir"
+    }
+
+    proc fble-test-memory-growth { expr } {
+      spec-test-extract
+      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-mem-test.cov $::spectestdir/test.fble" \
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov --growth $::spectestdir/test.fble $::spectestdir"
+    }
+    source $::spectcl
   }
 }
 
@@ -263,7 +289,7 @@ test $::test/fble-profiles-test.tr \
 # Compile each .fble module in the prgms directory.
 set ::fble_prgms_objs [list]
 foreach dir [dirs prgms ""] {
-  lappend globs "prgms/$dir"
+  lappend build_ninja_deps "prgms/$dir"
   foreach {x} [glob -tails -directory prgms -nocomplain -type f $dir/*.fble] {
     # Generate a .d file to capture dependencies.
     build $::prgms/$x.d "$::bin/fble-deps prgms/$x" \
@@ -360,7 +386,7 @@ build $::test/summary.tr "tools/tests.tcl $::test/tests.txt" \
   "tclsh tools/tests.tcl $::test/tests.txt && echo PASSED > $::test/summary.tr"
 
 # build.ninja
-build $::out/build.ninja "build.ninja.tcl $::globs" \
+build $::out/build.ninja "build.ninja.tcl $::build_ninja_deps" \
   "tclsh build.ninja.tcl > $::out/build.ninja"
 
 # TODO: Add a profiling variant of things?

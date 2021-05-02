@@ -219,6 +219,24 @@ coverage. Maybe it's worth giving clang and its profiling capabilities a try.
 
 ---
 
-I'll just go with gcov for ow and not worry about the fact that changes to
+I'll just go with gcov for now and not worry about the fact that changes to
 spec tests could include stale coverage info.
+
+---
+
+Next question: how to do compilation-based spec test? We would like to build
+the .c and .o files with ninja, but we don't know what things we need to build
+until we've read the .tcl spec for the test.
+
+I thought this would be easy using subninja, but ninja apparently does not try
+to regenerate the subninja file before reading it.
+
+I don't want to read all the .tcl spec files as part of building the top level
+build.ninja. How can I do this?
+
+I suppose I should just read all the .tcl spec files as part of building the
+top level build.ninja. Think of it like doing a glob to figure out what all
+things need to be built. We do that elsewhere enough of the time.
+
+Ugh. Maybe I can defer generating the .fble files to a build rule to start?
 

@@ -1,17 +1,26 @@
+
+* Set up compilation spec tests.
+ - Add build rules to compile and run tests compiled as well as interpreted.
+   Consider inlining extract-spec-test.tcl into build.ninja.tcl?
+
+* Link profiles in FbleLink instead of FbleCompile
+ - So that we can reuse that same approach to support profiling in compiled
+   mode.
+
+* Start using custom abort functions
+ - For PUT and GET values that do nothing (?)
+ - For FbleCode by phantom executing instructions.
+ - For generated code, by phantom executing instructions.
+
+* Remove setting and checking of NULL on release to test that we don't rely on
+  it. And maybe get a speed boost?
+
+* After linking profiles in FbleLink, add support for profiling in compiled
+  mode.
+
 * [lang] Add some way to catch or recover from errors at runtime?
 * Print full stack trace on abort instead of just the top stack trace?
 * Optimize Sat simplification to avoid lots of repeated traversals?
-
-* Set up compilation spec tests.
-
-* Start using custom abort functions
- - For PUT and GET values that do nothing.
- - For FbleCode that use info stored in the current instruction.
- - For generated code, that should use a custom generated function.
-* Track info necessary to know what to release on abort without checking if
-  something is NULL or not.
-* Remove setting and checking of NULL on release to test that we don't rely on
-  it. And maybe get a speed boost?
 
 * Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
   Their implementations may be different enough now to warrant it?
