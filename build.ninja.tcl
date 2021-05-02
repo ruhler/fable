@@ -228,6 +228,25 @@ proc dirs { root dir } {
 }
 
 # fble language spec tests
+# 
+# The code for running the spec tests is split up a little bit awkwardly
+# because we want to reuse ninja to build intermediate artifacts used in the
+# test. The intermediate artifacts we need to build depend on the contents of
+# the test specification. We split it up as follows:
+# * build.ninja.tcl (this file) - reads the spec tests and uses it to generate
+#   build rules, because apparently ninja needs all the build rules to show up
+#   in build.ninja from the beginning. Does as little else as possible because
+#   build.ninja.tcl is rerun for lots of reasons. In particular, does not
+#   extract the .fble files from the test.
+# * tools/extract-spec-test.tcl - extracts the .fble files from a particular
+#   test. This is run at build time so we avoid re-extracting the .fble files
+#   repeatedly if the test specification hasn't changed.
+# * tools/run-spec-test.tcl - a helper function to execute a spec test that
+#   takes the command to run as input. The primary purpose of this is to
+#   encapsulate an otherwise complex command line to run the test and give us
+#   nice test failure messages. It reads the test spec for the test to run,
+#   but only to know what error location, if any, is expected for
+#   fble-test-error tests.
 set ::spec_tests [list]
 foreach dir [dirs langs/fble ""] {
   lappend build_ninja_deps "langs/fble/$dir"
@@ -236,6 +255,37 @@ foreach dir [dirs langs/fble ""] {
     set ::spectestdir $::test/$specroot
     set ::spectcl langs/fble/$t
     lappend build_ninja_deps $::spectcl
+
+    # Returns the list of .fble files for modules used in the test, not
+    # including the top level .fble file.
+    proc collect_modules { dir modules } {
+      set fbles [list]
+      foreach m $modules {
+        set name [lindex $m 0]
+        set submodules [lrange $m 2 end]
+        lappend fbles $dir/$name.fble
+        lappend fbles {*}[collect_modules $dir/$name $submodules]
+      }
+      return $fbles
+    }
+
+    # Emit build rules to compile all the .fble files for the test to .c
+    # files.
+    # TODO: Make sure we only compile modules that can be reached from the
+    # test.fble file.
+    # TODO: Compile the generated c files and link those together too.
+    proc spec-test-compile { modules } {
+      set fbles [collect_modules "" $modules]
+      lappend fbles "/test.fble"
+
+      foreach x $fbles {
+        set path "[file rootname $x]%"
+        set fble $::spectestdir$x
+        set c [string map {.fble .c} $fble]
+        build $c "$::bin/fble-compile $fble" \
+        "$::bin/fble-compile $path $fble $::spectestdir > $c"
+      }
+    }
 
     proc spec-test-extract {} {
       build $::spectestdir/test.fble \
@@ -246,6 +296,7 @@ foreach dir [dirs langs/fble ""] {
 
     proc fble-test { expr args } {
       spec-test-extract
+      #spec-test-compile $args
 
       # We run with --profile to get better test coverage for profiling.
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
@@ -260,12 +311,14 @@ foreach dir [dirs langs/fble ""] {
 
     proc fble-test-memory-constant { expr } {
       spec-test-extract
+      #spec-test-compile {}
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-mem-test.cov $::spectestdir/test.fble" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov $::spectestdir/test.fble $::spectestdir"
     }
 
     proc fble-test-memory-growth { expr } {
       spec-test-extract
+      #spec-test-compile {}
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-mem-test.cov $::spectestdir/test.fble" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov --growth $::spectestdir/test.fble $::spectestdir"
     }

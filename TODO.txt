@@ -1,7 +1,7 @@
 
 * Set up compilation spec tests.
- - Add build rules to compile and run tests compiled as well as interpreted.
-   Consider inlining extract-spec-test.tcl into build.ninja.tcl?
+ - But how do we make sure we only compile the modules used by the test, for
+   that one test that has an unused module that doesn't compile?
 
 * Link profiles in FbleLink instead of FbleCompile
  - So that we can reuse that same approach to support profiling in compiled
