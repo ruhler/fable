@@ -1,7 +1,11 @@
-
 * Set up compilation spec tests.
- - But how do we make sure we only compile the modules used by the test, for
-   that one test that has an unused module that doesn't compile?
+ - Add module path as input to FbleLoad for it to use as the path of the
+   module it is loading to fix access/visibility issues with compiling a module?
+ - Uncomment commented out spec-test-compile calls.
+ - Build .o files for tests.
+ - Change fble-test to work with compiled things too, like fble-stdio does.
+ - Add build rules for compiled fble-test
+ - Do same for fble-mem-test.
 
 * Link profiles in FbleLink instead of FbleCompile
  - So that we can reuse that same approach to support profiling in compiled

@@ -9,5 +9,5 @@ fble-test {
     Bool@ True = Bool@(true: Unit@());
     Bool@ False = Bool@(false: Unit@());
     @(Unit@, Bool@, True, False);
-  } {}
+  }
 }

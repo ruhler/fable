@@ -240,3 +240,25 @@ things need to be built. We do that elsewhere enough of the time.
 
 Ugh. Maybe I can defer generating the .fble files to a build rule to start?
 
+---
+
+I don't think I can reuse ninja to do compilation of spec tests. Because we
+have a test case that specifies a malformed .fble file but expects to pass
+because we don't refer to that malformed .fble file from the main module. The
+only way we can know if we should build that .fble file from the test
+specification is by extracting the .fble files and running some fble-deps or
+similar code to see if it is referred to or not. But now we have a cyclic
+dependency: build.ninja depends on fble-deps, and fble-deps depends on
+build.ninja.
+
+This is a funny case, so I'm okay not trying to force use of ninja to help
+execute the spec tests. But that suggests we'll need some alternative way to
+compile .fble files that knows how to pay attention to dependencies between
+modules.
+
+---
+
+Another annoying thing: ninja can't rebuild itself after removing one of the
+things the build.ninja file depends on. Could those be added as dynamic
+dependencies perhaps? Would that fix the issue?
+

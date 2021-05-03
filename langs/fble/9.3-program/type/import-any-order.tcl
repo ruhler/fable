@@ -12,7 +12,7 @@ fble-test {
     Unit@ Unit = Unit@();
 
     @(Unit@, Unit);
-  } {}
+  }
 } {
   Bool {
     @ Unit@ = /Unit%.Unit@;
@@ -20,5 +20,5 @@ fble-test {
     @ Bool@ = +(Unit@ true, Unit@ false);
     Bool@ True = Bool@(true: Unit);
     @(Bool@, True);
-  } {}
+  }
 }

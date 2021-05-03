@@ -279,7 +279,7 @@ foreach dir [dirs langs/fble ""] {
       lappend fbles "/test.fble"
 
       foreach x $fbles {
-        set path "[file rootname $x]%"
+        set path "[string map {* {}} [file rootname $x]]%"
         set fble $::spectestdir$x
         set c [string map {.fble .c} $fble]
         build $c "$::bin/fble-compile $fble" \
