@@ -12,7 +12,6 @@
    mode.
 
 * Start using custom abort functions
- - For PUT and GET values that do nothing (?)
  - For FbleCode by phantom executing instructions.
  - For generated code, by phantom executing instructions.
 
