@@ -271,15 +271,13 @@ foreach dir [dirs langs/fble ""] {
 
     # Emit build rules to compile all the .fble files for the test to .c
     # files.
-    # TODO: Make sure we only compile modules that can be reached from the
-    # test.fble file.
     # TODO: Compile the generated c files and link those together too.
     proc spec-test-compile { modules } {
       set fbles [collect_modules "" $modules]
       lappend fbles "/test.fble"
 
       foreach x $fbles {
-        set path "[string map {* {}} [file rootname $x]]%"
+        set path [file rootname $x]%
         set fble $::spectestdir$x
         set c [string map {.fble .c} $fble]
         build $c "$::bin/fble-compile $fble" \
@@ -296,7 +294,7 @@ foreach dir [dirs langs/fble ""] {
 
     proc fble-test { expr args } {
       spec-test-extract
-      #spec-test-compile $args
+      spec-test-compile $args
 
       # We run with --profile to get better test coverage for profiling.
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
@@ -311,14 +309,14 @@ foreach dir [dirs langs/fble ""] {
 
     proc fble-test-memory-constant { expr } {
       spec-test-extract
-      #spec-test-compile {}
+      spec-test-compile {}
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-mem-test.cov $::spectestdir/test.fble" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov $::spectestdir/test.fble $::spectestdir"
     }
 
     proc fble-test-memory-growth { expr } {
       spec-test-extract
-      #spec-test-compile {}
+      spec-test-compile {}
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-mem-test.cov $::spectestdir/test.fble" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov --growth $::spectestdir/test.fble $::spectestdir"
     }
