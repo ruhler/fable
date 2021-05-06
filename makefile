@@ -5,6 +5,11 @@ out/build.ninja: build.ninja.tcl
 	mkdir -p out
 	tclsh $< > $@
 
+.PHONY: ninja
+ninja:
+	mkdir -p out
+	tclsh build.ninja.tcl > out/build.ninja
+
 .PHONY: foo
 foo:
 	ninja -f out/build.ninja -k 0

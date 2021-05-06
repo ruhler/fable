@@ -1,6 +1,8 @@
 * Set up compilation spec tests.
  - Add module path as input to FbleLoad for it to use as the path of the
    module it is loading to fix access/visibility issues with compiling a module?
+   Need path argument to fble-deps too then? Or should I just remove access
+   controls from fble language until I start to use it?
  - Uncomment commented out spec-test-compile calls.
  - Build .o files for tests.
  - Change fble-test to work with compiled things too, like fble-stdio does.
@@ -21,7 +23,6 @@
 * After linking profiles in FbleLink, add support for profiling in compiled
   mode.
 
-* [lang] Add some way to catch or recover from errors at runtime?
 * Print full stack trace on abort instead of just the top stack trace?
 * Optimize Sat simplification to avoid lots of repeated traversals?
 
@@ -158,11 +159,13 @@
 
 * [libfble] Can fble-stdio check that the function has the right type?
 
+* [lang] Add some way to catch or recover from errors at runtime?
 * [lang] Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?
 * [lang] Clarify spec on when (compile vs runtime) vacuous value error should be
   reported.
 * [lang] Add support for abstract types?
+* [lang] Revisit notion of packages and public/private access to modules.
 * [lang] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
 * [lang] Document and test that put ports don't retain link values.

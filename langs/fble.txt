@@ -946,18 +946,11 @@ formed by combining a module with all of its direct and indirect dependencies.
 9.1 Organization
 ----------------
 Modules are organized into a tree structure. The purpose of the tree structure
-is to group modules together that are developed by the same organization and
-to support access controls on modules.
+is to group modules together that are developed by the same organization to
+help avoid name conflicts.
 
 Each node in the tree is a module. Each module has a value and zero or more
 named child nodes.
-
-A child node can be marked as public or private. If a child node is marked
-public, it and all of its externally visible descendants are visible external
-to the parent node. If a child node is marked private, neither it nor any of
-its descendants are visible external to the parent node. All immediate child
-nodes are visible to their parent, and all immediate sibling nodes are visible
-to each other.
 
 A module's value may be trivial if the module is intended primarily for
 organizational purposes. A module need not contain any children if it is
@@ -973,23 +966,17 @@ directory Foo/. The absence of a file Foo.fble implies the value of the module
 Foo is *()(). The absence of a subdirectory Foo implies the module Foo has no
 children.
 
-By default a module is public. The character '*' is appended to a module's
-file name to indicate that the module is private.
-
 For example, you might have the following directory structure:
 
   root/
    StdLib/
      Unit.fble
      List.fble
+     List/
+       Tests.fble
    Md5.fble
    Md5/
-     Impl*.fble
      Tests.fble
-
-In this case, Impl*.fble is visible to the parent Md5.fble and sibling
-Tests.fble, but not to any other module. All other modules are visible to all
-other modules.
 
 9.2 Path
 --------
@@ -1241,7 +1228,6 @@ Notes:
   to distinguish between the two kinds of expressions.
 * explicit type struct value and function apply share the same form. The type
   of the expr is used to distinguish between the two kinds of expressions.
-* The module value for module Foo is stored in Foo.fble for a public module
-  and Foo*.fble for private module. Child modules of module Foo are stored in
-  subdirectory Foo/ if Foo is a public module and Foo*/ if Foo is a private
-  module.
+* The module value for module Foo is stored in Foo.fble for a public module.
+  Child modules of module Foo are stored in subdirectory Foo/ if Foo is a
+  public module.

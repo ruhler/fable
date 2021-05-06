@@ -8,5 +8,5 @@ fble-test-error 3:17 {
     @ Unit@ = *();
     Unit@ Unit = Unit@();
     @(Unit@, Unit);
-  } {}
+  }
 }
