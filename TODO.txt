@@ -1,9 +1,3 @@
-* Set up compilation spec tests.
- - Build .o files for tests.
- - Change fble-test to work with compiled things too, like fble-stdio does.
- - Add build rules for compiled fble-test
- - Do same for fble-mem-test.
-
 * Link profiles in FbleLink instead of FbleCompile
  - So that we can reuse that same approach to support profiling in compiled
    mode.
