@@ -203,7 +203,6 @@ static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index)
 //   Sets the value at the given index in the frame.
 static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
 {
-  assert(NULL == thread->stack->locals[index]);
   FbleRetainValue(heap, value);
   thread->stack->locals[index] = value;
 }
@@ -225,7 +224,6 @@ static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalI
 //   reference ownership of the value.
 static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value)
 {
-  assert(NULL == thread->stack->locals[index]);
   thread->stack->locals[index] = value;
 }
 
@@ -254,7 +252,6 @@ static FbleExecStatus RunStructValueInstr(FbleValueHeap* heap, FbleThreadV* thre
 static FbleExecStatus AbortStructValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-  assert(stack->locals[struct_value_instr->dest] == NULL);
   stack->locals[struct_value_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -278,7 +275,6 @@ static FbleExecStatus RunUnionValueInstr(FbleValueHeap* heap, FbleThreadV* threa
 static FbleExecStatus AbortUnionValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-  assert(stack->locals[union_value_instr->dest] == NULL);
   stack->locals[union_value_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -307,7 +303,6 @@ static FbleExecStatus RunStructAccessInstr(FbleValueHeap* heap, FbleThreadV* thr
 static FbleExecStatus AbortStructAccessInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-  assert(stack->locals[access_instr->dest] == NULL);
   stack->locals[access_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -341,7 +336,6 @@ static FbleExecStatus RunUnionAccessInstr(FbleValueHeap* heap, FbleThreadV* thre
 static FbleExecStatus AbortUnionAccessInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-  assert(stack->locals[access_instr->dest] == NULL);
   stack->locals[access_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -413,7 +407,6 @@ static FbleExecStatus RunFuncValueInstr(FbleValueHeap* heap, FbleThreadV* thread
 static FbleExecStatus AbortFuncValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-  assert(stack->locals[func_value_instr->dest] == NULL);
   stack->locals[func_value_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -459,11 +452,7 @@ static FbleExecStatus RunCallInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
   }
 
   thread->stack->pc++;
-
-  FbleValue** result = thread->stack->locals + call_instr->dest;
-  assert(*result == NULL);
-
-  FbleThreadCall(heap, result, func, args, thread);
+  FbleThreadCall(heap, thread->stack->locals + call_instr->dest, func, args, thread);
   return FBLE_EXEC_FINISHED;
 }
 
@@ -476,20 +465,26 @@ static FbleExecStatus AbortCallInstr(FbleValueHeap* heap, FbleStack* stack, Fble
   if (call_instr->exit) {
     if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
       FbleReleaseValue(heap, stack->locals[call_instr->func.index]);
+
+      // Set function to NULL so it's safe to release it again if the function
+      // is also one of the arguments.
       stack->locals[call_instr->func.index] = NULL;
     }
 
     for (size_t i = 0; i < call_instr->args.size; ++i) {
       if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
         FbleReleaseValue(heap, stack->locals[call_instr->args.xs[i].index]);
+
+        // Set the arg to NULL so it's safe to release it again if the
+        // arg is used more than once.
         stack->locals[call_instr->args.xs[i].index] = NULL;
       }
     }
 
+    *(stack->result) = NULL;
     return FBLE_EXEC_FINISHED;
   }
 
-  assert(stack->locals[call_instr->dest] == NULL);
   stack->locals[call_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -516,7 +511,6 @@ static FbleExecStatus RunForkInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
     FbleVectorAppend(*threads, child);
 
     FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
-    assert(*result == NULL);
     FbleThreadCall(heap, result, arg, NULL, child);
   }
   thread->stack->pc++;
@@ -530,7 +524,6 @@ static FbleExecStatus AbortForkInstr(FbleValueHeap* heap, FbleStack* stack, Fble
   FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
 
   for (size_t i = 0; i < fork_instr->args.size; ++i) {
-    assert(stack->locals[fork_instr->dests.xs[i]] == NULL);
     stack->locals[fork_instr->dests.xs[i]] = NULL;
   }
   stack->pc++;
@@ -553,7 +546,6 @@ static FbleExecStatus RunCopyInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
 static FbleExecStatus AbortCopyInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-  assert(stack->locals[copy_instr->dest] == NULL);
   stack->locals[copy_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -585,9 +577,7 @@ static FbleExecStatus RunLinkInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
 static FbleExecStatus AbortLinkInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-  assert(stack->locals[link_instr->get] == NULL);
   stack->locals[link_instr->get] = NULL;
-  assert(stack->locals[link_instr->put] == NULL);
   stack->locals[link_instr->put] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -612,7 +602,6 @@ static FbleExecStatus RunRefValueInstr(FbleValueHeap* heap, FbleThreadV* threads
 static FbleExecStatus AbortRefValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-  assert(stack->locals[ref_instr->dest] == NULL);
   stack->locals[ref_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -672,7 +661,6 @@ static FbleExecStatus RunReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, 
 
     case FBLE_LOCALS_FRAME_SECTION: {
       result = thread->stack->locals[return_instr->result.index];
-      thread->stack->locals[return_instr->result.index] = NULL;
       break;
     }
   }
@@ -690,11 +678,11 @@ static FbleExecStatus AbortReturnInstr(FbleValueHeap* heap, FbleStack* stack, Fb
     case FBLE_STATICS_FRAME_SECTION: break;
     case FBLE_LOCALS_FRAME_SECTION: {
       FbleReleaseValue(heap, stack->locals[return_instr->result.index]);
-      stack->locals[return_instr->result.index] = NULL;
       break;
     }
   }
 
+  *(stack->result) = NULL;
   return FBLE_EXEC_FINISHED;
 }
 
@@ -715,7 +703,6 @@ static FbleExecStatus RunTypeInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
 static FbleExecStatus AbortTypeInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-  assert(stack->locals[type_instr->dest] == NULL);
   stack->locals[type_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
@@ -726,9 +713,7 @@ static FbleExecStatus AbortTypeInstr(FbleValueHeap* heap, FbleStack* stack, Fble
 static FbleExecStatus RunReleaseInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-  assert(NULL != thread->stack->locals[release_instr->target]);
   FbleReleaseValue(heap, thread->stack->locals[release_instr->target]);
-  thread->stack->locals[release_instr->target] = NULL;
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -739,7 +724,6 @@ static FbleExecStatus AbortReleaseInstr(FbleValueHeap* heap, FbleStack* stack, F
 {
   FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
   FbleReleaseValue(heap, stack->locals[release_instr->target]);
-  stack->locals[release_instr->target] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

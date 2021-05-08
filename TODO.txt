@@ -1,5 +1,5 @@
-* Remove setting and checking of NULL on release to test that we don't rely on
-  it. And maybe get a speed boost?
+* Distinguish between runtime and compile time errors in spec tests.
+ - And make sure we run the runtime error tests in compilation mode.
 
 * Link profiles in FbleLink instead of FbleCompile
  - So that we can reuse that same approach to support profiling in compiled

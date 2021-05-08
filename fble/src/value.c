@@ -305,7 +305,7 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
 // See documentation of FbleExecutable.abort in execute.h
 static void GetAbortFunction(FbleValueHeap* heap, FbleStack* stack)
 {
-  // There's nothing to clean up here.
+  *(stack->result) = NULL;
 }
 
 // PutRunFunction --
@@ -364,7 +364,7 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
 // See documentation of FbleExecutable.abort in execute.h
 static void PutAbortFunction(FbleValueHeap* heap, FbleStack* stack)
 {
-  // There's nothing to clean up here.
+  *(stack->result) = NULL;
 }
 
 // PartialPutRunFunction --
@@ -400,8 +400,6 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
   FbleValueAddRef(heap, &put->_base, arg);
 
   FbleReleaseValue(heap, thread->stack->locals[0]);
-  thread->stack->locals[0] = NULL;
-
   FbleThreadReturn(heap, thread, &put->_base);
   return FBLE_EXEC_FINISHED;
 }
@@ -415,7 +413,7 @@ static void PartialPutAbortFunction(FbleValueHeap* heap, FbleStack* stack)
   // The only time abort should be called is if we haven't had a chance to run
   // the function yet. In this case we need to clean up its single argument.
   FbleReleaseValue(heap, stack->locals[0]);
-  stack->locals[0] = NULL;
+  *(stack->result) = NULL;
 }
 
 // FbleNewGetValue -- see documentation in value.h

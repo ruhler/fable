@@ -201,7 +201,6 @@ static void FrameGetStrict(FILE* fout, FbleFrameIndex index)
 //   taking care of releasing any existing values as necessary.
 static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value)
 {
-  fprintf(fout, "%sassert(thread->stack->locals[%i] == NULL);\n", indent, index);
   fprintf(fout, "%sFbleRetainValue(heap, %s);\n", indent, value);
   fprintf(fout, "%sthread->stack->locals[%i] = %s;\n", indent, index, value);
 }
@@ -220,7 +219,6 @@ static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex inde
 //   taking care of releasing any existing values as necessary.
 static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value)
 {
-  fprintf(fout, "%sassert(thread->stack->locals[%i] == NULL);\n", indent, index);
   fprintf(fout, "%sthread->stack->locals[%i] = %s;\n", indent, index, value);
 }
 
@@ -470,13 +468,6 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
         if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
           fprintf(fout, "      FbleReleaseValue(heap, thread->stack->locals[%i]);\n", call_instr->func.index);
-          fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", call_instr->func.index);
-        }
-
-        for (size_t i = 0; i < call_instr->args.size; ++i) {
-          if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
-            fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", call_instr->args.xs[i].index);
-          }
         }
 
         fprintf(fout, "      FbleThreadTailCall(heap, func, args, thread);\n");
@@ -487,7 +478,6 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      thread->stack->pc = %i;\n", pc+1);
 
       fprintf(fout, "      FbleValue** result = thread->stack->locals + %i;", call_instr->dest);
-      fprintf(fout, "      assert(*result == NULL);\n");
       fprintf(fout, "      FbleThreadCall(heap, result, func, args, thread);\n");
       fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
       return;
@@ -526,9 +516,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
         fprintf(fout, "      child->stack->joins++;\n");
         fprintf(fout, "      FbleVectorAppend(*threads, child);\n");
 
-        fprintf(fout, "      result = thread->stack->locals + %i;", fork_instr->dests.xs[i]);
-        fprintf(fout, "      FbleReleaseValue(heap, *result);\n");
-        fprintf(fout, "      *result = NULL;\n");
+        fprintf(fout, "      result = thread->stack->locals + %i\n;", fork_instr->dests.xs[i]);
         fprintf(fout, "      FbleThreadCall(heap, result, arg, NULL, child);\n");
       }
 
@@ -591,7 +579,6 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
         case FBLE_LOCALS_FRAME_SECTION: {
           fprintf(fout, "      FbleValue* result = thread->stack->locals[%i];\n", return_instr->result.index);
-          fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", return_instr->result.index);
           fprintf(fout, "      FbleThreadReturn(heap, thread, result);\n");
           fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
           break;
@@ -611,7 +598,6 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
       fprintf(fout, "      FbleReleaseValue(heap, thread->stack->locals[%i]);\n", release_instr->target);
-      fprintf(fout, "      thread->stack->locals[%i] = NULL;\n", release_instr->target);
       return;
     }
   }
@@ -634,28 +620,24 @@ static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* i
   switch (instr->tag) {
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", struct_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", struct_instr->dest);
       return;
     }
 
     case FBLE_UNION_VALUE_INSTR: {
       FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", union_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", union_instr->dest);
       return;
     }
 
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", access_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", access_instr->dest);
       return;
     }
 
     case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", access_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", access_instr->dest);
       return;
     }
@@ -674,7 +656,6 @@ static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* i
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", func_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", func_instr->dest);
       return;
     };
@@ -694,11 +675,11 @@ static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* i
           }
         }
 
+        fprintf(fout, "      *(stack->result) = NULL;\n");
         fprintf(fout, "      return;\n");
         return;
       }
 
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", call_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", call_instr->dest);
       return;
     }
@@ -706,9 +687,7 @@ static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* i
     case FBLE_LINK_INSTR: {
       FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
 
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", link_instr->get);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", link_instr->get);
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", link_instr->put);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", link_instr->put);
       return;
     }
@@ -716,7 +695,6 @@ static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* i
     case FBLE_FORK_INSTR: {
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
       for (size_t i = 0; i < fork_instr->args.size; ++i) {
-        fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", fork_instr->dests.xs[i]);
         fprintf(fout, "      stack->locals[%i] = NULL;\n", fork_instr->dests.xs[i]);
       }
       return;
@@ -724,14 +702,12 @@ static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* i
 
     case FBLE_COPY_INSTR: {
       FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", copy_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", copy_instr->dest);
       return;
     }
 
     case FBLE_REF_VALUE_INSTR: {
       FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", ref_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", ref_instr->dest);
       return;
     }
@@ -746,17 +722,16 @@ static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* i
         case FBLE_STATICS_FRAME_SECTION: break;
         case FBLE_LOCALS_FRAME_SECTION: {
           fprintf(fout, "      FbleReleaseValue(heap, stack->locals[%i]);\n", return_instr->result.index);
-          fprintf(fout, "      stack->locals[%i] = NULL;\n", return_instr->result.index);
           break;
         }
       }
+      fprintf(fout, "      *(stack->result) = NULL;\n");
       fprintf(fout, "      return;\n");
       return;
     }
 
     case FBLE_TYPE_INSTR: {
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-      fprintf(fout, "      assert(stack->locals[%i] == NULL);\n", type_instr->dest);
       fprintf(fout, "      stack->locals[%i] = NULL;\n", type_instr->dest);
       return;
     }
@@ -764,7 +739,6 @@ static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* i
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
       fprintf(fout, "      FbleReleaseValue(heap, stack->locals[%i]);\n", release_instr->target);
-      fprintf(fout, "      stack->locals[%i] = NULL;\n", release_instr->target);
       return;
     }
   }
@@ -958,28 +932,24 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "static void Struct0ValueInstr(FbleValueHeap* heap, FbleThread* thread, size_t dest)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue* v = FbleNewStructValue(heap, 0);\n");
-  fprintf(fout, "  assert(NULL == thread->stack->locals[dest]);\n");
   fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
   fprintf(fout, "static void Struct2LLValueInstr(FbleValueHeap* heap, FbleThread* thread, size_t arg0, size_t arg1, size_t dest)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue* v = FbleNewStructValue(heap, 2, thread->stack->locals[arg0], thread->stack->locals[arg1]);\n");
-  fprintf(fout, "  assert(NULL == thread->stack->locals[dest]);\n");
   fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
   fprintf(fout, "static void UnionValueInstrStatics(FbleValueHeap* heap, FbleThread* thread, size_t tag, size_t arg, size_t dest)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue* v = FbleNewUnionValue(heap, tag, thread->stack->func->statics[arg]);\n");
-  fprintf(fout, "  assert(NULL == thread->stack->locals[dest]);\n");
   fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
   fprintf(fout, "static void UnionValueInstrLocals(FbleValueHeap* heap, FbleThread* thread, size_t tag, size_t arg, size_t dest)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue* v = FbleNewUnionValue(heap, tag, thread->stack->locals[arg]);\n");
-  fprintf(fout, "  assert(NULL == thread->stack->locals[dest]);\n");
   fprintf(fout, "  thread->stack->locals[dest] = v;\n");
   fprintf(fout, "}\n\n");
 
@@ -987,7 +957,6 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue* value = FbleStructValueAccess(sv, tag);\n");
   fprintf(fout, "  FbleRetainValue(heap, value);\n");
-  fprintf(fout, "  assert(NULL == thread->stack->locals[dest]);\n");
   fprintf(fout, "  thread->stack->locals[dest] = value;\n");
   fprintf(fout, "}\n\n");
 

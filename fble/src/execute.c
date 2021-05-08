@@ -5,7 +5,6 @@
 
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for NULL
-#include <string.h>   // for memset
 
 #include "fble-alloc.h"     // for FbleAlloc, FbleFree, etc.
 #include "fble-value.h"     // for FbleValue, etc.
@@ -35,10 +34,6 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 {
   FbleStack* stack = thread->stack;
   thread->stack = thread->stack->tail;
-
-  for (size_t i = 0; i < stack->func->executable->locals; ++i) {
-    assert(stack->locals[i] == NULL);
-  }
   FbleReleaseValue(heap, &stack->func->_base);
   FbleFree(stack);
 }
@@ -212,7 +207,6 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
   stack->pc = 0;
   stack->result = result;
   stack->tail = thread->stack;
-  memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   for (size_t i = 0; i < func->executable->args; ++i) {
     stack->locals[i] = args[i];
@@ -232,7 +226,6 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
   stack->pc = 0;
   stack->result = thread->stack->result;
   stack->tail = thread->stack->tail;
-  memset(stack->locals, 0, locals * sizeof(FbleValue*));
 
   for (size_t i = 0; i < func->executable->args; ++i) {
     stack->locals[i] = args[i];
