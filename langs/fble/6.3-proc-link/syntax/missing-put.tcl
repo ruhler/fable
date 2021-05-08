@@ -1,4 +1,4 @@
-fble-test-error 5:16 {
+fble-test-compile-error 5:16 {
   @ Unit@ = *();
 
   # The put name is missing.

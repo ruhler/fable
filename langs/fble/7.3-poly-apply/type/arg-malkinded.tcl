@@ -1,4 +1,4 @@
-fble-test-error 7:11 {
+fble-test-compile-error 7:11 {
   @ Unit@ = *();
 
   <<@>@>@ MaybeM@ = <<@>@ M@> { +(M@<Unit@> just, Unit@ nothing); };

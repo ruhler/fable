@@ -1,4 +1,4 @@
-fble-test-error 6:9 {
+fble-test-compile-error 6:9 {
   @ Unit@ = *();
 
   # Single quotes act as delimeters.

@@ -1,4 +1,4 @@
-fble-test-error 6:39 {
+fble-test-compile-error 6:39 {
   @ Unit@ = *();
 
   # Test that expressions in exec actions do not have access to variables

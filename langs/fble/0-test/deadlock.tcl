@@ -1,4 +1,4 @@
-fble-test-error 0:0  {
+fble-test-runtime-error 0:0  {
   # The spec doesn't actually say anything about detecting deadlock, but the
   # reference implementation can detect deadlock in some cases and report
   # that, and it's nice if we can test it using the spec test infrastructure.

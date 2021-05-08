@@ -1,4 +1,4 @@
-fble-test-error 7:14 {
+fble-test-runtime-error 7:14 {
   @ Unit@ = *();
   @ Nat@ = *(Unit@ Z, Nat@ S);
 

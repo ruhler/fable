@@ -1,4 +1,4 @@
-fble-test-error 9:5 {
+fble-test-runtime-error 9:5 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
 

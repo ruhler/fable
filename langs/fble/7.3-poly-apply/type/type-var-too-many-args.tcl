@@ -1,4 +1,4 @@
-fble-test-error 5:28 {
+fble-test-compile-error 5:28 {
   @ Unit@ = *();
 
   # There are too many arguments to the type variable T.

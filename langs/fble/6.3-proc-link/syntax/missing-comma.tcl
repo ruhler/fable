@@ -1,4 +1,4 @@
-fble-test-error 5:15 {
+fble-test-compile-error 5:15 {
   @ Unit@ = *();
 
   # The comma separating get and put is missing.

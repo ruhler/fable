@@ -1,4 +1,4 @@
-fble-test-error 7:5 {
+fble-test-compile-error 7:5 {
   % True = /Bool%.True;
 
   True.true;

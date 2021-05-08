@@ -1,4 +1,4 @@
-fble-test-error 5:14 {
+fble-test-compile-error 5:14 {
   @ Unit@ = *();
 
   # The argument does not compile.

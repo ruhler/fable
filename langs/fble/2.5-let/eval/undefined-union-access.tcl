@@ -1,4 +1,4 @@
-fble-test-error 7:12 {
+fble-test-runtime-error 7:12 {
   @ Unit@ = *();
   @ T@ = +(Unit@ nil, T@ tail);
 

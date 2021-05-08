@@ -1,4 +1,4 @@
-fble-test-error 6:5 {
+fble-test-compile-error 6:5 {
   @ Unit@ = *();
 
   <<@>@ A@> (A@ a){

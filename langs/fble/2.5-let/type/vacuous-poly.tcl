@@ -1,4 +1,4 @@
-fble-test-error 5:8 {
+fble-test-compile-error 5:8 {
   @ Unit@ = *();
 
   # The poly type F@ must not be vacuously defined like this.

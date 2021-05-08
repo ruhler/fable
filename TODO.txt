@@ -1,5 +1,8 @@
-* Distinguish between runtime and compile time errors in spec tests.
- - And make sure we run the runtime error tests in compilation mode.
+* Distinguish between --runtime-error and --compile-error in fble-test
+* Run fble-test-runtime-error tests in compilation mode as well.
+
+* Run fble-test-compile-error tests in compilation mode.
+  - Maybe we need a way to specify which file the error belongs to?
 
 * Link profiles in FbleLink instead of FbleCompile
  - So that we can reuse that same approach to support profiling in compiled

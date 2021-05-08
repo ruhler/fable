@@ -1,4 +1,4 @@
-fble-test-error 10:21 {
+fble-test-runtime-error 10:21 {
   @ Unit@ = *();
   Unit@ Unit = Unit@();
 

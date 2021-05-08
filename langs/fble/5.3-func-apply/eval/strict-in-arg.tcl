@@ -1,4 +1,4 @@
-fble-test-error 14:9 {
+fble-test-runtime-error 14:9 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
@@ -10,6 +10,6 @@ fble-test-error 14:9 {
     x.?(true: false, false: true);
   };
 
-  # Function application is strict in the argument..
+  # Function application is strict in the argument.
   Not(m.just);
 }

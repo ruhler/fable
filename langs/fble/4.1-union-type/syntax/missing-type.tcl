@@ -1,4 +1,4 @@
-fble-test-error 6:6 {
+fble-test-compile-error 6:6 {
   @ Unit@ = *();
   @ S1@ = *(Unit@ x);
 

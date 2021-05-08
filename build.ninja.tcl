@@ -251,7 +251,7 @@ proc dirs { root dir } {
 #   encapsulate an otherwise complex command line to run the test and give us
 #   nice test failure messages. It reads the test spec for the test to run,
 #   but only to know what error location, if any, is expected for
-#   fble-test-error tests.
+#   fble-test-*-error tests.
 set ::spec_tests [list]
 foreach dir [dirs langs/fble ""] {
   lappend build_ninja_deps "langs/fble/$dir"
@@ -286,7 +286,7 @@ foreach dir [dirs langs/fble ""] {
         set fble $::spectestdir$x
 
         set c [string map {.fble .c} $fble]
-        build $c "$::bin/fble-compile.cov $fble" \
+        build $c "$::bin/fble-compile.cov $fble $::spectestdir/test.fble" \
           "$::bin/fble-compile.cov $path $fble $::spectestdir > $c"
 
         set o [string map {.fble .o} $fble]
@@ -327,12 +327,26 @@ foreach dir [dirs langs/fble ""] {
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test"
     }
 
-    proc fble-test-error { loc expr args } {
+    proc fble-test-compile-error { loc expr args } {
       spec-test-extract
 
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --error $::spectestdir/test.fble $::spectestdir"
+
+      # TODO: Test that we get the desired compilation error when running the
+      # compiler.
+    }
+
+    proc fble-test-runtime-error { loc expr args } {
+      spec-test-extract
+
+      lappend ::spec_tests $::spectestdir/test.tr
+      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --error $::spectestdir/test.fble $::spectestdir"
+
+      # TODO: Add a compiled test that verifies we get the expected runtime
+      # error when using compilation.
     }
 
     proc fble-test-memory-constant { expr } {

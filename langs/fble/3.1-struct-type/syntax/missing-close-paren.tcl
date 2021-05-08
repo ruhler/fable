@@ -1,4 +1,4 @@
-fble-test-error 6:20 {
+fble-test-compile-error 6:20 {
   @ Unit@ = *();
   @ S1@ = *(Unit@ x);
 

@@ -1,4 +1,4 @@
-fble-test-error 5:11 {
+fble-test-compile-error 5:11 {
   @ Unit@ = *();
 
   # The get port name is missing.

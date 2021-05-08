@@ -1,4 +1,4 @@
-fble-test-error 6:37 {
+fble-test-compile-error 6:37 {
   @ Unit@ = *();
   @ Pair@ = *(Unit@ a, Unit@ b);
 

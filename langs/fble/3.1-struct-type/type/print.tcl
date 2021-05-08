@@ -1,4 +1,4 @@
-fble-test-error 7:27 {
+fble-test-compile-error 7:27 {
   @ Unit@ = *();
 
   # Cause an unlabeled struct type to be printed in an error message. We don't

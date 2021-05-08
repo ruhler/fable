@@ -1,4 +1,4 @@
-fble-test-error 6:3 {
+fble-test-compile-error 6:3 {
   @ Unit@ = *();
   Unit@ u = Unit@();
 

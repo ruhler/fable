@@ -43,7 +43,11 @@ proc fble-test { expr args } {
   fble-test-extract $expr $args
 }
 
-proc fble-test-error { loc expr args } {
+proc fble-test-compile-error { loc expr args } {
+  fble-test-extract $expr $args
+}
+
+proc fble-test-runtime-error { loc expr args } {
   fble-test-extract $expr $args
 }
 

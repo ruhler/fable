@@ -1,4 +1,4 @@
-fble-test-error 3:12 {
+fble-test-compile-error 3:12 {
   # The module /Unit/Foo% does not exist.
   % Unit = /Unit/Foo%.Unit;
 

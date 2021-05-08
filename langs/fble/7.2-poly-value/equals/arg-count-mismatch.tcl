@@ -1,4 +1,4 @@
-fble-test-error 8:20 {
+fble-test-compile-error 8:20 {
   @ Unit@ = *();
   <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
 

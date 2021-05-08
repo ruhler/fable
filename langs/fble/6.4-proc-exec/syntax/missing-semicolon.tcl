@@ -1,4 +1,4 @@
-fble-test-error 9:1 {
+fble-test-compile-error 9:1 {
   @ Unit@ = *();
   @ Pair@ = *(Unit@ a, Unit@ b);
 

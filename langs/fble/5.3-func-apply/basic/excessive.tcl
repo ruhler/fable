@@ -1,4 +1,4 @@
-fble-test-error 13:3 {
+fble-test-compile-error 13:3 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());

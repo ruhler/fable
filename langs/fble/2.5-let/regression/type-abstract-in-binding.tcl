@@ -1,4 +1,4 @@
-fble-test-error 8:13 {
+fble-test-compile-error 8:13 {
   @ Unit@ = *();
 
   # Bool@ is treated as an abstract type in the bindings of the let where it

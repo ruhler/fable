@@ -1,4 +1,4 @@
-fble-test-error 3:3  {
-  # Test 'fble-test-error' catches type errors
+fble-test-compile-error 3:3  {
+  # Test 'fble-test-compile-error' catches type errors
   x;
 }

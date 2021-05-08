@@ -1,4 +1,4 @@
-fble-test-error 5:3 {
+fble-test-compile-error 5:3 {
   @ Unit@ = *();
 
   # The type Bool@ has not been defined.

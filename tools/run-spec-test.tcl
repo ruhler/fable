@@ -23,12 +23,14 @@ proc fble-test-memory-constant { expr } { test }
 proc fble-test-memory-growth { expr } { test }
 
 # Otherwise run the command and search for the error string.
-proc fble-test-error { loc expr args } {
+proc test-error { loc } {
   set output [exec {*}$::command]
   if {-1 == [string first ":$loc: error" $output]} {
     error "Expected error at $loc, but got:\n$output"
   }
 }
+proc fble-test-compile-error { loc expr args } { test-error $loc }
+proc fble-test-runtime-error { loc expr args } { test-error $loc }
 
 if { [catch {source $::testtcl} msg] } {
   puts "$msg"

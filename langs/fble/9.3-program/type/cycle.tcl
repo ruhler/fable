@@ -1,4 +1,4 @@
-fble-test-error 2:15 {
+fble-test-compile-error 2:15 {
   % True = /Unit%.True;
 
   True.true;
