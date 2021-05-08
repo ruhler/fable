@@ -16,7 +16,7 @@ FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* thre
 // FbleInterpreterAbortFunction --
 //   A standard abort function for interpreted code.
 //
-// See documentation of FbleExecutableStandardAbortFunction in execute.h
+// See documentation of FbleAbortFunction in execute.h
 void FbleInterpreterAbortFunction(FbleValueHeap* heap, FbleStack* stack);
 
 #endif // FBLE_INTERNAL_INTERPRET_H_

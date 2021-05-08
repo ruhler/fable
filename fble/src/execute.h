@@ -192,13 +192,6 @@ struct FbleExecutable {
 //   free resources associated with the given executable.
 void FbleFreeExecutable(FbleExecutable* executable);
 
-// FbleExecutableStandardAbortFunction --
-//   A standard implementation of the FbleAbortFunction that calls
-//   FbleReleaseValue on all non-NULL locals.
-//
-// See documentation of FbleExecutable.abort above.
-void FbleExecutableStandardAbortFunction(FbleValueHeap* heap, FbleStack* stack);
-
 // FbleExecutableNothingOnFree --
 //   Implementation of a no-op FbleExecutable.on_free function.
 //
