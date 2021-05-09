@@ -1,4 +1,3 @@
-* Distinguish between --runtime-error and --compile-error in fble-test
 * Run fble-test-runtime-error tests in compilation mode as well.
 
 * Run fble-test-compile-error tests in compilation mode.

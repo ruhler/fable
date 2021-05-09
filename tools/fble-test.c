@@ -32,12 +32,13 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-test [--error] [--profile] FILE [PATH]\n"
+      "Usage: fble-test [--compile-error | --runtime-error] [--profile] FILE [PATH]\n"
       "Type check and evaluate the fble program from FILE.\n"
       "PATH is an optional include search path.\n"
       "If the result is a process, run the process.\n"
       "Exit status is 0 if the program produced no type or runtime errors, 1 otherwise.\n"
-      "With --error, exit status is 0 if the program produced a type or runtime error, 0 otherwise.\n"
+      "With --compile-error, exit status is 0 if the program produced a compilation error, 0 otherwise.\n"
+      "With --runtime-error, exit status is 0 if the program produced a runtime error, 0 otherwise.\n"
       "With --profile, a profiling report is given after executing the program.\n"
   );
 }
@@ -85,9 +86,14 @@ int main(int argc, char* argv[])
     return EX_SUCCESS;
   }
 
-  bool expect_error = false;
-  if (argc > 0 && strcmp("--error", *argv) == 0) {
-    expect_error = true;
+  bool expectCompileError = false;
+  bool expectRuntimeError = false;
+  if (argc > 0 && strcmp("--compile-error", *argv) == 0) {
+    expectCompileError = true;
+    argc--;
+    argv++;
+  } else if (argc > 0 && strcmp("--runtime-error", *argv) == 0) {
+    expectRuntimeError = true;
     argc--;
     argv++;
   }
@@ -102,18 +108,26 @@ int main(int argc, char* argv[])
   const char* path = argc < 1 ? NULL : argv[0];
   const char* include_path = argc < 2 ? NULL : argv[1];
 
-  FILE* stderr_save = stderr;
-  stderr = expect_error ? stdout : stderr;
-  int failure = expect_error ? EX_SUCCESS : EX_FAIL;
-
   FbleProfile* profile = report_profile ? FbleNewProfile() : NULL;
   FbleValueHeap* heap = FbleNewValueHeap();
+
+  FILE* original_stderr = stderr;
+  stderr = expectCompileError ? stdout : original_stderr;
+
   FbleValue* linked = Main(heap, path, include_path, profile);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return failure;
+    return expectCompileError ? EX_SUCCESS : EX_FAIL;
+  } else if (expectCompileError) {
+    fprintf(original_stderr, "expected compile error, but none encountered.\n");
+    FbleReleaseValue(heap, linked);
+    FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
+    return EX_FAIL;
   }
+
+  stderr = expectRuntimeError ? stdout : original_stderr;
 
   FbleValue* result = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
@@ -136,11 +150,9 @@ int main(int argc, char* argv[])
   }
 
   if (result == NULL) {
-    return failure;
-  }
-
-  if (expect_error) {
-    fprintf(stderr_save, "expected error, but none encountered.\n");
+    return expectRuntimeError ? EX_SUCCESS : EX_FAIL;
+  } else if (expectRuntimeError) {
+    fprintf(original_stderr, "expected runtime error, but none encountered.\n");
     return EX_FAIL;
   }
 

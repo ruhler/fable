@@ -1,13 +1,9 @@
-fble-test-runtime-error 14:17 {
+fble-test-runtime-error 10:17 {
   @ Unit@ = *();
   Unit@ Unit = Unit@();
 
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ True = Bool@(true: Unit);
-  
-  (Unit@) { Unit@; } F = (Unit@ x) {
-    x;
-  };
 
   (Bool@) { Unit@; } G = (Bool@ x) {
     # Test that we can properly unwind a stack involving a normal call.

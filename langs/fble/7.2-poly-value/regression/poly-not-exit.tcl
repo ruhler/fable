@@ -1,4 +1,4 @@
-fble-test-runtime-error 9:8 {
+fble-test-runtime-error 9:31 {
   @ Unit@ = *();
   @ Bool@ = +(Unit@ true, Unit@ false);
   Bool@ true = Bool@(true: Unit@());
@@ -6,5 +6,5 @@ fble-test-runtime-error 9:8 {
   # We had a bug in the past where we assumed that all poly expressions are
   # the last expressions in their block.
   <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
-  true.false;
+  Maybe@<Unit@>(nothing: true.false);
 }

@@ -332,10 +332,10 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --error $::spectestdir/test.fble $::spectestdir"
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --compile-error $::spectestdir/test.fble $::spectestdir"
 
       # TODO: Test that we get the desired compilation error when running the
-      # compiler.
+      # compiler?
     }
 
     proc fble-test-runtime-error { loc expr args } {
@@ -343,7 +343,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --error $::spectestdir/test.fble $::spectestdir"
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --runtime-error $::spectestdir/test.fble $::spectestdir"
 
       # TODO: Add a compiled test that verifies we get the expected runtime
       # error when using compilation.
