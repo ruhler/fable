@@ -340,13 +340,19 @@ foreach dir [dirs langs/fble ""] {
 
     proc fble-test-runtime-error { loc expr args } {
       spec-test-extract
+      spec-test-compile $args
 
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --runtime-error $::spectestdir/test.fble $::spectestdir"
 
-      # TODO: Add a compiled test that verifies we get the expected runtime
-      # error when using compilation.
+      lappend ::spec_tests $::spectestdir/test-compiled.tr
+      bin $::spectestdir/compiled-test \
+        "$::obj/fble-compiled-test.o $::spectestdir/libtest.a" \
+        "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
+      test $::spectestdir/test-compiled.tr \
+        "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
+        "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --runtime-error"
     }
 
     proc fble-test-memory-constant { expr } {

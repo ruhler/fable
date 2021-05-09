@@ -1,8 +1,3 @@
-* Run fble-test-runtime-error tests in compilation mode as well.
-
-* Run fble-test-compile-error tests in compilation mode.
-  - Maybe we need a way to specify which file the error belongs to?
-
 * Link profiles in FbleLink instead of FbleCompile
  - So that we can reuse that same approach to support profiling in compiled
    mode.
@@ -16,6 +11,8 @@
  
 * Print full stack trace on abort instead of just the top stack trace?
 * Optimize Sat simplification to avoid lots of repeated traversals?
+
+* Run fble-test-compile-error tests in compilation mode?
 
 * Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
   Their implementations may be different enough now to warrant it?

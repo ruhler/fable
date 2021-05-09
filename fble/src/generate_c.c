@@ -29,7 +29,7 @@ typedef struct {
 static void AddLoc(const char* source, LocV* locs);
 static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code);
 
-static void ReturnAbort(FILE* fout, const char* indent, const char* msg, FbleLoc loc);
+static void ReturnAbort(FILE* fout, const char* indent, size_t pc, const char* msg, FbleLoc loc);
 
 static void FrameGet(FILE* fout, FbleFrameIndex index);
 static void FrameGetStrict(FILE* fout, FbleFrameIndex index);
@@ -40,6 +40,7 @@ static VarId GenLoc(FILE* fout, const char* indent, VarId* var_id, FbleLoc loc);
 static VarId GenName(FILE* fout, VarId* var_id, FbleName name);
 static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
+static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
 static int CIdentifierForLocSize(const char* str);
 static void CIdentifierForLocStr(const char* str, char* dest);
 static FbleString* CIdentifierForPath(FbleModulePath* path);
@@ -131,17 +132,18 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 // Inputs:
 //   fout - the output stream.
 //   indent - indent to use at start of line.
+//   pc - the program counter of the abort location.
 //   msg - the name of a variable in scope containing the error message.
 //   loc - the location to report with the error message.
 //
 // Side effects:
 //   Emit code to return the error.
-static void ReturnAbort(FILE* fout, const char* indent, const char* msg, FbleLoc loc)
+static void ReturnAbort(FILE* fout, const char* indent, size_t pc, const char* msg, FbleLoc loc)
 {
   size_t size = CIdentifierForLocSize(loc.source->str);
   char source[size];
   CIdentifierForLocStr(loc.source->str, source);
-  fprintf(fout, "%sreturn Abort(%s, %s, %i, %i);\n", indent, msg, source, loc.line, loc.col);
+  fprintf(fout, "%sreturn Abort(thread->stack, %i, %s, %s, %i, %i);\n", indent, pc, msg, source, loc.line, loc.col);
 }
 
 // FrameGet --
@@ -362,7 +364,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       fprintf(fout, "      FbleValue* sv = "); FrameGetStrict(fout, access_instr->obj); fprintf(fout, ";\n");
       fprintf(fout, "      if (sv == NULL) {\n");
-      ReturnAbort(fout, "        ", "UndefinedStructValue", access_instr->loc);
+      ReturnAbort(fout, "        ", pc, "UndefinedStructValue", access_instr->loc);
       fprintf(fout, "      };\n");
       fprintf(fout, "      StructAccess(heap, thread, sv, %i, %i);\n",
           access_instr->tag, access_instr->dest);
@@ -373,12 +375,12 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       fprintf(fout, "      FbleUnionValue* uv = (FbleUnionValue*)"); FrameGetStrict(fout, access_instr->obj); fprintf(fout, ";\n");
       fprintf(fout, "      if (uv == NULL) {\n");
-      ReturnAbort(fout, "        ", "UndefinedUnionValue", access_instr->loc);
+      ReturnAbort(fout, "        ", pc, "UndefinedUnionValue", access_instr->loc);
       fprintf(fout, "      };\n");
 
       fprintf(fout, "      assert(uv->_base.tag == FBLE_UNION_VALUE);\n");
       fprintf(fout, "      if (uv->tag != %i) {;\n", access_instr->tag);
-      ReturnAbort(fout, "        ", "WrongUnionTag", access_instr->loc);
+      ReturnAbort(fout, "        ", pc, "WrongUnionTag", access_instr->loc);
       fprintf(fout, "      };\n");
 
       FrameSetBorrowed(fout, "      ", access_instr->dest, "uv->arg");
@@ -391,7 +393,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FrameGetStrict(fout, select_instr->condition);
       fprintf(fout, ";\n");
       fprintf(fout, "      if (v == NULL) {\n");
-      ReturnAbort(fout, "        ", "UndefinedUnionSelect", select_instr->loc);
+      ReturnAbort(fout, "        ", pc, "UndefinedUnionSelect", select_instr->loc);
       fprintf(fout, "      };\n");
 
       fprintf(fout, "      assert(v->_base.tag == FBLE_UNION_VALUE);\n");
@@ -435,7 +437,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       fprintf(fout, "      FbleFuncValue* func = (FbleFuncValue*)"); FrameGetStrict(fout, call_instr->func); fprintf(fout, ";\n");
       fprintf(fout, "      if (func == NULL) {\n");
-      ReturnAbort(fout, "        ", "UndefinedFunctionValue", call_instr->loc);
+      ReturnAbort(fout, "        ", pc, "UndefinedFunctionValue", call_instr->loc);
       fprintf(fout, "      }\n");
 
       fprintf(fout, "      assert(func->_base.tag == FBLE_FUNC_VALUE);\n");
@@ -558,7 +560,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      }\n");
 
       fprintf(fout, "      if (ref == rv) {\n");
-      ReturnAbort(fout, "        ", "VacuousValue", ref_instr->loc);
+      ReturnAbort(fout, "        ", pc, "VacuousValue", ref_instr->loc);
       fprintf(fout, "      }\n");
 
       fprintf(fout, "      rv->value = v;\n");
@@ -917,8 +919,9 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "static const char* WrongUnionTag = \"union field access undefined: wrong tag\\n\";\n");
   fprintf(fout, "static const char* UndefinedFunctionValue = \"called undefined function\\n\";\n");
   fprintf(fout, "static const char* VacuousValue = \"vacuous value\\n\";\n\n");
-  fprintf(fout, "static FbleExecStatus Abort(const char* msg, const char* source, size_t line, size_t col)\n");
+  fprintf(fout, "static FbleExecStatus Abort(FbleStack* stack, size_t pc, const char* msg, const char* source, size_t line, size_t col)\n");
   fprintf(fout, "{\n");
+  fprintf(fout, "  stack->pc = pc;\n");
   fprintf(fout, "  fprintf(stderr, \"%%s:%%d:%%d: error: %%s\", source, line, col, msg);\n");
   fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
   fprintf(fout, "}\n\n");
@@ -1000,30 +1003,13 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     fprintf(fout, "{\n");
     var_id = 0;
 
-    // Output a jump table to jump into the right place in the function to
-    // resume. We'll only ever resume into a place that's after a normal call
-    // or fork instruction, so that's all we need to check for.
     fprintf(fout, "  switch (stack->pc) {\n");
-    fprintf(fout, "    case 0: goto _pc_0;\n");
     for (size_t i = 0; i < code->instrs.size; ++i) {
-      FbleInstr* instr = code->instrs.xs[i];
-      if (instr->tag == FBLE_CALL_INSTR) {
-        FbleCallInstr* call = (FbleCallInstr*)instr;
-        if (!call->exit) {
-          fprintf(fout, "    case %i: goto _pc_%i;\n", i+1, i+1);
-        }
-      } else if (instr->tag == FBLE_FORK_INSTR) {
-        fprintf(fout, "    case %i: goto _pc_%i;\n", i+1, i+1);
-      }
-    }
-    fprintf(fout, "  };\n");
-
-    // Output code to execute the individual instructions.
-    for (size_t i = 0; i < code->instrs.size; ++i) {
-      fprintf(fout, "    _pc_%i: {\n", i);
+      fprintf(fout, "    case %i:  _pc_%i: {\n", i, i);
       EmitInstrForAbort(fout, &var_id, i, code->instrs.xs[i]);
       fprintf(fout, "    }\n");
     }
+    fprintf(fout, "  }\n");
     fprintf(fout, "  Unreachable();\n");
     fprintf(fout, "}\n\n");
   }
