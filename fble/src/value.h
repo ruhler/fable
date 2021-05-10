@@ -66,6 +66,8 @@ typedef struct {
 //
 // Fields:
 //   executable - The code for the function.
+//   profile_base_id - An offset to use for profile blocks referenced from this
+//                     function.
 //   statics - static variables captured by the function.
 //             Size is executable->statics
 //
@@ -75,6 +77,7 @@ typedef struct {
 struct FbleFuncValue {
   FbleValue _base;
   FbleExecutable* executable;
+  size_t profile_base_id;
   FbleValue* statics[];
 };
 
@@ -166,6 +169,7 @@ typedef struct {
 // Inputs:
 //   heap - heap to use for allocations.
 //   executable - the executable to run. Borrowed.
+//   profile_base_id - the profile_base_id to use for the function.
 //
 // Results:
 //   A newly allocated FbleFuncValue that is fully initialized except for
@@ -174,7 +178,7 @@ typedef struct {
 // Side effects:
 //   Allocates a new FbleFuncValue that should be freed using FbleReleaseValue
 //   when it is no longer needed.
-FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable);
+FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id);
 
 // FbleNewGetValue --
 //   Create a new get proc value for the given link.

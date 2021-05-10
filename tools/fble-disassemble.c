@@ -76,18 +76,15 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleProfile* profile = FbleNewProfile();
-  FbleCompiledProgram* compiled = FbleCompile(prgm, profile);
+  FbleCompiledProgram* compiled = FbleCompile(prgm);
   FbleFreeLoadedProgram(prgm);
 
   if (compiled == NULL) {
-    FbleFreeProfile(profile);
     return EX_FAIL;
   }
 
-  FbleDisassemble(stdout, compiled->modules.xs[compiled->modules.size - 1].code, profile);
+  FbleDisassemble(stdout, compiled->modules.xs[compiled->modules.size - 1].code);
 
   FbleFreeCompiledProgram(compiled);
-  FbleFreeProfile(profile);
   return EX_SUCCESS;
 }

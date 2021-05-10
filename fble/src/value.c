@@ -237,10 +237,11 @@ FbleValue* FbleUnionValueAccess(FbleValue* object)
 }
 
 // FbleNewFuncValue -- see documentation in value.h
-FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable)
+FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id)
 {
   FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * executable->statics);
   v->_base.tag = FBLE_FUNC_VALUE;
+  v->profile_base_id = profile_base_id;
   v->executable = executable;
   v->executable->refcount++;
   return v;
@@ -385,11 +386,12 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
   exec->args = 0;
   exec->statics = 2;
   exec->locals = 0;
+  FbleVectorInit(exec->profile_blocks);
   exec->run = &PutRunFunction;
   exec->abort = &PutAbortFunction;
   exec->on_free = &FbleExecutableNothingOnFree;
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, exec);
+  FbleFuncValue* put = FbleNewFuncValue(heap, exec, 0);
   FbleFreeExecutable(exec);
 
   FbleValue* link = thread->stack->func->statics[0];
@@ -427,11 +429,12 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
   exec->args = 0;
   exec->statics = 1;
   exec->locals = 0;
+  FbleVectorInit(exec->profile_blocks);
   exec->run = &GetRunFunction;
   exec->abort = &GetAbortFunction;
   exec->on_free = &FbleExecutableNothingOnFree;
 
-  FbleProcValue* get = FbleNewFuncValue(heap, exec);
+  FbleProcValue* get = FbleNewFuncValue(heap, exec, 0);
   get->statics[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
 
@@ -460,11 +463,12 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
   exec->args = 1;
   exec->statics = 1;
   exec->locals = 1;
+  FbleVectorInit(exec->profile_blocks);
   exec->run = &PartialPutRunFunction;
   exec->abort = &PartialPutAbortFunction;
   exec->on_free = &FbleExecutableNothingOnFree;
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, exec);
+  FbleFuncValue* put = FbleNewFuncValue(heap, exec, 0);
   put->statics[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
   FbleFreeExecutable(exec);

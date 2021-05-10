@@ -104,6 +104,21 @@ FbleProfile* FbleNewProfile();
 // called.
 FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
 
+// FbleProfileAddBlocks --
+//   Add multiple new block to the profile using a contiguous range of block
+//   ids.
+//
+// Inputs:
+//   profile - the profile to add the blocks to
+//   names - the names of the block to add. Borrowed.
+//
+// Results:
+//   The id of the first added block.
+//
+// Side effects:
+// * Adds blocks to the profile.
+FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
+
 // FbleFreeProfile --
 //   Free a profile.
 //

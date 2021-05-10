@@ -477,6 +477,15 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name)
   FbleVectorAppend(profile->blocks, block);
   return id;
 }
+// FbleProfileAddBlocks -- see documentation in fble-profile.h
+FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names)
+{
+  size_t id = profile->blocks.size;
+  for (size_t i = 0; i < names.size; ++i) {
+    FbleProfileAddBlock(profile, FbleCopyName(names.xs[i]));
+  }
+  return id;
+}
 
 // FbleFreeProfile -- see documentation in fble-profile.h
 void FbleFreeProfile(FbleProfile* profile)

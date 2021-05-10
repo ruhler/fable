@@ -16,6 +16,7 @@
 // Inputs:
 //   heap - heap to use for allocations.
 //   program - the executable program to link.
+//   profile - profile to construct for the linked program. May be NULL.
 //
 // Results:
 //   An FbleValue representing a zero-argument function that can be used to
@@ -24,7 +25,7 @@
 // Side effects:
 //   Allocates an FbleValue* that should be freed using FbleReleaseValue when
 //   no longer needed.
-FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program);
+FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile);
 
 // FbleLinkFromSource --
 //   Load, compile, and link a full program from source.

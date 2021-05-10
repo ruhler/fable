@@ -287,6 +287,11 @@ void FbleFreeExecutable(FbleExecutable* executable)
   assert(executable->refcount > 0);
   executable->refcount--;
   if (executable->refcount == 0) {
+    for (size_t i = 0; i < executable->profile_blocks.size; ++i) {
+      FbleFreeName(executable->profile_blocks.xs[i]);
+    }
+    FbleFree(executable->profile_blocks.xs);
+
     executable->on_free(executable);
     FbleFree(executable);
   }

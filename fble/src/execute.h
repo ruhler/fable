@@ -168,6 +168,10 @@ typedef void FbleAbortFunction(FbleValueHeap* heap, FbleStack* stack);
 // The 'on_free' function is called passing this as an argument just before
 // the FbleExecutable object is freed. Subclasses should use this to free any
 // custom state.
+//
+// 'profile_blocks' is an optional list of names of profile blocks used in the
+// FbleExecutable. This is intended to be used for FbleExecutable's
+// representing top level modules only.
 #define FBLE_EXECUTABLE_MAGIC 0xB10CE
 struct FbleExecutable {
   size_t refcount;            // reference count.
@@ -175,6 +179,7 @@ struct FbleExecutable {
   size_t args;                // The number of arguments expected by the function.
   size_t statics;             // The number of statics used by the function.
   size_t locals;              // The number of locals used by the function.
+  FbleNameV profile_blocks;
   FbleRunFunction* run;       // How to run the function.
   FbleAbortFunction* abort;   // How to abort the function.
   void (*on_free)(FbleExecutable* this);

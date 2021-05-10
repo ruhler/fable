@@ -72,10 +72,10 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId bloc
 //
 // Fields:
 //   stack - The stack of black frames representing the current location.
-//   profile - The profile to append blocks to.
+//   profile - The names of profile blocks to append to.
 typedef struct {
   FbleBlockIdV stack;
-  FbleProfile* profile;
+  FbleNameV profile;
 } Blocks;
 
 static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace);
@@ -84,7 +84,7 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit);
 
 static void CompileExit(bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* tc);
-static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile);
+static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name);
 
 // NewLocal --
 //   Allocate space for an anonymous local variable on the stack frame.
@@ -382,7 +382,7 @@ static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope,
   size_t currlen = 0;
   if (blocks->stack.size > 0) {
     size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
-    curr = blocks->profile->blocks.xs[curr_id]->name.name->str;
+    curr = blocks->profile.xs[curr_id].name->str;
     currlen = strlen(curr);
   }
 
@@ -403,7 +403,8 @@ static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope,
   }
 
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
-  size_t id = FbleProfileAddBlock(blocks->profile, nm);
+  size_t id = blocks->profile.size;
+  FbleVectorAppend(blocks->profile, nm);
 
   AppendProfileOp(scope, replace ? FBLE_PROFILE_REPLACE_OP : FBLE_PROFILE_ENTER_OP, id);
   FbleVectorAppend(blocks->stack, id);
@@ -429,7 +430,7 @@ static void EnterBodyBlock(Blocks* blocks, FbleLoc loc, Scope* scope)
   const char* curr = "";
   if (blocks->stack.size > 0) {
     size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
-    curr = blocks->profile->blocks.xs[curr_id]->name.name->str;
+    curr = blocks->profile.xs[curr_id].name->str;
   }
 
   // Append "!" to the current block name to figure out the new block name.
@@ -441,7 +442,8 @@ static void EnterBodyBlock(Blocks* blocks, FbleLoc loc, Scope* scope)
   strcat(str->str, "!");
 
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
-  size_t id = FbleProfileAddBlock(blocks->profile, nm);
+  size_t id = blocks->profile.size;
+  FbleVectorAppend(blocks->profile, nm);
 
   AppendProfileOp(scope, FBLE_PROFILE_ENTER_OP, id);
   FbleVectorAppend(blocks->stack, id);
@@ -916,7 +918,6 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 //   argc - the number of local variables to reserve for arguments.
 //   tc - the type-checked expression to compile.
 //   name - the name of the expression to use in profiling. Borrowed.
-//   profile - profile to populate with blocks. May be NULL.
 //
 // Results:
 //   The compiled program.
@@ -925,20 +926,11 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 // * Adds blocks to the given profile.
 // * The caller should call FbleFreeCode to release resources
 //   associated with the returned program when it is no longer needed.
-static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name, FbleProfile* profile)
+static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name)
 {
-  bool profiling_disabled = false;
-  if (profile == NULL) {
-    // Profiling is disabled. Allocate a new temporary profile to use during
-    // compilation so we don't have to special case the code for emitting
-    // profiling information.
-    profiling_disabled = true;
-    profile = FbleNewProfile();
-  }
-
   Blocks blocks;
   FbleVectorInit(blocks.stack);
-  blocks.profile = profile;
+  FbleVectorInit(blocks.profile);
 
   FbleCode* code;
   Scope scope;
@@ -959,9 +951,8 @@ static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name, FbleProfile* pr
   FreeScope(&scope);
   assert(blocks.stack.size == 0);
   FbleFree(blocks.stack.xs);
-  if (profiling_disabled) {
-    FbleFreeProfile(profile);
-  }
+  FbleFree(code->_base.profile_blocks.xs);
+  code->_base.profile_blocks = blocks.profile;
   return code;
 }
 
@@ -984,7 +975,7 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program)
 }
 
 // FbleCompile -- see documentation in fble-compile.h
-FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program, FbleProfile* profile)
+FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program)
 {
   FbleTcV typechecked;
   FbleVectorInit(typechecked);
@@ -1010,7 +1001,7 @@ FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program, FbleProfile* profil
     }
 
     FbleName label = FbleModulePathName(module->path);
-    compiled_module->code = Compile(module->deps.size, typechecked.xs[i], label, profile);
+    compiled_module->code = Compile(module->deps.size, typechecked.xs[i], label);
     FbleFreeTc(typechecked.xs[i]);
     FbleFreeName(label);
   }

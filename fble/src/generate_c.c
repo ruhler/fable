@@ -420,10 +420,11 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      executable->args = %i;\n", func_instr->code->_base.args);
       fprintf(fout, "      executable->statics = %i;\n", func_instr->code->_base.statics);
       fprintf(fout, "      executable->locals = %i;\n", func_instr->code->_base.locals);
+      fprintf(fout, "      FbleVectorInit(executable->profile_blocks);\n");
       fprintf(fout, "      executable->run = &_Run_%p;\n", (void*)func_instr->code);
       fprintf(fout, "      executable->abort = &_Abort_%p;\n", (void*)func_instr->code);
       fprintf(fout, "      executable->on_free = &FbleExecutableNothingOnFree;\n");
-      fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, executable);\n");
+      fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, executable, thread->stack->func->profile_base_id);\n");
       fprintf(fout, "      FbleFreeExecutable(executable);\n");
       for (size_t i = 0; i < staticc; ++i) {
         fprintf(fout, "      v->statics[%i] = ", i); FrameGet(fout, func_instr->scope.xs[i]); fprintf(fout, ";\n");
@@ -1058,6 +1059,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  v%x->executable->args = %i;\n", module_id, module->code->_base.args);
   fprintf(fout, "  v%x->executable->statics = %i;\n", module_id, module->code->_base.statics);
   fprintf(fout, "  v%x->executable->locals = %i;\n", module_id, module->code->_base.locals);
+  fprintf(fout, "  FbleVectorInit(v%x->executable->profile_blocks);\n", module_id);
   fprintf(fout, "  v%x->executable->run = &_Run_%p;\n", module_id, (void*)module->code);
   fprintf(fout, "  v%x->executable->abort = &_Abort_%p;\n", module_id, (void*)module->code);
   fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
@@ -1084,7 +1086,7 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
   fprintf(fout, "  FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);\n");
   fprintf(fout, "  FbleVectorInit(program->modules);\n");
   fprintf(fout, "  %s(program);\n", module_name->str);
-  fprintf(fout, "  FbleValue* value = FbleLink(heap, program);\n");
+  fprintf(fout, "  FbleValue* value = FbleLink(heap, program, NULL);\n");
   fprintf(fout, "  FbleFreeExecutableProgram(program);\n");
   fprintf(fout, "  return value;\n");
   fprintf(fout, "}\n\n");

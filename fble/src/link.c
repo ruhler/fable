@@ -11,7 +11,7 @@
 #include "value.h"
 
 // FbleLink -- see documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
+FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile)
 {
   size_t modulec = program->modules.size;
 
@@ -19,8 +19,16 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   // module given values of the modules it depends on.
   FbleValue* funcs[modulec];
   for (size_t i = 0; i < modulec; ++i) {
-    assert(program->modules.xs[i].executable->statics == 0);
-    FbleFuncValue* func = FbleNewFuncValue(heap, program->modules.xs[i].executable);
+    FbleExecutable* module = program->modules.xs[i].executable;
+
+    assert(module->statics == 0);
+
+    size_t profile_base_id = 0;
+    if (profile != NULL) {
+      profile_base_id = FbleProfileAddBlocks(profile, module->profile_blocks);
+    }
+
+    FbleFuncValue* func = FbleNewFuncValue(heap, module, profile_base_id);
     funcs[i] = &func->_base;
   }
 
@@ -75,7 +83,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program)
   FbleVectorAppend(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
-  FbleFuncValue* linked = FbleNewFuncValue(heap, &code->_base);
+  FbleFuncValue* linked = FbleNewFuncValue(heap, &code->_base, 0);
   for (size_t i = 0; i < modulec; ++i) {
     linked->statics[i] = funcs[i];
     FbleValueAddRef(heap, &linked->_base, funcs[i]);
@@ -94,7 +102,7 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const c
     return NULL;
   }
 
-  FbleCompiledProgram* compiled = FbleCompile(program, profile);
+  FbleCompiledProgram* compiled = FbleCompile(program);
   FbleFreeLoadedProgram(program);
   if (compiled == NULL) {
    return NULL;
@@ -103,7 +111,7 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const c
   FbleExecutableProgram* executable = FbleInterpret(compiled);
   FbleFreeCompiledProgram(compiled);
 
-  FbleValue* linked = FbleLink(heap, executable);
+  FbleValue* linked = FbleLink(heap, executable, profile);
   FbleFreeExecutableProgram(executable);
   return linked;
 }

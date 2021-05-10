@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
       return EX_FAIL;
     }
 
-    FbleCompiledProgram* compiled = FbleCompile(prgm, NULL);
+    FbleCompiledProgram* compiled = FbleCompile(prgm);
     FbleFreeLoadedProgram(prgm);
 
     if (compiled == NULL) {

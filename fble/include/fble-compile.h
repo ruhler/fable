@@ -64,7 +64,6 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program);
 //
 // Inputs:
 //   program - the program to compile.
-//   profile - profile to populate with blocks. May be NULL.
 //
 // Results:
 //   The compiled program, or NULL if the program is not well typed.
@@ -72,10 +71,9 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program);
 // Side effects:
 // * Prints warning messages to stderr.
 // * Prints a message to stderr if the program fails to compile.
-// * Adds blocks to the given profile.
 // * The caller should call FbleFreeCompiledProgram to release resources
 //   associated with the returned program when it is no longer needed.
-FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program, FbleProfile* profile);
+FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program);
 
 // FbleDisassemble --
 //   Write a disassembled version of an instruction block in human readable
@@ -84,11 +82,10 @@ FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program, FbleProfile* profil
 // Inputs:
 //   fout - the file to write the disassembled program to.
 //   code - the code to disassemble.
-//   profile - profile to use for profile block information.
 //
 // Side effects:
 //   A disassembled version of the code is printed to fout.
-void FbleDisassemble(FILE* fout, FbleCode* code, FbleProfile* profile);
+void FbleDisassemble(FILE* fout, FbleCode* code);
 
 // FbleGenerateC --
 //   Generate C code for an fble compiled module.

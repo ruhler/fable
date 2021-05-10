@@ -17,7 +17,7 @@
 #define UNREACHABLE(x) assert(false && x)
 
 static void OnFree(FbleExecutable* executable);
-static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile);
+static void DumpCode(FILE* fout, FbleCode* code);
 
 // OnFree --
 //   The FbleExecutable.on_free function for FbleCode.
@@ -37,17 +37,18 @@ static void OnFree(FbleExecutable* executable)
 // Inputs:
 //   fout - where to dump the blocks to.
 //   code - the code block to dump.
-//   profile - the profile, for getting names of profiling blocks.
 //
 // Results:
 //   none
 //
 // Side effects:
 //   Prints the code block in human readable format to stderr.
-static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
+static void DumpCode(FILE* fout, FbleCode* code)
 {
   // Map from FbleFrameSection to short descriptor of the section.
   static const char* sections[] = {"s", "l"};
+
+  FbleNameV profile_blocks = code->_base.profile_blocks;
 
   struct { size_t size; FbleCode** xs; } blocks;
   FbleVectorInit(blocks);
@@ -64,7 +65,7 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP: {
             FbleBlockId block = op->block;
-            FbleName* name = &profile->blocks.xs[block]->name;
+            FbleName* name = &profile_blocks.xs[block];
             fprintf(fout, "    .  profile enter [%04x]; ", block);
             fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name->str, block,
                 name->loc.source->str, name->loc.line, name->loc.col);
@@ -73,7 +74,7 @@ static void DumpCode(FILE* fout, FbleCode* code, FbleProfile* profile)
 
           case FBLE_PROFILE_REPLACE_OP: {
             FbleBlockId block = op->block;
-            FbleName* name = &profile->blocks.xs[block]->name;
+            FbleName* name = &profile_blocks.xs[block];
             fprintf(fout, "    .  profile replace [%04x]; ", block);
             fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name->str, block,
                 name->loc.source->str, name->loc.line, name->loc.col);
@@ -358,6 +359,7 @@ FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals)
   code->_base.args = args;
   code->_base.statics = statics;
   code->_base.locals = locals;
+  FbleVectorInit(code->_base.profile_blocks);
   code->_base.run = &FbleInterpreterRunFunction;
   code->_base.abort = &FbleInterpreterAbortFunction;
   code->_base.on_free = &OnFree;
@@ -372,7 +374,7 @@ void FbleFreeCode(FbleCode* code)
 }
 
 // FbleDisassmeble -- see documentation in fble-compile.h.
-void FbleDisassemble(FILE* fout, FbleCode* code, FbleProfile* profile)
+void FbleDisassemble(FILE* fout, FbleCode* code)
 {
-  DumpCode(fout, code, profile);
+  DumpCode(fout, code);
 }

@@ -1,9 +1,8 @@
-* Link profiles in FbleLink instead of FbleCompile
- - So that we can reuse that same approach to support profiling in compiled
-   mode.
-
-* After linking profiles in FbleLink, add support for profiling in compiled
-  mode.
+* Add support for profiling in compiled mode.
+ - Emit code for the profiling ops.
+ - Emit code to Sample at each instruction.
+ - Consider putting the profiling code behind some CPP flag so it is easy to
+   remove entirely when we compile the generated code.
 
 * Better Usage messages for fble-test, fble-mem-test, and fble-stdio?
   For the case when the fble program is compiled in instead of passed on the
