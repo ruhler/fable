@@ -215,6 +215,7 @@ bin $::bin/fble-app $::obj/fble-app.o "-L $::lib -lfble -lSDL2" $::libfble
 obj $::obj/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleMain -I fble/include"
 obj $::obj/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleMain -I fble/include"
 obj $::obj/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleMain -I fble/include"
+obj $::obj/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleMain -I fble/include"
 
 # tests
 test $::test/true.tr "" true
@@ -471,6 +472,19 @@ bin $::bin/fble-tests \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 test $::test/fble-compiled-tests.tr $::bin/fble-tests \
   "$::bin/fble-tests" "pool = console"
+
+# fble-compiled-profiles-test
+build $::src/fble-compiled-profiles-test-fble-main.c $::bin/fble-compile \
+  "$::bin/fble-compile /Fble/ProfilesTest% --export FbleMain > $::src/fble-compiled-profiles-test-fble-main.c"
+obj $::obj/fble-compiled-profiles-test-fble-main.o $::src/fble-compiled-profiles-test-fble-main.c \
+  "-I fble/include -I fble/src"
+bin $::bin/fble-compiled-profiles-test \
+  "$::obj/fble-compiled-profiles-test.o $::obj/fble-compiled-profiles-test-fble-main.o" \
+  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
+# TODO: Re-enable this test.
+#test $::test/fble-compiled-profiles-test.tr \
+#  "$::bin/fble-compiled-profiles-test" \
+#  "$::bin/fble-compiled-profiles-test > $::test/fble-compiled-profiles-test.prof"
 
 # /Fble/Bench% compiled binary
 build $::src/fble-bench.c $::bin/fble-compile \
