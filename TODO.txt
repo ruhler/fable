@@ -1,5 +1,4 @@
 * Add helper function for FbleNewName that we can use in generated code?
-* Enable profiling for compiled spec tests.
 
 * Factor out common code for switching between FbleCompiledMain and
   FbleLinkFromSource.

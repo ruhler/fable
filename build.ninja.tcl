@@ -292,13 +292,13 @@ foreach dir [dirs langs/fble ""] {
 
         set o [string map {.fble .o} $fble]
         lappend objs $o
-        tobj $o $c "-I fble/include -I fble/src"
+        tobj $o $c "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
       }
 
       build $::spectestdir/test.c \
         "$::bin/fble-compile.cov $::spectestdir/test.fble" \
         "$::bin/fble-compile.cov /test% --export FbleMain $::spectestdir/test.fble $::spectestdir > $::spectestdir/test.c"
-      tobj $::spectestdir/test.o $::spectestdir/test.c "-I fble/include -I fble/src"
+      tobj $::spectestdir/test.o $::spectestdir/test.c "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
       lappend objs $::spectestdir/test.o
 
       lib $::spectestdir/libtest.a $objs
@@ -325,7 +325,7 @@ foreach dir [dirs langs/fble ""] {
         "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test"
+        "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --profile"
     }
 
     proc fble-test-compile-error { loc expr args } {
