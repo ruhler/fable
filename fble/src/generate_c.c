@@ -1114,10 +1114,12 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  v%x->executable->abort = &_Abort_%p;\n", module_id, (void*)module->code);
   fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
 
+  fprintf(fout, "#ifdef FBLE_ENABLE_PROFILING\n");
   for (size_t i = 0; i < module->code->_base.profile_blocks.size; ++i) {
     VarId name_id = GenName(fout, &var_id, module->code->_base.profile_blocks.xs[i]);
     fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, v%x);\n", module_id, name_id);
   }
+  fprintf(fout, "#endif // FBLE_ENABLE_PROFILING\n");
 
   fprintf(fout, "}\n");
 
