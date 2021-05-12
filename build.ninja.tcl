@@ -474,17 +474,17 @@ test $::test/fble-compiled-tests.tr $::bin/fble-tests \
   "$::bin/fble-tests" "pool = console"
 
 # fble-compiled-profiles-test
-build $::src/fble-compiled-profiles-test-fble-main.c $::bin/fble-compile \
-  "$::bin/fble-compile /Fble/ProfilesTest% --export FbleMain > $::src/fble-compiled-profiles-test-fble-main.c"
-obj $::obj/fble-compiled-profiles-test-fble-main.o $::src/fble-compiled-profiles-test-fble-main.c \
-  "-I fble/include -I fble/src"
+build $::src/fble-compiled-profiles-test-fble-main.c \
+  "$::bin/fble-compile prgms/Fble/ProfilesTest.fble" \
+  "$::bin/fble-compile /Fble/ProfilesTest% --export FbleMain prgms/Fble/ProfilesTest.fble > $::src/fble-compiled-profiles-test-fble-main.c"
+tobj $::obj/fble-compiled-profiles-test-fble-main.o $::src/fble-compiled-profiles-test-fble-main.c \
+  "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
 bin $::bin/fble-compiled-profiles-test \
   "$::obj/fble-compiled-profiles-test.o $::obj/fble-compiled-profiles-test-fble-main.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
-# TODO: Re-enable this test.
-#test $::test/fble-compiled-profiles-test.tr \
-#  "$::bin/fble-compiled-profiles-test" \
-#  "$::bin/fble-compiled-profiles-test > $::test/fble-compiled-profiles-test.prof"
+test $::test/fble-compiled-profiles-test.tr \
+  "$::bin/fble-compiled-profiles-test" \
+  "$::bin/fble-compiled-profiles-test > $::test/fble-compiled-profiles-test.prof"
 
 # /Fble/Bench% compiled binary
 build $::src/fble-bench.c $::bin/fble-compile \

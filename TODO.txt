@@ -1,9 +1,8 @@
-* Add support for profiling in compiled mode.
- - Emit code for the profiling ops.
- - Emit code to Sample at each instruction.
- - Consider putting the profiling code behind some CPP flag so it is easy to
-   remove entirely when we compile the generated code.
- - Set up a compiled version of the fble-profiles-test.
+* Add helper function for FbleNewName that we can use in generated code?
+* Enable profiling for compiled spec tests.
+
+* Factor out common code for switching between FbleCompiledMain and
+  FbleLinkFromSource.
 
 * Better Usage messages for fble-test, fble-mem-test, and fble-stdio?
   For the case when the fble program is compiled in instead of passed on the

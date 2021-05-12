@@ -123,11 +123,11 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
 // load if you want to load compiled .fble code. Otherwise we'll load
 // interpreted .fble code.
 #ifdef FbleCompiledMain
-FbleValue* FbleCompiledMain(FbleValueHeap* heap);
+FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
 
 static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
 {
-  return FbleCompiledMain(heap);
+  return FbleCompiledMain(heap, profile);
 }
 #else
 static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)

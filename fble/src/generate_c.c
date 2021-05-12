@@ -275,8 +275,18 @@ static VarId GenName(FILE* fout, VarId* var_id, FbleName name)
 
   VarId id = (*var_id)++;
   fprintf(fout, "  FbleName v%x;\n", id);
-  // TODO: Handle funny chars in the string literal properly.
-  fprintf(fout, "  v%x.name = FbleNewString(\"%s\");\n", id, name.name->str);
+  fprintf(fout, "  v%x.name = FbleNewString(\"", id);
+  for (char* p = name.name->str; *p; p++) {
+    // TODO: Handle other special characters too.
+    switch (*p) {
+      case '\n': fprintf(fout, "\\n"); break;
+      case '"': fprintf(fout, "\\\""); break;
+      case '\\': fprintf(fout, "\\\\"); break;
+      default: fprintf(fout, "%c", *p); break;
+    }
+  }
+
+  fprintf(fout, "\");\n");
   fprintf(fout, "  v%x.space = %s;\n", id, spaces[name.space]);
   fprintf(fout, "  v%x.loc = v%x;\n", id, loc_id);
   return id;
@@ -324,6 +334,29 @@ static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
 // * Increments var_id based on the number of internal variables used.
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 {
+  fprintf(fout, "      ProfileSample(thread->profile);\n");
+
+  for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+    switch (op->tag) {
+      case FBLE_PROFILE_ENTER_OP:
+        fprintf(fout, "      ProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id + %i);\n", op->block);
+        break;
+
+      case FBLE_PROFILE_REPLACE_OP:
+        fprintf(fout, "      ProfileReplaceBlock(thread->profile, thread->stack->func->profile_base_id + %i);\n", op->block);
+        break;
+
+      case FBLE_PROFILE_EXIT_OP:
+        fprintf(fout, "      ProfileExitBlock(thread->profile);\n");
+        break;
+
+      case FBLE_PROFILE_AUTO_EXIT_OP: {
+        fprintf(fout, "      ProfileAutoExitBlock(thread->profile);\n");
+        break;
+      }
+    }
+  }
+
   switch (instr->tag) {
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
@@ -878,7 +911,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocksAndLocs(&blocks, &locs, module->code);
 
-  fprintf(fout, "#include \"assert.h\"\n\n");
+  fprintf(fout, "#include \"assert.h\"\n\n");    // for assert
 
   fprintf(fout, "#include \"fble-alloc.h\"\n");  // for FbleAlloc, etc.
   fprintf(fout, "#include \"fble-value.h\"\n");  // for FbleValue, etc.
@@ -886,6 +919,23 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "#include \"execute.h\"\n");     // for FbleThread, etc.
   fprintf(fout, "#include \"value.h\"\n");       // for FbleStructValue, etc.
   fprintf(fout, "\n");
+
+  // Macros for profiling that can optionally be enabled when compiling the
+  // generated C code.
+  fprintf(fout, "#ifdef FBLE_ENABLE_PROFILING\n");
+  fprintf(fout, "#include \"stdlib.h\"\n\n");    // for rand
+  fprintf(fout, "#define ProfileEnterBlock(profile, block) if (profile) { FbleProfileEnterBlock(profile, block); }\n");
+  fprintf(fout, "#define ProfileReplaceBlock(profile, block) if (profile) { FbleProfileReplaceBlock(profile, block); }\n");
+  fprintf(fout, "#define ProfileExitBlock(profile) if (profile) { FbleProfileExitBlock(profile); }\n");
+  fprintf(fout, "#define ProfileAutoExitBlock(profile) if (profile) { FbleProfileAutoExitBlock(profile); }\n");
+  fprintf(fout, "#define ProfileSample(profile) if (profile && rand() %% 1024 == 0) { FbleProfileSample(profile, 1); }\n");
+  fprintf(fout, "#else\n");
+  fprintf(fout, "#define ProfileEnterBlock(profile, block)\n");
+  fprintf(fout, "#define ProfileReplaceBlock(profile, block)\n");
+  fprintf(fout, "#define ProfileExitBlock(profile)\n");
+  fprintf(fout, "#define ProfileAutoExitBlock(profile)\n");
+  fprintf(fout, "#define ProfileSample(profile)\n");
+  fprintf(fout, "#endif // FBLE_ENABLE_PROFILING\n");
 
   // Prototypes for module dependencies.
   for (size_t i = 0; i < module->deps.size; ++i) {
@@ -1064,6 +1114,11 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  v%x->executable->abort = &_Abort_%p;\n", module_id, (void*)module->code);
   fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
 
+  for (size_t i = 0; i < module->code->_base.profile_blocks.size; ++i) {
+    VarId name_id = GenName(fout, &var_id, module->code->_base.profile_blocks.xs[i]);
+    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, v%x);\n", module_id, name_id);
+  }
+
   fprintf(fout, "}\n");
 
   return true;
@@ -1081,12 +1136,12 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
   FbleString* module_name = CIdentifierForPath(path);
   fprintf(fout, "void %s(FbleExecutableProgram* program);\n\n", module_name->str);
 
-  fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", name);
+  fprintf(fout, "FbleValue* %s(FbleValueHeap* heap, FbleProfile* profile)\n", name);
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);\n");
   fprintf(fout, "  FbleVectorInit(program->modules);\n");
   fprintf(fout, "  %s(program);\n", module_name->str);
-  fprintf(fout, "  FbleValue* value = FbleLink(heap, program, NULL);\n");
+  fprintf(fout, "  FbleValue* value = FbleLink(heap, program, profile);\n");
   fprintf(fout, "  FbleFreeExecutableProgram(program);\n");
   fprintf(fout, "  return value;\n");
   fprintf(fout, "}\n\n");
