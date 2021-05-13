@@ -1,7 +1,15 @@
 * Add helper function for FbleNewName that we can use in generated code?
 
+* Factor out and reuse code in generate_c for generating string literals with
+  funny escape characters in them.
+
 * Factor out common code for switching between FbleCompiledMain and
   FbleLinkFromSource.
+ - Generate .so files that we can load dynamically for compiled code, rather
+   than have to recompile the same main c program for each different main fble
+   program?
+
+* Better document how to enable profiling for compiled fble code.
 
 * Better Usage messages for fble-test, fble-mem-test, and fble-stdio?
   For the case when the fble program is compiled in instead of passed on the
@@ -45,7 +53,6 @@
  - Does this mean making a copy of the FbleExecutableProgram? That's tedious.
 
 * [compilation] Switch over entirely to compilation use case?
- - We'll want to add profiling support to the compilation use case.
  - Remove interpreter entirely? Any significant downside?
  - We could always write a wrapper script that calls tcc, for example, to give
    the same user experience as the interpreter currently gives us.
@@ -55,7 +62,6 @@
  - Should definition of FbleThread* be private to execute.c?
 * [compilation] Make public headers available for compiled code to use so we don't have to
   give direct access to internal header files.
-* [compilation] Figure out what to do about profiling for the compilation code path.
 * [compilation] Add support for .fble.@ files and modular compilation.
 
 * [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?

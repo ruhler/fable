@@ -106,7 +106,7 @@ FbleLoadedProgram* FbleLoad(const char* filename, const char* root)
   FbleString* filename_str = FbleNewString(filename);
   Stack* stack = FbleAlloc(Stack);
   stack->deps_loaded = 0;
-  FbleLoc loc = { .source = FbleNewString(filename), .line = 1, .col = 0 };
+  FbleLoc loc = FbleNewLoc(filename, 1, 0);
   stack->module.path = FbleNewModulePath(loc);
   FbleFreeLoc(loc);
   FbleVectorInit(stack->module.deps);

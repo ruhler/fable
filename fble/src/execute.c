@@ -177,10 +177,9 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 
     bool blocked = !unblocked;
     if (!io->io(io, heap, blocked) && blocked) {
-      FbleString* source = FbleNewString(__FILE__);
-      FbleLoc loc = { .source = source, .line = 0, .col = 0 };
+      FbleLoc loc = FbleNewLoc(__FILE__, 0, 0);
       FbleReportError("deadlock\n", loc);
-      FbleFreeString(source);
+      FbleFreeLoc(loc);
 
       AbortThreads(heap, &threads);
       FbleReleaseValue(heap, result);

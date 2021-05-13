@@ -36,7 +36,7 @@ static void FrameGetStrict(FILE* fout, FbleFrameIndex index);
 static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
 static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
 
-static VarId GenLoc(FILE* fout, const char* indent, VarId* var_id, FbleLoc loc);
+static void Loc(FILE* fout, FbleLoc loc);
 static VarId GenName(FILE* fout, VarId* var_id, FbleName name);
 static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
@@ -224,30 +224,19 @@ static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex inde
   fprintf(fout, "%sthread->stack->locals[%i] = %s;\n", indent, index, value);
 }
 
-// GenLoc --
-//   Generate code for a FbleLoc.
+// Loc --
+//   Output a C expression to produce an FbleLoc.
 //
 // Inputs:
-//   fout - the output stream to write the code to.
-//   var_id - pointer to next available variable id for use.
+//   fout - the output stream to write the C expression to.
 //   loc - the FbleLoc to generate code for.
 //
-// Results:
-//   The variable id of the generated FbleLoc.
-//
 // Side effects:
-// * Outputs code to fout with two space indent.
-// * Increments var_id based on the number of internal variables used.
-static VarId GenLoc(FILE* fout, const char* indent, VarId* var_id, FbleLoc loc)
+// * Outputs code to fout for the loc.
+static void Loc(FILE* fout, FbleLoc loc)
 {
-  VarId source = (*var_id)++;
-  fprintf(fout, "%sFbleString* v%x = FbleNewString(\"%s\");\n",
-      indent, source, loc.source->str);
-
-  VarId id = (*var_id)++;
-  fprintf(fout, "%sFbleLoc v%x = { .source = v%x, .line = %i, .col = %i };\n",
-      indent, id, source, loc.line, loc.col);
-  return id;
+  // TODO: Properly escape funny chars in the source string.
+  fprintf(fout, "FbleNewLoc(\"%s\", %i, %i)", loc.source->str, loc.line, loc.col);
 }
 
 // GenName --
@@ -271,8 +260,6 @@ static VarId GenName(FILE* fout, VarId* var_id, FbleName name)
     "FBLE_TYPE_NAME_SPACE"
   };
 
-  VarId loc_id = GenLoc(fout, "  ", var_id, name.loc);
-
   VarId id = (*var_id)++;
   fprintf(fout, "  FbleName v%x;\n", id);
   fprintf(fout, "  v%x.name = FbleNewString(\"", id);
@@ -288,7 +275,7 @@ static VarId GenName(FILE* fout, VarId* var_id, FbleName name)
 
   fprintf(fout, "\");\n");
   fprintf(fout, "  v%x.space = %s;\n", id, spaces[name.space]);
-  fprintf(fout, "  v%x.loc = v%x;\n", id, loc_id);
+  fprintf(fout, "  v%x.loc = ", id); Loc(fout, name.loc); fprintf(fout, ";\n");
   return id;
 }
 
@@ -308,8 +295,9 @@ static VarId GenName(FILE* fout, VarId* var_id, FbleName name)
 // * Increments var_id based on the number of internal variables used.
 static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
 {
-  VarId loc_id = GenLoc(fout, "  ", var_id, path->loc);
+  VarId loc_id = (*var_id)++;
   VarId path_id = (*var_id)++;
+  fprintf(fout, "  FbleLoc v%x = ", loc_id); Loc(fout, path->loc); fprintf(fout, ";\n");
   fprintf(fout, "  FbleModulePath* v%x = FbleNewModulePath(v%x);\n", path_id, loc_id);
   fprintf(fout, "  FbleFreeLoc(v%x);\n", loc_id);
 

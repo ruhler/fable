@@ -24,6 +24,23 @@ typedef struct {
   int col;
 } FbleLoc;
 
+// FbleNewLoc --
+//   Convenience function for creating an FbleLoc from a char* source name.
+//
+// Inputs:
+//   source - the name of the source file for the location. Borrowed.
+//   line - the line within the file.
+//   col - the column within the line.
+//
+// Results:
+//   An FbleLoc with given source, line, and col. Copy of the source string is
+//   made.
+//
+// Side effects:
+//   Allocates resources for an FbleLoc that should be freed using FbleFreeLoc
+//   when no longer needed.
+FbleLoc FbleNewLoc(const char* source, int line, int col);
+
 // FbleCopyLoc --
 //   Make a (possibly shared) copy of a location.
 //

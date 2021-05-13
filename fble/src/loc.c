@@ -7,6 +7,17 @@
 #include "fble-alloc.h"
 #include "fble-string.h"
 
+// FbleNewLoc -- see documentation in fble-loc.h
+FbleLoc FbleNewLoc(const char* source, int line, int col)
+{
+  FbleLoc loc = {
+    .source = FbleNewString(source),
+    .line = line,
+    .col = col,
+  };
+  return loc;
+}
+
 // FbleCopyLoc -- see documentation in fble-loc.h
 FbleLoc FbleCopyLoc(FbleLoc loc)
 {
