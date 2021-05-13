@@ -37,7 +37,7 @@ static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex inde
 static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
 
 static void Loc(FILE* fout, FbleLoc loc);
-static VarId GenName(FILE* fout, VarId* var_id, FbleName name);
+static void Name(FILE* fout, FbleName name);
 static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
 static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
@@ -239,30 +239,23 @@ static void Loc(FILE* fout, FbleLoc loc)
   fprintf(fout, "FbleNewLoc(\"%s\", %i, %i)", loc.source->str, loc.line, loc.col);
 }
 
-// GenName --
-//   Generate code for a FbleName.
+// Name --
+//   Generate an expression for constructing an FbleName.
 //
 // Inputs:
 //   fout - the output stream to write the code to.
-//   var_id - pointer to next available variable id for use.
 //   name - the FbleName to generate code for.
 //
-// Results:
-//   The variable id of the generated FbleName.
-//
 // Side effects:
-// * Outputs code to fout with two space indent.
-// * Increments var_id based on the number of internal variables used.
-static VarId GenName(FILE* fout, VarId* var_id, FbleName name)
+// * Outputs code to fout for the expression.
+static void Name(FILE* fout, FbleName name)
 {
   static const char* spaces[] = {
     "FBLE_NORMAL_NAME_SPACE",
     "FBLE_TYPE_NAME_SPACE"
   };
 
-  VarId id = (*var_id)++;
-  fprintf(fout, "  FbleName v%x;\n", id);
-  fprintf(fout, "  v%x.name = FbleNewString(\"", id);
+  fprintf(fout, "Name(\"");
   for (char* p = name.name->str; *p; p++) {
     // TODO: Handle other special characters too.
     switch (*p) {
@@ -273,10 +266,7 @@ static VarId GenName(FILE* fout, VarId* var_id, FbleName name)
     }
   }
 
-  fprintf(fout, "\");\n");
-  fprintf(fout, "  v%x.space = %s;\n", id, spaces[name.space]);
-  fprintf(fout, "  v%x.loc = ", id); Loc(fout, name.loc); fprintf(fout, ";\n");
-  return id;
+  fprintf(fout, "\", %s, \"%s\", %i, %i)", spaces[name.space], name.loc.source->str, name.loc.line, name.loc.col);
 }
 
 // GenModulePath --
@@ -302,8 +292,9 @@ static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
   fprintf(fout, "  FbleFreeLoc(v%x);\n", loc_id);
 
   for (size_t i = 0; i < path->path.size; ++i) {
-    VarId name_id = GenName(fout, var_id, path->path.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->path, v%x);\n", path_id, name_id);
+    fprintf(fout, "  FbleVectorAppend(v%x->path, ", path_id);
+    Name(fout, path->path.xs[i]);
+    fprintf(fout, ");\n");
   }
   return path_id;
 }
@@ -902,6 +893,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "#include \"assert.h\"\n\n");    // for assert
 
   fprintf(fout, "#include \"fble-alloc.h\"\n");  // for FbleAlloc, etc.
+  fprintf(fout, "#include \"fble-name.h\"\n");   // for FbleName, etc.
   fprintf(fout, "#include \"fble-value.h\"\n");  // for FbleValue, etc.
   fprintf(fout, "#include \"fble-vector.h\"\n"); // for FbleVectorInit, etc.
   fprintf(fout, "#include \"execute.h\"\n");     // for FbleThread, etc.
@@ -958,6 +950,16 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "static const char* WrongUnionTag = \"union field access undefined: wrong tag\\n\";\n");
   fprintf(fout, "static const char* UndefinedFunctionValue = \"called undefined function\\n\";\n");
   fprintf(fout, "static const char* VacuousValue = \"vacuous value\\n\";\n\n");
+
+  fprintf(fout, "static FbleName Name(const char* name, FbleNameSpace space, const char* source, int line, int col)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  FbleName n;\n");
+  fprintf(fout, "  n.name = FbleNewString(name);\n");
+  fprintf(fout, "  n.space = space;\n");
+  fprintf(fout, "  n.loc = FbleNewLoc(source, line, col);\n");
+  fprintf(fout, "  return n;\n");
+  fprintf(fout, "}\n\n");
+
   fprintf(fout, "static FbleExecStatus Abort(FbleStack* stack, size_t pc, const char* msg, const char* source, size_t line, size_t col)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  stack->pc = pc;\n");
@@ -1104,8 +1106,9 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   fprintf(fout, "#ifdef FBLE_ENABLE_PROFILING\n");
   for (size_t i = 0; i < module->code->_base.profile_blocks.size; ++i) {
-    VarId name_id = GenName(fout, &var_id, module->code->_base.profile_blocks.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, v%x);\n", module_id, name_id);
+    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, ", module_id);
+    Name(fout, module->code->_base.profile_blocks.xs[i]);
+    fprintf(fout, ");\n");
   }
   fprintf(fout, "#endif // FBLE_ENABLE_PROFILING\n");
 

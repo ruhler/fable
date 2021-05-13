@@ -1,5 +1,3 @@
-* Add helper function for FbleNewName that we can use in generated code?
-
 * Factor out and reuse code in generate_c for generating string literals with
   funny escape characters in them.
 
