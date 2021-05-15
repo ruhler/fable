@@ -17,10 +17,35 @@ typedef FbleValue* FbleCompiledMainFunction(FbleValueHeap* heap, FbleProfile* pr
 //   code.
 //
 // See documentation of FbleMain for how to use this.
+//
+// FBLE_MAIN_USAGE_SUMMARY --
+//   A string to include in an application usage summary line describing the
+//   usage of the argc/argv passed to FbleMain.
+//
+// FBLE_MAIN_USAGE_DETAIL --
+//   A string to include in an application usage description with more detail
+//   about the usage of argc/argv passed to FbleMain.
+//
+// FBLE_MAIN_USAGE_EXAMPLE --
+//   A string to include an an application usage example command line showing
+//   what to use in the argc/argv passed to FbleMain.
 #ifdef FbleCompiledMain
 FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
+
+#define FBLE_MAIN_USAGE_SUMMARY ""
+#define FBLE_MAIN_USAGE_DETAIL "Loads the statically linked fble program.\n"
+#define FBLE_MAIN_USAGE_EXAMPLE ""
+
 #else  // FbleCompiledMain
+
 #define FbleCompiledMain NULL
+
+#define FBLE_MAIN_USAGE_SUMMARY "FILE [PATH]"
+#define FBLE_MAIN_USAGE_DETAIL \
+  "Load the fble program from FILE.\n" \
+  "PATH is an optional include search path.\n"
+#define FBLE_MAIN_USAGE_EXAMPLE "prgms/Fble/Tests.fble prgms"
+
 #endif // FbleCompiledMain
 
 // FbleMain -- 

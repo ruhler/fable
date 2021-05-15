@@ -33,8 +33,9 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-profiles-test prgms/Fble/ProfilesTest.fble\n"
-      "Run the fble-profiles-test using the given ProfilesTest.fble file.\n"
+      "Usage: fble-profiles-test " FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Run the fble-profiles-test on the ProfilesTest.fble program.\n"
+      FBLE_MAIN_USAGE_DETAIL
       "Exit status is 0 on success, non-zero on test failure.\n"
   );
 }

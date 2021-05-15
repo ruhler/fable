@@ -31,13 +31,13 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-mem-test [--growth] FILE [PATH]\n"
-      "FILE is an fble program evaluating to a function that takes a unary natural number.\n"
+      "Usage: fble-mem-test [--growth] " FBLE_MAIN_USAGE_SUMMARY "\n"
+      FBLE_MAIN_USAGE_DETAIL
+      "The fble program should evaluate to a function that takes a unary natural number.\n"
       "Exist status is 0 if running the function uses O(1) memory, 1 otherwise.\n"
       "Running the function means evaluating the function, and if it results in\n"
       "a process, executing the process.\n"
       "If --growth is specified, 0 if the function use > O(1) memory, 1 otherwise.\n"
-      "PATH is an optional include search path.\n"
   );
 }
 

@@ -31,9 +31,9 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-test [--compile-error | --runtime-error] [--profile] FILE [PATH]\n"
-      "Type check and evaluate the fble program from FILE.\n"
-      "PATH is an optional include search path.\n"
+      "Usage: fble-test [--compile-error | --runtime-error] [--profile] " FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Type check and evaluate an fble program.\n"
+      FBLE_MAIN_USAGE_DETAIL
       "If the result is a process, run the process.\n"
       "Exit status is 0 if the program produced no type or runtime errors, 1 otherwise.\n"
       "With --compile-error, exit status is 0 if the program produced a compilation error, 0 otherwise.\n"

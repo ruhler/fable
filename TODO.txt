@@ -1,4 +1,3 @@
-* Figure out better story for printing usage for FbleMain users.
 * Pass search path and module path to FbleLoad instead of file and path.
 * Add option for passing .so files to FbleLoad.
 
@@ -12,10 +11,6 @@
 
 * Better document how to enable profiling for compiled fble code.
 
-* Better Usage messages for fble-test, fble-mem-test, and fble-stdio?
-  For the case when the fble program is compiled in instead of passed on the
-  command line.
- 
 * Print full stack trace on abort instead of just the top stack trace?
 * Optimize Sat simplification to avoid lots of repeated traversals?
 

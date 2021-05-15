@@ -48,12 +48,13 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream,
-      "Usage: fble-stdio [--profile FILE] FILE DIR \n"
-      "Run the fble stdio program described by the fble program FILE.\n"
+      "Usage: fble-stdio [--profile FILE] " FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Run an fble stdio program.\n"
+      FBLE_MAIN_USAGE_DETAIL
       "Options:\n"
       "  --profile FILE\n"
       "    Writes a profile of the test run to FILE\n"
-      "Example: fble-stdio --profile tests.prof prgms/Fble/Tests.fble prgms\n"
+      "Example: fble-stdio --profile tests.prof " FBLE_MAIN_USAGE_EXAMPLE "\n"
   );
 }
 
