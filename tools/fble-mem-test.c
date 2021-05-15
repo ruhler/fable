@@ -7,6 +7,7 @@
 
 #include "fble-alloc.h"   // for FbleMaxTotalBytesAllocated.
 #include "fble-link.h"    // for FbleLinkFromSource.
+#include "fble-main.h"    // for FbleMain
 #include "fble-value.h"   // for FbleValue, etc.
 
 #define EX_SUCCESS 0
@@ -14,7 +15,6 @@
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -40,28 +40,6 @@ static void PrintUsage(FILE* stream)
       "PATH is an optional include search path.\n"
   );
 }
-
-// Main --
-//   Load the main fble program.
-//
-// See documentation of FbleLinkFromSource in fble-link.h
-//
-// #define FbleCompileMain to the exported name of the compiled fble code to
-// load if you want to load compiled .fble code. Otherwise we'll load
-// interpreted .fble code.
-#ifdef FbleCompiledMain
-FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
-
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
-{
-  return FbleCompiledMain(heap, profile);
-}
-#else
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
-{
-  return FbleLinkFromSource(heap, file, dir, profile);
-}
-#endif // FbleCompiledMain
 
 // Run --
 //   Run the program, measuring maximum memory needed to evaluate f[n].
@@ -158,14 +136,11 @@ int main(int argc, char* argv[])
     argv++;
   }
 
-  const char* path = argc < 1 ? NULL : argv[0];
-  const char* include_path = argc < 2 ? NULL : argv[1];
-
   // Use a profile during tests to ensure memory behavior works properly with
   // profiling turned on.
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = Main(heap, path, include_path, profile);
+  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

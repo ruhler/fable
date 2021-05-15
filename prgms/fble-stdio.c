@@ -19,7 +19,7 @@
 #include <string.h>     // for strcmp
 #include <stdlib.h>     // for free
 
-#include "fble-link.h"    // for FbleLinkFromSource.
+#include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
 typedef struct {
@@ -32,7 +32,6 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static char ReadChar(FbleValue* c);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -164,28 +163,6 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
   return change;
 }
 
-// Main --
-//   Load the main fble program.
-//
-// See documentation of FbleLinkFromSource in fble-link.h
-//
-// #define FbleCompileMain to the exported name of the compiled fble code to
-// load if you want to load compiled .fble code. Otherwise we'll load
-// interpreted .fble code.
-#ifdef FbleCompiledMain
-FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
-
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
-{
-  return FbleCompiledMain(heap, profile);
-}
-#else
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
-{
-  return FbleLinkFromSource(heap, file, dir, profile);
-}
-#endif // FbleCompiledMain
-
 // main --
 //   The main entry point for fble-tests.
 //
@@ -201,14 +178,16 @@ static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, F
 //   standard error if an error is encountered.
 int main(int argc, char* argv[])
 {
-  if (argc > 1 && strcmp("--help", argv[1]) == 0) {
+  argc--;
+  argv++;
+  if (argc > 0 && strcmp("--help", *argv) == 0) {
     PrintUsage(stdout);
     return 0;
   }
 
   FILE* fprofile = NULL;
-  if (argc > 2 && strcmp("--profile", argv[1]) == 0) {
-    fprofile = fopen(argv[2], "w");
+  if (argc > 1 && strcmp("--profile", *argv) == 0) {
+    fprofile = fopen(argv[1], "w");
     if (fprofile == NULL) {
       fprintf(stderr, "unable to open %s for writing.\n", argv[2]);
       return 1;
@@ -218,13 +197,10 @@ int main(int argc, char* argv[])
     argv += 2;
   }
 
-  const char* path = argc <= 1 ? NULL : argv[1];
-  const char* include_path = argc <= 2 ? NULL : argv[2];
-
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* linked = Main(heap, path, include_path, profile);
+  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

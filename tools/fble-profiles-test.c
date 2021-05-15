@@ -5,7 +5,7 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble-link.h"      // for FbleLinkFromSource.
+#include "fble-main.h"      // for FbleMain.
 #include "fble-profile.h"   // for FbleNewProfile, etc.
 #include "fble-value.h"     // for FbleValue, etc.
 
@@ -16,7 +16,6 @@
 static void PrintUsage(FILE* stream);
 static size_t Count(FbleProfile* profile, const char* name);
 static size_t Calls(FbleProfile* profile, const char* caller, const char* callee);
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile);
 
 int main(int argc, char* argv[]);
 
@@ -114,28 +113,6 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
   return 0;
 }
 
-// Main --
-//   Load the main fble program.
-//
-// See documentation of FbleLinkFromSource in fble-link.h
-//
-// #define FbleCompileMain to the exported name of the compiled fble code to
-// load if you want to load compiled .fble code. Otherwise we'll load
-// interpreted .fble code.
-#ifdef FbleCompiledMain
-FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
-
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
-{
-  return FbleCompiledMain(heap, profile);
-}
-#else
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
-{
-  return FbleLinkFromSource(heap, file, dir, profile);
-}
-#endif // FbleCompiledMain
-
 // main --
 //   The main entry point for the fble-profiles-test program.
 //
@@ -157,11 +134,9 @@ int main(int argc, char* argv[])
     return EX_SUCCESS;
   }
 
-  const char* path = argc < 1 ? NULL : *argv;
-
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = Main(heap, path, NULL, profile);
+  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

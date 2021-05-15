@@ -1,11 +1,14 @@
+* Figure out better story for printing usage for FbleMain users.
+* Pass search path and module path to FbleLoad instead of file and path.
+* Add option for passing .so files to FbleLoad.
+
 * Factor out and reuse code in generate_c for generating string literals with
   funny escape characters in them.
+ - It would really be nice if I could do it as a custom string format char,
+   instead of having to do a separate call to fprintf for it.
 
-* Factor out common code for switching between FbleCompiledMain and
-  FbleLinkFromSource.
- - Generate .so files that we can load dynamically for compiled code, rather
-   than have to recompile the same main c program for each different main fble
-   program?
+* Consider factoring out common code used in generated code into an include
+  file we can include? Like a foo.c.inc kind of thing?
 
 * Better document how to enable profiling for compiled fble code.
 

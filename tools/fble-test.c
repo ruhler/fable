@@ -6,7 +6,7 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble-link.h"      // for FbleLinkFromSource.
+#include "fble-main.h"      // for FbleMain
 #include "fble-profile.h"   // for FbleNewProfile, etc.
 #include "fble-value.h"     // for FbleValue, etc.
 
@@ -15,7 +15,6 @@
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -42,28 +41,6 @@ static void PrintUsage(FILE* stream)
       "With --profile, a profiling report is given after executing the program.\n"
   );
 }
-
-// Main --
-//   Load the main fble program.
-//
-// See documentation of FbleLinkFromSource in fble-link.h
-//
-// #define FbleCompileMain to the exported name of the compiled fble code to
-// load if you want to load compiled .fble code. Otherwise we'll load
-// interpreted .fble code.
-#ifdef FbleCompiledMain
-FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
-
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
-{
-  return FbleCompiledMain(heap, profile);
-}
-#else
-static FbleValue* Main(FbleValueHeap* heap, const char* file, const char* dir, FbleProfile* profile)
-{
-  return FbleLinkFromSource(heap, file, dir, profile);
-}
-#endif // FbleCompiledMain
 
 // main --
 //   The main entry point for the fble-test program.
@@ -105,16 +82,13 @@ int main(int argc, char* argv[])
     argv++;
   }
 
-  const char* path = argc < 1 ? NULL : argv[0];
-  const char* include_path = argc < 2 ? NULL : argv[1];
-
   FbleProfile* profile = report_profile ? FbleNewProfile() : NULL;
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FILE* original_stderr = stderr;
   stderr = expectCompileError ? stdout : original_stderr;
 
-  FbleValue* linked = Main(heap, path, include_path, profile);
+  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

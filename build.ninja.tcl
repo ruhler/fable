@@ -212,10 +212,10 @@ obj $::obj/fble-app.o prgms/fble-app.c "-I fble/include -I /usr/include/SDL2"
 bin $::bin/fble-app $::obj/fble-app.o "-L $::lib -lfble -lSDL2" $::libfble
 
 # Compiled variations of some of the tools.
-obj $::obj/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleMain -I fble/include"
-obj $::obj/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleMain -I fble/include"
-obj $::obj/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleMain -I fble/include"
-obj $::obj/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleMain -I fble/include"
+obj $::obj/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::obj/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::obj/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::obj/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 
 # tests
 test $::test/true.tr "" true
@@ -297,7 +297,7 @@ foreach dir [dirs langs/fble ""] {
 
       build $::spectestdir/test.c \
         "$::bin/fble-compile.cov $::spectestdir/test.fble" \
-        "$::bin/fble-compile.cov /test% --export FbleMain $::spectestdir/test.fble $::spectestdir > $::spectestdir/test.c"
+        "$::bin/fble-compile.cov /test% --export FbleCompiledMain $::spectestdir/test.fble $::spectestdir > $::spectestdir/test.c"
       tobj $::spectestdir/test.o $::spectestdir/test.c "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
       lappend objs $::spectestdir/test.o
 
@@ -455,7 +455,7 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
 
 # /Stdio/Test% compilation test
 build $::src/fble-stdio-test.c $::bin/fble-compile \
-  "$::bin/fble-compile /Stdio/Test% --export FbleMain > $::src/fble-stdio-test.c"
+  "$::bin/fble-compile /Stdio/Test% --export FbleCompiledMain > $::src/fble-stdio-test.c"
 obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.c "-I fble/include -I fble/src"
 bin $::bin/fble-stdio-test \
   "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
@@ -465,7 +465,7 @@ test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
 
 # /Fble/Tests% compilation test
 build $::src/fble-tests.c $::bin/fble-compile \
-  "$::bin/fble-compile /Fble/Tests% --export FbleMain > $::src/fble-tests.c"
+  "$::bin/fble-compile /Fble/Tests% --export FbleCompiledMain > $::src/fble-tests.c"
 obj $::obj/fble-tests.o $::src/fble-tests.c "-I fble/include -I fble/src"
 bin $::bin/fble-tests \
   "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o" \
@@ -476,7 +476,7 @@ test $::test/fble-compiled-tests.tr $::bin/fble-tests \
 # fble-compiled-profiles-test
 build $::src/fble-compiled-profiles-test-fble-main.c \
   "$::bin/fble-compile prgms/Fble/ProfilesTest.fble" \
-  "$::bin/fble-compile /Fble/ProfilesTest% --export FbleMain prgms/Fble/ProfilesTest.fble > $::src/fble-compiled-profiles-test-fble-main.c"
+  "$::bin/fble-compile /Fble/ProfilesTest% --export FbleCompiledMain prgms/Fble/ProfilesTest.fble > $::src/fble-compiled-profiles-test-fble-main.c"
 tobj $::obj/fble-compiled-profiles-test-fble-main.o $::src/fble-compiled-profiles-test-fble-main.c \
   "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
 bin $::bin/fble-compiled-profiles-test \
@@ -488,7 +488,7 @@ test $::test/fble-compiled-profiles-test.tr \
 
 # /Fble/Bench% compiled binary
 build $::src/fble-bench.c $::bin/fble-compile \
-  "$::bin/fble-compile /Fble/Bench% --export FbleMain > $::src/fble-bench.c"
+  "$::bin/fble-compile /Fble/Bench% --export FbleCompiledMain > $::src/fble-bench.c"
 obj $::obj/fble-bench.o $::src/fble-bench.c "-I fble/include -I fble/src"
 bin $::bin/fble-bench \
   "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
