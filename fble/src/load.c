@@ -26,14 +26,14 @@ typedef struct Stack {
   struct Stack* tail;
 } Stack;
 
-static FbleString* Find(const char* root, FbleModulePath* path);
+static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path);
 
 // Find  -- 
 //  Returns the path on disk of the .fble file for the given root directory
 //  and module path.
 //  
 // Inputs:
-//   root - file path to the root of the module search path. May be NULL.
+//   search_path - file path to the root of the module search path. May be NULL.
 //   path - the module path to find the source file for.
 //
 // Results:
@@ -44,9 +44,9 @@ static FbleString* Find(const char* root, FbleModulePath* path);
 // * Prints an error message to stderr in case of error.
 // * The user should call FbleFreeString when the returned string is no
 //   longer needed.
-static FbleString* Find(const char* root, FbleModulePath* path)
+static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path)
 {
-  if (root == NULL) {
+  if (search_path == NULL) {
     FbleReportError("module ", path->loc);
     FblePrintModulePath(stderr, path);
     fprintf(stderr, " not found\n");
@@ -54,7 +54,7 @@ static FbleString* Find(const char* root, FbleModulePath* path)
   }
 
   // Cacluate the length of the filename for the module.
-  size_t len = strlen(root) + strlen(".fble") + 1;
+  size_t len = strlen(search_path) + strlen(".fble") + 1;
   for (size_t i = 0; i < path->path.size; ++i) {
     // "/name"
     len += 1 + strlen(path->path.xs[i].name->str);
@@ -74,7 +74,7 @@ static FbleString* Find(const char* root, FbleModulePath* path)
   // Construct the path to the module on disk.
   char filename[len];
   filename[0] = '\0';
-  strcat(filename, root);
+  strcat(filename, search_path);
   for (size_t i = 0; i < path->path.size; ++i) {
     strcat(filename, "/");
     strcat(filename, path->path.xs[i].name->str);
@@ -92,10 +92,15 @@ static FbleString* Find(const char* root, FbleModulePath* path)
 }
 
 // FbleLoad -- see documentation in fble-load.h
-FbleLoadedProgram* FbleLoad(const char* filename, const char* root)
+FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_path)
 {
+  if (module_path == NULL) {
+    fprintf(stderr, "no module path specified\n");
+    return NULL;
+  }
+
+  FbleString* filename = Find(search_path, module_path);
   if (filename == NULL) {
-    fprintf(stderr, "no input file\n");
     return NULL;
   }
 
@@ -103,20 +108,19 @@ FbleLoadedProgram* FbleLoad(const char* filename, const char* root)
   FbleVectorInit(program->modules);
 
   bool error = false;
-  FbleString* filename_str = FbleNewString(filename);
   Stack* stack = FbleAlloc(Stack);
   stack->deps_loaded = 0;
-  FbleLoc loc = FbleNewLoc(filename, 1, 0);
+  FbleLoc loc = { .source = FbleCopyString(filename), .line = 1, .col = 0 };
   stack->module.path = FbleNewModulePath(loc);
   FbleFreeLoc(loc);
   FbleVectorInit(stack->module.deps);
   stack->tail = NULL;
-  stack->module.value = FbleParse(filename_str, &stack->module.deps);
+  stack->module.value = FbleParse(filename, &stack->module.deps);
   if (stack->module.value == NULL) {
     error = true;
     stack->deps_loaded = stack->module.deps.size;
   }
-  FbleFreeString(filename_str);
+  FbleFreeString(filename);
 
   while (stack != NULL) {
     if (stack->deps_loaded == stack->module.deps.size) {
@@ -169,7 +173,7 @@ FbleLoadedProgram* FbleLoad(const char* filename, const char* root)
     stack->module.value = NULL;
     stack->tail = tail;
 
-    FbleString* filename_str = Find(root, stack->module.path);
+    FbleString* filename_str = Find(search_path, stack->module.path);
     if (filename_str != NULL) {
       stack->module.value = FbleParse(filename_str, &stack->module.deps);
       FbleFreeString(filename_str);

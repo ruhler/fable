@@ -5,6 +5,7 @@
 #define FBLE_LINK_H_
 
 #include "fble-execute.h"
+#include "fble-load.h"
 #include "fble-profile.h"
 #include "fble-value.h"
 
@@ -32,8 +33,8 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 //
 // Inputs:
 //   heap - heap to use for allocations.
-//   filename - The name of the file to parse the program from.
-//   root - The directory to search for modules in. May be NULL.
+//   search_path - The search path to use for location .fble files.
+//   module_path - The module path for the main module to load. Borrowed.
 //   profile - profile to populate with blocks. May be NULL.
 //
 // Returns: 
@@ -44,6 +45,6 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 // * Prints an error message to stderr if the program fails to load.
 // * The user should call FbleReleaseValue on the returned value when it is no
 //   longer needed.
-FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const char* root, FbleProfile* profile);
+FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, FbleModulePath* module_path, FbleProfile* profile);
 
 #endif // FBLE_LINK_H_

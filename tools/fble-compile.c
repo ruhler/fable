@@ -28,15 +28,14 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-native path [--export NAME] [FILE [PATH]]\n"
+      "Usage: fble-native MODULE_PATH [--export NAME] [SEARCH_PATH]\n"
       "Compile an fble module to C code.\n"
-      "  path - the fble module path associated with FILE. For example: /Foo/Bar%\n"
-      "  FILE - the name of the .fble file to compile.\n"
-      "  PATH - an optional include search path.\n"
+      "  MODULE_PATH - the fble module path associated with FILE. For example: /Foo/Bar%\n"
+      "  SEARCH_PATH - the directory to search for .fble files in.\n"
       "Options:\n"
       "  --export NAME\n"
       "    Generates a C function with the given NAME to export the module\n"
-      "At least one of [--export NAME] or [FILE [PATH]] must be provided.\n"
+      "At least one of [--export NAME] or [SEARCH_PATH] must be provided.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
 }
@@ -78,22 +77,11 @@ int main(int argc, char* argv[])
     argv += 2;
   }
 
-  const char* path = NULL;
-  if (export == NULL && argc < 1) {
-    fprintf(stderr, "no input file.\n");
+  const char* search_path = argc < 1 ? NULL : argv[0];
+  if (export == NULL && search_path == NULL) {
+    fprintf(stderr, "one of --export NAME or SEARCH_PATH must be specified.\n");
     PrintUsage(stderr);
     return EX_USAGE;
-  }
-
-  if (argc > 0) {
-    path = *argv;
-    argc--;
-    argv++;
-  }
-
-  const char* include_path = NULL;
-  if (argc > 0) {
-    include_path = *argv;
   }
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
@@ -105,8 +93,8 @@ int main(int argc, char* argv[])
     FbleGenerateCExport(stdout, export, mpath);
   }
 
-  if (path != NULL) {
-    FbleLoadedProgram* prgm = FbleLoad(path, include_path);
+  if (search_path != NULL) {
+    FbleLoadedProgram* prgm = FbleLoad(search_path, mpath);
     if (prgm == NULL) {
       FbleFreeModulePath(mpath);
       return EX_FAIL;

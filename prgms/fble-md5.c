@@ -7,7 +7,7 @@
 #include <stdint.h>     // for uint64_t
 #include <string.h>     // for strcmp
 
-#include "fble-link.h"    // for FbleLinkFromSource.
+#include "fble-main.h"    // for FbleMain
 #include "fble-value.h"   // for FbleValue, etc.
 
 // Md5IO --
@@ -37,11 +37,11 @@ int main(int argc, char* argv[]);
 //   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream)
 {
-  fprintf(stream,
-      "Usage: fbld-md5 PRGM PATH FILE \n"
-      "Execute the md5 process described by the fble program PRGM.\n"
-      "Using search path PATH, and computing the md5 of FILE.\n"
-      "Example: fbld-md5 prgms/Md5/Main.fble prgms foo.txt\n"
+  fprintf(stream, "%s",
+      "Usage: fbld-md5 FILE " FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Compute md5 on FILE using the given fble program.\n"
+      FBLE_MAIN_USAGE_DETAIL
+      "Example: fbld-md5 foo.txt " FBLE_MAIN_USAGE_EXAMPLE "\n"
   );
 }
 
@@ -121,25 +121,10 @@ int main(int argc, char* argv[])
     PrintUsage(stderr);
     return 1;
   }
-
-  if (argc <= 2) {
-    fprintf(stderr, "no include path provided.\n");
-    PrintUsage(stderr);
-    return 1;
-  }
-
-  if (argc <= 3) {
-    fprintf(stderr, "no input file.\n");
-    PrintUsage(stderr);
-    return 1;
-  }
-
-  const char* path = argv[1];
-  const char* include_path = argv[2];
-  const char* file = argv[3];
+  const char* file = argv[1];
 
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleLinkFromSource(heap, path, include_path, NULL);
+  FbleValue* linked = FbleMain(heap, NULL, FbleCompiledMain, argc - 2, argv + 2);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     return 1;

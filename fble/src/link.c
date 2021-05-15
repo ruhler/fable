@@ -95,9 +95,9 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 }
 
 // FbleLinkFromSource -- see documentation in fble-link.h
-FbleValue* FbleLinkFromSource(FbleValueHeap* heap, const char* filename, const char* root, FbleProfile* profile)
+FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, FbleModulePath* module_path, FbleProfile* profile)
 {
-  FbleLoadedProgram* program = FbleLoad(filename, root);
+  FbleLoadedProgram* program = FbleLoad(search_path, module_path);
   if (program == NULL) {
     return NULL;
   }

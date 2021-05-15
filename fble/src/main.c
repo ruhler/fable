@@ -13,8 +13,25 @@ FbleValue* FbleMain(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledMainF
     return compiled_main(heap, profile);
   }
 
-  const char* file = argc < 1 ? NULL : argv[0];
-  const char* dir = argc < 2 ? NULL : argv[1];
-  return FbleLinkFromSource(heap, file, dir, profile);
+  if (argc < 1) {
+    fprintf(stderr, "no search path provided.\n");
+    return NULL;
+  }
+  const char* search_path = argv[0];
+
+  if (argc < 2) {
+    fprintf(stderr, "no module path provided.\n");
+    return NULL;
+  }
+  const char* mpath_string = argv[1];
+
+  FbleModulePath* mpath = FbleParseModulePath(mpath_string);
+  if (mpath == NULL) {
+    return NULL;
+  }
+
+  FbleValue* linked = FbleLinkFromSource(heap, search_path, mpath, profile);
+  FbleFreeModulePath(mpath);
+  return linked;
 }
 

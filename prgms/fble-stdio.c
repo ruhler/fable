@@ -47,7 +47,7 @@ int main(int argc, char* argv[]);
 //   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream)
 {
-  fprintf(stream,
+  fprintf(stream, "%s",
       "Usage: fble-stdio [--profile FILE] " FBLE_MAIN_USAGE_SUMMARY "\n"
       "Run an fble stdio program.\n"
       FBLE_MAIN_USAGE_DETAIL

@@ -60,12 +60,19 @@ typedef struct {
 //   calling FbleFreeModulePath on each path when it is no longer needed.
 FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
 
+// FbleSearchPath - 
+//   A directory to use as the root of an fble file hierarchy for locating
+//   .fble files corresponding to a module path.
+//
+// TODO: Support a list of directories instead of a single directory?
+typedef const char* FbleSearchPath;
+
 // FbleLoad --
 //   Load an fble program.
 //
 // Inputs:
-//   filename - The name of the file to parse the program from.
-//   root - The directory to search for modules in. May be NULL.
+//   search_path - The search path to use for location .fble files.
+//   module_path - The module path for the main module to load.
 //
 // Results:
 //   The parsed program, or NULL in case of error.
@@ -76,7 +83,7 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
 // Allocations:
 // * The user should call FbleFreeLoadedProgram to free resources associated
 //   with the given program when it is no longer needed.
-FbleLoadedProgram* FbleLoad(const char* filename, const char* root);
+FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_path);
 
 // FbleFreeLoadedProgram --
 //   Free resources associated with the given program.

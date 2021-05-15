@@ -1,5 +1,4 @@
-* Pass search path and module path to FbleLoad instead of file and path.
-* Add option for passing .so files to FbleLoad.
+* Add option for passing .so files to FbleMain.
 
 * Factor out and reuse code in generate_c for generating string literals with
   funny escape characters in them.
@@ -10,6 +9,7 @@
   file we can include? Like a foo.c.inc kind of thing?
 
 * Better document how to enable profiling for compiled fble code.
+ - Perhaps an fble user guide?
 
 * Print full stack trace on abort instead of just the top stack trace?
 * Optimize Sat simplification to avoid lots of repeated traversals?

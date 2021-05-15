@@ -27,11 +27,12 @@ int main(int argc, char* argv[]);
 //   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream)
 {
-  fprintf(stream,
-      "Usage: fble-deps target FILE [PATH]\n"
+  fprintf(stream, "%s",
+      "Usage: fble-deps target SEARCH_PATH MODULE_PATH\n"
       "  target - the name of the target of the output deps.\n"
-      "  FILE - the .fble file to get dependencies for.\n"
-      "  PATH - an optional include search path.\n"
+      "  MODULE_PATH - the fble module path to the module to get dependencies for.\n"
+      "  SEARCH_PATH - a directory with the .fble files.\n"
+      "Example: fble-deps out/prgms/Foo/Bar.fble.d prgms /Foo/Bar%.\n"
   );
 }
 
@@ -66,21 +67,30 @@ int main(int argc, char* argv[])
   argv++;
 
   if (argc < 1) {
-    fprintf(stderr, "no input file.\n");
+    fprintf(stderr, "no SEARCH_PATH specified.\n");
     PrintUsage(stderr);
     return EX_USAGE;
   }
-  
-  const char* path = *argv;
+  const char* search_path = *argv;
   argc--;
   argv++;
 
-  const char* include_path = NULL;
-  if (argc > 0) {
-    include_path = *argv;
+  if (argc < 1) {
+    fprintf(stderr, "no MODULE_PATH specified.\n");
+    PrintUsage(stderr);
+    return EX_USAGE;
+  }
+  const char* mpath_string = *argv;
+  argc--;
+  argv++;
+
+  FbleModulePath* mpath = FbleParseModulePath(mpath_string);
+  if (mpath == NULL) {
+    return EX_FAIL;
   }
 
-  FbleLoadedProgram* prgm = FbleLoad(path, include_path);
+  FbleLoadedProgram* prgm = FbleLoad(search_path, mpath);
+  FbleFreeModulePath(mpath);
   if (prgm == NULL) {
     return EX_FAIL;
   }
@@ -95,8 +105,8 @@ int main(int argc, char* argv[])
         cols = 1;
       }
 
-      cols += 1 + strlen(include_path);
-      printf(" %s", include_path);
+      cols += 1 + strlen(search_path);
+      printf(" %s", search_path);
       for (size_t j = 0; j < mpath->path.size; ++j) {
         cols += 1 + strlen(mpath->path.xs[j].name->str);
         printf("/%s", mpath->path.xs[j].name->str);

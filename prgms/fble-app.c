@@ -6,7 +6,7 @@
 
 #include <SDL.h>        // for SDL_*
 
-#include "fble-link.h"    // for FbleLinkFromSource.
+#include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
 // AppIO - Implementation of FbleIO for App, with some additional parameters
@@ -55,10 +55,11 @@ int main(int argc, char* argv[]);
 //   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream)
 {
-  fprintf(stream,
-      "Usage: fble-app FILE DIR \n"
-      "Execute the an app process described by the fble program FILE.\n"
-      "Example: fble-app prgms/Snake.fble prgms\n"
+  fprintf(stream, "%s",
+      "Usage: fble-app " FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Execute an fble app process.\n"
+      FBLE_MAIN_USAGE_DETAIL
+      "Example: fble-app " FBLE_MAIN_USAGE_EXAMPLE "\n"
   );
 }
 
@@ -469,17 +470,8 @@ int main(int argc, char* argv[])
     return 0;
   }
 
-  if (argc <= 1) {
-    fprintf(stderr, "no input file.\n");
-    PrintUsage(stderr);
-    return 1;
-  }
-
-  const char* path = argv[1];
-  const char* include_path = argv[2];
-
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleLinkFromSource(heap, path, include_path, NULL);
+  FbleValue* linked = FbleMain(heap, NULL, FbleCompiledMain, argc-1, argv+1);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     return 1;

@@ -15,6 +15,12 @@ typedef FbleValue* FbleCompiledMainFunction(FbleValueHeap* heap, FbleProfile* pr
 //   A macro that should be set at compile time to the name of the compiled
 //   main program to use, or left unset to default to loading interpreted
 //   code.
+//   
+//   For example, compile with -DFbleCompiledMain=FbleCompiledMain linking
+//   with the .o file of a .c program generated with
+//   `fble-compile --export FbleCompiledMain ...` to statically link that
+//   compiled main module. Compile without any special flags to allow loading
+//   .fble files directly at runtime based on command line arguments.
 //
 // See documentation of FbleMain for how to use this.
 //
@@ -40,11 +46,11 @@ FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
 
 #define FbleCompiledMain NULL
 
-#define FBLE_MAIN_USAGE_SUMMARY "FILE [PATH]"
+#define FBLE_MAIN_USAGE_SUMMARY "SEARCH_PATH MODULE_PATH"
 #define FBLE_MAIN_USAGE_DETAIL \
-  "Load the fble program from FILE.\n" \
-  "PATH is an optional include search path.\n"
-#define FBLE_MAIN_USAGE_EXAMPLE "prgms/Fble/Tests.fble prgms"
+  "MODULE_PATH is the module path of the main fble module to load.\n" \
+  "SEARCH_PATH is the directory containing the .fble files for the module hierarchy.\n"
+#define FBLE_MAIN_USAGE_EXAMPLE "prgms /Fble/Tests%"
 
 #endif // FbleCompiledMain
 
@@ -70,11 +76,10 @@ FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
 //   in use.
 // * Prints messages to stderr in case of error.
 //
-// Usage: (In the case where compiled_main is NULL)
-//   SEARCH_PATH MODULE_PATH
-//
-//   Loads the fble module with given MODULE_PATH using SEARCH_PATH as the
-//   directory to search for the .fble file for the module.
+// Usage:
+//   See FBLE_MAIN_USAGE_SUMMARY, FBLE_MAIN_USAGE_DETAIL, and
+//   FBLE_MAIN_USAGE_EXAMPLE for usage information on the arguments passed in
+//   argc/argv.
 //
 // Example use:
 //   FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);

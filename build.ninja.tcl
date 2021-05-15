@@ -288,7 +288,7 @@ foreach dir [dirs langs/fble ""] {
 
         set c [string map {.fble .c} $fble]
         build $c "$::bin/fble-compile.cov $fble $::spectestdir/test.fble" \
-          "$::bin/fble-compile.cov $path $fble $::spectestdir > $c"
+          "$::bin/fble-compile.cov $path $::spectestdir > $c"
 
         set o [string map {.fble .o} $fble]
         lappend objs $o
@@ -297,7 +297,7 @@ foreach dir [dirs langs/fble ""] {
 
       build $::spectestdir/test.c \
         "$::bin/fble-compile.cov $::spectestdir/test.fble" \
-        "$::bin/fble-compile.cov /test% --export FbleCompiledMain $::spectestdir/test.fble $::spectestdir > $::spectestdir/test.c"
+        "$::bin/fble-compile.cov /test% --export FbleCompiledMain $::spectestdir > $::spectestdir/test.c"
       tobj $::spectestdir/test.o $::spectestdir/test.c "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
       lappend objs $::spectestdir/test.o
 
@@ -317,7 +317,7 @@ foreach dir [dirs langs/fble ""] {
       # We run with --profile to get better test coverage for profiling.
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --profile $::spectestdir/test.fble $::spectestdir"
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --profile $::spectestdir /test%"
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
@@ -333,7 +333,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --compile-error $::spectestdir/test.fble $::spectestdir"
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --compile-error $::spectestdir /test%"
 
       # TODO: Test that we get the desired compilation error when running the
       # compiler?
@@ -345,7 +345,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --runtime-error $::spectestdir/test.fble $::spectestdir"
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-test.cov --runtime-error $::spectestdir /test%"
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
@@ -362,7 +362,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-mem-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov $::spectestdir/test.fble $::spectestdir"
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov $::spectestdir /test%"
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
@@ -379,7 +379,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test.tr
       test $::spectestdir/test.tr "tools/run-spec-test.tcl $::bin/fble-mem-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov --growth $::spectestdir/test.fble $::spectestdir"
+        "tclsh tools/run-spec-test.tcl $::spectcl $::bin/fble-mem-test.cov --growth $::spectestdir /test%"
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
@@ -404,23 +404,24 @@ test $::test/fble-profile-test.tr $::bin/fble-profile-test \
 # fble-profiles-test
 test $::test/fble-profiles-test.tr \
   "$::bin/fble-profiles-test prgms/Fble/ProfilesTest.fble" \
-  "$::bin/fble-profiles-test prgms/Fble/ProfilesTest.fble > $::test/fble-profiles-test.prof"
+  "$::bin/fble-profiles-test prgms /Fble/ProfilesTest% > $::test/fble-profiles-test.prof"
 
 # Compile each .fble module in the prgms directory.
 set ::fble_prgms_objs [list]
 foreach dir [dirs prgms ""] {
   lappend build_ninja_deps "prgms/$dir"
   foreach {x} [glob -tails -directory prgms -nocomplain -type f $dir/*.fble] {
+    set mpath "/[file rootname $x]%"
+
     # Generate a .d file to capture dependencies.
     build $::prgms/$x.d "$::bin/fble-deps prgms/$x" \
-      "$::bin/fble-deps $::prgms/$x.d prgms/$x prgms > $::prgms/$x.d" \
+      "$::bin/fble-deps $::prgms/$x.d prgms $mpath > $::prgms/$x.d" \
       "depfile = $::prgms/$x.d"
 
     # Generate a .c file.
-    set path "/[file rootname $x]%"
     build $::prgms/$x.c \
       "$::bin/fble-compile $::prgms/$x.d" \
-      "$::bin/fble-compile $path prgms/$x prgms > $::prgms/$x.c"
+      "$::bin/fble-compile $mpath prgms > $::prgms/$x.c"
 
     # Generate a .o file.
     tobj $::prgms/$x.o $::prgms/$x.c "-I fble/include -I fble/src"
@@ -435,23 +436,23 @@ lib $::libfbleprgms $::fble_prgms_objs
 # fble-disassemble test
 test $::test/fble-disassemble.tr \
   "$::bin/fble-disassemble $::prgms/Fble/Tests.fble.d" \
-  "$::bin/fble-disassemble prgms/Fble/Tests.fble prgms > $::prgms/Fble/Tests.fble.s"
+  "$::bin/fble-disassemble prgms /Fble/Tests% > $::prgms/Fble/Tests.fble.s"
 
 # Fble/Tests.fble tests
 test $::test/fble-tests.tr "$::bin/fble-stdio $::prgms/Fble/Tests.fble.d" \
-  "$::bin/fble-stdio prgms/Fble/Tests.fble prgms" "pool = console"
+  "$::bin/fble-stdio prgms /Fble/Tests%" "pool = console"
 
 # fble-md5 test
 test $::test/fble-md5.tr "$::bin/fble-md5 $::prgms/Md5/Main.fble.d" \
-  "$::bin/fble-md5 prgms/Md5/Main.fble prgms /dev/null > $::test/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::test/fble-md5.out > /dev/null"
+  "$::bin/fble-md5 /dev/null prgms /Md5/Main% > $::test/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::test/fble-md5.out > /dev/null"
 
 # fble-cat test
 test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
-  "$::bin/fble-stdio prgms/Stdio/Cat.fble prgms < README.txt > $::test/fble-cat.out && cmp $::test/fble-cat.out README.txt"
+  "$::bin/fble-stdio prgms /Stdio/Cat% < README.txt > $::test/fble-cat.out && cmp $::test/fble-cat.out README.txt"
 
 # fble-stdio test
 test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
-  "$::bin/fble-stdio prgms/Stdio/Test.fble prgms > $::test/fble-stdio.out && grep PASSED $::test/fble-stdio.out > /dev/null"
+  "$::bin/fble-stdio prgms /Stdio/Test% > $::test/fble-stdio.out && grep PASSED $::test/fble-stdio.out > /dev/null"
 
 # /Stdio/Test% compilation test
 build $::src/fble-stdio-test.c $::bin/fble-compile \
@@ -476,7 +477,7 @@ test $::test/fble-compiled-tests.tr $::bin/fble-tests \
 # fble-compiled-profiles-test
 build $::src/fble-compiled-profiles-test-fble-main.c \
   "$::bin/fble-compile prgms/Fble/ProfilesTest.fble" \
-  "$::bin/fble-compile /Fble/ProfilesTest% --export FbleCompiledMain prgms/Fble/ProfilesTest.fble > $::src/fble-compiled-profiles-test-fble-main.c"
+  "$::bin/fble-compile /Fble/ProfilesTest% --export FbleCompiledMain prgms > $::src/fble-compiled-profiles-test-fble-main.c"
 tobj $::obj/fble-compiled-profiles-test-fble-main.o $::src/fble-compiled-profiles-test-fble-main.c \
   "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
 bin $::bin/fble-compiled-profiles-test \
@@ -498,7 +499,7 @@ bin $::bin/fble-bench \
 obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
 build $::src/fblf-tests.c \
   "$::bin/fble-stdio $::prgms/Fblf/Lib/Tests/Compile.fble.d" \
-  "$::bin/fble-stdio prgms/Fblf/Lib/Tests/Compile.fble prgms > $::src/fblf-tests.c"
+  "$::bin/fble-stdio prgms /Fblf/Lib/Tests/Compile% > $::src/fblf-tests.c"
 obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
 bin $::bin/fblf-tests "$::obj/fblf-tests.o $::obj/fblf-heap.o" ""
 test $::test/fblf-tests.tr $::bin/fblf-tests $::bin/fblf-tests
@@ -506,7 +507,7 @@ test $::test/fblf-tests.tr $::bin/fblf-tests $::bin/fblf-tests
 # fblf md5 compilation test
 build $::src/fblf-md5.c \
   "$::bin/fble-stdio $::prgms/Fblf/Lib/Md5/Stdio.fble.d" \
-  "$::bin/fble-stdio prgms/Fblf/Lib/Md5/Stdio.fble prgms > $::src/fblf-md5.c"
+  "$::bin/fble-stdio prgms /Fblf/Lib/Md5/Stdio% prgms > $::src/fblf-md5.c"
 obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
 bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
 test $::test/fblf-md5.tr $::bin/fblf-md5 \

@@ -27,10 +27,11 @@ static void PrintUsage(FILE* stream);
 //   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream)
 {
-  fprintf(stream,
-      "Usage: fble-disassemble FILE [PATH]\n"
-      "Disassemble the fble program from FILE.\n"
-      "PATH is an optional include search path.\n"
+  fprintf(stream, "%s",
+      "Usage: fble-disassemble SEARCH_PATH MODULE_PATH\n"
+      "Disassemble an fble program.\n"
+      "  MODULE_PATH - the fble module path associated with FILE. For example: /Foo/Bar%\n"
+      "  SEARCH_PATH - the directory to search for .fble files in.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
 }
@@ -57,21 +58,27 @@ int main(int argc, char* argv[])
   }
 
   if (argc < 1) {
-    fprintf(stderr, "no input file.\n");
+    fprintf(stderr, "no SEARCH_PATH provided.\n");
+    PrintUsage(stderr);
+    return EX_USAGE;
+  }
+
+  if (argc < 2) {
+    fprintf(stderr, "no MODULE_PATH provided.\n");
     PrintUsage(stderr);
     return EX_USAGE;
   }
   
-  const char* path = *argv;
-  argc--;
-  argv++;
+  const char* search_path = argv[0];
+  const char* mpath_string = argv[1];
 
-  const char* include_path = NULL;
-  if (argc > 0) {
-    include_path = *argv;
+  FbleModulePath* mpath = FbleParseModulePath(mpath_string);
+  if (mpath == NULL) {
+    return EX_FAIL;
   }
 
-  FbleLoadedProgram* prgm = FbleLoad(path, include_path);
+  FbleLoadedProgram* prgm = FbleLoad(search_path, mpath);
+  FbleFreeModulePath(mpath);
   if (prgm == NULL) {
     return EX_FAIL;
   }
