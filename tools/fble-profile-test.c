@@ -45,8 +45,8 @@ static FbleName Name(const char* name)
   return nm;
 }
 
-// AutoExitMaxMem --
-//   Returns the maximum memory required for an n deep auto exit self
+// ReplaceMaxMem --
+//   Returns the maximum memory required for an n deep replace self
 //   recursive call. For the purposes of testing that tail calls can be done
 //   using O(1) memory.
 //
@@ -58,7 +58,7 @@ static FbleName Name(const char* name)
 //
 // Side effects:
 //   None.
-static size_t AutoExitMaxMem(size_t n)
+static size_t ReplaceMaxMem(size_t n)
 {
   FbleResetMaxTotalBytesAllocated();
 
@@ -71,8 +71,7 @@ static size_t AutoExitMaxMem(size_t n)
   FbleProfileSample(thread, 10);
 
   for (size_t i = 0; i < n; ++i) {
-    FbleProfileAutoExitBlock(thread);
-    FbleProfileEnterBlock(thread, 1);
+    FbleProfileReplaceBlock(thread, 1);
     FbleProfileSample(thread, 10);
   }
   FbleProfileExitBlock(thread);
@@ -205,14 +204,12 @@ int main(int argc, char* argv[])
     FbleProfileSample(thread, 10);
     FbleProfileEnterBlock(thread, 2);
     FbleProfileSample(thread, 20);
-    FbleProfileAutoExitBlock(thread);  // 2
-    FbleProfileEnterBlock(thread, 3);
+    FbleProfileReplaceBlock(thread, 3); // 2
     FbleProfileSample(thread, 30);
     FbleProfileEnterBlock(thread, 4);
     FbleProfileSample(thread, 40);
     FbleProfileExitBlock(thread); // 4
-    FbleProfileAutoExitBlock(thread);  // 3
-    FbleProfileEnterBlock(thread, 5);
+    FbleProfileReplaceBlock(thread, 5); // 3
     FbleProfileSample(thread, 50);
     FbleProfileExitBlock(thread); // 5
     FbleProfileEnterBlock(thread, 6);
@@ -352,17 +349,13 @@ int main(int argc, char* argv[])
     FbleProfileThread* thread = FbleNewProfileThread(profile);
     FbleProfileEnterBlock(thread, 1);
     FbleProfileSample(thread, 10);
-    FbleProfileAutoExitBlock(thread);  // 1
-    FbleProfileEnterBlock(thread, 2);
+    FbleProfileReplaceBlock(thread, 2);  // 1
     FbleProfileSample(thread, 20);
-    FbleProfileAutoExitBlock(thread); // 2
-    FbleProfileEnterBlock(thread, 2);
+    FbleProfileReplaceBlock(thread, 2); // 2
     FbleProfileSample(thread, 20);
-    FbleProfileAutoExitBlock(thread); // 2
-    FbleProfileEnterBlock(thread, 2);
+    FbleProfileReplaceBlock(thread, 2); // 2
     FbleProfileSample(thread, 20);
-    FbleProfileAutoExitBlock(thread); // 2
-    FbleProfileEnterBlock(thread, 3);
+    FbleProfileReplaceBlock(thread, 3); // 2
     FbleProfileSample(thread, 30);
     FbleProfileExitBlock(thread); // 3
     FbleFreeProfileThread(thread);
@@ -481,8 +474,8 @@ int main(int argc, char* argv[])
 
   {
     // Test that tail calls have O(1) memory.
-    size_t mem_100 = AutoExitMaxMem(100);
-    size_t mem_200 = AutoExitMaxMem(200);
+    size_t mem_100 = ReplaceMaxMem(100);
+    size_t mem_200 = ReplaceMaxMem(200);
     ASSERT(mem_100 == mem_200);
   }
 

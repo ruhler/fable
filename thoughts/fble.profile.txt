@@ -206,3 +206,31 @@ Hopefully, if we at least add labels for exec bindings and make sure to wrap
 them in Enter/Exit blocks in compile.c, then we'll see the exec binding
 labelled block calling into whatever that function being returned was.
 
+---
+
+Now that we support modular profiling, the question becomes: how do we link
+custom profiling block info into the overall profile? If we use the value of a
+profile block name to identify the name, we could lazily resolve things in the
+profile. But that's expensive.
+
+We could pass builtin profiling blocks to the linker that always have the same
+known value and use those for put and get and user defined functions?
+
+Or, have the compiler generate blocks in compiled code to pass to put and get.
+And for external functions... it's the users job to provide a profile id, and
+they can initialize the profile with that. I think that works actually.
+
+In summary:
+* We set profile_id as field of a function. This can be different from
+  profile_base_id.
+* The compiler make sure to generate these for every executable, in place of
+  the enter/exit calls currently done at the top level of a function.
+* FbleNewPutValue and FbleNewGetValue take the profile id as an argument
+  (along with a base id? not sure).
+* Users will have to supply their own id profile when creating new functions.
+  They can allocate those via the profile before or after linking as desired.
+* Function call does an EnterBlock, tail call does a ReplaceBlock, and Return
+  does an ExitBlock as part of the semantics of those instructions.
+
+Then we no longer need AutoExitBlock and the profiling issue is solved.
+

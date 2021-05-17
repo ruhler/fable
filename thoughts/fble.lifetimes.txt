@@ -506,4 +506,100 @@ Perhaps, in terms of API, we want to add a new function analogous to the
 FbleExecutable 'run' function, called 'abort', which aborts the thread at a
 given pc.
 
+---
+
+Next step: let's see if we can pack values into structs and unions at least,
+if not stack frames as well.
+
+We don't have to worry about changing the FbleValue* storage for the user API:
+just leave it as 32 bits, or whatever the native pointer size is. But we do
+need to pass to the API enough information about the type of the value we are
+working with for it to know if it is packed data and how it is packed.
+
+The idea is: we have FbleTypeValue store the type information we are
+interested in, and we make it possible to construct type values by
+composition. We generate instructions to construct FbleTypeValues at runtime
+that are needed for a function. To avoid excessive overhead, we'll compute
+these type values as part of constructing function values, passing the type
+values as static variables. For polymorphic types, we'll construct the type
+values after the type arguments have been applied.
+
+What I'm not going to worry about yet is the fact that often we know the type
+concretely at compile time, so we could avoid constructing the type value at
+runtime. This way things will be consistent from polymorphic to
+non-polymorphic types. And don't worry about packing stack frames yet.
+
+I think this will be a very good step forward. The key thing to start is
+figure out how to pass an FbleTypeValue anywhere we call the struct and union
+value APIs, and make sure everyone who interacts with struct and union values
+is using the APIs.
+
+Survey of use:
+
+* FbleNewStructValue, FbleNewEnumValue, should take an FbleTypeValue*.
+ - We know the type to use for Unit.
+ - StructValueInstr should take the type as an argument to be found on the
+   stack.
+ - Users like fble-md5 know the type they need to pass.
+* FbleStructValueAccess
+ - Instr should take the type as an argument to be found on the stack.
+ - Users like fble-md5 know the type they need to pass.
+* GC Refs needs to know the type of the value, including for subfields
+  somehow. Including knowing the types of static args to functions.
+
+GC looks like the hard part to me. Some options:
+* Track types separately from values. This looks like it would need
+  cooperation from the heap implementation though.
+* Track types as part of values, for values allocated on the heap. Then we
+  need some way for GC to know if a value is allocated on the heap or not.
+  Maybe that means setting the least significant bit to 1 if not allocated on
+  the heap, and not packing heap allocated values at all.
+
+Ideally we track types separately from values in GC. I think this is doable.
+GC only needs to track some abstract notion of type for a heap allocated
+object. That makes sense to support in general.
+
+For example:
+* heap callback could take a void* type in addition to void* obj.
+* refs could take a void* type in addition to void* obj.
+* on_free could take a void* type in addition to void* obj.
+* new heap object takes a type.
+* Retain takes a type?
+* Release takes a type?
+* Add ref takes types?
+
+That way heap can be responsible for storing the void* type for a heap
+allocated object, and the refs callback function can skip over any values that
+the type says are not heap allocated.
+
+Perhaps the type we want to pass around is not heap allocated? But types can
+be recursive. Perhaps it uses its own heap?
+
+I think it's going to be most straight forward to store the type with the heap
+allocated object. Too bad about the overhead, but my guess is we net save by
+no longer making things like units and booleans be heap allocated.
+
+Actually, why isn't it enough to store the type with the FbleValue*
+allocation? We'll have access to that for determining refs. Yeah. Let's start
+that way. No need to mess with gc, and it should support references from
+values to types and back just fine.
+
+It's seems unfortunate to have to pass a type with the FbleValue APIs when the
+value itself will hold the type. I wonder... what if the value could hold a
+function that does the refs callback? Then we could generate a special
+function at compile time for all the types we care about? That doesn't save
+any space though... Might be more efficient, but doesn't save any space.
+
+I guess the summary is this:
+1. Define the FbleTypeValue structure that will allow us to track offsets and
+   sizes and heap allocatedness of types.
+2. Add an FbleTypeValue field to every FbleValue*.
+3. Have users pass FbleTypeValue when constructing and accessing values.
+4. Now we're free to do whatever packing we want, with FbleTypeValue always
+   available to know what's packed in what way.
+
+Perhaps we could have one of the FbleTypeValue's be HEAP_ALLOCATED, which
+means the actual type info is stored in the heap allocated pointer? That makes
+it easier to deal with things like functions, where they have the same
+function type but potentially different captured static values.
 

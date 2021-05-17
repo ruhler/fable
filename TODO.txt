@@ -1,4 +1,18 @@
+
+* Add test demonstrating issue with tail call of PUT to ProfileTests.fble.
+
+* Fix profiling issue.
+ See thoughts/fble.profile.txt.
+ - Move EnterBodyBlock into InitScope.
+ - Add Enter/Exit calls to Get and Put value functions.
+ - Add Enter/Exit call to link top level code.
+ - Move top level Enter/Exit calls into FbleExecutable profile_block CALL,
+   TAIL_CALL, and EXIT instructions.
+ - Remove AutoExit api from profiling API.
+
 * Add option for passing .so files to FbleMain.
+* Consider reorganizing 'langs' directory?
+ - Separate tests from specification?
 
 * Factor out and reuse code in generate_c for generating string literals with
   funny escape characters in them.
@@ -27,11 +41,6 @@
  - I think the way it's setup, either we'll get no block in some cases, or
    double blocks in some cases. Is it really that important to fix?
  - Maybe add a test case at least to show the problem in ProfileTests.fble?
-
-* Add test demonstrating issue with tail call of PUT to ProfileTests.fble.
-
-* Fix profiling issue.
- See thoughts/fble.profile.txt.
 
 * Could I emit #line pragmas to get gcov and gprof at .fble file level?
  - But we would want more comprehensive line number information, instead of
