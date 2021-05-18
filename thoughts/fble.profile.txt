@@ -234,3 +234,40 @@ In summary:
 
 Then we no longer need AutoExitBlock and the profiling issue is solved.
 
+---
+
+How should we label blocks for compiling a top level program? Remember that a
+top level program gets turned into:
+
+m1 = <m1%>;
+m2 = <m2%>;
+...
+
+Where <m1%>, <m2%> are treated as zero argument functions.
+
+But the equals and application are done in the linker. So for each individual
+<m%>, we want to return a zero argument function. Seems like a special case
+here for profile name?
+
+For a normal function, we have something like
+  foo = ...;
+  foo(...);
+
+We have two separate profile labels: "foo" is the label covering what runs
+when creating the function, "foo!" is the label covering what runs when we
+execute the function. That makes a lot of sense.
+
+For a module... there is nothing interesting done when creating its function:
+it's just a wrapper around an FbleExecutable. I guess the question is: if we
+were consistent, we would have "/foo%!" be the label for running the top level
+module and "/foo%" is, conceptually, the time to wrap the executable in a
+function. But that happens at link time. It's nicer for a user to see "/foo%"
+everywhere rather than "/foo%!" everywhere. Just like how we do things today.
+
+So here's how to transition to a world where every executable has a profile id
+with it:
+* Add a PushBlock function which does the same as EnterBlock, except it
+  doesn't emit the profile op to enter and instead returns the profile block id.
+* Change EnterBodyBlock to PushBodyBlock, returning the profile block id
+  instead of emitting a profile op.
+* Change InitScope to take a profile block id that it enters.

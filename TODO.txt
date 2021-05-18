@@ -1,9 +1,8 @@
 
-* Add test demonstrating issue with tail call of PUT to ProfileTests.fble.
 
 * Fix profiling issue.
  See thoughts/fble.profile.txt.
- - Move EnterBodyBlock into InitScope.
+ - Add test demonstrating issue with tail call of PUT to ProfileTests.fble?
  - Add Enter/Exit calls to Get and Put value functions.
  - Add Enter/Exit call to link top level code.
  - Move top level Enter/Exit calls into FbleExecutable profile_block CALL,

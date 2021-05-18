@@ -62,7 +62,7 @@ static void PopVar(Scope* scope, bool exit);
 static Local* GetVar(Scope* scope, FbleVarIndex index);
 static void SetVar(Scope* scope, size_t index, Local* local);
 
-static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, Scope* parent);
+static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
@@ -78,8 +78,9 @@ typedef struct {
   FbleNameV profile;
 } Blocks;
 
+static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc);
+static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc);
 static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace);
-static void EnterBodyBlock(Blocks* blocks, FbleLoc loc, Scope* scope);
 static void ExitBlock(Blocks* blocks, Scope* scope, bool exit);
 
 static void CompileExit(bool exit, Scope* scope, Local* result);
@@ -250,10 +251,8 @@ static void SetVar(Scope* scope, size_t index, Local* local)
 //   code - a pointer to store the allocated code block for this scope.
 //   args - the number of arguments to the function the scope is for.
 //   statics - the number of statics captured by the scope (??).
+//   block - the profile block id to enter when executing this scope.
 //   parent - the parent of the scope to initialize. May be NULL.
-//
-// Results:
-//   None.
 //
 // Side effects:
 // * Initializes scope based on parent. FreeScope should be
@@ -261,7 +260,7 @@ static void SetVar(Scope* scope, size_t index, Local* local)
 //   and the parent scope must exceed the lifetime of this scope.
 // * The caller is responsible for calling FbleFreeCode on *code when it
 //   is no longer needed.
-static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, Scope* parent)
+static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, FbleBlockId block, Scope* parent)
 {
   FbleVectorInit(scope->statics);
   for (size_t i = 0; i < statics; ++i) {
@@ -280,6 +279,8 @@ static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics
   scope->parent = parent;
 
   *code = scope->code;
+
+  AppendProfileOp(scope, FBLE_PROFILE_ENTER_OP, block);
 }
 
 // FreeScope --
@@ -362,21 +363,22 @@ static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId bloc
   } 
 }
 
-// EnterBlock --
-//   Enter a new profiling block.
+// PushBlock --
+//   Push a new profiling block onto the block stack.
 //
 // Inputs:
 //   blocks - the blocks stack.
 //   name - name to add to the current block path for naming the new block.
 //   loc - the location of the block.
-//   scope - where to add the ENTER_BLOCK instruction to.
-//   replace - if true, emit a REPLACE_BLOCK instruction instead of ENTER_BLOCK.
+//
+// Results:
+//   The id of the newly pushed profiling block.
 //
 // Side effects:
-//   Adds a new block to the blocks stack. Change the current block to the new
-//   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
-//   exited when no longer in scope using ExitBlock.
-static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace)
+// * Pushes a new block to the blocks stack.
+// * The block should be popped from the stack using ExitBlock or one of the
+//   other functions that exit a block when no longer needed.
+static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc)
 {
   const char* curr = NULL;
   size_t currlen = 0;
@@ -405,27 +407,27 @@ static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope,
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
   size_t id = blocks->profile.size;
   FbleVectorAppend(blocks->profile, nm);
-
-  AppendProfileOp(scope, replace ? FBLE_PROFILE_REPLACE_OP : FBLE_PROFILE_ENTER_OP, id);
   FbleVectorAppend(blocks->stack, id);
+  return id;
 }
 
-// EnterBodyBlock --
-//   Enter a new body profiling block. This is used for the body of functions
-//   and processes that are executed when they are called, not when they are
-//   defined.
+// PushBodyBlock --
+//   Add a new body profiling block to the block stack. This is used for the
+//   body of functions and processes that are executed when they are called,
+//   not when they are defined.
 //
 // Inputs:
 //   blocks - the blocks stack.
 //   loc - The location of the new block.
-//   scope - where to add the ENTER_BLOCK instruction to.
+//
+// Returns:
+//   The id of the newly pushed block.
 //
 // Side effects:
-//   Adds a new block to the blocks stack. Change the current block to the new
-//   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
-//   exited when no longer in scope using ExitBlock or one of the other
-//   functions that exit a block.
-static void EnterBodyBlock(Blocks* blocks, FbleLoc loc, Scope* scope)
+// * Adds a new block to the blocks stack.
+// * The block should be popped from the stack using ExitBlock or one of the
+//   other functions that exit a block when no longer needed.
+static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc)
 {
   const char* curr = "";
   if (blocks->stack.size > 0) {
@@ -444,9 +446,28 @@ static void EnterBodyBlock(Blocks* blocks, FbleLoc loc, Scope* scope)
   FbleName nm = { .name = str, .loc = FbleCopyLoc(loc) };
   size_t id = blocks->profile.size;
   FbleVectorAppend(blocks->profile, nm);
-
-  AppendProfileOp(scope, FBLE_PROFILE_ENTER_OP, id);
   FbleVectorAppend(blocks->stack, id);
+  return id;
+}
+
+// EnterBlock --
+//   Enter a new profiling block.
+//
+// Inputs:
+//   blocks - the blocks stack.
+//   name - name to add to the current block path for naming the new block.
+//   loc - the location of the block.
+//   scope - where to add the ENTER_BLOCK instruction to.
+//   replace - if true, emit a REPLACE_BLOCK instruction instead of ENTER_BLOCK.
+//
+// Side effects:
+//   Adds a new block to the blocks stack. Change the current block to the new
+//   block. Outputs an ENTER_BLOCK instruction to instrs. The block should be
+//   exited when no longer in scope using ExitBlock.
+static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace)
+{
+  FbleBlockId id = PushBlock(blocks, name, loc);
+  AppendProfileOp(scope, replace ? FBLE_PROFILE_REPLACE_OP : FBLE_PROFILE_ENTER_OP, id);
 }
 
 // ExitBlock --
@@ -765,8 +786,8 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       }
 
       Scope func_scope;
-      InitScope(&func_scope, &instr->code, argc, func_tc->scope.size, scope);
-      EnterBodyBlock(blocks, func_tc->body_loc, &func_scope);
+      FbleBlockId scope_block = PushBodyBlock(blocks, func_tc->body_loc);
+      InitScope(&func_scope, &instr->code, argc, func_tc->scope.size, scope_block, scope);
 
       for (size_t i = 0; i < argc; ++i) {
         Local* local = NewLocal(&func_scope);
@@ -934,17 +955,14 @@ static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name)
 
   FbleCode* code;
   Scope scope;
-  InitScope(&scope, &code, argc, 0, NULL);
+  FbleBlockId scope_block = PushBlock(&blocks, name, name.loc);
+  InitScope(&scope, &code, argc, 0, scope_block, NULL);
 
   for (size_t i = 0; i < argc; ++i) {
     Local* local = NewLocal(&scope);
     PushVar(&scope, local);
   }
 
-  // CompileExpr assumes it is in a profile block that it needs to exit when
-  // exit is true, so make sure we wrap the top level expression in a profile
-  // block.
-  EnterBlock(&blocks, name, name.loc, &scope, false);
   CompileExpr(&blocks, true, &scope, tc);
   ExitBlock(&blocks, &scope, true);
 
