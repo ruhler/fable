@@ -1,13 +1,13 @@
-
-
 * Fix profiling issue.
  See thoughts/fble.profile.txt.
  - Add test demonstrating issue with tail call of PUT to ProfileTests.fble?
  - Add Enter/Exit calls to Get and Put value functions.
- - Add Enter/Exit call to link top level code.
  - Move top level Enter/Exit calls into FbleExecutable profile_block CALL,
    TAIL_CALL, and EXIT instructions.
  - Remove AutoExit api from profiling API.
+
+* Can we get rid of special <root> profile block, now that we introduce a
+  <main> block in link that should cover everything?
 
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?

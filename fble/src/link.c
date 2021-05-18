@@ -15,6 +15,21 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 {
   size_t modulec = program->modules.size;
 
+  // Inject a profiling op into the first instruction of the program to enter
+  // to the main block.
+  FbleProfileOp* op = NULL;
+  if (profile != NULL) {
+    FbleName main_block = {
+      .name = FbleNewString("<main>"),
+      .loc = FbleNewLoc(__FILE__, __LINE__-2, 12)
+    };
+    FbleBlockId main_id = FbleProfileAddBlock(profile, main_block);
+    op = FbleAlloc(FbleProfileOp);
+    op->tag = FBLE_PROFILE_ENTER_OP;
+    op->block = main_id;
+    op->next = NULL;
+  }
+
   // Make an FbleFuncValue for each module that computes the value of the
   // module given values of the modules it depends on.
   FbleValue* funcs[modulec];
@@ -36,12 +51,13 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   // appropriate module arguments. The function for module i will be static
   // variable i, and the value computed for module i will be local variable i.
   FbleCode* code = FbleNewCode(0, modulec, modulec);
+
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleExecutableModule* module = program->modules.xs + i;
 
     FbleCallInstr* call = FbleAlloc(FbleCallInstr);
     call->_base.tag = FBLE_CALL_INSTR;
-    call->_base.profile_ops = NULL;
+    call->_base.profile_ops = op; op = NULL;
     call->loc.source = FbleNewString(__FILE__);
     call->loc.line = __LINE__ - 1;
     call->loc.col = 5;
@@ -78,6 +94,11 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
   return_instr->_base.tag = FBLE_RETURN_INSTR;
   return_instr->_base.profile_ops = NULL;
+  if (profile != NULL) {
+    return_instr->_base.profile_ops = FbleAlloc(FbleProfileOp);
+    return_instr->_base.profile_ops->tag = FBLE_PROFILE_EXIT_OP;
+    return_instr->_base.profile_ops->next = NULL;
+  }
   return_instr->result.section = FBLE_LOCALS_FRAME_SECTION;
   return_instr->result.index = modulec - 1;
   FbleVectorAppend(code->instrs, &return_instr->_base);
