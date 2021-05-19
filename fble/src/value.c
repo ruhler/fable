@@ -380,19 +380,19 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
   assert(thread->stack->func->executable->locals == 1);
   assert(thread->stack->func->executable->run == &PartialPutRunFunction);
 
-  FbleExecutable* exec = FbleAlloc(FbleExecutable);
-  exec->refcount = 1;
-  exec->magic = FBLE_EXECUTABLE_MAGIC;
-  exec->args = 0;
-  exec->statics = 2;
-  exec->locals = 0;
-  FbleVectorInit(exec->profile_blocks);
-  exec->run = &PutRunFunction;
-  exec->abort = &PutAbortFunction;
-  exec->on_free = &FbleExecutableNothingOnFree;
+  static FbleExecutable executable = {
+    .refcount = 1,
+    .magic = FBLE_EXECUTABLE_MAGIC,
+    .args = 0,
+    .statics = 2,
+    .locals = 0,
+    .profile_blocks = { .size = 0, .xs = NULL },
+    .run = &PutRunFunction,
+    .abort = &PutAbortFunction,
+    .on_free = NULL,
+  };
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, exec, 0);
-  FbleFreeExecutable(exec);
+  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, 0);
 
   FbleValue* link = thread->stack->func->statics[0];
   FbleValue* arg = thread->stack->locals[0];
@@ -423,22 +423,21 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
 {
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
-  FbleExecutable* exec = FbleAlloc(FbleExecutable);
-  exec->refcount = 1;
-  exec->magic = FBLE_EXECUTABLE_MAGIC;
-  exec->args = 0;
-  exec->statics = 1;
-  exec->locals = 0;
-  FbleVectorInit(exec->profile_blocks);
-  exec->run = &GetRunFunction;
-  exec->abort = &GetAbortFunction;
-  exec->on_free = &FbleExecutableNothingOnFree;
+  static FbleExecutable executable = {
+    .refcount = 1,
+    .magic = FBLE_EXECUTABLE_MAGIC,
+    .args = 0,
+    .statics = 1,
+    .locals = 0,
+    .profile_blocks = { .size = 0, .xs = NULL },
+    .run = &GetRunFunction,
+    .abort = &GetAbortFunction,
+    .on_free = NULL
+  };
 
-  FbleProcValue* get = FbleNewFuncValue(heap, exec, 0);
+  FbleProcValue* get = FbleNewFuncValue(heap, &executable, 0);
   get->statics[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
-
-  FbleFreeExecutable(exec);
   return &get->_base;
 }
 
@@ -457,21 +456,21 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data)
 // FbleNewPutValue -- see documentation in value.h
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
 {
-  FbleExecutable* exec = FbleAlloc(FbleExecutable);
-  exec->refcount = 1;
-  exec->magic = FBLE_EXECUTABLE_MAGIC;
-  exec->args = 1;
-  exec->statics = 1;
-  exec->locals = 1;
-  FbleVectorInit(exec->profile_blocks);
-  exec->run = &PartialPutRunFunction;
-  exec->abort = &PartialPutAbortFunction;
-  exec->on_free = &FbleExecutableNothingOnFree;
+  static FbleExecutable executable = {
+    .refcount = 1,
+    .magic = FBLE_EXECUTABLE_MAGIC,
+    .args = 1,
+    .statics = 1,
+    .locals = 1,
+    .profile_blocks = { .size = 0, .xs = NULL },
+    .run = &PartialPutRunFunction,
+    .abort = &PartialPutAbortFunction,
+    .on_free = NULL,
+  };
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, exec, 0);
+  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, 0);
   put->statics[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
-  FbleFreeExecutable(exec);
   return &put->_base;
 }
 

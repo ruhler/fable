@@ -426,18 +426,18 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
       size_t staticc = func_instr->code->_base.statics;
-      fprintf(fout, "      FbleExecutable* executable = FbleAlloc(FbleExecutable);\n");
-      fprintf(fout, "      executable->refcount = 1;\n");
-      fprintf(fout, "      executable->magic = FBLE_EXECUTABLE_MAGIC;\n");
-      fprintf(fout, "      executable->args = %i;\n", func_instr->code->_base.args);
-      fprintf(fout, "      executable->statics = %i;\n", func_instr->code->_base.statics);
-      fprintf(fout, "      executable->locals = %i;\n", func_instr->code->_base.locals);
-      fprintf(fout, "      FbleVectorInit(executable->profile_blocks);\n");
-      fprintf(fout, "      executable->run = &_Run_%p;\n", (void*)func_instr->code);
-      fprintf(fout, "      executable->abort = &_Abort_%p;\n", (void*)func_instr->code);
-      fprintf(fout, "      executable->on_free = &FbleExecutableNothingOnFree;\n");
-      fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, executable, thread->stack->func->profile_base_id);\n");
-      fprintf(fout, "      FbleFreeExecutable(executable);\n");
+      fprintf(fout, "      static FbleExecutable executable = {\n");
+      fprintf(fout, "        .refcount = 1,\n");
+      fprintf(fout, "        .magic = FBLE_EXECUTABLE_MAGIC,\n");
+      fprintf(fout, "        .args = %i,\n", func_instr->code->_base.args);
+      fprintf(fout, "        .statics = %i,\n", func_instr->code->_base.statics);
+      fprintf(fout, "        .locals = %i,\n", func_instr->code->_base.locals);
+      fprintf(fout, "        .profile_blocks = { .size = 0, .xs = NULL },\n");
+      fprintf(fout, "        .run = &_Run_%p,\n", (void*)func_instr->code);
+      fprintf(fout, "        .abort = &_Abort_%p,\n", (void*)func_instr->code);
+      fprintf(fout, "        .on_free = NULL,\n");
+      fprintf(fout, "      };\n");
+      fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, &executable, thread->stack->func->profile_base_id);\n");
       for (size_t i = 0; i < staticc; ++i) {
         fprintf(fout, "      v->statics[%i] = ", i); FrameGet(fout, func_instr->scope.xs[i]); fprintf(fout, ";\n");
         fprintf(fout, "      FbleValueAddRef(heap, &v->_base, v->statics[%i]);\n", i);
