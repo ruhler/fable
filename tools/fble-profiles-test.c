@@ -194,6 +194,14 @@ int main(int argc, char* argv[])
   assert(1 == Calls(profile, "/%!.e2!", "/%.Id!"));
   assert(1 == Calls(profile, "/%!.e3!", "/%.Id!"));
 
+  // Regression test for a bug where had tail-calling the builtin put
+  // function. The builtin put didn't do any Enter/Exit calls, and we were
+  // using AutoExit to do the tail call. As a result, the profiler thought the
+  // caller of the put was calling into whatever function was executed after
+  // the caller returned, which is clearly wrong.
+  assert(0 == Calls(profile, "/%!.A!!.b", "/%!.D!"));
+  assert(1 == Calls(profile, "/%!.A!!", "/%!.D!"));
+
   FbleFreeProfile(profile);
   return EX_SUCCESS;
 }

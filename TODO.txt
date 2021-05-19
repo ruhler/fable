@@ -1,6 +1,5 @@
 * Fix profiling issue.
  See thoughts/fble.profile.txt.
- - Add test demonstrating issue with tail call of PUT to ProfileTests.fble?
  - Add Enter/Exit calls to Get and Put value functions.
  - Move top level Enter/Exit calls into FbleExecutable profile_block CALL,
    TAIL_CALL, and EXIT instructions.
