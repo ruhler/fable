@@ -562,8 +562,8 @@ static FbleExecStatus RunLinkInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
   link->head = NULL;
   link->tail = NULL;
 
-  FbleValue* get = FbleNewGetValue(heap, &link->_base);
-  FbleValue* put = FbleNewPutValue(heap, &link->_base);
+  FbleValue* get = FbleNewGetValue(heap, &link->_base, thread->stack->func->profile_base_id + link_instr->profile);
+  FbleValue* put = FbleNewPutValue(heap, &link->_base, thread->stack->func->profile_base_id + link_instr->profile + 1);
   FbleReleaseValue(heap, &link->_base);
 
   FrameSetConsumed(heap, thread, link_instr->get, get);

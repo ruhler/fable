@@ -237,8 +237,13 @@ typedef struct {
 // Represents a process link expression. Unlike FBLE_LINK_EXPR, which
 // evaluates to a proc value, FBLE_LINK_TC evaluates to the result of
 // computing the proc value.
+//
+// 'get' and 'put' fields are the names of the get and put variables for use
+// in profiling.
 typedef struct {
   FbleTc _base;
+  FbleName get;
+  FbleName put;
   FbleTc* body;
 } FbleLinkTc;
 

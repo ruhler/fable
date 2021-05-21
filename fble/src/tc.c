@@ -113,6 +113,8 @@ void FbleFreeTc(FbleTc* tc)
 
     case FBLE_LINK_TC: {
       FbleLinkTc* link_tc = (FbleLinkTc*)tc;
+      FbleFreeName(link_tc->get);
+      FbleFreeName(link_tc->put);
       FbleFreeTc(link_tc->body);
       FbleFree(tc);
       return;

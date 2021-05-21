@@ -82,6 +82,7 @@ static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc);
 static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc);
 static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace);
 static void ExitBlock(Blocks* blocks, Scope* scope, bool exit);
+static FbleBlockId LinkProfile(Blocks* blocks, FbleName get, FbleName put);
 
 static void CompileExit(bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* tc);
@@ -491,6 +492,57 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
   }
 }
 
+// LinkProfile --
+//   Get a block id to use in a link instruction to represent the execution of
+//   get and put values.
+//
+// Inputs:
+//   blocks - the current block stack.
+//   get - the name and location to use for the get value.
+//   put - the name and location to use for the put value.
+//
+// Result:
+//   The block id to use in the link instruction.
+//
+// Side effects:
+//   Adds three names to blocks.
+static FbleBlockId LinkProfile(Blocks* blocks, FbleName get, FbleName put)
+{
+  const char* curr = NULL;
+  size_t currlen = 0;
+  if (blocks->stack.size > 0) {
+    size_t curr_id = blocks->stack.xs[blocks->stack.size-1];
+    curr = blocks->profile.xs[curr_id].name->str;
+    currlen = strlen(curr);
+  }
+
+  FbleLoc loc[3] = { get.loc, put.loc, put.loc };
+  const char* base[3] = { get.name->str, put.name->str, put.name->str };
+  const char* suffix[3] = { "!", "!", "!!" };
+
+  size_t id = blocks->profile.size;
+  for (size_t i = 0; i < 3; ++i) {
+    FbleString* str = FbleAllocExtra(FbleString, currlen + strlen(base[i]) + strlen(suffix[i]) + 3);
+    str->refcount = 1;
+    str->magic = FBLE_STRING_MAGIC;
+    str->str[0] = '\0';
+    if (currlen > 0) {
+      strcat(str->str, curr);
+      strcat(str->str, ".");
+    }
+    strcat(str->str, base[i]);
+    strcat(str->str, suffix[i]);
+
+    FbleName nm = {
+      .name = str,
+      .space = FBLE_NORMAL_NAME_SPACE,
+      .loc = FbleCopyLoc(loc[i])
+    };
+    FbleVectorAppend(blocks->profile, nm);
+  }
+  return id;
+}
+
 // CompileExit --
 //   If exit is true, appends a return instruction to instrs.
 //
@@ -875,6 +927,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       link->put = put_local->index.index;
       PushVar(scope, put_local);
 
+      link->profile = LinkProfile(blocks, link_tc->get, link_tc->put);
       AppendInstr(scope, &link->_base);
 
       Local* result = CompileExpr(blocks, exit, scope, link_tc->body);

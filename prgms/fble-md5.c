@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
     .input = NULL,
   };
 
-  FbleValue* input = FbleNewInputPortValue(heap, &mio.input);
+  FbleValue* input = FbleNewInputPortValue(heap, &mio.input, 0);
   FbleValue* proc = FbleApply(heap, func, &input, NULL);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, input);

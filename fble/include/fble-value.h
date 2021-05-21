@@ -219,6 +219,7 @@ bool FbleIsProcValue(FbleValue* value);
 // Inputs:
 //   heap - the heap to allocate the value on.
 //   data - a pointer to where the input data will be communicated.
+//   profile - a profile block id to use when getting from the input port.
 //
 // Results:
 //   A newly allocated port value.
@@ -226,7 +227,7 @@ bool FbleIsProcValue(FbleValue* value);
 // Side effects:
 //   The returned port value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data);
+FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile);
 
 // FbleNewOutputPortValue --
 //   Create a new output port value with given id.
@@ -234,6 +235,8 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data);
 // Inputs:
 //   heap - the heap to allocate the value on.
 //   data - a pointer to where the output data will be communicated.
+//   profile - the first of two consecutive profile block ids to use for when
+//             applying an arg to the port to put, and for executing the put.
 //
 // Results:
 //   A newly allocated port value.
@@ -241,7 +244,7 @@ FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data);
 // Side effects:
 //   The returned port value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data);
+FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile);
 
 // FbleEval --
 //   Evaluate a linked program. The program is assumed to be a zero argument

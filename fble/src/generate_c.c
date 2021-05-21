@@ -505,8 +505,8 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "      link->head = NULL;\n");
       fprintf(fout, "      link->tail = NULL;\n");
 
-      fprintf(fout, "      FbleValue* get = FbleNewGetValue(heap, &link->_base);\n");
-      fprintf(fout, "      FbleValue* put = FbleNewPutValue(heap, &link->_base);\n");
+      fprintf(fout, "      FbleValue* get = FbleNewGetValue(heap, &link->_base, thread->stack->func->profile_base_id + %i);\n", link_instr->profile);
+      fprintf(fout, "      FbleValue* put = FbleNewPutValue(heap, &link->_base, thread->stack->func->profile_base_id + %i);\n", link_instr->profile + 1);
       fprintf(fout, "      FbleReleaseValue(heap, &link->_base);\n");
 
       FrameSetConsumed(fout, "      ", link_instr->get, "get");

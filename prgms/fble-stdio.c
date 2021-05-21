@@ -223,9 +223,25 @@ int main(int argc, char* argv[])
     .output = NULL,
   };
 
+  FbleName block_names[3];
+  block_names[0].name = FbleNewString("stdin!");
+  block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  block_names[1].name = FbleNewString("stdout!");
+  block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  block_names[2].name = FbleNewString("stdout!!");
+  block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  FbleBlockId block_id = 0;
+  if (profile != NULL) {
+    FbleNameV names = { .size = 3, .xs = block_names };
+    block_id = FbleProfileAddBlocks(profile, names);
+  };
+  FbleFreeName(block_names[0]);
+  FbleFreeName(block_names[1]);
+  FbleFreeName(block_names[2]);
+
   FbleValue* args[2] = {
-    FbleNewInputPortValue(heap, &io.input),
-    FbleNewOutputPortValue(heap, &io.output)
+    FbleNewInputPortValue(heap, &io.input, block_id),
+    FbleNewOutputPortValue(heap, &io.output, block_id + 1)
   };
   FbleValue* proc = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);

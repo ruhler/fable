@@ -275,6 +275,11 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
       return FBLE_EXEC_BLOCKED;
     }
 
+    if (thread->profile != NULL) {
+      FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
+      FbleProfileExitBlock(thread->profile);
+    }
+
     FbleValues* head = link->head;
     link->head = link->head->next;
     if (link->head == NULL) {
@@ -292,6 +297,11 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   if (*port->data == NULL) {
     // Blocked on get.
     return FBLE_EXEC_BLOCKED;
+  }
+
+  if (thread->profile != NULL) {
+    FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
+    FbleProfileExitBlock(thread->profile);
   }
 
   FbleThreadReturn(heap, thread, *port->data);
@@ -324,6 +334,11 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   FbleValue* put_port = thread->stack->func->statics[0];
   FbleValue* arg = thread->stack->func->statics[1];
   if (put_port->tag == FBLE_LINK_VALUE) {
+    if (thread->profile != NULL) {
+      FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
+      FbleProfileExitBlock(thread->profile);
+    }
+
     FbleLinkValue* link = (FbleLinkValue*)put_port;
 
     FbleValues* tail = FbleAlloc(FbleValues);
@@ -350,6 +365,11 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   if (*port->data != NULL) {
     // Blocked on put.
     return FBLE_EXEC_BLOCKED;
+  }
+
+  if (thread->profile != NULL) {
+    FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
+    FbleProfileExitBlock(thread->profile);
   }
 
   FbleRetainValue(heap, arg);
@@ -392,7 +412,12 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
     .on_free = NULL,
   };
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, 0);
+  if (thread->profile != NULL) {
+    FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
+    FbleProfileExitBlock(thread->profile);
+  }
+
+  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, thread->stack->func->profile_base_id + 1);
 
   FbleValue* link = thread->stack->func->statics[0];
   FbleValue* arg = thread->stack->locals[0];
@@ -419,7 +444,7 @@ static void PartialPutAbortFunction(FbleValueHeap* heap, FbleStack* stack)
 }
 
 // FbleNewGetValue -- see documentation in value.h
-FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
+FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId profile)
 {
   assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
 
@@ -435,26 +460,26 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port)
     .on_free = NULL
   };
 
-  FbleProcValue* get = FbleNewFuncValue(heap, &executable, 0);
+  FbleProcValue* get = FbleNewFuncValue(heap, &executable, profile);
   get->statics[0] = port;
   FbleValueAddRef(heap, &get->_base, port);
   return &get->_base;
 }
 
 // FbleNewInputPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data)
+FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile)
 {
   FblePortValue* get_port = FbleNewValue(heap, FblePortValue);
   get_port->_base.tag = FBLE_PORT_VALUE;
   get_port->data = data;
 
-  FbleValue* get = FbleNewGetValue(heap, &get_port->_base);
+  FbleValue* get = FbleNewGetValue(heap, &get_port->_base, profile);
   FbleReleaseValue(heap, &get_port->_base);
   return get;
 }
 
 // FbleNewPutValue -- see documentation in value.h
-FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
+FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link, FbleBlockId profile)
 {
   static FbleExecutable executable = {
     .refcount = 1,
@@ -468,19 +493,19 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link)
     .on_free = NULL,
   };
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, 0);
+  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, profile);
   put->statics[0] = link;
   FbleValueAddRef(heap, &put->_base, link);
   return &put->_base;
 }
 
 // FbleNewOutputPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data)
+FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile)
 {
   FblePortValue* port_value = FbleNewValue(heap, FblePortValue);
   port_value->_base.tag = FBLE_PORT_VALUE;
   port_value->data = data;
-  FbleValue* put = FbleNewPutValue(heap, &port_value->_base);
+  FbleValue* put = FbleNewPutValue(heap, &port_value->_base, profile);
   FbleReleaseValue(heap, &port_value->_base);
   return put;
 }

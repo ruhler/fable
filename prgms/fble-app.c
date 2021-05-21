@@ -527,8 +527,8 @@ int main(int argc, char* argv[])
   FbleValue* args[] = {
     MakeInt(heap, width),
     MakeInt(heap, height),
-    FbleNewInputPortValue(heap, &io.event),
-    FbleNewOutputPortValue(heap, &io.effect)
+    FbleNewInputPortValue(heap, &io.event, 0),
+    FbleNewOutputPortValue(heap, &io.effect, 0)
   };
   FbleValue* proc = FbleApply(heap, func, args, NULL);
   FbleReleaseValue(heap, func);

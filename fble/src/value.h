@@ -186,6 +186,7 @@ FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable,
 // Inputs:
 //   heap - the heap to allocate the value on.
 //   port - the port value to get from.
+//   profile - the id of a profile block to use for when the get is executed.
 //
 // Results:
 //   A newly allocated get value.
@@ -194,7 +195,7 @@ FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable,
 //   The returned get value must be freed using FbleReleaseValue when no
 //   longer in use. This function does not take ownership of the port value.
 //   argument.
-FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
+FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId profile);
 
 // FbleNewPutValue --
 //   Create a new put value for the given link.
@@ -202,6 +203,9 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
 // Inputs:
 //   heap - the heap to allocate the value on.
 //   link - the link to put to. Borrowed.
+//   profile - the first of two consecutive ids of profile blocks to use for
+//             when the first argument is applied to the put and when the put
+//             is executed.
 //
 // Results:
 //   A newly allocated put value.
@@ -209,7 +213,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port);
 // Side effects:
 //   The returned put value must be freed using FbleReleaseValue when no
 //   longer in use. This function does not take ownership of the link value.
-FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link);
+FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link, FbleBlockId profile);
 
 // FbleStrictValue --
 //   Get the strict value associated with the given value, which will either

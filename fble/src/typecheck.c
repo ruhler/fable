@@ -1683,6 +1683,8 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleLinkTc* link_tc = FbleAlloc(FbleLinkTc);
       link_tc->_base.tag = FBLE_LINK_TC;
+      link_tc->get = FbleCopyName(link_expr->get);
+      link_tc->put = FbleCopyName(link_expr->put);
       link_tc->body = body.tc;
       return MkTc(body.type, &link_tc->_base);
     }

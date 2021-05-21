@@ -233,10 +233,20 @@ typedef struct {
 //
 // *get = <get port>;
 // *put = <put port>;
+//
+// profile is a profiling block id relative to the function profile base
+// id pointing to three consecutive profile blocks:
+//   profile_base_id + profile + 0:
+//      A block to use when executing get.
+//   profile_base_id + profile + 1:
+//      A block to use when applying the arg to put.
+//   profile_base_id + profile + 2:
+//      A block to use when executing put.
 typedef struct {
   FbleInstr _base;
   FbleLocalIndex get;
   FbleLocalIndex put;
+  FbleBlockId profile;
 } FbleLinkInstr;
 
 // FbleForkInstr -- FBLE_FORK_INSTR
