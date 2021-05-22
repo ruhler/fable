@@ -756,11 +756,6 @@ FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* thre
           case FBLE_PROFILE_EXIT_OP:
             FbleProfileExitBlock(profile);
             break;
-
-          case FBLE_PROFILE_AUTO_EXIT_OP: {
-            FbleProfileAutoExitBlock(profile);
-            break;
-          }
         }
       }
     }

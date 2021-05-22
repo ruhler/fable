@@ -85,11 +85,6 @@ static void DumpCode(FILE* fout, FbleCode* code)
             fprintf(fout, "    .  profile exit;\n");
             break;
           }
-
-          case FBLE_PROFILE_AUTO_EXIT_OP: {
-            fprintf(fout, "    .  profile auto exit;\n");
-            break;
-          }
         }
       }
 

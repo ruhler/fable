@@ -154,7 +154,6 @@ typedef struct {
 // FbleProfileThread -- see documentation in fble-profile.h
 struct FbleProfileThread {
   FbleProfile* profile;
-  bool auto_exit;
 
   // Hash map from (caller,callee) to (sample, data).
   // Where sample is the index into sample.xs where we last had a sample call
@@ -180,6 +179,8 @@ static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id);
 static void PrintCallData(FILE* fout, FbleProfile* profile, bool highlight, FbleCallData* call);
 
 static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, size_t blockc);
+
+static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace);
 
 // CallStackPush --
 //   Push an uninitialized Call onto the call stack for the thread.
@@ -447,6 +448,92 @@ static Entry* TableEntry(Table* table, FbleBlockId caller, FbleBlockId callee, s
   return entry;
 }
 
+// EnterBlock --
+//   Enter a block on the given profile thread.
+//
+// Inputs:
+//   thread - the thread to do the call on.
+//   block - the block to call into.
+//   replace - if true, replace the current block with the new block being
+//             entered instead of calling into the new block.
+//
+// Side effects:
+//   A corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
+//   should be made when the call leaves, for proper accounting and resource
+//   management.
+static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace)
+{
+  Call* call = thread->calls->top;
+  FbleBlockId caller = call->id;
+  FbleBlockId callee = block;
+  thread->profile->blocks.xs[callee]->block.count++;
+
+  // Lookup the entry for this (caller,callee) in our table.
+  Entry* entry = TableEntry(&thread->table, caller, callee, thread->profile->blocks.size);
+
+  bool resize = false;
+  if (entry->data == NULL) {
+    // Entry not found. Insert it now.
+    entry->sample = thread->sample.size;
+    entry->caller = caller;
+    entry->data = GetCallData(thread->profile, caller, callee);
+    thread->table.size++;
+
+    // Check now if we should resize after this insertion. We won't resize
+    // until after we're done updating the entry though.
+    resize = (3 * thread->table.size > thread->table.capacity);
+  }
+
+  entry->data->count++;
+
+  if (!replace) {
+    call = CallStackPush(thread);
+    call->exit = 0;
+  }
+  call->id = callee;
+
+  // If the call was already running, we will find it on the sample stack
+  // where our hash table says it should be.
+  bool call_running = 
+    entry->sample < thread->sample.size
+    && entry->data == thread->sample.xs[entry->sample].call;
+
+  if (!call_running) {
+    entry->sample = thread->sample.size;
+
+    if (thread->sample.size == thread->sample.capacity) {
+      thread->sample.capacity *= 2;
+      Sample* xs = FbleArrayAlloc(Sample, thread->sample.capacity);
+      memcpy(xs, thread->sample.xs, thread->sample.size * sizeof(Sample));
+      FbleFree(thread->sample.xs);
+      thread->sample.xs = xs;
+    }
+    Sample* sample = thread->sample.xs + thread->sample.size++;
+    sample->caller = caller;
+    sample->callee = callee;
+    sample->call = entry->data;
+    call->exit++;
+  }
+
+  if (resize) {
+    Table new_table;
+    new_table.capacity = 2 * thread->table.capacity - 1;
+    new_table.size = thread->table.size;
+    new_table.xs = FbleArrayAlloc(Entry, new_table.capacity);
+    memset(new_table.xs, 0, new_table.capacity * sizeof(Entry));
+
+    for (size_t i = 0; i < thread->table.capacity; ++i) {
+      Entry e = thread->table.xs[i];
+      if (e.data != NULL) {
+        *TableEntry(&new_table, e.caller, e.data->id, thread->profile->blocks.size) = e;
+      }
+    }
+
+    FbleFree(thread->table.xs);
+    thread->table = new_table;
+  }
+}
+
 // FbleNewProfile -- see documentation in fble-profile.h
 FbleProfile* FbleNewProfile()
 {
@@ -512,7 +599,6 @@ FbleProfileThread* FbleNewProfileThread(FbleProfile* profile)
 {
   FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
   thread->profile = profile;
-  thread->auto_exit = false;
 
   thread->table.capacity = 10;
   thread->table.size = 0;
@@ -540,7 +626,6 @@ FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent)
 {
   FbleProfileThread* thread = FbleAlloc(FbleProfileThread);
   thread->profile = parent->profile;
-  thread->auto_exit = false;
 
   thread->table.capacity = parent->table.capacity;
   thread->table.size = parent->table.size;
@@ -620,83 +705,13 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
 // FbleProfileEnterBlock -- see documentation in fble-profile.h
 void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block)
 {
-  Call* call = thread->calls->top;
-  FbleBlockId caller = call->id;
-  FbleBlockId callee = block;
-  thread->profile->blocks.xs[callee]->block.count++;
-
-  // Lookup the entry for this (caller,callee) in our table.
-  Entry* entry = TableEntry(&thread->table, caller, callee, thread->profile->blocks.size);
-
-  bool resize = false;
-  if (entry->data == NULL) {
-    // Entry not found. Insert it now.
-    entry->sample = thread->sample.size;
-    entry->caller = caller;
-    entry->data = GetCallData(thread->profile, caller, callee);
-    thread->table.size++;
-
-    // Check now if we should resize after this insertion. We won't resize
-    // until after we're done updating the entry though.
-    resize = (3 * thread->table.size > thread->table.capacity);
-  }
-
-  entry->data->count++;
-
-  if (!thread->auto_exit) {
-    call = CallStackPush(thread);
-    call->exit = 0;
-  }
-  call->id = callee;
-  thread->auto_exit = false;
-
-  // If the call was already running, we will find it on the sample stack
-  // where our hash table says it should be.
-  bool call_running = 
-    entry->sample < thread->sample.size
-    && entry->data == thread->sample.xs[entry->sample].call;
-
-  if (!call_running) {
-    entry->sample = thread->sample.size;
-
-    if (thread->sample.size == thread->sample.capacity) {
-      thread->sample.capacity *= 2;
-      Sample* xs = FbleArrayAlloc(Sample, thread->sample.capacity);
-      memcpy(xs, thread->sample.xs, thread->sample.size * sizeof(Sample));
-      FbleFree(thread->sample.xs);
-      thread->sample.xs = xs;
-    }
-    Sample* sample = thread->sample.xs + thread->sample.size++;
-    sample->caller = caller;
-    sample->callee = callee;
-    sample->call = entry->data;
-    call->exit++;
-  }
-
-  if (resize) {
-    Table new_table;
-    new_table.capacity = 2 * thread->table.capacity - 1;
-    new_table.size = thread->table.size;
-    new_table.xs = FbleArrayAlloc(Entry, new_table.capacity);
-    memset(new_table.xs, 0, new_table.capacity * sizeof(Entry));
-
-    for (size_t i = 0; i < thread->table.capacity; ++i) {
-      Entry e = thread->table.xs[i];
-      if (e.data != NULL) {
-        *TableEntry(&new_table, e.caller, e.data->id, thread->profile->blocks.size) = e;
-      }
-    }
-
-    FbleFree(thread->table.xs);
-    thread->table = new_table;
-  }
+  EnterBlock(thread, block, false);
 }
 
 // FbleProfileReplaceBlock -- see documentation in fble-profile.h
 void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block)
 {
-  FbleProfileAutoExitBlock(thread);
-  FbleProfileEnterBlock(thread, block);
+  EnterBlock(thread, block, true);
 }
 
 // FbleProfileExitBlock -- see documentation in fble-profile.h
@@ -705,12 +720,6 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
   // TODO: Consider shrinking the sample stack occasionally to recover memory?
   thread->sample.size -= thread->calls->top->exit;
   CallStackPop(thread);
-}
-
-// FbleProfileAutoExitBlock -- see documentation in fble-profile.h
-void FbleProfileAutoExitBlock(FbleProfileThread* thread)
-{
-  thread->auto_exit = true;
 }
 
 // FbleProfileReport -- see documentation in fble-profile.h

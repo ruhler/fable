@@ -328,11 +328,6 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       case FBLE_PROFILE_EXIT_OP:
         fprintf(fout, "      ProfileExitBlock(thread->profile);\n");
         break;
-
-      case FBLE_PROFILE_AUTO_EXIT_OP: {
-        fprintf(fout, "      ProfileAutoExitBlock(thread->profile);\n");
-        break;
-      }
     }
   }
 

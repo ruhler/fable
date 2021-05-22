@@ -198,9 +198,9 @@ void FbleProfileSample(FbleProfileThread* thread, uint64_t time);
 //   block - the block to call into.
 //
 // Side effects:
-//   A corresponding call to FbleProfileExitBlock, FbleProfileAutoExitBlock,
-//   or FbleProfileReplaceBlock should be made when the call leaves, for
-//   proper accounting and resource management.
+//   A corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
+//   should be made when the call leaves, for proper accounting and resource
+//   management.
 void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
 
 // FbleProfileReplaceBlock -- 
@@ -213,9 +213,8 @@ void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
 // Side effects:
 //   Replaces the current profiling block with the new block. Frees resources
 //   associated with the block being replaced, but the a corresponding call to
-//   FbleProfileExitBlock, FbleProfileAutoExitBlock, or
-//   FbleProfileReplaceBlock will still needed to free resources associated
-//   with the replacement block.
+//   FbleProfileExitBlock or FbleProfileReplaceBlock will still needed to free
+//   resources associated with the replacement block.
 void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
 
 // FbleProfileExitBlock --
@@ -227,17 +226,6 @@ void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
 // Side effects:
 //   Updates the profile data associated with the given thread.
 void FbleProfileExitBlock(FbleProfileThread* thread);
-
-// FbleProfileAutoExitBlock --
-//   Arrange for the current block to exit the next time a callee of the block
-//   exits. This provides a way to express tail call.
-//
-// Inputs:
-//   thread - the thread to exit the call on.
-//
-// Side effects:
-//   Updates the profile data associated with the given thread.
-void FbleProfileAutoExitBlock(FbleProfileThread* thread);
 
 // FbleProfileReport --
 //   Generate a human readable profile report.

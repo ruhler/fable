@@ -11,6 +11,7 @@
    FbleNewOutputPortValue in all cases.
 
 * Turn profiling ops into first class instructions?
+ - They could interfere with profile sampling in that case though?
 
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?

@@ -46,7 +46,6 @@ typedef enum {
   FBLE_PROFILE_ENTER_OP,
   FBLE_PROFILE_REPLACE_OP,
   FBLE_PROFILE_EXIT_OP,
-  FBLE_PROFILE_AUTO_EXIT_OP,
 } FbleProfileOpTag;
 
 // FbleProfileOp
@@ -55,7 +54,6 @@ typedef enum {
 //
 // ENTER: Enters a new profiling block, as given by the 'block' field.
 // EXIT: Exits the current profiling block. 'block' is ignored.
-// AUTO_EXIT: Auto-exits the current profiling block. 'block' is ignored.
 typedef struct FbleProfileOp {
   FbleProfileOpTag tag;
   FbleBlockId block;

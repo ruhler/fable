@@ -271,3 +271,11 @@ with it:
 * Change EnterBodyBlock to PushBodyBlock, returning the profile block id
   instead of emitting a profile op.
 * Change InitScope to take a profile block id that it enters.
+
+---
+
+All done and fixed. We no longer have AutoExit, so we no longer have to worry
+about that bug. And we support profiling with compiled code.
+
+There is perhaps some minor cleanup left around how we disable profiling
+cleanly and efficiently.
