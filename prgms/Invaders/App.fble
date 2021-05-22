@@ -73,12 +73,9 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   Unit@! tick = out(Effect@(tick: frame_period));
 
   (Game@) { Unit@!; } draw = (Game@ g) {
-    # Note: we don't just use out(...) here because of a bug in profiling tail
-    # calls of PUT values.
-    Unit@ _ := out(Effect@(draw: Over(
+    out(Effect@(draw: Over(
       Rect(0, 0, width, height, Color@(black: Unit)),
       Affine(a, b, Game.Draw(g)))));
-    !(Unit);
   };
 
   Game@ game = Game.Initial;

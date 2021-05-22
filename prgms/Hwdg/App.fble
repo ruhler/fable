@@ -151,10 +151,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     Effect@ transformed = e.?(
       tick: e,
       draw: Effect@(draw: Affine(a, b, e.draw)));
-    # Note: we don't just use 'out(transformed)' here because of a bug in
-    # profiling when tail calling a PUT value function.
-    Unit@ _ := out(transformed);
-    !(Unit);
+    out(transformed);
   };
 
   Unit@! WaitForKeyPress = {

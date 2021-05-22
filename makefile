@@ -31,7 +31,7 @@ full:
 
 .PHONY: bench
 bench:
-	bash -c 'time ./out/bin/fble-stdio prgms/Fble/Bench.fble prgms'
+	bash -c 'time ./out/bin/fble-stdio prgms /Fble/Bench%'
 	bash -c 'time ./out/bin/fble-bench'
 
 .PHONY: benchprof

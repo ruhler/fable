@@ -1,5 +1,3 @@
-* Remove AutoExit api from profiling API.
-
 * Test and fix case of mixed compiled profiling enabled?
  - We could try calling into a block for a module without profiling enabled.
    Make sure we have allocated a block name for that block.
@@ -9,9 +7,6 @@
    like fble-md5 and fble-app?
  - Check we are passing meaningful block ids to FbleNewInputPortValue and
    FbleNewOutputPortValue in all cases.
-
-* Turn profiling ops into first class instructions?
- - They could interfere with profile sampling in that case though?
 
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?
