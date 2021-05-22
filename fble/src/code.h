@@ -332,6 +332,7 @@ void FbleFreeInstr(FbleInstr* instr);
 //   args - the number of arguments to the function.
 //   statics - the number of statics captured by the function.
 //   locals - the number of locals used by the function.
+//   profile - the profile block to use for this function.
 //
 // Returns:
 //   A newly allocated FbleCode object with no initial instructions.
@@ -339,7 +340,7 @@ void FbleFreeInstr(FbleInstr* instr);
 // Side effects:
 //   Allocates a new FbleCode object that should be freed with FbleFreeCode or
 //   FbleFreeExecutable when no longer needed.
-FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals);
+FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals, FbleBlockId profile);
 
 // FbleFreeCode --
 //   Decrement the refcount on the given block of instructions and free it if

@@ -432,6 +432,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
       fprintf(fout, "        .args = %i,\n", func_instr->code->_base.args);
       fprintf(fout, "        .statics = %i,\n", func_instr->code->_base.statics);
       fprintf(fout, "        .locals = %i,\n", func_instr->code->_base.locals);
+      fprintf(fout, "        .profile = %i,\n", func_instr->code->_base.profile);
       fprintf(fout, "        .profile_blocks = { .size = 0, .xs = NULL },\n");
       fprintf(fout, "        .run = &_Run_%p,\n", (void*)func_instr->code);
       fprintf(fout, "        .abort = &_Abort_%p,\n", (void*)func_instr->code);
@@ -1099,6 +1100,7 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  v%x->executable->args = %i;\n", module_id, module->code->_base.args);
   fprintf(fout, "  v%x->executable->statics = %i;\n", module_id, module->code->_base.statics);
   fprintf(fout, "  v%x->executable->locals = %i;\n", module_id, module->code->_base.locals);
+  fprintf(fout, "  v%x->executable->profile = %i;\n", module_id, module->code->_base.profile);
   fprintf(fout, "  FbleVectorInit(v%x->executable->profile_blocks);\n", module_id);
   fprintf(fout, "  v%x->executable->run = &_Run_%p;\n", module_id, (void*)module->code);
   fprintf(fout, "  v%x->executable->abort = &_Abort_%p;\n", module_id, (void*)module->code);

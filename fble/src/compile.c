@@ -81,6 +81,7 @@ typedef struct {
 static FbleBlockId PushBlock(Blocks* blocks, FbleName name, FbleLoc loc);
 static FbleBlockId PushBodyBlock(Blocks* blocks, FbleLoc loc);
 static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope, bool replace);
+static void PopBlock(Blocks* blocks);
 static void ExitBlock(Blocks* blocks, Scope* scope, bool exit);
 static FbleBlockId LinkProfile(Blocks* blocks, FbleName get, FbleName put);
 
@@ -275,13 +276,11 @@ static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics
   FbleVectorInit(scope->vars);
   FbleVectorInit(scope->locals);
 
-  scope->code = FbleNewCode(args, statics, 0);
+  scope->code = FbleNewCode(args, statics, 0, block);
   scope->pending_profile_ops = NULL;
   scope->parent = parent;
 
   *code = scope->code;
-
-  AppendProfileOp(scope, FBLE_PROFILE_ENTER_OP, block);
 }
 
 // FreeScope --
@@ -471,6 +470,20 @@ static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope,
   AppendProfileOp(scope, replace ? FBLE_PROFILE_REPLACE_OP : FBLE_PROFILE_ENTER_OP, id);
 }
 
+// PopBlock --
+//   Pop the current profiling block frame.
+//
+// Inputs:
+//   blocks - the blocks stack.
+//
+// Side effects:
+//   Pops the top block frame off the blocks stack.
+static void PopBlock(Blocks* blocks)
+{
+  assert(blocks->stack.size > 0);
+  blocks->stack.size--;
+}
+
 // ExitBlock --
 //   Exit the current profiling block frame.
 //
@@ -480,13 +493,11 @@ static void EnterBlock(Blocks* blocks, FbleName name, FbleLoc loc, Scope* scope,
 //   exit - whether the frame has already been exited.
 //
 // Side effects:
-//   Pops the top block frame off the blocks stack and append a
+//   Pops the top block frame off the blocks stack.
 //   profile exit op to the scope if exit is false.
 static void ExitBlock(Blocks* blocks, Scope* scope, bool exit)
 {
-  assert(blocks->stack.size > 0);
-  blocks->stack.size--;
-
+  PopBlock(blocks);
   if (!exit) {
     AppendProfileOp(scope, FBLE_PROFILE_EXIT_OP, 0);
   }
@@ -568,8 +579,6 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
         AppendInstr(scope, &release_instr->_base);
       }
     }
-
-    AppendProfileOp(scope, FBLE_PROFILE_EXIT_OP, 0);
 
     FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
     return_instr->_base.tag = FBLE_RETURN_INSTR;
@@ -887,8 +896,6 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
             }
           }
         }
-
-        AppendProfileOp(scope, FBLE_PROFILE_AUTO_EXIT_OP, 0);
       }
 
       Local* dest = exit ? NULL : NewLocal(scope);

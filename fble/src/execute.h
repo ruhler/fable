@@ -87,7 +87,8 @@ typedef struct {
 //   thread - the thread whose stack to push the frame on to.
 //
 // Side effects:
-//   Updates the threads stack.
+// * Updates the threads stack.
+// * Enters a profiling block for the function being called.
 void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
 
 // FbleThreadTailCall --
@@ -106,6 +107,7 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
 // * The func and all args have their ownership transferred to
 //   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
 //   doing an FbleReleaseValue call for func and args.
+// * Replaces the profiling block for the function being called.
 void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
 
 // FbleThreadReturn --
@@ -119,6 +121,7 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 // Side effects:
 // * Sets the return result for the current stack frame and pops the frame off
 //   the stack. 
+// * Exits the current profiling block.
 // * Takes over ownership of result. FbleThreadReturn will call
 //   FbleReleaseValue on the result on behalf of the caller when the result is
 //   no longer needed.
@@ -165,13 +168,16 @@ typedef void FbleAbortFunction(FbleValueHeap* heap, FbleStack* stack);
 //   A reference counted, partially abstract data type describing how to
 //   execute a function.
 //
-// The 'on_free' function is called passing this as an argument just before
-// the FbleExecutable object is freed. Subclasses should use this to free any
-// custom state.
+// 'profile' is the profiling block id associated with execution of this
+// executable, relative to the function profile_base_id.
 //
 // 'profile_blocks' is an optional list of names of profile blocks used in the
 // FbleExecutable. This is intended to be used for FbleExecutable's
 // representing top level modules only.
+//
+// The 'on_free' function is called passing this as an argument just before
+// the FbleExecutable object is freed. Subclasses should use this to free any
+// custom state.
 #define FBLE_EXECUTABLE_MAGIC 0xB10CE
 struct FbleExecutable {
   size_t refcount;            // reference count.
@@ -179,6 +185,7 @@ struct FbleExecutable {
   size_t args;                // The number of arguments expected by the function.
   size_t statics;             // The number of statics used by the function.
   size_t locals;              // The number of locals used by the function.
+  FbleBlockId profile;
   FbleNameV profile_blocks;
   FbleRunFunction* run;       // How to run the function.
   FbleAbortFunction* abort;   // How to abort the function.

@@ -1,13 +1,16 @@
-* Fix profiling issue.
- - Move top level Enter/Exit calls into FbleExecutable profile_block CALL,
-   TAIL_CALL, and EXIT instructions.
- - Remove AutoExit api from profiling API.
+* Remove AutoExit api from profiling API.
+
+* Test and fix case of mixed compiled profiling enabled?
+ - We could try calling into a block for a module without profiling enabled.
+   Make sure we have allocated a block name for that block.
 
 * Use some way other than NULL to disable profiling?
  - To encourage all the apps to support optional profiling, including things
    like fble-md5 and fble-app?
  - Check we are passing meaningful block ids to FbleNewInputPortValue and
    FbleNewOutputPortValue in all cases.
+
+* Turn profiling ops into first class instructions?
 
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?

@@ -275,11 +275,6 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
       return FBLE_EXEC_BLOCKED;
     }
 
-    if (thread->profile != NULL) {
-      FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
-      FbleProfileExitBlock(thread->profile);
-    }
-
     FbleValues* head = link->head;
     link->head = link->head->next;
     if (link->head == NULL) {
@@ -297,11 +292,6 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   if (*port->data == NULL) {
     // Blocked on get.
     return FBLE_EXEC_BLOCKED;
-  }
-
-  if (thread->profile != NULL) {
-    FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
-    FbleProfileExitBlock(thread->profile);
   }
 
   FbleThreadReturn(heap, thread, *port->data);
@@ -334,11 +324,6 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   FbleValue* put_port = thread->stack->func->statics[0];
   FbleValue* arg = thread->stack->func->statics[1];
   if (put_port->tag == FBLE_LINK_VALUE) {
-    if (thread->profile != NULL) {
-      FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
-      FbleProfileExitBlock(thread->profile);
-    }
-
     FbleLinkValue* link = (FbleLinkValue*)put_port;
 
     FbleValues* tail = FbleAlloc(FbleValues);
@@ -365,11 +350,6 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   if (*port->data != NULL) {
     // Blocked on put.
     return FBLE_EXEC_BLOCKED;
-  }
-
-  if (thread->profile != NULL) {
-    FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
-    FbleProfileExitBlock(thread->profile);
   }
 
   FbleRetainValue(heap, arg);
@@ -406,16 +386,12 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
     .args = 0,
     .statics = 2,
     .locals = 0,
+    .profile = 0,
     .profile_blocks = { .size = 0, .xs = NULL },
     .run = &PutRunFunction,
     .abort = &PutAbortFunction,
     .on_free = NULL,
   };
-
-  if (thread->profile != NULL) {
-    FbleProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id);
-    FbleProfileExitBlock(thread->profile);
-  }
 
   FbleFuncValue* put = FbleNewFuncValue(heap, &executable, thread->stack->func->profile_base_id + 1);
 
@@ -454,6 +430,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId pro
     .args = 0,
     .statics = 1,
     .locals = 0,
+    .profile = 0,
     .profile_blocks = { .size = 0, .xs = NULL },
     .run = &GetRunFunction,
     .abort = &GetAbortFunction,
@@ -487,6 +464,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link, FbleBlockId pro
     .args = 1,
     .statics = 1,
     .locals = 1,
+    .profile = 0,
     .profile_blocks = { .size = 0, .xs = NULL },
     .run = &PartialPutRunFunction,
     .abort = &PartialPutAbortFunction,

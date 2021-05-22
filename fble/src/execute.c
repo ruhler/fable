@@ -197,6 +197,10 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleFuncValue* func, Fbl
 // FbleThreadCall -- see documentation in execute.h
 void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
+  if (thread->profile != NULL) {
+    FbleProfileEnterBlock(thread->profile, func->profile_base_id + func->executable->profile);
+  }
+
   size_t locals = func->executable->locals;
 
   FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
@@ -217,6 +221,10 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
 // FbleThreadTailCall -- see documentation in execute.h
 void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread)
 {
+  if (thread->profile != NULL) {
+    FbleProfileReplaceBlock(thread->profile, func->profile_base_id + func->executable->profile);
+  }
+
   size_t locals = func->executable->locals;
 
   FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
@@ -237,6 +245,9 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 // FbleThreadReturn -- see documentation in execute.h
 void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result)
 {
+  if (thread->profile != NULL) {
+    FbleProfileExitBlock(thread->profile);
+  }
   *(thread->stack->result) = result;
   PopStackFrame(heap, thread);
 }

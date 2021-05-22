@@ -12,7 +12,7 @@ ninja:
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja out/test/fble-compiled-profiles-test.tr
+	ninja -f out/build.ninja out/bin/fble-disassemble
 
 .PHONY: all
 all: out/build.ninja
