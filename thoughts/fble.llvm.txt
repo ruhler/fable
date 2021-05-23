@@ -1,0 +1,22 @@
+Compiling Fble to LLVM
+======================
+The idea has come up a few times. LLVM seems like a nice balance between
+supporting a variety of architectures (arm, arm64, intel, etc.) and being a
+low level target. Maybe better to generate LLVM code instead of C?
+
+Potential advantages:
+* We can use something fancier than tcc to compile generated code.
+* We have more control over low level code generation, such as storing
+  thread->profile in a register to reduce the overhead of disabled profiling.
+* We can learn more about llvm, which seems interesting and useful in general.
+
+I don't want to link the llvm libraries, but I would be happy to generate llvm
+text IR and have users install and run llc (or whatever) on the result.
+
+First test:
+* I expect clang will take too many resources to compile our generated C code.
+  Confirm that, then try compiling with clang to llvm text IR and see how much
+  time it takes to compile the llvm text IR. Hopefully all the problem with
+  clang on the C code goes away by the time we are running llc on the
+  generated IR.
+

@@ -279,3 +279,132 @@ about that bug. And we support profiling with compiled code.
 
 There is perhaps some minor cleanup left around how we disable profiling
 cleanly and efficiently.
+
+---
+
+How can we disable profiling cleanly and efficiently?
+
+Current problems:
+* It's tedious to enable profiling for compiled code, because you have to
+  recompile. It would be a much nicer user experience if you didn't have to
+  recompile.
+* The code for dealing with profiles is tedious, because you always have to
+  check if you have a profile or not. It would be much nicer of the code could
+  behave as if there was always a profile, and we had other implicit
+  mechanisms to disable profiling.
+
+The only reason to have this conditional behavior is the overheads of
+profiling. Let's do some experiments to see what the costs are.
+
+Experiments based on compiled code fble bench. I'm not so concerned about
+overheads in interpreted code.
+
+A. Profiling not compiled.
+  What we do today for compiled code without the option of profiling. This
+  could be thought of as fastest option available today. Though you could
+  imagine a more extreme approach where all profiling code is compiled out,
+  not just the profiling code in generated c code.
+
+  fble-bench compiled: 4m56s
+
+B. Profiling compiled but not enabled.
+  Represents the overhead of unused compiled profiling code.
+
+  fble-bench compiled: 5m12s
+
+C. Profiling compiled and enabled.
+  Represents the overhead of doing the actual profiling.
+
+  fble-bench compiled: 8m26s
+
+I really would love to have profiling support always compiled in, just enabled
+or disabled at runtime. Then the question we have is: how can we effectively
+disable profiling at runtime?
+
+Some options I think:
+1. Check a local variable before seeing if we should call into profiling
+functions. For example, check profile == NULL before calling
+FbleProfileEnterBlock. I think this is the fastest case I could imagine.
+
+2. Check a non-local variable before seeing if we should call into profiling
+functions. For example, check profile->enabled before calling
+FbleProfileEnterBlock. This has the advantage that we can allocate a profile
+always, adding blocks to it. The cost is potentially the extra load.
+
+3. Call into profiling functions, check in there.
+I fear the overheads of calling into the profiling functions. This would allow
+us to have a much nicer interface though.
+
+Anything else clever we could do?
+
+The assembly code I imagine we want to generate is something where we do a
+conditional branch over profiling code, and rely on branch prediction to make
+that free. Then we have to avoid the function call wherever possible.
+
+5m12s compared to 4m56s is more than I wanted for the overhead of unused
+compiled code. Could we perhaps shrink that by putting conditional calls
+around ... hmm... That already has fully conditionalized all the calls for
+profiling using a local variable to know if profiling is enabled or not.
+
+If profiling is going to be a compile time decision, why not have all of
+profiling be compile time flagged? Then there is even less overhead when
+profiling is disabled, and, more importantly, the code for profiling that we
+write can assume profiling is enabled.
+
+Taking a peak at the assembly code generated for calls to FbleProfileSample:
+
+    19d4: e59b0014  ldr r0, [fp, #20]      // r0 = thread
+    19d8: e2800004  add r0, r0, #4         // r0 = &thread->profile
+    19dc: e5901000  ldr r1, [r0]           // r1 = thread->profile
+    19e0: e3511000  cmp r1, #0             // thread->profile == NULL
+    19e4: 0a00000c  beq 1a1c <_Run_0x17f2844+0x136c>
+
+Well... I suppose there is some opportunity here if we can keep the profile
+pointer as a local variable instead of always reading it from thread. But I'm
+not convinced tcc would keep it in a register.
+
+Let's try and see. Maybe we can cut that 16s overhead in half. That would be
+pretty good, right?
+
+With that change we get, as expected:
+
+    19c4:	e51b0004 	ldr	r0, [fp, #-4]
+    19c8:	e3500000 	cmp	r0, #0
+    19cc:	0a000008 	beq	19f4 <_Run_0x1763844+0x1344>
+
+Better than nothing. Not as good as if we kept profile in a register, because
+then we could avoid the load. But who am I to say if that's a worthwhile use
+of the register? Seems a shame to have to occupy a register the entire time
+just to turn off profiling.
+
+Now we have:
+
+  fble-bench compiled: 5m04s.
+
+Not bad. We cut the overhead in half, down to 8 seconds.
+
+Could we annotate it somehow to tell tcc to keep it in a register?
+
+No. tcc is ignoring the 'register' attribute, unsurprisingly.
+
+I guess the questions are:
+* Is 8s overhead too much for me to always compile in profiling?
+* Do I want to try generating, for example, llvm to reduce that 8s to
+  hopefully almost nothing?
+* Do I want to always do profiling with compile time switch, and just deal
+  with the annoyance of having to recompile everything whenever I want to do
+  profiling?
+* Any way we could get meaningful profiling info out of prof without needing
+  to have any builting profiling support?
+
+---
+
+The answer, for now, is to take the 8s hit and always have profiling support
+compiled in. 3% overhead is not the bulk of what I need to make fble programs
+run efficiently, and there is always opportunity to reduce that overhead or
+compile it away in the future. Clean up first, optimize later.
+
+After we get rid of FBLE_ENABLE_PROFILING, we can change the profiling
+functions to accept NULL as if it were a valid profile, and experiment with
+adding macros to avoid doing the call if the profile is NULL.
+

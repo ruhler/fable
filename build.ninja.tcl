@@ -292,13 +292,13 @@ foreach dir [dirs langs/fble ""] {
 
         set o [string map {.fble .o} $fble]
         lappend objs $o
-        tobj $o $c "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
+        tobj $o $c "-I fble/include -I fble/src"
       }
 
       build $::spectestdir/test.c \
         "$::bin/fble-compile.cov $::spectestdir/test.fble" \
         "$::bin/fble-compile.cov /test% --export FbleCompiledMain $::spectestdir > $::spectestdir/test.c"
-      tobj $::spectestdir/test.o $::spectestdir/test.c "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
+      tobj $::spectestdir/test.o $::spectestdir/test.c "-I fble/include -I fble/src"
       lappend objs $::spectestdir/test.o
 
       lib $::spectestdir/libtest.a $objs
@@ -479,7 +479,7 @@ build $::src/fble-compiled-profiles-test-fble-main.c \
   "$::bin/fble-compile prgms/Fble/ProfilesTest.fble" \
   "$::bin/fble-compile /Fble/ProfilesTest% --export FbleCompiledMain prgms > $::src/fble-compiled-profiles-test-fble-main.c"
 tobj $::obj/fble-compiled-profiles-test-fble-main.o $::src/fble-compiled-profiles-test-fble-main.c \
-  "-DFBLE_ENABLE_PROFILING -I fble/include -I fble/src"
+  "-I fble/include -I fble/src"
 bin $::bin/fble-compiled-profiles-test \
   "$::obj/fble-compiled-profiles-test.o $::obj/fble-compiled-profiles-test-fble-main.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"

@@ -1,12 +1,22 @@
-* Test and fix case of mixed compiled profiling enabled?
- - We could try calling into a block for a module without profiling enabled.
-   Make sure we have allocated a block name for that block.
+* Change FbleProfile functions to accept NULL, and clean up code to take
+  advantage of that where it makes sense.
+
+* Test and fix issue with compiled profiling missing module names in profile
+  block names.
+ - Test case should be easy: we expect the name of the module in the
+   ProfilesTest profile. Just add that to the test. No need to add more
+   modules, a single module should be enough to exercise this.
+ - I assume it's the use of FbleNewModulePath in fble/src/load.c instead of
+   copying the passed in module path.
 
 * Use some way other than NULL to disable profiling?
  - To encourage all the apps to support optional profiling, including things
    like fble-md5 and fble-app?
  - Check we are passing meaningful block ids to FbleNewInputPortValue and
    FbleNewOutputPortValue in all cases.
+
+* Consider/explore generating llvm code instead of c code from fble-compile.
+ see thoughts/fble.llvm.txt.
 
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?
@@ -19,9 +29,6 @@
 
 * Consider factoring out common code used in generated code into an include
   file we can include? Like a foo.c.inc kind of thing?
-
-* Better document how to enable profiling for compiled fble code.
- - Perhaps an fble user guide?
 
 * Print full stack trace on abort instead of just the top stack trace?
 * Optimize Sat simplification to avoid lots of repeated traversals?

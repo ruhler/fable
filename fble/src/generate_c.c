@@ -313,20 +313,20 @@ static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
 // * Increments var_id based on the number of internal variables used.
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 {
-  fprintf(fout, "      ProfileSample(thread->profile);\n");
+  fprintf(fout, "      ProfileSample(profile);\n");
 
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
     switch (op->tag) {
       case FBLE_PROFILE_ENTER_OP:
-        fprintf(fout, "      ProfileEnterBlock(thread->profile, thread->stack->func->profile_base_id + %i);\n", op->block);
+        fprintf(fout, "      ProfileEnterBlock(profile, thread->stack->func->profile_base_id + %i);\n", op->block);
         break;
 
       case FBLE_PROFILE_REPLACE_OP:
-        fprintf(fout, "      ProfileReplaceBlock(thread->profile, thread->stack->func->profile_base_id + %i);\n", op->block);
+        fprintf(fout, "      ProfileReplaceBlock(profile, thread->stack->func->profile_base_id + %i);\n", op->block);
         break;
 
       case FBLE_PROFILE_EXIT_OP:
-        fprintf(fout, "      ProfileExitBlock(thread->profile);\n");
+        fprintf(fout, "      ProfileExitBlock(profile);\n");
         break;
     }
   }
@@ -523,7 +523,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
         fprintf(fout, "      child = FbleAlloc(FbleThread);\n");
         fprintf(fout, "      child->stack = thread->stack;\n");
-        fprintf(fout, "      child->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(thread->profile);\n");
+        fprintf(fout, "      child->profile = profile == NULL ? NULL : FbleForkProfileThread(profile);\n");
         fprintf(fout, "      child->stack->joins++;\n");
         fprintf(fout, "      FbleVectorAppend(*threads, child);\n");
 
@@ -896,22 +896,12 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "#include \"value.h\"\n");       // for FbleStructValue, etc.
   fprintf(fout, "\n");
 
-  // Macros for profiling that can optionally be enabled when compiling the
-  // generated C code.
-  fprintf(fout, "#ifdef FBLE_ENABLE_PROFILING\n");
   fprintf(fout, "#include \"stdlib.h\"\n\n");    // for rand
   fprintf(fout, "#define ProfileEnterBlock(profile, block) if (profile) { FbleProfileEnterBlock(profile, block); }\n");
   fprintf(fout, "#define ProfileReplaceBlock(profile, block) if (profile) { FbleProfileReplaceBlock(profile, block); }\n");
   fprintf(fout, "#define ProfileExitBlock(profile) if (profile) { FbleProfileExitBlock(profile); }\n");
   fprintf(fout, "#define ProfileAutoExitBlock(profile) if (profile) { FbleProfileAutoExitBlock(profile); }\n");
   fprintf(fout, "#define ProfileSample(profile) if (profile && rand() %% 1024 == 0) { FbleProfileSample(profile, 1); }\n");
-  fprintf(fout, "#else\n");
-  fprintf(fout, "#define ProfileEnterBlock(profile, block)\n");
-  fprintf(fout, "#define ProfileReplaceBlock(profile, block)\n");
-  fprintf(fout, "#define ProfileExitBlock(profile)\n");
-  fprintf(fout, "#define ProfileAutoExitBlock(profile)\n");
-  fprintf(fout, "#define ProfileSample(profile)\n");
-  fprintf(fout, "#endif // FBLE_ENABLE_PROFILING\n");
 
   // Prototypes for module dependencies.
   for (size_t i = 0; i < module->deps.size; ++i) {
@@ -1008,6 +998,8 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     fprintf(fout, "{\n");
     VarId var_id = 0;
 
+    fprintf(fout, "  register FbleProfileThread* profile = thread->profile;\n");
+
     // Output a jump table to jump into the right place in the function to
     // resume. We'll only ever resume into a place that's after a normal call
     // or fork instruction, so that's all we need to check for.
@@ -1101,13 +1093,11 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  v%x->executable->abort = &_Abort_%p;\n", module_id, (void*)module->code);
   fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
 
-  fprintf(fout, "#ifdef FBLE_ENABLE_PROFILING\n");
   for (size_t i = 0; i < module->code->_base.profile_blocks.size; ++i) {
     fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, ", module_id);
     Name(fout, module->code->_base.profile_blocks.xs[i]);
     fprintf(fout, ");\n");
   }
-  fprintf(fout, "#endif // FBLE_ENABLE_PROFILING\n");
 
   fprintf(fout, "}\n");
 
