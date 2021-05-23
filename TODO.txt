@@ -1,14 +1,6 @@
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense.
 
-* Test and fix issue with compiled profiling missing module names in profile
-  block names.
- - Test case should be easy: we expect the name of the module in the
-   ProfilesTest profile. Just add that to the test. No need to add more
-   modules, a single module should be enough to exercise this.
- - I assume it's the use of FbleNewModulePath in fble/src/load.c instead of
-   copying the passed in module path.
-
 * Use some way other than NULL to disable profiling?
  - To encourage all the apps to support optional profiling, including things
    like fble-md5 and fble-app?

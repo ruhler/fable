@@ -168,39 +168,39 @@ int main(int argc, char* argv[])
 
   // Each of these top level let bindings were executed once when the main
   // program ran.
-  assert(1 == Calls(profile, "/%", "/%.Not"));
-  assert(1 == Calls(profile, "/%", "/%.t"));
-  assert(1 == Calls(profile, "/%", "/%.f"));
-  assert(1 == Calls(profile, "/%", "/%.f2"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%", "/Fble/ProfilesTest%.Not"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%", "/Fble/ProfilesTest%.t"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%", "/Fble/ProfilesTest%.f"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%", "/Fble/ProfilesTest%.f2"));
 
   // The Not function was executed three times, once from each of t, f, and
   // f2.
-  assert(1 == Calls(profile, "/%.t", "/%.Not!"));
-  assert(1 == Calls(profile, "/%.f", "/%.Not!"));
-  assert(1 == Calls(profile, "/%.f2", "/%.Not!"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%.t", "/Fble/ProfilesTest%.Not!"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%.f", "/Fble/ProfilesTest%.Not!"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%.f2", "/Fble/ProfilesTest%.Not!"));
 
   // In total, we created Not once and executed three times. 
-  assert(1 == Count(profile, "/%.Not"));
-  assert(3 == Count(profile, "/%.Not!"));
+  assert(1 == Count(profile, "/Fble/ProfilesTest%.Not"));
+  assert(3 == Count(profile, "/Fble/ProfilesTest%.Not!"));
 
   // The true branch of Not was executed twice, the false branch once.
-  assert(2 == Calls(profile, "/%.Not!", "/%.Not!.true"));
-  assert(1 == Calls(profile, "/%.Not!", "/%.Not!.false"));
+  assert(2 == Calls(profile, "/Fble/ProfilesTest%.Not!", "/Fble/ProfilesTest%.Not!.true"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%.Not!", "/Fble/ProfilesTest%.Not!.false"));
 
   // The Id function was executed three times, once from each of e1, e2, and
   // e3 execution.
-  assert(3 == Count(profile, "/%.Id!"));
-  assert(1 == Calls(profile, "/%!.e1!", "/%.Id!"));
-  assert(1 == Calls(profile, "/%!.e2!", "/%.Id!"));
-  assert(1 == Calls(profile, "/%!.e3!", "/%.Id!"));
+  assert(3 == Count(profile, "/Fble/ProfilesTest%.Id!"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%!.e1!", "/Fble/ProfilesTest%.Id!"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%!.e2!", "/Fble/ProfilesTest%.Id!"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%!.e3!", "/Fble/ProfilesTest%.Id!"));
 
   // Regression test for a bug where had tail-calling the builtin put
   // function. The builtin put didn't do any Enter/Exit calls, and we were
   // using AutoExit to do the tail call. As a result, the profiler thought the
   // caller of the put was calling into whatever function was executed after
   // the caller returned, which is clearly wrong.
-  assert(0 == Calls(profile, "/%!.A!!.b", "/%!.D!"));
-  assert(1 == Calls(profile, "/%!.A!!", "/%!.D!"));
+  assert(0 == Calls(profile, "/Fble/ProfilesTest%!.A!!.b", "/Fble/ProfilesTest%!.D!"));
+  assert(1 == Calls(profile, "/Fble/ProfilesTest%!.A!!", "/Fble/ProfilesTest%!.D!"));
 
   FbleFreeProfile(profile);
   return EX_SUCCESS;

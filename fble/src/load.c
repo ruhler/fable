@@ -111,7 +111,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_p
   Stack* stack = FbleAlloc(Stack);
   stack->deps_loaded = 0;
   FbleLoc loc = { .source = FbleCopyString(filename), .line = 1, .col = 0 };
-  stack->module.path = FbleNewModulePath(loc);
+  stack->module.path = FbleCopyModulePath(module_path);
   FbleFreeLoc(loc);
   FbleVectorInit(stack->module.deps);
   stack->tail = NULL;
