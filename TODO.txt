@@ -7,8 +7,8 @@
  - Check we are passing meaningful block ids to FbleNewInputPortValue and
    FbleNewOutputPortValue in all cases.
 
-* Consider/explore generating llvm code instead of c code from fble-compile.
- see thoughts/fble.llvm.txt.
+* Consider/explore generating assembly instead of c code from fble-compile.
+ see thoughts/fble.asm.txt.
 
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?
