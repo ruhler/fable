@@ -335,12 +335,12 @@ static void ReportError(FbleLoc loc, const char* fmt, ...)
   va_start(ap, fmt);
 
   for (const char* p = strchr(fmt, '%'); p != NULL; p = strchr(fmt, '%')) {
-    fprintf(stderr, "%.*s", p - fmt, fmt);
+    fprintf(stderr, "%.*s", (int)(p - fmt), fmt);
 
     switch (*(p + 1)) {
       case 'i': {
         size_t x = va_arg(ap, size_t);
-        fprintf(stderr, "%d", x);
+        fprintf(stderr, "%zd", x);
         break;
       }
 

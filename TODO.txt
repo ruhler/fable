@@ -1,4 +1,8 @@
-* Set up generate_armv7.c for compiling to arm assembly.
+* Figure out why we end up always rebuilding all the spec tests.
+ - I bet it's because linking the Nat.fble file doesn't update its timestamp.
+* Debug fblf-md5 test failure after switch from armv7l to aarch64.
+
+* Set up generate_aarch64.c for compiling to aarch64 assembly.
  - Perhaps with a -s option to fble-compile to switch to use it.
  
 * Change FbleProfile functions to accept NULL, and clean up code to take

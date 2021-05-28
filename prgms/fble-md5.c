@@ -38,10 +38,10 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fbld-md5 FILE " FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Usage: fble-md5 FILE " FBLE_MAIN_USAGE_SUMMARY "\n"
       "Compute md5 on FILE using the given fble program.\n"
       FBLE_MAIN_USAGE_DETAIL
-      "Example: fbld-md5 foo.txt " FBLE_MAIN_USAGE_EXAMPLE "\n"
+      "Example: fble-md5 foo.txt " FBLE_MAIN_USAGE_EXAMPLE "\n"
   );
 }
 

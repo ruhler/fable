@@ -66,8 +66,8 @@ static void DumpCode(FILE* fout, FbleCode* code)
           case FBLE_PROFILE_ENTER_OP: {
             FbleBlockId block = op->block;
             FbleName* name = &profile_blocks.xs[block];
-            fprintf(fout, "    .  profile enter [%04x]; ", block);
-            fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name->str, block,
+            fprintf(fout, "    .  profile enter [%04zx]; ", block);
+            fprintf(fout, "// %s[%04zx]: %s:%d:%d\n", name->name->str, block,
                 name->loc.source->str, name->loc.line, name->loc.col);
             break;
           }
@@ -75,8 +75,8 @@ static void DumpCode(FILE* fout, FbleCode* code)
           case FBLE_PROFILE_REPLACE_OP: {
             FbleBlockId block = op->block;
             FbleName* name = &profile_blocks.xs[block];
-            fprintf(fout, "    .  profile replace [%04x]; ", block);
-            fprintf(fout, "// %s[%04x]: %s:%d:%d\n", name->name->str, block,
+            fprintf(fout, "    .  profile replace [%04zx]; ", block);
+            fprintf(fout, "// %s[%04zx]: %s:%d:%d\n", name->name->str, block,
                 name->loc.source->str, name->loc.line, name->loc.col);
             break;
           }

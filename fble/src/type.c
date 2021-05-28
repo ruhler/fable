@@ -841,7 +841,7 @@ void FblePrintKind(FbleKind* kind)
       switch (basic->level) {
         case 0: fprintf(stderr, "%%"); break;
         case 1: fprintf(stderr, "@"); break;
-        default: fprintf(stderr, "@%i", basic->level); break;
+        default: fprintf(stderr, "@%zi", basic->level); break;
       }
       break;
     }
