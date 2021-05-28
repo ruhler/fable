@@ -495,25 +495,6 @@ bin $::bin/fble-bench \
   "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 
-# fblf compilation test
-obj $::obj/fblf-heap.o prgms/Fblf/fblf-heap.c "-I prgms/Fblf"
-build $::src/fblf-tests.c \
-  "$::bin/fble-stdio $::prgms/Fblf/Lib/Tests/Compile.fble.d" \
-  "$::bin/fble-stdio prgms /Fblf/Lib/Tests/Compile% > $::src/fblf-tests.c"
-obj $::obj/fblf-tests.o $::src/fblf-tests.c "-I prgms/Fblf"
-bin $::bin/fblf-tests "$::obj/fblf-tests.o $::obj/fblf-heap.o" ""
-test $::test/fblf-tests.tr $::bin/fblf-tests $::bin/fblf-tests
-
-# fblf md5 compilation test
-build $::src/fblf-md5.c \
-  "$::bin/fble-stdio $::prgms/Fblf/Lib/Md5/Stdio.fble.d" \
-  "$::bin/fble-stdio prgms /Fblf/Lib/Md5/Stdio% prgms > $::src/fblf-md5.c"
-obj $::obj/fblf-md5.o $::src/fblf-md5.c "-I prgms/Fblf"
-bin $::bin/fblf-md5 "$::obj/fblf-md5.o $::obj/fblf-heap.o" ""
-# TODO: Figure out why this fails:
-# test $::test/fblf-md5.tr $::bin/fblf-md5 \
-#  "$::bin/fblf-md5 /dev/null > $::test/fblf-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::test/fblf-md5.out > /dev/null"
-
 # test summary
 build $::test/tests.txt "$::tests" "echo $::tests > $::test/tests.txt"
 build $::test/summary.tr "tools/tests.tcl $::test/tests.txt" \

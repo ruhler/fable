@@ -1,5 +1,3 @@
-* Debug fblf-md5 test failure after switch from armv7l to aarch64.
-
 * Set up generate_aarch64.c for compiling to aarch64 assembly.
  - Perhaps with a -s option to fble-compile to switch to use it.
  
@@ -119,24 +117,6 @@
  - Add way to write 'skip' test and/or 'expect_fail' test?
    For example, so we can have the fblf md5 tests, compile them, skip them
    because they are too slow, and report on how many were skipped and why.
-* [/Fblf%] Figure out how to avoid duplication of module definitions.
-  For the case like Add, and Bitwise modules that take a non-var argument as a
-  function to the module.
-  - I'm pretty sure the solution is to separate the definition of the module
-    procs from the definition of the module interface. It's just annoying.
-* [/Fblf%] Add nicer summary and error messages in compiled fblf test runner.
-* [/Fblf%] Rewrite tests for /Fblf/Heap%.
-* [/Fblf%] Figure out how to replace fblf integer arithmetic with a native c
-  implementation at compile time.
-  - See how much faster it is now.
-* [/Fblf%] Implement space invaders in fblf.
-  - Do whatever is necessary to make it easier to write the program as I go
-    along with regards to types and syntax.
-* [/Fblf%] Add test cases for aliasing for things in general?
-* [/Fblf%] Replace /Loop%.For and /Loop%.DoWhile with /Iter%.For?
- - Because the /Iter%.For is a nicer API I think.
-* [/Fblf%] Add test for /Fblf/Program/Show%, which I don't think is currently even
-  compiled when tests are run.
 * [/GameOfLife%] Switch to a target 60 FPS?
 * [/Hwdg%] Improve the API for describing a bunch of gates with modules.
 * [/Hwdg%] Have an easier way to set a bunch of cells at once?

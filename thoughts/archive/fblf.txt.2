@@ -462,3 +462,14 @@ address on the heap. The body of a procedure is a program like we currently
 have defined for fblf, except you can call other procedures. And that's it.
 Should be very simple to describe.
 
+---
+
+I'm obsoleting this fblf effort. It was a good run. Big takeaways for me were:
+* Inlining everything will not work.
+* Compilation is a good approach.
+
+Instead of pursuing this EDSL in fble, I want to apply it directly to fble and
+perhaps fblg. The camel on the straw's back for getting rid of the Fblf code
+was switching from a 32 bit OS to a 64 bit OS, which broke something about my
+fblf runtime library code that I don't want to bother debugging.
+
