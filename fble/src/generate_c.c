@@ -488,7 +488,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
 
       fprintf(fout, "      thread->stack->pc = %i;\n", pc+1);
 
-      fprintf(fout, "      FbleValue** result = thread->stack->locals + %i;", call_instr->dest);
+      fprintf(fout, "      FbleValue** result = thread->stack->locals + %i;\n", call_instr->dest);
       fprintf(fout, "      FbleThreadCall(heap, result, func, args, thread);\n");
       fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
       return;
@@ -527,7 +527,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr)
         fprintf(fout, "      child->stack->joins++;\n");
         fprintf(fout, "      FbleVectorAppend(*threads, child);\n");
 
-        fprintf(fout, "      result = thread->stack->locals + %i\n;", fork_instr->dests.xs[i]);
+        fprintf(fout, "      result = thread->stack->locals + %i;\n", fork_instr->dests.xs[i]);
         fprintf(fout, "      FbleThreadCall(heap, result, arg, NULL, child);\n");
       }
 
