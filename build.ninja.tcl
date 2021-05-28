@@ -292,7 +292,7 @@ foreach dir [dirs langs/fble ""] {
 
         set o [string map {.fble .o} $fble]
         lappend objs $o
-        tobj $o $c "-I fble/include -I fble/src"
+        tobj $o $c "-I fble/include -I fble/src" $::spectestdir/test.fble
       }
 
       build $::spectestdir/test.c \
@@ -305,7 +305,7 @@ foreach dir [dirs langs/fble ""] {
     }
 
     proc spec-test-extract {} {
-      build "$::spectestdir/test.fble $::spectestdir/Nat.fble"  \
+      build "$::spectestdir/test.fble"  \
         "tools/extract-spec-test.tcl $::spectcl langs/fble/Nat.fble" \
         "tclsh tools/extract-spec-test.tcl $::spectcl $::spectestdir langs/fble/Nat.fble"
     }
