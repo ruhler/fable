@@ -28,13 +28,15 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-native MODULE_PATH [--export NAME] [SEARCH_PATH]\n"
+      "Usage: fble-native [-s] MODULE_PATH [--export NAME] [SEARCH_PATH]\n"
       "Compile an fble module to C code.\n"
       "  MODULE_PATH - the fble module path associated with FILE. For example: /Foo/Bar%\n"
       "  SEARCH_PATH - the directory to search for .fble files in.\n"
       "Options:\n"
+      "  -s\n"
+      "    Generate aarch64 assembly instead of c code."
       "  --export NAME\n"
-      "    Generates a C function with the given NAME to export the module\n"
+      "    Generates a function with the given NAME to export the module\n"
       "At least one of [--export NAME] or [SEARCH_PATH] must be provided.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
@@ -59,6 +61,13 @@ int main(int argc, char* argv[])
   if (argc > 0 && strcmp("--help", *argv) == 0) {
     PrintUsage(stdout);
     return EX_SUCCESS;
+  }
+
+  bool aarch64 = false;
+  if (argc > 0 && strcmp("-s", *argv) == 0) {
+    aarch64 = true;
+    argc--;
+    argv++;
   }
 
   if (argc < 1) {
@@ -90,7 +99,11 @@ int main(int argc, char* argv[])
   }
 
   if (export != NULL) {
-    FbleGenerateCExport(stdout, export, mpath);
+    if (aarch64) {
+      FbleGenerateAArch64Export(stdout, export, mpath);
+    } else {
+      FbleGenerateCExport(stdout, export, mpath);
+    }
   }
 
   if (search_path != NULL) {
@@ -112,7 +125,11 @@ int main(int argc, char* argv[])
     FbleFreeModulePath(module->path);
     module->path = FbleCopyModulePath(mpath);
 
-    FbleGenerateC(stdout, module);
+    if (aarch64) {
+      FbleGenerateAArch64(stdout, module);
+    } else {
+      FbleGenerateC(stdout, module);
+    }
 
     FbleFreeCompiledProgram(compiled);
   }

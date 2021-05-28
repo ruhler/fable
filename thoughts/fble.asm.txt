@@ -169,4 +169,20 @@ store 'threads' and 'io_activity' on r10, r11 I guess. Or stack if we want
 more registers to work with. We can create aliases for these registers so that
 it's very convenient to emit code and have them easily updated.
 
+---
+
+Switching over to aarch64, because I have more interest in learning that than
+32 bit arm.
+
+Procedure Call Standard:
+* r0-r7     input/output args
+* r8        indirect result location
+* r9-r15    temp registers
+* r16, r17  intra procedure call scratch registers
+* r18       platform register
+* r19-r28   callee saved registers
+* r29       frame pointer
+* r30       link register
+* SP        stack pointer
+
 

@@ -139,4 +139,48 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module);
 // * Generates C code for the given code.
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
 
+// FbleGenerateAArch64 --
+//   Generate 64-bit ARM code for an fble compiled module.
+//
+// The generated code will export a single function named based on the
+// module path with the following signature:
+//  
+//   void <name>(FbleCompiledProgram* program);
+//
+// Calling this function will append this module to the given program if it
+// does not already belong to the given program.
+//
+// Inputs:
+//   fout - the output stream to write the C code to.
+//   module - the module to generate code for.
+//
+// Results:
+//   true on success, false on error.
+//
+// Side effects:
+// * Generates arm64 code for the given code.
+// * An error message is printed to stderr in case of error.
+bool FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
+
+// FbleGenerateAArch64Export --
+//   Generate aarch64 code to export the code for a compiled module.
+//
+// The generated code will export a single function with the given name with
+// the following signature
+//  
+//   FbleValue* <name>(FbleValueHeap* heap);
+//
+// Calling this function will allocate an FbleValue representing a zero
+// argument function that can be executed to compute the value of the given
+// module.
+//
+// Inputs:
+//   fout - the output stream to write the C code to.
+//   name - the name of the function to generate.
+//   path - the path to the module to export.
+//
+// Side effects:
+// * Generates aarch64 code for the given code.
+void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path);
+
 #endif // FBLE_COMPILE_H_

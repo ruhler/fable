@@ -1,5 +1,4 @@
-* Set up generate_aarch64.c for compiling to aarch64 assembly.
- - Perhaps with a -s option to fble-compile to switch to use it.
+* Implement generate_aarch64
  
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense.
