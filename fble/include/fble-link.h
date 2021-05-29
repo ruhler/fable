@@ -47,4 +47,32 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 //   longer needed.
 FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, FbleModulePath* module_path, FbleProfile* profile);
 
+// FbleCompiledModuleFunction --
+//   The type of a module function generated for compiled .fble code.
+//
+// Inputs:
+//   program - modules loaded into the program so far.
+//
+// Side effects:
+//   Adds this module to the given program if it is not already in the
+//   program.
+typedef void FbleCompiledModuleFunction(FbleExecutableProgram* program);
+
+// FbleLinkFromCompiled --
+//   Load and link a precompiled fble program.
+//
+// Inputs:
+//   module - the compiled main module function.
+//   heap - heap to use for allocations.
+//   profile - profile to populate with blocks. May be NULL.
+//
+// Returns: 
+//   A zero-argument fble function that computes the value of the program when
+//   executed.
+//
+// Side effects:
+// * The user should call FbleReleaseValue on the returned value when it is no
+//   longer needed.
+FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
+
 #endif // FBLE_LINK_H_

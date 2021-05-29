@@ -7,10 +7,10 @@
 
 // FbleMain -- 
 //   See documentation in fble-main.h
-FbleValue* FbleMain(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledMainFunction* compiled_main, int argc, char** argv)
+FbleValue* FbleMain(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* compiled_main, int argc, char** argv)
 {
   if (compiled_main != NULL) {
-    return compiled_main(heap, profile);
+    return FbleLinkFromCompiled(compiled_main, heap, profile);
   }
 
   if (argc < 1) {

@@ -1107,24 +1107,14 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 // FbleGenerateCExport -- see documentation in fble-compile.h
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
-  fprintf(fout, "#include \"fble-link.h\"\n");    // for FbleLink
-  fprintf(fout, "#include \"fble-value.h\"\n");   // for FbleValue
-  fprintf(fout, "#include \"fble-vector.h\"\n");  // for FbleVectorInit, etc.
+  fprintf(fout, "#include \"fble-execute.h\"\n");    // for FbleExecutableProgram
   fprintf(fout, "\n");
 
-  // Prototype for the exported module.
   FbleString* module_name = CIdentifierForPath(path);
   fprintf(fout, "void %s(FbleExecutableProgram* program);\n\n", module_name->str);
-
-  fprintf(fout, "FbleValue* %s(FbleValueHeap* heap, FbleProfile* profile)\n", name);
+  fprintf(fout, "void %s(FbleExecutableProgram* program)\n", name);
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);\n");
-  fprintf(fout, "  FbleVectorInit(program->modules);\n");
   fprintf(fout, "  %s(program);\n", module_name->str);
-  fprintf(fout, "  FbleValue* value = FbleLink(heap, program, profile);\n");
-  fprintf(fout, "  FbleFreeExecutableProgram(program);\n");
-  fprintf(fout, "  return value;\n");
   fprintf(fout, "}\n\n");
-
   FbleFreeString(module_name);
 }

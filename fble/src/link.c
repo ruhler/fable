@@ -125,3 +125,14 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, F
   FbleFreeExecutableProgram(executable);
   return linked;
 }
+
+// FbleLinkFromCompiled -- see documentation in fble-link.h
+FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile)
+{
+  FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);
+  FbleVectorInit(program->modules);
+  module(program);
+  FbleValue* value = FbleLink(heap, program, profile);
+  FbleFreeExecutableProgram(program);
+  return value;
+}

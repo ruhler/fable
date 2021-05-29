@@ -4,12 +4,9 @@
 #ifndef FBLE_MAIN_H_
 #define FBLE_MAIN_H_
 
+#include "fble-link.h"
 #include "fble-profile.h"
 #include "fble-value.h"
-
-// FbleCompiledMainFunction --
-//   The type of a main function exported from compiled .fble code.
-typedef FbleValue* FbleCompiledMainFunction(FbleValueHeap* heap, FbleProfile* profile);
 
 // FbleCompiledMain --
 //   A macro that should be set at compile time to the name of the compiled
@@ -36,7 +33,7 @@ typedef FbleValue* FbleCompiledMainFunction(FbleValueHeap* heap, FbleProfile* pr
 //   A string to include an an application usage example command line showing
 //   what to use in the argc/argv passed to FbleMain.
 #ifdef FbleCompiledMain
-FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
+void FbleCompiledMain(FbleExecutableProgram* program);
 
 #define FBLE_MAIN_USAGE_SUMMARY ""
 #define FBLE_MAIN_USAGE_DETAIL "Loads the statically linked fble program.\n"
@@ -86,6 +83,6 @@ FbleValue* FbleCompiledMain(FbleValueHeap* heap, FbleProfile* profile);
 //
 // Where FbleCompiledMain defaults to NULL, but can be overridden at compile
 // time using something like -DFbleCompiledMain=FbleCompiledMain.
-FbleValue* FbleMain(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledMainFunction* compiled_main, int argc, char** argv);
+FbleValue* FbleMain(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* compiled_main, int argc, char** argv);
 
 #endif // FBLE_MAIN_H_
