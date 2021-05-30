@@ -1115,32 +1115,32 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   // Add this module to the program.
   VarId module_id = var_id++;
-  fprintf(fout, "  FbleExecutableModule* v%x = FbleVectorExtend(program->modules);\n", module_id);
-  fprintf(fout, "  v%x->path = v%x;\n", module_id, path_id);
-  fprintf(fout, "  FbleVectorInit(v%x->deps);\n", module_id);
+  fprintf(fout, "  FbleExecutableModule v%x;\n", module_id);
+  fprintf(fout, "  v%x.path = v%x;\n", module_id, path_id);
+  fprintf(fout, "  FbleVectorInit(v%x.deps);\n", module_id);
 
   for (size_t i = 0; i < module->deps.size; ++i) {
     VarId dep_id = GenModulePath(fout, &var_id, module->deps.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->deps, v%x);\n", module_id, dep_id);
+    fprintf(fout, "  FbleVectorAppend(v%x.deps, v%x);\n", module_id, dep_id);
   }
 
-  fprintf(fout, "  v%x->executable = FbleAlloc(FbleExecutable);\n", module_id);
-  fprintf(fout, "  v%x->executable->refcount = 1;\n", module_id);
-  fprintf(fout, "  v%x->executable->magic = FBLE_EXECUTABLE_MAGIC;\n", module_id);
-  fprintf(fout, "  v%x->executable->args = %zi;\n", module_id, module->code->_base.args);
-  fprintf(fout, "  v%x->executable->statics = %zi;\n", module_id, module->code->_base.statics);
-  fprintf(fout, "  v%x->executable->locals = %zi;\n", module_id, module->code->_base.locals);
-  fprintf(fout, "  v%x->executable->profile = %zi;\n", module_id, module->code->_base.profile);
-  fprintf(fout, "  FbleVectorInit(v%x->executable->profile_blocks);\n", module_id);
-  fprintf(fout, "  v%x->executable->run = &_Run_%p;\n", module_id, (void*)module->code);
-  fprintf(fout, "  v%x->executable->abort = &_Abort_%p;\n", module_id, (void*)module->code);
-  fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
+  fprintf(fout, "  v%x.executable = FbleAlloc(FbleExecutable);\n", module_id);
+  fprintf(fout, "  v%x.executable->refcount = 1;\n", module_id);
+  fprintf(fout, "  v%x.executable->magic = FBLE_EXECUTABLE_MAGIC;\n", module_id);
+  fprintf(fout, "  v%x.executable->args = %zi;\n", module_id, module->code->_base.args);
+  fprintf(fout, "  v%x.executable->statics = %zi;\n", module_id, module->code->_base.statics);
+  fprintf(fout, "  v%x.executable->locals = %zi;\n", module_id, module->code->_base.locals);
+  fprintf(fout, "  v%x.executable->profile = %zi;\n", module_id, module->code->_base.profile);
+  fprintf(fout, "  FbleVectorInit(v%x.executable->profile_blocks);\n", module_id);
+  fprintf(fout, "  v%x.executable->run = &_Run_%p;\n", module_id, (void*)module->code);
+  fprintf(fout, "  v%x.executable->abort = &_Abort_%p;\n", module_id, (void*)module->code);
+  fprintf(fout, "  v%x.executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
 
   for (size_t i = 0; i < module->code->_base.profile_blocks.size; ++i) {
     VarId name_id = StaticName(fout, &var_id, module->code->_base.profile_blocks.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, v%x);\n", module_id, name_id);
+    fprintf(fout, "  FbleVectorAppend(v%x.executable->profile_blocks, v%x);\n", module_id, name_id);
   }
-
+  fprintf(fout, "  FbleVectorAppend(program->modules, v%x);\n", module_id);
   fprintf(fout, "}\n");
 
   return true;
