@@ -1,4 +1,12 @@
 * Implement generate_aarch64
+ - Make a static FbleExecutableModule.
+ - Pass the FbleExecutableModule, a list of dependant load functions to a
+   loader function that adds the module to the program as needed.
+ - Figure out how to generate .data section to describe the static
+   FbleExecutableModule from assembly.
+ - Implement top level wrapper function for aarch64.
+ - Implement abort and run functions in aarch64.
+   
  
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense.

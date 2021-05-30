@@ -36,8 +36,10 @@ static void FrameGetStrict(FILE* fout, FbleFrameIndex index);
 static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
 static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
 
-static void Loc(FILE* fout, FbleLoc loc);
-static void Name(FILE* fout, FbleName name);
+static VarId StaticString(FILE* fout, VarId* var_id, const char* string);
+static VarId StaticLoc(FILE* fout, VarId* var_id, FbleLoc loc);
+static VarId StaticName(FILE* fout, VarId* var_id, FbleName name);
+
 static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
 static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
@@ -224,39 +226,29 @@ static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex inde
   fprintf(fout, "%sthread->stack->locals[%zi] = %s;\n", indent, index, value);
 }
 
-// Loc --
-//   Output a C expression to produce an FbleLoc.
+// StaticString --
+//   Output code to declare a static FbleString value.
 //
 // Inputs:
-//   fout - the output stream to write the C expression to.
-//   loc - the FbleLoc to generate code for.
+//   fout - the file to write to
+//   var_id - pointer to next available variable id for use.
+//   string - the value of the string.
+//
+// Returns:
+//   A variable name of a local, static FbleString.
 //
 // Side effects:
-// * Outputs code to fout for the loc.
-static void Loc(FILE* fout, FbleLoc loc)
+//   Writes code to fout and allocates variable ids out of var_id.
+static VarId StaticString(FILE* fout, VarId* var_id, const char* string)
 {
-  // TODO: Properly escape funny chars in the source string.
-  fprintf(fout, "FbleNewLoc(\"%s\", %i, %i)", loc.source->str, loc.line, loc.col);
-}
-
-// Name --
-//   Generate an expression for constructing an FbleName.
-//
-// Inputs:
-//   fout - the output stream to write the code to.
-//   name - the FbleName to generate code for.
-//
-// Side effects:
-// * Outputs code to fout for the expression.
-static void Name(FILE* fout, FbleName name)
-{
-  static const char* spaces[] = {
-    "FBLE_NORMAL_NAME_SPACE",
-    "FBLE_TYPE_NAME_SPACE"
-  };
+  VarId id = (*var_id)++;
 
-  fprintf(fout, "Name(\"");
-  for (char* p = name.name->str; *p; p++) {
+  fprintf(fout, "  static FbleString v%x = {\n", id);
+  fprintf(fout, "    .refcount = 2,\n");
+  fprintf(fout, "    .magic = FBLE_STRING_MAGIC,\n");
+  fprintf(fout, "    .str = \"");
+
+  for (const char* p = string; *p; p++) {
     // TODO: Handle other special characters too.
     switch (*p) {
       case '\n': fprintf(fout, "\\n"); break;
@@ -266,7 +258,69 @@ static void Name(FILE* fout, FbleName name)
     }
   }
 
-  fprintf(fout, "\", %s, \"%s\", %i, %i)", spaces[name.space], name.loc.source->str, name.loc.line, name.loc.col);
+  fprintf(fout, "\",\n");
+  fprintf(fout, "  };\n\n");
+  return id;
+}
+
+// StaticLoc --
+//   Output code to declare a static FbleLoc value.
+//
+// Inputs:
+//   fout - the file to write to
+//   var_id - pointer to next available variable id for use.
+//   loc - the value of the loc.
+//
+// Returns:
+//   A variable name of a local, static FbleLoc.
+//
+// Side effects:
+//   Writes code to fout and allocates variable ids out of var_id.
+static VarId StaticLoc(FILE* fout, VarId* var_id, FbleLoc loc)
+{
+  VarId str_id = StaticString(fout, var_id, loc.source->str);
+  VarId id = (*var_id)++;
+
+  fprintf(fout, "  static FbleLoc v%x = {\n", id);
+  fprintf(fout, "    .source = &v%x,\n", str_id);
+  fprintf(fout, "    .line = %i,\n", loc.line);
+  fprintf(fout, "    .col = %i,\n", loc.col);
+  fprintf(fout, "  };\n");
+
+  return id;
+}
+
+// StaticName --
+//   Output code to declare a static FbleName value.
+//
+// Inputs:
+//   fout - the file to write to
+//   var_id - pointer to next available variable id for use.
+//   name - the value of the name.
+//
+// Returns:
+//   A variable name of a local, static FbleName.
+//
+// Side effects:
+//   Writes code to fout and allocates variable ids out of var_id.
+static VarId StaticName(FILE* fout, VarId* var_id, FbleName name)
+{
+  static const char* spaces[] = {
+    "FBLE_NORMAL_NAME_SPACE",
+    "FBLE_TYPE_NAME_SPACE"
+  };
+
+  VarId str_id = StaticString(fout, var_id, name.name->str);
+  VarId src_id = StaticString(fout, var_id, name.loc.source->str);
+  VarId id = (*var_id)++;
+
+  fprintf(fout, "  static FbleName v%x = {\n", id);
+  fprintf(fout, "    .name = &v%x,\n", str_id);
+  fprintf(fout, "    .space = %s,\n", spaces[name.space]);
+  fprintf(fout, "    .loc = { .source = &v%x, .line = %i, .col = %i},\n", src_id, name.loc.line, name.loc.col);
+  fprintf(fout, "  };\n");
+
+  return id;
 }
 
 // GenModulePath --
@@ -285,16 +339,14 @@ static void Name(FILE* fout, FbleName name)
 // * Increments var_id based on the number of internal variables used.
 static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
 {
-  VarId loc_id = (*var_id)++;
+  VarId loc_id = StaticLoc(fout, var_id, path->loc);
   VarId path_id = (*var_id)++;
-  fprintf(fout, "  FbleLoc v%x = ", loc_id); Loc(fout, path->loc); fprintf(fout, ";\n");
+
   fprintf(fout, "  FbleModulePath* v%x = FbleNewModulePath(v%x);\n", path_id, loc_id);
-  fprintf(fout, "  FbleFreeLoc(v%x);\n", loc_id);
 
   for (size_t i = 0; i < path->path.size; ++i) {
-    fprintf(fout, "  FbleVectorAppend(v%x->path, ", path_id);
-    Name(fout, path->path.xs[i]);
-    fprintf(fout, ");\n");
+    VarId name_id = StaticName(fout, var_id, path->path.xs[i]);
+    fprintf(fout, "  FbleVectorAppend(v%x->path, FbleCopyName(v%x));\n", path_id, name_id);
   }
   return path_id;
 }
@@ -937,15 +989,6 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "static const char* UndefinedFunctionValue = \"called undefined function\\n\";\n");
   fprintf(fout, "static const char* VacuousValue = \"vacuous value\\n\";\n\n");
 
-  fprintf(fout, "static FbleName Name(const char* name, FbleNameSpace space, const char* source, int line, int col)\n");
-  fprintf(fout, "{\n");
-  fprintf(fout, "  FbleName n;\n");
-  fprintf(fout, "  n.name = FbleNewString(name);\n");
-  fprintf(fout, "  n.space = space;\n");
-  fprintf(fout, "  n.loc = FbleNewLoc(source, line, col);\n");
-  fprintf(fout, "  return n;\n");
-  fprintf(fout, "}\n\n");
-
   fprintf(fout, "static FbleExecStatus Abort(FbleStack* stack, size_t pc, const char* msg, const char* source, size_t line, size_t col)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  stack->pc = pc;\n");
@@ -1094,9 +1137,8 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
 
   for (size_t i = 0; i < module->code->_base.profile_blocks.size; ++i) {
-    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, ", module_id);
-    Name(fout, module->code->_base.profile_blocks.xs[i]);
-    fprintf(fout, ");\n");
+    VarId name_id = StaticName(fout, &var_id, module->code->_base.profile_blocks.xs[i]);
+    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, v%x);\n", module_id, name_id);
   }
 
   fprintf(fout, "}\n");
