@@ -311,18 +311,27 @@ void FbleFreeExecutable(FbleExecutable* executable)
 void FbleExecutableNothingOnFree(FbleExecutable* this)
 {}
 
+// FbleFreeExecutableModule -- see documentation in fble-execute.h
+void FbleFreeExecutableModule(FbleExecutableModule* module)
+{
+  assert(module->magic == FBLE_EXECUTABLE_MODULE_MAGIC && "corrupt FbleExecutableModule");
+  if (--module->refcount == 0) {
+    FbleFreeModulePath(module->path);
+    for (size_t j = 0; j < module->deps.size; ++j) {
+      FbleFreeModulePath(module->deps.xs[j]);
+    }
+    FbleFree(module->deps.xs);
+    FbleFreeExecutable(module->executable);
+    FbleFree(module);
+  }
+}
+
 // FbleFreeExecutableProgram -- see documentation in fble-execute.h
 void FbleFreeExecutableProgram(FbleExecutableProgram* program)
 {
   if (program != NULL) {
     for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleExecutableModule* module = program->modules.xs + i;
-      FbleFreeModulePath(module->path);
-      for (size_t j = 0; j < module->deps.size; ++j) {
-        FbleFreeModulePath(module->deps.xs[j]);
-      }
-      FbleFree(module->deps.xs);
-      FbleFreeExecutable(module->executable);
+      FbleFreeExecutableModule(program->modules.xs[i]);
     }
     FbleFree(program->modules.xs);
     FbleFree(program);

@@ -28,7 +28,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   // module given values of the modules it depends on.
   FbleValue* funcs[modulec];
   for (size_t i = 0; i < modulec; ++i) {
-    FbleExecutable* module = program->modules.xs[i].executable;
+    FbleExecutable* module = program->modules.xs[i]->executable;
 
     assert(module->statics == 0);
 
@@ -47,7 +47,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   FbleCode* code = FbleNewCode(0, modulec, modulec, main_id);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleExecutableModule* module = program->modules.xs + i;
+    FbleExecutableModule* module = program->modules.xs[i];
 
     FbleCallInstr* call = FbleAlloc(FbleCallInstr);
     call->_base.tag = FBLE_CALL_INSTR;
@@ -61,7 +61,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     FbleVectorInit(call->args);
     for (size_t d = 0; d < module->deps.size; ++d) {
       for (size_t v = 0; v < i; ++v) {
-        if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[v].path)) {
+        if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[v]->path)) {
           FbleFrameIndex index = {
             .section = FBLE_LOCALS_FRAME_SECTION,
             .index = v

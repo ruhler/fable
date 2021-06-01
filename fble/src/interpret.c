@@ -785,7 +785,9 @@ FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleCompiledModule* module = program->modules.xs + i;
 
-    FbleExecutableModule* executable_module = FbleVectorExtend(executable->modules);
+    FbleExecutableModule* executable_module = FbleAlloc(FbleExecutableModule);
+    executable_module->refcount = 1;
+    executable_module->magic = FBLE_EXECUTABLE_MODULE_MAGIC;
     executable_module->path = FbleCopyModulePath(module->path);
     FbleVectorInit(executable_module->deps);
     for (size_t d = 0; d < module->deps.size; ++d) {
@@ -794,6 +796,8 @@ FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
 
     executable_module->executable = &module->code->_base;
     executable_module->executable->refcount++;
+
+    FbleVectorAppend(executable->modules, executable_module);
   }
 
   return executable;

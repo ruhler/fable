@@ -1058,7 +1058,7 @@ bool FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   // do.
   VarId path_id = GenModulePath(fout, &var_id, module->path);
   fprintf(fout, "  for (size_t i = 0; i < program->modules.size; ++i) {\n");
-  fprintf(fout, "    if (FbleModulePathsEqual(v%x, program->modules.xs[i].path)) {\n", path_id);
+  fprintf(fout, "    if (FbleModulePathsEqual(v%x, program->modules.xs[i]->path)) {\n", path_id);
   fprintf(fout, "      FbleFreeModulePath(v%x);\n", path_id);
   fprintf(fout, "      return;\n");
   fprintf(fout, "    }\n");
