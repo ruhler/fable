@@ -4,6 +4,7 @@
  - Make a static FbleExecutableModule.
  - Figure out how to generate .data section to describe the static
    FbleExecutableModule from assembly.
+ - Move prototype for FbleLoadCompiled to a better place?
  - Implement top level wrapper function for aarch64.
  - Implement abort and run functions in aarch64.
    

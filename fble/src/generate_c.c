@@ -244,7 +244,7 @@ static VarId StaticString(FILE* fout, VarId* var_id, const char* string)
   VarId id = (*var_id)++;
 
   fprintf(fout, "  static FbleString v%x = {\n", id);
-  fprintf(fout, "    .refcount = 2,\n");
+  fprintf(fout, "    .refcount = 1,\n");
   fprintf(fout, "    .magic = FBLE_STRING_MAGIC,\n");
   fprintf(fout, "    .str = \"");
 
@@ -1095,25 +1095,17 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   VarId var_id = 0;
 
-  // Check if the module has already been loaded. If so, there's nothing to
-  // do.
-  VarId path_id = GenModulePath(fout, &var_id, module->path);
-  fprintf(fout, "  for (size_t i = 0; i < program->modules.size; ++i) {\n");
-  fprintf(fout, "    if (FbleModulePathsEqual(v%x, program->modules.xs[i]->path)) {\n", path_id);
-  fprintf(fout, "      FbleFreeModulePath(v%x);\n", path_id);
-  fprintf(fout, "      return;\n");
-  fprintf(fout, "    }\n");
-  fprintf(fout, "  }\n\n");
-
-  // Make sure all dependencies have been loaded.
+  fprintf(fout, "  static size_t depc = %zi;\n", module->deps.size);
+  fprintf(fout, "  static FbleCompiledModuleFunction* deps[%zi] = {\n", module->deps.size);
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleString* dep_name = CIdentifierForPath(module->deps.xs[i]);
-    fprintf(fout, "  %s(program);\n", dep_name->str);
+    fprintf(fout, "    &%s,\n", dep_name->str);
     FbleFreeString(dep_name);
   }
-  fprintf(fout, "\n");
+  fprintf(fout, "  };\n");
 
-  // Add this module to the program.
+  // TODO: Allocate the FbleExecutableModule statically.
+  VarId path_id = GenModulePath(fout, &var_id, module->path);
   VarId module_id = var_id++;
   fprintf(fout, "  FbleExecutableModule* v%x = FbleAlloc(FbleExecutableModule);\n", module_id);
   fprintf(fout, "  v%x->refcount = 1;\n", module_id);
@@ -1140,9 +1132,12 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   for (size_t i = 0; i < module->code->_base.profile_blocks.size; ++i) {
     VarId name_id = StaticName(fout, &var_id, module->code->_base.profile_blocks.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, v%x);\n", module_id, name_id);
+    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, FbleCopyName(v%x));\n", module_id, name_id);
   }
-  fprintf(fout, "  FbleVectorAppend(program->modules, v%x);\n", module_id);
+
+
+  fprintf(fout, "  FbleLoadFromCompiled(program, v%x, depc, deps);\n", module_id);
+  fprintf(fout, "  FbleFreeExecutableModule(v%x);\n", module_id);
   fprintf(fout, "}\n");
 
   return true;

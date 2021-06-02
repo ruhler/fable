@@ -126,6 +126,25 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, F
   return linked;
 }
 
+// FbleLoadFromCompiled -- see documentation in fble-link.h
+void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* module, size_t depc, FbleCompiledModuleFunction** deps)
+{
+  // Don't do anything if the module has already been loaded.
+  for (size_t i = 0; i < program->modules.size; ++i) {
+    if (FbleModulePathsEqual(module->path, program->modules.xs[i]->path)) {
+      return;
+    }
+  }
+
+  // Otherwise, load it's dependencies and add it to the list.
+  for (size_t i = 0; i < depc; ++i) {
+    deps[i](program);
+  }
+
+  module->refcount++;
+  FbleVectorAppend(program->modules, module);
+}
+
 // FbleLinkFromCompiled -- see documentation in fble-link.h
 FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile)
 {

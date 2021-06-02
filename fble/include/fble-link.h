@@ -58,6 +58,21 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, F
 //   program.
 typedef void FbleCompiledModuleFunction(FbleExecutableProgram* program);
 
+// FbleLoadFromCompiled --
+//   Load modules for a precompiled fble module.
+//
+// TODO: Should this be an internal, private function?
+//
+// Inputs:
+//   program - the program to add the module and its dependencies to.
+//   module - the compiled module to load. Borrowed.
+//   depc - the number of other modules this module immediately depends on.
+//   deps - the immediate dependencies of this module.
+//
+// Side effects:
+// * Adds this module and any modules it depends on to the given program.
+void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* module, size_t depc, FbleCompiledModuleFunction** deps);
+
 // FbleLinkFromCompiled --
 //   Load and link a precompiled fble program.
 //
