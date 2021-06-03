@@ -38,7 +38,6 @@ static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex inde
 
 static void StringLit(FILE* fout, const char* string);
 static VarId StaticString(FILE* fout, VarId* var_id, const char* string);
-static VarId StaticName(FILE* fout, VarId* var_id, FbleName name);
 static VarId StaticNames(FILE* fout, VarId* var_id, FbleNameV names);
 static VarId StaticModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 
@@ -268,46 +267,12 @@ static VarId StaticString(FILE* fout, VarId* var_id, const char* string)
 {
   VarId id = (*var_id)++;
 
-  fprintf(fout, "  static FbleString v%x = {\n", id);
-  fprintf(fout, "    .refcount = 1,\n");
-  fprintf(fout, "    .magic = FBLE_STRING_MAGIC,\n");
-  fprintf(fout, "    .str = ");
+  fprintf(fout, "  static FbleString v%x = {", id);
+  fprintf(fout, " .refcount = 1,");
+  fprintf(fout, " .magic = FBLE_STRING_MAGIC,");
+  fprintf(fout, " .str = ");
   StringLit(fout, string);
-  fprintf(fout, ",\n");
-  fprintf(fout, "  };\n\n");
-  return id;
-}
-
-// StaticName --
-//   Output code to declare a static FbleName value.
-//
-// Inputs:
-//   fout - the file to write to
-//   var_id - pointer to next available variable id for use.
-//   name - the value of the name.
-//
-// Returns:
-//   A variable id of a local, static FbleName.
-//
-// Side effects:
-//   Writes code to fout and allocates variable ids out of var_id.
-static VarId StaticName(FILE* fout, VarId* var_id, FbleName name)
-{
-  static const char* spaces[] = {
-    "FBLE_NORMAL_NAME_SPACE",
-    "FBLE_TYPE_NAME_SPACE"
-  };
-
-  VarId str_id = StaticString(fout, var_id, name.name->str);
-  VarId src_id = StaticString(fout, var_id, name.loc.source->str);
-  VarId id = (*var_id)++;
-
-  fprintf(fout, "  static FbleName v%x = {\n", id);
-  fprintf(fout, "    .name = &v%x,\n", str_id);
-  fprintf(fout, "    .space = %s,\n", spaces[name.space]);
-  fprintf(fout, "    .loc = { .source = &v%x, .line = %i, .col = %i},\n", src_id, name.loc.line, name.loc.col);
-  fprintf(fout, "  };\n");
-
+  fprintf(fout, " };\n");
   return id;
 }
 
@@ -352,7 +317,7 @@ static VarId StaticNames(FILE* fout, VarId* var_id, FbleNameV names)
 
   fprintf(fout, "  static FbleName v%x[%zi] = {\n", id, names.size);
   for (size_t i = 0; i < names.size; ++i) {
-    fprintf(fout, "  { .name = &v%x_str_%zi,", id, i);
+    fprintf(fout, "    { .name = &v%x_str_%zi,", id, i);
     fprintf(fout, " .space = %s,", spaces[names.xs[i].space]);
     fprintf(fout, " .loc = { .source = &v%x_src_%zi, .line = %i, .col = %i}},\n", id, i, names.xs[i].loc.line, names.xs[i].loc.col);
   }
@@ -1142,42 +1107,47 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   }
   fprintf(fout, "  };\n");
 
-  // TODO: Allocate the FbleExecutableModule statically.
   VarId path_id = StaticModulePath(fout, &var_id, module->path);
-  VarId module_id = var_id++;
-  fprintf(fout, "  FbleExecutableModule* v%x = FbleAlloc(FbleExecutableModule);\n", module_id);
-  fprintf(fout, "  v%x->refcount = 1;\n", module_id);
-  fprintf(fout, "  v%x->magic = FBLE_EXECUTABLE_MODULE_MAGIC;\n", module_id);
-  fprintf(fout, "  v%x->path = FbleCopyModulePath(&v%x);\n", module_id, path_id);
-  fprintf(fout, "  FbleVectorInit(v%x->deps);\n", module_id);
 
+  VarId dep_ids[module->deps.size];
   for (size_t i = 0; i < module->deps.size; ++i) {
-    VarId dep_id = StaticModulePath(fout, &var_id, module->deps.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->deps, FbleCopyModulePath(&v%x));\n", module_id, dep_id);
+    dep_ids[i] = StaticModulePath(fout, &var_id, module->deps.xs[i]);
   }
 
-  fprintf(fout, "  v%x->executable = FbleAlloc(FbleExecutable);\n", module_id);
-  fprintf(fout, "  v%x->executable->refcount = 1;\n", module_id);
-  fprintf(fout, "  v%x->executable->magic = FBLE_EXECUTABLE_MAGIC;\n", module_id);
-  fprintf(fout, "  v%x->executable->args = %zi;\n", module_id, module->code->_base.args);
-  fprintf(fout, "  v%x->executable->statics = %zi;\n", module_id, module->code->_base.statics);
-  fprintf(fout, "  v%x->executable->locals = %zi;\n", module_id, module->code->_base.locals);
-  fprintf(fout, "  v%x->executable->profile = %zi;\n", module_id, module->code->_base.profile);
-  fprintf(fout, "  FbleVectorInit(v%x->executable->profile_blocks);\n", module_id);
-  fprintf(fout, "  v%x->executable->run = &_Run_%p;\n", module_id, (void*)module->code);
-  fprintf(fout, "  v%x->executable->abort = &_Abort_%p;\n", module_id, (void*)module->code);
-  fprintf(fout, "  v%x->executable->on_free = &FbleExecutableNothingOnFree;\n", module_id);
-
-  for (size_t i = 0; i < module->code->_base.profile_blocks.size; ++i) {
-    VarId name_id = StaticName(fout, &var_id, module->code->_base.profile_blocks.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->executable->profile_blocks, FbleCopyName(v%x));\n", module_id, name_id);
+  VarId deps_xs_id = var_id++;
+  fprintf(fout, "  static FbleModulePath* v%x[] = {", deps_xs_id);
+  for (size_t i = 0; i < module->deps.size; ++i) {
+    fprintf(fout, " &v%x,", dep_ids[i]);
   }
+  fprintf(fout, " };\n");
 
+  VarId profile_blocks_xs_id = StaticNames(fout, &var_id, module->code->_base.profile_blocks);
 
-  fprintf(fout, "  FbleLoadFromCompiled(program, v%x, depc, deps);\n", module_id);
-  fprintf(fout, "  FbleFreeExecutableModule(v%x);\n", module_id);
+  VarId executable_id = var_id++;
+  fprintf(fout, "  static FbleExecutable v%x = {\n", executable_id);
+  fprintf(fout, "    .refcount = 1,\n");
+  fprintf(fout, "    .magic = FBLE_EXECUTABLE_MAGIC,\n");
+  fprintf(fout, "    .args = %zi,\n", module->code->_base.args);
+  fprintf(fout, "    .statics = %zi,\n", module->code->_base.statics);
+  fprintf(fout, "    .locals = %zi,\n", module->code->_base.locals);
+  fprintf(fout, "    .profile = %zi,\n", module->code->_base.profile);
+  fprintf(fout, "    .profile_blocks = { .size = %zi, .xs = v%x },\n", module->code->_base.profile_blocks.size, profile_blocks_xs_id);
+  fprintf(fout, "    .run = &_Run_%p,\n", (void*)module->code);
+  fprintf(fout, "    .abort = &_Abort_%p,\n", (void*)module->code);
+  fprintf(fout, "    .on_free = &FbleExecutableNothingOnFree,\n");
+  fprintf(fout, "  };\n");
+
+  VarId module_id = var_id++;
+  fprintf(fout, "  static FbleExecutableModule v%x = {\n", module_id);
+  fprintf(fout, "    .refcount = 1,\n");
+  fprintf(fout, "    .magic = FBLE_EXECUTABLE_MODULE_MAGIC,\n");
+  fprintf(fout, "    .path = &v%x,\n", path_id);
+  fprintf(fout, "    .deps = { .size = %zi, .xs = v%x },\n", module->deps.size, deps_xs_id);
+  fprintf(fout, "    .executable = &v%x,\n", executable_id);
+  fprintf(fout, "  };\n");
+
+  fprintf(fout, "  FbleLoadFromCompiled(program, &v%x, depc, deps);\n", module_id);
   fprintf(fout, "}\n");
-
   return true;
 }
 

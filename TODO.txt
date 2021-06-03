@@ -1,7 +1,4 @@
 * Implement generate_aarch64
- - Pass the FbleExecutableModule, a list of dependant load functions to a
-   loader function that adds the module to the program as needed.
- - Make a static FbleExecutableModule.
  - Figure out how to generate .data section to describe the static
    FbleExecutableModule from assembly.
  - Move prototype for FbleLoadCompiled to a better place?
