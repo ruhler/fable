@@ -36,11 +36,12 @@ static void FrameGetStrict(FILE* fout, FbleFrameIndex index);
 static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
 static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex index, const char* value);
 
+static void StringLit(FILE* fout, const char* string);
 static VarId StaticString(FILE* fout, VarId* var_id, const char* string);
-static VarId StaticLoc(FILE* fout, VarId* var_id, FbleLoc loc);
 static VarId StaticName(FILE* fout, VarId* var_id, FbleName name);
+static VarId StaticNames(FILE* fout, VarId* var_id, FbleNameV names);
+static VarId StaticModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 
-static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
 static void EmitInstrForAbort(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr);
 static int CIdentifierForLocSize(const char* str);
@@ -226,6 +227,30 @@ static void FrameSetConsumed(FILE* fout, const char* indent, FbleLocalIndex inde
   fprintf(fout, "%sthread->stack->locals[%zi] = %s;\n", indent, index, value);
 }
 
+// StringLit --
+//   Output a string literal to fout.
+//
+// Inputs:
+//   fout - the file to write to.
+//   string - the contents of the string to write.
+//
+// Side effects:
+//   Outputs the given string as a C string literal to the given file.
+static void StringLit(FILE* fout, const char* string)
+{
+  fprintf(fout, "\"");
+  for (const char* p = string; *p; p++) {
+    // TODO: Handle other special characters too.
+    switch (*p) {
+      case '\n': fprintf(fout, "\\n"); break;
+      case '"': fprintf(fout, "\\\""); break;
+      case '\\': fprintf(fout, "\\\\"); break;
+      default: fprintf(fout, "%c", *p); break;
+    }
+  }
+  fprintf(fout, "\"");
+}
+
 // StaticString --
 //   Output code to declare a static FbleString value.
 //
@@ -246,47 +271,10 @@ static VarId StaticString(FILE* fout, VarId* var_id, const char* string)
   fprintf(fout, "  static FbleString v%x = {\n", id);
   fprintf(fout, "    .refcount = 1,\n");
   fprintf(fout, "    .magic = FBLE_STRING_MAGIC,\n");
-  fprintf(fout, "    .str = \"");
-
-  for (const char* p = string; *p; p++) {
-    // TODO: Handle other special characters too.
-    switch (*p) {
-      case '\n': fprintf(fout, "\\n"); break;
-      case '"': fprintf(fout, "\\\""); break;
-      case '\\': fprintf(fout, "\\\\"); break;
-      default: fprintf(fout, "%c", *p); break;
-    }
-  }
-
-  fprintf(fout, "\",\n");
+  fprintf(fout, "    .str = ");
+  StringLit(fout, string);
+  fprintf(fout, ",\n");
   fprintf(fout, "  };\n\n");
-  return id;
-}
-
-// StaticLoc --
-//   Output code to declare a static FbleLoc value.
-//
-// Inputs:
-//   fout - the file to write to
-//   var_id - pointer to next available variable id for use.
-//   loc - the value of the loc.
-//
-// Returns:
-//   A variable name of a local, static FbleLoc.
-//
-// Side effects:
-//   Writes code to fout and allocates variable ids out of var_id.
-static VarId StaticLoc(FILE* fout, VarId* var_id, FbleLoc loc)
-{
-  VarId str_id = StaticString(fout, var_id, loc.source->str);
-  VarId id = (*var_id)++;
-
-  fprintf(fout, "  static FbleLoc v%x = {\n", id);
-  fprintf(fout, "    .source = &v%x,\n", str_id);
-  fprintf(fout, "    .line = %i,\n", loc.line);
-  fprintf(fout, "    .col = %i,\n", loc.col);
-  fprintf(fout, "  };\n");
-
   return id;
 }
 
@@ -299,7 +287,7 @@ static VarId StaticLoc(FILE* fout, VarId* var_id, FbleLoc loc)
 //   name - the value of the name.
 //
 // Returns:
-//   A variable name of a local, static FbleName.
+//   A variable id of a local, static FbleName.
 //
 // Side effects:
 //   Writes code to fout and allocates variable ids out of var_id.
@@ -323,8 +311,57 @@ static VarId StaticName(FILE* fout, VarId* var_id, FbleName name)
   return id;
 }
 
-// GenModulePath --
-//   Generate code for a FbleModulePath..
+// StaticNames --
+//   Output code to declare a static FbleNameV.xs value.
+//
+// Inputs:
+//   fout - the file to write to
+//   var_id - pointer to next available variable id for use.
+//   names - the value of the names.
+//
+// Returns:
+//   A variable id of a local, static FbleNameV.xs.
+//
+// Side effects:
+//   Writes code to fout and allocates variable ids out of var_id.
+static VarId StaticNames(FILE* fout, VarId* var_id, FbleNameV names)
+{
+  static const char* spaces[] = {
+    "FBLE_NORMAL_NAME_SPACE",
+    "FBLE_TYPE_NAME_SPACE"
+  };
+
+  VarId id = (*var_id)++;
+  for (size_t i = 0; i < names.size; ++i) {
+    fprintf(fout, "  static FbleString v%x_str_%zi = {", id, i);
+    fprintf(fout, " .refcount = 1,");
+    fprintf(fout, " .magic = FBLE_STRING_MAGIC,");
+    fprintf(fout, " .str = ");
+    StringLit(fout, names.xs[i].name->str);
+    fprintf(fout, " };\n");
+  }
+
+  for (size_t i = 0; i < names.size; ++i) {
+    fprintf(fout, "  static FbleString v%x_src_%zi = {", id, i);
+    fprintf(fout, " .refcount = 1,");
+    fprintf(fout, " .magic = FBLE_STRING_MAGIC,");
+    fprintf(fout, " .str = ");
+    StringLit(fout, names.xs[i].loc.source->str);
+    fprintf(fout, " };\n");
+  }
+
+  fprintf(fout, "  static FbleName v%x[%zi] = {\n", id, names.size);
+  for (size_t i = 0; i < names.size; ++i) {
+    fprintf(fout, "  { .name = &v%x_str_%zi,", id, i);
+    fprintf(fout, " .space = %s,", spaces[names.xs[i].space]);
+    fprintf(fout, " .loc = { .source = &v%x_src_%zi, .line = %i, .col = %i}},\n", id, i, names.xs[i].loc.line, names.xs[i].loc.col);
+  }
+  fprintf(fout, "  };\n");
+  return id;
+}
+
+// StaticModulePath --
+//   Generate code to declare a static FbleModulePath value.
 //
 // Inputs:
 //   fout - the output stream to write the code to.
@@ -332,22 +369,23 @@ static VarId StaticName(FILE* fout, VarId* var_id, FbleName name)
 //   path - the FbleModulePath to generate code for.
 //
 // Results:
-//   The variable id of the generated FbleModulePath.
+//   The variable id of a local, static FbleModulePath.
 //
 // Side effects:
-// * Outputs code to fout with two space indent.
+// * Outputs code to fout.
 // * Increments var_id based on the number of internal variables used.
-static VarId GenModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
+static VarId StaticModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
 {
-  VarId loc_id = StaticLoc(fout, var_id, path->loc);
+  VarId src_id = StaticString(fout, var_id, path->loc.source->str);
+  VarId names_id = StaticNames(fout, var_id, path->path);
   VarId path_id = (*var_id)++;
 
-  fprintf(fout, "  FbleModulePath* v%x = FbleNewModulePath(v%x);\n", path_id, loc_id);
-
-  for (size_t i = 0; i < path->path.size; ++i) {
-    VarId name_id = StaticName(fout, var_id, path->path.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->path, FbleCopyName(v%x));\n", path_id, name_id);
-  }
+  fprintf(fout, "  static FbleModulePath v%x = {\n", path_id);
+  fprintf(fout, "    .refcount = 1,\n");
+  fprintf(fout, "    .magic = FBLE_MODULE_PATH_MAGIC,\n");
+  fprintf(fout, "    .loc = { .source = &v%x, .line = %i, .col = %i },\n", src_id, path->loc.line, path->loc.col);
+  fprintf(fout, "    .path = { .size = %zi, .xs = v%x },\n", path->path.size, names_id);
+  fprintf(fout, "  };\n");
   return path_id;
 }
 
@@ -1105,17 +1143,17 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  };\n");
 
   // TODO: Allocate the FbleExecutableModule statically.
-  VarId path_id = GenModulePath(fout, &var_id, module->path);
+  VarId path_id = StaticModulePath(fout, &var_id, module->path);
   VarId module_id = var_id++;
   fprintf(fout, "  FbleExecutableModule* v%x = FbleAlloc(FbleExecutableModule);\n", module_id);
   fprintf(fout, "  v%x->refcount = 1;\n", module_id);
   fprintf(fout, "  v%x->magic = FBLE_EXECUTABLE_MODULE_MAGIC;\n", module_id);
-  fprintf(fout, "  v%x->path = v%x;\n", module_id, path_id);
+  fprintf(fout, "  v%x->path = FbleCopyModulePath(&v%x);\n", module_id, path_id);
   fprintf(fout, "  FbleVectorInit(v%x->deps);\n", module_id);
 
   for (size_t i = 0; i < module->deps.size; ++i) {
-    VarId dep_id = GenModulePath(fout, &var_id, module->deps.xs[i]);
-    fprintf(fout, "  FbleVectorAppend(v%x->deps, v%x);\n", module_id, dep_id);
+    VarId dep_id = StaticModulePath(fout, &var_id, module->deps.xs[i]);
+    fprintf(fout, "  FbleVectorAppend(v%x->deps, FbleCopyModulePath(&v%x));\n", module_id, dep_id);
   }
 
   fprintf(fout, "  v%x->executable = FbleAlloc(FbleExecutable);\n", module_id);
