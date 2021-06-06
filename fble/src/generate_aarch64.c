@@ -268,12 +268,14 @@ static VarId StaticString(FILE* fout, VarId* var_id, const char* string)
 {
   VarId id = (*var_id)++;
 
-  fprintf(fout, "  static FbleString v%x = {", id);
-  fprintf(fout, " .refcount = 1,");
-  fprintf(fout, " .magic = FBLE_STRING_MAGIC,");
-  fprintf(fout, " .str = ");
+  fprintf(fout, "  .section .data\n");
+  fprintf(fout, "  .align 3\n");                       // 64 bit alignment
+  fprintf(fout, "v%x:\n", id);
+  fprintf(fout, "  .xword 1\n");                       // .refcount = 1
+  fprintf(fout, "  .xword %i\n", FBLE_STRING_MAGIC);   // .magic
+  fprintf(fout, "  .string ");                         // .str
   StringLit(fout, string);
-  fprintf(fout, " };\n");
+  fprintf(fout, "\n");
   return id;
 }
 
@@ -292,37 +294,25 @@ static VarId StaticString(FILE* fout, VarId* var_id, const char* string)
 //   Writes code to fout and allocates variable ids out of var_id.
 static VarId StaticNames(FILE* fout, VarId* var_id, FbleNameV names)
 {
-  static const char* spaces[] = {
-    "FBLE_NORMAL_NAME_SPACE",
-    "FBLE_TYPE_NAME_SPACE"
-  };
+  VarId str_ids[names.size];
+  VarId src_ids[names.size];
+  for (size_t i = 0; i < names.size; ++i) {
+    str_ids[i] = StaticString(fout, var_id, names.xs[i].name->str);
+    src_ids[i] = StaticString(fout, var_id, names.xs[i].loc.source->str);
+  }
 
   VarId id = (*var_id)++;
+  fprintf(fout, "  .data\n");
+  fprintf(fout, "  .align 3\n");
+  fprintf(fout, "v%x:\n", id);
   for (size_t i = 0; i < names.size; ++i) {
-    fprintf(fout, "  static FbleString v%x_str_%zi = {", id, i);
-    fprintf(fout, " .refcount = 1,");
-    fprintf(fout, " .magic = FBLE_STRING_MAGIC,");
-    fprintf(fout, " .str = ");
-    StringLit(fout, names.xs[i].name->str);
-    fprintf(fout, " };\n");
+    fprintf(fout, "  .xword v%x\n", str_ids[i]);          // name
+    fprintf(fout, "  .word %i\n", names.xs[i].space);     // space
+    fprintf(fout, "  .zero 4\n");                         // padding
+    fprintf(fout, "  .xword v%x\n", src_ids[i]);          // loc.src
+    fprintf(fout, "  .word %i\n", names.xs[i].loc.line);  // loc.line
+    fprintf(fout, "  .word %i\n", names.xs[i].loc.col);   // loc.col
   }
-
-  for (size_t i = 0; i < names.size; ++i) {
-    fprintf(fout, "  static FbleString v%x_src_%zi = {", id, i);
-    fprintf(fout, " .refcount = 1,");
-    fprintf(fout, " .magic = FBLE_STRING_MAGIC,");
-    fprintf(fout, " .str = ");
-    StringLit(fout, names.xs[i].loc.source->str);
-    fprintf(fout, " };\n");
-  }
-
-  fprintf(fout, "  static FbleName v%x[%zi] = {\n", id, names.size);
-  for (size_t i = 0; i < names.size; ++i) {
-    fprintf(fout, "    { .name = &v%x_str_%zi,", id, i);
-    fprintf(fout, " .space = %s,", spaces[names.xs[i].space]);
-    fprintf(fout, " .loc = { .source = &v%x_src_%zi, .line = %i, .col = %i}},\n", id, i, names.xs[i].loc.line, names.xs[i].loc.col);
-  }
-  fprintf(fout, "  };\n");
   return id;
 }
 
@@ -346,12 +336,16 @@ static VarId StaticModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
   VarId names_id = StaticNames(fout, var_id, path->path);
   VarId path_id = (*var_id)++;
 
-  fprintf(fout, "  static FbleModulePath v%x = {\n", path_id);
-  fprintf(fout, "    .refcount = 1,\n");
-  fprintf(fout, "    .magic = FBLE_MODULE_PATH_MAGIC,\n");
-  fprintf(fout, "    .loc = { .source = &v%x, .line = %i, .col = %i },\n", src_id, path->loc.line, path->loc.col);
-  fprintf(fout, "    .path = { .size = %zi, .xs = v%x },\n", path->path.size, names_id);
-  fprintf(fout, "  };\n");
+  fprintf(fout, "  .data");
+  fprintf(fout, "  .align 3");
+  fprintf(fout, "v%x:\n", path_id);
+  fprintf(fout, "  .xword 1\n");                  // .refcount
+  fprintf(fout, "  .xword 2004903300\n");         // .magic
+  fprintf(fout, "  .xword v%x\n", src_id);        // path->loc.src
+  fprintf(fout, "  .word %i\n", path->loc.line);
+  fprintf(fout, "  .word %i\n", path->loc.col);
+  fprintf(fout, "  .xword %zi\n", path->path.size);
+  fprintf(fout, "  .xword v%x\n", names_id);
   return path_id;
 }
 
@@ -379,37 +373,41 @@ static VarId StaticExecutableModule(FILE* fout, VarId* var_id, FbleCompiledModul
   }
 
   VarId deps_xs_id = (*var_id)++;
-  fprintf(fout, "  static FbleModulePath* v%x[] = {", deps_xs_id);
+  fprintf(fout, "  .section .data.rel.local\n");
+  fprintf(fout, "  .align 3\n");
+  fprintf(fout, "v%x:\n", deps_xs_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
-    fprintf(fout, " &v%x,", dep_ids[i]);
+    fprintf(fout, "  v%x\n", dep_ids[i]);
   }
-  fprintf(fout, " };\n");
 
   VarId profile_blocks_xs_id = StaticNames(fout, var_id, module->code->_base.profile_blocks);
 
   VarId executable_id = (*var_id)++;
-  fprintf(fout, "  static FbleExecutable v%x = {\n", executable_id);
-  fprintf(fout, "    .refcount = 1,\n");
-  fprintf(fout, "    .magic = FBLE_EXECUTABLE_MAGIC,\n");
-  fprintf(fout, "    .args = %zi,\n", module->code->_base.args);
-  fprintf(fout, "    .statics = %zi,\n", module->code->_base.statics);
-  fprintf(fout, "    .locals = %zi,\n", module->code->_base.locals);
-  fprintf(fout, "    .profile = %zi,\n", module->code->_base.profile);
-  fprintf(fout, "    .profile_blocks = { .size = %zi, .xs = v%x },\n", module->code->_base.profile_blocks.size, profile_blocks_xs_id);
-  fprintf(fout, "    .run = &_Run_%p,\n", (void*)module->code);
-  fprintf(fout, "    .abort = &_Abort_%p,\n", (void*)module->code);
-  fprintf(fout, "    .on_free = &FbleExecutableNothingOnFree,\n");
-  fprintf(fout, "  };\n");
+  fprintf(fout, "  .section .data.rel,\"aw\"\n");
+  fprintf(fout, "  .align 3\n");
+  fprintf(fout, "v%x:\n", executable_id);
+  fprintf(fout, "  .xword 1\n");                          // .refcount
+  fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
+  fprintf(fout, "  .xword %zi\n", module->code->_base.args);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.statics);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.locals);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.profile);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.profile_blocks.size);
+  fprintf(fout, "  .xword v%x\n", profile_blocks_xs_id);
+  fprintf(fout, "  .xword _Run_%p\n", (void*)module->code);
+  fprintf(fout, "  .xword _Abort_%p\n", (void*)module->code);
+  fprintf(fout, "  .xword FbleExecutableNothingOnFree\n");
 
   VarId module_id = (*var_id)++;
-  fprintf(fout, "  static FbleExecutableModule v%x = {\n", module_id);
-  fprintf(fout, "    .refcount = 1,\n");
-  fprintf(fout, "    .magic = FBLE_EXECUTABLE_MODULE_MAGIC,\n");
-  fprintf(fout, "    .path = &v%x,\n", path_id);
-  fprintf(fout, "    .deps = { .size = %zi, .xs = v%x },\n", module->deps.size, deps_xs_id);
-  fprintf(fout, "    .executable = &v%x,\n", executable_id);
-  fprintf(fout, "  };\n");
-
+  fprintf(fout, "  .section .data.rel.local\n");
+  fprintf(fout, "  .align 3\n");
+  fprintf(fout, "v%x:\n", module_id);
+  fprintf(fout, "  .xword 1\n");                                  // .refcount
+  fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MODULE_MAGIC);   // .magic
+  fprintf(fout, "  .xword v%x\n", path_id);                       // .path
+  fprintf(fout, "  .xword %zi\n", module->deps.size);
+  fprintf(fout, "  .xword v%x\n", deps_xs_id);
+  fprintf(fout, "  .xword v%x\n", executable_id);
   return module_id;
 }
 
