@@ -931,7 +931,7 @@ static FbleString* CIdentifierForPath(FbleModulePath* path)
 }
 
 // FbleGenerateC -- see documentation in fble-compile.h
-bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
+void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 {
   FbleCodeV blocks;
   FbleVectorInit(blocks);
@@ -1148,7 +1148,6 @@ bool FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   fprintf(fout, "  FbleLoadFromCompiled(program, &v%x, depc, deps);\n", module_id);
   fprintf(fout, "}\n");
-  return true;
 }
 
 // FbleGenerateCExport -- see documentation in fble-compile.h

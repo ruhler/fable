@@ -876,7 +876,7 @@ static FbleString* CIdentifierForPath(FbleModulePath* path)
 }
 
 // FbleGenerateAArch64 -- see documentation in fble-compile.h
-bool FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
+void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 {
   assert(false && "TODO: generate aarch64, not C");
 
@@ -1102,8 +1102,6 @@ bool FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   }
 
   fprintf(fout, "}\n");
-
-  return true;
 }
 
 // FbleGenerateAArch64Export -- see documentation in fble-compile.h

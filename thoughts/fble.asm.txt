@@ -258,3 +258,62 @@ Would it be possible to write a CPP macro that, given the path to the module,
 turns into the name of the generated C identifier? Then we don't need to
 export anything at all, you can literally use the path to the module.
 
+---
+
+How to describe the static data for an FbleExecutableModule in assembly:
+
+gcc does something like:
+
+For an FbleString:
+
+foo:
+  .data
+  .align 3                (what for?)
+  .xword 1                (refcount)
+  .xword 5333369          (magic)
+  .string "foo"           (str)
+
+For an FbleName:
+foo:
+  .data
+  .align 3                (what for?)
+  .xword str              (name)
+  .word 0                 (space)
+  .zero 4                 (?? alignment for Loc?)
+  .xword src              (source)
+  .word 1                 (line)
+  .word 2                 (col)
+
+For data with pointers, it goes into .data.rel,"aw" or .data.rel.local
+sections.
+
+So, things to figure out:
+* why align 3?
+ - Does that mean align by 2^3 bytes, to get 64 bit alignment, as required
+   given it contains 64 bit pointers?
+ - Yes. For this architecture it must be "the number of low-order zero bits the
+   location counter must have after advancement."
+* why zero 4
+ - I'm thinking because FbleLoc has 64 bit alignment because it contains a
+   pointer, so we need to pad 32 bits between the 32 bit enum and the FbleLoc.
+ - Yeah. that makes sense.
+* Difference between sections .rodata, .data.rel.local,"aw",, .data.rel.local,
+  .data.rel,"aw"
+  - "aw" are flags: 'a' for allocatable, 'w' for writeable.
+  - presumably .rodata is read only data, .data.rel relocatable data, not sure
+    what the .local is. But are these just arbitrary names for debugging
+    purpose, or does the assembler/linker treat them specially semantically?
+
+From reading the linker manual:
+* A "loadable" section is loaded into memory at runtime.
+* An "allocatable" section is allocated in memory at runtime, but doesn't get
+  anything loaded into it.
+* Otherwise a section is probably just debug info that need not be accessed at
+  runtime.
+* The section names, like .data.rel.local, are referenced by the linker
+  script. There is a default linker script that says what order to put the
+  different sections in.
+* The elf spec ('man elf') has some notion of sections. The linker's job is to
+  convert input sections to different output sections. Maybe the output
+  sections are what matter for relocation? Yeah, looks like that's the case.
+

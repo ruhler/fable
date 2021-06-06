@@ -106,13 +106,9 @@ void FbleDisassemble(FILE* fout, FbleCode* code);
 //   fout - the output stream to write the C code to.
 //   module - the module to generate code for.
 //
-// Results:
-//   true on success, false on error.
-//
 // Side effects:
 // * Generates C code for the given code.
-// * An error message is printed to stderr in case of error.
-bool FbleGenerateC(FILE* fout, FbleCompiledModule* module);
+void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
 
 // FbleGenerateCExport --
 //   Generate C code to export the code for a compiled module.
@@ -154,13 +150,9 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
 //   fout - the output stream to write the C code to.
 //   module - the module to generate code for.
 //
-// Results:
-//   true on success, false on error.
-//
 // Side effects:
 // * Generates arm64 code for the given code.
-// * An error message is printed to stderr in case of error.
-bool FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
+void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
 
 // FbleGenerateAArch64Export --
 //   Generate aarch64 code to export the code for a compiled module.
