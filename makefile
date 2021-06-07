@@ -38,3 +38,7 @@ bench:
 benchprof:
 	./out/bin/fble-stdio --profile bench.prof prgms/Fble/Bench.fble prgms
 
+.PHONY: asm
+asm:
+	./out/bin/fble-compile -s /Md5% prgms > foo.s
+	as -o foo.o foo.s

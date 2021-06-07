@@ -210,7 +210,7 @@ static void FrameSetBorrowed(FILE* fout, const char* indent, FbleLocalIndex inde
   fprintf(fout, "%sthread->stack->locals[%zi] = %s;\n", indent, index, value);
 }
 
-// FrameSetBorrowed --
+// FrameSetConsumed --
 //   Emit code to set a consumed value in the stack frame.
 //
 // Inputs:

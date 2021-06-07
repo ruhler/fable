@@ -1,7 +1,9 @@
 * Implement generate_aarch64
- - Generate assembly for deps, depc, and call into FbleLoadCompiled.
  - Implement abort and run functions in aarch64.
+ - Switch to using assembly in build.ninja.
+ - Debug debug debug.
  - Move prototype for FbleLoadCompiled to a better place?
+ - Retire generate_c?
  
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense.
