@@ -43,6 +43,7 @@ static VarId StaticModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
 static VarId StaticExecutableModule(FILE* fout, VarId* var_id, FbleCompiledModule* module);
 
 static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bool abort);
+static void EmitCode(FILE* fout, FbleCode* code, bool abort);
 static int CIdentifierForLocSize(const char* str);
 static void CIdentifierForLocStr(const char* str, char* dest);
 static FbleString* CIdentifierForPath(FbleModulePath* path);
@@ -432,11 +433,11 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
     for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
       switch (op->tag) {
         case FBLE_PROFILE_ENTER_OP:
-          fprintf(fout, "      ProfileEnterBlock(profile, thread->stack->func->profile_base_id + %zi);\n", op->block);
+          fprintf(fout, "      ProfileEnterBlock(profile, stack->func->profile_base_id + %zi);\n", op->block);
           break;
 
         case FBLE_PROFILE_REPLACE_OP:
-          fprintf(fout, "      ProfileReplaceBlock(profile, thread->stack->func->profile_base_id + %zi);\n", op->block);
+          fprintf(fout, "      ProfileReplaceBlock(profile, stack->func->profile_base_id + %zi);\n", op->block);
           break;
 
         case FBLE_PROFILE_EXIT_OP:
@@ -573,7 +574,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
         fprintf(fout, "        .abort = &_Abort_%p,\n", (void*)func_instr->code);
         fprintf(fout, "        .on_free = NULL,\n");
         fprintf(fout, "      };\n");
-        fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, &executable, thread->stack->func->profile_base_id);\n");
+        fprintf(fout, "      FbleFuncValue* v = FbleNewFuncValue(heap, &executable, stack->func->profile_base_id);\n");
         for (size_t i = 0; i < staticc; ++i) {
           fprintf(fout, "      v->statics[%zi] = ", i); FrameGet(fout, func_instr->scope.xs[i]); fprintf(fout, ";\n");
           fprintf(fout, "      FbleValueAddRef(heap, &v->_base, v->statics[%zi]);\n", i);
@@ -640,7 +641,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
           }
 
           if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
-            fprintf(fout, "      FbleReleaseValue(heap, thread->stack->locals[%zi]);\n", call_instr->func.index);
+            fprintf(fout, "      FbleReleaseValue(heap, stack->locals[%zi]);\n", call_instr->func.index);
           }
 
           fprintf(fout, "      FbleThreadTailCall(heap, func, args, thread);\n");
@@ -648,9 +649,9 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
           return;
         }
 
-        fprintf(fout, "      thread->stack->pc = %zi;\n", pc+1);
+        fprintf(fout, "      stack->pc = %zi;\n", pc+1);
 
-        fprintf(fout, "      FbleValue** result = thread->stack->locals + %zi;\n", call_instr->dest);
+        fprintf(fout, "      FbleValue** result = stack->locals + %zi;\n", call_instr->dest);
         fprintf(fout, "      FbleThreadCall(heap, result, func, args, thread);\n");
         fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
       }
@@ -668,8 +669,8 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
         fprintf(fout, "      link->head = NULL;\n");
         fprintf(fout, "      link->tail = NULL;\n");
 
-        fprintf(fout, "      FbleValue* get = FbleNewGetValue(heap, &link->_base, thread->stack->func->profile_base_id + %zi);\n", link_instr->profile);
-        fprintf(fout, "      FbleValue* put = FbleNewPutValue(heap, &link->_base, thread->stack->func->profile_base_id + %zi);\n", link_instr->profile + 1);
+        fprintf(fout, "      FbleValue* get = FbleNewGetValue(heap, &link->_base, stack->func->profile_base_id + %zi);\n", link_instr->profile);
+        fprintf(fout, "      FbleValue* put = FbleNewPutValue(heap, &link->_base, stack->func->profile_base_id + %zi);\n", link_instr->profile + 1);
         fprintf(fout, "      FbleReleaseValue(heap, &link->_base);\n");
 
         FrameSetConsumed(fout, "      ", link_instr->get, "get");
@@ -695,16 +696,16 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
           fprintf(fout, "      assert(arg->_base.tag == FBLE_PROC_VALUE);\n");
 
           fprintf(fout, "      child = FbleAlloc(FbleThread);\n");
-          fprintf(fout, "      child->stack = thread->stack;\n");
+          fprintf(fout, "      child->stack = stack;\n");
           fprintf(fout, "      child->profile = profile == NULL ? NULL : FbleForkProfileThread(profile);\n");
           fprintf(fout, "      child->stack->joins++;\n");
           fprintf(fout, "      FbleVectorAppend(*threads, child);\n");
 
-          fprintf(fout, "      result = thread->stack->locals + %zi;\n", fork_instr->dests.xs[i]);
+          fprintf(fout, "      result = stack->locals + %zi;\n", fork_instr->dests.xs[i]);
           fprintf(fout, "      FbleThreadCall(heap, result, arg, NULL, child);\n");
         }
 
-        fprintf(fout, "      thread->stack->pc = %zi;\n", pc+1);
+        fprintf(fout, "      stack->pc = %zi;\n", pc+1);
         fprintf(fout, "      return FBLE_EXEC_YIELDED;\n");
       }
       return;
@@ -738,7 +739,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
     case FBLE_REF_DEF_INSTR: {
       if (!abort) {
         FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
-        fprintf(fout, "      FbleRefValue* rv = (FbleRefValue*)thread->stack->locals[%zi];\n", ref_instr->ref);
+        fprintf(fout, "      FbleRefValue* rv = (FbleRefValue*)stack->locals[%zi];\n", ref_instr->ref);
         fprintf(fout, "      assert(rv->_base.tag == FBLE_REF_VALUE);\n");
         fprintf(fout, "      assert(rv->value == NULL);\n");
 
@@ -776,7 +777,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
       } else {
         switch (return_instr->result.section) {
           case FBLE_STATICS_FRAME_SECTION: {
-            fprintf(fout, "      FbleValue* result = thread->stack->func->statics[%zi];\n", return_instr->result.index);
+            fprintf(fout, "      FbleValue* result = stack->func->statics[%zi];\n", return_instr->result.index);
             fprintf(fout, "      FbleRetainValue(heap, result);\n");
             fprintf(fout, "      FbleThreadReturn(heap, thread, result);\n");
             fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
@@ -784,7 +785,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
           }
 
           case FBLE_LOCALS_FRAME_SECTION: {
-            fprintf(fout, "      FbleValue* result = thread->stack->locals[%zi];\n", return_instr->result.index);
+            fprintf(fout, "      FbleValue* result = stack->locals[%zi];\n", return_instr->result.index);
             fprintf(fout, "      FbleThreadReturn(heap, thread, result);\n");
             fprintf(fout, "      return FBLE_EXEC_FINISHED;\n");
             break;
@@ -808,14 +809,45 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
 
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-      if (abort) {
-        fprintf(fout, "      FbleReleaseValue(heap, stack->locals[%zi]);\n", release_instr->target);
-      } else {
-        fprintf(fout, "      FbleReleaseValue(heap, thread->stack->locals[%zi]);\n", release_instr->target);
-      }
+      fprintf(fout, "      FbleReleaseValue(heap, stack->locals[%zi]);\n", release_instr->target);
       return;
     }
   }
+}
+
+// EmitCode --
+//   Generate code to execute an FbleCode block.
+//
+// Inputs:
+//   fout - the output stream to write the code to.
+//   code - the block of code to generate a C function for.
+//   abort - if true, emit code to abort the block instead of execute it.
+//
+// Side effects:
+// * Outputs code to fout with two space indent.
+static void EmitCode(FILE* fout, FbleCode* code, bool abort)
+{
+  if (abort) {
+    fprintf(fout, "static void _Abort_%p(FbleValueHeap* heap, FbleStack* stack)\n", (void*)code);
+    fprintf(fout, "{\n");
+  } else {
+    fprintf(fout, "static FbleExecStatus _Run_%p(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)\n", (void*)code);
+    fprintf(fout, "{\n");
+    fprintf(fout, "  FbleProfileThread* profile = thread->profile;\n");
+    fprintf(fout, "  FbleStack* stack = thread->stack;\n");
+  }
+
+  VarId var_id = 0;
+
+  fprintf(fout, "  switch (stack->pc) {\n");
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    fprintf(fout, "    case %zi:  _pc_%zi: {\n", i, i);
+    EmitInstr(fout, &var_id, i, code->instrs.xs[i], abort);
+    fprintf(fout, "    }\n");
+  }
+  fprintf(fout, "  }\n");
+  fprintf(fout, "  Unreachable();\n");
+  fprintf(fout, "}\n\n");
 }
 
 // CIdentifierForLocSize --
@@ -1046,55 +1078,8 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   for (int i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
-
-    // RunFunction
-    fprintf(fout, "static FbleExecStatus _Run_%p(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)\n", (void*)blocks.xs[i]);
-    fprintf(fout, "{\n");
-    VarId var_id = 0;
-
-    fprintf(fout, "  register FbleProfileThread* profile = thread->profile;\n");
-
-    // Output a jump table to jump into the right place in the function to
-    // resume. We'll only ever resume into a place that's after a normal call
-    // or fork instruction, so that's all we need to check for.
-    fprintf(fout, "  switch (thread->stack->pc) {\n");
-    fprintf(fout, "    case 0: goto _pc_0;\n");
-    for (size_t i = 0; i < code->instrs.size; ++i) {
-      FbleInstr* instr = code->instrs.xs[i];
-      if (instr->tag == FBLE_CALL_INSTR) {
-        FbleCallInstr* call = (FbleCallInstr*)instr;
-        if (!call->exit) {
-          fprintf(fout, "    case %zi: goto _pc_%zi;\n", i+1, i+1);
-        }
-      } else if (instr->tag == FBLE_FORK_INSTR) {
-        fprintf(fout, "    case %zi: goto _pc_%zi;\n", i+1, i+1);
-      }
-    }
-    fprintf(fout, "  };\n");
-
-    // Output code to execute the individual instructions.
-    for (size_t i = 0; i < code->instrs.size; ++i) {
-      fprintf(fout, "    _pc_%zi: {\n", i);
-      EmitInstr(fout, &var_id, i, code->instrs.xs[i], false);
-      fprintf(fout, "    }\n");
-    }
-    fprintf(fout, "  return Unreachable();\n");
-    fprintf(fout, "}\n\n");
-
-    // AbortFunction
-    fprintf(fout, "static void _Abort_%p(FbleValueHeap* heap, FbleStack* stack)\n", (void*)blocks.xs[i]);
-    fprintf(fout, "{\n");
-    var_id = 0;
-
-    fprintf(fout, "  switch (stack->pc) {\n");
-    for (size_t i = 0; i < code->instrs.size; ++i) {
-      fprintf(fout, "    case %zi:  _pc_%zi: {\n", i, i);
-      EmitInstr(fout, &var_id, i, code->instrs.xs[i], true);
-      fprintf(fout, "    }\n");
-    }
-    fprintf(fout, "  }\n");
-    fprintf(fout, "  Unreachable();\n");
-    fprintf(fout, "}\n\n");
+    EmitCode(fout, code, false); // RunFunction
+    EmitCode(fout, code, true); // AbortFunction
   }
   FbleFree(blocks.xs);
 
