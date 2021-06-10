@@ -1,4 +1,5 @@
 * Implement generate_aarch64
+ - Allow for different executable_pc and code_pc in generated c code?
  - Implement abort and run functions in aarch64.
  - Switch to using assembly in build.ninja.
  - Debug debug debug.

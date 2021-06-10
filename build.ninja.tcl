@@ -418,13 +418,14 @@ foreach dir [dirs prgms ""] {
       "$::bin/fble-deps $::prgms/$x.d prgms $mpath > $::prgms/$x.d" \
       "depfile = $::prgms/$x.d"
 
-    # Generate a .c file.
-    build $::prgms/$x.c \
-      "$::bin/fble-compile $::prgms/$x.d" \
-      "$::bin/fble-compile $mpath prgms > $::prgms/$x.c"
+    # Generate a .o file via .s
+    #build $::prgms/$x.s "$::bin/fble-compile $::prgms/$x.d" "$::bin/fble-compile -s $mpath prgms > $::prgms/$x.s"
+    #obj $::prgms/$x.o $::prgms/$x.s ""
 
-    # Generate a .o file.
+    # Generate a .o file via .c
+    build $::prgms/$x.c "$::bin/fble-compile $::prgms/$x.d" "$::bin/fble-compile $mpath prgms > $::prgms/$x.c"
     tobj $::prgms/$x.o $::prgms/$x.c "-I fble/include -I fble/src"
+
     lappend ::fble_prgms_objs $::prgms/$x.o
   }
 }
