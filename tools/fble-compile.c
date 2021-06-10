@@ -28,15 +28,15 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-native [-s] MODULE_PATH [--export NAME] [SEARCH_PATH]\n"
+      "Usage: fble-native [--export NAME] [-s] MODULE_PATH [SEARCH_PATH]\n"
       "Compile an fble module to C code.\n"
       "  MODULE_PATH - the fble module path associated with FILE. For example: /Foo/Bar%\n"
       "  SEARCH_PATH - the directory to search for .fble files in.\n"
       "Options:\n"
-      "  -s\n"
-      "    Generate aarch64 assembly instead of c code."
       "  --export NAME\n"
       "    Generates a function with the given NAME to export the module\n"
+      "  -s\n"
+      "    Generate aarch64 assembly instead of c code."
       "At least one of [--export NAME] or [SEARCH_PATH] must be provided.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
@@ -63,6 +63,13 @@ int main(int argc, char* argv[])
     return EX_SUCCESS;
   }
 
+  const char* export = NULL;
+  if (argc > 1 && strcmp("--export", argv[0]) == 0) {
+    export = argv[1];
+    argc -= 2;
+    argv += 2;
+  }
+
   bool aarch64 = false;
   if (argc > 0 && strcmp("-s", *argv) == 0) {
     aarch64 = true;
@@ -78,13 +85,6 @@ int main(int argc, char* argv[])
   const char* mpath_string = *argv;
   argc--;
   argv++;
-
-  const char* export = NULL;
-  if (argc > 1 && strcmp("--export", argv[0]) == 0) {
-    export = argv[1];
-    argc -= 2;
-    argv += 2;
-  }
 
   const char* search_path = argc < 1 ? NULL : argv[0];
   if (export == NULL && search_path == NULL) {

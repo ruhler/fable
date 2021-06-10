@@ -96,6 +96,25 @@ proc tobj { obj src iflags args } {
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
 
+# Compile a .fble file to .o.
+#
+# Inputs:
+#   obj - the name of the .o file to generate.
+#   compile - the name of the fble-compile executable.
+#   module_path - the module path to compile.
+#   search_path - the search path.
+#   export - "" or "--export ..." arg to pass to compile function.
+#   args - additional dependencies, typically including the .fble file.
+proc fbleobj { obj compile module_path search_path export args } {
+  #set s [string map {.o .s} $obj]
+  #build $s "$compile $args" "$compile $export -s $module_path $search_path > $s"
+  #obj $obj $s ""
+
+  set c [string map {.o .c} $obj]
+  build $c "$compile $args" "$compile $export $module_path $search_path > $c"
+  tobj $obj $c "-I fble/include -I fble/src"
+}
+
 # lib --
 #   Build a library.
 #
@@ -286,19 +305,13 @@ foreach dir [dirs langs/fble ""] {
         set path [file rootname $x]%
         set fble $::spectestdir$x
 
-        set c [string map {.fble .c} $fble]
-        build $c "$::bin/fble-compile.cov $::spectestdir/test.fble" \
-          "$::bin/fble-compile.cov $path $::spectestdir > $c"
-
         set o [string map {.fble .o} $fble]
         lappend objs $o
-        tobj $o $c "-I fble/include -I fble/src" $::spectestdir/test.fble
+
+        fbleobj $o $::bin/fble-compile.cov $path $::spectestdir "" $::spectestdir/test.fble
       }
 
-      build $::spectestdir/test.c \
-        "$::bin/fble-compile.cov $::spectestdir/test.fble" \
-        "$::bin/fble-compile.cov /test% --export FbleCompiledMain $::spectestdir > $::spectestdir/test.c"
-      tobj $::spectestdir/test.o $::spectestdir/test.c "-I fble/include -I fble/src"
+      fbleobj $::spectestdir/test.o $::bin/fble-compile.cov /test% $::spectestdir "--export FbleCompiledMain" $::spectestdir/test.fble
       lappend objs $::spectestdir/test.o
 
       lib $::spectestdir/libtest.a $objs
@@ -418,14 +431,7 @@ foreach dir [dirs prgms ""] {
       "$::bin/fble-deps $::prgms/$x.d prgms $mpath > $::prgms/$x.d" \
       "depfile = $::prgms/$x.d"
 
-    # Generate a .o file via .s
-    #build $::prgms/$x.s "$::bin/fble-compile $::prgms/$x.d" "$::bin/fble-compile -s $mpath prgms > $::prgms/$x.s"
-    #obj $::prgms/$x.o $::prgms/$x.s ""
-
-    # Generate a .o file via .c
-    build $::prgms/$x.c "$::bin/fble-compile $::prgms/$x.d" "$::bin/fble-compile $mpath prgms > $::prgms/$x.c"
-    tobj $::prgms/$x.o $::prgms/$x.c "-I fble/include -I fble/src"
-
+    fbleobj $::prgms/$x.o $::bin/fble-compile $mpath prgms "" $::prgms/$x.d
     lappend ::fble_prgms_objs $::prgms/$x.o
   }
 }
@@ -457,7 +463,7 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
 
 # /Stdio/Test% compilation test
 build $::src/fble-stdio-test.s $::bin/fble-compile \
-  "$::bin/fble-compile -s /Stdio/Test% --export FbleCompiledMain > $::src/fble-stdio-test.s"
+  "$::bin/fble-compile --export FbleCompiledMain -s /Stdio/Test% > $::src/fble-stdio-test.s"
 obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.s ""
 bin $::bin/fble-stdio-test \
   "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
@@ -467,7 +473,7 @@ test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
 
 # /Fble/Tests% compilation test
 build $::src/fble-tests.s $::bin/fble-compile \
-  "$::bin/fble-compile -s /Fble/Tests% --export FbleCompiledMain > $::src/fble-tests.s"
+  "$::bin/fble-compile --export FbleCompiledMain -s /Fble/Tests% > $::src/fble-tests.s"
 obj $::obj/fble-tests.o $::src/fble-tests.s ""
 bin $::bin/fble-tests \
   "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o" \
@@ -476,11 +482,9 @@ test $::test/fble-compiled-tests.tr $::bin/fble-tests \
   "$::bin/fble-tests" "pool = console"
 
 # fble-compiled-profiles-test
-build $::src/fble-compiled-profiles-test-fble-main.c \
-  "$::bin/fble-compile prgms/Fble/ProfilesTest.fble" \
-  "$::bin/fble-compile /Fble/ProfilesTest% --export FbleCompiledMain prgms > $::src/fble-compiled-profiles-test-fble-main.c"
-tobj $::obj/fble-compiled-profiles-test-fble-main.o $::src/fble-compiled-profiles-test-fble-main.c \
-  "-I fble/include -I fble/src"
+fbleobj $::obj/fble-compiled-profiles-test-fble-main.o $::bin/fble-compile \
+  /Fble/ProfilesTest% prgms "--export FbleCompiledMain" \
+  prgms/Fble/ProfilesTest.fble
 bin $::bin/fble-compiled-profiles-test \
   "$::obj/fble-compiled-profiles-test.o $::obj/fble-compiled-profiles-test-fble-main.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
@@ -490,7 +494,7 @@ test $::test/fble-compiled-profiles-test.tr \
 
 # /Fble/Bench% compiled binary
 build $::src/fble-bench.s $::bin/fble-compile \
-  "$::bin/fble-compile -s /Fble/Bench% --export FbleCompiledMain > $::src/fble-bench.s"
+  "$::bin/fble-compile --export FbleCompiledMain -s /Fble/Bench% > $::src/fble-bench.s"
 obj $::obj/fble-bench.o $::src/fble-bench.s ""
 bin $::bin/fble-bench \
   "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
