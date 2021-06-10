@@ -15,11 +15,12 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// VarId --
-//   Type representing a C variable name as an integer.
+// LabelId --
+//   Type representing a name as an integer.
 //
-// The number is turned into a C variable name using printf format "v%x".
-typedef unsigned int VarId;
+// The number is turned into a label using printf format LABEL.
+typedef unsigned int LabelId;
+#define LABEL "L.%x"
 
 typedef struct {
   size_t size;
@@ -30,10 +31,10 @@ static void AddLoc(const char* source, LocV* locs);
 static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code);
 
 static void StringLit(FILE* fout, const char* string);
-static VarId StaticString(FILE* fout, VarId* var_id, const char* string);
-static VarId StaticNames(FILE* fout, VarId* var_id, FbleNameV names);
-static VarId StaticModulePath(FILE* fout, VarId* var_id, FbleModulePath* path);
-static VarId StaticExecutableModule(FILE* fout, VarId* var_id, FbleCompiledModule* module);
+static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string);
+static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
+static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
+static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
 static FbleString* CIdentifierForPath(FbleModulePath* path);
 
@@ -147,21 +148,21 @@ static void StringLit(FILE* fout, const char* string)
 //
 // Inputs:
 //   fout - the file to write to
-//   var_id - pointer to next available variable id for use.
+//   label_id - pointer to next available label id for use.
 //   string - the value of the string.
 //
 // Returns:
-//   A variable name of a local, static FbleString.
+//   A label id of a local, static FbleString.
 //
 // Side effects:
-//   Writes code to fout and allocates variable ids out of var_id.
-static VarId StaticString(FILE* fout, VarId* var_id, const char* string)
+//   Writes code to fout and allocates label ids out of label_id.
+static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
 {
-  VarId id = (*var_id)++;
+  LabelId id = (*label_id)++;
 
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");                       // 64 bit alignment
-  fprintf(fout, "v%x:\n", id);
+  fprintf(fout, LABEL ":\n", id);
   fprintf(fout, "  .xword 1\n");                       // .refcount = 1
   fprintf(fout, "  .xword %i\n", FBLE_STRING_MAGIC);   // .magic
   fprintf(fout, "  .string ");                         // .str
@@ -175,32 +176,32 @@ static VarId StaticString(FILE* fout, VarId* var_id, const char* string)
 //
 // Inputs:
 //   fout - the file to write to
-//   var_id - pointer to next available variable id for use.
+//   label_id - pointer to next available label id for use.
 //   names - the value of the names.
 //
 // Returns:
-//   A variable id of a local, static FbleNameV.xs.
+//   A label id of a local, static FbleNameV.xs.
 //
 // Side effects:
-//   Writes code to fout and allocates variable ids out of var_id.
-static VarId StaticNames(FILE* fout, VarId* var_id, FbleNameV names)
+//   Writes code to fout and allocates label ids out of label_id.
+static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
 {
-  VarId str_ids[names.size];
-  VarId src_ids[names.size];
+  LabelId str_ids[names.size];
+  LabelId src_ids[names.size];
   for (size_t i = 0; i < names.size; ++i) {
-    str_ids[i] = StaticString(fout, var_id, names.xs[i].name->str);
-    src_ids[i] = StaticString(fout, var_id, names.xs[i].loc.source->str);
+    str_ids[i] = StaticString(fout, label_id, names.xs[i].name->str);
+    src_ids[i] = StaticString(fout, label_id, names.xs[i].loc.source->str);
   }
 
-  VarId id = (*var_id)++;
+  LabelId id = (*label_id)++;
   fprintf(fout, "  .data\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, "v%x:\n", id);
+  fprintf(fout, LABEL ":\n", id);
   for (size_t i = 0; i < names.size; ++i) {
-    fprintf(fout, "  .xword v%x\n", str_ids[i]);          // name
+    fprintf(fout, "  .xword " LABEL "\n", str_ids[i]);    // name
     fprintf(fout, "  .word %i\n", names.xs[i].space);     // space
     fprintf(fout, "  .zero 4\n");                         // padding
-    fprintf(fout, "  .xword v%x\n", src_ids[i]);          // loc.src
+    fprintf(fout, "  .xword " LABEL "\n", src_ids[i]);    // loc.src
     fprintf(fout, "  .word %i\n", names.xs[i].loc.line);  // loc.line
     fprintf(fout, "  .word %i\n", names.xs[i].loc.col);   // loc.col
   }
@@ -212,31 +213,31 @@ static VarId StaticNames(FILE* fout, VarId* var_id, FbleNameV names)
 //
 // Inputs:
 //   fout - the output stream to write the code to.
-//   var_id - pointer to next available variable id for use.
+//   label_id - pointer to next available label id for use.
 //   path - the FbleModulePath to generate code for.
 //
 // Results:
-//   The variable id of a local, static FbleModulePath.
+//   The label id of a local, static FbleModulePath.
 //
 // Side effects:
 // * Outputs code to fout.
-// * Increments var_id based on the number of internal variables used.
-static VarId StaticModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
+// * Increments label_id based on the number of internal labels used.
+static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path)
 {
-  VarId src_id = StaticString(fout, var_id, path->loc.source->str);
-  VarId names_id = StaticNames(fout, var_id, path->path);
-  VarId path_id = (*var_id)++;
+  LabelId src_id = StaticString(fout, label_id, path->loc.source->str);
+  LabelId names_id = StaticNames(fout, label_id, path->path);
+  LabelId path_id = (*label_id)++;
 
   fprintf(fout, "  .data\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, "v%x:\n", path_id);
+  fprintf(fout, LABEL ":\n", path_id);
   fprintf(fout, "  .xword 1\n");                  // .refcount
   fprintf(fout, "  .xword 2004903300\n");         // .magic
-  fprintf(fout, "  .xword v%x\n", src_id);        // path->loc.src
+  fprintf(fout, "  .xword " LABEL "\n", src_id);        // path->loc.src
   fprintf(fout, "  .word %i\n", path->loc.line);
   fprintf(fout, "  .word %i\n", path->loc.col);
   fprintf(fout, "  .xword %zi\n", path->path.size);
-  fprintf(fout, "  .xword v%x\n", names_id);
+  fprintf(fout, "  .xword " LABEL "\n", names_id);
   return path_id;
 }
 
@@ -245,38 +246,38 @@ static VarId StaticModulePath(FILE* fout, VarId* var_id, FbleModulePath* path)
 //
 // Inputs:
 //   fout - the output stream to write the code to.
-//   var_id - pointer to next available variable id for use.
+//   label_id - pointer to next available label id for use.
 //   module - the FbleCompiledModule to generate code for.
 //
 // Results:
-//   The variable id of a local, static FbleExecutableModule.
+//   The label id of a local, static FbleExecutableModule.
 //
 // Side effects:
 // * Outputs code to fout.
-// * Increments var_id based on the number of internal variables used.
-static VarId StaticExecutableModule(FILE* fout, VarId* var_id, FbleCompiledModule* module)
+// * Increments label_id based on the number of internal labels used.
+static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module)
 {
-  VarId path_id = StaticModulePath(fout, var_id, module->path);
+  LabelId path_id = StaticModulePath(fout, label_id, module->path);
 
-  VarId dep_ids[module->deps.size];
+  LabelId dep_ids[module->deps.size];
   for (size_t i = 0; i < module->deps.size; ++i) {
-    dep_ids[i] = StaticModulePath(fout, var_id, module->deps.xs[i]);
+    dep_ids[i] = StaticModulePath(fout, label_id, module->deps.xs[i]);
   }
 
-  VarId deps_xs_id = (*var_id)++;
+  LabelId deps_xs_id = (*label_id)++;
   fprintf(fout, "  .section .data.rel.local\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, "v%x:\n", deps_xs_id);
+  fprintf(fout, LABEL ":\n", deps_xs_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
-    fprintf(fout, "  .xword v%x\n", dep_ids[i]);
+    fprintf(fout, "  .xword " LABEL "\n", dep_ids[i]);
   }
 
-  VarId profile_blocks_xs_id = StaticNames(fout, var_id, module->code->_base.profile_blocks);
+  LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->code->_base.profile_blocks);
 
-  VarId executable_id = (*var_id)++;
+  LabelId executable_id = (*label_id)++;
   fprintf(fout, "  .section .data.rel,\"aw\"\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, "v%x:\n", executable_id);
+  fprintf(fout, LABEL ":\n", executable_id);
   fprintf(fout, "  .xword 1\n");                          // .refcount
   fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
   fprintf(fout, "  .xword %zi\n", module->code->_base.args);
@@ -284,21 +285,21 @@ static VarId StaticExecutableModule(FILE* fout, VarId* var_id, FbleCompiledModul
   fprintf(fout, "  .xword %zi\n", module->code->_base.locals);
   fprintf(fout, "  .xword %zi\n", module->code->_base.profile);
   fprintf(fout, "  .xword %zi\n", module->code->_base.profile_blocks.size);
-  fprintf(fout, "  .xword v%x\n", profile_blocks_xs_id);
+  fprintf(fout, "  .xword " LABEL "\n", profile_blocks_xs_id);
   fprintf(fout, "  .xword _Run_%p\n", (void*)module->code);
   fprintf(fout, "  .xword _Abort_%p\n", (void*)module->code);
   fprintf(fout, "  .xword FbleExecutableNothingOnFree\n");
 
-  VarId module_id = (*var_id)++;
+  LabelId module_id = (*label_id)++;
   fprintf(fout, "  .section .data.rel.local\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, "v%x:\n", module_id);
+  fprintf(fout, LABEL ":\n", module_id);
   fprintf(fout, "  .xword 1\n");                                  // .refcount
   fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MODULE_MAGIC);   // .magic
-  fprintf(fout, "  .xword v%x\n", path_id);                       // .path
+  fprintf(fout, "  .xword " LABEL "\n", path_id);                       // .path
   fprintf(fout, "  .xword %zi\n", module->deps.size);
-  fprintf(fout, "  .xword v%x\n", deps_xs_id);
-  fprintf(fout, "  .xword v%x\n", executable_id);
+  fprintf(fout, "  .xword " LABEL "\n", deps_xs_id);
+  fprintf(fout, "  .xword " LABEL "\n", executable_id);
   return module_id;
 }
 
@@ -389,13 +390,13 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   FbleFree(blocks.xs);
   FbleFree(locs.xs);
 
-  VarId var_id = 0;
-  VarId module_id = StaticExecutableModule(fout, &var_id, module);
-  VarId deps_id = var_id++;
+  LabelId label_id = 0;
+  LabelId module_id = StaticExecutableModule(fout, &label_id, module);
+  LabelId deps_id = label_id++;
 
   fprintf(fout, "  .section .data.rel,\"aw\"\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, "v%x:\n", deps_id);
+  fprintf(fout, LABEL ":\n", deps_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleString* dep_name = CIdentifierForPath(module->deps.xs[i]);
     fprintf(fout, "  .xword %s\n", dep_name->str);
@@ -407,9 +408,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .align 2\n");
   fprintf(fout, "  .global %s\n", func_name->str);
   fprintf(fout, "%s:\n", func_name->str);
-  fprintf(fout, "  mov x1, v%x\n", module_id);
+  fprintf(fout, "  mov x1, " LABEL "\n", module_id);
   fprintf(fout, "  mov x2, %zi\n", module->deps.size);
-  fprintf(fout, "  mov x3, v%x\n", deps_id);
+  fprintf(fout, "  mov x3, " LABEL "\n", deps_id);
   fprintf(fout, "  b FbleLoadFromCompiled\n");
   FbleFreeString(func_name);
 }
