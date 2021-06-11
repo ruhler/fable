@@ -74,28 +74,6 @@ proc obj_cov { obj src iflags args } {
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
 
-# tobj --
-#   Builds a .o file using tcc.
-#
-# Used for compiling large generated .c files, where tcc has much nicer memory
-# requirements than gcc does. 
-#
-# Inputs:
-#   obj - the .o file to build (include $::obj directory).
-#   src - the .c file to build the .o file from.
-#   iflags - include flags, e.g. "-I foo".
-#   args - optional additional dependencies.
-proc tobj { obj src iflags args } {
-  #set cflags "-std=c99 -pedantic -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage -pg"
-  #set cflags "-std=c99 -pedantic -gdwarf-3 -ggdb"
-  #set cmd "gcc -MD -MF $obj.d $cflags $iflags -c -o $obj $src"
-  #set cflags "-pedantic -g -I /usr/include"
-  #set cmd "clang -MD -MF $obj.d $cflags $iflags -c -o $obj $src"
-  set cflags "-pedantic -Wall -Werror -g -I /usr/include"
-  set cmd "tcc -MD -MF $obj.d $cflags $iflags -c -o $obj $src"
-  build $obj "$src $args" $cmd "depfile = $obj.d"
-}
-
 # Compile a .fble file to .o.
 #
 # Inputs:
@@ -112,7 +90,12 @@ proc fbleobj { obj compile module_path search_path export args } {
 
   set c [string map {.o .c} $obj]
   build $c "$compile $args" "$compile $export $module_path $search_path > $c"
-  tobj $obj $c "-I fble/include -I fble/src"
+
+  # Compile the c file using tcc, because it requires signifantly less memory
+  # than gcc or clang.
+  set cflags "-pedantic -Wall -Werror -g -I /usr/include -I fble/include -I fble/src"
+  set cmd "tcc -MD -MF $obj.d $cflags -c -o $obj $c"
+  build $obj "$c $args" $cmd "depfile = $obj.d"
 }
 
 # lib --
