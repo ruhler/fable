@@ -317,3 +317,67 @@ From reading the linker manual:
   convert input sections to different output sections. Maybe the output
   sections are what matter for relocation? Yeah, looks like that's the case.
 
+---
+
+After setting up build support for using assembly, we are getting segfaults in
+the tests. That's not really what I expect at this point. At this point I
+expect aborts when the _Run_ function is called. What's up?
+
+FbleLoadFromCompiled is being passed a module '0'. Why?
+
+Looks like some issue with the linker.
+
+Before linking:
+
+_Fble_2f_test_25_:
+  mov x1, L.24
+  mov x2, 0
+  mov x3, L.25
+  b FbleLoadFromCompiled
+
+After linking:
+
+0000000000400f94 <_Fble_2f_test_25_>:
+  400f94: d2800001  mov x1, #0x0                    // #0 (module)
+  400f98: d2800002  mov x2, #0x0                    // #0 (depc)
+  400f9c: d2800b03  mov x3, #0x58                   // #88 (deps)
+  400fa0: 14001768  b 406d40 <FbleLoadFromCompiled>
+
+It looks like the references to the labels in the assembly are being turned
+directly into constants relative to the start of the label's section, rather
+than being tied to where the section actually ends up getting loaded to. Why?
+
+Let's compare to some custom C code that references a static value.
+
+Instead of using something like mov x0, X, the C code uses:
+
+ adrp  x0, X
+ add x0, x0, :lo12:X
+
+What does this mean?
+
+That gets turned into, in the .o file:
+
+ adrp x0, 0
+ add x0, x0, #0
+
+And in the executable file:
+
+ 73c:   b0000080        adrp    x0, 11000 <__cxa_finalize@GLIBC_2.17>
+ 740:   9100c000        add     x0, x0, #0x30
+
+Reading the ARM manual suggests that:
+
+ adrp  x0, X
+ add x0, x0, :lo12:X
+
+adrp means set x0 to the value of (X << 12) relative to the current pc.
+Presumably :lo12:X gives the low 12 bits of X. I'm not sure I understand. I
+have to assume the value for 'X' in the adrp does not include the bottom 12
+bits. Then this would make sense.
+
+I think I can just use adr. Let's see if that makes the assembler/linker any
+happier.
+
+Switching to adr gets us to our expected abort. And 'objdump -r -D' gives
+better insight as to how this information is tracked.

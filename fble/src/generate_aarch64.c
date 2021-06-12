@@ -408,9 +408,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .align 2\n");
   fprintf(fout, "  .global %s\n", func_name->str);
   fprintf(fout, "%s:\n", func_name->str);
-  fprintf(fout, "  mov x1, " LABEL "\n", module_id);
+  fprintf(fout, "  adr x1, " LABEL "\n", module_id);
   fprintf(fout, "  mov x2, %zi\n", module->deps.size);
-  fprintf(fout, "  mov x3, " LABEL "\n", deps_id);
+  fprintf(fout, "  adr x3, " LABEL "\n", deps_id);
   fprintf(fout, "  b FbleLoadFromCompiled\n");
   FbleFreeString(func_name);
 }
