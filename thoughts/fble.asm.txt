@@ -421,3 +421,5 @@ That looks pretty easy. What if I update the existing code to use this instead
 of direct tail calls to functions, so that we get a better stack frame when
 debugging? Yeah. That looks great.
 
+Note to self: SP should stay a multiple of 16, not just a multiple of 8,
+otherwise I get bus errors.

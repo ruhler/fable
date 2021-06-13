@@ -315,13 +315,45 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 // * Outputs code to fout with two space indent.
 static void EmitCode(FILE* fout, FbleCode* code)
 {
+  // Jump table data for jumping to the right fble pc.
+  fprintf(fout, "  .section .data.rel.local\n");
+  fprintf(fout, "  .align 3\n");
+  fprintf(fout, "L._Run_%p.pcs:\n", (void*)code);
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    fprintf(fout, "  .xword L._Run_%p.pc.%zi\n", (void*)code, i);
+  }
+
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
   fprintf(fout, "_Run_%p:\n", (void*)code);
-  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
+
+  // Set up stack and frame pointer.
+  fprintf(fout, "  stp FP, LR, [SP, #-48]!\n");
   fprintf(fout, "  mov FP, SP\n");
-  fprintf(fout, "  bl abort\n");  // TODO: Implement me.
-  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
+
+  // Save args to the stack for later reference.
+  fprintf(fout, "  str x0, [SP, #16]\n"); // heap
+  fprintf(fout, "  str x1, [SP, #24]\n"); // threads
+  fprintf(fout, "  str x2, [SP, #32]\n"); // thread
+  fprintf(fout, "  str x3, [SP, #40]\n"); // io_activity
+
+  // Jump to the fble instruction at thread->stack->pc.
+  fprintf(fout, "  ldr x0, [x2]\n");       // x0 = thread->stack
+  fprintf(fout, "  ldr x0, [x0, #16]\n");  // x0 = (thread->stack)->pc
+  fprintf(fout, "  lsl x0, x0, #3\n");     // x0 = 8 * (thread->stack->pc)
+  fprintf(fout, "  adr x1, L._Run_%p.pcs\n", (void*)code); // x1 = pcs
+  fprintf(fout, "  add x0, x0, x1\n");     // x0 = &pcs[thread->stack->pc]
+  fprintf(fout, "  ldr x0, [x0]\n");       // x0 = pcs[thread->stack->pc]
+  fprintf(fout, "  br x0\n");              // goto pcs[thread->stack->pc]
+
+  // Emit code for each fble instruction
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    fprintf(fout, "L._Run_%p.pc.%zi:\n", (void*)code, i);
+    fprintf(fout, "  bl abort\n");  // TODO: Implement me.
+  }
+
+  // Restore stack and frame pointer and return.
+  fprintf(fout, "  ldp FP, LR, [SP], #48\n");
   fprintf(fout, "  ret\n");
 }
 
