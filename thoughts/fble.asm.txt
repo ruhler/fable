@@ -160,9 +160,8 @@ compiler to assembly and just figure out the rest from there?
 Local variables that would be nice to keep in registers:
 * profile, so we can easily disable profiling.
 * heap
-* thread->stack->locals
-* thread->stack->func->statics?
-* thread?
+* thread->stack->locals - for fast access to local vars
+* thread->stack->func->statics - for fast access to static vars
 
 Perfect. So, use r0-r3 for scratch, r4-r8 for the five values above. We can
 store 'threads' and 'io_activity' on r10, r11 I guess. Or stack if we want
@@ -381,3 +380,44 @@ happier.
 
 Switching to adr gets us to our expected abort. And 'objdump -r -D' gives
 better insight as to how this information is tracked.
+
+---
+
+Keep track of local variables / registers used by the run function:
+* We need to at least keep pointers to heap, threads, thread and io_activity
+  from the run function.
+* These can be saved on the stack. We can use dedicated registers for anything
+  we want faster access to.
+
+So, how do I save some registers to the stack?
+
+FbleInterpreterRunFunction as compiled by gcc starts with:
+
+    1898:       a9ba7bfd        stp     x29, x30, [sp, #-96]!
+    189c:       910003fd        mov     x29, sp
+    18a0:       f90017e0        str     x0, [sp, #40]
+    18a4:       f90013e1        str     x1, [sp, #32]
+    18a8:       f9000fe2        str     x2, [sp, #24]
+    18ac:       f9000be3        str     x3, [sp, #16]
+
+It ends with:
+    1a18:       a8c67bfd        ldp     x29, x30, [sp], #96
+    1a1c:       d65f03c0        ret
+ 
+The meaning of 'stp' is:
+  Store Pair: it stores x29 and x30 to the stack pointer offset by -96.
+
+Where do we update the stack pointer?
+  That's part of the address mode for stp and ldp.
+
+Pre Indexed form: stp rA, rB, [rX, #C]!
+  addr = rX + C
+  rX := addr
+
+So the stp instruction advances the stack pointer by 12 8-byte words and saves
+x29 (FP) and x30 (LR) at the top.
+
+That looks pretty easy. What if I update the existing code to use this instead
+of direct tail calls to functions, so that we get a better stack frame when
+debugging? Yeah. That looks great.
+

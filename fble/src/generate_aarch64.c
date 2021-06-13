@@ -36,6 +36,7 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
+static void EmitCode(FILE* fout, FbleCode* code);
 static FbleString* CIdentifierForPath(FbleModulePath* path);
 
 // AddLoc --
@@ -303,6 +304,27 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   return module_id;
 }
 
+// EmitCode --
+//   Generate code to execute an FbleCode block.
+//
+// Inputs:
+//   fout - the output stream to write the code to.
+//   code - the block of code to generate a C function for.
+//
+// Side effects:
+// * Outputs code to fout with two space indent.
+static void EmitCode(FILE* fout, FbleCode* code)
+{
+  fprintf(fout, "  .text\n");
+  fprintf(fout, "  .align 2\n");
+  fprintf(fout, "_Run_%p:\n", (void*)code);
+  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
+  fprintf(fout, "  mov FP, SP\n");
+  fprintf(fout, "  bl abort\n");  // TODO: Implement me.
+  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
+  fprintf(fout, "  ret\n");
+}
+
 // CIdentifierForPath --
 //   Returns a name suitable for use as a C function identifier to use for the
 //   give module path.
@@ -377,15 +399,16 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
-    fprintf(fout, "  .text\n");
-    fprintf(fout, "  .align 2\n");
-    fprintf(fout, "_Run_%p:\n", (void*)blocks.xs[i]);
-    fprintf(fout, "  b abort\n");  // TODO: Implement me.
+    EmitCode(fout, blocks.xs[i]);
 
     fprintf(fout, "  .text\n");
     fprintf(fout, "  .align 2\n");
     fprintf(fout, "_Abort_%p:\n", (void*)blocks.xs[i]);
-    fprintf(fout, "  b abort\n");  // TODO: Implement me.
+    fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
+    fprintf(fout, "  mov FP, SP\n");
+    fprintf(fout, "  bl abort\n");  // TODO: Implement me.
+    fprintf(fout, "  ldp FP, LR, [SP], #16\n");
+    fprintf(fout, "  ret\n");
   }
   FbleFree(blocks.xs);
   FbleFree(locs.xs);
@@ -408,10 +431,16 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .align 2\n");
   fprintf(fout, "  .global %s\n", func_name->str);
   fprintf(fout, "%s:\n", func_name->str);
+  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
+  fprintf(fout, "  mov FP, SP\n");
+
   fprintf(fout, "  adr x1, " LABEL "\n", module_id);
   fprintf(fout, "  mov x2, %zi\n", module->deps.size);
   fprintf(fout, "  adr x3, " LABEL "\n", deps_id);
-  fprintf(fout, "  b FbleLoadFromCompiled\n");
+  fprintf(fout, "  bl FbleLoadFromCompiled\n");
+
+  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
+  fprintf(fout, "  ret\n");
   FbleFreeString(func_name);
 }
 
@@ -422,8 +451,13 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
   fprintf(fout, "  .align 2\n");
   fprintf(fout, "  .global %s\n", name);
   fprintf(fout, "%s:\n", name);
+  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
+  fprintf(fout, "  mov FP, SP\n");
 
   FbleString* module_name = CIdentifierForPath(path);
-  fprintf(fout, "  b %s\n\n", module_name->str);
+  fprintf(fout, "  bl %s\n\n", module_name->str);
   FbleFreeString(module_name);
+
+  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
+  fprintf(fout, "  ret\n");
 }
