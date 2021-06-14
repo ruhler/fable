@@ -36,6 +36,7 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
+static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
 static FbleString* CIdentifierForPath(FbleModulePath* path);
 
@@ -304,6 +305,53 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   return module_id;
 }
 
+// EmitInstr --
+//   Generate code to execute an instruction.
+//
+// Inputs:
+//   fout - the output stream to write the code to.
+//   pc - the program counter of the instruction.
+//   instr - the instruction to execute.
+//
+// Side effects:
+// * Outputs code to fout.
+static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr)
+{
+#define TODO assert(false && "TODO")
+// #define TODO fprintf(fout, "  bl abort\n"); return
+
+  // TODO: Emit profiling instructions.
+  switch (instr->tag) {
+    case FBLE_STRUCT_VALUE_INSTR: TODO;
+    case FBLE_UNION_VALUE_INSTR: TODO;
+    case FBLE_STRUCT_ACCESS_INSTR: TODO;
+    case FBLE_UNION_ACCESS_INSTR: TODO;
+    case FBLE_UNION_SELECT_INSTR: TODO;
+    case FBLE_JUMP_INSTR: TODO;
+    case FBLE_FUNC_VALUE_INSTR: TODO;
+    case FBLE_CALL_INSTR: TODO;
+    case FBLE_LINK_INSTR: TODO;
+    case FBLE_FORK_INSTR: TODO;
+    case FBLE_COPY_INSTR: TODO;
+    case FBLE_REF_VALUE_INSTR: TODO;
+    case FBLE_REF_DEF_INSTR: TODO;
+    case FBLE_RETURN_INSTR: TODO;
+
+    case FBLE_TYPE_INSTR: {
+      FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, #%zi\n", sizeof(FbleTypeValue));
+      fprintf(fout, "  bl FbleNewHeapObject\n");
+      fprintf(fout, "  mov w1, #%i\n", FBLE_TYPE_VALUE);
+      fprintf(fout, "  str w1, [x0]\n"); // v->_base.tag = FBLE_TYPE_VALUE.
+      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", type_instr->dest);
+      return;
+    }
+
+    case FBLE_RELEASE_INSTR: TODO;
+  }
+}
+
 // EmitCode --
 //   Generate code to execute an FbleCode block.
 //
@@ -328,7 +376,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "_Run_%p:\n", (void*)code);
 
   // Set up stack and frame pointer.
-  fprintf(fout, "  stp FP, LR, [SP, #-48]!\n");
+  fprintf(fout, "  stp FP, LR, [SP, #-64]!\n");
   fprintf(fout, "  mov FP, SP\n");
 
   // Save args to the stack for later reference.
@@ -337,9 +385,17 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  str x2, [SP, #32]\n"); // thread
   fprintf(fout, "  str x3, [SP, #40]\n"); // io_activity
 
+  // Save callee saved registers for later restoration.
+  fprintf(fout, "  str R_HEAP, [SP, #48]\n");
+  fprintf(fout, "  str R_LOCALS, [SP, #56]\n");
+
+  // Set up common registers.
+  fprintf(fout, "  ldr x4, [x2]\n");          // thread->stack
+  fprintf(fout, "  mov R_HEAP, x0\n");
+  fprintf(fout, "  add R_LOCALS, x4, #40\n");
+
   // Jump to the fble instruction at thread->stack->pc.
-  fprintf(fout, "  ldr x0, [x2]\n");       // x0 = thread->stack
-  fprintf(fout, "  ldr x0, [x0, #16]\n");  // x0 = (thread->stack)->pc
+  fprintf(fout, "  ldr x0, [x4, #16]\n");  // x0 = (thread->stack)->pc
   fprintf(fout, "  lsl x0, x0, #3\n");     // x0 = 8 * (thread->stack->pc)
   fprintf(fout, "  adr x1, L._Run_%p.pcs\n", (void*)code); // x1 = pcs
   fprintf(fout, "  add x0, x0, x1\n");     // x0 = &pcs[thread->stack->pc]
@@ -349,11 +405,13 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, "L._Run_%p.pc.%zi:\n", (void*)code, i);
-    fprintf(fout, "  bl abort\n");  // TODO: Implement me.
+    EmitInstr(fout, i, code->instrs.xs[i]);
   }
 
   // Restore stack and frame pointer and return.
-  fprintf(fout, "  ldp FP, LR, [SP], #48\n");
+  fprintf(fout, "  ldr R_HEAP, [SP, #48]\n");
+  fprintf(fout, "  ldr R_LOCALS, [SP, #56]\n");
+  fprintf(fout, "  ldp FP, LR, [SP], #64\n");
   fprintf(fout, "  ret\n");
 }
 
@@ -429,6 +487,10 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocksAndLocs(&blocks, &locs, module->code);
 
+  // Common things we hold in callee saved registers for Run and Abort
+  // functions.
+  fprintf(fout, "  R_HEAP .req x19\n");
+  fprintf(fout, "  R_LOCALS .req x20\n");
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
     EmitCode(fout, blocks.xs[i]);
