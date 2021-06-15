@@ -423,3 +423,21 @@ debugging? Yeah. That looks great.
 
 Note to self: SP should stay a multiple of 16, not just a multiple of 8,
 otherwise I get bus errors.
+
+---
+
+How varargs works:
+
+It's not entirely clear to me from the spec.
+First 8 args go in registers.
+Next args go in stack.
+But what order do they go in the stack, and on what side of the stack pointer?
+
+Experiment suggests the args go as:
+
+x0, x1, x2, x3, x4, x5, x6, x7, x8, [sp], [sp, 8], [sp, 16], ...
+
+So we'll need to allocate space on the stack for however many more than 8 args
+we have, then fill reg x0-x8, then sp+0 to sp+N, in that order.
+
+

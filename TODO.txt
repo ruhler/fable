@@ -1,5 +1,7 @@
 * Implement generate_aarch64
  - Implement run functions in aarch64.
+ - Figure out how to refer to fields by name instead of hard coding offsets
+   into structs.
  - Implement abort functions in aarch64.
  - Move prototype for FbleLoadCompiled to a better place?
  - Retire generate_c?

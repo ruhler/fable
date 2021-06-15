@@ -322,7 +322,30 @@ static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr)
 
   // TODO: Emit profiling instructions.
   switch (instr->tag) {
-    case FBLE_STRUCT_VALUE_INSTR: TODO;
+    case FBLE_STRUCT_VALUE_INSTR: {
+      static const char* r_src[] = { "R_STATICS", "R_LOCALS" };
+      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
+      size_t argc = struct_instr->args.size;
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, %zi\n", argc);
+      for (size_t i = 0; i < argc; ++i) {
+        fprintf(fout, "  ldr x%zi, [%s, #%zi]\n", i + 2,
+            r_src[struct_instr->args.xs[i].section],
+            struct_instr->args.xs[i].index);
+      }
+
+      // TODO: Put rest of the args on the stack:
+      //   alloc space on stack, 16 byte aligned.
+      //   args go in order sp, sp+8, sp+16, ...
+      //   remember to free stack space after call.
+      assert(argc <= 6 && "TODO");
+
+      fprintf(fout, "  bl FbleNewStructValue\n");
+      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", struct_instr->dest);
+      return;
+    }
+
     case FBLE_UNION_VALUE_INSTR: TODO;
     case FBLE_STRUCT_ACCESS_INSTR: TODO;
     case FBLE_UNION_ACCESS_INSTR: TODO;
@@ -388,11 +411,14 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Save callee saved registers for later restoration.
   fprintf(fout, "  str R_HEAP, [SP, #48]\n");
   fprintf(fout, "  str R_LOCALS, [SP, #56]\n");
+  fprintf(fout, "  str R_STATICS, [SP, #64]\n");
 
   // Set up common registers.
   fprintf(fout, "  ldr x4, [x2]\n");          // thread->stack
+  fprintf(fout, "  ldr x5, [x4, 8]\n");       // thread->stack->func
   fprintf(fout, "  mov R_HEAP, x0\n");
   fprintf(fout, "  add R_LOCALS, x4, #40\n");
+  fprintf(fout, "  add R_STATICS, x5, #%zi\n", sizeof(FbleValue) + 16);
 
   // Jump to the fble instruction at thread->stack->pc.
   fprintf(fout, "  ldr x0, [x4, #16]\n");  // x0 = (thread->stack)->pc
@@ -411,6 +437,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Restore stack and frame pointer and return.
   fprintf(fout, "  ldr R_HEAP, [SP, #48]\n");
   fprintf(fout, "  ldr R_LOCALS, [SP, #56]\n");
+  fprintf(fout, "  ldr R_STATICS, [SP, #64]\n");
   fprintf(fout, "  ldp FP, LR, [SP], #64\n");
   fprintf(fout, "  ret\n");
 }
@@ -491,6 +518,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   // functions.
   fprintf(fout, "  R_HEAP .req x19\n");
   fprintf(fout, "  R_LOCALS .req x20\n");
+  fprintf(fout, "  R_STATICS .req x21\n");
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
     EmitCode(fout, blocks.xs[i]);
