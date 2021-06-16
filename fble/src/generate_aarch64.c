@@ -329,20 +329,35 @@ static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr)
 
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, %zi\n", argc);
-      for (size_t i = 0; i < argc; ++i) {
+
+      // The first 6 args go in registers x2 through x7.
+      const size_t num_reg_args = 6;
+      for (size_t i = 0; i < argc && i < num_reg_args; ++i) {
         fprintf(fout, "  ldr x%zi, [%s, #%zi]\n", i + 2,
             r_src[struct_instr->args.xs[i].section],
             struct_instr->args.xs[i].index);
       }
 
-      // TODO: Put rest of the args on the stack:
-      //   alloc space on stack, 16 byte aligned.
-      //   args go in order sp, sp+8, sp+16, ...
-      //   remember to free stack space after call.
-      assert(argc <= 6 && "TODO");
+      // Subsequent args go onto the stack.
+      // We need to keep the stack 16-byte aligned.
+      size_t stack = 16 * ((argc - num_reg_args + 1) / 2);
+      if (argc > num_reg_args) {
+        fprintf(fout, "  sub SP, SP, #%zi\n", stack);
+      }
+
+      for (size_t i = num_reg_args; i < argc; ++i) {
+        fprintf(fout, "  ldr x9, [%s, #%zi]\n",
+            r_src[struct_instr->args.xs[i].section],
+            struct_instr->args.xs[i].index);
+        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * (i - num_reg_args));
+      }
 
       fprintf(fout, "  bl FbleNewStructValue\n");
       fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", struct_instr->dest);
+
+      if (argc > num_reg_args) {
+        fprintf(fout, "  add SP, SP, #%zi\n", stack);
+      }
       return;
     }
 
