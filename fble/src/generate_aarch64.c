@@ -36,9 +36,13 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
-static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr);
+static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
 static FbleString* CIdentifierForPath(FbleModulePath* path);
+
+// R_SECTION --
+//   The register name to use for the given FbleFrameSection.
+static const char* R_SECTION[] = { "R_STATICS", "R_LOCALS" };
 
 // AddLoc --
 //   Add a source location to the list of locations.
@@ -310,20 +314,20 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 //
 // Inputs:
 //   fout - the output stream to write the code to.
+//   code - pointer to the current code block, for referencing labels.
 //   pc - the program counter of the instruction.
 //   instr - the instruction to execute.
 //
 // Side effects:
 // * Outputs code to fout.
-static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr)
+static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 {
-#define TODO assert(false && "TODO")
-// #define TODO fprintf(fout, "  bl abort\n"); return
+// #define TODO assert(false && "TODO")
+#define TODO fprintf(fout, "  bl abort\n"); return
 
   // TODO: Emit profiling instructions.
   switch (instr->tag) {
     case FBLE_STRUCT_VALUE_INSTR: {
-      static const char* r_src[] = { "R_STATICS", "R_LOCALS" };
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       size_t argc = struct_instr->args.size;
 
@@ -334,7 +338,7 @@ static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr)
       const size_t num_reg_args = 6;
       for (size_t i = 0; i < argc && i < num_reg_args; ++i) {
         fprintf(fout, "  ldr x%zi, [%s, #%zi]\n", i + 2,
-            r_src[struct_instr->args.xs[i].section],
+            R_SECTION[struct_instr->args.xs[i].section],
             struct_instr->args.xs[i].index);
       }
 
@@ -347,7 +351,7 @@ static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr)
 
       for (size_t i = num_reg_args; i < argc; ++i) {
         fprintf(fout, "  ldr x9, [%s, #%zi]\n",
-            r_src[struct_instr->args.xs[i].section],
+            R_SECTION[struct_instr->args.xs[i].section],
             struct_instr->args.xs[i].index);
         fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * (i - num_reg_args));
       }
@@ -361,16 +365,44 @@ static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_UNION_VALUE_INSTR: TODO;
+    case FBLE_UNION_VALUE_INSTR: {
+      FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, %zi\n", union_instr->tag);
+      fprintf(fout, "  ldr x2, [%s, #%zi]\n",
+          R_SECTION[union_instr->arg.section],
+          union_instr->arg.index);
+      fprintf(fout, "  bl FbleNewUnionValue\n");
+      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", union_instr->dest);
+      return;
+    }
+
     case FBLE_STRUCT_ACCESS_INSTR: TODO;
     case FBLE_UNION_ACCESS_INSTR: TODO;
     case FBLE_UNION_SELECT_INSTR: TODO;
-    case FBLE_JUMP_INSTR: TODO;
+
+    case FBLE_JUMP_INSTR: {
+      FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+      fprintf(fout, "  b L._Run_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
+      return;
+    }
+
     case FBLE_FUNC_VALUE_INSTR: TODO;
     case FBLE_CALL_INSTR: TODO;
     case FBLE_LINK_INSTR: TODO;
     case FBLE_FORK_INSTR: TODO;
-    case FBLE_COPY_INSTR: TODO;
+
+    case FBLE_COPY_INSTR: {
+      FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  ldr x1, [%s, #%zi]\n",
+          R_SECTION[copy_instr->source.section],
+          copy_instr->source.index);
+      fprintf(fout, "  str x1, [R_LOCALS, #%zi]\n", copy_instr->dest);
+      fprintf(fout, "  bl FbleRetainValue\n");
+      return;
+    }
+
     case FBLE_REF_VALUE_INSTR: TODO;
     case FBLE_REF_DEF_INSTR: TODO;
     case FBLE_RETURN_INSTR: TODO;
@@ -386,7 +418,13 @@ static void EmitInstr(FILE* fout, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_RELEASE_INSTR: TODO;
+    case FBLE_RELEASE_INSTR: {
+      FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", release_instr->target);
+      fprintf(fout, "  bl FbleReleaseValue\n");
+      return;
+    }
   }
 }
 
@@ -446,7 +484,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, "L._Run_%p.pc.%zi:\n", (void*)code, i);
-    EmitInstr(fout, i, code->instrs.xs[i]);
+    EmitInstr(fout, code, i, code->instrs.xs[i]);
   }
 
   // Restore stack and frame pointer and return.
