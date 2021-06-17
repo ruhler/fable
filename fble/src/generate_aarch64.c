@@ -36,6 +36,8 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
+static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
+
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
 static FbleString* CIdentifierForPath(FbleModulePath* path);
@@ -309,6 +311,27 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   return module_id;
 }
 
+// ReturnAbort --
+//   Emit code to return an error from a Run function.
+//
+// Inputs:
+//   fout - the output stream.
+//   code - pointer to current code block to use for labels.
+//   pc - the program counter of the abort location.
+//   lmsg - the label of the error message to use.
+//   loc - the location to report with the error message.
+//
+// Side effects:
+//   Emit code to return the error.
+static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc)
+{
+  // TODO: stack->pc = pc and print the error message.
+  fprintf(fout, "  bl abort\n");
+
+  fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
+  fprintf(fout, "  b L._Run_.%p.exit\n", code);
+}
+
 // EmitInstr --
 //   Generate code to execute an instruction.
 //
@@ -377,7 +400,27 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_STRUCT_ACCESS_INSTR: TODO;
+    case FBLE_STRUCT_ACCESS_INSTR: {
+      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      fprintf(fout, "  ldr x0, [%s, #%zi]\n",
+          R_SECTION[access_instr->obj.section],
+          access_instr->obj.index);
+      fprintf(fout, "  bl FbleStrictValue\n");
+
+      // Abort if the struct object is NULL.
+      fprintf(fout, "  cbnz x0, L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, "L.UndefinedStructValue", access_instr->loc);
+
+      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
+      fprintf(fout, "  bl FbleStructValueAccess\n");
+      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", access_instr->dest);
+      fprintf(fout, "  mov x1, x0\n");
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  bl FbleRetainValue\n");
+      return;
+    }
+
     case FBLE_UNION_ACCESS_INSTR: TODO;
     case FBLE_UNION_SELECT_INSTR: TODO;
 
@@ -487,7 +530,9 @@ static void EmitCode(FILE* fout, FbleCode* code)
     EmitInstr(fout, code, i, code->instrs.xs[i]);
   }
 
-  // Restore stack and frame pointer and return.
+  // Restore stack and frame pointer and return whatever is in x0.
+  // Common code for exiting a run function.
+  fprintf(fout, "L._Run_.%p.exit:\n", (void*)code);
   fprintf(fout, "  ldr R_HEAP, [SP, #48]\n");
   fprintf(fout, "  ldr R_LOCALS, [SP, #56]\n");
   fprintf(fout, "  ldr R_STATICS, [SP, #64]\n");
@@ -572,6 +617,22 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_HEAP .req x19\n");
   fprintf(fout, "  R_LOCALS .req x20\n");
   fprintf(fout, "  R_STATICS .req x21\n");
+
+  // Error messages.
+  fprintf(fout, "  .section .data\n");
+  fprintf(fout, "L.UndefinedStructValue:\n");
+  fprintf(fout, "  .string \"undefined struct value access\\n\"\n");
+  fprintf(fout, "L.UndefinedUnionValue:\n");
+  fprintf(fout, "  .string \"undefined union value access\\n\";\n");
+  fprintf(fout, "L.UndefinedUnionSelect:\n");
+  fprintf(fout, "  .string \"undefined union value select\\n\";\n");
+  fprintf(fout, "L.WrongUnionTag:\n");
+  fprintf(fout, "  .string \"union field access undefined: wrong tag\\n\";\n");
+  fprintf(fout, "L.UndefinedFunctionValue:\n");
+  fprintf(fout, "  .string \"called undefined function\\n\";\n");
+  fprintf(fout, "L.VacuousValue:\n");
+  fprintf(fout, "  .string \"vacuous value\\n\";\n");
+
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
     EmitCode(fout, blocks.xs[i]);
