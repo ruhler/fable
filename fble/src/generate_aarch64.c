@@ -439,7 +439,35 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_UNION_ACCESS_INSTR: TODO;
+    case FBLE_UNION_ACCESS_INSTR: {
+      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      // Get the union value.
+      fprintf(fout, "  ldr x0, [%s, #%zi]\n",
+          R_SECTION[access_instr->obj.section],
+          access_instr->obj.index);
+      fprintf(fout, "  bl FbleStrictValue\n");
+
+      // Abort if the union object is NULL.
+      fprintf(fout, "  cbnz x0, L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, "L.UndefinedUnionValue", access_instr->loc);
+
+      // Abort if the tag is wrong.
+      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, "  ldr x1, [x0, #8]\n"); // uv->tag
+      fprintf(fout, "  cmp x1, %zi\n", access_instr->tag);
+      fprintf(fout, "  b.eq L.%p.%zi.tagok\n", code, pc);
+      ReturnAbort(fout, code, pc, "L.WrongUnionTag", access_instr->loc);
+
+      // Access the field.
+      fprintf(fout, "L.%p.%zi.tagok:\n", code, pc);
+      fprintf(fout, "  ldr x0, [x0, #16]\n"); // uv->ar
+      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", access_instr->dest);
+      fprintf(fout, "  mov x1, x0\n");
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  bl FbleRetainValue\n");
+      return;
+    }
+
     case FBLE_UNION_SELECT_INSTR: TODO;
 
     case FBLE_JUMP_INSTR: {
