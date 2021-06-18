@@ -40,7 +40,8 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
-static FbleString* CIdentifierForPath(FbleModulePath* path);
+static void LabelForLocStr(FILE* fout, const char* str);
+static FbleString* LabelForPath(FbleModulePath* path);
 
 // R_SECTION --
 //   The register name to use for the given FbleFrameSection.
@@ -325,9 +326,26 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 //   Emit code to return the error.
 static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc)
 {
-  // TODO: stack->pc = pc and print the error message.
-  fprintf(fout, "  bl abort\n");
+  // stack->pc = pc
+  fprintf(fout, "  ldr x0, [SP, #32]\n");   // x0 = thread. TODO: keep in sync with EmitCode.
+  fprintf(fout, "  ldr x0, [x0, #0]\n");    // x0 = thread->stack
+  fprintf(fout, "  mov x1, #%zi\n", pc);    // x1 = pc
+  fprintf(fout, "  str x1, [x0, #16]\n");   // stack->pc = pc
 
+  // Print error message.
+  fprintf(fout, "  adr x0, stderr\n");
+  fprintf(fout, "  adr x1, L.ErrorFormatString\n");
+
+  fprintf(fout, "  adr x2, ");
+  LabelForLocStr(fout, loc.source->str);
+  fprintf(fout, "\n");
+
+  fprintf(fout, "  mov x3, %i\n", loc.line);
+  fprintf(fout, "  mov x4, %i\n", loc.col);
+  fprintf(fout, "  adr x5, %s\n", lmsg);
+  fprintf(fout, "  bl fprintf\n");
+
+  // Return FBLE_EXEC_ABORTED
   fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
   fprintf(fout, "  b L._Run_.%p.exit\n", code);
 }
@@ -501,7 +519,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Save args to the stack for later reference.
   fprintf(fout, "  str x0, [SP, #16]\n"); // heap
   fprintf(fout, "  str x1, [SP, #24]\n"); // threads
-  fprintf(fout, "  str x2, [SP, #32]\n"); // thread
+  fprintf(fout, "  str x2, [SP, #32]\n"); // thread. TODO: keep in sync with ReturnAbort
   fprintf(fout, "  str x3, [SP, #40]\n"); // io_activity
 
   // Save callee saved registers for later restoration.
@@ -540,7 +558,21 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  ret\n");
 }
 
-// CIdentifierForPath --
+// LabelForLocStr --
+//   Output the label for a location source file name string.
+//
+// Inputs:
+//   fout - where to output the label.
+//   str - the file name string to output the label for.
+static void LabelForLocStr(FILE* fout, const char* str)
+{
+  fprintf(fout, "L.loc.");
+  for (const char* p = str; *p != '\0'; p++) {
+    fprintf(fout, isalnum(*p) ? "%c" : "_%02x_", *p);
+  }
+}
+
+// LabelForPath --
 //   Returns a name suitable for use as a C function identifier to use for the
 //   give module path.
 //
@@ -553,7 +585,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
 // Side effects:
 //   Allocates an FbleString* that should be freed with FbleFreeString when no
 //   longer needed.
-static FbleString* CIdentifierForPath(FbleModulePath* path)
+static FbleString* LabelForPath(FbleModulePath* path)
 {
   // The conversion from path to name works as followed:
   // * We add _Fble as a prefix.
@@ -620,6 +652,8 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
+  fprintf(fout, "L.ErrorFormatString:\n");
+  fprintf(fout, "  .string \"%%s:%%d:%%d: error: %%s\"\n");
   fprintf(fout, "L.UndefinedStructValue:\n");
   fprintf(fout, "  .string \"undefined struct value access\\n\"\n");
   fprintf(fout, "L.UndefinedUnionValue:\n");
@@ -632,6 +666,12 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .string \"called undefined function\\n\";\n");
   fprintf(fout, "L.VacuousValue:\n");
   fprintf(fout, "  .string \"vacuous value\\n\";\n");
+
+  // Definitions of source code locations.
+  for (size_t i = 0; i < locs.size; ++i) {
+    LabelForLocStr(fout, locs.xs[i]);
+    fprintf(fout, ":\n  .string \"%s\"\n", locs.xs[i]);
+  }
 
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
@@ -657,12 +697,12 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", deps_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
-    FbleString* dep_name = CIdentifierForPath(module->deps.xs[i]);
+    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
     fprintf(fout, "  .xword %s\n", dep_name->str);
     FbleFreeString(dep_name);
   }
 
-  FbleString* func_name = CIdentifierForPath(module->path);
+  FbleString* func_name = LabelForPath(module->path);
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
   fprintf(fout, "  .global %s\n", func_name->str);
@@ -690,7 +730,7 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
   fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
   fprintf(fout, "  mov FP, SP\n");
 
-  FbleString* module_name = CIdentifierForPath(path);
+  FbleString* module_name = LabelForPath(path);
   fprintf(fout, "  bl %s\n\n", module_name->str);
   FbleFreeString(module_name);
 
