@@ -1,5 +1,11 @@
 * Implement generate_aarch64
  - Implement run functions in aarch64.
+   - func value
+   - call
+   - link
+   - fork
+   - ref def
+   - Profiling ops
  - Figure out how to refer to fields by name instead of hard coding offsets
    into structs.
  - Implement abort functions in aarch64.

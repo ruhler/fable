@@ -468,7 +468,37 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_UNION_SELECT_INSTR: TODO;
+    case FBLE_UNION_SELECT_INSTR: {
+      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+
+      // Jump table data for jumping to the right fble pc.
+      fprintf(fout, "  .section .data.rel.local\n");
+      fprintf(fout, "  .align 3\n");
+      fprintf(fout, "L._Run_%p.%zi.pcs:\n", code, pc);
+      for (size_t i = 0; i < select_instr->jumps.size; ++i) {
+        fprintf(fout, "  .xword L._Run_%p.pc.%zi\n", (void*)code, pc + 1 + select_instr->jumps.xs[i]);
+      }
+
+      // Get the union value.
+      fprintf(fout, "  .text\n");
+      fprintf(fout, "  ldr x0, [%s, #%zi]\n",
+          R_SECTION[select_instr->condition.section],
+          select_instr->condition.index);
+      fprintf(fout, "  bl FbleStrictValue\n");
+
+      // Abort if the union object is NULL.
+      fprintf(fout, "  cbnz x0, L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, "L.UndefinedUnionSelect", select_instr->loc);
+
+      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, "  ldr x0, [x0, #8]\n");  // x0 = uv->tag
+      fprintf(fout, "  lsl x0, x0, #3\n");    // x0 = 8 * (uv->tag)
+      fprintf(fout, "  adr x1, L._Run_%p.%zi.pcs\n", code, pc); // x1 = pcs
+      fprintf(fout, "  add x0, x0, x1\n");   // x0 = &pcs[uv->tag] 
+      fprintf(fout, "  ldr x0, [x0]\n");     // x0 = pcs[uv->tag]
+      fprintf(fout, "  br x0\n");            // goto pcs[uv->tag]
+      return;
+    }
 
     case FBLE_JUMP_INSTR: {
       FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
@@ -492,9 +522,46 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_REF_VALUE_INSTR: TODO;
+    case FBLE_REF_VALUE_INSTR: {
+      FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, #%zi\n", sizeof(FbleRefValue));
+      fprintf(fout, "  bl FbleNewHeapObject\n");
+      fprintf(fout, "  mov w1, #%i\n", FBLE_REF_VALUE);
+      fprintf(fout, "  str w1, [x0]\n");      // v->_base.tag = FBLE_REF_VALUE
+      fprintf(fout, "  str XZR, [x0, #8]\n"); // v->value = NULL.
+      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", ref_instr->dest);
+      return;
+    }
+
     case FBLE_REF_DEF_INSTR: TODO;
-    case FBLE_RETURN_INSTR: TODO;
+
+    case FBLE_RETURN_INSTR: {
+      FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
+      fprintf(fout, "  ldr R_SCRATCH, [%s, #%zi]\n",
+          R_SECTION[return_instr->result.section],
+          return_instr->result.index);
+
+      switch (return_instr->result.section) {
+        case FBLE_STATICS_FRAME_SECTION: {
+          fprintf(fout, "  mov x0, R_HEAP\n");
+          fprintf(fout, "  mov x1, R_SCRATCH\n");
+          fprintf(fout, "  bl FbleRetainValue\n");
+          break;
+        }
+
+        case FBLE_LOCALS_FRAME_SECTION: break;
+      }
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  ldr x1, [SP, #32]\n");
+      fprintf(fout, "  mov x2, R_SCRATCH\n");
+      fprintf(fout, "  bl FbleThreadReturn\n");
+
+      fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
+      fprintf(fout, "  b L._Run_.%p.exit\n", code);
+      return;
+    }
 
     case FBLE_TYPE_INSTR: {
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
@@ -541,19 +608,20 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "_Run_%p:\n", (void*)code);
 
   // Set up stack and frame pointer.
-  fprintf(fout, "  stp FP, LR, [SP, #-64]!\n");
+  fprintf(fout, "  stp FP, LR, [SP, #-80]!\n");
   fprintf(fout, "  mov FP, SP\n");
 
   // Save args to the stack for later reference.
   fprintf(fout, "  str x0, [SP, #16]\n"); // heap
   fprintf(fout, "  str x1, [SP, #24]\n"); // threads
-  fprintf(fout, "  str x2, [SP, #32]\n"); // thread. TODO: keep in sync with ReturnAbort
+  fprintf(fout, "  str x2, [SP, #32]\n"); // thread. TODO: keep in sync with users!
   fprintf(fout, "  str x3, [SP, #40]\n"); // io_activity
 
   // Save callee saved registers for later restoration.
   fprintf(fout, "  str R_HEAP, [SP, #48]\n");
   fprintf(fout, "  str R_LOCALS, [SP, #56]\n");
   fprintf(fout, "  str R_STATICS, [SP, #64]\n");
+  fprintf(fout, "  str R_SCRATCH, [SP, #72]\n");
 
   // Set up common registers.
   fprintf(fout, "  ldr x4, [x2]\n");          // thread->stack
@@ -582,7 +650,8 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  ldr R_HEAP, [SP, #48]\n");
   fprintf(fout, "  ldr R_LOCALS, [SP, #56]\n");
   fprintf(fout, "  ldr R_STATICS, [SP, #64]\n");
-  fprintf(fout, "  ldp FP, LR, [SP], #64\n");
+  fprintf(fout, "  ldr R_SCRATCH, [SP, #72]\n");
+  fprintf(fout, "  ldp FP, LR, [SP], #80\n");
   fprintf(fout, "  ret\n");
 }
 
@@ -677,6 +746,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_HEAP .req x19\n");
   fprintf(fout, "  R_LOCALS .req x20\n");
   fprintf(fout, "  R_STATICS .req x21\n");
+  fprintf(fout, "  R_SCRATCH .req x22\n");
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
