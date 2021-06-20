@@ -231,4 +231,19 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link, FbleBlockId pro
 //   None.
 FbleValue* FbleStrictValue(FbleValue* value);
 
+// FbleStrictRefValue --
+//   Like FbleStrictValue, except returns the inner most RefValue if the value
+//   is a reference that has no value yet.
+//
+// Inputs:
+//   value - the value to get the strict version of.
+//
+// Results:
+//   The value with all layers of reference indirection removed except the
+//   last is the value is a reference that has no value yet.
+//
+// Side effects:
+//   None.
+FbleValue* FbleStrictRefValue(FbleValue* value);
+
 #endif // FBLE_INTERNAL_VALUE_H_

@@ -497,3 +497,14 @@ FbleValue* FbleStrictValue(FbleValue* value)
   }
   return value;
 }
+
+// FbleStrictRefValue -- see documentation in value.h
+FbleValue* FbleStrictRefValue(FbleValue* value)
+{
+  FbleRefValue* ref = (FbleRefValue*)value;
+  while (value->tag == FBLE_REF_VALUE && ref->value != NULL) {
+    value = ref->value;
+    ref = (FbleRefValue*)value;
+  }
+  return value;
+}

@@ -621,12 +621,7 @@ static FbleExecStatus RunRefDefInstr(FbleValueHeap* heap, FbleThreadV* threads, 
 
   // Unwrap any accumulated layers of references on the returned value, and,
   // more importantly, make sure we aren't forming a vacuous value.
-  FbleRefValue* ref = (FbleRefValue*)value;
-  while (value->tag == FBLE_REF_VALUE && ref->value != NULL) {
-    value = ref->value;
-    ref = (FbleRefValue*)value;
-  }
-
+  FbleRefValue* ref = (FbleRefValue*)FbleStrictRefValue(value);
   if (ref == rv) {
     FbleReportError("vacuous value\n", ref_def_instr->loc);
     return FBLE_EXEC_ABORTED;

@@ -746,12 +746,7 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
         fprintf(fout, "      FbleValue* v = "); FrameGet(fout, ref_instr->value); fprintf(fout, ";\n");
         fprintf(fout, "      assert(v != NULL);\n");
 
-        fprintf(fout, "      FbleRefValue* ref = (FbleRefValue*)v;\n");
-        fprintf(fout, "      while (v->tag == FBLE_REF_VALUE && ref->value != NULL) {\n");
-        fprintf(fout, "        v = ref->value;\n");
-        fprintf(fout, "        ref = (FbleRefValue*)v;\n");
-        fprintf(fout, "      }\n");
-
+        fprintf(fout, "      FbleRefValue* ref = (FbleRefValue*)FbleStrictRefValue(v);\n");
         fprintf(fout, "      if (ref == rv) {\n");
         ReturnAbort(fout, "        ", pc, "VacuousValue", ref_instr->loc);
         fprintf(fout, "      }\n");
