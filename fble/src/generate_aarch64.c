@@ -506,7 +506,48 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_FUNC_VALUE_INSTR: TODO;
+    case FBLE_FUNC_VALUE_INSTR: {
+      FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
+      fprintf(fout, "  .section .data.rel,\"aw\"\n");
+      fprintf(fout, "  .align 3\n");
+      fprintf(fout, "L._Run_%p.%zi.exe:\n", code, pc);
+      fprintf(fout, "  .xword 1\n");                          // .refcount
+      fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.args);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.statics);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.locals);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.profile);
+      fprintf(fout, "  .xword 0\n"); // .profile_blocks.size
+      fprintf(fout, "  .xword 0\n"); // .profile_blocks.xs
+      fprintf(fout, "  .xword _Run_%p\n", (void*)func_instr->code);
+      fprintf(fout, "  .xword _Abort_%p\n", (void*)func_instr->code);
+      fprintf(fout, "  .xword 0\n"); // .on_free
+
+      fprintf(fout, "  .text\n");
+      fprintf(fout, "  .align 2\n");
+
+      fprintf(fout, "  ldr x0, [SP, #32]\n");   // x0 = thread. TODO: keep in sync with EmitCode.
+      fprintf(fout, "  ldr x0, [x0, #0]\n");    // x0 = thread->stack
+      fprintf(fout, "  ldr x0, [x0, #8]\n");    // x0 = thread->stack->func
+      fprintf(fout, "  ldr x2, [x0, #16]\n");   // x2 = thread->stack->func->profile_base_id
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  adr x1, L._Run_%p.%zi.exe\n", code, pc);
+      fprintf(fout, "  bl FbleNewFuncValue\n");
+      fprintf(fout, "  mov R_SCRATCH, x0\n");
+      fprintf(fout, "  str R_SCRATCH, [R_LOCALS, #%zi]\n", func_instr->dest);
+
+      for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
+        fprintf(fout, "  mov x0, R_HEAP\n");
+        fprintf(fout, "  mov x1, R_SCRATCH\n");
+        fprintf(fout, "  ldr x2, [%s, #%zi]\n",
+            R_SECTION[func_instr->scope.xs[i].section],
+            func_instr->scope.xs[i].index);
+        fprintf(fout, "  bl FbleValueAddRef\n");
+      }
+      return;
+    }
+
     case FBLE_CALL_INSTR: TODO;
     case FBLE_LINK_INSTR: TODO;
     case FBLE_FORK_INSTR: TODO;
