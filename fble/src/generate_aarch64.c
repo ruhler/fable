@@ -534,7 +534,25 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_REF_DEF_INSTR: TODO;
+    case FBLE_REF_DEF_INSTR: {
+      FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
+      fprintf(fout, "  ldr x0, [%s, #%zi]\n",
+          R_SECTION[ref_instr->value.section],
+          ref_instr->value.index);
+      fprintf(fout, "  bl FbleStrictRefValue\n");
+
+      fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", ref_instr->ref);
+      fprintf(fout, "  cmp x0, x1\n");
+      fprintf(fout, "  b.ne L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, "L.VacuousValue", ref_instr->loc);
+
+      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, "  str x0, [x1, #8]\n");  // rv->value = v;
+      fprintf(fout, "  mov x2, x0\n");
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  bl FbleValueAddRef\n");
+      return;
+    }
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;

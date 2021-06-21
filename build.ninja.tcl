@@ -84,18 +84,18 @@ proc obj_cov { obj src iflags args } {
 #   export - "" or "--export ..." arg to pass to compile function.
 #   args - additional dependencies, typically including the .fble file.
 proc fbleobj { obj compile module_path search_path export args } {
-#  set s [string map {.o .s} $obj]
-#  build $s "$compile $args" "$compile $export -s $module_path $search_path > $s"
-#  obj $obj $s ""
+  set s [string map {.o .s} $obj]
+  build $s "$compile $args" "$compile $export -s $module_path $search_path > $s"
+  obj $obj $s ""
 
-  set c [string map {.o .c} $obj]
-  build $c "$compile $args" "$compile $export $module_path $search_path > $c"
- 
-  # Compile the c file using tcc, because it requires signifantly less memory
-  # than gcc or clang.
-  set cflags "-pedantic -Wall -Werror -g -I /usr/include -I fble/include -I fble/src"
-  set cmd "tcc -MD -MF $obj.d $cflags -c -o $obj $c"
-  build $obj "$c $args" $cmd "depfile = $obj.d"
+#  set c [string map {.o .c} $obj]
+#  build $c "$compile $args" "$compile $export $module_path $search_path > $c"
+# 
+#  # Compile the c file using tcc, because it requires signifantly less memory
+#  # than gcc or clang.
+#  set cflags "-pedantic -Wall -Werror -g -I /usr/include -I fble/include -I fble/src"
+#  set cmd "tcc -MD -MF $obj.d $cflags -c -o $obj $c"
+#  build $obj "$c $args" $cmd "depfile = $obj.d"
 }
 
 # lib --
