@@ -36,16 +36,14 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
+static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index);
+static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
 static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
 
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
 static void LabelForLocStr(FILE* fout, const char* str);
 static FbleString* LabelForPath(FbleModulePath* path);
-
-// R_SECTION --
-//   The register name to use for the given FbleFrameSection.
-static const char* R_SECTION[] = { "R_STATICS", "R_LOCALS" };
 
 // AddLoc --
 //   Add a source location to the list of locations.
@@ -312,6 +310,38 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   return module_id;
 }
 
+// GetFrameVar --
+//   Generate code to read a variable from the current frame into register rdst.
+//
+// Inputs:
+//   fout - the output stream
+//   rdst - the name of the register to read the variable into
+//   index - the variable to read.
+//
+// Side effects:
+// * Writes to the output stream.
+static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index)
+{
+  static const char* section[] = { "R_STATICS", "R_LOCALS" };
+  fprintf(fout, "  ldr %s, [%s, #%zi]\n",
+      rdst, section[index.section], 8 * index.index);
+}
+
+// SetFrameVar --
+//   Generate code to write a variable to the current frame from register rsrc.
+//
+// Inputs:
+//   fout - the output stream
+//   rsrc - the name of the register with the value to write.
+//   index - the index of the value to write.
+//
+// Side effects:
+// * Writes to the output stream.
+static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
+{
+  fprintf(fout, "  str %s, [R_LOCALS, #%zi]\n", rsrc, 8 * index);
+}
+
 // ReturnAbort --
 //   Emit code to return an error from a Run function.
 //
@@ -378,9 +408,9 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       // The first 6 args go in registers x2 through x7.
       const size_t num_reg_args = 6;
       for (size_t i = 0; i < argc && i < num_reg_args; ++i) {
-        fprintf(fout, "  ldr x%zi, [%s, #%zi]\n", i + 2,
-            R_SECTION[struct_instr->args.xs[i].section],
-            struct_instr->args.xs[i].index);
+        char rdst[5];
+        sprintf(rdst, "x%zi", i + 2);
+        GetFrameVar(fout, rdst, struct_instr->args.xs[i]);
       }
 
       // Subsequent args go onto the stack.
@@ -391,14 +421,12 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       }
 
       for (size_t i = num_reg_args; i < argc; ++i) {
-        fprintf(fout, "  ldr x9, [%s, #%zi]\n",
-            R_SECTION[struct_instr->args.xs[i].section],
-            struct_instr->args.xs[i].index);
+        GetFrameVar(fout, "x9", struct_instr->args.xs[i]);
         fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * (i - num_reg_args));
       }
 
       fprintf(fout, "  bl FbleNewStructValue\n");
-      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", struct_instr->dest);
+      SetFrameVar(fout, "x0", struct_instr->dest);
 
       if (argc > num_reg_args) {
         fprintf(fout, "  add SP, SP, #%zi\n", stack);
@@ -410,19 +438,15 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, %zi\n", union_instr->tag);
-      fprintf(fout, "  ldr x2, [%s, #%zi]\n",
-          R_SECTION[union_instr->arg.section],
-          union_instr->arg.index);
+      GetFrameVar(fout, "x2", union_instr->arg);
       fprintf(fout, "  bl FbleNewUnionValue\n");
-      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", union_instr->dest);
+      SetFrameVar(fout, "x0", union_instr->dest);
       return;
     }
 
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "  ldr x0, [%s, #%zi]\n",
-          R_SECTION[access_instr->obj.section],
-          access_instr->obj.index);
+      GetFrameVar(fout, "x0", access_instr->obj);
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the struct object is NULL.
@@ -432,7 +456,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleStructValueAccess\n");
-      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", access_instr->dest);
+      SetFrameVar(fout, "x0", access_instr->dest);
       fprintf(fout, "  mov x1, x0\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  bl FbleRetainValue\n");
@@ -442,9 +466,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       // Get the union value.
-      fprintf(fout, "  ldr x0, [%s, #%zi]\n",
-          R_SECTION[access_instr->obj.section],
-          access_instr->obj.index);
+      GetFrameVar(fout, "x0", access_instr->obj);
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the union object is NULL.
@@ -461,7 +483,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       // Access the field.
       fprintf(fout, "L.%p.%zi.tagok:\n", code, pc);
       fprintf(fout, "  ldr x0, [x0, #16]\n"); // uv->ar
-      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", access_instr->dest);
+      SetFrameVar(fout, "x0", access_instr->dest);
       fprintf(fout, "  mov x1, x0\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  bl FbleRetainValue\n");
@@ -481,9 +503,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
       // Get the union value.
       fprintf(fout, "  .text\n");
-      fprintf(fout, "  ldr x0, [%s, #%zi]\n",
-          R_SECTION[select_instr->condition.section],
-          select_instr->condition.index);
+      GetFrameVar(fout, "x0", select_instr->condition);
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the union object is NULL.
@@ -535,14 +555,12 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  adr x1, L._Run_%p.%zi.exe\n", code, pc);
       fprintf(fout, "  bl FbleNewFuncValue\n");
       fprintf(fout, "  mov R_SCRATCH, x0\n");
-      fprintf(fout, "  str R_SCRATCH, [R_LOCALS, #%zi]\n", func_instr->dest);
+      SetFrameVar(fout, "R_SCRATCH", func_instr->dest);
 
       for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
         fprintf(fout, "  mov x0, R_HEAP\n");
         fprintf(fout, "  mov x1, R_SCRATCH\n");
-        fprintf(fout, "  ldr x2, [%s, #%zi]\n",
-            R_SECTION[func_instr->scope.xs[i].section],
-            func_instr->scope.xs[i].index);
+        GetFrameVar(fout, "x2", func_instr->scope.xs[i]);
         fprintf(fout, "  bl FbleValueAddRef\n");
       }
       return;
@@ -555,10 +573,8 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     case FBLE_COPY_INSTR: {
       FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  ldr x1, [%s, #%zi]\n",
-          R_SECTION[copy_instr->source.section],
-          copy_instr->source.index);
-      fprintf(fout, "  str x1, [R_LOCALS, #%zi]\n", copy_instr->dest);
+      GetFrameVar(fout, "x1", copy_instr->source);
+      SetFrameVar(fout, "x1", copy_instr->dest);
       fprintf(fout, "  bl FbleRetainValue\n");
       return;
     }
@@ -571,15 +587,13 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  mov w1, #%i\n", FBLE_REF_VALUE);
       fprintf(fout, "  str w1, [x0]\n");      // v->_base.tag = FBLE_REF_VALUE
       fprintf(fout, "  str XZR, [x0, #8]\n"); // v->value = NULL.
-      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", ref_instr->dest);
+      SetFrameVar(fout, "x0", ref_instr->dest);
       return;
     }
 
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
-      fprintf(fout, "  ldr x0, [%s, #%zi]\n",
-          R_SECTION[ref_instr->value.section],
-          ref_instr->value.index);
+      GetFrameVar(fout, "x0", ref_instr->value);
       fprintf(fout, "  bl FbleStrictRefValue\n");
 
       fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", ref_instr->ref);
@@ -597,9 +611,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      fprintf(fout, "  ldr R_SCRATCH, [%s, #%zi]\n",
-          R_SECTION[return_instr->result.section],
-          return_instr->result.index);
+      GetFrameVar(fout, "R_SCRATCH", return_instr->result);
 
       switch (return_instr->result.section) {
         case FBLE_STATICS_FRAME_SECTION: {
@@ -629,7 +641,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  bl FbleNewHeapObject\n");
       fprintf(fout, "  mov w1, #%i\n", FBLE_TYPE_VALUE);
       fprintf(fout, "  str w1, [x0]\n"); // v->_base.tag = FBLE_TYPE_VALUE.
-      fprintf(fout, "  str x0, [R_LOCALS, #%zi]\n", type_instr->dest);
+      SetFrameVar(fout, "x0", type_instr->dest);
       return;
     }
 
