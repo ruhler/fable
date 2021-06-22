@@ -322,9 +322,11 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 // * Writes to the output stream.
 static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index)
 {
+  // TODO: We can use a single ldr immediate instruction if index is <= 32.
+  // TODO: We need to use something different if index is > 512
   static const char* section[] = { "R_STATICS", "R_LOCALS" };
-  fprintf(fout, "  ldr %s, [%s, #%zi]\n",
-      rdst, section[index.section], 8 * index.index);
+  fprintf(fout, "  add %s, %s, #%zi\n", rdst, section[index.section], 8 * index.index);
+  fprintf(fout, "  ldr %s, [%s]\n", rdst, rdst);
 }
 
 // SetFrameVar --
@@ -596,7 +598,11 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       GetFrameVar(fout, "x0", ref_instr->value);
       fprintf(fout, "  bl FbleStrictRefValue\n");
 
-      fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", ref_instr->ref);
+      FbleFrameIndex ref_index = {
+        .section = FBLE_LOCALS_FRAME_SECTION,
+        .index = ref_instr->ref
+      };
+      GetFrameVar(fout, "x1", ref_index);
       fprintf(fout, "  cmp x0, x1\n");
       fprintf(fout, "  b.ne L.%p.%zi.ok\n", code, pc);
       ReturnAbort(fout, code, pc, "L.VacuousValue", ref_instr->loc);
@@ -648,7 +654,12 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", release_instr->target);
+
+      FbleFrameIndex target_index = {
+        .section = FBLE_LOCALS_FRAME_SECTION,
+        .index = release_instr->target
+      };
+      GetFrameVar(fout, "x1", target_index);
       fprintf(fout, "  bl FbleReleaseValue\n");
       return;
     }
