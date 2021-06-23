@@ -553,12 +553,12 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  adr x1, L._Run_%p.%zi.exe\n", code, pc);
       fprintf(fout, "  bl FbleNewFuncValue\n");
-      fprintf(fout, "  mov R_SCRATCH, x0\n");
-      SetFrameVar(fout, "R_SCRATCH", func_instr->dest);
+      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
+      SetFrameVar(fout, "R_SCRATCH_0", func_instr->dest);
 
       for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
         fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  mov x1, R_SCRATCH\n");
+        fprintf(fout, "  mov x1, R_SCRATCH_0\n");
         GetFrameVar(fout, "x2", func_instr->scope.xs[i]);
         fprintf(fout, "  bl FbleValueAddRef\n");
       }
@@ -566,7 +566,44 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     }
 
     case FBLE_CALL_INSTR: TODO;
-    case FBLE_LINK_INSTR: TODO;
+
+    case FBLE_LINK_INSTR: {
+      FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
+
+      // Allocate and initialize the FbleLinkValue.
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, #%zi\n", sizeof(FbleLinkValue));
+      fprintf(fout, "  bl FbleNewHeapObject\n");
+      fprintf(fout, "  mov w1, #%i\n", FBLE_LINK_VALUE);
+      fprintf(fout, "  str w1, [x0]\n");       // link->_base.tag = FBLE_LINK_VALUE.
+      fprintf(fout, "  str XZR, [x0, #8]\n");  // link->head = NULL;
+      fprintf(fout, "  str XZR, [x0, #16]\n"); // link->tail = NULL;
+      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
+
+      // Compute thread->stack->func->profile_base_id
+      fprintf(fout, "  ldr x0, [SP, #32]\n"); // thread
+      fprintf(fout, "  ldr x0, [x0]\n");      // ->stack
+      fprintf(fout, "  ldr x0, [x0, #8]\n");  // ->func
+      fprintf(fout, "  ldr R_SCRATCH_1, [x0, #16]\n");   // ->profile_base_id
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, R_SCRATCH_0\n");
+      fprintf(fout, "  add x2, R_SCRATCH_1, #%zi\n", link_instr->profile);
+      fprintf(fout, "  bl FbleNewGetValue\n");
+      SetFrameVar(fout, "x0", link_instr->get);
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, R_SCRATCH_0\n");
+      fprintf(fout, "  add x2, R_SCRATCH_1, #%zi\n", link_instr->profile + 1);
+      fprintf(fout, "  bl FbleNewPutValue\n");
+      SetFrameVar(fout, "x0", link_instr->put);
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, R_SCRATCH_0\n");
+      fprintf(fout, "  bl FbleReleaseValue\n");
+      return;
+    }
+
     case FBLE_FORK_INSTR: TODO;
 
     case FBLE_COPY_INSTR: {
@@ -614,12 +651,12 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
     case FBLE_RETURN_INSTR: {
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-      GetFrameVar(fout, "R_SCRATCH", return_instr->result);
+      GetFrameVar(fout, "R_SCRATCH_0", return_instr->result);
 
       switch (return_instr->result.section) {
         case FBLE_STATICS_FRAME_SECTION: {
           fprintf(fout, "  mov x0, R_HEAP\n");
-          fprintf(fout, "  mov x1, R_SCRATCH\n");
+          fprintf(fout, "  mov x1, R_SCRATCH_0\n");
           fprintf(fout, "  bl FbleRetainValue\n");
           break;
         }
@@ -629,7 +666,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  ldr x1, [SP, #32]\n");
-      fprintf(fout, "  mov x2, R_SCRATCH\n");
+      fprintf(fout, "  mov x2, R_SCRATCH_0\n");
       fprintf(fout, "  bl FbleThreadReturn\n");
 
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
@@ -700,7 +737,8 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  str R_HEAP, [SP, #48]\n");
   fprintf(fout, "  str R_LOCALS, [SP, #56]\n");
   fprintf(fout, "  str R_STATICS, [SP, #64]\n");
-  fprintf(fout, "  str R_SCRATCH, [SP, #72]\n");
+  fprintf(fout, "  str R_SCRATCH_0, [SP, #72]\n");
+  fprintf(fout, "  str R_SCRATCH_1, [SP, #80]\n");
 
   // Set up common registers.
   fprintf(fout, "  ldr x4, [x2]\n");          // thread->stack
@@ -729,7 +767,8 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  ldr R_HEAP, [SP, #48]\n");
   fprintf(fout, "  ldr R_LOCALS, [SP, #56]\n");
   fprintf(fout, "  ldr R_STATICS, [SP, #64]\n");
-  fprintf(fout, "  ldr R_SCRATCH, [SP, #72]\n");
+  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #72]\n");
+  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #80]\n");
   fprintf(fout, "  ldp FP, LR, [SP], #80\n");
   fprintf(fout, "  ret\n");
 }
@@ -825,7 +864,8 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_HEAP .req x19\n");
   fprintf(fout, "  R_LOCALS .req x20\n");
   fprintf(fout, "  R_STATICS .req x21\n");
-  fprintf(fout, "  R_SCRATCH .req x22\n");
+  fprintf(fout, "  R_SCRATCH_0 .req x22\n");
+  fprintf(fout, "  R_SCRATCH_1 .req x23\n");
 
   // Error messages.
   fprintf(fout, "  .section .data\n");

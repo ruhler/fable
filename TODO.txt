@@ -1,7 +1,6 @@
 * Implement generate_aarch64
  - Implement run functions in aarch64.
    - call
-   - link
    - fork
    - Profiling ops
  - Debug and fix "relocation truncated to fit" error.
