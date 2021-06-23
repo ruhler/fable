@@ -322,11 +322,8 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 // * Writes to the output stream.
 static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index)
 {
-  // TODO: We can use a single ldr immediate instruction if index is <= 32.
-  // TODO: We need to use something different if index is > 512
   static const char* section[] = { "R_STATICS", "R_LOCALS" };
-  fprintf(fout, "  add %s, %s, #%zi\n", rdst, section[index.section], 8 * index.index);
-  fprintf(fout, "  ldr %s, [%s]\n", rdst, rdst);
+  fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, section[index.section], 8 * index.index);
 }
 
 // SetFrameVar --

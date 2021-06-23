@@ -440,4 +440,22 @@ x0, x1, x2, x3, x4, x5, x6, x7, x8, [sp], [sp, 8], [sp, 16], ...
 So we'll need to allocate space on the stack for however many more than 8 args
 we have, then fill reg x0-x8, then sp+0 to sp+N, in that order.
 
+---
 
+How to load from far away offsets?
+
+Some examples of various offsets:
+
+ldr x0, [x0, 40]
+ldr x0, [x0, 320]
+ldr x0, [x0, 3200]
+...
+
+  add x0, x0, 65536
+  ldr x0, [x0, 14464]
+
+This suggests we can go up to 65536. Why is the assembler yelling at me for
+more than 256? Is it this use of '#'?
+
+I'm not longer able to reproduce the issue of loading from far away offsets.
+Odd...
