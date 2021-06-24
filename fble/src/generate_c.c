@@ -990,7 +990,6 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "#define ProfileEnterBlock(profile, block) if (profile) { FbleProfileEnterBlock(profile, block); }\n");
   fprintf(fout, "#define ProfileReplaceBlock(profile, block) if (profile) { FbleProfileReplaceBlock(profile, block); }\n");
   fprintf(fout, "#define ProfileExitBlock(profile) if (profile) { FbleProfileExitBlock(profile); }\n");
-  fprintf(fout, "#define ProfileAutoExitBlock(profile) if (profile) { FbleProfileAutoExitBlock(profile); }\n");
   fprintf(fout, "#define ProfileSample(profile) if (profile && rand() %% 1024 == 0) { FbleProfileSample(profile, 1); }\n");
 
   // Prototypes for module dependencies.

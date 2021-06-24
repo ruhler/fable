@@ -395,7 +395,45 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 // #define TODO assert(false && "TODO")
 #define TODO fprintf(fout, "  bl abort\n"); return
 
-  // TODO: Emit profiling instructions.
+  fprintf(fout, "  cbz R_PROFILE, L._Run_%p.%zi.postprofile\n", code, pc);
+  fprintf(fout, "  bl rand\n");
+  fprintf(fout, "  and w0, w0, #%i\n", 0x3ff);    // rand() % 1024
+  fprintf(fout, "  cbz w0, L._Run_%p.%zi.postsample\n", code, pc);
+  fprintf(fout, "  mov x0, R_PROFILE\n");
+  fprintf(fout, "  mov x1, #1\n");
+  fprintf(fout, "  bl FbleProfileSample\n");
+
+  fprintf(fout, "L._Run_%p.%zi.postsample:\n", code, pc);
+  for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+    switch (op->tag) {
+      case FBLE_PROFILE_ENTER_OP:
+        fprintf(fout, "  ldr x0, [SP, #32]\n");   // x0 = thread. TODO: keep in sync with EmitCode.
+        fprintf(fout, "  ldr x0, [x0, #0]\n");    // x0 = thread->stack
+        fprintf(fout, "  ldr x0, [x0, #8]\n");    // x0 = thread->stack->func
+        fprintf(fout, "  ldr x1, [x0, #16]\n");   // x1 = thread->stack->func->profile_base_id
+        fprintf(fout, "  mov x0, R_PROFILE\n");
+        fprintf(fout, "  add x1, x1, #%zi\n", op->block);
+        fprintf(fout, "  bl FbleProfileEnterBlock\n");
+        break;
+
+      case FBLE_PROFILE_REPLACE_OP:
+        fprintf(fout, "  ldr x0, [SP, #32]\n");   // x0 = thread. TODO: keep in sync with EmitCode.
+        fprintf(fout, "  ldr x0, [x0, #0]\n");    // x0 = thread->stack
+        fprintf(fout, "  ldr x0, [x0, #8]\n");    // x0 = thread->stack->func
+        fprintf(fout, "  ldr x1, [x0, #16]\n");   // x1 = thread->stack->func->profile_base_id
+        fprintf(fout, "  mov x0, R_PROFILE\n");
+        fprintf(fout, "  add x1, x1, #%zi\n", op->block);
+        fprintf(fout, "  bl FbleProfileReplaceBlock\n");
+        break;
+
+      case FBLE_PROFILE_EXIT_OP:
+        fprintf(fout, "  mov x0, R_PROFILE\n");
+        fprintf(fout, "  bl FbleProfileExitBlock\n");
+        break;
+    }
+  }
+
+  fprintf(fout, "L._Run_%p.%zi.postprofile:\n", code, pc);
   switch (instr->tag) {
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
@@ -724,7 +762,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "_Run_%p:\n", (void*)code);
 
   // Set up stack and frame pointer.
-  fprintf(fout, "  stp FP, LR, [SP, #-80]!\n");
+  fprintf(fout, "  stp FP, LR, [SP, #-96]!\n");
   fprintf(fout, "  mov FP, SP\n");
 
   // Save args to the stack for later reference.
@@ -737,15 +775,17 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  str R_HEAP, [SP, #48]\n");
   fprintf(fout, "  str R_LOCALS, [SP, #56]\n");
   fprintf(fout, "  str R_STATICS, [SP, #64]\n");
-  fprintf(fout, "  str R_SCRATCH_0, [SP, #72]\n");
-  fprintf(fout, "  str R_SCRATCH_1, [SP, #80]\n");
+  fprintf(fout, "  str R_PROFILE, [SP, #72]\n");
+  fprintf(fout, "  str R_SCRATCH_0, [SP, #80]\n");
+  fprintf(fout, "  str R_SCRATCH_1, [SP, #88]\n");
 
   // Set up common registers.
   fprintf(fout, "  ldr x4, [x2]\n");          // thread->stack
-  fprintf(fout, "  ldr x5, [x4, 8]\n");       // thread->stack->func
+  fprintf(fout, "  ldr x5, [x4, #8]\n");      // thread->stack->func
   fprintf(fout, "  mov R_HEAP, x0\n");
   fprintf(fout, "  add R_LOCALS, x4, #40\n");
   fprintf(fout, "  add R_STATICS, x5, #%zi\n", sizeof(FbleValue) + 16);
+  fprintf(fout, "  ldr R_PROFILE, [x2, #8]\n"); // thread->profile
 
   // Jump to the fble instruction at thread->stack->pc.
   fprintf(fout, "  ldr x0, [x4, #16]\n");  // x0 = (thread->stack)->pc
@@ -767,9 +807,10 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  ldr R_HEAP, [SP, #48]\n");
   fprintf(fout, "  ldr R_LOCALS, [SP, #56]\n");
   fprintf(fout, "  ldr R_STATICS, [SP, #64]\n");
-  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #72]\n");
-  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #80]\n");
-  fprintf(fout, "  ldp FP, LR, [SP], #80\n");
+  fprintf(fout, "  ldr R_PROFILE, [SP, #72]\n");
+  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #80]\n");
+  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #88]\n");
+  fprintf(fout, "  ldp FP, LR, [SP], #96\n");
   fprintf(fout, "  ret\n");
 }
 
@@ -864,8 +905,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_HEAP .req x19\n");
   fprintf(fout, "  R_LOCALS .req x20\n");
   fprintf(fout, "  R_STATICS .req x21\n");
-  fprintf(fout, "  R_SCRATCH_0 .req x22\n");
-  fprintf(fout, "  R_SCRATCH_1 .req x23\n");
+  fprintf(fout, "  R_PROFILE .req x22\n");
+  fprintf(fout, "  R_SCRATCH_0 .req x23\n");
+  fprintf(fout, "  R_SCRATCH_1 .req x24\n");
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
