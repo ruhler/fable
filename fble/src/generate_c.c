@@ -687,7 +687,6 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
         }
       } else {
         fprintf(fout, "      FbleProcValue* arg;\n");
-        fprintf(fout, "      FbleThread* child;\n");
         fprintf(fout, "      FbleValue** result;\n");
 
         for (size_t i = 0; i < fork_instr->args.size; ++i) {
@@ -695,14 +694,9 @@ static void EmitInstr(FILE* fout, VarId* var_id, size_t pc, FbleInstr* instr, bo
           fprintf(fout, "      assert(arg != NULL && \"undefined proc value\");");
           fprintf(fout, "      assert(arg->_base.tag == FBLE_PROC_VALUE);\n");
 
-          fprintf(fout, "      child = FbleAlloc(FbleThread);\n");
-          fprintf(fout, "      child->stack = stack;\n");
-          fprintf(fout, "      child->profile = profile == NULL ? NULL : FbleForkProfileThread(profile);\n");
-          fprintf(fout, "      child->stack->joins++;\n");
-          fprintf(fout, "      FbleVectorAppend(*threads, child);\n");
-
           fprintf(fout, "      result = stack->locals + %zi;\n", fork_instr->dests.xs[i]);
-          fprintf(fout, "      FbleThreadCall(heap, result, arg, NULL, child);\n");
+
+          fprintf(fout, "      FbleThreadFork(heap, threads, thread, result, arg, NULL);\n");
         }
 
         fprintf(fout, "      stack->pc = %zi;\n", pc+1);

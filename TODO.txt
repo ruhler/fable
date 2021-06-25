@@ -1,7 +1,7 @@
 * Implement generate_aarch64
  - Implement run functions in aarch64.
    - call
-   - fork: factor out common code for forking threads and reuse that?
+   - fork
  - Debug and fix "relocation truncated to fit" error.
    From use of adr instruction? Maybe need adrp for far away things?
  - Debug and fix FbleHeapObjectAddRef: Assertion `dst_ != NULL' failed.

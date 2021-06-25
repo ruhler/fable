@@ -504,14 +504,8 @@ static FbleExecStatus RunForkInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
     assert(arg != NULL && "undefined proc value");
     assert(arg->_base.tag == FBLE_PROC_VALUE);
 
-    FbleThread* child = FbleAlloc(FbleThread);
-    child->stack = thread->stack;
-    child->profile = thread->profile == NULL ? NULL : FbleForkProfileThread(thread->profile);
-    child->stack->joins++;
-    FbleVectorAppend(*threads, child);
-
     FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
-    FbleThreadCall(heap, result, arg, NULL, child);
+    FbleThreadFork(heap, threads, thread, result, arg, NULL);
   }
   thread->stack->pc++;
   return FBLE_EXEC_YIELDED;

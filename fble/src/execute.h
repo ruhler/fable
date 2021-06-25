@@ -80,8 +80,8 @@ typedef struct {
 //   Push a frame onto the execution stack.
 //
 // Inputs:
-//   dest - where to store a strong reference to the result of executing the
-//          function.
+//   result - where to store a strong reference to the result of executing the
+//            function.
 //   func - the function to execute. Borrowed.
 //   args - arguments to pass to the function. length == func->argc. Borrowed.
 //   thread - the thread whose stack to push the frame on to.
@@ -109,6 +109,23 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
 //   doing an FbleReleaseValue call for func and args.
 // * Replaces the profiling block for the function being called.
 void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
+
+// FbleThreadFork --
+//   Fork a new thread from the given parent thread.
+//
+// Inputs:
+//   heap - the value heap.
+//   threads - pool of threads to add the forked thread to.
+//   parent - the thread to fork from.
+//   result - where to store a strong reference to the result of executing the
+//            function.
+//   func - the function to execute. Borrowed.
+//   args - arguments to pass to the function. length == func->argc. Borrowed.
+//
+// Side effects:
+// * Allocates a new thread and adds it to the threads pool.
+// * Increments the joins count on the parent thread.
+void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue** result, FbleFuncValue* func, FbleValue** args);
 
 // FbleThreadReturn --
 //   Return from the current frame on the thread's stack.
