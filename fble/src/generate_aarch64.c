@@ -392,9 +392,6 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 // * Outputs code to fout.
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 {
-// #define TODO assert(false && "TODO")
-#define TODO fprintf(fout, "  bl abort\n"); return
-
   fprintf(fout, "  cbz R_PROFILE, L._Run_%p.%zi.postprofile\n", code, pc);
   fprintf(fout, "  bl rand\n");
   fprintf(fout, "  and w0, w0, #%i\n", 0x3ff);    // rand() % 1024
@@ -603,7 +600,87 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       return;
     }
 
-    case FBLE_CALL_INSTR: TODO;
+    case FBLE_CALL_INSTR: {
+      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+      GetFrameVar(fout, "x0", call_instr->func);
+      fprintf(fout, "  bl FbleStrictValue\n");
+      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
+
+      fprintf(fout, "  cbnz R_SCRATCH_0, L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, "L.UndefinedFunctionValue", call_instr->loc);
+
+      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+
+      // Allocate space for the arguments array on the stack.
+      size_t sp_offset = 8 * call_instr->args.size;
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      for (size_t i = 0; i < call_instr->args.size; ++i) {
+        GetFrameVar(fout, "x0", call_instr->args.xs[i]);
+        fprintf(fout, "  str x0, [SP, #%zi]\n", 8 * i);
+      }
+
+      if (call_instr->exit) {
+        fprintf(fout, "  mov x0, R_HEAP\n");
+        fprintf(fout, "  mov x1, R_SCRATCH_0\n");
+        fprintf(fout, "  bl FbleRetainValue\n");
+
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          // We need to do a Retain on every arg from statics. For args from
+          // locals, we don't need to do a Retain on the arg the first time we
+          // see the local, because we can transfer the caller's ownership of
+          // the local to the callee for that arg.
+          bool retain = call_instr->args.xs[i].section != FBLE_LOCALS_FRAME_SECTION;
+          for (size_t j = 0; j < i; ++j) {
+            if (call_instr->args.xs[i].section == call_instr->args.xs[j].section
+                && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
+              retain = true;
+              break;
+            }
+          }
+
+          if (retain) {
+            fprintf(fout, "  mov x0, R_HEAP\n");
+            fprintf(fout, "  ldr x1, [SP, #%zi]\n", 8*i);
+            fprintf(fout, "  bl FbleRetainValue\n");
+          }
+        }
+
+        if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+          fprintf(fout, "  mov x0, R_HEAP\n");
+          fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", 8*call_instr->func.index);
+          fprintf(fout, "  bl FbleReleaseValue\n");
+        }
+
+        fprintf(fout, "  mov x0, R_HEAP\n");
+        fprintf(fout, "  mov x1, R_SCRATCH_0\n");                   // func
+        fprintf(fout, "  mov x2, SP\n");
+        fprintf(fout, "  ldr x3, [SP, #%zi]\n", sp_offset + 32);    // thread
+        fprintf(fout, "  bl FbleThreadTailCall\n");
+
+        fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
+        fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
+        fprintf(fout, "  b L._Run_.%p.exit\n", code);
+        return;
+      }
+
+      // stack->pc = pc + 1
+      fprintf(fout, "  ldr x0, [SP, #%zi]\n", sp_offset + 32); // x0 = thread
+      fprintf(fout, "  ldr x0, [x0, #0]\n");      // x0 = thread->stack
+      fprintf(fout, "  mov x1, #%zi\n", pc + 1);  // x1 = pc + 1
+      fprintf(fout, "  str x1, [x0, #16]\n");     // stack->pc = pc + 1
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  add x1, R_LOCALS, #%zi\n", 8*call_instr->dest);
+      fprintf(fout, "  mov x2, R_SCRATCH_0\n");   // func
+      fprintf(fout, "  mov x3, SP\n");
+      fprintf(fout, "  ldr x3, [SP, #%zi]\n", sp_offset + 32); // thread
+      fprintf(fout, "  bl FbleThreadCall\n");
+
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
+      fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
+      fprintf(fout, "  b L._Run_.%p.exit\n", code);
+      return;
+    }
 
     case FBLE_LINK_INSTR: {
       FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;

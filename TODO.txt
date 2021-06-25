@@ -1,5 +1,5 @@
 * Implement generate_aarch64
- - Implement run function call instruction.
+ - Round up sp_offset to a multiple of 16 to fix SIGBUG errors.
  - Debug and fix "relocation truncated to fit" error.
    From use of adr instruction? Maybe need adrp for far away things?
  - Fix issue with immediate out of range for fork.
