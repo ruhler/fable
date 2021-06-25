@@ -643,18 +643,19 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     }
 
     case FBLE_FORK_INSTR: {
-      TODO;
-      // FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      // for (size_t i = 0; i < fork_instr->args.size; ++i) {
-      //   fprintf(fout, "      child = FbleNewThread(threads, thread);\n");
-      //   fprintf(fout, "      arg = (FbleProcValue*)"); FrameGetStrict(fout, fork_instr->args.xs[i]); fprintf(fout, ";\n");
-      //   fprintf(fout, "      assert(arg != NULL && \"undefined proc value\");");
-      //   fprintf(fout, "      assert(arg->_base.tag == FBLE_PROC_VALUE);\n");
+      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+      for (size_t i = 0; i < fork_instr->args.size; ++i) {
+        GetFrameVar(fout, "x0", fork_instr->args.xs[i]);
+        fprintf(fout, "  bl FbleStrictValue\n");
+        fprintf(fout, "  mov x4, x0\n");
 
-
-      //   fprintf(fout, "      result = stack->locals + %zi;\n", fork_instr->dests.xs[i]);
-      //   fprintf(fout, "      FbleThreadCall(heap, result, arg, NULL, child);\n");
-      // }
+        fprintf(fout, "  mov x0, R_HEAP\n");
+        fprintf(fout, "  ldr x1, [SP, #24]\n");   // threads
+        fprintf(fout, "  ldr x2, [SP, #32]\n");   // thread
+        fprintf(fout, "  add x3, R_LOCALS, #%zi\n", 8 * fork_instr->dests.xs[i]);
+        fprintf(fout, "  mov x5, XZR\n");
+        fprintf(fout, "  bl FbleThreadFork\n");
+      }
 
       // stack->pc = pc + 1
       fprintf(fout, "  ldr x0, [SP, #32]\n");   // x0 = thread. TODO: keep in sync with EmitCode.
@@ -665,8 +666,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       // Return FBLE_EXEC_YIELDED
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_YIELDED);
       fprintf(fout, "  b L._Run_.%p.exit\n", code);
-      fprintf(fout, "      stack->pc = %zi;\n", pc+1);
-      fprintf(fout, "      return FBLE_EXEC_YIELDED;\n");
+      return;
     }
 
     case FBLE_COPY_INSTR: {
