@@ -40,6 +40,8 @@ static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
 static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
 
+static size_t StackBytesForCount(size_t count);
+
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
 static void LabelForLocStr(FILE* fout, const char* str);
@@ -379,6 +381,23 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
   fprintf(fout, "  b L._Run_.%p.exit\n", code);
 }
 
+// StackBytesForCount --
+//   Calculate a 16 byte aligned number of bytes sufficient to store count
+//   xwords.
+//
+// Inputs:
+//   count - the number of xwords.
+//
+// Returns:
+//   The number of bytes to allocate on the stack.
+//
+// Side effects:
+//   None.
+static size_t StackBytesForCount(size_t count)
+{
+  return 16 * ((count + 1) / 2);
+}
+
 // EmitInstr --
 //   Generate code to execute an instruction.
 //
@@ -449,9 +468,9 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
       // Subsequent args go onto the stack.
       // We need to keep the stack 16-byte aligned.
-      size_t stack = 16 * ((argc - num_reg_args + 1) / 2);
+      size_t sp_offset = StackBytesForCount(argc - num_reg_args);
       if (argc > num_reg_args) {
-        fprintf(fout, "  sub SP, SP, #%zi\n", stack);
+        fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
       }
 
       for (size_t i = num_reg_args; i < argc; ++i) {
@@ -463,7 +482,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       SetFrameVar(fout, "x0", struct_instr->dest);
 
       if (argc > num_reg_args) {
-        fprintf(fout, "  add SP, SP, #%zi\n", stack);
+        fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       }
       return;
     }
@@ -612,7 +631,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
 
       // Allocate space for the arguments array on the stack.
-      size_t sp_offset = 8 * call_instr->args.size;
+      size_t sp_offset = StackBytesForCount(call_instr->args.size);
       fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
       for (size_t i = 0; i < call_instr->args.size; ++i) {
         GetFrameVar(fout, "x0", call_instr->args.xs[i]);

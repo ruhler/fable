@@ -1,8 +1,9 @@
 * Implement generate_aarch64
- - Round up sp_offset to a multiple of 16 to fix SIGBUG errors.
+ - Fix issue with immediate out of range for fork.
+   example: add x3, R_LOCALS, #16568
  - Debug and fix "relocation truncated to fit" error.
    From use of adr instruction? Maybe need adrp for far away things?
- - Fix issue with immediate out of range for fork.
+   "relocation truncated to fit: R_AARCH64_ADR_PREL_LO21 against `.data'"
  - Debug and fix FbleHeapObjectAddRef: Assertion `dst_ != NULL' failed.
  - Figure out how to refer to fields by name instead of hard coding offsets
    into structs. Same for Run function stack local variables.
