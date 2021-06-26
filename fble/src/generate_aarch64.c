@@ -42,6 +42,8 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 
 static size_t StackBytesForCount(size_t count);
 
+static void AddImmediate(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp);
+
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
 static void LabelForLocStr(FILE* fout, const char* str);
@@ -398,6 +400,27 @@ static size_t StackBytesForCount(size_t count)
   return 16 * ((count + 1) / 2);
 }
 
+// AddImmediate --
+//   Generate assembly to do an add immediate to a register.
+//
+// Inputs:
+//   fout - the output stream
+//   r_dst - the name of the destination register
+//   r_a - the name of the register to use for the first argument.
+//   b - the immediate size to add
+//   r_tmp - an available temporary register that can be overwritten. 
+//            May be the same as r_dst, but not the same as r_a.
+static void AddImmediate(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp)
+{
+  if (b <= 4096) {
+    fprintf(fout, "  add %s, %s, #%zi\n", r_dst, r_a, b);
+    return;
+  }
+
+  fprintf(fout, "  mov %s, #%zi\n", r_tmp, b);
+  fprintf(fout, "  add %s, %s, %s\n", r_dst, r_a, r_tmp);
+}
+
 // EmitInstr --
 //   Generate code to execute an instruction.
 //
@@ -748,7 +771,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
         fprintf(fout, "  mov x0, R_HEAP\n");
         fprintf(fout, "  ldr x1, [SP, #24]\n");   // threads
         fprintf(fout, "  ldr x2, [SP, #32]\n");   // thread
-        fprintf(fout, "  add x3, R_LOCALS, #%zi\n", 8 * fork_instr->dests.xs[i]);
+        AddImmediate(fout, "x3", "R_LOCALS", 8 * fork_instr->dests.xs[i], "x3");
         fprintf(fout, "  mov x5, XZR\n");
         fprintf(fout, "  bl FbleThreadFork\n");
       }

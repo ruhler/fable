@@ -1,6 +1,4 @@
 * Implement generate_aarch64
- - Fix issue with immediate out of range for fork.
-   example: add x3, R_LOCALS, #16568
  - Debug and fix "relocation truncated to fit" error.
    From use of adr instruction? Maybe need adrp for far away things?
    "relocation truncated to fit: R_AARCH64_ADR_PREL_LO21 against `.data'"
