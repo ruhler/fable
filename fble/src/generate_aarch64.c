@@ -4,6 +4,7 @@
 #include <assert.h>   // for assert
 #include <ctype.h>    // for isalnum
 #include <stdio.h>    // for sprintf
+#include <stdarg.h>   // for va_list, va_start, va_end.
 #include <string.h>   // for strlen, strcat
 
 #include "fble-vector.h"    // for FbleVectorInit, etc.
@@ -42,11 +43,13 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 
 static size_t StackBytesForCount(size_t count);
 
-static void AddImmediate(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp);
+static void AddI(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp);
+static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
-static void LabelForLocStr(FILE* fout, const char* str);
+static size_t SizeofLabelForLocStr(const char* str);
+static void LabelForLocStr(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
 
 // AddLoc --
@@ -366,16 +369,16 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
   fprintf(fout, "  str x1, [x0, #16]\n");   // stack->pc = pc
 
   // Print error message.
-  fprintf(fout, "  adr x0, stderr\n");
-  fprintf(fout, "  adr x1, L.ErrorFormatString\n");
+  Adr(fout, "x0", "stderr");
+  Adr(fout, "x1", "L.ErrorFormatString");
 
-  fprintf(fout, "  adr x2, ");
-  LabelForLocStr(fout, loc.source->str);
-  fprintf(fout, "\n");
+  char label[SizeofLabelForLocStr(loc.source->str)];
+  LabelForLocStr(loc.source->str, label);
+  Adr(fout, "x2", "%s", label);
 
   fprintf(fout, "  mov x3, %i\n", loc.line);
   fprintf(fout, "  mov x4, %i\n", loc.col);
-  fprintf(fout, "  adr x5, %s\n", lmsg);
+  Adr(fout, "x5", "%s", lmsg);
   fprintf(fout, "  bl fprintf\n");
 
   // Return FBLE_EXEC_ABORTED
@@ -400,7 +403,7 @@ static size_t StackBytesForCount(size_t count)
   return 16 * ((count + 1) / 2);
 }
 
-// AddImmediate --
+// AddI --
 //   Generate assembly to do an add immediate to a register.
 //
 // Inputs:
@@ -410,7 +413,7 @@ static size_t StackBytesForCount(size_t count)
 //   b - the immediate size to add
 //   r_tmp - an available temporary register that can be overwritten. 
 //            May be the same as r_dst, but not the same as r_a.
-static void AddImmediate(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp)
+static void AddI(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp)
 {
   if (b <= 4096) {
     fprintf(fout, "  add %s, %s, #%zi\n", r_dst, r_a, b);
@@ -419,6 +422,33 @@ static void AddImmediate(FILE* fout, const char* r_dst, const char* r_a, size_t 
 
   fprintf(fout, "  mov %s, #%zi\n", r_tmp, b);
   fprintf(fout, "  add %s, %s, %s\n", r_dst, r_a, r_tmp);
+}
+
+// Adr --
+//   Emit an adr instruction to load a label into a register.
+//
+// Inputs:
+//   fout - the output stream
+//   r_dst - the name of the register to load the label into
+//   fmt, ... - a printf format string for the label to load.
+//
+// Side effects:
+//   Emits a sequence of instructions to load the label into the register.
+static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
+{
+  va_list ap;
+
+  fprintf(fout, "  adrp %s, ", r_dst);
+  va_start(ap, fmt);
+  vfprintf(fout, fmt, ap);
+  va_end(ap);
+  fprintf(fout, "\n");
+
+  fprintf(fout, "  add %s, %s, :lo12:", r_dst, r_dst);
+  va_start(ap, fmt);
+  vfprintf(fout, fmt, ap);
+  va_end(ap);
+  fprintf(fout, "\n");
 }
 
 // EmitInstr --
@@ -589,7 +619,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  ldr x0, [x0, #8]\n");  // x0 = uv->tag
       fprintf(fout, "  lsl x0, x0, #3\n");    // x0 = 8 * (uv->tag)
-      fprintf(fout, "  adr x1, L._Run_%p.%zi.pcs\n", code, pc); // x1 = pcs
+      Adr(fout, "x1", "L._Run_%p.%zi.pcs", code, pc); // x1 = pcs
       fprintf(fout, "  add x0, x0, x1\n");   // x0 = &pcs[uv->tag] 
       fprintf(fout, "  ldr x0, [x0]\n");     // x0 = pcs[uv->tag]
       fprintf(fout, "  br x0\n");            // goto pcs[uv->tag]
@@ -628,7 +658,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  ldr x2, [x0, #16]\n");   // x2 = thread->stack->func->profile_base_id
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  adr x1, L._Run_%p.%zi.exe\n", code, pc);
+      Adr(fout, "x1", "L._Run_%p.%zi.exe", code, pc);
       fprintf(fout, "  bl FbleNewFuncValue\n");
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");
       SetFrameVar(fout, "R_SCRATCH_0", func_instr->dest);
@@ -771,7 +801,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
         fprintf(fout, "  mov x0, R_HEAP\n");
         fprintf(fout, "  ldr x1, [SP, #24]\n");   // threads
         fprintf(fout, "  ldr x2, [SP, #32]\n");   // thread
-        AddImmediate(fout, "x3", "R_LOCALS", 8 * fork_instr->dests.xs[i], "x3");
+        AddI(fout, "x3", "R_LOCALS", 8 * fork_instr->dests.xs[i], "x3");
         fprintf(fout, "  mov x5, XZR\n");
         fprintf(fout, "  bl FbleThreadFork\n");
       }
@@ -934,7 +964,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Jump to the fble instruction at thread->stack->pc.
   fprintf(fout, "  ldr x0, [x4, #16]\n");  // x0 = (thread->stack)->pc
   fprintf(fout, "  lsl x0, x0, #3\n");     // x0 = 8 * (thread->stack->pc)
-  fprintf(fout, "  adr x1, L._Run_%p.pcs\n", (void*)code); // x1 = pcs
+  Adr(fout, "x1", "L._Run_%p.pcs", (void*)code); // x1 = pcs
   fprintf(fout, "  add x0, x0, x1\n");     // x0 = &pcs[thread->stack->pc]
   fprintf(fout, "  ldr x0, [x0]\n");       // x0 = pcs[thread->stack->pc]
   fprintf(fout, "  br x0\n");              // goto pcs[thread->stack->pc]
@@ -958,17 +988,37 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  ret\n");
 }
 
-// LabelForLocStr --
-//   Output the label for a location source file name string.
+// SizeofLabelForLocStr --
+//   Return the size of the label used for a given location string.
 //
 // Inputs:
-//   fout - where to output the label.
-//   str - the file name string to output the label for.
-static void LabelForLocStr(FILE* fout, const char* str)
+//   str - the file name string to output the size of the label for.
+static size_t SizeofLabelForLocStr(const char* str)
 {
-  fprintf(fout, "L.loc.");
+  size_t size = strlen("L.loc.") + 1;
   for (const char* p = str; *p != '\0'; p++) {
-    fprintf(fout, isalnum(*p) ? "%c" : "_%02x_", *p);
+    size += isalnum(*p) ? 1 : 4;
+  }
+  return size;
+}
+
+// LabelForLocStr --
+//   Construct the label for a location source file name string.
+//
+// Inputs:
+//   str - the file name string to output the label for.
+//   dst - a character buffer of size SizeofLabelForLocString(str) to write
+//         the label to.
+//
+// Side effects:
+//   Fills in dst with the label.
+static void LabelForLocStr(const char* str, char* dst)
+{
+  strcpy(dst, "L.loc.");
+  for (const char* p = str; *p != '\0'; p++) {
+    char x[5];
+    sprintf(x, isalnum(*p) ? "%c" : "_%02x_", *p);
+    strcat(dst, x);
   }
 }
 
@@ -1072,8 +1122,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   // Definitions of source code locations.
   for (size_t i = 0; i < locs.size; ++i) {
-    LabelForLocStr(fout, locs.xs[i]);
-    fprintf(fout, ":\n  .string \"%s\"\n", locs.xs[i]);
+    char label[SizeofLabelForLocStr(locs.xs[i])];
+    LabelForLocStr(locs.xs[i], label);
+    fprintf(fout, "%s:\n  .string \"%s\"\n", label, locs.xs[i]);
   }
 
   for (int i = 0; i < blocks.size; ++i) {
@@ -1113,9 +1164,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
   fprintf(fout, "  mov FP, SP\n");
 
-  fprintf(fout, "  adr x1, " LABEL "\n", module_id);
+  Adr(fout, "x1", LABEL, module_id);
   fprintf(fout, "  mov x2, %zi\n", module->deps.size);
-  fprintf(fout, "  adr x3, " LABEL "\n", deps_id);
+  Adr(fout, "x3", LABEL, deps_id);
   fprintf(fout, "  bl FbleLoadFromCompiled\n");
 
   fprintf(fout, "  ldp FP, LR, [SP], #16\n");

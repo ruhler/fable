@@ -1,8 +1,10 @@
 * Implement generate_aarch64
- - Debug and fix "relocation truncated to fit" error.
-   From use of adr instruction? Maybe need adrp for far away things?
-   "relocation truncated to fit: R_AARCH64_ADR_PREL_LO21 against `.data'"
+ - Generate code for abort function.
+ - Debug and fix segmentation violation
+   Looks related to process evaluation.
  - Debug and fix FbleHeapObjectAddRef: Assertion `dst_ != NULL' failed.
+
+* Cleanup fble-compile related code
  - Figure out how to refer to fields by name instead of hard coding offsets
    into structs. Same for Run function stack local variables.
  - Implement abort functions in aarch64.
