@@ -48,6 +48,8 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
+static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr);
+static void EmitCodeForAbort(FILE* fout, FbleCode* code);
 static size_t SizeofLabelForLocStr(const char* str);
 static void LabelForLocStr(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
@@ -988,6 +990,229 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  ret\n");
 }
 
+// EmitInstrForAbort --
+//   Generate code to execute an instruction for the purposes of abort.
+//
+// Inputs:
+//   fout - the output stream to write the code to.
+//   code - pointer to the current code block, for referencing labels.
+//   pc - the program counter of the instruction.
+//   instr - the instruction to execute.
+//
+// Side effects:
+// * Outputs code to fout.
+static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr)
+{
+  switch (instr->tag) {
+    case FBLE_STRUCT_VALUE_INSTR: {
+      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
+      SetFrameVar(fout, "XZR", struct_instr->dest);
+      return;
+    }
+
+    case FBLE_UNION_VALUE_INSTR: {
+      FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
+      SetFrameVar(fout, "XZR", union_instr->dest);
+      return;
+    }
+
+    case FBLE_STRUCT_ACCESS_INSTR: {
+      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      SetFrameVar(fout, "XZR", access_instr->dest);
+      return;
+    }
+
+    case FBLE_UNION_ACCESS_INSTR: {
+      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+      SetFrameVar(fout, "XZR", access_instr->dest);
+      return;
+    }
+
+    case FBLE_UNION_SELECT_INSTR: {
+      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+      fprintf(fout, "  b L._Abort_%p.pc.%zi\n", code, pc + 1 + select_instr->jumps.xs[0]);
+      return;
+    }
+
+    case FBLE_JUMP_INSTR: {
+      FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+      fprintf(fout, "  b L._Abort_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
+      return;
+    }
+
+    case FBLE_FUNC_VALUE_INSTR: {
+      FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
+      SetFrameVar(fout, "XZR", func_instr->dest);
+      return;
+    }
+
+    case FBLE_CALL_INSTR: {
+      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+      if (call_instr->exit) {
+        if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+          fprintf(fout, "  mov x0, R_HEAP\n");
+          GetFrameVar(fout, "x1", call_instr->func);
+          fprintf(fout, "  bl FbleReleaseValue\n");
+          SetFrameVar(fout, "XZR", call_instr->func.index);
+        }
+
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
+            fprintf(fout, "  mov x0, R_HEAP\n");
+            GetFrameVar(fout, "x1", call_instr->args.xs[i]);
+            fprintf(fout, "  bl FbleReleaseValue\n");
+            SetFrameVar(fout, "XZR", call_instr->args.xs[i].index);
+          }
+        }
+
+        fprintf(fout, "  ldr x0, [SP, #24]\n");   // stack
+        fprintf(fout, "  ldr x1, [x0, #24]\n");   // stack->result
+        fprintf(fout, "  str XZR, [x1]\n");       // stack->result = NULL;
+      }
+
+      SetFrameVar(fout, "XZR", call_instr->dest);
+      return;
+    }
+
+    case FBLE_LINK_INSTR: {
+      FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
+      SetFrameVar(fout, "XZR", link_instr->get);
+      SetFrameVar(fout, "XZR", link_instr->put);
+      return;
+    }
+
+    case FBLE_FORK_INSTR: {
+      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
+      for (size_t i = 0; i < fork_instr->args.size; ++i) {
+        SetFrameVar(fout, "XZR", fork_instr->dests.xs[i]);
+      }
+      return;
+    }
+
+    case FBLE_COPY_INSTR: {
+      FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+      SetFrameVar(fout, "XZR", copy_instr->dest);
+      return;
+    }
+
+    case FBLE_REF_VALUE_INSTR: {
+      FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+      SetFrameVar(fout, "XZR", ref_instr->dest);
+      return;
+    }
+
+    case FBLE_REF_DEF_INSTR: {
+      return;
+    }
+
+    case FBLE_RETURN_INSTR: {
+      FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
+      switch (return_instr->result.section) {
+        case FBLE_STATICS_FRAME_SECTION: break;
+        case FBLE_LOCALS_FRAME_SECTION: {
+          fprintf(fout, "  mov x0, R_HEAP\n");
+          GetFrameVar(fout, "x1", return_instr->result);
+          fprintf(fout, "  bl FbleReleaseValue\n");
+          break;
+        }
+      }
+
+      fprintf(fout, "  ldr x0, [SP, #24]\n");   // stack
+      fprintf(fout, "  ldr x1, [x0, #24]\n");   // stack->result
+      fprintf(fout, "  str XZR, [x1]\n");       // stack->result = NULL;
+
+      fprintf(fout, "  b L._Abort_.%p.exit\n", code);
+      return;
+    }
+
+    case FBLE_TYPE_INSTR: {
+      FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
+      SetFrameVar(fout, "XZR", type_instr->dest);
+      return;
+    }
+
+    case FBLE_RELEASE_INSTR: {
+      FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
+      fprintf(fout, "  mov x0, R_HEAP\n");
+
+      FbleFrameIndex target_index = {
+        .section = FBLE_LOCALS_FRAME_SECTION,
+        .index = release_instr->target
+      };
+      GetFrameVar(fout, "x1", target_index);
+      fprintf(fout, "  bl FbleReleaseValue\n");
+      return;
+    }
+  }
+}
+
+// EmitCodeForAbort --
+//   Generate code to abort an FbleCode block.
+//
+// Inputs:
+//   fout - the output stream to write the code to.
+//   code - the block of code to generate assembly.
+//
+// Side effects:
+// * Outputs generated code to the given output stream.
+static void EmitCodeForAbort(FILE* fout, FbleCode* code)
+{
+  // Jump table data for jumping to the right fble pc.
+  fprintf(fout, "  .section .data.rel.local\n");
+  fprintf(fout, "  .align 3\n");
+  fprintf(fout, "L._Abort_%p.pcs:\n", (void*)code);
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    fprintf(fout, "  .xword L._Abort_%p.pc.%zi\n", (void*)code, i);
+  }
+
+  fprintf(fout, "  .text\n");
+  fprintf(fout, "  .align 2\n");
+  fprintf(fout, "_Abort_%p:\n", (void*)code);
+
+  // Set up stack and frame pointer.
+  fprintf(fout, "  stp FP, LR, [SP, #-48]!\n");
+  fprintf(fout, "  mov FP, SP\n");
+
+  // Save args to the stack for later reference.
+  fprintf(fout, "  str x0, [SP, #16]\n"); // heap
+  fprintf(fout, "  str x1, [SP, #24]\n"); // stack
+
+  // Save callee saved registers for later restoration.
+  fprintf(fout, "  str R_HEAP, [SP, #32]\n");
+  fprintf(fout, "  str R_LOCALS, [SP, #40]\n");
+  fprintf(fout, "  str R_STATICS, [SP, #48]\n");
+
+  // Set up common registers.
+  fprintf(fout, "  ldr x2, [x1, #8]\n");      // stack->func
+  fprintf(fout, "  mov R_HEAP, x0\n");
+  fprintf(fout, "  add R_LOCALS, x1, #40\n");
+  fprintf(fout, "  add R_STATICS, x2, #%zi\n", sizeof(FbleValue) + 16);
+
+  // Jump to the fble instruction at thread->stack->pc.
+  fprintf(fout, "  ldr x0, [x1, #16]\n");  // x0 = stack->pc
+  fprintf(fout, "  lsl x0, x0, #3\n");     // x0 = 8 * (stack->pc)
+  Adr(fout, "x1", "L._Abort_%p.pcs", (void*)code); // x1 = pcs
+  fprintf(fout, "  add x0, x0, x1\n");     // x0 = &pcs[stack->pc]
+  fprintf(fout, "  ldr x0, [x0]\n");       // x0 = pcs[stack->pc]
+  fprintf(fout, "  br x0\n");              // goto pcs[stack->pc]
+
+  // Emit code for each fble instruction
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    fprintf(fout, "L._Abort_%p.pc.%zi:\n", (void*)code, i);
+    EmitInstrForAbort(fout, code, i, code->instrs.xs[i]);
+  }
+
+  // Restore stack and frame pointer and return whatever is in x0.
+  // Common code for exiting a run function.
+  fprintf(fout, "L._Abort_.%p.exit:\n", (void*)code);
+  fprintf(fout, "  ldr R_HEAP, [SP, #32]\n");
+  fprintf(fout, "  ldr R_LOCALS, [SP, #40]\n");
+  fprintf(fout, "  ldr R_STATICS, [SP, #48]\n");
+  fprintf(fout, "  ldp FP, LR, [SP], #48\n");
+  fprintf(fout, "  ret\n");
+}
+
+
 // SizeofLabelForLocStr --
 //   Return the size of the label used for a given location string.
 //
@@ -1130,16 +1355,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
     EmitCode(fout, blocks.xs[i]);
-
-    fprintf(fout, "  .text\n");
-    fprintf(fout, "  .align 2\n");
-    fprintf(fout, "_Abort_%p:\n", (void*)blocks.xs[i]);
-    fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
-    fprintf(fout, "  mov FP, SP\n");
-    fprintf(fout, "  bl abort\n");  // TODO: Implement me.
-    fprintf(fout, "  ldp FP, LR, [SP], #16\n");
-    fprintf(fout, "  ret\n");
+    EmitCodeForAbort(fout, blocks.xs[i]);
   }
+
   FbleFree(blocks.xs);
   FbleFree(locs.xs);
 

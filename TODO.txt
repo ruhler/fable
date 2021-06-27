@@ -1,8 +1,9 @@
 * Implement generate_aarch64
- - Generate code for abort function.
- - Debug and fix segmentation violation
-   Looks related to process evaluation.
- - Debug and fix FbleHeapObjectAddRef: Assertion `dst_ != NULL' failed.
+ - Debug starting from simple test failures:
+   || FAILED: out/test/0-test/undefined-access/test-compiled.tr 
+   || FAILED: out/test/5.3-func-apply/basic/single-arg/test-compiled.tr 
+   || FAILED: out/test/6.4-proc-exec/basic/single-binding/test-compiled.tr 
+   
 
 * Cleanup fble-compile related code
  - Figure out how to refer to fields by name instead of hard coding offsets
@@ -10,6 +11,8 @@
  - Implement abort functions in aarch64.
  - Move prototype for FbleLoadCompiled to a better place?
  - Retire generate_c?
+ - Set up a ninja pool for running the assembler on generated assembly so we
+   don't have to use -j 1 or worry about running out of memory.
  
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense.
