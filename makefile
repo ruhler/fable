@@ -12,7 +12,7 @@ ninja:
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja -k 0 -j 1
+	ninja -f out/build.ninja out/test/5.3-func-apply/basic/single-arg/test-compiled.tr
 	#ninja -f out/build.ninja out/test/0-test/no-error/test-compiled.tr
 
 .PHONY: all

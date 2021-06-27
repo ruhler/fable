@@ -727,7 +727,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
         fprintf(fout, "  mov x0, R_HEAP\n");
         fprintf(fout, "  mov x1, R_SCRATCH_0\n");                   // func
-        fprintf(fout, "  mov x2, SP\n");
+        fprintf(fout, "  mov x2, SP\n");                            // args
         fprintf(fout, "  ldr x3, [SP, #%zi]\n", sp_offset + 32);    // thread
         fprintf(fout, "  bl FbleThreadTailCall\n");
 
@@ -747,7 +747,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  add x1, R_LOCALS, #%zi\n", 8*call_instr->dest);
       fprintf(fout, "  mov x2, R_SCRATCH_0\n");   // func
       fprintf(fout, "  mov x3, SP\n");
-      fprintf(fout, "  ldr x3, [SP, #%zi]\n", sp_offset + 32); // thread
+      fprintf(fout, "  ldr x4, [SP, #%zi]\n", sp_offset + 32); // thread
       fprintf(fout, "  bl FbleThreadCall\n");
 
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
