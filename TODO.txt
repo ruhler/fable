@@ -1,8 +1,4 @@
 * Implement generate_aarch64
- - Debug out/test/0-test/undefined-access/test-compiled.tr 
-   This looks okay, except for whatever reason it isn't printing the error
-   message. Maybe I can intercept the call to fprintf somehow?
-
  - Debug out/test/5.3-func-apply/basic/single-arg/test-compiled.tr 
    We're getting a NULL static function argument.
 

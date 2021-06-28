@@ -372,6 +372,7 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 
   // Print error message.
   Adr(fout, "x0", "stderr");
+  fprintf(fout, "  ldr x0, [x0]\n");
   Adr(fout, "x1", "L.ErrorFormatString");
 
   char label[SizeofLabelForLocStr(loc.source->str)];
