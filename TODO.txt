@@ -1,11 +1,3 @@
-* Implement generate_aarch64
- - Debug out/test/5.3-func-apply/basic/single-arg/test-compiled.tr 
-   We're getting a NULL static function argument.
-
- - Debug the following test failures:
-   || FAILED: out/test/6.4-proc-exec/basic/single-binding/test-compiled.tr 
-   
-
 * Cleanup fble-compile related code
  - Figure out how to refer to fields by name instead of hard coding offsets
    into structs. Same for Run function stack local variables.

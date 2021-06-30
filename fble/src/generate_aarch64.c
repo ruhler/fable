@@ -660,16 +660,18 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  ldr x0, [x0, #8]\n");    // x0 = thread->stack->func
       fprintf(fout, "  ldr x2, [x0, #16]\n");   // x2 = thread->stack->func->profile_base_id
 
+      // R_SCRATCH_1: func->statics
       fprintf(fout, "  mov x0, R_HEAP\n");
       Adr(fout, "x1", "L._Run_%p.%zi.exe", code, pc);
       fprintf(fout, "  bl FbleNewFuncValue\n");
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
+      fprintf(fout, "  mov R_SCRATCH_0, x0\n");   // R_SCRATCH_0: func
       SetFrameVar(fout, "R_SCRATCH_0", func_instr->dest);
 
       for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
         fprintf(fout, "  mov x0, R_HEAP\n");
         fprintf(fout, "  mov x1, R_SCRATCH_0\n");
         GetFrameVar(fout, "x2", func_instr->scope.xs[i]);
+        fprintf(fout, "  str x2, [R_SCRATCH_0, #%zi]\n", 24 + 8 * i);
         fprintf(fout, "  bl FbleValueAddRef\n");
       }
       return;
@@ -961,7 +963,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
   fprintf(fout, "  ldr x5, [x4, #8]\n");      // thread->stack->func
   fprintf(fout, "  mov R_HEAP, x0\n");
   fprintf(fout, "  add R_LOCALS, x4, #40\n");
-  fprintf(fout, "  add R_STATICS, x5, #%zi\n", sizeof(FbleValue) + 16);
+  fprintf(fout, "  add R_STATICS, x5, #24\n");  // func->statics
   fprintf(fout, "  ldr R_PROFILE, [x2, #8]\n"); // thread->profile
 
   // Jump to the fble instruction at thread->stack->pc.
