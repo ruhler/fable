@@ -26,6 +26,9 @@ puts {
 rule rule
   description = $out
   command = $cmd
+
+pool fbleobj_pool
+  depth = 1
 }
 
 # build --
@@ -86,7 +89,9 @@ proc obj_cov { obj src iflags args } {
 proc fbleobj { obj compile module_path search_path export args } {
   set s [string map {.o .s} $obj]
   build $s "$compile $args" "$compile $export -s $module_path $search_path > $s"
-  obj $obj $s ""
+
+  set cmd "as -o $obj $s"
+  build $obj "$s $args" $cmd "pool = fbleobj_pool"
 
 #  set c [string map {.o .c} $obj]
 #  build $c "$compile $args" "$compile $export $module_path $search_path > $c"

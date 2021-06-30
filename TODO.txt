@@ -1,11 +1,13 @@
+* Figure out why running make twice causes things to be rebuilt.
 * Cleanup fble-compile related code
  - Figure out how to refer to fields by name instead of hard coding offsets
    into structs. Same for Run function stack local variables.
- - Implement abort functions in aarch64.
+   See offsetof
  - Move prototype for FbleLoadCompiled to a better place?
  - Retire generate_c?
- - Set up a ninja pool for running the assembler on generated assembly so we
-   don't have to use -j 1 or worry about running out of memory.
+
+* Figure out why the assembler takes so much memory some times.
+ - Compare to tcc, which doesn't.
  
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense.
@@ -15,9 +17,6 @@
    like fble-md5 and fble-app?
  - Check we are passing meaningful block ids to FbleNewInputPortValue and
    FbleNewOutputPortValue in all cases.
-
-* Consider/explore generating assembly instead of c code from fble-compile.
- see thoughts/fble.asm.txt.
 
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?

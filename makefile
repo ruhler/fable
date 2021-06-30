@@ -17,7 +17,7 @@ foo:
 
 .PHONY: all
 all: out/build.ninja
-	ninja -f out/build.ninja -j 2
+	ninja -f out/build.ninja
 
 .PHONY: clean
 clean:
