@@ -77,6 +77,17 @@ proc obj_cov { obj src iflags args } {
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
 
+# Compile a .s file to .o
+#
+# Inputs:
+#   obj - the .o file to build (include $::obj directory).
+#   src - the .s file to build the .o file from.
+#   args - optional additional dependencies.
+proc asm { obj src args } {
+  set cmd "as -o $obj $src"
+  build $obj "$src $args" $cmd
+}
+
 # Compile a .fble file to .o.
 #
 # Inputs:
@@ -452,7 +463,8 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
 # /Stdio/Test% compilation test
 build $::src/fble-stdio-test.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain -s /Stdio/Test% > $::src/fble-stdio-test.s"
-obj $::obj/fble-stdio-test.o $::src/fble-stdio-test.s ""
+asm $::obj/fble-stdio-test.o $::src/fble-stdio-test.s
+
 bin $::bin/fble-stdio-test \
   "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
@@ -462,7 +474,8 @@ test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
 # /Fble/Tests% compilation test
 build $::src/fble-tests.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain -s /Fble/Tests% > $::src/fble-tests.s"
-obj $::obj/fble-tests.o $::src/fble-tests.s ""
+asm $::obj/fble-tests.o $::src/fble-tests.s
+
 bin $::bin/fble-tests \
   "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
@@ -483,7 +496,7 @@ test $::test/fble-compiled-profiles-test.tr \
 # /Fble/Bench% compiled binary
 build $::src/fble-bench.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain -s /Fble/Bench% > $::src/fble-bench.s"
-obj $::obj/fble-bench.o $::src/fble-bench.s ""
+asm $::obj/fble-bench.o $::src/fble-bench.s ""
 bin $::bin/fble-bench \
   "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"

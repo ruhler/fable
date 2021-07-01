@@ -1,4 +1,3 @@
-* Figure out why running make twice causes things to be rebuilt.
 * Cleanup fble-compile related code
  - Figure out how to refer to fields by name instead of hard coding offsets
    into structs. Same for Run function stack local variables.
