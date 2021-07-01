@@ -281,7 +281,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   }
 
   LabelId deps_xs_id = (*label_id)++;
-  fprintf(fout, "  .section .data.rel.local\n");
+  fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", deps_xs_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
@@ -291,7 +291,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->code->_base.profile_blocks);
 
   LabelId executable_id = (*label_id)++;
-  fprintf(fout, "  .section .data.rel,\"aw\"\n");
+  fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", executable_id);
   fprintf(fout, "  .xword 1\n");                          // .refcount
@@ -307,7 +307,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .xword FbleExecutableNothingOnFree\n");
 
   LabelId module_id = (*label_id)++;
-  fprintf(fout, "  .section .data.rel.local\n");
+  fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", module_id);
   fprintf(fout, "  .xword 1\n");                                  // .refcount
@@ -603,7 +603,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
 
       // Jump table data for jumping to the right fble pc.
-      fprintf(fout, "  .section .data.rel.local\n");
+      fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
       fprintf(fout, "L._Run_%p.%zi.pcs:\n", code, pc);
       for (size_t i = 0; i < select_instr->jumps.size; ++i) {
@@ -637,7 +637,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-      fprintf(fout, "  .section .data.rel,\"aw\"\n");
+      fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
       fprintf(fout, "L._Run_%p.%zi.exe:\n", code, pc);
       fprintf(fout, "  .xword 1\n");                          // .refcount
@@ -929,7 +929,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 static void EmitCode(FILE* fout, FbleCode* code)
 {
   // Jump table data for jumping to the right fble pc.
-  fprintf(fout, "  .section .data.rel.local\n");
+  fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, "L._Run_%p.pcs:\n", (void*)code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
@@ -1161,7 +1161,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 static void EmitCodeForAbort(FILE* fout, FbleCode* code)
 {
   // Jump table data for jumping to the right fble pc.
-  fprintf(fout, "  .section .data.rel.local\n");
+  fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, "L._Abort_%p.pcs:\n", (void*)code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
@@ -1368,7 +1368,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   LabelId module_id = StaticExecutableModule(fout, &label_id, module);
   LabelId deps_id = label_id++;
 
-  fprintf(fout, "  .section .data.rel,\"aw\"\n");
+  fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
   fprintf(fout, LABEL ":\n", deps_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
