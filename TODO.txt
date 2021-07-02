@@ -1,12 +1,15 @@
-* Cleanup fble-compile related code
- - Figure out how to refer to fields by name instead of hard coding offsets
-   into structs. Same for Run function stack local variables.
-   See offsetof
- - Move prototype for FbleLoadCompiled to a better place?
- - Retire generate_c?
+* Use offsetof wherever possible in generate_aarch64.c
+ - Make a type representing Run and Abort stack frames.
+* Move prototype for FbleLoadCompiled to a better place?
 
 * Figure out why the assembler takes so much memory some times.
  - Compare to tcc, which doesn't.
+ - Use Invaders/Graphics.fble for example.
+
+* Retire generate_c?
+
+* Add instructions for list and literal, to avoid assembly code blowup from
+  desugaring lists and literals?
  
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense.
