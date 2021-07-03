@@ -99,19 +99,10 @@ proc asm { obj src args } {
 #   args - additional dependencies, typically including the .fble file.
 proc fbleobj { obj compile module_path search_path export args } {
   set s [string map {.o .s} $obj]
-  build $s "$compile $args" "$compile $export -s $module_path $search_path > $s"
+  build $s "$compile $args" "$compile $export $module_path $search_path > $s"
 
   set cmd "as -o $obj $s"
   build $obj "$s $args" $cmd "pool = fbleobj_pool"
-
-#  set c [string map {.o .c} $obj]
-#  build $c "$compile $args" "$compile $export $module_path $search_path > $c"
-# 
-#  # Compile the c file using tcc, because it requires signifantly less memory
-#  # than gcc or clang.
-#  set cflags "-pedantic -Wall -Werror -g -I /usr/include -I fble/include -I fble/src"
-#  set cmd "tcc -MD -MF $obj.d $cflags -c -o $obj $c"
-#  build $obj "$c $args" $cmd "depfile = $obj.d"
 }
 
 # lib --
@@ -462,7 +453,7 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
 
 # /Stdio/Test% compilation test
 build $::src/fble-stdio-test.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain -s /Stdio/Test% > $::src/fble-stdio-test.s"
+  "$::bin/fble-compile --export FbleCompiledMain /Stdio/Test% > $::src/fble-stdio-test.s"
 asm $::obj/fble-stdio-test.o $::src/fble-stdio-test.s
 
 bin $::bin/fble-stdio-test \
@@ -473,7 +464,7 @@ test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
 
 # /Fble/Tests% compilation test
 build $::src/fble-tests.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain -s /Fble/Tests% > $::src/fble-tests.s"
+  "$::bin/fble-compile --export FbleCompiledMain /Fble/Tests% > $::src/fble-tests.s"
 asm $::obj/fble-tests.o $::src/fble-tests.s
 
 bin $::bin/fble-tests \
@@ -495,7 +486,7 @@ test $::test/fble-compiled-profiles-test.tr \
 
 # /Fble/Bench% compiled binary
 build $::src/fble-bench.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain -s /Fble/Bench% > $::src/fble-bench.s"
+  "$::bin/fble-compile --export FbleCompiledMain /Fble/Bench% > $::src/fble-bench.s"
 asm $::obj/fble-bench.o $::src/fble-bench.s ""
 bin $::bin/fble-bench \
   "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \

@@ -1,9 +1,8 @@
+* Add instructions for list and literal, to avoid assembly code blowup from
+  desugaring lists and literals.
+ 
 * Move prototype for FbleLoadCompiled to a better place?
 
-* Remove code for generate_c.
-* Add instructions for list and literal, to avoid assembly code blowup from
-  desugaring lists and literals?
- 
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense.
 
@@ -16,11 +15,6 @@
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?
  - Separate tests from specification?
-
-* Factor out and reuse code in generate_c for generating string literals with
-  funny escape characters in them.
- - It would really be nice if I could do it as a custom string format char,
-   instead of having to do a separate call to fprintf for it.
 
 * Consider factoring out common code used in generated code into an include
   file we can include? Like a foo.c.inc kind of thing?
@@ -81,6 +75,8 @@
 
 * [build] Decide whether individual test failures should fail to build or not.
   If they should fail to build, then tools/tests.tcl could be simplified?
+ - building with -k 0 and grepping for FAILED is a decent way to see the list
+   of all current failures.
 
 * [tests] Any way to improve memory growth tests?
  It feels wrong to me to have to do a full gc for the tests to pass. It feels
