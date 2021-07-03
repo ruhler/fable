@@ -1,3 +1,7 @@
+* Fix bug in profile block name used for some profiling entries when compiled
+ - Compare profile from interpreted and compiled to see what I'm talking
+   about.
+
 * Try to reduce size of generated assembly?
  - Factor out slow paths for profiling and returning abort?
  - Generate a sparse pc jump table?
@@ -17,9 +21,6 @@
 * Add option for passing .so files to FbleMain.
 * Consider reorganizing 'langs' directory?
  - Separate tests from specification?
-
-* Consider factoring out common code used in generated code into an include
-  file we can include? Like a foo.c.inc kind of thing?
 
 * Print full stack trace on abort instead of just the top stack trace?
 * Optimize Sat simplification to avoid lots of repeated traversals?
@@ -55,8 +56,11 @@
 
 * [compilation] Switch over entirely to compilation use case?
  - Remove interpreter entirely? Any significant downside?
- - We could always write a wrapper script that calls tcc, for example, to give
-   the same user experience as the interpreter currently gives us.
+ - We could always write a wrapper script that calls the compiler, for
+   example, to give the same user experience as the interpreter currently
+   gives us.
+ - Note: currently the interpreter case is my answer for how to run on
+   architectures other than aarch64.
 
 * [compilation] Cleanup API between execute/value/interpret/generated code.
  - Can I cleanup/break the dependency cycle between execute.h and value.h?
@@ -182,9 +186,6 @@
   to spend evaluating should be independent of the number of children in the
   family.
 
-* [profile] Cleanup
- - Switch to convention that caller is responsible for enter block?
- - Replace AutoExitBlock with ReplaceBlock?
 * [profile] Check if it's okay to add new blocks to a profile in progress.
  - either way, document that clearly.
 

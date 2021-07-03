@@ -261,3 +261,77 @@ retain/release it or not. Like... a reference count? So, you still pay the
 cost of checking per object, but you avoid the function call to Retain/Release
 by inlining the initial check?
 
+---
+
+Now that we are generating custom aarch64 assembly when we compile, I want to
+step back and do another performance analysis.
+
+My intuition tells me we have the following potential performance
+opportunities:
+* Pack data into words when possible, as discussed previously, to reduce gc
+  and allocation effort required.
+* Use the native stack instead of a managed stack for multithreading.
+
+Step 1: fble based profiling of fble-bench
+
+Just to get a sense of what fble code seems to take up time. Then perhaps we
+could write a micro benchmark to focus performance analysis on. I kind of
+suspect we could just increment an integer in a loop to get a good idea.
+Something like:
+ 
+for (int i = 0; i < 1000; ++i)
+  for (int j = 0; j < 1000; ++j)
+    ;
+ 
+Step 2: Let's try using linux perf tool again, so we can test on our generated
+assembly.
+
+Goal to start: ideally I can sample periodically over the course of the
+benchmark and get a histogram of PC addresses where the samples took place.
+I should be able to label which functions the addresses come from and get a
+sense if we spend a lot of time, for example, in GC, or allocation, or
+generated assembly, or what have you.
+
+I'm kind of guessing it's almost all going to be in allocations. Is it worth
+trying to optimize my allocator rather than use the slow debug on top of
+malloc based allocation?
+
+It took a shockingly long 32 minutes to run compiled fble-bench with
+profiling. That's 10x overhead for profiling?
+
+For the fun of it, let me try running interpreted with profiling.
+That only takes 6m15 seconds. Something is very wrong. If it's faster to do
+profiling with the interpreter and they give the same results, why support
+profiling in compiled code?
+
+Oh. You know what it is? A bug. Compiled code looks to be sampling every cycle
+instead of every 1000. That should be fixable.
+
+gcc generates the following code:
+
+    1acc:       94000000        bl      0 <rand>
+    1ad0:       12002400        and     w0, w0, #0x3ff
+    1ad4:       7100001f        cmp     w0, #0x0
+    1ad8:       54000081        b.ne    1ae8 <FbleInterpreterRunFunction+0xa4>
+
+    1adc:       d2800021        mov     x1, #0x1                        // #1
+    1ae0:       f94027e0        ldr     x0, [sp, #72]
+    1ae4:       94000000        bl      0 <FbleProfileSample>
+
+I generate:
+
+  bl rand
+  and w0, w0, #1023
+  cbz w0, L._Run_0x181b2258.0.postsample
+
+  mov x0, R_PROFILE
+  mov x1, #1
+  bl FbleProfileSample
+
+What's wrong? What's broken here?
+
+
+The condition is flipped? gcc says: if it is not equal to zero, skip sampling.
+Ah. That's it. I need cbnz.
+
+Now compiled profile is 4m19.816s. Good.

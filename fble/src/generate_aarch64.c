@@ -502,8 +502,8 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 {
   fprintf(fout, "  cbz R_PROFILE, L._Run_%p.%zi.postprofile\n", code, pc);
   fprintf(fout, "  bl rand\n");
-  fprintf(fout, "  and w0, w0, #%i\n", 0x3ff);    // rand() % 1024
-  fprintf(fout, "  cbz w0, L._Run_%p.%zi.postsample\n", code, pc);
+  fprintf(fout, "  and w0, w0, #0x3ff\n");    // rand() % 1024
+  fprintf(fout, "  cbnz w0, L._Run_%p.%zi.postsample\n", code, pc);
   fprintf(fout, "  mov x0, R_PROFILE\n");
   fprintf(fout, "  mov x1, #1\n");
   fprintf(fout, "  bl FbleProfileSample\n");

@@ -459,3 +459,13 @@ more than 256? Is it this use of '#'?
 
 I'm not longer able to reproduce the issue of loading from far away offsets.
 Odd...
+
+---
+
+It's done! We compile to aarch64 now. It wasn't too bad to write. We'll see
+how hard it ends up being to maintain. We get a nice speed boost:
+3m29s => 2m48s  going from tcc to our hand crafted assembly. And it feels like
+it opens up a lot of possibilities for future performance improvements, such
+as custom procedure call standards and use of native stack instead of managed
+stack.
+
