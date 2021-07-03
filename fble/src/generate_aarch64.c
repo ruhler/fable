@@ -22,7 +22,7 @@
 //
 // The number is turned into a label using printf format LABEL.
 typedef unsigned int LabelId;
-#define LABEL "L.%x"
+#define LABEL ".L.%x"
 
 typedef struct {
   size_t size;
@@ -406,7 +406,7 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
   // Print error message.
   Adr(fout, "x0", "stderr");
   fprintf(fout, "  ldr x0, [x0]\n");
-  Adr(fout, "x1", "L.ErrorFormatString");
+  Adr(fout, "x1", ".L.ErrorFormatString");
 
   char label[SizeofLabelForLocStr(loc.source->str)];
   LabelForLocStr(loc.source->str, label);
@@ -419,7 +419,7 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 
   // Return FBLE_EXEC_ABORTED
   fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
-  fprintf(fout, "  b L._Run_.%p.exit\n", code);
+  fprintf(fout, "  b .L._Run_.%p.exit\n", code);
 }
 
 // StackBytesForCount --
@@ -500,15 +500,15 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
 // * Outputs code to fout.
 static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 {
-  fprintf(fout, "  cbz R_PROFILE, L._Run_%p.%zi.postprofile\n", code, pc);
+  fprintf(fout, "  cbz R_PROFILE, .L._Run_%p.%zi.postprofile\n", code, pc);
   fprintf(fout, "  bl rand\n");
   fprintf(fout, "  and w0, w0, #0x3ff\n");    // rand() % 1024
-  fprintf(fout, "  cbnz w0, L._Run_%p.%zi.postsample\n", code, pc);
+  fprintf(fout, "  cbnz w0, .L._Run_%p.%zi.postsample\n", code, pc);
   fprintf(fout, "  mov x0, R_PROFILE\n");
   fprintf(fout, "  mov x1, #1\n");
   fprintf(fout, "  bl FbleProfileSample\n");
 
-  fprintf(fout, "L._Run_%p.%zi.postsample:\n", code, pc);
+  fprintf(fout, ".L._Run_%p.%zi.postsample:\n", code, pc);
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
     switch (op->tag) {
       case FBLE_PROFILE_ENTER_OP:
@@ -538,7 +538,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
     }
   }
 
-  fprintf(fout, "L._Run_%p.%zi.postprofile:\n", code, pc);
+  fprintf(fout, ".L._Run_%p.%zi.postprofile:\n", code, pc);
   switch (instr->tag) {
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
@@ -592,10 +592,10 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the struct object is NULL.
-      fprintf(fout, "  cbnz x0, L.%p.%zi.ok\n", code, pc);
-      ReturnAbort(fout, code, pc, "L.UndefinedStructValue", access_instr->loc);
+      fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, ".L.UndefinedStructValue", access_instr->loc);
 
-      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  mov x1, #%zi\n", access_instr->tag);
       fprintf(fout, "  bl FbleStructValueAccess\n");
       SetFrameVar(fout, "x0", access_instr->dest);
@@ -612,18 +612,18 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the union object is NULL.
-      fprintf(fout, "  cbnz x0, L.%p.%zi.ok\n", code, pc);
-      ReturnAbort(fout, code, pc, "L.UndefinedUnionValue", access_instr->loc);
+      fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, ".L.UndefinedUnionValue", access_instr->loc);
 
       // Abort if the tag is wrong.
-      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleUnionValue, tag));
       fprintf(fout, "  cmp x1, %zi\n", access_instr->tag);
-      fprintf(fout, "  b.eq L.%p.%zi.tagok\n", code, pc);
-      ReturnAbort(fout, code, pc, "L.WrongUnionTag", access_instr->loc);
+      fprintf(fout, "  b.eq .L.%p.%zi.tagok\n", code, pc);
+      ReturnAbort(fout, code, pc, ".L.WrongUnionTag", access_instr->loc);
 
       // Access the field.
-      fprintf(fout, "L.%p.%zi.tagok:\n", code, pc);
+      fprintf(fout, ".L.%p.%zi.tagok:\n", code, pc);
       fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleUnionValue, arg));
       SetFrameVar(fout, "x0", access_instr->dest);
       fprintf(fout, "  mov x1, x0\n");
@@ -638,9 +638,9 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       // Jump table data for jumping to the right fble pc.
       fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
-      fprintf(fout, "L._Run_%p.%zi.pcs:\n", code, pc);
+      fprintf(fout, ".L._Run_%p.%zi.pcs:\n", code, pc);
       for (size_t i = 0; i < select_instr->jumps.size; ++i) {
-        fprintf(fout, "  .xword L._Run_%p.pc.%zi\n", (void*)code, pc + 1 + select_instr->jumps.xs[i]);
+        fprintf(fout, "  .xword .L._Run_%p.pc.%zi\n", (void*)code, pc + 1 + select_instr->jumps.xs[i]);
       }
 
       // Get the union value.
@@ -649,13 +649,13 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  bl FbleStrictValue\n");
 
       // Abort if the union object is NULL.
-      fprintf(fout, "  cbnz x0, L.%p.%zi.ok\n", code, pc);
-      ReturnAbort(fout, code, pc, "L.UndefinedUnionSelect", select_instr->loc);
+      fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, ".L.UndefinedUnionSelect", select_instr->loc);
 
-      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleUnionValue, tag));
       fprintf(fout, "  lsl x0, x0, #3\n");    // x0 = 8 * (uv->tag)
-      Adr(fout, "x1", "L._Run_%p.%zi.pcs", code, pc); // x1 = pcs
+      Adr(fout, "x1", ".L._Run_%p.%zi.pcs", code, pc); // x1 = pcs
       fprintf(fout, "  add x0, x0, x1\n");   // x0 = &pcs[uv->tag] 
       fprintf(fout, "  ldr x0, [x0]\n");     // x0 = pcs[uv->tag]
       fprintf(fout, "  br x0\n");            // goto pcs[uv->tag]
@@ -664,7 +664,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
     case FBLE_JUMP_INSTR: {
       FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      fprintf(fout, "  b L._Run_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
+      fprintf(fout, "  b .L._Run_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
       return;
     }
 
@@ -672,7 +672,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
       fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
-      fprintf(fout, "L._Run_%p.%zi.exe:\n", code, pc);
+      fprintf(fout, ".L._Run_%p.%zi.exe:\n", code, pc);
       fprintf(fout, "  .xword 1\n");                          // .refcount
       fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.args);
@@ -695,7 +695,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
       // R_SCRATCH_1: func->statics
       fprintf(fout, "  mov x0, R_HEAP\n");
-      Adr(fout, "x1", "L._Run_%p.%zi.exe", code, pc);
+      Adr(fout, "x1", ".L._Run_%p.%zi.exe", code, pc);
       fprintf(fout, "  bl FbleNewFuncValue\n");
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");   // R_SCRATCH_0: func
       SetFrameVar(fout, "R_SCRATCH_0", func_instr->dest);
@@ -716,10 +716,10 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  bl FbleStrictValue\n");
       fprintf(fout, "  mov R_SCRATCH_0, x0\n");
 
-      fprintf(fout, "  cbnz R_SCRATCH_0, L.%p.%zi.ok\n", code, pc);
-      ReturnAbort(fout, code, pc, "L.UndefinedFunctionValue", call_instr->loc);
+      fprintf(fout, "  cbnz R_SCRATCH_0, .L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, ".L.UndefinedFunctionValue", call_instr->loc);
 
-      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
 
       // Allocate space for the arguments array on the stack.
       size_t sp_offset = StackBytesForCount(call_instr->args.size);
@@ -769,7 +769,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
         fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
         fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
-        fprintf(fout, "  b L._Run_.%p.exit\n", code);
+        fprintf(fout, "  b .L._Run_.%p.exit\n", code);
         return;
       }
 
@@ -788,7 +788,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
-      fprintf(fout, "  b L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 
@@ -852,7 +852,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
       // Return FBLE_EXEC_YIELDED
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_YIELDED);
-      fprintf(fout, "  b L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 
@@ -888,10 +888,10 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       };
       GetFrameVar(fout, "x1", ref_index);
       fprintf(fout, "  cmp x0, x1\n");
-      fprintf(fout, "  b.ne L.%p.%zi.ok\n", code, pc);
-      ReturnAbort(fout, code, pc, "L.VacuousValue", ref_instr->loc);
+      fprintf(fout, "  b.ne .L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, ".L.VacuousValue", ref_instr->loc);
 
-      fprintf(fout, "L.%p.%zi.ok:\n", code, pc);
+      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
       fprintf(fout, "  str x0, [x1, #%zi]\n", offsetof(FbleRefValue, value));
       fprintf(fout, "  mov x2, x0\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
@@ -920,7 +920,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  bl FbleThreadReturn\n");
 
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
-      fprintf(fout, "  b L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 
@@ -976,7 +976,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 
       fprintf(fout, "  .section .data\n");
       fprintf(fout, "  .align 3\n");
-      fprintf(fout, "L._Run_%p.%zi.letters:\n", code, pc);
+      fprintf(fout, ".L._Run_%p.%zi.letters:\n", code, pc);
       for (size_t i = 0; i < argc; ++i) {
         fprintf(fout, "  .xword %zi\n", literal_instr->letters.xs[i]);
       }
@@ -985,7 +985,7 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  .align 2\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, %zi\n", argc);
-      Adr(fout, "x2", "L._Run_%p.%zi.letters", code, pc);
+      Adr(fout, "x2", ".L._Run_%p.%zi.letters", code, pc);
       fprintf(fout, "  bl FbleNewLiteralValue\n");
       SetFrameVar(fout, "x0", literal_instr->dest);
       return;
@@ -1007,9 +1007,9 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Jump table data for jumping to the right fble pc.
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, "L._Run_%p.pcs:\n", (void*)code);
+  fprintf(fout, ".L._Run_%p.pcs:\n", (void*)code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "  .xword L._Run_%p.pc.%zi\n", (void*)code, i);
+    fprintf(fout, "  .xword .L._Run_%p.pc.%zi\n", (void*)code, i);
   }
 
   fprintf(fout, "  .text\n");
@@ -1045,20 +1045,20 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Jump to the fble instruction at thread->stack->pc.
   fprintf(fout, "  ldr x0, [x4, #%zi]\n", offsetof(FbleStack, pc));
   fprintf(fout, "  lsl x0, x0, #3\n");     // x0 = 8 * (thread->stack->pc)
-  Adr(fout, "x1", "L._Run_%p.pcs", (void*)code); // x1 = pcs
+  Adr(fout, "x1", ".L._Run_%p.pcs", (void*)code); // x1 = pcs
   fprintf(fout, "  add x0, x0, x1\n");     // x0 = &pcs[thread->stack->pc]
   fprintf(fout, "  ldr x0, [x0]\n");       // x0 = pcs[thread->stack->pc]
   fprintf(fout, "  br x0\n");              // goto pcs[thread->stack->pc]
 
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "L._Run_%p.pc.%zi:\n", (void*)code, i);
+    fprintf(fout, ".L._Run_%p.pc.%zi:\n", (void*)code, i);
     EmitInstr(fout, code, i, code->instrs.xs[i]);
   }
 
   // Restore stack and frame pointer and return whatever is in x0.
   // Common code for exiting a run function.
-  fprintf(fout, "L._Run_.%p.exit:\n", (void*)code);
+  fprintf(fout, ".L._Run_.%p.exit:\n", (void*)code);
   fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
@@ -1109,13 +1109,13 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  b L._Abort_%p.pc.%zi\n", code, pc + 1 + select_instr->jumps.xs[0]);
+      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc + 1 + select_instr->jumps.xs[0]);
       return;
     }
 
     case FBLE_JUMP_INSTR: {
       FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      fprintf(fout, "  b L._Abort_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
+      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
       return;
     }
 
@@ -1200,7 +1200,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleStack, result));
       fprintf(fout, "  str XZR, [x1]\n");       // stack->result = NULL;
 
-      fprintf(fout, "  b L._Abort_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Abort_.%p.exit\n", code);
       return;
     }
 
@@ -1251,9 +1251,9 @@ static void EmitCodeForAbort(FILE* fout, FbleCode* code)
   // Jump table data for jumping to the right fble pc.
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
-  fprintf(fout, "L._Abort_%p.pcs:\n", (void*)code);
+  fprintf(fout, ".L._Abort_%p.pcs:\n", (void*)code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "  .xword L._Abort_%p.pc.%zi\n", (void*)code, i);
+    fprintf(fout, "  .xword .L._Abort_%p.pc.%zi\n", (void*)code, i);
   }
 
   fprintf(fout, "  .text\n");
@@ -1282,20 +1282,20 @@ static void EmitCodeForAbort(FILE* fout, FbleCode* code)
   // Jump to the fble instruction at thread->stack->pc.
   fprintf(fout, "  ldr x0, [x1, #%zi]\n", offsetof(FbleStack, pc));
   fprintf(fout, "  lsl x0, x0, #3\n");     // x0 = 8 * (stack->pc)
-  Adr(fout, "x1", "L._Abort_%p.pcs", (void*)code); // x1 = pcs
+  Adr(fout, "x1", ".L._Abort_%p.pcs", (void*)code); // x1 = pcs
   fprintf(fout, "  add x0, x0, x1\n");     // x0 = &pcs[stack->pc]
   fprintf(fout, "  ldr x0, [x0]\n");       // x0 = pcs[stack->pc]
   fprintf(fout, "  br x0\n");              // goto pcs[stack->pc]
 
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "L._Abort_%p.pc.%zi:\n", (void*)code, i);
+    fprintf(fout, ".L._Abort_%p.pc.%zi:\n", (void*)code, i);
     EmitInstrForAbort(fout, code, i, code->instrs.xs[i]);
   }
 
   // Restore stack and frame pointer and return whatever is in x0.
   // Common code for exiting a run function.
-  fprintf(fout, "L._Abort_.%p.exit:\n", (void*)code);
+  fprintf(fout, ".L._Abort_.%p.exit:\n", (void*)code);
   fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(AbortStackFrame, r_heap_save));
   fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(AbortStackFrame, r_locals_save));
   fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(AbortStackFrame, r_statics_save));
@@ -1310,7 +1310,7 @@ static void EmitCodeForAbort(FILE* fout, FbleCode* code)
 //   str - the file name string to output the size of the label for.
 static size_t SizeofLabelForLocStr(const char* str)
 {
-  size_t size = strlen("L.loc.") + 1;
+  size_t size = strlen(".L.loc.") + 1;
   for (const char* p = str; *p != '\0'; p++) {
     size += isalnum(*p) ? 1 : 4;
   }
@@ -1329,7 +1329,7 @@ static size_t SizeofLabelForLocStr(const char* str)
 //   Fills in dst with the label.
 static void LabelForLocStr(const char* str, char* dst)
 {
-  strcpy(dst, "L.loc.");
+  strcpy(dst, ".L.loc.");
   for (const char* p = str; *p != '\0'; p++) {
     char x[5];
     sprintf(x, isalnum(*p) ? "%c" : "_%02x_", *p);
@@ -1420,19 +1420,19 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
-  fprintf(fout, "L.ErrorFormatString:\n");
+  fprintf(fout, ".L.ErrorFormatString:\n");
   fprintf(fout, "  .string \"%%s:%%d:%%d: error: %%s\"\n");
-  fprintf(fout, "L.UndefinedStructValue:\n");
+  fprintf(fout, ".L.UndefinedStructValue:\n");
   fprintf(fout, "  .string \"undefined struct value access\\n\"\n");
-  fprintf(fout, "L.UndefinedUnionValue:\n");
+  fprintf(fout, ".L.UndefinedUnionValue:\n");
   fprintf(fout, "  .string \"undefined union value access\\n\";\n");
-  fprintf(fout, "L.UndefinedUnionSelect:\n");
+  fprintf(fout, ".L.UndefinedUnionSelect:\n");
   fprintf(fout, "  .string \"undefined union value select\\n\";\n");
-  fprintf(fout, "L.WrongUnionTag:\n");
+  fprintf(fout, ".L.WrongUnionTag:\n");
   fprintf(fout, "  .string \"union field access undefined: wrong tag\\n\";\n");
-  fprintf(fout, "L.UndefinedFunctionValue:\n");
+  fprintf(fout, ".L.UndefinedFunctionValue:\n");
   fprintf(fout, "  .string \"called undefined function\\n\";\n");
-  fprintf(fout, "L.VacuousValue:\n");
+  fprintf(fout, ".L.VacuousValue:\n");
   fprintf(fout, "  .string \"vacuous value\\n\";\n");
 
   // Definitions of source code locations.

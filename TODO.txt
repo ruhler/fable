@@ -2,6 +2,9 @@
  - Compare profile from interpreted and compiled to see what I'm talking
    about.
 
+* Pick better names for _Run_ and _Abort_ functions.
+ - Like, name them based on the profiling block info?
+
 * Try to reduce size of generated assembly?
  - Factor out slow paths for profiling and returning abort?
  - Generate a sparse pc jump table?

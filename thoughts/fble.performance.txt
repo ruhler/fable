@@ -335,3 +335,72 @@ The condition is flipped? gcc says: if it is not equal to zero, skip sampling.
 Ah. That's it. I need cbnz.
 
 Now compiled profile is 4m19.816s. Good.
+
+---
+
+fble profile shows: 
+
+Looks like a lot of time iterating over map and list data structures?
+
+perf shows...
+
+Previous command lines I've used:
+
+       perf record -F 997 -d --call-graph dwarf ./out/bin/fble-test prgms/fble-bench.fble prgms/
+       perf report -g folded,address,0.1,0 > perf.report.txt
+       #perf report -g folded,address,callee,0.1,0 > perf.report.txt
+
+Let's try:
+  perf record -F 997 -d <cmd>
+
+To try and sample virtual addresses at a rate of 997KHz
+
+We get 161130 samples.
+
+Now, to dump the samples, I think: perf report -n.
+
+I'm happy to look at raw sample counts, and then do my own visualization from
+there. No stack chains for the moment. I'm not sure my generated assembly
+supports them.
+
+Now, how to make sense of what we see? The samples are organized by function,
+but some functions are bigger than others, so is that a good way to group
+them? Or does it bias towards looking at bigger functions?
+
+The top entries are all allocation / gc related:
+
+    10.01%         16125  fble-bench  fble-bench        [.] FbleReleaseHeapObject
+     9.57%         15435  fble-bench  fble-bench        [.] MarkRef
+     8.90%         14330  fble-bench  fble-bench        [.] FbleRetainHeapObject
+     7.47%         12034  fble-bench  fble-bench        [.] IncrGc
+     6.14%          9898  fble-bench  libc-2.28.so      [.] _int_free
+     5.93%          9551  fble-bench  libc-2.28.so      [.] _int_malloc
+     5.66%          9122  fble-bench  fble-bench        [.] FbleFree
+     5.02%          8093  fble-bench  fble-bench        [.] FbleRawAlloc
+     3.34%          5375  fble-bench  libc-2.28.so      [.] malloc
+     3.32%          5343  fble-bench  libc-2.28.so      [.] cfree@GLIBC_2.17
+     3.11%          5006  fble-bench  fble-bench        [.] Refs
+
+How long is the tail though? I'm not sure this is a meaningful way to look at
+the data. Can I dump raw addresses?
+
+Looks like: `perf annotate -n` shows things pretty clearly: it shows number of
+samples per address, interleaved with source code. That's pretty nice. Still
+not sure how I want to think about and interpret the data though.
+
+Looks like samples mostly happen after branches, loads, and stores. Not
+surprising. That's when we could stall for a while.
+
+Things that stand out:
+* obj->space in MarkRef looks like it must be missing in the cache a bunch?
+  Like, accessing all the obj gc headers is slow.
+
+Hmm... So it seems I have lots of good information, but no obvious way to
+organize and interpret it.
+
+Is it possible to avoid exporting the local labels in assembly? That way we
+could group everything from a _Run_* function together? I think that could
+give a better picture.
+
+Looks like I need to use ".L" instead of "L" as the label prefix. I'll try
+that.
