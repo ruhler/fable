@@ -79,6 +79,8 @@ typedef enum {
   FBLE_RETURN_INSTR,
   FBLE_TYPE_INSTR,
   FBLE_RELEASE_INSTR,
+  FBLE_LIST_INSTR,
+  FBLE_LITERAL_INSTR,
 } FbleInstrTag;
 
 // FbleInstr --
@@ -309,6 +311,29 @@ typedef struct {
   FbleInstr _base;
   FbleLocalIndex target;
 } FbleReleaseInstr;
+
+// FbleListInstr -- FBLE_LIST_INSTR
+// *dest = [a1, a2, ..., aN]
+typedef struct {
+  FbleInstr _base;
+  FbleFrameIndexV args;
+  FbleLocalIndex dest;
+} FbleListInstr;
+
+// FbleTagV --
+//   A vector of tags.
+typedef struct {
+  size_t size;
+  size_t* xs;
+} FbleTagV;
+
+// FbleLiteralInstr -- FBLE_LITERAL_INSTR
+// *dest = "xxx"
+typedef struct {
+  FbleInstr _base;
+  FbleTagV letters;
+  FbleLocalIndex dest;
+} FbleLiteralInstr;
 
 // FbleFreeInstr --
 //   Free the given instruction.

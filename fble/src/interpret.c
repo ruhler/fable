@@ -85,6 +85,8 @@ static FbleExecStatus RunRefDefInstr(FbleValueHeap* heap, FbleThreadV* threads, 
 static FbleExecStatus RunReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunTypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunReleaseInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus RunListInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus RunLiteralInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 
 static FbleExecStatus AbortStructValueInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortUnionValueInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
@@ -102,6 +104,8 @@ static FbleExecStatus AbortRefDefInstr(FbleValueHeap* heap, FbleStack*, FbleInst
 static FbleExecStatus AbortReturnInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortTypeInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortReleaseInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
+static FbleExecStatus AbortListInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
+static FbleExecStatus AbortLiteralInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 
 // sRunInstr --
 //   Implementations of instructions, indexed by instruction tag.
@@ -122,6 +126,8 @@ static RunInstr sRunInstr[] = {
   &RunReturnInstr,           // FBLE_RETURN_INSTR
   &RunTypeInstr,             // FBLE_TYPE_INSTR
   &RunReleaseInstr,          // FBLE_RELEASE_INSTR
+  &RunListInstr,             // FBLE_LIST_INSTR
+  &RunLiteralInstr,          // FBLE_LITERAL_INSTR
 };
 
 // sAbortInstr --
@@ -144,6 +150,8 @@ static AbortInstr sAbortInstr[] = {
   &AbortReturnInstr,           // FBLE_RETURN_INSTR
   &AbortTypeInstr,             // FBLE_TYPE_INSTR
   &AbortReleaseInstr,          // FBLE_RELEASE_INSTR
+  &AbortListInstr,             // FBLE_LIST_INSTR
+  &AbortLiteralInstr,          // FBLE_LITERAL_INSTR
 };
 
 // FrameGet --
@@ -713,6 +721,54 @@ static FbleExecStatus AbortReleaseInstr(FbleValueHeap* heap, FbleStack* stack, F
 {
   FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
   FbleReleaseValue(heap, stack->locals[release_instr->target]);
+  stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
+// RunListInstr -- see documentation of RunInstr.
+//   Execute an FBLE_LIST_INSTR.
+static FbleExecStatus RunListInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleListInstr* list_instr = (FbleListInstr*)instr;
+  size_t argc = list_instr->args.size;
+  FbleValue* args[argc];
+  for (size_t i = 0; i < argc; ++i) {
+    args[i] = FrameGet(thread, list_instr->args.xs[i]);
+  }
+
+  FbleValue* list = FbleNewListValue(heap, argc, args);
+  FrameSetConsumed(heap, thread, list_instr->dest, list);
+  thread->stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
+// AbortListInstr -- see documentation of AbortInstr.
+//   Execute a LIST_INSTR for abort.
+static FbleExecStatus AbortListInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+{
+  FbleListInstr* list_instr = (FbleListInstr*)instr;
+  stack->locals[list_instr->dest] = NULL;
+  stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
+// RunLiteralInstr -- see documentation of RunInstr.
+//   Execute an FBLE_LITERAL_INSTR.
+static FbleExecStatus RunLiteralInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+  FbleValue* list = FbleNewLiteralValue(heap, literal_instr->letters.size, literal_instr->letters.xs);
+  FrameSetConsumed(heap, thread, literal_instr->dest, list);
+  thread->stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
+// AbortLiteralInstr -- see documentation of AbortInstr.
+//   Execute a FBLE_LITERAL_INSTR for abort.
+static FbleExecStatus AbortLiteralInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+{
+  FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+  stack->locals[literal_instr->dest] = NULL;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

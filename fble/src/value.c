@@ -488,6 +488,42 @@ FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlo
   return put;
 }
 
+// FbleNewListValue -- see documentation in value.h
+FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
+{
+  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* tail = FbleNewUnionValue(heap, 1, unit);
+  FbleReleaseValue(heap, unit);
+  for (size_t i = 0; i < argc; ++i) {
+    FbleValue* arg = args[argc - i - 1];
+    FbleValue* cons = FbleNewStructValue(heap, 2, arg, tail);
+    FbleReleaseValue(heap, tail);
+
+    tail = FbleNewUnionValue(heap, 0, cons);
+    FbleReleaseValue(heap, cons);
+  }
+  return tail;
+}
+
+// FbleNewLiteralValue -- see documentation in value.h
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
+{
+  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* tail = FbleNewUnionValue(heap, 1, unit);
+  FbleReleaseValue(heap, unit);
+  for (size_t i = 0; i < argc; ++i) {
+    size_t letter = args[argc - i - 1];
+    FbleValue* arg = FbleNewUnionValue(heap, letter, unit);
+    FbleValue* cons = FbleNewStructValue(heap, 2, arg, tail);
+    FbleReleaseValue(heap, arg);
+    FbleReleaseValue(heap, tail);
+
+    tail = FbleNewUnionValue(heap, 0, cons);
+    FbleReleaseValue(heap, cons);
+  }
+  return tail;
+}
+
 // FbleStrictValue -- see documentation in value.h
 FbleValue* FbleStrictValue(FbleValue* value)
 {

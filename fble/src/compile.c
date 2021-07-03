@@ -986,6 +986,51 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       return local;
     }
+
+    case FBLE_LIST_TC: {
+      FbleListTc* list_tc = (FbleListTc*)v;
+
+      size_t argc = list_tc->fieldc;
+      Local* args[argc];
+      for (size_t i = 0; i < argc; ++i) {
+        args[i] = CompileExpr(blocks, false, scope, list_tc->fields[i]);
+      }
+
+      Local* local = NewLocal(scope);
+      FbleListInstr* list_instr = FbleAlloc(FbleListInstr);
+      list_instr->_base.tag = FBLE_LIST_INSTR;
+      list_instr->_base.profile_ops = NULL;
+      list_instr->dest = local->index.index;
+      FbleVectorInit(list_instr->args);
+      AppendInstr(scope, &list_instr->_base);
+      CompileExit(exit, scope, local);
+
+      for (size_t i = 0; i < argc; ++i) {
+        FbleVectorAppend(list_instr->args, args[i]->index);
+        ReleaseLocal(scope, args[i], exit);
+      }
+
+      return local;
+    }
+
+    case FBLE_LITERAL_TC: {
+      FbleLiteralTc* literal_tc = (FbleLiteralTc*)v;
+
+      Local* local = NewLocal(scope);
+      FbleLiteralInstr* literal_instr = FbleAlloc(FbleLiteralInstr);
+      literal_instr->_base.tag = FBLE_LITERAL_INSTR;
+      literal_instr->_base.profile_ops = NULL;
+      literal_instr->dest = local->index.index;
+      FbleVectorInit(literal_instr->letters);
+      AppendInstr(scope, &literal_instr->_base);
+      CompileExit(exit, scope, local);
+
+      for (size_t i = 0; i < literal_tc->letterc; ++i) {
+        FbleVectorAppend(literal_instr->letters, literal_tc->letters[i]);
+      }
+
+      return local;
+    }
   }
 
   UNREACHABLE("should already have returned");

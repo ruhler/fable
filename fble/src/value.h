@@ -215,6 +215,38 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId pro
 //   longer in use. This function does not take ownership of the link value.
 FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link, FbleBlockId profile);
 
+// FbleNewListValue --
+//   Create a new list value from the given list of arguments.
+//
+// Inputs:
+//   heap - the heap to allocate the value on.
+//   argc - the number of elements on the list.
+//   args - the elements to put on the list. Borrowed.
+//
+// Results:
+//   A newly allocated list value.
+//
+// Side effects:
+//   The returned value must be freed using FbleReleaseValue when no longer in
+//   use.
+FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+
+// FbleNewLiteralValue --
+//   Create a new literal value from the given list of letters.
+//
+// Inputs:
+//   heap - the heap to allocate the value on.
+//   argc - the number of letters in the literal.
+//   args - the tags of the letters in the literal.
+//
+// Results:
+//   A newly allocated literal value.
+//
+// Side effects:
+//   The returned value must be freed using FbleReleaseValue when no longer in
+//   use.
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
+
 // FbleStrictValue --
 //   Get the strict value associated with the given value, which will either
 //   be the value itself, or the dereferenced value if the value is a

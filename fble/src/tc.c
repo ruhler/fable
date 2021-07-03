@@ -132,6 +132,20 @@ void FbleFreeTc(FbleTc* tc)
       FbleFree(tc);
       return;
     }
+
+    case FBLE_LIST_TC: {
+      FbleListTc* v = (FbleListTc*)tc;
+      for (size_t i = 0; i < v->fieldc; ++i) {
+        FbleFreeTc(v->fields[i]);
+      }
+      FbleFree(tc);
+      return;
+    }
+
+    case FBLE_LITERAL_TC: {
+      FbleFree(tc);
+      return;
+    }
   }
 
   UNREACHABLE("should never get here");

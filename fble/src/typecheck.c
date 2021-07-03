@@ -98,7 +98,6 @@ static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 
 static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* th, Tc tc);
-static FbleTc* ListExpr(FbleLoc loc, FbleTc* func, FbleTc** args, size_t argc);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
@@ -440,51 +439,6 @@ static void FreeTc(FbleTypeHeap* th, Tc tc)
 {
   FbleReleaseType(th, tc.type);
   FbleFreeTc(tc.tc);
-}
-
-// ListExpr --
-//   Form a list expression of the form func[arg0, arg1, ...]
-//
-// Inputs:
-//   loc - the location of the literal. Borrowed.
-//   func - the function. Consumed by this function.
-//   args - the args. Each arg is consumed by the function. The array of args
-//          is borrowed.
-//   argc - the number of args.
-static FbleTc* ListExpr(FbleLoc loc, FbleTc* func, FbleTc** args, size_t argc)
-{
-  // Construct an expression of the form:
-  // f(@(0: @(arg0, @(0: @(arg1, ... @(1: *()())...)))));
-  FbleStructValueTc* unit = FbleAlloc(FbleStructValueTc);
-  unit->_base.tag = FBLE_STRUCT_VALUE_TC;
-  unit->fieldc = 0;
-
-  FbleUnionValueTc* tail = FbleAlloc(FbleUnionValueTc);
-  tail->_base.tag = FBLE_UNION_VALUE_TC;
-  tail->tag = 1;
-  tail->arg = &unit->_base;
-
-  for (int i = 0; i < argc; ++i) {
-    int j = argc - i - 1;
-    FbleStructValueTc* cons = FbleAllocExtra(FbleStructValueTc, 2 * sizeof(FbleTc*));
-    cons->_base.tag = FBLE_STRUCT_VALUE_TC;
-    cons->fieldc = 2;
-    cons->fields[0] = args[j];
-    cons->fields[1] = &tail->_base;
-
-    tail = FbleAlloc(FbleUnionValueTc);
-    tail->_base.tag = FBLE_UNION_VALUE_TC;
-    tail->tag = 0;
-    tail->arg = &cons->_base;
-  }
-
-  FbleFuncApplyTc* apply = FbleAlloc(FbleFuncApplyTc);
-  apply->_base.tag = FBLE_FUNC_APPLY_TC;
-  apply->loc = FbleCopyLoc(loc);
-  apply->func = func;
-  FbleVectorInit(apply->args);
-  FbleVectorAppend(apply->args, &tail->_base);
-  return &apply->_base;
 }
 
 // TypeCheckExpr --
@@ -1206,6 +1160,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       }
 
       bool error = false;
+
       size_t argc = list_expr->args.size;
       FbleTc* args[argc];
       for (size_t i = 0; i < argc; ++i) {
@@ -1239,7 +1194,20 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      return MkTc(result_type, ListExpr(expr->loc, func.tc, args, argc));
+      FbleListTc* list_tc = FbleAllocExtra(FbleListTc, argc * sizeof(FbleTc*));
+      list_tc->_base.tag = FBLE_LIST_TC;
+      list_tc->fieldc = argc;
+      for (size_t i = 0; i < argc; ++i) {
+        list_tc->fields[i] = args[i];
+      }
+
+      FbleFuncApplyTc* apply = FbleAlloc(FbleFuncApplyTc);
+      apply->_base.tag = FBLE_FUNC_APPLY_TC;
+      apply->loc = FbleCopyLoc(expr->loc);
+      apply->func = func.tc;
+      FbleVectorInit(apply->args);
+      FbleVectorAppend(apply->args, &list_tc->_base);
+      return MkTc(result_type, &apply->_base);
     }
 
     case FBLE_LITERAL_EXPR: {
@@ -1277,7 +1245,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       }
 
       size_t argc = strlen(literal_expr->word);
-      FbleTc* args[argc];
+      size_t args[argc];
 
       FbleDataType* unit_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       unit_type->datatype = FBLE_STRUCT_DATATYPE;
@@ -1287,7 +1255,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleLoc loc = literal_expr->word_loc;
       for (size_t i = 0; i < argc; ++i) {
         char field_str[2] = { literal_expr->word[i], '\0' };
-        args[i] = NULL;
         bool found = false;
         for (size_t j = 0; j < elem_data_type->fields.size; ++j) {
           if (strcmp(field_str, elem_data_type->fields.xs[j].name.name->str) == 0) {
@@ -1295,26 +1262,18 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
             if (!FbleTypesEqual(th, &unit_type->_base, elem_data_type->fields.xs[j].type)) {
               ReportError(loc, "expected field type %t, but letter '%s' has field type %t\n",
                   unit_type, field_str, elem_data_type->fields.xs[j].type);
+              error = true;
               break;
             }
 
-            FbleStructValueTc* unit = FbleAlloc(FbleStructValueTc);
-            unit->_base.tag = FBLE_STRUCT_VALUE_TC;
-            unit->fieldc = 0;
-
-            FbleUnionValueTc* letter = FbleAlloc(FbleUnionValueTc);
-            letter->_base.tag = FBLE_UNION_VALUE_TC;
-            letter->tag = j;
-            letter->arg = &unit->_base;
-
-            args[i] = &letter->_base;
+            args[i] = j;
             break;
           }
         }
-        error = error || (args[i] == NULL);
 
         if (!found) {
           ReportError(loc, "'%s' is not a field of type %t\n", field_str, elem_type);
+          error = true;
         }
 
         if (literal_expr->word[i] == '\n') {
@@ -1332,16 +1291,25 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleReleaseType(th, &unit_type->_base);
 
       if (error) {
-        for (size_t i = 0; i < argc; ++i) {
-          FbleFreeTc(args[i]);
-        }
-
         FbleFreeTc(func.tc);
         FbleReleaseType(th, result_type);
         return TC_FAILED;
       }
 
-      return MkTc(result_type, ListExpr(expr->loc, func.tc, args, argc));
+      FbleLiteralTc* literal_tc = FbleAllocExtra(FbleLiteralTc, argc * sizeof(size_t));
+      literal_tc->_base.tag = FBLE_LITERAL_TC;
+      literal_tc->letterc = argc;
+      for (size_t i = 0; i < argc; ++i) {
+        literal_tc->letters[i] = args[i];
+      }
+
+      FbleFuncApplyTc* apply = FbleAlloc(FbleFuncApplyTc);
+      apply->_base.tag = FBLE_FUNC_APPLY_TC;
+      apply->loc = FbleCopyLoc(expr->loc);
+      apply->func = func.tc;
+      FbleVectorInit(apply->args);
+      FbleVectorAppend(apply->args, &literal_tc->_base);
+      return MkTc(result_type, &apply->_base);
     }
 
     case FBLE_MODULE_PATH_EXPR: {

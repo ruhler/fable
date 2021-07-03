@@ -257,6 +257,31 @@ static void DumpCode(FILE* fout, FbleCode* code)
           fprintf(fout, "release l%zi;\n", release_instr->target);
           break;
         }
+
+        case FBLE_LIST_INSTR: {
+          FbleListInstr* list_instr = (FbleListInstr*)instr;
+          fprintf(fout, "l%zi = list(", list_instr->dest);
+          const char* comma = "";
+          for (size_t j = 0; j < list_instr->args.size; ++j) {
+            FbleFrameIndex arg = list_instr->args.xs[j];
+            fprintf(fout, "%s%s%zi", comma, sections[arg.section], arg.index);
+            comma = ", ";
+          }
+          fprintf(fout, ");\n");
+          break;
+        }
+
+        case FBLE_LITERAL_INSTR: {
+          FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+          fprintf(fout, "l%zi = literal(", literal_instr->dest);
+          const char* comma = "";
+          for (size_t j = 0; j < literal_instr->letters.size; ++j) {
+            fprintf(fout, "%s%zi", comma, literal_instr->letters.xs[j]);
+            comma = ", ";
+          }
+          fprintf(fout, ");\n");
+          break;
+        }
       }
     }
     fprintf(fout, "\n\n");
@@ -337,6 +362,20 @@ void FbleFreeInstr(FbleInstr* instr)
       FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
       FbleFree(fork_instr->args.xs);
       FbleFree(fork_instr->dests.xs);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_LIST_INSTR: {
+      FbleListInstr* list_instr = (FbleListInstr*)instr;
+      FbleFree(list_instr->args.xs);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_LITERAL_INSTR: {
+      FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+      FbleFree(literal_instr->letters.xs);
       FbleFree(instr);
       return;
     }

@@ -162,6 +162,8 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
       case FBLE_RETURN_INSTR: break;
       case FBLE_TYPE_INSTR: break;
       case FBLE_RELEASE_INSTR: break;
+      case FBLE_LIST_INSTR: break;
+      case FBLE_LITERAL_INSTR: break;
     }
   }
 }
@@ -945,6 +947,49 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  bl FbleReleaseValue\n");
       return;
     }
+
+    case FBLE_LIST_INSTR: {
+      FbleListInstr* list_instr = (FbleListInstr*)instr;
+      size_t argc = list_instr->args.size;
+
+      // Allocate space on the stack for the array of arguments.
+      size_t sp_offset = StackBytesForCount(argc);
+      fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
+      for (size_t i = 0; i < argc; ++i) {
+        GetFrameVar(fout, "x9", list_instr->args.xs[i]);
+        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * i);
+      }
+
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, %zi\n", argc);
+      fprintf(fout, "  mov x2, SP\n");
+      fprintf(fout, "  bl FbleNewListValue\n");
+
+      SetFrameVar(fout, "x0", list_instr->dest);
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
+      return;
+    }
+
+    case FBLE_LITERAL_INSTR: {
+      FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+      size_t argc = literal_instr->letters.size;
+
+      fprintf(fout, "  .section .data\n");
+      fprintf(fout, "  .align 3\n");
+      fprintf(fout, "L._Run_%p.%zi.letters:\n", code, pc);
+      for (size_t i = 0; i < argc; ++i) {
+        fprintf(fout, "  .xword %zi\n", literal_instr->letters.xs[i]);
+      }
+
+      fprintf(fout, "  .text\n");
+      fprintf(fout, "  .align 2\n");
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  mov x1, %zi\n", argc);
+      Adr(fout, "x2", "L._Run_%p.%zi.letters", code, pc);
+      fprintf(fout, "  bl FbleNewLiteralValue\n");
+      SetFrameVar(fout, "x0", literal_instr->dest);
+      return;
+    }
   }
 }
 
@@ -1175,6 +1220,18 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       };
       GetFrameVar(fout, "x1", target_index);
       fprintf(fout, "  bl FbleReleaseValue\n");
+      return;
+    }
+
+    case FBLE_LIST_INSTR: {
+      FbleListInstr* list_instr = (FbleListInstr*)instr;
+      SetFrameVar(fout, "XZR", list_instr->dest);
+      return;
+    }
+
+    case FBLE_LITERAL_INSTR: {
+      FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+      SetFrameVar(fout, "XZR", literal_instr->dest);
       return;
     }
   }

@@ -1,6 +1,8 @@
-* Add instructions for list and literal, to avoid assembly code blowup from
-  desugaring lists and literals.
- 
+* Try to reduce size of generated assembly?
+ - Factor out slow paths for profiling and returning abort?
+ - Generate a sparse pc jump table?
+ - Avoid emitting unused labels?
+
 * Move prototype for FbleLoadCompiled to a better place?
 
 * Change FbleProfile functions to accept NULL, and clean up code to take

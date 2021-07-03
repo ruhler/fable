@@ -45,6 +45,8 @@ typedef enum {
   FBLE_FUNC_APPLY_TC,
   FBLE_LINK_TC,
   FBLE_EXEC_TC,
+  FBLE_LIST_TC,
+  FBLE_LITERAL_TC,
 } FbleTcTag;
 
 // FbleTc --
@@ -258,6 +260,30 @@ typedef struct {
   FbleTcProfiledV bindings;
   FbleTc* body;
 } FbleExecTc;
+
+// FbleListTc --
+//   FBLE_LIST_TC
+//
+// An expression to construct the list value that will be passed to the
+// function as part of a list expression.
+typedef struct {
+  FbleTc _base;
+  size_t fieldc;
+  FbleTc* fields[];
+} FbleListTc;
+
+// FbleLiteralTc --
+//   FBLE_LITERAL_TC
+//
+// An expression to construct the list value that will be passed to the
+// function as part of a literal expression.
+//
+// letters[i] is the tag value to use for the ith letter in the literal.
+typedef struct {
+  FbleTc _base;
+  size_t letterc;
+  size_t letters[];
+} FbleLiteralTc;
 
 // FbleFreeTc --
 //   Free resources associated with an FbleTc.
