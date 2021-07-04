@@ -404,3 +404,73 @@ give a better picture.
 
 Looks like I need to use ".L" instead of "L" as the label prefix. I'll try
 that.
+
+---
+
+Just to see what it looks like, I want to try running perf with stack traces.
+
+Try: perf record -F 997 -d -g <cmd>
+
+Which should use the frame pointer to unwind. I think that should work with my
+generated assembly. I don't see an obvious option for specifying the stack
+depth. Let's see what it does.
+
+For the report, something like:
+  perf report -n -g folded,0,0,caller,function,count
+
+This groups together chains that have the same function, ignoring the specific
+addresses. That probably makes sense to do. I think this is the data
+presentation I want. Note that all sorts of other presentations exist that
+don't particularly make any sense to me.
+
+This is a nicer picture than the flat array I think.
+
+You know what will help a lot? More descriptive names for the _Run_ functions.
+
+This shows that we are basically dominated by time spent doing allocations of
+new objects, which have the fairly big cost of IncrGc, among other things. I
+think my intuition is correct. The biggest thing we can do is to pack small
+objects and pass by value instead of by object, to cut down on number of
+object allocations and GC. Another, smaller magnitude improvement we could
+make is using the native stack instead of a managed stack.
+
+Let me see if I can get that IncrGc to show up on the top of a report. I guess
+what I want is for each function, the number of events that happen in that
+function. Expect to see '_start' and 'main' at the top, but eventually IncrGc.
+
+We get close with:
+  perf report -n -g none,0,0,caller,function,count
+
+Just look at the top set of entries. That looks like it has the right
+percentages. Too bad it doesn't show total samples.
+
+The simple version:
+  perf report -n none
+
+43% FbleNewObject
+33% IncrGc
+
+It should also be possible to make an fble profile style presentation of the
+data, with 'time' in samples but no 'count' column. I think that's worth
+doing. It would be great if I could reuse the C code for profiling. Maybe
+treat each individual sample as single count. Then all we need is enter/exit
+calls per sample. That should be doable.
+
+It looks like perf has some support for python scripting. See the
+perf-script-python man page for more info. So maybe I write a python script to
+extract the info I want from perf.data and convert it into some text format I
+can easily parse and consume by the C code. The write an fble-profile tool
+that takes a trace as input and outputs the profile.
+
+What trace format should we use? Is there a standard one? I basically want a
+sequence of: enter <id>, exit, replace <id>, sample <n> calls.
+
+
+Summary:
+  $ perf record -F 997 -d -g <cmd>
+  $ perf report -q -g folded,count,0 | fble-perf-profile
+
+Where fble-perf-profile is a C program I wrote that parses the perf report
+directly. That's easier than introducing a python script into the mix.
+
+

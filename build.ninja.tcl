@@ -500,13 +500,3 @@ build $::test/summary.tr "tools/tests.tcl $::test/tests.txt" \
 # build.ninja
 build $::out/build.ninja "build.ninja.tcl $::build_ninja_deps" \
   "tclsh build.ninja.tcl > $::out/build.ninja"
-
-# TODO: Add a profiling variant of things?
-#
-# For profiling:
-# * add to gcc flags: -fprofile-arcs -ftest-coverage -pg to obj and bin rules.
-# * remove all the generated .gcda files to start fresh.
-# * run benchmark as desired.
-# * run gprof passing the benchmark executable run on the command line.
-# * run gcov out/obj/*.o and move *.gcov files where preferred.
-# * remove gmon.out
