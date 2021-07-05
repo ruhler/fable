@@ -6,6 +6,7 @@
 #include <stdio.h>    // for FILE, fprintf, stderr
 
 #include "fble-main.h"      // for FbleMain.
+#include "fble-name.h"      // for FbleName.
 #include "fble-profile.h"   // for FbleNewProfile, etc.
 #include "fble-value.h"     // for FbleValue, etc.
 
@@ -14,6 +15,7 @@
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
+static FbleBlockProfile* Block(FbleProfile* profile, const char* name);
 static size_t Count(FbleProfile* profile, const char* name);
 static size_t Calls(FbleProfile* profile, const char* caller, const char* callee);
 
@@ -39,6 +41,32 @@ static void PrintUsage(FILE* stream)
       "Exit status is 0 on success, non-zero on test failure.\n"
   );
 }
+// Block --
+//   Look up information for the given named block.
+//
+// Inputs:
+//   profile - the profile to get the block info for.
+//   name - the name of the block to get.
+//
+// Results:
+//   The block.
+//
+// Side effects:
+//   Asserts with failure if there are no blocks with the given name or there
+//   is more than one block with the given name.
+static FbleBlockProfile* Block(FbleProfile* profile, const char* name)
+{
+  FbleBlockProfile* result = NULL;
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    FbleBlockProfile* block = profile->blocks.xs[i];
+    if (strcmp(block->name.name->str, name) == 0) {
+      assert(result == NULL && "duplicate entries with name");
+      result = block;
+    }
+  }
+  assert(result != NULL && "no block found with given name");
+  return result;
+}
 
 // Count --
 //   Return the total number of times the profiling block with the given name
@@ -56,16 +84,7 @@ static void PrintUsage(FILE* stream)
 //   is more than one block with the given name.
 static size_t Count(FbleProfile* profile, const char* name)
 {
-  FbleCallData* data = NULL;
-  for (size_t i = 0; i < profile->blocks.size; ++i) {
-    FbleBlockProfile* block = profile->blocks.xs[i];
-    if (strcmp(block->name.name->str, name) == 0) {
-      assert(data == NULL && "duplicate entries with name");
-      data = &block->block;
-    }
-  }
-  assert(data != NULL && "no block found with given name");
-  return data->count;
+  return Block(profile,name)->block.count;
 }
 
 // Calls --
@@ -85,26 +104,10 @@ static size_t Count(FbleProfile* profile, const char* name)
 //   and caller or if there are multiple blocks matching the names.
 static size_t Calls(FbleProfile* profile, const char* caller, const char* callee)
 {
-  FbleBlockProfile* caller_block = NULL;
-  FbleBlockId caller_id = profile->blocks.size;
-  FbleBlockId callee_id = profile->blocks.size;
-  for (size_t i = 0; i < profile->blocks.size; ++i) {
-    FbleBlockProfile* block = profile->blocks.xs[i];
-    if (strcmp(block->name.name->str, caller) == 0) {
-      assert(caller_id == profile->blocks.size && "duplicate named caller");
-      caller_block = block;
-      caller_id = block->block.id;
-      assert(caller_id != profile->blocks.size && "bad assumption for test");
-    }
-    if (strcmp(block->name.name->str, callee) == 0) {
-      assert(callee_id == profile->blocks.size && "duplicate named callee");
-      callee_id = block->block.id;
-      assert(callee_id != profile->blocks.size && "bad assumption for test");
-    }
-  }
-  assert(callee_id != profile->blocks.size && "no block matching callee name");
-  assert(caller_id != profile->blocks.size && "no block matching caller name");
+  FbleBlockProfile* caller_block = Block(profile, caller);
+  FbleBlockProfile* callee_block = Block(profile, callee);
 
+  FbleBlockId callee_id = callee_block->block.id;
   for (size_t i = 0; i < caller_block->callees.size; ++i) {
     FbleCallData* call = caller_block->callees.xs[i];
     if (call->id == callee_id) {
@@ -201,6 +204,13 @@ int main(int argc, char* argv[])
   // the caller returned, which is clearly wrong.
   assert(0 == Calls(profile, "/Fble/ProfilesTest%!.A!!.b", "/Fble/ProfilesTest%!.D!"));
   assert(1 == Calls(profile, "/Fble/ProfilesTest%!.A!!", "/Fble/ProfilesTest%!.D!"));
+
+  // Regression test for a bug where the location for the top level profile
+  // block was a module path instead of a file path.
+  {
+    FbleBlockProfile* block = Block(profile, "/Fble/ProfilesTest%");
+    assert(strcmp(block->name.loc.source->str, "prgms/Fble/ProfilesTest.fble") == 0);
+  }
 
   FbleFreeProfile(profile);
   return EX_SUCCESS;

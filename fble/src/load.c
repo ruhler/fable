@@ -110,9 +110,12 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_p
   bool error = false;
   Stack* stack = FbleAlloc(Stack);
   stack->deps_loaded = 0;
+
   FbleLoc loc = { .source = FbleCopyString(filename), .line = 1, .col = 0 };
   stack->module.path = FbleCopyModulePath(module_path);
-  FbleFreeLoc(loc);
+  FbleFreeLoc(stack->module.path->loc);
+  stack->module.path->loc = loc;
+
   FbleVectorInit(stack->module.deps);
   stack->tail = NULL;
   stack->module.value = FbleParse(filename, &stack->module.deps);

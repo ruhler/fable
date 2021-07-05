@@ -1,6 +1,7 @@
-* Fix bug in profile block name used for some profiling entries when compiled
- - Compare profile from interpreted and compiled to see what I'm talking
-   about.
+* For loaded submodules, should the module profile block be the module file or
+  the place where it was imported from?
+ - Seems like it should be the module file, because it could be imported from
+   multiple places?
 
 * Pick better names for _Run_ and _Abort_ functions.
  - Like, name them based on the profiling block info?
