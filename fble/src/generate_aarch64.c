@@ -81,8 +81,8 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleCode* code);
 static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCodeForAbort(FILE* fout, FbleCode* code);
-static size_t SizeofLabelForLocStr(const char* str);
-static void LabelForLocStr(const char* str, char* dst);
+static size_t SizeofSanitizedString(const char* str);
+static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
 
 // AddLoc --
@@ -408,9 +408,9 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
   fprintf(fout, "  ldr x0, [x0]\n");
   Adr(fout, "x1", ".L.ErrorFormatString");
 
-  char label[SizeofLabelForLocStr(loc.source->str)];
-  LabelForLocStr(loc.source->str, label);
-  Adr(fout, "x2", "%s", label);
+  char label[SizeofSanitizedString(loc.source->str)];
+  SanitizeString(loc.source->str, label);
+  Adr(fout, "x2", ".L.loc.%s", label);
 
   fprintf(fout, "  mov x3, %i\n", loc.line);
   fprintf(fout, "  mov x4, %i\n", loc.col);
@@ -1303,33 +1303,37 @@ static void EmitCodeForAbort(FILE* fout, FbleCode* code)
   fprintf(fout, "  ret\n");
 }
 
-// SizeofLabelForLocStr --
-//   Return the size of the label used for a given location string.
+// SizeofSanitizedString --
+//   Return the size of the label-sanitized version of a given string.
 //
 // Inputs:
-//   str - the file name string to output the size of the label for.
-static size_t SizeofLabelForLocStr(const char* str)
+//   str - the string to get the sanitized size of.
+//
+// Results:
+//   The number of bytes needed for the sanitized version of the given string,
+//   including nul terminator.
+static size_t SizeofSanitizedString(const char* str)
 {
-  size_t size = strlen(".L.loc.") + 1;
+  size_t size = 1;
   for (const char* p = str; *p != '\0'; p++) {
     size += isalnum(*p) ? 1 : 4;
   }
   return size;
 }
 
-// LabelForLocStr --
-//   Construct the label for a location source file name string.
+// SanitizeString --
+//   Return a version of the string suitable for use in labels.
 //
 // Inputs:
-//   str - the file name string to output the label for.
-//   dst - a character buffer of size SizeofLabelForLocString(str) to write
-//         the label to.
+//   str - the string to sanitize.
+//   dst - a character buffer of size SizeofSanitizedString(str) to write
+//         the sanitized string to.
 //
 // Side effects:
-//   Fills in dst with the label.
-static void LabelForLocStr(const char* str, char* dst)
+//   Fills in dst with the sanitized version of the string.
+static void SanitizeString(const char* str, char* dst)
 {
-  strcpy(dst, ".L.loc.");
+  dst[0] = '\0';
   for (const char* p = str; *p != '\0'; p++) {
     char x[5];
     sprintf(x, isalnum(*p) ? "%c" : "_%02x_", *p);
@@ -1437,9 +1441,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   // Definitions of source code locations.
   for (size_t i = 0; i < locs.size; ++i) {
-    char label[SizeofLabelForLocStr(locs.xs[i])];
-    LabelForLocStr(locs.xs[i], label);
-    fprintf(fout, "%s:\n  .string \"%s\"\n", label, locs.xs[i]);
+    char label[SizeofSanitizedString(locs.xs[i])];
+    SanitizeString(locs.xs[i], label);
+    fprintf(fout, ".L.loc.%s:\n  .string \"%s\"\n", label, locs.xs[i]);
   }
 
   for (int i = 0; i < blocks.size; ++i) {

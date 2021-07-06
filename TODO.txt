@@ -1,10 +1,12 @@
+* Pick better names for _Run_ and _Abort_ functions.
+ - Like, name them based on the profiling block info?
+ - Yes, we should have code->_base.profile_blocks available from the top level
+   module for this.
+
 * For loaded submodules, should the module profile block be the module file or
   the place where it was imported from?
  - Seems like it should be the module file, because it could be imported from
    multiple places?
-
-* Pick better names for _Run_ and _Abort_ functions.
- - Like, name them based on the profiling block info?
 
 * Try to reduce size of generated assembly?
  - Factor out slow paths for profiling and returning abort?
