@@ -39,6 +39,11 @@ bench:
 benchprof:
 	./out/bin/fble-stdio --profile bench.prof prgms/Fble/Bench.fble prgms
 
+.PHONY: perf
+perf:
+	perf record -F 997 -d -g ./out/bin/fble-bench
+	perf report -q -g folded,count,0 | ./out/bin/fble-perf-profile > bench.perf.txt
+
 .PHONY: asm
 asm:
 	./out/bin/fble-compile -s /Md5% prgms > foo.s

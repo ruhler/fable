@@ -77,10 +77,10 @@ static size_t StackBytesForCount(size_t count);
 static void AddI(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp);
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
-static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr);
-static void EmitCode(FILE* fout, FbleCode* code);
+static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
+static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr);
-static void EmitCodeForAbort(FILE* fout, FbleCode* code);
+static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
@@ -335,8 +335,12 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .xword %zi\n", module->code->_base.profile);
   fprintf(fout, "  .xword %zi\n", module->code->_base.profile_blocks.size);
   fprintf(fout, "  .xword " LABEL "\n", profile_blocks_xs_id);
-  fprintf(fout, "  .xword _Run_%p\n", (void*)module->code);
-  fprintf(fout, "  .xword _Abort_%p\n", (void*)module->code);
+
+  FbleName function_block = module->code->_base.profile_blocks.xs[module->code->_base.profile];
+  char function_label[SizeofSanitizedString(function_block.name->str)];
+  SanitizeString(function_block.name->str, function_label);
+  fprintf(fout, "  .xword _Run.%p.%s\n", (void*)module->code, function_label);
+  fprintf(fout, "  .xword _Abort.%p.%s\n", (void*)module->code, function_label);
   fprintf(fout, "  .xword FbleExecutableNothingOnFree\n");
 
   LabelId module_id = (*label_id)++;
@@ -492,13 +496,14 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
 //
 // Inputs:
 //   fout - the output stream to write the code to.
+//   profile_blocks - the list of profile block names for the module.
 //   code - pointer to the current code block, for referencing labels.
 //   pc - the program counter of the instruction.
 //   instr - the instruction to execute.
 //
 // Side effects:
 // * Outputs code to fout.
-static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
+static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr)
 {
   fprintf(fout, "  cbz R_PROFILE, .L._Run_%p.%zi.postprofile\n", code, pc);
   fprintf(fout, "  bl rand\n");
@@ -681,8 +686,12 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.profile);
       fprintf(fout, "  .xword 0\n"); // .profile_blocks.size
       fprintf(fout, "  .xword 0\n"); // .profile_blocks.xs
-      fprintf(fout, "  .xword _Run_%p\n", (void*)func_instr->code);
-      fprintf(fout, "  .xword _Abort_%p\n", (void*)func_instr->code);
+
+      FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile];
+      char function_label[SizeofSanitizedString(function_block.name->str)];
+      SanitizeString(function_block.name->str, function_label);
+      fprintf(fout, "  .xword _Run.%p.%s\n", (void*)func_instr->code, function_label);
+      fprintf(fout, "  .xword _Abort.%p.%s\n", (void*)func_instr->code, function_label);
       fprintf(fout, "  .xword 0\n"); // .on_free
 
       fprintf(fout, "  .text\n");
@@ -998,11 +1007,12 @@ static void EmitInstr(FILE* fout, void* code, size_t pc, FbleInstr* instr)
 //
 // Inputs:
 //   fout - the output stream to write the code to.
+//   profile_blocks - the list of profile block names for the module.
 //   code - the block of code to generate a C function for.
 //
 // Side effects:
 // * Outputs code to fout with two space indent.
-static void EmitCode(FILE* fout, FbleCode* code)
+static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
   // Jump table data for jumping to the right fble pc.
   fprintf(fout, "  .section .data\n");
@@ -1014,7 +1024,10 @@ static void EmitCode(FILE* fout, FbleCode* code)
 
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
-  fprintf(fout, "_Run_%p:\n", (void*)code);
+  FbleName function_block = profile_blocks.xs[code->_base.profile];
+  char function_label[SizeofSanitizedString(function_block.name->str)];
+  SanitizeString(function_block.name->str, function_label);
+  fprintf(fout, "_Run.%p.%s:\n", (void*)code, function_label);
 
   // Set up stack and frame pointer.
   fprintf(fout, "  stp FP, LR, [SP, #-%zi]!\n", sizeof(RunStackFrame));
@@ -1053,7 +1066,7 @@ static void EmitCode(FILE* fout, FbleCode* code)
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, ".L._Run_%p.pc.%zi:\n", (void*)code, i);
-    EmitInstr(fout, code, i, code->instrs.xs[i]);
+    EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);
   }
 
   // Restore stack and frame pointer and return whatever is in x0.
@@ -1242,11 +1255,12 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 //
 // Inputs:
 //   fout - the output stream to write the code to.
+//   profile_blocks - the list of profile block names for the module.
 //   code - the block of code to generate assembly.
 //
 // Side effects:
 // * Outputs generated code to the given output stream.
-static void EmitCodeForAbort(FILE* fout, FbleCode* code)
+static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
   // Jump table data for jumping to the right fble pc.
   fprintf(fout, "  .section .data\n");
@@ -1258,7 +1272,10 @@ static void EmitCodeForAbort(FILE* fout, FbleCode* code)
 
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
-  fprintf(fout, "_Abort_%p:\n", (void*)code);
+  FbleName function_block = profile_blocks.xs[code->_base.profile];
+  char function_label[SizeofSanitizedString(function_block.name->str)];
+  SanitizeString(function_block.name->str, function_label);
+  fprintf(fout, "_Abort.%p.%s:\n", (void*)code, function_label);
 
   // Set up stack and frame pointer.
   fprintf(fout, "  stp FP, LR, [SP, #-%zi]!\n", sizeof(AbortStackFrame));
@@ -1448,8 +1465,8 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
-    EmitCode(fout, blocks.xs[i]);
-    EmitCodeForAbort(fout, blocks.xs[i]);
+    EmitCode(fout, module->code->_base.profile_blocks, blocks.xs[i]);
+    EmitCodeForAbort(fout, module->code->_base.profile_blocks, blocks.xs[i]);
   }
 
   FbleFree(blocks.xs);
