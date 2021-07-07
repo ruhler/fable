@@ -8,7 +8,7 @@
 % Unit = /Unit%.Unit;
 
 Unit@! Bench = {
-  Result@ solved := !(Solve(/Sat/Aim%, Just<Int@>(Int|70)));
+  Result@ solved := !(Solve(/Sat/Aim%, Just<Int@>(Int|80)));
   !(Unit);
 };
 

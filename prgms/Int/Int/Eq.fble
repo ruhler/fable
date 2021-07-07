@@ -22,7 +22,7 @@
     p: b.?(n: False, 0: False, p: EqP(a.p, b.p)));
 };
 
-(Int@, Int@){ Bool@; } Lt = (Int@ a, Int@ b) {
+(Int@, Int@) { Bool@; } Lt = (Int@ a, Int@ b) {
   a.?(
       n: b.?(n: LtP(b.n, a.n), 0: True, p: True),
       0: b.?(n: False, 0: False, p: True),

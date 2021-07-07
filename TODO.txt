@@ -3,6 +3,12 @@
  - Assumption is it will do much better because we don't have to allocate
    structure values all over the place to access the map.
 
+* Why does the Md5 benchmark take so much memory?
+ - Is there a memory leak or memory growth bug? Shouldn't the memory use be
+   constant?
+ - Is it building up the entire input string in memory? Maybe we should
+   generate random bytes for input on the fly instead, like 0..?
+
 * Investigate why fork-race test generates so many functions with the same
   name? Is there a bug here someone? Shouldn't profile block names be unique?
 

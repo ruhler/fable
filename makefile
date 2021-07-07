@@ -12,7 +12,7 @@ ninja:
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja -k 0 -j 1
+	ninja -f out/build.ninja out/bin/fble-bench
 	#ninja -f out/build.ninja out/test/5.3-func-apply/basic/single-arg/test-compiled.tr
 
 .PHONY: all
@@ -30,6 +30,10 @@ full:
 	tclsh build.ninja.tcl > out/build.ninja
 	ninja -f out/build.ninja
 
+.PHONY: test
+test:
+	./out/bin/fble-stdio prgms /Fble/Tests%
+
 .PHONY: bench
 bench:
 	bash -c 'time ./out/bin/fble-stdio prgms /Fble/Bench%'
@@ -37,7 +41,7 @@ bench:
 
 .PHONY: benchprof
 benchprof:
-	./out/bin/fble-stdio --profile bench.prof prgms/Fble/Bench.fble prgms
+	./out/bin/fble-stdio --profile bench.prof prgms /Fble/Bench%
 
 .PHONY: perf
 perf:
