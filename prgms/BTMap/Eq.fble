@@ -1,0 +1,54 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+% And = /Bool%.And;
+
+<@>@ Eq@ = /Eq%.Eq@;
+
+<@>@ List@ = /List%.List@;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
+
+<@,@>@ Map@ = /BTMap%.Map@;
+<@,@>@ Entry@ = /BTMap%.Entry@;
+<@,@,@>% ForEach = /BTMap%.ForEach;
+
+
+# IsEmpty --
+#   Returns true if the map is empty.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   map - the map to test.
+#
+# Returns:
+#   True if the map is empty, false otherwise.
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; } IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(empty: True, map: False);
+};
+
+<@ K@, @ V@>(Eq@<K@>, Eq@<V@>) { Eq@<Entry@<K@, V@>>; }
+EqEntry = <@ K@, @ V@>(Eq@<K@> keq, Eq@<V@> veq)(Entry@<K@, V@> a, Entry@<K@, V@> b) {
+  And(keq(a.key, b.key), veq(a.value, b.value));
+};
+
+# Eq --
+#   Implementation of Eq@ for Map@. See documentation of /Eq%.Eq@.
+<@ K@, @ V@>(Eq@<K@>, Eq@<V@>) { Eq@<Map@<K@, V@>>; }
+Eq = <@ K@, @ V@>(Eq@<K@> keq, Eq@<V@> veq)(Map@<K@, V@> a, Map@<K@, V@> b) {
+  List@<Entry@<K@, V@>> aes = ForEach<K@, V@, List@<Entry@<K@, V@>>>(a,
+    Nil<Entry@<K@, V@>>, (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
+      Cons<Entry@<K@, V@>>(Entry@<K@, V@>(k, v), b);
+  });
+  List@<Entry@<K@, V@>> bes = ForEach<K@, V@, List@<Entry@<K@, V@>>>(b,
+    Nil<Entry@<K@, V@>>, (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
+      Cons<Entry@<K@, V@>>(Entry@<K@, V@>(k, v), b);
+  });
+  /List/Eq%.Eq<Entry@<K@, V@>>(EqEntry<K@, V@>(keq, veq))(aes, bes);
+};
+
+@(IsEmpty, Eq);

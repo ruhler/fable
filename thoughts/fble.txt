@@ -147,6 +147,10 @@ Fble Language Thoughts
   small number of fields, but we have to mention every field in every state
   update because we can't do updates in place.
 
+  Another good example is a delete function for a binary tree based map,
+  because there are something like 6 different cases nested at different
+  levels. It would be so much nicer if we didn't have to nest. 
+
 * A funny thing about kind restrictions.
   Something of kind @ cannot be used in a polymorphic function where <@>@ is
   expected. That makes sense.

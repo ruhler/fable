@@ -1,0 +1,285 @@
+
+<@>@ Eq@ = /Eq%.Eq@;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Nothing = /Maybe%.Nothing;
+<@>% Just = /Maybe%.Just;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# Map@ --
+#   A map from K@ to V@, using the Structure@ of K@ to locate the key value
+#   entry in the map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+<@,@>@ Map@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); },
+
+# MapP@ --
+#   A non-empty map from K@ to V@.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+<@,@>@ MapP@ = <@ K@, @ V@> { 
+  *(K@ key,
+    V@ value,
+    Map@<K@, V@> left,
+    Map@<K@, V@> right
+  );
+};
+
+# Empty --
+#   A map without any entries.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Example Use:
+#   Empty<String@, Foo@>
+Map@ Empty = <@ K@, @ V@> {
+  Map@<K@, V@>(empty: Unit);
+};
+
+<@,@>@ Entry@ = <@ K@, @ V@> { *(K@ key, V@ value); };
+
+# First --
+#   Get the first (least) value in the map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   map - the map to look up the value in.
+#
+# Returns:
+#   The entry in the map with the smallest key value. Nothing if the map is
+#   empty.
+<@ K@, @ V@>(Map@<K@, V@>) { Maybe@<Entry@<K@, V@>>; }
+First = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(
+    empty: Nothing<Entry@<K@, V@>>,
+    map: {
+      Maybe@<Entry@<K@, V@>> first = First<K@, V@>(map.map.left);
+      first.?(
+        just: first,
+        nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map.map.key, map.map.value)));
+    });
+};
+
+# Last --
+#   Get the last (greatest) value in the map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   map - the map to look up the value in.
+#
+# Returns:
+#   The entry in the map with the largest key value. Nothing if the map is
+#   empty.
+<@ K@, @ V@>(Map@<K@, V@>) { Maybe@<Entry@<K@, V@>>; }
+Last = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(
+    empty: Nothing<Entry@<K@, V@>>,
+    map: {
+      Maybe@<Entry@<K@, V@>> last = Last<K@, V@>(map.map.right);
+      last.?(
+        just: last,
+        nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map.map.key, map.map.value)));
+    });
+};
+
+# Lookup --
+#   Look up the value in a map for the given key.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to look up the value in.
+#   key - the key of the value to look up.
+#
+# Returns:
+#   The value in the map associated with the key. Nothing if the map
+#   does not contain any such value.
+#
+# Example Use:
+#   % Lookup = /Map%.Lookup<String@>(/String/Eq%.Lt)<Foo@>;
+#   Lookup(map, key);
+#
+#   % Lookup = /Map%.Lookup<String@>(/String/Eq%.Lt);
+#   Lookup<Foo@>(mapToFoo, key);
+#   Lookup<Bar@>(mapToBar, key);
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
+Lookup = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
+  map.?(
+    empty: Nothing<V@>,
+    map: {
+      lt(key, map.map.key).?(
+        true: Lookup<K@>(lt)<V@>(map.map.left, key),
+        false: lt(map.map.key, key).?(
+          true: Lookup<K@>(lt)<V@>(map.map.right, key),
+          false: Just<V@>(map.map.value)));
+    });
+};
+
+# InsertWith --
+#   Insert a value into a map, taking into account whatever existing value is
+#   in the map for the given key.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the value of the key to store with the map entry.
+#   with - a function that returns the value to insert given the existing
+#          value in the map.
+#
+# Example Use:
+#   % InsertWith = /Map%.InsertWith<String@>(/String/Eq%.Lt)<Int@>;
+#   InsertWith(map, Str(Chars|foo), (Maybe@<Int@> mv) {
+#     mv.?(just: Add(mv, value), nothing: value);
+#   };
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
+InsertWith = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+  MapP@<K@, V@> m = map.?(
+    empty: MapP@<K@, V@>(key, with(Nothing<V@>), Empty<K@, V@>, Empty<K@, V@>),
+    map: {
+      lt(key, map.map.key).?(
+        true: MapP@<K@, V@>(
+          map.map.key,
+          map.map.value,
+          InsertWith<K@>(lt)<V@>(map.map.left, key, with),
+          map.map.right),
+        false: lt(map.map.key, key).?(
+          true: MapP@<K@, V@>(
+            map.map.key,
+            map.map.value,
+            map.map.left,
+            InsertWith<K@>(lt)<V@>(map.map.right, key, with)),
+          false: MapP@<K@, V@>(
+            map.map.key,
+            with(Just<V@>(map.map.value)),
+            map.map.left,
+            map.map.right)));
+    });
+  Map@<K@, V@>(map: m);
+};
+
+# Insert --
+#   Insert a value into a map. Any existing value for the key in the map will
+#   be overridden with the new value.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the value of the key to store with the map entry.
+#   value - the value to insert.
+#
+# Example Use:
+#   % Insert = /Map%.Insert<String@>(/String/Structured%.Structured)<Int@>;
+#   Insert(map, Str(Chars|foo), 4);
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
+Insert = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
+  InsertWith<K@>(lt)<V@>(map, key, (Maybe@<V@> _) { value; });
+};
+
+# Delete --
+#   Remove a key and its value from the map, if present.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the key of the value to delete from the map.
+#
+# Example Use:
+#   % Delete = /Map%.Delete<String@>(/String/Eq%.Lt)<Int@>;
+#   Delete(map, Str(Chars|foo));
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+Delete = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
+  map.?(
+    empty: map,
+    map: lt(key, map.map.key).?(
+      true: Map@<K@, V@>(map: MapP@<K@, V@>(
+        map.map.key,
+        map.map.value,
+        Delete<K@>(lt)<V@>(map.map.left, key),
+        map.map.right)),
+      false: lt(map.map.key, key).?(
+        true: Map@<K@, V@>(map: MapP@<K@, V@>(
+          map.map.key,
+          map.map.value,
+          map.map.left,
+          Delete<K@>(lt)<V@>(map.map.right, key))),
+        false: {
+          Maybe@<Entry@<K@, V@>> left = Last<K@, V@>(map.map.left);
+          left.?(
+            just: Map@<K@, V@>(map: MapP@<K@, V@>(
+              left.just.key,
+              left.just.value,
+              Delete<K@>(lt)<V@>(map.map.left, left.just.key),
+              map.map.right)),
+            nothing: {
+              Maybe@<Entry@<K@, V@>> right = First<K@, V@>(map.map.right);
+              right.?(
+                just: Map@<K@, V@>(map: MapP@<K@, V@>(
+                  right.just.key,
+                  right.just.value,
+                  map.map.left,
+                  Delete<K@>(lt)<V@>(map.map.right, right.just.key))),
+                nothing: Empty<K@, V@>);
+            });
+        })));
+};
+
+# ForEach --
+#   Iterate over entries of a map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#   B@ - The type of value updated and returned by the foreach loop.
+#
+# Inputs:
+#   map - the map to iterate over.
+#   base - the initial value to update and return from the loop.
+#   body - the body of the loop.
+#
+# Returns:
+#   The result of applying the body consecutively to the base value, once for
+#   each entry in the map.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach (k, v) in map:
+#     b = body(k, v, b)
+#   return b
+<@ K@, @ V@, @ B@>(Map@<K@, V@>, B@, (K@, V@, B@) { B@; }) { B@; }
+ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@; } body) {
+  map.?(
+    empty: base,
+    map: {
+      B@ b1 = base;
+      B@ b2 = ForEach<K@, V@, B@>(map.map.left, b1, body);
+      B@ b3 = body(map.map.key, map.map.value, b2);
+      ForEach<K@, V@, B@>(map.map.right, b3, body);
+    });
+};
+
+@(Map@, Entry@, Empty, Lookup, Insert, InsertWith, Delete, ForEach);
