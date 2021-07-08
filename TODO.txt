@@ -1,7 +1,6 @@
-* Implement a balanced binary tree map in fble, see how it compares
-  performance wise to the structure based map
- - Assumption is it will do much better because we don't have to allocate
-   structure values all over the place to access the map.
+* Implement balancing of the binary tree map.
+ - Need to figure out how to handle InsertWith, which may or may not add an
+   element to the map.
 
 * Why does the Md5 benchmark take so much memory?
  - Is there a memory leak or memory growth bug? Shouldn't the memory use be

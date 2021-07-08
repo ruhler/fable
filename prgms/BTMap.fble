@@ -8,6 +8,18 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
+# Balance@ --
+#   Keeps track of how well balanced a map node's children are.
+#
+# l2 and r2 are temporary states that will immediately be rebalanced away.
+#@ Balance@ = +(
+#  Unit@ l2,     # The left map has 2 elements more than the right map.
+#  Unit@ l1,     # The left map has 1 element more than the right map.
+#  Unit@ 0,      # The left and right maps have the same number of elements.
+#  Unit@ r1,     # The right map has 1 element more than the left map.
+#  Unit@ r2      # The right map has 2 elements more than the right map.
+#);
+
 # Map@ --
 #   A map from K@ to V@, using the Structure@ of K@ to locate the key value
 #   entry in the map.
@@ -26,6 +38,7 @@
 <@,@>@ MapP@ = <@ K@, @ V@> { 
   *(K@ key,
     V@ value,
+#    Balance@ balance,
     Map@<K@, V@> left,
     Map@<K@, V@> right
   );

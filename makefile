@@ -41,7 +41,7 @@ bench:
 
 .PHONY: benchprof
 benchprof:
-	./out/bin/fble-stdio --profile bench.prof prgms /Fble/Bench%
+	./out/bin/fble-bench --profile bench.prof
 
 .PHONY: perf
 perf:
