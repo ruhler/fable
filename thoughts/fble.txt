@@ -151,6 +151,76 @@ Fble Language Thoughts
   because there are something like 6 different cases nested at different
   levels. It would be so much nicer if we didn't have to nest. 
 
+  Proposal: let's have a variation on case expression that works in statement
+  mode. Syntax looks something like:
+
+  expr '.?(' name ':' ... ')'; expr
+
+  Which is equivalent to:
+  expr '.?(' name ':' ... ':' expr')'
+
+  Hmm... Doesn't look so clean in practice I fear.
+
+  I think better is something like:
+  stmt ::= expr '.?' name { stmt } stmt
+
+  Which is equivalent to:
+   expr '.?' (name: stmt, ':' stmt)
+
+  Now you can say things like:
+    x.? just { 
+      Foo(x.just);
+    };
+
+    y.? just {
+      Foo(y.just);
+    };
+
+    Foo(5);
+
+  Maybe it's worth a try?
+
+  But note, this is the same exact problem function bind syntax was introduced
+  to solve. In theory we should already be able to do something like:
+
+  Unit@ _ <- ifJust<Foo@>(x, {
+    Foo(x.just);
+  });
+  Unit@ _ <- ifJust<Foo@>(y, {
+    Foo(y.just);
+  });
+  Foo(5);
+
+  Now, it's annoying to have to define IsJust for any tag we might want to use
+  this with, and a little annoying to have to write Unit@ _ <- , and annoying
+  to have to write the type that we are returning explicitly, and annoying
+  that this probably has higher performance overhead. Could those issues be
+  fixed more generally?
+
+  No, it's not quite the same. Because the function bind evaluates its first
+  argument strictly instead of lazily. We would need to have the first
+  argument be a function. So:
+
+  Unit@ _ <- ifJust<Foo@>(x, (Unit@ _) {
+    Foo(x.just);
+  });
+  Unit@ _ <- ifJust<Foo@>(y, (Unit@ _) {
+    Foo(y.just);
+  });
+  Foo(5);
+
+  This could perhaps be simplified if we allowed zero argument functions:
+
+  <- ifJust<X@, Foo@>(x, () {
+    Foo(x.just);
+  });
+
+  <- ifJust<Y@, Foo@>(y, () {
+    Foo(y.just);
+  });
+
+  Foo(5);
+
 * A funny thing about kind restrictions.
   Something of kind @ cannot be used in a polymorphic function where <@>@ is
   expected. That makes sense.

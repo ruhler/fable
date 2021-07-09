@@ -145,6 +145,100 @@ Lookup = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
     });
 };
 
+# Modify --
+#   Insert, modify, or delete a value in the map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the value of the key to store with the map entry.
+#   with - a function that returns the value to insert given the existing
+#          value in the map, or Nothing to delete the value in the map.
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Map@<K@, V@>; }
+Modify = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
+  map.?(
+    empty: {
+      Maybe@<V@> value = with(Nothing<V@>);
+      value.?(
+        # Insert into empty map.
+        just: Map@<K@, V@>(map: MapP@<K@, V@>(
+          key,
+          value.just,
+          Empty<K@, V@>,
+          Empty<K@, V@>)),
+        # Remove from empty map.
+        nothing: Empty<K@, V@>);
+    }, 
+    map: {
+      lt(key, map.map.key).?(
+        # Recurse to left map.
+        true: Map@<K@, V@>(map: MapP@<K@, V@>(
+          map.map.key,
+          map.map.value,
+          Modify<K@>(lt)<V@>(map.map.left, key, with),
+          map.map.right)),
+        false: lt(map.map.key, key).?(
+          # Recurse to right map.
+          true: Map@<K@, V@>(map: MapP@<K@, V@>(
+            map.map.key,
+            map.map.value,
+            map.map.left,
+            Modify<K@>(lt)<V@>(map.map.right, key, with))),
+          false: {
+            Maybe@<V@> value = with(Just<V@>(map.map.value));
+            value.?(
+              # Replace existing element's value.
+              just: Map@<K@, V@>(map: MapP@<K@, V@>(
+                map.map.key,
+                value.just,
+                map.map.left,
+                map.map.right)),
+              nothing: {
+                Maybe@<Entry@<K@, V@>> left = Last<K@, V@>(map.map.left);
+                left.?(
+                  # Delete element, filling in from left.
+                  just: Map@<K@, V@>(map: MapP@<K@, V@>(
+                    left.just.key,
+                    left.just.value,
+                    Delete<K@>(lt)<V@>(map.map.left, left.just.key),
+                    map.map.right)),
+                  nothing: {
+                    Maybe@<Entry@<K@, V@>> right = First<K@, V@>(map.map.right);
+                    right.?(
+                      # Delete element, filling in from right.
+                      just: Map@<K@, V@>(map: MapP@<K@, V@>(
+                        right.just.key,
+                        right.just.value,
+                        map.map.left,
+                        Delete<K@>(lt)<V@>(map.map.right, right.just.key))),
+                      # Delete only element in the map.
+                      nothing: Empty<K@, V@>);
+                  });
+              });
+            }));
+    });
+},
+
+# Delete --
+#   Remove a key and its value from the map, if present.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the key of the value to delete from the map.
+#
+# Example Use:
+#   % Delete = /Map%.Delete<String@>(/String/Eq%.Lt)<Int@>;
+#   Delete(map, Str(Chars|foo));
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+Delete = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
+  Modify<K@>(lt)<V@>(map, key, (Maybe@<V@> _) { Nothing<V@>; });
+};
+
 # InsertWith --
 #   Insert a value into a map, taking into account whatever existing value is
 #   in the map for the given key.
@@ -167,28 +261,7 @@ Lookup = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
 #   };
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
 InsertWith = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
-  MapP@<K@, V@> m = map.?(
-    empty: MapP@<K@, V@>(key, with(Nothing<V@>), Empty<K@, V@>, Empty<K@, V@>),
-    map: {
-      lt(key, map.map.key).?(
-        true: MapP@<K@, V@>(
-          map.map.key,
-          map.map.value,
-          InsertWith<K@>(lt)<V@>(map.map.left, key, with),
-          map.map.right),
-        false: lt(map.map.key, key).?(
-          true: MapP@<K@, V@>(
-            map.map.key,
-            map.map.value,
-            map.map.left,
-            InsertWith<K@>(lt)<V@>(map.map.right, key, with)),
-          false: MapP@<K@, V@>(
-            map.map.key,
-            with(Just<V@>(map.map.value)),
-            map.map.left,
-            map.map.right)));
-    });
-  Map@<K@, V@>(map: m);
+  Modify<K@>(lt)<V@>(map, key, (Maybe@<V@> v) { Just<V@>(with(v)); });
 };
 
 # Insert --
@@ -211,54 +284,6 @@ InsertWith = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Insert = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
   InsertWith<K@>(lt)<V@>(map, key, (Maybe@<V@> _) { value; });
-};
-
-# Delete --
-#   Remove a key and its value from the map, if present.
-#
-# Inputs:
-#   lt - The less than operator to use for comparing keys.
-#   map - the map to insert the value into up the value in.
-#   key - the key of the value to delete from the map.
-#
-# Example Use:
-#   % Delete = /Map%.Delete<String@>(/String/Eq%.Lt)<Int@>;
-#   Delete(map, Str(Chars|foo));
-<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
-Delete = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
-  map.?(
-    empty: map,
-    map: lt(key, map.map.key).?(
-      true: Map@<K@, V@>(map: MapP@<K@, V@>(
-        map.map.key,
-        map.map.value,
-        Delete<K@>(lt)<V@>(map.map.left, key),
-        map.map.right)),
-      false: lt(map.map.key, key).?(
-        true: Map@<K@, V@>(map: MapP@<K@, V@>(
-          map.map.key,
-          map.map.value,
-          map.map.left,
-          Delete<K@>(lt)<V@>(map.map.right, key))),
-        false: {
-          Maybe@<Entry@<K@, V@>> left = Last<K@, V@>(map.map.left);
-          left.?(
-            just: Map@<K@, V@>(map: MapP@<K@, V@>(
-              left.just.key,
-              left.just.value,
-              Delete<K@>(lt)<V@>(map.map.left, left.just.key),
-              map.map.right)),
-            nothing: {
-              Maybe@<Entry@<K@, V@>> right = First<K@, V@>(map.map.right);
-              right.?(
-                just: Map@<K@, V@>(map: MapP@<K@, V@>(
-                  right.just.key,
-                  right.just.value,
-                  map.map.left,
-                  Delete<K@>(lt)<V@>(map.map.right, right.just.key))),
-                nothing: Empty<K@, V@>);
-            });
-        })));
 };
 
 # ForEach --
