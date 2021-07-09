@@ -472,6 +472,45 @@ choice selected by the condition. No other choices are evaluated.
 Runtime is O(log(N)) plus the runtimes of the condition and selected argument,
 where N is the number of fields in the union.
 
+4.4 Union If
+------------
+Concrete Syntax:
+  stmt ::= stmt '.?' name ':' expr ';' stmt
+
+Example:
+  x.? true: { Foo; }; Bar;
+
+Union if is a syntactic sugar for union select with a non-default and default
+branch. The above example is equivalent to: x.?(true: Foo, : Bar);
+
+The motivation for the union if syntax is to collapse nesting where possible.
+For example, consider a 4 way selection based on two boolean variables. With
+union select, this is written as:
+
+  x.?(
+    true: y.?(
+      true: A,
+      false: B),
+    false: y.?(
+      true: C,
+      false: D));
+
+Using union if, this is expressed more sequentially as:
+
+  x.? true: {
+    y.? true: {
+      A;
+    };
+
+    B;
+  }
+
+  y.? true: {
+    C;
+  };
+
+  D;
+
 5. Functions
 ------------
 A function is a mapping from one or more argument values to a result value.

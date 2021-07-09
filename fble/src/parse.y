@@ -519,6 +519,17 @@ stmt:
       exec_expr->body = $3;
       $$ = &exec_expr->_base;
     }
+  | expr '.' '?' name ':' expr ';' stmt {
+      FbleUnionSelectExpr* select_expr = FbleAlloc(FbleUnionSelectExpr);
+      select_expr->_base.tag = FBLE_UNION_SELECT_EXPR;
+      select_expr->_base.loc = FbleCopyLoc(@$);
+      select_expr->condition = $1;
+      FbleVectorInit(select_expr->choices);
+      FbleTaggedExpr choice = { .name = $4, .expr = $6 };
+      FbleVectorAppend(select_expr->choices, choice);
+      select_expr->default_ = $8;
+      $$ = &select_expr->_base;
+    }
   ;
 
 expr_p:
