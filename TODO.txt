@@ -2,6 +2,14 @@
  - Need to figure out how to handle InsertWith, which may or may not add an
    element to the map.
 
+* Look for other opportunities to make use of union if expression?
+
+* Fix missing dependency of generation of build.ninja on new spec tests.
+
+* Preserve union if expression all the way to the back end so we can generate
+  better code?
+ - A simple conditional check is surely better than a jump table for this.
+
 * Why does the Md5 benchmark take so much memory?
  - Is there a memory leak or memory growth bug? Shouldn't the memory use be
    constant?

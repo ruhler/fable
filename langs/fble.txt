@@ -444,10 +444,12 @@ Abstract Syntax:
 
 Concrete Syntax:
   expr ::= expr '.?(' name ':' expr [',' name ':' expr [...]] [',' ':' expr]')'
+  stmt ::= expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt
 
 Example:
   mfoo.?(Just: mfoo.Just, Nothing: 3)
   char.?(a: True, b: True, : False)
+  { char.?(a: True, b: True); False; }
 
 The condition must be a union value. Returns the value of the choice selected
 by the tag of the condition, without causing any other choices to be
@@ -472,44 +474,37 @@ choice selected by the condition. No other choices are evaluated.
 Runtime is O(log(N)) plus the runtimes of the condition and selected argument,
 where N is the number of fields in the union.
 
-4.4 Union If
-------------
-Concrete Syntax:
-  stmt ::= stmt '.?' name ':' expr ';' stmt
+The stmt form of syntax is an alternate syntax to reduce syntactic overhead of
+nested union select expressions. In this syntax the body of the default branch
+is specified in the statement following the union select.
 
-Example:
-  x.? true: { Foo; }; Bar;
-
-Union if is a syntactic sugar for union select with a non-default and default
-branch. The above example is equivalent to: x.?(true: Foo, : Bar);
-
-The motivation for the union if syntax is to collapse nesting where possible.
-For example, consider a 4 way selection based on two boolean variables. With
-union select, this is written as:
-
+For example, the following union select expression:
+ 
   x.?(
     true: y.?(
       true: A,
-      false: B),
+      : B),
     false: y.?(
       true: C,
-      false: D));
+      : D));
 
-Using union if, this is expressed more sequentially as:
+Is equivalent to the following statement based form:
 
-  x.? true: {
-    y.? true: {
-      A;
-    };
+  {
+    x.?(true: {
+      y.?(true: {
+        A;
+      });
 
-    B;
+      B;
+    });
+
+    y.?(true: {
+      C;
+    });
+
+    D;
   }
-
-  y.? true: {
-    C;
-  };
-
-  D;
 
 5. Functions
 ------------

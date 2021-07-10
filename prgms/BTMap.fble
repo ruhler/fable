@@ -160,68 +160,68 @@ Lookup = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
 #          value in the map, or Nothing to delete the value in the map.
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Map@<K@, V@>; }
 Modify = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
-  map.? empty: {
+  map.?(empty: {
     Maybe@<V@> value = with(Nothing<V@>);
-    value.? just: {
+    value.?(just: {
       # Insert into empty map.
       Map@<K@, V@>(map: MapP@<K@, V@>(
         key,
         value.just,
         Empty<K@, V@>,
         Empty<K@, V@>));
-    };
+    });
 
     # Remove from empty map.
     Empty<K@, V@>;
-  }; 
+  }); 
 
-  lt(key, map.map.key).? true: {
+  lt(key, map.map.key).?(true: {
     # Recurse to left map.
     Map@<K@, V@>(map: MapP@<K@, V@>(
       map.map.key,
       map.map.value,
       Modify<K@>(lt)<V@>(map.map.left, key, with),
       map.map.right));
-  };
+  });
 
-  lt(map.map.key, key).? true: {
+  lt(map.map.key, key).?(true: {
     # Recurse to right map.
     Map@<K@, V@>(map: MapP@<K@, V@>(
       map.map.key,
       map.map.value,
       map.map.left,
       Modify<K@>(lt)<V@>(map.map.right, key, with)));
-  };
+  });
 
   Maybe@<V@> value = with(Just<V@>(map.map.value));
-  value.? just: {
+  value.?(just: {
     # Replace existing element's value.
     Map@<K@, V@>(map: MapP@<K@, V@>(
       map.map.key,
       value.just,
       map.map.left,
       map.map.right));
-  };
+  });
 
   Maybe@<Entry@<K@, V@>> left = Last<K@, V@>(map.map.left);
-  left.? just: {
+  left.?(just: {
     # Delete element, filling in from left.
     Map@<K@, V@>(map: MapP@<K@, V@>(
       left.just.key,
       left.just.value,
       Delete<K@>(lt)<V@>(map.map.left, left.just.key),
       map.map.right));
-  };
+  });
 
   Maybe@<Entry@<K@, V@>> right = First<K@, V@>(map.map.right);
-  right.? just: {
+  right.?(just: {
     # Delete element, filling in from right.
     Map@<K@, V@>(map: MapP@<K@, V@>(
       right.just.key,
       right.just.value,
       map.map.left,
       Delete<K@>(lt)<V@>(map.map.right, right.just.key)));
-  };
+  });
 
   # Delete only element in the map.
   Empty<K@, V@>;
