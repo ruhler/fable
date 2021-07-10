@@ -82,20 +82,16 @@ Map@ Empty = <@ K@, @ V@> {
 #   does not contain any such value.
 <@ K@, @ V@>(Map@<K@, V@>, Structure@) { Maybe@<V@>; }
 LookupS = <@ K@, @ V@>(Map@<K@, V@> map, Structure@ key) {
-  map.?(
-     empty: Nothing<V@>,
-     map: {
-       key.?(
-          unit: GetValue<K@, V@>(map.map.unit),
-          either: key.either.?(
-                   a: LookupS<K@, V@>(map.map.either.a, key.either.a),
-                   b: LookupS<K@, V@>(map.map.either.b, key.either.b)),
-          pair: {
-            Maybe@<Map@<K@, V@>> mm = LookupS<Unit@, Map@<K@, V@>>(map.map.pair, key.pair.a);
-            mm.?(
-                just: LookupS<K@, V@>(mm.just, key.pair.b),
-                nothing: Nothing<V@>);
-          });
+  map.?(empty: Nothing<V@>);
+  key.?(
+     unit: GetValue<K@, V@>(map.map.unit),
+     either: key.either.?(
+              a: LookupS<K@, V@>(map.map.either.a, key.either.a),
+              b: LookupS<K@, V@>(map.map.either.b, key.either.b)),
+     pair: {
+       Maybe@<Map@<K@, V@>> mm = LookupS<Unit@, Map@<K@, V@>>(map.map.pair, key.pair.a);
+       mm.?(just: LookupS<K@, V@>(mm.just, key.pair.b));
+       Nothing<V@>;
      });
 };
 
@@ -279,19 +275,17 @@ Delete = <@ K@>(Structured@<K@> s)<@ V@>(Map@<K@, V@> map, K@ key) {
 #   return b
 <@ K@, @ V@, @ B@>(Map@<K@, V@>, B@, (K@, V@, B@) { B@; }) { B@; }
 ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@; } body) {
-  map.?(
-    empty: base,
-    map: {
-      B@ b2 = map.map.unit.?(
-        just: body(map.map.unit.just.key, map.map.unit.just.value, base),
-        nothing: base);
-      B@ b3 = ForEach<K@, V@, B@>(map.map.either.a, b2, body);
-      B@ b4 = ForEach<K@, V@, B@>(map.map.either.b, b3, body);
-      ForEach<Unit@, Map@<K@, V@>, B@>(map.map.pair, b4,
-        (Unit@ _, Map@<K@, V@> v, B@ b) {
-          ForEach<K@, V@, B@>(v, b, body);
-      });
-    });
+  map.?(empty: base);
+
+  B@ b2 = map.map.unit.?(
+    just: body(map.map.unit.just.key, map.map.unit.just.value, base),
+    nothing: base);
+  B@ b3 = ForEach<K@, V@, B@>(map.map.either.a, b2, body);
+  B@ b4 = ForEach<K@, V@, B@>(map.map.either.b, b3, body);
+  ForEach<Unit@, Map@<K@, V@>, B@>(map.map.pair, b4,
+    (Unit@ _, Map@<K@, V@> v, B@ b) {
+      ForEach<K@, V@, B@>(v, b, body);
+  });
 };
 
 @(Map@, Empty, Lookup, Insert, InsertWith, Delete, ForEach);
