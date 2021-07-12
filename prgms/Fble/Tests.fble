@@ -47,6 +47,7 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
 ]);
 
 Stdio@ Main = (Get@<Maybe@<String@>> in, Put@<String@> out) {
+  #/Test%.RunTestsVerbose(out, AllTests);
   /Test%.RunTests(out, AllTests);
 };
 
