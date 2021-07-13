@@ -36,8 +36,6 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-<@>@ Structured@ = /Structured%.Structured@;
-
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
@@ -87,18 +85,17 @@ Int@ NumAliens = Mul(NumRows, NumCols);
 # Set@ --
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
-@ Set@ = /Map%.Map@<Alien@, Unit@>;
+@ Set@ = /BTMap%.Map@<Alien@, Unit@>;
 
-# AlienS -- 
-#   The definition of Structured@ for AlienS, required to make use of the set
-#   of aliens.
-Structured@<Alien@> AlienS = /Int/Int/Structured%.Structured;
+# AlienLt -- 
+#   Less than comparison operation for Aliens.
+/Eq%.Eq@<Alien@> AlienLt = /Int/Int/Eq%.Lt;
 
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
-  % Insert = /Map%.Insert<Alien@>(AlienS)<Unit@>;
-  DoWhile<Alien@, Set@>(Int|0, Next, /Map%.Empty<Alien@, Unit@>, 
+  % Insert = /BTMap%.Insert<Alien@>(AlienLt)<Unit@>;
+  DoWhile<Alien@, Set@>(Int|0, Next, /BTMap%.Empty<Alien@, Unit@>, 
     (Alien@ a, Set@ s) {
       Insert(s, a, Unit);
     });
@@ -107,7 +104,7 @@ Set@ AllAliens = {
 # Contains --
 #   Returns true if the set contains the given alien, false otherwise.
 (Set@, Alien@) { Bool@; } Contains = {
-  % Lookup = /Map%.Lookup<Alien@>(AlienS)<Unit@>;
+  % Lookup = /BTMap%.Lookup<Alien@>(AlienLt)<Unit@>;
   (Set@ set, Alien@ alien) {
     Lookup(set, alien).?(just: True, nothing: False);
   };
