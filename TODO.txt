@@ -1,10 +1,7 @@
 * Implement balancing of the binary tree map.
- - Try switching the rest of the code from structured map to balanced map.
-   Do we get an overall performance improvement?
- - Set up infrastructure to test rebalancing
-   There are just so many cases to test :(
-   Maybe we can set up a stress test, inserting a large number of integers in
-   random order and confirming at the end that it is properly balanced?
+ - Remove /Map and Structured, now that they are unused.
+ - Remain /BTMap% to /Map%.
+ - Add tests for BTMap%?
 
 * Fix missing dependency of generation of build.ninja on new spec tests.
 

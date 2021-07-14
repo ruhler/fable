@@ -24,7 +24,6 @@
 <@,@>% ForEach = /List%.ForEach;
 <@>% Length = /List/Length%.Length;
 <@>% Sort = /List/Sort%.Sort;
-<@>% _Structured = /List/Structured%.Structured;
 
 <@>@ Show@ = /Show%.Show@;
 

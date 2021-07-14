@@ -36,6 +36,7 @@ test:
 
 .PHONY: bench
 bench:
+	ninja -f out/build.ninja
 	bash -c 'time ./out/bin/fble-stdio prgms /Fble/Bench%'
 	bash -c 'time ./out/bin/fble-bench'
 

@@ -38,7 +38,6 @@
 % Ge = /Int/Int/Eq%.Ge;
 
 % Int = /Int/Int/Lit%.Int;
-% _Structured = /Int/Int/Structured%.Structured;
 
 (String@, Bool@!) { Test@; } T = (String@ name, Bool@! p) {
   Test(name, {

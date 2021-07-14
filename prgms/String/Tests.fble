@@ -6,7 +6,6 @@
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 % Strs = /String%.Strs;
-% _Structured = /String/Structured%.Structured;
 @ Test@ = /Test%.Test@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
