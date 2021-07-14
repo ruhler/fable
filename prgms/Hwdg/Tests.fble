@@ -34,6 +34,7 @@
 @ Gates@ = /Hwdg%.Gates@;
 <@>@ Ports@ = /Hwdg%.Ports@;
 @ PortSpec@ = /Hwdg%.PortSpec@;
+% CoordEq = /Hwdg%.CoordEq;
 % InputPort = /Hwdg%.InputPort;
 % OutputPort = /Hwdg%.OutputPort;
 % UnusedPort = /Hwdg%.UnusedPort;
@@ -61,11 +62,11 @@ Show@<Coord@> ShowCoord = (Coord@ x) {
 };
 
 (Cells@, Cells@) { Bool@; } EqCells = (Cells@ a, Cells@ b) {
-  /Map/Eq%.Eq<Coord@, Data@>(EqData)(a, b);
+  /BTMap/Eq%.Eq<Coord@, Data@>(CoordEq, EqData)(a, b);
 };
 
 Show@<Cells@> ShowCells = (Cells@ x) {
-  /Map/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x);
+  /BTMap/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x);
 };
 
 Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[

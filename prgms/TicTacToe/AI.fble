@@ -1,4 +1,7 @@
 
+% True = /Bool%.True;
+% False = /Bool%.False;
+
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 <@,@>% ForEach = /List%.ForEach;
@@ -12,12 +15,6 @@
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
-@ Structure@ = /Structure%.Structure@;
-% Struct = /Structure/Struct%.Struct;
-% Enum = /Structure/Union%.Enum;
-<@>@ Structured@ = /Structured%.Structured@;
-
-
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
@@ -29,26 +26,40 @@
 % BoardStatus = /TicTacToe/Board%.BoardStatus;
 % Move = /TicTacToe/Board%.Move;
 
-Structured@<Square@> SquareS = {
-  Structure@ x = Enum|00;
-  Structure@ o = Enum|01;
-  Structure@ e = Enum|1;
-  (Square@ s) { s.?(X: x, O: o, E: e); };
+/Eq%.Eq@<Square@> SquareEq = (Square@ a, Square@ b) {
+  a.?(
+    X: b.?(X: True, : False),
+    O: b.?(O: True, : False),
+    E: b.?(E: True, : False));
 };
 
-Structured@<Board@> BoardS = {
-  (Square@, Square@, Square@) { Structure@; }
-  RowS = (Square@ a, Square@ b, Square@ c) {
-    Struct[SquareS(a), SquareS(b), SquareS(c)];
-  };
+/Eq%.Eq@<Square@> SquareLt = (Square@ a, Square@ b) {
+  a.?(
+    X: b.?(X: False, O: True, E: True),
+    O: b.?(X: False, O: False, E: True),
+    E: False);
+};
 
-  (Board@ b) {
-    Struct[
-      RowS(b.ul, b.uc, b.ur),
-      RowS(b.ml, b.mc, b.mr),
-      RowS(b.ll, b.lc, b.lr)
-    ];
-  };
+/Eq%.Eq@<Board@> BoardLt = (Board@ a, Board@ b) {
+  SquareLt(a.ul, b.ul).?(true: True);
+  SquareEq(a.ul, b.ul).?(false: False);
+  SquareLt(a.uc, b.uc).?(true: True);
+  SquareEq(a.uc, b.uc).?(false: False);
+  SquareLt(a.ur, b.ur).?(true: True);
+  SquareEq(a.ur, b.ur).?(false: False);
+  SquareLt(a.ml, b.ml).?(true: True);
+  SquareEq(a.ml, b.ml).?(false: False);
+  SquareLt(a.mc, b.mc).?(true: True);
+  SquareEq(a.mc, b.mc).?(false: False);
+  SquareLt(a.mr, b.mr).?(true: True);
+  SquareEq(a.mr, b.mr).?(false: False);
+  SquareLt(a.ll, b.ll).?(true: True);
+  SquareEq(a.ll, b.ll).?(false: False);
+  SquareLt(a.lc, b.lc).?(true: True);
+  SquareEq(a.lc, b.lc).?(false: False);
+  SquareLt(a.lr, b.lr).?(true: True);
+  SquareEq(a.lr, b.lr).?(false: False);
+  False;
 };
 
 (Position@){ Maybe@<Position@>; } NextPosition = (Position@ p) {
@@ -150,10 +161,10 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-@ MemoTable@ = /Map%.Map@<Board@, PositionResult@>;
-% Empty = /Map%.Empty<Board@, PositionResult@>;
-% Lookup = /Map%.Lookup<Board@>(BoardS)<PositionResult@>;
-% Insert = /Map%.Insert<Board@>(BoardS)<PositionResult@>;
+@ MemoTable@ = /BTMap%.Map@<Board@, PositionResult@>;
+% Empty = /BTMap%.Empty<Board@, PositionResult@>;
+% Lookup = /BTMap%.Lookup<Board@>(BoardLt)<PositionResult@>;
+% Insert = /BTMap%.Insert<Board@>(BoardLt)<PositionResult@>;
 
 <@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 

@@ -2,6 +2,7 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
 % False = /Bool%.False;
+% And = /Bool%.And;
 % Or = /Bool%.Or;
 
 @ Int@ = /Int/Int%.Int@; 
@@ -13,18 +14,23 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-% PairS = /Structure%.PairS;
-<@>@ Structured@ = /Structured%.Structured@;
-
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
 @ Coord@ = *(Int@ x, Int@ y);
 
-Structured@<Coord@> CoordS = {
-  % IntS = /Int/Int/Structured%.Structured;
-  (Coord@ c) {
-    PairS(IntS(c.x), IntS(c.y));
+/Eq%.Eq@<Coord@> CoordLt = {
+  % IntEq = /Int/Int/Eq%.Eq;
+  % IntLt = /Int/Int/Eq%.Lt;
+  (Coord@ a, Coord@ b) {
+    Or(IntLt(a.x, b.x), And(IntEq(a.x, b.x), IntLt(a.y, b.y)));
+  };
+};
+
+/Eq%.Eq@<Coord@> CoordEq = {
+  % IntEq = /Int/Int/Eq%.Eq;
+  (Coord@ a, Coord@ b) {
+    And(IntEq(a.x, b.x), IntEq(a.y, b.y));
   };
 };
 
@@ -50,13 +56,13 @@ PortSpec@ UnusedPort = PortSpec@(unused: Unit);
 
 @ Gate@ = *(Ports@<PortSpec@> ports, GateFunction@ function);
 
-@ Cells@ = /Map%.Map@<Coord@, Data@>;
+@ Cells@ = /BTMap%.Map@<Coord@, Data@>;
 @ GateEntry@ = *(Coord@ coord, Gate@ gate);
 @ Gates@ = /List%.List@<GateEntry@>;
 
 # EmptyCells -- 
 #  An empty array of data cells.
-Cells@ EmptyCells = /Map%.Empty<Coord@, Data@>;
+Cells@ EmptyCells = /BTMap%.Empty<Coord@, Data@>;
 
 # EmptyGates --
 #  An empty array of gates.
@@ -65,19 +71,19 @@ Gates@ EmptyGates = /List%.Nil<GateEntry@>;
 # GetData --
 #   Get the data of a particular cell.
 (Cells@, Coord@) { Maybe@<Data@>; } GetData = {
-  /Map%.Lookup<Coord@>(CoordS)<Data@>;
+  /BTMap%.Lookup<Coord@>(CoordLt)<Data@>;
 };
 
 # SetData --
 #   Set the data value of the given cell.
 (Cells@, Coord@, Data@) { Cells@; } SetData = {
-  /Map%.Insert<Coord@>(CoordS)<Data@>;
+  /BTMap%.Insert<Coord@>(CoordLt)<Data@>;
 };
 
 # ClearData --
 #   Clear the data value of the given cell, leaving the cell empty.
 (Cells@, Coord@) { Cells@; } ClearData = {
-  /Map%.Delete<Coord@>(CoordS)<Data@>;
+  /BTMap%.Delete<Coord@>(CoordLt)<Data@>;
 };
 
 # SetGate --
@@ -188,6 +194,6 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
 };
 
 @(Cells@, Gates@, GateEntry@, Coord@, Data@, Gate@, Ports@, PortSpec@,
-  0, 1, InputPort, OutputPort, UnusedPort,
+  0, 1, InputPort, OutputPort, UnusedPort, CoordEq,
   EmptyCells, GetData, SetData, ClearData, EmptyGates, Gates, SetGate, ForEachGate,
   Step, Run);
