@@ -62,11 +62,11 @@ Show@<Coord@> ShowCoord = (Coord@ x) {
 };
 
 (Cells@, Cells@) { Bool@; } EqCells = (Cells@ a, Cells@ b) {
-  /BTMap/Eq%.Eq<Coord@, Data@>(CoordEq, EqData)(a, b);
+  /Map/Eq%.Eq<Coord@, Data@>(CoordEq, EqData)(a, b);
 };
 
 Show@<Cells@> ShowCells = (Cells@ x) {
-  /BTMap/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x);
+  /Map/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x);
 };
 
 Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[

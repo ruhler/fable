@@ -161,10 +161,10 @@ ChooseBestMaybePosition = (Maybe@<PositionResult@> a, Maybe@<PositionResult@> b)
 
 # Map from Board to the best next move to make on that board and the expected
 # game result from playing there.
-@ MemoTable@ = /BTMap%.Map@<Board@, PositionResult@>;
-% Empty = /BTMap%.Empty<Board@, PositionResult@>;
-% Lookup = /BTMap%.Lookup<Board@>(BoardLt)<PositionResult@>;
-% Insert = /BTMap%.Insert<Board@>(BoardLt)<PositionResult@>;
+@ MemoTable@ = /Map%.Map@<Board@, PositionResult@>;
+% Empty = /Map%.Empty<Board@, PositionResult@>;
+% Lookup = /Map%.Lookup<Board@>(BoardLt)<PositionResult@>;
+% Insert = /Map%.Insert<Board@>(BoardLt)<PositionResult@>;
 
 <@>@ MemoState@ = <@ T@>{ *(MemoTable@ memo, T@ data); };
 

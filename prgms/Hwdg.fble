@@ -56,13 +56,13 @@ PortSpec@ UnusedPort = PortSpec@(unused: Unit);
 
 @ Gate@ = *(Ports@<PortSpec@> ports, GateFunction@ function);
 
-@ Cells@ = /BTMap%.Map@<Coord@, Data@>;
+@ Cells@ = /Map%.Map@<Coord@, Data@>;
 @ GateEntry@ = *(Coord@ coord, Gate@ gate);
 @ Gates@ = /List%.List@<GateEntry@>;
 
 # EmptyCells -- 
 #  An empty array of data cells.
-Cells@ EmptyCells = /BTMap%.Empty<Coord@, Data@>;
+Cells@ EmptyCells = /Map%.Empty<Coord@, Data@>;
 
 # EmptyGates --
 #  An empty array of gates.
@@ -71,19 +71,19 @@ Gates@ EmptyGates = /List%.Nil<GateEntry@>;
 # GetData --
 #   Get the data of a particular cell.
 (Cells@, Coord@) { Maybe@<Data@>; } GetData = {
-  /BTMap%.Lookup<Coord@>(CoordLt)<Data@>;
+  /Map%.Lookup<Coord@>(CoordLt)<Data@>;
 };
 
 # SetData --
 #   Set the data value of the given cell.
 (Cells@, Coord@, Data@) { Cells@; } SetData = {
-  /BTMap%.Insert<Coord@>(CoordLt)<Data@>;
+  /Map%.Insert<Coord@>(CoordLt)<Data@>;
 };
 
 # ClearData --
 #   Clear the data value of the given cell, leaving the cell empty.
 (Cells@, Coord@) { Cells@; } ClearData = {
-  /BTMap%.Delete<Coord@>(CoordLt)<Data@>;
+  /Map%.Delete<Coord@>(CoordLt)<Data@>;
 };
 
 # SetGate --

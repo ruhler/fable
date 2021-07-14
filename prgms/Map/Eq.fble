@@ -10,9 +10,9 @@
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 
-<@,@>@ Map@ = /BTMap%.Map@;
-<@,@>@ Entry@ = /BTMap%.Entry@;
-<@,@,@>% ForEach = /BTMap%.ForEach;
+<@,@>@ Map@ = /Map%.Map@;
+<@,@>@ Entry@ = /Map%.Entry@;
+<@,@,@>% ForEach = /Map%.ForEach;
 
 
 # IsEmpty --

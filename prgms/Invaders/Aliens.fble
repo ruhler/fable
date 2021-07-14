@@ -85,7 +85,7 @@ Int@ NumAliens = Mul(NumRows, NumCols);
 # Set@ --
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
-@ Set@ = /BTMap%.Map@<Alien@, Unit@>;
+@ Set@ = /Map%.Map@<Alien@, Unit@>;
 
 # AlienLt -- 
 #   Less than comparison operation for Aliens.
@@ -94,8 +94,8 @@ Int@ NumAliens = Mul(NumRows, NumCols);
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
-  % Insert = /BTMap%.Insert<Alien@>(AlienLt)<Unit@>;
-  DoWhile<Alien@, Set@>(Int|0, Next, /BTMap%.Empty<Alien@, Unit@>, 
+  % Insert = /Map%.Insert<Alien@>(AlienLt)<Unit@>;
+  DoWhile<Alien@, Set@>(Int|0, Next, /Map%.Empty<Alien@, Unit@>, 
     (Alien@ a, Set@ s) {
       Insert(s, a, Unit);
     });
@@ -104,7 +104,7 @@ Set@ AllAliens = {
 # Contains --
 #   Returns true if the set contains the given alien, false otherwise.
 (Set@, Alien@) { Bool@; } Contains = {
-  % Lookup = /BTMap%.Lookup<Alien@>(AlienLt)<Unit@>;
+  % Lookup = /Map%.Lookup<Alien@>(AlienLt)<Unit@>;
   (Set@ set, Alien@ alien) {
     Lookup(set, alien).?(just: True, nothing: False);
   };
