@@ -1,7 +1,6 @@
 * Implement balancing of the binary tree map.
  - Try switching the rest of the code from structured map to balanced map.
    Do we get an overall performance improvement?
- - See if I can come up with a way to avoid duplicating code.
  - Set up infrastructure to test rebalancing
    There are just so many cases to test :(
    Maybe we can set up a stress test, inserting a large number of integers in
