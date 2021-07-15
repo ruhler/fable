@@ -224,6 +224,7 @@ bin $::bin/fble-app $::obj/fble-app.o "-L $::lib -lfble -lSDL2" $::libfble
 obj $::obj/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 obj $::obj/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 obj $::obj/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::obj/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I /usr/include/SDL2"
 obj $::obj/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 
 # tests
@@ -491,6 +492,14 @@ asm $::obj/fble-bench.o $::src/fble-bench.s ""
 bin $::bin/fble-bench \
   "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
+
+# /Invaders/NativeApp% compiled binary
+build $::src/fble-invaders.s $::bin/fble-compile \
+  "$::bin/fble-compile --export FbleCompiledMain /Invaders/NativeApp% > $::src/fble-invaders.s"
+asm $::obj/fble-invaders.o $::src/fble-invaders.s ""
+bin $::bin/fble-invaders \
+  "$::obj/fble-invaders.o $::obj/fble-compiled-app.o" \
+  "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
 
 # test summary
 build $::test/tests.txt "$::tests" "echo $::tests > $::test/tests.txt"

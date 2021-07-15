@@ -1,7 +1,5 @@
-* Implement balancing of the binary tree map.
- - Remove /Map and Structured, now that they are unused.
- - Remain /BTMap% to /Map%.
- - Add tests for BTMap%?
+* Add tests for balancing of /Map%?
+* Update Hwdg for new spec and implement md5?
 
 * Fix missing dependency of generation of build.ninja on new spec tests.
 
