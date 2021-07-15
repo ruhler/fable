@@ -4,6 +4,7 @@
 % False = /Bool%.False;
 % And = /Bool%.And;
 % Or = /Bool%.Or;
+% Not = /Bool%.Not;
 
 @ Int@ = /Int/Int%.Int@; 
 % Inc = /Int/Int%.Inc;
@@ -38,10 +39,13 @@
 Data@ 0 = Data@(0: Unit);
 Data@ 1 = Data@(1: Unit);
 
-@ PortSpec@ = +(Unit@ input, Unit@ output, Unit@ unused);
-PortSpec@ InputPort = PortSpec@(input: Unit);
-PortSpec@ OutputPort = PortSpec@(output: Unit);
-PortSpec@ UnusedPort = PortSpec@(unused: Unit);
+# PortSpec@ --
+#   Describes how a given port is used in a gate.
+@ PortSpec@ = *(Bool@ input, Bool@ output);
+PortSpec@ InputPort = PortSpec@(True, False);
+PortSpec@ OutputPort = PortSpec@(False, True);
+PortSpec@ IOPort = PortSpec@(True, True);
+PortSpec@ UnusedPort = PortSpec@(False, False);
 
 <@>@ Ports@ = <@ T@> { *(T@ ul, T@ ur, T@ ll, T@ lr); };
 
@@ -126,25 +130,22 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
 # enabled.
 (Gates@, Cells@) { Maybe@<Cells@>; } Step = {
   (PortSpec@, Maybe@<Data@>) { Bool@; } Blocked = (PortSpec@ ps, Maybe@<Data@> d) {
-    ps.?(
-      input: d.?(just: False, nothing: True),
-      output: d.?(just: True, nothing: False),
-      unused: False);
+    Bool@ empty = d.?(just: False, nothing: True);
+    And(ps.input, empty).?(true: True);
+    And(ps.output, And(Not(ps.input), Not(empty)));
   };
 
   (PortSpec@, Maybe@<Data@>) { Data@; } InputData = (PortSpec@ ps, Maybe@<Data@> d) {
-    ps.?(
-      input: d.?(just: d.just, nothing: 0),
-      output: 0,
-      unused: 0);
+    Not(ps.input).?(true: 0);
+    d.?(nothing: 0);
+    d.just;
   };
 
   @ B@ = *(Cells@ cells, Bool@ updated);
   (B@, Coord@, PortSpec@, Data@) { B@; } UpdateResult = (B@ b, Coord@ c, PortSpec@ ps, Data@ d) {
-    ps.?(
-      input: @(cells: ClearData(b.cells, c), updated: True),
-      output: @(cells: SetData(b.cells, c, d), updated: True),
-      unused: b);
+    ps.output.?(true: @(cells: SetData(b.cells, c, d), updated: True));
+    ps.input.?(true: @(cells: ClearData(b.cells, c), updated: True));
+    b;
   };
 
   (Gates@ gates, Cells@ cells) {
@@ -194,6 +195,6 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
 };
 
 @(Cells@, Gates@, GateEntry@, Coord@, Data@, Gate@, Ports@, PortSpec@,
-  0, 1, InputPort, OutputPort, UnusedPort, CoordEq,
+  0, 1, InputPort, OutputPort, IOPort, UnusedPort, CoordEq,
   EmptyCells, GetData, SetData, ClearData, EmptyGates, Gates, SetGate, ForEachGate,
   Step, Run);

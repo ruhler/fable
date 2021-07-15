@@ -4,8 +4,7 @@
 @ Effect@ = /App%.Effect@;
 
 @ Bool@ = /Bool%.Bool@;
-% False = /Bool%.False;
-% True = /Bool%.True;
+% Or = /Bool%.Or;
 
 @ Draw@ = /Drawing%.Draw@;
 @ Color@ = /Drawing%.Color@;
@@ -90,10 +89,10 @@ Cells@ Cells = {
        Coord@(p.x, Inc(p.y)), Coord@(Inc(p.x), Inc(p.y)));
 
      Ports@<Bool@> used = Ports@<Bool@>(
-       g.ports.ul.?(unused: False, : True),
-       g.ports.ur.?(unused: False, : True),
-       g.ports.ll.?(unused: False, : True),
-       g.ports.lr.?(unused: False, : True));
+       Or(g.ports.ul.input, g.ports.ul.output),
+       Or(g.ports.ur.input, g.ports.ur.output),
+       Or(g.ports.ll.input, g.ports.ll.output),
+       Or(g.ports.lr.input, g.ports.lr.output));
 
      Ports@<Draw@> fills = Ports@<Draw@>(
        Rect(coords.ul.x, coords.ul.y, 1, 1, Color@(white: Unit)),
