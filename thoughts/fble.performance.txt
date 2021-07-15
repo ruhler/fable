@@ -473,4 +473,38 @@ Summary:
 Where fble-perf-profile is a C program I wrote that parses the perf report
 directly. That's easier than introducing a python script into the mix.
 
+---
+
+Running perf based profiling on invaders game shows:
+ The prominent fble functions are:
+ /Int/IntP%.2P0
+ /Int/Int%.P
+ /Int/IntP%.2P1
+ /Int/IntS%.IntP
+
+With most time spent in FbleNewUnionValue, in all cases.
+
+The fble profile shows all the time is in /Invaders/Aliens%.Draw:
+
+**     7205    18159  /Invaders/Aliens%.Draw!![051d] **
+       7205     5950  /Invaders/Aliens%.Draw!!.alien_x[0527]   
+       7205     5453  /Invaders/Aliens%.Draw!!.alien_y[0528]   
+       7205     4602  /Invaders/Aliens%.Row![04c7]   
+       7205     1096  /Invaders/Aliens%.Sprite![050e]   
+       7205      568  /Drawing%.Translate![018c]   
+
+That's: Add, Mul, Div.
+
+I don't think we're trying to do an unreasonable amount of Int operations
+here. And it looks like the main performance issue is just the raw number of
+Int objects we have to allocate to do the Add, Mul, Div. I don't think
+function overhead is that significant. And it looks like most of the cost of
+the allocation is actually the time spent doing incremental GC.
+
+Lots of object allocations means lots of GC. As we've said before, I think we
+could cut down a lot on the GC needed if we can pack as many objects as we can
+into bits that we pass as values instead of as objects. I think this is
+probably much more significantly important to do that, for example, using
+native stack instead of managed stack. It's got to be the next step for fble
+performance.
 

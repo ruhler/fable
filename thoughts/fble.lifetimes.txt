@@ -584,7 +584,7 @@ allocation? We'll have access to that for determining refs. Yeah. Let's start
 that way. No need to mess with gc, and it should support references from
 values to types and back just fine.
 
-It's seems unfortunate to have to pass a type with the FbleValue APIs when the
+It seems unfortunate to have to pass a type with the FbleValue APIs when the
 value itself will hold the type. I wonder... what if the value could hold a
 function that does the refs callback? Then we could generate a special
 function at compile time for all the types we care about? That doesn't save

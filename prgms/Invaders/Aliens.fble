@@ -291,11 +291,9 @@ Aliens@ Initial = @(
 #   phase.
 (Int@, Phase@) { Draw@; } Sprite = (Int@ row, Phase@ phase) {
   Int@ half_row = Div(row, Int|2);
-  Eq(Int|0, half_row).?(
-    true: phase.?(a: Alien1A, b: Alien1B),
-    false: Eq(Int|1, half_row).?(
-      true: phase.?(a: Alien2A, b: Alien2B),
-      false: phase.?(a: Alien3A, b: Alien3B)));
+  Eq(Int|0, half_row).?(true: phase.?(a: Alien1A, b: Alien1B));
+  Eq(Int|1, half_row).?(true: phase.?(a: Alien2A, b: Alien2B));
+  phase.?(a: Alien3A, b: Alien3B);
 };
 
 # Draw --

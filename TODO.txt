@@ -1,5 +1,6 @@
 * Add tests for balancing of /Map%?
 * Update Hwdg for new spec and implement md5?
+ - Change PortSpec to Bool@ input, Bool@ output, to support InOut case.
 
 * Fix missing dependency of generation of build.ninja on new spec tests.
 
