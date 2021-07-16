@@ -1,5 +1,4 @@
-* Add tests for balancing of /Map%?
-* Implement md5 in Hwdg?
+* Implement md5 in Hwdg
 
 * Fix missing dependency of generation of build.ninja on new spec tests.
 
@@ -145,6 +144,7 @@
 * [/Invaders%] The aliens look like they are too far down the screen to start. Double check
   their initial coordinates.
 * [/Invaders%] Once it is fast enough to be reasonable to develop, finish writing the game.
+* [/Map%] Add tests for balancing of /Map%?
 * [/Sat%] Optimize the solver.
 * [/Sat%] Implement dimacs cnf parser.
 * [/Snake%] Switch to a target 60 FPS?

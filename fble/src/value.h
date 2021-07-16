@@ -42,25 +42,8 @@ typedef struct {
   FbleValue _base;
 } FbleTypeValue;
 
-// FbleStructValue --
-//   FBLE_STRUCT_VALUE
-//
-// Represents a struct value.
-typedef struct {
-  FbleValue _base;
-  size_t fieldc;
-  FbleValue* fields[];
-} FbleStructValue;
-
-// FbleUnionValue --
-//   FBLE_UNION_VALUE
-//
-// Represents a union value.
-typedef struct {
-  FbleValue _base;
-  size_t tag;
-  FbleValue* arg;
-} FbleUnionValue;
+// FbleStructValue -- Internal to value.c
+// FbleUnionValue -- Internal to value.c
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //

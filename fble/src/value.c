@@ -13,6 +13,27 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// FbleStructValue --
+//   FBLE_STRUCT_VALUE
+//
+// Represents a struct value.
+typedef struct {
+  FbleValue _base;
+  size_t fieldc;
+  FbleValue* fields[];
+} FbleStructValue;
+
+// FbleUnionValue --
+//   FBLE_UNION_VALUE
+//
+// Represents a union value.
+typedef struct {
+  FbleValue _base;
+  size_t tag;
+  FbleValue* arg;
+} FbleUnionValue;
+
+
 static void OnFree(FbleValueHeap* heap, FbleValue* value);
 static void Ref(FbleHeapCallback* callback, FbleValue* value);
 static void Refs(FbleHeapCallback* callback, FbleValue* value);
@@ -186,6 +207,23 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...)
     }
   }
   va_end(ap);
+  return &value->_base;
+}
+
+// FbleNewStructValue_ -- see documentation in fble-value.h
+FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** args)
+{
+  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
+  value->_base.tag = FBLE_STRUCT_VALUE;
+  value->fieldc = argc;
+
+  for (size_t i = 0; i < argc; ++i) {
+    FbleValue* arg = args[i];
+    value->fields[i] = arg;
+    if (arg != NULL) {
+      FbleValueAddRef(heap, &value->_base, arg);
+    }
+  }
   return &value->_base;
 }
 

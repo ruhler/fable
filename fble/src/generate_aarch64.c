@@ -622,14 +622,16 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
       // Abort if the tag is wrong.
       fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
-      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleUnionValue, tag));
-      fprintf(fout, "  cmp x1, %zi\n", access_instr->tag);
+      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
+      fprintf(fout, "  bl FbleUnionValueTag\n");
+      fprintf(fout, "  cmp x0, %zi\n", access_instr->tag);
       fprintf(fout, "  b.eq .L.%p.%zi.tagok\n", code, pc);
       ReturnAbort(fout, code, pc, ".L.WrongUnionTag", access_instr->loc);
 
       // Access the field.
       fprintf(fout, ".L.%p.%zi.tagok:\n", code, pc);
-      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleUnionValue, arg));
+      fprintf(fout, "  mov x0, R_SCRATCH_0\n");
+      fprintf(fout, "  bl FbleUnionValueAccess\n");
       SetFrameVar(fout, "x0", access_instr->dest);
       fprintf(fout, "  mov x1, x0\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
@@ -658,7 +660,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       ReturnAbort(fout, code, pc, ".L.UndefinedUnionSelect", select_instr->loc);
 
       fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
-      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleUnionValue, tag));
+      fprintf(fout, "  bl FbleUnionValueTag\n");
       fprintf(fout, "  lsl x0, x0, #3\n");    // x0 = 8 * (uv->tag)
       Adr(fout, "x1", ".L._Run_%p.%zi.pcs", code, pc); // x1 = pcs
       fprintf(fout, "  add x0, x0, x1\n");   // x0 = &pcs[uv->tag] 

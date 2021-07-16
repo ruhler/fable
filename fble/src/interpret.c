@@ -241,16 +241,13 @@ static FbleExecStatus RunStructValueInstr(FbleValueHeap* heap, FbleThreadV* thre
 {
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
   size_t argc = struct_value_instr->args.size;
-
-  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
-  value->_base.tag = FBLE_STRUCT_VALUE;
-  value->fieldc = argc;
+  FbleValue* args[argc];
   for (size_t i = 0; i < argc; ++i) {
-    value->fields[i] = FrameGet(thread, struct_value_instr->args.xs[i]);
-    FbleValueAddRef(heap, &value->_base, value->fields[i]);
+    args[i] = FrameGet(thread, struct_value_instr->args.xs[i]);
   }
 
-  FrameSetConsumed(heap, thread, struct_value_instr->dest, &value->_base);
+  FbleValue* value = FbleNewStructValue_(heap, argc, args);
+  FrameSetConsumed(heap, thread, struct_value_instr->dest, value);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -322,19 +319,18 @@ static FbleExecStatus RunUnionAccessInstr(FbleValueHeap* heap, FbleThreadV* thre
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
-  FbleUnionValue* uv = (FbleUnionValue*)FrameGetStrict(thread, access_instr->obj);
+  FbleValue* uv = FrameGetStrict(thread, access_instr->obj);
   if (uv == NULL) {
     FbleReportError("undefined union value access\n", access_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
 
-  assert(uv->_base.tag == FBLE_UNION_VALUE);
-  if (uv->tag != access_instr->tag) {
+  if (FbleUnionValueTag(uv) != access_instr->tag) {
     FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
 
-  FrameSetBorrowed(heap, thread, access_instr->dest, uv->arg);
+  FrameSetBorrowed(heap, thread, access_instr->dest, FbleUnionValueAccess(uv));
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -354,13 +350,12 @@ static FbleExecStatus AbortUnionAccessInstr(FbleValueHeap* heap, FbleStack* stac
 static FbleExecStatus RunUnionSelectInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-  FbleUnionValue* uv = (FbleUnionValue*)FrameGetStrict(thread, select_instr->condition);
+  FbleValue* uv = FrameGetStrict(thread, select_instr->condition);
   if (uv == NULL) {
     FbleReportError("undefined union value select\n", select_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
-  assert(uv->_base.tag == FBLE_UNION_VALUE);
-  thread->stack->pc += 1 + select_instr->jumps.xs[uv->tag];
+  thread->stack->pc += 1 + select_instr->jumps.xs[FbleUnionValueTag(uv)];
   return FBLE_EXEC_RUNNING;
 }
 
