@@ -81,8 +81,7 @@ Cells@ Cells = {
   Draw@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
 
   # 2. For each input or output port of a gate, draw a white unit square.
-  # TODO: Don't assume Gates is a /Map%.Map@?
- Draw@ io = ForEachGate<Draw@>(gates, clear,
+  Draw@ io = ForEachGate<Draw@>(gates, clear,
    (Coord@ p, Gate@ g, Draw@ d) {
      Ports@<Coord@> coords = Ports@<Coord@>(
        Coord@(p.x, p.y), Coord@(Inc(p.x), p.y),

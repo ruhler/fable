@@ -603,3 +603,120 @@ means the actual type info is stored in the heap allocated pointer? That makes
 it easier to deal with things like functions, where they have the same
 function type but potentially different captured static values.
 
+---
+
+Idea to explore. Even though this is getting a little wayward from the initial
+vision for this document.
+
+I'm sad that the approach I have been discussing doesn't let us pack recursive
+struct types, like Int@. For that we need runtime information to know the size
+of a particular value. But we have that runtime information stored in the
+union tags. It's there. We just need to read it.
+
+So here's the strawman proposal:
+
+Struct and Union values can be packed into bits. It's not tied to the
+particular type, but rather to the runtime value.
+
+We say an FbleValue is 64 bits. It's either a pointer or packed. If it's a
+pointer, the least significant bit is 0, if it's packed, the least significant
+bit is 1.
+
+If it's a pointer, we'll just use the exact same approach as today: GC
+objects, separate 64 bit entries for each field, etc.
+
+If it's packed, we now have 63 bits of raw data to work with. Assume we know
+the type.
+
+What is a type in this context?
+For Struct: A vector of types, with the type for each arg.
+For Union: The number of bits needed for the tag, and the type of the arg.
+For anything else: not needed. We'll assume for now that we only back things
+with structs and unions, because everything else would need a pointer that's
+more than 64 bits.
+
+Let's pack the bits left to right, aligned to the left? At the end of the day
+we'll want a tag though. So let's use the following layout:
+
+Union: junk, arg, tag.
+Struct: junk, argn, ..., arg1, arg0
+
+To get a union tag:
+* read the N least significant bits of the value, where N is the number of
+  bits in the tag.
+
+To get a union value:
+* shift right by N, where N is the number of bits in the tag.
+
+To skip to the end of the union value:
+* shift right by the number of bits in the tag.
+* skip past the arg.
+
+To access a struct field:
+* For field 0: return the value.
+* For field i: skip past (i-1) fields.
+
+To determine the size of an object:
+* For union: size of tag + size of arg.
+* For struct: size of args.
+
+To construct a union value:
+* If the arg is a pointer, allocate an FbleUnionValue.
+* Get the size of the arg. If that plus the size of the tag is more than 63,
+  allocate an FbleUnionValue.
+* Shift the arg left by the size of the tag, or in the tag.
+
+To construct a struct value:
+* For each arg, if any are pointers, allocate an FbleStructValue.
+* Otherwise sum the args, if they all fit into 63 bits, pack them together.
+
+Now we have perfect packing of recursive values. As long as they fit within
+63 bits.
+
+Now access is going to be more expensive, because potentially we have to call
+into some recursive thing and read a bunch of tags. But it's still constant
+time in theory, so that's fine. We'll have to see in practice how expensive
+it is. I bet you it's much cheaper than doing a bunch of chained loads from
+memory. And we don't have to do GC in that case.
+
+The key for this to work is to know what the type of the value is whenever we
+want to do something with it. So:
+* Pass type when allocating a new value. Note this is the full recursive type,
+  not just the shallow list of fields.
+* Pass type when doing access.
+* We don't have to know the type for GC, just check if it's a pointer or not.
+* We do need to make sure we aren't assuming something is a generic FbleValue*
+  when it is packed.
+
+This is a pretty exciting idea. The two big pieces are going to be:
+1. Distinguishing between packed and unpacked anywhere a value is used.
+2. Getting the right type information everywhere it is needed.
+
+We can get the compiler to help us:
+1. Change FbleValue* to a union of intptr_t and what was FbleValue*. Every
+function that used to deal with FbleValue* should deal with this new type and
+know how to check for packed or unpacked.
+
+2. Add Type arg to FbleNewUnionValue, FbleNewStructValue,
+FbleStructValueAccess, FbleUnionValueTag, and FbleUnionValueAccess functions.
+We'll have to allocate Type objects as necessary to pass them to those
+functions.
+
+Other bits of work that need to be done:
+* Implement the packing and unpacking routines.
+* Create a Type value, emit code for generating those in the compiler.
+
+I'm thinking as a first step:
+* Replace use of FbleValue* with use of FbleValue,
+ where FbleValue is a union of
+  FbleUnpackedValue* unpacked   ( least significant bit set to 0)
+  intptr_t packed               ( least significant bit set to 1)
+
+Maybe to ease the transition we should call it FbleValueX on the first round.
+Then do a rename. Just to avoid confusion between the old FbleValue and the
+new FbleValue. Or rename the old FbleValue to FbleValueX first.
+
+I suppose it's safe for users to assume unpacked if they know we aren't
+dealing with a struct or union value. You just can't assume unpacked if it's a
+generic FbleValue.
+
