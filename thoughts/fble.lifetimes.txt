@@ -720,3 +720,13 @@ I suppose it's safe for users to assume unpacked if they know we aren't
 dealing with a struct or union value. You just can't assume unpacked if it's a
 generic FbleValue.
 
+---
+
+It's a little awkward to deal with wrapping and unwrapping unpacked FbleValue
+in value.c, but otherwise I like the external interface, passing around
+FbleValue instead of FbleValue*. It already feels much less heavy weight.
+
+Hopefully performance won't be too bad from wrapping and unwrapping all the
+time. Is there any way to write a function or macros that can wrap for free?
+
+It's a little annoying to not be able to use 'NULL' anymore for FbleValue.

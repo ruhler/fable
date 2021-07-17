@@ -369,7 +369,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index)
 {
   static const char* section[] = { "R_STATICS", "R_LOCALS" };
-  fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, section[index.section], sizeof(FbleValue*) * index.index);
+  fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, section[index.section], sizeof(FbleValue) * index.index);
 }
 
 // SetFrameVar --
@@ -384,7 +384,7 @@ static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index)
 // * Writes to the output stream.
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
 {
-  fprintf(fout, "  str %s, [R_LOCALS, #%zi]\n", rsrc, sizeof(FbleValue*) * index);
+  fprintf(fout, "  str %s, [R_LOCALS, #%zi]\n", rsrc, sizeof(FbleValue) * index);
 }
 
 // ReturnAbort --
@@ -715,7 +715,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         fprintf(fout, "  mov x0, R_HEAP\n");
         fprintf(fout, "  mov x1, R_SCRATCH_0\n");
         GetFrameVar(fout, "x2", func_instr->scope.xs[i]);
-        fprintf(fout, "  str x2, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, statics) + sizeof(FbleValue*) * i);
+        fprintf(fout, "  str x2, [R_SCRATCH_0, #%zi]\n", offsetof(FbleFuncValue, statics) + sizeof(FbleValue) * i);
         fprintf(fout, "  bl FbleValueAddRef\n");
       }
       return;
@@ -737,7 +737,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
       for (size_t i = 0; i < call_instr->args.size; ++i) {
         GetFrameVar(fout, "x0", call_instr->args.xs[i]);
-        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue) * i);
       }
 
       if (call_instr->exit) {
@@ -761,14 +761,14 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
           if (retain) {
             fprintf(fout, "  mov x0, R_HEAP\n");
-            fprintf(fout, "  ldr x1, [SP, #%zi]\n", sizeof(FbleValue*)*i);
+            fprintf(fout, "  ldr x1, [SP, #%zi]\n", sizeof(FbleValue)*i);
             fprintf(fout, "  bl FbleRetainValue\n");
           }
         }
 
         if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
           fprintf(fout, "  mov x0, R_HEAP\n");
-          fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", sizeof(FbleValue*)*call_instr->func.index);
+          fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", sizeof(FbleValue)*call_instr->func.index);
           fprintf(fout, "  bl FbleReleaseValue\n");
         }
 
@@ -791,7 +791,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  str x1, [x0, #%zi]\n", offsetof(FbleStack, pc));
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  add x1, R_LOCALS, #%zi\n", sizeof(FbleValue*)*call_instr->dest);
+      fprintf(fout, "  add x1, R_LOCALS, #%zi\n", sizeof(FbleValue)*call_instr->dest);
       fprintf(fout, "  mov x2, R_SCRATCH_0\n");   // func
       fprintf(fout, "  mov x3, SP\n");
       fprintf(fout, "  ldr x4, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread)); // thread
@@ -850,7 +850,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         fprintf(fout, "  mov x0, R_HEAP\n");
         fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, threads));
         fprintf(fout, "  ldr x2, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-        AddI(fout, "x3", "R_LOCALS", sizeof(FbleValue*) * fork_instr->dests.xs[i], "x3");
+        AddI(fout, "x3", "R_LOCALS", sizeof(FbleValue) * fork_instr->dests.xs[i], "x3");
         fprintf(fout, "  mov x5, XZR\n");
         fprintf(fout, "  bl FbleThreadFork\n");
       }

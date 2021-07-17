@@ -13,7 +13,7 @@
 #include "heap.h"
 
 // FbleValueTag --
-//   A tag used to distinguish among different kinds of FbleValue.
+//   A tag used to distinguish among different kinds of FbleUnpackedValue.
 typedef enum {
   FBLE_TYPE_VALUE,
   FBLE_STRUCT_VALUE,
@@ -24,12 +24,12 @@ typedef enum {
   FBLE_REF_VALUE,
 } FbleValueTag;
 
-// FbleValue --
+// FbleUnpackedValue --
 //   A tagged union of value types. All values have the same initial
-//   layout as FbleValue. The tag can be used to determine what kind of
-//   value this is to get access to additional fields of the value
-//   by first casting to that specific type of value.
-struct FbleValue {
+//   layout as FbleUnpackedValue. The tag can be used to determine what kind
+//   of value this is to get access to additional fields of the value by first
+//   casting to that specific type of value.
+struct FbleUnpackedValue {
   FbleValueTag tag;
 };
 
@@ -39,7 +39,7 @@ struct FbleValue {
 // Represents the type value. Because types are compile-time concepts, not
 // runtime concepts, the type value contains no information.
 typedef struct {
-  FbleValue _base;
+  FbleUnpackedValue _base;
 } FbleTypeValue;
 
 // FbleStructValue -- Internal to value.c
@@ -58,10 +58,10 @@ typedef struct {
 // don't distinguish between the two at runtime, except that
 // executable->args == 0 suggests this is for a process instead of a function.
 struct FbleFuncValue {
-  FbleValue _base;
+  FbleUnpackedValue _base;
   FbleExecutable* executable;
   size_t profile_base_id;
-  FbleValue* statics[];
+  FbleValue statics[];
 };
 
 // FbleProcValue -- FBLE_PROC_VALUE
@@ -72,7 +72,7 @@ typedef FbleFuncValue FbleProcValue;
 // FbleValues --
 //   A non-circular singly linked list of values.
 typedef struct FbleValues {
-  FbleValue* value;
+  FbleValue value;
   struct FbleValues* next;
 } FbleValues;
 
@@ -81,7 +81,7 @@ typedef struct FbleValues {
 //   from the head. If there are no values on the list, both head and tail are
 //   set to NULL.
 typedef struct {
-  FbleValue _base;
+  FbleUnpackedValue _base;
   FbleValues* head;
   FbleValues* tail;
 } FbleLinkValue;
@@ -95,8 +95,8 @@ typedef struct {
 //   data - a pointer to a value owned externally where data should be put to
 //          and got from.
 typedef struct {
-  FbleValue _base;
-  FbleValue** data;
+  FbleUnpackedValue _base;
+  FbleValue* data;
 } FblePortValue;
 
 // FbleRefValue --
@@ -112,8 +112,8 @@ typedef struct {
 // Fields:
 //   value - the value being referenced, or NULL if no value is referenced.
 typedef struct {
-  FbleValue _base;
-  FbleValue* value;
+  FbleUnpackedValue _base;
+  FbleValue value;
 } FbleRefValue;
 
 // FbleNewValue --
@@ -145,6 +145,25 @@ typedef struct {
 // Side effects:
 //   Allocates a value that should be released when it is no longer needed.
 #define FbleNewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
+
+// FbleValueIsUnpacked --
+//   Test whether a value is unpacked.
+//
+// Inputs:
+//   FbleValue value - the value to test.
+//
+// Results:
+//   bool true if the value is unpacked, false otherwise.
+//
+// Note:
+//   This is a macro instead of a function because I assume (without
+//   verification) that making it a function would introduce a silly amount of
+//   overhead.
+#define FbleValueIsUnpacked(value) ((value.packed & 1) == 0)
+
+// FbleWrapUnpackedValue --
+//   Wrap an FbleUnpackedValue* as an FbleValue.
+FbleValue FbleWrapUnpackedValue(FbleUnpackedValue* value);
 
 // FbleNewFuncValue --
 //   Allocates a new FbleFuncValue that runs the given executable.
@@ -178,7 +197,7 @@ FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable,
 //   The returned get value must be freed using FbleReleaseValue when no
 //   longer in use. This function does not take ownership of the port value.
 //   argument.
-FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId profile);
+FbleValue FbleNewGetValue(FbleValueHeap* heap, FbleValue port, FbleBlockId profile);
 
 // FbleNewPutValue --
 //   Create a new put value for the given link.
@@ -196,7 +215,7 @@ FbleValue* FbleNewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId pro
 // Side effects:
 //   The returned put value must be freed using FbleReleaseValue when no
 //   longer in use. This function does not take ownership of the link value.
-FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link, FbleBlockId profile);
+FbleValue FbleNewPutValue(FbleValueHeap* heap, FbleValue link, FbleBlockId profile);
 
 // FbleNewListValue --
 //   Create a new list value from the given list of arguments.
@@ -212,7 +231,7 @@ FbleValue* FbleNewPutValue(FbleValueHeap* heap, FbleValue* link, FbleBlockId pro
 // Side effects:
 //   The returned value must be freed using FbleReleaseValue when no longer in
 //   use.
-FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+FbleValue FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue* args);
 
 // FbleNewLiteralValue --
 //   Create a new literal value from the given list of letters.
@@ -228,7 +247,7 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
 // Side effects:
 //   The returned value must be freed using FbleReleaseValue when no longer in
 //   use.
-FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
+FbleValue FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 
 // FbleStrictValue --
 //   Get the strict value associated with the given value, which will either
@@ -244,7 +263,7 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 //
 // Side effects:
 //   None.
-FbleValue* FbleStrictValue(FbleValue* value);
+FbleValue FbleStrictValue(FbleValue value);
 
 // FbleStrictRefValue --
 //   Like FbleStrictValue, except returns the inner most RefValue if the value
@@ -259,6 +278,6 @@ FbleValue* FbleStrictValue(FbleValue* value);
 //
 // Side effects:
 //   None.
-FbleValue* FbleStrictRefValue(FbleValue* value);
+FbleValue FbleStrictRefValue(FbleValue value);
 
 #endif // FBLE_INTERNAL_VALUE_H_

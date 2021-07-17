@@ -1,6 +1,5 @@
 // tc.h --
-//   Header file defining the FbleTc type, which is used as the implementation
-//   for FbleValue.
+//   Header file defining the FbleTc type.
 //   This is an internal library interface.
 
 #ifndef FBLE_INTERNAL_TC_H_

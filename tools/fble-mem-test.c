@@ -57,7 +57,7 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   Resets the max total allocated bytes on the heap.
-size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t use_n, size_t alloc_n)
+size_t Run(FbleValueHeap* heap, FbleValue func, FbleProfile* profile, size_t use_n, size_t alloc_n)
 {
   assert(use_n <= alloc_n);
 
@@ -72,13 +72,13 @@ size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t us
   // @ Bit@ = +(Unit@ 0, Unit@ 1);
   // @ BitS@ = +(BitP@ cons, Unit@ nil),
   // @ BitP@ = *(Bit@ msb, BitS@ tail);
-  FbleValue* zero = FbleNewEnumValue(heap, 0);
-  FbleValue* one = FbleNewEnumValue(heap, 1);
-  FbleValue* tail = FbleNewEnumValue(heap, 1);
+  FbleValue zero = FbleNewEnumValue(heap, 0);
+  FbleValue one = FbleNewEnumValue(heap, 1);
+  FbleValue tail = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < num_bits; ++i) {
-    FbleValue* bit = (use_n % 2 == 0) ? zero : one;
+    FbleValue bit = (use_n % 2 == 0) ? zero : one;
     use_n /= 2;
-    FbleValue* cons = FbleNewStructValue(heap, 2, bit, tail);
+    FbleValue cons = FbleNewStructValue(heap, 2, bit, tail);
     FbleReleaseValue(heap, tail);
     tail = FbleNewUnionValue(heap, 0, cons);
     FbleReleaseValue(heap, cons);
@@ -92,13 +92,13 @@ size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t us
   FbleValueFullGc(heap);
 
   FbleResetMaxTotalBytesAllocated();
-  FbleValue* result = FbleApply(heap, func, &tail, profile);
+  FbleValue result = FbleApply(heap, func, &tail, profile);
 
   // As a special case, if the result of evaluation is a process, execute
   // the process. This allows us to test process execution.
-  if (result != NULL && FbleIsProcValue(result)) {
+  if (!FbleValueIsNull(result) && FbleIsProcValue(result)) {
     FbleIO io = { .io = &FbleNoIO };
-    FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+    FbleValue exec_result = FbleExec(heap, &io, result, profile);
     FbleReleaseValue(heap, result);
     result = exec_result;
   }
@@ -140,16 +140,16 @@ int main(int argc, char* argv[])
   // profiling turned on.
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
-  if (linked == NULL) {
+  FbleValue linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
+  if (FbleValueIsNull(linked)) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAIL;
   }
 
-  FbleValue* func = FbleEval(heap, linked, profile);
+  FbleValue func = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
-  if (func == NULL) {
+  if (FbleValueIsNull(func)) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAIL;

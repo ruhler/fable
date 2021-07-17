@@ -88,8 +88,8 @@ int main(int argc, char* argv[])
   FILE* original_stderr = stderr;
   stderr = expectCompileError ? stdout : original_stderr;
 
-  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
-  if (linked == NULL) {
+  FbleValue linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
+  if (FbleValueIsNull(linked)) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return expectCompileError ? EX_SUCCESS : EX_FAIL;
@@ -103,14 +103,14 @@ int main(int argc, char* argv[])
 
   stderr = expectRuntimeError ? stdout : original_stderr;
 
-  FbleValue* result = FbleEval(heap, linked, profile);
+  FbleValue result = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
 
   // As a special case, if the result of evaluation is a process, execute
   // the process. This allows us to test process execution.
-  if (result != NULL && FbleIsProcValue(result)) {
+  if (!FbleValueIsNull(result) && FbleIsProcValue(result)) {
     FbleIO io = { .io = &FbleNoIO, };
-    FbleValue* exec_result = FbleExec(heap, &io, result, profile);
+    FbleValue exec_result = FbleExec(heap, &io, result, profile);
     FbleReleaseValue(heap, result);
     result = exec_result;
   }
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
     FbleFreeProfile(profile);
   }
 
-  if (result == NULL) {
+  if (FbleValueIsNull(result)) {
     return expectRuntimeError ? EX_SUCCESS : EX_FAIL;
   } else if (expectRuntimeError) {
     fprintf(original_stderr, "expected runtime error, but none encountered.\n");

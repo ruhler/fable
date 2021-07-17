@@ -38,9 +38,9 @@ typedef struct FbleStack {
   size_t joins;
   FbleFuncValue* func;
   size_t pc;
-  FbleValue** result;
+  FbleValue* result;
   struct FbleStack* tail;
-  FbleValue* locals[];
+  FbleValue locals[];
 } FbleStack;
 
 // FbleExecStatus -- 
@@ -89,7 +89,7 @@ typedef struct {
 // Side effects:
 // * Updates the threads stack.
 // * Enters a profiling block for the function being called.
-void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
+void FbleThreadCall(FbleValueHeap* heap, FbleValue* result, FbleFuncValue* func, FbleValue* args, FbleThread* thread);
 
 // FbleThreadTailCall --
 //   Replace the current frame with a new one.
@@ -108,7 +108,7 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleFuncValue* func
 //   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
 //   doing an FbleReleaseValue call for func and args.
 // * Replaces the profiling block for the function being called.
-void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** args, FbleThread* thread);
+void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue* args, FbleThread* thread);
 
 // FbleThreadFork --
 //   Fork a new thread from the given parent thread.
@@ -125,7 +125,7 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue** ar
 // Side effects:
 // * Allocates a new thread and adds it to the threads pool.
 // * Increments the joins count on the parent thread.
-void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue** result, FbleFuncValue* func, FbleValue** args);
+void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue* result, FbleFuncValue* func, FbleValue* args);
 
 // FbleThreadReturn --
 //   Return from the current frame on the thread's stack.
@@ -142,7 +142,7 @@ void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* paren
 // * Takes over ownership of result. FbleThreadReturn will call
 //   FbleReleaseValue on the result on behalf of the caller when the result is
 //   no longer needed.
-void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result);
+void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue result);
 
 // FbleRunFunction --
 //   A C function to run the fble function on the top of the thread stack to

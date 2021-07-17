@@ -1,5 +1,10 @@
 * Implement md5 in Hwdg
 
+* Consider not exposing the FbleFuncValue type external to value.
+  Because packing and unpacking it everywhere is annoying.
+* Update documentation around use of NULL FbleValue
+  It should say FbleNullValue instead of 'NULL'.
+
 * Fix missing dependency of generation of build.ninja on new spec tests.
 
 * Why does the Md5 benchmark take so much memory?

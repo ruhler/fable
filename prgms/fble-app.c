@@ -26,18 +26,18 @@ typedef struct {
   Uint32* colors;
   Uint32 time;
 
-  FbleValue* event;
-  FbleValue* effect;
+  FbleValue event;
+  FbleValue effect;
 } AppIO;
 
 static void PrintUsage(FILE* stream);
-static int ReadIntP(FbleValue* num);
-static int ReadInt(FbleValue* num);
+static int ReadIntP(FbleValue num);
+static int ReadInt(FbleValue num);
 static void FillPath(SDL_Window* window, size_t n, SDL_Point* points, Uint32 color);
-static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors);
-static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
-static FbleValue* MakeInt(FbleValueHeap* heap, int x);
-static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
+static void Draw(SDL_Window* window, FbleValue drawing, Uint32* colors);
+static FbleValue MakeIntP(FbleValueHeap* heap, int x);
+static FbleValue MakeInt(FbleValueHeap* heap, int x);
+static FbleValue MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
 int main(int argc, char* argv[]);
@@ -74,7 +74,7 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   None
-static int ReadIntP(FbleValue* x)
+static int ReadIntP(FbleValue x)
 {
   switch (FbleUnionValueTag(x)) {
     case 0: return 1;
@@ -95,7 +95,7 @@ static int ReadIntP(FbleValue* x)
 //
 // Side effects:
 //   None
-static int ReadInt(FbleValue* x)
+static int ReadInt(FbleValue x)
 {
   switch (FbleUnionValueTag(x)) {
     case 0: return -ReadIntP(FbleUnionValueAccess(x));
@@ -183,7 +183,7 @@ static void FillPath(SDL_Window* window, size_t n, SDL_Point* points, Uint32 col
 // Side effects:
 //   Draws the drawing to the window. The caller must call
 //   SDL_UpdateWindowSurface for the screen to actually be updated.
-static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
+static void Draw(SDL_Window* window, FbleValue drawing, Uint32* colors)
 {
   switch (FbleUnionValueTag(drawing)) {
     case 0: {
@@ -193,14 +193,14 @@ static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
 
     case 1: {
       // Path.
-      FbleValue* rv = FbleUnionValueAccess(drawing);
+      FbleValue rv = FbleUnionValueAccess(drawing);
 
-      FbleValue* pointsS = FbleStructValueAccess(rv, 0);
-      FbleValue* color = FbleStructValueAccess(rv, 1);
+      FbleValue pointsS = FbleStructValueAccess(rv, 0);
+      FbleValue color = FbleStructValueAccess(rv, 1);
 
       // Precompute the number of the points.
       size_t n = 0;
-      FbleValue* s = pointsS;
+      FbleValue s = pointsS;
       while (FbleUnionValueTag(s) == 0) {
         n++;
         s = FbleStructValueAccess(FbleUnionValueAccess(s), 1);
@@ -210,9 +210,9 @@ static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
       SDL_Point points[n];
       for (size_t i = 0; i < n; ++i) {
         assert(FbleUnionValueTag(pointsS) == 0);
-        FbleValue* pointsP = FbleUnionValueAccess(pointsS);
+        FbleValue pointsP = FbleUnionValueAccess(pointsS);
 
-        FbleValue* point = FbleStructValueAccess(pointsP, 0);
+        FbleValue point = FbleStructValueAccess(pointsP, 0);
         pointsS = FbleStructValueAccess(pointsP, 1);
 
         points[i].x = ReadInt(FbleStructValueAccess(point, 0));
@@ -226,7 +226,7 @@ static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
 
     case 2: {
       // Over.
-      FbleValue* over = FbleUnionValueAccess(drawing);
+      FbleValue over = FbleUnionValueAccess(drawing);
       Draw(window, FbleStructValueAccess(over, 0), colors);
       Draw(window, FbleStructValueAccess(over, 1), colors);
       return;
@@ -252,15 +252,15 @@ static void Draw(SDL_Window* window, FbleValue* drawing, Uint32* colors)
 // Side effects:
 //   Allocates a value that should be freed with FbleReleaseValue when no
 //   longer needed. Behavior is undefined if x is not positive.
-static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
+static FbleValue MakeIntP(FbleValueHeap* heap, int x)
 {
   assert(x > 0);
   if (x == 1) {
     return FbleNewEnumValue(heap, 0);
   }
 
-  FbleValue* p = MakeIntP(heap, x / 2);
-  FbleValue* result = FbleNewUnionValue(heap, 1 + (x % 2), p);
+  FbleValue p = MakeIntP(heap, x / 2);
+  FbleValue result = FbleNewUnionValue(heap, 1 + (x % 2), p);
   FbleReleaseValue(heap, p);
   return result;
 }
@@ -278,11 +278,11 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 // Side effects:
 //   Allocates a value that should be freed with FbleReleaseValue when no
 //   longer needed.
-static FbleValue* MakeInt(FbleValueHeap* heap, int x)
+static FbleValue MakeInt(FbleValueHeap* heap, int x)
 {
   if (x < 0) {
-    FbleValue* p = MakeIntP(heap, -x);
-    FbleValue* result = FbleNewUnionValue(heap, 0, p);
+    FbleValue p = MakeIntP(heap, -x);
+    FbleValue result = FbleNewUnionValue(heap, 0, p);
     FbleReleaseValue(heap, p);
     return result;
   }
@@ -291,8 +291,8 @@ static FbleValue* MakeInt(FbleValueHeap* heap, int x)
     return FbleNewEnumValue(heap, 1);
   }
 
-  FbleValue* p = MakeIntP(heap, x);
-  FbleValue* result = FbleNewUnionValue(heap, 2, p);
+  FbleValue p = MakeIntP(heap, x);
+  FbleValue result = FbleNewUnionValue(heap, 2, p);
   FbleReleaseValue(heap, p);
   return result;
 }
@@ -311,7 +311,7 @@ static FbleValue* MakeInt(FbleValueHeap* heap, int x)
 // Side effects:
 //   Allocates a value that should be freed with FbleReleaseValue when no
 //   longer needed.
-static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
+static FbleValue MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
 {
   int k = -1;
   switch (scancode) {
@@ -328,7 +328,7 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
   if (k >= 0) {
     return FbleNewEnumValue(heap, k);
   }
-  return NULL;
+  return FbleNullValue;
 }
 
 // IO --
@@ -340,8 +340,8 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 
   bool change = false;
 
-  if (app->effect != NULL) {
-    FbleValue* effect = app->effect;
+  if (!FbleValueIsNull(app->effect)) {
+    FbleValue effect = app->effect;
     switch (FbleUnionValueTag(effect)) {
       case 0: {
         int tick = ReadInt(FbleUnionValueAccess(effect));
@@ -382,18 +382,18 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     }
 
     FbleReleaseValue(heap, app->effect);
-    app->effect = NULL;
+    app->effect = FbleNullValue;
     change = true;
   }
 
   if (block) {
-    while (app->event == NULL) {
+    while (FbleValueIsNull(app->event)) {
       SDL_Event event;
       SDL_WaitEvent(&event);
       switch (event.type) {
         case SDL_KEYDOWN: {
-          FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
-          if (key != NULL) {
+          FbleValue key = MakeKey(heap, event.key.keysym.scancode);
+          if (!FbleValueIsNull(key)) {
             app->event = FbleNewUnionValue(heap, 1, key);
             FbleReleaseValue(heap, key);
             change = true;
@@ -402,8 +402,8 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
         }
 
         case SDL_KEYUP: {
-          FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
-          if (key != NULL) {
+          FbleValue key = MakeKey(heap, event.key.keysym.scancode);
+          if (!FbleValueIsNull(key)) {
             app->event = FbleNewUnionValue(heap, 2, key);
             FbleReleaseValue(heap, key);
             change = true;
@@ -471,16 +471,16 @@ int main(int argc, char* argv[])
   }
 
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleMain(heap, NULL, FbleCompiledMain, argc-1, argv+1);
-  if (linked == NULL) {
+  FbleValue linked = FbleMain(heap, NULL, FbleCompiledMain, argc-1, argv+1);
+  if (FbleValueIsNull(linked)) {
     FbleFreeValueHeap(heap);
     return 1;
   }
 
-  FbleValue* func = FbleEval(heap, linked, NULL);
+  FbleValue func = FbleEval(heap, linked, NULL);
   FbleReleaseValue(heap, linked);
 
-  if (func == NULL) {
+  if (FbleValueIsNull(func)) {
     FbleFreeValueHeap(heap);
     return 1;
   }
@@ -520,24 +520,24 @@ int main(int argc, char* argv[])
     .colors = colors,
     .time = SDL_GetTicks(),
 
-    .event = NULL,
-    .effect = NULL,
+    .event = FbleNullValue,
+    .effect = FbleNullValue,
   };
 
-  FbleValue* args[] = {
+  FbleValue args[] = {
     MakeInt(heap, width),
     MakeInt(heap, height),
     FbleNewInputPortValue(heap, &io.event, 0),
     FbleNewOutputPortValue(heap, &io.effect, 0)
   };
-  FbleValue* proc = FbleApply(heap, func, args, NULL);
+  FbleValue proc = FbleApply(heap, func, args, NULL);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
   FbleReleaseValue(heap, args[1]);
   FbleReleaseValue(heap, args[2]);
   FbleReleaseValue(heap, args[3]);
 
-  if (proc == NULL) {
+  if (FbleValueIsNull(proc)) {
     FbleFreeValueHeap(heap);
     SDL_DestroyWindow(window);
     SDL_Quit();
@@ -546,7 +546,7 @@ int main(int argc, char* argv[])
 
   SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));
 
-  FbleValue* value = FbleExec(heap, &io._base, proc, NULL);
+  FbleValue value = FbleExec(heap, &io._base, proc, NULL);
   FbleReleaseValue(heap, proc);
   FbleReleaseValue(heap, io.event);
   FbleReleaseValue(heap, io.effect);

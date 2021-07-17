@@ -24,9 +24,9 @@
 //   compute the value of the program.
 //
 // Side effects:
-//   Allocates an FbleValue* that should be freed using FbleReleaseValue when
+//   Allocates an FbleValue that should be freed using FbleReleaseValue when
 //   no longer needed.
-FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile);
+FbleValue FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile);
 
 // FbleLinkFromSource --
 //   Load, compile, and link a full program from source.
@@ -45,7 +45,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 // * Prints an error message to stderr if the program fails to load.
 // * The user should call FbleReleaseValue on the returned value when it is no
 //   longer needed.
-FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, FbleModulePath* module_path, FbleProfile* profile);
+FbleValue FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, FbleModulePath* module_path, FbleProfile* profile);
 
 // FbleCompiledModuleFunction --
 //   The type of a module function generated for compiled .fble code.
@@ -88,6 +88,6 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
 // Side effects:
 // * The user should call FbleReleaseValue on the returned value when it is no
 //   longer needed.
-FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
+FbleValue FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
 
 #endif // FBLE_LINK_H_

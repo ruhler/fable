@@ -25,12 +25,12 @@
 typedef struct {
   FbleIO io;
 
-  FbleValue* input;
-  FbleValue* output;
+  FbleValue input;
+  FbleValue output;
 } Stdio;
 
 static void PrintUsage(FILE* stream);
-static char ReadChar(FbleValue* c);
+static char ReadChar(FbleValue c);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 int main(int argc, char* argv[]);
 
@@ -78,7 +78,7 @@ static const char* gStdLibChars =
 //
 // Side effects:
 //   None
-static char ReadChar(FbleValue* c)
+static char ReadChar(FbleValue c)
 {
   return gStdLibChars[FbleUnionValueTag(c)];
 }
@@ -97,7 +97,7 @@ static char ReadChar(FbleValue* c)
 //
 // Side effects:
 //   Allocates a value that must be freed when no longer required.
-static FbleValue* WriteChar(FbleValueHeap* heap, char c)
+static FbleValue WriteChar(FbleValueHeap* heap, char c)
 {
   char* p = strchr(gStdLibChars, c);
   if (p == NULL || c == '\0') {
@@ -120,12 +120,12 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   Stdio* stdio = (Stdio*)io;
   bool change = false;
-  if (stdio->output != NULL) {
+  if (!FbleValueIsNull(stdio->output)) {
     // Output a string to stdout.
-    FbleValue* charS = stdio->output;
+    FbleValue charS = stdio->output;
     while (FbleUnionValueTag(charS) == 0) {
-      FbleValue* charP = FbleUnionValueAccess(charS);
-      FbleValue* charV = FbleStructValueAccess(charP, 0);
+      FbleValue charP = FbleUnionValueAccess(charS);
+      FbleValue charV = FbleStructValueAccess(charP, 0);
       charS = FbleStructValueAccess(charP, 1);
 
       char c = ReadChar(charV);
@@ -134,11 +134,11 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     fflush(stdout);
 
     FbleReleaseValue(heap, stdio->output);
-    stdio->output = NULL;
+    stdio->output = FbleNullValue;
     change = true;
   }
 
-  if (block && stdio->input == NULL) {
+  if (block && FbleValueIsNull(stdio->input)) {
     // Read a line from stdin.
     char* line = NULL;
     size_t len = 0;
@@ -146,10 +146,10 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     if (read < 0) {
       stdio->input = FbleNewEnumValue(heap, 1);
     } else {
-      FbleValue* charS = FbleNewEnumValue(heap, 1);
+      FbleValue charS = FbleNewEnumValue(heap, 1);
       for (size_t i = 0; i < read; ++i) {
-        FbleValue* charV = WriteChar(heap, line[read - i - 1]);
-        FbleValue* charP = FbleNewStructValue(heap, 2, charV, charS);
+        FbleValue charV = WriteChar(heap, line[read - i - 1]);
+        FbleValue charP = FbleNewStructValue(heap, 2, charV, charS);
         FbleReleaseValue(heap, charV);
         FbleReleaseValue(heap, charS);
         charS = FbleNewUnionValue(heap, 0, charP);
@@ -201,17 +201,17 @@ int main(int argc, char* argv[])
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
-  if (linked == NULL) {
+  FbleValue linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
+  if (FbleValueIsNull(linked)) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return 1;
   }
 
-  FbleValue* func = FbleEval(heap, linked, profile);
+  FbleValue func = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
 
-  if (func == NULL) {
+  if (FbleValueIsNull(func)) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return 1;
@@ -219,8 +219,8 @@ int main(int argc, char* argv[])
 
   Stdio io = {
     .io = { .io = &IO, },
-    .input = NULL,
-    .output = NULL,
+    .input = FbleNullValue,
+    .output = FbleNullValue,
   };
 
   FbleName block_names[3];
@@ -239,29 +239,29 @@ int main(int argc, char* argv[])
   FbleFreeName(block_names[1]);
   FbleFreeName(block_names[2]);
 
-  FbleValue* args[2] = {
+  FbleValue args[2] = {
     FbleNewInputPortValue(heap, &io.input, block_id),
     FbleNewOutputPortValue(heap, &io.output, block_id + 1)
   };
-  FbleValue* proc = FbleApply(heap, func, args, profile);
+  FbleValue proc = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
   FbleReleaseValue(heap, args[1]);
 
-  if (proc == NULL) {
+  if (FbleValueIsNull(proc)) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return 1;
   }
 
-  FbleValue* value = FbleExec(heap, &io.io, proc, profile);
+  FbleValue value = FbleExec(heap, &io.io, proc, profile);
 
   FbleReleaseValue(heap, proc);
   FbleReleaseValue(heap, io.input);
   FbleReleaseValue(heap, io.output);
 
   size_t result = 1;
-  if (value != NULL) {
+  if (!FbleValueIsNull(value)) {
     result = FbleUnionValueTag(value);
     FbleReleaseValue(heap, value);
   }

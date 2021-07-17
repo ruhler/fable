@@ -11,7 +11,7 @@
 #include "value.h"
 
 // FbleLink -- see documentation in fble-link.h
-FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile)
+FbleValue FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FbleProfile* profile)
 {
   size_t modulec = program->modules.size;
 
@@ -26,7 +26,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 
   // Make an FbleFuncValue for each module that computes the value of the
   // module given values of the modules it depends on.
-  FbleValue* funcs[modulec];
+  FbleValue funcs[modulec];
   for (size_t i = 0; i < modulec; ++i) {
     FbleExecutable* module = program->modules.xs[i]->executable;
 
@@ -38,7 +38,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     }
 
     FbleFuncValue* func = FbleNewFuncValue(heap, module, profile_base_id);
-    funcs[i] = &func->_base;
+    funcs[i] = FbleWrapUnpackedValue(&func->_base);
   }
 
   // Write some code to call each of module functions in turn with the
@@ -96,32 +96,32 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   FbleFuncValue* linked = FbleNewFuncValue(heap, &code->_base, 0);
   for (size_t i = 0; i < modulec; ++i) {
     linked->statics[i] = funcs[i];
-    FbleValueAddRef(heap, &linked->_base, funcs[i]);
+    FbleValueAddRef(heap, FbleWrapUnpackedValue(&linked->_base), funcs[i]);
     FbleReleaseValue(heap, funcs[i]);
   }
   FbleFreeCode(code);
 
-  return &linked->_base;
+  return FbleWrapUnpackedValue(&linked->_base);
 }
 
 // FbleLinkFromSource -- see documentation in fble-link.h
-FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, FbleModulePath* module_path, FbleProfile* profile)
+FbleValue FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, FbleModulePath* module_path, FbleProfile* profile)
 {
   FbleLoadedProgram* program = FbleLoad(search_path, module_path);
   if (program == NULL) {
-    return NULL;
+    return FbleWrapUnpackedValue(NULL);
   }
 
   FbleCompiledProgram* compiled = FbleCompile(program);
   FbleFreeLoadedProgram(program);
   if (compiled == NULL) {
-   return NULL;
+   return FbleWrapUnpackedValue(NULL);
   }
 
   FbleExecutableProgram* executable = FbleInterpret(compiled);
   FbleFreeCompiledProgram(compiled);
 
-  FbleValue* linked = FbleLink(heap, executable, profile);
+  FbleValue linked = FbleLink(heap, executable, profile);
   FbleFreeExecutableProgram(executable);
   return linked;
 }
@@ -146,12 +146,12 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
 }
 
 // FbleLinkFromCompiled -- see documentation in fble-link.h
-FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile)
+FbleValue FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile)
 {
   FbleExecutableProgram* program = FbleAlloc(FbleExecutableProgram);
   FbleVectorInit(program->modules);
   module(program);
-  FbleValue* value = FbleLink(heap, program, profile);
+  FbleValue value = FbleLink(heap, program, profile);
   FbleFreeExecutableProgram(program);
   return value;
 }
