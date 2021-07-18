@@ -2,7 +2,10 @@
 @ Coord@ = /Hwdg/Coord%.Coord@;
 @ Data@ = /Hwdg/Data%.Data@;
 
+@ Int@ = /Int/Int%.Int@;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ List@ = /List%.List@;
 
 # Memory@ --
 #   An unbounded 2D array of memory.
@@ -65,4 +68,16 @@ Memory@ Empty = /Map%.Empty<Coord@, Data@>;
 <@ B@>(Memory@, B@, (Coord@, Data@, B@) { B@; }) { B@; }
 ForEach = <@ B@> { /Map%.ForEach<Coord@, Data@, B@>; };
 
-@(Memory@, Empty, Get, Set, Clear, Eq, Show, ForEach);
+# Cell@ --
+#   Describes the data value at a particular location in memory.
+@ Cell@ = *(Int@ x, Int@ y, Data@ data);
+
+# Memory --
+#   Construct an initial memory based on a list of Cell@s.
+(List@<Cell@>) { Memory@; } Memory = (List@<Cell@> cells) {
+  /List%.ForEach<Cell@, Memory@>(cells, Empty, (Cell@ cell, Memory@ memory) {
+    Set(memory, Coord@(cell.x, cell.y), cell.data);
+  });
+};
+
+@(Memory@, Cell@, Memory, Empty, Get, Set, Clear, Eq, Show, ForEach);

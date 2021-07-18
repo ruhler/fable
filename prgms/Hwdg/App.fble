@@ -4,7 +4,8 @@
 @ Effect@ = /App%.Effect@;
 
 @ Bool@ = /Bool%.Bool@;
-% Or = /Bool%.Or;
+% True = /Bool%.True;
+% False = /Bool%.False;
 
 @ Draw@ = /Drawing%.Draw@;
 @ Color@ = /Drawing%.Color@;
@@ -20,9 +21,9 @@
 % Data1 = /Hwdg/Data%.1;
 
 @ Design@ = /Hwdg/Design%.Design@;
-@ Gate@ = /Hwdg/Design%.Gate@;
+@ Rule@ = /Hwdg/Design%.Rule@;
 <@>@ Ports@ = /Hwdg/Design%.Ports@;
-<@>% ForEachGate = /Hwdg/Design%.ForEachGate;
+<@>% ForEachRule = /Hwdg/Design%.ForEachRule;
 % Step = /Hwdg/Design%.Step;
 
 @ Memory@ = /Hwdg/Memory%.Memory@;
@@ -83,17 +84,17 @@ Memory@ Cells = {
   Draw@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
 
   # 2. For each input or output port of a gate, draw a white unit square.
-  Draw@ io = ForEachGate<Draw@>(design, clear,
-   (Coord@ p, Gate@ g, Draw@ d) {
+  Draw@ io = ForEachRule<Draw@>(design, clear,
+   (Coord@ p, Rule@ r, Draw@ d) {
      Ports@<Coord@> coords = Ports@<Coord@>(
        Coord@(p.x, p.y), Coord@(Inc(p.x), p.y),
        Coord@(p.x, Inc(p.y)), Coord@(Inc(p.x), Inc(p.y)));
 
      Ports@<Bool@> used = Ports@<Bool@>(
-       Or(g.ports.ul.input, g.ports.ul.output),
-       Or(g.ports.ur.input, g.ports.ur.output),
-       Or(g.ports.ll.input, g.ports.ll.output),
-       Or(g.ports.lr.input, g.ports.lr.output));
+       { r.inputs.ul.?(just: True); r.outputs.ul.?(just: True); False; },
+       { r.inputs.ur.?(just: True); r.outputs.ur.?(just: True); False; },
+       { r.inputs.ll.?(just: True); r.outputs.ll.?(just: True); False; },
+       { r.inputs.lr.?(just: True); r.outputs.lr.?(just: True); False; });
 
      Ports@<Draw@> fills = Ports@<Draw@>(
        Rect(coords.ul.x, coords.ul.y, 1, 1, Color@(white: Unit)),

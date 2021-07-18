@@ -3,12 +3,17 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 % Not = /Bool%.Not;
-% Or = /Bool%.Or;
 
-@ Coord@ = /Hwdg/Coord%.Coord@;
+@ Char@ = /Char%.Char@;
+
+@ Coord@ = /Hwdg/Coord%.Coord@; 
+
 @ Data@ = /Hwdg/Data%.Data@;
+% Data = /Hwdg/Data%;
+
 @ Memory@ = /Hwdg/Memory%.Memory@;
 
+@ Int@ = /Int/Int%.Int@;
 % Inc = /Int/Int%.Inc;
 % 0 = /Int/Int%.0;
 
@@ -20,108 +25,136 @@
 
 <@>@ Set@ = /Set%.Set@;
 
+@ String@ = /String%.String@;
+
 # Ports@ --
 #   Convenience type for capturing information about each of the 4 adjacent
-#   ports in a gate: upper left, upper right, lower left, lower right.
+#   ports in a rule: upper left, upper right, lower left, lower right.
 <@>@ Ports@ = <@ T@> { *(T@ ul, T@ ur, T@ ll, T@ lr); };
 
 # PortSpec@ --
-#   Describes how a given port is used in a gate.
-#
-# Input Port:
-#   A gate cannot operate unless there is data available on all of its input ports.
-#   The data on an input port is consumed as a result of operating the gate.
-#
-# Output Port:
-#   A gate cannot operate unless there is space on all of its output ports
-#   (after consuming any data on input ports). Data is written to an output
-#   port as a result of operating the gate.
-#
-# A single port can be both an input and an output port. In this case there
-# must be data available for the gate to operate. Conceptually that data will
-# be consumed and new data written in its place as a result of operating the
-# gate.
-# 
-# A single port may be neither an input or an output port for a particular
-# gate. This means the port is unused.
-@ PortSpec@ = *(Bool@ input, Bool@ output);
-PortSpec@ In = PortSpec@(True, False);
-PortSpec@ Out = PortSpec@(False, True);
-PortSpec@ InOut = PortSpec@(True, True);
-PortSpec@ Unused = PortSpec@(False, False);
+#   Used in the description of a rule. If data is provided, the given value is
+#   read from the port or written to the port. Otherwise the port is unused.
+@ PortSpec@ = Maybe@<Data@>;
 
-(PortSpec@) { Bool@; } IsUsed = (PortSpec@ ps) { Or(ps.input, ps.output); };
-(PortSpec@) { Bool@; } IsUnused = (PortSpec@ ps) { Not(IsUsed(ps)); };
+# Inputs@ --
+#   Specification for the inputs of a rule.
+@ Inputs@ = Ports@<PortSpec@>;
 
-# GateFunction@ --
-#   Describes the behavior of a gate when it is triggered.
-#
-# Input:
-#   The data value for each port, with 0 passed for any non-input port.
-#
-# Result:
-#   The new data value for each port, where values for non-output ports are
-#   ignored.
-@ GateFunction@ = (Ports@<Data@>) { Ports@<Data@>; };
+# Outputs@ --
+#   Specification for the outputs of a rule.
+@ Outputs@ = Ports@<PortSpec@>;
 
-# Gate@ --
-#   The primitive atomic computation block in a design.
+# Rule@ --
+#   A guarded atomic action that can take place at a particular 2x2 area of
+#   memory.
 #
-# A gate updates memory according to 'function' when its ports are in an
-# appropriate state to execute.
-@ Gate@ = *(Ports@<PortSpec@> ports, GateFunction@ function);
+# A rule consumes the expected inputs from its ports and produces the
+# specified outputs on its ports. A rule is only enabled if the input ports
+# contain their expected values and there is space on the output ports (after
+# input port values have been consumed).
+#
+# For example, the following rule moves a value '1' from the upper left port
+# to the upper right port. The lower left and lower right ports are unused.
+#   1... => .1..
+@ Rule@ = *(Inputs@ inputs, Outputs@ outputs);
+
+# Rule -- 
+#   Convenience literal for describing a rule.
+#
+# The input string is assumed to be of the format:
+#   'IIII => OOOO'
+# Where I and O are one of '1', '0', or '.' for 1, 0, and Nothing respectively.
+#
+# For example:
+#   Rule@ r = Rule|'10.. => ..0.';
+(String@) { Rule@; } Rule = {
+  (Char@) { PortSpec@; } FromChar = (Char@ c) {
+    c.?('0': Just<Data@>(Data.0));
+    c.?('1': Just<Data@>(Data.1));
+    c.?('.': Nothing<Data@>);
+    Nothing<Maybe@<Data@>>.just;  # Invalid PortSpec character.
+  };
+
+  (String@ s) {
+    Char@ i0 = s.cons.head; String@ s1 = s.cons.tail;
+    Char@ i1 = s1.cons.head; String@ s2 = s1.cons.tail;
+    Char@ i2 = s2.cons.head; String@ s3 = s2.cons.tail;
+    Char@ i3 = s3.cons.head; String@ s4 = s3.cons.tail;
+    Char@ _ = s4.cons.head; String@ s5 = s4.cons.tail;
+    Char@ _ = s5.cons.head; String@ s6 = s5.cons.tail;
+    Char@ _ = s6.cons.head; String@ s7 = s6.cons.tail;
+    Char@ _ = s7.cons.head; String@ s8 = s7.cons.tail;
+    Char@ o0 = s8.cons.head; String@ s9 = s8.cons.tail;
+    Char@ o1 = s9.cons.head; String@ s10 = s9.cons.tail;
+    Char@ o2 = s10.cons.head; String@ s11 = s10.cons.tail;
+    Char@ o3 = s11.cons.head;
+    Rule@(
+      Inputs@(FromChar(i0), FromChar(i1), FromChar(i2), FromChar(i3)),
+      Outputs@(FromChar(o0), FromChar(o1), FromChar(o2), FromChar(o3)));
+  };
+};
 
 # Design@ --
-#   Either a single gate, or a collection of designs placed at various
-#   locations relative to the overall design.
-#
-# Designs are Placed@ relative to the origin at the upper left most point in
-# the design.
-@ Design@ = +(Gate@ gate, List@<Placed@> designs),
+#   Either a single rule, or a collection of designs placed at various
+#   locations relative to the upper left corner of the overall design.
+@ Design@ = +(Rule@ rule, List@<Placed@> designs),
 @ Placed@ = *(Coord@ coord, Design@ design);
 
-# ForEachGatePlaced --
-#   Iterate over the set of gates in a Placed@ design.
+# Designs --
+#   Construct a Design from a collection of placed designs.
+(List@<Placed@>) { Design@; } Designs = (List@<Placed@> designs) {
+  Design@(designs: designs);
+};
+
+# PlacedRule -- 
+#   Convenience function for constructing a Placed design with a single rule.
+(Int@, Int@, Rule@) { Placed@; } PlacedRule = (Int@ x, Int@ y, Rule@ r) {
+  Placed@(Coord@(x, y), Design@(rule: r));
+};
+
+# ForEachRulePlaced --
+#   Iterate over the set of rules in a Placed@ design.
 #
 # Conceptually:
 #   B@ b = base
-#   foreach (coord, gate) in gates:
-#     b = body(coord, gates, b)
+#   foreach (coord, rule) in placed:
+#     b = body(coord, rule, b)
 #   return b
-<@ B@>(Placed@, B@, (Coord@, Gate@, B@) { B@; }) { B@; }
-ForEachGatePlaced = <@ B@>(Placed@ placed, B@ base, (Coord@, Gate@, B@) { B@; } body) {
+<@ B@>(Placed@, B@, (Coord@, Rule@, B@) { B@; }) { B@; }
+ForEachRulePlaced = <@ B@>(Placed@ placed, B@ base, (Coord@, Rule@, B@) { B@; } body) {
   placed.design.?(
-    gate: body(placed.coord, placed.design.gate, base),
+    rule: body(placed.coord, placed.design.rule, base),
     designs: {
       /List%.ForEach<Placed@, B@>(placed.design.designs, base,
         (Placed@ p, B@ b) {
           Placed@ np = @(
             coord: /Hwdg/Coord%.Add(placed.coord, p.coord),
             design: p.design);
-          ForEachGatePlaced<B@>(np, b, body);
+          ForEachRulePlaced<B@>(np, b, body);
           });
       });
 };
 
-# ForEachGate --
-#   Iterate over the set of gates in a Design@.
+# ForEachRule --
+#   Iterate over the set of rules in a Design@.
 #
 # Conceptually:
 #   B@ b = base
-#   foreach (coord, gate) in gates:
-#     b = body(coord, gates, b)
+#   foreach (coord, rule) in design:
+#     b = body(coord, rule, b)
 #   return b
-<@ B@>(Design@, B@, (Coord@, Gate@, B@) { B@; }) { B@; }
-ForEachGate = <@ B@> (Design@ design, B@ base, (Coord@, Gate@, B@) { B@; } body) {
-  ForEachGatePlaced<B@>(Placed@(Coord@(0, 0), design), base, body);
+<@ B@>(Design@, B@, (Coord@, Rule@, B@) { B@; }) { B@; }
+ForEachRule = <@ B@> (Design@ design, B@ base, (Coord@, Rule@, B@) { B@; } body) {
+  ForEachRulePlaced<B@>(Placed@(Coord@(0, 0), design), base, body);
 };
 
 # StepInternal --
 #   Run a single step of the given design.
 #
-# This means executing all currently enabled gates in the design, except those
-# that are disabled due to conflicts with other gates executed in the same
-# step.
+# This means executing all currently enabled rules in the design, excluding
+# those that are disabled due to conflicts with other rules executed in the
+# same step.
 #
 # Inputs:
 #   design - the design to execute.
@@ -135,39 +168,43 @@ ForEachGate = <@ B@> (Design@ design, B@ base, (Coord@, Gate@, B@) { B@; } body)
 
   # Check if a port is blocked because its memory location has already been
   # updated.
-  (B@, Coord@, PortSpec@) { Bool@; } Blocked = (B@ b, Coord@ c, PortSpec@ ps) {
-    IsUnused(ps).?(true: False);
-    /Set%.Contains<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c);
+  (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } Blocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
+    pi.?(just: /Set%.Contains<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c));
+    po.?(just: /Set%.Contains<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c));
+    False;
   };
 
-  # Get the input value to use for the given port, or Nothing if there is no
-  # input available for the port.
-  (B@, Coord@, PortSpec@) { Maybe@<Data@>; } Input = (B@ b, Coord@ c, PortSpec@ ps) {
-    ps.input.?(false: Just<Data@>(/Hwdg/Data%.0));
-    /Hwdg/Memory%.Get(b.memory, c);
+  # Check if a port is blocked because the input value is unvailable or does
+  # not match the specification.
+  (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } InputBlocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
+    pi.?(nothing: False);
+
+    Maybe@<Data@> data = /Hwdg/Memory%.Get(b.memory, c);
+    data.?(nothing: True);
+    Not(/Hwdg/Data%.Eq(pi.just, data.just));
   };
 
   # Return true if output to the given port is blocked because there's
   # something in the way.
-  (B@, Coord@, PortSpec@) { Bool@; } OutputBlocked = (B@ b, Coord@ c, PortSpec@ ps) {
-    ps.input.?(true: False);
-    ps.output.?(false: False);
+  (B@, Coord@, PortSpec@, PortSpec@) { Bool@; } OutputBlocked = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
+    pi.?(just: False);
+    po.?(nothing: False);
     /Hwdg/Memory%.Get(b.memory, c).?(just: True, nothing: False);
   };
 
-  # Update the state based on a computed output value.
-  (B@, Coord@, PortSpec@, Data@) { B@; } Update = (B@ b, Coord@ c, PortSpec@ ps, Data@ d) {
-    ps.output.?(true: @(
-      memory: /Hwdg/Memory%.Set(b.memory, c, d),
+  # Update the state based on the specification.
+  (B@, Coord@, PortSpec@, PortSpec@) { B@; } Update = (B@ b, Coord@ c, PortSpec@ pi, PortSpec@ po) {
+    po.?(just: @(
+      memory: /Hwdg/Memory%.Set(b.memory, c, po.just),
       updated: /Set%.Insert<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c)));
-    ps.input.?(true: @(
+    pi.?(just: @(
       memory: /Hwdg/Memory%.Clear(b.memory, c),
       updated: /Set%.Insert<Coord@>(/Hwdg/Coord%.Lt)(b.updated, c)));
     b;
   };
 
   (Design@ design, Memory@ memory, Set@<Coord@> updated) {
-    B@ b = ForEachGate<B@>(design, B@(memory, updated), (Coord@ c, Gate@ g, B@ b) {
+    B@ b = ForEachRule<B@>(design, B@(memory, updated), (Coord@ c, Rule@ r, B@ b) {
       # The coordinates of each port.
       Ports@<Coord@> cs = Ports@<Coord@>(
         Coord@(c.x, c.y),
@@ -177,33 +214,28 @@ ForEachGate = <@ B@> (Design@ design, B@ base, (Coord@, Gate@, B@) { B@; } body)
 
       # Don't do anything if the data needed for this port has been modified
       # since the start of the cycle.
-      Blocked(b, cs.ul, g.ports.ul).?(true: b);
-      Blocked(b, cs.ur, g.ports.ur).?(true: b);
-      Blocked(b, cs.ll, g.ports.ll).?(true: b);
-      Blocked(b, cs.lr, g.ports.lr).?(true: b);
+      Blocked(b, cs.ul, r.inputs.ul, r.outputs.ul).?(true: b);
+      Blocked(b, cs.ur, r.inputs.ur, r.outputs.ur).?(true: b);
+      Blocked(b, cs.ll, r.inputs.ll, r.outputs.ll).?(true: b);
+      Blocked(b, cs.lr, r.inputs.lr, r.outputs.lr).?(true: b);
 
-      # Get the inputs, exiting immediately if a required input isn't
-      # available.
-      Maybe@<Data@> uli = Input(b, cs.ul, g.ports.ul); uli.?(nothing: b);
-      Maybe@<Data@> uri = Input(b, cs.ur, g.ports.ur); uri.?(nothing: b);
-      Maybe@<Data@> lli = Input(b, cs.ll, g.ports.ll); lli.?(nothing: b);
-      Maybe@<Data@> lri = Input(b, cs.lr, g.ports.lr); lri.?(nothing: b);
+      # Don't do anything if the inputs are blocked.
+      InputBlocked(b, cs.ul, r.inputs.ul, r.outputs.ul).?(true: b);
+      InputBlocked(b, cs.ur, r.inputs.ur, r.outputs.ur).?(true: b);
+      InputBlocked(b, cs.ll, r.inputs.ll, r.outputs.ll).?(true: b);
+      InputBlocked(b, cs.lr, r.inputs.lr, r.outputs.lr).?(true: b);
 
-      # Exit immediately if any of the required output ports are blocked.
-      OutputBlocked(b, cs.ul, g.ports.ul).?(true: b);
-      OutputBlocked(b, cs.ur, g.ports.ur).?(true: b);
-      OutputBlocked(b, cs.ll, g.ports.ll).?(true: b);
-      OutputBlocked(b, cs.lr, g.ports.lr).?(true: b);
+      # Don't do anything if the outputs are blocked.
+      OutputBlocked(b, cs.ul, r.inputs.ul, r.outputs.ul).?(true: b);
+      OutputBlocked(b, cs.ur, r.inputs.ur, r.outputs.ur).?(true: b);
+      OutputBlocked(b, cs.ll, r.inputs.ll, r.outputs.ll).?(true: b);
+      OutputBlocked(b, cs.lr, r.inputs.lr, r.outputs.lr).?(true: b);
 
-      # We are now good to execute the gate.
-      Ports@<Data@> inputs = Ports@<Data@>(uli.just, uri.just, lli.just, lri.just);
-      Ports@<Data@> outputs = g.function(inputs);
-
-      # Update the state based on the result of executing the gate.
-      B@ b_ul = Update(b, cs.ul, g.ports.ul, outputs.ul);
-      B@ b_ur = Update(b_ul, cs.ur, g.ports.ur, outputs.ur);
-      B@ b_ll = Update(b_ur, cs.ll, g.ports.ll, outputs.ll);
-      B@ b_lr = Update(b_ll, cs.lr, g.ports.lr, outputs.lr);
+      # Update the state based on execution of the rule.
+      B@ b_ul = Update(b   , cs.ul, r.inputs.ul, r.outputs.ul);
+      B@ b_ur = Update(b_ul, cs.ur, r.inputs.ur, r.outputs.ur);
+      B@ b_ll = Update(b_ur, cs.ll, r.inputs.ll, r.outputs.ll);
+      B@ b_lr = Update(b_ll, cs.lr, r.inputs.lr, r.outputs.lr);
       b_lr;
     });
 
@@ -240,10 +272,8 @@ ForEachGate = <@ B@> (Design@ design, B@ base, (Coord@, Gate@, B@) { B@; } body)
 };
 
 @(
-  Ports@,
-  PortSpec@, In, Out, InOut, Unused, IsUsed, IsUnused,
-  GateFunction@, Gate@,
-  Design@, Placed@,
-  ForEachGate,
+  Ports@, PortSpec@, Inputs@, Outputs@, Rule@, Rule,
+  Design@, Placed@, Designs, PlacedRule,
+  ForEachRule,
   Step, Run
 );

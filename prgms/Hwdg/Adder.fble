@@ -5,15 +5,10 @@
 % Data = /Hwdg/Data%;
 
 @ Design@ = /Hwdg/Design%.Design@;
-@ Placed@ = /Hwdg/Design%.Placed@;
-@ Gate@ = /Hwdg/Design%.Gate@;
-@ PortSpec@ = /Hwdg/Design%.PortSpec@;
-<@>@ Ports@ = /Hwdg/Design%.Ports@;
-% In = /Hwdg/Design%.In;
-% Out = /Hwdg/Design%.Out;
-% Unused = /Hwdg/Design%.Unused;
+% Designs = /Hwdg/Design%.Designs;
+% Rule = /Hwdg/Design%.Rule;
+% PlacedRule = /Hwdg/Design%.PlacedRule;
 
-@ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
 % 1 = /Int/Int%.1;
 % 2 = /Int/Int%.2;
@@ -21,7 +16,6 @@
 % 4 = /Int/Int%.4;
 % 8 = /Int/Int%.8;
 
-<@>% List = /List%.List;
 
 # Adder1 - A one bit full adder.
 #
@@ -42,10 +36,6 @@
 #   3   _ _ _
 #   4     _ z
 Design@ Adder1 = {
-  (Int@, Int@, Gate@) { Placed@; } G = (Int@ x, Int@ y, Gate@ g) {
-    @(coord: Coord@(x, y), design: Design@(gate: g));
-  };
-
   Data@ _ = Data.0;
   
   # Internal Geometry:
@@ -55,7 +45,7 @@ Design@ Adder1 = {
   #   2 x C Z C c
   #   3   C Z C
   #   4     C z
-  Design@(designs: List<Placed@>[
+  Designs[
     # Duplicate the input 'a' to cells (1, 0) and (0, 1).
     #   0 1 2 3 4
     # 0   A   b
@@ -63,14 +53,8 @@ Design@ Adder1 = {
     # 2         c
     # 3        
     # 4        
-    G(0, 0, @(
-        ports: Ports@<PortSpec@>(
-          In, Out,
-          Out, Unused),
-        function: (Ports@<Data@> d) { Ports@<Data@>(
-          _, d.ul,
-          d.ul, _);
-        })),
+    PlacedRule(0, 0, Rule|'0... => .00.'),
+    PlacedRule(0, 0, Rule|'1... => .11.'),
 
     # Duplicate the input 'b' to cells (2, 0) and (3, 1).
     #   0 1 2 3 4
@@ -79,14 +63,8 @@ Design@ Adder1 = {
     # 2         c
     # 3        
     # 4        
-    G(2, 0, @(
-        ports: Ports@<PortSpec@>(
-          Out, In,
-          Unused, Out),
-        function: (Ports@<Data@> d) { Ports@<Data@>(
-          d.ur, _,
-          _, d.ur);
-        })),
+    PlacedRule(2, 0, Rule|'.0.. => 0..0'),
+    PlacedRule(2, 0, Rule|'.1.. => 1..1'),
 
     # Duplicate the input 'c' to cells (3, 2) and (3, 3).
     #   0 1 2 3 4
@@ -95,14 +73,8 @@ Design@ Adder1 = {
     # 2       C  
     # 3       C
     # 4        
-    G(3, 2, @(
-        ports: Ports@<PortSpec@>(
-          Out, In,
-          Out, Unused),
-        function: (Ports@<Data@> d) { Ports@<Data@>(
-          d.ur, _,
-          d.ur, _);
-        })),
+    PlacedRule(3, 2, Rule|'.0.. => 0.0.'),
+    PlacedRule(3, 2, Rule|'.1.. => 1.1.'),
 
     # Cross over a and b inputs.
     #   0 1 2 3 4
@@ -111,14 +83,10 @@ Design@ Adder1 = {
     # 2       C  
     # 3       C
     # 4        
-    G(1, 0, @(
-        ports: Ports@<PortSpec@>(
-          In, In,
-          Out, Out),
-        function: (Ports@<Data@> d) { Ports@<Data@>(
-          _, _,
-          d.ur, d.ul);
-        })),
+    PlacedRule(1, 0, Rule|'0... => ...0'),
+    PlacedRule(1, 0, Rule|'1... => ...1'),
+    PlacedRule(1, 0, Rule|'.0.. => ..0.'),
+    PlacedRule(1, 0, Rule|'.1.. => ..1.'),
 
     # Compute sum out.
     #   0 1 2 3 4
@@ -127,16 +95,14 @@ Design@ Adder1 = {
     # 2     Z    
     # 3       C
     # 4        
-    G(2, 1, @(
-        ports: Ports@<PortSpec@>(
-          In, In,
-          Out, In),
-        function: (Ports@<Data@> d) {
-          Data@ z = d.ul.?(
-            0: d.ur.?(0: d.lr, 1: d.lr.?(0: Data.1, 1: Data.0)),
-            1: d.ur.?(0: d.lr.?(0: Data.1, 1: Data.0), 1: d.lr));
-          Ports@<Data@>( _, _, z, _);
-        })),
+    PlacedRule(2, 1, Rule|'00.0 => ..0.'),
+    PlacedRule(2, 1, Rule|'00.1 => ..1.'),
+    PlacedRule(2, 1, Rule|'01.0 => ..1.'),
+    PlacedRule(2, 1, Rule|'01.1 => ..0.'),
+    PlacedRule(2, 1, Rule|'10.0 => ..1.'),
+    PlacedRule(2, 1, Rule|'10.1 => ..0.'),
+    PlacedRule(2, 1, Rule|'11.0 => ..0.'),
+    PlacedRule(2, 1, Rule|'11.1 => ..1.'),
 
     # Move z down to (2, 3).
     #   0 1 2 3 4
@@ -145,14 +111,8 @@ Design@ Adder1 = {
     # 2          
     # 3     Z C
     # 4        
-    G(2, 2, @(
-        ports: Ports@<PortSpec@>(
-          In, Unused,
-          Out, Unused),
-        function: (Ports@<Data@> d) { Ports@<Data@>(
-          _, _,
-          d.ul, _);
-        })),
+    PlacedRule(2, 2, Rule|'0... => ..0.'),
+    PlacedRule(2, 2, Rule|'1... => ..1.'),
 
     # Cross over c and z.
     #   0 1 2 3 4
@@ -161,14 +121,10 @@ Design@ Adder1 = {
     # 2          
     # 3        
     # 4     C z
-    G(2, 3, @(
-        ports: Ports@<PortSpec@>(
-          In, In,
-          Out, Out),
-        function: (Ports@<Data@> d) { Ports@<Data@>(
-          _, _,
-          d.ur, d.ul);
-        })),
+    PlacedRule(2, 3, Rule|'0... => ...0'),
+    PlacedRule(2, 3, Rule|'1... => ...1'),
+    PlacedRule(2, 3, Rule|'.0.. => ..0.'),
+    PlacedRule(2, 3, Rule|'.1.. => ..1.'),
 
     # Move c up to (1, 3).
     #   0 1 2 3 4
@@ -177,14 +133,8 @@ Design@ Adder1 = {
     # 2          
     # 3   C    
     # 4       z
-    G(1, 3, @(
-        ports: Ports@<PortSpec@>(
-          Out, Unused,
-          Unused, In),
-        function: (Ports@<Data@> d) { Ports@<Data@>(
-          d.lr, _,
-          _, _);
-        })),
+    PlacedRule(1, 3, Rule|'...0 => 0...'),
+    PlacedRule(1, 3, Rule|'...1 => 1...'),
 
     # Move c up to (1, 2).
     #   0 1 2 3 4
@@ -193,14 +143,8 @@ Design@ Adder1 = {
     # 2   C      
     # 3        
     # 4       z
-    G(1, 2, @(
-        ports: Ports@<PortSpec@>(
-          Out, Unused,
-          In, Unused),
-        function: (Ports@<Data@> d) { Ports@<Data@>(
-          d.ll, _,
-          _, _);
-        })),
+    PlacedRule(1, 2, Rule|'..0. => 0...'),
+    PlacedRule(1, 2, Rule|'..1. => 1...'),
 
     # Compute carry out.
     #   0 1 2 3 4
@@ -209,17 +153,15 @@ Design@ Adder1 = {
     # 2 x        
     # 3        
     # 4       z
-    G(0, 1, @(
-        ports: Ports@<PortSpec@>(
-          In, In,
-          Out, In),
-        function: (Ports@<Data@> d) {
-          Data@ x = d.ul.?(
-            0: d.ur.?(0: Data.0, 1: d.lr),
-            1: d.ur.?(0: d.lr, 1: Data.1));
-          Ports@<Data@>( _, _, x, _);
-        }))
-  ]);
+    PlacedRule(0, 1, Rule|'00.0 => ..0.'),
+    PlacedRule(0, 1, Rule|'00.1 => ..0.'),
+    PlacedRule(0, 1, Rule|'01.0 => ..0.'),
+    PlacedRule(0, 1, Rule|'01.1 => ..1.'),
+    PlacedRule(0, 1, Rule|'10.0 => ..0.'),
+    PlacedRule(0, 1, Rule|'10.1 => ..1.'),
+    PlacedRule(0, 1, Rule|'11.0 => ..1.'),
+    PlacedRule(0, 1, Rule|'11.1 => ..1.')
+  ];
 };
 
 # Adder2 - A two bit adder.
@@ -243,10 +185,10 @@ Design@ Adder1 = {
 #   2 x _ _ _ _ _ _ _ c
 #   3   _ _ _   _ _ _ 
 #   4     _ Z     _ z
-Design@ Adder2 = Design@(designs: List<Placed@>[
+Design@ Adder2 = Designs[
   @(coord: Coord@(0, 0), design: Adder1),
   @(coord: Coord@(4, 0), design: Adder1)
-]);
+];
 
 # Adder4 - A four bit adder.
 #
@@ -266,10 +208,10 @@ Design@ Adder2 = Design@(designs: List<Placed@>[
 #   2  x  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  c
 #   3     _  _  _     _  _  _     _  _  _     _  _  _
 #   4        _ z3        _ z2        _ z1        _ z0
-Design@ Adder4 = Design@(designs: List<Placed@>[
+Design@ Adder4 = Designs[
   @(coord: Coord@(0, 0), design: Adder2),
   @(coord: Coord@(8, 0), design: Adder2)
-]);
+];
 
 @(Adder1, Adder2, Adder4);
 

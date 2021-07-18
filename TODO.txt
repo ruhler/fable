@@ -1,3 +1,6 @@
+* [/Hwdg%] Give separate Tests modules for each submodule.
+* [/Hwdg%] Move Adder module to a Designs subdirectory.
+* [/Hwdg%] Add tests for the Adder module.
 * Implement md5 in Hwdg
 
 * Consider not exposing the FbleFuncValue type external to value.

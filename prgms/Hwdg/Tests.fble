@@ -4,7 +4,6 @@
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
 
-<@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
@@ -21,36 +20,24 @@
 @ Coord@ = /Hwdg/Coord%.Coord@;
 
 @ Data@ = /Hwdg/Data%.Data@;
-% Data0 = /Hwdg/Data%.0;
-% Data1 = /Hwdg/Data%.1;
+% Data = /Hwdg/Data%;
 
 @ Design@ = /Hwdg/Design%.Design@;
-@ Placed@ = /Hwdg/Design%.Placed@;
-@ Gate@ = /Hwdg/Design%.Gate@;
-<@>@ Ports@ = /Hwdg/Design%.Ports@;
-@ PortSpec@ = /Hwdg/Design%.PortSpec@;
-% In = /Hwdg/Design%.In;
-% Out = /Hwdg/Design%.Out;
-% Unused = /Hwdg/Design%.Unused;
+% Designs = /Hwdg/Design%.Designs;
+% PlacedRule = /Hwdg/Design%.PlacedRule;
+% Rule = /Hwdg/Design%.Rule;
 % Run = /Hwdg/Design%.Run;
 
 @ Memory@ = /Hwdg/Memory%.Memory@;
+@ Cell@ = /Hwdg/Memory%.Cell@;
 % Empty = /Hwdg/Memory%.Empty;
+% Memory = /Hwdg/Memory%.Memory;
 % Clear = /Hwdg/Memory%.Clear;
 % Get = /Hwdg/Memory%.Get;
 % Set = /Hwdg/Memory%.Set;
 
 # Import to test compilation.
 % _ = /Hwdg/NativeApp%;
-
-# Gates --
-#   Convenience function for constructing a design from a list of gates.
-@ PlacedGate@ = *(Coord@ coord, Gate@ gate);
-(List@<PlacedGate@>) { Design@; } Gates = (List@<PlacedGate@> gates) {
-  Design@(designs: /List%.Map<PlacedGate@, Placed@>(gates, (PlacedGate@ pg) {
-      @(coord: pg.coord, design: Design@(gate: pg.gate));
-      }));
-};
 
 Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   Test(Str|'empty no data', !({
@@ -65,9 +52,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'set this data to 0', !({
-    Memory@ cells = Set(Empty, Coord@(3, 2), Data0);
+    Memory@ cells = Set(Empty, Coord@(3, 2), Data.0);
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
-    Maybe@<Data@> wnt = Just<Data@>(Data0);
+    Maybe@<Data@> wnt = Just<Data@>(Data.0);
 
     AssertEquals<Maybe@<Data@>>(
       /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
@@ -76,9 +63,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'set this data to 1', !({
-    Memory@ cells = Set(Empty, Coord@(3, 2), Data1);
+    Memory@ cells = Set(Empty, Coord@(3, 2), Data.1);
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
-    Maybe@<Data@> wnt = Just<Data@>(Data1);
+    Maybe@<Data@> wnt = Just<Data@>(Data.1);
 
     AssertEquals<Maybe@<Data@>>(
       /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
@@ -87,7 +74,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'set other data', !({
-    Memory@ cells = Set(Empty, Coord@(2, 3), Data1);
+    Memory@ cells = Set(Empty, Coord@(2, 3), Data.1);
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
 
@@ -98,7 +85,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'clear data', !({
-    Memory@ cells = Clear(Set(Empty, Coord@(3, 2), Data1), Coord@(3, 2));
+    Memory@ cells = Clear(Set(Empty, Coord@(3, 2), Data.1), Coord@(3, 2));
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
 
@@ -109,9 +96,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'clear other data', !({
-    Memory@ cells = Clear(Set(Empty, Coord@(3, 2), Data1), Coord@(2, 3));
+    Memory@ cells = Clear(Set(Empty, Coord@(3, 2), Data.1), Coord@(2, 3));
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
-    Maybe@<Data@> wnt = Just<Data@>(Data1);
+    Maybe@<Data@> wnt = Just<Data@>(Data.1);
 
     AssertEquals<Maybe@<Data@>>(
       /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
@@ -122,43 +109,35 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   Test(Str|'empty gate', !({
     # Make sure we don't get stuck in an infinite loop if there is an empty
     # gate.
-    Gate@ gate = @(
-      ports: Ports@<PortSpec@>(Unused, Unused, Unused, Unused),
-      function: (Ports@<Data@> unused) { unused; });
-    Design@ design = Design@(gate: gate);
-    Memory@ cells = Set(Empty, Coord@(0, 0), Data1);
+    Design@ design = Designs[
+      PlacedRule(0, 0, Rule|'.... => ....')
+    ];
+    Memory@ cells = Memory[Cell@(0, 0, Data.1)];
 
-    Memory@ wnt = Set(Empty, Coord@(0, 0), Data1);
+    # Nothing changes
+    Memory@ wnt = cells;
     Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity ul to lr', !({
-    Gate@ gate = @(
-      ports: Ports@<PortSpec@>(
-        In, Unused,
-        Unused, Out),
-      function: (Ports@<Data@> x) {
-        Ports@<Data@>(Data0, Data0, Data0, x.ul);
-      });
-    Design@ design = Gates[@(coord: Coord@(0, 0), gate: gate)];
-    Memory@ cells = Set(Empty, Coord@(0, 0), Data1);
+    Design@ design = Designs[
+      PlacedRule(0, 0, Rule|'0... => ...0'),
+      PlacedRule(0, 0, Rule|'1... => ...1')
+    ];
+    Memory@ cells = Memory[Cell@(0, 0, Data.1)];
 
-    Memory@ wnt = Set(Empty, Coord@(1, 1), Data1);
+    Memory@ wnt = Memory[Cell@(1, 1, Data.1)];
     Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity ul to lr input blocked', !({
-    Gate@ gate = @(
-      ports: Ports@<PortSpec@>(
-        In, Unused,
-        Unused, Out),
-      function: (Ports@<Data@> x) {
-        Ports@<Data@>(Data0, Data0, Data0, x.ul);
-      });
-    Design@ design = Gates[@(coord: Coord@(0, 0), gate: gate)];
-    Memory@ cells = Set(Empty, Coord@(1, 0), Data1);
+    Design@ design = Designs[
+      PlacedRule(0, 0, Rule|'0... => ...0'),
+      PlacedRule(0, 0, Rule|'1... => ...1')
+    ];
+    Memory@ cells = Memory[Cell@(1, 0, Data.1)];
 
     # The gate doesn't have it's input available, so we don't expect it to
     # trigger.
@@ -168,17 +147,14 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'identity ul to lr output blocked', !({
-    Gate@ gate = @(
-      ports: Ports@<PortSpec@>(
-        In, Unused,
-        Unused, Out),
-      function: (Ports@<Data@> x) {
-        Ports@<Data@>(Data0, Data0, Data0, x.ul);
-      });
-    Design@ design = Gates[@(coord: Coord@(0, 0), gate: gate)];
-    Memory@ cells = Set(Set(Empty,
-        Coord@(0, 0), Data1),
-        Coord@(1, 1), Data0);
+    Design@ design = Designs[
+      PlacedRule(0, 0, Rule|'0... => ...0'),
+      PlacedRule(0, 0, Rule|'1... => ...1')
+    ];
+    Memory@ cells = Memory[
+      Cell@(0, 0, Data.1),
+      Cell@(1, 1, Data.0)
+    ];
 
     # The gate's output port is blockd, so we don't expect it to trigger.
     Memory@ wnt = cells;
@@ -192,32 +168,31 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     # .  .   v .
     # <- <- -| .
     # .  .  .  .
-    Gate@ ul_to_ur = @(
-      ports: Ports@<PortSpec@>(In, Out, Unused, Unused),
-      function: (Ports@<Data@> x) { Ports@<Data@>(Data0, x.ul, Data0, Data0); });
-    Gate@ ul_to_ll = @(
-      ports: Ports@<PortSpec@>( In, Unused, Out, Unused),
-      function: (Ports@<Data@> x) { Ports@<Data@>(Data0, Data0, x.ul, Data0); });
-    Gate@ ur_to_ul = @(
-      ports: Ports@<PortSpec@>( Out, In, Unused, Unused),
-      function: (Ports@<Data@> x) { Ports@<Data@>(x.ur, Data0, Data0, Data0); });
-
-    Design@ design = Gates[
-      @(coord: Coord@(0, 0), gate: ul_to_ur),
-      @(coord: Coord@(1, 0), gate: ul_to_ur),
-      @(coord: Coord@(2, 0), gate: ul_to_ll),
-      @(coord: Coord@(2, 1), gate: ul_to_ll),
-      @(coord: Coord@(1, 2), gate: ur_to_ul),
-      @(coord: Coord@(0, 2), gate: ur_to_ul)];
+    Design@ design = Designs[
+      PlacedRule(0, 0, Rule|'0... => .0..'),
+      PlacedRule(0, 0, Rule|'1... => .1..'),
+      PlacedRule(1, 0, Rule|'0... => .0..'),
+      PlacedRule(1, 0, Rule|'1... => .1..'),
+      PlacedRule(2, 0, Rule|'0... => ..0.'),
+      PlacedRule(2, 0, Rule|'1... => ..1.'),
+      PlacedRule(2, 1, Rule|'0... => ..0.'),
+      PlacedRule(2, 1, Rule|'1... => ..1.'),
+      PlacedRule(1, 2, Rule|'.0.. => 0...'),
+      PlacedRule(1, 2, Rule|'.1.. => 1...'),
+      PlacedRule(0, 2, Rule|'.0.. => 0...'),
+      PlacedRule(0, 2, Rule|'.1.. => 1...')
+    ];
 
     # Send '0' and '1' down the wire together.
-    Memory@ cells = Set(Set(Empty,
-          Coord@(0, 0), Data1),
-          Coord@(1, 0), Data0);
+    Memory@ cells = Memory[
+      Cell@(0, 0, Data.1),
+      Cell@(1, 0, Data.0)
+    ];
 
-    Memory@ wnt = Set(Set(Empty,
-          Coord@(0, 2), Data0),
-          Coord@(1, 2), Data1);
+    Memory@ wnt = Memory[
+      Cell@(0, 2, Data.0),
+      Cell@(1, 2, Data.1)
+    ];
     Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   }))
