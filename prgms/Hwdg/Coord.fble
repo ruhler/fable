@@ -1,0 +1,29 @@
+% And = /Bool%.And;
+% Or = /Bool%.Or;
+
+@ Int@ = /Int/Int%.Int@;
+
+# Coord@ --
+#   A coordinate identifying a location in the memory/design grid.
+@ Coord@ = *(Int@ x, Int@ y);
+
+# Eq --
+#   Equality operator for Coord@.
+/Eq%.Eq@<Coord@> Eq = {
+  % IntEq = /Int/Int/Eq%.Eq;
+  (Coord@ a, Coord@ b) {
+    And(IntEq(a.x, b.x), IntEq(a.y, b.y));
+  };
+};
+
+# Lt --
+#   Less than operator for Coord@.
+/Eq%.Eq@<Coord@> Lt = {
+  % IntEq = /Int/Int/Eq%.Eq;
+  % IntLt = /Int/Int/Eq%.Lt;
+  (Coord@ a, Coord@ b) {
+    Or(IntLt(a.x, b.x), And(IntEq(a.x, b.x), IntLt(a.y, b.y)));
+  };
+};
+
+@(Coord@, Eq, Lt);

@@ -6,7 +6,6 @@
 % Or = /Bool%.Or;
 % Not = /Bool%.Not;
 
-@ Int@ = /Int/Int%.Int@; 
 % Inc = /Int/Int%.Inc;
 
 <@>@ List@ = /List%.List@;
@@ -18,22 +17,7 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-@ Coord@ = *(Int@ x, Int@ y);
-
-/Eq%.Eq@<Coord@> CoordLt = {
-  % IntEq = /Int/Int/Eq%.Eq;
-  % IntLt = /Int/Int/Eq%.Lt;
-  (Coord@ a, Coord@ b) {
-    Or(IntLt(a.x, b.x), And(IntEq(a.x, b.x), IntLt(a.y, b.y)));
-  };
-};
-
-/Eq%.Eq@<Coord@> CoordEq = {
-  % IntEq = /Int/Int/Eq%.Eq;
-  (Coord@ a, Coord@ b) {
-    And(IntEq(a.x, b.x), IntEq(a.y, b.y));
-  };
-};
+@ Coord@ = /Hwdg/Coord%.Coord@;
 
 @ Data@ = +(Unit@ 0, Unit@ 1);
 Data@ 0 = Data@(0: Unit);
@@ -75,19 +59,19 @@ Gates@ EmptyGates = /List%.Nil<GateEntry@>;
 # GetData --
 #   Get the data of a particular cell.
 (Cells@, Coord@) { Maybe@<Data@>; } GetData = {
-  /Map%.Lookup<Coord@>(CoordLt)<Data@>;
+  /Map%.Lookup<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
 };
 
 # SetData --
 #   Set the data value of the given cell.
 (Cells@, Coord@, Data@) { Cells@; } SetData = {
-  /Map%.Insert<Coord@>(CoordLt)<Data@>;
+  /Map%.Insert<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
 };
 
 # ClearData --
 #   Clear the data value of the given cell, leaving the cell empty.
 (Cells@, Coord@) { Cells@; } ClearData = {
-  /Map%.Delete<Coord@>(CoordLt)<Data@>;
+  /Map%.Delete<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
 };
 
 # SetGate --
@@ -195,6 +179,6 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
 };
 
 @(Cells@, Gates@, GateEntry@, Coord@, Data@, Gate@, Ports@, PortSpec@,
-  0, 1, InputPort, OutputPort, IOPort, UnusedPort, CoordEq,
+  0, 1, InputPort, OutputPort, IOPort, UnusedPort,
   EmptyCells, GetData, SetData, ClearData, EmptyGates, Gates, SetGate, ForEachGate,
   Step, Run);

@@ -34,7 +34,6 @@
 @ Gates@ = /Hwdg%.Gates@;
 <@>@ Ports@ = /Hwdg%.Ports@;
 @ PortSpec@ = /Hwdg%.PortSpec@;
-% CoordEq = /Hwdg%.CoordEq;
 % InputPort = /Hwdg%.InputPort;
 % OutputPort = /Hwdg%.OutputPort;
 % UnusedPort = /Hwdg%.UnusedPort;
@@ -62,7 +61,7 @@ Show@<Coord@> ShowCoord = (Coord@ x) {
 };
 
 (Cells@, Cells@) { Bool@; } EqCells = (Cells@ a, Cells@ b) {
-  /Map/Eq%.Eq<Coord@, Data@>(CoordEq, EqData)(a, b);
+  /Map/Eq%.Eq<Coord@, Data@>(/Hwdg/Coord%.Eq, EqData)(a, b);
 };
 
 Show@<Cells@> ShowCells = (Cells@ x) {
