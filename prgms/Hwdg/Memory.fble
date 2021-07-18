@@ -42,4 +42,27 @@ Memory@ Empty = /Map%.Empty<Coord@, Data@>;
   /Map/Show%.Show<Coord@, Data@>(/Hwdg/Coord%.Show, /Hwdg/Data%.Show);
 };
 
-@(Memory@, Empty, Get, Set, Clear, Eq, Show);
+# ForEach --
+#   Iterate over non-empty values in the memory.
+#
+# Type Parameters:
+#   B@ - The type of value updated and returned by the foreach loop.
+#
+# Inputs:
+#   memory - the memory to iterate over.
+#   base - the initial value to update and return from the loop.
+#   body - the body of the loop.
+#
+# Returns:
+#   The result of applying the body consecutively to the base value, once for
+#   each entry in the map.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach (coord, data) in memory:
+#     b = body(k, coord, data)
+#   return b
+<@ B@>(Memory@, B@, (Coord@, Data@, B@) { B@; }) { B@; }
+ForEach = <@ B@> { /Map%.ForEach<Coord@, Data@, B@>; };
+
+@(Memory@, Empty, Get, Set, Clear, Eq, Show, ForEach);

@@ -110,8 +110,7 @@ Memory@ Cells = {
    });
     
   # 3. Draw a green square for 1 and a red square for 0.
-  # TODO: Don't assume Cells@ is a /Map%.Map@?
-  /Map%.ForEach<Coord@, Data@, Draw@>(cells, io,
+  /Hwdg/Memory%.ForEach<Draw@>(cells, io,
     (Coord@ p, Data@ data, Draw@ d) {
       Color@ color = data.?(0: Color@(red: Unit), 1: Color@(green: Unit));
       Over(d, Rect(p.x, p.y, 1, 1, color));

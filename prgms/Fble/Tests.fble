@@ -19,7 +19,6 @@
 % _ = /Fble/Bench%;
 % _ = /Fble/ProfilesTest%;
 % _ = /Fble/StackSmasher%;
-% _ = /Hwdg/NativeApp%;
 % _ = /Invaders/NativeApp%;
 % _ = /Invaders/Bench%;
 % _ = /Invaders/Screenshot/NativeApp%;
