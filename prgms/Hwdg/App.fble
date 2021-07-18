@@ -15,10 +15,7 @@
 
 @ Gate@ = /Hwdg%.Gate@;
 @ Gates@ = /Hwdg%.Gates@;
-@ Cells@ = /Hwdg%.Cells@;
 <@>@ Ports@ = /Hwdg%.Ports@;
-% SetData = /Hwdg%.SetData;
-% EmptyCells = /Hwdg%.EmptyCells;
 <@>% ForEachGate = /Hwdg%.ForEachGate;
 
 @ Coord@ = /Hwdg/Coord%.Coord@;
@@ -26,6 +23,10 @@
 @ Data@ = /Hwdg/Data%.Data@;
 % Data0 = /Hwdg/Data%.0;
 % Data1 = /Hwdg/Data%.1;
+
+@ Memory@ = /Hwdg/Memory%.Memory@;
+% Empty = /Hwdg/Memory%.Empty;
+% Set = /Hwdg/Memory%.Set;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
@@ -63,8 +64,8 @@ Gates@ Gates = /Hwdg/Adder%.Adder4;
 
 # Cells --
 #   The initial data configuration of the hardware to simulate
-Cells@ Cells = {
-  SetData(SetData(SetData(SetData(SetData(SetData(SetData(SetData(SetData(EmptyCells,
+Memory@ Cells = {
+  Set(Set(Set(Set(Set(Set(Set(Set(Set(Empty,
     Coord@(Int|0, 0), Data1), # a3
     Coord@(Int|4, 0), Data1), # a2
     Coord@(Int|8, 0), Data1), # a1
@@ -78,7 +79,7 @@ Cells@ Cells = {
 
 # Draw --
 #   Draw the current hardware configuration.
-(Gates@, Cells@) { Draw@; } Draw = (Gates@ gates, Cells@ cells) {
+(Gates@, Memory@) { Draw@; } Draw = (Gates@ gates, Memory@ cells) {
   # 1. Clear the background.
   Draw@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
 
@@ -126,13 +127,13 @@ Cells@ Cells = {
       key_up: GetInput(in));
 };
 
-(Gates@, Cells@) { Cells@; } Step = (Gates@ gates, Cells@ cells) {
-  Maybe@<Cells@> mcells = /Hwdg%.Step(gates, cells);
+(Gates@, Memory@) { Memory@; } Step = (Gates@ gates, Memory@ cells) {
+  Maybe@<Memory@> mcells = /Hwdg%.Step(gates, cells);
   mcells.?(just: mcells.just, nothing: cells);
 };
 
-(Get@<Input@>, Put@<Effect@>, Int@, Gates@, Cells@) { Unit@!; }
-StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Gates@ gates, Cells@ cells) {
+(Get@<Input@>, Put@<Effect@>, Int@, Gates@, Memory@) { Unit@!; }
+StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Gates@ gates, Memory@ cells) {
   Unit@ _ := out(Effect@(draw: Draw(gates, cells)));
   Unit@ _ := out(Effect@(tick: Int|400));
   Input@ x := in;

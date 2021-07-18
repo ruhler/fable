@@ -1,0 +1,35 @@
+
+@ Coord@ = /Hwdg/Coord%.Coord@;
+@ Data@ = /Hwdg/Data%.Data@;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+# Memory@ --
+#   An unbounded 2D array of memory.
+#
+# Each location in the memory is either empty or contains data 0 or 1.
+@ Memory@ = /Map%.Map@<Coord@, Data@>;
+
+# Empty -- 
+#   A completely empty memory.
+Memory@ Empty = /Map%.Empty<Coord@, Data@>;
+
+# Get --
+#   Get the value of memory at a particular location.
+(Memory@, Coord@) { Maybe@<Data@>; } Get = {
+  /Map%.Lookup<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+};
+
+# Put -- 
+#   Set the data value at a particular location.
+(Memory@, Coord@, Data@) { Memory@; } Set = {
+  /Map%.Insert<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+};
+
+# Clear --
+#   Clear the data value of a particular location, leaving the location empty.
+(Memory@, Coord@) { Memory@; } Clear = {
+  /Map%.Delete<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+};
+
+@(Memory@, Empty, Get, Set, Clear);

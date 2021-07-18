@@ -17,6 +17,11 @@
 @ Coord@ = /Hwdg/Coord%.Coord@;
 @ Data@ = /Hwdg/Data%.Data@;
 
+@ Memory@ = /Hwdg/Memory%.Memory@;
+% Get = /Hwdg/Memory%.Get;
+% Set = /Hwdg/Memory%.Set;
+% Clear = /Hwdg/Memory%.Clear;
+
 # PortSpec@ --
 #   Describes how a given port is used in a gate.
 @ PortSpec@ = *(Bool@ input, Bool@ output);
@@ -38,35 +43,12 @@ PortSpec@ UnusedPort = PortSpec@(False, False);
 
 @ Gate@ = *(Ports@<PortSpec@> ports, GateFunction@ function);
 
-@ Cells@ = /Map%.Map@<Coord@, Data@>;
 @ GateEntry@ = *(Coord@ coord, Gate@ gate);
 @ Gates@ = /List%.List@<GateEntry@>;
-
-# EmptyCells -- 
-#  An empty array of data cells.
-Cells@ EmptyCells = /Map%.Empty<Coord@, Data@>;
 
 # EmptyGates --
 #  An empty array of gates.
 Gates@ EmptyGates = /List%.Nil<GateEntry@>;
-
-# GetData --
-#   Get the data of a particular cell.
-(Cells@, Coord@) { Maybe@<Data@>; } GetData = {
-  /Map%.Lookup<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
-};
-
-# SetData --
-#   Set the data value of the given cell.
-(Cells@, Coord@, Data@) { Cells@; } SetData = {
-  /Map%.Insert<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
-};
-
-# ClearData --
-#   Clear the data value of the given cell, leaving the cell empty.
-(Cells@, Coord@) { Cells@; } ClearData = {
-  /Map%.Delete<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
-};
 
 # SetGate --
 #   Configure the gate whose upper left corner is at the given coordinates of
@@ -106,7 +88,7 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
 #
 # TODO: Test and fix the case when conflicting gates are simultaneously
 # enabled.
-(Gates@, Cells@) { Maybe@<Cells@>; } Step = {
+(Gates@, Memory@) { Maybe@<Memory@>; } Step = {
   (PortSpec@, Maybe@<Data@>) { Bool@; } Blocked = (PortSpec@ ps, Maybe@<Data@> d) {
     Bool@ empty = d.?(just: False, nothing: True);
     And(ps.input, empty).?(true: True);
@@ -119,14 +101,14 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
     d.just;
   };
 
-  @ B@ = *(Cells@ cells, Bool@ updated);
+  @ B@ = *(Memory@ cells, Bool@ updated);
   (B@, Coord@, PortSpec@, Data@) { B@; } UpdateResult = (B@ b, Coord@ c, PortSpec@ ps, Data@ d) {
-    ps.output.?(true: @(cells: SetData(b.cells, c, d), updated: True));
-    ps.input.?(true: @(cells: ClearData(b.cells, c), updated: True));
+    ps.output.?(true: @(cells: Set(b.cells, c, d), updated: True));
+    ps.input.?(true: @(cells: Clear(b.cells, c), updated: True));
     b;
   };
 
-  (Gates@ gates, Cells@ cells) {
+  (Gates@ gates, Memory@ cells) {
     B@ b = ForEachGate<B@>(gates, B@(cells, False),
       (Coord@ c, Gate@ g, B@ b) {
         Ports@<Coord@> coords = Ports@<Coord@>(
@@ -136,8 +118,8 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
           Coord@(Inc(c.x), Inc(c.y)));
 
         Ports@<Maybe@<Data@>> data = Ports@<Maybe@<Data@>>(
-          GetData(cells, coords.ul), GetData(cells, coords.ur),
-          GetData(cells, coords.ll), GetData(cells, coords.lr));
+          Get(cells, coords.ul), Get(cells, coords.ur),
+          Get(cells, coords.ll), Get(cells, coords.lr));
 
         Bool@ blocked_ul = Blocked(g.ports.ul, data.ul);
         Bool@ blocked_ur = Or(blocked_ul, Blocked(g.ports.ur, data.ur));
@@ -161,18 +143,18 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
             b_lr;
           });
       });
-    b.updated.?(true: Just<Cells@>(b.cells), false: Nothing<Cells@>);
+    b.updated.?(true: Just<Memory@>(b.cells), false: Nothing<Memory@>);
   };
 };
 
 # Run --
 #   Run the given hardware layout as long as any gates are enabled.
-(Gates@, Cells@) { Cells@; } Run = (Gates@ gates, Cells@ cells) {
-  Maybe@<Cells@> mc = Step(gates, cells);
+(Gates@, Memory@) { Memory@; } Run = (Gates@ gates, Memory@ cells) {
+  Maybe@<Memory@> mc = Step(gates, cells);
   mc.?(just: Run(gates, mc.just), nothing: cells);
 };
 
-@(Cells@, Gates@, GateEntry@, Gate@, Ports@, PortSpec@,
+@(Gates@, GateEntry@, Gate@, Ports@, PortSpec@,
   InputPort, OutputPort, IOPort, UnusedPort,
-  EmptyCells, GetData, SetData, ClearData, EmptyGates, Gates, SetGate, ForEachGate,
+  EmptyGates, Gates, SetGate, ForEachGate,
   Step, Run);

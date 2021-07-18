@@ -26,7 +26,6 @@
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 
-@ Cells@ = /Hwdg%.Cells@;
 @ Gate@ = /Hwdg%.Gate@;
 @ GateEntry@ = /Hwdg%.GateEntry@;
 @ Gates@ = /Hwdg%.Gates@;
@@ -35,10 +34,6 @@
 % InputPort = /Hwdg%.InputPort;
 % OutputPort = /Hwdg%.OutputPort;
 % UnusedPort = /Hwdg%.UnusedPort;
-% EmptyCells = /Hwdg%.EmptyCells;
-% ClearData = /Hwdg%.ClearData;
-% GetData = /Hwdg%.GetData;
-% SetData = /Hwdg%.SetData;
 % Gates = /Hwdg%.Gates;
 % Run = /Hwdg%.Run;
 
@@ -47,6 +42,12 @@
 @ Data@ = /Hwdg/Data%.Data@;
 % Data0 = /Hwdg/Data%.0;
 % Data1 = /Hwdg/Data%.1;
+
+@ Memory@ = /Hwdg/Memory%.Memory@;
+% Empty = /Hwdg/Memory%.Empty;
+% Clear = /Hwdg/Memory%.Clear;
+% Get = /Hwdg/Memory%.Get;
+% Set = /Hwdg/Memory%.Set;
 
 Eq@<Data@> EqData = (Data@ a, Data@ b) {
   a.?(
@@ -62,18 +63,18 @@ Show@<Coord@> ShowCoord = (Coord@ x) {
   Strs[Str|'(', /Int/Int/Show%.Show(x.x), Str|',', /Int/Int/Show%.Show(x.y), Str|')'];
 };
 
-(Cells@, Cells@) { Bool@; } EqCells = (Cells@ a, Cells@ b) {
+(Memory@, Memory@) { Bool@; } EqCells = (Memory@ a, Memory@ b) {
   /Map/Eq%.Eq<Coord@, Data@>(/Hwdg/Coord%.Eq, EqData)(a, b);
 };
 
-Show@<Cells@> ShowCells = (Cells@ x) {
+Show@<Memory@> ShowCells = (Memory@ x) {
   /Map/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x);
 };
 
 Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   Test(Str|'empty no data', !({
-    Cells@ cells = EmptyCells;
-    Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
+    Memory@ cells = Empty;
+    Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
@@ -83,8 +84,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'set this data to 0', !({
-    Cells@ cells = SetData(EmptyCells, Coord@(3, 2), Data0);
-    Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
+    Memory@ cells = Set(Empty, Coord@(3, 2), Data0);
+    Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data0);
 
     AssertEquals<Maybe@<Data@>>(
@@ -94,8 +95,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'set this data to 1', !({
-    Cells@ cells = SetData(EmptyCells, Coord@(3, 2), Data1);
-    Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
+    Memory@ cells = Set(Empty, Coord@(3, 2), Data1);
+    Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data1);
 
     AssertEquals<Maybe@<Data@>>(
@@ -105,8 +106,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'set other data', !({
-    Cells@ cells = SetData(EmptyCells, Coord@(2, 3), Data1);
-    Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
+    Memory@ cells = Set(Empty, Coord@(2, 3), Data1);
+    Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
@@ -116,8 +117,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'clear data', !({
-    Cells@ cells = ClearData(SetData(EmptyCells, Coord@(3, 2), Data1), Coord@(3, 2));
-    Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
+    Memory@ cells = Clear(Set(Empty, Coord@(3, 2), Data1), Coord@(3, 2));
+    Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
@@ -127,8 +128,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   })),
 
   Test(Str|'clear other data', !({
-    Cells@ cells = ClearData(SetData(EmptyCells, Coord@(3, 2), Data1), Coord@(2, 3));
-    Maybe@<Data@> got = GetData(cells, Coord@(3, 2));
+    Memory@ cells = Clear(Set(Empty, Coord@(3, 2), Data1), Coord@(2, 3));
+    Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data1);
 
     AssertEquals<Maybe@<Data@>>(
@@ -144,11 +145,11 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       ports: Ports@<PortSpec@>(UnusedPort, UnusedPort, UnusedPort, UnusedPort),
       function: (Ports@<Data@> unused) { unused; });
     Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
-    Cells@ cells = SetData(EmptyCells, Coord@(0, 0), Data1);
+    Memory@ cells = Set(Empty, Coord@(0, 0), Data1);
 
-    Cells@ wnt = SetData(EmptyCells, Coord@(0, 0), Data1);
-    Cells@ got = Run(gates, cells);
-    AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
+    Memory@ wnt = Set(Empty, Coord@(0, 0), Data1);
+    Memory@ got = Run(gates, cells);
+    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
   })),
 
   Test(Str|'identity ul to lr', !({
@@ -160,11 +161,11 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
     Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
-    Cells@ cells = SetData(EmptyCells, Coord@(0, 0), Data1);
+    Memory@ cells = Set(Empty, Coord@(0, 0), Data1);
 
-    Cells@ wnt = SetData(EmptyCells, Coord@(1, 1), Data1);
-    Cells@ got = Run(gates, cells);
-    AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
+    Memory@ wnt = Set(Empty, Coord@(1, 1), Data1);
+    Memory@ got = Run(gates, cells);
+    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
   })),
 
   Test(Str|'identity ul to lr input blocked', !({
@@ -176,13 +177,13 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
     Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
-    Cells@ cells = SetData(EmptyCells, Coord@(1, 0), Data1);
+    Memory@ cells = Set(Empty, Coord@(1, 0), Data1);
 
     # The gate doesn't have it's input available, so we don't expect it to
     # trigger.
-    Cells@ wnt = cells;
-    Cells@ got = Run(gates, cells);
-    AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
+    Memory@ wnt = cells;
+    Memory@ got = Run(gates, cells);
+    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
   })),
 
   Test(Str|'identity ul to lr output blocked', !({
@@ -194,14 +195,14 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
     Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
-    Cells@ cells = SetData(SetData(EmptyCells,
+    Memory@ cells = Set(Set(Empty,
         Coord@(0, 0), Data1),
         Coord@(1, 1), Data0);
 
     # The gate's output port is blockd, so we don't expect it to trigger.
-    Cells@ wnt = cells;
-    Cells@ got = Run(gates, cells);
-    AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
+    Memory@ wnt = cells;
+    Memory@ got = Run(gates, cells);
+    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
   })),
 
   Test(Str|'identity chain', !({
@@ -229,15 +230,15 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       @(coord: Coord@(0, 2), gate: ur_to_ul)]);
 
     # Send '0' and '1' down the wire together.
-    Cells@ cells = SetData(SetData(EmptyCells,
+    Memory@ cells = Set(Set(Empty,
           Coord@(0, 0), Data1),
           Coord@(1, 0), Data0);
 
-    Cells@ wnt = SetData(SetData(EmptyCells,
+    Memory@ wnt = Set(Set(Empty,
           Coord@(0, 2), Data0),
           Coord@(1, 2), Data1);
-    Cells@ got = Run(gates, cells);
-    AssertEquals<Cells@>(EqCells, ShowCells, wnt, got);
+    Memory@ got = Run(gates, cells);
+    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
   }))
 ]);
 
