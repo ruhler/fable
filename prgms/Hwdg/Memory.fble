@@ -32,4 +32,14 @@ Memory@ Empty = /Map%.Empty<Coord@, Data@>;
   /Map%.Delete<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
 };
 
-@(Memory@, Empty, Get, Set, Clear);
+# Eq --
+#   Test whether two memories contains the same contents.
+/Eq%.Eq@<Memory@> Eq = {
+  /Map/Eq%.Eq<Coord@, Data@>(/Hwdg/Coord%.Eq, /Hwdg/Data%.Eq);
+};
+
+/Show%.Show@<Memory@> Show = {
+  /Map/Show%.Show<Coord@, Data@>(/Hwdg/Coord%.Show, /Hwdg/Data%.Show);
+};
+
+@(Memory@, Empty, Get, Set, Clear, Eq, Show);

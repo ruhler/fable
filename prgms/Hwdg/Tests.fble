@@ -1,10 +1,4 @@
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
-
-<@>@ Eq@ = /Eq%.Eq@;
-
 % 0 = /Int/Int%.0;
 % 1 = /Int/Int%.1;
 % 2 = /Int/Int%.2;
@@ -16,10 +10,7 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-<@>@ Show@ = /Show%.Show@;
-
 % Str = /String%.Str;
-% Strs = /String%.Strs;
 
 @ Test@ = /Test%.Test@;
 <@>% AssertEquals = /Test%.AssertEquals;
@@ -49,28 +40,6 @@
 % Get = /Hwdg/Memory%.Get;
 % Set = /Hwdg/Memory%.Set;
 
-Eq@<Data@> EqData = (Data@ a, Data@ b) {
-  a.?(
-    0: b.?(0: True, 1: False),
-    1: b.?(0: False, 1: True));
-};
-
-Show@<Data@> ShowData = (Data@ x) {
-  x.?(0: Str|0, 1: Str|1);
-};
-
-Show@<Coord@> ShowCoord = (Coord@ x) {
-  Strs[Str|'(', /Int/Int/Show%.Show(x.x), Str|',', /Int/Int/Show%.Show(x.y), Str|')'];
-};
-
-(Memory@, Memory@) { Bool@; } EqCells = (Memory@ a, Memory@ b) {
-  /Map/Eq%.Eq<Coord@, Data@>(/Hwdg/Coord%.Eq, EqData)(a, b);
-};
-
-Show@<Memory@> ShowCells = (Memory@ x) {
-  /Map/Show%.Show<Coord@, Data@>(ShowCoord, ShowData)(x);
-};
-
 Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   Test(Str|'empty no data', !({
     Memory@ cells = Empty;
@@ -78,8 +47,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(EqData),
-      /Maybe/Show%.Show<Data@>(ShowData),
+      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -89,8 +58,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Just<Data@>(Data0);
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(EqData),
-      /Maybe/Show%.Show<Data@>(ShowData),
+      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -100,8 +69,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Just<Data@>(Data1);
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(EqData),
-      /Maybe/Show%.Show<Data@>(ShowData),
+      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -111,8 +80,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(EqData),
-      /Maybe/Show%.Show<Data@>(ShowData),
+      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -122,8 +91,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(EqData),
-      /Maybe/Show%.Show<Data@>(ShowData),
+      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -133,8 +102,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Just<Data@>(Data1);
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(EqData),
-      /Maybe/Show%.Show<Data@>(ShowData),
+      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -149,7 +118,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
 
     Memory@ wnt = Set(Empty, Coord@(0, 0), Data1);
     Memory@ got = Run(gates, cells);
-    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
+    AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity ul to lr', !({
@@ -165,7 +134,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
 
     Memory@ wnt = Set(Empty, Coord@(1, 1), Data1);
     Memory@ got = Run(gates, cells);
-    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
+    AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity ul to lr input blocked', !({
@@ -183,7 +152,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     # trigger.
     Memory@ wnt = cells;
     Memory@ got = Run(gates, cells);
-    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
+    AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity ul to lr output blocked', !({
@@ -202,7 +171,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     # The gate's output port is blockd, so we don't expect it to trigger.
     Memory@ wnt = cells;
     Memory@ got = Run(gates, cells);
-    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
+    AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity chain', !({
@@ -238,7 +207,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
           Coord@(0, 2), Data0),
           Coord@(1, 2), Data1);
     Memory@ got = Run(gates, cells);
-    AssertEquals<Memory@>(EqCells, ShowCells, wnt, got);
+    AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   }))
 ]);
 

@@ -3,6 +3,9 @@
 
 @ Int@ = /Int/Int%.Int@;
 
+% Str = /String%.Str;
+% Strs = /String%.Strs;
+
 # Coord@ --
 #   A coordinate identifying a location in the memory/design grid.
 @ Coord@ = *(Int@ x, Int@ y);
@@ -26,4 +29,8 @@
   };
 };
 
-@(Coord@, Eq, Lt);
+/Show%.Show@<Coord@> Show = (Coord@ x) {
+  Strs[Str|'(', /Int/Int/Show%.Show(x.x), Str|',', /Int/Int/Show%.Show(x.y), Str|')'];
+};
+
+@(Coord@, Eq, Lt, Show);
