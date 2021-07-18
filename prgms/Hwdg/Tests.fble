@@ -27,8 +27,6 @@
 % TestSuite = /Test%.TestSuite;
 
 @ Cells@ = /Hwdg%.Cells@;
-@ Coord@ = /Hwdg%.Coord@;
-@ Data@ = /Hwdg%.Data@;
 @ Gate@ = /Hwdg%.Gate@;
 @ GateEntry@ = /Hwdg%.GateEntry@;
 @ Gates@ = /Hwdg%.Gates@;
@@ -37,14 +35,18 @@
 % InputPort = /Hwdg%.InputPort;
 % OutputPort = /Hwdg%.OutputPort;
 % UnusedPort = /Hwdg%.UnusedPort;
-% Data0 = /Hwdg%.0;
-% Data1 = /Hwdg%.1;
 % EmptyCells = /Hwdg%.EmptyCells;
 % ClearData = /Hwdg%.ClearData;
 % GetData = /Hwdg%.GetData;
 % SetData = /Hwdg%.SetData;
 % Gates = /Hwdg%.Gates;
 % Run = /Hwdg%.Run;
+
+@ Coord@ = /Hwdg/Coord%.Coord@;
+
+@ Data@ = /Hwdg/Data%.Data@;
+% Data0 = /Hwdg/Data%.0;
+% Data1 = /Hwdg/Data%.1;
 
 Eq@<Data@> EqData = (Data@ a, Data@ b) {
   a.?(

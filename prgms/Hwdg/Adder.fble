@@ -1,6 +1,4 @@
 
-@ Coord@ = /Hwdg%.Coord@;
-@ Data@ = /Hwdg%.Data@;
 @ Gate@ = /Hwdg%.Gate@;
 @ GateEntry@ = /Hwdg%.GateEntry@;
 @ Gates@ = /Hwdg%.Gates@;
@@ -10,11 +8,15 @@
 % OutputPort = /Hwdg%.OutputPort;
 % UnusedPort = /Hwdg%.UnusedPort;
 % Gates = /Hwdg%.Gates;
-% Data0 = /Hwdg%.0;
-% Data1 = /Hwdg%.1;
 % SetGate = /Hwdg%.SetGate;
 % EmptyGates = /Hwdg%.EmptyGates;
 <@>% ForEachGate = /Hwdg%.ForEachGate;
+
+@ Coord@ = /Hwdg/Coord%.Coord@;
+
+@ Data@ = /Hwdg/Data%.Data@;
+% Data0 = /Hwdg/Data%.0;
+% Data1 = /Hwdg/Data%.1;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;

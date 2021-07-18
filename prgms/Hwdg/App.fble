@@ -13,17 +13,19 @@
 % Over = /Drawing%.Over;
 % Affine = /Drawing%.Affine;
 
-@ Coord@ = /Hwdg%.Coord@;
-@ Data@ = /Hwdg%.Data@;
 @ Gate@ = /Hwdg%.Gate@;
 @ Gates@ = /Hwdg%.Gates@;
 @ Cells@ = /Hwdg%.Cells@;
 <@>@ Ports@ = /Hwdg%.Ports@;
-% Data0 = /Hwdg%.0;
-% Data1 = /Hwdg%.1;
 % SetData = /Hwdg%.SetData;
 % EmptyCells = /Hwdg%.EmptyCells;
 <@>% ForEachGate = /Hwdg%.ForEachGate;
+
+@ Coord@ = /Hwdg/Coord%.Coord@;
+
+@ Data@ = /Hwdg/Data%.Data@;
+% Data0 = /Hwdg/Data%.0;
+% Data1 = /Hwdg/Data%.1;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;

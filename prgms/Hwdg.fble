@@ -14,14 +14,8 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
-
 @ Coord@ = /Hwdg/Coord%.Coord@;
-
-@ Data@ = +(Unit@ 0, Unit@ 1);
-Data@ 0 = Data@(0: Unit);
-Data@ 1 = Data@(1: Unit);
+@ Data@ = /Hwdg/Data%.Data@;
 
 # PortSpec@ --
 #   Describes how a given port is used in a gate.
@@ -120,8 +114,8 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
   };
 
   (PortSpec@, Maybe@<Data@>) { Data@; } InputData = (PortSpec@ ps, Maybe@<Data@> d) {
-    Not(ps.input).?(true: 0);
-    d.?(nothing: 0);
+    Not(ps.input).?(true: /Hwdg/Data%.0);
+    d.?(nothing: /Hwdg/Data%.0);
     d.just;
   };
 
@@ -178,7 +172,7 @@ ForEachGate = <@ B@>(Gates@ gates, B@ base, (Coord@, Gate@, B@) { B@; } body) {
   mc.?(just: Run(gates, mc.just), nothing: cells);
 };
 
-@(Cells@, Gates@, GateEntry@, Coord@, Data@, Gate@, Ports@, PortSpec@,
-  0, 1, InputPort, OutputPort, IOPort, UnusedPort,
+@(Cells@, Gates@, GateEntry@, Gate@, Ports@, PortSpec@,
+  InputPort, OutputPort, IOPort, UnusedPort,
   EmptyCells, GetData, SetData, ClearData, EmptyGates, Gates, SetGate, ForEachGate,
   Step, Run);

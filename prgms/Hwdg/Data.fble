@@ -1,0 +1,9 @@
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Data@ = +(Unit@ 0, Unit@ 1);
+Data@ 0 = Data@(0: Unit);
+Data@ 1 = Data@(1: Unit);
+
+@(Data@, 0, 1);
