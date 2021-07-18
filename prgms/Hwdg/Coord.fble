@@ -8,7 +8,17 @@
 
 # Coord@ --
 #   A coordinate identifying a location in the memory/design grid.
+#
+# By convention the origin is at the upper left:
+# * Positive x goes to the right.
+# * Positive y goes down.
 @ Coord@ = *(Int@ x, Int@ y);
+
+# Add --
+#   Add two coordinates together.
+(Coord@, Coord@) { Coord@; } Add = (Coord@ a, Coord@ b) {
+  Coord@(/Int/Int%.Add(a.x, b.x), /Int/Int%.Add(a.y, b.y));
+};
 
 # Eq --
 #   Equality operator for Coord@.
@@ -33,4 +43,4 @@
   Strs[Str|'(', /Int/Int/Show%.Show(x.x), Str|',', /Int/Int/Show%.Show(x.y), Str|')'];
 };
 
-@(Coord@, Eq, Lt, Show);
+@(Coord@, Add, Eq, Lt, Show);

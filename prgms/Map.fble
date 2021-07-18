@@ -1,4 +1,8 @@
 
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
 <@>@ Eq@ = /Eq%.Eq@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
@@ -154,6 +158,23 @@ Last = <@ K@, @ V@>(Map@<K@, V@> map) {
         just: last,
         nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map.map.key, map.map.value)));
     });
+};
+
+# IsEmpty --
+#   Check if a map is empty.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   map - the map to check.
+#
+# Returns:
+#   True if the map is empty, false otherwise.
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(empty: True, map: False);
 };
 
 # Lookup --
@@ -534,7 +555,7 @@ InsertWith = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V
 #   value - the value to insert.
 #
 # Example Use:
-#   % Insert = /Map%.Insert<String@>(/String/Structured%.Structured)<Int@>;
+#   % Insert = /Map%.Insert<String@>(/String/Eq%.Lt)<Int@>;
 #   Insert(map, Str(Chars|foo), 4);
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Insert = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
@@ -573,4 +594,4 @@ ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@; } bod
   ForEach<K@, V@, B@>(map.map.right, b3, body);
 };
 
-@(Map@, Entry@, Empty, Lookup, Insert, InsertWith, Delete, ForEach);
+@(Map@, Entry@, Empty, IsEmpty, Lookup, Insert, InsertWith, Delete, ForEach);

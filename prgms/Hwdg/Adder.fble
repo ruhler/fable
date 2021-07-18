@@ -1,22 +1,17 @@
 
-@ Gate@ = /Hwdg%.Gate@;
-@ GateEntry@ = /Hwdg%.GateEntry@;
-@ Gates@ = /Hwdg%.Gates@;
-@ PortSpec@ = /Hwdg%.PortSpec@;
-<@>@ Ports@ = /Hwdg%.Ports@;
-% InputPort = /Hwdg%.InputPort;
-% OutputPort = /Hwdg%.OutputPort;
-% UnusedPort = /Hwdg%.UnusedPort;
-% Gates = /Hwdg%.Gates;
-% SetGate = /Hwdg%.SetGate;
-% EmptyGates = /Hwdg%.EmptyGates;
-<@>% ForEachGate = /Hwdg%.ForEachGate;
-
 @ Coord@ = /Hwdg/Coord%.Coord@;
 
 @ Data@ = /Hwdg/Data%.Data@;
-% Data0 = /Hwdg/Data%.0;
-% Data1 = /Hwdg/Data%.1;
+% Data = /Hwdg/Data%;
+
+@ Design@ = /Hwdg/Design%.Design@;
+@ Placed@ = /Hwdg/Design%.Placed@;
+@ Gate@ = /Hwdg/Design%.Gate@;
+@ PortSpec@ = /Hwdg/Design%.PortSpec@;
+<@>@ Ports@ = /Hwdg/Design%.Ports@;
+% In = /Hwdg/Design%.In;
+% Out = /Hwdg/Design%.Out;
+% Unused = /Hwdg/Design%.Unused;
 
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
@@ -25,7 +20,6 @@
 % 3 = /Int/Int%.3;
 % 4 = /Int/Int%.4;
 % 8 = /Int/Int%.8;
-% Add = /Int/Int%.Add;
 
 <@>% List = /List%.List;
 
@@ -47,12 +41,12 @@
 #   2 x _ _ _ c
 #   3   _ _ _
 #   4     _ z
-Gates@ Adder1 = {
-  (Int@, Int@, Gate@) { GateEntry@; } G = (Int@ x, Int@ y, Gate@ g) {
-    @(coord: Coord@(x, y), gate: g);
+Design@ Adder1 = {
+  (Int@, Int@, Gate@) { Placed@; } G = (Int@ x, Int@ y, Gate@ g) {
+    @(coord: Coord@(x, y), design: Design@(gate: g));
   };
 
-  Data@ _ = Data0;
+  Data@ _ = Data.0;
   
   # Internal Geometry:
   #     0 1 2 3 4
@@ -61,7 +55,7 @@ Gates@ Adder1 = {
   #   2 x C Z C c
   #   3   C Z C
   #   4     C z
-  Gates(List<GateEntry@>[
+  Design@(designs: List<Placed@>[
     # Duplicate the input 'a' to cells (1, 0) and (0, 1).
     #   0 1 2 3 4
     # 0   A   b
@@ -71,8 +65,8 @@ Gates@ Adder1 = {
     # 4        
     G(0, 0, @(
         ports: Ports@<PortSpec@>(
-          InputPort, OutputPort,
-          OutputPort, UnusedPort),
+          In, Out,
+          Out, Unused),
         function: (Ports@<Data@> d) { Ports@<Data@>(
           _, d.ul,
           d.ul, _);
@@ -87,8 +81,8 @@ Gates@ Adder1 = {
     # 4        
     G(2, 0, @(
         ports: Ports@<PortSpec@>(
-          OutputPort, InputPort,
-          UnusedPort, OutputPort),
+          Out, In,
+          Unused, Out),
         function: (Ports@<Data@> d) { Ports@<Data@>(
           d.ur, _,
           _, d.ur);
@@ -103,8 +97,8 @@ Gates@ Adder1 = {
     # 4        
     G(3, 2, @(
         ports: Ports@<PortSpec@>(
-          OutputPort, InputPort,
-          OutputPort, UnusedPort),
+          Out, In,
+          Out, Unused),
         function: (Ports@<Data@> d) { Ports@<Data@>(
           d.ur, _,
           d.ur, _);
@@ -119,8 +113,8 @@ Gates@ Adder1 = {
     # 4        
     G(1, 0, @(
         ports: Ports@<PortSpec@>(
-          InputPort, InputPort,
-          OutputPort, OutputPort),
+          In, In,
+          Out, Out),
         function: (Ports@<Data@> d) { Ports@<Data@>(
           _, _,
           d.ur, d.ul);
@@ -135,12 +129,12 @@ Gates@ Adder1 = {
     # 4        
     G(2, 1, @(
         ports: Ports@<PortSpec@>(
-          InputPort, InputPort,
-          OutputPort, InputPort),
+          In, In,
+          Out, In),
         function: (Ports@<Data@> d) {
           Data@ z = d.ul.?(
-            0: d.ur.?(0: d.lr, 1: d.lr.?(0: Data1, 1: Data0)),
-            1: d.ur.?(0: d.lr.?(0: Data1, 1: Data0), 1: d.lr));
+            0: d.ur.?(0: d.lr, 1: d.lr.?(0: Data.1, 1: Data.0)),
+            1: d.ur.?(0: d.lr.?(0: Data.1, 1: Data.0), 1: d.lr));
           Ports@<Data@>( _, _, z, _);
         })),
 
@@ -153,8 +147,8 @@ Gates@ Adder1 = {
     # 4        
     G(2, 2, @(
         ports: Ports@<PortSpec@>(
-          InputPort, UnusedPort,
-          OutputPort, UnusedPort),
+          In, Unused,
+          Out, Unused),
         function: (Ports@<Data@> d) { Ports@<Data@>(
           _, _,
           d.ul, _);
@@ -169,8 +163,8 @@ Gates@ Adder1 = {
     # 4     C z
     G(2, 3, @(
         ports: Ports@<PortSpec@>(
-          InputPort, InputPort,
-          OutputPort, OutputPort),
+          In, In,
+          Out, Out),
         function: (Ports@<Data@> d) { Ports@<Data@>(
           _, _,
           d.ur, d.ul);
@@ -185,8 +179,8 @@ Gates@ Adder1 = {
     # 4       z
     G(1, 3, @(
         ports: Ports@<PortSpec@>(
-          OutputPort, UnusedPort,
-          UnusedPort, InputPort),
+          Out, Unused,
+          Unused, In),
         function: (Ports@<Data@> d) { Ports@<Data@>(
           d.lr, _,
           _, _);
@@ -201,8 +195,8 @@ Gates@ Adder1 = {
     # 4       z
     G(1, 2, @(
         ports: Ports@<PortSpec@>(
-          OutputPort, UnusedPort,
-          InputPort, UnusedPort),
+          Out, Unused,
+          In, Unused),
         function: (Ports@<Data@> d) { Ports@<Data@>(
           d.ll, _,
           _, _);
@@ -217,15 +211,14 @@ Gates@ Adder1 = {
     # 4       z
     G(0, 1, @(
         ports: Ports@<PortSpec@>(
-          InputPort, InputPort,
-          OutputPort, InputPort),
+          In, In,
+          Out, In),
         function: (Ports@<Data@> d) {
           Data@ x = d.ul.?(
-            0: d.ur.?(0: Data0, 1: d.lr),
-            1: d.ur.?(0: d.lr, 1: Data1));
+            0: d.ur.?(0: Data.0, 1: d.lr),
+            1: d.ur.?(0: d.lr, 1: Data.1));
           Ports@<Data@>( _, _, x, _);
         }))
-
   ]);
 };
 
@@ -250,15 +243,10 @@ Gates@ Adder1 = {
 #   2 x _ _ _ _ _ _ _ c
 #   3   _ _ _   _ _ _ 
 #   4     _ Z     _ z
-Gates@ Adder2 = {
-  ForEachGate<Gates@>(Adder1, EmptyGates, (Coord@ p, Gate@ g, Gates@ gates) {
-    # Gates for the most significant bit addition.
-    Gates@ g1 = SetGate(gates, p, g);
-
-    # Gates for the least significant bit addition.
-    SetGate(g1, Coord@(Add(4, p.x), p.y), g);
-  });
-};
+Design@ Adder2 = Design@(designs: List<Placed@>[
+  @(coord: Coord@(0, 0), design: Adder1),
+  @(coord: Coord@(4, 0), design: Adder1)
+]);
 
 # Adder4 - A four bit adder.
 #
@@ -278,15 +266,10 @@ Gates@ Adder2 = {
 #   2  x  _  _  _  _  _  _  _  _  _  _  _  _  _  _  _  c
 #   3     _  _  _     _  _  _     _  _  _     _  _  _
 #   4        _ z3        _ z2        _ z1        _ z0
-Gates@ Adder4 = {
-  ForEachGate<Gates@>(Adder2, EmptyGates, (Coord@ p, Gate@ g, Gates@ gates) {
-    # Gates for the most significant 2 bits of addition.
-    Gates@ g1 = SetGate(gates, p, g);
-
-    # Gates for the least significant 2 bits of addition.
-    SetGate(g1, Coord@(Add(8, p.x), p.y), g);
-  });
-};
+Design@ Adder4 = Design@(designs: List<Placed@>[
+  @(coord: Coord@(0, 0), design: Adder2),
+  @(coord: Coord@(8, 0), design: Adder2)
+]);
 
 @(Adder1, Adder2, Adder4);
 

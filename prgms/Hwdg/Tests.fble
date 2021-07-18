@@ -4,6 +4,7 @@
 % 2 = /Int/Int%.2;
 % 3 = /Int/Int%.3;
 
+<@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
@@ -17,22 +18,21 @@
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 
-@ Gate@ = /Hwdg%.Gate@;
-@ GateEntry@ = /Hwdg%.GateEntry@;
-@ Gates@ = /Hwdg%.Gates@;
-<@>@ Ports@ = /Hwdg%.Ports@;
-@ PortSpec@ = /Hwdg%.PortSpec@;
-% InputPort = /Hwdg%.InputPort;
-% OutputPort = /Hwdg%.OutputPort;
-% UnusedPort = /Hwdg%.UnusedPort;
-% Gates = /Hwdg%.Gates;
-% Run = /Hwdg%.Run;
-
 @ Coord@ = /Hwdg/Coord%.Coord@;
 
 @ Data@ = /Hwdg/Data%.Data@;
 % Data0 = /Hwdg/Data%.0;
 % Data1 = /Hwdg/Data%.1;
+
+@ Design@ = /Hwdg/Design%.Design@;
+@ Placed@ = /Hwdg/Design%.Placed@;
+@ Gate@ = /Hwdg/Design%.Gate@;
+<@>@ Ports@ = /Hwdg/Design%.Ports@;
+@ PortSpec@ = /Hwdg/Design%.PortSpec@;
+% In = /Hwdg/Design%.In;
+% Out = /Hwdg/Design%.Out;
+% Unused = /Hwdg/Design%.Unused;
+% Run = /Hwdg/Design%.Run;
 
 @ Memory@ = /Hwdg/Memory%.Memory@;
 % Empty = /Hwdg/Memory%.Empty;
@@ -42,6 +42,15 @@
 
 # Import to test compilation.
 % _ = /Hwdg/NativeApp%;
+
+# Gates --
+#   Convenience function for constructing a design from a list of gates.
+@ PlacedGate@ = *(Coord@ coord, Gate@ gate);
+(List@<PlacedGate@>) { Design@; } Gates = (List@<PlacedGate@> gates) {
+  Design@(designs: /List%.Map<PlacedGate@, Placed@>(gates, (PlacedGate@ pg) {
+      @(coord: pg.coord, design: Design@(gate: pg.gate));
+      }));
+};
 
 Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   Test(Str|'empty no data', !({
@@ -114,66 +123,66 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     # Make sure we don't get stuck in an infinite loop if there is an empty
     # gate.
     Gate@ gate = @(
-      ports: Ports@<PortSpec@>(UnusedPort, UnusedPort, UnusedPort, UnusedPort),
+      ports: Ports@<PortSpec@>(Unused, Unused, Unused, Unused),
       function: (Ports@<Data@> unused) { unused; });
-    Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
+    Design@ design = Design@(gate: gate);
     Memory@ cells = Set(Empty, Coord@(0, 0), Data1);
 
     Memory@ wnt = Set(Empty, Coord@(0, 0), Data1);
-    Memory@ got = Run(gates, cells);
+    Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity ul to lr', !({
     Gate@ gate = @(
       ports: Ports@<PortSpec@>(
-        InputPort, UnusedPort,
-        UnusedPort, OutputPort),
+        In, Unused,
+        Unused, Out),
       function: (Ports@<Data@> x) {
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
-    Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
+    Design@ design = Gates[@(coord: Coord@(0, 0), gate: gate)];
     Memory@ cells = Set(Empty, Coord@(0, 0), Data1);
 
     Memory@ wnt = Set(Empty, Coord@(1, 1), Data1);
-    Memory@ got = Run(gates, cells);
+    Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity ul to lr input blocked', !({
     Gate@ gate = @(
       ports: Ports@<PortSpec@>(
-        InputPort, UnusedPort,
-        UnusedPort, OutputPort),
+        In, Unused,
+        Unused, Out),
       function: (Ports@<Data@> x) {
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
-    Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
+    Design@ design = Gates[@(coord: Coord@(0, 0), gate: gate)];
     Memory@ cells = Set(Empty, Coord@(1, 0), Data1);
 
     # The gate doesn't have it's input available, so we don't expect it to
     # trigger.
     Memory@ wnt = cells;
-    Memory@ got = Run(gates, cells);
+    Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
   Test(Str|'identity ul to lr output blocked', !({
     Gate@ gate = @(
       ports: Ports@<PortSpec@>(
-        InputPort, UnusedPort,
-        UnusedPort, OutputPort),
+        In, Unused,
+        Unused, Out),
       function: (Ports@<Data@> x) {
         Ports@<Data@>(Data0, Data0, Data0, x.ul);
       });
-    Gates@ gates = Gates(List<GateEntry@>[@(coord: Coord@(0, 0), gate: gate)]);
+    Design@ design = Gates[@(coord: Coord@(0, 0), gate: gate)];
     Memory@ cells = Set(Set(Empty,
         Coord@(0, 0), Data1),
         Coord@(1, 1), Data0);
 
     # The gate's output port is blockd, so we don't expect it to trigger.
     Memory@ wnt = cells;
-    Memory@ got = Run(gates, cells);
+    Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   })),
 
@@ -184,22 +193,22 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     # <- <- -| .
     # .  .  .  .
     Gate@ ul_to_ur = @(
-      ports: Ports@<PortSpec@>(InputPort, OutputPort, UnusedPort, UnusedPort),
+      ports: Ports@<PortSpec@>(In, Out, Unused, Unused),
       function: (Ports@<Data@> x) { Ports@<Data@>(Data0, x.ul, Data0, Data0); });
     Gate@ ul_to_ll = @(
-      ports: Ports@<PortSpec@>( InputPort, UnusedPort, OutputPort, UnusedPort),
+      ports: Ports@<PortSpec@>( In, Unused, Out, Unused),
       function: (Ports@<Data@> x) { Ports@<Data@>(Data0, Data0, x.ul, Data0); });
     Gate@ ur_to_ul = @(
-      ports: Ports@<PortSpec@>( OutputPort, InputPort, UnusedPort, UnusedPort),
+      ports: Ports@<PortSpec@>( Out, In, Unused, Unused),
       function: (Ports@<Data@> x) { Ports@<Data@>(x.ur, Data0, Data0, Data0); });
 
-    Gates@ gates = Gates(List<GateEntry@>[
+    Design@ design = Gates[
       @(coord: Coord@(0, 0), gate: ul_to_ur),
       @(coord: Coord@(1, 0), gate: ul_to_ur),
       @(coord: Coord@(2, 0), gate: ul_to_ll),
       @(coord: Coord@(2, 1), gate: ul_to_ll),
       @(coord: Coord@(1, 2), gate: ur_to_ul),
-      @(coord: Coord@(0, 2), gate: ur_to_ul)]);
+      @(coord: Coord@(0, 2), gate: ur_to_ul)];
 
     # Send '0' and '1' down the wire together.
     Memory@ cells = Set(Set(Empty,
@@ -209,7 +218,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Memory@ wnt = Set(Set(Empty,
           Coord@(0, 2), Data0),
           Coord@(1, 2), Data1);
-    Memory@ got = Run(gates, cells);
+    Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
   }))
 ]);

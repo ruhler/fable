@@ -13,16 +13,17 @@
 % Over = /Drawing%.Over;
 % Affine = /Drawing%.Affine;
 
-@ Gate@ = /Hwdg%.Gate@;
-@ Gates@ = /Hwdg%.Gates@;
-<@>@ Ports@ = /Hwdg%.Ports@;
-<@>% ForEachGate = /Hwdg%.ForEachGate;
-
 @ Coord@ = /Hwdg/Coord%.Coord@;
 
 @ Data@ = /Hwdg/Data%.Data@;
 % Data0 = /Hwdg/Data%.0;
 % Data1 = /Hwdg/Data%.1;
+
+@ Design@ = /Hwdg/Design%.Design@;
+@ Gate@ = /Hwdg/Design%.Gate@;
+<@>@ Ports@ = /Hwdg/Design%.Ports@;
+<@>% ForEachGate = /Hwdg/Design%.ForEachGate;
+% Step = /Hwdg/Design%.Step;
 
 @ Memory@ = /Hwdg/Memory%.Memory@;
 % Empty = /Hwdg/Memory%.Empty;
@@ -43,8 +44,6 @@
 
 % Int = /Int/Int/Lit%.Int;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
@@ -58,9 +57,9 @@ Int@ YMax = Int|20;
 Int@ Width = Sub(XMax, XMin);
 Int@ Height = Sub(YMax, YMin);
 
-# Gates --
-#   The particular gates for the hardware layout to simulate.
-Gates@ Gates = /Hwdg/Adder%.Adder4;
+# Design --
+#   The design to simulate.
+Design@ Design = /Hwdg/Adder%.Adder4;
 
 # Cells --
 #   The initial data configuration of the hardware to simulate
@@ -79,12 +78,12 @@ Memory@ Cells = {
 
 # Draw --
 #   Draw the current hardware configuration.
-(Gates@, Memory@) { Draw@; } Draw = (Gates@ gates, Memory@ cells) {
+(Design@, Memory@) { Draw@; } Draw = (Design@ design, Memory@ cells) {
   # 1. Clear the background.
   Draw@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
 
   # 2. For each input or output port of a gate, draw a white unit square.
-  Draw@ io = ForEachGate<Draw@>(gates, clear,
+  Draw@ io = ForEachGate<Draw@>(design, clear,
    (Coord@ p, Gate@ g, Draw@ d) {
      Ports@<Coord@> coords = Ports@<Coord@>(
        Coord@(p.x, p.y), Coord@(Inc(p.x), p.y),
@@ -126,20 +125,15 @@ Memory@ Cells = {
       key_up: GetInput(in));
 };
 
-(Gates@, Memory@) { Memory@; } Step = (Gates@ gates, Memory@ cells) {
-  Maybe@<Memory@> mcells = /Hwdg%.Step(gates, cells);
-  mcells.?(just: mcells.just, nothing: cells);
-};
-
-(Get@<Input@>, Put@<Effect@>, Int@, Gates@, Memory@) { Unit@!; }
-StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Gates@ gates, Memory@ cells) {
-  Unit@ _ := out(Effect@(draw: Draw(gates, cells)));
+(Get@<Input@>, Put@<Effect@>, Int@, Design@, Memory@) { Unit@!; }
+StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Design@ design, Memory@ cells) {
+  Unit@ _ := out(Effect@(draw: Draw(design, cells)));
   Unit@ _ := out(Effect@(tick: Int|400));
   Input@ x := in;
   x.?(quit: !(Unit),
       step: IsZero(n).?(
               true: !(Unit),
-              false: StepUI(in, out, Dec(n), gates, Step(gates, cells))));
+              false: StepUI(in, out, Dec(n), design, Step(design, cells))));
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
@@ -159,9 +153,9 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
 
-  Unit@ _ := game_out(Effect@(draw: Draw(Gates, Cells)));
+  Unit@ _ := game_out(Effect@(draw: Draw(Design, Cells)));
   Unit@ _ := WaitForKeyPress;
-  Unit@ _ := StepUI(GetInput(in), game_out, Int|2000, Gates, Cells);
+  Unit@ _ := StepUI(GetInput(in), game_out, Int|2000, Design, Cells);
 
   WaitForKeyPress;
 };

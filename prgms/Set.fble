@@ -1,0 +1,77 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+<@>@ Eq@ = /Eq%.Eq@;
+
+<@,@>@ Map@ = /Map%.Map@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# Set@ -- 
+#   A set of elements.
+<@>@ Set@ = <@ T@> { Map@<T@, Unit@>; };
+
+# Empty -- 
+#   The empty set.
+Set@ Empty = <@ T@> { /Map%.Empty<T@, Unit@>; };
+
+# IsEmpty --
+#   Check if a set is empty.
+#
+# Type Parameters:
+#   T@ - the type of element in the set.
+#
+# Inputs:
+#   set - the map to check.
+#
+# Returns:
+#   True if the set is empty, false otherwise.
+<@ T@>(Set@<T@>) { Bool@; } IsEmpty = <@ T@>(Set@<T@> set) {
+  /Map%.IsEmpty<T@, Unit@>(set);
+};
+
+# Contains --
+#   Test whether an element exists in a set.
+#
+# Type Parameters:
+#   T@ - the type of element in the set.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing elements.
+#   set - the set to check for the element in.
+#   element - the element to check for.
+#
+# Returns:
+#   True if the element belongs to the map, false otherwise.
+#
+# Example Use:
+#   % Contains = /Set%.Contains<String@>(/String/Eq%.Lt);
+#   Contains(set, value);
+<@ T@>(Eq@<T@>)(Set@<T@>, T@) { Bool@; }
+Contains = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
+  /Map%.Lookup<T@>(lt)<Unit@>(set, element).?(just: True, nothing: False);
+};
+
+# Insert --
+#   Insert an element into the set.
+#
+# Type Parameters:
+#   T@ - the type of element in the set.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing elements.
+#   set - the set to insert an element into.
+#   element - the element to insert.
+#
+# Example Use:
+#   % Insert = /Set%.Insert<String@>(/String/Eq%.Lt);
+#   Insert(set, Str(Chars|foo));
+<@ T@>(Eq@<T@>)(Set@<T@>, T@) { Set@<T@>; }
+Insert = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
+  /Map%.Insert<T@>(lt)<Unit@>(set, element, Unit);
+};
+
+@(Set@, Empty, IsEmpty, Contains, Insert);
