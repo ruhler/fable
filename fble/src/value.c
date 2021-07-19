@@ -34,6 +34,7 @@ typedef struct {
 } FbleUnionValue;
 
 FbleValue FbleNullValue = { .unpacked = NULL };
+FbleValue FbleGenericTypeValue = { .packed = 1 };
 
 static void OnFree(FbleValueHeap* heap, FbleUnpackedValue* value);
 static void Ref(FbleHeapCallback* callback, FbleValue value);

@@ -730,3 +730,38 @@ Hopefully performance won't be too bad from wrapping and unwrapping all the
 time. Is there any way to write a function or macros that can wrap for free?
 
 It's a little annoying to not be able to use 'NULL' anymore for FbleValue.
+
+---
+
+Next step: add support for describing the type information we need for packed
+values.
+
+We want three kinds of types:
+* struct type: with a list of type args.
+* union type: with a size of tag and type args.
+* other: we don't care about the info.
+
+We could implement struct type and union type as a struct value. We could
+pack other as '1'. This would allows us to pack type values as well as data values.
+Why not?
+
+I should probably still expose a reasonable API to work with these type values
+packed as struct values. Something like:
+
+extern FbleValue FbleGenericTypeValue;
+
+FbleValue FbleNewDataTypeValue(heap, argc, args);
+size_t FbleDataTypeValueNumFields(object);
+FbleValue FbleDataTypeValueAccess(object, field);
+
+Now this gets a little weird, because what is the type of a packed data type
+that we can use to unpack it?
+
+I think this meta packing thing is just going to make things confusing. What
+if we modify FbleTypeValue to store num fields and pointers to args, packed as
+'1' for generic type values? That sounds better to me. I don't expect us to
+do so many type allocations that we need to avoid them by packing.
+
+To get an initial idea, we could start by defining FbleGenericTypeValue, and
+start using it everywhere instead of allocating empty FbleTypeValue objects.
+

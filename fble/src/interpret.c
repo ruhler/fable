@@ -683,9 +683,7 @@ static FbleExecStatus AbortReturnInstr(FbleValueHeap* heap, FbleStack* stack, Fb
 static FbleExecStatus RunTypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-  FbleTypeValue* value = FbleNewValue(heap, FbleTypeValue);
-  value->_base.tag = FBLE_TYPE_VALUE;
-  FrameSetConsumed(heap, thread, type_instr->dest, FbleWrapUnpackedValue(&value->_base));
+  FrameSetConsumed(heap, thread, type_instr->dest, FbleGenericTypeValue);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

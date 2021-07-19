@@ -33,11 +33,18 @@ struct FbleUnpackedValue {
   FbleValueTag tag;
 };
 
+// FbleGenericTypeValue --
+//   Used as an instance of an fble type for those types that don't need any
+//   extra information at runtime.
+extern FbleValue FbleGenericTypeValue;
+
 // FbleTypeValue --
 //   FBLE_TYPE_VALUE
 //
 // Represents the type value. Because types are compile-time concepts, not
 // runtime concepts, the type value contains no information.
+//
+// TODO: Record struct and union fields here for data types.
 typedef struct {
   FbleUnpackedValue _base;
 } FbleTypeValue;
@@ -274,7 +281,7 @@ FbleValue FbleStrictValue(FbleValue value);
 //
 // Results:
 //   The value with all layers of reference indirection removed except the
-//   last is the value is a reference that has no value yet.
+//   last if the value is a reference that has no value yet.
 //
 // Side effects:
 //   None.

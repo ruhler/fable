@@ -937,11 +937,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_TYPE_INSTR: {
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, #%zi\n", sizeof(FbleTypeValue));
-      fprintf(fout, "  bl FbleNewHeapObject\n");
-      fprintf(fout, "  mov w1, #%i\n", FBLE_TYPE_VALUE);
-      fprintf(fout, "  str w1, [x0]\n"); // v->_base.tag = FBLE_TYPE_VALUE.
+      Adr(fout, "x0", "FbleGenericTypeValue");
+      fprintf(fout, "  ldr x0, [x0]\n");
       SetFrameVar(fout, "x0", type_instr->dest);
       return;
     }
