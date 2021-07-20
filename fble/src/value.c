@@ -484,6 +484,18 @@ static void PartialPutAbortFunction(FbleValueHeap* heap, FbleStack* stack)
   FbleReleaseValue(heap, stack->locals[0]);
   *(stack->result) = FbleNullValue;
 }
+// FbleNewLinkValue -- see documentation in value.h
+void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue* get, FbleValue* put)
+{
+  FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
+  link->_base.tag = FBLE_LINK_VALUE;
+  link->head = NULL;
+  link->tail = NULL;
+
+  *get = FbleNewGetValue(heap, FbleWrapUnpackedValue(&link->_base), profile);
+  *put = FbleNewPutValue(heap, FbleWrapUnpackedValue(&link->_base), profile + 1);
+  FbleReleaseValue(heap, FbleWrapUnpackedValue(&link->_base));
+}
 
 // FbleNewGetValue -- see documentation in value.h
 FbleValue FbleNewGetValue(FbleValueHeap* heap, FbleValue port, FbleBlockId profile)

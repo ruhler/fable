@@ -554,17 +554,11 @@ static FbleExecStatus RunLinkInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
 {
   FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
 
-  FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
-  link->_base.tag = FBLE_LINK_VALUE;
-  link->head = NULL;
-  link->tail = NULL;
+  FbleNewLinkValue(heap,
+      thread->stack->func->profile_base_id + link_instr->profile,
+      thread->stack->locals + link_instr->get,
+      thread->stack->locals + link_instr->put);
 
-  FbleValue get = FbleNewGetValue(heap, FbleWrapUnpackedValue(&link->_base), thread->stack->func->profile_base_id + link_instr->profile);
-  FbleValue put = FbleNewPutValue(heap, FbleWrapUnpackedValue(&link->_base), thread->stack->func->profile_base_id + link_instr->profile + 1);
-  FbleReleaseValue(heap, FbleWrapUnpackedValue(&link->_base));
-
-  FrameSetConsumed(heap, thread, link_instr->get, get);
-  FrameSetConsumed(heap, thread, link_instr->put, put);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

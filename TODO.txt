@@ -4,7 +4,8 @@
  -  Add tests for the Adder module.
 
 * Implement support for packed data values.
- - Change FbleTypeValue to FbleDataTypeValue and add appropriate fields.
+ - See if FbleValueTag and FbleValue subtypes can be made internal to value.h
+ - Add FbleDataTypeValue.
  - Implement FbleDataTypeInstr for allocating FbleDataTypeValues.
  - Change the compiler to allocate FbleDataTypeValues when appropriate.
  - Pass type to struct and union construction and access functions.
