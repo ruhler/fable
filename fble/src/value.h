@@ -15,7 +15,6 @@
 // FbleValueTag --
 //   A tag used to distinguish among different kinds of FbleUnpackedValue.
 typedef enum {
-  FBLE_TYPE_VALUE,
   FBLE_STRUCT_VALUE,
   FBLE_UNION_VALUE,
   FBLE_FUNC_VALUE,
@@ -37,17 +36,6 @@ struct FbleUnpackedValue {
 //   Used as an instance of an fble type for those types that don't need any
 //   extra information at runtime.
 extern FbleValue FbleGenericTypeValue;
-
-// FbleTypeValue --
-//   FBLE_TYPE_VALUE
-//
-// Represents the type value. Because types are compile-time concepts, not
-// runtime concepts, the type value contains no information.
-//
-// TODO: Record struct and union fields here for data types.
-typedef struct {
-  FbleUnpackedValue _base;
-} FbleTypeValue;
 
 // FbleStructValue -- Internal to value.c
 // FbleUnionValue -- Internal to value.c

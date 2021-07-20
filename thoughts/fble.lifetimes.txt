@@ -765,3 +765,33 @@ do so many type allocations that we need to avoid them by packing.
 To get an initial idea, we could start by defining FbleGenericTypeValue, and
 start using it everywhere instead of allocating empty FbleTypeValue objects.
 
+---
+
+Could we reuse FbleType for this? Instead of passing FbleTypeValue to struct
+and union construction and access, maybe we can pass an FbleType? We know the
+value of the FbleType statically, so we could hard code it into the
+instruction stream?
+
+* We'll need to resolve any abstract types at runtime regardless. For example,
+  to access the second field, you have to know the full type of the first in
+  order to be able to traverse over the first.
+* FbleType is nice in that it completely describes a type, instead of only
+  describe the types we care about. That means it could potentially be used as
+  an interface for callers. For example, so we can check from C code that an
+  FbleValue has the type we expect.
+* FbleType contains name and location information that we don't care about at
+  runtime. At runtime all we care about is the structure of the type.
+* We would have to wrap FbleType in an FbleValue in those cases where we have
+  to compute it for polymorphic functions.
+
+So, while it's an interesting idea, I think it makes sense to have a dedicated
+FbleValue based runtime type. We can ask the question of whether we should
+make it fully describe all types or just punt on non-data types. It wouldn't
+be too bad, because there should hopefully not be a notion of a poly type or a
+var type? Just data, func, type, and maybe proc type.
+
+No. I think to start, go ahead with my previous plan. Rename FbleTypeValue to
+FbleDataTypeValue and add an FbleNewDataTypeValue constructor. For now don't
+worry about having an external API to read the type. So we have two kinds of
+type values: Generic and DataType.
+

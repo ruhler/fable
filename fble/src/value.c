@@ -116,7 +116,6 @@ void FbleValueFullGc(FbleValueHeap* heap)
 static void OnFree(FbleValueHeap* heap, FbleUnpackedValue* value)
 {
   switch (value->tag) {
-    case FBLE_TYPE_VALUE: return;
     case FBLE_STRUCT_VALUE: return;
     case FBLE_UNION_VALUE: return;
 
@@ -169,8 +168,6 @@ static void Ref(FbleHeapCallback* callback, FbleValue value)
 static void Refs(FbleHeapCallback* callback, FbleUnpackedValue* value)
 {
   switch (value->tag) {
-    case FBLE_TYPE_VALUE: break;
-
     case FBLE_STRUCT_VALUE: {
       FbleStructValue* sv = (FbleStructValue*)value;
       for (size_t i = 0; i < sv->fieldc; ++i) {
