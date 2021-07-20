@@ -1,9 +1,11 @@
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
  -  Move Adder module to a Designs subdirectory.
+ -  Figure out a nicer API for Adder.
  -  Add tests for the Adder module.
 
 * Implement support for packed data values.
+ - Make FbleNewPutValue and FbleNewGetValue private to value.c
  - See if FbleValueTag and FbleValue subtypes can be made internal to value.h
  - Add FbleDataTypeValue.
  - Implement FbleDataTypeInstr for allocating FbleDataTypeValues.

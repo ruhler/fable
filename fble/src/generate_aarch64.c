@@ -805,38 +805,19 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_LINK_INSTR: {
       FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-
-      // Allocate and initialize the FbleLinkValue.
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, #%zi\n", sizeof(FbleLinkValue));
-      fprintf(fout, "  bl FbleNewHeapObject\n");
-      fprintf(fout, "  mov w1, #%i\n", FBLE_LINK_VALUE);
-      fprintf(fout, "  str w1, [x0]\n");       // link->_base.tag = FBLE_LINK_VALUE.
-      fprintf(fout, "  str XZR, [x0, #%zi]\n", offsetof(FbleLinkValue, head));
-      fprintf(fout, "  str XZR, [x0, #%zi]\n", offsetof(FbleLinkValue, tail));
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
 
-      // Compute thread->stack->func->profile_base_id
-      fprintf(fout, "  ldr x0, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleThread, stack));
-      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleStack, func));
-      fprintf(fout, "  ldr R_SCRATCH_1, [x0, #%zi]\n", offsetof(FbleFuncValue, profile_base_id));
+      // Compute thread->stack->func->profile_base_id + link_instr->profile
+      fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
+      fprintf(fout, "  ldr x1, [x1, #%zi]\n", offsetof(FbleThread, stack));
+      fprintf(fout, "  ldr x1, [x1, #%zi]\n", offsetof(FbleStack, func));
+      fprintf(fout, "  ldr x1, [x1, #%zi]\n", offsetof(FbleFuncValue, profile_base_id));
+      fprintf(fout, "  add x1, x1, #%zi\n", link_instr->profile);
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_SCRATCH_0\n");
-      fprintf(fout, "  add x2, R_SCRATCH_1, #%zi\n", link_instr->profile);
-      fprintf(fout, "  bl FbleNewGetValue\n");
-      SetFrameVar(fout, "x0", link_instr->get);
-
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_SCRATCH_0\n");
-      fprintf(fout, "  add x2, R_SCRATCH_1, #%zi\n", link_instr->profile + 1);
-      fprintf(fout, "  bl FbleNewPutValue\n");
-      SetFrameVar(fout, "x0", link_instr->put);
-
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_SCRATCH_0\n");
-      fprintf(fout, "  bl FbleReleaseValue\n");
+      // Where to store 'get' and 'put'.
+      fprintf(fout, "  add x2, R_LOCALS, #%zi\n", sizeof(FbleValue) * link_instr->get);
+      fprintf(fout, "  add x3, R_LOCALS, #%zi\n", sizeof(FbleValue) * link_instr->put);
+      fprintf(fout, "  bl FbleNewLinkValue\n");
       return;
     }
 
