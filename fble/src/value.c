@@ -33,6 +33,37 @@ typedef struct {
   FbleValue arg;
 } FbleUnionValue;
 
+// FbleValues --
+//   A non-circular singly linked list of values.
+typedef struct FbleValues {
+  FbleValue value;
+  struct FbleValues* next;
+} FbleValues;
+
+// FbleLinkValue -- FBLE_LINK_VALUE
+//   Holds the list of values on a link. Values are added to the tail and taken
+//   from the head. If there are no values on the list, both head and tail are
+//   set to NULL.
+typedef struct {
+  FbleUnpackedValue _base;
+  FbleValues* head;
+  FbleValues* tail;
+} FbleLinkValue;
+
+// FblePortValue --
+//   FBLE_PORT_VALUE
+//
+// Use for input and output values linked to external IO.
+//
+// Fields:
+//   data - a pointer to a value owned externally where data should be put to
+//          and got from.
+typedef struct {
+  FbleUnpackedValue _base;
+  FbleValue* data;
+} FblePortValue;
+
+
 FbleValue FbleNullValue = { .unpacked = NULL };
 FbleValue FbleGenericTypeValue = { .packed = 1 };
 

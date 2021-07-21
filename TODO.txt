@@ -6,6 +6,7 @@
 
 * Implement support for packed data values.
  - See if FbleValueTag and FbleValue subtypes can be made internal to value.h
+ - Remove Fble prefixes on types internal to value.c
  - Add FbleDataTypeValue.
  - Implement FbleDataTypeInstr for allocating FbleDataTypeValues.
  - Change the compiler to allocate FbleDataTypeValues when appropriate.

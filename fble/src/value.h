@@ -39,6 +39,8 @@ extern FbleValue FbleGenericTypeValue;
 
 // FbleStructValue -- Internal to value.c
 // FbleUnionValue -- Internal to value.c
+// FbleLinkValue -- Internal to value.c
+// FblePortValue -- Internal to value.c
 
 // FbleFuncValue -- FBLE_FUNC_VALUE
 //
@@ -63,36 +65,6 @@ struct FbleFuncValue {
 //   A proc value is represented as a function that takes no arguments.
 #define FBLE_PROC_VALUE FBLE_FUNC_VALUE
 typedef FbleFuncValue FbleProcValue;
-
-// FbleValues --
-//   A non-circular singly linked list of values.
-typedef struct FbleValues {
-  FbleValue value;
-  struct FbleValues* next;
-} FbleValues;
-
-// FbleLinkValue -- FBLE_LINK_VALUE
-//   Holds the list of values on a link. Values are added to the tail and taken
-//   from the head. If there are no values on the list, both head and tail are
-//   set to NULL.
-typedef struct {
-  FbleUnpackedValue _base;
-  FbleValues* head;
-  FbleValues* tail;
-} FbleLinkValue;
-
-// FblePortValue --
-//   FBLE_PORT_VALUE
-//
-// Use for input and output values linked to external IO.
-//
-// Fields:
-//   data - a pointer to a value owned externally where data should be put to
-//          and got from.
-typedef struct {
-  FbleUnpackedValue _base;
-  FbleValue* data;
-} FblePortValue;
 
 // FbleRefValue --
 //   FBLE_REF_VALUE
