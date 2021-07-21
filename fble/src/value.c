@@ -681,8 +681,13 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue ref, FbleValue value)
 {
   // Unwrap any accumulated layers of references on the value and make sure we
   // aren't forming a vacuous value.
-  FbleValue unwrapped = FbleStrictRefValue(value);
-  if (FbleValueIsUnpacked(unwrapped) && unwrapped.unpacked == ref.unpacked) {
+  FbleRefValue* unwrap = (FbleRefValue*)value.unpacked;
+  while (FbleValueIsUnpacked(value) && value.unpacked->tag == FBLE_REF_VALUE && !FbleValueIsNull(unwrap->value)) {
+    value = unwrap->value;
+    unwrap = (FbleRefValue*)value.unpacked;
+  }
+
+  if (FbleValueIsUnpacked(value) && value.unpacked == ref.unpacked) {
     return false;
   }
 
@@ -690,7 +695,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue ref, FbleValue value)
   FbleRefValue* rv = (FbleRefValue*)ref.unpacked;
   assert(rv->_base.tag == FBLE_REF_VALUE);
   rv->value = value;
-  FbleValueAddRef(heap, ref, unwrapped);
+  FbleValueAddRef(heap, ref, value);
   return true;
 }
 
@@ -700,17 +705,6 @@ FbleValue FbleStrictValue(FbleValue value)
   while (FbleValueIsUnpacked(value) && value.unpacked != NULL && value.unpacked->tag == FBLE_REF_VALUE) {
     FbleRefValue* ref = (FbleRefValue*)value.unpacked;
     value = ref->value;
-  }
-  return value;
-}
-
-// FbleStrictRefValue -- see documentation in value.h
-FbleValue FbleStrictRefValue(FbleValue value)
-{
-  FbleRefValue* ref = (FbleRefValue*)value.unpacked;
-  while (FbleValueIsUnpacked(value) && value.unpacked->tag == FBLE_REF_VALUE && !FbleValueIsNull(ref->value)) {
-    value = ref->value;
-    ref = (FbleRefValue*)value.unpacked;
   }
   return value;
 }
