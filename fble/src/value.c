@@ -667,6 +667,15 @@ FbleValue FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
   return tail;
 }
 
+// FbleNewRefValue -- see documentation in value.h
+FbleValue FbleNewRefValue(FbleValueHeap* heap)
+{
+  FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);
+  rv->_base.tag = FBLE_REF_VALUE;
+  rv->value = FbleNullValue;
+  return FbleWrapUnpackedValue(&rv->_base);
+}
+
 // FbleStrictValue -- see documentation in value.h
 FbleValue FbleStrictValue(FbleValue value)
 {

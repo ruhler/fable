@@ -860,11 +860,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     case FBLE_REF_VALUE_INSTR: {
       FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, #%zi\n", sizeof(FbleRefValue));
-      fprintf(fout, "  bl FbleNewHeapObject\n");
-      fprintf(fout, "  mov w1, #%i\n", FBLE_REF_VALUE);
-      fprintf(fout, "  str w1, [x0]\n");      // v->_base.tag = FBLE_REF_VALUE
-      fprintf(fout, "  str XZR, [x0, #%zi]\n", offsetof(FbleRefValue, value));
+      fprintf(fout, "  bl FbleNewRefValue\n");
       SetFrameVar(fout, "x0", ref_instr->dest);
       return;
     }

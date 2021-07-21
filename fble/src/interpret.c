@@ -579,11 +579,8 @@ static FbleExecStatus AbortLinkInstr(FbleValueHeap* heap, FbleStack* stack, Fble
 static FbleExecStatus RunRefValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-  FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);
-  rv->_base.tag = FBLE_REF_VALUE;
-  rv->value = FbleNullValue;
-
-  FrameSetConsumed(heap, thread, ref_instr->dest, FbleWrapUnpackedValue(&rv->_base));
+  FbleValue rv = FbleNewRefValue(heap);
+  FrameSetConsumed(heap, thread, ref_instr->dest, rv);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

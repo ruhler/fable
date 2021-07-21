@@ -197,6 +197,20 @@ FbleValue FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue* args);
 //   use.
 FbleValue FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 
+// FbleNewRefValue --
+//   Create a new reference value.
+//
+// Inputs:
+//   heap - the heap to allocate the value on.
+//
+// Results:
+//   A newly allocated reference value.
+//
+// Side effects:
+//   The returned value must be freed using FbleReleaseValue when no longer in
+//   use.
+FbleValue FbleNewRefValue(FbleValueHeap* heap);
+
 // FbleStrictValue --
 //   Get the strict value associated with the given value, which will either
 //   be the value itself, or the dereferenced value if the value is a
