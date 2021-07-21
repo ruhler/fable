@@ -49,6 +49,9 @@ static void PutAbortFunction(FbleValueHeap* heap, FbleStack* stack);
 static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 static void PartialPutAbortFunction(FbleValueHeap* heap, FbleStack* stack);
 
+static FbleValue NewGetValue(FbleValueHeap* heap, FbleValue port, FbleBlockId profile);
+static FbleValue NewPutValue(FbleValueHeap* heap, FbleValue link, FbleBlockId profile);
+
 
 // FbleWrapUnpackedValue -- see documentation in value.h
 //
@@ -484,21 +487,23 @@ static void PartialPutAbortFunction(FbleValueHeap* heap, FbleStack* stack)
   FbleReleaseValue(heap, stack->locals[0]);
   *(stack->result) = FbleNullValue;
 }
-// FbleNewLinkValue -- see documentation in value.h
-void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue* get, FbleValue* put)
-{
-  FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
-  link->_base.tag = FBLE_LINK_VALUE;
-  link->head = NULL;
-  link->tail = NULL;
-
-  *get = FbleNewGetValue(heap, FbleWrapUnpackedValue(&link->_base), profile);
-  *put = FbleNewPutValue(heap, FbleWrapUnpackedValue(&link->_base), profile + 1);
-  FbleReleaseValue(heap, FbleWrapUnpackedValue(&link->_base));
-}
 
-// FbleNewGetValue -- see documentation in value.h
-FbleValue FbleNewGetValue(FbleValueHeap* heap, FbleValue port, FbleBlockId profile)
+// NewGetValue --
+//   Create a new get proc value for the given link.
+//
+// Inputs:
+//   heap - the heap to allocate the value on.
+//   port - the port value to get from.
+//   profile - the id of a profile block to use for when the get is executed.
+//
+// Results:
+//   A newly allocated get value.
+//
+// Side effects:
+//   The returned get value must be freed using FbleReleaseValue when no
+//   longer in use. This function does not take ownership of the port value.
+//   argument.
+static FbleValue NewGetValue(FbleValueHeap* heap, FbleValue port, FbleBlockId profile)
 {
   assert(FbleValueIsUnpacked(port));
   assert(port.unpacked->tag == FBLE_LINK_VALUE || port.unpacked->tag == FBLE_PORT_VALUE);
@@ -529,13 +534,28 @@ FbleValue FbleNewInputPortValue(FbleValueHeap* heap, FbleValue* data, FbleBlockI
   get_port->_base.tag = FBLE_PORT_VALUE;
   get_port->data = data;
 
-  FbleValue get = FbleNewGetValue(heap, FbleWrapUnpackedValue(&get_port->_base), profile);
+  FbleValue get = NewGetValue(heap, FbleWrapUnpackedValue(&get_port->_base), profile);
   FbleReleaseValue(heap, FbleWrapUnpackedValue(&get_port->_base));
   return get;
 }
 
-// FbleNewPutValue -- see documentation in value.h
-FbleValue FbleNewPutValue(FbleValueHeap* heap, FbleValue link, FbleBlockId profile)
+// NewPutValue --
+//   Create a new put value for the given link.
+//
+// Inputs:
+//   heap - the heap to allocate the value on.
+//   link - the link to put to. Borrowed.
+//   profile - the first of two consecutive ids of profile blocks to use for
+//             when the first argument is applied to the put and when the put
+//             is executed.
+//
+// Results:
+//   A newly allocated put value.
+//
+// Side effects:
+//   The returned put value must be freed using FbleReleaseValue when no
+//   longer in use. This function does not take ownership of the link value.
+static FbleValue NewPutValue(FbleValueHeap* heap, FbleValue link, FbleBlockId profile)
 {
   static FbleExecutable executable = {
     .refcount = 1,
@@ -556,13 +576,26 @@ FbleValue FbleNewPutValue(FbleValueHeap* heap, FbleValue link, FbleBlockId profi
   return FbleWrapUnpackedValue(&put->_base);
 }
 
+// FbleNewLinkValue -- see documentation in value.h
+void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue* get, FbleValue* put)
+{
+  FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
+  link->_base.tag = FBLE_LINK_VALUE;
+  link->head = NULL;
+  link->tail = NULL;
+
+  *get = NewGetValue(heap, FbleWrapUnpackedValue(&link->_base), profile);
+  *put = NewPutValue(heap, FbleWrapUnpackedValue(&link->_base), profile + 1);
+  FbleReleaseValue(heap, FbleWrapUnpackedValue(&link->_base));
+}
+
 // FbleNewOutputPortValue -- see documentation in fble-value.h
 FbleValue FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue* data, FbleBlockId profile)
 {
   FblePortValue* port_value = FbleNewValue(heap, FblePortValue);
   port_value->_base.tag = FBLE_PORT_VALUE;
   port_value->data = data;
-  FbleValue put = FbleNewPutValue(heap, FbleWrapUnpackedValue(&port_value->_base), profile);
+  FbleValue put = NewPutValue(heap, FbleWrapUnpackedValue(&port_value->_base), profile);
   FbleReleaseValue(heap, FbleWrapUnpackedValue(&port_value->_base));
   return put;
 }

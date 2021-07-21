@@ -193,41 +193,6 @@ FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable,
 //   no longer in use.
 void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue* get, FbleValue* put);
 
-// FbleNewGetValue --
-//   Create a new get proc value for the given link.
-//
-// Inputs:
-//   heap - the heap to allocate the value on.
-//   port - the port value to get from.
-//   profile - the id of a profile block to use for when the get is executed.
-//
-// Results:
-//   A newly allocated get value.
-//
-// Side effects:
-//   The returned get value must be freed using FbleReleaseValue when no
-//   longer in use. This function does not take ownership of the port value.
-//   argument.
-FbleValue FbleNewGetValue(FbleValueHeap* heap, FbleValue port, FbleBlockId profile);
-
-// FbleNewPutValue --
-//   Create a new put value for the given link.
-//
-// Inputs:
-//   heap - the heap to allocate the value on.
-//   link - the link to put to. Borrowed.
-//   profile - the first of two consecutive ids of profile blocks to use for
-//             when the first argument is applied to the put and when the put
-//             is executed.
-//
-// Results:
-//   A newly allocated put value.
-//
-// Side effects:
-//   The returned put value must be freed using FbleReleaseValue when no
-//   longer in use. This function does not take ownership of the link value.
-FbleValue FbleNewPutValue(FbleValueHeap* heap, FbleValue link, FbleBlockId profile);
-
 // FbleNewListValue --
 //   Create a new list value from the given list of arguments.
 //
