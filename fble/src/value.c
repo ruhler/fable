@@ -63,6 +63,22 @@ typedef struct {
   FbleValue* data;
 } FblePortValue;
 
+// FbleRefValue --
+//   FBLE_REF_VALUE
+//
+// An implementation-specific value introduced to support recursive values and
+// not yet computed values.
+//
+// A ref value holds a reference to another value. All values must be
+// dereferenced before being otherwise accessed in case they are ref
+// values.
+//
+// Fields:
+//   value - the value being referenced, or NULL if no value is referenced.
+typedef struct {
+  FbleUnpackedValue _base;
+  FbleValue value;
+} FbleRefValue;
 
 FbleValue FbleNullValue = { .unpacked = NULL };
 FbleValue FbleGenericTypeValue = { .packed = 1 };
