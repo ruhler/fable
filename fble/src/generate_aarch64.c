@@ -867,23 +867,19 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
-      GetFrameVar(fout, "x0", ref_instr->value);
-      fprintf(fout, "  bl FbleStrictRefValue\n");
 
       FbleFrameIndex ref_index = {
         .section = FBLE_LOCALS_FRAME_SECTION,
         .index = ref_instr->ref
       };
-      GetFrameVar(fout, "x1", ref_index);
-      fprintf(fout, "  cmp x0, x1\n");
-      fprintf(fout, "  b.ne .L.%p.%zi.ok\n", code, pc);
-      ReturnAbort(fout, code, pc, ".L.VacuousValue", ref_instr->loc);
 
-      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
-      fprintf(fout, "  str x0, [x1, #%zi]\n", offsetof(FbleRefValue, value));
-      fprintf(fout, "  mov x2, x0\n");
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  bl FbleValueAddRef\n");
+      GetFrameVar(fout, "x1", ref_index);
+      GetFrameVar(fout, "x2", ref_instr->value);
+      fprintf(fout, "  bl FbleAssignRefValue\n");
+      fprintf(fout, "  cbnz x0, .L.%p.%zi.ok\n", code, pc);
+      ReturnAbort(fout, code, pc, ".L.VacuousValue", ref_instr->loc);
+      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
       return;
     }
 

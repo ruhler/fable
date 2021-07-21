@@ -600,23 +600,13 @@ static FbleExecStatus AbortRefValueInstr(FbleValueHeap* heap, FbleStack* stack, 
 static FbleExecStatus RunRefDefInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-  FbleRefValue* rv = (FbleRefValue*)thread->stack->locals[ref_def_instr->ref].unpacked;
-  assert(rv->_base.tag == FBLE_REF_VALUE);
-  assert(FbleValueIsNull(rv->value));
-
+  FbleValue ref = thread->stack->locals[ref_def_instr->ref];
   FbleValue value = FrameGet(thread, ref_def_instr->value);
-  assert(!FbleValueIsNull(value));
-
-  // Unwrap any accumulated layers of references on the returned value, and,
-  // more importantly, make sure we aren't forming a vacuous value.
-  FbleValue ref = FbleStrictRefValue(value);
-  if (FbleValueIsUnpacked(ref) && ref.unpacked == &rv->_base) {
+  if (!FbleAssignRefValue(heap, ref, value)) {
     FbleReportError("vacuous value\n", ref_def_instr->loc);
     return FBLE_EXEC_ABORTED;
   }
 
-  rv->value = value;
-  FbleValueAddRef(heap, FbleWrapUnpackedValue(&rv->_base), rv->value);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

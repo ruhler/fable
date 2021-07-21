@@ -676,6 +676,24 @@ FbleValue FbleNewRefValue(FbleValueHeap* heap)
   return FbleWrapUnpackedValue(&rv->_base);
 }
 
+// FbleAssignRefValue -- see documentation in value.h
+bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue ref, FbleValue value)
+{
+  // Unwrap any accumulated layers of references on the value and make sure we
+  // aren't forming a vacuous value.
+  FbleValue unwrapped = FbleStrictRefValue(value);
+  if (FbleValueIsUnpacked(unwrapped) && unwrapped.unpacked == ref.unpacked) {
+    return false;
+  }
+
+  assert(FbleValueIsUnpacked(ref));
+  FbleRefValue* rv = (FbleRefValue*)ref.unpacked;
+  assert(rv->_base.tag == FBLE_REF_VALUE);
+  rv->value = value;
+  FbleValueAddRef(heap, ref, unwrapped);
+  return true;
+}
+
 // FbleStrictValue -- see documentation in value.h
 FbleValue FbleStrictValue(FbleValue value)
 {

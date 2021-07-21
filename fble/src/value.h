@@ -211,6 +211,22 @@ FbleValue FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 //   use.
 FbleValue FbleNewRefValue(FbleValueHeap* heap);
 
+// FbleAssignRefValue
+//   Assign a RefValue to point to another value.
+//
+// Inputs:
+//   heap - the heap to use for allocations
+//   ref - the reference to assign to
+//   value - the value to assign to the reference.
+//
+// Results:
+//   true on success. false if the assignment would produce a vacuous
+//   value.
+//
+// Side effects:
+//   Updates ref to point to value.
+bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue ref, FbleValue value);
+
 // FbleStrictValue --
 //   Get the strict value associated with the given value, which will either
 //   be the value itself, or the dereferenced value if the value is a
