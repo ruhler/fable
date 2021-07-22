@@ -5,7 +5,10 @@
  -  Add tests for the Adder module.
 
 * Implement support for packed data values.
- - See if FbleValueTag and FbleValue subtypes can be made internal to value.h
+ - Use FbleFuncValue APIs in generate_aarch64.c.
+ - Change FbleNewFuncValue to take statics as an array argument.
+ - See if FbleValueTag and FbleValue subtypes can be made internal to value.c
+ - See if packed / unpacked can be hidden internal to value.c
  - Remove Fble prefixes on types internal to value.c
  - Add FbleDataTypeValue.
  - Implement FbleDataTypeInstr for allocating FbleDataTypeValues.

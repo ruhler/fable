@@ -169,7 +169,7 @@ static AbortInstr sAbortInstr[] = {
 static FbleValue FrameGet(FbleThread* thread, FbleFrameIndex index)
 {
   switch (index.section) {
-    case FBLE_STATICS_FRAME_SECTION: return thread->stack->func->statics[index.index];
+    case FBLE_STATICS_FRAME_SECTION: return FbleFuncValueStatics(thread->stack->func)[index.index];
     case FBLE_LOCALS_FRAME_SECTION: return thread->stack->locals[index.index];
   }
   UNREACHABLE("should never get here");
@@ -394,7 +394,7 @@ static FbleExecStatus AbortJumpInstr(FbleValueHeap* heap, FbleStack* stack, Fble
 static FbleExecStatus RunFuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-  FbleFuncValue* value = FbleNewFuncValue(heap, &func_value_instr->code->_base, thread->stack->func->profile_base_id);
+  FbleFuncValue* value = FbleNewFuncValue(heap, &func_value_instr->code->_base, FbleFuncValueProfileBaseId(thread->stack->func));
   for (size_t i = 0; i < func_value_instr->scope.size; ++i) {
     FbleValue arg = FrameGet(thread, func_value_instr->scope.xs[i]);
     value->statics[i] = arg;
@@ -420,21 +420,21 @@ static FbleExecStatus AbortFuncValueInstr(FbleValueHeap* heap, FbleStack* stack,
 static FbleExecStatus RunCallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-  FbleFuncValue* func = (FbleFuncValue*)FrameGetStrict(thread, call_instr->func).unpacked;
-  if (func == NULL) {
+  FbleValue func = FrameGetStrict(thread, call_instr->func);
+  if (FbleValueIsNull(func)) {
     FbleReportError("called undefined function\n", call_instr->loc);
     return FBLE_EXEC_ABORTED;
   };
-  assert(func->_base.tag == FBLE_FUNC_VALUE);
 
-  FbleValue args[func->executable->args];
-  for (size_t i = 0; i < func->executable->args; ++i) {
+  FbleExecutable* executable = FbleFuncValueExecutable(func);
+  FbleValue args[executable->args];
+  for (size_t i = 0; i < executable->args; ++i) {
     args[i] = FrameGet(thread, call_instr->args.xs[i]);
   }
 
   if (call_instr->exit) {
-    FbleRetainValue(heap, FbleWrapUnpackedValue(&func->_base));
-    for (size_t i = 0; i < func->executable->args; ++i) {
+    FbleRetainValue(heap, func);
+    for (size_t i = 0; i < executable->args; ++i) {
       FbleRetainValue(heap, args[i]);
     }
 
@@ -500,13 +500,7 @@ static FbleExecStatus RunForkInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
   FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
 
   for (size_t i = 0; i < fork_instr->args.size; ++i) {
-    FbleProcValue* arg = (FbleProcValue*)FrameGetStrict(thread, fork_instr->args.xs[i]).unpacked;
-
-    // You cannot execute a proc in a let binding, so it should be
-    // impossible to ever have an undefined proc value.
-    assert(arg != NULL && "undefined proc value");
-    assert(arg->_base.tag == FBLE_PROC_VALUE);
-
+    FbleValue arg = FrameGetStrict(thread, fork_instr->args.xs[i]);
     FbleValue* result = thread->stack->locals + fork_instr->dests.xs[i];
     FbleThreadFork(heap, threads, thread, result, arg, NULL);
   }
@@ -555,7 +549,7 @@ static FbleExecStatus RunLinkInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
   FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
 
   FbleNewLinkValue(heap,
-      thread->stack->func->profile_base_id + link_instr->profile,
+      FbleFuncValueProfileBaseId(thread->stack->func) + link_instr->profile,
       thread->stack->locals + link_instr->get,
       thread->stack->locals + link_instr->put);
 
@@ -627,7 +621,7 @@ static FbleExecStatus RunReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, 
   FbleValue result = FbleNullValue;
   switch (return_instr->result.section) {
     case FBLE_STATICS_FRAME_SECTION: {
-      result = thread->stack->func->statics[return_instr->result.index];
+      result = FbleFuncValueStatics(thread->stack->func)[return_instr->result.index];
       FbleRetainValue(heap, result);
       break;
     }
@@ -751,8 +745,8 @@ static FbleExecStatus AbortLiteralInstr(FbleValueHeap* heap, FbleStack* stack, F
 FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
   FbleProfileThread* profile = thread->profile;
-  FbleBlockId profile_base_id = thread->stack->func->profile_base_id;
-  FbleInstr** code = ((FbleCode*)thread->stack->func->executable)->instrs.xs;
+  FbleBlockId profile_base_id = FbleFuncValueProfileBaseId(thread->stack->func);
+  FbleInstr** code = ((FbleCode*)FbleFuncValueExecutable(thread->stack->func))->instrs.xs;
 
   FbleExecStatus status = FBLE_EXEC_RUNNING;
   while (status == FBLE_EXEC_RUNNING) {
@@ -787,7 +781,7 @@ FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* thre
 // FbleInterpreterAbortFunction -- see documentation in interpret.h
 void FbleInterpreterAbortFunction(FbleValueHeap* heap, FbleStack* stack)
 {
-  FbleInstr** code = ((FbleCode*)stack->func->executable)->instrs.xs;
+  FbleInstr** code = ((FbleCode*)FbleFuncValueExecutable(stack->func))->instrs.xs;
   FbleExecStatus status = FBLE_EXEC_RUNNING;
   while (status == FBLE_EXEC_RUNNING) {
     FbleInstr* instr = code[stack->pc];

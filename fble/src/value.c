@@ -359,6 +359,30 @@ FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable,
   return v;
 }
 
+// FbleFuncValueStatics -- see documentation in value.h
+FbleValue* FbleFuncValueStatics(FbleValue func)
+{
+  assert(FbleValueIsUnpacked(func));
+  FbleFuncValue* func_value = (FbleFuncValue*)func.unpacked;
+  return func_value->statics;
+}
+
+// FbleFuncValueProfileBaseId -- see documentation in value.h
+size_t FbleFuncValueProfileBaseId(FbleValue func)
+{
+  assert(FbleValueIsUnpacked(func));
+  FbleFuncValue* func_value = (FbleFuncValue*)func.unpacked;
+  return func_value->profile_base_id;
+}
+
+// FbleFuncValueExecutable -- see documentation in value.h
+FbleExecutable* FbleFuncValueExecutable(FbleValue func)
+{
+  assert(FbleValueIsUnpacked(func));
+  FbleFuncValue* func_value = (FbleFuncValue*)func.unpacked;
+  return func_value->executable;
+}
+
 // FbleIsProcValue -- see documentation in fble-value.h
 bool FbleIsProcValue(FbleValue value)
 {
@@ -375,13 +399,7 @@ bool FbleIsProcValue(FbleValue value)
 // See documentation of FbleExecutable.run in execute.h.
 static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
-  assert(thread->stack->pc == 0);
-  assert(thread->stack->func->executable->args == 0);
-  assert(thread->stack->func->executable->statics == 1);
-  assert(thread->stack->func->executable->locals == 0);
-  assert(thread->stack->func->executable->run == &GetRunFunction);
-
-  FbleValue get_port = thread->stack->func->statics[0];
+  FbleValue get_port = FbleFuncValueStatics(thread->stack->func)[0];
   assert(FbleValueIsUnpacked(get_port));
   if (get_port.unpacked->tag == FBLE_LINK_VALUE) {
     FbleLinkValue* link = (FbleLinkValue*)get_port.unpacked;
@@ -431,14 +449,9 @@ static void GetAbortFunction(FbleValueHeap* heap, FbleStack* stack)
 // See documentation of FbleExecutable.run in execute.h.
 static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
-  assert(thread->stack->pc == 0);
-  assert(thread->stack->func->executable->args == 0);
-  assert(thread->stack->func->executable->statics == 2);
-  assert(thread->stack->func->executable->locals == 0);
-  assert(thread->stack->func->executable->run == &PutRunFunction);
-
-  FbleValue put_port = thread->stack->func->statics[0];
-  FbleValue arg = thread->stack->func->statics[1];
+  FbleValue* statics = FbleFuncValueStatics(thread->stack->func);
+  FbleValue put_port = statics[0];
+  FbleValue arg = statics[1];
   if (put_port.unpacked->tag == FBLE_LINK_VALUE) {
     FbleLinkValue* link = (FbleLinkValue*)put_port.unpacked;
 
@@ -490,12 +503,6 @@ static void PutAbortFunction(FbleValueHeap* heap, FbleStack* stack)
 // See documentation of FbleExecutable.run in execute.h.
 static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
-  assert(thread->stack->pc == 0);
-  assert(thread->stack->func->executable->args == 1);
-  assert(thread->stack->func->executable->statics == 1);
-  assert(thread->stack->func->executable->locals == 1);
-  assert(thread->stack->func->executable->run == &PartialPutRunFunction);
-
   static FbleExecutable executable = {
     .refcount = 1,
     .magic = FBLE_EXECUTABLE_MAGIC,
@@ -509,9 +516,9 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
     .on_free = NULL,
   };
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, thread->stack->func->profile_base_id + 1);
+  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, FbleFuncValueProfileBaseId(thread->stack->func) + 1);
 
-  FbleValue link = thread->stack->func->statics[0];
+  FbleValue link = FbleFuncValueStatics(thread->stack->func)[0];
   FbleValue arg = thread->stack->locals[0];
   put->statics[0] = link;
   FbleValueAddRef(heap, FbleWrapUnpackedValue(&put->_base), link);

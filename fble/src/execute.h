@@ -36,7 +36,7 @@
 //   receive a strong reference to the return value.
 typedef struct FbleStack {
   size_t joins;
-  FbleFuncValue* func;
+  FbleValue func;
   size_t pc;
   FbleValue* result;
   struct FbleStack* tail;
@@ -89,7 +89,7 @@ typedef struct {
 // Side effects:
 // * Updates the threads stack.
 // * Enters a profiling block for the function being called.
-void FbleThreadCall(FbleValueHeap* heap, FbleValue* result, FbleFuncValue* func, FbleValue* args, FbleThread* thread);
+void FbleThreadCall(FbleValueHeap* heap, FbleValue* result, FbleValue func, FbleValue* args, FbleThread* thread);
 
 // FbleThreadTailCall --
 //   Replace the current frame with a new one.
@@ -108,7 +108,7 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue* result, FbleFuncValue* func,
 //   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
 //   doing an FbleReleaseValue call for func and args.
 // * Replaces the profiling block for the function being called.
-void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue* args, FbleThread* thread);
+void FbleThreadTailCall(FbleValueHeap* heap, FbleValue func, FbleValue* args, FbleThread* thread);
 
 // FbleThreadFork --
 //   Fork a new thread from the given parent thread.
@@ -125,7 +125,7 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleFuncValue* func, FbleValue* arg
 // Side effects:
 // * Allocates a new thread and adds it to the threads pool.
 // * Increments the joins count on the parent thread.
-void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue* result, FbleFuncValue* func, FbleValue* args);
+void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue* result, FbleValue func, FbleValue* args);
 
 // FbleThreadReturn --
 //   Return from the current frame on the thread's stack.
