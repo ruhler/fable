@@ -349,14 +349,14 @@ FbleValue FbleUnionValueAccess(FbleValue object)
 }
 
 // FbleNewFuncValue -- see documentation in value.h
-FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id)
+FbleValue FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id)
 {
   FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue) * executable->statics);
   v->_base.tag = FBLE_FUNC_VALUE;
   v->profile_base_id = profile_base_id;
   v->executable = executable;
   v->executable->refcount++;
-  return v;
+  return FbleWrapUnpackedValue(&v->_base);
 }
 
 // FbleFuncValueStatics -- see documentation in value.h
@@ -516,17 +516,18 @@ static FbleExecStatus PartialPutRunFunction(FbleValueHeap* heap, FbleThreadV* th
     .on_free = NULL,
   };
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, FbleFuncValueProfileBaseId(thread->stack->func) + 1);
+  FbleValue put = FbleNewFuncValue(heap, &executable, FbleFuncValueProfileBaseId(thread->stack->func) + 1);
+  FbleValue* statics = FbleFuncValueStatics(put);
 
   FbleValue link = FbleFuncValueStatics(thread->stack->func)[0];
   FbleValue arg = thread->stack->locals[0];
-  put->statics[0] = link;
-  FbleValueAddRef(heap, FbleWrapUnpackedValue(&put->_base), link);
-  put->statics[1] = arg;
-  FbleValueAddRef(heap, FbleWrapUnpackedValue(&put->_base), arg);
+  statics[0] = link;
+  FbleValueAddRef(heap, put, link);
+  statics[1] = arg;
+  FbleValueAddRef(heap, put, arg);
 
   FbleReleaseValue(heap, thread->stack->locals[0]);
-  FbleThreadReturn(heap, thread, FbleWrapUnpackedValue(&put->_base));
+  FbleThreadReturn(heap, thread, put);
   return FBLE_EXEC_FINISHED;
 }
 
@@ -575,10 +576,11 @@ static FbleValue NewGetValue(FbleValueHeap* heap, FbleValue port, FbleBlockId pr
     .on_free = NULL
   };
 
-  FbleProcValue* get = FbleNewFuncValue(heap, &executable, profile);
-  get->statics[0] = port;
-  FbleValueAddRef(heap, FbleWrapUnpackedValue(&get->_base), port);
-  return FbleWrapUnpackedValue(&get->_base);
+  FbleValue get = FbleNewFuncValue(heap, &executable, profile);
+  FbleValue* statics = FbleFuncValueStatics(get);
+  statics[0] = port;
+  FbleValueAddRef(heap, get, port);
+  return get;
 }
 
 // FbleNewInputPortValue -- see documentation in fble-value.h
@@ -624,10 +626,11 @@ static FbleValue NewPutValue(FbleValueHeap* heap, FbleValue link, FbleBlockId pr
     .on_free = NULL,
   };
 
-  FbleFuncValue* put = FbleNewFuncValue(heap, &executable, profile);
-  put->statics[0] = link;
-  FbleValueAddRef(heap, FbleWrapUnpackedValue(&put->_base), link);
-  return FbleWrapUnpackedValue(&put->_base);
+  FbleValue put = FbleNewFuncValue(heap, &executable, profile);
+  FbleValue* statics = FbleFuncValueStatics(put);
+  statics[0] = link;
+  FbleValueAddRef(heap, put, link);
+  return put;
 }
 
 // FbleNewLinkValue -- see documentation in value.h

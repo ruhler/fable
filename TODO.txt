@@ -16,10 +16,9 @@
  - Pass type to struct and union construction and access functions.
  - Implement packing for struct and union values.
 
-* Consider not exposing the FbleFuncValue type external to value.
-  Because packing and unpacking it everywhere is annoying.
 * Update documentation around use of NULL FbleValue
   It should say FbleNullValue instead of 'NULL'.
+  Or switch back to NULL.
 
 * Fix missing dependency of generation of build.ninja on new spec tests.
 

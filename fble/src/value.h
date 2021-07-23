@@ -131,7 +131,7 @@ FbleValue FbleWrapUnpackedValue(FbleUnpackedValue* value);
 // Side effects:
 //   Allocates a new FbleFuncValue that should be freed using FbleReleaseValue
 //   when it is no longer needed.
-FbleFuncValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id);
+FbleValue FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id);
 
 // FbleFuncValueStatics --
 //   Gets the array of static variables used by a function.

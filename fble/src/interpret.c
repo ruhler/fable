@@ -394,13 +394,14 @@ static FbleExecStatus AbortJumpInstr(FbleValueHeap* heap, FbleStack* stack, Fble
 static FbleExecStatus RunFuncValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-  FbleFuncValue* value = FbleNewFuncValue(heap, &func_value_instr->code->_base, FbleFuncValueProfileBaseId(thread->stack->func));
+  FbleValue value = FbleNewFuncValue(heap, &func_value_instr->code->_base, FbleFuncValueProfileBaseId(thread->stack->func));
+  FbleValue* statics = FbleFuncValueStatics(value);
   for (size_t i = 0; i < func_value_instr->scope.size; ++i) {
     FbleValue arg = FrameGet(thread, func_value_instr->scope.xs[i]);
-    value->statics[i] = arg;
-    FbleValueAddRef(heap, FbleWrapUnpackedValue(&value->_base), arg);
+    statics[i] = arg;
+    FbleValueAddRef(heap, value, arg);
   }
-  FrameSetConsumed(heap, thread, func_value_instr->dest, FbleWrapUnpackedValue(&value->_base));
+  FrameSetConsumed(heap, thread, func_value_instr->dest,value);
   thread->stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
