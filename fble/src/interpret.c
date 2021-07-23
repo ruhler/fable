@@ -257,7 +257,7 @@ static FbleExecStatus RunStructValueInstr(FbleValueHeap* heap, FbleThreadV* thre
 static FbleExecStatus AbortStructValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-  stack->locals[struct_value_instr->dest] = FbleWrapUnpackedValue(NULL);
+  stack->locals[struct_value_instr->dest] = FbleNullValue;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
@@ -280,7 +280,7 @@ static FbleExecStatus RunUnionValueInstr(FbleValueHeap* heap, FbleThreadV* threa
 static FbleExecStatus AbortUnionValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-  stack->locals[union_value_instr->dest] = FbleWrapUnpackedValue(NULL);
+  stack->locals[union_value_instr->dest] = FbleNullValue;
   stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

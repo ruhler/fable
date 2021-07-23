@@ -135,7 +135,7 @@ static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue
   main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
   FbleVectorAppend(threads, main_thread);
 
-  FbleValue result = FbleWrapUnpackedValue(NULL);
+  FbleValue result = FbleNullValue;
   FbleThreadCall(heap, &result, func, args, main_thread);
 
   while (threads.size > 0) {
@@ -170,7 +170,7 @@ static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue
           AbortThreads(heap, &threads);
           FbleReleaseValue(heap, result);
           FbleFree(threads.xs);
-          return FbleWrapUnpackedValue(NULL);
+          return FbleNullValue;
         }
       }
     }
@@ -184,7 +184,7 @@ static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue
       AbortThreads(heap, &threads);
       FbleReleaseValue(heap, result);
       FbleFree(threads.xs);
-      return FbleWrapUnpackedValue(NULL);
+      return FbleNullValue;
     }
   }
 
@@ -274,8 +274,6 @@ FbleValue FbleEval(FbleValueHeap* heap, FbleValue program, FbleProfile* profile)
 // FbleApply -- see documentation in fble.h
 FbleValue FbleApply(FbleValueHeap* heap, FbleValue func, FbleValue* args, FbleProfile* profile)
 {
-  assert(FbleValueIsUnpacked(func));
-  assert(func.unpacked->tag == FBLE_FUNC_VALUE);
   FbleIO io = { .io = &FbleNoIO, };
   FbleValue result = Eval(heap, &io, func, args, profile);
   return result;
@@ -290,8 +288,6 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 // FbleExec -- see documentation in fble.h
 FbleValue FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue proc, FbleProfile* profile)
 {
-  assert(FbleValueIsUnpacked(proc));
-  assert(proc.unpacked->tag == FBLE_PROC_VALUE);
   return Eval(heap, io, proc, NULL, profile);
 }
 

@@ -109,13 +109,13 @@ FbleValue FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, Fb
 {
   FbleLoadedProgram* program = FbleLoad(search_path, module_path);
   if (program == NULL) {
-    return FbleWrapUnpackedValue(NULL);
+    return FbleNullValue;
   }
 
   FbleCompiledProgram* compiled = FbleCompile(program);
   FbleFreeLoadedProgram(program);
   if (compiled == NULL) {
-   return FbleWrapUnpackedValue(NULL);
+   return FbleNullValue;
   }
 
   FbleExecutableProgram* executable = FbleInterpret(compiled);

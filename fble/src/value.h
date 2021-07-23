@@ -12,109 +12,10 @@
 #include "execute.h"      // for FbleRunFunction
 #include "heap.h"
 
-// FbleValueTag --
-//   A tag used to distinguish among different kinds of FbleUnpackedValue.
-typedef enum {
-  FBLE_STRUCT_VALUE,
-  FBLE_UNION_VALUE,
-  FBLE_FUNC_VALUE,
-  FBLE_LINK_VALUE,
-  FBLE_PORT_VALUE,
-  FBLE_REF_VALUE,
-} FbleValueTag;
-
-// FbleUnpackedValue --
-//   A tagged union of value types. All values have the same initial
-//   layout as FbleUnpackedValue. The tag can be used to determine what kind
-//   of value this is to get access to additional fields of the value by first
-//   casting to that specific type of value.
-struct FbleUnpackedValue {
-  FbleValueTag tag;
-};
-
 // FbleGenericTypeValue --
 //   Used as an instance of an fble type for those types that don't need any
 //   extra information at runtime.
 extern FbleValue FbleGenericTypeValue;
-
-// FbleStructValue -- Internal to value.c
-// FbleUnionValue -- Internal to value.c
-// FbleLinkValue -- Internal to value.c
-// FblePortValue -- Internal to value.c
-// FbleRefValue -- Internal to value.c
-
-// FbleFuncValue -- FBLE_FUNC_VALUE
-//
-// Fields:
-//   executable - The code for the function.
-//   profile_base_id - An offset to use for profile blocks referenced from this
-//                     function.
-//   statics - static variables captured by the function.
-//             Size is executable->statics
-//
-// Note: Function values are used for both pure functions and processes. We
-// don't distinguish between the two at runtime, except that
-// executable->args == 0 suggests this is for a process instead of a function.
-struct FbleFuncValue {
-  FbleUnpackedValue _base;
-  FbleExecutable* executable;
-  size_t profile_base_id;
-  FbleValue statics[];
-};
-
-// FbleProcValue -- FBLE_PROC_VALUE
-//   A proc value is represented as a function that takes no arguments.
-#define FBLE_PROC_VALUE FBLE_FUNC_VALUE
-typedef FbleFuncValue FbleProcValue;
-
-// FbleNewValue --
-//   Allocate a new value of the given type.
-//
-// Inputs:
-//   heap - the heap to allocate the value on
-//   T - the type of the value
-//
-// Results:
-//   The newly allocated value. The value does not have its tag initialized.
-//
-// Side effects:
-//   Allocates a value that should be released when it is no longer needed.
-#define FbleNewValue(heap, T) ((T*) FbleNewHeapObject(heap, sizeof(T)))
-
-// FbleNewValueExtra --
-//   Allocate a new value of the given type with some extra space.
-//
-// Inputs:
-//   heap - the heap to allocate the value on
-//   T - the type of the value
-//   size - the number of bytes of extra space to include in the allocated
-//   object.
-//
-// Results:
-//   The newly allocated value with extra space.
-//
-// Side effects:
-//   Allocates a value that should be released when it is no longer needed.
-#define FbleNewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
-
-// FbleValueIsUnpacked --
-//   Test whether a value is unpacked.
-//
-// Inputs:
-//   FbleValue value - the value to test.
-//
-// Results:
-//   bool true if the value is unpacked, false otherwise.
-//
-// Note:
-//   This is a macro instead of a function because I assume (without
-//   verification) that making it a function would introduce a silly amount of
-//   overhead.
-#define FbleValueIsUnpacked(value) ((value.packed & 1) == 0)
-
-// FbleWrapUnpackedValue --
-//   Wrap an FbleUnpackedValue* as an FbleValue.
-FbleValue FbleWrapUnpackedValue(FbleUnpackedValue* value);
 
 // FbleNewFuncValue --
 //   Allocates a new FbleFuncValue that runs the given executable.
