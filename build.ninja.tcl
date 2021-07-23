@@ -26,9 +26,6 @@ puts {
 rule rule
   description = $out
   command = $cmd
-
-pool fbleobj_pool
-  depth = 1
 }
 
 # build --
@@ -102,7 +99,7 @@ proc fbleobj { obj compile module_path search_path export args } {
   build $s "$compile $args" "$compile $export $module_path $search_path > $s"
 
   set cmd "as -o $obj $s"
-  build $obj "$s $args" $cmd "pool = fbleobj_pool"
+  build $obj "$s $args" $cmd
 }
 
 # lib --

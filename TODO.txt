@@ -4,10 +4,6 @@
  -  Figure out a nicer API for Adder.
  -  Add tests for the Adder module.
 
-* Remove limit on fbleobj pool.
- - I don't think we need it anymore since we optimized the code generated for
-   literals.
-
 # Clean up FbleValue API.
  - Change FbleNewFuncValue to take statics as an array argument.
  - Clean up value.c.
