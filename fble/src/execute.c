@@ -19,7 +19,7 @@
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
 static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads);
-static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue* args, FbleProfile* profile);
+static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
 // PopStackFrame --
 //   Pops the top frame off the thread's stack.
@@ -125,7 +125,7 @@ static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
 //   Does not take ownership of the function or the args.
-static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue* args, FbleProfile* profile)
+static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
   FbleThreadV threads;
   FbleVectorInit(threads);
@@ -135,7 +135,7 @@ static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue
   main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
   FbleVectorAppend(threads, main_thread);
 
-  FbleValue result = FbleNullValue;
+  FbleValue* result = NULL;
   FbleThreadCall(heap, &result, func, args, main_thread);
 
   while (threads.size > 0) {
@@ -170,7 +170,7 @@ static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue
           AbortThreads(heap, &threads);
           FbleReleaseValue(heap, result);
           FbleFree(threads.xs);
-          return FbleNullValue;
+          return NULL;
         }
       }
     }
@@ -184,7 +184,7 @@ static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue
       AbortThreads(heap, &threads);
       FbleReleaseValue(heap, result);
       FbleFree(threads.xs);
-      return FbleNullValue;
+      return NULL;
     }
   }
 
@@ -195,7 +195,7 @@ static FbleValue Eval(FbleValueHeap* heap, FbleIO* io, FbleValue func, FbleValue
 }
 
 // FbleThreadCall -- see documentation in execute.h
-void FbleThreadCall(FbleValueHeap* heap, FbleValue* result, FbleValue func, FbleValue* args, FbleThread* thread)
+void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleExecutable* executable = FbleFuncValueExecutable(func);
   if (thread->profile != NULL) {
@@ -204,7 +204,7 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue* result, FbleValue func, Fble
 
   size_t locals = executable->locals;
 
-  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue));
+  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
   stack->joins = 0;
   stack->func = func;
   FbleRetainValue(heap, func);
@@ -220,7 +220,7 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue* result, FbleValue func, Fble
 }
 
 // FbleThreadTailCall -- see documentation in execute.h
-void FbleThreadTailCall(FbleValueHeap* heap, FbleValue func, FbleValue* args, FbleThread* thread)
+void FbleThreadTailCall(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleExecutable* executable = FbleFuncValueExecutable(func);
   if (thread->profile != NULL) {
@@ -229,7 +229,7 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleValue func, FbleValue* args, Fb
 
   size_t locals = executable->locals;
 
-  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue));
+  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
   stack->joins = 0;
   stack->func = func;
   stack->pc = 0;
@@ -245,7 +245,7 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleValue func, FbleValue* args, Fb
 }
 
 // FbleThreadFork -- see documentation in execute.h
-void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue* result, FbleValue func, FbleValue* args)
+void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue** result, FbleValue* func, FbleValue** args)
 {
   FbleThread* child = FbleAlloc(FbleThread);
   child->stack = parent->stack;
@@ -256,7 +256,7 @@ void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* paren
 }
 
 // FbleThreadReturn -- see documentation in execute.h
-void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue result)
+void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result)
 {
   if (thread->profile != NULL) {
     FbleProfileExitBlock(thread->profile);
@@ -266,16 +266,16 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue result)
 }
 
 // FbleEval -- see documentation in fble.h
-FbleValue FbleEval(FbleValueHeap* heap, FbleValue program, FbleProfile* profile)
+FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {
   return FbleApply(heap, program, NULL, profile);
 }
 
 // FbleApply -- see documentation in fble.h
-FbleValue FbleApply(FbleValueHeap* heap, FbleValue func, FbleValue* args, FbleProfile* profile)
+FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
   FbleIO io = { .io = &FbleNoIO, };
-  FbleValue result = Eval(heap, &io, func, args, profile);
+  FbleValue* result = Eval(heap, &io, func, args, profile);
   return result;
 }
 
@@ -286,7 +286,7 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
 }
 
 // FbleExec -- see documentation in fble.h
-FbleValue FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue proc, FbleProfile* profile)
+FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile)
 {
   return Eval(heap, io, proc, NULL, profile);
 }

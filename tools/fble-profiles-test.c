@@ -140,19 +140,19 @@ int main(int argc, char* argv[])
 
   FbleProfile* profile = FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
-  if (FbleValueIsNull(linked)) {
+  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
+  if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAIL;
   }
 
-  FbleValue result = FbleEval(heap, linked, profile);
+  FbleValue* result = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
 
-  if (!FbleValueIsNull(result) && FbleIsProcValue(result)) {
+  if (result != NULL && FbleIsProcValue(result)) {
     FbleIO io = { .io = &FbleNoIO, };
-    FbleValue exec_result = FbleExec(heap, &io, result, profile);
+    FbleValue* exec_result = FbleExec(heap, &io, result, profile);
     FbleReleaseValue(heap, result);
     result = exec_result;
   }
@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
   FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 
-  if (FbleValueIsNull(result)) {
+  if (result == NULL) {
     FbleFreeProfile(profile);
     return EX_FAIL;
   }

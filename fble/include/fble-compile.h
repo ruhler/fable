@@ -112,7 +112,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
 // The generated code will export a single function with the given name with
 // the following signature
 //  
-//   FbleValue <name>(FbleValueHeap* heap);
+//   FbleValue* <name>(FbleValueHeap* heap);
 //
 // Calling this function will allocate an FbleValue representing a zero
 // argument function that can be executed to compute the value of the given

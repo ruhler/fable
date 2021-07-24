@@ -5,10 +5,11 @@
  -  Add tests for the Adder module.
 
 # Clean up FbleValue API.
+ - Can FbleStrictValue be made internal?
  - Change FbleNewFuncValue to take statics as an array argument.
+   Maybe like StructValue: have vararg (for humans and generated assembly) and
+   array (for interpreter) versions.
  - Clean up value.c.
- - Change FbleValue to raw intptr_t.
-   Switch FbleNullValue back to NULL.
  - Remove Fble prefixes on types internal to value.c and otherwise cleanup
    value.
 

@@ -15,7 +15,7 @@
 // FbleGenericTypeValue --
 //   Used as an instance of an fble type for those types that don't need any
 //   extra information at runtime.
-extern FbleValue FbleGenericTypeValue;
+extern FbleValue* FbleGenericTypeValue;
 
 // FbleNewFuncValue --
 //   Allocates a new FbleFuncValue that runs the given executable.
@@ -32,7 +32,7 @@ extern FbleValue FbleGenericTypeValue;
 // Side effects:
 //   Allocates a new FbleFuncValue that should be freed using FbleReleaseValue
 //   when it is no longer needed.
-FbleValue FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id);
+FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id);
 
 // FbleFuncValueStatics --
 //   Gets the array of static variables used by a function.
@@ -46,7 +46,7 @@ FbleValue FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size
 // Side effects:
 //   The returned pointer is only valid for as long as the function value
 //   remains alive.
-FbleValue* FbleFuncValueStatics(FbleValue func);
+FbleValue** FbleFuncValueStatics(FbleValue* func);
 
 // FbleFuncValueProfileBaseId --
 //   Gets the profile base id associated with a function.
@@ -56,7 +56,7 @@ FbleValue* FbleFuncValueStatics(FbleValue func);
 //
 // Results:
 //   The profile base id of the function.
-size_t FbleFuncValueProfileBaseId(FbleValue func);
+size_t FbleFuncValueProfileBaseId(FbleValue* func);
 
 // FbleFuncValueExecutable --
 //   Gets the FbleExecutable associated with a function.
@@ -70,7 +70,7 @@ size_t FbleFuncValueProfileBaseId(FbleValue func);
 // Side effects:
 //   The returned pointer is only valid for as long as the function value
 //   remains alive.
-FbleExecutable* FbleFuncValueExecutable(FbleValue func);
+FbleExecutable* FbleFuncValueExecutable(FbleValue* func);
 
 // FbleNewLinkValue --
 //   Create a new link value.
@@ -86,7 +86,7 @@ FbleExecutable* FbleFuncValueExecutable(FbleValue func);
 // * Allocates new get and put values connected together with a link.
 // * The returned get and put values must be freed using FbleReleaseValue when
 //   no longer in use.
-void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue* get, FbleValue* put);
+void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue** get, FbleValue** put);
 
 // FbleNewListValue --
 //   Create a new list value from the given list of arguments.
@@ -102,7 +102,7 @@ void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue* get, 
 // Side effects:
 //   The returned value must be freed using FbleReleaseValue when no longer in
 //   use.
-FbleValue FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue* args);
+FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
 // FbleNewLiteralValue --
 //   Create a new literal value from the given list of letters.
@@ -118,7 +118,7 @@ FbleValue FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue* args);
 // Side effects:
 //   The returned value must be freed using FbleReleaseValue when no longer in
 //   use.
-FbleValue FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 
 // FbleNewRefValue --
 //   Create a new reference value.
@@ -132,7 +132,7 @@ FbleValue FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
 // Side effects:
 //   The returned value must be freed using FbleReleaseValue when no longer in
 //   use.
-FbleValue FbleNewRefValue(FbleValueHeap* heap);
+FbleValue* FbleNewRefValue(FbleValueHeap* heap);
 
 // FbleAssignRefValue
 //   Assign a RefValue to point to another value.
@@ -148,7 +148,7 @@ FbleValue FbleNewRefValue(FbleValueHeap* heap);
 //
 // Side effects:
 //   Updates ref to point to value.
-bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue ref, FbleValue value);
+bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
 
 // FbleStrictValue --
 //   Get the strict value associated with the given value, which will either
@@ -164,6 +164,6 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue ref, FbleValue value);
 //
 // Side effects:
 //   None.
-FbleValue FbleStrictValue(FbleValue value);
+FbleValue* FbleStrictValue(FbleValue* value);
 
 #endif // FBLE_INTERNAL_VALUE_H_

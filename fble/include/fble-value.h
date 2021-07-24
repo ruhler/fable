@@ -10,33 +10,15 @@
 
 typedef struct FbleHeap FbleValueHeap;
 
-// FbleUnpackedValue --
-//   An fble value that is allocated on the value heap.
-typedef struct FbleUnpackedValue FbleUnpackedValue;
-
-// FblePackedValue --
-//   An fble value that is packed into bits.
-typedef intptr_t FblePackedValue;
-
 // FbleValue --
-//   An fble value.
-//
-// If the least significant bit is 0, the value is unpacked. Otherwise the
-// value is packed.
-typedef union {
-  FbleUnpackedValue* unpacked;
-  FblePackedValue packed;
-} FbleValue;
-
-// FbleFuncValue --
-//   An fble function value.
-typedef struct FbleFuncValue FbleFuncValue;
+//   Abstract type for fble values.
+typedef struct FbleValue FbleValue;
 
 // FbleValueV --
 //   A vector of FbleValue*
 typedef struct {
   size_t size;
-  FbleValue* xs;
+  FbleValue** xs;
 } FbleValueV;
 
 // FbleNewValueHeap --
@@ -63,23 +45,6 @@ FbleValueHeap* FbleNewValueHeap();
 //   not be used after this call.
 void FbleFreeValueHeap(FbleValueHeap* heap);
 
-// FbleNullValue --
-//   The NULL FbleValue.
-extern FbleValue FbleNullValue;
-
-// FbleValueIsNull --
-//   Test whether the given value is NULL or not.
-//
-// Inputs:
-//   value - the value to test.
-//
-// Results:
-//   true if the value is NULL, false otherwise.
-//
-// Side effects:
-//   None.
-bool FbleValueIsNull(FbleValue value);
-
 // FbleRetainValue --
 //   Keep the given value alive until a corresponding FbleReleaseValue is
 //   called.
@@ -91,7 +56,7 @@ bool FbleValueIsNull(FbleValue value);
 //   Causes the value to be retained until a corresponding FbleReleaseValue
 //   calls is made on the value. FbleReleaseValue must be called when the
 //   value is no longer needed.
-void FbleRetainValue(FbleValueHeap* heap, FbleValue src);
+void FbleRetainValue(FbleValueHeap* heap, FbleValue* src);
 
 // FbleReleaseValue --
 //
@@ -109,7 +74,7 @@ void FbleRetainValue(FbleValueHeap* heap, FbleValue src);
 // Side effect:
 //   Decrements the strong reference count of the value and frees resources
 //   associated with the value if there are no more references to it.
-void FbleReleaseValue(FbleValueHeap* heap, FbleValue value);
+void FbleReleaseValue(FbleValueHeap* heap, FbleValue* value);
 
 // FbleValueAddRef --
 //   Notify the value heap of a new reference from src to dst.
@@ -121,7 +86,7 @@ void FbleReleaseValue(FbleValueHeap* heap, FbleValue value);
 //
 // Side effects:
 //   Causes the dst value to be retained for at least as long as the src value.
-void FbleValueAddRef(FbleValueHeap* heap, FbleValue src, FbleValue dst);
+void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
 
 // FbleValueFullGc --
 //   Perform a full garbage collection on the value heap. Frees any
@@ -151,7 +116,7 @@ void FbleValueFullGc(FbleValueHeap* heap);
 // Side effects:
 //   The returned struct value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...);
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...);
 
 // FbleNewStructValue_ --
 //   Create a new struct value with given arguments.
@@ -168,7 +133,7 @@ FbleValue FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...);
 // Side effects:
 //   The returned struct value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue* args);
+FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
 // FbleStructValueAccess --
 //   Gets the given field value of a struct value.
@@ -186,7 +151,7 @@ FbleValue FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue* args)
 // Side effects:
 //   Behavior is undefined if the object is not a struct value or the field
 //   is invalid.
-FbleValue FbleStructValueAccess(FbleValue object, size_t field);
+FbleValue* FbleStructValueAccess(FbleValue* object, size_t field);
 
 // FbleNewUnionValue --
 //   Create a new union value with given tag and argument.
@@ -202,7 +167,7 @@ FbleValue FbleStructValueAccess(FbleValue object, size_t field);
 // Side effects:
 //   The returned union value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue arg);
+FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg);
 
 // FbleNewEnumValue --
 //   Create a new union value with given tag. Convenience function for
@@ -218,7 +183,7 @@ FbleValue FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue arg);
 // Side effects:
 //   The returned union value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
+FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
 
 // FbleUnionValueTag --
 //   Gets the tag of a union value.
@@ -232,7 +197,7 @@ FbleValue FbleNewEnumValue(FbleValueHeap* heap, size_t tag);
 // Side effects:
 //   Behavior is undefined if the object is not a union value.
 //   
-size_t FbleUnionValueTag(FbleValue object);
+size_t FbleUnionValueTag(FbleValue* object);
 
 // FbleUnionValueAccess --
 //   Gets the argument of a union value.
@@ -246,7 +211,7 @@ size_t FbleUnionValueTag(FbleValue object);
 // Side effects:
 //   Behavior is undefined if the object is not a union value.
 //   
-FbleValue FbleUnionValueAccess(FbleValue object);
+FbleValue* FbleUnionValueAccess(FbleValue* object);
 
 // FbleIsProcValue --
 //   Returns true if the value represents a process value.
@@ -259,7 +224,7 @@ FbleValue FbleUnionValueAccess(FbleValue object);
 //
 // Side effects:
 //   none.
-bool FbleIsProcValue(FbleValue value);
+bool FbleIsProcValue(FbleValue* value);
 
 // FbleNewInputPortValue --
 //   Create a new input port value with given id.
@@ -275,7 +240,7 @@ bool FbleIsProcValue(FbleValue value);
 // Side effects:
 //   The returned port value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue FbleNewInputPortValue(FbleValueHeap* heap, FbleValue* data, FbleBlockId profile);
+FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile);
 
 // FbleNewOutputPortValue --
 //   Create a new output port value with given id.
@@ -292,7 +257,7 @@ FbleValue FbleNewInputPortValue(FbleValueHeap* heap, FbleValue* data, FbleBlockI
 // Side effects:
 //   The returned port value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue* data, FbleBlockId profile);
+FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile);
 
 // FbleEval --
 //   Evaluate a linked program. The program is assumed to be a zero argument
@@ -313,7 +278,7 @@ FbleValue FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue* data, FbleBlock
 // * Prints an error message to stderr in case of a runtime error.
 // * Updates profiling information in profile based on the execution of the
 //   program.
-FbleValue FbleEval(FbleValueHeap* heap, FbleValue program, FbleProfile* profile);
+FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile);
 
 // FbleApply --
 //   Apply a function to the given arguments.
@@ -334,7 +299,7 @@ FbleValue FbleEval(FbleValueHeap* heap, FbleValue program, FbleProfile* profile)
 // * Prints warning messages to stderr.
 // * Prints an error message to stderr in case of error.
 // * Updates the profile with stats from the evaluation.
-FbleValue FbleApply(FbleValueHeap* heap, FbleValue func, FbleValue* args, FbleProfile* profile);
+FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
 // FbleIO --
 //   An interface for reading or writing values over external ports.
@@ -404,6 +369,6 @@ bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block);
 //   Prints warning messages to stderr.
 //   Prints an error message to stderr in case of error.
 //   Updates the profile with stats from the evaluation.
-FbleValue FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue proc, FbleProfile* profile);
+FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile);
 
 #endif // FBLE_VALUE_H_

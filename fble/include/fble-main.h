@@ -83,6 +83,6 @@ void FbleCompiledMain(FbleExecutableProgram* program);
 //
 // Where FbleCompiledMain defaults to NULL, but can be overridden at compile
 // time using something like -DFbleCompiledMain=FbleCompiledMain.
-FbleValue FbleMain(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* compiled_main, int argc, char** argv);
+FbleValue* FbleMain(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* compiled_main, int argc, char** argv);
 
 #endif // FBLE_MAIN_H_

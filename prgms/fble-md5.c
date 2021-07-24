@@ -16,11 +16,11 @@ typedef struct {
   FbleIO io;
   FILE* fin;
 
-  FbleValue input;
+  FbleValue* input;
 } Md5IO;
 
 static void PrintUsage(FILE* stream);
-static FbleValue MkBitN(FbleValueHeap* heap, size_t n, uint64_t data);
+static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 int main(int argc, char* argv[]);
 
@@ -58,7 +58,7 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   Allocates fblc values.
-static FbleValue MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
+static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 {
   if (n == 1) {
     return FbleNewEnumValue(heap, data & 0x1);
@@ -66,9 +66,9 @@ static FbleValue MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 
   assert(n % 2 == 0 && "Invalid n supplied");
   int halfn = n / 2;
-  FbleValue hi = MkBitN(heap, halfn, (data >> halfn));
-  FbleValue lo = MkBitN(heap, halfn, data);
-  FbleValue result = FbleNewStructValue(heap, 2, hi, lo);
+  FbleValue* hi = MkBitN(heap, halfn, (data >> halfn));
+  FbleValue* lo = MkBitN(heap, halfn, data);
+  FbleValue* result = FbleNewStructValue(heap, 2, hi, lo);
   FbleReleaseValue(heap, hi);
   FbleReleaseValue(heap, lo);
   return result;
@@ -80,7 +80,7 @@ static FbleValue MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   Md5IO* mio = (Md5IO*)io;
-  if (block && FbleValueIsNull(mio->input)) {
+  if (block && mio->input == NULL) {
     // Read the next byte from the file.
     int c = fgetc(mio->fin);
     if (c == EOF) {
@@ -88,7 +88,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       mio->input = FbleNewEnumValue(heap, 1);
     } else {
       // Maybe<Bit8>:just(c)
-      FbleValue byte = MkBitN(heap, 8, c);
+      FbleValue* byte = MkBitN(heap, 8, c);
       mio->input = FbleNewUnionValue(heap, 0, byte);
       FbleReleaseValue(heap, byte);
     }
@@ -124,16 +124,16 @@ int main(int argc, char* argv[])
   const char* file = argv[1];
 
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue linked = FbleMain(heap, NULL, FbleCompiledMain, argc - 2, argv + 2);
-  if (FbleValueIsNull(linked)) {
+  FbleValue* linked = FbleMain(heap, NULL, FbleCompiledMain, argc - 2, argv + 2);
+  if (linked == NULL) {
     FbleFreeValueHeap(heap);
     return 1;
   }
 
-  FbleValue func = FbleEval(heap, linked, NULL);
+  FbleValue* func = FbleEval(heap, linked, NULL);
   FbleReleaseValue(heap, linked);
 
-  if (FbleValueIsNull(func)) {
+  if (func == NULL) {
     FbleFreeValueHeap(heap);
     return 1;
   }
@@ -149,28 +149,28 @@ int main(int argc, char* argv[])
   Md5IO mio = {
     .io = { .io = &IO, },
     .fin = fin,
-    .input = FbleNullValue,
+    .input = NULL,
   };
 
-  FbleValue input = FbleNewInputPortValue(heap, &mio.input, 0);
-  FbleValue proc = FbleApply(heap, func, &input, NULL);
+  FbleValue* input = FbleNewInputPortValue(heap, &mio.input, 0);
+  FbleValue* proc = FbleApply(heap, func, &input, NULL);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, input);
 
-  if (FbleValueIsNull(proc)) {
+  if (proc == NULL) {
     FbleFreeValueHeap(heap);
     return 1;
   }
 
-  FbleValue value = FbleExec(heap, &mio.io, proc, NULL);
+  FbleValue* value = FbleExec(heap, &mio.io, proc, NULL);
 
   FbleReleaseValue(heap, proc);
-  assert(FbleValueIsNull(mio.input));
+  assert(mio.input == NULL);
 
   // Print the md5 hash
   char* hex = "0123456789abcdef";
   for (size_t i = 0; i < 32; ++i) {
-    FbleValue h = FbleStructValueAccess(value, i);
+    FbleValue* h = FbleStructValueAccess(value, i);
     size_t tag = FbleUnionValueTag(h);
     assert(tag < 16);
     printf("%c", hex[tag]);
