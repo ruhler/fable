@@ -795,3 +795,42 @@ FbleDataTypeValue and add an FbleNewDataTypeValue constructor. For now don't
 worry about having an external API to read the type. So we have two kinds of
 type values: Generic and DataType.
 
+---
+
+Before having full type information, we should be able to get some idea of the
+performance potential for this approach by trying to do what packing we can
+without the explicit type information.
+
+Round 1:
+* pack Unit as 1, pack tagged tag: Unit as {tag,1}.
+
+Round 2:
+* pack struct as:
+   {1, arg0, 1, arg1, ..., 0}
+* pack union as:
+   {1, tag[0], 1, tag[1], ..., 0, arg}
+
+In other words, use unary representation to count the number of arguments and
+the number of tag bits.
+
+Hopefully Round 1 gives us a sense of the potential benefits without the cost
+of unpacking. Round 2 shows more potential benefits weighed against the cost
+of unpacking. Round 3 would be having sufficient type information to perfectly
+pack values, which weighs the cost of coordinating that type information and
+unpacking via that type information against the benefits of perfectly packed
+values.
+
+fble bench interpreted:  7m02s -> 6m41s
+fble bench compiled:     4m40s -> 4m35s
+
+Not as much improvement as I had hoped, and I'm surprised to see greater
+improvement in the interpreted code than the compiled code. Shouldn't we
+expect more improvement in the compiled code, which in theory spends a greater
+percentage of time in GC?
+
+Profiling hints that most of the improvement came from union packing. I wonder
+if everyone uses the same instance of 'Unit' already, so that doesn't help
+anything.
+
+There's potentially much more value to gain from Round 2, I hope?
+

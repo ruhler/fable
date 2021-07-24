@@ -174,9 +174,9 @@ int main(int argc, char* argv[])
   FbleFreeProfile(profile);
 
   // The memory samples can be a little bit noisy. Be lenient to that.
-  // Hopefully small memory growth will not be able to hide within 10% of the
+  // Hopefully small memory growth will not be able to hide within 5% of the
   // small heap size.
-  size_t noise = 10 * max_small_n / 100;
+  size_t noise = 5 * max_small_n / 100;
   if (!growth && max_large_n > max_small_n + noise) {
     fprintf(stderr, "memory growth of %zi bytes\n", max_large_n - max_small_n);
     return EX_FAIL;

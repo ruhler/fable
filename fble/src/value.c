@@ -45,6 +45,9 @@ struct FbleValue {
 //   STRUCT_VALUE
 //
 // Represents a struct value.
+//
+// Packings:
+// * Unit is packed as 1.
 typedef struct {
   FbleValue _base;
   size_t fieldc;
@@ -55,6 +58,9 @@ typedef struct {
 //   UNION_VALUE
 //
 // Represents a union value.
+//
+// Packings:
+// * If the argument is Unit, we pack the union as {tag, 1}.
 typedef struct {
   FbleValue _base;
   size_t tag;
@@ -158,6 +164,7 @@ typedef struct {
 #define NewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
 
 FbleValue* FbleGenericTypeValue = (FbleValue*)1;
+static FbleValue* UnitValue = (FbleValue*)1;
 
 static void OnFree(FbleValueHeap* heap, FbleValue* value);
 static void Ref(FbleHeapCallback* callback, FbleValue* value);
@@ -322,6 +329,10 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 // FbleNewStructValue -- see documentation in fble-value.h
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...)
 {
+  if (argc == 0) {
+    return UnitValue;
+  }
+
   StructValue* value = NewValueExtra(heap, StructValue, sizeof(FbleValue*) * argc);
   value->_base.tag = STRUCT_VALUE;
   value->fieldc = argc;
@@ -342,6 +353,10 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...)
 // FbleNewStructValue_ -- see documentation in fble-value.h
 FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
+  if (argc == 0) {
+    return UnitValue;
+  }
+
   StructValue* value = NewValueExtra(heap, StructValue, sizeof(FbleValue*) * argc);
   value->_base.tag = STRUCT_VALUE;
   value->fieldc = argc;
@@ -370,6 +385,11 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 // FbleNewUnionValue -- see documentation in fble-value.h
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 {
+  if (arg == UnitValue) {
+    intptr_t packed = (tag << 1) | 1;
+    return (FbleValue*)packed;
+  }
+
   UnionValue* union_value = NewValue(heap, UnionValue);
   union_value->_base.tag = UNION_VALUE;
   union_value->tag = tag;
@@ -380,16 +400,20 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 // FbleNewEnumValue -- see documentation in fble-value.h
 FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 {
-  FbleValue* unit = FbleNewStructValue(heap, 0);
-  FbleValue* result = FbleNewUnionValue(heap, tag, unit);
-  FbleReleaseValue(heap, unit);
-  return result;
+  intptr_t packed = (tag << 1) | 1;
+  return (FbleValue*)packed;
 }
 
 // FbleUnionValueTag -- see documentation in fble-value.h
 size_t FbleUnionValueTag(FbleValue* object)
 {
   object = FbleStrictValue(object);
+
+  if (PACKED(object)) {
+    size_t packed = (size_t)object;
+    return packed >> 1;
+  };
+
   assert(object != NULL && object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->tag;
@@ -399,6 +423,11 @@ size_t FbleUnionValueTag(FbleValue* object)
 FbleValue* FbleUnionValueAccess(FbleValue* object)
 {
   object = FbleStrictValue(object);
+
+  if (PACKED(object)) {
+    return UnitValue;
+  };
+
   assert(object != NULL && object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
   return value->arg;
