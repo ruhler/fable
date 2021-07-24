@@ -9,9 +9,9 @@
  - Change FbleNewFuncValue to take statics as an array argument.
    Maybe like StructValue: have vararg (for humans and generated assembly) and
    array (for interpreter) versions.
- - Clean up value.c.
- - Remove Fble prefixes on types internal to value.c and otherwise cleanup
-   value.
+
+* Try packing Unit and tagged Unit values.
+ Just to see what kind of effect that may have on performance.
 
 * Implement support for packed data values.
  - Add FbleDataTypeValue.

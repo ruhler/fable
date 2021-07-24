@@ -13,55 +13,55 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// FbleValueTag --
+// PACKED --
+//   Test whether a value is packed into an FbleValue* pointer.
+//
+// IMPORTANT: Some fble values are packed directly in the FbleValue* pointer
+// to save space. An FbleValue* only points to an FbleValue if the least
+// significant bit of the pointer is 0.
+#define PACKED(x) (((intptr_t)x) & 1)
+
+// ValueTag --
 //   A tag used to distinguish among different kinds of FbleValue.
 typedef enum {
-  FBLE_STRUCT_VALUE,
-  FBLE_UNION_VALUE,
-  FBLE_FUNC_VALUE,
-  FBLE_LINK_VALUE,
-  FBLE_PORT_VALUE,
-  FBLE_REF_VALUE,
-} FbleValueTag;
+  STRUCT_VALUE,
+  UNION_VALUE,
+  FUNC_VALUE,
+  LINK_VALUE,
+  PORT_VALUE,
+  REF_VALUE,
+} ValueTag;
 
 // FbleValue --
 //   A tagged union of value types. All values have the same initial layout as
 //   FbleValue. The tag can be used to determine what kind of value this is to
 //   get access to additional fields of the value by first casting to that
 //   specific type of value.
-//
-// IMPORTANT: some values are packed directly in the FbleValue* pointer to
-// save space. An FbleValue* only points to an FbleValue if the least
-// significant bit of the pointer is 0.
 struct FbleValue {
-  FbleValueTag tag;
+  ValueTag tag;
 };
 
-// PACKED --
-//   Test whether a value is packed into an FbleValue* pointer.
-#define PACKED(x) (((intptr_t)x) & 1)
-
-// FbleStructValue --
-//   FBLE_STRUCT_VALUE
+// StructValue --
+//   STRUCT_VALUE
 //
 // Represents a struct value.
 typedef struct {
   FbleValue _base;
   size_t fieldc;
   FbleValue* fields[];
-} FbleStructValue;
+} StructValue;
 
-// FbleUnionValue --
-//   FBLE_UNION_VALUE
+// UnionValue --
+//   UNION_VALUE
 //
 // Represents a union value.
 typedef struct {
   FbleValue _base;
   size_t tag;
   FbleValue* arg;
-} FbleUnionValue;
+} UnionValue;
 
-// FbleFuncValue -- FBLE_FUNC_VALUE
+// FuncValue -- FUNC_VALUE
 //
 // Fields:
 //   executable - The code for the function.
@@ -78,32 +78,27 @@ typedef struct {
   FbleExecutable* executable;
   size_t profile_base_id;
   FbleValue* statics[];
-} FbleFuncValue;
+} FuncValue;
 
-// FbleProcValue -- FBLE_PROC_VALUE
-//   A proc value is represented as a function that takes no arguments.
-#define FBLE_PROC_VALUE FBLE_FUNC_VALUE
-typedef FbleFuncValue FbleProcValue;
-
-// FbleValues --
+// Values --
 //   A non-circular singly linked list of values.
-typedef struct FbleValues {
+typedef struct Values {
   FbleValue* value;
-  struct FbleValues* next;
-} FbleValues;
+  struct Values* next;
+} Values;
 
-// FbleLinkValue -- FBLE_LINK_VALUE
+// LinkValue -- LINK_VALUE
 //   Holds the list of values on a link. Values are added to the tail and taken
 //   from the head. If there are no values on the list, both head and tail are
 //   set to NULL.
 typedef struct {
   FbleValue _base;
-  FbleValues* head;
-  FbleValues* tail;
-} FbleLinkValue;
+  Values* head;
+  Values* tail;
+} LinkValue;
 
-// FblePortValue --
-//   FBLE_PORT_VALUE
+// PortValue --
+//   PORT_VALUE
 //
 // Use for input and output values linked to external IO.
 //
@@ -113,10 +108,10 @@ typedef struct {
 typedef struct {
   FbleValue _base;
   FbleValue** data;
-} FblePortValue;
+} PortValue;
 
-// FbleRefValue --
-//   FBLE_REF_VALUE
+// RefValue --
+//   REF_VALUE
 //
 // An implementation-specific value introduced to support recursive values and
 // not yet computed values.
@@ -130,9 +125,9 @@ typedef struct {
 typedef struct {
   FbleValue _base;
   FbleValue* value;
-} FbleRefValue;
+} RefValue;
 
-// FbleNewValue --
+// NewValue --
 //   Allocate a new value of the given type.
 //
 // Inputs:
@@ -144,9 +139,9 @@ typedef struct {
 //
 // Side effects:
 //   Allocates a value that should be released when it is no longer needed.
-#define FbleNewValue(heap, T) ((T*) FbleNewHeapObject(heap, sizeof(T)))
+#define NewValue(heap, T) ((T*) FbleNewHeapObject(heap, sizeof(T)))
 
-// FbleNewValueExtra --
+// NewValueExtra --
 //   Allocate a new value of the given type with some extra space.
 //
 // Inputs:
@@ -160,7 +155,7 @@ typedef struct {
 //
 // Side effects:
 //   Allocates a value that should be released when it is no longer needed.
-#define FbleNewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
+#define NewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
 
 FbleValue* FbleGenericTypeValue = (FbleValue*)1;
 
@@ -230,28 +225,28 @@ void FbleValueFullGc(FbleValueHeap* heap)
 static void OnFree(FbleValueHeap* heap, FbleValue* value)
 {
   switch (value->tag) {
-    case FBLE_STRUCT_VALUE: return;
-    case FBLE_UNION_VALUE: return;
+    case STRUCT_VALUE: return;
+    case UNION_VALUE: return;
 
-    case FBLE_FUNC_VALUE: {
-      FbleFuncValue* v = (FbleFuncValue*)value;
+    case FUNC_VALUE: {
+      FuncValue* v = (FuncValue*)value;
       FbleFreeExecutable(v->executable);
       return;
     }
 
-    case FBLE_LINK_VALUE: {
-      FbleLinkValue* v = (FbleLinkValue*)value;
-      FbleValues* curr = v->head;
+    case LINK_VALUE: {
+      LinkValue* v = (LinkValue*)value;
+      Values* curr = v->head;
       while (curr != NULL) {
-        FbleValues* tmp = curr;
+        Values* tmp = curr;
         curr = curr->next;
         FbleFree(tmp);
       }
       return;
     }
 
-    case FBLE_PORT_VALUE: return;
-    case FBLE_REF_VALUE: return;
+    case PORT_VALUE: return;
+    case REF_VALUE: return;
   }
 
   UNREACHABLE("Should not get here");
@@ -282,42 +277,42 @@ static void Ref(FbleHeapCallback* callback, FbleValue* value)
 static void Refs(FbleHeapCallback* callback, FbleValue* value)
 {
   switch (value->tag) {
-    case FBLE_STRUCT_VALUE: {
-      FbleStructValue* sv = (FbleStructValue*)value;
+    case STRUCT_VALUE: {
+      StructValue* sv = (StructValue*)value;
       for (size_t i = 0; i < sv->fieldc; ++i) {
         Ref(callback, sv->fields[i]);
       }
       break;
     }
 
-    case FBLE_UNION_VALUE: {
-      FbleUnionValue* uv = (FbleUnionValue*)value;
+    case UNION_VALUE: {
+      UnionValue* uv = (UnionValue*)value;
       Ref(callback, uv->arg);
       break;
     }
 
-    case FBLE_FUNC_VALUE: {
-      FbleFuncValue* v = (FbleFuncValue*)value;
+    case FUNC_VALUE: {
+      FuncValue* v = (FuncValue*)value;
       for (size_t i = 0; i < v->executable->statics; ++i) {
         Ref(callback, v->statics[i]);
       }
       break;
     }
 
-    case FBLE_LINK_VALUE: {
-      FbleLinkValue* v = (FbleLinkValue*)value;
-      for (FbleValues* elem = v->head; elem != NULL; elem = elem->next) {
+    case LINK_VALUE: {
+      LinkValue* v = (LinkValue*)value;
+      for (Values* elem = v->head; elem != NULL; elem = elem->next) {
         Ref(callback, elem->value);
       }
       break;
     }
 
-    case FBLE_PORT_VALUE: {
+    case PORT_VALUE: {
       break;
     }
 
-    case FBLE_REF_VALUE: {
-      FbleRefValue* v = (FbleRefValue*)value;
+    case REF_VALUE: {
+      RefValue* v = (RefValue*)value;
       Ref(callback, v->value);
       break;
     }
@@ -327,8 +322,8 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 // FbleNewStructValue -- see documentation in fble-value.h
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...)
 {
-  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
-  value->_base.tag = FBLE_STRUCT_VALUE;
+  StructValue* value = NewValueExtra(heap, StructValue, sizeof(FbleValue*) * argc);
+  value->_base.tag = STRUCT_VALUE;
   value->fieldc = argc;
 
   va_list ap;
@@ -347,8 +342,8 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...)
 // FbleNewStructValue_ -- see documentation in fble-value.h
 FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
-  FbleStructValue* value = FbleNewValueExtra(heap, FbleStructValue, sizeof(FbleValue*) * argc);
-  value->_base.tag = FBLE_STRUCT_VALUE;
+  StructValue* value = NewValueExtra(heap, StructValue, sizeof(FbleValue*) * argc);
+  value->_base.tag = STRUCT_VALUE;
   value->fieldc = argc;
 
   for (size_t i = 0; i < argc; ++i) {
@@ -366,8 +361,8 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** arg
 FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 {
   object = FbleStrictValue(object);
-  assert(object != NULL && object->tag == FBLE_STRUCT_VALUE);
-  FbleStructValue* value = (FbleStructValue*)object;
+  assert(object != NULL && object->tag == STRUCT_VALUE);
+  StructValue* value = (StructValue*)object;
   assert(field < value->fieldc);
   return value->fields[field];
 }
@@ -375,8 +370,8 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 // FbleNewUnionValue -- see documentation in fble-value.h
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 {
-  FbleUnionValue* union_value = FbleNewValue(heap, FbleUnionValue);
-  union_value->_base.tag = FBLE_UNION_VALUE;
+  UnionValue* union_value = NewValue(heap, UnionValue);
+  union_value->_base.tag = UNION_VALUE;
   union_value->tag = tag;
   union_value->arg = arg;
   FbleValueAddRef(heap, &union_value->_base, arg);
@@ -395,8 +390,8 @@ FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 size_t FbleUnionValueTag(FbleValue* object)
 {
   object = FbleStrictValue(object);
-  assert(object != NULL && object->tag == FBLE_UNION_VALUE);
-  FbleUnionValue* value = (FbleUnionValue*)object;
+  assert(object != NULL && object->tag == UNION_VALUE);
+  UnionValue* value = (UnionValue*)object;
   return value->tag;
 }
 
@@ -404,16 +399,16 @@ size_t FbleUnionValueTag(FbleValue* object)
 FbleValue* FbleUnionValueAccess(FbleValue* object)
 {
   object = FbleStrictValue(object);
-  assert(object != NULL && object->tag == FBLE_UNION_VALUE);
-  FbleUnionValue* value = (FbleUnionValue*)object;
+  assert(object != NULL && object->tag == UNION_VALUE);
+  UnionValue* value = (UnionValue*)object;
   return value->arg;
 }
 
 // FbleNewFuncValue -- see documentation in value.h
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id)
 {
-  FbleFuncValue* v = FbleNewValueExtra(heap, FbleFuncValue, sizeof(FbleValue*) * executable->statics);
-  v->_base.tag = FBLE_FUNC_VALUE;
+  FuncValue* v = NewValueExtra(heap, FuncValue, sizeof(FbleValue*) * executable->statics);
+  v->_base.tag = FUNC_VALUE;
   v->profile_base_id = profile_base_id;
   v->executable = executable;
   v->executable->refcount++;
@@ -423,21 +418,21 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
 // FbleFuncValueStatics -- see documentation in value.h
 FbleValue** FbleFuncValueStatics(FbleValue* func)
 {
-  FbleFuncValue* func_value = (FbleFuncValue*)func;
+  FuncValue* func_value = (FuncValue*)func;
   return func_value->statics;
 }
 
 // FbleFuncValueProfileBaseId -- see documentation in value.h
 size_t FbleFuncValueProfileBaseId(FbleValue* func)
 {
-  FbleFuncValue* func_value = (FbleFuncValue*)func;
+  FuncValue* func_value = (FuncValue*)func;
   return func_value->profile_base_id;
 }
 
 // FbleFuncValueExecutable -- see documentation in value.h
 FbleExecutable* FbleFuncValueExecutable(FbleValue* func)
 {
-  FbleFuncValue* func_value = (FbleFuncValue*)func;
+  FuncValue* func_value = (FuncValue*)func;
   return func_value->executable;
 }
 
@@ -445,8 +440,8 @@ FbleExecutable* FbleFuncValueExecutable(FbleValue* func)
 bool FbleIsProcValue(FbleValue* value)
 {
   if (!PACKED(value)) {
-    FbleProcValue* proc = (FbleProcValue*)value;
-    return value->tag == FBLE_PROC_VALUE && proc->executable->args == 0;
+    FuncValue* proc = (FuncValue*)value;
+    return value->tag == FUNC_VALUE && proc->executable->args == 0;
   }
   return false;
 }
@@ -458,15 +453,15 @@ bool FbleIsProcValue(FbleValue* value)
 static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
   FbleValue* get_port = FbleFuncValueStatics(thread->stack->func)[0];
-  if (get_port->tag == FBLE_LINK_VALUE) {
-    FbleLinkValue* link = (FbleLinkValue*)get_port;
+  if (get_port->tag == LINK_VALUE) {
+    LinkValue* link = (LinkValue*)get_port;
 
     if (link->head == NULL) {
       // Blocked on get.
       return FBLE_EXEC_BLOCKED;
     }
 
-    FbleValues* head = link->head;
+    Values* head = link->head;
     link->head = link->head->next;
     if (link->head == NULL) {
       link->tail = NULL;
@@ -478,8 +473,8 @@ static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
     return FBLE_EXEC_FINISHED;
   }
 
-  assert(get_port->tag == FBLE_PORT_VALUE);
-  FblePortValue* port = (FblePortValue*)get_port;
+  assert(get_port->tag == PORT_VALUE);
+  PortValue* port = (PortValue*)get_port;
   if (*port->data == NULL) {
     // Blocked on get.
     return FBLE_EXEC_BLOCKED;
@@ -509,10 +504,10 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
   FbleValue** statics = FbleFuncValueStatics(thread->stack->func);
   FbleValue* put_port = statics[0];
   FbleValue* arg = statics[1];
-  if (put_port->tag == FBLE_LINK_VALUE) {
-    FbleLinkValue* link = (FbleLinkValue*)put_port;
+  if (put_port->tag == LINK_VALUE) {
+    LinkValue* link = (LinkValue*)put_port;
 
-    FbleValues* tail = FbleAlloc(FbleValues);
+    Values* tail = FbleAlloc(Values);
     tail->value = arg;
     tail->next = NULL;
 
@@ -531,7 +526,7 @@ static FbleExecStatus PutRunFunction(FbleValueHeap* heap, FbleThreadV* threads, 
     return FBLE_EXEC_FINISHED;
   }
 
-  FblePortValue* port = (FblePortValue*)put_port;
+  PortValue* port = (PortValue*)put_port;
   if (*port->data != NULL) {
     // Blocked on put.
     return FBLE_EXEC_BLOCKED;
@@ -616,7 +611,7 @@ static void PartialPutAbortFunction(FbleValueHeap* heap, FbleStack* stack)
 //   argument.
 static FbleValue* NewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId profile)
 {
-  assert(port->tag == FBLE_LINK_VALUE || port->tag == FBLE_PORT_VALUE);
+  assert(port->tag == LINK_VALUE || port->tag == PORT_VALUE);
 
   static FbleExecutable executable = {
     .refcount = 1,
@@ -641,8 +636,8 @@ static FbleValue* NewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId 
 // FbleNewInputPortValue -- see documentation in fble-value.h
 FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile)
 {
-  FblePortValue* get_port = FbleNewValue(heap, FblePortValue);
-  get_port->_base.tag = FBLE_PORT_VALUE;
+  PortValue* get_port = NewValue(heap, PortValue);
+  get_port->_base.tag = PORT_VALUE;
   get_port->data = data;
 
   FbleValue* get = NewGetValue(heap, &get_port->_base, profile);
@@ -691,8 +686,8 @@ static FbleValue* NewPutValue(FbleValueHeap* heap, FbleValue* link, FbleBlockId 
 // FbleNewLinkValue -- see documentation in value.h
 void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue** get, FbleValue** put)
 {
-  FbleLinkValue* link = FbleNewValue(heap, FbleLinkValue);
-  link->_base.tag = FBLE_LINK_VALUE;
+  LinkValue* link = NewValue(heap, LinkValue);
+  link->_base.tag = LINK_VALUE;
   link->head = NULL;
   link->tail = NULL;
 
@@ -704,8 +699,8 @@ void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue** get,
 // FbleNewOutputPortValue -- see documentation in fble-value.h
 FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile)
 {
-  FblePortValue* port_value = FbleNewValue(heap, FblePortValue);
-  port_value->_base.tag = FBLE_PORT_VALUE;
+  PortValue* port_value = NewValue(heap, PortValue);
+  port_value->_base.tag = PORT_VALUE;
   port_value->data = data;
   FbleValue* put = NewPutValue(heap, &port_value->_base, profile);
   FbleReleaseValue(heap, &port_value->_base);
@@ -751,8 +746,8 @@ FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 // FbleNewRefValue -- see documentation in value.h
 FbleValue* FbleNewRefValue(FbleValueHeap* heap)
 {
-  FbleRefValue* rv = FbleNewValue(heap, FbleRefValue);
-  rv->_base.tag = FBLE_REF_VALUE;
+  RefValue* rv = NewValue(heap, RefValue);
+  rv->_base.tag = REF_VALUE;
   rv->value = NULL;
   return &rv->_base;
 }
@@ -762,18 +757,18 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 {
   // Unwrap any accumulated layers of references on the value and make sure we
   // aren't forming a vacuous value.
-  FbleRefValue* unwrap = (FbleRefValue*)value;
-  while (!PACKED(value) && value->tag == FBLE_REF_VALUE && unwrap->value != NULL) {
+  RefValue* unwrap = (RefValue*)value;
+  while (!PACKED(value) && value->tag == REF_VALUE && unwrap->value != NULL) {
     value = unwrap->value;
-    unwrap = (FbleRefValue*)value;
+    unwrap = (RefValue*)value;
   }
 
   if (value == ref) {
     return false;
   }
 
-  FbleRefValue* rv = (FbleRefValue*)ref;
-  assert(rv->_base.tag == FBLE_REF_VALUE);
+  RefValue* rv = (RefValue*)ref;
+  assert(rv->_base.tag == REF_VALUE);
   rv->value = value;
   FbleValueAddRef(heap, ref, value);
   return true;
@@ -782,8 +777,8 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
 // FbleStrictValue -- see documentation in value.h
 FbleValue* FbleStrictValue(FbleValue* value)
 {
-  while (!PACKED(value) && value != NULL && value->tag == FBLE_REF_VALUE) {
-    FbleRefValue* ref = (FbleRefValue*)value;
+  while (!PACKED(value) && value != NULL && value->tag == REF_VALUE) {
+    RefValue* ref = (RefValue*)value;
     value = ref->value;
   }
   return value;
