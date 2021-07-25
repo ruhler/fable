@@ -4,14 +4,18 @@
  -  Figure out a nicer API for Adder.
  -  Add tests for the Adder module.
 
-# Clean up FbleValue API.
+* Figure out why fork race test takes so much memory.
+ - And remove -j 1 from default build once we've figured it out.
+
+* Clean up FbleValue API.
+ - Switch to using FbleValue** args version of FbleNewStructValue for
+   generated assembly.
+   Because it should be cheaper than the vararg now based on how the vararg
+   version is implemented.
  - Can FbleStrictValue be made internal?
  - Change FbleNewFuncValue to take statics as an array argument.
    Maybe like StructValue: have vararg (for humans and generated assembly) and
    array (for interpreter) versions.
-
-* Try packing Unit and tagged Unit values.
- Just to see what kind of effect that may have on performance.
 
 * Implement support for packed data values.
  - Add FbleDataTypeValue.

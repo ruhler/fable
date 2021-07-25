@@ -47,7 +47,12 @@ struct FbleValue {
 // Represents a struct value.
 //
 // Packings:
-// * Unit is packed as 1.
+//   Struct values may be packed. If so, read in order from the least
+//   significant bits:
+//   '0' - to indicate it is a struct value instead of a union value.
+//   <num_args> - unary encoded number of arguments in the struct.
+//     e.g. "0" for 0 args, "10" for 1 arg, "110" for 2 args, and so on.
+//   <args> in order of argument arg0, arg1, etc.
 typedef struct {
   FbleValue _base;
   size_t fieldc;
@@ -60,7 +65,12 @@ typedef struct {
 // Represents a union value.
 //
 // Packings:
-// * If the argument is Unit, we pack the union as {tag, 1}.
+//   Union values may be packed. If so, read in order from the least
+//   significant bit:
+//   '1' - to indicate it is a union value instead of a struct value.
+//   <tag> - the tag, using a unary encoding terminated with 0.
+//     e.g. "0" for 0, "10" for 1, "110" for 2, and so on.
+//   <arg> - the argument.
 typedef struct {
   FbleValue _base;
   size_t tag;
@@ -163,12 +173,18 @@ typedef struct {
 //   Allocates a value that should be released when it is no longer needed.
 #define NewValueExtra(heap, T, size) ((T*) FbleNewHeapObject(heap, sizeof(T) + size))
 
+// FbleGenericTypeValue -- see documentation in fble-value.h
+//
+// Note: the packed value for a generic type matches the packed value of a
+// zero-argument struct value, so that it can be packed along with union and
+// struct values.
 FbleValue* FbleGenericTypeValue = (FbleValue*)1;
-static FbleValue* UnitValue = (FbleValue*)1;
 
 static void OnFree(FbleValueHeap* heap, FbleValue* value);
 static void Ref(FbleHeapCallback* callback, FbleValue* value);
 static void Refs(FbleHeapCallback* callback, FbleValue* value);
+
+static size_t PackedValueLength(intptr_t data);
 
 static FbleExecStatus GetRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 static void GetAbortFunction(FbleValueHeap* heap, FbleStack* stack);
@@ -326,35 +342,86 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
   }
 }
 
+// PackedValueLength --
+//   Compute the number of bits needed for the value packed into the least
+//   significat bits of 'data'. 'data' should not include the pack marker.
+//
+// Inputs:
+//   Raw data bits for a packed value without the pack marker.
+//
+// Output:
+//   The number of bits of the data used to describe that value.
+static size_t PackedValueLength(intptr_t data)
+{
+  size_t len = 0;
+  if ((data & 0x1) == 0) {
+    // Struct value
+    data >>= 1; len++;     // struct value marker
+    size_t argc = 0;
+    while (data & 0x1) {
+      data >>= 1; len++;   // unary encoding of number of fields.
+      argc++;
+    }
+    data >>= 1; len++;   // number of fields terminator.
+
+    for (size_t i = 0; i < argc; ++i) {
+      size_t arglen = PackedValueLength(data);
+      data >>= arglen; len += arglen;
+    }
+    return len;
+  } else {
+    // Union value
+    data >>= 1; len++;      // union value marker
+    while (data & 0x1) {
+      data >>= 1; len++;    // unary encoding of tag.
+    };
+    data >>= 1; len++;      // tag terminator.
+    return len + PackedValueLength(data);
+  }
+}
+
 // FbleNewStructValue -- see documentation in fble-value.h
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...)
 {
-  if (argc == 0) {
-    return UnitValue;
-  }
-
-  StructValue* value = NewValueExtra(heap, StructValue, sizeof(FbleValue*) * argc);
-  value->_base.tag = STRUCT_VALUE;
-  value->fieldc = argc;
-
+  FbleValue* args[argc];
   va_list ap;
   va_start(ap, argc);
   for (size_t i = 0; i < argc; ++i) {
-    FbleValue* arg = va_arg(ap, FbleValue*);
-    value->fields[i] = arg;
-    if (arg != NULL) {
-      FbleValueAddRef(heap, &value->_base, arg);
-    }
+    args[i] = va_arg(ap, FbleValue*);
   }
   va_end(ap);
-  return &value->_base;
+  return FbleNewStructValue_(heap, argc, args);
 }
 
 // FbleNewStructValue_ -- see documentation in fble-value.h
 FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
-  if (argc == 0) {
-    return UnitValue;
+  // Try packing optimistically.
+  intptr_t data = 0;
+  size_t num_bits = 0;
+  for (size_t i = 0; i < argc; ++i) {
+    FbleValue* arg = args[argc-i-1];
+    if (PACKED(arg)) {
+      intptr_t argdata = (intptr_t)arg;
+      argdata >>= 1;   // skip past pack marker.
+      size_t arglen = PackedValueLength(argdata);
+      num_bits += arglen;
+      intptr_t mask = ((intptr_t)1 << arglen) - 1;
+      data = (data << arglen) | (mask & argdata);
+    } else {
+      num_bits += 8 * sizeof(FbleValue*);
+      break;
+    }
+  }
+
+  if (num_bits + argc + 1 < 8 * sizeof(FbleValue*)) {
+    // We have enough space to pack the struct value.
+    data <<= 1;   // num args '0' terminator.
+    for (size_t i = 0; i < argc; ++i) {
+      data = (data << 1) | 1;     // unary encoding of number of args.
+    }
+    data = (data << 2) | 1;       // struct value and pack marks.
+    return (FbleValue*)data;
   }
 
   StructValue* value = NewValueExtra(heap, StructValue, sizeof(FbleValue*) * argc);
@@ -376,6 +443,29 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** arg
 FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 {
   object = FbleStrictValue(object);
+
+  if (PACKED(object)) {
+    intptr_t data = (intptr_t)object;
+
+    // Skip past the pack bit and the bit saying this is a struct value.
+    data >>= 2;
+
+    // Skip past the number of args.
+    while (data & 0x1) {
+      data >>= 1;
+    }
+    data >>= 1;
+
+    // Skip past any args before the field we want.
+    for (size_t i = 0; i < field; ++i) {
+      data >>= PackedValueLength(data);
+    }
+
+    // Pack the result.
+    data = (data << 1) | 1;
+    return (FbleValue*)data;
+  }
+
   assert(object != NULL && object->tag == STRUCT_VALUE);
   StructValue* value = (StructValue*)object;
   assert(field < value->fieldc);
@@ -385,9 +475,18 @@ FbleValue* FbleStructValueAccess(FbleValue* object, size_t field)
 // FbleNewUnionValue -- see documentation in fble-value.h
 FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 {
-  if (arg == UnitValue) {
-    intptr_t packed = (tag << 1) | 1;
-    return (FbleValue*)packed;
+  if (PACKED(arg)) {
+    intptr_t data = (intptr_t)arg;
+    data >>= 1;
+
+    if (PackedValueLength(data) + tag + 1 < 8*sizeof(FbleValue*)) {
+      data <<= 1;   // tag '0' terminator.
+      for (size_t i = 0; i < tag; ++i) {
+        data = (data << 1) | 1; // unary encoded tag
+      }
+      data = (data << 2) | 3;   // union value and packed markers.
+      return (FbleValue*)data;
+    }
   }
 
   UnionValue* union_value = NewValue(heap, UnionValue);
@@ -400,8 +499,10 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 // FbleNewEnumValue -- see documentation in fble-value.h
 FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 {
-  intptr_t packed = (tag << 1) | 1;
-  return (FbleValue*)packed;
+  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* result = FbleNewUnionValue(heap, tag, unit);
+  FbleReleaseValue(heap, unit);
+  return result;
 }
 
 // FbleUnionValueTag -- see documentation in fble-value.h
@@ -410,9 +511,19 @@ size_t FbleUnionValueTag(FbleValue* object)
   object = FbleStrictValue(object);
 
   if (PACKED(object)) {
-    size_t packed = (size_t)object;
-    return packed >> 1;
-  };
+    intptr_t data = (intptr_t)object;
+
+    // Skip past the pack bit and the bit saying this is a union value.
+    data >>= 2;
+
+    // Read the tag.
+    size_t tag = 0;
+    while (data & 0x1) {
+      tag++;
+      data >>= 1;
+    }
+    return tag;
+  }
 
   assert(object != NULL && object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;
@@ -425,8 +536,21 @@ FbleValue* FbleUnionValueAccess(FbleValue* object)
   object = FbleStrictValue(object);
 
   if (PACKED(object)) {
-    return UnitValue;
-  };
+    intptr_t data = (intptr_t)object;
+
+    // Skip past the pack bit and the bit saying this is a union value.
+    data >>= 2;
+
+    // Skip passed the tag.
+    while (data & 0x1) {
+      data >>= 1;
+    }
+    data >>= 1;
+
+    // Pack the result
+    data = (data << 1) | 1;  // packed marker
+    return (FbleValue*)data;
+  }
 
   assert(object != NULL && object->tag == UNION_VALUE);
   UnionValue* value = (UnionValue*)object;

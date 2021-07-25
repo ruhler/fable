@@ -4,7 +4,7 @@ fble-test {
   Unit@ Unit = Unit@();
 
   # Regression test for a race condition we had where the arguments to exec
-  # where stored in the same local variable slot as the result of evaluating
+  # were stored in the same local variable slot as the result of evaluating
   # those arguments. Everything was fine as long as we released the arguments
   # after fork before any of the child processes finished, but if any child
   # process finishes first, we silently overwrite a value and forget to

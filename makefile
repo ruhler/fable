@@ -12,11 +12,11 @@ ninja:
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja -k 0
+	ninja -f out/build.ninja -j 1
 
 .PHONY: all
 all: out/build.ninja
-	ninja -f out/build.ninja
+	ninja -f out/build.ninja -j 1
 
 .PHONY: clean
 clean:

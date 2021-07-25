@@ -834,3 +834,32 @@ anything.
 
 There's potentially much more value to gain from Round 2, I hope?
 
+---
+
+Round 2 draft: with a slight variation on how we pack to simplify things and
+be able to distinguish between struct and union values.
+
+Looks like a decent performance improvement, and half the max memory use.
+There's just the issue of one of the tests completely wedging my computer, and
+another one of the tests apparently taking forever to run.
+
+fble bench interpreted:  6m41s -> 5m13s
+fble bench compiled:     4m35s -> 3m21s
+
+That's 20%-30% performance improvement.
+
+The issues:
+* fork-race uses a bunch of memory, like 40%. That doesn't make any sense to
+  me. Worth investigating.
+  Note: this is not a new issue.
+* cat test hangs.
+* 6.3-proc-link/eval/unsustained-put-get is not seeing it as a memory leak.
+  Fixed by lowering the noise threshold for what's considered constant.
+
+For the cat test:
+* it's getting stuck some time after reading the input. Maybe gdb can tell us
+  where.
+
+Yeah, data is -1 for some reason, which is very bad for decoding the packed
+value. This happens when we have an enum with more than 64 tags, formed using
+FbleNewEnumValue.
