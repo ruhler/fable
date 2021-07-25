@@ -1,11 +1,10 @@
+* Fix profile table memory issue.
+
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
  -  Move Adder module to a Designs subdirectory.
  -  Figure out a nicer API for Adder.
  -  Add tests for the Adder module.
-
-* Figure out why fork race test takes so much memory.
- - And remove -j 1 from default build once we've figured it out.
 
 * Clean up FbleValue API.
  - Switch to using FbleValue** args version of FbleNewStructValue for

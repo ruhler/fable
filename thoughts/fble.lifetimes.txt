@@ -863,3 +863,79 @@ For the cat test:
 Yeah, data is -1 for some reason, which is very bad for decoding the packed
 value. This happens when we have an enum with more than 64 tags, formed using
 FbleNewEnumValue.
+
+---
+ 
+Debugging the issue with the fork race test.
+
+Step 1: what part actually is the one that causes an issue?
+
+Running it? Compiling for it? Interpreted?
+
+Let's try one step at a time.
+1. run interpreted with profiling turned on.
+Maximum resident set size (kbytes): 446448
+That's 430 MB, which I think is the problem.
+
+Compare to some other arbitrary test.
+Maximum resident set size (kbytes): 1380
+
+Yeah.
+
+Let's figure out what's taking up so much memory.
+Maybe start by dumping assembly.
+
+The assembly shows:
+* We allocate 2000 function values.
+  Each of which is its own function defined as a single return statement.
+* We have a single 'fork' instruction.
+* We release each function value and result of executing fork.
+* Then we return Unit.
+
+This looks entirely reasonable to me.
+
+How much memory I expect it to need:
+  2000 * size of a function
++ 4000 * local variable size
++ 2000 * size of a thread, including a profile thread.
+
+Maybe I can run this with code coverage and see what it says for how many
+times different things are executed?
+
+A function should be roughly:
+  32 bytes for object overhead
+  24 bytes for function value overhead.
+  8 bytes for the single static argument
+  96 bytes for the executable object.
+  
+I can't see how this could add up to so much memory. We're talking 200KB per
+function. How could we possibly take that much space?
+
+Without profiling: Maximum resident set size (kbytes): 5264
+
+So this is clearly related to profiling.
+
+valgrind claims it's from the line in profile.c:
+
+  thread->table.xs = FbleArrayAlloc(Entry, thread->table.capacity);
+
+Because for each thread, we are allocating a table with 9217 entries, 24 bytes
+per entry, gives us: 2000 * 9217 * 24 = 430MB.
+
+Why is the table so big? Well, we have about 2000 entries in it, which gets it
+resized to 9217, which is just over 3 times 2000, then we make a copy for each
+child thread. On the surface it sounds reasonable. The real question is, what
+is this hash map for, do we really need to propagate it from parent to child
+thread so aggressively?
+
+Okay, so the real problem is this, I think: we need to remove entries from the
+table when we exit a block. That way the size of the table is bounded by the
+maximum stack depth, not the total number of (caller,callee) pairs in the
+history of the program. But is there any easy way to delete entries from my
+current hash table in a way that gives back some of the capacity?
+
+Would it be more efficient to skip the hash table and do a linear search of
+the stack?
+
+Anyway, this has nothing to do with object lifetimes, so let me move the
+discussion elsewhere.
