@@ -1,9 +1,3 @@
-* Clean up FbleValue API.
- - Can FbleStrictValue be made internal?
- - Change FbleNewFuncValue to take statics as an array argument.
-   Maybe like StructValue: have vararg (for humans and generated assembly) and
-   array (for interpreter) versions.
-
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
  -  Move Adder module to a Designs subdirectory.

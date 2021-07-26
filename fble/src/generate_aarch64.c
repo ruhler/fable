@@ -679,24 +679,22 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  .text\n");
       fprintf(fout, "  .align 2\n");
 
-      // R_SCRATCH_1: func->statics
+      // Allocate space for the statics array on the stack.
+      size_t sp_offset = StackBytesForCount(func_instr->code->_base.statics);
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
+        GetFrameVar(fout, "x0", func_instr->scope.xs[i]);
+        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+      }
+
       fprintf(fout, "  mov x0, R_HEAP\n");
       Adr(fout, "x1", ".L._Run_%p.%zi.exe", code, pc);
       fprintf(fout, "  mov x2, R_PROFILE_BASE_ID\n");
+      fprintf(fout, "  mov x3, SP\n");
       fprintf(fout, "  bl FbleNewFuncValue\n");
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");   // R_SCRATCH_0: func
-      SetFrameVar(fout, "R_SCRATCH_0", func_instr->dest);
+      SetFrameVar(fout, "x0", func_instr->dest);
 
-      fprintf(fout, "  bl FbleFuncValueStatics\n");
-      fprintf(fout, "  mov R_SCRATCH_1, x0\n");   // R_SCRATCH_1: statics
-
-      for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  mov x1, R_SCRATCH_0\n");
-        GetFrameVar(fout, "x2", func_instr->scope.xs[i]);
-        fprintf(fout, "  str x2, [R_SCRATCH_1, #%zi]\n", sizeof(FbleValue*) * i);
-        fprintf(fout, "  bl FbleValueAddRef\n");
-      }
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       return;
     }
 

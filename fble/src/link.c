@@ -37,7 +37,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
       profile_base_id = FbleProfileAddBlocks(profile, module->profile_blocks);
     }
 
-    funcs[i] = FbleNewFuncValue(heap, module, profile_base_id);
+    funcs[i] = FbleNewFuncValue(heap, module, profile_base_id, NULL);
   }
 
   // Write some code to call each of module functions in turn with the
@@ -92,11 +92,8 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   FbleVectorAppend(code->instrs, &return_instr->_base);
 
   // Wrap that all up into an FbleFuncValue.
-  FbleValue* linked = FbleNewFuncValue(heap, &code->_base, 0);
-  FbleValue** statics = FbleFuncValueStatics(linked);
+  FbleValue* linked = FbleNewFuncValue(heap, &code->_base, 0, funcs);
   for (size_t i = 0; i < modulec; ++i) {
-    statics[i] = funcs[i];
-    FbleValueAddRef(heap, linked, funcs[i]);
     FbleReleaseValue(heap, funcs[i]);
   }
   FbleFreeCode(code);

@@ -24,15 +24,16 @@ extern FbleValue* FbleGenericTypeValue;
 //   heap - heap to use for allocations.
 //   executable - the executable to run. Borrowed.
 //   profile_base_id - the profile_base_id to use for the function.
+//   statics - the array of static variables for the function. The count
+//             should match executable->statics.
 //
 // Results:
-//   A newly allocated FbleFuncValue that is fully initialized except for
-//   statics.
+//   A newly allocated FbleFuncValue.
 //
 // Side effects:
 //   Allocates a new FbleFuncValue that should be freed using FbleReleaseValue
 //   when it is no longer needed.
-FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id);
+FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id, FbleValue** statics);
 
 // FbleFuncValueStatics --
 //   Gets the array of static variables used by a function.
