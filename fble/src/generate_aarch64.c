@@ -543,35 +543,21 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
       size_t argc = struct_instr->args.size;
 
+      // Allocate space for the arguments array on the stack.
+      size_t sp_offset = StackBytesForCount(argc);
+      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      for (size_t i = 0; i < argc; ++i) {
+        GetFrameVar(fout, "x0", struct_instr->args.xs[i]);
+        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+      };
+
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, %zi\n", argc);
-
-      // The first 6 args go in registers x2 through x7.
-      const size_t num_reg_args = 6;
-      for (size_t i = 0; i < argc && i < num_reg_args; ++i) {
-        char rdst[5];
-        sprintf(rdst, "x%zi", i + 2);
-        GetFrameVar(fout, rdst, struct_instr->args.xs[i]);
-      }
-
-      // Subsequent args go onto the stack.
-      // We need to keep the stack 16-byte aligned.
-      size_t sp_offset = StackBytesForCount(argc - num_reg_args);
-      if (argc > num_reg_args) {
-        fprintf(fout, "  sub SP, SP, #%zi\n", sp_offset);
-      }
-
-      for (size_t i = num_reg_args; i < argc; ++i) {
-        GetFrameVar(fout, "x9", struct_instr->args.xs[i]);
-        fprintf(fout, "  str x9, [SP, #%zi]\n", 8 * (i - num_reg_args));
-      }
-
-      fprintf(fout, "  bl FbleNewStructValue\n");
+      fprintf(fout, "  mov x2, SP\n");
+      fprintf(fout, "  bl FbleNewStructValue_\n");
       SetFrameVar(fout, "x0", struct_instr->dest);
 
-      if (argc > num_reg_args) {
-        fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-      }
+      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       return;
     }
 

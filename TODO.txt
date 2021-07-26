@@ -1,6 +1,8 @@
-* Improve performance with profiling enabled?
- - Now that we removed the optimization for detecting duplicate call entries
-   in the stack?
+* Clean up FbleValue API.
+ - Can FbleStrictValue be made internal?
+ - Change FbleNewFuncValue to take statics as an array argument.
+   Maybe like StructValue: have vararg (for humans and generated assembly) and
+   array (for interpreter) versions.
 
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
@@ -8,22 +10,17 @@
  -  Figure out a nicer API for Adder.
  -  Add tests for the Adder module.
 
-* Clean up FbleValue API.
- - Switch to using FbleValue** args version of FbleNewStructValue for
-   generated assembly.
-   Because it should be cheaper than the vararg now based on how the vararg
-   version is implemented.
- - Can FbleStrictValue be made internal?
- - Change FbleNewFuncValue to take statics as an array argument.
-   Maybe like StructValue: have vararg (for humans and generated assembly) and
-   array (for interpreter) versions.
-
 * Implement support for packed data values.
  - Add FbleDataTypeValue.
  - Implement FbleDataTypeInstr for allocating FbleDataTypeValues.
  - Change the compiler to allocate FbleDataTypeValues when appropriate.
  - Pass type to struct and union construction and access functions.
  - Implement packing for struct and union values.
+
+* Improve performance with profiling enabled?
+ - Now that we removed the optimization for detecting duplicate call entries
+   in the stack?
+ - see thoughts/fble.profile.txt
 
 * Fix missing dependency of generation of build.ninja on new spec tests.
 
