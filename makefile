@@ -12,11 +12,11 @@ ninja:
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja -j 1
+	ninja -f out/build.ninja out/bin/fble-bench
 
 .PHONY: all
 all: out/build.ninja
-	ninja -f out/build.ninja -j 1
+	ninja -f out/build.ninja
 
 .PHONY: clean
 clean:

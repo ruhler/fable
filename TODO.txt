@@ -1,4 +1,6 @@
-* Fix profile table memory issue.
+* Improve performance with profiling enabled?
+ - Now that we removed the optimization for detecting duplicate call entries
+   in the stack?
 
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.

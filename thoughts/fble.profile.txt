@@ -1,0 +1,57 @@
+Fble Profiling Memory Bug
+-------------------------
+
+The issue:
+* We keep a hash map from (caller,caller) to (sample, data).
+* Currently we only add entries to the hash map, we never remove them.
+* When we fork a thread, we copy the entire hash map. 
+
+So, 2000 entries forked 2000 times needs 430MB of memory, which is too much.
+
+How this information is used:
+* On enter block, we look up in the table
+ - Call data is an optimization cache, to avoid the cost of looking up the call
+   data by binary search.
+ - Sample is used to know if the call is already in the call stack.
+   We do have a check to confirm that entry isn't stale.
+
+The cached call data is useful regardless of whether the call exists on the
+stack or not, because we want to update the count data regardless. The sample
+is only useful while the call is on the stack. As soon as we exit the call
+stack entry, we may as well clear that info.
+ 
+First question is: how important is it to cache this at all? Why not look back
+through the stack every time we enter a block? That will be O(stack depth)
+instead of O(1), which is potentially very bad. But maybe not so bad in
+practice?
+
+There's also the O(log(num profiling blocks)) lookup needed.
+
+To get an idea of the stack depth, let me turn on profiling for fble bench and
+see what the depth is when we enter blocks.
+
+I wonder if we could separate these into two separate things: 1. a single cache
+for (caller,callee) to profile data, for fast lookup of the Call data, shared
+by all profiling threads, 2. a per-thread set to quickly see if the given
+caller,callee pair is on the current stack or not, using a data structure that
+is proportional to the current number of entries instead of the history of
+entries.
+
+Old git logs hint that maybe the hash table approach currently in use isn't
+that significant for performance.
+
+Logging suggests for GameOfLife at least, the stack depth is at much as 50
+deep, with a large number of hits around 30. That would be expensive for a
+linear search I think.
+
+Let's do some measurements and establish some goals.
+
+How about a goal of: your program takes no more than twice as long to run with
+profiling enabled.
+
+Current status for fble bench, let's use the compiled version for profiling:
+
+Without profiling: 3m19s.
+With profiling: 6m11s. Just fast enough for 2x...
+Without caching call data: 6m32s. Still fast enough for 2x.
+Without hashing calls on stack: 8m33s. Too slow.
