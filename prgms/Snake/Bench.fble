@@ -12,6 +12,6 @@
 # Note: To avoid deadlock, make sure this is less than the number of
 # iterations that the Snake App runs for.
 Unit@! Bench = /App/Benchmark%.Benchmark(
-  /Snake%, Int|1200, Event@(key_down: Key@(q: Unit)));
+  /Snake%, Int|1300, Event@(key_down: Key@(q: Unit)));
 
 @(Bench);

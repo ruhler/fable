@@ -1,3 +1,9 @@
+* Why does the Md5 benchmark take so much memory?
+ - Is there a memory leak or memory growth bug? Shouldn't the memory use be
+   constant?
+ - Is it building up the entire input string in memory? Maybe we should
+   generate random bytes for input on the fly instead, like 0..?
+
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
  -  Move Adder module to a Designs subdirectory.
@@ -18,12 +24,6 @@
 
 * Fix missing dependency of generation of build.ninja on new spec tests.
 
-* Why does the Md5 benchmark take so much memory?
- - Is there a memory leak or memory growth bug? Shouldn't the memory use be
-   constant?
- - Is it building up the entire input string in memory? Maybe we should
-   generate random bytes for input on the fly instead, like 0..?
-
 * Investigate why fork-race test generates so many functions with the same
   name? Is there a bug here someone? Shouldn't profile block names be unique?
 
@@ -40,7 +40,7 @@
 * Move prototype for FbleLoadCompiled to a better place?
 
 * Change FbleProfile functions to accept NULL, and clean up code to take
-  advantage of that where it makes sense.
+  advantage of that where it makes sense?
 
 * Use some way other than NULL to disable profiling?
  - To encourage all the apps to support optional profiling, including things
@@ -151,7 +151,6 @@
    because they are too slow, and report on how many were skipped and why.
 * [/GameOfLife%] Switch to a target 60 FPS?
 * [/Hwdg%] Improve the API for describing a bunch of gates with modules.
-* [/Hwdg%] Have an easier way to set a bunch of cells at once?
 * [/Hwdg%] Add test case for nondeterministic/conflicting gates case.
 * [/Invaders%] It's way way way too slow. Figure out how to make it go much faster.
  - Profile the benchmark to see what's up.
