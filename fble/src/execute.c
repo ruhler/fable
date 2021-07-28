@@ -16,10 +16,37 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread);
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
 static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads);
 static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleValue** args, FbleProfile* profile);
+
+// PushStackFrame --
+//   Push a frame on top of the thread's stack.
+//
+// Inputs:
+//   func - the function to push on the stack. Consumed.
+//   result - where to store the result of executing the function.
+//   locals - the number of local values to allocate stack space for.
+//   thread - the thread whose stack to push to.
+//
+// Side effects:
+// * Pushes a frame on top of the stack. Local variables are not initialized.
+// * Allocates memory that should be freed with a corresponding call to
+//   PopStackFrame.
+// * Consumes the given function, which will be released when PopStackFrame is
+//   called.
+static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread)
+{
+  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
+  stack->joins = 0;
+  stack->func = func;
+  stack->pc = 0;
+  stack->result = result;
+  stack->tail = thread->stack;
+  thread->stack = stack;
+}
 
 // PopStackFrame --
 //   Pops the top frame off the thread's stack.
@@ -202,21 +229,15 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleValue* func, Fb
     FbleProfileEnterBlock(thread->profile, FbleFuncValueProfileBaseId(func) + executable->profile);
   }
 
+  FbleRetainValue(heap, func);
   size_t locals = executable->locals;
 
-  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
-  stack->joins = 0;
-  stack->func = func;
-  FbleRetainValue(heap, func);
-  stack->pc = 0;
-  stack->result = result;
-  stack->tail = thread->stack;
+  PushStackFrame(func, result, locals, thread);
 
   for (size_t i = 0; i < executable->args; ++i) {
-    stack->locals[i] = args[i];
+    thread->stack->locals[i] = args[i];
     FbleRetainValue(heap, args[i]);
   }
-  thread->stack = stack;
 }
 
 // FbleThreadTailCall -- see documentation in execute.h
@@ -228,20 +249,14 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleValue* func, FbleValue** args, 
   }
 
   size_t locals = executable->locals;
-
-  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
-  stack->joins = 0;
-  stack->func = func;
-  stack->pc = 0;
-  stack->result = thread->stack->result;
-  stack->tail = thread->stack->tail;
-
-  for (size_t i = 0; i < executable->args; ++i) {
-    stack->locals[i] = args[i];
-  }
+  FbleValue** result = thread->stack->result;
 
   PopStackFrame(heap, thread);
-  thread->stack = stack;
+  PushStackFrame(func, result, locals, thread);
+
+  for (size_t i = 0; i < executable->args; ++i) {
+    thread->stack->locals[i] = args[i];
+  }
 }
 
 // FbleThreadFork -- see documentation in execute.h

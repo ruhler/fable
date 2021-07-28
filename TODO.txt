@@ -1,3 +1,7 @@
+* Optimize stack allocations
+ - Implement PushStackFrame function analogous to PopStackFrame.
+ - Switch to a mmap based custom allocator for stack allocations.
+
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
  -  Move Adder module to a Designs subdirectory.
