@@ -49,7 +49,6 @@ perf:
 	ninja -f out/build.ninja out/bin/fble-bench out/bin/fble-perf-profile
 	perf record -F 997 -d -g ./out/bin/fble-bench
 	perf report -q -g folded,count,0 | ./out/bin/fble-perf-profile > bench.perf.txt
-	rm perf.data
 
 .PHONY: asm
 asm:

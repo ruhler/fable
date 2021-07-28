@@ -24,7 +24,7 @@ Stdio@ Bench = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
   Unit@ _invaders := /Invaders/Bench%.Bench;
 
   Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Md5...']);
-  Unit@ _md5 := /Md5/Tests%.Bench;
+  Unit@ _md5 := /Md5/Bench%.Bench;
 
   Unit@ _ := stdout(Strs[Str[Chars.nl], Str|'Sat...']);
   Unit@ _sat := /Sat/Bench%.Bench;

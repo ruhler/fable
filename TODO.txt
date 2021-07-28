@@ -1,9 +1,3 @@
-* Why does the Md5 benchmark take so much memory?
- - Is there a memory leak or memory growth bug? Shouldn't the memory use be
-   constant?
- - Is it building up the entire input string in memory? Maybe we should
-   generate random bytes for input on the fly instead, like 0..?
-
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
  -  Move Adder module to a Designs subdirectory.
@@ -16,6 +10,8 @@
  - Change the compiler to allocate FbleDataTypeValues when appropriate.
  - Pass type to struct and union construction and access functions.
  - Implement packing for struct and union values.
+* Avoid calling 'FbleRelease' in those cases where the compiler can tell
+  statically that a value will be packed?
 
 * Improve performance with profiling enabled?
  - Now that we removed the optimization for detecting duplicate call entries

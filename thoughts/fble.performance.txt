@@ -508,3 +508,10 @@ probably much more significantly important to do that, for example, using
 native stack instead of managed stack. It's got to be the next step for fble
 performance.
 
+---
+
+Now on the top of the list is allocating and freeing for every push/pop of the
+stack. This should be a straight forward fix. We want to do batch allocation
+instead of allocation per push/pop. So, allocate 1MB or 8MB at a time and just
+increment a pointer the rest of the time.
+

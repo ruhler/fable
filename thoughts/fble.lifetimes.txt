@@ -939,3 +939,12 @@ the stack?
 
 Anyway, this has nothing to do with object lifetimes, so let me move the
 discussion elsewhere.
+
+---
+
+The current summary is that packing values was definitely worth while, and I
+think it will be definitely worth while to do better packing. I really like
+supporting packing of dynamically sized values. Better packing means passing
+type information everywhere we do packing to tell us how many bits to use for
+tags, so we can have 'perfect' packing. That's the next step.
+

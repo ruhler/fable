@@ -1,0 +1,39 @@
+
+@ Bit8@ = /Bits%.Bit8.Bit8@;
+% H2 = /Bits%.Bit8.H2;
+
+% Hex = /Digits%.Hex;
+
+@ Int@ = /Int/Int%.Int@;
+% Sub = /Int/Int%.Sub;
+% Int = /Int/Int/Lit%.Int;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+@ Md5Hash@ = /Md5%.Md5Hash@;
+% Md5 = /Md5%.Md5;
+
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+(Put@<Maybe@<Bit8@>>, Int@) { Unit@!; }
+PutN = (Put@<Maybe@<Bit8@>> out, Int@ n) {
+  n.?(0: out(Nothing<Bit8@>));
+
+  Unit@ _ := out(Just<Bit8@>(H2(Hex.A, Hex.5)));
+  PutN(out, Sub(n, Int|1));
+};
+
+# Benchmark for md5 sum that takes about 1 minute to run.
+Unit@! Bench = {
+  Int@ n = Int|30000;
+  Maybe@<Bit8@> ~ get, put;
+  Md5Hash@ md5 := Md5(get), Unit@ x := PutN(put, n);
+  !(Unit);
+};
+
+@(Bench);
