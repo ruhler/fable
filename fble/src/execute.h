@@ -13,6 +13,8 @@
 #include "fble-profile.h"   // for FbleProfileThread
 #include "fble-value.h"     // for FbleValueHeap
 
+#include "stack-alloc.h"    // for FbleStackAllocator
+
 // FbleStack --
 //
 // Fields:
@@ -55,15 +57,16 @@ typedef enum {
 //
 // Fields:
 //   stack - the execution stack.
-//   profile - the profile thread associated with this thread. May be NULL to
-//             disable profiling.
 //   parent - the parent of this thread, NULL for the initial thread.
 //   children - the number of child threads.
+//   profile - the profile thread associated with this thread. May be NULL to
+//             disable profiling.
 typedef struct FbleThread {
   FbleStack* stack;
-  FbleProfileThread* profile;
+  FbleStackAllocator* allocator;
   struct FbleThread* parent;
   size_t children;
+  FbleProfileThread* profile;
 } FbleThread;
 
 // FbleThreadV --

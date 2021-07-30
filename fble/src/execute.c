@@ -39,7 +39,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
 //   called.
 static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread)
 {
-  FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
+  FbleStack* stack = FbleStackAlloc(thread->allocator, sizeof(FbleStack) + locals * sizeof(FbleValue*));
   stack->func = func;
   stack->pc = 0;
   stack->result = result;
@@ -61,7 +61,7 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
   FbleStack* stack = thread->stack;
   thread->stack = thread->stack->tail;
   FbleReleaseValue(heap, stack->func);
-  FbleFree(stack);
+  FbleStackFree(thread->allocator, stack);
 }
 
 // RunThread --
@@ -117,6 +117,7 @@ static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
       PopStackFrame(heap, thread);
     }
 
+    FbleFreeStackAllocator(thread->allocator);
     FbleFreeProfileThread(thread->profile);
     FbleFree(thread);
   }
@@ -149,9 +150,10 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
 
   FbleThread* main_thread = FbleAlloc(FbleThread);
   main_thread->stack = NULL;
-  main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
+  main_thread->allocator = FbleNewStackAllocator();
   main_thread->parent = NULL;
   main_thread->children = 0;
+  main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
   FbleVectorAppend(threads, main_thread);
 
   FbleValue* result = NULL;
@@ -166,6 +168,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
         case FBLE_EXEC_FINISHED: {
           unblocked = true;
           assert(thread->stack == NULL);
+          FbleFreeStackAllocator(thread->allocator);
           FbleFreeProfileThread(thread->profile);
           if (thread->parent != NULL) {
             thread->parent->children--;
@@ -259,10 +262,11 @@ void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* paren
 {
   FbleThread* child = FbleAlloc(FbleThread);
   child->stack = NULL;
-  child->profile = parent->profile == NULL ? NULL : FbleForkProfileThread(parent->profile);
+  child->allocator = FbleNewStackAllocator();
   child->parent = parent;
   child->children = 0;
   parent->children++;
+  child->profile = parent->profile == NULL ? NULL : FbleForkProfileThread(parent->profile);
   FbleVectorAppend(*threads, child);
   FbleThreadCall(heap, result, func, args, child);
 }
