@@ -16,8 +16,6 @@
 // FbleStack --
 //
 // Fields:
-//   joins - the number of threads to wait for joining before resuming
-//           execution of this frame of the stack.
 //   func - the function being executed at this frame of the stack.
 //   pc - the next instruction in func->code to execute.
 //   result - where to store the result of executing the current frame.
@@ -25,17 +23,12 @@
 //   locals - array of local variables. Size is func->executable->locals.
 //
 // Memory Management:
-//   Each thread owns its stack. The stack owns its tail. Except that we have
-//   a cactus stack structure where multiple threads can reuse parts of the
-//   same stack. In that case, 'joins' will be greater than 0. The total
-//   number of threads (or their stacks) that hold a reference to a stack
-//   frame is 1 + joins.
+//   Each thread owns its stack. The stack owns its tail.
 //
 //   The stack holds a strong reference to func and any non-NULL locals.
 //   'result' is a pointer to something that is initially NULL and expects to
 //   receive a strong reference to the return value.
 typedef struct FbleStack {
-  size_t joins;
   FbleValue* func;
   size_t pc;
   FbleValue** result;
@@ -64,9 +57,13 @@ typedef enum {
 //   stack - the execution stack.
 //   profile - the profile thread associated with this thread. May be NULL to
 //             disable profiling.
-typedef struct {
+//   parent - the parent of this thread, NULL for the initial thread.
+//   children - the number of child threads.
+typedef struct FbleThread {
   FbleStack* stack;
   FbleProfileThread* profile;
+  struct FbleThread* parent;
+  size_t children;
 } FbleThread;
 
 // FbleThreadV --

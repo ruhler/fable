@@ -40,7 +40,6 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
 static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread)
 {
   FbleStack* stack = FbleAllocExtra(FbleStack, locals * sizeof(FbleValue*));
-  stack->joins = 0;
   stack->func = func;
   stack->pc = 0;
   stack->result = result;
@@ -91,10 +90,8 @@ static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 {
   FbleExecStatus status = FBLE_EXEC_FINISHED;
   while (status == FBLE_EXEC_FINISHED && thread->stack != NULL) {
-    if (thread->stack->joins > 0) {
-      thread->stack->joins--;
-      thread->stack = NULL;
-      return FBLE_EXEC_FINISHED;
+    if (thread->children > 0) {
+      return FBLE_EXEC_BLOCKED;
     }
 
     status = FbleFuncValueExecutable(thread->stack->func)->run(heap, threads, thread, io_activity);
@@ -116,13 +113,6 @@ static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
   for (size_t i = 0; i < threads->size; ++i) {
     FbleThread* thread = threads->xs[i];
     while (thread->stack != NULL) {
-      if (thread->stack->joins > 0) {
-        thread->stack->joins--;
-        thread->stack = NULL;
-        break;
-      }
-
-
       FbleFuncValueExecutable(thread->stack->func)->abort(heap, thread->stack);
       PopStackFrame(heap, thread);
     }
@@ -160,6 +150,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
   FbleThread* main_thread = FbleAlloc(FbleThread);
   main_thread->stack = NULL;
   main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
+  main_thread->parent = NULL;
+  main_thread->children = 0;
   FbleVectorAppend(threads, main_thread);
 
   FbleValue* result = NULL;
@@ -175,6 +167,9 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
           unblocked = true;
           assert(thread->stack == NULL);
           FbleFreeProfileThread(thread->profile);
+          if (thread->parent != NULL) {
+            thread->parent->children--;
+          }
           FbleFree(thread);
 
           threads.xs[i] = threads.xs[threads.size - 1];
@@ -263,9 +258,11 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleValue* func, FbleValue** args, 
 void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue** result, FbleValue* func, FbleValue** args)
 {
   FbleThread* child = FbleAlloc(FbleThread);
-  child->stack = parent->stack;
+  child->stack = NULL;
   child->profile = parent->profile == NULL ? NULL : FbleForkProfileThread(parent->profile);
-  child->stack->joins++;
+  child->parent = parent;
+  child->children = 0;
+  parent->children++;
   FbleVectorAppend(*threads, child);
   FbleThreadCall(heap, result, func, args, child);
 }

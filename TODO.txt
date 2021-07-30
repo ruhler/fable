@@ -1,5 +1,7 @@
 * Optimize stack allocations
- - Implement PushStackFrame function analogous to PopStackFrame.
+ - Reorganize parent/child thread relationship so that there is clear
+   ownership over stack allocations.
+ - Switch to using stack allocator for thread stacks.
  - Switch to a mmap based custom allocator for stack allocations.
 
 * Implement md5 in Hwdg
