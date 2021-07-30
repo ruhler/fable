@@ -110,18 +110,31 @@ static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 //   Cleans up the thread state.
 static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
 {
-  for (size_t i = 0; i < threads->size; ++i) {
-    FbleThread* thread = threads->xs[i];
-    while (thread->stack != NULL) {
-      FbleFuncValueExecutable(thread->stack->func)->abort(heap, thread->stack);
-      PopStackFrame(heap, thread);
-    }
+  while (threads->size > 0) {
+    size_t blocked = 0;
+    for (size_t i = 0; i < threads->size; ++i) {
+      FbleThread* thread = threads->xs[i];
 
-    FbleFreeStackAllocator(thread->allocator);
-    FbleFreeProfileThread(thread->profile);
-    FbleFree(thread);
+      if (thread->children > 0) {
+        threads->xs[blocked] = thread;
+        blocked++;
+        continue;
+      }
+
+      while (thread->stack != NULL) {
+        FbleFuncValueExecutable(thread->stack->func)->abort(heap, thread->stack);
+        PopStackFrame(heap, thread);
+      }
+
+      FbleFreeStackAllocator(thread->allocator);
+      FbleFreeProfileThread(thread->profile);
+      if (thread->parent != NULL) {
+        thread->parent->children--;
+      }
+      FbleFree(thread);
+    }
+    threads->size = blocked;
   }
-  threads->size = 0;
 }
 
 // Eval --
