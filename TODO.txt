@@ -1,8 +1,4 @@
-* Optimize stack allocations
- - Reorganize parent/child thread relationship so that there is clear
-   ownership over stack allocations.
- - Switch to using stack allocator for thread stacks.
- - Switch to a mmap based custom allocator for stack allocations.
+* Switch to a mmap based custom allocator for stack allocations.
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
