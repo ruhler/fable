@@ -39,7 +39,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
 //   called.
 static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread)
 {
-  FbleStack* stack = FbleStackAlloc(thread->allocator, sizeof(FbleStack) + locals * sizeof(FbleValue*));
+  FbleStack* stack = FbleStackAllocExtra(thread->allocator, FbleStack, locals * sizeof(FbleValue*));
   stack->func = func;
   stack->pc = 0;
   stack->result = result;

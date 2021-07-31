@@ -9,11 +9,10 @@
 
 #include <stdbool.h>      // for bool
 
+#include "fble-alloc.h"     // for FbleStackAllocator, etc.
 #include "fble-execute.h"   // for FbleExecutable typedef.
 #include "fble-profile.h"   // for FbleProfileThread
 #include "fble-value.h"     // for FbleValueHeap
-
-#include "stack-alloc.h"    // for FbleStackAllocator
 
 // FbleStack --
 //

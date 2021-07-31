@@ -79,7 +79,100 @@ void* FbleRawAlloc(size_t size);
 // * Behavior is undefined if ptr was not previously returned by a call to
 //   FbleAlloc or one of its variants.
 void FbleFree(void* ptr);
+
+// FbleStackAllocator --
+//   Abstract type of an allocator to use for allocations.
+typedef struct FbleStackAllocator FbleStackAllocator;
 
+// FbleNewStackAllocator --
+//   Create a new stack allocator.
+//
+// Returns:
+//   A newly allocated stack allocator.
+//
+// Side effects:
+//   Allocates a stack allocator that should be freed using
+//   FbleFreeStackAllocator when no longer in use.
+FbleStackAllocator* FbleNewStackAllocator();
+
+// FbleFreeStackAllocator --
+//   Free resources associated with a stack allocator.
+//
+// Inputs:
+//   allocator - the allocator to free.
+//
+// Side effects:
+// * Frees resources associated with the given allocator.
+// * The allocator must not have any outstanding allocations at the time of
+//   free.
+void FbleFreeStackAllocator(FbleStackAllocator* allocator);
+
+// FbleRawStackAlloc --
+//   Allocate a block of memory using the given stack allocator. This function
+//   is not type safe. It is recommended to use the FbleStackAlloc macros
+//   instead.
+//
+// Inputs:
+//   allocator - the allocator to allocate memory from.
+//   size - the number of bytes to allocate.
+//
+// Results:
+//   A block of memory allocated.
+//
+// Side effects:
+//   Allocates memory that should be freed with FbleStackFree when no longer
+//   needed.
+void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size);
+
+// FbleStackAlloc --
+//   Type safe variant of FbleRawStackAlloc.
+//
+// Inputs:
+//   allocator - the allocator to allocate memory from.
+//   T - The type of object to allocate.
+//
+// Results:
+//   A pointer to a newly stack allocated object of the given type.
+//
+// Side effects:
+//   Allocates memory that should be freed with FbleStackFree when no longer
+//   needed.
+#define FbleStackAlloc(allocator, T) ((T*) FbleRawStackAlloc(allocator, sizeof(T)))
+
+// FbleStackAllocExtra --
+//   Stack allocate an object with additional extra space. For use with
+//   objects like:
+//   struct {
+//     ...
+//     Foo foo[]
+//   };
+//
+// Inputs:
+//   allocator - The stack allocator.
+//   T - The type of object to allocate.
+//   size - The size of the extra space to include.
+//
+// Results:
+//   A pointer to a newly allocated object of the given type with extra size.
+//
+// Side effects:
+// * The allocation should be freed by calling FbleStackFree when no longer in
+//   use.
+#define FbleStackAllocExtra(allocator, T, size) ((T*) FbleRawStackAlloc(allocator, sizeof(T) + size))
+
+// FbleStackFree --
+//   Free a block of allocated memory.
+//
+// Inputs:
+//   allocator - the allocator to free the memory from.
+//   ptr - the block of memory to free.
+//
+// Side effects:
+// * Frees resources associated with the given pointer.
+// * Behavior is undefined if 'ptr' is not the same as the pointer most
+//   recently returned from FbleStackAlloc on this same allocator.
+void FbleStackFree(FbleStackAllocator* allocator, void* ptr);
+
 // FbleMaxTotalBytesAllocated
 //   Returns the maximum number of bytes allocated using the fble allocation
 //   routines since the most recent call to FbleResetMaxTotalBytesAllocated.

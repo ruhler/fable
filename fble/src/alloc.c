@@ -26,6 +26,15 @@ typedef struct {
   char data[];
 } Alloc;
 
+typedef struct StackAlloc {
+  struct StackAlloc* tail;
+  char data[];
+} StackAlloc;
+
+struct FbleStackAllocator {
+  StackAlloc* allocs;
+};
+
 static void Exit();
 
 
@@ -74,6 +83,39 @@ void FbleFree(void* ptr)
 
   gTotalBytesAllocated -= alloc->size;
   free(alloc);
+}
+
+// FbleNewStackAllocator -- see documentation in stack-alloc.h
+FbleStackAllocator* FbleNewStackAllocator()
+{
+  FbleStackAllocator* allocator = FbleAlloc(FbleStackAllocator);
+  allocator->allocs = NULL;
+  return allocator;
+}
+
+// FbleFreeStackAllocator -- see documentation in stack-alloc.h
+void FbleFreeStackAllocator(FbleStackAllocator* allocator)
+{
+  assert(allocator->allocs == NULL);
+  FbleFree(allocator);
+}
+
+// FbleRawStackAlloc -- see documentation in stack-alloc.h
+void* FbleRawStackAlloc(FbleStackAllocator* allocator, size_t size)
+{
+  StackAlloc* alloc = FbleAllocExtra(StackAlloc, size);
+  alloc->tail = allocator->allocs;
+  allocator->allocs = alloc;
+  return alloc->data;
+}
+
+// FbleStackFree -- see documentation in stack-alloc.h
+void FbleStackFree(FbleStackAllocator* allocator, void* ptr)
+{
+  StackAlloc* alloc = allocator->allocs;
+  assert(ptr == alloc->data);
+  allocator->allocs = alloc->tail;
+  FbleFree(alloc);
 }
 
 // FbleMaxTotalBytesAllocated -- see documentation in fble-alloc.h
