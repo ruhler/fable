@@ -1,5 +1,3 @@
-* Switch to a mmap based custom allocator for stack allocations.
-
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
 
