@@ -9,6 +9,9 @@
 
 * Remove msg argument to allocation routines.
 
+* Consider running some of the tests under valgrind?
+ - To catch memory issues that could otherwise go undetected?
+
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
  -  Move Adder module to a Designs subdirectory.

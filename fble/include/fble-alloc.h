@@ -12,7 +12,6 @@
 //
 // Inputs:
 //   size - The number of bytes to allocate.
-//   msg - A message used to identify the allocation for debugging purposes.
 //
 // Result:
 //   A pointer to a newly allocated size bytes of memory.
@@ -20,7 +19,7 @@
 // Side effects:
 // * Allocates size bytes that should be freed by calling FbleFree when no
 //   longer in use.
-void* FbleRawAlloc(size_t size, const char* msg);
+void* FbleRawAlloc(size_t size);
 
 // FbleAlloc --
 //   A type safe way of allocating objects.
@@ -33,9 +32,7 @@ void* FbleRawAlloc(size_t size, const char* msg);
 //
 // Side effects:
 // * The allocation should be freed by calling FbleFree when no longer in use.
-#define FbleAllocLine(x) #x
-#define FbleAllocMsg(file, line) file ":" FbleAllocLine(line)
-#define FbleAlloc(T) ((T*) FbleRawAlloc(sizeof(T), FbleAllocMsg(__FILE__, __LINE__)))
+#define FbleAlloc(T) ((T*) FbleRawAlloc(sizeof(T)))
 
 // FbleAllocExtra --
 //   Allocate an object with additional extra space. For use with objects like:
@@ -53,7 +50,7 @@ void* FbleRawAlloc(size_t size, const char* msg);
 //
 // Side effects:
 // * The allocation should be freed by calling FbleFree when no longer in use.
-#define FbleAllocExtra(T, size) ((T*) FbleRawAlloc(sizeof(T) + size, FbleAllocMsg(__FILE__, __LINE__)))
+#define FbleAllocExtra(T, size) ((T*) FbleRawAlloc(sizeof(T) + size))
 
 // FbleArrayAlloc --
 //   A type safe way of allocating an array of objects.
@@ -67,7 +64,7 @@ void* FbleRawAlloc(size_t size, const char* msg);
 //
 // Side effects:
 // * The allocation should be freed by calling FbleFree when no longer in use.
-#define FbleArrayAlloc(T, count) ((T*) FbleRawAlloc((count) * sizeof(T), FbleAllocMsg(__FILE__, __LINE__)))
+#define FbleArrayAlloc(T, count) ((T*) FbleRawAlloc((count) * sizeof(T)))
 
 // FbleFree --
 //   Free a memory allocation.

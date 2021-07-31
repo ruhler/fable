@@ -45,7 +45,7 @@ void Exit()
 }
 
 // FbleRawAlloc -- see documentation in fble-alloc.h
-void* FbleRawAlloc(size_t size, const char* msg)
+void* FbleRawAlloc(size_t size)
 {
   if (!gInitialized) {
     gInitialized = true;
