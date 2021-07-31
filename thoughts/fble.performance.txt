@@ -515,3 +515,10 @@ stack. This should be a straight forward fix. We want to do batch allocation
 instead of allocation per push/pop. So, allocate 1MB or 8MB at a time and just
 increment a pointer the rest of the time.
 
+---
+
+Implementing a custom stack allocator helped with the cost of stack
+allocations. Now we're back to data type allocations showing up as the top
+contributor to runtime. Time to do next round of optimizations for packed data
+types.
+
