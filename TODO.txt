@@ -4,11 +4,6 @@
  - Switch to using stack allocator for thread stacks.
  - Switch to a mmap based custom allocator for stack allocations.
 
-* Close 'fin' from parser when done parsing?
- - To avoid that memory leak reported by valgrind?
-
-* Remove msg argument to allocation routines.
-
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
 

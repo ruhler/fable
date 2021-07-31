@@ -898,6 +898,7 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps)
   };
   FbleExpr* result = NULL;
   yyparse(&lex, &result, deps);
+  fclose(fin);
   return result;
 }
 
