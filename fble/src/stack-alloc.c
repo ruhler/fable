@@ -4,7 +4,9 @@
 #include "stack-alloc.h"
 
 #include <assert.h>   // for assert
-#include <stdlib.h>   // for NULL, malloc, free
+#include <stdlib.h>   // for NULL
+
+#include "fble-alloc.h"
 
 typedef struct Alloc {
   struct Alloc* tail;
@@ -18,7 +20,7 @@ struct FbleStackAllocator {
 // FbleNewStackAllocator -- see documentation in stack-alloc.h
 FbleStackAllocator* FbleNewStackAllocator()
 {
-  FbleStackAllocator* allocator = malloc(sizeof(FbleStackAllocator));
+  FbleStackAllocator* allocator = FbleAlloc(FbleStackAllocator);
   allocator->allocs = NULL;
   return allocator;
 }
@@ -27,13 +29,13 @@ FbleStackAllocator* FbleNewStackAllocator()
 void FbleFreeStackAllocator(FbleStackAllocator* allocator)
 {
   assert(allocator->allocs == NULL);
-  free(allocator);
+  FbleFree(allocator);
 }
 
 // FbleStackAlloc -- see documentation in stack-alloc.h
 void* FbleStackAlloc(FbleStackAllocator* allocator, size_t size)
 {
-  Alloc* alloc = malloc(sizeof(Alloc) + size);
+  Alloc* alloc = FbleAllocExtra(Alloc, size);
   alloc->tail = allocator->allocs;
   allocator->allocs = alloc;
   return alloc->data;
@@ -45,5 +47,5 @@ void FbleStackFree(FbleStackAllocator* allocator, void* ptr)
   Alloc* alloc = allocator->allocs;
   assert(ptr == alloc->data);
   allocator->allocs = alloc->tail;
-  free(alloc);
+  FbleFree(alloc);
 }

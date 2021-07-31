@@ -7,13 +7,7 @@
 * Close 'fin' from parser when done parsing?
  - To avoid that memory leak reported by valgrind?
 
-* Replace custom FbleAlloc with valgrind for memory leak checking?
- So as not to incur the overheads at runtime unless explicitly checking for
- it?
- - Then how do we implement mem-test? A much simpler wrapper?
- - Maybe we just count total bytes allocated and total bytes freed and make
-   use of that? Should be efficient enough. Still tell us if we are leaking,
-   and then we can use valgrind to track down the memory leak.
+* Remove msg argument to allocation routines.
 
 * Implement md5 in Hwdg
  -  Give separate Tests modules for each submodule.
