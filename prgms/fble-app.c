@@ -56,10 +56,13 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-app " FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Usage: fble-app [--profile FILE]" FBLE_MAIN_USAGE_SUMMARY "\n"
       "Execute an fble app process.\n"
       FBLE_MAIN_USAGE_DETAIL
-      "Example: fble-app " FBLE_MAIN_USAGE_EXAMPLE "\n"
+      "Options:\n"
+      "  --profile FILE\n"
+      "    Writes a profile of the app to FILE\n"
+      "Example: fble-app --profile app.prof " FBLE_MAIN_USAGE_EXAMPLE "\n"
   );
 }
 
@@ -465,23 +468,41 @@ static Uint32 OnTimer(Uint32 interval, void* param)
 //   standard error if an error is encountered.
 int main(int argc, char* argv[])
 {
-  if (argc > 1 && strcmp("--help", argv[1]) == 0) {
+  argc--;
+  argv++;
+  if (argc > 0 && strcmp("--help", *argv) == 0) {
     PrintUsage(stdout);
     return 0;
   }
 
+  FILE* fprofile = NULL;
+  if (argc > 1 && strcmp("--profile", *argv) == 0) {
+    fprofile = fopen(argv[1], "w");
+    if (fprofile == NULL) {
+      fprintf(stderr, "unable to open %s for writing.\n", argv[1]);
+      return 1;
+    }
+
+    argc -= 2;
+    argv += 2;
+  }
+
+  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleMain(heap, NULL, FbleCompiledMain, argc-1, argv+1);
+
+  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc-1, argv+1);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
     return 1;
   }
 
-  FbleValue* func = FbleEval(heap, linked, NULL);
+  FbleValue* func = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
     return 1;
   }
 
@@ -524,13 +545,29 @@ int main(int argc, char* argv[])
     .effect = NULL,
   };
 
+  FbleName block_names[3];
+  block_names[0].name = FbleNewString("in!");
+  block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  block_names[1].name = FbleNewString("out!");
+  block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  block_names[2].name = FbleNewString("out!!");
+  block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  FbleBlockId block_id = 0;
+  if (profile != NULL) {
+    FbleNameV names = { .size = 3, .xs = block_names };
+    block_id = FbleProfileAddBlocks(profile, names);
+  }
+  FbleFreeName(block_names[0]);
+  FbleFreeName(block_names[1]);
+  FbleFreeName(block_names[2]);
+
   FbleValue* args[] = {
     MakeInt(heap, width),
     MakeInt(heap, height),
-    FbleNewInputPortValue(heap, &io.event, 0),
-    FbleNewOutputPortValue(heap, &io.effect, 0)
+    FbleNewInputPortValue(heap, &io.event, block_id),
+    FbleNewOutputPortValue(heap, &io.effect, block_id + 1)
   };
-  FbleValue* proc = FbleApply(heap, func, args, NULL);
+  FbleValue* proc = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
   FbleReleaseValue(heap, args[1]);
@@ -539,6 +576,7 @@ int main(int argc, char* argv[])
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);
+    FbleFreeProfile(profile);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 1;
@@ -546,13 +584,18 @@ int main(int argc, char* argv[])
 
   SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));
 
-  FbleValue* value = FbleExec(heap, &io._base, proc, NULL);
+  FbleValue* value = FbleExec(heap, &io._base, proc, profile);
   FbleReleaseValue(heap, proc);
   FbleReleaseValue(heap, io.event);
   FbleReleaseValue(heap, io.effect);
 
   FbleReleaseValue(heap, value);
   FbleFreeValueHeap(heap);
+
+  if (fprofile != NULL) {
+    FbleProfileReport(fprofile, profile);
+  }
+  FbleFreeProfile(profile);
 
   SDL_DestroyWindow(window);
   SDL_Quit();

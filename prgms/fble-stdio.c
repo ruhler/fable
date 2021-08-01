@@ -190,7 +190,7 @@ int main(int argc, char* argv[])
   if (argc > 1 && strcmp("--profile", *argv) == 0) {
     fprofile = fopen(argv[1], "w");
     if (fprofile == NULL) {
-      fprintf(stderr, "unable to open %s for writing.\n", argv[2]);
+      fprintf(stderr, "unable to open %s for writing.\n", argv[1]);
       return 1;
     }
 
