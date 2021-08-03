@@ -8,9 +8,10 @@
  -  Add tests for the Adder module.
 
 * Implement support for packed data values.
- - Add FbleDataTypeValue.
- - Implement FbleDataTypeInstr for allocating FbleDataTypeValues.
- - Change the compiler to allocate FbleDataTypeValues when appropriate.
+ - Add FbleStructTypeValue and FbleUnionTypeValue.
+ - Implement FbleStructTypeInstr and FbleUnionTypeInstr.
+ - Change the compiler to allocate FbleStructTypeValue and FbleUnionTypeValue
+   when appropriate.
  - Pass type to struct and union construction and access functions.
  - Implement packing for struct and union values.
 * Avoid calling 'FbleRelease' in those cases where the compiler can tell
@@ -24,7 +25,8 @@
 * Fix missing dependency of generation of build.ninja on new spec tests.
 
 * Investigate why fork-race test generates so many functions with the same
-  name? Is there a bug here someone? Shouldn't profile block names be unique?
+  name? Is there a bug here somewhere? Shouldn't profile block names be
+unique?
 
 * For loaded submodules, should the module profile block be the module file or
   the place where it was imported from?

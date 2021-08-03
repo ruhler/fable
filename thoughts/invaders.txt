@@ -1,0 +1,19 @@
+
+Trying to fix performance issues with Invaders game, here's what I see:
+
+* Fullscreen versus 640x480 makes a huge difference, because the draw screen
+  is proportional to the size of the screen.
+* At 60FPS, shift velocity of 3 pixels per tick looks like about the right
+  speed and looks pretty smooth. I think this is a good target.
+
+Is there anything I can do to make the Draw function take time proportional to
+the shape of what's being drawn instead of the resolution of the window?
+
+Proposal: Add Transform as part of the NativeApp interface.
+
+Benefits:
+* We don't have to reallocate a bunch of paths every time on fble side.
+* We do most of the transformation math on the C side where it is fast.
+* The draw function can take advantage of the transformation to spend time
+  proportional to the pre-transformed path size instead of the
+  post-transformed path size.

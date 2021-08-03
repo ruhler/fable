@@ -33,6 +33,10 @@
   # four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
   *(List@<Point@> points, Color@ color) path,
 
+  # Draw a drawing transformed by an affine transformation of the form
+  # a*x + b.
+  *(Point@ a, Point@ b, Drawing@ drawing) transformed,
+
   # Draw one drawing over another.
   *(Drawing@ below, Drawing@ above) over
 );
