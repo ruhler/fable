@@ -4,12 +4,10 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
-% Mul = /Int/Int%.Mul;
 % Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
-<@,@>% Map = /List%.Map;
 
 @ Color@ = +(
   Unit@ black,
@@ -41,31 +39,18 @@
   *(Drawing@ below, Drawing@ above) over
 );
 
-# Transform@ --
-#   Represents an affine transformation of the form a*x + b.
-@ Transform@ = *(Point@ a, Point@ b);
-
 # Draw@ --
-#   An API for drawing that keeps track of the current transformation stack.
-@ Draw@ = (Transform@) { Drawing@; };
+#   TODO: Remove this as an alias.
+@ Draw@ = Drawing@;
 
-# Transform --
-#   Transforms a point using the given transformation.
-(Transform@)(Point@) { Point@; } Transform = (Transform@ t)(Point@ p) {
-  @(x: Add(Mul(t.a.x, p.x), t.b.x),
-    y: Add(Mul(t.a.y, p.y), t.b.y));
-};
-
-Draw@ Blank = (Transform@ _) { Drawing@(blank: Unit); };
+Draw@ Blank = Drawing@(blank: Unit);
 
 # Draw a path filled solid with the given color.
 #
 # The path is implicitly closed. For example, to draw a rectangle, give the
 # four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
-(List@<Point@>, Color@) { Draw@; } Path = (List@<Point@> points, Color@ color)(Transform@ t) {
-  Drawing@(path: @(
-      points: Map<Point@, Point@>(points, Transform(t)),
-      color: color));
+(List@<Point@>, Color@) { Draw@; } Path = (List@<Point@> points, Color@ color) {
+  Drawing@(path: @(points: points, color: color));
 };
 
 # Draw a rectangle filled solid with the given color.
@@ -79,8 +64,8 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 };
 
 # Compose two drawings together by drawing one over another.
-(Draw@, Draw@) { Draw@; } Over = (Draw@ below, Draw@ above)(Transform@ t) {
-  Drawing@(over: @(below: below(t), above: above(t)));
+(Draw@, Draw@) { Draw@; } Over = (Draw@ below, Draw@ above) {
+  Drawing@(over: @(below: below, above: above));
 };
 
 # Combing a list of drawings into a single drawing by drawing each subsequent
@@ -94,11 +79,8 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 # Transform the drawing using an affine transform. Each point p will be
 # transformed to (a.x*p.x + b.x, a.y*p.y + b.y).
 (Point@, Point@, Draw@) { Draw@; }
-Affine = (Point@ a, Point@ b, Draw@ d)(Transform@ t) {
-  Transform@ nt = @(
-    a: @(x: Mul(t.a.x, a.x), y: Mul(t.a.y, a.y)),
-    b: @(x: Add(Mul(t.a.x, b.x), t.b.x), y: Add(Mul(t.a.y, b.y), t.b.y)));
-  d(nt);
+Affine = (Point@ a, Point@ b, Draw@ d) {
+  Drawing@(transformed: @(a, b, drawing: d));
 };
 
 # Translate the drawing by the given x and y amounts.
@@ -109,8 +91,7 @@ Translate = (Int@ dx, Int@ dy, Draw@ d) {
 
 # Render a drawing directly without any transformation.
 (Draw@) { Drawing@; } Draw = (Draw@ d) {
-  Transform@ t = @(a: @(x: Int|1, y: Int|1), b: @(x: Int|0, y: Int|0));
-  d(t);
+  d;
 };
 
 @(Color@, Drawing@, Draw@, Point@,

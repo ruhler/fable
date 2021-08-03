@@ -242,9 +242,10 @@ static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* 
 
     case 2: {
       // Transformed.
-      FbleValue* a = FbleStructValueAccess(drawing, 0);
-      FbleValue* b = FbleStructValueAccess(drawing, 1);
-      FbleValue* d = FbleStructValueAccess(drawing, 2);
+      FbleValue* transformed = FbleUnionValueAccess(drawing);
+      FbleValue* a = FbleStructValueAccess(transformed, 0);
+      FbleValue* b = FbleStructValueAccess(transformed, 1);
+      FbleValue* d = FbleStructValueAccess(transformed, 2);
 
       int axi = ReadInt(FbleStructValueAccess(a, 0));
       int ayi = ReadInt(FbleStructValueAccess(a, 1));
