@@ -7,11 +7,9 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-# The number of iterations is chosen so that the benchmark takes on the
-# order of 1 minute to run.
-# Note: To avoid deadlock, make sure this is less than the number of
-# iterations that the Snake App runs for.
 Unit@! Bench = /App/Benchmark%.Benchmark(
+  # 1300 is around the number of iterations the Snake app runs for. Don't try
+  # to run more, otherwise we could get deadlock.
   /Snake%, Int|1300, Event@(key_down: Key@(q: Unit)));
 
 @(Bench);

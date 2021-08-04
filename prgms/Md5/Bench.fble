@@ -30,7 +30,7 @@ PutN = (Put@<Maybe@<Bit8@>> out, Int@ n) {
 
 # Benchmark for md5 sum that takes about 1 minute to run.
 Unit@! Bench = {
-  Int@ n = Int|30000;
+  Int@ n = Int|60000;
   Maybe@<Bit8@> ~ get, put;
   Md5Hash@ md5 := Md5(get), Unit@ x := PutN(put, n);
   !(Unit);

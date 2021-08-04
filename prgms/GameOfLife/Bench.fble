@@ -7,11 +7,9 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-# The number of iterations is chosen so that the benchmark takes on the
-# order of 1 minute to run.
-# Note: To avoid deadlock, make sure this is less than the number of
-# iterations that the GameOfLife App runs for (200 last time I looked).
 Unit@! Bench = /App/Benchmark%.Benchmark(
-  /GameOfLife/App%, Int|150, Event@(key_down: Key@(q: Unit)));
+  # The GameOfLife App is set to run for 200 iterations. Use a little less
+  # than that for the benchmark to avoid deadlock.
+  /GameOfLife/App%, Int|180, Event@(key_down: Key@(q: Unit)));
 
 @(Bench);

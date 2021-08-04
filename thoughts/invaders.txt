@@ -28,3 +28,7 @@ Now what I see is:
 * perf profiling suggests a fairly even split across compiled fble functions,
   mostly integer operations.
 
+Note that without drawing to the screen, we can just exceed 60 FPS. That
+doesn't give us enough time to draw, but we're in the right ballpark now.
+
+Maybe use iteration instead of recursion for ReadIntP?

@@ -9,8 +9,8 @@
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal for invaders is 60 frames a
-# second. We're not quite there yet.
+# second.
 Unit@! Bench = /App/Benchmark%.Benchmark(
-  /Invaders/App%, Int|200, Event@(key_down: Key@(q: Unit)));
+  /Invaders/App%, Int|3600, Event@(key_down: Key@(q: Unit)));
 
 @(Bench);
