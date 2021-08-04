@@ -90,18 +90,18 @@ Game@ Initial = @(
     Drawing@ d2 = Digit(Mod(s10, 10));
     Drawing@ d3 = Digit(Mod(s1, 10));
     Drawings[
-      Translate(Int|80, Int|440, d3),
-      Translate(Int|96, Int|440, d2),
-      Translate(Int|112, Int|440, d1),
-      Translate(Int|128, Int|440, d0)
+      Translate(Int|40, Int|220, d3),
+      Translate(Int|48, Int|220, d2),
+      Translate(Int|56, Int|220, d1),
+      Translate(Int|64, Int|220, d0)
     ];
   };
 };
 
 (Lives@) { Drawing@; } DrawLives = {
-  Drawing@ l1 = Translate(Int|320, Int|440, Graphics.Ship);
-  Drawing@ l2 = Translate(Int|360, Int|440, Graphics.Ship);
-  Drawing@ l3 = Translate(Int|400, Int|440, Graphics.Ship);
+  Drawing@ l1 = Translate(Int|160, Int|220, Graphics.Ship);
+  Drawing@ l2 = Translate(Int|180, Int|220, Graphics.Ship);
+  Drawing@ l3 = Translate(Int|200, Int|220, Graphics.Ship);
   (Lives@ l) {
     l.?(
       0: Blank,

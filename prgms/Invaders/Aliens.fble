@@ -169,30 +169,30 @@ Set@ AllAliens = {
 
 # LeftEdge --
 #   The furthest left, in game coordinates, the left edge of an alien will go.
-Int@ LeftEdge = Int|92;
+Int@ LeftEdge = Int|46;
 
 # RightEdge --
 #   The furthest right, in game coordinates, the left edge of an alien will go.
-Int@ RightEdge = Int|524;
+Int@ RightEdge = Int|262;
 
 # StrideX --
 #   The horizontal distance, in game coordinates, between the left edge of an
 #   alien and the left edge of its immediately adjacent alien.
-Int@ StrideX = Int|30;
+Int@ StrideX = Int|15;
 
 # StrideY --
 #   The vertical distance, in game coordinates, between the bottom edge of an
 #   alien and the bottom edge of its immediately adjacent alien.
-Int@ StrideY = Int|32;
+Int@ StrideY = Int|16;
 
 # MoveX --
 #   How far an alien moves side to side, in game coordinates, in a single
 #   step.
-Int@ MoveX = Int|4;
+Int@ MoveX = Int|2;
 
 # MoveY --
 #   How far an alien moves down, in game coordinates, in a single step.
-Int@ MoveY = Int|16;
+Int@ MoveY = Int|8;
 
 # Aliens@ --
 #   The state of a group of aliens.
@@ -239,9 +239,9 @@ Int@ MoveY = Int|16;
 Aliens@ Initial = @(
   wait: Wait(NumAliens),
   src_x: LeftEdge,
-  src_y: Int|128,
+  src_y: Int|64,
   dst_x: Add(LeftEdge, MoveX),
-  dst_y: Int|128,
+  dst_y: Int|64,
   alive: AllAliens,
   num_aliens_alive: NumAliens,
   dir: Dir@(right: Unit),

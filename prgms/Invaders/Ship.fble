@@ -18,14 +18,14 @@
 
 # The ships moves side to side, but not forward or backwards.
 # This is the Y coordinate of the bottom edge of the ship.
-Int@ ShipY = Int|22;
+Int@ ShipY = Int|11;
 
 # The velocity of the ship when it is moving, in pixels per tick.
-Int@ ShipV = Int|3;
+Int@ ShipV = Int|2;
 
 # The range of values allowed for the left edge of the ship.
-Int@ MinX = Int|96;
-Int@ MaxX = Int|514;
+Int@ MinX = Int|48;
+Int@ MaxX = Int|257;
 
 @ Dir@ = +(
   Unit@ left,

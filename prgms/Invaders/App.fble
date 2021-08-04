@@ -64,7 +64,7 @@ Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
-  Point@ a = @(x: Int|1, y: Neg(Int|1));
+  Point@ a = @(x: Int|2, y: Neg(Int|2));
   Point@ b = @(x: Int|0, y: Int|480);
 
   # The target is 60 FPS, or 16 millseconds per frame.
