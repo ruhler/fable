@@ -39,22 +39,18 @@
   *(Drawing@ below, Drawing@ above) over
 );
 
-# Draw@ --
-#   TODO: Remove this as an alias.
-@ Draw@ = Drawing@;
-
-Draw@ Blank = Drawing@(blank: Unit);
+Drawing@ Blank = Drawing@(blank: Unit);
 
 # Draw a path filled solid with the given color.
 #
 # The path is implicitly closed. For example, to draw a rectangle, give the
 # four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
-(List@<Point@>, Color@) { Draw@; } Path = (List@<Point@> points, Color@ color) {
+(List@<Point@>, Color@) { Drawing@; } Path = (List@<Point@> points, Color@ color) {
   Drawing@(path: @(points: points, color: color));
 };
 
 # Draw a rectangle filled solid with the given color.
-(Int@, Int@, Int@, Int@, Color@) { Draw@; }
+(Int@, Int@, Int@, Int@, Color@) { Drawing@; }
 Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
   Path(List<Point@>[
     Point@(x, y),
@@ -64,13 +60,13 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 };
 
 # Compose two drawings together by drawing one over another.
-(Draw@, Draw@) { Draw@; } Over = (Draw@ below, Draw@ above) {
+(Drawing@, Drawing@) { Drawing@; } Over = (Drawing@ below, Drawing@ above) {
   Drawing@(over: @(below: below, above: above));
 };
 
 # Combing a list of drawings into a single drawing by drawing each subsequent
 # drawing on top of the previous drawing.
-(List@<Draw@>) { Draw@; } Drawings = (List@<Draw@> drawings) {
+(List@<Drawing@>) { Drawing@; } Drawings = (List@<Drawing@> drawings) {
   drawings.?(
     cons: Over(drawings.cons.head, Drawings(drawings.cons.tail)),
     nil: Blank);
@@ -78,21 +74,16 @@ Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
 
 # Transform the drawing using an affine transform. Each point p will be
 # transformed to (a.x*p.x + b.x, a.y*p.y + b.y).
-(Point@, Point@, Draw@) { Draw@; }
-Affine = (Point@ a, Point@ b, Draw@ d) {
+(Point@, Point@, Drawing@) { Drawing@; }
+Affine = (Point@ a, Point@ b, Drawing@ d) {
   Drawing@(transformed: @(a, b, drawing: d));
 };
 
 # Translate the drawing by the given x and y amounts.
-(Int@, Int@, Draw@) { Draw@; }
-Translate = (Int@ dx, Int@ dy, Draw@ d) {
+(Int@, Int@, Drawing@) { Drawing@; }
+Translate = (Int@ dx, Int@ dy, Drawing@ d) {
   Affine(@(x: Int|1, y: Int|1), @(x: dx, y: dy), d);
 };
 
-# Render a drawing directly without any transformation.
-(Draw@) { Drawing@; } Draw = (Draw@ d) {
-  d;
-};
-
-@(Color@, Drawing@, Draw@, Point@,
-  Blank, Path, Rect, Over, Drawings, Affine, Translate, Draw);
+@(Color@, Drawing@, Point@,
+  Blank, Path, Rect, Over, Drawings, Affine, Translate);

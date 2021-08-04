@@ -1,5 +1,5 @@
 
-@ Draw@ = /Drawing%.Draw@;
+@ Drawing@ = /Drawing%.Drawing@;
 % Translate = /Drawing%.Translate;
 
 @ Int@ = /Int/Int%.Int@;
@@ -74,7 +74,7 @@ Ship@ Initial = @(
 };
 
 # Make a drawing of the ship in its current location.
-(Ship@) { Draw@; } Draw = (Ship@ s) {
+(Ship@) { Drawing@; } Draw = (Ship@ s) {
   Translate(s.x, ShipY, Graphics.Ship);
 };
 

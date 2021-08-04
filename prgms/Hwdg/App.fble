@@ -7,7 +7,7 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 
-@ Draw@ = /Drawing%.Draw@;
+@ Drawing@ = /Drawing%.Drawing@;
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
 % Rect = /Drawing%.Rect;
@@ -79,13 +79,13 @@ Memory@ Cells = {
 
 # Draw --
 #   Draw the current hardware configuration.
-(Design@, Memory@) { Draw@; } Draw = (Design@ design, Memory@ cells) {
+(Design@, Memory@) { Drawing@; } Draw = (Design@ design, Memory@ cells) {
   # 1. Clear the background.
-  Draw@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
+  Drawing@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
 
   # 2. For each input or output port of a gate, draw a white unit square.
-  Draw@ io = ForEachRule<Draw@>(design, clear,
-   (Coord@ p, Rule@ r, Draw@ d) {
+  Drawing@ io = ForEachRule<Drawing@>(design, clear,
+   (Coord@ p, Rule@ r, Drawing@ d) {
      Ports@<Coord@> coords = Ports@<Coord@>(
        Coord@(p.x, p.y), Coord@(Inc(p.x), p.y),
        Coord@(p.x, Inc(p.y)), Coord@(Inc(p.x), Inc(p.y)));
@@ -96,22 +96,22 @@ Memory@ Cells = {
        { r.inputs.ll.?(just: True); r.outputs.ll.?(just: True); False; },
        { r.inputs.lr.?(just: True); r.outputs.lr.?(just: True); False; });
 
-     Ports@<Draw@> fills = Ports@<Draw@>(
+     Ports@<Drawing@> fills = Ports@<Drawing@>(
        Rect(coords.ul.x, coords.ul.y, 1, 1, Color@(white: Unit)),
        Rect(coords.ur.x, coords.ur.y, 1, 1, Color@(white: Unit)),
        Rect(coords.ll.x, coords.ll.y, 1, 1, Color@(white: Unit)),
        Rect(coords.lr.x, coords.lr.y, 1, 1, Color@(white: Unit)));
 
-     Draw@ d_ul = used.ul.?(true: Over(d, fills.ul), false: d);
-     Draw@ d_ur = used.ur.?(true: Over(d_ul, fills.ur), false: d_ul);
-     Draw@ d_ll = used.ll.?(true: Over(d_ur, fills.ll), false: d_ur);
-     Draw@ d_lr = used.lr.?(true: Over(d_ll, fills.lr), false: d_ll);
+     Drawing@ d_ul = used.ul.?(true: Over(d, fills.ul), false: d);
+     Drawing@ d_ur = used.ur.?(true: Over(d_ul, fills.ur), false: d_ul);
+     Drawing@ d_ll = used.ll.?(true: Over(d_ur, fills.ll), false: d_ur);
+     Drawing@ d_lr = used.lr.?(true: Over(d_ll, fills.lr), false: d_ll);
      d_lr;
    });
     
   # 3. Draw a green square for 1 and a red square for 0.
-  /Hwdg/Memory%.ForEach<Draw@>(cells, io,
-    (Coord@ p, Data@ data, Draw@ d) {
+  /Hwdg/Memory%.ForEach<Drawing@>(cells, io,
+    (Coord@ p, Data@ data, Drawing@ d) {
       Color@ color = data.?(0: Color@(red: Unit), 1: Color@(green: Unit));
       Over(d, Rect(p.x, p.y, 1, 1, color));
     });

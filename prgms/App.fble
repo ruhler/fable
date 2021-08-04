@@ -1,5 +1,4 @@
 
-@ Draw@ = /Drawing%.Draw@;
 @ Drawing@ = /Drawing%.Drawing@;
 
 @ Int@ = /Int/Int%.Int@;
@@ -32,7 +31,7 @@
   # The drawing is clipped to fit in the screen area.
   #
   # It is undefined how pixels not specified in the drawing will be displayed.
-  Draw@ draw
+  Drawing@ draw
 );
 
 # App@ --
@@ -55,28 +54,4 @@
 #   None.
 @ App@ = (Int@, Int@, Get@<Event@>, Put@<Effect@>){ Unit@!; };
 
-# NativeEffect@ --
-#   When running an App with native code, we prefer to communicate the drawing
-#   as a pure structure instead of a function that takes a transformation.
-#   This is captured in NativeEffect@.
-@ NativeEffect@ = +(Int@ tick, Drawing@ draw);
-
-# NativeApp@ --
-#   Type of fble programs that can be used with the native fble-app driver.
-#
-# Typical usage is:
-#   App@ myApp = ...
-#   NativeApp@ myNativeApp = NativeApp(myApp);
-@ NativeApp@ = (Int@, Int@, Get@<Event@>, Put@<NativeEffect@>) { Unit@!; };
-
-(App@) { NativeApp@; }
-NativeApp = (App@ app)(Int@ w, Int@ h, Get@<Event@> in, Put@<NativeEffect@> out) {
-  Put@<Effect@> pout = (Effect@ e) {
-    out(e.?(
-      tick: NativeEffect@(tick: e.tick),
-      draw: NativeEffect@(draw: /Drawing%.Draw(e.draw))));
-  };
-  app(w, h, in, pout);
-};
-
-@(App@, NativeApp@, Key@, Event@, Effect@, NativeApp);
+@(App@, Key@, Event@, Effect@);

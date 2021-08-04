@@ -37,7 +37,7 @@
 % Set = /Hwdg/Memory%.Set;
 
 # Import to test compilation.
-% _ = /Hwdg/NativeApp%;
+% _ = /Hwdg/App%;
 
 Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
   Test(Str|'empty no data', !({

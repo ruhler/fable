@@ -3,7 +3,7 @@
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
-@ Draw@ = /Drawing%.Draw@;
+@ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
 % Affine = /Drawing%.Affine;
 
@@ -25,7 +25,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   Point@ a = @(x: Int|1, y: Neg(Int|1));
   Point@ b = @(x: Int|0, y: Int|480);
 
-  Draw@ screenshot = Screenshot;
+  Drawing@ screenshot = Screenshot;
   Unit@ _ := out(Effect@(draw: Affine(a, b, screenshot)));
 
   Unit@! WaitForKeyPress = {

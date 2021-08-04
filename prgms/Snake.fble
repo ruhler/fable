@@ -10,7 +10,7 @@
 % Or = /Bool%.Or;
 
 @ Color@ = /Drawing%.Color@;
-@ Draw@ = /Drawing%.Draw@;
+@ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
 % Blank = /Drawing%.Blank;
 % Drawings = /Drawing%.Drawings;
@@ -75,7 +75,7 @@ Int@ MaxCol = Int|60;
 
 @ Cell@ = +(Unit@ empty, Unit@ snake, Unit@ food);
 
-(Pos@, Cell@) { Draw@; } DrawCell = (Pos@ pos, Cell@ cell) {
+(Pos@, Cell@) { Drawing@; } DrawCell = (Pos@ pos, Cell@ cell) {
   Color@ c = cell.?(
     empty: Color@(blue: Unit),
     snake: Color@(cyan: Unit),
@@ -100,13 +100,13 @@ Int@ MaxCol = Int|60;
   Int@ speed
 );
 
-(List@<Pos@>) { Draw@; } DrawSnakeS = (List@<Pos@> s) {
-  ForEach<Pos@, Draw@>(s, Blank, (Pos@ p, Draw@ d) {
+(List@<Pos@>) { Drawing@; } DrawSnakeS = (List@<Pos@> s) {
+  ForEach<Pos@, Drawing@>(s, Blank, (Pos@ p, Drawing@ d) {
     Over(DrawCell(p, Cell@(snake: Unit)), d);
   });
 };
 
-(State@) { Draw@; } Draw = (State@ s) {
+(State@) { Drawing@; } Draw = (State@ s) {
   Drawings[
     Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit)),
     DrawSnakeS(s.snake),

@@ -4,7 +4,6 @@
 @ Effect@ = /App%.Effect@;
 
 @ Drawing@ = /Drawing%.Drawing@;
-% Draw = /Drawing%.Draw;
 
 @ Int@ = /Int/Int%.Int@;
 % Dec = /Int/Int%.Dec;
@@ -49,7 +48,7 @@
            draw: {
              # Do the drawing like we would if executing this as a native app,
              # to make sure that's counted in the benchmark time.
-             Drawing@ _ := !(Draw(e.draw));
+             Drawing@ _ := !(e.draw);
              Feed(n);
            });
        });

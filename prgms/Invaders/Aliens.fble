@@ -4,7 +4,7 @@
 % False = /Bool%.False;
 % Or = /Bool%.Or;
 
-@ Draw@ = /Drawing%.Draw@;
+@ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
 % Over = /Drawing%.Over;
 % Translate = /Drawing%.Translate;
@@ -289,7 +289,7 @@ Aliens@ Initial = @(
 # Sprite --
 #   Return the alien sprite for an alien in the given row with the given
 #   phase.
-(Int@, Phase@) { Draw@; } Sprite = (Int@ row, Phase@ phase) {
+(Int@, Phase@) { Drawing@; } Sprite = (Int@ row, Phase@ phase) {
   Int@ half_row = Div(row, Int|2);
   Eq(Int|0, half_row).?(true: phase.?(a: Alien1A, b: Alien1B));
   Eq(Int|1, half_row).?(true: phase.?(a: Alien2A, b: Alien2B));
@@ -298,12 +298,12 @@ Aliens@ Initial = @(
 
 # Draw --
 #   Make a drawing of the aliens in their current location.
-(Aliens@) { Draw@; } Draw = (Aliens@ as) {
-  For<Alien@, Draw@>(
+(Aliens@) { Drawing@; } Draw = (Aliens@ as) {
+  For<Alien@, Drawing@>(
     FirstAlive(as.alive),
     (Alien@ a) { NextAlive(as.alive, a); },
     Blank,
-    (Alien@ a, Draw@ d) {
+    (Alien@ a, Drawing@ d) {
       Bool@ moved = as.next.?(just: Lt(a, as.next.just), nothing: True);
       Int@ group_x = moved.?(true: as.dst_x, false: as.src_x);
       Int@ group_y = moved.?(true: as.dst_y, false: as.src_y);

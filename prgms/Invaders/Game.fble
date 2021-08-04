@@ -1,5 +1,5 @@
 
-@ Draw@ = /Drawing%.Draw@;
+@ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
 % Drawings = /Drawing%.Drawings;
 % Translate = /Drawing%.Translate;
@@ -47,10 +47,10 @@ Game@ Initial = @(
   Game@(g.score, g.lives, Ship.Input(g.ship, d), g.aliens);
 };
 
-(Int@) { Draw@; } DrawScore = {
+(Int@) { Drawing@; } DrawScore = {
   # Digit -- Get the drawing associated with the digit corresponding to d.
   # Returns a blank drawing if d is not in [0-9].
-  (Int@) { Draw@; } Digit = (Int@ d) {
+  (Int@) { Drawing@; } Digit = (Int@ d) {
     d.?(n: Blank, 0: Graphics.Digits.0, p: d.p.?(
         1: Graphics.Digits.1,
         2p0: d.p.2p0.?( 
@@ -85,10 +85,10 @@ Game@ Initial = @(
     Int@ s100 = Div(s1000, 10);
     Int@ s10 = Div(s100, 10);
     Int@ s1 = Div(s10, 10);
-    Draw@ d0 = Digit(Mod(s1000, 10));
-    Draw@ d1 = Digit(Mod(s100, 10));
-    Draw@ d2 = Digit(Mod(s10, 10));
-    Draw@ d3 = Digit(Mod(s1, 10));
+    Drawing@ d0 = Digit(Mod(s1000, 10));
+    Drawing@ d1 = Digit(Mod(s100, 10));
+    Drawing@ d2 = Digit(Mod(s10, 10));
+    Drawing@ d3 = Digit(Mod(s1, 10));
     Drawings[
       Translate(Int|80, Int|440, d3),
       Translate(Int|96, Int|440, d2),
@@ -98,10 +98,10 @@ Game@ Initial = @(
   };
 };
 
-(Lives@) { Draw@; } DrawLives = {
-  Draw@ l1 = Translate(Int|320, Int|440, Graphics.Ship);
-  Draw@ l2 = Translate(Int|360, Int|440, Graphics.Ship);
-  Draw@ l3 = Translate(Int|400, Int|440, Graphics.Ship);
+(Lives@) { Drawing@; } DrawLives = {
+  Drawing@ l1 = Translate(Int|320, Int|440, Graphics.Ship);
+  Drawing@ l2 = Translate(Int|360, Int|440, Graphics.Ship);
+  Drawing@ l3 = Translate(Int|400, Int|440, Graphics.Ship);
   (Lives@ l) {
     l.?(
       0: Blank,
@@ -111,7 +111,7 @@ Game@ Initial = @(
   };
 };
 
-(Game@) { Draw@; } Draw = (Game@ g) {
+(Game@) { Drawing@; } Draw = (Game@ g) {
   Drawings[
     DrawScore(g.score),
     DrawLives(g.lives),

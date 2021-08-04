@@ -5,7 +5,7 @@
 
 % And = /Bool%.And;
 
-@ Draw@ = /Drawing%.Draw@;
+@ Drawing@ = /Drawing%.Drawing@;
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
 % Rect = /Drawing%.Rect;
@@ -61,11 +61,11 @@ World@ acorn = World(List<Coord@>[
   C(Int|2, Int|6)
 ]);
 
-(World@) { Draw@; } DrawWorld = (World@ w) {
-  Draw@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
+(World@) { Drawing@; } DrawWorld = (World@ w) {
+  Drawing@ clear = Rect(XMin, YMin, Width, Height, Color@(black: Unit));
     
   # 2. For each live cell in range, draw a green unit square.
-  ForWorld<Draw@>(w, clear, (Coord@ coord, Unit@ _, Draw@ d) {
+  ForWorld<Drawing@>(w, clear, (Coord@ coord, Unit@ _, Drawing@ d) {
     Int@ r = coord.row;
     Int@ c = coord.col;
     And(And(Lt(YMin, r), Lt(XMin, c)),

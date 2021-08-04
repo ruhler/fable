@@ -490,9 +490,9 @@ bin $::bin/fble-bench \
   "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 
-# /Invaders/NativeApp% compiled binary
+# /Invaders/App% compiled binary
 build $::src/fble-invaders.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain /Invaders/NativeApp% > $::src/fble-invaders.s"
+  "$::bin/fble-compile --export FbleCompiledMain /Invaders/App% > $::src/fble-invaders.s"
 asm $::obj/fble-invaders.o $::src/fble-invaders.s ""
 bin $::bin/fble-invaders \
   "$::obj/fble-invaders.o $::obj/fble-compiled-app.o" \
