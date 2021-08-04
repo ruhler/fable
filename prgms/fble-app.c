@@ -9,6 +9,10 @@
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
+// sFpsHistogram[i] is the number of samples with i frames per second.
+// Anything above 60 FPS is counted towards i = 60.
+static int sFpsHistogram[61] = {0};
+
 // AppIO - Implementation of FbleIO for App, with some additional parameters
 // to pass to the IO function.
 //
@@ -394,7 +398,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
         Draw(app->window, 1, 1, 0, 0, FbleUnionValueAccess(effect), app->colors);
         SDL_UpdateWindowSurface(app->window);
 
-        // Estimate frame rate, just for the fun of it.
+        // Collect status on frame rate.
         static Uint32 last = 0;
         static Uint32 frames = 0;
         frames++;
@@ -405,8 +409,11 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
         }
         Uint32 elapsed = now - last;
         if (elapsed > 1000) {
-          Uint32 fps = 1000 * frames / elapsed;
-          fprintf(stderr, "%i FPS\n", fps);
+          int fps = (1000 * frames) / elapsed;
+          if (fps > 60) {
+            fps = 60;
+          }
+          sFpsHistogram[fps]++;
           last = now;
           frames = 0;
         }
@@ -629,5 +636,13 @@ int main(int argc, char* argv[])
 
   SDL_DestroyWindow(window);
   SDL_Quit();
+
+  fprintf(stderr, "FPS Histogram:\n");
+  for (size_t i = 0; i < 61; ++i) {
+    if (sFpsHistogram[i] > 0) {
+      printf("  % 2zi: % 12i\n", i, sFpsHistogram[i]);
+    }
+  }
+
   return 0;
 }

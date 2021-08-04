@@ -1,9 +1,3 @@
-* Leverage 320x240 resolution for invaders game if appropriate.
-* Leverage smaller resolutions for Snake, GameOfLife, and Hwdg games if
-  appropriate.
-* Change fble-app FPS display to keep a running average and update that in
-  place instead of outputting a whole bunch of different lines?
-
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
 
