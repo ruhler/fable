@@ -17,3 +17,14 @@ Benefits:
 * The draw function can take advantage of the transformation to spend time
   proportional to the pre-transformed path size instead of the
   post-transformed path size.
+
+---
+
+Now what I see is:
+* We get around 42 FPS, no bullets yet, with a 640x480 window.
+* We get around 22 FPS with a fullscreen window.
+* fble profiling suggests we spend most of our time doing arithmetic to figure
+  out the positions of each Alien.
+* perf profiling suggests a fairly even split across compiled fble functions,
+  mostly integer operations.
+

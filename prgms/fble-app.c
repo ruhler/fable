@@ -550,8 +550,8 @@ int main(int argc, char* argv[])
   }
 
   SDL_Window* window = SDL_CreateWindow(
-      "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 0, 0,
-      SDL_WINDOW_FULLSCREEN);
+      "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
+      0);
   SDL_ShowCursor(SDL_DISABLE);
 
   SDL_Surface* screen = SDL_GetWindowSurface(window);
