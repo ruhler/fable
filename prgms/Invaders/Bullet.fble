@@ -1,0 +1,63 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+@ Drawing@ = /Drawing%.Drawing@;
+% Blank = /Drawing%.Blank;
+% Translate = /Drawing%.Translate;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Lt = /Int/Int/Eq%.Lt;
+% Int = /Int/Int/Lit%.Int;
+
+% Graphics = /Invaders/Graphics%;
+@ Ship@ = /Invaders/Ship%.Ship@;
+
+@ Bullet@ = *(
+  Int@ x,
+  Int@ y,
+  Bool@ live      # True if the bullet is on screen, false otherwise.
+);
+
+# BulletV --
+#   The vertical velocity of a bullet in game coordinates per unit of game
+#   time.
+Int@ BulletV = Int|5;
+
+# Initial --
+#   The initial state of the bullet.
+Bullet@ Initial = Bullet@(Int|0, Int|0, False);
+
+# Fire -- 
+#   Fire the bullet from the ship.
+#
+# Args:
+#   bullet - the bullet to update
+#   ship - the ship to fire the bullet from
+#
+# Returns:
+#   The updated bullet state.
+(Bullet@, Ship@) { Bullet@; }
+Fire = (Bullet@ bullet, Ship@ ship) {
+  bullet.live.?(
+    true: bullet,
+    false: Bullet@(Add(ship.x, Int|7), Int|24, True));
+};
+
+# Advance the bullet one unit of game time.
+(Bullet@) { Bullet@; } Tick = (Bullet@ bullet) {
+  bullet.live.?(
+    true: Bullet@(bullet.x, Add(bullet.y, BulletV), Lt(bullet.y, Int|210)),
+    false: bullet);
+};
+
+# Make a drawing of the bullet in its current location.
+(Bullet@) { Drawing@; } Draw = (Bullet@ bullet) {
+  bullet.live.?(
+    true: Translate(bullet.x, bullet.y, Graphics.Bullet),
+    false: Blank);
+};
+
+@(Bullet@, Initial, Fire, Tick, Draw);

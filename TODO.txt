@@ -1,5 +1,7 @@
 
-* [/Invaders%] Add bullets.
+* [/Invaders%] Add collision detection for bullets.
+ - Maybe that's done by the game after every tick.
+   Check for collision, clear bullet and kill alien if that happens.
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?

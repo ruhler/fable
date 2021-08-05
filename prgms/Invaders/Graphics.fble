@@ -1020,7 +1020,7 @@ Drawing@ LetterV = Path(
   Color@(white: Unit)
 );
 
-Drawing@ YourBullet = Path(
+Drawing@ Bullet = Path(
   List<Point@>[
     Point@(Int|1, Int|0),
     Point@(Int|0, Int|0),
@@ -1029,7 +1029,7 @@ Drawing@ YourBullet = Path(
   Color@(white: Unit)
 );
 
-Drawing@ TheirBullet = Path(
+Drawing@ Bomb = Path(
   List<Point@>[
     Point@(Int|2, Int|0),
     Point@(Int|1, Int|0),
@@ -1046,7 +1046,7 @@ Drawing@ TheirBullet = Path(
   Color@(white: Unit)
 );
 
-Drawing@ TheirSquiggle = Path(
+Drawing@ Squiggle = Path(
   List<Point@>[
     Point@(Int|2, Int|0),
     Point@(Int|1, Int|0),
@@ -1337,19 +1337,19 @@ Drawing@ Screenshot = Drawings[
   Translate(Int|61, Int|128, Alien1A),
   Translate(Int|61, Int|112, DeadAlien),
 
-  Translate(Int|55, Int|100, TheirBullet),
-  Translate(Int|60, Int|65, TheirSquiggle),
+  Translate(Int|55, Int|100, Bomb),
+  Translate(Int|60, Int|65, Squiggle),
 
   Translate(Int|68, Int|36, Base),
   Translate(Int|121, Int|36, Base),
   Translate(Int|174, Int|36, Base),
   Translate(Int|227, Int|36, Base),
 
-  Translate(Int|55, Int|31, YourBullet),
+  Translate(Int|55, Int|31, Bullet),
 
   Translate(Int|48, Int|11, Ship),
   Translate(Int|98, Int|11, DeadShipA),
   Translate(Int|148, Int|11, DeadShipB)
 ];
 
-@(Ship, Aliens, Background, Digits, Screenshot);
+@(Ship, Aliens, Background, Digits, Screenshot, Bullet);

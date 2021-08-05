@@ -29,8 +29,13 @@
 @ Input@ = +(
   Unit@ tick,
   Unit@ quit,
-  Dir@ dir
+  Game.Input@ game
 );
+
+Input@ Left = Input@(game: Game.Input@(dir: Dir@(left: Unit)));
+Input@ Right = Input@(game: Game.Input@(dir: Dir@(right: Unit)));
+Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
+Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
 (Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
@@ -38,12 +43,13 @@
       tick: !(Input@(tick: Unit)),
       key_down: e.key_down.?(
         q: !(Input@(quit: Unit)),
-        left: !(Input@(dir: Dir@(left: Unit))),
-        right: !(Input@(dir: Dir@(right: Unit))),
+        left: !(Left),
+        right: !(Right),
+        space: !(Fire),
         : GetInput(in)),
       key_up: e.key_up.?(
-        left: !(Input@(dir: Dir@(stopped: Unit))),
-        right: !(Input@(dir: Dir@(stopped: Unit))),
+        left: !(Stopped),
+        right: !(Stopped),
         : GetInput(in))
    );
 };
@@ -59,7 +65,7 @@ Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
        Run(in, draw, tick, ngame);
      },
      quit: !(Unit),
-     dir: Run(in, draw, tick, Game.Input(game, i.dir)));
+     game: Run(in, draw, tick, Game.Input(game, i.game)));
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
