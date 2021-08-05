@@ -239,9 +239,9 @@ Int@ MoveY = Int|8;
 Aliens@ Initial = @(
   wait: Wait(NumAliens),
   src_x: LeftEdge,
-  src_y: Int|64,
+  src_y: Int|104,
   dst_x: Add(LeftEdge, MoveX),
-  dst_y: Int|64,
+  dst_y: Int|104,
   alive: AllAliens,
   num_aliens_alive: NumAliens,
   dir: Dir@(right: Unit),

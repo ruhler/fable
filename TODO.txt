@@ -1,3 +1,8 @@
+
+* [/Invaders%] Increase the speed at which things move.
+  For now, assume whatever current FPS we get is the final FPS we'll go with.
+  It should be easy to slow things down later if we end up getting better FPS.
+
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
 
@@ -153,13 +158,6 @@ unique?
 * [/GameOfLife%] Switch to a target 60 FPS?
 * [/Hwdg%] Improve the API for describing a bunch of gates with modules.
 * [/Hwdg%] Add test case for nondeterministic/conflicting gates case.
-* [/Invaders%] It's way way way too slow. Figure out how to make it go much faster.
- - Profile the benchmark to see what's up.
- - Figure out if this is a problem with the code written in fble or if it's a
-   problem with the fble implementation.
-* [/Invaders%] The aliens look like they are too far down the screen to start. Double check
-  their initial coordinates.
-* [/Invaders%] Once it is fast enough to be reasonable to develop, finish writing the game.
 * [/Map%] Add tests for balancing of /Map%?
 * [/Sat%] Optimize the solver.
 * [/Sat%] Implement dimacs cnf parser.
