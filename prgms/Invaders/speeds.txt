@@ -47,3 +47,9 @@ Hmm... I messed up the math. Aliens go much slower. They take turns moving. oh
 well. In general, we want a rational number: an integer number of pixels to
 move every integer number of frames.
 
+---
+
+All the speeds are messed up and should probably be recalculated, because the
+original SI game was going as fast as it could, around 2 ms per frame instead
+of 16.
+

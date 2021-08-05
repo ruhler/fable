@@ -1,7 +1,5 @@
 
-* [/Invaders%] Increase the speed at which things move.
-  For now, assume whatever current FPS we get is the final FPS we'll go with.
-  It should be easy to slow things down later if we end up getting better FPS.
+* [/Invaders%] Add bullets.
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?

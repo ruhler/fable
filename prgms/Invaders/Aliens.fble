@@ -19,7 +19,6 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
-% Dec = /Int/Int%.Dec;
 % Inc = /Int/Int%.Inc;
 % Mul = /Int/Int%.Mul;
 % Div = /Int/Int/Div%.Div;
@@ -156,17 +155,6 @@ Set@ AllAliens = {
   d.?(left: Dir@(right: Unit), right: Dir@(left: Unit));
 };
 
-# Wait@ --
-#   Keeps track of the number of ticks to wait before the next alien moves.
-@ Wait@ = Int@;
-
-# Wait --
-#   Determines how long to wait before the next alien moves, as a function of
-#   how many aliens are still alive.
-(Int@) { Wait@; } Wait = (Int@ num_live_aliens) {
-  Div(Add(num_live_aliens, Int|35), Int|10);
-};
-
 # LeftEdge --
 #   The furthest left, in game coordinates, the left edge of an alien will go.
 Int@ LeftEdge = Int|46;
@@ -197,9 +185,6 @@ Int@ MoveY = Int|8;
 # Aliens@ --
 #   The state of a group of aliens.
 @ Aliens@ = *(
-  # The number of ticks to wait before the next alien moves.
-  Wait@ wait,
-
   # The (x, y) position of the bottom left edge of the group of aliens,
   # independent of which aliens are alive or dead, for those aliens in the
   # group that have not moved yet.
@@ -237,7 +222,6 @@ Int@ MoveY = Int|8;
 # Initial --
 #   The initial set of aliens.
 Aliens@ Initial = @(
-  wait: Wait(NumAliens),
   src_x: LeftEdge,
   src_y: Int|104,
   dst_x: Add(LeftEdge, MoveX),
@@ -252,38 +236,31 @@ Aliens@ Initial = @(
 # Tick --
 #   Advance the aliens by one unit of time tick.
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
-  Eq(Int|0, a.wait).?(
-    true: {
-      Wait@ wait = Wait(a.num_aliens_alive);
-      a.next.?(
-        just: {
-          Int@ left = Add(a.dst_x, Mul(StrideX, Col(a.next.just)));
-          Bool@ turn = Or(a.turn, a.dir.?(
-            left: Lt(left, LeftEdge),
-            right: Gt(left, RightEdge)));
-          Maybe@<Alien@> next = NextAlive(a.alive, a.next.just);
-          Aliens@(wait, a.src_x, a.src_y, a.dst_x, a.dst_y, a.alive,
-            a.num_aliens_alive, a.dir, a.phase, next, turn);
-        },
-        nothing: {
-          *(Int@ x, Int@ y, Dir@ dir) updates = a.turn.?(
-            true: @(
-              x: a.dst_x,
-              y: Sub(a.dst_y, MoveY),
-              dir: FlipDir(a.dir)),
-            false: @(
-              x: a.dir.?(left: Sub(a.dst_x, MoveX), right: Add(a.dst_x, MoveX)),
-              y: a.dst_y,
-              dir: a.dir));
-          Maybe@<Alien@> next = FirstAlive(a.alive);
-          Aliens@(wait, a.dst_x, a.dst_y, updates.x, updates.y,
-            a.alive, a.num_aliens_alive, updates.dir, FlipPhase(a.phase),
-            next, False);
-        });
+  a.next.?(
+    just: {
+      Int@ left = Add(a.dst_x, Mul(StrideX, Col(a.next.just)));
+      Bool@ turn = Or(a.turn, a.dir.?(
+        left: Lt(left, LeftEdge),
+        right: Gt(left, RightEdge)));
+      Maybe@<Alien@> next = NextAlive(a.alive, a.next.just);
+      Aliens@(a.src_x, a.src_y, a.dst_x, a.dst_y, a.alive,
+        a.num_aliens_alive, a.dir, a.phase, next, turn);
     },
-    false: Aliens@(
-         Dec(a.wait), a.src_x, a.src_y, a.dst_x, a.dst_y, a.alive,
-         a.num_aliens_alive, a.dir, a.phase, a.next, a.turn));
+    nothing: {
+      *(Int@ x, Int@ y, Dir@ dir) updates = a.turn.?(
+        true: @(
+          x: a.dst_x,
+          y: Sub(a.dst_y, MoveY),
+          dir: FlipDir(a.dir)),
+        false: @(
+          x: a.dir.?(left: Sub(a.dst_x, MoveX), right: Add(a.dst_x, MoveX)),
+          y: a.dst_y,
+          dir: a.dir));
+      Maybe@<Alien@> next = FirstAlive(a.alive);
+      Aliens@(a.dst_x, a.dst_y, updates.x, updates.y,
+        a.alive, a.num_aliens_alive, updates.dir, FlipPhase(a.phase),
+        next, False);
+    });
 };
 
 # Sprite --
