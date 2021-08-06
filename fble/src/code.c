@@ -90,6 +90,20 @@ static void DumpCode(FILE* fout, FbleCode* code)
 
       fprintf(fout, "%4zi.  ", i);
       switch (instr->tag) {
+        case FBLE_DATA_TYPE_INSTR: {
+          FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
+          fprintf(fout, "l%zi = %s(", data_type_instr->dest,
+              data_type_instr->kind == FBLE_STRUCT_DATATYPE ? "*" : "+");
+          const char* comma = "";
+          for (size_t j = 0; j < data_type_instr->fields.size; ++j) {
+            FbleFrameIndex field = data_type_instr->fields.xs[j];
+            fprintf(fout, "%s%s%zi", comma, sections[field.section], field.index);
+            comma = ", ";
+          }
+          fprintf(fout, ");\n");
+          break;
+        }
+
         case FBLE_STRUCT_VALUE_INSTR: {
           FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
           fprintf(fout, "l%zi = struct(", struct_value_instr->dest);
@@ -323,6 +337,13 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* i = (FbleAccessInstr*)instr;
       FbleFreeLoc(i->loc);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_DATA_TYPE_INSTR: {
+      FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
+      FbleFree(dt_instr->fields.xs);
       FbleFree(instr);
       return;
     }

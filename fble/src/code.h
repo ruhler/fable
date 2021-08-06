@@ -8,6 +8,7 @@
 #include "fble-compile.h"   // for FbleCode forward declaration.
 #include "fble-profile.h"   // for FbleBlockId.
 #include "execute.h"        // for FbleExecutable.
+#include "kind.h"           // for FbleDataTypeTag.
 
 // FbleFrameSection --
 //   Which section of a frame a value can be found in.
@@ -63,6 +64,7 @@ typedef struct FbleProfileOp {
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
+  FBLE_DATA_TYPE_INSTR,
   FBLE_STRUCT_VALUE_INSTR,
   FBLE_UNION_VALUE_INSTR,
   FBLE_STRUCT_ACCESS_INSTR,
@@ -114,6 +116,18 @@ typedef struct {
   size_t size;
   FbleCode** xs;
 } FbleCodeV;
+
+// FbleDataTypeInstr -- FBLE_DATA_TYPE_INSTR
+//   Allocate a data type value.
+//
+// *dest = +(a1, a2, ..., aN)
+// *dest = *(a1, a2, ..., aN)
+typedef struct {
+  FbleInstr _base;
+  FbleDataTypeTag kind;
+  FbleFrameIndexV fields;
+  FbleLocalIndex dest;
+} FbleDataTypeInstr;
 
 // FbleStructValueInstr -- FBLE_STRUCT_VALUE_INSTR
 //   Allocate a struct value.

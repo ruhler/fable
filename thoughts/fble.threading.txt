@@ -1,0 +1,61 @@
+Fble Threading
+==============
+I think it would help performance if fble took more advantage of the native
+machine stack.
+
+How it works today: When an fble function wants to call another function, it
+puts the other function on the managed stack then returns to the thread
+scheduler. The thread scheduler then calls in to the callee. After the callee
+returns back to the thread scheduler, the scheduler calls back into the
+original function, jumping to the right place in it to resume.
+
+How I think it would be nicer: When an fble function wants to call another
+function, it calls that function directly. When that other function returns,
+it returns to the right place in the original function to resume from.
+
+Why this is better:
+* We don't need to implement jump tables in the functions to support resuming
+  mid way through.
+* We avoid the overhead of going back into the scheduler thread every time we
+  do an fble function call.
+* It opens up the door for interesting optimizations in compiled code for
+  directly calling other fble run functions.
+
+There are two main challenges: multithreading and tail calls.
+
+I propose we use getcontext/setcontext for multithreading. If we ever need to
+yield, call a Yield function back into the scheduler. The scheduler gets the
+context, saves, picks the next thread to resume, and setcontext's back into
+it.
+
+One reason I didn't do this before was out of the question of how to manage
+stacks. For each thread we want to allocate a new stack. I'm thinking it
+should be fine to just allocate a 10MB stack, or some such, for each thread.
+We can recycle old stacks and use mmap to avoid taking up that much real
+memory for each thread. As long as most of the allocations for a function are
+done with a separate StackAllocator, I anticipate only a very small amount of
+stack is required for each fble function call. Like on the order of 100 bytes,
+which gives us plenty of stack depth.
+
+That leaves the question of tail recursive calls.
+
+For compiled code, it's pretty straight forward. Fixup the stack pointer, then
+do a direct branch instead of bl into the callee.
+
+For the interpreter it's a little trickier. We'll need a way to thread the
+current function back in FbleInterpreterRunFunction, updating profile_base_id,
+code, and stack in place. Probably not to difficult actually, more tedious and
+slightly messy.
+
+How about I start by supporting tail calls directly in interpret.c, with the
+current multithreading approach? Then support tail calls directly in compiled
+code. Then the switch to getcontext/setcontext should be easy.
+
+---
+
+I tried doing tail calls in interpret.c, which isn't actually hard at all,
+except that's assuming all interpreted code uses FbleCode*, which isn't true
+in general. For example, Put and Get functions don't use FbleCode*. We can't
+do tail calls from interpret.c in general without first exiting where we are
+on the stack.
+

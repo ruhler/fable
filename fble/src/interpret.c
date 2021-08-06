@@ -69,6 +69,7 @@ typedef FbleExecStatus (*RunInstr)(FbleValueHeap* heap, FbleThreadV* threads, Fb
 //   Executes the instruction for the purposes of aborting the stack frame.
 typedef FbleExecStatus (*AbortInstr)(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr);
 
+static FbleExecStatus RunDataTypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunStructValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunUnionValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunStructAccessInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
@@ -88,6 +89,7 @@ static FbleExecStatus RunReleaseInstr(FbleValueHeap* heap, FbleThreadV* threads,
 static FbleExecStatus RunListInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunLiteralInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 
+static FbleExecStatus AbortDataTypeInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortStructValueInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortUnionValueInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortStructAccessInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
@@ -110,6 +112,7 @@ static FbleExecStatus AbortLiteralInstr(FbleValueHeap* heap, FbleStack*, FbleIns
 // sRunInstr --
 //   Implementations of instructions, indexed by instruction tag.
 static RunInstr sRunInstr[] = {
+  &RunDataTypeInstr,         // FBLE_DATA_TYPE_INSTR
   &RunStructValueInstr,      // FBLE_STRUCT_VALUE_INSTR
   &RunUnionValueInstr,       // FBLE_UNION_VALUE_INSTR
   &RunStructAccessInstr,     // FBLE_STRUCT_ACCESS_INSTR
@@ -134,6 +137,7 @@ static RunInstr sRunInstr[] = {
 //   Implementations of instructions for the purposes of aborting a stack
 //   frame, indexed by instruction tag.
 static AbortInstr sAbortInstr[] = {
+  &AbortDataTypeInstr,         // FBLE_DATA_TYPE_INSTR
   &AbortStructValueInstr,      // FBLE_STRUCT_VALUE_INSTR
   &AbortUnionValueInstr,       // FBLE_UNION_VALUE_INSTR
   &AbortStructAccessInstr,     // FBLE_STRUCT_ACCESS_INSTR
@@ -235,6 +239,23 @@ static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalI
   thread->stack->locals[index] = value;
 }
 
+// RunDataTypeInstr -- see documentation of RunInstr.
+//   Execute an FBLE_DATA_TYPE_INSTR.
+static FbleExecStatus RunDataTypeInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+{
+  FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
+  size_t fieldc = data_type_instr->fields.size;
+  FbleValue* fields[fieldc];
+  for (size_t i = 0; i < fieldc; ++i) {
+    fields[i] = FrameGet(thread, data_type_instr->fields.xs[i]);
+  }
+
+  FbleValue* value = FbleNewDataTypeValue(heap, data_type_instr->kind, fieldc, fields);
+  FrameSetConsumed(heap, thread, data_type_instr->dest, value);
+  thread->stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
 // RunStructValueInstr -- see documentation of RunInstr.
 //   Execute a STRUCT_VALUE_INSTR.
 static FbleExecStatus RunStructValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
@@ -249,6 +270,16 @@ static FbleExecStatus RunStructValueInstr(FbleValueHeap* heap, FbleThreadV* thre
   FbleValue* value = FbleNewStructValue_(heap, argc, args);
   FrameSetConsumed(heap, thread, struct_value_instr->dest, value);
   thread->stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
+// AbortDataTypeInstr -- see documentation of AbortInstr.
+//   Execute a FBLE_DATA_TYPE_INSTR for abort.
+static FbleExecStatus AbortDataTypeInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+{
+  FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
+  stack->locals[data_type_instr->dest] = NULL;
+  stack->pc++;
   return FBLE_EXEC_RUNNING;
 }
 
