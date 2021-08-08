@@ -1,6 +1,5 @@
 
 @ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -12,18 +11,6 @@
 % Lt = /Int/Int/Eq%.Lt;
 % Int = /Int/Int/Lit%.Int;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-
-<@>@ Get@ = /Process%.Get@;
-<@>@ Put@ = /Process%.Put@;
-
-@ Stdio@ = /Stdio%.Stdio@;
-
-@ String@ = /String%.String@;
-
-@ Unit@ = /Unit%.Unit@;
-
-
 
 @ LFT@ = *(Int@ q, Int@ r, Int@ s, Int@ t);
 
@@ -34,6 +21,8 @@
 #   k - The index of the next input to consume.
 #   z - The streaming state.
 @ State@ = *(Int@ k, LFT@ z);
+
+State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 
 # Input -- 
 #   Compute the 'k'th input, starting at k = 1.
@@ -55,8 +44,6 @@
     true: x,
     false: Dec(x));
 };
-
-LFT@ Unit = LFT@(Int|1, Int|0, Int|0, Int|1);
 
 # Compose --
 #   Streaming state composition.
@@ -104,22 +91,4 @@ LFT@ Unit = LFT@(Int|1, Int|0, Int|0, Int|1);
     false: Stream(State@(Add(s.k, Int|1), Consume(s.z, Input(s.k)))));
 };
 
-# Output the digits of pi, one digit output for each input string, starting
-# from state 's'.
-
-Stdio@ Main = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
-  (State@) { Bool@!; } PiDigits = (State@ s) {
-    Maybe@<String@> line := stdin;
-    line.?(
-      just: {
-        StreamResult@ r = Stream(s);
-        Unit@ _ := stdout(/Int/Int/Show%.Show(r.output));
-        PiDigits(r.state);
-      },
-      nothing: !(True));
-  };
-
-  PiDigits(State@(Int|1, Unit));
-};
-
-Main;
+@(State@, StreamResult@, Stream, Initial);

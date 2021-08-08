@@ -1,0 +1,40 @@
+
+@ State@ = /BenchmarkGame/PiDigits%.State@;
+@ StreamResult@ = /BenchmarkGame/PiDigits%.StreamResult@;
+% Stream = /BenchmarkGame/PiDigits%.Stream;
+% Initial = /BenchmarkGame/PiDigits%.Initial;
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Stdio@ = /Stdio%.Stdio@;
+
+@ String@ = /String%.String@;
+
+@ Unit@ = /Unit%.Unit@;
+
+# Output the digits of pi, one digit output for each input string, starting
+# from state 's'.
+#
+# TODO: Implement the interface prescribed by the Benchmark Games.
+Stdio@ Main = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
+  (State@) { Bool@!; } PiDigits = (State@ s) {
+    Maybe@<String@> line := stdin;
+    line.?(
+      just: {
+        StreamResult@ r = Stream(s);
+        Unit@ _ := stdout(/Int/Int/Show%.Show(r.output));
+        PiDigits(r.state);
+      },
+      nothing: !(True));
+  };
+
+  PiDigits(Initial);
+};
+
+Main;
