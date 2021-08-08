@@ -1,3 +1,4 @@
+* Implement pidigits from benchmark game?
 * Implement tail calls directly for compiled code.
 
 * [/Invaders%] Add collision detection for bullets.

@@ -1,0 +1,125 @@
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Dec = /Int/Int%.Dec;
+% Neg = /Int/Int%.Neg;
+% Mul = /Int/Int%.Mul;
+% Div = /Int/Int/Div%.Div;
+% Eq = /Int/Int/Eq%.Eq;
+% Lt = /Int/Int/Eq%.Lt;
+% Int = /Int/Int/Lit%.Int;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Stdio@ = /Stdio%.Stdio@;
+
+@ String@ = /String%.String@;
+
+@ Unit@ = /Unit%.Unit@;
+
+
+
+@ LFT@ = *(Int@ q, Int@ r, Int@ s, Int@ t);
+
+# State@ --
+#   The state of computation of digits of pi
+#
+# Fields:
+#   k - The index of the next input to consume.
+#   z - The streaming state.
+@ State@ = *(Int@ k, LFT@ z);
+
+# Input -- 
+#   Compute the 'k'th input, starting at k = 1.
+(Int@) { LFT@; } Input = (Int@ k) {
+  LFT@(k, Add(Mul(Int|4, k), Int|2), Int|0, Add(Mul(Int|2, k), Int|1));
+};
+
+@ Rational@ = *(Int@ n, Int@ d);
+
+(LFT@, Int@) { Rational@; } Extract = (LFT@ z, Int@ x) {
+  Rational@(Add(Mul(z.q, x), z.r), Add(Mul(z.s, x), z.t));
+};
+
+(Rational@) { Int@; } Floor = (Rational@ r) {
+  Int@ x = Div(r.n, r.d);
+  Bool@ n_negative = Lt(r.n, Int|0);
+  Bool@ d_negative = Lt(r.d, Int|0);
+  /Bool/Eq%.Eq(n_negative, d_negative).?(
+    true: x,
+    false: Dec(x));
+};
+
+LFT@ Unit = LFT@(Int|1, Int|0, Int|0, Int|1);
+
+# Compose --
+#   Streaming state composition.
+(LFT@, LFT@) { LFT@; } Compose = (LFT@ a, LFT@ b) {
+  LFT@(
+    Add(Mul(a.q, b.q), Mul(a.r, b.s)),
+    Add(Mul(a.q, b.r), Mul(a.r, b.t)),
+    Add(Mul(a.s, b.q), Mul(a.t, b.s)),
+    Add(Mul(a.s, b.r), Mul(a.t, b.t)));
+};
+
+(LFT@) { Int@; } Next = (LFT@ z) {
+  Floor(Extract(z, Int|3));
+};
+
+(LFT@, Int@) { Bool@; } Safe = (LFT@ z, Int@ n) {
+  Eq(n, Floor(Extract(z, Int|4)));
+};
+
+# Produce --
+#   Produce the next streaming state, given the current streaming state and
+#   output.
+(LFT@, Int@) { LFT@; } Produce = (LFT@ z, Int@ n) {
+  Compose(LFT@(Int|10, Neg(Mul(Int|10, n)), Int|0, Int|1), z);
+};
+
+# Consume --
+#   Consume the next input.
+(LFT@, LFT@) { LFT@; } Consume = Compose;
+
+# StreamResult@ --
+#   The result of calling the Stream function.
+#
+# Fields:
+#   state - the updated computation state.
+#   output - the next output digit.
+@ StreamResult@ = *(State@ state, Int@ output);
+
+# Stream --
+#   Get the next output from the streaming computation.
+(State@) { StreamResult@; } Stream = (State@ s) {
+  Int@ y = Next(s.z);
+  Safe(s.z, y).?(
+    true: StreamResult@(State@(s.k, Produce(s.z, y)), y),
+    false: Stream(State@(Add(s.k, Int|1), Consume(s.z, Input(s.k)))));
+};
+
+# Output the digits of pi, one digit output for each input string, starting
+# from state 's'.
+
+Stdio@ Main = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
+  (State@) { Bool@!; } PiDigits = (State@ s) {
+    Maybe@<String@> line := stdin;
+    line.?(
+      just: {
+        StreamResult@ r = Stream(s);
+        Unit@ _ := stdout(/Int/Int/Show%.Show(r.output));
+        PiDigits(r.state);
+      },
+      nothing: !(True));
+  };
+
+  PiDigits(State@(Int|1, Unit));
+};
+
+Main;

@@ -15,6 +15,7 @@
 % TestSuite = /Test%.TestSuite;
 
 # Import to test compilation.
+% _ = /BenchmarkGame/PiDigits%;
 % _ = /Char/Show%;
 % _ = /Fble/Bench%;
 % _ = /Fble/ProfilesTest%;

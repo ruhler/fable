@@ -59,3 +59,57 @@ in general. For example, Put and Get functions don't use FbleCode*. We can't
 do tail calls from interpret.c in general without first exiting where we are
 on the stack.
 
+One approach I can think of, which is basically what we do today, is have a
+convention that the Run function can return 'TAIL_CALL', and it's the callers
+job to execute the tail call.
+
+The key points are:
+* This can be used to separate tail call from multithreading concepts, which
+  are currently tied together.
+* A tail call doesn't need to implement TAIL_CALL semantics itself, because it
+  can rely on its caller to do that.
+* Tail calls in assembly code can be implemented as real tail calls, instead
+  of returning TAIL_CALL, so hopefully it's rare in practice for TAIL_CALL to
+  be returned.
+
+The code to do a call would now look something like:
+do {
+  status = func->run(heap, threads, thread, io_activity)
+} while (status == TAIL_CALL);
+
+If we make this switch, then when we do multithreading, I would expect the Run
+function now returns: Finished, TailCall, or Abort? It's annoying that we'll
+have to check those after every call, but presumably not worse than what we
+already do today?
+
+Anyway, what steps to envision to get me where I want to go?
+
+1. Implement direct tail call support in generated assembly.
+  Hopefully minor performance improvement?
+
+2. Implement direct function call of the exec function in generated assembly,
+  Checking the return status to know if we should return to caller for tail
+  call or scheduling, or resume from where we left off in the function.
+
+  Hopefully this means we spend less time going back to the scheduler and
+  calling back into a function again. Maybe we get some performance
+  improvement.
+
+3. Implement direct function call of exec function in interpreter.
+
+4. Add TAIL_CALL as an option to exec status.
+  Change interpreter and generated assembly to handle TAIL_CALL directly
+  instead of falling back to the scheduler for it.
+
+5. Change interpreter and generated assembly to handle Abort directly, instead
+  of falling back to the scheduler for it.
+
+6. Use getcontext/setcontext to implement YIELD and BLOCK results.
+  Maybe we could support this as a mixed approach with the existing scheduler,
+  then slowly phase out the old scheduler for this approach? Like, if a thread
+  has a context, then execute it via setcontext. Otherwise call into the
+  function.
+
+It would be nice to have a bit more substantial benchmarks in place before
+doing this. Can I add a new benchmark to the benchmark set?
+
