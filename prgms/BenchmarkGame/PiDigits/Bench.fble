@@ -1,0 +1,29 @@
+
+@ State@ = /BenchmarkGame/PiDigits%.State@;
+@ StreamResult@ = /BenchmarkGame/PiDigits%.StreamResult@;
+% Stream = /BenchmarkGame/PiDigits%.Stream;
+% Initial = /BenchmarkGame/PiDigits%.Initial;
+
+@ Int@ = /Int/Int%.Int@;
+% Dec = /Int/Int%.Dec;
+% Eq = /Int/Int/Eq%.Eq;
+% Int = /Int/Int/Lit%.Int;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# Benchmark for PiDigits that takes about 1 minute to run.
+# Computes the nth digit of pi.
+Unit@! Bench = {
+  Int@ n = Int|26;
+
+  (Int@, State@) { Int@; } PiDigits = (Int@ i, State@ s) {
+    StreamResult@ r = Stream(s);
+    Eq(i, Int|0).?(true: r.output, false: PiDigits(Dec(i), r.state));
+  };
+
+  Int@ digit := !(PiDigits(n, Initial));
+  !(Unit);
+};
+
+@(Bench);
