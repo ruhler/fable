@@ -39,13 +39,16 @@
 Char@ newline = Char@('
 ': Unit);
 
+Char@ tab = Char@('	': Unit);
+
 # Chars --
 #   A collection of characters that can be referenced more easily than
 #   creating character values directly.
 % Chars = @(
   nl: newline,
+  tab: tab,
 
-  '	': Char@('	': Unit),
+  '	': tab,
 
   ' ': Char@(' ': Unit), '!': Char@('!': Unit), '"': Char@('"': Unit),
   '#': Char@('#': Unit), '$': Char@('$': Unit), '%': Char@( '%': Unit),

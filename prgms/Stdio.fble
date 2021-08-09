@@ -11,8 +11,9 @@
 # The Stdio Interface.
 # Inputs:
 #   input - The next line of text from standard input, or Nothing if end
-#           of file has been reached.
-#   output - Output a line of text to standard output.
+#           of file has been reached. Any newline read is included in the
+#           string.
+#   output - Output text to standard output.
 #
 # Results:
 #   True if the program ran successfully and should exit zero. False if the

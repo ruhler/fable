@@ -1,12 +1,6 @@
-* Don't automatically output newline in Stdio stdout put.
- - Update Cat, Fble/Tests, Fble/Bench, PiDigits, and TicTacToe
-
 * Implement pidigits from benchmark game
  - Change Stdio interface to take command line arguments?
- - Add an option to Stdio to stream out a character at a time instead of line
-   at a time?
  - Implement tests for PiDigits.
- - Implement expected interface for benchmark games and check output.
  - Change PiDigits benchmark to use Stdio program as basis.
 
 * Implement tail calls directly for compiled code.
