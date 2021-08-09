@@ -201,11 +201,14 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
 #   Lookup<Foo@>(mapToFoo, key);
 #   Lookup<Bar@>(mapToBar, key);
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
-Lookup = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
-  map.?(empty: Nothing<V@>);
-  lt(key, map.map.key).?(true: Lookup<K@>(lt)<V@>(map.map.left, key));
-  lt(map.map.key, key).?(true: Lookup<K@>(lt)<V@>(map.map.right, key));
-  Just<V@>(map.map.value);
+Lookup = <@ K@>(Eq@<K@> lt)<@ V@> {
+  (Map@<K@, V@>, K@) { Maybe@<V@>; } Lookup_ = (Map@<K@, V@> map, K@ key) {
+    map.?(empty: Nothing<V@>);
+    lt(key, map.map.key).?(true: Lookup_(map.map.left, key));
+    lt(map.map.key, key).?(true: Lookup_(map.map.right, key));
+    Just<V@>(map.map.value);
+  };
+  Lookup_;
 };
 
 # Modified@ --
@@ -426,78 +429,83 @@ RebalanceRight = <@ K@, @ V@> (K@ key, V@ value, Balance@ balance, Map@<K@, V@> 
 #   with - a function that returns the value to insert given the existing
 #          value in the map, or Nothing to delete the value in the map.
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
-Modify = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
-  map.?(empty: {
-    Maybe@<V@> value = with(Nothing<V@>);
-    value.?(just: {
-      # Insert into empty map.
-      @(
-        delta: '+',
-        map: MapP<K@, V@>(key, value.just, '0', Empty<K@, V@>, Empty<K@, V@>));
+Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
+  (Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
+  Modify_ = (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
+    map.?(empty: {
+      Maybe@<V@> value = with(Nothing<V@>);
+      value.?(just: {
+        # Insert into empty map.
+        @(
+          delta: '+',
+          map: MapP<K@, V@>(key, value.just, '0', Empty<K@, V@>, Empty<K@, V@>));
+      });
+
+      # Remove from empty map.
+      @(delta: '0', map: Empty<K@, V@>);
     });
 
-    # Remove from empty map.
-    @(delta: '0', map: Empty<K@, V@>);
-  });
-
-  lt(key, map.map.key).?(true: {
-    # Recurse to left subtree.
-    RebalanceLeft<K@, V@>(
-      map.map.key,
-      map.map.value,
-      map.map.balance,
-      Modify<K@>(lt)<V@>(map.map.left, key, with),
-      map.map.right);
-  });
-
-  lt(map.map.key, key).?(true: {
-    # Recurse to right subtree.
-    RebalanceRight<K@, V@>(
-      map.map.key,
-      map.map.value,
-      map.map.balance,
-      map.map.left,
-      Modify<K@>(lt)<V@>(map.map.right, key, with));
-  });
-
-  Maybe@<V@> value = with(Just<V@>(map.map.value));
-  value.?(just: {
-    # Replace root entry's value.
-    @(
-      delta: '0',
-      map: MapP<K@, V@>(
+    lt(key, map.map.key).?(true: {
+      # Recurse to left subtree.
+      RebalanceLeft<K@, V@>(
         map.map.key,
-        value.just,
+        map.map.value,
+        map.map.balance,
+        Modify_(map.map.left, key, with),
+        map.map.right);
+    });
+
+    lt(map.map.key, key).?(true: {
+      # Recurse to right subtree.
+      RebalanceRight<K@, V@>(
+        map.map.key,
+        map.map.value,
         map.map.balance,
         map.map.left,
-        map.map.right));
-  });
+        Modify_(map.map.right, key, with));
+    });
 
-  Maybe@<Entry@<K@, V@>> entry = Last<K@, V@>(map.map.left);
-  entry.?(just: {
-    # Delete root entry, filling in from left.
-    RebalanceLeft<K@, V@>(
-      entry.just.key,
-      entry.just.value,
-      map.map.balance,
-      Modify<K@>(lt)<V@>(map.map.left, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }),
-      map.map.right);
-  });
+    Maybe@<V@> value = with(Just<V@>(map.map.value));
+    value.?(just: {
+      # Replace root entry's value.
+      @(
+        delta: '0',
+        map: MapP<K@, V@>(
+          map.map.key,
+          value.just,
+          map.map.balance,
+          map.map.left,
+          map.map.right));
+    });
 
-  Maybe@<Entry@<K@, V@>> entry = First<K@, V@>(map.map.right);
-  entry.?(just: {
-    # Delete root entry, filling in from right.
-    RebalanceRight<K@, V@>(
-      entry.just.key,
-      entry.just.value,
-      map.map.balance,
-      map.map.left,
-      Modify<K@>(lt)<V@>(map.map.right, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }));
-  });
+    Maybe@<Entry@<K@, V@>> entry = Last<K@, V@>(map.map.left);
+    entry.?(just: {
+      # Delete root entry, filling in from left.
+      RebalanceLeft<K@, V@>(
+        entry.just.key,
+        entry.just.value,
+        map.map.balance,
+        Modify_(map.map.left, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }),
+        map.map.right);
+    });
 
-  # We are deleting the only element in the map.
-  @(delta: '-', map: Empty<K@, V@>);
-},
+    Maybe@<Entry@<K@, V@>> entry = First<K@, V@>(map.map.right);
+    entry.?(just: {
+      # Delete root entry, filling in from right.
+      RebalanceRight<K@, V@>(
+        entry.just.key,
+        entry.just.value,
+        map.map.balance,
+        map.map.left,
+        Modify_(map.map.right, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }));
+    });
+
+    # We are deleting the only element in the map.
+    @(delta: '-', map: Empty<K@, V@>);
+  };
+
+  Modify_;
+};
 
 # Delete --
 #   Remove a key and its value from the map, if present.
