@@ -129,6 +129,18 @@ Test@ Tests = TestSuite(Str|Int, List<Test@>[
   TEq(Str|Exp2_8, Int|256, !(Exp2(8))),
   TEq(Str|Exp2_7, Int|128, !(Exp2(7))),
 
+  Test(Str|Read_Positive, !({
+    Int@ wnt = Int|49113;
+    Int@ got = /Int/Int/Show%.Read(Str|49113);
+    AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, wnt, got);
+  })),
+
+  Test(Str|Read_Negative, !({
+    Int@ wnt = Neg(Int|49113);
+    Int@ got = /Int/Int/Show%.Read(Str|'-49113');
+    AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, wnt, got);
+  })),
+
   Test(Str|Show_Positive, !({
     String@ wnt = Str|'10325487960';
     String@ got = /Int/Int/Show%.Show(Int|10325487960);

@@ -27,10 +27,8 @@
 
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.
-#
-# TODO: Implement the interface prescribed by the Benchmark Games.
 Stdio@ Main = (IO@ io, List@<String@> args) {
-  Int@ n = Int|20;
+  Int@ n = /Int/Int/Show%.Read(args.cons.head);
   Int@ l = Int|10;
   (Int@, State@) { Bool@!; } PiDigits = (Int@ i, State@ s) {
     Eq(i, n).?(true: !(True));

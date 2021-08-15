@@ -1,6 +1,4 @@
-* Implement pidigits from benchmark game
- - Implement tests for PiDigits.
- - Change PiDigits benchmark to use Stdio program as basis.
+* Implement tests for PiDigits.
 
 * Implement tail calls directly for compiled code.
 
