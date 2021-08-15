@@ -2,8 +2,6 @@
  - Implement tests for PiDigits.
  - Change PiDigits benchmark to use Stdio program as basis.
 
-* Add --verbose option to fble-tests.
-
 * Implement tail calls directly for compiled code.
 
 * [/Invaders%] Add collision detection for bullets.

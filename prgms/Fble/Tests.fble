@@ -1,4 +1,7 @@
 
+@ Bool@ = /Bool%.Bool@;
+% False = /Bool%.False;
+
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 
@@ -43,8 +46,13 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
 ]);
 
 Stdio@ Main = (IO@ io, List@<String@> args) {
-  #/Test%.RunTestsVerbose(out, AllTests);
-  /Test%.RunTests(io.stdout, AllTests);
+  Bool@ verbose = args.?(
+    cons: /String/Eq%.Eq(Str|'--verbose', args.cons.head),
+    nil: False);
+
+  verbose.?(
+    true: /Test%.RunTestsVerbose(io.stdout, AllTests),
+    false: /Test%.RunTests(io.stdout, AllTests));
 };
 
 Main;
