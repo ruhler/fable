@@ -1,24 +1,24 @@
 
 % True = /Bool%.True;
 
+<@>@ List@ = /List%.List@;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
-<@>@ Get@ = /Process%.Get@;
-<@>@ Put@ = /Process%.Put@;
-
 @ Stdio@ = /Stdio%.Stdio@;
+@ IO@ = /Stdio%.IO@;
 
 @ String@ = /String%.String@;
 
 @ Unit@ = /Unit%.Unit@;
 
 # The 'cat' program to cat stdin.
-Stdio@ Cat = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
-  Maybe@<String@> line := stdin;
+Stdio@ Cat = (IO@ io, List@<String@> args) {
+  Maybe@<String@> line := io.stdin;
   line.?(
     just: {
-      Unit@ _ := stdout(line.just);
-      Cat(stdin, stdout);
+      Unit@ _ := io.stdout(line.just);
+      Cat(io, args);
     },
     nothing: !(True)
   );

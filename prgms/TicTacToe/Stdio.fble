@@ -4,6 +4,7 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
+<@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 <@>% Concat = /List%.Concat;
 
@@ -15,6 +16,7 @@
 <@>@ Put@ = /Process%.Put@;
 
 @ Stdio@ = /Stdio%.Stdio@;
+@ IO@ = /Stdio%.IO@;
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
@@ -95,14 +97,14 @@
 };
 
 # Play a game of tic-tac-toe using the stdio interface.
-Stdio@ TicTacToe = (Get@<Maybe@<String@>> input, Put@<String@> output) {
+Stdio@ TicTacToe = (IO@ io, List@<String@> args) {
   Get@<Input@> in = {
-    Maybe@<String@> s := input;
+    Maybe@<String@> s := io.stdin;
     s.?(just: {
             Maybe@<Input@> mi = ParseInput(s.just);
             mi.?(just: !(mi.just),
                  nothing: {
-                    Unit@ _ := output(Concat<Char@>(List<String@>[
+                    Unit@ _ := io.stdout(Concat<Char@>(List<String@>[
                       Str|'invalid input: ',
                       Str|'expected {A,B,C}{1,2,3}, P, or R',
                       Str[Chars.nl]]));
@@ -112,7 +114,7 @@ Stdio@ TicTacToe = (Get@<Maybe@<String@>> input, Put@<String@> output) {
          nothing: !(Input@(quit: Unit)));
   };
 
-  Put@<Output@> out = (Output@ o) { output(ShowOutput(o)); };
+  Put@<Output@> out = (Output@ o) { io.stdout(ShowOutput(o)); };
 
   Unit@ _ := /TicTacToe/Game%.TicTacToe(in, out);
   !(True);

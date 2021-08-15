@@ -32,12 +32,16 @@
 // FBLE_MAIN_USAGE_EXAMPLE --
 //   A string to include an an application usage example command line showing
 //   what to use in the argc/argv passed to FbleMain.
+//
+// FBLE_COMPILED_MAIN_ARGS --
+//   The number of command line arguments used to specify the main function.
 #ifdef FbleCompiledMain
 void FbleCompiledMain(FbleExecutableProgram* program);
 
 #define FBLE_MAIN_USAGE_SUMMARY ""
 #define FBLE_MAIN_USAGE_DETAIL "Loads the statically linked fble program.\n"
 #define FBLE_MAIN_USAGE_EXAMPLE ""
+#define FBLE_COMPILED_MAIN_ARGS 0
 
 #else  // FbleCompiledMain
 
@@ -48,6 +52,7 @@ void FbleCompiledMain(FbleExecutableProgram* program);
   "MODULE_PATH is the module path of the main fble module to load.\n" \
   "SEARCH_PATH is the directory containing the .fble files for the module hierarchy.\n"
 #define FBLE_MAIN_USAGE_EXAMPLE "prgms /Fble/Tests%"
+#define FBLE_COMPILED_MAIN_ARGS 2
 
 #endif // FbleCompiledMain
 

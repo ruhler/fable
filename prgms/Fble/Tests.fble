@@ -1,12 +1,9 @@
 
+<@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-
-<@>@ Get@ = /Process%.Get@;
-<@>@ Put@ = /Process%.Put@;
-
 @ Stdio@ = /Stdio%.Stdio@;
+@ IO@ = /Stdio%.IO@;
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
@@ -45,9 +42,9 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /TicTacToe/Tests%.Tests
 ]);
 
-Stdio@ Main = (Get@<Maybe@<String@>> in, Put@<String@> out) {
+Stdio@ Main = (IO@ io, List@<String@> args) {
   #/Test%.RunTestsVerbose(out, AllTests);
-  /Test%.RunTests(out, AllTests);
+  /Test%.RunTests(io.stdout, AllTests);
 };
 
 Main;

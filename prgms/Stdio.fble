@@ -1,6 +1,8 @@
 
 @ Bool@ = /Bool%.Bool@;
 
+<@>@ List@ = /List%.List@;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
 <@>@ Get@ = /Process%.Get@;
@@ -8,16 +10,22 @@
 
 @ String@ = /String%.String@;
 
+# IO@ --
+#   Input and output streams for a Stdio program.
+@ IO@ = *(
+  Get@<Maybe@<String@>> stdin,
+  Put@<String@> stdout,
+  Put@<String@> stderr
+);
+
 # The Stdio Interface.
 # Inputs:
-#   input - The next line of text from standard input, or Nothing if end
-#           of file has been reached. Any newline read is included in the
-#           string.
-#   output - Output text to standard output.
+#   io - The input and output streams.
+#   args - The list of arguments.
 #
 # Results:
 #   True if the program ran successfully and should exit zero. False if the
 #   program failed and should exit non-zero.
-@ Stdio@ = (Get@<Maybe@<String@>>, Put@<String@>) { Bool@!; };
+@ Stdio@ = (IO@, List@<String@>) { Bool@!; };
 
-@(Stdio@);
+@(IO@, Stdio@);

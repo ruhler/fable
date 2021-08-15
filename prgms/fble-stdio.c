@@ -1,17 +1,5 @@
 // fble-stdio
-//   A program to run fble programs with a stdio interface:
-//
-//     (Maybe@<Str@>-, Str@+) { Bool@; }
-//
-//   The first argument is stdin: a you can read lines of input from stdin. It
-//   returns Nothing on end of file.
-//
-//   The second argument sends strings to stdout.
-//
-//   The return value should be a union type. The tag of the union type is the
-//   return code of the program. For example, True causes an exit code of 0
-//   and False causes an exit code of 1.
-//
+//   A program to run fble programs with a /Stdio%.Stdio@ interface.
 
 #define _GNU_SOURCE     // for getline
 #include <assert.h>     // for assert
@@ -25,12 +13,16 @@
 typedef struct {
   FbleIO io;
 
-  FbleValue* input;
-  FbleValue* output;
+  FbleValue* in;
+  FbleValue* out;
+  FbleValue* err;
 } Stdio;
 
 static void PrintUsage(FILE* stream);
 static char ReadChar(FbleValue* c);
+static FbleValue* WriteChar(FbleValueHeap* heap, char c);
+static void Output(FILE* stream, FbleValue* str);
+static FbleValue* ToFbleString(FbleValueHeap* heap, const char* str);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 int main(int argc, char* argv[]);
 
@@ -48,7 +40,7 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-stdio [--profile FILE] " FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Usage: fble-stdio [--profile FILE] " FBLE_MAIN_USAGE_SUMMARY " ARGS\n"
       "Run an fble stdio program.\n"
       FBLE_MAIN_USAGE_DETAIL
       "Options:\n"
@@ -109,53 +101,93 @@ static FbleValue* WriteChar(FbleValueHeap* heap, char c)
   return FbleNewEnumValue(heap, tag);
 }
 
+// Output --
+//   Output a string to the given output stream.
+//
+// Inputs:
+//   stream - the stream to output to
+//   str - the /String%.String@ to write
+//
+// Side effects:
+//   Outputs the string to the stream and flushes the stream.
+static void Output(FILE* stream, FbleValue* str)
+{
+  FbleValue* charS = str;
+  while (FbleUnionValueTag(charS) == 0) {
+    FbleValue* charP = FbleUnionValueAccess(charS);
+    FbleValue* charV = FbleStructValueAccess(charP, 0);
+    charS = FbleStructValueAccess(charP, 1);
+
+    char c = ReadChar(charV);
+    fprintf(stream, "%c", c);
+  }
+  fflush(stream);
+}
+
+// ToFbleString --
+//   Convert a C string to an Fble /String%.String@.
+//
+// Inputs:
+//   heap - the heap to use for allocations.
+//   str - the string to convert.
+//
+// Results:
+//   A newly allocated fble /String%.String@ with the contents of str.
+//
+// Side effects:
+//   Allocates an FbleValue that should be freed with FbleReleaseValue when no
+//   longer needed.
+static FbleValue* ToFbleString(FbleValueHeap* heap, const char* str)
+{
+  size_t length = strlen(str);
+  FbleValue* charS = FbleNewEnumValue(heap, 1);
+  for (size_t i = 0; i < length; ++i) {
+    FbleValue* charV = WriteChar(heap, str[length - i - 1]);
+    FbleValue* charP = FbleNewStructValue(heap, 2, charV, charS);
+    FbleReleaseValue(heap, charV);
+    FbleReleaseValue(heap, charS);
+    charS = FbleNewUnionValue(heap, 0, charP);
+    FbleReleaseValue(heap, charP);
+  }
+  return charS;
+}
+
 // IO --
 //   FbleIO.io function for external ports.
 //   See the corresponding documentation in fble-value.h.
 //
 // Ports:
-//  input: Maybe@<Str@>-  Read a line from stdin. Nothing on end of file.
-//  output: Str@+          Output a line to stdout.
+//  in:   Read a line from stdin. Nothing on end of file.
+//  out:  Write to stdout.
+//  err:  Write to stderr.
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 {
   Stdio* stdio = (Stdio*)io;
   bool change = false;
-  if (stdio->output != NULL) {
-    // Output a string to stdout.
-    FbleValue* charS = stdio->output;
-    while (FbleUnionValueTag(charS) == 0) {
-      FbleValue* charP = FbleUnionValueAccess(charS);
-      FbleValue* charV = FbleStructValueAccess(charP, 0);
-      charS = FbleStructValueAccess(charP, 1);
-
-      char c = ReadChar(charV);
-      printf("%c", c);
-    }
-    fflush(stdout);
-
-    FbleReleaseValue(heap, stdio->output);
-    stdio->output = NULL;
+  if (stdio->out != NULL) {
+    Output(stdout, stdio->out);
+    FbleReleaseValue(heap, stdio->out);
+    stdio->out = NULL;
     change = true;
   }
 
-  if (block && stdio->input == NULL) {
+  if (stdio->err != NULL) {
+    Output(stderr, stdio->err);
+    FbleReleaseValue(heap, stdio->err);
+    stdio->err = NULL;
+    change = true;
+  }
+
+  if (block && stdio->in == NULL) {
     // Read a line from stdin.
     char* line = NULL;
     size_t len = 0;
     ssize_t read = getline(&line, &len, stdin);
     if (read < 0) {
-      stdio->input = FbleNewEnumValue(heap, 1);
+      stdio->in = FbleNewEnumValue(heap, 1);
     } else {
-      FbleValue* charS = FbleNewEnumValue(heap, 1);
-      for (size_t i = 0; i < read; ++i) {
-        FbleValue* charV = WriteChar(heap, line[read - i - 1]);
-        FbleValue* charP = FbleNewStructValue(heap, 2, charV, charS);
-        FbleReleaseValue(heap, charV);
-        FbleReleaseValue(heap, charS);
-        charS = FbleNewUnionValue(heap, 0, charP);
-        FbleReleaseValue(heap, charP);
-      }
-      stdio->input = FbleNewUnionValue(heap, 0, charS);
+      FbleValue* charS = ToFbleString(heap, line);
+      stdio->in = FbleNewUnionValue(heap, 0, charS);
       FbleReleaseValue(heap, charS);
     }
     free(line);
@@ -219,30 +251,55 @@ int main(int argc, char* argv[])
 
   Stdio io = {
     .io = { .io = &IO, },
-    .input = NULL,
-    .output = NULL,
+    .in = NULL,
+    .out = NULL,
+    .err = NULL,
   };
 
-  FbleName block_names[3];
+  FbleName block_names[5];
   block_names[0].name = FbleNewString("stdin!");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   block_names[1].name = FbleNewString("stdout!");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   block_names[2].name = FbleNewString("stdout!!");
   block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  block_names[3].name = FbleNewString("stderr!");
+  block_names[3].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  block_names[4].name = FbleNewString("stderr!!");
+  block_names[4].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleBlockId block_id = 0;
   if (profile != NULL) {
-    FbleNameV names = { .size = 3, .xs = block_names };
+    FbleNameV names = { .size = 5, .xs = block_names };
     block_id = FbleProfileAddBlocks(profile, names);
   };
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
   FbleFreeName(block_names[2]);
+  FbleFreeName(block_names[3]);
+  FbleFreeName(block_names[4]);
 
-  FbleValue* args[2] = {
-    FbleNewInputPortValue(heap, &io.input, block_id),
-    FbleNewOutputPortValue(heap, &io.output, block_id + 1)
-  };
+  FbleValue* fble_stdin = FbleNewInputPortValue(heap, &io.in, block_id);
+  FbleValue* fble_stdout = FbleNewOutputPortValue(heap, &io.out, block_id + 1);
+  FbleValue* fble_stderr = FbleNewOutputPortValue(heap, &io.err, block_id + 3);
+  FbleValue* fble_io = FbleNewStructValue(heap, 3, fble_stdin, fble_stdout, fble_stderr);
+  FbleReleaseValue(heap, fble_stdin);
+  FbleReleaseValue(heap, fble_stdout);
+  FbleReleaseValue(heap, fble_stderr);
+
+  argc -= FBLE_COMPILED_MAIN_ARGS;
+  argv += FBLE_COMPILED_MAIN_ARGS;
+
+  FbleValue* argS = FbleNewEnumValue(heap, 1);
+  for (size_t i = 0; i < argc; ++i) {
+    FbleValue* argV = ToFbleString(heap, argv[argc - i - 1]);
+    FbleValue* argP = FbleNewStructValue(heap, 2, argV, argS);
+    FbleReleaseValue(heap, argV);
+    FbleReleaseValue(heap, argS);
+    argS = FbleNewUnionValue(heap, 0, argP);
+    FbleReleaseValue(heap, argP);
+  }
+
+  FbleValue* args[2] = { fble_io, argS };
   FbleValue* proc = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
@@ -257,8 +314,6 @@ int main(int argc, char* argv[])
   FbleValue* value = FbleExec(heap, &io.io, proc, profile);
 
   FbleReleaseValue(heap, proc);
-  FbleReleaseValue(heap, io.input);
-  FbleReleaseValue(heap, io.output);
 
   size_t result = 1;
   if (value != NULL) {

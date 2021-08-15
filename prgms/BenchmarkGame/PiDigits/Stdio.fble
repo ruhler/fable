@@ -15,12 +15,10 @@
 % Eq = /Int/Int/Eq%.Eq;
 % Int = /Int/Int/Lit%.Int;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-
-<@>@ Get@ = /Process%.Get@;
-<@>@ Put@ = /Process%.Put@;
+<@>@ List@ = /List%.List@;
 
 @ Stdio@ = /Stdio%.Stdio@;
+@ IO@ = /Stdio%.IO@;
 
 @ String@ = /String%.String@;
 
@@ -31,20 +29,20 @@
 # from state 's'.
 #
 # TODO: Implement the interface prescribed by the Benchmark Games.
-Stdio@ Main = (Get@<Maybe@<String@>> stdin, Put@<String@> stdout) {
+Stdio@ Main = (IO@ io, List@<String@> args) {
   Int@ n = Int|20;
   Int@ l = Int|10;
   (Int@, State@) { Bool@!; } PiDigits = (Int@ i, State@ s) {
     Eq(i, n).?(true: !(True));
 
     StreamResult@ r = Stream(s);
-    Unit@ _ := stdout(/Int/Int/Show%.Show(r.output));
+    Unit@ _ := io.stdout(/Int/Int/Show%.Show(r.output));
 
     Int@ ni = Inc(i);
     Unit@ _ := Eq(Int|0, Mod(ni, l)).?(true: {
-      Unit@ _ := stdout[Chars.tab, Chars.':'];
-      Unit@ _ := stdout(/Int/Int/Show%.Show(ni));
-      stdout[Chars.nl];
+      Unit@ _ := io.stdout[Chars.tab, Chars.':'];
+      Unit@ _ := io.stdout(/Int/Int/Show%.Show(ni));
+      io.stdout[Chars.nl];
     }, false: !(Unit));
 
     PiDigits(ni, r.state);
