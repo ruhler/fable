@@ -15,6 +15,7 @@
 % TestSuite = /Test%.TestSuite;
 
 # Import to test compilation.
+% _ = /BenchmarkGame/BinaryTrees%;
 % _ = /BenchmarkGame/PiDigits/Stdio%;
 % _ = /Char/Show%;
 % _ = /Fble/Bench%;

@@ -1,4 +1,5 @@
 * Implement tests for PiDigits.
+* Implement tests for BinaryTrees.
 
 * Implement tail calls directly for compiled code.
 
