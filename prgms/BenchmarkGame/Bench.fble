@@ -1,0 +1,34 @@
+
+@ Bool@ = /Bool%.Bool@;
+
+<@>% List = /List%.List;
+
+<@>% Nothing = /Maybe%.Nothing;
+
+@ Stdio@ = /Stdio%.Stdio@;
+@ IO@ = /Stdio%.IO@;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+(Stdio@, String@) { Unit@!; } RunBench = (Stdio@ game, String@ n) {
+  IO@ io = @(
+    stdin: !(Nothing<String@>),
+    stdout: (String@ _) { !(Unit); },
+    stderr: (String@ _) { !(Unit); });
+
+  Bool@ result := game(io, List<String@>[n]);
+  !(result.true);
+};
+
+# Benchmark for the benchmark games that takes about 1 minute to run.
+Unit@! Bench = {
+  Unit@ _pidigits := RunBench(/BenchmarkGame/PiDigits/Stdio%, Str|22);
+  Unit@ _binarytrees := RunBench(/BenchmarkGame/BinaryTrees%, Str|14);
+  !(Unit);
+};
+
+@(Bench);

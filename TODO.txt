@@ -1,5 +1,6 @@
 * Implement tests for PiDigits.
 * Implement tests for BinaryTrees.
+* Implement a regular expression engine?
 
 * Implement tail calls directly for compiled code.
 
