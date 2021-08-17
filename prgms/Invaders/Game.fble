@@ -5,6 +5,7 @@
 % Translate = /Drawing%.Translate;
 
 @ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
 % Div = /Int/Int/Div%.Div;
 % Mod = /Int/Int/Div%.Mod;
 
@@ -43,7 +44,7 @@
 @ Input@ = +(Dir@ dir, Unit@ fire);
 
 Game@ Initial = @(
-  score: Int|920,
+  score: Int|0,
   lives: Lives@(3: Unit),
   ship: Ship.Initial,
   bullet: Bullet.Initial,
@@ -62,7 +63,8 @@ Game@ Initial = @(
   };
 
   kill.?(just: {
-    Game@(g.score, g.lives, ship, Bullet.Initial, Aliens.Kill(aliens, kill.just));
+    Game@(Add(Aliens.Points(kill.just), g.score),
+      g.lives, ship, Bullet.Initial, Aliens.Kill(aliens, kill.just));
   });
     
   Game@(g.score, g.lives, ship, bullet, aliens);

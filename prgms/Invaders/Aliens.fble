@@ -377,6 +377,15 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
     dying: Cons<Dying@>(dying, aliens.dying));
 };
 
+# Points --
+#   The number of points earned by killing the given alien.
+(Alien@) { Int@; } Points = (Alien@ alien) {
+  Int@ half_row = Div(Row(alien), Int|2);
+  Eq(Int|0, half_row).?(true: Int|10);
+  Eq(Int|1, half_row).?(true: Int|20);
+  Int|30;
+};
+
 # Sprite --
 #   Return the alien sprite for an alien in the given row with the given
 #   phase.
@@ -410,4 +419,4 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
     });
 };
 
-@(Alien@, Aliens@, Initial, Tick, Collision, Kill, Draw);
+@(Alien@, Aliens@, Initial, Tick, Collision, Kill, Points, Draw);
