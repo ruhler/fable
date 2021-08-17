@@ -21,7 +21,7 @@
 Int@ ShipY = Int|11;
 
 # The velocity of the ship when it is moving, in pixels per tick.
-Int@ ShipV = Int|2;
+Int@ ShipV = Int|1;
 
 # The range of values allowed for the left edge of the ship.
 Int@ MinX = Int|48;
