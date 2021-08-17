@@ -15,6 +15,7 @@
 % Alien2B = /Invaders/Graphics%.Aliens.Alien2B;
 % Alien3A = /Invaders/Graphics%.Aliens.Alien3A;
 % Alien3B = /Invaders/Graphics%.Aliens.Alien3B;
+% DeadAlien = /Invaders/Graphics%.DeadAlien;
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
@@ -32,6 +33,10 @@
 
 <@,@>% DoWhile = /Loop%.DoWhile;
 <@,@>% For = /Loop%.For;
+
+<@>@ List@ = /List%.List@;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
@@ -197,6 +202,18 @@ Int@ MoveX = Int|2;
 #   How far an alien moves down, in game coordinates, in a single step.
 Int@ MoveY = Int|8;
 
+# DyingTime --
+#   How many ticks it takes for an alien to die.
+Int@ DyingTime = Int|10;
+
+# Dying@ --
+#   Represents a dying alien.
+#
+# Fields:
+#   x, y - The position of the dead alien
+#   wait - how many ticks to wait before the dead alien disappears.
+@ Dying@ = *(Int@ x, Int@ y, Int@ wait);
+
 # Aliens@ --
 #   The state of a group of aliens.
 @ Aliens@ = *(
@@ -228,7 +245,10 @@ Int@ MoveY = Int|8;
   Maybe@<Alien@> next,
 
   # Set to true if we should change direction in the next full round.
-  Bool@ turn
+  Bool@ turn,
+
+  # The list of currently dying aliens.
+  List@<Dying@> dying
 );
 
 # Initial --
@@ -242,7 +262,22 @@ Aliens@ Initial = @(
   dir: Dir@(right: Unit),
   phase: Phase@(b: Unit),
   next: Just<Alien@>(Int|0),
-  turn: False);
+  turn: False,
+  dying: Nil<Dying@>
+);
+
+# TickDying --
+#   Advance the dying aliens by one unit of time tick.
+(List@<Dying@>) { List@<Dying@>; } TickDying = (List@<Dying@> dying) {
+  dying.?(nil: dying);
+
+  Dying@ head = dying.cons.head;
+  List@<Dying@> tail = TickDying(dying.cons.tail);
+
+  Int@ nwait = Sub(head.wait, Int|1);
+  Eq(Int|0, nwait).?(true: tail);
+  Cons<Dying@>(Dying@(head.x, head.y, nwait), tail);
+};
 
 # Tick --
 #   Advance the aliens by one unit of time tick.
@@ -255,7 +290,7 @@ Aliens@ Initial = @(
         right: Gt(left, RightEdge)));
       Maybe@<Alien@> next = NextAlive(a.alive, a.next.just);
       Aliens@(a.src_x, a.src_y, a.dst_x, a.dst_y, a.alive,
-        a.dir, a.phase, next, turn);
+        a.dir, a.phase, next, turn, TickDying(a.dying));
     },
     nothing: {
       *(Int@ x, Int@ y, Dir@ dir) updates = a.turn.?(
@@ -270,7 +305,7 @@ Aliens@ Initial = @(
       Maybe@<Alien@> next = FirstAlive(a.alive);
       Aliens@(a.dst_x, a.dst_y, updates.x, updates.y,
         a.alive, updates.dir, FlipPhase(a.phase),
-        next, False);
+        next, False, TickDying(a.dying));
     });
 };
 
@@ -321,6 +356,15 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 
 # Kill the given alien.
 (Aliens@, Alien@) { Aliens@; } Kill = (Aliens@ aliens, Alien@ alien) {
+  Dying@ dying = {
+    Bool@ moved = aliens.next.?(just: Lt(alien, aliens.next.just), nothing: True);
+    Int@ group_x = moved.?(true: aliens.dst_x, false: aliens.src_x);
+    Int@ group_y = moved.?(true: aliens.dst_y, false: aliens.src_y);
+    Int@ alien_x = Add(group_x, Mul(StrideX, Col(alien)));
+    Int@ alien_y = Add(group_y, Mul(StrideY, Row(alien)));
+    Dying@(alien_x, alien_y, DyingTime);
+  };
+
   @(src_x: aliens.src_x,
     src_y: aliens.src_y,
     dst_x: aliens.dst_x,
@@ -329,7 +373,8 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
     dir: aliens.dir,
     phase: aliens.phase,
     next: aliens.next,
-    turn: aliens.turn);
+    turn: aliens.turn,
+    dying: Cons<Dying@>(dying, aliens.dying));
 };
 
 # Sprite --
@@ -345,10 +390,15 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 # Draw --
 #   Make a drawing of the aliens in their current location.
 (Aliens@) { Drawing@; } Draw = (Aliens@ as) {
+  Drawing@ dying = /List%.ForEach<Dying@, Drawing@>(as.dying, Blank,
+    (Dying@ dy, Drawing@ d) {
+      Over(d, Translate(dy.x, dy.y, DeadAlien));
+    });
+     
   For<Alien@, Drawing@>(
     FirstAlive(as.alive),
     (Alien@ a) { NextAlive(as.alive, a); },
-    Blank,
+    dying,
     (Alien@ a, Drawing@ d) {
       Bool@ moved = as.next.?(just: Lt(a, as.next.just), nothing: True);
       Int@ group_x = moved.?(true: as.dst_x, false: as.src_x);

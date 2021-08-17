@@ -1352,4 +1352,4 @@ Drawing@ Screenshot = Drawings[
   Translate(Int|148, Int|11, DeadShipB)
 ];
 
-@(Ship, Aliens, Background, Digits, Screenshot, Bullet);
+@(Ship, Aliens, DeadAlien, Background, Digits, Screenshot, Bullet);

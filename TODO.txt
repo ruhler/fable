@@ -4,8 +4,7 @@
 
 * Implement tail calls directly for compiled code.
 
-* [/Invaders%] Make the bullet a little shorter?
-* [/Invaders%] Add death animation when aliens are killed.
+* [/Invaders%] Start keeping track of score.
 * [/Invaders%] Go to the next level when all the aliens are killed.
 
 * Consider running some of the tests under valgrind?
