@@ -4,8 +4,7 @@
 
 * Implement tail calls directly for compiled code.
 
-* [/Invaders%] Fix bug where you can kill an alien on the left by shooting to
-               the right of all the aliens.
+* [/Invaders%] Make the bullet a little shorter?
 * [/Invaders%] Add death animation when aliens are killed.
 * [/Invaders%] Go to the next level when all the aliens are killed.
 

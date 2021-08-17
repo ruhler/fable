@@ -26,6 +26,7 @@
 % Eq = /Int/Int/Eq%.Eq;
 % Le = /Int/Int/Eq%.Le;
 % Lt = /Int/Int/Eq%.Lt;
+% Ge = /Int/Int/Eq%.Ge;
 % Gt = /Int/Int/Eq%.Gt;
 % Int = /Int/Int/Lit%.Int;
 
@@ -282,6 +283,8 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
   (Int@, Int@) { Maybe@<Alien@>; } Candidate = (Int@ aliens_x, Int@ aliens_y) {
     Lt(x, aliens_x).?(true: Nothing<Alien@>);
     Lt(y, aliens_y).?(true: Nothing<Alien@>);
+    Ge(x, Add(aliens_x, Mul(StrideX, NumCols))).?(true: Nothing<Alien@>);
+    Ge(y, Add(aliens_y, Mul(StrideY, NumRows))).?(true: Nothing<Alien@>);
 
     Int@ dx = Sub(x, aliens_x);
     Int@ dy = Sub(y, aliens_y);
