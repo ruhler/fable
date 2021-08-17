@@ -111,6 +111,10 @@ Set@ AllAliens = {
   };
 };
 
+# Remove --
+#   Remove an element of the set.
+(Set@, Alien@) { Set@; } Remove = /Map%.Delete<Alien@>(AlienLt)<Unit@>;
+
 # NextAlive --
 #   Returns the next live alien in the given set, or Nothing if we have
 #   reached the end of live aliens.
@@ -210,9 +214,6 @@ Int@ MoveY = Int|8;
   # The set of aliens in the group that are alive.
   Set@ alive,            
 
-  # The number of aliens in the group that are alive.
-  Int@ num_aliens_alive,
-
   # The direction the aliens are currently moving.
   Dir@ dir,
 
@@ -237,7 +238,6 @@ Aliens@ Initial = @(
   dst_x: Add(LeftEdge, MoveX),
   dst_y: Int|104,
   alive: AllAliens,
-  num_aliens_alive: NumAliens,
   dir: Dir@(right: Unit),
   phase: Phase@(b: Unit),
   next: Just<Alien@>(Int|0),
@@ -254,7 +254,7 @@ Aliens@ Initial = @(
         right: Gt(left, RightEdge)));
       Maybe@<Alien@> next = NextAlive(a.alive, a.next.just);
       Aliens@(a.src_x, a.src_y, a.dst_x, a.dst_y, a.alive,
-        a.num_aliens_alive, a.dir, a.phase, next, turn);
+        a.dir, a.phase, next, turn);
     },
     nothing: {
       *(Int@ x, Int@ y, Dir@ dir) updates = a.turn.?(
@@ -268,7 +268,7 @@ Aliens@ Initial = @(
           dir: a.dir));
       Maybe@<Alien@> next = FirstAlive(a.alive);
       Aliens@(a.dst_x, a.dst_y, updates.x, updates.y,
-        a.alive, a.num_aliens_alive, updates.dir, FlipPhase(a.phase),
+        a.alive, updates.dir, FlipPhase(a.phase),
         next, False);
     });
 };
@@ -316,6 +316,19 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
   Nothing<Alien@>;
 };
 
+# Kill the given alien.
+(Aliens@, Alien@) { Aliens@; } Kill = (Aliens@ aliens, Alien@ alien) {
+  @(src_x: aliens.src_x,
+    src_y: aliens.src_y,
+    dst_x: aliens.dst_x,
+    dst_y: aliens.dst_y,
+    alive: Remove(aliens.alive, alien),
+    dir: aliens.dir,
+    phase: aliens.phase,
+    next: aliens.next,
+    turn: aliens.turn);
+};
+
 # Sprite --
 #   Return the alien sprite for an alien in the given row with the given
 #   phase.
@@ -344,4 +357,4 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
     });
 };
 
-@(Alien@, Aliens@, Initial, Tick, Collision, Draw);
+@(Alien@, Aliens@, Initial, Tick, Collision, Kill, Draw);

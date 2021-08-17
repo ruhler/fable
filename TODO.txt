@@ -4,9 +4,8 @@
 
 * Implement tail calls directly for compiled code.
 
-* [/Invaders%] Add collision detection for bullets.
- - Maybe that's done by the game after every tick.
-   Check for collision, clear bullet and kill alien if that happens.
+* [/Invaders%] Add death animation when aliens are killed.
+* [/Invaders%] Go to the next level when all the aliens are killed.
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?

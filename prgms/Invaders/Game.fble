@@ -14,6 +14,7 @@
 
 % Aliens = /Invaders/Aliens%;
 @ Aliens@ = Aliens.Aliens@;
+@ Alien@ = Aliens.Alien@;
 
 % Bullet = /Invaders/Bullet%;
 @ Bullet@ = Bullet.Bullet@;
@@ -21,6 +22,9 @@
 % Ship = /Invaders/Ship%;
 @ Dir@ = Ship.Dir@;
 @ Ship@ = Ship.Ship@;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Nothing = /Maybe%.Nothing;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -52,16 +56,16 @@ Game@ Initial = @(
   Aliens@ aliens = Aliens.Tick(g.aliens);
 
   # Check for bullet colliding with an alien.
-  Bullet@ bullet2 = bullet.live.?(
-    true: {
-      Aliens.Collision(bullet.x, bullet.y, aliens).?(
-        just: Bullet.Initial,
-        nothing: bullet);
-    },
-    false: bullet);
+  Maybe@<Alien@> kill = {
+    bullet.live.?(false: Nothing<Alien@>);
+    Aliens.Collision(bullet.x, bullet.y, aliens);
+  };
 
-
-  Game@(g.score, g.lives, ship, bullet2, aliens);
+  kill.?(just: {
+    Game@(g.score, g.lives, ship, Bullet.Initial, Aliens.Kill(aliens, kill.just));
+  });
+    
+  Game@(g.score, g.lives, ship, bullet, aliens);
 };
 
 (Game@, Input@) { Game@; } Input = (Game@ g, Input@ input) {
