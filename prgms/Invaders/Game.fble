@@ -47,8 +47,21 @@ Game@ Initial = @(
 );
 
 (Game@) { Game@; } Tick = (Game@ g) {
-  Game@(g.score, g.lives, Ship.Tick(g.ship), Bullet.Tick(g.bullet),
-    Aliens.Tick(g.aliens));
+  Ship@ ship = Ship.Tick(g.ship);
+  Bullet@ bullet = Bullet.Tick(g.bullet);
+  Aliens@ aliens = Aliens.Tick(g.aliens);
+
+  # Check for bullet colliding with an alien.
+  Bullet@ bullet2 = bullet.live.?(
+    true: {
+      Aliens.Collision(bullet.x, bullet.y, aliens).?(
+        just: Bullet.Initial,
+        nothing: bullet);
+    },
+    false: bullet);
+
+
+  Game@(g.score, g.lives, ship, bullet2, aliens);
 };
 
 (Game@, Input@) { Game@; } Input = (Game@ g, Input@ input) {

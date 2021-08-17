@@ -24,6 +24,7 @@
 % Div = /Int/Int/Div%.Div;
 % Mod = /Int/Int/Div%.Mod;
 % Eq = /Int/Int/Eq%.Eq;
+% Le = /Int/Int/Eq%.Le;
 % Lt = /Int/Int/Eq%.Lt;
 % Gt = /Int/Int/Eq%.Gt;
 % Int = /Int/Int/Lit%.Int;
@@ -86,9 +87,10 @@ Int@ NumAliens = Mul(NumRows, NumCols);
 # A set of aliens.
 @ Set@ = /Map%.Map@<Alien@, Unit@>;
 
-# AlienLt -- 
-#   Less than comparison operation for Aliens.
+# AlienLt, AlienLe -- 
+#   Less than comparison operations for Aliens.
 /Eq%.Eq@<Alien@> AlienLt = /Int/Int/Eq%.Lt;
+/Eq%.Eq@<Alien@> AlienLe = /Int/Int/Eq%.Le;
 
 # AllAliens --
 #   The set of all aliens.
@@ -172,6 +174,14 @@ Int@ StrideX = Int|15;
 #   The vertical distance, in game coordinates, between the bottom edge of an
 #   alien and the bottom edge of its immediately adjacent alien.
 Int@ StrideY = Int|16;
+
+# Width --
+#   The width of a single alien.
+Int@ Width = Int|10;
+
+# Height --
+#   The height of a single alien.
+Int@ Height = Int|8;
 
 # MoveX --
 #   How far an alien moves side to side, in game coordinates, in a single
@@ -263,6 +273,49 @@ Aliens@ Initial = @(
     });
 };
 
+# Collision --
+#   Returns the alien, if any, that occupy the same location as the given
+#   point.
+(Int@, Int@, Aliens@) { Maybe@<Alien@>; }
+Collision = (Int@ x, Int@ y, Aliens@ aliens) {
+  # Identify the alien at point x, y relative to the given aliens position.
+  (Int@, Int@) { Maybe@<Alien@>; } Candidate = (Int@ aliens_x, Int@ aliens_y) {
+    Lt(x, aliens_x).?(true: Nothing<Alien@>);
+    Lt(y, aliens_y).?(true: Nothing<Alien@>);
+
+    Int@ dx = Sub(x, aliens_x);
+    Int@ dy = Sub(y, aliens_y);
+    Int@ rx = Mod(dx, StrideX);
+    Int@ ry = Mod(dy, StrideY);
+
+    Le(rx, Width).?(false: Nothing<Alien@>);
+    Le(ry, Height).?(false: Nothing<Alien@>);
+
+    Alien@ alien = Add(Mul(NumCols, Div(dy, StrideY)), Div(dx, StrideX));
+    Contains(aliens.alive, alien).?(false: Nothing<Alien@>);
+
+    Just<Alien@>(alien);
+  };
+
+  Maybe@<Alien@> src_candidate = Candidate(aliens.src_x, aliens.src_y);
+  Bool@ src_valid = {
+    src_candidate.?(nothing: False);
+    aliens.next.?(nothing: False);
+    AlienLe(aliens.next.just, src_candidate.just);
+  };
+  src_valid.?(true: src_candidate);
+
+  Maybe@<Alien@> dst_candidate = Candidate(aliens.dst_x, aliens.dst_y);
+  Bool@ dst_valid = {
+    dst_candidate.?(nothing: False);
+    aliens.next.?(nothing: True);
+    AlienLt(dst_candidate.just, aliens.next.just);
+  };
+  dst_valid.?(true: dst_candidate);
+
+  Nothing<Alien@>;
+};
+
 # Sprite --
 #   Return the alien sprite for an alien in the given row with the given
 #   phase.
@@ -291,4 +344,4 @@ Aliens@ Initial = @(
     });
 };
 
-@(Aliens@, Initial, Tick, Draw);
+@(Alien@, Aliens@, Initial, Tick, Collision, Draw);
