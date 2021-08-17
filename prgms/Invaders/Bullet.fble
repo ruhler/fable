@@ -24,7 +24,7 @@
 # BulletV --
 #   The vertical velocity of a bullet in game coordinates per unit of game
 #   time.
-Int@ BulletV = Int|5;
+Int@ BulletV = Int|4;
 
 # Initial --
 #   The initial state of the bullet.
