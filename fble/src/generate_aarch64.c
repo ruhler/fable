@@ -151,6 +151,7 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
 
       case FBLE_LINK_INSTR: break;
       case FBLE_FORK_INSTR: break;
+      case FBLE_JOIN_INSTR: break;
       case FBLE_COPY_INSTR: break;
       case FBLE_REF_VALUE_INSTR: break;
 
@@ -842,6 +843,14 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       return;
     }
 
+    case FBLE_JOIN_INSTR: {
+      fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_BLOCKED);
+      fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
+      fprintf(fout, "  ldr x1, [x1, #%zi]\n", offsetof(FbleThread, children));
+      fprintf(fout, "  cbnz x1, .L._Run_.exit\n");
+      return;
+    }
+
     case FBLE_COPY_INSTR: {
       FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
@@ -1150,6 +1159,10 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       for (size_t i = 0; i < fork_instr->args.size; ++i) {
         SetFrameVar(fout, "XZR", fork_instr->dests.xs[i]);
       }
+      return;
+    }
+
+    case FBLE_JOIN_INSTR: {
       return;
     }
 

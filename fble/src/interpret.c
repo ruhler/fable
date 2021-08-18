@@ -81,6 +81,7 @@ static FbleExecStatus RunCallInstr(FbleValueHeap* heap, FbleThreadV* threads, Fb
 static FbleExecStatus RunCopyInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunLinkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
+static FbleExecStatus RunJoinInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunRefValueInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunRefDefInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
 static FbleExecStatus RunReturnInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity);
@@ -101,6 +102,7 @@ static FbleExecStatus AbortCallInstr(FbleValueHeap* heap, FbleStack*, FbleInstr*
 static FbleExecStatus AbortCopyInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortLinkInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortForkInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
+static FbleExecStatus AbortJoinInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortRefValueInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortRefDefInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
 static FbleExecStatus AbortReturnInstr(FbleValueHeap* heap, FbleStack*, FbleInstr* instr);
@@ -123,6 +125,7 @@ static RunInstr sRunInstr[] = {
   &RunCallInstr,             // FBLE_CALL_INSTR
   &RunLinkInstr,             // FBLE_LINK_INSTR
   &RunForkInstr,             // FBLE_FORK_INSTR
+  &RunJoinInstr,             // FBLE_JOIN_INSTR
   &RunCopyInstr,             // FBLE_COPY_INSTR
   &RunRefValueInstr,         // FBLE_REF_VALUE_INSTR
   &RunRefDefInstr,           // FBLE_REF_DEF_INSTR
@@ -148,6 +151,7 @@ static AbortInstr sAbortInstr[] = {
   &AbortCallInstr,             // FBLE_CALL_INSTR
   &AbortLinkInstr,             // FBLE_LINK_INSTR
   &AbortForkInstr,             // FBLE_FORK_INSTR
+  &AbortJoinInstr,             // FBLE_JOIN_INSTR
   &AbortCopyInstr,             // FBLE_COPY_INSTR
   &AbortRefValueInstr,         // FBLE_REF_VALUE_INSTR
   &AbortRefDefInstr,           // FBLE_REF_DEF_INSTR
@@ -548,6 +552,25 @@ static FbleExecStatus AbortForkInstr(FbleValueHeap* heap, FbleStack* stack, Fble
   for (size_t i = 0; i < fork_instr->args.size; ++i) {
     stack->locals[fork_instr->dests.xs[i]] = NULL;
   }
+  stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
+// RunJoinInstr -- see documentation of RunInstr
+//   Execute an FBLE_JOIN_INSTR.
+static FbleExecStatus RunJoinInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity)
+{
+  if (thread->children > 0) {
+    return FBLE_EXEC_BLOCKED;
+  }
+  thread->stack->pc++;
+  return FBLE_EXEC_RUNNING;
+}
+
+// AbortJoinInstr -- see documentation of AbortInstr
+//   Execute an FBLE_JOIN_INSTR for abort.
+static FbleExecStatus AbortJoinInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+{
   stack->pc++;
   return FBLE_EXEC_RUNNING;
 }

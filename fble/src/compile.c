@@ -962,6 +962,11 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       fork->dests.size = exec_tc->bindings.size;
       AppendInstr(scope, &fork->_base);
 
+      FbleJoinInstr* join = FbleAlloc(FbleJoinInstr);
+      join->_base.tag = FBLE_JOIN_INSTR;
+      join->_base.profile_ops = NULL;
+      AppendInstr(scope, &join->_base);
+
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
         // Note: Make sure we call NewLocal before calling ReleaseLocal on any
         // of the arguments.

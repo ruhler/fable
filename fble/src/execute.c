@@ -90,10 +90,6 @@ static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 {
   FbleExecStatus status = FBLE_EXEC_FINISHED;
   while (status == FBLE_EXEC_FINISHED && thread->stack != NULL) {
-    if (thread->children > 0) {
-      return FBLE_EXEC_BLOCKED;
-    }
-
     status = FbleFuncValueExecutable(thread->stack->func)->run(heap, threads, thread, io_activity);
   }
   return status;

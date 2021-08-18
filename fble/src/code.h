@@ -75,6 +75,7 @@ typedef enum {
   FBLE_CALL_INSTR,
   FBLE_LINK_INSTR,
   FBLE_FORK_INSTR,
+  FBLE_JOIN_INSTR,
   FBLE_COPY_INSTR,
   FBLE_REF_VALUE_INSTR,
   FBLE_REF_DEF_INSTR,
@@ -270,12 +271,19 @@ typedef struct {
 // thread and stores the result to the given destination in the parent
 // thread's stack frame.
 //
-// The parent thread does not resume until all child threads have finished.
+// Fork instructions should always be followed by join instructions to ensure
+// all the children have completed before the parent continues executing.
 typedef struct {
   FbleInstr _base;
   FbleFrameIndexV args;
   FbleLocalIndexV dests;
 } FbleForkInstr;
+
+// FbleJoinInstr -- FBLE_JOIN_INSTR
+//   Blocks a thread until all the thread's children have completed.
+typedef struct {
+  FbleInstr _base;
+} FbleJoinInstr;
 
 // FbleCopyInstr -- FBLE_COPY_INSTR
 //   Copy a value in the stack frame from one location to another.

@@ -225,6 +225,11 @@ static void DumpCode(FILE* fout, FbleCode* code)
           break;
         }
 
+        case FBLE_JOIN_INSTR: {
+          fprintf(fout, "join\n");
+          break;
+        }
+
         case FBLE_COPY_INSTR: {
           FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
           fprintf(fout, "l%zi = %s%zi;\n",
@@ -321,6 +326,7 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_LINK_INSTR:
     case FBLE_REF_VALUE_INSTR:
     case FBLE_RETURN_INSTR:
+    case FBLE_JOIN_INSTR:
     case FBLE_TYPE_INSTR:
     case FBLE_RELEASE_INSTR:
       FbleFree(instr);
