@@ -424,7 +424,7 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 
   // Return FBLE_EXEC_ABORTED
   fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
-  fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+  fprintf(fout, "  b .L._Run_.exit\n");
 }
 
 // StackBytesForCount --
@@ -781,7 +781,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
         fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
         fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
-        fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+        fprintf(fout, "  b .L._Run_.exit\n");
         return;
       }
 
@@ -800,7 +800,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.exit\n");
       return;
     }
 
@@ -838,7 +838,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
       // Return FBLE_EXEC_YIELDED
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_YIELDED);
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.exit\n");
       return;
     }
 
@@ -898,7 +898,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleThreadReturn\n");
 
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+      fprintf(fout, "  b .L._Run_.exit\n");
       return;
     }
 
@@ -1046,19 +1046,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     fprintf(fout, ".L._Run_%p.pc.%zi:\n", (void*)code, i);
     EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);
   }
-
-  // Restore stack and frame pointer and return whatever is in x0.
-  // Common code for exiting a run function.
-  fprintf(fout, ".L._Run_.%p.exit:\n", (void*)code);
-  fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
-  fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
-  fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
-  fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
-  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
-  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
-  fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
-  fprintf(fout, "  ret\n");
 }
 
 // EmitInstrForAbort --
@@ -1445,6 +1432,21 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
     SanitizeString(locs.xs[i], label);
     fprintf(fout, ".L.loc.%s:\n  .string \"%s\"\n", label, locs.xs[i]);
   }
+
+  // Common code for exiting a run function.
+  // Restores stack and frame pointer and return whatever is in x0.
+  fprintf(fout, "  .text\n");
+  fprintf(fout, "  .align 2\n");
+  fprintf(fout, ".L._Run_.exit:\n");
+  fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
+  fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
+  fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
+  fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
+  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
+  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
+  fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
+  fprintf(fout, "  ret\n");
 
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction

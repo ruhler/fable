@@ -5,6 +5,15 @@
 * Implement tail calls directly for compiled code.
 
 * [/Invaders%] Go to the next level when all the aliens are killed.
+* [/Invaders%] Loose the game when aliens reach the bottom.
+* [/Invaders%] Add the UFO.
+  Comes every 10000 units
+  Point value randomly chosen: 10% 300, 20% 150, 30% 100, 40% 50
+  Direction randomly chosen.
+  When killed, it displays the score of the kill.
+* [/Invaders%] Add Alien bombs and squiggles.
+* [/Invaders%] Add the bases.
+
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
