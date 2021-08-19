@@ -2,8 +2,6 @@
 * Implement tests for BinaryTrees.
 * Implement a regular expression engine?
 
-* Implement tail calls directly for compiled code.
-
 * [/Invaders%] Go to the next level when all the aliens are killed.
 * [/Invaders%] Loose the game when aliens reach the bottom.
 * [/Invaders%] Add the UFO.
@@ -14,6 +12,9 @@
 * [/Invaders%] Add Alien bombs and squiggles.
 * [/Invaders%] Add the bases.
 
+* Can we make tail calls from compiled to compiled code more efficient?
+ - Seems like, if we know we are calling into compiled code, we could avoid
+   resetting the stack frame on tail call and it would be much more efficient?
 
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
