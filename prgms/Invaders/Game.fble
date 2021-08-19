@@ -24,6 +24,9 @@
 @ Dir@ = Ship.Dir@;
 @ Ship@ = Ship.Ship@;
 
+% Ufo = /Invaders/Ufo%;
+@ Ufo@ = Ufo.Ufo@;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Nothing = /Maybe%.Nothing;
 
@@ -38,7 +41,8 @@
   Lives@ lives,
   Ship@ ship,
   Bullet@ bullet,
-  Aliens@ aliens
+  Aliens@ aliens,
+  Ufo@ ufo
 );
 
 @ Input@ = +(Dir@ dir, Unit@ fire);
@@ -48,13 +52,15 @@ Game@ Initial = @(
   lives: Lives@(3: Unit),
   ship: Ship.Initial,
   bullet: Bullet.Initial,
-  aliens: Aliens.Initial
+  aliens: Aliens.Initial,
+  ufo: Ufo.Initial
 );
 
 (Game@) { Game@; } Tick = (Game@ g) {
   Ship@ ship = Ship.Tick(g.ship);
   Bullet@ bullet = Bullet.Tick(g.bullet);
   Aliens@ aliens = Aliens.Tick(g.aliens);
+  Ufo@ ufo = Ufo.Tick(g.ufo);
 
   # Check for bullet colliding with an alien.
   Maybe@<Alien@> kill = {
@@ -64,17 +70,17 @@ Game@ Initial = @(
 
   kill.?(just: {
     Game@(Add(Aliens.Points(kill.just), g.score),
-      g.lives, ship, Bullet.Initial, Aliens.Kill(aliens, kill.just));
+      g.lives, ship, Bullet.Initial, Aliens.Kill(aliens, kill.just), ufo);
   });
     
-  Game@(g.score, g.lives, ship, bullet, aliens);
+  Game@(g.score, g.lives, ship, bullet, aliens, ufo);
 };
 
 (Game@, Input@) { Game@; } Input = (Game@ g, Input@ input) {
   Game@(g.score, g.lives,
     input.?(dir: Ship.Input(g.ship, input.dir), : g.ship),
     input.?(fire: Bullet.Fire(g.bullet, g.ship), : g.bullet),
-    g.aliens);
+    g.aliens, g.ufo);
 };
 
 (Int@) { Drawing@; } DrawScore = {
@@ -148,7 +154,8 @@ Game@ Initial = @(
     Graphics.Background,
     Ship.Draw(g.ship),
     Bullet.Draw(g.bullet),
-    Aliens.Draw(g.aliens)
+    Aliens.Draw(g.aliens),
+    Ufo.Draw(g.ufo)
   ];
 };
 

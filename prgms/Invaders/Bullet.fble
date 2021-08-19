@@ -55,9 +55,8 @@ Fire = (Bullet@ bullet, Ship@ ship) {
 
 # Make a drawing of the bullet in its current location.
 (Bullet@) { Drawing@; } Draw = (Bullet@ bullet) {
-  bullet.live.?(
-    true: Translate(bullet.x, bullet.y, Graphics.Bullet),
-    false: Blank);
+  bullet.live.?(false: Blank);
+  Translate(bullet.x, bullet.y, Graphics.Bullet);
 };
 
 @(Bullet@, Initial, Fire, Tick, Draw);

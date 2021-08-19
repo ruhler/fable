@@ -425,7 +425,7 @@ Drawing@ Alien3B = Path(
 
 % Aliens = @(Alien1A, Alien1B, Alien2A, Alien2B, Alien3A, Alien3B);
 
-Drawing@ UFO = Path(
+Drawing@ Ufo = Path(
   List<Point@>[
     Point@(Int|4, Int|0),
     Point@(Int|3, Int|0),
@@ -1314,7 +1314,7 @@ Drawing@ Screenshot = Drawings[
   Translate(Int|104, Int|220, Digit4),
   Translate(Int|112, Int|220, Digit4),
 
-  Translate(Int|100, Int|200, UFO),
+  Translate(Int|100, Int|200, Ufo),
 
   Translate(Int|128, Int|185, LetterG),
   Translate(Int|136, Int|185, LetterA),
@@ -1352,4 +1352,4 @@ Drawing@ Screenshot = Drawings[
   Translate(Int|148, Int|11, DeadShipB)
 ];
 
-@(Ship, Aliens, DeadAlien, Background, Digits, Screenshot, Bullet);
+@(Ship, Aliens, Ufo, DeadAlien, Background, Digits, Screenshot, Bullet);

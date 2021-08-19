@@ -1,0 +1,68 @@
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+
+@ Drawing@ = /Drawing%.Drawing@;
+% Blank = /Drawing%.Blank;
+% Translate = /Drawing%.Translate;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Mul = /Int/Int%.Mul;
+% Neg = /Int/Int%.Neg;
+% Div = /Int/Int/Div%.Div;
+% Mod = /Int/Int/Div%.Mod;
+% Eq = /Int/Int/Eq%.Eq;
+% Lt = /Int/Int/Eq%.Lt;
+% Gt = /Int/Int/Eq%.Gt;
+% Int = /Int/Int/Lit%.Int;
+
+% Graphics = /Invaders/Graphics%;
+
+# Ufo@ -- 
+# 
+# Fields:
+#   live - true if the UFO is currently flying, false otherwise.
+#   x - the x coordinate of the UFO.
+#   v - the x velocity of the UFO.
+#   random - the state of our random number generator.
+@ Ufo@ = *(
+  Bool@ live,
+  Int@ x,
+  Int@ v,
+  Int@ random
+);
+
+Int@ MinX = Int|40;
+Int@ MaxX = Int|264;
+
+Int@ UfoY = Int|200;
+
+# The number of pixels the ufo travels each tick.
+Int@ Velocity = Int|1;
+
+Ufo@ Initial = Ufo@(True, MinX, Velocity, Int|1);
+
+# Launch --
+#   Launch the UFO from a random direction.
+(Ufo@) { Ufo@; } Launch = (Ufo@ ufo) {
+  # Note: the arithmetic to get a randomish direction was arbitrarily chosen.
+  # I have no idea if it will actually appear random or not.
+  Int@ random = Div(Add(Mul(ufo.random, Int|1027), Int|123), Int|23);
+  Eq(Int|0, Mod(random, Int|2)).?(
+    true: Ufo@(True, MinX, Velocity, Add(Int|1, ufo.random)),
+    false: Ufo@(True, MaxX, Neg(Velocity), Add(Int|1, ufo.random)));
+};
+
+(Ufo@) { Ufo@; } Tick = (Ufo@ ufo) {
+  ufo.live.?(false: ufo);
+  Lt(ufo.x, MinX).?(true: Launch(ufo));
+  Gt(ufo.x, MaxX).?(true: Launch(ufo));
+  Ufo@(True, Add(ufo.x, ufo.v), ufo.v, ufo.random);
+};
+
+(Ufo@) { Drawing@; } Draw = (Ufo@ ufo) {
+  ufo.live.?(false: Blank);
+  Translate(ufo.x, UfoY, Graphics.Ufo);
+};
+
+@(Ufo@, Initial, Tick, Draw);

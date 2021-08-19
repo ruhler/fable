@@ -4,11 +4,10 @@
 
 * [/Invaders%] Go to the next level when all the aliens are killed.
 * [/Invaders%] Loose the game when aliens reach the bottom.
-* [/Invaders%] Add the UFO.
-  Comes every 10000 units
+* [/Invaders%] UFO.
+ - Have it launch only once every 10000 or so ticks.
+ - Add collision detection and score assignment.
   Point value randomly chosen: 10% 300, 20% 150, 30% 100, 40% 50
-  Direction randomly chosen.
-  When killed, it displays the score of the kill.
 * [/Invaders%] Add Alien bombs and squiggles.
 * [/Invaders%] Add the bases.
 
