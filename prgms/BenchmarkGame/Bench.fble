@@ -27,7 +27,7 @@
 # Benchmark for the benchmark games that takes about 1 minute to run.
 Unit@! Bench = {
   Unit@ _pidigits := RunBench(/BenchmarkGame/PiDigits/Stdio%, Str|22);
-  Unit@ _binarytrees := RunBench(/BenchmarkGame/BinaryTrees%, Str|14);
+  Unit@ _binarytrees := RunBench(/BenchmarkGame/BinaryTrees/Stdio%, Str|14);
   !(Unit);
 };
 

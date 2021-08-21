@@ -1,0 +1,17 @@
+
+<@>% List = /List%.List;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+% TestSuite = /Test%.TestSuite;
+
+# Import to test compilation.
+% _ = /BenchmarkGame/Bench%;
+
+Test@ Tests = TestSuite(Str|BenchmarkGame, List<Test@>[
+  /BenchmarkGame/BinaryTrees/Tests%.Tests,
+  /BenchmarkGame/PiDigits/Tests%.Tests
+]);
+
+@(Tests);

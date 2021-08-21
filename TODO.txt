@@ -1,9 +1,8 @@
-* Implement tests for PiDigits.
-* Implement tests for BinaryTrees.
+* Implement IEEE floating point?
 * Implement a regular expression engine?
 
 * [/Invaders%] Go to the next level when all the aliens are killed.
-* [/Invaders%] Loose the game when aliens reach the bottom.
+* [/Invaders%] Lose the game when aliens reach the bottom.
 * [/Invaders%] UFO.
  - Have it launch only once every 10000 or so ticks.
  - Add collision detection and score assignment.

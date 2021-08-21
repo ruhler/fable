@@ -87,5 +87,4 @@ Stdio@ Main = (IO@ io, List@<String@> args) {
   !(True);
 };
 
-Main;
-
+@(Main);

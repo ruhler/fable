@@ -1,0 +1,49 @@
+
+
+@ Bool@ = /Bool%.Bool@;
+
+<@>% List = /List%.List;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+@ Stdio@ = /Stdio%.Stdio@;
+@ IO@ = /Stdio%.IO@;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+% Strs = /String%.Strs;
+
+@ Test@ = /Test%.Test@;
+<@>% AssertEquals = /Test%.AssertEquals;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+(String@, Stdio@, String@, String@) { Test@; }
+Test = (String@ name, Stdio@ game, String@ n, String@ expected) {
+  /Test%.Test(name, {
+    Maybe@<String@> ~ get, put;
+
+    IO@ io = @(
+      stdin: !(Nothing<String@>),
+      stdout: (String@ s) { put(Just<String@>(s)); },
+      stderr: (String@ _) { !(Unit); });
+
+    (String@) { String@!; } ReadOutput = (String@ output) { 
+      Maybe@<String@> ms := get;
+      ms.?(nothing: !(output));
+      ReadOutput(Strs[output, ms.just]);
+    };
+
+    Unit@! RunGame = {
+      Bool@ _ := game(io, List<String@>[n]);
+      put(Nothing<String@>);
+    };
+    Unit@ _ := RunGame, String@ got := ReadOutput(Str|'');
+    !(AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, expected, got));
+  });
+};
+
+@(Test);

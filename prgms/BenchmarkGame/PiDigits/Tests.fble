@@ -1,0 +1,12 @@
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+
+% Test = /BenchmarkGame/Test%.Test;
+
+Test@ Tests = Test(Str|PiDigits, /BenchmarkGame/PiDigits/Stdio%, Str|10, Str|
+'3141592653	:10
+');
+
+@(Tests);
