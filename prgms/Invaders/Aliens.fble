@@ -396,6 +396,15 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
   phase.?(a: Alien3A, b: Alien3B);
 };
 
+@ Kill@ = *(Int@ points, Aliens@ aliens);
+
+(Int@, Int@, Aliens@) { Maybe@<Kill@>; }
+Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
+  Maybe@<Alien@> kill = Collision(x, y, aliens);
+  kill.?(nothing: Nothing<Kill@>);
+  Just<Kill@>(Kill@(Points(kill.just), Kill(aliens, kill.just)));
+};
+
 # Draw --
 #   Make a drawing of the aliens in their current location.
 (Aliens@) { Drawing@; } Draw = (Aliens@ as) {
@@ -419,4 +428,4 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
     });
 };
 
-@(Alien@, Aliens@, Initial, Tick, Collision, Kill, Points, Draw);
+@(Alien@, Aliens@, Kill@, Initial, Tick, Shoot, Draw);

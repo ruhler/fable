@@ -15,7 +15,6 @@
 
 % Aliens = /Invaders/Aliens%;
 @ Aliens@ = Aliens.Aliens@;
-@ Alien@ = Aliens.Alien@;
 
 % Bullet = /Invaders/Bullet%;
 @ Bullet@ = Bullet.Bullet@;
@@ -63,14 +62,14 @@ Game@ Initial = @(
   Ufo@ ufo = Ufo.Tick(g.ufo);
 
   # Check for bullet colliding with an alien.
-  Maybe@<Alien@> kill = {
-    bullet.live.?(false: Nothing<Alien@>);
-    Aliens.Collision(bullet.x, bullet.y, aliens);
+  Maybe@<Aliens.Kill@> kill = {
+    bullet.live.?(false: Nothing<Aliens.Kill@>);
+    Aliens.Shoot(bullet.x, bullet.y, aliens);
   };
 
   kill.?(just: {
-    Game@(Add(Aliens.Points(kill.just), g.score),
-      g.lives, ship, Bullet.Initial, Aliens.Kill(aliens, kill.just), ufo);
+    Game@(Add(kill.just.points, g.score),
+      g.lives, ship, Bullet.Initial, kill.just.aliens, ufo);
   });
     
   Game@(g.score, g.lives, ship, bullet, aliens, ufo);
