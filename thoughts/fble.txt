@@ -242,3 +242,17 @@ Fble Language Thoughts
   field of kind <@>@, and then use that struct type where something of kind @
   is expected. Is this a bad thing? It seems weird. Is it?
 
+* Conditionally updating multiple variables.
+  Is annoying. For example, I have variables x, y, z. If some condition holds,
+  I want to update x and y, otherwise leave them as they are. How do you code
+  this?
+
+  % xyz = p.?(true: @(x: ..., y: ..., z), false: @(x, y, z));
+
+  For now, where the variables already belong to a struct, I'm going:
+  XYZ@ xyz_ = {
+    p.?(false: xyz);
+    @(x: ..., y: ..., z);
+  }
+  XYZ@ xyz = xyz_;
+

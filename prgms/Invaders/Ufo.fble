@@ -18,6 +18,10 @@
 
 % Graphics = /Invaders/Graphics%;
 
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
 # Ufo@ -- 
 # 
 # Fields:
@@ -36,6 +40,9 @@ Int@ MinX = Int|40;
 Int@ MaxX = Int|264;
 
 Int@ UfoY = Int|200;
+
+Int@ Height = Int|8;
+Int@ Width = Int|16;
 
 # The number of pixels the ufo travels each tick.
 Int@ Velocity = Int|1;
@@ -63,9 +70,25 @@ Ufo@ Initial = Ufo@(True, MinX, Velocity, Int|1);
   Ufo@(True, Add(ufo.x, ufo.v), ufo.v, ufo.random);
 };
 
+@ Kill@ = *(Int@ points, Ufo@ ufo);
+
+(Int@, Int@, Ufo@) { Maybe@<Kill@>; } Shoot = (Int@ x, Int@ y, Ufo@ ufo) {
+  Lt(y, UfoY).?(true: Nothing<Kill@>);
+  Gt(y, Add(UfoY, Height)).?(true: Nothing<Kill@>);
+  Lt(x, ufo.x).?(true: Nothing<Kill@>);
+  Gt(x, Add(ufo.x, Width)).?(true: Nothing<Kill@>);
+
+  # TODO: vary the points.
+  # TODO: wait a while before launching the alien again.
+  # TODO: display the points where the alien died.
+  Int@ points = Int|50;
+  Ufo@ new_ufo = Launch(ufo);
+  Just<Kill@>(Kill@(points, new_ufo));
+};
+
 (Ufo@) { Drawing@; } Draw = (Ufo@ ufo) {
   ufo.live.?(false: Blank);
   Translate(ufo.x, UfoY, Graphics.Ufo);
 };
 
-@(Ufo@, Initial, Tick, Draw);
+@(Ufo@, Kill@, Initial, Tick, Shoot, Draw);

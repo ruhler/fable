@@ -27,7 +27,6 @@
 @ Ufo@ = Ufo.Ufo@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Nothing = /Maybe%.Nothing;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -56,23 +55,33 @@ Game@ Initial = @(
 );
 
 (Game@) { Game@; } Tick = (Game@ g) {
-  Ship@ ship = Ship.Tick(g.ship);
-  Bullet@ bullet = Bullet.Tick(g.bullet);
-  Aliens@ aliens = Aliens.Tick(g.aliens);
-  Ufo@ ufo = Ufo.Tick(g.ufo);
+  Game@ g_ = Game@(g.score, g.lives,
+    Ship.Tick(g.ship), Bullet.Tick(g.bullet),
+    Aliens.Tick(g.aliens), Ufo.Tick(g.ufo));
+  Game@ g = g_;
 
   # Check for bullet colliding with an alien.
-  Maybe@<Aliens.Kill@> kill = {
-    bullet.live.?(false: Nothing<Aliens.Kill@>);
-    Aliens.Shoot(bullet.x, bullet.y, aliens);
+  Game@ g_ = {
+    g.bullet.live.?(false: g);
+    Maybe@<Aliens.Kill@> kill = Aliens.Shoot(g.bullet.x, g.bullet.y, g.aliens);
+    kill.?(nothing: g);
+    Game@(Add(kill.just.points, g.score), g.lives,
+      g.ship, Bullet.Initial,
+      kill.just.aliens, g.ufo);
   };
+  Game@ g = g_;
 
-  kill.?(just: {
-    Game@(Add(kill.just.points, g.score),
-      g.lives, ship, Bullet.Initial, kill.just.aliens, ufo);
-  });
-    
-  Game@(g.score, g.lives, ship, bullet, aliens, ufo);
+  # Check for bullet colliding with ufo.
+  Game@ g_ = {
+    g.bullet.live.?(false: g);
+    Maybe@<Ufo.Kill@> kill = Ufo.Shoot(g.bullet.x, g.bullet.y, g.ufo);
+    kill.?(nothing: g);
+    Game@(Add(kill.just.points, g.score), g.lives,
+      g.ship, Bullet.Initial, g.aliens, kill.just.ufo);
+  };
+  Game@ g = g_;
+
+  g;
 };
 
 (Game@, Input@) { Game@; } Input = (Game@ g, Input@ input) {
