@@ -1,5 +1,7 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
+% Not = /Bool%.Not;
+% And = /Bool%.And;
 
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
@@ -7,9 +9,7 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
-% Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
-% Div = /Int/Int/Div%.Div;
 % Mod = /Int/Int/Div%.Mod;
 % Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
@@ -45,12 +45,15 @@ Ufo@ Initial = Ufo@(True, MinX, Velocity, Int|1);
 # Launch --
 #   Launch the UFO from a random direction.
 (Ufo@) { Ufo@; } Launch = (Ufo@ ufo) {
-  # Note: the arithmetic to get a randomish direction was arbitrarily chosen.
-  # I have no idea if it will actually appear random or not.
-  Int@ random = Div(Add(Mul(ufo.random, Int|1027), Int|123), Int|23);
-  Eq(Int|0, Mod(random, Int|2)).?(
-    true: Ufo@(True, MinX, Velocity, Add(Int|1, ufo.random)),
-    false: Ufo@(True, MaxX, Neg(Velocity), Add(Int|1, ufo.random)));
+  # The intention is to repeat the cycle: LLRLRR, which hopefully will make it
+  # seem random, or at least hard for a player to remember where in the cycle
+  # we are.
+  Int@ state = Mod(ufo.random, Int|6);
+  Bool@ from_left = And(Lt(state, Int|4), Not(Eq(state, Int|2)));
+  Int@ random = Add(Int|1, ufo.random);
+  from_left.?(
+    true: Ufo@(True, MinX, Velocity, random),
+    false: Ufo@(True, MaxX, Neg(Velocity), random));
 };
 
 (Ufo@) { Ufo@; } Tick = (Ufo@ ufo) {

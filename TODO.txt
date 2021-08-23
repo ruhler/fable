@@ -1,3 +1,12 @@
+* Implement fannkuchredux benchmark?
+  Permutation order looks like:
+    0, 1, 2, 3, ..., n
+    all subpermutations of length n-1
+    1, 2, 3, ..., n, 0
+    all subpermutations ...
+    2, 3, 4, ..., 0, 1
+    etc.
+    In other words, keep track of current length, rotate the first n elements.
 * Implement IEEE floating point?
 * Implement a regular expression engine?
 
