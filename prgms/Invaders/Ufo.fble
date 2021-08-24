@@ -1,7 +1,6 @@
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
-% Not = /Bool%.Not;
-% And = /Bool%.And;
+% False = /Bool%.False;
 
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
@@ -10,8 +9,6 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Neg = /Int/Int%.Neg;
-% Mod = /Int/Int/Div%.Mod;
-% Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
 % Gt = /Int/Int/Eq%.Gt;
 % Int = /Int/Int/Lit%.Int;
@@ -22,18 +19,40 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# DirState@ --
+#   State keeping track of which direction the ufo will fly in from.
+#
+# The intention is to repeat the cycle: LLRLRR, which hopefully will make it
+# seem random, or at least hard for a player to remember where in the cycle
+# we are.
+@ DirState@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3, Unit@ 4, Unit@ 5);
+
+DirState@ InitialDirState = DirState@(0: Unit);
+
+(DirState@) { DirState@; } Next = (DirState@ ds) {
+  ds.?(0: DirState@(1: Unit), 1: DirState@(2: Unit), 2: DirState@(3: Unit),
+    3: DirState@(4: Unit), 4: DirState@(5: Unit), 5: DirState@(0: Unit));
+};
+
+(DirState@) { Bool@; } FromLeft = (DirState@ ds) {
+  ds.?(0: True, 1: True, 2: False, 3: True, 4: False, 5: False);
+};
+
 # Ufo@ -- 
 # 
 # Fields:
 #   live - true if the UFO is currently flying, false otherwise.
 #   x - the x coordinate of the UFO.
 #   v - the x velocity of the UFO.
-#   random - the state of our random number generator.
+#   dir - the state of the direction to fly in from next.
 @ Ufo@ = *(
   Bool@ live,
   Int@ x,
   Int@ v,
-  Int@ random
+  DirState@ dir
 );
 
 Int@ MinX = Int|40;
@@ -47,27 +66,23 @@ Int@ Width = Int|16;
 # The number of pixels the ufo travels each tick.
 Int@ Velocity = Int|1;
 
-Ufo@ Initial = Ufo@(True, MinX, Velocity, Int|1);
+Ufo@ Initial = Ufo@(True, MinX, Velocity, InitialDirState);
 
 # Launch --
 #   Launch the UFO from a random direction.
 (Ufo@) { Ufo@; } Launch = (Ufo@ ufo) {
-  # The intention is to repeat the cycle: LLRLRR, which hopefully will make it
-  # seem random, or at least hard for a player to remember where in the cycle
-  # we are.
-  Int@ state = Mod(ufo.random, Int|6);
-  Bool@ from_left = And(Lt(state, Int|4), Not(Eq(state, Int|2)));
-  Int@ random = Add(Int|1, ufo.random);
+  Bool@ from_left = FromLeft(ufo.dir);
+  DirState@ dir = Next(ufo.dir);
   from_left.?(
-    true: Ufo@(True, MinX, Velocity, random),
-    false: Ufo@(True, MaxX, Neg(Velocity), random));
+    true: Ufo@(True, MinX, Velocity, dir),
+    false: Ufo@(True, MaxX, Neg(Velocity), dir));
 };
 
 (Ufo@) { Ufo@; } Tick = (Ufo@ ufo) {
   ufo.live.?(false: ufo);
   Lt(ufo.x, MinX).?(true: Launch(ufo));
   Gt(ufo.x, MaxX).?(true: Launch(ufo));
-  Ufo@(True, Add(ufo.x, ufo.v), ufo.v, ufo.random);
+  Ufo@(True, Add(ufo.x, ufo.v), ufo.v, ufo.dir);
 };
 
 @ Kill@ = *(Int@ points, Ufo@ ufo);
