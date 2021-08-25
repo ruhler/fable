@@ -1,14 +1,19 @@
 
+@ Decimal@ = /Digits%.Decimal@;
+
 @ Color@ = /Drawing%.Color@;
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
+% Blank = /Drawing%.Blank;
 % Drawings = /Drawing%.Drawings;
+% Over = /Drawing%.Over;
 % Path = /Drawing%.Path;
 % Rect = /Drawing%.Rect;
 % Translate = /Drawing%.Translate;
 
 % Int = /Int/Int/Lit%.Int;
 
+<@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 
 % Unit = /Unit%.Unit;
@@ -753,11 +758,16 @@ Drawing@ Digit9 = Path(
   Color@(white: Unit)
 );
 
-% Digits = @(
-  0: Digit0, 1: Digit1, 2: Digit2, 3: Digit3,
-  4: Digit4, 5: Digit5, 6: Digit6, 7: Digit7,
-  8: Digit8, 9: Digit9
-);
+# Digits --
+#   Draw a string of decimal digits.
+(List@<Decimal@>) { Drawing@; } Digits = (List@<Decimal@> digits) {
+  digits.?(nil: Blank);
+  Drawing@ first = digits.cons.head.?(
+    0: Digit0, 1: Digit1, 2: Digit2, 3: Digit3,
+    4: Digit4, 5: Digit5, 6: Digit6, 7: Digit7,
+    8: Digit8, 9: Digit9);
+  Over(first, Translate(Int|8, Int|0, Digits(digits.cons.tail)));
+};
 
 Drawing@ LetterA = Path(
   List<Point@>[

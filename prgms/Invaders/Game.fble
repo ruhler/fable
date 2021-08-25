@@ -1,4 +1,7 @@
 
+@ Decimal@ = /Digits%.Decimal@;
+% Decimal = /Digits%.Decimal;
+
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
 % Drawings = /Drawing%.Drawings;
@@ -92,33 +95,34 @@ Game@ Initial = @(
 };
 
 (Int@) { Drawing@; } DrawScore = {
-  # Digit -- Get the drawing associated with the digit corresponding to d.
-  # Returns a blank drawing if d is not in [0-9].
-  (Int@) { Drawing@; } Digit = (Int@ d) {
-    d.?(n: Blank, 0: Graphics.Digits.0, p: d.p.?(
-        1: Graphics.Digits.1,
+  # Digit -- Get the decimal digit corresponding to d.
+  # Returns 0 if d is not in [0-9].
+  Decimal@ none = Decimal.0;
+  (Int@) { Decimal@; } Digit = (Int@ d) {
+    d.?(n: none, 0: Decimal.0, p: d.p.?(
+        1: Decimal.1,
         2p0: d.p.2p0.?( 
-          1: Graphics.Digits.2,
+          1: Decimal.2,
           2p0: d.p.2p0.2p0.?(
-            1: Graphics.Digits.4,
+            1: Decimal.4,
             2p0: d.p.2p0.2p0.2p0.?(
-              1: Graphics.Digits.8,
-              : Blank),
-            : Blank),
+              1: Decimal.8,
+              : none),
+            : none),
           2p1: d.p.2p0.2p1.?(
-            1: Graphics.Digits.6,
-            : Blank)),
+            1: Decimal.6,
+            : none)),
         2p1: d.p.2p1.?( 
-          1: Graphics.Digits.3,
+          1: Decimal.3,
           2p0: d.p.2p1.2p0.?(
-            1: Graphics.Digits.5,
+            1: Decimal.5,
             2p0: d.p.2p1.2p0.2p0.?(
-              1: Graphics.Digits.9,
-              : Blank),
-            : Blank),
+              1: Decimal.9,
+              : none),
+            : none),
           2p1: d.p.2p1.2p1.?(
-            1: Graphics.Digits.7,
-            : Blank))));
+            1: Decimal.7,
+            : none))));
   };
 
   Int@ 10 = Int|10;
@@ -129,16 +133,11 @@ Game@ Initial = @(
     Int@ s100 = Div(s1000, 10);
     Int@ s10 = Div(s100, 10);
     Int@ s1 = Div(s10, 10);
-    Drawing@ d0 = Digit(Mod(s1000, 10));
-    Drawing@ d1 = Digit(Mod(s100, 10));
-    Drawing@ d2 = Digit(Mod(s10, 10));
-    Drawing@ d3 = Digit(Mod(s1, 10));
-    Drawings[
-      Translate(Int|40, Int|220, d3),
-      Translate(Int|48, Int|220, d2),
-      Translate(Int|56, Int|220, d1),
-      Translate(Int|64, Int|220, d0)
-    ];
+    Decimal@ d0 = Digit(Mod(s1000, 10));
+    Decimal@ d1 = Digit(Mod(s100, 10));
+    Decimal@ d2 = Digit(Mod(s10, 10));
+    Decimal@ d3 = Digit(Mod(s1, 10));
+    Translate(Int|40, Int|220, Graphics.Digits[d3, d2, d1, d0]);
   };
 };
 
