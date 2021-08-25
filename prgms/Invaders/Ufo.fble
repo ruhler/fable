@@ -8,7 +8,9 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
 % Neg = /Int/Int%.Neg;
+% Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
 % Gt = /Int/Int/Eq%.Gt;
 % Int = /Int/Int/Lit%.Int;
@@ -41,19 +43,59 @@ DirState@ InitialDirState = DirState@(0: Unit);
   ds.?(0: True, 1: True, 2: False, 3: True, 4: False, 5: False);
 };
 
+# Flying@ --
+#   State of a flying ufo.
+#
+# Fields:
+#   x - the x coordinate of the UFO.
+#   v - the x velocity of the UFO.
+@ Flying@ = *(Int@ x, Int@ v);
+
+# Points@ -- 
+#   The number of points for hitting the ufo.
+@ Points@ = +(Unit@ 50, Unit@ 100, Unit@ 150, Unit@ 300);
+
+# Points --
+#   Converts Points@ to Int@.
+(Points@) { Int@; } Points = (Points@ points) {
+  points.?(50: Int|50, 100: Int|100, 150: Int|150, 300: Int|300);
+};
+
+# DrawPoints --
+(Points@) { Drawing@; } DrawPoints = (Points@ points) {
+  points.?(
+    50: Graphics.Digits|50,
+    100: Graphics.Digits|100,
+    150: Graphics.Digits|150,
+    300: Graphics.Digits|300);
+};
+
+# Dying@ --
+#   State of a dying ufo.
+#
+# Fields:
+#   time - the number of ticks left for the ufo to be dying.
+#   x - the position of the ufo when it died.
+#   points - the points for killing the ufo.
+@ Dying@ = *(Int@ time, Int@ x, Points@ points);
+
+# Hiding@ --
+#   State of a hiding ufo.
+#
+# Fields:
+#   time - the number of ticks left for the ufo to be hiding.
+@ Hiding@ = *(Int@ time);
+
+# State@ --
+#   The state of the ufo.
+@ State@ = +(Flying@ flying, Dying@ dying, Hiding@ hiding);
+
 # Ufo@ -- 
 # 
 # Fields:
-#   live - true if the UFO is currently flying, false otherwise.
-#   x - the x coordinate of the UFO.
-#   v - the x velocity of the UFO.
-#   dir - the state of the direction to fly in from next.
-@ Ufo@ = *(
-  Bool@ live,
-  Int@ x,
-  Int@ v,
-  DirState@ dir
-);
+#   state - the current state of the ufo (flying, dying, or hiding) 
+#   dir - the state tracking the direction to fly in from next.
+@ Ufo@ = *(State@ state, DirState@ dir);
 
 Int@ MinX = Int|40;
 Int@ MaxX = Int|264;
@@ -66,44 +108,81 @@ Int@ Width = Int|16;
 # The number of pixels the ufo travels each tick.
 Int@ Velocity = Int|1;
 
-Ufo@ Initial = Ufo@(True, MinX, Velocity, InitialDirState);
+# The number of ticks to spend dying.
+Int@ DyingTime = Int|60;
 
-# Launch --
-#   Launch the UFO from a random direction.
-(Ufo@) { Ufo@; } Launch = (Ufo@ ufo) {
+# The number of ticks to spend hiding.
+Int@ HidingTime = Int|60;
+
+Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
+
+# Fly --
+#   Set the UFO flying from a random direction.
+(Ufo@) { Ufo@; } Fly = (Ufo@ ufo) {
   Bool@ from_left = FromLeft(ufo.dir);
   DirState@ dir = Next(ufo.dir);
-  from_left.?(
-    true: Ufo@(True, MinX, Velocity, dir),
-    false: Ufo@(True, MaxX, Neg(Velocity), dir));
+  Flying@ flying = from_left.?(
+    true: Flying@(MinX, Velocity),
+    false: Flying@(MaxX, Neg(Velocity)));
+  Ufo@(State@(flying: flying), dir);
+};
+
+# Hide --
+#   Set the UFO to hiding.
+(Ufo@) { Ufo@; } Hide = (Ufo@ ufo) {
+  Ufo@(State@(hiding: Hiding@(HidingTime)), ufo.dir);
 };
 
 (Ufo@) { Ufo@; } Tick = (Ufo@ ufo) {
-  ufo.live.?(false: ufo);
-  Lt(ufo.x, MinX).?(true: Launch(ufo));
-  Gt(ufo.x, MaxX).?(true: Launch(ufo));
-  Ufo@(True, Add(ufo.x, ufo.v), ufo.v, ufo.dir);
+  ufo.state.?(
+    flying: {
+      Lt(ufo.state.flying.x, MinX).?(true: Hide(ufo));
+      Gt(ufo.state.flying.x, MaxX).?(true: Hide(ufo));
+      Ufo@(State@(flying: @(
+            x: Add(ufo.state.flying.x, ufo.state.flying.v),
+            v: ufo.state.flying.v)), ufo.dir);
+    },
+    dying: {
+      Eq(Int|0, ufo.state.dying.time).?(
+        true: Hide(ufo),
+        false: Ufo@(State@(dying: @(
+              time: Sub(ufo.state.dying.time, Int|1),
+              x: ufo.state.dying.x,
+              points: ufo.state.dying.points)), ufo.dir));
+    },
+    hiding: {
+      Eq(Int|0, ufo.state.hiding.time).?(
+        true: Fly(ufo),
+        false: Ufo@(
+          State@(hiding: Hiding@(Sub(ufo.state.hiding.time, Int|1))),
+          ufo.dir));
+    });
 };
 
 @ Kill@ = *(Int@ points, Ufo@ ufo);
 
 (Int@, Int@, Ufo@) { Maybe@<Kill@>; } Shoot = (Int@ x, Int@ y, Ufo@ ufo) {
+  ufo.state.?(dying: Nothing<Kill@>);
+  ufo.state.?(hiding: Nothing<Kill@>);
+  Flying@ flying = ufo.state.flying;
+
   Lt(y, UfoY).?(true: Nothing<Kill@>);
   Gt(y, Add(UfoY, Height)).?(true: Nothing<Kill@>);
-  Lt(x, ufo.x).?(true: Nothing<Kill@>);
-  Gt(x, Add(ufo.x, Width)).?(true: Nothing<Kill@>);
+  Lt(x, flying.x).?(true: Nothing<Kill@>);
+  Gt(x, Add(flying.x, Width)).?(true: Nothing<Kill@>);
 
   # TODO: vary the points.
-  # TODO: wait a while before launching the alien again.
-  # TODO: display the points where the alien died.
-  Int@ points = Int|50;
-  Ufo@ new_ufo = Launch(ufo);
-  Just<Kill@>(Kill@(points, new_ufo));
+  Points@ points = Points@(50: Unit);
+  Dying@ dying = Dying@(DyingTime, ufo.state.flying.x, points);
+  Just<Kill@>(Kill@(Points(points), Ufo@(State@(dying: dying), ufo.dir)));
 };
 
 (Ufo@) { Drawing@; } Draw = (Ufo@ ufo) {
-  ufo.live.?(false: Blank);
-  Translate(ufo.x, UfoY, Graphics.Ufo);
+  ufo.state.?(
+    flying: Translate(ufo.state.flying.x, UfoY, Graphics.Ufo),
+    dying: Translate(ufo.state.dying.x, UfoY,
+      DrawPoints(ufo.state.dying.points)),
+    hiding: Blank);
 };
 
 @(Ufo@, Kill@, Initial, Tick, Shoot, Draw);

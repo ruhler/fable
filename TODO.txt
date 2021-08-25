@@ -1,8 +1,7 @@
 * [/Invaders%] UFO.
- - Have it launch only once every 10000 or so ticks.
  - Add score assignment.
   Point value randomly chosen: 10% 300, 20% 150, 30% 100, 40% 50
- - Display score on screen after kill.
+ - Wait longer between ufo appearances.
 * [/Invaders%] Go to the next level when all the aliens are killed.
 * [/Invaders%] Lose the game when aliens reach the bottom.
 * [/Invaders%] Add Alien bombs and squiggles.
