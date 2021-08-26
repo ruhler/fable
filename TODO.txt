@@ -1,12 +1,8 @@
-* [/Invaders%] UFO.
- - Factor out code for extracting the LeastSignificantDigit from an Int@.
- - Add score assignment.
-  Point value randomly chosen: 10% 300, 20% 150, 30% 100, 40% 50
- - Wait longer between ufo appearances.
 * [/Invaders%] Go to the next level when all the aliens are killed.
 * [/Invaders%] Lose the game when aliens reach the bottom.
 * [/Invaders%] Add Alien bombs and squiggles.
 * [/Invaders%] Add the bases.
+* [/Invaders%] UFO should travel slower than ship, so the ship can catch it?
 
 * Implement fannkuchredux benchmark?
   Permutation order looks like:

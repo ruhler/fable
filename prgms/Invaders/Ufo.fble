@@ -2,6 +2,8 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 
+@ Decimal@ = /Digits%.Decimal@;
+
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
 % Translate = /Drawing%.Translate;
@@ -10,10 +12,12 @@
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % Neg = /Int/Int%.Neg;
+% Div = /Int/Int/Div%.Div;
 % Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
 % Gt = /Int/Int/Eq%.Gt;
 % Int = /Int/Int/Lit%.Int;
+% LeastSignificantDigit = /Int/Int/Digits%.LeastSignificantDigit;
 
 % Graphics = /Invaders/Graphics%;
 
@@ -55,9 +59,9 @@ DirState@ InitialDirState = DirState@(0: Unit);
 #   The number of points for hitting the ufo.
 @ Points@ = +(Unit@ 50, Unit@ 100, Unit@ 150, Unit@ 300);
 
-# Points --
+# PointsValue --
 #   Converts Points@ to Int@.
-(Points@) { Int@; } Points = (Points@ points) {
+(Points@) { Int@; } PointsValue = (Points@ points) {
   points.?(50: Int|50, 100: Int|100, 150: Int|150, 300: Int|300);
 };
 
@@ -112,7 +116,7 @@ Int@ Velocity = Int|1;
 Int@ DyingTime = Int|60;
 
 # The number of ticks to spend hiding.
-Int@ HidingTime = Int|60;
+Int@ HidingTime = Int|1000;
 
 Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
 
@@ -161,6 +165,25 @@ Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
 
 @ Kill@ = *(Int@ points, Ufo@ ufo);
 
+# Points --
+#   Choose the number of points to get for shooting the ufo.
+(Int@) { Points@; } Points = (Int@ ufo_x) {
+  # We treat the x position of the ufo as effectively random, then draw points
+  # from the distrubtion with 10% 300, 20% 150, 30% 100, and 40% 50.
+  Decimal@ d = LeastSignificantDigit(Div(ufo_x, Velocity));
+  d.?(
+    0: Points@(100: Unit),
+    1: Points@(50: Unit),
+    2: Points@(150: Unit),
+    3: Points@(100: Unit),
+    4: Points@(50: Unit),
+    5: Points@(300: Unit),
+    6: Points@(50: Unit),
+    7: Points@(100: Unit),
+    8: Points@(150: Unit),
+    9: Points@(50: Unit));
+};
+
 (Int@, Int@, Ufo@) { Maybe@<Kill@>; } Shoot = (Int@ x, Int@ y, Ufo@ ufo) {
   ufo.state.?(dying: Nothing<Kill@>);
   ufo.state.?(hiding: Nothing<Kill@>);
@@ -171,10 +194,9 @@ Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
   Lt(x, flying.x).?(true: Nothing<Kill@>);
   Gt(x, Add(flying.x, Width)).?(true: Nothing<Kill@>);
 
-  # TODO: vary the points.
-  Points@ points = Points@(50: Unit);
-  Dying@ dying = Dying@(DyingTime, ufo.state.flying.x, points);
-  Just<Kill@>(Kill@(Points(points), Ufo@(State@(dying: dying), ufo.dir)));
+  Points@ points = Points(flying.x);
+  Dying@ dying = Dying@(DyingTime, flying.x, points);
+  Just<Kill@>(Kill@(PointsValue(points), Ufo@(State@(dying: dying), ufo.dir)));
 };
 
 (Ufo@) { Drawing@; } Draw = (Ufo@ ufo) {
