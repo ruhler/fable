@@ -1,4 +1,5 @@
 * [/Invaders%] UFO.
+ - Factor out code for extracting the LeastSignificantDigit from an Int@.
  - Add score assignment.
   Point value randomly chosen: 10% 300, 20% 150, 30% 100, 40% 50
  - Wait longer between ufo appearances.

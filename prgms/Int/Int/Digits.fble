@@ -1,0 +1,57 @@
+
+@ Decimal@ = /Digits%.Decimal@;
+% Decimal = /Digits%.Decimal;
+
+@ Int@ = /Int/Int%.Int@;
+% Int = /Int/Int/Lit%.Int;
+% Mod = /Int/Int/Div%.Mod;
+
+<@>% Nothing = /Maybe%.Nothing;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# Digit --
+#   Converts an integer in the range [0-9] to a decimal digit.
+#
+# Behavior is undefined if the integer is not in the range [0-9].
+(Int@) { Decimal@; } Digit = {
+  (Unit@) { Decimal@; } Undef = (Unit@ _) {
+    Nothing<Decimal@>.just;
+  };
+
+  (Int@ d) {
+    d.?(n: Undef(Unit), 0: Decimal.0, p: d.p.?(
+        1: Decimal.1,
+        2p0: d.p.2p0.?( 
+          1: Decimal.2,
+          2p0: d.p.2p0.2p0.?(
+            1: Decimal.4,
+            2p0: d.p.2p0.2p0.2p0.?(
+              1: Decimal.8,
+              : Undef(Unit)),
+            : Undef(Unit)),
+          2p1: d.p.2p0.2p1.?(
+            1: Decimal.6,
+            : Undef(Unit))),
+        2p1: d.p.2p1.?( 
+          1: Decimal.3,
+          2p0: d.p.2p1.2p0.?(
+            1: Decimal.5,
+            2p0: d.p.2p1.2p0.2p0.?(
+              1: Decimal.9,
+              : Undef(Unit)),
+            : Undef(Unit)),
+          2p1: d.p.2p1.2p1.?(
+            1: Decimal.7,
+            : Undef(Unit)))));
+  };
+};
+
+# LeastSignificantDigit --
+#   Returns the least sigificant decimal digit of the given integer.
+(Int@) { Decimal@; } LeastSignificantDigit = (Int@ x) {
+  Digit(Mod(x, Int|10));
+};
+
+@(LeastSignificantDigit);
