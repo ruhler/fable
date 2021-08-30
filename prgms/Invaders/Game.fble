@@ -8,7 +8,9 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
 % Div = /Int/Int/Div%.Div;
+% Eq = /Int/Int/Eq%.Eq;
 % LeastSignificantDigit = /Int/Int/Digits%.LeastSignificantDigit;
 
 % Int = /Int/Int/Lit%.Int;
@@ -33,12 +35,23 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-
 @ Lives@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
+
+# State@ --
+#   The overall game state.
+@ State@ = +(
+  Unit@ defending,   # Player is actively defending against the alien attack.
+  Int@ leveling,     # Wait this many ticks to start next level.
+  Unit@ over         # The game is over.
+);
+
+Int@ LevelingTime = Int|60;
 
 @ Game@ = *(
   Int@ score,
+  Int@ level,
   Lives@ lives,
+  State@ state,
   Ship@ ship,
   Bullet@ bullet,
   Aliens@ aliens,
@@ -49,15 +62,33 @@
 
 Game@ Initial = @(
   score: Int|0,
+  level: Int|0,
   lives: Lives@(3: Unit),
+  state: State@(defending: Unit),
   ship: Ship.Initial,
   bullet: Bullet.Initial,
-  aliens: Aliens.Initial,
+  aliens: Aliens.Initial(Int|0),
   ufo: Ufo.Initial
 );
 
 (Game@) { Game@; } Tick = (Game@ g) {
-  Game@ g_ = Game@(g.score, g.lives,
+  g.state.?(over: g);
+
+  g.state.?(leveling: {
+    Eq(Int|0, g.state.leveling).?(true: {
+      Int@ level = Add(Int|1, g.level);
+      @(score: g.score, level: level, lives: g.lives,
+        state: State@(defending: Unit), ship: Ship.Initial,
+        bullet: Bullet.Initial, aliens: Aliens.Initial(level),
+        ufo: g.ufo);
+    });
+
+    @(score: g.score, level: g.level, lives: g.lives,
+      state: State@(leveling: Sub(g.state.leveling, Int|1)), ship: g.ship,
+      bullet: g.bullet, aliens: g.aliens, ufo: g.ufo);
+  });
+
+  Game@ g_ = Game@(g.score, g.level, g.lives, g.state,
     Ship.Tick(g.ship), Bullet.Tick(g.bullet),
     Aliens.Tick(g.aliens), Ufo.Tick(g.ufo));
   Game@ g = g_;
@@ -67,9 +98,8 @@ Game@ Initial = @(
     g.bullet.live.?(false: g);
     Maybe@<Aliens.Kill@> kill = Aliens.Shoot(g.bullet.x, g.bullet.y, g.aliens);
     kill.?(nothing: g);
-    Game@(Add(kill.just.points, g.score), g.lives,
-      g.ship, Bullet.Initial,
-      kill.just.aliens, g.ufo);
+    Game@(Add(kill.just.points, g.score), g.level, g.lives, g.state,
+      g.ship, Bullet.Initial, kill.just.aliens, g.ufo);
   };
   Game@ g = g_;
 
@@ -78,19 +108,32 @@ Game@ Initial = @(
     g.bullet.live.?(false: g);
     Maybe@<Ufo.Kill@> kill = Ufo.Shoot(g.bullet.x, g.bullet.y, g.ufo);
     kill.?(nothing: g);
-    Game@(Add(kill.just.points, g.score), g.lives,
+    Game@(Add(kill.just.points, g.score), g.level, g.lives, g.state,
       g.ship, Bullet.Initial, g.aliens, kill.just.ufo);
   };
+  Game@ g = g_;
+
+  # Check if all the aliens are dead.
+  Game@ g_ = {
+    Aliens.AllDead(g.aliens).?(false: g);
+    Game@(g.score, g.level, g.lives, State@(leveling: LevelingTime),
+      g.ship, g.bullet, g.aliens, g.ufo);
+  };
+
   Game@ g = g_;
 
   g;
 };
 
 (Game@, Input@) { Game@; } Input = (Game@ g, Input@ input) {
-  Game@(g.score, g.lives,
-    input.?(dir: Ship.Input(g.ship, input.dir), : g.ship),
-    input.?(fire: Bullet.Fire(g.bullet, g.ship), : g.bullet),
-    g.aliens, g.ufo);
+  g.state.?(defending: {
+    Game@(g.score, g.level, g.lives, g.state,
+      input.?(dir: Ship.Input(g.ship, input.dir), : g.ship),
+      input.?(fire: Bullet.Fire(g.bullet, g.ship), : g.bullet),
+      g.aliens, g.ufo);
+  });
+
+  g;
 };
 
 (Int@) { Drawing@; } DrawScore = {

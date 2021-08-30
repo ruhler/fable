@@ -1,4 +1,3 @@
-* [/Invaders%] Go to the next level when all the aliens are killed.
 * [/Invaders%] Lose the game when aliens reach the bottom.
 * [/Invaders%] Add Alien bombs and squiggles.
 * [/Invaders%] Add the bases.

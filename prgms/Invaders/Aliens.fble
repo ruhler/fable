@@ -108,6 +108,8 @@ Set@ AllAliens = {
     });
 };
 
+(Set@) { Bool@; } IsEmpty = /Map%.IsEmpty<Alien@, Unit@>;
+
 # Contains --
 #   Returns true if the set contains the given alien, false otherwise.
 (Set@, Alien@) { Bool@; } Contains = {
@@ -252,19 +254,20 @@ Int@ DyingTime = Int|10;
 );
 
 # Initial --
-#   The initial set of aliens.
-Aliens@ Initial = @(
-  src_x: LeftEdge,
-  src_y: Int|104,
-  dst_x: Add(LeftEdge, MoveX),
-  dst_y: Int|104,
-  alive: AllAliens,
-  dir: Dir@(right: Unit),
-  phase: Phase@(b: Unit),
-  next: Just<Alien@>(Int|0),
-  turn: False,
-  dying: Nil<Dying@>
-);
+#   The initial set of aliens, given the current game level.
+(Int@) { Aliens@; } Initial = (Int@ level) {
+  Int@ y = Sub(Int|104, Mul(Mod(level, Int|6), StrideY));
+  @(src_x: LeftEdge,
+    src_y: y,
+    dst_x: Add(LeftEdge, MoveX),
+    dst_y: y,
+    alive: AllAliens,
+    dir: Dir@(right: Unit),
+    phase: Phase@(b: Unit),
+    next: Just<Alien@>(Int|0),
+    turn: False,
+    dying: Nil<Dying@>);
+};
 
 # TickDying --
 #   Advance the dying aliens by one unit of time tick.
@@ -405,6 +408,12 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
   Just<Kill@>(Kill@(Points(kill.just), Kill(aliens, kill.just)));
 };
 
+# AllDead --
+#   Returns true if all the aliens are dead, false otherwise.
+(Aliens@) { Bool@; } AllDead = (Aliens@ as) {
+  IsEmpty(as.alive);
+};
+
 # Draw --
 #   Make a drawing of the aliens in their current location.
 (Aliens@) { Drawing@; } Draw = (Aliens@ as) {
@@ -428,4 +437,4 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
     });
 };
 
-@(Alien@, Aliens@, Kill@, Initial, Tick, Shoot, Draw);
+@(Alien@, Aliens@, Kill@, Initial, Tick, Shoot, AllDead, Draw);
