@@ -60,7 +60,7 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-app [--profile FILE]" FBLE_MAIN_USAGE_SUMMARY "\n"
+      "Usage: fble-app [--profile FILE] " FBLE_MAIN_USAGE_SUMMARY "\n"
       "Execute an fble app process.\n"
       FBLE_MAIN_USAGE_DETAIL
       "Options:\n"
@@ -528,7 +528,7 @@ int main(int argc, char* argv[])
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc-1, argv+1);
+  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

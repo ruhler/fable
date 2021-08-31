@@ -16,6 +16,8 @@
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 
+@ String@ = /String%.String@;
+
 % Unit = /Unit%.Unit;
 
 Drawing@ Ship = Path(
@@ -1030,6 +1032,19 @@ Drawing@ LetterV = Path(
   Color@(white: Unit)
 );
 
+# String --
+#   Draw a string of letters.
+(String@) { Drawing@; } String = (String@ str) {
+  str.?(nil: Blank);
+  Drawing@ first = str.cons.head.?(
+    '0': Digit0, '1': Digit1, '2': Digit2, '3': Digit3, '4': Digit4,
+    '5': Digit5, '6': Digit6, '7': Digit7, '8': Digit8, '9': Digit9,
+    'A': LetterA, 'C': LetterC, 'E': LetterE, 'G': LetterG,
+    'I': LetterI, 'L': LetterL, 'M': LetterM, 'O': LetterO, 'R': LetterR,
+    'S': LetterS, 'V': LetterV, : Blank);
+  Over(first, Translate(Int|8, Int|0, String(str.cons.tail)));
+};
+
 Drawing@ Bullet = Path(
   List<Point@>[
     Point@(Int|1, Int|0),
@@ -1295,45 +1310,19 @@ Drawing@ DeadShipB = Drawings[
 ];
 
 Drawing@ Background = Drawings[
-    Translate(Int|40, Int|232, LetterS),
-    Translate(Int|48, Int|232, LetterC),
-    Translate(Int|56, Int|232, LetterO),
-    Translate(Int|64, Int|232, LetterR),
-    Translate(Int|72, Int|232, LetterE),
-
-    Translate(Int|160, Int|232, LetterL),
-    Translate(Int|168, Int|232, LetterI),
-    Translate(Int|176, Int|232, LetterV),
-    Translate(Int|184, Int|232, LetterE),
-    Translate(Int|192, Int|232, LetterS),
-
+    Translate(Int|40, Int|232, String|SCORE),
+    Translate(Int|160, Int|232, String|LIVES),
     Translate(Int|40, Int|0, Ground)
 ];
 
 Drawing@ Screenshot = Drawings[
   Background,
 
-  Translate(Int|40, Int|220, Digit0),
-  Translate(Int|48, Int|220, Digit0),
-  Translate(Int|56, Int|220, Digit1),
-  Translate(Int|64, Int|220, Digit1),
-  Translate(Int|72, Int|220, Digit2),
-  Translate(Int|80, Int|220, Digit2),
-  Translate(Int|88, Int|220, Digit3),
-  Translate(Int|96, Int|220, Digit3),
-  Translate(Int|104, Int|220, Digit4),
-  Translate(Int|112, Int|220, Digit4),
+  Translate(Int|40, Int|220, String|0123456789),
 
   Translate(Int|100, Int|200, Ufo),
 
-  Translate(Int|128, Int|185, LetterG),
-  Translate(Int|136, Int|185, LetterA),
-  Translate(Int|144, Int|185, LetterM),
-  Translate(Int|152, Int|185, LetterE),
-  Translate(Int|168, Int|185, LetterO),
-  Translate(Int|176, Int|185, LetterV),
-  Translate(Int|184, Int|185, LetterE),
-  Translate(Int|192, Int|185, LetterR),
+  Translate(Int|128, Int|185, String|'GAME OVER'),
 
   Translate(Int|46, Int|176, Alien3A),
   Translate(Int|46, Int|160, Alien2A),
@@ -1362,4 +1351,4 @@ Drawing@ Screenshot = Drawings[
   Translate(Int|148, Int|11, DeadShipB)
 ];
 
-@(Ship, Aliens, Ufo, DeadAlien, Background, Digits, Screenshot, Bullet);
+@(Ship, Aliens, Ufo, DeadAlien, Background, Digits, String, Screenshot, Bullet);
