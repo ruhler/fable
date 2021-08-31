@@ -116,7 +116,7 @@ Int@ Velocity = Int|1;
 Int@ DyingTime = Int|60;
 
 # The number of ticks to spend hiding.
-Int@ HidingTime = Int|1000;
+Int@ HidingTime = Int|1600;
 
 Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
 

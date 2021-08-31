@@ -46,11 +46,9 @@
 % Unit = /Unit%.Unit;
 
 # Aliens move together in a group of rows and columns. They decide which
-# direction to move. Then each live alien, in turn, makes a move. They go 4
-# pixels side by side in a move, or 16 pixels down. Time between moves starts
-# at 8 units, then gradually goes down to 2 units depending on how many aliens
-# are alive. After a full round of moves, if any live alien has reached an
-# edge, as a group they go down and plan to switch direction.
+# direction to move. Then each live alien, in turn, makes a move. After a full
+# round of moves, if any live alien has reached an edge, as a group they go
+# down and plan to switch direction.
 
 # NumRows --
 #   The number of rows of aliens in the group.
@@ -414,6 +412,22 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
   IsEmpty(as.alive);
 };
 
+# Invaded --
+#   Returns true if the aliens have invaded the planet.
+(Aliens@) { Bool@; } Invaded = (Aliens@ as) {
+  # The first alive alien is the closest to the planet.
+  Maybe@<Alien@> first = FirstAlive(as.alive);
+  first.?(nothing: False);
+
+  Int@ group_y = {
+    as.next.?(nothing: as.dst_y);
+    AlienLt(first.just, as.next.just).?(true: as.dst_y);
+    as.src_y;
+  };
+  Int@ y = Add(group_y, Mul(StrideY, Row(first.just)));
+  Lt(y, Int|20);
+};
+
 # Draw --
 #   Make a drawing of the aliens in their current location.
 (Aliens@) { Drawing@; } Draw = (Aliens@ as) {
@@ -437,4 +451,4 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
     });
 };
 
-@(Alien@, Aliens@, Kill@, Initial, Tick, Shoot, AllDead, Draw);
+@(Alien@, Aliens@, Kill@, Initial, Tick, Shoot, AllDead, Invaded, Draw);

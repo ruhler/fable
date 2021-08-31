@@ -119,7 +119,14 @@ Game@ Initial = @(
     Game@(g.score, g.level, g.lives, State@(leveling: LevelingTime),
       g.ship, g.bullet, g.aliens, g.ufo);
   };
+  Game@ g = g_;
 
+  # Check if the aliens have invaded.
+  Game@ g_ = {
+    Aliens.Invaded(g.aliens).?(false: g);
+    Game@(g.score, g.level, g.lives, State@(over: Unit), g.ship, g.bullet,
+      g.aliens, g.ufo);
+  };
   Game@ g = g_;
 
   g;

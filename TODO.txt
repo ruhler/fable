@@ -1,7 +1,10 @@
-* [/Invaders%] Lose the game when aliens reach the bottom.
+* [/Invaders%] Display the game over animation at the end of the game.
 * [/Invaders%] Add Alien bombs and squiggles.
 * [/Invaders%] Add the bases.
 * [/Invaders%] UFO should travel slower than ship, so the ship can catch it?
+* [/Invaders%] Color an alien red when it reaches the planet so it's more
+  obvious why the game ends in that case? Or is that rare enough it doesn't
+  matter?
 
 * Implement fannkuchredux benchmark?
   Permutation order looks like:
