@@ -11,6 +11,7 @@
 % Sub = /Int/Int%.Sub;
 % Div = /Int/Int/Div%.Div;
 % Eq = /Int/Int/Eq%.Eq;
+% Gt = /Int/Int/Eq%.Gt;
 % LeastSignificantDigit = /Int/Int/Digits%.LeastSignificantDigit;
 
 % Int = /Int/Int/Lit%.Int;
@@ -32,20 +33,40 @@
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
+@ String@ = /String%.String@;
+% Strs = /String%.Strs;
+% Str = /String%.Str;
+
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
 @ Lives@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
+
+# GameOver@ --
+#   The game over animation.
+#
+# Fields:
+#   hidden - the tail parts of the string "GAME OVER" that aren't yet visible.
+#   visible - the front parts of the string "GAME OVER" that are visible.
+#   wait - how many ticks to wait before showing the next character.
+@ GameOver@ = *(String@ hidden, String@ visible, Int@ wait);
+
+# GameOverWait --
+#   The number of ticks between revealing of letters in the game over
+#   animation.
+Int@ GameOverWait = Int|28;
 
 # State@ --
 #   The overall game state.
 @ State@ = +(
   Unit@ defending,   # Player is actively defending against the alien attack.
   Int@ leveling,     # Wait this many ticks to start next level.
-  Unit@ over         # The game is over.
+  GameOver@ over     # The game is over.
 );
 
 Int@ LevelingTime = Int|60;
+
+State@ GameOver = State@(over: GameOver@(Str|'GAME OVER', Str|'', GameOverWait));
 
 @ Game@ = *(
   Int@ score,
@@ -71,8 +92,24 @@ Game@ Initial = @(
   ufo: Ufo.Initial
 );
 
+(GameOver@) { GameOver@; } TickGameOver = (GameOver@ over) {
+  Gt(over.wait, Int|0).?(true: {
+    GameOver@(over.hidden, over.visible, Sub(over.wait, Int|1));
+  });
+
+  over.hidden.?(nil: over);
+
+  GameOver@(over.hidden.cons.tail,
+    Strs[over.visible, Str[over.hidden.cons.head]],
+    GameOverWait);
+};
+
 (Game@) { Game@; } Tick = (Game@ g) {
-  g.state.?(over: g);
+  g.state.?(over: {
+    @(score: g.score, level: g.level, lives: g.lives,
+      state: State@(over: TickGameOver(g.state.over)), ship: g.ship,
+      bullet: g.bullet, aliens: g.aliens, ufo: g.ufo);
+  });
 
   g.state.?(leveling: {
     Eq(Int|0, g.state.leveling).?(true: {
@@ -124,7 +161,7 @@ Game@ Initial = @(
   # Check if the aliens have invaded.
   Game@ g_ = {
     Aliens.Invaded(g.aliens).?(false: g);
-    Game@(g.score, g.level, g.lives, State@(over: Unit), g.ship, g.bullet,
+    Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet,
       g.aliens, g.ufo);
   };
   Game@ g = g_;
@@ -174,6 +211,10 @@ Game@ Initial = @(
 };
 
 (Game@) { Drawing@; } Draw = (Game@ g) {
+  Drawing@ over = g.state.?(
+    over: Translate(Int|120, Int|184, Graphics.String(g.state.over.visible)),
+    : Blank);
+
   Drawings[
     DrawScore(g.score),
     DrawLives(g.lives),
@@ -181,7 +222,8 @@ Game@ Initial = @(
     Ship.Draw(g.ship),
     Bullet.Draw(g.bullet),
     Aliens.Draw(g.aliens),
-    Ufo.Draw(g.ufo)
+    Ufo.Draw(g.ufo),
+    over
   ];
 };
 

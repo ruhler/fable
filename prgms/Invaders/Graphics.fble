@@ -1322,7 +1322,7 @@ Drawing@ Screenshot = Drawings[
 
   Translate(Int|100, Int|200, Ufo),
 
-  Translate(Int|128, Int|185, String|'GAME OVER'),
+  Translate(Int|120, Int|184, String|'GAME OVER'),
 
   Translate(Int|46, Int|176, Alien3A),
   Translate(Int|46, Int|160, Alien2A),
