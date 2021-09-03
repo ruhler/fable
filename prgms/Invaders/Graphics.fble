@@ -20,15 +20,14 @@
 
 % Unit = /Unit%.Unit;
 
-Drawing@ Ship = {
-  Color@ color = Color@(green: Unit);
+Color@ green = Color@(green: Unit);
 
-  Drawings[
-    Rect(Int|0, Int|0, Int|15, Int|5, color),
-    Rect(Int|1, Int|5, Int|13, Int|1, color),
-    Rect(Int|6, Int|6, Int|3, Int|2, color),
-    Rect(Int|7, Int|8, Int|1, Int|1, color)];
-};
+Drawing@ Ship = Drawings[
+  Rect(Int|0, Int|0, Int|15, Int|5, green),
+  Rect(Int|1, Int|5, Int|13, Int|1, green),
+  Rect(Int|6, Int|6, Int|3, Int|2, green),
+  Rect(Int|7, Int|8, Int|1, Int|1, green)
+];
 
 Drawing@ Base = Path(
   List<Point@>[
@@ -64,10 +63,10 @@ Drawing@ Base = Path(
     Point@(Int|6, Int|2),
     Point@(Int|5, Int|2),
     Point@(Int|5, Int|0)],
-  Color@(green: Unit)
+  green
 );
 
-Drawing@ Ground = Rect(Int|0, Int|0, Int|240, Int|2, Color@(green: Unit));
+Drawing@ Ground = Rect(Int|0, Int|0, Int|240, Int|2, green);
 
 Drawing@ Alien1A = Path(
   List<Point@>[
@@ -1203,7 +1202,7 @@ Drawing@ DeadShipA = Drawings[
       Point@(Int|11, Int|3),
       Point@(Int|11, Int|1),
       Point@(Int|14, Int|1)],
-    Color@(green: Unit)
+    green
   ),
   Path(
     List<Point@>[
@@ -1211,7 +1210,7 @@ Drawing@ DeadShipA = Drawings[
       Point@(Int|2, Int|6),
       Point@(Int|2, Int|7),
       Point@(Int|3, Int|7)],
-    Color@(green: Unit)
+    green
   ),
   Path(
     List<Point@>[
@@ -1219,7 +1218,7 @@ Drawing@ DeadShipA = Drawings[
       Point@(Int|7, Int|7),
       Point@(Int|7, Int|8),
       Point@(Int|8, Int|8)],
-    Color@(green: Unit)
+    green
   ),
   Path(
     List<Point@>[
@@ -1227,7 +1226,7 @@ Drawing@ DeadShipA = Drawings[
       Point@(Int|11, Int|7),
       Point@(Int|11, Int|8),
       Point@(Int|12, Int|8)],
-    Color@(green: Unit)
+    green
   ),
   Path(
     List<Point@>[
@@ -1235,7 +1234,7 @@ Drawing@ DeadShipA = Drawings[
       Point@(Int|10, Int|4),
       Point@(Int|10, Int|5),
       Point@(Int|11, Int|5)],
-    Color@(green: Unit)
+    green
   )
 ];
 
@@ -1270,7 +1269,7 @@ Drawing@ DeadShipB = Drawings[
       Point@(Int|12, Int|2),
       Point@(Int|12, Int|1),
       Point@(Int|14, Int|1)],
-    Color@(green: Unit)
+    green
   ),
   Path(
     List<Point@>[
@@ -1278,7 +1277,7 @@ Drawing@ DeadShipB = Drawings[
       Point@(Int|3, Int|7),
       Point@(Int|3, Int|8),
       Point@(Int|4, Int|8)],
-    Color@(green: Unit)
+    green
   ),
   Path(
     List<Point@>[
@@ -1286,7 +1285,7 @@ Drawing@ DeadShipB = Drawings[
       Point@(Int|11, Int|5),
       Point@(Int|11, Int|6),
       Point@(Int|12, Int|6)],
-    Color@(green: Unit)
+    green
   ),
   Path(
     List<Point@>[
@@ -1294,7 +1293,7 @@ Drawing@ DeadShipB = Drawings[
       Point@(Int|12, Int|3),
       Point@(Int|12, Int|4),
       Point@(Int|13, Int|4)],
-    Color@(green: Unit)
+    green
   )
 ];
 
