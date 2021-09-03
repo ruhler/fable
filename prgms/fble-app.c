@@ -37,8 +37,8 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static int ReadIntP(FbleValue* num);
 static int ReadInt(FbleValue* num);
-static void FillPath(SDL_Window* window, int ax, int ay, int bx, int by, size_t n, SDL_Point* points, Uint32 color);
-static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* drawing, Uint32* colors);
+static void FillPath(SDL_Surface* s, int ax, int ay, int bx, int by, size_t n, SDL_Point* points, Uint32 color);
+static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing, Uint32* colors);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
@@ -116,7 +116,7 @@ static int ReadInt(FbleValue* x)
 //   Fill a closed path with a solid color to the window.
 //
 // Inputs:
-//   window - the SDL window to draw to.
+//   surface - the SDL surface to draw to.
 //   ax, ay, bx, by - A transformation to apply to each point: a * p + b.
 //   n - the number of points in the path.
 //   points - the points, in order around the path.
@@ -129,10 +129,8 @@ static int ReadInt(FbleValue* x)
 //   Draws a filled path as described by the given points to the global
 //   window. The user is responsible for calling SDL_UpdateWindowSurface when
 //   they are ready to display the filled path.
-static void FillPath(SDL_Window* window, int ax, int ay, int bx, int by, size_t n, SDL_Point* points, Uint32 color)
+static void FillPath(SDL_Surface* surface, int ax, int ay, int bx, int by, size_t n, SDL_Point* points, Uint32 color)
 {
-  SDL_Surface* s = SDL_GetWindowSurface(window);
-
   assert(n > 0);
 
   SDL_Rect bounds;
@@ -184,7 +182,7 @@ static void FillPath(SDL_Window* window, int ax, int ay, int bx, int by, size_t 
         r.h = -r.h;
       }
 
-      SDL_FillRect(s, &r, color);
+      SDL_FillRect(surface, &r, color);
     }
   }
 }
@@ -193,7 +191,7 @@ static void FillPath(SDL_Window* window, int ax, int ay, int bx, int by, size_t 
 //   Draw a drawing to the screen of type /Drawing%.Drawing@.
 //
 // Inputs:
-//   window - the window to draw to.
+//   surface - the surface to draw to.
 //   ax, ay, bx, by - a transformation to apply to the drawing: a*p + b.
 //   drawing - the drawing to draw.
 //
@@ -203,7 +201,7 @@ static void FillPath(SDL_Window* window, int ax, int ay, int bx, int by, size_t 
 // Side effects:
 //   Draws the drawing to the window. The caller must call
 //   SDL_UpdateWindowSurface for the screen to actually be updated.
-static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* drawing, Uint32* colors)
+static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing, Uint32* colors)
 {
   switch (FbleUnionValueTag(drawing)) {
     case 0: {
@@ -221,7 +219,6 @@ static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* 
       FbleValue* h = FbleStructValueAccess(rv, 3);
       FbleValue* color = FbleStructValueAccess(rv, 4);
 
-      SDL_Surface* s = SDL_GetWindowSurface(window);
       SDL_Rect r = {
         ax * ReadInt(x) + bx,
         ay * ReadInt(y) + by,
@@ -239,7 +236,7 @@ static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* 
         r.h = -r.h;
       }
 
-      SDL_FillRect(s, &r, colors[FbleUnionValueTag(color)]);
+      SDL_FillRect(surface, &r, colors[FbleUnionValueTag(color)]);
       return;
     }
 
@@ -272,7 +269,7 @@ static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* 
       }
       assert(FbleUnionValueTag(pointsS) == 1);
 
-      FillPath(window, ax, ay, bx, by, n, points, colors[FbleUnionValueTag(color)]);
+      FillPath(surface, ax, ay, bx, by, n, points, colors[FbleUnionValueTag(color)]);
       return;
     }
 
@@ -289,15 +286,15 @@ static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* 
       int byi = ReadInt(FbleStructValueAccess(b, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
-      Draw(window, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d, colors);
+      Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d, colors);
       return;
     }
 
     case 4: {
       // Over.
       FbleValue* over = FbleUnionValueAccess(drawing);
-      Draw(window, ax, ay, bx, by, FbleStructValueAccess(over, 0), colors);
-      Draw(window, ax, ay, bx, by, FbleStructValueAccess(over, 1), colors);
+      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 0), colors);
+      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 1), colors);
       return;
     }
 
@@ -428,7 +425,8 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       }
 
       case 1: {
-        Draw(app->window, 1, 1, 0, 0, FbleUnionValueAccess(effect), app->colors);
+        SDL_Surface* surface = SDL_GetWindowSurface(app->window);
+        Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect), app->colors);
         SDL_UpdateWindowSurface(app->window);
 
         // Collect status on frame rate.
