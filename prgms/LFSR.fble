@@ -1,0 +1,69 @@
+
+@ Bit@ = /Digits%.Bit@;
+% Bit = /Digits%.Bit;
+% BitStr = /Digits/String%.BitStr;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@>% Cons = /List%.Cons;
+
+# LFSR@ --
+#   State for a linear feedback shift register using xor as the linear
+#   function.
+#
+# Fields:
+#   c - List of N coefficients, highest order coefficient first.
+#   s - List of N bits of state, with the output (most significant) bit first.
+@ LFSR@ = *(List@<Bit@> c, List@<Bit@> s);
+
+# Prod --
+#   Compute the element wise product of bits in the given lists.
+(List@<Bit@>, List@<Bit@>) { List@<Bit@>; }
+Prod = (List@<Bit@> a, List@<Bit@> b) {
+  a.?(nil: a);
+
+  List@<Bit@> tail = Prod(a.cons.tail, b.cons.tail);
+  Cons<Bit@>(a.cons.head.?(0: Bit.0, 1: b.cons.head), tail);
+};
+
+# Sum --
+#   Compute the sum over all bits in the given list.
+(List@<Bit@>) { Bit@; } Sum = (List@<Bit@> xs) {
+  xs.?(nil: Bit.0);
+  Bit@ head = xs.cons.head;
+  Bit@ tail = Sum(xs.cons.tail);
+  head.?(0: tail, 1: tail.?(0: Bit.1, 1: Bit.0));
+};
+
+# ShiftIn --
+#   Shift bit i into the given state.
+(List@<Bit@>, Bit@) { List@<Bit@>; }
+ShiftIn = (List@<Bit@> s, Bit@ i) {
+  List@<Bit@> tail = s.cons.tail;
+  tail.?(nil: List<Bit@>[i]);
+  Cons<Bit@>(tail.cons.head, ShiftIn(tail, i));
+};
+
+# Output --
+#   Returns the current output bit of the LFSR.
+(LFSR@) { Bit@; } Output = (LFSR@ lfsr) {
+  lfsr.s.cons.head;
+};
+
+# Shift --
+#   Shift the LFSR.
+(LFSR@) { LFSR@; } Shift = (LFSR@ lfsr) {
+  LFSR@(lfsr.c, ShiftIn(lfsr.s, Sum(Prod(lfsr.c, lfsr.s))));
+};
+
+# LFSRs -- 
+#   A collection of LFSRs using primitive polynomials (from wikipedia).
+#
+# LFSRs.n has period 2^n - 1.
+% LFSRs = @(
+  8: LFSR@(BitStr|10111000, BitStr|10111000)
+);
+
+
+@(LFSR@, LFSRs, Output, Shift);
+

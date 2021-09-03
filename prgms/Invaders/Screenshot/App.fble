@@ -22,8 +22,8 @@
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   # Map game coordinates into screen coordinate.
-  Point@ a = @(x: Int|1, y: Neg(Int|1));
-  Point@ b = @(x: Int|0, y: Int|240);
+  Point@ a = @(x: Int|2, y: Neg(Int|2));
+  Point@ b = @(x: Int|0, y: Int|480);
 
   Drawing@ screenshot = Screenshot;
   Unit@ _ := out(Effect@(draw: Affine(a, b, screenshot)));
