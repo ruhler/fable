@@ -21,6 +21,7 @@
 % Unit = /Unit%.Unit;
 
 Color@ green = Color@(green: Unit);
+Color@ white = Color@(white: Unit);
 
 Drawing@ Ship = Drawings[
   Rect(Int|0, Int|0, Int|15, Int|5, green),
@@ -118,7 +119,7 @@ Drawing@ Alien1A = Path(
     Point@(Int|3, Int|2),
     Point@(Int|3, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Alien1B = Path(
@@ -171,7 +172,7 @@ Drawing@ Alien1B = Path(
     Point@(Int|4, Int|2),
     Point@(Int|4, Int|1),
     Point@(Int|2, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Alien2A = Path(
@@ -232,7 +233,7 @@ Drawing@ Alien2A = Path(
     Point@(Int|3, Int|5),
     Point@(Int|3, Int|1),
     Point@(Int|5, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Alien2B = Path(
@@ -293,7 +294,7 @@ Drawing@ Alien2B = Path(
     Point@(Int|3, Int|5),
     Point@(Int|3, Int|1),
     Point@(Int|2, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Alien3A = Path(
@@ -350,7 +351,7 @@ Drawing@ Alien3A = Path(
     Point@(Int|1, Int|2),
     Point@(Int|1, Int|1),
     Point@(Int|2, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Alien3B = Path(
@@ -415,7 +416,7 @@ Drawing@ Alien3B = Path(
     Point@(Int|2, Int|2),
     Point@(Int|2, Int|1),
     Point@(Int|1, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 % Aliens = @(Alien1A, Alien1B, Alien2A, Alien2B, Alien3A, Alien3B);
@@ -511,7 +512,7 @@ Drawing@ Digit0 = Path(
     Point@(Int|4, Int|1),
     Point@(Int|4, Int|0),
     Point@(Int|1, Int|0)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit1 = Path(
@@ -527,7 +528,7 @@ Drawing@ Digit1 = Path(
     Point@(Int|3, Int|1),
     Point@(Int|4, Int|1),
     Point@(Int|4, Int|0)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit2 = Path(
@@ -554,7 +555,7 @@ Drawing@ Digit2 = Path(
     Point@(Int|1, Int|3),
     Point@(Int|1, Int|1),
     Point@(Int|5, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit3 = Path(
@@ -587,7 +588,7 @@ Drawing@ Digit3 = Path(
     Point@(Int|5, Int|3),
     Point@(Int|5, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit4 = Path(
@@ -606,7 +607,7 @@ Drawing@ Digit4 = Path(
     Point@(Int|5, Int|4),
     Point@(Int|5, Int|3),
     Point@(Int|4, Int|3)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit5 = Path(
@@ -631,7 +632,7 @@ Drawing@ Digit5 = Path(
     Point@(Int|5, Int|4),
     Point@(Int|5, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit6 = Path(
@@ -660,7 +661,7 @@ Drawing@ Digit6 = Path(
     Point@(Int|1, Int|3),
     Point@(Int|1, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit7 = Path(
@@ -683,7 +684,7 @@ Drawing@ Digit7 = Path(
     Point@(Int|3, Int|4),
     Point@(Int|3, Int|3),
     Point@(Int|2, Int|3)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit8 = Path(
@@ -716,7 +717,7 @@ Drawing@ Digit8 = Path(
     Point@(Int|5, Int|3),
     Point@(Int|5, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Digit9 = Path(
@@ -745,7 +746,7 @@ Drawing@ Digit9 = Path(
     Point@(Int|5, Int|6),
     Point@(Int|5, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 # Digits --
@@ -785,7 +786,7 @@ Drawing@ LetterA = Path(
     Point@(Int|4, Int|0),
     Point@(Int|4, Int|3),
     Point@(Int|1, Int|3)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterC = Path(
@@ -810,7 +811,7 @@ Drawing@ LetterC = Path(
     Point@(Int|5, Int|2),
     Point@(Int|5, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterE = Path(
@@ -827,7 +828,7 @@ Drawing@ LetterE = Path(
     Point@(Int|1, Int|3),
     Point@(Int|1, Int|1),
     Point@(Int|5, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterG = Path(
@@ -854,7 +855,7 @@ Drawing@ LetterG = Path(
     Point@(Int|5, Int|4),
     Point@(Int|5, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterI = Path(
@@ -871,7 +872,7 @@ Drawing@ LetterI = Path(
     Point@(Int|3, Int|6),
     Point@(Int|3, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterL = Path(
@@ -882,7 +883,7 @@ Drawing@ LetterL = Path(
     Point@(Int|1, Int|7),
     Point@(Int|1, Int|1),
     Point@(Int|5, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterM = Path(
@@ -907,7 +908,7 @@ Drawing@ LetterM = Path(
     Point@(Int|2, Int|3),
     Point@(Int|2, Int|5),
     Point@(Int|1, Int|5)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterO = Path(
@@ -928,7 +929,7 @@ Drawing@ LetterO = Path(
     Point@(Int|5, Int|6),
     Point@(Int|5, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterR = Path(
@@ -959,7 +960,7 @@ Drawing@ LetterR = Path(
     Point@(Int|2, Int|2),
     Point@(Int|2, Int|3),
     Point@(Int|1, Int|3)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterS = Path(
@@ -992,7 +993,7 @@ Drawing@ LetterS = Path(
     Point@(Int|5, Int|3),
     Point@(Int|5, Int|1),
     Point@(Int|4, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ LetterV = Path(
@@ -1017,7 +1018,7 @@ Drawing@ LetterV = Path(
     Point@(Int|4, Int|2),
     Point@(Int|4, Int|1),
     Point@(Int|3, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 # String --
@@ -1033,14 +1034,7 @@ Drawing@ LetterV = Path(
   Over(first, Translate(Int|8, Int|0, String(str.cons.tail)));
 };
 
-Drawing@ Bullet = Path(
-  List<Point@>[
-    Point@(Int|1, Int|0),
-    Point@(Int|0, Int|0),
-    Point@(Int|0, Int|4),
-    Point@(Int|1, Int|4)],
-  Color@(white: Unit)
-);
+Drawing@ Bullet = Rect(Int|0, Int|0, Int|1, Int|4, white);
 
 Drawing@ Bomb = Path(
   List<Point@>[
@@ -1056,7 +1050,7 @@ Drawing@ Bomb = Path(
     Point@(Int|3, Int|2),
     Point@(Int|3, Int|1),
     Point@(Int|2, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ Squiggle = Path(
@@ -1081,7 +1075,7 @@ Drawing@ Squiggle = Path(
     Point@(Int|3, Int|2),
     Point@(Int|3, Int|1),
     Point@(Int|2, Int|1)],
-  Color@(white: Unit)
+  white
 );
 
 Drawing@ DeadAlien = Drawings[
@@ -1091,7 +1085,7 @@ Drawing@ DeadAlien = Drawings[
       Point@(Int|6, Int|0),
       Point@(Int|6, Int|2),
       Point@(Int|7, Int|2)],
-    Color@(white: Unit)
+    white
   ),
   Path(
     List<Point@>[
@@ -1107,7 +1101,7 @@ Drawing@ DeadAlien = Drawings[
       Point@(Int|4, Int|3),
       Point@(Int|4, Int|2),
       Point@(Int|2, Int|2)],
-    Color@(white: Unit)
+    white
   ),
   Path(
     List<Point@>[
@@ -1123,7 +1117,7 @@ Drawing@ DeadAlien = Drawings[
       Point@(Int|3, Int|6),
       Point@(Int|3, Int|5),
       Point@(Int|2, Int|5)],
-    Color@(white: Unit)
+    white
   ),
   Path(
     List<Point@>[
@@ -1131,7 +1125,7 @@ Drawing@ DeadAlien = Drawings[
       Point@(Int|5, Int|6),
       Point@(Int|5, Int|8),
       Point@(Int|6, Int|8)],
-    Color@(white: Unit)
+    white
   ),
   Path(
     List<Point@>[
@@ -1151,7 +1145,7 @@ Drawing@ DeadAlien = Drawings[
       Point@(Int|9, Int|5),
       Point@(Int|9, Int|6),
       Point@(Int|8, Int|6)],
-    Color@(white: Unit)
+    white
   ),
   Path(
     List<Point@>[
@@ -1159,7 +1153,7 @@ Drawing@ DeadAlien = Drawings[
       Point@(Int|10, Int|3),
       Point@(Int|10, Int|4),
       Point@(Int|12, Int|4)],
-    Color@(white: Unit)
+    white
   ),
   Path(
     List<Point@>[
@@ -1175,7 +1169,7 @@ Drawing@ DeadAlien = Drawings[
       Point@(Int|10, Int|2),
       Point@(Int|10, Int|1),
       Point@(Int|11, Int|1)],
-    Color@(white: Unit)
+    white
   )
 ];
 
