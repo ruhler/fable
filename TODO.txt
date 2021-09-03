@@ -9,6 +9,7 @@
   obvious why the game ends in that case? Or is that rare enough it doesn't
   matter?
 * [/Invaders%] Add sound effects?
+* [/Invaders%] Center Alien3?
 
 * Implement fannkuchredux benchmark?
   Permutation order looks like:
