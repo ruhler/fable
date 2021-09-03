@@ -212,6 +212,38 @@ static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* 
     }
 
     case 1: {
+      // Rect
+      FbleValue* rv = FbleUnionValueAccess(drawing);
+
+      FbleValue* x = FbleStructValueAccess(rv, 0);
+      FbleValue* y = FbleStructValueAccess(rv, 1);
+      FbleValue* w = FbleStructValueAccess(rv, 2);
+      FbleValue* h = FbleStructValueAccess(rv, 3);
+      FbleValue* color = FbleStructValueAccess(rv, 4);
+
+      SDL_Surface* s = SDL_GetWindowSurface(window);
+      SDL_Rect r = {
+        ax * ReadInt(x) + bx,
+        ay * ReadInt(y) + by,
+        ax * ReadInt(w),
+        ay * ReadInt(h)
+      };
+
+      if (r.w < 0) {
+        r.x += r.w;
+        r.w = -r.w;
+      }
+
+      if (r.h < 0) {
+        r.y += r.h;
+        r.h = -r.h;
+      }
+
+      SDL_FillRect(s, &r, colors[FbleUnionValueTag(color)]);
+      return;
+    }
+
+    case 2: {
       // Path.
       FbleValue* rv = FbleUnionValueAccess(drawing);
 
@@ -244,7 +276,7 @@ static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* 
       return;
     }
 
-    case 2: {
+    case 3: {
       // Transformed.
       FbleValue* transformed = FbleUnionValueAccess(drawing);
       FbleValue* a = FbleStructValueAccess(transformed, 0);
@@ -261,7 +293,7 @@ static void Draw(SDL_Window* window, int ax, int ay, int bx, int by, FbleValue* 
       return;
     }
 
-    case 3: {
+    case 4: {
       // Over.
       FbleValue* over = FbleUnionValueAccess(drawing);
       Draw(window, ax, ay, bx, by, FbleStructValueAccess(over, 0), colors);

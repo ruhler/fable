@@ -1,3 +1,7 @@
+* Remove 'Path' option to Drawing
+ - The implementation has bugs with resolution and bounding box and it's slow.
+   Use rectangles instead.
+
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 * [/Invaders%] Add Alien bombs and squiggles.
  After moving all aliens in the group, for each column, the bottom alien fires

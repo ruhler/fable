@@ -3,11 +3,9 @@
 % Unit = /Unit%.Unit;
 
 @ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
 % Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 
 @ Color@ = +(
   Unit@ black,
@@ -24,6 +22,9 @@
 @ Drawing@ = +(
   # A blank (transparent) drawing.
   Unit@ blank,
+
+  # A filled rectangle.
+  *(Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) rect,
   
   # A filled path.
   #
@@ -52,11 +53,7 @@ Drawing@ Blank = Drawing@(blank: Unit);
 # Draw a rectangle filled solid with the given color.
 (Int@, Int@, Int@, Int@, Color@) { Drawing@; }
 Rect = (Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) {
-  Path(List<Point@>[
-    Point@(x, y),
-    Point@(Add(x, w), y),
-    Point@(Add(x, w), Add(y, h)),
-    Point@(x, Add(y, h))], color);
+  Drawing@(rect: @(x, y, w, h, color));
 };
 
 # Compose two drawings together by drawing one over another.
