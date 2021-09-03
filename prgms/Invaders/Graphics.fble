@@ -20,26 +20,15 @@
 
 % Unit = /Unit%.Unit;
 
-Drawing@ Ship = Path(
-  List<Point@>[
-    Point@(Int|0, Int|0),
-    Point@(Int|0, Int|5),
-    Point@(Int|1, Int|5),
-    Point@(Int|1, Int|6),
-    Point@(Int|6, Int|6),
-    Point@(Int|6, Int|8),
-    Point@(Int|7, Int|8),
-    Point@(Int|7, Int|9),
-    Point@(Int|8, Int|9),
-    Point@(Int|8, Int|8),
-    Point@(Int|9, Int|8),
-    Point@(Int|9, Int|6),
-    Point@(Int|14, Int|6),
-    Point@(Int|14, Int|5),
-    Point@(Int|15, Int|5),
-    Point@(Int|15, Int|0)],
-  Color@(green: Unit)
-);
+Drawing@ Ship = {
+  Color@ color = Color@(green: Unit);
+
+  Drawings[
+    Rect(Int|0, Int|0, Int|15, Int|5, color),
+    Rect(Int|1, Int|5, Int|13, Int|1, color),
+    Rect(Int|6, Int|6, Int|3, Int|2, color),
+    Rect(Int|7, Int|8, Int|1, Int|1, color)];
+};
 
 Drawing@ Base = Path(
   List<Point@>[
