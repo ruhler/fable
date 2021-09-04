@@ -20,8 +20,9 @@
 
 % Unit = /Unit%.Unit;
 
-Color@ green = Color@(green: Unit);
 Color@ white = Color@(white: Unit);
+Color@ green = Color@(green: Unit);
+Color@ red = Color@(red: Unit);
 
 Drawing@ Ship = Drawings[
   Rect(Int|0, Int|0, Int|15, Int|5, green),
@@ -155,66 +156,22 @@ Drawing@ Alien3B = Drawings[
 
 % Aliens = @(Alien1A, Alien1B, Alien2A, Alien2B, Alien3A, Alien3B);
 
-Drawing@ Ufo = Path(
-  List<Point@>[
-    Point@(Int|4, Int|0),
-    Point@(Int|3, Int|0),
-    Point@(Int|3, Int|1),
-    Point@(Int|2, Int|1),
-    Point@(Int|2, Int|2),
-    Point@(Int|0, Int|2),
-    Point@(Int|0, Int|3),
-    Point@(Int|1, Int|3),
-    Point@(Int|1, Int|4),
-    Point@(Int|2, Int|4),
-    Point@(Int|2, Int|5),
-    Point@(Int|3, Int|5),
-    Point@(Int|3, Int|3),
-    Point@(Int|4, Int|3),
-    Point@(Int|4, Int|4),
-    Point@(Int|3, Int|4),
-    Point@(Int|3, Int|6),
-    Point@(Int|5, Int|6),
-    Point@(Int|5, Int|7),
-    Point@(Int|11, Int|7),
-    Point@(Int|11, Int|6),
-    Point@(Int|13, Int|6),
-    Point@(Int|13, Int|4),
-    Point@(Int|12, Int|4),
-    Point@(Int|12, Int|3),
-    Point@(Int|13, Int|3),
-    Point@(Int|13, Int|5),
-    Point@(Int|14, Int|5),
-    Point@(Int|14, Int|4),
-    Point@(Int|15, Int|4),
-    Point@(Int|15, Int|3),
-    Point@(Int|16, Int|3),
-    Point@(Int|16, Int|2),
-    Point@(Int|14, Int|2),
-    Point@(Int|14, Int|1),
-    Point@(Int|13, Int|1),
-    Point@(Int|13, Int|0),
-    Point@(Int|12, Int|0),
-    Point@(Int|12, Int|1),
-    Point@(Int|11, Int|1),
-    Point@(Int|11, Int|2),
-    Point@(Int|9, Int|2),
-    Point@(Int|9, Int|3),
-    Point@(Int|10, Int|3),
-    Point@(Int|10, Int|4),
-    Point@(Int|9, Int|4),
-    Point@(Int|9, Int|1),
-    Point@(Int|7, Int|1),
-    Point@(Int|7, Int|4),
-    Point@(Int|6, Int|4),
-    Point@(Int|6, Int|3),
-    Point@(Int|7, Int|3),
-    Point@(Int|7, Int|2),
-    Point@(Int|5, Int|2),
-    Point@(Int|5, Int|1),
-    Point@(Int|4, Int|1)],
-  Color@(red: Unit)
-);
+Drawing@ Ufo = Drawings[
+  Rect(Int|3, Int|0, Int|1, Int|1, red),
+  Rect(Int|12, Int|0, Int|1, Int|1, red),
+  Rect(Int|2, Int|1, Int|3, Int|1, red),
+  Rect(Int|7, Int|1, Int|2, Int|1, red),
+  Rect(Int|11, Int|1, Int|3, Int|1, red),
+  Rect(Int|0, Int|2, Int|16, Int|1, red),
+  Rect(Int|1, Int|3, Int|2, Int|1, red),
+  Rect(Int|4, Int|3, Int|2, Int|1, red),
+  Rect(Int|7, Int|3, Int|2, Int|1, red),
+  Rect(Int|10, Int|3, Int|2, Int|1, red),
+  Rect(Int|13, Int|3, Int|2, Int|1, red),
+  Rect(Int|2, Int|4, Int|12, Int|1, red),
+  Rect(Int|3, Int|5, Int|10, Int|1, red),
+  Rect(Int|5, Int|6, Int|6, Int|1, red)
+];
 
 Drawing@ Digit0 = Path(
   List<Point@>[
