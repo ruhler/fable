@@ -3,18 +3,15 @@
 
 @ Color@ = /Drawing%.Color@;
 @ Drawing@ = /Drawing%.Drawing@;
-@ Point@ = /Drawing%.Point@;
 % Blank = /Drawing%.Blank;
 % Drawings = /Drawing%.Drawings;
 % Over = /Drawing%.Over;
-% Path = /Drawing%.Path;
 % Rect = /Drawing%.Rect;
 % Translate = /Drawing%.Translate;
 
 % Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
 
 @ String@ = /String%.String@;
 
@@ -377,242 +374,64 @@ Drawing@ Bomb = Drawings[
   Rect(Int|1, Int|0, Int|1, Int|5, white)
 ];
 
-Drawing@ Squiggle = Path(
-  List<Point@>[
-    Point@(Int|2, Int|0),
-    Point@(Int|1, Int|0),
-    Point@(Int|1, Int|1),
-    Point@(Int|2, Int|1),
-    Point@(Int|2, Int|2),
-    Point@(Int|1, Int|2),
-    Point@(Int|1, Int|3),
-    Point@(Int|0, Int|3),
-    Point@(Int|0, Int|4),
-    Point@(Int|1, Int|4),
-    Point@(Int|1, Int|5),
-    Point@(Int|2, Int|5),
-    Point@(Int|2, Int|4),
-    Point@(Int|1, Int|4),
-    Point@(Int|1, Int|3),
-    Point@(Int|2, Int|3),
-    Point@(Int|2, Int|2),
-    Point@(Int|3, Int|2),
-    Point@(Int|3, Int|1),
-    Point@(Int|2, Int|1)],
-  white
-);
+Drawing@ Squiggle = Drawings[
+  Rect(Int|1, Int|0, Int|1, Int|1, white),
+  Rect(Int|2, Int|1, Int|1, Int|1, white),
+  Rect(Int|1, Int|2, Int|1, Int|1, white),
+  Rect(Int|0, Int|3, Int|1, Int|1, white),
+  Rect(Int|1, Int|4, Int|1, Int|1, white)
+];
 
 Drawing@ DeadAlien = Drawings[
-  Path(
-    List<Point@>[
-      Point@(Int|7, Int|0),
-      Point@(Int|6, Int|0),
-      Point@(Int|6, Int|2),
-      Point@(Int|7, Int|2)],
-    white
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|2, Int|1),
-      Point@(Int|1, Int|1),
-      Point@(Int|1, Int|2),
-      Point@(Int|2, Int|2),
-      Point@(Int|2, Int|3),
-      Point@(Int|4, Int|3),
-      Point@(Int|4, Int|4),
-      Point@(Int|5, Int|4),
-      Point@(Int|5, Int|3),
-      Point@(Int|4, Int|3),
-      Point@(Int|4, Int|2),
-      Point@(Int|2, Int|2)],
-    white
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|2, Int|4),
-      Point@(Int|0, Int|4),
-      Point@(Int|0, Int|5),
-      Point@(Int|2, Int|5),
-      Point@(Int|2, Int|6),
-      Point@(Int|1, Int|6),
-      Point@(Int|1, Int|7),
-      Point@(Int|2, Int|7),
-      Point@(Int|2, Int|6),
-      Point@(Int|3, Int|6),
-      Point@(Int|3, Int|5),
-      Point@(Int|2, Int|5)],
-    white
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|6, Int|6),
-      Point@(Int|5, Int|6),
-      Point@(Int|5, Int|8),
-      Point@(Int|6, Int|8)],
-    white
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|8, Int|5),
-      Point@(Int|7, Int|5),
-      Point@(Int|7, Int|6),
-      Point@(Int|8, Int|6),
-      Point@(Int|8, Int|8),
-      Point@(Int|9, Int|8),
-      Point@(Int|9, Int|6),
-      Point@(Int|10, Int|6),
-      Point@(Int|10, Int|7),
-      Point@(Int|11, Int|7),
-      Point@(Int|11, Int|6),
-      Point@(Int|10, Int|6),
-      Point@(Int|10, Int|5),
-      Point@(Int|9, Int|5),
-      Point@(Int|9, Int|6),
-      Point@(Int|8, Int|6)],
-    white
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|12, Int|3),
-      Point@(Int|10, Int|3),
-      Point@(Int|10, Int|4),
-      Point@(Int|12, Int|4)],
-    white
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|11, Int|0),
-      Point@(Int|10, Int|0),
-      Point@(Int|10, Int|1),
-      Point@(Int|9, Int|1),
-      Point@(Int|9, Int|2),
-      Point@(Int|8, Int|2),
-      Point@(Int|8, Int|3),
-      Point@(Int|9, Int|3),
-      Point@(Int|9, Int|2),
-      Point@(Int|10, Int|2),
-      Point@(Int|10, Int|1),
-      Point@(Int|11, Int|1)],
-    white
-  )
+  Rect(Int|0, Int|4, Int|2, Int|1, white),
+  Rect(Int|2, Int|5, Int|1, Int|1, white),
+  Rect(Int|1, Int|6, Int|1, Int|1, white),
+
+  Rect(Int|1, Int|1, Int|1, Int|1, white),
+  Rect(Int|2, Int|2, Int|2, Int|1, white),
+  Rect(Int|4, Int|3, Int|1, Int|1, white),
+
+  Rect(Int|5, Int|6, Int|1, Int|2, white),
+
+  Rect(Int|7, Int|5, Int|1, Int|1, white),
+  Rect(Int|8, Int|6, Int|1, Int|2, white),
+  Rect(Int|9, Int|5, Int|1, Int|1, white),
+  Rect(Int|10, Int|6, Int|1, Int|1, white),
+
+  Rect(Int|6, Int|0, Int|1, Int|2, white),
+
+  Rect(Int|8, Int|2, Int|1, Int|1, white),
+  Rect(Int|9, Int|1, Int|1, Int|1, white),
+  Rect(Int|10, Int|0, Int|1, Int|1, white),
+
+  Rect(Int|10, Int|3, Int|2, Int|1, white)
 ];
 
 Drawing@ DeadShipA = Drawings[
-  Path(
-    List<Point@>[
-      Point@(Int|14, Int|0),
-      Point@(Int|1, Int|0),
-      Point@(Int|1, Int|1),
-      Point@(Int|2, Int|1),
-      Point@(Int|2, Int|2),
-      Point@(Int|4, Int|2),
-      Point@(Int|4, Int|4),
-      Point@(Int|5, Int|4),
-      Point@(Int|5, Int|3),
-      Point@(Int|6, Int|3),
-      Point@(Int|6, Int|6),
-      Point@(Int|7, Int|6),
-      Point@(Int|7, Int|3),
-      Point@(Int|8, Int|3),
-      Point@(Int|8, Int|4),
-      Point@(Int|9, Int|4),
-      Point@(Int|9, Int|3),
-      Point@(Int|11, Int|3),
-      Point@(Int|11, Int|1),
-      Point@(Int|14, Int|1)],
-    green
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|3, Int|6),
-      Point@(Int|2, Int|6),
-      Point@(Int|2, Int|7),
-      Point@(Int|3, Int|7)],
-    green
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|8, Int|7),
-      Point@(Int|7, Int|7),
-      Point@(Int|7, Int|8),
-      Point@(Int|8, Int|8)],
-    green
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|12, Int|7),
-      Point@(Int|11, Int|7),
-      Point@(Int|11, Int|8),
-      Point@(Int|12, Int|8)],
-    green
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|11, Int|4),
-      Point@(Int|10, Int|4),
-      Point@(Int|10, Int|5),
-      Point@(Int|11, Int|5)],
-    green
-  )
+  Rect(Int|1, Int|0, Int|13, Int|1, green),
+  Rect(Int|2, Int|1, Int|9, Int|1, green),
+  Rect(Int|4, Int|2, Int|7, Int|1, green),
+  Rect(Int|4, Int|3, Int|1, Int|1, green),
+  Rect(Int|6, Int|3, Int|1, Int|3, green),
+  Rect(Int|8, Int|3, Int|1, Int|1, green),
+  Rect(Int|10, Int|4, Int|1, Int|1, green),
+  Rect(Int|2, Int|6, Int|1, Int|1, green),
+  Rect(Int|7, Int|7, Int|1, Int|1, green),
+  Rect(Int|11, Int|7, Int|1, Int|1, green)
 ];
 
 Drawing@ DeadShipB = Drawings[
-  Path(
-    List<Point@>[
-      Point@(Int|14, Int|0),
-      Point@(Int|1, Int|0),
-      Point@(Int|1, Int|1),
-      Point@(Int|3, Int|1),
-      Point@(Int|3, Int|3),
-      Point@(Int|2, Int|3),
-      Point@(Int|2, Int|4),
-      Point@(Int|3, Int|4),
-      Point@(Int|3, Int|3),
-      Point@(Int|6, Int|3),
-      Point@(Int|6, Int|4),
-      Point@(Int|7, Int|4),
-      Point@(Int|7, Int|5),
-      Point@(Int|8, Int|5),
-      Point@(Int|8, Int|6),
-      Point@(Int|9, Int|6),
-      Point@(Int|9, Int|7),
-      Point@(Int|10, Int|7),
-      Point@(Int|10, Int|6),
-      Point@(Int|9, Int|6),
-      Point@(Int|9, Int|4),
-      Point@(Int|8, Int|4),
-      Point@(Int|8, Int|3),
-      Point@(Int|10, Int|3),
-      Point@(Int|10, Int|2),
-      Point@(Int|12, Int|2),
-      Point@(Int|12, Int|1),
-      Point@(Int|14, Int|1)],
-    green
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|4, Int|7),
-      Point@(Int|3, Int|7),
-      Point@(Int|3, Int|8),
-      Point@(Int|4, Int|8)],
-    green
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|12, Int|5),
-      Point@(Int|11, Int|5),
-      Point@(Int|11, Int|6),
-      Point@(Int|12, Int|6)],
-    green
-  ),
-  Path(
-    List<Point@>[
-      Point@(Int|13, Int|3),
-      Point@(Int|12, Int|3),
-      Point@(Int|12, Int|4),
-      Point@(Int|13, Int|4)],
-    green
-  )
+  Rect(Int|1, Int|0, Int|13, Int|1, green),
+  Rect(Int|3, Int|1, Int|9, Int|1, green),
+  Rect(Int|3, Int|2, Int|7, Int|1, green),
+  Rect(Int|2, Int|3, Int|1, Int|1, green),
+  Rect(Int|6, Int|3, Int|2, Int|1, green),
+  Rect(Int|12, Int|3, Int|1, Int|1, green),
+  Rect(Int|7, Int|4, Int|2, Int|1, green),
+  Rect(Int|8, Int|5, Int|1, Int|1, green),
+  Rect(Int|11, Int|5, Int|1, Int|1, green),
+  Rect(Int|9, Int|6, Int|1, Int|1, green),
+  Rect(Int|3, Int|7, Int|1, Int|1, green)
 ];
 
 Drawing@ Background = Drawings[
