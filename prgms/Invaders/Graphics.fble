@@ -270,266 +270,92 @@ Drawing@ Digit9 = Drawings[
   Over(first, Translate(Int|8, Int|0, Digits(digits.cons.tail)));
 };
 
-Drawing@ LetterA = Path(
-  List<Point@>[
-    Point@(Int|1, Int|0),
-    Point@(Int|0, Int|0),
-    Point@(Int|0, Int|5),
-    Point@(Int|1, Int|5),
-    Point@(Int|1, Int|4),
-    Point@(Int|4, Int|4),
-    Point@(Int|4, Int|5),
-    Point@(Int|3, Int|5),
-    Point@(Int|3, Int|6),
-    Point@(Int|2, Int|6),
-    Point@(Int|2, Int|5),
-    Point@(Int|1, Int|5),
-    Point@(Int|1, Int|6),
-    Point@(Int|2, Int|6),
-    Point@(Int|2, Int|7),
-    Point@(Int|3, Int|7),
-    Point@(Int|3, Int|6),
-    Point@(Int|4, Int|6),
-    Point@(Int|4, Int|5),
-    Point@(Int|5, Int|5),
-    Point@(Int|5, Int|0),
-    Point@(Int|4, Int|0),
-    Point@(Int|4, Int|3),
-    Point@(Int|1, Int|3)],
-  white
-);
+Drawing@ LetterA = Drawings[
+  Rect(Int|0, Int|0, Int|1, Int|5, white),
+  Rect(Int|4, Int|0, Int|1, Int|5, white),
+  Rect(Int|1, Int|3, Int|3, Int|1, white),
+  Rect(Int|1, Int|5, Int|1, Int|1, white),
+  Rect(Int|3, Int|5, Int|1, Int|1, white),
+  Rect(Int|2, Int|6, Int|1, Int|1, white)
+];
 
-Drawing@ LetterC = Path(
-  List<Point@>[
-    Point@(Int|4, Int|0),
-    Point@(Int|1, Int|0),
-    Point@(Int|1, Int|1),
-    Point@(Int|0, Int|1),
-    Point@(Int|0, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|7),
-    Point@(Int|4, Int|7),
-    Point@(Int|4, Int|6),
-    Point@(Int|5, Int|6),
-    Point@(Int|5, Int|5),
-    Point@(Int|4, Int|5),
-    Point@(Int|4, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|1),
-    Point@(Int|4, Int|1),
-    Point@(Int|4, Int|2),
-    Point@(Int|5, Int|2),
-    Point@(Int|5, Int|1),
-    Point@(Int|4, Int|1)],
-  white
-);
+Drawing@ LetterC = Drawings[
+  Rect(Int|1, Int|0, Int|3, Int|1, white),
+  Rect(Int|1, Int|6, Int|3, Int|1, white),
+  Rect(Int|0, Int|1, Int|1, Int|5, white),
+  Rect(Int|4, Int|1, Int|1, Int|1, white),
+  Rect(Int|4, Int|5, Int|1, Int|1, white)
+];
 
-Drawing@ LetterE = Path(
-  List<Point@>[
-    Point@(Int|5, Int|0),
-    Point@(Int|0, Int|0),
-    Point@(Int|0, Int|7),
-    Point@(Int|5, Int|7),
-    Point@(Int|5, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|4),
-    Point@(Int|4, Int|4),
-    Point@(Int|4, Int|3),
-    Point@(Int|1, Int|3),
-    Point@(Int|1, Int|1),
-    Point@(Int|5, Int|1)],
-  white
-);
+Drawing@ LetterE = Drawings[
+  Rect(Int|0, Int|0, Int|1, Int|7, white),
+  Rect(Int|1, Int|0, Int|4, Int|1, white),
+  Rect(Int|1, Int|3, Int|3, Int|1, white),
+  Rect(Int|1, Int|6, Int|4, Int|1, white)
+];
 
-Drawing@ LetterG = Path(
-  List<Point@>[
-    Point@(Int|4, Int|0),
-    Point@(Int|1, Int|0),
-    Point@(Int|1, Int|1),
-    Point@(Int|0, Int|1),
-    Point@(Int|0, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|7),
-    Point@(Int|4, Int|7),
-    Point@(Int|4, Int|6),
-    Point@(Int|5, Int|6),
-    Point@(Int|5, Int|5),
-    Point@(Int|4, Int|5),
-    Point@(Int|4, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|1),
-    Point@(Int|4, Int|1),
-    Point@(Int|4, Int|3),
-    Point@(Int|2, Int|3),
-    Point@(Int|2, Int|4),
-    Point@(Int|5, Int|4),
-    Point@(Int|5, Int|1),
-    Point@(Int|4, Int|1)],
-  white
-);
+Drawing@ LetterG = Drawings[
+  Rect(Int|1, Int|0, Int|3, Int|1, white),
+  Rect(Int|0, Int|1, Int|1, Int|5, white),
+  Rect(Int|4, Int|1, Int|1, Int|3, white),
+  Rect(Int|2, Int|3, Int|2, Int|1, white),
+  Rect(Int|1, Int|6, Int|3, Int|1, white),
+  Rect(Int|4, Int|5, Int|1, Int|1, white)
+];
 
-Drawing@ LetterI = Path(
-  List<Point@>[
-    Point@(Int|4, Int|0),
-    Point@(Int|1, Int|0),
-    Point@(Int|1, Int|1),
-    Point@(Int|2, Int|1),
-    Point@(Int|2, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|7),
-    Point@(Int|4, Int|7),
-    Point@(Int|4, Int|6),
-    Point@(Int|3, Int|6),
-    Point@(Int|3, Int|1),
-    Point@(Int|4, Int|1)],
-  white
-);
+Drawing@ LetterI = Drawings[
+  Rect(Int|1, Int|0, Int|3, Int|1, white),
+  Rect(Int|1, Int|6, Int|3, Int|1, white),
+  Rect(Int|2, Int|1, Int|1, Int|5, white)
+];
 
-Drawing@ LetterL = Path(
-  List<Point@>[
-    Point@(Int|5, Int|0),
-    Point@(Int|0, Int|0),
-    Point@(Int|0, Int|7),
-    Point@(Int|1, Int|7),
-    Point@(Int|1, Int|1),
-    Point@(Int|5, Int|1)],
-  white
-);
+Drawing@ LetterL = Drawings[
+  Rect(Int|0, Int|0, Int|5, Int|1, white),
+  Rect(Int|0, Int|1, Int|1, Int|6, white)
+];
 
-Drawing@ LetterM = Path(
-  List<Point@>[
-    Point@(Int|1, Int|0),
-    Point@(Int|0, Int|0),
-    Point@(Int|0, Int|7),
-    Point@(Int|1, Int|7),
-    Point@(Int|1, Int|6),
-    Point@(Int|2, Int|6),
-    Point@(Int|2, Int|5),
-    Point@(Int|3, Int|5),
-    Point@(Int|3, Int|6),
-    Point@(Int|4, Int|6),
-    Point@(Int|4, Int|7),
-    Point@(Int|5, Int|7),
-    Point@(Int|5, Int|0),
-    Point@(Int|4, Int|0),
-    Point@(Int|4, Int|5),
-    Point@(Int|3, Int|5),
-    Point@(Int|3, Int|3),
-    Point@(Int|2, Int|3),
-    Point@(Int|2, Int|5),
-    Point@(Int|1, Int|5)],
-  white
-);
+Drawing@ LetterM = Drawings[
+  Rect(Int|0, Int|0, Int|1, Int|7, white),
+  Rect(Int|4, Int|0, Int|1, Int|7, white),
+  Rect(Int|1, Int|5, Int|1, Int|1, white),
+  Rect(Int|3, Int|5, Int|1, Int|1, white),
+  Rect(Int|2, Int|3, Int|1, Int|2, white)
+];
 
-Drawing@ LetterO = Path(
-  List<Point@>[
-    Point@(Int|4, Int|0),
-    Point@(Int|1, Int|0),
-    Point@(Int|1, Int|1),
-    Point@(Int|4, Int|1),
-    Point@(Int|4, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|1),
-    Point@(Int|0, Int|1),
-    Point@(Int|0, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|7),
-    Point@(Int|4, Int|7),
-    Point@(Int|4, Int|6),
-    Point@(Int|5, Int|6),
-    Point@(Int|5, Int|1),
-    Point@(Int|4, Int|1)],
-  white
-);
+Drawing@ LetterO = Drawings[
+  Rect(Int|1, Int|0, Int|3, Int|1, white),
+  Rect(Int|1, Int|6, Int|3, Int|1, white),
+  Rect(Int|0, Int|1, Int|1, Int|5, white),
+  Rect(Int|4, Int|1, Int|1, Int|5, white)
+];
 
-Drawing@ LetterR = Path(
-  List<Point@>[
-    Point@(Int|1, Int|0),
-    Point@(Int|0, Int|0),
-    Point@(Int|0, Int|7),
-    Point@(Int|4, Int|7),
-    Point@(Int|4, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|4),
-    Point@(Int|4, Int|4),
-    Point@(Int|4, Int|6),
-    Point@(Int|5, Int|6),
-    Point@(Int|5, Int|4),
-    Point@(Int|4, Int|4),
-    Point@(Int|4, Int|3),
-    Point@(Int|3, Int|3),
-    Point@(Int|3, Int|2),
-    Point@(Int|4, Int|2),
-    Point@(Int|4, Int|1),
-    Point@(Int|5, Int|1),
-    Point@(Int|5, Int|0),
-    Point@(Int|4, Int|0),
-    Point@(Int|4, Int|1),
-    Point@(Int|3, Int|1),
-    Point@(Int|3, Int|2),
-    Point@(Int|2, Int|2),
-    Point@(Int|2, Int|3),
-    Point@(Int|1, Int|3)],
-  white
-);
+Drawing@ LetterR = Drawings[
+  Rect(Int|0, Int|0, Int|1, Int|7, white),
+  Rect(Int|1, Int|3, Int|3, Int|1, white),
+  Rect(Int|1, Int|6, Int|3, Int|1, white),
+  Rect(Int|4, Int|0, Int|1, Int|1, white),
+  Rect(Int|3, Int|1, Int|1, Int|1, white),
+  Rect(Int|2, Int|2, Int|1, Int|1, white),
+  Rect(Int|4, Int|4, Int|1, Int|2, white)
+];
 
-Drawing@ LetterS = Path(
-  List<Point@>[
-    Point@(Int|4, Int|0),
-    Point@(Int|1, Int|0),
-    Point@(Int|1, Int|1),
-    Point@(Int|0, Int|1),
-    Point@(Int|0, Int|2),
-    Point@(Int|1, Int|2),
-    Point@(Int|1, Int|1),
-    Point@(Int|4, Int|1),
-    Point@(Int|4, Int|3),
-    Point@(Int|1, Int|3),
-    Point@(Int|1, Int|4),
-    Point@(Int|0, Int|4),
-    Point@(Int|0, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|7),
-    Point@(Int|4, Int|7),
-    Point@(Int|4, Int|6),
-    Point@(Int|5, Int|6),
-    Point@(Int|5, Int|5),
-    Point@(Int|4, Int|5),
-    Point@(Int|4, Int|6),
-    Point@(Int|1, Int|6),
-    Point@(Int|1, Int|4),
-    Point@(Int|4, Int|4),
-    Point@(Int|4, Int|3),
-    Point@(Int|5, Int|3),
-    Point@(Int|5, Int|1),
-    Point@(Int|4, Int|1)],
-  white
-);
+Drawing@ LetterS = Drawings[
+  Rect(Int|0, Int|1, Int|1, Int|1, white),
+  Rect(Int|1, Int|0, Int|3, Int|1, white),
+  Rect(Int|4, Int|1, Int|1, Int|2, white),
+  Rect(Int|1, Int|3, Int|3, Int|1, white),
+  Rect(Int|0, Int|4, Int|1, Int|2, white),
+  Rect(Int|1, Int|6, Int|3, Int|1, white),
+  Rect(Int|4, Int|5, Int|1, Int|1, white)
+];
 
-Drawing@ LetterV = Path(
-  List<Point@>[
-    Point@(Int|3, Int|0),
-    Point@(Int|2, Int|0),
-    Point@(Int|2, Int|1),
-    Point@(Int|1, Int|1),
-    Point@(Int|1, Int|2),
-    Point@(Int|0, Int|2),
-    Point@(Int|0, Int|7),
-    Point@(Int|1, Int|7),
-    Point@(Int|1, Int|2),
-    Point@(Int|2, Int|2),
-    Point@(Int|2, Int|1),
-    Point@(Int|3, Int|1),
-    Point@(Int|3, Int|2),
-    Point@(Int|4, Int|2),
-    Point@(Int|4, Int|7),
-    Point@(Int|5, Int|7),
-    Point@(Int|5, Int|2),
-    Point@(Int|4, Int|2),
-    Point@(Int|4, Int|1),
-    Point@(Int|3, Int|1)],
-  white
-);
+Drawing@ LetterV = Drawings[
+  Rect(Int|2, Int|0, Int|1, Int|1, white),
+  Rect(Int|1, Int|1, Int|1, Int|1, white),
+  Rect(Int|3, Int|1, Int|1, Int|1, white),
+  Rect(Int|0, Int|2, Int|1, Int|5, white),
+  Rect(Int|4, Int|2, Int|1, Int|5, white)
+];
 
 # String --
 #   Draw a string of letters.
