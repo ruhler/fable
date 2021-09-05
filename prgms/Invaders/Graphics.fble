@@ -546,22 +546,10 @@ Drawing@ LetterV = Path(
 
 Drawing@ Bullet = Rect(Int|0, Int|0, Int|1, Int|4, white);
 
-Drawing@ Bomb = Path(
-  List<Point@>[
-    Point@(Int|2, Int|0),
-    Point@(Int|1, Int|0),
-    Point@(Int|1, Int|1),
-    Point@(Int|0, Int|1),
-    Point@(Int|0, Int|2),
-    Point@(Int|1, Int|2),
-    Point@(Int|1, Int|5),
-    Point@(Int|2, Int|5),
-    Point@(Int|2, Int|2),
-    Point@(Int|3, Int|2),
-    Point@(Int|3, Int|1),
-    Point@(Int|2, Int|1)],
-  white
-);
+Drawing@ Bomb = Drawings[
+  Rect(Int|0, Int|1, Int|3, Int|1, white),
+  Rect(Int|1, Int|0, Int|1, Int|5, white)
+];
 
 Drawing@ Squiggle = Path(
   List<Point@>[
