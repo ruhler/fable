@@ -58,32 +58,28 @@ Int@ NumRows = Int|5;
 #   The number of columns of aliens in the group.
 Int@ NumCols = Int|11;
 
-# NumAliens --
-#   The total number of aliens in the group.
-Int@ NumAliens = Mul(NumRows, NumCols);
-
 # Alien@ --
-#   An individual alien is identified by its position in the group, in the
-#   order that they move: left to right, bottom to top.
-@ Alien@ = Int@;
+#   An alien is identified using it's position in the group.
+#   Row 0 is the bottom row, col 0 is the left column.
+@ Alien@ = *(Int@ row, Int@ col);
 
-# Row -- 
-#   Which row the given alien belongs to. Row 0 is the bottom row.
-(Alien@) { Int@; } Row = (Alien@ a) {
-  Div(a, NumCols);
-};
-
-# Col --
-#   Which column the given alien belongs to. Col 0 is the left column.
-(Alien@) { Int@; } Col = (Alien@ a) {
-  Mod(a, NumCols);
-};
+# FirstAlien --
+#   The first alien in the set of all aliens.
+Alien@ FirstAlien = Alien@(Int|0, Int|0);
 
 # Next --
 #   Iteration over aliens in order.
 (Alien@) { Maybe@<Alien@>; } Next = (Alien@ a) {
-  Alien@ next = Inc(a);
-  Lt(next, NumAliens).?(true: Just<Alien@>(next), false: Nothing<Alien@>);
+  Alien@ next = Alien@(a.row, Inc(a.col));
+
+  Alien@ next_ = {
+    Lt(next.col, NumCols).?(true: next);
+    Alien@(Inc(a.row), Int|0);
+  };
+  Alien@ next = next_;
+
+  Eq(NumRows, next.row).?(true: Nothing<Alien@>);
+  Just<Alien@>(next);
 };
 
 # Set@ --
@@ -93,14 +89,23 @@ Int@ NumAliens = Mul(NumRows, NumCols);
 
 # AlienLt, AlienLe -- 
 #   Less than comparison operations for Aliens.
-/Eq%.Eq@<Alien@> AlienLt = /Int/Int/Eq%.Lt;
-/Eq%.Eq@<Alien@> AlienLe = /Int/Int/Eq%.Le;
+/Eq%.Eq@<Alien@> AlienLt = (Alien@ a, Alien@ b) {
+  Lt(a.row, b.row).?(true: True);
+  Lt(b.row, a.row).?(true: False);
+  Lt(a.col, b.col);
+};
+
+/Eq%.Eq@<Alien@> AlienLe = (Alien@ a, Alien@ b) {
+  Lt(a.row, b.row).?(true: True);
+  Lt(b.row, a.row).?(true: False);
+  Le(a.col, b.col);
+};
 
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
   % Insert = /Map%.Insert<Alien@>(AlienLt)<Unit@>;
-  DoWhile<Alien@, Set@>(Int|0, Next, /Map%.Empty<Alien@, Unit@>, 
+  DoWhile<Alien@, Set@>(FirstAlien, Next, /Map%.Empty<Alien@, Unit@>, 
     (Alien@ a, Set@ s) {
       Insert(s, a, Unit);
     });
@@ -140,10 +145,9 @@ Set@ AllAliens = {
 #   Returns the first live alien in the given set, or Nothing if there are no
 #   live aliens.
 (Set@) { Maybe@<Alien@>; } FirstAlive = (Set@ alive) {
-  Alien@ first = Int|0;
-  Contains(alive, first).?(
-    true: Just<Alien@>(first),
-    false: NextAlive(alive, first));
+  Contains(alive, FirstAlien).?(
+    true: Just<Alien@>(FirstAlien),
+    false: NextAlive(alive, FirstAlien));
 };
 
 # Phase@ --
@@ -262,7 +266,7 @@ Int@ DyingTime = Int|10;
     alive: AllAliens,
     dir: Dir@(right: Unit),
     phase: Phase@(b: Unit),
-    next: Just<Alien@>(Int|0),
+    next: Just<Alien@>(FirstAlien),
     turn: False,
     dying: Nil<Dying@>);
 };
@@ -285,7 +289,7 @@ Int@ DyingTime = Int|10;
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
   a.next.?(
     just: {
-      Int@ left = Add(a.dst_x, Mul(StrideX, Col(a.next.just)));
+      Int@ left = Add(a.dst_x, Mul(StrideX, a.next.just.col));
       Bool@ turn = Or(a.turn, a.dir.?(
         left: Lt(left, LeftEdge),
         right: Gt(left, RightEdge)));
@@ -330,7 +334,7 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
     Le(rx, Width).?(false: Nothing<Alien@>);
     Le(ry, Height).?(false: Nothing<Alien@>);
 
-    Alien@ alien = Add(Mul(NumCols, Div(dy, StrideY)), Div(dx, StrideX));
+    Alien@ alien = Alien@(Div(dy, StrideY), Div(dx, StrideX));
     Contains(aliens.alive, alien).?(false: Nothing<Alien@>);
 
     Just<Alien@>(alien);
@@ -358,11 +362,13 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 # Kill the given alien.
 (Aliens@, Alien@) { Aliens@; } Kill = (Aliens@ aliens, Alien@ alien) {
   Dying@ dying = {
-    Bool@ moved = aliens.next.?(just: Lt(alien, aliens.next.just), nothing: True);
+    Bool@ moved = aliens.next.?(
+      just: AlienLt(alien, aliens.next.just),
+      nothing: True);
     Int@ group_x = moved.?(true: aliens.dst_x, false: aliens.src_x);
     Int@ group_y = moved.?(true: aliens.dst_y, false: aliens.src_y);
-    Int@ alien_x = Add(group_x, Mul(StrideX, Col(alien)));
-    Int@ alien_y = Add(group_y, Mul(StrideY, Row(alien)));
+    Int@ alien_x = Add(group_x, Mul(StrideX, alien.col));
+    Int@ alien_y = Add(group_y, Mul(StrideY, alien.row));
     Dying@(alien_x, alien_y, DyingTime);
   };
 
@@ -381,7 +387,7 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 # Points --
 #   The number of points earned by killing the given alien.
 (Alien@) { Int@; } Points = (Alien@ alien) {
-  Int@ half_row = Div(Row(alien), Int|2);
+  Int@ half_row = Div(alien.row, Int|2);
   Eq(Int|0, half_row).?(true: Int|10);
   Eq(Int|1, half_row).?(true: Int|20);
   Int|30;
@@ -424,7 +430,7 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
     AlienLt(first.just, as.next.just).?(true: as.dst_y);
     as.src_y;
   };
-  Int@ y = Add(group_y, Mul(StrideY, Row(first.just)));
+  Int@ y = Add(group_y, Mul(StrideY, first.just.row));
   Lt(y, Int|20);
 };
 
@@ -441,13 +447,13 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
     (Alien@ a) { NextAlive(as.alive, a); },
     dying,
     (Alien@ a, Drawing@ d) {
-      Bool@ moved = as.next.?(just: Lt(a, as.next.just), nothing: True);
+      Bool@ moved = as.next.?(just: AlienLt(a, as.next.just), nothing: True);
       Int@ group_x = moved.?(true: as.dst_x, false: as.src_x);
       Int@ group_y = moved.?(true: as.dst_y, false: as.src_y);
-      Int@ alien_x = Add(group_x, Mul(StrideX, Col(a)));
-      Int@ alien_y = Add(group_y, Mul(StrideY, Row(a)));
+      Int@ alien_x = Add(group_x, Mul(StrideX, a.col));
+      Int@ alien_y = Add(group_y, Mul(StrideY, a.row));
       Phase@ phase = moved.?(true: as.phase, false: FlipPhase(as.phase));
-      Over(d, Translate(alien_x, alien_y, Sprite(Row(a), phase)));
+      Over(d, Translate(alien_x, alien_y, Sprite(a.row, phase)));
     });
 };
 
