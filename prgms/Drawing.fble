@@ -26,12 +26,6 @@
   # A filled rectangle.
   *(Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) rect,
   
-  # A filled path.
-  #
-  # The path is implicitly closed. For example, to draw a rectangle, give the
-  # four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
-  *(List@<Point@> points, Color@ color) path,
-
   # Draw a drawing transformed by an affine transformation of the form
   # a*x + b.
   *(Point@ a, Point@ b, Drawing@ drawing) transformed,
@@ -41,14 +35,6 @@
 );
 
 Drawing@ Blank = Drawing@(blank: Unit);
-
-# Draw a path filled solid with the given color.
-#
-# The path is implicitly closed. For example, to draw a rectangle, give the
-# four corner points in order, such as: [(0, 0), (2, 0), (2, 2), (0, 2)].
-(List@<Point@>, Color@) { Drawing@; } Path = (List@<Point@> points, Color@ color) {
-  Drawing@(path: @(points: points, color: color));
-};
 
 # Draw a rectangle filled solid with the given color.
 (Int@, Int@, Int@, Int@, Color@) { Drawing@; }
@@ -83,4 +69,4 @@ Translate = (Int@ dx, Int@ dy, Drawing@ d) {
 };
 
 @(Color@, Drawing@, Point@,
-  Blank, Path, Rect, Over, Drawings, Affine, Translate);
+  Blank, Rect, Over, Drawings, Affine, Translate);

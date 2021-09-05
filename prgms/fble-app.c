@@ -37,7 +37,6 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static int ReadIntP(FbleValue* num);
 static int ReadInt(FbleValue* num);
-static void FillPath(SDL_Surface* s, int ax, int ay, int bx, int by, size_t n, SDL_Point* points, Uint32 color);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing, Uint32* colors);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
@@ -112,81 +111,6 @@ static int ReadInt(FbleValue* x)
   }
 }
 
-// FillPath --
-//   Fill a closed path with a solid color to the window.
-//
-// Inputs:
-//   surface - the SDL surface to draw to.
-//   ax, ay, bx, by - A transformation to apply to each point: a * p + b.
-//   n - the number of points in the path.
-//   points - the points, in order around the path.
-//   color - the color to fill the path with.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Draws a filled path as described by the given points to the global
-//   window. The user is responsible for calling SDL_UpdateWindowSurface when
-//   they are ready to display the filled path.
-static void FillPath(SDL_Surface* surface, int ax, int ay, int bx, int by, size_t n, SDL_Point* points, Uint32 color)
-{
-  assert(n > 0);
-
-  SDL_Rect bounds;
-  SDL_EnclosePoints(points, n, NULL, &bounds);
-
-  for (int y = bounds.y; y < bounds.y + bounds.h; ++y) {
-    // xs is a sorted list of the x coordinates of line segments in the path
-    // that intersect the horizontal line defined by y.
-    // xn is the number of valid points in the xs array.
-    int xs[n];
-    size_t xn = 0;
-    for (size_t i = 0; i < n; ++i) {
-      SDL_Point* s = points + i;
-      SDL_Point* e = points + ((i+1) % n);
-      if ((s->y <= y && e->y > y) || (s->y > y && e->y <= y)) {
-        int x = s->x + (y - s->y)*(e->x - s->x)/(e->y - s->y);
-
-        // Insert x sorted into the array of xs gathered so far.
-        for (size_t j = 0; j < xn; ++j) {
-          if (x < xs[j]) {
-            int tmp = xs[j];
-            xs[j] = x;
-            x = tmp;
-          }
-        }
-        xs[xn++] = x;
-      }
-    }
-
-    // For a closed path, by mean value theorem, there should be an even
-    // number of line segments intersecting with this horizontal y.
-    assert(xn % 2 == 0);
-
-    // Fill with the even odd rule: draw a ray from the point to infinity in
-    // any direction, the point is considered inside the path if the number of
-    // line segments the ray crosses is odd. We pick a ray going in the
-    // horizontal direction. All points between x[0] and x[1] should be
-    // filled, between x[2] and x[3], and so on.
-    for (size_t i = 0; i + 1 < xn; i += 2) {
-      SDL_Rect r = { ax*xs[i] + bx, ay*y+by, ax*(xs[i+1]-xs[i]), ay };
-
-      if (r.w < 0) {
-        r.x += r.w;
-        r.w = -r.w;
-      }
-
-      if (r.h < 0) {
-        r.y += r.h;
-        r.h = -r.h;
-      }
-
-      SDL_FillRect(surface, &r, color);
-    }
-  }
-}
-
 // Draw --
 //   Draw a drawing to the screen of type /Drawing%.Drawing@.
 //
@@ -241,39 +165,6 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
     }
 
     case 2: {
-      // Path.
-      FbleValue* rv = FbleUnionValueAccess(drawing);
-
-      FbleValue* pointsS = FbleStructValueAccess(rv, 0);
-      FbleValue* color = FbleStructValueAccess(rv, 1);
-
-      // Precompute the number of the points.
-      size_t n = 0;
-      FbleValue* s = pointsS;
-      while (FbleUnionValueTag(s) == 0) {
-        n++;
-        s = FbleStructValueAccess(FbleUnionValueAccess(s), 1);
-      }
-
-      // Extract the point values.
-      SDL_Point points[n];
-      for (size_t i = 0; i < n; ++i) {
-        assert(FbleUnionValueTag(pointsS) == 0);
-        FbleValue* pointsP = FbleUnionValueAccess(pointsS);
-
-        FbleValue* point = FbleStructValueAccess(pointsP, 0);
-        pointsS = FbleStructValueAccess(pointsP, 1);
-
-        points[i].x = ReadInt(FbleStructValueAccess(point, 0));
-        points[i].y = ReadInt(FbleStructValueAccess(point, 1));
-      }
-      assert(FbleUnionValueTag(pointsS) == 1);
-
-      FillPath(surface, ax, ay, bx, by, n, points, colors[FbleUnionValueTag(color)]);
-      return;
-    }
-
-    case 3: {
       // Transformed.
       FbleValue* transformed = FbleUnionValueAccess(drawing);
       FbleValue* a = FbleStructValueAccess(transformed, 0);
@@ -290,7 +181,7 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       return;
     }
 
-    case 4: {
+    case 3: {
       // Over.
       FbleValue* over = FbleUnionValueAccess(drawing);
       Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 0), colors);
