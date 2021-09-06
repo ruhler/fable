@@ -9,6 +9,9 @@
 % Over = /Drawing%.Over;
 % Translate = /Drawing%.Translate;
 
+@ Bombs@ = /Invaders/Bombs%.Bombs@;
+@ Kind@ = /Invaders/Bombs%.Kind@;
+
 % Alien1A = /Invaders/Graphics%.Aliens.Alien1A;
 % Alien1B = /Invaders/Graphics%.Aliens.Alien1B;
 % Alien2A = /Invaders/Graphics%.Aliens.Alien2A;
@@ -284,6 +287,23 @@ Int@ DyingTime = Int|10;
   Cons<Dying@>(Dying@(head.x, head.y, nwait), tail);
 };
 
+# FireBombs --
+#   Launch bombs at the ship if appropriate.
+(Aliens@, Bombs@) { Bombs@; } FireBombs = (Aliens@ aliens, Bombs@ bombs) {
+  # We launch bombs once all aliens have completed their move.
+  aliens.next.?(just: bombs);
+
+  # TODO: Randomly launch bombs from the bottom alien alive in each column.
+  # For now we'll just launch a bomb from the first alive alien.
+  Maybe@<Alien@> alien = FirstAlive(aliens.alive);
+  alien.?(nothing: bombs);
+
+  Int@ x = Add(Int|5, Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
+  Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
+  Kind@ kind = Kind@(bomb: Unit);
+  /Invaders/Bombs%.Fire(x, y, kind, bombs);
+};
+
 # Tick --
 #   Advance the aliens by one unit of time tick.
 (Aliens@) { Aliens@; } Tick = (Aliens@ a) {
@@ -457,4 +477,4 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
     });
 };
 
-@(Alien@, Aliens@, Kill@, Initial, Tick, Shoot, AllDead, Invaded, Draw);
+@(Alien@, Aliens@, Kill@, Initial, FireBombs, Tick, Shoot, AllDead, Invaded, Draw);

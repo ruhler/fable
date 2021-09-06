@@ -1,0 +1,59 @@
+
+@ Drawing@ = /Drawing%.Drawing@;
+% Blank = /Drawing%.Blank;
+% Over = /Drawing%.Over;
+% Translate = /Drawing%.Translate;
+
+@ Int@ = /Int/Int%.Int@;
+% Sub = /Int/Int%.Sub;
+% Mul = /Int/Int%.Mul;
+% Lt = /Int/Int/Eq%.Lt;
+% Int = /Int/Int/Lit%.Int;
+
+<@>@ List@ = /List%.List@;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
+<@,@>% ForEach = /List%.ForEach;
+<@>% Length = /List/Length%.Length;
+
+% Graphics = /Invaders/Graphics%;
+
+@ Unit@ = /Unit%.Unit@;
+
+@ Kind@ = +(Unit@ bomb, Unit@ squiggle);
+
+Int@ BombVelocity = Int|1;
+Int@ SquiggleVelocity = Mul(Int|3, BombVelocity);
+Int@ MinY = Int|2;
+Int@ MaxBombs = Int|1;
+
+@ Bomb@ = *(Int@ x, Int@ y, Kind@ kind);
+
+@ Bombs@ = List@<Bomb@>;
+
+Bombs@ Initial = Nil<Bomb@>;
+
+(Int@, Int@, Kind@, Bombs@) { Bombs@; }
+Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
+  Lt(Length<Bomb@>(bombs), MaxBombs).?(false: bombs);
+  Cons<Bomb@>(Bomb@(x, y, kind), bombs);
+};
+
+(Bombs@) { Bombs@; } Tick = (Bombs@ bombs) {
+  ForEach<Bomb@, Bombs@>(bombs, Nil<Bomb@>, (Bomb@ b, Bombs@ bs) {
+    Int@ v = b.kind.?(bomb: BombVelocity, squiggle: SquiggleVelocity);
+    Bomb@ nb = Bomb@(b.x, Sub(b.y, v), b.kind);
+    Lt(nb.y, MinY).?(true: bs);
+    Cons<Bomb@>(nb, bs);
+  });
+};
+
+(Bombs@) { Drawing@; } Draw = (Bombs@ bombs) {
+  ForEach<Bomb@, Drawing@>(bombs, Blank, (Bomb@ b, Drawing@ d) {
+    Drawing@ sprite = b.kind.?(bomb: Graphics.Bomb, squiggle: Graphics.Squiggle);
+    Over(d, Translate(b.x, b.y, sprite));
+  });
+};
+
+@(Bombs@, Kind@, Initial, Fire, Tick, Draw);
+
