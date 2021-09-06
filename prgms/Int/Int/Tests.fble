@@ -31,6 +31,9 @@
 % Mul = /Int/Int%.Mul;
 % Exp2 = /Int/Int%.Exp2;
 
+% Div = /Int/Int/Div%.Div;
+% Mod = /Int/Int/Div%.Mod;
+
 % Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
 % Le = /Int/Int/Eq%.Le;
@@ -125,6 +128,10 @@ Test@ Tests = TestSuite(Str|Int, List<Test@>[
   TEq(Str|Sub_3_5, Neg(2), !(Sub(3, 5))),
   TEq(Str|Neg_m2, 2, !(Neg(Neg(2)))),
   TEq(Str|Mul_3_5, Int|15, !(Mul(3, 5))),
+
+  # TODO: Test negative numbers. What result do we expect?
+  TEq(Str|Div_11_4, Int|2, !(Div(Int|11, Int|4))),
+  TEq(Str|Mod_11_4, Int|3, !(Mod(Int|11, Int|4))),
 
   TEq(Str|Exp2_8, Int|256, !(Exp2(8))),
   TEq(Str|Exp2_7, Int|128, !(Exp2(7))),

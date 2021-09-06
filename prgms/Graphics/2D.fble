@@ -32,6 +32,7 @@ Point = (Point@ point, Color@ color) {
 #   Division with rounding.
 #
 # Does a/b, rounding to the nearest whole number.
+# Assumes both a and b are non-negative.
 (Int@, Int@) { Int@; } DivR = (Int@ a, Int@ b) {
   Int@ q = Div(a, b);
   Int@ r = Mod(a, b);
@@ -42,14 +43,9 @@ Point = (Point@ point, Color@ color) {
 
 # LineX --
 #   Draw a line from the origin to (x, y) by putting a pixel at every x
-#   coordinate.
+#   coordinate. x and y are assumed to be non-negative.
 (Int@, Int@, Color@) { Drawing@; }
 LineX = (Int@ x, Int@ y, Color@ color) {
-  x.?(n: {
-    Affine(Point@(Neg(Int|1), Int|1), Point@(Int|0, Int|0),
-      LineX(Neg(x), y, color));
-  });
-
   x.?(0: Point(Point@(Int|0, Int|0), color));
 
   /Iter%.For<Int@, Drawing@>(Range(Int|0, Add(Int|1, x)), Blank,
@@ -61,14 +57,9 @@ LineX = (Int@ x, Int@ y, Color@ color) {
 
 # LineY --
 #   Draw a line from the origin to (x, y) by putting a pixel at every y
-#   coordinate.
+#   coordinate. x and y are assumed to be non-negative.
 (Int@, Int@, Color@) { Drawing@; }
 LineY = (Int@ x, Int@ y, Color@ color) {
-  y.?(n: {
-    Affine(Point@(Int|1, Neg(Int|1)), Point@(Int|0, Int|0),
-      LineY(x, Neg(y), color));
-  });
-
   y.?(0: Point(Point@(Int|0, Int|0), color));
 
   /Iter%.For<Int@, Drawing@>(Range(Int|0, Add(Int|1, y)), Blank,
@@ -82,11 +73,27 @@ LineY = (Int@ x, Int@ y, Color@ color) {
 #   Draw a line from point a to point b.
 (Point@, Point@, Color@) { Drawing@; }
 Line = (Point@ a, Point@ b, Color@ color) {
-  Int@ dx = Sub(b.x, a.x);
-  Int@ dy = Sub(b.y, a.y);
+  % s = @(dx: Sub(b.x, a.x), dy: Sub(b.y, a.y), ax: Int|1, ay: Int|1);
 
-  % LineF = Lt(Abs(dx), Abs(dy)).?(true: LineY, false: LineX);
-  Translate(a.x, a.y, LineF(dx, dy, color));
+  % s_ = {
+    Lt(s.dx, Int|0).?(true: {
+      @(dx: Neg(s.dx), dy: s.dy, ax: Neg(s.ax), ay: s.ay);
+    });
+    s;
+  };
+  % s = s_;
+
+  % s_ = {
+    Lt(s.dy, Int|0).?(true: {
+      @(dx: s.dx, dy: Neg(s.dy), ax: s.ax, ay: Neg(s.ay));
+    });
+    s;
+  };
+  % s = s_;
+
+  % LineF = Lt(Abs(s.dx), Abs(s.dy)).?(true: LineY, false: LineX);
+  Translate(a.x, a.y,
+    Affine(Point@(s.ax, s.ay), Point@(Int|0, Int|0), LineF(s.dx, s.dy, color)));
 };
 
 @(Point@, Point, Line);

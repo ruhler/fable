@@ -12,13 +12,13 @@
 };
 
 (Int@, Int@) { Int@; } Div = (Int@ a, Int@ b) {
-  a.?(n: b.?(n: IntS(P.Div(a.n, b.n)),
+  a.?(n: b.?(n: IntS(P.Div(a.n, b.n)),    # TODO: is this right?
              0: Int@(p: b.n),     # UNDEFINED
              p: Neg(IntS(P.Div(a.n, b.p)))),
       0: b.?(n: 0,
              0: Int@(p: b.n),     # UNDEFINED
              p: 0),
-      p: b.?(n: Neg(IntS(P.Div(a.p, b.n))),
+      p: b.?(n: Neg(IntS(P.Div(a.p, b.n))), # TODO: is this right?
              0: Int@(p: b.n),     # UNDEFINED
              p: IntS(P.Div(a.p, b.p))));
 };
