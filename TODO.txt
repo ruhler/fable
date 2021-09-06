@@ -1,3 +1,6 @@
+* Implement support for Mod of negative numbers.
+* Verify line drawing looks okay in other quadrants.
+
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 
 * [/Invaders%] Add Alien bombs and squiggles.

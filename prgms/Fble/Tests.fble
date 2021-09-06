@@ -19,6 +19,7 @@
 % _ = /Fble/Bench%;
 % _ = /Fble/ProfilesTest%;
 % _ = /Fble/StackSmasher%;
+% _ = /Graphics/App%;
 % _ = /Invaders/App%;
 % _ = /Invaders/Bench%;
 % _ = /Invaders/Screenshot/App%;

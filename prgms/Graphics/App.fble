@@ -1,0 +1,78 @@
+
+@ App@ = /App%.App@;
+@ Event@ = /App%.Event@;
+@ Effect@ = /App%.Effect@;
+
+@ Drawing@ = /Drawing%.Drawing@;
+@ Color@ = /Drawing%.Color@;
+@ Point@ = /Drawing%.Point@;
+% Over = /Drawing%.Over;
+% Rect = /Drawing%.Rect;
+% Affine = /Drawing%.Affine;
+
+% Line = /Graphics/2D%.Line;
+
+@ Int@ = /Int/Int%.Int@;
+% Neg = /Int/Int%.Neg;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+
+% Int = /Int/Int/Lit%.Int;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+
+@ State@ = *(Int@ x, Int@ y);
+
+(State@) { Drawing@; } Draw = (State@ s) {
+  Line(Point@(Int|0, Int|0), Point@(s.x, s.y), Color@(green: Unit));
+};
+
+(Get@<Event@>, Put@<State@>, Unit@!, State@) { Unit@!; }
+Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
+  Event@ e := in;
+
+  e.?(tick: {
+    Unit@ _ := tick;
+    Unit@ _ := draw(state);
+    Run(in, draw, tick, state);
+  });
+
+  e.?(key_down: {
+    e.key_down.?(q: !(Unit));
+
+    State@ new_state = e.key_down.?(
+      h: State@(Sub(state.x, Int|1), state.y),
+      j: State@(state.x, Sub(state.y, Int|1)),
+      k: State@(state.x, Add(state.y, Int|1)),
+      l: State@(Add(state.x, Int|1), state.y),
+      : state);
+    Run(in, draw, tick, new_state);
+  });
+  Run(in, draw, tick, state);
+};
+
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+  Point@ a = @(x: Int|10, y: Neg(Int|10));
+  Point@ b = @(x: Int|320, y: Int|240);
+
+  # The target is 60 FPS, or 16 millseconds per frame.
+  Int@ frame_period = Int|16;
+  Unit@! tick = out(Effect@(tick: frame_period));
+
+  (State@) { Unit@!; } draw = (State@ s) {
+    out(Effect@(draw: Over(
+      Rect(Int|0, Int|0, width, height, Color@(black: Unit)),
+      Affine(a, b, Draw(s)))));
+  };
+
+  Unit@ _ := out(Effect@(tick: Int|0));
+  State@ state = State@(Int|10, Int|10);
+  Run(in, draw, tick, state); 
+};
+
+Main;
