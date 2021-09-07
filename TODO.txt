@@ -1,5 +1,7 @@
-* Implement support for Mod of negative numbers.
-* Verify line drawing looks okay in other quadrants.
+
+* [/Graphics] Fix issues with inconsistent precision.
+   The same point should always be drawn at the same point.
+* [/Graphics] Figure out how to support rotation of the camera.
 
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 

@@ -1,0 +1,65 @@
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+% Mul = /Int/Int%.Mul;
+% Div = /Int/Int/Div%.Div;
+% Int = /Int/Int/Lit%.Int;
+
+@ Point@ = /Graphics/2D%.Point@;
+
+# Vec@ --
+#   A 3 element vector.
+@ Vec@ = *(Int@ x, Int@ y, Int@ z);
+
+(Vec@, Vec@) { Vec@; } VSub = (Vec@ a, Vec@ b) {
+  Vec@(Sub(a.x, b.x), Sub(a.y, b.y), Sub(a.z, b.z));
+};
+
+# Mat@ --
+#   A 3x3 matrix.
+@ Mat@ = *(Vec@ i, Vec@ j, Vec@ k);
+
+(Mat@) { Mat@; } Transpose = (Mat@ m) {
+  Mat@(
+    Vec@(m.i.x, m.j.x, m.k.x),
+    Vec@(m.i.y, m.j.y, m.k.y),
+    Vec@(m.i.z, m.j.z, m.k.z));
+};
+
+(Mat@, Vec@) { Vec@; } MatMul = (Mat@ m, Vec@ a) {
+  Vec@(
+    Add(Mul(m.i.x, a.x), Add(Mul(m.j.x, a.y), Mul(m.k.x, a.z))),
+    Add(Mul(m.i.y, a.x), Add(Mul(m.j.y, a.y), Mul(m.k.y, a.z))),
+    Add(Mul(m.i.z, a.x), Add(Mul(m.j.z, a.y), Mul(m.k.z, a.z))));
+};
+
+# Camera@ --
+#   Describes the position and direction of the camera.
+#
+# Fields:
+#   pos - The position of the camera.
+#   dir - The direction the camera is facing, as an orthonormal matrix.
+#   focus - The distance from the camera to the focus plane.
+@ Camera@ = *(Vec@ pos, Mat@ dir, Int@ focus);
+
+# View --
+#   Convert a 3D point to where it would be viewed by the camera.
+(Camera@, Vec@) { Point@; }
+View = (Camera@ camera, Vec@ p) {
+  # Transform the point into the basis of the camera.
+  Mat@ m = Transpose(camera.dir);
+  Vec@ p_ = MatMul(m, p);
+
+  # Put the camera at the origin.
+  Vec@ p = VSub(p_, camera.pos);
+
+  # Project onto the plane z = focus.
+  Int@ a = camera.focus;
+  Point@(
+    Div(Mul(a, p.x), Add(p.z, Mul(Int|2, a))),
+    Div(Mul(a, p.y), Add(p.z, Mul(Int|2, a))));
+};
+
+@(Camera@, Vec@, Mat@, View);
+
