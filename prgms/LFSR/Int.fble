@@ -1,0 +1,34 @@
+
+@ Bit@ = /Digits%.Bit@;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Mul = /Int/Int%.Mul;
+% Ge = /Int/Int/Eq%.Ge;
+% Lt = /Int/Int/Eq%.Lt;
+% Int = /Int/Int/Lit%.Int;
+
+@ LFSR@ = /LFSR%.LFSR@;
+<@>@ Shifted@ = /LFSR%.Shifted@;
+% Shift = /LFSR%.Shift;
+
+# ShiftInt --
+#   Shift out an integer from the given LFSR that is in the range [0, max).
+(LFSR@, Int@) { Shifted@<Int@>; }
+ShiftInt = (LFSR@ lfsr, Int@ max) {
+  @ State@ = *(LFSR@ lfsr, Int@ max, Int@ x);
+  (State@) { State@; } F = (State@ s) {
+    Ge(s.max, max).?(true: s);
+    Shifted@<Bit@> shifted = Shift(s.lfsr);
+    F(@(
+      lfsr: shifted.lfsr,
+      max: Mul(Int|2, s.max),
+      x: Add(Mul(Int|2, s.x), shifted.output.?(0: Int|0, 1: Int|1))));
+  };
+
+  State@ s = F(State@(lfsr, Int|1, Int|0));
+  Lt(s.x, max).?(true: Shifted@<Int@>(s.lfsr, s.x));
+  ShiftInt(s.lfsr, max);
+};
+
+@(ShiftInt);

@@ -5,12 +5,7 @@
 
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 
-* [/Invaders%] Add Alien bombs and squiggles.
- - Change rate of firing bombs
- After moving all aliens in the group, for each column, the bottom alien fires
- a bomb if there are less than 15 bombs with a 2% chance of being a squiggle
- and 13% chance of being a normal bomb. 
- - Add collision detection between bombs and player.
+* [/Invaders%] Add collision detection between bombs and player.
 * [/Invaders%] Add the bases.
 * [/Invaders%] UFO should travel slower than ship, so the ship can catch it?
 * [/Invaders%] Color an alien red when it reaches the planet so it's more

@@ -44,16 +44,20 @@ ShiftIn = (List@<Bit@> s, Bit@ i) {
   Cons<Bit@>(tail.cons.head, ShiftIn(tail, i));
 };
 
-# Output --
-#   Returns the current output bit of the LFSR.
-(LFSR@) { Bit@; } Output = (LFSR@ lfsr) {
-  lfsr.s.cons.head;
-};
+<@>@ Shifted@ = <@ T@> { *(LFSR@ lfsr, T@ output); };
 
 # Shift --
 #   Shift the LFSR.
-(LFSR@) { LFSR@; } Shift = (LFSR@ lfsr) {
-  LFSR@(lfsr.c, ShiftIn(lfsr.s, Sum(Prod(lfsr.c, lfsr.s))));
+(LFSR@) { Shifted@<Bit@>; } Shift = (LFSR@ lfsr) {
+  @(lfsr: LFSR@(lfsr.c, ShiftIn(lfsr.s, Sum(Prod(lfsr.c, lfsr.s)))),
+    output: lfsr.s.cons.head);
+};
+
+# Init --
+#   Initialize an LFSR with the given taps.
+(List@<Bit@>) { LFSR@; } Init = (List@<Bit@> taps) {
+  # We take the taps as the initial seed, because it is convenient.
+  LFSR@(taps, taps);
 };
 
 # LFSRs -- 
@@ -61,9 +65,7 @@ ShiftIn = (List@<Bit@> s, Bit@ i) {
 #
 # LFSRs.n has period 2^n - 1.
 % LFSRs = @(
-  8: LFSR@(BitStr|10111000, BitStr|10111000)
+  8: Init(BitStr|10111000)
 );
 
-
-@(LFSR@, LFSRs, Output, Shift);
-
+@(LFSR@, Shifted@, LFSRs, Shift);
