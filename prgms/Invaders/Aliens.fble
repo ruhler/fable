@@ -287,21 +287,36 @@ Int@ DyingTime = Int|10;
   Cons<Dying@>(Dying@(head.x, head.y, nwait), tail);
 };
 
+# Vanguard --
+#   The alive alien at the bottom of the given column, if any.
+(Aliens@, Int@) { Maybe@<Alien@>; }
+Vanguard = (Aliens@ aliens, Int@ col) {
+  (Int@) { Maybe@<Alien@>; } FromRow = (Int@ row) {
+    Lt(row, NumRows).?(false: Nothing<Alien@>);
+    Alien@ alien = Alien@(row, col);
+    Contains(aliens.alive, alien).?(true: Just<Alien@>(alien));
+    FromRow(Inc(row));
+  };
+  FromRow(Int|0);
+};
+
 # FireBombs --
 #   Launch bombs at the ship if appropriate.
 (Aliens@, Bombs@) { Bombs@; } FireBombs = (Aliens@ aliens, Bombs@ bombs) {
   # We launch bombs once all aliens have completed their move.
   aliens.next.?(just: bombs);
 
-  # TODO: Randomly launch bombs from the bottom alien alive in each column.
-  # For now we'll just launch a bomb from the first alive alien.
-  Maybe@<Alien@> alien = FirstAlive(aliens.alive);
-  alien.?(nothing: bombs);
+  /Iter%.For<Int@, Bombs@>(/Int/Int/Iter%.Range(Int|0, NumCols), bombs,
+    (Int@ col, Bombs@ bombs) {
+      Maybe@<Alien@> alien = Vanguard(aliens, col);
+      alien.?(nothing: bombs);
 
-  Int@ x = Add(Int|5, Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
-  Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
-  Kind@ kind = Kind@(bomb: Unit);
-  /Invaders/Bombs%.Fire(x, y, kind, bombs);
+      # TODO: Randomly launch bombs instead of always launching bombs.
+      Int@ x = Add(Int|5, Add(aliens.dst_x, Mul(StrideX, alien.just.col)));
+      Int@ y = Sub(Add(aliens.dst_y, Mul(StrideY, alien.just.row)), Int|6);
+      Kind@ kind = Kind@(bomb: Unit);
+      /Invaders/Bombs%.Fire(x, y, kind, bombs);
+    });
 };
 
 # Tick --

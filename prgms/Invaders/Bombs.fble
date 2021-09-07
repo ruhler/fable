@@ -25,7 +25,7 @@
 Int@ BombVelocity = Int|1;
 Int@ SquiggleVelocity = Mul(Int|3, BombVelocity);
 Int@ MinY = Int|2;
-Int@ MaxBombs = Int|1;
+Int@ MaxBombs = Int|15;
 
 @ Bomb@ = *(Int@ x, Int@ y, Kind@ kind);
 
