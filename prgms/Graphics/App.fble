@@ -11,7 +11,7 @@
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 
-% Line = /Graphics/2D%.Line;
+% Triangle = /Graphics/2D%.Triangle;
 
 @ Camera@ = /Graphics/3D%.Camera@;
 @ Vec@ = /Graphics/3D%.Vec@;
@@ -40,37 +40,30 @@
       Vec@(Int|1, Int|0, Int|0),
       Vec@(Int|0, Int|1, Int|0),
       Vec@(Int|0, Int|0, Int|1)),
-    Int|50);
+    Int|100);
+
+  Point@ 000 = View(camera, Vec@(Int|0, Int|0, Int|0));
+  Point@ 001 = View(camera, Vec@(Int|0, Int|0, Int|50));
+  Point@ 010 = View(camera, Vec@(Int|0, Int|50, Int|0));
+  Point@ 011 = View(camera, Vec@(Int|0, Int|50, Int|50));
+  Point@ 100 = View(camera, Vec@(Int|50, Int|0, Int|0));
+  Point@ 101 = View(camera, Vec@(Int|50, Int|0, Int|50));
+  Point@ 110 = View(camera, Vec@(Int|50, Int|50, Int|0));
+  Point@ 111 = View(camera, Vec@(Int|50, Int|50, Int|50));
+
   Color@ green = Color@(green: Unit);
+  Color@ blue = Color@(blue: Unit);
+  Color@ red = Color@(red: Unit);
 
-  # Draw a 10x10 cube centered at (0, 0, 10)
   Drawings[
-    Line(View(camera, Vec@(Int|5, Int|5, Int|5)),
-         View(camera, Vec@(Neg(Int|5), Int|5, Int|5)), green),
-    Line(View(camera, Vec@(Int|5, Int|5, Int|15)),
-         View(camera, Vec@(Neg(Int|5), Int|5, Int|15)), green),
-    Line(View(camera, Vec@(Int|5, Neg(Int|5), Int|15)),
-         View(camera, Vec@(Neg(Int|5), Neg(Int|5), Int|15)), green),
-    Line(View(camera, Vec@(Int|5, Neg(Int|5), Int|5)),
-         View(camera, Vec@(Neg(Int|5), Neg(Int|5), Int|5)), green),
+    Triangle(010, 011, 110, red), Triangle(110, 011, 111, red),
+    Triangle(000, 100, 001, red), Triangle(100, 101, 001, red),
 
-    Line(View(camera, Vec@(Int|5, Int|5, Int|5)),
-         View(camera, Vec@(Int|5, Neg(Int|5), Int|5)), green),
-    Line(View(camera, Vec@(Neg(Int|5), Int|5, Int|5)),
-         View(camera, Vec@(Neg(Int|5), Neg(Int|5), Int|5)), green),
-    Line(View(camera, Vec@(Int|5, Int|5, Int|15)),
-         View(camera, Vec@(Int|5, Neg(Int|5), Int|15)), green),
-    Line(View(camera, Vec@(Neg(Int|5), Int|5, Int|15)),
-         View(camera, Vec@(Neg(Int|5), Neg(Int|5), Int|15)), green),
+    Triangle(100, 110, 111, blue), Triangle(100, 111, 101, blue),
+    Triangle(000, 011, 010, blue), Triangle(000, 001, 011, blue),
 
-    Line(View(camera, Vec@(Int|5, Int|5, Int|5)),
-         View(camera, Vec@(Int|5, Int|5, Int|15)), green),
-    Line(View(camera, Vec@(Neg(Int|5), Int|5, Int|5)),
-         View(camera, Vec@(Neg(Int|5), Int|5, Int|15)), green),
-    Line(View(camera, Vec@(Neg(Int|5), Neg(Int|5), Int|5)),
-         View(camera, Vec@(Neg(Int|5), Neg(Int|5), Int|15)), green),
-    Line(View(camera, Vec@(Int|5, Neg(Int|5), Int|5)),
-         View(camera, Vec@(Int|5, Neg(Int|5), Int|15)), green)
+    Triangle(000, 010, 110, green), Triangle(000, 110, 100, green),
+    Triangle(000, 110, 010, green), Triangle(000, 100, 110, green)
   ];
 };
 
@@ -88,12 +81,12 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
     e.key_down.?(q: !(Unit));
 
     State@ new_state = e.key_down.?(
-      h: State@(Sub(state.x, Int|1), state.y, state.z),
-      j: State@(state.x, Sub(state.y, Int|1), state.z),
-      k: State@(state.x, Add(state.y, Int|1), state.z),
-      l: State@(Add(state.x, Int|1), state.y, state.z),
-      left: State@(state.x, state.y, Sub(state.z, Int|1)),
-      right: State@(state.x, state.y, Add(state.z, Int|1)),
+      h: State@(Sub(state.x, Int|10), state.y, state.z),
+      j: State@(state.x, Sub(state.y, Int|10), state.z),
+      k: State@(state.x, Add(state.y, Int|10), state.z),
+      l: State@(Add(state.x, Int|10), state.y, state.z),
+      left: State@(state.x, state.y, Sub(state.z, Int|10)),
+      right: State@(state.x, state.y, Add(state.z, Int|10)),
       : state);
     Run(in, draw, tick, new_state);
   });
@@ -101,7 +94,7 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
-  Point@ a = @(x: Int|10, y: Neg(Int|10));
+  Point@ a = @(x: Int|5, y: Neg(Int|5));
   Point@ b = @(x: Int|320, y: Int|240);
 
   # The target is 60 FPS, or 16 millseconds per frame.

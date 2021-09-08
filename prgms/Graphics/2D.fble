@@ -1,4 +1,8 @@
 
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
 @ Drawing@ = /Drawing%.Drawing@;
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
@@ -17,9 +21,13 @@
 % Int = /Int/Int/Lit%.Int;
 % Le = /Int/Int/Eq%.Le;
 % Lt = /Int/Int/Eq%.Lt;
+% Max = /Int/Int/Eq%.Max;
+% Min = /Int/Int/Eq%.Min;
 % Div = /Int/Int/Div%.Div;
 % Mod = /Int/Int/Div%.Mod;
 % Range = /Int/Int/Iter%.Range;
+
+<@,@>% For = /Iter%.For;
 
 # Point --
 #   Draw a point.
@@ -48,7 +56,7 @@ Point = (Point@ point, Color@ color) {
 LineX = (Int@ x, Int@ y, Color@ color) {
   x.?(0: Point(Point@(Int|0, Int|0), color));
 
-  /Iter%.For<Int@, Drawing@>(Range(Int|0, Add(Int|1, x)), Blank,
+  For<Int@, Drawing@>(Range(Int|0, Add(Int|1, x)), Blank,
     (Int@ xi, Drawing@ d) {
       Int@ yi = DivR(Mul(xi, y), x);
       Over(d, Point(Point@(xi, yi), color));
@@ -62,7 +70,7 @@ LineX = (Int@ x, Int@ y, Color@ color) {
 LineY = (Int@ x, Int@ y, Color@ color) {
   y.?(0: Point(Point@(Int|0, Int|0), color));
 
-  /Iter%.For<Int@, Drawing@>(Range(Int|0, Add(Int|1, y)), Blank,
+  For<Int@, Drawing@>(Range(Int|0, Add(Int|1, y)), Blank,
     (Int@ yi, Drawing@ d) {
       Int@ xi = DivR(Mul(x, yi), y);
       Over(d, Point(Point@(xi, yi), color));
@@ -96,4 +104,54 @@ Line = (Point@ a, Point@ b, Color@ color) {
     Affine(Point@(s.ax, s.ay), Point@(Int|0, Int|0), LineF(s.dx, s.dy, color)));
 };
 
-@(Point@, Point, Line);
+# RightOf -- 
+#   Return true if the point 'x' is to the right of the line going in the
+#   direction from point a to point b. False otherwise.
+(Point@, Point@, Point@) { Bool@; }
+RightOf = (Point@ a, Point@ b, Point@ x) {
+  Int@ b_x = Sub(b.x, a.x);
+  Int@ b_y = Sub(b.y, a.y);
+  Int@ x_x = Sub(x.x, a.x);
+  Int@ x_y = Sub(x.y, a.y);
+
+  Int@ l = Mul(b_y, x_x);
+  Int@ p = Mul(b_x, x_y);
+
+  Le(p, l);
+};
+
+# Enclosed --
+#   Return true if point 'x' is enclosed in the triangle described by points
+#   a, b, and c.
+(Point@, Point@, Point@, Point@) { Bool@; }
+Enclosed = (Point@ a, Point@ b, Point@ c, Point@ x) {
+  RightOf(a, b, x).?(false: False);
+  RightOf(b, c, x).?(false: False);
+  RightOf(c, a, x).?(false: False);
+  True;
+};
+
+# Triangle --
+#   Draw a filled triangle between the points a, b, and c.
+#
+# The points should be specified in order going clockwise around the triangle,
+# otherwise nothing is drawn.
+(Point@, Point@, Point@, Color@) { Drawing@; }
+Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
+  Int@ x_min = Min(a.x, Min(b.x, c.x));
+  Int@ x_max = Max(a.x, Max(b.x, c.x));
+  Int@ y_min = Min(a.y, Min(b.y, c.y));
+  Int@ y_max = Max(a.y, Max(b.y, c.y));
+
+  For<Int@, Drawing@>(Range(x_min, Add(Int|1, x_max)), Blank,
+    (Int@ x, Drawing@ d) {
+      For<Int@, Drawing@>(Range(y_min, Add(Int|1, y_max)), d,
+        (Int@ y, Drawing@ dd) {
+          Point@ p = Point@(x, y);
+          Enclosed(a, b, c, p).?(false: dd);
+          Over(dd, Point(p, color));
+        });
+    });
+};
+
+@(Point@, Point, Line, Triangle);

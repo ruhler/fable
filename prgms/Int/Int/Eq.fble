@@ -55,9 +55,13 @@
   x.?(n: Int@(p: x.n), 0: x, p: x);
 };
 
+(Int@, Int@) { Int@; } Max = (Int@ a, Int@ b) {
+  Lt(a, b).?(true: b, false: a);
+};
+
 (Int@, Int@) { Int@; } Min = (Int@ a, Int@ b) {
   Lt(a, b).?(true: a, false: b);
 };
 
-@(IsZero, Eq, Lt, Le, Gt, Ge, Abs, Min);
+@(IsZero, Eq, Lt, Le, Gt, Ge, Abs, Max, Min);
 

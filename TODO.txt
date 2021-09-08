@@ -1,7 +1,9 @@
 
-* [/Graphics] Fix issues with inconsistent precision.
+* [/Graphics] Fix issues with inconsistent precision with line drawing.
    The same point should always be drawn at the same point.
 * [/Graphics] Figure out how to support rotation of the camera.
+* Remove duplicate implementations of Abs
+ - One is in /Int/Int%, another in /Int/Int/Eq%.
 
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 
