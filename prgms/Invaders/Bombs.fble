@@ -1,13 +1,19 @@
 
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
 % Over = /Drawing%.Over;
 % Translate = /Drawing%.Translate;
 
 @ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
 % Lt = /Int/Int/Eq%.Lt;
+% Gt = /Int/Int/Eq%.Gt;
 % Int = /Int/Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
@@ -39,6 +45,20 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
   Cons<Bomb@>(Bomb@(x, y, kind), bombs);
 };
 
+# HitShip -- 
+#   Returns true if any of the bombs are currently hitting the ship.
+(Bombs@, Int@) { Bool@; } HitShip = (Bombs@ bombs, Int@ ship_x) {
+  bombs.?(nil: False);
+  HitShip(bombs.cons.tail, ship_x).?(true: True);
+
+  Bomb@ bomb = bombs.cons.head;
+  Lt(bomb.y, /Invaders/Ship%.ShipY).?(true: False);
+  Lt(bomb.x, ship_x).?(true: False);
+  Gt(bomb.y, Add(Int|8, /Invaders/Ship%.ShipY)).?(true: False);
+  Gt(bomb.x, Add(ship_x, Int|15)).?(true: False);
+  True;
+};
+
 (Bombs@) { Bombs@; } Tick = (Bombs@ bombs) {
   ForEach<Bomb@, Bombs@>(bombs, Nil<Bomb@>, (Bomb@ b, Bombs@ bs) {
     Int@ v = b.kind.?(bomb: BombVelocity, squiggle: SquiggleVelocity);
@@ -55,5 +75,5 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
   });
 };
 
-@(Bombs@, Kind@, Initial, Fire, Tick, Draw);
+@(Bombs@, Kind@, Initial, Fire, HitShip, Tick, Draw);
 

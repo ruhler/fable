@@ -1249,6 +1249,7 @@ block ::=
 stmt ::=
    expr ';'
  | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
+ | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
  | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
  | type '~' name ',' name ';' stmt                                   (* proc_link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)

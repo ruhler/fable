@@ -59,10 +59,15 @@
 #   animation.
 Int@ GameOverWait = Int|28;
 
+# DyingWait --
+#   How long the ship spends dying.
+Int@ DyingWait = Int|180;
+
 # State@ --
 #   The overall game state.
 @ State@ = +(
   Unit@ defending,   # Player is actively defending against the alien attack.
+  Int@ dying,        # Play ship dying animation this many ticks.
   Int@ leveling,     # Wait this many ticks to start next level.
   GameOver@ over     # The game is over.
 );
@@ -70,6 +75,7 @@ Int@ GameOverWait = Int|28;
 Int@ LevelingTime = Int|60;
 
 State@ GameOver = State@(over: GameOver@(Str|'GAME OVER', Str|'', GameOverWait));
+State@ Dying = State@(dying: DyingWait);
 
 @ Game@ = *(
   Int@ score,
@@ -130,6 +136,29 @@ Game@ Initial = @(
       bullet: g.bullet, aliens: g.aliens, bombs: g.bombs, ufo: g.ufo);
   });
 
+  g.state.?(dying: {
+    Eq(Int|0, g.state.dying).?(true: {
+      Lives@ lives = g.lives.?(
+        0: Lives@(0: Unit),
+        1: Lives@(0: Unit),
+        2: Lives@(1: Unit),
+        3: Lives@(2: Unit));
+
+      lives.?(0: {
+        Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet,
+          g.aliens, g.bombs, g.ufo);
+      });
+
+      Game@(g.score, g.level, lives, State@(defending: Unit),
+        Ship.Revive(g.ship), Bullet.Initial, g.aliens, Bombs.Initial, g.ufo);
+    });
+
+    @(score: g.score, level: g.level, lives: g.lives,
+      state: State@(leveling: Sub(g.state.dying, Int|1)),
+      ship: Ship.Tick(g.ship), bullet: g.bullet, aliens: g.aliens,
+      bombs: g.bombs, ufo: g.ufo);
+  });
+
   Game@ g_ = Game@(g.score, g.level, g.lives, g.state,
     Ship.Tick(g.ship), Bullet.Tick(g.bullet),
     Aliens.Tick(g.aliens), Bombs.Tick(g.bombs), Ufo.Tick(g.ufo));
@@ -160,6 +189,14 @@ Game@ Initial = @(
     Aliens.AllDead(g.aliens).?(false: g);
     Game@(g.score, g.level, g.lives, State@(leveling: LevelingTime),
       g.ship, g.bullet, g.aliens, g.bombs, g.ufo);
+  };
+  Game@ g = g_;
+
+  # Check for a bomb colliding with the ship.
+  Game@ g_ = {
+    Bombs.HitShip(g.bombs, g.ship.x).?(false: g);
+    Game@(g.score, g.level, g.lives, Dying,
+      Ship.Kill(g.ship), g.bullet, g.aliens, g.bombs, g.ufo);
   };
   Game@ g = g_;
 

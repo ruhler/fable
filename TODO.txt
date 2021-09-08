@@ -1,7 +1,9 @@
 
+* [/Invaders%] Clear the bomb that hits the ship when ship is killed.
 * [/Graphics] Fix issues with inconsistent precision with line drawing.
    The same point should always be drawn at the same point.
 * [/Graphics] Figure out how to support rotation of the camera.
+   Given I'm using integer arithmetic.
 * Remove duplicate implementations of Abs
  - One is in /Int/Int%, another in /Int/Int/Eq%.
 

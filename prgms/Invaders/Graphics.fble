@@ -477,4 +477,4 @@ Drawing@ Screenshot = Drawings[
 ];
 
 @(Ship, Aliens, Ufo, DeadAlien, Background, Digits, String, Screenshot, Bullet,
-  Bomb, Squiggle);
+  Bomb, Squiggle, DeadShipA, DeadShipB);

@@ -1,0 +1,51 @@
+
+Conditionally updating multiple variables is tedious in fble. Can we add some
+form of conditional update to fble? That would improve a lot of things, for
+example, in the Invaders Game Tick loop.
+
+Things to keep in mind:
+* We don't want to support in place updates of struct or union field values
+  with an easy syntax, because that would imply the update is cheap when in
+  reality it may require a copy of the entire value.
+* Unlike struct and union field value updates, variable updates in a scope can
+  be done in place cheaply, because there is only ever one user of the current
+  scope (static variables not included).
+
+So the idea is that a statement could either return a value, or modify the
+values of (but not the types of) existing non-static local variables. And we
+have a way to conditionally "execute" a statement.
+
+* One interesting question is whether we require static knowledge of whether a
+  statement returns a value vs. modifies local variables, or if that's
+  something we could do one or the other based on dynamic values. The later is
+  more general, and I could certainly make up use cases for it, but maybe that
+  adds too much complexity to the code or the implementation that is better
+  avoided?
+
+When talking about conditional execution, if the body of the condition returns
+a value, then we don't continue to the point after the condition. That's like
+a return.
+
+How might this look syntactically? How do the process statements interact with
+this?
+
+The current definition of stmt is very linear:
+
+stmt ::=
+   expr ';'
+ | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
+ | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
+ | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
+ | type '~' name ',' name ';' stmt                                   (* proc_link *)
+ | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
+ ;
+
+I guess the goal is to make it more like a (directed acyclic) graph of
+conditional control flow?
+
+* If we can modify the environment, any reason not to start supporting loops
+  whose body just do a modification of the environment?
+
+* This would also open up the question of uninitialized values, which we may
+  want to support now.
+

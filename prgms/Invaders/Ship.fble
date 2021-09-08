@@ -34,7 +34,9 @@ Int@ MaxX = Int|257;
 );
 
 @ Status@ = +(
-  Dir@ alive        # Which direction it is going.
+  Dir@ alive,        # Which direction it is going.
+  Unit@ dying_a,     # Dying with 'a' animation.
+  Unit@ dying_b      # Dying with 'b' animation.
 );
 
 @ Ship@ = *(
@@ -55,8 +57,23 @@ Ship@ Initial = @(
     status: Status@(alive: d));
 };
 
+# Kill --
+#   Set the ship to dying.
+(Ship@) { Ship@; } Kill = (Ship@ s) {
+  Ship@(s.x, Status@(dying_a: Unit));
+};
+
+# Revive --
+#   Revive a dying ship.
+(Ship@) { Ship@; } Revive = (Ship@ s) {
+  Ship@(s.x, Status@(alive: Dir@(stopped: Unit)));
+};
+
 # Advance the ship one unit of game time.
 (Ship@) { Ship@; } Tick = (Ship@ s) {
+  s.status.?(dying_a: Ship@(s.x, Status@(dying_b: Unit)));
+  s.status.?(dying_b: Ship@(s.x, Status@(dying_a: Unit)));
+
   s.status.alive.?(
       left: {
         Int@ nx = Sub(s.x, ShipV);
@@ -75,7 +92,12 @@ Ship@ Initial = @(
 
 # Make a drawing of the ship in its current location.
 (Ship@) { Drawing@; } Draw = (Ship@ s) {
-  Translate(s.x, ShipY, Graphics.Ship);
+  Drawing@ d = s.status.?(
+    alive: Graphics.Ship,
+    dying_a: Graphics.DeadShipA,
+    dying_b: Graphics.DeadShipB);
+
+  Translate(s.x, ShipY, d);
 };
 
-@(Ship@, Dir@, Initial, Input, Tick, Draw);
+@(Ship@, Dir@, ShipY, Initial, Input, Kill, Revive, Tick, Draw);
