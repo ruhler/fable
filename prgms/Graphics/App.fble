@@ -6,6 +6,7 @@
 @ Drawing@ = /Drawing%.Drawing@;
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
+% Color = /Drawing%.Color;
 % Drawings = /Drawing%.Drawings;
 % Over = /Drawing%.Over;
 % Rect = /Drawing%.Rect;
@@ -51,9 +52,9 @@
   Point@ 110 = View(camera, Vec@(Int|10, Int|10, Int|0));
   Point@ 111 = View(camera, Vec@(Int|10, Int|10, Int|10));
 
-  Color@ green = Color@(green: Unit);
-  Color@ blue = Color@(blue: Unit);
-  Color@ red = Color@(red: Unit);
+  Color@ green = Color.Green;
+  Color@ blue = Color.Blue;
+  Color@ red = Color.Red;
 
   Drawings[
     Triangle(010, 011, 110, red), Triangle(110, 011, 111, red),
@@ -103,7 +104,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   (State@) { Unit@!; } draw = (State@ s) {
     out(Effect@(draw: Over(
-      Rect(Int|0, Int|0, width, height, Color@(black: Unit)),
+      Rect(Int|0, Int|0, width, height, Color.Black),
       Affine(a, b, Draw(s)))));
   };
 

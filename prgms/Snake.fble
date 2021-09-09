@@ -13,6 +13,7 @@
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
 % Blank = /Drawing%.Blank;
+% Color = /Drawing%.Color;
 % Drawings = /Drawing%.Drawings;
 % Rect = /Drawing%.Rect;
 % Over = /Drawing%.Over;
@@ -77,9 +78,9 @@ Int@ MaxCol = Int|60;
 
 (Pos@, Cell@) { Drawing@; } DrawCell = (Pos@ pos, Cell@ cell) {
   Color@ c = cell.?(
-    empty: Color@(blue: Unit),
-    snake: Color@(cyan: Unit),
-    food: Color@(green: Unit));
+    empty: Color.Blue,
+    snake: Color.Cyan,
+    food: Color.Green);
   Rect(pos.col, pos.row, 1, 1, c);
 };
 
@@ -108,7 +109,7 @@ Int@ MaxCol = Int|60;
 
 (State@) { Drawing@; } Draw = (State@ s) {
   Drawings[
-    Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit)),
+    Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color.Blue),
     DrawSnakeS(s.snake),
     DrawCell(s.food, Cell@(food: Unit))
   ];
@@ -297,7 +298,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
     out(transformed);
   };
 
-  Unit@ _ := game_out(Effect@(draw: Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color@(blue: Unit))));
+  Unit@ _ := game_out(Effect@(draw: Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color.Blue)));
   Unit@ _ := game_out(Effect@(draw: Draw(s)));
   Unit@ _ := out(Effect@(tick: Int|16));
   Unit@ _ := Snake(GetInput(in), game_out, s);

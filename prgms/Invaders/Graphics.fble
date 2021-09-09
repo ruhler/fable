@@ -4,6 +4,7 @@
 @ Color@ = /Drawing%.Color@;
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
+% Color = /Drawing%.Color;
 % Drawings = /Drawing%.Drawings;
 % Over = /Drawing%.Over;
 % Rect = /Drawing%.Rect;
@@ -15,11 +16,9 @@
 
 @ String@ = /String%.String@;
 
-% Unit = /Unit%.Unit;
-
-Color@ white = Color@(white: Unit);
-Color@ green = Color@(green: Unit);
-Color@ red = Color@(red: Unit);
+Color@ white = Color.White;
+Color@ green = Color.Green;
+Color@ red = Color.Red;
 
 Drawing@ Ship = Drawings[
   Rect(Int|0, Int|0, Int|15, Int|5, green),

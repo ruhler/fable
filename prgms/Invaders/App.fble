@@ -3,8 +3,8 @@
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
-@ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
+% Color = /Drawing%.Color;
 % Over = /Drawing%.Over;
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
@@ -79,7 +79,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   (Game@) { Unit@!; } draw = (Game@ g) {
     out(Effect@(draw: Over(
-      Rect(0, 0, width, height, Color@(black: Unit)),
+      Rect(0, 0, width, height, Color.Black),
       Affine(a, b, Game.Draw(g)))));
   };
 

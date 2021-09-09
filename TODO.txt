@@ -8,14 +8,10 @@
 
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 
-* [/Invaders%] Add collision detection between bombs and player.
 * [/Invaders%] Add the bases.
-* [/Invaders%] UFO should travel slower than ship, so the ship can catch it?
-* [/Invaders%] Color an alien red when it reaches the planet so it's more
-  obvious why the game ends in that case? Or is that rare enough it doesn't
-  matter?
 * [/Invaders%] Add sound effects?
 * [/Invaders%] Center Alien3?
+* [/Invaders%] Center 'GAME OVER'?
 
 * Implement fannkuchredux benchmark?
   Permutation order looks like:

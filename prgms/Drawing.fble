@@ -7,15 +7,24 @@
 
 <@>@ List@ = /List%.List@;
 
-@ Color@ = +(
-  Unit@ black,
-  Unit@ red,
-  Unit@ green,
-  Unit@ yellow,
-  Unit@ blue,
-  Unit@ magenta,
-  Unit@ cyan,
-  Unit@ white);
+# Color@ --
+#   Represents a color as a combination of red, green, and blue. The value of
+#   these fields is the color intensity out of 256. They should have values
+#   between 0 and 256.
+@ Color@ = *(Int@ r, Int@ g, Int@ b);
+
+# Colors --
+#   Common colors.
+% Color = @(
+  Black: Color@(Int|0, Int|0, Int|0),
+  Red: Color@(Int|255, Int|0, Int|0),
+  Green: Color@(Int|0, Int|255, Int|0),
+  Blue: Color@(Int|0, Int|0, Int|255),
+  Cyan: Color@(Int|0, Int|255, Int|255),
+  Magenta: Color@(Int|255, Int|0, Int|255),
+  Yellow: Color@(Int|255, Int|255, Int|0),
+  White: Color@(Int|255, Int|255, Int|255)
+);
 
 @ Point@ = *(Int@ x, Int@ y);
 
@@ -68,5 +77,5 @@ Translate = (Int@ dx, Int@ dy, Drawing@ d) {
   Affine(@(x: Int|1, y: Int|1), @(x: dx, y: dy), d);
 };
 
-@(Color@, Drawing@, Point@,
+@(Color@, Drawing@, Point@, Color,
   Blank, Rect, Over, Drawings, Affine, Translate);

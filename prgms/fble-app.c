@@ -19,7 +19,7 @@ static int sFpsHistogram[61] = {0};
 // Fields:
 //   _base - The underlying FbleIO object.
 //   window - The window to draw to.
-//   colors - A preinitialized array of colors.
+//   format - The pixel format of the screen, for getting color values.
 //   time - The current simulation time in units of SDL_GetTicks.
 //
 //   event - The event input port.
@@ -27,7 +27,7 @@ static int sFpsHistogram[61] = {0};
 typedef struct {
   FbleIO _base;
   SDL_Window* window;
-  Uint32* colors;
+  SDL_PixelFormat* format;
   Uint32 time;
 
   FbleValue* event;
@@ -37,7 +37,8 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static int ReadIntP(FbleValue* num);
 static int ReadInt(FbleValue* num);
-static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing, Uint32* colors);
+static Uint32 ReadColor(SDL_PixelFormat* format, FbleValue* color);
+static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing, SDL_PixelFormat* format);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
@@ -111,6 +112,26 @@ static int ReadInt(FbleValue* x)
   }
 }
 
+// ReadColor --
+//  Read the color value from a /Drawing%.Color@ tag.
+//
+// Inputs:
+//   format - the pixel format of the screen to encode color with.
+//   color - the /Drawing%.Color@ value.
+//
+// Returns:
+//   The pixel value to use for the color.
+//
+// Side effects:
+//   None.
+static Uint32 ReadColor(SDL_PixelFormat* format, FbleValue* color)
+{
+  int r = ReadInt(FbleStructValueAccess(color, 0));
+  int g = ReadInt(FbleStructValueAccess(color, 1));
+  int b = ReadInt(FbleStructValueAccess(color, 2));
+  return SDL_MapRGB(format, r, g, b);
+}
+
 // Draw --
 //   Draw a drawing to the screen of type /Drawing%.Drawing@.
 //
@@ -118,6 +139,7 @@ static int ReadInt(FbleValue* x)
 //   surface - the surface to draw to.
 //   ax, ay, bx, by - a transformation to apply to the drawing: a*p + b.
 //   drawing - the drawing to draw.
+//   format - the screen format, for determinig color values.
 //
 // Results:
 //   none.
@@ -125,7 +147,7 @@ static int ReadInt(FbleValue* x)
 // Side effects:
 //   Draws the drawing to the window. The caller must call
 //   SDL_UpdateWindowSurface for the screen to actually be updated.
-static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing, Uint32* colors)
+static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing, SDL_PixelFormat* format)
 {
   switch (FbleUnionValueTag(drawing)) {
     case 0: {
@@ -160,7 +182,7 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
         r.h = -r.h;
       }
 
-      SDL_FillRect(surface, &r, colors[FbleUnionValueTag(color)]);
+      SDL_FillRect(surface, &r, ReadColor(format, color));
       return;
     }
 
@@ -177,15 +199,15 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       int byi = ReadInt(FbleStructValueAccess(b, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
-      Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d, colors);
+      Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d, format);
       return;
     }
 
     case 3: {
       // Over.
       FbleValue* over = FbleUnionValueAccess(drawing);
-      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 0), colors);
-      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 1), colors);
+      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 0), format);
+      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 1), format);
       return;
     }
 
@@ -317,7 +339,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 
       case 1: {
         SDL_Surface* surface = SDL_GetWindowSurface(app->window);
-        Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect), app->colors);
+        Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect), app->format);
         SDL_UpdateWindowSurface(app->window);
 
         // Collect status on frame rate.
@@ -478,18 +500,6 @@ int main(int argc, char* argv[])
 
   SDL_Surface* screen = SDL_GetWindowSurface(window);
 
-  // Colors as defined in /Drawing%.Color@.
-  Uint32 colors[] = {
-    SDL_MapRGB(screen->format, 0, 0, 0),
-    SDL_MapRGB(screen->format, 255, 0, 0),
-    SDL_MapRGB(screen->format, 0, 255, 0),
-    SDL_MapRGB(screen->format, 255, 255, 0),
-    SDL_MapRGB(screen->format, 0, 0, 255),
-    SDL_MapRGB(screen->format, 255, 0, 255),
-    SDL_MapRGB(screen->format, 0, 255, 255),
-    SDL_MapRGB(screen->format, 255, 255, 255),
-  };
-
   int width = 0;
   int height = 0;
   SDL_GetWindowSize(window, &width, &height);
@@ -497,7 +507,7 @@ int main(int argc, char* argv[])
   AppIO io = {
     ._base = { .io = &IO, },
     .window = window,
-    .colors = colors,
+    .format = screen->format,
     .time = SDL_GetTicks(),
 
     .event = NULL,
