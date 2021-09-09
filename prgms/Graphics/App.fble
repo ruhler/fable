@@ -52,9 +52,9 @@
   Point@ 110 = View(camera, Vec@(Int|10, Int|10, Int|0));
   Point@ 111 = View(camera, Vec@(Int|10, Int|10, Int|10));
 
-  Color@ green = Color.Green;
-  Color@ blue = Color.Blue;
-  Color@ red = Color.Red;
+  Color@ red = Color@(Int|0, Int|255, Int|255);
+  Color@ blue = Color@(Int|0, Int|196, Int|196);
+  Color@ green = Color@(Int|0, Int|168, Int|168);
 
   Drawings[
     Triangle(010, 011, 110, red), Triangle(110, 011, 111, red),
