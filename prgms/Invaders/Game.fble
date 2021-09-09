@@ -72,7 +72,7 @@ Int@ DyingWait = Int|120;
   GameOver@ over     # The game is over.
 );
 
-Int@ LevelingTime = Int|60;
+Int@ LevelingTime = Int|90;
 
 State@ GameOver = State@(over: GameOver@(Str|'GAME OVER', Str|'', GameOverWait));
 State@ Dying = State@(dying: DyingWait);
