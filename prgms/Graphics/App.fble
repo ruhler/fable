@@ -43,13 +43,13 @@
     Int|100);
 
   Point@ 000 = View(camera, Vec@(Int|0, Int|0, Int|0));
-  Point@ 001 = View(camera, Vec@(Int|0, Int|0, Int|50));
-  Point@ 010 = View(camera, Vec@(Int|0, Int|50, Int|0));
-  Point@ 011 = View(camera, Vec@(Int|0, Int|50, Int|50));
-  Point@ 100 = View(camera, Vec@(Int|50, Int|0, Int|0));
-  Point@ 101 = View(camera, Vec@(Int|50, Int|0, Int|50));
-  Point@ 110 = View(camera, Vec@(Int|50, Int|50, Int|0));
-  Point@ 111 = View(camera, Vec@(Int|50, Int|50, Int|50));
+  Point@ 001 = View(camera, Vec@(Int|0, Int|0, Int|10));
+  Point@ 010 = View(camera, Vec@(Int|0, Int|10, Int|0));
+  Point@ 011 = View(camera, Vec@(Int|0, Int|10, Int|10));
+  Point@ 100 = View(camera, Vec@(Int|10, Int|0, Int|0));
+  Point@ 101 = View(camera, Vec@(Int|10, Int|0, Int|10));
+  Point@ 110 = View(camera, Vec@(Int|10, Int|10, Int|0));
+  Point@ 111 = View(camera, Vec@(Int|10, Int|10, Int|10));
 
   Color@ green = Color@(green: Unit);
   Color@ blue = Color@(blue: Unit);
