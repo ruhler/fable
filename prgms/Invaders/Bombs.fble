@@ -45,18 +45,33 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
   Cons<Bomb@>(Bomb@(x, y, kind), bombs);
 };
 
+# HitResult@ --
+#   A result from checking if a bomb hit the ship.
+#
+# Fields:
+#   hit - true if hit, false otherwise.
+#   bombs - the bombs after removing the bomb that hit the ship.
+@ HitResult@ = *(Bool@ hit, Bombs@ bombs);
+
 # HitShip -- 
-#   Returns true if any of the bombs are currently hitting the ship.
-(Bombs@, Int@) { Bool@; } HitShip = (Bombs@ bombs, Int@ ship_x) {
-  bombs.?(nil: False);
-  HitShip(bombs.cons.tail, ship_x).?(true: True);
+#   Returns just if any of the bombs are currently hitting the ship, with the
+#   bomb that hit the ship removed. Returns nothing if no bomb hits the ship.
+(Bombs@, Int@) { HitResult@; } HitShip = (Bombs@ bombs, Int@ ship_x) {
+  HitResult@ miss = @(hit: False, bombs: bombs);
+
+  bombs.?(nil: miss);
+
+  HitResult@ tail_hit = HitShip(bombs.cons.tail, ship_x);
+  tail_hit.hit.?(true: {
+    @(hit: True, bombs: Cons<Bomb@>(bombs.cons.head, tail_hit.bombs));
+  });
 
   Bomb@ bomb = bombs.cons.head;
-  Lt(bomb.y, /Invaders/Ship%.ShipY).?(true: False);
-  Lt(bomb.x, ship_x).?(true: False);
-  Gt(bomb.y, Add(Int|8, /Invaders/Ship%.ShipY)).?(true: False);
-  Gt(bomb.x, Add(ship_x, Int|15)).?(true: False);
-  True;
+  Lt(bomb.y, /Invaders/Ship%.ShipY).?(true: miss);
+  Lt(bomb.x, ship_x).?(true: miss);
+  Gt(bomb.y, Add(Int|8, /Invaders/Ship%.ShipY)).?(true: miss);
+  Gt(bomb.x, Add(ship_x, Int|15)).?(true: miss);
+  @(hit: True, bombs: bombs.cons.tail);
 };
 
 (Bombs@) { Bombs@; } Tick = (Bombs@ bombs) {
@@ -75,5 +90,5 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
   });
 };
 
-@(Bombs@, Kind@, Initial, Fire, HitShip, Tick, Draw);
+@(Bombs@, Kind@, HitResult@, Initial, Fire, HitShip, Tick, Draw);
 

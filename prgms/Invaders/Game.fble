@@ -187,14 +187,15 @@ Game@ Initial = @(
   Game@ g = g_;
 
   # Check for a bomb colliding with the ship.
-  Bombs.HitShip(g.bombs, g.ship.x).?(true: {
+  Bombs.HitResult@ hit = Bombs.HitShip(g.bombs, g.ship.x);
+  hit.hit.?(true: {
     Lives@ lives = g.lives.?(
       0: Lives@(0: Unit),
       1: Lives@(0: Unit),
       2: Lives@(1: Unit),
       3: Lives@(2: Unit));
     Game@(g.score, g.level, lives, Dying,
-      Ship.Kill(g.ship), g.bullet, g.aliens, g.bombs, g.ufo);
+      Ship.Kill(g.ship), g.bullet, g.aliens, hit.bombs, g.ufo);
   });
 
   # Fire bombs
