@@ -61,7 +61,7 @@ Int@ GameOverWait = Int|28;
 
 # DyingWait --
 #   How long the ship spends dying.
-Int@ DyingWait = Int|180;
+Int@ DyingWait = Int|120;
 
 # State@ --
 #   The overall game state.
@@ -138,23 +138,17 @@ Game@ Initial = @(
 
   g.state.?(dying: {
     Eq(Int|0, g.state.dying).?(true: {
-      Lives@ lives = g.lives.?(
-        0: Lives@(0: Unit),
-        1: Lives@(0: Unit),
-        2: Lives@(1: Unit),
-        3: Lives@(2: Unit));
-
-      lives.?(0: {
+      g.lives.?(0: {
         Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet,
           g.aliens, g.bombs, g.ufo);
       });
 
-      Game@(g.score, g.level, lives, State@(defending: Unit),
+      Game@(g.score, g.level, g.lives, State@(defending: Unit),
         Ship.Revive(g.ship), Bullet.Initial, g.aliens, Bombs.Initial, g.ufo);
     });
 
     @(score: g.score, level: g.level, lives: g.lives,
-      state: State@(leveling: Sub(g.state.dying, Int|1)),
+      state: State@(dying: Sub(g.state.dying, Int|1)),
       ship: Ship.Tick(g.ship), bullet: g.bullet, aliens: g.aliens,
       bombs: g.bombs, ufo: g.ufo);
   });
@@ -193,12 +187,15 @@ Game@ Initial = @(
   Game@ g = g_;
 
   # Check for a bomb colliding with the ship.
-  Game@ g_ = {
-    Bombs.HitShip(g.bombs, g.ship.x).?(false: g);
-    Game@(g.score, g.level, g.lives, Dying,
+  Bombs.HitShip(g.bombs, g.ship.x).?(true: {
+    Lives@ lives = g.lives.?(
+      0: Lives@(0: Unit),
+      1: Lives@(0: Unit),
+      2: Lives@(1: Unit),
+      3: Lives@(2: Unit));
+    Game@(g.score, g.level, lives, Dying,
       Ship.Kill(g.ship), g.bullet, g.aliens, g.bombs, g.ufo);
-  };
-  Game@ g = g_;
+  });
 
   # Fire bombs
   Game@ g_ = {
