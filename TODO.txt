@@ -1,4 +1,6 @@
 
+* Add more keys to /App%, including up, down, a, s, d, w.
+
 * [/Graphics] Fix issues with inconsistent precision with line drawing.
    The same point should always be drawn at the same point.
 * [/Graphics] Figure out how to support rotation of the camera.

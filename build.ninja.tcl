@@ -498,6 +498,14 @@ bin $::bin/fble-invaders \
   "$::obj/fble-invaders.o $::obj/fble-compiled-app.o" \
   "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
 
+# /Graphics/App% compiled binary
+build $::src/fble-graphics.s $::bin/fble-compile \
+  "$::bin/fble-compile --export FbleCompiledMain /Graphics/App% > $::src/fble-graphics.s"
+asm $::obj/fble-graphics.o $::src/fble-graphics.s ""
+bin $::bin/fble-graphics \
+  "$::obj/fble-graphics.o $::obj/fble-compiled-app.o" \
+  "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
+
 # test summary
 build $::test/tests.txt "$::tests" "echo $::tests > $::test/tests.txt"
 build $::test/summary.tr "tools/tests.tcl $::test/tests.txt" \
