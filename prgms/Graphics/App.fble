@@ -4,7 +4,6 @@
 @ Effect@ = /App%.Effect@;
 
 @ Drawing@ = /Drawing%.Drawing@;
-@ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
 % Color = /Drawing%.Color;
 % Drawings = /Drawing%.Drawings;
@@ -41,18 +40,16 @@
       Vec@(Int|1, Int|0, Int|0),
       Vec@(Int|0, Int|1, Int|0),
       Vec@(Int|0, Int|0, Int|1)),
-    Int|100);
+    Int|10);
 
-  Point@ a = View(camera, Vec@(Int|0, Int|0, Int|0));
-  Point@ b = View(camera, Vec@(Int|10, Int|20, Int|0));
-  Point@ c = View(camera, Vec@(Int|20, Int|0, Int|0));
-  Point@ d = View(camera, Vec@(Int|10, Int|10, Int|20));
+  # Triangle that happens to already be positioned on the focus plane of the
+  # camera.
+  Point@ a = View(camera, Vec@(Int|0, Int|0, Int|10));
+  Point@ b = View(camera, Vec@(Int|0, Int|10, Int|10));
+  Point@ c = View(camera, Vec@(Int|20, Int|0, Int|10));
 
   Drawings[
-    Triangle(a, c, b, Color@(Int|0, Int|0, Int|255)),
-    Triangle(a, d, c, Color@(Int|0, Int|255, Int|0)),
-    Triangle(a, b, d, Color@(Int|255, Int|255, Int|255)),
-    Triangle(b, c, d, Color@(Int|255, Int|0, Int|0))
+    Triangle(a, b, c, Color.Red)
   ];
 };
 
@@ -70,12 +67,12 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
     e.key_down.?(q: !(Unit));
 
     State@ new_state = e.key_down.?(
-      h: State@(Sub(state.x, Int|10), state.y, state.z),
-      j: State@(state.x, Sub(state.y, Int|10), state.z),
-      k: State@(state.x, Add(state.y, Int|10), state.z),
-      l: State@(Add(state.x, Int|10), state.y, state.z),
-      left: State@(state.x, state.y, Sub(state.z, Int|10)),
-      right: State@(state.x, state.y, Add(state.z, Int|10)),
+      h: State@(Sub(state.x, Int|1), state.y, state.z),
+      j: State@(state.x, Sub(state.y, Int|1), state.z),
+      k: State@(state.x, Add(state.y, Int|1), state.z),
+      l: State@(Add(state.x, Int|1), state.y, state.z),
+      left: State@(state.x, state.y, Sub(state.z, Int|1)),
+      right: State@(state.x, state.y, Add(state.z, Int|1)),
       : state);
     Run(in, draw, tick, new_state);
   });
@@ -83,7 +80,9 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
-  Point@ a = @(x: Int|5, y: Neg(Int|5));
+  # The window should be centered at (0, 0), ranging in from
+  # (-32, -24) to (32, 24).
+  Point@ a = @(x: Int|10, y: Neg(Int|10));
   Point@ b = @(x: Int|320, y: Int|240);
 
   # The target is 60 FPS, or 16 millseconds per frame.
@@ -97,7 +96,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   };
 
   Unit@ _ := out(Effect@(tick: Int|0));
-  State@ state = State@(Int|0, Int|0, Neg(Int|10));
+  State@ state = State@(Int|0, Int|0, Int|0);
   Run(in, draw, tick, state); 
 };
 
