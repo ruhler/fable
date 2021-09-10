@@ -44,12 +44,16 @@
 
   # Triangle that happens to already be positioned on the focus plane of the
   # camera.
-  Point@ a = View(camera, Vec@(Int|0, Int|0, Int|10));
-  Point@ b = View(camera, Vec@(Int|0, Int|10, Int|10));
-  Point@ c = View(camera, Vec@(Int|20, Int|0, Int|10));
+  Point@ a = View(camera, Vec@(Int|0, Int|0, Int|20));
+  Point@ b = View(camera, Vec@(Int|0, Int|10, Int|20));
+  Point@ c = View(camera, Vec@(Int|20, Int|0, Int|20));
+  Point@ d = View(camera, Vec@(Int|5, Int|5, Int|10));
 
   Drawings[
-    Triangle(a, b, c, Color.Red)
+    Triangle(a, c, b, Color.Red),
+    Triangle(a, d, c, Color.Green),
+    Triangle(b, c, d, Color.Blue),
+    Triangle(a, b, d, Color.White)
   ];
 };
 

@@ -1,8 +1,4 @@
 
-* /Graphics%: Figure out how to deal with the fact that the camera looks up at
-the screen from underneath, so counterclockwise turns to clockwise when
-drawing triangle points.
-
 * [/Graphics] Fix issues with inconsistent precision with line drawing.
    The same point should always be drawn at the same point.
 * [/Graphics] Figure out how to support rotation of the camera.
