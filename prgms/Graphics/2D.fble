@@ -138,6 +138,9 @@ Enclosed = (Point@ a, Point@ b, Point@ c, Point@ x) {
 # otherwise nothing is drawn.
 (Point@, Point@, Point@, Color@) { Drawing@; }
 Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
+  # If the points don't go around in clockwise order, there is nothing to do.
+  RightOf(a, b, c).?(false: Blank);
+
   Int@ x_min = Min(a.x, Min(b.x, c.x));
   Int@ x_max = Max(a.x, Max(b.x, c.x));
   Int@ y_min = Min(a.y, Min(b.y, c.y));
