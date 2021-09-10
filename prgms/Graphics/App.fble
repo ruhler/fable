@@ -43,28 +43,16 @@
       Vec@(Int|0, Int|0, Int|1)),
     Int|100);
 
-  Point@ 000 = View(camera, Vec@(Int|0, Int|0, Int|0));
-  Point@ 001 = View(camera, Vec@(Int|0, Int|0, Int|10));
-  Point@ 010 = View(camera, Vec@(Int|0, Int|10, Int|0));
-  Point@ 011 = View(camera, Vec@(Int|0, Int|10, Int|10));
-  Point@ 100 = View(camera, Vec@(Int|10, Int|0, Int|0));
-  Point@ 101 = View(camera, Vec@(Int|10, Int|0, Int|10));
-  Point@ 110 = View(camera, Vec@(Int|10, Int|10, Int|0));
-  Point@ 111 = View(camera, Vec@(Int|10, Int|10, Int|10));
-
-  Color@ red = Color@(Int|0, Int|255, Int|255);
-  Color@ blue = Color@(Int|0, Int|196, Int|196);
-  Color@ green = Color@(Int|0, Int|168, Int|168);
+  Point@ a = View(camera, Vec@(Int|0, Int|0, Int|0));
+  Point@ b = View(camera, Vec@(Int|10, Int|20, Int|0));
+  Point@ c = View(camera, Vec@(Int|20, Int|0, Int|0));
+  Point@ d = View(camera, Vec@(Int|10, Int|10, Int|20));
 
   Drawings[
-    Triangle(010, 011, 110, red), Triangle(110, 011, 111, red),
-    Triangle(000, 100, 001, red), Triangle(100, 101, 001, red),
-
-    Triangle(100, 110, 111, blue), Triangle(100, 111, 101, blue),
-    Triangle(000, 011, 010, blue), Triangle(000, 001, 011, blue),
-
-    Triangle(000, 010, 110, green), Triangle(000, 110, 100, green),
-    Triangle(000, 110, 010, green), Triangle(000, 100, 110, green)
+    Triangle(a, c, b, Color@(Int|0, Int|0, Int|255)),
+    Triangle(a, d, c, Color@(Int|0, Int|255, Int|0)),
+    Triangle(a, b, d, Color@(Int|255, Int|255, Int|255)),
+    Triangle(b, c, d, Color@(Int|255, Int|0, Int|0))
   ];
 };
 
