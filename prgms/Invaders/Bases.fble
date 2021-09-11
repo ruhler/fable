@@ -1,0 +1,97 @@
+
+@ Drawing@ = /Drawing%.Drawing@;
+% Blank = /Drawing%.Blank;
+% Color = /Drawing%.Color;
+% Over = /Drawing%.Over;
+% Rect = /Drawing%.Rect;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
+% Lt = /Int/Int/Eq%.Lt;
+% Ge = /Int/Int/Eq%.Ge;
+% Int = /Int/Int/Lit%.Int;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+
+# Slice@ --
+#   The vertical range of a slice of base.
+@ Slice@ = *(Int@ min, Int@ max);
+
+# Damage --
+#   The number of pixels of a slice of base destroyed when hit by a bomb or a
+#   bullet.
+Int@ Damage = Int|4;
+
+# BaseY --
+#   The bottom Y coordinate of the bases.
+Int@ BaseY = Int|36;
+
+# Bases@ --
+#   Map from x coordinate to the slice of base, if any, at that x coordinate.
+@ Bases@ = /Map%.Map@<Int@, Slice@>;
+
+# Empty --
+#   No bases.
+Bases@ Empty = /Map%.Empty<Int@, Slice@>;
+
+# BaseSpec --
+#   Specification for the shape of an individual base, relative to the lower
+#   left corner of an individual base, in order of X from left to right.
+List@<Slice@> BaseSpec = List<Slice@>[
+  Slice@(Int|0, Int|12), Slice@(Int|0, Int|13),
+  Slice@(Int|0, Int|14), Slice@(Int|0, Int|15),
+  Slice@(Int|0, Int|16), Slice@(Int|2, Int|16),
+  Slice@(Int|3, Int|16), Slice@(Int|4, Int|16),
+  Slice@(Int|4, Int|16), Slice@(Int|4, Int|16),
+  Slice@(Int|4, Int|16), Slice@(Int|4, Int|16),
+  Slice@(Int|4, Int|16), Slice@(Int|4, Int|16),
+  Slice@(Int|4, Int|16), Slice@(Int|4, Int|16),
+  Slice@(Int|4, Int|16), Slice@(Int|3, Int|16),
+  Slice@(Int|2, Int|16), Slice@(Int|0, Int|16),
+  Slice@(Int|0, Int|15), Slice@(Int|0, Int|14),
+  Slice@(Int|0, Int|13), Slice@(Int|0, Int|12)
+];
+
+# AddSlices --
+#   Add a BaseSpec collection of slices to Bases@ starting at the given X
+#   coordinate.
+(Int@, List@<Slice@>, Bases@) { Bases@; }
+AddSlices = {
+  % Insert = /Map%.Insert<Int@>(Lt)<Slice@>;
+  
+  (Int@ x, List@<Slice@> slices, Bases@ bases) {
+    slices.?(nil: bases);
+    Slice@ head = slices.cons.head;
+    Slice@ slice = Slice@(Add(BaseY, head.min), Add(BaseY, head.max));
+    Bases@ inserted = Insert(bases, x, slice);
+    AddSlices(Add(x, Int|1), slices.cons.tail, inserted);
+  };
+};
+
+# Initial --
+#   The initial bases, given the current game level.
+(Int@) { Bases@; } Initial = (Int@ level) {
+  # We no longer have bases once we reach level 4.
+  Ge(level, Int|4).?(true: Empty);
+
+  AddSlices(Int|68, BaseSpec,
+  AddSlices(Int|121, BaseSpec,
+  AddSlices(Int|174, BaseSpec,
+  AddSlices(Int|227, BaseSpec, Empty))));
+};
+
+# Draw --
+#   Draw the bases.
+(Bases@) { Drawing@; } Draw = {
+  % ForEach = /Map%.ForEach<Int@, Slice@, Drawing@>;
+
+  (Bases@ bases) {
+    ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
+      Over(d, Rect(x, s.min, Int|1, Sub(s.max, s.min), Color.Green));
+    });
+  };
+};
+
+@(Bases@, Initial, Draw);

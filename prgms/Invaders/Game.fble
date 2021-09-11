@@ -21,6 +21,9 @@
 % Aliens = /Invaders/Aliens%;
 @ Aliens@ = Aliens.Aliens@;
 
+% Bases = /Invaders/Bases%;
+@ Bases@ = Bases.Bases@;
+
 % Bombs = /Invaders/Bombs%;
 @ Bombs@ = Bombs.Bombs@;
 
@@ -84,6 +87,7 @@ State@ Dying = State@(dying: DyingWait);
   State@ state,
   Ship@ ship,
   Bullet@ bullet,
+  Bases@ bases,
   Aliens@ aliens,
   Bombs@ bombs,
   Ufo@ ufo
@@ -98,6 +102,7 @@ Game@ Initial = @(
   state: State@(defending: Unit),
   ship: Ship.Initial,
   bullet: Bullet.Initial,
+  bases: Bases.Initial(Int|0),
   aliens: Aliens.Initial(Int|0),
   bombs: Bombs.Initial,
   ufo: Ufo.Initial
@@ -119,7 +124,8 @@ Game@ Initial = @(
   g.state.?(over: {
     @(score: g.score, level: g.level, lives: g.lives,
       state: State@(over: TickGameOver(g.state.over)), ship: g.ship,
-      bullet: g.bullet, aliens: g.aliens, bombs: g.bombs, ufo: g.ufo);
+      bullet: g.bullet, bases: g.bases, aliens: g.aliens, bombs: g.bombs,
+      ufo: g.ufo);
   });
 
   g.state.?(leveling: {
@@ -127,34 +133,36 @@ Game@ Initial = @(
       Int@ level = Add(Int|1, g.level);
       @(score: g.score, level: level, lives: g.lives,
         state: State@(defending: Unit), ship: Ship.Initial,
-        bullet: Bullet.Initial, aliens: Aliens.Initial(level),
-        bombs: Bombs.Initial, ufo: g.ufo);
+        bullet: Bullet.Initial, bases: Bases.Initial(level),
+        aliens: Aliens.Initial(level), bombs: Bombs.Initial, ufo: g.ufo);
     });
 
     @(score: g.score, level: g.level, lives: g.lives,
       state: State@(leveling: Sub(g.state.leveling, Int|1)), ship: g.ship,
-      bullet: g.bullet, aliens: g.aliens, bombs: g.bombs, ufo: g.ufo);
+      bullet: g.bullet, bases: g.bases, aliens: g.aliens, bombs: g.bombs,
+      ufo: g.ufo);
   });
 
   g.state.?(dying: {
     Eq(Int|0, g.state.dying).?(true: {
       g.lives.?(0: {
-        Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet,
+        Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet, g.bases,
           g.aliens, g.bombs, g.ufo);
       });
 
       Game@(g.score, g.level, g.lives, State@(defending: Unit),
-        Ship.Revive(g.ship), Bullet.Initial, g.aliens, Bombs.Initial, g.ufo);
+        Ship.Revive(g.ship), Bullet.Initial, g.bases, g.aliens, Bombs.Initial,
+        g.ufo);
     });
 
     @(score: g.score, level: g.level, lives: g.lives,
       state: State@(dying: Sub(g.state.dying, Int|1)),
-      ship: Ship.Tick(g.ship), bullet: g.bullet, aliens: g.aliens,
-      bombs: g.bombs, ufo: g.ufo);
+      ship: Ship.Tick(g.ship), bullet: g.bullet, bases: g.bases,
+      aliens: g.aliens, bombs: g.bombs, ufo: g.ufo);
   });
 
   Game@ g_ = Game@(g.score, g.level, g.lives, g.state,
-    Ship.Tick(g.ship), Bullet.Tick(g.bullet),
+    Ship.Tick(g.ship), Bullet.Tick(g.bullet), g.bases,
     Aliens.Tick(g.aliens), Bombs.Tick(g.bombs), Ufo.Tick(g.ufo));
   Game@ g = g_;
 
@@ -164,7 +172,7 @@ Game@ Initial = @(
     Maybe@<Aliens.Kill@> kill = Aliens.Shoot(g.bullet.x, g.bullet.y, g.aliens);
     kill.?(nothing: g);
     Game@(Add(kill.just.points, g.score), g.level, g.lives, g.state,
-      g.ship, Bullet.Initial, kill.just.aliens, g.bombs, g.ufo);
+      g.ship, Bullet.Initial, g.bases, kill.just.aliens, g.bombs, g.ufo);
   };
   Game@ g = g_;
 
@@ -174,7 +182,7 @@ Game@ Initial = @(
     Maybe@<Ufo.Kill@> kill = Ufo.Shoot(g.bullet.x, g.bullet.y, g.ufo);
     kill.?(nothing: g);
     Game@(Add(kill.just.points, g.score), g.level, g.lives, g.state,
-      g.ship, Bullet.Initial, g.aliens, g.bombs, kill.just.ufo);
+      g.ship, Bullet.Initial, g.bases, g.aliens, g.bombs, kill.just.ufo);
   };
   Game@ g = g_;
 
@@ -182,7 +190,7 @@ Game@ Initial = @(
   Game@ g_ = {
     Aliens.AllDead(g.aliens).?(false: g);
     Game@(g.score, g.level, g.lives, State@(leveling: LevelingTime),
-      g.ship, g.bullet, g.aliens, g.bombs, g.ufo);
+      g.ship, g.bullet, g.bases, g.aliens, g.bombs, g.ufo);
   };
   Game@ g = g_;
 
@@ -195,13 +203,13 @@ Game@ Initial = @(
       2: Lives@(1: Unit),
       3: Lives@(2: Unit));
     Game@(g.score, g.level, lives, Dying,
-      Ship.Kill(g.ship), g.bullet, g.aliens, hit.bombs, g.ufo);
+      Ship.Kill(g.ship), g.bullet, g.bases, g.aliens, hit.bombs, g.ufo);
   });
 
   # Fire bombs
   Game@ g_ = {
     Bombs@ nbombs = Aliens.FireBombs(g.aliens, g.bombs);
-    Game@(g.score, g.level, g.lives, g.state, g.ship, g.bullet,
+    Game@(g.score, g.level, g.lives, g.state, g.ship, g.bullet, g.bases,
       g.aliens, nbombs, g.ufo);
   };
   Game@ g = g_;
@@ -209,7 +217,7 @@ Game@ Initial = @(
   # Check if the aliens have invaded.
   Game@ g_ = {
     Aliens.Invaded(g.aliens).?(false: g);
-    Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet,
+    Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet, g.bases,
       g.aliens, g.bombs, g.ufo);
   };
   Game@ g = g_;
@@ -222,7 +230,7 @@ Game@ Initial = @(
     Game@(g.score, g.level, g.lives, g.state,
       input.?(dir: Ship.Input(g.ship, input.dir), : g.ship),
       input.?(fire: Bullet.Fire(g.bullet, g.ship), : g.bullet),
-      g.aliens, g.bombs, g.ufo);
+      g.bases, g.aliens, g.bombs, g.ufo);
   });
 
   g;
@@ -269,6 +277,7 @@ Game@ Initial = @(
     Graphics.Background,
     Ship.Draw(g.ship),
     Bullet.Draw(g.bullet),
+    Bases.Draw(g.bases),
     Aliens.Draw(g.aliens),
     Bombs.Draw(g.bombs),
     Ufo.Draw(g.ufo),
