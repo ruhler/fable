@@ -58,7 +58,7 @@ Int@ RotF = Int|256;
 (Int@, Int@, Int@, Camera@) { Camera@; }
 Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
   Vec@ v_cam = Vec@(x, y, z);
-  Vec@ v_abs = MulMV(Transpose(camera.rot), v_cam);
+  Vec@ v_abs = DivVS(MulMV(Transpose(camera.rot), v_cam), RotF);
   Camera@(AddV(camera.pos, v_abs), camera.rot, camera.focus);
 };
 
