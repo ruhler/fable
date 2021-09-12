@@ -1,7 +1,6 @@
 
 * [/Graphics] Fix camera translation/focus/rotation issues.
- - try drawing a plane of squares to get a better sense of if it's working or
-   not.
+ - I think the rotation computation is messed up.
  - need more precision for position, otherwise we can't update it by a small
    amount after rotating.
  - presumably we'll need to fix up the orthonormal matrix occasionally.
@@ -13,9 +12,6 @@
  - One is in /Int/Int%, another in /Int/Int/Eq%.
 
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
-
-* [/Invaders%] Add the bases.
- - Detect collision between bases and aliens.
 
 * Implement fannkuchredux benchmark?
   Permutation order looks like:
