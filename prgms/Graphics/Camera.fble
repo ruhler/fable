@@ -1,0 +1,107 @@
+
+@ Bool@ = /Bool%.Bool@;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Mul = /Int/Int%.Mul;
+% Neg = /Int/Int%.Neg;
+% Div = /Int/Int/Div%.Div;
+% Int = /Int/Int/Lit%.Int;
+
+@ Point@ = /Graphics/2D%.Point@;
+
+@ Mat@ = /Graphics/3D%.Mat@;
+@ Vec@ = /Graphics/3D%.Vec@;
+% AddV = /Graphics/3D%.AddV;
+% SubV = /Graphics/3D%.SubV;
+% MulMV = /Graphics/3D%.MulMV;
+% MulMM = /Graphics/3D%.MulMM;
+% DivMS = /Graphics/3D%.DivMS;
+% DivVS = /Graphics/3D%.DivVS;
+% Transpose = /Graphics/3D%.Transpose;
+
+# Camera@ --
+#   Describes the position and direction of the camera.
+#
+# Fields:
+#   pos - The position of the camera.
+#   rot - Describes the rotation of the camera, as a matrix that rotates a
+#         point into the basis of the camera. The basis of the camera is:
+#           +x is to the right of the screen
+#           +y is to the top of the screen
+#           +z is into the screen (TODO: or out of the screen?)
+#         rot is an orthnormal matrix scaled by the factor RotF.
+#   focus - The distance from the camera to the focus plane.
+@ Camera@ = *(Vec@ pos, Mat@ rot, Int@ focus);
+
+# RotF --
+#   The scale factor used for the camera rotation matrix.
+Int@ RotF = Int|256;
+
+# Camera --
+#   A camera at the origin with +x to the right of the screen, +y to the top
+#   of the screen, and +z into the screen (TODO: or out of the screen?),
+#   with the given distance between camera and focus plane.
+(Int@) { Camera@; } Camera = (Int@ focus) {
+  Camera@(
+    Vec@(Int|0, Int|0, Int|0),
+    Mat@(
+      Vec@(RotF, Int|0, Int|0),
+      Vec@(Int|0, RotF, Int|0),
+      Vec@(Int|0, Int|0, RotF)),
+    focus);
+};
+
+# Translate --
+#   Translate the camera by the given x, y, and z coordinates, relative to the
+#   camera's current orientation.
+(Int@, Int@, Int@, Camera@) { Camera@; }
+Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
+  Vec@ v_cam = Vec@(x, y, z);
+  Vec@ v_abs = MulMV(Transpose(camera.rot), v_cam);
+  Camera@(AddV(camera.pos, v_abs), camera.rot, camera.focus);
+};
+
+# RotateY --
+#   Rotate the camera some small fixed amount about its own Y axis.
+(Bool@, Camera@) { Camera@; } RotateY = (Bool@ clockwise, Camera@ camera) {
+  # We pick a small angle θ to rotate where cos(θ) is approximately 255/256,
+  # then sin(θ) is 23/256, and it takes about 71 rotations to make a full
+  # circle.
+  #
+  # TODO: Double check the polarity of clockwise.
+  Int@ c = Int|255;
+  Int@ s = clockwise.?(true: Int|23, false: Neg(Int|23));
+  Mat@ m = Mat@(
+    Vec@(c, Int|0, s),
+    Vec@(Int|0, RotF, Int|0),
+    Vec@(Neg(s), Int|0, c));
+  Mat@ rot = DivMS(MulMM(m, camera.rot), RotF);
+  Camera@(camera.pos, rot, camera.focus);
+};
+
+# Focus --
+#   Change the distance to the focus plane by the given amount.
+(Int@, Camera@) { Camera@; } Focus = (Int@ focus, Camera@ camera) {
+  Camera@(camera.pos, camera.rot, Add(camera.focus, focus));
+};
+
+# View --
+#   Convert a 3D point to where it would be viewed by the camera.
+(Camera@, Vec@) { Point@; }
+View = (Camera@ camera, Vec@ p) {
+  # Put the camera at the origin.
+  Vec@ p_ = SubV(p, camera.pos); Vec@ p = p_;
+
+  # Rotate the point around the origin/camera.
+  Vec@ p_ = DivVS(MulMV(camera.rot, p), RotF); Vec@ p = p_;
+
+  # Project onto the plane z = focus.
+  Int@ a = camera.focus;
+  Point@(
+    Div(Mul(a, p.x), p.z),
+    Div(Mul(a, p.y), p.z));
+};
+
+@(Camera@, Camera, Translate, RotateY, Focus, View);
+

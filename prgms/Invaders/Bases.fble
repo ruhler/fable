@@ -22,7 +22,7 @@
 # Damage --
 #   The number of pixels of a slice of base destroyed when hit by a bomb or a
 #   bullet.
-Int@ Damage = Int|4;
+#Int@ Damage = Int|4;
 
 # BaseY --
 #   The bottom Y coordinate of the bases.
