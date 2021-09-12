@@ -11,7 +11,6 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
-% Mul = /Int/Int%.Mul;
 % Lt = /Int/Int/Eq%.Lt;
 % Gt = /Int/Int/Eq%.Gt;
 % Int = /Int/Int/Lit%.Int;
@@ -31,8 +30,8 @@
 
 @ Kind@ = +(Unit@ bomb, Unit@ squiggle);
 
-Int@ BombVelocity = Int|1;
-Int@ SquiggleVelocity = Mul(Int|3, BombVelocity);
+Int@ BombVelocity = Int|2;
+Int@ SquiggleVelocity = Int|3;
 Int@ MinY = Int|2;
 Int@ MaxBombs = Int|15;
 
