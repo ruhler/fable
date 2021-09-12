@@ -126,6 +126,29 @@ BombHit = (Int@ x, Int@ y, Bases@ bases) {
   HitResult@(True, Delete(bases, x));
 };
 
+# BulletHit --
+#   Check for and apply collision between bullet and bases.
+#
+# Inputs:
+#   x, y - the coordinates of the top of the bullet.
+#   bases - the bases to check against.
+(Int@, Int@, Bases@) { HitResult@; }
+BulletHit = (Int@ x, Int@ y, Bases@ bases) {
+  HitResult@ miss = HitResult@(False, bases);
+  Maybe@<Slice@> slice = Lookup(bases, x);
+  slice.?(nothing: miss);
+  Ge(y, slice.just.max).?(true: miss);
+  Lt(y, slice.just.min).?(true: miss);
+
+  Int@ min = Add(y, Damage);
+
+  Lt(min, slice.just.max).?(true: {
+    HitResult@(True, Insert(bases, x, Slice@(min, slice.just.max)));
+  });
+
+  HitResult@(True, Delete(bases, x));
+};
+
 # Draw --
 #   Draw the bases.
 (Bases@) { Drawing@; } Draw = {
@@ -138,4 +161,4 @@ BombHit = (Int@ x, Int@ y, Bases@ bases) {
   };
 };
 
-@(Bases@, HitResult@, Initial, BombHit, Draw);
+@(Bases@, HitResult@, Initial, BombHit, BulletHit, Draw);

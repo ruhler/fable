@@ -15,11 +15,7 @@
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 
 * [/Invaders%] Add the bases.
- - Detect collision between bases and bullets.
  - Detect collision between bases and aliens.
-* [/Invaders%] Add sound effects?
-* [/Invaders%] Center Alien3?
-* [/Invaders%] Center 'GAME OVER'?
 
 * Implement fannkuchredux benchmark?
   Permutation order looks like:

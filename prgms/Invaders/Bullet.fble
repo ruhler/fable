@@ -26,6 +26,10 @@
 #   time.
 Int@ BulletV = Int|4;
 
+# Height --
+#   The height of a bullet.
+Int@ Height = Int|4;
+
 # Initial --
 #   The initial state of the bullet.
 Bullet@ Initial = Bullet@(Int|0, Int|0, False);
@@ -59,4 +63,4 @@ Fire = (Bullet@ bullet, Ship@ ship) {
   Translate(bullet.x, bullet.y, Graphics.Bullet);
 };
 
-@(Bullet@, Initial, Fire, Tick, Draw);
+@(Bullet@, Height, Initial, Fire, Tick, Draw);

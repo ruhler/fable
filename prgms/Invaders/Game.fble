@@ -200,6 +200,17 @@ Game@ Initial = @(
     hit_bases.bases, g.aliens, hit_bases.bombs, g.ufo);
   Game@ g = g_;
 
+  # Check for bullet colliding with bases.
+  Game@ g_ = {
+    g.bullet.live.?(false: g);
+    Bases.HitResult@ hit = Bases.BulletHit(
+      g.bullet.x, Add(Bullet.Height, g.bullet.y), g.bases);
+    hit.hit.?(false: g);
+    Game@(g.score, g.level, g.lives, g.state, g.ship, Bullet.Initial,
+      hit.bases, g.aliens, g.bombs, g.ufo);
+  };
+  Game@ g = g_;
+
   # Check for a bomb colliding with the ship.
   Bombs.HitResult@ hit = Bombs.HitShip(g.bombs, g.ship.x);
   hit.hit.?(true: {
