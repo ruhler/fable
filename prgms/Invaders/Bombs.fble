@@ -22,6 +22,9 @@
 <@,@>% ForEach = /List%.ForEach;
 <@>% Length = /List/Length%.Length;
 
+% Bases = /Invaders/Bases%;
+@ Bases@ = Bases.Bases@;
+
 % Graphics = /Invaders/Graphics%;
 
 @ Unit@ = /Unit%.Unit@;
@@ -74,6 +77,24 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
   @(hit: True, bombs: bombs.cons.tail);
 };
 
+@ HitBasesResult@ = *(Bombs@ bombs, Bases@ bases);
+
+# HitBases --
+#   Update Bombs@ and Bases@ for any collisions between the two.
+(Bombs@, Bases@) { HitBasesResult@; }
+HitBases = (Bombs@ bombs, Bases@ bases) {
+  bombs.?(nil: @(bombs, bases));
+
+  HitBasesResult@ tail_hit = HitBases(bombs.cons.tail, bases);
+
+  Bomb@ bomb = bombs.cons.head;
+  Bases.HitResult@ hit = Bases.BombHit(bomb.x, bomb.y, tail_hit.bases);
+  Bombs@ nbombs = hit.hit.?(
+    true: tail_hit.bombs,
+    false: Cons<Bomb@>(bomb, tail_hit.bombs));
+  @(bombs: nbombs, bases: hit.bases);
+};
+
 (Bombs@) { Bombs@; } Tick = (Bombs@ bombs) {
   ForEach<Bomb@, Bombs@>(bombs, Nil<Bomb@>, (Bomb@ b, Bombs@ bs) {
     Int@ v = b.kind.?(bomb: BombVelocity, squiggle: SquiggleVelocity);
@@ -90,5 +111,6 @@ Fire = (Int@ x, Int@ y, Kind@ kind, Bombs@ bombs) {
   });
 };
 
-@(Bombs@, Kind@, HitResult@, Initial, Fire, HitShip, Tick, Draw);
+@(Bombs@, Kind@, HitResult@, HitBasesResult@,
+  Initial, Fire, HitShip, HitBases, Tick, Draw);
 

@@ -1,15 +1,20 @@
 
+* [/Graphics] Fix camera translation/focus/rotation issues.
+ - try drawing a plane of squares to get a better sense of if it's working or
+   not.
+ - need more precision for position, otherwise we can't update it by a small
+   amount after rotating.
+ - presumably we'll need to fix up the orthonormal matrix occasionally.
+
 * [/Graphics] Fix issues with inconsistent precision with line drawing.
    The same point should always be drawn at the same point.
-* [/Graphics] Figure out how to support rotation of the camera.
-   Given I'm using integer arithmetic.
+
 * Remove duplicate implementations of Abs
  - One is in /Int/Int%, another in /Int/Int/Eq%.
 
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 
 * [/Invaders%] Add the bases.
- - Detect collision between bases and bombs.
  - Detect collision between bases and bullets.
  - Detect collision between bases and aliens.
 * [/Invaders%] Add sound effects?

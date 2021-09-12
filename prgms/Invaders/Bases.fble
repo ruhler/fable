@@ -1,4 +1,8 @@
 
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
 % Color = /Drawing%.Color;
@@ -15,6 +19,8 @@
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
 
+<@>@ Maybe@ = /Maybe%.Maybe@;
+
 # Slice@ --
 #   The vertical range of a slice of base.
 @ Slice@ = *(Int@ min, Int@ max);
@@ -22,7 +28,7 @@
 # Damage --
 #   The number of pixels of a slice of base destroyed when hit by a bomb or a
 #   bullet.
-#Int@ Damage = Int|4;
+Int@ Damage = Int|4;
 
 # BaseY --
 #   The bottom Y coordinate of the bases.
@@ -35,6 +41,17 @@ Int@ BaseY = Int|36;
 # Empty --
 #   No bases.
 Bases@ Empty = /Map%.Empty<Int@, Slice@>;
+
+# Lookup --
+#   Look up a slice by X coordinate.
+(Bases@, Int@) { Maybe@<Slice@>; } Lookup = /Map%.Lookup<Int@>(Lt)<Slice@>;
+
+# Delete --
+#   Remove a slice by X coordinate.
+(Bases@, Int@) { Bases@; } Delete = /Map%.Delete<Int@>(Lt)<Slice@>;
+
+(Bases@, Int@, Slice@) { Bases@; } Insert = /Map%.Insert<Int@>(Lt)<Slice@>;
+  
 
 # BaseSpec --
 #   Specification for the shape of an individual base, relative to the lower
@@ -59,8 +76,6 @@ List@<Slice@> BaseSpec = List<Slice@>[
 #   coordinate.
 (Int@, List@<Slice@>, Bases@) { Bases@; }
 AddSlices = {
-  % Insert = /Map%.Insert<Int@>(Lt)<Slice@>;
-  
   (Int@ x, List@<Slice@> slices, Bases@ bases) {
     slices.?(nil: bases);
     Slice@ head = slices.cons.head;
@@ -82,6 +97,35 @@ AddSlices = {
   AddSlices(Int|227, BaseSpec, Empty))));
 };
 
+# HitResult@ --
+#   The result of hitting a base.
+#
+# Fields:
+#   hit: - True if the base was hit, false otherwise.
+#   bases - The state of the bases after being hit.
+@ HitResult@ = *(Bool@ hit, Bases@ bases);
+
+# BombHit --
+#   Check for and apply collision between bomb and bases.
+#
+# Inputs:
+#   x, y - the coordinates of the bomb.
+#   bases - the bases to check against.
+(Int@, Int@, Bases@) { HitResult@; }
+BombHit = (Int@ x, Int@ y, Bases@ bases) {
+  HitResult@ miss = HitResult@(False, bases);
+  Maybe@<Slice@> slice = Lookup(bases, x);
+  slice.?(nothing: miss);
+  Ge(y, slice.just.max).?(true: miss);
+  Int@ max = Sub(y, Damage);
+
+  Lt(slice.just.min, max).?(true: {
+    HitResult@(True, Insert(bases, x, Slice@(slice.just.min, max)));
+  });
+
+  HitResult@(True, Delete(bases, x));
+};
+
 # Draw --
 #   Draw the bases.
 (Bases@) { Drawing@; } Draw = {
@@ -94,4 +138,4 @@ AddSlices = {
   };
 };
 
-@(Bases@, Initial, Draw);
+@(Bases@, HitResult@, Initial, BombHit, Draw);
