@@ -25,7 +25,7 @@
 #   Describes the position and direction of the camera.
 #
 # Fields:
-#   pos - The position of the camera.
+#   pos - The position of the camera, scaled by the factor RotF.
 #   rot - Describes the rotation of the camera, as a matrix that rotates a
 #         point into the basis of the camera. The basis of the camera is:
 #           +x is to the right of the screen
@@ -58,10 +58,8 @@ Int@ RotF = Int|256;
 #   camera's current orientation.
 (Int@, Int@, Int@, Camera@) { Camera@; }
 Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
-  # TODO: Division by RotF means we loose too much precision for small values
-  # of x, y, and z to make any motion at all.
   Vec@ v_cam = Vec@(x, y, z);
-  Vec@ v_abs = DivVS(MulMV(Transpose(camera.rot), v_cam), RotF);
+  Vec@ v_abs = MulMV(Transpose(camera.rot), v_cam);
   Camera@(AddV(camera.pos, v_abs), camera.rot, camera.focus);
 };
 
@@ -92,7 +90,7 @@ Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
 (Camera@, Vec@) { Point@; }
 View = (Camera@ camera, Vec@ p) {
   # Put the camera at the origin.
-  Vec@ p_ = SubV(p, camera.pos); Vec@ p = p_;
+  Vec@ p_ = SubV(p, DivVS(camera.pos, RotF)); Vec@ p = p_;
 
   # Rotate the point around the origin/camera.
   Vec@ p_ = DivVS(MulMV(camera.rot, p), RotF); Vec@ p = p_;
