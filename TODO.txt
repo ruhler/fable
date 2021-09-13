@@ -1,9 +1,10 @@
 
 * [/Graphics] Fix camera translation/focus/rotation issues.
- - I think the rotation computation is messed up.
  - need more precision for position, otherwise we can't update it by a small
    amount after rotating.
  - presumably we'll need to fix up the orthonormal matrix occasionally.
+ - Figure out how to deal with the case where a point to view goes behind the
+   camera.
 
 * [/Graphics] Fix issues with inconsistent precision with line drawing.
    The same point should always be drawn at the same point.

@@ -116,8 +116,8 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
       s: Translate(Int|0, Int|0, Neg(Int|1), state),
       w: Translate(Int|0, Int|0, Int|1, state),
 
-      left: RotateY(True, state),
-      right: RotateY(False, state),
+      left: RotateY(False, state),
+      right: RotateY(True, state),
       : state);
     Run(in, draw, tick, new_state);
   });
