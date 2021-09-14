@@ -49,3 +49,57 @@ conditional control flow?
 * This would also open up the question of uninitialized values, which we may
   want to support now.
 
+---
+
+Exploration, not worrying about proc for now.
+
+A stmt either returns an expression or modifies values in the environment. It
+can't do both.
+
+stmt ::=
+   expr ';'
+     Returns the value of the expression in the environment.
+ | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
+     Same as normal let. Value of statement is value of body,
+     new variables shadow any existing ones.
+ | name '=' expr ';' 
+     Update the value of a variable the environment.
+ | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
+
+For union select, we want the body of a branch to be stmt instead of expr.
+Though expr could work as well. Which raises the question: what is it? A
+statement or an expression? We could force it to be a stmt by requiring it be
+a block.
+
+
+So, we want an option for { stmt } to modify it's outer context. So why can't
+an arbitrary expression modify its outer context? Then we have issues with
+order of operations.
+
+We want:
+  name '=' expr ';' stmt, to update a variable in place.
+
+We also want:
+  expr '.?(' name ':' { name '=' expr ';' stmt }, ...) to conditionally update
+  a variable.
+
+But how do we distinguish between { name '=' expr ';' stmt } and expr?
+
+Maybe we have something outside of the syntax do a check that says you can
+only modify a variable in a limited set of contexts.
+
+For example, in an expression that has a unique next statement to execute, or
+where there is no ambiguity about order of operations?
+
+For example, the following is fine:
+
+Foo@ foo = a;
+x.?(p: { foo = b; ... }, q: { foo = c; ... });
+
+But the following is not:
+Foo@ foo = a;
+f(x.?(p: { foo = b; ... }, q: { foo = c; ... }), x.?(p: { foo = c; ... }, ...))
+
+Because we don't know the order of operations. In other words, the validity of
+an expression depends on the context where it is used.
+

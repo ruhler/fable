@@ -1,10 +1,15 @@
 
+* [/Graphics] Fix issue with adjacent triangles having a gap between them.
+* Fix bad object refcount in case of Triangle div by zero when using the
+  original points a, b, c, instead of the sorted points a, b, c.
+
 * [/Graphics] Fix camera translation/focus/rotation issues.
- - need more precision for position, otherwise we can't update it by a small
-   amount after rotating.
  - presumably we'll need to fix up the orthonormal matrix occasionally.
  - Figure out how to deal with the case where a point to view goes behind the
    camera.
+ - Figure out why performance goes way slow when points get near the camera
+   Are we generating negative values that SDL is having trouble with, or is it
+   just a bigger triangle when we get closer?
 
 * [/Graphics] Fix issues with inconsistent precision with line drawing.
    The same point should always be drawn at the same point.

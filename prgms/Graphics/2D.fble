@@ -1,7 +1,5 @@
 
 @ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
 
 @ Drawing@ = /Drawing%.Drawing@;
 @ Color@ = /Drawing%.Color@;
@@ -19,6 +17,7 @@
 % Neg = /Int/Int%.Neg;
 % Mul = /Int/Int%.Mul;
 % Int = /Int/Int/Lit%.Int;
+% Eq = /Int/Int/Eq%.Eq;
 % Le = /Int/Int/Eq%.Le;
 % Lt = /Int/Int/Eq%.Lt;
 % Max = /Int/Int/Eq%.Max;
@@ -120,15 +119,21 @@ RightOf = (Point@ a, Point@ b, Point@ x) {
   Le(p, l);
 };
 
-# Enclosed --
-#   Return true if point 'x' is enclosed in the triangle described by points
-#   a, b, and c.
-(Point@, Point@, Point@, Point@) { Bool@; }
-Enclosed = (Point@ a, Point@ b, Point@ c, Point@ x) {
-  RightOf(a, b, x).?(false: False);
-  RightOf(b, c, x).?(false: False);
-  RightOf(c, a, x).?(false: False);
-  True;
+@ Sorted@ = *(Point@ 0, Point@ 1, Point@ 2);
+
+(Point@, Point@, Point@) { Sorted@; }
+SortByY = (Point@ a, Point@ b, Point@ c) {
+  Le(a.y, b.y).?(
+    true: Le(b.y, c.y).?(
+      true: Sorted@(a, b, c),
+      false: Le(a.y, c.y).?(
+        true: Sorted@(a, c, b),
+        false: Sorted@(c, a, b))),
+    false: Le(a.y, c.y).?(
+      true: Sorted@(b, a, c),
+      false: Le(b.y, c.y).?(
+        true: Sorted@(b, c, a),
+        false: Sorted@(c, b, a))));
 };
 
 # Triangle --
@@ -141,20 +146,46 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
   # If the points don't go around in clockwise order, there is nothing to do.
   RightOf(a, b, c).?(false: Blank);
 
-  Int@ x_min = Min(a.x, Min(b.x, c.x));
-  Int@ x_max = Max(a.x, Max(b.x, c.x));
-  Int@ y_min = Min(a.y, Min(b.y, c.y));
-  Int@ y_max = Max(a.y, Max(b.y, c.y));
+  Sorted@ s = SortByY(a, b, c);
+  Point@ a = s.0;
+  Point@ b = s.1;
+  Point@ c = s.2;
 
-  For<Int@, Drawing@>(Range(x_min, Add(Int|1, x_max)), Blank,
-    (Int@ x, Drawing@ d) {
-      For<Int@, Drawing@>(Range(y_min, Add(Int|1, y_max)), d,
-        (Int@ y, Drawing@ dd) {
-          Point@ p = Point@(x, y);
-          Enclosed(a, b, c, p).?(false: dd);
-          Over(dd, Point(p, color));
-        });
+  Drawing@ bottom = For<Int@, Drawing@>(Range(a.y, b.y), Blank,
+    (Int@ y, Drawing@ d) {
+      Int@ xb = Add(a.x, Div(Mul(Sub(y, a.y), Sub(b.x, a.x)), Sub(b.y, a.y)));
+      Int@ xc = Add(a.x, Div(Mul(Sub(y, a.y), Sub(c.x, a.x)), Sub(c.y, a.y)));
+      Int@ xmin = Min(xb, xc);
+      Int@ xmax = Max(xb, xc);
+      Over(d, Rect(xmin, y, Sub(xmax, xmin), Int|1, color));
     });
+
+  Drawing@ top = For<Int@, Drawing@>(Range(b.y, c.y), Blank,
+    (Int@ y, Drawing@ d) {
+      Int@ xa = Add(c.x, Div(Mul(Sub(c.y, y), Sub(a.x, c.x)), Sub(c.y, a.y)));
+      Int@ xb = Add(c.x, Div(Mul(Sub(c.y, y), Sub(b.x, c.x)), Sub(c.y, b.y)));
+      Int@ xmin = Min(xa, xb);
+      Int@ xmax = Max(xa, xb);
+      Over(d, Rect(xmin, y, Sub(xmax, xmin), Int|1, color));
+    });
+
+  Drawing@ extra = {
+    Eq(a.y, c.y).?(true: {
+      Int@ xmin = Min(a.x, c.x);
+      Int@ xmax = Max(a.x, c.x);
+      Rect(xmin, a.y, Sub(xmax, xmin), Int|1, color);
+    });
+
+    Eq(b.y, c.y).?(true: {
+      Int@ xmin = Min(b.x, c.x);
+      Int@ xmax = Max(b.x, c.x);
+      Rect(xmin, b.y, Sub(xmax, xmin), Int|1, color);
+    });
+
+    Blank;
+  };
+
+  Over(bottom, Over(top, extra));
 };
 
 @(Point@, Point, Line, Triangle);
