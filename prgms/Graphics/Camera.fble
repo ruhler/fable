@@ -5,7 +5,7 @@
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
-% Eq = /Int/Int/Eq%.Eq;
+% Le = /Int/Int/Eq%.Le;
 % Div = /Int/Int/Div%.Div;
 % Int = /Int/Int/Lit%.Int;
 
@@ -96,8 +96,8 @@ View = (Camera@ camera, Vec@ p) {
   Vec@ p_ = DivVS(MulMV(camera.rot, p), RotF); Vec@ p = p_;
 
   # Project onto the plane z = focus.
-  # TODO: How to handle the case when p.z <= 0?
-  Eq(Int|0, p.z).?(true: Point@(Int|0, Int|0));
+  # TODO: How to handle the case when the point is behind the camera?
+  Le(p.z, Int|0).?(true: Point@(Int|0, Int|0));
 
   Int@ a = camera.focus;
   Point@(

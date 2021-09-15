@@ -103,3 +103,159 @@ f(x.?(p: { foo = b; ... }, q: { foo = c; ... }), x.?(p: { foo = c; ... }, ...))
 Because we don't know the order of operations. In other words, the validity of
 an expression depends on the context where it is used.
 
+---
+
+For reference, here's the code I'm talking about:
+
+(Game@) { Game@; } Tick = (Game@ g) {
+  g.state.?(over: {
+    @(score: g.score, level: g.level, lives: g.lives,
+      state: State@(over: TickGameOver(g.state.over)), ship: g.ship,
+      bullet: g.bullet, bases: g.bases, aliens: g.aliens, bombs: g.bombs,
+      ufo: g.ufo);
+  });
+
+  g.state.?(leveling: {
+    Eq(Int|0, g.state.leveling).?(true: {
+      Int@ level = Add(Int|1, g.level);
+      @(score: g.score, level: level, lives: g.lives,
+        state: State@(defending: Unit), ship: Ship.Initial,
+        bullet: Bullet.Initial, bases: Bases.Initial(level),
+        aliens: Aliens.Initial(level), bombs: Bombs.Initial, ufo: g.ufo);
+    });
+
+    @(score: g.score, level: g.level, lives: g.lives,
+      state: State@(leveling: Sub(g.state.leveling, Int|1)), ship: g.ship,
+      bullet: g.bullet, bases: g.bases, aliens: g.aliens, bombs: g.bombs,
+      ufo: g.ufo);
+  });
+
+  g.state.?(dying: {
+    Eq(Int|0, g.state.dying).?(true: {
+      g.lives.?(0: {
+        Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet, g.bases,
+          g.aliens, g.bombs, g.ufo);
+      });
+
+      Game@(g.score, g.level, g.lives, State@(defending: Unit),
+        Ship.Revive(g.ship), Bullet.Initial, g.bases, g.aliens, Bombs.Initial,
+        g.ufo);
+    });
+
+    @(score: g.score, level: g.level, lives: g.lives,
+      state: State@(dying: Sub(g.state.dying, Int|1)),
+      ship: Ship.Tick(g.ship), bullet: g.bullet, bases: g.bases,
+      aliens: g.aliens, bombs: g.bombs, ufo: g.ufo);
+  });
+
+  Game@ g_ = Game@(g.score, g.level, g.lives, g.state,
+    Ship.Tick(g.ship), Bullet.Tick(g.bullet), g.bases,
+    Aliens.Tick(g.aliens), Bombs.Tick(g.bombs), Ufo.Tick(g.ufo));
+  Game@ g = g_;
+
+  # Check for bullet colliding with an alien.
+  Game@ g_ = {
+    g.bullet.live.?(false: g);
+    Maybe@<Aliens.Kill@> kill = Aliens.Shoot(g.bullet.x, g.bullet.y, g.aliens);
+    kill.?(nothing: g);
+    Game@(Add(kill.just.points, g.score), g.level, g.lives, g.state,
+      g.ship, Bullet.Initial, g.bases, kill.just.aliens, g.bombs, g.ufo);
+  };
+  Game@ g = g_;
+
+  # Check for bullet colliding with ufo.
+  Game@ g_ = {
+    g.bullet.live.?(false: g);
+    Maybe@<Ufo.Kill@> kill = Ufo.Shoot(g.bullet.x, g.bullet.y, g.ufo);
+    kill.?(nothing: g);
+    Game@(Add(kill.just.points, g.score), g.level, g.lives, g.state,
+      g.ship, Bullet.Initial, g.bases, g.aliens, g.bombs, kill.just.ufo);
+  };
+  Game@ g = g_;
+
+  # Check if all the aliens are dead.
+  Game@ g_ = {
+    Aliens.AllDead(g.aliens).?(false: g);
+    Game@(g.score, g.level, g.lives, State@(leveling: LevelingTime),
+      g.ship, g.bullet, g.bases, g.aliens, g.bombs, g.ufo);
+  };
+  Game@ g = g_;
+
+  # Check for bombs colliding with bases.
+  Bombs.HitBasesResult@ hit_bases = Bombs.HitBases(g.bombs, g.bases);
+  Game@ g_ = Game@(g.score, g.level, g.lives, g.state, g.ship, g.bullet,
+    hit_bases.bases, g.aliens, hit_bases.bombs, g.ufo);
+  Game@ g = g_;
+
+  # Check for bullet colliding with bases.
+  Game@ g_ = {
+    g.bullet.live.?(false: g);
+    Bases.HitResult@ hit = Bases.BulletHit(
+      g.bullet.x, Add(Bullet.Height, g.bullet.y), g.bases);
+    hit.hit.?(false: g);
+    Game@(g.score, g.level, g.lives, g.state, g.ship, Bullet.Initial,
+      hit.bases, g.aliens, g.bombs, g.ufo);
+  };
+  Game@ g = g_;
+
+  # Check for a bomb colliding with the ship.
+  Bombs.HitResult@ hit = Bombs.HitShip(g.bombs, g.ship.x);
+  hit.hit.?(true: {
+    Lives@ lives = g.lives.?(
+      0: Lives@(0: Unit),
+      1: Lives@(0: Unit),
+      2: Lives@(1: Unit),
+      3: Lives@(2: Unit));
+    Game@(g.score, g.level, lives, Dying,
+      Ship.Kill(g.ship), g.bullet, g.bases, g.aliens, hit.bombs, g.ufo);
+  });
+
+  # Fire bombs
+  Game@ g_ = {
+    Bombs@ nbombs = Aliens.FireBombs(g.aliens, g.bombs);
+    Game@(g.score, g.level, g.lives, g.state, g.ship, g.bullet, g.bases,
+      g.aliens, nbombs, g.ufo);
+  };
+  Game@ g = g_;
+
+  # Check if the aliens have invaded.
+  Game@ g_ = {
+    Aliens.Invaded(g.aliens).?(false: g);
+    Game@(g.score, g.level, g.lives, GameOver, g.ship, g.bullet, g.bases,
+      g.aliens, g.bombs, g.ufo);
+  };
+  Game@ g = g_;
+
+  g;
+};
+
+There are two things I really don't like about this:
+
+1. Having to list all the fields of Game@ when I only want to update a few of
+them. I wish we had some syntax to make that easier, like:
+
+   g(ship: ..., bullets: ...);
+
+Which would mean create a struct value with the initial contents identical to
+'g' except with ship and bullets modified. The reason I hesitate to do this is
+that it would hide the runtime cost of creating a copy of g.
+
+2. Having to switch between 'g' and 'g_' for names. I wish I could just reuse
+g everywhere. But that's hard to make sense of in a world where we support
+recursion.
+
+I was tempted to say this could be improved by extracting all the fields of G
+into local variables and being able to update local variables, but:
+* Extracting all the fields of G into local variables is a pain.
+* Being able to conditionally update local variables from within expressions
+  means we would want functions to be able to do the same thing, otherwise
+  they loose their ability to serve as faithful abstractions. And I'm pretty
+  sure I don't want functions to be able to arbitrarily modify the callers
+  environment.
+
+Perhaps a hack we could use for syntax for (2) is:
+
+Foo@ foo = (Foo@ foo) { Foo@(foo.a, foo.b); }(foo);
+
+That's not great.
+

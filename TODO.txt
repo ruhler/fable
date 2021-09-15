@@ -1,5 +1,11 @@
 
+* [/Graphics] Fix issues with inconsistent precision with line drawing.
+   The same point should always be drawn at the same point.
 * [/Graphics] Fix issue with adjacent triangles having a gap between them.
+* [/Graphics] Add a left to right scan version of Triangles and pick that if
+  the distance is shorter than bottom to top.
+* [/Graphics] I'm still not convinced rotation is working correctly.
+
 * Fix bad object refcount in case of Triangle div by zero when using the
   original points a, b, c, instead of the sorted points a, b, c.
 
@@ -11,8 +17,6 @@
    Are we generating negative values that SDL is having trouble with, or is it
    just a bigger triangle when we get closer?
 
-* [/Graphics] Fix issues with inconsistent precision with line drawing.
-   The same point should always be drawn at the same point.
 
 * Remove duplicate implementations of Abs
  - One is in /Int/Int%, another in /Int/Int/Eq%.
