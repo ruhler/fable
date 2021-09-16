@@ -9,8 +9,10 @@
 % Draw = /Drawing/Test%.Draw;
 
 % Point = /Graphics/2D%.Point;
+% Line = /Graphics/2D%.Line;
 
 % Int = /Int/Int/Lit%.Int;
+% Neg = /Int/Int%.Neg;
 
 <@>% List = /List%.List;
 
@@ -27,7 +29,67 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     /Drawing/Test%.AssertEquals(wnt, got);
-    }))
+  })),
+
+  Test(Str|'HorizontalLine', !({
+    Drawing@ drawing = Line(
+      Point@(Int|2, Int|3),
+      Point@(Int|4, Int|3), Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|2, Int|3, Color.Green),
+      Pixel@(Int|3, Int|3, Color.Green),
+      Pixel@(Int|4, Int|3, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'VerticalLine', !({
+    Drawing@ drawing = Line(
+      Point@(Int|2, Int|3),
+      Point@(Int|2, Int|5), Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|2, Int|3, Color.Green),
+      Pixel@(Int|2, Int|4, Color.Green),
+      Pixel@(Int|2, Int|5, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'DiagonalLine', !({
+    Drawing@ drawing = Line(
+      Point@(Int|2, Int|3),
+      Point@(Int|4, Int|5), Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|2, Int|3, Color.Green),
+      Pixel@(Int|3, Int|4, Color.Green),
+      Pixel@(Int|4, Int|5, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'NegativeLine', !({
+    Drawing@ drawing = Line(
+      Point@(Int|0, Int|0),
+      Point@(Neg(Int|2), Neg(Int|2)), Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Neg(Int|1), Neg(Int|1), Color.Green),
+      Pixel@(Neg(Int|2), Neg(Int|2), Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  }))
 ]);
 
 @(Tests);

@@ -1,6 +1,8 @@
 
 * [/Graphics] Fix issues with inconsistent precision with line drawing.
    The same point should always be drawn at the same point.
+   Debug failing test case.
+
 * [/Graphics] Fix issue with adjacent triangles having a gap between them.
 * [/Graphics] Add a left to right scan version of Triangles and pick that if
   the distance is shorter than bottom to top.
