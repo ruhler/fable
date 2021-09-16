@@ -1,0 +1,33 @@
+
+@ Drawing@ = /Drawing%.Drawing@;
+@ Point@ = /Drawing%.Point@;
+% Color = /Drawing%.Color;
+
+@ Drawn@ = /Drawing/Test%.Drawn@;
+@ Pixel@ = /Drawing/Test%.Pixel@;
+% Drawn = /Drawing/Test%.Drawn;
+% Draw = /Drawing/Test%.Draw;
+
+% Point = /Graphics/2D%.Point;
+
+% Int = /Int/Int/Lit%.Int;
+
+<@>% List = /List%.List;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+
+Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
+  Test(Str|'Point', !({
+    Drawing@ drawing = Point(Point@(Int|2, Int|5), Color.Green);
+    Drawn@ wnt = Drawn[Pixel@(Int|2, Int|5, Color.Green)];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+    }))
+]);
+
+@(Tests);
