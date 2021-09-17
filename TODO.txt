@@ -187,9 +187,6 @@ unique?
 * [/Fble/Test%] Clean up fble test framework
  - Use AssertEquals for more of the tests.
  - Properly test the test infra.
- - Add way to write 'skip' test and/or 'expect_fail' test?
-   For example, so we can have the fblf md5 tests, compile them, skip them
-   because they are too slow, and report on how many were skipped and why.
 * [/GameOfLife%] Switch to a target 60 FPS?
 * [/Hwdg%] Improve the API for describing a bunch of gates with modules.
 * [/Hwdg%] Add test case for nondeterministic/conflicting gates case.

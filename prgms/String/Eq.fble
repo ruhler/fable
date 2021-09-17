@@ -1,4 +1,8 @@
 
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
 @ Char@ = /Char%.Char@;
 <@>@ Eq@ = /Eq%.Eq@;
 @ String@ = /String%.String@;
@@ -7,4 +11,22 @@
 #   Implementation of Eq@ for String@. See documentation of /Eq%.Eq@.
 Eq@<String@> Eq = /List/Eq%.Eq<Char@>(/Char/Eq%.Eq);
 
-@(Eq);
+# StartsWith --
+#   Returns true if the string str starts with sub.
+(String@, String@) { Bool@; } StartsWith = (String@ str, String@ sub) {
+  sub.?(nil: True);
+  str.?(nil: False);
+  /Char/Eq%.Eq(str.cons.head, sub.cons.head).?(false: False);
+  StartsWith(str.cons.tail, sub.cons.tail);
+};
+
+# Contains --
+#   Returns true if the string str contains sub as a substring.
+(String@, String@) { Bool@; } Contains = (String@ str, String@ sub) {
+  sub.?(nil: True);
+  str.?(nil: False);
+  StartsWith(str, sub).?(true: True);
+  Contains(str.cons.tail, sub);
+};
+
+@(Eq, StartsWith, Contains);

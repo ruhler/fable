@@ -9,6 +9,7 @@
 @ Int@ = /Int/Int%.Int@;
 % 0 = /Int/Int%.0;
 % Inc = /Int/Int%.Inc;
+% Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 
 <@>@ List@ = /List%.List@;
@@ -24,11 +25,12 @@
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;
+% Strs = /String%.Strs;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-@ TestResult@ = +(Unit@ pass, String@ fail);
+@ TestResult@ = +(Unit@ pass, String@ fail, Unit@ xfail);
 @ TestCase@ = *(String@ name, TestResult@! test);
 @ TestSuite@ = *(String@ name, List@<Test@> tests),
 @ Test@ = +(TestCase@ case, TestSuite@ suite);
@@ -63,6 +65,21 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       Str|', but got: ', show(actual)])));
 };
 
+# ExpectFails --
+#   Change the test result to expected failure if the given test result is
+#   failing and msg is contained somewhere in the failure message.
+(TestResult@, String@) { TestResult@; }
+ExpectFails = (TestResult@ result, String@ msg) {
+  result.?(
+    pass: TestResult@(fail: Str|'Expected failure, but test passed'),
+    fail: /String/Eq%.Contains(result.fail, msg).?(
+      true: TestResult@(xfail: Unit),
+      false: TestResult@(fail: Strs[
+        Str|'Expected failure containing "', msg,
+        Str|'", but failed with "', result.fail, Str|'"'])),
+    xfail: TestResult@(fail: Str|'Expected failure, but was xfail'));
+};
+
 # Print a string to the given output stream.
 (Put@<String@>, String@) { Unit@!; } Print = (Put@<String@> out, String@ str) {
   out(str);
@@ -79,19 +96,21 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 
   # Run all the tests, given a list of tests that failed so far.
   # Returns the number of total tests executed and the list of failing tests.
-  @ Status@ = *(Int@ total, List@<Failure@> failures);
+  @ Status@ = *(Int@ total, Int@ xfails, List@<Failure@> failures);
   (Test@, String@, Status@) { Status@!; }
   Run = (Test@ test, String@ prefix, Status@ status) {
     test.?(
       case: {
         TestCase@ t = test.case;
         TestResult@ tr := t.test;
-        String@ short = tr.?(pass: Str|'.', fail: Str|'F');
+        String@ short = tr.?(pass: Str|'.', fail: Str|'F', xfail: Str|'X');
         Unit@ _ := out(short);
         List@<Failure@> nfailed = tr.?(
           pass: status.failures,
-          fail: Cons<Failure@>(Failure@(Append<Char@>(prefix, t.name), tr.fail), status.failures));
-        !(Status@(Inc(status.total), nfailed));
+          fail: Cons<Failure@>(Failure@(Append<Char@>(prefix, t.name), tr.fail), status.failures),
+          xfail: status.failures);
+        Int@ xfails = tr.?(xfail: Inc(status.xfails), : status.xfails);
+        !(Status@(Inc(status.total), xfails, nfailed));
       },
       suite: {
         String@ nprefix = Concat<Char@>(List<String@>[
@@ -103,7 +122,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
       });
   };
 
-  Status@ status := Run(test, Nil<Char@>, Status@(0, Nil<Failure@>));
+  Status@ status := Run(test, Nil<Char@>, Status@(0, 0, Nil<Failure@>));
   List@<Failure@> failures = status.failures;
 
   Unit@ _ := PrintLn(out, Nil<Char@>);
@@ -114,11 +133,13 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 
   Int@ num_total = status.total;
   Int@ num_failed = Length<Failure@>(failures);
-  Int@ num_passed = Sub(num_total, num_failed);
+  Int@ num_xfailed = status.xfails;
+  Int@ num_passed = Sub(num_total, Add(num_failed, num_xfailed));
   Unit@ _ := PrintLn(out, Concat<Char@>(List<String@>[
     Str|'Test Summary: ',
     /Int/Int/Show%.Show(num_passed), Str|' passed, ',
     /Int/Int/Show%.Show(num_failed), Str|' failed, ',
+    /Int/Int/Show%.Show(num_xfailed), Str|' expect failed, ',
     /Int/Int/Show%.Show(num_total), Str|' total'
   ]));
 
@@ -140,9 +161,11 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
             !(passing);
           },
           fail: {
-            Unit@ _ := PrintLn(
-              out,
-              Concat<Char@>(List<String@>[Str|': FAILED: ', tr.fail]));
+            Unit@ _ := PrintLn(out, Strs[Str|': FAILED: ', tr.fail]);
+            !(False);
+          },
+          xfail: {
+            Unit@ _ := PrintLn(out, Strs[Str|': EXPECT FAILED']);
             !(False);
           });
       },
@@ -161,4 +184,4 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 
 @(
   String@, TestResult@, Test@, TestSuite@, TestCase@,
-  AssertEquals, Test, TestSuite, RunTests, RunTestsVerbose);
+  AssertEquals, ExpectFails, Test, TestSuite, RunTests, RunTestsVerbose);

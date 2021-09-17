@@ -64,4 +64,42 @@ Times in the past I wished I have an fble debugger:
    (-1, -1) to (-3, -3), ideally by stepping through the code and viewing
    local variables at each step.
  
+---
+
+It doesn't look like gdb can easily support languages that are far different
+from C. Perhaps it's worth trying to develop a custom debugger for fble. I can
+avoid any overhead/dependency on gdb that way. But it also means I have to
+implement the entire thing myself.
+
+There are guides online for how to add a new language to gdb, which requires
+modifying the gdb source code. That includes ways to specify how to print
+types and expressions and how to parse types and expressions.
+
+Could we use dwarf to pretend we are executing C code, and encode structs and
+unions in a way that gdb can understand? Then at least for structs we could
+see all the fields, and for unions, perhaps we could see the names of tag?
+That's about as good as we could do anyway, right?
+
+Dealing with the stack will be challenging, given tail calls and the fact that
+the stack is managed. Perhaps it would be simpler if I finish implementing my
+plan to use native stacks. Or perhaps not.
+
+I'm thinking it is at least worth a try to emit dwarf information. In that
+process I'll see what we can encode in dwarf and how, and how useful gdb is in
+that case.
+
+Let's go a ways down this route and see where we get. Initial goals:
+* Be able to set break points and step through .fble files.
+* Be able to print data type values as structs/unions based on variables on
+  the stack.
+
+Don't worry about stack traces yet. And let's focus on debugging compiled
+code, which I suspect would be easier.
+
+What happens today if we try to run a compiled program and set a breakpoint
+based on an fble source file and line number? It says no such source file.
+
+The first step, then, should be to see how we can get my .fble files included
+in the list from 'info sources'. Let's download the dwarf spec and see how
+to start with that.
 
