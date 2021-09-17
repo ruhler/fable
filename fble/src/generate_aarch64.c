@@ -507,6 +507,29 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
 // * Outputs code to fout.
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr)
 {
+  // Emit dwarf location information for the instruction.
+  for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+    switch (op->tag) {
+      case FBLE_PROFILE_ENTER_OP: {
+        FbleBlockId block = op->block;
+        FbleName* name = &profile_blocks.xs[block];
+        fprintf(fout, "  .loc 1 %i %i\n", name->loc.line, name->loc.col + 1);
+        break;
+      }
+
+      case FBLE_PROFILE_REPLACE_OP: {
+        FbleBlockId block = op->block;
+        FbleName* name = &profile_blocks.xs[block];
+        fprintf(fout, "  .loc 1 %i %i\n", name->loc.line, name->loc.col + 1);
+        break;
+      }
+
+      case FBLE_PROFILE_EXIT_OP: {
+        break;
+      }
+    }
+  }
+
   fprintf(fout, "  cbz R_PROFILE, .L._Run_%p.%zi.postprofile\n", code, pc);
   fprintf(fout, "  bl rand\n");
   fprintf(fout, "  and w0, w0, #0x3ff\n");    // rand() % 1024
@@ -518,24 +541,27 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
   fprintf(fout, ".L._Run_%p.%zi.postsample:\n", code, pc);
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
     switch (op->tag) {
-      case FBLE_PROFILE_ENTER_OP:
+      case FBLE_PROFILE_ENTER_OP: {
         fprintf(fout, "  mov x0, R_PROFILE\n");
         fprintf(fout, "  mov x1, R_PROFILE_BASE_ID\n");
         fprintf(fout, "  add x1, x1, #%zi\n", op->block);
         fprintf(fout, "  bl FbleProfileEnterBlock\n");
         break;
+      }
 
-      case FBLE_PROFILE_REPLACE_OP:
+      case FBLE_PROFILE_REPLACE_OP: {
         fprintf(fout, "  mov x0, R_PROFILE\n");
         fprintf(fout, "  mov x1, R_PROFILE_BASE_ID\n");
         fprintf(fout, "  add x1, x1, #%zi\n", op->block);
         fprintf(fout, "  bl FbleProfileReplaceBlock\n");
         break;
+      }
 
-      case FBLE_PROFILE_EXIT_OP:
+      case FBLE_PROFILE_EXIT_OP: {
         fprintf(fout, "  mov x0, R_PROFILE\n");
         fprintf(fout, "  bl FbleProfileExitBlock\n");
         break;
+      }
     }
   }
 
@@ -1411,6 +1437,8 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   FbleVectorInit(locs);
 
   CollectBlocksAndLocs(&blocks, &locs, module->code);
+
+  fprintf(fout, "  .file 1 \"%s\"\n", module->path->loc.source->str);
 
   // Common things we hold in callee saved registers for Run and Abort
   // functions.

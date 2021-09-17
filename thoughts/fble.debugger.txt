@@ -103,3 +103,70 @@ The first step, then, should be to see how we can get my .fble files included
 in the list from 'info sources'. Let's download the dwarf spec and see how
 to start with that.
 
+---
+
+My sample assembly program passes the file using a '.file' assembly directive
+at the top of the generated assembly:
+
+.arch armv8-a
+.file "foo.c"
+
+Within the assembly, I also see directives of the form:
+
+.file 1 "foo.c"
+
+And:
+
+.loc 1 9 3
+.loc 1 13 12 discriminator 3
+.loc 1 13 12 is_stmt 0
+.loc 1 13 12 is_stmt 1
+
+My guess is what we need is:
+* .file 1 "foo.c" somewhere near the top of the generated assembly file.
+* .loc 1 <line> <col> for each line, and after the last line.
+
+What does the gnu assembly docs say about these?
+* The plain .file "foo.c" directive is deprecated
+* https://www.sourceware.org/binutils/docs/as/index.html seems to have decent
+  documentation of the directives.
+
+The .loc options are all related to the .debug_line state machine, which I can
+probably read about in the dwarf spec, page 151:
+
+* lines and cols start at '1'
+* is_stmt is a recommended breakpoint location
+* discriminator is used in case multiple blocks have the same line, column,
+  and file.
+
+My guess is I don't have to worry about any of the line number options.
+
+So, plan is simple:
+* At the top of the generated assembly, emit a .file 1 "foo.c" directive.
+* At the start of each emitted instruction, ...
+
+We have to decide and track somehow which code instructions should have line
+numbers associated with them. Or at least, which are starts of statements. We
+also need to start tracking line number information more generally in
+FbleInstr.
+
+I would say a statement is:
+* let bindings, branch of case expression, expression in a block or 'stmt'
+  form, union_select statement, function bind, proc_link, and proc_exec.
+
+Other things are not statements.
+
+Can we use our profiling block locations as statements? We already have that
+information available in the code block, and it has the location information.
+
+Let's try this: profile enter and profile replace emit locations which will
+correspond to statements. Try that.
+
+It works! I can now set breakpoints on .fble files. Stepping through doesn't
+work too well at this point, but it's a good start.
+
+Question also: the profile blocks are basic blocks, not statements. This means
+we'll skip over let expressions and things like that. It would be good if we
+could add statements there. Maybe we could add a fake kind of profile op to
+mark the beginning of a statement?
+
