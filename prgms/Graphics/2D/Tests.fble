@@ -31,6 +31,14 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
+  Test(Str|'NegativePoint', !({
+    Drawing@ drawing = Point(Point@(Neg(Int|2), Neg(Int|5)), Color.Green);
+    Drawn@ wnt = Drawn[Pixel@(Neg(Int|2), Neg(Int|5), Color.Green)];
+    Drawn@ got = Draw(drawing);
+
+    /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
   Test(Str|'HorizontalLine', !({
     Drawing@ drawing = Line(
       Point@(Int|2, Int|3),
@@ -76,20 +84,20 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
-  Test(Str|'NegativeLine', !({
+  Test(Str|'ReverseDiagonalLine', !({
     Drawing@ drawing = Line(
-      Point@(Int|0, Int|0),
-      Point@(Neg(Int|2), Neg(Int|2)), Color.Green);
+      Point@(Int|4, Int|5),
+      Point@(Int|2, Int|3), Color.Green);
 
     Drawn@ wnt = Drawn[
-      Pixel@(Int|0, Int|0, Color.Green),
-      Pixel@(Neg(Int|1), Neg(Int|1), Color.Green),
-      Pixel@(Neg(Int|2), Neg(Int|2), Color.Green)
+      Pixel@(Int|2, Int|3, Color.Green),
+      Pixel@(Int|3, Int|4, Color.Green),
+      Pixel@(Int|4, Int|5, Color.Green)
     ];
     Drawn@ got = Draw(drawing);
       
     # TODO: Not sure why this is failing yet. Need to debug.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'(-3, -3)');
+    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'(1, 2)');
   }))
 ]);
 

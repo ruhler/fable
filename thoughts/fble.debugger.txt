@@ -170,3 +170,24 @@ we'll skip over let expressions and things like that. It would be good if we
 could add statements there. Maybe we could add a fake kind of profile op to
 mark the beginning of a statement?
 
+---
+
+Note: Turn off -O3 when debugging to get better info, hopefully.
+
+How can I print the values of variables?
+
+Maybe to start, can we list the available variables somehow in gdb? Perhaps
+'info locals'?
+
+And also, typing 'next' in gdb doesn't work at all. Would be nice if I could
+fix that somehow. Perhaps because we don't have more statements in the same
+block, and so it doesn't know where the statement ends?
+
+Other things my sample assembly has:
+.cfi_startproc
+.cfi_def_cfa_offset 16
+.cfi_endproc
+
+And a .debug_info section.
+
+
