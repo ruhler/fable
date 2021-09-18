@@ -96,7 +96,13 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Not sure why this is failing yet. Need to debug.
+    # TODO: Fix this.
+    # The trouble is:
+    #  The point (0, 0) is represented as rect (0, 0, 1, 1).
+    #  Negate:  -(0, 0) represented as -(0, 0, 1, 1),
+    #            (0, 0) represented as (0, 0, -1, -1)
+    #                   represented as (-1, -1, 1, 1)
+    #  So, somehow we turned (0, 0) into (-1, -1).
     /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'(1, 2)');
   }))
 ]);

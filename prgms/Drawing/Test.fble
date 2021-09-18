@@ -90,8 +90,8 @@ Draw_ = {
 
         Int@ xmin = Lt(w, Int|0).?(true: Add(x, w), false: x);
         Int@ xmax = Lt(w, Int|0).?(true: x, false: Add(x, w));
-        Int@ ymin = Lt(h, Int|0).?(true: Add(y, w), false: y);
-        Int@ ymax = Lt(h, Int|0).?(true: y, false: Add(y, w));
+        Int@ ymin = Lt(h, Int|0).?(true: Add(y, h), false: y);
+        Int@ ymax = Lt(h, Int|0).?(true: y, false: Add(y, h));
 
         /Iter%.For<Int@, Drawn@>(Range(xmin, xmax), drawn, (Int@ x, Drawn@ d) {
           /Iter%.For<Int@, Drawn@>(Range(ymin, ymax), d, (Int@ y, Drawn@ d) {
