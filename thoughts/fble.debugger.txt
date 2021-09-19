@@ -63,6 +63,11 @@ Times in the past I wished I have an fble debugger:
  - Debug why drawing a line from (0, 0) to (-2, -2) actually draws a line from
    (-1, -1) to (-3, -3), ideally by stepping through the code and viewing
    local variables at each step.
+
+   Walked through the code by hand on pen and paper to see that the code was
+   doing exactly what I wanted it to, but what I wanted it to do was wrong.
+   Being able to step through the code and view values of variables as we go
+   would have been nicer than doing it on pen and paper.
  
 ---
 
@@ -190,4 +195,67 @@ Other things my sample assembly has:
 
 And a .debug_info section.
 
+---
+
+I finally read through the dwarf5 spec in sufficient detail. My summary of
+dwarf is:
+
+Debugging information is represented as a tree of nodes. Nodes describe things
+like programs, functions, call sites, declarations, etc. Each node has a tag
+describing the type of the node and a collection of key,value pairs which are
+attributes. The tree is flattened into a sequence of nodes stored in the
+.debug_info section.
+
+Along with the tree of nodes, there is a section for storing a mapping from
+line numbers to machine addresses, stored in .debug_lines. There is also a
+section for call frame information, stored in .debug_frame, that describes how
+to unwind the stack and restore registers appropriately.
+
+My guess is that the gnu assembler generates the .debug_lines section for me
+based on my .loc directives, and it would generate the .debug_frames section
+for me too if I add relevant cfi directives. I'll have to write the
+.debug_info tree myself.
+
+The dwarf spec has an appendix showing what all attributes you could expect
+for various node types in the tree. I don't know what information gdb needs
+for specific features, such as going to the next statement. But presumably if
+I try to fill out the debug information tree with as much information as I
+reasonably can that seems related, eventually I'll get to a place where gdb
+can do good things.
+
+Note that dwarf5 does support tagged unions. I think they call them variants.
+
+What approach should I take for adding dwarf support? I would like to do it
+well and complete. Not just hacky like I have so far. For example, statements
+should include all the statements, not just the beginnings of blocks. Then it
+should be fairly straight forward I think: start with a minimal compilation
+unit debug tree, then slowly and recursively add more attributes until we get
+to a place we are happy with.
+
+A big challenge will be figuring out how to write tests for the generated
+debug info.
+
+Maybe libdwarf will be useful? Looks like it can do some sanity checks, and
+dump to human readable format. So I could at least craft a particular .fble
+file, dump the dwarf for it, and verify it has all the statements and
+variables and types and such? Or perhaps objdump has some support?
+
+dwarf.h and libdwarf.h exist on my computer, defining a bunch of the dwarf
+contents. That will be useful.
+
+For example, try objdump with --dwarf and see what it outputs. And it has
+a --dwarf-check option too.
+
+It looks like the assembler is generating a compilation unit entry for me. It
+also says it is emitting dwarf2. Maybe I should start by generating dwarf2,
+which is perhaps more widely supported than dwarf5 and simpler?
+
+I think first step is to pick some attribute I want to add to the compilation
+unit node. Figure out how to add that in the assembler. Next step is to figure
+out how to add a broken attribute value and use objdump or dwarfdump to catch
+the error. Then set up a dwarf test case that runs as part of build.
+
+Once I have the infrastructure up and running to test dwarf, I guess I can
+slowly start adding dwarf. For now we can just check for consistency in the
+generated dwarf code.
 

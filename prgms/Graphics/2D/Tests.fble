@@ -8,11 +8,9 @@
 % Drawn = /Drawing/Test%.Drawn;
 % Draw = /Drawing/Test%.Draw;
 
-% Point = /Graphics/2D%.Point;
-% Line = /Graphics/2D%.Line;
+% Triangle = /Graphics/2D%.Triangle;
 
 % Int = /Int/Int/Lit%.Int;
-% Neg = /Int/Int%.Neg;
 
 <@>% List = /List%.List;
 
@@ -23,87 +21,23 @@
 % TestSuite = /Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
-  Test(Str|'Point', !({
-    Drawing@ drawing = Point(Point@(Int|2, Int|5), Color.Green);
-    Drawn@ wnt = Drawn[Pixel@(Int|2, Int|5, Color.Green)];
-    Drawn@ got = Draw(drawing);
-      
-    /Drawing/Test%.AssertEquals(wnt, got);
-  })),
-
-  Test(Str|'NegativePoint', !({
-    Drawing@ drawing = Point(Point@(Neg(Int|2), Neg(Int|5)), Color.Green);
-    Drawn@ wnt = Drawn[Pixel@(Neg(Int|2), Neg(Int|5), Color.Green)];
-    Drawn@ got = Draw(drawing);
-
-    /Drawing/Test%.AssertEquals(wnt, got);
-  })),
-
-  Test(Str|'HorizontalLine', !({
-    Drawing@ drawing = Line(
-      Point@(Int|2, Int|3),
-      Point@(Int|4, Int|3), Color.Green);
+  Test(Str|'Basic', !({
+    Drawing@ drawing = Triangle(
+      Point@(Int|0, Int|0),
+      Point@(Int|0, Int|3),
+      Point@(Int|3, Int|0), Color.Green);
 
     Drawn@ wnt = Drawn[
-      Pixel@(Int|2, Int|3, Color.Green),
-      Pixel@(Int|3, Int|3, Color.Green),
-      Pixel@(Int|4, Int|3, Color.Green)
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|0, Int|2, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green),
+      Pixel@(Int|1, Int|1, Color.Green),
+      Pixel@(Int|2, Int|0, Color.Green)
     ];
     Drawn@ got = Draw(drawing);
       
     /Drawing/Test%.AssertEquals(wnt, got);
-  })),
-
-  Test(Str|'VerticalLine', !({
-    Drawing@ drawing = Line(
-      Point@(Int|2, Int|3),
-      Point@(Int|2, Int|5), Color.Green);
-
-    Drawn@ wnt = Drawn[
-      Pixel@(Int|2, Int|3, Color.Green),
-      Pixel@(Int|2, Int|4, Color.Green),
-      Pixel@(Int|2, Int|5, Color.Green)
-    ];
-    Drawn@ got = Draw(drawing);
-      
-    /Drawing/Test%.AssertEquals(wnt, got);
-  })),
-
-  Test(Str|'DiagonalLine', !({
-    Drawing@ drawing = Line(
-      Point@(Int|2, Int|3),
-      Point@(Int|4, Int|5), Color.Green);
-
-    Drawn@ wnt = Drawn[
-      Pixel@(Int|2, Int|3, Color.Green),
-      Pixel@(Int|3, Int|4, Color.Green),
-      Pixel@(Int|4, Int|5, Color.Green)
-    ];
-    Drawn@ got = Draw(drawing);
-      
-    /Drawing/Test%.AssertEquals(wnt, got);
-  })),
-
-  Test(Str|'ReverseDiagonalLine', !({
-    Drawing@ drawing = Line(
-      Point@(Int|4, Int|5),
-      Point@(Int|2, Int|3), Color.Green);
-
-    Drawn@ wnt = Drawn[
-      Pixel@(Int|2, Int|3, Color.Green),
-      Pixel@(Int|3, Int|4, Color.Green),
-      Pixel@(Int|4, Int|5, Color.Green)
-    ];
-    Drawn@ got = Draw(drawing);
-      
-    # TODO: Fix this.
-    # The trouble is:
-    #  The point (0, 0) is represented as rect (0, 0, 1, 1).
-    #  Negate:  -(0, 0) represented as -(0, 0, 1, 1),
-    #            (0, 0) represented as (0, 0, -1, -1)
-    #                   represented as (-1, -1, 1, 1)
-    #  So, somehow we turned (0, 0) into (-1, -1).
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'(1, 2)');
   }))
 ]);
 
