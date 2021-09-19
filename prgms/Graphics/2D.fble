@@ -13,7 +13,6 @@
 % Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
 % Int = /Int/Int/Lit%.Int;
-% Eq = /Int/Int/Eq%.Eq;
 % Le = /Int/Int/Eq%.Le;
 % Max = /Int/Int/Eq%.Max;
 % Min = /Int/Int/Eq%.Min;
@@ -88,23 +87,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
       Over(d, Rect(xmin, y, Sub(xmax, xmin), Int|1, color));
     });
 
-  Drawing@ extra = {
-    Eq(a.y, c.y).?(true: {
-      Int@ xmin = Min(a.x, c.x);
-      Int@ xmax = Max(a.x, c.x);
-      Rect(xmin, a.y, Sub(xmax, xmin), Int|1, color);
-    });
-
-    Eq(b.y, c.y).?(true: {
-      Int@ xmin = Min(b.x, c.x);
-      Int@ xmax = Max(b.x, c.x);
-      Rect(xmin, b.y, Sub(xmax, xmin), Int|1, color);
-    });
-
-    Blank;
-  };
-
-  Over(bottom, Over(top, extra));
+  Over(bottom, top);
 };
 
 @(Point@, Triangle);
