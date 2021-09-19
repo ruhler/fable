@@ -1,6 +1,3 @@
-
-* [/Graphics] Figure out which pixels on the edge of a triangle to include.
-* [/Graphics] Fix issue with adjacent triangles having a gap between them.
 * [/Graphics] Add a left to right scan version of Triangles and pick that if
   the distance is shorter than bottom to top.
 * [/Graphics] I'm still not convinced rotation is working correctly.

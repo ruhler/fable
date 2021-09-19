@@ -54,6 +54,32 @@ SortByY = (Point@ a, Point@ b, Point@ c) {
         false: Sorted@(c, b, a))));
 };
 
+# XFromY --
+#   Given a line from point a to point b, and a value y
+#   in the range [a.y, b.y), compute the value of x on the line cooresponding
+#   to that value y.
+#
+# Requirement: a.y < b.y.
+(Point@, Point@)(Int@) { Int@; } XFromY = (Point@ a, Point@ b) {
+  # Our goal is to compute the value of 'x' as a function of 'y' in such a
+  # way that:
+  # * We factor out common terms used for different values of y, to improve
+  #   performance of repeated calls to this function.
+  # * We do one big division at the end, so that rounding is independent
+  #   of whatever frame of reference we use.
+  #
+  # In other words, we compute:
+  #   x = (d*y + e)/f 
+  # With appropriate choice of constants d, e, and f.
+  Int@ d = Sub(b.x, a.x);
+  Int@ e = Sub(Mul(a.x, b.y), Mul(a.y, b.x));
+  Int@ f = Sub(b.y, a.y);
+
+  (Int@ y) {
+    Div(Add(Mul(d, y), e), f);
+  };
+};
+
 # Triangle --
 #   Draw a filled triangle between the points a, b, and c.
 #
@@ -69,23 +95,31 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
   Point@ b = s.1;
   Point@ c = s.2;
 
-  Drawing@ bottom = For<Int@, Drawing@>(Range(a.y, b.y), Blank,
+  Drawing@ bottom = For<Int@, Drawing@>(Range(a.y, b.y), Blank, { 
+    (Int@) { Int@; } Fxb = XFromY(a, b);
+    (Int@) { Int@; } Fxc = XFromY(a, c);
+
     (Int@ y, Drawing@ d) {
-      Int@ xb = Add(a.x, Div(Mul(Sub(y, a.y), Sub(b.x, a.x)), Sub(b.y, a.y)));
-      Int@ xc = Add(a.x, Div(Mul(Sub(y, a.y), Sub(c.x, a.x)), Sub(c.y, a.y)));
+      Int@ xb = Fxb(y);
+      Int@ xc = Fxc(y);
       Int@ xmin = Min(xb, xc);
       Int@ xmax = Max(xb, xc);
       Over(d, Rect(xmin, y, Sub(xmax, xmin), Int|1, color));
-    });
+    };
+  });
 
-  Drawing@ top = For<Int@, Drawing@>(Range(b.y, c.y), Blank,
+  Drawing@ top = For<Int@, Drawing@>(Range(b.y, c.y), Blank, {
+    (Int@) { Int@; } Fxa = XFromY(a, c);
+    (Int@) { Int@; } Fxb = XFromY(b, c);
+
     (Int@ y, Drawing@ d) {
-      Int@ xa = Add(c.x, Div(Mul(Sub(c.y, y), Sub(a.x, c.x)), Sub(c.y, a.y)));
-      Int@ xb = Add(c.x, Div(Mul(Sub(c.y, y), Sub(b.x, c.x)), Sub(c.y, b.y)));
+      Int@ xa = Fxa(y);
+      Int@ xb = Fxb(y);
       Int@ xmin = Min(xa, xb);
       Int@ xmax = Max(xa, xb);
       Over(d, Rect(xmin, y, Sub(xmax, xmin), Int|1, color));
-    });
+    };
+  });
 
   Over(bottom, top);
 };

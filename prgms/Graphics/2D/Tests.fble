@@ -2,6 +2,7 @@
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
 % Color = /Drawing%.Color;
+% Drawings = /Drawing%.Drawings;
 
 @ Drawn@ = /Drawing/Test%.Drawn@;
 @ Pixel@ = /Drawing/Test%.Pixel@;
@@ -27,6 +28,7 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
       Point@(Int|0, Int|3),
       Point@(Int|3, Int|0), Color.Green);
 
+    # Points on the diagonal are included, because of the negative slope.
     Drawn@ wnt = Drawn[
       Pixel@(Int|0, Int|0, Color.Green),
       Pixel@(Int|0, Int|1, Color.Green),
@@ -46,53 +48,36 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
       Point@(Int|0, Int|3),
       Point@(Int|3, Int|3), Color.Green);
 
+    # Points on the diagonal are excluded because of the positive slope.
     Drawn@ wnt = Drawn[
-      Pixel@(Int|0, Int|0, Color.Green),
       Pixel@(Int|0, Int|1, Color.Green),
       Pixel@(Int|0, Int|2, Color.Green),
-      Pixel@(Int|1, Int|1, Color.Green),
-      Pixel@(Int|1, Int|2, Color.Green),
-      Pixel@(Int|2, Int|2, Color.Green)
+      Pixel@(Int|1, Int|2, Color.Green)
     ];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Figure out whether we should draw pixels on the diagonal or not.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+    /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
-  Test(Str|'Upper Right Right Triangle', !({
-    Drawing@ drawing = Triangle(
-      Point@(Int|0, Int|3),
-      Point@(Int|3, Int|3),
-      Point@(Int|3, Int|0), Color.Green);
-
-    Drawn@ wnt = Drawn[
-      Pixel@(Int|0, Int|2, Color.Green),
-      Pixel@(Int|1, Int|1, Color.Green),
-      Pixel@(Int|1, Int|2, Color.Green),
-      Pixel@(Int|2, Int|0, Color.Green),
-      Pixel@(Int|2, Int|1, Color.Green),
-      Pixel@(Int|2, Int|2, Color.Green)
+  Test(Str|'Adjacent Gap', !({
+    # Regression test for an issue with rounding we had in the past where two
+    # adjacent triangles could have a gap between them because we were using
+    # inconsistent rounding.
+    Drawing@ drawing = Drawings[
+      Triangle(
+        Point@(Int|0, Int|0),
+        Point@(Int|0, Int|2),
+        Point@(Int|1, Int|0), Color.Green),
+      Triangle(
+        Point@(Int|1, Int|0),
+        Point@(Int|0, Int|2),
+        Point@(Int|1, Int|2), Color.Red)
     ];
-    Drawn@ got = Draw(drawing);
-      
-    # TODO: Figure out whether we should draw pixels on the diagonal or not.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
-  })),
 
-  Test(Str|'Lower Right Right Triangle', !({
-    Drawing@ drawing = Triangle(
-      Point@(Int|0, Int|0),
-      Point@(Int|3, Int|3),
-      Point@(Int|3, Int|0), Color.Green);
-
+    # Verify there is no gap between the two triangles.
     Drawn@ wnt = Drawn[
       Pixel@(Int|0, Int|0, Color.Green),
-      Pixel@(Int|1, Int|0, Color.Green),
-      Pixel@(Int|1, Int|1, Color.Green),
-      Pixel@(Int|2, Int|0, Color.Green),
-      Pixel@(Int|2, Int|1, Color.Green),
-      Pixel@(Int|2, Int|2, Color.Green)
+      Pixel@(Int|0, Int|1, Color.Red)
     ];
     Drawn@ got = Draw(drawing);
       
