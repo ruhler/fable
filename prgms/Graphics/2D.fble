@@ -124,4 +124,4 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
   Over(bottom, top);
 };
 
-@(Point@, Triangle);
+@(Triangle);

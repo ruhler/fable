@@ -14,8 +14,6 @@
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 
-% Triangle = /Graphics/2D%.Triangle;
-
 @ Vec@ = /Graphics/3D%.Vec@;
 
 @ Camera@ = /Graphics/Camera%.Camera@;
@@ -23,7 +21,8 @@
 % Translate = /Graphics/Camera%.Translate;
 % RotateY = /Graphics/Camera%.RotateY;
 % Focus = /Graphics/Camera%.Focus;
-% View = /Graphics/Camera%.View;
+% Triangle = /Graphics/Camera%.Triangle;
+% Vertex = /Graphics/Camera%.Vertex;
 
 @ Int@ = /Int/Int%.Int@;
 % Neg = /Int/Int%.Neg;
@@ -41,57 +40,57 @@
 State@ Initial = Camera(Int|10);
 
 (State@) { Drawing@; } Draw = (State@ camera) {
-  Point@ 00 = View(camera, Vec@(Int|0, Neg(Int|10), Int|20));
-  Point@ 10 = View(camera, Vec@(Int|5, Neg(Int|10), Int|20));
-  Point@ 20 = View(camera, Vec@(Int|10, Neg(Int|10), Int|20));
-  Point@ 30 = View(camera, Vec@(Int|15, Neg(Int|10), Int|20));
-  Point@ 40 = View(camera, Vec@(Int|20, Neg(Int|10), Int|20));
+  Vec@ 00 = Vertex(camera, Vec@(Int|0, Neg(Int|10), Int|20));
+  Vec@ 10 = Vertex(camera, Vec@(Int|5, Neg(Int|10), Int|20));
+  Vec@ 20 = Vertex(camera, Vec@(Int|10, Neg(Int|10), Int|20));
+  Vec@ 30 = Vertex(camera, Vec@(Int|15, Neg(Int|10), Int|20));
+  Vec@ 40 = Vertex(camera, Vec@(Int|20, Neg(Int|10), Int|20));
 
-  Point@ 01 = View(camera, Vec@(Int|0, Neg(Int|10), Int|25));
-  Point@ 11 = View(camera, Vec@(Int|5, Neg(Int|10), Int|25));
-  Point@ 21 = View(camera, Vec@(Int|10, Neg(Int|10), Int|25));
-  Point@ 31 = View(camera, Vec@(Int|15, Neg(Int|10), Int|25));
-  Point@ 41 = View(camera, Vec@(Int|20, Neg(Int|10), Int|25));
+  Vec@ 01 = Vertex(camera, Vec@(Int|0, Neg(Int|10), Int|25));
+  Vec@ 11 = Vertex(camera, Vec@(Int|5, Neg(Int|10), Int|25));
+  Vec@ 21 = Vertex(camera, Vec@(Int|10, Neg(Int|10), Int|25));
+  Vec@ 31 = Vertex(camera, Vec@(Int|15, Neg(Int|10), Int|25));
+  Vec@ 41 = Vertex(camera, Vec@(Int|20, Neg(Int|10), Int|25));
 
-  Point@ 02 = View(camera, Vec@(Int|0, Neg(Int|10), Int|30));
-  Point@ 12 = View(camera, Vec@(Int|5, Neg(Int|10), Int|30));
-  Point@ 22 = View(camera, Vec@(Int|10, Neg(Int|10), Int|30));
-  Point@ 32 = View(camera, Vec@(Int|15, Neg(Int|10), Int|30));
-  Point@ 42 = View(camera, Vec@(Int|20, Neg(Int|10), Int|30));
+  Vec@ 02 = Vertex(camera, Vec@(Int|0, Neg(Int|10), Int|30));
+  Vec@ 12 = Vertex(camera, Vec@(Int|5, Neg(Int|10), Int|30));
+  Vec@ 22 = Vertex(camera, Vec@(Int|10, Neg(Int|10), Int|30));
+  Vec@ 32 = Vertex(camera, Vec@(Int|15, Neg(Int|10), Int|30));
+  Vec@ 42 = Vertex(camera, Vec@(Int|20, Neg(Int|10), Int|30));
 
-  Point@ 03 = View(camera, Vec@(Int|0, Neg(Int|10), Int|35));
-  Point@ 13 = View(camera, Vec@(Int|5, Neg(Int|10), Int|35));
-  Point@ 23 = View(camera, Vec@(Int|10, Neg(Int|10), Int|35));
-  Point@ 33 = View(camera, Vec@(Int|15, Neg(Int|10), Int|35));
-  Point@ 43 = View(camera, Vec@(Int|20, Neg(Int|10), Int|35));
+  Vec@ 03 = Vertex(camera, Vec@(Int|0, Neg(Int|10), Int|35));
+  Vec@ 13 = Vertex(camera, Vec@(Int|5, Neg(Int|10), Int|35));
+  Vec@ 23 = Vertex(camera, Vec@(Int|10, Neg(Int|10), Int|35));
+  Vec@ 33 = Vertex(camera, Vec@(Int|15, Neg(Int|10), Int|35));
+  Vec@ 43 = Vertex(camera, Vec@(Int|20, Neg(Int|10), Int|35));
 
   Drawings[
-    Triangle(00, 01, 10, Color.Red),
-    Triangle(10, 01, 11, Color.Green),
-    Triangle(10, 11, 20, Color.Red),
-    Triangle(20, 11, 21, Color.Green),
-    Triangle(20, 21, 30, Color.Red),
-    Triangle(30, 21, 31, Color.Green),
-    Triangle(30, 31, 40, Color.Red),
-    Triangle(40, 31, 41, Color.Green),
+    Triangle(camera, 00, 01, 10, Color.Red),
+    Triangle(camera, 10, 01, 11, Color.Green),
+    Triangle(camera, 10, 11, 20, Color.Red),
+    Triangle(camera, 20, 11, 21, Color.Green),
+    Triangle(camera, 20, 21, 30, Color.Red),
+    Triangle(camera, 30, 21, 31, Color.Green),
+    Triangle(camera, 30, 31, 40, Color.Red),
+    Triangle(camera, 40, 31, 41, Color.Green),
 
-    Triangle(01, 02, 11, Color.Red),
-    Triangle(11, 02, 12, Color.Green),
-    Triangle(11, 12, 21, Color.Red),
-    Triangle(21, 12, 22, Color.Green),
-    Triangle(21, 22, 31, Color.Red),
-    Triangle(31, 22, 32, Color.Green),
-    Triangle(31, 32, 41, Color.Red),
-    Triangle(41, 32, 42, Color.Green),
+    Triangle(camera, 01, 02, 11, Color.Red),
+    Triangle(camera, 11, 02, 12, Color.Green),
+    Triangle(camera, 11, 12, 21, Color.Red),
+    Triangle(camera, 21, 12, 22, Color.Green),
+    Triangle(camera, 21, 22, 31, Color.Red),
+    Triangle(camera, 31, 22, 32, Color.Green),
+    Triangle(camera, 31, 32, 41, Color.Red),
+    Triangle(camera, 41, 32, 42, Color.Green),
 
-    Triangle(02, 03, 12, Color.Red),
-    Triangle(12, 03, 13, Color.Green),
-    Triangle(12, 13, 22, Color.Red),
-    Triangle(22, 13, 23, Color.Green),
-    Triangle(22, 23, 32, Color.Red),
-    Triangle(32, 23, 33, Color.Green),
-    Triangle(32, 33, 42, Color.Red),
-    Triangle(42, 33, 43, Color.Green)
+    Triangle(camera, 02, 03, 12, Color.Red),
+    Triangle(camera, 12, 03, 13, Color.Green),
+    Triangle(camera, 12, 13, 22, Color.Red),
+    Triangle(camera, 22, 13, 23, Color.Green),
+    Triangle(camera, 22, 23, 32, Color.Red),
+    Triangle(camera, 32, 23, 33, Color.Green),
+    Triangle(camera, 32, 33, 42, Color.Red),
+    Triangle(camera, 42, 33, 43, Color.Green)
   ];
 };
 

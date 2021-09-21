@@ -12,7 +12,7 @@ ninja:
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja out/bin/fble-tests
+	ninja -f out/build.ninja out/bin/fble-graphics
 
 .PHONY: all
 all: out/build.ninja

@@ -1,6 +1,11 @@
 
 @ Bool@ = /Bool%.Bool@;
 
+@ Drawing@ = /Drawing%.Drawing@;
+@ Point@ = /Drawing%.Point@;
+@ Color@ = /Drawing%.Color@;
+% Blank = /Drawing%.Blank;
+
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
@@ -8,8 +13,6 @@
 % Le = /Int/Int/Eq%.Le;
 % Div = /Int/Int/Div%.Div;
 % Int = /Int/Int/Lit%.Int;
-
-@ Point@ = /Graphics/2D%.Point@;
 
 @ Mat@ = /Graphics/3D%.Mat@;
 @ Vec@ = /Graphics/3D%.Vec@;
@@ -85,25 +88,45 @@ Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
   Camera@(camera.pos, camera.rot, Add(camera.focus, focus));
 };
 
-# View --
-#   Convert a 3D point to where it would be viewed by the camera.
-(Camera@, Vec@) { Point@; }
-View = (Camera@ camera, Vec@ p) {
+# Vertex --
+#   Create a vertex out of a 3D point given the current camera.
+#
+# Maps from world coordinates to camera coordinates before projection to the
+# screen.
+(Camera@, Vec@) { Vec@; }
+Vertex = (Camera@ camera, Vec@ p) {
   # Put the camera at the origin.
   Vec@ p_ = SubV(p, DivVS(camera.pos, RotF)); Vec@ p = p_;
 
   # Rotate the point around the origin/camera.
-  Vec@ p_ = DivVS(MulMV(camera.rot, p), RotF); Vec@ p = p_;
-
-  # Project onto the plane z = focus.
-  # TODO: How to handle the case when the point is behind the camera?
-  Le(p.z, Int|0).?(true: Point@(Int|0, Int|0));
-
-  Int@ a = camera.focus;
-  Point@(
-    Div(Mul(a, p.x), p.z),
-    Div(Mul(a, p.y), p.z));
+  DivVS(MulMV(camera.rot, p), RotF);
 };
 
-@(Camera@, Camera, Translate, RotateY, Focus, View);
+# Triangle --
+#   Draw a triangle from the point of view of a camera.
+#
+# The input points should all be from calling Vertex with the same camera.
+# That is, the input points are relative to the position and orientation of
+# the camera.
+(Camera@, Vec@, Vec@, Vec@, Color@) { Drawing@; }
+Triangle = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
+  # TODO: Clip properly if any of the points are behind the camera.
+  Le(a.z, Int|0).?(true: Blank);
+  Le(b.z, Int|0).?(true: Blank);
+  Le(c.z, Int|0).?(true: Blank);
+
+  # Project the points onto the plane z = focus.
+  Point@ a_ = Point@(
+    Div(Mul(camera.focus, a.x), a.z),
+    Div(Mul(camera.focus, a.y), a.z));
+  Point@ b_ = Point@(
+    Div(Mul(camera.focus, b.x), b.z),
+    Div(Mul(camera.focus, b.y), b.z));
+  Point@ c_ = Point@(
+    Div(Mul(camera.focus, c.x), c.z),
+    Div(Mul(camera.focus, c.y), c.z));
+  /Graphics/2D%.Triangle(a_, b_, c_, color);
+};
+
+@(Camera@, Camera, Translate, RotateY, Focus, Vertex, Triangle);
 

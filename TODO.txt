@@ -1,18 +1,16 @@
+* [/Graphics] Add support for clipping.
+
+* [/Graphics] Clean up the orthonormal matrix occasionally?
+
+* [/Graphics] Figure out how to improve performance of drawing triangles.
+ - We should be able to generate the points on a line incrementally
+   without use of division instead of dividing each time.
+
 * [/Graphics] Add a left to right scan version of Triangles and pick that if
   the distance is shorter than bottom to top.
-* [/Graphics] I'm still not convinced rotation is working correctly.
 
 * Fix bad object refcount in case of Triangle div by zero when using the
   original points a, b, c, instead of the sorted points a, b, c.
-
-* [/Graphics] Fix camera translation/focus/rotation issues.
- - presumably we'll need to fix up the orthonormal matrix occasionally.
- - Figure out how to deal with the case where a point to view goes behind the
-   camera.
- - Figure out why performance goes way slow when points get near the camera
-   Are we generating negative values that SDL is having trouble with, or is it
-   just a bigger triangle when we get closer?
-
 
 * Remove duplicate implementations of Abs
  - One is in /Int/Int%, another in /Int/Int/Eq%.
