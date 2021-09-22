@@ -1,4 +1,9 @@
 * [/Graphics] Add support for clipping.
+ - Think again about what plane we should use for clipping.
+ - Figure out how to write a good test for clipping.
+* [/Graphics] Move check for clockwise/counter clockwise of Triangle to
+  Camera%.Triangle
+ - So we can skip clipping the triangle if we aren't going to show it.
 
 * [/Graphics] Clean up the orthonormal matrix occasionally?
 
