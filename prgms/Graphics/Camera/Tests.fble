@@ -1,0 +1,102 @@
+
+@ Drawing@ = /Drawing%.Drawing@;
+% Color = /Drawing%.Color;
+
+@ Drawn@ = /Drawing/Test%.Drawn@;
+@ Pixel@ = /Drawing/Test%.Pixel@;
+% Drawn = /Drawing/Test%.Drawn;
+% Draw = /Drawing/Test%.Draw;
+
+@ Vec@ = /Graphics/3D%.Vec@;
+
+@ Camera@ = /Graphics/Camera%.Camera@;
+% Camera = /Graphics/Camera%.Camera;
+% Triangle = /Graphics/Camera%.Triangle;
+% Vertex = /Graphics/Camera%.Vertex;
+
+% Int = /Int/Int/Lit%.Int;
+
+<@>% List = /List%.List;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+
+Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
+  Test(Str|'Focus Triangle', !({
+    # A triangle drawn at the focus plane should appear normal size.
+    Camera@ camera = Camera(Int|10);
+    Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|10));
+    Vec@ b = Vertex(camera, Vec@(Int|0, Int|4, Int|10));
+    Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|10));
+
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|0, Int|2, Color.Green),
+      Pixel@(Int|0, Int|3, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green),
+      Pixel@(Int|1, Int|1, Color.Green),
+      Pixel@(Int|1, Int|2, Color.Green),
+      Pixel@(Int|2, Int|0, Color.Green),
+      Pixel@(Int|2, Int|1, Color.Green),
+      Pixel@(Int|3, Int|0, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'Far Triangle', !({
+    # A triangle drawn at twice the distance from the focus plane should
+    # appear half its actual size.
+    Camera@ camera = Camera(Int|10);
+    Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|20));
+    Vec@ b = Vertex(camera, Vec@(Int|0, Int|4, Int|20));
+    Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|20));
+
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'Close Triangle', !({
+    # A triangle drawn at half the distance to the focus plane should appear
+    # twice its normal size.
+    Camera@ camera = Camera(Int|10);
+    Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|5));
+    Vec@ b = Vertex(camera, Vec@(Int|0, Int|2, Int|5));
+    Vec@ c = Vertex(camera, Vec@(Int|2, Int|0, Int|5));
+
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|0, Int|2, Color.Green),
+      Pixel@(Int|0, Int|3, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green),
+      Pixel@(Int|1, Int|1, Color.Green),
+      Pixel@(Int|1, Int|2, Color.Green),
+      Pixel@(Int|2, Int|0, Color.Green),
+      Pixel@(Int|2, Int|1, Color.Green),
+      Pixel@(Int|3, Int|0, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  }))
+]);
+
+@(Tests);
