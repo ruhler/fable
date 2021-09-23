@@ -27,7 +27,7 @@
 Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'Focus Triangle', !({
     # A triangle drawn at the focus plane should appear normal size.
-    Camera@ camera = Camera(Int|10);
+    Camera@ camera = Camera(Int|8, Int|8, Int|10);
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|10));
     Vec@ b = Vertex(camera, Vec@(Int|0, Int|4, Int|10));
     Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|10));
@@ -54,7 +54,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'Far Triangle', !({
     # A triangle drawn at twice the distance from the focus plane should
     # appear half its actual size.
-    Camera@ camera = Camera(Int|10);
+    Camera@ camera = Camera(Int|8, Int|8, Int|10);
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|20));
     Vec@ b = Vertex(camera, Vec@(Int|0, Int|4, Int|20));
     Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|20));
@@ -74,7 +74,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'Close Triangle', !({
     # A triangle drawn at half the distance to the focus plane should appear
     # twice its normal size.
-    Camera@ camera = Camera(Int|10);
+    Camera@ camera = Camera(Int|8, Int|8, Int|10);
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|5));
     Vec@ b = Vertex(camera, Vec@(Int|0, Int|2, Int|5));
     Vec@ c = Vertex(camera, Vec@(Int|2, Int|0, Int|5));

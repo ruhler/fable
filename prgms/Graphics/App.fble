@@ -37,7 +37,7 @@
 
 @ State@ = Camera@;
 
-State@ Initial = Camera(Int|10);
+State@ Initial = Camera(Int|64, Int|48, Int|10);
 
 (State@) { Drawing@; } Draw = (State@ camera) {
   Vec@ a = Vertex(camera, Vec@(Neg(Int|5), Neg(Int|10), Int|20));
@@ -84,10 +84,10 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
-  # The window should be centered at (0, 0), ranging in from
-  # (-32, -24) to (32, 24).
+  # Set the window coordinates to (0, 0) lower left corner, (64, 48) upper
+  # right corner.
   Point@ a = @(x: Int|10, y: Neg(Int|10));
-  Point@ b = @(x: Int|320, y: Int|240);
+  Point@ b = @(x: Int|0, y: Int|480);
 
   # The target is 60 FPS, or 16 millseconds per frame.
   Int@ frame_period = Int|16;
