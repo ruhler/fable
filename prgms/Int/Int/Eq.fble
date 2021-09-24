@@ -50,11 +50,6 @@
       p: b.?(n: True, 0: True, p: GeP(a.p, b.p)));
 };
 
-# Abs(x) = |x|
-(Int@) { Int@; } Abs = (Int@ x) {
-  x.?(n: Int@(p: x.n), 0: x, p: x);
-};
-
 (Int@, Int@) { Int@; } Max = (Int@ a, Int@ b) {
   Lt(a, b).?(true: b, false: a);
 };
@@ -63,5 +58,5 @@
   Lt(a, b).?(true: a, false: b);
 };
 
-@(IsZero, Eq, Lt, Le, Gt, Ge, Abs, Max, Min);
+@(IsZero, Eq, Lt, Le, Gt, Ge, Max, Min);
 

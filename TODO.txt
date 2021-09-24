@@ -15,9 +15,6 @@
 * Fix bad object refcount in case of Triangle div by zero when using the
   original points a, b, c, instead of the sorted points a, b, c.
 
-* Remove duplicate implementations of Abs
- - One is in /Int/Int%, another in /Int/Int/Eq%.
-
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 
 * Implement fannkuchredux benchmark?

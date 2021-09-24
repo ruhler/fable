@@ -38,10 +38,10 @@
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
 % Sub = /Int/Int%.Sub;
+% Abs = /Int/Int%.Abs;
 
 % Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
-% Abs = /Int/Int/Eq%.Abs;
 
 % Int = /Int/Int/Lit%.Int;
 
