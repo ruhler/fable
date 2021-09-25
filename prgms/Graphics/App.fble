@@ -40,17 +40,12 @@
 State@ Initial = Camera(Int|64, Int|48, Int|10);
 
 (State@) { Drawing@; } Draw = (State@ camera) {
-  Vec@ a = Vertex(camera, Vec@(Neg(Int|5), Neg(Int|10), Int|20));
-  Vec@ b = Vertex(camera, Vec@(Int|0, Neg(Int|10), Int|30));
-  Vec@ c = Vertex(camera, Vec@(Int|5, Neg(Int|10), Int|20));
-
-  Vec@ d = Vertex(camera, Vec@(Neg(Int|5), Int|10, Int|20));
-  Vec@ e = Vertex(camera, Vec@(Int|0, Int|10, Int|30));
-  Vec@ f = Vertex(camera, Vec@(Int|5, Int|10, Int|20));
+  Vec@ a = Vertex(camera, Vec@(Neg(Int|10), Neg(Int|10), Int|10));
+  Vec@ b = Vertex(camera, Vec@(Int|0, Int|10, Int|10));
+  Vec@ c = Vertex(camera, Vec@(Int|10, Neg(Int|10), Int|10));
 
   Drawings[
-    Triangle(camera, a, b, c, Color.Cyan),
-    Triangle(camera, d, f, e, Color.Green)
+    Triangle(camera, a, b, c, Color.Cyan)
   ];
 };
 
@@ -84,10 +79,10 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
-  # Set the window coordinates to (0, 0) lower left corner, (64, 48) upper
+  # Set the window coordinates to (-32, -24) lower left corner, (32, 24) upper
   # right corner.
   Point@ a = @(x: Int|10, y: Neg(Int|10));
-  Point@ b = @(x: Int|0, y: Int|480);
+  Point@ b = @(x: Int|320, y: Int|240);
 
   # The target is 60 FPS, or 16 millseconds per frame.
   Int@ frame_period = Int|16;

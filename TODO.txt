@@ -1,9 +1,16 @@
 * [/Graphics] Implement proper clipping support.
+ - How should clipping interact with translation?
+   In particular, whose job should it be to map (0,0) in camera space to the
+   lower left of the screen? Translating the camera can't do anything, because
+   (0,0) relative to the camera space is unaffected by moving the camera.
+
 * [/Graphics] Move check for clockwise/counter clockwise of Triangle to
   Camera%.Triangle
  - So we can skip clipping the triangle if we aren't going to show it.
 
 * [/Graphics] Clean up the orthonormal matrix occasionally?
+ - To start, just store an angle and compute/lookup cos,sin on the fly.
+   This works as long as we only can rotate around one axis.
 
 * [/Graphics] Figure out how to improve performance of drawing triangles.
  - We should be able to generate the points on a line incrementally

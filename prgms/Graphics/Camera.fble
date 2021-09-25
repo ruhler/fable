@@ -9,7 +9,6 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
 % Le = /Int/Int/Eq%.Le;
@@ -164,27 +163,6 @@ Triangle = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
     # All points are in front of the camera.
     ClippedTriangle(camera, a, b, c, color);
   });
-
-  Gt(b.z, Int|0).?(true: {
-    # The point 'c' is behind the camera. Need to clip.
-    # TODO: Proper clipping in this case.
-    Blank;
-  });
-
-  Gt(a.z, Int|0).?(true: {
-    # The points b and c are behind the camera. Need to clip.
-    Vec@ b_ = @(
-      x: Div(Add(Mul(a.x, Sub(Int|1, b.x)), Mul(b.x, Sub(a.x, Int|1))), Sub(a.z, b.z)),
-      y: Div(Add(Mul(a.y, Sub(Int|1, b.y)), Mul(b.y, Sub(a.y, Int|1))), Sub(a.z, b.z)),
-      z: Int|1);
-    Vec@ c_ = @(
-      x: Div(Add(Mul(a.x, Sub(Int|1, c.x)), Mul(c.x, Sub(a.x, Int|1))), Sub(a.z, c.z)),
-      y: Div(Add(Mul(a.y, Sub(Int|1, c.y)), Mul(c.y, Sub(a.y, Int|1))), Sub(a.z, c.z)),
-      z: Int|1);
-    ClippedTriangle(camera, a, b_, c_, color);
-  });
-
-  # All points are outside of the camera. Skip drawing the triangle.
   Blank;
 };
 
