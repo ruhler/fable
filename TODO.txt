@@ -1,9 +1,5 @@
 * [/Graphics] Implement proper clipping support.
 
-* [/Graphics] Move check for clockwise/counter clockwise of Triangle to
-  Camera%.Triangle
- - So we can skip clipping the triangle if we aren't going to show it.
-
 * [/Graphics] Fix failing rotation test.
 
 * [/Graphics] Figure out how to improve performance of drawing triangles.

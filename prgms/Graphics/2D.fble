@@ -1,6 +1,4 @@
 
-@ Bool@ = /Bool%.Bool@;
-
 @ Drawing@ = /Drawing%.Drawing@;
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
@@ -20,22 +18,6 @@
 % Range = /Int/Int/Iter%.Range;
 
 <@,@>% For = /Iter%.For;
-
-# RightOf -- 
-#   Return true if the point 'x' is to the right of the line going in the
-#   direction from point a to point b. False otherwise.
-(Point@, Point@, Point@) { Bool@; }
-RightOf = (Point@ a, Point@ b, Point@ x) {
-  Int@ b_x = Sub(b.x, a.x);
-  Int@ b_y = Sub(b.y, a.y);
-  Int@ x_x = Sub(x.x, a.x);
-  Int@ x_y = Sub(x.y, a.y);
-
-  Int@ l = Mul(b_y, x_x);
-  Int@ p = Mul(b_x, x_y);
-
-  Le(p, l);
-};
 
 @ Sorted@ = *(Point@ 0, Point@ 1, Point@ 2);
 
@@ -82,14 +64,8 @@ SortByY = (Point@ a, Point@ b, Point@ c) {
 
 # Triangle --
 #   Draw a filled triangle between the points a, b, and c.
-#
-# The points should be specified in order going clockwise around the triangle,
-# otherwise nothing is drawn.
 (Point@, Point@, Point@, Color@) { Drawing@; }
 Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
-  # If the points don't go around in clockwise order, there is nothing to do.
-  RightOf(a, b, c).?(false: Blank);
-
   Sorted@ s = SortByY(a, b, c);
   Point@ a = s.0;
   Point@ b = s.1;
