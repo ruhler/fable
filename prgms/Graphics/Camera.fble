@@ -26,6 +26,11 @@
 % DivVS = /Graphics/3D%.DivVS;
 % Transpose = /Graphics/3D%.Transpose;
 
+# Rect@ --
+#   Describes a rectangle with the lower left corner at (x, y), of width w and
+#   height h.
+@ Rect@ = *(Int@ x, Int@ y, Int@ w, Int@ h);
+
 # Camera@ --
 #   Describes the position and direction of the camera.
 #
@@ -38,19 +43,16 @@
 #        +y is to the top of the screen
 #        +z is into the screen
 #     rot is an orthnormal matrix scaled by the factor RotF.
-#   width -
-#     The width of the display to draw to. Any points x outside the range
-#     [0, width) will not be drawn.
-#   height -
-#     The height of the display to draw to. Any points y outside the range
-#     [0, height) will not be drawn.
 #   focus -
 #     The distance from the camera to the focus plane. That is, the distance
 #     from the camera at which points are not scaled at all. An object halfway
 #     between the camera and focus plane will appear twice the object's actual
 #     size. An object twice as far from the camera as the focus plane will
 #     appear half the object's actual size.
-@ Camera@ = *(Vec@ pos, Mat@ rot, Int@ width, Int@ height, Int@ focus);
+#   clip -
+#     The clipping rectangle. Any points on the focus plane outside the
+#     clip rectangle will not be drawn.
+@ Camera@ = *(Vec@ pos, Mat@ rot, Int@ focus, Rect@ clip);
 
 # RotF --
 #   The scale factor used for the camera rotation matrix.
@@ -60,14 +62,14 @@ Int@ RotF = Int|256;
 #   A camera at the origin with +x to the right of the screen, +y to the top
 #   of the screen, and +z into the screen, with the given distance between
 #   camera and focus plane.
-(Int@, Int@, Int@) { Camera@; } Camera = (Int@ width, Int@ height, Int@ focus) {
+(Int@, Rect@) { Camera@; } Camera = (Int@ focus, Rect@ clip) {
   Camera@(
     Vec@(Int|0, Int|0, Int|0),
     Mat@(
       Vec@(RotF, Int|0, Int|0),
       Vec@(Int|0, RotF, Int|0),
       Vec@(Int|0, Int|0, RotF)),
-    width, height, focus);
+    focus, clip);
 };
 
 # Translate --
@@ -77,8 +79,7 @@ Int@ RotF = Int|256;
 Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
   Vec@ v_cam = Vec@(x, y, z);
   Vec@ v_abs = MulMV(Transpose(camera.rot), v_cam);
-  Camera@(AddV(camera.pos, v_abs), camera.rot,
-    camera.width, camera.height, camera.focus);
+  Camera@(AddV(camera.pos, v_abs), camera.rot, camera.focus, camera.clip);
 };
 
 # RotateY --
@@ -94,14 +95,13 @@ Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
     Vec@(Int|0, RotF, Int|0),
     Vec@(Neg(s), Int|0, c));
   Mat@ rot = DivMS(MulMM(m, camera.rot), RotF);
-  Camera@(camera.pos, rot, camera.width, camera.height, camera.focus);
+  Camera@(camera.pos, rot, camera.focus, camera.clip);
 };
 
 # Focus --
 #   Increase the distance to the focus plane by the given amount.
 (Int@, Camera@) { Camera@; } Focus = (Int@ focus, Camera@ camera) {
-  Camera@(camera.pos, camera.rot, camera.width, camera.height, 
-    Add(camera.focus, focus));
+  Camera@(camera.pos, camera.rot, Add(camera.focus, focus), camera.clip);
 };
 
 # Vertex --
@@ -166,5 +166,5 @@ Triangle = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
   Blank;
 };
 
-@(Camera@, Camera, Translate, RotateY, Focus, Vertex, Triangle);
+@(Camera@, Rect@, Camera, Translate, RotateY, Focus, Vertex, Triangle);
 

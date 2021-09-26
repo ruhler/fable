@@ -17,6 +17,7 @@
 @ Vec@ = /Graphics/3D%.Vec@;
 
 @ Camera@ = /Graphics/Camera%.Camera@;
+@ Rect@ = /Graphics/Camera%.Rect@;
 % Camera = /Graphics/Camera%.Camera;
 % Translate = /Graphics/Camera%.Translate;
 % RotateY = /Graphics/Camera%.RotateY;
@@ -37,7 +38,7 @@
 
 @ State@ = Camera@;
 
-State@ Initial = Camera(Int|64, Int|48, Int|10);
+State@ Initial = Camera(Int|10, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48));
 
 (State@) { Drawing@; } Draw = (State@ camera) {
   Vec@ a = Vertex(camera, Vec@(Neg(Int|10), Neg(Int|10), Int|10));

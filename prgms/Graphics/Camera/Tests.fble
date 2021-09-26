@@ -10,6 +10,7 @@
 @ Vec@ = /Graphics/3D%.Vec@;
 
 @ Camera@ = /Graphics/Camera%.Camera@;
+@ Rect@ = /Graphics/Camera%.Rect@;
 % Camera = /Graphics/Camera%.Camera;
 % Triangle = /Graphics/Camera%.Triangle;
 % Vertex = /Graphics/Camera%.Vertex;
@@ -28,7 +29,7 @@
 Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'Focus Triangle', !({
     # A triangle drawn at the focus plane should appear normal size.
-    Camera@ camera = Camera(Int|8, Int|8, Int|10);
+    Camera@ camera = Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6));
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|10));
     Vec@ b = Vertex(camera, Vec@(Int|0, Int|4, Int|10));
     Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|10));
@@ -55,7 +56,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'Far Triangle', !({
     # A triangle drawn at twice the distance from the focus plane should
     # appear half its actual size.
-    Camera@ camera = Camera(Int|8, Int|8, Int|10);
+    Camera@ camera = Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6));
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|20));
     Vec@ b = Vertex(camera, Vec@(Int|0, Int|4, Int|20));
     Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|20));
@@ -75,7 +76,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'Close Triangle', !({
     # A triangle drawn at half the distance to the focus plane should appear
     # twice its normal size.
-    Camera@ camera = Camera(Int|8, Int|8, Int|10);
+    Camera@ camera = Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6));
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|5));
     Vec@ b = Vertex(camera, Vec@(Int|0, Int|2, Int|5));
     Vec@ c = Vertex(camera, Vec@(Int|2, Int|0, Int|5));
@@ -102,7 +103,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'1 Vertex Clipped Triangle', !({
     # One of the vertices of the triangle is clipped, so that the result of
     # drawing a triangle looks like a trapezoid.
-    Camera@ camera = Camera(Int|2, Int|8, Int|10);
+    Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|10));
     Vec@ b = Vertex(camera, Vec@(Int|0, Int|4, Int|10));
     Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|10));
@@ -127,7 +128,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'2 Vertex Clipped Triangle', !({
     # Two of the verticies of the triangle are clipped, so that the result of
     # drawing a triangle looks like a smaller triangle.
-    Camera@ camera = Camera(Int|2, Int|8, Int|10);
+    Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
     Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|10));
     Vec@ b = Vertex(camera, Vec@(Int|4, Int|4, Int|10));
     Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|10));
@@ -148,7 +149,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'Fully Clipped Triangle', !({
     # The entire triangle is outside the clipping region, so nothing should be
     # drawn.
-    Camera@ camera = Camera(Int|8, Int|8, Int|10);
+    Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|8, Int|8));
     Vec@ a = Vertex(camera, Vec@(Int|10, Int|10, Int|10));
     Vec@ b = Vertex(camera, Vec@(Int|10, Int|14, Int|10));
     Vec@ c = Vertex(camera, Vec@(Int|14, Int|10, Int|10));
@@ -165,7 +166,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
   Test(Str|'Full Screen Clipped Triangle', !({
     # The triangle takes up the entire available display, so you see a solid
     # color screen.
-    Camera@ camera = Camera(Int|2, Int|2, Int|10);
+    Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|2));
     Vec@ a = Vertex(camera, Vec@(Neg(Int|3), Neg(Int|1), Int|10));
     Vec@ b = Vertex(camera, Vec@(Int|3, Int|5, Int|10));
     Vec@ c = Vertex(camera, Vec@(Int|3, Neg(Int|1), Int|10));
