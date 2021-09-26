@@ -42,14 +42,15 @@
 #   angle -
 #     Describes the rotation of the camera as an angle of rotation about the Y
 #     axis in the direction given by the right hand rule, scaled by RotF/2π.
+#     An angle of 0 has the camera pointed in the z direction of a left handed
+#     coordinate system:
+#       +x is drawn to the right of the screen.
+#       +y is drawn to the top of the screen.
+#       +z is drawn going into the screen.
 #   rot -
-#     Describes the rotation of the camera, as a matrix that rotates a point
-#     into the basis of the camera. The basis of the camera is:
-#        +x is to the right of the screen
-#        +y is to the top of the screen
-#        +z is into the screen
-#     rot is an orthnormal matrix scaled by the factor RotF, derived from the
-#     'angle' field and kept around for convenience.
+#     Rotation matrix transformation that transforms a point into the view of
+#     the camera. rot is an orthnormal matrix scaled by the factor RotF,
+#     derived from the 'angle' field and kept around for convenience.
 #   focus -
 #     The distance from the camera to the focus plane. That is, the distance
 #     from the camera at which points are not scaled at all. An object halfway
@@ -65,32 +66,6 @@
 #   The scale factor used for the camera rotation.
 Int@ RotF = Int|256;
 
-# Camera --
-#   A camera at the origin with +x to the right of the screen, +y to the top
-#   of the screen, and +z into the screen, with the given distance between
-#   camera and focus plane.
-(Int@, Rect@) { Camera@; } Camera = (Int@ focus, Rect@ clip) {
-  Camera@(
-    Vec@(Int|0, Int|0, Int|0),
-    Int|0,
-    Mat@(
-      Vec@(RotF, Int|0, Int|0),
-      Vec@(Int|0, RotF, Int|0),
-      Vec@(Int|0, Int|0, RotF)),
-    focus, clip);
-};
-
-# Translate --
-#   Move the camera by the given x, y, and z coordinates, relative to the
-#   camera's current orientation.
-(Int@, Int@, Int@, Camera@) { Camera@; }
-Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
-  Vec@ v_cam = Vec@(x, y, z);
-  Vec@ v_abs = MulMV(Transpose(camera.rot), v_cam);
-  Camera@(AddV(camera.pos, v_abs), camera.angle, camera.rot, camera.focus,
-    camera.clip);
-};
-
 # Angle --
 #   Canonicalize the value for an angle by putting it in the range [0, RotF).
 (Int@) { Int@; } Angle = (Int@ a) {
@@ -99,19 +74,63 @@ Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
   a;
 };
 
+# Rotation --
+#   Computation the rotation matrix for the given angle rotation around the Y
+#   axis.
+#
+# The angle is assumed to be in the range [0, RotF).
+(Int@) { Mat@; } Rotation = (Int@ angle) {
+  SinCos@ sc = SinCos(angle);
+  Int@ c = sc.cos;
+  Int@ s = sc.sin;
+
+  # Imagine we are rotated 90 degrees: sin = 1, cos = 0, and we are now facing
+  # in the -x direction instead of the +z direction. We expect the rotation
+  # matrix to map absolute ==> camera coordinates:
+  #   (1, 0, 0) ==> ( 0,  0, -1 )  (+x looks like -z to the camera)
+  #   (0, 1, 0) ==> ( 0,  1,  0 )  (+y looks like +y to the camera)
+  #   (0, 0, 1) ==> ( 1,  0,  0 )  (+z looks like +x to the camera)
+  Mat@(
+    Vec@(c, Int|0, Neg(s)),
+    Vec@(Int|0, RotF, Int|0),
+    Vec@(s, Int|0, c));
+};
+
+# Camera --
+#   A camera at the origin facing towards the +z axis, with +x to the right of
+#   the screen, +y to the top of the screen, and +z going into the screen,
+#   with the given distance between camera and focus plane and clipping
+#   rectangle.
+(Int@, Rect@) { Camera@; } Camera = (Int@ focus, Rect@ clip) {
+  Camera@(Vec@(Int|0, Int|0, Int|0), Int|0, Rotation(Int|0), focus, clip);
+};
+
+# Translate --
+#   Move the camera by the given x, y, and z coordinates, relative to the
+#   camera's current orientation.
+(Int@, Int@, Int@, Camera@) { Camera@; }
+Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
+  # rot maps from points in the absolute reference frame to the camera
+  # reference frame. To determine how far to move the camera in the absolute
+  # reference frame, we want to map the given (x, y, z) from the camera
+  # reference to the absolute reference frame, so we take the inverse of the
+  # rotation matrix, which is the same as the transpose for an orthonormal
+  # matrix.
+  #
+  # Note: v_cam is in units of 1, v_abs is in units of 256, with the scaling
+  # introduced by the camera rotation matrix.
+  Vec@ v_cam = Vec@(x, y, z);
+  Vec@ v_abs = MulMV(Transpose(camera.rot), v_cam);
+  Camera@(AddV(camera.pos, v_abs), camera.angle, camera.rot, camera.focus,
+    camera.clip);
+};
+
 # RotateY --
 #   Rotate the camera about the Y axis by the given amount, in units of
 #   2π/RotF.
 (Int@, Camera@) { Camera@; } RotateY = (Int@ angle, Camera@ camera) {
   Int@ a = Angle(Add(angle, camera.angle));
-  SinCos@ sc = SinCos(a);
-  Int@ c = sc.cos;
-  Int@ s = sc.sin;
-  Mat@ rot = Mat@(
-    Vec@(c, Int|0, Neg(s)),
-    Vec@(Int|0, RotF, Int|0),
-    Vec@(s, Int|0, c));
-  Camera@(camera.pos, a, rot, camera.focus, camera.clip);
+  Camera@(camera.pos, a, Rotation(a), camera.focus, camera.clip);
 };
 
 # Focus --
@@ -129,15 +148,15 @@ Translate = (Int@ x, Int@ y, Int@ z, Camera@ camera) {
 (Camera@, Vec@) { Vec@; }
 Vertex = (Camera@ camera, Vec@ p) {
   # Put the camera at the origin.
-  Vec@ p_ = SubV(p, DivVS(camera.pos, RotF)); Vec@ p = p_;
+  Vec@ p_translated = SubV(p, DivVS(camera.pos, RotF));
 
   # Rotate the point around the origin/camera.
-  DivVS(MulMV(camera.rot, p), RotF);
+  DivVS(MulMV(camera.rot, p_translated), RotF);
 };
 
 # ClippedTriangle --
 #   Draw a triangle from the point of view of a camera, where the triangle has
-#   already been clipped to be in front of the camera.
+#   already been clipped to be in front of the camera (i.e. z < 0).
 #
 # The input points should all be from calling Vertex with the same camera.
 # That is, the input points are relative to the position and orientation of

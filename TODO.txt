@@ -1,7 +1,5 @@
 * [/Graphics] Implement proper clipping support.
 
-* [/Graphics] Fix failing rotation test.
-
 * [/Graphics] Figure out how to improve performance of drawing triangles.
  - We should be able to generate the points on a line incrementally
    without use of division instead of dividing each time.
