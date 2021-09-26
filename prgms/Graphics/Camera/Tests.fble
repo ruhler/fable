@@ -12,6 +12,8 @@
 @ Camera@ = /Graphics/Camera%.Camera@;
 @ Rect@ = /Graphics/Camera%.Rect@;
 % Camera = /Graphics/Camera%.Camera;
+% RotateY = /Graphics/Camera%.RotateY;
+% Translate = /Graphics/Camera%.Translate;
 % Triangle = /Graphics/Camera%.Triangle;
 % Vertex = /Graphics/Camera%.Vertex;
 
@@ -98,6 +100,63 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'Translated Triangle', !({
+    # Test that translation moves the camera in the direction specified.
+    Camera@ camera = Translate(Int|0, Int|0, Int|10,
+      Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6)));
+    Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|20));
+    Vec@ b = Vertex(camera, Vec@(Int|0, Int|4, Int|20));
+    Vec@ c = Vertex(camera, Vec@(Int|4, Int|0, Int|20));
+
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|0, Int|2, Color.Green),
+      Pixel@(Int|0, Int|3, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green),
+      Pixel@(Int|1, Int|1, Color.Green),
+      Pixel@(Int|1, Int|2, Color.Green),
+      Pixel@(Int|2, Int|0, Color.Green),
+      Pixel@(Int|2, Int|1, Color.Green),
+      Pixel@(Int|3, Int|0, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'Rotated Triangle', !({
+    # Test that rotation rotates the camera in the direction specified.
+    # Here we rotate the camera 90 degrees around the Y axis, so that the
+    # camera is now looking in the +x direction.
+    Camera@ camera = RotateY(Int|64,
+      Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6)));
+    Vec@ a = Vertex(camera, Vec@(Int|10, Int|0, Int|0));
+    Vec@ b = Vertex(camera, Vec@(Int|10, Int|4, Int|0));
+    Vec@ c = Vertex(camera, Vec@(Int|10, Int|0, Int|4));
+
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|0, Int|2, Color.Green),
+      Pixel@(Int|0, Int|3, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green),
+      Pixel@(Int|1, Int|1, Color.Green),
+      Pixel@(Int|1, Int|2, Color.Green),
+      Pixel@(Int|2, Int|0, Color.Green),
+      Pixel@(Int|2, Int|1, Color.Green),
+      Pixel@(Int|3, Int|0, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    # TODO: Figure out why this test is failing.
+    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'{ }');
   })),
 
   Test(Str|'1 Vertex Clipped Triangle', !({

@@ -3,9 +3,6 @@
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
-% True = /Bool%.True;
-% False = /Bool%.False;
-
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
 % Color = /Drawing%.Color;
@@ -71,8 +68,8 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
       s: Translate(Int|0, Int|0, Neg(Int|1), state),
       w: Translate(Int|0, Int|0, Int|1, state),
 
-      left: RotateY(False, state),
-      right: RotateY(True, state),
+      left: RotateY(Int|1, state),
+      right: RotateY(Neg(Int|1), state),
       : state);
     Run(in, draw, tick, new_state);
   });

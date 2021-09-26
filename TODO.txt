@@ -4,9 +4,7 @@
   Camera%.Triangle
  - So we can skip clipping the triangle if we aren't going to show it.
 
-* [/Graphics] Clean up the orthonormal matrix occasionally?
- - To start, just store an angle and compute/lookup cos,sin on the fly.
-   This works as long as we only can rotate around one axis.
+* [/Graphics] Fix failing rotation test.
 
 * [/Graphics] Figure out how to improve performance of drawing triangles.
  - We should be able to generate the points on a line incrementally
