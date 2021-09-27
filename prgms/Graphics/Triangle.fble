@@ -1,5 +1,7 @@
 
+@ Bool@ = /Bool%.Bool@;
 % And = /Bool%.And;
+% Not = /Bool%.Not;
 
 @ Drawing@ = /Drawing%.Drawing@;
 @ Color@ = /Drawing%.Color@;
@@ -11,8 +13,11 @@
 @ Camera@ = /Graphics/Camera%.Camera@;
 % Perspective = /Graphics/Camera%.Perspective;
 
+@ Int@ = /Int/Int%.Int@;
+% Mul = /Int/Int%.Mul;
 % Le = /Int/Int/Eq%.Le;
 % Gt = /Int/Int/Eq%.Gt;
+% Ge = /Int/Int/Eq%.Ge;
 % Int = /Int/Int/Lit%.Int;
 
 # Draw@ --
@@ -26,6 +31,37 @@ Draw@ Clipped = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
   Point@ b_ = Perspective(camera, b);
   Point@ c_ = Perspective(camera, c);
   /Graphics/2D%.Triangle(a_, b_, c_, color);
+};
+
+# RightOf --
+#   Returns true if the point (ax, ay) is to the right of the point (bx, by),
+#   or if it is aligned with point (bx, by).
+(Int@, Int@, Int@, Int@) { Bool@; }
+RightOf = (Int@ ax, Int@ ay, Int@ bx, Int@ by) {
+  Ge(Mul(ax, by), Mul(bx, ay));
+};
+
+# LeftOf --
+#   Returns true if the point (ax, ay) is to the left of the point (bx, by),
+#   or if it is aligned with point (bx, by).
+(Int@, Int@, Int@, Int@) { Bool@; }
+LeftOf = (Int@ ax, Int@ ay, Int@ bx, Int@ by) {
+  Le(Mul(ax, by), Mul(bx, ay));
+};
+
+@ Sorted@ = *(Vec@ a, Vec@ b, Vec@ c);
+
+# Sort --
+#   Sort three vectors based on the predicate p.
+#
+# Vectors satisfying the predicate are moved to the front and vectors not
+# satisfying the predicate are moved to the back. The relative order of points
+# is kept in tact to preserve clockwise/counterclockwiseness of the points.
+((Vec@) { Bool@; }, Vec@, Vec@, Vec@) { Sorted@; }
+Sort = ((Vec@) { Bool@; } p, Vec@ a, Vec@ b, Vec@ c) {
+  And(Not(p(a)), p(b)).?(true: @(a: b, b: c, c: a));
+  And(Not(p(b)), p(c)).?(true: @(a: c, b: a, c: b));
+  @(a, b, c);
 };
 
 # ClipLeft --
@@ -66,14 +102,11 @@ Draw@ Clipped = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
 # TODO: This shouldn't be needed once the other clipping functions are
 # implemented, right?
 (Draw@) { Draw@; } ClipBehind = (Draw@ draw) {
+  (Vec@) { Bool@; } ZGt0 = (Vec@ p) { Gt(p.z, Int|0); };
   (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
     # Rotate the points [a, b, c] such that any points behind the camera are at
     # the end of the list [a, b, c].
-    % l = {
-      And(Le(a.z, Int|0), Gt(b.z, Int|0)).?(true: @(a: b, b: c, c: a));
-      And(Le(b.z, Int|0), Gt(c.z, Int|0)).?(true: @(a: c, b: a, c: b));
-      @(a, b, c);
-    };
+    % l = Sort(ZGt0, a, b, c);
     Vec@ a = l.a; Vec@ b = l.b; Vec@ c = l.c;
 
     # Only draw the triangle if all points are in front of the camera for now.
