@@ -19,8 +19,9 @@
 % Translate = /Graphics/Camera%.Translate;
 % RotateY = /Graphics/Camera%.RotateY;
 % Focus = /Graphics/Camera%.Focus;
-% Triangle = /Graphics/Camera%.Triangle;
 % Vertex = /Graphics/Camera%.Vertex;
+
+% Triangle = /Graphics/Triangle%.Triangle;
 
 @ Int@ = /Int/Int%.Int@;
 % Neg = /Int/Int%.Neg;

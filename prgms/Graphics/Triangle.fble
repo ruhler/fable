@@ -1,0 +1,60 @@
+
+% And = /Bool%.And;
+
+@ Drawing@ = /Drawing%.Drawing@;
+@ Color@ = /Drawing%.Color@;
+@ Point@ = /Drawing%.Point@;
+% Blank = /Drawing%.Blank;
+
+@ Vec@ = /Graphics/3D%.Vec@;
+
+@ Camera@ = /Graphics/Camera%.Camera@;
+% Perspective = /Graphics/Camera%.Perspective;
+
+% Le = /Int/Int/Eq%.Le;
+% Gt = /Int/Int/Eq%.Gt;
+% Int = /Int/Int/Lit%.Int;
+
+# ClippedTriangle --
+#   Draw a triangle from the point of view of a camera, where the triangle has
+#   already been clipped to be in front of the camera (i.e. z < 0).
+#
+# The input points should all be from calling Vertex with the same camera.
+# That is, the input points are relative to the position and orientation of
+# the camera.
+(Camera@, Vec@, Vec@, Vec@, Color@) { Drawing@; }
+ClippedTriangle = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
+  # Project the points onto the plane z = focus.
+  Point@ a_ = Perspective(camera, a);
+  Point@ b_ = Perspective(camera, b);
+  Point@ c_ = Perspective(camera, c);
+  /Graphics/2D%.Triangle(a_, b_, c_, color);
+};
+
+# Triangle --
+#   Draw a triangle from the point of view of a camera.
+#
+# The input points should all be from calling Vertex with the same camera.
+# That is, the input points are relative to the position and orientation of
+# the camera.
+(Camera@, Vec@, Vec@, Vec@, Color@) { Drawing@; }
+Triangle = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
+  # Rotate the points [a, b, c] such that any points behind the camera are at
+  # the end of the list [a, b, c].
+  % l = {
+    And(Le(a.z, Int|0), Gt(b.z, Int|0)).?(true: @(a: b, b: c, c: a));
+    And(Le(b.z, Int|0), Gt(c.z, Int|0)).?(true: @(a: c, b: a, c: b));
+    @(a, b, c);
+  };
+  Vec@ a = l.a; Vec@ b = l.b; Vec@ c = l.c;
+
+  # TODO: Clip properly. 
+
+  Gt(c.z, Int|0).?(true: {
+    # All points are in front of the camera.
+    ClippedTriangle(camera, a, b, c, color);
+  });
+  Blank;
+};
+
+@(Triangle);
