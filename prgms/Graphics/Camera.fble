@@ -154,6 +154,15 @@ Vertex = (Camera@ camera, Vec@ p) {
   DivVS(MulMV(camera.rot, p_translated), RotF);
 };
 
+# Perspective --
+#   Apply perspective to a 3D point to convert it to a 2D point as seen by the
+#   given camera.
+(Camera@, Vec@) { Point@; } Perspective = (Camera@ camera, Vec@ p) {
+  Point@(
+    Div(Mul(camera.focus, p.x), p.z),
+    Div(Mul(camera.focus, p.y), p.z));
+};
+
 # ClippedTriangle --
 #   Draw a triangle from the point of view of a camera, where the triangle has
 #   already been clipped to be in front of the camera (i.e. z < 0).
@@ -164,15 +173,9 @@ Vertex = (Camera@ camera, Vec@ p) {
 (Camera@, Vec@, Vec@, Vec@, Color@) { Drawing@; }
 ClippedTriangle = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
   # Project the points onto the plane z = focus.
-  Point@ a_ = Point@(
-    Div(Mul(camera.focus, a.x), a.z),
-    Div(Mul(camera.focus, a.y), a.z));
-  Point@ b_ = Point@(
-    Div(Mul(camera.focus, b.x), b.z),
-    Div(Mul(camera.focus, b.y), b.z));
-  Point@ c_ = Point@(
-    Div(Mul(camera.focus, c.x), c.z),
-    Div(Mul(camera.focus, c.y), c.z));
+  Point@ a_ = Perspective(camera, a);
+  Point@ b_ = Perspective(camera, b);
+  Point@ c_ = Perspective(camera, c);
   /Graphics/2D%.Triangle(a_, b_, c_, color);
 };
 
