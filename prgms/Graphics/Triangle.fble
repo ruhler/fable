@@ -12,6 +12,7 @@
 @ Vec@ = /Graphics/3D%.Vec@;
 
 @ Camera@ = /Graphics/Camera%.Camera@;
+@ Rect@ = /Graphics/Camera%.Rect@;
 % Perspective = /Graphics/Camera%.Perspective;
 
 @ Int@ = /Int/Int%.Int@;
@@ -21,6 +22,9 @@
 % Gt = /Int/Int/Eq%.Gt;
 % Ge = /Int/Int/Eq%.Ge;
 % Int = /Int/Int/Lit%.Int;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
 # Draw@ --
 #   A function to draw a triangle in 3D.
@@ -86,140 +90,29 @@ IntersectY = (Int@ x, Int@ z, Vec@ a, Vec@ b) {
   b;
 };
 
-# ClipLeft --
-#   Draw a triangle after clipping any bits too far to the left for the camera
-#   to see.
-(Draw@) { Draw@; } ClipLeft = (Draw@ draw) {
-  (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
-    (Vec@) { Bool@; } in_bounds = (Vec@ v) {
-      RightOf(v.x, v.z, camera.clip.x, camera.focus);
-    };
-
-    % s = Sort(in_bounds, a, b, c);
-    Vec@ a = s.a;
-    Vec@ b = s.b;
-    Vec@ c = s.c;
-
-    in_bounds(c).?(true: {
-      # All three points are in bounds. Nothing to clip.
-      draw(camera, a, b, c, color);
-    });
-
-    in_bounds(b).?(true: {
-      # Point c is out of bounds. We need to clip a corner of the triangle.
-      Vec@ ca = IntersectX(camera.clip.x, camera.focus, c, a);
-      Vec@ cb = IntersectX(camera.clip.x, camera.focus, c, b);
-      Over(
-        draw(camera, a, b, cb, color),
-        draw(camera, a, cb, ca, color));
-    });
-
-    in_bounds(a).?(true: {
-      # Points b and c are out of bounds. We need to clip a side of the
-      # triangle.
-      Vec@ ab = IntersectX(camera.clip.x, camera.focus, a, b);
-      Vec@ ac = IntersectX(camera.clip.x, camera.focus, a, c);
-      draw(camera, a, ab, ac, color);
-    });
-
-    # None of the points are in bounds. Nothing to draw.
-    Blank;
-  };
-};
-
-# ClipRight --
-#   Draw a triangle after clipping any bits too far to the right for the camera
-#   to see.
-(Draw@) { Draw@; } ClipRight = (Draw@ draw) {
-  (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
-    Int@ xmax = Add(camera.clip.x, camera.clip.w);
-
-    (Vec@) { Bool@; } in_bounds = (Vec@ v) {
-      LeftOf(v.x, v.z, xmax, camera.focus);
-    };
-
-    % s = Sort(in_bounds, a, b, c);
-    Vec@ a = s.a;
-    Vec@ b = s.b;
-    Vec@ c = s.c;
-
-    in_bounds(c).?(true: {
-      # All three points are in bounds. Nothing to clip.
-      draw(camera, a, b, c, color);
-    });
-
-    in_bounds(b).?(true: {
-      # Point c is out of bounds. We need to clip a corner of the triangle.
-      Vec@ ca = IntersectX(xmax, camera.focus, c, a);
-      Vec@ cb = IntersectX(xmax, camera.focus, c, b);
-      Over(
-        draw(camera, a, b, cb, color),
-        draw(camera, a, cb, ca, color));
-    });
-
-    in_bounds(a).?(true: {
-      # Points b and c are out of bounds. We need to clip a side of the
-      # triangle.
-      Vec@ ab = IntersectX(xmax, camera.focus, a, b);
-      Vec@ ac = IntersectX(xmax, camera.focus, a, c);
-      draw(camera, a, ab, ac, color);
-    });
-
-    # None of the points are in bounds. Nothing to draw.
-    Blank;
-  };
-};
-
-# ClipTop --
-#   Draw a triangle after clipping any bits too far to the top for the camera
-#   to see.
-(Draw@) { Draw@; } ClipTop = (Draw@ draw) {
-  (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
-    Int@ ymax = Add(camera.clip.y, camera.clip.h);
-
-    (Vec@) { Bool@; } in_bounds = (Vec@ v) {
-      LeftOf(v.y, v.z, ymax, camera.focus);
-    };
-
-    % s = Sort(in_bounds, a, b, c);
-    Vec@ a = s.a;
-    Vec@ b = s.b;
-    Vec@ c = s.c;
-
-    in_bounds(c).?(true: {
-      # All three points are in bounds. Nothing to clip.
-      draw(camera, a, b, c, color);
-    });
-
-    in_bounds(b).?(true: {
-      # Point c is out of bounds. We need to clip a corner of the triangle.
-      Vec@ ca = IntersectY(ymax, camera.focus, c, a);
-      Vec@ cb = IntersectY(ymax, camera.focus, c, b);
-      Over(
-        draw(camera, a, b, cb, color),
-        draw(camera, a, cb, ca, color));
-    });
-
-    in_bounds(a).?(true: {
-      # Points b and c are out of bounds. We need to clip a side of the
-      # triangle.
-      Vec@ ab = IntersectY(ymax, camera.focus, a, b);
-      Vec@ ac = IntersectY(ymax, camera.focus, a, c);
-      draw(camera, a, ab, ac, color);
-    });
-
-    # None of the points are in bounds. Nothing to draw.
-    Blank;
-  };
-};
-
-# ClipBottom --
-#   Draw a triangle after clipping any bits too far to the bottom for the
+# Clip --
+#   Draw a triangle after clipping any bits too far out of range for the
 #   camera to see.
-(Draw@) { Draw@; } ClipBottom = (Draw@ draw) {
+#
+# This is a common routine that can be reused for clipping left, right, top,
+# or bottom edges.
+@ Side@ = +(Unit@ min, Unit@ max);
+@ Axis@ = +(Unit@ x, Unit@ y);
+(Side@, Axis@, Draw@) { Draw@; } Clip = (Side@ side, Axis@ axis, Draw@ draw) {
+  % SideOf = side.?(min: RightOf, max: LeftOf);
+  % IntersectXY = axis.?(x: IntersectX, y: IntersectY);
+  % Bound = (Rect@ clip) {
+    side.?(
+      min: axis.?(x: clip.x, y: clip.y),
+      max: axis.?(x: Add(clip.x, clip.w), y: Add(clip.y, clip.h)));
+  };
+  % GetXY = axis.?(x: (Vec@ v) { v.x; }, y: (Vec@ v) { v.y; });
+
   (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
+    Int@ bound = Bound(camera.clip);
+
     (Vec@) { Bool@; } in_bounds = (Vec@ v) {
-      RightOf(v.y, v.z, camera.clip.y, camera.focus);
+      SideOf(GetXY(v), v.z, bound, camera.focus);
     };
 
     % s = Sort(in_bounds, a, b, c);
@@ -234,8 +127,8 @@ IntersectY = (Int@ x, Int@ z, Vec@ a, Vec@ b) {
 
     in_bounds(b).?(true: {
       # Point c is out of bounds. We need to clip a corner of the triangle.
-      Vec@ ca = IntersectY(camera.clip.y, camera.focus, c, a);
-      Vec@ cb = IntersectY(camera.clip.y, camera.focus, c, b);
+      Vec@ ca = IntersectXY(bound, camera.focus, c, a);
+      Vec@ cb = IntersectXY(bound, camera.focus, c, b);
       Over(
         draw(camera, a, b, cb, color),
         draw(camera, a, cb, ca, color));
@@ -244,8 +137,8 @@ IntersectY = (Int@ x, Int@ z, Vec@ a, Vec@ b) {
     in_bounds(a).?(true: {
       # Points b and c are out of bounds. We need to clip a side of the
       # triangle.
-      Vec@ ab = IntersectY(camera.clip.y, camera.focus, a, b);
-      Vec@ ac = IntersectY(camera.clip.y, camera.focus, a, c);
+      Vec@ ab = IntersectXY(bound, camera.focus, a, b);
+      Vec@ ac = IntersectXY(bound, camera.focus, a, c);
       draw(camera, a, ab, ac, color);
     });
 
@@ -281,7 +174,12 @@ IntersectY = (Int@ x, Int@ z, Vec@ a, Vec@ b) {
 # orientation of the camera.
 (Camera@, Vec@, Vec@, Vec@, Color@) { Drawing@; }
 Triangle = {
-  ClipBehind(ClipTop(ClipLeft(ClipRight(ClipBottom(Clipped)))));
+  ClipBehind(
+  Clip(Side@(min: Unit), Axis@(x: Unit),
+  Clip(Side@(min: Unit), Axis@(y: Unit),
+  Clip(Side@(max: Unit), Axis@(x: Unit),
+  Clip(Side@(max: Unit), Axis@(y: Unit),
+  Clipped)))));
 };
 
 @(Triangle);

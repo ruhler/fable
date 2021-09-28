@@ -1,4 +1,5 @@
 * [/Graphics] Implement proper clipping support.
+ - Implement intersection between plane and line.
 
 * [/Graphics] Figure out how to improve performance of drawing triangles.
  - We should be able to generate the points on a line incrementally
