@@ -10,6 +10,9 @@
 % Over = /Drawing%.Over;
 
 @ Vec@ = /Graphics/3D%.Vec@;
+% AddV = /Graphics/3D%.AddV;
+% MulVS = /Graphics/3D%.MulVS;
+% DivVS = /Graphics/3D%.DivVS;
 
 @ Camera@ = /Graphics/Camera%.Camera@;
 @ Rect@ = /Graphics/Camera%.Rect@;
@@ -17,7 +20,9 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
+% Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
+% Lt = /Int/Int/Eq%.Lt;
 % Le = /Int/Int/Eq%.Le;
 % Gt = /Int/Int/Eq%.Gt;
 % Ge = /Int/Int/Eq%.Ge;
@@ -76,8 +81,10 @@ Sort = ((Vec@) { Bool@; } p, Vec@ a, Vec@ b, Vec@ c) {
 #   points a and b. Behavior is undefined if no such point exists.
 (Int@, Int@, Vec@, Vec@) { Vec@; }
 IntersectX = (Int@ x, Int@ z, Vec@ a, Vec@ b) {
-  # TODO: Implement me.
-  b;
+  Lt(b.x, a.x).?(true: IntersectX(x, z, b, a));
+  Int@ n = Sub(Mul(a.z, x), Mul(a.x, z));
+  Int@ m = Sub(Mul(Sub(a.z, b.z), x), Mul(Sub(a.x, b.x), z));
+  DivVS(AddV(MulVS(b, n), MulVS(a, Sub(m, n))), m);
 };
 
 # IntersectY --
@@ -85,9 +92,11 @@ IntersectX = (Int@ x, Int@ z, Vec@ a, Vec@ b) {
 #   going through points (*, 0, 0) and (*, y, z) with the line going through
 #   points a and b. Behavior is undefined if no such point exists.
 (Int@, Int@, Vec@, Vec@) { Vec@; }
-IntersectY = (Int@ x, Int@ z, Vec@ a, Vec@ b) {
-  # TODO: Implement me.
-  b;
+IntersectY = (Int@ y, Int@ z, Vec@ a, Vec@ b) {
+  Lt(b.y, a.y).?(true: IntersectY(y, z, b, a));
+  Int@ n = Sub(Mul(a.z, y), Mul(a.y, z));
+  Int@ m = Sub(Mul(Sub(a.z, b.z), y), Mul(Sub(a.y, b.y), z));
+  DivVS(AddV(MulVS(b, n), MulVS(a, Sub(m, n))), m);
 };
 
 # Clip --

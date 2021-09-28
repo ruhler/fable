@@ -29,7 +29,7 @@
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 
-Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
+Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
   Test(Str|'Focus Triangle', !({
     # A triangle drawn at the focus plane should appear normal size.
     Camera@ camera = Camera(Int|10, Rect@(Neg(Int|1), Neg(Int|1), Int|6, Int|6));
@@ -180,8 +180,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Implement clipping.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+    /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'2 Vertex Clipped Triangle', !({
@@ -201,8 +200,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Implement clipping.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+    /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Fully Clipped Triangle', !({
@@ -239,7 +237,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Implement clipping.
+    # TODO: Fix clipping.
     /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
   }))
 

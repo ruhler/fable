@@ -21,6 +21,12 @@
   Vec@(Sub(a.x, b.x), Sub(a.y, b.y), Sub(a.z, b.z));
 };
 
+# MulVS --
+#   Multiply a vector by a scalar.
+(Vec@, Int@) { Vec@; } MulVS = (Vec@ a, Int@ s) {
+  Vec@(Mul(a.x, s), Mul(a.y, s), Mul(a.z, s));
+};
+
 # DivVS --
 #   Divide a vector by a scalar.
 (Vec@, Int@) { Vec@; } DivVS = (Vec@ a, Int@ s) {
@@ -61,5 +67,5 @@
     Vec@(m.i.z, m.j.z, m.k.z));
 };
 
-@(Vec@, Mat@, AddV, SubV, DivVS, DivMS, MulMV, MulMM, Transpose);
+@(Vec@, Mat@, AddV, SubV, MulVS, DivVS, DivMS, MulMV, MulMM, Transpose);
 
