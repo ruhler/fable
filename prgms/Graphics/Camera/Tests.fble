@@ -218,8 +218,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Camera', List<Test@>[
     Drawn@ wnt = Drawn[];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Implement clipping.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+    /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Full Screen Clipped Triangle', !({
