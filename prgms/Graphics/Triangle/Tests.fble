@@ -159,7 +159,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
-  Test(Str|'1 Vertex Clipped Triangle', !({
+  Test(Str|'1 Vertex Clip Right', !({
     # One of the vertices of the triangle is clipped, so that the result of
     # drawing a triangle looks like a trapezoid.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
@@ -183,7 +183,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
-  Test(Str|'2 Vertex Clipped Triangle', !({
+  Test(Str|'2 Vertex Clip Right', !({
     # Two of the verticies of the triangle are clipped, so that the result of
     # drawing a triangle looks like a smaller triangle.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
@@ -203,7 +203,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
-  Test(Str|'Fully Clipped Triangle', !({
+  Test(Str|'3 Vertex Clip Right', !({
     # The entire triangle is outside the clipping region, so nothing should be
     # drawn.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|8, Int|8));
@@ -217,6 +217,27 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'2 Vertex Clip Left', !({
+    # Two of the verticies of the triangle are clipped on the left, so that
+    # the result of drawing a triangle looks like a smaller triangle.
+    Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
+    Vec@ a = Vertex(camera, Vec@(Neg(Int|2), Int|0, Int|10));
+    Vec@ b = Vertex(camera, Vec@(Int|2, Int|4, Int|10));
+    Vec@ c = Vertex(camera, Vec@(Int|2, Int|0, Int|10));
+
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    # TODO: Fix left clipping.
+    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
   })),
 
   Test(Str|'Full Screen Clipped Triangle', !({
