@@ -1,4 +1,3 @@
-* [/Graphics] Move Triangle tests out of Camera subdirectory.
 * [/Graphics] Implement proper clipping support.
 
 * [/Graphics] Figure out how to improve performance of drawing triangles.
