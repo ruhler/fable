@@ -7,6 +7,7 @@
 #include <stdarg.h>   // for va_list, va_start, va_end.
 #include <stddef.h>   // for offsetof
 #include <string.h>   // for strlen, strcat
+#include <unistd.h>   // for getcwd
 
 #include "fble-vector.h"    // for FbleVectorInit, etc.
 
@@ -1478,6 +1479,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   // Restores stack and frame pointer and return whatever is in x0.
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
+  fprintf(fout, ".Llow_pc:\n");
   fprintf(fout, ".L._Run_.exit:\n");
   fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
@@ -1545,7 +1547,58 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   fprintf(fout, "  ldp FP, LR, [SP], #16\n");
   fprintf(fout, "  ret\n");
+  fprintf(fout, ".Lhigh_pc:\n");
   FbleFreeString(func_name);
+
+  // Emit dwarf debug info.
+  fprintf(fout, "  .section .debug_info\n");
+
+  // Compilation Unit Header
+  fprintf(fout, ".Ldebug_info:\n");
+  fprintf(fout, "  .4byte .Ldebug_info_end-.Ldebug_info-4\n");  // length
+  fprintf(fout, "  .2byte 2\n");                // DWARF version 2
+  fprintf(fout, "  .4byte .Ldebug_abbrev\n");   // .debug_abbrev offset
+  fprintf(fout, "  .byte 8\n");                 // pointer size in bytes
+
+  // compile_unit entry
+  char cwd[1024];
+  char* gotten = getcwd(cwd, 1024);
+  assert(gotten && "TODO: handle longer paths");
+  fprintf(fout, "  .uleb128 1\n");       // abbrev code for compile_unit
+  fprintf(fout, "  .8byte .Llow_pc\n");  // low_pc value.
+  fprintf(fout, "  .8byte .Lhigh_pc\n"); // high_pc value.
+  fprintf(fout, "  .string \"%s\"\n",    // source file name.
+      module->path->loc.source->str);    
+  fprintf(fout, "  .byte 0\n");          // stmt_list offset.
+  fprintf(fout, "  .string \"%s\"\n", cwd); // compilation directory.
+  fprintf(fout, "  .string \"FBLE\"\n"); // producer.
+
+  fprintf(fout, "  .uleb128 0\n");    // abbrev code for NULL (end of list).
+
+  fprintf(fout, ".Ldebug_info_end:\n");
+
+  fprintf(fout, "  .section .debug_abbrev\n");
+  fprintf(fout, ".Ldebug_abbrev:\n");
+  fprintf(fout, "  .uleb128 1\n");     // compile_unit abbrev code declaration
+  fprintf(fout, "  .uleb128 0x11\n");  // DW_TAG_compile_unit
+  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_no
+
+  fprintf(fout, "  .uleb128 0x11\n");  // DW_AT_low_pc
+  fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
+  fprintf(fout, "  .uleb128 0x12\n");  // DW_AT_high_pc
+  fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
+  fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
+  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
+  fprintf(fout, "  .uleb128 0x10\n");  // DW_AT_stmt_list
+  fprintf(fout, "  .uleb128 0x0b\n");  // DW_FORM_data1
+  fprintf(fout, "  .uleb128 0x1b\n");  // DW_AT_comp_dir
+  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
+  fprintf(fout, "  .uleb128 0x25\n");  // DW_AT_producer
+  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
+
+  fprintf(fout, "  .uleb128 0\n");     // End of abbrev declarations.
 }
 
 // FbleGenerateAArch64Export -- see documentation in fble-compile.h

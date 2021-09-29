@@ -264,3 +264,66 @@ Once I have the infrastructure up and running to test dwarf, I guess I can
 slowly start adding dwarf. For now we can just check for consistency in the
 generated dwarf code.
 
+---
+
+Let me start with dwarf2, look at an example c file compiled by gcc. Dump the
+debug info entries, and see where the functions/statements show up in the
+tree. If statements are completely separate from functions, then let's start
+by generating all the statement nodes. If, as I suspect, the statements are
+parts of functions, then let's generate function nodes to start, and worry
+about adding statement nodes after.
+
+My sample foo.o file has:
+
+DW_TAG_compile_unit
+  DW_TAG_subprogram main, with low_pc and high_pc
+  DW_TAG_subprogram sludge
+  DW_TAG_subprogram foo
+  
+
+I see no nodes for statements. Presumably those are captured using low_pc and
+high_pc along with line location info? Except .debug_abbrev might augment
+that?
+
+And from assembly, how is that encoded?
+Maybe add
+  .type foo, %function before a function label?
+  .size foo, .-foo at the end of each function?
+
+I don't know. This is hard. I should probably actually read and understand the
+spec.
+
+Let's try setting .type and .size and see if the assembler generates anything
+for us for free from that.
+
+No, it doesn't. I think what happens is GNU AS generates a .debug_info section
+if there isn't one in the file, but in the case of gcc, it adds one explicitly
+to the file. So I'll need to add my own to the file, with all the node info,
+and presumably GNU AS will see it and avoid creating its own.
+
+Any reason to keep the .type and .size info for symbols? How about no, until I
+figure out what it's good for.
+
+Note: my gcc appears to emit dwarf version 4 for the .debug_info section
+(unlike dwarf version 2 for other sections). So maybe that's a good target to
+start with? Or maybe stick with dwarf version 2 as long as it has what we
+need, and upgrade to later version only as needed.
+
+I suppose a decent place to start, then, is to emit my own compile_unit tag:
+
+producer: FBLE
+name: foo.fble
+comp_dir: getcwd
+low_pc: 0
+high_pc: ??? get this with some asm magic? Yes. I can use a label to the end
+of the text.
+
+So probably we'll want to emit the debug_info all at the end, referencing
+labels within things?
+
+It looks like we need a .debug_abbrev section too. .debug_info stores the
+attribute values, .debug_abbrev stores the attribute names.
+
+Cool. This should be straight forward to start, if a little tedious in the
+details. Let's emit a single compile_unit node.
+

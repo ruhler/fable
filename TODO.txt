@@ -1,3 +1,6 @@
+
+* [debugger] Emit a compile_unit DIE node when generating assembly.
+
 * [/Graphics] Implement proper clipping support.
  - Debug failing test.
    The math by hand looks right to me. Something else must be going wrong.
