@@ -219,9 +219,8 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
-  Test(Str|'2 Vertex Clip Left', !({
-    # Two of the verticies of the triangle are clipped on the left, so that
-    # the result of drawing a triangle looks like a smaller triangle.
+  Test(Str|'1 Vertex Clip Left', !({
+    # One of the verticies of the triangle is clipped on the left.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|8));
     Vec@ a = Vertex(camera, Vec@(Neg(Int|2), Int|0, Int|10));
     Vec@ b = Vertex(camera, Vec@(Int|2, Int|4, Int|10));

@@ -68,6 +68,11 @@ Times in the past I wished I have an fble debugger:
    doing exactly what I wanted it to, but what I wanted it to do was wrong.
    Being able to step through the code and view values of variables as we go
    would have been nicer than doing it on pen and paper.
+
+ - Debug why triangle is not being clipped properly. Walking through the code
+   by hand suggests it should work. I want debugger to step through the code
+   and print variable values to confirm it lines up with what I expect based
+   on walking through the code by hand.
  
 ---
 
