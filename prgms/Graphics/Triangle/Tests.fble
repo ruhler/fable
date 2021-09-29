@@ -232,17 +232,21 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ wnt = Drawn[
       Pixel@(Int|0, Int|0, Color.Green),
       Pixel@(Int|0, Int|1, Color.Green),
-      Pixel@(Int|1, Int|0, Color.Green)
+      Pixel@(Int|0, Int|2, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green),
+      Pixel@(Int|1, Int|1, Color.Green),
+      Pixel@(Int|1, Int|2, Color.Green),
+      Pixel@(Int|1, Int|3, Color.Green)
     ];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Fix left clipping.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+    # TODO: Debug.
+    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'(-1, 0)');
   })),
 
   Test(Str|'Full Screen Clipped Triangle', !({
     # The triangle takes up the entire available display, so you see a solid
-    # color screen.
+    # color screen. Tests clipping on all sides.
     Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|2));
     Vec@ a = Vertex(camera, Vec@(Neg(Int|3), Neg(Int|1), Int|10));
     Vec@ b = Vertex(camera, Vec@(    Int|3,      Int|5 , Int|10));

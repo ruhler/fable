@@ -22,9 +22,9 @@
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
+% Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
 % Le = /Int/Int/Eq%.Le;
-% Gt = /Int/Int/Eq%.Gt;
 % Ge = /Int/Int/Eq%.Ge;
 % Int = /Int/Int/Lit%.Int;
 
@@ -38,6 +38,11 @@
 # Clipped --
 #   Draw an already clipped triangle.
 Draw@ Clipped = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
+  # TOOD: Properly handle the case where z is zero.
+  Eq(Int|0, a.z).?(true: Blank);
+  Eq(Int|0, b.z).?(true: Blank);
+  Eq(Int|0, c.z).?(true: Blank);
+
   Point@ a_ = Perspective(camera, a);
   Point@ b_ = Perspective(camera, b);
   Point@ c_ = Perspective(camera, c);
@@ -156,25 +161,6 @@ IntersectY = (Int@ y, Int@ z, Vec@ a, Vec@ b) {
   };
 };
 
-# ClipBehind --
-#   Draw a triangle after clipping any bits behind the camera.
-#
-# TODO: This shouldn't be needed once the other clipping functions are
-# implemented, right?
-(Draw@) { Draw@; } ClipBehind = (Draw@ draw) {
-  (Vec@) { Bool@; } ZGt0 = (Vec@ p) { Gt(p.z, Int|0); };
-  (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
-    # Rotate the points [a, b, c] such that any points behind the camera are at
-    # the end of the list [a, b, c].
-    % l = Sort(ZGt0, a, b, c);
-    Vec@ a = l.a; Vec@ b = l.b; Vec@ c = l.c;
-
-    # Only draw the triangle if all points are in front of the camera for now.
-    Le(c.z, Int|0).?(true: Blank);
-    draw(camera, a, b, c, color);
-  };
-};
-
 # Triangle --
 #   Draw a triangle from the point of view of a camera.
 #
@@ -183,12 +169,11 @@ IntersectY = (Int@ y, Int@ z, Vec@ a, Vec@ b) {
 # orientation of the camera.
 (Camera@, Vec@, Vec@, Vec@, Color@) { Drawing@; }
 Triangle = {
-  ClipBehind(
   Clip(Side@(min: Unit), Axis@(x: Unit),
   Clip(Side@(min: Unit), Axis@(y: Unit),
   Clip(Side@(max: Unit), Axis@(x: Unit),
   Clip(Side@(max: Unit), Axis@(y: Unit),
-  Clipped)))));
+  Clipped))));
 };
 
 @(Triangle);

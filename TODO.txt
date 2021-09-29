@@ -1,5 +1,6 @@
 * [/Graphics] Implement proper clipping support.
  - Debug failing test.
+ - Test and fix case where we clip to a z value of 0.
 
 * [/Graphics] Figure out how to improve performance of drawing triangles.
  - We should be able to generate the points on a line incrementally
