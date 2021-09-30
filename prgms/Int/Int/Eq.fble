@@ -45,7 +45,7 @@
 
 (Int@, Int@){ Bool@; } Ge = (Int@ a, Int@ b) {
   a.?(
-      n: b.?(n: GeP(b.n, a.n), 0: True, p: False),
+      n: b.?(n: GeP(b.n, a.n), 0: False, p: False),
       0: b.?(n: True, 0: True, p: False),
       p: b.?(n: True, 0: True, p: GeP(a.p, b.p)));
 };

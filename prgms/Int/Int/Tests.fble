@@ -122,6 +122,9 @@ Test@ Tests = TestSuite(Str|Int, List<Test@>[
   T(Str|Ge_5_6, !(Not(Ge(5, 6)))),
   T(Str|Ge_5_7, !(Not(Ge(5, 7)))),
 
+  T(Str|Ge_m5_0, !(Not(Ge(Neg(5), 0)))),
+  T(Str|Ge_m5_1, !(Not(Ge(Neg(5), 1)))),
+
   TEq(Str|Add_2_3, 5, !(Add(2, 3))),
   TEq(Str|Add_3_m5, Neg(2), !(Add(3, Neg(5)))),
   TEq(Str|Sub_5_3, 2, !(Sub(5, 3))),

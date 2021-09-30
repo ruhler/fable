@@ -73,6 +73,11 @@ Times in the past I wished I have an fble debugger:
    by hand suggests it should work. I want debugger to step through the code
    and print variable values to confirm it lines up with what I expect based
    on walking through the code by hand.
+
+   I ended up making a copy of the code, turning the Clip function into a
+   process, making it a Stdio@ program, and adding print statements for printf
+   style debugging. This revealed the problem was a bug in the integer Ge
+   function.
  
 ---
 
@@ -327,3 +332,17 @@ attribute values, .debug_abbrev stores the attribute names.
 Cool. This should be straight forward to start, if a little tedious in the
 details. Let's emit a single compile_unit node.
 
+---
+
+The compile_unit should contain subroutine entries for each of the functions.
+
+DW_TAG_subprogram
+  DW_AT_name string "/foo/bar%.blah"
+  DW_AT_external flag for externally visible functions. Just the top level?
+  DW_AT_calling_convention - can be omitted for standard c calling convention.
+  DW_AT_type - for the return type, but I don't have support for describing
+               types yet.
+  DW_AT_low_pc, DW_AT_high_pc - for the address range of the function.
+  DW_AT_return_addr, DW_AT_frame_base 
+
+So, to start, just name, external, low_pc, and high_pc I guess.

@@ -239,8 +239,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Debug.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'(-1, 0)');
+    /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Full Screen Clipped Triangle', !({
@@ -261,8 +260,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    # TODO: Fix clipping.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+    /Drawing/Test%.AssertEquals(wnt, got);
   }))
 
   # TODO:
