@@ -1,12 +1,14 @@
 
 * [debugger] Emit debug info entries for functions in generated assembly.
 
-* [/Graphics] Implement proper clipping support.
- - Test and fix case where we clip to a z value of 0.
-
 * [/Graphics] Figure out how to improve performance of drawing triangles.
  - We should be able to generate the points on a line incrementally
    without use of division instead of dividing each time.
+
+* [/Graphics] Clipping doesn't go all the way to the edge of the screen?
+  It looks like clipping is maybe off by a pixel or so on getting the edge of
+  the clipping rectangle? For example, zoom into a large triangle and compare
+  the case where z is 1 with z is 0.
 
 * [/Graphics] Add a left to right scan version of Triangles and pick that if
   the distance is shorter than bottom to top.

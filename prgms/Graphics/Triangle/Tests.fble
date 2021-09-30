@@ -261,6 +261,39 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'Poked Eye Triangle', !({
+    # A triangle at the origin, poking out the camera's eye.
+    # In this case we expect the triangle to take up the entire display.
+    Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|4, Int|4));
+    Vec@ a = Vertex(camera, Vec@(Int|0, Int|0, Int|0));
+    Vec@ b = Vertex(camera, Vec@(Int|0, Int|2, Int|0));
+    Vec@ c = Vertex(camera, Vec@(Int|0, Int|0, Int|4));
+
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|0, Int|2, Color.Green),
+      Pixel@(Int|0, Int|3, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green),
+      Pixel@(Int|1, Int|1, Color.Green),
+      Pixel@(Int|1, Int|2, Color.Green),
+      Pixel@(Int|1, Int|3, Color.Green),
+      Pixel@(Int|2, Int|0, Color.Green),
+      Pixel@(Int|2, Int|1, Color.Green),
+      Pixel@(Int|2, Int|2, Color.Green),
+      Pixel@(Int|2, Int|3, Color.Green),
+      Pixel@(Int|3, Int|0, Color.Green),
+      Pixel@(Int|3, Int|1, Color.Green),
+      Pixel@(Int|3, Int|2, Color.Green),
+      Pixel@(Int|3, Int|3, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
   }))
 
   # TODO:

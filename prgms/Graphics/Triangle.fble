@@ -1,5 +1,7 @@
 
 @ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
 % And = /Bool%.And;
 % Not = /Bool%.Not;
 
@@ -7,6 +9,7 @@
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
 % Blank = /Drawing%.Blank;
+% Rect = /Drawing%.Rect;
 % Over = /Drawing%.Over;
 
 @ Vec@ = /Graphics/3D%.Vec@;
@@ -38,11 +41,17 @@
 # Clipped --
 #   Draw an already clipped triangle.
 Draw@ Clipped = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
-  # TOOD: Properly handle the case where z is zero.
-  Eq(Int|0, a.z).?(true: Blank);
-  Eq(Int|0, b.z).?(true: Blank);
-  Eq(Int|0, c.z).?(true: Blank);
+  # If we have a point where z is zero, it means we are poking out the eye of
+  # the camera. Just fill the entire screen with the given color.
+  Bool@ poke = {
+    Eq(Int|0, a.z).?(true: True);
+    Eq(Int|0, b.z).?(true: True);
+    Eq(Int|0, c.z).?(true: True);
+    False;
+  };
+  poke.?(true: Rect(camera.clip.x, camera.clip.y, camera.clip.w, camera.clip.h, color));
 
+  # Otherwise project the triangle to the display of the camera.
   Point@ a_ = Perspective(camera, a);
   Point@ b_ = Perspective(camera, b);
   Point@ c_ = Perspective(camera, c);
