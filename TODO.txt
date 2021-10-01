@@ -10,6 +10,10 @@
   the clipping rectangle? For example, zoom into a large triangle and compare
   the case where z is 1 with z is 0.
 
+* [/Graphics] Debug clipping artifacts
+  Looks like precision gets off some times for clipping, with bits of sky
+  showing through the ground. Figure out what's up, right a test and fix it.
+
 * [/Graphics] Add a left to right scan version of Triangles and pick that if
   the distance is shorter than bottom to top.
 

@@ -5,6 +5,7 @@
 
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
+@ Color@ = /Drawing%.Color@;
 % Color = /Drawing%.Color;
 % Drawings = /Drawing%.Drawings;
 % Over = /Drawing%.Over;
@@ -36,15 +37,59 @@
 
 @ State@ = Camera@;
 
-State@ Initial = Camera(Int|10, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48));
+State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48));
 
-(State@) { Drawing@; } Draw = (State@ camera) {
-  Vec@ a = Vertex(camera, Vec@(Neg(Int|10), Neg(Int|10), Int|10));
-  Vec@ b = Vertex(camera, Vec@(Int|0, Int|10, Int|10));
-  Vec@ c = Vertex(camera, Vec@(Int|10, Neg(Int|10), Int|10));
+% Colors = @(
+  Wall: Color@(Int|175, Int|175, Int|175),
+  Ground: Color@(Int|134, Int|48, Int|22),
+  Sky: Color@(Int|87, Int|184, Int|230)
+);
+
+% Vertices = {
+  Int@ xh = Int|20;
+  Int@ xl = Neg(xh);
+  Int@ yh = Int|6;
+  Int@ yl = Neg(yh);
+  Int@ zh = Int|30;
+  Int@ zl = Neg(zh);
+  @(000: Vec@(xl, yl, zl),
+    001: Vec@(xl, yl, zh),
+    010: Vec@(xl, yh, zl),
+    011: Vec@(xl, yh, zh),
+    100: Vec@(xh, yl, zl),
+    101: Vec@(xh, yl, zh),
+    110: Vec@(xh, yh, zl),
+    111: Vec@(xh, yh, zh));
+};
+
+(State@) { Drawing@; } Draw = (Camera@ camera) {
+  % vs = @(
+    000: Vertex(camera, Vertices.000),
+    001: Vertex(camera, Vertices.001),
+    010: Vertex(camera, Vertices.010),
+    011: Vertex(camera, Vertices.011),
+    100: Vertex(camera, Vertices.100),
+    101: Vertex(camera, Vertices.101),
+    110: Vertex(camera, Vertices.110),
+    111: Vertex(camera, Vertices.111));
 
   Drawings[
-    Triangle(camera, a, b, c, Color.Cyan)
+    # Sky
+    Rect(camera.clip.x, camera.clip.y, camera.clip.w, camera.clip.h, Colors.Sky),
+
+    # Ground
+    Triangle(camera, vs.000, vs.001, vs.100, Colors.Ground),
+    Triangle(camera, vs.100, vs.001, vs.101, Colors.Ground),
+
+    # Walls
+    Triangle(camera, vs.000, vs.001, vs.011, Colors.Wall),
+    Triangle(camera, vs.000, vs.011, vs.010, Colors.Wall),
+    Triangle(camera, vs.100, vs.101, vs.111, Colors.Wall),
+    Triangle(camera, vs.100, vs.111, vs.110, Colors.Wall),
+    Triangle(camera, vs.000, vs.100, vs.110, Colors.Wall),
+    Triangle(camera, vs.000, vs.110, vs.010, Colors.Wall),
+    Triangle(camera, vs.001, vs.101, vs.111, Colors.Wall),
+    Triangle(camera, vs.001, vs.111, vs.011, Colors.Wall)
   ];
 };
 
