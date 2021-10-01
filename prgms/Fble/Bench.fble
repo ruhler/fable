@@ -15,17 +15,20 @@
 @ Unit@ = /Unit%.Unit@;
 
 Stdio@ Bench = (IO@ io, List@<String@> args) {
+  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'BenchmarkGame...']);
+  Unit@ _benchmarkgame := /BenchmarkGame/Bench%.Bench;
+
   Unit@ _ := io.stdout(Str|'GameOfLife...');
   Unit@ _gameoflife := /GameOfLife/Bench%.Bench;
+
+  Unit@ _ := io.stdout(Str|'Graphics...');
+  Unit@ _graphics := /Graphics/Bench%.Bench;
 
   Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'Invaders...']);
   Unit@ _invaders := /Invaders/Bench%.Bench;
 
   Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'Md5...']);
   Unit@ _md5 := /Md5/Bench%.Bench;
-
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'BenchmarkGame...']);
-  Unit@ _benchmarkgame := /BenchmarkGame/Bench%.Bench;
 
   Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'Sat...']);
   Unit@ _sat := /Sat/Bench%.Bench;
