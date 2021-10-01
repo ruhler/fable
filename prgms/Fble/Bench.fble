@@ -1,9 +1,13 @@
 
+@ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;
+% False = /Bool%.False;
+% Not = /Bool%.Not;
 
 % Chars = /Char%.Chars;
 
 <@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
@@ -13,36 +17,46 @@
 % Strs = /String%.Strs;
 
 @ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
 
+@ Benchmark@ = *(String@ name, Unit@! bench);
+
+List@<Benchmark@> Benchmarks = List<Benchmark@>[
+  Benchmark@(Str|'BenchmarkGame', /BenchmarkGame/Bench%.Bench),
+  Benchmark@(Str|'GameOfLife', /GameOfLife/Bench%.Bench),
+  Benchmark@(Str|'Graphics', /Graphics/Bench%.Bench),
+  Benchmark@(Str|'Invaders', /Invaders/Bench%.Bench),
+  Benchmark@(Str|'Md5', /Md5/Bench%.Bench),
+  Benchmark@(Str|'Sat', /Sat/Bench%.Bench),
+  Benchmark@(Str|'Snake', /Snake/Bench%.Bench),
+  Benchmark@(Str|'Sudoku', /Sudoku/Tests%.Bench),
+  Benchmark@(Str|'TicTacToe', /TicTacToe/Tests%.Bench)
+];
+
+# Bench --
+#   Run fble benchmarks.
+#
+# Runs the benchmarks listed in args. If no benchmarks are listed in args,
+# runs all the benchmarks.
 Stdio@ Bench = (IO@ io, List@<String@> args) {
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'BenchmarkGame...']);
-  Unit@ _benchmarkgame := /BenchmarkGame/Bench%.Bench;
+  Unit@ _ := /List%.ProcessEach<Benchmark@, Unit@>(Benchmarks, Unit,
+    (Benchmark@ benchmark, Unit@ _) {
+      Bool@ skip = {
+        args.?(nil: False);
+        Not(/List/Eq%.Contains<String@>(/String/Eq%.Eq)(args, benchmark.name));
+      };
 
-  Unit@ _ := io.stdout(Str|'GameOfLife...');
-  Unit@ _gameoflife := /GameOfLife/Bench%.Bench;
+      skip.?(true: {
+        io.stdout(Strs[benchmark.name, Str|' SKIPPED', Str[Chars.nl]]);
+      });
 
-  Unit@ _ := io.stdout(Str|'Graphics...');
-  Unit@ _graphics := /Graphics/Bench%.Bench;
+      Unit@ _ := io.stdout(Strs[benchmark.name, Str|'...']);
+      Unit@ _ := benchmark.bench;
+      Unit@ _ := io.stdout(Str[Chars.nl]);
+      !(Unit);
+    });
 
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'Invaders...']);
-  Unit@ _invaders := /Invaders/Bench%.Bench;
-
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'Md5...']);
-  Unit@ _md5 := /Md5/Bench%.Bench;
-
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'Sat...']);
-  Unit@ _sat := /Sat/Bench%.Bench;
-
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'Snake...']);
-  Unit@ _snake := /Snake/Bench%.Bench;
-
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'Sudoku...']);
-  Unit@ _sudoku := /Sudoku/Tests%.Bench;
-
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'TicTacToe...']);
-  Unit@ _tictactoe := /TicTacToe/Tests%.Bench;
-
-  Unit@ _ := io.stdout(Strs[Str[Chars.nl], Str|'DONE', Str[Chars.nl]]);
+  Unit@ _ := io.stdout(Strs[Str|'DONE', Str[Chars.nl]]);
   !(True);
 };
 
