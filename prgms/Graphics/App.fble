@@ -26,6 +26,8 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Neg = /Int/Int%.Neg;
+% Mul = /Int/Int%.Mul;
+% Div = /Int/Int/Div%.Div;
 
 % Int = /Int/Int/Lit%.Int;
 
@@ -39,11 +41,32 @@
 
 State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48));
 
-% Colors = @(
-  Wall: Color@(Int|175, Int|175, Int|175),
-  Ground: Color@(Int|134, Int|48, Int|22),
-  Sky: Color@(Int|87, Int|184, Int|230)
-);
+# Light --
+#   Change the lighting of the given color by the factor alpha/256.
+(Int@, Color@) { Color@; } Light = (Int@ alpha, Color@ color) {
+  Color@(
+    Div(Mul(alpha, color.r), Int|256),
+    Div(Mul(alpha, color.g), Int|256),
+    Div(Mul(alpha, color.b), Int|256));
+};
+
+% Colors = {
+  Color@ wall = Color@(Int|175, Int|175, Int|175);
+
+  # Wall lighting is based on light going in direction (3, -6, 2).
+  #  left: (1, 0, 0) vs. (3, -6, 2) ==> 0  ==> 128/256
+  #  right (-1, 0, 0) vs. (3, -6, 2) = 3/7 ==> 237/256
+  #  front (0, 0, -1) vs. (3, -6, 2) = 2/7 ==> 201/256
+  #  back (0, 0, 1) vs. (3, -6, 2) ==> 0   ==> 128/256
+  @(
+    LeftWall: Light(Int|128, wall),
+    RightWall: Light(Int|237, wall),
+    FrontWall: Light(Int|201, wall),
+    BackWall: Light(Int|148, wall),
+    Ground: Color@(Int|134, Int|48, Int|22),
+    Sky: Color@(Int|87, Int|184, Int|230)
+  );
+};
 
 % Vertices = {
   Int@ xh = Int|20;
@@ -82,14 +105,14 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
     Triangle(camera, vs.100, vs.001, vs.101, Colors.Ground),
 
     # Walls
-    Triangle(camera, vs.000, vs.001, vs.011, Colors.Wall),
-    Triangle(camera, vs.000, vs.011, vs.010, Colors.Wall),
-    Triangle(camera, vs.100, vs.101, vs.111, Colors.Wall),
-    Triangle(camera, vs.100, vs.111, vs.110, Colors.Wall),
-    Triangle(camera, vs.000, vs.100, vs.110, Colors.Wall),
-    Triangle(camera, vs.000, vs.110, vs.010, Colors.Wall),
-    Triangle(camera, vs.001, vs.101, vs.111, Colors.Wall),
-    Triangle(camera, vs.001, vs.111, vs.011, Colors.Wall)
+    Triangle(camera, vs.000, vs.001, vs.011, Colors.LeftWall),
+    Triangle(camera, vs.000, vs.011, vs.010, Colors.LeftWall),
+    Triangle(camera, vs.100, vs.101, vs.111, Colors.RightWall),
+    Triangle(camera, vs.100, vs.111, vs.110, Colors.RightWall),
+    Triangle(camera, vs.000, vs.100, vs.110, Colors.BackWall),
+    Triangle(camera, vs.000, vs.110, vs.010, Colors.BackWall),
+    Triangle(camera, vs.001, vs.101, vs.111, Colors.FrontWall),
+    Triangle(camera, vs.001, vs.111, vs.011, Colors.FrontWall)
   ];
 };
 
