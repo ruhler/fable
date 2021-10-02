@@ -514,14 +514,14 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       case FBLE_PROFILE_ENTER_OP: {
         FbleBlockId block = op->block;
         FbleName* name = &profile_blocks.xs[block];
-        fprintf(fout, "  .loc 1 %i %i\n", name->loc.line, name->loc.col + 1);
+        fprintf(fout, "  .loc 1 %i %i\n", name->loc.line, name->loc.col);
         break;
       }
 
       case FBLE_PROFILE_REPLACE_OP: {
         FbleBlockId block = op->block;
         FbleName* name = &profile_blocks.xs[block];
-        fprintf(fout, "  .loc 1 %i %i\n", name->loc.line, name->loc.col + 1);
+        fprintf(fout, "  .loc 1 %i %i\n", name->loc.line, name->loc.col);
         break;
       }
 
@@ -1094,6 +1094,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  br x0\n");              // goto pcs[thread->stack->pc]
 
   // Emit code for each fble instruction
+  fprintf(fout, "  .loc 1 %i %i\n", function_block.loc.line, function_block.loc.col);
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, ".L._Run_%p.pc.%zi:\n", (void*)code, i);
     EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);

@@ -56,8 +56,11 @@ static void DumpCode(FILE* fout, FbleCode* code)
 
   while (blocks.size > 0) {
     FbleCode* block = blocks.xs[--blocks.size];
-    fprintf(fout, "%p args[%zi] statics[%zi] locals[%zi]:\n",
-        (void*)block, block->_base.args, block->_base.statics, block->_base.locals);
+    FbleName block_name = profile_blocks.xs[block->_base.profile];
+    fprintf(fout, "%s[%04zx] args[%zi] statics[%zi] locals[%zi]: // %s:%d:%d\n",
+        block_name.name->str, block->_base.profile,
+        block->_base.args, block->_base.statics, block->_base.locals,
+        block_name.loc.source->str, block_name.loc.line, block_name.loc.col);
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];
 
@@ -163,9 +166,11 @@ static void DumpCode(FILE* fout, FbleCode* code)
 
         case FBLE_FUNC_VALUE_INSTR: {
           FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-          fprintf(fout, "l%zi = func %p [",
+          FbleCode* func = func_value_instr->code;
+          FbleName func_name = profile_blocks.xs[func->_base.profile];
+          fprintf(fout, "l%zi = func %s[%04zx] [",
               func_value_instr->dest,
-              (void*)func_value_instr->code);
+              func_name.name->str, func->_base.profile);
           const char* comma = "";
           for (size_t j = 0; j < func_value_instr->scope.size; ++j) {
             fprintf(fout, "%s%s%zi",
