@@ -404,3 +404,31 @@ This happens, for example, in /Fble/DebugTest% function.
 
 I have no idea what's going on here.
 
+---
+
+Next steps with gdb: 'step' and 'next'.
+* step apparently goes to whatever the next source line encountered is. I
+  should be able to verify that works today.
+* next: "Execution stops when control reaches a
+   different line of code at the original stack level that was executing when
+   you gave the next command. This command is abbreviated n."
+
+Presumably 'next' is not going to work in the case where the frame pointer
+gets mess up, or the backtrace gets messed up?
+
+Step appears to work as specified, except it's a little annoying it steps into
+C code. It would be nice if we could make it go to the next 'fble' source
+file.
+
+Next gets stuck at the address of the 'exit' trampoline. Somehow that stack
+appears to be corrupted when we get there. Perhaps it would help to give each
+function its own exit routine. More traditional and straight forward. I'm not
+sure why the stack is messed up there though. Maybe gdb is just confused that
+a part of the function isn't where it thought it would be?
+
+Yeah, moving exit into the particular function it is for fixes gdb's
+unhappiness about next. But next doesn't work the way you want because it
+triggers when we do any call into a function, which causes us to move the
+native stack to the managed stack for the current running function, so gdb
+thinks we have exited the function and it's time to stop.
+

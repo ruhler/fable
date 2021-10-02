@@ -426,7 +426,7 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 
   // Return FBLE_EXEC_ABORTED
   fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
-  fprintf(fout, "  b .L._Run_.exit\n");
+  fprintf(fout, "  b .L._Run_.%p.exit\n", code);
 }
 
 // StackBytesForCount --
@@ -809,7 +809,23 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
         fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
         fprintf(fout, "  mov x0, R_SCRATCH_0\n");
-        fprintf(fout, "  b .L._Run_.tail_call\n");
+
+        // Restore stack and frame pointer and do a tail call.
+        fprintf(fout, "  bl FbleFuncValueExecutable\n");
+        fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleExecutable, run));
+        fprintf(fout, "  mov x0, R_HEAP\n");
+        fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, threads));
+        fprintf(fout, "  ldr x2, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
+        fprintf(fout, "  ldr x3, [SP, #%zi]\n", offsetof(RunStackFrame, io_activity));
+        fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+        fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
+        fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
+        fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
+        fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
+        fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
+        fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
+        fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
+        fprintf(fout, "  br x4\n");
         return;
       }
 
@@ -828,7 +844,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
-      fprintf(fout, "  b .L._Run_.exit\n");
+      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 
@@ -866,7 +882,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
       // Return FBLE_EXEC_YIELDED
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_YIELDED);
-      fprintf(fout, "  b .L._Run_.exit\n");
+      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 
@@ -874,7 +890,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_BLOCKED);
       fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
       fprintf(fout, "  ldr x1, [x1, #%zi]\n", offsetof(FbleThread, children));
-      fprintf(fout, "  cbnz x1, .L._Run_.exit\n");
+      fprintf(fout, "  cbnz x1, .L._Run_.%p.exit\n", code);
       return;
     }
 
@@ -934,7 +950,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleThreadReturn\n");
 
       fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
-      fprintf(fout, "  b .L._Run_.exit\n");
+      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 
@@ -1082,6 +1098,18 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     fprintf(fout, ".L._Run_%p.pc.%zi:\n", (void*)code, i);
     EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);
   }
+
+  // Restores stack and frame pointer and return whatever is in x0.
+  fprintf(fout, ".L._Run_.%p.exit:\n", (void*)code);
+  fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
+  fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
+  fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
+  fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
+  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
+  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
+  fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
+  fprintf(fout, "  ret\n");
 }
 
 // EmitInstrForAbort --
@@ -1475,40 +1503,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
     fprintf(fout, ".L.loc.%s:\n  .string \"%s\"\n", label, locs.xs[i]);
   }
 
-  // Common code for exiting a run function.
-  // Restores stack and frame pointer and return whatever is in x0.
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
   fprintf(fout, ".Llow_pc:\n");
-  fprintf(fout, ".L._Run_.exit:\n");
-  fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
-  fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
-  fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
-  fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
-  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
-  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
-  fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
-  fprintf(fout, "  ret\n");
-
-  // Common code for doing a tail call from a run function.
-  // Restores stack and frame pointer and tail calls the FbleFuncValue in x0.
-  fprintf(fout, ".L._Run_.tail_call:\n");
-  fprintf(fout, "  bl FbleFuncValueExecutable\n");
-  fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleExecutable, run));
-  fprintf(fout, "  mov x0, R_HEAP\n");
-  fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, threads));
-  fprintf(fout, "  ldr x2, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-  fprintf(fout, "  ldr x3, [SP, #%zi]\n", offsetof(RunStackFrame, io_activity));
-  fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
-  fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
-  fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
-  fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
-  fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
-  fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
-  fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
-  fprintf(fout, "  br x4\n");
 
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction

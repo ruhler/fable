@@ -1,5 +1,11 @@
 
 * [debugger] Emit debug info entries for functions in generated assembly.
+  - this should give us nice function names in gdb (add a test).
+  - and maybe make the dwarfdump high address mismatch error go away?
+
+* [debugger] Do normal function calls in place.
+  - instead of returning to the caller.
+  - this should maybe fix the implementation of 'next'.
 
 * [/Graphics] Clipping doesn't go all the way to the edge of the screen?
   It looks like clipping is maybe off by a pixel or so on getting the edge of
