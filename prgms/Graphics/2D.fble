@@ -9,12 +9,10 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
-% Mul = /Int/Int%.Mul;
 % Int = /Int/Int/Lit%.Int;
 % Le = /Int/Int/Eq%.Le;
 % Max = /Int/Int/Eq%.Max;
 % Min = /Int/Int/Eq%.Min;
-% Div = /Int/Int/Div%.Div;
 % Range = /Int/Int/Iter%.Range;
 
 <@,@>% For = /Iter%.For;
@@ -36,68 +34,77 @@ SortByY = (Point@ a, Point@ b, Point@ c) {
         false: Sorted@(c, b, a))));
 };
 
-# XFromY --
-#   Given a line from point a to point b, and a value y
-#   in the range [a.y, b.y), compute the value of x on the line cooresponding
-#   to that value y.
+# Fixed@ -- 
+#   A fixed point number.
 #
-# Requirement: a.y < b.y.
-(Point@, Point@)(Int@) { Int@; } XFromY = (Point@ a, Point@ b) {
-  # Our goal is to compute the value of 'x' as a function of 'y' in such a
-  # way that:
-  # * We factor out common terms used for different values of y, to improve
-  #   performance of repeated calls to this function.
-  # * We do one big division at the end, so that rounding is independent
-  #   of whatever frame of reference we use.
-  #
-  # In other words, we compute:
-  #   x = (d*y + e)/f 
-  # With appropriate choice of constants d, e, and f.
-  Int@ d = Sub(b.x, a.x);
-  Int@ e = Sub(Mul(a.x, b.y), Mul(a.y, b.x));
-  Int@ f = Sub(b.y, a.y);
+# i = x + r/S, r ∊ [0, S), for some constant S given by the context.
+@ Fixed@ = *(Int@ x, Int@ r);
 
-  (Int@ y) {
-    Div(Add(Mul(d, y), e), f);
-  };
+# Fixed --
+#   Produce a fixed point number from integer x, remainder r, and scale s.
+#
+# r can be outside the interval [0, S), but it's assumed for performance
+# reasons to be close and will be normalized appropriately.
+#
+# s must be greater than 0.
+(Int@, Int@, Int@) { Fixed@; } Fixed = (Int@ x, Int@ r, Int@ s) {
+  r.?(n: Fixed(Sub(x, Int|1), Add(r, s), s));
+
+  Int@ r_minus_s = Sub(r, s);
+  r_minus_s.?(n: Fixed@(x, r));
+
+  Fixed(Add(x, Int|1), r_minus_s, s);
 };
 
 # Triangle --
 #   Draw a filled triangle between the points a, b, and c.
 (Point@, Point@, Point@, Color@) { Drawing@; }
 Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
+  # Sort the points so that a is at the bottom and c is at the top.
   Sorted@ s = SortByY(a, b, c);
   Point@ a = s.0;
   Point@ b = s.1;
   Point@ c = s.2;
 
-  Drawing@ bottom = For<Int@, Drawing@>(Range(a.y, b.y), Blank, { 
-    (Int@) { Int@; } Fxb = XFromY(a, b);
-    (Int@) { Int@; } Fxc = XFromY(a, c);
+  # Draw horizontal lines between line segments ab and ac starting from the
+  # bottom point a and going up to the middle point b.
+  @ State@ = *(Drawing@ drawing, Fixed@ xb, Fixed@ xc);
+  State@ initial = @(
+    drawing: Blank,
+    xb: Fixed@(a.x, Int|0),
+    xc: Fixed@(a.x, Int|0));
+  Point@ db = Point@(Sub(b.x, a.x), Sub(b.y, a.y));
+  Point@ dc = Point@(Sub(c.x, a.x), Sub(c.y, a.y));
+  State@ bottom = For<Int@, State@>(Range(a.y, b.y), initial, 
+    (Int@ y, State@ state) {
+      Int@ xmin = Min(state.xb.x, state.xc.x);
+      Int@ xmax = Max(state.xb.x, state.xc.x);
+      Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
+      Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);
+      State@(
+        Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), Int|1, color)),
+        xb, xc);
+    });
 
-    (Int@ y, Drawing@ d) {
-      Int@ xb = Fxb(y);
-      Int@ xc = Fxc(y);
-      Int@ xmin = Min(xb, xc);
-      Int@ xmax = Max(xb, xc);
-      Over(d, Rect(xmin, y, Sub(xmax, xmin), Int|1, color));
-    };
-  });
-
-  Drawing@ top = For<Int@, Drawing@>(Range(b.y, c.y), Blank, {
-    (Int@) { Int@; } Fxa = XFromY(a, c);
-    (Int@) { Int@; } Fxb = XFromY(b, c);
-
-    (Int@ y, Drawing@ d) {
-      Int@ xa = Fxa(y);
-      Int@ xb = Fxb(y);
-      Int@ xmin = Min(xa, xb);
-      Int@ xmax = Max(xa, xb);
-      Over(d, Rect(xmin, y, Sub(xmax, xmin), Int|1, color));
-    };
-  });
-
-  Over(bottom, top);
+  # Draw horizontal lines between line segments bc and ac starting from the
+  # middle point b and going up to the top point c.
+  Point@ db = Point@(Sub(c.x, b.x), Sub(c.y, b.y));
+  Point@ dc = Point@(Sub(c.x, a.x), Sub(c.y, a.y));
+  State@ initial = @(
+    drawing: bottom.drawing,
+    xb: Fixed@(b.x, Int|0),
+    xc: bottom.xc);
+  State@ top = For<Int@, State@>(Range(b.y, c.y), initial,
+    (Int@ y, State@ state) {
+      Int@ xmin = Min(state.xc.x, state.xb.x);
+      Int@ xmax = Max(state.xc.x, state.xb.x);
+      Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);
+      Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
+      State@(
+        Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), Int|1, color)),
+        xb, xc);
+    });
+  top.drawing;
 };
 
 @(Triangle);
