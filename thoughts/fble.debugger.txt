@@ -346,3 +346,38 @@ DW_TAG_subprogram
   DW_AT_return_addr, DW_AT_frame_base 
 
 So, to start, just name, external, low_pc, and high_pc I guess.
+
+---
+
+I could write tests for the debugging stuff using gdb scripts, right? Debug a
+known program, verify I can place breakpoints and view things and step through
+things.
+
+It would be great if I knew what information gdb needed for certain tasks, so
+I could do this based on what gdb needs instead of randomly adding information
+and hoping for the best.
+
+If the first debugging goal was to be able to set breakpoints on .fble files,
+the next debugging goal would be to be able 'step' and 'next' through the code
+reliably. I suppose we don't really have the first goal done yet, because you
+can't set breakpoints at the start of a let body?
+
+How about:
+* figure out how to write a gdb based test of the debugging stuff.
+* write a test that you can set a breakpoint at the start of a basic block.
+* write a failing test that you can set a breakpoint at a let body.
+* add debug info necessary to set a breakpoint at a let body.
+* research what approach/info gdb needs to implement step and next.
+* add a test for step/next.
+* implement whatever is needed for step/next.
+
+Apparently I can no longer set breakpoints at lines in .fble files, presumably
+because I added my own debug_info section? No, looks like it's because I
+specify the statement list as 0 instead of some relocatable value, and it
+isn't being relocated properly.
+
+Yeah, that was the problem.
+
+I'm also getting some dwarf warnings about bogus end of sibling markers that I
+don't understand. Maybe I need to check out the source code for dwarfdump to
+see why it produces that warning.

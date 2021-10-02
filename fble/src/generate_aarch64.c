@@ -1569,7 +1569,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .8byte .Lhigh_pc\n"); // high_pc value.
   fprintf(fout, "  .string \"%s\"\n",    // source file name.
       module->path->loc.source->str);    
-  fprintf(fout, "  .byte 0\n");          // stmt_list offset.
+  fprintf(fout, "  .8byte .Ldebug_line\n");          // stmt_list offset.
   fprintf(fout, "  .string \"%s\"\n", cwd); // compilation directory.
   fprintf(fout, "  .string \"FBLE\"\n"); // producer.
 
@@ -1590,7 +1590,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
   fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
   fprintf(fout, "  .uleb128 0x10\n");  // DW_AT_stmt_list
-  fprintf(fout, "  .uleb128 0x0b\n");  // DW_FORM_data1
+  fprintf(fout, "  .uleb128 0x07\n");  // DW_FORM_data8
   fprintf(fout, "  .uleb128 0x1b\n");  // DW_AT_comp_dir
   fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
   fprintf(fout, "  .uleb128 0x25\n");  // DW_AT_producer
@@ -1599,6 +1599,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
 
   fprintf(fout, "  .uleb128 0\n");     // End of abbrev declarations.
+
+  fprintf(fout, "  .section .debug_line\n");
+  fprintf(fout, ".Ldebug_line:\n");
 }
 
 // FbleGenerateAArch64Export -- see documentation in fble-compile.h

@@ -490,6 +490,29 @@ bin $::bin/fble-bench \
   "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 
+# /Fble/DebugTest% compiled binary
+build $::src/fble-debug-test.s $::bin/fble-compile \
+  "$::bin/fble-compile --export FbleCompiledMain /Fble/DebugTest% > $::src/fble-debug-test.s"
+asm $::obj/fble-debug-test.o $::src/fble-debug-test.s ""
+bin $::bin/fble-debug-test \
+  "$::obj/fble-debug-test.o $::obj/fble-compiled-stdio.o" \
+  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
+
+# Test that there are no dwarf warnings in the generated fble-debug-test
+# binary.
+build "$::obj/fble-debug-test.dwarf $::test/fble-debug-test.dwarf-warnings.txt" \
+  "$::bin/fble-debug-test" \
+  "objdump --dwarf $::bin/fble-debug-test > $::obj/fble-debug-test.dwarf 2> $::test/fble-debug-test.dwarf-warnings.txt"
+
+# TODO: Understand why this test fails.
+#test $::test/dwarf-test.tr \
+#  "$::test/fble-debug-test.dwarf-warnings.txt" \
+#  "cmp /dev/null $::test/fble-debug-test.dwarf-warnings.txt"
+
+test $::test/fble-debug-test.tr \
+  "$::bin/fble-debug-test tools/fble-debug-test.exp" \
+  "expect tools/fble-debug-test.exp > /dev/null"
+
 # /Invaders/App% compiled binary
 build $::src/fble-invaders.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain /Invaders/App% > $::src/fble-invaders.s"
