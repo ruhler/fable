@@ -345,7 +345,8 @@ DW_TAG_subprogram
   DW_AT_low_pc, DW_AT_high_pc - for the address range of the function.
   DW_AT_return_addr, DW_AT_frame_base 
 
-So, to start, just name, external, low_pc, and high_pc I guess.
+So, to start, just name, external, low_pc, and high_pc I guess. Or even just
+name, low_pc, and high_pc.
 
 ---
 
@@ -432,3 +433,47 @@ triggers when we do any call into a function, which causes us to move the
 native stack to the managed stack for the current running function, so gdb
 thinks we have exited the function and it's time to stop.
 
+---
+
+How will multithreading work?
+
+gdb has support for pthreads. Otherwise I bet it will get confused.
+
+But, can we use pthreads for light weight multithreading? For example, if I'm
+going to allocate a separate stack per thread anyway, is there significant
+overhead associated with pthreads?
+
+I would be happy to use pthreads if:
+* The overhead of creating threads isn't too high, because we do it with every
+  proc/exec. Creating and joining threads should be light weight. Like, on the
+  order of a function call, or maybe up to 4x a function call.
+* We can set the scheduler to only allow one thread to run at once.
+  I suppose we can have a big lock if we want to, to control this.
+
+I fear it's just going to be way too much overhead though.
+
+And the fble thoughts archive shows last time I considered pthreads, there's a
+not very high limit on the total number of threads you can have.
+
+Maybe multithreading won't be so big a problem in practice, because we tend to
+execute a thread to completion whenever possible, so the only time we do a
+context switch that could confuse gdb is when the thread gets blocked.
+Straight line code should work just fine.
+
+---
+
+Another question: any way we can avoid calling into the .c files? How about we
+avoid generating debugging symbols for .c files, so the only debug symbols we
+have are for fble files. Step should then step through only the .fble files,
+right?
+
+Yes! That works great. As long as we can make it obvious to gdb what the stack
+is, if we only have fble debug info produced, then 'step' goes to the next
+fble line. In practice this would work by having a user link with a release
+build of libfble that does not have debugging symbols.
+
+---
+
+With subprogram entries in place, we can now set breakpoints on function
+names, assuming you can figure out what the right name to use is with regards
+to '!' extensions.

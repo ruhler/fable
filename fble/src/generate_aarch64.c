@@ -1110,6 +1110,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
   fprintf(fout, "  ret\n");
+
+  fprintf(fout, ".L.%p.%s.high_pc:\n", (void*)code, function_label);
 }
 
 // EmitInstrForAbort --
@@ -1507,14 +1509,13 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .align 2\n");
   fprintf(fout, ".Llow_pc:\n");
 
+  FbleNameV profile_blocks = module->code->_base.profile_blocks;
+
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
-    EmitCode(fout, module->code->_base.profile_blocks, blocks.xs[i]);
-    EmitCodeForAbort(fout, module->code->_base.profile_blocks, blocks.xs[i]);
+    EmitCode(fout, profile_blocks, blocks.xs[i]);
+    EmitCodeForAbort(fout, profile_blocks, blocks.xs[i]);
   }
-
-  FbleFree(blocks.xs);
-  FbleFree(locs.xs);
 
   LabelId label_id = 0;
   LabelId module_id = StaticExecutableModule(fout, &label_id, module);
@@ -1570,6 +1571,23 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .string \"%s\"\n", cwd); // compilation directory.
   fprintf(fout, "  .string \"FBLE\"\n"); // producer.
 
+  // subprogram entries
+  for (int i = 0; i < blocks.size; ++i) {
+    FbleCode* code = blocks.xs[i];
+
+    FbleName function_block = profile_blocks.xs[code->_base.profile];
+    char function_label[SizeofSanitizedString(function_block.name->str)];
+    SanitizeString(function_block.name->str, function_label);
+
+    fprintf(fout, "  .uleb128 2\n");       // abbrev code for subprogram.
+    fprintf(fout, "  .string \"%s\"\n",    // source function name.
+        function_block.name->str);
+
+    // low_pc and high_pc attributes.
+    fprintf(fout, "  .8byte _Run.%p.%s\n", (void*)code, function_label);
+    fprintf(fout, "  .8byte .L.%p.%s.high_pc\n", (void*)code, function_label);
+  };
+
   fprintf(fout, "  .uleb128 0\n");    // abbrev code for NULL (end of list).
 
   fprintf(fout, ".Ldebug_info_end:\n");
@@ -1578,8 +1596,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, ".Ldebug_abbrev:\n");
   fprintf(fout, "  .uleb128 1\n");     // compile_unit abbrev code declaration
   fprintf(fout, "  .uleb128 0x11\n");  // DW_TAG_compile_unit
-  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_no
-
+  fprintf(fout, "  .byte 1\n");        // DW_CHILDREN_yes
   fprintf(fout, "  .uleb128 0x11\n");  // DW_AT_low_pc
   fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
   fprintf(fout, "  .uleb128 0x12\n");  // DW_AT_high_pc
@@ -1595,10 +1612,25 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
   fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
 
+  fprintf(fout, "  .uleb128 2\n");     // subprogram abbrev code declaration
+  fprintf(fout, "  .uleb128 0x2e\n");  // DW_TAG_subprogram
+  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_no
+  fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
+  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
+  fprintf(fout, "  .uleb128 0x11\n");  // DW_AT_low_pc
+  fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
+  fprintf(fout, "  .uleb128 0x12\n");  // DW_AT_high_pc
+  fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
+
   fprintf(fout, "  .uleb128 0\n");     // End of abbrev declarations.
 
   fprintf(fout, "  .section .debug_line\n");
   fprintf(fout, ".Ldebug_line:\n");
+
+  FbleFree(blocks.xs);
+  FbleFree(locs.xs);
 }
 
 // FbleGenerateAArch64Export -- see documentation in fble-compile.h

@@ -1,5 +1,6 @@
 
-* [debugger] Emit debug info entries for functions in generated assembly.
+* [debugger] Figure out why first line of Show! function is line 25 instead of
+line 23.
   - this should give us nice function names in gdb (add a test).
   - and maybe make the dwarfdump high address mismatch error go away?
 
