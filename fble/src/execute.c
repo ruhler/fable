@@ -76,11 +76,7 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 //                 unblock another thread.
 //
 // Results:
-//   FBLE_EXEC_FINISHED - if the thread has finished running.
-//   FBLE_EXEC_BLOCKED - if the thread is blocked on I/O.
-//   FBLE_EXEC_YIELDED - if our time slice for executing instructions is over.
-//   FBLE_EXEC_RUNNING - not used.
-//   FBLE_EXEC_ABORTED - if execution should be aborted.
+//   The status of running the thread.
 //
 // Side effects:
 // * The thread is executed, updating its stack.
@@ -199,7 +195,6 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
           break;
         }
 
-        case FBLE_EXEC_RUNNING: UNREACHABLE("unexpected status");
         case FBLE_EXEC_ABORTED: {
           AbortThreads(heap, &threads);
           FbleReleaseValue(heap, result);
