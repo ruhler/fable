@@ -404,14 +404,16 @@ static Control RunCallInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThrea
     }
 
     FbleThreadTailCall(heap, func, args, thread);
-    *status = FBLE_EXEC_FINISHED;
+    *status = FBLE_EXEC_CONTINUED;
     return RETURN;
   }
 
   thread->stack->pc++;
   FbleThreadCall(heap, thread->stack->locals + call_instr->dest, func, args, thread);
-  *status = FBLE_EXEC_FINISHED;
-  return RETURN;
+  do {
+    *status = FbleFuncValueExecutable(thread->stack->func)->run(heap, threads, thread, io_activity);
+  } while (*status == FBLE_EXEC_CONTINUED);
+  return (*status == FBLE_EXEC_FINISHED) ? CONTINUE : RETURN;
 }
 
 // AbortCallInstr -- see documentation of AbortInstr

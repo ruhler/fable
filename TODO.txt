@@ -4,9 +4,10 @@ line 23.
   For some reason gdb is skipping the first loc output. It does this for c
   code too. I'm not sure how it's choosing to skip or not though.
 
-* [debugger] Do normal function calls in place.
-  - instead of returning to the caller.
-  - this should maybe fix the implementation of 'next'.
+* [debugger] Add locations for more statements.
+  So we can set breakpoints and step through more parts of the code.
+
+* [debugger] Figure out how we could print variables.
 
 * [/Graphics] Clipping doesn't go all the way to the edge of the screen?
   It looks like clipping is maybe off by a pixel or so on getting the edge of
@@ -109,10 +110,6 @@ unique?
  - I think the way it's setup, either we'll get no block in some cases, or
    double blocks in some cases. Is it really that important to fix?
  - Maybe add a test case at least to show the problem in ProfileTests.fble?
-
-* Could I emit #line pragmas to get gcov and gprof at .fble file level?
- - But we would want more comprehensive line number information, instead of
-   just line numbers for aborts.
 
 * Remove dependence of interpret.c and generated code on value.h.
   Making value functions public as necessary to support this.

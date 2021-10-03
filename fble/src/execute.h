@@ -38,10 +38,21 @@ typedef struct FbleStack {
 } FbleStack;
 
 // FbleExecStatus -- 
-//   Shared status code used for returning status from running an instruction,
-//   running a function or running a thread.
+//   Shared status code used for returning status from running a function or a
+//   thread.
+//
+// FBLE_EXEC_CONTINUED is used in the case when a function needs to perform a
+// tail call. In this case, the function pushes the tail call on the managed
+// stack and returns FBLE_EXEC_CONTINUED. It is the callers responsibility to
+// execute the function on top of the managed stack to completion before
+// continuing itself. This status is only relevant for functions, not for
+// threads.
+//
+// FBLE_EXEC_FINISHED may only be returned if the managed stack is identical
+// to what it was before the function was called.
 typedef enum {
-  FBLE_EXEC_FINISHED,       // The function has finished running.
+  FBLE_EXEC_CONTINUED,      // The function requires a continuation to be run.
+  FBLE_EXEC_FINISHED,       // The function/thread has finished running.
   FBLE_EXEC_BLOCKED,        // The thread is blocked on I/O.
   FBLE_EXEC_YIELDED,        // The thread yielded, but is not blocked on I/O.
   FBLE_EXEC_ABORTED,        // Execution needs to be aborted.

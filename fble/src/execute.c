@@ -85,7 +85,7 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
 {
   FbleExecStatus status = FBLE_EXEC_FINISHED;
-  while (status == FBLE_EXEC_FINISHED && thread->stack != NULL) {
+  while ((status == FBLE_EXEC_FINISHED || status == FBLE_EXEC_CONTINUED) && thread->stack != NULL) {
     status = FbleFuncValueExecutable(thread->stack->func)->run(heap, threads, thread, io_activity);
   }
   return status;
@@ -170,6 +170,12 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
       FbleThread* thread = threads.xs[i];
       FbleExecStatus status = RunThread(heap, &threads, thread, &unblocked);
       switch (status) {
+        case FBLE_EXEC_CONTINUED: {
+          UNREACHABLE("unexpected status");
+          unblocked = true;
+          break;
+        }
+
         case FBLE_EXEC_FINISHED: {
           unblocked = true;
           assert(thread->stack == NULL);

@@ -477,3 +477,11 @@ build of libfble that does not have debugging symbols.
 With subprogram entries in place, we can now set breakpoints on function
 names, assuming you can figure out what the right name to use is with regards
 to '!' extensions.
+
+---
+
+Now that we do function calls in place instead of falling back to RunThread to
+do function calls, next and backtrace work decently well. That's cool. I bet
+we can step through the code in a useful way now. Aside from there not being
+enough statement locations.
+

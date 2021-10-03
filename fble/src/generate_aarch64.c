@@ -841,9 +841,27 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  mov x3, SP\n");
       fprintf(fout, "  ldr x4, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread)); // thread
       fprintf(fout, "  bl FbleThreadCall\n");
-
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-      fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
+
+      // Call the function repeatedly for as long as it results in
+      // FBLE_EXEC_CONTINUED.
+      fprintf(fout, ".L._Run_.%p.call.%zi:\n", code, pc);
+      fprintf(fout, "  mov x0, R_SCRATCH_0\n");   // func
+      fprintf(fout, "  bl FbleFuncValueExecutable\n");
+      fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleExecutable, run));
+      fprintf(fout, "  mov x0, R_HEAP\n");
+      fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, threads));
+      fprintf(fout, "  ldr x2, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
+      fprintf(fout, "  ldr x3, [SP, #%zi]\n", offsetof(RunStackFrame, io_activity));
+      fprintf(fout, "  blr x4\n");               // call run function
+      fprintf(fout, "  cmp x0, %i\n", FBLE_EXEC_CONTINUED);
+      fprintf(fout, "  b.eq .L._Run_.%p.call.%zi\n", code, pc);
+
+      // If the called function finished, continue to the next instruction.
+      fprintf(fout, "  cmp x0, %i\n", FBLE_EXEC_FINISHED);
+      fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", code, pc + 1);
+
+      // If the called function aborted or yielded or blocked, return now.
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
