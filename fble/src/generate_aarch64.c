@@ -897,10 +897,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleThread, stack));
       fprintf(fout, "  mov x1, #%zi\n", pc+1);  // x1 = pc + 1
       fprintf(fout, "  str x1, [x0, #%zi]\n", offsetof(FbleStack, pc));
-
-      // Return FBLE_EXEC_YIELDED
-      fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_YIELDED);
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
 

@@ -462,8 +462,7 @@ static Control RunForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThrea
     FbleThreadFork(heap, threads, thread, result, arg, NULL);
   }
   thread->stack->pc++;
-  *status = FBLE_EXEC_YIELDED;
-  return RETURN;
+  return CONTINUE;
 }
 
 // AbortForkInstr -- see documentation of AbortInstr

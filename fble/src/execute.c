@@ -196,11 +196,6 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
           break;
         }
 
-        case FBLE_EXEC_YIELDED: {
-          unblocked = true;
-          break;
-        }
-
         case FBLE_EXEC_ABORTED: {
           AbortThreads(heap, &threads);
           FbleReleaseValue(heap, result);

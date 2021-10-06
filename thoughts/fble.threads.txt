@@ -1,0 +1,151 @@
+Fble Threads
+============
+The goal is to redesign how threads are done in the fble implementation.
+
+Recently we changed function calls to preserve the native stack, which makes
+debugging more useful. I've done a proof of concept with getcontext/setcontext
+for implementing threads which looks like it will work great.
+
+The goal is to have each fble thread runs on its own native stack, rather than
+all share the same native stack. The benefits:
+* We can remove these pc jump tables everywhere in generated assembly.
+* We open up the door for future optimizations of generated code where we
+  store more context on the native stack instead of the managed stack.
+
+I expect minor performance improvements, from no longer having to go through
+pc jump tables and avoiding function call overheads when switching between
+threads. But nothing significant performance wise.
+
+As a side goal, it might be nice if we have a low level threading abstraction
+that we can implement with getcontext/setcontext or pthreads, for example so
+that we could reuse pthreads for gdb thread debugging.
+
+Current Threading Design
+------------------------
+Each fble thread has a managed stack allocated on the heap that keeps track of
+the chain of functions called and current pc within the function. An fble
+function takes pc as an argument, making it possible to resume from within the
+pc. The managed stack stores all the information necessary to run a thread.
+When we want to suspend a thread, we unwind the native stack completely. When
+we want to resume a thread, we execute functions from the top of the managed
+stack one at a time, jumping to the recorded pc address.
+
+Any thread can signal an abort. In this case, we abort the threads by calling
+each function's 'abort' entry point passing the current pc.
+
+The thread scheduler runs each thread in turn, recording whether a thread is
+blocked or not. Then the thread scheduler runs the user supplied IO function.
+A flag signalling whether all threads are blocked or not is passed to the IO
+function, so it can block waiting for user input in that case. To track if
+threads are blocked, we also ask each thread to update a variable if they
+perform any io activity, in which case we say not all threads are blocked.
+
+If all threads are blocked and the io function makes no progress, execution is
+aborted with "deadlock".
+
+The managed thread keeps track of how many child threads a thread is blocked
+waiting on. The JOIN instruction waits until that number drops to zero. A
+thread is responsible for decrementing the child count of its parent thread
+when it exits.
+
+Proposed Threading Design
+-------------------------
+* Threads should be responsible for aborting themselves. If a function needs
+  to abort, it cleans itself up and returns ABORT to the caller. If a callee
+  function returns ABORT, the caller aborts itself. If a sibling thread
+  aborts, it should exit with ABORT, which other threads are notified of when
+  they resume, and then they can abort.
+* When a thread wishes to suspend, it Yields. It will need to indicate whether
+  it is blocked or not. Yield will return if the thread should abort or not.
+
+We can run IO on the main thread. That seems natural. So the main thread would
+be something like:
+
+  bool blocked = false;
+  while (threads.size > 0) {
+    if (!io->io(io, heap, blocked) && blocked) {
+      // deadlock
+      Abort notify threads and wait for them to clean up.
+    }
+   
+    blocked = true;
+    Yield();
+  }
+
+This assumes round robin scheduling, which is more than I would like. So how
+about we keep track of a count of the number of threads blocked and compare
+that to the number of current threads to know if all the threads are blocked.
+And the total number of threads tells us if all the threads are done or not.
+And a global flag to say if we are aborted or not.
+
+Threads should remove themselves from the thread list when they are done
+executing. Which means they will want to know where they are in the thread
+list.
+
+I think the current approach for blocking parent threads on children threads
+is fine: keep a count of children threads on the managed stack, yield
+control from the parent thread as long as there are children, and decrement
+the children count when a child thread exits.
+
+Potential Future Threading Design
+---------------------------------
+In the future I imagine we'll want better synchronization between threads. So
+no busy loops, track exactly what each thread is blocked on. A thread could be
+blocked on:
+* A child thread running (from fork/join).
+* A put on a port (from get).
+* A get from a port (from put).
+
+In that case it would be nice to store a thread id of some sort on a link to
+know what threads are blocked waiting on it, and perhaps to move a thread to a
+'suspended' state so it would not be scheduled. We could avoid scheduling
+suspended threads this way, and remove them from the 'suspended' state when we
+do a put/get or are the last child of the parent thread.
+
+That suggests we could have two lists: running threads and suspended threads.
+If we keep that up to date, we instantly know if all threads are blocked or
+not, and how many threads have yet to complete.
+
+Low Level Thread API Proposal
+-----------------------------
+Thinking about something we could do that would work for getcontext/setcontext
+and pthreads and potentially a future where we implement proper synchonization
+and want to support pre-emptive scheduling...
+
+* Sched* NewScheduler()
+  Allocate a new scheduler.
+* void FreeScheduler(Sched*)
+  Free resources associated with the given scheduler. Will return on the
+  current thread. All other threads will be deleted and never resumed.
+* void Create(Sched*, func, arg, stacksize)
+  You give a function to run and a user argument. It spawns a new thread that
+  will run that function with that user argument. Maybe you also give the size
+  of the stack desired. It returns an id for the newly spawned thread. In the
+  case of cooperative multithreading, the new thread is doesn't take over
+  control until Yield() is called.
+* void Yield(Sched*)
+  Yield control of the current thread to some other runnable thread tracked by
+  the scheduler. If there are no other runnable threads, a deadlock error is
+  reported and the process is aborted. Scheduling is fair in the sense that
+  all runnable threads will eventually be scheduled as long as the current
+  thread continues to yield periodically.
+* SuspendId Suspend(Sched*)
+  Remove the current thread from the list of running threads and returns an
+  identifier for the suspended thread. The thread will not be scheduled to run
+  again until explicitly resumed with Resume. Suspend may return a different
+  identifier for the same thread if invoked repeatedly.
+* void Resume(Sched*, SuspendId id)
+  Add the thread with the given suspend id back to the list of running
+  threads. In the case of cooperative multithreading, the calling thread
+  continues to run after this call. The resumed thread does not take control
+  until it is scheduled from a call to Yield like normal.
+
+Where Suspend/Resume can be implemented as part of V2. Note that the user of
+the threading library is responsible for keeping track of the number of
+threads currently running/suspended if it needs to know that information.
+Threads clean up resources for themselves when they exit.
+
+The Sched* tracks state and is required to avoid interference in the case when
+you want reentrant thread schedulers. For example, if an fble IO function
+calls Eval, which needs to spawn its own thread scheduler and run threads
+without allowing threads sibling to the IO function to be run.

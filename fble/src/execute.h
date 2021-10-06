@@ -54,7 +54,6 @@ typedef enum {
   FBLE_EXEC_CONTINUED,      // The function requires a continuation to be run.
   FBLE_EXEC_FINISHED,       // The function/thread has finished running.
   FBLE_EXEC_BLOCKED,        // The thread is blocked on I/O.
-  FBLE_EXEC_YIELDED,        // The thread yielded, but is not blocked on I/O.
   FBLE_EXEC_ABORTED,        // Execution needs to be aborted.
 } FbleExecStatus;
 
