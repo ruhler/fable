@@ -263,6 +263,28 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     /Drawing/Test%.AssertEquals(wnt, got);
   })),
 
+  Test(Str|'Close Up Full Screen Clipped Triangle', !({
+    # Test that clipping rounds to outside the clip region in cases.
+    # The full screen is taken up by the triangle, but the projection causes
+    # rounding to be required.
+    Camera@ camera = Camera(Int|10, Rect@(Int|0, Int|0, Int|2, Int|2));
+    Vec@ a = Vertex(camera, Vec@(Neg(Int|3), Neg(Int|1), Int|9));
+    Vec@ b = Vertex(camera, Vec@(    Int|3,      Int|5 , Int|9));
+    Vec@ c = Vertex(camera, Vec@(    Int|3,  Neg(Int|1), Int|9));
+
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+
+    Drawn@ wnt = Drawn[
+      Pixel@(Int|0, Int|0, Color.Green),
+      Pixel@(Int|0, Int|1, Color.Green),
+      Pixel@(Int|1, Int|0, Color.Green),
+      Pixel@(Int|1, Int|1, Color.Green)
+    ];
+    Drawn@ got = Draw(drawing);
+      
+    /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
   Test(Str|'Poked Eye Triangle', !({
     # A triangle at the origin, poking out the camera's eye.
     # In this case we expect the triangle to take up the entire display.

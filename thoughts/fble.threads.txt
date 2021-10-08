@@ -149,3 +149,116 @@ The Sched* tracks state and is required to avoid interference in the case when
 you want reentrant thread schedulers. For example, if an fble IO function
 calls Eval, which needs to spawn its own thread scheduler and run threads
 without allowing threads sibling to the IO function to be run.
+
+Proper Threading Proposal
+-------------------------
+I feel like there is a "proper" way to implement threading, which is what we
+want in the longer term and solves the issue of knowing when all the threads
+are blocked. It's just a bit annoying to implement. Let me write down the
+proper threading proposal first and worry about the implementation later.
+
+Threads can be blocked for the following reasons:
+* Parent thread blocked on children to finish running.
+* Blocked on Get from link.
+* Blocked on Get from IO port.
+* Blocked on Put to IO port.
+
+In each of these cases, it is clear when the thread should be unblocked: when
+the last child thread completes, or you do a corresponding put/get on the
+link/port a thread is blocked on.
+
+Conceptually we would like:
+* A list of currently running (non-blocked) threads.
+* A list of currently blocked threads (needed to easily track blocked threads
+  in case we need to abort them).
+* For each link, a FIFO list of threads blocked on get.
+* For each IO port, a FIFO list of threads blocked on the port.
+* A child thread knows what its parent thread is and how many children of the
+  parent thread are running.
+
+When a thread becomes blocked, it removes itself from the list of currently
+running threads, adds itself to the list of blocked threads, adds itself to
+whatever link or port it is blocked on if any, and suspends itself.
+
+When a thread would unblock another thread, it moves that other thread from
+the list of blocked threads to the list of running threads, removes it from
+whatever link/port it is listed as blocked on, and resumes it.
+
+We only ever schedule threads that are currently running. To avoid wasted
+effort resuming blocked threads. This will help threading scale to a large
+number of blocked threads.
+
+We know if all threads are blocked by checking if there are any threads on the
+list of currently running threads.
+
+For data structures:
+* We want to be able to remove from the middle of the list of running threads
+  in constant time.
+* We want to be able to remove from the middle of the list of currently
+  blocked threads in constant time.
+* We want FIFO order constant get and put from link and IO port thread lists.
+
+There are two reasonable ways to support removing from the middle of a list of
+threads: store them as a vector and swap with last element when removing, or
+store as a doubly linked list.
+
+To preserve FIFO order, it's not great to swap with the last element when
+removing.
+
+So this suggests we want threads to belong to a doubly linked list. We can say
+they belong either to the list of running threads or the list of blocked
+threads, and their order in blocked threads is FIFO and grouped together based
+on the link/port they are blocked on.
+
+Each link will have a pointer to the first and last of the threads blocked on
+it. Each port will have a pointer to the first and last of the threads blocked
+on it.
+
+The memory cost is:
+* Extra 2 pointers per link.
+* Extra 2 pointers per port.
+* Extra 2 pointers per thread.
+* Less 1 pointer per thread for the thread vector.
+
+That's really not so bad. Links and ports are presumably relatively rare, and
+threads have the overhead of a stack allocated with them anyway.
+
+We can use non-circular linked lists.
+
+It's not clear to me there is any worthwhile incremental approach to
+implementing the proper threading proposal described here. May as well just do
+it all in one go. Note we can do this with our current native stack reuse
+scheduler. We don't have to switch to separate native stacks per thread yet.
+
+Review of Concerns
+------------------
+The big concern with switching to a different native stack per thread is
+having to bound stack sizes ahead of time and the overall memory cost. For
+example, if we pick 1 MB per thread, then some threads may run out of stack
+space and we may end up allocating 1 GB memory for 1K threads that is mostly
+unused.
+
+We don't have this problem today, because all threads share the main stack.
+
+The thought is, the kernel is already using virtual memory, so even if we need
+a lot of virtual memory address space, we'll only be changed physical memory
+for what we actually use. We may as well take advantage of what the kernel is
+already giving us. Assuming that really works out in practice.
+
+And I can't figure out a nicer way for different stacks to be interleaved in
+memory, given that any standard C code we call assumes it has enough
+continuous stack space to do whatever it wants.
+
+Could we compromise? Have one shared main stack, but use getcontext/setcontext
+to more efficiently unwind and rewind a thread's stack?
+
+Upon reflection, I think it's better to reuse the main stack for all threads.
+If the biggest implications are limited memory per thread and excessive
+overall memory versus non-standard debugging/profiling support, I rather have
+non-standard debugging/profiling support. I'm not convinced there are
+significant performance motivations to switch.
+
+We can get rid of the pc jump tables in the current design, we just need to
+store native pc values instead of fble pc values. We'll also want to store
+separate abort pc values in case of abort.
+

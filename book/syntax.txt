@@ -1,0 +1,113 @@
+Fble Concrete Syntax Design
+===========================
+Guiding principles for the design of the Fble concrete syntax:
+
+* No keywords.
+  It always bothers me in languages like Java and C when I go to use a name
+  like 'class' or 'union' or 'return' for a field or variable and it doesn't
+  let me. You end up writing 'cls' or 'class_' or some such. I want the user
+  to be able to pick any name they want for their fields and variables, with
+  no arbitrarily restricted keyword names.
+
+  In practice this means the syntactic terms are delimited using punctuation
+  instead of keywords. There is not a single keyword in the fble concrete
+  syntax.
+
+* Easy to parse.
+  Easy to parse means for both humans and computers, based on the assumption
+  that anything that is hard to write a parser for is harder for humans to
+  parse.
+
+  In original versions of the language this meant easy to write a hand coded C
+  parser for. Since switching to using a parser generator for the language,
+  I've relaxed that to be something that bison can handle without producing
+  conflicts. The first thing I do when considering a new syntax is see if it
+  creates a conflict.
+
+* Whitespace does not convey syntax.
+  Languages like python or haskell layout annoy me. I want control over my own
+  whitespace. In fble whitespace does not convey syntactic information. Use
+  braces and other punctuation for that. Indent and put whitespace wherever
+  you like.
+
+* C-like syntax.
+  In some sense the concrete syntax for a language doesn't matter to me as a
+  designer of the language. Changing the concrete syntax doesn't change the
+  fundamental identity of a language.
+
+  In practice you need a concrete syntax to be able to write a specification
+  for the language, to develop a reference implementation, to write test
+  cases, and to standardize so that developers can easily read programs from
+  other developers in the language.
+
+  The somewhat arbitrary choice is to have something likely to be more
+  comfortable to a large number of programmers: a C like syntax. So: braces,
+  function calls using parenthesis, angle brackets for type polymorphism.
+
+  But C-like syntax is only a vague guide. It's much more important to expose
+  the underlying language in a pure form. So think of C-like syntax more as a
+  starting point that has evolved in fble into something that at times looks
+  very little like C code, but has some amount of consistency and purity with
+  the underlying fble language that resonates with me.
+
+* Common syntactic structures.
+  Lists are common: lists of fields, lists of arguments, lists of statements.
+  Try to use consistent syntax for lists. Two approaches are used:
+  1. parenthesis, comma separated (or the variant angle brackets for type
+     level lists).
+  2. braces, semicolon terminated.
+
+  Where braces are used for those cases where names are introduced into the
+  scope, such as variables, and parenthesis are used otherwise.
+
+  Use of union tags are common: in initializers, in case expressions. That's
+  why you have (name ':' expr) in both cases, and for struct values.
+  
+  Use of '.' for member access is common. I ended up reusing this for
+  conditional expressions, which can be thought of as the same kind of thing
+  as member access, so that you do x.?(...). This came after a number of
+  evolutions to the conditional expression, and for some reason I quite enjoy
+  how it has ended up.
+
+* Syntactic sugar only if justified.
+  One thing that annoyed me when learning Haskell was all the different ways
+  to do conditional expressions:  if, case, |, repeated function definitions.
+  If they are all the same, they should use the same syntax. So I prefer to
+  avoid syntactic sugar as much as possible. If the syntax is lacking in a
+  significant way, that's a reflection that something about the underlying
+  language is missing.
+
+  Where I have syntactic sugar, it's for important reasons. Literals and list
+  expressions come to mind. You fundamentally want a way to pack a lot of
+  information into a dense sequence of characters. What's interesting is while
+  these started as syntactic sugar, they eventually found their way into the
+  underlying language specification and propagated all the way to the arm 64
+  code generator. Because the abstractions were important enough that we want
+  to preserve them all the way through.
+
+  I'm not currently convinced function bind is worthwhile enough to include as
+  a syntactic sugar. It's gone in and out of the language a few times.
+
+  Case statements were introduced recently and have found a lot of use. I
+  think there is a practical need to be able to express a linear tree without
+  explicit nesting.
+
+  I think of functions as being the way users introduce custom syntax into
+  their programs. If syntax is too tedious, define a function to introduce
+  your own new syntax for that operation.
+
+* Distinction between type level and value level.
+  Type variables end with '@', normal variables don't. This is somewhat
+  arbitrary, but I think important so it's easy for programmers to see what is
+  determined statically and what is determined at runtime. It's also nice to
+  be able to define a type and a function with similar names, so Unit@ and
+  Unit for example.
+
+On choice of punctuation:
+ '+' for sum type, '*' for product type.
+ '?' for asking questions about the tag of a union. 
+ '~' for a link, because maybe it looks like a wire or pipe.
+ '<-' for function bind inspired by haskell do notation.
+ '!' for something that can have side effects.
+ '/' for its common use as a path delimiter.
+ '@' and '%' as the few remaining symbols easy to access on a US keyboard.

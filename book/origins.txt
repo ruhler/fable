@@ -1,0 +1,50 @@
+The Origins of Fble
+===================
+In the beginning there was Fable, an idea that there was no such thing as one
+language to rule them all, instead we should have a collection of related
+languages, each suited for a different purpose.
+
+The original Fables were:
+* 'A' for finite purely functional programs, think combinational logic in
+hardware.
+* 'B' for unbounded pure functional programming, think a pure functional
+programming language.
+* 'C' for unbounded pure functional programming with support for non-determinism, interaction,
+  IO, side effects, causality, time, or whatever you want to call it.
+* 'D' for everything in 'C', but with features added to support programmers
+  developing programs at scale.
+
+It didn't take long to realize I may as well not worry about implementing A
+and B if I'm going to implement C, because it doesn't add anything of
+interest.
+
+We ended up in a place where 'C' was beautiful and wonderful and perfect, but
+tedious to program in, and 'D' was getting more and more clunky. I wanted the
+best of both worlds, so I scrapped both, started over, and decided to name the
+thing 'E', which is how we get 'Fable E', shortened to fble as a convenient
+filename extension.
+
+Evolution of Philosophy
+-----------------------
+Initial philosophy for Fable came out of the idea, inspired by Bluespec, of
+zero cost abstraction and compilation to hardware. You write a program with
+abstractions that are all compiled away so that the end program runs really
+fast but is still easy to program.
+
+Functions and data were kept separate, so you could easily map a function to
+static hardware. Functions were all declared statically at the top level. The
+implementation could evaluate things in whatever order or way it wanted to, to
+support both hardware and software compilation.
+
+It turned out to just be too hard to program with the restriction of functions
+being static top level entities. I made a major shift from fblc/fbld to fble
+of making functions first class objects, and conversely, of allowing variables
+to be defined in the global namespace. This abandoned the original idea of
+compiling a program to hardware, substituting it with the hopefully acceptable
+replacement of implementing an interpreter for the language in hardware.
+
+This was a huge step forward for programmability of the language, which was
+the biggest challenge the language faced. This has since evolved to the
+feeling that we must preserve abstractions at runtime to the extent possible,
+because otherwise things will blow up at runtime.
+
