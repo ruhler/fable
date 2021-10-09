@@ -53,6 +53,10 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
+Int@ 0 = Int|0;
+Int@ 1 = Int|1;
+Int@ 2 = Int|2;
+
 # Aliens move together in a group of rows and columns. They decide which
 # direction to move. Then each live alien, in turn, makes a move. After a full
 # round of moves, if any live alien has reached an edge, as a group they go
@@ -437,9 +441,9 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 # Points --
 #   The number of points earned by killing the given alien.
 (Alien@) { Int@; } Points = (Alien@ alien) {
-  Int@ half_row = Div(alien.row, Int|2);
-  Eq(Int|0, half_row).?(true: Int|10);
-  Eq(Int|1, half_row).?(true: Int|20);
+  Int@ half_row = Div(alien.row, 2);
+  Eq(0, half_row).?(true: Int|10);
+  Eq(1, half_row).?(true: Int|20);
   Int|30;
 };
 
@@ -447,9 +451,9 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 #   Return the alien sprite for an alien in the given row with the given
 #   phase.
 (Int@, Phase@) { Drawing@; } Sprite = (Int@ row, Phase@ phase) {
-  Int@ half_row = Div(row, Int|2);
-  Eq(Int|0, half_row).?(true: phase.?(a: Alien1A, b: Alien1B));
-  Eq(Int|1, half_row).?(true: phase.?(a: Alien2A, b: Alien2B));
+  Int@ half_row = Div(row, 2);
+  Eq(0, half_row).?(true: phase.?(a: Alien1A, b: Alien1B));
+  Eq(1, half_row).?(true: phase.?(a: Alien2A, b: Alien2B));
   phase.?(a: Alien3A, b: Alien3B);
 };
 

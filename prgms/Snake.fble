@@ -144,9 +144,12 @@ State@ InitialState = {
 # Takes the current direction of the snake to add some randomness to the
 # update.
 Int@ Max64 = Int|18446744073709551616;
+Int@ 1103515245 = Int|1103515245;
+Int@ 12345 = Int|12345;
+
 (Dir@, Int@) { Int@; } StepRand = (Dir@ d, Int@ s) {
   Int@ offset = d.?(up: 0, down: 1, left: 2, right: 3);
-  Mod(Add(Mul(s, Int|1103515245), Add(Int|12345, offset)), Max64);
+  Mod(Add(Mul(s, 1103515245), Add(12345, offset)), Max64);
 };
 
 # Pick the position of the next food randomly, given the random bits and the

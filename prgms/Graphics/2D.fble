@@ -17,6 +17,9 @@
 
 <@,@>% For = /Iter%.For;
 
+Int@ 0 = Int|0;
+Int@ 1 = Int|1;
+
 @ Sorted@ = *(Point@ 0, Point@ 1, Point@ 2);
 
 (Point@, Point@, Point@) { Sorted@; }
@@ -48,12 +51,12 @@ SortByY = (Point@ a, Point@ b, Point@ c) {
 #
 # s must be greater than 0.
 (Int@, Int@, Int@) { Fixed@; } Fixed = (Int@ x, Int@ r, Int@ s) {
-  r.?(n: Fixed(Sub(x, Int|1), Add(r, s), s));
+  r.?(n: Fixed(Sub(x, 1), Add(r, s), s));
 
   Int@ r_minus_s = Sub(r, s);
   r_minus_s.?(n: Fixed@(x, r));
 
-  Fixed(Add(x, Int|1), r_minus_s, s);
+  Fixed(Add(x, 1), r_minus_s, s);
 };
 
 # Triangle --
@@ -71,8 +74,8 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
   @ State@ = *(Drawing@ drawing, Fixed@ xb, Fixed@ xc);
   State@ initial = @(
     drawing: Blank,
-    xb: Fixed@(a.x, Int|0),
-    xc: Fixed@(a.x, Int|0));
+    xb: Fixed@(a.x, 0),
+    xc: Fixed@(a.x, 0));
   Point@ db = Point@(Sub(b.x, a.x), Sub(b.y, a.y));
   Point@ dc = Point@(Sub(c.x, a.x), Sub(c.y, a.y));
   State@ bottom = For<Int@, State@>(Range(a.y, b.y), initial, 
@@ -82,7 +85,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
       Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
       Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);
       State@(
-        Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), Int|1, color)),
+        Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), 1, color)),
         xb, xc);
     });
 
@@ -92,7 +95,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
   Point@ dc = Point@(Sub(c.x, a.x), Sub(c.y, a.y));
   State@ initial = @(
     drawing: bottom.drawing,
-    xb: Fixed@(b.x, Int|0),
+    xb: Fixed@(b.x, 0),
     xc: bottom.xc);
   State@ top = For<Int@, State@>(Range(b.y, c.y), initial,
     (Int@ y, State@ state) {
@@ -101,7 +104,7 @@ Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
       Fixed@ xc = Fixed(state.xc.x, Add(state.xc.r, dc.x), dc.y);
       Fixed@ xb = Fixed(state.xb.x, Add(state.xb.r, db.x), db.y);
       State@(
-        Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), Int|1, color)),
+        Over(state.drawing, Rect(xmin, y, Sub(xmax, xmin), 1, color)),
         xb, xc);
     });
   top.drawing;

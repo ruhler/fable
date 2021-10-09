@@ -7,6 +7,8 @@
 
 <@>@ List@ = /List%.List@;
 
+Int@ 1 = Int|1;
+
 # Color@ --
 #   Represents a color as a combination of red, green, and blue. The value of
 #   these fields is the color intensity out of 256. They should have values
@@ -74,7 +76,7 @@ Affine = (Point@ a, Point@ b, Drawing@ d) {
 # Translate the drawing by the given x and y amounts.
 (Int@, Int@, Drawing@) { Drawing@; }
 Translate = (Int@ dx, Int@ dy, Drawing@ d) {
-  Affine(@(x: Int|1, y: Int|1), @(x: dx, y: dy), d);
+  Affine(@(x: 1, y: 1), @(x: dx, y: dy), d);
 };
 
 @(Color@, Drawing@, Point@, Color,

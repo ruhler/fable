@@ -244,6 +244,7 @@ static FbleCallData* GetCallData(FbleProfile* profile,
   call->id = callee;
   call->time = 0;
   call->count = 0;
+  call->self = 0;
 
   // Insert the new call data into the callee list, preserving the sort by
   // callee id.
@@ -385,8 +386,8 @@ static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 static void PrintCallData(FILE* fout, FbleProfile* profile, bool highlight, FbleCallData* call)
 {
   char h = highlight ? '*' : ' ';
-  fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 "  ",
-      h, h, call->count, call->time);
+  fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 " %8" PRIu64 "  ",
+      h, h, call->count, call->time, call->self);
   PrintBlockName(fout, profile, call->id);
   fprintf(fout, " %c%c\n", h, h);
 }
@@ -477,6 +478,7 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name)
   block->block.id = id;
   block->block.count = 0;
   block->block.time = 0;
+  block->block.self = 0;
   FbleVectorInit(block->callees);
   FbleVectorAppend(profile->blocks, block);
   return id;
@@ -592,6 +594,8 @@ void FbleFreeProfileThread(FbleProfileThread* thread)
 // FbleProfileSample -- see documentation in fble-profile.h
 void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
 {
+  thread->profile->blocks.xs[thread->calls->top->id]->block.self += time;
+
   // Charge calls in the stack for their time.
   bool block_seen[thread->profile->blocks.size];
   memset(block_seen, 0, thread->profile->blocks.size * sizeof(bool));
@@ -654,6 +658,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
       called->id = i;
       called->count = call->count;
       called->time = call->time;
+      called->self = call->self;
       FbleVectorAppend(callers[call->id], called);
     }
   }
@@ -669,7 +674,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
   // Flat Profile
   fprintf(fout, "Flat Profile\n");
   fprintf(fout, "------------\n");
-  fprintf(fout, "   %8s %8s  %s\n", "count", "time", "block");
+  fprintf(fout, "   %8s %8s %8s  %s\n", "count", "time", "self", "block");
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     PrintCallData(fout, profile, true, calls[i]);
   }

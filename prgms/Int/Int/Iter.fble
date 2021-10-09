@@ -13,12 +13,15 @@
 
 @ Unit@ = /Unit%.Unit@;
 
+Int@ 0 = Int|0;
+Int@ 1 = Int|1;
+
 # Range --
 #   An iterator over the range of integers [lo, hi).
 (Int@, Int@) { Iter@<Int@>; } Range = (Int@ lo, Int@ hi) {
   (Unit@ _) {
     Lt(lo, hi).?(
-      true: Has<Int@>(lo, Range(Add(lo, Int|1), hi)),
+      true: Has<Int@>(lo, Range(Add(lo, 1), hi)),
       false: End<Int@>);
   };
 };
@@ -26,17 +29,17 @@
 # CountUpTo --
 #   An iterator over the range of integers [0, n).
 (Int@) { Iter@<Int@>; } CountUpTo = (Int@ n) {
-  Range(Int|0, n);
+  Range(0, n);
 };
 
 # CountDownFrom --
 #   An iterator over the range of integers (n, 0]
 (Int@) { Iter@<Int@>; } CountDownFrom = (Int@ n) {
   (Unit@ _) {
-    Le(n, Int|0).?(
+    Le(n, 0).?(
       true: End<Int@>,
       false: {
-        Int@ first = Sub(n, Int|1);
+        Int@ first = Sub(n, 1);
         Has<Int@>(first, CountDownFrom(first));
       });
   };

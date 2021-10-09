@@ -55,3 +55,30 @@ Without profiling: 3m19s.
 With profiling: 6m11s. Just fast enough for 2x...
 Without caching call data: 6m32s. Still fast enough for 2x.
 Without hashing calls on stack: 8m33s. Too slow.
+
+Self Times in Profile
+---------------------
+Before we updated generated assembly to call in place, there was no depth to
+the fble function calls when using a perf profile. In essence, it showed self
+times for functions. This was very useful I felt. I ended up looking at perf
+profile to figure out what to care about, then looking at regular fble profile
+to optimize that.
+
+As soon as we switch to normal function calls in generated assembly, it was
+suddenly harder to get good info from the perf profile.
+
+Proposal: maybe listing 'self' time in the profile is important.
+
+I'm not sure why philosophically, except that it's another way to break down
+the runtime of the program and identify potential optimization opportunities.
+
+So, I've tried adding self time to profiles, and right away I led me to some
+easy optimization opportunities: we were calling Int|xxx in a lot of often
+called functions where all those literals could be factored out. Evidence
+suggests to me, then, that self times are useful for profiles.
+
+Let's leave them in for a while and gather more evidence of their worth.
+
+And in the mean time, think about what a good way to present them in the
+profile report would be.
+

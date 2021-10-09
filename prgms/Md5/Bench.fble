@@ -20,12 +20,14 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
+Int@ 1 = Int|1;
+
 (Put@<Maybe@<Bit8@>>, Int@) { Unit@!; }
 PutN = (Put@<Maybe@<Bit8@>> out, Int@ n) {
   n.?(0: out(Nothing<Bit8@>));
 
   Unit@ _ := out(Just<Bit8@>(H2(Hex.A, Hex.5)));
-  PutN(out, Sub(n, Int|1));
+  PutN(out, Sub(n, 1));
 };
 
 # Benchmark for md5 sum that takes about 1 minute to run.

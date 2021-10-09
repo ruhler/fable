@@ -21,6 +21,8 @@
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
+Int@ 1 = Int|1;
+
 # Slice@ --
 #   The vertical range of a slice of base.
 @ Slice@ = *(Int@ min, Int@ max);
@@ -156,7 +158,7 @@ BulletHit = (Int@ x, Int@ y, Bases@ bases) {
 
   (Bases@ bases) {
     ForEach(bases, Blank, (Int@ x, Slice@ s, Drawing@ d) {
-      Over(d, Rect(x, s.min, Int|1, Sub(s.max, s.min), Color.Green));
+      Over(d, Rect(x, s.min, 1, Sub(s.max, s.min), Color.Green));
     });
   };
 };

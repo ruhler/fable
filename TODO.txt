@@ -1,4 +1,6 @@
 
+* Consider adding 'self' time to profile outputs?
+
 * [debugger] Figure out why first line of Show! function is line 24 instead of
 line 23.
   For some reason gdb is skipping the first loc output. It does this for c
