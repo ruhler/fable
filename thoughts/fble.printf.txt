@@ -1,0 +1,93 @@
+Fble Printf Debugging
+=====================
+I think it's worth asking the question of whether we should add printf
+debugging to Fble.
+
+Why? The ability to debug is important. Even if we got full supported added to
+gdb for fble, we still would only be able to see raw underlying
+implementations of types instead of their higher level semantic values. For
+example, the integer 1234 would be visible in gdb as some tree of 1, 2P0, 2P1,
+which is not useful.
+
+Really we want a way to run show functions defined by the user that show the
+data at the high level abstraction. Printf debugging is perfect for this: you
+call a function to convert a value to a string and print it.
+
+We already have a way to convert a sequence of characters in source code into
+a builtin list type. Why not add a way to do the opposite: you give a list of
+enums, we convert it to a human readable string by sequencing all the tag
+names of the enums together.
+
+For example, maybe we add a new statement to fble:
+
+$ <expr>; <stmt>
+
+Where <expr> evaluates to an object of this list type, for example String@.
+The semantics of the expression are equivalent to the body statement <stmt>,
+but it has a side effect not visible to the program itself to output the
+string from <expr> to some debug stream if enabled.
+
+Sounds messy to me. Why do this when you can already use streams in the
+language? What stream do we output to? What happens if there is an error or
+infinite loop evaluating the string to print? Is there an issue with there
+being a performance side effect of evaluating and printing the string? It just
+seems like such an arbitrary thing to add to a language.
+
+I feel like, ideally, you could use gdb to call an fble function to convert an
+FbleValue* to a different kind of value, and maybe add some built in C
+function that can print that to the user assuming the type information is
+available for it to know how to name the fields.
+
+Then I guess it comes down to the question of what value, if any, there is to
+be able to record the printf specifications in the program directly instead of
+have to manually type it in gdb, or use gdb scripts?
+
+There is a real cost to having to use procs to support debugging in real fble
+programs: you can no longer use pure functions. Unless, I suppose, you
+abstract the procs behind some monad (which may have performance overheads?).
+And if you are always using monads, could we instead not distinguish between
+pure and proc, but have everything always run under some monad, where you can
+use a Pure monad to do pure computation?
+
+What's the point of distinguishing between procs and pure code? At one point I
+would argue it lets you pass procs to a function to manipulate with the
+guarantee that the function doesn't invoke the proc. But that falls apart just
+as soon as you need to give the function the ability to call a proc for other
+reasons.
+
+In other words, it seems like procs are not a great solution if the goal is to
+have fine grain control over what side effects a function can have. They are
+all or nothing: any side effects or none. We would prefer an explicit list of
+allowed side effects, like you get with monadic do notation: the set of
+allowed side effects is determined by the type.
+
+But you can't have a side effect without having access to a port, except to be
+able to do nondeterministic computation internally by launching a bunch of
+threads and introducing scheduler noise into the result of computation.
+
+The real value of proc is to identify which functions may have side effects
+and hence require explicit ordering in how they are called. That's reasonable.
+It's not to prevent you from having a particular side effect: you can prevent
+that by not supplying any port or introducing some polymorphic abstraction.
+It's to know when you have to call something in an ordered fashion or not.
+
+What about printf debugging? If it has real side effects, then you need to
+call things ordered, but if it really is just for debugging, maybe it's okay
+not to have an explicit ordering?
+
+But if you don't care what the output is, because it's a one-off thing, then I
+think you are better off using gdb to do the printf.
+
+To me, it really comes down to whether you want to save your printfs for
+future debugging. If so, write a test case instead and add printfs to the test
+case.
+
+I suggest I continue work on gdb, figure out how to include enough type
+information with variables to be able to write a C function that prints the
+type analogous to how we would print it with printf debugging.
+
+It's almost like you want some kind of metaprogramming where you can associate
+annotations in the source code that certain tools are aware of. Then you could
+write a tool to execute fble doing printf. You could use that for assertions.
+That kind of thing. But then, what is a language? I don't know.
+

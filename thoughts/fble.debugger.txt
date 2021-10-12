@@ -78,6 +78,13 @@ Times in the past I wished I have an fble debugger:
    process, making it a Stdio@ program, and adding print statements for printf
    style debugging. This revealed the problem was a bug in the integer Ge
    function.
+
+ - Debug another issue why triangle is not being clipped properly. I can step
+   through the code in gdb now, but without the ability to print variables,
+   it's too hard to follow what's going on. I'm tempted to use my printf
+   debugging approach again, which should find the problem pretty quickly. The
+   printf approach is effective, but it's very tedious to thread IO through an
+   otherwise pure function.
  
 ---
 
@@ -484,4 +491,42 @@ Now that we do function calls in place instead of falling back to RunThread to
 do function calls, next and backtrace work decently well. That's cool. I bet
 we can step through the code in a useful way now. Aside from there not being
 enough statement locations.
+
+---
+
+Next step is to have some way to print variable values. I think to start,
+given a variable name, it would be nice to print the raw pointer value as an
+FbleValue*, or worst case to start, as an intptr_t.
+
+Looks like I'll want:
+   DW_TAG_variable
+     DW_AT_name string name
+   DW_AT_location location at runtime
+   DW_AT_type (for when I start supporting that)
+   DW_AT_start_scope (offset from low_pc)
+     For variables that are declared in the middle of a block.
+
+If I want I can put these directly in the subprogram tag it looks like, or
+introduce DW_TAG_lexical_block with low_pc and high_pc for grouping.
+
+How to specify a location?
+I want something like: a register specifies an address, we compute an offset.
+So: memory[reg + X].
+
+Looks like we can do it with one op:
+
+  DW_OP_breg* <reg> <X>
+
+Where we'll have to look up how aarch64 registers are numbered for dwarf. I
+don't think that's in the dwarf spec.
+
+One question is how I'll propagate this information from the fble compiler to
+the aarch64 code generator.
+
+Could we define an explicit dwarf like data structure that we pass around
+along side an fble code description that refers to offsets in terms of fble pc
+and variable offsets? Then the aarch64 code generator could convert that to
+dwarf. It would be nice if we accurately tracked statements and braces and all
+that fun stuff. Instead of overloading profiling info? Or could the profiler
+reuse this same info for describing locations of blocks?
 

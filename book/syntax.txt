@@ -103,6 +103,23 @@ Guiding principles for the design of the Fble concrete syntax:
   be able to define a type and a function with similar names, so Unit@ and
   Unit for example.
 
+* Syntax mirrors what runs fast.
+  If there is a simple syntax for some operation, that ought to imply that
+  operation is fast to run. I'm not sure how well I stick by this, but it's an
+  idea at least.
+
+  For example, field access is simple syntax because it should be fast to
+  access fields. That's why we don't use function call syntax for field
+  access.
+
+  Case expressions do not have advanced pattern matching features, because
+  that would hide performance overheads they introduce.
+
+  I don't include a simple struct field update syntax, because that would be
+  misleading. Updating a single field of a struct has performance proportional
+  to the number of fields, so it seems right that the syntax to update a
+  single field of a struct be proportional to the number of fields.
+
 On choice of punctuation:
  '+' for sum type, '*' for product type.
  '?' for asking questions about the tag of a union. 

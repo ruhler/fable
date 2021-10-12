@@ -82,3 +82,63 @@ Let's leave them in for a while and gather more evidence of their worth.
 And in the mean time, think about what a good way to present them in the
 profile report would be.
 
+---
+
+Proposal for how to display self in profile:
+* Add self column everywhere.
+* Add a section for flat profile identical to the existing one only sorted by
+  self time.
+
+The meaning of 'self' time for the call graph profile will be the amount of
+self time for a callee that would go away if we didn't make the call from the
+caller to the callee. Is that feasible to compute?
+
+For each sample, I know how much self time it is adding and the particular
+callee that is retrieving the self time. Hmm... Is this meaningful? Why would
+I care about self time of an immediate callee but not self time of
+sub-callees? If we care about self time of all children, we would need to add
+a lot more entries to the list, because you could effect self time internally.
+
+No, I vote just display blanks for non-highlight self time and add the flat
+graph sort by self listing (including only those with non-zero self time?).
+
+
+Removing Profiling Support from Compiled Code
+---------------------------------------------
+
+Question: is it worth removing profiling support from compiled code?
+
+Pros:
+* Faster peak performance. I estimate... 20% improvement?
+* Smaller code generated.
+* Simpler code generator implementation.
+
+Cons:
+* Slower profiler running time.
+ - But profiler runs slow anyway, and using interpreter is probably not that
+   much slower.
+* Rely on interpreter for profiling.
+ - But we already rely on the interpreter for any platform other than aarch64.
+* Slight inconvenience to user to invoke profiling.
+ - But it's really slight.
+
+Mitigations:
+* Can still run perf based profiling on compiled code.
+* If we wanted to, we could add back profiling behind a compile time flag so
+  we still get smaller faster code with profiling disabled, but compiler
+  support and faster profiling for profiling enabled.
+
+Performance numbers from today:
+  fble bench          profile interpreted: 15m13s
+  fble bench disabled-profile interpreted:  6m46s
+  fble bench          profile compiled:    11m51s
+  fble bench disabled-profile compiled:     4m21s
+  fble bench  removed-profile compiled:     4m08s
+
+So, actually, the cost of disabled profiling in compiled code appears not to
+be too high: less than 5%. And the benefit for enabled profiling is decent:
+over 20%.
+
+Let's keep things as is for now then. The gains from removing profiling
+support from compiled code don't seem worth it.
+

@@ -1,6 +1,3 @@
-
-* Consider adding 'self' time to profile outputs?
-
 * [debugger] Figure out why first line of Show! function is line 24 instead of
 line 23.
   For some reason gdb is skipping the first loc output. It does this for c
@@ -11,22 +8,31 @@ line 23.
 
 * [debugger] Figure out how we could print variables.
 
-* [/Graphics] Clipping doesn't go all the way to the edge of the screen?
-  It looks like clipping is maybe off by a pixel or so on getting the edge of
-  the clipping rectangle? For example, zoom into a large triangle and compare
-  the case where z is 1 with z is 0.
-
 * [/Graphics] Debug clipping artifacts
   Looks like precision gets off some times for clipping, with bits of sky
   showing through the ground. Figure out what's up, right a test and fix it.
+    Try a triangle with points (-20, -6, -30), (-20, -6, 30), (20, -6, -30).
+    The lower left corner gets clipped wrong? Focus 10, camera at (1,0,0).
+
+  The issue:
+  1. Clip X axis, so that X point is right on the edge, but just outside.
+  2. Clip Y axis, so that Y point is right on the edge, but just outside.
+  But rounding Y coord just outside rounds X coord just inside.
+
+  In this example, if we clip Y first, we don't have a problem, because then
+  we end up clipping towards a point outside both x and y. Otherwise we end up
+  clipping towards a point outside y but inside x.
+  
+  Not sure what the solution is though.
 
 * [/Graphics] Add a left to right scan version of Triangles and pick that if
   the distance is shorter than bottom to top.
 
-* Fix bad object refcount in case of Triangle div by zero when using the
+* Fix bad object refcount in case of 2D Triangle div by zero when using the
   original points a, b, c, instead of the sorted points a, b, c.
 
 * [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
+* [/LFSR%] Reuse LFSR for Snake randomness.
 
 * Implement fannkuchredux benchmark?
   Permutation order looks like:
@@ -235,6 +241,7 @@ unique?
   Should we instead get: expected type Maybe@<Bool@>? 
 
 * [eval] Clean up how we track io activity?
+  See thoughts/fble.threads.txt
 * [eval] Thread execution should be at least somewhat fair.
   In the current implementation, in theory, a long running non-IO computation
   could cause IO threads to get blocked. That's certainly against the spirit
