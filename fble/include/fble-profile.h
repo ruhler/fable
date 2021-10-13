@@ -34,12 +34,10 @@ typedef struct {
 //   id - the id of the caller/callee block.
 //   count - the number of times the call was made.
 //   time - the amount of time spent in the call.
-//   self - the amount of time in the call not including child calls.
 typedef struct {
   FbleBlockId id;
   uint64_t count;
   uint64_t time;
-  uint64_t self;
 } FbleCallData;
 
 // FbleCallDataV --
@@ -54,12 +52,14 @@ typedef struct {
 //
 // Fields:
 //   name - the name of this block.
+//   self - the time spent in this block, not including callees of this block.
 //   block - the id, summary count and time spent in this block.
 //   callees - info about calls from this block into other blocks, sorted in
 //             increasing order of callee. Only callees that have been called
 //             from this block are included.
 typedef struct {
   FbleName name;
+  uint64_t self;
   FbleCallData block;
   FbleCallDataV callees;
 } FbleBlockProfile;

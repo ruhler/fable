@@ -148,7 +148,7 @@ static FbleCallData* GetCallData(FbleProfile* profile, FbleBlockId caller, FbleB
 static void MergeSortCallData(Order order, bool in_place, FbleCallData** a, FbleCallData** b, size_t size);
 static void SortCallData(Order order, FbleCallData** data, size_t size);
 static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id);
-static void PrintCallData(FILE* fout, FbleProfile* profile, bool highlight, FbleCallData* call);
+static void PrintCallData(FILE* fout, FbleProfile* profile, bool block, FbleCallData* call);
 
 static void EnterBlock(FbleProfileThread* thread, FbleBlockId block, bool replace);
 
@@ -244,7 +244,6 @@ static FbleCallData* GetCallData(FbleProfile* profile,
   call->id = callee;
   call->time = 0;
   call->count = 0;
-  call->self = 0;
 
   // Insert the new call data into the callee list, preserving the sort by
   // callee id.
@@ -375,7 +374,9 @@ static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 // Inputs:
 //   fout - the file to print to
 //   profile - the profile, used for getting block names
-//   highlight - if true, highlight the line
+//   block -
+//     if true, print the call data for a block. This adds highlights to the
+//     line and includes information about self time.
 //   call - the call data to print
 //
 // Results:
@@ -383,11 +384,17 @@ static void PrintBlockName(FILE* fout, FbleProfile* profile, FbleBlockId id)
 //
 // Side effects:
 //   Prints a single line description of the call data to the given file.
-static void PrintCallData(FILE* fout, FbleProfile* profile, bool highlight, FbleCallData* call)
+static void PrintCallData(FILE* fout, FbleProfile* profile, bool block, FbleCallData* call)
 {
-  char h = highlight ? '*' : ' ';
-  fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64 " %8" PRIu64 "  ",
-      h, h, call->count, call->time, call->self);
+  char h = block ? '*' : ' ';
+  fprintf(fout, "%c%c %8" PRIu64 " %8" PRIu64, h, h, call->count, call->time);
+
+  if (block) {
+    fprintf(fout, " %8" PRIu64 "  ", profile->blocks.xs[call->id]->self);
+  } else {
+    fprintf(fout, " %8s  ", "");
+  }
+
   PrintBlockName(fout, profile, call->id);
   fprintf(fout, " %c%c\n", h, h);
 }
@@ -475,10 +482,10 @@ FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name)
   FbleBlockId id = profile->blocks.size;
   FbleBlockProfile* block = FbleAlloc(FbleBlockProfile);
   block->name = name;
+  block->self = 0;
   block->block.id = id;
   block->block.count = 0;
   block->block.time = 0;
-  block->block.self = 0;
   FbleVectorInit(block->callees);
   FbleVectorAppend(profile->blocks, block);
   return id;
@@ -594,7 +601,7 @@ void FbleFreeProfileThread(FbleProfileThread* thread)
 // FbleProfileSample -- see documentation in fble-profile.h
 void FbleProfileSample(FbleProfileThread* thread, uint64_t time)
 {
-  thread->profile->blocks.xs[thread->calls->top->id]->block.self += time;
+  thread->profile->blocks.xs[thread->calls->top->id]->self += time;
 
   // Charge calls in the stack for their time.
   bool block_seen[thread->profile->blocks.size];
@@ -658,7 +665,6 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
       called->id = i;
       called->count = call->count;
       called->time = call->time;
-      called->self = call->self;
       FbleVectorAppend(callers[call->id], called);
     }
   }
