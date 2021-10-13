@@ -643,9 +643,11 @@ void FbleProfileExitBlock(FbleProfileThread* thread)
 void FbleProfileReport(FILE* fout, FbleProfile* profile)
 {
   FbleCallData* calls[profile->blocks.size];
+  FbleCallData* selfs[profile->blocks.size];
 
   // Number of blocks covered.
   size_t covered = 0;
+  uint64_t total = 0;
 
   FbleCallDataV callers[profile->blocks.size];
   for (size_t i = 0; i < profile->blocks.size; ++i) {
@@ -654,6 +656,7 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
 
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     calls[i] = &profile->blocks.xs[i]->block;
+    total += profile->blocks.xs[i]->self;
 
     if (calls[i]->count > 0) {
       covered++;
@@ -667,8 +670,17 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
       called->time = call->time;
       FbleVectorAppend(callers[call->id], called);
     }
+
+    // As a convenience to be able to reuse the sorting logic for sorting
+    // blocks by self time, fake up an FbleCallData for a block that stores
+    // block self time in the call time field.
+    selfs[i] = FbleAlloc(FbleCallData);
+    selfs[i]->id = profile->blocks.xs[i]->block.id;
+    selfs[i]->time = profile->blocks.xs[i]->self;
+    selfs[i]->count = 0;
   }
   SortCallData(DESCENDING, calls, profile->blocks.size);
+  SortCallData(DESCENDING, selfs, profile->blocks.size);
 
   double coverage = (double)covered / (double)profile->blocks.size;
 
@@ -677,12 +689,25 @@ void FbleProfileReport(FILE* fout, FbleProfile* profile)
   fprintf(fout, "blocks executed: %2.2f%% of %zi\n", 100 * coverage, profile->blocks.size);
   fprintf(fout, "\n");
 
-  // Flat Profile
-  fprintf(fout, "Flat Profile\n");
-  fprintf(fout, "------------\n");
+  // Flat Profile by Overall Time
+  fprintf(fout, "Flat Profile by Overall Time\n");
+  fprintf(fout, "----------------------------\n");
   fprintf(fout, "   %8s %8s %8s  %s\n", "count", "time", "self", "block");
   for (size_t i = 0; i < profile->blocks.size; ++i) {
     PrintCallData(fout, profile, true, calls[i]);
+  }
+  fprintf(fout, "\n");
+
+  // Flat Profile by Self Time
+  fprintf(fout, "Flat Profile by Self Time\n");
+  fprintf(fout, "-------------------------\n");
+  fprintf(fout, "%5s %8s  %s\n", "%", "self", "block");
+  for (size_t i = 0; i < profile->blocks.size; ++i) {
+    double percent = 100.0 * (double)selfs[i]->time / (double)total;
+    fprintf(fout, "%5.2f %8" PRIu64 "  ", percent, selfs[i]->time);
+    PrintBlockName(fout, profile, selfs[i]->id);
+    fprintf(fout, "\n");
+    FbleFree(selfs[i]);
   }
   fprintf(fout, "\n");
 
