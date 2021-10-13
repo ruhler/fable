@@ -3,7 +3,6 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 % And = /Bool%.And;
-% Or = /Bool%.Or;
 
 <@>@ Eq@ = /Eq%.Eq@;
 
@@ -31,7 +30,9 @@ Eq@<Coord@> EqCoord = (Coord@ a, Coord@ b) {
 };
 
 Eq@<Coord@> LtCoord = (Coord@ a, Coord@ b) {
-  Or(Lt(a.row, b.row), And(Eq(a.row, b.row), Lt(a.col, b.col)));
+  Lt(a.row, b.row).?(true: True);
+  Eq(a.row, b.row).?(false: False);
+  Lt(a.col, b.col);
 };
 
 # The world is a set of Coord@ where there are live cells.
