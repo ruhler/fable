@@ -3,3 +3,4 @@ Topics to consider writing about:
 * garbage collection
 * profiler
 * compiler
+* testing (language tests)

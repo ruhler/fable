@@ -1,11 +1,16 @@
 
 @ Drawing@ = /Drawing%.Drawing@;
+@ Color@ = /Drawing%.Color@;
+@ Point@ = /Drawing%.Point@;
 % Color = /Drawing%.Color;
 
 @ Drawn@ = /Drawing/Test%.Drawn@;
 @ Pixel@ = /Drawing/Test%.Pixel@;
 % Drawn = /Drawing/Test%.Drawn;
 % Draw = /Drawing/Test%.Draw;
+% LtPoint = /Drawing/Test%.LtPoint;
+% EqColor = /Drawing/Test%.EqColor;
+% ShowColor = /Drawing/Test%.ShowColor;
 
 @ Vec@ = /Graphics/3D%.Vec@;
 
@@ -22,6 +27,9 @@
 % Int = /Int/Int/Lit%.Int;
 
 <@>% List = /List%.List;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
 
 % Str = /String%.Str;
 
@@ -283,6 +291,29 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     /Drawing/Test%.AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'X/Y Clip Issue', !({
+    # Regression test for a case where we clipped X, then clipped Y, but the
+    # clipping of Y rounded the X clipped point inside of the X clipping
+    # region, causing a hole to appear where there should not have been one.
+    Camera@ camera = Translate(Int|1, Int|0, Int|0,
+      Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48)));
+    Vec@ a = Vertex(camera, Vec@(Neg(Int|20), Neg(Int|6), Neg(Int|30)));
+    Vec@ b = Vertex(camera, Vec@(Neg(Int|20), Neg(Int|6), Int|30));
+    Vec@ c = Vertex(camera, Vec@(Int|20, Neg(Int|6), Neg(Int|30)));
+    Drawing@ drawing = Triangle(camera, a, b, c, Color.Green);
+    Drawn@ drawn = Draw(drawing);
+
+    # Verify we don't have a hole in the lower left corner.
+    Maybe@<Color@> got = /Map%.Lookup<Point@>(LtPoint)<Color@>(
+      drawn, Point@(Neg(Int|32), Neg(Int|24)));
+    Maybe@<Color@> wnt = Just<Color@>(Color.Green);
+      
+    /Test%.ExpectFails(/Test%.AssertEquals<Maybe@<Color@>>(
+      /Maybe/Eq%.Eq<Color@>(EqColor),
+      /Maybe/Show%.Show<Color@>(ShowColor),
+      wnt, got), Str|'Nothing');
   })),
 
   Test(Str|'Poked Eye Triangle', !({

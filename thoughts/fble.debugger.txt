@@ -530,3 +530,70 @@ dwarf. It would be nice if we accurately tracked statements and braces and all
 that fun stuff. Instead of overloading profiling info? Or could the profiler
 reuse this same info for describing locations of blocks?
 
+---
+
+Let's start with statements. What info do I want for statements?
+
+From dwarf:
+ DW_TAG_compile_unit - clear
+   DW_TAG_subprogram - clear
+     DW_TAG_lexical_block - Any use of { } braces for stmts?
+       Start of basic block
+         Start of statement
+
+ prologue_end? epilogue_begin?
+      
+We can associate each of these things with fble code pcs.
+
+What I see gcc generates:
+
+* .loc at the '{' after a function, emitted at the first instruction of the
+  function.
+* .loc at the start of a new statement in the function.
+* .loc with discriminator ?? inside the for loop?
+* .loc with is_stmt 0 ?? inside the for loop?
+* .loc with is_stmt 1 following one with is_stmt 0.
+* .loc at the close bracket at the end of a function, emitted just before the
+  instructions to restore the stack. So, after the last statement's
+  instructions.
+* .cfi_* info in functions. I'm not sure if this influences debug_lines.
+
+dwarf2 spec says nothing about discriminator or prologue/epilogue. I don't
+understand the use of is_stmt 0, but it looks like I should just not emit
+location information if it's not the start of a statement? Or, emit location
+information for every fble instruction, but set is_stmt to 0 for those that
+are not on a statement boundary to get more fine grained mapping from assembly
+address to the source code. In other words, we can choose how much granularity
+we want for locations, somewhere in the range of 1 location for each statement
+to 1 location for each fble instruction.
+
+Question: what if we have a nested statement block {}? Do we put a loc for
+open and close brace, or just for the statements inside of it? Or maybe it
+doesn't matter, because we would end up with two .loc right after each other
+in the assembly code so the first would be ignored. gcc does not emit an
+extra loc for '{' or '}' in this case. So that must be special to a function.
+
+So, each function ideally keeps a location for it's open and close brace
+around with it so we can emit that in dwarf. Otherwise we just need locations
+for the starts of every statement, and optionally the starts of every pc
+instruction. My vote is to focus on just whole statements to start. I don't
+see us gaining much by going into subexpressions.
+
+Here's my proposal:
+* Add a field to every fble instruction with the location of the instruction
+  and a boolean flag indicating if it was the start of an instruction or not.
+* Use that info to generate .loc statements instead of the profile statements.
+* To start we can just emit .loc for instructions that are the starts of
+  statements. Later on, if we want, we can emit .loc for non statement
+  instructions too. If there's any value to be had from that.
+* Emit a .loc instruction for a function. So maybe track open and close brace
+  as part of a function too.
+
+On second thought, looking through the compiler implementation makes it look
+like not a lot of instructions are statement instructions, and those that
+aren't we don't necessarily have easy access to locations for. How about make
+something analogous to profile_ops but for debug info, where we have optional
+debug_ops we can add. We can "emit" a debug op just before compiling an
+expression that should be counted as a new statement, which is usually obvious
+from the caller rather than the expression being compiled itself.
+

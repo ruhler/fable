@@ -1,0 +1,33 @@
+Fble Graphics Library
+=====================
+I've gotten started on an fble 3d graphics library. This is an application
+to drive development of language, and a good performance benchmark.
+
+What we have so far:
+* I can draw triangles in perspective.
+
+What's next:
+* There is a bug in the implementation of clipping that needs to be fixed.
+* Support for hidden surface removal.
+* Support for shadows and lighting.
+
+My idea for shadows and lighting is to clip a scene from the point of view of
+the light, get back the clipped scene in the original 3D coordinate system,
+then draw that from the point of view of the camera on top of the non-lit
+scene. That depends on hidden surface removal being implemented as part of the
+clipping.
+
+I don't have any great ideas yet for how to fix the clipping glitch. Maybe
+something about how I can compute the (x,y) slope of a projected line given
+the (x,y,z) slope the 3D line. So as long as I can find a point of the line
+inside the clip region in 2D space, I could walk along the slope to find where
+it intersects the clip region. That doesn't help with being able to clip in 3D
+though.
+
+---
+
+Idea for clipping: just round all results away from 0. Is that enough? Ideally
+we want to round all results away from any point inside the clip region. I
+guess you can specify clip regions that don't have the point (0, 0) at the
+center. That's annoying. Otherwise I think it should be fine to always round
+away from 0. Something worth trying as a hack anyway.

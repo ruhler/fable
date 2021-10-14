@@ -127,5 +127,5 @@ AssertEquals = (Drawn@ expected, Drawn@ actual) {
     expected, actual);
 };
 
-@(Drawn@, Pixel@, Draw, Drawn, AssertEquals);
+@(Drawn@, Pixel@, Draw, Drawn, ShowColor, EqColor, LtPoint, AssertEquals);
 

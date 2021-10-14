@@ -142,3 +142,19 @@ over 20%.
 Let's keep things as is for now then. The gains from removing profiling
 support from compiled code don't seem worth it.
 
+Granularity of Profile Blocks
+-----------------------------
+Currently we have fairly fined grain profiling blocks. Each basic block in the
+code has its own profiling block so we can test for code coverage, and we
+break things down by fields and variables so users have a better idea of
+what's taking up time within in a particular expression.
+
+One downside is, for example, now that we have self times in profiling, that
+self times for blocks in the same function aren't grouped together. We often
+end up walking through a bunch of layers of profiling blocks that we don't
+particularly care about to get to more of the top level functions.
+
+Is there a natural boundary for profile blocks that makes more sense than what
+we are using? Perhaps users should be allowed to annotate profiling blocks
+themselves instead? Perhaps we should use a different mechanism for tracking
+code coverage to allow more flexibility in placing profile blocks?
