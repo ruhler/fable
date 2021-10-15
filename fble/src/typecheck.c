@@ -478,6 +478,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
       type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
+      type_tc->_base.loc = FbleCopyLoc(expr->loc);
       return MkTc(&type_type->_base, &type_tc->_base);
     }
 
@@ -492,6 +493,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleVarTc* var_tc = FbleAlloc(FbleVarTc);
       var_tc->_base.tag = FBLE_VAR_TC;
+      var_tc->_base.loc = FbleCopyLoc(expr->loc);
       var_tc->index = var->index;
       return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
     }
@@ -661,6 +663,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleLetTc* let_tc = FbleAlloc(FbleLetTc);
       let_tc->_base.tag = FBLE_LET_TC;
+      let_tc->_base.loc = FbleCopyLoc(expr->loc);
       let_tc->recursive = recursive;
       FbleVectorInit(let_tc->bindings);
       let_tc->body = body.tc;
@@ -728,6 +731,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleStructValueTc* struct_tc = FbleAllocExtra(FbleStructValueTc, argc * sizeof(FbleTc*));
       struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
+      struct_tc->_base.loc = FbleCopyLoc(expr->loc);
       struct_tc->fieldc = argc;
       for (size_t i = 0; i < argc; ++i) {
         FbleReleaseType(th, args[i].type);
@@ -794,6 +798,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleUnionValueTc* union_tc = FbleAlloc(FbleUnionValueTc);
       union_tc->_base.tag = FBLE_UNION_VALUE_TC;
+      union_tc->_base.loc = FbleCopyLoc(expr->loc);
       union_tc->tag = tag;
       union_tc->arg = arg.tc;
       return MkTc(type, &union_tc->_base);
@@ -821,6 +826,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleUnionSelectTc* select_tc = FbleAllocExtra(FbleUnionSelectTc, union_type->fields.size * sizeof(FbleTc*));
       select_tc->_base.tag = FBLE_UNION_SELECT_TC;
+      select_tc->_base.loc = FbleCopyLoc(expr->loc);
       select_tc->loc = FbleCopyLoc(expr->loc);
       select_tc->condition = condition.tc;
       FbleVectorInit(select_tc->choices);
@@ -978,6 +984,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleFuncValueTc* func_tc = FbleAlloc(FbleFuncValueTc);
       func_tc->_base.tag = FBLE_FUNC_VALUE_TC;
+      func_tc->_base.loc = FbleCopyLoc(expr->loc);
       func_tc->body_loc = FbleCopyLoc(func_value_expr->body->loc);
       func_tc->scope = captured;
       func_tc->argc = argc;
@@ -1009,6 +1016,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleFuncValueTc* proc_tc = FbleAlloc(FbleFuncValueTc);
       proc_tc->_base.tag = FBLE_FUNC_VALUE_TC;
+      proc_tc->_base.loc = FbleCopyLoc(expr->loc);
       proc_tc->body_loc = FbleCopyLoc(expr->loc);
       proc_tc->scope = captured;
       proc_tc->argc = 0;
@@ -1063,9 +1071,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       // optimize this away?
       FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
       type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
+      type_tc->_base.loc = FbleCopyLoc(expr->loc);
 
       FbleLetTc* let_tc = FbleAlloc(FbleLetTc);
       let_tc->_base.tag = FBLE_LET_TC;
+      let_tc->_base.loc = FbleCopyLoc(expr->loc);
       let_tc->recursive = false;
       let_tc->body = body.tc;
       FbleVectorInit(let_tc->bindings);
@@ -1196,6 +1206,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleListTc* list_tc = FbleAllocExtra(FbleListTc, argc * sizeof(FbleTc*));
       list_tc->_base.tag = FBLE_LIST_TC;
+      list_tc->_base.loc = FbleCopyLoc(expr->loc);
       list_tc->fieldc = argc;
       for (size_t i = 0; i < argc; ++i) {
         list_tc->fields[i] = args[i];
@@ -1203,6 +1214,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleFuncApplyTc* apply = FbleAlloc(FbleFuncApplyTc);
       apply->_base.tag = FBLE_FUNC_APPLY_TC;
+      apply->_base.loc = FbleCopyLoc(expr->loc);
       apply->loc = FbleCopyLoc(expr->loc);
       apply->func = func.tc;
       FbleVectorInit(apply->args);
@@ -1298,6 +1310,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleLiteralTc* literal_tc = FbleAllocExtra(FbleLiteralTc, argc * sizeof(size_t));
       literal_tc->_base.tag = FBLE_LITERAL_TC;
+      literal_tc->_base.loc = FbleCopyLoc(expr->loc);
       literal_tc->letterc = argc;
       for (size_t i = 0; i < argc; ++i) {
         literal_tc->letters[i] = args[i];
@@ -1305,6 +1318,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleFuncApplyTc* apply = FbleAlloc(FbleFuncApplyTc);
       apply->_base.tag = FBLE_FUNC_APPLY_TC;
+      apply->_base.loc = FbleCopyLoc(expr->loc);
       apply->loc = FbleCopyLoc(expr->loc);
       apply->func = func.tc;
       FbleVectorInit(apply->args);
@@ -1324,6 +1338,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleVarTc* var_tc = FbleAlloc(FbleVarTc);
       var_tc->_base.tag = FBLE_VAR_TC;
+      var_tc->_base.loc = FbleCopyLoc(expr->loc);
       var_tc->index = var->index;
       return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
     }
@@ -1355,6 +1370,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
           FbleDataAccessTc* access_tc = FbleAlloc(FbleDataAccessTc);
           access_tc->_base.tag = FBLE_DATA_ACCESS_TC;
+          access_tc->_base.loc = FbleCopyLoc(expr->loc);
           access_tc->datatype = normal->datatype;
           access_tc->obj = obj.tc;
           access_tc->tag = i;
@@ -1435,6 +1451,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
         FbleFuncApplyTc* apply_tc = FbleAlloc(FbleFuncApplyTc);
         apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
+        apply_tc->_base.loc = FbleCopyLoc(expr->loc);
         apply_tc->loc = FbleCopyLoc(expr->loc);
         apply_tc->func = misc.tc;
         FbleVectorInit(apply_tc->args);
@@ -1502,6 +1519,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
         FbleStructValueTc* struct_tc = FbleAllocExtra(FbleStructValueTc, argc * sizeof(FbleTc*));
         struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
+        struct_tc->_base.loc = FbleCopyLoc(expr->loc);
         struct_tc->fieldc = argc;
         for (size_t i = 0; i < argc; ++i) {
           FbleReleaseType(th, args[i].type);
@@ -1587,6 +1605,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleFuncApplyTc* apply_tc = FbleAlloc(FbleFuncApplyTc);
       apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
+      apply_tc->_base.loc = FbleCopyLoc(expr->loc);
       apply_tc->loc = FbleCopyLoc(expr->loc);
       apply_tc->func = proc.tc;
       FbleVectorInit(apply_tc->args);
@@ -1651,6 +1670,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleLinkTc* link_tc = FbleAlloc(FbleLinkTc);
       link_tc->_base.tag = FBLE_LINK_TC;
+      link_tc->_base.loc = FbleCopyLoc(expr->loc);
       link_tc->get = FbleCopyName(link_expr->get);
       link_tc->put = FbleCopyName(link_expr->put);
       link_tc->body = body.tc;
@@ -1670,6 +1690,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleExecTc* exec_tc = FbleAlloc(FbleExecTc);
       exec_tc->_base.tag = FBLE_EXEC_TC;
+      exec_tc->_base.loc = FbleCopyLoc(expr->loc);
       FbleVectorInit(exec_tc->bindings);
       exec_tc->body = NULL;
 

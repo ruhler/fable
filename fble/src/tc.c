@@ -16,6 +16,8 @@ void FbleFreeTc(FbleTc* tc)
     return;
   }
 
+  FbleFreeLoc(tc->loc);
+
   switch (tc->tag) {
     case FBLE_TYPE_VALUE_TC: {
       FbleFree(tc);

@@ -51,6 +51,7 @@ typedef struct Scope {
   LocalV vars;
   LocalV locals;
   FbleCode* code;
+  FbleDebugInfo* pending_debug_info;
   FbleProfileOp* pending_profile_ops;
   struct Scope* parent;
 } Scope;
@@ -65,6 +66,7 @@ static void SetVar(Scope* scope, size_t index, Local* local);
 static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
+static void AppendStmtDebugInfo(Scope* scope, FbleLoc loc);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
 
 // Blocks --
@@ -86,7 +88,7 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit);
 static FbleBlockId LinkProfile(Blocks* blocks, FbleName get, FbleName put);
 
 static void CompileExit(bool exit, Scope* scope, Local* result);
-static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* tc);
+static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* tc);
 static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name);
 
 // NewLocal --
@@ -148,6 +150,7 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
     if (!exit) {
       FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
       release_instr->_base.tag = FBLE_RELEASE_INSTR;
+      release_instr->_base.debug_info = NULL;
       release_instr->_base.profile_ops = NULL;
       release_instr->target = local->index.index;
       AppendInstr(scope, &release_instr->_base);
@@ -277,6 +280,7 @@ static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics
   FbleVectorInit(scope->locals);
 
   scope->code = FbleNewCode(args, statics, 0, block);
+  scope->pending_debug_info = NULL;
   scope->pending_profile_ops = NULL;
   scope->parent = parent;
 
@@ -310,6 +314,13 @@ static void FreeScope(Scope* scope)
   }
   FbleFree(scope->locals.xs);
 
+  while (scope->pending_debug_info != NULL) {
+    FbleDebugInfo* info = scope->pending_debug_info;
+    scope->pending_debug_info = info->next;
+    FbleFreeLoc(info->loc);
+    FbleFree(info);
+  }
+
   while (scope->pending_profile_ops != NULL) {
     FbleProfileOp* op = scope->pending_profile_ops;
     scope->pending_profile_ops = op->next;
@@ -329,10 +340,41 @@ static void FreeScope(Scope* scope)
 //   ownership of the instr.
 static void AppendInstr(Scope* scope, FbleInstr* instr)
 {
+  assert(instr->debug_info == NULL);
+  instr->debug_info = scope->pending_debug_info;
+  scope->pending_debug_info = NULL;
+
   assert(instr->profile_ops == NULL);
   instr->profile_ops = scope->pending_profile_ops;
   scope->pending_profile_ops = NULL;
+
   FbleVectorAppend(scope->code->instrs, instr);
+}
+
+// AppendStmtDebugInfo --
+//   Append a statement debug info entry to the code block for the given scope.
+//
+// Inputs:
+//   scope - the scope to append the instruction to.
+//   loc - the location of the statement in source code. Borrowed.
+//
+// Side effects:
+//   Appends the debug info to the code block for the given scope.
+static void AppendStmtDebugInfo(Scope* scope, FbleLoc loc)
+{
+  FbleDebugInfo* info = FbleAlloc(FbleDebugInfo);
+  info->loc = FbleCopyLoc(loc);
+  info->next = NULL;
+
+  if (scope->pending_debug_info == NULL) {
+    scope->pending_debug_info = info;
+  } else {
+    FbleDebugInfo* curr = scope->pending_debug_info;
+    while (curr->next != NULL) {
+      curr = curr->next;
+    }
+    curr->next = info;
+  } 
 }
 
 // AppendProfileOp --
@@ -574,6 +616,7 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
       if (local != NULL && local != result) {
         FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
         release_instr->_base.tag = FBLE_RELEASE_INSTR;
+        release_instr->_base.debug_info = NULL;
         release_instr->_base.profile_ops = NULL;
         release_instr->target = local->index.index;
         AppendInstr(scope, &release_instr->_base);
@@ -582,6 +625,7 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
 
     FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
     return_instr->_base.tag = FBLE_RETURN_INSTR;
+    return_instr->_base.debug_info = NULL;
     return_instr->_base.profile_ops = NULL;
     return_instr->result = result->index;
     AppendInstr(scope, &return_instr->_base);
@@ -595,6 +639,8 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
 //
 // Inputs:
 //   blocks - the blocks stack.
+//   stmt - true if this marks the beginning of a statement, for debug
+//     purposes.
 //   exit - if true, generate instructions to exit the current scope.
 //   scope - the list of variables in scope.
 //   tc - the type checked expression to compile.
@@ -610,13 +656,18 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
 // * The caller should call ReleaseLocal when the returned results are no
 //   longer needed. Note that FreeScope calls ReleaseLocal for all locals
 //   allocated to the scope, so that can also be used to clean up the local.
-static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
+static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* v)
 {
+  if (stmt) {
+    AppendStmtDebugInfo(scope, v->loc);
+  };
+
   switch (v->tag) {
     case FBLE_TYPE_VALUE_TC: {
       Local* local = NewLocal(scope);
       FbleTypeInstr* instr = FbleAlloc(FbleTypeInstr);
       instr->_base.tag = FBLE_TYPE_INSTR;
+      instr->_base.debug_info = NULL;
       instr->_base.profile_ops = NULL;
       instr->dest = local->index.index;
       AppendInstr(scope, &instr->_base);
@@ -644,6 +695,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
           vars[i] = NewLocal(scope);
           FbleRefValueInstr* ref_instr = FbleAlloc(FbleRefValueInstr);
           ref_instr->_base.tag = FBLE_REF_VALUE_INSTR;
+          ref_instr->_base.debug_info = NULL;
           ref_instr->_base.profile_ops = NULL;
           ref_instr->dest = vars[i]->index.index;
           AppendInstr(scope, &ref_instr->_base);
@@ -655,7 +707,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       Local* defs[let_tc->bindings.size];
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
         EnterBlock(blocks, let_tc->bindings.xs[i].profile_name, let_tc->bindings.xs[i].profile_loc, scope, false);
-        defs[i] = CompileExpr(blocks, false, scope, let_tc->bindings.xs[i].tc);
+        defs[i] = CompileExpr(blocks, false, false, scope, let_tc->bindings.xs[i].tc);
         ExitBlock(blocks, scope, false);
       }
 
@@ -663,6 +715,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
         if (let_tc->recursive) {
           FbleRefDefInstr* ref_def_instr = FbleAlloc(FbleRefDefInstr);
           ref_def_instr->_base.tag = FBLE_REF_DEF_INSTR;
+          ref_def_instr->_base.debug_info = NULL;
           ref_def_instr->_base.profile_ops = NULL;
           ref_def_instr->loc = FbleCopyLoc(let_tc->bindings.xs[i].var_loc);
           ref_def_instr->ref = vars[i]->index.index;
@@ -672,7 +725,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
         SetVar(scope, base_index + i, defs[i]);
       }
 
-      Local* body = CompileExpr(blocks, exit, scope, let_tc->body);
+      Local* body = CompileExpr(blocks, true, exit, scope, let_tc->body);
 
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
         PopVar(scope, exit);
@@ -687,12 +740,13 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       size_t argc = struct_tc->fieldc;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(blocks, false, scope, struct_tc->fields[i]);
+        args[i] = CompileExpr(blocks, false, false, scope, struct_tc->fields[i]);
       }
 
       Local* local = NewLocal(scope);
       FbleStructValueInstr* struct_instr = FbleAlloc(FbleStructValueInstr);
       struct_instr->_base.tag = FBLE_STRUCT_VALUE_INSTR;
+      struct_instr->_base.debug_info = NULL;
       struct_instr->_base.profile_ops = NULL;
       struct_instr->dest = local->index.index;
       FbleVectorInit(struct_instr->args);
@@ -709,11 +763,12 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
     case FBLE_UNION_VALUE_TC: {
       FbleUnionValueTc* union_tc = (FbleUnionValueTc*)v;
-      Local* arg = CompileExpr(blocks, false, scope, union_tc->arg);
+      Local* arg = CompileExpr(blocks, false, false, scope, union_tc->arg);
 
       Local* local = NewLocal(scope);
       FbleUnionValueInstr* union_instr = FbleAlloc(FbleUnionValueInstr);
       union_instr->_base.tag = FBLE_UNION_VALUE_INSTR;
+      union_instr->_base.debug_info = NULL;
       union_instr->_base.profile_ops = NULL;
       union_instr->tag = union_tc->tag;
       union_instr->arg = arg->index;
@@ -726,10 +781,11 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* select_tc = (FbleUnionSelectTc*)v;
-      Local* condition = CompileExpr(blocks, false, scope, select_tc->condition);
+      Local* condition = CompileExpr(blocks, false, false, scope, select_tc->condition);
 
       FbleUnionSelectInstr* select_instr = FbleAlloc(FbleUnionSelectInstr);
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
+      select_instr->_base.debug_info = NULL;
       select_instr->_base.profile_ops = NULL;
       select_instr->loc = FbleCopyLoc(select_tc->loc);
       select_instr->condition = condition->index;
@@ -760,11 +816,12 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
           // local and then copying that to target?
           branch_offsets[i] = scope->code->instrs.size - select_instr_pc;
           EnterBlock(blocks, select_tc->choices.xs[i].profile_name, select_tc->choices.xs[i].profile_loc, scope, exit);
-          Local* result = CompileExpr(blocks, exit, scope, select_tc->choices.xs[i].tc);
+          Local* result = CompileExpr(blocks, true, exit, scope, select_tc->choices.xs[i].tc);
 
           if (!exit) {
             FbleCopyInstr* copy = FbleAlloc(FbleCopyInstr);
             copy->_base.tag = FBLE_COPY_INSTR;
+            copy->_base.debug_info = NULL;
             copy->_base.profile_ops = NULL;
             copy->source = result->index;
             copy->dest = target->index.index;
@@ -777,6 +834,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
           if (!exit) {
             exit_jumps[i] = FbleAlloc(FbleJumpInstr);
             exit_jumps[i]->_base.tag = FBLE_JUMP_INSTR;
+            exit_jumps[i]->_base.debug_info = NULL;
             exit_jumps[i]->_base.profile_ops = NULL;
             exit_jumps[i]->count = scope->code->instrs.size + 1;
             AppendInstr(scope, &exit_jumps[i]->_base);
@@ -807,7 +865,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
     case FBLE_DATA_ACCESS_TC: {
       FbleDataAccessTc* access_tc = (FbleDataAccessTc*)v;
-      Local* obj = CompileExpr(blocks, false, scope, access_tc->obj);
+      Local* obj = CompileExpr(blocks, false, false, scope, access_tc->obj);
 
       FbleInstrTag tag;
       if (access_tc->datatype == FBLE_STRUCT_DATATYPE) {
@@ -819,6 +877,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       FbleAccessInstr* access = FbleAlloc(FbleAccessInstr);
       access->_base.tag = tag;
+      access->_base.debug_info = NULL;
       access->_base.profile_ops = NULL;
       access->obj = obj->index;
       access->tag = access_tc->tag;
@@ -838,6 +897,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       FbleFuncValueInstr* instr = FbleAlloc(FbleFuncValueInstr);
       instr->_base.tag = FBLE_FUNC_VALUE_INSTR;
+      instr->_base.debug_info = NULL;
       instr->_base.profile_ops = NULL;
 
       FbleVectorInit(instr->scope);
@@ -855,7 +915,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
         PushVar(&func_scope, local);
       }
 
-      Local* func_result = CompileExpr(blocks, true, &func_scope, func_tc->body);
+      Local* func_result = CompileExpr(blocks, true, true, &func_scope, func_tc->body);
       ExitBlock(blocks, &func_scope, true);
       ReleaseLocal(&func_scope, func_result, true);
       FreeScope(&func_scope);
@@ -869,12 +929,12 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
     case FBLE_FUNC_APPLY_TC: {
       FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)v;
-      Local* func = CompileExpr(blocks, false, scope, apply_tc->func);
+      Local* func = CompileExpr(blocks, false, false, scope, apply_tc->func);
 
       size_t argc = apply_tc->args.size;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(blocks, false, scope, apply_tc->args.xs[i]);
+        args[i] = CompileExpr(blocks, false, false, scope, apply_tc->args.xs[i]);
       }
 
       if (exit) {
@@ -890,6 +950,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
             if (!used) {
               FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
               release_instr->_base.tag = FBLE_RELEASE_INSTR;
+              release_instr->_base.debug_info = NULL;
               release_instr->_base.profile_ops = NULL;
               release_instr->target = local->index.index;
               AppendInstr(scope, &release_instr->_base);
@@ -902,6 +963,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       FbleCallInstr* call_instr = FbleAlloc(FbleCallInstr);
       call_instr->_base.tag = FBLE_CALL_INSTR;
+      call_instr->_base.debug_info = NULL;
       call_instr->_base.profile_ops = NULL;
       call_instr->loc = FbleCopyLoc(apply_tc->loc);
       call_instr->exit = exit;
@@ -924,6 +986,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       FbleLinkInstr* link = FbleAlloc(FbleLinkInstr);
       link->_base.tag = FBLE_LINK_INSTR;
+      link->_base.debug_info = NULL;
       link->_base.profile_ops = NULL;
 
       Local* get_local = NewLocal(scope);
@@ -937,7 +1000,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       link->profile = LinkProfile(blocks, link_tc->get, link_tc->put);
       AppendInstr(scope, &link->_base);
 
-      Local* result = CompileExpr(blocks, exit, scope, link_tc->body);
+      Local* result = CompileExpr(blocks, true, exit, scope, link_tc->body);
 
       PopVar(scope, exit);
       PopVar(scope, exit);
@@ -950,12 +1013,13 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       Local* args[exec_tc->bindings.size];
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
         EnterBlock(blocks, exec_tc->bindings.xs[i].profile_name, exec_tc->bindings.xs[i].profile_loc, scope, false);
-        args[i] = CompileExpr(blocks, false, scope, exec_tc->bindings.xs[i].tc);
+        args[i] = CompileExpr(blocks, false, false, scope, exec_tc->bindings.xs[i].tc);
         ExitBlock(blocks, scope, false);
       }
 
       FbleForkInstr* fork = FbleAlloc(FbleForkInstr);
       fork->_base.tag = FBLE_FORK_INSTR;
+      fork->_base.debug_info = NULL;
       fork->_base.profile_ops = NULL;
       FbleVectorInit(fork->args);
       fork->dests.xs = FbleArrayAlloc(FbleLocalIndex, exec_tc->bindings.size);
@@ -964,6 +1028,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
 
       FbleJoinInstr* join = FbleAlloc(FbleJoinInstr);
       join->_base.tag = FBLE_JOIN_INSTR;
+      join->_base.debug_info = NULL;
       join->_base.profile_ops = NULL;
       AppendInstr(scope, &join->_base);
 
@@ -983,7 +1048,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
         }
       }
 
-      Local* local = CompileExpr(blocks, exit, scope, exec_tc->body);
+      Local* local = CompileExpr(blocks, true, exit, scope, exec_tc->body);
 
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
         PopVar(scope, exit);
@@ -998,12 +1063,13 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       size_t argc = list_tc->fieldc;
       Local* args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        args[i] = CompileExpr(blocks, false, scope, list_tc->fields[i]);
+        args[i] = CompileExpr(blocks, false, false, scope, list_tc->fields[i]);
       }
 
       Local* local = NewLocal(scope);
       FbleListInstr* list_instr = FbleAlloc(FbleListInstr);
       list_instr->_base.tag = FBLE_LIST_INSTR;
+      list_instr->_base.debug_info = NULL;
       list_instr->_base.profile_ops = NULL;
       list_instr->dest = local->index.index;
       FbleVectorInit(list_instr->args);
@@ -1024,6 +1090,7 @@ static Local* CompileExpr(Blocks* blocks, bool exit, Scope* scope, FbleTc* v)
       Local* local = NewLocal(scope);
       FbleLiteralInstr* literal_instr = FbleAlloc(FbleLiteralInstr);
       literal_instr->_base.tag = FBLE_LITERAL_INSTR;
+      literal_instr->_base.debug_info = NULL;
       literal_instr->_base.profile_ops = NULL;
       literal_instr->dest = local->index.index;
       FbleVectorInit(literal_instr->letters);
@@ -1073,7 +1140,7 @@ static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name)
     PushVar(&scope, local);
   }
 
-  CompileExpr(&blocks, true, &scope, tc);
+  CompileExpr(&blocks, true, true, &scope, tc);
   ExitBlock(&blocks, &scope, true);
 
   FreeScope(&scope);

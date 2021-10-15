@@ -597,3 +597,13 @@ debug_ops we can add. We can "emit" a debug op just before compiling an
 expression that should be counted as a new statement, which is usually obvious
 from the caller rather than the expression being compiled itself.
 
+---
+
+Note, it's a little weird, but if you have something like:
+  Unit@ u = Unit;
+  g(u);
+
+Then you can't set a breakpoint on the first line, because there is no code
+generated for that. Variable assignment like this is free. There are no
+instructions emitted for it.
+

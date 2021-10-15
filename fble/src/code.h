@@ -61,6 +61,19 @@ typedef struct FbleProfileOp {
   struct FbleProfileOp* next;
 } FbleProfileOp;
 
+// FbleDebugInfo
+//
+// A singly-linked list of debug info.
+//
+// Currently there is only one kind of debug info entry:
+//   If an instruction has a debug info entry attached, that indicates the
+//   instruction is the start of a source code statement at the given location
+//   in source code.
+typedef struct FbleDebugInfo {
+  FbleLoc loc;
+  struct FbleDebugInfo* next;
+} FbleDebugInfo;
+
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.
 typedef enum {
@@ -93,6 +106,7 @@ typedef enum {
 // instruction.
 typedef struct {
   FbleInstrTag tag;
+  FbleDebugInfo* debug_info;
   FbleProfileOp* profile_ops;
 } FbleInstr;
 

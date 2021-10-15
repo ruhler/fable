@@ -64,6 +64,11 @@ static void DumpCode(FILE* fout, FbleCode* code)
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];
 
+      for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
+        fprintf(fout, "    .  stmt; // %s:%d:%d\n", 
+            info->loc.source->str, info->loc.line, info->loc.col);
+      }
+
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP: {
@@ -318,6 +323,13 @@ static void DumpCode(FILE* fout, FbleCode* code)
 void FbleFreeInstr(FbleInstr* instr)
 {
   assert(instr != NULL);
+  while (instr->debug_info != NULL) {
+    FbleDebugInfo* info = instr->debug_info;
+    instr->debug_info = info->next;
+    FbleFreeLoc(info->loc);
+    FbleFree(info);
+  }
+
   while (instr->profile_ops != NULL) {
     FbleProfileOp* op = instr->profile_ops;
     instr->profile_ops = op->next;

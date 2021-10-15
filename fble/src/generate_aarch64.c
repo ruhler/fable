@@ -509,26 +509,8 @@ static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr)
 {
   // Emit dwarf location information for the instruction.
-  for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-    switch (op->tag) {
-      case FBLE_PROFILE_ENTER_OP: {
-        FbleBlockId block = op->block;
-        FbleName* name = &profile_blocks.xs[block];
-        fprintf(fout, "  .loc 1 %i %i\n", name->loc.line, name->loc.col);
-        break;
-      }
-
-      case FBLE_PROFILE_REPLACE_OP: {
-        FbleBlockId block = op->block;
-        FbleName* name = &profile_blocks.xs[block];
-        fprintf(fout, "  .loc 1 %i %i\n", name->loc.line, name->loc.col);
-        break;
-      }
-
-      case FBLE_PROFILE_EXIT_OP: {
-        break;
-      }
-    }
+  for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
+    fprintf(fout, "  .loc 1 %i %i\n", info->loc.line, info->loc.col);
   }
 
   fprintf(fout, "  cbz R_PROFILE, .L._Run_%p.%zi.postprofile\n", code, pc);
@@ -1061,6 +1043,11 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "_Run.%p.%s:\n", (void*)code, function_label);
 
+  // Output the location of the function.
+  // This is intended to match the .loc info gcc outputs on the open brace of
+  // a function body.
+  fprintf(fout, "  .loc 1 %i %i\n", function_block.loc.line, function_block.loc.col);
+
   // Set up stack and frame pointer.
   fprintf(fout, "  stp FP, LR, [SP, #-%zi]!\n", sizeof(RunStackFrame));
   fprintf(fout, "  mov FP, SP\n");
@@ -1108,7 +1095,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  br x0\n");              // goto pcs[thread->stack->pc]
 
   // Emit code for each fble instruction
-  fprintf(fout, "  .loc 1 %i %i\n", function_block.loc.line, function_block.loc.col);
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, ".L._Run_%p.pc.%zi:\n", (void*)code, i);
     EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);

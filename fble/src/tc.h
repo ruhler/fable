@@ -53,8 +53,12 @@ typedef enum {
 //   layout as FbleTc. The tag can be used to determine what kind of
 //   tc this is to get access to additional fields of the value
 //   by first casting to that specific type of tc.
+//
+// loc is the location of the start of the expression in source code, used for
+// general purpose debug information.
 struct FbleTc {
   FbleTcTag tag;
+  FbleLoc loc;
 };
 
 // FbleTypeValueTc --

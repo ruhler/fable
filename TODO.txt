@@ -1,10 +1,9 @@
-* [debugger] Figure out why first line of Show! function is line 24 instead of
-line 23.
-  For some reason gdb is skipping the first loc output. It does this for c
-  code too. I'm not sure how it's choosing to skip or not though.
+* Remove custom loc fields from FbleTc in those cases where the general loc
+  field can be used instead.
 
-* [debugger] Add locations for more statements.
-  So we can set breakpoints and step through more parts of the code.
+* Consider adding a helper macro to compile.c and link.c for initializing
+  FbleInstrs
+  That takes care of initializing tag, debug_info, and profile_ops for us.
 
 * [debugger] Figure out how we could print variables.
 

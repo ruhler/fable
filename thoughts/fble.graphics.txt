@@ -31,3 +31,11 @@ we want to round all results away from any point inside the clip region. I
 guess you can specify clip regions that don't have the point (0, 0) at the
 center. That's annoying. Otherwise I think it should be fine to always round
 away from 0. Something worth trying as a hack anyway.
+
+I tried the idea. It fixes this particular case, but breaks most of the other
+cases.
+
+Maybe part of the issue is that any rounding errors close to the camera get
+magnified? Is there some way we can do the rounding after we've already
+projected it to the screen of the camera, where we have the precision we care
+about?

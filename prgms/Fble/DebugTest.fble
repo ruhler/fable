@@ -28,11 +28,11 @@
 
 (Light@) { Light@; } Next = (Light@ light) {
   # Add a let statement to test setting breakpoints after assignment.
-  Light@ foo = light;
-  foo.?(
-    red: Light@(green: Unit),
-    yellow: Light@(red: Unit),
-    green: Light@(yellow: Unit));
+  Unit@ u = True.true;
+  light.?(
+    red: Light@(green: u),
+    yellow: Light@(red: u),
+    green: Light@(yellow: u));
 };
 
 (IO@, Light@) { Light@!; } Change = (IO@ io, Light@ light) {
