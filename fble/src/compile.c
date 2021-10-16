@@ -787,7 +787,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       select_instr->_base.tag = FBLE_UNION_SELECT_INSTR;
       select_instr->_base.debug_info = NULL;
       select_instr->_base.profile_ops = NULL;
-      select_instr->loc = FbleCopyLoc(select_tc->loc);
+      select_instr->loc = FbleCopyLoc(select_tc->_base.loc);
       select_instr->condition = condition->index;
       FbleVectorInit(select_instr->jumps);
       AppendInstr(scope, &select_instr->_base);
@@ -965,7 +965,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       call_instr->_base.tag = FBLE_CALL_INSTR;
       call_instr->_base.debug_info = NULL;
       call_instr->_base.profile_ops = NULL;
-      call_instr->loc = FbleCopyLoc(apply_tc->loc);
+      call_instr->loc = FbleCopyLoc(apply_tc->_base.loc);
       call_instr->exit = exit;
       call_instr->func = func->index;
       FbleVectorInit(call_instr->args);

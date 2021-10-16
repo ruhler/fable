@@ -196,7 +196,6 @@ typedef struct {
 // FbleTcProfiled for each unique tc referred to by choices.
 typedef struct {
   FbleTc _base;
-  FbleLoc loc;
   FbleTc* condition;
   FbleTcProfiledV choices;
 } FbleUnionSelectTc;
@@ -231,7 +230,6 @@ typedef struct {
 // Represents a function application expression.
 typedef struct {
   FbleTc _base;
-  FbleLoc loc;
   FbleTc* func;
   FbleTcV args;
 } FbleFuncApplyTc;

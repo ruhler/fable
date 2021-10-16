@@ -1,6 +1,3 @@
-* Remove custom loc fields from FbleTc in those cases where the general loc
-  field can be used instead.
-
 * Consider adding a helper macro to compile.c and link.c for initializing
   FbleInstrs
   That takes care of initializing tag, debug_info, and profile_ops for us.

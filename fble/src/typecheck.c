@@ -827,7 +827,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleUnionSelectTc* select_tc = FbleAllocExtra(FbleUnionSelectTc, union_type->fields.size * sizeof(FbleTc*));
       select_tc->_base.tag = FBLE_UNION_SELECT_TC;
       select_tc->_base.loc = FbleCopyLoc(expr->loc);
-      select_tc->loc = FbleCopyLoc(expr->loc);
       select_tc->condition = condition.tc;
       FbleVectorInit(select_tc->choices);
 
@@ -1215,7 +1214,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleFuncApplyTc* apply = FbleAlloc(FbleFuncApplyTc);
       apply->_base.tag = FBLE_FUNC_APPLY_TC;
       apply->_base.loc = FbleCopyLoc(expr->loc);
-      apply->loc = FbleCopyLoc(expr->loc);
       apply->func = func.tc;
       FbleVectorInit(apply->args);
       FbleVectorAppend(apply->args, &list_tc->_base);
@@ -1319,7 +1317,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleFuncApplyTc* apply = FbleAlloc(FbleFuncApplyTc);
       apply->_base.tag = FBLE_FUNC_APPLY_TC;
       apply->_base.loc = FbleCopyLoc(expr->loc);
-      apply->loc = FbleCopyLoc(expr->loc);
       apply->func = func.tc;
       FbleVectorInit(apply->args);
       FbleVectorAppend(apply->args, &literal_tc->_base);
@@ -1452,7 +1449,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         FbleFuncApplyTc* apply_tc = FbleAlloc(FbleFuncApplyTc);
         apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
         apply_tc->_base.loc = FbleCopyLoc(expr->loc);
-        apply_tc->loc = FbleCopyLoc(expr->loc);
         apply_tc->func = misc.tc;
         FbleVectorInit(apply_tc->args);
         for (size_t i = 0; i < argc; ++i) {
@@ -1606,7 +1602,6 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleFuncApplyTc* apply_tc = FbleAlloc(FbleFuncApplyTc);
       apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
       apply_tc->_base.loc = FbleCopyLoc(expr->loc);
-      apply_tc->loc = FbleCopyLoc(expr->loc);
       apply_tc->func = proc.tc;
       FbleVectorInit(apply_tc->args);
 

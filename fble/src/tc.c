@@ -62,7 +62,6 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_UNION_SELECT_TC: {
       FbleUnionSelectTc* v = (FbleUnionSelectTc*)tc;
       FbleFreeTc(v->condition);
-      FbleFreeLoc(v->loc);
       for (size_t i = 0; i < v->choices.size; ++i) {
         // The default branch may appear multiple times in choices. Make sure
         // we only free it once.
@@ -104,7 +103,6 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_FUNC_APPLY_TC: {
       FbleFuncApplyTc* apply_tc = (FbleFuncApplyTc*)tc;
       FbleFreeTc(apply_tc->func);
-      FbleFreeLoc(apply_tc->loc);
       for (size_t i = 0; i < apply_tc->args.size; ++i) {
         FbleFreeTc(apply_tc->args.xs[i]);
       }
