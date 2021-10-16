@@ -319,7 +319,18 @@ static void DumpCode(FILE* fout, FbleCode* code)
   FbleFree(blocks.xs);
 }
 
-// FbleFreeInstr -- see documentation in isa.h
+// FbleRawAllocInstr -- see documentation in code.h
+void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
+{
+  assert(sizeof(FbleInstr) <= size);
+  FbleInstr* instr = FbleRawAlloc(size);
+  instr->tag = tag;
+  instr->debug_info = NULL;
+  instr->profile_ops = NULL;
+  return instr;
+}
+
+// FbleFreeInstr -- see documentation in code.h
 void FbleFreeInstr(FbleInstr* instr)
 {
   assert(instr != NULL);

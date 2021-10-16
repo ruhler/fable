@@ -48,10 +48,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleExecutableModule* module = program->modules.xs[i];
 
-    FbleCallInstr* call = FbleAlloc(FbleCallInstr);
-    call->_base.tag = FBLE_CALL_INSTR;
-    call->_base.debug_info = NULL;
-    call->_base.profile_ops = NULL;
+    FbleCallInstr* call = FbleAllocInstr(FbleCallInstr, FBLE_CALL_INSTR);
     call->loc.source = FbleNewString(__FILE__);
     call->loc.line = __LINE__ - 1;
     call->loc.col = 5;
@@ -78,18 +75,12 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   }
 
   for (size_t i = 0; i + 1 < program->modules.size; ++i) {
-    FbleReleaseInstr* release_instr = FbleAlloc(FbleReleaseInstr);
-    release_instr->_base.tag = FBLE_RELEASE_INSTR;
-    release_instr->_base.debug_info = NULL;
-    release_instr->_base.profile_ops = NULL;
+    FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
     release_instr->target = i;
     FbleVectorAppend(code->instrs, &release_instr->_base);
   }
 
-  FbleReturnInstr* return_instr = FbleAlloc(FbleReturnInstr);
-  return_instr->_base.tag = FBLE_RETURN_INSTR;
-  return_instr->_base.debug_info = NULL;
-  return_instr->_base.profile_ops = NULL;
+  FbleReturnInstr* return_instr = FbleAllocInstr(FbleReturnInstr, FBLE_RETURN_INSTR);
   return_instr->result.section = FBLE_LOCALS_FRAME_SECTION;
   return_instr->result.index = modulec - 1;
   FbleVectorAppend(code->instrs, &return_instr->_base);

@@ -371,6 +371,53 @@ typedef struct {
   FbleLocalIndex dest;
 } FbleLiteralInstr;
 
+// FbleRawAllocInstr --
+//   Allocate and partially initialize an FbleInstr. This function is not type
+//   safe. It is recommended to use the FbleAllocInstr and FbleAllocInstrExtra
+//   macros instead.
+//
+// Inputs:
+//   size - The total number of bytes to allocate for the instruction.
+//   tag - The instruction tag.
+//
+// Result:
+//   A pointer to a newly allocated size bytes of memory with FbleInstr tag,
+//   debug_info, and profile_ops initialized.
+void* FbleRawAllocInstr(size_t size, FbleInstrTag tag);
+
+// FbleAllocInstr --
+//   A type safe way of allocating instructions.
+//
+// Inputs:
+//   T - The type of instruction to allocate.
+//   tag - The tag of the instruction to allocate.
+//
+// Results:
+//   A pointer to a newly allocated object of the given type with the
+//   FbleInstr tag, debug_info, and profile_ops fields initialized.
+//
+// Side effects:
+// * The allocation should be freed by calling FbleFreeInstr when no longer in
+//   use.
+#define FbleAllocInstr(T, tag) ((T*) FbleRawAllocInstr(sizeof(T), tag))
+
+// FbleAllocInstrExtra --
+//   Allocate an instruction with additional extra space.
+//
+// Inputs:
+//   T - The type of instruction to allocate.
+//   size - The size in bytes of extra space to include.
+//   tag - The tag of the instruction.
+//
+// Results:
+//   A pointer to a newly allocated instruction of the given type with extra
+//   size, with FbleInstr fields initialized.
+//
+// Side effects:
+// * The allocation should be freed by calling FbleFreeInstr when no longer in
+//   use.
+#define FbleAllocInstrExtra(T, size, tag) ((T*) FbleRawAllocInstr(sizeof(T) + size), tag)
+
 // FbleFreeInstr --
 //   Free the given instruction.
 //

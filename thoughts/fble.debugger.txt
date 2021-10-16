@@ -607,3 +607,16 @@ Then you can't set a breakpoint on the first line, because there is no code
 generated for that. Variable assignment like this is free. There are no
 instructions emitted for it.
 
+---
+
+How to print variables?
+
+First step is telling gdb about the mapping from variable name to FbleValue*.
+I propose:
+* Add a DebugInfo type called VarInfo that stores the first fble pc, last fble
+  pc, name, and frame index for each variable.
+* Compute the VarInfo in the compiler, store it at the first pc, associate the
+  VarInfo with a Local, and have the Local automatically set last fble pc when
+  we do ReleaseLocal.
+* Emit dwarf info for VarInfos by iterating again over the instructions when
+  emitting dwarf info.
