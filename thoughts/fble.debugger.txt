@@ -477,7 +477,8 @@ right?
 Yes! That works great. As long as we can make it obvious to gdb what the stack
 is, if we only have fble debug info produced, then 'step' goes to the next
 fble line. In practice this would work by having a user link with a release
-build of libfble that does not have debugging symbols.
+build of libfble that does not have debugging symbols. It looks like there's
+also an option in gdb to skip files, so the user could say skip all .c files.
 
 ---
 
@@ -611,7 +612,7 @@ instructions emitted for it.
 
 How to print variables?
 
-First step is telling gdb about the mapping from variable name to FbleValue*.
+1. First step is telling gdb about the mapping from variable name to FbleValue*.
 I propose:
 * Add a DebugInfo type called VarInfo that stores the first fble pc, last fble
   pc, name, and frame index for each variable.
@@ -620,3 +621,84 @@ I propose:
   we do ReleaseLocal.
 * Emit dwarf info for VarInfos by iterating again over the instructions when
   emitting dwarf info.
+
+Hopefully at this point we can say 'print x' in gdb, and it will print out a
+raw address. We could cast that to a corresponding FbleValue* type, or try to
+interpret it manually (because it could be packed bits).
+
+2. The next level of usefulness, for data type values, would be to print the raw
+structure form, using tags and offsets. For example, an integer 5 might be
+printed as:
+  @(2: @(2: @(1: @(0: @()))))
+
+That's not terribly useful, but at least you don't have to unpack it manually.
+We could implement this by providing a C function users can invoke from gdb to
+dump the data type value.
+
+3. The next level of usefulness for data type values would be to have field
+names available. So an integer 5 would be printed as:
+
+  Int@(p: IntP@(2p1: IntP@(2p0: IntP@(1: Unit@()))))
+
+I would argue that's still not terribly useful, but that's about the best we
+can expect from gdb, even if we give gdb full type information and somehow
+manage to teach it about how to unpack values.
+
+I almost wonder if the easiest way to implement this will be by providing a C
+function users can invoke from gdb, passing the value and somehow being able
+to get from gdb a pointer to the type info.
+
+4. The real level of usefulness for data type values would be to allow users
+to call an fble function on the data type value that returns an fble string,
+and printing that string out to the user. So an integer 5 would be printed as:
+  
+  "5"
+
+From gdb's point of view, however, I don't think we have access to top level
+functions.
+
+To summarize, I think the type system gdb is designed for is not nearly as
+well suited to fble, where integers are not primitives. It's going to be
+tedious for a user to type out what they want to print, and I'm not sure how
+I'll be able to implement in a reasonable way.
+
+All of which starts to make a printf debugging approach much more appealing.
+
+I suppose fundamentally what we want to make a debugger useful here is:
+1. Ability to print strings, where strings use a user defined type.
+2. Ability to invoke fble functions naturally passing fble arguments.
+3. Ability to access fble functions by full module path from anywhere.
+
+Or, more generally:
+
+* Ability to print strings, where strings use a user defined type.
+* Ability to evaluate arbitrary fble expressions, in the context of a current
+  environment.
+* Ability to refer to values by module path.
+* Ability to set breakpoint at function or line.
+* Ability to run, continue, break, step, next in a program.
+* Ability to print backtrace and go to the context of any particular frame.
+* Ability to list threads and switch between them.
+* Ability to see current location in source code, preferably by showing the
+  actual lines of source around the current location.
+* Ideally an ability to easily switch out whatever UI you want on top of the
+  debugger.
+
+---
+
+Going through the gdb manual, looks like gdb may have some support for
+customized pretty printing of expressions. May be useful for printing strings
+or particular types? Looks like there is elf section .debug_gdb_scripts we
+could potentially emit to the object code to do pretty printing? Seems like
+gdb supports python and scheme as the main scripting languages. I would
+probably choose to use python.
+
+I suppose the question is, is it worth adding debugging support that's so
+specific to gdb, or would it be nicer to have an fble specific debugger that's
+flexible enough that other people could make it work with gdb or whatever
+debugger they prefer?
+
+Put another way, everything I've done so far for debugging is in the dwarf
+standard. We don't actually do anything gdb specific yet. If I start to be gdb
+specific... is that overly specific?
+

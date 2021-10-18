@@ -1,5 +1,10 @@
 * [debugger] Figure out how we could print variables.
 
+* Remove function bind syntax again, now that we no longer use it?
+  On the one hand, it seems a shame to have a syntactic sugar that I don't
+  currently use for anything. On the other hand, I must have had good reason
+  to add it back for fblf.
+
 * [/Graphics] Debug clipping artifacts
   Looks like precision gets off some times for clipping, with bits of sky
   showing through the ground. Figure out what's up, right a test and fix it.
@@ -203,7 +208,7 @@ unique?
   exits, even if that means retaining it longer than its lexical scope?
 * [lang] Clarify spec on when (compile vs runtime) vacuous value error should be
   reported.
-* [lang] Add support for abstract types?
+* [lang] Add support for abstract types? See thoughts/fble.adt.txt.
 * [lang] Revisit notion of packages and public/private access to modules.
 * [lang] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.

@@ -713,7 +713,7 @@ Abstract Syntax:
   Expr ::= proc_link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
 
 Concrete Syntax:
-  stmt ::= type '~' name ',' name ';' expr
+  stmt ::= type '~' name ',' name ';' stmt
 
 Example:
   Int@ ~ input, output; f(input, output)
@@ -850,13 +850,123 @@ The runtime of a poly application is linear in the number of arguments plus
 the runtime of the poly. Unlike function application, poly application does
 not cause the body of the poly to be re-evaluated.
 
-8. Literals
+8. Abstract Types
+-----------------
+Abstract types are a mechanism to restrict how users interact with a type,
+making it possible to change the implementation of the type without effecting
+users.
+
+By default, users can use any operation supported by the type of a value,
+including field access, conditional access, function application, and so on.
+Abstract types are a mechanism to restrict users to interact with a value
+using a limited set of functions.
+
+TODO: finish me.
+8.1 Abstract
+------------
+Abstract Syntax:
+  Expr ::= abstract (name :: TypeName) (body :: Expr)
+
+Concrete Syntax:
+  stmt ::= '@@' name ';' stmt
+
+Example:
+  @@ Tok@;
+  ...
+
+The abstract expression introduces a new abstract token type into the
+environment under the given type name. The type of the abstract expression is
+the type of the body and the value of the abstract expression is the value of
+the body evaluated with the abstract token type in scope.
+
+The abstract token type has kind @ and is considered different from every
+other type, including any other abstract token type created using an abstract
+expression.
+
+8.2 Abstract Type
+-----------------
+Abstract Syntax:
+  Type ::= abstract_type (token :: Type) (type :: Type)
+
+Concrete Syntax:
+  type ::= type '<' type '>'
+
+Example:
+  @@ Tok@; Tok@<Bool@>;
+  
+Forms an abstract type by combining the given token type with an underlying
+type. Abstract types are considered equal if both their token type and
+underlying types are equal.
+
+The token type must have been created using an abstract expression. The
+underlying type can be any type of kind @. The resulting abstract type has
+kind @.
+
+8.3 Abstract Value
+------------------
+Abstract Syntax:
+  Expr ::= abstract_value (token :: Type) (value :: Expr)
+
+Concrete Syntax:
+  expr ::= type '(' expr ')'
+
+Example:
+  @@ Tok@; Tok@(True);
+
+Creates an abstract value accessed using the given token type and containing
+the given value. The type must be a token type created using an abstract
+expression.
+
+The type of the result is an abstract type with the same token and underlying
+type equal to the type of the value.
+
+8.4 Abstract Access
+-------------------
+Abstract Syntax:
+  Expr ::= abstract_access (value :: Expr) (token :: Type)
+
+Concrete Syntax:
+  expr ::= value '<' type '>'
+
+Example:
+  x<Tok@>
+
+The value must be an abstract value. Returns the underlying value associated
+with the abstract value if the token type matches the token type used to
+create the abstract value. It is a compiler error if the token type does not
+match the token type used to create the abstract value.
+
+8.5 Example
+-----------
+The follow example shows how to define a three element enum type that can only
+be accessed externally using the provided methods.
+
+  @ Impl@ = +(Unit@ a, Unit@ b, Unit@ c);
+
+  @@ Tok@;
+  @ Enum@ = Tok@<Impl@>;
+
+  Enum@ A = Tok@(Impl@(a: Unit));
+  Enum@ B = Tok@(Impl@(b: Unit));
+  Enum@ C = Tok@(Impl@(c: Unit));
+
+  (Enum@) { Bool@; } IsA = (Enum@ e) { e.<Tok@>.?(a: True, : False); };
+  (Enum@) { Bool@; } IsB = (Enum@ e) { e.<Tok@>.?(b: True, : False); };
+  (Enum@) { Bool@; } IsC = (Enum@ e) { e.<Tok@>.?(c: True, : False); };
+
+  @(Enum@, A, B, C, IsA, IsB, IsC);
+
+Because the Tok@ type is not made available to users, users are unable to
+construct or access fields of the Enum@ type directly. They can only use the
+provided values A, B, C and functions IsA, IsB, and IsC.
+
+9. Literals
 -----------
 We introduce syntax for describing lists and literals to make it less tedious
 to write code involving sequences of elements of the same type and raw
 sequences of data without the overhead of punctuation between data elements.
 
-8.1 List
+9.1 List
 --------
 Abstract Syntax:
   Expr ::= list (func :: Expr) (args :: [Expr])
@@ -902,7 +1012,7 @@ expression, instead of having stand alone list expressions like [a, b, c], is:
 * For consistency with literal expressions, which require a user defined
   letter type to be supplied.
 
-8.2 Literal
+9.2 Literal
 -----------
 Abstract Syntax:
   Expr ::= literal (func :: Expr) (letters :: word)
@@ -935,7 +1045,7 @@ to f is E@, is desugared to:
 It is a type error if the word contains a letter for which there is no
 corresponding field in the element type E@.
 
-8.3 Example
+9.3 Example
 -----------
 To better illustrate the intended use of list and literal expressions, imagine
 we want to define a binary integer literal.
@@ -971,13 +1081,13 @@ example:
  Int@ 6 = Binary|110;
  Int@ x = Binary[first_bit, second_bit, third_bit];
 
-9. Modules
+10. Modules
 ----------
 Fble code is organized into a hierarchy of reusable modules. Each module
 describes a value that may depend on the value of other modules. A program is
 formed by combining a module with all of its direct and indirect dependencies.
 
-9.1 Organization
+10.1 Organization
 ----------------
 Modules are organized into a tree structure. The purpose of the tree structure
 is to group modules together that are developed by the same organization to
@@ -1012,7 +1122,7 @@ For example, you might have the following directory structure:
    Md5/
      Tests.fble
 
-9.2 Path
+10.2 Path
 --------
 Modules may depend on other modules independent of the tree hierarchy of
 modules. A program can include a module without having to depend on any
@@ -1037,7 +1147,7 @@ Examples:
   /Unit%
   /Md5/ImplA%
 
-9.3 Program
+10.3 Program
 -----------
 A program is an fble expressions that creates a value that is used however is
 deemed suitable by whoever is executing the program. Commonly this could be:
@@ -1087,7 +1197,7 @@ The same module hierarchy can be used for a program to run List tests:
   StdLib_List = </StdLib/List%>;
   </StdLib/List/Tests%>;
 
-10. Abstract Syntax Reference
+11. Abstract Syntax Reference
 ----------------------------
 NormalName ::= (* A string of characters *)
 TypeName ::= (* A string of characters *)
@@ -1142,15 +1252,20 @@ Expr ::=
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
 
+ | abstract (name :: TypeName) (body :: Expr)
+ | abstract_type (token :: Type) (type :: Type)
+ | abstract_value (token :: Type) (value :: Expr)
+ | abstract_access (value :: Expr) (token :: Type)
+
  | list (func :: Expr) (args :: [Expr])
  | literal (func :: Expr) (letters :: word)
  ;
 
 Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
 
-11. Concrete Syntax
+12. Concrete Syntax
 -------------------
-11.1 Lexical Syntax
+12.1 Lexical Syntax
 -------------------
 We have the following categories of characters:
 1. whitespace: Any whitespace character, as traditionally classified.
@@ -1183,7 +1298,7 @@ three separate words: 'Foo', '.', and 'Bar', not as a single word 'Foo.Bar'.
 The only exception is when consecutive single quote characters are used to
 embed a single quote character in a word.
 
-11.2 Reference
+12.2 Reference
 --------------
 word ::= (* word as described in the section on lexical syntax *)
 normal_name ::= word
@@ -1233,6 +1348,10 @@ expr ::=
 
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
+ | type '<' type '>'                               (* abstract_type *) 
+ | type '(' expr ')'                               (* abstract_value *) 
+ | expr '<' type '>'                               (* abstract_access *) 
+
  | expr '['[expr [',' expr [...]] ']'              (* list *)
  | expr '|' word                                   (* literal *)
 
@@ -1253,6 +1372,7 @@ stmt ::=
  | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
  | type '~' name ',' name ';' stmt                                   (* proc_link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
+ | '@@' name ';' stmt                                                (* abstract *)
  ;
 
 module ::= stmt                                                      (* module_value *)
@@ -1261,8 +1381,11 @@ module ::= stmt                                                      (* module_v
 Notes:
 * struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
-* explicit type struct value and function apply share the same form. The type
-  of the expr is used to distinguish between the two kinds of expressions.
-* The module value for module Foo is stored in Foo.fble for a public module.
-  Child modules of module Foo are stored in subdirectory Foo/ if Foo is a
-  public module.
+* explicit type struct value, function apply, and abstract value share the
+  same form. The type of the expr is used to distinguish between the three
+  kinds of expressions.
+* Polymorphic application, abstract type, and abstract access all share the
+  same form. The type of the argument is used to distinguish between the three
+  kinds of expressions.
+* The module value for module Foo is stored in Foo.fble. Child modules of
+  module Foo are stored in subdirectory Foo/.  public module.

@@ -39,3 +39,16 @@ Maybe part of the issue is that any rounding errors close to the camera get
 magnified? Is there some way we can do the rounding after we've already
 projected it to the screen of the camera, where we have the precision we care
 about?
+
+---
+
+Idea for clipping: just keep more precision. Represent numbers as rational
+instead of integer during the clipping process. That should avoid this
+rounding artifact. Worry about performance later.
+
+Ideas for hidden surface removal: we should be able to project all lines from
+the camera and use it to slice up all triangles. Then we end up with a bunch
+of triangle slices, where each triangle is either fully visible, or fully
+hidden. We just have to figure out which is which, remove the hidden
+triangles, and we're done.
+

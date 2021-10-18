@@ -641,7 +641,7 @@ Abstract Syntax:
   Expr ::= abstract_type (type :: Type) (typename :: Name) (get :: Name) (put :: Name) (body :: Expr)
 
 Concrete Syntax:
-  stmt ::= type '&' name ',' name ',' name ';' expr
+  stmt ::= type '&' name ',' name ',' name ';' stmt
 
 Example:
   FooImpl@ & Foo@, Get, Put;
@@ -655,3 +655,471 @@ polymorphism, because we need to know about polymorphism to explain the
 translation. And as we have seen, abstract types are tied up pretty
 significantly with polymorphism in terms of making sense semantically, so that
 seems reasonable. Maybe even it should go in the section on polymorphism?
+
+---
+
+Let me try to summarize the outcome of the above discussion, now that it's
+been a while and I'm starting to loose track.
+
+Abstract Syntax:
+  Expr ::= abstract_type (type :: Type) (typename :: Name) (get :: Name) (put :: Name) (body :: Expr)
+
+Concrete Syntax:
+  stmt ::= type '&' name ',' name ',' name ';' expr
+
+Example:
+  FooImpl@ & Foo@, Get, Put;
+  ...
+  @(Foo@);
+
+Define an abstract type based on a concrete type value. In this example,
+FooImpl@ is some possibly polymorphic type in scope. This statement adds three
+new entities to the scope:
+  
+  Foo@ - An abstract type.
+  Get - A (possibly polymorphic) function to convert a value of type Foo@ to a
+        value of type FooImpl@.
+  Put - A (possibly polymorphic) function to convert a value of type FooImpl@
+        to a value of type Foo@.
+
+The recommended use case is:
+* Define your internal data type FooImpl@.
+* Use the expression to define the public interface type Foo@.
+* Pass values of type Foo@ around everywhere, but when you want to allocate or
+  access fields, convert first using Put/Get.
+* Only make Put/Get functions available to privileged modules.
+  
+A user could make up their own copy of the FooImpl@ type out of thin air, but
+they can't use that to create or extract any information from a value of type
+Foo@.
+
+---
+
+Explicitly having to convert between types seems annoying. Why not allow use
+of FooImpl@ internally as equivalent to Foo@, but not externally? Let's
+explore a little more.
+
+I want two type names I can use interchangeably, where one of them is opaque
+and unique, and the other is non-opaque and unique. How about, then, we have
+something that, given a type, returns back two new types that are equivalent,
+where one is opaque and one is not? And it knows how to deal with polymorphic
+types. And we could use special syntax to access the abstract variant of a
+type.
+
+Something like:
+
+<@,@>@ Map@ = & <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+
+Here, MapP@ can be a normal type creatable out of thin air.
+
+Now we have:
+
+Map@ 
+  - a unique type. The constructor has to be used explicitly to create
+    values of this type. Values of this type can be accessed. This is the type
+    that will be used by the map implementation.
+
+Map@.& 
+  - a unique type equivalent to Map@ type that can be used interchangeably
+    with the Map@ type, but that is opaque.
+
+The implementation of Map will export Map@ for internal use and Map@.& for
+external use. Everything else works just fine.
+
+There's no way to produce a Map@ out of thin air. In particular the following
+types Map1@ and Map2@ are not considered equal:
+
+<@,@>@ Map1@ = & <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+<@,@>@ Map2@ = & <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+
+Note that:
+  <@>@ Foo@ = & <@ X@> { ...; }
+
+Means something different from:
+  <@>@ Foo@ = <@ X@> { &Foo@; }
+
+The former has that Foo@<X@> is equal to Foo@<X@>. The second has that
+Foo@<X@> is different from Foo@<X@>, making the second rather not useful.
+
+Perhaps instead of making & an expression, it would be better in statement
+form:
+
+<@,@>@ Map@ &= <@ K@, @ V@> { ... };
+
+Now it is clear we are associating the uniqueness of the type Map@ with the
+name Map@.
+
+Cool, so new proposal is:
+
+stmt ::= <kind> <typename> &= <type> ';' stmt
+expr ::= <type> '.' '&'
+
+With two new kinds of types: unique types and opaque types.
+
+Equality for a unique type requires pointer equality, but we'll also have to
+keep track of the source of a polymorphic application for checking equality.
+
+An opaque type is just like a unique type, except field access is not allowed.
+
+Do I like the syntax choice, or better to use '@' for this?
+
+<@,@>@ Map@ @= <@ K@, @ V@> { ... };
+<@,@>@ PublicMap@ = Map@.@;
+
+I like the syntax of that. It seems meaningful to me semantically at first
+glance. It supports hierarchical access to internal and external type. It
+supports uniqueness of type. There's no need for explicit conversions.
+
+Is there ever a desire to cast a Map@ to the raw underlying type form? For
+example, if we wanted a newtype like thing instead of a type wrapper? I don't
+think so. We could always introduce a new struct type wrapper and use field
+access for that.
+
+Questions:
+* What does it mean if the type is a function type? How would construct values
+  of the type?
+
+So perhaps a refinement: think of it as a 'newtype' kind of a type. Here's
+what you can do with a newtype:
+
+Define a new type, this is paired with a statement, to avoid any confusion
+over when you make a new type:
+
+<kind> <typename> '@=' <type> ';' stmt
+
+The type supports the following operations:
+  Construction:  <type> '(' <expr> ')'
+    Construct a value of the newtype given an expression of the underlying
+    type.
+
+  Access: <expr> '.' '@'
+    Access the value of the new type. Returns the value of the underlying
+    type.
+
+  Abstraction: <type> '.' '@'
+    Returns an opaque type considered equal to the given type.
+
+And something to fix up whatever issues there are with polymorphism based on
+the kind of the newtype.
+
+That way you could create newtypes for any kind of type, not just data. It's
+essentially a one field struct type, though maybe we can implement it more
+efficiently at runtime.
+
+I would probably have to start trying this out to see if it works in practice
+or what surprising things come up.
+
+If you do typeof on a value of a newtype, you get the abstract type in return.
+
+Of course, for this to be useful for cross module hierarchy stuff, we will
+need to have some support for module access control.
+
+---
+
+Thinking about it more, I understand better the original proposal.
+
+We can't have two different kinds of unique type. A value of the newtype has
+to have only one type, and some users are able to access that one type, and
+others are not. Because we pass values into and out of the API for interacting
+with values of that type.
+
+Fundamentally what we need is:
+* A newtype, so users can't create and use its implementation type out of thin
+  air.
+* A value that acts as a token to provide access to convert to and from the
+  newtype.
+
+The access token could be Put and Get functions. Or maybe it is some separate
+kind of value. My main concern is the syntax overhead for constructing and
+accessing the newtype with the token.
+
+Let's explore some syntax:
+
+<@,@>@ Map@, Put, Get @= <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+
+Map@ Empty = <@ K@, @ V@> {
+  Put<K@, V@>(empty: Unit);
+};
+
+No...
+
+<@,@>@ Map_@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+<@,@>@ Map@, Put, Get @= Map_@;
+
+Map@ Empty = <@ K@, @ V@> {
+  Map_@<K@, V@> empty = Map_@<K@, V@>(empty: Unit);
+  Put<K@, V@>(empty);
+};
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  Map_@<K@, V@> map_ = Get<K@, V@>(map);
+  map_.?(empty: True, map: False);
+};
+
+Actually, that's not so bad. This approach says we always cast first thing
+from Map@ to Map_@ at the start of an API function that takes a Map@, and we
+cast at the end from Map_@ to Map@ at the end of an API function that returns
+a Map@.
+
+What if we used a token instead of Put and Get? Would that help with any
+confusion over polymorphism?
+
+<@,@>@ Map_@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+<@,@>@ Map@, Map_ @= Map_@;
+
+Map@ Empty = <@ K@, @ V@> {
+  Map_@<K@, V@> empty = Map_@<K@, V@>(empty: Unit);
+  Map@<K@, V@>(Map_, empty);
+};
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  Map_@<K@, V@> map_ = map(Map_);
+  map_.?(empty: True, map: False);
+};
+
+That way we don't have to come up with names for Put and Get, get becomes
+function application on the new type value and Put becomes function
+application on the new type type. But then, what is the type of a token?
+
+If the token is a static thing, could we make it a type?
+
+<@,@>@ Map_@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+<@,@>@ Map@, _@ @= Map_@;
+
+Map@ Empty = <@ K@, @ V@> {
+  Map_@<K@, V@> empty = Map_@<K@, V@>(empty: Unit);
+  Map@<_@><K@, V@>(empty);
+};
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map<_@>.?(empty: True, map: False);
+};
+
+I think Put and Get functions would be cleaner semantically and avoid
+introducing a new kind of concept into the language. Maybe we have a
+convention to name them Public and Private?
+
+<@,@>@ Map_@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+<@,@>@ Map@, Private, Public @= Map_@;
+
+Map@ Empty = <@ K@, @ V@> {
+  Public<K@, V@>(Map_@<K@, V@>(empty: Unit));
+};
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  Private<K@, V@>(map).?(empty: True, map: False);
+};
+
+I think I prefer the syntax 
+   <kind> <typename>, <name>, <name> '@=' <type> ';' stmt
+
+Which is more consistent with how we define types.
+
+Should we use that kind of syntax for links too? How would that look?
+
+Get@<Int@> get, Put@<Int@> put ~= Int@;
+
+No, that's hard to follow. I suppose we could reuse function bind syntax,
+assuming we had a builtin link function 
+
+  <@ T@, @ X@>((Get@<T@> get, Put@<T@> put) { X@; } f) { X@; }
+
+Get@<Int@> get, Put@<Int@> put <- ~<Int@, X@>;
+
+But having to specify X@ is yucky. Same as with function bind.
+
+Maybe:
+
+  get, put ~= Int@;
+
+I just wish there was some kind of type at the beginning. But then it would be
+duplicated with what was at the end?
+
+Map_@ & Map@, Get, Put;
+<@,@>@ Map@, Get, Put @= Map_@;
+
+Let's stick with @= for newtype and the existing syntax for link.
+
+---
+
+It's a little sad we have function call overhead associated with what is
+otherwise a no-op cast between types. Any way we could get rid of that? Like,
+have a special syntax for the put and the get?
+
+That would mean passing around a token again, and may as well make it a type
+token so it can be eliminated at runtime.
+
+<@,@>@ Map@, _@ &= Map_@;
+
+  map.<_@> says given an instance of Map@, return it's Map_@.
+  Map@.<_@>(...) says construct an instance of Map@ from Map_@?
+
+It's a special syntax for sure, which will let us make it free to run at
+runtime. The compiler gives an access error if the type _@ does not match the
+type created for Map@ when Map@ was created. Now you can pass around _@
+however you want, to whoever you want. The important part is, there is no way
+to create _@ out of thin air. _@ is a special primitive kind of type. There is
+no way to instantiate a value of that type. It has kind @ though, if you want
+to pass it as a template argument. I'm not sure if that's useful. I guess it
+would give you a way to pass types and their access tokens to polymorphic
+functions that can operate on arbitrary newtypes. Not sure that's significant
+for anything.
+
+<@,@>@ Map_@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); };
+<@,@>@ Map@, _@ @= Map_@;
+
+Map@ Empty = <@ K@, @ V@> {
+  Map@<K@, V@>.<_@>(Map_@<K@, V@>(empty: Unit));
+};
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.<_@>.?(empty: True, map: False);
+};
+
+Maybe the token is the real thing that matters? We can create a token out of
+thin air, and that token is a type. Then we can use that to construct newtypes
+of kind @. I'm just thinking about how we could simplify the issue of
+polymorphism here. And we could reuse the same token for lots of different
+types.
+
+For example:
+
+@@ Tok@;  # Creates a new token type 'Tok@'. User choice of name.
+
+<@,@>@ Map@ = <@ K@, @ V@> { Tok@<Map_@<K@, V@>>; };
+
+Map@ Empty = <@ K@, @ V@> {
+  Map_@<K@, V@> empty = Map_@<K@, V@>(empty: Unit);
+  Map@<K@, V@>.<Tok@>(empty);
+};
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.<Tok@>.?(empty: True, map: False);
+};
+
+So, newtype only operates on types of kind @. We add the following operations:
+
+@@ <typename> ';' <stmt>
+  Creates a new token type and stores it under the name typename.
+
+  The type has kind <@>@. When given a type T@, it returns a newtype for the
+  type T@ accessible only with the token type.
+
+<type> '.' <type> '(' <expr> ')'
+  Requires the left hand side be a newtype N@ for some type T@. The right hand
+  side must be the token type the newtype was originally created with,
+  otherwise you get a compiler error. The expression should have type T@.
+  Returns a value of type N@ that contains the value of the expression.
+
+<expr> '.' <type>
+  Requires the expression be a newtype N@ for some type T@. The type must be
+  the token type the newtype was originally created with, otherwise you get a
+  compiler error. Returns a value of type T@ that was associated with the
+  newtype value N@.
+
+The advantages of this approach, syntax questions aside, is we don't have any
+confusion over polymorphism: it works on kind @ arguments, you can manually
+reuse the token within polymorphism and across different types as desired. And
+we use syntax for the conversions instead of functions, so they don't need to
+have any runtime overhead.
+
+Exploring different syntax:
+
+@@ Tok@;  # Creates a new token type 'Tok@'. User choice of name.
+
+<@,@>@ Map@ = <@ K@, @ V@> { Map_@<K@, V@>:<Tok@>; };
+
+Map@ Empty = <@ K@, @ V@> {
+  Map_@<K@, V@> empty = Map_@<K@, V@>(empty: Unit);
+  Map@<K@, V@>.<Tok@>(empty);
+};
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.<Tok@>.?(empty: True, map: False);
+};
+
+What if there was no such thing as a special token type. We can use whatever
+type we want? Well, we do need such a thing as a unique type. It can be a
+unique phantom type. And there's not really much point to allow any kind of
+type for token, because if it is not a unique type, anyone could get at the
+token type.
+
+So, focus on the token type as the actor? Or, we have the token type and the
+newtype as actors.
+
+Abstract syntax:
+  Expr ::= abstract (name :: TypeName) (body :: Expr)
+    Creates an abstract token type with the given name, available in the body.
+
+    What's the kind of token type? <@>@ in theory. But <@>@ Foo@; ... is not
+    good. I like @@ Foo@; ... for concrete syntax.
+
+  Type ::= abstract_type (token :: Type) (type :: Type)
+    Given a abstract token type and an arbitrary type, return an abstract
+    version of that arbitrary type keyed on the token type.
+
+    Looks like polymorphism again. Why not say the token type is a polymorphic
+    type and use concrete syntax such as Tok@<Map_@>;
+
+  Expr ::= abstract_value (token :: Type) (value :: Expr)
+    Given an abstract token type and a value of arbitrary type, return an
+    abstract value keyed on the token type. The type of the returned value is
+    the abstract type of the type of the given value.
+
+    Concrete syntax: <type>(value). To match struct and union value syntax.
+
+  Expr ::= abstract_access (value :: Expr) (token :: Type)
+    Given an abstract value and token type, return the value associated with
+    the abstract_value if the token type matches the token type used to
+    construct the abstract value.
+
+    Why not make abstract_value a polymorphic type? Then this becomes a simple
+    polymorphic type application with standard syntax? Thus, concrete syntax
+    would be, for example: map<Tok@>.?(...).
+
+There's a couple ways we could think of this. Think of abstract type as a
+specific class of type of kind @, like struct and union. Or think of abstract
+type as a builtin polymorphic type. I suspect the former will be easier to
+understand. My concern with the polymorphic type part is we really want Map@
+to have kind <@,@>@, not <@,@,@>@. And I'm not sure <@,@><@,@> is treated the
+same as <@,@>@ in my language.
+
+Okay then. There you go. Use the same syntax as polymorphic type application,
+but treat abstract types as something different. Confusing? Perhaps. The
+example code now:
+
+@@ _@;
+
+<@,@>@ Map@ = <@ K@, @ V@> { _@<Map_@<K@, V@>>; };
+
+Map@ Empty = <@ K@, @ V@> {
+  Map_@<K@, V@> empty = Map_@<K@, V@>(empty: Unit);
+  _@(Map_@<K@, V@>(empty: Unit));
+};
+
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map<_@>.?(empty: True, map: False);
+};
+
+That looks pretty nice to me. Except that you have to know Map@ is a newtype
+to understand why you can do <_@> application to it.
+
+That's pretty cool actually. Only concern syntax wise is the overloading of
+polymorphic application for abstract values and abstract types. The other
+option would be to say a token type has kind <@><@,@>. You give it a type, it
+returns something that given ... no it would be some weird recursive kind
+thing. I'd rather not enter that world. Treat it as completely separate from
+polymorphism. Have a new section on abstract types.
+
+As with usual, we can revisit the feature or syntax as we start to use it
+more. No need for it to be perfect to start. But I'm fairly happy with the
+proposal now. Shall I give it a try?
+
