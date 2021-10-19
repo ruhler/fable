@@ -20,7 +20,6 @@ typedef enum {
   FBLE_PROC_TYPE,
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
-  FBLE_ABSTRACT_TOKEN_TYPE,
   FBLE_ABSTRACT_TYPE,
   FBLE_VAR_TYPE,
   FBLE_TYPE_TYPE,
@@ -84,15 +83,6 @@ typedef struct {
   FbleType _base;
   FbleType* type;
 } FbleProcType;
-
-// FbleAbstractTokenType --
-//   FBLE_ABSTRACT_TOKEN_TYPE
-//
-// A token type used for abstract values. An instance of an abstract token
-// type is an anonmyous unique type that is only equal to itself.
-typedef struct {
-  FbleType _base;
-} FbleAbstractTokenType;
 
 // FbleAbstractType --
 //   FBLE_ABSTRACT_TYPE

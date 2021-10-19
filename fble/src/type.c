@@ -170,10 +170,6 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
       break;
     }
 
-    case FBLE_ABSTRACT_TOKEN_TYPE: {
-      break;
-    }
-
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
       Ref(callback, abs->token);
@@ -218,7 +214,6 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
     case FBLE_PROC_TYPE: return;
     case FBLE_POLY_TYPE: return;
     case FBLE_POLY_APPLY_TYPE: return;
-    case FBLE_ABSTRACT_TOKEN_TYPE: return;
     case FBLE_ABSTRACT_TYPE: return;
 
     case FBLE_VAR_TYPE: {
@@ -306,7 +301,6 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normaliz
       return FbleRetainType(heap, type);
     }
 
-    case FBLE_ABSTRACT_TOKEN_TYPE: return FbleRetainType(heap, type);
     case FBLE_ABSTRACT_TYPE: return FbleRetainType(heap, type);
 
     case FBLE_VAR_TYPE: {
@@ -385,10 +379,6 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
       FblePolyApplyType* pat = (FblePolyApplyType*)type;
       return HasParam(pat->arg, param, &nv)
           || HasParam(pat->poly, param, &nv);
-    }
-
-    case FBLE_ABSTRACT_TOKEN_TYPE: {
-      return false;
     }
 
     case FBLE_ABSTRACT_TYPE: {
@@ -536,11 +526,6 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       FbleReleaseType(heap, poly);
       FbleReleaseType(heap, sarg);
       return &spat->_base;
-    }
-
-    case FBLE_ABSTRACT_TOKEN_TYPE: {
-      UNREACHABLE("abstract token type does not have params");
-      return NULL;
     }
 
     case FBLE_ABSTRACT_TYPE: {
@@ -741,13 +726,6 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       return false;
     }
 
-    case FBLE_ABSTRACT_TOKEN_TYPE: {
-      bool result = (a == b);
-      FbleReleaseType(heap, a);
-      FbleReleaseType(heap, b);
-      return result;
-    };
-
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* aa = (FbleAbstractType*)a;
       FbleAbstractType* ab = (FbleAbstractType*)b;
@@ -791,7 +769,6 @@ FbleKind* FbleGetKind(FbleType* type)
     case FBLE_DATA_TYPE:
     case FBLE_FUNC_TYPE:
     case FBLE_PROC_TYPE:
-    case FBLE_ABSTRACT_TOKEN_TYPE:
     case FBLE_ABSTRACT_TYPE: {
       FbleBasicKind* kind = FbleAlloc(FbleBasicKind);
       kind->_base.tag = FBLE_BASIC_KIND;
@@ -1246,11 +1223,6 @@ void FblePrintType(FbleType* type)
       }
       fprintf(stderr, ">");
       FbleFree(args.xs);
-      return;
-    }
-
-    case FBLE_ABSTRACT_TOKEN_TYPE: {
-      fprintf(stderr, "@@%p", (void*)type);
       return;
     }
 
