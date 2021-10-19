@@ -1,7 +1,6 @@
 * [lang] Add support for abstract types.
- - Add Abstract expression to FbleExpr.
- - Add '@@' syntax for abstract expression to parser.
  - Add abstract type, abstract value, and abstract access to FbleExpr.
+ - Use VarType for abstract token type? We have a name to go with it.
  - Add AbstractTokenType and AbstractType to FbleType.
  - Add more tests.
  - Try turning /Map% into an abstract type. And/or Int@.
