@@ -180,6 +180,14 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_ABSTRACT_EXPR: {
+      FbleAbstractExpr* e = (FbleAbstractExpr*)expr;
+      FbleFreeName(e->name);
+      FbleFreeExpr(e->body);
+      FbleFree(expr);
+      return;
+    }
+
     case FBLE_LIST_EXPR: {
       FbleListExpr* e = (FbleListExpr*)expr;
       FbleFreeExpr(e->func);

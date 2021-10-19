@@ -950,9 +950,9 @@ be accessed externally using the provided methods.
   Enum@ B = Tok@(Impl@(b: Unit));
   Enum@ C = Tok@(Impl@(c: Unit));
 
-  (Enum@) { Bool@; } IsA = (Enum@ e) { e.<Tok@>.?(a: True, : False); };
-  (Enum@) { Bool@; } IsB = (Enum@ e) { e.<Tok@>.?(b: True, : False); };
-  (Enum@) { Bool@; } IsC = (Enum@ e) { e.<Tok@>.?(c: True, : False); };
+  (Enum@) { Bool@; } IsA = (Enum@ e) { e<Tok@>.?(a: True, : False); };
+  (Enum@) { Bool@; } IsB = (Enum@ e) { e<Tok@>.?(b: True, : False); };
+  (Enum@) { Bool@; } IsC = (Enum@ e) { e<Tok@>.?(c: True, : False); };
 
   @(Enum@, A, B, C, IsA, IsB, IsC);
 

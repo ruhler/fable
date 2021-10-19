@@ -1144,6 +1144,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       return MkTc(pat, poly.tc);
     }
 
+    case FBLE_ABSTRACT_EXPR: {
+      assert(false && "TODO");
+      return TC_FAILED;
+    }
+
     case FBLE_LIST_EXPR: {
       FbleListExpr* list_expr = (FbleListExpr*)expr;
 
@@ -1575,6 +1580,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     case FBLE_PROC_TYPE_EXPR:
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
+    case FBLE_ABSTRACT_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:
@@ -1908,6 +1914,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     case FBLE_EXEC_EXPR:
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
+    case FBLE_ABSTRACT_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:

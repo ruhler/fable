@@ -519,6 +519,14 @@ stmt:
       exec_expr->body = $3;
       $$ = &exec_expr->_base;
     }
+  | '@' '@' name ';' stmt {
+      FbleAbstractExpr* abstract_expr = FbleAlloc(FbleAbstractExpr);
+      abstract_expr->_base.tag = FBLE_ABSTRACT_EXPR;
+      abstract_expr->_base.loc = FbleCopyLoc(@$);
+      abstract_expr->name = $3;
+      abstract_expr->body = $5;
+      $$ = &abstract_expr->_base;
+    }
   | expr ';' stmt {
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)$1;
       if (select_expr->_base.tag != FBLE_UNION_SELECT_EXPR

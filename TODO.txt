@@ -1,3 +1,11 @@
+* [lang] Add support for abstract types.
+ - Add Abstract expression to FbleExpr.
+ - Add '@@' syntax for abstract expression to parser.
+ - Add abstract type, abstract value, and abstract access to FbleExpr.
+ - Add AbstractTokenType and AbstractType to FbleType.
+ - Add more tests.
+ - Try turning /Map% into an abstract type. And/or Int@.
+
 * [debugger] Figure out how we could print variables.
 
 * Remove function bind syntax again, now that we no longer use it?
@@ -208,7 +216,6 @@ unique?
   exits, even if that means retaining it longer than its lexical scope?
 * [lang] Clarify spec on when (compile vs runtime) vacuous value error should be
   reported.
-* [lang] Add support for abstract types? See thoughts/fble.adt.txt.
 * [lang] Revisit notion of packages and public/private access to modules.
 * [lang] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
