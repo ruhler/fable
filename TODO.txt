@@ -1,6 +1,7 @@
 * [lang] Add support for abstract types.
  - Add support for abstract types to typecheck.c
  - Add more tests.
+   Test that name of token type is a type name.
  - Try turning /Map% into an abstract type. And/or Int@.
 
 * [debugger] Figure out how we could print variables.

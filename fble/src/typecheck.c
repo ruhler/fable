@@ -1145,8 +1145,33 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_ABSTRACT_EXPR: {
-      assert(false && "TODO");
-      return TC_FAILED;
+      FbleAbstractExpr* abs_expr = (FbleAbstractExpr*)expr;
+
+      FbleBasicKind* kind = FbleAlloc(FbleBasicKind);
+      kind->_base.tag = FBLE_BASIC_KIND;
+      kind->_base.loc = FbleCopyLoc(expr->loc);
+      kind->_base.refcount = 1;
+      kind->level = 0;
+
+      FbleType* token = FbleNewVarType(th, abs_expr->name.loc, &kind->_base, abs_expr->name);
+      FbleFreeKind(&kind->_base);
+
+      FbleTypeType* typeof_token = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, token->loc);
+      typeof_token->type = token;
+      FbleTypeAddRef(th, &typeof_token->_base, typeof_token->type);
+      FbleReleaseType(th, token);
+
+      if (!CheckNameSpace(abs_expr->name, &typeof_token->_base)) {
+        FbleReleaseType(th, &typeof_token->_base);
+        return TC_FAILED;
+      }
+
+      VarName name = { .normal = abs_expr->name, .module = NULL };
+      PushVar(scope, name, &typeof_token->_base);
+      Tc body = TypeCheckExpr(th, scope, abs_expr->body);
+      PopVar(th, scope);
+      FbleReleaseType(th, &typeof_token->_base);
+      return body;
     }
 
     case FBLE_LIST_EXPR: {
