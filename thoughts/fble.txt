@@ -242,6 +242,13 @@ Fble Language Thoughts
   field of kind <@>@, and then use that struct type where something of kind @
   is expected. Is this a bad thing? It seems weird. Is it?
 
+  It is weird and unnecessary. We should allow something of kind <@>@ to be
+  used where @ is expected, because you can do everything with a <@>@ that you
+  can with an @. The same is not true the other way around, because you can't
+  apply types to something of kind @ but you can of kind <@>@. Similarly, you
+  can use something of kind <@,@>@ where something of kind <@>@ is expected. I
+  should update the language spec and implementation to support this.
+
 * Conditionally updating multiple variables.
   Is annoying. For example, I have variables x, y, z. If some condition holds,
   I want to update x and y, otherwise leave them as they are. How do you code

@@ -1099,49 +1099,114 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(poly.type);
-      if (poly_kind->_base.tag != FBLE_POLY_KIND) {
-        ReportError(expr->loc,
-            "cannot apply poly args to a basic kinded entity\n");
-        FbleFreeKind(&poly_kind->_base);
-        FreeTc(th, poly);
-        return TC_FAILED;
-      }
-
       // Note: arg_type is typeof(arg)
       FbleType* arg_type = TypeCheckExprForType(th, scope, apply->arg);
       if (arg_type == NULL) {
-        FbleFreeKind(&poly_kind->_base);
         FreeTc(th, poly);
         return TC_FAILED;
       }
 
-      FbleKind* expected_kind = poly_kind->arg;
-      FbleKind* actual_kind = FbleGetKind(arg_type);
-      if (!FbleKindsEqual(expected_kind, actual_kind)) {
-        ReportError(apply->arg->loc,
-            "expected kind %k, but found something of kind %k\n",
-            expected_kind, actual_kind);
-        FbleFreeKind(&poly_kind->_base);
+      FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(poly.type);
+      if (poly_kind->_base.tag == FBLE_POLY_KIND) {
+        // poly_apply
+        FbleKind* expected_kind = poly_kind->arg;
+        FbleKind* actual_kind = FbleGetKind(arg_type);
+        if (!FbleKindsEqual(expected_kind, actual_kind)) {
+          ReportError(apply->arg->loc,
+              "expected kind %k, but found something of kind %k\n",
+              expected_kind, actual_kind);
+          FbleFreeKind(&poly_kind->_base);
+          FbleFreeKind(actual_kind);
+          FbleReleaseType(th, arg_type);
+          FreeTc(th, poly);
+          return TC_FAILED;
+        }
         FbleFreeKind(actual_kind);
+        FbleFreeKind(&poly_kind->_base);
+
+        FbleType* arg = FbleValueOfType(th, arg_type);
+        assert(arg != NULL && "TODO: poly apply arg is a value?");
         FbleReleaseType(th, arg_type);
-        FreeTc(th, poly);
-        return TC_FAILED;
+
+        FbleType* pat = FbleNewPolyApplyType(th, expr->loc, poly.type, arg);
+        FbleReleaseType(th, arg);
+        FbleReleaseType(th, poly.type);
+
+        // When we erase types, poly application dissappears, because we already
+        // supplied the generic type when creating the poly value.
+        return MkTc(pat, poly.tc);
       }
-      FbleFreeKind(actual_kind);
-      FbleFreeKind(&poly_kind->_base);
 
-      FbleType* arg = FbleValueOfType(th, arg_type);
-      assert(arg != NULL && "TODO: poly apply arg is a value?");
+      if (poly.type->tag == FBLE_ABSTRACT_TYPE) {
+        // abstract_access
+        FbleAbstractType* abs_type = (FbleAbstractType*)poly.type;
+
+        FbleType* arg = FbleValueOfType(th, arg_type);
+        FbleReleaseType(th, arg_type);
+        if (arg == NULL) {
+          ReportError(apply->arg->loc,
+              "expected token type, but found something of kind %\n");
+          FreeTc(th, poly);
+          return TC_FAILED;
+        }
+
+        if (!FbleTypesEqual(th, abs_type->token, arg)) {
+          ReportError(apply->arg->loc,
+              "illegal abstract access, expected token type %t, but found %t\n",
+              abs_type->token, arg);
+          FbleReleaseType(th, arg);
+          FreeTc(th, poly);
+          return TC_FAILED;
+        }
+
+        FbleType* type = abs_type->type;
+        FbleRetainType(th, type);
+        FbleReleaseType(th, arg);
+        FbleReleaseType(th, poly.type);
+        return MkTc(type, poly.tc);
+      }
+
+      FbleType* poly_value = FbleValueOfType(th, poly.type);
+      FbleVarType* token = (FbleVarType*)poly_value;
+      if (token != NULL && token->_base.tag == FBLE_VAR_TYPE && token->value == NULL) {
+        // abstract_type
+        // TODO: be able to distinguish between abstract token types and
+        // other abstract variable types.
+        FbleType* arg = FbleValueOfType(th, arg_type);
+        FbleReleaseType(th, arg_type);
+        if (arg == NULL) {
+          ReportError(apply->arg->loc,
+              "expected type, but found something of kind %\n");
+          FbleReleaseType(th, poly_value);
+          FreeTc(th, poly);
+          return TC_FAILED;
+        }
+
+        FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
+        abs_type->token = &token->_base;
+        abs_type->type = arg;
+        FbleTypeAddRef(th, &abs_type->_base, abs_type->token);
+        FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
+        FbleReleaseType(th, arg);
+
+        FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
+        type_type->type = &abs_type->_base;
+        FbleTypeAddRef(th, &type_type->_base, type_type->type);
+        FbleReleaseType(th, &abs_type->_base);
+
+        FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
+        type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
+        type_tc->_base.loc = FbleCopyLoc(expr->loc);
+        return MkTc(&type_type->_base, &type_tc->_base);
+      }
+
+      ReportError(expr->loc,
+          "type application requires a poly, abstract token type, or abstract value\n");
+      FbleReleaseType(th, poly_value);
       FbleReleaseType(th, arg_type);
-
-      FbleType* pat = FbleNewPolyApplyType(th, expr->loc, poly.type, arg);
-      FbleReleaseType(th, arg);
-      FbleReleaseType(th, poly.type);
-
-      // When we erase types, poly application dissappears, because we already
-      // supplied the generic type when creating the poly value.
-      return MkTc(pat, poly.tc);
+      FbleFreeKind(&poly_kind->_base);
+      FreeTc(th, poly);
+      return TC_FAILED;
     }
 
     case FBLE_ABSTRACT_EXPR: {
@@ -1489,73 +1554,96 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       }
 
       if (normal->tag == FBLE_TYPE_TYPE) {
-        // FBLE_STRUCT_VALUE_EXPR
         FbleTypeType* type_type = (FbleTypeType*)normal;
         FbleType* vtype = FbleRetainType(th, type_type->type);
         FbleReleaseType(th, normal);
         FreeTc(th, misc);
 
-        FbleDataType* struct_type = (FbleDataType*)FbleNormalType(th, vtype);
-        if (struct_type->datatype != FBLE_STRUCT_DATATYPE) {
-          ReportError(apply_expr->misc->loc,
-              "expected a struct type, but found %t\n",
-              vtype);
+        FbleType* vnorm = FbleNormalType(th, vtype);
+        FbleDataType* struct_type = (FbleDataType*)vnorm;
+        if (struct_type->_base.tag == FBLE_DATA_TYPE
+            && struct_type->datatype == FBLE_STRUCT_DATATYPE) {
+          // struct_value
+          if (struct_type->fields.size != argc) {
+            // TODO: Where should the error message go?
+            ReportError(expr->loc,
+                "expected %i args, but %i provided\n",
+                 struct_type->fields.size, argc);
+            FbleReleaseType(th, &struct_type->_base);
+            FbleReleaseType(th, vtype);
+            for (size_t i = 0; i < argc; ++i) {
+              FreeTc(th, args[i]);
+            }
+            return TC_FAILED;
+          }
+
+          bool error = false;
+          for (size_t i = 0; i < argc; ++i) {
+            FbleTaggedType* field = struct_type->fields.xs + i;
+
+            if (!FbleTypesEqual(th, field->type, args[i].type)) {
+              ReportError(apply_expr->args.xs[i]->loc,
+                  "expected type %t, but found %t\n",
+                  field->type, args[i]);
+              error = true;
+            }
+          }
+
           FbleReleaseType(th, &struct_type->_base);
-          FbleReleaseType(th, vtype);
+
+          if (error) {
+            FbleReleaseType(th, vtype);
+            for (size_t i = 0; i < argc; ++i) {
+              FreeTc(th, args[i]);
+            }
+            return TC_FAILED;
+          }
+
+          FbleStructValueTc* struct_tc = FbleAllocExtra(FbleStructValueTc, argc * sizeof(FbleTc*));
+          struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
+          struct_tc->_base.loc = FbleCopyLoc(expr->loc);
+          struct_tc->fieldc = argc;
           for (size_t i = 0; i < argc; ++i) {
-            FreeTc(th, args[i]);
+            FbleReleaseType(th, args[i].type);
+            struct_tc->fields[i] = args[i].tc;
           }
-          return TC_FAILED;
+          return MkTc(vtype, &struct_tc->_base);
         }
 
-        if (struct_type->fields.size != argc) {
-          // TODO: Where should the error message go?
-          ReportError(expr->loc,
-              "expected %i args, but %i provided\n",
-               struct_type->fields.size, argc);
-          FbleReleaseType(th, &struct_type->_base);
+        FbleVarType* token = (FbleVarType*)vnorm;
+        if (token->_base.tag == FBLE_VAR_TYPE && token->value == NULL) {
+          // abstract_value
+          // TODO: Distinguish between this case and arbitrary abstract
+          // variables.
+          if (argc != 1) {
+            // TODO: Where should the error message go?
+            ReportError(expr->loc,
+                "expected 1 argument, but %i provided\n", argc);
+            FbleReleaseType(th, vnorm);
+            FbleReleaseType(th, vtype);
+            for (size_t i = 0; i < argc; ++i) {
+              FreeTc(th, args[i]);
+            }
+            return TC_FAILED;
+          }
+
+          FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
+          abs_type->token = &token->_base;
+          abs_type->type = args[0].type;
+          FbleTypeAddRef(th, &abs_type->_base, abs_type->token);
+          FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
           FbleReleaseType(th, vtype);
-          for (size_t i = 0; i < argc; ++i) {
-            FreeTc(th, args[i]);
-          }
-          return TC_FAILED;
+          FbleReleaseType(th, vnorm);
+          FbleReleaseType(th, args[0].type);
+          return MkTc(&abs_type->_base, args[0].tc);
         }
 
-        bool error = false;
-        for (size_t i = 0; i < argc; ++i) {
-          FbleTaggedType* field = struct_type->fields.xs + i;
-
-          if (!FbleTypesEqual(th, field->type, args[i].type)) {
-            ReportError(apply_expr->args.xs[i]->loc,
-                "expected type %t, but found %t\n",
-                field->type, args[i]);
-            error = true;
-          }
-        }
-
-        FbleReleaseType(th, &struct_type->_base);
-
-        if (error) {
-          FbleReleaseType(th, vtype);
-          for (size_t i = 0; i < argc; ++i) {
-            FreeTc(th, args[i]);
-          }
-          return TC_FAILED;
-        }
-
-        FbleStructValueTc* struct_tc = FbleAllocExtra(FbleStructValueTc, argc * sizeof(FbleTc*));
-        struct_tc->_base.tag = FBLE_STRUCT_VALUE_TC;
-        struct_tc->_base.loc = FbleCopyLoc(expr->loc);
-        struct_tc->fieldc = argc;
-        for (size_t i = 0; i < argc; ++i) {
-          FbleReleaseType(th, args[i].type);
-          struct_tc->fields[i] = args[i].tc;
-        }
-        return MkTc(vtype, &struct_tc->_base);
+        FbleReleaseType(th, vtype);
+        FbleReleaseType(th, vnorm);
       }
 
       ReportError(expr->loc,
-          "expecting a function or struct type, but found something of type %t\n",
+          "cannot apply arguments to something of type %t\n",
           misc.type);
       FreeTc(th, misc);
       FbleReleaseType(th, normal);

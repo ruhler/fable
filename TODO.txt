@@ -1,8 +1,22 @@
 * [lang] Add support for abstract types.
- - Add support for abstract types to typecheck.c
+ - Add support for abstract_value expression to typecheck.c
+ - Fix memory leaks.
+ - Change syntax for '@@' to '@?'.
+ - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
+ - Switch to syntax <kind> name ';' stmt for token type expression.
+   But then is it an error for kind to be <@>@, because that interfers with
+   the token type syntax?
  - Add more tests.
    Test that name of token type is a type name.
+   Test what happens if a value is passed in <...> instead of a type.
+   Test you can only create abstract types using token types, not arbitrary
+   types. In particular, not arbitrary abstract variable types.
+   A test for application to non-data type.
+
+   For example, (Unit@) { Unit@; }(xxx);
  - Try turning /Map% into an abstract type. And/or Int@.
+
+* [lang] Allow something of kind <@>@ to be used where @ is expected.
 
 * [debugger] Figure out how we could print variables.
 

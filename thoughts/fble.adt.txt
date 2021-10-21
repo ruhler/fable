@@ -1123,3 +1123,216 @@ As with usual, we can revisit the feature or syntax as we start to use it
 more. No need for it to be perfect to start. But I'm fairly happy with the
 proposal now. Shall I give it a try?
 
+---
+
+While implementing my proposal for abstract data types, it feels like there's
+a lot of overlap between the syntax and polymorphism. Could we implement
+abstract types using polymorphism?
+
+Here's the idea:
+* We keep the ability to get a unique token type.
+* We add a special kind which is, say, a type constraint or equality kind.
+
+I would propose that's all we need to support all the same things as currently
+proposed for abstract types.
+
+Let's say syntax for the new kind is '=' '<' type '>'
+
+If we wanted, we could change the syntax for token types to be more similar to
+poly too:
+
+  <kind> type ';' stmt
+
+Now the simple example for abstract types becomes:
+
+@ Tok@;
+<=<Tok@>>@ AbsBool@ = <=<Tok@> _@> { Bool@; };
+AbsBool@ t = <=<Tok@> _@> { Bool@(true: Unit); };
+t<Tok@>.true;
+
+Okay, so the syntax is pretty unhappy for the type kind, but you get the idea.
+What would a nicer syntax be? Maybe we could use a type for a kind?
+
+@ Tok@;
+<Tok@>@ AbsBool@ = <Tok@ _@> { Bool@; };
+AbsBool@ t = <Tok@ _@> { Bool@(true: Unit); };
+t<Tok@>.true;
+
+Yeah, that's nicer.
+
+The semantics of the type constraint kind are the only thing it accepts is a
+type that matches the type constraint kind. Anything else is a compiler error.
+
+The user has no way to get at the type of the kind to create it out of thin
+air, so we are all set.
+
+Syntactically this is only slightly more tedious than what I originally
+proposed.
+
+There is a question over the kind of the abstract entity. The user needs to be
+able to write down the kind or the type in order to declare a variable of this
+type, and there's no way to do that unless they can access the token type.
+That spoils things a bit.
+
+I want to propose a separate improvement to the language though. That you can
+use something of higher order kind anywhere something of lower order kind is
+expected. For example, if a function expects something of kind @, you could
+use something of kind @, <@>@, or <@,@>@. If something expect something of
+kind <@>@, you could use something of kind <@>@ or <@,@>@. That limits you to
+not being able to make full use of the something your using, but otherwise it
+should work fine, right?
+
+Then we could say:
+
+@ AbsBool@ = /AbsBool%.AbsBool@;
+
+Even though the kind of /AbsBool%.AbsBool@ is <Tok@>@.
+
+Allowing a kind to contain a type is slightly tedious from an implementation
+perspective.
+
+---
+
+I don't much like overloading the syntax for polymorphism and abstract types.
+I don't much like the idea of allowing a type to be used as a kind.
+
+Exploring a different concrete syntax:
+
+I like the idea of being able to use any type as a token type, even though you
+would only use it in practice with an abstract type, because then we can use
+the nicer syntax for an abstract type:   kind name ';' stmt.
+
+@ Tok@;
+@ AbsBool@ = ?(Tok@, Bool@);
+AbsBool@ t = ?(Tok@, Bool@(true: Unit));
+t.?<Tok@>.true;
+
+Here, using ? as the punctuation for abstract types. .?<> is analogous to .?()
+used for union select. It seems much more readable than the polymorphic syntax
+to me. ?() reused for both abstract type and abstract value. Does that make
+sense?
+
+The syntax for ?() looks a little weird to me. Any other variations that would
+be better? In particular, we normally do something more like (type value, ...)
+when using that form of syntax to define new types.
+
+Maybe use ':' as the operator? No. That sounds like a potential for lots of
+conflicts. I was thinking something like: Bool@:Tok@, True:Tok@.
+
+  Tok@<Bool@>, Tok@(True), t.<Tok@>.true?
+
+Using t.<Tok@> could be thought of as analogous to union values. You access a
+tag, which may or may not be the right one, and you get the result or an
+error. The difference being the tag is now a type.
+
+Crazy idea, could we have fields be first class objects? So the syntax for
+access is <expr> . <expr>, where the second expression has type field?
+
+This is worth exploring. It feels like things would magically work fine if
+field access was done by function and construction was done by function
+instead of type. Then you have separate named entities for the constructor,
+the fields, and the types, so you can share the type without also sharing the
+fields. I guess we would still need a way to support unique types though.
+
+How about for a token, instead of using a generic type, we have a value of
+type token?
+
+& tok;
+@ AbsBool@ = ?<tok: Bool@>;
+AbsBool@ t = ?(tok: True);
+t.tok;
+
+tok<Bool@>, tok(True), t.tok.
+
+I suppose the benefit here is the token is just a name, so it is an atomic
+kind of thing. Not a general expression. But that would mean you can't pass
+tokens around, which is not what we want. We'll always want to be able to say
+something like:  t.</Foo/Impl%.tok@>.
+
+_@<Bool@>, _@(True), t<_@>
+
+_@(Bool@), _@(True), t[_@]
+
+Bool@[_@], True[_@], t[_@]
+
+/Foo%._@(Bool@), /Foo%._@(True), t.(_@)
+
+@? _@;
+@ AbsBool@ = ?(_@: Bool@);
+AbsBool@ t = ?(_@: True);
+t.(_@);
+
+@? _@;
+@ AbsBool@ = <_@>?(Bool@);
+AbsBool@ t = <_@>?(True);
+t?<_@>;
+
+@? _@;
+@ AbsBool@ = _@<Bool@>;
+AbsBool@ t = _@(True);
+t<_@>;
+
+Struct value, function apply, and abstract value all make sense to share the
+same function application form. It's all the same kind of thing. We could just
+as well have used normal functions to implement struct and abstract value.
+
+I don't think the same is true of polymorphic application? How is abstract
+type different?
+
+_@<Bool@>. We could think of _@ as a polymorphic type that, given a type,
+returns an abstract type. That's fine. If we used some different syntax, we
+could still write:
+
+<@>@ _@ = <@ T@> { ?(Tok@, T@); };
+
+Can we think of abstract access that same way? A function that gives us a
+polymorphic value makes sense, right?
+
+(T@)<@ tok@>{ T@; } _@ = (T@ t) {
+  <@ tok@> { t; }
+};
+
+You could almost write that today. The only thing missing is the compiler
+magic to assert that the value supplied for tok@ matches Tok@. I have no way
+to do that with polymorphism, because we don't have access to the applied type
+when checking the correctness of the body of a poly. In this case we need to
+compare the externally applied type with the internally applied type.
+
+The point is, the use of polymorphic syntax is reasonable based on the idea
+that you could almost model an abstract value as a polymorphic value.
+
+Poly is like a forall. <@ T@> { ... } means, for all T@, we have { ... }. And
+we check that it will work for all, and then you can pass any type and it will
+work.
+
+What we are looking for with abstract types is more like a constraint. For all
+T@, such that T@ = Tok@, we have { ... }. Which gets back to the idea of type
+kinds.
+
+Could we introduce a special kind of poly binding?
+
+Today we have: kind name. Add as an option: type. Then we have two kinds of
+constraints. We would need to support these constraints in kinds though. So
+really it would just be a matter of syntax.
+
+@? _@;
+<_@>@ AbsBool@ = <_@> { Bool@; };
+AbsBool@ t = <_@> { True; };
+t<_@>;
+
+@? _@;
+@ AbsBool@ = _@<Bool@>;
+AbsBool@ t = _@(True);
+t<_@>;
+
+I don't know. It's tough. Let's continue down the current path of something
+not quite a poly, but that behaves similarly to a poly. Just like a struct
+type is not quite a function, but in some cases behaves like a function. You
+can always wrap it in a function if you want.
+
+<@>@ Abs@ = <@ T@> { _@<T@>; };
+<@ T@>(T@) { Abs@<T@> } = <@ T@>(T@ x) { _@(x); };
+
+I guess you can't wrap the abstract value in a poly though. That's the funny
+bit.
+
