@@ -1172,8 +1172,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleType* poly_value = FbleValueOfType(th, poly.type);
       FreeTc(th, poly);
-      FbleVarType* token = (FbleVarType*)poly_value;
-      if (token != NULL && token->_base.tag == FBLE_VAR_TYPE && token->value == NULL && token->abstract) {
+      FbleTokenType* token = (FbleTokenType*)poly_value;
+      if (token != NULL && token->_base.tag == FBLE_TOKEN_TYPE) {
         // abstract_type
         FbleType* arg = FbleValueOfType(th, arg_type);
         FbleReleaseType(th, arg_type);
@@ -1213,21 +1213,13 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     case FBLE_ABSTRACT_EXPR: {
       FbleAbstractExpr* abs_expr = (FbleAbstractExpr*)expr;
 
-      FbleBasicKind* kind = FbleAlloc(FbleBasicKind);
-      kind->_base.tag = FBLE_BASIC_KIND;
-      kind->_base.loc = FbleCopyLoc(expr->loc);
-      kind->_base.refcount = 1;
-      kind->level = 0;
+      FbleTokenType* token = FbleNewType(th, FbleTokenType, FBLE_TOKEN_TYPE, abs_expr->name.loc);
+      token->name = FbleCopyName(abs_expr->name);
 
-      FbleType* token = FbleNewVarType(th, abs_expr->name.loc, &kind->_base, abs_expr->name);
-      assert(token->tag == FBLE_VAR_TYPE);
-      ((FbleVarType*)token)->abstract = true;
-      FbleFreeKind(&kind->_base);
-
-      FbleTypeType* typeof_token = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, token->loc);
-      typeof_token->type = token;
+      FbleTypeType* typeof_token = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, token->_base.loc);
+      typeof_token->type = &token->_base;
       FbleTypeAddRef(th, &typeof_token->_base, typeof_token->type);
-      FbleReleaseType(th, token);
+      FbleReleaseType(th, &token->_base);
 
       if (!CheckNameSpace(abs_expr->name, &typeof_token->_base)) {
         FbleReleaseType(th, &typeof_token->_base);
@@ -1632,8 +1624,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           return MkTc(vtype, &struct_tc->_base);
         }
 
-        FbleVarType* token = (FbleVarType*)vnorm;
-        if (token->_base.tag == FBLE_VAR_TYPE && token->value == NULL && token->abstract) {
+        FbleTokenType* token = (FbleTokenType*)vnorm;
+        if (token->_base.tag == FBLE_TOKEN_TYPE) {
           // abstract_value
           FbleReleaseType(th, normal);
           FreeTc(th, misc);

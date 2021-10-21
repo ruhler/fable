@@ -20,6 +20,7 @@ typedef enum {
   FBLE_PROC_TYPE,
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
+  FBLE_TOKEN_TYPE,
   FBLE_ABSTRACT_TYPE,
   FBLE_VAR_TYPE,
   FBLE_TYPE_TYPE,
@@ -84,6 +85,15 @@ typedef struct {
   FbleType* type;
 } FbleProcType;
 
+// FbleTokenType --
+//   FBLE_TOKEN_TYPE
+//
+// An abstract token type.
+typedef struct {
+  FbleType _base;
+  FbleName name;
+} FbleTokenType;
+
 // FbleAbstractType --
 //   FBLE_ABSTRACT_TYPE
 //
@@ -102,9 +112,6 @@ typedef struct {
 //
 // The 'kind' refers to the kind of value that has this type.
 //
-// The 'abstract' field should be set to true if the type represents an
-// abstract token type, false otherwise.
-//
 // We maintain an invariant when constructing FbleVarTypes that the value is
 // not an FBLE_TYPE_TYPE. In other words, the kind must have kind level 0.
 // Construct var types using FbleNewVarType to enforce this invariant.
@@ -113,7 +120,6 @@ typedef struct FbleVarType {
   FbleKind* kind;
   FbleName name;
   FbleType* value;
-  bool abstract;
 } FbleVarType;
 
 // FbleVarTypeV - a vector of var types.
