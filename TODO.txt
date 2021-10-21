@@ -1,6 +1,5 @@
 * [lang] Add support for abstract types.
  - Consider distinguishing between VAR_TYPE and ABSTRACT_TOKEN_TYPE again.
- - Change syntax for '@@' to '@?'.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
  - Add more tests.
    Test that name of token type is a type name.

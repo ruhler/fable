@@ -868,10 +868,10 @@ Abstract Syntax:
   Expr ::= abstract (name :: TypeName) (body :: Expr)
 
 Concrete Syntax:
-  stmt ::= '@@' name ';' stmt
+  stmt ::= '@?' name ';' stmt
 
 Example:
-  @@ Tok@;
+  @? Tok@;
   ...
 
 The abstract expression introduces a new abstract token type into the
@@ -892,7 +892,7 @@ Concrete Syntax:
   type ::= type '<' type '>'
 
 Example:
-  @@ Tok@; Tok@<Bool@>;
+  @? Tok@; Tok@<Bool@>;
   
 Forms an abstract type by combining the given token type with an underlying
 type. Abstract types are considered equal if both their token type and
@@ -911,7 +911,7 @@ Concrete Syntax:
   expr ::= type '(' expr ')'
 
 Example:
-  @@ Tok@; Tok@(True);
+  @? Tok@; Tok@(True);
 
 Creates an abstract value accessed using the given token type and containing
 the given value. The type must be a token type created using an abstract
@@ -943,7 +943,7 @@ be accessed externally using the provided methods.
 
   @ Impl@ = +(Unit@ a, Unit@ b, Unit@ c);
 
-  @@ Tok@;
+  @? Tok@;
   @ Enum@ = Tok@<Impl@>;
 
   Enum@ A = Tok@(Impl@(a: Unit));
@@ -1372,7 +1372,7 @@ stmt ::=
  | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
  | type '~' name ',' name ';' stmt                                   (* proc_link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
- | '@@' name ';' stmt                                                (* abstract *)
+ | '@?' name ';' stmt                                                (* abstract *)
  ;
 
 module ::= stmt                                                      (* module_value *)

@@ -5,7 +5,7 @@ fble-test {
   @ Bool@ = +(Unit@ true, Unit@ false);
 
   # Basic abstract access.
-  @@ Tok@;
+  @? Tok@;
   @ AbsBool@ = Tok@<Bool@>;
   AbsBool@ t = Tok@(Bool@(true: Unit));
   t<Tok@>.true;
