@@ -11,6 +11,7 @@
 <@>% Nil = /List%.Nil;
 
 <@,@>@ Map@ = /Map%.Map@;
+@ _@ = /Map%._@;
 <@,@>@ Entry@ = /Map%.Entry@;
 <@,@,@>% ForEach = /Map%.ForEach;
 
@@ -28,7 +29,7 @@
 # Returns:
 #   True if the map is empty, false otherwise.
 <@ K@, @ V@>(Map@<K@, V@>) { Bool@; } IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
-  map.?(empty: True, map: False);
+  map<_@>.?(empty: True, map: False);
 };
 
 <@ K@, @ V@>(Eq@<K@>, Eq@<V@>) { Eq@<Entry@<K@, V@>>; }

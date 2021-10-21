@@ -23,6 +23,7 @@ syn match Type "\w\+@"
 syn match xNotKind "@("
 syn match xNotKind "@<"
 syn match Special "\(<[<@, >]*>\)\?[@%]" contains=xNotKind
+syn match Special "@?"
 
 
 " Highlight fields used in union select and implicit type struct values as

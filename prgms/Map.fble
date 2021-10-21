@@ -64,6 +64,9 @@ Delta = (Balance@ delta, Balance@ balance) {
     });
 };
 
+# _@ -- Token type for access to internals of Map@ abstract type.
+@? _@;
+
 # Map@ --
 #   A map from K@ to V@, using the Structure@ of K@ to locate the key value
 #   entry in the map.
@@ -71,7 +74,8 @@ Delta = (Balance@ delta, Balance@ balance) {
 # Type Parameters:
 #   K@ - the type of keys in the map.
 #   V@ - the type of values in the map.
-<@,@>@ Map@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); },
+<@,@>@ Map@ = <@ K@, @ V@> { _@<Map_@<K@, V@>>; },
+<@,@>@ Map_@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); },
 
 # MapP@ --
 #   A non-empty map from K@ to V@.
@@ -92,7 +96,7 @@ Delta = (Balance@ delta, Balance@ balance) {
 #   Construct a non-empty Map@ instance.
 <@ K@, @ V@>(K@, V@, Balance@, Map@<K@, V@>, Map@<K@, V@>) { Map@<K@, V@>; }
 MapP = <@ K@, @ V@>(K@ key, V@ value, Balance@ balance, Map@<K@, V@> left, Map@<K@, V@> right) {
-  Map@<K@, V@>(map: MapP@<K@, V@>(key, value, balance, left, right));
+  _@(Map_@<K@, V@>(map: MapP@<K@, V@>(key, value, balance, left, right)));
 };
 
 # Empty --
@@ -105,7 +109,7 @@ MapP = <@ K@, @ V@>(K@ key, V@ value, Balance@ balance, Map@<K@, V@> left, Map@<
 # Example Use:
 #   Empty<String@, Foo@>
 Map@ Empty = <@ K@, @ V@> {
-  Map@<K@, V@>(empty: Unit);
+  _@(Map_@<K@, V@>(empty: Unit));
 };
 
 <@,@>@ Entry@ = <@ K@, @ V@> { *(K@ key, V@ value); };
@@ -125,13 +129,14 @@ Map@ Empty = <@ K@, @ V@> {
 #   empty.
 <@ K@, @ V@>(Map@<K@, V@>) { Maybe@<Entry@<K@, V@>>; }
 First = <@ K@, @ V@>(Map@<K@, V@> map) {
-  map.?(
+  Map_@<K@, V@> map_ = map<_@>;
+  map_.?(
     empty: Nothing<Entry@<K@, V@>>,
     map: {
-      Maybe@<Entry@<K@, V@>> first = First<K@, V@>(map.map.left);
+      Maybe@<Entry@<K@, V@>> first = First<K@, V@>(map_.map.left);
       first.?(
         just: first,
-        nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map.map.key, map.map.value)));
+        nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map_.map.key, map_.map.value)));
     });
 };
 
@@ -150,13 +155,14 @@ First = <@ K@, @ V@>(Map@<K@, V@> map) {
 #   empty.
 <@ K@, @ V@>(Map@<K@, V@>) { Maybe@<Entry@<K@, V@>>; }
 Last = <@ K@, @ V@>(Map@<K@, V@> map) {
-  map.?(
+  Map_@<K@, V@> map_ = map<_@>;
+  map_.?(
     empty: Nothing<Entry@<K@, V@>>,
     map: {
-      Maybe@<Entry@<K@, V@>> last = Last<K@, V@>(map.map.right);
+      Maybe@<Entry@<K@, V@>> last = Last<K@, V@>(map_.map.right);
       last.?(
         just: last,
-        nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map.map.key, map.map.value)));
+        nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map_.map.key, map_.map.value)));
     });
 };
 
@@ -174,7 +180,7 @@ Last = <@ K@, @ V@>(Map@<K@, V@> map) {
 #   True if the map is empty, false otherwise.
 <@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
 IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
-  map.?(empty: True, map: False);
+  map<_@>.?(empty: True, map: False);
 };
 
 # Lookup --
@@ -203,10 +209,11 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
 Lookup = <@ K@>(Eq@<K@> lt)<@ V@> {
   (Map@<K@, V@>, K@) { Maybe@<V@>; } Lookup_ = (Map@<K@, V@> map, K@ key) {
-    map.?(empty: Nothing<V@>);
-    lt(key, map.map.key).?(true: Lookup_(map.map.left, key));
-    lt(map.map.key, key).?(true: Lookup_(map.map.right, key));
-    Just<V@>(map.map.value);
+    Map_@<K@, V@> map_ = map<_@>;
+    map_.?(empty: Nothing<V@>);
+    lt(key, map_.map.key).?(true: Lookup_(map_.map.left, key));
+    lt(map_.map.key, key).?(true: Lookup_(map_.map.right, key));
+    Just<V@>(map_.map.value);
   };
   Lookup_;
 };
@@ -236,11 +243,13 @@ Lookup = <@ K@>(Eq@<K@> lt)<@ V@> {
 #   effects of rebalancing included.
 <@ K@, @ V@> (Balance@, K@, V@, Sum@, Map@<K@, V@>, Map@<K@, V@>) { Modified@<K@, V@>; }
 Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K@, V@> left, Map@<K@, V@> right) {
+  Map_@<K@, V@> left_ = left<_@>;
+  Map_@<K@, V@> right_ = right<_@>;
   balance.?(
     '-': {
       # The left subtree is too large. We need to rebalance. How we rebalance
       # depends on the balance of the left subtree.
-      left.map.balance.?(
+      left_.map.balance.?(
         '-': {
           # The left subtree ('b') is left heavy.
           #     d3            b2
@@ -250,11 +259,11 @@ Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K
           # a1  c0            c0  e0
           @(delta: Sum(delta, '-').'0',
             map: MapP<K@, V@>(
-              left.map.key,
-              left.map.value,
+              left_.map.key,
+              left_.map.value,
               '0',
-              left.map.left,
-              MapP<K@, V@>(key, value, '0', left.map.right, right)));
+              left_.map.left,
+              MapP<K@, V@>(key, value, '0', left_.map.right, right)));
         },
         '0': {
           # The left subtree ('b') is balanced.
@@ -265,11 +274,11 @@ Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K
           # a1  c1            c1  e0
           @(delta: delta,
             map: MapP<K@, V@>(
-              left.map.key,
-              left.map.value,
+              left_.map.key,
+              left_.map.value,
               '+',
-              left.map.left,
-              MapP<K@, V@>(key, value, '-', left.map.right, right)));
+              left_.map.left,
+              MapP<K@, V@>(key, value, '-', left_.map.right, right)));
         },
         '+': {
           # The left subtree ('f') is right heavy.
@@ -280,16 +289,16 @@ Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K
           #    a0  d1        a0  c? e?  g0
           #       /  \
           #      c?   e?
-          Map@<K@, V@> a = left.map.left;
+          Map@<K@, V@> a = left_.map.left;
           Entry@<K@, V@> b = @(
-            key: left.map.key,
-            value: left.map.value);
-          Map@<K@, V@> c = left.map.right.map.left;
+            key: left_.map.key,
+            value: left_.map.value);
+          Map@<K@, V@> c = left_.map.right<_@>.map.left;
           Entry@<K@, V@> d = @(
-            key: left.map.right.map.key,
-            value: left.map.right.map.value);
-          Balance@ dB = left.map.right.map.balance;
-          Map@<K@, V@> e = left.map.right.map.right;
+            key: left_.map.right<_@>.map.key,
+            value: left_.map.right<_@>.map.value);
+          Balance@ dB = left_.map.right<_@>.map.balance;
+          Map@<K@, V@> e = left_.map.right<_@>.map.right;
           Entry@<K@, V@> f = @(key, value);
           Map@<K@, V@> g = right;
           @(
@@ -311,7 +320,7 @@ Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K
     '+': {
        # The right subtree is too large. We need to rebalance. How we
        # rebalance depends on the balance of the right subtree.
-       right.map.balance.?(
+       right_.map.balance.?(
          '-': {
            # The right subtree ('f') is left heavy.
            #   b3             d2
@@ -323,16 +332,16 @@ Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K
            # c?  e?
            Map@<K@, V@> a = left;
            Entry@<K@, V@> b = @(key, value);
-           Map@<K@, V@> c = right.map.left.map.left;
+           Map@<K@, V@> c = right_.map.left<_@>.map.left;
            Entry@<K@, V@> d = @(
-             key: right.map.left.map.key,
-             value: right.map.left.map.value);
-           Balance@ dB = right.map.left.map.balance;
-           Map@<K@, V@> e = right.map.left.map.right;
+             key: right<_@>.map.left<_@>.map.key,
+             value: right<_@>.map.left<_@>.map.value);
+           Balance@ dB = right<_@>.map.left<_@>.map.balance;
+           Map@<K@, V@> e = right<_@>.map.left<_@>.map.right;
            Entry@<K@, V@> f = @(
-             key: right.map.key,
-             value: right.map.value);
-           Map@<K@, V@> g = right.map.right;
+             key: right<_@>.map.key,
+             value: right<_@>.map.value);
+           Map@<K@, V@> g = right<_@>.map.right;
            @(
              delta: Sum(delta, '-').'0',
              map: MapP<K@, V@>(
@@ -352,11 +361,11 @@ Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K
            @(
              delta: delta,
              map: MapP<K@, V@>(
-               right.map.key,
-               right.map.value,
+               right<_@>.map.key,
+               right<_@>.map.value,
                '-',
-               MapP<K@, V@>(key, value, '+', left, right.map.left),
-               right.map.right));
+               MapP<K@, V@>(key, value, '+', left, right<_@>.map.left),
+               right<_@>.map.right));
          },
          '+': {
            # The right subtree ('d') is right heavy.
@@ -368,11 +377,11 @@ Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K
            @(
              delta: Sum(delta, '-').'0',
              map: MapP<K@, V@>(
-               right.map.key,
-               right.map.value,
+               right<_@>.map.key,
+               right<_@>.map.value,
                '0',
-               MapP<K@, V@>(key, value, '0', left, right.map.left),
-               right.map.right));
+               MapP<K@, V@>(key, value, '0', left, right<_@>.map.left),
+               right<_@>.map.right));
          });
     });
 };
@@ -432,7 +441,7 @@ RebalanceRight = <@ K@, @ V@> (K@ key, V@ value, Balance@ balance, Map@<K@, V@> 
 Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
   (Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
   Modify_ = (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
-    map.?(empty: {
+    map<_@>.?(empty: {
       Maybe@<V@> value = with(Nothing<V@>);
       value.?(just: {
         # Insert into empty map.
@@ -445,59 +454,59 @@ Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
       @(delta: '0', map: Empty<K@, V@>);
     });
 
-    lt(key, map.map.key).?(true: {
+    lt(key, map<_@>.map.key).?(true: {
       # Recurse to left subtree.
       RebalanceLeft<K@, V@>(
-        map.map.key,
-        map.map.value,
-        map.map.balance,
-        Modify_(map.map.left, key, with),
-        map.map.right);
+        map<_@>.map.key,
+        map<_@>.map.value,
+        map<_@>.map.balance,
+        Modify_(map<_@>.map.left, key, with),
+        map<_@>.map.right);
     });
 
-    lt(map.map.key, key).?(true: {
+    lt(map<_@>.map.key, key).?(true: {
       # Recurse to right subtree.
       RebalanceRight<K@, V@>(
-        map.map.key,
-        map.map.value,
-        map.map.balance,
-        map.map.left,
-        Modify_(map.map.right, key, with));
+        map<_@>.map.key,
+        map<_@>.map.value,
+        map<_@>.map.balance,
+        map<_@>.map.left,
+        Modify_(map<_@>.map.right, key, with));
     });
 
-    Maybe@<V@> value = with(Just<V@>(map.map.value));
+    Maybe@<V@> value = with(Just<V@>(map<_@>.map.value));
     value.?(just: {
       # Replace root entry's value.
       @(
         delta: '0',
         map: MapP<K@, V@>(
-          map.map.key,
+          map<_@>.map.key,
           value.just,
-          map.map.balance,
-          map.map.left,
-          map.map.right));
+          map<_@>.map.balance,
+          map<_@>.map.left,
+          map<_@>.map.right));
     });
 
-    Maybe@<Entry@<K@, V@>> entry = Last<K@, V@>(map.map.left);
+    Maybe@<Entry@<K@, V@>> entry = Last<K@, V@>(map<_@>.map.left);
     entry.?(just: {
       # Delete root entry, filling in from left.
       RebalanceLeft<K@, V@>(
         entry.just.key,
         entry.just.value,
-        map.map.balance,
-        Modify_(map.map.left, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }),
-        map.map.right);
+        map<_@>.map.balance,
+        Modify_(map<_@>.map.left, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }),
+        map<_@>.map.right);
     });
 
-    Maybe@<Entry@<K@, V@>> entry = First<K@, V@>(map.map.right);
+    Maybe@<Entry@<K@, V@>> entry = First<K@, V@>(map<_@>.map.right);
     entry.?(just: {
       # Delete root entry, filling in from right.
       RebalanceRight<K@, V@>(
         entry.just.key,
         entry.just.value,
-        map.map.balance,
-        map.map.left,
-        Modify_(map.map.right, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }));
+        map<_@>.map.balance,
+        map<_@>.map.left,
+        Modify_(map<_@>.map.right, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }));
     });
 
     # We are deleting the only element in the map.
@@ -594,12 +603,12 @@ Insert = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
 #   return b
 <@ K@, @ V@, @ B@>(Map@<K@, V@>, B@, (K@, V@, B@) { B@; }) { B@; }
 ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@; } body) {
-  map.?(empty: base);
+  map<_@>.?(empty: base);
 
   B@ b1 = base;
-  B@ b2 = ForEach<K@, V@, B@>(map.map.left, b1, body);
-  B@ b3 = body(map.map.key, map.map.value, b2);
-  ForEach<K@, V@, B@>(map.map.right, b3, body);
+  B@ b2 = ForEach<K@, V@, B@>(map<_@>.map.left, b1, body);
+  B@ b3 = body(map<_@>.map.key, map<_@>.map.value, b2);
+  ForEach<K@, V@, B@>(map<_@>.map.right, b3, body);
 };
 
-@(Map@, Entry@, Empty, IsEmpty, Lookup, Insert, InsertWith, Delete, ForEach);
+@(_@, Map@, Entry@, Empty, IsEmpty, Lookup, Insert, InsertWith, Delete, ForEach);

@@ -1336,3 +1336,19 @@ can always wrap it in a function if you want.
 I guess you can't wrap the abstract value in a poly though. That's the funny
 bit.
 
+---
+
+Experience report trying to use abstract types for Map@:
+* You really want to define internal and public types.
+  Map_@ and Map@ in this case.
+* Seems to be more convenient to declare a local variable of internal type and
+  access that rather than use abstract access everywhere.
+  e.g. Map_@<K@, V@> map_ = map<_@>; ... map_...
+* Actually, for a case like: right.map.left.map.value, it's nicer to do
+  right.map.left<_@>.map.value. I'm not sure if that means better to do
+  right<_@>.map.left<_@>.map.value too.
+* I'm tempted to wrap foo.map in a function to get the field. That would be
+  unfortunate, no?
+* It's kind of nice that you can easily see who accesses the internals of a
+  data type based on who references the _@ token type.
+
