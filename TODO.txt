@@ -1,11 +1,7 @@
 * [lang] Add support for abstract types.
- - Add support for abstract_value expression to typecheck.c
- - Fix memory leaks.
+ - Consider distinguishing between VAR_TYPE and ABSTRACT_TOKEN_TYPE again.
  - Change syntax for '@@' to '@?'.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
- - Switch to syntax <kind> name ';' stmt for token type expression.
-   But then is it an error for kind to be <@>@, because that interfers with
-   the token type syntax?
  - Add more tests.
    Test that name of token type is a type name.
    Test what happens if a value is passed in <...> instead of a type.
@@ -255,6 +251,10 @@ unique?
 
   We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
   Should we instead get: expected type Maybe@<Bool@>? 
+* [typecheck] Clean up memory management code somehow?
+  It's tough to keep track of what variables are alive when and need to be
+  freed where. Is there some convention we can come up with to make it much
+  more obvious what is live when and who is responsible for freeing something?
 
 * [eval] Clean up how we track io activity?
   See thoughts/fble.threads.txt

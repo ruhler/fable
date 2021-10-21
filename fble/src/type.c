@@ -967,6 +967,7 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
   var->name = FbleCopyName(name);
   var->kind = LevelAdjustedKind(kind, -(int)level);
   var->value = NULL;
+  var->abstract = false;
 
   FbleType* type = &var->_base;
   for (size_t i = 0; i < level; ++i) {

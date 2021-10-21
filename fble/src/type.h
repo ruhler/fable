@@ -102,6 +102,9 @@ typedef struct {
 //
 // The 'kind' refers to the kind of value that has this type.
 //
+// The 'abstract' field should be set to true if the type represents an
+// abstract token type, false otherwise.
+//
 // We maintain an invariant when constructing FbleVarTypes that the value is
 // not an FBLE_TYPE_TYPE. In other words, the kind must have kind level 0.
 // Construct var types using FbleNewVarType to enforce this invariant.
@@ -110,6 +113,7 @@ typedef struct FbleVarType {
   FbleKind* kind;
   FbleName name;
   FbleType* value;
+  bool abstract;
 } FbleVarType;
 
 // FbleVarTypeV - a vector of var types.
@@ -317,7 +321,7 @@ FbleType* FbleNewVarType(FbleTypeHeap* heap, FbleLoc loc, FbleKind* kind, FbleNa
 //
 // Inputs:
 //   var - the type to assign the value of. This type should have been created
-//         with FbleNewVarTYpe.
+//         with FbleNewVarType.
 //   value - the value to assign to the type.
 //
 // Results:

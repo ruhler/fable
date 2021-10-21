@@ -1136,16 +1136,17 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         // supplied the generic type when creating the poly value.
         return MkTc(pat, poly.tc);
       }
+      FbleFreeKind(&poly_kind->_base);
 
-      if (poly.type->tag == FBLE_ABSTRACT_TYPE) {
+      FbleAbstractType* abs_type = (FbleAbstractType*)FbleNormalType(th, poly.type);
+      if (abs_type->_base.tag == FBLE_ABSTRACT_TYPE) {
         // abstract_access
-        FbleAbstractType* abs_type = (FbleAbstractType*)poly.type;
-
         FbleType* arg = FbleValueOfType(th, arg_type);
         FbleReleaseType(th, arg_type);
         if (arg == NULL) {
           ReportError(apply->arg->loc,
               "expected token type, but found something of kind %\n");
+          FbleReleaseType(th, &abs_type->_base);
           FreeTc(th, poly);
           return TC_FAILED;
         }
@@ -1154,6 +1155,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           ReportError(apply->arg->loc,
               "illegal abstract access, expected token type %t, but found %t\n",
               abs_type->token, arg);
+          FbleReleaseType(th, &abs_type->_base);
           FbleReleaseType(th, arg);
           FreeTc(th, poly);
           return TC_FAILED;
@@ -1163,22 +1165,22 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         FbleRetainType(th, type);
         FbleReleaseType(th, arg);
         FbleReleaseType(th, poly.type);
+        FbleReleaseType(th, &abs_type->_base);
         return MkTc(type, poly.tc);
       }
+      FbleReleaseType(th, &abs_type->_base);
 
       FbleType* poly_value = FbleValueOfType(th, poly.type);
+      FreeTc(th, poly);
       FbleVarType* token = (FbleVarType*)poly_value;
-      if (token != NULL && token->_base.tag == FBLE_VAR_TYPE && token->value == NULL) {
+      if (token != NULL && token->_base.tag == FBLE_VAR_TYPE && token->value == NULL && token->abstract) {
         // abstract_type
-        // TODO: be able to distinguish between abstract token types and
-        // other abstract variable types.
         FbleType* arg = FbleValueOfType(th, arg_type);
         FbleReleaseType(th, arg_type);
         if (arg == NULL) {
           ReportError(apply->arg->loc,
               "expected type, but found something of kind %\n");
           FbleReleaseType(th, poly_value);
-          FreeTc(th, poly);
           return TC_FAILED;
         }
 
@@ -1187,7 +1189,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         abs_type->type = arg;
         FbleTypeAddRef(th, &abs_type->_base, abs_type->token);
         FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-        FbleReleaseType(th, arg);
+        FbleReleaseType(th, abs_type->token);
+        FbleReleaseType(th, abs_type->type);
 
         FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
         type_type->type = &abs_type->_base;
@@ -1204,8 +1207,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           "type application requires a poly, abstract token type, or abstract value\n");
       FbleReleaseType(th, poly_value);
       FbleReleaseType(th, arg_type);
-      FbleFreeKind(&poly_kind->_base);
-      FreeTc(th, poly);
       return TC_FAILED;
     }
 
@@ -1219,6 +1220,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       kind->level = 0;
 
       FbleType* token = FbleNewVarType(th, abs_expr->name.loc, &kind->_base, abs_expr->name);
+      assert(token->tag == FBLE_VAR_TYPE);
+      ((FbleVarType*)token)->abstract = true;
       FbleFreeKind(&kind->_base);
 
       FbleTypeType* typeof_token = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, token->loc);
@@ -1235,8 +1238,27 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       PushVar(scope, name, &typeof_token->_base);
       Tc body = TypeCheckExpr(th, scope, abs_expr->body);
       PopVar(th, scope);
-      FbleReleaseType(th, &typeof_token->_base);
-      return body;
+
+      FbleLetTc* let_tc = FbleAlloc(FbleLetTc);
+      let_tc->_base.tag = FBLE_LET_TC;
+      let_tc->_base.loc = FbleCopyLoc(expr->loc);
+      let_tc->recursive = false;
+      FbleVectorInit(let_tc->bindings);
+
+      FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
+      type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
+      type_tc->_base.loc = FbleCopyLoc(expr->loc);
+
+      FbleLetTcBinding binding = {
+        .var_loc = FbleCopyLoc(expr->loc),
+        .profile_name = FbleCopyName(abs_expr->name),
+        .profile_loc = FbleCopyLoc(expr->loc),
+        .tc = &type_tc->_base
+      };
+      FbleVectorAppend(let_tc->bindings, binding);
+
+      let_tc->body = body.tc;
+      return MkTc(body.type, &let_tc->_base);
     }
 
     case FBLE_LIST_EXPR: {
@@ -1556,13 +1578,13 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       if (normal->tag == FBLE_TYPE_TYPE) {
         FbleTypeType* type_type = (FbleTypeType*)normal;
         FbleType* vtype = FbleRetainType(th, type_type->type);
-        FbleReleaseType(th, normal);
-        FreeTc(th, misc);
 
         FbleType* vnorm = FbleNormalType(th, vtype);
         FbleDataType* struct_type = (FbleDataType*)vnorm;
         if (struct_type->_base.tag == FBLE_DATA_TYPE
             && struct_type->datatype == FBLE_STRUCT_DATATYPE) {
+          FbleReleaseType(th, normal);
+          FreeTc(th, misc);
           // struct_value
           if (struct_type->fields.size != argc) {
             // TODO: Where should the error message go?
@@ -1611,10 +1633,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         }
 
         FbleVarType* token = (FbleVarType*)vnorm;
-        if (token->_base.tag == FBLE_VAR_TYPE && token->value == NULL) {
+        if (token->_base.tag == FBLE_VAR_TYPE && token->value == NULL && token->abstract) {
           // abstract_value
-          // TODO: Distinguish between this case and arbitrary abstract
-          // variables.
+          FbleReleaseType(th, normal);
+          FreeTc(th, misc);
           if (argc != 1) {
             // TODO: Where should the error message go?
             ReportError(expr->loc,
