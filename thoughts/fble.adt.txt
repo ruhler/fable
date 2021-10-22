@@ -1352,3 +1352,14 @@ Experience report trying to use abstract types for Map@:
 * It's kind of nice that you can easily see who accesses the internals of a
   data type based on who references the _@ token type.
 
+Doing things a little differently:
+* We can store Map_@ instead of Map@ for internal fields. That way you can do
+  right_.map.left.map.value. That's probably better. Only add the layer of
+  abstraction at the interface to the outside world.
+
+  The tradeoff is we tend to need _@(...) around the internal value more often
+  now when converting to public value.
+
+* Say I have a function type that takes a private type. Can I cast that to a
+  function type that takes the public type to avoid runtime overhead?
+

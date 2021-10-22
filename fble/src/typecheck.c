@@ -314,6 +314,7 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
 //     %n - FbleName
 //     %s - const char*
 //     %t - FbleType*
+//     %% - literal '%'
 //   Please add additional format specifiers as needed.
 //
 // Inputs:
@@ -337,6 +338,11 @@ static void ReportError(FbleLoc loc, const char* fmt, ...)
     fprintf(stderr, "%.*s", (int)(p - fmt), fmt);
 
     switch (*(p + 1)) {
+      case '%': {
+        fprintf(stderr, "%%");
+        break;
+      }
+
       case 'i': {
         size_t x = va_arg(ap, size_t);
         fprintf(stderr, "%zd", x);
@@ -1179,7 +1185,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         FbleReleaseType(th, arg_type);
         if (arg == NULL) {
           ReportError(apply->arg->loc,
-              "expected type, but found something of kind %\n");
+              "expected type, but found something of kind %%\n");
           FbleReleaseType(th, poly_value);
           return TC_FAILED;
         }
