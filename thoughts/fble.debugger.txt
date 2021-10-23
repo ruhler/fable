@@ -85,6 +85,12 @@ Times in the past I wished I have an fble debugger:
    debugging approach again, which should find the problem pretty quickly. The
    printf approach is effective, but it's very tedious to thread IO through an
    otherwise pure function.
+
+ - Debug why snake screen is just blank. In this case I wanted to step through
+   a mix of fble code and fble-app.c code, but using the interpreter, because
+   I don't happen to have a compiled version of the fble snake app. I ended up
+   using gdb to step through fble-app.c after things were converted outside of
+   the FbleValue domain.
  
 ---
 
