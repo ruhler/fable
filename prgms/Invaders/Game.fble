@@ -259,9 +259,9 @@ Game@ Initial = @(
   (Int@ score) {
     # We only print 4 digits for the score.
     Int@ s1000 = score;
-    Int@ s100 = Div(s1000, 10);
-    Int@ s10 = Div(s100, 10);
-    Int@ s1 = Div(s10, 10);
+    Int@ s100 = Div(s1000, 10).q;
+    Int@ s10 = Div(s100, 10).q;
+    Int@ s1 = Div(s10, 10).q;
     Decimal@ d0 = LeastSignificantDigit(s1000);
     Decimal@ d1 = LeastSignificantDigit(s100);
     Decimal@ d2 = LeastSignificantDigit(s10);

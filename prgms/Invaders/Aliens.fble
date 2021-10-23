@@ -25,8 +25,8 @@
 % Sub = /Int/Int%.Sub;
 % Inc = /Int/Int%.Inc;
 % Mul = /Int/Int%.Mul;
+@ QR@ = /Int/Int/Div%.QR@;
 % Div = /Int/Int/Div%.Div;
-% Mod = /Int/Int/Div%.Mod;
 % Eq = /Int/Int/Eq%.Eq;
 % Le = /Int/Int/Eq%.Le;
 % Lt = /Int/Int/Eq%.Lt;
@@ -273,7 +273,7 @@ Int@ DyingTime = Int|10;
 # Initial --
 #   The initial set of aliens, given the current game level.
 (Int@) { Aliens@; } Initial = (Int@ level) {
-  Int@ y = Sub(Int|104, Mul(Mod(level, Int|6), StrideY));
+  Int@ y = Sub(Int|104, Mul(Div(level, Int|6).r, StrideY));
   @(src_x: LeftEdge,
     src_y: y,
     dst_x: Add(LeftEdge, MoveX),
@@ -381,13 +381,14 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 
     Int@ dx = Sub(x, aliens_x);
     Int@ dy = Sub(y, aliens_y);
-    Int@ rx = Mod(dx, StrideX);
-    Int@ ry = Mod(dy, StrideY);
 
-    Le(rx, Width).?(false: Nothing<Alien@>);
-    Le(ry, Height).?(false: Nothing<Alien@>);
+    QR@ qrx = Div(dx, StrideX);
+    QR@ qry = Div(dy, StrideY);
 
-    Alien@ alien = Alien@(Div(dy, StrideY), Div(dx, StrideX));
+    Le(qrx.r, Width).?(false: Nothing<Alien@>);
+    Le(qry.r, Height).?(false: Nothing<Alien@>);
+
+    Alien@ alien = Alien@(qry.q, qrx.q);
     Contains(aliens.alive, alien).?(false: Nothing<Alien@>);
 
     Just<Alien@>(alien);
@@ -441,7 +442,7 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 # Points --
 #   The number of points earned by killing the given alien.
 (Alien@) { Int@; } Points = (Alien@ alien) {
-  Int@ half_row = Div(alien.row, 2);
+  Int@ half_row = Div(alien.row, 2).q;
   Eq(0, half_row).?(true: Int|10);
   Eq(1, half_row).?(true: Int|20);
   Int|30;
@@ -451,7 +452,7 @@ Collision = (Int@ x, Int@ y, Aliens@ aliens) {
 #   Return the alien sprite for an alien in the given row with the given
 #   phase.
 (Int@, Phase@) { Drawing@; } Sprite = (Int@ row, Phase@ phase) {
-  Int@ half_row = Div(row, 2);
+  Int@ half_row = Div(row, 2).q;
   Eq(0, half_row).?(true: phase.?(a: Alien1A, b: Alien1B));
   Eq(1, half_row).?(true: phase.?(a: Alien2A, b: Alien2B));
   phase.?(a: Alien3A, b: Alien3B);

@@ -46,7 +46,6 @@
 % Int = /Int/Int/Lit%.Int;
 
 % Div = /Int/Int/Div%.Div;
-% Mod = /Int/Int/Div%.Mod;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
@@ -149,15 +148,15 @@ Int@ 12345 = Int|12345;
 
 (Dir@, Int@) { Int@; } StepRand = (Dir@ d, Int@ s) {
   Int@ offset = d.?(up: 0, down: 1, left: 2, right: 3);
-  Mod(Add(Mul(s, 1103515245), Add(12345, offset)), Max64);
+  Div(Add(Mul(s, 1103515245), Add(12345, offset)), Max64).r;
 };
 
 # Pick the position of the next food randomly, given the random bits and the
 # snakes position.
 (Int@, List@<Pos@>) { Pos@; } GetNextFood = (Int@ rand, List@<Pos@> snake) {
-  Int@ x = Mod(Div(rand, Int|65536), Int|32768);
-  Int@ row = Inc(Mod(x, Dec(MaxRow)));
-  Int@ col = Inc(Mod(Div(x, MaxRow), Dec(MaxCol)));
+  Int@ x = Div(Div(rand, Int|65536).q, Int|32768).r;
+  Int@ row = Inc(Div(x, Dec(MaxRow)).r);
+  Int@ col = Inc(Div(Div(x, MaxRow).q, Dec(MaxCol)).r);
   Pos@ pos = Pos@(row, col);
   InPosS(snake, pos).?(
     true: GetNextFood(StepRand(Dir@(up: Unit), rand), snake),
@@ -291,7 +290,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   State@ s = InitialState;
   
   # Map game coordinates into screen coordinates.
-  Point@ a = @(x: Div(width, Add(3, MaxCol)), y: Div(height, Add(3, MaxRow)));
+  Point@ a = @(x: Div(width, Add(3, MaxCol)).q, y: Div(height, Add(3, MaxRow)).q);
   Point@ b = @(x: a.x, y: Add(height, a.y));
 
   Put@<Effect@> game_out = (Effect@ e) {

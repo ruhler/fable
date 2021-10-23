@@ -1,0 +1,90 @@
+Library Organization
+====================
+The prgms directory is getting big enough now that it wants organizing. But
+how should the fble library and programs be organized? Ideally there is some
+notion of layering of which parts of the library can depend on which other
+parts of the library. Ideally there is some way to separate things like hwdg
+from the core library.
+
+What exists today, and how I might organize it:
+
+  Core: Bool, Char, Eq, Int, Literal, List, Loop, Maybe, Process, Show,
+        String, Test, Unit
+
+  I/O: Stdio, {App, Drawing}
+
+  Utilities: Hex, Bits, {Map, Structured}
+
+  Apps: DataFlow, GameOfLife, Hwdg, Invaders, Md5, Primes, Sat, Snake,
+        Sudoku, TicTacToe
+
+  Fble
+
+I kind of wish Int didn't have to be part of Core, but it's used in Test,
+which I think should be part of core? Maybe not?
+
+Ideally each module only has visibility of those other modules that it is
+allowed to. For example, GameOfLife shouldn't have any visibility of Invaders
+and vice versa. Char shouldn't have any visibility of Stdio. It's like there's
+a notion of visibility separate from dependence. Is there any way I can work
+that into the build system? Or the search path?
+
+
+Integer Division
+----------------
+Integer division. How should I deal with that? I'm tempted to say there is no
+such thing as integer division. If you want to do integer division, use
+rational numbers and approximate as integer.
+
+Or we could have functions like:
+(Int@, Int@) { Int@; } Floor;
+
+How do we currently use integer division?
+* x % 10 to convert integer to decimal digits.
+* Invaders
+ - given (x, y) coordinates, find the alien row, height based on StrideY and
+   StrideX.
+ - convert a row number 0, 1, 2, 3 to alien type A1, A1, A2, A2
+ - Wrap level number around mod 6 for determining initial Y position.
+* Compute the scale factor to map game coordinates to screen coordinates.
+* Random number generation for snake.
+* 3D graphics perspective drawing.
+
+A bunch of these seem like very legitimate use cases to me. If I were to
+summarize:
+* Doing things cyclically, where we like to map a non-cyclic thing to a cyclic
+  thing. In other words, mod of positive integers?
+* Arithmetic in integer coordinate space, where we want to snap to integer
+  values.
+* Packing and unpacking bits of data into integers.
+
+Can I come up with clearly defined, meaningful functions for all my current
+use cases?
+
+That is, division and mod of Int@ is not well defined right now. Write
+functions that are well defined and use those. If appropriate, go through
+rational numbers.
+
+Proposal:
+  a / b should give:
+     a = q*b + r, q = floor(a/b)
+
+Why this makes sense to me:
+* If both a and b are positive:
+  - This gives what I expect: division rounds towards 0, mod is between 0 and b.
+* If a is negative and b is positive, 
+  - We still want mod to be between 0 and b, continuing the same cycle
+    uninterrupted.
+  - It's nice for division to round consistently instead of having a blip
+    around 0.
+* If a is positive and b is negative
+  - It's nice to have a / (-b) = (-a) / b.
+  - I kind of like the idea of mod (-b) being between -b and 0.
+* If a and b are negative
+  - (-a) / (-b) = a / b
+  - And still mod (-b) between -b and 0.
+
+That's what we get if we always use floor. So really, it seems like the best
+of all worlds to do it that way.
+
+

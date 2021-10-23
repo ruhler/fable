@@ -170,7 +170,7 @@ Ufo@ Initial = Ufo@(State@(hiding: Hiding@(HidingTime)), InitialDirState);
 (Int@) { Points@; } Points = (Int@ ufo_x) {
   # We treat the x position of the ufo as effectively random, then draw points
   # from the distrubtion with 10% 300, 20% 150, 30% 100, and 40% 50.
-  Decimal@ d = LeastSignificantDigit(Div(ufo_x, Velocity));
+  Decimal@ d = LeastSignificantDigit(Div(ufo_x, Velocity).q);
   d.?(
     0: Points@(100: Unit),
     1: Points@(50: Unit),

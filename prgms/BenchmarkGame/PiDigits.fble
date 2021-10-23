@@ -3,12 +3,10 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
-% Dec = /Int/Int%.Dec;
 % Neg = /Int/Int%.Neg;
 % Mul = /Int/Int%.Mul;
 % Div = /Int/Int/Div%.Div;
 % Eq = /Int/Int/Eq%.Eq;
-% Lt = /Int/Int/Eq%.Lt;
 % Int = /Int/Int/Lit%.Int;
 
 
@@ -37,12 +35,7 @@ State@ Initial = State@(Int|1, LFT@(Int|1, Int|0, Int|0, Int|1));
 };
 
 (Rational@) { Int@; } Floor = (Rational@ r) {
-  Int@ x = Div(r.n, r.d);
-  Bool@ n_negative = Lt(r.n, Int|0);
-  Bool@ d_negative = Lt(r.d, Int|0);
-  /Bool/Eq%.Eq(n_negative, d_negative).?(
-    true: x,
-    false: Dec(x));
+  Div(r.n, r.d).q;
 };
 
 # Compose --

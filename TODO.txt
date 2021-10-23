@@ -202,7 +202,6 @@ unique?
    everything regardless and it would be nice to avoid drawing a bunch of
    stuff and then covering it up right away.
 * [/Int%] Add test coverage for the Int routines.
- - In particular, test Div and Mod.
 * [/Fble/Test%] Clean up fble test framework
  - Use AssertEquals for more of the tests.
  - Properly test the test infra.

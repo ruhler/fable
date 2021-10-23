@@ -12,7 +12,7 @@ ninja:
 
 .PHONY: foo
 foo:
-	ninja -f out/build.ninja out/test/8.4-abstract-access/basic/basic/test.tr
+	ninja -f out/build.ninja -k 0
 
 .PHONY: all
 all: out/build.ninja

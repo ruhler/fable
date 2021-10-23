@@ -45,9 +45,9 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
 #   Change the lighting of the given color by the factor alpha/256.
 (Int@, Color@) { Color@; } Light = (Int@ alpha, Color@ color) {
   Color@(
-    Div(Mul(alpha, color.r), Int|256),
-    Div(Mul(alpha, color.g), Int|256),
-    Div(Mul(alpha, color.b), Int|256));
+    Div(Mul(alpha, color.r), Int|256).q,
+    Div(Mul(alpha, color.g), Int|256).q,
+    Div(Mul(alpha, color.b), Int|256).q);
 };
 
 % Colors = {

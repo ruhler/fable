@@ -30,7 +30,7 @@
 # DivVS --
 #   Divide a vector by a scalar.
 (Vec@, Int@) { Vec@; } DivVS = (Vec@ a, Int@ s) {
-  Vec@(Div(a.x, s), Div(a.y, s), Div(a.z, s));
+  Vec@(Div(a.x, s).q, Div(a.y, s).q, Div(a.z, s).q);
 };
 
 # Mat@ --

@@ -4,7 +4,7 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Int = /Int/Int/Lit%.Int;
-% Mod = /Int/Int/Div%.Mod;
+% Div = /Int/Int/Div%.Div;
 
 <@>% Nothing = /Maybe%.Nothing;
 
@@ -51,7 +51,7 @@
 # LeastSignificantDigit --
 #   Returns the least sigificant decimal digit of the given integer.
 (Int@) { Decimal@; } LeastSignificantDigit = (Int@ x) {
-  Digit(Mod(x, Int|10));
+  Digit(Div(x, Int|10).r);
 };
 
 @(LeastSignificantDigit);

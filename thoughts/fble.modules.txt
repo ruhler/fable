@@ -210,3 +210,143 @@ example, I want to print the number of tests ran, passed, and failed in the
 test runner. A simple thing like computing passed = ran - failed suddenly runs
 into problems if I'm using IntS@ as the type instead of Int@.
 
+---
+
+Experience after a fair bit of time has gone by:
+* Little modules are fine and nice. Slightly inconvenient sometimes to
+  remember where something is defined, and in the case of Abs, I ended up
+  defining it twice in two different places. Otherwise, I like it.
+* For the Int@ question, I'm very much trending towards always use Int@, and
+  think of IntP@ and IntS@ as internal implementation detail. The potential
+  runtime savings are not worth the inability to easily compose functions
+  involving IntP@, IntS@, and Int@.
+
+---
+
+Now that we've added an initial form of abstract types to fble, it begs
+revisiting modules. Some time back I removed support for expressing and
+controlling access to private modules, because it seemed messy and worth
+revisiting later rather than maintaining. I think now is a good time to
+revisit, at least in thought, what to do about modules.
+
+Modules are many things, which makes it confusing at times:
+* A way to load things without bringing in unused dependencies.
+* A way to organize code.
+* A way to control who has access to what parts of code, primarily to make it
+  possible to update the internal implementation of a module without breaking
+  users.
+* A way to package, share, and deliver code to users?
+* A way to improve compilation times?
+* A way to deliver code to users without sharing source code?
+
+Conceptually an organization wants to deliver a collection of modules, call it
+a package. A package ideally is hierarchical, i.e. made up of a number
+of sub-packages delivered by sub-organizations. The package will include
+public interface modules and internal modules used in the implementation of
+the public interface.
+
+Organizations will want to be able to update their package and make new
+releases. Users will want to download new releases compatible with their code
+and switch to using those. Users may want to make use of packages X and Y that
+both depend on package Z, and share the package Z between X and Y instead of
+duplicating it.
+
+Packages will depend on other packages at particular versions or ranges of
+versions. You probably want it to be possible to have more than one version of
+a package at a time in the same executable, for example if X depends on Z
+version 1 and Y depends on Z version 2, and you want both X and Y in the same
+program.
+
+Package management sounds hard. Does it make sense to make it a part of the
+language, or does it make sense to let people use whatever package management
+mechanism they want? Let's do a survey of some existing languages.
+
+C/C++
+  Tends to rely on OS distribution for package management. You ship a library,
+  user has to download the write version of the library. pkgconfig can help
+  organize things a little bit.
+
+Python
+  Has a whole bunch of stuff. It looks confusing and complicated.
+
+Let's look at this another way. What's important for me as a developer is:
+* Can I easily install packages I can compile against for development of my
+  package?
+* Can I easily publish my package for others to install?
+* Note that distributing libraries may have different requirements than
+  distributing end applications.
+
+From the language point of view, you are writing source code. Your source code
+refers to types and entities of the package you want to use. You should only
+be able to access public entities of the package in your source code. You
+should have a way to describe what is public or private to your package.
+
+How do you know what is exported by the package? I have this idea that
+anything private to the package can just be omitted from the public
+interface. For example, you compile in internal stuff when compiling your
+package, but don't let users have access to that internal stuff when using
+your package. But you don't always want to compiler your dependencies into the
+package. If you use a common library, you want users to provide the library.
+
+So, what is a package?
+* An interface for use in compiling source code.
+* An implementation for use in running
+ - depends on if you run with interpreter or native machine code for example.
+* A list of dependencies your package has that the user is responsible for
+  providing.
+
+In fble, I suppose module is the link unit. You link against modules, not
+functions. That means at runtime you access the module value, and if it is a
+struct, any entities inside it.
+
+So we could use something like an ELF format, where there are public and
+private symbols, for public and private modules.
+
+That suggests we may want to have multiple modules compiled to a single
+library file. As it gets bigger, we would want to have multiple library files
+representing a collection of packages.
+
+How do we generate these library files? Because that's where we will want to
+specify what is public and private. And we'll want some way to specify the
+interface to a package.
+
+Perhaps I can think of fble as responsible for describing a single module. And
+we want some other language or mechanism for describing how to compile modules
+together into reusable packages. That other mechanism is where we would
+specify what modules are public or private.
+
+---
+
+ld has an option --exclude-libs which I think can be used to mark certain
+modules as internal only. For example, we could link together a bunch of .o
+files for compiled modules using ld, and indicate then which modules are
+public and which modules are private. If we distribute the resulting .so file
+as a package, then you can only access exported modules.
+
+It would be strange if your program could compile but not link though. The
+compiler needs to know types for all the modules you reference. How can it get
+that information?
+
+I think the original plan for module compilation was to have the compiler
+generate Foo.fble.@ files describing the type of a module using restricting
+fble syntax that doesn't allow for module references. If we have that, then
+when we distribute a package, we could distribute a .so file with the compiled
+code and a collection of Foo.fble.@ files, where we remove .@ files for
+internal modules.
+
+There is a subtle consequence to this approach: access to internal modules is
+no longer based on location in the hierarchy. It's based on an explicit list
+of things when compiled. In other words, you have visibility to everything you
+are compiled together with. That seems entirely reasonable to me. The
+assumption being the group of modules you are compiled with is the same group
+of modules that a single organization has sufficient control over.
+
+I don't necessarily want elf files to be part of the language spec. That
+depends very much on the language implementation. If you are using an
+interpreter, you would want .fble source files, including internal modules, as
+part of the package distribution. Or maybe compile to some other format the
+interpreter understands.
+
+I guess the question for packages in fble is what I want to include as part of
+the language specification in terms of package formats.
+

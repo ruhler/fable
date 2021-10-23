@@ -152,8 +152,8 @@ Vertex = (Camera@ camera, Vec@ p) {
 #   given camera.
 (Camera@, Vec@) { Point@; } Perspective = (Camera@ camera, Vec@ p) {
   Point@(
-    Div(Mul(camera.focus, p.x), p.z),
-    Div(Mul(camera.focus, p.y), p.z));
+    Div(Mul(camera.focus, p.x), p.z).q,
+    Div(Mul(camera.focus, p.y), p.z).q);
 };
 
 @(Camera@, Rect@, RotF, Camera, Translate, RotateY, Focus, Vertex, Perspective);

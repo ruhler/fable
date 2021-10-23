@@ -1,6 +1,8 @@
 
 @ Int@ = /Int/Int%.Int@;
+% Dec = /Int/Int%.Dec;
 % Neg = /Int/Int%.Neg;
+% Sub = /Int/Int%.Sub;
 % 0 = /Int/Int%.0;
 
 @ IntS@ = /Int/IntS%.IntS@;
@@ -11,26 +13,35 @@
   s.?(0: 0, p: Int@(p: s.p));
 };
 
-(Int@, Int@) { Int@; } Div = (Int@ a, Int@ b) {
-  a.?(n: b.?(n: IntS(P.Div(a.n, b.n)),    # TODO: is this right?
-             0: Int@(p: b.n),     # UNDEFINED
-             p: Neg(IntS(P.Div(a.n, b.p)))),
-      0: b.?(n: 0,
-             0: Int@(p: b.n),     # UNDEFINED
-             p: 0),
-      p: b.?(n: Neg(IntS(P.Div(a.p, b.n))), # TODO: is this right?
-             0: Int@(p: b.n),     # UNDEFINED
-             p: IntS(P.Div(a.p, b.p))));
+# QR@ --
+#   Quotient and remainder from integer division.
+@ QR@ = *(Int@ q, Int@ r);
+
+% DivideByZero = /Undef%.Undef<QR@>;
+
+# Div --
+#   a = q*b + r, |r| < |b|, where q = floor(a/b)
+(Int@, Int@) { QR@; } Div = (Int@ a, Int@ b) {
+  b.?(
+    n: {
+      QR@ qr = Div(Neg(a), Neg(b));
+      @(q: qr.q, r: Neg(qr.r));
+    },
+    0: DivideByZero.undefined,
+    p: {
+      a.?(
+        n: {
+          P.QR@ qr = P.Div(a.n, b.p);
+          Int@ q = Neg(IntS(qr.q));
+          qr.r.?(0: @(q: q, r: 0));
+          @(q: Dec(q), r: Sub(b, IntS(qr.r)));
+        },
+        0: @(q: 0, r: 0),
+        p: {
+          P.QR@ qr = P.Div(a.p, b.p);
+          @(q: IntS(qr.q), r: IntS(qr.r));
+        });
+      });
 };
 
-(Int@, Int@) { Int@; } Mod = (Int@ a, Int@ b) {
-  a.?(n: Int@(p: a.p),             # TODO: What is negative mod?
-      0: b.?(n: 0,
-             0: Int@(p: b.n),     # UNDEFINED
-             p: 0),
-      p: b.?(n: Int@(p: b.p),     # TODO: What is negative od?
-             0: Int@(p: b.n),     # UNDEFINED
-             p: IntS(P.Mod(a.p, b.p))));
-};
-
-@(Div, Mod);
+@(QR@, Div);
