@@ -32,7 +32,7 @@ Ball@ Initial = Ball@(Int|100, Int|0);
 
 # HALF_G --
 #   Half the acceleration due to gravity.
-Rat@ HALF_G = Neg(Div(Int|1, Int|2));
+Rat@ HALF_G = Neg(Div(Int|1, Int|4));
 
 # G --
 #   The acceleration due to gravity.
@@ -41,7 +41,19 @@ Rat@ G = Mul(Int|2, HALF_G);
 # R --
 #   The coefficient of restitution: the fraction of energy preserved during a
 #   collision.
-Rat@ R = Int|1;
+Rat@ R = Div(Int|9, Int|10);
+
+# Trunc --
+#   Limit the precision of a rational number.
+Int@ P = /Int/Int/Lit%.Int|1000;
+(Rat@) { Rat@; } Trunc = (Rat@ x) {
+  Int@ n = /Int/Int/Div%.Div(/Int/Int%.Mul(P, x.n), x.d).q;
+  Rat@(n, P);
+};
+
+(Ball@) { Ball@; } BTrunc = (Ball@ b) {
+  Ball@(Trunc(b.y), Trunc(b.v));
+};
 
 # Tick --
 #   Advance the ball by one unit of time.
@@ -49,13 +61,13 @@ Rat@ R = Int|1;
   Rat@ y = Add(b.y, Add(b.v, HALF_G));
   Rat@ v = Add(b.v, G);
 
-  Lt(y, Int|0).?(false: Ball@(y, v));
+  Lt(y, Int|0).?(false: BTrunc(Ball@(y, v)));
 
   # The ball has dropped below ground level. Have it bounce up instead.
   # We approximate the trajectory of the ball as linear in this region.
   Rat@ y_ = Neg(y);
   Rat@ v_ = Neg(Mul(R, b.v));
-  Ball@(y_, v_);
+  BTrunc(Ball@(y_, v_));
 };
 
 (Ball@) { Drawing@; } Draw = (Ball@ ball) {
