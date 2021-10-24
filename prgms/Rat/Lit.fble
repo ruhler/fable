@@ -1,0 +1,16 @@
+
+@ Decimal@ = /Digits%.Decimal@;
+
+@ Rat@ = /Rat%.Rat@;
+
+<@>@ List@ = /List%.List@;
+
+# Int --
+#   Create a Rat@ from a positive decimal integer literal.
+#
+# For example: Rat@ 42 = Int|42;
+(List@<Decimal@>) { Rat@; } Int = (List@<Decimal@> ds) {
+  Rat@(/Int/Int/Lit%.Int(ds), /Int/Int/Lit%.Int|1);
+};
+
+@(Int);

@@ -1,0 +1,100 @@
+
+@ App@ = /App%.App@;
+@ Event@ = /App%.Event@;
+@ Effect@ = /App%.Effect@;
+
+@ Drawing@ = /Drawing%.Drawing@;
+@ Point@ = /Drawing%.Point@;
+% Color = /Drawing%.Color;
+% Over = /Drawing%.Over;
+% Rect = /Drawing%.Rect;
+% Affine = /Drawing%.Affine;
+
+@ Int@ = /Int/Int%.Int@;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+@ Rat@ = /Rat%.Rat@;
+% Add = /Rat%.Add;
+% Neg = /Rat%.Neg;
+% Mul = /Rat%.Mul;
+% Div = /Rat%.Div;
+% Lt = /Rat/Eq%.Lt;
+% Int = /Rat/Lit%.Int;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Ball@ = *(Rat@ y, Rat@ v);
+
+Ball@ Initial = Ball@(Int|100, Int|0);
+
+# HALF_G --
+#   Half the acceleration due to gravity.
+Rat@ HALF_G = Neg(Div(Int|1, Int|2));
+
+# G --
+#   The acceleration due to gravity.
+Rat@ G = Mul(Int|2, HALF_G);
+
+# R --
+#   The coefficient of restitution: the fraction of energy preserved during a
+#   collision.
+Rat@ R = Int|1;
+
+# Tick --
+#   Advance the ball by one unit of time.
+(Ball@) { Ball@; } Tick = (Ball@ b) {
+  Rat@ y = Add(b.y, Add(b.v, HALF_G));
+  Rat@ v = Add(b.v, G);
+
+  Lt(y, Int|0).?(false: Ball@(y, v));
+
+  # The ball has dropped below ground level. Have it bounce up instead.
+  # We approximate the trajectory of the ball as linear in this region.
+  Rat@ y_ = Neg(y);
+  Rat@ v_ = Neg(Mul(R, b.v));
+  Ball@(y_, v_);
+};
+
+(Ball@) { Drawing@; } Draw = (Ball@ ball) {
+  Int@ y = /Int/Int/Div%.Div(ball.y.n, ball.y.d).q;
+  Rect(Int|0.n, y, Int|10.n, Int|10.n, Color.Cyan);
+};
+
+(Get@<Event@>, Put@<Ball@>, Unit@!, Ball@) { Unit@!; }
+Run = (Get@<Event@> in, Put@<Ball@> draw, Unit@! tick, Ball@ ball) {
+  Event@ e := in;
+
+  e.?(tick: {
+    Unit@ _ := tick;
+    Unit@ _ := draw(ball);
+    Run(in, draw, tick, Tick(ball));
+  });
+
+  e.?(key_down: {
+    e.key_down.?(q: !(Unit));
+    Run(in, draw, tick, ball);
+  });
+  Run(in, draw, tick, ball);
+};
+
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+  Point@ a = @(x: Int|1.n, y: Neg(Int|1).n);
+  Point@ b = @(x: Int|320.n, y: Int|240.n);
+  Int@ frame_period = Int|16.n;
+  Unit@! tick = out(Effect@(tick: frame_period));
+
+  (Ball@) { Unit@!; } draw = (Ball@ s) {
+    out(Effect@(draw: Over(
+      Rect(Int|0.n, Int|0.n, width, height, Color.Black),
+      Affine(a, b, Draw(s)))));
+  };
+
+  Unit@ _ := out(Effect@(tick: Int|0.n));
+  Run(in, draw, tick, Initial); 
+};
+
+Main;
+

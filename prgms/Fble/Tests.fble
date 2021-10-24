@@ -24,6 +24,7 @@
 % _ = /Invaders/App%;
 % _ = /Invaders/Bench%;
 % _ = /Invaders/Screenshot/App%;
+% _ = /Pinball%;
 % _ = /Snake%;
 % _ = /Snake/Bench%;
 % _ = /Stdio/Cat%;

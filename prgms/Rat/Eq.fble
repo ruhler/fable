@@ -1,0 +1,20 @@
+
+<@>@ Eq@ = /Eq%.Eq@;
+
+@ Int@ = /Int/Int%.Int@;
+
+@ Rat@ = /Rat%.Rat@;
+
+Eq@<Rat@> Lt = (Rat@ a, Rat@ b) {
+  Eq@<Int@> lt = {
+    a.d.?(n: {
+      b.d.?(n: /Int/Int/Eq%.Lt);
+      /Int/Int/Eq%.Gt;
+    });
+    /Int/Int/Eq%.Lt;
+  };
+
+  lt(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
+};
+
+@(Lt);
