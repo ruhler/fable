@@ -24,7 +24,6 @@
 % _ = /Invaders/App%;
 % _ = /Invaders/Bench%;
 % _ = /Invaders/Screenshot/App%;
-% _ = /LFSR%;
 % _ = /Snake%;
 % _ = /Snake/Bench%;
 % _ = /Stdio/Cat%;
@@ -39,6 +38,7 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Graphics/Triangle/Tests%.Tests,
   /Hwdg/Tests%.Tests,
   /Int/Int/Tests%.Tests,
+  /LFSR/Tests%.Tests,
   /List/Tests%.Tests,
   /Map/Tests%.Tests,
   /Maybe/Tests%.Tests,

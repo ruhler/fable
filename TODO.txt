@@ -42,10 +42,6 @@
 * [/Graphics] Add a left to right scan version of Triangles and pick that if
   the distance is shorter than bottom to top.
 
-* Fix bad object refcount in case of 2D Triangle div by zero when using the
-  original points a, b, c, instead of the sorted points a, b, c.
-
-* [/LFSR%] Add a test, maybe for the 3 bit LFSR from wikipedia.
 * [/LFSR%] Reuse LFSR for Snake randomness.
 
 * Implement fannkuchredux benchmark?

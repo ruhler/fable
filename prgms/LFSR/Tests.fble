@@ -1,0 +1,44 @@
+
+@ Bit@ = /Digits%.Bit@;
+% BitStr = /Digits/String%.BitStr;
+
+@ Int@ = /Int/Int%.Int@;
+% Sub = /Int/Int%.Sub;
+% Int = /Int/Int/Lit%.Int;
+
+@ LFSR@ = /LFSR%.LFSR@;
+<@>@ Shifted@ = /LFSR%.Shifted@;
+% Shift = /LFSR%.Shift;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
+<@>% Cons = /List%.Cons;
+<@>% Nil = /List%.Nil;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+% TestSuite = /Test%.TestSuite;
+% Test = /Test%.Test;
+<@>% AssertEquals = /Test%.AssertEquals;
+
+(LFSR@, Int@) { List@<Bit@>; }
+ShiftN = (LFSR@ lfsr, Int@ n) {
+  n.?(0: Nil<Bit@>);
+  Shifted@<Bit@> shifted = Shift(lfsr);
+  Cons<Bit@>(shifted.output, ShiftN(shifted.lfsr, Sub(n, Int|1)));
+};
+
+Test@ Tests = TestSuite(Str|LFSR, List<Test@>[
+  Test(Str|Basic, !({
+    # A 3 bit LFSR.
+    LFSR@ lfsr = LFSR@(BitStr|110, BitStr|000);
+    List@<Bit@> got = ShiftN(lfsr, Int|16);
+    List@<Bit@> wnt = BitStr|0001101000110100;
+    AssertEquals<List@<Bit@>>(
+      /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit),
+      /Digits/Show%.ShowBits, wnt, got);
+  }))
+]);
+
+@(Tests);
