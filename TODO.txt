@@ -42,8 +42,6 @@
 * [/Graphics] Add a left to right scan version of Triangles and pick that if
   the distance is shorter than bottom to top.
 
-* [/LFSR%] Reuse LFSR for Snake randomness.
-
 * Implement fannkuchredux benchmark?
   Permutation order looks like:
     0, 1, 2, 3, ..., n

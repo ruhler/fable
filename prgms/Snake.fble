@@ -7,7 +7,6 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 % And = /Bool%.And;
-% Or = /Bool%.Or;
 
 @ Color@ = /Drawing%.Color@;
 @ Drawing@ = /Drawing%.Drawing@;
@@ -18,6 +17,12 @@
 % Rect = /Drawing%.Rect;
 % Over = /Drawing%.Over;
 % Affine = /Drawing%.Affine;
+
+@ LFSR@ = /LFSR%.LFSR@;
+<@>@ Shifted@ = /LFSR%.Shifted@;
+% LFSRs = /LFSR%.LFSRs;
+% Shift = /LFSR%.Shift;
+% ShiftInt = /LFSR/Int%.ShiftInt;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
@@ -42,6 +47,7 @@
 
 % Eq = /Int/Int/Eq%.Eq;
 % Lt = /Int/Int/Eq%.Lt;
+% Gt = /Int/Int/Eq%.Gt;
 
 % Int = /Int/Int/Lit%.Int;
 
@@ -50,10 +56,10 @@
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
-Int@ MinRow = 0;
-Int@ MaxRow = Int|20;
-Int@ MinCol = 0;
-Int@ MaxCol = Int|60;
+Int@ MinRow = Int|0;    # Inclusive. This is a legal row.
+Int@ MaxRow = Int|20;   # Inclusive. This is a legal row.
+Int@ MinCol = Int|0;    # Inclusive. This is a legal col.
+Int@ MaxCol = Int|60;   # Inclusive. This is a legal col.
 
 @ Pos@ = *(Int@ row, Int@ col);
 
@@ -95,7 +101,7 @@ Int@ MaxCol = Int|60;
 @ State@ = *(
   Dir@ dir,
   Pos@ food,
-  Int@ rand,
+  LFSR@ rand,
   List@<Pos@> snake,
   Int@ speed
 );
@@ -124,7 +130,7 @@ State@ InitialState = {
   State@(
     Dir@(right: Unit),
     Pos@(r4, c1),
-    Int|1,
+    LFSRs.8,
     List<Pos@>[Pos@(r1, c4), Pos@(r1, c3), Pos@(r1, c2), Pos@(r1, c1)],
     Int|40);
 };
@@ -133,39 +139,32 @@ State@ InitialState = {
 @ PosM@ = +(Unit@ dead, Pos@ pos);
 
 # Return true if the given position is found in the list of positions.
-(List@<Pos@>, Pos@) { Bool@; } InPosS = (List@<Pos@> s, Pos@ p) {
-  s.?(
-    cons: EqPos(s.cons.head, p).?(true: True, false: InPosS(s.cons.tail, p)),
-    nil: False);
-};
+(List@<Pos@>, Pos@) { Bool@; } InPosS = /List/Eq%.Contains<Pos@>(EqPos);
 
 # Update the random number for where the next food will be generate.
 # Takes the current direction of the snake to add some randomness to the
 # update.
-Int@ Max64 = Int|18446744073709551616;
-Int@ 1103515245 = Int|1103515245;
-Int@ 12345 = Int|12345;
-
-(Dir@, Int@) { Int@; } StepRand = (Dir@ d, Int@ s) {
-  Int@ offset = d.?(up: 0, down: 1, left: 2, right: 3);
-  Div(Add(Mul(s, 1103515245), Add(12345, offset)), Max64).r;
+(Dir@, LFSR@) { LFSR@; } StepRand = (Dir@ d, LFSR@ s) {
+  LFSR@ s0 = s; d.?(up: s0);
+  LFSR@ s1 = Shift(s0).lfsr; d.?(down: s1);
+  LFSR@ s2 = Shift(s1).lfsr; d.?(left: s2);
+  Shift(s2).lfsr;
 };
 
 # Pick the position of the next food randomly, given the random bits and the
 # snakes position.
-(Int@, List@<Pos@>) { Pos@; } GetNextFood = (Int@ rand, List@<Pos@> snake) {
-  Int@ x = Div(Div(rand, Int|65536).q, Int|32768).r;
-  Int@ row = Inc(Div(x, Dec(MaxRow)).r);
-  Int@ col = Inc(Div(Div(x, MaxRow).q, Dec(MaxCol)).r);
-  Pos@ pos = Pos@(row, col);
+(LFSR@, List@<Pos@>) { Pos@; } GetNextFood = (LFSR@ rand, List@<Pos@> snake) {
+  Shifted@<Int@> row = ShiftInt(rand, MaxRow);
+  Shifted@<Int@> col = ShiftInt(row.lfsr, MaxCol);
+  Pos@ pos = Pos@(row.output, col.output);
   InPosS(snake, pos).?(
-    true: GetNextFood(StepRand(Dir@(up: Unit), rand), snake),
+    true: GetNextFood(col.lfsr, snake),
     false: pos
   );
 };
 
 (State@) { MoveResultM@; } Move = (State@ s) {
-  Int@ nrand = StepRand(s.dir, s.rand);
+  LFSR@ nrand = StepRand(s.dir, s.rand);
   PosM@ pm = s.dir.?(
     up: Eq(s.snake.cons.head.row, MaxRow).?(
       true: PosM@(dead: Unit),
@@ -224,10 +223,13 @@ Int@ 12345 = Int|12345;
       left: Pos@(s.snake.cons.head.row, Dec(s.snake.cons.head.col)),
       right: Pos@(s.snake.cons.head.row, Inc(s.snake.cons.head.col)));
 
-    Bool@ dead =
-      Or(Or(Or(Eq(pos.row, MinRow), Eq(pos.row, MaxRow)),
-            Or(Eq(pos.col, MinCol), Eq(pos.col, MaxCol))),
-         InPosS(s.snake, pos));
+    Bool@ dead = {
+      Lt(pos.row, MinRow).?(true: True);
+      Gt(pos.row, MaxRow).?(true: True);
+      Lt(pos.col, MinCol).?(true: True);
+      Gt(pos.col, MaxCol).?(true: True);
+      InPosS(s.snake, pos);
+    };
 
     # The cost of death is very high.
     Int@ death = dead.?(true: Int|100000, false: 0);
