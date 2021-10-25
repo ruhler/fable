@@ -20,6 +20,7 @@
 % Neg = /Rat%.Neg;
 % Mul = /Rat%.Mul;
 % Div = /Rat%.Div;
+% Approx = /Rat%.Approx;
 % Lt = /Rat/Eq%.Lt;
 % Int = /Rat/Lit%.Int;
 
@@ -43,16 +44,12 @@ Rat@ G = Mul(Int|2, HALF_G);
 #   collision.
 Rat@ R = Div(Int|9, Int|10);
 
-# Trunc --
-#   Limit the precision of a rational number.
-Int@ P = /Int/Int/Lit%.Int|1000;
-(Rat@) { Rat@; } Trunc = (Rat@ x) {
-  Int@ n = /Int/Int/Div%.Div(/Int/Int%.Mul(P, x.n), x.d).q;
-  Rat@(n, P);
-};
 
+# BTrunc --
+#   Limit the precision of the ball.
+Rat@ P = Div(Int|1, Int|1000);
 (Ball@) { Ball@; } BTrunc = (Ball@ b) {
-  Ball@(Trunc(b.y), Trunc(b.v));
+  Ball@(Approx(b.y, P), Approx(b.v, P));
 };
 
 # Tick --

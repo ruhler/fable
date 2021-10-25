@@ -3,6 +3,7 @@
 % AddI = /Int/Int%.Add;
 % SubI = /Int/Int%.Sub;
 % MulI = /Int/Int%.Mul;
+% DivI = /Int/Int/Div%.Div;
 
 # Rat@ --
 #   A rational number: n / d.
@@ -32,4 +33,17 @@
   Rat@(MulI(a.n, b.d), MulI(a.d, b.n));
 };
 
-@(Rat@, Add, Sub, Neg, Mul, Div);
+# Approx --
+#   Approximate the rational number x to within e.
+#
+# This reduces the amount of memory required to store the rational number, at
+# the expense of some precision.
+#
+# For example, Approx(x, 1/1000) will round x down to the nearest whole 1/1000
+# units.
+(Rat@, Rat@) { Rat@; } Approx = (Rat@ x, Rat@ e) {
+  Int@ n = DivI(MulI(e.d, x.n), x.d).q;
+  Rat@(SubI(n, DivI(n, e.n).r), e.d);
+};
+
+@(Rat@, Add, Sub, Neg, Mul, Div, Approx);
