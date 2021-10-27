@@ -17,4 +17,16 @@ Eq@<Rat@> Lt = (Rat@ a, Rat@ b) {
   lt(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
 };
 
-@(Lt);
+Eq@<Rat@> Le = (Rat@ a, Rat@ b) {
+  Eq@<Int@> le = {
+    a.d.?(n: {
+      b.d.?(n: /Int/Int/Eq%.Le);
+      /Int/Int/Eq%.Ge;
+    });
+    /Int/Int/Eq%.Le;
+  };
+
+  le(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
+};
+
+@(Lt, Le);

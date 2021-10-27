@@ -17,11 +17,13 @@
 
 @ Rat@ = /Rat%.Rat@;
 % Add = /Rat%.Add;
+% Sub = /Rat%.Sub;
 % Neg = /Rat%.Neg;
 % Mul = /Rat%.Mul;
 % Div = /Rat%.Div;
 % Approx = /Rat%.Approx;
 % Lt = /Rat/Eq%.Lt;
+% Le = /Rat/Eq%.Le;
 % Int = /Rat/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
@@ -34,10 +36,6 @@ Ball@ Initial = Ball@(Int|100, Int|0);
 # HALF_G --
 #   Half the acceleration due to gravity.
 Rat@ HALF_G = Neg(Div(Int|1, Int|4));
-
-# G --
-#   The acceleration due to gravity.
-Rat@ G = Mul(Int|2, HALF_G);
 
 # R --
 #   The coefficient of restitution: the fraction of energy preserved during a
@@ -52,19 +50,43 @@ Rat@ P = Div(Int|1, Int|1000);
   Ball@(Approx(b.y, P), Approx(b.v, P));
 };
 
+# Move --
+#   Move the ball by the given amount of time, assuming velocity stays
+#   constant.
+#
+# In case of collision, we break down the time period into smaller bits. The
+# assumption that velocity is constant is intended to prevent the case where
+# we break down the time period into smaller and smaller bits and end up never
+# reaching the end of the time period as a result. This is also assumes we
+# don't have any super tight corners that would cause us to collide an
+# excessive number of times in a single time period.
+(Ball@, Rat@) { Ball@; } Move = (Ball@ b, Rat@ t) {
+  Le(t, Int|0).?(true: b);
+
+  Rat@ y = Add(b.y, Mul(b.v, t));
+
+  Lt(y, Int|0).?(false: Ball@(y, b.v));
+  Lt(b.v, Int|0).?(false: Ball@(y, b.v));
+
+  # The ball has dropped below ground level and is going downward. Have it
+  # bounce up instead.
+  # 0 = y0 + vt ==>  t = -y0/v
+  Rat@ t0 = Div(Neg(b.y), b.v);
+  Move(Ball@(Int|0, Mul(R, Neg(b.v))), Sub(t, t0));
+};
+
 # Tick --
 #   Advance the ball by one unit of time.
 (Ball@) { Ball@; } Tick = (Ball@ b) {
-  Rat@ y = Add(b.y, Add(b.v, HALF_G));
-  Rat@ v = Add(b.v, G);
+  # 1. Compute average expected velocity over the time period.
+  Rat@ v_avg = Add(b.v, HALF_G);
 
-  Lt(y, Int|0).?(false: BTrunc(Ball@(y, v)));
+  # 2. Move the ball assuming constant velocity.
+  Ball@ b_moved = Move(Ball@(b.y, v_avg), Int|1);
 
-  # The ball has dropped below ground level. Have it bounce up instead.
-  # We approximate the trajectory of the ball as linear in this region.
-  Rat@ y_ = Neg(y);
-  Rat@ v_ = Neg(Mul(R, b.v));
-  BTrunc(Ball@(y_, v_));
+  # 3. Compute final velocity.
+  Rat@ v = Add(b_moved.v, HALF_G);
+  BTrunc(Ball@(b_moved.y, v));
 };
 
 (Ball@) { Drawing@; } Draw = (Ball@ ball) {
