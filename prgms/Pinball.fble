@@ -82,7 +82,7 @@ Rat@ R = Div(Int|9, Int|10);
 #   Limit the precision of the ball to avoid taking up a potentially
 #   significant necessary memory and computation time.
 (Ball@) { Ball@; } Shrink = {
-  Rat@ P = Div(Int|1, Int|1000);
+  Rat@ P = Div(Int|1, Int|128);
   (Rat@) { Rat@; } A = (Rat@ x) { /Rat%.Approx(x, P); };
 
   (Ball@ b) {
