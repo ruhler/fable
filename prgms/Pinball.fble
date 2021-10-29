@@ -10,7 +10,12 @@
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 
+% Triangle = /Graphics/2D%.Triangle;
+
 @ Int@ = /Int/Int%.Int@;
+
+<@>@ List@ = /List%.List@;
+<@>% List = /List%.List;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -34,13 +39,35 @@
   Vec@(Add(a.x, b.x), Add(a.y, b.y));
 };
 
+(Vec@, Vec@) { Vec@; } SubV = (Vec@ a, Vec@ b) {
+  Vec@(Sub(a.x, b.x), Sub(a.y, b.y));
+};
+
 (Vec@, Rat@) { Vec@; } MulVS = (Vec@ a, Rat@ s) {
   Vec@(Mul(a.x, s), Mul(a.y, s));
 };
 
+(Vec@) { Point@; } Point = (Vec@ a) {
+  Point@(
+    /Int/Int/Div%.Div(a.x.n, a.x.d).q,
+    /Int/Int/Div%.Div(a.y.n, a.y.d).q);
+};
+
 @ Ball@ = *(Vec@ pos, Vec@ vel);
 
-Ball@ Initial = Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0));
+@ Edge@ = *(
+  Vec@ normal,     # Unit normal vector.
+  Vec@ start,      # Starting position of the edge.
+  Rat@ length      # Length of the edge.
+);
+
+@ World@ = *(Ball@ ball, List@<Edge@> edges);
+
+World@ Initial = World@(
+  Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0)),
+  List<Edge@>[
+    Edge@(Vec@(Int|0, Int|1), Vec@(Neg(Int|100), Int|0), Int|200)
+  ]);
 
 # HALF_G --
 #   Half the acceleration due to gravity.
@@ -89,9 +116,9 @@ Rat@ R = Div(Int|9, Int|10);
   Move(Ball@(Vec@(b.pos.x, Int|0), MulVS(v, R)), Sub(t, t0));
 };
 
-# Tick --
+# TickBall --
 #   Advance the ball by one unit of time.
-(Ball@) { Ball@; } Tick = (Ball@ b) {
+(Ball@) { Ball@; } TickBall = (Ball@ b) {
   # 1. Compute average expected velocity over the time period.
   Vec@ v_avg = AddV(b.vel, HALF_G);
 
@@ -103,27 +130,47 @@ Rat@ R = Div(Int|9, Int|10);
   Shrink(Ball@(b_moved.pos, v));
 };
 
-(Ball@) { Drawing@; } Draw = (Ball@ ball) {
-  Int@ x = /Int/Int/Div%.Div(ball.pos.x.n, ball.pos.x.d).q;
-  Int@ y = /Int/Int/Div%.Div(ball.pos.y.n, ball.pos.y.d).q;
-  Rect(x, y, Int|10.n, Int|10.n, Color.Cyan);
+# Tick --
+#   Advance the world by one unit of time.
+(World@) { World@; } Tick = (World@ w) {
+  World@(TickBall(w.ball), w.edges);
 };
 
-(Get@<Event@>, Put@<Ball@>, Unit@!, Ball@) { Unit@!; }
-Run = (Get@<Event@> in, Put@<Ball@> draw, Unit@! tick, Ball@ ball) {
+(Ball@) { Drawing@; } DrawBall = (Ball@ ball) {
+  Point@ p = Point(ball.pos);
+  Rect(p.x, p.y, Int|10.n, Int|10.n, Color.Cyan);
+};
+
+(Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
+  Point@ a = Point(edge.start);
+  Point@ b = Point(SubV(edge.start, MulVS(edge.normal, Int|10)));
+  Vec@ tangent = Vec@(edge.normal.y, Neg(edge.normal.x));
+  Point@ c = Point(AddV(edge.start, MulVS(tangent, edge.length)));
+  Triangle(a, b, c, Color.Green);
+};
+
+(World@) { Drawing@; } Draw = (World@ world) {
+  /List%.ForEach<Edge@, Drawing@>(world.edges, DrawBall(world.ball),
+    (Edge@ e, Drawing@ d) {
+      Over(d, DrawEdge(e));
+  });
+};
+
+(Get@<Event@>, Put@<World@>, Unit@!, World@) { Unit@!; }
+Run = (Get@<Event@> in, Put@<World@> draw, Unit@! tick, World@ world) {
   Event@ e := in;
 
   e.?(tick: {
     Unit@ _ := tick;
-    Unit@ _ := draw(ball);
-    Run(in, draw, tick, Tick(ball));
+    Unit@ _ := draw(world);
+    Run(in, draw, tick, Tick(world));
   });
 
   e.?(key_down: {
     e.key_down.?(q: !(Unit));
-    Run(in, draw, tick, ball);
+    Run(in, draw, tick, world);
   });
-  Run(in, draw, tick, ball);
+  Run(in, draw, tick, world);
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
@@ -132,7 +179,7 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
   Int@ frame_period = Int|16.n;
   Unit@! tick = out(Effect@(tick: frame_period));
 
-  (Ball@) { Unit@!; } draw = (Ball@ s) {
+  (World@) { Unit@!; } draw = (World@ s) {
     out(Effect@(draw: Over(
       Rect(Int|0.n, Int|0.n, width, height, Color.Black),
       Affine(a, b, Draw(s)))));
