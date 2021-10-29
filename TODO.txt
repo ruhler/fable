@@ -1,5 +1,4 @@
 * [pinball]
- - Add support for 2d motion.
  - Add support for collisions against arbitrary edges.
 
 * [lang] Clean up support for abstract types.
