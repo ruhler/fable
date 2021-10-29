@@ -21,7 +21,6 @@
 % Neg = /Rat%.Neg;
 % Mul = /Rat%.Mul;
 % Div = /Rat%.Div;
-% Approx = /Rat%.Approx;
 % Lt = /Rat/Eq%.Lt;
 % Le = /Rat/Eq%.Le;
 % Int = /Rat/Lit%.Int;
@@ -43,11 +42,16 @@ Rat@ HALF_G = Neg(Div(Int|1, Int|4));
 Rat@ R = Div(Int|9, Int|10);
 
 
-# BTrunc --
-#   Limit the precision of the ball.
-Rat@ P = Div(Int|1, Int|1000);
-(Ball@) { Ball@; } BTrunc = (Ball@ b) {
-  Ball@(Approx(b.y, P), Approx(b.v, P));
+# Shrink --
+#   Limit the precision of the ball to avoid taking up a potentially
+#   significant necessary memory and computation time.
+(Ball@) { Ball@; } Shrink = {
+  Rat@ P = Div(Int|1, Int|1000);
+  (Rat@) { Rat@; } A = (Rat@ x) { /Rat%.Approx(x, P); };
+
+  (Ball@ b) {
+    Ball@(A(b.y), A(b.v));
+  };
 };
 
 # Move --
@@ -86,7 +90,7 @@ Rat@ P = Div(Int|1, Int|1000);
 
   # 3. Compute final velocity.
   Rat@ v = Add(b_moved.v, HALF_G);
-  BTrunc(Ball@(b_moved.y, v));
+  Shrink(Ball@(b_moved.y, v));
 };
 
 (Ball@) { Drawing@; } Draw = (Ball@ ball) {
