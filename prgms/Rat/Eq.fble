@@ -5,6 +5,18 @@
 
 @ Rat@ = /Rat%.Rat@;
 
+Eq@<Rat@> Gt = (Rat@ a, Rat@ b) {
+  Eq@<Int@> gt = {
+    a.d.?(n: {
+      b.d.?(n: /Int/Int/Eq%.Gt);
+      /Int/Int/Eq%.Lt;
+    });
+    /Int/Int/Eq%.Gt;
+  };
+
+  gt(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
+};
+
 Eq@<Rat@> Lt = (Rat@ a, Rat@ b) {
   Eq@<Int@> lt = {
     a.d.?(n: {
@@ -29,4 +41,4 @@ Eq@<Rat@> Le = (Rat@ a, Rat@ b) {
   le(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
 };
 
-@(Lt, Le);
+@(Gt, Lt, Le);

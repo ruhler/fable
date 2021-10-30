@@ -26,6 +26,7 @@
 % Neg = /Rat%.Neg;
 % Mul = /Rat%.Mul;
 % Div = /Rat%.Div;
+% Gt = /Rat/Eq%.Gt;
 % Lt = /Rat/Eq%.Lt;
 % Le = /Rat/Eq%.Le;
 % Int = /Rat/Lit%.Int;
@@ -47,6 +48,24 @@
   Vec@(Mul(a.x, s), Mul(a.y, s));
 };
 
+# RotateTo --
+#   Given unit normal vector n and arbitrary vector v, rotate the vector v
+#   to a coordinate system where n is at (0, 1).
+(Vec@, Vec@) { Vec@; } RotateTo = (Vec@ n, Vec@ v) {
+  Rat@ x = Sub(Mul(n.y, v.x), Mul(n.x, v.y));
+  Rat@ y = Add(Mul(n.x, v.x), Mul(n.y, v.y));
+  @(x, y);
+};
+
+# RotateFrom --
+#   Given unit normal vector n and arbitrary vector v, rotate the vector v
+#   out of a coordinate system where n is at (0, 1).
+(Vec@, Vec@) { Vec@; } RotateFrom = (Vec@ n, Vec@ v) {
+  Rat@ x = Add(Mul(n.y, v.x), Mul(n.x, v.y));
+  Rat@ y = Sub(Mul(n.y, v.y), Mul(n.x, v.x));
+  @(x, y);
+};
+
 (Vec@) { Point@; } Point = (Vec@ a) {
   Point@(
     /Int/Int/Div%.Div(a.x.n, a.x.d).q,
@@ -66,7 +85,8 @@
 World@ Initial = World@(
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0)),
   List<Edge@>[
-    Edge@(Vec@(Int|0, Int|1), Vec@(Neg(Int|100), Int|0), Int|200)
+    Edge@(Vec@(Int|0, Int|1), Vec@(Neg(Int|100), Int|0), Int|200),
+    Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|30, Neg(Int|20)), Int|100)
   ]);
 
 # HALF_G --
@@ -76,7 +96,7 @@ Vec@ HALF_G = Vec@(Int|0, Neg(Div(Int|1, Int|4)));
 # R --
 #   The coefficient of restitution: the fraction of energy preserved during a
 #   collision.
-Rat@ R = Div(Int|9, Int|10);
+Rat@ R = Div(Int|8, Int|10);
 
 # Shrink --
 #   Limit the precision of the ball to avoid taking up a potentially
@@ -90,6 +110,40 @@ Rat@ R = Div(Int|9, Int|10);
   };
 };
 
+# Collide --
+#   Check for and apply collision between ball and edge if any.
+#
+# Returns the ball in the state just after it's first collision at time
+# 'time'.
+@ CollideResult@ = *(Ball@ ball, Rat@ time);
+(Vec@, Vec@, Vec@, Rat@, List@<Edge@>) { CollideResult@; }
+Collide = (Vec@ start, Vec@ end, Vec@ vel, Rat@ time, List@<Edge@> edges) {
+  edges.?(nil: @(ball: Ball@(end, vel), time));
+
+  Edge@ edge = edges.cons.head;
+
+  # For there to be considered a collision, the ball must start above the
+  # edge and end below the edge.
+  # TODO: what if the ball starts just below the edge. Could that be a case
+  # where it is falling through the edge due to imprecision? Can we consider
+  # it a collision if the ball starts just below the edge too to prevent that?
+  Vec@ s = RotateTo(edge.normal, SubV(start, edge.start));
+  Lt(s.y, Int|0).?(true: Collide(start, end, vel, time, edges.cons.tail));
+
+  Vec@ e = RotateTo(edge.normal, SubV(end, edge.start));
+  Gt(e.y, Int|0).?(true: Collide(start, end, vel, time, edges.cons.tail));
+
+  # Collision detected.
+  # 0 = y0 + vt ==>  t = -y0/v
+  Vec@ v0 = RotateTo(edge.normal, vel);
+  Rat@ t = Div(Neg(s.y), v0.y);
+  Vec@ vc = Vec@(v0.x, Neg(v0.y));
+
+  Vec@ end = AddV(start, MulVS(vel, t));
+  Vec@ vel = RotateFrom(edge.normal, vc);
+  Collide(start, end, MulVS(vel, R), t, edges.cons.tail);
+};
+
 # Move --
 #   Move the ball by the given amount of time, assuming velocity stays
 #   constant.
@@ -100,20 +154,12 @@ Rat@ R = Div(Int|9, Int|10);
 # reaching the end of the time period as a result. This is also assumes we
 # don't have any super tight corners that would cause us to collide an
 # excessive number of times in a single time period.
-(Ball@, Rat@) { Ball@; } Move = (Ball@ b, Rat@ t) {
+(Ball@, Rat@, List@<Edge@>) { Ball@; } Move = (Ball@ b, Rat@ t, List@<Edge@> edges) {
   Le(t, Int|0).?(true: b);
 
-  Vec@ pos = AddV(b.pos, MulVS(b.vel, t));
-
-  Lt(pos.y, Int|0).?(false: Ball@(pos, b.vel));
-  Lt(b.vel.y, Int|0).?(false: Ball@(pos, b.vel));
-
-  # The ball has dropped below ground level and is going downward. Have it
-  # bounce up instead.
-  # 0 = y0 + vt ==>  t = -y0/v
-  Rat@ t0 = Div(Neg(b.pos.y), b.vel.y);
-  Vec@ v = Vec@(b.vel.x, Neg(b.vel.y));
-  Move(Ball@(Vec@(b.pos.x, Int|0), MulVS(v, R)), Sub(t, t0));
+  Vec@ end = AddV(b.pos, MulVS(b.vel, t));
+  CollideResult@ cr = Collide(b.pos, end, b.vel, t, edges);
+  Move(cr.ball, Sub(t, cr.time), edges);
 };
 
 # Tick --
@@ -123,7 +169,7 @@ Rat@ R = Div(Int|9, Int|10);
   Vec@ v_avg = AddV(w.ball.vel, HALF_G);
 
   # 2. Move the ball assuming constant velocity.
-  Ball@ b_moved = Move(Ball@(w.ball.pos, v_avg), Int|1);
+  Ball@ b_moved = Move(Ball@(w.ball.pos, v_avg), Int|1, w.edges);
 
   # 3. Compute final velocity.
   Vec@ v = AddV(b_moved.vel, HALF_G);
