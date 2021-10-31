@@ -1,4 +1,6 @@
-* [pinball] Figure out next steps.
+* [pinball] 
+ - Set up test infra.
+ - Test and fix bug where edges are treated as lines instead of line segments.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?

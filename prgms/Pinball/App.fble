@@ -1,0 +1,104 @@
+
+@ App@ = /App%.App@;
+@ Event@ = /App%.Event@;
+@ Effect@ = /App%.Effect@;
+
+@ Drawing@ = /Drawing%.Drawing@;
+@ Point@ = /Drawing%.Point@;
+% Color = /Drawing%.Color;
+% Over = /Drawing%.Over;
+% Rect = /Drawing%.Rect;
+% Affine = /Drawing%.Affine;
+
+% Triangle = /Graphics/2D%.Triangle;
+
+@ Int@ = /Int/Int%.Int@;
+
+<@>% List = /List%.List;
+
+<@>@ Get@ = /Process%.Get@;
+<@>@ Put@ = /Process%.Put@;
+
+% Neg = /Rat%.Neg;
+% Int = /Rat/Lit%.Int;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+@ Ball@ = /Pinball/Physics%.Ball@;
+@ Edge@ = /Pinball/Physics%.Edge@;
+@ Vec@ = /Pinball/Physics%.Vec@;
+@ World@ = /Pinball/Physics%.World@;
+% AddV = /Pinball/Physics%.AddV;
+% SubV = /Pinball/Physics%.SubV;
+% MulVS = /Pinball/Physics%.MulVS;
+% Tick = /Pinball/Physics%.Tick;
+
+(Vec@) { Point@; } Point = (Vec@ a) {
+  Point@(
+    /Int/Int/Div%.Div(a.x.n, a.x.d).q,
+    /Int/Int/Div%.Div(a.y.n, a.y.d).q);
+};
+
+World@ Initial = World@(
+  Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0)),
+  List<Edge@>[
+    Edge@(Vec@(Int|0, Int|1), Vec@(Neg(Int|100), Int|0), Int|200),
+    Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|30, Neg(Int|20)), Int|100)
+  ]);
+
+(Ball@) { Drawing@; } DrawBall = (Ball@ ball) {
+  Point@ p = Point(ball.pos);
+  Rect(p.x, p.y, Int|10.n, Int|10.n, Color.Cyan);
+};
+
+(Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
+  Point@ a = Point(edge.start);
+  Point@ b = Point(SubV(edge.start, MulVS(edge.normal, Int|10)));
+  Vec@ tangent = Vec@(edge.normal.y, Neg(edge.normal.x));
+  Point@ c = Point(AddV(edge.start, MulVS(tangent, edge.length)));
+  Triangle(a, b, c, Color.Green);
+};
+
+(World@) { Drawing@; } Draw = (World@ world) {
+  /List%.ForEach<Edge@, Drawing@>(world.edges, DrawBall(world.ball),
+    (Edge@ e, Drawing@ d) {
+      Over(d, DrawEdge(e));
+  });
+};
+
+(Get@<Event@>, Put@<World@>, Unit@!, World@) { Unit@!; }
+Run = (Get@<Event@> in, Put@<World@> draw, Unit@! tick, World@ world) {
+  Event@ e := in;
+
+  e.?(tick: {
+    Unit@ _ := tick;
+    Unit@ _ := draw(world);
+    Run(in, draw, tick, Tick(world));
+  });
+
+  e.?(key_down: {
+    e.key_down.?(q: !(Unit));
+    Run(in, draw, tick, world);
+  });
+  Run(in, draw, tick, world);
+};
+
+App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+  Point@ a = @(x: Int|1.n, y: Neg(Int|1).n);
+  Point@ b = @(x: Int|320.n, y: Int|240.n);
+  Int@ frame_period = Int|16.n;
+  Unit@! tick = out(Effect@(tick: frame_period));
+
+  (World@) { Unit@!; } draw = (World@ s) {
+    out(Effect@(draw: Over(
+      Rect(Int|0.n, Int|0.n, width, height, Color.Black),
+      Affine(a, b, Draw(s)))));
+  };
+
+  Unit@ _ := out(Effect@(tick: Int|0.n));
+  Run(in, draw, tick, Initial); 
+};
+
+Main;
+
