@@ -41,4 +41,8 @@ Eq@<Rat@> Le = (Rat@ a, Rat@ b) {
   le(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
 };
 
-@(Gt, Lt, Le);
+Eq@<Rat@> Eq = (Rat@ a, Rat@ b) {
+  /Int/Int/Eq%.Eq(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
+};
+
+@(Gt, Lt, Le, Eq);

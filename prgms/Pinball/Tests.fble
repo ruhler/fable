@@ -1,0 +1,31 @@
+
+<@>% List = /List%.List;
+<@>% Nil = /List%.Nil;
+
+@ Ball@ = /Pinball/Physics%.Ball@;
+@ Edge@ = /Pinball/Physics%.Edge@;
+@ Vec@ = /Pinball/Physics%.Vec@;
+@ World@ = /Pinball/Physics%.World@;
+% Tick = /Pinball/Physics%.Tick;
+
+@ Rat@ = /Rat%.Rat@;
+% Int = /Rat/Lit%.Int;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
+
+Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
+  Test(Str|'Move Ball No Collision', !({
+    World@ start = World@(Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0)), Nil<Edge@>);
+    World@ end = Tick(start);
+    Rat@ want = Int|10;
+    Rat@ got = end.ball.pos.x;
+    AssertEquals<Rat@>(/Rat/Eq%.Eq, /Rat/Show%.Show, want, got);
+  }))
+]);
+
+@(Tests);

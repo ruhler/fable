@@ -1,0 +1,94 @@
+Fble Release
+============
+It seems like we have made enough progress on fble to consider trying to make
+a release of it.
+
+Goals:
+* Put fble in releasable form.
+* Gain experience trying to use fble in a released form, in particular around
+  version control of various components of fble.
+* Clean up separation of things that are better separated.
+* Revisit APIs between components, clean up, and document.
+
+When I say release, I'm thinking some tarballs that someone could download
+from a website and install on their own computer in traditional fashion.
+
+Implications:
+* There is not one fixed environment that we can assume. We need to be more
+  flexible.
+* Things that don't belong together should be split up. For example, fble
+  language spec doesn't belong together with a draft pinball game.
+* Separate pieces will want separate build systems.
+* Separate pieces will want separate test suites.
+
+Brainstorm of components to release:
+* Language specification, spec tests, tutorials, style guide, syntax file.
+* fble reference implementation: libfble.
+* fble packages, each separate.
+  - Libraries: Core, Stdio, App, Map, 
+  - Apps: GameOfLife, Invaders, Md5, Primes, Sat, Snake, Sudoku, TicTacToe
+
+I think the biggest challenges are going to be around the interfaces between
+these components:
+* How to decouple native interface from reference implementation?
+* How to build an app against a set of 'installed' fble packages?
+ - Given that a package could include native code as well as fble code.
+
+---
+
+If we assume the libfble interface is fixed, it's not too hard to think about
+packages. We can do interpreted or compiled code, mixed together, by
+generating an elf file with the executable code to run using the standard
+calling convention for an fble module.
+
+A package is a collection of modules that we can compile all together into a
+single elf file. The package dependency graph is an abstraction of the module
+dependency graph. The module dependency graph is still useful, primary for
+limiting what module code gets run at runtime. The package dependency graph is
+useful for limiting what packages need to be available at compile time.
+
+Conceptually we want to be able to compile a module in the presence of other
+packages, listed explicitly. Then from the compiler point of view a package
+needs to least for each module path in the package, the type of the module.
+That should be enough info for the compiler. We can think about embedding the
+type of a module in the elf file for the package so all you have to do is pass
+around the library file.
+
+There is a question of user documentation versus module interface. The
+compiler wants to know the raw type of a module. The user wants to have
+abstractions for types, like a module hierarchy, and comments in code. Which
+is slightly different from the full source code, where ideally the user
+doesn't get to see the implementation, just the type. That's an open question
+that perhaps doesn't matter too much conceptually. Bottom line is, the
+compiler needs a way to know what the modules and their types are in a
+package.
+ 
+If we allow different incompatible implementations of libfble, then that's
+going to be harder. Unless a package is compiled for a particular
+implementation of fble and you combine things that way. I'm not sure if it's
+worth trying to standardize the native interface for all implementations,
+focus on just libfble for the time being, try to make an alternative
+implementation to see what the issues are in practice, or something else.
+
+I suppose either the different implementations of libfble can be intermixed,
+in which case there is a standard interface we can use for linking, or they
+can't be intermixed, in which case we have to generate separate elf files per
+implementation anyway, so we can use the specific implementation interface for
+linking.
+
+In short, I'm suggesting we package fble packages as elf files containing the
+code for all the modules in the package and supplementary information
+describing the types of modules in the package, assuming that's a convenient
+format for the compile to consume.
+
+Then the fble compile command should take a list of include packages when
+compiling a module, and we should organize modules into packages using a
+separate directory for each package. One question: should the package
+directory be part of the module path or not? Why not? Otherwise we risk having
+multiple packages defining the same module name, which is no good. It will be
+slightly inconvenient in the sense of having longer module paths. There's also
+the question of whether package versions should be in the module path. I feel
+like users should be able to set up their own redirects: any time you use
+package "/foo/...", rename it to, for example, "/foo-3.4.1/...". That's at
+compile time.
+

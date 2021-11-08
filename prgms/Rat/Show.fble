@@ -1,0 +1,14 @@
+
+@ Rat@ = /Rat%.Rat@;
+
+<@>@ Show@ = /Show%.Show@;
+
+% Str = /String%.Str;
+% Strs = /String%.Strs;
+
+Show@<Rat@> Show = (Rat@ r) {
+  # TODO: Reduce the ratio before showing?
+  Strs[/Int/Int/Show%.Show(r.n), Str|' / ', /Int/Int/Show%.Show(r.d)];
+};
+
+@(Show);
