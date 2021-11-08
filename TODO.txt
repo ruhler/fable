@@ -1,5 +1,4 @@
 * [pinball] 
- - Set up test infra.
  - Test and fix bug where edges are treated as lines instead of line segments.
 
 * [lang] Clean up support for abstract types.
@@ -202,6 +201,7 @@ unique?
 * [/Int%] Add test coverage for the Int routines.
 * [/Fble/Test%] Clean up fble test framework
  - Use AssertEquals for more of the tests.
+ - Add an AssertLt or similar methods? Or generalize AssertEquals?
  - Properly test the test infra.
 * [/GameOfLife%] Switch to a target 60 FPS?
 * [/Hwdg%] Improve the API for describing a bunch of gates with modules.

@@ -9,6 +9,7 @@
 % Tick = /Pinball/Physics%.Tick;
 
 @ Rat@ = /Rat%.Rat@;
+% Neg = /Rat%.Neg;
 % Int = /Rat/Lit%.Int;
 
 % Str = /String%.Str;
@@ -20,11 +21,44 @@
 
 Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   Test(Str|'Move Ball No Collision', !({
-    World@ start = World@(Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0)), Nil<Edge@>);
+    # The ball moves freely to the right 10 units per tick.
+    World@ start = @(
+      ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0)),
+      edges: Nil<Edge@>);
     World@ end = Tick(start);
     Rat@ want = Int|10;
     Rat@ got = end.ball.pos.x;
     AssertEquals<Rat@>(/Rat/Eq%.Eq, /Rat/Show%.Show, want, got);
+  })),
+  
+  Test(Str|'Move Ball Collision', !({
+    # The ball moves to the right, hits a wall, then bounces back.
+    World@ start = @(
+      ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0)),
+      edges: List<Edge@>[
+        Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Neg(Int|4)), Int|8)
+      ]);
+    World@ end = Tick(start);
+    # TODO: Define an AssertLt function instead of reusing AssertEquals here.
+    AssertEquals<Rat@>(/Rat/Eq%.Lt, /Rat/Show%.Show, end.ball.pos.x, Int|5);
+  })),
+
+  Test(Str|'Move Ball Avoid Collision', !({
+    # The ball moves to the right, passing beneath a wall.
+    # Regression test for when we failed to check collision happens within the
+    # bounds of a wall.
+    World@ start = @(
+      ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0)),
+      edges: List<Edge@>[
+        Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Int|2), Int|8)
+      ]);
+    World@ end = Tick(start);
+    Rat@ want = Int|10;
+    Rat@ got = end.ball.pos.x;
+    # TODO: Fix this bug.
+    /Test%.ExpectFails(
+      AssertEquals<Rat@>(/Rat/Eq%.Eq, /Rat/Show%.Show, want, got),
+      Str|'');
   }))
 ]);
 
