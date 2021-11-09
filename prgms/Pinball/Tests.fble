@@ -55,10 +55,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
     World@ end = Tick(start);
     Rat@ want = Int|10;
     Rat@ got = end.ball.pos.x;
-    # TODO: Fix this bug.
-    /Test%.ExpectFails(
-      AssertEquals<Rat@>(/Rat/Eq%.Eq, /Rat/Show%.Show, want, got),
-      Str|'');
+    AssertEquals<Rat@>(/Rat/Eq%.Eq, /Rat/Show%.Show, want, got);
   }))
 ]);
 

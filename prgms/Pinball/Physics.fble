@@ -98,12 +98,18 @@ Collide = (Vec@ start, Vec@ end, Vec@ vel, Rat@ time, List@<Edge@> edges) {
   Vec@ e = RotateTo(edge.normal, SubV(end, edge.start));
   Gt(e.y, Int|0).?(true: Collide(start, end, vel, time, edges.cons.tail));
 
-  # Collision detected.
+  # Potential collision detected.
   # 0 = y0 + vt ==>  t = -y0/v
   Vec@ v0 = RotateTo(edge.normal, vel);
   Rat@ t = Div(Neg(s.y), v0.y);
-  Vec@ vc = Vec@(v0.x, Neg(v0.y));
 
+  # Verify the collision happens within the segment of the edge.
+  Rat@ x = Add(s.x, Mul(v0.x, t));
+  Lt(x, Int|0).?(true: Collide(start, end, vel, time, edges.cons.tail));
+  Gt(x, edge.length).?(true: Collide(start, end, vel, time, edges.cons.tail));
+
+  # Compute the new state just after the collision.
+  Vec@ vc = Vec@(v0.x, Neg(v0.y));
   Vec@ end = AddV(start, MulVS(vel, t));
   Vec@ vel = RotateFrom(edge.normal, vc);
   Collide(start, end, MulVS(vel, R), t, edges.cons.tail);
