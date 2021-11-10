@@ -1,5 +1,5 @@
 * [pinball] 
- - Make ball round and have width for collisions.
+ - Take ball radius into account for collisions.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?

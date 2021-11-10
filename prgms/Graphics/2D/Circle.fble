@@ -1,0 +1,69 @@
+
+@ Drawing@ = /Drawing%.Drawing@;
+@ Color@ = /Drawing%.Color@;
+@ Point@ = /Drawing%.Point@;
+% Blank = /Drawing%.Blank;
+% Drawings = /Drawing%.Drawings;
+% Over = /Drawing%.Over;
+% Rect = /Drawing%.Rect;
+% Translate = /Drawing%.Translate;
+
+@ Int@ = /Int/Int%.Int@;
+% Add = /Int/Int%.Add;
+% Inc = /Int/Int%.Inc;
+% Dec = /Int/Int%.Dec;
+% Neg = /Int/Int%.Neg;
+% Mul = /Int/Int%.Mul;
+% Int = /Int/Int/Lit%.Int;
+% Lt = /Int/Int/Eq%.Lt;
+
+Int@ 0 = Int|0;
+Int@ 1 = Int|1;
+Int@ 2 = Int|2;
+
+# State@ --
+#   Internal state for CircleS function.
+#
+# Fields:
+#   x - the current x position.
+#   y - the current y position.
+#   r2 - the square of the desired radius.
+#   color - the desired color.
+@ State@ = *(Int@ x, Int@ y, Int@ r2, Color@ color);
+
+# CircleS --
+#   Helper function for drawing a circle about the origin.
+#
+# Starting with the point (r, 0), we go around the circle until
+# x == y, filling in the circle 4 ways in parallel: center up, center down,
+# top down, and bottom up.
+(State@) { Drawing@; } CircleS = (State@ s) {
+  Lt(s.x, s.y).?(true: Blank);
+
+  Int@ 2x = Mul(2, s.x);
+  Int@ 2y = Mul(2, s.y);
+  Drawing@ lines = Drawings[
+    Rect(Neg(s.x), s.y, 2x, 1, s.color),
+    Rect(Neg(s.x), Neg(s.y), 2x, Neg(1), s.color),
+    Rect(Neg(s.y), s.x, 2y, 1, s.color),
+    Rect(Neg(s.y), Neg(s.x), 2y, Neg(1), s.color)
+  ];
+
+  # We will always increment y by one. We may or may not need to decrement x
+  # by at most one. Don't decrement x if the new radius will drop below the
+  # desired radius.
+  Int@ nx = Dec(s.x);
+  Int@ ny = Inc(s.y);
+  Int@ nr2 = Add(Mul(nx, nx), Mul(ny, ny));
+  Int@ x = Lt(nr2, s.r2).?(true: s.x, false: nx);
+  Over(lines, CircleS(State@(x, ny, s.r2, s.color)));
+};
+
+# Circle --
+#   Draw a filled circle at point a of radius r.
+(Point@, Int@, Color@) { Drawing@; }
+Circle = (Point@ a, Int@ r, Color@ color) {
+  Translate(a.x, a.y, CircleS(State@(r, 0, Mul(r, r), color)));
+};
+
+@(Circle);

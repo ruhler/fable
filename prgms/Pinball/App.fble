@@ -10,6 +10,7 @@
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 
+% Circle = /Graphics/2D/Circle%.Circle;
 % Triangle = /Graphics/2D/Triangle%.Triangle;
 
 @ Int@ = /Int/Int%.Int@;
@@ -49,7 +50,7 @@ World@ Initial = World@(
 
 (Ball@) { Drawing@; } DrawBall = (Ball@ ball) {
   Point@ p = Point(ball.pos);
-  Rect(p.x, p.y, Int|10.n, Int|10.n, Color.Cyan);
+  Circle(p, Int|5.n, Color.Cyan);
 };
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
