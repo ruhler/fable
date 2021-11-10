@@ -10,7 +10,7 @@
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 
-% Triangle = /Graphics/2D%.Triangle;
+% Triangle = /Graphics/2D/Triangle%.Triangle;
 
 @ Int@ = /Int/Int%.Int@;
 

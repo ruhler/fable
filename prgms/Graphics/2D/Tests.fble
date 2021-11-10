@@ -9,7 +9,7 @@
 % Drawn = /Drawing/Test%.Drawn;
 % Draw = /Drawing/Test%.Draw;
 
-% Triangle = /Graphics/2D%.Triangle;
+% Triangle = /Graphics/2D/Triangle%.Triangle;
 
 % Int = /Int/Int/Lit%.Int;
 

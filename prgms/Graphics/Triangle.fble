@@ -55,7 +55,7 @@ Draw@ Clipped = (Camera@ camera, Vec@ a, Vec@ b, Vec@ c, Color@ color) {
   Point@ a_ = Perspective(camera, a);
   Point@ b_ = Perspective(camera, b);
   Point@ c_ = Perspective(camera, c);
-  /Graphics/2D%.Triangle(a_, b_, c_, color);
+  /Graphics/2D/Triangle%.Triangle(a_, b_, c_, color);
 };
 
 # RightOf --
