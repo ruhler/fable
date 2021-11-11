@@ -27,6 +27,7 @@ List@<Benchmark@> Benchmarks = List<Benchmark@>[
   Benchmark@(Str|'Graphics', /Graphics/Bench%.Bench),
   Benchmark@(Str|'Invaders', /Invaders/Bench%.Bench),
   Benchmark@(Str|'Md5', /Md5/Bench%.Bench),
+  Benchmark@(Str|'Pinball', /Pinball/Bench%.Bench),
   Benchmark@(Str|'Sat', /Sat/Bench%.Bench),
   Benchmark@(Str|'Snake', /Snake/Bench%.Bench),
   Benchmark@(Str|'Sudoku', /Sudoku/Tests%.Bench),
