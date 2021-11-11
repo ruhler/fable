@@ -32,3 +32,4 @@ Without looking at profiles yet, what I expect is:
   directly to the number of edges in the screen. Maybe we can add a fast path
   cutout?
 
+* Making a compiled version of pinball helps a bit.

@@ -529,6 +529,14 @@ bin $::bin/fble-graphics \
   "$::obj/fble-graphics.o $::obj/fble-compiled-app.o" \
   "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
 
+# /Pinball/App% compiled binary
+build $::src/fble-pinball.s $::bin/fble-compile \
+  "$::bin/fble-compile --export FbleCompiledMain /Pinball/App% > $::src/fble-pinball.s"
+asm $::obj/fble-pinball.o $::src/fble-pinball.s ""
+bin $::bin/fble-pinball \
+  "$::obj/fble-pinball.o $::obj/fble-compiled-app.o" \
+  "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
+
 # test summary
 build $::test/tests.txt "$::tests" "echo $::tests > $::test/tests.txt"
 build $::test/summary.tr "tools/tests.tcl $::test/tests.txt" \
