@@ -1,0 +1,34 @@
+Pinball Game
+============
+
+There are so many different games we could redo as a pinball game. For
+example:
+* skiball
+* bowling
+* breakout
+* space invaders
+* soccer
+* platformer, like mario brothers or celeste
+* Air hockey.
+
+Initial proposal:
+* Have a half court with sloping sides and paddles with a single object at the
+  top of the screen that goes back and forth left and right in a fixed
+  pattern. You have a score multiplier. Hit the object, you score the number
+  of points on the score multiplier and double the score multiplier. Hit the
+  ceiling you reset the score multiplier to 1. The game ends when the ball
+  drops down the drain.
+
+  Ideally we can print a score on the screen and keep track of high score and
+  all that stuff. No fancy graphics required.
+
+Current challenge:
+* With just a ball and fixed edges, it's going way too slow. Averaging 4
+  frames per second. We want to get it up to 60 frames per second. So let's do
+  some profiling to figure out what's up.
+
+Without looking at profiles yet, what I expect is:
+* Maybe collision detection is expensive, given the performance seems tied
+  directly to the number of edges in the screen. Maybe we can add a fast path
+  cutout?
+

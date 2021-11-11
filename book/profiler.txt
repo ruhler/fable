@@ -4,6 +4,7 @@ One of the main goals of the fble language is to support high performance, low
 overhead computing. A profiler is an important tool to aid developers in
 optimizing the performance of fble programs.
 
+** TODO: move the following to performance.txt
 My philosophy on performance is that the programmer is responsible for
 optimizing the algorithmic complexity of their program, the fble
 implementation is responsible for optimizing the constant overheads. There

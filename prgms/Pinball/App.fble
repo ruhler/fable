@@ -23,6 +23,7 @@
 
 @ Rat@ = /Rat%.Rat@;
 % Neg = /Rat%.Neg;
+% Div = /Rat%.Div;
 % Int = /Rat/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
@@ -48,8 +49,31 @@
 World@ Initial = World@(
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Int|8),
   List<Edge@>[
-    Edge@(Vec@(Int|0, Int|1), Vec@(Neg(Int|100), Int|0), Int|200),
-    Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|30, Neg(Int|20)), Int|100)
+    # Floor
+    Edge@(Vec@(Int|0, Int|1),
+          Vec@(Neg(Int|16), Neg(Int|104)),
+          Int|32),
+
+    # Slopes
+    Edge@(Vec@(Neg(Div(Int|3, Int|5)), Div(Int|4, Int|5)),
+          Vec@(Int|16, Neg(Int|104)),
+          Int|160),
+    Edge@(Vec@(Div(Int|3, Int|5), Div(Int|4, Int|5)),
+          Vec@(Neg(Int|144), Neg(Int|8)),
+          Int|160),
+
+    # Side walls
+    Edge@(Vec@(Int|1, Int|0),
+          Vec@(Neg(Int|144), Int|104),
+          Int|112),
+    Edge@(Vec@(Neg(Int|1), Int|0),
+          Vec@(Int|144, Neg(Int|8)),
+          Int|112),
+
+    # Ceiling
+    Edge@(Vec@(Int|0, Neg(Int|1)),
+          Vec@(Int|144, Int|104),
+          Int|288)
   ]);
 
 (Ball@) { Drawing@; } DrawBall = (Ball@ ball) {
