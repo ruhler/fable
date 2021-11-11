@@ -21,6 +21,7 @@
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
+@ Rat@ = /Rat%.Rat@;
 % Neg = /Rat%.Neg;
 % Int = /Rat/Lit%.Int;
 
@@ -36,14 +37,16 @@
 % MulVS = /Pinball/Physics%.MulVS;
 % Tick = /Pinball/Physics%.Tick;
 
+(Rat@) { Int@; } Floor = (Rat@ x) {
+  /Int/Int/Div%.Div(x.n, x.d).q;
+};
+
 (Vec@) { Point@; } Point = (Vec@ a) {
-  Point@(
-    /Int/Int/Div%.Div(a.x.n, a.x.d).q,
-    /Int/Int/Div%.Div(a.y.n, a.y.d).q);
+  Point@(Floor(a.x), Floor(a.y));
 };
 
 World@ Initial = World@(
-  Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0)),
+  Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Int|8),
   List<Edge@>[
     Edge@(Vec@(Int|0, Int|1), Vec@(Neg(Int|100), Int|0), Int|200),
     Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|30, Neg(Int|20)), Int|100)
@@ -51,7 +54,7 @@ World@ Initial = World@(
 
 (Ball@) { Drawing@; } DrawBall = (Ball@ ball) {
   Point@ p = Point(ball.pos);
-  Circle(p, Int|5.n, Color.Cyan);
+  Circle(p, Floor(ball.radius), Color.Cyan);
 };
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
