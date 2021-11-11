@@ -9,6 +9,7 @@
 % Over = /Drawing%.Over;
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
+% Drawings = /Drawing%.Drawings;
 
 % Circle = /Graphics/2D/Circle%.Circle;
 % Triangle = /Graphics/2D/Triangle%.Triangle;
@@ -54,11 +55,17 @@ World@ Initial = World@(
 };
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
+  Vec@ s = SubV(edge.start, MulVS(edge.normal, Int|2));
+
   Point@ a = Point(edge.start);
-  Point@ b = Point(SubV(edge.start, MulVS(edge.normal, Int|10)));
+  Point@ b = Point(s);
   Vec@ tangent = Vec@(edge.normal.y, Neg(edge.normal.x));
   Point@ c = Point(AddV(edge.start, MulVS(tangent, edge.length)));
-  Triangle(a, b, c, Color.Green);
+  Point@ d = Point(AddV(s, MulVS(tangent, edge.length)));
+  Drawings[
+    Triangle(a, b, c, Color.Green),
+    Triangle(c, b, d, Color.Green)
+  ];
 };
 
 (World@) { Drawing@; } Draw = (World@ world) {
