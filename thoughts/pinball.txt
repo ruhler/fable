@@ -31,5 +31,16 @@ Without looking at profiles yet, what I expect is:
 * Maybe collision detection is expensive, given the performance seems tied
   directly to the number of edges in the screen. Maybe we can add a fast path
   cutout?
+* Maybe drawing the circle every frame. We could just cache the drawing and
+  translate it instead?
 
 * Making a compiled version of pinball helps a bit.
+
+Pinball app benchmark profile says:
+* 70% of the time is spent drawing the triangles for the edges.
+
+Let's fix that. Maybe it's finally time to add the optimization of drawing
+triangles that are tall and skinny.
+
+Actually, no need to redraw the triangles. Do the background drawing once and
+reuse it.

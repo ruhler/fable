@@ -5,11 +5,13 @@
 
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
+% Blank = /Drawing%.Blank;
 % Color = /Drawing%.Color;
 % Over = /Drawing%.Over;
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 % Drawings = /Drawing%.Drawings;
+% Translate = /Drawing%.Translate;
 
 % Circle = /Graphics/2D/Circle%.Circle;
 % Triangle = /Graphics/2D/Triangle%.Triangle;
@@ -46,8 +48,12 @@
   Point@(Floor(a.x), Floor(a.y));
 };
 
+# Radius --
+#   The radius of the ball.
+Rat@ Radius = Int|8;
+
 World@ Initial = World@(
-  Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Int|8),
+  Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
   List<Edge@>[
     # Floor
     Edge@(Vec@(Int|0, Int|1),
@@ -76,11 +82,6 @@ World@ Initial = World@(
           Int|288)
   ]);
 
-(Ball@) { Drawing@; } DrawBall = (Ball@ ball) {
-  Point@ p = Point(ball.pos);
-  Circle(p, Floor(ball.radius), Color.Cyan);
-};
-
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
   Vec@ s = SubV(edge.start, MulVS(edge.normal, Int|2));
 
@@ -95,11 +96,17 @@ World@ Initial = World@(
   ];
 };
 
-(World@) { Drawing@; } Draw = (World@ world) {
-  /List%.ForEach<Edge@, Drawing@>(world.edges, DrawBall(world.ball),
-    (Edge@ e, Drawing@ d) {
-      Over(d, DrawEdge(e));
+Drawing@ Background = {
+  /List%.ForEach<Edge@, Drawing@>(Initial.edges, Blank, (Edge@ e, Drawing@ d) {
+    Over(d, DrawEdge(e));
   });
+};
+
+Drawing@ DrawnBall = Circle(Point@(Int|0.n, Int|0.n), Floor(Radius), Color.Cyan);
+
+(World@) { Drawing@; } Draw = (World@ world) {
+  Point@ p = Point(world.ball.pos);
+  Over(Background, Translate(p.x, p.y, DrawnBall));
 };
 
 (Get@<Event@>, Put@<World@>, Unit@!, World@) { Unit@!; }
