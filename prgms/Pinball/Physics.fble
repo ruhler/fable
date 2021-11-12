@@ -56,12 +56,12 @@
 
 # HALF_G --
 #   Half the acceleration due to gravity.
-Vec@ HALF_G = Vec@(Int|0, Neg(Div(Int|1, Int|4)));
+Vec@ HALF_G = Vec@(Int|0, Neg(Div(Int|1, Int|8)));
 
 # R --
 #   The coefficient of restitution: the fraction of energy preserved during a
 #   collision.
-Rat@ R = Div(Int|8, Int|10);
+Rat@ R = Div(Int|10, Int|10);
 
 # Shrink --
 #   Limit the precision of the ball to avoid taking up a potentially

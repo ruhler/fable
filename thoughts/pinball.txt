@@ -55,3 +55,12 @@ Perhaps this is because we introduced 3/5, 4/5 as rational numbers and we
 don't reduce Rat@, so the denominator goes up and up and up leading to large
 multiplications?
 
+---
+
+Reducing Rat@ made a big difference. That fixed the issue with integer
+multiplication taking up all the time.
+
+Setting restitution to 1 so that the ball bounces forever, it's starting to
+look pretty good, except that there is a pause every time we collide with an
+edge.
+
