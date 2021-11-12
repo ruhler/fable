@@ -1,5 +1,34 @@
 Fble Performance Philosophy
 ===========================
-* The programmer is responsible for optimizing the algorithmic complexity of
-  their program, the fble implementation is responsible for optimizing the
-  constant overheads.
+The programmer is responsible for optimizing the algorithmic complexity of
+their program, the fble implementation is responsible for optimizing the
+constant overheads.
+
+Constant overheads will change depending on the fble implementation. Any
+optimization a programmer does for constant overheads is specific to a
+particular fble implementation and is not necessarily good if you switch to a
+different implementation. For this reason, the programmer should focus their
+efforts on optimizing algorithmic complexity, not constant overheads.
+
+There should be a clear performance model for programmers to program against.
+It should be very obvious to a programmer how their program is executed at run
+time. It is more important that a programmer understand how their program will
+behave than that their program run fast. Because if a programmer clearly
+understands how their program will behave, the programmer is capable of making
+the program run fast. If the programmer has to rely on magic from the compiler
+to make their program fast, the programmer is at the mercy of whatever magic
+things the compiler is looking for.
+
+For this reason, the compiler should avoid doing things that effect
+algorithmic complexity. For example, do not eliminate expressions whose
+results are unused. Do not de-duplicate calls to functions. Do not pull
+function calls out of loops. The programmer can do all of these things
+manually easily enough.
+
+An fble implementation should be optimized for good code, not for bad code.
+It's not the fble implementation's job to make a poor algorithm run fast, it's
+the fble implementation's job to make a good algorithm run fast. For that
+reason, when benchmarking, the preference is to benchmark with optimized
+programs, not silly unrealistic benchmarks with terrible algorithmic
+complexity such as an exponential Fibonacci implementation.
+

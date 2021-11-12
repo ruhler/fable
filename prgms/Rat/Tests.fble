@@ -1,0 +1,58 @@
+
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+<@>@ Eq@ = /Eq%.Eq@;
+
+@ Int@ = /Int/Int%.Int@;
+% NegI = /Int/Int%.Neg;
+% IntI = /Int/Int/Lit%.Int;
+
+<@>% List = /List%.List;
+
+@ Rat@ = /Rat%.Rat@;
+% Rat = /Rat%.Rat;
+
+@ String@ = /String%.String@;
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
+
+# EqS --
+#   Test for structural equality of rational numbers. Used for testing
+#   normalization.
+Eq@<Rat@> EqS = (Rat@ a, Rat@ b) {
+  /Int/Int/Eq%.Eq(a.n, b.n).?(false: False);
+  /Int/Int/Eq%.Eq(a.d, b.d).?(false: False);
+  True;
+};
+
+# TestReduce --
+#   Test that rational numbers are properly reduced.
+#
+# Specifically, tests that (n / d) reduces to (nr / dr).
+(String@, Int@, Int@, Int@, Int@) { Test@; }
+TestReduce = (String@ name, Int@ n, Int@ d, Int@ nr, Int@ dr) {
+  Test(name, !({
+    Rat@ wnt = Rat@(nr, dr);
+    Rat@ got = Rat(n, d);
+    AssertEquals<Rat@>(EqS, /Rat/Show%.Show, wnt, got);
+  }));
+};
+
+Test@ Tests = TestSuite(Str|Rat, List<Test@>[
+  TestSuite(Str|Reduce, List<Test@>[
+    TestReduce(Str|'reduced', IntI|5, IntI|7, IntI|5, IntI|7),
+    TestReduce(Str|'neg_pos', NegI(IntI|5), IntI|7, NegI(IntI|5), IntI|7),
+    TestReduce(Str|'neg_neg', NegI(IntI|5), NegI(IntI|7), IntI|5, IntI|7),
+    TestReduce(Str|'pos_neg', IntI|5, NegI(IntI|7), NegI(IntI|5), IntI|7),
+    TestReduce(Str|'even_even', IntI|10, IntI|14, IntI|5, IntI|7),
+    TestReduce(Str|'even_odd', IntI|10, IntI|7, IntI|10, IntI|7),
+    TestReduce(Str|'odd_even', IntI|5, IntI|14, IntI|5, IntI|14)
+  ])
+]);
+
+@(Tests);

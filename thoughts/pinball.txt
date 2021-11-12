@@ -44,3 +44,14 @@ triangles that are tall and skinny.
 
 Actually, no need to redraw the triangles. Do the background drawing once and
 reuse it.
+
+---
+
+The next performance issue is the rational arithmetic, mostly Add and Sub for
+Rat@, which involves calls to /Int/Int%.Mul. Those multiplications account for
+70% of the time now.
+
+Perhaps this is because we introduced 3/5, 4/5 as rational numbers and we
+don't reduce Rat@, so the denominator goes up and up and up leading to large
+multiplications?
+

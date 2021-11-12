@@ -1,9 +1,16 @@
 
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
 @ Int@ = /Int/Int%.Int@;
 % AddI = /Int/Int%.Add;
 % SubI = /Int/Int%.Sub;
+% NegI = /Int/Int%.Neg;
 % MulI = /Int/Int%.Mul;
 % DivI = /Int/Int/Div%.Div;
+% LtI = /Int/Int/Eq%.Lt;
+% IntI = /Int/Int/Lit%.Int;
 
 # Rat@ --
 #   A rational number: n / d.
@@ -13,24 +20,70 @@
 #   d - the denominator.
 @ Rat@ = *(Int@ n, Int@ d);
 
+# Rat -- 
+#   A rational number: n / d, normalized.
+#
+# The normal form of a number is to have the fraction fully reduced with the
+# denominator positive.
+(Int@, Int@) { Rat@; } Rat = (Int@ n, Int@ d) {
+  d.?(n: Rat(NegI(n), NegI(d)));
+  d.?(0: Rat@(IntI|1, d));
+  d.p.?(1: Rat@(n, d));
+
+  n.?(n: {
+    Rat@ r = Rat(NegI(n), d);
+    Rat@(NegI(r.n), r.d);
+  });
+
+  n.?(0: Rat@(n, IntI|1));
+
+  n.p.?(1: Rat@(n, d));
+
+  Bool@ both_even = {
+    n.p.?(2p1: False);
+    d.p.?(2p1: False);
+    True;
+  };
+
+  both_even.?(true: Rat(Int@(p: n.p.2p0), Int@(p: d.p.2p0)));
+
+  n.p.?(2p0: {
+    Rat@ r = Rat(Int@(p: n.p.2p0), d); 
+    Rat@(MulI(IntI|2, r.n), r.d);
+  });
+
+  d.p.?(2p0: {
+    Rat@ r = Rat(n, Int@(p: d.p.2p0));
+    Rat@(r.n, MulI(IntI|2, r.d));
+  });
+
+  LtI(n, d).?(true: {
+    Rat@ r = Rat(d, n);
+    Rat@(r.d, r.n);
+  });
+
+  Rat@ r = Rat(SubI(n, d), d);
+  Rat@(AddI(r.n, r.d), r.d);
+};
+
 (Rat@, Rat@) { Rat@; } Add = (Rat@ a, Rat@ b) {
-  Rat@(AddI(MulI(a.n, b.d), MulI(b.n, a.d)), MulI(a.d, b.d));
+  Rat(AddI(MulI(a.n, b.d), MulI(b.n, a.d)), MulI(a.d, b.d));
 };
 
 (Rat@, Rat@) { Rat@; } Sub = (Rat@ a, Rat@ b) {
-  Rat@(SubI(MulI(a.n, b.d), MulI(b.n, a.d)), MulI(a.d, b.d));
+  Rat(SubI(MulI(a.n, b.d), MulI(b.n, a.d)), MulI(a.d, b.d));
 };
 
 (Rat@, Rat@) { Rat@; } Mul = (Rat@ a, Rat@ b) {
-  Rat@(MulI(a.n, b.n), MulI(a.d, b.d));
+  Rat(MulI(a.n, b.n), MulI(a.d, b.d));
 };
 
 (Rat@) { Rat@; } Neg = (Rat@ a) {
-  Rat@(/Int/Int%.Neg(a.n), a.d);
+  Rat(/Int/Int%.Neg(a.n), a.d);
 };
 
 (Rat@, Rat@) { Rat@; } Div = (Rat@ a, Rat@ b) {
-  Rat@(MulI(a.n, b.d), MulI(a.d, b.n));
+  Rat(MulI(a.n, b.d), MulI(a.d, b.n));
 };
 
 # Approx --
@@ -43,7 +96,7 @@
 # units.
 (Rat@, Rat@) { Rat@; } Approx = (Rat@ x, Rat@ e) {
   Int@ n = DivI(MulI(e.d, x.n), x.d).q;
-  Rat@(SubI(n, DivI(n, e.n).r), e.d);
+  Rat(SubI(n, DivI(n, e.n).r), e.d);
 };
 
-@(Rat@, Add, Sub, Neg, Mul, Div, Approx);
+@(Rat@, Rat, Add, Sub, Neg, Mul, Div, Approx);
