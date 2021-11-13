@@ -1,18 +1,18 @@
 
 <@>@ List@ = /List%.List@;
 
-@ Rat@ = /Rat%.Rat@;
-% Add = /Rat%.Add;
-% Sub = /Rat%.Sub;
-% Neg = /Rat%.Neg;
-% Mul = /Rat%.Mul;
-% Div = /Rat%.Div;
-% Gt = /Rat/Eq%.Gt;
-% Lt = /Rat/Eq%.Lt;
-% Le = /Rat/Eq%.Le;
-% Int = /Rat/Lit%.Int;
+@ Num@ = /Pinball/Num%.Num@;
+% Add = /Pinball/Num%.Add;
+% Sub = /Pinball/Num%.Sub;
+% Neg = /Pinball/Num%.Neg;
+% Mul = /Pinball/Num%.Mul;
+% Div = /Pinball/Num%.Div;
+% Gt = /Pinball/Num%.Gt;
+% Lt = /Pinball/Num%.Lt;
+% Le = /Pinball/Num%.Le;
+% Int = /Pinball/Num%.Int;
 
-@ Vec@ = *(Rat@ x, Rat@ y);
+@ Vec@ = *(Num@ x, Num@ y);
 
 (Vec@, Vec@) { Vec@; } AddV = (Vec@ a, Vec@ b) {
   Vec@(Add(a.x, b.x), Add(a.y, b.y));
@@ -22,7 +22,7 @@
   Vec@(Sub(a.x, b.x), Sub(a.y, b.y));
 };
 
-(Vec@, Rat@) { Vec@; } MulVS = (Vec@ a, Rat@ s) {
+(Vec@, Num@) { Vec@; } MulVS = (Vec@ a, Num@ s) {
   Vec@(Mul(a.x, s), Mul(a.y, s));
 };
 
@@ -30,8 +30,8 @@
 #   Given unit normal vector n and arbitrary vector v, rotate the vector v
 #   to a coordinate system where n is at (0, 1).
 (Vec@, Vec@) { Vec@; } RotateTo = (Vec@ n, Vec@ v) {
-  Rat@ x = Sub(Mul(n.y, v.x), Mul(n.x, v.y));
-  Rat@ y = Add(Mul(n.x, v.x), Mul(n.y, v.y));
+  Num@ x = Sub(Mul(n.y, v.x), Mul(n.x, v.y));
+  Num@ y = Add(Mul(n.x, v.x), Mul(n.y, v.y));
   @(x, y);
 };
 
@@ -39,17 +39,17 @@
 #   Given unit normal vector n and arbitrary vector v, rotate the vector v
 #   out of a coordinate system where n is at (0, 1).
 (Vec@, Vec@) { Vec@; } RotateFrom = (Vec@ n, Vec@ v) {
-  Rat@ x = Add(Mul(n.y, v.x), Mul(n.x, v.y));
-  Rat@ y = Sub(Mul(n.y, v.y), Mul(n.x, v.x));
+  Num@ x = Add(Mul(n.y, v.x), Mul(n.x, v.y));
+  Num@ y = Sub(Mul(n.y, v.y), Mul(n.x, v.x));
   @(x, y);
 };
 
-@ Ball@ = *(Vec@ pos, Vec@ vel, Rat@ radius);
+@ Ball@ = *(Vec@ pos, Vec@ vel, Num@ radius);
 
 @ Edge@ = *(
   Vec@ normal,     # Unit normal vector.
   Vec@ start,      # Starting position of the edge.
-  Rat@ length      # Length of the edge.
+  Num@ length      # Length of the edge.
 );
 
 @ World@ = *(Ball@ ball, List@<Edge@> edges);
@@ -61,28 +61,16 @@ Vec@ HALF_G = Vec@(Int|0, Neg(Div(Int|1, Int|8)));
 # R --
 #   The coefficient of restitution: the fraction of energy preserved during a
 #   collision.
-Rat@ R = Div(Int|10, Int|10);
-
-# Shrink --
-#   Limit the precision of the ball to avoid taking up a potentially
-#   significant necessary memory and computation time.
-(Ball@) { Ball@; } Shrink = {
-  Rat@ P = Div(Int|1, Int|128);
-  (Rat@) { Rat@; } A = (Rat@ x) { /Rat%.Approx(x, P); };
-
-  (Ball@ b) {
-    Ball@(Vec@(A(b.pos.x), A(b.pos.y)), Vec@(A(b.vel.x), A(b.vel.y)), b.radius);
-  };
-};
+Num@ R = Div(Int|10, Int|10);
 
 # Collide --
 #   Check for and apply collision between ball and edge if any.
 #
 # Returns the ball in the state just after it's first collision at time
 # 'time'.
-@ CollideResult@ = *(Ball@ ball, Rat@ time);
-(Vec@, Vec@, Vec@, Rat@, Rat@, List@<Edge@>) { CollideResult@; }
-Collide = (Vec@ start, Vec@ end, Vec@ vel, Rat@ radius, Rat@ time, List@<Edge@> edges) {
+@ CollideResult@ = *(Ball@ ball, Num@ time);
+(Vec@, Vec@, Vec@, Num@, Num@, List@<Edge@>) { CollideResult@; }
+Collide = (Vec@ start, Vec@ end, Vec@ vel, Num@ radius, Num@ time, List@<Edge@> edges) {
   edges.?(nil: @(ball: Ball@(end, vel, radius), time));
 
   Edge@ edge = edges.cons.head;
@@ -101,10 +89,10 @@ Collide = (Vec@ start, Vec@ end, Vec@ vel, Rat@ radius, Rat@ time, List@<Edge@> 
   # Potential collision detected.
   # r = y0 + vt ==>  t = (r-y0)/v
   Vec@ v0 = RotateTo(edge.normal, vel);
-  Rat@ t = Div(Sub(radius, s.y), v0.y);
+  Num@ t = Div(Sub(radius, s.y), v0.y);
 
   # Verify the collision happens within the segment of the edge.
-  Rat@ x = Add(s.x, Mul(v0.x, t));
+  Num@ x = Add(s.x, Mul(v0.x, t));
   Lt(x, Int|0).?(true: Collide(start, end, vel, radius, time, edges.cons.tail));
   Gt(x, edge.length).?(true: Collide(start, end, vel, radius, time, edges.cons.tail));
 
@@ -125,7 +113,7 @@ Collide = (Vec@ start, Vec@ end, Vec@ vel, Rat@ radius, Rat@ time, List@<Edge@> 
 # reaching the end of the time period as a result. This is also assumes we
 # don't have any super tight corners that would cause us to collide an
 # excessive number of times in a single time period.
-(Ball@, Rat@, List@<Edge@>) { Ball@; } Move = (Ball@ b, Rat@ t, List@<Edge@> edges) {
+(Ball@, Num@, List@<Edge@>) { Ball@; } Move = (Ball@ b, Num@ t, List@<Edge@> edges) {
   Le(t, Int|0).?(true: b);
 
   Vec@ end = AddV(b.pos, MulVS(b.vel, t));
@@ -145,7 +133,7 @@ Collide = (Vec@ start, Vec@ end, Vec@ vel, Rat@ radius, Rat@ time, List@<Edge@> 
   # 3. Compute final velocity.
   Vec@ v = AddV(b_moved.vel, HALF_G);
 
-  World@(Shrink(Ball@(b_moved.pos, v, w.ball.radius)), w.edges);
+  World@(Ball@(b_moved.pos, v, w.ball.radius), w.edges);
 };
 
 @(Vec@, Ball@, Edge@, World@, Tick,

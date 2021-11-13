@@ -1363,3 +1363,10 @@ Doing things a little differently:
 * Say I have a function type that takes a private type. Can I cast that to a
   function type that takes the public type to avoid runtime overhead?
 
+---
+
+I wanted to try using abstract data types in my pinball game to define a type
+Num@ that's equal to either a rational number, int, or any other number with
+sufficient precision, but I'm hesitant for fear wrapping all the functions
+will result in significant performance overheads. Sigh. Perhaps that is an
+unjustified concern?

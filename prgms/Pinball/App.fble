@@ -23,13 +23,15 @@
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
-@ Rat@ = /Rat%.Rat@;
-% Neg = /Rat%.Neg;
-% Div = /Rat%.Div;
-% Int = /Rat/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
+
+@ Num@ = /Pinball/Num%.Num@;
+% Floor = /Pinball/Num%.Floor;
+% Neg = /Pinball/Num%.Neg;
+% Div = /Pinball/Num%.Div;
+% Int = /Pinball/Num%.Int;
 
 @ Ball@ = /Pinball/Physics%.Ball@;
 @ Edge@ = /Pinball/Physics%.Edge@;
@@ -40,17 +42,13 @@
 % MulVS = /Pinball/Physics%.MulVS;
 % Tick = /Pinball/Physics%.Tick;
 
-(Rat@) { Int@; } Floor = (Rat@ x) {
-  /Int/Int/Div%.Div(x.n, x.d).q;
-};
-
 (Vec@) { Point@; } Point = (Vec@ a) {
   Point@(Floor(a.x), Floor(a.y));
 };
 
 # Radius --
 #   The radius of the ball.
-Rat@ Radius = Int|8;
+Num@ Radius = Int|8;
 
 World@ Initial = World@(
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
@@ -102,7 +100,7 @@ Drawing@ Background = {
   });
 };
 
-Drawing@ DrawnBall = Circle(Point@(Int|0.n, Int|0.n), Floor(Radius), Color.Cyan);
+Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), Color.Cyan);
 
 (World@) { Drawing@; } Draw = (World@ world) {
   Point@ p = Point(world.ball.pos);
@@ -127,18 +125,18 @@ Run = (Get@<Event@> in, Put@<World@> draw, Unit@! tick, World@ world) {
 };
 
 App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
-  Point@ a = @(x: Int|1.n, y: Neg(Int|1).n);
-  Point@ b = @(x: Int|320.n, y: Int|240.n);
-  Int@ frame_period = Int|16.n;
+  Point@ a = @(x: Floor(Int|1), y: Floor(Neg(Int|1)));
+  Point@ b = @(x: Floor(Int|320), y: Floor(Int|240));
+  Int@ frame_period = Floor(Int|16);
   Unit@! tick = out(Effect@(tick: frame_period));
 
   (World@) { Unit@!; } draw = (World@ s) {
     out(Effect@(draw: Over(
-      Rect(Int|0.n, Int|0.n, width, height, Color.Black),
+      Rect(Floor(Int|0), Floor(Int|0), width, height, Color.Black),
       Affine(a, b, Draw(s)))));
   };
 
-  Unit@ _ := out(Effect@(tick: Int|0.n));
+  Unit@ _ := out(Effect@(tick: Floor(Int|0)));
   Run(in, draw, tick, Initial); 
 };
 

@@ -1,5 +1,6 @@
 * [pinball] 
- - Set up a more interesting world.
+ - Test and fix issue with ball falling outside of the world.
+ - Try switching Num@ from Rat@ to Int@ and see how performance changes.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?

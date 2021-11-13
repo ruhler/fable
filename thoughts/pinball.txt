@@ -74,3 +74,21 @@ noticeably lags. Bouncing off vertical or horizontal edges appear to be fine.
 Less than 5% of the profile is time spent in collisions, which suggests the
 profile is not terribly meaningful for understanding the lag at time of
 collision.
+
+I tried changing the world to do lots of collisions against the diagonal
+walls, but then it didn't lag so much.
+
+I want to try using integers instead of rational numbers and see if it makes a
+noticeable difference. Have everything be scaled by a factor of 128 and see
+how that goes.
+
+---
+
+Turns out, the collision lag issue goes away if we fix precision to 1/128 at
+intermediate computations of rational numbers. In that case, why not use Int@
+instead of Rat@?
+
+I'm not more prominently running into the issue where the ball manages to
+escape it's box. I was having that with Rat@ too, but it seems more likely to
+happen now with the precision limits. Any easy way to address that?
+
