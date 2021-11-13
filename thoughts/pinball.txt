@@ -64,3 +64,13 @@ Setting restitution to 1 so that the ball bounces forever, it's starting to
 look pretty good, except that there is a pause every time we collide with an
 edge.
 
+Perhaps not surprisingly, now all of our time is spent normalizing rational
+numbers? Though maybe changing the ball to bounce forever isn't the right way
+to look at things, if the performance issue is when collisions actually occur.
+
+In particular, it's when the ball bounces off the diagonal edge that it
+noticeably lags. Bouncing off vertical or horizontal edges appear to be fine.
+
+Less than 5% of the profile is time spent in collisions, which suggests the
+profile is not terribly meaningful for understanding the lag at time of
+collision.

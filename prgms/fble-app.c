@@ -350,22 +350,17 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 
         // Collect status on frame rate.
         static Uint32 last = 0;
-        static Uint32 frames = 0;
-        frames++;
 
         Uint32 now = SDL_GetTicks();
         if (last == 0) {
           last = now;
-        }
-        Uint32 elapsed = now - last;
-        if (elapsed > 1000) {
-          int fps = (1000 * frames) / elapsed;
+        } else if (now > last) {
+          Uint32 fps = 1000/(now - last);
           if (fps > 60) {
             fps = 60;
           }
           sFpsHistogram[fps]++;
           last = now;
-          frames = 0;
         }
         break;
       }
