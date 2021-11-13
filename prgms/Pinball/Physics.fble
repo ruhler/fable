@@ -63,44 +63,58 @@ Vec@ HALF_G = Vec@(Int|0, Neg(Div(Int|1, Int|8)));
 #   collision.
 Num@ R = Div(Int|10, Int|10);
 
-# Collide --
-#   Check for and apply collision between ball and edge if any.
-#
-# Returns the ball in the state just after it's first collision at time
-# 'time'.
-@ CollideResult@ = *(Ball@ ball, Num@ time);
-(Vec@, Vec@, Vec@, Num@, Num@, List@<Edge@>) { CollideResult@; }
-Collide = (Vec@ start, Vec@ end, Vec@ vel, Num@ radius, Num@ time, List@<Edge@> edges) {
-  edges.?(nil: @(ball: Ball@(end, vel, radius), time));
+# BallT@ --
+#   A ball at a particular point in time.
+@ BallT@ = *(Ball@ ball, Num@ time);
 
-  Edge@ edge = edges.cons.head;
+# Collide -- 
+#   Check for and apply collision of ball with edge between start and end.
+#
+# If there is no collision, end is returned as is. If there is a collision,
+# returns the ball in the state just after the collision at the time of
+# collision.
+(Ball@, BallT@, Edge@) { BallT@; }
+Collide = (Ball@ start, BallT@ end, Edge@ edge) {
+  Num@ radius = start.radius;
 
   # For there to be considered a collision, the ball must start above the
   # edge and end below the edge.
   # TODO: what if the ball starts just below the edge. Could that be a case
   # where it is falling through the edge due to imprecision? Can we consider
   # it a collision if the ball starts just below the edge too to prevent that?
-  Vec@ s = RotateTo(edge.normal, SubV(start, edge.start));
-  Lt(s.y, radius).?(true: Collide(start, end, vel, radius, time, edges.cons.tail));
+  Vec@ s = RotateTo(edge.normal, SubV(start.pos, edge.start));
+  Lt(s.y, radius).?(true: end);
 
-  Vec@ e = RotateTo(edge.normal, SubV(end, edge.start));
-  Gt(e.y, radius).?(true: Collide(start, end, vel, radius, time, edges.cons.tail));
+  Vec@ e = RotateTo(edge.normal, SubV(end.ball.pos, edge.start));
+  Gt(e.y, radius).?(true: end);
 
   # Potential collision detected.
   # r = y0 + vt ==>  t = (r-y0)/v
-  Vec@ v0 = RotateTo(edge.normal, vel);
+  Vec@ v0 = RotateTo(edge.normal, start.vel);
   Num@ t = Div(Sub(radius, s.y), v0.y);
 
   # Verify the collision happens within the segment of the edge.
   Num@ x = Add(s.x, Mul(v0.x, t));
-  Lt(x, Int|0).?(true: Collide(start, end, vel, radius, time, edges.cons.tail));
-  Gt(x, edge.length).?(true: Collide(start, end, vel, radius, time, edges.cons.tail));
+  Lt(x, Int|0).?(true: end);
+  Gt(x, edge.length).?(true: end);
 
   # Compute the new state just after the collision.
   Vec@ vc = Vec@(v0.x, Neg(v0.y));
-  Vec@ end = AddV(start, MulVS(vel, t));
+  Vec@ end_pos = AddV(start.pos, MulVS(start.vel, t));
   Vec@ vel = RotateFrom(edge.normal, vc);
-  Collide(start, end, MulVS(vel, R), radius, t, edges.cons.tail);
+  BallT@(Ball@(end_pos, MulVS(vel, R), radius), t);
+};
+
+# CollideS --
+#   Check for and apply collision between ball and a list of edges.
+#
+# If there is no collision, end is returned as is. If there is a collision,
+# returns the ball in the state just after the collision at the time of
+# collision.
+(Ball@, BallT@, List@<Edge@>) { BallT@; }
+CollideS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
+  edges.?(nil: end);
+  CollideS(start, Collide(start, end, edges.cons.head), edges.cons.tail);
 };
 
 # Move --
@@ -116,8 +130,9 @@ Collide = (Vec@ start, Vec@ end, Vec@ vel, Num@ radius, Num@ time, List@<Edge@> 
 (Ball@, Num@, List@<Edge@>) { Ball@; } Move = (Ball@ b, Num@ t, List@<Edge@> edges) {
   Le(t, Int|0).?(true: b);
 
-  Vec@ end = AddV(b.pos, MulVS(b.vel, t));
-  CollideResult@ cr = Collide(b.pos, end, b.vel, b.radius, t, edges);
+  Vec@ end_pos = AddV(b.pos, MulVS(b.vel, t));
+  BallT@ end = BallT@(Ball@(end_pos, b.vel, b.radius), t);
+  BallT@ cr = CollideS(b, end, edges);
   Move(cr.ball, Sub(t, cr.time), edges);
 };
 

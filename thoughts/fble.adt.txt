@@ -1375,3 +1375,9 @@ I went ahead with it anyway, and it's pretty nice actually. I feel much better
 about my ability to change out the implementation of Num@ without breaking
 anything. No noticeable performance issues yet.
 
+Performance overhead is not too bad. For example, here we have 1301/89139, or
+about 1.5% overhead for the abstraction.
+
+**   164908    89139     1301  /Pinball/Num%.Mul![0d57] **
+     164908    57634           /Int/Int%.Mul![012f]
+     164908    30204           /Int/Int/Div%.Div![0180]
