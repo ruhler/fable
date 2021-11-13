@@ -94,3 +94,9 @@ happen now with the precision limits. Any easy way to address that?
 
 Switching from Rat@ to Int@ is almost 4x improvement in benchmark performance.
 
+---
+
+Next issue is the details of collision to make sure the ball doesn't magically
+get energy from hitting a corner and eventually runs out of energy, but is
+still able to roll on an incline.
+

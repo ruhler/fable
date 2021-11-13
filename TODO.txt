@@ -1,5 +1,6 @@
 * [pinball] 
- - Test and fix issue with ball falling outside of the world.
+ - Fix issues with ball getting energy from collisions.
+ - Add support for paddles.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?

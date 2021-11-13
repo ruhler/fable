@@ -8,6 +8,7 @@
 % Mul = /Pinball/Num%.Mul;
 % Div = /Pinball/Num%.Div;
 % Gt = /Pinball/Num%.Gt;
+% Ge = /Pinball/Num%.Ge;
 % Lt = /Pinball/Num%.Lt;
 % Le = /Pinball/Num%.Le;
 % Int = /Pinball/Num%.Int;
@@ -56,12 +57,12 @@
 
 # HALF_G --
 #   Half the acceleration due to gravity.
-Vec@ HALF_G = Vec@(Int|0, Neg(Div(Int|1, Int|8)));
+Vec@ HALF_G = Vec@(Int|0, Neg(Div(Int|1, Int|16)));
 
 # R --
 #   The coefficient of restitution: the fraction of energy preserved during a
 #   collision.
-Num@ R = Div(Int|10, Int|10);
+Num@ R = Div(Int|6, Int|8);
 
 # BallT@ --
 #   A ball at a particular point in time.
@@ -78,31 +79,30 @@ Collide = (Ball@ start, BallT@ end, Edge@ edge) {
   Num@ radius = start.radius;
 
   # For there to be considered a collision, the ball must start above the
-  # edge and end below the edge.
-  # TODO: what if the ball starts just below the edge. Could that be a case
-  # where it is falling through the edge due to imprecision? Can we consider
-  # it a collision if the ball starts just below the edge too to prevent that?
+  # edge, end within radius units of the edge, and be going towards the edge.
   Vec@ s = RotateTo(edge.normal, SubV(start.pos, edge.start));
-  Lt(s.y, radius).?(true: end);
+  Lt(s.y, Int|0).?(true: end);
 
   Vec@ e = RotateTo(edge.normal, SubV(end.ball.pos, edge.start));
   Gt(e.y, radius).?(true: end);
 
+  Vec@ v = RotateTo(edge.normal, start.vel);
+  Ge(v.y, Int|0).?(true: end);
+
   # Potential collision detected.
   # r = y0 + vt ==>  t = (r-y0)/v
-  Vec@ v0 = RotateTo(edge.normal, start.vel);
-  Num@ t = Div(Sub(radius, s.y), v0.y);
+  Num@ t = Lt(s.y, radius).?(true: Int|0, false: Div(Sub(radius, s.y), v.y));
 
   # Verify the collision happens within the segment of the edge.
-  Num@ x = Add(s.x, Mul(v0.x, t));
+  Num@ x = Add(s.x, Mul(v.x, t));
   Lt(x, Int|0).?(true: end);
   Gt(x, edge.length).?(true: end);
 
   # Compute the new state just after the collision.
-  Vec@ vc = Vec@(v0.x, Neg(v0.y));
-  Vec@ end_pos = AddV(start.pos, MulVS(start.vel, t));
+  Vec@ vc = Vec@(v.x, Mul(R, Neg(v.y)));
+  Vec@ end_pos = AddV(edge.start, RotateFrom(edge.normal, Vec@(x, radius)));
   Vec@ vel = RotateFrom(edge.normal, vc);
-  BallT@(Ball@(end_pos, MulVS(vel, R), radius), t);
+  BallT@(Ball@(end_pos, vel, radius), t);
 };
 
 # CollideS --

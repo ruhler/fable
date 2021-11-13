@@ -10,6 +10,7 @@
 % MulI = /Int/Int%.Mul;
 % DivI = /Int/Int/Div%.Div;
 % GtI = /Int/Int/Eq%.Gt;
+% GeI = /Int/Int/Eq%.Ge;
 % LtI = /Int/Int/Eq%.Lt;
 % LeI = /Int/Int/Eq%.Le;
 % EqI = /Int/Int/Eq%.Eq;
@@ -64,6 +65,10 @@ Int@ S = IntI|128;
   GtI(a<_@>, b<_@>);
 };
 
+(Num@, Num@) { Bool@; } Ge = (Num@ a, Num@ b) {
+  GeI(a<_@>, b<_@>);
+};
+
 (Num@, Num@) { Bool@; } Lt = (Num@ a, Num@ b) {
   LtI(a<_@>, b<_@>);
 };
@@ -86,4 +91,4 @@ Show@<Num@> Show = (Num@ a) {
   DivI(a<_@>, S).q;
 };
 
-@(Num@, Add, Sub, Neg, Mul, Div, Eq, Gt, Lt, Le, Show, Int, Floor);
+@(Num@, Add, Sub, Neg, Mul, Div, Eq, Gt, Ge, Lt, Le, Show, Int, Floor);
