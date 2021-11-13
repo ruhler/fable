@@ -1370,3 +1370,8 @@ Num@ that's equal to either a rational number, int, or any other number with
 sufficient precision, but I'm hesitant for fear wrapping all the functions
 will result in significant performance overheads. Sigh. Perhaps that is an
 unjustified concern?
+
+I went ahead with it anyway, and it's pretty nice actually. I feel much better
+about my ability to change out the implementation of Num@ without breaking
+anything. No noticeable performance issues yet.
+

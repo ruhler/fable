@@ -4,88 +4,86 @@
 @ Decimal@ = /Digits%.Decimal@;
 
 @ Int@ = /Int/Int%.Int@;
+% AddI = /Int/Int%.Add;
+% SubI = /Int/Int%.Sub;
+% NegI = /Int/Int%.Neg;
+% MulI = /Int/Int%.Mul;
+% DivI = /Int/Int/Div%.Div;
+% GtI = /Int/Int/Eq%.Gt;
+% LtI = /Int/Int/Eq%.Lt;
+% LeI = /Int/Int/Eq%.Le;
+% EqI = /Int/Int/Eq%.Eq;
+% IntI = /Int/Int/Lit%.Int;
+% ShowI = /Int/Int/Show%.Show;
 
 <@>@ List@ = /List%.List@;
 
-@ Rat@ = /Rat%.Rat@;
-% AddR = /Rat%.Add;
-% SubR = /Rat%.Sub;
-% NegR = /Rat%.Neg;
-% MulR = /Rat%.Mul;
-% DivR = /Rat%.Div;
-% ApproxR = /Rat%.Approx;
-% GtR = /Rat/Eq%.Gt;
-% LtR = /Rat/Eq%.Lt;
-% LeR = /Rat/Eq%.Le;
-% EqR = /Rat/Eq%.Eq;
-% IntR = /Rat/Lit%.Int;
-% ShowR = /Rat/Show%.Show;
-
 <@>@ Show@ = /Show%.Show@;
+
+% Str = /String%.Str;
+% Strs = /String%.Strs;
 
 # _@ -- Token type to prevent internal access to Num@ abstract type.
 @? _@;
 
 # Num@ -- 
 #   A number with sufficient precision for the pinball game.
-@ Num@ = _@<Rat@>;
+#
+# The integer x is used to represent the number x/S.
+@ Num@ = _@<Int@>;
 
-(Rat@) { Num@; } Num = {
-  Rat@ P = DivR(IntR|1, IntR|128);
-  (Rat@ a) {
-    _@(ApproxR(a, P));
-  };
-};
+# S -- 
+#   Scale factor for converting Int@ to Num@.
+Int@ S = IntI|128;
 
 (Num@, Num@) { Num@; } Add = (Num@ a, Num@ b) {
-  Num(AddR(a<_@>, b<_@>));
+  _@(AddI(a<_@>, b<_@>));
 };
 
 (Num@, Num@) { Num@; } Sub = (Num@ a, Num@ b) {
-  Num(SubR(a<_@>, b<_@>));
+  _@(SubI(a<_@>, b<_@>));
 };
 
 (Num@) { Num@; } Neg = (Num@ a) {
-  Num(NegR(a<_@>));
+  _@(NegI(a<_@>));
 };
 
 (Num@, Num@) { Num@; } Mul = (Num@ a, Num@ b) {
-  Num(MulR(a<_@>, b<_@>));
+  _@(DivI(MulI(a<_@>, b<_@>), S).q);
 };
 
 (Num@, Num@) { Num@; } Div = (Num@ a, Num@ b) {
-  Num(DivR(a<_@>, b<_@>));
+  _@(DivI(MulI(a<_@>, S), b<_@>).q);
 };
 
 (Num@, Num@) { Bool@; } Eq = (Num@ a, Num@ b) {
-  EqR(a<_@>, b<_@>);
+  EqI(a<_@>, b<_@>);
 };
 
 (Num@, Num@) { Bool@; } Gt = (Num@ a, Num@ b) {
-  GtR(a<_@>, b<_@>);
+  GtI(a<_@>, b<_@>);
 };
 
 (Num@, Num@) { Bool@; } Lt = (Num@ a, Num@ b) {
-  LtR(a<_@>, b<_@>);
+  LtI(a<_@>, b<_@>);
 };
 
 (Num@, Num@) { Bool@; } Le = (Num@ a, Num@ b) {
-  LeR(a<_@>, b<_@>);
+  LeI(a<_@>, b<_@>);
 };
 
 Show@<Num@> Show = (Num@ a) {
-  ShowR(a<_@>);
+  Strs[ShowI(a<_@>), Str|' / ', ShowI(S)];
 };
 
 # Int --
 #   Integer literal.
 (List@<Decimal@>) { Num@; } Int = (List@<Decimal@> ds) {
-  Num(IntR(ds));
+  _@(MulI(IntI(ds), S));
 };
 
 (Num@) { Int@; } Floor = (Num@ a) {
-  Rat@ ar = a<_@>;
-  /Int/Int/Div%.Div(ar.n, ar.d).q;
+  DivI(a<_@>, S).q;
 };
 
 @(Num@, Add, Sub, Neg, Mul, Div, Eq, Gt, Lt, Le, Show, Int, Floor);

@@ -92,3 +92,5 @@ I'm not more prominently running into the issue where the ball manages to
 escape it's box. I was having that with Rat@ too, but it seems more likely to
 happen now with the precision limits. Any easy way to address that?
 
+Switching from Rat@ to Int@ is almost 4x improvement in benchmark performance.
+

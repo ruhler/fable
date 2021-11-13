@@ -708,3 +708,12 @@ Put another way, everything I've done so far for debugging is in the dwarf
 standard. We don't actually do anything gdb specific yet. If I start to be gdb
 specific... is that overly specific?
 
+---
+
+Success story with the debugger: I was getting a divide by zero. I put a
+breakpoint at fprintf, saw the stack trace, and it immediately saw what fble
+code was leading to the divide by zero.
+
+Then I had a long running loop. I ran gdb, did ctrl-c, saw where in the code
+it was looping, and that helped me find another bug. Yay!
+
