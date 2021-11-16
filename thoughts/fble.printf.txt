@@ -91,3 +91,16 @@ annotations in the source code that certain tools are aware of. Then you could
 write a tool to execute fble doing printf. You could use that for assertions.
 That kind of thing. But then, what is a language? I don't know.
 
+---
+
+It would be so useful to have printf functionality. One idea: if we get
+sufficient support for modular compilation, perhaps I could define a library
+function for printf that has a custom native implementation that prints a
+String@ argument as a side effect? Nothing needs to be built into the
+language, we can hard code the String@ type to avoid having to worry about
+types, and we still get the benefits of printf debugging.
+
+All it really requires is a way to compile against a module where you only
+have access to the type of the module at compile time, not the implementation.
+I specify the type: (String@) { Unit@; } is probably good.
+

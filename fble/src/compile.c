@@ -66,7 +66,7 @@ static void SetVar(Scope* scope, size_t index, Local* local);
 static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
-static void AppendStmtDebugInfo(Scope* scope, FbleLoc loc);
+static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
 static void AppendProfileOp(Scope* scope, FbleProfileOpTag tag, FbleBlockId block);
 
 // Blocks --
@@ -176,6 +176,15 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
 //   FreeScope.
 static void PushVar(Scope* scope, Local* local)
 {
+  // TODO: Pass variable name information to PushVar and append a debug info
+  // entry for the variable here.
+  // FbleVarDebugInfo* info = FbleAlloc(FbleVarDebugInfo);
+  // info->_base.tag = FBLE_VAR_DEBUG_INFO;
+  // info->_base.next = NULL;
+  // info->var = ???;
+  // info->index = local->index;
+  // AppendDebugInfo(scope, &info->_base);
+
   FbleVectorAppend(scope->vars, local);
 }
 
@@ -310,19 +319,7 @@ static void FreeScope(Scope* scope)
     }
   }
   FbleFree(scope->locals.xs);
-
-  while (scope->pending_debug_info != NULL) {
-    FbleDebugInfo* info = scope->pending_debug_info;
-    scope->pending_debug_info = info->next;
-    switch (info->tag) { 
-      case FBLE_STATEMENT_DEBUG_INFO: {
-        FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
-        FbleFreeLoc(stmt->loc);
-        break;
-      }
-    }
-    FbleFree(info);
-  }
+  FbleFreeDebugInfo(scope->pending_debug_info);
 
   while (scope->pending_profile_ops != NULL) {
     FbleProfileOp* op = scope->pending_profile_ops;
@@ -354,30 +351,27 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
   FbleVectorAppend(scope->code->instrs, instr);
 }
 
-// AppendStmtDebugInfo --
-//   Append a statement debug info entry to the code block for the given scope.
+// AppendDebugInfo --
+//   Append a single debug info entry to the code block for the given scope.
 //
 // Inputs:
 //   scope - the scope to append the instruction to.
-//   loc - the location of the statement in source code. Borrowed.
+//   info - the debug info entry whose next field must be NULL. Consumed.
 //
 // Side effects:
-//   Appends the debug info to the code block for the given scope.
-static void AppendStmtDebugInfo(Scope* scope, FbleLoc loc)
+//   Appends the debug info to the code block for the given scope, taking
+//   ownership of the allocated debug info object.
+static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info)
 {
-  FbleStatementDebugInfo* stmt = FbleAlloc(FbleStatementDebugInfo);
-  stmt->_base.tag = FBLE_STATEMENT_DEBUG_INFO;
-  stmt->_base.next = NULL;
-  stmt->loc = FbleCopyLoc(loc);
-
+  assert(info->next == NULL);
   if (scope->pending_debug_info == NULL) {
-    scope->pending_debug_info = &stmt->_base;
+    scope->pending_debug_info = info;
   } else {
     FbleDebugInfo* curr = scope->pending_debug_info;
     while (curr->next != NULL) {
       curr = curr->next;
     }
-    curr->next = &stmt->_base;
+    curr->next = info;
   } 
 }
 
@@ -657,8 +651,12 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
 static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* v)
 {
   if (stmt) {
-    AppendStmtDebugInfo(scope, v->loc);
-  };
+    FbleStatementDebugInfo* stmt = FbleAlloc(FbleStatementDebugInfo);
+    stmt->_base.tag = FBLE_STATEMENT_DEBUG_INFO;
+    stmt->_base.next = NULL;
+    stmt->loc = FbleCopyLoc(v->loc);
+    AppendDebugInfo(scope, &stmt->_base);
+  }
 
   switch (v->tag) {
     case FBLE_TYPE_VALUE_TC: {

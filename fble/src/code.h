@@ -65,6 +65,7 @@ typedef struct FbleProfileOp {
 //   Enum used to distinguish among different kinds of FbleDebugInfos.
 typedef enum {
   FBLE_STATEMENT_DEBUG_INFO,
+  FBLE_VAR_DEBUG_INFO,
 } FbleDebugInfoTag;
 
 // FbleDebugInfo
@@ -86,6 +87,28 @@ typedef struct {
   FbleDebugInfo _base;
   FbleLoc loc;
 } FbleStatementDebugInfo;
+
+// FbleVarDebugInfo --
+//   FBLE_VAR_DEBUG_INFO
+//
+// Fields:
+//   var - the name a variable that enters scope at this instruction.
+//   index - the location of the variable in the stack frame.
+typedef struct {
+  FbleDebugInfo _base;
+  FbleName var;
+  FbleFrameIndex index;
+} FbleVarDebugInfo;
+
+// FbleFreeDebugInfo --
+//   Free the given chain of debug infos.
+//
+// Inputs:
+//   info - the chain of debug infos to free. May be NULL.
+//
+// Side effect:
+//   Frees memory allocated for the given debug infos.
+void FbleFreeDebugInfo(FbleDebugInfo* info);
 
 // FbleInstrTag --
 //   Enum used to distinguish among different kinds of instructions.

@@ -72,6 +72,13 @@ static void DumpCode(FILE* fout, FbleCode* code)
                 stmt->loc.source->str, stmt->loc.line, stmt->loc.col);
             break;
           }
+
+          case FBLE_VAR_DEBUG_INFO: {
+            FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
+            fprintf(fout, "    .  var %s %s%zi\n", var->var.name->str,
+                sections[var->index.section], var->index.index);
+            break;
+          }
         }
       }
 
@@ -336,23 +343,34 @@ void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
   return instr;
 }
 
-// FbleFreeInstr -- see documentation in code.h
-void FbleFreeInstr(FbleInstr* instr)
+// FbleFreeDebugInfo -- see documentation in code.h
+void FbleFreeDebugInfo(FbleDebugInfo* info)
 {
-  assert(instr != NULL);
-  while (instr->debug_info != NULL) {
-    FbleDebugInfo* info = instr->debug_info;
-    instr->debug_info = info->next;
-
+  while (info != NULL) {
+    FbleDebugInfo* next = info->next;
     switch (info->tag) {
       case FBLE_STATEMENT_DEBUG_INFO: {
         FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
         FbleFreeLoc(stmt->loc);
         break;
       }
+
+      case FBLE_VAR_DEBUG_INFO: {
+        FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
+        FbleFreeName(var->var);
+        break;
+      }
     }
     FbleFree(info);
+    info = next;
   }
+}
+
+// FbleFreeInstr -- see documentation in code.h
+void FbleFreeInstr(FbleInstr* instr)
+{
+  assert(instr != NULL);
+  FbleFreeDebugInfo(instr->debug_info);
 
   while (instr->profile_ops != NULL) {
     FbleProfileOp* op = instr->profile_ops;

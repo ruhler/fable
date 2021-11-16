@@ -738,3 +738,9 @@ add a TODO and improve scope management later. That sounds like a plan to me.
 First step: have the compiler generate VarInfo debug entries for each
 variable.
  
+* I need to pass variable name info via tc. Specifically for:
+  - let_tc bindings
+  - func_value_tc args
+  - link_tc get and put.
+  - fork_tc bindings.
+  - Compile for top level module args.
