@@ -1,5 +1,4 @@
 * [pinball] 
- - Fix issues with ball getting energy from collisions.
  - Add support for paddles.
 
 * [lang] Clean up support for abstract types.

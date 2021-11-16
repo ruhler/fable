@@ -112,3 +112,25 @@ slope. It gets to the left slope, then slides up the left slope.
 
 The order in which we test for collision doesn't seem to matter.
 
+Try this math:
+
+pos = (-2325/128, -11678/128)
+vel = (-126/128, -4/128)
+
+Understand why we go to
+pos = (-2616/128, -11507/128)
+vel = (-38/128, 98/128)
+
+And in particular, how we can jump to the left by 291 units at once when the
+X velocity is somewhere between -126 and -38.
+
+Checking the math suggests the issue may be that 3/5 and 4/5 don't divide 128
+evenly, so rotating forward and then backwards leads to funny behavior at time
+of collision.
+
+Seems things are better if we avoid use of RotateFrom for computing the new X
+position. I worry that could lead to the possibility of the ball sinking
+through the wall over time, but maybe that's not the case. It looks okay.
+Gravity pushes it down, it doesn't actually go down, then the velocity from
+collision pushes it back up a little. I think we are okay.
+

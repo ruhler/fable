@@ -100,7 +100,7 @@ Collide = (Ball@ start, BallT@ end, Edge@ edge) {
 
   # Compute the new state just after the collision.
   Vec@ vc = Vec@(v.x, Mul(R, Neg(v.y)));
-  Vec@ end_pos = AddV(edge.start, RotateFrom(edge.normal, Vec@(x, radius)));
+  Vec@ end_pos = AddV(start.pos, MulVS(start.vel, t));
   Vec@ vel = RotateFrom(edge.normal, vc);
   BallT@(Ball@(end_pos, vel, radius), t);
 };
