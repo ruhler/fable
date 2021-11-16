@@ -1,5 +1,6 @@
 
 @ App@ = /App%.App@;
+@ AppIO@ = /App%.AppIO@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
@@ -124,20 +125,20 @@ Run = (Get@<Event@> in, Put@<World@> draw, Unit@! tick, World@ world) {
   Run(in, draw, tick, world);
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+App@ Main = (AppIO@ app) {
   Point@ a = @(x: Floor(Int|1), y: Floor(Neg(Int|1)));
   Point@ b = @(x: Floor(Int|320), y: Floor(Int|240));
   Int@ frame_period = Floor(Int|16);
-  Unit@! tick = out(Effect@(tick: frame_period));
+  Unit@! tick = app.effect(Effect@(tick: frame_period));
 
   (World@) { Unit@!; } draw = (World@ s) {
-    out(Effect@(draw: Over(
-      Rect(Floor(Int|0), Floor(Int|0), width, height, Color.Black),
+    app.effect(Effect@(draw: Over(
+      Rect(Floor(Int|0), Floor(Int|0), app.width, app.height, Color.Black),
       Affine(a, b, Draw(s)))));
   };
 
-  Unit@ _ := out(Effect@(tick: Floor(Int|0)));
-  Run(in, draw, tick, Initial); 
+  Unit@ _ := app.effect(Effect@(tick: Floor(Int|0)));
+  Run(app.event, draw, tick, Initial); 
 };
 
 Main;

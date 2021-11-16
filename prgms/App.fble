@@ -35,24 +35,29 @@
   Drawing@ draw
 );
 
+# AppIO@ --
+#   Interface for an App.
+#
+# Fields:
+#   width - The width of the screen.
+#   height - The height of the screen.
+#   event - Get the next input event.
+#   effect - Output an effect.
+@ AppIO@ = *(
+  Int@ width,
+  Int@ height,
+  Get@<Event@> event,
+  Put@<Effect@> effect
+);
+
 # App@ --
 #   User API for describing an App.
 #
 # Inputs:
-#   width - The width of the screen.
-#   height - The height of the screen.
-#   in - Get the next input event.
-#   out - Draw to the screen.
-#      Draws on top of whatever was there before.
-#
-#      Coordinate (0, 0) is the upper left of the screen, with the positive x
-#      access going towards the right edge of the screen and the positive y
-#      access going towards the bottom edge of the screen.
-# 
-#      The drawing is clipped to fit in the screen area.
+#   io - The interface to the application.
 #
 # Results:
 #   None.
-@ App@ = (Int@, Int@, Get@<Event@>, Put@<Effect@>){ Unit@!; };
+@ App@ = (AppIO@) { Unit@!; };
 
-@(App@, Key@, Event@, Effect@);
+@(App@, AppIO@, Key@, Event@, Effect@);

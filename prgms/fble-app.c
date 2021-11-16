@@ -531,18 +531,20 @@ int main(int argc, char* argv[])
   FbleFreeName(block_names[1]);
   FbleFreeName(block_names[2]);
 
-  FbleValue* args[] = {
-    MakeInt(heap, width),
-    MakeInt(heap, height),
-    FbleNewInputPortValue(heap, &io.event, block_id),
-    FbleNewOutputPortValue(heap, &io.effect, block_id + 1)
-  };
+  FbleValue* fble_width = MakeInt(heap, width);
+  FbleValue* fble_height = MakeInt(heap, height);
+  FbleValue* fble_event = FbleNewInputPortValue(heap, &io.event, block_id);
+  FbleValue* fble_effect = FbleNewOutputPortValue(heap, &io.effect, block_id + 1);
+  FbleValue* fble_app = FbleNewStructValue(heap, 4, fble_width, fble_height, fble_event, fble_effect);
+  FbleReleaseValue(heap, fble_width);
+  FbleReleaseValue(heap, fble_height);
+  FbleReleaseValue(heap, fble_event);
+  FbleReleaseValue(heap, fble_effect);
+
+  FbleValue* args[1] = { fble_app };
   FbleValue* proc = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
-  FbleReleaseValue(heap, args[1]);
-  FbleReleaseValue(heap, args[2]);
-  FbleReleaseValue(heap, args[3]);
 
   if (proc == NULL) {
     FbleFreeValueHeap(heap);

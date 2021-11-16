@@ -1,5 +1,6 @@
 
 @ App@ = /App%.App@;
+@ AppIO@ = /App%.AppIO@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
@@ -68,24 +69,24 @@ Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
      game: Run(in, draw, tick, Game.Input(game, i.game)));
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+App@ Main = (AppIO@ app) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|2, y: Neg(Int|2));
   Point@ b = @(x: Int|0, y: Int|480);
 
   # The target is 60 FPS, or 16 millseconds per frame.
   Int@ frame_period = Int|16;
-  Unit@! tick = out(Effect@(tick: frame_period));
+  Unit@! tick = app.effect(Effect@(tick: frame_period));
 
   (Game@) { Unit@!; } draw = (Game@ g) {
-    out(Effect@(draw: Over(
-      Rect(0, 0, width, height, Color.Black),
+    app.effect(Effect@(draw: Over(
+      Rect(0, 0, app.width, app.height, Color.Black),
       Affine(a, b, Game.Draw(g)))));
   };
 
   Game@ game = Game.Initial;
-  Unit@ _ := out(Effect@(tick: Int|0));
-  Run(GetInput(in), draw, tick, game); 
+  Unit@ _ := app.effect(Effect@(tick: Int|0));
+  Run(GetInput(app.event), draw, tick, game); 
 };
 
 Main;

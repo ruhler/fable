@@ -1,5 +1,6 @@
 
 @ App@ = /App%.App@;
+@ AppIO@ = /App%.AppIO@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
@@ -288,27 +289,28 @@ Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   );
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+App@ Main = (AppIO@ app) {
   State@ s = InitialState;
   
   # Map game coordinates into screen coordinates.
-  Point@ a = @(x: Div(width, Add(3, MaxCol)).q, y: Div(height, Add(3, MaxRow)).q);
+  Point@ a = @(x: Div(app.width, Add(3, MaxCol)).q,
+               y: Div(app.height, Add(3, MaxRow)).q);
   Point@ b = @(x: Int|0, y: Int|0);
 
   Put@<Effect@> game_out = (Effect@ e) {
     Effect@ transformed = e.?(
       tick: e,
       draw: Effect@(draw: Affine(a, b, e.draw)));
-    out(transformed);
+    app.effect(transformed);
   };
 
   Unit@ _ := game_out(Effect@(draw: Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color.Blue)));
   Unit@ _ := game_out(Effect@(draw: Draw(s)));
-  Unit@ _ := out(Effect@(tick: Int|16));
-  Unit@ _ := Snake(GetInput(in), game_out, s);
+  Unit@ _ := app.effect(Effect@(tick: Int|16));
+  Unit@ _ := Snake(GetInput(app.event), game_out, s);
 
   Unit@! WaitForKeyPress = {
-    Event@ e := in;
+    Event@ e := app.event;
     e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;

@@ -1,5 +1,6 @@
 
 @ App@ = /App%.App@;
+@ AppIO@ = /App%.AppIO@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
@@ -7,29 +8,25 @@
 @ Point@ = /Drawing%.Point@;
 % Affine = /Drawing%.Affine;
 
-@ Int@ = /Int/Int%.Int@;
 % Neg = /Int/Int%.Neg;
 
 % Int = /Int/Int/Lit%.Int;
-
-<@>@ Get@ = /Process%.Get@;
-<@>@ Put@ = /Process%.Put@;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
 % Screenshot = /Invaders/Graphics%.Screenshot;
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+App@ Main = (AppIO@ app) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|2, y: Neg(Int|2));
   Point@ b = @(x: Int|0, y: Int|480);
 
   Drawing@ screenshot = Screenshot;
-  Unit@ _ := out(Effect@(draw: Affine(a, b, screenshot)));
+  Unit@ _ := app.effect(Effect@(draw: Affine(a, b, screenshot)));
 
   Unit@! WaitForKeyPress = {
-    Event@ e := in;
+    Event@ e := app.event;
     e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
   };
   WaitForKeyPress;

@@ -1,5 +1,6 @@
 
 @ App@ = /App%.App@;
+@ AppIO@ = /App%.AppIO@;
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
@@ -145,7 +146,7 @@ Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
   Run(in, draw, tick, state);
 };
 
-App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
+App@ Main = (AppIO@ app) {
   # Set the window coordinates to (-32, -24) lower left corner, (32, 24) upper
   # right corner.
   Point@ a = @(x: Int|10, y: Neg(Int|10));
@@ -153,16 +154,16 @@ App@ Main = (Int@ width, Int@ height, Get@<Event@> in, Put@<Effect@> out) {
 
   # The target is 60 FPS, or 16 millseconds per frame.
   Int@ frame_period = Int|16;
-  Unit@! tick = out(Effect@(tick: frame_period));
+  Unit@! tick = app.effect(Effect@(tick: frame_period));
 
   (State@) { Unit@!; } draw = (State@ s) {
-    out(Effect@(draw: Over(
-      Rect(Int|0, Int|0, width, height, Color.Black),
+    app.effect(Effect@(draw: Over(
+      Rect(Int|0, Int|0, app.width, app.height, Color.Black),
       Affine(a, b, Draw(s)))));
   };
 
-  Unit@ _ := out(Effect@(tick: Int|0));
-  Run(in, draw, tick, Initial); 
+  Unit@ _ := app.effect(Effect@(tick: Int|0));
+  Run(app.event, draw, tick, Initial); 
 };
 
 Main;
