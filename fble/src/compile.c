@@ -314,7 +314,13 @@ static void FreeScope(Scope* scope)
   while (scope->pending_debug_info != NULL) {
     FbleDebugInfo* info = scope->pending_debug_info;
     scope->pending_debug_info = info->next;
-    FbleFreeLoc(info->loc);
+    switch (info->tag) { 
+      case FBLE_STATEMENT_DEBUG_INFO: {
+        FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
+        FbleFreeLoc(stmt->loc);
+        break;
+      }
+    }
     FbleFree(info);
   }
 
@@ -359,18 +365,19 @@ static void AppendInstr(Scope* scope, FbleInstr* instr)
 //   Appends the debug info to the code block for the given scope.
 static void AppendStmtDebugInfo(Scope* scope, FbleLoc loc)
 {
-  FbleDebugInfo* info = FbleAlloc(FbleDebugInfo);
-  info->loc = FbleCopyLoc(loc);
-  info->next = NULL;
+  FbleStatementDebugInfo* stmt = FbleAlloc(FbleStatementDebugInfo);
+  stmt->_base.tag = FBLE_STATEMENT_DEBUG_INFO;
+  stmt->_base.next = NULL;
+  stmt->loc = FbleCopyLoc(loc);
 
   if (scope->pending_debug_info == NULL) {
-    scope->pending_debug_info = info;
+    scope->pending_debug_info = &stmt->_base;
   } else {
     FbleDebugInfo* curr = scope->pending_debug_info;
     while (curr->next != NULL) {
       curr = curr->next;
     }
-    curr->next = info;
+    curr->next = &stmt->_base;
   } 
 }
 

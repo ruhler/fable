@@ -91,6 +91,12 @@ Times in the past I wished I have an fble debugger:
    I don't happen to have a compiled version of the fble snake app. I ended up
    using gdb to step through fble-app.c after things were converted outside of
    the FbleValue domain.
+
+ - Debug strange behavior of pinball hitting a corner where it gets a bunch of
+   energy. I want to add a check to the code to detect when the situation
+   occurs, then do printf to print values of variables at the time of
+   collision to better understand.
+
  
 ---
 
@@ -717,3 +723,18 @@ code was leading to the divide by zero.
 Then I had a long running loop. I ran gdb, did ctrl-c, saw where in the code
 it was looping, and that helped me find another bug. Yay!
 
+---
+
+For the sake of making some progress towards support for printing variables,
+next step is to try and generate debug info for variables. One question in
+terms of the info I need to generate is how we track variable scopes. Or,
+maybe it isn't an issue as long as we use the function scope as the end,
+because if another variable of the same name is declared, it shadows the
+scope?
+
+Or, just don't worry about scopes for now. Get something useful, and we can
+add a TODO and improve scope management later. That sounds like a plan to me.
+
+First step: have the compiler generate VarInfo debug entries for each
+variable.
+ 

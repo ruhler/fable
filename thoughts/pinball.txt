@@ -100,3 +100,15 @@ Next issue is the details of collision to make sure the ball doesn't magically
 get energy from hitting a corner and eventually runs out of energy, but is
 still able to roll on an incline.
 
+It seems to do a collision at the end corner of an edge and get significant
+boost to velocity in the negative tangential direction.
+
+It's not about hitting the end of an edge, because it happens even if the two
+intersecting edges intersect in the middle. And it only appears to happen on
+the left hand corner, not the right hand corner.
+
+Specifically, this is the ball rolling left on the floor towards the left
+slope. It gets to the left slope, then slides up the left slope.
+
+The order in which we test for collision doesn't seem to matter.
+

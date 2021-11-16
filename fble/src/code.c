@@ -65,8 +65,14 @@ static void DumpCode(FILE* fout, FbleCode* code)
       FbleInstr* instr = block->instrs.xs[i];
 
       for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
-        fprintf(fout, "    .  stmt; // %s:%d:%d\n", 
-            info->loc.source->str, info->loc.line, info->loc.col);
+        switch (info->tag) {
+          case FBLE_STATEMENT_DEBUG_INFO: {
+            FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
+            fprintf(fout, "    .  stmt; // %s:%d:%d\n", 
+                stmt->loc.source->str, stmt->loc.line, stmt->loc.col);
+            break;
+          }
+        }
       }
 
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
@@ -337,7 +343,14 @@ void FbleFreeInstr(FbleInstr* instr)
   while (instr->debug_info != NULL) {
     FbleDebugInfo* info = instr->debug_info;
     instr->debug_info = info->next;
-    FbleFreeLoc(info->loc);
+
+    switch (info->tag) {
+      case FBLE_STATEMENT_DEBUG_INFO: {
+        FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
+        FbleFreeLoc(stmt->loc);
+        break;
+      }
+    }
     FbleFree(info);
   }
 

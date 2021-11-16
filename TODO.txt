@@ -19,7 +19,10 @@
 
 * [lang] Allow something of kind <@>@ to be used where @ is expected.
 
-* [debugger] Figure out how we could print variables.
+* [debugger] Add support for printing variables
+ - Add FbleVarDebugInfo.
+ - Emit dwarf entries for var info.
+ - Add debug test that we can list local variables and print their raw values.
 
 * Remove function bind syntax again, now that we no longer use it?
   On the one hand, it seems a shame to have a syntactic sugar that I don't

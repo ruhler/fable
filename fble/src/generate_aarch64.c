@@ -510,7 +510,10 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 {
   // Emit dwarf location information for the instruction.
   for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
-    fprintf(fout, "  .loc 1 %i %i\n", info->loc.line, info->loc.col);
+    if (info->tag == FBLE_STATEMENT_DEBUG_INFO) {
+      FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
+      fprintf(fout, "  .loc 1 %i %i\n", stmt->loc.line, stmt->loc.col);
+    }
   }
 
   fprintf(fout, "  cbz R_PROFILE, .L._Run_%p.%zi.postprofile\n", code, pc);
