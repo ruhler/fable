@@ -380,5 +380,9 @@ module, separate from its implementation.
 How would this look from an implementation standpoint?
 
 Currently we always load and compile all modules, but we only generate aarch64
-code for the main module.
+code for the main module. We'll want a different way to load modules.
+
+Maybe we can load for each module a type and a value, either of which is
+optional?
+
 

@@ -740,7 +740,7 @@ variable.
  
 * I need to pass variable name info via tc. Specifically for:
   - let_tc bindings ==> done.
-  - func_value_tc args.
+  - func_value_tc args ==> done.
   - func_value_tc statics (not via PushVar?).
   - link_tc get and put ==> done.
   - fork_tc bindings ==> done.

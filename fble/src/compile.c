@@ -89,7 +89,7 @@ static FbleBlockId LinkProfile(Blocks* blocks, FbleName get, FbleName put);
 
 static void CompileExit(bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* tc);
-static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name);
+static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name);
 
 // NewLocal --
 //   Allocate space for an anonymous local variable on the stack frame.
@@ -1058,7 +1058,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 //   Compile a type-checked expression.
 //
 // Inputs:
-//   argc - the number of local variables to reserve for arguments.
+//   args - local variables to reserve for arguments.
 //   tc - the type-checked expression to compile.
 //   name - the name of the expression to use in profiling. Borrowed.
 //
@@ -1069,7 +1069,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 // * Adds blocks to the given profile.
 // * The caller should call FbleFreeCode to release resources
 //   associated with the returned program when it is no longer needed.
-static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name)
+static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name)
 {
   Blocks blocks;
   FbleVectorInit(blocks.stack);
@@ -1078,9 +1078,9 @@ static FbleCode* Compile(size_t argc, FbleTc* tc, FbleName name)
   FbleCode* code;
   Scope scope;
   FbleBlockId scope_block = PushBlock(&blocks, name, name.loc);
-  InitScope(&scope, &code, argc, 0, scope_block, NULL);
+  InitScope(&scope, &code, args.size, 0, scope_block, NULL);
 
-  for (size_t i = 0; i < argc; ++i) {
+  for (size_t i = 0; i < args.size; ++i) {
     Local* local = NewLocal(&scope);
     PushVar(&scope, local);
   }
@@ -1136,12 +1136,19 @@ FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program)
     FbleCompiledModule* compiled_module = FbleVectorExtend(compiled->modules);
     compiled_module->path = FbleCopyModulePath(module->path);
     FbleVectorInit(compiled_module->deps);
+    FbleNameV args;
+    FbleVectorInit(args);
     for (size_t d = 0; d < module->deps.size; ++d) {
       FbleVectorAppend(compiled_module->deps, FbleCopyModulePath(module->deps.xs[d]));
+      FbleVectorAppend(args, FbleModulePathName(module->path));
     }
 
     FbleName label = FbleModulePathName(module->path);
-    compiled_module->code = Compile(module->deps.size, typechecked.xs[i], label);
+    compiled_module->code = Compile(args, typechecked.xs[i], label);
+    for (size_t i = 0; i < args.size; ++i) {
+      FbleFreeName(args.xs[i]);
+    }
+    FbleFree(args.xs);
     FbleFreeTc(typechecked.xs[i]);
     FbleFreeName(label);
   }
