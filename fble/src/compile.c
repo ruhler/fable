@@ -696,7 +696,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       // Compile the values of the variables.
       Local* defs[let_tc->bindings.size];
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        EnterBlock(blocks, let_tc->bindings.xs[i].var, let_tc->bindings.xs[i].profile_loc, scope, false);
+        EnterBlock(blocks, let_tc->bindings.xs[i].name, let_tc->bindings.xs[i].loc, scope, false);
         defs[i] = CompileExpr(blocks, false, false, scope, let_tc->bindings.xs[i].tc);
         ExitBlock(blocks, scope, false);
       }
@@ -704,7 +704,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
         if (let_tc->recursive) {
           FbleRefDefInstr* ref_def_instr = FbleAllocInstr(FbleRefDefInstr, FBLE_REF_DEF_INSTR);
-          ref_def_instr->loc = FbleCopyLoc(let_tc->bindings.xs[i].var.loc);
+          ref_def_instr->loc = FbleCopyLoc(let_tc->bindings.xs[i].name.loc);
           ref_def_instr->ref = vars[i]->index.index;
           ref_def_instr->value = defs[i]->index;
           AppendInstr(scope, &ref_def_instr->_base);
@@ -793,7 +793,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
           // the target directly instead of in some cases allocating a new
           // local and then copying that to target?
           branch_offsets[i] = scope->code->instrs.size - select_instr_pc;
-          EnterBlock(blocks, select_tc->choices.xs[i].profile_name, select_tc->choices.xs[i].profile_loc, scope, exit);
+          EnterBlock(blocks, select_tc->choices.xs[i].name, select_tc->choices.xs[i].loc, scope, exit);
           Local* result = CompileExpr(blocks, true, exit, scope, select_tc->choices.xs[i].tc);
 
           if (!exit) {
@@ -969,7 +969,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Local* args[exec_tc->bindings.size];
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        EnterBlock(blocks, exec_tc->bindings.xs[i].profile_name, exec_tc->bindings.xs[i].profile_loc, scope, false);
+        EnterBlock(blocks, exec_tc->bindings.xs[i].name, exec_tc->bindings.xs[i].loc, scope, false);
         args[i] = CompileExpr(blocks, false, false, scope, exec_tc->bindings.xs[i].tc);
         ExitBlock(blocks, scope, false);
       }

@@ -739,8 +739,9 @@ First step: have the compiler generate VarInfo debug entries for each
 variable.
  
 * I need to pass variable name info via tc. Specifically for:
-  - let_tc bindings
-  - func_value_tc args
-  - link_tc get and put.
+  - let_tc bindings ==> done.
+  - func_value_tc args.
+  - func_value_tc statics (not via PushVar?).
+  - link_tc get and put ==> done.
   - fork_tc bindings.
   - Compile for top level module args.

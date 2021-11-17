@@ -32,8 +32,8 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_LET_TC: {
       FbleLetTc* let_tc = (FbleLetTc*)tc;
       for (size_t i = 0; i < let_tc->bindings.size; ++i) {
-        FbleFreeName(let_tc->bindings.xs[i].var);
-        FbleFreeLoc(let_tc->bindings.xs[i].profile_loc);
+        FbleFreeName(let_tc->bindings.xs[i].name);
+        FbleFreeLoc(let_tc->bindings.xs[i].loc);
         FbleFreeTc(let_tc->bindings.xs[i].tc);
       }
       FbleFree(let_tc->bindings.xs);
@@ -72,8 +72,8 @@ void FbleFreeTc(FbleTc* tc)
           }
         }
         if (!freed) {
-          FbleFreeName(v->choices.xs[i].profile_name);
-          FbleFreeLoc(v->choices.xs[i].profile_loc);
+          FbleFreeName(v->choices.xs[i].name);
+          FbleFreeLoc(v->choices.xs[i].loc);
           FbleFreeTc(v->choices.xs[i].tc);
         }
       }
@@ -122,8 +122,8 @@ void FbleFreeTc(FbleTc* tc)
     case FBLE_EXEC_TC: {
       FbleExecTc* exec_tc = (FbleExecTc*)tc;
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        FbleFreeName(exec_tc->bindings.xs[i].profile_name);
-        FbleFreeLoc(exec_tc->bindings.xs[i].profile_loc);
+        FbleFreeName(exec_tc->bindings.xs[i].name);
+        FbleFreeLoc(exec_tc->bindings.xs[i].loc);
         FbleFreeTc(exec_tc->bindings.xs[i].tc);
       }
       FbleFree(exec_tc->bindings.xs);

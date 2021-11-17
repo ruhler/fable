@@ -674,9 +674,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleVectorInit(let_tc->bindings);
       let_tc->body = body.tc;
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        FbleLetTcBinding ltc = {
-          .var = FbleCopyName(let_expr->bindings.xs[i].name),
-          .profile_loc = FbleCopyLoc(let_expr->bindings.xs[i].expr->loc),
+        FbleTcBinding ltc = {
+          .name = FbleCopyName(let_expr->bindings.xs[i].name),
+          .loc = FbleCopyLoc(let_expr->bindings.xs[i].expr->loc),
           .tc = defs[i].tc
         };
         FbleVectorAppend(let_tc->bindings, ltc);
@@ -838,7 +838,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       bool error = false;
       FbleType* target = NULL;
 
-      FbleTcProfiled default_ = { .tc = NULL };
+      FbleTcBinding default_ = { .tc = NULL };
       bool default_used = false;
       if (select_expr->default_ != NULL) {
         Tc result = TypeCheckExpr(th, scope, select_expr->default_);
@@ -849,8 +849,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
             .space = FBLE_NORMAL_NAME_SPACE,
             .loc = FbleCopyLoc(select_expr->default_->loc),
           };
-          default_.profile_name = label;
-          default_.profile_loc = FbleCopyLoc(select_expr->default_->loc);
+          default_.name = label;
+          default_.loc = FbleCopyLoc(select_expr->default_->loc);
           default_.tc = result.tc;
         }
         target = result.type;
@@ -863,9 +863,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           error = error || (result.type == NULL);
 
           if (result.type != NULL) {
-            FbleTcProfiled choice = {
-              .profile_name = FbleCopyName(select_expr->choices.xs[branch].name),
-              .profile_loc = FbleCopyLoc(select_expr->choices.xs[branch].expr->loc),
+            FbleTcBinding choice = {
+              .name = FbleCopyName(select_expr->choices.xs[branch].name),
+              .loc = FbleCopyLoc(select_expr->choices.xs[branch].expr->loc),
               .tc = result.tc,
             };
             FbleVectorAppend(select_tc->choices, choice);
@@ -906,8 +906,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       }
 
       if (default_.tc != NULL && !default_used) {
-        FbleFreeName(default_.profile_name);
-        FbleFreeLoc(default_.profile_loc);
+        FbleFreeName(default_.name);
+        FbleFreeLoc(default_.loc);
         FbleFreeTc(default_.tc);
       }
 
@@ -1083,9 +1083,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       let_tc->recursive = false;
       let_tc->body = body.tc;
       FbleVectorInit(let_tc->bindings);
-      FbleLetTcBinding ltc = {
-        .var = FbleCopyName(poly->arg.name),
-        .profile_loc = FbleCopyLoc(poly->arg.name.loc),
+      FbleTcBinding ltc = {
+        .name = FbleCopyName(poly->arg.name),
+        .loc = FbleCopyLoc(poly->arg.name.loc),
         .tc = &type_tc->_base
       };
       FbleVectorAppend(let_tc->bindings, ltc);
@@ -1245,9 +1245,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
       type_tc->_base.loc = FbleCopyLoc(expr->loc);
 
-      FbleLetTcBinding binding = {
-        .var = FbleCopyName(abs_expr->name),
-        .profile_loc = FbleCopyLoc(expr->loc),
+      FbleTcBinding binding = {
+        .name = FbleCopyName(abs_expr->name),
+        .loc = FbleCopyLoc(expr->loc),
         .tc = &type_tc->_base
       };
       FbleVectorAppend(let_tc->bindings, binding);
@@ -1846,9 +1846,9 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         } else {
           error = true;
         }
-        FbleTcProfiled pb = {
-          .profile_name = FbleCopyName(exec_expr->bindings.xs[i].name),
-          .profile_loc = FbleCopyLoc(exec_expr->bindings.xs[i].expr->loc),
+        FbleTcBinding pb = {
+          .name = FbleCopyName(exec_expr->bindings.xs[i].name),
+          .loc = FbleCopyLoc(exec_expr->bindings.xs[i].expr->loc),
           .tc = binding.tc,
         };
         FbleVectorAppend(exec_tc->bindings, pb);

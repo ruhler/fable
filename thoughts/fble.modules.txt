@@ -350,3 +350,20 @@ interpreter understands.
 I guess the question for packages in fble is what I want to include as part of
 the language specification in terms of package formats.
 
+---
+
+Modules came up as potentially useful for printf debugging. The idea is you
+want to be able to compile a module with only type information about the other
+modules it depends on. That's useful for distributing modules too.
+
+So, here's what I'm thinking:
+
+/Foo% is implemented in Foo.fble. Foo.fble.@ is an fble file containing just
+the type of /Foo%. The compiler can read the .@ files to get type information
+for dependencies without needing to access their implementations.
+
+I'm thinking we may as well have Foo.fble.@ have the same syntax as a normal
+fble file. It might be useful to share type definitions among these header
+files, and it might be useful to make them human readable. At the same time,
+we still have the option to make them compiler generated.
+

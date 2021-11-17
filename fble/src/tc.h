@@ -108,24 +108,25 @@ typedef struct {
   FbleVarIndex index;
 } FbleVarTc;
 
-// FbleLetTcBinding --
-//   Information for a binding used in FbleLetTc.
+// FbleTcBinding --
+//   Information for a binding. Used for let bindings, exec bindings, and case
+//   branches.
 //
-// var - The name of the variable, for profile and debugging purposes.
-// profile_loc - The location of the profile block to use for the binding.
+// name - The name of the variable or branch.
+// loc - The location of the value.
 // tc - The value of the binding.
 typedef struct {
-  FbleName var;
-  FbleLoc profile_loc;
+  FbleName name;
+  FbleLoc loc;
   FbleTc* tc;
-} FbleLetTcBinding;
+} FbleTcBinding;
 
-// FbleLetTcBindingV --
-//   A vector of FbleLetTcBinding.
+// FbleTcBindingV --
+//   A vector of FbleTcBinding.
 typedef struct {
   size_t size;
-  FbleLetTcBinding* xs;
-} FbleLetTcBindingV;
+  FbleTcBinding* xs;
+} FbleTcBindingV;
 
 // FbleLetTc --
 //   FBLE_LET_TC
@@ -142,7 +143,7 @@ typedef struct {
 typedef struct {
   FbleTc _base;
   bool recursive;
-  FbleLetTcBindingV bindings;
+  FbleTcBindingV bindings;
   FbleTc* body;
 } FbleLetTc;
 
@@ -166,21 +167,6 @@ typedef struct {
   FbleTc* arg;
 } FbleUnionValueTc;
 
-// FbleTcProfiled --
-//   An FbleTc along with information needed to wrap it in a profiling block.
-typedef struct {
-  FbleName profile_name;
-  FbleLoc profile_loc;
-  FbleTc* tc;
-} FbleTcProfiled;
-
-// FbleTcProfiledV --
-//   Vector of FbleTcProfiled.
-typedef struct {
-  size_t size;
-  FbleTcProfiled* xs;
-} FbleTcProfiledV;
-
 // FbleUnionSelectTc --
 //   FBLE_UNION_SELECT_TC
 //
@@ -195,7 +181,7 @@ typedef struct {
 typedef struct {
   FbleTc _base;
   FbleTc* condition;
-  FbleTcProfiledV choices;
+  FbleTcBindingV choices;
 } FbleUnionSelectTc;
 
 // FbleDataAccessTc --
@@ -256,7 +242,7 @@ typedef struct {
 // computing the proc value.
 typedef struct {
   FbleTc _base;
-  FbleTcProfiledV bindings;
+  FbleTcBindingV bindings;
   FbleTc* body;
 } FbleExecTc;
 
