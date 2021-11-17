@@ -862,7 +862,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
     case FBLE_FUNC_VALUE_TC: {
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)v;
-      size_t argc = func_tc->argc;
+      size_t argc = func_tc->args.size;
 
       FbleFuncValueInstr* instr = FbleAllocInstr(FbleFuncValueInstr, FBLE_FUNC_VALUE_INSTR);
 

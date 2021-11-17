@@ -991,7 +991,10 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       func_tc->_base.loc = FbleCopyLoc(expr->loc);
       func_tc->body_loc = FbleCopyLoc(func_value_expr->body->loc);
       func_tc->scope = captured;
-      func_tc->argc = argc;
+      FbleVectorInit(func_tc->args);
+      for (size_t i = 0; i < argc; ++i) {
+        FbleVectorAppend(func_tc->args, FbleCopyName(func_value_expr->args.xs[i].name));
+      }
       func_tc->body = func_result.tc;
 
       FreeScope(th, &func_scope);
@@ -1023,7 +1026,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       proc_tc->_base.loc = FbleCopyLoc(expr->loc);
       proc_tc->body_loc = FbleCopyLoc(expr->loc);
       proc_tc->scope = captured;
-      proc_tc->argc = 0;
+      FbleVectorInit(proc_tc->args);
       proc_tc->body = body.tc;
 
       FreeScope(th, &body_scope);

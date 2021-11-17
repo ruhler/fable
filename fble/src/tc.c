@@ -95,6 +95,10 @@ void FbleFreeTc(FbleTc* tc)
       FbleFreeLoc(func_tc->body_loc);
       FbleFreeTc(func_tc->body);
       FbleFree(func_tc->scope.xs);
+      for (size_t i = 0; i < func_tc->args.size; ++i) {
+        FbleFreeName(func_tc->args.xs[i]);
+      }
+      FbleFree(func_tc->args.xs);
       FbleFree(tc);
       return;
     }

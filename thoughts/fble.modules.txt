@@ -367,3 +367,18 @@ fble file. It might be useful to share type definitions among these header
 files, and it might be useful to make them human readable. At the same time,
 we still have the option to make them compiler generated.
 
+It will be important for the compiler to be able to confirm when compiling
+Foo.fble that it's type matches what is in Foo.fble.@.
+
+There may be duplication of code between Foo.fble and Foo.fble.@. I think
+that's okay. Hopefully it means you have to think twice any time you go to
+change the interface to a module. Hopefully it's not too bad to duplicate.
+
+I think Foo.fble.@ would be a good place to document the public interface to a
+module, separate from its implementation.
+
+How would this look from an implementation standpoint?
+
+Currently we always load and compile all modules, but we only generate aarch64
+code for the main module.
+

@@ -204,7 +204,7 @@ typedef struct {
   FbleTc _base;
   FbleLoc body_loc;
   FbleVarIndexV scope;
-  size_t argc;
+  FbleNameV args;
   FbleTc* body;
 } FbleFuncValueTc;
 
