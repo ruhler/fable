@@ -58,10 +58,10 @@ typedef struct Scope {
 
 static Local* NewLocal(Scope* scope);
 static void ReleaseLocal(Scope* scope, Local* local, bool exit);
-static void PushVar(Scope* scope, Local* local);
+static void PushVar(Scope* scope, FbleName name, Local* local);
 static void PopVar(Scope* scope, bool exit);
 static Local* GetVar(Scope* scope, FbleVarIndex index);
-static void SetVar(Scope* scope, size_t index, Local* local);
+static void SetVar(Scope* scope, size_t index, FbleName name, Local* local);
 
 static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
@@ -165,6 +165,7 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
 //
 // Inputs:
 //   scope - the scope to push the variable on to.
+//   name - the name of the variable. Borrowed.
 //   local - the local address of the variable. Consumed.
 //
 // Results:
@@ -174,16 +175,16 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
 //   Pushes a new variable onto the scope. Takes ownership of the given local,
 //   which will be released when the variable is freed by a call to PopVar or
 //   FreeScope.
-static void PushVar(Scope* scope, Local* local)
+static void PushVar(Scope* scope, FbleName name, Local* local)
 {
-  // TODO: Pass variable name information to PushVar and append a debug info
-  // entry for the variable here.
-  // FbleVarDebugInfo* info = FbleAlloc(FbleVarDebugInfo);
-  // info->_base.tag = FBLE_VAR_DEBUG_INFO;
-  // info->_base.next = NULL;
-  // info->var = ???;
-  // info->index = local->index;
-  // AppendDebugInfo(scope, &info->_base);
+  if (local != NULL) {
+    FbleVarDebugInfo* info = FbleAlloc(FbleVarDebugInfo);
+    info->_base.tag = FBLE_VAR_DEBUG_INFO;
+    info->_base.next = NULL;
+    info->var = FbleCopyName(name);
+    info->index = local->index;
+    AppendDebugInfo(scope, &info->_base);
+  }
 
   FbleVectorAppend(scope->vars, local);
 }
@@ -241,17 +242,25 @@ static Local* GetVar(Scope* scope, FbleVarIndex index)
 // Inputs:
 //   scope - scope of variables
 //   index - the index of the local variable to change
+//   name - the name of the variable.
 //   local - the new value for the local variable
 //
 // Side effects:
 // * Frees the existing local value of the variable.
 // * Sets the value of the variable to the given local.
 // * Takes ownership of the given local.
-static void SetVar(Scope* scope, size_t index, Local* local)
+static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
 {
   assert(index < scope->vars.size);
   ReleaseLocal(scope, scope->vars.xs[index], false);
   scope->vars.xs[index] = local;
+
+  FbleVarDebugInfo* info = FbleAlloc(FbleVarDebugInfo);
+  info->_base.tag = FBLE_VAR_DEBUG_INFO;
+  info->_base.next = NULL;
+  info->var = FbleCopyName(name);
+  info->index = local->index;
+  AppendDebugInfo(scope, &info->_base);
 }
 
 // InitScope --
@@ -690,7 +699,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
           ref_instr->dest = vars[i]->index.index;
           AppendInstr(scope, &ref_instr->_base);
         }
-        PushVar(scope, vars[i]);
+        PushVar(scope, let_tc->bindings.xs[i].name, vars[i]);
       }
 
       // Compile the values of the variables.
@@ -709,7 +718,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
           ref_def_instr->value = defs[i]->index;
           AppendInstr(scope, &ref_def_instr->_base);
         }
-        SetVar(scope, base_index + i, defs[i]);
+        SetVar(scope, base_index + i, let_tc->bindings.xs[i].name, defs[i]);
       }
 
       Local* body = CompileExpr(blocks, true, exit, scope, let_tc->body);
@@ -878,7 +887,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       for (size_t i = 0; i < argc; ++i) {
         Local* local = NewLocal(&func_scope);
-        PushVar(&func_scope, local);
+        PushVar(&func_scope, func_tc->args.xs[i], local);
       }
 
       Local* func_result = CompileExpr(blocks, true, true, &func_scope, func_tc->body);
@@ -948,11 +957,11 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Local* get_local = NewLocal(scope);
       link->get = get_local->index.index;
-      PushVar(scope, get_local);
+      PushVar(scope, link_tc->get, get_local);
 
       Local* put_local = NewLocal(scope);
       link->put = put_local->index.index;
-      PushVar(scope, put_local);
+      PushVar(scope, link_tc->put, put_local);
 
       link->profile = LinkProfile(blocks, link_tc->get, link_tc->put);
       AppendInstr(scope, &link->_base);
@@ -988,7 +997,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
         // of the arguments.
         Local* local = NewLocal(scope);
         fork->dests.xs[i] = local->index.index;
-        PushVar(scope, local);
+        PushVar(scope, exec_tc->bindings.xs[i].name, local);
       }
 
       for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
@@ -1082,7 +1091,7 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name)
 
   for (size_t i = 0; i < args.size; ++i) {
     Local* local = NewLocal(&scope);
-    PushVar(&scope, local);
+    PushVar(&scope, args.xs[i], local);
   }
 
   CompileExpr(&blocks, true, true, &scope, tc);
@@ -1140,7 +1149,7 @@ FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program)
     FbleVectorInit(args);
     for (size_t d = 0; d < module->deps.size; ++d) {
       FbleVectorAppend(compiled_module->deps, FbleCopyModulePath(module->deps.xs[d]));
-      FbleVectorAppend(args, FbleModulePathName(module->path));
+      FbleVectorAppend(args, FbleModulePathName(module->deps.xs[d]));
     }
 
     FbleName label = FbleModulePathName(module->path);

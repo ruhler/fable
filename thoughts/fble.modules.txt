@@ -383,6 +383,8 @@ Currently we always load and compile all modules, but we only generate aarch64
 code for the main module. We'll want a different way to load modules.
 
 Maybe we can load for each module a type and a value, either of which is
-optional?
+optional? I'll need some thought to work out exactly how to do it, but the
+idea seems simple enough. Just need to manage the two different ways of
+loading things: full source versus mostly type dependencies.
 
 

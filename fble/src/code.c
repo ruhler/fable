@@ -75,8 +75,9 @@ static void DumpCode(FILE* fout, FbleCode* code)
 
           case FBLE_VAR_DEBUG_INFO: {
             FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
-            fprintf(fout, "    .  var %s %s%zi\n", var->var.name->str,
-                sections[var->index.section], var->index.index);
+            fprintf(fout, "    .  var ");
+            FblePrintName(fout, var->var);
+            fprintf(fout, " %s%zi\n", sections[var->index.section], var->index.index);
             break;
           }
         }
