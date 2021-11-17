@@ -745,3 +745,40 @@ variable.
   - link_tc get and put ==> done.
   - fork_tc bindings ==> done.
   - Compile for top level module args ==> done.
+
+Figuring out the location info:
+
+   DW_OP_bregx <offset> <regnum>
+Or DW_OP_breg<regnum> <offset>
+
+What are the registers for R_STATICS, R_LOCALS?
+
+R_LOCALS = x20 = ??
+R_STATICS = x21 = ??
+
+Encoding:
+  OP (1 byte): 0x7? or 0x92 depending.
+  (ULEB128 reg)
+  SLEB128 offset
+
+Let's figure out the register numbers. The internet says x0-x30 are dwarf
+register numbers 0-30. So we can use:
+
+R_LOCALS: OP 0x84
+R_STATICS: OP 0x85
+
+Followed by a SLEB 128 offset.
+So, what kind of constant do we use for this?
+It's got to be a block. We'll have to know the length
+of the block. DW_FORM_block1 should be just fine.
+
+The format of a block1 block is: 1-byte length followed by bytes of
+information.
+
+gcc uses 0x18 for the form of a location, which I don't see in the dwarf2
+spec.
+
+---
+
+It totally works. I can print variables now. That's pretty awesome. Great
+progress.

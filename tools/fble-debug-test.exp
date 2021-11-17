@@ -45,4 +45,27 @@ eval {
   close
 }
 
+eval {
+  # Test that we can print values of local variables
+  spawn gdb --quiet ./out/bin/fble-debug-test
+  expect "(gdb) "
+
+  set LINE 32
+  send "break prgms/Fble/DebugTest.fble:$LINE\n"
+  require "Breakpoint 1 at"
+  require "prgms/Fble/DebugTest.fble, line $LINE."
+  require "(gdb) "
+
+  send "run\n"
+  require "at prgms/Fble/DebugTest.fble:$LINE"
+  require "(gdb) "
+
+  send "info locals\n"
+  require "light"
+  require "u"
+  require "(gdb)"
+
+  close
+}
+
 exit 0

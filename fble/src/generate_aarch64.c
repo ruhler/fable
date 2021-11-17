@@ -1590,6 +1590,35 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
     // low_pc and high_pc attributes.
     fprintf(fout, "  .8byte _Run.%p.%s\n", (void*)code, function_label);
     fprintf(fout, "  .8byte .L.%p.%s.high_pc\n", (void*)code, function_label);
+
+    for (size_t j = 0; j < code->instrs.size; ++j) {
+      FbleInstr* instr = code->instrs.xs[j];
+      for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
+        if (info->tag == FBLE_VAR_DEBUG_INFO) {
+          FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
+          fprintf(fout, "  .uleb128 3\n");  // abbrev code for var.
+
+          // variable name.
+          fprintf(fout, "  .string \"");
+          FblePrintName(fout, var->var);
+          fprintf(fout, "\"\n");
+
+          // location.
+          static const char* sections[] = { "0x85", "0x84"};
+          fprintf(fout, "  .byte 1f - 0f\n");   // length of block.
+          fprintf(fout, "0:\n");
+          fprintf(fout, "  .byte %s\n", sections[var->index.section]);
+          fprintf(fout, "  .sleb128 %zi\n", sizeof(FbleValue*) * var->index.index);
+          fprintf(fout, "1:\n");
+
+          // start_scope
+          fprintf(fout, "  .8byte .L._Run_%p.pc.%zi - _Run.%p.%s\n",
+              (void*)code, j,
+              (void*)code, function_label);
+        }
+      }
+    }
+    fprintf(fout, "  .uleb128 0\n");    // abbrev code for NULL (end of list).
   };
 
   fprintf(fout, "  .uleb128 0\n");    // abbrev code for NULL (end of list).
@@ -1618,13 +1647,25 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   fprintf(fout, "  .uleb128 2\n");     // subprogram abbrev code declaration
   fprintf(fout, "  .uleb128 0x2e\n");  // DW_TAG_subprogram
-  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_no
+  fprintf(fout, "  .byte 1\n");        // DW_CHILDREN_yes
   fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
   fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
   fprintf(fout, "  .uleb128 0x11\n");  // DW_AT_low_pc
   fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
   fprintf(fout, "  .uleb128 0x12\n");  // DW_AT_high_pc
   fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
+
+  fprintf(fout, "  .uleb128 3\n");     // var abbrev code declaration
+  fprintf(fout, "  .uleb128 0x34\n");  // DW_TAG_variable
+  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_yes
+  fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
+  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
+  fprintf(fout, "  .uleb128 0x02\n");  // DW_AT_location
+  fprintf(fout, "  .uleb128 0x0a\n");  // DW_FORM_block1
+  fprintf(fout, "  .uleb128 0x2c\n");  // DW_AT_start_scope
+  fprintf(fout, "  .uleb128 0x07\n");  // DW_FORM_data8
   fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
   fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
 

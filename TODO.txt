@@ -18,10 +18,12 @@
 
 * [lang] Allow something of kind <@>@ to be used where @ is expected.
 
-* [debugger] Add support for printing variables
- - Add FbleVarDebugInfo.
- - Emit dwarf entries for var info.
- - Add debug test that we can list local variables and print their raw values.
+* [debugger] Improve support for printing variables
+ - Add VarDebugInfo for function static variables.
+ - Write some helper C functions to decode FbleValue*.
+ - Emit lexical scopes where appropriate.
+ - Specify type of variables as FbleValue*?
+   So that they print in hex by default in gdb instead of decimal?
 
 * Remove function bind syntax again, now that we no longer use it?
   On the one hand, it seems a shame to have a syntactic sugar that I don't
