@@ -111,13 +111,11 @@ typedef struct {
 // FbleLetTcBinding --
 //   Information for a binding used in FbleLetTc.
 //
-// var_loc - The location of the variable, used to report vacuous values.
-// profile_name - The name of the profile block to use for the binding.
+// var - The name of the variable, for profile and debugging purposes.
 // profile_loc - The location of the profile block to use for the binding.
 // tc - The value of the binding.
 typedef struct {
-  FbleLoc var_loc;
-  FbleName profile_name;
+  FbleName var;
   FbleLoc profile_loc;
   FbleTc* tc;
 } FbleLetTcBinding;
