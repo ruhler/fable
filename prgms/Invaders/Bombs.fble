@@ -8,9 +8,9 @@
 % Over = /Drawing%.Over;
 % Translate = /Drawing%.Translate;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
+% Sub = /Int%.Sub;
 % Lt = /Int/Eq%.Lt;
 % Gt = /Int/Eq%.Gt;
 % Int = /Int/Lit%.Int;

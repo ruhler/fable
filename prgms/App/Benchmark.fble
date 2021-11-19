@@ -6,8 +6,8 @@
 
 @ Drawing@ = /Drawing%.Drawing@;
 
-@ Int@ = /Int/Int%.Int@;
-% Dec = /Int/Int%.Dec;
+@ Int@ = /Int%.Int@;
+% Dec = /Int%.Dec;
 
 % Int = /Int/Lit%.Int;
 

@@ -6,11 +6,11 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-@ Int@ = /Int/Int%.Int@;
-% 0 = /Int/Int%.0;
-% Inc = /Int/Int%.Inc;
-% Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
+@ Int@ = /Int%.Int@;
+% 0 = /Int%.0;
+% Inc = /Int%.Inc;
+% Add = /Int%.Add;
+% Sub = /Int%.Sub;
 
 <@>@ List@ = /List%.List@;
 <@>% Nil = /List%.Nil;

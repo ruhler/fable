@@ -7,8 +7,8 @@
 % Blank = /Drawing%.Blank;
 % Translate = /Drawing%.Translate;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
 % Lt = /Int/Eq%.Lt;
 % Int = /Int/Lit%.Int;
 

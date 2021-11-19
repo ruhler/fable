@@ -1,7 +1,7 @@
 % And = /Bool%.And;
 % Or = /Bool%.Or;
 
-@ Int@ = /Int/Int%.Int@;
+@ Int@ = /Int%.Int@;
 
 % Str = /String%.Str;
 % Strs = /String%.Strs;
@@ -17,7 +17,7 @@
 # Add --
 #   Add two coordinates together.
 (Coord@, Coord@) { Coord@; } Add = (Coord@ a, Coord@ b) {
-  Coord@(/Int/Int%.Add(a.x, b.x), /Int/Int%.Add(a.y, b.y));
+  Coord@(/Int%.Add(a.x, b.x), /Int%.Add(a.y, b.y));
 };
 
 # Eq --

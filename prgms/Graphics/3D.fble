@@ -1,8 +1,8 @@
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
-% Mul = /Int/Int%.Mul;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
+% Sub = /Int%.Sub;
+% Mul = /Int%.Mul;
 % Div = /Int/Div%.Div;
 
 # Vec@ --

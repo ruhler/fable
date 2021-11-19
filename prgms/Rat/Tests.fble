@@ -4,8 +4,8 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
-@ Int@ = /Int/Int%.Int@;
-% NegI = /Int/Int%.Neg;
+@ Int@ = /Int%.Int@;
+% NegI = /Int%.Neg;
 % IntI = /Int/Lit%.Int;
 
 <@>% List = /List%.List;

@@ -1,7 +1,7 @@
 
 @ Drawing@ = /Drawing%.Drawing@;
 
-@ Int@ = /Int/Int%.Int@;
+@ Int@ = /Int%.Int@;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;

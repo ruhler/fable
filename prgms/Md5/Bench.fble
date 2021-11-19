@@ -4,8 +4,8 @@
 
 % Hex = /Digits%.Hex;
 
-@ Int@ = /Int/Int%.Int@;
-% Sub = /Int/Int%.Sub;
+@ Int@ = /Int%.Int@;
+% Sub = /Int%.Sub;
 % Int = /Int/Lit%.Int;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;

@@ -2,7 +2,7 @@
 @ Decimal@ = /Digits%.Decimal@;
 % Decimal = /Digits%.Decimal;
 
-@ Int@ = /Int/Int%.Int@;
+@ Int@ = /Int%.Int@;
 % Int = /Int/Lit%.Int;
 % Div = /Int/Div%.Div;
 

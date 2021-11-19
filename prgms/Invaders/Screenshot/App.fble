@@ -8,7 +8,7 @@
 @ Point@ = /Drawing%.Point@;
 % Affine = /Drawing%.Affine;
 
-% Neg = /Int/Int%.Neg;
+% Neg = /Int%.Neg;
 
 % Int = /Int/Lit%.Int;
 

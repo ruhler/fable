@@ -6,7 +6,7 @@
 @ QR@ = /Int/IntP/Div%.QR@;
 % Div = /Int/IntP/Div%.Div;
 
-@ Int@ = /Int/Int%.Int@;
+@ Int@ = /Int%.Int@;
 
 <@>% Append = /List%.Append;
 <@>% Nil = /List%.Nil;

@@ -92,7 +92,7 @@ static int ReadIntP(FbleValue* x)
 }
 
 // ReadInt --
-//   Read a number from an FbleValue of type /Int/Int%.Int@.
+//   Read a number from an FbleValue of type /Int%.Int@.
 //
 // Inputs:
 //   x - the value of the number.
@@ -245,7 +245,7 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 }
 
 // MakeInt -- 
-//   Make an FbleValue of type /Int/Int%.Int@ for the given integer.
+//   Make an FbleValue of type /Int%.Int@ for the given integer.
 //
 // Inputs:
 //   heap - the heap to use for allocations.

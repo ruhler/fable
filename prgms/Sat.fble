@@ -1,8 +1,8 @@
 
 @ Bool@ = /Bool%.Bool@;
 % Not = /Bool%.Not;
-@ Int@ = /Int/Int%.Int@;
-% Dec = /Int/Int%.Dec;
+@ Int@ = /Int%.Int@;
+% Dec = /Int%.Dec;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;

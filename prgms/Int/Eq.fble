@@ -3,7 +3,7 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 
-@ Int@ = /Int/Int%.Int@;
+@ Int@ = /Int%.Int@;
 
 % EqP = /Int/IntP/Eq%.Eq;
 % LtP = /Int/IntP/Eq%.Lt;

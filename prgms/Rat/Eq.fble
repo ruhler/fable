@@ -1,7 +1,7 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
-@ Int@ = /Int/Int%.Int@;
+@ Int@ = /Int%.Int@;
 
 @ Rat@ = /Rat%.Rat@;
 
@@ -14,7 +14,7 @@ Eq@<Rat@> Gt = (Rat@ a, Rat@ b) {
     /Int/Eq%.Gt;
   };
 
-  gt(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
+  gt(/Int%.Mul(a.n, b.d), /Int%.Mul(b.n, a.d));
 };
 
 Eq@<Rat@> Lt = (Rat@ a, Rat@ b) {
@@ -26,7 +26,7 @@ Eq@<Rat@> Lt = (Rat@ a, Rat@ b) {
     /Int/Eq%.Lt;
   };
 
-  lt(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
+  lt(/Int%.Mul(a.n, b.d), /Int%.Mul(b.n, a.d));
 };
 
 Eq@<Rat@> Le = (Rat@ a, Rat@ b) {
@@ -38,11 +38,11 @@ Eq@<Rat@> Le = (Rat@ a, Rat@ b) {
     /Int/Eq%.Le;
   };
 
-  le(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
+  le(/Int%.Mul(a.n, b.d), /Int%.Mul(b.n, a.d));
 };
 
 Eq@<Rat@> Eq = (Rat@ a, Rat@ b) {
-  /Int/Eq%.Eq(/Int/Int%.Mul(a.n, b.d), /Int/Int%.Mul(b.n, a.d));
+  /Int/Eq%.Eq(/Int%.Mul(a.n, b.d), /Int%.Mul(b.n, a.d));
 };
 
 @(Gt, Lt, Le, Eq);

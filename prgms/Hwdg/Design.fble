@@ -13,9 +13,9 @@
 
 @ Memory@ = /Hwdg/Memory%.Memory@;
 
-@ Int@ = /Int/Int%.Int@;
-% Inc = /Int/Int%.Inc;
-% 0 = /Int/Int%.0;
+@ Int@ = /Int%.Int@;
+% Inc = /Int%.Inc;
+% 0 = /Int%.0;
 
 <@>@ List@ = /List%.List@;
 

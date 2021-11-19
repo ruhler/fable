@@ -3,11 +3,11 @@
 % True = /Bool%.True;
 % False = /Bool%.False;
 
-@ Int@ = /Int/Int%.Int@;
-% AddI = /Int/Int%.Add;
-% SubI = /Int/Int%.Sub;
-% NegI = /Int/Int%.Neg;
-% MulI = /Int/Int%.Mul;
+@ Int@ = /Int%.Int@;
+% AddI = /Int%.Add;
+% SubI = /Int%.Sub;
+% NegI = /Int%.Neg;
+% MulI = /Int%.Mul;
 % DivI = /Int/Div%.Div;
 % LtI = /Int/Eq%.Lt;
 % IntI = /Int/Lit%.Int;
@@ -79,7 +79,7 @@
 };
 
 (Rat@) { Rat@; } Neg = (Rat@ a) {
-  Rat(/Int/Int%.Neg(a.n), a.d);
+  Rat(/Int%.Neg(a.n), a.d);
 };
 
 (Rat@, Rat@) { Rat@; } Div = (Rat@ a, Rat@ b) {

@@ -22,10 +22,10 @@
 @ Rect@ = /Graphics/Camera%.Rect@;
 % Perspective = /Graphics/Camera%.Perspective;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
-% Mul = /Int/Int%.Mul;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
+% Sub = /Int%.Sub;
+% Mul = /Int%.Mul;
 % Eq = /Int/Eq%.Eq;
 % Le = /Int/Eq%.Le;
 % Ge = /Int/Eq%.Ge;

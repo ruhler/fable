@@ -6,9 +6,9 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
-@ Int@ = /Int/Int%.Int@;
-% Inc = /Int/Int%.Inc;
-% Dec = /Int/Int%.Dec;
+@ Int@ = /Int%.Int@;
+% Inc = /Int%.Inc;
+% Dec = /Int%.Dec;
 
 % IsZero = /Int/Eq%.IsZero;
 % Eq = /Int/Eq%.Eq;

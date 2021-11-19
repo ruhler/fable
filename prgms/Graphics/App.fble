@@ -25,9 +25,9 @@
 
 % Triangle = /Graphics/Triangle%.Triangle;
 
-@ Int@ = /Int/Int%.Int@;
-% Neg = /Int/Int%.Neg;
-% Mul = /Int/Int%.Mul;
+@ Int@ = /Int%.Int@;
+% Neg = /Int%.Neg;
+% Mul = /Int%.Mul;
 % Div = /Int/Div%.Div;
 
 % Int = /Int/Lit%.Int;

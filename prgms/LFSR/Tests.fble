@@ -2,8 +2,8 @@
 @ Bit@ = /Digits%.Bit@;
 % BitStr = /Digits/String%.BitStr;
 
-@ Int@ = /Int/Int%.Int@;
-% Sub = /Int/Int%.Sub;
+@ Int@ = /Int%.Int@;
+% Sub = /Int%.Sub;
 % Int = /Int/Lit%.Int;
 
 @ LFSR@ = /LFSR%.LFSR@;

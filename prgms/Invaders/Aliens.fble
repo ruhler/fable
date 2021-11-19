@@ -20,11 +20,11 @@
 % Alien3B = /Invaders/Graphics%.Aliens.Alien3B;
 % DeadAlien = /Invaders/Graphics%.DeadAlien;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
-% Inc = /Int/Int%.Inc;
-% Mul = /Int/Int%.Mul;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
+% Sub = /Int%.Sub;
+% Inc = /Int%.Inc;
+% Mul = /Int%.Mul;
 @ QR@ = /Int/Div%.QR@;
 % Div = /Int/Div%.Div;
 % Eq = /Int/Eq%.Eq;

@@ -6,9 +6,9 @@
 % Over = /Drawing%.Over;
 % Rect = /Drawing%.Rect;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
+% Sub = /Int%.Sub;
 % Int = /Int/Lit%.Int;
 % Le = /Int/Eq%.Le;
 % Max = /Int/Eq%.Max;

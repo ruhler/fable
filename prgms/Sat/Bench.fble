@@ -1,5 +1,5 @@
 
-@ Int@ = /Int/Int%.Int@;
+@ Int@ = /Int%.Int@;
 % Int = /Int/Lit%.Int;
 <@>% Just = /Maybe%.Just;
 @ Result@ = /Sat%.Result@;

@@ -10,9 +10,9 @@
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 
-@ Int@ = /Int/Int%.Int@;
-% 0 = /Int/Int%.0;
-% Neg = /Int/Int%.Neg;
+@ Int@ = /Int%.Int@;
+% 0 = /Int%.0;
+% Neg = /Int%.Neg;
 
 % Int = /Int/Lit%.Int;
 

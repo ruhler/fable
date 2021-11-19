@@ -1,8 +1,8 @@
 
-@ Int@ = /Int/Int%.Int@;
-% 0 = /Int/Int%.0;
-% Inc = /Int/Int%.Inc;
-% Dec = /Int/Int%.Dec;
+@ Int@ = /Int%.Int@;
+% 0 = /Int%.0;
+% Inc = /Int%.Inc;
+% Dec = /Int%.Dec;
 % Le = /Int/Eq%.Le;
 
 <@>@ List@ = /List%.List@;

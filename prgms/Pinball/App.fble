@@ -17,7 +17,7 @@
 % Circle = /Graphics/2D/Circle%.Circle;
 % Triangle = /Graphics/2D/Triangle%.Triangle;
 
-@ Int@ = /Int/Int%.Int@;
+@ Int@ = /Int%.Int@;
 
 <@>% List = /List%.List;
 

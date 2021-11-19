@@ -1,11 +1,11 @@
 
 @ Point@ = /Drawing%.Point@;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
-% Mul = /Int/Int%.Mul;
-% Neg = /Int/Int%.Neg;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
+% Sub = /Int%.Sub;
+% Mul = /Int%.Mul;
+% Neg = /Int%.Neg;
 % Lt = /Int/Eq%.Lt;
 % Ge = /Int/Eq%.Ge;
 % Div = /Int/Div%.Div;

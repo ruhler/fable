@@ -3,11 +3,11 @@
 
 @ Decimal@ = /Digits%.Decimal@;
 
-@ Int@ = /Int/Int%.Int@;
-% AddI = /Int/Int%.Add;
-% SubI = /Int/Int%.Sub;
-% NegI = /Int/Int%.Neg;
-% MulI = /Int/Int%.Mul;
+@ Int@ = /Int%.Int@;
+% AddI = /Int%.Add;
+% SubI = /Int%.Sub;
+% NegI = /Int%.Neg;
+% MulI = /Int%.Mul;
 % DivI = /Int/Div%.Div;
 % GtI = /Int/Eq%.Gt;
 % GeI = /Int/Eq%.Ge;

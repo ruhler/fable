@@ -7,9 +7,9 @@
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Mul = /Int/Int%.Mul;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
+% Mul = /Int%.Mul;
 % Eq = /Int/Eq%.Eq;
 % Lt = /Int/Eq%.Lt;
 % Int = /Int/Lit%.Int;

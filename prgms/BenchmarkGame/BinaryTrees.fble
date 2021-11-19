@@ -3,10 +3,10 @@
 
 % Chars = /Char%.Chars;
 
-@ Int@ = /Int/Int%.Int@;
-% Add = /Int/Int%.Add;
-% Sub = /Int/Int%.Sub;
-% Mul = /Int/Int%.Mul;
+@ Int@ = /Int%.Int@;
+% Add = /Int%.Add;
+% Sub = /Int%.Sub;
+% Mul = /Int%.Mul;
 % Int = /Int/Lit%.Int;
 % Eq = /Int/Eq%.Eq;
 % Gt = /Int/Eq%.Gt;

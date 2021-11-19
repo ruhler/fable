@@ -1,8 +1,8 @@
 
-% 0 = /Int/Int%.0;
-% 1 = /Int/Int%.1;
-% 2 = /Int/Int%.2;
-% 3 = /Int/Int%.3;
+% 0 = /Int%.0;
+% 1 = /Int%.1;
+% 2 = /Int%.2;
+% 3 = /Int%.3;
 
 <@>% List = /List%.List;
 
