@@ -8,14 +8,14 @@
 % SubI = /Int/Int%.Sub;
 % NegI = /Int/Int%.Neg;
 % MulI = /Int/Int%.Mul;
-% DivI = /Int/Int/Div%.Div;
-% GtI = /Int/Int/Eq%.Gt;
-% GeI = /Int/Int/Eq%.Ge;
-% LtI = /Int/Int/Eq%.Lt;
-% LeI = /Int/Int/Eq%.Le;
-% EqI = /Int/Int/Eq%.Eq;
-% IntI = /Int/Int/Lit%.Int;
-% ShowI = /Int/Int/Show%.Show;
+% DivI = /Int/Div%.Div;
+% GtI = /Int/Eq%.Gt;
+% GeI = /Int/Eq%.Ge;
+% LtI = /Int/Eq%.Lt;
+% LeI = /Int/Eq%.Le;
+% EqI = /Int/Eq%.Eq;
+% IntI = /Int/Lit%.Int;
+% ShowI = /Int/Show%.Show;
 
 <@>@ List@ = /List%.List@;
 

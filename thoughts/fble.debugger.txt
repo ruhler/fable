@@ -782,3 +782,29 @@ spec.
 
 It totally works. I can print variables now. That's pretty awesome. Great
 progress.
+
+You know, I could use FbleStructValueAccess, FbleUnionValueAccess, ReadInt,
+etc. functions to view the contents of fble values. That might be better than
+dumping them as a tree of tag numbers.
+
+But first, let's see if we can get the type to print a little more nicely.
+Ideally we can specify the type as FbleValue*, but I don't know how we have
+access to that definition.
+
+Maybe:
+  DW_TAG_base_type
+    DW_AT_name FbleValue
+    DW_AT_encoding DW_ATE_address
+
+Or:
+  DW_TAG_pointer_type
+    DW_AT_type?
+
+If only I could find a way to reference whatever debug entry gcc outputs for
+FbleValue*? Could I duplicate it? It's not that complicated. Except it
+references ValueTag as well. Is it worth it? All just to have it show as hex
+instead of decimal? I'm thinking maybe not.
+
+In practice the most valuable next step for debugging would be to have names
+for tag values instead of numbers. But that sounds hard.
+

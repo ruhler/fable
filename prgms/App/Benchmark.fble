@@ -9,7 +9,7 @@
 @ Int@ = /Int/Int%.Int@;
 % Dec = /Int/Int%.Dec;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;

@@ -4,7 +4,7 @@
 @ Char@ = /Char%.Char@;
 <@>@ Eq@ = /Eq%.Eq@;
 @ Int@ = /Int/Int%.Int@;
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 <@>% List = /List%.List;
 <@>% Append = /List%.Append;
 <@>% Just = /Maybe%.Just;
@@ -33,7 +33,7 @@
 
 VarId@ X = /Int/Int%.1;
 
-Show@<VarId@> ShowId = /Int/Int/Show%.Show;
+Show@<VarId@> ShowId = /Int/Show%.Show;
 
 Show@<Var@> ShowVar = (Var@ v) {
   String@ sign = v.polarity.?(true: Str|'+', false: Str|'-');

@@ -25,14 +25,14 @@
 % Sub = /Int/Int%.Sub;
 % Inc = /Int/Int%.Inc;
 % Mul = /Int/Int%.Mul;
-@ QR@ = /Int/Int/Div%.QR@;
-% Div = /Int/Int/Div%.Div;
-% Eq = /Int/Int/Eq%.Eq;
-% Le = /Int/Int/Eq%.Le;
-% Lt = /Int/Int/Eq%.Lt;
-% Ge = /Int/Int/Eq%.Ge;
-% Gt = /Int/Int/Eq%.Gt;
-% Int = /Int/Int/Lit%.Int;
+@ QR@ = /Int/Div%.QR@;
+% Div = /Int/Div%.Div;
+% Eq = /Int/Eq%.Eq;
+% Le = /Int/Eq%.Le;
+% Lt = /Int/Eq%.Lt;
+% Ge = /Int/Eq%.Ge;
+% Gt = /Int/Eq%.Gt;
+% Int = /Int/Lit%.Int;
 
 @ LFSR@ = /LFSR%.LFSR@;
 <@>@ Shifted@ = /LFSR%.Shifted@;
@@ -320,7 +320,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
   aliens.next.?(just: bombs);
 
   @ State@ = *(LFSR@ lfsr, Bombs@ bombs);
-  /Iter%.For<Int@, State@>(/Int/Int/Iter%.Range(Int|0, NumCols),
+  /Iter%.For<Int@, State@>(/Int/Iter%.Range(Int|0, NumCols),
     State@(aliens.lfsr, bombs),
     (Int@ col, State@ s) {
       Maybe@<Alien@> alien = Vanguard(aliens, col);

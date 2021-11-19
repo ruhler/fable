@@ -2,10 +2,10 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
-% Le = /Int/Int/Eq%.Le;
-% Lt = /Int/Int/Eq%.Lt;
+% Le = /Int/Eq%.Le;
+% Lt = /Int/Eq%.Lt;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 <@>@ Iter@ = /Iter%.Iter@;
 <@>% Has = /Iter%.Has;

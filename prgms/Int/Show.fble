@@ -2,7 +2,7 @@
 @ Char@ = /Char%.Char@;
 
 @ Int@ = /Int/Int%.Int@;
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 % Add = /Int/Int%.Add;
 % Neg = /Int/Int%.Neg;
 % Mul = /Int/Int%.Mul;

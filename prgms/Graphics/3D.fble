@@ -3,7 +3,7 @@
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
-% Div = /Int/Int/Div%.Div;
+% Div = /Int/Div%.Div;
 
 # Vec@ --
 #   A 3 element vector.

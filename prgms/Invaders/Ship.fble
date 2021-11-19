@@ -6,10 +6,10 @@
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 
-% Lt = /Int/Int/Eq%.Lt;
-% Gt = /Int/Int/Eq%.Gt;
+% Lt = /Int/Eq%.Lt;
+% Gt = /Int/Eq%.Gt;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;
 

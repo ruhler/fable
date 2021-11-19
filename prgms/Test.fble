@@ -137,10 +137,10 @@ ExpectFails = (TestResult@ result, String@ msg) {
   Int@ num_passed = Sub(num_total, Add(num_failed, num_xfailed));
   Unit@ _ := PrintLn(out, Concat<Char@>(List<String@>[
     Str|'Test Summary: ',
-    /Int/Int/Show%.Show(num_passed), Str|' passed, ',
-    /Int/Int/Show%.Show(num_failed), Str|' failed, ',
-    /Int/Int/Show%.Show(num_xfailed), Str|' expect failed, ',
-    /Int/Int/Show%.Show(num_total), Str|' total'
+    /Int/Show%.Show(num_passed), Str|' passed, ',
+    /Int/Show%.Show(num_failed), Str|' failed, ',
+    /Int/Show%.Show(num_xfailed), Str|' expect failed, ',
+    /Int/Show%.Show(num_total), Str|' total'
   ]));
 
   !(failures.?(cons: False, nil: True));

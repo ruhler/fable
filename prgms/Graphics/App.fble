@@ -28,9 +28,9 @@
 @ Int@ = /Int/Int%.Int@;
 % Neg = /Int/Int%.Neg;
 % Mul = /Int/Int%.Mul;
-% Div = /Int/Int/Div%.Div;
+% Div = /Int/Div%.Div;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;

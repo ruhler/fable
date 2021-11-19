@@ -4,9 +4,9 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Mul = /Int/Int%.Mul;
-% Ge = /Int/Int/Eq%.Ge;
-% Lt = /Int/Int/Eq%.Lt;
-% Int = /Int/Int/Lit%.Int;
+% Ge = /Int/Eq%.Ge;
+% Lt = /Int/Eq%.Lt;
+% Int = /Int/Lit%.Int;
 
 @ LFSR@ = /LFSR%.LFSR@;
 <@>@ Shifted@ = /LFSR%.Shifted@;

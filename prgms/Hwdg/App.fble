@@ -41,11 +41,11 @@
 % Neg = /Int/Int%.Neg;
 % Sub = /Int/Int%.Sub;
 
-% Div = /Int/Int/Div%.Div;
+% Div = /Int/Div%.Div;
 
-% IsZero = /Int/Int/Eq%.IsZero;
+% IsZero = /Int/Eq%.IsZero;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;

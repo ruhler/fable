@@ -46,13 +46,13 @@
 % Sub = /Int/Int%.Sub;
 % Abs = /Int/Int%.Abs;
 
-% Eq = /Int/Int/Eq%.Eq;
-% Lt = /Int/Int/Eq%.Lt;
-% Gt = /Int/Int/Eq%.Gt;
+% Eq = /Int/Eq%.Eq;
+% Lt = /Int/Eq%.Lt;
+% Gt = /Int/Eq%.Gt;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
-% Div = /Int/Int/Div%.Div;
+% Div = /Int/Div%.Div;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;

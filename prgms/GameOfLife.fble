@@ -10,9 +10,9 @@
 % Inc = /Int/Int%.Inc;
 % Dec = /Int/Int%.Dec;
 
-% IsZero = /Int/Int/Eq%.IsZero;
-% Eq = /Int/Int/Eq%.Eq;
-% Lt = /Int/Int/Eq%.Lt;
+% IsZero = /Int/Eq%.IsZero;
+% Eq = /Int/Eq%.Eq;
+% Lt = /Int/Eq%.Lt;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;

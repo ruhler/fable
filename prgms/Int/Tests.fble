@@ -31,15 +31,15 @@
 % Mul = /Int/Int%.Mul;
 % Exp2 = /Int/Int%.Exp2;
 
-% Div = /Int/Int/Div%.Div;
+% Div = /Int/Div%.Div;
 
-% Eq = /Int/Int/Eq%.Eq;
-% Lt = /Int/Int/Eq%.Lt;
-% Le = /Int/Int/Eq%.Le;
-% Gt = /Int/Int/Eq%.Gt;
-% Ge = /Int/Int/Eq%.Ge;
+% Eq = /Int/Eq%.Eq;
+% Lt = /Int/Eq%.Lt;
+% Le = /Int/Eq%.Le;
+% Gt = /Int/Eq%.Gt;
+% Ge = /Int/Eq%.Ge;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 (String@, Bool@!) { Test@; } T = (String@ name, Bool@! p) {
   Test(name, {
@@ -54,7 +54,7 @@
 (String@, Int@, Int@!) { Test@; } TEq = (String@ name, Int@ a, Int@! b) {
   Test(name, {
     Int@ x := b;
-    !(AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, a, x));
+    !(AssertEquals<Int@>(/Int/Eq%.Eq, /Int/Show%.Show, a, x));
   });
 };
 
@@ -145,31 +145,31 @@ Test@ Tests = TestSuite(Str|Int, List<Test@>[
 
   Test(Str|Read_Positive, !({
     Int@ wnt = Int|49113;
-    Int@ got = /Int/Int/Show%.Read(Str|49113);
-    AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, wnt, got);
+    Int@ got = /Int/Show%.Read(Str|49113);
+    AssertEquals<Int@>(/Int/Eq%.Eq, /Int/Show%.Show, wnt, got);
   })),
 
   Test(Str|Read_Negative, !({
     Int@ wnt = Neg(Int|49113);
-    Int@ got = /Int/Int/Show%.Read(Str|'-49113');
-    AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, wnt, got);
+    Int@ got = /Int/Show%.Read(Str|'-49113');
+    AssertEquals<Int@>(/Int/Eq%.Eq, /Int/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Positive, !({
     String@ wnt = Str|'10325487960';
-    String@ got = /Int/Int/Show%.Show(Int|10325487960);
+    String@ got = /Int/Show%.Show(Int|10325487960);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Zero, !({
     String@ wnt = Str|'0';
-    String@ got = /Int/Int/Show%.Show(Int|0);
+    String@ got = /Int/Show%.Show(Int|0);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Negative, !({
     String@ wnt = Str|'-42';
-    String@ got = /Int/Int/Show%.Show(Neg(Int|42));
+    String@ got = /Int/Show%.Show(Neg(Int|42));
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   }))
 ]);

@@ -26,12 +26,12 @@
 % Neg = /Int/Int%.Neg;
 % Sub = /Int/Int%.Sub;
 
-% Div = /Int/Int/Div%.Div;
+% Div = /Int/Div%.Div;
 
-% IsZero = /Int/Int/Eq%.IsZero;
-% Lt = /Int/Int/Eq%.Lt;
+% IsZero = /Int/Eq%.IsZero;
+% Lt = /Int/Eq%.Lt;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 <@>% List = /List%.List;
 

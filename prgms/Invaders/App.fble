@@ -14,7 +14,7 @@
 % 0 = /Int/Int%.0;
 % Neg = /Int/Int%.Neg;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;

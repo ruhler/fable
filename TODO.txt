@@ -23,7 +23,14 @@
  - Write some helper C functions to decode FbleValue*.
  - Emit lexical scopes where appropriate.
  - Specify type of variables as FbleValue*?
-   So that they print in hex by default in gdb instead of decimal?
+
+* Pull ReadInt and other native code for working with fble values out into
+  separate libraries associated with their fble files.
+  ReadInt should go somewhere like prgms/Int/Int.c instead of
+  prgms/fble-app.c, for example.
+
+  To allow us to reuse the logic in multiple programs and make it available
+  for use printing variable values when debugging.
 
 * Remove function bind syntax again, now that we no longer use it?
   On the one hand, it seems a shame to have a syntactic sugar that I don't

@@ -3,8 +3,8 @@
 % Decimal = /Digits%.Decimal;
 
 @ Int@ = /Int/Int%.Int@;
-% Int = /Int/Int/Lit%.Int;
-% Div = /Int/Int/Div%.Div;
+% Int = /Int/Lit%.Int;
+% Div = /Int/Div%.Div;
 
 <@>% Nothing = /Maybe%.Nothing;
 

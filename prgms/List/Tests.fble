@@ -11,7 +11,7 @@
 <@>@ Eq@ = /Eq%.Eq@;
 
 @ Int@ = /Int/Int%.Int@;
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
@@ -166,7 +166,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   Test(Str|'Length', !({
     Int@ wnt = Int|5;
     Int@ got = Length<Elem@>(EL|ABCDE);
-    /Test%.AssertEquals<Int@>(/Int/Int/Eq%.Eq, /Int/Int/Show%.Show, wnt, got);
+    /Test%.AssertEquals<Int@>(/Int/Eq%.Eq, /Int/Show%.Show, wnt, got);
   }))
 ]);
 

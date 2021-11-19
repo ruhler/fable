@@ -9,8 +9,8 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
-% Lt = /Int/Int/Eq%.Lt;
-% Int = /Int/Int/Lit%.Int;
+% Lt = /Int/Eq%.Lt;
+% Int = /Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;
 @ Ship@ = /Invaders/Ship%.Ship@;

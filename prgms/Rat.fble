@@ -8,9 +8,9 @@
 % SubI = /Int/Int%.Sub;
 % NegI = /Int/Int%.Neg;
 % MulI = /Int/Int%.Mul;
-% DivI = /Int/Int/Div%.Div;
-% LtI = /Int/Int/Eq%.Lt;
-% IntI = /Int/Int/Lit%.Int;
+% DivI = /Int/Div%.Div;
+% LtI = /Int/Eq%.Lt;
+% IntI = /Int/Lit%.Int;
 
 # Rat@ --
 #   A rational number: n / d.

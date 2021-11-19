@@ -3,7 +3,7 @@
 % 0 = /Int/Int%.0;
 % Inc = /Int/Int%.Inc;
 % Dec = /Int/Int%.Dec;
-% Le = /Int/Int/Eq%.Le;
+% Le = /Int/Eq%.Le;
 
 <@>@ List@ = /List%.List@;
 <@>% Cons = /List%.Cons;

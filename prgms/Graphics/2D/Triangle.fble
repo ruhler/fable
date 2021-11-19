@@ -9,11 +9,11 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
-% Int = /Int/Int/Lit%.Int;
-% Le = /Int/Int/Eq%.Le;
-% Max = /Int/Int/Eq%.Max;
-% Min = /Int/Int/Eq%.Min;
-% Range = /Int/Int/Iter%.Range;
+% Int = /Int/Lit%.Int;
+% Le = /Int/Eq%.Le;
+% Max = /Int/Eq%.Max;
+% Min = /Int/Eq%.Min;
+% Range = /Int/Iter%.Range;
 
 <@,@>% For = /Iter%.For;
 

@@ -6,10 +6,10 @@
 % Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
 % Neg = /Int/Int%.Neg;
-% Lt = /Int/Int/Eq%.Lt;
-% Ge = /Int/Int/Eq%.Ge;
-% Div = /Int/Int/Div%.Div;
-% Int = /Int/Int/Lit%.Int;
+% Lt = /Int/Eq%.Lt;
+% Ge = /Int/Eq%.Ge;
+% Div = /Int/Div%.Div;
+% Int = /Int/Lit%.Int;
 
 @ Mat@ = /Graphics/3D%.Mat@;
 @ Vec@ = /Graphics/3D%.Vec@;

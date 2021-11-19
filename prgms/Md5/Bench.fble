@@ -6,7 +6,7 @@
 
 @ Int@ = /Int/Int%.Int@;
 % Sub = /Int/Int%.Sub;
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;

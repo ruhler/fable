@@ -39,7 +39,7 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Graphics/2D/Tests%.Tests,
   /Graphics/Triangle/Tests%.Tests,
   /Hwdg/Tests%.Tests,
-  /Int/Int/Tests%.Tests,
+  /Int/Tests%.Tests,
   /LFSR/Tests%.Tests,
   /List/Tests%.Tests,
   /Map/Tests%.Tests,

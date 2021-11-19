@@ -26,10 +26,10 @@
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
-% Eq = /Int/Int/Eq%.Eq;
-% Le = /Int/Int/Eq%.Le;
-% Ge = /Int/Int/Eq%.Ge;
-% Int = /Int/Int/Lit%.Int;
+% Eq = /Int/Eq%.Eq;
+% Le = /Int/Eq%.Le;
+% Ge = /Int/Eq%.Ge;
+% Int = /Int/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;

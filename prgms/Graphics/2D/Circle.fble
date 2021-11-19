@@ -14,8 +14,8 @@
 % Dec = /Int/Int%.Dec;
 % Neg = /Int/Int%.Neg;
 % Mul = /Int/Int%.Mul;
-% Int = /Int/Int/Lit%.Int;
-% Lt = /Int/Int/Eq%.Lt;
+% Int = /Int/Lit%.Int;
+% Lt = /Int/Eq%.Lt;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

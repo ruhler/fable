@@ -134,3 +134,13 @@ through the wall over time, but maybe that's not the case. It looks okay.
 Gravity pushes it down, it doesn't actually go down, then the velocity from
 collision pushes it back up a little. I think we are okay.
 
+---
+
+Computing cos/sin for integers is pretty doable I think. From some
+experiments, important notes:
+* Do the intermediate computation with double the precision requested.
+* Do expansion only close to 0, so first 90 degrees, and compute rest based on
+  those numbers. Or first 45 degrees sin and cos.
+* Compute as many terms as needed until we run out of precision to store the
+  result.
+

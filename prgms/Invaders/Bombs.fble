@@ -11,9 +11,9 @@
 @ Int@ = /Int/Int%.Int@;
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
-% Lt = /Int/Int/Eq%.Lt;
-% Gt = /Int/Int/Eq%.Gt;
-% Int = /Int/Int/Lit%.Int;
+% Lt = /Int/Eq%.Lt;
+% Gt = /Int/Eq%.Gt;
+% Int = /Int/Lit%.Int;
 
 <@>@ List@ = /List%.List@;
 <@>% Cons = /List%.Cons;

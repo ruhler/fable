@@ -7,9 +7,9 @@
 % Add = /Int/Int%.Add;
 % Sub = /Int/Int%.Sub;
 % Mul = /Int/Int%.Mul;
-% Int = /Int/Int/Lit%.Int;
-% Eq = /Int/Int/Eq%.Eq;
-% Gt = /Int/Int/Eq%.Gt;
+% Int = /Int/Lit%.Int;
+% Eq = /Int/Eq%.Eq;
+% Gt = /Int/Eq%.Gt;
 
 <@>@ List@ = /List%.List@;
 
@@ -53,7 +53,7 @@ Int@ 2 = Int|2;
 };
 
 Stdio@ Main = (IO@ io, List@<String@> args) {
-  Int@ n = args.?(cons: /Int/Int/Show%.Read(args.cons.head), nil: 0);
+  Int@ n = args.?(cons: /Int/Show%.Read(args.cons.head), nil: 0);
   Int@ max_depth = Gt(Add(2, MinDepth), n).?(
     true: Add(2, MinDepth),
     false: n);
@@ -61,8 +61,8 @@ Stdio@ Main = (IO@ io, List@<String@> args) {
 
   Int@ check = Check(Tree(stretch_depth));
   Unit@ _ := io.stdout(Strs[
-    Str|'stretch tree of depth ', /Int/Int/Show%.Show(stretch_depth),
-    Str|'	 check: ', /Int/Int/Show%.Show(check), Str[Chars.nl]]);
+    Str|'stretch tree of depth ', /Int/Show%.Show(stretch_depth),
+    Str|'	 check: ', /Int/Show%.Show(check), Str[Chars.nl]]);
 
   Tree@ long_lived = Tree(max_depth);
 
@@ -78,16 +78,16 @@ Stdio@ Main = (IO@ io, List@<String@> args) {
 
     Int@ check = ForIter(0, 1);
     Unit@ _ := io.stdout(Strs[
-      /Int/Int/Show%.Show(iterations),
-      Str|'	 trees of depth ', /Int/Int/Show%.Show(depth),
-      Str|'	 check: ', /Int/Int/Show%.Show(check), Str[Chars.nl]]);
+      /Int/Show%.Show(iterations),
+      Str|'	 trees of depth ', /Int/Show%.Show(depth),
+      Str|'	 check: ', /Int/Show%.Show(check), Str[Chars.nl]]);
     ForDepth(Add(2, depth));
   };
   Unit@ _ := ForDepth(MinDepth);
   Unit@ _ := io.stdout(Strs[
     Str|'long lived tree of depth ',
-    /Int/Int/Show%.Show(max_depth),
-    Str|'	 check: ', /Int/Int/Show%.Show(Check(long_lived)), Str[Chars.nl]]);
+    /Int/Show%.Show(max_depth),
+    Str|'	 check: ', /Int/Show%.Show(Check(long_lived)), Str[Chars.nl]]);
   !(True);
 };
 

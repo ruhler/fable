@@ -1,7 +1,7 @@
 
 % True = /Bool%.True;
 % False = /Bool%.False;
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 <@>% List = /List%.List;
 @ Formula@ = /Sat%.Formula@;
 @ Clause@ = /Sat%.Clause@;

@@ -17,7 +17,7 @@
 # VarId@ --
 #   A variable identifier.
 @ VarId@ = Int@;
-% EqId = /Int/Int/Eq%.Eq;
+% EqId = /Int/Eq%.Eq;
 
 # Var@ --
 #   A variable in a boolean formula.
@@ -111,7 +111,7 @@
   @ Status@ = +(Bool@ pure, Unit@ impure);
   @ Map@ = /Map%.Map@<VarId@, Status@>;
   % Empty = /Map%.Empty<VarId@, Status@>;
-  % InsertWith = /Map%.InsertWith<VarId@>(/Int/Int/Eq%.Lt)<Status@>;
+  % InsertWith = /Map%.InsertWith<VarId@>(/Int/Eq%.Lt)<Status@>;
 
   (Formula@ f) {
     Map@ map = /List%.ForEach<Clause@, Map@>(f, Empty,

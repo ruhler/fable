@@ -387,4 +387,3 @@ optional? I'll need some thought to work out exactly how to do it, but the
 idea seems simple enough. Just need to manage the two different ways of
 loading things: full source versus mostly type dependencies.
 
-

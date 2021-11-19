@@ -10,7 +10,7 @@
 #
 # For example: Rat@ 42 = Int|42;
 (List@<Decimal@>) { Rat@; } Int = (List@<Decimal@> ds) {
-  Rat@(/Int/Int/Lit%.Int(ds), /Int/Int/Lit%.Int|1);
+  Rat@(/Int/Lit%.Int(ds), /Int/Lit%.Int|1);
 };
 
 @(Int);

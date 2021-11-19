@@ -10,7 +10,7 @@
 
 % Neg = /Int/Int%.Neg;
 
-% Int = /Int/Int/Lit%.Int;
+% Int = /Int/Lit%.Int;
 
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
