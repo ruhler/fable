@@ -16,6 +16,7 @@
 % EqI = /Int/Eq%.Eq;
 % IntI = /Int/Lit%.Int;
 % ShowI = /Int/Show%.Show;
+% SqrtI = /Int/Sqrt%.Sqrt;
 
 <@>@ List@ = /List%.List@;
 
@@ -91,4 +92,8 @@ Show@<Num@> Show = (Num@ a) {
   DivI(a<_@>, S).q;
 };
 
-@(Num@, Add, Sub, Neg, Mul, Div, Eq, Gt, Ge, Lt, Le, Show, Int, Floor);
+(Num@) { Num@; } Sqrt = (Num@ a) {
+  _@(SqrtI(MulI(a<_@>, S)).q);
+};
+
+@(Num@, Add, Sub, Neg, Mul, Div, Eq, Gt, Ge, Lt, Le, Show, Int, Floor, Sqrt);

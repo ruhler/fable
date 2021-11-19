@@ -11,6 +11,7 @@
 
 @ Ball@ = /Pinball/Physics%.Ball@;
 @ Edge@ = /Pinball/Physics%.Edge@;
+@ Paddle@ = /Pinball/Physics%.Paddle@;
 @ Vec@ = /Pinball/Physics%.Vec@;
 @ World@ = /Pinball/Physics%.World@;
 % Tick = /Pinball/Physics%.Tick;
@@ -27,7 +28,8 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
     # The ball moves freely to the right 10 units per tick.
     World@ start = @(
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
-      edges: Nil<Edge@>);
+      edges: Nil<Edge@>,
+      paddles: Nil<Paddle@>);
     World@ end = Tick(start);
     Num@ want = Int|10;
     Num@ got = end.ball.pos.x;
@@ -40,7 +42,8 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
       edges: List<Edge@>[
         Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Neg(Int|4)), Int|8)
-      ]);
+      ],
+      paddles: Nil<Paddle@>);
     World@ end = Tick(start);
     # TODO: Define an AssertLt function instead of reusing AssertEquals here.
     AssertEquals<Num@>(Lt, Show, end.ball.pos.x, Int|5);
@@ -54,7 +57,8 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
       edges: List<Edge@>[
         Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Int|3), Int|8)
-      ]);
+      ],
+      paddles: Nil<Paddle@>);
     World@ end = Tick(start);
     Num@ want = Int|10;
     Num@ got = end.ball.pos.x;

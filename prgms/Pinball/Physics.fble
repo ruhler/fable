@@ -1,5 +1,6 @@
 
 <@>@ List@ = /List%.List@;
+<@>% Cons = /List%.Cons;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
@@ -7,6 +8,8 @@
 % Neg = /Pinball/Num%.Neg;
 % Mul = /Pinball/Num%.Mul;
 % Div = /Pinball/Num%.Div;
+% Sqrt = /Pinball/Num%.Sqrt;
+% Eq = /Pinball/Num%.Eq;
 % Gt = /Pinball/Num%.Gt;
 % Ge = /Pinball/Num%.Ge;
 % Lt = /Pinball/Num%.Lt;
@@ -25,6 +28,13 @@
 
 (Vec@, Num@) { Vec@; } MulVS = (Vec@ a, Num@ s) {
   Vec@(Mul(a.x, s), Mul(a.y, s));
+};
+
+# Norm --
+#   Computes a unit vector in the direction of the given vector.
+(Vec@) { Vec@; } Norm = (Vec@ a) {
+  Num@ d = Sqrt(Add(Mul(a.x, a.x), Mul(a.y, a.y)));
+  Vec@(Div(a.x, d), Div(a.y, d));
 };
 
 # RotateTo --
@@ -53,7 +63,24 @@
   Num@ length      # Length of the edge.
 );
 
-@ World@ = *(Ball@ ball, List@<Edge@> edges);
+@ Paddle@ = *(
+  Vec@ end_down,   # The paddle's end position when off.
+  Vec@ end_up,     # The paddle's end position when on.
+  Num@ pos,        # The fraction of the way between end_up and end_pos.
+  Num@ vel,        # The velocity of the paddle in units of pos per tick.
+  Edge@ edge       # The edge of the paddle in its current position.
+);
+
+(Paddle@) { Paddle@; } RecomputeEdge = (Paddle@ p) {
+  Vec@ end = AddV(p.end_down, MulVS(SubV(p.end_up, p.end_down), p.pos));
+  Vec@ tangent = Norm(SubV(end, p.edge.start));
+  Vec@ normal = Vec@(Neg(tangent.y), tangent.x);
+  Paddle@(
+    p.end_down, p.end_up, p.pos, p.vel,
+    Edge@(normal, p.edge.start, p.edge.length));
+};
+
+@ World@ = *(Ball@ ball, List@<Edge@> edges, List@<Paddle@> paddles);
 
 # HALF_G --
 #   Half the acceleration due to gravity.
@@ -124,7 +151,7 @@ CollideS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
 # In case of collision, we break down the time period into smaller bits. The
 # assumption that velocity is constant is intended to prevent the case where
 # we break down the time period into smaller and smaller bits and end up never
-# reaching the end of the time period as a result. This is also assumes we
+# reaching the end of the time period as a result. This also assumes we
 # don't have any super tight corners that would cause us to collide an
 # excessive number of times in a single time period.
 (Ball@, Num@, List@<Edge@>) { Ball@; } Move = (Ball@ b, Num@ t, List@<Edge@> edges) {
@@ -136,20 +163,40 @@ CollideS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
   Move(cr.ball, Sub(t, cr.time), edges);
 };
 
+(Paddle@) { Paddle@; } TickPaddle = (Paddle@ p) {
+  Num@ pos = Add(p.pos, p.vel);
+
+  Num@ pos_ = Lt(pos, Int|0).?(true: Int|0, false: pos);
+  Num@ pos = pos_;
+
+  Num@ pos_ = Gt(pos, Int|1).?(true: Int|1, false: pos);
+  Num@ pos = pos_;
+
+  Eq(pos, p.pos).?(true: p);
+  RecomputeEdge(Paddle@(p.end_down, p.end_up, pos, p.vel, p.edge));
+};
+
 # Tick --
 #   Advance the world by one unit of time.
 (World@) { World@; } Tick = (World@ w) {
-  # 1. Compute average expected velocity over the time period.
+  # Update the paddles.
+  List@<Paddle@> paddles = /List%.Map<Paddle@, Paddle@>(w.paddles, TickPaddle);
+
+  # Compute average expected ball velocity over the time period.
   Vec@ v_avg = AddV(w.ball.vel, HALF_G);
 
-  # 2. Move the ball assuming constant velocity.
-  Ball@ b_moved = Move(Ball@(w.ball.pos, v_avg, w.ball.radius), Int|1, w.edges);
+  # Move the ball assuming constant velocity.
+  List@<Edge@> edges = /List%.ForEach<Paddle@, List@<Edge@>>(
+    paddles, w.edges, (Paddle@ p, List@<Edge@> es) {
+      Cons<Edge@>(p.edge, es);
+    });
+  Ball@ b_moved = Move(Ball@(w.ball.pos, v_avg, w.ball.radius), Int|1, edges);
 
-  # 3. Compute final velocity.
+  # Compute final ball velocity.
   Vec@ v = AddV(b_moved.vel, HALF_G);
 
-  World@(Ball@(b_moved.pos, v, w.ball.radius), w.edges);
+  World@(Ball@(b_moved.pos, v, w.ball.radius), w.edges, paddles);
 };
 
-@(Vec@, Ball@, Edge@, World@, Tick,
+@(Vec@, Ball@, Edge@, Paddle@, World@, Tick,
   AddV, SubV, MulVS);

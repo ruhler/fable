@@ -12,8 +12,7 @@ ninja:
 
 .PHONY: foo
 foo:
-	./out/bin/fble-stdio prgms /Pinball/foo%
-	#ninja -f out/build.ninja out/bin/fble-pinball
+	ninja -f out/build.ninja out/bin/fble-pinball
 
 .PHONY: all
 all: out/build.ninja

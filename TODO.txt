@@ -1,5 +1,8 @@
 * [pinball] 
- - Add support for paddles.
+ - Add controls for the paddle.
+ - Add right paddle to app.
+ - Improve performance in presence of paddles.
+ - Take account of paddle velocity in collision.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
