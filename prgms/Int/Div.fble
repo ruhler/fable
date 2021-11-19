@@ -5,13 +5,7 @@
 % Sub = /Int/Int%.Sub;
 % 0 = /Int/Int%.0;
 
-@ IntS@ = /Int/IntS%.IntS@;
-
 % P = /Int/IntP/Div%;
-
-(IntS@) { Int@; } IntS = (IntS@ s) {
-  s.?(0: 0, p: Int@(p: s.p));
-};
 
 # QR@ --
 #   Quotient and remainder from integer division.
@@ -32,15 +26,12 @@
       a.?(
         n: {
           P.QR@ qr = P.Div(a.n, b.p);
-          Int@ q = Neg(IntS(qr.q));
+          Int@ q = Neg(qr.q);
           qr.r.?(0: @(q: q, r: 0));
-          @(q: Dec(q), r: Sub(b, IntS(qr.r)));
+          @(q: Dec(q), r: Sub(b, qr.r));
         },
         0: @(q: 0, r: 0),
-        p: {
-          P.QR@ qr = P.Div(a.p, b.p);
-          @(q: IntS(qr.q), r: IntS(qr.r));
-        });
+        p: P.Div(a.p, b.p));
       });
 };
 

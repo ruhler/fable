@@ -5,10 +5,6 @@
 % MulP = IntP.Mul;
 % Exp2P = IntP.Exp2;
 
-% Sub1 = /Int/IntP/Sub%.Sub1;
-
-@ IntS@ = /Int/IntS%.IntS@;
-
 @ Unit@ = /Unit%.Unit@;
 % Unit = /Unit%.Unit;
 
@@ -39,12 +35,24 @@ Int@ 8 = P(IntP.8);
 Int@ 9 = P(IntP.9);
 Int@ 10 = P(IntP.10);
 
+# Sub1(x) = x - 1
+(IntP@) { Int@; } Sub1 = (IntP@ x) {
+  x.?(1: 0,
+      2p0: {
+        Int@ s = Sub1(x.2p0);
+        s.?(0: 1);
+        Int@(p: IntP@(2p1: s.p));
+      },
+      2p1: Int@(p: IntP@(2p0: x.2p1)));
+};
+
 # a + 1
 (Int@){ Int@; } Inc = (Int@ a) {
   a.?( 
       n: {
-        IntS@ s = Sub1(a.n);
-        s.?(0: 0, p: N(s.p));
+        Int@ s = Sub1(a.n);
+        s.?(0: 0);
+        N(s.p);
       },
       0: P(IntP.1),
       p: P(IntP.Add1(a.p)));
@@ -56,8 +64,9 @@ Int@ 10 = P(IntP.10);
       n: N(IntP.Add1(a.n)),
       0: N(IntP.1),
       p: {
-        IntS@ s = Sub1(a.p);
-        s.?(0: 0, p: P(s.p));
+        Int@ s = Sub1(a.p);
+        s.?(0: 0);
+        P(s.p);
       });
 };
 
@@ -68,8 +77,9 @@ Int@ 10 = P(IntP.10);
 
 (IntP@, IntP@) { Int@; } SubP = (IntP@ a, IntP@ b) {
   a.?(1: {
-         IntS@ s = Sub1(b);
-         s.?(0: 0, p: N(s.p));
+         Int@ s = Sub1(b);
+         s.?(0: 0);
+         N(s.p);
        },
        2p0: b.?(1: P(Sub1(a).p),
                 2p0: Mul2(SubP(a.2p0, b.2p0)),

@@ -6,7 +6,7 @@
 @ QR@ = /Int/IntP/Div%.QR@;
 % Div = /Int/IntP/Div%.Div;
 
-@ IntS@ = /Int/IntS%.IntS@;
+@ Int@ = /Int/Int%.Int@;
 
 <@>% Append = /List%.Append;
 <@>% Nil = /List%.Nil;
@@ -20,33 +20,32 @@
 #   Convert the given digit to a string.
 #
 # Behavior is undefined if x is not in the range [0, 9].
-(IntS@) { String@; } ShowDigit = (IntS@ x) {
-  x.?(
-    0: Str|0,
-    p: x.p.?(
-      1: Str|1,
-      2p0: x.p.2p0.?( 
-        1: Str|2,
-        2p0: x.p.2p0.2p0.?(
-          1: Str|4,
-          2p0: x.p.2p0.2p0.2p0.?(
-            1: Str|8,
-            : Str|'?'),
+(Int@) { String@; } ShowDigit = (Int@ x) {
+  x.?(0: Str|0);
+  x.p.?(
+    1: Str|1,
+    2p0: x.p.2p0.?( 
+      1: Str|2,
+      2p0: x.p.2p0.2p0.?(
+        1: Str|4,
+        2p0: x.p.2p0.2p0.2p0.?(
+          1: Str|8,
           : Str|'?'),
-        2p1: x.p.2p0.2p1.?(
-          1: Str|6,
-          : Str|'?')),
-      2p1: x.p.2p1.?( 
-        1: Str|3,
-        2p0: x.p.2p1.2p0.?(
-          1: Str|5,
-          2p0: x.p.2p1.2p0.2p0.?(
-            1: Str|9,
-            : Str|'?'),
+        : Str|'?'),
+      2p1: x.p.2p0.2p1.?(
+        1: Str|6,
+        : Str|'?')),
+    2p1: x.p.2p1.?( 
+      1: Str|3,
+      2p0: x.p.2p1.2p0.?(
+        1: Str|5,
+        2p0: x.p.2p1.2p0.2p0.?(
+          1: Str|9,
           : Str|'?'),
-        2p1: x.p.2p1.2p1.?(
-          1: Str|7,
-          : Str|'?'))));
+        : Str|'?'),
+      2p1: x.p.2p1.2p1.?(
+        1: Str|7,
+        : Str|'?')));
 };
 
 # Show --
@@ -54,7 +53,10 @@
 Show@<IntP@> Show = (IntP@ x) {
   QR@ qr = Div(x, 10);
   String@ tail = ShowDigit(qr.r);
-  String@ head = qr.q.?(0: Nil<Char@>, p: Show(qr.q.p));
+  String@ head = {
+    qr.q.?(0: Nil<Char@>);
+    Show(qr.q.p);
+  };
   Append<Char@>(head, tail);
 };
 

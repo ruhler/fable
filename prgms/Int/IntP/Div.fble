@@ -1,24 +1,28 @@
 
 @ IntP@ = /Int/IntP%.IntP@;
 
-@ IntS@ = /Int/IntS%.IntS@;
-% 0 = /Int/IntS%.0;
-% IntP = /Int/IntS%.IntP;
-% 2P0 = /Int/IntS%.2P0;
-% 2P1 = /Int/IntS%.2P1;
-
 @ Int@ = /Int/Int%.Int@;
 % Sub = /Int/Int%.Sub;
-% I0 = /Int/Int%.0;
-
-# Promote an IntS@ to Int@.
-(IntS@) { Int@; } Int = (IntS@ s) {
-  s.?(0: I0, p: Int@(p: s.p));
-};
+% 0 = /Int/Int%.0;
+% 1 = /Int/Int%.1;
 
 # QR@ --
 #   Quotient and remainder.
-@ QR@ = *(IntS@ q, IntS@ r);
+@ QR@ = *(Int@ q, Int@ r);
+
+(IntP@) { Int@; } IntP = (IntP@ x) {
+  Int@(p: x);
+};
+
+(Int@) { Int@; } 2P0 = (Int@ x) {
+  x.?(0: 0);
+  Int@(p: IntP@(2p0: x.p));
+};
+
+(Int@) { Int@; } 2P1 = (Int@ x) {
+  x.?(0: 1);
+  Int@(p: IntP@(2p1: x.p));
+};
 
 # a = b*q + r, r < b, where q = floor(a/b)
 (IntP@, IntP@) { QR@; } Div = (IntP@ a, IntP@ b) {
@@ -37,8 +41,8 @@
       2p1: a.?(1: @(q: 0, r: IntP(a)),
                2p0: {
                  QR@ qr = Div(a.2p0, b);
-                 IntS@ 2r = 2P0(qr.r);
-                 Int@ 2r_minus_b = Sub(Int(2r), Int@(p: b));
+                 Int@ 2r = 2P0(qr.r);
+                 Int@ 2r_minus_b = Sub(2r, Int@(p: b));
                  2r_minus_b.?(
                     n: @(q: 2P0(qr.q), r: 2r),
                     0: @(q: 2P1(qr.q), r: 0),
@@ -46,8 +50,8 @@
                },
                2p1: {
                  QR@ qr = Div(a.2p1, b);
-                 IntS@ 2rp1 = 2P1(qr.r);
-                 Int@ 2rp1_minus_b = Sub(Int(2rp1), Int@(p: b));
+                 Int@ 2rp1 = 2P1(qr.r);
+                 Int@ 2rp1_minus_b = Sub(2rp1, Int@(p: b));
                  2rp1_minus_b.?(
                     n: @(q: 2P0(qr.q), r: 2rp1),
                     0: @(q: 2P1(qr.q), r: 0),
