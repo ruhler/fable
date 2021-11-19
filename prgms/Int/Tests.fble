@@ -32,6 +32,7 @@
 % Exp2 = /Int%.Exp2;
 
 % Div = /Int/Div%.Div;
+% Sqrt = /Int/Sqrt%.Sqrt;
 
 % Eq = /Int/Eq%.Eq;
 % Lt = /Int/Eq%.Lt;
@@ -139,6 +140,11 @@ Test@ Tests = TestSuite(Str|Int, List<Test@>[
   TEq(Str|Mod_11_m4, Neg(Int|1), !(Div(Int|11, Neg(Int|4)).r)),
   TEq(Str|Div_m11_m4, Int|2, !(Div(Neg(Int|11), Neg(Int|4)).q)),
   TEq(Str|Mod_m11_m4, Neg(Int|3), !(Div(Neg(Int|11), Neg(Int|4)).r)),
+
+  TEq(Str|Sqrt_29_q, Int|5, !(Sqrt(Int|29).q)),
+  TEq(Str|Sqrt_29_r, Int|4, !(Sqrt(Int|29).r)),
+  TEq(Str|Sqrt_12345_q, Int|111, !(Sqrt(Int|12345).q)),
+  TEq(Str|Sqrt_12345_r, Int|24, !(Sqrt(Int|12345).r)),
 
   TEq(Str|Exp2_8, Int|256, !(Exp2(8))),
   TEq(Str|Exp2_7, Int|128, !(Exp2(7))),
