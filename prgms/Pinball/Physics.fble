@@ -1,6 +1,5 @@
 
 <@>@ List@ = /List%.List@;
-<@>% Cons = /List%.Cons;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
@@ -95,14 +94,14 @@ Num@ R = Div(Int|6, Int|8);
 #   A ball at a particular point in time.
 @ BallT@ = *(Ball@ ball, Num@ time);
 
-# Collide -- 
+# CollideEdge -- 
 #   Check for and apply collision of ball with edge between start and end.
 #
 # If there is no collision, end is returned as is. If there is a collision,
 # returns the ball in the state just after the collision at the time of
 # collision.
 (Ball@, BallT@, Edge@) { BallT@; }
-Collide = (Ball@ start, BallT@ end, Edge@ edge) {
+CollideEdge = (Ball@ start, BallT@ end, Edge@ edge) {
   Num@ radius = start.radius;
 
   # For there to be considered a collision, the ball must start above the
@@ -132,21 +131,59 @@ Collide = (Ball@ start, BallT@ end, Edge@ edge) {
   BallT@(Ball@(end_pos, vel, radius), t);
 };
 
-# CollideS --
+# CollideEdgeS --
 #   Check for and apply collision between ball and a list of edges.
 #
 # If there is no collision, end is returned as is. If there is a collision,
 # returns the ball in the state just after the collision at the time of
 # collision.
 (Ball@, BallT@, List@<Edge@>) { BallT@; }
-CollideS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
+CollideEdgeS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
   edges.?(nil: end);
-  CollideS(start, Collide(start, end, edges.cons.head), edges.cons.tail);
+  CollideEdgeS(start, CollideEdge(start, end, edges.cons.head), edges.cons.tail);
+};
+
+# CollidePaddle --
+#   Check for and apply collision between ball and paddle.
+#
+# If there is no collision, end is returned as is. If there is a collision,
+# returns the ball in the state just after the collision at the time of
+# collision.
+(Ball@, BallT@, Paddle@) { BallT@; }
+CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
+  # TODO: Fancier stuff here.
+  CollideEdge(start, end, paddle.edge);
+};
+
+# CollidePaddleS --
+#   Check for and apply collision between ball and a list of paddles.
+#
+# If there is no collision, end is returned as is. If there is a collision,
+# returns the ball in the state just after the collision at the time of
+# collision.
+(Ball@, BallT@, List@<Paddle@>) { BallT@; }
+CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
+  paddles.?(nil: end);
+  CollidePaddleS(start, CollidePaddle(start, end, paddles.cons.head), paddles.cons.tail);
+};
+
+# MovePaddle -- 
+#   Move a paddle by the given amount of time.
+(Num@)(Paddle@) { Paddle@; } MovePaddle = (Num@ t)(Paddle@ p) {
+  Num@ pos = {
+    Num@ pos = Add(p.pos, Mul(p.vel, t));
+    Lt(pos, Int|0).?(true: Int|0);
+    Gt(pos, Int|1).?(true: Int|1);
+    pos;
+  };
+
+  Eq(pos, p.pos).?(true: p);
+  RecomputeEdge(Paddle@(p.end_down, p.end_up, pos, p.vel, p.edge));
 };
 
 # Move --
-#   Move the ball by the given amount of time, assuming velocity stays
-#   constant.
+#   Move the ball and paddles by the given amount of time, assuming velocity
+#   stays constant.
 #
 # In case of collision, we break down the time period into smaller bits. The
 # assumption that velocity is constant is intended to prevent the case where
@@ -154,48 +191,32 @@ CollideS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
 # reaching the end of the time period as a result. This also assumes we
 # don't have any super tight corners that would cause us to collide an
 # excessive number of times in a single time period.
-(Ball@, Num@, List@<Edge@>) { Ball@; } Move = (Ball@ b, Num@ t, List@<Edge@> edges) {
-  Le(t, Int|0).?(true: b);
+(World@, Num@) { World@; } Move = (World@ w, Num@ t) {
+  Le(t, Int|0).?(true: w);
 
-  Vec@ end_pos = AddV(b.pos, MulVS(b.vel, t));
-  BallT@ end = BallT@(Ball@(end_pos, b.vel, b.radius), t);
-  BallT@ cr = CollideS(b, end, edges);
-  Move(cr.ball, Sub(t, cr.time), edges);
-};
-
-(Paddle@) { Paddle@; } TickPaddle = (Paddle@ p) {
-  Num@ pos = Add(p.pos, p.vel);
-
-  Num@ pos_ = Lt(pos, Int|0).?(true: Int|0, false: pos);
-  Num@ pos = pos_;
-
-  Num@ pos_ = Gt(pos, Int|1).?(true: Int|1, false: pos);
-  Num@ pos = pos_;
-
-  Eq(pos, p.pos).?(true: p);
-  RecomputeEdge(Paddle@(p.end_down, p.end_up, pos, p.vel, p.edge));
+  Vec@ end_pos = AddV(w.ball.pos, MulVS(w.ball.vel, t));
+  BallT@ end = BallT@(Ball@(end_pos, w.ball.vel, w.ball.radius), t);
+  BallT@ edged = CollideEdgeS(w.ball, end, w.edges);
+  BallT@ batted = CollidePaddleS(w.ball, edged, w.paddles);
+  Num@ ct = batted.time;
+  List@<Paddle@> paddles = /List%.Map<Paddle@, Paddle@>(w.paddles, MovePaddle(ct));
+  World@ moved = World@(batted.ball, w.edges, paddles);
+  Move(moved, Sub(t, ct));
 };
 
 # Tick --
 #   Advance the world by one unit of time.
 (World@) { World@; } Tick = (World@ w) {
-  # Update the paddles.
-  List@<Paddle@> paddles = /List%.Map<Paddle@, Paddle@>(w.paddles, TickPaddle);
-
   # Compute average expected ball velocity over the time period.
   Vec@ v_avg = AddV(w.ball.vel, HALF_G);
+  World@ updated = World@(Ball@(w.ball.pos, v_avg, w.ball.radius), w.edges, w.paddles);
 
   # Move the ball assuming constant velocity.
-  List@<Edge@> edges = /List%.ForEach<Paddle@, List@<Edge@>>(
-    paddles, w.edges, (Paddle@ p, List@<Edge@> es) {
-      Cons<Edge@>(p.edge, es);
-    });
-  Ball@ b_moved = Move(Ball@(w.ball.pos, v_avg, w.ball.radius), Int|1, edges);
+  World@ moved = Move(updated, Int|1);
 
   # Compute final ball velocity.
-  Vec@ v = AddV(b_moved.vel, HALF_G);
-
-  World@(Ball@(b_moved.pos, v, w.ball.radius), w.edges, paddles);
+  Vec@ v = AddV(moved.ball.vel, HALF_G);
+  World@(Ball@(moved.ball.pos, v, moved.ball.radius), moved.edges, moved.paddles);
 };
 
 @(Vec@, Ball@, Edge@, Paddle@, World@, Tick,

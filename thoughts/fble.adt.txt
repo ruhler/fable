@@ -1381,3 +1381,206 @@ about 1.5% overhead for the abstraction.
 **   164908    89139     1301  /Pinball/Num%.Mul![0d57] **
      164908    57634           /Int/Int%.Mul![012f]
      164908    30204           /Int/Int/Div%.Div![0180]
+
+---
+
+Hmm... I seem to have lost a bunch of thoughts I had about abstract data types
+here. The summary was: I still worry about performance and syntactic overheads
+of wrapper functions. There was an idea that _@ could be a cast, where you
+provide a polymorphic type to describe where to apply _@ within a type, then
+you could directly cast a function instead of have to wrap it.
+
+But the syntax was still tedious, or an alternative syntax that takes input
+and output types directly, taking advantage of the typeof expression, is
+sketchy.
+
+Here's another idea: what if _@ gave us two things: a way to define newtypes,
+and a way to write code in an environment where newtypes are considered equal
+to their value types.
+
+@? _@;
+
+@ Num@ = _@<Int@>;    # Defines a new type.
+
+Num@ x = Int|4;       # Not legal, Int@ does not equal Num@.
+
+(Num@) { Num@; } Id = (Num@ x) { x; };
+
+Num@ x = _@ { Id(Int|4); }; # Legal within scope of _@.
+
+Now imagine:
+
+@? _@;
+@ Num@ = _@<Int@>;
+
+_@ {
+  (Num@, Num@) { Num@; } Add = AddI;
+  (Num@, Num@) { Num@; } Sub = SubI;
+  (Num@) { Num@; } Neg = NegI;
+  (Num@) { Num@; } Foo = (Int@ x) {
+     FooI(AddI(x, Int|2));
+  };
+};
+
+If we wanted to, we could create a syntax for the scope of _@. That would get
+us back to the original idea if: if you have _@ in scope, then the types are
+considered equal. The key differences from before being:
+
+* We have an explicit scope statement for _@, so it's explicit when _@ is
+  considered in scope or not.
+* We still very clearly label the type of an object as Num@ or Int@. Two
+  different types. It's just that we consider them equal within the scope.
+
+For example:
+  _@ {
+    Num@ n = Int|3;
+    Int@ i = Int|3;
+    @(n, i);
+  };
+
+Will result in the type @(Num@ n, Int@ i).
+
+I do worry this is a little bit confusing. I would rather explicitly cast
+types. Can we use this idea to make explicit casting better?
+
+I guess what I really want, syntactically, is the cast where you give input
+and output type explicitly. If we have that, any need for a scope?
+   
+@? _@;
+@ Num@ = _@<Int@>;
+
+(Num@, Num@) { Num@; } Add = _@<@<Add>, @<AddI>>(AddI);
+(Num@, Num@) { Num@; } Sub = _@<@<Sub>, @<SubI>>(SubI);
+(Num@) { Num@; } Neg = _@<@<Neg>, @<NegI>>(NegI);
+(Num@) { Num@; } Foo = (Num@ x) {
+   _@<Num@, Int@>(FooI(AddI(_@<Int@, Num@>(x), Int|2)));
+};
+
+This is as conceptually sound as the scope approach if we make the cast a
+special syntactic construct. The meaning of the cast is: compare input and
+output types under the scope of equality for the newtype, if the types are
+equal, then it's a legal cast, otherwise it's an illegal cast.
+
+If we make it a syntactic construct, we can do some type inference to make it
+more convenient. There are two:
+
+* newtype <token type> <value type>
+  Creates a new type wrapper using the token type around the value type.
+
+* cast <token type> <target type> <expr>
+  Cast an expression using the token type to the target type. It's legal to do
+  as long as the type of the expression is equal to the target type when
+  treating newtypes for the token type as equal to their values.
+
+This reduces our current abstract, abstract_type, abstract_value, and
+abstract_access down to three: abstract, abstract_type, abstract_cast. We use
+the same cast to go into and out of the abstract type.
+
+Ideas for syntax: well, like before, except trying to figure out some way to
+pair type and value together in the same syntax. I think using <> is fine, but
+how do we distinguish between the newtype and the cast operations?
+
+If we want cast to work on arbitrary types, the syntax has to be focused on
+the token type, not the argument type. The token type is like any other type,
+so we also have to distinguish the syntax from arbitrary other syntax
+involving types.
+
+One of the operations can be single argument polymorphic application to the
+token type. That fits. Probably that should be the newtype.
+
+How do we do the cast? How do we clearly make it it's own syntax? Either it
+has to be a wildly new syntax based around the token type, or it is a special
+cast syntax that takes the token as an input. I think the later will be
+better. If we do that, maybe we can define a newtype syntax in a similar
+manner, and avoid any confusion with polymorphic application?
+
+@? Tok@;
+@ Num@ = @?<Tok@>(Int@);
+Num@ x = @?<Tok@, Num@>(Int|3);
+
+Okay, here is an option. Special syntax anchored around @?:
+
+@? <typename> ; stmt
+  Define a token type.
+
+@? <token type> ( <type> )
+  Define a newtype with a token type.
+
+@? <token type, target type> (<expr>)
+  Cast an expression to a target type given the token type.
+
+The newtype form is sort of similar to struct and union types, using 
+@?<Tok@> in the place of '+' and '*'.
+
+The full example:
+
+@? _@;
+@ Num@ = @?<_@>(Int@);
+
+(Num@, Num@) { Num@; } Add = @?<_@, @<Add>>(AddI);
+(Num@, Num@) { Num@; } Sub = @?<_@, @<Sub>>(SubI);
+(Num@) { Num@; } Neg = @?<_@, @<Neg>>(NegI);
+(Num@) { Num@; } Foo = (Num@ x) {
+   @?<_@, Num@>(FooI(AddI(@?<_@, Int@>(x), Int|2)));
+};
+
+Maybe we could add syntax highlighting for @?<...> so it stands out as a
+separate syntactic entity?
+
+Or, random other idea, maybe you can using @? to create things that take _@ as
+an argument.
+
+
+@? _@;
+@ Num@ = @?<Int@><_@>;
+(Num@, Num@) { Num@; } Add = @?<@<Add>>(AddI)<_@>;
+
+No, I rather have the token type available when we typecheck the cast instead
+of making it a deferred thing.
+
+@? _@;
+@ Num@ = _@<Int@>;
+Num@ 3 = _@.<Num@>(Int|3);
+(Num@, Num@) { Num@; } Add = _@.<@<Add>>(AddI);
+
+This is interesting. Avoid the extra @? by using _@.<target>(expr) for cast.
+That seems cleaner to me.
+
+@? _@;
+@ Num@ = _@<Int@>;
+Num@ 3 = _@.<Num@>(Int|3);
+(Num@, Num@) { Num@; } Add = _@.<@<Add>>(AddI);
+(Num@, Num@) { Num@; } Sub = _@.<@<Sub>>(SubI);
+(Num@) { Num@; } Neg = _@.<@<Neg>>(NegI);
+(Num@) { Num@; } Foo = (Num@ x) {
+   _@.<Num@>(FooI(AddI(_@.<Int@>(x), Int|2)));
+};
+
+Yeah, that seems good. Fairly low overhead syntax. No runtime overhead for the
+cast. No need for wrapper functions. Basically no runtime overhead for
+abstract data types, which is what I really want.
+
+Question: use <> or () for newtype? Does it mean anything to have a newtype of
+a value? Like: _@(Int|3)? No. It doesn't. Soo I think <>.
+
+Question: anything other than '.' we could use that would make more sense for
+casting? No. I think '.' is like syntax for conditional except using <type> in
+place of '?'. _@.?(Num@: Int|3)? To much overhead in the syntax.
+
+Good. I like this idea. Maybe let's give it a try and see how it goes. The
+fact that it eliminates the need for wrapper functions and entirely addresses
+my two major hesitations for using abstract data types suggests it is worth
+pursuing.
+
+Implementation wise, it's just a question of whether we can do the equality
+check for types easily enough. Maybe we add a magic flag to an abstract type
+saying if it is currently transparent or opaque during the check for type
+equality?
+
+It will be interesting to see what effect this has on Map@ use of abstract
+type. Maybe I can separate internal from external definitions entirely and
+just use a cast at the top level instead of lots of internal casts? Because we
+are introducing some overhead to the cast now that you have to supply the
+target type, and if we want to hide that behind functions, we are back to
+introducing runtime overhead.
+
