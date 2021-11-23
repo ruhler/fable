@@ -199,8 +199,10 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   # Compute the new state just after the collision.
   # TODO: Properly take into account the velocity of the paddle at the point
   # of collision.
+  Num@ w = Div(Int|4, Int|10);
+  Num@ vp = Mul(w, sh.x);
   Vec@ vh = RotateTo(ph.edge.normal, start.vel);
-  Vec@ vc = Vec@(vh.x, Mul(R, Neg(vh.y)));
+  Vec@ vc = Vec@(vh.x, Sub(vp, vh.y));
   Vec@ vel = RotateFrom(ph.edge.normal, vc);
   BallT@(Ball@(end_pos, vel, radius), t);
 };
