@@ -143,30 +143,6 @@ CollideEdgeS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
   CollideEdgeS(start, CollideEdge(start, end, edges.cons.head), edges.cons.tail);
 };
 
-# CollidePaddle --
-#   Check for and apply collision between ball and paddle.
-#
-# If there is no collision, end is returned as is. If there is a collision,
-# returns the ball in the state just after the collision at the time of
-# collision.
-(Ball@, BallT@, Paddle@) { BallT@; }
-CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
-  # TODO: Fancier stuff here.
-  CollideEdge(start, end, paddle.edge);
-};
-
-# CollidePaddleS --
-#   Check for and apply collision between ball and a list of paddles.
-#
-# If there is no collision, end is returned as is. If there is a collision,
-# returns the ball in the state just after the collision at the time of
-# collision.
-(Ball@, BallT@, List@<Paddle@>) { BallT@; }
-CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
-  paddles.?(nil: end);
-  CollidePaddleS(start, CollidePaddle(start, end, paddles.cons.head), paddles.cons.tail);
-};
-
 # MovePaddle -- 
 #   Move a paddle by the given amount of time.
 (Num@)(Paddle@) { Paddle@; } MovePaddle = (Num@ t)(Paddle@ p) {
@@ -179,6 +155,66 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
 
   Eq(pos, p.pos).?(true: p);
   RecomputeEdge(Paddle@(p.end_down, p.end_up, pos, p.vel, p.edge));
+};
+
+# CollidePaddle --
+#   Check for and apply collision between ball and paddle.
+#
+# If there is no collision, end is returned as is. If there is a collision,
+# returns the ball in the state just after the collision at the time of
+# collision.
+(Ball@, BallT@, Paddle@) { BallT@; }
+CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
+  Num@ radius = start.radius;
+  Num@ tm = end.time;
+
+  # Compute time for the ball to reach the end position of the paddle.
+  Paddle@ p0 = MovePaddle(tm)(paddle);
+  Vec@ s0 = RotateTo(p0.edge.normal, SubV(start.pos, p0.edge.start));
+  Vec@ v0 = RotateTo(p0.edge.normal, start.vel);
+  Num@ t0 = Div(Sub(s0.y, radius), v0.y);
+
+  # Compute time for the ball to reach the start position of the paddle.
+  Paddle@ p1 = paddle;
+  Vec@ s1 = RotateTo(p1.edge.normal, SubV(start.pos, p1.edge.start));
+  Vec@ v1 = RotateTo(p1.edge.normal, start.vel);
+  Num@ t1 = Div(Sub(s1.y, radius), v1.y);
+
+  # Compute time for ball to collide with paddle, assuming paddle the paddle
+  # moves towards the ball at a constant velocity along the path of the ball.
+  Num@ td = Add(tm, Sub(t1, t0));
+  Eq(td, Int|0).?(true: end);
+
+  Num@ t = Div(Mul(t1, tm), td);
+  Lt(t, Int|0).?(true: end);
+  Gt(t, tm).?(true: end);
+
+  # Verify the collision happens within the segment of the edge.
+  Vec@ end_pos = AddV(start.pos, MulVS(start.vel, t));
+  Paddle@ ph = MovePaddle(t)(paddle);
+  Vec@ sh = RotateTo(ph.edge.normal, SubV(end_pos, ph.edge.start));
+  Lt(sh.x, Int|0).?(true: end);
+  Gt(sh.x, ph.edge.length).?(true: end);
+
+  # Compute the new state just after the collision.
+  # TODO: Properly take into account the velocity of the paddle at the point
+  # of collision.
+  Vec@ vh = RotateTo(ph.edge.normal, start.vel);
+  Vec@ vc = Vec@(vh.x, Mul(R, Neg(vh.y)));
+  Vec@ vel = RotateFrom(ph.edge.normal, vc);
+  BallT@(Ball@(end_pos, vel, radius), t);
+};
+
+# CollidePaddleS --
+#   Check for and apply collision between ball and a list of paddles.
+#
+# If there is no collision, end is returned as is. If there is a collision,
+# returns the ball in the state just after the collision at the time of
+# collision.
+(Ball@, BallT@, List@<Paddle@>) { BallT@; }
+CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
+  paddles.?(nil: end);
+  CollidePaddleS(start, CollidePaddle(start, end, paddles.cons.head), paddles.cons.tail);
 };
 
 # Move --
