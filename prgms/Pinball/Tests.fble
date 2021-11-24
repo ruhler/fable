@@ -27,6 +27,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   Test(Str|'Move Ball No Collision', !({
     # The ball moves freely to the right 10 units per tick.
     World@ start = @(
+      gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
       edges: Nil<Edge@>,
       paddles: Nil<Paddle@>);
@@ -39,6 +40,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   Test(Str|'Move Ball Collision', !({
     # The ball moves to the right, hits a wall, then bounces back.
     World@ start = @(
+      gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
       edges: List<Edge@>[
         Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Neg(Int|4)), Int|8)
@@ -54,6 +56,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
     # Regression test for when we failed to check collision happens within the
     # bounds of a wall.
     World@ start = @(
+      gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
       edges: List<Edge@>[
         Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Int|3), Int|8)

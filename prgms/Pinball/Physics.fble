@@ -79,11 +79,12 @@
     Edge@(normal, p.edge.start, p.edge.length));
 };
 
-@ World@ = *(Ball@ ball, List@<Edge@> edges, List@<Paddle@> paddles);
-
-# HALF_G --
-#   Half the acceleration due to gravity.
-Vec@ HALF_G = Vec@(Int|0, Neg(Div(Int|1, Int|16)));
+@ World@ = *(
+  Vec@ gravity,      # acceleration due to gravity
+  Ball@ ball,
+  List@<Edge@> edges,
+  List@<Paddle@> paddles
+);
 
 # R --
 #   The coefficient of restitution: the fraction of energy preserved during a
@@ -238,7 +239,7 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
   BallT@ batted = CollidePaddleS(w.ball, edged, w.paddles);
   Num@ ct = batted.time;
   List@<Paddle@> paddles = /List%.Map<Paddle@, Paddle@>(w.paddles, MovePaddle(ct));
-  World@ moved = World@(batted.ball, w.edges, paddles);
+  World@ moved = World@(w.gravity, batted.ball, w.edges, paddles);
   Move(moved, Sub(t, ct));
 };
 
@@ -246,15 +247,16 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
 #   Advance the world by one unit of time.
 (World@) { World@; } Tick = (World@ w) {
   # Compute average expected ball velocity over the time period.
-  Vec@ v_avg = AddV(w.ball.vel, HALF_G);
-  World@ updated = World@(Ball@(w.ball.pos, v_avg, w.ball.radius), w.edges, w.paddles);
+  Vec@ half_gravity = MulVS(w.gravity, Div(Int|1, Int|2));
+  Vec@ v_avg = AddV(w.ball.vel, half_gravity);
+  World@ updated = World@(w.gravity, Ball@(w.ball.pos, v_avg, w.ball.radius), w.edges, w.paddles);
 
   # Move the ball assuming constant velocity.
   World@ moved = Move(updated, Int|1);
 
   # Compute final ball velocity.
-  Vec@ v = AddV(moved.ball.vel, HALF_G);
-  World@(Ball@(moved.ball.pos, v, moved.ball.radius), moved.edges, moved.paddles);
+  Vec@ v = AddV(moved.ball.vel, half_gravity);
+  World@(w.gravity, Ball@(moved.ball.pos, v, moved.ball.radius), moved.edges, moved.paddles);
 };
 
 @(Vec@, Ball@, Edge@, Paddle@, World@, Tick,

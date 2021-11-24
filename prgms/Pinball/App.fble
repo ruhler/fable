@@ -55,6 +55,7 @@ Num@ Radius = Int|8;
 Num@ PaddleVelocity = Div(Int|1, Int|4);
 
 World@ Initial = World@(
+  Vec@(Int|0, Neg(Div(Int|1, Int|8))),
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
   List<Edge@>[
     # Floor
@@ -129,7 +130,7 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
 
 (Num@, World@) { World@; } SetPaddleVelocity = (Num@ v, World@ w) {
   Paddle@ p = w.paddles.cons.head;
-  World@(w.ball, w.edges, 
+  World@(w.gravity, w.ball, w.edges, 
     List<Paddle@>[Paddle@(p.end_down, p.end_up, p.pos, v, p.edge)]);
 };
 
