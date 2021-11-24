@@ -29,10 +29,16 @@
   Vec@(Mul(a.x, s), Mul(a.y, s));
 };
 
+# Magitude --
+#   Computes the length of a vector.
+(Vec@) { Num@; } Magnitude = (Vec@ a) {
+  Sqrt(Add(Mul(a.x, a.x), Mul(a.y, a.y)));
+};
+
 # Norm --
 #   Computes a unit vector in the direction of the given vector.
 (Vec@) { Vec@; } Norm = (Vec@ a) {
-  Num@ d = Sqrt(Add(Mul(a.x, a.x), Mul(a.y, a.y)));
+  Num@ d = Magnitude(a);
   Vec@(Div(a.x, d), Div(a.y, d));
 };
 
@@ -194,12 +200,9 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   Gt(sh.x, ph.edge.length).?(true: end);
 
   # Compute the new state just after the collision.
-  # TODO: Properly take into account the velocity of the paddle at the point
-  # of collision.
-  Num@ w = Div(Int|4, Int|10);
-  Num@ vp = Mul(w, sh.x);
+  Num@ v = Div(Mul(sh.x, Mul(paddle.vel, Magnitude(SubV(paddle.end_up, paddle.end_down)))), paddle.edge.length);
   Vec@ vh = RotateTo(ph.edge.normal, start.vel);
-  Vec@ vc = Vec@(vh.x, Sub(vp, vh.y));
+  Vec@ vc = Vec@(vh.x, Sub(v, vh.y));
   Vec@ vel = RotateFrom(ph.edge.normal, vc);
   BallT@(Ball@(end_pos, vel, radius), t);
 };
