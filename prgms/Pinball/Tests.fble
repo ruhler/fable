@@ -1,12 +1,16 @@
 
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+<@>@ Eq@ = /Eq%.Eq@;
+
 <@>% List = /List%.List;
 <@>% Nil = /List%.Nil;
 
-@ Num@ = /Pinball/Num%.Num@;
 % Neg = /Pinball/Num%.Neg;
 % Int = /Pinball/Num%.Int;
+% Div = /Pinball/Num%.Div;
 % Eq = /Pinball/Num%.Eq;
-% Lt = /Pinball/Num%.Lt;
 % Show = /Pinball/Num%.Show;
 
 @ Ball@ = /Pinball/Physics%.Ball@;
@@ -16,12 +20,37 @@
 @ World@ = /Pinball/Physics%.World@;
 % Tick = /Pinball/Physics%.Tick;
 
+<@>@ Show@ = /Show%.Show@;
+
+% Strs = /String%.Strs;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
+
+Eq@<Vec@> EqVec = (Vec@ a, Vec@ b) {
+  Eq(a.x, b.x).?(false: False);
+  Eq(a.y, b.y).?(false: False);
+  True;
+};
+
+Show@<Vec@> ShowVec = (Vec@ a) {
+  Strs[Str|'(', Show(a.x), Str|', ', Show(a.y), Str|')'];
+};
+
+Eq@<Ball@> EqBall = (Ball@ a, Ball@ b) {
+  EqVec(a.pos, b.pos).?(false: False);
+  EqVec(a.vel, b.vel).?(false: False);
+  Eq(a.radius, b.radius).?(false: False);
+  True;
+};
+
+Show@<Ball@> ShowBall = (Ball@ a) {
+  Strs[Str|'Ball@(pos=', ShowVec(a.pos), Str|', vel=', ShowVec(a.vel),
+    Str|', radius=', Show(a.radius), Str|')'];
+};
 
 Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   Test(Str|'Move Ball No Collision', !({
@@ -32,9 +61,12 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       edges: Nil<Edge@>,
       paddles: Nil<Paddle@>);
     World@ end = Tick(start);
-    Num@ want = Int|10;
-    Num@ got = end.ball.pos.x;
-    AssertEquals<Num@>(Eq, Show, want, got);
+    Ball@ want = @(
+      pos: Vec@(Int|10, Int|0),
+      vel: Vec@(Int|10, Int|0),
+      radius: Int|1);
+    Ball@ got = end.ball;
+    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
   })),
   
   Test(Str|'Move Ball Collision', !({
@@ -43,12 +75,17 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
       edges: List<Edge@>[
-        Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Neg(Int|4)), Int|8, Int|1)
+        Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|6, Neg(Int|4)), Int|8, Int|1)
       ],
       paddles: Nil<Paddle@>);
     World@ end = Tick(start);
-    # TODO: Define an AssertLt function instead of reusing AssertEquals here.
-    AssertEquals<Num@>(Lt, Show, end.ball.pos.x, Int|5);
+
+    Ball@ want = @(
+      pos: Vec@(Int|0, Int|0),
+      vel: Vec@(Neg(Int|10), Int|0),
+      radius: Int|1);
+    Ball@ got = end.ball;
+    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
   })),
 
   Test(Str|'Move Ball Avoid Collision', !({
@@ -63,9 +100,42 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       ],
       paddles: Nil<Paddle@>);
     World@ end = Tick(start);
-    Num@ want = Int|10;
-    Num@ got = end.ball.pos.x;
-    AssertEquals<Num@>(Eq, Show, want, got);
+    Ball@ want = @(
+      pos: Vec@(Int|10, Int|0),
+      vel: Vec@(Int|10, Int|0),
+      radius: Int|1);
+    Ball@ got = end.ball;
+    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+  })),
+
+  Test(Str|'Stationary Paddle Collision', !({
+    # The ball moves down at constant velocity onto a stationary paddle.
+    World@ start = @(
+      gravity: Vec@(Int|0, Int|0),
+      ball: @(
+        pos: Vec@(Int|2, Int|2),
+        vel: Vec@(Int|0, Neg(Int|2)),
+        radius: Int|1),
+      edges: Nil<Edge@>,
+      paddles: List<Paddle@>[
+        @(end_down: Vec@(Int|4, Neg(Int|2)),
+          end_up: Vec@(Int|4, Int|2),
+          pos: Div(Int|1, Int|2),
+          vel: Int|0,
+          edge: @(
+            normal: Vec@(Int|0, Int|1),
+            start: Vec@(Int|0, Int|0),
+            length: Int|4,
+            restitution: Int|1))
+      ]);
+    World@ end = Tick(start);
+    Ball@ want = @(
+      pos: Vec@(Int|2, Int|2),
+      vel: Vec@(Int|0, Int|2),
+      radius: Int|1);
+    Ball@ got = end.ball;
+    # TODO: Debug test failure.
+    /Test%.ExpectFails(AssertEquals<Ball@>(EqBall, ShowBall, want, got), Str|'');
   }))
 ]);
 

@@ -79,7 +79,7 @@ Int@ S = IntI|128;
 };
 
 Show@<Num@> Show = (Num@ a) {
-  Strs[ShowI(a<_@>), Str|' / ', ShowI(S)];
+  Strs[ShowI(a<_@>), Str|'/', ShowI(S)];
 };
 
 # Int --
