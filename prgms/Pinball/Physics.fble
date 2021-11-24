@@ -57,9 +57,10 @@
 @ Ball@ = *(Vec@ pos, Vec@ vel, Num@ radius);
 
 @ Edge@ = *(
-  Vec@ normal,     # Unit normal vector.
-  Vec@ start,      # Starting position of the edge.
-  Num@ length      # Length of the edge.
+  Vec@ normal,      # Unit normal vector.
+  Vec@ start,       # Starting position of the edge.
+  Num@ length,      # Length of the edge.
+  Num@ restitution  # Fraction of energy preserved during a collision.
 );
 
 @ Paddle@ = *(
@@ -76,7 +77,7 @@
   Vec@ normal = Vec@(Neg(tangent.y), tangent.x);
   Paddle@(
     p.end_down, p.end_up, p.pos, p.vel,
-    Edge@(normal, p.edge.start, p.edge.length));
+    Edge@(normal, p.edge.start, p.edge.length, p.edge.restitution));
 };
 
 @ World@ = *(
@@ -85,11 +86,6 @@
   List@<Edge@> edges,
   List@<Paddle@> paddles
 );
-
-# R --
-#   The coefficient of restitution: the fraction of energy preserved during a
-#   collision.
-Num@ R = Div(Int|6, Int|8);
 
 # BallT@ --
 #   A ball at a particular point in time.
@@ -126,7 +122,7 @@ CollideEdge = (Ball@ start, BallT@ end, Edge@ edge) {
   Gt(x, edge.length).?(true: end);
 
   # Compute the new state just after the collision.
-  Vec@ vc = Vec@(v.x, Mul(R, Neg(v.y)));
+  Vec@ vc = Vec@(v.x, Mul(edge.restitution, Neg(v.y)));
   Vec@ end_pos = AddV(start.pos, MulVS(start.vel, t));
   Vec@ vel = RotateFrom(edge.normal, vc);
   BallT@(Ball@(end_pos, vel, radius), t);

@@ -43,7 +43,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
       edges: List<Edge@>[
-        Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Neg(Int|4)), Int|8)
+        Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Neg(Int|4)), Int|8, Int|1)
       ],
       paddles: Nil<Paddle@>);
     World@ end = Tick(start);
@@ -59,7 +59,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       gravity: Vec@(Int|0, Int|0),
       ball: Ball@(Vec@(Int|0, Int|0), Vec@(Int|10, Int|0), Int|1),
       edges: List<Edge@>[
-        Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Int|3), Int|8)
+        Edge@(Vec@(Neg(Int|1), Int|0), Vec@(Int|5, Int|3), Int|8, Int|1)
       ],
       paddles: Nil<Paddle@>);
     World@ end = Tick(start);

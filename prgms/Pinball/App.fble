@@ -54,6 +54,8 @@ Num@ Radius = Int|8;
 
 Num@ PaddleVelocity = Div(Int|1, Int|4);
 
+Num@ Restitution = Div(Int|6, Int|8);
+
 World@ Initial = World@(
   Vec@(Int|0, Neg(Div(Int|1, Int|8))),
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
@@ -61,28 +63,28 @@ World@ Initial = World@(
     # Floor
     Edge@(Vec@(Int|0, Int|1),
           Vec@(Neg(Int|16), Neg(Int|104)),
-          Int|32),
+          Int|32, Restitution),
 
     # Slopes
     Edge@(Vec@(Neg(Div(Int|3, Int|5)), Div(Int|4, Int|5)),
           Vec@(Int|16, Neg(Int|104)),
-          Int|160),
+          Int|160, Restitution),
     Edge@(Vec@(Div(Int|3, Int|5), Div(Int|4, Int|5)),
           Vec@(Neg(Int|144), Neg(Int|8)),
-          Int|80),
+          Int|80, Restitution),
 
     # Side walls
     Edge@(Vec@(Int|1, Int|0),
           Vec@(Neg(Int|144), Int|104),
-          Int|112),
+          Int|112, Restitution),
     Edge@(Vec@(Neg(Int|1), Int|0),
           Vec@(Int|144, Neg(Int|8)),
-          Int|112),
+          Int|112, Restitution),
 
     # Ceiling
     Edge@(Vec@(Int|0, Neg(Int|1)),
           Vec@(Int|144, Int|104),
-          Int|288)
+          Int|288, Restitution)
   ],
   List<Paddle@>[
     # Left Paddle.
@@ -93,7 +95,7 @@ World@ Initial = World@(
       Neg(PaddleVelocity),
       Edge@(Vec@(Div(Int|3, Int|5), Div(Int|4, Int|5)),
           Vec@(Neg(Int|80), Neg(Int|56)),
-          Int|80))
+          Int|80, Restitution))
   ]);
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
