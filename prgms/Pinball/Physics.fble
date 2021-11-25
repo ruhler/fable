@@ -167,7 +167,7 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   # Compute the new state just after the collision.
   Num@ v = Div(Mul(sh.x, Mul(paddle.vel, Magnitude(SubV(paddle.end_up, paddle.end_down)))), paddle.edge.length);
   Vec@ vh = RotateTo(ph.edge.normal, start.vel);
-  Vec@ vc = Vec@(vh.x, Sub(v, vh.y));
+  Vec@ vc = Vec@(vh.x, Mul(paddle.edge.restitution, Sub(v, vh.y)));
   Vec@ vel = RotateFrom(ph.edge.normal, vc);
   BallT@(Ball@(end_pos, vel, radius), t);
 };

@@ -1,6 +1,7 @@
 * [pinball] 
  - Test and fix bug of ball going through paddle.
- - Test and fix divide by zero bug.
+ - Test and fix bug of ball gaining velocity when paddle isn't moving.
+ - Test and fix bug of ball bouncing off far away from paddle.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
