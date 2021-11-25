@@ -65,6 +65,11 @@ eval {
   require "u"
   require "(gdb)"
 
+  # Test that it show the type of the variable as FbleValue*.
+  send "print light\n"
+  require "(struct FbleValue *)"
+  require "(gdb)"
+
   close
 }
 

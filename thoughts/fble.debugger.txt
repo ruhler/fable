@@ -869,3 +869,43 @@ FbleReadString, FbleDebugString, etc? If I have FbleReadInt and
 FbleReadString, there's no need for the Debug variants because gdb can print
 int and string already?
 
+---
+
+How gdb represents FbleValue* type:
+
+<1><5b2>: Abbrev Number: 2 (DW_TAG_typedef)
+    <5b3>   DW_AT_name        : (indirect string, offset: 0x3bd): FbleValue
+    <5b7>   DW_AT_decl_file   : 14
+    <5b8>   DW_AT_decl_line   : 15
+    <5b9>   DW_AT_decl_column : 26
+    <5ba>   DW_AT_type        : <0x5be>
+<1><5be>: Abbrev Number: 11 (DW_TAG_structure_type)
+    <5bf>   DW_AT_name        : (indirect string, offset: 0x3bd): FbleValue
+    <5c3>   DW_AT_declaration : 1
+ <1><5c4>: Abbrev Number: 6 (DW_TAG_pointer_type)
+    <5c5>   DW_AT_byte_size   : 8
+    <5c6>   DW_AT_type        : <0x5b2>
+
+It appears to duplicate that information for every object file. What's
+interesting is it is only defined as a structure once. Perhaps this is all we
+need to output to the dwarf information, set DW_AT_declaration to 1 to say we
+aren't defining the value here, you'll have to find it elsewhere. That's very
+reasonable for me to output in generated code I feel like. Cool. Let's try
+that.
+
+Maybe leave out the file, line and column where FbleValue typedef is declared.
+Maybe I can leave out the typedef as well? Just something like:
+    
+<1><5be>: Abbrev Number: 11 (DW_TAG_structure_type)
+    <5bf>   DW_AT_name        : (indirect string, offset: 0x3bd): FbleValue
+    <5c3>   DW_AT_declaration : 1
+ <1><5c4>: Abbrev Number: 6 (DW_TAG_pointer_type)
+    <5c5>   DW_AT_byte_size   : 8
+    <5c6>   DW_AT_type        : <0x5b2>
+
+We reference the type using an offset from the first byte of the compilation
+unit, or a raw address.
+
+This works. It shows it as (struct FbleValue*) instead of (FbleValue*), which
+is not surprising, but it is also able to dereference the tag, which is cool.
+

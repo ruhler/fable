@@ -1575,6 +1575,17 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .string \"%s\"\n", cwd); // compilation directory.
   fprintf(fout, "  .string \"FBLE\"\n"); // producer.
 
+  // FbleValue* type entry
+  fprintf(fout, ".LFbleValuePointerType:\n");
+  fprintf(fout, "  .uleb128 4\n");       // abbrev code for point type
+  fprintf(fout, "  .byte 8\n");          // bite_size value
+  fprintf(fout, "  .8byte .LFbleValueStructType\n");  // type value
+
+  fprintf(fout, ".LFbleValueStructType:\n");
+  fprintf(fout, "  .uleb128 5\n");            // abbrev code for structure type
+  fprintf(fout, "  .string \"FbleValue\"\n"); // name
+  fprintf(fout, "  .byte 1\n");               // declaration
+
   // subprogram entries
   for (int i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
@@ -1615,6 +1626,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "  .8byte .L._Run_%p.pc.%zi - _Run.%p.%s\n",
               (void*)code, j,
               (void*)code, function_label);
+
+          // type
+          fprintf(fout, "  .8byte .LFbleValuePointerType\n");
         }
       }
     }
@@ -1666,6 +1680,28 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .uleb128 0x0a\n");  // DW_FORM_block1
   fprintf(fout, "  .uleb128 0x2c\n");  // DW_AT_start_scope
   fprintf(fout, "  .uleb128 0x07\n");  // DW_FORM_data8
+  fprintf(fout, "  .uleb128 0x49\n");  // DW_AT_type
+  fprintf(fout, "  .uleb128 0x10\n");  // DW_FORM_ref_addr
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
+
+  fprintf(fout, "  .uleb128 4\n");     // pointer type abbrev code declaration
+  fprintf(fout, "  .uleb128 0x0f\n");  // DW_TAG_pointer_type
+  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_no
+  fprintf(fout, "  .uleb128 0x0b\n");  // DW_AT_byte_size
+  fprintf(fout, "  .uleb128 0x0b\n");  // DW_FORM_data1
+  fprintf(fout, "  .uleb128 0x49\n");  // DW_AT_type
+  fprintf(fout, "  .uleb128 0x10\n");  // DW_FORM_ref_addr
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
+  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
+
+  fprintf(fout, "  .uleb128 5\n");     // struct type abbrev code declaration
+  fprintf(fout, "  .uleb128 0x13\n");  // DW_TAG_structure_type
+  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_no
+  fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
+  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
+  fprintf(fout, "  .uleb128 0x3c\n");  // DW_AT_declaration
+  fprintf(fout, "  .uleb128 0x0c\n");  // DW_FORM_flag
   fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
   fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
 

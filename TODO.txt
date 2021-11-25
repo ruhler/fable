@@ -29,11 +29,6 @@
 * [lang] Allow something of kind <@>@ to be used where @ is expected.
 
 * [debugger] Improve support for printing variables
- - Move ReadInt and maybe ReadString functions to separate libraries
-   prgms/Int.c, prgms/Char.c, prgms/String.c, etc.
-   Link these into the executable for debugging purposes.
- - Specify type of variables as FbleValue*
-   Or at least unsigned, to avoid signed/unsigned conversion issues.
  - Add VarDebugInfo for function static variables.
  - Emit lexical scopes where appropriate.
 
