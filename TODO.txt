@@ -1,6 +1,6 @@
 * [pinball] 
- - Figure out how to prevent ball from going through paddle.
- - Take account of paddle velocity in collision.
+ - Test and fix bug of ball going through paddle.
+ - Test and fix divide by zero bug.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?

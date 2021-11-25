@@ -120,16 +120,13 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
             length: Int|4,
             restitution: Int|1))
       ]);
-    # TODO: Figure out why this gets stuck in a loop.
-    # World@ end = Tick(start);
-    World@ end = start;
+    World@ end = Tick(start);
     Ball@ want = @(
       pos: Vec@(Int|2, Int|2),
       vel: Vec@(Int|0, Int|2),
       radius: Int|1);
     Ball@ got = end.ball;
-    # TODO: Fix test.
-    /Test%.ExpectFails(AssertEquals<Ball@>(EqBall, ShowBall, want, got), Str|'');
+    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
   }))
 ]);
 

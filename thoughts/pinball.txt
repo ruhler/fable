@@ -144,3 +144,9 @@ experiments, important notes:
 * Compute as many terms as needed until we run out of precision to store the
   result.
 
+---
+
+Issue: Collision with paddle leaves ball on the edge of the paddle, but then
+moves the ball from there. The ball is at the edge of the paddle. Should it be
+considered a collision or not? If we say yes, the we get stuck at the edge. If
+we say no, then could we possibly get unlucky and go through the edge?

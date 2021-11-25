@@ -152,7 +152,7 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   Eq(td, Int|0).?(true: end);
 
   Num@ t = Div(Mul(t1, tm), td);
-  Lt(t, Int|0).?(true: end);
+  Le(t, Int|0).?(true: end);
   Gt(t, tm).?(true: end);
 
   # Verify the collision happens within the segment of the edge.

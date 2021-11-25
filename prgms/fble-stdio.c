@@ -268,6 +268,7 @@ void DebugInt(FbleValue* x)
 void DebugString(FbleValue* x)
 {
   Output(stdout, x);
+  printf("\n");
 }
 
 // main --

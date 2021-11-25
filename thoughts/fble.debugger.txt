@@ -853,4 +853,6 @@ I see 'x' is being treated as a negative number in gdb. Yeah, looks like that
 could be the case. It would be great to mark the type of FbleValue* as
 FbleValue*, a pointer, or unsigned at least.
 
+* I eventually got around to trying DebugString, it works pretty well. No need
+  to thread through process everywhere.
 
