@@ -1,0 +1,62 @@
+
+@ Num@ = /Pinball/Num%.Num@;
+% Add = /Pinball/Num%.Add;
+% Sub = /Pinball/Num%.Sub;
+% Mul = /Pinball/Num%.Mul;
+% Div = /Pinball/Num%.Div;
+% Sqrt = /Pinball/Num%.Sqrt;
+
+# Vec@ -- 
+#   A 2D vector.
+@ Vec@ = *(Num@ x, Num@ y);
+
+# AddV --
+#   Vector addition.
+(Vec@, Vec@) { Vec@; } AddV = (Vec@ a, Vec@ b) {
+  Vec@(Add(a.x, b.x), Add(a.y, b.y));
+};
+
+# SubV --
+#   Vector subtraction.
+(Vec@, Vec@) { Vec@; } SubV = (Vec@ a, Vec@ b) {
+  Vec@(Sub(a.x, b.x), Sub(a.y, b.y));
+};
+
+# MulVS --
+#   Multiply a vector by a scalar.
+(Vec@, Num@) { Vec@; } MulVS = (Vec@ a, Num@ s) {
+  Vec@(Mul(a.x, s), Mul(a.y, s));
+};
+
+# Magitude --
+#   Computes the length of a vector.
+(Vec@) { Num@; } Magnitude = (Vec@ a) {
+  Sqrt(Add(Mul(a.x, a.x), Mul(a.y, a.y)));
+};
+
+# Normalize --
+#   Computes a unit vector in the direction of the given vector.
+(Vec@) { Vec@; } Normalize = (Vec@ a) {
+  Num@ d = Magnitude(a);
+  Vec@(Div(a.x, d), Div(a.y, d));
+};
+
+# RotateTo --
+#   Given unit normal vector n and arbitrary vector v, rotate the vector v
+#   to a coordinate system where n is at (0, 1).
+(Vec@, Vec@) { Vec@; } RotateTo = (Vec@ n, Vec@ v) {
+  Num@ x = Sub(Mul(n.y, v.x), Mul(n.x, v.y));
+  Num@ y = Add(Mul(n.x, v.x), Mul(n.y, v.y));
+  @(x, y);
+};
+
+# RotateFrom --
+#   Given unit normal vector n and arbitrary vector v, rotate the vector v
+#   out of a coordinate system where n is at (0, 1).
+(Vec@, Vec@) { Vec@; } RotateFrom = (Vec@ n, Vec@ v) {
+  Num@ x = Add(Mul(n.y, v.x), Mul(n.x, v.y));
+  Num@ y = Sub(Mul(n.y, v.y), Mul(n.x, v.x));
+  @(x, y);
+};
+
+@(Vec@, AddV, SubV, MulVS, Magnitude, Normalize, RotateTo, RotateFrom);
