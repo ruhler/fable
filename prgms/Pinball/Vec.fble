@@ -1,10 +1,20 @@
 
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+<@>@ Eq@ = /Eq%.Eq@;
+
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
 % Sub = /Pinball/Num%.Sub;
 % Mul = /Pinball/Num%.Mul;
 % Div = /Pinball/Num%.Div;
 % Sqrt = /Pinball/Num%.Sqrt;
+
+<@>@ Show@ = /Show%.Show@;
+
+% Strs = /String%.Strs;
+% Str = /String%.Str;
 
 # Vec@ -- 
 #   A 2D vector.
@@ -59,4 +69,17 @@
   @(x, y);
 };
 
-@(Vec@, AddV, SubV, MulVS, Magnitude, Normalize, RotateTo, RotateFrom);
+Eq@<Vec@> Eq = (Vec@ a, Vec@ b) {
+  /Pinball/Num%.Eq(a.x, b.x).?(false: False);
+  /Pinball/Num%.Eq(a.y, b.y).?(false: False);
+  True;
+};
+
+Show@<Vec@> Show = (Vec@ a) {
+  Strs[Str|'(',
+    /Pinball/Num%.Show(a.x), Str|', ',
+    /Pinball/Num%.Show(a.y), Str|')'];
+};
+
+@(Vec@, AddV, SubV, MulVS, Magnitude, Normalize, RotateTo, RotateFrom,
+  Eq, Show);

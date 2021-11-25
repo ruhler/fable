@@ -30,25 +30,17 @@
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
 
-Eq@<Vec@> EqVec = (Vec@ a, Vec@ b) {
-  Eq(a.x, b.x).?(false: False);
-  Eq(a.y, b.y).?(false: False);
-  True;
-};
-
-Show@<Vec@> ShowVec = (Vec@ a) {
-  Strs[Str|'(', Show(a.x), Str|', ', Show(a.y), Str|')'];
-};
-
 Eq@<Ball@> EqBall = (Ball@ a, Ball@ b) {
-  EqVec(a.pos, b.pos).?(false: False);
-  EqVec(a.vel, b.vel).?(false: False);
+  /Pinball/Vec%.Eq(a.pos, b.pos).?(false: False);
+  /Pinball/Vec%.Eq(a.vel, b.vel).?(false: False);
   Eq(a.radius, b.radius).?(false: False);
   True;
 };
 
 Show@<Ball@> ShowBall = (Ball@ a) {
-  Strs[Str|'Ball@(pos=', ShowVec(a.pos), Str|', vel=', ShowVec(a.vel),
+  Strs[Str|'Ball@(pos=',
+    /Pinball/Vec%.Show(a.pos), Str|', vel=',
+    /Pinball/Vec%.Show(a.vel),
     Str|', radius=', Show(a.radius), Str|')'];
 };
 
