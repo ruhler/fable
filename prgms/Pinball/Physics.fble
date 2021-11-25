@@ -175,13 +175,13 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   Paddle@ p0 = MovePaddle(tm)(paddle);
   Vec@ s0 = RotateTo(p0.edge.normal, SubV(start.pos, p0.edge.start));
   Vec@ v0 = RotateTo(p0.edge.normal, start.vel);
-  Num@ t0 = Div(Sub(s0.y, radius), v0.y);
+  Num@ t0 = Div(Sub(radius, s0.y), v0.y);
 
   # Compute time for the ball to reach the start position of the paddle.
   Paddle@ p1 = paddle;
   Vec@ s1 = RotateTo(p1.edge.normal, SubV(start.pos, p1.edge.start));
   Vec@ v1 = RotateTo(p1.edge.normal, start.vel);
-  Num@ t1 = Div(Sub(s1.y, radius), v1.y);
+  Num@ t1 = Div(Sub(radius, s1.y), v1.y);
 
   # Compute time for ball to collide with paddle, assuming paddle the paddle
   # moves towards the ball at a constant velocity along the path of the ball.

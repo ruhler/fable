@@ -808,3 +808,49 @@ instead of decimal? I'm thinking maybe not.
 In practice the most valuable next step for debugging would be to have names
 for tag values instead of numbers. But that sounds hard.
 
+---
+
+Another round of debugging I want to do. I want to print local variables that
+are Num@ to start. How? I suppose...  Num@ is an Int@. It would be nice to be
+able to convert an Int@ to a C int. We have a function for that, in
+fble-app.c. But I don't have access to that in fble-tests. Can I load that
+somehow? Apparently not.
+
+My suggestion is to move the ReadInt function to a library: prgms/Int.o, or
+some such. And link that into fble-tests.o solely for debug ability?
+
+Or maybe, to get started, copy that function into fble-test.c? Ideally it's a
+library function that is shared though. We can reference it from fble-test.c
+solely for the purpose of debug ability?
+
+Note: fble-stdio.c has an Output function that takes a stream and a fble
+String@. If I'm willing to do some printf style string declarations in the
+source code, I could use that to print them out.
+
+Let me try a mix. I'll add ReadInt to fble-stdio.c and maybe try adding a
+string to the source code to print the information I want, and see what works.
+
+First though, can I call the Output function if it's static? No. Some how
+about I add DumpString and DumpInt functions to fble-stdio for use with
+debugging.
+
+* DebugInt works.
+  Except it got stuck in an infinite loop in one case? Not sure.
+* It's a little annoying to have to call FbleStructValueAccess and know the
+  tag numbers by heart instead of using names, or better yet, 's.x'. But it
+  works.
+* It's tedious enough to add a String@ variable for printf that I was hesitant
+  and didn't do it. Just having to import Strs, Str, define Show functions,
+  etc. That would be a cost to a printf style approach too.
+
+Debugging with DebugInt helped me to find a bug though, so that's good. And
+debugging in general feels pretty good to me now in terms of setting
+breakpoints and stepping through code.
+
+For some reason print DebugInt(FbleStructValueAccess(x, 1)) is hanging in
+some (but not all?) cases. I wonder if there is some conversion issue, because
+I see 'x' is being treated as a negative number in gdb. Yeah, looks like that
+could be the case. It would be great to mark the type of FbleValue* as
+FbleValue*, a pointer, or unsigned at least.
+
+
