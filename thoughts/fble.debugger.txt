@@ -856,3 +856,16 @@ FbleValue*, a pointer, or unsigned at least.
 * I eventually got around to trying DebugString, it works pretty well. No need
   to thread through process everywhere.
 
+---
+
+The trouble with adding things like DebugInt and DebugString to fble-tests is
+they don't work for fble-pinball. It would really be nice to have them in
+general.
+
+I compile those programs manually. I should just have some .o files that I
+build as a library. Maybe a library, libfblelib.a? Or separate .o files
+included specifically for debugging? FbleReadInt, FbleDebugInt,
+FbleReadString, FbleDebugString, etc? If I have FbleReadInt and
+FbleReadString, there's no need for the Debug variants because gdb can print
+int and string already?
+

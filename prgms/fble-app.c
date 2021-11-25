@@ -6,6 +6,7 @@
 
 #include <SDL.h>        // for SDL_*
 
+#include "fble-int.h"     // for FbleIntValueRead
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
@@ -35,8 +36,6 @@ typedef struct {
 } AppIO;
 
 static void PrintUsage(FILE* stream);
-static int ReadIntP(FbleValue* num);
-static int ReadInt(FbleValue* num);
 static Uint32 ReadColor(SDL_PixelFormat* format, FbleValue* color);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing, SDL_PixelFormat* format);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
@@ -70,48 +69,6 @@ static void PrintUsage(FILE* stream)
   );
 }
 
-// ReadIntP --
-//   Read a number from an FbleValue of type /Int/IntP%.IntP@.
-//
-// Inputs:
-//   x - the value of the number.
-//
-// Results:
-//   The number x represented as an integer.
-//
-// Side effects:
-//   None
-static int ReadIntP(FbleValue* x)
-{
-  switch (FbleUnionValueTag(x)) {
-    case 0: return 1;
-    case 1: return 2 * ReadIntP(FbleUnionValueAccess(x));
-    case 2: return 2 * ReadIntP(FbleUnionValueAccess(x)) + 1;
-    default: assert(false && "Invalid IntP@ tag"); abort();
-  }
-}
-
-// ReadInt --
-//   Read a number from an FbleValue of type /Int%.Int@.
-//
-// Inputs:
-//   x - the value of the number.
-//
-// Results:
-//   The number x represented as an integer.
-//
-// Side effects:
-//   None
-static int ReadInt(FbleValue* x)
-{
-  switch (FbleUnionValueTag(x)) {
-    case 0: return -ReadIntP(FbleUnionValueAccess(x));
-    case 1: return 0;
-    case 2: return ReadIntP(FbleUnionValueAccess(x));
-    default: assert(false && "Invalid Int@ tag"); abort();
-  }
-}
-
 // ReadColor --
 //  Read the color value from a /Drawing%.Color@ tag.
 //
@@ -126,9 +83,9 @@ static int ReadInt(FbleValue* x)
 //   None.
 static Uint32 ReadColor(SDL_PixelFormat* format, FbleValue* color)
 {
-  int r = ReadInt(FbleStructValueAccess(color, 0));
-  int g = ReadInt(FbleStructValueAccess(color, 1));
-  int b = ReadInt(FbleStructValueAccess(color, 2));
+  int r = FbleIntValueRead(FbleStructValueAccess(color, 0));
+  int g = FbleIntValueRead(FbleStructValueAccess(color, 1));
+  int b = FbleIntValueRead(FbleStructValueAccess(color, 2));
   return SDL_MapRGB(format, r, g, b);
 }
 
@@ -166,10 +123,10 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       FbleValue* color = FbleStructValueAccess(rv, 4);
 
       SDL_Rect r = {
-        ax * ReadInt(x) + bx,
-        ay * ReadInt(y) + by,
-        ax * ReadInt(w),
-        ay * ReadInt(h)
+        ax * FbleIntValueRead(x) + bx,
+        ay * FbleIntValueRead(y) + by,
+        ax * FbleIntValueRead(w),
+        ay * FbleIntValueRead(h)
       };
 
       if (r.w < 0) {
@@ -193,10 +150,10 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       FbleValue* b = FbleStructValueAccess(transformed, 1);
       FbleValue* d = FbleStructValueAccess(transformed, 2);
 
-      int axi = ReadInt(FbleStructValueAccess(a, 0));
-      int ayi = ReadInt(FbleStructValueAccess(a, 1));
-      int bxi = ReadInt(FbleStructValueAccess(b, 0));
-      int byi = ReadInt(FbleStructValueAccess(b, 1));
+      int axi = FbleIntValueRead(FbleStructValueAccess(a, 0));
+      int ayi = FbleIntValueRead(FbleStructValueAccess(a, 1));
+      int bxi = FbleIntValueRead(FbleStructValueAccess(b, 0));
+      int byi = FbleIntValueRead(FbleStructValueAccess(b, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
       Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d, format);
@@ -330,7 +287,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     FbleValue* effect = app->effect;
     switch (FbleUnionValueTag(effect)) {
       case 0: {
-        int tick = ReadInt(FbleUnionValueAccess(effect));
+        int tick = FbleIntValueRead(FbleUnionValueAccess(effect));
 
         // TODO: This assumes we don't already have a tick in progress. We
         // should add proper support for multiple backed up tick requests.

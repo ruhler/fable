@@ -214,8 +214,9 @@ foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   bin $::bin/$base $::obj/$base.o "-L $::lib -lfble" $::libfble
   bin_cov $::bin/$base.cov $::obj/$base.o "-L $::lib -lfble.cov" $::libfblecov
 }
+obj $::obj/fble-int.o prgms/fble-int.c "-I fble/include"
 obj $::obj/fble-app.o prgms/fble-app.c "-I fble/include -I /usr/include/SDL2"
-bin $::bin/fble-app $::obj/fble-app.o "-L $::lib -lfble -lSDL2" $::libfble
+bin $::bin/fble-app "$::obj/fble-app.o $::obj/fble-int.o" "-L $::lib -lfble -lSDL2" $::libfble
 
 # Compiled variations of some of the tools.
 obj $::obj/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
@@ -465,8 +466,9 @@ build $::src/fble-tests.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain /Fble/Tests% > $::src/fble-tests.s"
 asm $::obj/fble-tests.o $::src/fble-tests.s
 
+# Note: fble-int.o included to provide useful functions for debugging.
 bin $::bin/fble-tests \
-  "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o" \
+  "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o $::obj/fble-int.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 test $::test/fble-compiled-tests.tr $::bin/fble-tests \
   "$::bin/fble-tests" "pool = console"
@@ -518,7 +520,7 @@ build $::src/fble-invaders.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain /Invaders/App% > $::src/fble-invaders.s"
 asm $::obj/fble-invaders.o $::src/fble-invaders.s ""
 bin $::bin/fble-invaders \
-  "$::obj/fble-invaders.o $::obj/fble-compiled-app.o" \
+  "$::obj/fble-invaders.o $::obj/fble-compiled-app.o $::obj/fble-int.o" \
   "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
 
 # /Graphics/App% compiled binary
@@ -526,7 +528,7 @@ build $::src/fble-graphics.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain /Graphics/App% > $::src/fble-graphics.s"
 asm $::obj/fble-graphics.o $::src/fble-graphics.s ""
 bin $::bin/fble-graphics \
-  "$::obj/fble-graphics.o $::obj/fble-compiled-app.o" \
+  "$::obj/fble-graphics.o $::obj/fble-compiled-app.o $::obj/fble-int.o" \
   "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
 
 # /Pinball/App% compiled binary
@@ -534,7 +536,7 @@ build $::src/fble-pinball.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain /Pinball/App% > $::src/fble-pinball.s"
 asm $::obj/fble-pinball.o $::src/fble-pinball.s ""
 bin $::bin/fble-pinball \
-  "$::obj/fble-pinball.o $::obj/fble-compiled-app.o" \
+  "$::obj/fble-pinball.o $::obj/fble-compiled-app.o $::obj/fble-int.o" \
   "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
 
 # test summary

@@ -1,7 +1,15 @@
 * [pinball] 
+ - Test basic ball paddle in motion collision.
+   Need to better understand how velocity of paddle is specified.
  - Test and fix bug of ball going through paddle.
  - Test and fix bug of ball gaining velocity when paddle isn't moving.
  - Test and fix bug of ball bouncing off far away from paddle.
+
+* [lib] Move more value conversion functions to separate object files.
+ - Char, String, Color, IO, etc.
+
+* [build] Factor out common build steps in build.ninja
+ - I'm thinking like compiled fble apps, for example.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
@@ -21,10 +29,12 @@
 * [lang] Allow something of kind <@>@ to be used where @ is expected.
 
 * [debugger] Improve support for printing variables
- - Specify type of variables as FbleValue*?
+ - Move ReadInt and maybe ReadString functions to separate libraries
+   prgms/Int.c, prgms/Char.c, prgms/String.c, etc.
+   Link these into the executable for debugging purposes.
+ - Specify type of variables as FbleValue*
    Or at least unsigned, to avoid signed/unsigned conversion issues.
  - Add VarDebugInfo for function static variables.
- - Write some helper C functions to decode FbleValue*.
  - Emit lexical scopes where appropriate.
 
 * Pull ReadInt and other native code for working with fble values out into

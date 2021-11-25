@@ -21,12 +21,9 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static char ReadChar(FbleValue* c);
 static FbleValue* WriteChar(FbleValueHeap* heap, char c);
-static int ReadIntP(FbleValue* num);
-static int ReadInt(FbleValue* num);
 static void Output(FILE* stream, FbleValue* str);
 static FbleValue* ToFbleString(FbleValueHeap* heap, const char* str);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
-void DebugInt(FbleValue* x);
 void DebugString(FbleValue* x);
 int main(int argc, char* argv[]);
 
@@ -103,48 +100,6 @@ static FbleValue* WriteChar(FbleValueHeap* heap, char c)
   assert(p >= gStdLibChars);
   size_t tag = p - gStdLibChars;
   return FbleNewEnumValue(heap, tag);
-}
-
-// ReadIntP --
-//   Read a number from an FbleValue of type /Int/IntP%.IntP@.
-//
-// Inputs:
-//   x - the value of the number.
-//
-// Results:
-//   The number x represented as an integer.
-//
-// Side effects:
-//   None
-static int ReadIntP(FbleValue* x)
-{
-  switch (FbleUnionValueTag(x)) {
-    case 0: return 1;
-    case 1: return 2 * ReadIntP(FbleUnionValueAccess(x));
-    case 2: return 2 * ReadIntP(FbleUnionValueAccess(x)) + 1;
-    default: assert(false && "Invalid IntP@ tag"); abort();
-  }
-}
-
-// ReadInt --
-//   Read a number from an FbleValue of type /Int%.Int@.
-//
-// Inputs:
-//   x - the value of the number.
-//
-// Results:
-//   The number x represented as an integer.
-//
-// Side effects:
-//   None
-static int ReadInt(FbleValue* x)
-{
-  switch (FbleUnionValueTag(x)) {
-    case 0: return -ReadIntP(FbleUnionValueAccess(x));
-    case 1: return 0;
-    case 2: return ReadIntP(FbleUnionValueAccess(x));
-    default: assert(false && "Invalid Int@ tag"); abort();
-  }
 }
 
 // Output --
@@ -240,20 +195,6 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     change = true;
   }
   return change;
-}
-
-// DebugInt --
-//   Print a /Int%.Int@ value in human readable form to standard out for
-//   debugging purposes. This is intended to be called from a debugger.
-//
-// Inputs:
-//   x - A /Int%.Int@ value.
-//
-// Side effects:
-//   Prints the value of the integer to standard out.
-void DebugInt(FbleValue* x)
-{
-  printf("%d\n", ReadInt(x));
 }
 
 // DebugString --
