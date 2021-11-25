@@ -127,6 +127,33 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       radius: Int|1);
     Ball@ got = end.ball;
     AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+  })),
+
+  Test(Str|'Stationary Ball With Paddle', !({
+    # Regression test for a divide by zero that happens if the ball is
+    # stationary relative to the paddle.
+    World@ start = @(
+      gravity: Vec@(Int|0, Int|0),
+      ball: @(
+        pos: Vec@(Int|2, Int|2),
+        vel: Vec@(Int|0, Int|0),
+        radius: Int|1),
+      edges: Nil<Edge@>,
+      paddles: List<Paddle@>[
+        @(end_down: Vec@(Int|4, Neg(Int|2)),
+          end_up: Vec@(Int|4, Int|2),
+          pos: Div(Int|1, Int|2),
+          vel: Int|0,
+          edge: @(
+            normal: Vec@(Int|0, Int|1),
+            start: Vec@(Int|0, Int|0),
+            length: Int|4,
+            restitution: Int|1))
+      ]);
+    World@ end = Tick(start);
+    Ball@ want = start.ball;
+    Ball@ got = end.ball;
+    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
   }))
 ]);
 
