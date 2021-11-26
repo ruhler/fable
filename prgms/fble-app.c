@@ -9,7 +9,7 @@
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
-#include "int.fble.h"     // for FbleIntValueRead
+#include "int.fble.h"     // for FbleIntValueAccess
 
 // sFpsHistogram[i] is the number of samples with i frames per second.
 // Anything above 60 FPS is counted towards i = 60.
@@ -84,9 +84,9 @@ static void PrintUsage(FILE* stream)
 //   None.
 static Uint32 ReadColor(SDL_PixelFormat* format, FbleValue* color)
 {
-  int r = FbleIntValueRead(FbleStructValueAccess(color, 0));
-  int g = FbleIntValueRead(FbleStructValueAccess(color, 1));
-  int b = FbleIntValueRead(FbleStructValueAccess(color, 2));
+  int r = FbleIntValueAccess(FbleStructValueAccess(color, 0));
+  int g = FbleIntValueAccess(FbleStructValueAccess(color, 1));
+  int b = FbleIntValueAccess(FbleStructValueAccess(color, 2));
   return SDL_MapRGB(format, r, g, b);
 }
 
@@ -124,10 +124,10 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       FbleValue* color = FbleStructValueAccess(rv, 4);
 
       SDL_Rect r = {
-        ax * FbleIntValueRead(x) + bx,
-        ay * FbleIntValueRead(y) + by,
-        ax * FbleIntValueRead(w),
-        ay * FbleIntValueRead(h)
+        ax * FbleIntValueAccess(x) + bx,
+        ay * FbleIntValueAccess(y) + by,
+        ax * FbleIntValueAccess(w),
+        ay * FbleIntValueAccess(h)
       };
 
       if (r.w < 0) {
@@ -151,10 +151,10 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       FbleValue* b = FbleStructValueAccess(transformed, 1);
       FbleValue* d = FbleStructValueAccess(transformed, 2);
 
-      int axi = FbleIntValueRead(FbleStructValueAccess(a, 0));
-      int ayi = FbleIntValueRead(FbleStructValueAccess(a, 1));
-      int bxi = FbleIntValueRead(FbleStructValueAccess(b, 0));
-      int byi = FbleIntValueRead(FbleStructValueAccess(b, 1));
+      int axi = FbleIntValueAccess(FbleStructValueAccess(a, 0));
+      int ayi = FbleIntValueAccess(FbleStructValueAccess(a, 1));
+      int bxi = FbleIntValueAccess(FbleStructValueAccess(b, 0));
+      int byi = FbleIntValueAccess(FbleStructValueAccess(b, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
       Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d, format);
@@ -288,7 +288,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     FbleValue* effect = app->effect;
     switch (FbleUnionValueTag(effect)) {
       case 0: {
-        int tick = FbleIntValueRead(FbleUnionValueAccess(effect));
+        int tick = FbleIntValueAccess(FbleUnionValueAccess(effect));
 
         // TODO: This assumes we don't already have a tick in progress. We
         // should add proper support for multiple backed up tick requests.

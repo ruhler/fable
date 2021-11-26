@@ -15,21 +15,21 @@ static const char* Chars =
     "abcdefghijklmnopqrstuvwxyz"
     "{|}~";
 
-// FbleCharValueRead -- see documentation in fble-char.h
-char FbleCharValueRead(FbleValue* c)
-{
-  return Chars[FbleUnionValueTag(c)];
-}
-
-// FbleCharValueWrite -- see documentation in fble-char.h
-FbleValue* FbleCharValueWrite(FbleValueHeap* heap, char c)
+// FbleNewCharValue -- see documentation in char.fble.h
+FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c)
 {
   char* p = strchr(Chars, c);
   if (p == NULL || c == '\0') {
     assert(c != '?');
-    return FbleCharValueWrite(heap, '?');
+    return FbleNewCharValue(heap, '?');
   }
   assert(p >= Chars);
   size_t tag = p - Chars;
   return FbleNewEnumValue(heap, tag);
+}
+
+// FbleCharValueAccess -- see documentation in char.fble.h
+char FbleCharValueAccess(FbleValue* c)
+{
+  return Chars[FbleUnionValueTag(c)];
 }

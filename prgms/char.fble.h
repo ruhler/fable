@@ -4,21 +4,8 @@
 
 #include "fble-value.h"   // for FbleValue, etc.
 
-// FbleCharValueRead --
-//   Read a character from an FbleValue of type /Char%.Char@
-//
-// Inputs:
-//   c - the value of the character.
-//
-// Results:
-//   The value x represented as a c char.
-//
-// Side effects:
-//   None
-char FbleCharValueRead(FbleValue* c);
-
-// FbleCharValueWrite --
-//   Write a character to an FbleValue of type /Char%.Char@.
+// FbleNewCharValue --
+//   Create an FbleValue of type /Char%.Char@.
 //   The character '?' is used for any characters not currently supported by
 //   the /Char%.Char@ type.
 //
@@ -31,6 +18,20 @@ char FbleCharValueRead(FbleValue* c);
 //
 // Side effects:
 //   Allocates a value that must be freed when no longer required.
-FbleValue* FbleCharValueWrite(FbleValueHeap* heap, char c);
+FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c);
+
+// FbleCharValueAccess --
+//   Read a character from an FbleValue of type /Char%.Char@
+//
+// Inputs:
+//   c - the value of the character.
+//
+// Results:
+//   The value x represented as a c char.
+//
+// Side effects:
+//   None
+char FbleCharValueAccess(FbleValue* c);
+
 
 #endif // FBLE_CHAR_FBLE_H_

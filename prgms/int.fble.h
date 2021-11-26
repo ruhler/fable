@@ -3,7 +3,7 @@
 
 #include "fble-value.h"
 
-// FbleIntValueRead --
+// FbleIntValueAccess --
 //   Read a number from an FbleValue of type /Int%.Int@.
 //
 // Inputs:
@@ -15,6 +15,6 @@
 // Side effects:
 //   Behavior is undefined if the int value cannot be represented using the C
 //   int64_t type, for example because it is too large.
-int64_t FbleIntValueRead(FbleValue* x);
+int64_t FbleIntValueAccess(FbleValue* x);
 
 #endif // FBLE_INT_FBLE_H_

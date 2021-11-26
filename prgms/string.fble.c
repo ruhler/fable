@@ -6,9 +6,9 @@
 #include "fble-value.h"     // for FbleValue, etc.
 #include "fble-vector.h"    // for FbleVectorInit, etc.
 
-#include "char.fble.h"      // for FbleCharValueRead, FbleCharValueWrite
+#include "char.fble.h"      // for FbleCharValueAccess, FbleNewCharValue
 
-// FbleStringValueAccess -- see documentation in fble-string.h
+// FbleStringValueAccess -- see documentation in string.fble.h
 char* FbleStringValueAccess(FbleValue* str)
 {
   struct { size_t size; char* xs; } chars;
@@ -18,20 +18,20 @@ char* FbleStringValueAccess(FbleValue* str)
     FbleValue* charV = FbleStructValueAccess(charP, 0);
     str = FbleStructValueAccess(charP, 1);
 
-    char c = FbleCharValueRead(charV);
+    char c = FbleCharValueAccess(charV);
     FbleVectorAppend(chars, c);
   }
   FbleVectorAppend(chars, '\0');
   return chars.xs;
 }
 
-// FbleNewStringValue -- see documentation in fble-string.h
+// FbleNewStringValue -- see documentation in string.fble.h
 FbleValue* FbleNewStringValue(FbleValueHeap* heap, const char* str)
 {
   size_t length = strlen(str);
   FbleValue* charS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < length; ++i) {
-    FbleValue* charV = FbleCharValueWrite(heap, str[length - i - 1]);
+    FbleValue* charV = FbleNewCharValue(heap, str[length - i - 1]);
     FbleValue* charP = FbleNewStructValue(heap, 2, charV, charS);
     FbleReleaseValue(heap, charV);
     FbleReleaseValue(heap, charS);
