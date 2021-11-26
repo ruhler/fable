@@ -1,4 +1,7 @@
 * [pinball] 
+ - Write test that ball moving away from paddle doesn't collide with it.
+ - Figure out how to track velocity of a paddle at the end of its range.
+
  - Test basic ball paddle in motion collision.
    Need to better understand how velocity of paddle is specified.
  - Test and fix bug of ball going through paddle.
@@ -28,14 +31,6 @@
 * [debugger] Improve support for printing variables
  - Add VarDebugInfo for function static variables.
  - Emit lexical scopes where appropriate.
-
-* Pull ReadInt and other native code for working with fble values out into
-  separate libraries associated with their fble files.
-  ReadInt should go somewhere like prgms/Int/Int.c instead of
-  prgms/fble-app.c, for example.
-
-  To allow us to reuse the logic in multiple programs and make it available
-  for use printing variable values when debugging.
 
 * Remove function bind syntax again, now that we no longer use it?
   On the one hand, it seems a shame to have a syntactic sugar that I don't

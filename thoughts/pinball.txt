@@ -150,3 +150,55 @@ Issue: Collision with paddle leaves ball on the edge of the paddle, but then
 moves the ball from there. The ball is at the edge of the paddle. Should it be
 considered a collision or not? If we say yes, the we get stuck at the edge. If
 we say no, then could we possibly get unlucky and go through the edge?
+
+Perhaps the right solution is don't count it as a collision if the ball is
+moving away from the edge at the time of collision.
+
+Issue: Computation of paddle velocity is wrong if the paddle is at rest but
+paddle.vel is not zero.
+
+Is it wrong for paddle.vel to be non-zero when the paddle has reached its
+limit? When do we have the paddle reach its limit?
+
+Here's what I think:
+* We should treat the paddle reaching it's end point as a collision. It should
+  break up a Move. It should set the paddle velocity to 0. So paddle velocity
+  is 0 when the paddle is stopped.
+
+* We should decouple the computation of a collision from whether that happens
+  before or after something else.
+
+What kinds of movements can we have?
+* Ball moves, doesn't run into anything.
+  Position changes.
+* Paddle moves, doesn't run into anything.
+  Position changes.
+* Paddle moves, hits end of range.
+  Position and velocity of paddle changes.
+* Ball moves, hits edge.
+  Position and velocity of ball changes.
+* Ball moves, paddle moves, they hit.
+  Paddle position, ball position, and ball velocity all change.
+
+Ideally each can be concerned just with its own thing. But we also don't want
+to have to calculate super far out in time, for example, how long it would
+take the ball to collide with an edge that it is running almost parallel to,
+because that could be expensive to compute.
+
+Part of the annoyance is how we can easily specify which paddle is updated in
+a world. It would be nice if we could name the paddles somehow.
+
+Let's take this one step at a time. What's the first test case I want to add
+that would demonstrate the problem?
+
+A paddle going up, hits the top edge and stops before the ball then collides
+with that stationary edge, all in one tick of the world. The solution will be
+to add a check for when the paddle reaches its end and treat that as a kind of
+collision.
+
+The position of the ball and all paddles are effected by time. The velocity of
+the ball and paddles are effected by collisions. There's nothing to say you
+couldn't have a ball collide with a paddle at the same time multiple paddles
+reaches their end point, which suggests we want a way to describe updates to
+multiple things at once somehow.
+
