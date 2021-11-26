@@ -208,16 +208,26 @@ lib $::libfblecov $::fble_objs_cov
 
 # fble tool binaries
 lappend build_ninja_deps "tools"
-foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
+foreach {x} [glob tools/*.c] {
   set base [file rootname [file tail $x]]
   obj $::obj/$base.o $x "-I fble/include"
-  bin $::bin/$base "$::obj/$base.o $::obj/fble-char.o" "-L $::lib -lfble" $::libfble
-  bin_cov $::bin/$base.cov "$::obj/$base.o $::obj/fble-char.o" "-L $::lib -lfble.cov" $::libfblecov
+  bin $::bin/$base "$::obj/$base.o" "-L $::lib -lfble" $::libfble
+  bin_cov $::bin/$base.cov "$::obj/$base.o" "-L $::lib -lfble.cov" $::libfblecov
 }
+
+# fble programs native library 
 obj $::obj/fble-char.o prgms/fble-char.c "-I fble/include"
 obj $::obj/fble-int.o prgms/fble-int.c "-I fble/include"
-obj $::obj/fble-app.o prgms/fble-app.c "-I fble/include -I /usr/include/SDL2"
-bin $::bin/fble-app "$::obj/fble-app.o $::obj/fble-int.o" "-L $::lib -lfble -lSDL2" $::libfble
+lib $::lib/libfble-prgms-native.a "$::obj/fble-char.o $::obj/fble-int.o"
+
+# fble programs binaries
+foreach {x} {prgms/fble-md5.c prgms/fble-stdio.c prgms/fble-app.c} {
+  set base [file rootname [file tail $x]]
+  obj $::obj/$base.o $x "-I fble/include -I /usr/include/SDL2"
+  bin $::bin/$base "$::obj/$base.o" \
+    "-L $::lib -lfble -lfble-prgms-native -lSDL2" \
+    "$::libfble $::lib/libfble-prgms-native.a"
+}
 
 # Compiled variations of some of the tools.
 obj $::obj/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
@@ -427,7 +437,7 @@ foreach dir [dirs prgms ""] {
 }
 
 # libfbleprgms.a
-set ::libfbleprgms "$::lib/libfbleprgms.a"
+set ::libfbleprgms "$::lib/libfble-prgms.a"
 lib $::libfbleprgms $::fble_prgms_objs
 
 # fble-disassemble test
@@ -451,26 +461,27 @@ test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
 test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
   "$::bin/fble-stdio prgms /Stdio/Test% > $::test/fble-stdio.out && grep PASSED $::test/fble-stdio.out > /dev/null"
 
-# /Stdio/Test% compilation test
-build $::src/fble-stdio-test.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain /Stdio/Test% > $::src/fble-stdio-test.s"
-asm $::obj/fble-stdio-test.o $::src/fble-stdio-test.s
+# Build an fble-stdio compiled binary.
+proc stdio { name path } {
+  build $::src/$name.s $::bin/fble-compile \
+    "$::bin/fble-compile --export FbleCompiledMain $path > $::src/$name.s"
+  asm $::obj/$name.o $::src/$name.s
+  bin $::bin/$name \
+    "$::obj/$name.o $::obj/fble-compiled-stdio.o" \
+    "-L $::lib -lfble -lfble-prgms -lfble-prgms-native" \
+    "$::libfble $::libfbleprgms $::lib/libfble-prgms-native.a"
+};
 
-bin $::bin/fble-stdio-test \
-  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o $::obj/fble-char.o" \
-  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
+stdio fble-stdio-test "/Stdio/Test%"
+stdio fble-tests "/Fble/Tests%"
+stdio fble-bench "/Fble/Bench%"
+stdio fble-debug-test "/Fble/DebugTest%"
+
+# /Stdio/Test% compilation test
 test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
   "$::bin/fble-stdio-test > $::test/fble-stdio-test.out && grep PASSED $::test/fble-stdio-test.out > /dev/null"
 
 # /Fble/Tests% compilation test
-build $::src/fble-tests.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain /Fble/Tests% > $::src/fble-tests.s"
-asm $::obj/fble-tests.o $::src/fble-tests.s
-
-# Note: fble-int.o included to provide useful functions for debugging.
-bin $::bin/fble-tests \
-  "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o $::obj/fble-int.o $::obj/fble-char.o" \
-  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 test $::test/fble-compiled-tests.tr $::bin/fble-tests \
   "$::bin/fble-tests" "pool = console"
 
@@ -480,26 +491,10 @@ fbleobj $::obj/fble-compiled-profiles-test-fble-main.o $::bin/fble-compile \
   prgms/Fble/ProfilesTest.fble
 bin $::bin/fble-compiled-profiles-test \
   "$::obj/fble-compiled-profiles-test.o $::obj/fble-compiled-profiles-test-fble-main.o" \
-  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
+  "-L $::lib -lfble -lfble-prgms" "$::libfble $::libfbleprgms"
 test $::test/fble-compiled-profiles-test.tr \
   "$::bin/fble-compiled-profiles-test" \
   "$::bin/fble-compiled-profiles-test > $::test/fble-compiled-profiles-test.prof"
-
-# /Fble/Bench% compiled binary
-build $::src/fble-bench.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain /Fble/Bench% > $::src/fble-bench.s"
-asm $::obj/fble-bench.o $::src/fble-bench.s ""
-bin $::bin/fble-bench \
-  "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o $::obj/fble-char.o" \
-  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
-
-# /Fble/DebugTest% compiled binary
-build $::src/fble-debug-test.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain /Fble/DebugTest% > $::src/fble-debug-test.s"
-asm $::obj/fble-debug-test.o $::src/fble-debug-test.s ""
-bin $::bin/fble-debug-test \
-  "$::obj/fble-debug-test.o $::obj/fble-compiled-stdio.o $::obj/fble-char.o" \
-  "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 
 # Test that there are no dwarf warnings in the generated fble-debug-test
 # binary.
@@ -516,29 +511,20 @@ test $::test/fble-debug-test.tr \
   "$::bin/fble-debug-test tools/fble-debug-test.exp" \
   "expect tools/fble-debug-test.exp > /dev/null"
 
-# /Invaders/App% compiled binary
-build $::src/fble-invaders.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain /Invaders/App% > $::src/fble-invaders.s"
-asm $::obj/fble-invaders.o $::src/fble-invaders.s ""
-bin $::bin/fble-invaders \
-  "$::obj/fble-invaders.o $::obj/fble-compiled-app.o $::obj/fble-int.o" \
-  "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
+# Build an fble-app compiled binary.
+proc app { name path } {
+  build $::src/$name.s $::bin/fble-compile \
+    "$::bin/fble-compile --export FbleCompiledMain $path > $::src/$name.s"
+  asm $::obj/$name.o $::src/$name.s ""
+  bin $::bin/$name \
+    "$::obj/$name.o $::obj/fble-compiled-app.o" \
+    "-L $::lib -lfble -lfble-prgms -lfble-prgms-native -lSDL2" \
+    "$::libfble $::libfbleprgms $::lib/libfble-prgms-native.a"
+}
 
-# /Graphics/App% compiled binary
-build $::src/fble-graphics.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain /Graphics/App% > $::src/fble-graphics.s"
-asm $::obj/fble-graphics.o $::src/fble-graphics.s ""
-bin $::bin/fble-graphics \
-  "$::obj/fble-graphics.o $::obj/fble-compiled-app.o $::obj/fble-int.o" \
-  "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
-
-# /Pinball/App% compiled binary
-build $::src/fble-pinball.s $::bin/fble-compile \
-  "$::bin/fble-compile --export FbleCompiledMain /Pinball/App% > $::src/fble-pinball.s"
-asm $::obj/fble-pinball.o $::src/fble-pinball.s ""
-bin $::bin/fble-pinball \
-  "$::obj/fble-pinball.o $::obj/fble-compiled-app.o $::obj/fble-int.o" \
-  "-L $::lib -lfble -lfbleprgms -lSDL2" "$::libfble $::libfbleprgms"
+app fble-invaders "/Invaders/App%"
+app fble-graphics "/Graphics/App%"
+app fble-pinball "/Pinball/App%"
 
 # test summary
 build $::test/tests.txt "$::tests" "echo $::tests > $::test/tests.txt"
