@@ -6,8 +6,7 @@
  - Test and fix bug of ball bouncing off far away from paddle.
 
 * [lib] Move more value conversion functions to separate object files.
- - String, Color, IO, etc.
- - Collect these together into a library, like -lfble-lib?
+ - Color, IO, etc.
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?

@@ -216,15 +216,17 @@ foreach {x} [glob tools/*.c] {
 }
 
 # fble programs native library 
-obj $::obj/fble-char.o prgms/fble-char.c "-I fble/include"
-obj $::obj/fble-int.o prgms/fble-int.c "-I fble/include"
-lib $::lib/libfble-prgms-native.a "$::obj/fble-char.o $::obj/fble-int.o"
+set fbleprgmsnative_objs [list]
+foreach {x} { fble-char fble-int string.fble } {
+  lappend fbleprgmsnative_objs $::obj/$x.o
+  obj $::obj/$x.o prgms/$x.c "-I fble/include -I prgms"
+}
+lib $::lib/libfble-prgms-native.a $fbleprgmsnative_objs
 
 # fble programs binaries
-foreach {x} {prgms/fble-md5.c prgms/fble-stdio.c prgms/fble-app.c} {
-  set base [file rootname [file tail $x]]
-  obj $::obj/$base.o $x "-I fble/include -I /usr/include/SDL2"
-  bin $::bin/$base "$::obj/$base.o" \
+foreach {x} { fble-md5 fble-stdio fble-app } {
+  obj $::obj/$x.o prgms/$x.c "-I fble/include -I /usr/include/SDL2"
+  bin $::bin/$x "$::obj/$x.o" \
     "-L $::lib -lfble -lfble-prgms-native -lSDL2" \
     "$::libfble $::lib/libfble-prgms-native.a"
 }

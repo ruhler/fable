@@ -7,9 +7,11 @@
 #include <string.h>     // for strcmp
 #include <stdlib.h>     // for free
 
+#include "fble-alloc.h"   // for FbleFree
 #include "fble-char.h"    // for FbleCharValueRead, FbleCharValueWrite
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
+#include "string.fble.h"  // for FbleNewStringValue, FbleStringValueAccess
 
 typedef struct {
   FbleIO io;
@@ -21,9 +23,7 @@ typedef struct {
 
 static void PrintUsage(FILE* stream);
 static void Output(FILE* stream, FbleValue* str);
-static FbleValue* ToFbleString(FbleValueHeap* heap, const char* str);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
-void DebugString(FbleValue* x);
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -61,46 +61,11 @@ static void PrintUsage(FILE* stream)
 //   Outputs the string to the stream and flushes the stream.
 static void Output(FILE* stream, FbleValue* str)
 {
-  FbleValue* charS = str;
-  while (FbleUnionValueTag(charS) == 0) {
-    FbleValue* charP = FbleUnionValueAccess(charS);
-    FbleValue* charV = FbleStructValueAccess(charP, 0);
-    charS = FbleStructValueAccess(charP, 1);
-
-    char c = FbleCharValueRead(charV);
-    fprintf(stream, "%c", c);
-  }
+  char* chars = FbleStringValueAccess(str);
+  fprintf(stream, "%s", chars);
   fflush(stream);
+  FbleFree(chars);
 }
-
-// ToFbleString --
-//   Convert a C string to an Fble /String%.String@.
-//
-// Inputs:
-//   heap - the heap to use for allocations.
-//   str - the string to convert.
-//
-// Results:
-//   A newly allocated fble /String%.String@ with the contents of str.
-//
-// Side effects:
-//   Allocates an FbleValue that should be freed with FbleReleaseValue when no
-//   longer needed.
-static FbleValue* ToFbleString(FbleValueHeap* heap, const char* str)
-{
-  size_t length = strlen(str);
-  FbleValue* charS = FbleNewEnumValue(heap, 1);
-  for (size_t i = 0; i < length; ++i) {
-    FbleValue* charV = FbleCharValueWrite(heap, str[length - i - 1]);
-    FbleValue* charP = FbleNewStructValue(heap, 2, charV, charS);
-    FbleReleaseValue(heap, charV);
-    FbleReleaseValue(heap, charS);
-    charS = FbleNewUnionValue(heap, 0, charP);
-    FbleReleaseValue(heap, charP);
-  }
-  return charS;
-}
-
 // IO --
 //   FbleIO.io function for external ports.
 //   See the corresponding documentation in fble-value.h.
@@ -135,7 +100,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     if (read < 0) {
       stdio->in = FbleNewEnumValue(heap, 1);
     } else {
-      FbleValue* charS = ToFbleString(heap, line);
+      FbleValue* charS = FbleNewStringValue(heap, line);
       stdio->in = FbleNewUnionValue(heap, 0, charS);
       FbleReleaseValue(heap, charS);
     }
@@ -143,21 +108,6 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
     change = true;
   }
   return change;
-}
-
-// DebugString --
-//   Print a /String%.String@ value in human readable form to standard out for
-//   debugging purposes. This is intended to be called from a debugger.
-//
-// Inputs:
-//   x - A /String%.String@ value.
-//
-// Side effects:
-//   Prints the value of the integer to standard out.
-void DebugString(FbleValue* x)
-{
-  Output(stdout, x);
-  printf("\n");
 }
 
 // main --
@@ -255,7 +205,7 @@ int main(int argc, char* argv[])
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
-    FbleValue* argV = ToFbleString(heap, argv[argc - i - 1]);
+    FbleValue* argV = FbleNewStringValue(heap, argv[argc - i - 1]);
     FbleValue* argP = FbleNewStructValue(heap, 2, argV, argS);
     FbleReleaseValue(heap, argV);
     FbleReleaseValue(heap, argS);
