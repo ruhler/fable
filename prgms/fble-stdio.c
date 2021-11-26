@@ -7,6 +7,7 @@
 #include <string.h>     // for strcmp
 #include <stdlib.h>     // for free
 
+#include "fble-char.h"    // for FbleCharValueRead, FbleCharValueWrite
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
@@ -19,8 +20,6 @@ typedef struct {
 } Stdio;
 
 static void PrintUsage(FILE* stream);
-static char ReadChar(FbleValue* c);
-static FbleValue* WriteChar(FbleValueHeap* heap, char c);
 static void Output(FILE* stream, FbleValue* str);
 static FbleValue* ToFbleString(FbleValueHeap* heap, const char* str);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
@@ -51,57 +50,6 @@ static void PrintUsage(FILE* stream)
   );
 }
 
-// gStdLibChars --
-//   The list of characters (in tag order) supported by the StdLib.Char@ type.
-static const char* gStdLibChars =
-    "\n\t !\"#$%&'()*+,-./0123456789:;<=>?@"
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "[\\]^_`"
-    "abcdefghijklmnopqrstuvwxyz"
-    "{|}~";
-
-// ReadChar --
-//   Read a character from an FbleValue of type StdLib.Char@
-//
-// Inputs:
-//   c - the value of the character.
-//
-// Results:
-//   The value x represented as a c char.
-//
-// Side effects:
-//   None
-static char ReadChar(FbleValue* c)
-{
-  return gStdLibChars[FbleUnionValueTag(c)];
-}
-
-// WriteChar --
-//   Write a character to an FbleValue of type StdLib.Char@.
-//   The character '?' is used for any characters not currently supported by
-//   the StdLib.Char@ type.
-//
-// Inputs:
-//   heap - the heap to use for allocations.
-//   c - the value of the character to write.
-//
-// Results:
-//   The FbleValue c represented as an StdLib.Char@.
-//
-// Side effects:
-//   Allocates a value that must be freed when no longer required.
-static FbleValue* WriteChar(FbleValueHeap* heap, char c)
-{
-  char* p = strchr(gStdLibChars, c);
-  if (p == NULL || c == '\0') {
-    assert(c != '?');
-    return WriteChar(heap, '?');
-  }
-  assert(p >= gStdLibChars);
-  size_t tag = p - gStdLibChars;
-  return FbleNewEnumValue(heap, tag);
-}
-
 // Output --
 //   Output a string to the given output stream.
 //
@@ -119,7 +67,7 @@ static void Output(FILE* stream, FbleValue* str)
     FbleValue* charV = FbleStructValueAccess(charP, 0);
     charS = FbleStructValueAccess(charP, 1);
 
-    char c = ReadChar(charV);
+    char c = FbleCharValueRead(charV);
     fprintf(stream, "%c", c);
   }
   fflush(stream);
@@ -143,7 +91,7 @@ static FbleValue* ToFbleString(FbleValueHeap* heap, const char* str)
   size_t length = strlen(str);
   FbleValue* charS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < length; ++i) {
-    FbleValue* charV = WriteChar(heap, str[length - i - 1]);
+    FbleValue* charV = FbleCharValueWrite(heap, str[length - i - 1]);
     FbleValue* charP = FbleNewStructValue(heap, 2, charV, charS);
     FbleReleaseValue(heap, charV);
     FbleReleaseValue(heap, charS);

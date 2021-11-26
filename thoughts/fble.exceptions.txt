@@ -1,0 +1,88 @@
+Exceptions in Fble
+==================
+The language doesn't currently have support for an exception mechanism. This
+document is intended to explore whether it ought to.
+
+If the purpose of exceptions is just to clean up error checking in the code, I
+would rather make that easy to do as regular fble code without exceptions. For
+example, using Maybe monad or something.
+
+But there are places where exceptions could potentially provide capabilities
+that do not exist today. Primarily with regards to running untrusted code.
+
+Programs can and will have errors in them. There is nothing we can do
+syntactically or at the type level to fully remove errors. Some of the errors
+you can have at runtime today:
+* Undefined union access.
+* Use of vacuous value.
+* Undefined reference value access.
+
+And there will always be:
+* Infinite loops.
+* Out of memory.
+
+The question is, should we add a mechanism to recover from these kinds of
+errors?
+
+Use cases:
+* For running test cases, we don't have a way to catch these kinds of errors.
+  If a test encounters one of those errors, the test suite will fail to
+  complete and we miss out on the results of other tests and nice summary
+  information.
+* For an OS or screen like case: you are running some application that is
+  untrusted code, you want a way to recover if the application gets stuck, or
+  to prevent a particular application from using too much memory or cpu.
+
+Any mechanism I introduce to catch these explicit errors like undefined union
+value access should also work for infinite or long running loops, otherwise
+it's not a complete solution. To catch infinite or long running loops implies
+some sort of timeout or cpu quota mechanism.
+
+A strawman proposal would be:
+   timeout <max_time> <expr> <expr>
+
+It executes the first expression for at most max time. If there is an error or
+timeout, it takes the result of the second expression instead.
+
+The trouble is, how do you measure time? And if we want memory quota, how do
+you measure memory quota? And if you want to wait for as long as some user
+gets impatient, how do you do that?
+
+Perhaps a better approach would be to provide a side effect that a user can
+trigger programmatically. Then they could use an external clock source,
+external memory counter, or logic tied to the rest of the program to drive
+when to interrupt something that's running. How might that look?
+
+You just need a handle to some Unit! you can invoke to interrupt a running
+process. If you are going to be able to call that Unit!, then you would be
+running as a sibling of the untrusted process? If you are running as a
+sibling, maybe you could just do an explicit undefined union access and have
+that interrupt all your siblings?
+
+Perhaps it would be sufficient to have a function or syntax:
+
+ <@ T@>(T@!, T@) { T@!; } Try = <@ T@>(T@! process, T@ on_error) { ... };
+
+Semantics are: execute the process, if it raises an explicit error, then
+return on_error, otherwise return the result of executing the process.
+
+For example, to do a timeout you could pass as your process:
+ {
+   Bool@ ~ get, put;
+   Unit@! monitor = {
+     Unit@ _ := AfterSeconds(Int|30, put(True)),
+     Bool@ timeout := get;
+     !(timeout.?(true: timeout.false, false: Unit));
+   };
+
+   Unit@ _ := monitor, T@ result := {
+     T@ x := UntrustedCode;
+     Unit@ _ := put(False);
+     !(x);
+   };
+ };
+   
+Where AfterSeconds is some user defined process communicating with the outside
+world to get a callback after that many seconds. Or some variation on the
+above in case it's not quite right from a concurrency/blocking perspective.
+

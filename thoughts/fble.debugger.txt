@@ -909,3 +909,29 @@ unit, or a raw address.
 This works. It shows it as (struct FbleValue*) instead of (FbleValue*), which
 is not surprising, but it is also able to dereference the tag, which is cool.
 
+---
+
+Is it at all feasible to imagine a world where we can have an fble-level type
+description for gdb, so it can do member access and all that stuff? Let's look
+at struct to start. First question: how to access an unpacked type.
+
+To access field i from object x:
+  *(x + 16 + i*8)
+
+That should be easy. Because we pass a location as a function from base offset
+'x' to target offset.
+
+Second question: how to access a packed type? That's harder, because I'm not
+sure there is any way to tell gdb how many bits the field takes up when the
+number of bits depends on the runtime value. Or maybe we say all the bits? It
+might just be possible if we can say all the bits not here.
+
+So, a few different ideas:
+* Have a function we can call to unpack the value, the debugger could then
+  print the unpacked value.
+* Have a runtime flag we can set (via debugger perhaps) to disable packing on
+  all values, then debugging works fine on the unpacked values.
+* Double check dwarf spec to see how it handles bitfields and whether we could
+  support packed and unpacked values in a single type entry. I'm... skeptical.
+  If it's doable, it sounds like it would be pretty gnarly.
+

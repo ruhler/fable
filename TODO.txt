@@ -6,10 +6,13 @@
  - Test and fix bug of ball bouncing off far away from paddle.
 
 * [lib] Move more value conversion functions to separate object files.
- - Char, String, Color, IO, etc.
+ - String, Color, IO, etc.
+ - Collect these together into a library, like -lfble-lib?
 
 * [build] Factor out common build steps in build.ninja
  - I'm thinking like compiled fble apps, for example.
+* [build] Double check we use coverage enabled fble-char.o for coverage
+  enabled fble-tests?
 
 * [lang] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?

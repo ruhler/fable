@@ -211,9 +211,10 @@ lappend build_ninja_deps "tools"
 foreach {x} [glob tools/*.c prgms/fble-md5.c prgms/fble-stdio.c] {
   set base [file rootname [file tail $x]]
   obj $::obj/$base.o $x "-I fble/include"
-  bin $::bin/$base $::obj/$base.o "-L $::lib -lfble" $::libfble
-  bin_cov $::bin/$base.cov $::obj/$base.o "-L $::lib -lfble.cov" $::libfblecov
+  bin $::bin/$base "$::obj/$base.o $::obj/fble-char.o" "-L $::lib -lfble" $::libfble
+  bin_cov $::bin/$base.cov "$::obj/$base.o $::obj/fble-char.o" "-L $::lib -lfble.cov" $::libfblecov
 }
+obj $::obj/fble-char.o prgms/fble-char.c "-I fble/include"
 obj $::obj/fble-int.o prgms/fble-int.c "-I fble/include"
 obj $::obj/fble-app.o prgms/fble-app.c "-I fble/include -I /usr/include/SDL2"
 bin $::bin/fble-app "$::obj/fble-app.o $::obj/fble-int.o" "-L $::lib -lfble -lSDL2" $::libfble
@@ -456,7 +457,7 @@ build $::src/fble-stdio-test.s $::bin/fble-compile \
 asm $::obj/fble-stdio-test.o $::src/fble-stdio-test.s
 
 bin $::bin/fble-stdio-test \
-  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o" \
+  "$::obj/fble-stdio-test.o $::obj/fble-compiled-stdio.o $::obj/fble-char.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 test $::test/fble-stdio-test.tr $::bin/fble-stdio-test \
   "$::bin/fble-stdio-test > $::test/fble-stdio-test.out && grep PASSED $::test/fble-stdio-test.out > /dev/null"
@@ -468,7 +469,7 @@ asm $::obj/fble-tests.o $::src/fble-tests.s
 
 # Note: fble-int.o included to provide useful functions for debugging.
 bin $::bin/fble-tests \
-  "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o $::obj/fble-int.o" \
+  "$::obj/fble-tests.o $::obj/fble-compiled-stdio.o $::obj/fble-int.o $::obj/fble-char.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 test $::test/fble-compiled-tests.tr $::bin/fble-tests \
   "$::bin/fble-tests" "pool = console"
@@ -489,7 +490,7 @@ build $::src/fble-bench.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain /Fble/Bench% > $::src/fble-bench.s"
 asm $::obj/fble-bench.o $::src/fble-bench.s ""
 bin $::bin/fble-bench \
-  "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o" \
+  "$::obj/fble-bench.o $::obj/fble-compiled-stdio.o $::obj/fble-char.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 
 # /Fble/DebugTest% compiled binary
@@ -497,7 +498,7 @@ build $::src/fble-debug-test.s $::bin/fble-compile \
   "$::bin/fble-compile --export FbleCompiledMain /Fble/DebugTest% > $::src/fble-debug-test.s"
 asm $::obj/fble-debug-test.o $::src/fble-debug-test.s ""
 bin $::bin/fble-debug-test \
-  "$::obj/fble-debug-test.o $::obj/fble-compiled-stdio.o" \
+  "$::obj/fble-debug-test.o $::obj/fble-compiled-stdio.o $::obj/fble-char.o" \
   "-L $::lib -lfble -lfbleprgms" "$::libfble $::libfbleprgms"
 
 # Test that there are no dwarf warnings in the generated fble-debug-test
