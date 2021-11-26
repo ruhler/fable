@@ -10,9 +10,10 @@
 #include "fble-alloc.h"   // for FbleFree
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
-#include "string.fble.h"  // for FbleNewStringValue, FbleStringValueAccess
 
-#include "char.fble.h"    // for FbleCharValueRead, FbleCharValueWrite
+#include "char.fble.h"    // for FbleCharValueAccess
+#include "int.fble.h"     // for FbleIntValueAccess
+#include "string.fble.h"  // for FbleNewStringValue, FbleStringValueAccess
 
 typedef struct {
   FbleIO io;
@@ -25,6 +26,7 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static void Output(FILE* stream, FbleValue* str);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
+int debug();
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -110,6 +112,19 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
   }
   return change;
 }
+
+// debug --
+//   Placeholder to force linking with some functions that are useful for
+//   debugging.
+int debug()
+{
+  intptr_t x = 0;
+  x += (intptr_t)(FbleCharValueAccess);
+  x += (intptr_t)(FbleIntValueAccess);
+  x += (intptr_t)(FbleStringValueAccess);
+  return x;
+}
+
 
 // main --
 //   The main entry point for fble-tests.

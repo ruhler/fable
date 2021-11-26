@@ -1,15 +1,17 @@
 // fble-app
 //   A program to run fble programs with an App interface.
 
-#include <assert.h>     // for assert
-#include <string.h>     // for strcmp
+#include <assert.h>       // for assert
+#include <string.h>       // for strcmp
 
-#include <SDL.h>        // for SDL_*
+#include <SDL.h>          // for SDL_*
 
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
+#include "char.fble.h"    // for FbleCharValueAccess
 #include "int.fble.h"     // for FbleIntValueAccess
+#include "string.fble.h"  // for FbleStringValueAccess
 
 // sFpsHistogram[i] is the number of samples with i frames per second.
 // Anything above 60 FPS is counted towards i = 60.
@@ -44,6 +46,7 @@ static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
+int debug();
 int main(int argc, char* argv[]);
 
 // PrintUsage --
@@ -391,6 +394,18 @@ static Uint32 OnTimer(Uint32 interval, void* param)
   event.user = user;
   SDL_PushEvent(&event);
   return 0;
+}
+
+// debug --
+//   Placeholder to force linking with some functions that are useful for
+//   debugging.
+int debug()
+{
+  intptr_t x = 0;
+  x += (intptr_t)(FbleCharValueAccess);
+  x += (intptr_t)(FbleIntValueAccess);
+  x += (intptr_t)(FbleStringValueAccess);
+  return x;
 }
 
 // main --
