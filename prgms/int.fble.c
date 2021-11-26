@@ -2,7 +2,7 @@
 #include <assert.h>       // for assert
 #include <stdlib.h>       // for abort
 
-#include "fble-int.h"
+#include "int.fble.h"
 
 #include "fble-value.h"   // for FbleValue, etc.
 

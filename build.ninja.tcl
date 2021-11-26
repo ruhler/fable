@@ -217,7 +217,7 @@ foreach {x} [glob tools/*.c] {
 
 # fble programs native library 
 set fbleprgmsnative_objs [list]
-foreach {x} { fble-char fble-int string.fble } {
+foreach {x} { char.fble int.fble string.fble } {
   lappend fbleprgmsnative_objs $::obj/$x.o
   obj $::obj/$x.o prgms/$x.c "-I fble/include -I prgms"
 }

@@ -3,9 +3,10 @@
 
 #include "string.fble.h"
 
-#include "fble-char.h"      // for FbleCharValueRead, FbleCharValueWrite
 #include "fble-value.h"     // for FbleValue, etc.
 #include "fble-vector.h"    // for FbleVectorInit, etc.
+
+#include "char.fble.h"      // for FbleCharValueRead, FbleCharValueWrite
 
 // FbleStringValueAccess -- see documentation in fble-string.h
 char* FbleStringValueAccess(FbleValue* str)

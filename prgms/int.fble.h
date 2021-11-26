@@ -1,5 +1,5 @@
-#ifndef FBLE_INT_H_
-#define FBLE_INT_H_
+#ifndef FBLE_INT_FBLE_H_
+#define FBLE_INT_FBLE_H_
 
 #include "fble-value.h"
 
@@ -17,4 +17,4 @@
 //   int64_t type, for example because it is too large.
 int64_t FbleIntValueRead(FbleValue* x);
 
-#endif // FBLE_INT_H_
+#endif // FBLE_INT_FBLE_H_

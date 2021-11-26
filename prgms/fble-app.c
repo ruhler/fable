@@ -6,9 +6,10 @@
 
 #include <SDL.h>        // for SDL_*
 
-#include "fble-int.h"     // for FbleIntValueRead
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
+
+#include "int.fble.h"     // for FbleIntValueRead
 
 // sFpsHistogram[i] is the number of samples with i frames per second.
 // Anything above 60 FPS is counted towards i = 60.

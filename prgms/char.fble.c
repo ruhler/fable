@@ -2,7 +2,7 @@
 #include <assert.h>   // for assert
 #include <string.h>   // for strchr
 
-#include "fble-char.h"
+#include "char.fble.h"
 
 #include "fble-value.h"   // for FbleValue, etc.
 

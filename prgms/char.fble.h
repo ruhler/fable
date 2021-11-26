@@ -1,6 +1,6 @@
 
-#ifndef FBLE_CHAR_H_
-#define FBLE_CHAR_H_
+#ifndef FBLE_CHAR_FBLE_H_
+#define FBLE_CHAR_FBLE_H_
 
 #include "fble-value.h"   // for FbleValue, etc.
 
@@ -33,4 +33,4 @@ char FbleCharValueRead(FbleValue* c);
 //   Allocates a value that must be freed when no longer required.
 FbleValue* FbleCharValueWrite(FbleValueHeap* heap, char c);
 
-#endif // FBLE_CHAR_H_
+#endif // FBLE_CHAR_FBLE_H_

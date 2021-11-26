@@ -8,10 +8,11 @@
 #include <stdlib.h>     // for free
 
 #include "fble-alloc.h"   // for FbleFree
-#include "fble-char.h"    // for FbleCharValueRead, FbleCharValueWrite
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 #include "string.fble.h"  // for FbleNewStringValue, FbleStringValueAccess
+
+#include "char.fble.h"    // for FbleCharValueRead, FbleCharValueWrite
 
 typedef struct {
   FbleIO io;
