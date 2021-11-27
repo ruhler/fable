@@ -1,12 +1,11 @@
 * [pinball] 
- - Write test that ball moving away from paddle doesn't collide with it.
  - Figure out how to track velocity of a paddle at the end of its range.
-
  - Test basic ball paddle in motion collision.
    Need to better understand how velocity of paddle is specified.
  - Test and fix bug of ball going through paddle.
  - Test and fix bug of ball gaining velocity when paddle isn't moving.
  - Test and fix bug of ball bouncing off far away from paddle.
+ - Test and fix bug of ball getting stuck to paddle.
 
 * [lib] Move more value conversion functions to separate object files.
  - Color, IO, etc.

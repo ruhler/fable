@@ -154,7 +154,7 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   Eq(td, Int|0).?(true: end);
 
   Num@ t = Div(Mul(t1, tm), td);
-  Le(t, Int|0).?(true: end);
+  Lt(t, Int|0).?(true: end);
   Gt(t, tm).?(true: end);
 
   # Verify the collision happens within the segment of the edge.
@@ -164,10 +164,14 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   Lt(sh.x, Int|0).?(true: end);
   Gt(sh.x, ph.edge.length).?(true: end);
 
-  # Compute the new state just after the collision.
+  # Verify the ball is moving towards the edge at the time of collision.
   Num@ v = Div(Mul(sh.x, Mul(paddle.vel, Magnitude(SubV(paddle.end_up, paddle.end_down)))), paddle.edge.length);
   Vec@ vh = RotateTo(ph.edge.normal, start.vel);
-  Vec@ vc = Vec@(vh.x, Mul(paddle.edge.restitution, Sub(v, vh.y)));
+  Num@ vr = Sub(v, vh.y);
+  Le(vr, Int|0).?(true: end);
+
+  # Compute the new state just after the collision.
+  Vec@ vc = Vec@(vh.x, Mul(paddle.edge.restitution, vr));
   Vec@ vel = RotateFrom(ph.edge.normal, vc);
   BallT@(Ball@(end_pos, vel, radius), t);
 };
