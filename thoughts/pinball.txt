@@ -202,3 +202,119 @@ couldn't have a ball collide with a paddle at the same time multiple paddles
 reaches their end point, which suggests we want a way to describe updates to
 multiple things at once somehow.
 
+The way rocinante worked is we first check for events. Events give the time of
+the event and all the information needed to update the ball as a result of the
+event. Namely, the velocity and point of collision of the object with the
+ball. We would advance the ball until the time of the event, and if there was
+an event, update the ball velocity based on the information it has.
+
+I like the idea of having the ball update its own velocity, to factor out
+common code for edge and paddle collisions. If we stop worrying about
+performance for just a bit, then we could have a function
+
+(Ball@, Vec@, Num@) { Ball@; } Collide = (Ball@ ball, Vec@ pos, Num@ vel) { ...  };
+
+Where pos is the absolute position of the point of collision, vel is the
+magnitude of velocity...
+
+But it seems a shame to throw away and recompute what we've already computed.
+Hmm... There are a couple of ideas here:
+1. How to compactly express a ball collision event.
+2. What logic for updating the ball velocity can we localize with the ball
+code instead of the edge collision code?
+
+The information we need:
+* The new velocity of the ball.
+  Depends on:
+  - the (normal) velocity of the object the ball collides with.
+  - the normal vector of the object the ball collides with (or, equivalently,
+    the point on the circumference of the ball where the collision took place).
+  - the coefficient of restitution between ball and edge.
+
+The information we already have:
+* the velocity of the ball at time of collision relative to the edge.
+* the velocity of the edge at time of collision relative to the edge.
+* the tangential velocity of the ball at time of collision relative to the
+  edge.
+
+So it would seem to me that there is very little code specific to the ball
+that we would like to localize:
+  v_ball.tangent = v_ball.tangent
+  v_ball.normal = R * (v_edge - v_ball.normal)
+  v = Rotate(normal, v_ball.tangent, v_ball.normal)
+
+And we could always factor out a function for that logic if desired.
+
+The collision logic makes use of the end position of the ball. We could
+recompute that or not.
+
+I'm fine with the event giving the new state for the ball. And we could treat
+'time up' as an event. The issue is, some events effect the ball and some
+events effect a specific paddle. How can we accumulate those and act
+accordingly?
+
+Imagine we have multiball. Then events could involve a particular ball. The
+time up event doesn't make sense any more, because time up depends on the time
+of another event.
+
+Maybe we have two kinds of events:
+* Paddle Stop - sets paddle velocity to zero because the edge has been
+  reached.
+* Ball Collide - gives direction and magnitude of collision.
+
+We have the following functions:
+* Ball Collide Edge - gives a maybe ball collide event.
+* Ball Collide Paddle - gives a maybe ball collide event.
+* Paddle End - gives a maybe paddle stop event.
+
+We process all possible events, end up with a list of all the events that
+happen as soon as some time t. Advance Ball and Paddle by t, then apply each
+event.
+
+The key idea being, we need some way to refer to a specific ball or paddle in
+the event. That's something we'll want anyway for user input, for example, to
+indicate which paddle's velocity to change.
+
+Imagine we have an id. Then things are easy.
+
+Paddle Stop - specifies the id of the paddle.
+Ball collide - specifies the id of the ball.
+
+Ball collide edge - takes the id of the ball.
+Ball collide paddle - takes the id of the ball and the paddle.
+Paddle end - takes the id of the paddle.
+
+Then we have a function to apply an event to a World@. Get the list of events,
+filter out any with greater times than any others (via an event queue
+abstraction?), advance the world, by the time of the events, apply all the
+events to the world, and continue.
+
+More and more I feel like we should use an abstract data type to represent the
+world, with methods on the world such as apply event.
+
+The number of balls in play could be dynamic. The number of paddles could be
+dynamic, but the names need to be fixed in some sense to know which paddle to
+operate? Unless it's just a left paddle or a right paddle that we need to
+know.
+
+My question is, what should we use to refer to a specific ball or paddle? An
+integer id? A user provided type? A string name?
+
+For the sake of development we could restrict the world to a single ball and
+single paddle and not worry about ids yet. Figure out the physics first, add
+ids later. That sounds reasonable to me.
+
+Actually, the annoying thing about having one paddle always is for testing we
+don't have an easy way to have no paddles.
+
+Perhaps it would be worth having some finer grain unit testing. Better
+targeted tests with simpler descriptions. Factor out the core logic in a
+better way. And hope the interfaces don't change too much.
+
+For example, to start:
+* Pull Ball@ out into its own module, define Eq@ and Show@ and Move.
+* Pull Edge@ out into its own module.
+* Pull Paddle@ out into its own module, define Eq@ and Show@ and Move.
+* Pull Collision routines out into a separate module.
+
+

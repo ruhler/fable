@@ -227,5 +227,4 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
   World@(w.gravity, Ball@(moved.ball.pos, v, moved.ball.radius), moved.edges, moved.paddles);
 };
 
-@(Vec@, Ball@, Edge@, Paddle@, World@, Tick,
-  AddV, SubV, MulVS);
+@(Ball@, Edge@, Paddle@, World@, Tick);

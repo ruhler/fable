@@ -37,12 +37,13 @@
 @ Ball@ = /Pinball/Physics%.Ball@;
 @ Edge@ = /Pinball/Physics%.Edge@;
 @ Paddle@ = /Pinball/Physics%.Paddle@;
-@ Vec@ = /Pinball/Physics%.Vec@;
 @ World@ = /Pinball/Physics%.World@;
-% AddV = /Pinball/Physics%.AddV;
-% SubV = /Pinball/Physics%.SubV;
-% MulVS = /Pinball/Physics%.MulVS;
 % Tick = /Pinball/Physics%.Tick;
+
+@ Vec@ = /Pinball/Vec%.Vec@;
+% AddV = /Pinball/Vec%.AddV;
+% SubV = /Pinball/Vec%.SubV;
+% MulVS = /Pinball/Vec%.MulVS;
 
 (Vec@) { Point@; } Point = (Vec@ a) {
   Point@(Floor(a.x), Floor(a.y));

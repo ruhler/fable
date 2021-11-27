@@ -18,9 +18,10 @@
 @ Ball@ = /Pinball/Physics%.Ball@;
 @ Edge@ = /Pinball/Physics%.Edge@;
 @ Paddle@ = /Pinball/Physics%.Paddle@;
-@ Vec@ = /Pinball/Physics%.Vec@;
 @ World@ = /Pinball/Physics%.World@;
 % Tick = /Pinball/Physics%.Tick;
+
+@ Vec@ = /Pinball/Vec%.Vec@;
 
 <@>@ Show@ = /Show%.Show@;
 
