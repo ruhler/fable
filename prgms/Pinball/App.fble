@@ -34,8 +34,10 @@
 % Div = /Pinball/Num%.Div;
 % Int = /Pinball/Num%.Int;
 
+@ Edge@ = /Pinball/Edge%.Edge@;
+% Edge = /Pinball/Edge%.Edge;
+
 @ Ball@ = /Pinball/Physics%.Ball@;
-@ Edge@ = /Pinball/Physics%.Edge@;
 @ Paddle@ = /Pinball/Physics%.Paddle@;
 @ World@ = /Pinball/Physics%.World@;
 % Tick = /Pinball/Physics%.Tick;
@@ -55,37 +57,25 @@ Num@ Radius = Int|8;
 
 Num@ PaddleVelocity = Div(Int|1, Int|4);
 
-Num@ Restitution = Div(Int|6, Int|8);
+Num@ R = Div(Int|6, Int|8);
 
 World@ Initial = World@(
   Vec@(Int|0, Neg(Div(Int|1, Int|8))),
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
   List<Edge@>[
     # Floor
-    Edge@(Vec@(Int|0, Int|1),
-          Vec@(Neg(Int|16), Neg(Int|104)),
-          Int|32, Restitution),
+    Edge(Vec@(Neg(Int|16), Neg(Int|104)), Vec@(Int|16, Neg(Int|104)), R),
 
     # Slopes
-    Edge@(Vec@(Neg(Div(Int|3, Int|5)), Div(Int|4, Int|5)),
-          Vec@(Int|16, Neg(Int|104)),
-          Int|160, Restitution),
-    Edge@(Vec@(Div(Int|3, Int|5), Div(Int|4, Int|5)),
-          Vec@(Neg(Int|144), Neg(Int|8)),
-          Int|80, Restitution),
+    Edge(Vec@(Int|16, Neg(Int|104)), Vec@(Int|144, Neg(Int|8)), R),
+    Edge(Vec@(Neg(Int|144), Neg(Int|8)), Vec@(Neg(Int|80), Neg(Int|56)), R),
 
     # Side walls
-    Edge@(Vec@(Int|1, Int|0),
-          Vec@(Neg(Int|144), Int|104),
-          Int|112, Restitution),
-    Edge@(Vec@(Neg(Int|1), Int|0),
-          Vec@(Int|144, Neg(Int|8)),
-          Int|112, Restitution),
+    Edge(Vec@(Neg(Int|144), Int|104), Vec@(Neg(Int|144), Neg(Int|8)), R),
+    Edge(Vec@(Int|144, Neg(Int|8)), Vec@(Int|144, Int|104), R),
 
     # Ceiling
-    Edge@(Vec@(Int|0, Neg(Int|1)),
-          Vec@(Int|144, Int|104),
-          Int|288, Restitution)
+    Edge(Vec@(Int|144, Int|104), Vec@(Neg(Int|144), Int|104), R)
   ],
   List<Paddle@>[
     # Left Paddle.
@@ -96,7 +86,7 @@ World@ Initial = World@(
       Neg(PaddleVelocity),
       Edge@(Vec@(Div(Int|3, Int|5), Div(Int|4, Int|5)),
           Vec@(Neg(Int|80), Neg(Int|56)),
-          Int|80, Restitution))
+          Int|80, R))
   ]);
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {

@@ -1,0 +1,30 @@
+
+@ Num@ = /Pinball/Num%.Num@;
+% Neg = /Pinball/Num%.Neg;
+% Div = /Pinball/Num%.Div;
+
+@ Vec@ = /Pinball/Vec%.Vec@;
+% SubV = /Pinball/Vec%.SubV;
+% Magnitude = /Pinball/Vec%.Magnitude;
+
+# Edge@ --
+#   Internal representation for a stationary edge.
+@ Edge@ = *(
+  Vec@ normal,      # Unit normal vector.
+  Vec@ start,       # Starting position of the edge.
+  Num@ length,      # Length of the edge.
+  Num@ restitution  # Fraction of energy preserved during a collision.
+);
+
+# Edge --
+#   Specify an edge using start and end position.
+(Vec@, Vec@, Num@) { Edge@; }
+Edge = (Vec@ start, Vec@ end, Num@ restitution) {
+  Vec@ vec = SubV(end, start);
+  Num@ length = Magnitude(vec);
+  Vec@ normal = Vec@(Neg(Div(vec.y, length)), Div(vec.x, length));
+  @(normal, start, length, restitution);
+};
+
+@(Edge@, Edge);
+

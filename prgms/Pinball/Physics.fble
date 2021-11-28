@@ -14,6 +14,8 @@
 % Le = /Pinball/Num%.Le;
 % Int = /Pinball/Num%.Int;
 
+@ Edge@ = /Pinball/Edge%.Edge@;
+
 @ Vec@ = /Pinball/Vec%.Vec@;
 % AddV = /Pinball/Vec%.AddV;
 % SubV = /Pinball/Vec%.SubV;
@@ -24,13 +26,6 @@
 % RotateFrom = /Pinball/Vec%.RotateFrom;
 
 @ Ball@ = *(Vec@ pos, Vec@ vel, Num@ radius);
-
-@ Edge@ = *(
-  Vec@ normal,      # Unit normal vector.
-  Vec@ start,       # Starting position of the edge.
-  Num@ length,      # Length of the edge.
-  Num@ restitution  # Fraction of energy preserved during a collision.
-);
 
 @ Paddle@ = *(
   Vec@ end_down,   # The paddle's end position when off.
@@ -227,4 +222,4 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
   World@(w.gravity, Ball@(moved.ball.pos, v, moved.ball.radius), moved.edges, moved.paddles);
 };
 
-@(Ball@, Edge@, Paddle@, World@, Tick);
+@(Ball@, Paddle@, World@, Tick);

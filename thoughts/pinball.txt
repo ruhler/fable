@@ -317,4 +317,51 @@ For example, to start:
 * Pull Paddle@ out into its own module, define Eq@ and Show@ and Move.
 * Pull Collision routines out into a separate module.
 
+---
 
+I want to summarize what physics seems to work well for stationary edge in
+terms of the ball not double colliding or passing through, even in the
+presence of gravity:
+* It's not considered a collision if the ball is moving in the same direction
+  the edge is facing.
+* It's not a collision if the ball center starts below the edge.
+  - This is the case where the ball starts past the edge.
+  - We would expect t is negative if the ball is moving in the direction
+    opposite the edge is facing.
+  - Maybe it's better to do this by position than time, to avoid large numbers
+    in the computation of time.
+* It's not a collision if the ball bottom edge ends above the edge.
+  - This is the case where the ball doesn't reach the edge.
+  - We would expect t is less than tm if the ball is moving in the direction
+    opposite the edge is facing.
+  - Maybe it's better to do this by position than time, to avoid large numbers
+    in the computation of time.
+* The ball has to be within the segment of the edge at the point of collision.
+* v_normal = R * -v_normal
+
+That works great.
+
+For a paddle, we should be able to apply the same thing. The differences are:
+* After filtering out invalid ball start and end positions, computed time of
+  collision may still be negative or greater than tm. That should be checked
+  for.
+* paddle could be moving with some normal velocity v_paddle, so the new ball
+  velocity would be: v_normal_ball = R * (v_paddle - v_normal_ball)
+  - Example: v_normal_ball is -5, v_paddle is 10, final velocity is 15R.
+
+---
+
+On naming paddles: if the goal is to figure out the physics first, how about
+just move all the paddles together? Or say there is at most one paddle in the
+list? Or make it a Maybe paddle instead of a list of paddles?
+
+I would like to specify edges using start and end point, rather than normal
+and length. Let me write a helper function for that. That way I can write a
+bunch of tests for a collide edge function.
+
+The API for collide edge ought to be:
+* Inputs: ball, edge, max time.
+* Outputs: Maybe<time, Ball@>
+
+And we'll have a function to move a ball with a fixed velocity by a given
+time to help.
