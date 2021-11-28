@@ -1,9 +1,4 @@
 
-% True = /Bool%.True;
-% False = /Bool%.False;
-
-<@>@ Eq@ = /Eq%.Eq@;
-
 <@>% List = /List%.List;
 <@>% Nil = /List%.Nil;
 
@@ -12,42 +7,24 @@
 % Int = /Pinball/Num%.Int;
 % Sub = /Pinball/Num%.Sub;
 % Div = /Pinball/Num%.Div;
-% Eq = /Pinball/Num%.Eq;
-% Show = /Pinball/Num%.Show;
+
+@ Ball@ = /Pinball/Ball%.Ball@;
 
 @ Edge@ = /Pinball/Edge%.Edge@;
 % Edge = /Pinball/Edge%.Edge;
 
-@ Ball@ = /Pinball/Physics%.Ball@;
 @ Paddle@ = /Pinball/Physics%.Paddle@;
 @ World@ = /Pinball/Physics%.World@;
 % Tick = /Pinball/Physics%.Tick;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
 
-<@>@ Show@ = /Show%.Show@;
-
-% Strs = /String%.Strs;
 % Str = /String%.Str;
 
 @ Test@ = /Test%.Test@;
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
-
-Eq@<Ball@> EqBall = (Ball@ a, Ball@ b) {
-  /Pinball/Vec%.Eq(a.pos, b.pos).?(false: False);
-  /Pinball/Vec%.Eq(a.vel, b.vel).?(false: False);
-  Eq(a.radius, b.radius).?(false: False);
-  True;
-};
-
-Show@<Ball@> ShowBall = (Ball@ a) {
-  Strs[Str|'Ball@(pos=',
-    /Pinball/Vec%.Show(a.pos), Str|', vel=',
-    /Pinball/Vec%.Show(a.vel),
-    Str|', radius=', Show(a.radius), Str|')'];
-};
 
 Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   Test(Str|'Move Ball No Collision', !({
@@ -63,7 +40,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       vel: Vec@(Int|10, Int|0),
       radius: Int|1);
     Ball@ got = end.ball;
-    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+    AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   })),
   
   Test(Str|'Move Ball Collision', !({
@@ -82,7 +59,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       vel: Vec@(Neg(Int|10), Int|0),
       radius: Int|1);
     Ball@ got = end.ball;
-    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+    AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   })),
 
   Test(Str|'Move Ball Avoid Collision', !({
@@ -102,7 +79,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       vel: Vec@(Int|10, Int|0),
       radius: Int|1);
     Ball@ got = end.ball;
-    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+    AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   })),
 
   Test(Str|'Stationary Paddle Collision', !({
@@ -131,7 +108,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       vel: Vec@(Int|0, Int|2),
       radius: Int|1);
     Ball@ got = end.ball;
-    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+    AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   })),
 
   Test(Str|'Stationary Paddle Collision Restitution', !({
@@ -161,7 +138,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       vel: Vec@(Int|0, Int|1),
       radius: Int|1);
     Ball@ got = end.ball;
-    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+    AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   })),
 
   Test(Str|'Stationary Ball With Paddle', !({
@@ -188,7 +165,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
     World@ end = Tick(start);
     Ball@ want = start.ball;
     Ball@ got = end.ball;
-    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+    AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   })),
 
   Test(Str|'End-Stationary Paddle Collision', !({
@@ -221,7 +198,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       radius: Int|1);
     Ball@ got = end.ball;
     # TODO: Set paddle velocity to zero when it hits the end of its range.
-    /Test%.ExpectFails(AssertEquals<Ball@>(EqBall, ShowBall, want, got), Str|'');
+    /Test%.ExpectFails(AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got), Str|'');
   })),
 
   Test(Str|'Stationary Paddle Non-Collision', !({
@@ -254,7 +231,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       vel: Vec@(Int|0, Int|2),
       radius: Int|1);
     Ball@ got = end.ball;
-    AssertEquals<Ball@>(EqBall, ShowBall, want, got);
+    AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   }))
 
 ]);

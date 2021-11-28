@@ -14,6 +14,7 @@
 % Le = /Pinball/Num%.Le;
 % Int = /Pinball/Num%.Int;
 
+@ Ball@ = /Pinball/Ball%.Ball@;
 @ Edge@ = /Pinball/Edge%.Edge@;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
@@ -24,8 +25,6 @@
 % Normalize = /Pinball/Vec%.Normalize;
 % RotateTo = /Pinball/Vec%.RotateTo;
 % RotateFrom = /Pinball/Vec%.RotateFrom;
-
-@ Ball@ = *(Vec@ pos, Vec@ vel, Num@ radius);
 
 @ Paddle@ = *(
   Vec@ end_down,   # The paddle's end position when off.
@@ -222,4 +221,4 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
   World@(w.gravity, Ball@(moved.ball.pos, v, moved.ball.radius), moved.edges, moved.paddles);
 };
 
-@(Ball@, Paddle@, World@, Tick);
+@(Paddle@, World@, Tick);

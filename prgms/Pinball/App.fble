@@ -34,10 +34,11 @@
 % Div = /Pinball/Num%.Div;
 % Int = /Pinball/Num%.Int;
 
+@ Ball@ = /Pinball/Ball%.Ball@;
+
 @ Edge@ = /Pinball/Edge%.Edge@;
 % Edge = /Pinball/Edge%.Edge;
 
-@ Ball@ = /Pinball/Physics%.Ball@;
 @ Paddle@ = /Pinball/Physics%.Paddle@;
 @ World@ = /Pinball/Physics%.World@;
 % Tick = /Pinball/Physics%.Tick;

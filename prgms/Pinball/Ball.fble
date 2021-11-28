@@ -1,0 +1,35 @@
+
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+<@>@ Eq@ = /Eq%.Eq@;
+
+@ Num@ = /Pinball/Num%.Num@;
+@ Vec@ = /Pinball/Vec%.Vec@;
+
+<@>@ Show@ = /Show%.Show@;
+
+% Strs = /String%.Strs;
+% Str = /String%.Str;
+
+# Ball@ --
+#   pos - the position of the center of the ball.
+#   vel - the velocity of the ball.
+#   radius - the radius of the ball.
+@ Ball@ = *(Vec@ pos, Vec@ vel, Num@ radius);
+
+Eq@<Ball@> Eq = (Ball@ a, Ball@ b) {
+  /Pinball/Vec%.Eq(a.pos, b.pos).?(false: False);
+  /Pinball/Vec%.Eq(a.vel, b.vel).?(false: False);
+  /Pinball/Num%.Eq(a.radius, b.radius).?(false: False);
+  True;
+};
+
+Show@<Ball@> Show = (Ball@ a) {
+  Strs[Str|'Ball@(pos=',
+    /Pinball/Vec%.Show(a.pos), Str|', vel=',
+    /Pinball/Vec%.Show(a.vel), Str|', radius=',
+    /Pinball/Num%.Show(a.radius), Str|')'];
+};
+
+@(Ball@, Eq, Show);
