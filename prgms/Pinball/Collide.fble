@@ -1,0 +1,71 @@
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+@ Num@ = /Pinball/Num%.Num@;
+% Add = /Pinball/Num%.Add;
+% Sub = /Pinball/Num%.Sub;
+% Neg = /Pinball/Num%.Neg;
+% Mul = /Pinball/Num%.Mul;
+% Div = /Pinball/Num%.Div;
+% Gt = /Pinball/Num%.Gt;
+% Ge = /Pinball/Num%.Ge;
+% Lt = /Pinball/Num%.Lt;
+% Int = /Pinball/Num%.Int;
+
+@ Ball@ = /Pinball/Ball%.Ball@;
+@ Edge@ = /Pinball/Edge%.Edge@;
+
+@ Vec@ = /Pinball/Vec%.Vec@;
+% AddV = /Pinball/Vec%.AddV;
+% SubV = /Pinball/Vec%.SubV;
+% MulVS = /Pinball/Vec%.MulVS;
+% RotateTo = /Pinball/Vec%.RotateTo;
+% RotateFrom = /Pinball/Vec%.RotateFrom;
+
+# BallT@ --
+#   A ball at a particular point in time.
+@ BallT@ = *(Ball@ ball, Num@ time);
+
+# BallEdge --
+#   Check for and return collision results between a ball and an edge.
+#
+# Returns false if there is no collision within the given time. If there is a
+# collision, return sthe ball in the state just after the collision at the
+# time of collision.
+(Ball@, Edge@, Num@) { Maybe@<BallT@>; }
+BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
+  Maybe@<BallT@> NoCollision = Nothing<BallT@>;
+
+  # Verify the ball starts above the edge.
+  Vec@ s = RotateTo(edge.normal, SubV(ball.pos, edge.start));
+  Lt(s.y, Int|0).?(true: NoCollision);
+
+  # Verify the ball ends within radius units of the edge.
+  Num@ radius = ball.radius;
+  Vec@ end = AddV(ball.pos, MulVS(ball.vel, tmax));
+  Vec@ e = RotateTo(edge.normal, SubV(end, edge.start));
+  Gt(e.y, radius).?(true: NoCollision);
+
+  # Verify the ball is moving towards the edge instead of away from it.
+  Vec@ v = RotateTo(edge.normal, ball.vel);
+  Ge(v.y, Int|0).?(true: NoCollision);
+
+  # Potential collision detected.
+  # r = y0 + vt ==>  t = (r-y0)/v
+  Num@ t = Lt(s.y, radius).?(true: Int|0, false: Div(Sub(radius, s.y), v.y));
+
+  # Verify the collision happens within the segment of the edge.
+  Num@ x = Add(s.x, Mul(v.x, t));
+  Lt(x, Int|0).?(true: NoCollision);
+  Gt(x, edge.length).?(true: NoCollision);
+
+  # Compute the new state just after the collision.
+  Vec@ vc = Vec@(v.x, Mul(edge.restitution, Neg(v.y)));
+  Vec@ pos = AddV(ball.pos, MulVS(ball.vel, t));
+  Vec@ vel = RotateFrom(edge.normal, vc);
+  Just<BallT@>(BallT@(@(pos, vel, radius), t));
+};
+
+@(BallT@, BallEdge);
