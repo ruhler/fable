@@ -9,13 +9,16 @@
 % Neg = /Pinball/Num%.Neg;
 % Mul = /Pinball/Num%.Mul;
 % Div = /Pinball/Num%.Div;
+% Eq = /Pinball/Num%.Eq;
 % Gt = /Pinball/Num%.Gt;
 % Ge = /Pinball/Num%.Ge;
 % Lt = /Pinball/Num%.Lt;
+% Le = /Pinball/Num%.Le;
 % Int = /Pinball/Num%.Int;
 
 @ Ball@ = /Pinball/Ball%.Ball@;
 @ Edge@ = /Pinball/Edge%.Edge@;
+@ Paddle@ = /Pinball/Paddle%.Paddle@;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
 % AddV = /Pinball/Vec%.AddV;
@@ -28,15 +31,18 @@
 #   A ball at a particular point in time.
 @ BallT@ = *(Ball@ ball, Num@ time);
 
+# NoCollision --
+#   Used to indicate no collision.
+Maybe@<BallT@> NoCollision = Nothing<BallT@>;
+
 # BallEdge --
 #   Check for and return collision results between a ball and an edge.
 #
-# Returns false if there is no collision within the given time. If there is a
-# collision, return sthe ball in the state just after the collision at the
+# Returns Nothing if there is no collision within the given time. If there is a
+# collision, return the ball in the state just after the collision at the
 # time of collision.
 (Ball@, Edge@, Num@) { Maybe@<BallT@>; }
 BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
-  Maybe@<BallT@> NoCollision = Nothing<BallT@>;
 
   # Verify the ball starts above the edge.
   Vec@ s = RotateTo(edge.normal, SubV(ball.pos, edge.start));
@@ -68,4 +74,57 @@ BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
   Just<BallT@>(BallT@(@(pos, vel, radius), t));
 };
 
-@(BallT@, BallEdge);
+# BallPaddle --
+#   Check for and return collision results between a ball and a paddle.
+#
+# Returns Nothing if there is no collision within the given time. If there is a
+# collision, return the ball in the state just after the collision at the
+# time of collision.
+(Ball@, Paddle@, Num@) { Maybe@<BallT@>; }
+BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
+  Num@ radius = ball.radius;
+
+  # Compute time for the ball to reach the end position of the paddle.
+  Paddle@ p0 = /Pinball/Paddle%.Move(paddle, tm);
+  Vec@ s0 = RotateTo(p0.edge.normal, SubV(ball.pos, p0.edge.start));
+  Vec@ v0 = RotateTo(p0.edge.normal, ball.vel);
+  Eq(v0.y, Int|0).?(true: NoCollision);
+  Num@ t0 = Div(Sub(radius, s0.y), v0.y);
+
+  # Compute time for the ball to reach the start position of the paddle.
+  Paddle@ p1 = paddle;
+  Vec@ s1 = RotateTo(p1.edge.normal, SubV(ball.pos, p1.edge.start));
+  Vec@ v1 = RotateTo(p1.edge.normal, ball.vel);
+  Eq(v1.y, Int|0).?(true: NoCollision);
+  Num@ t1 = Div(Sub(radius, s1.y), v1.y);
+
+  # Compute time for ball to collide with paddle, assuming paddle the paddle
+  # moves towards the ball at a constant velocity along the path of the ball.
+  Num@ td = Add(tm, Sub(t1, t0));
+  Eq(td, Int|0).?(true: NoCollision);
+
+  Num@ t = Div(Mul(t1, tm), td);
+  Lt(t, Int|0).?(true: NoCollision);
+  Gt(t, tm).?(true: NoCollision);
+
+  # Verify the collision happens within the segment of the edge.
+  Vec@ end_pos = AddV(ball.pos, MulVS(ball.vel, t));
+  Paddle@ ph = /Pinball/Paddle%.Move(paddle, t);
+  Vec@ sh = RotateTo(ph.edge.normal, SubV(end_pos, ph.edge.start));
+  Lt(sh.x, Int|0).?(true: NoCollision);
+  Gt(sh.x, ph.edge.length).?(true: NoCollision);
+
+  # Verify the ball is moving towards the edge at the time of collision.
+  Num@ v = Mul(sh.x, paddle.vel);
+  Vec@ vh = RotateTo(ph.edge.normal, ball.vel);
+  Num@ vr = Sub(v, vh.y);
+  Le(vr, Int|0).?(true: NoCollision);
+
+  # Compute the new state just after the collision.
+  Vec@ vc = Vec@(vh.x, Mul(paddle.edge.restitution, vr));
+  Vec@ vel = RotateFrom(ph.edge.normal, vc);
+  Just<BallT@>(BallT@(Ball@(end_pos, vel, radius), t));
+};
+
+
+@(BallT@, BallEdge, BallPaddle);
