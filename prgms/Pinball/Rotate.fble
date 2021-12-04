@@ -8,6 +8,7 @@
 % Eq = /Pinball/Num%.Eq;
 % Gt = /Pinball/Num%.Gt;
 % Lt = /Pinball/Num%.Lt;
+% Abs = /Pinball/Num%.Abs;
 % Int = /Pinball/Num%.Int;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
@@ -51,7 +52,7 @@ Num@ 'π/2' = Div(π, Int|2);
   Num@ y = Mul(f, 2m);
   Num@ x = Sub(2m, y);
   Num@ d = Magnitude(Vec@(x, y));
-  Vec@(Div(Mul(m, x), d), Div(Mul(m, y), d));
+  Vec@(Div(Mul(Abs(m), x), d), Div(Mul(Abs(m), y), d));
 };
 
 # Rotate --

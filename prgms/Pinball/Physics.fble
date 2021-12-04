@@ -8,11 +8,11 @@
 @ BallT@ = /Pinball/Collide%.BallT@;
 
 @ Edge@ = /Pinball/Edge%.Edge@;
+% Edge = /Pinball/Edge%.Edge;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
 % Sub = /Pinball/Num%.Sub;
-% Neg = /Pinball/Num%.Neg;
 % Mul = /Pinball/Num%.Mul;
 % Div = /Pinball/Num%.Div;
 % Eq = /Pinball/Num%.Eq;
@@ -21,30 +21,40 @@
 % Le = /Pinball/Num%.Le;
 % Int = /Pinball/Num%.Int;
 
+% Rotate = /Pinball/Rotate%.Rotate;
+
 @ Vec@ = /Pinball/Vec%.Vec@;
 % AddV = /Pinball/Vec%.AddV;
 % SubV = /Pinball/Vec%.SubV;
 % MulVS = /Pinball/Vec%.MulVS;
-% Magnitude = /Pinball/Vec%.Magnitude;
-% Normalize = /Pinball/Vec%.Normalize;
 % RotateTo = /Pinball/Vec%.RotateTo;
 % RotateFrom = /Pinball/Vec%.RotateFrom;
 
 @ Paddle@ = *(
-  Vec@ end_down,   # The paddle's end position when off.
-  Vec@ end_up,     # The paddle's end position when on.
-  Num@ pos,        # The fraction of the way between end_up and end_pos.
-  Num@ vel,        # The velocity of the paddle in units of pos per tick.
-  Edge@ edge       # The edge of the paddle in its current position.
+  Edge@ edge,     # The edge of the paddle in its current position.
+  Vec@ extent,    # Vector from edge.start to end of paddle at angle 0.
+  Num@ vel,       # The angular velocity of the paddle in radians per tick.
+  Num@ pos,       # The current angle of the paddle in radians.
+  Num@ min,       # The minimum allowed value of pos.
+  Num@ max        # The maximum allowed value of pos.
 );
 
-(Paddle@) { Paddle@; } RecomputeEdge = (Paddle@ p) {
-  Vec@ end = AddV(p.end_down, MulVS(SubV(p.end_up, p.end_down), p.pos));
-  Vec@ tangent = Normalize(SubV(end, p.edge.start));
-  Vec@ normal = Vec@(Neg(tangent.y), tangent.x);
-  Paddle@(
-    p.end_down, p.end_up, p.pos, p.vel,
-    Edge@(normal, p.edge.start, p.edge.length, p.edge.restitution));
+# Paddle --
+#   Specify a paddle.
+#
+# Args:
+#   start - the starting point of the paddle.
+#   end - the end point of the paddle when angle is 0.
+#   vel - the angular velocity of the paddle in radians per tick.
+#   pos - the current position of the paddle in radians.
+#   min - the minimum allowed value of pos for the paddle.
+#   max - the maximum allowed value of pos for the paddle.
+#   res - the coefficient of restitituion for the paddle.
+(Vec@, Vec@, Num@, Num@, Num@, Num@, Num@) { Paddle@; }
+Paddle = (Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ max, Num@ res) {
+  Vec@ extent = SubV(end, start);
+  Vec@ current_end = AddV(start, Rotate(extent, pos));
+  Paddle@(Edge(start, current_end, res), extent, vel, pos, min, max);
 };
 
 @ World@ = *(
@@ -84,13 +94,14 @@ CollideEdgeS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
 (Num@)(Paddle@) { Paddle@; } MovePaddle = (Num@ t)(Paddle@ p) {
   Num@ pos = {
     Num@ pos = Add(p.pos, Mul(p.vel, t));
-    Lt(pos, Int|0).?(true: Int|0);
-    Gt(pos, Int|1).?(true: Int|1);
+    Lt(pos, p.min).?(true: p.min);
+    Gt(pos, p.max).?(true: p.max);
     pos;
   };
 
   Eq(pos, p.pos).?(true: p);
-  RecomputeEdge(Paddle@(p.end_down, p.end_up, pos, p.vel, p.edge));
+  Paddle(p.edge.start, AddV(p.edge.start, p.extent),
+    p.vel, pos, p.min, p.max, p.edge.restitution);
 };
 
 # CollidePaddle --
@@ -135,7 +146,7 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   Gt(sh.x, ph.edge.length).?(true: end);
 
   # Verify the ball is moving towards the edge at the time of collision.
-  Num@ v = Div(Mul(sh.x, Mul(paddle.vel, Magnitude(SubV(paddle.end_up, paddle.end_down)))), paddle.edge.length);
+  Num@ v = Mul(sh.x, paddle.vel);
   Vec@ vh = RotateTo(ph.edge.normal, start.vel);
   Num@ vr = Sub(v, vh.y);
   Le(vr, Int|0).?(true: end);
@@ -197,4 +208,4 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
   World@(w.gravity, Ball@(moved.ball.pos, v, moved.ball.radius), moved.edges, moved.paddles);
 };
 
-@(Paddle@, World@, Tick);
+@(Paddle@, World@, Paddle, Tick);

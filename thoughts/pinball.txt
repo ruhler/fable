@@ -508,3 +508,14 @@ integer and a/B in units of radians. Let's graph the magnitude of the point
 graph the distance between points with a and a+1. And see how various
 different implementations do.
 
+---
+
+Okay, I now have what looks to me like a reasonable approximation of rotating
+a point around an angle in radians. Let's assume that works fine and switch to
+new approach for specifying a paddle.
+
+How to specify a paddle now:
+  start, end (at angle 0), angle, max angle, min angle, velocity, restitution.
+
+What to store for a paddle now:
+  v (at angle 0), angle, max angle, min angle, velocity, current edge 

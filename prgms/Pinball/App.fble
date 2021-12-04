@@ -42,6 +42,7 @@
 @ Paddle@ = /Pinball/Physics%.Paddle@;
 @ World@ = /Pinball/Physics%.World@;
 % Tick = /Pinball/Physics%.Tick;
+% Paddle = /Pinball/Physics%.Paddle;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
 % AddV = /Pinball/Vec%.AddV;
@@ -59,6 +60,13 @@ Num@ Radius = Int|8;
 Num@ PaddleVelocity = Div(Int|1, Int|4);
 
 Num@ R = Div(Int|6, Int|8);
+
+(Num@, Num@) { Paddle@; } LeftPaddle = (Num@ vel, Num@ pos) {
+  Paddle(
+    Vec@(Neg(Int|80), Neg(Int|56)),
+    Vec@(Neg(Int|16), Neg(Int|104)),
+    vel, pos, Int|0, Int|1, Int|1);
+};
 
 World@ Initial = World@(
   Vec@(Int|0, Neg(Div(Int|1, Int|8))),
@@ -78,17 +86,8 @@ World@ Initial = World@(
     # Ceiling
     Edge(Vec@(Int|144, Int|104), Vec@(Neg(Int|144), Int|104), R)
   ],
-  List<Paddle@>[
-    # Left Paddle.
-    Paddle@(
-      Vec@(Neg(Int|16), Neg(Int|104)),
-      Vec@(Neg(Int|16), Neg(Int|8)),
-      Int|0,
-      Neg(PaddleVelocity),
-      Edge@(Vec@(Div(Int|3, Int|5), Div(Int|4, Int|5)),
-          Vec@(Neg(Int|80), Neg(Int|56)),
-          Int|80, R))
-  ]);
+  List<Paddle@>[LeftPaddle(Int|0, Int|0)]
+);
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
   Vec@ s = SubV(edge.start, MulVS(edge.normal, Int|2));
@@ -125,7 +124,7 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
 (Num@, World@) { World@; } SetPaddleVelocity = (Num@ v, World@ w) {
   Paddle@ p = w.paddles.cons.head;
   World@(w.gravity, w.ball, w.edges, 
-    List<Paddle@>[Paddle@(p.end_down, p.end_up, p.pos, v, p.edge)]);
+    List<Paddle@>[LeftPaddle(v, p.pos)]);
 };
 
 (Get@<Event@>, Put@<World@>, Unit@!, World@) { Unit@!; }

@@ -7,6 +7,7 @@
 % AddI = /Int%.Add;
 % SubI = /Int%.Sub;
 % NegI = /Int%.Neg;
+% AbsI = /Int%.Abs;
 % MulI = /Int%.Mul;
 % DivI = /Int/Div%.Div;
 % GtI = /Int/Eq%.Gt;
@@ -48,6 +49,10 @@ Int@ S = IntI|128;
 
 (Num@) { Num@; } Neg = (Num@ a) {
   _@(NegI(a<_@>));
+};
+
+(Num@) { Num@; } Abs = (Num@ a) {
+  _@(AbsI(a<_@>));
 };
 
 (Num@, Num@) { Num@; } Mul = (Num@ a, Num@ b) {
@@ -96,4 +101,4 @@ Show@<Num@> Show = (Num@ a) {
   _@(SqrtI(MulI(a<_@>, S)).q);
 };
 
-@(Num@, Add, Sub, Neg, Mul, Div, Eq, Gt, Ge, Lt, Le, Show, Int, Floor, Sqrt);
+@(Num@, Add, Sub, Neg, Abs, Mul, Div, Eq, Gt, Ge, Lt, Le, Show, Int, Floor, Sqrt);

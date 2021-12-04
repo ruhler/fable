@@ -1,0 +1,50 @@
+
+<@>% List = /List%.List;
+
+% Neg = /Pinball/Num%.Neg;
+% Int = /Pinball/Num%.Int;
+% Rotate = /Pinball/Rotate%.Rotate;
+@ Vec@ = /Pinball/Vec%.Vec@;
+
+% Str = /String%.Str;
+
+@ Test@ = /Test%.Test@;
+% Test = /Test%.Test;
+% TestSuite = /Test%.TestSuite;
+<@>% AssertEquals = /Test%.AssertEquals;
+
+Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
+  Test(Str|'Unrotated Q1', !({
+    # Rotation a vector by an angle of 0 should not change the vector.
+    Vec@ v = Vec@(Int|2, Int|3);
+    Vec@ want = v;
+    Vec@ got = Rotate(v, Int|0);
+    AssertEquals<Vec@>(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
+  })),
+
+  Test(Str|'Unrotated Q2', !({
+    # Rotation a vector by an angle of 0 should not change the vector.
+    Vec@ v = Vec@(Neg(Int|2), Int|3);
+    Vec@ want = v;
+    Vec@ got = Rotate(v, Int|0);
+    AssertEquals<Vec@>(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
+  })),
+
+  Test(Str|'Unrotated Q3', !({
+    # Rotation a vector by an angle of 0 should not change the vector.
+    Vec@ v = Vec@(Neg(Int|2), Neg(Int|3));
+    Vec@ want = v;
+    Vec@ got = Rotate(v, Int|0);
+    AssertEquals<Vec@>(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
+  })),
+
+  Test(Str|'Unrotated Q4', !({
+    # Rotation a vector by an angle of 0 should not change the vector.
+    Vec@ v = Vec@(Int|2, Neg(Int|3));
+    Vec@ want = v;
+    Vec@ got = Rotate(v, Int|0);
+    AssertEquals<Vec@>(/Pinball/Vec%.Eq, /Pinball/Vec%.Show, want, got);
+  }))
+]);
+
+@(Tests);
