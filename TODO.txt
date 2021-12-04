@@ -1,4 +1,5 @@
 * [pinball] 
+ - Pull Paddle collision out into Collide.
  - Figure out how to track velocity of a paddle at the end of its range.
  - Test basic ball paddle in motion collision.
    Need to better understand how velocity of paddle is specified.

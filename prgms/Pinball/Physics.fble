@@ -8,7 +8,8 @@
 @ BallT@ = /Pinball/Collide%.BallT@;
 
 @ Edge@ = /Pinball/Edge%.Edge@;
-% Edge = /Pinball/Edge%.Edge;
+
+@ Paddle@ = /Pinball/Paddle%.Paddle@;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
@@ -21,41 +22,12 @@
 % Le = /Pinball/Num%.Le;
 % Int = /Pinball/Num%.Int;
 
-% Rotate = /Pinball/Rotate%.Rotate;
-
 @ Vec@ = /Pinball/Vec%.Vec@;
 % AddV = /Pinball/Vec%.AddV;
 % SubV = /Pinball/Vec%.SubV;
 % MulVS = /Pinball/Vec%.MulVS;
 % RotateTo = /Pinball/Vec%.RotateTo;
 % RotateFrom = /Pinball/Vec%.RotateFrom;
-
-@ Paddle@ = *(
-  Edge@ edge,     # The edge of the paddle in its current position.
-  Vec@ extent,    # Vector from edge.start to end of paddle at angle 0.
-  Num@ vel,       # The angular velocity of the paddle in radians per tick.
-  Num@ pos,       # The current angle of the paddle in radians.
-  Num@ min,       # The minimum allowed value of pos.
-  Num@ max        # The maximum allowed value of pos.
-);
-
-# Paddle --
-#   Specify a paddle.
-#
-# Args:
-#   start - the starting point of the paddle.
-#   end - the end point of the paddle when angle is 0.
-#   vel - the angular velocity of the paddle in radians per tick.
-#   pos - the current position of the paddle in radians.
-#   min - the minimum allowed value of pos for the paddle.
-#   max - the maximum allowed value of pos for the paddle.
-#   res - the coefficient of restitituion for the paddle.
-(Vec@, Vec@, Num@, Num@, Num@, Num@, Num@) { Paddle@; }
-Paddle = (Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ max, Num@ res) {
-  Vec@ extent = SubV(end, start);
-  Vec@ current_end = AddV(start, Rotate(extent, pos));
-  Paddle@(Edge(start, current_end, res), extent, vel, pos, min, max);
-};
 
 @ World@ = *(
   Vec@ gravity,      # acceleration due to gravity
@@ -89,21 +61,6 @@ CollideEdgeS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
   CollideEdgeS(start, CollideEdge(start, end, edges.cons.head), edges.cons.tail);
 };
 
-# MovePaddle -- 
-#   Move a paddle by the given amount of time.
-(Num@)(Paddle@) { Paddle@; } MovePaddle = (Num@ t)(Paddle@ p) {
-  Num@ pos = {
-    Num@ pos = Add(p.pos, Mul(p.vel, t));
-    Lt(pos, p.min).?(true: p.min);
-    Gt(pos, p.max).?(true: p.max);
-    pos;
-  };
-
-  Eq(pos, p.pos).?(true: p);
-  Paddle(p.edge.start, AddV(p.edge.start, p.extent),
-    p.vel, pos, p.min, p.max, p.edge.restitution);
-};
-
 # CollidePaddle --
 #   Check for and apply collision between ball and paddle.
 #
@@ -116,7 +73,7 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
   Num@ tm = end.time;
 
   # Compute time for the ball to reach the end position of the paddle.
-  Paddle@ p0 = MovePaddle(tm)(paddle);
+  Paddle@ p0 = /Pinball/Paddle%.Move(paddle, tm);
   Vec@ s0 = RotateTo(p0.edge.normal, SubV(start.pos, p0.edge.start));
   Vec@ v0 = RotateTo(p0.edge.normal, start.vel);
   Eq(v0.y, Int|0).?(true: end);
@@ -140,7 +97,7 @@ CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
 
   # Verify the collision happens within the segment of the edge.
   Vec@ end_pos = AddV(start.pos, MulVS(start.vel, t));
-  Paddle@ ph = MovePaddle(t)(paddle);
+  Paddle@ ph = /Pinball/Paddle%.Move(paddle, t);
   Vec@ sh = RotateTo(ph.edge.normal, SubV(end_pos, ph.edge.start));
   Lt(sh.x, Int|0).?(true: end);
   Gt(sh.x, ph.edge.length).?(true: end);
@@ -187,7 +144,9 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
   BallT@ edged = CollideEdgeS(w.ball, end, w.edges);
   BallT@ batted = CollidePaddleS(w.ball, edged, w.paddles);
   Num@ ct = batted.time;
-  List@<Paddle@> paddles = /List%.Map<Paddle@, Paddle@>(w.paddles, MovePaddle(ct));
+  List@<Paddle@> paddles = /List%.Map<Paddle@, Paddle@>(w.paddles, (Paddle@ p) {
+    /Pinball/Paddle%.Move(p, ct);
+  });
   World@ moved = World@(w.gravity, batted.ball, w.edges, paddles);
   Move(moved, Sub(t, ct));
 };
@@ -208,4 +167,4 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
   World@(w.gravity, Ball@(moved.ball.pos, v, moved.ball.radius), moved.edges, moved.paddles);
 };
 
-@(Paddle@, World@, Paddle, Tick);
+@(World@, Tick);

@@ -39,10 +39,11 @@
 @ Edge@ = /Pinball/Edge%.Edge@;
 % Edge = /Pinball/Edge%.Edge;
 
-@ Paddle@ = /Pinball/Physics%.Paddle@;
+@ Paddle@ = /Pinball/Paddle%.Paddle@;
+% Paddle = /Pinball/Paddle%.Paddle;
+
 @ World@ = /Pinball/Physics%.World@;
 % Tick = /Pinball/Physics%.Tick;
-% Paddle = /Pinball/Physics%.Paddle;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
 % AddV = /Pinball/Vec%.AddV;
