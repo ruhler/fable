@@ -5,6 +5,7 @@
 % Neg = /Pinball/Num%.Neg;
 % Mul = /Pinball/Num%.Mul;
 % Div = /Pinball/Num%.Div;
+% Eq = /Pinball/Num%.Eq;
 % Gt = /Pinball/Num%.Gt;
 % Lt = /Pinball/Num%.Lt;
 % Int = /Pinball/Num%.Int;
@@ -19,6 +20,8 @@ Num@ 'π/2' = Div(π, Int|2);
 # RotateS -
 #   Rotate vector (m, 0) by an angle in radians.
 (Num@, Num@) { Vec@; } RotateS = (Num@ m, Num@ a) {
+  Eq(Int|0, m).?(true: Vec@(m, m));
+
   # Put angle in range [0, ∞)
   Lt(a, Int|0).?(true: {
     Vec@ r = RotateS(m, Neg(a));
