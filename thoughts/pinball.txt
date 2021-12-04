@@ -365,3 +365,146 @@ The API for collide edge ought to be:
 
 And we'll have a function to move a ball with a fixed velocity by a given
 time to help.
+
+---
+
+On specifying paddles: the most natural way to specify a paddle, I think,
+assuming we are limiting to single edges for the time being, is:
+* starting edge
+* center of rotation
+* maximum angle
+* angular velocity
+
+Where conceptually I don't care what unit is used for angles or angular
+velocity, as long as it gives sufficient precision.
+
+The question of right versus left paddle is a little tricky. One rotates
+clockwise, the other counter clockwise. That sort of messes up the definition
+of maximum and minimum angle. Perhaps it would be better to have:
+
+* current edge
+* center of rotation
+* current angle
+* maximum angle
+* minimum angle
+* angular velocity
+
+But I worry if we are constantly transforming the current edge with loss of
+precision, we'll degrade the paddle over time.
+
+In rocinante we specify the edge at angle 0 with max and min angle values.
+We update the current edge in place, which could lose precision in theory.
+
+So perhaps we should specify:
+* edge at angle 0
+* center of rotation
+* current angle
+* min angle
+* max angle
+* angular velocity
+
+That sounds reasonable, and it supports left and right paddles.
+
+To rotate, we'll want to compute the current edge either based on sin,cos of
+the current angle or a rotation
+To rotate, we'll want to compute the current edge either based on sin,cos of
+the current angle or a small rotation based on sin,cos of a change in angle.
+Which gets us back to the question of sin,cos.
+
+My preference would be to support sin,cos of the current angle, which will
+prevent loss of precision and is a more general implementation of sin,cos. We
+could represent the angle as an integer either in fractions of radians or
+fractions of whole circles. Note that if we do fractions of whole circles, we
+can boost the precision. For instance, degrees are fractions of a whole
+circles, and using Num@ for a single degree should give plenty of precision.
+
+Let me do another round of thinking about how we can get reasonable enough
+precision for an implementation of sin and cos using integer arithmetic.
+
+---
+
+Here's the crux of the problem:
+
+I want to write good tests for the paddle. I need a clear specification of how
+the paddle behaves. We care about the normal velocity of the paddle. It would
+be nice if we could represent the angular velocity of the paddle with full
+precision. We don't care so much about the exact value of the paddle angle,
+just so long as we can specify precisely enough when the paddle has reached
+its limit.
+
+We would like to be able to write a test where the edge is perfectly well
+known at the time of a collision. We can do this if we arrange for the
+angle to be zero at the time of collision, though that limits the cases we can
+test.
+
+So, let's express angular velocity in radians and choose it such that we can
+represent the angular velocity perfectly. Then we can represent the normal
+velocity at some integer radius perfectly.
+
+Then I guess all we need is some approximation of cos, sin that takes radians
+and is perfectly accurate when the input is 0. And we limit test cases to
+those where the collision happens at angle 0. Note that 0 -> sin(0),cos(0) is
+the only case where we have perfectly accurate input and output.
+
+Alternatives and why they don't work so well:
+* Use degrees instead of radians. Then we have a bunch of cases where
+  perfectly accurate input and output match. But then we can't represent the
+  angular velocity accurately.
+
+Is there any way we could write a test for the case where the collision
+happens at angle not equal to 0? Perhaps if I do it in terms of my
+approximation for sin, cos?
+
+It would seem my approximation for sin and cos doesn't have to be terribly
+accurate. As long as we get 0, and make sure sin and cos returned form
+something close to a unit vector travel around the circle in the right
+direction, and are close to doing a full circle when you get near 2pi.
+
+Okay, then let's try this approach and see if it gets us into trouble.
+
+Paddle specification:
+ * edge at angle 0
+ * min angle in radians, max angle in radians
+ * current angle in radians,
+ * angular velocity in radians.
+
+I think radians are precise enough. That's 804 divisions of the circle if I
+use 128 based fixed point. We could always represent it with more precision
+later on if we wanted.
+
+So, how do I want to implement the approximation of cos and sin in radians?
+* Convert to positive angle.
+* Convert to first quadrant.
+* Implement a polynomial approximation in the first quadrant?
+* Or normalize the point (1-2x/pi, 2x/pi) in the first quadrant?
+* Or do a lookup table in the first quadrant?
+
+---
+
+Some other miscellaneous thoughts about rotation:
+* If you think about it, really all we care about for pinball is that the
+  paddle length is preserved on rotation, 0 stays at 0 on rotation, and
+  possibly that equally spaced angles result in equally spaced points. The
+  first two are pretty easy. The last one isn't that important. So it really
+  doesn't matter too much how we approximate the rotation.
+* What we really care about isn't the value of cos and sin, it's about
+  rotating points. So really what I want is a function that takes a vector and
+  an angle and rotates the vector by the angle. This could give us more
+  opportunity to improve precision. For example, you don't need nearly as much
+  precision for a point close to the origin as you do a point far away. If we
+  know the point we want to transform, we could take that into consideration
+  when performing the translation, and potentially make up for loss in
+  precision. In other words, int(rotate(angle, [1, 0]))*v with perfect
+  precision for the rotation could give a worse result than
+  int(rotate(angle, v)) with less precision for the rotation.
+
+Taking the later into account, maybe what we want is a general way to compute
+x*cos(angle), for arbitrary integer value x. The bigger x, the more accuracy
+we want.
+
+Let me do some experiments with how to compute A*cos(a/B), with A, a, B all
+integer and a/B in units of radians. Let's graph the magnitude of the point
+(A*cos(a/B), A*sin(a/B)) as a function of angle a between 0 and pi/2. Let's
+graph the distance between points with a and a+1. And see how various
+different implementations do.
+
