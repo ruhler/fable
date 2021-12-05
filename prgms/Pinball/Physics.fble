@@ -2,10 +2,14 @@
 <@>@ List@ = /List%.List@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
 
 @ Ball@ = /Pinball/Ball%.Ball@;
 
 @ BallT@ = /Pinball/Collide%.BallT@;
+% BallEdgeS = /Pinball/Collide%.BallEdgeS;
+% BallPaddleS = /Pinball/Collide%.BallPaddleS;
+% First = /Pinball/Collide%.First;
 
 @ Edge@ = /Pinball/Edge%.Edge@;
 
@@ -28,56 +32,6 @@
   List@<Paddle@> paddles
 );
 
-# CollideEdge -- 
-#   Check for and apply collision of ball with edge between start and end.
-#
-# If there is no collision, end is returned as is. If there is a collision,
-# returns the ball in the state just after the collision at the time of
-# collision.
-(Ball@, BallT@, Edge@) { BallT@; }
-CollideEdge = (Ball@ start, BallT@ end, Edge@ edge) {
-  Maybe@<BallT@> mcr = /Pinball/Collide%.BallEdge(start, edge, end.time);
-  mcr.?(nothing: end);
-  mcr.just;
-};
-
-# CollidePaddle -- 
-#   Check for and apply collision of ball with paddle between start and end.
-#
-# If there is no collision, end is returned as is. If there is a collision,
-# returns the ball in the state just after the collision at the time of
-# collision.
-(Ball@, BallT@, Paddle@) { BallT@; }
-CollidePaddle = (Ball@ start, BallT@ end, Paddle@ paddle) {
-  Maybe@<BallT@> mcr = /Pinball/Collide%.BallPaddle(start, paddle, end.time);
-  mcr.?(nothing: end);
-  mcr.just;
-};
-
-# CollideEdgeS --
-#   Check for and apply collision between ball and a list of edges.
-#
-# If there is no collision, end is returned as is. If there is a collision,
-# returns the ball in the state just after the collision at the time of
-# collision.
-(Ball@, BallT@, List@<Edge@>) { BallT@; }
-CollideEdgeS = (Ball@ start, BallT@ end, List@<Edge@> edges) {
-  edges.?(nil: end);
-  CollideEdgeS(start, CollideEdge(start, end, edges.cons.head), edges.cons.tail);
-};
-
-# CollidePaddleS --
-#   Check for and apply collision between ball and a list of paddles.
-#
-# If there is no collision, end is returned as is. If there is a collision,
-# returns the ball in the state just after the collision at the time of
-# collision.
-(Ball@, BallT@, List@<Paddle@>) { BallT@; }
-CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
-  paddles.?(nil: end);
-  CollidePaddleS(start, CollidePaddle(start, end, paddles.cons.head), paddles.cons.tail);
-};
-
 # Move --
 #   Move the ball and paddles by the given amount of time, assuming velocity
 #   stays constant.
@@ -91,15 +45,19 @@ CollidePaddleS = (Ball@ start, BallT@ end, List@<Paddle@> paddles) {
 (World@, Num@) { World@; } Move = (World@ w, Num@ t) {
   Le(t, Int|0).?(true: w);
 
-  Vec@ end_pos = AddV(w.ball.pos, MulVS(w.ball.vel, t));
-  BallT@ end = BallT@(Ball@(end_pos, w.ball.vel, w.ball.radius), t);
-  BallT@ edged = CollideEdgeS(w.ball, end, w.edges);
-  BallT@ batted = CollidePaddleS(w.ball, edged, w.paddles);
-  Num@ ct = batted.time;
+  Maybe@<BallT@> if_nohit = Just<BallT@>({
+    Vec@ end_pos = AddV(w.ball.pos, MulVS(w.ball.vel, t));
+    BallT@(Ball@(end_pos, w.ball.vel, w.ball.radius), t);
+  });
+  Maybe@<BallT@> if_edged = BallEdgeS(w.ball, w.edges, t);
+  Maybe@<BallT@> if_paddled = BallPaddleS(w.ball, w.paddles, t);
+
+  BallT@ ball = First(if_nohit, First(if_edged, if_paddled)).just;
+  Num@ ct = ball.time;
   List@<Paddle@> paddles = /List%.Map<Paddle@, Paddle@>(w.paddles, (Paddle@ p) {
     /Pinball/Paddle%.Move(p, ct);
   });
-  World@ moved = World@(w.gravity, batted.ball, w.edges, paddles);
+  World@ moved = World@(w.gravity, ball.ball, w.edges, paddles);
   Move(moved, Sub(t, ct));
 };
 

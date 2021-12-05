@@ -1,4 +1,6 @@
 
+<@>@ List@ = /List%.List@;
+
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
@@ -31,9 +33,24 @@
 #   A ball at a particular point in time.
 @ BallT@ = *(Ball@ ball, Num@ time);
 
+# BallCollider@ --
+#   Check for and return collision results between a ball and an object.
+#
+# Returns Nothing if there is no collision within the given time. If there is a
+# collision, return the ball in the state just after the collision at the
+# time of collision.
+<@>@ BallCollider@ = <@ T@>(Ball@, T@, Num@) { Maybe@<BallT@>; };
+
 # NoCollision --
-#   Used to indicate no collision.
+#   Used to indicate no collision in a BallCollider@.
 Maybe@<BallT@> NoCollision = Nothing<BallT@>;
+
+(Maybe@<BallT@>, Maybe@<BallT@>) { Maybe@<BallT@>; }
+First = (Maybe@<BallT@> a, Maybe@<BallT@> b) {
+  a.?(nothing: b);
+  b.?(nothing: a);
+  Lt(a.just.time, b.just.time).?(true: a, false: b);
+};
 
 # BallEdge --
 #   Check for and return collision results between a ball and an edge.
@@ -41,8 +58,7 @@ Maybe@<BallT@> NoCollision = Nothing<BallT@>;
 # Returns Nothing if there is no collision within the given time. If there is a
 # collision, return the ball in the state just after the collision at the
 # time of collision.
-(Ball@, Edge@, Num@) { Maybe@<BallT@>; }
-BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
+BallCollider@<Edge@> BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
 
   # Verify the ball starts above the edge.
   Vec@ s = RotateTo(edge.normal, SubV(ball.pos, edge.start));
@@ -74,14 +90,21 @@ BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
   Just<BallT@>(BallT@(@(pos, vel, radius), t));
 };
 
+BallCollider@<List@<Edge@>>
+BallEdgeS = (Ball@ ball, List@<Edge@> edges, Num@ tmax) {
+  edges.?(nil: NoCollision);
+  Maybe@<BallT@> tail = BallEdgeS(ball, edges.cons.tail, tmax);
+  Maybe@<BallT@> head = BallEdge(ball, edges.cons.head, tmax);
+  First(tail, head);
+};
+
 # BallPaddle --
 #   Check for and return collision results between a ball and a paddle.
 #
 # Returns Nothing if there is no collision within the given time. If there is a
 # collision, return the ball in the state just after the collision at the
 # time of collision.
-(Ball@, Paddle@, Num@) { Maybe@<BallT@>; }
-BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
+BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   Num@ radius = ball.radius;
 
   # Compute time for the ball to reach the end position of the paddle.
@@ -126,5 +149,12 @@ BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   Just<BallT@>(BallT@(Ball@(end_pos, vel, radius), t));
 };
 
+BallCollider@<List@<Paddle@>>
+BallPaddleS = (Ball@ ball, List@<Paddle@> paddles, Num@ tmax) {
+  paddles.?(nil: NoCollision);
+  Maybe@<BallT@> tail = BallPaddleS(ball, paddles.cons.tail, tmax);
+  Maybe@<BallT@> head = BallPaddle(ball, paddles.cons.head, tmax);
+  First(tail, head);
+};
 
-@(BallT@, BallEdge, BallPaddle);
+@(BallT@, First, BallEdge, BallEdgeS, BallPaddle, BallPaddleS);
