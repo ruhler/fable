@@ -148,4 +148,28 @@ BallPaddleS = (Ball@ ball, List@<Paddle@> paddles, Num@ tmax) {
   ];
 };
 
-@(BallEdge, BallEdgeS, BallPaddle, BallPaddleS);
+# PaddleRange --
+#   Check for an event where a paddle reaches the end of its range.
+(Paddle@, Num@) { Event@; } PaddleRange = (Paddle@ paddle, Num@ tmax) {
+  Event@ NoCollision = TimeEvent(tmax);
+
+  Eq(Int|0, paddle.vel).?(true: NoCollision);
+
+  Num@ t = Lt(paddle.vel, Int|0).?(
+    true: Div(Sub(paddle.min, paddle.pos), paddle.vel),
+    false: Div(Sub(paddle.max, paddle.pos), paddle.vel));
+  Events[NoCollision, TimeEvent(t)];
+};
+
+# PaddleRangeS --
+#   Check for an event where a paddle reaches the end of its range.
+(List@<Paddle@>, Num@) { Event@; }
+PaddleRangeS = (List@<Paddle@> paddles, Num@ tmax) {
+  paddles.?(nil: TimeEvent(tmax));
+  Events[
+    PaddleRange(paddles.cons.head, tmax),
+    PaddleRangeS(paddles.cons.tail, tmax)
+  ];
+};
+
+@(BallEdge, BallEdgeS, BallPaddle, BallPaddleS, PaddleRange, PaddleRangeS);

@@ -5,6 +5,7 @@
 
 % BallEdgeS = /Pinball/Collide%.BallEdgeS;
 % BallPaddleS = /Pinball/Collide%.BallPaddleS;
+% PaddleRangeS = /Pinball/Collide%.PaddleRangeS;
 
 @ Edge@ = /Pinball/Edge%.Edge@;
 
@@ -46,7 +47,8 @@
   # Figure out when the next interesting thing happens.
   Event@ event = Events[
     BallEdgeS(w.ball, w.edges, t),      # ball collides with an edge?
-    BallPaddleS(w.ball, w.paddles, t)   # ball collides with a paddle?
+    BallPaddleS(w.ball, w.paddles, t),  # ball collides with a paddle?
+    PaddleRangeS(w.paddles, t)          # paddle reaches its end of range?
   ];
 
   # Advance the state of the world to just after the next interesting event.

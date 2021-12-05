@@ -8,6 +8,7 @@
 % Eq = /Pinball/Num%.Eq;
 % Gt = /Pinball/Num%.Gt;
 % Lt = /Pinball/Num%.Lt;
+% Int = /Pinball/Num%.Int;
 
 % Rotate = /Pinball/Rotate%.Rotate;
 
@@ -44,7 +45,11 @@ Paddle = (Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ max, Num@ res
 
 # Move -- 
 #   Move a paddle by the given amount of time.
+#
+# Sets the velocity of the paddle to 0 if it reaches its end of range.
 (Paddle@, Num@) { Paddle@; } Move = (Paddle@ p, Num@ t) {
+  Eq(Int|0, p.vel).?(true: p);
+
   Num@ pos = {
     Num@ pos = Add(p.pos, Mul(p.vel, t));
     Lt(pos, p.min).?(true: p.min);
@@ -52,9 +57,14 @@ Paddle = (Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ max, Num@ res
     pos;
   };
 
-  Eq(pos, p.pos).?(true: p);
+  Num@ vel = {
+    Eq(pos, p.min).?(true: Int|0);
+    Eq(pos, p.max).?(true: Int|0);
+    p.vel;
+  };
+
   Paddle(p.edge.start, AddV(p.edge.start, p.extent),
-    p.vel, pos, p.min, p.max, p.edge.restitution);
+    vel, pos, p.min, p.max, p.edge.restitution);
 };
 
 @(Paddle@, Paddle, Move);

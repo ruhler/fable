@@ -174,8 +174,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       vel: Vec@(Int|0, Int|2),
       radius: Int|1);
     Ball@ got = end.ball;
-    # TODO: Set paddle velocity to zero when it hits the end of its range.
-    /Test%.ExpectFails(AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got), Str|'');
+    AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got);
   })),
 
   Test(Str|'Stationary Paddle Non-Collision', !({
