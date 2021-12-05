@@ -16,8 +16,8 @@
 @ Paddle@ = /Pinball/Paddle%.Paddle@;
 % Paddle = /Pinball/Paddle%.Paddle;
 
-@ World@ = /Pinball/Physics%.World@;
-% Tick = /Pinball/Physics%.Tick;
+@ World@ = /Pinball/World%.World@;
+% Tick = /Pinball/World%.Tick;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
 

@@ -33,8 +33,8 @@
 );
 
 # Move --
-#   Move the ball and paddles by the given amount of time, assuming velocity
-#   stays constant.
+#   Move the world by the given amount of time, assuming velocity stays
+#   constant.
 #
 # In case of collision, we break down the time period into smaller bits. The
 # assumption that velocity is constant is intended to prevent the case where
