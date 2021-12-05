@@ -5,7 +5,10 @@
 <@>@ Eq@ = /Eq%.Eq@;
 
 @ Num@ = /Pinball/Num%.Num@;
+
 @ Vec@ = /Pinball/Vec%.Vec@;
+% AddV = /Pinball/Vec%.AddV;
+% MulVS = /Pinball/Vec%.MulVS;
 
 <@>@ Show@ = /Show%.Show@;
 
@@ -17,6 +20,13 @@
 #   vel - the velocity of the ball.
 #   radius - the radius of the ball.
 @ Ball@ = *(Vec@ pos, Vec@ vel, Num@ radius);
+
+# Move --
+#   Move a ball by the given amount of time assuming constant velocity.
+(Ball@, Num@) { Ball@; } Move = (Ball@ ball, Num@ time) {
+  Vec@ pos = AddV(ball.pos, MulVS(ball.vel, time));
+  Ball@(pos, ball.vel, ball.radius);
+};
 
 Eq@<Ball@> Eq = (Ball@ a, Ball@ b) {
   /Pinball/Vec%.Eq(a.pos, b.pos).?(false: False);
@@ -32,4 +42,4 @@ Show@<Ball@> Show = (Ball@ a) {
     /Pinball/Num%.Show(a.radius), Str|')'];
 };
 
-@(Ball@, Eq, Show);
+@(Ball@, Move, Eq, Show);

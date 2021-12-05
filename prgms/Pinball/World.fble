@@ -1,17 +1,15 @@
 
 <@>@ List@ = /List%.List@;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-
 @ Ball@ = /Pinball/Ball%.Ball@;
 
-@ BallT@ = /Pinball/Collide%.BallT@;
 % BallEdgeS = /Pinball/Collide%.BallEdgeS;
 % BallPaddleS = /Pinball/Collide%.BallPaddleS;
-% First = /Pinball/Collide%.First;
 
 @ Edge@ = /Pinball/Edge%.Edge@;
+
+@ Event@ = /Pinball/Event%.Event@;
+% Events = /Pinball/Event%.Events;
 
 @ Paddle@ = /Pinball/Paddle%.Paddle@;
 
@@ -45,20 +43,24 @@
 (World@, Num@) { World@; } Move = (World@ w, Num@ t) {
   Le(t, Int|0).?(true: w);
 
-  Maybe@<BallT@> if_nohit = Just<BallT@>({
-    Vec@ end_pos = AddV(w.ball.pos, MulVS(w.ball.vel, t));
-    BallT@(Ball@(end_pos, w.ball.vel, w.ball.radius), t);
-  });
-  Maybe@<BallT@> if_edged = BallEdgeS(w.ball, w.edges, t);
-  Maybe@<BallT@> if_paddled = BallPaddleS(w.ball, w.paddles, t);
+  # Figure out when the next interesting thing happens.
+  Event@ event = Events[
+    BallEdgeS(w.ball, w.edges, t),      # ball collides with an edge?
+    BallPaddleS(w.ball, w.paddles, t)   # ball collides with a paddle?
+  ];
 
-  BallT@ ball = First(if_nohit, First(if_edged, if_paddled)).just;
-  Num@ ct = ball.time;
+  # Advance the state of the world to just after the next interesting event.
+  Ball@ ball = {
+    event.ball.?(just: event.ball.just);
+    /Pinball/Ball%.Move(w.ball, event.time);
+  };
+
   List@<Paddle@> paddles = /List%.Map<Paddle@, Paddle@>(w.paddles, (Paddle@ p) {
-    /Pinball/Paddle%.Move(p, ct);
+    /Pinball/Paddle%.Move(p, event.time);
   });
-  World@ moved = World@(w.gravity, ball.ball, w.edges, paddles);
-  Move(moved, Sub(t, ct));
+
+  World@ moved = World@(w.gravity, ball, w.edges, paddles);
+  Move(moved, Sub(t, event.time));
 };
 
 # Tick --

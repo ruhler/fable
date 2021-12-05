@@ -1,9 +1,10 @@
 
 <@>@ List@ = /List%.List@;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+@ Event@ = /Pinball/Event%.Event@;
+% Events = /Pinball/Event%.Events;
+% BallEvent = /Pinball/Event%.BallEvent;
+% TimeEvent = /Pinball/Event%.TimeEvent;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
@@ -29,28 +30,13 @@
 % RotateTo = /Pinball/Vec%.RotateTo;
 % RotateFrom = /Pinball/Vec%.RotateFrom;
 
-# BallT@ --
-#   A ball at a particular point in time.
-@ BallT@ = *(Ball@ ball, Num@ time);
-
 # BallCollider@ --
 #   Check for and return collision results between a ball and an object.
 #
-# Returns Nothing if there is no collision within the given time. If there is a
-# collision, return the ball in the state just after the collision at the
-# time of collision.
-<@>@ BallCollider@ = <@ T@>(Ball@, T@, Num@) { Maybe@<BallT@>; };
-
-# NoCollision --
-#   Used to indicate no collision in a BallCollider@.
-Maybe@<BallT@> NoCollision = Nothing<BallT@>;
-
-(Maybe@<BallT@>, Maybe@<BallT@>) { Maybe@<BallT@>; }
-First = (Maybe@<BallT@> a, Maybe@<BallT@> b) {
-  a.?(nothing: b);
-  b.?(nothing: a);
-  Lt(a.just.time, b.just.time).?(true: a, false: b);
-};
+# Returns a time event if there is no collision within the given time.
+# If there is a collision, return the ball in the state just after the
+# collision at the time of collision.
+<@>@ BallCollider@ = <@ T@>(Ball@, T@, Num@) { Event@; };
 
 # BallEdge --
 #   Check for and return collision results between a ball and an edge.
@@ -59,6 +45,7 @@ First = (Maybe@<BallT@> a, Maybe@<BallT@> b) {
 # collision, return the ball in the state just after the collision at the
 # time of collision.
 BallCollider@<Edge@> BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
+  Event@ NoCollision = TimeEvent(tmax);
 
   # Verify the ball starts above the edge.
   Vec@ s = RotateTo(edge.normal, SubV(ball.pos, edge.start));
@@ -87,15 +74,16 @@ BallCollider@<Edge@> BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
   Vec@ vc = Vec@(v.x, Mul(edge.restitution, Neg(v.y)));
   Vec@ pos = AddV(ball.pos, MulVS(ball.vel, t));
   Vec@ vel = RotateFrom(edge.normal, vc);
-  Just<BallT@>(BallT@(@(pos, vel, radius), t));
+  BallEvent(t, @(pos, vel, radius));
 };
 
 BallCollider@<List@<Edge@>>
 BallEdgeS = (Ball@ ball, List@<Edge@> edges, Num@ tmax) {
-  edges.?(nil: NoCollision);
-  Maybe@<BallT@> tail = BallEdgeS(ball, edges.cons.tail, tmax);
-  Maybe@<BallT@> head = BallEdge(ball, edges.cons.head, tmax);
-  First(tail, head);
+  edges.?(nil: TimeEvent(tmax));
+  Events[
+    BallEdge(ball, edges.cons.head, tmax),
+    BallEdgeS(ball, edges.cons.tail, tmax)
+  ];
 };
 
 # BallPaddle --
@@ -105,6 +93,8 @@ BallEdgeS = (Ball@ ball, List@<Edge@> edges, Num@ tmax) {
 # collision, return the ball in the state just after the collision at the
 # time of collision.
 BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
+  Event@ NoCollision = TimeEvent(tm);
+
   Num@ radius = ball.radius;
 
   # Compute time for the ball to reach the end position of the paddle.
@@ -146,15 +136,16 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   # Compute the new state just after the collision.
   Vec@ vc = Vec@(vh.x, Mul(paddle.edge.restitution, vr));
   Vec@ vel = RotateFrom(ph.edge.normal, vc);
-  Just<BallT@>(BallT@(Ball@(end_pos, vel, radius), t));
+  BallEvent(t, Ball@(end_pos, vel, radius));
 };
 
 BallCollider@<List@<Paddle@>>
 BallPaddleS = (Ball@ ball, List@<Paddle@> paddles, Num@ tmax) {
-  paddles.?(nil: NoCollision);
-  Maybe@<BallT@> tail = BallPaddleS(ball, paddles.cons.tail, tmax);
-  Maybe@<BallT@> head = BallPaddle(ball, paddles.cons.head, tmax);
-  First(tail, head);
+  paddles.?(nil: TimeEvent(tmax));
+  Events[
+    BallPaddle(ball, paddles.cons.head, tmax),
+    BallPaddleS(ball, paddles.cons.tail, tmax)
+  ];
 };
 
-@(BallT@, First, BallEdge, BallEdgeS, BallPaddle, BallPaddleS);
+@(BallEdge, BallEdgeS, BallPaddle, BallPaddleS);

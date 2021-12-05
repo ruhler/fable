@@ -1,0 +1,49 @@
+
+<@>@ List@ = /List%.List@;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Just = /Maybe%.Just;
+<@>% Nothing = /Maybe%.Nothing;
+
+@ Ball@ = /Pinball/Ball%.Ball@;
+
+@ Num@ = /Pinball/Num%.Num@;
+% Lt = /Pinball/Num%.Lt;
+
+# Event@ --
+#   An event represents a point in time when something happens.
+#
+# Things that can happen:
+#   * Nothing - to mark the advancing of time.
+#   * ball update - the state of the ball is updated.
+#
+# TODO: When we get more things, add more kinds of things here.
+@ Event@ = *(Num@ time, Maybe@<Ball@> ball);
+
+# Events --
+#   Merge a non-empty collection of events into a single event.
+#
+# Behavior is undefined if the given list is empty.
+(List@<Event@>) { Event@; } Events = (List@<Event@> events) {
+  events.cons.tail.?(nil: events.cons.head);
+  Event@ tail = Events(events.cons.tail);
+  Event@ head = events.cons.head;
+  Lt(tail.time, head.time).?(true: tail);
+  Lt(head.time, tail.time).?(true: head);
+  tail.ball.?(just: tail);
+  head;
+};
+
+# TimeEvent --
+#   Create an event to mark the passage of time.
+(Num@) { Event@; } TimeEvent = (Num@ time) {
+  Event@(time, Nothing<Ball@>);
+};
+
+# BallEvent --
+#   Create an event to change the state of the ball at the given time.
+(Num@, Ball@) { Event@; } BallEvent = (Num@ time, Ball@ ball) {
+  Event@(time, Just<Ball@>(ball));
+};
+
+@(Event@, Events, TimeEvent, BallEvent);
