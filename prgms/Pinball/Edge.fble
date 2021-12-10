@@ -7,6 +7,11 @@
 % SubV = /Pinball/Vec%.SubV;
 % Magnitude = /Pinball/Vec%.Magnitude;
 
+<@>@ Show@ = /Show%.Show@;
+
+% Strs = /String%.Strs;
+% Str = /String%.Str;
+
 # Edge@ --
 #   Internal representation for a stationary edge.
 @ Edge@ = *(
@@ -26,5 +31,14 @@ Edge = (Vec@ start, Vec@ end, Num@ restitution) {
   @(normal, start, length, restitution);
 };
 
-@(Edge@, Edge);
+Show@<Edge@> Show = (Edge@ e) {
+  Strs[
+    Str|'(normal: ', /Pinball/Vec%.Show(e.normal),
+    Str|', start: ', /Pinball/Vec%.Show(e.start),
+    Str|', length: ', /Pinball/Num%.Show(e.length),
+    Str|', restitution: ', /Pinball/Num%.Show(e.restitution),
+    Str|')'];
+};
+
+@(Edge@, Edge, Show);
 

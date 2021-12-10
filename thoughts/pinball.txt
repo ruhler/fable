@@ -519,3 +519,112 @@ How to specify a paddle now:
 
 What to store for a paddle now:
   v (at angle 0), angle, max angle, min angle, velocity, current edge 
+
+---
+
+The play is feeling better now. Issues:
+* Performance.
+ - Half the time is spent drawing the triangles for the paddle.
+* The ball still gets stuck occasionally.
+ - Move is seeing a collision at time t=0 with 6/128 time steps to go.
+ - I'm not sure how to reproduce this though.
+ - It appears to happen when the ball is moving at about the same velocity of
+   the paddle after just bouncing off the paddle.
+* The ball falls through the paddle when rolling down it.
+ - Maybe it happens when you start the paddle moving as the ball is already
+   rolling down it?
+* Ball sometimes appears to bounce off the space in front of the paddle.
+* The ball sometimes seems to fall partially through the paddle before
+  bouncing off of it.
+
+Example of failing case when ball gets stuck:
+ball:
+Ball@(
+  pos=(-4134/128, -7390/128),
+  vel=(491/128, 555/128),
+  radius=1024/128),
+paddle: (
+  edge: (
+    normal: (26/128, 125/128),
+    start: (-10240/128, -7168/128),
+    length: 10240/128,
+    restitution: 96/128),
+  extent: (8192/128, -6144/128),
+  vel: 32/128,
+  pos: 65/128)"
+
+It's not terribly obvious I fear.
+
+Thinking about it, in theory I expect the following:
+A. Ball moving towards edge. Then it should collide and subsequently be moving
+away from the edge or be stationary relative to the edge.
+B. Ball stationary relative to edge. Then it should not be considered a
+collision.
+C. Ball moving away from the edge. Then it should not be considered a
+collision.
+
+If we are getting stuck, then one of (A), (B), or (C) is wrong. Let me figure
+out which case we are in.
+
+What we see:
+* The ball is moving up, the paddle is moving up faster, so it's case (A).
+
+But the new velocity of the ball is not significantly different from the
+original velocity because of restitution. For example:
+  Ball goes at 800 v
+  Paddle at 1800 v
+  Relative velocity: 1000v
+  New velocity: 0.8 * 1000v = 800 v.
+
+I think the last step is wrong. Shouldn't new velocity be something like 800 +
+1000v?
+
+If we do the collision in the reference frame where the velocity of the paddle
+is 0, then the resulting velocity is in the frame where the velocity of the
+paddle is 0, so we need to add back the velocity of the paddle in the final
+(absolute reference frame) velocity.
+
+This should be addressed by testing a basic collision in motion:
+  Ball moves down at velocity 1, collides with paddle at velocity 1, with no
+  restitution, the resulting velocity should be ball moving up at velocity ...
+
+In reference frame of paddle:
+  Ball moves down at velocity 2. Resulting velocity is ball moves up at 2
+  relative to the paddle. So absolutely, ball ends up with velocity 3 away
+  from the paddle? I think my math is wrong.
+
+According to wikipedia, given masses m1, m2, initial velocity u1, u2, final
+velocity v1, v2:
+
+v1 = (m1 - m2)/(m1 + m2) * u1 + 2*m2/(m1 + m2) * u2
+v2 = 2*m1/(m1 + m2) * u1 + (m2 - m1)/(m1 + m2) * u2
+
+Take the case where u1 is the paddle which is 0 and m1 is much larger than m2:
+
+v1 = u1 = 0
+v2 = -u2.
+
+Now, take the case where u1 is not 0, but m1 is much larger than m2:
+
+v1 = u1
+v2 = 2*u1 - u2
+
+So, when u1 = 1 and u2 = -1:
+
+v1 = 1 (as expected)
+v2 = 2 + 1 = 3 (as sort of expected)
+
+Let's add the test case and fix the math.
+
+Unfortunately, I'm not getting the accuracy I need for that test case.
+
+How about with u2 0?
+
+Unfortunately we don't handle that case either. No velocity for the ball means
+the ball never reaches the first or last position of the paddle. That's a
+problem.
+
+So, I need to rethink how I compute collision between ball and paddle to
+handle the case where the ball isn't moving, to fix the math, and hopefully to
+figure out a reasonable way to write a test for this case.
+

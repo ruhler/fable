@@ -16,6 +16,11 @@
 % AddV = /Pinball/Vec%.AddV;
 % SubV = /Pinball/Vec%.SubV;
 
+<@>@ Show@ = /Show%.Show@;
+
+% Strs = /String%.Strs;
+% Str = /String%.Str;
+
 @ Paddle@ = *(
   Edge@ edge,     # The edge of the paddle in its current position.
   Vec@ extent,    # Vector from edge.start to end of paddle at angle 0.
@@ -67,5 +72,14 @@ Paddle = (Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ max, Num@ res
     vel, pos, p.min, p.max, p.edge.restitution);
 };
 
-@(Paddle@, Paddle, Move);
+Show@<Paddle@> Show = (Paddle@ p) {
+  Strs[
+    Str|'(edge: ', /Pinball/Edge%.Show(p.edge),
+    Str|', extent: ', /Pinball/Vec%.Show(p.extent),
+    Str|', vel: ', /Pinball/Num%.Show(p.vel),
+    Str|', pos: ', /Pinball/Num%.Show(p.pos),
+    Str|')'];
+};
+
+@(Paddle@, Paddle, Move, Show);
 
