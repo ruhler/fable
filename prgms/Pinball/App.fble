@@ -60,7 +60,7 @@ Num@ Radius = Int|8;
 
 Num@ PaddleVelocity = Div(Int|1, Int|4);
 
-Num@ R = Div(Int|6, Int|8);
+Num@ R = Div(Int|4, Int|8);
 
 (Num@, Num@) { Paddle@; } LeftPaddle = (Num@ vel, Num@ pos) {
   Paddle(
@@ -70,7 +70,7 @@ Num@ R = Div(Int|6, Int|8);
 };
 
 World@ Initial = World@(
-  Vec@(Int|0, Neg(Div(Int|1, Int|8))),
+  Vec@(Int|0, Neg(Div(Int|2, Int|8))),
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
   List<Edge@>[
     # Floor

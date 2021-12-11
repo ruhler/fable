@@ -221,14 +221,15 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
       ]);
     World@ end = Tick(start);
     Ball@ want = @(
-      pos: Vec@(Int|2, Int|1),
+      pos: Vec@(Int|2, Int|2),
       vel: Vec@(Int|0, Int|2),
       radius: Int|1);
     Ball@ got = end.ball;
-    # TODO: Fix this failing test case.
+
+    # TODO: Test fails due to loss of precision. How should we handle this?
     /Test%.ExpectFails(
       AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got),
-      Str|'');
+      Str|'got: Ball@(pos=(256/128, 264/128), vel=(1/128, 254/128)');
   }))
 ]);
 

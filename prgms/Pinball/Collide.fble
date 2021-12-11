@@ -29,7 +29,6 @@
 @ Linear@ = /Pinball/Quadratic%.Linear@;
 @ Quadratic@ = /Pinball/Quadratic%.Quadratic@;
 @ Roots@ = /Pinball/Quadratic%.Roots@;
-% AddQQ = /Pinball/Quadratic%.AddQQ;
 % SubQQ = /Pinball/Quadratic%.SubQQ;
 % MulLL = /Pinball/Quadratic%.MulLL;
 % Roots = /Pinball/Quadratic%.Roots;
@@ -128,19 +127,21 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   # scaled by factor tm.
   Vec@ e0 = RotateTo(p0.edge.normal, Rotate(p0.extent, p0.pos));
   Vec@ ef = RotateTo(p0.edge.normal, Rotate(p0.extent, Add(p0.pos, Mul(p0.vel, tm))));
-  Linear@ ex = Linear@(Sub(ef.x, ef.x), Mul(tm, e0.x));
-  Linear@ ey = Linear@(Sub(ef.y, ef.y), Mul(tm, e0.y));
+  Linear@ ex = Linear@(Sub(ef.x, e0.x), Mul(tm, e0.x));
+  Linear@ ey = Linear@(Sub(ef.y, e0.y), Mul(tm, e0.y));
 
   # Compute the distance of the center of the ball from the line of the paddle
   # as a quadratic function of time, scaled by factor tm * l, where l is the
   # length of the paddle.
-  Quadratic@ d = AddQQ(MulLL(ex, bx), MulLL(ey, by));
+  Quadratic@ d = SubQQ(MulLL(ex, by), MulLL(ey, bx));
 
   # Our goal is to find the time when (d - radius) = 0, taking proper scaling
   # into account.
   # Radius scaled by factor tm * l
   Quadratic@ r = Quadratic@(Int|0, Int|0, Mul(tm, Mul(p0.edge.length, radius)));
-  Maybe@<Roots@> roots = Roots(SubQQ(d, r));
+  Quadratic@ q = SubQQ(d, r);
+
+  Maybe@<Roots@> roots = Roots(q);
   roots.?(nothing: NoCollision);
   Num@ t = {
     Lt(roots.just.first, Int|0).?(true: roots.just.second);
@@ -156,13 +157,14 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   Gt(sh.x, ph.edge.length).?(true: NoCollision);
 
   # Verify the ball is moving towards the edge at the time of collision.
-  Num@ v = Mul(sh.x, paddle.vel);
-  Vec@ vh = RotateTo(ph.edge.normal, ball.vel);
-  Num@ vr = Sub(v, vh.y);
+  Num@ v = Mul(sh.x, paddle.vel);                 # velocity of paddle
+  Vec@ vh = RotateTo(ph.edge.normal, ball.vel);   # velocity of ball
+  Num@ vr = Sub(v, vh.y);                         # negative relative velocity
   Le(vr, Int|0).?(true: NoCollision);
 
   # Compute the new state just after the collision.
-  Vec@ vc = Vec@(vh.x, Mul(paddle.edge.restitution, vr));
+  Num@ vrf = Mul(paddle.edge.restitution, vr);    # updated relative velocity
+  Vec@ vc = Vec@(vh.x, Add(v, vrf));              # updated absolute velocity.
   Vec@ vel = RotateFrom(ph.edge.normal, vc);
   BallEvent(t, Ball@(end_pos, vel, radius));
 };

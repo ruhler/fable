@@ -1,10 +1,9 @@
 * [pinball] 
- - Test basic ball paddle in motion collision.
- - Test and fix bug of ball going through paddle.
- - Test and fix bug of ball getting stuck to paddle.
+ - Figure out how to deal with imprecision in test.
+ - Fix collision with reverse of paddle.
+ - Change paddle velocity to increase gradually instead of instantly.
+ - Test and fix bug of bouncing high off a stationary paddle.
  - Do a round of performance improvements for app.
-
- - Test and fix bug of ball bouncing off far away from paddle.
 
 * [lib] Move more value conversion functions to separate object files.
  - Color, IO, etc.

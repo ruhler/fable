@@ -1,0 +1,23 @@
+
+@ Linear@ = /Pinball/Quadratic%.Linear@;
+@ Quadratic@ = /Pinball/Quadratic%.Quadratic@;
+
+<@>@ Show@ = /Show%.Show@;
+
+% Strs = /String%.Strs;
+% Str = /String%.Str;
+
+Show@<Linear@> ShowLinear = (Linear@ l) {
+  Strs[Str|'Linear@(',
+    /Pinball/Num%.Show(l.a), Str|', ',
+    /Pinball/Num%.Show(l.b), Str|')'];
+};
+
+Show@<Quadratic@> ShowQuadratic = (Quadratic@ q) {
+  Strs[Str|'Quadratic@(',
+    /Pinball/Num%.Show(q.a), Str|', ',
+    /Pinball/Num%.Show(q.b), Str|', ',
+    /Pinball/Num%.Show(q.c), Str|')'];
+};
+
+@(ShowLinear, ShowQuadratic);

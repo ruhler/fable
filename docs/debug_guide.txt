@@ -19,3 +19,11 @@ tricks for making the most of the currently available debug support.
 * To set a breakpoint that will trigger on runtime error:
   break fprintf
 
+* For printf like debugging.
+  Define an unused String@ variable in your fble source code. Run your code in
+  the debugger, break at the line after the String@ variable is defined, and use 
+  print FbleStringValueAccess(string_var) to display the value of the string.
+
+  To prevent the string value from being truncated by gdb, first issue:
+      set print elements 0
+

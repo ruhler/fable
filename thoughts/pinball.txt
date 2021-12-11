@@ -1,6 +1,5 @@
 Pinball Game
 ============
-
 There are so many different games we could redo as a pinball game. For
 example:
 * skiball
@@ -9,7 +8,15 @@ example:
 * space invaders
 * soccer
 * platformer, like mario brothers or celeste
-* Air hockey.
+* air hockey.
+* tony hawk
+* minigolf
+* basketball
+
+Long term game idea:
+* Have lots of different pinball maps, one for each game we could redo. Each
+  map can have some collection of achievements for a player. Completing
+  achievements in a map leads to unlocking new maps to try.
 
 Initial proposal:
 * Have a half court with sloping sides and paddles with a single object at the
@@ -628,3 +635,17 @@ So, I need to rethink how I compute collision between ball and paddle to
 handle the case where the ball isn't moving, to fix the math, and hopefully to
 figure out a reasonable way to write a test for this case.
 
+---
+
+I think I worked out the math for collision, but now we are facing some
+precision issues in the test. It's not perfect precision. How should I deal
+with that?
+
+Anyway, with the updated paddle collision logic, it's feeling pretty good. We
+get pretty reliable bouncing off the paddle. No sticking to the paddle. No
+falling through the paddle. Issues now are:
+* performance
+* hitting the back of the paddle
+* once I saw the ball shoot off the paddle not in motion.
+* If you hit ball rolling down paddle, it jumps away unrealistically, because
+  paddle instantly gets to high velocity instead of gradually.
