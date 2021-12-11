@@ -1,0 +1,21 @@
+Fble Debugging Guide
+====================
+Fble has some limited support for debugging. This document explains tips and
+tricks for making the most of the currently available debug support.
+
+* Compile your code.
+  There is debug support for compiled fble code, not interpreted fble code.
+  Compile your code to access that debug support.
+
+* To print an Int@ variable value in gdb:
+  print FbleIntValueAccess(foo)
+
+* To print a String@ variable value in gdb:
+  print FbleStringValueAccess(foo)
+
+* To access a struct field:
+  print FbleStructValueAccess(foo, tag)
+
+* To set a breakpoint that will trigger on runtime error:
+  break fprintf
+

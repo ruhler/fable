@@ -30,6 +30,7 @@
 
 Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   /Pinball/Rotate/Tests%.Tests,
+  /Pinball/Quadratic/Tests%.Tests,
 
   Test(Str|'Move Ball No Collision', !({
     # The ball moves freely to the right 10 units per tick.

@@ -13,7 +13,7 @@
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
 
-Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
+Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
   Test(Str|'Unrotated Q1', !({
     # Rotation a vector by an angle of 0 should not change the vector.
     Vec@ v = Vec@(Int|2, Int|3);

@@ -1,5 +1,6 @@
 
 <@>@ List@ = /List%.List@;
+<@>@ Maybe@ = /Maybe%.Maybe@;
 
 @ Event@ = /Pinball/Event%.Event@;
 % Events = /Pinball/Event%.Events;
@@ -22,6 +23,16 @@
 @ Ball@ = /Pinball/Ball%.Ball@;
 @ Edge@ = /Pinball/Edge%.Edge@;
 @ Paddle@ = /Pinball/Paddle%.Paddle@;
+
+% Rotate = /Pinball/Rotate%.Rotate;
+
+@ Linear@ = /Pinball/Quadratic%.Linear@;
+@ Quadratic@ = /Pinball/Quadratic%.Quadratic@;
+@ Roots@ = /Pinball/Quadratic%.Roots@;
+% AddQQ = /Pinball/Quadratic%.AddQQ;
+% SubQQ = /Pinball/Quadratic%.SubQQ;
+% MulLL = /Pinball/Quadratic%.MulLL;
+% Roots = /Pinball/Quadratic%.Roots;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
 % AddV = /Pinball/Vec%.AddV;
@@ -94,30 +105,47 @@ BallEdgeS = (Ball@ ball, List@<Edge@> edges, Num@ tmax) {
 # time of collision.
 BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   Event@ NoCollision = TimeEvent(tm);
-
   Num@ radius = ball.radius;
 
-  # Compute time for the ball to reach the end position of the paddle.
-  Paddle@ p0 = /Pinball/Paddle%.Move(paddle, tm);
-  Vec@ s0 = RotateTo(p0.edge.normal, SubV(ball.pos, p0.edge.start));
-  Vec@ v0 = RotateTo(p0.edge.normal, ball.vel);
-  Eq(v0.y, Int|0).?(true: NoCollision);
-  Num@ t0 = Div(Sub(radius, s0.y), v0.y);
+  # Compute time for the ball to collide with the line of the paddle.
+  # We approximate the motion of the line of the paddle as the line from the
+  # center of rotation to an end point that travels at constant velocity from
+  # the initial paddle's end point to the final paddle's end point.
+  #
+  # We work in a coordinate system relative to the initial paddle:
+  # * center of rotation at the origin.
+  # * end point on the positive X axis.
 
-  # Compute time for the ball to reach the start position of the paddle.
-  Paddle@ p1 = paddle;
-  Vec@ s1 = RotateTo(p1.edge.normal, SubV(ball.pos, p1.edge.start));
-  Vec@ v1 = RotateTo(p1.edge.normal, ball.vel);
-  Eq(v1.y, Int|0).?(true: NoCollision);
-  Num@ t1 = Div(Sub(radius, s1.y), v1.y);
+  # Compute the position of the center of the ball as a linear function of
+  # time.
+  Paddle@ p0 = paddle;
+  Vec@ b0 = RotateTo(p0.edge.normal, SubV(ball.pos, p0.edge.start));
+  Vec@ bv = RotateTo(p0.edge.normal, ball.vel);
+  Linear@ bx = Linear@(bv.x, b0.x);
+  Linear@ by = Linear@(bv.y, b0.y);
 
-  # Compute time for ball to collide with paddle, assuming paddle the paddle
-  # moves towards the ball at a constant velocity along the path of the ball.
-  Num@ td = Add(tm, Sub(t1, t0));
-  Eq(td, Int|0).?(true: NoCollision);
+  # Compute the position of the end point as a linear function of time,
+  # scaled by factor tm.
+  Vec@ e0 = RotateTo(p0.edge.normal, Rotate(p0.extent, p0.pos));
+  Vec@ ef = RotateTo(p0.edge.normal, Rotate(p0.extent, Add(p0.pos, Mul(p0.vel, tm))));
+  Linear@ ex = Linear@(Sub(ef.x, ef.x), Mul(tm, e0.x));
+  Linear@ ey = Linear@(Sub(ef.y, ef.y), Mul(tm, e0.y));
 
-  Num@ t = Div(Mul(t1, tm), td);
-  Lt(t, Int|0).?(true: NoCollision);
+  # Compute the distance of the center of the ball from the line of the paddle
+  # as a quadratic function of time, scaled by factor tm * l, where l is the
+  # length of the paddle.
+  Quadratic@ d = AddQQ(MulLL(ex, bx), MulLL(ey, by));
+
+  # Our goal is to find the time when (d - radius) = 0, taking proper scaling
+  # into account.
+  # Radius scaled by factor tm * l
+  Quadratic@ r = Quadratic@(Int|0, Int|0, Mul(tm, Mul(p0.edge.length, radius)));
+  Maybe@<Roots@> roots = Roots(SubQQ(d, r));
+  roots.?(nothing: NoCollision);
+  Num@ t = {
+    Lt(roots.just.first, Int|0).?(true: roots.just.second);
+    roots.just.first;
+  };
   Gt(t, tm).?(true: NoCollision);
 
   # Verify the collision happens within the segment of the edge.

@@ -1,0 +1,76 @@
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Nothing = /Maybe%.Nothing;
+<@>% Just = /Maybe%.Just;
+
+@ Num@ = /Pinball/Num%.Num@;
+% Add = /Pinball/Num%.Add;
+% Sub = /Pinball/Num%.Sub;
+% Mul = /Pinball/Num%.Mul;
+% Neg = /Pinball/Num%.Neg;
+% Div = /Pinball/Num%.Div;
+% Sqrt = /Pinball/Num%.Sqrt;
+% Int = /Pinball/Num%.Int;
+% Eq = /Pinball/Num%.Eq;
+% Lt = /Pinball/Num%.Lt;
+
+# Linear@ --
+#   Describe a function of the form:
+#     f(x) = a*x + b
+@ Linear@ = *(Num@ a, Num@ b);
+
+# Quadratic@ --
+#   Describe a function of the form:
+#     f(x) = a*x^2 + b*x + c
+@ Quadratic@ = *(Num@ a, Num@ b, Num@ c);
+
+# AddQQ -- 
+#   f(x) + g(x)
+(Quadratic@, Quadratic@) { Quadratic@; }
+AddQQ = (Quadratic@ f, Quadratic@ g) {
+  Quadratic@(Add(f.a, g.a), Add(f.b, g.b), Add(f.c, g.c));
+};
+
+# SubQQ -- 
+#   f(x) - g(x)
+(Quadratic@, Quadratic@) { Quadratic@; }
+SubQQ = (Quadratic@ f, Quadratic@ g) {
+  Quadratic@(Sub(f.a, g.a), Sub(f.b, g.b), Sub(f.c, g.c));
+};
+
+# MulLL --
+#   f(x) * g(x)
+(Linear@, Linear@) { Quadratic@; }
+MulLL = (Linear@ f, Linear@ g) {
+  Quadratic@(
+    Mul(f.a, g.a),
+    Add(Mul(f.a, g.b), Mul(f.b, g.a)),
+    Mul(f.b, g.b));
+};
+
+# Roots@ --
+#   Used to store the two roots of a quadratic equation.
+#
+# first is less than or equal to second.
+@ Roots@ = *(Num@ first, Num@ second);
+
+# Roots --
+#   Compute the roots of a quadratic equation.
+(Quadratic@) { Maybe@<Roots@>; } Roots = (Quadratic@ q) {
+  Eq(q.a, Int|0).?(true: {
+    Eq(q.b, Int|0).?(true: Nothing<Roots@>);
+    Num@ r = Div(Neg(q.c), q.b);
+    Just<Roots@>(Roots@(r, r));
+  });
+
+  Num@ d = Sub(Mul(q.b, q.b), Mul(Int|4, Mul(q.a, q.c)));
+  Lt(d, Int|0).?(true: Nothing<Roots@>);
+  Num@ nb = Neg(q.b);
+  Num@ s = Sqrt(d);
+  Num@ 2a = Mul(Int|2, q.a);
+  Num@ first = Div(Sub(nb, s), 2a);
+  Num@ second = Div(Add(nb, s), 2a);
+  Just<Roots@>(@(first, second));
+};
+
+@(Linear@, Quadratic@, Roots@, AddQQ, SubQQ, MulLL, Roots);
