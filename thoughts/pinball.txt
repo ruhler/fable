@@ -649,3 +649,27 @@ falling through the paddle. Issues now are:
 * once I saw the ball shoot off the paddle not in motion.
 * If you hit ball rolling down paddle, it jumps away unrealistically, because
   paddle instantly gets to high velocity instead of gradually.
+
+Review of performance profile now:
+* A third of the time spent drawing edge.
+* A third of the time spent rotating points.
+
+That's probably a good start.
+
+---
+
+I think the answer to the performance issue is to have the Drawing@ API draw
+triangles instead of rectangles, and support arbitrary linear and affine
+transformations, including rotations. My hesitation is that would make the
+Drawing@ API harder to implement in theory. Is it significant in practice? I'm
+sure I could implement triangle drawing routine's fairly easily in SDL. And if
+we have a triangle API, we could take advantage of GPUs to do the rendering on
+those systems (aka all systems today really) that support it.
+
+Running glxgears program works swell on my computer, so I expect we should be
+able to use opengl for the drawing with reasonable performance.
+
+Yeah, I can get 60FPS rotating a triangle with open GL and SDL together. It's
+pretty straight forward. That should also support 3D graphics well enough.
+That should fix my triangle drawing performance issues.
+

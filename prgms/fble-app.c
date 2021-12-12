@@ -5,6 +5,7 @@
 #include <string.h>       // for strcmp
 
 #include <SDL.h>          // for SDL_*
+#include <gl.h>           // for gl*
 
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
@@ -39,7 +40,6 @@ typedef struct {
 } AppIO;
 
 static void PrintUsage(FILE* stream);
-static Uint32 ReadColor(SDL_PixelFormat* format, FbleValue* color);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing, SDL_PixelFormat* format);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
@@ -71,26 +71,6 @@ static void PrintUsage(FILE* stream)
       "    Writes a profile of the app to FILE\n"
       "Example: fble-app --profile app.prof " FBLE_MAIN_USAGE_EXAMPLE "\n"
   );
-}
-
-// ReadColor --
-//  Read the color value from a /Drawing%.Color@ tag.
-//
-// Inputs:
-//   format - the pixel format of the screen to encode color with.
-//   color - the /Drawing%.Color@ value.
-//
-// Returns:
-//   The pixel value to use for the color.
-//
-// Side effects:
-//   None.
-static Uint32 ReadColor(SDL_PixelFormat* format, FbleValue* color)
-{
-  int r = FbleIntValueAccess(FbleStructValueAccess(color, 0));
-  int g = FbleIntValueAccess(FbleStructValueAccess(color, 1));
-  int b = FbleIntValueAccess(FbleStructValueAccess(color, 2));
-  return SDL_MapRGB(format, r, g, b);
 }
 
 // Draw --
@@ -143,7 +123,11 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
         r.h = -r.h;
       }
 
-      SDL_FillRect(surface, &r, ReadColor(format, color));
+      int red = FbleIntValueAccess(FbleStructValueAccess(color, 0));
+      int green = FbleIntValueAccess(FbleStructValueAccess(color, 1));
+      int blue = FbleIntValueAccess(FbleStructValueAccess(color, 2));
+      glColor3f(red/256.0, green/256.0, blue/256.0);
+      glRecti(r.x, r.y, r.x + r.w, r.y + r.h);
       return;
     }
 
@@ -307,7 +291,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       case 1: {
         SDL_Surface* surface = SDL_GetWindowSurface(app->window);
         Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect), app->format);
-        SDL_UpdateWindowSurface(app->window);
+        SDL_GL_SwapWindow(app->window);
 
         // Collect status on frame rate.
         static Uint32 last = 0;
@@ -469,7 +453,8 @@ int main(int argc, char* argv[])
 
   SDL_Window* window = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
-      0);
+      SDL_WINDOW_OPENGL);
+  SDL_GLContext glctx = SDL_GL_CreateContext(window);
   SDL_ShowCursor(SDL_DISABLE);
 
   SDL_Surface* screen = SDL_GetWindowSurface(window);
@@ -477,6 +462,12 @@ int main(int argc, char* argv[])
   int width = 0;
   int height = 0;
   SDL_GetWindowSize(window, &width, &height);
+
+  glShadeModel(GL_FLAT);
+  glViewport(0, 0, width, height);
+  glMatrixMode( GL_PROJECTION );
+  glLoadIdentity();
+  glOrtho(0, width, height, 0, -1, 1);
 
   AppIO io = {
     ._base = { .io = &IO, },
@@ -542,6 +533,7 @@ int main(int argc, char* argv[])
   }
   FbleFreeProfile(profile);
 
+  SDL_GL_DeleteContext(glctx);
   SDL_DestroyWindow(window);
   SDL_Quit();
 

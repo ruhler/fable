@@ -1,8 +1,14 @@
+* [graphics]
+ - Change Drawing@ interface to take triangles instead of rects.
+
 * [pinball] 
+ - Design a relatively complete traditional pinball playfield I can use to
+   exercise everything of what I expect I may want to support.
  - Figure out how to deal with imprecision in test.
  - Fix collision with reverse of paddle.
  - Change paddle velocity to increase gradually instead of instantly.
  - Test and fix bug of bouncing high off a stationary paddle.
+ - Paddle seems to delay launching if ball is on it when you start.
  - Do a round of performance improvements for app.
 
 * [lib] Move more value conversion functions to separate object files.
