@@ -673,3 +673,9 @@ Yeah, I can get 60FPS rotating a triangle with open GL and SDL together. It's
 pretty straight forward. That should also support 3D graphics well enough.
 That should fix my triangle drawing performance issues.
 
+---
+
+I switched to opengl for drawing triangles. Works great. Triangle drawing
+performance issues are gone. I'd say performance is good enough for the time
+being that we no longer need to focus on it.
+

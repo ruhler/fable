@@ -64,8 +64,8 @@ Num@ R = Div(Int|4, Int|8);
 
 (Num@, Num@) { Paddle@; } LeftPaddle = (Num@ vel, Num@ pos) {
   Paddle(
-    Vec@(Neg(Int|80), Neg(Int|56)),
-    Vec@(Neg(Int|16), Neg(Int|104)),
+    Vec@(Neg(Int|80), Neg(Int|156)),
+    Vec@(Neg(Int|16), Neg(Int|204)),
     vel, pos, Int|0, Int|1, R);
 };
 
@@ -74,18 +74,18 @@ World@ Initial = World@(
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
   List<Edge@>[
     # Floor
-    Edge(Vec@(Neg(Int|16), Neg(Int|104)), Vec@(Int|16, Neg(Int|104)), R),
+    Edge(Vec@(Neg(Int|16), Neg(Int|204)), Vec@(Int|16, Neg(Int|204)), R),
 
     # Slopes
-    Edge(Vec@(Int|16, Neg(Int|104)), Vec@(Int|144, Neg(Int|8)), R),
-    Edge(Vec@(Neg(Int|144), Neg(Int|8)), Vec@(Neg(Int|80), Neg(Int|56)), R),
+    Edge(Vec@(Int|16, Neg(Int|204)), Vec@(Int|144, Neg(Int|108)), R),
+    Edge(Vec@(Neg(Int|144), Neg(Int|108)), Vec@(Neg(Int|80), Neg(Int|156)), R),
 
     # Side walls
-    Edge(Vec@(Neg(Int|144), Int|104), Vec@(Neg(Int|144), Neg(Int|8)), R),
-    Edge(Vec@(Int|144, Neg(Int|8)), Vec@(Int|144, Int|104), R),
+    Edge(Vec@(Neg(Int|144), Int|204), Vec@(Neg(Int|144), Neg(Int|108)), R),
+    Edge(Vec@(Int|144, Neg(Int|108)), Vec@(Int|144, Int|204), R),
 
     # Ceiling
-    Edge(Vec@(Int|144, Int|104), Vec@(Neg(Int|144), Int|104), R)
+    Edge(Vec@(Int|144, Int|204), Vec@(Neg(Int|144), Int|204), R)
   ],
   List<Paddle@>[LeftPaddle(Int|0, Int|0)]
 );
