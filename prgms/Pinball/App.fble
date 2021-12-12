@@ -9,13 +9,13 @@
 % Blank = /Drawing%.Blank;
 % Color = /Drawing%.Color;
 % Over = /Drawing%.Over;
+% Triangle = /Drawing%.Triangle;
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 % Drawings = /Drawing%.Drawings;
 % Translate = /Drawing%.Translate;
 
 % Circle = /Graphics/2D/Circle%.Circle;
-% Triangle = /Graphics/2D/Triangle%.Triangle;
 
 @ Int@ = /Int%.Int@;
 

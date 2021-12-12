@@ -34,6 +34,9 @@ Int@ 1 = Int|1;
   # A blank (transparent) drawing.
   Unit@ blank,
 
+  # A filled triangle.
+  *(Point@ a, Point@ b, Point@ c, Color@ color) triangle,
+
   # A filled rectangle.
   *(Int@ x, Int@ y, Int@ w, Int@ h, Color@ color) rect,
   
@@ -46,6 +49,12 @@ Int@ 1 = Int|1;
 );
 
 Drawing@ Blank = Drawing@(blank: Unit);
+
+# Draw a triangle filled solid with the given color.
+(Point@, Point@, Point@, Color@) { Drawing@; }
+Triangle = (Point@ a, Point@ b, Point@ c, Color@ color) {
+  Drawing@(triangle: @(a, b, c, color));
+};
 
 # Draw a rectangle filled solid with the given color.
 (Int@, Int@, Int@, Int@, Color@) { Drawing@; }
@@ -80,4 +89,4 @@ Translate = (Int@ dx, Int@ dy, Drawing@ d) {
 };
 
 @(Color@, Drawing@, Point@, Color,
-  Blank, Rect, Over, Drawings, Affine, Translate);
+  Blank, Triangle, Rect, Over, Drawings, Affine, Translate);

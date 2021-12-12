@@ -94,6 +94,34 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
     }
 
     case 1: {
+      // Triangle
+      FbleValue* v = FbleUnionValueAccess(drawing);
+
+      FbleValue* a = FbleStructValueAccess(v, 0);
+      FbleValue* b = FbleStructValueAccess(v, 1);
+      FbleValue* c = FbleStructValueAccess(v, 2);
+      FbleValue* color = FbleStructValueAccess(v, 3);
+
+      int x0 = ax * FbleIntValueAccess(FbleStructValueAccess(a, 0)) + bx;
+      int y0 = ay * FbleIntValueAccess(FbleStructValueAccess(a, 1)) + by;
+      int x1 = ax * FbleIntValueAccess(FbleStructValueAccess(b, 0)) + bx;
+      int y1 = ay * FbleIntValueAccess(FbleStructValueAccess(b, 1)) + by;
+      int x2 = ax * FbleIntValueAccess(FbleStructValueAccess(c, 0)) + bx;
+      int y2 = ay * FbleIntValueAccess(FbleStructValueAccess(c, 1)) + by;
+
+      int red = FbleIntValueAccess(FbleStructValueAccess(color, 0));
+      int green = FbleIntValueAccess(FbleStructValueAccess(color, 1));
+      int blue = FbleIntValueAccess(FbleStructValueAccess(color, 2));
+      glColor3f(red/256.0, green/256.0, blue/256.0);
+      glBegin(GL_TRIANGLES);
+      glVertex2i(x0, y0);
+      glVertex2i(x1, y1);
+      glVertex2i(x2, y2);
+      glEnd();
+      return;
+    }
+
+    case 2: {
       // Rect
       FbleValue* rv = FbleUnionValueAccess(drawing);
 
@@ -128,7 +156,7 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       return;
     }
 
-    case 2: {
+    case 3: {
       // Transformed.
       FbleValue* transformed = FbleUnionValueAccess(drawing);
       FbleValue* a = FbleStructValueAccess(transformed, 0);
@@ -145,7 +173,7 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       return;
     }
 
-    case 3: {
+    case 4: {
       // Over.
       FbleValue* over = FbleUnionValueAccess(drawing);
       Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 0));

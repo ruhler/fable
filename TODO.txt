@@ -1,8 +1,9 @@
 * [graphics]
- - Change Drawing@ interface to take triangles instead of rects.
+ - Figure out what to do about my Triangle drawing implementation now that we
+   can draw triangles directly.
 
 * [pinball] 
- - Design a relatively complete traditional pinball playfield I can use to
+ - Design a relatively complete traditional pinball play field I can use to
    exercise everything of what I expect I may want to support.
  - Figure out how to deal with imprecision in test.
  - Fix collision with reverse of paddle.
