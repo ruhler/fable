@@ -24,7 +24,6 @@ static int sFpsHistogram[61] = {0};
 // Fields:
 //   _base - The underlying FbleIO object.
 //   window - The window to draw to.
-//   format - The pixel format of the screen, for getting color values.
 //   time - The current simulation time in units of SDL_GetTicks.
 //
 //   event - The event input port.
@@ -32,7 +31,6 @@ static int sFpsHistogram[61] = {0};
 typedef struct {
   FbleIO _base;
   SDL_Window* window;
-  SDL_PixelFormat* format;
   Uint32 time;
 
   FbleValue* event;
@@ -40,7 +38,7 @@ typedef struct {
 } AppIO;
 
 static void PrintUsage(FILE* stream);
-static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing, SDL_PixelFormat* format);
+static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
@@ -80,7 +78,6 @@ static void PrintUsage(FILE* stream)
 //   surface - the surface to draw to.
 //   ax, ay, bx, by - a transformation to apply to the drawing: a*p + b.
 //   drawing - the drawing to draw.
-//   format - the screen format, for determinig color values.
 //
 // Results:
 //   none.
@@ -88,7 +85,7 @@ static void PrintUsage(FILE* stream)
 // Side effects:
 //   Draws the drawing to the window. The caller must call
 //   SDL_UpdateWindowSurface for the screen to actually be updated.
-static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing, SDL_PixelFormat* format)
+static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue* drawing)
 {
   switch (FbleUnionValueTag(drawing)) {
     case 0: {
@@ -144,15 +141,15 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
       int byi = FbleIntValueAccess(FbleStructValueAccess(b, 1));
 
       // a * (ai * x + bi) + b ==> (a*ai) x + (a*bi + b)
-      Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d, format);
+      Draw(surface, ax * axi, ay * ayi, ax * bxi + bx, ay * byi + by, d);
       return;
     }
 
     case 3: {
       // Over.
       FbleValue* over = FbleUnionValueAccess(drawing);
-      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 0), format);
-      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 1), format);
+      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 0));
+      Draw(surface, ax, ay, bx, by, FbleStructValueAccess(over, 1));
       return;
     }
 
@@ -290,7 +287,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 
       case 1: {
         SDL_Surface* surface = SDL_GetWindowSurface(app->window);
-        Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect), app->format);
+        Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect));
         SDL_GL_SwapWindow(app->window);
 
         // Collect status on frame rate.
@@ -457,8 +454,6 @@ int main(int argc, char* argv[])
   SDL_GLContext glctx = SDL_GL_CreateContext(window);
   SDL_ShowCursor(SDL_DISABLE);
 
-  SDL_Surface* screen = SDL_GetWindowSurface(window);
-
   int width = 0;
   int height = 0;
   SDL_GetWindowSize(window, &width, &height);
@@ -472,7 +467,6 @@ int main(int argc, char* argv[])
   AppIO io = {
     ._base = { .io = &IO, },
     .window = window,
-    .format = screen->format,
     .time = SDL_GetTicks(),
 
     .event = NULL,
@@ -517,8 +511,6 @@ int main(int argc, char* argv[])
     SDL_Quit();
     return 1;
   }
-
-  SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0, 0, 0));
 
   FbleValue* value = FbleExec(heap, &io._base, proc, profile);
   FbleReleaseValue(heap, proc);
