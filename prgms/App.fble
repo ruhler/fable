@@ -12,7 +12,7 @@
   Unit@ a, Unit@ d, Unit@ h, Unit@ j, Unit@ k, Unit@ l,
   Unit@ q, Unit@ s, Unit@ w,
   Unit@ left, Unit@ right, Unit@ up, Unit@ down,
-  Unit@ space
+  Unit@ space, Unit@ lshift, Unit@ rshift
 );
 @ Event@ = +(Unit@ tick, Key@ key_down, Key@ key_up);
 

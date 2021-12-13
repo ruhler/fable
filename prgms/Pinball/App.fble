@@ -74,15 +74,15 @@ World@ Initial = World@(
   Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
   List<Edge@>[
     # Floor
-    Edge(Vec@(Neg(Int|16), Neg(Int|204)), Vec@(Int|16, Neg(Int|204)), R),
+    Edge(Vec@(Neg(Int|144), Neg(Int|224)), Vec@(Int|144, Neg(Int|224)), R),
 
     # Slopes
     Edge(Vec@(Int|16, Neg(Int|204)), Vec@(Int|144, Neg(Int|108)), R),
     Edge(Vec@(Neg(Int|144), Neg(Int|108)), Vec@(Neg(Int|80), Neg(Int|156)), R),
 
     # Side walls
-    Edge(Vec@(Neg(Int|144), Int|204), Vec@(Neg(Int|144), Neg(Int|108)), R),
-    Edge(Vec@(Int|144, Neg(Int|108)), Vec@(Int|144, Int|204), R),
+    Edge(Vec@(Neg(Int|144), Int|204), Vec@(Neg(Int|144), Neg(Int|224)), R),
+    Edge(Vec@(Int|144, Neg(Int|224)), Vec@(Int|144, Int|204), R),
 
     # Ceiling
     Edge(Vec@(Int|144, Int|204), Vec@(Neg(Int|144), Int|204), R)
@@ -143,14 +143,14 @@ Run = (Get@<Event@> in, Put@<World@> draw, Unit@! tick, World@ world) {
     e.key_down.?(s: {
       Run(in, draw, tick, Initial);
     });
-    e.key_down.?(space: {
+    e.key_down.?(lshift: {
       Run(in, draw, tick, SetPaddleVelocity(PaddleVelocity, world));
     });
     Run(in, draw, tick, world);
   });
 
   e.?(key_up: {
-    e.key_up.?(space: {
+    e.key_up.?(lshift: {
       Run(in, draw, tick, SetPaddleVelocity(Neg(PaddleVelocity), world));
     });
     Run(in, draw, tick, world);
