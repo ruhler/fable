@@ -65,19 +65,26 @@ Num@ R = Div(Int|4, Int|8);
 (Num@, Num@) { Paddle@; } LeftPaddle = (Num@ vel, Num@ pos) {
   Paddle(
     Vec@(Neg(Int|80), Neg(Int|156)),
-    Vec@(Neg(Int|16), Neg(Int|204)),
-    vel, pos, Int|0, Int|1, R);
+    Vec@(Neg(Int|10), Neg(Int|156)),
+    vel, pos, Neg(Div(Int|1, Int|2)), Div(Int|1, Int|2), R);
+};
+
+(Num@, Num@) { Paddle@; } RightPaddle = (Num@ vel, Num@ pos) {
+  Paddle(
+    Vec@(Int|80, Neg(Int|156)),
+    Vec@(Int|10, Neg(Int|156)),
+    vel, pos, Neg(Div(Int|1, Int|2)), Div(Int|1, Int|2), R);
 };
 
 World@ Initial = World@(
   Vec@(Int|0, Neg(Div(Int|2, Int|8))),
-  Ball@(Vec@(Int|0, Int|100), Vec@(Int|1, Int|0), Radius),
+  Ball@(Vec@(Int|0, Int|100), Vec@(Neg(Div(Int|1, Int|2)), Int|0), Radius),
   List<Edge@>[
     # Floor
     Edge(Vec@(Neg(Int|144), Neg(Int|224)), Vec@(Int|144, Neg(Int|224)), R),
 
     # Slopes
-    Edge(Vec@(Int|16, Neg(Int|204)), Vec@(Int|144, Neg(Int|108)), R),
+    Edge(Vec@(Int|80, Neg(Int|156)), Vec@(Int|144, Neg(Int|108)), R),
     Edge(Vec@(Neg(Int|144), Neg(Int|108)), Vec@(Neg(Int|80), Neg(Int|156)), R),
 
     # Side walls
@@ -87,7 +94,10 @@ World@ Initial = World@(
     # Ceiling
     Edge(Vec@(Int|144, Int|204), Vec@(Neg(Int|144), Int|204), R)
   ],
-  List<Paddle@>[LeftPaddle(Int|0, Int|0)]
+  List<Paddle@>[
+    LeftPaddle(Neg(PaddleVelocity), Int|0),
+    RightPaddle(PaddleVelocity, Int|0)
+  ]
 );
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
@@ -122,10 +132,18 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
     });
 };
 
-(Num@, World@) { World@; } SetPaddleVelocity = (Num@ v, World@ w) {
-  Paddle@ p = w.paddles.cons.head;
+(Num@, World@) { World@; } SetLeftPaddleVelocity = (Num@ v, World@ w) {
+  Paddle@ l = w.paddles.cons.head;
+  Paddle@ r = w.paddles.cons.tail.cons.head;
   World@(w.gravity, w.ball, w.edges, 
-    List<Paddle@>[LeftPaddle(v, p.pos)]);
+    List<Paddle@>[LeftPaddle(v, l.pos), r]);
+};
+
+(Num@, World@) { World@; } SetRightPaddleVelocity = (Num@ v, World@ w) {
+  Paddle@ l = w.paddles.cons.head;
+  Paddle@ r = w.paddles.cons.tail.cons.head;
+  World@(w.gravity, w.ball, w.edges, 
+    List<Paddle@>[l, RightPaddle(v, r.pos)]);
 };
 
 (Get@<Event@>, Put@<World@>, Unit@!, World@) { Unit@!; }
@@ -144,14 +162,20 @@ Run = (Get@<Event@> in, Put@<World@> draw, Unit@! tick, World@ world) {
       Run(in, draw, tick, Initial);
     });
     e.key_down.?(lshift: {
-      Run(in, draw, tick, SetPaddleVelocity(PaddleVelocity, world));
+      Run(in, draw, tick, SetLeftPaddleVelocity(PaddleVelocity, world));
+    });
+    e.key_down.?(rshift: {
+      Run(in, draw, tick, SetRightPaddleVelocity(Neg(PaddleVelocity), world));
     });
     Run(in, draw, tick, world);
   });
 
   e.?(key_up: {
     e.key_up.?(lshift: {
-      Run(in, draw, tick, SetPaddleVelocity(Neg(PaddleVelocity), world));
+      Run(in, draw, tick, SetLeftPaddleVelocity(Neg(PaddleVelocity), world));
+    });
+    e.key_up.?(rshift: {
+      Run(in, draw, tick, SetRightPaddleVelocity(PaddleVelocity, world));
     });
     Run(in, draw, tick, world);
   });

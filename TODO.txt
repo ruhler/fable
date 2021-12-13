@@ -3,6 +3,8 @@
    can draw triangles directly.
 
 * [pinball] 
+ - Fix issues with ball colliding behind paddle.
+   Possibly by requiring paddles be more than just lines?
  - Design a relatively complete traditional pinball play field I can use to
    exercise everything of what I expect I may want to support.
  - Figure out how to deal with imprecision in test.
