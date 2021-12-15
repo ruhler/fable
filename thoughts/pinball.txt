@@ -679,3 +679,63 @@ I switched to opengl for drawing triangles. Works great. Triangle drawing
 performance issues are gone. I'd say performance is good enough for the time
 being that we no longer need to focus on it.
 
+---
+
+Next step: remove requirement for the paddle start point to be the center of
+rotation. This way we can fix the right paddle by making the end point the
+center of rotation, and we should do it generally so we can later turn the
+paddle into a 3d paddle with edges around it that don't have either end point
+on the center of rotation.
+
+What changes for the math?
+
+Today we are doing distance of ball from line by rotating to normal of line
+based on the endpoint. So we just need to change 'ex' and 'ey' to be end point
+minus start point, where start point is now a linear function of time. And,
+uh, express the ball position relative to the start of the line, right? Yeah,
+both ball and end point relative to start point.
+
+I'm thinking it might be nice to change the representation of Edge@ and
+Paddle@ slightly. Maybe introduce something called a Segment@, which is a line
+segment. We could factor out common code for drawing segments and rotating
+points such that a segment starts at the origin and goes along the x axis.
+
+"Line segment" is the proper term, but that makes for an awkward type name.
+Num@, Point@, Vec@, Line@? Seg@? LSeg? LineSeg@?
+
+@ Seg@ = *(Vec@ start, Vec@ end);
+
+Operations I'm interested in:
+* Given a Vec@ and Seg@, express the Vec@ relative to the Seg@.
+* Get the length of a Seg@.
+* Draw a Seg@.
+
+Then we could express Edge@ as Seg@ and restitution. Or better yet, call it a
+wall? Because a Paddle@ has an edge. Or multiple edges, possibly with
+different restitution? Maybe, if we just want to save space for storing
+restitution, we could define Edges@ as a list of segments with the same
+restitution? I don't know.
+
+I want:
+Seg@ - pure math, no restitution, with length, draw, rotate to.
+Edge@ - Seg@ plus restitution.
+Paddle@ - Edge@ plus rotation.
+
+Update current code to match that. Then it should be easy to update pinball
+collision logic to make ball position and end relative to the start. Then it
+should be easy to provide a paddle edge that isn't starting at the origin.
+Then I'm done.
+
+---
+
+Do I need a Seg@ type, or can I just pass around Vec@ start and Vec@ end
+everywhere? A paddle could be described as a sequence of Vec@ if we assume
+they are all connected.
+
+Let me go a little slower. First step: store edge as start and end points
+instead of normal and length.
+
+This is nice, but unfortunately it means we end up doing a lot more repeated
+computation of edge length and division which makes things way slow. Should I
+add the cache of a unit vector for the edge back?
+

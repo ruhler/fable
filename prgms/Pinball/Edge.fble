@@ -1,7 +1,5 @@
 
 @ Num@ = /Pinball/Num%.Num@;
-% Neg = /Pinball/Num%.Neg;
-% Div = /Pinball/Num%.Div;
 
 @ Vec@ = /Pinball/Vec%.Vec@;
 % SubV = /Pinball/Vec%.SubV;
@@ -15,9 +13,8 @@
 # Edge@ --
 #   Internal representation for a stationary edge.
 @ Edge@ = *(
-  Vec@ normal,      # Unit normal vector.
-  Vec@ start,       # Starting position of the edge.
-  Num@ length,      # Length of the edge.
+  Vec@ start,       # The start point of the edge.
+  Vec@ end,         # The end point of the edge.
   Num@ restitution  # Fraction of energy preserved during a collision.
 );
 
@@ -25,20 +22,28 @@
 #   Specify an edge using start and end position.
 (Vec@, Vec@, Num@) { Edge@; }
 Edge = (Vec@ start, Vec@ end, Num@ restitution) {
-  Vec@ vec = SubV(end, start);
-  Num@ length = Magnitude(vec);
-  Vec@ normal = Vec@(Neg(Div(vec.y, length)), Div(vec.x, length));
-  @(normal, start, length, restitution);
+  Edge@(start, end, restitution);
+};
+
+# Dir --
+#   The direction of an edge.
+(Edge@) { Vec@; } Dir = (Edge@ e) {
+  SubV(e.end, e.start);
+};
+
+# Length --
+#   The length of an edge.
+(Edge@) { Num@; } Length = (Edge@ e) {
+  Magnitude(Dir(e));
 };
 
 Show@<Edge@> Show = (Edge@ e) {
   Strs[
-    Str|'(normal: ', /Pinball/Vec%.Show(e.normal),
-    Str|', start: ', /Pinball/Vec%.Show(e.start),
-    Str|', length: ', /Pinball/Num%.Show(e.length),
+    Str|'(start: ', /Pinball/Vec%.Show(e.start),
+    Str|', end: ', /Pinball/Vec%.Show(e.end),
     Str|', restitution: ', /Pinball/Num%.Show(e.restitution),
     Str|')'];
 };
 
-@(Edge@, Edge, Show);
+@(Edge@, Edge, Dir, Length, Show);
 

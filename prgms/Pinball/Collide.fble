@@ -21,7 +21,11 @@
 % Int = /Pinball/Num%.Int;
 
 @ Ball@ = /Pinball/Ball%.Ball@;
+
 @ Edge@ = /Pinball/Edge%.Edge@;
+% Dir = /Pinball/Edge%.Dir;
+% Length = /Pinball/Edge%.Length;
+
 @ Paddle@ = /Pinball/Paddle%.Paddle@;
 
 % Rotate = /Pinball/Rotate%.Rotate;
@@ -58,17 +62,17 @@ BallCollider@<Edge@> BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
   Event@ NoCollision = TimeEvent(tmax);
 
   # Verify the ball starts above the edge.
-  Vec@ s = RotateTo(edge.normal, SubV(ball.pos, edge.start));
+  Vec@ s = RotateTo(Dir(edge), SubV(ball.pos, edge.start));
   Lt(s.y, Int|0).?(true: NoCollision);
 
   # Verify the ball ends within radius units of the edge.
   Num@ radius = ball.radius;
   Vec@ end = AddV(ball.pos, MulVS(ball.vel, tmax));
-  Vec@ e = RotateTo(edge.normal, SubV(end, edge.start));
+  Vec@ e = RotateTo(Dir(edge), SubV(end, edge.start));
   Gt(e.y, radius).?(true: NoCollision);
 
   # Verify the ball is moving towards the edge instead of away from it.
-  Vec@ v = RotateTo(edge.normal, ball.vel);
+  Vec@ v = RotateTo(Dir(edge), ball.vel);
   Ge(v.y, Int|0).?(true: NoCollision);
 
   # Potential collision detected.
@@ -78,12 +82,12 @@ BallCollider@<Edge@> BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
   # Verify the collision happens within the segment of the edge.
   Num@ x = Add(s.x, Mul(v.x, t));
   Lt(x, Int|0).?(true: NoCollision);
-  Gt(x, edge.length).?(true: NoCollision);
+  Gt(x, Length(edge)).?(true: NoCollision);
 
   # Compute the new state just after the collision.
   Vec@ vc = Vec@(v.x, Mul(edge.restitution, Neg(v.y)));
   Vec@ pos = AddV(ball.pos, MulVS(ball.vel, t));
-  Vec@ vel = RotateFrom(edge.normal, vc);
+  Vec@ vel = RotateFrom(Dir(edge), vc);
   BallEvent(t, @(pos, vel, radius));
 };
 
@@ -118,15 +122,15 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   # Compute the position of the center of the ball as a linear function of
   # time.
   Paddle@ p0 = paddle;
-  Vec@ b0 = RotateTo(p0.edge.normal, SubV(ball.pos, p0.edge.start));
-  Vec@ bv = RotateTo(p0.edge.normal, ball.vel);
+  Vec@ b0 = RotateTo(Dir(p0.edge), SubV(ball.pos, p0.edge.start));
+  Vec@ bv = RotateTo(Dir(p0.edge), ball.vel);
   Linear@ bx = Linear@(bv.x, b0.x);
   Linear@ by = Linear@(bv.y, b0.y);
 
   # Compute the position of the end point as a linear function of time,
   # scaled by factor tm.
-  Vec@ e0 = RotateTo(p0.edge.normal, Rotate(p0.extent, p0.pos));
-  Vec@ ef = RotateTo(p0.edge.normal, Rotate(p0.extent, Add(p0.pos, Mul(p0.vel, tm))));
+  Vec@ e0 = RotateTo(Dir(p0.edge), Rotate(p0.extent, p0.pos));
+  Vec@ ef = RotateTo(Dir(p0.edge), Rotate(p0.extent, Add(p0.pos, Mul(p0.vel, tm))));
   Linear@ ex = Linear@(Sub(ef.x, e0.x), Mul(tm, e0.x));
   Linear@ ey = Linear@(Sub(ef.y, e0.y), Mul(tm, e0.y));
 
@@ -138,7 +142,7 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   # Our goal is to find the time when (d - radius) = 0, taking proper scaling
   # into account.
   # Radius scaled by factor tm * l
-  Quadratic@ r = Quadratic@(Int|0, Int|0, Mul(tm, Mul(p0.edge.length, radius)));
+  Quadratic@ r = Quadratic@(Int|0, Int|0, Mul(tm, Mul(Length(p0.edge), radius)));
   Quadratic@ q = SubQQ(d, r);
 
   Maybe@<Roots@> roots = Roots(q);
@@ -152,20 +156,20 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   # Verify the collision happens within the segment of the edge.
   Vec@ end_pos = AddV(ball.pos, MulVS(ball.vel, t));
   Paddle@ ph = /Pinball/Paddle%.Move(paddle, t);
-  Vec@ sh = RotateTo(ph.edge.normal, SubV(end_pos, ph.edge.start));
+  Vec@ sh = RotateTo(Dir(ph.edge), SubV(end_pos, ph.edge.start));
   Lt(sh.x, Int|0).?(true: NoCollision);
-  Gt(sh.x, ph.edge.length).?(true: NoCollision);
+  Gt(sh.x, Length(ph.edge)).?(true: NoCollision);
 
   # Verify the ball is moving towards the edge at the time of collision.
   Num@ v = Mul(sh.x, paddle.vel);                 # velocity of paddle
-  Vec@ vh = RotateTo(ph.edge.normal, ball.vel);   # velocity of ball
+  Vec@ vh = RotateTo(Dir(ph.edge), ball.vel);   # velocity of ball
   Num@ vr = Sub(v, vh.y);                         # negative relative velocity
   Le(vr, Int|0).?(true: NoCollision);
 
   # Compute the new state just after the collision.
   Num@ vrf = Mul(paddle.edge.restitution, vr);    # updated relative velocity
   Vec@ vc = Vec@(vh.x, Add(v, vrf));              # updated absolute velocity.
-  Vec@ vel = RotateFrom(ph.edge.normal, vc);
+  Vec@ vel = RotateFrom(Dir(ph.edge), vc);
   BallEvent(t, Ball@(end_pos, vel, radius));
 };
 

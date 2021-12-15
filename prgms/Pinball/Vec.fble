@@ -52,21 +52,23 @@
 };
 
 # RotateTo --
-#   Given unit normal vector n and arbitrary vector v, rotate the vector v
-#   to a coordinate system where n is at (0, 1).
-(Vec@, Vec@) { Vec@; } RotateTo = (Vec@ n, Vec@ v) {
-  Num@ x = Sub(Mul(n.y, v.x), Mul(n.x, v.y));
-  Num@ y = Add(Mul(n.x, v.x), Mul(n.y, v.y));
-  @(x, y);
+#   Rotate the vector v to a coordinate system where dir points towards the +x
+#   axis.
+(Vec@, Vec@) { Vec@; } RotateTo = (Vec@ dir, Vec@ v) {
+  Num@ x = Add(Mul(dir.x, v.x), Mul(dir.y, v.y));
+  Num@ y = Sub(Mul(dir.x, v.y), Mul(dir.y, v.x));
+  Num@ l = Magnitude(dir);
+  Vec@(Div(x, l), Div(y, l));
 };
 
 # RotateFrom --
-#   Given unit normal vector n and arbitrary vector v, rotate the vector v
-#   out of a coordinate system where n is at (0, 1).
-(Vec@, Vec@) { Vec@; } RotateFrom = (Vec@ n, Vec@ v) {
-  Num@ x = Add(Mul(n.y, v.x), Mul(n.x, v.y));
-  Num@ y = Sub(Mul(n.y, v.y), Mul(n.x, v.x));
-  @(x, y);
+#   Rotate the vector v out of a coordinate system where dir points towards
+#   the +x axis.
+(Vec@, Vec@) { Vec@; } RotateFrom = (Vec@ dir, Vec@ v) {
+  Num@ x = Sub(Mul(dir.x, v.x), Mul(dir.y, v.y));
+  Num@ y = Add(Mul(dir.x, v.y), Mul(dir.y, v.x));
+  Num@ l = Magnitude(dir);
+  Vec@(Div(x, l), Div(y, l));
 };
 
 Eq@<Vec@> Eq = (Vec@ a, Vec@ b) {

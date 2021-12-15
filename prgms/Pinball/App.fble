@@ -38,6 +38,7 @@
 
 @ Edge@ = /Pinball/Edge%.Edge@;
 % Edge = /Pinball/Edge%.Edge;
+% Dir = /Pinball/Edge%.Dir;
 
 @ Paddle@ = /Pinball/Paddle%.Paddle@;
 % Paddle = /Pinball/Paddle%.Paddle;
@@ -47,8 +48,7 @@
 
 @ Vec@ = /Pinball/Vec%.Vec@;
 % AddV = /Pinball/Vec%.AddV;
-% SubV = /Pinball/Vec%.SubV;
-% MulVS = /Pinball/Vec%.MulVS;
+% RotateFrom = /Pinball/Vec%.RotateFrom;
 
 (Vec@) { Point@; } Point = (Vec@ a) {
   Point@(Floor(a.x), Floor(a.y));
@@ -101,13 +101,11 @@ World@ Initial = World@(
 );
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
-  Vec@ s = SubV(edge.start, MulVS(edge.normal, Int|2));
-
+  Vec@ e = RotateFrom(Dir(edge), Vec@(Int|0, Neg(Int|2)));
   Point@ a = Point(edge.start);
-  Point@ b = Point(s);
-  Vec@ tangent = Vec@(edge.normal.y, Neg(edge.normal.x));
-  Point@ c = Point(AddV(edge.start, MulVS(tangent, edge.length)));
-  Point@ d = Point(AddV(s, MulVS(tangent, edge.length)));
+  Point@ b = Point(AddV(edge.start, e));
+  Point@ c = Point(edge.end);
+  Point@ d = Point(AddV(edge.end, e));
   Drawings[
     Triangle(a, b, c, Color.Green),
     Triangle(c, b, d, Color.Green)

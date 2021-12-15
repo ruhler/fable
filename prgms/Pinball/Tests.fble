@@ -229,7 +229,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
     # TODO: Test fails due to loss of precision. How should we handle this?
     /Test%.ExpectFails(
       AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got),
-      Str|'got: Ball@(pos=(256/128, 264/128), vel=(1/128, 254/128)');
+      Str|'got: Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)');
   }))
 ]);
 
