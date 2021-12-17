@@ -43,6 +43,7 @@
 % MulVS = /Pinball/Vec%.MulVS;
 % RotateTo = /Pinball/Vec%.RotateTo;
 % RotateFrom = /Pinball/Vec%.RotateFrom;
+% Magnitude = /Pinball/Vec%.Magnitude;
 
 # BallCollider@ --
 #   Check for and return collision results between a ball and an object.
@@ -107,70 +108,95 @@ BallEdgeS = (Ball@ ball, List@<Edge@> edges, Num@ tmax) {
 # collision, return the ball in the state just after the collision at the
 # time of collision.
 BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
-  Event@ NoCollision = TimeEvent(tm);
-  Num@ radius = ball.radius;
-
   # Compute time for the ball to collide with the line of the paddle.
   # We approximate the motion of the line of the paddle as the line from the
   # center of rotation to an end point that travels at constant velocity from
   # the initial paddle's end point to the final paddle's end point.
   #
-  # We work in a coordinate system relative to the initial paddle:
-  # * center of rotation at the origin.
-  # * end point on the positive X axis.
+  # Coordinate systems in use:
+  #   a: absolute.
+  #     The coordinate system of ball.pos, ball.vel, etc.
+  #   p: paddle.
+  #     The coordinate system relative to the paddle's resting position. The
+  #     center of rotation of the paddle is at the origin. The paddle end
+  #     point at paddle position 0 is given by paddle.end.
+  #   c: collision.
+  #     The coordinate system relative to the line of the paddle at the time
+  #     of collision. The center of rotation of the paddle is at the origin.
+  #     The end point of the paddle at the paddle's position of collision is
+  #     on the +x axis.
+  #
+  # Times in use:
+  #   0: t = 0
+  #   h: t = time of collision.
+  #   f: t = tm
+  #   t: as a function of time t.
+  #
+  # Other abbreviations:
+  #   p: paddle
+  #   b: ball
+  #   e: end
+  #   v: velocity
+  #   p: position
+  Event@ NoCollision = TimeEvent(tm);
+  Num@ radius = ball.radius;
 
   # Compute the position of the center of the ball as a linear function of
-  # time.
-  Paddle@ p0 = paddle;
-  Vec@ b0 = RotateTo(Dir(p0.edge), SubV(ball.pos, p0.edge.start));
-  Vec@ bv = RotateTo(Dir(p0.edge), ball.vel);
-  Linear@ bx = Linear@(bv.x, b0.x);
-  Linear@ by = Linear@(bv.y, b0.y);
+  # time, relative to the center of rotation of the paddle.
+  Vec@ bp_p0 = SubV(ball.pos, paddle.center);
+  Vec@ bv_p0 = ball.vel;
+  Linear@ bx_pt = Linear@(bv_p0.x, bp_p0.x);
+  Linear@ by_pt = Linear@(bv_p0.y, bp_p0.y);
 
-  # Compute the position of the end point as a linear function of time,
-  # scaled by factor tm.
-  Vec@ e0 = RotateTo(Dir(p0.edge), Rotate(p0.extent, p0.pos));
-  Vec@ ef = RotateTo(Dir(p0.edge), Rotate(p0.extent, Add(p0.pos, Mul(p0.vel, tm))));
-  Linear@ ex = Linear@(Sub(ef.x, e0.x), Mul(tm, e0.x));
-  Linear@ ey = Linear@(Sub(ef.y, e0.y), Mul(tm, e0.y));
+  # Compute the position of the end point of the paddle as a linear function
+  # of time, scaled by factor tm.
+  Vec@ e_p0 = Rotate(paddle.end, paddle.pos);
+  Vec@ e_pf = Rotate(paddle.end, Add(paddle.pos, Mul(paddle.vel, tm)));
+  Linear@ ex_pt = Linear@(Sub(e_pf.x, e_p0.x), Mul(tm, e_p0.x));
+  Linear@ ey_pt = Linear@(Sub(e_pf.y, e_p0.y), Mul(tm, e_p0.y));
 
   # Compute the distance of the center of the ball from the line of the paddle
   # as a quadratic function of time, scaled by factor tm * l, where l is the
   # length of the paddle.
-  Quadratic@ d = SubQQ(MulLL(ex, by), MulLL(ey, bx));
+  Quadratic@ d_pt = SubQQ(MulLL(ex_pt, by_pt), MulLL(ey_pt, bx_pt));
 
   # Our goal is to find the time when (d - radius) = 0, taking proper scaling
   # into account.
   # Radius scaled by factor tm * l
-  Quadratic@ r = Quadratic@(Int|0, Int|0, Mul(tm, Mul(Length(p0.edge), radius)));
-  Quadratic@ q = SubQQ(d, r);
+  Num@ l = Magnitude(paddle.end);
+  Quadratic@ r_t = Quadratic@(Int|0, Int|0, Mul(tm, Mul(l, radius)));
+  Quadratic@ q_pt = SubQQ(d_pt, r_t);
 
-  Maybe@<Roots@> roots = Roots(q);
+  Maybe@<Roots@> roots = Roots(q_pt);
   roots.?(nothing: NoCollision);
-  Num@ t = {
+  Num@ t_h = {
     Lt(roots.just.first, Int|0).?(true: roots.just.second);
     roots.just.first;
   };
-  Gt(t, tm).?(true: NoCollision);
+  Gt(t_h, tm).?(true: NoCollision);
 
   # Verify the collision happens within the segment of the edge.
-  Vec@ end_pos = AddV(ball.pos, MulVS(ball.vel, t));
-  Paddle@ ph = /Pinball/Paddle%.Move(paddle, t);
-  Vec@ sh = RotateTo(Dir(ph.edge), SubV(end_pos, ph.edge.start));
-  Lt(sh.x, Int|0).?(true: NoCollision);
-  Gt(sh.x, Length(ph.edge)).?(true: NoCollision);
+  # We now switch to a coordinate system relative to the edge of the paddle at
+  # the time of collision.
+  Num@ pp_h = Add(paddle.pos, Mul(paddle.vel, t_h));
+  Vec@ e_ph = Rotate(paddle.end, pp_h);
+  Vec@ bp_ah = AddV(ball.pos, MulVS(ball.vel, t_h));
+  Vec@ bp_ph = SubV(bp_ah, paddle.center);
+  Vec@ bp_ch = RotateTo(e_ph, bp_ph);
+  Lt(bp_ch.x, Int|0).?(true: NoCollision);
+  Gt(bp_ch.x, l).?(true: NoCollision);
 
   # Verify the ball is moving towards the edge at the time of collision.
-  Num@ v = Mul(sh.x, paddle.vel);                 # velocity of paddle
-  Vec@ vh = RotateTo(Dir(ph.edge), ball.vel);   # velocity of ball
-  Num@ vr = Sub(v, vh.y);                         # negative relative velocity
-  Le(vr, Int|0).?(true: NoCollision);
+  Num@ pv_ch = Mul(bp_ch.x, paddle.vel);   # velocity of paddle
+  Vec@ bv_ch = RotateTo(e_ph, bv_p0);      # velocity of ball
+  Num@ vy_ch = Sub(pv_ch, bv_ch.y);        # negative relative velocity
+  Le(vy_ch, Int|0).?(true: NoCollision);
 
   # Compute the new state just after the collision.
-  Num@ vrf = Mul(paddle.edge.restitution, vr);    # updated relative velocity
-  Vec@ vc = Vec@(vh.x, Add(v, vrf));              # updated absolute velocity.
-  Vec@ vel = RotateFrom(Dir(ph.edge), vc);
-  BallEvent(t, Ball@(end_pos, vel, radius));
+  Num@ vyr_ch = Mul(paddle.res, vy_ch);           # updated relative velocity
+  Vec@ vr_ch = Vec@(bv_ch.x, Add(pv_ch, vyr_ch)); # updated absolute velocity.
+  Vec@ v_ah = RotateFrom(e_ph, vr_ch);
+  BallEvent(t_h, Ball@(bp_ah, v_ah, radius));
 };
 
 BallCollider@<List@<Paddle@>>
