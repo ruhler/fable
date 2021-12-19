@@ -739,3 +739,17 @@ This is nice, but unfortunately it means we end up doing a lot more repeated
 computation of edge length and division which makes things way slow. Should I
 add the cache of a unit vector for the edge back?
 
+---
+
+Okay, so I made the play field a little more interesting. Now it's really slow
+again. What's the plan?
+
+Fble profiling shows 75% of the time is in BallEdge collision detection,
+mostly from the 'RotateTo' function, as expected. That function involves 2
+divisions and a square root operation. I could avoid those if I pass a unit
+vector to RotateTo, which I could easily cache as part of an edge. We could
+cache that for paddle too if we want, and rotate the vector based on the
+angle.
+
+We'll have a little less precision, but hopefully that's okay.
+

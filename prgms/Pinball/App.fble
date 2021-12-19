@@ -63,40 +63,72 @@ Num@ Radius = Int|8;
 Num@ PaddleVelocity = Div(Int|1, Int|4);
 
 Num@ R = Div(Int|4, Int|8);
+Num@ R_BUMPER = Div(Int|10, Int|8);
 
 (Num@, Num@) { Paddle@; } LeftPaddle = (Num@ vel, Num@ pos) {
   Paddle(
-    Vec@(Neg(Int|80), Neg(Int|156)),
-    Vec@(Neg(Int|80), Neg(Int|156)),
-    Vec@(Neg(Int|10), Neg(Int|156)),
+    Vec@(Neg(Int|80), Neg(Int|172)),
+    Vec@(Neg(Int|80), Neg(Int|172)),
+    Vec@(Neg(Int|10), Neg(Int|172)),
     vel, pos, Neg(Div(Int|1, Int|2)), Div(Int|1, Int|2), R);
 };
 
 (Num@, Num@) { Paddle@; } RightPaddle = (Num@ vel, Num@ pos) {
   Paddle(
-    Vec@(Int|80, Neg(Int|156)),
-    Vec@(Int|10, Neg(Int|156)),
-    Vec@(Int|80, Neg(Int|156)),
+    Vec@(Int|80, Neg(Int|172)),
+    Vec@(Int|10, Neg(Int|172)),
+    Vec@(Int|80, Neg(Int|172)),
     vel, pos, Neg(Div(Int|1, Int|2)), Div(Int|1, Int|2), R);
 };
 
 World@ Initial = World@(
   Vec@(Int|0, Neg(Div(Int|2, Int|8))),
-  Ball@(Vec@(Int|0, Int|100), Vec@(Neg(Div(Int|1, Int|2)), Int|0), Radius),
+  Ball@(Vec@(Int|0, Int|0), Vec@(Neg(Div(Int|1, Int|2)), Int|0), Radius),
   List<Edge@>[
-    # Floor
-    Edge(Vec@(Neg(Int|144), Neg(Int|224)), Vec@(Int|144, Neg(Int|224)), R),
-
     # Slopes
-    Edge(Vec@(Int|80, Neg(Int|156)), Vec@(Int|144, Neg(Int|108)), R),
-    Edge(Vec@(Neg(Int|144), Neg(Int|108)), Vec@(Neg(Int|80), Neg(Int|156)), R),
+    Edge(Vec@(Int|80, Neg(Int|172)), Vec@(Int|144, Neg(Int|108)), R),
+    Edge(Vec@(Neg(Int|144), Neg(Int|108)), Vec@(Neg(Int|80), Neg(Int|172)), R),
 
     # Side walls
-    Edge(Vec@(Neg(Int|144), Int|204), Vec@(Neg(Int|144), Neg(Int|224)), R),
-    Edge(Vec@(Int|144, Neg(Int|224)), Vec@(Int|144, Int|204), R),
+    Edge(Vec@(Neg(Int|144), Int|140), Vec@(Neg(Int|144), Neg(Int|108)), R),
+    Edge(Vec@(Int|144, Neg(Int|108)), Vec@(Int|144, Int|140), R),
+
+    # Upper corners
+    Edge(Vec@(Neg(Int|80), Int|204), Vec@(Neg(Int|144), Int|140), R),
+    Edge(Vec@(Int|144, Int|140), Vec@(Int|80, Int|204), R),
 
     # Ceiling
-    Edge(Vec@(Int|144, Int|204), Vec@(Neg(Int|144), Int|204), R)
+    Edge(Vec@(Int|80, Int|204), Vec@(Neg(Int|80), Int|204), R),
+
+    # Center Bumber
+    Edge(Vec@(Neg(Int|20), Int|80), Vec@(Int|0, Int|100), R_BUMPER),
+    Edge(Vec@(Int|0, Int|100), Vec@(Int|20, Int|80), R_BUMPER),
+    Edge(Vec@(Int|20, Int|80), Vec@(Int|0, Int|60), R_BUMPER),
+    Edge(Vec@(Int|0, Int|60), Vec@(Neg(Int|20), Int|80), R_BUMPER),
+
+    # Center-Left Bumber
+    Edge(Vec@(Neg(Int|60), Int|130), Vec@(Neg(Int|40), Int|150), R_BUMPER),
+    Edge(Vec@(Neg(Int|40), Int|150), Vec@(Neg(Int|20), Int|130), R_BUMPER),
+    Edge(Vec@(Neg(Int|20), Int|130), Vec@(Neg(Int|40), Int|110), R_BUMPER),
+    Edge(Vec@(Neg(Int|40), Int|110), Vec@(Neg(Int|60), Int|130), R_BUMPER),
+
+    # Center-Left-Left Bumber
+    Edge(Vec@(Neg(Int|100), Int|80), Vec@(Neg(Int|80), Int|100), R_BUMPER),
+    Edge(Vec@(Neg(Int|80), Int|100), Vec@(Neg(Int|60), Int|80), R_BUMPER),
+    Edge(Vec@(Neg(Int|60), Int|80), Vec@(Neg(Int|80), Int|60), R_BUMPER),
+    Edge(Vec@(Neg(Int|80), Int|60), Vec@(Neg(Int|100), Int|80), R_BUMPER),
+
+    # Center-Right Bumber
+    Edge(Vec@(Int|20, Int|130), Vec@(Int|40, Int|150), R_BUMPER),
+    Edge(Vec@(Int|40, Int|150), Vec@(Int|60, Int|130), R_BUMPER),
+    Edge(Vec@(Int|60, Int|130), Vec@(Int|40, Int|110), R_BUMPER),
+    Edge(Vec@(Int|40, Int|110), Vec@(Int|20, Int|130), R_BUMPER),
+
+    # Center-Right-Right Bumber
+    Edge(Vec@(Int|60, Int|80), Vec@(Int|80, Int|100), R_BUMPER),
+    Edge(Vec@(Int|80, Int|100), Vec@(Int|100, Int|80), R_BUMPER),
+    Edge(Vec@(Int|100, Int|80), Vec@(Int|80, Int|60), R_BUMPER),
+    Edge(Vec@(Int|80, Int|60), Vec@(Int|60, Int|80), R_BUMPER)
   ],
   List<Paddle@>[
     LeftPaddle(Neg(PaddleVelocity), Int|0),

@@ -3,16 +3,18 @@
    can draw triangles directly.
 
 * [pinball] 
- - Fix performance issue with recomputing edge length and normal vector all
-   the time.
+ - Improve performance
+   - Change RotateTo and RotateFrom to take unit vectors.
+   - Cache unit vector for edge.
+ - Give width to paddle.
+ - Fix issue with ball not hitting end points of edges.
+ - Paddle seems to delay launching if ball is on it when you start.
+   Perhaps bad logic for detecting end of range if collision at t=0?
+
  - Design a relatively complete traditional pinball play field I can use to
    exercise everything of what I expect I may want to support.
  - Figure out how to deal with imprecision in test.
- - Fix collision with reverse of paddle.
  - Change paddle velocity to increase gradually instead of instantly?
- - Paddle seems to delay launching if ball is on it when you start.
-   Perhaps bad logic for detecting end of range if collision at t=0?
- - Do a round of performance improvements for app.
 
 * [lib] Move more value conversion functions to separate object files.
  - Color, IO, etc.
