@@ -38,6 +38,13 @@ SubQQ = (Quadratic@ f, Quadratic@ g) {
   Quadratic@(Sub(f.a, g.a), Sub(f.b, g.b), Sub(f.c, g.c));
 };
 
+# SubLL -- 
+#   f(x) - g(x)
+(Linear@, Linear@) { Linear@; }
+SubLL = (Linear@ f, Linear@ g) {
+  Linear@(Sub(f.a, g.a), Sub(f.b, g.b));
+};
+
 # MulLL --
 #   f(x) * g(x)
 (Linear@, Linear@) { Quadratic@; }
@@ -73,4 +80,4 @@ MulLL = (Linear@ f, Linear@ g) {
   Just<Roots@>(@(first, second));
 };
 
-@(Linear@, Quadratic@, Roots@, AddQQ, SubQQ, MulLL, Roots);
+@(Linear@, Quadratic@, Roots@, AddQQ, SubQQ, SubLL, MulLL, Roots);

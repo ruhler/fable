@@ -5,15 +5,13 @@
 * [pinball] 
  - Fix performance issue with recomputing edge length and normal vector all
    the time.
- - Fix issues with ball colliding behind paddle.
-   Possibly by requiring paddles be more than just lines?
  - Design a relatively complete traditional pinball play field I can use to
    exercise everything of what I expect I may want to support.
  - Figure out how to deal with imprecision in test.
  - Fix collision with reverse of paddle.
- - Change paddle velocity to increase gradually instead of instantly.
- - Test and fix bug of bouncing high off a stationary paddle.
+ - Change paddle velocity to increase gradually instead of instantly?
  - Paddle seems to delay launching if ball is on it when you start.
+   Perhaps bad logic for detecting end of range if collision at t=0?
  - Do a round of performance improvements for app.
 
 * [lib] Move more value conversion functions to separate object files.

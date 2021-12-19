@@ -67,6 +67,7 @@ Num@ R = Div(Int|4, Int|8);
 (Num@, Num@) { Paddle@; } LeftPaddle = (Num@ vel, Num@ pos) {
   Paddle(
     Vec@(Neg(Int|80), Neg(Int|156)),
+    Vec@(Neg(Int|80), Neg(Int|156)),
     Vec@(Neg(Int|10), Neg(Int|156)),
     vel, pos, Neg(Div(Int|1, Int|2)), Div(Int|1, Int|2), R);
 };
@@ -75,6 +76,7 @@ Num@ R = Div(Int|4, Int|8);
   Paddle(
     Vec@(Int|80, Neg(Int|156)),
     Vec@(Int|10, Neg(Int|156)),
+    Vec@(Int|80, Neg(Int|156)),
     vel, pos, Neg(Div(Int|1, Int|2)), Div(Int|1, Int|2), R);
 };
 
@@ -115,10 +117,11 @@ World@ Initial = World@(
 };
 
 (Paddle@) { Drawing@; } DrawPaddle = (Paddle@ paddle) {
+  Vec@ start = AddV(paddle.center, Rotate(paddle.start, paddle.pos));
   Vec@ end = AddV(paddle.center, Rotate(paddle.end, paddle.pos));
   Vec@ e = Rotate(Vec@(Int|0, Neg(Int|2)), paddle.pos);
-  Point@ a = Point(paddle.center);
-  Point@ b = Point(AddV(paddle.center, e));
+  Point@ a = Point(start);
+  Point@ b = Point(AddV(start, e));
   Point@ c = Point(end);
   Point@ d = Point(AddV(end, e));
   Drawings[

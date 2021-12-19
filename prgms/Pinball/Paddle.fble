@@ -17,6 +17,7 @@
 
 @ Paddle@ = *(
   Vec@ center,    # The center of rotation of the paddle.
+  Vec@ start,     # The start point of the paddle at angle 0 relative to center.
   Vec@ end,       # The end point of the paddle at angle 0 relative to center.
   Num@ vel,       # The angular velocity of the paddle in radians per tick.
   Num@ pos,       # The current angle of the paddle in radians.
@@ -29,16 +30,17 @@
 #   Specify a paddle.
 #
 # Args:
-#   start - the starting point of the paddle.
+#   center - the center point of the paddle.
+#   start - the starting point of the paddle when angle is 0.
 #   end - the end point of the paddle when angle is 0.
 #   vel - the angular velocity of the paddle in radians per tick.
 #   pos - the current position of the paddle in radians.
 #   min - the minimum allowed value of pos for the paddle.
 #   max - the maximum allowed value of pos for the paddle.
 #   res - the coefficient of restitituion for the paddle.
-(Vec@, Vec@, Num@, Num@, Num@, Num@, Num@) { Paddle@; }
-Paddle = (Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ max, Num@ res) {
-  Paddle@(start, SubV(end, start), vel, pos, min, max, res);
+(Vec@, Vec@, Vec@, Num@, Num@, Num@, Num@, Num@) { Paddle@; }
+Paddle = (Vec@ center, Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ max, Num@ res) {
+  Paddle@(center, SubV(start, center), SubV(end, center), vel, pos, min, max, res);
 };
 
 # Move -- 
@@ -61,12 +63,13 @@ Paddle = (Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ max, Num@ res
     p.vel;
   };
 
-  Paddle@(p.center, p.end, vel, pos, p.min, p.max, p.res);
+  Paddle@(p.center, p.start, p.end, vel, pos, p.min, p.max, p.res);
 };
 
 Show@<Paddle@> Show = (Paddle@ p) {
   Strs[
     Str|'(center: ', /Pinball/Vec%.Show(p.center),
+    Str|', start: ', /Pinball/Vec%.Show(p.start),
     Str|', end: ', /Pinball/Vec%.Show(p.end),
     Str|', vel: ', /Pinball/Num%.Show(p.vel),
     Str|', pos: ', /Pinball/Num%.Show(p.pos),
