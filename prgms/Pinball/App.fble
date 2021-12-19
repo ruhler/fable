@@ -38,7 +38,6 @@
 
 @ Edge@ = /Pinball/Edge%.Edge@;
 % Edge = /Pinball/Edge%.Edge;
-% Dir = /Pinball/Edge%.Dir;
 
 @ Paddle@ = /Pinball/Paddle%.Paddle@;
 % Paddle = /Pinball/Paddle%.Paddle;
@@ -137,7 +136,7 @@ World@ Initial = World@(
 );
 
 (Edge@) { Drawing@; } DrawEdge = (Edge@ edge) {
-  Vec@ e = RotateFrom(Dir(edge), Vec@(Int|0, Neg(Int|2)));
+  Vec@ e = RotateFrom(edge.dir, Vec@(Int|0, Neg(Int|2)));
   Point@ a = Point(edge.start);
   Point@ b = Point(AddV(edge.start, e));
   Point@ c = Point(edge.end);

@@ -3,9 +3,7 @@
    can draw triangles directly.
 
 * [pinball] 
- - Improve performance
-   - Change RotateTo and RotateFrom to take unit vectors.
-   - Cache unit vector for edge.
+ - Improve performance somehow.
  - Give width to paddle.
  - Fix issue with ball not hitting end points of edges.
  - Paddle seems to delay launching if ball is on it when you start.

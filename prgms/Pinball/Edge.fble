@@ -4,6 +4,7 @@
 @ Vec@ = /Pinball/Vec%.Vec@;
 % SubV = /Pinball/Vec%.SubV;
 % Magnitude = /Pinball/Vec%.Magnitude;
+% Normalize = /Pinball/Vec%.Normalize;
 
 <@>@ Show@ = /Show%.Show@;
 
@@ -15,26 +16,19 @@
 @ Edge@ = *(
   Vec@ start,       # The start point of the edge.
   Vec@ end,         # The end point of the edge.
-  Num@ restitution  # Fraction of energy preserved during a collision.
+  Num@ restitution, # Fraction of energy preserved during a collision.
+
+  # The following values are cached as fields to avoid having to recompute.
+  Vec@ dir,         # Unit vector pointing from start to end.
+  Num@ length       # Length of the edge.
 );
 
 # Edge --
 #   Specify an edge using start and end position.
 (Vec@, Vec@, Num@) { Edge@; }
 Edge = (Vec@ start, Vec@ end, Num@ restitution) {
-  Edge@(start, end, restitution);
-};
-
-# Dir --
-#   The direction of an edge.
-(Edge@) { Vec@; } Dir = (Edge@ e) {
-  SubV(e.end, e.start);
-};
-
-# Length --
-#   The length of an edge.
-(Edge@) { Num@; } Length = (Edge@ e) {
-  Magnitude(Dir(e));
+  Vec@ dir = SubV(end, start);
+  Edge@(start, end, restitution, Normalize(dir), Magnitude(dir));
 };
 
 Show@<Edge@> Show = (Edge@ e) {
@@ -45,5 +39,5 @@ Show@<Edge@> Show = (Edge@ e) {
     Str|')'];
 };
 
-@(Edge@, Edge, Dir, Length, Show);
+@(Edge@, Edge, Show);
 

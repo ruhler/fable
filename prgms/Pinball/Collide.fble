@@ -23,8 +23,6 @@
 @ Ball@ = /Pinball/Ball%.Ball@;
 
 @ Edge@ = /Pinball/Edge%.Edge@;
-% Dir = /Pinball/Edge%.Dir;
-% Length = /Pinball/Edge%.Length;
 
 @ Paddle@ = /Pinball/Paddle%.Paddle@;
 
@@ -45,6 +43,7 @@
 % RotateTo = /Pinball/Vec%.RotateTo;
 % RotateFrom = /Pinball/Vec%.RotateFrom;
 % Magnitude = /Pinball/Vec%.Magnitude;
+% Normalize = /Pinball/Vec%.Normalize;
 
 # BallCollider@ --
 #   Check for and return collision results between a ball and an object.
@@ -64,17 +63,17 @@ BallCollider@<Edge@> BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
   Event@ NoCollision = TimeEvent(tmax);
 
   # Verify the ball starts above the edge.
-  Vec@ s = RotateTo(Dir(edge), SubV(ball.pos, edge.start));
+  Vec@ s = RotateTo(edge.dir, SubV(ball.pos, edge.start));
   Lt(s.y, Int|0).?(true: NoCollision);
 
   # Verify the ball ends within radius units of the edge.
   Num@ radius = ball.radius;
   Vec@ end = AddV(ball.pos, MulVS(ball.vel, tmax));
-  Vec@ e = RotateTo(Dir(edge), SubV(end, edge.start));
+  Vec@ e = RotateTo(edge.dir, SubV(end, edge.start));
   Gt(e.y, radius).?(true: NoCollision);
 
   # Verify the ball is moving towards the edge instead of away from it.
-  Vec@ v = RotateTo(Dir(edge), ball.vel);
+  Vec@ v = RotateTo(edge.dir, ball.vel);
   Ge(v.y, Int|0).?(true: NoCollision);
 
   # Potential collision detected.
@@ -84,12 +83,12 @@ BallCollider@<Edge@> BallEdge = (Ball@ ball, Edge@ edge, Num@ tmax) {
   # Verify the collision happens within the segment of the edge.
   Num@ x = Add(s.x, Mul(v.x, t));
   Lt(x, Int|0).?(true: NoCollision);
-  Gt(x, Length(edge)).?(true: NoCollision);
+  Gt(x, edge.length).?(true: NoCollision);
 
   # Compute the new state just after the collision.
   Vec@ vc = Vec@(v.x, Mul(edge.restitution, Neg(v.y)));
   Vec@ pos = AddV(ball.pos, MulVS(ball.vel, t));
-  Vec@ vel = RotateFrom(Dir(edge), vc);
+  Vec@ vel = RotateFrom(edge.dir, vc);
   BallEvent(t, @(pos, vel, radius));
 };
 
@@ -170,7 +169,7 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   Vec@ bc = AddV(ball.pos, MulVS(ball.vel, t));
   Vec@ sc = AddV(paddle.center, Rotate(paddle.start, pc));
   Vec@ ec = AddV(paddle.center, Rotate(paddle.end, pc));
-  Vec@ dc = SubV(ec, sc);
+  Vec@ dc = Normalize(SubV(ec, sc));
 
   # Compute where the ball is relative to the edge of the paddle at the time
   # of collision.
