@@ -55,6 +55,9 @@
   Point@(Floor(a.x), Floor(a.y));
 };
 
+Num@ 0 = Int|0;
+Num@ '-2' = Neg(Int|2);
+
 # Radius --
 #   The radius of the ball.
 Num@ Radius = Int|8;
@@ -150,7 +153,7 @@ World@ Initial = World@(
 (Paddle@) { Drawing@; } DrawPaddle = (Paddle@ paddle) {
   Vec@ start = AddV(paddle.center, Rotate(paddle.start, paddle.pos));
   Vec@ end = AddV(paddle.center, Rotate(paddle.end, paddle.pos));
-  Vec@ e = Rotate(Vec@(Int|0, Neg(Int|2)), paddle.pos);
+  Vec@ e = Rotate(Vec@(0, '-2'), paddle.pos);
   Point@ a = Point(start);
   Point@ b = Point(AddV(start, e));
   Point@ c = Point(end);
@@ -238,11 +241,11 @@ App@ Main = (AppIO@ app) {
 
   (World@) { Unit@!; } draw = (World@ s) {
     app.effect(Effect@(draw: Over(
-      Rect(Floor(Int|0), Floor(Int|0), app.width, app.height, Color.Black),
+      Rect(Floor(0), Floor(0), app.width, app.height, Color.Black),
       Affine(a, b, Draw(s)))));
   };
 
-  Unit@ _ := app.effect(Effect@(tick: Floor(Int|0)));
+  Unit@ _ := app.effect(Effect@(tick: Floor(0)));
   Run(app.event, draw, tick, Initial); 
 };
 

@@ -562,7 +562,7 @@ int main(int argc, char* argv[])
   fprintf(stderr, "FPS Histogram:\n");
   for (size_t i = 0; i < 61; ++i) {
     if (sFpsHistogram[i] > 0) {
-      printf("  % 2zi: % 12i\n", i, sFpsHistogram[i]);
+      printf("  % 3zi: % 12i\n", i, sFpsHistogram[i]);
     }
   }
 

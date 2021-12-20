@@ -14,17 +14,19 @@
 @ Vec@ = /Pinball/Vec%.Vec@;
 % Magnitude = /Pinball/Vec%.Magnitude;
 
+Num@ 0 = Int|0;
+Num@ 2 = Int|2;
 Num@ π = Div(Int|355, Int|113);
-Num@ 2π = Mul(π, Int|2);
-Num@ 'π/2' = Div(π, Int|2);
+Num@ 2π = Mul(π, 2);
+Num@ 'π/2' = Div(π, 2);
 
 # RotateS -
 #   Rotate vector (m, 0) by an angle in radians.
 (Num@, Num@) { Vec@; } RotateS = (Num@ m, Num@ a) {
-  Eq(Int|0, m).?(true: Vec@(m, m));
+  Eq(0, m).?(true: Vec@(m, m));
 
   # Put angle in range [0, ∞)
-  Lt(a, Int|0).?(true: {
+  Lt(a, 0).?(true: {
     Vec@ r = RotateS(m, Neg(a));
     Vec@(r.x, Neg(r.y));
   });
@@ -47,8 +49,8 @@ Num@ 'π/2' = Div(π, Int|2);
   # Approximation: we draw a line from (0, 2m) to (2m, 0), pick a point on
   # that line that is 2a/π of the way along that line, then normalize the
   # resulting point.
-  Num@ f = Div(Mul(a, Int|2), π);
-  Num@ 2m = Mul(m, Int|2);
+  Num@ f = Div(Mul(a, 2), π);
+  Num@ 2m = Mul(m, 2);
   Num@ y = Mul(f, 2m);
   Num@ x = Sub(2m, y);
   Num@ d = Magnitude(Vec@(x, y));

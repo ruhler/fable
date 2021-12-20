@@ -14,6 +14,10 @@
 % Eq = /Pinball/Num%.Eq;
 % Lt = /Pinball/Num%.Lt;
 
+Num@ 0 = Int|0;
+Num@ 2 = Int|2;
+Num@ 4 = Int|4;
+
 # Linear@ --
 #   Describe a function of the form:
 #     f(x) = a*x + b
@@ -64,17 +68,17 @@ MulLL = (Linear@ f, Linear@ g) {
 # Roots --
 #   Compute the roots of a quadratic equation.
 (Quadratic@) { Maybe@<Roots@>; } Roots = (Quadratic@ q) {
-  Eq(q.a, Int|0).?(true: {
-    Eq(q.b, Int|0).?(true: Nothing<Roots@>);
+  Eq(q.a, 0).?(true: {
+    Eq(q.b, 0).?(true: Nothing<Roots@>);
     Num@ r = Div(Neg(q.c), q.b);
     Just<Roots@>(Roots@(r, r));
   });
 
-  Num@ d = Sub(Mul(q.b, q.b), Mul(Int|4, Mul(q.a, q.c)));
-  Lt(d, Int|0).?(true: Nothing<Roots@>);
+  Num@ d = Sub(Mul(q.b, q.b), Mul(4, Mul(q.a, q.c)));
+  Lt(d, 0).?(true: Nothing<Roots@>);
   Num@ nb = Neg(q.b);
   Num@ s = Sqrt(d);
-  Num@ 2a = Mul(Int|2, q.a);
+  Num@ 2a = Mul(2, q.a);
   Num@ first = Div(Sub(nb, s), 2a);
   Num@ second = Div(Add(nb, s), 2a);
   Just<Roots@>(@(first, second));

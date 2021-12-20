@@ -15,6 +15,8 @@
 % Strs = /String%.Strs;
 % Str = /String%.Str;
 
+Num@ 0 = Int|0;
+
 @ Paddle@ = *(
   Vec@ center,    # The center of rotation of the paddle.
   Vec@ start,     # The start point of the paddle at angle 0 relative to center.
@@ -48,7 +50,7 @@ Paddle = (Vec@ center, Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ 
 #
 # Sets the velocity of the paddle to 0 if it reaches its end of range.
 (Paddle@, Num@) { Paddle@; } Move = (Paddle@ p, Num@ t) {
-  Eq(Int|0, p.vel).?(true: p);
+  Eq(0, p.vel).?(true: p);
 
   Num@ pos = {
     Num@ pos = Add(p.pos, Mul(p.vel, t));
@@ -58,8 +60,8 @@ Paddle = (Vec@ center, Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ 
   };
 
   Num@ vel = {
-    Eq(pos, p.min).?(true: Int|0);
-    Eq(pos, p.max).?(true: Int|0);
+    Eq(pos, p.min).?(true: 0);
+    Eq(pos, p.max).?(true: 0);
     p.vel;
   };
 
