@@ -72,7 +72,7 @@ Int@ 10 = P(IntP.10);
 
 # 2 * a
 (Int@) { Int@; } Mul2 = (Int@ a) {
-  a.?(n: N(IntP.2P0(a.n)), 0: a, p: P(IntP.2P0(a.p)));
+  a.?(n: N(IntP@(2p0: a.n)), 0: a, p: P(IntP@(2p0: a.p)));
 };
 
 (IntP@, IntP@) { Int@; } SubP = (IntP@ a, IntP@ b) {

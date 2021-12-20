@@ -753,3 +753,27 @@ angle.
 
 We'll have a little less precision, but hopefully that's okay.
 
+Looks fine. Helps. But we are still slow. Currently:
+
+42% BallPaddle collision.
+40% BallEdge collision.
+17% DrawPaddle
+  3 calls to 'Rotate'. I bet we could reduce to a single call to Rotate, then
+  some calls to the faster RotateTo?
+
+It looks like a lot of the time is spent doing math: multiplication, division.
+Hmm...
+
+I suppose the obvious thing to do for the collisions is to define hit boxes
+for each thing and make sure there is an intersection of hit boxes before
+starting on the more complicated math. This should be better worst case, not
+just average case, because we assume at most a small number of hit boxes could
+overlap with the ball in any given frame.
+
+Hit box for an edge: defined by min/max x/y points.
+Hit box for a paddle: defined by max radius from center to start/end point.
+Hit box for ball: defined by max/min x/y +- radius.
+
+Compute the hit box for the ball across the time frame. For each edge/paddle,
+first check intersection with the ball hitbox.
+

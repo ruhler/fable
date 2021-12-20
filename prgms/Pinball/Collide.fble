@@ -155,7 +155,6 @@ BallCollider@<Paddle@> BallPaddle = (Ball@ ball, Paddle@ paddle, Num@ tm) {
   Quadratic@ r_t = Quadratic@(Int|0, Int|0, Mul(tm, Mul(l, radius)));
   Quadratic@ q_t = SubQQ(d_t, r_t);
 
-
   Maybe@<Roots@> roots = Roots(q_t);
   roots.?(nothing: NoCollision);
   Num@ t = {

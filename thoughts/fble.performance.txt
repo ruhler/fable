@@ -522,3 +522,34 @@ allocations. Now we're back to data type allocations showing up as the top
 contributor to runtime. Time to do next round of optimizations for packed data
 types.
 
+---
+
+I see IntP 2P0 and 2P1 showing up at the top of the fble profile by self time
+for pinball (8% and 4% respectively). Do you think inlining these could make a
+notable performance difference? They aren't as high on the perf profile, but
+they are still there at 2% each.
+
+Let me see what it shows up as for the full benchmark suite, what profiling
+and perf suggest it takes up, and then try inlining manually to see if it
+makes a significant difference in practice. If so... that either suggests we
+should manually inline things like that for low level libraries like integer
+arithmetic, or it would be nice if the compiler could do that for us somehow,
+or we could somehow reduce the overhead of function calls so it wouldn't
+matter? Somehow I think as long as we do a function call where we don't need
+to, it's going to be hard to avoid the overhead of that.
+
+bench.prof shows:
+  3% of time spent in 2P0
+  1.5% of time spent in 2P1
+  5.22% time total spent in 2P0, 2P1.
+  So, maximum savings of 16 seconds if we inline it.
+
+bench.perf.txt shows:
+  3.8, 1.86% total time, which is surprisingly close to what bench.prof says.
+
+Actual savings from inlining:
+  17 seconds.
+
+That's pretty awesome how close it was predicted by both forms of profiling.
+  
+

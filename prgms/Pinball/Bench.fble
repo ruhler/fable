@@ -10,6 +10,6 @@
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal is 60 frames a second.
 Unit@! Bench = /App/Benchmark%.Benchmark(
-  /Pinball/App%, Int|3600, Event@(key_down: Key@(q: Unit)));
+  /Pinball/App%, Int|720, Event@(key_down: Key@(q: Unit)));
 
 @(Bench);

@@ -1,5 +1,5 @@
-Fble Lifetimes
-==============
+Fble Lifetimes Transitioning to Fble Value Packing
+==================================================
 There are a couple of questions:
 1. What is the lifetime of an fble value? Is it clear from the spec? If not,
 how should the spec be written to make it clear?
@@ -948,3 +948,44 @@ supporting packing of dynamically sized values. Better packing means passing
 type information everywhere we do packing to tell us how many bits to use for
 tags, so we can have 'perfect' packing. That's the next step.
 
+---
+
+Better packing is going to be a bit complicated.
+
+My dream is that packed values are stored as a sequence of binary encoded tag
+bits only. There is no info about number of fields, tag size, or kind of
+value.  That should be known by whoever is doing the accessing.
+
+Considerations:
+* Struct and union access is not associated with a type value at the language
+  level, so we'll have to get the types from somewhere. Does this have
+  performance implications that need to be exposed at the language level?
+* Recursive types could be annoying to construct at runtime.
+* Polymorphic values will need to pass real type information. Does this have
+  performance implications that need to be exposed at the language level? Do
+  we need to distinguish between multi arg and single arg poly values like we
+  do for functions?
+* Ideally we aren't allocating a bunch of types everywhere. Rather, we
+  allocate a type once at the top level and reuse it. The implementation of
+  this might be a bit of work. More importantly, does this have performance
+  implications that need to be exposed at the language level? Is it a kind of
+  common subexpression elimination that goes against the fble philosophy?
+* There will be some performance overhead for traversing these more perfectly
+  packed values. Is it worth it? How much benefit / overhead do we get
+  compared to our current approach to packing?
+* What extra type information do we need to store for purposes of GC and
+  native API?
+
+Steps to implement:
+* Convince myself we don't need to expose this stuff at the language level for
+  performance reasons.
+* Start with an implementation that allocates types on the fly every time,
+  without support for polymorphic values or recursive types.
+* Add support for recursive types.
+* Add support for polymorphic values.
+* We should now have enough information at runtime to switch packing scheme.
+ - May need to update APIs to allow / require users to pass type info?
+ - First performance impression, presumably will be slower from all the
+   allocated type objects.
+* Factor out type definitions as far as polymorphism allows.
+ - Then we're done, hopefully.
