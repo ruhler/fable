@@ -6,8 +6,8 @@
  - Improve performance somehow.
  - Give width to paddle.
  - Fix issue with ball not hitting end points of edges.
- - Paddle seems to delay launching if ball is on it when you start.
-   Perhaps bad logic for detecting end of range if collision at t=0?
+ - Test and fix issue with ball getting stuck bouncing between two close
+   bumpers.
 
  - Design a relatively complete traditional pinball play field I can use to
    exercise everything of what I expect I may want to support.

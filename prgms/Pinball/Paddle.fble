@@ -3,7 +3,8 @@
 % Add = /Pinball/Num%.Add;
 % Mul = /Pinball/Num%.Mul;
 % Eq = /Pinball/Num%.Eq;
-% Gt = /Pinball/Num%.Gt;
+% Ge = /Pinball/Num%.Ge;
+% Le = /Pinball/Num%.Le;
 % Lt = /Pinball/Num%.Lt;
 % Int = /Pinball/Num%.Int;
 
@@ -50,22 +51,18 @@ Paddle = (Vec@ center, Vec@ start, Vec@ end, Num@ vel, Num@ pos, Num@ min, Num@ 
 #
 # Sets the velocity of the paddle to 0 if it reaches its end of range.
 (Paddle@, Num@) { Paddle@; } Move = (Paddle@ p, Num@ t) {
-  Eq(0, p.vel).?(true: p);
+  Eq(p.vel, 0).?(true: p);
 
-  Num@ pos = {
-    Num@ pos = Add(p.pos, Mul(p.vel, t));
-    Lt(pos, p.min).?(true: p.min);
-    Gt(pos, p.max).?(true: p.max);
-    pos;
-  };
+  Num@ pos = Add(p.pos, Mul(p.vel, t));
+  Lt(p.vel, 0).?(true: {
+    Le(pos, p.min).?(
+      true: Paddle@(p.center, p.start, p.end, 0, p.min, p.min, p.max, p.res),
+      false: Paddle@(p.center, p.start, p.end, p.vel, pos, p.min, p.max, p.res));
+  });
 
-  Num@ vel = {
-    Eq(pos, p.min).?(true: 0);
-    Eq(pos, p.max).?(true: 0);
-    p.vel;
-  };
-
-  Paddle@(p.center, p.start, p.end, vel, pos, p.min, p.max, p.res);
+  Ge(pos, p.max).?(
+    true: Paddle@(p.center, p.start, p.end, 0, p.max, p.min, p.max, p.res),
+    false: Paddle@(p.center, p.start, p.end, p.vel, pos, p.min, p.max, p.res));
 };
 
 Show@<Paddle@> Show = (Paddle@ p) {

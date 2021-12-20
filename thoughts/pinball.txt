@@ -777,3 +777,13 @@ Hit box for ball: defined by max/min x/y +- radius.
 Compute the hit box for the ball across the time frame. For each edge/paddle,
 first check intersection with the ball hitbox.
 
+Actually, performance seems to be okay for the time being. We're at about
+20FPS, which feels responsive enough to focus on functional rather than
+performance work for the time being.
+
+---
+
+Next functional topic: make it so the ball can collide with end points of an
+edge or paddle.
+
+
