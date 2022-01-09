@@ -1145,74 +1145,45 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       }
       FbleFreeKind(&poly_kind->_base);
 
-      FbleAbstractType* abs_type = (FbleAbstractType*)FbleNormalType(th, poly.type);
-      if (abs_type->_base.tag == FBLE_ABSTRACT_TYPE) {
-        // abstract_access
-        FbleType* arg = FbleValueOfType(th, arg_type);
-        FbleReleaseType(th, arg_type);
-        if (arg == NULL) {
-          ReportError(apply->arg->loc,
-              "expected token type, but found something of kind %\n");
-          FbleReleaseType(th, &abs_type->_base);
-          FreeTc(th, poly);
-          return TC_FAILED;
-        }
-
-        if (!FbleTypesEqual(th, abs_type->token, arg)) {
-          ReportError(apply->arg->loc,
-              "illegal abstract access, expected token type %t, but found %t\n",
-              abs_type->token, arg);
-          FbleReleaseType(th, &abs_type->_base);
-          FbleReleaseType(th, arg);
-          FreeTc(th, poly);
-          return TC_FAILED;
-        }
-
-        FbleType* type = abs_type->type;
-        FbleRetainType(th, type);
-        FbleReleaseType(th, arg);
-        FbleReleaseType(th, poly.type);
-        FbleReleaseType(th, &abs_type->_base);
-        return MkTc(type, poly.tc);
-      }
-      FbleReleaseType(th, &abs_type->_base);
-
       FbleType* poly_value = FbleValueOfType(th, poly.type);
       FreeTc(th, poly);
-      FbleTokenType* token = (FbleTokenType*)poly_value;
-      if (token != NULL && token->_base.tag == FBLE_TOKEN_TYPE) {
-        // abstract_type
-        FbleType* arg = FbleValueOfType(th, arg_type);
-        FbleReleaseType(th, arg_type);
-        if (arg == NULL) {
-          ReportError(apply->arg->loc,
-              "expected type, but found something of kind %%\n");
-          FbleReleaseType(th, poly_value);
-          return TC_FAILED;
+      if (poly_value != NULL) {
+        FbleTokenType* token = (FbleTokenType*)FbleNormalType(th, poly_value);
+        FbleReleaseType(th, poly_value);
+        if (token->_base.tag == FBLE_TOKEN_TYPE) {
+          // abstract_type
+          FbleType* arg = FbleValueOfType(th, arg_type);
+          FbleReleaseType(th, arg_type);
+          if (arg == NULL) {
+            ReportError(apply->arg->loc,
+                "expected type, but found something of kind %%\n");
+            FbleReleaseType(th, &token->_base);
+            return TC_FAILED;
+          }
+
+          FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
+          abs_type->token = &token->_base;
+          abs_type->type = arg;
+          FbleTypeAddRef(th, &abs_type->_base, abs_type->token);
+          FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
+          FbleReleaseType(th, abs_type->token);
+          FbleReleaseType(th, abs_type->type);
+
+          FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
+          type_type->type = &abs_type->_base;
+          FbleTypeAddRef(th, &type_type->_base, type_type->type);
+          FbleReleaseType(th, &abs_type->_base);
+
+          FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
+          type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
+          type_tc->_base.loc = FbleCopyLoc(expr->loc);
+          return MkTc(&type_type->_base, &type_tc->_base);
         }
-
-        FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
-        abs_type->token = &token->_base;
-        abs_type->type = arg;
-        FbleTypeAddRef(th, &abs_type->_base, abs_type->token);
-        FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-        FbleReleaseType(th, abs_type->token);
-        FbleReleaseType(th, abs_type->type);
-
-        FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
-        type_type->type = &abs_type->_base;
-        FbleTypeAddRef(th, &type_type->_base, type_type->type);
-        FbleReleaseType(th, &abs_type->_base);
-
-        FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
-        type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
-        type_tc->_base.loc = FbleCopyLoc(expr->loc);
-        return MkTc(&type_type->_base, &type_tc->_base);
+        FbleReleaseType(th, &token->_base);
       }
 
       ReportError(expr->loc,
-          "type application requires a poly, abstract token type, or abstract value\n");
-      FbleReleaseType(th, poly_value);
+          "type application requires a poly or abstract token type\n");
       FbleReleaseType(th, arg_type);
       return TC_FAILED;
     }
@@ -1257,6 +1228,46 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       let_tc->body = body.tc;
       return MkTc(body.type, &let_tc->_base);
+    }
+
+    case FBLE_ABSTRACT_CAST_EXPR: {
+      FbleAbstractCastExpr* cast_expr = (FbleAbstractCastExpr*)expr;
+
+      FbleType* token_type = TypeCheckType(th, scope, cast_expr->token);
+      if (token_type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleTokenType* token = (FbleTokenType*)FbleNormalType(th, token_type);
+      if (token->_base.tag != FBLE_TOKEN_TYPE) {
+        ReportError(cast_expr->token->loc,
+          "expected abstract token type, but found %t\n", token_type);
+        FbleReleaseType(th, &token->_base);
+        FbleReleaseType(th, token_type);
+        return TC_FAILED;
+      }
+
+      FbleType* target = TypeCheckType(th, scope, cast_expr->target);
+      if (target == NULL) {
+        FbleReleaseType(th, &token->_base);
+        FbleReleaseType(th, token_type);
+        return TC_FAILED;
+      }
+
+      Tc value = TypeCheckExpr(th, scope, cast_expr->value);
+      if (value.type == NULL) {
+        FbleReleaseType(th, &token->_base);
+        FbleReleaseType(th, token_type);
+        FbleReleaseType(th, target);
+        return TC_FAILED;
+      }
+
+      // TODO: Verify the cast is legal!
+
+      FbleReleaseType(th, &token->_base);
+      FbleReleaseType(th, token_type);
+      FbleReleaseType(th, value.type);
+      return MkTc(target, value.tc);
     }
 
     case FBLE_LIST_EXPR: {
@@ -1630,34 +1641,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           return MkTc(vtype, &struct_tc->_base);
         }
 
-        FbleTokenType* token = (FbleTokenType*)vnorm;
-        if (token->_base.tag == FBLE_TOKEN_TYPE) {
-          // abstract_value
-          FbleReleaseType(th, normal);
-          FreeTc(th, misc);
-          if (argc != 1) {
-            // TODO: Where should the error message go?
-            ReportError(expr->loc,
-                "expected 1 argument, but %i provided\n", argc);
-            FbleReleaseType(th, vnorm);
-            FbleReleaseType(th, vtype);
-            for (size_t i = 0; i < argc; ++i) {
-              FreeTc(th, args[i]);
-            }
-            return TC_FAILED;
-          }
-
-          FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
-          abs_type->token = &token->_base;
-          abs_type->type = args[0].type;
-          FbleTypeAddRef(th, &abs_type->_base, abs_type->token);
-          FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-          FbleReleaseType(th, vtype);
-          FbleReleaseType(th, vnorm);
-          FbleReleaseType(th, args[0].type);
-          return MkTc(&abs_type->_base, args[0].tc);
-        }
-
         FbleReleaseType(th, vtype);
         FbleReleaseType(th, vnorm);
       }
@@ -1714,6 +1697,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_ABSTRACT_EXPR:
+    case FBLE_ABSTRACT_CAST_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:
@@ -2048,6 +2032,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_ABSTRACT_EXPR:
+    case FBLE_ABSTRACT_CAST_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:

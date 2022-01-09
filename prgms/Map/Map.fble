@@ -1,0 +1,607 @@
+
+# Internal implementation of Map@ type.
+
+@ Bool@ = /Bool%.Bool@;
+% True = /Bool%.True;
+% False = /Bool%.False;
+
+<@>@ Eq@ = /Eq%.Eq@;
+
+<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>% Nothing = /Maybe%.Nothing;
+<@>% Just = /Maybe%.Just;
+
+@ Unit@ = /Unit%.Unit@;
+% Unit = /Unit%.Unit;
+
+# Balance@ --
+#   Keeps track of how well balanced a map node's children are.
+@ Balance@ = +(
+  Unit@ '-',     # The left subtree has height 1 greater than the right subtree.
+  Unit@ '0',     # The heights of the left and right subtrees match.
+  Unit@ '+'      # The right subtree has height 1 greater than the left subtree.
+);
+
+Balance@ '-' = Balance@('-': Unit);
+Balance@ '0' = Balance@('0': Unit);
+Balance@ '+' = Balance@('+': Unit);
+
+(Balance@) { Balance@; } Flip = (Balance@ x) {
+  x.?('-': '+', '0': '0', '+': '-');
+};
+
+# Sum@ --
+#   Represents the sum of two Balance@.
+@ Sum@ = +(Unit@ '-', Balance@ '0', Unit@ '+');
+
+# Sum --
+#   Compute the Sum of two Balance@.
+(Balance@, Balance@) { Sum@; }
+Sum = (Balance@ a, Balance@ b) {
+  a.?(
+    '-': b.?('-': Sum@('-': Unit), '0': Sum@('0': '-'), '+': Sum@('0': '0')),
+    '0': Sum@('0': b),
+    '+': b.?('-': Sum@('0': '0'), '0': Sum@('0': '+'), '+': Sum@('+': Unit)));
+};
+
+# Delta --
+#   Determine how the height of a map changes of the right subtree changes by
+#   the given 'delta' and the map originally had the given 'balance'.
+(Balance@, Balance@) { Balance@; }
+Delta = (Balance@ delta, Balance@ balance) {
+  delta.?(
+    '-': {
+      # The right subtree is smaller now. That reduces the height of the
+      # overall tree only if tree was originally right heavy.
+      balance.?('+': '-', : '0');
+    },
+    '0': {
+      # No change in height.
+      '0';
+    },
+    '+': {
+      # The right subtree is larger now. That increases the height of the
+      # overall tree unless the tree was originally left heavy.
+      balance.?('-': '0', : '+');
+    });
+};
+
+# Map@ --
+#   A map from K@ to V@, using the Structure@ of K@ to locate the key value
+#   entry in the map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+<@,@>@ Map@ = <@ K@, @ V@> { +(Unit@ empty, MapP@<K@, V@> map); },
+
+# MapP@ --
+#   A non-empty map from K@ to V@.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+<@,@>@ MapP@ = <@ K@, @ V@> {
+  *(K@ key,
+    V@ value,
+    Balance@ balance,
+    Map@<K@, V@> left,
+    Map@<K@, V@> right
+  );
+};
+
+# MapP --
+#   Construct a non-empty Map@ instance.
+<@ K@, @ V@>(K@, V@, Balance@, Map@<K@, V@>, Map@<K@, V@>) { Map@<K@, V@>; }
+MapP = <@ K@, @ V@>(K@ key, V@ value, Balance@ balance, Map@<K@, V@> left, Map@<K@, V@> right) {
+  Map@<K@, V@>(map: MapP@<K@, V@>(key, value, balance, left, right));
+};
+
+# Empty --
+#   A map without any entries.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Example Use:
+#   Empty<String@, Foo@>
+Map@ Empty = <@ K@, @ V@> {
+  Map@<K@, V@>(empty: Unit);
+};
+
+<@,@>@ Entry@ = <@ K@, @ V@> { *(K@ key, V@ value); };
+
+# First --
+#   Get the first (least) value in the map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   map - the map to look up the value in.
+#
+# Returns:
+#   The entry in the map with the smallest key value. Nothing if the map is
+#   empty.
+<@ K@, @ V@>(Map@<K@, V@>) { Maybe@<Entry@<K@, V@>>; }
+First = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(
+    empty: Nothing<Entry@<K@, V@>>,
+    map: {
+      Maybe@<Entry@<K@, V@>> first = First<K@, V@>(map.map.left);
+      first.?(
+        just: first,
+        nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map.map.key, map.map.value)));
+    });
+};
+
+# Last --
+#   Get the last (greatest) value in the map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   map - the map to look up the value in.
+#
+# Returns:
+#   The entry in the map with the largest key value. Nothing if the map is
+#   empty.
+<@ K@, @ V@>(Map@<K@, V@>) { Maybe@<Entry@<K@, V@>>; }
+Last = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(
+    empty: Nothing<Entry@<K@, V@>>,
+    map: {
+      Maybe@<Entry@<K@, V@>> last = Last<K@, V@>(map.map.right);
+      last.?(
+        just: last,
+        nothing: Just<Entry@<K@, V@>>(Entry@<K@, V@>(map.map.key, map.map.value)));
+    });
+};
+
+# IsEmpty --
+#   Check if a map is empty.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   map - the map to check.
+#
+# Returns:
+#   True if the map is empty, false otherwise.
+<@ K@, @ V@>(Map@<K@, V@>) { Bool@; }
+IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
+  map.?(empty: True, map: False);
+};
+
+# Lookup --
+#   Look up the value in a map for the given key.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to look up the value in.
+#   key - the key of the value to look up.
+#
+# Returns:
+#   The value in the map associated with the key. Nothing if the map
+#   does not contain any such value.
+#
+# Example Use:
+#   % Lookup = /Map%.Lookup<String@>(/String/Eq%.Lt)<Foo@>;
+#   Lookup(map, key);
+#
+#   % Lookup = /Map%.Lookup<String@>(/String/Eq%.Lt);
+#   Lookup<Foo@>(mapToFoo, key);
+#   Lookup<Bar@>(mapToBar, key);
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
+Lookup = <@ K@>(Eq@<K@> lt)<@ V@> {
+  (Map@<K@, V@>, K@) { Maybe@<V@>; } L = (Map@<K@, V@> map, K@ key) {
+    map.?(empty: Nothing<V@>);
+    lt(key, map.map.key).?(true: L(map.map.left, key));
+    lt(map.map.key, key).?(true: L(map.map.right, key));
+    Just<V@>(map.map.value);
+  };
+  L;
+};
+
+# Modified@ --
+#   Keeps track of the result of a map modification.
+#
+# Fields:
+#   delta - '+' if the map grew in height by 1, '0' if the map did not change
+#           height, '-' if the map decreased in height by 1.
+#   map - the modified, rebalanced map.
+<@,@>@ Modified@ = <@ K@, @ V@> { *(Balance@ delta, Map@<K@, V@> map); };
+
+# Rebalance --
+#   Rebalance a potentially unbalanced map.
+#
+# Inputs:
+#   delta - the change in height of the tree before rebalancing.
+#   key - the root key
+#   value - the root value
+#   balance - the balance of the map
+#   left - the left subtree
+#   right - the right subtree
+#
+# Returns:
+#   A rebalanced map and the overall change in height of the tree with the
+#   effects of rebalancing included.
+<@ K@, @ V@> (Balance@, K@, V@, Sum@, Map@<K@, V@>, Map@<K@, V@>) { Modified@<K@, V@>; }
+Rebalance = <@ K@, @ V@> (Balance@ delta, K@ key, V@ value, Sum@ balance, Map@<K@, V@> left, Map@<K@, V@> right) {
+  balance.?(
+    '-': {
+      # The left subtree is too large. We need to rebalance. How we rebalance
+      # depends on the balance of the left subtree.
+      left.map.balance.?(
+        '-': {
+          # The left subtree ('b') is left heavy.
+          #     d3            b2
+          #    /  \          /  \
+          #   b2  e0  ==>  a1   d1
+          #  / \               /  \
+          # a1  c0            c0  e0
+          @(delta: Sum(delta, '-').'0',
+            map: MapP<K@, V@>(
+              left.map.key,
+              left.map.value,
+              '0',
+              left.map.left,
+              MapP<K@, V@>(key, value, '0', left.map.right, right)));
+        },
+        '0': {
+          # The left subtree ('b') is balanced.
+          #     d3            b3
+          #    /  \          /  \
+          #   b2  e0  ==>  a1   d2
+          #  / \               /  \
+          # a1  c1            c1  e0
+          @(delta: delta,
+            map: MapP<K@, V@>(
+              left.map.key,
+              left.map.value,
+              '+',
+              left.map.left,
+              MapP<K@, V@>(key, value, '-', left.map.right, right)));
+        },
+        '+': {
+          # The left subtree ('f') is right heavy.
+          #        f3             d2
+          #       /  \          /    \
+          #      b2  g0        b1     f1
+          #     /  \     ==>  /  \   /  \
+          #    a0  d1        a0  c? e?  g0
+          #       /  \
+          #      c?   e?
+          Map@<K@, V@> a = left.map.left;
+          Entry@<K@, V@> b = @(
+            key: left.map.key,
+            value: left.map.value);
+          Map@<K@, V@> c = left.map.right.map.left;
+          Entry@<K@, V@> d = @(
+            key: left.map.right.map.key,
+            value: left.map.right.map.value);
+          Balance@ dB = left.map.right.map.balance;
+          Map@<K@, V@> e = left.map.right.map.right;
+          Entry@<K@, V@> f = @(key, value);
+          Map@<K@, V@> g = right;
+          @(
+            delta: Sum(delta, '-').0,
+            map: MapP<K@, V@>(
+              d.key,
+              d.value,
+              '0',
+              MapP<K@, V@>(b.key, b.value, dB.?('+': '-', : '0'), a, c),
+              MapP<K@, V@>(f.key, f.value, dB.?('-': '+', : '0'), e, g)));
+        });
+    },
+
+    '0': {
+      # The tree does not need rebalancing.
+      @(delta: delta, map: MapP<K@, V@>(key, value, balance.'0', left, right));
+    },
+
+    '+': {
+       # The right subtree is too large. We need to rebalance. How we
+       # rebalance depends on the balance of the right subtree.
+       right.map.balance.?(
+         '-': {
+           # The right subtree ('f') is left heavy.
+           #   b3             d2
+           #  / \           /    \
+           # a0  f2        b1     f1
+           #    / \  ==>  / \    / \
+           #   d1  g0    a0  c? e?  g0
+           #  / \
+           # c?  e?
+           Map@<K@, V@> a = left;
+           Entry@<K@, V@> b = @(key, value);
+           Map@<K@, V@> c = right.map.left.map.left;
+           Entry@<K@, V@> d = @(
+             key: right.map.left.map.key,
+             value: right.map.left.map.value);
+           Balance@ dB = right.map.left.map.balance;
+           Map@<K@, V@> e = right.map.left.map.right;
+           Entry@<K@, V@> f = @(
+             key: right.map.key,
+             value: right.map.value);
+           Map@<K@, V@> g = right.map.right;
+           @(
+             delta: Sum(delta, '-').'0',
+             map: MapP<K@, V@>(
+               d.key,
+               d.value,
+               '0',
+               MapP<K@, V@>(b.key, b.value, dB.?('+': '-', : '0'), a, c),
+               MapP<K@, V@>(f.key, f.value, dB.?('-': '+', : '0'), e, g)));
+         },
+         '0': {
+           # The right subtree ('d') is balanced.
+           #   b3             d3
+           #  /  \           /  \
+           # a0   d2   ==>  b2   e1
+           #     / \       / \
+           #    c1  e1    a0  c1
+           @(
+             delta: delta,
+             map: MapP<K@, V@>(
+               right.map.key,
+               right.map.value,
+               '-',
+               MapP<K@, V@>(key, value, '+', left, right.map.left),
+               right.map.right));
+         },
+         '+': {
+           # The right subtree ('d') is right heavy.
+           #   b3             d2
+           #  /  \           /  \
+           # a0   d2   ==>  b1   e1
+           #     / \       / \
+           #    c0  e1    a0  c0
+           @(
+             delta: Sum(delta, '-').'0',
+             map: MapP<K@, V@>(
+               right.map.key,
+               right.map.value,
+               '0',
+               MapP<K@, V@>(key, value, '0', left, right.map.left),
+               right.map.right));
+         });
+    });
+};
+
+# RebalanceLeft --
+#   Rebalance after modifying the left subtree of a map.
+#
+# Inputs:
+#   key - the root key
+#   value - the root value
+#   balance - the original balance of the map
+#   left - the modified left subtree
+#   right - the original right subtree
+#
+# Returns:
+#   A rebalanced map along with its overall change in height.
+<@ K@, @ V@> (K@, V@, Balance@, Modified@<K@, V@>, Map@<K@, V@>) { Modified@<K@, V@>; }
+RebalanceLeft = <@ K@, @ V@> (K@ key, V@ value, Balance@ balance, Modified@<K@, V@> left, Map@<K@, V@> right) {
+  Rebalance<K@, V@>(
+    Delta(left.delta, Flip(balance)),
+    key, value, Sum(balance, Flip(left.delta)), left.map, right);
+};
+
+# RebalanceRight --
+#   Rebalance after modifying the right subtree of a map.
+#
+# Inputs:
+#   key - the root key
+#   value - the root value
+#   balance - the original balance of the map
+#   left - the original left subtree
+#   right - the modified right subtree
+#
+# Returns:
+#   A rebalanced map along with its overall change in height.
+<@ K@, @ V@> (K@, V@, Balance@, Map@<K@, V@>, Modified@<K@, V@>) { Modified@<K@, V@>; }
+RebalanceRight = <@ K@, @ V@> (K@ key, V@ value, Balance@ balance, Map@<K@, V@> left, Modified@<K@, V@> right) {
+  Rebalance<K@, V@>(
+    Delta(right.delta, balance),
+    key, value, Sum(balance, right.delta), left, right.map);
+};
+
+# Modify --
+#   Insert, modify, or delete a value in the map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the value of the key to store with the map entry.
+#   with - a function that returns the value to insert given the existing
+#          value in the map, or Nothing to delete the value in the map.
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
+Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
+  (Map@<K@, V@>, K@, (Maybe@<V@>){ Maybe@<V@>; }) { Modified@<K@, V@>; }
+  M = (Map@<K@, V@> map, K@ key, (Maybe@<V@>) { Maybe@<V@>; } with) {
+    map.?(empty: {
+      Maybe@<V@> value = with(Nothing<V@>);
+      value.?(just: {
+        # Insert into empty map.
+        @(
+          delta: '+',
+          map: MapP<K@, V@>(key, value.just, '0', Empty<K@, V@>, Empty<K@, V@>));
+      });
+
+      # Remove from empty map.
+      @(delta: '0', map: Empty<K@, V@>);
+    });
+
+    lt(key, map.map.key).?(true: {
+      # Recurse to left subtree.
+      RebalanceLeft<K@, V@>(
+        map.map.key,
+        map.map.value,
+        map.map.balance,
+        M(map.map.left, key, with),
+        map.map.right);
+    });
+
+    lt(map.map.key, key).?(true: {
+      # Recurse to right subtree.
+      RebalanceRight<K@, V@>(
+        map.map.key,
+        map.map.value,
+        map.map.balance,
+        map.map.left,
+        M(map.map.right, key, with));
+    });
+
+    Maybe@<V@> value = with(Just<V@>(map.map.value));
+    value.?(just: {
+      # Replace root entry's value.
+      @(
+        delta: '0',
+        map: MapP<K@, V@>(
+          map.map.key,
+          value.just,
+          map.map.balance,
+          map.map.left,
+          map.map.right));
+    });
+
+    Maybe@<Entry@<K@, V@>> entry = Last<K@, V@>(map.map.left);
+    entry.?(just: {
+      # Delete root entry, filling in from left.
+      RebalanceLeft<K@, V@>(
+        entry.just.key,
+        entry.just.value,
+        map.map.balance,
+        M(map.map.left, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }),
+        map.map.right);
+    });
+
+    Maybe@<Entry@<K@, V@>> entry = First<K@, V@>(map.map.right);
+    entry.?(just: {
+      # Delete root entry, filling in from right.
+      RebalanceRight<K@, V@>(
+        entry.just.key,
+        entry.just.value,
+        map.map.balance,
+        map.map.left,
+        M(map.map.right, entry.just.key, (Maybe@<V@> _) { Nothing<V@>; }));
+    });
+
+    # We are deleting the only element in the map.
+    @(delta: '-', map: Empty<K@, V@>);
+  };
+
+  M;
+};
+
+# Delete --
+#   Remove a key and its value from the map, if present.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the key of the value to delete from the map.
+#
+# Example Use:
+#   % Delete = /Map%.Delete<String@>(/String/Eq%.Lt)<Int@>;
+#   Delete(map, Str(Chars|foo));
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
+Delete = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
+  Modify<K@>(lt)<V@>(map, key, (Maybe@<V@> _) { Nothing<V@>; }).map;
+};
+
+# InsertWith --
+#   Insert a value into a map, taking into account whatever existing value is
+#   in the map for the given key.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the value of the key to store with the map entry.
+#   with - a function that returns the value to insert given the existing
+#          value in the map.
+#
+# Example Use:
+#   % InsertWith = /Map%.InsertWith<String@>(/String/Eq%.Lt)<Int@>;
+#   InsertWith(map, Str(Chars|foo), (Maybe@<Int@> mv) {
+#     mv.?(just: Add(mv, value), nothing: value);
+#   };
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, (Maybe@<V@>){ V@; }) { Map@<K@, V@>; }
+InsertWith = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V@; } with) {
+  Modify<K@>(lt)<V@>(map, key, (Maybe@<V@> v) { Just<V@>(with(v)); }).map;
+};
+
+# Insert --
+#   Insert a value into a map. Any existing value for the key in the map will
+#   be overridden with the new value.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#
+# Inputs:
+#   lt - The less than operator to use for comparing keys.
+#   map - the map to insert the value into up the value in.
+#   key - the value of the key to store with the map entry.
+#   value - the value to insert.
+#
+# Example Use:
+#   % Insert = /Map%.Insert<String@>(/String/Eq%.Lt)<Int@>;
+#   Insert(map, Str(Chars|foo), 4);
+<@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
+Insert = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {
+  InsertWith<K@>(lt)<V@>(map, key, (Maybe@<V@> _) { value; });
+};
+
+# ForEach --
+#   Iterate over entries of a map.
+#
+# Type Parameters:
+#   K@ - the type of keys in the map.
+#   V@ - the type of values in the map.
+#   B@ - The type of value updated and returned by the foreach loop.
+#
+# Inputs:
+#   map - the map to iterate over.
+#   base - the initial value to update and return from the loop.
+#   body - the body of the loop.
+#
+# Returns:
+#   The result of applying the body consecutively to the base value, once for
+#   each entry in the map.
+#
+# Conceptually:
+#   B@ b = base
+#   foreach (k, v) in map:
+#     b = body(k, v, b)
+#   return b
+<@ K@, @ V@, @ B@>(Map@<K@, V@>, B@, (K@, V@, B@) { B@; }) { B@; }
+ForEach = <@ K@, @ V@, @ B@>(Map@<K@, V@> map, B@ base, (K@, V@, B@) { B@; } body) {
+  map.?(empty: base);
+
+  B@ b1 = base;
+  B@ b2 = ForEach<K@, V@, B@>(map.map.left, b1, body);
+  B@ b3 = body(map.map.key, map.map.value, b2);
+  ForEach<K@, V@, B@>(map.map.right, b3, body);
+};
+
+@(Map@, Entry@, Empty, IsEmpty, Lookup, Insert, InsertWith, Delete, ForEach);

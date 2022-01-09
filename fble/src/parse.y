@@ -417,6 +417,15 @@ expr:
       }
       FbleFree($3.xs);
    }
+ | expr '.' '<' expr '>' '(' expr ')' {
+     FbleAbstractCastExpr* cast_expr = FbleAlloc(FbleAbstractCastExpr);
+     cast_expr->_base.tag = FBLE_ABSTRACT_CAST_EXPR;
+     cast_expr->_base.loc = FbleCopyLoc(@$);
+     cast_expr->token = $1;
+     cast_expr->target = $4;
+     cast_expr->value = $7;
+     $$ = &cast_expr->_base;
+   }
  | expr '[' expr_s ']' {
       FbleListExpr* list_expr = FbleAlloc(FbleListExpr);
       list_expr->_base.tag = FBLE_LIST_EXPR;

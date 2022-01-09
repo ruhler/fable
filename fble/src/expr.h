@@ -41,8 +41,7 @@ typedef enum {
 
   FBLE_ABSTRACT_EXPR,
   // FBLE_ABSTRACT_TYPE_EXPR = FBLE_POLY_APPLY_EXPR
-  // FBLE_ABSTRACT_VALUE_EXPR = FBLE_MISC_APPLY_EXPR
-  // FBLE_ABSTRACT_ACCESS_EXPR = FBLE_POLY_APPLY_EXPR
+  FBLE_ABSTRACT_CAST_EXPR,
 
   FBLE_LIST_EXPR,
   FBLE_LITERAL_EXPR,
@@ -275,6 +274,15 @@ typedef struct {
   FbleName name;
   FbleExpr* body;
 } FbleAbstractExpr;
+
+// FbleAbstractCastExpr --
+//   FBLE_ABSTRACT_CAST_EXPR (token :: Type) (target :: Type) (value :: Expr)
+typedef struct {
+  FbleExpr _base;
+  FbleTypeExpr* token;
+  FbleTypeExpr* target;
+  FbleExpr* value;
+} FbleAbstractCastExpr;
 
 // FbleListExpr --
 //   FBLE_LIST_EXPR (func :: Expr) (args :: [Expr])

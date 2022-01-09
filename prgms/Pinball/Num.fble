@@ -39,66 +39,41 @@
 #   Scale factor for converting Int@ to Num@.
 Int@ S = IntI|128;
 
-(Num@, Num@) { Num@; } Add = (Num@ a, Num@ b) {
-  _@(AddI(a<_@>, b<_@>));
-};
+(Num@, Num@) { Num@; } Add = _@.<@<Add>>(AddI);
+(Num@, Num@) { Num@; } Sub = _@.<@<Sub>>(SubI);
+(Num@) { Num@; } Neg = _@.<@<Neg>>(NegI);
+(Num@) { Num@; } Abs = _@.<@<Abs>>(AbsI);
 
-(Num@, Num@) { Num@; } Sub = (Num@ a, Num@ b) {
-  _@(SubI(a<_@>, b<_@>));
-};
+(Num@, Num@) { Num@; } Mul = _@.<@<Mul>>((Int@ a, Int@ b) {
+  DivI(MulI(a, b), S).q;
+});
 
-(Num@) { Num@; } Neg = (Num@ a) {
-  _@(NegI(a<_@>));
-};
+(Num@, Num@) { Num@; } Div = _@.<@<Div>>((Int@ a, Int@ b) {
+  DivI(MulI(a, S), b).q;
+});
 
-(Num@) { Num@; } Abs = (Num@ a) {
-  _@(AbsI(a<_@>));
-};
+(Num@, Num@) { Bool@; } Eq = _@.<@<Eq>>(EqI);
+(Num@, Num@) { Bool@; } Gt = _@.<@<Gt>>(GtI);
+(Num@, Num@) { Bool@; } Ge = _@.<@<Ge>>(GeI);
+(Num@, Num@) { Bool@; } Lt = _@.<@<Lt>>(LtI);
+(Num@, Num@) { Bool@; } Le = _@.<@<Le>>(LeI);
 
-(Num@, Num@) { Num@; } Mul = (Num@ a, Num@ b) {
-  _@(DivI(MulI(a<_@>, b<_@>), S).q);
-};
-
-(Num@, Num@) { Num@; } Div = (Num@ a, Num@ b) {
-  _@(DivI(MulI(a<_@>, S), b<_@>).q);
-};
-
-(Num@, Num@) { Bool@; } Eq = (Num@ a, Num@ b) {
-  EqI(a<_@>, b<_@>);
-};
-
-(Num@, Num@) { Bool@; } Gt = (Num@ a, Num@ b) {
-  GtI(a<_@>, b<_@>);
-};
-
-(Num@, Num@) { Bool@; } Ge = (Num@ a, Num@ b) {
-  GeI(a<_@>, b<_@>);
-};
-
-(Num@, Num@) { Bool@; } Lt = (Num@ a, Num@ b) {
-  LtI(a<_@>, b<_@>);
-};
-
-(Num@, Num@) { Bool@; } Le = (Num@ a, Num@ b) {
-  LeI(a<_@>, b<_@>);
-};
-
-Show@<Num@> Show = (Num@ a) {
-  Strs[ShowI(a<_@>), Str|'/', ShowI(S)];
-};
+Show@<Num@> Show = _@.<@<Show>>((Int@ a) {
+  Strs[ShowI(a), Str|'/', ShowI(S)];
+});
 
 # Int --
 #   Integer literal.
 (List@<Decimal@>) { Num@; } Int = (List@<Decimal@> ds) {
-  _@(MulI(IntI(ds), S));
+  _@.<Num@>(MulI(IntI(ds), S));
 };
 
-(Num@) { Int@; } Floor = (Num@ a) {
-  DivI(a<_@>, S).q;
-};
+(Num@) { Int@; } Floor = _@.<@<Floor>>((Int@ a) {
+  DivI(a, S).q;
+});
 
-(Num@) { Num@; } Sqrt = (Num@ a) {
-  _@(SqrtI(MulI(a<_@>, S)).q);
-};
+(Num@) { Num@; } Sqrt = _@.<@<Sqrt>>((Int@ a) {
+  SqrtI(MulI(a, S)).q;
+});
 
 @(Num@, Add, Sub, Neg, Abs, Mul, Div, Eq, Gt, Ge, Lt, Le, Show, Int, Floor, Sqrt);

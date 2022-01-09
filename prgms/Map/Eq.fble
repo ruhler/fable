@@ -10,6 +10,8 @@
 <@>% Cons = /List%.Cons;
 <@>% Nil = /List%.Nil;
 
+% Map = /Map/Map%;
+
 <@,@>@ Map@ = /Map%.Map@;
 @ _@ = /Map%._@;
 <@,@>@ Entry@ = /Map%.Entry@;
@@ -29,7 +31,7 @@
 # Returns:
 #   True if the map is empty, false otherwise.
 <@ K@, @ V@>(Map@<K@, V@>) { Bool@; } IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
-  map<_@>.?(empty: True, map: False);
+  _@.<Map.Map@<K@, V@>>(map).?(empty: True, map: False);
 };
 
 <@ K@, @ V@>(Eq@<K@>, Eq@<V@>) { Eq@<Entry@<K@, V@>>; }

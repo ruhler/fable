@@ -4,9 +4,9 @@ fble-test {
 
   @ Bool@ = +(Unit@ true, Unit@ false);
 
-  # Basic abstract access.
+  # Basic abstract cast.
   @? Tok@;
   @ AbsBool@ = Tok@<Bool@>;
-  AbsBool@ t = Tok@(Bool@(true: Unit));
-  t<Tok@>.true;
+  AbsBool@ t = Tok@.<AbsBool@>(Bool@(true: Unit));
+  Tok@.<Bool@>(t).true;
 }

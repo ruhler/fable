@@ -238,7 +238,7 @@ Or do we want to require the compiler to do conservative analysis to say any
 code path (reachable or unreachable) that could lead to a vacuous value gets
 flagged as a compile time error?
 
-Bindings are allowed to defined variables with the same name as variables
+Bindings are allowed to define variables with the same name as variables
 already in scope, thus shadowing the variable already in scope. Except that
 the variables defined in a single let expression must have distinct names.
 
@@ -859,9 +859,13 @@ users.
 By default, users can use any operation supported by the type of a value,
 including field access, conditional access, function application, and so on.
 Abstract types are a mechanism to restrict users to interact with a value
-using a limited set of functions.
+using only those functions provided to them for that purpose.
 
-TODO: finish me.
+The approach to supporting abstract types is to introduce the concept of an
+abstract token type that allows you to create separate internal and external
+types for the same underlying value and to cast between them if you have
+access to the token type.
+
 8.1 Abstract
 ------------
 Abstract Syntax:
@@ -902,41 +906,27 @@ The token type must have been created using an abstract expression. The
 underlying type can be any type of kind @. The resulting abstract type has
 kind @.
 
-8.3 Abstract Value
-------------------
+8.3 Abstract Cast
+-----------------
 Abstract Syntax:
-  Expr ::= abstract_value (token :: Type) (value :: Expr)
+  Expr ::= abstract_cast (token :: Type) (target :: Type) (value :: Expr)
 
 Concrete Syntax:
-  expr ::= type '(' expr ')'
+  expr ::= type '.' '<' type '>' '(' expr ')'
 
 Example:
-  @? Tok@; Tok@(True);
+  @? Tok@;
+  @ AbstractBool@ = Tok@<Bool@>;
+  AbstractBool@ AbstractTrue = Tok@.<AbstractBool@>(True);
+  Bool@ OriginalTrue = Tok@.<Bool@>(AbstractTrue);
 
-Creates an abstract value accessed using the given token type and containing
-the given value. The type must be a token type created using an abstract
-expression.
+Casts a value between two types that are equal under the assumption that for
+all types T@, the type Tok@<T@> is equal to T@.
 
-The type of the result is an abstract type with the same token and underlying
-type equal to the type of the value.
+The type of the resulting value is the target type. It is a type error if the
+type of the value cannot be cast to the target type.
 
-8.4 Abstract Access
--------------------
-Abstract Syntax:
-  Expr ::= abstract_access (value :: Expr) (token :: Type)
-
-Concrete Syntax:
-  expr ::= value '<' type '>'
-
-Example:
-  x<Tok@>
-
-The value must be an abstract value. Returns the underlying value associated
-with the abstract value if the token type matches the token type used to
-create the abstract value. It is a compiler error if the token type does not
-match the token type used to create the abstract value.
-
-8.5 Example
+8.4 Example
 -----------
 The follow example shows how to define a three element enum type that can only
 be accessed externally using the provided methods.
@@ -946,13 +936,13 @@ be accessed externally using the provided methods.
   @? Tok@;
   @ Enum@ = Tok@<Impl@>;
 
-  Enum@ A = Tok@(Impl@(a: Unit));
-  Enum@ B = Tok@(Impl@(b: Unit));
-  Enum@ C = Tok@(Impl@(c: Unit));
+  Enum@ A = Tok@.<Enum@>(Impl@(a: Unit));
+  Enum@ B = Tok@.<Enum@>(Impl@(b: Unit));
+  Enum@ C = Tok@.<Enum@>(Impl@(c: Unit));
 
-  (Enum@) { Bool@; } IsA = (Enum@ e) { e<Tok@>.?(a: True, : False); };
-  (Enum@) { Bool@; } IsB = (Enum@ e) { e<Tok@>.?(b: True, : False); };
-  (Enum@) { Bool@; } IsC = (Enum@ e) { e<Tok@>.?(c: True, : False); };
+  (Enum@) { Bool@; } IsA = Tok@.<@<IsA>>((Impl@ e) { e.?(a: True, : False); });
+  (Enum@) { Bool@; } IsB = Tok@.<@<IsB>>((Impl@ e) { e.?(b: True, : False); });
+  (Enum@) { Bool@; } IsC = Tok@.<@<IsC>>((Impl@ e) { e.?(c: True, : False); });
 
   @(Enum@, A, B, C, IsA, IsB, IsC);
 
@@ -1254,8 +1244,7 @@ Expr ::=
 
  | abstract (name :: TypeName) (body :: Expr)
  | abstract_type (token :: Type) (type :: Type)
- | abstract_value (token :: Type) (value :: Expr)
- | abstract_access (value :: Expr) (token :: Type)
+ | abstract_cast (token :: Type) (target :: Type) (value :: Expr)
 
  | list (func :: Expr) (args :: [Expr])
  | literal (func :: Expr) (letters :: word)
@@ -1349,8 +1338,7 @@ expr ::=
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
  | type '<' type '>'                               (* abstract_type *) 
- | type '(' expr ')'                               (* abstract_value *) 
- | expr '<' type '>'                               (* abstract_access *) 
+ | type '.' '<' type '>' '(' expr ')'              (* abstract_cast *) 
 
  | expr '['[expr [',' expr [...]] ']'              (* list *)
  | expr '|' word                                   (* literal *)

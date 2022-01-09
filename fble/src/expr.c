@@ -188,6 +188,15 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_ABSTRACT_CAST_EXPR: {
+      FbleAbstractCastExpr* e = (FbleAbstractCastExpr*)expr;
+      FbleFreeExpr(e->token);
+      FbleFreeExpr(e->target);
+      FbleFreeExpr(e->value);
+      FbleFree(expr);
+      return;
+    }
+
     case FBLE_LIST_EXPR: {
       FbleListExpr* e = (FbleListExpr*)expr;
       FbleFreeExpr(e->func);

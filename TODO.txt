@@ -1,3 +1,7 @@
+* [lang] Update to new proposal for abstract types.
+ - Add test to verify you can't cast types illegally.
+ - Implement support for checking cast type equality.
+
 * [graphics]
  - Figure out what to do about my Triangle drawing implementation now that we
    can draw triangles directly.
@@ -31,8 +35,6 @@
 
    For example, (Unit@) { Unit@; }(xxx);
  - Try turning Int@ into an abstract type.
-
-* [lang] Allow something of kind <@>@ to be used where @ is expected.
 
 * [debugger] Improve support for printing variables
  - Add VarDebugInfo for function static variables.
@@ -101,6 +103,7 @@
  - see thoughts/fble.profile.txt
 
 * Fix missing dependency of generation of build.ninja on new spec tests.
+* Fix issue with build when removing a spec test.
 
 * Investigate why fork-race test generates so many functions with the same
   name? Is there a bug here somewhere? Shouldn't profile block names be

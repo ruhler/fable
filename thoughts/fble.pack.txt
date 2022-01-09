@@ -975,6 +975,7 @@ Considerations:
   compared to our current approach to packing?
 * What extra type information do we need to store for purposes of GC and
   native API?
+  None for GC. User has to track types for API.
 
 Steps to implement:
 * Convince myself we don't need to expose this stuff at the language level for
@@ -989,3 +990,9 @@ Steps to implement:
    allocated type objects.
 * Factor out type definitions as far as polymorphism allows.
  - Then we're done, hopefully.
+
+---
+
+Note: We don't have to worry about storing type info for GC. All GC needs to
+know is if it's packed or not. If it's packed, GC doesn't have to worry about
+it because it can't retain anything.

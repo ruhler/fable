@@ -1584,3 +1584,111 @@ are introducing some overhead to the cast now that you have to supply the
 target type, and if we want to hide that behind functions, we are back to
 introducing runtime overhead.
 
+---
+
+How to update the language specification to let you provide something of kind
+<@>@ where something of kind @ is expected?
+
+Places we currently do kind checks:
+* Checking if kinds of arguments to poly types are equal.
+* Checking if kinds of arguments to poly kinds are equal.
+* In let expression where type is not supplied to confirm the kind of the
+  value matches the kind of the variable.
+* In polymorphic application to check the kind supplied matches the kind
+  expected.
+
+The idea is if I have a poly that expects something of kind @, you should
+be able to supply something of kind <@>@, because it's abstract. The interface
+is @, and you can do everything with a <@>@ that you can do with an @. The
+other way around is not true: you can't do polymorphic application to
+something of kind @.
+
+The first idea would be to say: you can pass something of kind <@>@ in
+polymorphic application where something of kind @ is expected.
+
+This has implications for equality checks. For example, let's say I have a
+poly of kind: < <@>@ >@. In theory I could pass it something of kind @, so it
+could be used as if it was kind <@>@. That's a bit more complicated, but makes
+sense. If the only reason we check kind arguments to poly kinds are equal,
+then we rename KindsEqual to KindsAllowed, or some such, preserve the
+asymmetry, and implement it properly.
+
+How about the case of types? If I have something of type: <@ T@> { T@; },
+that's clearly different than something of type True@. I don't see how we
+could consider them the same.
+
+How about: <@ T@> { T@; } versus <<@>@ T@> { T@; }? Again, we don't have an
+equality relationship, because it is asymmetric, but you could use one where
+the other is expected? I see no need to support what would be a really rarely
+used feature like that. So let's say type equality requires kind equality
+still.
+
+Now the question of a let expression. If you have something Foo@ of kind <@>@,
+is it okay to write:
+
+  @ Bar@ = Foo@;
+
+In theory this would mean you could do Foo@<X@>, but not Bar@<X@>. But then,
+you may as well instead write this as <@>@ Bar@. What do you loose? Better
+information. You can do just as much.
+
+One argument would be if you want to treat it as an abstract entity and have
+the compiler verify you don't do any application to it. That way you could
+change the implementation to stop using polymorphism without effecting users.
+
+I feel like it could be a common mistake to write things like:
+
+@ Maybe@ = /Maybe%.Maybe@;
+
+It would be nice to have help from the compiler to tell you you made a
+mistake. On the other hand, I don't think anything can go wrong from this
+mistake. Any attempts to do application to Maybe@ will fail, and that will
+show you the mistake you made.
+
+Is it possible to manually wrap a polymorphic value as a non-polymorphic
+value? What does that even mean? For example, maybe I have a function that
+operates on lists of elements of kind @ that I want to work on lists of
+elements of kind <@>@, like the Length function. Can I do that in the language
+currently?
+
+I don't think so.
+
+Basically that would mean you can't do anything with whatever you are treating
+as a different kind. So it would have to have an abstract type.
+
+Potential options:
+1. keep things as they are now.
+2. allow <@>@ to be passed in poly application where @ is expected.
+3. add some way to convert something of kind <@>@ to abstract value of kind @
+4. in all language features, allow <@>@ where @ is expected.
+
+I don't think (3) or (4) are justified. Can I get away with just (2)? I think
+that makes sense semantically, as long as I recursively define what it means
+to allow some kind X to be used where some kind Y is expected.
+
+Interestingly, we could use abstract types to convert something to kind @,
+which would provide a work around for the case of applying higher kinded
+arguments to poly values. It works better if we make the improvements to
+abstract types suggested above that allow us to cast more complex types.
+
+---
+
+Trying out new approach for abstract types. The Map implementation makes me
+feel like this is nicer, and leans more towards having separate blocks for
+implementation (all internal access) and interface (summarized at the end with
+explicit types).
+
+I ended up putting the internal implementation in a completely separate file,
+where it looks exactly like how it would if I didn't make it abstract. And
+then a separate module for defining he abstract interface that only shows the
+types of the abstract interface.
+
+There's still the issue of how to do private modules. To have the full story,
+I think I'll want to define the token type in a separate private module. That
+will come some time down the line when I've worked out modular compilation
+better.
+
+I feel like it works out pretty well for my Num@ abstract type, both for
+functions that work directly with the underlying value, and with functions
+that need slight modification.
+
