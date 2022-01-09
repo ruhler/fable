@@ -174,7 +174,7 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      Ref(callback, abs->token);
+      Ref(callback, &abs->token->_base);
       Ref(callback, abs->type);
       break;
     }
@@ -397,8 +397,7 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      return HasParam(abs->token, param, &nv)
-          || HasParam(abs->type, param, &nv);
+      return HasParam(abs->type, param, &nv);
     }
 
     case FBLE_VAR_TYPE: {
@@ -550,16 +549,14 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
 
-      FbleType* token = Subst(heap, abs->token, param, arg, tps);
       FbleType* body = Subst(heap, abs->type, param, arg, tps);
 
       FbleAbstractType* sabs = FbleNewType(heap, FbleAbstractType, FBLE_ABSTRACT_TYPE, abs->_base.loc);
       sabs->_base.id = abs->_base.id;
-      sabs->token = token;
+      sabs->token = abs->token;
       sabs->type = body;
-      FbleTypeAddRef(heap, &sabs->_base, sabs->token);
+      FbleTypeAddRef(heap, &sabs->_base, &sabs->token->_base);
       FbleTypeAddRef(heap, &sabs->_base, sabs->type);
-      FbleReleaseType(heap, token);
       FbleReleaseType(heap, body);
       return &sabs->_base;
     }
@@ -642,6 +639,28 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
     .b = b->id,
     .next = eq,
   };
+
+  // For abstract cast, compare underlying types if the token types aren't
+  // opaque.
+  if (a->tag == FBLE_ABSTRACT_TYPE) {
+    FbleAbstractType* aa = (FbleAbstractType*)a;
+    if (!aa->token->opaque) {
+      bool equal = TypesEqual(heap, aa->type, b, &neq);
+      FbleReleaseType(heap, a);
+      FbleReleaseType(heap, b);
+      return equal;
+    }
+  }
+
+  if (b->tag == FBLE_ABSTRACT_TYPE) {
+    FbleAbstractType* ab = (FbleAbstractType*)b;
+    if (!ab->token->opaque) {
+      bool equal = TypesEqual(heap, a, ab->type, &neq);
+      FbleReleaseType(heap, a);
+      FbleReleaseType(heap, b);
+      return equal;
+    }
+  }
 
   if (a->tag != b->tag) {
     FbleReleaseType(heap, a);
@@ -754,7 +773,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* aa = (FbleAbstractType*)a;
       FbleAbstractType* ab = (FbleAbstractType*)b;
-      bool result = TypesEqual(heap, aa->token, ab->token, &neq)
+      bool result = (aa->token == ab->token)
                  && TypesEqual(heap, aa->type, ab->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
@@ -1260,7 +1279,7 @@ void FblePrintType(FbleType* type)
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      FblePrintType(abs->token);
+      FblePrintType(&abs->token->_base);
       fprintf(stderr, "<");
       FblePrintType(abs->type);
       fprintf(stderr, ">");

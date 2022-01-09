@@ -89,9 +89,13 @@ typedef struct {
 //   FBLE_TOKEN_TYPE
 //
 // An abstract token type.
+//
+// The 'opaque' field is used to control whether or not an abstract type
+// associated with this token type is considered equal to its underlying type.
 typedef struct {
   FbleType _base;
   FbleName name;
+  bool opaque;
 } FbleTokenType;
 
 // FbleAbstractType --
@@ -100,7 +104,7 @@ typedef struct {
 // A type protected by an abstract token type.
 typedef struct {
   FbleType _base;
-  FbleType* token;
+  FbleTokenType* token;
   FbleType* type;
 } FbleAbstractType;
 

@@ -1,7 +1,3 @@
-* [lang] Update to new proposal for abstract types.
- - Add test to verify you can't cast types illegally.
- - Implement support for checking cast type equality.
-
 * [graphics]
  - Figure out what to do about my Triangle drawing implementation now that we
    can draw triangles directly.
@@ -32,6 +28,7 @@
    Test you can only create abstract types using token types, not arbitrary
    types. In particular, not arbitrary abstract variable types.
    A test for application to non-data type.
+   Test more complex illegal casts.
 
    For example, (Unit@) { Unit@; }(xxx);
  - Try turning Int@ into an abstract type.

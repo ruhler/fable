@@ -1162,11 +1162,11 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           }
 
           FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
-          abs_type->token = &token->_base;
+          abs_type->token = token;
           abs_type->type = arg;
-          FbleTypeAddRef(th, &abs_type->_base, abs_type->token);
+          FbleTypeAddRef(th, &abs_type->_base, &abs_type->token->_base);
           FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-          FbleReleaseType(th, abs_type->token);
+          FbleReleaseType(th, &abs_type->token->_base);
           FbleReleaseType(th, abs_type->type);
 
           FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
@@ -1193,6 +1193,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleTokenType* token = FbleNewType(th, FbleTokenType, FBLE_TOKEN_TYPE, abs_expr->name.loc);
       token->name = FbleCopyName(abs_expr->name);
+      token->opaque = true;
 
       FbleTypeType* typeof_token = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, token->_base.loc);
       typeof_token->type = &token->_base;
@@ -1262,7 +1263,19 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      // TODO: Verify the cast is legal!
+      assert(token->opaque);
+      token->opaque = false;
+      bool legal = FbleTypesEqual(th, target, value.type);
+      token->opaque = true;
+
+      if (!legal) {
+        ReportError(expr->loc, "cannot cast value of type %t to %t\n", value.type, target);
+        FbleReleaseType(th, &token->_base);
+        FbleReleaseType(th, token_type);
+        FbleReleaseType(th, target);
+        FreeTc(th, value);
+        return TC_FAILED;
+      }
 
       FbleReleaseType(th, &token->_base);
       FbleReleaseType(th, token_type);
