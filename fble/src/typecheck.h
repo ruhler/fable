@@ -7,8 +7,29 @@
 #include "fble-load.h"
 #include "tc.h"
 
-// FbleTypeCheck -- 
-//   Run typecheck on the given program.
+// FbleTypeCheckModule -- 
+//   Run typecheck on the main module of the given program.
+//
+// An FbleTc is produced for the main module of the program. The FbleTc
+// produced is a type checked expression suitable for use in the body of a
+// function that takes the computed module values for each module listed in
+// module->deps as arguments to the function.
+//
+// Inputs:
+//   program - the program to typecheck
+//
+// Result:
+//   The type checked expression for the body of the main module, or NULL in
+//   case of failure to type check.
+//
+// Side effects:
+// * Prints messages to stderr in case of failure to type check.
+// * The user is responsible for freeing the returned FbleTc using FbleFreeTc
+//   when it is no longer needed.
+FbleTc* FbleTypeCheckModule(FbleLoadedProgram* program);
+
+// FbleTypeCheckProgram -- 
+//   Run typecheck on all modules of the given program.
 //
 // An FbleTc is produced for each module in the program. The FbleTc
 // produced is a type checked expression suitable for use in the body of a
@@ -17,18 +38,15 @@
 //
 // Inputs:
 //   program - the program to typecheck
-//   result - output variable assumed to be a pre-initialized vector.
 //
 // Result:
-//   true if successfull, false in case of failure to type check.
+//   An array of FbleTc, one for each module in the program, or NULL in case
+//   of error to typecheck.
 //
 // Side effects:
-// * Fills in result with type checked values in the same order as the modules
-//   in the program.
 // * Prints messages to stderr in case of failure to type check.
-// * The user is responsible for freeing any values added to the result vector
-//   when they are no longer needed, including in the case when FbleTypeCheck
-//   fails.
-bool FbleTypeCheck(FbleLoadedProgram* program, FbleTcV* result);
+// * The user is responsible for freeing the returned array and all FbleTc*
+//   values contained therein when no longer needed.
+FbleTc** FbleTypeCheckProgram(FbleLoadedProgram* program);
 
 #endif // FBLE_INTERNAL_TYPECHECK_H_

@@ -1168,38 +1168,24 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program)
 // FbleCompileModule -- see documentation in fble-compile.h
 FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program)
 {
-  FbleTcV typechecked;
-  FbleVectorInit(typechecked);
-  if (!FbleTypeCheck(program, &typechecked)) { 
-    for (size_t i = 0; i < typechecked.size; ++i) {
-      FbleFreeTc(typechecked.xs[i]);
-    }
-    FbleFree(typechecked.xs);
+  FbleTc* tc = FbleTypeCheckModule(program);
+  if (!tc) {
     return NULL;
   }
 
   assert(program->modules.size > 0);
   FbleLoadedModule* module = program->modules.xs + program->modules.size - 1;
-  FbleTc* tc = typechecked.xs[typechecked.size-1];
   FbleCompiledModule* compiled = CompileModule(module, tc);
 
-  for (size_t i = 0; i < typechecked.size; ++i) {
-    FbleFreeTc(typechecked.xs[i]);
-  }
-  FbleFree(typechecked.xs);
+  FbleFreeTc(tc);
   return compiled;
 }
 
 // FbleCompileProgram -- see documentation in fble-compile.h
 FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program)
 {
-  FbleTcV typechecked;
-  FbleVectorInit(typechecked);
-  if (!FbleTypeCheck(program, &typechecked)) { 
-    for (size_t i = 0; i < typechecked.size; ++i) {
-      FbleFreeTc(typechecked.xs[i]);
-    }
-    FbleFree(typechecked.xs);
+  FbleTc** typechecked = FbleTypeCheckProgram(program);
+  if (!typechecked) {
     return NULL;
   }
 
@@ -1208,10 +1194,9 @@ FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program)
 
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleLoadedModule* module = program->modules.xs + i;
-    FbleVectorAppend(compiled->modules, CompileModule(module, typechecked.xs[i]));
-    FbleFreeTc(typechecked.xs[i]);
+    FbleVectorAppend(compiled->modules, CompileModule(module, typechecked[i]));
+    FbleFreeTc(typechecked[i]);
   }
-
-  FbleFree(typechecked.xs);
+  FbleFree(typechecked);
   return compiled;
 }

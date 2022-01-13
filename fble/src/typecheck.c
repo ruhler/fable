@@ -2109,9 +2109,27 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType**
   return tc;
 }
 
-// FbleTypeCheck -- see documentation in typecheck.h
-bool FbleTypeCheck(FbleLoadedProgram* program, FbleTcV* result)
+// FbleTypeCheckModule -- see documentation in typecheck.h
+FbleTc* FbleTypeCheckModule(FbleLoadedProgram* program)
 {
+  FbleTc** tcs = FbleTypeCheckProgram(program);
+  if (tcs == NULL) {
+    return NULL;
+  }
+
+  FbleTc* tc = tcs[program->modules.size - 1];
+  for (size_t i = 0; i < program->modules.size-1; ++i) {
+    FbleFreeTc(tcs[i]);
+  }
+  FbleFree(tcs);
+  return tc;
+}
+
+// FbleTypeCheckProgram -- see documentation in typecheck.h
+FbleTc** FbleTypeCheckProgram(FbleLoadedProgram* program)
+{
+  FbleTc** tcs = FbleArrayAlloc(FbleTc*, program->modules.size);
+
   bool error = false;
   FbleTypeHeap* th = FbleNewTypeHeap();
   FbleType* types[program->modules.size];
@@ -2140,9 +2158,10 @@ bool FbleTypeCheck(FbleLoadedProgram* program, FbleTcV* result)
     if (tc.type == NULL) {
       error = true;
       types[i] = NULL;
+      tcs[i] = NULL;
     } else {
       types[i] = tc.type;
-      FbleVectorAppend(*result, tc.tc);
+      tcs[i] = tc.tc;
     }
   }
 
@@ -2151,5 +2170,13 @@ bool FbleTypeCheck(FbleLoadedProgram* program, FbleTcV* result)
   }
   FbleFreeTypeHeap(th);
 
-  return !error;
+  if (error) {
+    for (size_t i = 0; i < program->modules.size; ++i) {
+      FbleFreeTc(tcs[i]);
+    }
+    FbleFree(tcs);
+    return NULL;
+  }
+
+  return tcs;
 }
