@@ -2084,9 +2084,12 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
 //          as module->deps. size is module->deps.size.
 //
 // Results:
-//   The type checked module, as the body of a function that takes module
-//   dependencies as arguments and computes the value of the module. TC_FAILED
-//   if the module failed to type check.
+//   Returns the type, and optionally value of the module as the body of a
+//   function that takes module dependencies as arguments and computes the
+//   value of the module. TC_FAILED if the module failed to type check.
+//
+//   If module->value is not provided but module->type still type checks, this
+//   will return a Tc with non-NULL type but NULL tc.
 //
 // Side effects:
 // * Prints warning messages to stderr.
@@ -2104,8 +2107,48 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType**
     PushVar(&scope, name, FbleRetainType(th, deps[i]));
   }
 
-  Tc tc = TypeCheckExpr(th, &scope, module->value);
+  assert(module->type || module->value);
+
+  FbleType* type = NULL;
+  if (module->type) {
+    type = TypeCheckType(th, &scope, module->value);
+    if (type == NULL) {
+      FreeScope(th, &scope);
+      return TC_FAILED;
+    }
+  }
+
+  Tc tc = TC_FAILED;
+  if (module->value) {
+    tc = TypeCheckExpr(th, &scope, module->value);
+    if (tc.type == NULL) {
+      FreeScope(th, &scope);
+      FbleReleaseType(th, type);
+      return TC_FAILED;
+    }
+  }
+
   FreeScope(th, &scope);
+
+  if (type && tc.type) {
+    if (!FbleTypesEqual(th, type, tc.type)) {
+      ReportError(tc.type->loc, "the type %t does not match interface type %t for module ",
+          tc.type, type);
+      FblePrintModulePath(stderr, module->path);
+      fprintf(stderr, "\n");
+      FbleReleaseType(th, type);
+      FreeTc(th, tc);
+      return TC_FAILED;
+    }
+    FbleReleaseType(th, type);
+    return tc;
+  }
+
+  if (type) {
+    tc.type = type;
+    return tc;
+  }
+
   return tc;
 }
 

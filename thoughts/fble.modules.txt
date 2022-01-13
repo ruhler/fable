@@ -495,3 +495,22 @@ option to compile an entire package specified by directory root or something.
 Good. I think the next steps are clear. And I think this is worth implementing
 so we can start to split up fble programs more realistically.
  
+---
+
+What does it mean if a .fble.@ depends on a module that the .fble doesn't?
+There's nothing to stop it. Should we say that means both the .fble and
+.fble.@ modules depend on that module? Or should we distinguish between them?
+
+I expect in the normal case that the .fble.@ file depends on a subset of
+modules depended on by .fble. How about I don't make things complicated, just
+say you depend on all modules referenced from .fble.@ and .fble file if you
+are trying to load them both.
+
+I worry this is introduces some confusing, questioning cases. Having two
+definitions of a module. But we know they have to match, enforced by the
+compiler, and we know one is a type, so it's not like two different
+implementations really.
+
+Hopefully I can find a reasonable place to document the difference and
+interplay between .fble and .fble.@ files.
+

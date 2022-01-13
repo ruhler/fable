@@ -1,10 +1,10 @@
 * [modules]
- - Add 'type' field to FbleLoadedModule.
-   Typecheck it and compare to value type in typecheck if available.
  - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
  - Add support for loading .fble.@ files.
    And presumably some way to test this and something about it in the language
    spec?
+ - Test all combinations of .fble/.fble.@, with all combinations of type
+   errors in one or the other or both.
 
 * [graphics]
  - Figure out what to do about my Triangle drawing implementation now that we

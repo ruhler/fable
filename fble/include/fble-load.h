@@ -12,14 +12,22 @@ typedef struct FbleExpr FbleExpr;
 
 // FbleLoadedModule --
 //   Describes the abstract syntax for a particular module.
+//
+// Either one or both of 'type' and 'value' fields may be supplied. The
+// 'value' field is required to run or generate code for the module. The type
+// of the module can be determined either from the 'type' field or the type of
+// the 'value' field. If both 'type' and 'value' are supplied, the typechecker
+// will check that they describe the same type for the module.
 // 
 // Fields:
 //   path - the path to the module.
 //   deps - a list of distinct modules this module depends on.
-//   expr - the abstract syntax of the module.
+//   type - the abstract syntax of the module type. May be NULL.
+//   value - the abstract syntax of the module implementation. May be NULL.
 typedef struct {
   FbleModulePath* path;
   FbleModulePathV deps;
+  FbleExpr* type;
   FbleExpr* value;
 } FbleLoadedModule;
 

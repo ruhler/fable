@@ -118,6 +118,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_p
 
   FbleVectorInit(stack->module.deps);
   stack->tail = NULL;
+  stack->module.type = NULL;
   stack->module.value = FbleParse(filename, &stack->module.deps);
   if (stack->module.value == NULL) {
     error = true;
@@ -173,6 +174,7 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_p
     stack->deps_loaded = 0;
     stack->module.path = FbleCopyModulePath(ref);
     FbleVectorInit(stack->module.deps);
+    stack->module.type = NULL;
     stack->module.value = NULL;
     stack->tail = tail;
 
@@ -206,6 +208,7 @@ void FbleFreeLoadedProgram(FbleLoadedProgram* program)
         FbleFreeModulePath(module->deps.xs[j]);
       }
       FbleFree(module->deps.xs);
+      FbleFreeExpr(module->type);
       FbleFreeExpr(module->value);
     }
     FbleFree(program->modules.xs);
