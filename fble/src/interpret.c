@@ -827,7 +827,7 @@ FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
   FbleVectorInit(executable->modules);
 
   for (size_t i = 0; i < program->modules.size; ++i) {
-    FbleCompiledModule* module = program->modules.xs + i;
+    FbleCompiledModule* module = program->modules.xs[i];
 
     FbleExecutableModule* executable_module = FbleAlloc(FbleExecutableModule);
     executable_module->refcount = 1;

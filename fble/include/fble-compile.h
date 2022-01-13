@@ -33,14 +33,14 @@ typedef struct {
 // FbleCompiledModuleV -- A vector of compiled modules.
 typedef struct {
   size_t size;
-  FbleCompiledModule* xs;
+  FbleCompiledModule** xs;
 } FbleCompiledModuleV;
 
 // FbleCompiledProgram --
 //   A compiled program.
 //
 // The program is represented as a list of compiled modules in topological
-// dependancy order. Later modules in the list may depend on earlier modules
+// dependency order. Later modules in the list may depend on earlier modules
 // in the list, but not the other way around.
 //
 // The last module in the list is the main program. The module path for the
@@ -48,6 +48,16 @@ typedef struct {
 typedef struct {
   FbleCompiledModuleV modules;
 } FbleCompiledProgram;
+
+// FbleFreeCompiledModule --
+//   Free resources associated with the given module.
+//
+// Inputs:
+//   module - the module to free, may be NULL.
+//
+// Side effects:
+//   Frees resources associated with the given program.
+void FbleFreeCompiledModule(FbleCompiledModule* module);
 
 // FbleFreeCompiledProgram --
 //   Free resources associated with the given program.
@@ -59,8 +69,24 @@ typedef struct {
 //   Frees resources associated with the given program.
 void FbleFreeCompiledProgram(FbleCompiledProgram* program);
 
-// FbleCompile --
-//   Type check and compile the given program.
+// FbleCompileModule --
+//   Type check and compile the main module of the given program.
+//
+// Inputs:
+//   program - the program to compile.
+//
+// Results:
+//   The compiled module, or NULL if the program is not well typed.
+//
+// Side effects:
+// * Prints warning messages to stderr.
+// * Prints a message to stderr if the program fails to compile.
+// * The caller should call FbleFreeCompiledModule to release resources
+//   associated with the returned module when it is no longer needed.
+FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program);
+
+// FbleCompileProgram --
+//   Type check and compile all modules of the given program.
 //
 // Inputs:
 //   program - the program to compile.
@@ -73,7 +99,7 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program);
 // * Prints a message to stderr if the program fails to compile.
 // * The caller should call FbleFreeCompiledProgram to release resources
 //   associated with the returned program when it is no longer needed.
-FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program);
+FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program);
 
 // FbleDisassemble --
 //   Write a disassembled version of an instruction block in human readable

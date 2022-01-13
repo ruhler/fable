@@ -54,7 +54,7 @@ void FbleFreeExecutableModule(FbleExecutableModule* module);
 //   An executable program.
 //
 // The program is represented as a list of executable modules in topological
-// dependancy order. Later modules in the list may depend on earlier modules
+// dependency order. Later modules in the list may depend on earlier modules
 // in the list, but not the other way around.
 //
 // The last module in the list is the main program. The module path for the

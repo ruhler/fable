@@ -90,6 +90,7 @@ static FbleBlockId LinkProfile(Blocks* blocks, FbleName get, FbleName put);
 static void CompileExit(bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* tc);
 static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name);
+static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc);
 
 // NewLocal --
 //   Allocate space for an anonymous local variable on the stack frame.
@@ -1105,26 +1106,92 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name)
   return code;
 }
 
+// CompileModule --
+//   Compile a single module.
+//
+// Inputs:
+//   module - meta info about the module and its dependencies.
+//   tc - the typechecked value of the module.
+//
+// Results:
+//   The compiled module.
+//
+// Side effects:
+//   The user should call FbleFreeCompiledModule on the resulting module when
+//   it is no longer needed.
+static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
+{
+  FbleCompiledModule* compiled = FbleAlloc(FbleCompiledModule);
+  compiled->path = FbleCopyModulePath(module->path);
+  FbleVectorInit(compiled->deps);
+  FbleNameV args;
+  FbleVectorInit(args);
+  for (size_t d = 0; d < module->deps.size; ++d) {
+    FbleVectorAppend(compiled->deps, FbleCopyModulePath(module->deps.xs[d]));
+    FbleVectorAppend(args, FbleModulePathName(module->deps.xs[d]));
+  }
+
+  FbleName label = FbleModulePathName(module->path);
+  compiled->code = Compile(args, tc, label);
+  for (size_t i = 0; i < args.size; ++i) {
+    FbleFreeName(args.xs[i]);
+  }
+  FbleFree(args.xs);
+  FbleFreeName(label);
+  return compiled;
+}
+
+// FbleFreeCompiledModule -- see documentation in fble-compile.h
+void FbleFreeCompiledModule(FbleCompiledModule* module)
+{
+  FbleFreeModulePath(module->path);
+  for (size_t j = 0; j < module->deps.size; ++j) {
+    FbleFreeModulePath(module->deps.xs[j]);
+  }
+  FbleFree(module->deps.xs);
+  FbleFreeCode(module->code);
+  FbleFree(module);
+}
+
 // FbleFreeCompiledProgram -- see documentation in fble-compile.h
 void FbleFreeCompiledProgram(FbleCompiledProgram* program)
 {
   if (program != NULL) {
     for (size_t i = 0; i < program->modules.size; ++i) {
-      FbleCompiledModule* module = program->modules.xs + i;
-      FbleFreeModulePath(module->path);
-      for (size_t j = 0; j < module->deps.size; ++j) {
-        FbleFreeModulePath(module->deps.xs[j]);
-      }
-      FbleFree(module->deps.xs);
-      FbleFreeCode(module->code);
+      FbleFreeCompiledModule(program->modules.xs[i]);
     }
     FbleFree(program->modules.xs);
     FbleFree(program);
   }
 }
 
-// FbleCompile -- see documentation in fble-compile.h
-FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program)
+// FbleCompileModule -- see documentation in fble-compile.h
+FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program)
+{
+  FbleTcV typechecked;
+  FbleVectorInit(typechecked);
+  if (!FbleTypeCheck(program, &typechecked)) { 
+    for (size_t i = 0; i < typechecked.size; ++i) {
+      FbleFreeTc(typechecked.xs[i]);
+    }
+    FbleFree(typechecked.xs);
+    return NULL;
+  }
+
+  assert(program->modules.size > 0);
+  FbleLoadedModule* module = program->modules.xs + program->modules.size - 1;
+  FbleTc* tc = typechecked.xs[typechecked.size-1];
+  FbleCompiledModule* compiled = CompileModule(module, tc);
+
+  for (size_t i = 0; i < typechecked.size; ++i) {
+    FbleFreeTc(typechecked.xs[i]);
+  }
+  FbleFree(typechecked.xs);
+  return compiled;
+}
+
+// FbleCompileProgram -- see documentation in fble-compile.h
+FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program)
 {
   FbleTcV typechecked;
   FbleVectorInit(typechecked);
@@ -1141,25 +1208,8 @@ FbleCompiledProgram* FbleCompile(FbleLoadedProgram* program)
 
   for (size_t i = 0; i < program->modules.size; ++i) {
     FbleLoadedModule* module = program->modules.xs + i;
-
-    FbleCompiledModule* compiled_module = FbleVectorExtend(compiled->modules);
-    compiled_module->path = FbleCopyModulePath(module->path);
-    FbleVectorInit(compiled_module->deps);
-    FbleNameV args;
-    FbleVectorInit(args);
-    for (size_t d = 0; d < module->deps.size; ++d) {
-      FbleVectorAppend(compiled_module->deps, FbleCopyModulePath(module->deps.xs[d]));
-      FbleVectorAppend(args, FbleModulePathName(module->deps.xs[d]));
-    }
-
-    FbleName label = FbleModulePathName(module->path);
-    compiled_module->code = Compile(args, typechecked.xs[i], label);
-    for (size_t i = 0; i < args.size; ++i) {
-      FbleFreeName(args.xs[i]);
-    }
-    FbleFree(args.xs);
+    FbleVectorAppend(compiled->modules, CompileModule(module, typechecked.xs[i]));
     FbleFreeTc(typechecked.xs[i]);
-    FbleFreeName(label);
   }
 
   FbleFree(typechecked.xs);

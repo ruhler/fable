@@ -103,7 +103,7 @@ FbleValue* FbleLinkFromSource(FbleValueHeap* heap, FbleSearchPath search_path, F
     return NULL;
   }
 
-  FbleCompiledProgram* compiled = FbleCompile(program);
+  FbleCompiledProgram* compiled = FbleCompileProgram(program);
   FbleFreeLoadedProgram(program);
   if (compiled == NULL) {
    return NULL;

@@ -100,21 +100,20 @@ int main(int argc, char* argv[])
       return EX_FAIL;
     }
 
-    FbleCompiledProgram* compiled = FbleCompile(prgm);
+    FbleCompiledModule* module = FbleCompileModule(prgm);
     FbleFreeLoadedProgram(prgm);
 
-    if (compiled == NULL) {
+    if (module == NULL) {
       FbleFreeModulePath(mpath);
       return EX_FAIL;
     }
 
-    FbleCompiledModule* module = compiled->modules.xs + compiled->modules.size - 1;
     FbleFreeModulePath(module->path);
     module->path = FbleCopyModulePath(mpath);
 
     FbleGenerateAArch64(stdout, module);
 
-    FbleFreeCompiledProgram(compiled);
+    FbleFreeCompiledModule(module);
   }
 
   FbleFreeModulePath(mpath);

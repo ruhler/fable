@@ -387,3 +387,111 @@ optional? I'll need some thought to work out exactly how to do it, but the
 idea seems simple enough. Just need to manage the two different ways of
 loading things: full source versus mostly type dependencies.
 
+---
+
+Let me summarize what I think I may have said above, but I'm not sure.
+
+Modules:
+* Compile an individual module to a .o file.
+* Group .o files for modules from the same developer into a library file.
+* When reading dependencies, search for .fble or .fble.@ files to represent
+  the dependency. Type check, but don't generate code for these.
+
+A package is distributed as a library file along with a collection of
+.fble/.fble.@ files.
+
+How this supports private modules:
+* When you generate the library file, you have access to internal modules.
+* When you publish the library file, you do not provide a .fble/.fble.@ for
+  internal modules.
+
+There are two broad cases to consider:
+1. Compilation. fble-compile acts as described above. Generates a .o file for
+a module. Loads dependencies for types from .fble/.fble.@ files. The user can
+link against the distributed libraries.
+
+2. Interpreter. It's nice if we can avoid the extra compile step, otherwise we
+may as well make this a different compiler.
+
+The interpreter mode is kind of funny. You need the source for everything, or
+the ability to find and load .so files dynamically because you can't link them
+into the interpreter itself.
+
+---
+
+How I would implement modular compilation, assuming I didn't have to worry
+about the interpreter case:
+* FbleLoadedModule contains FbleExpr* type and FbleExpr* value.
+  FbleLoad loads value and optional type for main module.
+  FbleLoad loads type only for dependant modules, wrapping in typeof as needed
+  in case of .fble vs. .fble.@ file loaded.
+* FbleTypeCheck knows to get types for dependent modules.
+* FbleCompile returns code only for the main module.
+
+And the interpreter case?
+* Do things as we do today: load full, type check all, compile all, interpret
+  all, link together all.
+
+Perhaps what I want, then, is Module and Program variations on everything:
+* Add an FbleExpr* type field to FbleLoadedModule.
+  This is the value of the loaded .fble.@ file, if any.
+  States:
+   1. type && value: main module, loaded both. Typecheck confirms they match.
+   2. type only: loaded .fble.@. Use that for the type.
+   3. value only: loaded .fble. Use that for the type.
+* FbleLoadModule
+  Loads type && value for main, prefers type over value for non-main.
+* FbleLoadProgram
+  Loads type && value for main, loads type and value for non-main.
+
+Okay, so this brings up a tricky point I think I mentioned before. The graph
+for .fble could be different from the graph for .fble.@. Is that an issue? Can
+we assume they can be sorted the same way?
+
+For modular compilation, we do want to check that the type of main.fble.@
+matches the type of the value main.fble. We need to load both main.fble.@ and
+main.fble. Then main.fble.@ loads its own graph and main.fble loads its own
+graph. Either we process them as two separate graphs, or we load them all at
+once. To load them all at once requires the merged graph not be cyclic. I
+think that's fine. It maybe means we have to load all the dependencies for
+main.fble.@ and main.fble before we can add the FbleLoadedModule. That's fine.
+Should be straight forward if we do them as a group.
+
+* FbleTypeCheck
+  Type checks all loaded type && value for all modules.
+  Verifies type matches value for all modules if both are present.
+
+* FbleCompileModule
+  Compiles only the main module (type checks all).
+  In particular, does not compile .fble files used just for type information.
+
+* FbleCompileProgram
+  Compiles all modules.
+
+* FbleCompile
+  To simplify things getting started, maybe just have the compiler compile any
+  module with a value loaded. We can ignore the results of any we don't care
+  about. The performance optimization is to skip compilation for modules we
+  don't care about.
+
+Yeah, so incrementally we want:
+* Add 'type' field to FbleLoadedModule.
+* FbleLoad implements FbleLoadProgram behavior: load whatever .fble.@ and
+  .fble we find.
+* FbleTypeCheck checks all types and values and types against values.
+* FbleCompile compiles everything with a value.
+
+And we later optimize to not load .fble if we can load just .fble.@, and to
+not compile any values we aren't going to use.
+
+This raises a question: should we have a compilation mode that generates code
+for an entire program in one go? It would be faster, because we don't have to
+reload all the dependencies for everything in separate calls to the compiler.
+But it would complicate the interface because we need to generate multiple
+files instead of a single file, and need to come up with names for those. No.
+Let's not worry about compilation time for now. Maybe some day I can have an
+option to compile an entire package specified by directory root or something.
+
+Good. I think the next steps are clear. And I think this is worth implementing
+so we can start to split up fble programs more realistically.
+ 

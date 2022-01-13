@@ -83,15 +83,15 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleCompiledProgram* compiled = FbleCompile(prgm);
+  FbleCompiledModule* compiled = FbleCompileModule(prgm);
   FbleFreeLoadedProgram(prgm);
 
   if (compiled == NULL) {
     return EX_FAIL;
   }
 
-  FbleDisassemble(stdout, compiled->modules.xs[compiled->modules.size - 1].code);
+  FbleDisassemble(stdout, compiled->code);
 
-  FbleFreeCompiledProgram(compiled);
+  FbleFreeCompiledModule(compiled);
   return EX_SUCCESS;
 }
