@@ -514,3 +514,233 @@ implementations really.
 Hopefully I can find a reasonable place to document the difference and
 interplay between .fble and .fble.@ files.
 
+---
+
+Trying out to see how some .fble.@ files would look written by hand... it
+feels rather tedious to me. It feels almost like I want a different language
+for the .fble.@ file, which is like the normal .fble file, except with the
+definitions of things removed, in some cases.
+
+For example, what if I used Undef to define all values?
+
+Or, should I prefer auto-generated .fble.@ files? But then, what's a good way
+to read documentation for the library? Is it bad to try and overload the
+purpose of .fble.@ for compiler and human consumption? If it's not for human
+consumption, why not just use the .fble file for the implementation file?
+
+Remember the goal: only read what we need from the modules to know their type.
+If we use the full .fble file, we end up reading dependencies that exist
+solely for the implementation.
+
+Also, I'm not sure how abstract data types can work with separate .fble.@ and
+.fble files, because they will be considered as having two different types.
+How do we map the type in the .fble.@ file to the type in the .fble file?
+
+---
+
+Revisiting the goal of modules. There are a few different ones:
+1. Providing documentation for users on how to use a module without the
+distraction of implementation details.
+
+2. Efficiently providing the type of a module to a compiler.
+
+3. Making it possible to compile a module without the full implementation of
+the modules it depends on, so it's possible to restrict access to internal
+parts of that implementation.
+
+4. Making it possible to implement a module outside of the language.
+For example, for printf, or a hypothetical optimized integer library.
+
+Thoughts on documentation:
+
+In practice when programming I use man pages, reference guides, wikis for
+documentation. It's only my own code where I tend to refer to comments on the
+prototypes of functions. I've never found things like Deoxygen output useful.
+Occasionally it's useful to read comments in code, and that tends to be in the
+implementation file anyway.
+
+In other words, I'm not convinced documenting code via comments on a header
+file like thing separate from the implementation is anything fundamental.
+There are lots of ways to document code. We could have doc comments in the
+implementation and write tools to auto generate online reference guides or
+documentation.
+
+Items (2), (3) and (4) are, to me, really about specifying just the type of a
+module, separate from its implementation. This could be a machine
+representation, it need not be human produced or consumed.
+
+The dream is that you specify the type of a module in a human readable format
+where you can also document things.
+
+In practice, most modules I write have a struct type.
+
+But fble can already be used to describe types. What's so tedious about it?
+Really, honestly?
+
+* Annoying to do @<Foo@> Foo@ for a type. I rather do @(Foo@, ...).
+* Annoying to have indent of *( T@ t, ... ). I rather directly do 
+   T@ t;
+* Annoying to have to duplicate a complex type like Char@ from implementation
+  to type.
+* Annoying to have to give the type of something like Chars, which we
+  otherwise never have to write explicitly.
+
+I almost wish we had a special language construct designed to help here.
+For example, what if we had a special kind of statement:
+
+type name ';' stmt
+
+The meaning of this is declare a variable of given type and name. The type is
+the type of the body of the statement. At runtime this gives a runtime error
+'unimplemented'.
+
+It's okay to use for describing types, because you don't ever run the code.
+
+This gets around the tedious concerns. And there's nothing I can do to get
+around having to give the type of something like Char@ or Chars. And that's a
+fairly special case. We don't often have some complicated types. And users
+would need to know those types regardless.
+
+@ Chars@ = *(Char@ nl, Char@ tab, Char@ ' ', ...);
+Chars@ Chars;
+
+This is the best of all worlds, right? You get full fble syntax for describing
+types in a human readable format. You can put documentation with those types.
+You have a pleasant syntax for putting the types. We don't have to have two
+separate syntaxes for header and implementations.
+
+A couple of questions to follow up on:
+1. Should we require a .fble.@ file for every module?
+2. How do we support abstract types this way?
+3. Should the .fble.@ file give the value or the type? Like, end in @(...) or 
+  @<@(...)>?
+4. Should there be a way to reference the type from a .fble.@ in the .fble
+file, or do we really need to duplicate things like the definition of Char@?
+
+---
+
+Here's an idea, just for the fun of it. What if we allowed you to write
+abstract values and abstract types, such as:
+
+@ Bool@;
+Bool@ True;
+...
+
+And we said the way you provide an interface for a module is by providing a
+file with the same type as the module.
+
+And we said this replaces abstract types. That way, instead of having two
+different mechanisms for access control, we have a single one that works for
+both.
+
+For example, say you have two versions of Map.fble, the public and the private
+one. The private one has the full type def. Anyone allowed access to the
+internals sees the private one. Anyone without access to the internals sees
+the public one. For the purpose of typecheck, the public Map@ type is an
+abstract type you can't create or access.
+
+This brings up a question of how hard it should be to break abstraction. For
+example, let's say you use the Map@ library and want to work around the access
+issue. What do you have to do?
+
+Without any restriction, you have to try hard not to accidentally modify the
+Map. With abstract data types, you have to not import the token type. It's
+much harder to accidentally access internals. If we say you can implement fble
+modules outside the language, then there is nothing stopping you from
+accessing internals of the type that way.
+
+I think, in practice, it's good enough if we just provide a .so file and
+public Map.fble to prevent people from accessing internals. They would have to
+go out of their way, and then it's on them.
+
+But what if you have access to both the internal and external Map.fble? For
+example, because you want to run the interpreter, or because you are the
+implementer of Map.fble and some modules that should treat it as an abstract
+type?
+
+I'm basically saying access control is done at build time based on how you
+compile. You pick what can access something by pointing it to the public files
+or the private files. Again, if you don't have the private files, that's easy.
+But if you have both, it's on you to make sure you don't access what you
+shouldn't be accessing.
+
+Could we have two different types? The internal Map@ type, and the public Map@
+type, so that an extra step is required to explicitly access internals?
+
+How would the build setup look like, if I were to follow this? Conceptually I
+don't really want to manage on a per file basis what files things can access.
+I want packages. So each package has the source code and the public API, let's
+say they belong in different folders.
+
+To compile a package P, with public code in P_api and source code in P_src, I
+say P_src code has access to *_api for all packages it depends on, and P_src
+for implementation.
+
+If only there was some lighter weight way to group modules together. For
+example, Int@ and Map@ seem like good candidates for a core package, but it
+would be nice if Int@ couldn't see inside Map@. Or, for pinball, Num@ should
+be part of the package, but still not visible. It's like, it would be nice to
+have sub-packages. A fine grained hierarchy of packages.
+
+How might I describe that for the current collection of modules I have
+written? In general it's a graph. Not a total order. It's an abstraction of
+the module graph.
+
+Let's think about packages then. A package is a named set of modules. A
+package can depend on other packages. A module within a package may only
+reference modules from the package or packages the package depends on.
+
+That's not too hard. We could have a package format, like, name, list of
+modules, list of packages depended on.
+
+Next we introduce the notion of a subpackage. Or, conversely, a way to group
+together a collection of packages into a bigger package.
+
+A composite package is a named package that depends on other packages and
+provides a list of packages implementing it. Packages inside the composite
+package can only depend on each other or packages depended on by the composite
+package. A module acts as an atomic package.
+
+So, essentially, I just want a package to be able to denote the boundary
+between where the internal version of a module is used instead of the
+external version of the module. Well, that and restricting the set of
+dependencies a module is allowed to have. That's important too.
+
+---
+
+I'm sort of leaning towards my old package idea.
+
+A module is a module and a package. For example, /Foo% is the module /Foo% and
+the package /Foo%. These are organized hierarchically. For example:
+
+Core/
+  Map/...
+Pinball/...
+
+The package /Foo% includes the module /Foo% and all modules / packages in the
+/Foo/ directory.
+
+A package has a name, a list of direct modules/packages in the implementation,
+and a subset of those that are 'public', meaning they can be accessed by
+modules that are not in a sibling package. And a package has a list of other
+packages it can depend on.
+
+By default a package can depend on any other package that any of it's modules
+depends on, and a package exports all entities as public.
+
+If you want, you can specify a .fble.@ file for a module to give its public
+interface. Modules in sibling packages have access to the .fble file, all
+others see it using the .fble.@ interface.
+
+If you want, you can specify a .fble.# (or whatever syntax I want) file, which
+gives non-default package info: a list of packages it can depend on, and the
+list of children that it exports publicly. Not sure what the syntax should be.
+Maybe:
+
+  a; b; c;    (Imported)
+  @(x, y, z, ...);  (Exported)
+
+This gives us fined grain packaging. And we can distribute a package as a set
+of just .fble.@ files and .o files, or .fble.@ files and a .so file.
+
+Let me play around with this idea and see what it might look like in practice.
