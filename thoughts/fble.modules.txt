@@ -744,3 +744,347 @@ This gives us fined grain packaging. And we can distribute a package as a set
 of just .fble.@ files and .o files, or .fble.@ files and a .so file.
 
 Let me play around with this idea and see what it might look like in practice.
+
+---
+
+Things that came up when playing around:
+
+1. Let's say I want Unit, Bool, etc. to all be together in a single Core
+package, so that we can say other packages can depend on Core, but not other
+things. That means I would have to move all those things to the Core/
+directory, which would mean I have to update all the modules paths to include
+Core/. But I don't really want to do that. And how do you know what goes into
+Core or not in that case?
+
+If the goal is to restrict the modules some app can depend on, what's the
+criteria for what that set should be? 
+
+If you have two package developers, how do you prevent them from unknowningly
+defining modules with the same path? The only way is to require they know
+their package name and that their package names don't conflict. That suggests
+that if you are providing a module Bool as part of a package Core, then the
+module should really be called /Core/Bool, not /Bool.
+
+As a corollary, every module at the top level of the hierarchy must be in its
+own package. Because if it was in another package, that other package would
+own the entire namespace, meaning it would be the only package that could
+exist.
+
+There is a need, at the global level, to prevent conflicts. You need a single
+package database that owns a namespace and can allocate parts of that
+namespace to separate entities. Ideally, like anything else, it's
+hierarchical. You could have a sub namespace that is manage by some
+organization that allocates parts of it to other organizations. The point is,
+the unit of allocation is directory: if you can put things in a directory, you
+are the sole entity that can put things in that directory.
+
+2. If you reference some module Bar from Foo.fble.@, does that bring in the
+internal version of Bar or the public version of Bar?
+
+For values, we should only need the public version of Bar. I think it only
+matters for types, because Foo.fble.@ is only used for types. So, imagine Bar
+is Map, and Foo.fble wants to export something that works with Map@. It should
+be fine for Foo.fble.@ to only refer to the abstract Map@ type, because it
+doesn't need to access internals.
+
+Is it possible we have a third module that imports Foo, but also has access to
+the private version of Map@? Perhaps it's part of the Map implementation that
+wants to reuse Foo, and Foo is not part of the Map implementation. How do we
+reconcile the two map types, the one read from Map.fble for internal use and
+the one read via Foo from Map.fble.@?
+
+This suggests to me, that for consistency sake, what matters for determining
+use of .fble versus .fble.@ is the main module being compiled. If you want to
+compile module X, and X depends on Y depends on Z, then when Y refers to
+module Z, it should see the version of Z visible to X.
+
+That sounds pretty confusing to me. If only values are abstract, then it
+should always be safe to read the .fble.@ file. But if types may or may not be
+abstract, then ... ? Can we say something like: if Y depends on Z, and Y
+compiles under Z.@, and Z is consistent with Z.@, that guarantees that Y will
+compile under Z, so when X references Y, it's okay to do so with Y having
+access to Z?
+
+3. I find the .fble.@ files pretty appealing in terms of providing
+documentation and including just what you need to know to understand how to
+use a module, without the distraction of an implementation.
+
+For example, lots of the Tests.fble.@ files are just three lines of code,
+compared to hundreds for the corresponding Tests.fble file.
+
+4. It's kind of nice having to write down explicitly dependencies for
+packages. For example, given I know the Core package has no external
+dependencies, that makes it very clear what all has to be grouped together as
+part of the core package.
+
+5. Subpackages must be able to depend on each other recursively. So it would
+seem that packages should be able to depend on each other recursively as well?
+Isn't that scary?
+
+For example, Unit/Show% is part of Unit package, depends on String package.
+String depends on Unit. So that's a package cycle, even if not a module cycle.
+I argue this is fine because really all of 'Core' is compiled together. So, it
+would seem, 'Core' is a real package, and somehow 'Unit' and 'String' are not?
+
+That begs the question: is there really any such thing as a subpackage? Or,
+what is the meaning if explicit package dependencies? If a module in a package
+can freely refer to any other modules in the package, it makes sense that a
+package in a package can freely refer to any other package in the package.
+
+It does mean that you can't necessarily compile a sub-package in isolation.
+You can't compile the Unit package without compiling the String package, and
+you can't compile the String package without the Unit package.
+
+We could, in theory, compile Unit and String sub packages separately, if we
+had the interfaces to the corresponding package. But then, how would we know
+if the implementations depend on each other or not? How could you check that
+at compile time?
+
+6. How to handle top level module of a package?
+
+The Core package has no top level module. It's easy. Everything is under Core,
+and Core just has to export those immediate packages under it.
+
+For Stdio, we have a /Stdio% module. Maybe we say /Stdio% module is always
+included in Stdio.fble.# package, and additionally we list some other modules
+that are exported.
+
+What about something like /Map%, where it seems like we should have Map and
+Set both in the same package, but if the package is Map, and we have /Map%,
+that means we have to have /Map/Set%? Wouldn't you rather have /Map/Map% and
+/Map/Set%? That almost suggests that you should not be allowed to have a
+module and package with the same name? As if a package is a directory and a
+module is a file. You don't have something that is simultaneously a directory
+and a file.
+
+Then we would have /Stdio/Stdio%. Package and module separate. And where
+should Cat% and Test% go? In /Stdio/Test and /Stdio/Cat? Or /Stdio/Stdio/Test
+and /Stdio/Stdio/Cat? Clearly the former.
+
+But then, how can we have /Core/Int% module with /Core/Int/IntP inside? Are
+you suggesting instead we have /Core/Int/Int%? /Core/Int is the package name
+and Int% is the module within that? Or, in this case, should we not bother
+making /Core/Int an official package, so we can have a module named /Core/Int%
+and Core/Int/Test%?
+
+Let's say we have a package Core, and under Core is a package Int, and we have
+a module /Core/Int%. Does that belong to the Core package or the Int package?
+Where it would make a difference is if the Int package hides some internal
+modules. The question is, should /Core/Int% have access to those internal
+modules or not? I lean towards saying /Core/Int% is part of the Int package,
+but it kind of only makes sense to make that a public part of the /Core/Int%
+package?
+
+---
+
+Let's work out some details for abstract types.
+
+The question: how can we define a type that is abstract for everyone outside
+of a package, but visible to everyone inside a package?
+
+If it's visible to everyone inside a package, the type must be exported from
+the module that defines it. It could be exported privately or publicly.
+
+Privately means anyone in the same package can access it? Then say we define
+it in /Map%, with Map.fble.@ not defining it, but Map.fble defining it. And we
+have a Map package, so any module under /Map/... should have access to it, and
+anyone else not.
+
+/Foo% imports /Map% directly, gets the abstract type.
+/Map/Foo% imports /Map% directly, gets the defined type.
+/Foo% imports /Map/Foo%, gets the /Map/Foo.fble.@ file. Then say
+/Map/Foo.fble.@ gets the abstract type.
+
+Which would suggest: when referencing a module from a .fble file in the same
+(or privately accessible) package, you read the .fble file of the imported
+module. When referencing a module from a .fble file of a non accessible
+package, you read the .fble.@ file. When referencing a module from a .fble.@
+file, you always read the .fble.@ file.
+
+It still feels weird to me that abstract values can be guaranteed to make no
+difference reading .fble versus .fble.@, but abstract types can.
+
+Let's say we export the definition of a type publicly in an internal module.
+Eventually, for a user to be able to refer to the type, we have to export it
+from someone who can see the original type definition.
+
+Going back to the private approach. /Map/Foo% imports /Foo% and /Map%, and
+/Foo% imports /Map%. Now we have two different Map@ types, the one defined and
+visible from /Map%, and the abstract one from /Foo% --> /Map%.
+
+Okay, now lets explore an approach based on token types. Say there is no such
+thing as an abstract type in .fble.@. .fble.@ and .fble have exactly matching
+types. How would this work?
+
+* Define the implementation type in a private internal module. Everyone in the
+package has access, nobody outside the package has access.
+* Define a token type in a private internal module. Everyone in the package has
+access, nobody outside the package has access.
+* Define the abstract type in a public module that references the internal
+  module for the token type and the internal type. Only export the abstract
+  type.
+
+Now /Foo% imports /Map%, which imports /Map/Map% and /Map/Tok%. /Foo% cannot
+access /Map/Map% or /Map/Tok%, but /Map% can. This means access control is
+based on where the reference comes from, not the main module being compiled.
+That's different from my other approach, where type consistency requires
+everything see the same definitions.
+
+But now we have a situation where we have to ship /Map/Map% and /Map/Tok%
+with the package, because they are needed to be able to compile /Foo%. In an
+ideal world, though, they shouldn't be needed to compile /Foo%. /Foo% doesn't
+actually need to know anything about the Map@ type.
+
+Going back to the private approach again. /Map/Foo% imports /Foo% and /Map%,
+and /Foo% imports /Map%. This implies that the Map package depends on the Foo
+package, and the Foo package depends on the Map package. Which means they
+cannot be compiled in isolation. Which brings us back to the question of sub
+packages.
+
+Let's imagine there we are not allowed to have cyclic package dependencies.
+Does that solve the abstract type issue? A-cyclic package dependencies means
+there is a total order in which you can compile packages. When compiling a
+package, all modules inside the package have access to the internal type
+definitions inside the package. Modules have access only to the public type
+definitions for modules outside the package.
+
+It's almost like you want three different files: .fble that does the
+implementation, .fble.pkg.@ which does the package internal interface, and
+.fble.@, which does that public interface. Or, to be able to say there is some
+internal package defining this type, but that package is not visible to
+external users.
+
+Something like:
+
+@ Map@ = /Map/Map%.Map@;
+
+Where /Map/Map% is private to the module. In other words, we allow you to
+refer to modules that don't exist (in the publicly visible set of modules)
+from a publicly visible .fble.@ file. Which brings us back to the 2 interfaces
+idea: a package internal interface and a package public interface, both
+separate from the implementation.
+
+Let's be honest. We only ever want to access a module via its interface,
+regardless of whether we are in the same package or not. Abstract types
+implies multiple separate interfaces for a module.
+
+---
+
+Here's an idea for supporting abstract types with modules. It's based on the
+idea of having public/private key pairs. For example, normal cryptographic,
+or, say, module name, where the compiler enforces that only a module can
+create it's private key.
+
+We have a public token type that takes a public key as part of the name.
+
+  @ _@ = ?(/Map/Private%);
+
+Anyone can create abstract types from the public token type:
+
+  @ Map@ = _@<Map@>;
+
+If you want to cast, you have to have access to the private token.
+
+  @? key;   # key has type ?(/Map/Private%), assuming this is declared in
+            # the module /Map/Private%.
+
+And you can use the key to cast.
+
+    key.<target>(source)
+
+key has the ability to cast anything abstract via type @<key>.
+
+Hmm... be a little careful. We need the key to be real. We don't want people
+doing things like: Maybe@<_@>.just.<target>(source). So either have a runtime
+check that the key is valid, or use a slightly different type for key that you
+can't write down.
+
+---
+
+A few more thoughts:
+* I think the compiler needs to know the internals of an abstract type when
+  compiling the user code. Because, depending on the language implementation,
+  the compiler will need to know how much space or what the runtime layout of
+  the type is. This suggests it's not sufficient to withhold the internal type
+  from external packages.
+
+* It would really be great if we could use the same mechanism to prevent users
+  from accessing internal modules as we do to prevent users from accessing
+  internals of an abstract type. I would prefer not to have two separate
+  mechanisms.
+
+* We can generalize the idea of keys and tokens and casting conceptually.
+  Add a type to the language which describes the set of modules with access.
+  That's our token type. Only modules in the list can do the cast to and from
+  token type wrapped values. Whether the set of modules is the current module,
+  any module with access to the type, an explicit list of modules, or
+  implicitly any modules in "this" package is a detail from that point of
+  view.
+
+* Random idea that I'm not convinced makes sense: if an internal module has
+  some module type, maybe we wrap that module type in an abstract type. That
+  way only people with access to the internals of the abstract type can
+  actually use the module. In other words, instead of using module access to
+  restrict access to abstract types, I feel like we could just as easily, or
+  perhaps even more naturally, restrict module access using abstract types.
+  And this could give us finer granularity of restriction. For example, maybe
+  some fields of a module are public and some are private. It's not all or
+  nothing, it's value by value based on their corresponding types.
+
+* It's still useful to have modules as separate entities for the purposes of
+  limiting dependencies, even if you have to ship something as a package. For
+  example, you could imagine statically compiling a binary. It would be nice
+  to only have to include implementation code for the modules used, not the
+  entire package.
+
+---
+
+If we want to support private modules easily, it would be good to have syntax
+in addition to cast that knows how to directly wrap and unwrap values. Then,
+for example, we could do something like:
+
+_@(@(...));
+
+To mark a module as private. And
+
+% Foo = /Foo%.@;
+
+To unwrap, assuming we unwrap in a module that has access. 
+
+---
+
+Taking a step back, here's where I'm at.
+
+1. It's nice to have separate interface files for each module, for human
+documentation purposes. I think that can be done as an orthogonal language
+feature. Header files can have undefined values, but not undefined types.
+
+2. It's nice to organize modules together by package. I can do this today by
+putting separate modules in separate subdirectories, allowing multiple paths
+to be passed to the compiler, and building packages with access to just the
+packages they depend on.
+
+3. From (1) we get the ability to distribute packages with header files but
+without source files. And we get the ability to implement a module in a
+different language.
+
+4. What's left is
+a. A question of trust: can you disallow untrusted users from creating values
+   passed to your APIs. Solve by abstract type token, which essentially gives
+   access to an explicit list of trusted modules.
+b. A question of upgradability: can you restrict the APIs that a user uses so
+   that you can make updates without breaking them. This could be entire
+   modules to mark as private, or fields of abstract types. It feels to me
+   like this is tied up with the question of version numbers and the ability
+   to make backwards/forwards compatible changes to a module or package.
+
+In both these cases users may be within a distributed package boundary. For
+example, Core is a distributed package boundary, Int and String are within.
+That suggests to me that compile time hackery is not the right answer. We want
+a language feature for access restriction.
+
+I think it's worth thinking more about backwards/forwards compatible changes,
+and what language features would enable them. For example, perhaps a read only
+unordered struct type would help, because you could add members without
+breaking things, allowing for a wide range of compatibility.
+
