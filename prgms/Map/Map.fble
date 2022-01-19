@@ -11,8 +11,8 @@
 <@>% Nothing = /Maybe%.Nothing;
 <@>% Just = /Maybe%.Just;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # Balance@ --
 #   Keeps track of how well balanced a map node's children are.

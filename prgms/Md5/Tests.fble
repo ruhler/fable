@@ -29,8 +29,8 @@
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # Import to test compilation.
 % _ = /Md5/Bench%;

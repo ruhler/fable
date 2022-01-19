@@ -31,8 +31,8 @@
 % Ge = /Int/Eq%.Ge;
 % Int = /Int/Lit%.Int;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # Draw@ --
 #   A function to draw a triangle in 3D.

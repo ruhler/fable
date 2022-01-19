@@ -1,5 +1,5 @@
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # Maybe@ --
 #   Type representing an optional value.

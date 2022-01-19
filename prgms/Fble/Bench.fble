@@ -16,8 +16,8 @@
 % Str = /String%.Str;
 % Strs = /String%.Strs;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Benchmark@ = *(String@ name, Unit@! bench);
 

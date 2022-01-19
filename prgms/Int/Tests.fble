@@ -13,7 +13,7 @@
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
 
-% Unit = /Unit%.Unit;
+% Unit = /Core/Unit%.Unit;
 
 @ Int@ = /Int%.Int@;
 % 0 = /Int%.0;

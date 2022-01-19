@@ -27,8 +27,8 @@
 % Str = /String%.Str;
 % Strs = /String%.Strs;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ TestResult@ = +(Unit@ pass, String@ fail, Unit@ xfail);
 @ TestCase@ = *(String@ name, TestResult@! test);

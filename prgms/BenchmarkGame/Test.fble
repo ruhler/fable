@@ -18,8 +18,8 @@
 @ Test@ = /Test%.Test@;
 <@>% AssertEquals = /Test%.AssertEquals;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 (String@, Stdio@, String@, String@) { Test@; }
 Test = (String@ name, Stdio@ game, String@ n, String@ expected) {

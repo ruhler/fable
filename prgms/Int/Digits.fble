@@ -1,4 +1,7 @@
 
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
 @ Decimal@ = /Digits%.Decimal@;
 % Decimal = /Digits%.Decimal;
 
@@ -7,9 +10,6 @@
 % Div = /Int/Div%.Div;
 
 <@>% Nothing = /Maybe%.Nothing;
-
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
 
 # Digit --
 #   Converts an integer in the range [0-9] to a decimal digit.

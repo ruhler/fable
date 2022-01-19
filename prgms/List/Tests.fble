@@ -1,6 +1,6 @@
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Bool@ = /Bool%.Bool@;
 % True = /Bool%.True;

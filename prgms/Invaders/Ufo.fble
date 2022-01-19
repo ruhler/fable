@@ -25,8 +25,8 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # DirState@ --
 #   State keeping track of which direction the ufo will fly in from.

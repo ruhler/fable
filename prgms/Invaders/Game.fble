@@ -43,8 +43,8 @@
 % Strs = /String%.Strs;
 % Str = /String%.Str;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Lives@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
 

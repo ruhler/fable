@@ -12,8 +12,8 @@
 
 % Int = /Int/Lit%.Int;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 % Screenshot = /Invaders/Graphics%.Screenshot;
 

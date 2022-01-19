@@ -10,7 +10,7 @@
 
 @ String@ = /String%.String@;
 
-@ Unit@ = /Unit%.Unit@;
+@ Unit@ = /Core/Unit%.Unit@;
 
 # The 'cat' program to cat stdin.
 Stdio@ Cat = (IO@ io, List@<String@> args) {

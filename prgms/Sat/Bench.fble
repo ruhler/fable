@@ -4,8 +4,8 @@
 <@>% Just = /Maybe%.Just;
 @ Result@ = /Sat%.Result@;
 % Solve = /Sat%.Solve;
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 Unit@! Bench = {
   Result@ solved := !(Solve(/Sat/Aim%, Just<Int@>(Int|400)));

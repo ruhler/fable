@@ -14,8 +14,8 @@
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # AB@ --
 #   Helper type to test eq and show of Maybe@.

@@ -10,8 +10,8 @@
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Bit@ = /Bits%.Bit.Bit@;
 @ Bit2@ = /Bits%.Bit2.Bit2@;

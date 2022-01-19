@@ -15,8 +15,8 @@
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Board@ = /TicTacToe/Board%.Board@;
 @ Player@ = /TicTacToe/Board%.Player@;

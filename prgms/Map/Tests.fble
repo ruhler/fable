@@ -21,8 +21,8 @@
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Bit1@ = +(Unit@ 0, Unit@ 1);
 @ Bit2@ = *(Bit1@ h, Bit1@ l);
@@ -69,8 +69,8 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Maybe@<Unit@> wnt = Nothing<Unit@>;
     Maybe@<Unit@> got = Lookup<Unit@>(Empty<Unit@>, B);
     AssertEquals<Maybe@<Unit@>>(
-      /Maybe/Eq%.Eq<Unit@>(/Unit/Eq%.Eq),
-      /Maybe/Show%.Show<Unit@>(/Unit/Show%.Show),
+      /Maybe/Eq%.Eq<Unit@>(/Core/Unit/Eq%.Eq),
+      /Maybe/Show%.Show<Unit@>(/Core/Unit/Show%.Show),
       wnt, got);
   })),
 
@@ -79,8 +79,8 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Maybe@<Unit@> wnt = Nothing<Unit@>;
     Maybe@<Unit@> got = Lookup<Unit@>(map, B);
     AssertEquals<Maybe@<Unit@>>(
-      /Maybe/Eq%.Eq<Unit@>(/Unit/Eq%.Eq),
-      /Maybe/Show%.Show<Unit@>(/Unit/Show%.Show),
+      /Maybe/Eq%.Eq<Unit@>(/Core/Unit/Eq%.Eq),
+      /Maybe/Show%.Show<Unit@>(/Core/Unit/Show%.Show),
       wnt, got);
   })),
 

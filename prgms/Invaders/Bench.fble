@@ -4,8 +4,8 @@
 
 % Int = /Int/Lit%.Int;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal for invaders is 60 frames a

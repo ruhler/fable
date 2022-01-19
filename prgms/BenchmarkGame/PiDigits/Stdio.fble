@@ -22,8 +22,8 @@
 
 @ String@ = /String%.String@;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.

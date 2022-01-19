@@ -4,8 +4,8 @@
 
 % Int = /Int/Lit%.Int;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 Unit@! Bench = /App/Benchmark%.Benchmark(
   # 1300 is around the number of iterations the Snake app runs for. Don't try

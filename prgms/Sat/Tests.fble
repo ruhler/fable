@@ -17,7 +17,7 @@
 % Test = /Test%.Test;
 % TestSuite = /Test%.TestSuite;
 <@>% AssertEquals = /Test%.AssertEquals;
-% Unit = /Unit%.Unit;
+% Unit = /Core/Unit%.Unit;
 
 @ Formula@ = /Sat%.Formula@;
 @ Clause@ = /Sat%.Clause@;

@@ -4,8 +4,8 @@
 
 % Str = /String%.Str;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Data@ = +(Unit@ 0, Unit@ 1);
 Data@ 0 = Data@(0: Unit);

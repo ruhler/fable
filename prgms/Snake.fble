@@ -54,8 +54,8 @@
 
 % Div = /Int/Div%.Div;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 Int@ MinRow = Int|0;    # Inclusive. This is a legal row.
 Int@ MaxRow = Int|20;   # Inclusive. This is a legal row.

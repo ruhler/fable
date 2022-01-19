@@ -14,8 +14,8 @@
 % Str = /String%.Str;
 % Strs = /String%.Strs;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Light@ = +(Unit@ red, Unit@ yellow, Unit@ green);
 

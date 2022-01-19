@@ -4,8 +4,8 @@
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ AI@ = /TicTacToe/AI%.AI@;
 <@>% WithAI = /TicTacToe/AI%.WithAI;

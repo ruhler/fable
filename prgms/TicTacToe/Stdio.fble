@@ -21,8 +21,8 @@
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Square@ = /TicTacToe/Board%.Square@;
 @ Board@ = /TicTacToe/Board%.Board@;

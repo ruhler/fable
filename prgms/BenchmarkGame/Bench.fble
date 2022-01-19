@@ -11,8 +11,8 @@
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 (Stdio@, String@) { Unit@!; } RunBench = (Stdio@ game, String@ n) {
   IO@ io = @(

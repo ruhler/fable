@@ -1,3 +1,6 @@
+* [lib] Move Core modules to Core directory.
+ In preparation for being able to build a core package separately.
+
 * [modules]
  - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
  - Add support for loading .fble.@ files.

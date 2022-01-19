@@ -1,5 +1,5 @@
 
-% Unit = /Unit%.Unit;
+% Unit = /Core/Unit%.Unit;
 
 @ Hex@ = /Digits%.Hex@;
 % 0 = /Digits%.Hex.0;

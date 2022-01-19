@@ -20,8 +20,8 @@
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
-@ Unit@ = /Unit%.Unit@;
-% Unit = /Unit%.Unit;
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Coord@ = *(Int@ row, Int@ col);
 
@@ -37,7 +37,7 @@ Eq@<Coord@> LtCoord = (Coord@ a, Coord@ b) {
 
 # The world is a set of Coord@ where there are live cells.
 @ World@ = /Map%.Map@<Coord@, Unit@>;
-% EqWorld = /Map/Eq%.Eq<Coord@, Unit@>(EqCoord, /Unit/Eq%.Eq);
+% EqWorld = /Map/Eq%.Eq<Coord@, Unit@>(EqCoord, /Core/Unit/Eq%.Eq);
 % W = @(
   Empty: /Map%.Empty<Coord@, Unit@>,
   Insert: /Map%.Insert<Coord@>(LtCoord)<Unit@>,

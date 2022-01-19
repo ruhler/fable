@@ -26,7 +26,7 @@
 
 % Graphics = /Invaders/Graphics%;
 
-@ Unit@ = /Unit%.Unit@;
+@ Unit@ = /Core/Unit%.Unit@;
 
 @ Kind@ = +(Unit@ bomb, Unit@ squiggle);
 
