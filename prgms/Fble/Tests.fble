@@ -11,8 +11,8 @@
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-% TestSuite = /Test%.TestSuite;
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
 % _ = /Char/Show%;
@@ -50,7 +50,7 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Sat/Tests%.Tests,
   /String/Tests%.Tests,
   /Sudoku/Tests%.Tests,
-  /Test/Tests%.Tests,
+  /Core/Test/Tests%.Tests,
   /TicTacToe/Tests%.Tests
 ]);
 
@@ -60,8 +60,8 @@ Stdio@ Main = (IO@ io, List@<String@> args) {
     nil: False);
 
   verbose.?(
-    true: /Test%.RunTestsVerbose(io.stdout, AllTests),
-    false: /Test%.RunTests(io.stdout, AllTests));
+    true: /Core/Test%.RunTestsVerbose(io.stdout, AllTests),
+    false: /Core/Test%.RunTests(io.stdout, AllTests));
 };
 
 Main;

@@ -10,10 +10,10 @@
 <@>@ Show@ = /Show%.Show@;
 @ String@ = /String%.String@;
 % Str = /String%.Str;
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 

@@ -12,10 +12,10 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-<@>% AssertEquals = /Test%.AssertEquals;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
+@ Test@ = /Core/Test%.Test@;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
 
 @ Coord@ = /Hwdg/Coord%.Coord@;
 

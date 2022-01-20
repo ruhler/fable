@@ -17,10 +17,10 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-% TestSuite = /Test%.TestSuite;
-% Test = /Test%.Test;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
+% Test = /Core/Test%.Test;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 (LFSR@, Int@) { List@<Bit@>; }
 ShiftN = (LFSR@ lfsr, Int@ n) {

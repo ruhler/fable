@@ -16,10 +16,10 @@
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 # EqS --
 #   Test for structural equality of rational numbers. Used for testing

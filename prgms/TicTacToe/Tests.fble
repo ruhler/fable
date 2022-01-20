@@ -3,10 +3,10 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-@ TestResult@ = /Test%.TestResult@;
-% TestSuite = /Test%.TestSuite;
-% Test = /Test%.Test;
+@ Test@ = /Core/Test%.Test@;
+@ TestResult@ = /Core/Test%.TestResult@;
+% TestSuite = /Core/Test%.TestSuite;
+% Test = /Core/Test%.Test;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

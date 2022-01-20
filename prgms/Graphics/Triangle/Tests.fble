@@ -33,9 +33,9 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
 
 Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
   Test(Str|'Focus Triangle', !({
@@ -291,7 +291,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     # TODO: Debug this test failure.
-    /Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+    /Core/Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
   })),
 
   Test(Str|'X/Y Clip Issue', !({
@@ -312,7 +312,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Maybe@<Color@> wnt = Just<Color@>(Color.Green);
       
     # TODO: debug this test passing.
-    /Test%.ExpectFails(/Test%.ExpectFails(/Test%.AssertEquals<Maybe@<Color@>>(
+    /Core/Test%.ExpectFails(/Core/Test%.ExpectFails(/Core/Test%.AssertEquals<Maybe@<Color@>>(
       /Maybe/Eq%.Eq<Color@>(EqColor),
       /Maybe/Show%.Show<Color@>(ShowColor),
       wnt, got), Str|'Nothing'), Str|'');

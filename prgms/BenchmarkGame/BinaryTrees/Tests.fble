@@ -1,7 +1,7 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
+@ Test@ = /Core/Test%.Test@;
 
 % Test = /BenchmarkGame/Test%.Test;
 

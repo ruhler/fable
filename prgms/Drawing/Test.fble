@@ -21,7 +21,7 @@
 % Strs = /String%.Strs;
 % Str = /String%.Str;
 
-@ TestResult@ = /Test%.TestResult@;
+@ TestResult@ = /Core/Test%.TestResult@;
 
 (Point@, Point@) { Bool@; } EqPoint = (Point@ a, Point@ b) {
   Eq(a.x, b.x).?(false: False);
@@ -122,7 +122,7 @@ Draw_ = {
 
 (Drawn@, Drawn@) { TestResult@; }
 AssertEquals = (Drawn@ expected, Drawn@ actual) {
-  /Test%.AssertEquals<Drawn@>(
+  /Core/Test%.AssertEquals<Drawn@>(
     /Map/Eq%.Eq<Point@, Color@>(EqPoint, EqColor),
     /Map/Show%.Show<Point@, Color@>(ShowPoint, ShowColor),
     expected, actual);

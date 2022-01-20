@@ -15,15 +15,15 @@
 % Str = /String%.Str;
 % Strs = /String%.Strs;
 
-@ Test@ = /Test%.Test@;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Core/Test%.Test@;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
 (String@, Stdio@, String@, String@) { Test@; }
 Test = (String@ name, Stdio@ game, String@ n, String@ expected) {
-  /Test%.Test(name, {
+  /Core/Test%.Test(name, {
     Maybe@<String@> ~ get, put;
 
     IO@ io = @(

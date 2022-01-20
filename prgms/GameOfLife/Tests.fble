@@ -12,10 +12,10 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-@ TestResult@ = /Test%.TestResult@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
+@ Test@ = /Core/Test%.Test@;
+@ TestResult@ = /Core/Test%.TestResult@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
 
 % Unit = /Core/Unit%.Unit;
 

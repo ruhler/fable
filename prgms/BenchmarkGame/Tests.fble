@@ -3,8 +3,8 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-% TestSuite = /Test%.TestSuite;
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
 % _ = /BenchmarkGame/Bench%;

@@ -22,10 +22,10 @@
 % Strs = /String%.Strs;
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 Eq@<Roots@> EqRoots = (Roots@ a, Roots@ b) {
   /Pinball/Num%.Eq(a.first, b.first).?(false: False);

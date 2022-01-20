@@ -23,10 +23,10 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   /Pinball/Rotate/Tests%.Tests,
@@ -246,7 +246,7 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
     Ball@ got = end.ball;
 
     # TODO: Test fails due to loss of precision. How should we handle this?
-    /Test%.ExpectFails(
+    /Core/Test%.ExpectFails(
       AssertEquals<Ball@>(/Pinball/Ball%.Eq, /Pinball/Ball%.Show, want, got),
       Str|'got: Ball@(pos=(257/128, 262/128), vel=(2/128, 254/128)');
   })),

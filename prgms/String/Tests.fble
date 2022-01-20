@@ -6,10 +6,10 @@
 @ String@ = /String%.String@;
 % Str = /String%.Str;
 % Strs = /String%.Strs;
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 # Tests --
 #  A test suite to test the /String% module and friends.

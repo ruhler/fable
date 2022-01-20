@@ -8,10 +8,10 @@
 
 % Str = /String%.Str;
 
-@ Test@ = /Test%.Test@;
-% Test = /Test%.Test;
-% TestSuite = /Test%.TestSuite;
-<@>% AssertEquals = /Test%.AssertEquals;
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 Test@ Tests = TestSuite(Str|'Rotate', List<Test@>[
   Test(Str|'Unrotated Q1', !({
