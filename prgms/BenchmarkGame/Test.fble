@@ -1,6 +1,6 @@
 
 
-@ Bool@ = /Bool%.Bool@;
+@ Bool@ = /Core/Bool%.Bool@;
 
 <@>% List = /List%.List;
 

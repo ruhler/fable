@@ -1088,3 +1088,184 @@ and what language features would enable them. For example, perhaps a read only
 unordered struct type would help, because you could add members without
 breaking things, allowing for a wide range of compatibility.
 
+---
+
+Another line of thoughts.
+
+1. If two people can both add modules to the same directory, there must be
+some mechanism of trust between those two people. Otherwise they could add the
+same module and create a conflict. So let's assume that people with access to
+the same directory trust each other. This suggests it's reasonable to use
+directory hierarchy for describing sets of trusted modules.
+
+2. There are three things we may want to restrict access to: modules, fields
+of a module, or types. Is it okay for a user to know about a restricted
+module of field? If yes, then we can use the same mechanism of abstract types
+to restrict access to modules, fields, and types.
+
+Module: Make the type of a module an abstract type.
+Field: Make a field of a module an abstract type.
+Type: Make the type an abstract type.
+
+In practice this would mean a user could import a restricted module. They just
+couldn't do anything interesting with it. I prefer the user wouldn't be
+allowed to reference the module at all though, so that you could remove an
+internal module without breaking anyone.
+
+Same thing for a field: In practice a user could import a restricted field,
+they just couldn't do anything interesting with it. Except perhaps to pass it
+back to a module that could do something with it.
+
+An abstract type is useless if a user can't refer to the type, so we don't
+have that question there.
+
+3. It doesn't make sense to have separate public and private namespaces for a
+module, because we want a way to make a sub sub module public to a sub package
+but private to a higher level package. Namespaces cannot easily convey that
+distinction.
+
+4. Could I come up with a way to make modules and fields unreferenceable? Or does
+it only matter for the case where you want to remove an internal module/field
+without breaking a user, in which case, just leave it as an empty
+module/field?
+
+Which brings us to the question of compatibility. What changes can you make to
+a package/module to guarantee you don't break the user?
+
+There are different kinds of compatibility:
+* binary compatibility: the user doesn't have to recompile. You would not be
+  allowed to change any interface type, assuming the compiled code depends on
+  the number of bits needed to represent a type.
+* source compatibility: if the program compiled successfully with the other
+  package, it should also compile successfully with this package.
+
+Are we always dealing with 2 packages? Let's consider four packages, A1, A2,
+B1, B2. Say B depends on A.
+
+Say A1B1 works, does that mean A2B1 works? In general, only if:
+* No interface types changed between A1 and A2.
+  For both binary and source compatibility.
+* It is possible to add new modules.
+
+Say A2B1 works, does that mean A1B1 works? Only if:
+* No interface types changed.
+* It is possible to remove modules going from A1 to A2.
+
+Say A1B1 works, does that mean A1B2 works?
+* Presumably B2 is compiled against A1, so yeah. No issue.
+
+So, kinds of actions involved:
+* Change a module's type.
+* Add a module.
+* Remove a module.
+
+What I wonder is if there are ways we could support changing a module's type
+while still being compatible. For example, add a field to a module.
+
+For binary compatibility, I claim no.
+
+For source compatibility, you could imagine it's fine to add a field to a
+struct type as long as the user only uses values of the type to access fields.
+For example, don't construct values of the type, and don't compare the type to
+an explicit other type. You could think about making @(...) form produce an
+anonymous struct type that is unique from all other struct types and that does
+not support explicit type struct value construction. We could use that for
+modules. It means you couldn't use a  short hand for, e.g.
+ 
+  Coord@ c = @(x: 3, y: 4);
+
+You would have to do instead:
+
+  Coord@ c = Coord@(3, 4);
+
+But I presume that's a relatively minor loss of ability in the language.
+
+If you had this, you could add fields and maintain backwards compatibility.
+
+How about for union types? You could only add fields if there were default
+cases, and only remove fields if users avoided constructing those fields in
+the first place.
+
+How about changing abstract types? It's source compatible, but not binary
+compatible, to change abstract types.
+
+So, I think the relevant questions are:
+* Do I want to enforce binary compatibility, or is it okay and desirable to
+  enforce source compatibility without also binary compatibility?
+* How do I feel about having anonymous struct types as a separate language
+  type?
+
+I like the idea of binary compatibility. If we can force people to have binary
+compatibility, isn't that for the better? And we can enforce that if we keep
+the same type system we have now. Because currently, source compatibility
+implies binary compatibility.
+
+That suggests to me that we would want to allow different versions of a
+module. For example, instead of /Int%, we would want /Int-1% and /Int-2%, or
+some such. To update the library, you add a module /Int-2%. Anyone on the old
+version stays with /Int-1%. New people can pick up /Int-2%. If you want to
+make a change, just add a new module. And, I suppose, update all references
+from the old module to the new module.
+
+So, maybe we can have a convention. You have a notion of an unstable module
+and a stable module. Users can refer to the unstable module if they are
+willing to take updates. Otherwise they refer to the stable module that they
+want. If there is a stable version for each unstable version, they could
+always recompile to use the stable version of the previous working unstable
+version and migrate to the new unstable version incrementally.
+
+You could do this on the package level too, where you need a new package
+version any time you add or remove a module.
+
+I feel like that's a convention we could enforce outside of the language, in a
+package management system? Or maybe, every module has a version number. If you
+reference module /Int%, it automatically rewrites that to the latest version
+of the /Int% module. Then the developer could add a newer version of the
+module without fear of breaking anyone at all, and users can slowly migrate.
+The key being that you have to maintain all previous module versions when you
+ship a package.
+
+And we could do the same approach when managing package dependencies. Then
+package Core version 2 could remove a bunch of deprecated stuff from Core
+version 1, and allow users time to upgrade at their leisure, because Core
+version 1 is still available. The difference, perhaps being that it makes
+sense to reuse the same underlying implementation  for /Int-1% and /Int-2%,
+but maybe we want to have two separate copies of Core-1% and Core-2%.
+
+All of which is leading me to the following conclusion:
+* All we need is language support for abstract types. We can do all access
+  control that way. No need for explicit packages. And let's say we deal with
+  package level access control at build time.
+
+In other words, all I need to do is update the syntax for abstract types. I
+want:
+1. package_type <module_path>
+Defines a token type to restrict access to modules of the given path or
+submodules of that path.
+
+2. abstract_type <package_type> <type>
+Creates an abstract type based on the restricted package type.
+
+3. abstract_value <package_type> <expr>
+Creates a value of abstract type by directly wrapping a value.
+
+4. abstract_access <abstract_value>
+Accesses the value of an abstract value. Only allowed for modules belonging to
+the 'package' of the abstract value.
+
+5. abstract_cast <package_type> <target_type> <expr>
+Cast an expression to target type. Only legal if the types are the same up to
+abstract types matching the package_type and if the module is part of the
+package type.
+
+Let me spend a little time brainstorming the concrete syntax. And then we can
+implement it and see how it looks.
+
+Summary of next steps:
+* Update language feature for abstract types as above.
+* Reorganize source code into packages.
+* Add search path for compile time and restructure code and build system to
+  only give access to explicitly listed packages for compilation.
+* If desired, write down a proposal for versioning modules and packages in
+  fble.
+* Implement support for .fble.@ header files. I think required of all modules.

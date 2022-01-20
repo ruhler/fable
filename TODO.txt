@@ -1,6 +1,13 @@
 * [lib] Move Core modules to Core directory.
  In preparation for being able to build a core package separately.
 
+* [lang] Rewrite abstract types feature again.
+ - brainstorm concrete syntax.
+ - update language spec.
+ - update spec tests.
+ - update implementation.
+ - update programs.
+
 * [modules]
  - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
  - Add support for loading .fble.@ files.

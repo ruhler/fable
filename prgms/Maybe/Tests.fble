@@ -1,7 +1,7 @@
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 <@>@ Eq@ = /Eq%.Eq@;
 <@>% List = /List%.List;
 <@>@ Maybe@ = /Maybe%.Maybe@;
@@ -44,25 +44,25 @@ Test@ Tests = TestSuite(Str|Maybe, List<Test@>[
   Test(Str|Eq_JustEq, !({
     Bool@ wnt = True;
     Bool@ got = Eq(Just<AB@>(A), Just<AB@>(A));
-    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+    AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })),
 
   Test(Str|Eq_JustNe, !({
     Bool@ wnt = False;
     Bool@ got = Eq(Just<AB@>(A), Just<AB@>(B));
-    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+    AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })),
 
   Test(Str|Eq_JustNothing, !({
     Bool@ wnt = False;
     Bool@ got = Eq(Just<AB@>(A), Nothing<AB@>);
-    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+    AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })),
 
   Test(Str|Eq_Nothing, !({
     Bool@ wnt = True;
     Bool@ got = Eq(Nothing<AB@>, Nothing<AB@>);
-    AssertEquals<Bool@>(/Bool/Eq%.Eq, /Bool/Show%.Show, wnt, got);
+    AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Just, !({

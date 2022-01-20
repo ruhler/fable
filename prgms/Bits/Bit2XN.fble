@@ -1,8 +1,8 @@
 
 <@>@ BitN@ = /Bits/BitN%.BitN@;
 
-@ Bool@ = /Bool%.Bool@;
-% And = /Bool%.And;
+@ Bool@ = /Core/Bool%.Bool@;
+% And = /Core/Bool%.And;
 
 <@>@ Bit2XT@ = <@ T@> { *(T@ hi, T@ lo); };
 

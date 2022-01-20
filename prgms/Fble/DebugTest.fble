@@ -1,7 +1,7 @@
 
 # This fble program is used to help test gdb debuggability of fble.
 
-% True = /Bool%.True;
+% True = /Core/Bool%.True;
 
 % Chars = /Char%.Chars;
 

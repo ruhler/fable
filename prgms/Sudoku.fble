@@ -1,7 +1,7 @@
 
-@ Bool@ = /Bool%.Bool@;
-% False = /Bool%.False;
-% True = /Bool%.True;
+@ Bool@ = /Core/Bool%.Bool@;
+% False = /Core/Bool%.False;
+% True = /Core/Bool%.True;
 
 <@,@>% DoWhile = /Loop%.DoWhile; 
 

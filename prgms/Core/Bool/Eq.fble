@@ -1,9 +1,9 @@
 
-@ Bool@ = /Bool%.Bool@;
+@ Bool@ = /Core/Bool%.Bool@;
 
 # Eq -- see documentation of /Eq%.Eq@.
 /Eq%.Eq@<Bool@> Eq = (Bool@ a, Bool@ b) {
-  a.?(true: b, false: /Bool%.Not(b));
+  a.?(true: b, false: /Core/Bool%.Not(b));
 };
 
 @(Eq);

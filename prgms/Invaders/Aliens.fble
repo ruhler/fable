@@ -1,8 +1,8 @@
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
-% Or = /Bool%.Or;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% Or = /Core/Bool%.Or;
 
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;

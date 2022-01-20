@@ -4,8 +4,8 @@
 % Stream = /BenchmarkGame/PiDigits%.Stream;
 % Initial = /BenchmarkGame/PiDigits%.Initial;
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
 
 % Chars = /Char%.Chars;
 

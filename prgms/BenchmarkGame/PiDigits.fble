@@ -1,5 +1,5 @@
 
-@ Bool@ = /Bool%.Bool@;
+@ Bool@ = /Core/Bool%.Bool@;
 
 @ Int@ = /Int%.Int@;
 % Add = /Int%.Add;

@@ -1,11 +1,11 @@
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
-% Not = /Bool%.Not;
-% And = /Bool%.And;
-% Or = /Bool%.Or;
-% Eq = /Bool/Eq%.Eq;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% Not = /Core/Bool%.Not;
+% And = /Core/Bool%.And;
+% Or = /Core/Bool%.Or;
+% Eq = /Core/Bool/Eq%.Eq;
 
 <@>% List = /List%.List;
 
@@ -34,7 +34,7 @@
 (String@, Bool@!) { Test@; } T = (String@ name, Bool@! p) {
   Test(name, {
     Bool@ x := p;
-    !(AssertEquals<Bool@>(Eq, /Bool/Show%.Show, True, x));
+    !(AssertEquals<Bool@>(Eq, /Core/Bool/Show%.Show, True, x));
   });
 };
 
@@ -55,12 +55,12 @@
 (String@, Bool@!) { Test@; } F = (String@ name, Bool@! p) {
   Test(name, {
     Bool@ x := p;
-    !(AssertEquals<Bool@>(Eq, /Bool/Show%.Show, False, x));
+    !(AssertEquals<Bool@>(Eq, /Core/Bool/Show%.Show, False, x));
   });
 };
 
 # Tests --
-#  A test suite to test the /Bool% module.
+#  A test suite to test the /Core/Bool% module.
 Test@ Tests = TestSuite(Str|Bool, List<Test@>[
   T(Str|True, !(True)),
   F(Str|False, !(False)),
@@ -85,13 +85,13 @@ Test@ Tests = TestSuite(Str|Bool, List<Test@>[
 
   Test(Str|Show_True, !({
     String@ wnt = Str|'True';
-    String@ got = /Bool/Show%.Show(True);
+    String@ got = /Core/Bool/Show%.Show(True);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_False, !({
     String@ wnt = Str|'False';
-    String@ got = /Bool/Show%.Show(False);
+    String@ got = /Core/Bool/Show%.Show(False);
     AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
   }))
 ]);

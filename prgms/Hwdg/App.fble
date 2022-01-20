@@ -4,9 +4,9 @@
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 
 @ Drawing@ = /Drawing%.Drawing@;
 @ Color@ = /Drawing%.Color@;

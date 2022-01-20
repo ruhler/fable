@@ -1,6 +1,6 @@
 
-@ Bool@ = /Bool%.Bool@;
-% False = /Bool%.False;
+@ Bool@ = /Core/Bool%.Bool@;
+% False = /Core/Bool%.False;
 
 <@>@ List@ = /List%.List@;
 <@>% List = /List%.List;
@@ -32,7 +32,7 @@
 % _ = /Stdio/Test%;
 
 Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
-  /Bool/Tests%.Tests,
+  /Core/Bool/Tests%.Tests,
   /BenchmarkGame/Tests%.Tests,
   /Digits/Tests%.Tests,
   /GameOfLife/Tests%.Tests,

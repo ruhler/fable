@@ -1,6 +1,6 @@
-% True = /Bool%.True;
-% False = /Bool%.False;
-% And = /Bool%.And;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+% And = /Core/Bool%.And;
 @ Char@ = /Char%.Char@;
 <@>@ Eq@ = /Eq%.Eq@;
 @ Int@ = /Int%.Int@;
@@ -41,7 +41,7 @@ Show@<Var@> ShowVar = (Var@ v) {
 };
 
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
-  And(EqId(a.id, b.id), /Bool/Eq%.Eq(a.polarity, b.polarity));
+  And(EqId(a.id, b.id), /Core/Bool/Eq%.Eq(a.polarity, b.polarity));
 };
 
 Show@<Assignment@> ShowAssignment = /List/Show%.Show<Var@>(ShowVar);

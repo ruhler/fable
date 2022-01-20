@@ -3,7 +3,7 @@
 
 % Map = /Map/Map%;
 
-@ Bool@ = /Bool%.Bool@;
+@ Bool@ = /Core/Bool%.Bool@;
 
 <@>@ Eq@ = /Eq%.Eq@;
 

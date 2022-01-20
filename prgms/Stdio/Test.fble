@@ -1,7 +1,7 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-% True = /Bool%.True;
+% True = /Core/Bool%.True;
 
 <@>@ List@ = /List%.List@;
 

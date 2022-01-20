@@ -1,9 +1,9 @@
 
 # Internal implementation of Map@ type.
 
-@ Bool@ = /Bool%.Bool@;
-% True = /Bool%.True;
-% False = /Bool%.False;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 
 <@>@ Eq@ = /Eq%.Eq@;
 

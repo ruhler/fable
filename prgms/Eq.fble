@@ -10,6 +10,6 @@
 #
 # Returns:
 #   True if the two values are equal, false otherwise.
-<@>@ Eq@ = <@ T@>(T@, T@) { /Bool%.Bool@; };
+<@>@ Eq@ = <@ T@>(T@, T@) { /Core/Bool%.Bool@; };
 
 @(Eq@);

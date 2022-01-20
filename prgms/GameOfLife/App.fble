@@ -4,7 +4,7 @@
 @ Event@ = /App%.Event@;
 @ Effect@ = /App%.Effect@;
 
-% And = /Bool%.And;
+% And = /Core/Bool%.And;
 
 @ Drawing@ = /Drawing%.Drawing@;
 @ Point@ = /Drawing%.Point@;
