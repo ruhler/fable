@@ -19,7 +19,7 @@
 
 @ Int@ = /Int%.Int@;
 
-<@>% List = /List%.List;
+<@>% List = /Core/List%.List;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -165,7 +165,7 @@ World@ Initial = World@(
 };
 
 Drawing@ Background = {
-  /List%.ForEach<Edge@, Drawing@>(Initial.edges, Blank, (Edge@ e, Drawing@ d) {
+  /Core/List%.ForEach<Edge@, Drawing@>(Initial.edges, Blank, (Edge@ e, Drawing@ d) {
     Over(d, DrawEdge(e));
   });
 };
@@ -174,7 +174,7 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
 
 (World@) { Drawing@; } Draw = (World@ world) {
   Point@ ball = Point(world.ball.pos);
-  /List%.ForEach<Paddle@, Drawing@>(
+  /Core/List%.ForEach<Paddle@, Drawing@>(
     world.paddles,
     Over(Background, Translate(ball.x, ball.y, DrawnBall)),
     (Paddle@ paddle, Drawing@ d) {

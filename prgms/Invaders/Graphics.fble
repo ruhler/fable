@@ -12,7 +12,7 @@
 
 % Int = /Int/Lit%.Int;
 
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 @ String@ = /String%.String@;
 

@@ -5,8 +5,8 @@
 <@>@ Eq@ = /Eq%.Eq@;
 @ Int@ = /Int%.Int@;
 % Int = /Int/Lit%.Int;
-<@>% List = /List%.List;
-<@>% Append = /List%.Append;
+<@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 <@>@ Show@ = /Show%.Show@;
@@ -44,8 +44,8 @@ Eq@<Var@> EqVar = (Var@ a, Var@ b) {
   And(EqId(a.id, b.id), /Core/Bool/Eq%.Eq(a.polarity, b.polarity));
 };
 
-Show@<Assignment@> ShowAssignment = /List/Show%.Show<Var@>(ShowVar);
-Eq@<Assignment@> EqAssignment = /List/Eq%.Eq<Var@>(EqVar);
+Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show<Var@>(ShowVar);
+Eq@<Assignment@> EqAssignment = /Core/List/Eq%.Eq<Var@>(EqVar);
 
 Eq@<Result@> EqResult = (Result@ a, Result@ b) {
   a.?(

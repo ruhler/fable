@@ -2,9 +2,9 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@,@>% ForEach = /List%.ForEach;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@,@>% ForEach = /Core/List%.ForEach;
 
 <@,@>% DoWhile = /Loop%.DoWhile;
 

@@ -7,9 +7,9 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 
-<@>@ List@ = /List%.List@;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -114,9 +114,9 @@
   % InsertWith = /Map%.InsertWith<VarId@>(/Int/Eq%.Lt)<Status@>;
 
   (Formula@ f) {
-    Map@ map = /List%.ForEach<Clause@, Map@>(f, Empty,
+    Map@ map = /Core/List%.ForEach<Clause@, Map@>(f, Empty,
       (Clause@ clause, Map@ map) {
-        /List%.ForEach<Var@, Map@>(clause, map, (Var@ v, Map@ map) {
+        /Core/List%.ForEach<Var@, Map@>(clause, map, (Var@ v, Map@ map) {
            InsertWith(map, v.id, (Maybe@<Status@> ms) {
              ms.?(
                just: ms.just.?(

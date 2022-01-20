@@ -25,11 +25,11 @@
 % Shift = /LFSR%.Shift;
 % ShiftInt = /LFSR/Int%.ShiftInt;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@>% Init = /List%.Init;
-<@>% Cons = /List%.Cons;
-<@,@>% ForEach = /List%.ForEach;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Init = /Core/List%.Init;
+<@>% Cons = /Core/List%.Cons;
+<@,@>% ForEach = /Core/List%.ForEach;
 
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
@@ -140,7 +140,7 @@ State@ InitialState = {
 @ PosM@ = +(Unit@ dead, Pos@ pos);
 
 # Return true if the given position is found in the list of positions.
-(List@<Pos@>, Pos@) { Bool@; } InPosS = /List/Eq%.Contains<Pos@>(EqPos);
+(List@<Pos@>, Pos@) { Bool@; } InPosS = /Core/List/Eq%.Contains<Pos@>(EqPos);
 
 # Update the random number for where the next food will be generate.
 # Takes the current direction of the snake to add some randomness to the

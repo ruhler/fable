@@ -5,7 +5,7 @@
 @ Int@ = /Int%.Int@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 # Memory@ --
 #   An unbounded 2D array of memory.
@@ -75,7 +75,7 @@ ForEach = <@ B@> { /Map%.ForEach<Coord@, Data@, B@>; };
 # Memory --
 #   Construct an initial memory based on a list of Cell@s.
 (List@<Cell@>) { Memory@; } Memory = (List@<Cell@> cells) {
-  /List%.ForEach<Cell@, Memory@>(cells, Empty, (Cell@ cell, Memory@ memory) {
+  /Core/List%.ForEach<Cell@, Memory@>(cells, Empty, (Cell@ cell, Memory@ memory) {
     Set(memory, Coord@(cell.x, cell.y), cell.data);
   });
 };

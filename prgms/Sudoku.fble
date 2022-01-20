@@ -5,7 +5,7 @@
 
 <@,@>% DoWhile = /Loop%.DoWhile; 
 
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;

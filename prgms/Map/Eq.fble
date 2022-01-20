@@ -6,9 +6,9 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
-<@>@ List@ = /List%.List@;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 % Map = /Map/Map%;
 
@@ -51,7 +51,7 @@ Eq = <@ K@, @ V@>(Eq@<K@> keq, Eq@<V@> veq)(Map@<K@, V@> a, Map@<K@, V@> b) {
     Nil<Entry@<K@, V@>>, (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
       Cons<Entry@<K@, V@>>(Entry@<K@, V@>(k, v), b);
   });
-  /List/Eq%.Eq<Entry@<K@, V@>>(EqEntry<K@, V@>(keq, veq))(aes, bes);
+  /Core/List/Eq%.Eq<Entry@<K@, V@>>(EqEntry<K@, V@>(keq, veq))(aes, bes);
 };
 
 @(IsEmpty, Eq);

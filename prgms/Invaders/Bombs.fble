@@ -15,11 +15,11 @@
 % Gt = /Int/Eq%.Gt;
 % Int = /Int/Lit%.Int;
 
-<@>@ List@ = /List%.List@;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
-<@,@>% ForEach = /List%.ForEach;
-<@>% Length = /List/Length%.Length;
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@,@>% ForEach = /Core/List%.ForEach;
+<@>% Length = /Core/List/Length%.Length;
 
 % Bases = /Invaders/Bases%;
 @ Bases@ = Bases.Bases@;

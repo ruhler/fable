@@ -13,17 +13,17 @@
 @ Int@ = /Int%.Int@;
 % Int = /Int/Lit%.Int;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
-<@>% Append = /List%.Append;
-<@>% Init = /List%.Init;
-<@>% Concat = /List%.Concat;
-<@,@>% Map = /List%.Map;
-<@,@>% ForEach = /List%.ForEach;
-<@>% Length = /List/Length%.Length;
-<@>% Sort = /List/Sort%.Sort;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% Append = /Core/List%.Append;
+<@>% Init = /Core/List%.Init;
+<@>% Concat = /Core/List%.Concat;
+<@,@>% Map = /Core/List%.Map;
+<@,@>% ForEach = /Core/List%.ForEach;
+<@>% Length = /Core/List/Length%.Length;
+<@>% Sort = /Core/List/Sort%.Sort;
 
 <@>@ Show@ = /Show%.Show@;
 
@@ -66,8 +66,8 @@
       E: b.?(E: True, : False));
 };
 
-Eq@<List@<Elem@>> Eq = /List/Eq%.Eq<Elem@>(ElemEq);
-Show@<List@<Elem@>> Show = /List/Show%.Show<Elem@>(ElemShow);
+Eq@<List@<Elem@>> Eq = /Core/List/Eq%.Eq<Elem@>(ElemEq);
+Show@<List@<Elem@>> Show = /Core/List/Show%.Show<Elem@>(ElemShow);
 
 (List@<Elem@>, List@<Elem@>) { TestResult@; }
 AssertEquals = (List@<Elem@> a, List@<Elem@> b) {

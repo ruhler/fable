@@ -8,8 +8,8 @@
 
 @ Int@ = /Int%.Int@;
 
-<@>% Append = /List%.Append;
-<@>% Nil = /List%.Nil;
+<@>% Append = /Core/List%.Append;
+<@>% Nil = /Core/List%.Nil;
 
 <@>@ Show@ = /Show%.Show@;
 

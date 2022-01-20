@@ -3,7 +3,7 @@
 
 % True = /Core/Bool%.True;
 
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;

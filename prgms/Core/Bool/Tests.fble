@@ -7,7 +7,7 @@
 % Or = /Core/Bool%.Or;
 % Eq = /Core/Bool/Eq%.Eq;
 
-<@>% List = /List%.List;
+<@>% List = /Core/List%.List;
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;

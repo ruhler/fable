@@ -6,8 +6,8 @@
 
 % Chars = /Char%.Chars;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
 
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
@@ -40,11 +40,11 @@ List@<Benchmark@> Benchmarks = List<Benchmark@>[
 # Runs the benchmarks listed in args. If no benchmarks are listed in args,
 # runs all the benchmarks.
 Stdio@ Bench = (IO@ io, List@<String@> args) {
-  Unit@ _ := /List%.ProcessEach<Benchmark@, Unit@>(Benchmarks, Unit,
+  Unit@ _ := /Core/List%.ProcessEach<Benchmark@, Unit@>(Benchmarks, Unit,
     (Benchmark@ benchmark, Unit@ _) {
       Bool@ skip = {
         args.?(nil: False);
-        Not(/List/Eq%.Contains<String@>(/String/Eq%.Eq)(args, benchmark.name));
+        Not(/Core/List/Eq%.Contains<String@>(/String/Eq%.Eq)(args, benchmark.name));
       };
 
       skip.?(true: {

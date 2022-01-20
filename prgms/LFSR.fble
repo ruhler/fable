@@ -3,9 +3,9 @@
 % Bit = /Digits%.Bit;
 % BitStr = /Digits/String%.BitStr;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@>% Cons = /List%.Cons;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
 
 # LFSR@ --
 #   State for a linear feedback shift register using xor as the linear

@@ -1,8 +1,8 @@
 
 @ Char@ = /Char%.Char@;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
 
 # String@ --
 #   A character string.
@@ -20,6 +20,6 @@
 #
 # Example Use:
 #   String@ s = Strs[Str|'x is ', Show(x), Str|'.']
-(List@<String@>) { String@; } Strs = /List%.Concat<Char@>;
+(List@<String@>) { String@; } Strs = /Core/List%.Concat<Char@>;
 
 @(String@, Str, Strs);

@@ -42,9 +42,9 @@
 <@,@>% DoWhile = /Loop%.DoWhile;
 <@,@>% For = /Loop%.For;
 
-<@>@ List@ = /List%.List@;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
@@ -492,7 +492,7 @@ Shoot = (Int@ x, Int@ y, Aliens@ aliens) {
 # Draw --
 #   Make a drawing of the aliens in their current location.
 (Aliens@) { Drawing@; } Draw = (Aliens@ as) {
-  Drawing@ dying = /List%.ForEach<Dying@, Drawing@>(as.dying, Blank,
+  Drawing@ dying = /Core/List%.ForEach<Dying@, Drawing@>(as.dying, Blank,
     (Dying@ dy, Drawing@ d) {
       Over(d, Translate(dy.x, dy.y, DeadAlien));
     });

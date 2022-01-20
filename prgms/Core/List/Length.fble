@@ -5,9 +5,9 @@
 % Dec = /Int%.Dec;
 % Le = /Int/Eq%.Le;
 
-<@>@ List@ = /List%.List@;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 # Drop --
 #   Remove the first n elements from the list.

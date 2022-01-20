@@ -2,10 +2,10 @@
 @ Bit@ = /Digits%.Bit@;
 @ Hex@ = /Digits%.Hex@;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List ;
-<@>% Concat = /List%.Concat;
-<@,@>% Map = /List%.Map;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List ;
+<@>% Concat = /Core/List%.Concat;
+<@,@>% Map = /Core/List%.Map;
 
 # A literal spec for a list of binary digits.
 (List@<Bit@>) { List@<Bit@>; } BitStr = List<Bit@>;

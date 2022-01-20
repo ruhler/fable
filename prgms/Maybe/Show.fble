@@ -1,6 +1,6 @@
 
 @ Char@ = /Char%.Char@;
-<@>% Append = /List%.Append;
+<@>% Append = /Core/List%.Append;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>@ Show@ = /Show%.Show@;
 % Str = /String%.Str;

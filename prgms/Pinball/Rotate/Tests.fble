@@ -1,5 +1,5 @@
 
-<@>% List = /List%.List;
+<@>% List = /Core/List%.List;
 
 % Neg = /Pinball/Num%.Neg;
 % Int = /Pinball/Num%.Int;

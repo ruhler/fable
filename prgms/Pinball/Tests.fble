@@ -1,6 +1,6 @@
 
-<@>% List = /List%.List;
-<@>% Nil = /List%.Nil;
+<@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Neg = /Pinball/Num%.Neg;

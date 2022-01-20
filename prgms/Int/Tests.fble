@@ -2,7 +2,7 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % Not = /Core/Bool%.Not;
 
-<@>% List = /List%.List;
+<@>% List = /Core/List%.List;
 
 @ String@ = /String%.String@;
 % Str = /String%.Str;

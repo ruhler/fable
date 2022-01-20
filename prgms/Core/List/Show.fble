@@ -1,9 +1,9 @@
 
 @ Char@ = /Char%.Char@;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@>% Concat = /List%.Concat;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Concat = /Core/List%.Concat;
 
 <@>@ Show@ = /Show%.Show@;
 

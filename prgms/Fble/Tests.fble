@@ -2,8 +2,8 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % False = /Core/Bool%.False;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
 
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
@@ -41,7 +41,7 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Hwdg/Tests%.Tests,
   /Int/Tests%.Tests,
   /LFSR/Tests%.Tests,
-  /List/Tests%.Tests,
+  /Core/List/Tests%.Tests,
   /Map/Tests%.Tests,
   /Maybe/Tests%.Tests,
   /Md5/Tests%.Tests,

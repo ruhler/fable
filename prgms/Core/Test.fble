@@ -12,14 +12,14 @@
 % Add = /Int%.Add;
 % Sub = /Int%.Sub;
 
-<@>@ List@ = /List%.List@;
-<@>% Nil = /List%.Nil;
-<@>% List = /List%.List;
-<@>% Append = /List%.Append;
-<@>% Concat = /List%.Concat;
-<@>% Cons = /List%.Cons;
-<@,@>% ProcessEach = /List%.ProcessEach;
-<@>% Length = /List/Length%.Length;
+<@>@ List@ = /Core/List%.List@;
+<@>% Nil = /Core/List%.Nil;
+<@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
+<@>% Concat = /Core/List%.Concat;
+<@>% Cons = /Core/List%.Cons;
+<@,@>% ProcessEach = /Core/List%.ProcessEach;
+<@>% Length = /Core/List/Length%.Length;
 
 <@>@ Put@ = /Process%.Put@;
 

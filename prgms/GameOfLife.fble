@@ -14,9 +14,9 @@
 % Eq = /Int/Eq%.Eq;
 % Lt = /Int/Eq%.Lt;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@,@>% ForEach = /List%.ForEach;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@,@>% ForEach = /Core/List%.ForEach;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 

@@ -5,7 +5,7 @@
 @ Int@ = /Int%.Int@;
 % Int = /Int/Lit%.Int;
 
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 Int@ 1 = Int|1;
 

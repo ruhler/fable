@@ -4,9 +4,9 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@>% Concat = /List%.Concat;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Concat = /Core/List%.Concat;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;

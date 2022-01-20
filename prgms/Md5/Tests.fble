@@ -7,11 +7,11 @@
 @ Hex@ = /Digits%.Hex@;
 % HexStr = /Digits/String%.HexStr;
 
-<@>@ List@ = /List%.List@;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
-<@>% List = /List%.List;
-<@>% Concat = /List%.Concat;
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
+<@>% List = /Core/List%.List;
+<@>% Concat = /Core/List%.Concat;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 

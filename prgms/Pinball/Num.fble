@@ -19,7 +19,7 @@
 % ShowI = /Int/Show%.Show;
 % SqrtI = /Int/Sqrt%.Sqrt;
 
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 <@>@ Show@ = /Show%.Show@;
 

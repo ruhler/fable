@@ -1,6 +1,6 @@
 
 @ Char@ = /Char%.Char@;
-<@>% Append = /List%.Append;
+<@>% Append = /Core/List%.Append;
 <@,@>@ Map@ = /Map%.Map@;
 <@,@,@>% ForEach = /Map%.ForEach;
 <@>@ Show@ = /Show%.Show@;

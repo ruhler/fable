@@ -7,8 +7,8 @@
 @ Char@ = /Char%.Char@;
 % Chars = /Char%.Chars;
 
-<@>% List = /List%.List;
-<@>% Concat = /List%.Concat;
+<@>% List = /Core/List%.List;
+<@>% Concat = /Core/List%.Concat;
 
 <@,@>% DoWhile = /Loop%.DoWhile;
 

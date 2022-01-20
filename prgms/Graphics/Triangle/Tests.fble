@@ -26,7 +26,7 @@
 % Neg = /Int%.Neg;
 % Int = /Int/Lit%.Int;
 
-<@>% List = /List%.List;
+<@>% List = /Core/List%.List;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;

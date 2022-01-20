@@ -9,7 +9,7 @@
 
 # Eq --
 #   Implementation of Eq@ for String@. See documentation of /Eq%.Eq@.
-Eq@<String@> Eq = /List/Eq%.Eq<Char@>(/Char/Eq%.Eq);
+Eq@<String@> Eq = /Core/List/Eq%.Eq<Char@>(/Char/Eq%.Eq);
 
 # StartsWith --
 #   Returns true if the string str starts with sub.

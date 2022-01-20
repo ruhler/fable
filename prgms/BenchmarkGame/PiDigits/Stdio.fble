@@ -15,7 +15,7 @@
 % Eq = /Int/Eq%.Eq;
 % Int = /Int/Lit%.Int;
 
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;

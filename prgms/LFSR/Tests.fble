@@ -10,10 +10,10 @@
 <@>@ Shifted@ = /LFSR%.Shifted@;
 % Shift = /LFSR%.Shift;
 
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@>% Cons = /List%.Cons;
-<@>% Nil = /List%.Nil;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 % Str = /String%.Str;
 
@@ -36,7 +36,7 @@ Test@ Tests = TestSuite(Str|LFSR, List<Test@>[
     List@<Bit@> got = ShiftN(lfsr, Int|16);
     List@<Bit@> wnt = BitStr|0001101000110100;
     AssertEquals<List@<Bit@>>(
-      /List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit),
+      /Core/List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit),
       /Digits/Show%.ShowBits, wnt, got);
   }))
 ]);

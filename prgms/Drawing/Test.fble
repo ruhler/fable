@@ -15,7 +15,7 @@
 % Int = /Int/Lit%.Int;
 % Range = /Int/Iter%.Range;
 
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 @ String@ = /String%.String@;
 % Strs = /String%.Strs;

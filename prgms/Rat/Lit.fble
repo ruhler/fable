@@ -3,7 +3,7 @@
 
 @ Rat@ = /Rat%.Rat@;
 
-<@>@ List@ = /List%.List@;
+<@>@ List@ = /Core/List%.List@;
 
 # Int --
 #   Create a Rat@ from a positive decimal integer literal.

@@ -6,11 +6,11 @@
 % Or = /Core/Bool%.Or;
 @ Char@ = /Char%.Char@;
 <@>@ Eq@ = /Eq%.Eq@;
-<@>@ List@ = /List%.List@;
-<@>% List = /List%.List;
-<@>% Append = /List%.Append;
-<@>% Nil = /List%.Nil;
-<@>% Cons = /List%.Cons;
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
+<@>% Nil = /Core/List%.Nil;
+<@>% Cons = /Core/List%.Cons;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
@@ -135,10 +135,10 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
         Cons<Entry@>(Entry@(k, v), l);
       });
     AssertEquals<List@<Entry@>>(
-      /List/Eq%.Eq<Entry@>((Entry@ a, Entry@ b) {
+      /Core/List/Eq%.Eq<Entry@>((Entry@ a, Entry@ b) {
         And(EqBit2(a.key, b.key), /Core/Bool/Eq%.Eq(a.value, b.value));
       }),
-      /List/Show%.Show<Entry@>((Entry@ e) {
+      /Core/List/Show%.Show<Entry@>((Entry@ e) {
         /String%.Strs[ShowBit2(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
       }),
       wnt, got);
