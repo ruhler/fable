@@ -1,15 +1,15 @@
 
-@ Int@ = /Int%.Int@;
-% 0 = /Int%.0;
-% 1 = /Int%.1;
-% 2 = /Int%.2;
-% 3 = /Int%.3;
-% 4 = /Int%.4;
-% Inc = /Int%.Inc;
-% Add = /Int%.Add;
-% Sub = /Int%.Sub;
-% Mul = /Int%.Mul;
-% Lt = /Int/Eq%.Lt;
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% 1 = /Core/Int%.1;
+% 2 = /Core/Int%.2;
+% 3 = /Core/Int%.3;
+% 4 = /Core/Int%.4;
+% Inc = /Core/Int%.Inc;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
+% Mul = /Core/Int%.Mul;
+% Lt = /Core/Int/Eq%.Lt;
 
 # QR@ --
 #   Square root and remainder from integer square root.

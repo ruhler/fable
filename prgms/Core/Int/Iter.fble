@@ -1,11 +1,11 @@
 
-@ Int@ = /Int%.Int@;
-% Add = /Int%.Add;
-% Sub = /Int%.Sub;
-% Le = /Int/Eq%.Le;
-% Lt = /Int/Eq%.Lt;
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
+% Le = /Core/Int/Eq%.Le;
+% Lt = /Core/Int/Eq%.Lt;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ Iter@ = /Iter%.Iter@;
 <@>% Has = /Iter%.Has;

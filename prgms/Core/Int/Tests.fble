@@ -15,32 +15,32 @@
 
 % Unit = /Core/Unit%.Unit;
 
-@ Int@ = /Int%.Int@;
-% 0 = /Int%.0;
-% 1 = /Int%.1;
-% 2 = /Int%.2;
-% 3 = /Int%.3;
-% 4 = /Int%.4;
-% 5 = /Int%.5;
-% 6 = /Int%.6;
-% 7 = /Int%.7;
-% 8 = /Int%.8;
-% Neg = /Int%.Neg;
-% Add = /Int%.Add;
-% Sub = /Int%.Sub;
-% Mul = /Int%.Mul;
-% Exp2 = /Int%.Exp2;
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% 1 = /Core/Int%.1;
+% 2 = /Core/Int%.2;
+% 3 = /Core/Int%.3;
+% 4 = /Core/Int%.4;
+% 5 = /Core/Int%.5;
+% 6 = /Core/Int%.6;
+% 7 = /Core/Int%.7;
+% 8 = /Core/Int%.8;
+% Neg = /Core/Int%.Neg;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
+% Mul = /Core/Int%.Mul;
+% Exp2 = /Core/Int%.Exp2;
 
-% Div = /Int/Div%.Div;
-% Sqrt = /Int/Sqrt%.Sqrt;
+% Div = /Core/Int/Div%.Div;
+% Sqrt = /Core/Int/Sqrt%.Sqrt;
 
-% Eq = /Int/Eq%.Eq;
-% Lt = /Int/Eq%.Lt;
-% Le = /Int/Eq%.Le;
-% Gt = /Int/Eq%.Gt;
-% Ge = /Int/Eq%.Ge;
+% Eq = /Core/Int/Eq%.Eq;
+% Lt = /Core/Int/Eq%.Lt;
+% Le = /Core/Int/Eq%.Le;
+% Gt = /Core/Int/Eq%.Gt;
+% Ge = /Core/Int/Eq%.Ge;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 (String@, Bool@!) { Test@; } T = (String@ name, Bool@! p) {
   Test(name, {
@@ -55,7 +55,7 @@
 (String@, Int@, Int@!) { Test@; } TEq = (String@ name, Int@ a, Int@! b) {
   Test(name, {
     Int@ x := b;
-    !(AssertEquals<Int@>(/Int/Eq%.Eq, /Int/Show%.Show, a, x));
+    !(AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, a, x));
   });
 };
 
@@ -151,31 +151,31 @@ Test@ Tests = TestSuite(Str|Int, List<Test@>[
 
   Test(Str|Read_Positive, !({
     Int@ wnt = Int|49113;
-    Int@ got = /Int/Show%.Read(Str|49113);
-    AssertEquals<Int@>(/Int/Eq%.Eq, /Int/Show%.Show, wnt, got);
+    Int@ got = /Core/Int/Show%.Read(Str|49113);
+    AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   })),
 
   Test(Str|Read_Negative, !({
     Int@ wnt = Neg(Int|49113);
-    Int@ got = /Int/Show%.Read(Str|'-49113');
-    AssertEquals<Int@>(/Int/Eq%.Eq, /Int/Show%.Show, wnt, got);
+    Int@ got = /Core/Int/Show%.Read(Str|'-49113');
+    AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Positive, !({
     String@ wnt = Str|'10325487960';
-    String@ got = /Int/Show%.Show(Int|10325487960);
+    String@ got = /Core/Int/Show%.Show(Int|10325487960);
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Zero, !({
     String@ wnt = Str|'0';
-    String@ got = /Int/Show%.Show(Int|0);
+    String@ got = /Core/Int/Show%.Show(Int|0);
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Negative, !({
     String@ wnt = Str|'-42';
-    String@ got = /Int/Show%.Show(Neg(Int|42));
+    String@ got = /Core/Int/Show%.Show(Neg(Int|42));
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }))
 ]);

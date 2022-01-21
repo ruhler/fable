@@ -10,7 +10,7 @@
 % Rect = /Drawing%.Rect;
 % Translate = /Drawing%.Translate;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
 

@@ -8,9 +8,9 @@
 @ Point@ = /Drawing%.Point@;
 % Affine = /Drawing%.Affine;
 
-% Neg = /Int%.Neg;
+% Neg = /Core/Int%.Neg;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

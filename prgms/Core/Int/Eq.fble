@@ -3,13 +3,13 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Int@ = /Int%.Int@;
+@ Int@ = /Core/Int%.Int@;
 
-% EqP = /Int/IntP/Eq%.Eq;
-% LtP = /Int/IntP/Eq%.Lt;
-% LeP = /Int/IntP/Eq%.Le;
-% GtP = /Int/IntP/Eq%.Gt;
-% GeP = /Int/IntP/Eq%.Ge;
+% EqP = /Core/Int/IntP/Eq%.Eq;
+% LtP = /Core/Int/IntP/Eq%.Lt;
+% LeP = /Core/Int/IntP/Eq%.Le;
+% GtP = /Core/Int/IntP/Eq%.Gt;
+% GeP = /Core/Int/IntP/Eq%.Ge;
 
 (Int@) { Bool@; } IsZero = (Int@ x) {
   x.?(0: True, : False);

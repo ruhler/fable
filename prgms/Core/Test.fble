@@ -6,11 +6,11 @@
 @ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
 
-@ Int@ = /Int%.Int@;
-% 0 = /Int%.0;
-% Inc = /Int%.Inc;
-% Add = /Int%.Add;
-% Sub = /Int%.Sub;
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% Inc = /Core/Int%.Inc;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Nil = /Core/List%.Nil;
@@ -137,10 +137,10 @@ ExpectFails = (TestResult@ result, String@ msg) {
   Int@ num_passed = Sub(num_total, Add(num_failed, num_xfailed));
   Unit@ _ := PrintLn(out, Concat<Char@>(List<String@>[
     Str|'Test Summary: ',
-    /Int/Show%.Show(num_passed), Str|' passed, ',
-    /Int/Show%.Show(num_failed), Str|' failed, ',
-    /Int/Show%.Show(num_xfailed), Str|' expect failed, ',
-    /Int/Show%.Show(num_total), Str|' total'
+    /Core/Int/Show%.Show(num_passed), Str|' passed, ',
+    /Core/Int/Show%.Show(num_failed), Str|' failed, ',
+    /Core/Int/Show%.Show(num_xfailed), Str|' expect failed, ',
+    /Core/Int/Show%.Show(num_total), Str|' total'
   ]));
 
   !(failures.?(cons: False, nil: True));

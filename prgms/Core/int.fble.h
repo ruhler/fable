@@ -4,7 +4,7 @@
 #include "fble-value.h"
 
 // FbleIntValueAccess --
-//   Read a number from an FbleValue of type /Int%.Int@.
+//   Read a number from an FbleValue of type /Core/Int%.Int@.
 //
 // Inputs:
 //   x - the FbleValue value of the number.

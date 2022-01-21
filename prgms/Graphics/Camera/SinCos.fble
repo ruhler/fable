@@ -1,8 +1,8 @@
 
-@ Int@ = /Int%.Int@;
-% Neg = /Int%.Neg;
-% Lt = /Int/Eq%.Lt;
-% Int = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% Neg = /Core/Int%.Neg;
+% Lt = /Core/Int/Eq%.Lt;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;

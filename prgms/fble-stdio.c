@@ -12,7 +12,7 @@
 #include "fble-value.h"   // for FbleValue, etc.
 
 #include "Core/char.fble.h"    // for FbleCharValueAccess
-#include "int.fble.h"     // for FbleIntValueAccess
+#include "Core/int.fble.h"     // for FbleIntValueAccess
 #include "Core/string.fble.h"  // for FbleNewStringValue, FbleStringValueAccess
 
 typedef struct {

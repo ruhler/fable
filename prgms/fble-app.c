@@ -11,7 +11,7 @@
 #include "fble-value.h"   // for FbleValue, etc.
 
 #include "Core/char.fble.h"    // for FbleCharValueAccess
-#include "int.fble.h"     // for FbleIntValueAccess
+#include "Core/int.fble.h"     // for FbleIntValueAccess
 #include "Core/string.fble.h"  // for FbleStringValueAccess
 
 // sFpsHistogram[i] is the number of samples with i frames per second.
@@ -189,7 +189,7 @@ static void Draw(SDL_Surface* surface, int ax, int ay, int bx, int by, FbleValue
 }
 
 // MakeIntP -- 
-//   Make an FbleValue of type /Int/IntP%.IntP@ for the given integer.
+//   Make an FbleValue of type /Core/Int/Core/IntP%.IntP@ for the given integer.
 //
 // Inputs:
 //   heap - the heap to use for allocations.
@@ -215,7 +215,7 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x)
 }
 
 // MakeInt -- 
-//   Make an FbleValue of type /Int%.Int@ for the given integer.
+//   Make an FbleValue of type /Core/Int%.Int@ for the given integer.
 //
 // Inputs:
 //   heap - the heap to use for allocations.

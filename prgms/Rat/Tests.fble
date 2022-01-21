@@ -4,9 +4,9 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
-@ Int@ = /Int%.Int@;
-% NegI = /Int%.Neg;
-% IntI = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% NegI = /Core/Int%.Neg;
+% IntI = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
 
@@ -25,8 +25,8 @@
 #   Test for structural equality of rational numbers. Used for testing
 #   normalization.
 Eq@<Rat@> EqS = (Rat@ a, Rat@ b) {
-  /Int/Eq%.Eq(a.n, b.n).?(false: False);
-  /Int/Eq%.Eq(a.d, b.d).?(false: False);
+  /Core/Int/Eq%.Eq(a.n, b.n).?(false: False);
+  /Core/Int/Eq%.Eq(a.d, b.d).?(false: False);
   True;
 };
 

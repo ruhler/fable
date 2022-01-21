@@ -1,5 +1,5 @@
 
-% IntP = /Int/IntP%;
+% IntP = /Core/Int/IntP%;
 @ IntP@ = IntP.IntP@;
 % AddP = IntP.Add;
 % MulP = IntP.Mul;

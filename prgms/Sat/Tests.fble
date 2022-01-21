@@ -3,8 +3,8 @@
 % And = /Core/Bool%.And;
 @ Char@ = /Core/Char%.Char@;
 <@>@ Eq@ = /Eq%.Eq@;
-@ Int@ = /Int%.Int@;
-% Int = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
 <@>% List = /Core/List%.List;
 <@>% Append = /Core/List%.Append;
 <@>% Just = /Maybe%.Just;
@@ -31,9 +31,9 @@
 # Import to test compilation
 % _ = /Sat/Bench%;
 
-VarId@ X = /Int%.1;
+VarId@ X = /Core/Int%.1;
 
-Show@<VarId@> ShowId = /Int/Show%.Show;
+Show@<VarId@> ShowId = /Core/Int/Show%.Show;
 
 Show@<Var@> ShowVar = (Var@ v) {
   String@ sign = v.polarity.?(true: Str|'+', false: Str|'-');

@@ -2,7 +2,7 @@
 @ Coord@ = /Hwdg/Coord%.Coord@;
 @ Data@ = /Hwdg/Data%.Data@;
 
-@ Int@ = /Int%.Int@;
+@ Int@ = /Core/Int%.Int@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>@ List@ = /Core/List%.List@;

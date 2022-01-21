@@ -32,20 +32,20 @@
 % Empty = /Hwdg/Memory%.Empty;
 % Set = /Hwdg/Memory%.Set;
 
-@ Int@ = /Int%.Int@;
-% 0 = /Int%.0;
-% 1 = /Int%.1;
-% 2 = /Int%.2;
-% Inc = /Int%.Inc;
-% Dec = /Int%.Dec;
-% Neg = /Int%.Neg;
-% Sub = /Int%.Sub;
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% 1 = /Core/Int%.1;
+% 2 = /Core/Int%.2;
+% Inc = /Core/Int%.Inc;
+% Dec = /Core/Int%.Dec;
+% Neg = /Core/Int%.Neg;
+% Sub = /Core/Int%.Sub;
 
-% Div = /Int/Div%.Div;
+% Div = /Core/Int/Div%.Div;
 
-% IsZero = /Int/Eq%.IsZero;
+% IsZero = /Core/Int/Eq%.IsZero;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;

@@ -1,7 +1,7 @@
 % And = /Core/Bool%.And;
 % Or = /Core/Bool%.Or;
 
-@ Int@ = /Int%.Int@;
+@ Int@ = /Core/Int%.Int@;
 
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
@@ -17,13 +17,13 @@
 # Add --
 #   Add two coordinates together.
 (Coord@, Coord@) { Coord@; } Add = (Coord@ a, Coord@ b) {
-  Coord@(/Int%.Add(a.x, b.x), /Int%.Add(a.y, b.y));
+  Coord@(/Core/Int%.Add(a.x, b.x), /Core/Int%.Add(a.y, b.y));
 };
 
 # Eq --
 #   Equality operator for Coord@.
 /Eq%.Eq@<Coord@> Eq = {
-  % IntEq = /Int/Eq%.Eq;
+  % IntEq = /Core/Int/Eq%.Eq;
   (Coord@ a, Coord@ b) {
     And(IntEq(a.x, b.x), IntEq(a.y, b.y));
   };
@@ -32,15 +32,15 @@
 # Lt --
 #   Less than operator for Coord@.
 /Eq%.Eq@<Coord@> Lt = {
-  % IntEq = /Int/Eq%.Eq;
-  % IntLt = /Int/Eq%.Lt;
+  % IntEq = /Core/Int/Eq%.Eq;
+  % IntLt = /Core/Int/Eq%.Lt;
   (Coord@ a, Coord@ b) {
     Or(IntLt(a.x, b.x), And(IntEq(a.x, b.x), IntLt(a.y, b.y)));
   };
 };
 
 /Show%.Show@<Coord@> Show = (Coord@ x) {
-  Strs[Str|'(', /Int/Show%.Show(x.x), Str|',', /Int/Show%.Show(x.y), Str|')'];
+  Strs[Str|'(', /Core/Int/Show%.Show(x.x), Str|',', /Core/Int/Show%.Show(x.y), Str|')'];
 };
 
 @(Coord@, Add, Eq, Lt, Show);

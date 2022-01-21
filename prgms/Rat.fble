@@ -3,14 +3,14 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Int@ = /Int%.Int@;
-% AddI = /Int%.Add;
-% SubI = /Int%.Sub;
-% NegI = /Int%.Neg;
-% MulI = /Int%.Mul;
-% DivI = /Int/Div%.Div;
-% LtI = /Int/Eq%.Lt;
-% IntI = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% AddI = /Core/Int%.Add;
+% SubI = /Core/Int%.Sub;
+% NegI = /Core/Int%.Neg;
+% MulI = /Core/Int%.Mul;
+% DivI = /Core/Int/Div%.Div;
+% LtI = /Core/Int/Eq%.Lt;
+% IntI = /Core/Int/Lit%.Int;
 
 # Rat@ --
 #   A rational number: n / d.
@@ -79,7 +79,7 @@
 };
 
 (Rat@) { Rat@; } Neg = (Rat@ a) {
-  Rat(/Int%.Neg(a.n), a.d);
+  Rat(/Core/Int%.Neg(a.n), a.d);
 };
 
 (Rat@, Rat@) { Rat@; } Div = (Rat@ a, Rat@ b) {

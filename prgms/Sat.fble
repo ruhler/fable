@@ -1,8 +1,8 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 % Not = /Core/Bool%.Not;
-@ Int@ = /Int%.Int@;
-% Dec = /Int%.Dec;
+@ Int@ = /Core/Int%.Int@;
+% Dec = /Core/Int%.Dec;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
@@ -17,7 +17,7 @@
 # VarId@ --
 #   A variable identifier.
 @ VarId@ = Int@;
-% EqId = /Int/Eq%.Eq;
+% EqId = /Core/Int/Eq%.Eq;
 
 # Var@ --
 #   A variable in a boolean formula.
@@ -111,7 +111,7 @@
   @ Status@ = +(Bool@ pure, Unit@ impure);
   @ Map@ = /Map%.Map@<VarId@, Status@>;
   % Empty = /Map%.Empty<VarId@, Status@>;
-  % InsertWith = /Map%.InsertWith<VarId@>(/Int/Eq%.Lt)<Status@>;
+  % InsertWith = /Map%.InsertWith<VarId@>(/Core/Int/Eq%.Lt)<Status@>;
 
   (Formula@ f) {
     Map@ map = /Core/List%.ForEach<Clause@, Map@>(f, Empty,

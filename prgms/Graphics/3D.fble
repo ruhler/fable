@@ -1,9 +1,9 @@
 
-@ Int@ = /Int%.Int@;
-% Add = /Int%.Add;
-% Sub = /Int%.Sub;
-% Mul = /Int%.Mul;
-% Div = /Int/Div%.Div;
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
+% Mul = /Core/Int%.Mul;
+% Div = /Core/Int/Div%.Div;
 
 # Vec@ --
 #   A 3 element vector.

@@ -1,20 +1,20 @@
 
 @ Decimal@ = /Digits%.Decimal@;
 
-@ Int@ = /Int%.Int@;
-% 0 = /Int%.0;
-% 1 = /Int%.1;
-% 2 = /Int%.2;
-% 3 = /Int%.3;
-% 4 = /Int%.4;
-% 5 = /Int%.5;
-% 6 = /Int%.6;
-% 7 = /Int%.7;
-% 8 = /Int%.8;
-% 9 = /Int%.9;
-% 10 = /Int%.10;
-% Add = /Int%.Add;
-% Mul = /Int%.Mul;
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% 1 = /Core/Int%.1;
+% 2 = /Core/Int%.2;
+% 3 = /Core/Int%.3;
+% 4 = /Core/Int%.4;
+% 5 = /Core/Int%.5;
+% 6 = /Core/Int%.6;
+% 7 = /Core/Int%.7;
+% 8 = /Core/Int%.8;
+% 9 = /Core/Int%.9;
+% 10 = /Core/Int%.10;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
 
 <@>@ List@ = /Core/List%.List@;
 

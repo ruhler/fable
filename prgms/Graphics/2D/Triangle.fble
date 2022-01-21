@@ -6,14 +6,14 @@
 % Over = /Drawing%.Over;
 % Rect = /Drawing%.Rect;
 
-@ Int@ = /Int%.Int@;
-% Add = /Int%.Add;
-% Sub = /Int%.Sub;
-% Int = /Int/Lit%.Int;
-% Le = /Int/Eq%.Le;
-% Max = /Int/Eq%.Max;
-% Min = /Int/Eq%.Min;
-% Range = /Int/Iter%.Range;
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
+% Int = /Core/Int/Lit%.Int;
+% Le = /Core/Int/Eq%.Le;
+% Max = /Core/Int/Eq%.Max;
+% Min = /Core/Int/Eq%.Min;
+% Range = /Core/Int/Iter%.Range;
 
 <@,@>% For = /Iter%.For;
 

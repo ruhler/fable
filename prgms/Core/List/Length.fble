@@ -1,9 +1,9 @@
 
-@ Int@ = /Int%.Int@;
-% 0 = /Int%.0;
-% Inc = /Int%.Inc;
-% Dec = /Int%.Dec;
-% Le = /Int/Eq%.Le;
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% Inc = /Core/Int%.Inc;
+% Dec = /Core/Int%.Dec;
+% Le = /Core/Int/Eq%.Le;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;

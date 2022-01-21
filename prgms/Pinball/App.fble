@@ -17,7 +17,7 @@
 
 % Circle = /Graphics/2D/Circle%.Circle;
 
-@ Int@ = /Int%.Int@;
+@ Int@ = /Core/Int%.Int@;
 
 <@>% List = /Core/List%.List;
 

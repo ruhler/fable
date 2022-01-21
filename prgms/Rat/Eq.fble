@@ -1,48 +1,48 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
-@ Int@ = /Int%.Int@;
+@ Int@ = /Core/Int%.Int@;
 
 @ Rat@ = /Rat%.Rat@;
 
 Eq@<Rat@> Gt = (Rat@ a, Rat@ b) {
   Eq@<Int@> gt = {
     a.d.?(n: {
-      b.d.?(n: /Int/Eq%.Gt);
-      /Int/Eq%.Lt;
+      b.d.?(n: /Core/Int/Eq%.Gt);
+      /Core/Int/Eq%.Lt;
     });
-    /Int/Eq%.Gt;
+    /Core/Int/Eq%.Gt;
   };
 
-  gt(/Int%.Mul(a.n, b.d), /Int%.Mul(b.n, a.d));
+  gt(/Core/Int%.Mul(a.n, b.d), /Core/Int%.Mul(b.n, a.d));
 };
 
 Eq@<Rat@> Lt = (Rat@ a, Rat@ b) {
   Eq@<Int@> lt = {
     a.d.?(n: {
-      b.d.?(n: /Int/Eq%.Lt);
-      /Int/Eq%.Gt;
+      b.d.?(n: /Core/Int/Eq%.Lt);
+      /Core/Int/Eq%.Gt;
     });
-    /Int/Eq%.Lt;
+    /Core/Int/Eq%.Lt;
   };
 
-  lt(/Int%.Mul(a.n, b.d), /Int%.Mul(b.n, a.d));
+  lt(/Core/Int%.Mul(a.n, b.d), /Core/Int%.Mul(b.n, a.d));
 };
 
 Eq@<Rat@> Le = (Rat@ a, Rat@ b) {
   Eq@<Int@> le = {
     a.d.?(n: {
-      b.d.?(n: /Int/Eq%.Le);
-      /Int/Eq%.Ge;
+      b.d.?(n: /Core/Int/Eq%.Le);
+      /Core/Int/Eq%.Ge;
     });
-    /Int/Eq%.Le;
+    /Core/Int/Eq%.Le;
   };
 
-  le(/Int%.Mul(a.n, b.d), /Int%.Mul(b.n, a.d));
+  le(/Core/Int%.Mul(a.n, b.d), /Core/Int%.Mul(b.n, a.d));
 };
 
 Eq@<Rat@> Eq = (Rat@ a, Rat@ b) {
-  /Int/Eq%.Eq(/Int%.Mul(a.n, b.d), /Int%.Mul(b.n, a.d));
+  /Core/Int/Eq%.Eq(/Core/Int%.Mul(a.n, b.d), /Core/Int%.Mul(b.n, a.d));
 };
 
 @(Gt, Lt, Le, Eq);

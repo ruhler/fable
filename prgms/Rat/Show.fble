@@ -8,7 +8,7 @@
 
 Show@<Rat@> Show = (Rat@ r) {
   # TODO: Reduce the ratio before showing?
-  Strs[/Int/Show%.Show(r.n), Str|' / ', /Int/Show%.Show(r.d)];
+  Strs[/Core/Int/Show%.Show(r.n), Str|' / ', /Core/Int/Show%.Show(r.d)];
 };
 
 @(Show);

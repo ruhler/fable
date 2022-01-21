@@ -1,11 +1,11 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-@ Int@ = /Int%.Int@;
-% Add = /Int%.Add;
-% Neg = /Int%.Neg;
-% Mul = /Int%.Mul;
-% Int = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Neg = /Core/Int%.Neg;
+% Mul = /Core/Int%.Mul;
+% Int = /Core/Int/Lit%.Int;
 
 <@>% Append = /Core/List%.Append;
 
@@ -37,9 +37,9 @@
 
 Show@<Int@> Show = (Int@ x) {
   x.?(
-    n: Append<Char@>(Str|'-', /Int/IntP/Show%.Show(x.n)),
+    n: Append<Char@>(Str|'-', /Core/Int/IntP/Show%.Show(x.n)),
     0: Str|0,
-    p: /Int/IntP/Show%.Show(x.p));
+    p: /Core/Int/IntP/Show%.Show(x.p));
 };
 
 @(Read, Show);

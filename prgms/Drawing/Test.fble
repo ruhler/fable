@@ -7,13 +7,13 @@
 @ Color@ = /Drawing%.Color@;
 @ Point@ = /Drawing%.Point@;
 
-@ Int@ = /Int%.Int@;
-% Add = /Int%.Add;
-% Mul = /Int%.Mul;
-% Eq = /Int/Eq%.Eq;
-% Lt = /Int/Eq%.Lt;
-% Int = /Int/Lit%.Int;
-% Range = /Int/Iter%.Range;
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Eq = /Core/Int/Eq%.Eq;
+% Lt = /Core/Int/Eq%.Lt;
+% Int = /Core/Int/Lit%.Int;
+% Range = /Core/Int/Iter%.Range;
 
 <@>@ List@ = /Core/List%.List@;
 
@@ -36,8 +36,8 @@
 };
 
 (Point@) { String@; } ShowPoint = (Point@ x) {
-  Strs[Str|'(', /Int/Show%.Show(x.x),
-    Str|', ', /Int/Show%.Show(x.y), Str|')'];
+  Strs[Str|'(', /Core/Int/Show%.Show(x.x),
+    Str|', ', /Core/Int/Show%.Show(x.y), Str|')'];
 };
 
 (Color@, Color@) { Bool@; } EqColor = (Color@ a, Color@ b) {
@@ -50,9 +50,9 @@
 (Color@) { String@; } ShowColor = (Color@ c) {
   # TODO: Show color as hex string.
   Strs[
-    Str|'(',  /Int/Show%.Show(c.r),
-    Str|', ', /Int/Show%.Show(c.g),
-    Str|', ', /Int/Show%.Show(c.b), Str|')'];
+    Str|'(',  /Core/Int/Show%.Show(c.r),
+    Str|', ', /Core/Int/Show%.Show(c.g),
+    Str|', ', /Core/Int/Show%.Show(c.b), Str|')'];
 };
 
 @ Drawn@ = /Map%.Map@<Point@, Color@>;

@@ -9,11 +9,11 @@
 
 % Chars = /Core/Char%.Chars;
 
-@ Int@ = /Int%.Int@;
-% Inc = /Int%.Inc;
-% Div = /Int/Div%.Div;
-% Eq = /Int/Eq%.Eq;
-% Int = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% Inc = /Core/Int%.Inc;
+% Div = /Core/Int/Div%.Div;
+% Eq = /Core/Int/Eq%.Eq;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
 
@@ -28,18 +28,18 @@
 # Output the digits of pi, one digit output for each input string, starting
 # from state 's'.
 Stdio@ Main = (IO@ io, List@<String@> args) {
-  Int@ n = /Int/Show%.Read(args.cons.head);
+  Int@ n = /Core/Int/Show%.Read(args.cons.head);
   Int@ l = Int|10;
   (Int@, State@) { Bool@!; } PiDigits = (Int@ i, State@ s) {
     Eq(i, n).?(true: !(True));
 
     StreamResult@ r = Stream(s);
-    Unit@ _ := io.stdout(/Int/Show%.Show(r.output));
+    Unit@ _ := io.stdout(/Core/Int/Show%.Show(r.output));
 
     Int@ ni = Inc(i);
     Unit@ _ := Eq(Int|0, Div(ni, l).r).?(true: {
       Unit@ _ := io.stdout[Chars.tab, Chars.':'];
-      Unit@ _ := io.stdout(/Int/Show%.Show(ni));
+      Unit@ _ := io.stdout(/Core/Int/Show%.Show(ni));
       io.stdout[Chars.nl];
     }, false: !(Unit));
 

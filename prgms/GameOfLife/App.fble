@@ -19,19 +19,19 @@
 <@>% ForWorld = /GameOfLife%.ForWorld;
 % Step = /GameOfLife%.Step;
 
-@ Int@ = /Int%.Int@;
-% 1 = /Int%.1;
-% 2 = /Int%.2;
-% Dec = /Int%.Dec;
-% Neg = /Int%.Neg;
-% Sub = /Int%.Sub;
+@ Int@ = /Core/Int%.Int@;
+% 1 = /Core/Int%.1;
+% 2 = /Core/Int%.2;
+% Dec = /Core/Int%.Dec;
+% Neg = /Core/Int%.Neg;
+% Sub = /Core/Int%.Sub;
 
-% Div = /Int/Div%.Div;
+% Div = /Core/Int/Div%.Div;
 
-% IsZero = /Int/Eq%.IsZero;
-% Lt = /Int/Eq%.Lt;
+% IsZero = /Core/Int/Eq%.IsZero;
+% Lt = /Core/Int/Eq%.Lt;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
 

@@ -34,25 +34,25 @@
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;
 
-@ Int@ = /Int%.Int@;
-% 0 = /Int%.0;
-% 1 = /Int%.1;
-% 2 = /Int%.2;
-% 3 = /Int%.3;
-% Inc = /Int%.Inc;
-% Dec = /Int%.Dec;
-% Add = /Int%.Add;
-% Mul = /Int%.Mul;
-% Sub = /Int%.Sub;
-% Abs = /Int%.Abs;
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% 1 = /Core/Int%.1;
+% 2 = /Core/Int%.2;
+% 3 = /Core/Int%.3;
+% Inc = /Core/Int%.Inc;
+% Dec = /Core/Int%.Dec;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Sub = /Core/Int%.Sub;
+% Abs = /Core/Int%.Abs;
 
-% Eq = /Int/Eq%.Eq;
-% Lt = /Int/Eq%.Lt;
-% Gt = /Int/Eq%.Gt;
+% Eq = /Core/Int/Eq%.Eq;
+% Lt = /Core/Int/Eq%.Lt;
+% Gt = /Core/Int/Eq%.Gt;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
-% Div = /Int/Div%.Div;
+% Div = /Core/Int/Div%.Div;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

@@ -1,12 +1,12 @@
 
 @ Bit@ = /Digits%.Bit@;
 
-@ Int@ = /Int%.Int@;
-% Add = /Int%.Add;
-% Mul = /Int%.Mul;
-% Ge = /Int/Eq%.Ge;
-% Lt = /Int/Eq%.Lt;
-% Int = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Mul = /Core/Int%.Mul;
+% Ge = /Core/Int/Eq%.Ge;
+% Lt = /Core/Int/Eq%.Lt;
+% Int = /Core/Int/Lit%.Int;
 
 @ LFSR@ = /LFSR%.LFSR@;
 <@>@ Shifted@ = /LFSR%.Shifted@;

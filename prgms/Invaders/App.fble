@@ -10,11 +10,11 @@
 % Rect = /Drawing%.Rect;
 % Affine = /Drawing%.Affine;
 
-@ Int@ = /Int%.Int@;
-% 0 = /Int%.0;
-% Neg = /Int%.Neg;
+@ Int@ = /Core/Int%.Int@;
+% 0 = /Core/Int%.0;
+% Neg = /Core/Int%.Neg;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;

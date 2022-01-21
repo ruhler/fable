@@ -11,7 +11,7 @@
 
 % Triangle = /Graphics/2D/Triangle%.Triangle;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
 

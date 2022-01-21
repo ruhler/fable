@@ -5,9 +5,9 @@
 @ Decimal@ = /Digits%.Decimal@;
 % Decimal = /Digits%.Decimal;
 
-@ Int@ = /Int%.Int@;
-% Int = /Int/Lit%.Int;
-% Div = /Int/Div%.Div;
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+% Div = /Core/Int/Div%.Div;
 
 <@>% Nothing = /Maybe%.Nothing;
 

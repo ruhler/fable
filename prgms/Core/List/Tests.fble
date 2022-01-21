@@ -10,8 +10,8 @@
 
 <@>@ Eq@ = /Eq%.Eq@;
 
-@ Int@ = /Int%.Int@;
-% Int = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
@@ -166,7 +166,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   Test(Str|'Length', !({
     Int@ wnt = Int|5;
     Int@ got = Length<Elem@>(EL|ABCDE);
-    /Core/Test%.AssertEquals<Int@>(/Int/Eq%.Eq, /Int/Show%.Show, wnt, got);
+    /Core/Test%.AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   }))
 ]);
 

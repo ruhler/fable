@@ -7,10 +7,10 @@
 % Blank = /Drawing%.Blank;
 % Translate = /Drawing%.Translate;
 
-@ Int@ = /Int%.Int@;
-% Add = /Int%.Add;
-% Lt = /Int/Eq%.Lt;
-% Int = /Int/Lit%.Int;
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Lt = /Core/Int/Eq%.Lt;
+% Int = /Core/Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;
 @ Ship@ = /Invaders/Ship%.Ship@;

@@ -25,12 +25,12 @@
 
 % Triangle = /Graphics/Triangle%.Triangle;
 
-@ Int@ = /Int%.Int@;
-% Neg = /Int%.Neg;
-% Mul = /Int%.Mul;
-% Div = /Int/Div%.Div;
+@ Int@ = /Core/Int%.Int@;
+% Neg = /Core/Int%.Neg;
+% Mul = /Core/Int%.Mul;
+% Div = /Core/Int/Div%.Div;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;

@@ -1,10 +1,10 @@
 
-@ IntP@ = /Int/IntP%.IntP@;
+@ IntP@ = /Core/Int/IntP%.IntP@;
 
-@ Int@ = /Int%.Int@;
-% Sub = /Int%.Sub;
-% 0 = /Int%.0;
-% 1 = /Int%.1;
+@ Int@ = /Core/Int%.Int@;
+% Sub = /Core/Int%.Sub;
+% 0 = /Core/Int%.0;
+% 1 = /Core/Int%.1;
 
 # QR@ --
 #   Quotient and remainder.

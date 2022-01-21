@@ -3,21 +3,21 @@
 
 @ Decimal@ = /Digits%.Decimal@;
 
-@ Int@ = /Int%.Int@;
-% AddI = /Int%.Add;
-% SubI = /Int%.Sub;
-% NegI = /Int%.Neg;
-% AbsI = /Int%.Abs;
-% MulI = /Int%.Mul;
-% DivI = /Int/Div%.Div;
-% GtI = /Int/Eq%.Gt;
-% GeI = /Int/Eq%.Ge;
-% LtI = /Int/Eq%.Lt;
-% LeI = /Int/Eq%.Le;
-% EqI = /Int/Eq%.Eq;
-% IntI = /Int/Lit%.Int;
-% ShowI = /Int/Show%.Show;
-% SqrtI = /Int/Sqrt%.Sqrt;
+@ Int@ = /Core/Int%.Int@;
+% AddI = /Core/Int%.Add;
+% SubI = /Core/Int%.Sub;
+% NegI = /Core/Int%.Neg;
+% AbsI = /Core/Int%.Abs;
+% MulI = /Core/Int%.Mul;
+% DivI = /Core/Int/Div%.Div;
+% GtI = /Core/Int/Eq%.Gt;
+% GeI = /Core/Int/Eq%.Ge;
+% LtI = /Core/Int/Eq%.Lt;
+% LeI = /Core/Int/Eq%.Le;
+% EqI = /Core/Int/Eq%.Eq;
+% IntI = /Core/Int/Lit%.Int;
+% ShowI = /Core/Int/Show%.Show;
+% SqrtI = /Core/Int/Sqrt%.Sqrt;
 
 <@>@ List@ = /Core/List%.List@;
 

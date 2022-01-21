@@ -3,7 +3,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ IntP@ = /Int/IntP%.IntP@;
+@ IntP@ = /Core/Int/IntP%.IntP@;
 
 (IntP@, IntP@) { Bool@; } Eq = (IntP@ a, IntP@ b) {
   a.?(1: b.?(1: True, 2p0: False, 2p1: False),

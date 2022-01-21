@@ -9,7 +9,7 @@
 static int64_t ReadIntP(FbleValue* num);
 
 // ReadIntP --
-//   Read a number from an FbleValue of type /Int/IntP%.IntP@.
+//   Read a number from an FbleValue of type /Core/Int/Core/IntP%.IntP@.
 //
 // Inputs:
 //   x - the value of the number.

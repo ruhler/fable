@@ -23,8 +23,8 @@
 
 % Triangle = /Graphics/Triangle%.Triangle;
 
-% Neg = /Int%.Neg;
-% Int = /Int/Lit%.Int;
+% Neg = /Core/Int%.Neg;
+% Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
 

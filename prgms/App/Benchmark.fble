@@ -6,10 +6,10 @@
 
 @ Drawing@ = /Drawing%.Drawing@;
 
-@ Int@ = /Int%.Int@;
-% Dec = /Int%.Dec;
+@ Int@ = /Core/Int%.Int@;
+% Dec = /Core/Int%.Dec;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

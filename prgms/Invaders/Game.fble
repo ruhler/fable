@@ -6,15 +6,15 @@
 % Drawings = /Drawing%.Drawings;
 % Translate = /Drawing%.Translate;
 
-@ Int@ = /Int%.Int@;
-% Add = /Int%.Add;
-% Sub = /Int%.Sub;
-% Div = /Int/Div%.Div;
-% Eq = /Int/Eq%.Eq;
-% Gt = /Int/Eq%.Gt;
-% LeastSignificantDigit = /Int/Digits%.LeastSignificantDigit;
+@ Int@ = /Core/Int%.Int@;
+% Add = /Core/Int%.Add;
+% Sub = /Core/Int%.Sub;
+% Div = /Core/Int/Div%.Div;
+% Eq = /Core/Int/Eq%.Eq;
+% Gt = /Core/Int/Eq%.Gt;
+% LeastSignificantDigit = /Core/Int/Digits%.LeastSignificantDigit;
 
-% Int = /Int/Lit%.Int;
+% Int = /Core/Int/Lit%.Int;
 
 % Graphics = /Invaders/Graphics%;
 
