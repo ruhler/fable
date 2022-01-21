@@ -21,7 +21,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;

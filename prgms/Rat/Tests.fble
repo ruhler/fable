@@ -2,7 +2,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 
 @ Int@ = /Core/Int%.Int@;
 % NegI = /Core/Int%.Neg;
@@ -20,6 +20,8 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
+
+% _ = /Rat/Eq%;
 
 # EqS --
 #   Test for structural equality of rational numbers. Used for testing

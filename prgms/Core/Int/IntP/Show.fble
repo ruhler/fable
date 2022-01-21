@@ -11,7 +11,7 @@
 <@>% Append = /Core/List%.Append;
 <@>% Nil = /Core/List%.Nil;
 
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

@@ -4,7 +4,7 @@
 % False = /Core/Bool%.False;
 
 @ Char@ = /Core/Char%.Char@;
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 @ String@ = /Core/String%.String@;
 
 # Eq --

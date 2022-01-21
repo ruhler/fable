@@ -2,7 +2,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 
 <@>% List = /Core/List%.List;
 
@@ -17,7 +17,7 @@
 @ Roots@ = /Pinball/Quadratic%.Roots@;
 % Roots = /Pinball/Quadratic%.Roots;
 
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 
 % Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;
@@ -26,6 +26,8 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
+
+% _ = /Pinball/Quadratic/Show%;
 
 Eq@<Roots@> EqRoots = (Roots@ a, Roots@ b) {
   /Pinball/Num%.Eq(a.first, b.first).?(false: False);

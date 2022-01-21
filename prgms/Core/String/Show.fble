@@ -1,5 +1,5 @@
 
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;

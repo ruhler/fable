@@ -9,7 +9,7 @@
 
 <@>% Append = /Core/List%.Append;
 
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

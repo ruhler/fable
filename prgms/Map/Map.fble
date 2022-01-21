@@ -5,7 +5,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Nothing = /Maybe%.Nothing;

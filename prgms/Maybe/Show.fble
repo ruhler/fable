@@ -2,7 +2,7 @@
 @ Char@ = /Core/Char%.Char@;
 <@>% Append = /Core/List%.Append;
 <@>@ Maybe@ = /Maybe%.Maybe@;
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 % Str = /Core/String%.Str;
 
 

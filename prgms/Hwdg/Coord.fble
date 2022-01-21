@@ -22,7 +22,7 @@
 
 # Eq --
 #   Equality operator for Coord@.
-/Eq%.Eq@<Coord@> Eq = {
+/Core/Eq%.Eq@<Coord@> Eq = {
   % IntEq = /Core/Int/Eq%.Eq;
   (Coord@ a, Coord@ b) {
     And(IntEq(a.x, b.x), IntEq(a.y, b.y));
@@ -31,7 +31,7 @@
 
 # Lt --
 #   Less than operator for Coord@.
-/Eq%.Eq@<Coord@> Lt = {
+/Core/Eq%.Eq@<Coord@> Lt = {
   % IntEq = /Core/Int/Eq%.Eq;
   % IntLt = /Core/Int/Eq%.Lt;
   (Coord@ a, Coord@ b) {
@@ -39,7 +39,7 @@
   };
 };
 
-/Show%.Show@<Coord@> Show = (Coord@ x) {
+/Core/Show%.Show@<Coord@> Show = (Coord@ x) {
   Strs[Str|'(', /Core/Int/Show%.Show(x.x), Str|',', /Core/Int/Show%.Show(x.y), Str|')'];
 };
 

@@ -11,13 +11,13 @@
 Data@ 0 = Data@(0: Unit);
 Data@ 1 = Data@(1: Unit);
 
-/Eq%.Eq@<Data@> Eq = (Data@ a, Data@ b) {
+/Core/Eq%.Eq@<Data@> Eq = (Data@ a, Data@ b) {
   a.?(
     0: b.?(0: True, 1: False),
     1: b.?(0: False, 1: True));
 };
 
-/Show%.Show@<Data@> Show = (Data@ x) {
+/Core/Show%.Show@<Data@> Show = (Data@ x) {
   x.?(0: Str|0, 1: Str|1);
 };
 

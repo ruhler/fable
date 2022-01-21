@@ -5,7 +5,7 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 

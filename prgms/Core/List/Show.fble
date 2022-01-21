@@ -5,7 +5,7 @@
 <@>% List = /Core/List%.List;
 <@>% Concat = /Core/List%.Concat;
 
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

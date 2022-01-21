@@ -1,6 +1,6 @@
 
 @ Char@ = /Core/Char%.Char@;
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 % Str = /Core/String%.Str;
 
 # Show --

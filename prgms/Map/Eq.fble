@@ -4,7 +4,7 @@
 % False = /Core/Bool%.False;
 % And = /Core/Bool%.And;
 
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;

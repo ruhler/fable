@@ -11,7 +11,7 @@
 @ Vec@ = /Pinball/Vec%.Vec@;
 % SubV = /Pinball/Vec%.SubV;
 
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 
 % Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;

@@ -101,13 +101,13 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 
 # AlienLt, AlienLe -- 
 #   Less than comparison operations for Aliens.
-/Eq%.Eq@<Alien@> AlienLt = (Alien@ a, Alien@ b) {
+/Core/Eq%.Eq@<Alien@> AlienLt = (Alien@ a, Alien@ b) {
   Lt(a.row, b.row).?(true: True);
   Lt(b.row, a.row).?(true: False);
   Lt(a.col, b.col);
 };
 
-/Eq%.Eq@<Alien@> AlienLe = (Alien@ a, Alien@ b) {
+/Core/Eq%.Eq@<Alien@> AlienLe = (Alien@ a, Alien@ b) {
   Lt(a.row, b.row).?(true: True);
   Lt(b.row, a.row).?(true: False);
   Le(a.col, b.col);

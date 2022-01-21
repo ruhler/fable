@@ -26,21 +26,21 @@
 % BoardStatus = /TicTacToe/Board%.BoardStatus;
 % Move = /TicTacToe/Board%.Move;
 
-/Eq%.Eq@<Square@> SquareEq = (Square@ a, Square@ b) {
+/Core/Eq%.Eq@<Square@> SquareEq = (Square@ a, Square@ b) {
   a.?(
     X: b.?(X: True, : False),
     O: b.?(O: True, : False),
     E: b.?(E: True, : False));
 };
 
-/Eq%.Eq@<Square@> SquareLt = (Square@ a, Square@ b) {
+/Core/Eq%.Eq@<Square@> SquareLt = (Square@ a, Square@ b) {
   a.?(
     X: b.?(X: False, O: True, E: True),
     O: b.?(X: False, O: False, E: True),
     E: False);
 };
 
-/Eq%.Eq@<Board@> BoardLt = (Board@ a, Board@ b) {
+/Core/Eq%.Eq@<Board@> BoardLt = (Board@ a, Board@ b) {
   SquareLt(a.ul, b.ul).?(true: True);
   SquareEq(a.ul, b.ul).?(false: False);
   SquareLt(a.uc, b.uc).?(true: True);

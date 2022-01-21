@@ -2,7 +2,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 @ Char@ = /Core/Char%.Char@;
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 
 # Eq --
 #   Implementation of Eq@ for Char@. See documentation of /Eq%.Eq@.

@@ -2,7 +2,7 @@
 @ Bool@ = /Core/Bool%.Bool@;
 
 # Eq -- see documentation of /Eq%.Eq@.
-/Eq%.Eq@<Bool@> Eq = (Bool@ a, Bool@ b) {
+/Core/Eq%.Eq@<Bool@> Eq = (Bool@ a, Bool@ b) {
   a.?(true: b, false: /Core/Bool%.Not(b));
 };
 

@@ -1,6 +1,6 @@
 
 % True = /Core/Bool%.True;
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 @ Unit@ = /Core/Unit%.Unit@;
 
 # Eq --

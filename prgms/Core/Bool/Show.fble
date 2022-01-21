@@ -1,6 +1,6 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 % Str = /Core/String%.Str;
 
 # Show -- see documentation of /Show%.Show@.

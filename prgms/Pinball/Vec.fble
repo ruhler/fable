@@ -2,7 +2,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-<@>@ Eq@ = /Eq%.Eq@;
+<@>@ Eq@ = /Core/Eq%.Eq@;
 
 @ Num@ = /Pinball/Num%.Num@;
 % Add = /Pinball/Num%.Add;
@@ -11,7 +11,7 @@
 % Div = /Pinball/Num%.Div;
 % Sqrt = /Pinball/Num%.Sqrt;
 
-<@>@ Show@ = /Show%.Show@;
+<@>@ Show@ = /Core/Show%.Show@;
 
 % Strs = /Core/String%.Strs;
 % Str = /Core/String%.Str;

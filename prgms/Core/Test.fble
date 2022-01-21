@@ -57,7 +57,7 @@ TestSuite = (String@ name, List@<Test@> tests) {
 };
 
 <@ T@>((T@, T@) { Bool@; }, (T@) { String@; }, T@, T@) { TestResult@; }
-AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ actual) {
+AssertEquals = <@ T@>(/Core/Eq%.Eq@<T@> eq, /Core/Show%.Show@<T@> show, T@ expected, T@ actual) {
   eq(expected, actual).?(
     true: TestResult@(pass: Unit),
     false: TestResult@(fail: Concat<Char@>(List<String@>[
