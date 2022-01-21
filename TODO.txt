@@ -1,5 +1,7 @@
 * [lib] Move Core modules to Core directory.
  In preparation for being able to build a core package separately.
+ Digits, Undef, Iter
+ Looks like Loop and Maybe not required.
 
 * [lang] Rewrite abstract types feature again.
  - brainstorm concrete syntax.
