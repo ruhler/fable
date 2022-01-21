@@ -8,7 +8,7 @@
 <@>@ Get@ = /Process%.Get@;
 <@>@ Put@ = /Process%.Put@;
 
-@ String@ = /String%.String@;
+@ String@ = /Core/String%.String@;
 
 # IO@ --
 #   Input and output streams for a Stdio program.

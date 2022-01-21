@@ -1,8 +1,8 @@
 
 <@>@ Show@ = /Show%.Show@;
-@ String@ = /String%.String@;
-% Str = /String%.Str;
-% Strs = /String%.Strs;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 # Show --
 #   Implementation of Show@ for String@. See documentation of /Show%.Show@.

@@ -39,9 +39,9 @@
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 
-@ String@ = /String%.String@;
-% Strs = /String%.Strs;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

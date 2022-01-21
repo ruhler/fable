@@ -1,7 +1,7 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 <@>@ Show@ = /Show%.Show@;
-% Str = /String%.Str;
+% Str = /Core/String%.Str;
 
 # Show -- see documentation of /Show%.Show@.
 Show@<Bool@> Show = (Bool@ x) {

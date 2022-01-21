@@ -11,6 +11,6 @@
 #
 # Returns:
 #   A human readable representation of the given value.
-<@>@ Show@ = <@ T@>(T@) { /String%.String@; };
+<@>@ Show@ = <@ T@>(T@) { /Core/String%.String@; };
 
 @(Show@);

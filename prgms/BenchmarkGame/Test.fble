@@ -11,9 +11,9 @@
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
-% Strs = /String%.Strs;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 @ Test@ = /Core/Test%.Test@;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
@@ -42,7 +42,7 @@ Test = (String@ name, Stdio@ game, String@ n, String@ expected) {
       put(Nothing<String@>);
     };
     Unit@ _ := RunGame, String@ got := ReadOutput(Str|'');
-    !(AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, expected, got));
+    !(AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, expected, got));
   });
 };
 

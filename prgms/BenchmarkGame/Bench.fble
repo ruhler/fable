@@ -8,8 +8,8 @@
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

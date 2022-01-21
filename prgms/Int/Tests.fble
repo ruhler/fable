@@ -4,8 +4,8 @@
 
 <@>% List = /Core/List%.List;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
@@ -164,19 +164,19 @@ Test@ Tests = TestSuite(Str|Int, List<Test@>[
   Test(Str|Show_Positive, !({
     String@ wnt = Str|'10325487960';
     String@ got = /Int/Show%.Show(Int|10325487960);
-    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Zero, !({
     String@ wnt = Str|'0';
     String@ got = /Int/Show%.Show(Int|0);
-    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Negative, !({
     String@ wnt = Str|'-42';
     String@ got = /Int/Show%.Show(Neg(Int|42));
-    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }))
 ]);
 

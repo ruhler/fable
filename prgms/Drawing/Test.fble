@@ -17,9 +17,9 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ String@ = /String%.String@;
-% Strs = /String%.Strs;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
 
 @ TestResult@ = /Core/Test%.TestResult@;
 

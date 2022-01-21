@@ -10,7 +10,7 @@
 
 <@>% List = /Core/List%.List;
 
-% Str = /String%.Str;
+% Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;

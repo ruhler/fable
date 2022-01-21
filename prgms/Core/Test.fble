@@ -23,9 +23,9 @@
 
 <@>@ Put@ = /Process%.Put@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
-% Strs = /String%.Strs;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -72,7 +72,7 @@ AssertEquals = <@ T@>(/Eq%.Eq@<T@> eq, /Show%.Show@<T@> show, T@ expected, T@ ac
 ExpectFails = (TestResult@ result, String@ msg) {
   result.?(
     pass: TestResult@(fail: Str|'Expected failure, but test passed'),
-    fail: /String/Eq%.Contains(result.fail, msg).?(
+    fail: /Core/String/Eq%.Contains(result.fail, msg).?(
       true: TestResult@(xfail: Unit),
       false: TestResult@(fail: Strs[
         Str|'Expected failure containing "', msg,

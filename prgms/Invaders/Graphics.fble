@@ -14,7 +14,7 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ String@ = /String%.String@;
+@ String@ = /Core/String%.String@;
 
 Color@ white = Color.White;
 Color@ green = Color.Green;

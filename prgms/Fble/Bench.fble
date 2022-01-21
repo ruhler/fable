@@ -12,9 +12,9 @@
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
-% Strs = /String%.Strs;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -44,7 +44,7 @@ Stdio@ Bench = (IO@ io, List@<String@> args) {
     (Benchmark@ benchmark, Unit@ _) {
       Bool@ skip = {
         args.?(nil: False);
-        Not(/Core/List/Eq%.Contains<String@>(/String/Eq%.Eq)(args, benchmark.name));
+        Not(/Core/List/Eq%.Contains<String@>(/Core/String/Eq%.Eq)(args, benchmark.name));
       };
 
       skip.?(true: {

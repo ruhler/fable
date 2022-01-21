@@ -5,7 +5,7 @@
 
 @ Char@ = /Core/Char%.Char@;
 <@>@ Eq@ = /Eq%.Eq@;
-@ String@ = /String%.String@;
+@ String@ = /Core/String%.String@;
 
 # Eq --
 #   Implementation of Eq@ for String@. See documentation of /Eq%.Eq@.

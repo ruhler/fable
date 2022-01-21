@@ -15,7 +15,7 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 
-% Str = /String%.Str;
+% Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % TestSuite = /Core/Test%.TestSuite;

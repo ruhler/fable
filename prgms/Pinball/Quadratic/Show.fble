@@ -4,8 +4,8 @@
 
 <@>@ Show@ = /Show%.Show@;
 
-% Strs = /String%.Strs;
-% Str = /String%.Str;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
 
 Show@<Linear@> ShowLinear = (Linear@ l) {
   Strs[Str|'Linear@(',

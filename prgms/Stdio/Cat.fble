@@ -8,7 +8,7 @@
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
 
-@ String@ = /String%.String@;
+@ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 

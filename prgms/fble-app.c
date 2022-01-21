@@ -10,9 +10,9 @@
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
-#include "Core/char.fble.h"  // for FbleCharValueAccess
+#include "Core/char.fble.h"    // for FbleCharValueAccess
 #include "int.fble.h"     // for FbleIntValueAccess
-#include "string.fble.h"  // for FbleStringValueAccess
+#include "Core/string.fble.h"  // for FbleStringValueAccess
 
 // sFpsHistogram[i] is the number of samples with i frames per second.
 // Anything above 60 FPS is counted towards i = 60.

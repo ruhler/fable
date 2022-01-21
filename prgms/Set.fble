@@ -48,7 +48,7 @@ Set@ Empty = <@ T@> { /Map%.Empty<T@, Unit@>; };
 #   True if the element belongs to the map, false otherwise.
 #
 # Example Use:
-#   % Contains = /Set%.Contains<String@>(/String/Eq%.Lt);
+#   % Contains = /Set%.Contains<String@>(/Core/String/Eq%.Lt);
 #   Contains(set, value);
 <@ T@>(Eq@<T@>)(Set@<T@>, T@) { Bool@; }
 Contains = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
@@ -67,7 +67,7 @@ Contains = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
 #   element - the element to insert.
 #
 # Example Use:
-#   % Insert = /Set%.Insert<String@>(/String/Eq%.Lt);
+#   % Insert = /Set%.Insert<String@>(/Core/String/Eq%.Lt);
 #   Insert(set, Str(Chars|foo));
 <@ T@>(Eq@<T@>)(Set@<T@>, T@) { Set@<T@>; }
 Insert = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {

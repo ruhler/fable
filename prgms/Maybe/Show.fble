@@ -3,7 +3,7 @@
 <@>% Append = /Core/List%.Append;
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>@ Show@ = /Show%.Show@;
-% Str = /String%.Str;
+% Str = /Core/String%.Str;
 
 
 # Show --

@@ -15,8 +15,8 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 <@>@ Show@ = /Show%.Show@;
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
@@ -139,7 +139,7 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
         And(EqBit2(a.key, b.key), /Core/Bool/Eq%.Eq(a.value, b.value));
       }),
       /Core/List/Show%.Show<Entry@>((Entry@ e) {
-        /String%.Strs[ShowBit2(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
+        /Core/String%.Strs[ShowBit2(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
       }),
       wnt, got);
   })),
@@ -227,21 +227,21 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Map@<Bool@> map = Empty<Bool@>;
     String@ wnt = Str|'{ }';
     String@ got = /Map/Show%.Show<Bit2@, Bool@>(ShowBit2, /Core/Bool/Show%.Show)(map);
-    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })),
 
   Test(Str|'Show single', !({
     Map@<Bool@> map = Insert<Bool@>(Empty<Bool@>, B, False);
     String@ wnt = Str|'{ 01 => False; }';
     String@ got = /Map/Show%.Show<Bit2@, Bool@>(ShowBit2, /Core/Bool/Show%.Show)(map);
-    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })),
 
   Test(Str|'Show multi', !({
     Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>, B, False), C, True);
     String@ wnt = Str|'{ 01 => False; 10 => True; }';
     String@ got = /Map/Show%.Show<Bit2@, Bool@>(ShowBit2, /Core/Bool/Show%.Show)(map);
-    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }))
 ]);
 

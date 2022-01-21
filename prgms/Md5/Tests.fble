@@ -21,8 +21,8 @@
 
 <@>@ Put@ = /Process%.Put@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;

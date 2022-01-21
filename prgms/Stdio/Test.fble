@@ -8,8 +8,8 @@
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 Stdio@ Test = (IO@ io, List@<String@> args) {
   # Output a single line to test that we don't drop trailing outputs.

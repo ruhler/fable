@@ -8,8 +8,8 @@
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 % TestSuite = /Core/Test%.TestSuite;
@@ -48,7 +48,7 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Pinball/Tests%.Tests,
   /Rat/Tests%.Tests,
   /Sat/Tests%.Tests,
-  /String/Tests%.Tests,
+  /Core/String/Tests%.Tests,
   /Sudoku/Tests%.Tests,
   /Core/Test/Tests%.Tests,
   /TicTacToe/Tests%.Tests
@@ -56,7 +56,7 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
 
 Stdio@ Main = (IO@ io, List@<String@> args) {
   Bool@ verbose = args.?(
-    cons: /String/Eq%.Eq(Str|'--verbose', args.cons.head),
+    cons: /Core/String/Eq%.Eq(Str|'--verbose', args.cons.head),
     nil: False);
 
   verbose.?(

@@ -3,8 +3,8 @@
 
 <@>@ Show@ = /Show%.Show@;
 
-% Str = /String%.Str;
-% Strs = /String%.Strs;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 Show@<Rat@> Show = (Rat@ r) {
   # TODO: Reduce the ratio before showing?

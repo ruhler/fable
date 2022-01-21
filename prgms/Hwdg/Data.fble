@@ -2,7 +2,7 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-% Str = /String%.Str;
+% Str = /Core/String%.Str;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

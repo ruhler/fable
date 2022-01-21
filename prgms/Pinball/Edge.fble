@@ -8,8 +8,8 @@
 
 <@>@ Show@ = /Show%.Show@;
 
-% Strs = /String%.Strs;
-% Str = /String%.Str;
+% Strs = /Core/String%.Strs;
+% Str = /Core/String%.Str;
 
 # Edge@ --
 #   Internal representation for a stationary edge.

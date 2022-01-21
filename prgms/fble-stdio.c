@@ -11,9 +11,9 @@
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
-#include "Core/char.fble.h"  // for FbleCharValueAccess
+#include "Core/char.fble.h"    // for FbleCharValueAccess
 #include "int.fble.h"     // for FbleIntValueAccess
-#include "string.fble.h"  // for FbleNewStringValue, FbleStringValueAccess
+#include "Core/string.fble.h"  // for FbleNewStringValue, FbleStringValueAccess
 
 typedef struct {
   FbleIO io;
@@ -58,7 +58,7 @@ static void PrintUsage(FILE* stream)
 //
 // Inputs:
 //   stream - the stream to output to
-//   str - the /String%.String@ to write
+//   str - the /Core/String%.String@ to write
 //
 // Side effects:
 //   Outputs the string to the stream and flushes the stream.

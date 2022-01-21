@@ -196,10 +196,10 @@ IsEmpty = <@ K@, @ V@>(Map@<K@, V@> map) {
 #   does not contain any such value.
 #
 # Example Use:
-#   % Lookup = /Map%.Lookup<String@>(/String/Eq%.Lt)<Foo@>;
+#   % Lookup = /Map%.Lookup<String@>(/Core/String/Eq%.Lt)<Foo@>;
 #   Lookup(map, key);
 #
-#   % Lookup = /Map%.Lookup<String@>(/String/Eq%.Lt);
+#   % Lookup = /Map%.Lookup<String@>(/Core/String/Eq%.Lt);
 #   Lookup<Foo@>(mapToFoo, key);
 #   Lookup<Bar@>(mapToBar, key);
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Maybe@<V@>; }
@@ -518,7 +518,7 @@ Modify = <@ K@>(Eq@<K@> lt)<@ V@> {
 #   key - the key of the value to delete from the map.
 #
 # Example Use:
-#   % Delete = /Map%.Delete<String@>(/String/Eq%.Lt)<Int@>;
+#   % Delete = /Map%.Delete<String@>(/Core/String/Eq%.Lt)<Int@>;
 #   Delete(map, Str(Chars|foo));
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@) { Map@<K@, V@>; }
 Delete = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
@@ -541,7 +541,7 @@ Delete = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key) {
 #          value in the map.
 #
 # Example Use:
-#   % InsertWith = /Map%.InsertWith<String@>(/String/Eq%.Lt)<Int@>;
+#   % InsertWith = /Map%.InsertWith<String@>(/Core/String/Eq%.Lt)<Int@>;
 #   InsertWith(map, Str(Chars|foo), (Maybe@<Int@> mv) {
 #     mv.?(just: Add(mv, value), nothing: value);
 #   };
@@ -565,7 +565,7 @@ InsertWith = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, (Maybe@<V@>) { V
 #   value - the value to insert.
 #
 # Example Use:
-#   % Insert = /Map%.Insert<String@>(/String/Eq%.Lt)<Int@>;
+#   % Insert = /Map%.Insert<String@>(/Core/String/Eq%.Lt)<Int@>;
 #   Insert(map, Str(Chars|foo), 4);
 <@ K@>(Eq@<K@>)<@ V@>(Map@<K@, V@>, K@, V@) { Map@<K@, V@>; }
 Insert = <@ K@>(Eq@<K@> lt)<@ V@>(Map@<K@, V@> map, K@ key, V@ value) {

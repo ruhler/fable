@@ -13,8 +13,8 @@
 
 <@>@ Show@ = /Show%.Show@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 # ShowDigit --
 #   Convert the given digit to a string.

@@ -4,9 +4,9 @@
 <@,@>@ Map@ = /Map%.Map@;
 <@,@,@>% ForEach = /Map%.ForEach;
 <@>@ Show@ = /Show%.Show@;
-@ String@ = /String%.String@;
-% Str = /String%.Str;
-% Strs = /String%.Strs;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 # Show --
 #   Implementation of Show@ for Map@<K@, V@>. See documentation of

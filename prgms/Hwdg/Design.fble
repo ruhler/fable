@@ -25,7 +25,7 @@
 
 <@>@ Set@ = /Set%.Set@;
 
-@ String@ = /String%.String@;
+@ String@ = /Core/String%.String@;
 
 # Ports@ --
 #   Convenience type for capturing information about each of the 4 adjacent

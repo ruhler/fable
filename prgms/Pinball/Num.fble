@@ -23,8 +23,8 @@
 
 <@>@ Show@ = /Show%.Show@;
 
-% Str = /String%.Str;
-% Strs = /String%.Strs;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 # _@ -- Token type to prevent internal access to Num@ abstract type.
 @? _@;

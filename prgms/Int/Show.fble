@@ -11,8 +11,8 @@
 
 <@>@ Show@ = /Show%.Show@;
 
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 
 (String@) { Int@; } Read = {
   (Char@) { Int@; } Digit = (Char@ c) {

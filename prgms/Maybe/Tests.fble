@@ -8,8 +8,8 @@
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
 <@>@ Show@ = /Show%.Show@;
-@ String@ = /String%.String@;
-% Str = /String%.Str;
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
@@ -68,13 +68,13 @@ Test@ Tests = TestSuite(Str|Maybe, List<Test@>[
   Test(Str|Show_Just, !({
     String@ wnt = Str|'Just:b';
     String@ got = Show(Just<AB@>(B));
-    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })),
 
   Test(Str|Show_Nothing, !({
     String@ wnt = Str|'Nothing';
     String@ got = Show(Nothing<AB@>);
-    AssertEquals<String@>(/String/Eq%.Eq, /String/Show%.Show, wnt, got);
+    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }))
 ]);
 
