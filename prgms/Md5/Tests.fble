@@ -19,7 +19,7 @@
 % Md5 = /Md5%.Md5;
 % Eq = /Md5%.Eq;
 
-<@>@ Put@ = /Process%.Put@;
+<@>@ Put@ = /Core/Process%.Put@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

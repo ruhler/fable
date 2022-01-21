@@ -15,7 +15,7 @@
 @ Md5Hash@ = /Md5%.Md5Hash@;
 % Md5 = /Md5%.Md5;
 
-<@>@ Put@ = /Process%.Put@;
+<@>@ Put@ = /Core/Process%.Put@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

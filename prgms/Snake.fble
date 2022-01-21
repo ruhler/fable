@@ -31,8 +31,8 @@
 <@>% Cons = /Core/List%.Cons;
 <@,@>% ForEach = /Core/List%.ForEach;
 
-<@>@ Get@ = /Process%.Get@;
-<@>@ Put@ = /Process%.Put@;
+<@>@ Get@ = /Core/Process%.Get@;
+<@>@ Put@ = /Core/Process%.Put@;
 
 @ Int@ = /Int%.Int@;
 % 0 = /Int%.0;

@@ -36,8 +36,8 @@
 % 8 = Hex.8; % 9 = Hex.9; % A = Hex.A; % B = Hex.B;
 % C = Hex.C; % D = Hex.D; % E = Hex.E;
 
-<@>@ Get@ = /Process%.Get@;
-<@>@ Put@ = /Process%.Put@;
+<@>@ Get@ = /Core/Process%.Get@;
+<@>@ Put@ = /Core/Process%.Put@;
 
 # Construct a Bit32 in hex, with high-order byte first.
 (List@<Hex@>) { Bit32@; } H8 = (List@<Hex@> s) {

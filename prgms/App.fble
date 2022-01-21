@@ -3,8 +3,8 @@
 
 @ Int@ = /Int%.Int@;
 
-<@>@ Get@ = /Process%.Get@;
-<@>@ Put@ = /Process%.Put@;
+<@>@ Get@ = /Core/Process%.Get@;
+<@>@ Put@ = /Core/Process%.Put@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
