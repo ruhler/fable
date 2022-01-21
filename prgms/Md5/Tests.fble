@@ -2,7 +2,7 @@
 @ Bit8@ = /Bits%.Bit8.Bit8@;
 % H2 = /Bits%.Bit8.H2;
 
-@ Char@ = /Char%.Char@;
+@ Char@ = /Core/Char%.Char@;
 
 @ Hex@ = /Digits%.Hex@;
 % HexStr = /Digits/String%.HexStr;

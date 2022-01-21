@@ -3,7 +3,7 @@
 
 % True = /Core/Bool%.True;
 
-% Chars = /Char%.Chars;
+% Chars = /Core/Char%.Chars;
 
 <@>@ List@ = /Core/List%.List@;
 

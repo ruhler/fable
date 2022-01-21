@@ -5,23 +5,23 @@
 #include "fble-value.h"   // for FbleValue, etc.
 
 // FbleNewCharValue --
-//   Create an FbleValue of type /Char%.Char@.
+//   Create an FbleValue of type /Core/Char%.Char@.
 //   The character '?' is used for any characters not currently supported by
-//   the /Char%.Char@ type.
+//   the /Core/Char%.Char@ type.
 //
 // Inputs:
 //   heap - the heap to use for allocations.
 //   c - the value of the character to write.
 //
 // Results:
-//   The FbleValue c represented as an /Char%.Char@.
+//   The FbleValue c represented as an /Core/Char%.Char@.
 //
 // Side effects:
 //   Allocates a value that must be freed when no longer required.
 FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c);
 
 // FbleCharValueAccess --
-//   Read a character from an FbleValue of type /Char%.Char@
+//   Read a character from an FbleValue of type /Core/Char%.Char@
 //
 // Inputs:
 //   c - the value of the character.

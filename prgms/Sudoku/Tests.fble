@@ -4,8 +4,8 @@
 % False = /Core/Bool%.False;
 % And = /Core/Bool%.And;
 
-@ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
+@ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
 
 <@>% List = /Core/List%.List;
 <@>% Concat = /Core/List%.Concat;

@@ -4,7 +4,7 @@
 % False = /Core/Bool%.False;
 % Or = /Core/Bool%.Or;
 
-@ Char@ = /Char%.Char@;
+@ Char@ = /Core/Char%.Char@;
 
 (Char@) { Bool@; } IsUpper = (Char@ c) {
   c.?(

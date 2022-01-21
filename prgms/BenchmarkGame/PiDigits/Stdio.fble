@@ -7,7 +7,7 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 
-% Chars = /Char%.Chars;
+% Chars = /Core/Char%.Chars;
 
 @ Int@ = /Int%.Int@;
 % Inc = /Int%.Inc;

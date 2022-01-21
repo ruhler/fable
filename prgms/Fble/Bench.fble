@@ -4,7 +4,7 @@
 % False = /Core/Bool%.False;
 % Not = /Core/Bool%.Not;
 
-% Chars = /Char%.Chars;
+% Chars = /Core/Char%.Chars;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;

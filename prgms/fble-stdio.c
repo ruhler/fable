@@ -11,7 +11,7 @@
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
 
-#include "char.fble.h"    // for FbleCharValueAccess
+#include "Core/char.fble.h"  // for FbleCharValueAccess
 #include "int.fble.h"     // for FbleIntValueAccess
 #include "string.fble.h"  // for FbleNewStringValue, FbleStringValueAccess
 

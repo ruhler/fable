@@ -1,8 +1,8 @@
 
 % True = /Core/Bool%.True;
 
-@ Char@ = /Char%.Char@;
-% Chars = /Char%.Chars;
+@ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;

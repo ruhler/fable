@@ -1,7 +1,7 @@
 
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
-@ Char@ = /Char%.Char@;
+@ Char@ = /Core/Char%.Char@;
 <@>@ Eq@ = /Eq%.Eq@;
 
 # Eq --

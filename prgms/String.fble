@@ -1,5 +1,5 @@
 
-@ Char@ = /Char%.Char@;
+@ Char@ = /Core/Char%.Char@;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;

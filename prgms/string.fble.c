@@ -6,7 +6,7 @@
 #include "fble-value.h"     // for FbleValue, etc.
 #include "fble-vector.h"    // for FbleVectorInit, etc.
 
-#include "char.fble.h"      // for FbleCharValueAccess, FbleNewCharValue
+#include "Core/char.fble.h" // for FbleCharValueAccess, FbleNewCharValue
 
 // FbleStringValueAccess -- see documentation in string.fble.h
 char* FbleStringValueAccess(FbleValue* str)

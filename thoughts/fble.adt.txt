@@ -1692,3 +1692,37 @@ I feel like it works out pretty well for my Num@ abstract type, both for
 functions that work directly with the underlying value, and with functions
 that need slight modification.
 
+---
+
+After much thought on supporting abstract types across module boundaries, I
+want to do another revision. The key idea is that the token type is associated
+with a module path representing the set of modules that can access the token,
+and we add back direct wrap and unwrap syntax, which is needed to avoid what
+would otherwise be too tedious for marking abstract modules.
+
+This is a chance to revisit the concrete syntax. What do you think?
+
+@ _@ = ?(/Foo%);                # token type
+@ X@ = _@<X_@>;                 # abstract type
+X@ x = _@(x_);                  # abstract value
+X_@ y = x.?;                    # abstract access
+List@<X@> xs = _@.<@<xs>>(xs_); # abstract cast
+
+Is '?' the right character to use? How about '%'?
+
+@ _@ = %(/Foo%);                # token type
+@ X@ = _@<X_@>;                 # abstract type
+X@ x = _@(x_);                  # abstract value
+X_@ y = x.%;                    # abstract access
+List@<X@> xs = _@.<@<xs>>(xs_); # abstract cast
+
+Or '$', which I guess I'm not currently using?
+
+@ _@ = $(/Foo%);                # token type
+@ X@ = _@<X_@>;                 # abstract type
+X@ x = _@(x_);                  # abstract value
+X_@ y = x.$;                    # abstract access
+List@<X@> xs = _@.<@<xs>>(xs_); # abstract cast
+
+I'm leaning towards '%', if that doesn't conflict with other syntax.
+

@@ -3,20 +3,20 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Char@ = /Char%.Char@;
+@ Char@ = /Core/Char%.Char@;
 <@>@ Eq@ = /Eq%.Eq@;
 @ String@ = /String%.String@;
 
 # Eq --
 #   Implementation of Eq@ for String@. See documentation of /Eq%.Eq@.
-Eq@<String@> Eq = /Core/List/Eq%.Eq<Char@>(/Char/Eq%.Eq);
+Eq@<String@> Eq = /Core/List/Eq%.Eq<Char@>(/Core/Char/Eq%.Eq);
 
 # StartsWith --
 #   Returns true if the string str starts with sub.
 (String@, String@) { Bool@; } StartsWith = (String@ str, String@ sub) {
   sub.?(nil: True);
   str.?(nil: False);
-  /Char/Eq%.Eq(str.cons.head, sub.cons.head).?(false: False);
+  /Core/Char/Eq%.Eq(str.cons.head, sub.cons.head).?(false: False);
   StartsWith(str.cons.tail, sub.cons.tail);
 };
 
