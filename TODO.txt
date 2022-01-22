@@ -1,13 +1,14 @@
 * [lib] Set up build to only have access to explicit package list?
 
 * [lang] Rewrite abstract types feature again.
- - brainstorm concrete syntax.
  - update language spec.
  - update spec tests.
- - update implementation.
- - update programs.
+ - replace abstract token type with package type.
+   After this everything should compile again.
+ - add abstract access and abstract value and tests for those.
 
 * [modules]
+ - Decide about .fble.@ files.
  - Split FbleLoad into FbleLoadProgram and FbleLoadModule.
  - Add support for loading .fble.@ files.
    And presumably some way to test this and something about it in the language

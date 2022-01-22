@@ -1726,3 +1726,16 @@ List@<X@> xs = _@.<@<xs>>(xs_); # abstract cast
 
 I'm leaning towards '%', if that doesn't conflict with other syntax.
 
+---
+
+Implementation should be straight forward, because have access to module path
+when doing type check. Let's just stash the module path in the scope and use
+that for access checks.
+
+Step 1 is to check we don't have any parser conflicts with the proposed
+syntax.
+
+All we need to add is expr '.' '%' and '%'(mpath).
+
+The parse seems happy enough with this. Let's do it.
+

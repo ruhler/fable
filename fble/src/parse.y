@@ -364,6 +364,10 @@ expr:
       union_type->fields = $3;
       $$ = &union_type->_base;
    }
+ | '%' '(' module_path ')' {
+      assert(false && "TODO: parse package type.");
+      $$ = NULL;
+   }
  | expr '(' name ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(FbleUnionValueExpr);
       union_value_expr->_base.tag = FBLE_UNION_VALUE_EXPR;
@@ -416,6 +420,10 @@ expr:
         $$ = &poly_apply_expr->_base;
       }
       FbleFree($3.xs);
+   }
+ | expr '.' '%' {
+     assert(false && "TODO: parse abstract access");
+     $$ = NULL;
    }
  | expr '.' '<' expr '>' '(' expr ')' {
      FbleAbstractCastExpr* cast_expr = FbleAlloc(FbleAbstractCastExpr);
