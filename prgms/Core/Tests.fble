@@ -1,0 +1,22 @@
+
+<@>% List = /Core/List%.List;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
+
+# Import to test compilation.
+% _ = /Core/Char/Show%;
+
+Test@ Tests = TestSuite(Str|Core, List<Test@>[
+  /Core/Bool/Tests%.Tests,
+  /Core/Digits/Tests%.Tests,
+  /Core/Int/Tests%.Tests,
+  /Core/List/Tests%.Tests,
+  /Core/Maybe/Tests%.Tests,
+  /Core/String/Tests%.Tests,
+  /Core/Test/Tests%.Tests
+]);
+
+@(Tests);

@@ -15,7 +15,6 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /Core/Char/Show%;
 % _ = /Fble/Bench%;
 % _ = /Fble/DebugTest%;
 % _ = /Fble/ProfilesTest%;
@@ -32,25 +31,19 @@
 % _ = /Stdio/Test%;
 
 Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
-  /Core/Bool/Tests%.Tests,
+  /Core/Tests%.Tests,
   /BenchmarkGame/Tests%.Tests,
-  /Core/Digits/Tests%.Tests,
   /GameOfLife/Tests%.Tests,
   /Graphics/2D/Tests%.Tests,
   /Graphics/Triangle/Tests%.Tests,
   /Hwdg/Tests%.Tests,
-  /Core/Int/Tests%.Tests,
   /LFSR/Tests%.Tests,
-  /Core/List/Tests%.Tests,
   /Map/Tests%.Tests,
-  /Core/Maybe/Tests%.Tests,
   /Md5/Tests%.Tests,
   /Pinball/Tests%.Tests,
   /Rat/Tests%.Tests,
   /Sat/Tests%.Tests,
-  /Core/String/Tests%.Tests,
   /Sudoku/Tests%.Tests,
-  /Core/Test/Tests%.Tests,
   /TicTacToe/Tests%.Tests
 ]);
 
