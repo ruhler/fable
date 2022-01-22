@@ -4,13 +4,13 @@
 @ Hex@ = /Core/Digits%.Hex@;
 % 0 = /Core/Digits%.Hex.0;
 
-@ Bit@ = /Bits/BitN%.Bit@;
+@ Bit@ = /Md5/Bits/BitN%.Bit@;
 
-<@>@ Bit2X@ = /Bits/Bit2XN%.Bit2X@;
-<@>% Bit2XN = /Bits/Bit2XN%.Bit2XN;
+<@>@ Bit2X@ = /Md5/Bits/Bit2XN%.Bit2X@;
+<@>% Bit2XN = /Md5/Bits/Bit2XN%.Bit2XN;
 
 % Bit = @(Bit@);
-% Bit1 = /Bits/Bit1%;
+% Bit1 = /Md5/Bits/Bit1%;
 % Bit2 = @(Bit2@: Bit2X@<Bit@>, BitN: Bit2XN<Bit@>(Bit1.BitN));
 
 % Bit4 = {

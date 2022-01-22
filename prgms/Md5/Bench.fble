@@ -1,7 +1,4 @@
 
-@ Bit8@ = /Bits%.Bit8.Bit8@;
-% H2 = /Bits%.Bit8.H2;
-
 % Hex = /Core/Digits%.Hex;
 
 @ Int@ = /Core/Int%.Int@;
@@ -12,13 +9,16 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-@ Md5Hash@ = /Md5%.Md5Hash@;
-% Md5 = /Md5%.Md5;
-
 <@>@ Put@ = /Core/Process%.Put@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
+
+@ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
+% H2 = /Md5/Bits%.Bit8.H2;
+
+@ Md5Hash@ = /Md5%.Md5Hash@;
+% Md5 = /Md5%.Md5;
 
 Int@ 1 = Int|1;
 

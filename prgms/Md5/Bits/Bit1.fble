@@ -5,8 +5,8 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Bit@ = /Bits/BitN%.Bit@;
-<@>@ BitN@ = /Bits/BitN%.BitN@;
+@ Bit@ = /Md5/Bits/BitN%.Bit@;
+<@>@ BitN@ = /Md5/Bits/BitN%.BitN@;
 
 @ Result@ = *(Bit@ z, Bit@ cout);
 

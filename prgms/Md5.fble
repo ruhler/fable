@@ -4,6 +4,13 @@
 % False = /Core/Bool%.False;
 % True = /Core/Bool%.True;
 
+@ Hex@ = /Core/Digits%.Hex@;
+% Hex = /Core/Digits%.Hex;
+% 0 = Hex.0; % 1 = Hex.1; % 2 = Hex.2; % 3 = Hex.3;
+% 4 = Hex.4; % 5 = Hex.5; % 6 = Hex.6; % 7 = Hex.7;
+% 8 = Hex.8; % 9 = Hex.9; % A = Hex.A; % B = Hex.B;
+% C = Hex.C; % D = Hex.D; % E = Hex.E;
+
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@,@>% ForEach = /Core/List%.ForEach;
@@ -13,28 +20,21 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Bit@ = /Bits%.Bit.Bit@;
-@ Bit2@ = /Bits%.Bit2.Bit2@;
-@ Bit4@ = /Bits%.Bit4.Bit4@;
-@ Bit8@ = /Bits%.Bit8.Bit8@;
-@ Bit16@ = /Bits%.Bit16.Bit16@;
-@ Bit32@ = /Bits%.Bit32.Bit32@;
-@ Bit64@ = /Bits%.Bit64.Bit64@;
+@ Bit@ = /Md5/Bits%.Bit.Bit@;
+@ Bit2@ = /Md5/Bits%.Bit2.Bit2@;
+@ Bit4@ = /Md5/Bits%.Bit4.Bit4@;
+@ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
+@ Bit16@ = /Md5/Bits%.Bit16.Bit16@;
+@ Bit32@ = /Md5/Bits%.Bit32.Bit32@;
+@ Bit64@ = /Md5/Bits%.Bit64.Bit64@;
 
-% H2 = /Bits%.Bit8.H2;
+% H2 = /Md5/Bits%.Bit8.H2;
 
-% and = /Bits%.Bit32.BitN.and;
-% or = /Bits%.Bit32.BitN.or;
-% not = /Bits%.Bit32.BitN.not;
-% xor = /Bits%.Bit32.BitN.xor;
-% add = /Bits%.Bit32.BitN.add;
-
-@ Hex@ = /Core/Digits%.Hex@;
-% Hex = /Core/Digits%.Hex;
-% 0 = Hex.0; % 1 = Hex.1; % 2 = Hex.2; % 3 = Hex.3;
-% 4 = Hex.4; % 5 = Hex.5; % 6 = Hex.6; % 7 = Hex.7;
-% 8 = Hex.8; % 9 = Hex.9; % A = Hex.A; % B = Hex.B;
-% C = Hex.C; % D = Hex.D; % E = Hex.E;
+% and = /Md5/Bits%.Bit32.BitN.and;
+% or = /Md5/Bits%.Bit32.BitN.or;
+% not = /Md5/Bits%.Bit32.BitN.not;
+% xor = /Md5/Bits%.Bit32.BitN.xor;
+% add = /Md5/Bits%.Bit32.BitN.add;
 
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;
@@ -470,7 +470,7 @@ Round@ Round4 = RoundX(II, S@(6: Unit), S@(10: Unit), S@(15: Unit), S@(21: Unit)
 };
 
 (Bit64@) { Bit64@; } Inc64 = (Bit64@ a) {
-  /Bits%.Bit64.BitN.inc(a);
+  /Md5/Bits%.Bit64.BitN.inc(a);
 };
 
 (Hex@, Hex@) { Bit64@; } H2_64 = (Hex@ a, Hex@ b) {
@@ -479,15 +479,15 @@ Round@ Round4 = RoundX(II, S@(6: Unit), S@(10: Unit), S@(15: Unit), S@(21: Unit)
 };
 
 (Bit64@) { Bit64@; } shl64 = (Bit64@ a) {
-  /Bits%.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
+  /Md5/Bits%.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
 };
 
 # Add zeros as needed, then the final length to the output message.
 Bit64@ 3f_64 = H2_64(3, Hex.F);
 Bit64@ 08_64 = H2_64(0, 8);
 (Put@<Streamed@<Bit8@>>, Bit64@, Bit64@){Unit@!;} PadZ = (Put@<Streamed@<Bit8@>> output, Bit64@ msglen, Bit64@ length) {
-  /Bits%.Bit64.BitN.iszero(
-    /Bits%.Bit64.BitN.and(3f_64, /Bits%.Bit64.BitN.add(08_64, length))).?(
+  /Md5/Bits%.Bit64.BitN.iszero(
+    /Md5/Bits%.Bit64.BitN.and(3f_64, /Md5/Bits%.Bit64.BitN.add(08_64, length))).?(
        true: {
          Bit64@ bits = shl64(shl64(shl64(msglen)));
          Unit@ _ := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
@@ -568,13 +568,13 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
 
 (Maybe@<Bit8@>!) { Md5Hash@!; } Md5 = (Maybe@<Bit8@>! input) {
   Streamed@<Bit8@> ~ get_padded, put_padded;
-  Unit@ _ := Pad(input, put_padded, /Bits%.Bit64.BitN.zero),
+  Unit@ _ := Pad(input, put_padded, /Md5/Bits%.Bit64.BitN.zero),
   ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
   !(HexFromABCD(md5));
 };
 
 (Hex@, Hex@) { Bool@; } EqHex = (Hex@ a, Hex@ b) {
-  /Bits%.Bit8.BitN.eq(H2(0, a), H2(0, b));
+  /Md5/Bits%.Bit8.BitN.eq(H2(0, a), H2(0, b));
 };
 
 (Md5Hash@, Md5Hash@) { Bool@; } Eq = (Md5Hash@ a, Md5Hash@ b) {

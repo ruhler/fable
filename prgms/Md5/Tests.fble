@@ -1,6 +1,6 @@
 
-@ Bit8@ = /Bits%.Bit8.Bit8@;
-% H2 = /Bits%.Bit8.H2;
+@ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
+% H2 = /Md5/Bits%.Bit8.H2;
 
 @ Char@ = /Core/Char%.Char@;
 
