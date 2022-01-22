@@ -39,9 +39,6 @@
 % Shift = /LFSR%.Shift;
 % ShiftInt = /LFSR/Int%.ShiftInt;
 
-<@,@>% DoWhile = /Loop%.DoWhile;
-<@,@>% For = /Loop%.For;
-
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
@@ -49,6 +46,8 @@
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
+<@,@>% DoWhile = /Maybe%.DoWhile;
+<@,@>% For = /Maybe%.For;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

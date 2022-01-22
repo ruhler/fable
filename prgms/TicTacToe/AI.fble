@@ -6,11 +6,11 @@
 <@>% List = /Core/List%.List;
 <@,@>% ForEach = /Core/List%.ForEach;
 
-<@,@>% DoWhile = /Loop%.DoWhile;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
+<@,@>% DoWhile = /Maybe%.DoWhile;
 
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;

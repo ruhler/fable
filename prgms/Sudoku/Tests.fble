@@ -10,11 +10,11 @@
 <@>% List = /Core/List%.List;
 <@>% Concat = /Core/List%.Concat;
 
-<@,@>% DoWhile = /Loop%.DoWhile;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing;
+<@,@>% DoWhile = /Maybe%.DoWhile;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

@@ -3,13 +3,13 @@
 % False = /Core/Bool%.False;
 % True = /Core/Bool%.True;
 
-<@,@>% DoWhile = /Loop%.DoWhile; 
 
 <@>@ List@ = /Core/List%.List@;
 
 <@>@ Maybe@ = /Maybe%.Maybe@;
 <@>% Just = /Maybe%.Just;
 <@>% Nothing = /Maybe%.Nothing; 
+<@,@>% DoWhile = /Maybe%.DoWhile; 
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
