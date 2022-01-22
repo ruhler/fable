@@ -34,7 +34,7 @@
 Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Core/Bool/Tests%.Tests,
   /BenchmarkGame/Tests%.Tests,
-  /Digits/Tests%.Tests,
+  /Core/Digits/Tests%.Tests,
   /GameOfLife/Tests%.Tests,
   /Graphics/2D/Tests%.Tests,
   /Graphics/Triangle/Tests%.Tests,
@@ -43,7 +43,7 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /LFSR/Tests%.Tests,
   /Core/List/Tests%.Tests,
   /Map/Tests%.Tests,
-  /Maybe/Tests%.Tests,
+  /Core/Maybe/Tests%.Tests,
   /Md5/Tests%.Tests,
   /Pinball/Tests%.Tests,
   /Rat/Tests%.Tests,

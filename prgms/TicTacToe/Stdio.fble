@@ -8,9 +8,9 @@
 <@>% List = /Core/List%.List;
 <@>% Concat = /Core/List%.Concat;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;

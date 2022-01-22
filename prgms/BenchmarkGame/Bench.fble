@@ -3,7 +3,7 @@
 
 <@>% List = /Core/List%.List;
 
-<@>% Nothing = /Maybe%.Nothing;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ Stdio@ = /Stdio%.Stdio@;
 @ IO@ = /Stdio%.IO@;

@@ -1,7 +1,7 @@
 
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
-<@>% Just = /Maybe%.Just;
+<@>% Just = /Core/Maybe%.Just;
 @ Result@ = /Sat%.Result@;
 % Solve = /Sat%.Solve;
 @ Unit@ = /Core/Unit%.Unit@;

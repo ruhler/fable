@@ -15,7 +15,7 @@
 % Min = /Core/Int/Eq%.Min;
 % Range = /Core/Int/Iter%.Range;
 
-<@,@>% For = /Iter%.For;
+<@,@>% For = /Core/Iter%.For;
 
 Int@ 0 = Int|0;
 Int@ 1 = Int|1;

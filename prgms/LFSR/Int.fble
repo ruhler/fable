@@ -1,5 +1,5 @@
 
-@ Bit@ = /Digits%.Bit@;
+@ Bit@ = /Core/Digits%.Bit@;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;

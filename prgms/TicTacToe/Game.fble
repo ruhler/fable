@@ -1,5 +1,5 @@
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;

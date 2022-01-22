@@ -7,7 +7,7 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 # _@ -- Token type for access to internals of Map@ abstract type.
 #

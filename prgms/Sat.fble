@@ -1,11 +1,13 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 % Not = /Core/Bool%.Not;
+
 @ Int@ = /Core/Int%.Int@;
 % Dec = /Core/Int%.Dec;
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;

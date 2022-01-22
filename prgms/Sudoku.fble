@@ -6,10 +6,10 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing; 
-<@,@>% DoWhile = /Maybe%.DoWhile; 
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing; 
+<@,@>% DoWhile = /Core/Maybe%.DoWhile; 
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

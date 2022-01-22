@@ -6,9 +6,9 @@
 
 <@>% List = /Core/List%.List;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 % Neg = /Pinball/Num%.Neg;
 % Int = /Pinball/Num%.Int;
@@ -48,7 +48,7 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     Maybe@<Roots@> want = Just<Roots@>(Roots@(Int|2, Int|4));
     Maybe@<Roots@> got = Roots(q);
     AssertEquals<Maybe@<Roots@>>(
-      /Maybe/Eq%.Eq<Roots@>(EqRoots), /Maybe/Show%.Show<Roots@>(ShowRoots),
+      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
   })),
 
@@ -59,7 +59,7 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     Maybe@<Roots@> want = Just<Roots@>(Roots@(Int|2, Int|2));
     Maybe@<Roots@> got = Roots(q);
     AssertEquals<Maybe@<Roots@>>(
-      /Maybe/Eq%.Eq<Roots@>(EqRoots), /Maybe/Show%.Show<Roots@>(ShowRoots),
+      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
   })),
 
@@ -69,7 +69,7 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     Maybe@<Roots@> want = Nothing<Roots@>;
     Maybe@<Roots@> got = Roots(q);
     AssertEquals<Maybe@<Roots@>>(
-      /Maybe/Eq%.Eq<Roots@>(EqRoots), /Maybe/Show%.Show<Roots@>(ShowRoots),
+      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
   })),
 
@@ -79,7 +79,7 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     Maybe@<Roots@> want = Just<Roots@>(Roots@(Int|1, Int|1));
     Maybe@<Roots@> got = Roots(q);
     AssertEquals<Maybe@<Roots@>>(
-      /Maybe/Eq%.Eq<Roots@>(EqRoots), /Maybe/Show%.Show<Roots@>(ShowRoots),
+      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
   })),
 
@@ -89,7 +89,7 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     Maybe@<Roots@> want = Nothing<Roots@>;
     Maybe@<Roots@> got = Roots(q);
     AssertEquals<Maybe@<Roots@>>(
-      /Maybe/Eq%.Eq<Roots@>(EqRoots), /Maybe/Show%.Show<Roots@>(ShowRoots),
+      /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
   }))
 ]);

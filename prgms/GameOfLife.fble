@@ -18,7 +18,7 @@
 <@>% List = /Core/List%.List;
 <@,@>% ForEach = /Core/List%.ForEach;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

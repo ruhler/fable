@@ -4,9 +4,9 @@
 % False = /Core/Bool%.False;
 <@>@ Eq@ = /Core/Eq%.Eq@;
 <@>% List = /Core/List%.List;
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 <@>@ Show@ = /Core/Show%.Show@;
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -35,8 +35,8 @@ Show@<AB@> ShowAB = (AB@ x) {
   x.?(a: Str|a, b: Str|b);
 };
 
-Eq@<Maybe@<AB@>> Eq = /Maybe/Eq%.Eq<AB@>(EqAB);
-Show@<Maybe@<AB@>> Show = /Maybe/Show%.Show<AB@>(ShowAB);
+Eq@<Maybe@<AB@>> Eq = /Core/Maybe/Eq%.Eq<AB@>(EqAB);
+Show@<Maybe@<AB@>> Show = /Core/Maybe/Show%.Show<AB@>(ShowAB);
 
 # Tests --
 #  A test suite to test the /Maybe% module and friends.

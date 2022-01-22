@@ -1,13 +1,13 @@
 
-@ Decimal@ = /Digits%.Decimal@;
-% Decimal = /Digits%.Decimal;
+@ Decimal@ = /Core/Digits%.Decimal@;
+% Decimal = /Core/Digits%.Decimal;
 
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 % Div = /Core/Int/Div%.Div;
 
-<@>@ Undef@ = /Undef%.Undef@;
-<@>% Undef = /Undef%.Undef;
+<@>@ Undef@ = /Core/Undef%.Undef@;
+<@>% Undef = /Core/Undef%.Undef;
 
 Undef@<Decimal@> NotADigit = Undef<Decimal@>;
 

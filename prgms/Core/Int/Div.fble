@@ -11,7 +11,7 @@
 #   Quotient and remainder from integer division.
 @ QR@ = *(Int@ q, Int@ r);
 
-% DivideByZero = /Undef%.Undef<QR@>;
+% DivideByZero = /Core/Undef%.Undef<QR@>;
 
 # Div --
 #   a = q*b + r, |r| < |b|, where q = floor(a/b)

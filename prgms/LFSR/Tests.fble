@@ -1,6 +1,6 @@
 
-@ Bit@ = /Digits%.Bit@;
-% BitStr = /Digits/String%.BitStr;
+@ Bit@ = /Core/Digits%.Bit@;
+% BitStr = /Core/Digits/String%.BitStr;
 
 @ Int@ = /Core/Int%.Int@;
 % Sub = /Core/Int%.Sub;
@@ -36,8 +36,8 @@ Test@ Tests = TestSuite(Str|LFSR, List<Test@>[
     List@<Bit@> got = ShiftN(lfsr, Int|16);
     List@<Bit@> wnt = BitStr|0001101000110100;
     AssertEquals<List@<Bit@>>(
-      /Core/List/Eq%.Eq<Bit@>(/Digits/Eq%.EqBit),
-      /Digits/Show%.ShowBits, wnt, got);
+      /Core/List/Eq%.Eq<Bit@>(/Core/Digits/Eq%.EqBit),
+      /Core/Digits/Show%.ShowBits, wnt, got);
   }))
 ]);
 

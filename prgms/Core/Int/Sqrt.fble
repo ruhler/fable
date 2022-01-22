@@ -17,7 +17,7 @@
 # This type is the same as used for division, because why not?
 @ QR@ = *(Int@ q, Int@ r);
 
-% Imaginary = /Undef%.Undef<QR@>;
+% Imaginary = /Core/Undef%.Undef<QR@>;
 
 # Sqrt --
 #   a = q*q + r, r < 2q + 1

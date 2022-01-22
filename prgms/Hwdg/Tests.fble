@@ -6,9 +6,9 @@
 
 <@>% List = /Core/List%.List;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 % Str = /Core/String%.Str;
 
@@ -46,8 +46,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
-      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
+      /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -57,8 +57,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Just<Data@>(Data.0);
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
-      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
+      /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -68,8 +68,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Just<Data@>(Data.1);
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
-      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
+      /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -79,8 +79,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
-      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
+      /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -90,8 +90,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Nothing<Data@>;
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
-      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
+      /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 
@@ -101,8 +101,8 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Maybe@<Data@> wnt = Just<Data@>(Data.1);
 
     AssertEquals<Maybe@<Data@>>(
-      /Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
-      /Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
+      /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
+      /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
   })),
 

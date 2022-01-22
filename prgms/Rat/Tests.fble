@@ -22,6 +22,7 @@
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
 % _ = /Rat/Eq%;
+% _ = /Rat/Lit%;
 
 # EqS --
 #   Test for structural equality of rational numbers. Used for testing

@@ -7,9 +7,9 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Nothing = /Maybe%.Nothing;
-<@>% Just = /Maybe%.Just;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Nothing = /Core/Maybe%.Nothing;
+<@>% Just = /Core/Maybe%.Just;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

@@ -28,8 +28,8 @@
 
 <@>% List = /Core/List%.List;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
 
 % Str = /Core/String%.Str;
 
@@ -313,8 +313,8 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
       
     # TODO: debug this test passing.
     /Core/Test%.ExpectFails(/Core/Test%.ExpectFails(/Core/Test%.AssertEquals<Maybe@<Color@>>(
-      /Maybe/Eq%.Eq<Color@>(EqColor),
-      /Maybe/Show%.Show<Color@>(ShowColor),
+      /Core/Maybe/Eq%.Eq<Color@>(EqColor),
+      /Core/Maybe/Show%.Show<Color@>(ShowColor),
       wnt, got), Str|'Nothing'), Str|'');
   })),
 

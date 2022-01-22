@@ -7,10 +7,10 @@
 <@,@>% ForEach = /Core/List%.ForEach;
 
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
-<@,@>% DoWhile = /Maybe%.DoWhile;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+<@,@>% DoWhile = /Core/Maybe%.DoWhile;
 
 <@>@ Get@ = /Core/Process%.Get@;
 <@>@ Put@ = /Core/Process%.Put@;

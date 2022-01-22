@@ -1,6 +1,6 @@
 
-@ Bit@ = /Digits%.Bit@;
-@ Hex@ = /Digits%.Hex@;
+@ Bit@ = /Core/Digits%.Bit@;
+@ Hex@ = /Core/Digits%.Hex@;
 
 <@>@ List@ = /Core/List%.List@;
 <@,@>% Map = /Core/List%.Map;

@@ -3,7 +3,7 @@
 % False = /Core/Bool%.False;
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-@ Bit@ = /Digits%.Bit@;
+@ Bit@ = /Core/Digits%.Bit@;
 
 Eq@<Bit@> EqBit = (Bit@ a, Bit@ b) {
   a.?(

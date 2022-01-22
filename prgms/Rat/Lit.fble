@@ -1,9 +1,8 @@
 
-@ Decimal@ = /Digits%.Decimal@;
+@ Decimal@ = /Core/Digits%.Decimal@;
+<@>@ List@ = /Core/List%.List@;
 
 @ Rat@ = /Rat%.Rat@;
-
-<@>@ List@ = /Core/List%.List@;
 
 # Int --
 #   Create a Rat@ from a positive decimal integer literal.

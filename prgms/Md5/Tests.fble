@@ -4,8 +4,8 @@
 
 @ Char@ = /Core/Char%.Char@;
 
-@ Hex@ = /Digits%.Hex@;
-% HexStr = /Digits/String%.HexStr;
+@ Hex@ = /Core/Digits%.Hex@;
+% HexStr = /Core/Digits/String%.HexStr;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -13,7 +13,7 @@
 <@>% List = /Core/List%.List;
 <@>% Concat = /Core/List%.Concat;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ Md5Hash@ = /Md5%.Md5Hash@;
 % Md5 = /Md5%.Md5;

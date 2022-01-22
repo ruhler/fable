@@ -1,5 +1,5 @@
 
-@ Decimal@ = /Digits%.Decimal@;
+@ Decimal@ = /Core/Digits%.Decimal@;
 
 @ Int@ = /Core/Int%.Int@;
 % 0 = /Core/Int%.0;

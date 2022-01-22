@@ -1,6 +1,6 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
-@ Bit@ = /Digits%.Bit@;
+@ Bit@ = /Core/Digits%.Bit@;
 
 <@>@ BitN@ = <@ T@> {
   @ Result@ = *(T@ z, Bit@ cout);

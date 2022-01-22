@@ -7,9 +7,9 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ Iter@ = /Iter%.Iter@;
-<@>% Has = /Iter%.Has;
-<@>% End = /Iter%.End;
+<@>@ Iter@ = /Core/Iter%.Iter@;
+<@>% Has = /Core/Iter%.Has;
+<@>% End = /Core/Iter%.End;
 
 @ Unit@ = /Core/Unit%.Unit@;
 

@@ -1,5 +1,5 @@
 
-@ Decimal@ = /Digits%.Decimal@;
+@ Decimal@ = /Core/Digits%.Decimal@;
 
 @ Drawing@ = /Drawing%.Drawing@;
 % Blank = /Drawing%.Blank;
@@ -37,7 +37,7 @@
 % Ufo = /Invaders/Ufo%;
 @ Ufo@ = Ufo.Ufo@;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ String@ = /Core/String%.String@;
 % Strs = /Core/String%.Strs;

@@ -1,7 +1,7 @@
 
-@ Bit@ = /Digits%.Bit@;
-% Bit = /Digits%.Bit;
-% BitStr = /Digits/String%.BitStr;
+@ Bit@ = /Core/Digits%.Bit@;
+% Bit = /Core/Digits%.Bit;
+% BitStr = /Core/Digits/String%.BitStr;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;

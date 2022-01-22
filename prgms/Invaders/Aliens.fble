@@ -43,11 +43,11 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
-<@,@>% DoWhile = /Maybe%.DoWhile;
-<@,@>% For = /Maybe%.For;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+<@,@>% DoWhile = /Core/Maybe%.DoWhile;
+<@,@>% For = /Core/Maybe%.For;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -319,7 +319,7 @@ Vanguard = (Aliens@ aliens, Int@ col) {
   aliens.next.?(just: bombs);
 
   @ State@ = *(LFSR@ lfsr, Bombs@ bombs);
-  /Iter%.For<Int@, State@>(/Core/Int/Iter%.Range(Int|0, NumCols),
+  /Core/Iter%.For<Int@, State@>(/Core/Int/Iter%.Range(Int|0, NumCols),
     State@(aliens.lfsr, bombs),
     (Int@ col, State@ s) {
       Maybe@<Alien@> alien = Vanguard(aliens, col);

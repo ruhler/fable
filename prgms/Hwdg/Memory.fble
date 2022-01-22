@@ -4,7 +4,7 @@
 
 @ Int@ = /Core/Int%.Int@;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>@ List@ = /Core/List%.List@;
 
 # Memory@ --

@@ -1,5 +1,5 @@
 
-@ Decimal@ = /Digits%.Decimal@;
+@ Decimal@ = /Core/Digits%.Decimal@;
 
 @ Color@ = /Drawing%.Color@;
 @ Drawing@ = /Drawing%.Drawing@;

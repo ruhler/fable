@@ -9,8 +9,8 @@
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
-% Bit = /Digits%.Bit;
-% EqBit = /Digits/Eq%.EqBit;
+% Bit = /Core/Digits%.Bit;
+% EqBit = /Core/Digits/Eq%.EqBit;
 
 Test@ Tests = TestSuite(Str|Digits, List<Test@>[
   TestSuite(Str|EqBit, List<Test@>[

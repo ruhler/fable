@@ -1,6 +1,6 @@
 
 <@>@ List@ = /Core/List%.List@;
-<@>@ Maybe@ = /Maybe%.Maybe@;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 @ Event@ = /Pinball/Event%.Event@;
 % Events = /Pinball/Event%.Events;

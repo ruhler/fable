@@ -82,7 +82,7 @@ Draw_ = {
   (Point@ a, Point@ b, Drawing@ drawing, Drawn@ drawn) {
     drawing.?(
       blank: drawn,
-      triangle: /Undef%.Undef<Drawn@>.undefined,  # TODO
+      triangle: /Core/Undef%.Undef<Drawn@>.undefined,  # TODO
       rect: {
         Int@ x = Add(Mul(a.x, drawing.rect.x), b.x);
         Int@ y = Add(Mul(a.y, drawing.rect.y), b.y);
@@ -94,8 +94,8 @@ Draw_ = {
         Int@ ymin = Lt(h, Int|0).?(true: Add(y, h), false: y);
         Int@ ymax = Lt(h, Int|0).?(true: y, false: Add(y, h));
 
-        /Iter%.For<Int@, Drawn@>(Range(xmin, xmax), drawn, (Int@ x, Drawn@ d) {
-          /Iter%.For<Int@, Drawn@>(Range(ymin, ymax), d, (Int@ y, Drawn@ d) {
+        /Core/Iter%.For<Int@, Drawn@>(Range(xmin, xmax), drawn, (Int@ x, Drawn@ d) {
+          /Core/Iter%.For<Int@, Drawn@>(Range(ymin, ymax), d, (Int@ y, Drawn@ d) {
             Insert(d, Point@(x, y), drawing.rect.color);
           });
         });

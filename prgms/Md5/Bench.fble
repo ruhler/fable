@@ -2,15 +2,15 @@
 @ Bit8@ = /Bits%.Bit8.Bit8@;
 % H2 = /Bits%.Bit8.H2;
 
-% Hex = /Digits%.Hex;
+% Hex = /Core/Digits%.Hex;
 
 @ Int@ = /Core/Int%.Int@;
 % Sub = /Core/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ Md5Hash@ = /Md5%.Md5Hash@;
 % Md5 = /Md5%.Md5;

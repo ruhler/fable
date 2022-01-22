@@ -11,9 +11,9 @@
 <@>% Append = /Core/List%.Append;
 <@>% Nil = /Core/List%.Nil;
 <@>% Cons = /Core/List%.Cons;
-<@>@ Maybe@ = /Maybe%.Maybe@;
-<@>% Just = /Maybe%.Just;
-<@>% Nothing = /Maybe%.Nothing;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 <@>@ Show@ = /Core/Show%.Show@;
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -69,8 +69,8 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Maybe@<Unit@> wnt = Nothing<Unit@>;
     Maybe@<Unit@> got = Lookup<Unit@>(Empty<Unit@>, B);
     AssertEquals<Maybe@<Unit@>>(
-      /Maybe/Eq%.Eq<Unit@>(/Core/Unit/Eq%.Eq),
-      /Maybe/Show%.Show<Unit@>(/Core/Unit/Show%.Show),
+      /Core/Maybe/Eq%.Eq<Unit@>(/Core/Unit/Eq%.Eq),
+      /Core/Maybe/Show%.Show<Unit@>(/Core/Unit/Show%.Show),
       wnt, got);
   })),
 
@@ -79,8 +79,8 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Maybe@<Unit@> wnt = Nothing<Unit@>;
     Maybe@<Unit@> got = Lookup<Unit@>(map, B);
     AssertEquals<Maybe@<Unit@>>(
-      /Maybe/Eq%.Eq<Unit@>(/Core/Unit/Eq%.Eq),
-      /Maybe/Show%.Show<Unit@>(/Core/Unit/Show%.Show),
+      /Core/Maybe/Eq%.Eq<Unit@>(/Core/Unit/Eq%.Eq),
+      /Core/Maybe/Show%.Show<Unit@>(/Core/Unit/Show%.Show),
       wnt, got);
   })),
 
@@ -92,8 +92,8 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Maybe@<Bool@> wnt = Just<Bool@>(True);
     Maybe@<Bool@> got = Lookup<Bool@>(map, B);
     AssertEquals<Maybe@<Bool@>>(
-      /Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
-      /Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
+      /Core/Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
+      /Core/Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
       wnt, got);
   })),
 
@@ -104,8 +104,8 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Maybe@<Bool@> wnt = Just<Bool@>(True);
     Maybe@<Bool@> got = Lookup<Bool@>(map, B);
     AssertEquals<Maybe@<Bool@>>(
-      /Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
-      /Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
+      /Core/Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
+      /Core/Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
       wnt, got);
   })),
 
@@ -114,8 +114,8 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Maybe@<Bool@> wnt = Nothing<Bool@>;
     Maybe@<Bool@> got = Lookup<Bool@>(map, B);
     AssertEquals<Maybe@<Bool@>>(
-      /Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
-      /Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
+      /Core/Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
+      /Core/Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
       wnt, got);
   })),
 
