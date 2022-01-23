@@ -850,113 +850,13 @@ The runtime of a poly application is linear in the number of arguments plus
 the runtime of the poly. Unlike function application, poly application does
 not cause the body of the poly to be re-evaluated.
 
-8. Abstract Types
------------------
-Abstract types are a mechanism to restrict how users interact with a type,
-making it possible to change the implementation of the type without effecting
-users.
-
-By default, users can use any operation supported by the type of a value,
-including field access, conditional access, function application, and so on.
-Abstract types are a mechanism to restrict users to interact with a value
-using only those functions provided to them for that purpose.
-
-The approach to supporting abstract types is to introduce the concept of an
-abstract token type that allows you to create separate internal and external
-types for the same underlying value and to cast between them if you have
-access to the token type.
-
-8.1 Abstract
-------------
-Abstract Syntax:
-  Expr ::= abstract (name :: TypeName) (body :: Expr)
-
-Concrete Syntax:
-  stmt ::= '@?' name ';' stmt
-
-Example:
-  @? Tok@;
-  ...
-
-The abstract expression introduces a new abstract token type into the
-environment under the given type name. The type of the abstract expression is
-the type of the body and the value of the abstract expression is the value of
-the body evaluated with the abstract token type in scope.
-
-The abstract token type has kind @ and is considered different from every
-other type, including any other abstract token type created using an abstract
-expression.
-
-8.2 Abstract Type
------------------
-Abstract Syntax:
-  Type ::= abstract_type (token :: Type) (type :: Type)
-
-Concrete Syntax:
-  type ::= type '<' type '>'
-
-Example:
-  @? Tok@; Tok@<Bool@>;
-  
-Forms an abstract type by combining the given token type with an underlying
-type. Abstract types are considered equal if both their token type and
-underlying types are equal.
-
-The token type must have been created using an abstract expression. The
-underlying type can be any type of kind @. The resulting abstract type has
-kind @.
-
-8.3 Abstract Cast
------------------
-Abstract Syntax:
-  Expr ::= abstract_cast (token :: Type) (target :: Type) (value :: Expr)
-
-Concrete Syntax:
-  expr ::= type '.' '<' type '>' '(' expr ')'
-
-Example:
-  @? Tok@;
-  @ AbstractBool@ = Tok@<Bool@>;
-  AbstractBool@ AbstractTrue = Tok@.<AbstractBool@>(True);
-  Bool@ OriginalTrue = Tok@.<Bool@>(AbstractTrue);
-
-Casts a value between two types that are equal under the assumption that for
-all types T@, the type Tok@<T@> is equal to T@.
-
-The type of the resulting value is the target type. It is a type error if the
-type of the value cannot be cast to the target type.
-
-8.4 Example
------------
-The follow example shows how to define a three element enum type that can only
-be accessed externally using the provided methods.
-
-  @ Impl@ = +(Unit@ a, Unit@ b, Unit@ c);
-
-  @? Tok@;
-  @ Enum@ = Tok@<Impl@>;
-
-  Enum@ A = Tok@.<Enum@>(Impl@(a: Unit));
-  Enum@ B = Tok@.<Enum@>(Impl@(b: Unit));
-  Enum@ C = Tok@.<Enum@>(Impl@(c: Unit));
-
-  (Enum@) { Bool@; } IsA = Tok@.<@<IsA>>((Impl@ e) { e.?(a: True, : False); });
-  (Enum@) { Bool@; } IsB = Tok@.<@<IsB>>((Impl@ e) { e.?(b: True, : False); });
-  (Enum@) { Bool@; } IsC = Tok@.<@<IsC>>((Impl@ e) { e.?(c: True, : False); });
-
-  @(Enum@, A, B, C, IsA, IsB, IsC);
-
-Because the Tok@ type is not made available to users, users are unable to
-construct or access fields of the Enum@ type directly. They can only use the
-provided values A, B, C and functions IsA, IsB, and IsC.
-
 9. Literals
 -----------
 We introduce syntax for describing lists and literals to make it less tedious
 to write code involving sequences of elements of the same type and raw
 sequences of data without the overhead of punctuation between data elements.
 
-9.1 List
+8.1 List
 --------
 Abstract Syntax:
   Expr ::= list (func :: Expr) (args :: [Expr])
@@ -1002,7 +902,7 @@ expression, instead of having stand alone list expressions like [a, b, c], is:
 * For consistency with literal expressions, which require a user defined
   letter type to be supplied.
 
-9.2 Literal
+8.2 Literal
 -----------
 Abstract Syntax:
   Expr ::= literal (func :: Expr) (letters :: word)
@@ -1035,7 +935,7 @@ to f is E@, is desugared to:
 It is a type error if the word contains a letter for which there is no
 corresponding field in the element type E@.
 
-9.3 Example
+8.3 Example
 -----------
 To better illustrate the intended use of list and literal expressions, imagine
 we want to define a binary integer literal.
@@ -1071,13 +971,13 @@ example:
  Int@ 6 = Binary|110;
  Int@ x = Binary[first_bit, second_bit, third_bit];
 
-10. Modules
+9. Modules
 ----------
 Fble code is organized into a hierarchy of reusable modules. Each module
 describes a value that may depend on the value of other modules. A program is
 formed by combining a module with all of its direct and indirect dependencies.
 
-10.1 Organization
+9.1 Organization
 ----------------
 Modules are organized into a tree structure. The purpose of the tree structure
 is to group modules together that are developed by the same organization to
@@ -1112,7 +1012,7 @@ For example, you might have the following directory structure:
    Md5/
      Tests.fble
 
-10.2 Path
+9.2 Path
 --------
 Modules may depend on other modules independent of the tree hierarchy of
 modules. A program can include a module without having to depend on any
@@ -1137,7 +1037,7 @@ Examples:
   /Unit%
   /Md5/ImplA%
 
-10.3 Program
+9.3 Program
 -----------
 A program is an fble expressions that creates a value that is used however is
 deemed suitable by whoever is executing the program. Commonly this could be:
@@ -1186,6 +1086,200 @@ The same module hierarchy can be used for a program to run List tests:
   StdLib_Unit = </Stdlib/Unit%>;
   StdLib_List = </StdLib/List%>;
   </StdLib/List/Tests%>;
+
+10. Abstract Types
+------------------
+Abstract types provide a mechanism to define types of values that can only be
+accessed by modules in the same package. This makes it possible to hide
+implementation details from users and enforce invariants on how values are
+constructed.
+
+By default, anyone can use any operation supported by the type of a value,
+including construction, field access, conditional access, function
+application, and so on. Abstract types introduce the concept of a package
+type that can be used to restrict access to types based on module path.
+Modules that do not have restricted access can only interact with a type using
+publicly available functions.
+
+10.1 Package Type
+-----------------
+Abstract Syntax:
+  Type ::= package_type (path :: Path)
+
+Concrete Syntax:
+  type ::= '%(' path ')'
+
+Example:
+  @ FooBar@ = %(/Foo/Bar%);
+  ...
+
+The package type describes the set of modules whose module path prefix matches
+the given path. For example, the type %(/Foo/Bar%) includes modules /Foo/Bar%,
+/Foo/Bar/Sludge%, and /Foo/Bar/A/B%, but not /Foo% or /Bar%.
+
+The path for a package type need not refer to an existing module. There need
+not be any modules that satisfy the package path. A module need not be a
+member of whatever package type it constructs.
+
+A package type has kind @. Two package types are considered equal if they have the same path.
+
+10.2 Abstract Type
+------------------
+Abstract Syntax:
+  Type ::= abstract_type (package :: Type) (type :: Type)
+
+Concrete Syntax:
+  type ::= type '<' type '>'
+
+Example:
+  @ FooBar@ = %(/Foo/Bar%);
+  @ AbstractBool = FooBar@<Bool@>;
+  
+Forms an abstract type by combining the given package type with an underlying
+type. Abstract types are considered equal if both their package type and
+underlying types are equal.
+
+The package type must be a package type. The underlying type can be any type
+of any kind. The resulting abstract type has kind @.
+
+10.3 Abstract Cast
+------------------
+Abstract Syntax:
+  Expr ::= abstract_cast (package :: Type) (target :: Type) (value :: Expr)
+
+Concrete Syntax:
+  expr ::= type '.' '<' type '>' '(' expr ')'
+
+Example:
+  @ FooBar@ = %(/Foo/Bar%);
+  @ AbstractBool@ = FooBar@<Bool@>;
+  AbstractBool@ AbstractTrue = FooBar@.<AbstractBool@>(True);
+  Bool@ OriginalTrue = FooBar@.<Bool@>(AbstractTrue);
+
+Casts a value between two types that are equal under the assumption that for
+all types T@, the type FooBar@<T@> is equal to T@.
+
+The type of the resulting value is the target type. It is a type error if the
+current module is not a member of the package described by the package type.
+
+10.4 Abstract Value
+-------------------
+Abstract Syntax:
+  Expr ::= abstract_value (package :: Type) (value :: Expr)
+
+Concrete Syntax:
+  expr ::= type '(' expr ')'
+
+Example:
+  @ FooBar@ = %(/Foo/Bar%);
+  @ AbstractBool@ = FooBar@<Bool@>;
+  AbstractBool@ AbstractTrue = FooBar@(True);
+
+Casts a value of type T@ to type FooBar@<T@>. This is a convenience syntax
+equivalent to:
+
+  abstract_cast package (abstract_type package type) value
+
+It is a type error if the current module does not belong to the package
+described by the package type.
+
+This special syntax is provided to simplify the syntax for the common case of
+casting directly to an abstract value. It's not possible in general to use a
+standard function for this case given the package restriction applies to where
+the cast operation occurs.
+
+10.5 Abstract Access
+--------------------
+Abstract Syntax:
+  Expr ::= abstract_access (value :: Expr)
+
+Concrete Syntax:
+  expr ::= expr '.' '%'
+
+Example:
+  @ FooBar@ = %(/Foo/Bar%);
+  @ AbstractBool@ = FooBar@<Bool@>;
+  AbstractBool@ AbstractTrue = FooBar@(True);
+  Bool@ true = AbstractTrue.%;
+
+Casts a value of type FooBar@<T@> to type T@. This is a convenience syntax
+equivalent to:
+
+  abstract_cast package type value
+
+It is a type error if the current module does not belong to the package
+described by the package type.
+
+This special syntax is provided to simplify the syntax for the common case of
+casting directly from an abstract value. It's not possible in general to use a
+standard function for this case given the package restriction applies to where
+the cast operation occurs.
+
+10.6 Abstract Type Example
+--------------------------
+The follow example shows how to define a three element enum type that can only
+be accessed externally using the provided methods.
+
+  @ Impl@ = +(Unit@ a, Unit@ b, Unit@ c);
+
+  @ Pkg@ = %(/MyPackage%);
+  @ Enum@ = Pkg@<Impl@>;
+
+  Enum@ A = Pkg@.<Enum@>(Impl@(a: Unit));
+  Enum@ B = Pkg@.<Enum@>(Impl@(b: Unit));
+  Enum@ C = Pkg@.<Enum@>(Impl@(c: Unit));
+
+  (Enum@) { Bool@; } IsA = Pkg@.<@<IsA>>((Impl@ e) { e.?(a: True, : False); });
+  (Enum@) { Bool@; } IsB = Pkg@.<@<IsB>>((Impl@ e) { e.?(b: True, : False); });
+  (Enum@) { Bool@; } IsC = Pkg@.<@<IsC>>((Impl@ e) { e.?(c: True, : False); });
+
+  @(Enum@, A, B, C, IsA, IsB, IsC);
+
+The Pkg@ type restricts asscess to the internals of the Enum@ type to modules
+starting with /MyPackage in their path. Other users are unable to construct or
+access fields of the Enum@ type directly; they can only use the provided
+values A, B, C and functions IsA, IsB, and IsC.
+
+10.7 Private Module Example
+---------------------------
+Abstract types can be used to effectively mark modules or parts of modules
+private. For example, consider a module /Foo/Internal%:
+
+  @ Pkg@ = %(/Foo%);
+  
+  @ X@ = ...;
+  @ Y@ = ...;
+  X@ X = ...;
+  Y@ Y = ...;
+
+  Pkg@(@(X@, Y@, X, Y));
+
+Users can import the module with:
+ 
+ % M = /Foo/Internal%.%;
+
+This will result in a type error if the user does not belong to the package
+/Foo%.
+
+The same approach can be used to restrict access to individual fields of a
+module. For example, consider a module /Foo%:
+
+  @ Pkg@ = %(/Foo%);
+  
+  @ X@ = ...;
+  @ Y@ = ...;
+  X@ X = ...;
+  Y@ Y = ...;
+
+  @(X@, Y@, X, Pkg@(Y));
+
+In this case, the 'X' field is publicly accessible. The 'Y' field can only be
+accessed by modules in the package /Foo%. For example:
+
+  % Y = /Foo%.Y.%;
+
+This will result in a type error if the user does not belong to the package
+/Foo%.
 
 11. Abstract Syntax Reference
 ----------------------------
@@ -1242,9 +1336,11 @@ Expr ::=
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
 
- | abstract (name :: TypeName) (body :: Expr)
- | abstract_type (token :: Type) (type :: Type)
- | abstract_cast (token :: Type) (target :: Type) (value :: Expr)
+ | package_type (path :: Path)
+ | abstract_type (package :: Type) (type :: Type)
+ | abstract_cast (package :: Type) (target :: Type) (value :: Expr)
+ | abstract_value (package :: Type) (value :: Expr)
+ | abstract_access (package :: Type) (value :: Expr)
 
  | list (func :: Expr) (args :: [Expr])
  | literal (func :: Expr) (letters :: word)
@@ -1337,8 +1433,11 @@ expr ::=
 
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
+ | '%' '(' path ')'                                (* package_type* )
  | type '<' type '>'                               (* abstract_type *) 
  | type '.' '<' type '>' '(' expr ')'              (* abstract_cast *) 
+ | type '(' expr ')'                               (* abstract_value *) 
+ | expr '.' '%'                                    (* abstract_access *) 
 
  | expr '['[expr [',' expr [...]] ']'              (* list *)
  | expr '|' word                                   (* literal *)
@@ -1360,7 +1459,6 @@ stmt ::=
  | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
  | type '~' name ',' name ';' stmt                                   (* proc_link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
- | '@?' name ';' stmt                                                (* abstract *)
  ;
 
 module ::= stmt                                                      (* module_value *)
@@ -1372,8 +1470,6 @@ Notes:
 * explicit type struct value, function apply, and abstract value share the
   same form. The type of the expr is used to distinguish between the three
   kinds of expressions.
-* Polymorphic application, abstract type, and abstract access all share the
-  same form. The type of the argument is used to distinguish between the three
-  kinds of expressions.
-* The module value for module Foo is stored in Foo.fble. Child modules of
-  module Foo are stored in subdirectory Foo/.  public module.
+* Polymorphic application and abstract type share the same form. The type of
+  the argument is used to distinguish between the three kinds of expressions.
+* The module value for module /Foo/Bar% is stored in Foo/Bar.fble.
