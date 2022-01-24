@@ -88,6 +88,20 @@ void FblePrintModulePath(FILE* stream, FbleModulePath* path);
 //   None.
 bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b);
 
+// FbleModuleBelongsToPackage
+//   Check if a module belongs to a given package.
+//
+// Inputs:
+//   module - the module path.
+//   package - the module path describing the package.
+//
+// Returns:
+//   True if the module belongs to the package, false otherwise.
+//
+// Side effects:
+//   None.
+bool FbleModuleBelongsToPackage(FbleModulePath* module, FbleModulePath* package);
+
 // FbleParseModulePath --
 //   Parse an FbleModulePath from a string.
 //

@@ -66,11 +66,13 @@ typedef struct {
 //   captured - Collects the source of variables captured from the parent
 //              scope. May be NULL to indicate that operations on this scope
 //              should not have any side effects on the parent scope.
+//   module - the current module being compiled.
 //   parent - the parent of this scope. May be NULL.
 typedef struct Scope {
   VarV statics;
   VarV vars;
   FbleVarIndexV* captured;
+  FbleModulePath* module;
   struct Scope* parent;
 } Scope;
 
@@ -79,7 +81,7 @@ static Var* PushVar(Scope* scope, VarName name, FbleType* type);
 static void PopVar(FbleTypeHeap* heap, Scope* scope);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom);
 
-static void InitScope(Scope* scope, FbleVarIndexV* captured, Scope* parent);
+static void InitScope(Scope* scope, FbleVarIndexV* captured, FbleModulePath* module, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 
 static void ReportError(FbleLoc loc, const char* fmt, ...);
@@ -261,6 +263,7 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
 //   captured - Collects the source of variables captured from the parent
 //              scope. May be NULL to indicate that operations on this scope
 //              should not have any side effects on the parent scope.
+//   module - the current module. Borrowed.
 //   parent - the parent of the scope to initialize. May be NULL.
 //
 // Results:
@@ -270,11 +273,12 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
 //   Initializes scope based on parent. FreeScope should be
 //   called to free the allocations for scope. The lifetime of the parent
 //   scope must exceed the lifetime of this scope.
-static void InitScope(Scope* scope, FbleVarIndexV* captured, Scope* parent)
+static void InitScope(Scope* scope, FbleVarIndexV* captured, FbleModulePath* module, Scope* parent)
 {
   FbleVectorInit(scope->statics);
   FbleVectorInit(scope->vars);
   scope->captured = captured;
+  scope->module = FbleCopyModulePath(module);
   scope->parent = parent;
 }
 
@@ -302,6 +306,7 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
     PopVar(heap, scope);
   }
   FbleFree(scope->vars.xs);
+  FbleFreeModulePath(scope->module);
 }
 
 // ReportError --
@@ -314,6 +319,7 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
 //     %n - FbleName
 //     %s - const char*
 //     %t - FbleType*
+//     %m - FbleModulePath*
 //     %% - literal '%'
 //   Please add additional format specifiers as needed.
 //
@@ -352,6 +358,12 @@ static void ReportError(FbleLoc loc, const char* fmt, ...)
       case 'k': {
         FbleKind* kind = va_arg(ap, FbleKind*);
         FblePrintKind(kind);
+        break;
+      }
+
+      case 'm': {
+        FbleModulePath* path = va_arg(ap, FbleModulePath*);
+        FblePrintModulePath(stderr, path);
         break;
       }
 
@@ -962,7 +974,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleVarIndexV captured;
       FbleVectorInit(captured);
       Scope func_scope;
-      InitScope(&func_scope, &captured, scope);
+      InitScope(&func_scope, &captured, scope->module, scope);
 
       for (size_t i = 0; i < argc; ++i) {
         VarName name = { .normal = func_value_expr->args.xs[i].name, .module = NULL };
@@ -1008,7 +1020,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleVarIndexV captured;
       FbleVectorInit(captured);
       Scope body_scope;
-      InitScope(&body_scope, &captured, scope);
+      InitScope(&body_scope, &captured, scope->module, scope);
 
       Tc body = TypeCheckExec(th, &body_scope, expr);
       if (body.type == NULL) {
@@ -1221,7 +1233,15 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         return TC_FAILED;
       }
 
-      // TODO: Check that this module belongs to the package type!.
+      if (!FbleModuleBelongsToPackage(scope->module, package->path)) {
+        ReportError(expr->loc, "Module %m is not allowed access to package %m\n",
+            scope->module, package->path);
+        FbleReleaseType(th, &package->_base);
+        FbleReleaseType(th, package_type);
+        FbleReleaseType(th, target);
+        FreeTc(th, value);
+        return TC_FAILED;
+      }
 
       assert(package->opaque);
       package->opaque = false;
@@ -1868,7 +1888,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 {
   Scope nscope;
-  InitScope(&nscope, NULL, scope);
+  InitScope(&nscope, NULL, scope->module, scope);
 
   Tc result = TypeCheckExpr(th, &nscope, expr);
   FreeScope(th, &nscope);
@@ -2067,7 +2087,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps)
 {
   Scope scope;
-  InitScope(&scope, NULL, NULL);
+  InitScope(&scope, NULL, module->path, NULL);
 
   for (int i = 0; i < module->deps.size; ++i) {
     VarName name = { .module = module->deps.xs[i] };

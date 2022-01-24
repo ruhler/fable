@@ -1,8 +1,6 @@
 * [lib] Set up build to only have access to explicit package list?
 
 * [lang] Rewrite abstract types feature again.
- - Replace implementation of abstract token type with package type.
-   After this everything should compile again.
  - Add abstract access and abstract value and tests for those.
 
 * [lang] Should empty path be allowed in package type?

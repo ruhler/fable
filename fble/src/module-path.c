@@ -97,3 +97,18 @@ bool FbleModulePathsEqual(FbleModulePath* a, FbleModulePath* b)
   }
   return true;
 }
+
+// FbleModuleBelongsToPackage -- see documentation in fble-module-path.h
+bool FbleModuleBelongsToPackage(FbleModulePath* module, FbleModulePath* package)
+{
+  if (module->path.size < package->path.size) {
+    return false;
+  }
+
+  for (size_t i = 0; i < package->path.size; ++i) {
+    if (!FbleNamesEqual(module->path.xs[i], package->path.xs[i])) {
+      return false;
+    }
+  }
+  return true;
+}
