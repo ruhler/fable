@@ -365,8 +365,11 @@ expr:
       $$ = &union_type->_base;
    }
  | '%' '(' module_path ')' {
-      assert(false && "TODO: parse package type.");
-      $$ = NULL;
+      FblePackageTypeExpr* package_expr = FbleAlloc(FblePackageTypeExpr);
+      package_expr->_base.tag = FBLE_PACKAGE_TYPE_EXPR;
+      package_expr->_base.loc = FbleCopyLoc(@$);
+      package_expr->path = $3;
+      $$ = &package_expr->_base;
    }
  | expr '(' name ':' expr ')' {
       FbleUnionValueExpr* union_value_expr = FbleAlloc(FbleUnionValueExpr);
@@ -429,7 +432,7 @@ expr:
      FbleAbstractCastExpr* cast_expr = FbleAlloc(FbleAbstractCastExpr);
      cast_expr->_base.tag = FBLE_ABSTRACT_CAST_EXPR;
      cast_expr->_base.loc = FbleCopyLoc(@$);
-     cast_expr->token = $1;
+     cast_expr->package = $1;
      cast_expr->target = $4;
      cast_expr->value = $7;
      $$ = &cast_expr->_base;
@@ -535,14 +538,6 @@ stmt:
       exec_expr->bindings = $1;
       exec_expr->body = $3;
       $$ = &exec_expr->_base;
-    }
-  | '@' '?' name ';' stmt {
-      FbleAbstractExpr* abstract_expr = FbleAlloc(FbleAbstractExpr);
-      abstract_expr->_base.tag = FBLE_ABSTRACT_EXPR;
-      abstract_expr->_base.loc = FbleCopyLoc(@$);
-      abstract_expr->name = $3;
-      abstract_expr->body = $5;
-      $$ = &abstract_expr->_base;
     }
   | expr ';' stmt {
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)$1;

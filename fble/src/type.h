@@ -7,6 +7,7 @@
 #include <stdint.h>   // for uintptr_t
 
 #include "fble-loc.h"
+#include "fble-module-path.h"
 #include "fble-name.h"
 
 #include "heap.h"
@@ -20,7 +21,7 @@ typedef enum {
   FBLE_PROC_TYPE,
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
-  FBLE_TOKEN_TYPE,
+  FBLE_PACKAGE_TYPE,
   FBLE_ABSTRACT_TYPE,
   FBLE_VAR_TYPE,
   FBLE_TYPE_TYPE,
@@ -85,26 +86,26 @@ typedef struct {
   FbleType* type;
 } FbleProcType;
 
-// FbleTokenType --
-//   FBLE_TOKEN_TYPE
-//
-// An abstract token type.
+// FblePackageType --
+//   FBLE_PACKAGE_TYPE
 //
 // The 'opaque' field is used to control whether or not an abstract type
-// associated with this token type is considered equal to its underlying type.
+// associated with this package type is considered equal to its underlying type.
+// It is temporarily set to false while testing type equality for abstract
+// cast expressions.
 typedef struct {
   FbleType _base;
-  FbleName name;
+  FbleModulePath* path;
   bool opaque;
-} FbleTokenType;
+} FblePackageType;
 
 // FbleAbstractType --
 //   FBLE_ABSTRACT_TYPE
 //
-// A type protected by an abstract token type.
+// A type protected by a package type.
 typedef struct {
   FbleType _base;
-  FbleTokenType* token;
+  FblePackageType* package;
   FbleType* type;
 } FbleAbstractType;
 

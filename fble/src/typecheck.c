@@ -470,6 +470,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     case FBLE_DATA_TYPE_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
     case FBLE_PROC_TYPE_EXPR:
+    case FBLE_PACKAGE_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
     {
       FbleType* type = TypeCheckType(th, scope, expr);
@@ -1148,25 +1149,25 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleType* poly_value = FbleValueOfType(th, poly.type);
       FreeTc(th, poly);
       if (poly_value != NULL) {
-        FbleTokenType* token = (FbleTokenType*)FbleNormalType(th, poly_value);
+        FblePackageType* package = (FblePackageType*)FbleNormalType(th, poly_value);
         FbleReleaseType(th, poly_value);
-        if (token->_base.tag == FBLE_TOKEN_TYPE) {
+        if (package->_base.tag == FBLE_PACKAGE_TYPE) {
           // abstract_type
           FbleType* arg = FbleValueOfType(th, arg_type);
           FbleReleaseType(th, arg_type);
           if (arg == NULL) {
             ReportError(apply->arg->loc,
                 "expected type, but found something of kind %%\n");
-            FbleReleaseType(th, &token->_base);
+            FbleReleaseType(th, &package->_base);
             return TC_FAILED;
           }
 
           FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
-          abs_type->token = token;
+          abs_type->package = package;
           abs_type->type = arg;
-          FbleTypeAddRef(th, &abs_type->_base, &abs_type->token->_base);
+          FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
           FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-          FbleReleaseType(th, &abs_type->token->_base);
+          FbleReleaseType(th, &abs_type->package->_base);
           FbleReleaseType(th, abs_type->type);
 
           FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
@@ -1179,106 +1180,65 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           type_tc->_base.loc = FbleCopyLoc(expr->loc);
           return MkTc(&type_type->_base, &type_tc->_base);
         }
-        FbleReleaseType(th, &token->_base);
+        FbleReleaseType(th, &package->_base);
       }
 
       ReportError(expr->loc,
-          "type application requires a poly or abstract token type\n");
+          "type application requires a poly or package type\n");
       FbleReleaseType(th, arg_type);
       return TC_FAILED;
-    }
-
-    case FBLE_ABSTRACT_EXPR: {
-      FbleAbstractExpr* abs_expr = (FbleAbstractExpr*)expr;
-
-      FbleTokenType* token = FbleNewType(th, FbleTokenType, FBLE_TOKEN_TYPE, abs_expr->name.loc);
-      token->name = FbleCopyName(abs_expr->name);
-      token->opaque = true;
-
-      FbleTypeType* typeof_token = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, token->_base.loc);
-      typeof_token->type = &token->_base;
-      FbleTypeAddRef(th, &typeof_token->_base, typeof_token->type);
-      FbleReleaseType(th, &token->_base);
-
-      if (!CheckNameSpace(abs_expr->name, &typeof_token->_base)) {
-        FbleReleaseType(th, &typeof_token->_base);
-        return TC_FAILED;
-      }
-
-      VarName name = { .normal = abs_expr->name, .module = NULL };
-      PushVar(scope, name, &typeof_token->_base);
-      Tc body = TypeCheckExpr(th, scope, abs_expr->body);
-      PopVar(th, scope);
-
-      FbleLetTc* let_tc = FbleAlloc(FbleLetTc);
-      let_tc->_base.tag = FBLE_LET_TC;
-      let_tc->_base.loc = FbleCopyLoc(expr->loc);
-      let_tc->recursive = false;
-      FbleVectorInit(let_tc->bindings);
-
-      FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
-      type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
-      type_tc->_base.loc = FbleCopyLoc(expr->loc);
-
-      FbleTcBinding binding = {
-        .name = FbleCopyName(abs_expr->name),
-        .loc = FbleCopyLoc(expr->loc),
-        .tc = &type_tc->_base
-      };
-      FbleVectorAppend(let_tc->bindings, binding);
-
-      let_tc->body = body.tc;
-      return MkTc(body.type, &let_tc->_base);
     }
 
     case FBLE_ABSTRACT_CAST_EXPR: {
       FbleAbstractCastExpr* cast_expr = (FbleAbstractCastExpr*)expr;
 
-      FbleType* token_type = TypeCheckType(th, scope, cast_expr->token);
-      if (token_type == NULL) {
+      FbleType* package_type = TypeCheckType(th, scope, cast_expr->package);
+      if (package_type == NULL) {
         return TC_FAILED;
       }
 
-      FbleTokenType* token = (FbleTokenType*)FbleNormalType(th, token_type);
-      if (token->_base.tag != FBLE_TOKEN_TYPE) {
-        ReportError(cast_expr->token->loc,
-          "expected abstract token type, but found %t\n", token_type);
-        FbleReleaseType(th, &token->_base);
-        FbleReleaseType(th, token_type);
+      FblePackageType* package = (FblePackageType*)FbleNormalType(th, package_type);
+      if (package->_base.tag != FBLE_PACKAGE_TYPE) {
+        ReportError(cast_expr->package->loc,
+          "expected package type, but found %t\n", package_type);
+        FbleReleaseType(th, &package->_base);
+        FbleReleaseType(th, package_type);
         return TC_FAILED;
       }
 
       FbleType* target = TypeCheckType(th, scope, cast_expr->target);
       if (target == NULL) {
-        FbleReleaseType(th, &token->_base);
-        FbleReleaseType(th, token_type);
+        FbleReleaseType(th, &package->_base);
+        FbleReleaseType(th, package_type);
         return TC_FAILED;
       }
 
       Tc value = TypeCheckExpr(th, scope, cast_expr->value);
       if (value.type == NULL) {
-        FbleReleaseType(th, &token->_base);
-        FbleReleaseType(th, token_type);
+        FbleReleaseType(th, &package->_base);
+        FbleReleaseType(th, package_type);
         FbleReleaseType(th, target);
         return TC_FAILED;
       }
 
-      assert(token->opaque);
-      token->opaque = false;
+      // TODO: Check that this module belongs to the package type!.
+
+      assert(package->opaque);
+      package->opaque = false;
       bool legal = FbleTypesEqual(th, target, value.type);
-      token->opaque = true;
+      package->opaque = true;
 
       if (!legal) {
         ReportError(expr->loc, "cannot cast value of type %t to %t\n", value.type, target);
-        FbleReleaseType(th, &token->_base);
-        FbleReleaseType(th, token_type);
+        FbleReleaseType(th, &package->_base);
+        FbleReleaseType(th, package_type);
         FbleReleaseType(th, target);
         FreeTc(th, value);
         return TC_FAILED;
       }
 
-      FbleReleaseType(th, &token->_base);
-      FbleReleaseType(th, token_type);
+      FbleReleaseType(th, &package->_base);
+      FbleReleaseType(th, package_type);
       FbleReleaseType(th, value.type);
       return MkTc(target, value.tc);
     }
@@ -1709,7 +1669,7 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     case FBLE_PROC_TYPE_EXPR:
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
-    case FBLE_ABSTRACT_EXPR:
+    case FBLE_PACKAGE_TYPE_EXPR:
     case FBLE_ABSTRACT_CAST_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
@@ -2032,6 +1992,14 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
       return &ut->_base;
     }
 
+    case FBLE_PACKAGE_TYPE_EXPR: {
+      FblePackageTypeExpr* e = (FblePackageTypeExpr*)type;
+      FblePackageType* t = FbleNewType(th, FblePackageType, FBLE_PACKAGE_TYPE, type->loc);
+      t->path = FbleCopyModulePath(e->path);
+      t->opaque = true;
+      return &t->_base;
+    }
+
     case FBLE_VAR_EXPR:
     case FBLE_LET_EXPR:
     case FBLE_DATA_ACCESS_EXPR:
@@ -2044,7 +2012,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     case FBLE_EXEC_EXPR:
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
-    case FBLE_ABSTRACT_EXPR:
     case FBLE_ABSTRACT_CAST_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:

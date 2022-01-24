@@ -180,17 +180,16 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
-    case FBLE_ABSTRACT_EXPR: {
-      FbleAbstractExpr* e = (FbleAbstractExpr*)expr;
-      FbleFreeName(e->name);
-      FbleFreeExpr(e->body);
+    case FBLE_PACKAGE_TYPE_EXPR: {
+      FblePackageTypeExpr* e = (FblePackageTypeExpr*)expr;
+      FbleFreeModulePath(e->path);
       FbleFree(expr);
       return;
     }
 
     case FBLE_ABSTRACT_CAST_EXPR: {
       FbleAbstractCastExpr* e = (FbleAbstractCastExpr*)expr;
-      FbleFreeExpr(e->token);
+      FbleFreeExpr(e->package);
       FbleFreeExpr(e->target);
       FbleFreeExpr(e->value);
       FbleFree(expr);

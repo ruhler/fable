@@ -1,6 +1,7 @@
 
 #include <assert.h>   // for assert
 
+#include "fble-module-path.h"
 #include "fble-vector.h"
 #include "type.h"
 
@@ -170,11 +171,11 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
       break;
     }
 
-    case FBLE_TOKEN_TYPE: break;
+    case FBLE_PACKAGE_TYPE: break;
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      Ref(callback, &abs->token->_base);
+      Ref(callback, &abs->package->_base);
       Ref(callback, abs->type);
       break;
     }
@@ -217,9 +218,9 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
     case FBLE_POLY_TYPE: return;
     case FBLE_POLY_APPLY_TYPE: return;
 
-    case FBLE_TOKEN_TYPE: {
-      FbleTokenType* token = (FbleTokenType*)type;
-      FbleFreeName(token->name);
+    case FBLE_PACKAGE_TYPE: {
+      FblePackageType* package = (FblePackageType*)type;
+      FbleFreeModulePath(package->path);
       return;
     }
 
@@ -310,7 +311,7 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normaliz
       return FbleRetainType(heap, type);
     }
 
-    case FBLE_TOKEN_TYPE: return FbleRetainType(heap, type);
+    case FBLE_PACKAGE_TYPE: return FbleRetainType(heap, type);
     case FBLE_ABSTRACT_TYPE: return FbleRetainType(heap, type);
 
     case FBLE_VAR_TYPE: {
@@ -391,12 +392,13 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
           || HasParam(pat->poly, param, &nv);
     }
 
-    case FBLE_TOKEN_TYPE: {
+    case FBLE_PACKAGE_TYPE: {
       return false;
     }
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
+      // TODO: Test this case. Should we be returning 'false' instead?
       return HasParam(abs->type, param, &nv);
     }
 
@@ -541,8 +543,8 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       return &spat->_base;
     }
 
-    case FBLE_TOKEN_TYPE: {
-      UNREACHABLE("token type does not have params");
+    case FBLE_PACKAGE_TYPE: {
+      UNREACHABLE("package type does not have params");
       return NULL;
     }
 
@@ -553,9 +555,9 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 
       FbleAbstractType* sabs = FbleNewType(heap, FbleAbstractType, FBLE_ABSTRACT_TYPE, abs->_base.loc);
       sabs->_base.id = abs->_base.id;
-      sabs->token = abs->token;
+      sabs->package = abs->package;
       sabs->type = body;
-      FbleTypeAddRef(heap, &sabs->_base, &sabs->token->_base);
+      FbleTypeAddRef(heap, &sabs->_base, &sabs->package->_base);
       FbleTypeAddRef(heap, &sabs->_base, sabs->type);
       FbleReleaseType(heap, body);
       return &sabs->_base;
@@ -640,11 +642,11 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
     .next = eq,
   };
 
-  // For abstract cast, compare underlying types if the token types aren't
+  // For abstract cast, compare underlying types if the package types aren't
   // opaque.
   if (a->tag == FBLE_ABSTRACT_TYPE) {
     FbleAbstractType* aa = (FbleAbstractType*)a;
-    if (!aa->token->opaque) {
+    if (!aa->package->opaque) {
       bool equal = TypesEqual(heap, aa->type, b, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
@@ -654,7 +656,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
 
   if (b->tag == FBLE_ABSTRACT_TYPE) {
     FbleAbstractType* ab = (FbleAbstractType*)b;
-    if (!ab->token->opaque) {
+    if (!ab->package->opaque) {
       bool equal = TypesEqual(heap, a, ab->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
@@ -764,16 +766,19 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       return false;
     }
 
-    case FBLE_TOKEN_TYPE: {
+    case FBLE_PACKAGE_TYPE: {
+      FblePackageType* pa = (FblePackageType*)a;
+      FblePackageType* pb = (FblePackageType*)b;
+      bool result = FbleModulePathsEqual(pa->path, pb->path);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
-      return a == b;
+      return result;
     }
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* aa = (FbleAbstractType*)a;
       FbleAbstractType* ab = (FbleAbstractType*)b;
-      bool result = (aa->token == ab->token)
+      bool result = TypesEqual(heap, &aa->package->_base, &ab->package->_base, &neq)
                  && TypesEqual(heap, aa->type, ab->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
@@ -813,7 +818,7 @@ FbleKind* FbleGetKind(FbleType* type)
     case FBLE_DATA_TYPE:
     case FBLE_FUNC_TYPE:
     case FBLE_PROC_TYPE:
-    case FBLE_TOKEN_TYPE:
+    case FBLE_PACKAGE_TYPE:
     case FBLE_ABSTRACT_TYPE: {
       FbleBasicKind* kind = FbleAlloc(FbleBasicKind);
       kind->_base.tag = FBLE_BASIC_KIND;
@@ -1271,15 +1276,17 @@ void FblePrintType(FbleType* type)
       return;
     }
 
-    case FBLE_TOKEN_TYPE: {
-      FbleTokenType* token = (FbleTokenType*)type;
-      FblePrintName(stderr, token->name);
+    case FBLE_PACKAGE_TYPE: {
+      FblePackageType* package = (FblePackageType*)type;
+      fprintf(stderr, "%s", "%(");
+      FblePrintModulePath(stderr, package->path);
+      fprintf(stderr, ")");
       return;
     }
 
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* abs = (FbleAbstractType*)type;
-      FblePrintType(&abs->token->_base);
+      FblePrintType(&abs->package->_base);
       fprintf(stderr, "<");
       FblePrintType(abs->type);
       fprintf(stderr, ">");
