@@ -2,8 +2,8 @@ fble-test-compile-error 8:8 {
   @ Unit@ = *();
   Unit@ Unit = Unit@();
 
-  @? Tok@;
+  @ Tok@ = %(/Foo/Bar%);
 
-  # The abstract type is not a type.
+  # Abstract type constructor should be passed a type, but Unit is not a type.
   Tok@<Unit>;
 }

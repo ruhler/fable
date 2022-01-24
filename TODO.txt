@@ -1,10 +1,12 @@
 * [lib] Set up build to only have access to explicit package list?
 
 * [lang] Rewrite abstract types feature again.
- - Update spec tests.
- - Replace abstract token type with package type.
+ - Replace implementation of abstract token type with package type.
    After this everything should compile again.
  - Add abstract access and abstract value and tests for those.
+
+* [lang] Should empty path be allowed in package type?
+ See langs/fble.txt for more details.
 
 * [modules]
  - Decide about .fble.@ files.

@@ -9,11 +9,8 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-# _@ -- Token type for access to internals of Map@ abstract type.
-#
-# TODO: We should put this in a separate module so users don't have access to
-# it, no? Once we support private modules that is.
-@? _@;
+# _@ -- Package type for access to internals of Map@ abstract type.
+@ _@ = %(/Map%);
 
 # Map@ --
 #   A map from K@ to V@, using the Structure@ of K@ to locate the key value

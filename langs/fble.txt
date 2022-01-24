@@ -1121,6 +1121,11 @@ The path for a package type need not refer to an existing module. There need
 not be any modules that satisfy the package path. A module need not be a
 member of whatever package type it constructs.
 
+TODO: Can you pass an empty path, with the interpretation of the value is
+accessible to all modules? Do we allow empty path in general? It seems
+unnecessary to make an abstract type that every module can access, but maybe
+it's useful to have for uniformity of interaction with the type?
+
 A package type has kind @. Two package types are considered equal if they have the same path.
 
 10.2 Abstract Type
