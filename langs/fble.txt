@@ -850,7 +850,7 @@ The runtime of a poly application is linear in the number of arguments plus
 the runtime of the poly. Unlike function application, poly application does
 not cause the body of the poly to be re-evaluated.
 
-9. Literals
+8. Literals
 -----------
 We introduce syntax for describing lists and literals to make it less tedious
 to write code involving sequences of elements of the same type and raw

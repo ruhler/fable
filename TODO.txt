@@ -1,7 +1,6 @@
 * [lib] Set up build to only have access to explicit package list?
 
 * [lang] Rewrite abstract types feature again.
- - Update test directories given new chapter numbering.
  - Update spec tests.
  - Replace abstract token type with package type.
    After this everything should compile again.
