@@ -196,6 +196,13 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
+    case FBLE_ABSTRACT_ACCESS_EXPR: {
+      FbleAbstractAccessExpr* e = (FbleAbstractAccessExpr*)expr;
+      FbleFreeExpr(e->value);
+      FbleFree(expr);
+      return;
+    }
+
     case FBLE_LIST_EXPR: {
       FbleListExpr* e = (FbleListExpr*)expr;
       FbleFreeExpr(e->func);

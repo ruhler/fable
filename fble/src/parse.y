@@ -425,8 +425,11 @@ expr:
       FbleFree($3.xs);
    }
  | expr '.' '%' {
-     assert(false && "TODO: parse abstract access");
-     $$ = NULL;
+     FbleAbstractAccessExpr* access_expr = FbleAlloc(FbleAbstractAccessExpr);
+     access_expr->_base.tag = FBLE_ABSTRACT_ACCESS_EXPR;
+     access_expr->_base.loc = FbleCopyLoc(@$);
+     access_expr->value = $1;
+     $$ = &access_expr->_base;
    }
  | expr '.' '<' expr '>' '(' expr ')' {
      FbleAbstractCastExpr* cast_expr = FbleAlloc(FbleAbstractCastExpr);

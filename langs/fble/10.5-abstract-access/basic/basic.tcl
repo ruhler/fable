@@ -7,10 +7,10 @@ fble-test {
 
     @ Bool@ = +(Unit@ true, Unit@ false);
 
-    # Basic abstract cast.
+    # Basic abstract access.
     @ Tok@ = %(/A%);
     @ AbsBool@ = Tok@<Bool@>;
     AbsBool@ t = Tok@.<AbsBool@>(Bool@(true: Unit));
-    Tok@.<Bool@>(t).true;
+    t.%.true;
   }
 }

@@ -1263,6 +1263,37 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       return MkTc(target, value.tc);
     }
 
+    case FBLE_ABSTRACT_ACCESS_EXPR: {
+      FbleAbstractAccessExpr* access_expr = (FbleAbstractAccessExpr*)expr;
+
+      Tc value = TypeCheckExpr(th, scope, access_expr->value);
+      if (value.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleAbstractType* abstract_type = (FbleAbstractType*)FbleNormalType(th, value.type);
+      if (abstract_type->_base.tag != FBLE_ABSTRACT_TYPE) {
+        ReportError(expr->loc, "expected value of abstract type, but found some of type %t\n",
+            value.type);
+        FbleReleaseType(th, &abstract_type->_base);
+        FreeTc(th, value);
+        return TC_FAILED;
+      }
+
+      if (!FbleModuleBelongsToPackage(scope->module, abstract_type->package->path)) {
+        ReportError(expr->loc, "Module %m is not allowed to access package %m\n",
+            scope->module, abstract_type->package->path);
+        FbleReleaseType(th, &abstract_type->_base);
+        FreeTc(th, value);
+        return TC_FAILED;
+      }
+
+      FbleType* type = FbleRetainType(th, abstract_type->type);
+      FbleReleaseType(th, &abstract_type->_base);
+      FbleReleaseType(th, value.type);
+      return MkTc(type, value.tc);
+    }
+
     case FBLE_LIST_EXPR: {
       FbleListExpr* list_expr = (FbleListExpr*)expr;
 
@@ -1690,10 +1721,11 @@ static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_PACKAGE_TYPE_EXPR:
-    case FBLE_ABSTRACT_CAST_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:
+    case FBLE_ABSTRACT_CAST_EXPR:
+    case FBLE_ABSTRACT_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       Tc proc = TypeCheckExpr(th, scope, expr);
@@ -2032,10 +2064,11 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     case FBLE_EXEC_EXPR:
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
-    case FBLE_ABSTRACT_CAST_EXPR:
     case FBLE_LIST_EXPR:
     case FBLE_LITERAL_EXPR:
     case FBLE_MODULE_PATH_EXPR:
+    case FBLE_ABSTRACT_CAST_EXPR:
+    case FBLE_ABSTRACT_ACCESS_EXPR:
     case FBLE_MISC_APPLY_EXPR:
     {
       FbleExpr* expr = type;
