@@ -1,9 +1,6 @@
 * [lib] Set up build to only have access to explicit package list?
 * Reorder case statements to match updated order of *_EXPR enum.
 
-* [lang] Rewrite abstract types feature again.
- - Test and add support for abstract value expression.
-
 * [lang] Should empty path be allowed in package type?
  See langs/fble.txt for more details.
 

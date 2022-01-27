@@ -1,0 +1,9 @@
+Fble CMake
+==========
+Goal: see if we can uses CMake to build Fble packages, including the compiler
+and fble program packages.
+
+The motivation is: if we can build things with cmake, then it should be more
+portable, handle configuration and package dependencies automatically, and
+make it easy to create distributable packages.
+

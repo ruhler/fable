@@ -1616,9 +1616,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         FbleDataType* struct_type = (FbleDataType*)vnorm;
         if (struct_type->_base.tag == FBLE_DATA_TYPE
             && struct_type->datatype == FBLE_STRUCT_DATATYPE) {
+          // struct_value
           FbleReleaseType(th, normal);
           FreeTc(th, misc);
-          // struct_value
           if (struct_type->fields.size != argc) {
             // TODO: Where should the error message go?
             ReportError(expr->loc,
@@ -1663,6 +1663,45 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
             struct_tc->fields[i] = args[i].tc;
           }
           return MkTc(vtype, &struct_tc->_base);
+        }
+
+        FblePackageType* pkg_type = (FblePackageType*)vnorm;
+        if (pkg_type->_base.tag == FBLE_PACKAGE_TYPE) {
+          // abstract_value
+          FbleReleaseType(th, normal);
+          FreeTc(th, misc);
+
+          if (argc != 1) {
+            ReportError(expr->loc, "expected 1 argument, but %i provided\n", argc);
+            FbleReleaseType(th, &pkg_type->_base);
+            FbleReleaseType(th, vtype);
+            for (size_t i = 0; i < argc; ++i) {
+              FreeTc(th, args[i]);
+            }
+            return TC_FAILED;
+          }
+
+          if (!FbleModuleBelongsToPackage(scope->module, pkg_type->path)) {
+            ReportError(expr->loc, "Module %m is not allowed access to package %m\n",
+                scope->module, pkg_type->path);
+            FbleReleaseType(th, &pkg_type->_base);
+            FbleReleaseType(th, vtype);
+            for (size_t i = 0; i < argc; ++i) {
+              FreeTc(th, args[i]);
+            }
+            return TC_FAILED;
+          }
+
+          FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
+          abs_type->package = pkg_type;
+          abs_type->type = args[0].type;
+          FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
+          FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
+          FbleReleaseType(th, &pkg_type->_base);
+          FbleReleaseType(th, args[0].type);
+          FbleReleaseType(th, vtype);
+
+          return MkTc(&abs_type->_base, args[0].tc);
         }
 
         FbleReleaseType(th, vtype);

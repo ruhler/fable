@@ -1269,3 +1269,104 @@ Summary of next steps:
 * If desired, write down a proposal for versioning modules and packages in
   fble.
 * Implement support for .fble.@ header files. I think required of all modules.
+
+---
+
+The language update for abstract types is going well. It feels like a good,
+solid improvement to the language.
+
+Next step, I think, is to organize my code into packages, like how we would
+imagine them to be developed separately if they were developed separately.
+
+The vision: it will be something like C code. You pass flags to the compiler
+with search paths for include and library files. We move source and build for
+each package into its own subdirectory. Eventually they could be different git
+repos, but for now I see no need to suffer the costs of that.
+
+The tricky part will be deciding how to do the builds for each package.
+Specifically:
+* Can/should we reuse bits of tcl script for wrapping ninja files?
+* What mechanism should I use where ./configure traditionally goes?
+
+The ./configure step is necessary if we want to allow packages to be built in
+isolation. We have to have a way to figure out where dependencies are,
+including packages we depend on and binaries, like 'fble' that we depend on.
+
+If I want I can make a full build wrapper that calls configure for each sub
+project knowing that the dependencies are in the out folder of whatever other
+project we just compiled.
+
+What do you think? Should we use ./configure? pkg-config? Auto-conf? Is there
+any other standard way of finding things you depend on in a system you are
+unaware of?
+
+Options:
+* autoconf
+* CMake?
+
+It looks like ninja is built with CMake as an option, not autoconf. Let's
+learn more about CMake. Maybe it's more suitable
+
+Thoughts from reading the cmake documentation:
+* Looks like the user will have to install cmake to do the build.
+* cmake supports ninja, makefile, windows, mac, etc.
+* cmake has command line and gui options, which is nice.
+* Um... looks a little complicated, and like cmake wants to be the build
+  system as well as the configuration system. And the test system too?
+
+I don't know. I don't like users having to install cmake. It's not clear to me
+how easily I can add custom rules. I don't like having all of configure,
+build, and test in one. But on the other hand, if I ever want fble to compile
+for windows, seems like I'll need to use some more structured system like
+CMake?
+
+Or perhaps the real concern should be: can I use CMake for handling fble
+dependencies, as opposed to native library/executables?
+
+Sounds like autoconf isn't a great solution for windows. And I know it's
+clunky and doing a lot of stuff that I don't really care about. Sounds like
+it's hard to make it work correctly in general too.
+
+I could try writing a custom configure script. That will be simple, minimal
+dependencies. Unlikely to work for all general use cases.
+
+I really like having the programmability of tcl for my build system.
+
+I think the right approach is to give CMake a try. Who knows, maybe it works
+great, and then I don't have to worry about configure and maybe even windows
+just works. Maybe I get a test runner for free, and it fixes my issues moving
+around files. Or maybe it's just a complete pain and I can't find a nice way
+to describe spec tests and code coverage at all. Either way, I learn, right?
+
+Looks like cmake can generate debian packages. That would be cool.
+
+I feel like, ideally, we have the following entities as separate packages:
+* The language specification, vim utils, and spec tests.
+  Builds and installs documentation, and maybe spec tests distributed in some
+  shared data directory?
+* The fble compiler, interpreter, and tools.
+  Depends on language specification tests for test suite.
+  Builds and installs libraries and tools.
+  This is the most straight forward thing I would expect we could build by
+  cmake. Cmake should definitely work for this.
+* Fble packages, separate package for each of:
+  Core, Stdio, App, Md5, Sat, Invaders, Map, GameOfLife, Graphics, Pinball,
+  BenchmarkGame, Snake, Sudoku, and maybe some other miscellaneous.
+ 
+Uh, that's a lot of little packages. Is that a bit excessive? Maybe Map and
+LFSR and Rat could go into Core? I'd rather not though... It would be nice if
+little packages were okay. Maybe Snake, Sudoku, TicTacToe, GameOfLife, and
+BenchmarkGame could all go into a DemoApps package?
+
+Let's start by trying to use CMake to build fble as is. Don't worry about
+separating packages yet. Learn CMake first. See if we can get to parity with
+what I have using build.ninja.tcl now.
+
+---
+
+I wonder how we can do code coverage with cmake. Maybe we need to have
+conditional code coverage based on availability of gcc, because I doubt that
+bit of the build is portable.
+
+Let's move cmake related discussion over to thoughts/fble.cmake.txt.
+
