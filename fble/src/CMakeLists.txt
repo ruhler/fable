@@ -1,4 +1,7 @@
 
+find_package(BISON)
+BISON_TARGET(parser parse.y ${CMAKE_CURRENT_BINARY_DIR}/parse.c)
+
 add_library(fble
   alloc.c
   code.c
@@ -15,7 +18,7 @@ add_library(fble
   main.c
   module-path.c
   name.c
-  parse.y
+  parse.c
   profile.c
   string.c
   tc.c
@@ -25,3 +28,4 @@ add_library(fble
   vector.c
 )
 target_include_directories(fble PUBLIC "${PROJECT_SOURCE_DIR}/fble/include")
+target_include_directories(fble PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")

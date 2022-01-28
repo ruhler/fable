@@ -29,3 +29,8 @@ I'm just getting lucky that by specifying a standard and extensions off, it
 happens to set the right flags. Oh well. It probably doesn't matter that much
 in practice anyway.
 
+---
+
+Next challenge: cmake isn't building the parser. Looks like there is a module
+that supports that.
+
