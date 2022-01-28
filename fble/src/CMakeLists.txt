@@ -24,4 +24,4 @@ add_library(fble
   value.c
   vector.c
 )
-target_include_directories(fble PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(fble PUBLIC "${PROJECT_SOURCE_DIR}/fble/include")
