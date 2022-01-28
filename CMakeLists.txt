@@ -8,3 +8,4 @@ set(CMAKE_C_EXTENSIONS OFF)
 
 add_subdirectory(fble/src)
 add_subdirectory(tools)
+add_subdirectory(prgms)

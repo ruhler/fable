@@ -32,5 +32,7 @@ in practice anyway.
 ---
 
 Next challenge: cmake isn't building the parser. Looks like there is a module
-that supports that.
+that supports that. Okay. Looks good. We have fble-test now.
+
+What's next? fble-stdio would be nice.
 
