@@ -42,3 +42,18 @@ How will I specify that it depends on the value of all the relevant fble
 files? I bet it silently doesn't care about those dependencies. Like it
 silently ignored parse.y that I passed. Hmm...
 
+---
+
+cmake has a for loop, which is nice for factoring out common code for a lot of
+target. For example, I can use a for loop for all the tools.
+
+Documentation is tricky. I read stuff and don't have a clue how to make use of
+it in practice. For example, find_package. It looks like SDL2 ships with a
+cmake file describing the package, so I can use that. But GL doesn't. I'll
+have to figure out how to set that up.
+
+Okay, looks like there is a FindOpenGL cmake thing somewhere. I wonder where?
+
+/usr/share/cmake-3.16/Modules/FindOpenGL.cmake
+
+And there are other modules there that ship with CMake.

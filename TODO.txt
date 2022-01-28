@@ -6,6 +6,7 @@
  - Figure out how to compile a .fble file.
  - Figure out how to add tests.
  - Enable bison parser report?
+ - and more ...
 
 * [lib] Set up build to only have access to explicit package list?
 * Reorder case statements to match updated order of *_EXPR enum.

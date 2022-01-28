@@ -5,7 +5,7 @@
 #include <string.h>       // for strcmp
 
 #include <SDL.h>          // for SDL_*
-#include <gl.h>           // for gl*
+#include <GL/gl.h>        // for gl*
 
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.

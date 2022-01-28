@@ -226,7 +226,7 @@ lib $::lib/libfble-prgms-native.a $fbleprgmsnative_objs
 # fble programs binaries
 foreach {x} { fble-md5 fble-stdio fble-app } {
   obj $::obj/$x.o prgms/$x.c \
-    "-I fble/include -I /usr/include/SDL2 -I /usr/include/GL"
+    "-I fble/include -I /usr/include/SDL2"
   bin $::bin/$x "$::obj/$x.o" \
     "-L $::lib -lfble -lfble-prgms-native -lSDL2 -lGL" \
     "$::libfble $::lib/libfble-prgms-native.a"
@@ -236,7 +236,7 @@ foreach {x} { fble-md5 fble-stdio fble-app } {
 obj $::obj/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 obj $::obj/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 obj $::obj/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-obj $::obj/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I /usr/include/SDL2 -I /usr/include/GL"
+obj $::obj/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I /usr/include/SDL2"
 obj $::obj/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 
 # tests
