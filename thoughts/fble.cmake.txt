@@ -7,3 +7,25 @@ The motivation is: if we can build things with cmake, then it should be more
 portable, handle configuration and package dependencies automatically, and
 make it easy to create distributable packages.
 
+Step 1: let's do a straight forward cmake build setup for libfble.a. This
+should be easy I claim. Nothing crazy or fancy needed.
+
+---
+
+Well, this is pretty frustrating. I need -std=c99 to build properly, because I
+use 'typeof' as a variable name. CMake claims to support setting required
+standards, but it's picking gnu99 instead of c99.
+
+Perhaps that's a hint that it's worth me not using 'typeof' in the name of
+variables? That way it will be more portable?
+
+Looks like set(CMAKE_C_EXTENSIONS OFF) is required. Cmake does extensions on
+by default. I want to get feedback from the compiler if I'm using any
+extensions, so C_EXTENSIONS OFF sounds reasonable to me.
+
+With that, it's pretty straight forward to build a vanilla libfble.a using
+cmake. I'm not convinced the settings for cmake are well defined. I suspect
+I'm just getting lucky that by specifying a standard and extensions off, it
+happens to set the right flags. Oh well. It probably doesn't matter that much
+in practice anyway.
+
