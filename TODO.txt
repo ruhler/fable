@@ -1,3 +1,12 @@
+* [cmake]
+ - Figure out how to build with code coverage.
+ - Figure out how to build with dwarf debug info on.
+ - Figure out how to build with pedantic warnings turned on.
+ - Figure out how to build with optimizations turned on.
+ - Figure out how to compile a .fble file.
+ - Figure out how to add tests.
+ - Enable bison parser report?
+
 * [lib] Set up build to only have access to explicit package list?
 * Reorder case statements to match updated order of *_EXPR enum.
 

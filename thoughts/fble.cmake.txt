@@ -34,5 +34,11 @@ in practice anyway.
 Next challenge: cmake isn't building the parser. Looks like there is a module
 that supports that. Okay. Looks good. We have fble-test now.
 
-What's next? fble-stdio would be nice.
+What's next? fble-stdio would be nice. Okay, that works fine.
+
+Next? Maybe add Fble/Tests.fble test?
+
+How will I specify that it depends on the value of all the relevant fble
+files? I bet it silently doesn't care about those dependencies. Like it
+silently ignored parse.y that I passed. Hmm...
 
