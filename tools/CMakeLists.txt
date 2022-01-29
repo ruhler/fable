@@ -15,3 +15,4 @@ foreach(TOOL ${TOOLS})
   target_link_libraries(${TOOL} PUBLIC fble)
 endforeach()
 
+add_test(fble-profile-test fble-profile-test)

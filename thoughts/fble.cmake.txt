@@ -57,3 +57,16 @@ Okay, looks like there is a FindOpenGL cmake thing somewhere. I wonder where?
 /usr/share/cmake-3.16/Modules/FindOpenGL.cmake
 
 And there are other modules there that ship with CMake.
+
+---
+
+Added a test. It took me a while to figure out that enable_testing() has to be
+done before adding any test. Note that running 'make test' does not cause
+things to be rebuilt that are out of date. I'll need to run 'make && make
+test' for that, which is slightly annoying.
+
+I don't know what they are doing for their makefiles, but it takes a
+noticeably long time to run make when everything is already up to date. That's
+annoying.
+
+

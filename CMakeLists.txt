@@ -6,6 +6,9 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED True)
 set(CMAKE_C_EXTENSIONS OFF)
 
+enable_testing()
+
 add_subdirectory(fble/src)
 add_subdirectory(tools)
 add_subdirectory(prgms)
+
