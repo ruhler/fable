@@ -89,4 +89,27 @@ good.
 
 So, what do I do? Require Ninja as the generator and use .d files?
 
+---
+
+I'm going to abandon my first attempt at cmake for fble.
+
+For when I want to revisit later, here is the summary of why:
+
+Major Concerns:
+* I don't see a portable way to support scanning of non-C or CXX files for
+  implicit dependencies. I haven't tried too hard, but it doesn't seem worth
+  the effort to me.
+
+Moderate Concerns:
+* The documentation is cryptic. It's too hard to figure things out from the
+  documentation alone.
+
+Minor Concerns (general dislike and distrust):
+* Silently ignoring parse.y when passed to add_library.
+* Hard to figure out what's going wrong from make files if build doesn't work.
+* Make takes forever just to see that it's up to date, and I don't believe
+  that's due to anything intrinsic about make.
+* Having language extensions enabled by default.
+* Not rebuilding out of date files when 'make test' is run.
+* Re-running tests that have already run.
 
