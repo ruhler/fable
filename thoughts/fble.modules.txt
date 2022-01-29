@@ -1296,7 +1296,7 @@ If I want I can make a full build wrapper that calls configure for each sub
 project knowing that the dependencies are in the out folder of whatever other
 project we just compiled.
 
-What do you think? Should we use ./configure? pkg-config? Auto-conf? Is there
+What do you think? Should we use ./configure? pkg-config? Autoconf? Is there
 any other standard way of finding things you depend on in a system you are
 unaware of?
 
@@ -1369,4 +1369,52 @@ conditional code coverage based on availability of gcc, because I doubt that
 bit of the build is portable.
 
 Let's move cmake related discussion over to thoughts/fble.cmake.txt.
+
+---
+
+So, I'm running a little out of steam on cmake. Let's consider more
+alternatives.
+
+How about I just use pkg-config? Easy way to find compile and link flags. It
+supports sdl2 and gl. I can add pkg config entries for packages I compile and
+reference them.
+
+And then we have, say, a custom configure script I can use based on
+pkg-config. No need for autoconf or cmake or anything fancy like that.
+Probably it won't be so portable at first, but I suspect neither is anything
+else until I try it on other platforms for real.
+
+pkg-config looks good for use of libraries, but maybe not for finding
+executables like gcc or fble. Maybe I can deal with that using a custom
+configure script myself. Search for the executable in PATH, and if it's not
+there, allow users to specify alternate values.
+
+How would this look if I wanted to go the pkg-config route?
+
+The vision:
+* You use pkg-config in your own build commands specifying the other fble
+  packages you want to build against. You can build/configure your own package
+  however you like, but you're encouraged to install pkg-config files.
+* I add a custom ./configure script to fble implementation that uses
+  pkg-config to find SDL and GL. And clean up whatever else I feel like I
+  need, for the pleasantness of others trying to use fble. I provide a
+  pkg-config the fble libraries.
+* For each fble package I want, I can create a custom configure script.
+* Maybe I ship some helper scripts for building and distributing packages as
+  part of the fble package that you can refer to if you want.
+
+And the incremental progress to get there?
+
+Each subpackage will want its own build system and build directory. Or, users
+can choose their own build directory, right? So we can set up a top level
+build directory for sub packages and install those locally. That installs the
+package config files. When we run configure for sub packages, we specify where
+to search for the pkg-config paths.
+
+The key part in practice will be reorganizing the git repo to have separate
+directories for each separate package, and set up separate build systems for
+each separate package.
+
+The fble compiler is going to want to take multiple -I options instead of a
+single package path. Same with the interpreter I guess.
 

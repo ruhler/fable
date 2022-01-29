@@ -69,4 +69,24 @@ I don't know what they are doing for their makefiles, but it takes a
 noticeably long time to run make when everything is already up to date. That's
 annoying.
 
+---
+
+Next question: how can we compile an fble program?
+
+Maybe start simple. Try compiling /Unit% to an object file?
+
+It looks like I can add_custom_command. There is an option to ask it to scan
+for implicit dependencies, but that only works for C, CXX, and makefiles and
+is ignored otherwise. And there is an option for a Ninja .d depends file, but
+that's an error for other generators. In other words, this is not going to be
+portable. And I'm starting to question now if all the dependencies are
+properly tracked. For example, how about I change a header file and see if
+anything is recompiled? It's hard to know, because it looks like it does
+something even if I change nothing.
+
+Looks like changing a header file does cause c code to be rebuilt. That's
+good.
+
+So, what do I do? Require Ninja as the generator and use .d files?
+
 
