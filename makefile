@@ -2,13 +2,11 @@
 default: all
 
 out/build.ninja: build.ninja.tcl
-	mkdir -p out
-	tclsh $< > $@
+	tclsh $<
 
 .PHONY: ninja
 ninja:
-	mkdir -p out
-	tclsh build.ninja.tcl > out/build.ninja
+	tclsh build.ninja.tcl
 
 .PHONY: foo
 foo:
@@ -26,7 +24,7 @@ clean:
 full:
 	rm -rf out/
 	mkdir -p out
-	tclsh build.ninja.tcl > out/build.ninja
+	tclsh build.ninja.tcl
 	ninja -f out/build.ninja
 
 .PHONY: test

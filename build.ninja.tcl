@@ -1,8 +1,7 @@
 # ninja-based description of how to build fble and friends.
 #
 # First time setup:
-#   mkdir -p out
-#   tclsh build.ninja.tcl > out/build.ninja
+#   tclsh build.ninja
 #
 # Afterwards:
 #   ninja -f out/build.ninja
@@ -17,9 +16,12 @@ set ::prgms "$::out/prgms"
 set ::test "$::out/test"
 set ::cov "$::out/cov"
 
+exec mkdir -p $::out
+set ::build_ninja [open "$::out/build.ninja" "w"]
+
 # build.ninja header.
-puts "builddir = $::out"
-puts {
+puts $::build_ninja "builddir = $::out"
+puts $::build_ninja {
 # We build everything using this one generic rule, specifying the command
 # explicitly for every target. Because defining separate rules for different
 # command lines doesn't seem to buy us much.
@@ -37,11 +39,11 @@ rule rule
 #   command - the command to run to produce the targets.
 #   args - optional additional "key = argument" pairs to use for ninja rule.
 proc build { targets dependencies command args } {
-  puts "build [join $targets]: rule [join $dependencies]"
-  puts "  cmd = $command"
+  puts $::build_ninja "build [join $targets]: rule [join $dependencies]"
+  puts $::build_ninja "  cmd = $command"
 
   foreach kv $args {
-    puts "  $kv"
+    puts $::build_ninja "  $kv"
   }
 }
 
@@ -535,5 +537,10 @@ build $::test/summary.tr "tools/tests.tcl $::test/tests.txt" \
   "tclsh tools/tests.tcl $::test/tests.txt && echo PASSED > $::test/summary.tr"
 
 # build.ninja
-build $::out/build.ninja "build.ninja.tcl $::build_ninja_deps" \
-  "tclsh build.ninja.tcl > $::out/build.ninja"
+build $::out/build.ninja "build.ninja.tcl" "tclsh build.ninja.tcl" \
+  "depfile = $::out/build.ninja.d"
+
+# build.ninja.d implicit dependency file.
+set ::build_ninja_d [open "$::out/build.ninja.d" "w"]
+puts $::build_ninja_d "$::out/build.ninja: $::build_ninja_deps"
+

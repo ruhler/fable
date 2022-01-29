@@ -124,9 +124,6 @@
    in the stack?
  - see thoughts/fble.profile.txt
 
-* Fix missing dependency of generation of build.ninja on new spec tests.
-* Fix issue with build when removing a spec test.
-
 * Investigate why fork-race test generates so many functions with the same
   name? Is there a bug here somewhere? Shouldn't profile block names be
 unique?
