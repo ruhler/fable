@@ -1,15 +1,14 @@
-* [cmake]
- - Figure out how to build with code coverage.
- - Figure out how to build with dwarf debug info on.
- - Figure out how to build with pedantic warnings turned on.
- - Figure out how to build with optimizations turned on.
- - Figure out how to compile a .fble file.
- - Figure out how to add tests.
- - Enable bison parser report?
- - and more ...
+* [lib] Set up build to only have access to explicit package list
+ - Update approach to fble-deps to support multiple search paths.
+ - Reorganize prgms into package directories
+   pkgs/core/Core/...
+   pkgs/stdio/Stdio/...
+   pkgs/misc/...
+ - Update build script to only provide search paths packages are allowed to
+   depend on.
 
-* [lib] Set up build to only have access to explicit package list?
 * Reorder case statements to match updated order of *_EXPR enum.
+  In particular, the placement of the ABSTRACT_*_EXPR enums.
 
 * [lang] Should empty path be allowed in package type?
  See langs/fble.txt for more details.

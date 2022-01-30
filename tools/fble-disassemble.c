@@ -4,9 +4,11 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
+#include "fble-alloc.h"     // for FbleFree.
 #include "fble-compile.h"   // for FbleCompile, FbleDisassemble.
-#include "fble-load.h"      // for FbleLoad
+#include "fble-load.h"      // for FbleLoad.
 #include "fble-profile.h"   // for FbleNewProfile, etc.
+#include "fble-vector.h"    // for FbleVectorInit.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -69,15 +71,19 @@ int main(int argc, char* argv[])
     return EX_USAGE;
   }
   
-  const char* search_path = argv[0];
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  FbleVectorAppend(search_path, argv[0]);
   const char* mpath_string = argv[1];
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {
+    FbleFree(search_path.xs);
     return EX_FAIL;
   }
 
   FbleLoadedProgram* prgm = FbleLoad(search_path, mpath);
+  FbleFree(search_path.xs);
   FbleFreeModulePath(mpath);
   if (prgm == NULL) {
     return EX_FAIL;

@@ -26,14 +26,66 @@ typedef struct Stack {
   struct Stack* tail;
 } Stack;
 
+static FbleString* FindAt(const char* root, FbleModulePath* path);
 static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path);
 
-// Find  -- 
+// FindAt  -- 
 //  Returns the path on disk of the .fble file for the given root directory
 //  and module path.
 //  
 // Inputs:
-//   search_path - file path to the root of the module search path. May be NULL.
+//   root - file path to the root of the module search path.
+//   path - the module path to find the source file for.
+//
+// Results:
+//   The file path to the source code of the module, or NULL in case no such
+//   file can be found.
+//
+// Side effects:
+// * The user should call FbleFreeString when the returned string is no
+//   longer needed.
+static FbleString* FindAt(const char* root, FbleModulePath* path)
+{
+  assert(root != NULL);
+
+  // Cacluate the length of the filename for the module.
+  size_t len = strlen(root) + strlen(".fble") + 1;
+  for (size_t i = 0; i < path->path.size; ++i) {
+    // "/name"
+    len += 1 + strlen(path->path.xs[i].name->str);
+
+    if (strchr(path->path.xs[i].name->str, '/') != NULL) {
+      // There's nothing in the fble language spec that says you can't have a
+      // forward slash in a module name, but there's no way on a posix system
+      // to put the slash in the filename where we would look for the module,
+      // so don't even try looking for it.
+      return NULL;
+    }
+  }
+
+  // Construct the path to the module on disk.
+  char filename[len];
+  filename[0] = '\0';
+  strcat(filename, root);
+  for (size_t i = 0; i < path->path.size; ++i) {
+    strcat(filename, "/");
+    strcat(filename, path->path.xs[i].name->str);
+  }
+  strcat(filename, ".fble");
+
+  if (access(filename, F_OK) != 0) {
+    return NULL;
+  }
+
+  return FbleNewString(filename);
+}
+
+// Find  -- 
+//  Returns the path on disk of the .fble file for the given search path
+//  and module path.
+//  
+// Inputs:
+//   search_path - the module search path.
 //   path - the module path to find the source file for.
 //
 // Results:
@@ -46,49 +98,18 @@ static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path);
 //   longer needed.
 static FbleString* Find(FbleSearchPath search_path, FbleModulePath* path)
 {
-  if (search_path == NULL) {
+  FbleString* found = NULL;
+  for (size_t i = 0; !found && i < search_path.size; ++i) {
+    found = FindAt(search_path.xs[i], path);
+  }
+
+  if (found == NULL) {
     FbleReportError("module ", path->loc);
     FblePrintModulePath(stderr, path);
     fprintf(stderr, " not found\n");
     return NULL;
   }
-
-  // Cacluate the length of the filename for the module.
-  size_t len = strlen(search_path) + strlen(".fble") + 1;
-  for (size_t i = 0; i < path->path.size; ++i) {
-    // "/name"
-    len += 1 + strlen(path->path.xs[i].name->str);
-
-    if (strchr(path->path.xs[i].name->str, '/') != NULL) {
-      // There's nothing in the fble language spec that says you can't have a
-      // forward slash in a module name, but there's no way on a posix system
-      // to put the slash in the filename where we would look for the module,
-      // so don't even try looking for it.
-      FbleReportError("module ", path->loc);
-      FblePrintModulePath(stderr, path);
-      fprintf(stderr, " not found\n");
-      return NULL;
-    }
-  }
-
-  // Construct the path to the module on disk.
-  char filename[len];
-  filename[0] = '\0';
-  strcat(filename, search_path);
-  for (size_t i = 0; i < path->path.size; ++i) {
-    strcat(filename, "/");
-    strcat(filename, path->path.xs[i].name->str);
-  }
-  strcat(filename, ".fble");
-
-  if (access(filename, F_OK) != 0) {
-    FbleReportError("module ", path->loc);
-    FblePrintModulePath(stderr, path);
-    fprintf(stderr, " not found\n");
-    return NULL;
-  }
-
-  return FbleNewString(filename);
+  return found;
 }
 
 // FbleLoad -- see documentation in fble-load.h

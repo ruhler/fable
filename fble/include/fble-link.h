@@ -33,7 +33,7 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 //
 // Inputs:
 //   heap - heap to use for allocations.
-//   search_path - The search path to use for location .fble files.
+//   search_path - The search path to use for locating .fble files.
 //   module_path - The module path for the main module to load. Borrowed.
 //   profile - profile to populate with blocks. May be NULL.
 //

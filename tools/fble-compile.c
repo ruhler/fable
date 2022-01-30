@@ -5,8 +5,10 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
+#include "fble-alloc.h"         // for FbleFree.
 #include "fble-compile.h"       // for FbleCompile, etc.
-#include "fble-module-path.h"   // for FbleParseModulePath
+#include "fble-module-path.h"   // for FbleParseModulePath.
+#include "fble-vector.h"        // for FbleVectorInit.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -77,8 +79,13 @@ int main(int argc, char* argv[])
   argc--;
   argv++;
 
-  const char* search_path = argc < 1 ? NULL : argv[0];
-  if (export == NULL && search_path == NULL) {
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  if (argc >= 1) {
+    FbleVectorAppend(search_path, argv[0]);
+  }
+
+  if (export == NULL && search_path.size == 0) {
     fprintf(stderr, "one of --export NAME or SEARCH_PATH must be specified.\n");
     PrintUsage(stderr);
     return EX_USAGE;
@@ -93,7 +100,7 @@ int main(int argc, char* argv[])
     FbleGenerateAArch64Export(stdout, export, mpath);
   }
 
-  if (search_path != NULL) {
+  if (search_path.size > 0) {
     FbleLoadedProgram* prgm = FbleLoad(search_path, mpath);
     if (prgm == NULL) {
       FbleFreeModulePath(mpath);
@@ -116,6 +123,7 @@ int main(int argc, char* argv[])
     FbleFreeCompiledModule(module);
   }
 
+  FbleFree(search_path.xs);
   FbleFreeModulePath(mpath);
   return EX_SUCCESS;
 }

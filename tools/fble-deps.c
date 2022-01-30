@@ -2,10 +2,13 @@
 //   The implementation of the fble-deps program, which generates gcc -MD
 //   compatible dependencies for an .fble file.
 
+#include <assert.h>   // for assert
 #include <string.h>   // for strcmp, strlen
 #include <stdio.h>    // for FILE, fprintf, stderr
 
+#include "fble-alloc.h"   // for FbleFree.
 #include "fble-load.h"    // for FbleLoad.
+#include "fble-vector.h"  // for FbleVectorInit.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
@@ -71,13 +74,16 @@ int main(int argc, char* argv[])
     PrintUsage(stderr);
     return EX_USAGE;
   }
-  const char* search_path = *argv;
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  FbleVectorAppend(search_path, *argv);
   argc--;
   argv++;
 
   if (argc < 1) {
     fprintf(stderr, "no MODULE_PATH specified.\n");
     PrintUsage(stderr);
+    FbleFree(search_path.xs);
     return EX_USAGE;
   }
   const char* mpath_string = *argv;
@@ -86,6 +92,7 @@ int main(int argc, char* argv[])
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {
+    FbleFree(search_path.xs);
     return EX_FAIL;
   }
 
@@ -105,8 +112,9 @@ int main(int argc, char* argv[])
         cols = 1;
       }
 
-      cols += 1 + strlen(search_path);
-      printf(" %s", search_path);
+      assert(search_path.size == 1 && "TODO: support multiple search path entries");
+      cols += 1 + strlen(search_path.xs[0]);
+      printf(" %s", search_path.xs[0]);
       for (size_t j = 0; j < mpath->path.size; ++j) {
         cols += 1 + strlen(mpath->path.xs[j].name->str);
         printf("/%s", mpath->path.xs[j].name->str);
@@ -116,6 +124,7 @@ int main(int argc, char* argv[])
     }
   }
   printf("\n");
+  FbleFree(search_path.xs);
 
   FbleFreeLoadedProgram(prgm);
   return EX_SUCCESS;

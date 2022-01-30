@@ -69,18 +69,23 @@ typedef struct {
 FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
 
 // FbleSearchPath - 
-//   A directory to use as the root of an fble file hierarchy for locating
-//   .fble files corresponding to a module path.
+//   A list of directories to use as the root of an fble file hierarchy for
+//   locating .fble files corresponding to a module path.
 //
-// TODO: Support a list of directories instead of a single directory?
-typedef const char* FbleSearchPath;
+// The directories are search in order for the first matching module.
+//
+// Note: FbleSearchPath is a vector of const char*.
+typedef struct {
+  size_t size;
+  const char** xs;
+} FbleSearchPath;
 
 // FbleLoad --
 //   Load an fble program.
 //
 // Inputs:
-//   search_path - The search path to use for location .fble files.
-//   module_path - The module path for the main module to load.
+//   search_path - The search path to use for location .fble files. Borrowed.
+//   module_path - The module path for the main module to load. Borrowed.
 //
 // Results:
 //   The parsed program, or NULL in case of error.
