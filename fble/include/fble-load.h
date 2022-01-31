@@ -4,7 +4,10 @@
 #ifndef FBLE_LOAD_H_
 #define FBLE_LOAD_H_
 
+#include <stdio.h>  // for FILE
+
 #include "fble-module-path.h"
+#include "fble-string.h"
 
 // FbleExpr --
 //   Type used to represent an fble abstract syntax tree.
@@ -86,17 +89,19 @@ typedef struct {
 // Inputs:
 //   search_path - The search path to use for location .fble files. Borrowed.
 //   module_path - The module path for the main module to load. Borrowed.
+//   build_deps - Output to store list of files the load depended on.
+//                This should be a preinitialized vector, or NULL.
 //
 // Results:
 //   The parsed program, or NULL in case of error.
 //
 // Side effects:
 // * Prints an error message to stderr if the program cannot be parsed.
-//
-// Allocations:
 // * The user should call FbleFreeLoadedProgram to free resources associated
 //   with the given program when it is no longer needed.
-FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_path);
+// * The user should free strings added to build_deps when no longer needed,
+//   including in the case when program loading fails.
+FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
 // FbleFreeLoadedProgram --
 //   Free resources associated with the given program.
@@ -107,5 +112,23 @@ FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_p
 // Side effects:
 //   Frees resources associated with the given program.
 void FbleFreeLoadedProgram(FbleLoadedProgram* program);
+
+// FbleSaveBuildDeps --
+//   Save the list of build dependencies to a depfile suitable for use with
+//   ninja or make.
+//
+// For example, it would generate something like:
+//   target: build_deps1 build_deps2 build_deps3
+//     build_deps4 build_deps5 ...
+//
+// Inputs:
+//   fout - output stream to write the dependency file to.
+//   target - the target of the dependencies to generate.
+//   build_deps - the list of file dependencies.
+//
+// Side effects:
+// * Creates a build dependency file.
+// * Outputs an error message to stderr in case of error.
+void FbleSaveBuildDeps(FILE* fout, const char* target, FbleStringV build_deps);
 
 #endif // FBLE_LOAD_H_

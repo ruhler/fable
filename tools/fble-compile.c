@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
   }
 
   if (search_path.size > 0) {
-    FbleLoadedProgram* prgm = FbleLoad(search_path, mpath);
+    FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, NULL);
     if (prgm == NULL) {
       FbleFreeModulePath(mpath);
       return EX_FAIL;

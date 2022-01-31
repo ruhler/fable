@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleLoadedProgram* prgm = FbleLoad(search_path, mpath);
+  FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, NULL);
   FbleFree(search_path.xs);
   FbleFreeModulePath(mpath);
   if (prgm == NULL) {

@@ -96,36 +96,21 @@ int main(int argc, char* argv[])
     return EX_FAIL;
   }
 
-  FbleLoadedProgram* prgm = FbleLoad(search_path, mpath);
-  FbleFreeModulePath(mpath);
-  if (prgm == NULL) {
-    return EX_FAIL;
-  }
-
-  int cols = 1 + strlen(target);
-  printf("%s:", target);
-  if (prgm->modules.size > 1) {
-    for (size_t i = 0; i < prgm->modules.size - 1; ++i) {
-      FbleModulePath* mpath = prgm->modules.xs[i].path;
-      if (cols > 80) {
-        printf(" \\\n");
-        cols = 1;
-      }
-
-      assert(search_path.size == 1 && "TODO: support multiple search path entries");
-      cols += 1 + strlen(search_path.xs[0]);
-      printf(" %s", search_path.xs[0]);
-      for (size_t j = 0; j < mpath->path.size; ++j) {
-        cols += 1 + strlen(mpath->path.xs[j].name->str);
-        printf("/%s", mpath->path.xs[j].name->str);
-      }
-      cols += 5;
-      printf(".fble");
-    }
-  }
-  printf("\n");
+  FbleStringV deps;
+  FbleVectorInit(deps);
+  FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, &deps);
   FbleFree(search_path.xs);
-
+  FbleFreeModulePath(mpath);
   FbleFreeLoadedProgram(prgm);
-  return EX_SUCCESS;
+
+  if (prgm != NULL) {
+    FbleSaveBuildDeps(stdout, target, deps);
+  }
+
+  for (size_t i = 0; i < deps.size; ++i) {
+    FbleFreeString(deps.xs[i]);
+  }
+  FbleFree(deps.xs);
+
+  return prgm == NULL ? EX_FAIL : EX_SUCCESS;
 }

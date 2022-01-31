@@ -1418,3 +1418,100 @@ each separate package.
 The fble compiler is going to want to take multiple -I options instead of a
 single package path. Same with the interpreter I guess.
 
+---
+
+Next issue: assuming we support multiple -I options, fble-deps needs to
+change. It could get the dependencies from the loaded module. The question is:
+if we have .@ files, which dependency should it include? That depends on the
+tool in question, right? Probably whatever is actually loaded.
+
+It could be we load both .fble and .fble.@ file. I don't know. I haven't work
+out the details of .@ files yet.
+
+The other question is, should fble-deps be a separate tool? I feel like no,
+because the particular files you read may depend on the settings for how you
+load them. Coming back to the question of .fble and .fble.@ files.
+
+So, the proposal is, any binary that reads .fble files should provide a -MMD
+-MF equivalent option that records the files it read. That way, for example,
+you could use that for when you run fble-test and test cases.
+
+I imagine when you run the compiler on module Foo, it would list all the
+include files that were loaded, dependently or independently. For the
+interpreter, it would load more, because you need the implementation details.
+
+Two approach to how to get this info:
+* Store it with the loaded module somehow reasonable.
+* Add an option to FbleLoad to record all the files read.
+
+Here's an interesting question. Say you have a search path with two entries, A
+and B, and nothing is in A. So you first check for something in 'A', then
+check for something in 'B'. This means, if I add something to A that shadows
+B, then it would effect the compilation results.
+
+In other words, we need to add the non-existent path to 'A' to the implicit
+dependencies, even though there is no such file there.
+
+Does that work? Is that meaningful? If you don't add it as a dependency, then
+if you added a file, you wouldn't see it as a change, and your build would be
+out of date.
+
+What does ninja do if I always include a non-existent file in the .d? Does it
+always rebuild every time? Ninja gets unhappy and goes into an infinite loop.
+
+I suppose the proper thing would be to include the path to the (existent)
+directory searched. That's a little more work to identify, but not unduly so.
+Regardless, the point is, we don't store that info in the loaded program. We
+need the loader to record it for us.
+
+It doesn't look to me like gcc handles this subtlety.
+
+Could we use strace for this? Does it need to be built in? strace knows what
+files we try to read. But again, it doesn't know which ones exist?
+
+strace -e file -o foo.txt <cmd>
+
+Lists all the system calls with file names. Note the file names are in their
+original form, not canonicalized. Presumably I could write a script to clean
+them up. It includes a lot of shared library search.
+
+I'm tempted to try, as a proof of concept, whether we can mess up dependencies
+by adding a duplicate header file name.
+
+Let me try.
+
+fble/src/expr.o depends on fble/src/expr.c and fble/src/expr.h. I claim it
+should also depend on the absence of fble/include/expr.h. So, idea is, if I
+add fble/include/expr.h, ninja doesn't try to rebuild. If I rebuild from
+scratch, the whole project fails to rebuild.
+
+If that doesn't work because I got the order mixed up, try adding
+fble/src/fble-alloc.h instead.
+
+Yup. fble/src/fble-alloc.h shows the bug. Ninja does not attempt to rebuild
+when fble/src/fble-alloc.h is added, but if you then do rebuild, it fails to
+build.
+
+I think ninja can get away without being blamed for this, because it's just
+doing what it is told by the .d files. Maybe gcc can get away for the blame
+because it doesn't claim to support this use case.
+
+So, what do we do about this case? Just ignore it? Don't worry about it?
+Handle it correctly by adding directories to the generated dependencies? Use
+strace to generate .d files so we know it's correct and handles other
+potential issues, such as new library files?
+
+I wonder if ninja has a discussion list I could ask about this on.
+
+---
+
+Let me do the following:
+* For now, stick with what gcc does: just add to dependencies the files we
+  read.
+* I can improve that a little by adding directories we scan later down the
+  road.
+* Let's make dependency tracking part of FbleLoad. That's a natural place,
+  because FbleLoad knows what files it is searching for and opening.
+* We can reuse the fble-deps approach now, and later on, if so desired, change
+  it to something all the relevant fble tools support directly.
+

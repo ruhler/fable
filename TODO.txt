@@ -1,5 +1,5 @@
 * [lib] Set up build to only have access to explicit package list
- - Update approach to fble-deps to support multiple search paths.
+ - Pass search path to tools using -I option.
  - Reorganize prgms into package directories
    pkgs/core/Core/...
    pkgs/stdio/Stdio/...
@@ -12,6 +12,12 @@
 
 * [lang] Should empty path be allowed in package type?
  See langs/fble.txt for more details.
+
+* Should fble-deps be a side effect of other tools instead of a separate
+  executable?
+  It seems silly and potentially incorrect to run fble-deps as a separate
+  tool. What about making it a general option for all the fble related tools
+  that load modules? Particularly once we start loading separate .@ files.
 
 * [modules]
  - Decide about .fble.@ files.
