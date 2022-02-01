@@ -30,10 +30,10 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-disassemble SEARCH_PATH MODULE_PATH\n"
+      "Usage: fble-disassemble [-I DIR ...] MODULE_PATH\n"
       "Disassemble an fble program.\n"
+      "  -I DIR - adds DIR to the module search path.\n"
       "  MODULE_PATH - the fble module path associated with FILE. For example: /Foo/Bar%\n"
-      "  SEARCH_PATH - the directory to search for .fble files in.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
 }
@@ -59,22 +59,27 @@ int main(int argc, char* argv[])
     return EX_SUCCESS;
   }
 
-  if (argc < 1) {
-    fprintf(stderr, "no SEARCH_PATH provided.\n");
-    PrintUsage(stderr);
-    return EX_USAGE;
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  while (argc > 1 && strcmp(argv[0], "-I") == 0) {
+    FbleVectorAppend(search_path, argv[1]);
+    argc -= 2;
+    argv += 2;
   }
 
-  if (argc < 2) {
+  if (argc < 1) {
     fprintf(stderr, "no MODULE_PATH provided.\n");
     PrintUsage(stderr);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
+  } else if (argc > 1) {
+    fprintf(stderr, "too many arguments.\n");
+    PrintUsage(stderr);
+    FbleFree(search_path.xs);
     return EX_USAGE;
   }
   
-  FbleSearchPath search_path;
-  FbleVectorInit(search_path);
-  FbleVectorAppend(search_path, argv[0]);
-  const char* mpath_string = argv[1];
+  const char* mpath_string = argv[0];
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {

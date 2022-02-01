@@ -31,11 +31,11 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-deps target SEARCH_PATH MODULE_PATH\n"
+      "Usage: fble-deps target [-I DIR ...] MODULE_PATH\n"
       "  target - the name of the target of the output deps.\n"
+      "  -I DIR - Adds DIR to the module search path.\n"
       "  MODULE_PATH - the fble module path to the module to get dependencies for.\n"
-      "  SEARCH_PATH - a directory with the .fble files.\n"
-      "Example: fble-deps out/prgms/Foo/Bar.fble.d prgms /Foo/Bar%.\n"
+      "Example: fble-deps out/prgms/Foo/Bar.fble.d -I prgms /Foo/Bar%.\n"
   );
 }
 
@@ -69,19 +69,21 @@ int main(int argc, char* argv[])
   argc--;
   argv++;
 
-  if (argc < 1) {
-    fprintf(stderr, "no SEARCH_PATH specified.\n");
-    PrintUsage(stderr);
-    return EX_USAGE;
-  }
   FbleSearchPath search_path;
   FbleVectorInit(search_path);
-  FbleVectorAppend(search_path, *argv);
-  argc--;
-  argv++;
+  while (argc > 1 && strcmp(argv[0], "-I") == 0) {
+    FbleVectorAppend(search_path, argv[1]);
+    argc -= 2;
+    argv += 2;
+  }
 
   if (argc < 1) {
     fprintf(stderr, "no MODULE_PATH specified.\n");
+    PrintUsage(stderr);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
+  } else if (argc > 1) {
+    fprintf(stderr, "too many arguments.\n");
     PrintUsage(stderr);
     FbleFree(search_path.xs);
     return EX_USAGE;

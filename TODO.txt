@@ -1,11 +1,15 @@
 * [lib] Set up build to only have access to explicit package list
- - Pass search path to tools using -I option.
  - Reorganize prgms into package directories
    pkgs/core/Core/...
    pkgs/stdio/Stdio/...
    pkgs/misc/...
  - Update build script to only provide search paths packages are allowed to
    depend on.
+
+* Clean up fble-compile command line usage.
+  To distinguish between the three different combinations more obviously.
+  export only, compile only, export and compile.
+* Share and standardize command line option parsing.
 
 * Reorder case statements to match updated order of *_EXPR enum.
   In particular, the placement of the ABSTRACT_*_EXPR enums.

@@ -1515,3 +1515,39 @@ Let me do the following:
 * We can reuse the fble-deps approach now, and later on, if so desired, change
   it to something all the relevant fble tools support directly.
 
+---
+
+All the places where I want to change a single search path entry to use -I:
+* fble-profiles-test
+* fble-deps
+* fble-compile
+* fble-disassemble
+* fble-stdio, fble-md5, fble-test
+
+Which really means:
+* FbleMain, fble-deps, fble-compile, fble-disassemble.
+
+Let's switch them all and see how goes.
+
+Is there anyway I can share the code for all of them? Like, have some way to
+parse argv/argc for -I and module path values, but allow other stuff to be
+added? Specifically the other options are 'target' for fble-deps and
+'--export' for fble-compile.
+
+I don't see a clean way of composing them. For either to skip over the other
+args requires knowing the semantics of the other args. Unless we require the
+user to put all app-specific args at the front or the back and all generic
+args at the other side. Sounds messy.
+
+I'll just brute force it for now, see how bad that is, and worry about it
+later.
+
+Yeah, it's a pain to have so much duplicated options parsing code. That would
+be nice to standardize and reuse somehow.
+
+How about using getopt? Looks like it's part of POSIX standard. Maybe we can
+have FbleMain supply some part of the options specification and ... something?
+I'll have to figure out how getopt works first to see what makes sense in
+terms of separating code for standard fble options and executable specific
+options.
+

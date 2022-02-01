@@ -30,14 +30,15 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-native [--export NAME] MODULE_PATH [SEARCH_PATH]\n"
+      "Usage: fble-native [--export NAME] [-I DIR ...] MODULE_PATH\n"
       "Compile an fble module to assembly code.\n"
       "  MODULE_PATH - the fble module path associated with FILE. For example: /Foo/Bar%\n"
-      "  SEARCH_PATH - the directory to search for .fble files in.\n"
       "Options:\n"
       "  --export NAME\n"
       "    Generates a function with the given NAME to export the module\n"
-      "At least one of [--export NAME] or [SEARCH_PATH] must be provided.\n"
+      "  -I DIR\n"
+      "    Adds DIR to the module search path.\n"
+      "At least one of [--export NAME] or [-I DIR] must be provided.\n"
       "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
   );
 }
@@ -70,29 +71,37 @@ int main(int argc, char* argv[])
     argv += 2;
   }
 
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  while (argc > 1 && strcmp(argv[0], "-I") == 0) {
+    FbleVectorAppend(search_path, argv[1]);
+    argc -= 2;
+    argv += 2;
+  }
+
   if (argc < 1) {
     fprintf(stderr, "no path.\n");
     PrintUsage(stderr);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
+  } else if (argc > 1) {
+    fprintf(stderr, "too many arguments.\n");
+    PrintUsage(stderr);
+    FbleFree(search_path.xs);
     return EX_USAGE;
   }
   const char* mpath_string = *argv;
-  argc--;
-  argv++;
-
-  FbleSearchPath search_path;
-  FbleVectorInit(search_path);
-  if (argc >= 1) {
-    FbleVectorAppend(search_path, argv[0]);
-  }
 
   if (export == NULL && search_path.size == 0) {
-    fprintf(stderr, "one of --export NAME or SEARCH_PATH must be specified.\n");
+    fprintf(stderr, "one of --export NAME or -I DIR must be specified.\n");
     PrintUsage(stderr);
+    FbleFree(search_path.xs);
     return EX_USAGE;
   }
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {
+    FbleFree(search_path.xs);
     return EX_FAIL;
   }
 

@@ -47,11 +47,11 @@ void FbleCompiledMain(FbleExecutableProgram* program);
 
 #define FbleCompiledMain NULL
 
-#define FBLE_MAIN_USAGE_SUMMARY "SEARCH_PATH MODULE_PATH"
+#define FBLE_MAIN_USAGE_SUMMARY "[-I DIR ...] MODULE_PATH"
 #define FBLE_MAIN_USAGE_DETAIL \
-  "MODULE_PATH is the module path of the main fble module to load.\n" \
-  "SEARCH_PATH is the directory containing the .fble files for the module hierarchy.\n"
-#define FBLE_MAIN_USAGE_EXAMPLE "prgms /Fble/Tests%"
+  "-I DIR adds DIR to the module search path.\n" \
+  "MODULE_PATH is the module path of the main fble module to load.\n"
+#define FBLE_MAIN_USAGE_EXAMPLE "-I prgms /Fble/Tests%"
 #define FBLE_COMPILED_MAIN_ARGS 2
 
 #endif // FbleCompiledMain
