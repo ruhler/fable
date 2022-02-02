@@ -31,11 +31,24 @@ int main(int argc, char* argv[]);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-deps target [-I DIR ...] MODULE_PATH\n"
-      "  target - the name of the target of the output deps.\n"
-      "  -I DIR - Adds DIR to the module search path.\n"
-      "  MODULE_PATH - the fble module path to the module to get dependencies for.\n"
-      "Example: fble-deps out/prgms/Foo/Bar.fble.d -I prgms /Foo/Bar%.\n"
+      "Usage: fble-deps [OPTION...] -t TARGET -m MODULE_PATH\n"
+      "\n"
+      "Description:\n"
+      "  Outputs a depfile suitable for use with ninja build specifying the\n"
+      "  .fble files the given module depends on.\n"
+      "\n"
+      "Options:\n"
+      "  -h, --help\n"
+      "     Print this help message and exit.\n"
+      "  -I DIR\n"
+      "     Adds DIR to the module search path.\n"
+      "  -t, --target TARGET\n"
+      "     Specifies the name of the target to use in the generated depfile.\n"
+      "  -m, --module MODULE_PATH\n"
+      "     The path of the module to get dependencies for.\n"
+      "\n"
+      "Example:\n"
+      "  fble-deps -I prgms -t Foo.fble.d -m /Foo% > Foo.fble.d\n"
   );
 }
 
@@ -53,44 +66,88 @@ static void PrintUsage(FILE* stream)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, char* argv[])
 {
-  argc--;
-  argv++;
-  if (argc > 0 && strcmp("--help", *argv) == 0) {
-    PrintUsage(stdout);
-    return EX_SUCCESS;
-  }
-
-  if (argc < 1) {
-    fprintf(stderr, "no target specified.\n");
-    PrintUsage(stderr);
-    return EX_USAGE;
-  }
-  const char* target = *argv;
-  argc--;
-  argv++;
-
   FbleSearchPath search_path;
   FbleVectorInit(search_path);
-  while (argc > 1 && strcmp(argv[0], "-I") == 0) {
-    FbleVectorAppend(search_path, argv[1]);
-    argc -= 2;
-    argv += 2;
-  }
+  const char* target = NULL;
+  const char* mpath_string = NULL;
 
-  if (argc < 1) {
-    fprintf(stderr, "no MODULE_PATH specified.\n");
-    PrintUsage(stderr);
-    FbleFree(search_path.xs);
-    return EX_USAGE;
-  } else if (argc > 1) {
-    fprintf(stderr, "too many arguments.\n");
-    PrintUsage(stderr);
-    FbleFree(search_path.xs);
-    return EX_USAGE;
-  }
-  const char* mpath_string = *argv;
   argc--;
   argv++;
+  while (argc > 0) {
+    if (strcmp("-h", argv[0]) == 0 || strcmp("--help", argv[0]) == 0) {
+      PrintUsage(stdout);
+      FbleFree(search_path.xs);
+      return EX_SUCCESS;
+    }
+
+    if (strcmp("-I", argv[0]) == 0) {
+      if (argc < 2) {
+        fprintf(stderr, "Error: missing argument to -I option.\n");
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      FbleVectorAppend(search_path, argv[1]);
+      argc -= 2;
+      argv += 2;
+      continue;
+    }
+
+    if (strcmp("-t", argv[0]) == 0 || strcmp("--target", argv[0]) == 0) {
+      if (argc < 2) {
+        fprintf(stderr, "Error: missing argument to %s option.\n", argv[0]);
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      target = argv[1];
+      argc -= 2;
+      argv += 2;
+      continue;
+    }
+
+    if (strcmp("-m", argv[0]) == 0 || strcmp("--module", argv[0]) == 0) {
+      if (argc < 2) {
+        fprintf(stderr, "Error: missing argument to %s option.\n", argv[0]);
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      mpath_string = argv[1];
+      argc -= 2;
+      argv += 2;
+      continue;
+    }
+
+    if (argv[0][0] == '-') {
+      fprintf(stderr, "Error: unrecognized option '%s'\n", argv[0]);
+      PrintUsage(stderr);
+      FbleFree(search_path.xs);
+      return EX_USAGE;
+    }
+
+    fprintf(stderr, "Error: invalid argument '%s'\n", argv[0]);
+    PrintUsage(stderr);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
+  }
+
+  if (target == NULL) {
+    fprintf(stderr, "missing required --target option.\n");
+    PrintUsage(stderr);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
+  }
+
+  if (mpath_string == NULL) {
+    fprintf(stderr, "missing required --module option.\n");
+    PrintUsage(stderr);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
+  }
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {

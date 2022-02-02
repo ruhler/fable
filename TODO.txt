@@ -6,6 +6,8 @@
  - Update build script to only provide search paths packages are allowed to
    depend on.
 
+* Fix fble-stdio command line parsing.
+  The left over args are wrong I think.
 * Clean up fble-compile command line usage.
   To distinguish between the three different combinations more obviously.
   export only, compile only, export and compile.

@@ -431,7 +431,7 @@ foreach dir [dirs prgms ""] {
 
     # Generate a .d file to capture dependencies.
     build $::prgms/$x.d "$::bin/fble-deps prgms/$x" \
-      "$::bin/fble-deps $::prgms/$x.d -I prgms $mpath > $::prgms/$x.d" \
+      "$::bin/fble-deps -I prgms -t $::prgms/$x.d -m $mpath > $::prgms/$x.d" \
       "depfile = $::prgms/$x.d"
 
     fbleobj $::prgms/$x.o $::bin/fble-compile "-I prgms $mpath" $::prgms/$x.d

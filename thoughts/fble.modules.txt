@@ -1551,3 +1551,157 @@ I'll have to figure out how getopt works first to see what makes sense in
 terms of separating code for standard fble options and executable specific
 options.
 
+I think the first step is to switch everyone over to getopt, and worry about
+sharing logic later. But for sharing, it looks like maybe getopt parses
+options in the order passed in the spec string, reordering argv as needed. In
+that case, perhaps we could write a function that parses standard options out
+first? Or callers could parse their own options out first? It's really a
+question of whether I want things to be passed as options with flags or direct
+values. If everything is an option, it's easy. If some things are direct
+values, whatever thing wants to parse direct values probably needs to parse
+the command line last. In other words, the common parsing logic wants to go
+last to parse the module as a direct value instead of a flag value.
+
+---
+
+Okay, so this is a bit of a digression, but how should we do option parsing?
+
+There are three levels:
+1. What's an easy way to write the option parsing code.
+2. Can we have a single place to describe standard options?
+3. Can we reuse the same code everywhere for describing standard options?
+
+Survey of current command lines:
+* Standard options: [-I DIR ...] MODULE_PATH
+* fble-md5: FILE + standard options
+* fble-stdio: [--profile FILE] + standard options + ARGS
+   And I just realized I broke this with my recent change.
+* fble-app: [--profile FILE] + standard options.
+* fble-disassemble: standard options.
+* fble-mem-test: [--growth] + standard options.
+* fble-deps: target + standard options
+* fble-profiles-test: standard options
+* fble-test: [--compile-error | --runtime-error] [--profile] + standard options.
+* fble-compile: [--export NAME] + standard options
+  But ideally with a way to say export only, no compile.
+
+Thoughts:
+* Can --profile be made a standard option?
+* Notice that both standard options and a few other cases want to specify the
+  non-option argument.
+* There are some very command custom options in some cases.
+
+With regards to using getopt, I don't think we need to support things like
+bunching options together and supporting -Idir in addition to -I dir. I don't
+think it will work out well in the long run to stick to single character
+options. Better to support the better documenting long options. Maybe short
+options too, but ... yeah.
+
+With regards to non-argument options... it feels nice to me to specify module
+path as the non-argument option, like when passing a file. But maybe it's
+worth turning into an option, just so standard options are all normal options?
+It's not like the module is a file. We could use something like --main <>, or
+--module <...> as the option.
+
+I think fble-deps 'target' could easily be made an option: --target TARGET.
+
+Passing --module as an option fits well with compiled binaries, where you
+wouldn't list the module anyway. Things like fble-md5, fble-stdio, fble-app.
+It's a little weirder for things like fble-compile or fble-disassemble, where
+you think of them as taking the module as the main input.
+
+I think --profile should be a standardized option to be used whenever you run.
+Hmm... but it doesn't make sense for when you compile. So maybe we should have
+standard run options and standard compile options, possibly with some overlap?
+
+Ideally you can mix orders of options. They can come in any order, regardless
+of whether they are standard options or not.
+
+Ideally users can reuse standard option parsing with whatever mechanism of
+parsing options they want. I'm fine if the specific tools I write reuse a
+custom framework for options parsing, but I don't want to require everyone to
+reuse that custom framework for options parsing.
+
+I don't know. Sounds hard.
+
+Anyway, proposed changes to the user command line interface, regardless of
+parsing implementation:
+* --module MODULE instead of MODULE_PATH directly.
+* --profile FILE instead of --profile for fble-test.
+* --compile option to fble-compile to indicate if compilation is requested or
+  just exporting.
+* Ideally you can reorder flags and mix flags with non-option arguments.
+  Though I think it's fine to require options before non-option arguments.
+
+---
+
+Okay, here's what I'm thinking for reusing command line parsing. The top level
+executable is responsible for the main argument parsing loop. It looks
+something like:
+
+while args remain
+  if is arg X
+    parse arg X, advance args
+  else if is arg Y
+    parse arg Y, advance args
+  ...
+
+We can factor out the if/parse/advance for a particular arg into a function.
+
+In general the parse function for a particular option or set of options has:
+
+Inputs:
+  argv, argc pointers to read and update.
+  output pointers to parsed options.
+    For example, FbleSearchPath*, FbleModulePath**.
+
+Results: 
+  NO MATCH - if the argument isn't recognized by the parser.
+  FAILURE - if there is an error in the option recognized by the parser.
+  SUCCESS - on consumption of an argument, in which case argv, argc, and
+            output values are updated.
+
+Maybe, for example:
+
+bool ParseStandardOptions(bool* error, int* argc, const char*** argv,
+                          FbleSearchPath* search_path, FbleModulePath** module);
+
+Where returning 'false' means no match, returning true means match, which may
+or may not result in 'error' being set to true. argc and argv and everything
+else gets updated. So you would write something like:
+
+  bool error = false;
+  while (!error && argc > 0) {
+    if (ParseStandardOption(&error, &argc, &argv, &search_path, &module)) {
+      continue;
+    } else if (argc > 1 && argv[0] == "--profile") {
+      profile = argv[1];
+      argc -= 2;
+      argv += 2;
+      continue;
+    }
+    ...
+  }
+
+  if (error) {
+    PrintUsage();
+    return EXIT_USAGE;
+  }
+
+Do we need to use if/else or check the result? If it matches, what harm in
+trying to advance? Unless, I guess, it fails to parse? Well, because we want
+to be able to detect 'option that didn't match anything else' as an error.
+
+We could write some macros to hide the if/else/continue syntax. Though to what
+end? It's not that expensive, and why obfuscate things?
+
+---
+
+I tried updating fble-deps to have nice options. My take aways:
+* It's nice having short and long options.
+* It's nice having general option parsing support that allows things in
+  different orders and gives nice usage error message.
+* It's 80 lines of straight forward but repetitive and slightly tedious code
+  to implement the options parsing.
+* It's nice having cleaned up options and options parsing.
+
