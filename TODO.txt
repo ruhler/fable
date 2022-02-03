@@ -6,6 +6,7 @@
  - Update build script to only provide search paths packages are allowed to
    depend on.
 
+* Clean up option parsing for the rest of the executables.
 * Fix fble-stdio command line parsing.
   The left over args are wrong I think.
 * Clean up fble-compile command line usage.

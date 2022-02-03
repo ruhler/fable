@@ -30,16 +30,33 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-native [--export NAME] [-I DIR ...] MODULE_PATH\n"
-      "Compile an fble module to assembly code.\n"
-      "  MODULE_PATH - the fble module path associated with FILE. For example: /Foo/Bar%\n"
+      "Usage: fble-compile [OPTIONS...] -m MODULE_PATH\n"
+      "\n"
+      "Description:\n"
+      "  Compiles an fble module to assembly code.\n"
+      "\n"
       "Options:\n"
-      "  --export NAME\n"
-      "    Generates a function with the given NAME to export the module\n"
+      "  -h, --help\n"
+      "    Print this help message and exit.\n"
       "  -I DIR\n"
-      "    Adds DIR to the module search path.\n"
-      "At least one of [--export NAME] or [-I DIR] must be provided.\n"
-      "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
+      "    Add DIR to the module search path.\n"
+      "  -m, --module MODULE_PATH\n"
+      "     The path of the module to get dependencies for.\n"
+      "  -c, --compile\n"
+      "    Compile the module to assembly.\n"
+      "  -e, --export NAME\n"
+      "    Generate a function with the given NAME to export the module.\n"
+      "\n"
+      "  At least one of --compile or --export must be provided.\n"
+      "\n"
+      "Exit Status:\n"
+      "  0 on success.\n"
+      "  1 on failure.\n"
+      "  2 on usage error.\n"
+      "\n"
+      "Example:\n"
+      "  fble-compile -c -I prgms -m /Foo% > Foo.fble.s\n"
+      "  fble-compile -e FbleCompiledMain -m /Foo% > Foo.fble.main.s\n"
   );
 }
 
@@ -57,43 +74,99 @@ static void PrintUsage(FILE* stream)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, char* argv[])
 {
-  argc--;
-  argv++;
-  if (argc > 0 && strcmp("--help", *argv) == 0) {
-    PrintUsage(stdout);
-    return EX_SUCCESS;
-  }
-
-  const char* export = NULL;
-  if (argc > 1 && strcmp("--export", argv[0]) == 0) {
-    export = argv[1];
-    argc -= 2;
-    argv += 2;
-  }
-
   FbleSearchPath search_path;
   FbleVectorInit(search_path);
-  while (argc > 1 && strcmp(argv[0], "-I") == 0) {
-    FbleVectorAppend(search_path, argv[1]);
-    argc -= 2;
-    argv += 2;
-  }
+  bool compile = false;
+  const char* export = NULL;
+  const char* mpath_string = NULL;
 
-  if (argc < 1) {
-    fprintf(stderr, "no path.\n");
+  argc--;
+  argv++;
+  while (argc > 0) {
+    if (strcmp("-h", argv[0]) == 0 || strcmp("--help", argv[0]) == 0) {
+      PrintUsage(stdout);
+      FbleFree(search_path.xs);
+      return EX_SUCCESS;
+    }
+
+    if (strcmp("-I", argv[0]) == 0) {
+      if (argc < 2) {
+        fprintf(stderr, "Error: missing argument to -I option.\n");
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      FbleVectorAppend(search_path, argv[1]);
+      argc -= 2;
+      argv += 2;
+      continue;
+    }
+
+    if (strcmp("-m", argv[0]) == 0 || strcmp("--module", argv[0]) == 0) {
+      if (argc < 2) {
+        fprintf(stderr, "Error: missing argument to %s option.\n", argv[0]);
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      if (mpath_string != NULL) {
+        fprintf(stderr, "Error: duplicate --module options.\n");
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      mpath_string = argv[1];
+      argc -= 2;
+      argv += 2;
+      continue;
+    }
+
+    if (strcmp("-c", argv[0]) == 0 || strcmp("--compile", argv[0]) == 0) {
+      compile = true;
+      argc--;
+      argv++;
+      continue;
+    }
+
+    if (strcmp("-e", argv[0]) == 0 || strcmp("--export", argv[0]) == 0) {
+      if (argc < 2) {
+        fprintf(stderr, "Error: missing argument to %s option.\n", argv[0]);
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      if (export != NULL) {
+        fprintf(stderr, "Error: duplicate --export options.\n");
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      export = argv[1];
+      argc -= 2;
+      argv += 2;
+      continue;
+    }
+
+    if (argv[0][0] == '-') {
+      fprintf(stderr, "Error: unrecognized option '%s'\n", argv[0]);
+      PrintUsage(stderr);
+      FbleFree(search_path.xs);
+      return EX_USAGE;
+    }
+
+    fprintf(stderr, "Error: invalid argument '%s'\n", argv[0]);
     PrintUsage(stderr);
     FbleFree(search_path.xs);
     return EX_USAGE;
-  } else if (argc > 1) {
-    fprintf(stderr, "too many arguments.\n");
-    PrintUsage(stderr);
-    FbleFree(search_path.xs);
-    return EX_USAGE;
   }
-  const char* mpath_string = *argv;
 
-  if (export == NULL && search_path.size == 0) {
-    fprintf(stderr, "one of --export NAME or -I DIR must be specified.\n");
+  if (!compile && export == NULL) {
+    fprintf(stderr, "one of --export NAME or --compile must be specified.\n");
     PrintUsage(stderr);
     FbleFree(search_path.xs);
     return EX_USAGE;
@@ -109,7 +182,7 @@ int main(int argc, char* argv[])
     FbleGenerateAArch64Export(stdout, export, mpath);
   }
 
-  if (search_path.size > 0) {
+  if (compile) {
     FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, NULL);
     if (prgm == NULL) {
       FbleFreeModulePath(mpath);

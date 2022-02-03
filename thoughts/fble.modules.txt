@@ -1705,3 +1705,40 @@ I tried updating fble-deps to have nice options. My take aways:
   to implement the options parsing.
 * It's nice having cleaned up options and options parsing.
 
+The next question is: do I want to try and abstract away some of that options
+parsing logic? The trouble is it is awkward, because it interacts with control
+flow (exit 0, exit usage error, or continue), it interacts with variables we
+want to set, it interacts with things we need to clean up in case of exit.
+
+I think it's fine to read the options. Just a little annoying to write them.
+Could I easy factor out option parsing into a separate function? Then again we
+have the question of whether we want to exit 0, exit non-zero, or succeed. And
+whose job is it to initialize and clean up things like FbleSearchPath as we
+build it up?
+
+Ugh, there are a lot of details of various error conditions to remember and
+get right. I really ought to factor out the code into an options parsing
+library so I don't have to keep duplicating this logic.
+
+---
+
+Thoughts on the library approach:
+* For --help, return a boolean help option that the main function can read
+  after all arguments are parsed. No need to have special return immediately
+  handling for it.
+* For allocation/cleanup of args, let's say that's the responsibility of the
+  caller.
+
+So I'm imagining the following. We have an Option type that takes maybe a
+couple of strings for the flag names, a function to do the parsing, and a
+pointer to a void* for where to set the results. We define a function for each
+kind of option parser that produces a value of type Option. We specify the
+list of options using a vector of Option.
+
+The user is responsible for initializing data structures and passing pointers
+to them to the Option functions. The Option implementation functions need not
+now about the flags names. We can have a function that does a parse all given
+a list of options. Maybe we can have a function to do documentation too, if we
+want to include documentation along with the Option data structure. Or that
+can be done separately.
+

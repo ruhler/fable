@@ -311,10 +311,10 @@ foreach dir [dirs langs/fble ""] {
         set o [string map {.fble .o} $fble]
         lappend objs $o
 
-        fbleobj $o $::bin/fble-compile.cov "-I $::spectestdir $path" $::spectestdir/test.fble
+        fbleobj $o $::bin/fble-compile.cov "-c -I $::spectestdir -m $path" $::spectestdir/test.fble
       }
 
-      fbleobj $::spectestdir/test.o $::bin/fble-compile.cov "--export FbleCompiledMain -I $::spectestdir /test%" $::spectestdir/test.fble
+      fbleobj $::spectestdir/test.o $::bin/fble-compile.cov "-c -e FbleCompiledMain -I $::spectestdir -m /test%" $::spectestdir/test.fble
       lappend objs $::spectestdir/test.o
 
       lib $::spectestdir/libtest.a $objs
@@ -434,7 +434,7 @@ foreach dir [dirs prgms ""] {
       "$::bin/fble-deps -I prgms -t $::prgms/$x.d -m $mpath > $::prgms/$x.d" \
       "depfile = $::prgms/$x.d"
 
-    fbleobj $::prgms/$x.o $::bin/fble-compile "-I prgms $mpath" $::prgms/$x.d
+    fbleobj $::prgms/$x.o $::bin/fble-compile "-c -I prgms -m $mpath" $::prgms/$x.d
     lappend ::fble_prgms_objs $::prgms/$x.o
   }
 }
@@ -467,7 +467,7 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
 # Build an fble-stdio compiled binary.
 proc stdio { name path } {
   build $::src/$name.s $::bin/fble-compile \
-    "$::bin/fble-compile --export FbleCompiledMain $path > $::src/$name.s"
+    "$::bin/fble-compile -e FbleCompiledMain -m $path > $::src/$name.s"
   asm $::obj/$name.o $::src/$name.s
   bin $::bin/$name \
     "$::obj/$name.o $::obj/fble-compiled-stdio.o" \
@@ -490,7 +490,7 @@ test $::test/fble-compiled-tests.tr $::bin/fble-tests \
 
 # fble-compiled-profiles-test
 fbleobj $::obj/fble-compiled-profiles-test-fble-main.o $::bin/fble-compile \
-  "--export FbleCompiledMain -I prgms /Fble/ProfilesTest%" \
+  "-c -e FbleCompiledMain -I prgms -m /Fble/ProfilesTest%" \
   prgms/Fble/ProfilesTest.fble
 bin $::bin/fble-compiled-profiles-test \
   "$::obj/fble-compiled-profiles-test.o $::obj/fble-compiled-profiles-test-fble-main.o" \
@@ -517,7 +517,7 @@ test $::test/fble-debug-test.tr \
 # Build an fble-app compiled binary.
 proc app { name path } {
   build $::src/$name.s $::bin/fble-compile \
-    "$::bin/fble-compile --export FbleCompiledMain $path > $::src/$name.s"
+    "$::bin/fble-compile -e FbleCompiledMain -m $path > $::src/$name.s"
   asm $::obj/$name.o $::src/$name.s ""
   bin $::bin/$name \
     "$::obj/$name.o $::obj/fble-compiled-app.o" \

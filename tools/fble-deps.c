@@ -47,6 +47,11 @@ static void PrintUsage(FILE* stream)
       "  -m, --module MODULE_PATH\n"
       "     The path of the module to get dependencies for.\n"
       "\n"
+      "Exit Status:\n"
+      "  0 on success.\n"
+      "  1 on failure.\n"
+      "  2 on usage error.\n"
+      "\n"
       "Example:\n"
       "  fble-deps -I prgms -t Foo.fble.d -m /Foo% > Foo.fble.d\n"
   );
@@ -102,6 +107,13 @@ int main(int argc, char* argv[])
         return EX_USAGE;
       }
 
+      if (target != NULL) {
+        fprintf(stderr, "Error: duplicate --target options.\n");
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
       target = argv[1];
       argc -= 2;
       argv += 2;
@@ -111,6 +123,13 @@ int main(int argc, char* argv[])
     if (strcmp("-m", argv[0]) == 0 || strcmp("--module", argv[0]) == 0) {
       if (argc < 2) {
         fprintf(stderr, "Error: missing argument to %s option.\n", argv[0]);
+        PrintUsage(stderr);
+        FbleFree(search_path.xs);
+        return EX_USAGE;
+      }
+
+      if (mpath_string != NULL) {
+        fprintf(stderr, "Error: duplicate --module options.\n");
         PrintUsage(stderr);
         FbleFree(search_path.xs);
         return EX_USAGE;
