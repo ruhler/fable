@@ -10,7 +10,6 @@
 set ::out "out"
 set ::bin "$::out/bin"
 set ::lib "$::out/lib"
-set ::prgms "$::out/prgms"
 set ::test "$::out/test"
 set ::cov "$::out/cov"
 
@@ -428,12 +427,12 @@ foreach dir [dirs prgms ""] {
     set mpath "/[file rootname $x]%"
 
     # Generate a .d file to capture dependencies.
-    build $::prgms/$x.d "$::bin/fble-deps prgms/$x" \
-      "$::bin/fble-deps -I prgms -t $::prgms/$x.d -m $mpath > $::prgms/$x.d" \
-      "depfile = $::prgms/$x.d"
+    build $::out/prgms/$x.d "$::bin/fble-deps prgms/$x" \
+      "$::bin/fble-deps -I prgms -t $::out/prgms/$x.d -m $mpath > $::out/prgms/$x.d" \
+      "depfile = $::out/prgms/$x.d"
 
-    fbleobj $::prgms/$x.o $::bin/fble-compile "-c -I prgms -m $mpath" $::prgms/$x.d
-    lappend ::fble_prgms_objs $::prgms/$x.o
+    fbleobj $::out/prgms/$x.o $::bin/fble-compile "-c -I prgms -m $mpath" $::out/prgms/$x.d
+    lappend ::fble_prgms_objs $::out/prgms/$x.o
   }
 }
 
@@ -443,23 +442,23 @@ lib $::libfbleprgms $::fble_prgms_objs
 
 # fble-disassemble test
 test $::test/fble-disassemble.tr \
-  "$::bin/fble-disassemble $::prgms/Fble/Tests.fble.d" \
-  "$::bin/fble-disassemble -I prgms -m /Fble/Tests% > $::prgms/Fble/Tests.fbls"
+  "$::bin/fble-disassemble $::out/prgms/Fble/Tests.fble.d" \
+  "$::bin/fble-disassemble -I prgms -m /Fble/Tests% > $::out/prgms/Fble/Tests.fbls"
 
 # Fble/Tests.fble tests
-test $::test/fble-tests.tr "$::bin/fble-stdio $::prgms/Fble/Tests.fble.d" \
+test $::test/fble-tests.tr "$::bin/fble-stdio $::out/prgms/Fble/Tests.fble.d" \
   "$::bin/fble-stdio -I prgms /Fble/Tests%" "pool = console"
 
 # fble-md5 test
-test $::test/fble-md5.tr "$::bin/fble-md5 $::prgms/Md5/Main.fble.d" \
+test $::test/fble-md5.tr "$::bin/fble-md5 $::out/prgms/Md5/Main.fble.d" \
   "$::bin/fble-md5 /dev/null -I prgms /Md5/Main% > $::test/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::test/fble-md5.out > /dev/null"
 
 # fble-cat test
-test $::test/fble-cat.tr "$::bin/fble-stdio $::prgms/Stdio/Cat.fble.d" \
+test $::test/fble-cat.tr "$::bin/fble-stdio $::out/prgms/Stdio/Cat.fble.d" \
   "$::bin/fble-stdio -I prgms /Stdio/Cat% < README.txt > $::test/fble-cat.out && cmp $::test/fble-cat.out README.txt"
 
 # fble-stdio test
-test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
+test $::test/fble-stdio.tr "$::bin/fble-stdio $::out/prgms/Stdio/Test.fble.d" \
   "$::bin/fble-stdio -I prgms /Stdio/Test% > $::test/fble-stdio.out && grep PASSED $::test/fble-stdio.out > /dev/null"
 
 # Build an fble-stdio compiled binary.
@@ -499,9 +498,9 @@ test $::test/fble-compiled-profiles-test.tr \
 
 # Test that there are no dwarf warnings in the generated fble-debug-test
 # binary.
-build "$::prgms/fble-debug-test.dwarf $::test/fble-debug-test.dwarf-warnings.txt" \
+build "$::out/prgms/fble-debug-test.dwarf $::test/fble-debug-test.dwarf-warnings.txt" \
   "$::bin/fble-debug-test" \
-  "objdump --dwarf $::bin/fble-debug-test > $::prgms/fble-debug-test.dwarf 2> $::test/fble-debug-test.dwarf-warnings.txt"
+  "objdump --dwarf $::bin/fble-debug-test > $::out/prgms/fble-debug-test.dwarf 2> $::test/fble-debug-test.dwarf-warnings.txt"
 
 # TODO: Understand why this test fails.
 #test $::test/dwarf-test.tr \
