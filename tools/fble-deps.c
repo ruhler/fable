@@ -89,6 +89,7 @@ int main(int argc, const char* argv[])
     if (FbleParseStringArg("--target", &target, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
+    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
   if (help) {

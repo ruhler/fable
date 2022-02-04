@@ -87,4 +87,19 @@ bool FbleParseStringArg(const char* name, const char** dest, int* argc, const ch
 // * Prints an error message to stderr in case of error.
 bool FbleParseSearchPathArg(const char* name, FbleSearchPath* dest, int* argc, const char*** argv, bool* error);
 
+// FbleParseInvalidArg --
+//   Pretend to parse an arg, but actually just indicate error.
+//
+// Inputs:
+//   argc - pointer to number of arguments remaining.
+//   argv - pointer to arguments remaining.
+//   error - boolean value to set in case of error.
+//
+// Results:
+//   Returns true.
+//
+// Side effects:
+// * Prints an error message to stderr and sets error to true.
+bool FbleParseInvalidArg(int* argc, const char*** argv, bool* error);
+
 #endif // FBLE_ARG_PARSE_H_

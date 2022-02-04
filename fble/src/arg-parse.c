@@ -43,7 +43,7 @@ bool FbleParseStringArg(const char* name, const char** dest, int* argc, const ch
 }
 
 
-//   See documentation in fble-args.h
+// FbleParseSearchPathArg -- See documentation in fble-args.h
 bool FbleParseSearchPathArg(const char* name, FbleSearchPath* dest, int* argc, const char*** argv, bool* error)
 {
   if (strcmp(name, (*argv)[0]) == 0) {
@@ -60,4 +60,13 @@ bool FbleParseSearchPathArg(const char* name, FbleSearchPath* dest, int* argc, c
     return true;
   }
   return false;
+}
+
+// FbleParseInvalidArg --
+//   See documentation in fble-arg-parse.h
+bool FbleParseInvalidArg(int* argc, const char*** argv, bool* error)
+{
+  fprintf(stderr," Error: invalid argument: '%s'\n", (*argv)[0]);
+  *error = true;
+  return true;
 }
