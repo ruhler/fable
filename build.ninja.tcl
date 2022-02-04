@@ -9,7 +9,6 @@
 # Output directories used for build.
 set ::out "out"
 set ::bin "$::out/bin"
-set ::obj "$::out/obj"
 set ::lib "$::out/lib"
 set ::src "$::out/src"
 set ::prgms "$::out/prgms"
@@ -51,7 +50,7 @@ proc build { targets dependencies command args } {
 #   Builds a .o file.
 #
 # Inputs:
-#   obj - the .o file to build (include $::obj directory).
+#   obj - the .o file to build.
 #   src - the .c file to build the .o file from.
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
@@ -65,12 +64,12 @@ proc obj { obj src iflags args } {
 #   Builds a .o file with test coverage enabled.
 #
 # Inputs:
-#   obj - the .o file to build (include $::obj directory).
+#   obj - the .o file to build.
 #   src - the .c file to build the .o file from.
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj_cov { obj src iflags args } {
-  set gcda $::obj/[string map {.o .gcda} $obj]
+  set gcda [string map {.o .gcda} $obj]
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   set cmd "rm -f $gcda ; gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
@@ -79,7 +78,7 @@ proc obj_cov { obj src iflags args } {
 # Compile a .s file to .o
 #
 # Inputs:
-#   obj - the .o file to build (include $::obj directory).
+#   obj - the .o file to build.
 #   src - the .s file to build the .o file from.
 #   args - optional additional dependencies.
 proc asm { obj src args } {
@@ -166,8 +165,8 @@ set ::fble_objs [list]
 set ::fble_objs_cov [list]
 lappend ::build_ninja_deps "fble/src"
 foreach {x} [glob -tails -directory fble/src *.c] {
-  set object $::obj/[string map {.c .o} $x]
-  set object_cov $::obj/[string map {.c .cov.o} $x]
+  set object $::out/fble/src/[string map {.c .o} $x]
+  set object_cov $::out/fble/src/[string map {.c .cov.o} $x]
   obj $object fble/src/$x "-I fble/include -I fble/src"
   obj_cov $object_cov fble/src/$x "-I fble/include -I fble/src"
   lappend ::fble_objs $object
@@ -193,10 +192,10 @@ eval {
   set cmd "bison --report=all --report-file=$report -o $tabc fble/src/parse.y"
   build "$tabc $report" "fble/src/parse.y $includes" $cmd
 
-  obj $::obj/parse.tab.o $src/parse.tab.c "-I fble/include -I fble/src"
-  obj_cov $::obj/parse.tab.cov.o $src/parse.tab.c "-I fble/include -I fble/src"
-  lappend ::fble_objs $::obj/parse.tab.o
-  lappend ::fble_objs_cov $::obj/parse.tab.cov.o
+  obj $::out/fble/src/parse.tab.o $src/parse.tab.c "-I fble/include -I fble/src"
+  obj_cov $::out/fble/src/parse.tab.cov.o $src/parse.tab.c "-I fble/include -I fble/src"
+  lappend ::fble_objs $::out/fble/src/parse.tab.o
+  lappend ::fble_objs_cov $::out/fble/src/parse.tab.cov.o
 }
 
 # libfble.a
@@ -210,34 +209,34 @@ lib $::libfblecov $::fble_objs_cov
 lappend build_ninja_deps "tools"
 foreach {x} [glob tools/*.c] {
   set base [file rootname [file tail $x]]
-  obj $::obj/$base.o $x "-I fble/include"
-  bin $::bin/$base "$::obj/$base.o" "-L $::lib -lfble" $::libfble
-  bin_cov $::bin/$base.cov "$::obj/$base.o" "-L $::lib -lfble.cov" $::libfblecov
+  obj $::out/tools/$base.o $x "-I fble/include"
+  bin $::bin/$base "$::out/tools/$base.o" "-L $::lib -lfble" $::libfble
+  bin_cov $::bin/$base.cov "$::out/tools/$base.o" "-L $::lib -lfble.cov" $::libfblecov
 }
 
 # fble programs native library 
 set fbleprgmsnative_objs [list]
 foreach {x} { Core/char.fble Core/int.fble Core/string.fble } {
-  lappend fbleprgmsnative_objs $::obj/$x.o
-  obj $::obj/$x.o prgms/$x.c "-I fble/include -I prgms"
+  lappend fbleprgmsnative_objs $::out/prgms/$x.o
+  obj $::out/prgms/$x.o prgms/$x.c "-I fble/include -I prgms"
 }
 lib $::lib/libfble-prgms-native.a $fbleprgmsnative_objs
 
 # fble programs binaries
 foreach {x} { fble-md5 fble-stdio fble-app } {
-  obj $::obj/$x.o prgms/$x.c \
+  obj $::out/prgms/$x.o prgms/$x.c \
     "-I fble/include -I /usr/include/SDL2"
-  bin $::bin/$x "$::obj/$x.o" \
+  bin $::bin/$x "$::out/prgms/$x.o" \
     "-L $::lib -lfble -lfble-prgms-native -lSDL2 -lGL" \
     "$::libfble $::lib/libfble-prgms-native.a"
 }
 
 # Compiled variations of some of the tools.
-obj $::obj/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-obj $::obj/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-obj $::obj/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-obj $::obj/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I /usr/include/SDL2"
-obj $::obj/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::out/tools/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::out/tools/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::out/prgms/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::out/prgms/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I /usr/include/SDL2"
+obj $::out/tools/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 
 # tests
 test $::test/true.tr "" true
@@ -337,7 +336,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
-        "$::obj/fble-compiled-test.o $::spectestdir/libtest.a" \
+        "$::out/tools/fble-compiled-test.o $::spectestdir/libtest.a" \
         "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
@@ -365,7 +364,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
-        "$::obj/fble-compiled-test.o $::spectestdir/libtest.a" \
+        "$::out/tools/fble-compiled-test.o $::spectestdir/libtest.a" \
         "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
@@ -382,7 +381,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
-        "$::obj/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
+        "$::out/tools/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
         "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
@@ -399,7 +398,7 @@ foreach dir [dirs langs/fble ""] {
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
-        "$::obj/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
+        "$::out/tools/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
         "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
@@ -468,9 +467,9 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
 proc stdio { name path } {
   build $::src/$name.s $::bin/fble-compile \
     "$::bin/fble-compile -e FbleCompiledMain -m $path > $::src/$name.s"
-  asm $::obj/$name.o $::src/$name.s
+  asm $::out/prgms/$name.o $::src/$name.s
   bin $::bin/$name \
-    "$::obj/$name.o $::obj/fble-compiled-stdio.o" \
+    "$::out/prgms/$name.o $::out/prgms/fble-compiled-stdio.o" \
     "-L $::lib -lfble -lfble-prgms -lfble-prgms-native" \
     "$::libfble $::libfbleprgms $::lib/libfble-prgms-native.a"
 };
@@ -489,11 +488,11 @@ test $::test/fble-compiled-tests.tr $::bin/fble-tests \
   "$::bin/fble-tests" "pool = console"
 
 # fble-compiled-profiles-test
-fbleobj $::obj/fble-compiled-profiles-test-fble-main.o $::bin/fble-compile \
+fbleobj $::out/prgms/fble-compiled-profiles-test-fble-main.o $::bin/fble-compile \
   "-c -e FbleCompiledMain -I prgms -m /Fble/ProfilesTest%" \
   prgms/Fble/ProfilesTest.fble
 bin $::bin/fble-compiled-profiles-test \
-  "$::obj/fble-compiled-profiles-test.o $::obj/fble-compiled-profiles-test-fble-main.o" \
+  "$::out/tools/fble-compiled-profiles-test.o $::out/prgms/fble-compiled-profiles-test-fble-main.o" \
   "-L $::lib -lfble -lfble-prgms" "$::libfble $::libfbleprgms"
 test $::test/fble-compiled-profiles-test.tr \
   "$::bin/fble-compiled-profiles-test" \
@@ -501,9 +500,9 @@ test $::test/fble-compiled-profiles-test.tr \
 
 # Test that there are no dwarf warnings in the generated fble-debug-test
 # binary.
-build "$::obj/fble-debug-test.dwarf $::test/fble-debug-test.dwarf-warnings.txt" \
+build "$::prgms/fble-debug-test.dwarf $::test/fble-debug-test.dwarf-warnings.txt" \
   "$::bin/fble-debug-test" \
-  "objdump --dwarf $::bin/fble-debug-test > $::obj/fble-debug-test.dwarf 2> $::test/fble-debug-test.dwarf-warnings.txt"
+  "objdump --dwarf $::bin/fble-debug-test > $::prgms/fble-debug-test.dwarf 2> $::test/fble-debug-test.dwarf-warnings.txt"
 
 # TODO: Understand why this test fails.
 #test $::test/dwarf-test.tr \
@@ -518,9 +517,9 @@ test $::test/fble-debug-test.tr \
 proc app { name path } {
   build $::src/$name.s $::bin/fble-compile \
     "$::bin/fble-compile -e FbleCompiledMain -m $path > $::src/$name.s"
-  asm $::obj/$name.o $::src/$name.s ""
+  asm $::out/prgms/$name.o $::src/$name.s ""
   bin $::bin/$name \
-    "$::obj/$name.o $::obj/fble-compiled-app.o" \
+    "$::out/prgms/$name.o $::out/prgms/fble-compiled-app.o" \
     "-L $::lib -lfble -lfble-prgms -lfble-prgms-native -lSDL2 -lGL" \
     "$::libfble $::libfbleprgms $::lib/libfble-prgms-native.a"
 }

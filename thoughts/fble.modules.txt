@@ -1781,3 +1781,41 @@ Some clean up:
 * Use FbleSearchPath parser in fble-deps
 * Switch fble-compile to use library routines.
 
+---
+
+Next step is to update uses of FbleMain. But it's not clear how that should be
+done. I'm kind of thinking FbleMain shouldn't exist at all.
+
+For example, take fble-app.c. This wants to be the main program. We compile
+different apps by defining different values of FbleCompiledMain and
+recompiling. That requires the compiler have access to both fble-app.c and
+FbleCompiledMain. But if we split things into packages, we don't want to ship
+fble-app.c from the App package. We want to provide it as a library that
+someone else can call.
+
+So, either we let fble-app do all the option parsing, and make it very easy to
+write the wrapper function. Or we have the wrapper responsible for option
+parsing, passing preloaded values to fble-app.
+
+I'm thinking maybe it's better to have fble-invaders.c, fble-graphics.c,
+fble-pinball.c, fble-tests.c, fble-bench.c, fble-debug-test.c. It's just,
+that's a lot of wrapper programs to have to write, which is kind of tedious.
+
+I think the next step for modules is going to be tedious.
+
+I want to split up prgms into different directories for each package. This
+means updating the build system. In particular, updating the directory
+structure of the out directory.
+
+What if I took a more generic approach to the out directory, and build
+everything in a subdirectory parallel to the source directory? That way we can
+avoid name conflicts, and everything feels like it's in a good place. The
+downside is we don't have a nicely organized bin and lib directories.
+
+I'm not really making use of bin and lib directories yet though, except to
+make it easier to run executables by hand. And eventually I would expect that
+to be part of a separate install step.
+
+Okay, can I try that? Somehow make it work incrementally?
+
+

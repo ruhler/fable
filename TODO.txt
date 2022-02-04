@@ -1,3 +1,10 @@
+* Remove explicit out subdirectories from build system.
+ Mirror the source directories instead.
+
+* Clean up option parsing for the rest of the executables.
+ - Get rid of FbleMain?
+ - Clean up command line argument parsing for all binaries using FbleMain.
+
 * [lib] Set up build to only have access to explicit package list
  - Reorganize prgms into package directories
    pkgs/core/Core/...
@@ -6,10 +13,6 @@
  - Update build script to only provide search paths packages are allowed to
    depend on.
 
-* Clean up option parsing for the rest of the executables.
-* Fix fble-stdio command line parsing.
-  The left over args are wrong I think.
-* Share and standardize command line option parsing.
 
 * Reorder case statements to match updated order of *_EXPR enum.
   In particular, the placement of the ABSTRACT_*_EXPR enums.
