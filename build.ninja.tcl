@@ -10,7 +10,6 @@
 set ::out "out"
 set ::bin "$::out/bin"
 set ::lib "$::out/lib"
-set ::src "$::out/src"
 set ::prgms "$::out/prgms"
 set ::test "$::out/test"
 set ::cov "$::out/cov"
@@ -187,13 +186,13 @@ eval {
     fble/include/fble-vector.h
     fble/src/expr.h
   }
-  set report $::src/parse.tab.report.txt
-  set tabc $src/parse.tab.c
+  set report $::out/fble/src/parse.tab.report.txt
+  set tabc $::out/fble/src/parse.tab.c
   set cmd "bison --report=all --report-file=$report -o $tabc fble/src/parse.y"
   build "$tabc $report" "fble/src/parse.y $includes" $cmd
 
-  obj $::out/fble/src/parse.tab.o $src/parse.tab.c "-I fble/include -I fble/src"
-  obj_cov $::out/fble/src/parse.tab.cov.o $src/parse.tab.c "-I fble/include -I fble/src"
+  obj $::out/fble/src/parse.tab.o $::out/fble/src/parse.tab.c "-I fble/include -I fble/src"
+  obj_cov $::out/fble/src/parse.tab.cov.o $::out/fble/src/parse.tab.c "-I fble/include -I fble/src"
   lappend ::fble_objs $::out/fble/src/parse.tab.o
   lappend ::fble_objs_cov $::out/fble/src/parse.tab.cov.o
 }
@@ -465,9 +464,9 @@ test $::test/fble-stdio.tr "$::bin/fble-stdio $::prgms/Stdio/Test.fble.d" \
 
 # Build an fble-stdio compiled binary.
 proc stdio { name path } {
-  build $::src/$name.s $::bin/fble-compile \
-    "$::bin/fble-compile -e FbleCompiledMain -m $path > $::src/$name.s"
-  asm $::out/prgms/$name.o $::src/$name.s
+  build $::out/prgms/$name.s $::bin/fble-compile \
+    "$::bin/fble-compile -e FbleCompiledMain -m $path > $::out/prgms/$name.s"
+  asm $::out/prgms/$name.o $::out/prgms/$name.s
   bin $::bin/$name \
     "$::out/prgms/$name.o $::out/prgms/fble-compiled-stdio.o" \
     "-L $::lib -lfble -lfble-prgms -lfble-prgms-native" \
@@ -515,9 +514,9 @@ test $::test/fble-debug-test.tr \
 
 # Build an fble-app compiled binary.
 proc app { name path } {
-  build $::src/$name.s $::bin/fble-compile \
-    "$::bin/fble-compile -e FbleCompiledMain -m $path > $::src/$name.s"
-  asm $::out/prgms/$name.o $::src/$name.s ""
+  build $::out/prgms/$name.s $::bin/fble-compile \
+    "$::bin/fble-compile -e FbleCompiledMain -m $path > $::out/prgms/$name.s"
+  asm $::out/prgms/$name.o $::out/prgms/$name.s ""
   bin $::bin/$name \
     "$::out/prgms/$name.o $::out/prgms/fble-compiled-app.o" \
     "-L $::lib -lfble -lfble-prgms -lfble-prgms-native -lSDL2 -lGL" \
