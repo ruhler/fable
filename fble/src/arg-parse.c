@@ -66,7 +66,7 @@ bool FbleParseSearchPathArg(const char* name, FbleSearchPath* dest, int* argc, c
 //   See documentation in fble-arg-parse.h
 bool FbleParseInvalidArg(int* argc, const char*** argv, bool* error)
 {
-  fprintf(stderr," Error: invalid argument: '%s'\n", (*argv)[0]);
+  fprintf(stderr, "Error: invalid argument: '%s'\n", (*argv)[0]);
   *error = true;
   return true;
 }

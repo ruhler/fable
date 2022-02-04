@@ -5,6 +5,7 @@
 #include <stdio.h>    // for FILE, fprintf, stderr
 
 #include "fble-alloc.h"     // for FbleFree.
+#include "fble-arg-parse.h" // for FbleParseBoolArg, etc.
 #include "fble-compile.h"   // for FbleCompile, FbleDisassemble.
 #include "fble-load.h"      // for FbleLoad.
 #include "fble-profile.h"   // for FbleNewProfile, etc.
@@ -30,11 +31,26 @@ static void PrintUsage(FILE* stream);
 static void PrintUsage(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-disassemble [-I DIR ...] MODULE_PATH\n"
-      "Disassemble an fble program.\n"
-      "  -I DIR - adds DIR to the module search path.\n"
-      "  MODULE_PATH - the fble module path associated with FILE. For example: /Foo/Bar%\n"
-      "Exit status is 0 if the program compiled successfully, 1 otherwise.\n"
+      "Usage: fble-disassemble [OPTION ...] -m MODULE_PATH\n"
+      "\n"
+      "Description:\n"
+      "  Disassemble an fble program.\n"
+      "\n"
+      "Options:\n"
+      "  -h, --help\n"
+      "     Print this help message and exit.\n"
+      "  -I DIR\n"
+      "     Adds DIR to the module search path.\n"
+      "  -m, --module MODULE_PATH\n"
+      "     The path of the module to get dependencies for.\n"
+      "\n"
+      "Exit Status:\n"
+      "  0 on success.\n"
+      "  1 on failure.\n"
+      "  2 on usage error.\n"
+      "\n"
+      "Example:\n"
+      "  fble-disassemble -I prgms -m /Foo%\n"
   );
 }
 
@@ -50,36 +66,43 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   Prints an error to stderr and exits the program in the case of error.
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  const char* mpath_string = NULL;
+  bool help = false;
+  bool error = false;
+
   argc--;
   argv++;
-  if (argc > 0 && strcmp("--help", *argv) == 0) {
+  while (!error && argc > 0) {
+    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseSearchPathArg("-I", &search_path, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
+    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
+  }
+
+  if (help) {
     PrintUsage(stdout);
+    FbleFree(search_path.xs);
     return EX_SUCCESS;
   }
 
-  FbleSearchPath search_path;
-  FbleVectorInit(search_path);
-  while (argc > 1 && strcmp(argv[0], "-I") == 0) {
-    FbleVectorAppend(search_path, argv[1]);
-    argc -= 2;
-    argv += 2;
+  if (error) {
+    PrintUsage(stderr);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
   }
 
-  if (argc < 1) {
-    fprintf(stderr, "no MODULE_PATH provided.\n");
-    PrintUsage(stderr);
-    FbleFree(search_path.xs);
-    return EX_USAGE;
-  } else if (argc > 1) {
-    fprintf(stderr, "too many arguments.\n");
+  if (mpath_string == NULL) {
+    fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr);
     FbleFree(search_path.xs);
     return EX_USAGE;
   }
-  
-  const char* mpath_string = argv[0];
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {
