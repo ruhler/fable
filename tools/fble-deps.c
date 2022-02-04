@@ -6,16 +6,17 @@
 #include <string.h>   // for strcmp, strlen
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble-alloc.h"   // for FbleFree.
-#include "fble-load.h"    // for FbleLoad.
-#include "fble-vector.h"  // for FbleVectorInit.
+#include "fble-alloc.h"     // for FbleFree.
+#include "fble-arg-parse.h" // for FbleParseBoolArg, FbleParseStringArg
+#include "fble-load.h"      // for FbleLoad.
+#include "fble-vector.h"    // for FbleVectorInit.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
-int main(int argc, char* argv[]);
+int main(int argc, const char* argv[]);
 
 // PrintUsage --
 //   Prints help info to the given output stream.
@@ -69,86 +70,34 @@ static void PrintUsage(FILE* stream)
 //
 // Side effects:
 //   Prints an error to stderr and exits the program in the case of error.
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
   FbleSearchPath search_path;
   FbleVectorInit(search_path);
   const char* target = NULL;
   const char* mpath_string = NULL;
+  bool help = false;
+  bool error = false;
 
   argc--;
   argv++;
-  while (argc > 0) {
-    if (strcmp("-h", argv[0]) == 0 || strcmp("--help", argv[0]) == 0) {
-      PrintUsage(stdout);
-      FbleFree(search_path.xs);
-      return EX_SUCCESS;
-    }
+  while (!error && argc > 0) {
+    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseSearchPathArg("-I", &search_path, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("-t", &target, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--target", &target, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
+  }
 
-    if (strcmp("-I", argv[0]) == 0) {
-      if (argc < 2) {
-        fprintf(stderr, "Error: missing argument to -I option.\n");
-        PrintUsage(stderr);
-        FbleFree(search_path.xs);
-        return EX_USAGE;
-      }
+  if (help) {
+    PrintUsage(stdout);
+    FbleFree(search_path.xs);
+    return EX_SUCCESS;
+  }
 
-      FbleVectorAppend(search_path, argv[1]);
-      argc -= 2;
-      argv += 2;
-      continue;
-    }
-
-    if (strcmp("-t", argv[0]) == 0 || strcmp("--target", argv[0]) == 0) {
-      if (argc < 2) {
-        fprintf(stderr, "Error: missing argument to %s option.\n", argv[0]);
-        PrintUsage(stderr);
-        FbleFree(search_path.xs);
-        return EX_USAGE;
-      }
-
-      if (target != NULL) {
-        fprintf(stderr, "Error: duplicate --target options.\n");
-        PrintUsage(stderr);
-        FbleFree(search_path.xs);
-        return EX_USAGE;
-      }
-
-      target = argv[1];
-      argc -= 2;
-      argv += 2;
-      continue;
-    }
-
-    if (strcmp("-m", argv[0]) == 0 || strcmp("--module", argv[0]) == 0) {
-      if (argc < 2) {
-        fprintf(stderr, "Error: missing argument to %s option.\n", argv[0]);
-        PrintUsage(stderr);
-        FbleFree(search_path.xs);
-        return EX_USAGE;
-      }
-
-      if (mpath_string != NULL) {
-        fprintf(stderr, "Error: duplicate --module options.\n");
-        PrintUsage(stderr);
-        FbleFree(search_path.xs);
-        return EX_USAGE;
-      }
-
-      mpath_string = argv[1];
-      argc -= 2;
-      argv += 2;
-      continue;
-    }
-
-    if (argv[0][0] == '-') {
-      fprintf(stderr, "Error: unrecognized option '%s'\n", argv[0]);
-      PrintUsage(stderr);
-      FbleFree(search_path.xs);
-      return EX_USAGE;
-    }
-
-    fprintf(stderr, "Error: invalid argument '%s'\n", argv[0]);
+  if (error) {
     PrintUsage(stderr);
     FbleFree(search_path.xs);
     return EX_USAGE;

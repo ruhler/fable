@@ -1742,3 +1742,42 @@ a list of options. Maybe we can have a function to do documentation too, if we
 want to include documentation along with the Option data structure. Or that
 can be done separately.
 
+---
+
+For my first attempt, just defining some parser functions for parsing boolean
+flags and string flags factors out a lot of the messy logic. Maybe that's
+enough. The signature is something like:
+
+bool Parse(const char* name, T* dest, int* argc, char*** argv, bool* error);
+
+Where T is whatever relevant type you are trying to parse. Then, the top
+level is as easy as:
+
+while (!error && argc > 0) {
+  if (Parse(...)) continue;
+  if (Parse(...)) continue;
+  if (Parse(...)) continue;
+  if (Parse(...)) continue;
+}
+
+if (error) { 
+  ...
+}
+
+All the yucky logic is factored out, but I think we retain all of the
+flexibility and compatibility that I want. Let's start with this route and see
+if that meets my needs.
+
+In theory, we could define a ParseStandardOption function that knows how to
+parse a collection of things that we can then pass to FbleMain.
+
+You don't get automatic documentation, but I think that's fine. It's nice to
+separate the specification from the implementation in some sense.
+
+Some clean up:
+* Rename to fble-arg-parse.h
+* Implement FbleSearchPath arg parser.
+* Maybe document sample use at the top level, and general invariants.
+* Use FbleSearchPath parser in fble-deps
+* Switch fble-compile to use library routines.
+

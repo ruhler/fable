@@ -9,9 +9,6 @@
 * Clean up option parsing for the rest of the executables.
 * Fix fble-stdio command line parsing.
   The left over args are wrong I think.
-* Clean up fble-compile command line usage.
-  To distinguish between the three different combinations more obviously.
-  export only, compile only, export and compile.
 * Share and standardize command line option parsing.
 
 * Reorder case statements to match updated order of *_EXPR enum.
