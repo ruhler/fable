@@ -12,7 +12,7 @@ proc require { str } {
 eval {
   # Test that we can set a breakpoint at a particular line in a file and run to
   # that breakpoint.
-  spawn gdb --quiet ./out/bin/fble-debug-test
+  spawn gdb --quiet ./out/prgms/fble-debug-test
   expect "(gdb) "
 
   set STMT_LINE 31
@@ -30,7 +30,7 @@ eval {
 eval {
   # Test that we can set a breakpoint at a particular function and run to
   # that breakpoint.
-  spawn gdb --quiet ./out/bin/fble-debug-test
+  spawn gdb --quiet ./out/prgms/fble-debug-test
   expect "(gdb) "
 
   set LINE 31
@@ -47,7 +47,7 @@ eval {
 
 eval {
   # Test that we can print values of local variables
-  spawn gdb --quiet ./out/bin/fble-debug-test
+  spawn gdb --quiet ./out/prgms/fble-debug-test
   expect "(gdb) "
 
   set LINE 32
