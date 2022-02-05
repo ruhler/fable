@@ -154,50 +154,54 @@ proc test { tr deps cmd args} {
 # generation of build.ninja.
 set ::build_ninja_deps [list]
 
-# .o files used to implement libfble.a
-set ::fble_objs [list]
-set ::fble_objs_cov [list]
-lappend ::build_ninja_deps "fble/src"
-foreach {x} [glob -tails -directory fble/src *.c] {
-  set object $::out/fble/src/[string map {.c .o} $x]
-  set object_cov $::out/fble/src/[string map {.c .cov.o} $x]
-  obj $object fble/src/$x "-I fble/include -I fble/src"
-  obj_cov $object_cov fble/src/$x "-I fble/include -I fble/src"
-  lappend ::fble_objs $object
-  lappend ::fble_objs_cov $object_cov
-}
-
-# parser
-eval {
-  # Update local includes for fble/src/parse.y here.
-  # See comment in fble/src/parse.y.
-  set includes {
-    fble/include/fble-alloc.h
-    fble/include/fble-load.h
-    fble/include/fble-loc.h
-    fble/include/fble-module-path.h
-    fble/include/fble-name.h
-    fble/include/fble-string.h
-    fble/include/fble-vector.h
-    fble/src/expr.h
-  }
-  set report $::out/fble/src/parse.tab.report.txt
-  set tabc $::out/fble/src/parse.tab.c
-  set cmd "bison --report=all --report-file=$report -o $tabc fble/src/parse.y"
-  build "$tabc $report" "fble/src/parse.y $includes" $cmd
-
-  obj $::out/fble/src/parse.tab.o $::out/fble/src/parse.tab.c "-I fble/include -I fble/src"
-  obj_cov $::out/fble/src/parse.tab.cov.o $::out/fble/src/parse.tab.c "-I fble/include -I fble/src"
-  lappend ::fble_objs $::out/fble/src/parse.tab.o
-  lappend ::fble_objs_cov $::out/fble/src/parse.tab.cov.o
-}
-
 # libfble.a
-set ::libfble "$::out/fble/src/libfble.a"
-lib $::libfble $::fble_objs
+eval {
+  set fble_objs [list]
+  set fble_objs_cov [list]
 
-set ::libfblecov "$::out/fble/src/libfble.cov.a"
-lib $::libfblecov $::fble_objs_cov
+  # parser
+  eval {
+    # Update local includes for fble/src/parse.y here.
+    # See comment in fble/src/parse.y.
+    set includes {
+      fble/include/fble-alloc.h
+      fble/include/fble-load.h
+      fble/include/fble-loc.h
+      fble/include/fble-module-path.h
+      fble/include/fble-name.h
+      fble/include/fble-string.h
+      fble/include/fble-vector.h
+      fble/src/expr.h
+    }
+    set report $::out/fble/src/parse.tab.report.txt
+    set tabc $::out/fble/src/parse.tab.c
+    set cmd "bison --report=all --report-file=$report -o $tabc fble/src/parse.y"
+    build "$tabc $report" "fble/src/parse.y $includes" $cmd
+
+    obj $::out/fble/src/parse.tab.o $::out/fble/src/parse.tab.c "-I fble/include -I fble/src"
+    obj_cov $::out/fble/src/parse.tab.cov.o $::out/fble/src/parse.tab.c "-I fble/include -I fble/src"
+    lappend fble_objs $::out/fble/src/parse.tab.o
+    lappend fble_objs_cov $::out/fble/src/parse.tab.cov.o
+  }
+
+  # .o files
+  lappend ::build_ninja_deps "fble/src"
+  foreach {x} [glob -tails -directory fble/src *.c] {
+    set object $::out/fble/src/[string map {.c .o} $x]
+    set object_cov $::out/fble/src/[string map {.c .cov.o} $x]
+    obj $object fble/src/$x "-I fble/include -I fble/src"
+    obj_cov $object_cov fble/src/$x "-I fble/include -I fble/src"
+    lappend fble_objs $object
+    lappend fble_objs_cov $object_cov
+  }
+
+  # libfble.a
+  set ::libfble "$::out/fble/src/libfble.a"
+  lib $::libfble $fble_objs
+
+  set ::libfblecov "$::out/fble/src/libfble.cov.a"
+  lib $::libfblecov $fble_objs_cov
+}
 
 # fble tool binaries
 lappend build_ninja_deps "tools"
