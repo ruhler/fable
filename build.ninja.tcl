@@ -6,9 +6,8 @@
 # Afterwards:
 #   ninja -f out/build.ninja
 
-# Output directories used for build.
+# output directory used for build.
 set ::out "out"
-set ::lib "$::out/lib"
 
 exec mkdir -p $::out
 set ::build_ninja [open "$::out/build.ninja" "w"]
@@ -194,10 +193,10 @@ eval {
 }
 
 # libfble.a
-set ::libfble "$::lib/libfble.a"
+set ::libfble "$::out/fble/src/libfble.a"
 lib $::libfble $::fble_objs
 
-set ::libfblecov "$::lib/libfble.cov.a"
+set ::libfblecov "$::out/fble/src/libfble.cov.a"
 lib $::libfblecov $::fble_objs_cov
 
 # fble tool binaries
@@ -205,8 +204,8 @@ lappend build_ninja_deps "tools"
 foreach {x} [glob tools/*.c] {
   set base [file rootname [file tail $x]]
   obj $::out/tools/$base.o $x "-I fble/include"
-  bin $::out/tools/$base "$::out/tools/$base.o" "-L $::lib -lfble" $::libfble
-  bin_cov $::out/tools/$base.cov "$::out/tools/$base.o" "-L $::lib -lfble.cov" $::libfblecov
+  bin $::out/tools/$base "$::out/tools/$base.o" "-L $::out/fble/src -lfble" $::libfble
+  bin_cov $::out/tools/$base.cov "$::out/tools/$base.o" "-L $::out/fble/src -lfble.cov" $::libfblecov
 }
 
 # fble programs native library 
@@ -215,15 +214,15 @@ foreach {x} { Core/char.fble Core/int.fble Core/string.fble } {
   lappend fbleprgmsnative_objs $::out/prgms/$x.o
   obj $::out/prgms/$x.o prgms/$x.c "-I fble/include -I prgms"
 }
-lib $::lib/libfble-prgms-native.a $fbleprgmsnative_objs
+lib $::out/prgms/libfble-prgms-native.a $fbleprgmsnative_objs
 
 # fble programs binaries
 foreach {x} { fble-md5 fble-stdio fble-app } {
   obj $::out/prgms/$x.o prgms/$x.c \
     "-I fble/include -I /usr/include/SDL2"
   bin $::out/prgms/$x "$::out/prgms/$x.o" \
-    "-L $::lib -lfble -lfble-prgms-native -lSDL2 -lGL" \
-    "$::libfble $::lib/libfble-prgms-native.a"
+    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms-native -lSDL2 -lGL" \
+    "$::libfble $::out/prgms/libfble-prgms-native.a"
 }
 
 # Compiled variations of some of the tools.
@@ -332,7 +331,7 @@ foreach dir [dirs langs/fble ""] {
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
         "$::out/tools/fble-compiled-test.o $::spectestdir/libtest.a" \
-        "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
+        "-L $::out/fble/src -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --profile"
@@ -360,7 +359,7 @@ foreach dir [dirs langs/fble ""] {
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
         "$::out/tools/fble-compiled-test.o $::spectestdir/libtest.a" \
-        "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
+        "-L $::out/fble/src -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --runtime-error"
@@ -377,7 +376,7 @@ foreach dir [dirs langs/fble ""] {
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
         "$::out/tools/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
-        "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
+        "-L $::out/fble/src -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test"
@@ -394,7 +393,7 @@ foreach dir [dirs langs/fble ""] {
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
         "$::out/tools/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
-        "-L $::lib -L $::spectestdir -lfble -ltest" "$::libfble"
+        "-L $::out/fble/src -L $::spectestdir -lfble -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --growth"
@@ -434,7 +433,7 @@ foreach dir [dirs prgms ""] {
 }
 
 # libfbleprgms.a
-set ::libfbleprgms "$::lib/libfble-prgms.a"
+set ::libfbleprgms "$::out/prgms/libfble-prgms.a"
 lib $::libfbleprgms $::fble_prgms_objs
 
 # fble-disassemble test
@@ -465,8 +464,8 @@ proc stdio { name path } {
   asm $::out/prgms/$name.o $::out/prgms/$name.s
   bin $::out/prgms/$name \
     "$::out/prgms/$name.o $::out/prgms/fble-compiled-stdio.o" \
-    "-L $::lib -lfble -lfble-prgms -lfble-prgms-native" \
-    "$::libfble $::libfbleprgms $::lib/libfble-prgms-native.a"
+    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms -lfble-prgms-native" \
+    "$::libfble $::libfbleprgms $::out/prgms/libfble-prgms-native.a"
 };
 
 stdio fble-stdio-test "/Stdio/Test%"
@@ -488,7 +487,7 @@ fbleobj $::out/prgms/fble-compiled-profiles-test-fble-main.o $::out/tools/fble-c
   prgms/Fble/ProfilesTest.fble
 bin $::out/prgms/fble-compiled-profiles-test \
   "$::out/tools/fble-compiled-profiles-test.o $::out/prgms/fble-compiled-profiles-test-fble-main.o" \
-  "-L $::lib -lfble -lfble-prgms" "$::libfble $::libfbleprgms"
+  "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms" "$::libfble $::libfbleprgms"
 test $::out/prgms/Fble/fble-compiled-profiles-test.tr \
   "$::out/prgms/fble-compiled-profiles-test" \
   "$::out/prgms/fble-compiled-profiles-test > $::out/prgms/Fble/fble-compiled-profiles-test.prof"
@@ -515,8 +514,8 @@ proc app { name path } {
   asm $::out/prgms/$name.o $::out/prgms/$name.s ""
   bin $::out/prgms/$name \
     "$::out/prgms/$name.o $::out/prgms/fble-compiled-app.o" \
-    "-L $::lib -lfble -lfble-prgms -lfble-prgms-native -lSDL2 -lGL" \
-    "$::libfble $::libfbleprgms $::lib/libfble-prgms-native.a"
+    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms -lfble-prgms-native -lSDL2 -lGL" \
+    "$::libfble $::libfbleprgms $::out/prgms/libfble-prgms-native.a"
 }
 
 app fble-invaders "/Invaders/App%"

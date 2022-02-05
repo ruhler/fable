@@ -1,7 +1,3 @@
-* Remove explicit out subdirectories from build system.
- Mirror the source directories instead.
- Remove $::bin, $::lib, and $::cov variables.
-
 * Clean up option parsing for the rest of the executables.
  - Get rid of FbleMain?
  - Clean up command line argument parsing for all binaries using FbleMain.
