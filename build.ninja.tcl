@@ -10,7 +10,6 @@
 set ::out "out"
 set ::bin "$::out/bin"
 set ::lib "$::out/lib"
-set ::cov "$::out/cov"
 
 exec mkdir -p $::out
 set ::build_ninja [open "$::out/build.ninja" "w"]
@@ -406,8 +405,8 @@ foreach dir [dirs langs/fble ""] {
 }
 
 # Code coverage from spec tests.
-build $::cov/gcov.txt "$::fble_objs_cov $::spec_tests" \
-  "gcov $::fble_objs_cov > $::cov/gcov.txt && mv *.gcov $::cov"
+build $::out/cov/gcov.txt "$::fble_objs_cov $::spec_tests" \
+  "gcov $::fble_objs_cov > $::out/cov/gcov.txt && mv *.gcov $::out/cov"
 
 # fble-profile-test
 test $::out/tools/fble-profile-test.tr $::bin/fble-profile-test \
