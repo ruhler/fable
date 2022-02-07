@@ -1818,4 +1818,132 @@ to be part of a separate install step.
 
 Okay, can I try that? Somehow make it work incrementally?
 
+---
 
+Another random idea to explore with regards to organization of separate
+packages together: could we use git submodule somehow? What's the expected
+flow there? For example, maybe the 'core' package depends on the 'fble'
+package via git submodule? I don't think git submodules has a solution here,
+but it's worth taking a look again to understand that approach.
+
+The motivation at https://git-scm.com/book/en/v2/Git-Tools-Submodules looks
+like exactly the problem I'm having: "you want to be able to treat the two
+projects as separate yet still be able to use one from within the other."
+
+Git submodules looks complicated and error prone to me. They don't talk at all
+about how to do build across submodules.
+
+I know that conceptually I want things to be completely separate packages,
+that can be checked out and built and installed separately. What causes me to
+hesitate is:
+* How to manage benchmarks, which I want to use for libfble development, but
+  depends on random things I wouldn't want libfble development to necessarily
+  depend on, like the pinball game.
+* Manually having to do configure, make, make install for each subpackage any
+  time I change something.
+* Abstracting build dependencies, would could cause excessive rebuilding and
+  false dependencies.
+  - Think recursive makefiles.
+* Version management becomes complex if we don't have every package perfectly
+  aligned based on git revision.
+* Duplicating build system logic.
+
+The thing is, I kind of feel like these are all pretty fundamental real world
+issues. These are the reasons I want to organize things into packages, to
+understand and address these real world issues that will come up in the real
+world if anyone wanted to use fble as a language for real.
+
+The benchmarks issue seems like a special case. In reality, we should probably
+have a separate benchmark suite with a copy of code, rather than depend on
+libraries that could change their implementation whenever. That way the
+benchmark suite is a single separate package that freezes benchmarks in time
+when they are ready. libfble development may want to use benchmarks to aid in
+development, but that would be outside of the development of the package
+itself. As in, separate integration testing, benchmarking stuff that doesn't
+show up in the repository. Which is a little bit awkward. If it's not in the
+libfble repository, where is it? It's almost like we want a 'release' view of
+a package and a 'development' view, and the 'development' view can have
+dependencies on other packages that have dependencies (e.g. benchmark package)
+on the 'release' view of libfble.
+
+Manually having to do configure, make, make install, maybe make test for each
+subpackage any time I want to change something? I can define some wrapper
+scripts to do that for me if I want. Manually configure, or write a script to
+configure, each of the subpackages. Add a make command that calls make in
+turn. Sounds like recursive make. Also similar issue as previous: it's like I,
+as a developer, have different requirements than we want for the release. But
+if there are other developers, they should have access to those scripts and
+things that I have, but not require access to those for doing releases.
+
+Abstracting build dependencies. Sounds like recursive make. Not great if I'm
+working on a bunch of different packages at once. The other approach would be
+to say: don't work on a bunch of different packages at once. Work on one at a
+time. If I ever want to update the version I depend on from one package to
+another, that's something explicitly I do from that particular package. That
+suggests we may want to install for real on my system and work on each package
+independently. Doing updates that span across multiple packages, like API
+changes, is going to be a pain. Especially if I want the feedback: if I change
+this API in core, will it satisfy the needs of pinball game? Well, create a
+new version of core, release it, update pinball game to pull that new version,
+if it doesn't quite turn out right, then oops. Bad release of core. Go back.
+That's not a very pleasant situation to be in. This suggests we really want
+some stability with these packages before splitting them up, otherwise the
+overheads of dealing with updates is too high.
+
+Version management: again, we want enough stability that versions aren't
+changing that much, and that packages can be developed independently in
+practice.
+
+Duplicating build system logic is maybe okay, because the logic isn't that
+complicated. Or I can make yet another project for storing just the build
+system logic.
+
+It feels to me like all of these issues are different views of some common
+underlying thing about package stability and independence. If the packages
+never changed, sure we could make separate packages. But if we are changing
+them often in non-compatible ways, it's just a big massive pain to have them
+as separate packages. In that case, conceptually, they really can't be
+considered separate packages.
+
+So maybe the way to think about it is a package can be experimental or stable.
+It only makes sense to pull out a package as a separate package for real when
+it becomes stable. Otherwise all the experimental packages developed by the
+same organization, in particular depending in any way on each other, should be
+developed as part of a single monolithic package.
+
+---
+
+Interest read on versioning in Java here:
+https://docs.oracle.com/javase/7/docs/technotes/guides/versioning/spec/versioning2.html
+
+Some interesting ideas from the doc:
+* specifications can be versioned by number with clear order: an update to a
+  specification can be backwards compatible with a previous spec.
+* Implementations cannot be versioned by number with clear order: if you fix a
+  bug, that's a backwards incompatible thing to do.
+
+---
+
+I think the real challenge of what I'm trying to do is this: As soon as you
+release a package for someone else to use, you suddenly have much stricter
+requirements for what can change, how often, and when. That's the hard part
+here. If I want to make fble or core a separate package, it has downstream
+dependencies, so it is much hard to make any changes.
+
+In terms of compatibility for fble, I still think the only way you can be
+compatible is:
+* change the implementation without changing the type of a module.
+* add a new module.
+
+And maybe we should have a set of conventions based on that. Namely, you want
+to include the major version number of a module in its name, and the major
+version number of a package in its name. You keep all old module versions
+(source/binary/type compatible) when updating a module to a new version, which
+doesn't require a package version update. Only package version updates allow
+you to remove deprecated modules. Different packages in the same executable
+can refer to different versions of a package and different versions of a
+module. The thing that is shared is that, for example, a package foo could
+depend on a package bar major version 1, and work with package bar major
+version 1 with any minor version.
+
+But I don't want to worry about all of that right now?

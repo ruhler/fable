@@ -149,6 +149,18 @@ proc test { tr deps cmd args} {
   build $tr $deps "$cmd && echo PASSED > $tr" {*}$args
 }
 
+# Returns the list of all subdirectories, recursively, of the given directory.
+# The 'root' directory will not be included as a prefix in the returned list
+# of directories.
+# 'dir' should be empty or end with '/'.
+proc dirs { root dir } {
+  set l [list $dir]
+  foreach {x} [glob -tails -directory $root -nocomplain -type d $dir*] {
+    set l [concat $l [dirs $root "$x/"]]
+  }
+  return $l
+}
+
 # Any time we run glob over a directory, add that directory to this list.
 # We need to make sure to include these directories as a dependency on the
 # generation of build.ninja.
@@ -204,53 +216,24 @@ eval {
 }
 
 # fble tool binaries
-lappend build_ninja_deps "tools"
-foreach {x} [glob tools/*.c] {
-  set base [file rootname [file tail $x]]
-  obj $::out/tools/$base.o $x "-I fble/include"
-  bin $::out/tools/$base "$::out/tools/$base.o" "-L $::out/fble/src -lfble" $::libfble
-  bin_cov $::out/tools/$base.cov "$::out/tools/$base.o" "-L $::out/fble/src -lfble.cov" $::libfblecov
-}
+eval {
+  lappend build_ninja_deps "tools"
+  foreach {x} [glob tools/*.c] {
+    set base [file rootname [file tail $x]]
+    obj $::out/tools/$base.o $x "-I fble/include"
+    bin $::out/tools/$base "$::out/tools/$base.o" "-L $::out/fble/src -lfble" $::libfble
+    bin_cov $::out/tools/$base.cov "$::out/tools/$base.o" "-L $::out/fble/src -lfble.cov" $::libfblecov
+  }
 
-# fble programs native library 
-set fbleprgmsnative_objs [list]
-foreach {x} { Core/char.fble Core/int.fble Core/string.fble } {
-  lappend fbleprgmsnative_objs $::out/prgms/$x.o
-  obj $::out/prgms/$x.o prgms/$x.c "-I fble/include -I prgms"
+  # Object files for compiled variations of tools.
+  obj $::out/tools/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+  obj $::out/tools/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+  obj $::out/tools/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 }
-lib $::out/prgms/libfble-prgms-native.a $fbleprgmsnative_objs
-
-# fble programs binaries
-foreach {x} { fble-md5 fble-stdio fble-app } {
-  obj $::out/prgms/$x.o prgms/$x.c \
-    "-I fble/include -I /usr/include/SDL2"
-  bin $::out/prgms/$x "$::out/prgms/$x.o" \
-    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms-native -lSDL2 -lGL" \
-    "$::libfble $::out/prgms/libfble-prgms-native.a"
-}
-
-# Compiled variations of some of the tools.
-obj $::out/tools/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-obj $::out/tools/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-obj $::out/prgms/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-obj $::out/prgms/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I /usr/include/SDL2"
-obj $::out/tools/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
 
 # tests
 test $::out/true.tr "" true
 #test $::out/false.tr "" false
-
-# Returns the list of all subdirectories, recursively, of the given directory.
-# The 'root' directory will not be included as a prefix in the returned list
-# of directories.
-# 'dir' should be empty or end with '/'.
-proc dirs { root dir } {
-  set l [list $dir]
-  foreach {x} [glob -tails -directory $root -nocomplain -type d $dir*] {
-    set l [concat $l [dirs $root "$x/"]]
-  }
-  return $l
-}
 
 # fble language spec tests
 # 
@@ -419,6 +402,49 @@ test $::out/tools/fble-profiles-test.tr \
   "$::out/tools/fble-profiles-test prgms/Fble/ProfilesTest.fble" \
   "$::out/tools/fble-profiles-test -I prgms /Fble/ProfilesTest% > $::out/tools/fble-profiles-test.prof"
 
+# fble programs native library 
+set fbleprgmsnative_objs [list]
+foreach {x} { Core/char.fble Core/int.fble Core/string.fble } {
+  lappend fbleprgmsnative_objs $::out/prgms/$x.o
+  obj $::out/prgms/$x.o prgms/$x.c "-I fble/include -I prgms"
+}
+lib $::out/prgms/libfble-prgms-native.a $fbleprgmsnative_objs
+
+# fble programs binaries
+foreach {x} { fble-md5 fble-stdio fble-app } {
+  obj $::out/prgms/$x.o prgms/$x.c \
+    "-I fble/include -I /usr/include/SDL2"
+  bin $::out/prgms/$x "$::out/prgms/$x.o" \
+    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms-native -lSDL2 -lGL" \
+    "$::libfble $::out/prgms/libfble-prgms-native.a"
+}
+
+# Objects for compiled variations of the fble programs binaries.
+obj $::out/prgms/fble-compiled-stdio.o prgms/fble-stdio.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+obj $::out/prgms/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I /usr/include/SDL2"
+
+# Build an fble-stdio compiled binary.
+proc stdio { name path } {
+  build $::out/prgms/$name.s $::out/tools/fble-compile \
+    "$::out/tools/fble-compile -e FbleCompiledMain -m $path > $::out/prgms/$name.s"
+  asm $::out/prgms/$name.o $::out/prgms/$name.s
+  bin $::out/prgms/$name \
+    "$::out/prgms/$name.o $::out/prgms/fble-compiled-stdio.o" \
+    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms -lfble-prgms-native" \
+    "$::libfble $::libfbleprgms $::out/prgms/libfble-prgms-native.a"
+};
+
+# Build an fble-app compiled binary.
+proc app { name path } {
+  build $::out/prgms/$name.s $::out/tools/fble-compile \
+    "$::out/tools/fble-compile -e FbleCompiledMain -m $path > $::out/prgms/$name.s"
+  asm $::out/prgms/$name.o $::out/prgms/$name.s ""
+  bin $::out/prgms/$name \
+    "$::out/prgms/$name.o $::out/prgms/fble-compiled-app.o" \
+    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms -lfble-prgms-native -lSDL2 -lGL" \
+    "$::libfble $::libfbleprgms $::out/prgms/libfble-prgms-native.a"
+}
+
 # Compile each .fble module in the prgms directory.
 set ::fble_prgms_objs [list]
 foreach dir [dirs prgms ""] {
@@ -461,17 +487,6 @@ test $::out/prgms/Stdio/fble-cat.tr "$::out/prgms/fble-stdio $::out/prgms/Stdio/
 test $::out/prgms/Stdio/fble-stdio.tr "$::out/prgms/fble-stdio $::out/prgms/Stdio/Test.fble.d" \
   "$::out/prgms/fble-stdio -I prgms /Stdio/Test% > $::out/prgms/Stdio/fble-stdio.out && grep PASSED $::out/prgms/Stdio/fble-stdio.out > /dev/null"
 
-# Build an fble-stdio compiled binary.
-proc stdio { name path } {
-  build $::out/prgms/$name.s $::out/tools/fble-compile \
-    "$::out/tools/fble-compile -e FbleCompiledMain -m $path > $::out/prgms/$name.s"
-  asm $::out/prgms/$name.o $::out/prgms/$name.s
-  bin $::out/prgms/$name \
-    "$::out/prgms/$name.o $::out/prgms/fble-compiled-stdio.o" \
-    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms -lfble-prgms-native" \
-    "$::libfble $::libfbleprgms $::out/prgms/libfble-prgms-native.a"
-};
-
 stdio fble-stdio-test "/Stdio/Test%"
 stdio fble-tests "/Fble/Tests%"
 stdio fble-bench "/Fble/Bench%"
@@ -510,17 +525,6 @@ build "$::out/prgms/fble-debug-test.dwarf $::out/prgms/fble-debug-test.dwarf-war
 test $::out/prgms/fble-debug-test.tr \
   "$::out/prgms/fble-debug-test tools/fble-debug-test.exp" \
   "expect tools/fble-debug-test.exp > /dev/null"
-
-# Build an fble-app compiled binary.
-proc app { name path } {
-  build $::out/prgms/$name.s $::out/tools/fble-compile \
-    "$::out/tools/fble-compile -e FbleCompiledMain -m $path > $::out/prgms/$name.s"
-  asm $::out/prgms/$name.o $::out/prgms/$name.s ""
-  bin $::out/prgms/$name \
-    "$::out/prgms/$name.o $::out/prgms/fble-compiled-app.o" \
-    "-L $::out/fble/src -L $::out/prgms -lfble -lfble-prgms -lfble-prgms-native -lSDL2 -lGL" \
-    "$::libfble $::libfbleprgms $::out/prgms/libfble-prgms-native.a"
-}
 
 app fble-invaders "/Invaders/App%"
 app fble-graphics "/Graphics/App%"
