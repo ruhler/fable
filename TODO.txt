@@ -3,13 +3,7 @@
  - Clean up command line argument parsing for all binaries using FbleMain.
 
 * [lib] Set up build to only have access to explicit package list
- - Reorganize prgms into package directories
-   pkgs/core/Core/...
-   pkgs/stdio/Stdio/...
-   pkgs/misc/...
- - Update build script to only provide search paths packages are allowed to
-   depend on.
-
+ - Move rest of .fble modules from prgms to appropriate pkgs directory.
 
 * Reorder case statements to match updated order of *_EXPR enum.
   In particular, the placement of the ABSTRACT_*_EXPR enums.
