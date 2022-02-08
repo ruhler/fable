@@ -10,6 +10,7 @@
 #include "fble-alloc.h"   // for FbleFree
 #include "fble-main.h"    // for FbleMain.
 #include "fble-value.h"   // for FbleValue, etc.
+#include "fble-vector.h"  // for FbleVectorInit.
 
 #include "Core/char.fble.h"    // for FbleCharValueAccess
 #include "Core/int.fble.h"     // for FbleIntValueAccess
@@ -26,6 +27,7 @@ typedef struct {
 static void PrintUsage(FILE* stream);
 static void Output(FILE* stream, FbleValue* str);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
+static FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** args);
 int debug();
 int main(int argc, char* argv[]);
 
@@ -113,70 +115,29 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
   return change;
 }
 
-// debug --
-//   Placeholder to force linking with some functions that are useful for
-//   debugging.
-int debug()
-{
-  intptr_t x = 0;
-  x += (intptr_t)(FbleCharValueAccess);
-  x += (intptr_t)(FbleIntValueAccess);
-  x += (intptr_t)(FbleStringValueAccess);
-  return x;
-}
-
-
-// main --
-//   The main entry point for fble-tests.
+// FbleStdio -- 
+//   Execute a Stdio@ process.
 //
 // Inputs:
-//   argc - The number of command line arguments.
-//   argv - The command line arguments.
+//   heap - The value heap.
+//   profile - Optional profile to store execution results to. May be NULL.
+//   stdio - The Stdio@ to execute. Borrowed.
+//   argc - The number of string arguments to the stdio function. Borrowed.
+//   argv - The string arguments to the stdio function. Borrowed.
 //
 // Results:
-//   0 on success, non-zero on error.
+//   The Bool@ result of executing the stdio process, or NULL in case of
+//   error.
 //
 // Side effects:
-//   Performs IO based on the execution of FILE. Prints an error message to
-//   standard error if an error is encountered.
-int main(int argc, char* argv[])
+// * Updates the profile.
+// * The user should call FbleReleaseValue on the result when it is no longer
+//   needed.
+static FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio, size_t argc, FbleValue** argv)
 {
-  argc--;
-  argv++;
-  if (argc > 0 && strcmp("--help", *argv) == 0) {
-    PrintUsage(stdout);
-    return 0;
-  }
-
-  FILE* fprofile = NULL;
-  if (argc > 1 && strcmp("--profile", *argv) == 0) {
-    fprofile = fopen(argv[1], "w");
-    if (fprofile == NULL) {
-      fprintf(stderr, "unable to open %s for writing.\n", argv[1]);
-      return 1;
-    }
-
-    argc -= 2;
-    argv += 2;
-  }
-
-  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
-  FbleValueHeap* heap = FbleNewValueHeap();
-
-  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
-  if (linked == NULL) {
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    return 1;
-  }
-
-  FbleValue* func = FbleEval(heap, linked, profile);
-  FbleReleaseValue(heap, linked);
-
+  FbleValue* func = FbleEval(heap, stdio, profile);
   if (func == NULL) {
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    return 1;
+    return NULL;
   }
 
   Stdio io = {
@@ -216,14 +177,9 @@ int main(int argc, char* argv[])
   FbleReleaseValue(heap, fble_stdout);
   FbleReleaseValue(heap, fble_stderr);
 
-  argc -= FBLE_COMPILED_MAIN_ARGS;
-  argv += FBLE_COMPILED_MAIN_ARGS;
-
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
-    FbleValue* argV = FbleNewStringValue(heap, argv[argc - i - 1]);
-    FbleValue* argP = FbleNewStructValue(heap, 2, argV, argS);
-    FbleReleaseValue(heap, argV);
+    FbleValue* argP = FbleNewStructValue(heap, 2, argv[argc - i -1], argS);
     FbleReleaseValue(heap, argS);
     argS = FbleNewUnionValue(heap, 0, argP);
     FbleReleaseValue(heap, argP);
@@ -236,14 +192,86 @@ int main(int argc, char* argv[])
   FbleReleaseValue(heap, args[1]);
 
   if (proc == NULL) {
+    return NULL;
+  }
+
+  FbleValue* value = FbleExec(heap, &io.io, proc, profile);
+  FbleReleaseValue(heap, proc);
+  return value;
+}
+
+// debug --
+//   Placeholder to force linking with some functions that are useful for
+//   debugging.
+int debug()
+{
+  intptr_t x = 0;
+  x += (intptr_t)(FbleCharValueAccess);
+  x += (intptr_t)(FbleIntValueAccess);
+  x += (intptr_t)(FbleStringValueAccess);
+  return x;
+}
+
+// main --
+//   The main entry point for fble-tests.
+//
+// Inputs:
+//   argc - The number of command line arguments.
+//   argv - The command line arguments.
+//
+// Results:
+//   0 on success, non-zero on error.
+//
+// Side effects:
+//   Performs IO based on the execution of FILE. Prints an error message to
+//   standard error if an error is encountered.
+int main(int argc, char* argv[])
+{
+  argc--;
+  argv++;
+  if (argc > 0 && strcmp("--help", *argv) == 0) {
+    PrintUsage(stdout);
+    return 0;
+  }
+
+  FILE* fprofile = NULL;
+  if (argc > 1 && strcmp("--profile", *argv) == 0) {
+    fprofile = fopen(argv[1], "w");
+    if (fprofile == NULL) {
+      fprintf(stderr, "unable to open %s for writing.\n", argv[1]);
+      return 1;
+    }
+
+    argc -= 2;
+    argv += 2;
+  }
+
+  FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
+  FbleValueHeap* heap = FbleNewValueHeap();
+
+  FbleValue* stdio = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
+  if (stdio == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return 1;
   }
 
-  FbleValue* value = FbleExec(heap, &io.io, proc, profile);
+  argc -= FBLE_COMPILED_MAIN_ARGS;
+  argv += FBLE_COMPILED_MAIN_ARGS;
 
-  FbleReleaseValue(heap, proc);
+  FbleValueV stdio_args;
+  FbleVectorInit(stdio_args);
+  for (size_t i = 0; i < argc; ++i) {
+    FbleVectorAppend(stdio_args, FbleNewStringValue(heap, argv[i]));
+  }
+
+  FbleValue* value = FbleStdio(heap, profile, stdio, stdio_args.size, stdio_args.xs);
+
+  FbleReleaseValue(heap, stdio);
+  for (size_t i = 0; i < stdio_args.size; ++i) {
+    FbleReleaseValue(heap, stdio_args.xs[i]);
+  }
+  FbleFree(stdio_args.xs);
 
   size_t result = 1;
   if (value != NULL) {

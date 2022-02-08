@@ -1947,3 +1947,70 @@ depend on a package bar major version 1, and work with package bar major
 version 1 with any minor version.
 
 But I don't want to worry about all of that right now?
+
+---
+
+How to know what should be in the same package or a different package?
+* I would argue fble-stdio should be part of Core, because you need it to run
+  tests. There's no point for tests to record error messages if you can't
+  display them somehow.
+* Presumably fble-app shouldn't be part of core, because it adds an additional
+  dependency on OpenGL and SDL. So maybe packages can be like modules in the
+  sense of doing things based on package dependencies.
+* fble-pinball should clearly not be a part of core, because it is an end
+  application, and we don't want changes to it to impact users of core who
+  care nothing about it. Same for TicTacToe, Sudoku, Snake, Invaders, Sat.
+
+How about Map, LFSR, Rat? Those are not end user applications. They are
+intended to be reused. I could make a strong case for Map to be in Core just
+like Maybe is. Although Map is a bit more complicated because there are so
+many different ways you might want to implement a Map. Most of the other
+things in Core aren't like that? So what, you don't want to put something in
+Core that would have a name conflict with something you want to use a
+different implementation for? But we have 'Core' in the module path, so that's
+not a legitimate reason.
+
+* Namespace conflict prevention is not a good reason to leave something out of
+  a package, because the conflict would exist whether or not they are in the
+  same package. Unless you want, say, two different map implementations, and
+  they should go into two different directories to avoid name conflict.
+* How about size? Is there a downside to having a large number of unused
+  modules in a package? Size of .so, size of install. But in my case these
+  things are small. Maybe compilers can be smart enough to only link in those
+  modules that you depend on? That would be ideal.
+
+How about Md5? It is an end user app, but also something you could imagine
+people would want to reuse.
+
+* Presumably there is some notion of developer and release cadence. A single
+  package has to be updated all or nothing. If you want to be able to release
+  updates to a specific part of a package at a different rate than other parts
+  of a package, they would be better as separate packages.
+
+Here's a summary of points to consider for defining package boundaries:
+* Different packages can be updated at different times and rates.
+  If that's something you desire, then split into separate packages.
+* Avoid false package dependencies.
+  Ideally most modules in a package have the same external package
+  dependencies. It would be bad if a single module introduced a false package
+  dependency for all the other modules in a package.
+* The core package should be standalone testable.
+  This is a special case for the 'core' package.
+
+Is that enough? That would suggest to me we have the following:
+* Core: includes Stdio, Map, LFSR, Rat
+* App: Separate from Core because it adds dependence on OpenGL, SDL.
+* Pinball, Snake, Sudoku, etc.. separate from App because we want to make
+  updates frequently without requiring users of App to recompile.
+  These can be each separate packages, or grouped together into an 'Apps'
+  package. I might suggest: {GameOfLife, Snake} together as silly graphics
+  apps, {Sudoku, TicTacToe, BenchmarkGame} together as silly stdio, Invaders,
+  Pinball, Graphics, Sat, Hwdg all as separate packages. Or just everything as
+  separate packages, because you never know if I want to make a graphics
+  version of sudoku or tictactoe for example.
+
+Or maybe don't include Map, LFSR, Rat in Core, under the idea that 'Core'
+should be more stable than those? Like, level of stability is important for
+Core? Maybe distinguish between Core-Stable, Core-Development,
+Core-Experimental?
+
