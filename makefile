@@ -29,7 +29,7 @@ full:
 
 .PHONY: test
 test:
-	./out/bin/fble-stdio prgms /Fble/Tests%
+	./out/prgms/fble-stdio -I pkgs/core -I prgms /Fble/Tests%
 
 .PHONY: bench
 bench:

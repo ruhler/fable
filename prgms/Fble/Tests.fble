@@ -5,8 +5,8 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 
-@ Stdio@ = /Stdio%.Stdio@;
-@ IO@ = /Stdio%.IO@;
+@ Stdio@ = /Core/Stdio%.Stdio@;
+@ IO@ = /Core/Stdio%.IO@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -27,8 +27,6 @@
 % _ = /Pinball/App%;
 % _ = /Snake%;
 % _ = /Snake/Bench%;
-% _ = /Stdio/Cat%;
-% _ = /Stdio/Test%;
 
 Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Core/Tests%.Tests,

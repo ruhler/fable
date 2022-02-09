@@ -2014,3 +2014,60 @@ should be more stable than those? Like, level of stability is important for
 Core? Maybe distinguish between Core-Stable, Core-Development,
 Core-Experimental?
 
+---
+
+Trying to clean up fble-stdio compilation, in the sense of making it a library
+to share instead of .c file to share. First question is, how to distinguish
+between args to the fble-stdio runner and args to the Stdio@ function?
+
+For example, -I, -m, --profile would be for runner. Anything could be for
+Stdio@ function.
+
+How does tcl or python deal with this?
+* tclsh has exactly 1 special argument, then file, all others go to args.
+* python looks like anything after a particular argument is treated as args.
+
+That seems to be fairly standard. Options to the runner, followed by a
+particular option or non-option argument, then everything after is args to
+pass down.
+
+The fble-stdio things I build today:
+* fble-stdio interpreter
+* fble-stdio-test
+* fble-tests
+* fble-bench
+* fble-debug-test
+
+Usage is: [--profile FILE] [-I ... -m MODULE_PATH] ARGS
+
+One approach I could use is: the first unrecognized argument is considered
+ARGS and passed there. But we should also allow '--' to be specified as a
+separator, otherwise you can't necessarily pass things like '--profile' in
+ARGS.
+
+All the compiled fble-stdio things have the same command line. The interpreter
+is slightly different, because it has -I and -m options that need to be
+provided. Hypothetically we could compile things to shared libraries and pass
+-I a .so file and dynamically load compiled code. So the real difference is
+whether the module to run is hard coded in the executable or not.
+
+I'm tempted to provide an fble-stdio-main library that provides an
+implementation of main and assumes you make an FbleStdioMain symbol available
+at link time. It can use standard parsing options. The fble-stdio executable
+will have special command line parsing for -I and -m and module loading. Both
+can share common FbleStdio library function for setting up and running a
+Stdio@ value.
+
+Can we do linker tricks to make anything nicer? Maybe not require a separate
+fble-stdio-main library? Seems silly. I vote for fble-stdio libs as part of
+whatever package I use for fble-stdio, and fble-stdio-main library that
+includes just the main program for fble-stdio.
+
+Proposal:
+* stdio.fble.h, stdio.fble.c - library to go in libfble-core.a. FbleStdio.
+  Defines fble level interface to run a Stdio@.
+* fble-stdio.c - interpreter executable. Defines main.
+* fble-stdio-main.c - generic compiled executable library. Defines main.
+  Requires FbleStdioMain to be defined. We turn this into a separate
+  fble-stdio-main library that people can link with (assuming they provide
+  FbleStdioMain as the exported function).

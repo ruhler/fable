@@ -503,19 +503,19 @@ test $::out/prgms/fble-md5.tr "$::out/prgms/fble-md5 $::out/prgms/Md5/Main.fble.
   "$::out/prgms/fble-md5 /dev/null -I pkgs/core -I prgms /Md5/Main% > $::out/prgms/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/prgms/fble-md5.out > /dev/null"
 
 # fble-cat test
-test $::out/prgms/Stdio/fble-cat.tr "$::out/prgms/fble-stdio $::out/prgms/Stdio/Cat.fble.d" \
-  "$::out/prgms/fble-stdio -I pkgs/core -I prgms /Stdio/Cat% < README.txt > $::out/prgms/Stdio/fble-cat.out && cmp $::out/prgms/Stdio/fble-cat.out README.txt"
+test $::out/pkgs/core/Core/Stdio/fble-cat.tr "$::out/prgms/fble-stdio $::out/pkgs/core/Core/Stdio/Cat.fble.d" \
+  "$::out/prgms/fble-stdio -I pkgs/core /Core/Stdio/Cat% < README.txt > $::out/pkgs/core/Core/Stdio/fble-cat.out && cmp $::out/pkgs/core/Core/Stdio/fble-cat.out README.txt"
 
 # fble-stdio test
-test $::out/prgms/Stdio/fble-stdio.tr "$::out/prgms/fble-stdio $::out/prgms/Stdio/Test.fble.d" \
-  "$::out/prgms/fble-stdio -I pkgs/core -I prgms /Stdio/Test% > $::out/prgms/Stdio/fble-stdio.out && grep PASSED $::out/prgms/Stdio/fble-stdio.out > /dev/null"
+test $::out/pkgs/core/Core/Stdio/fble-stdio.tr "$::out/prgms/fble-stdio $::out/pkgs/core/Core/Stdio/Test.fble.d" \
+  "$::out/prgms/fble-stdio -I pkgs/core /Core/Stdio/Test% > $::out/pkgs/core/Core/Stdio/fble-stdio.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio.out > /dev/null"
 
-stdio fble-stdio-test "/Stdio/Test%"
+stdio fble-stdio-test "/Core/Stdio/Test%"
 stdio fble-tests "/Fble/Tests%"
 stdio fble-bench "/Fble/Bench%"
 stdio fble-debug-test "/Fble/DebugTest%"
 
-# /Stdio/Test% compilation test
+# /Core/Stdio/Test% compilation test
 test $::out/prgms/fble-stdio-test.tr $::out/prgms/fble-stdio-test \
   "$::out/prgms/fble-stdio-test > $::out/prgms/fble-stdio-test.out && grep PASSED $::out/prgms/fble-stdio-test.out > /dev/null"
 
