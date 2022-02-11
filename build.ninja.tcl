@@ -436,6 +436,35 @@ eval {
   bin $::out/pkgs/core/Core/fble-stdio "$::out/pkgs/core/Core/fble-stdio.o" \
     "-L $::out/fble/src -L $::out/pkgs/core -lfble-core -lfble" \
     "$::libfble $::out/pkgs/core/libfble-core.a"
+
+  # Build an fble-stdio compiled binary.
+  #
+  # Inputs:
+  #   target - the file to build.
+  #   path - the module path to use as Stdio@ main.
+  #   lflags - library flags, e.g. "-L foo/ -lfoo".
+  #   args - optional additional dependencies.
+  proc stdio { target path lflags args} {
+    build $target.s $::out/tools/fble-compile \
+      "$::out/tools/fble-compile --main FbleStdioMain -m $path > $target.s"
+    asm $target.o $target.s
+    bin $target "$target.o" \
+      "$lflags -L $::out/fble/src -L $::out/pkgs/core -lfble-core -lfble" \
+      "$::libfble $::out/pkgs/core/libfble-core.a $args"
+  }
+
+  # /Core/Stdio/Cat% interpreted test.
+  test $::out/pkgs/core/Core/Stdio/fble-cat.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Cat.fble.d" \
+    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Cat% < README.txt > $::out/pkgs/core/Core/Stdio/fble-cat.out && cmp $::out/pkgs/core/Core/Stdio/fble-cat.out README.txt"
+
+  # /Core/Stdio/Test% interpreted test.
+  test $::out/pkgs/core/Core/Stdio/fble-stdio.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Test.fble.d" \
+    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Test% > $::out/pkgs/core/Core/Stdio/fble-stdio.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio.out > /dev/null"
+
+  # /Core/Stdio/Test% compiled test.
+  stdio $::out/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
+  test $::out/pkgs/core/Core/Stdio/fble-stdio-test.tr $::out/pkgs/core/Core/Stdio/fble-stdio-test \
+    "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out > /dev/null"
 }
 
 # fble programs binaries
@@ -449,16 +478,6 @@ foreach {x} { fble-md5 fble-app } {
 
 # Objects for compiled variations of the fble programs binaries.
 obj $::out/prgms/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I pkgs/core -I /usr/include/SDL2"
-
-# Build an fble-stdio compiled binary.
-proc stdio { name path } {
-  build $::out/prgms/$name.s $::out/tools/fble-compile \
-    "$::out/tools/fble-compile --main FbleStdioMain -m $path > $::out/prgms/$name.s"
-  asm $::out/prgms/$name.o $::out/prgms/$name.s
-  bin $::out/prgms/$name "$::out/prgms/$name.o" \
-    "-L $::out/fble/src -L $::out/pkgs/core -L $::out/prgms -lfble-prgms -lfble-core -lfble" \
-    "$::libfble $::libfbleprgms $::out/pkgs/core/libfble-core.a"
-};
 
 # Build an fble-app compiled binary.
 proc app { name path } {
@@ -503,27 +522,14 @@ test $::out/tools/fble-disassemble.tr \
 test $::out/prgms/Fble/fble-tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/prgms/Fble/Tests.fble.d" \
   "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -I prgms -m /Fble/Tests%" "pool = console"
 
-
 # fble-md5 test
 test $::out/prgms/fble-md5.tr "$::out/prgms/fble-md5 $::out/prgms/Md5/Main.fble.d" \
   "$::out/prgms/fble-md5 /dev/null -I pkgs/core -I prgms /Md5/Main% > $::out/prgms/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/prgms/fble-md5.out > /dev/null"
 
-# fble-cat test
-test $::out/pkgs/core/Core/Stdio/fble-cat.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Cat.fble.d" \
-  "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Cat% < README.txt > $::out/pkgs/core/Core/Stdio/fble-cat.out && cmp $::out/pkgs/core/Core/Stdio/fble-cat.out README.txt"
+stdio $::out/prgms/fble-tests "/Fble/Tests%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
+stdio $::out/prgms/fble-bench "/Fble/Bench%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
+stdio $::out/prgms/fble-debug-test "/Fble/DebugTest%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
 
-# fble-stdio test
-test $::out/pkgs/core/Core/Stdio/fble-stdio.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Test.fble.d" \
-  "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Test% > $::out/pkgs/core/Core/Stdio/fble-stdio.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio.out > /dev/null"
-
-stdio fble-stdio-test "/Core/Stdio/Test%"
-stdio fble-tests "/Fble/Tests%"
-stdio fble-bench "/Fble/Bench%"
-stdio fble-debug-test "/Fble/DebugTest%"
-
-# /Core/Stdio/Test% compilation test
-test $::out/prgms/fble-stdio-test.tr $::out/prgms/fble-stdio-test \
-  "$::out/prgms/fble-stdio-test > $::out/prgms/fble-stdio-test.out && grep PASSED $::out/prgms/fble-stdio-test.out > /dev/null"
 
 # /Fble/Tests% compilation test
 test $::out/prgms/Fble/fble-compiled-tests.tr $::out/prgms/fble-tests \
