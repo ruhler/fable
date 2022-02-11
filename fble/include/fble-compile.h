@@ -153,4 +153,26 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
 // * Generates aarch64 code for the given code.
 void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* path);
 
+// FbleGenerateAArch64Main --
+//   Generate aarch64 code for a main function that invokes a compiled module
+//   with the given wrapper function.
+//
+// The generated code will export a main function of the following form:
+//  
+// int main(int argc, const char** argv) {
+//   return <main>(argc, argv, <compiled module>);
+// }
+//
+// Where <compiled module> is the FbleCompiledModuleFunction* corresponding to
+// the given module path.
+//
+// Inputs:
+//   fout - the output stream to write the C code to.
+//   main - the name of the wrapper function to invoke.
+//   path - the path to the module to pass to the wrapper function.
+//
+// Side effects:
+// * Generates aarch64 code for the given code.
+void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path);
+
 #endif // FBLE_COMPILE_H_

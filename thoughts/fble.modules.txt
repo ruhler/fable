@@ -2071,3 +2071,56 @@ Proposal:
   Requires FbleStdioMain to be defined. We turn this into a separate
   fble-stdio-main library that people can link with (assuming they provide
   FbleStdioMain as the exported function).
+
+---
+
+I'm not convinced about fble-stdio-main yet. The sticky thing is, what should
+the usage message be? Doesn't that depend on the actual compiled application?
+
+So, maybe instead I define a FbleStdioMain program that can be used to
+trivially implement a main function in these cases. They have to use the
+standard options for fble-stdio, namely --profile. Otherwise they pass as an
+argument the description of the program (and exit status?), and the module
+function to load from (or already loaded module function?).
+
+Or, should usage be printed by the Stdio@ program? Then how do we deal with
+the --profile option?
+
+I like the idea of --help being handled by the Stdio@ program. Or at least the
+option to. In that case, we could use a standard usage description. Does that
+mean fble-stdio-main library still makes sense? Or should we require people to
+define their own wrapper functions for main? They would be trivial:
+
+int main(int argc, char** argv) {
+  return FbleStdioMain(FbleTestsModule, argc, argv);
+}
+
+With a couple of lines of imports. It's just, why make people write this? We
+could do it with command line. All we need is to specify the name of the test
+module?
+
+---
+
+Here's my proposal:
+* stdio.fble.c defines an FbleStdioMain function that takes the compiled
+  module to load, argc, and argv. It does all command line option parsing,
+  using a generic usage message.
+* Add a --main option to fble-compile to generate a 'main' function
+  automatically via wrapper function. You specify the name of the wrapper
+  function. If you want a Stdio@ main, you do --main FbleStdioMain. You could
+  do FbleTestMain, FbleAppMain, etc. Any user defined function, as long as it
+  has the right signature.
+* The FbleStdioMain function accepts a NULL module to load, in which case it
+  adds -I and --module options to read that from the command line and be
+  interpreter.
+* fble-stdio.c is a simple wrapper around FbleStdioMain with NULL module to
+  load.
+
+No need for sharing .c code, doing weird defines, having a separate library
+with main, or doing wrapper functions for every thing you might want to make a
+main executable. This solves the fble-test case. It also would make it
+possible to write main fble executables in fble from the compiler without
+having to write any C code at all.
+
+Let's give it a try.
+

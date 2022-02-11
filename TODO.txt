@@ -1,10 +1,6 @@
-* Make fble-stdio.c a library function instead of executable.
- - Move fble-stdio.c to core/Core/stdio.fble.{h,c}, etc.
- - Update build.ninja.tcl to put stdio specific tests closer to core package
-   build.
-
 * Clean up option parsing for the rest of the executables.
- - Get rid of FbleMain?
+ - Move fble-stdio-test binary to better place in out directory.
+ - Get rid of FbleMain.
  - Clean up command line argument parsing for all binaries using FbleMain.
 
 * [lib] Set up build to only have access to explicit package list

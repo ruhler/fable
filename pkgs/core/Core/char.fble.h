@@ -1,6 +1,6 @@
 
-#ifndef FBLE_CHAR_FBLE_H_
-#define FBLE_CHAR_FBLE_H_
+#ifndef FBLE_CORE_CHAR_FBLE_H_
+#define FBLE_CORE_CHAR_FBLE_H_
 
 #include "fble-value.h"   // for FbleValue, etc.
 
@@ -34,4 +34,4 @@ FbleValue* FbleNewCharValue(FbleValueHeap* heap, char c);
 char FbleCharValueAccess(FbleValue* c);
 
 
-#endif // FBLE_CHAR_FBLE_H_
+#endif // FBLE_CORE_CHAR_FBLE_H_

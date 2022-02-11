@@ -47,8 +47,10 @@ static void PrintUsage(FILE* stream)
       "    Compile the module to assembly.\n"
       "  -e, --export NAME\n"
       "    Generate a function with the given NAME to export the module.\n"
+      "  --main NAME\n"
+      "    Generate a main function using NAME as the wrapper function.\n"
       "\n"
-      "  At least one of --compile or --export must be provided.\n"
+      "  At least one of --compile, --export, or --main must be provided.\n"
       "\n"
       "Exit Status:\n"
       "  0 on success.\n"
@@ -58,11 +60,12 @@ static void PrintUsage(FILE* stream)
       "Example:\n"
       "  fble-compile -c -I prgms -m /Foo% > Foo.fble.s\n"
       "  fble-compile -e FbleCompiledMain -m /Foo% > Foo.fble.main.s\n"
+      "  fble-compile --main FbleStdioMain -m /Foo% > Foo.fble.main.s\n"
   );
 }
 
 // main --
-//   The main entry point for the fble-disassemble program.
+//   The main entry point for the fble-compile program.
 //
 // Inputs:
 //   argc - The number of command line arguments.
@@ -79,6 +82,7 @@ int main(int argc, const char* argv[])
   FbleVectorInit(search_path);
   bool compile = false;
   const char* export = NULL;
+  const char* main_ = NULL;
   const char* mpath_string = NULL;
   bool help = false;
   bool error = false;
@@ -95,6 +99,7 @@ int main(int argc, const char* argv[])
     if (FbleParseBoolArg("--compile", &compile, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-e", &export, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--export", &export, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--main", &main_, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
@@ -110,8 +115,8 @@ int main(int argc, const char* argv[])
     return EX_USAGE;
   }
 
-  if (!compile && export == NULL) {
-    fprintf(stderr, "one of --export NAME or --compile must be specified.\n");
+  if (!compile && export == NULL && main_ == NULL) {
+    fprintf(stderr, "one of --export NAME, --compile, or --main NAME must be specified.\n");
     PrintUsage(stderr);
     FbleFree(search_path.xs);
     return EX_USAGE;
@@ -125,6 +130,10 @@ int main(int argc, const char* argv[])
 
   if (export != NULL) {
     FbleGenerateAArch64Export(stdout, export, mpath);
+  }
+
+  if (main_ != NULL) {
+    FbleGenerateAArch64Main(stdout, main_, mpath);
   }
 
   if (compile) {

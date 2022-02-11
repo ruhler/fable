@@ -1731,3 +1731,24 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
   fprintf(fout, "  ldp FP, LR, [SP], #16\n");
   fprintf(fout, "  ret\n");
 }
+
+// FbleGenerateAArch64Main -- see documentation in fble-compile.h
+void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path)
+{
+  fprintf(fout, "  .text\n");
+  fprintf(fout, "  .align 2\n");
+  fprintf(fout, "  .global main\n");
+  fprintf(fout, "main:\n");
+  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
+  fprintf(fout, "  mov FP, SP\n");
+
+  FbleString* module_name = LabelForPath(path);
+  Adr(fout, "x2", "%s", module_name->str);
+  FbleFreeString(module_name);
+
+  Adr(fout, "x3", "%s", main);
+
+  fprintf(fout, "  br x3\n");
+  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
+  fprintf(fout, "  ret\n");
+}
