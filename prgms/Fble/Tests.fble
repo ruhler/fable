@@ -35,7 +35,6 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Graphics/2D/Tests%.Tests,
   /Graphics/Triangle/Tests%.Tests,
   /Hwdg/Tests%.Tests,
-  /LFSR/Tests%.Tests,
   /Md5/Tests%.Tests,
   /Pinball/Tests%.Tests,
   /Sat/Tests%.Tests,

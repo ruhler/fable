@@ -34,10 +34,10 @@
 % Gt = /Core/Int/Eq%.Gt;
 % Int = /Core/Int/Lit%.Int;
 
-@ LFSR@ = /LFSR%.LFSR@;
-<@>@ Shifted@ = /LFSR%.Shifted@;
-% Shift = /LFSR%.Shift;
-% ShiftInt = /LFSR/Int%.ShiftInt;
+@ LFSR@ = /Core/LFSR%.LFSR@;
+<@>@ Shifted@ = /Core/LFSR%.Shifted@;
+% Shift = /Core/LFSR%.Shift;
+% ShiftInt = /Core/LFSR/Int%.ShiftInt;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% Cons = /Core/List%.Cons;
@@ -283,7 +283,7 @@ Int@ DyingTime = Int|10;
     next: Just<Alien@>(FirstAlien),
     turn: False,
     dying: Nil<Dying@>,
-    lfsr: /LFSR%.LFSRs.8);
+    lfsr: /Core/LFSR%.LFSRs.8);
 };
 
 # TickDying --

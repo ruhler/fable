@@ -19,11 +19,11 @@
 % False = /Core/Bool%.False;
 % And = /Core/Bool%.And;
 
-@ LFSR@ = /LFSR%.LFSR@;
-<@>@ Shifted@ = /LFSR%.Shifted@;
-% LFSRs = /LFSR%.LFSRs;
-% Shift = /LFSR%.Shift;
-% ShiftInt = /LFSR/Int%.ShiftInt;
+@ LFSR@ = /Core/LFSR%.LFSR@;
+<@>@ Shifted@ = /Core/LFSR%.Shifted@;
+% LFSRs = /Core/LFSR%.LFSRs;
+% Shift = /Core/LFSR%.Shift;
+% ShiftInt = /Core/LFSR/Int%.ShiftInt;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;

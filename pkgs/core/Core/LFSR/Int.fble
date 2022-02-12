@@ -8,9 +8,9 @@
 % Lt = /Core/Int/Eq%.Lt;
 % Int = /Core/Int/Lit%.Int;
 
-@ LFSR@ = /LFSR%.LFSR@;
-<@>@ Shifted@ = /LFSR%.Shifted@;
-% Shift = /LFSR%.Shift;
+@ LFSR@ = /Core/LFSR%.LFSR@;
+<@>@ Shifted@ = /Core/LFSR%.Shifted@;
+% Shift = /Core/LFSR%.Shift;
 
 # ShiftInt --
 #   Shift out an integer from the given LFSR that is in the range [0, max).

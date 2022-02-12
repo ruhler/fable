@@ -6,9 +6,9 @@
 % Sub = /Core/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
 
-@ LFSR@ = /LFSR%.LFSR@;
-<@>@ Shifted@ = /LFSR%.Shifted@;
-% Shift = /LFSR%.Shift;
+@ LFSR@ = /Core/LFSR%.LFSR@;
+<@>@ Shifted@ = /Core/LFSR%.Shifted@;
+% Shift = /Core/LFSR%.Shift;
 
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
