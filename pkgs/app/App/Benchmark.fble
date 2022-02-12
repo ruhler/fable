@@ -1,10 +1,10 @@
 
-@ App@ = /App%.App@;
-@ AppIO@ = /App%.AppIO@;
-@ Event@ = /App%.Event@;
-@ Effect@ = /App%.Effect@;
+@ App@ = /App/App%.App@;
+@ AppIO@ = /App/App%.AppIO@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
 
-@ Drawing@ = /Drawing%.Drawing@;
+@ Drawing@ = /App/Drawing%.Drawing@;
 
 @ Int@ = /Core/Int%.Int@;
 % Dec = /Core/Int%.Dec;

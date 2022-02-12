@@ -1,23 +1,17 @@
 
-@ App@ = /App%.App@;
-@ AppIO@ = /App%.AppIO@;
-@ Event@ = /App%.Event@;
-@ Effect@ = /App%.Effect@;
+@ App@ = /App/App%.App@;
+@ AppIO@ = /App/App%.AppIO@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Color = /App/Drawing%.Color;
+% Rect = /App/Drawing%.Rect;
+% Over = /App/Drawing%.Over;
+% Affine = /App/Drawing%.Affine;
 
 % And = /Core/Bool%.And;
-
-@ Drawing@ = /Drawing%.Drawing@;
-@ Point@ = /Drawing%.Point@;
-% Color = /Drawing%.Color;
-% Rect = /Drawing%.Rect;
-% Over = /Drawing%.Over;
-% Affine = /Drawing%.Affine;
-
-@ World@ = /GameOfLife%.World@;
-@ Coord@ = /GameOfLife%.Coord@;
-% World = /GameOfLife%.World;
-<@>% ForWorld = /GameOfLife%.ForWorld;
-% Step = /GameOfLife%.Step;
 
 @ Int@ = /Core/Int%.Int@;
 % 1 = /Core/Int%.1;
@@ -40,6 +34,13 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
+
+@ World@ = /GameOfLife%.World@;
+@ Coord@ = /GameOfLife%.Coord@;
+% World = /GameOfLife%.World;
+<@>% ForWorld = /GameOfLife%.ForWorld;
+% Step = /GameOfLife%.Step;
+
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
 

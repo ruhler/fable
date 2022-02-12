@@ -1,10 +1,10 @@
 
-@ Drawing@ = /Drawing%.Drawing@;
-@ Color@ = /Drawing%.Color@;
-@ Point@ = /Drawing%.Point@;
-% Blank = /Drawing%.Blank;
-% Over = /Drawing%.Over;
-% Rect = /Drawing%.Rect;
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+@ Point@ = /App/Drawing%.Point@;
+% Blank = /App/Drawing%.Blank;
+% Over = /App/Drawing%.Over;
+% Rect = /App/Drawing%.Rect;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;

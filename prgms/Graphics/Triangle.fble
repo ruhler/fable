@@ -1,16 +1,16 @@
 
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+@ Point@ = /App/Drawing%.Point@;
+% Blank = /App/Drawing%.Blank;
+% Rect = /App/Drawing%.Rect;
+% Over = /App/Drawing%.Over;
+
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 % And = /Core/Bool%.And;
 % Not = /Core/Bool%.Not;
-
-@ Drawing@ = /Drawing%.Drawing@;
-@ Color@ = /Drawing%.Color@;
-@ Point@ = /Drawing%.Point@;
-% Blank = /Drawing%.Blank;
-% Rect = /Drawing%.Rect;
-% Over = /Drawing%.Over;
 
 @ Vec@ = /Graphics/3D%.Vec@;
 % AddV = /Graphics/3D%.AddV;

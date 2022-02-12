@@ -1,14 +1,14 @@
 
-@ App@ = /App%.App@;
-@ AppIO@ = /App%.AppIO@;
-@ Event@ = /App%.Event@;
-@ Effect@ = /App%.Effect@;
+@ App@ = /App/App%.App@;
+@ AppIO@ = /App/App%.AppIO@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
 
-@ Point@ = /Drawing%.Point@;
-% Color = /Drawing%.Color;
-% Over = /Drawing%.Over;
-% Rect = /Drawing%.Rect;
-% Affine = /Drawing%.Affine;
+@ Point@ = /App/Drawing%.Point@;
+% Color = /App/Drawing%.Color;
+% Over = /App/Drawing%.Over;
+% Rect = /App/Drawing%.Rect;
+% Affine = /App/Drawing%.Affine;
 
 @ Int@ = /Core/Int%.Int@;
 % 0 = /Core/Int%.0;

@@ -2124,3 +2124,59 @@ having to write any C code at all.
 
 Let's give it a try.
 
+---
+
+I'm trying to make an 'app' package, which I thought should only depend on
+'core', but it uses /Map%. Is that enough justification to add /Map% to the
+'core' package? Do you see any harm in that? It seems like a pretty standard
+thing to have a Map implementation, no? Maybe core should be used for common
+useful reusable utilities?
+
+As long as it doesn't bring in extra dependencies like SDL and doesn't contain
+stand alone not reusable things like Sat, Pinball, etc? I think that's
+reasonable. So LFSR, Maybe, Map, Rat all make sense in there. Md5? I'm not
+sure.
+
+I suppose the downside of adding something to 'core' is:
+* We may start depending on that thing in other parts of core.
+* We encourage people to use that as a standard interface thing instead of
+  other, perhaps better designed and supported types.
+* Extra external dependency requirements (easy: just say no).
+
+Or, thought of as another way:
+* Packages produced by different organizations should be separate. Easy.
+* Packages that are small enough need not be split into subpackages.
+  So, map, sat, md5, lfsr, etc. have no motivation to split finer grain.
+* There is overhead of splitting into separate packages - you have to keep
+  things in sync version wise between packages.
+
+I like the idea of 'core' being standalone testable. Let's review the maximum
+set of packages I expect again:
+
+* core, maybe, map, app, gameoflife, tictactoe, sudoku, pinball, graphics,
+  hwdg, benchmarkgame, rat, invaders, md5, lfsr, fble, sat
+
+And things I'm happy to make separate packages:
+* core, app, pinball, graphics, hwdg, invaders, sat
+
+Questions are:
+* Should maybe, map, lfsr, rat, md5 be part of core?
+* Should gameoflife, tictactoe, sudoku, benchmark game be grouped together?
+* What to do about 'fble' package?
+
+So, looking at each questionable package:
+* maybe: put in core and be done with it. If list is in core, maybe should be
+  too.
+* map: put in core and be done with it. I see no significant value to having
+  it as a separate package, but it would be convenient to have as part of
+  core.
+* lfrs: put in core and be done with it. I see no significant value of having
+  it as a separate package, but it would be convenient to have as part of core.
+* rat: This is unused, right? Let's get rid of it.
+* md5: It uses a non-core Bit8@ type and isn't reused anywhere currently.
+       Let's make this a separate package.
+* gameoflife, tictactoe, sudoku, benchmark game - let's group these together
+  into a 'games' package, for demo/small/benchmark games. They can be stdio
+  and/or app games.
+* fble: let's keep this as a separate package targeted at libfble development.
+

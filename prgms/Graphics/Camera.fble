@@ -1,5 +1,5 @@
 
-@ Point@ = /Drawing%.Point@;
+@ Point@ = /App/Drawing%.Point@;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;

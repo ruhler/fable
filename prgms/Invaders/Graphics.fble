@@ -1,14 +1,14 @@
 
 @ Decimal@ = /Core/Digits%.Decimal@;
 
-@ Color@ = /Drawing%.Color@;
-@ Drawing@ = /Drawing%.Drawing@;
-% Blank = /Drawing%.Blank;
-% Color = /Drawing%.Color;
-% Drawings = /Drawing%.Drawings;
-% Over = /Drawing%.Over;
-% Rect = /Drawing%.Rect;
-% Translate = /Drawing%.Translate;
+@ Color@ = /App/Drawing%.Color@;
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Blank = /App/Drawing%.Blank;
+% Color = /App/Drawing%.Color;
+% Drawings = /App/Drawing%.Drawings;
+% Over = /App/Drawing%.Over;
+% Rect = /App/Drawing%.Rect;
+% Translate = /App/Drawing%.Translate;
 
 % Int = /Core/Int/Lit%.Int;
 

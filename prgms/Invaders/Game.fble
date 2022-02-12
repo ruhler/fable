@@ -1,10 +1,10 @@
 
 @ Decimal@ = /Core/Digits%.Decimal@;
 
-@ Drawing@ = /Drawing%.Drawing@;
-% Blank = /Drawing%.Blank;
-% Drawings = /Drawing%.Drawings;
-% Translate = /Drawing%.Translate;
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Blank = /App/Drawing%.Blank;
+% Drawings = /App/Drawing%.Drawings;
+% Translate = /App/Drawing%.Translate;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;

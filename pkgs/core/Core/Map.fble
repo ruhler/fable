@@ -1,7 +1,7 @@
 
 # Public API for Map@ type.
 
-% Map = /Map/Map%;
+% Map = /Core/Map/Map%;
 
 @ Bool@ = /Core/Bool%.Bool@;
 
@@ -10,7 +10,7 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 # _@ -- Package type for access to internals of Map@ abstract type.
-@ _@ = %(/Map%);
+@ _@ = %(/Core/Map%);
 
 # Map@ --
 #   A map from K@ to V@, using the Structure@ of K@ to locate the key value

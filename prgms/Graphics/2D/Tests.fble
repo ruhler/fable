@@ -1,13 +1,13 @@
 
-@ Drawing@ = /Drawing%.Drawing@;
-@ Point@ = /Drawing%.Point@;
-% Color = /Drawing%.Color;
-% Drawings = /Drawing%.Drawings;
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Color = /App/Drawing%.Color;
+% Drawings = /App/Drawing%.Drawings;
 
-@ Drawn@ = /Drawing/Test%.Drawn@;
-@ Pixel@ = /Drawing/Test%.Pixel@;
-% Drawn = /Drawing/Test%.Drawn;
-% Draw = /Drawing/Test%.Draw;
+@ Drawn@ = /App/Drawing/Test%.Drawn@;
+@ Pixel@ = /App/Drawing/Test%.Pixel@;
+% Drawn = /App/Drawing/Test%.Drawn;
+% Draw = /App/Drawing/Test%.Draw;
 
 % Triangle = /Graphics/2D/Triangle%.Triangle;
 
@@ -39,7 +39,7 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Upper Left Right Triangle', !({
@@ -56,7 +56,7 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Adjacent Gap', !({
@@ -81,7 +81,7 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   }))
 ]);
 

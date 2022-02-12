@@ -1,6 +1,6 @@
 
-@ Drawing@ = /Drawing%.Drawing@;
-% Translate = /Drawing%.Translate;
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Translate = /App/Drawing%.Translate;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;

@@ -1,5 +1,7 @@
-// fble-app
-//   A program to run fble programs with an App interface.
+// app.fble.c --
+//   Implementation of FbleAppMain function.
+
+#include "app.fble.h"
 
 #include <assert.h>       // for assert
 #include <string.h>       // for strcmp
@@ -7,12 +9,18 @@
 #include <SDL.h>          // for SDL_*
 #include <GL/gl.h>        // for gl*
 
-#include "fble-main.h"    // for FbleMain.
-#include "fble-value.h"   // for FbleValue, etc.
+#include "fble-alloc.h"       // for FbleFree.
+#include "fble-arg-parse.h"   // for FbleParseBoolArg, etc.
+#include "fble-value.h"       // for FbleValue, etc.
+#include "fble-vector.h"      // for FbleVectorInit.
 
 #include "Core/char.fble.h"    // for FbleCharValueAccess
 #include "Core/int.fble.h"     // for FbleIntValueAccess
 #include "Core/string.fble.h"  // for FbleStringValueAccess
+
+#define EX_SUCCESS 0
+#define EX_FAILURE 1
+#define EX_USAGE 2
 
 // sFpsHistogram[i] is the number of samples with i frames per second.
 // Anything above 60 FPS is counted towards i = 60.
@@ -37,38 +45,89 @@ typedef struct {
   FbleValue* effect;
 } AppIO;
 
-static void PrintUsage(FILE* stream);
+static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
+static FbleValue* LoadModule(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath search_path, const char* module_path);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
-int debug();
-int main(int argc, char* argv[]);
+int FbleStdioMain(int argc, const char* argv[], FbleCompiledModuleFunction* module);
 
 // PrintUsage --
 //   Prints help info to the given output stream.
 //
 // Inputs:
 //   stream - The output stream to write the usage information to.
-//
-// Result:
-//   None.
+//   module - Non-NULL if a compiled module is provided, NULL otherwise.
 //
 // Side effects:
 //   Outputs usage information to the given stream.
-static void PrintUsage(FILE* stream)
+static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
 {
+  fprintf(stream, "Usage: fble-app [OPTION...]%s\n",
+      module == NULL ? " -m MODULE_PATH" : "");
   fprintf(stream, "%s",
-      "Usage: fble-app [--profile FILE] " FBLE_MAIN_USAGE_SUMMARY "\n"
-      "Execute an fble app process.\n"
-      FBLE_MAIN_USAGE_DETAIL
+      "\n"
+      "Description:\n"
+      "  Runs an fble app program.\n"
+      "\n"
       "Options:\n"
+      "  -h, --help\n"
+      "     Print this help message and exit.\n");
+  if (module == NULL) {
+    fprintf(stream, "%s",
+      "  -I DIR\n"
+      "     Adds DIR to the module search path.\n"
+      "  -m, --module MODULE_PATH\n"
+      "     The path of the module to get dependencies for.\n");
+  }
+  fprintf(stream, "%s",
       "  --profile FILE\n"
       "    Writes a profile of the app to FILE\n"
-      "Example: fble-app --profile app.prof " FBLE_MAIN_USAGE_EXAMPLE "\n"
-  );
+      "\n"
+      "Exit Status:\n"
+      "  0 on success.\n"
+      "  1 on failure.\n"
+      "  2 on usage error.\n"
+      "\n"
+      "Example:\n");
+  fprintf(stream, "%s%s\n",
+      "  fble-app --profile foo.prof ",
+      module == NULL ? "-I prgms -m /Foo% " : "");
+}
+
+// LoadModule --
+//   Load a compiled or interpreted module.
+//
+// Inputs:
+//   heap - the value heap.
+//   profile - the profile.
+//   module - the compiled module, or NULL if we should load interpreted.
+//   search_path - search path to use when loading interpreted.
+//   module_path - module path to use when loading interpreted.
+//
+// Result:
+//   The loaded module, or NULL in case of error.
+//
+// Side effects:
+// * The user should call FbleReleaseValue when done with the returned value.
+// * Prints messages to stderr in case of error.
+static FbleValue* LoadModule(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath search_path, const char* module_path)
+{
+  if (module != NULL) {
+    return FbleLinkFromCompiled(module, heap, profile);
+  }
+
+  FbleModulePath* mpath = FbleParseModulePath(module_path);
+  if (mpath == NULL) {
+    return NULL;
+  }
+
+  FbleValue* linked = FbleLinkFromSource(heap, search_path, mpath, profile);
+  FbleFreeModulePath(mpath);
+  return linked;
 }
 
 // Draw --
@@ -407,75 +466,87 @@ static Uint32 OnTimer(Uint32 interval, void* param)
   return 0;
 }
 
-// debug --
-//   Placeholder to force linking with some functions that are useful for
-//   debugging.
-int debug()
+// FbleAppMain -- See documentation in app.fble.h
+int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module)
 {
-  intptr_t x = 0;
-  x += (intptr_t)(FbleCharValueAccess);
-  x += (intptr_t)(FbleIntValueAccess);
-  x += (intptr_t)(FbleStringValueAccess);
-  return x;
-}
-
-// main --
-//   The main entry point for fble-app.
-//
-// Inputs:
-//   argc - The number of command line arguments.
-//   argv - The command line arguments.
-//
-// Results:
-//   0 on success, non-zero on error.
-//
-// Side effects:
-//   Performs IO based on the execution of FILE. Prints an error message to
-//   standard error if an error is encountered.
-int main(int argc, char* argv[])
-{
+  // To ease debugging of FbleAppMain programs, cause the following useful
+  // functions to be linked in:
+  (void)(FbleCharValueAccess);
+  (void)(FbleIntValueAccess);
+  (void)(FbleStringValueAccess);
+
+  FbleSearchPath search_path;
+  FbleVectorInit(search_path);
+  const char* module_path = NULL;
+  const char* profile_file = NULL;
+  bool help = false;
+  bool error = false;
+
   argc--;
   argv++;
-  if (argc > 0 && strcmp("--help", *argv) == 0) {
-    PrintUsage(stdout);
-    return 0;
+  while (!error && argc > 0) {
+    if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (!module && FbleParseSearchPathArg("-I", &search_path, &argc, &argv, &error)) continue;
+    if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
+    if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
+    if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
+  }
+
+  if (help) {
+    PrintUsage(stdout, module);
+    FbleFree(search_path.xs);
+    return EX_SUCCESS;
+  }
+
+  if (error) {
+    PrintUsage(stderr, module);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
+  }
+
+  if (!module && module_path == NULL) {
+    fprintf(stderr, "missing required --module option.\n");
+    PrintUsage(stderr, module);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
   }
 
   FILE* fprofile = NULL;
-  if (argc > 1 && strcmp("--profile", *argv) == 0) {
-    fprofile = fopen(argv[1], "w");
+  if (profile_file != NULL) {
+    fprofile = fopen(profile_file, "w");
     if (fprofile == NULL) {
-      fprintf(stderr, "unable to open %s for writing.\n", argv[1]);
-      return 1;
+      fprintf(stderr, "unable to open %s for writing.\n", profile_file);
+      FbleFree(search_path.xs);
+      return EX_FAILURE;
     }
-
-    argc -= 2;
-    argv += 2;
   }
 
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* linked = FbleMain(heap, profile, FbleCompiledMain, argc, argv);
-  if (linked == NULL) {
+  FbleValue* app = LoadModule(heap, profile, module, search_path, module_path);
+  FbleFree(search_path.xs);
+  if (app == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return 1;
+    return EX_FAILURE;
   }
 
-  FbleValue* func = FbleEval(heap, linked, profile);
-  FbleReleaseValue(heap, linked);
+  FbleValue* func = FbleEval(heap, app, profile);
+  FbleReleaseValue(heap, app);
 
   if (func == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return 1;
+    return EX_FAILURE;
   }
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0) {
     SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
     FbleFreeValueHeap(heap);
-    return 1;
+    return EX_FAILURE;
   }
 
   SDL_Window* window = SDL_CreateWindow(
@@ -539,7 +610,7 @@ int main(int argc, char* argv[])
     FbleFreeProfile(profile);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    return 1;
+    return EX_FAILURE;
   }
 
   FbleValue* value = FbleExec(heap, &io._base, proc, profile);
@@ -566,5 +637,5 @@ int main(int argc, char* argv[])
     }
   }
 
-  return 0;
+  return EX_SUCCESS;
 }

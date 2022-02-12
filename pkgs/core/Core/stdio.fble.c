@@ -1,6 +1,6 @@
 
 // stdio.fble.c --
-//   Implementation of FbleStdio execution function.
+//   Implementation of FbleStdio and FbleStdioMain functions.
 
 
 #define _GNU_SOURCE     // for getline
@@ -110,7 +110,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 //   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
 {
-  fprintf(stream, "Usage: fble-stdio [OPTION...]%s ARGS",
+  fprintf(stream, "Usage: fble-stdio [OPTION...]%s ARGS\n",
       module == NULL ? " -m MODULE_PATH" : "");
   fprintf(stream, "%s",
       "\n"
@@ -319,7 +319,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   if (stdio == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return 1;
+    return EX_FAILURE;
   }
 
   FbleValueV stdio_args;

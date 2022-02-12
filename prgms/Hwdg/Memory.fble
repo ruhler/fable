@@ -11,38 +11,38 @@
 #   An unbounded 2D array of memory.
 #
 # Each location in the memory is either empty or contains data 0 or 1.
-@ Memory@ = /Map%.Map@<Coord@, Data@>;
+@ Memory@ = /Core/Map%.Map@<Coord@, Data@>;
 
 # Empty -- 
 #   A completely empty memory.
-Memory@ Empty = /Map%.Empty<Coord@, Data@>;
+Memory@ Empty = /Core/Map%.Empty<Coord@, Data@>;
 
 # Get --
 #   Get the value of memory at a particular location.
 (Memory@, Coord@) { Maybe@<Data@>; } Get = {
-  /Map%.Lookup<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+  /Core/Map%.Lookup<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
 };
 
 # Put -- 
 #   Set the data value at a particular location.
 (Memory@, Coord@, Data@) { Memory@; } Set = {
-  /Map%.Insert<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+  /Core/Map%.Insert<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
 };
 
 # Clear --
 #   Clear the data value of a particular location, leaving the location empty.
 (Memory@, Coord@) { Memory@; } Clear = {
-  /Map%.Delete<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
+  /Core/Map%.Delete<Coord@>(/Hwdg/Coord%.Lt)<Data@>;
 };
 
 # Eq --
 #   Test whether two memories contains the same contents.
 /Core/Eq%.Eq@<Memory@> Eq = {
-  /Map/Eq%.Eq<Coord@, Data@>(/Hwdg/Coord%.Eq, /Hwdg/Data%.Eq);
+  /Core/Map/Eq%.Eq<Coord@, Data@>(/Hwdg/Coord%.Eq, /Hwdg/Data%.Eq);
 };
 
 /Core/Show%.Show@<Memory@> Show = {
-  /Map/Show%.Show<Coord@, Data@>(/Hwdg/Coord%.Show, /Hwdg/Data%.Show);
+  /Core/Map/Show%.Show<Coord@, Data@>(/Hwdg/Coord%.Show, /Hwdg/Data%.Show);
 };
 
 # ForEach --
@@ -66,7 +66,7 @@ Memory@ Empty = /Map%.Empty<Coord@, Data@>;
 #     b = body(k, coord, data)
 #   return b
 <@ B@>(Memory@, B@, (Coord@, Data@, B@) { B@; }) { B@; }
-ForEach = <@ B@> { /Map%.ForEach<Coord@, Data@, B@>; };
+ForEach = <@ B@> { /Core/Map%.ForEach<Coord@, Data@, B@>; };
 
 # Cell@ --
 #   Describes the data value at a particular location in memory.

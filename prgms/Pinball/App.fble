@@ -1,19 +1,19 @@
 
-@ App@ = /App%.App@;
-@ AppIO@ = /App%.AppIO@;
-@ Event@ = /App%.Event@;
-@ Effect@ = /App%.Effect@;
+@ App@ = /App/App%.App@;
+@ AppIO@ = /App/App%.AppIO@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
 
-@ Drawing@ = /Drawing%.Drawing@;
-@ Point@ = /Drawing%.Point@;
-% Blank = /Drawing%.Blank;
-% Color = /Drawing%.Color;
-% Over = /Drawing%.Over;
-% Triangle = /Drawing%.Triangle;
-% Rect = /Drawing%.Rect;
-% Affine = /Drawing%.Affine;
-% Drawings = /Drawing%.Drawings;
-% Translate = /Drawing%.Translate;
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Blank = /App/Drawing%.Blank;
+% Color = /App/Drawing%.Color;
+% Over = /App/Drawing%.Over;
+% Triangle = /App/Drawing%.Triangle;
+% Rect = /App/Drawing%.Rect;
+% Affine = /App/Drawing%.Affine;
+% Drawings = /App/Drawing%.Drawings;
+% Translate = /App/Drawing%.Translate;
 
 % Circle = /Graphics/2D/Circle%.Circle;
 

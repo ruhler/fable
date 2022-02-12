@@ -1,5 +1,6 @@
 // fble-stdio
-//   A program to run interpreted fble programs with a /Stdio%.Stdio@ interface.
+//   A program to run interpreted fble programs with a /Core/Stdio%.Stdio@
+//   interface.
 
 #include "Core/stdio.fble.h"  // for FbleStdioMain
 

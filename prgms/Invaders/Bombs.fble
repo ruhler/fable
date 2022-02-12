@@ -3,10 +3,10 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Drawing@ = /Drawing%.Drawing@;
-% Blank = /Drawing%.Blank;
-% Over = /Drawing%.Over;
-% Translate = /Drawing%.Translate;
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Blank = /App/Drawing%.Blank;
+% Over = /App/Drawing%.Over;
+% Translate = /App/Drawing%.Translate;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;

@@ -1,12 +1,12 @@
 
-@ Drawing@ = /Drawing%.Drawing@;
-@ Color@ = /Drawing%.Color@;
-@ Point@ = /Drawing%.Point@;
-% Blank = /Drawing%.Blank;
-% Drawings = /Drawing%.Drawings;
-% Over = /Drawing%.Over;
-% Rect = /Drawing%.Rect;
-% Translate = /Drawing%.Translate;
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+@ Point@ = /App/Drawing%.Point@;
+% Blank = /App/Drawing%.Blank;
+% Drawings = /App/Drawing%.Drawings;
+% Over = /App/Drawing%.Over;
+% Rect = /App/Drawing%.Rect;
+% Translate = /App/Drawing%.Translate;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;

@@ -10,12 +10,12 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 
-% Map = /Map/Map%;
+% Map = /Core/Map/Map%;
 
-<@,@>@ Map@ = /Map%.Map@;
-@ _@ = /Map%._@;
-<@,@>@ Entry@ = /Map%.Entry@;
-<@,@,@>% ForEach = /Map%.ForEach;
+<@,@>@ Map@ = /Core/Map%.Map@;
+@ _@ = /Core/Map%._@;
+<@,@>@ Entry@ = /Core/Map%.Entry@;
+<@,@,@>% ForEach = /Core/Map%.ForEach;
 
 
 # IsEmpty --

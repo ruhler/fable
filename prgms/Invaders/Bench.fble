@@ -1,6 +1,6 @@
 
-@ Key@ = /App%.Key@;
-@ Event@ = /App%.Event@;
+@ Key@ = /App/App%.Key@;
+@ Event@ = /App/App%.Event@;
 
 % Int = /Core/Int/Lit%.Int;
 

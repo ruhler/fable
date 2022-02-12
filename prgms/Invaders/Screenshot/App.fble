@@ -1,12 +1,12 @@
 
-@ App@ = /App%.App@;
-@ AppIO@ = /App%.AppIO@;
-@ Event@ = /App%.Event@;
-@ Effect@ = /App%.Effect@;
+@ App@ = /App/App%.App@;
+@ AppIO@ = /App/App%.AppIO@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
 
-@ Drawing@ = /Drawing%.Drawing@;
-@ Point@ = /Drawing%.Point@;
-% Affine = /Drawing%.Affine;
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Point@ = /App/Drawing%.Point@;
+% Affine = /App/Drawing%.Affine;
 
 % Neg = /Core/Int%.Neg;
 

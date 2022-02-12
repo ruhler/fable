@@ -450,7 +450,7 @@ eval {
     asm $target.o $target.s
     bin $target "$target.o" \
       "$lflags -L $::out/fble/src -L $::out/pkgs/core -lfble-core -lfble" \
-      "$::libfble $::out/pkgs/core/libfble-core.a $args"
+      "$::libfble $::out/pkgs/core/libfble-core.a" {*}$args
   }
 
   # /Core/Stdio/Cat% interpreted test.
@@ -467,27 +467,65 @@ eval {
     "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out > /dev/null"
 }
 
+# fble 'app' library package.
+eval {
+  set objs [list]
+
+  # .c library files.
+  foreach {x} { App/app.fble } {
+    lappend objs $::out/pkgs/app/$x.o
+    obj $::out/pkgs/app/$x.o pkgs/app/$x.c "-I /usr/include/SDL2 -I fble/include -I pkgs/core -I pkgs/app"
+  }
+
+  # .fble library files.
+  foreach dir [dirs pkgs/app ""] {
+    lappend build_ninja_deps "pkgs/app/$dir"
+    foreach {x} [glob -tails -directory pkgs/app -nocomplain -type f $dir/*.fble] {
+      set mpath "/[file rootname $x]%"
+
+      # Generate a .d file to capture dependencies.
+      build $::out/pkgs/app/$x.d "$::out/tools/fble-deps pkgs/app/$x" \
+        "$::out/tools/fble-deps -I pkgs/core -I pkgs/app -t $::out/pkgs/app/$x.d -m $mpath > $::out/pkgs/app/$x.d" \
+        "depfile = $::out/pkgs/app/$x.d"
+
+      fbleobj $::out/pkgs/app/$x.o $::out/tools/fble-compile "-c -I pkgs/core -I pkgs/app -m $mpath" $::out/pkgs/app/$x.d
+      lappend objs $::out/pkgs/app/$x.o
+    }
+  }
+
+  lib $::out/pkgs/app/libfble-app.a $objs
+
+  # fble-app program.
+  obj $::out/pkgs/app/App/fble-app.o pkgs/app/App/fble-app.c \
+    "-I fble/include -I pkgs/core -I pkgs/app"
+  bin $::out/pkgs/app/App/fble-app "$::out/pkgs/app/App/fble-app.o" \
+    "-L $::out/fble/src -L $::out/pkgs/app -L $::out/pkgs/core -lfble-app -lfble-core -lfble -lSDL2 -lGL" \
+    "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a"
+
+  # Build an fble-app compiled binary.
+  #
+  # Inputs:
+  #   target - the file to build.
+  #   path - the module path to use as App@ main.
+  #   lflags - library flags, e.g. "-L foo/ -lfoo".
+  #   args - optional additional dependencies.
+  proc app { target path lflags args} {
+    build $target.s $::out/tools/fble-compile \
+      "$::out/tools/fble-compile --main FbleAppMain -m $path > $target.s"
+    asm $target.o $target.s
+    bin $target "$target.o" \
+      "$lflags -L $::out/fble/src -L $::out/pkgs/core -L $::out/pkgs/app -lfble-app -lfble-core -lfble -lSDL2 -lGL" \
+      "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a $args"
+  }
+}
+
 # fble programs binaries
-foreach {x} { fble-md5 fble-app } {
+foreach {x} { fble-md5 } {
   obj $::out/prgms/$x.o prgms/$x.c \
     "-I fble/include -I pkgs/core -I /usr/include/SDL2"
   bin $::out/prgms/$x "$::out/prgms/$x.o" \
     "-L $::out/fble/src -L $::out/pkgs/core -lfble-core -lfble -lSDL2 -lGL" \
     "$::libfble $::out/pkgs/core/libfble-core.a"
-}
-
-# Objects for compiled variations of the fble programs binaries.
-obj $::out/prgms/fble-compiled-app.o prgms/fble-app.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include -I pkgs/core -I /usr/include/SDL2"
-
-# Build an fble-app compiled binary.
-proc app { name path } {
-  build $::out/prgms/$name.s $::out/tools/fble-compile \
-    "$::out/tools/fble-compile -e FbleCompiledMain -m $path > $::out/prgms/$name.s"
-  asm $::out/prgms/$name.o $::out/prgms/$name.s ""
-  bin $::out/prgms/$name \
-    "$::out/prgms/$name.o $::out/prgms/fble-compiled-app.o" \
-    "-L $::out/fble/src -L $::out/pkgs/core -L $::out/prgms -lfble-prgms -lfble-core -lfble -lSDL2 -lGL" \
-    "$::libfble $::libfbleprgms $::out/pkgs/core/libfble-core.a"
 }
 
 # fble-prgms library
@@ -500,10 +538,10 @@ eval {
 
       # Generate a .d file to capture dependencies.
       build $::out/prgms/$x.d "$::out/tools/fble-deps prgms/$x" \
-        "$::out/tools/fble-deps -I pkgs/core -I prgms -t $::out/prgms/$x.d -m $mpath > $::out/prgms/$x.d" \
+        "$::out/tools/fble-deps -I pkgs/core -I pkgs/app -I prgms -t $::out/prgms/$x.d -m $mpath > $::out/prgms/$x.d" \
         "depfile = $::out/prgms/$x.d"
 
-      fbleobj $::out/prgms/$x.o $::out/tools/fble-compile "-c -I pkgs/core -I prgms -m $mpath" $::out/prgms/$x.d
+      fbleobj $::out/prgms/$x.o $::out/tools/fble-compile "-c -I pkgs/core -I pkgs/app -I prgms -m $mpath" $::out/prgms/$x.d
       lappend objs $::out/prgms/$x.o
     }
   }
@@ -516,18 +554,18 @@ eval {
 # fble-disassemble test
 test $::out/tools/fble-disassemble.tr \
   "$::out/tools/fble-disassemble $::out/prgms/Fble/Tests.fble.d" \
-  "$::out/tools/fble-disassemble -I pkgs/core -I prgms -m /Fble/Tests% > $::out/prgms/Fble/Tests.fbls"
+  "$::out/tools/fble-disassemble -I pkgs/core -I pkgs/app -I prgms -m /Fble/Tests% > $::out/prgms/Fble/Tests.fbls"
 
 # Fble/Tests.fble tests
 test $::out/prgms/Fble/fble-tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/prgms/Fble/Tests.fble.d" \
-  "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -I prgms -m /Fble/Tests%" "pool = console"
+  "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -I pkgs/app -I prgms -m /Fble/Tests%" "pool = console"
 
 # fble-md5 test
 test $::out/prgms/fble-md5.tr "$::out/prgms/fble-md5 $::out/prgms/Md5/Main.fble.d" \
-  "$::out/prgms/fble-md5 /dev/null -I pkgs/core -I prgms /Md5/Main% > $::out/prgms/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/prgms/fble-md5.out > /dev/null"
+  "$::out/prgms/fble-md5 /dev/null -I pkgs/core -I pkgs/app -I prgms /Md5/Main% > $::out/prgms/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/prgms/fble-md5.out > /dev/null"
 
-stdio $::out/prgms/fble-tests "/Fble/Tests%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
-stdio $::out/prgms/fble-bench "/Fble/Bench%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
+stdio $::out/prgms/fble-tests "/Fble/Tests%" "-L $::out/pkgs/app -L $::out/prgms -lfble-prgms -lfble-app" "$::libfbleprgms $::out/pkgs/app/libfble-app.a"
+stdio $::out/prgms/fble-bench "/Fble/Bench%" "-L $::out/pkgs/app -L $::out/prgms -lfble-prgms -lfble-app" "$::libfbleprgms $::out/pkgs/app/libfble-app.a"
 stdio $::out/prgms/fble-debug-test "/Fble/DebugTest%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
 
 
@@ -561,9 +599,9 @@ test $::out/prgms/fble-debug-test.tr \
   "$::out/prgms/fble-debug-test tools/fble-debug-test.exp" \
   "expect tools/fble-debug-test.exp > /dev/null"
 
-app fble-invaders "/Invaders/App%"
-app fble-graphics "/Graphics/App%"
-app fble-pinball "/Pinball/App%"
+app $::out/prgms/Invaders/fble-invaders "/Invaders/App%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
+app $::out/prgms/Graphics/fble-graphics "/Graphics/App%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
+app $::out/prgms/Pinball/fble-pinball "/Pinball/App%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
 
 # test summary
 build $::out/tests.txt "$::tests" "echo $::tests > $::out/tests.txt"

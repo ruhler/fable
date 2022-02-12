@@ -36,12 +36,12 @@ Eq@<Coord@> LtCoord = (Coord@ a, Coord@ b) {
 };
 
 # The world is a set of Coord@ where there are live cells.
-@ World@ = /Map%.Map@<Coord@, Unit@>;
-% EqWorld = /Map/Eq%.Eq<Coord@, Unit@>(EqCoord, /Core/Unit/Eq%.Eq);
+@ World@ = /Core/Map%.Map@<Coord@, Unit@>;
+% EqWorld = /Core/Map/Eq%.Eq<Coord@, Unit@>(EqCoord, /Core/Unit/Eq%.Eq);
 % W = @(
-  Empty: /Map%.Empty<Coord@, Unit@>,
-  Insert: /Map%.Insert<Coord@>(LtCoord)<Unit@>,
-  ForEach: /Map%.ForEach<Coord@, Unit@>
+  Empty: /Core/Map%.Empty<Coord@, Unit@>,
+  Insert: /Core/Map%.Insert<Coord@>(LtCoord)<Unit@>,
+  ForEach: /Core/Map%.ForEach<Coord@, Unit@>
 );
 
 # Create a world from a list of coordinates of live cells.
@@ -74,11 +74,11 @@ Eq@<Coord@> LtCoord = (Coord@ a, Coord@ b) {
 };
 
 # Map from Coord to the status of the cell.
-@ Cand@ = /Map%.Map@<Coord@, Status@>;
+@ Cand@ = /Core/Map%.Map@<Coord@, Status@>;
 % C = @(
-  Empty: /Map%.Empty<Coord@, Status@>,
-  InsertWith: /Map%.InsertWith<Coord@>(LtCoord)<Status@>,
-  ForEach: /Map%.ForEach<Coord@, Status@>
+  Empty: /Core/Map%.Empty<Coord@, Status@>,
+  InsertWith: /Core/Map%.InsertWith<Coord@>(LtCoord)<Status@>,
+  ForEach: /Core/Map%.ForEach<Coord@, Status@>
 );
 
 # Advance the world by one unit of time.

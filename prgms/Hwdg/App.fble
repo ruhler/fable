@@ -1,20 +1,20 @@
 
-@ App@ = /App%.App@;
-@ AppIO@ = /App%.AppIO@;
-@ Event@ = /App%.Event@;
-@ Effect@ = /App%.Effect@;
+@ App@ = /App/App%.App@;
+@ AppIO@ = /App/App%.AppIO@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+@ Point@ = /App/Drawing%.Point@;
+% Color = /App/Drawing%.Color;
+% Rect = /App/Drawing%.Rect;
+% Over = /App/Drawing%.Over;
+% Affine = /App/Drawing%.Affine;
 
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
-
-@ Drawing@ = /Drawing%.Drawing@;
-@ Color@ = /Drawing%.Color@;
-@ Point@ = /Drawing%.Point@;
-% Color = /Drawing%.Color;
-% Rect = /Drawing%.Rect;
-% Over = /Drawing%.Over;
-% Affine = /Drawing%.Affine;
 
 @ Coord@ = /Hwdg/Coord%.Coord@;
 

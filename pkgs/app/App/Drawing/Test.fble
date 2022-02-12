@@ -1,11 +1,11 @@
 
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+@ Point@ = /App/Drawing%.Point@;
+
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
-
-@ Drawing@ = /Drawing%.Drawing@;
-@ Color@ = /Drawing%.Color@;
-@ Point@ = /Drawing%.Point@;
 
 @ Int@ = /Core/Int%.Int@;
 % Add = /Core/Int%.Add;
@@ -55,16 +55,16 @@
     Str|', ', /Core/Int/Show%.Show(c.b), Str|')'];
 };
 
-@ Drawn@ = /Map%.Map@<Point@, Color@>;
+@ Drawn@ = /Core/Map%.Map@<Point@, Color@>;
 
-% Insert = /Map%.Insert<Point@>(LtPoint)<Color@>;
+% Insert = /Core/Map%.Insert<Point@>(LtPoint)<Color@>;
 
 @ Pixel@ = *(Int@ x, Int@ y, Color@ color);
 
 # Drawn --
 #   Create a drawing by listing raw pixels.
 (List@<Pixel@>) { Drawn@; } Drawn = (List@<Pixel@> pixels) {
-  pixels.?(nil: /Map%.Empty<Point@, Color@>);
+  pixels.?(nil: /Core/Map%.Empty<Point@, Color@>);
 
   Pixel@ head = pixels.cons.head;
   Insert(Drawn(pixels.cons.tail), Point@(head.x, head.y), head.color);
@@ -117,14 +117,14 @@ Draw_ = {
 };
 
 (Drawing@) { Drawn@; } Draw = (Drawing@ d) {
-  Draw_(Point@(Int|1, Int|1), Point@(Int|0, Int|0), d, /Map%.Empty<Point@, Color@>);
+  Draw_(Point@(Int|1, Int|1), Point@(Int|0, Int|0), d, /Core/Map%.Empty<Point@, Color@>);
 };
 
 (Drawn@, Drawn@) { TestResult@; }
 AssertEquals = (Drawn@ expected, Drawn@ actual) {
   /Core/Test%.AssertEquals<Drawn@>(
-    /Map/Eq%.Eq<Point@, Color@>(EqPoint, EqColor),
-    /Map/Show%.Show<Point@, Color@>(ShowPoint, ShowColor),
+    /Core/Map/Eq%.Eq<Point@, Color@>(EqPoint, EqColor),
+    /Core/Map/Show%.Show<Point@, Color@>(ShowPoint, ShowColor),
     expected, actual);
 };
 

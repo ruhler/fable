@@ -111,9 +111,9 @@
 # setting its value to the polarity that it shows up with.
 (Formula@) { Maybe@<Var@>; } GetPure = {
   @ Status@ = +(Bool@ pure, Unit@ impure);
-  @ Map@ = /Map%.Map@<VarId@, Status@>;
-  % Empty = /Map%.Empty<VarId@, Status@>;
-  % InsertWith = /Map%.InsertWith<VarId@>(/Core/Int/Eq%.Lt)<Status@>;
+  @ Map@ = /Core/Map%.Map@<VarId@, Status@>;
+  % Empty = /Core/Map%.Empty<VarId@, Status@>;
+  % InsertWith = /Core/Map%.InsertWith<VarId@>(/Core/Int/Eq%.Lt)<Status@>;
 
   (Formula@ f) {
     Map@ map = /Core/List%.ForEach<Clause@, Map@>(f, Empty,
@@ -134,7 +134,7 @@
     # TODO: It would be nice if we could break out of the for loop right
     # away instead of always traversing the entire map. Or better yet, return
     # the list of all pure literals intead of just one.
-    /Map%.ForEach<VarId@, Status@, Maybe@<Var@>>(map, Nothing<Var@>,
+    /Core/Map%.ForEach<VarId@, Status@, Maybe@<Var@>>(map, Nothing<Var@>,
       (VarId@ v, Status@ s, Maybe@<Var@> p) {
         p.?(just: p, nothing: s.?(pure: Just<Var@>(Var@(v, s.pure)), impure: p));
     });

@@ -1,8 +1,8 @@
 
 @ Char@ = /Core/Char%.Char@;
 <@>% Append = /Core/List%.Append;
-<@,@>@ Map@ = /Map%.Map@;
-<@,@,@>% ForEach = /Map%.ForEach;
+<@,@>@ Map@ = /Core/Map%.Map@;
+<@,@,@>% ForEach = /Core/Map%.ForEach;
 <@>@ Show@ = /Core/Show%.Show@;
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

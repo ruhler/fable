@@ -1,16 +1,16 @@
 
-@ Drawing@ = /Drawing%.Drawing@;
-@ Color@ = /Drawing%.Color@;
-@ Point@ = /Drawing%.Point@;
-% Color = /Drawing%.Color;
+@ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
+@ Point@ = /App/Drawing%.Point@;
+% Color = /App/Drawing%.Color;
 
-@ Drawn@ = /Drawing/Test%.Drawn@;
-@ Pixel@ = /Drawing/Test%.Pixel@;
-% Drawn = /Drawing/Test%.Drawn;
-% Draw = /Drawing/Test%.Draw;
-% LtPoint = /Drawing/Test%.LtPoint;
-% EqColor = /Drawing/Test%.EqColor;
-% ShowColor = /Drawing/Test%.ShowColor;
+@ Drawn@ = /App/Drawing/Test%.Drawn@;
+@ Pixel@ = /App/Drawing/Test%.Pixel@;
+% Drawn = /App/Drawing/Test%.Drawn;
+% Draw = /App/Drawing/Test%.Draw;
+% LtPoint = /App/Drawing/Test%.LtPoint;
+% EqColor = /App/Drawing/Test%.EqColor;
+% ShowColor = /App/Drawing/Test%.ShowColor;
 
 @ Vec@ = /Graphics/3D%.Vec@;
 
@@ -61,7 +61,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Far Triangle', !({
@@ -81,7 +81,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Close Triangle', !({
@@ -108,7 +108,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Translated Triangle', !({
@@ -135,7 +135,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Rotated Triangle', !({
@@ -164,7 +164,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'1 Vertex Clip Right', !({
@@ -188,7 +188,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'2 Vertex Clip Right', !({
@@ -208,7 +208,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'3 Vertex Clip Right', !({
@@ -224,7 +224,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ wnt = Drawn[];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'1 Vertex Clip Left', !({
@@ -247,7 +247,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Full Screen Clipped Triangle', !({
@@ -268,7 +268,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   })),
 
   Test(Str|'Close Up Full Screen Clipped Triangle', !({
@@ -291,7 +291,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     # TODO: Debug this test failure.
-    /Core/Test%.ExpectFails(/Drawing/Test%.AssertEquals(wnt, got), Str|'');
+    /Core/Test%.ExpectFails(/App/Drawing/Test%.AssertEquals(wnt, got), Str|'');
   })),
 
   Test(Str|'X/Y Clip Issue', !({
@@ -307,7 +307,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     Drawn@ drawn = Draw(drawing);
 
     # Verify we don't have a hole in the lower left corner.
-    Maybe@<Color@> got = /Map%.Lookup<Point@>(LtPoint)<Color@>(
+    Maybe@<Color@> got = /Core/Map%.Lookup<Point@>(LtPoint)<Color@>(
       drawn, Point@(Neg(Int|32), Neg(Int|24)));
     Maybe@<Color@> wnt = Just<Color@>(Color.Green);
       
@@ -348,7 +348,7 @@ Test@ Tests = TestSuite(Str|'Graphics.Triangle', List<Test@>[
     ];
     Drawn@ got = Draw(drawing);
       
-    /Drawing/Test%.AssertEquals(wnt, got);
+    /App/Drawing/Test%.AssertEquals(wnt, got);
   }))
 
   # TODO:

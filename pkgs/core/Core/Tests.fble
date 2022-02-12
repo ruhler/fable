@@ -17,6 +17,7 @@ Test@ Tests = TestSuite(Str|Core, List<Test@>[
   /Core/Int/Tests%.Tests,
   /Core/List/Tests%.Tests,
   /Core/Maybe/Tests%.Tests,
+  /Core/Map/Tests%.Tests,
   /Core/String/Tests%.Tests,
   /Core/Test/Tests%.Tests
 ]);

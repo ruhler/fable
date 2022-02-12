@@ -4,10 +4,10 @@
 % False = /Core/Bool%.False;
 % Or = /Core/Bool%.Or;
 
-@ Drawing@ = /Drawing%.Drawing@;
-% Blank = /Drawing%.Blank;
-% Over = /Drawing%.Over;
-% Translate = /Drawing%.Translate;
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Blank = /App/Drawing%.Blank;
+% Over = /App/Drawing%.Over;
+% Translate = /App/Drawing%.Translate;
 
 @ Bombs@ = /Invaders/Bombs%.Bombs@;
 @ Kind@ = /Invaders/Bombs%.Kind@;
@@ -96,7 +96,7 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 # Set@ --
 #   A set of aliens, to keep track of which aliens are alive or dead.
 # A set of aliens.
-@ Set@ = /Map%.Map@<Alien@, Unit@>;
+@ Set@ = /Core/Map%.Map@<Alien@, Unit@>;
 
 # AlienLt, AlienLe -- 
 #   Less than comparison operations for Aliens.
@@ -115,19 +115,19 @@ Alien@ FirstAlien = Alien@(Int|0, Int|0);
 # AllAliens --
 #   The set of all aliens.
 Set@ AllAliens = {
-  % Insert = /Map%.Insert<Alien@>(AlienLt)<Unit@>;
-  DoWhile<Alien@, Set@>(FirstAlien, Next, /Map%.Empty<Alien@, Unit@>, 
+  % Insert = /Core/Map%.Insert<Alien@>(AlienLt)<Unit@>;
+  DoWhile<Alien@, Set@>(FirstAlien, Next, /Core/Map%.Empty<Alien@, Unit@>, 
     (Alien@ a, Set@ s) {
       Insert(s, a, Unit);
     });
 };
 
-(Set@) { Bool@; } IsEmpty = /Map%.IsEmpty<Alien@, Unit@>;
+(Set@) { Bool@; } IsEmpty = /Core/Map%.IsEmpty<Alien@, Unit@>;
 
 # Contains --
 #   Returns true if the set contains the given alien, false otherwise.
 (Set@, Alien@) { Bool@; } Contains = {
-  % Lookup = /Map%.Lookup<Alien@>(AlienLt)<Unit@>;
+  % Lookup = /Core/Map%.Lookup<Alien@>(AlienLt)<Unit@>;
   (Set@ set, Alien@ alien) {
     Lookup(set, alien).?(just: True, nothing: False);
   };
@@ -135,7 +135,7 @@ Set@ AllAliens = {
 
 # Remove --
 #   Remove an element of the set.
-(Set@, Alien@) { Set@; } Remove = /Map%.Delete<Alien@>(AlienLt)<Unit@>;
+(Set@, Alien@) { Set@; } Remove = /Core/Map%.Delete<Alien@>(AlienLt)<Unit@>;
 
 # NextAlive --
 #   Returns the next live alien in the given set, or Nothing if we have

@@ -5,7 +5,7 @@
 
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
-<@,@>@ Map@ = /Map%.Map@;
+<@,@>@ Map@ = /Core/Map%.Map@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -16,7 +16,7 @@
 
 # Empty -- 
 #   The empty set.
-Set@ Empty = <@ T@> { /Map%.Empty<T@, Unit@>; };
+Set@ Empty = <@ T@> { /Core/Map%.Empty<T@, Unit@>; };
 
 # IsEmpty --
 #   Check if a set is empty.
@@ -30,7 +30,7 @@ Set@ Empty = <@ T@> { /Map%.Empty<T@, Unit@>; };
 # Returns:
 #   True if the set is empty, false otherwise.
 <@ T@>(Set@<T@>) { Bool@; } IsEmpty = <@ T@>(Set@<T@> set) {
-  /Map%.IsEmpty<T@, Unit@>(set);
+  /Core/Map%.IsEmpty<T@, Unit@>(set);
 };
 
 # Contains --
@@ -52,7 +52,7 @@ Set@ Empty = <@ T@> { /Map%.Empty<T@, Unit@>; };
 #   Contains(set, value);
 <@ T@>(Eq@<T@>)(Set@<T@>, T@) { Bool@; }
 Contains = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
-  /Map%.Lookup<T@>(lt)<Unit@>(set, element).?(just: True, nothing: False);
+  /Core/Map%.Lookup<T@>(lt)<Unit@>(set, element).?(just: True, nothing: False);
 };
 
 # Insert --
@@ -71,7 +71,7 @@ Contains = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
 #   Insert(set, Str(Chars|foo));
 <@ T@>(Eq@<T@>)(Set@<T@>, T@) { Set@<T@>; }
 Insert = <@ T@>(Eq@<T@> lt)(Set@<T@> set, T@ element) {
-  /Map%.Insert<T@>(lt)<Unit@>(set, element, Unit);
+  /Core/Map%.Insert<T@>(lt)<Unit@>(set, element, Unit);
 };
 
 @(Set@, Empty, IsEmpty, Contains, Insert);

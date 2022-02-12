@@ -1,7 +1,18 @@
 * Clean up option parsing for the rest of the executables.
- - Move fble-stdio-test binary to better place in out directory.
  - Get rid of FbleMain.
  - Clean up command line argument parsing for all binaries using FbleMain.
+* Check if Rat% module is unused, and if so, delete it.
+
+* Consider factoring out common code for LoadModule
+  Which loads either compiled or interpreted module.
+
+* Make a separate fble-core-tests for /Core/Tests%
+  Instead of doing it as part of an overall /Fble/Tests%.
+
+* Add an app package specific test case.
+  Maybe a simple demo app?
+* Factor out common code in build.ninja.tcl for generating fble package
+  libraries.
 
 * [lib] Set up build to only have access to explicit package list
  - Move rest of .fble modules from prgms to appropriate pkgs directory.
