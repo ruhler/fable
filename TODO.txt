@@ -1,10 +1,5 @@
-* Clean up option parsing for the rest of the executables.
- - Get rid of FbleMain.
- - Clean up command line argument parsing for all binaries using FbleMain.
-* Check if Rat% module is unused, and if so, delete it.
-
-* Consider factoring out common code for LoadModule
-  Which loads either compiled or interpreted module.
+* Get rid of FbleMain.
+   fble-md5, fble-test, fble-mem-test, fble-profiles-test
 
 * Make a separate fble-core-tests for /Core/Tests%
   Instead of doing it as part of an overall /Fble/Tests%.

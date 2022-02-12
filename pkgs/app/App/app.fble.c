@@ -46,7 +46,6 @@ typedef struct {
 } AppIO;
 
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
-static FbleValue* LoadModule(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath search_path, const char* module_path);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
@@ -96,38 +95,6 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
   fprintf(stream, "%s%s\n",
       "  fble-app --profile foo.prof ",
       module == NULL ? "-I prgms -m /Foo% " : "");
-}
-
-// LoadModule --
-//   Load a compiled or interpreted module.
-//
-// Inputs:
-//   heap - the value heap.
-//   profile - the profile.
-//   module - the compiled module, or NULL if we should load interpreted.
-//   search_path - search path to use when loading interpreted.
-//   module_path - module path to use when loading interpreted.
-//
-// Result:
-//   The loaded module, or NULL in case of error.
-//
-// Side effects:
-// * The user should call FbleReleaseValue when done with the returned value.
-// * Prints messages to stderr in case of error.
-static FbleValue* LoadModule(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath search_path, const char* module_path)
-{
-  if (module != NULL) {
-    return FbleLinkFromCompiled(module, heap, profile);
-  }
-
-  FbleModulePath* mpath = FbleParseModulePath(module_path);
-  if (mpath == NULL) {
-    return NULL;
-  }
-
-  FbleValue* linked = FbleLinkFromSource(heap, search_path, mpath, profile);
-  FbleFreeModulePath(mpath);
-  return linked;
 }
 
 // Draw --
@@ -526,7 +493,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FbleValue* app = LoadModule(heap, profile, module, search_path, module_path);
+  FbleValue* app = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
   FbleFree(search_path.xs);
   if (app == NULL) {
     FbleFreeValueHeap(heap);

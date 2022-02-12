@@ -90,4 +90,29 @@ void FbleLoadFromCompiled(FbleExecutableProgram* program, FbleExecutableModule* 
 //   longer needed.
 FbleValue* FbleLinkFromCompiled(FbleCompiledModuleFunction* module, FbleValueHeap* heap, FbleProfile* profile);
 
+// FbleLinkFromCompiledOrSource --
+//   Load and link an fble program that is compiled or from source.
+//
+// This is a convenience function that attempts to load a compiled program
+// if available, and if not, attempts to load from source.
+//
+// If module is non-NULL, loads from compiled. Otherwise loads from
+// module_path.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   profile - profile to populate with blocks. May be NULL.
+//   module - the compiled main module function. May be NULL.
+//   search_path - The search path to use for locating .fble files.
+//   module_path - The module path for the main module to load.
+//
+// Returns: 
+//   A zero-argument fble function that computes the value of the program when
+//   executed, or NULL in case of error.
+//
+// Side effects:
+// * The user should call FbleReleaseValue on the returned value when it is no
+//   longer needed.
+FbleValue* FbleLinkFromCompiledOrSource(FbleValueHeap* heap, FbleProfile* profile, FbleCompiledModuleFunction* module, FbleSearchPath search_path, const char* module_path);
+
 #endif // FBLE_LINK_H_
