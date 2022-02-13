@@ -1,0 +1,120 @@
+Fble Spec Tests
+===============
+Question: can we change how we specify fble language tests?
+
+Currently they are specified using tcl with a funny mechanism for specifying
+module hierarchy. Question is, could we write .fble files directly, like as a
+separate fble library package with no other fble library dependencies? I think
+that could be nicer.
+
+We just need a way to indicate the metadata for each test:
+ fble-test
+ fble-test-compile-error <loc>
+ fble-test-runtime-error <loc>
+ fble-test-memory-constant
+ fble-test-memory-growth
+
+Advantages of what I'm envisioning:
+* No need for special tcl syntax for modules.
+* We know the name of the top level test module.
+* We write .fble files directly, so we get syntax highlighting and direct line
+  numbers for errors.
+* We avoid an extra extraction step to get .fble files, which should simplify
+  the build system notably.
+* Hopefully more easily reused by hypothetical other fble implementations.
+* We can compile Nat.fble just once and easily reuse it.
+
+All I have to do is figure out a reasonable way to do the metadata.
+
+Seems something like checktest from llvm, but I don't really like that, and I
+certainly don't want a dependency on llvm.
+
+Most natural thing to do is add a comment to the code. Some syntax tests will
+be out of reach, like the ones involving comments, but that's such a basic
+thing I don't think we need to test that using a separate test.
+
+Note that the top level for the test case may be different from where the
+error occurs. I suggest putting a metadata line only at the top level of the
+test case?
+
+So it's pretty straight forward, right? First line of the file for a test case
+should be:
+
+# fble-test-* <loc>
+
+Or, maybe, because we aren't using tcl, we can use different names. Like:
+
+# TEST
+# TEST_COMPILE_ERROR <..>
+# TEST_RUNTIME_ERROR <..>
+# TEST_MEMORY_CONSTANT
+# TEST_MEMORY_GROWTH
+
+Or, like, have assertions? I dunno. I don't think it's hard, it's just
+arbitrary.
+
+We could do double comment:
+
+## NO_ERROR
+## COMPILE_ERROR 8:3
+## RUNTIME_ERROR 8:3
+## MEMORY_CONSTANT
+## MEMORY_GROWTH
+
+If it isn't annotated, it isn't as separate test case.
+
+How will the test runner work? How will it integrate with the build system
+where we want to compile?
+
+We could run a single grep command over all modules in the directory. That
+gives us a mapping from filename (hence module name) to test case. We can then
+do a loop over those lines. Maybe we can generate that using a build rule and
+have build.ninja depend on it and build.ninja.tcl read it? With a slight
+bootstrapping process to generate it initially I suppose? That's unnecessary
+though.
+
+Then we can parse the entry easy enough in tcl.
+
+So, I just need some metadata easy to locate with grep, and easy to parse from
+tcl. Let's explore options.
+
+For prefix, we want something that is a comment and is unlikely to occur by
+accident. It may be nice if it indicates to readers of the code what it is,
+instead of being some magic. If we have text, we don't need magic symbols
+aside from the comment character. I like 'test' and 'fble' in the name.
+
+# FBLE-TEST no-error 
+# FBLE-TEST compile-error 8:3
+# FBLE-TEST runtime-error 8:3
+# FBLE-TEST memory-constant
+# FBLE-TEST memory-growth
+
+Say it has to be the first line in the file, because why not? Or is that too
+picky and too easy to accidentally not be applied? No. I think anywhere should
+be okay. Allow any amount of whitespace between tokens. How to prevent
+accidental uses of 'FBLE-TEST' in a document? I think we want some special
+symbols for it.
+
+Okay, how about this, a line of the form:
+
+# @@fble-test@@ <type> <msg>
+
+<type> is one of:
+  no-error
+  compile-error
+  runtime-error
+  memory-constant
+  memory-growth
+
+<msg> is an arbitrary string expected to be included in the error message,
+primarily used to identify the location of the error.
+
+There should be at most one @@fble-test@@ line per file. I'm not sure who
+enforces that though.
+
+Clearly it has some special meaning. Simple to detect with grep. Clearly
+related to fble and testing. Simple to parse. I say go with it. No need for a
+name, the current module path should be fine?
+
+Good. What do you think? Shall I try doing this cleanup?
+

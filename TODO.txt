@@ -1,7 +1,9 @@
+* Switch to new proposed approach for spec tests.
+
 * Get rid of FbleMain.
    fble-md5, fble-test, fble-mem-test, fble-profiles-test
 
-* Make a separate fble-core-tests for /Core/Tests%
+* Make a separate fble-core-tests for /Core/Tests%?
   Instead of doing it as part of an overall /Fble/Tests%.
 
 * Add an app package specific test case.

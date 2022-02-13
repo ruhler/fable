@@ -166,6 +166,10 @@ proc dirs { root dir } {
 # generation of build.ninja.
 set ::build_ninja_deps [list]
 
+# Set up pkg-config for use in build.
+set ::env(PKG_CONFIG_PATH) fble:pkgs/core:pkgs/app:prgms
+set ::env(PKG_CONFIG_TOP_BUILD_DIR) $::out
+
 # libfble.a
 eval {
   set fble_objs [list]
@@ -220,15 +224,15 @@ eval {
   lappend build_ninja_deps "tools"
   foreach {x} [glob tools/*.c] {
     set base [file rootname [file tail $x]]
-    obj $::out/tools/$base.o $x "-I fble/include"
-    bin $::out/tools/$base "$::out/tools/$base.o" "-L $::out/fble/src -lfble" $::libfble
-    bin_cov $::out/tools/$base.cov "$::out/tools/$base.o" "-L $::out/fble/src -lfble.cov" $::libfblecov
+    obj $::out/tools/$base.o $x [exec pkg-config --cflags fble]
+    bin $::out/tools/$base "$::out/tools/$base.o" [exec pkg-config --libs fble] $::libfble
+    bin_cov $::out/tools/$base.cov "$::out/tools/$base.o" [exec pkg-config --libs fble.cov] $::libfblecov
   }
 
   # Object files for compiled variations of tools.
-  obj $::out/tools/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-  obj $::out/tools/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
-  obj $::out/tools/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain -I fble/include"
+  obj $::out/tools/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain [exec pkg-config --cflags fble]"
+  obj $::out/tools/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain [exec pkg-config --cflags fble]"
+  obj $::out/tools/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain [exec pkg-config --cflags fble]"
 }
 
 # tests
@@ -318,7 +322,7 @@ foreach dir [dirs langs/fble ""] {
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
         "$::out/tools/fble-compiled-test.o $::spectestdir/libtest.a" \
-        "-L $::out/fble/src -L $::spectestdir -lfble -ltest" "$::libfble"
+        "[exec pkg-config --libs fble] -L $::spectestdir -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --profile"
@@ -346,7 +350,7 @@ foreach dir [dirs langs/fble ""] {
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
         "$::out/tools/fble-compiled-test.o $::spectestdir/libtest.a" \
-        "-L $::out/fble/src -L $::spectestdir -lfble -ltest" "$::libfble"
+        "[exec pkg-config --libs fble] -L $::spectestdir -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --runtime-error"
@@ -363,7 +367,7 @@ foreach dir [dirs langs/fble ""] {
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
         "$::out/tools/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
-        "-L $::out/fble/src -L $::spectestdir -lfble -ltest" "$::libfble"
+        "[exec pkg-config --libs fble] -L $::spectestdir -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test"
@@ -380,7 +384,7 @@ foreach dir [dirs langs/fble ""] {
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
         "$::out/tools/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
-        "-L $::out/fble/src -L $::spectestdir -lfble -ltest" "$::libfble"
+        "[exec pkg-config --libs fble] -L $::spectestdir -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
         "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
         "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --growth"
@@ -397,11 +401,6 @@ build $::out/cov/gcov.txt "$::fble_objs_cov $::spec_tests" \
 test $::out/tools/fble-profile-test.tr $::out/tools/fble-profile-test \
   "$::out/tools/fble-profile-test > /dev/null"
 
-# fble-profiles-test
-test $::out/tools/fble-profiles-test.tr \
-  "$::out/tools/fble-profiles-test prgms/Fble/ProfilesTest.fble" \
-  "$::out/tools/fble-profiles-test -I prgms /Fble/ProfilesTest% > $::out/tools/fble-profiles-test.prof"
-
 # fble 'core' library package.
 eval {
   set objs [list]
@@ -409,7 +408,7 @@ eval {
   # .c library files.
   foreach {x} { Core/char.fble Core/int.fble Core/stdio.fble Core/string.fble } {
     lappend objs $::out/pkgs/core/$x.o
-    obj $::out/pkgs/core/$x.o pkgs/core/$x.c "-I fble/include -I pkgs/core"
+    obj $::out/pkgs/core/$x.o pkgs/core/$x.c "[exec pkg-config --cflags fble] -I pkgs/core"
   }
 
   # .fble library files.
@@ -432,9 +431,9 @@ eval {
 
   # fble-stdio program.
   obj $::out/pkgs/core/Core/fble-stdio.o pkgs/core/Core/fble-stdio.c \
-    "-I fble/include -I pkgs/core"
+    [exec pkg-config --cflags fble fble-core]
   bin $::out/pkgs/core/Core/fble-stdio "$::out/pkgs/core/Core/fble-stdio.o" \
-    "-L $::out/fble/src -L $::out/pkgs/core -lfble-core -lfble" \
+    [exec pkg-config --libs fble fble-core] \
     "$::libfble $::out/pkgs/core/libfble-core.a"
 
   # Build an fble-stdio compiled binary.
@@ -442,14 +441,14 @@ eval {
   # Inputs:
   #   target - the file to build.
   #   path - the module path to use as Stdio@ main.
-  #   lflags - library flags, e.g. "-L foo/ -lfoo".
+  #   libs - additional pkg-config named libraries that this depends on.
   #   args - optional additional dependencies.
-  proc stdio { target path lflags args} {
+  proc stdio { target path libs args} {
     build $target.s $::out/tools/fble-compile \
       "$::out/tools/fble-compile --main FbleStdioMain -m $path > $target.s"
     asm $target.o $target.s
     bin $target "$target.o" \
-      "$lflags -L $::out/fble/src -L $::out/pkgs/core -lfble-core -lfble" \
+      [exec pkg-config --libs fble fble-core {*}$libs] \
       "$::libfble $::out/pkgs/core/libfble-core.a" {*}$args
   }
 
@@ -497,9 +496,9 @@ eval {
 
   # fble-app program.
   obj $::out/pkgs/app/App/fble-app.o pkgs/app/App/fble-app.c \
-    "-I fble/include -I pkgs/core -I pkgs/app"
+    [exec pkg-config --cflags fble fble-core fble-app]
   bin $::out/pkgs/app/App/fble-app "$::out/pkgs/app/App/fble-app.o" \
-    "-L $::out/fble/src -L $::out/pkgs/app -L $::out/pkgs/core -lfble-app -lfble-core -lfble -lSDL2 -lGL" \
+    [exec pkg-config --libs fble-app] \
     "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a"
 
   # Build an fble-app compiled binary.
@@ -507,14 +506,14 @@ eval {
   # Inputs:
   #   target - the file to build.
   #   path - the module path to use as App@ main.
-  #   lflags - library flags, e.g. "-L foo/ -lfoo".
+  #   libs - addition pkg-config named libraries to depend on.
   #   args - optional additional dependencies.
-  proc app { target path lflags args} {
+  proc app { target path libs args} {
     build $target.s $::out/tools/fble-compile \
       "$::out/tools/fble-compile --main FbleAppMain -m $path > $target.s"
     asm $target.o $target.s
     bin $target "$target.o" \
-      "$lflags -L $::out/fble/src -L $::out/pkgs/core -L $::out/pkgs/app -lfble-app -lfble-core -lfble -lSDL2 -lGL" \
+      [exec pkg-config --libs fble-app {*}$libs] \
       "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a $args"
   }
 }
@@ -551,6 +550,11 @@ eval {
   lib $::libfbleprgms $objs
 }
 
+# fble-profiles-test
+test $::out/tools/fble-profiles-test.tr \
+  "$::out/tools/fble-profiles-test prgms/Fble/ProfilesTest.fble" \
+  "$::out/tools/fble-profiles-test -I prgms /Fble/ProfilesTest% > $::out/tools/fble-profiles-test.prof"
+
 # fble-disassemble test
 test $::out/tools/fble-disassemble.tr \
   "$::out/tools/fble-disassemble $::out/prgms/Fble/Tests.fble.d" \
@@ -564,9 +568,9 @@ test $::out/prgms/Fble/fble-tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pr
 test $::out/prgms/fble-md5.tr "$::out/prgms/fble-md5 $::out/prgms/Md5/Main.fble.d" \
   "$::out/prgms/fble-md5 /dev/null -I pkgs/core -I pkgs/app -I prgms /Md5/Main% > $::out/prgms/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/prgms/fble-md5.out > /dev/null"
 
-stdio $::out/prgms/fble-tests "/Fble/Tests%" "-L $::out/pkgs/app -L $::out/prgms -lfble-prgms -lfble-app" "$::libfbleprgms $::out/pkgs/app/libfble-app.a"
-stdio $::out/prgms/fble-bench "/Fble/Bench%" "-L $::out/pkgs/app -L $::out/prgms -lfble-prgms -lfble-app" "$::libfbleprgms $::out/pkgs/app/libfble-app.a"
-stdio $::out/prgms/fble-debug-test "/Fble/DebugTest%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
+stdio $::out/prgms/fble-tests "/Fble/Tests%" "fble-app fble-prgms" "$::libfbleprgms $::out/pkgs/app/libfble-app.a"
+stdio $::out/prgms/fble-bench "/Fble/Bench%" "fble-app fble-prgms" "$::libfbleprgms $::out/pkgs/app/libfble-app.a"
+stdio $::out/prgms/fble-debug-test "/Fble/DebugTest%" "fble-prgms" $::libfbleprgms
 
 
 # /Fble/Tests% compilation test
@@ -599,9 +603,9 @@ test $::out/prgms/fble-debug-test.tr \
   "$::out/prgms/fble-debug-test tools/fble-debug-test.exp" \
   "expect tools/fble-debug-test.exp > /dev/null"
 
-app $::out/prgms/Invaders/fble-invaders "/Invaders/App%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
-app $::out/prgms/Graphics/fble-graphics "/Graphics/App%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
-app $::out/prgms/Pinball/fble-pinball "/Pinball/App%" "-L $::out/prgms -lfble-prgms" $::libfbleprgms
+app $::out/prgms/Invaders/fble-invaders "/Invaders/App%" "fble-prgms" $::libfbleprgms
+app $::out/prgms/Graphics/fble-graphics "/Graphics/App%" "fble-prgms" $::libfbleprgms
+app $::out/prgms/Pinball/fble-pinball "/Pinball/App%" "fble-prgms" $::libfbleprgms
 
 # test summary
 build $::out/tests.txt "$::tests" "echo $::tests > $::out/tests.txt"

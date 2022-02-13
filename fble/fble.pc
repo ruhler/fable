@@ -1,0 +1,8 @@
+includedir=${pcfiledir}/include
+libdir=${pc_top_builddir}/fble/src
+
+Name: Fble
+Description: Fble language interpreter and compiler
+Version: 0.1
+Libs: -L${libdir} -lfble
+Cflags: -I${includedir}

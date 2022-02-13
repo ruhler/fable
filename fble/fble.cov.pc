@@ -1,0 +1,8 @@
+includedir=${pcfiledir}/include
+libdir=${pc_top_builddir}/fble/src
+
+Name: Fble (Coverage Enabled)
+Description: Fble language interpreter and compiler, with coverage enabled.
+Version: 0.1
+Libs: -L${libdir} -lfble.cov
+Cflags: -I${includedir}
