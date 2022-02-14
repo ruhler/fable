@@ -3,9 +3,9 @@
 % False = /Core/Bool%.False;
 % Int = /Core/Int/Lit%.Int;
 <@>% List = /Core/List%.List;
-@ Formula@ = /Sat%.Formula@;
-@ Clause@ = /Sat%.Clause@;
-@ Var@ = /Sat%.Var@;
+@ Formula@ = /Sat/Sat%.Formula@;
+@ Clause@ = /Sat/Sat%.Clause@;
+@ Var@ = /Sat/Sat%.Var@;
 
 # c FILE: aim-200-2_0-no-1.cnf
 # c

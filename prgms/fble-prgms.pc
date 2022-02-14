@@ -4,6 +4,6 @@ libdir=${pc_top_builddir}/prgms
 Name: Fble Programs
 Description: The fble prgms library package.
 Version: 0.1
-Requires: fble-core, fble-app
+Requires: fble-core, fble-app fble-sat
 Libs: -L${libdir} -lfble-prgms
 Cflags: -I${includedir}

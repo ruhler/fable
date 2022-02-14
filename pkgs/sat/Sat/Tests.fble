@@ -19,14 +19,14 @@
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 % Unit = /Core/Unit%.Unit;
 
-@ Formula@ = /Sat%.Formula@;
-@ Clause@ = /Sat%.Clause@;
-@ VarId@ = /Sat%.VarId@;
-@ Var@ = /Sat%.Var@;
-@ Assignment@ = /Sat%.Assignment@;
-@ Result@ = /Sat%.Result@;
-% EqId = /Sat%.EqId;
-% Solve = /Sat%.Solve;
+@ Formula@ = /Sat/Sat%.Formula@;
+@ Clause@ = /Sat/Sat%.Clause@;
+@ VarId@ = /Sat/Sat%.VarId@;
+@ Var@ = /Sat/Sat%.Var@;
+@ Assignment@ = /Sat/Sat%.Assignment@;
+@ Result@ = /Sat/Sat%.Result@;
+% EqId = /Sat/Sat%.EqId;
+% Solve = /Sat/Sat%.Solve;
 
 # Import to test compilation
 % _ = /Sat/Bench%;

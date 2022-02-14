@@ -201,7 +201,7 @@ proc pkg {name deps objs} {
 set ::build_ninja_deps [list]
 
 # Set up pkg-config for use in build.
-set ::env(PKG_CONFIG_PATH) fble:pkgs/core:pkgs/app:prgms
+set ::env(PKG_CONFIG_PATH) fble:pkgs/core:pkgs/sat:pkgs/app:prgms
 set ::env(PKG_CONFIG_TOP_BUILD_DIR) $::out
 
 # libfble.a
@@ -525,6 +525,9 @@ eval {
   }
 }
 
+# fble 'sat' library package.
+pkg sat core ""
+
 # fble programs binaries
 foreach {x} { fble-md5 } {
   obj $::out/prgms/$x.o prgms/$x.c \
@@ -544,10 +547,10 @@ eval {
 
       # Generate a .d file to capture dependencies.
       build $::out/prgms/$x.d "$::out/tools/fble-deps prgms/$x" \
-        "$::out/tools/fble-deps -I pkgs/core -I pkgs/app -I prgms -t $::out/prgms/$x.d -m $mpath > $::out/prgms/$x.d" \
+        "$::out/tools/fble-deps -I pkgs/core -I pkgs/app -I pkgs/sat -I prgms -t $::out/prgms/$x.d -m $mpath > $::out/prgms/$x.d" \
         "depfile = $::out/prgms/$x.d"
 
-      fbleobj $::out/prgms/$x.o $::out/tools/fble-compile "-c -I pkgs/core -I pkgs/app -I prgms -m $mpath" $::out/prgms/$x.d
+      fbleobj $::out/prgms/$x.o $::out/tools/fble-compile "-c -I pkgs/core -I pkgs/app -I pkgs/sat -I prgms -m $mpath" $::out/prgms/$x.d
       lappend objs $::out/prgms/$x.o
     }
   }
@@ -565,18 +568,18 @@ test $::out/tools/fble-profiles-test.tr \
 # fble-disassemble test
 test $::out/tools/fble-disassemble.tr \
   "$::out/tools/fble-disassemble $::out/prgms/Fble/Tests.fble.d" \
-  "$::out/tools/fble-disassemble -I pkgs/core -I pkgs/app -I prgms -m /Fble/Tests% > $::out/prgms/Fble/Tests.fbls"
+  "$::out/tools/fble-disassemble -I pkgs/core -I pkgs/sat -I pkgs/app -I prgms -m /Fble/Tests% > $::out/prgms/Fble/Tests.fbls"
 
 # Fble/Tests.fble tests
 test $::out/prgms/Fble/fble-tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/prgms/Fble/Tests.fble.d" \
-  "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -I pkgs/app -I prgms -m /Fble/Tests%" "pool = console"
+  "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -I pkgs/sat -I pkgs/app -I prgms -m /Fble/Tests%" "pool = console"
 
 # fble-md5 test
 test $::out/prgms/fble-md5.tr "$::out/prgms/fble-md5 $::out/prgms/Md5/Main.fble.d" \
-  "$::out/prgms/fble-md5 /dev/null -I pkgs/core -I pkgs/app -I prgms /Md5/Main% > $::out/prgms/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/prgms/fble-md5.out > /dev/null"
+  "$::out/prgms/fble-md5 /dev/null -I pkgs/core -I pkgs/sat -I pkgs/app -I prgms /Md5/Main% > $::out/prgms/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/prgms/fble-md5.out > /dev/null"
 
-stdio $::out/prgms/fble-tests "/Fble/Tests%" "fble-app fble-prgms" "$::libfbleprgms $::out/pkgs/app/libfble-app.a"
-stdio $::out/prgms/fble-bench "/Fble/Bench%" "fble-app fble-prgms" "$::libfbleprgms $::out/pkgs/app/libfble-app.a"
+stdio $::out/prgms/fble-tests "/Fble/Tests%" "fble-sat fble-app fble-prgms" "$::libfbleprgms $::out/pkgs/app/libfble-app.a $::out/pkgs/sat/libfble-sat.a"
+stdio $::out/prgms/fble-bench "/Fble/Bench%" "fble-sat fble-app fble-prgms" "$::libfbleprgms $::out/pkgs/app/libfble-app.a $::out/pkgs/sat/libfble-sat.a"
 stdio $::out/prgms/fble-debug-test "/Fble/DebugTest%" "fble-prgms" $::libfbleprgms
 
 
