@@ -15,12 +15,15 @@ set ::build_ninja [open "$::out/build.ninja" "w"]
 # build.ninja header.
 puts $::build_ninja "builddir = $::out"
 puts $::build_ninja {
-# We build everything using this one generic rule, specifying the command
-# explicitly for every target. Because defining separate rules for different
-# command lines doesn't seem to buy us much.
 rule rule
   description = $out
   command = $cmd
+
+cflags = -std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -O3
+rule cc
+  description = cc $out
+  command = gcc -MMD -MF $out.d $cflags $iflags -c -o $out $src
+  depfile = $out.d
 }
 
 # build --
@@ -49,9 +52,9 @@ proc build { targets dependencies command args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
-  set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -O3"
-  set cmd "gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
-  build $obj "$src $args" $cmd "depfile = $obj.d"
+  puts $::build_ninja "build $obj: cc $src $args"
+  puts $::build_ninja "  src=$src"
+  puts $::build_ninja "  iflags=$iflags"
 }
 
 # obj_cov --
