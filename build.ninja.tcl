@@ -15,13 +15,13 @@ set ::build_ninja [open "$::out/build.ninja" "w"]
 # build.ninja header.
 puts $::build_ninja "builddir = $::out"
 puts $::build_ninja {
-rule rule
+rule build
   description = $out
   command = $cmd
 
 cflags = -std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -O3
-rule cc
-  description = cc $out
+rule obj
+  description = obj $out
   command = gcc -MMD -MF $out.d $cflags $iflags -c -o $out $src
   depfile = $out.d
 }
@@ -35,7 +35,7 @@ rule cc
 #   command - the command to run to produce the targets.
 #   args - optional additional "key = argument" pairs to use for ninja rule.
 proc build { targets dependencies command args } {
-  puts $::build_ninja "build [join $targets]: rule [join $dependencies]"
+  puts $::build_ninja "build [join $targets]: build [join $dependencies]"
   puts $::build_ninja "  cmd = $command"
 
   foreach kv $args {
@@ -52,7 +52,7 @@ proc build { targets dependencies command args } {
 #   iflags - include flags, e.g. "-I foo".
 #   args - optional additional dependencies.
 proc obj { obj src iflags args } {
-  puts $::build_ninja "build $obj: cc $src $args"
+  puts $::build_ninja "build $obj: obj $src $args"
   puts $::build_ninja "  src=$src"
   puts $::build_ninja "  iflags=$iflags"
 }
