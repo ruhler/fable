@@ -164,6 +164,37 @@ proc dirs { root dir } {
   return $l
 }
 
+# pkg --
+#   Build an fble library package.
+#
+# Inputs:
+#   name - the name of the package, such as 'app'.
+#   deps - list of packages this package depends on.
+#   objs - additional object files to include in the generated library.
+proc pkg {name deps objs} {
+  set cflags ""
+  foreach dep $deps {
+    append cflags " -I pkgs/$dep"
+  }
+
+  foreach dir [dirs pkgs/$name ""] {
+    lappend build_ninja_deps "pkgs/$name/$dir"
+    foreach {x} [glob -tails -directory pkgs/$name -nocomplain -type f $dir/*.fble] {
+      set mpath "/[file rootname $x]%"
+
+      # Generate a .d file to capture dependencies.
+      build $::out/pkgs/$name/$x.d "$::out/tools/fble-deps pkgs/$name/$x" \
+        "$::out/tools/fble-deps $cflags -I pkgs/$name -t $::out/pkgs/$name/$x.d -m $mpath > $::out/pkgs/$name/$x.d" \
+        "depfile = $::out/pkgs/$name/$x.d"
+
+      fbleobj $::out/pkgs/$name/$x.o $::out/tools/fble-compile "-c $cflags -I pkgs/$name -m $mpath" $::out/pkgs/$name/$x.d
+      lappend objs $::out/pkgs/$name/$x.o
+    }
+  }
+
+  lib $::out/pkgs/$name/libfble-$name.a $objs
+}
+
 # Any time we run glob over a directory, add that directory to this list.
 # We need to make sure to include these directories as a dependency on the
 # generation of build.ninja.
@@ -419,23 +450,7 @@ eval {
     obj $::out/pkgs/core/$x.o pkgs/core/$x.c "$cflags -I pkgs/core"
   }
 
-  # .fble library files.
-  foreach dir [dirs pkgs/core ""] {
-    lappend build_ninja_deps "pkgs/core/$dir"
-    foreach {x} [glob -tails -directory pkgs/core -nocomplain -type f $dir/*.fble] {
-      set mpath "/[file rootname $x]%"
-
-      # Generate a .d file to capture dependencies.
-      build $::out/pkgs/core/$x.d "$::out/tools/fble-deps pkgs/core/$x" \
-        "$::out/tools/fble-deps -I pkgs/core -t $::out/pkgs/core/$x.d -m $mpath > $::out/pkgs/core/$x.d" \
-        "depfile = $::out/pkgs/core/$x.d"
-
-      fbleobj $::out/pkgs/core/$x.o $::out/tools/fble-compile "-c -I pkgs/core -m $mpath" $::out/pkgs/core/$x.d
-      lappend objs $::out/pkgs/core/$x.o
-    }
-  }
-
-  lib $::out/pkgs/core/libfble-core.a $objs
+  pkg core "" $objs
 
   # fble-stdio program.
   obj $::out/pkgs/core/Core/fble-stdio.o pkgs/core/Core/fble-stdio.c \
@@ -484,23 +499,7 @@ eval {
     obj $::out/pkgs/app/$x.o pkgs/app/$x.c "-I /usr/include/SDL2 -I fble/include -I pkgs/core -I pkgs/app"
   }
 
-  # .fble library files.
-  foreach dir [dirs pkgs/app ""] {
-    lappend build_ninja_deps "pkgs/app/$dir"
-    foreach {x} [glob -tails -directory pkgs/app -nocomplain -type f $dir/*.fble] {
-      set mpath "/[file rootname $x]%"
-
-      # Generate a .d file to capture dependencies.
-      build $::out/pkgs/app/$x.d "$::out/tools/fble-deps pkgs/app/$x" \
-        "$::out/tools/fble-deps -I pkgs/core -I pkgs/app -t $::out/pkgs/app/$x.d -m $mpath > $::out/pkgs/app/$x.d" \
-        "depfile = $::out/pkgs/app/$x.d"
-
-      fbleobj $::out/pkgs/app/$x.o $::out/tools/fble-compile "-c -I pkgs/core -I pkgs/app -m $mpath" $::out/pkgs/app/$x.d
-      lappend objs $::out/pkgs/app/$x.o
-    }
-  }
-
-  lib $::out/pkgs/app/libfble-app.a $objs
+  pkg app core $objs
 
   # fble-app program.
   obj $::out/pkgs/app/App/fble-app.o pkgs/app/App/fble-app.c \
