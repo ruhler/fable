@@ -2180,3 +2180,9 @@ So, looking at each questionable package:
   and/or app games.
 * fble: let's keep this as a separate package targeted at libfble development.
 
+---
+
+Observation: Looks like pkg-config cflags may not work for fble compiler
+flags, because it includes extra things like -D_REENTRANT and uses compiler
+flag formats like -Ifoo instead of -I foo. That's too bad.
+

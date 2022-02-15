@@ -201,7 +201,7 @@ proc pkg {name deps objs} {
 set ::build_ninja_deps [list]
 
 # Set up pkg-config for use in build.
-set ::env(PKG_CONFIG_PATH) fble:pkgs/core:pkgs/sat:pkgs/app:pkgs/misc
+set ::env(PKG_CONFIG_PATH) fble:pkgs/core:pkgs/sat:pkgs/app:pkgs/hwdg:pkgs/misc
 set ::env(PKG_CONFIG_TOP_BUILD_DIR) $::out
 
 # libfble.a
@@ -526,7 +526,8 @@ eval {
 }
 
 pkg sat core ""
-pkg misc [list core app sat] ""
+pkg hwdg [list core app] ""
+pkg misc [list core app hwdg sat] ""
 
 # fble programs binaries
 foreach {x} { fble-md5 } {
@@ -543,20 +544,21 @@ test $::out/tools/fble-profiles-test.tr \
   "$::out/tools/fble-profiles-test -I pkgs/misc /Fble/ProfilesTest% > $::out/tools/fble-profiles-test.prof"
 
 # fble-disassemble test
+set misc_cflags "-I pkgs/core -I pkgs/sat -I pkgs/app -I pkgs/misc -I pkgs/hwdg"
 test $::out/tools/fble-disassemble.tr \
   "$::out/tools/fble-disassemble $::out/pkgs/misc/Fble/Tests.fble.d" \
-  "$::out/tools/fble-disassemble -I pkgs/core -I pkgs/sat -I pkgs/app -I pkgs/misc -m /Fble/Tests% > $::out/pkgs/misc/Fble/Tests.fbls"
+  "$::out/tools/fble-disassemble $misc_cflags -m /Fble/Tests% > $::out/pkgs/misc/Fble/Tests.fbls"
 
 # Fble/Tests.fble tests
 test $::out/pkgs/misc/Fble/fble-tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/misc/Fble/Tests.fble.d" \
-  "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -I pkgs/sat -I pkgs/app -I pkgs/misc -m /Fble/Tests%" "pool = console"
+  "$::out/pkgs/core/Core/fble-stdio $misc_cflags -m /Fble/Tests%" "pool = console"
 
 # fble-md5 test
 test $::out/pkgs/misc/fble-md5.tr "$::out/pkgs/misc/fble-md5 $::out/pkgs/misc/Md5/Main.fble.d" \
-  "$::out/pkgs/misc/fble-md5 /dev/null -I pkgs/core -I pkgs/sat -I pkgs/app -I pkgs/misc /Md5/Main% > $::out/pkgs/misc/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/pkgs/misc/fble-md5.out > /dev/null"
+  "$::out/pkgs/misc/fble-md5 /dev/null $misc_cflags /Md5/Main% > $::out/pkgs/misc/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/pkgs/misc/fble-md5.out > /dev/null"
 
-stdio $::out/pkgs/misc/fble-tests "/Fble/Tests%" "fble-sat fble-app fble-misc" "$::out/pkgs/misc/libfble-misc.a $::out/pkgs/app/libfble-app.a $::out/pkgs/sat/libfble-sat.a"
-stdio $::out/pkgs/misc/fble-bench "/Fble/Bench%" "fble-sat fble-app fble-misc" "$::out/pkgs/misc/libfble-misc.a $::out/pkgs/app/libfble-app.a $::out/pkgs/sat/libfble-sat.a"
+stdio $::out/pkgs/misc/fble-tests "/Fble/Tests%" "fble-sat fble-app fble-misc fble-hwdg" "$::out/pkgs/misc/libfble-misc.a $::out/pkgs/app/libfble-app.a $::out/pkgs/sat/libfble-sat.a $::out/pkgs/hwdg/libfble-hwdg.a"
+stdio $::out/pkgs/misc/fble-bench "/Fble/Bench%" "fble-sat fble-app fble-misc fble-hwdg" "$::out/pkgs/misc/libfble-misc.a $::out/pkgs/app/libfble-app.a $::out/pkgs/sat/libfble-sat.a $::out/pkgs/hwdg/libfble-hwdg.a"
 stdio $::out/pkgs/misc/fble-debug-test "/Fble/DebugTest%" "fble-misc" $::out/pkgs/misc/libfble-misc.a
 
 
@@ -566,7 +568,7 @@ test $::out/pkgs/misc/Fble/fble-compiled-tests.tr $::out/pkgs/misc/fble-tests \
 
 # fble-compiled-profiles-test
 fbleobj $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o $::out/tools/fble-compile \
-  "-c -e FbleCompiledMain -I pkgs/core -I pkgs/misc -m /Fble/ProfilesTest%" \
+  "-c -e FbleCompiledMain $misc_cflags -m /Fble/ProfilesTest%" \
   pkgs/misc/Fble/ProfilesTest.fble
 bin $::out/pkgs/misc/fble-compiled-profiles-test \
   "$::out/tools/fble-compiled-profiles-test.o $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o" \
