@@ -1,18 +1,14 @@
-* Switch to new proposed approach for spec tests.
-
+* Separate rest of packages out of pkgs/misc.
 * Get rid of FbleMain.
    fble-md5, fble-test, fble-mem-test, fble-profiles-test
+
+* Switch to new proposed approach for spec tests.
 
 * Make a separate fble-core-tests for /Core/Tests%?
   Instead of doing it as part of an overall /Fble/Tests%.
 
 * Add an app package specific test case.
   Maybe a simple demo app?
-* Factor out common code in build.ninja.tcl for generating fble package
-  libraries.
-
-* [lib] Set up build to only have access to explicit package list
- - Move rest of .fble modules from prgms to appropriate pkgs directory.
 
 * Reorder case statements to match updated order of *_EXPR enum.
   In particular, the placement of the ABSTRACT_*_EXPR enums.

@@ -209,7 +209,7 @@ int main(int argc, char* argv[])
   // block was a module path instead of a file path.
   {
     FbleBlockProfile* block = Block(profile, "/Fble/ProfilesTest%");
-    assert(strcmp(block->name.loc.source->str, "prgms/Fble/ProfilesTest.fble") == 0);
+    assert(strcmp(block->name.loc.source->str, "pkgs/misc/Fble/ProfilesTest.fble") == 0);
   }
 
   FbleFreeProfile(profile);

@@ -12,17 +12,17 @@ proc require { str } {
 eval {
   # Test that we can set a breakpoint at a particular line in a file and run to
   # that breakpoint.
-  spawn gdb --quiet ./out/prgms/fble-debug-test
+  spawn gdb --quiet ./out/pkgs/misc/fble-debug-test
   expect "(gdb) "
 
   set STMT_LINE 31
-  send "break prgms/Fble/DebugTest.fble:$STMT_LINE\n"
+  send "break pkgs/misc/Fble/DebugTest.fble:$STMT_LINE\n"
   require "Breakpoint 1 at"
-  require "prgms/Fble/DebugTest.fble, line $STMT_LINE."
+  require "pkgs/misc/Fble/DebugTest.fble, line $STMT_LINE."
   require "(gdb) "
 
   send "run\n"
-  require "at prgms/Fble/DebugTest.fble:$STMT_LINE"
+  require "at pkgs/misc/Fble/DebugTest.fble:$STMT_LINE"
   require "(gdb) "
   close
 }
@@ -30,34 +30,34 @@ eval {
 eval {
   # Test that we can set a breakpoint at a particular function and run to
   # that breakpoint.
-  spawn gdb --quiet ./out/prgms/fble-debug-test
+  spawn gdb --quiet ./out/pkgs/misc/fble-debug-test
   expect "(gdb) "
 
   set LINE 31
   send "break /Fble/DebugTest%.Next!\n"
   require "Breakpoint 1 at"
-  require "prgms/Fble/DebugTest.fble, line $LINE."
+  require "pkgs/misc/Fble/DebugTest.fble, line $LINE."
   require "(gdb) "
 
   send "run\n"
-  require "at prgms/Fble/DebugTest.fble:$LINE"
+  require "at pkgs/misc/Fble/DebugTest.fble:$LINE"
   require "(gdb) "
   close
 }
 
 eval {
   # Test that we can print values of local variables
-  spawn gdb --quiet ./out/prgms/fble-debug-test
+  spawn gdb --quiet ./out/pkgs/misc/fble-debug-test
   expect "(gdb) "
 
   set LINE 32
-  send "break prgms/Fble/DebugTest.fble:$LINE\n"
+  send "break pkgs/misc/Fble/DebugTest.fble:$LINE\n"
   require "Breakpoint 1 at"
-  require "prgms/Fble/DebugTest.fble, line $LINE."
+  require "pkgs/misc/Fble/DebugTest.fble, line $LINE."
   require "(gdb) "
 
   send "run\n"
-  require "at prgms/Fble/DebugTest.fble:$LINE"
+  require "at pkgs/misc/Fble/DebugTest.fble:$LINE"
   require "(gdb) "
 
   send "info locals\n"

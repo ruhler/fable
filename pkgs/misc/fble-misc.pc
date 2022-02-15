@@ -1,0 +1,9 @@
+includedir=${pcfiledir}
+libdir=${pc_top_builddir}/pkgs/misc
+
+Name: Fble Misc
+Description: The fble misc library package.
+Version: 0.1
+Requires: fble-core, fble-app fble-sat
+Libs: -L${libdir} -lfble-misc
+Cflags: -I${includedir}
