@@ -1,4 +1,5 @@
 * Separate rest of packages out of pkgs/misc.
+* Fix possibly missing dependency of apps on libfble-foo.a files?
 * Get rid of FbleMain.
    fble-md5, fble-test, fble-mem-test, fble-profiles-test
 
