@@ -201,8 +201,14 @@ proc pkg {name deps objs} {
 set ::build_ninja_deps [list]
 
 # Set up pkg-config for use in build.
-set ::env(PKG_CONFIG_PATH) fble:pkgs/core:pkgs/sat:pkgs/app:pkgs/hwdg:pkgs/misc
 set ::env(PKG_CONFIG_TOP_BUILD_DIR) $::out
+set ::env(PKG_CONFIG_PATH) fble
+lappend $::build_ninja_deps "fble/fble.pc"
+lappend $::build_ninja_deps "fble/fble.cov.pc"
+foreach pkg [list core sat app hwdg misc] {
+  append ::env(PKG_CONFIG_PATH) ":pkgs/$pkg"
+  lappend $::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
+}
 
 # libfble.a
 eval {

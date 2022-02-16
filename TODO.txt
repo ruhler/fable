@@ -1,6 +1,4 @@
 * Separate rest of packages out of pkgs/misc.
-* Fix missing dependency of calls to pkg-config on *.pc files.
-  And dependency of build.ninja itself on those things.
 * Get rid of FbleMain.
    fble-md5, fble-test, fble-mem-test, fble-profiles-test
 
