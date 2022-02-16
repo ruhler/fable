@@ -22,16 +22,16 @@
 @ Benchmark@ = *(String@ name, Unit@! bench);
 
 List@<Benchmark@> Benchmarks = List<Benchmark@>[
-  Benchmark@(Str|'BenchmarkGame', /BenchmarkGame/Bench%.Bench),
-  Benchmark@(Str|'GameOfLife', /GameOfLife/Bench%.Bench),
+  Benchmark@(Str|'BenchmarkGame', /Games/BenchmarkGame/Bench%.Bench),
+  Benchmark@(Str|'GameOfLife', /Games/GameOfLife/Bench%.Bench),
   Benchmark@(Str|'Graphics', /Graphics/Bench%.Bench),
   Benchmark@(Str|'Invaders', /Invaders/Bench%.Bench),
   Benchmark@(Str|'Md5', /Md5/Bench%.Bench),
   Benchmark@(Str|'Pinball', /Pinball/Bench%.Bench),
   Benchmark@(Str|'Sat', /Sat/Bench%.Bench),
-  Benchmark@(Str|'Snake', /Snake/Bench%.Bench),
-  Benchmark@(Str|'Sudoku', /Sudoku/Tests%.Bench),
-  Benchmark@(Str|'TicTacToe', /TicTacToe/Tests%.Bench)
+  Benchmark@(Str|'Snake', /Games/Snake/Bench%.Bench),
+  Benchmark@(Str|'Sudoku', /Games/Sudoku/Tests%.Bench),
+  Benchmark@(Str|'TicTacToe', /Games/TicTacToe/Tests%.Bench)
 ];
 
 # Bench --

@@ -7,11 +7,11 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /BenchmarkGame/Bench%;
+% _ = /Games/BenchmarkGame/Bench%;
 
 Test@ Tests = TestSuite(Str|BenchmarkGame, List<Test@>[
-  /BenchmarkGame/BinaryTrees/Tests%.Tests,
-  /BenchmarkGame/PiDigits/Tests%.Tests
+  /Games/BenchmarkGame/BinaryTrees/Tests%.Tests,
+  /Games/BenchmarkGame/PiDigits/Tests%.Tests
 ]);
 
 @(Tests);

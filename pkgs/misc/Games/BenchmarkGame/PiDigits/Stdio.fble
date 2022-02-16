@@ -1,8 +1,8 @@
 
-@ State@ = /BenchmarkGame/PiDigits%.State@;
-@ StreamResult@ = /BenchmarkGame/PiDigits%.StreamResult@;
-% Stream = /BenchmarkGame/PiDigits%.Stream;
-% Initial = /BenchmarkGame/PiDigits%.Initial;
+@ State@ = /Games/BenchmarkGame/PiDigits%.State@;
+@ StreamResult@ = /Games/BenchmarkGame/PiDigits%.StreamResult@;
+% Stream = /Games/BenchmarkGame/PiDigits%.Stream;
+% Initial = /Games/BenchmarkGame/PiDigits%.Initial;
 
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;

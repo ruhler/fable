@@ -8,8 +8,8 @@
 % Unit = /Core/Unit%.Unit;
 
 Unit@! Bench = /App/Benchmark%.Benchmark(
-  # 1300 is around the number of iterations the Snake app runs for. Don't try
-  # to run more, otherwise we could get deadlock.
-  /Snake%, Int|1300, Event@(key_down: Key@(q: Unit)));
+  # The GameOfLife App is set to run for 200 iterations. Use a little less
+  # than that for the benchmark to avoid deadlock.
+  /Games/GameOfLife/App%, Int|180, Event@(key_down: Key@(q: Unit)));
 
 @(Bench);

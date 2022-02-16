@@ -25,21 +25,21 @@
 % _ = /Invaders/Screenshot/App%;
 % _ = /Pinball/App%;
 % _ = /Pinball/Circle%;
-% _ = /Snake%;
-% _ = /Snake/Bench%;
+% _ = /Games/Snake%;
+% _ = /Games/Snake/Bench%;
 
 Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Core/Tests%.Tests,
-  /BenchmarkGame/Tests%.Tests,
-  /GameOfLife/Tests%.Tests,
+  /Games/BenchmarkGame/Tests%.Tests,
+  /Games/GameOfLife/Tests%.Tests,
   /Graphics/2D/Tests%.Tests,
   /Graphics/Triangle/Tests%.Tests,
   /Hwdg/Tests%.Tests,
   /Md5/Tests%.Tests,
   /Pinball/Tests%.Tests,
   /Sat/Tests%.Tests,
-  /Sudoku/Tests%.Tests,
-  /TicTacToe/Tests%.Tests
+  /Games/Sudoku/Tests%.Tests,
+  /Games/TicTacToe/Tests%.Tests
 ]);
 
 Stdio@ Main = (IO@ io, List@<String@> args) {

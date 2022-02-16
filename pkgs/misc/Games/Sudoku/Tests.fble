@@ -27,20 +27,20 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Symbol@ = /Sudoku%.Symbol@;
-@ Input@ = /Sudoku%.Input@;
-@ Solved@ = /Sudoku%.Solved@;
-% 1 = /Sudoku%.1;
-% 2 = /Sudoku%.2;
-% 3 = /Sudoku%.3;
-% 4 = /Sudoku%.4;
-% 5 = /Sudoku%.5;
-% 6 = /Sudoku%.6;
-% 7 = /Sudoku%.7;
-% 8 = /Sudoku%.8;
-% 9 = /Sudoku%.9;
-% IterateSymbol = /Sudoku%.IterateSymbol;
-% Solve = /Sudoku%.Solve;
+@ Symbol@ = /Games/Sudoku%.Symbol@;
+@ Input@ = /Games/Sudoku%.Input@;
+@ Solved@ = /Games/Sudoku%.Solved@;
+% 1 = /Games/Sudoku%.1;
+% 2 = /Games/Sudoku%.2;
+% 3 = /Games/Sudoku%.3;
+% 4 = /Games/Sudoku%.4;
+% 5 = /Games/Sudoku%.5;
+% 6 = /Games/Sudoku%.6;
+% 7 = /Games/Sudoku%.7;
+% 8 = /Games/Sudoku%.8;
+% 9 = /Games/Sudoku%.9;
+% IterateSymbol = /Games/Sudoku%.IterateSymbol;
+% Solve = /Games/Sudoku%.Solve;
 
 (Symbol@, Symbol@) { Bool@; } EqSymbol = (Symbol@ a, Symbol@ b) {
   a.?(1: b.?(1: True, : False),

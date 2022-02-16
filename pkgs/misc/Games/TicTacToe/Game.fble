@@ -7,15 +7,15 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ AI@ = /TicTacToe/AI%.AI@;
-<@>% WithAI = /TicTacToe/AI%.WithAI;
+@ AI@ = /Games/TicTacToe/AI%.AI@;
+<@>% WithAI = /Games/TicTacToe/AI%.WithAI;
 
-@ Board@ = /TicTacToe/Board%.Board@;
-@ Position@ = /TicTacToe/Board%.Position@;
-@ Player@ = /TicTacToe/Board%.Player@;
-% BoardStatus = /TicTacToe/Board%.BoardStatus;
-% EmptyBoard = /TicTacToe/Board%.EmptyBoard;
-% Move = /TicTacToe/Board%.Move;
+@ Board@ = /Games/TicTacToe/Board%.Board@;
+@ Position@ = /Games/TicTacToe/Board%.Position@;
+@ Player@ = /Games/TicTacToe/Board%.Player@;
+% BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
+% EmptyBoard = /Games/TicTacToe/Board%.EmptyBoard;
+% Move = /Games/TicTacToe/Board%.Move;
 
 
 @ GameResult@ = +(Player@ win, Unit@ draw);

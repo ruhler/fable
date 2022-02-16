@@ -19,15 +19,15 @@
 
 % Unit = /Core/Unit%.Unit;
 
-@ Coord@ = /GameOfLife%.Coord@;
-@ World@ = /GameOfLife%.World@;
-% World = /GameOfLife%.World;
-% EqWorld = /GameOfLife%.EqWorld;
-% Step = /GameOfLife%.Step;
+@ Coord@ = /Games/GameOfLife%.Coord@;
+@ World@ = /Games/GameOfLife%.World@;
+% World = /Games/GameOfLife%.World;
+% EqWorld = /Games/GameOfLife%.EqWorld;
+% Step = /Games/GameOfLife%.Step;
 
 # Imports to test compilation.
-% _ = /GameOfLife/App%;
-% _ = /GameOfLife/Bench%;
+% _ = /Games/GameOfLife/App%;
+% _ = /Games/GameOfLife/Bench%;
 
 # Do a sigle step of the acorn configuration.
 # Generation 0:

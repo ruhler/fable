@@ -35,11 +35,11 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ World@ = /GameOfLife%.World@;
-@ Coord@ = /GameOfLife%.Coord@;
-% World = /GameOfLife%.World;
-<@>% ForWorld = /GameOfLife%.ForWorld;
-% Step = /GameOfLife%.Step;
+@ World@ = /Games/GameOfLife%.World@;
+@ Coord@ = /Games/GameOfLife%.Coord@;
+% World = /Games/GameOfLife%.World;
+<@>% ForWorld = /Games/GameOfLife%.ForWorld;
+% Step = /Games/GameOfLife%.Step;
 
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };

@@ -24,14 +24,14 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Square@ = /TicTacToe/Board%.Square@;
-@ Board@ = /TicTacToe/Board%.Board@;
-@ Player@ = /TicTacToe/Board%.Player@;
-@ Position@ = /TicTacToe/Board%.Position@;
+@ Square@ = /Games/TicTacToe/Board%.Square@;
+@ Board@ = /Games/TicTacToe/Board%.Board@;
+@ Player@ = /Games/TicTacToe/Board%.Player@;
+@ Position@ = /Games/TicTacToe/Board%.Position@;
 
-@ GameStatus@ = /TicTacToe/Game%.GameStatus@;
-@ Input@ = /TicTacToe/Game%.Input@;
-@ Output@ = /TicTacToe/Game%.Output@;
+@ GameStatus@ = /Games/TicTacToe/Game%.GameStatus@;
+@ Input@ = /Games/TicTacToe/Game%.Input@;
+@ Output@ = /Games/TicTacToe/Game%.Output@;
 
 (Square@) { String@; } ShowSquare = (Square@ s) {
   s.?(X: Str|X, O: Str|O, E: Str|_);
@@ -116,7 +116,7 @@ Stdio@ TicTacToe = (IO@ io, List@<String@> args) {
 
   Put@<Output@> out = (Output@ o) { io.stdout(ShowOutput(o)); };
 
-  Unit@ _ := /TicTacToe/Game%.TicTacToe(in, out);
+  Unit@ _ := /Games/TicTacToe/Game%.TicTacToe(in, out);
   !(True);
 };
 

@@ -11,19 +11,19 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ AI@ = /TicTacToe/AI%.AI@;
-<@>% WithAI = /TicTacToe/AI%.WithAI;
+@ AI@ = /Games/TicTacToe/AI%.AI@;
+<@>% WithAI = /Games/TicTacToe/AI%.WithAI;
 
-@ Board@ = /TicTacToe/Board%.Board@;
-@ Player@ = /TicTacToe/Board%.Player@;
-@ Position@ = /TicTacToe/Board%.Position@;
-@ Square@ = /TicTacToe/Board%.Square@;
-@ Status@ = /TicTacToe/Board%.Status@;
-% BoardStatus = /TicTacToe/Board%.BoardStatus;
-% EmptyBoard = /TicTacToe/Board%.EmptyBoard;
+@ Board@ = /Games/TicTacToe/Board%.Board@;
+@ Player@ = /Games/TicTacToe/Board%.Player@;
+@ Position@ = /Games/TicTacToe/Board%.Position@;
+@ Square@ = /Games/TicTacToe/Board%.Square@;
+@ Status@ = /Games/TicTacToe/Board%.Status@;
+% BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
+% EmptyBoard = /Games/TicTacToe/Board%.EmptyBoard;
 
 # Import to test compilation.
-% _ = /TicTacToe/Stdio%;
+% _ = /Games/TicTacToe/Stdio%;
 
 TestResult@! TestBoardStatus = {
   Unit@ _ := !(Unit); # Delay the test until we execute the process
