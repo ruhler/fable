@@ -15,8 +15,6 @@
 % Drawings = /App/Drawing%.Drawings;
 % Translate = /App/Drawing%.Translate;
 
-% Circle = /Graphics/2D/Circle%.Circle;
-
 @ Int@ = /Core/Int%.Int@;
 
 <@>% List = /Core/List%.List;
@@ -35,6 +33,8 @@
 % Int = /Pinball/Num%.Int;
 
 @ Ball@ = /Pinball/Ball%.Ball@;
+
+% Circle = /Pinball/Circle%.Circle;
 
 @ Edge@ = /Pinball/Edge%.Edge@;
 % Edge = /Pinball/Edge%.Edge;

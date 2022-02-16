@@ -20,11 +20,11 @@
 % _ = /Fble/ProfilesTest%;
 % _ = /Fble/StackSmasher%;
 % _ = /Graphics/App%;
-% _ = /Graphics/2D/Circle%;
 % _ = /Invaders/App%;
 % _ = /Invaders/Bench%;
 % _ = /Invaders/Screenshot/App%;
 % _ = /Pinball/App%;
+% _ = /Pinball/Circle%;
 % _ = /Snake%;
 % _ = /Snake/Bench%;
 
