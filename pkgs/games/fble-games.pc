@@ -1,0 +1,9 @@
+includedir=${pcfiledir}
+libdir=${pc_top_builddir}/pkgs/games
+
+Name: Fble Games
+Description: The fble games library package.
+Version: 0.1
+Requires: fble-core, fble-app
+Libs: -L${libdir} -lfble-games
+Cflags: -I${includedir}

@@ -4,6 +4,6 @@ libdir=${pc_top_builddir}/pkgs/misc
 Name: Fble Misc
 Description: The fble misc library package.
 Version: 0.1
-Requires: fble-core, fble-app, fble-sat, fble-hwdg
+Requires: fble-core, fble-app, fble-sat, fble-hwdg, fble-invaders, fble-pinball, fble-games
 Libs: -L${libdir} -lfble-misc
 Cflags: -I${includedir}
