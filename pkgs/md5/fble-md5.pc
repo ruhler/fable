@@ -1,0 +1,9 @@
+includedir=${pcfiledir}
+libdir=${pc_top_builddir}/pkgs/md5
+
+Name: Fble Md5
+Description: The fble md5 library package.
+Version: 0.1
+Requires: fble, fble-core
+Libs: -L${libdir} -lfble-md5
+Cflags: -I${includedir}

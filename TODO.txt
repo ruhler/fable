@@ -1,10 +1,10 @@
-* Separate rest of packages out of pkgs/misc.
+* Figure out what to do with misc/Fble modules.
 * Fix dependency issue of build.ninja on moved *.fble files
   For example, moving Md5.fble to Md5/Md5.fble didn't trigger rebuild of
   build.ninja file.
 * Fix possibly missing dependency of apps on libfble-foo.a files?
 * Get rid of FbleMain.
-   fble-md5, fble-test, fble-mem-test, fble-profiles-test
+   fble-test, fble-mem-test, fble-profiles-test
 
 * Switch to new proposed approach for spec tests.
 
