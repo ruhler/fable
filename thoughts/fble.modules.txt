@@ -2186,3 +2186,5 @@ Observation: Looks like pkg-config cflags may not work for fble compiler
 flags, because it includes extra things like -D_REENTRANT and uses compiler
 flag formats like -Ifoo instead of -I foo. That's too bad.
 
+Wait, how about using cflags-only-I? Isn't that exactly what we want?
+

@@ -205,7 +205,7 @@ set ::env(PKG_CONFIG_TOP_BUILD_DIR) $::out
 set ::env(PKG_CONFIG_PATH) fble
 lappend $::build_ninja_deps "fble/fble.pc"
 lappend $::build_ninja_deps "fble/fble.cov.pc"
-foreach pkg [list core sat app hwdg misc invaders pinball games] {
+foreach pkg [list core sat app hwdg misc invaders pinball games graphics] {
   append ::env(PKG_CONFIG_PATH) ":pkgs/$pkg"
   lappend $::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
 }
@@ -538,16 +538,25 @@ pkg games [list core app] ""
 # invaders package
 eval {
   pkg invaders [list core app] ""
-  app $::out/pkgs/invaders/Invaders/fble-invaders "/Invaders/App%" "fble-invaders" $::out/pkgs/invaders/libfble-invaders.a
+  app $::out/pkgs/invaders/Invaders/fble-invaders "/Invaders/App%" \
+    "fble-invaders" $::out/pkgs/invaders/libfble-invaders.a
 }
 
 # pinball package
 eval {
   pkg pinball [list core app] ""
-  app $::out/pkgs/pinball/Pinball/fble-pinball "/Pinball/App%" "fble-pinball" $::out/pkgs/pinball/libfble-pinball.a
+  app $::out/pkgs/pinball/Pinball/fble-pinball "/Pinball/App%" \
+    "fble-pinball" $::out/pkgs/pinball/libfble-pinball.a
 }
 
-pkg misc [list core app hwdg sat invaders pinball games] ""
+# graphics package
+eval {
+  pkg graphics [list core app] ""
+  app $::out/pkgs/graphics/Graphics/fble-graphics "/Graphics/App%" \
+    "fble-graphics" $::out/pkgs/graphics/libfble-graphics.a
+}
+
+pkg misc [list core app hwdg sat invaders pinball games graphics] ""
 
 # fble programs binaries
 foreach {x} { fble-md5 } {
@@ -566,7 +575,7 @@ test $::out/tools/fble-profiles-test.tr \
 # fble-disassemble test
 set misc_cflags ""
 set misc_libs ""
-foreach pkg [list core sat app misc hwdg invaders pinball games] {
+foreach pkg [list core sat app misc hwdg invaders pinball games graphics] {
   append misc_cflags " -I pkgs/$pkg"
   append misc_libs " $::out/pkgs/$pkg/libfble-$pkg.a"
 }
@@ -582,8 +591,8 @@ test $::out/pkgs/misc/Fble/fble-tests.tr "$::out/pkgs/core/Core/fble-stdio $::ou
 test $::out/pkgs/misc/fble-md5.tr "$::out/pkgs/misc/fble-md5 $::out/pkgs/misc/Md5/Main.fble.d" \
   "$::out/pkgs/misc/fble-md5 /dev/null $misc_cflags /Md5/Main% > $::out/pkgs/misc/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/pkgs/misc/fble-md5.out > /dev/null"
 
-stdio $::out/pkgs/misc/fble-tests "/Fble/Tests%" "fble-sat fble-app fble-misc fble-hwdg fble-invaders fble-pinball fble-games" $misc_libs
-stdio $::out/pkgs/misc/fble-bench "/Fble/Bench%" "fble-sat fble-app fble-misc fble-hwdg fble-invaders fble-pinball fble-games" $misc_libs
+stdio $::out/pkgs/misc/fble-tests "/Fble/Tests%" "fble-sat fble-app fble-misc fble-hwdg fble-invaders fble-pinball fble-games fble-graphics" $misc_libs
+stdio $::out/pkgs/misc/fble-bench "/Fble/Bench%" "fble-sat fble-app fble-misc fble-hwdg fble-invaders fble-pinball fble-games fble-graphics" $misc_libs
 stdio $::out/pkgs/misc/fble-debug-test "/Fble/DebugTest%" "fble-misc" $::out/pkgs/misc/libfble-misc.a
 
 
@@ -616,8 +625,6 @@ build "$::out/pkgs/misc/fble-debug-test.dwarf $::out/pkgs/misc/fble-debug-test.d
 test $::out/pkgs/misc/fble-debug-test.tr \
   "$::out/pkgs/misc/fble-debug-test tools/fble-debug-test.exp" \
   "expect tools/fble-debug-test.exp > /dev/null"
-
-app $::out/pkgs/misc/Graphics/fble-graphics "/Graphics/App%" "fble-misc" $::out/pkgs/misc/libfble-misc.a
 
 # test summary
 build $::out/tests.txt "$::tests" "echo $::tests > $::out/tests.txt"
