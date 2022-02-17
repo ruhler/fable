@@ -15,9 +15,9 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-@ Md5Hash@ = /Md5%.Md5Hash@;
-% Md5 = /Md5%.Md5;
-% Eq = /Md5%.Eq;
+@ Md5Hash@ = /Md5/Md5%.Md5Hash@;
+% Md5 = /Md5/Md5%.Md5;
+% Eq = /Md5/Md5%.Eq;
 
 <@>@ Put@ = /Core/Process%.Put@;
 

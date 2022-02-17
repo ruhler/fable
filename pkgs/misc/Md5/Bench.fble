@@ -17,8 +17,8 @@
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
 % H2 = /Md5/Bits%.Bit8.H2;
 
-@ Md5Hash@ = /Md5%.Md5Hash@;
-% Md5 = /Md5%.Md5;
+@ Md5Hash@ = /Md5/Md5%.Md5Hash@;
+% Md5 = /Md5/Md5%.Md5;
 
 Int@ 1 = Int|1;
 
