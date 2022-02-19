@@ -173,7 +173,7 @@ proc dirs { root dir } {
 proc pkg {name objs} {
   set cflags [exec pkg-config --cflags-only-I fble-$name]
   foreach dir [dirs pkgs/$name ""] {
-    lappend build_ninja_deps "pkgs/$name/$dir"
+    lappend ::build_ninja_deps "pkgs/$name/$dir"
     foreach {x} [glob -tails -directory pkgs/$name -nocomplain -type f $dir/*.fble] {
       set mpath "/[file rootname $x]%"
 
@@ -198,11 +198,11 @@ set ::build_ninja_deps [list]
 # Set up pkg-config for use in build.
 set ::env(PKG_CONFIG_TOP_BUILD_DIR) $::out
 set ::env(PKG_CONFIG_PATH) fble
-lappend $::build_ninja_deps "fble/fble.pc"
-lappend $::build_ninja_deps "fble/fble.cov.pc"
+lappend ::build_ninja_deps "fble/fble.pc"
+lappend ::build_ninja_deps "fble/fble.cov.pc"
 foreach pkg [list core sat app hwdg misc invaders pinball games graphics md5] {
   append ::env(PKG_CONFIG_PATH) ":pkgs/$pkg"
-  lappend $::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
+  lappend ::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
 }
 
 # libfble.a
@@ -212,8 +212,8 @@ eval {
 
   # parser
   eval {
-    # Update local includes for fble/src/parse.y here.
-    # See comment in fble/src/parse.y.
+    # Update local includes for fble/lib/parse.y here.
+    # See comment in fble/lib/parse.y.
     set includes {
       fble/include/fble-alloc.h
       fble/include/fble-load.h
@@ -222,41 +222,41 @@ eval {
       fble/include/fble-name.h
       fble/include/fble-string.h
       fble/include/fble-vector.h
-      fble/src/expr.h
+      fble/lib/expr.h
     }
-    set report $::out/fble/src/parse.tab.report.txt
-    set tabc $::out/fble/src/parse.tab.c
-    set cmd "bison --report=all --report-file=$report -o $tabc fble/src/parse.y"
-    build "$tabc $report" "fble/src/parse.y $includes" $cmd
+    set report $::out/fble/lib/parse.tab.report.txt
+    set tabc $::out/fble/lib/parse.tab.c
+    set cmd "bison --report=all --report-file=$report -o $tabc fble/lib/parse.y"
+    build "$tabc $report" "fble/lib/parse.y $includes" $cmd
 
-    obj $::out/fble/src/parse.tab.o $::out/fble/src/parse.tab.c "-I fble/include -I fble/src"
-    obj_cov $::out/fble/src/parse.tab.cov.o $::out/fble/src/parse.tab.c "-I fble/include -I fble/src"
-    lappend fble_objs $::out/fble/src/parse.tab.o
-    lappend fble_objs_cov $::out/fble/src/parse.tab.cov.o
+    obj $::out/fble/lib/parse.tab.o $::out/fble/lib/parse.tab.c "-I fble/include -I fble/lib"
+    obj_cov $::out/fble/lib/parse.tab.cov.o $::out/fble/lib/parse.tab.c "-I fble/include -I fble/lib"
+    lappend fble_objs $::out/fble/lib/parse.tab.o
+    lappend fble_objs_cov $::out/fble/lib/parse.tab.cov.o
   }
 
   # .o files
-  lappend ::build_ninja_deps "fble/src"
-  foreach {x} [glob -tails -directory fble/src *.c] {
-    set object $::out/fble/src/[string map {.c .o} $x]
-    set object_cov $::out/fble/src/[string map {.c .cov.o} $x]
-    obj $object fble/src/$x "-I fble/include -I fble/src"
-    obj_cov $object_cov fble/src/$x "-I fble/include -I fble/src"
+  lappend ::build_ninja_deps "fble/lib"
+  foreach {x} [glob -tails -directory fble/lib *.c] {
+    set object $::out/fble/lib/[string map {.c .o} $x]
+    set object_cov $::out/fble/lib/[string map {.c .cov.o} $x]
+    obj $object fble/lib/$x "-I fble/include"
+    obj_cov $object_cov fble/lib/$x "-I fble/include"
     lappend fble_objs $object
     lappend fble_objs_cov $object_cov
   }
 
   # libfble.a
-  set ::libfble "$::out/fble/src/libfble.a"
+  set ::libfble "$::out/fble/lib/libfble.a"
   lib $::libfble $fble_objs
 
-  set ::libfblecov "$::out/fble/src/libfble.cov.a"
+  set ::libfblecov "$::out/fble/lib/libfble.cov.a"
   lib $::libfblecov $fble_objs_cov
 }
 
 # fble tool binaries
 eval {
-  lappend build_ninja_deps "tools"
+  lappend ::build_ninja_deps "tools"
   set cflags [exec pkg-config --cflags fble]
   set ldflags [exec pkg-config --static --libs fble]
   set ldflags_cov [exec pkg-config --static --libs fble.cov]
@@ -300,12 +300,12 @@ test $::out/true.tr "" true
 set ::spec_tests [list]
 set ::ldflags_fble [exec pkg-config --static --libs fble]
 foreach dir [dirs langs/fble ""] {
-  lappend build_ninja_deps "langs/fble/$dir"
+  lappend ::build_ninja_deps "langs/fble/$dir"
   foreach {t} [lsort [glob -tails -directory langs/fble -nocomplain -type f $dir/*.tcl]] {
     set ::specroot [file rootname $t]
     set ::spectestdir $::out/langs/fble/$specroot
     set ::spectcl langs/fble/$t
-    lappend build_ninja_deps $::spectcl
+    lappend ::build_ninja_deps $::spectcl
 
     # Returns the list of .fble files for modules used in the test, not
     # including the top level .fble file.
@@ -612,7 +612,7 @@ fbleobj $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o $::out/tools/fb
   pkgs/misc/Fble/ProfilesTest.fble
 bin $::out/pkgs/misc/fble-compiled-profiles-test \
   "$::out/tools/fble-compiled-profiles-test.o $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o" \
-  "-L $::out/fble/src -L $::out/pkgs/misc -lfble -lfble-misc" "$::libfble $::out/pkgs/misc/libfble-misc.a"
+  "-L $::out/fble/lib -L $::out/pkgs/misc -lfble -lfble-misc" "$::libfble $::out/pkgs/misc/libfble-misc.a"
 test $::out/pkgs/misc/Fble/fble-compiled-profiles-test.tr \
   "$::out/pkgs/misc/fble-compiled-profiles-test" \
   "$::out/pkgs/misc/fble-compiled-profiles-test > $::out/pkgs/misc/Fble/fble-compiled-profiles-test.prof"

@@ -1,5 +1,5 @@
 includedir=${pcfiledir}/include
-libdir=${pc_top_builddir}/fble/src
+libdir=${pc_top_builddir}/fble/lib
 
 Name: Fble (Coverage Enabled)
 Description: Fble language interpreter and compiler, with coverage enabled.
