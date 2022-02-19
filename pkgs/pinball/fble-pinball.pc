@@ -4,6 +4,6 @@ libdir=${pc_top_builddir}/pkgs/pinball
 Name: Fble Pinball
 Description: The fble pinball library package.
 Version: 0.1
-Requires: fble-core, fble-app
+Requires.private: fble, fble-core, fble-app
 Libs: -L${libdir} -lfble-pinball
 Cflags: -I${includedir}

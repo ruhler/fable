@@ -92,7 +92,7 @@ int main(int argc, const char* argv[])
   while (!error && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (FbleParseSearchPathArg("-I", &search_path, &argc, &argv, &error)) continue;
+    if (FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-c", &compile, &argc, &argv, &error)) continue;

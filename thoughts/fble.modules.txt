@@ -2188,3 +2188,74 @@ flag formats like -Ifoo instead of -I foo. That's too bad.
 
 Wait, how about using cflags-only-I? Isn't that exactly what we want?
 
+I need to understand this a bit better. What are the dependencies when
+building packages?
+
+Example: package C depends on B, B depends on A.
+
+* -I flags need to compile C fble modules and .c source: -I B.
+  We do not need -I A.
+* -L,-l flags need to link C library: ??
+  Do you need -L flags to link a library, or only the user of the library
+  needs it? Only the user needs it. So, answer is none.
+
+* -I flags needed to compile executable depending on C: -I C.
+  We do not need -I B or -I A.
+* -L,-l flags needed to link executable depending on C:
+  -L and -l for all of A, B, C, and -lfble, and any other libraries A, B, or C
+  may depend on.
+
+Okay, so question is, what does pkg-config give us for -I and -L flags?
+Ideally -I is shallow and -L is deep?
+
+pkg-config has a --static option to include private libraries. So I guess we
+want that C privately depends on B, B privately depends on A, and use --static
+in pkg-config. That way -I flags don't recurse but -L flags do?
+
+Yeah, looks like I should be using Requires.private, not Requires.
+
+If I do things this way, we should be fine to use pkg-config for fble compile
+flags as well as C compile flags. Maybe we only need to support -Ifoo syntax
+if that's what's given in the .pc file?
+
+Let me try to clean this up. Summary is:
+* Use Requires.private instead of Requires for dependencies.
+* Use -I foo syntax in .pc files.
+* Use --cflags of packages we depend on when compiling a .c file for a
+  library.
+* Use --cflags of package when compiling a .c file for an executable.
+* Use --static and --libs for package we depend on when linking an
+  executable.
+
+Let's see if I can specify all the cflags and libs this way in the build.ninja
+file.
+
+Um, I think all fble packages depend privately on fble, to link with the
+runtime for compiled code.
+
+Looks like we have another case I missed.
+* When compiling a .fble module for package foo, we want to include -I for
+  dependencies and for -I foo. That's something I don't think pkg-config will
+  give to us in one invocation.
+
+Experimenting with pkg-config
+* Looks like -Ifoo form is needed, otherwise pkg-config rearranges them.
+* -I flags are output recursively, even for Requires.private modules.
+  Which is not what I expect or want. Or is it? Actually, maybe it is.
+* libs works as expected: --static to get recursive, otherwise non-recursive.
+
+Do we want -I flags recursive? If I reference /Foo.fble, and that references
+/Bar.fble, then I need /Foo and /Bar, even if I'm only using /Foo. Okay, so
+that works as expected then.
+
+Updates:
+* I'll want to support -Ifoo form in the compiler. Maybe make a short form
+  flags parser thing and use that for -I.
+* I'll need to go back to -Ifoo from in the .pc files.
+* For compiling self modules, we can use our own cflags from pkg-config, which
+  includes self and dependencies.
+* That means, because of things like SDL, we may need to filter just -I flags.
+  But SDL is a private include, right, so it shouldn't be included? But we
+  need to link. It's a funny thing, we need to link, but don't want to bring
+  in the -I flags. Oh well.
+

@@ -4,6 +4,6 @@ libdir=${pc_top_builddir}/pkgs/sat
 Name: Fble Sat
 Description: The fble sat library package.
 Version: 0.1
-Requires: fble, fble-core
+Requires.private: fble, fble-core
 Libs: -L${libdir} -lfble-sat
 Cflags: -I${includedir}

@@ -66,10 +66,9 @@ bool FbleParseStringArg(const char* name, const char** dest, int* argc, const ch
 //   Parse an FbleSearchPath command line argument.
 //
 // Sample argument usage:
-//   --foo entry1 --foo entry2
+//   -I entry1 -Ientry2
 // 
 // Inputs:
-//   name - the name of the flag to parse, such as "--foo".
 //   dest - search path value to append to based on the flag setting.
 //   argc - pointer to number of arguments remaining.
 //   argv - pointer to arguments remaining.
@@ -85,7 +84,7 @@ bool FbleParseStringArg(const char* name, const char** dest, int* argc, const ch
 // * Advances argc and argv to the next argument.
 // * Sets error to true in case of error parsing the matched argument.
 // * Prints an error message to stderr in case of error.
-bool FbleParseSearchPathArg(const char* name, FbleSearchPath* dest, int* argc, const char*** argv, bool* error);
+bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv, bool* error);
 
 // FbleParseInvalidArg --
 //   Pretend to parse an arg, but actually just indicate error.

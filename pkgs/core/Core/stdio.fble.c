@@ -237,7 +237,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   while (!error && !end_of_options && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
-    if (!module && FbleParseSearchPathArg("-I", &search_path, &argc, &argv, &error)) continue;
+    if (!module && FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;

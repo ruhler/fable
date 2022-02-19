@@ -169,14 +169,9 @@ proc dirs { root dir } {
 #
 # Inputs:
 #   name - the name of the package, such as 'app'.
-#   deps - list of packages this package depends on.
 #   objs - additional object files to include in the generated library.
-proc pkg {name deps objs} {
-  set cflags ""
-  foreach dep $deps {
-    append cflags " -I pkgs/$dep"
-  }
-
+proc pkg {name objs} {
+  set cflags [exec pkg-config --cflags-only-I fble-$name]
   foreach dir [dirs pkgs/$name ""] {
     lappend build_ninja_deps "pkgs/$name/$dir"
     foreach {x} [glob -tails -directory pkgs/$name -nocomplain -type f $dir/*.fble] {
@@ -184,10 +179,10 @@ proc pkg {name deps objs} {
 
       # Generate a .d file to capture dependencies.
       build $::out/pkgs/$name/$x.d "$::out/tools/fble-deps pkgs/$name/$x" \
-        "$::out/tools/fble-deps $cflags -I pkgs/$name -t $::out/pkgs/$name/$x.d -m $mpath > $::out/pkgs/$name/$x.d" \
+        "$::out/tools/fble-deps $cflags -t $::out/pkgs/$name/$x.d -m $mpath > $::out/pkgs/$name/$x.d" \
         "depfile = $::out/pkgs/$name/$x.d"
 
-      fbleobj $::out/pkgs/$name/$x.o $::out/tools/fble-compile "-c $cflags -I pkgs/$name -m $mpath" $::out/pkgs/$name/$x.d
+      fbleobj $::out/pkgs/$name/$x.o $::out/tools/fble-compile "-c $cflags -m $mpath" $::out/pkgs/$name/$x.d
       lappend objs $::out/pkgs/$name/$x.o
     }
   }
@@ -263,8 +258,8 @@ eval {
 eval {
   lappend build_ninja_deps "tools"
   set cflags [exec pkg-config --cflags fble]
-  set ldflags [exec pkg-config --libs fble]
-  set ldflags_cov [exec pkg-config --libs fble.cov]
+  set ldflags [exec pkg-config --static --libs fble]
+  set ldflags_cov [exec pkg-config --static --libs fble.cov]
   foreach {x} [glob tools/*.c] {
     set base [file rootname [file tail $x]]
     obj $::out/tools/$base.o $x $cflags
@@ -303,7 +298,7 @@ test $::out/true.tr "" true
 #   but only to know what error location, if any, is expected for
 #   fble-test-*-error tests.
 set ::spec_tests [list]
-set ::ldflags_fble [exec pkg-config --libs fble]
+set ::ldflags_fble [exec pkg-config --static --libs fble]
 foreach dir [dirs langs/fble ""] {
   lappend build_ninja_deps "langs/fble/$dir"
   foreach {t} [lsort [glob -tails -directory langs/fble -nocomplain -type f $dir/*.tcl]] {
@@ -456,13 +451,13 @@ eval {
     obj $::out/pkgs/core/$x.o pkgs/core/$x.c "$cflags -I pkgs/core"
   }
 
-  pkg core "" $objs
+  pkg core $objs
 
   # fble-stdio program.
   obj $::out/pkgs/core/Core/fble-stdio.o pkgs/core/Core/fble-stdio.c \
     [exec pkg-config --cflags fble fble-core]
   bin $::out/pkgs/core/Core/fble-stdio "$::out/pkgs/core/Core/fble-stdio.o" \
-    [exec pkg-config --libs fble fble-core] \
+    [exec pkg-config --static --libs fble fble-core] \
     "$::libfble $::out/pkgs/core/libfble-core.a"
 
   # Build an fble-stdio compiled binary.
@@ -477,7 +472,7 @@ eval {
       "$::out/tools/fble-compile --main FbleStdioMain -m $path > $target.s"
     asm $target.o $target.s
     bin $target "$target.o" \
-      [exec pkg-config --libs fble fble-core {*}$libs] \
+      [exec pkg-config --static --libs fble fble-core {*}$libs] \
       "$::libfble $::out/pkgs/core/libfble-core.a" {*}$args
   }
 
@@ -505,13 +500,13 @@ eval {
     obj $::out/pkgs/app/$x.o pkgs/app/$x.c "-I /usr/include/SDL2 -I fble/include -I pkgs/core -I pkgs/app"
   }
 
-  pkg app core $objs
+  pkg app $objs
 
   # fble-app program.
   obj $::out/pkgs/app/App/fble-app.o pkgs/app/App/fble-app.c \
     [exec pkg-config --cflags fble fble-core fble-app]
   bin $::out/pkgs/app/App/fble-app "$::out/pkgs/app/App/fble-app.o" \
-    [exec pkg-config --libs fble-app] \
+    [exec pkg-config --static --libs fble-app] \
     "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a"
 
   # Build an fble-app compiled binary.
@@ -526,7 +521,7 @@ eval {
       "$::out/tools/fble-compile --main FbleAppMain -m $path > $target.s"
     asm $target.o $target.s
     bin $target "$target.o" \
-      [exec pkg-config --libs fble-app {*}$libs] \
+      [exec pkg-config --static --libs fble-app {*}$libs] \
       "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a $args"
   }
 }
@@ -541,13 +536,13 @@ eval {
     obj $::out/pkgs/md5/$x.o pkgs/md5/$x.c "-I fble/include -I pkgs/core -I pkgs/md5"
   }
 
-  pkg md5 core $objs
+  pkg md5 $objs
 
   # fble-md5 program.
   obj $::out/pkgs/md5/Md5/fble-md5.o pkgs/md5/Md5/fble-md5.c \
     [exec pkg-config --cflags fble fble-core fble-md5]
   bin $::out/pkgs/md5/Md5/fble-md5 "$::out/pkgs/md5/Md5/fble-md5.o" \
-    [exec pkg-config --libs fble-md5] \
+    [exec pkg-config --static --libs fble-md5] \
     "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/md5/libfble-md5.a"
 
   # fble-md5 test
@@ -555,32 +550,32 @@ eval {
     "$::out/pkgs/md5/Md5/fble-md5 -I pkgs/core -I pkgs/md5 -m /Md5/Main% /dev/null > $::out/pkgs/md5/Md5/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/pkgs/md5/Md5/fble-md5.out > /dev/null"
 }
 
-pkg sat core ""
-pkg hwdg [list core app] ""
-pkg games [list core app] ""
+pkg sat ""
+pkg hwdg ""
+pkg games ""
 
 # invaders package
 eval {
-  pkg invaders [list core app] ""
+  pkg invaders ""
   app $::out/pkgs/invaders/Invaders/fble-invaders "/Invaders/App%" \
     "fble-invaders" $::out/pkgs/invaders/libfble-invaders.a
 }
 
 # pinball package
 eval {
-  pkg pinball [list core app] ""
+  pkg pinball ""
   app $::out/pkgs/pinball/Pinball/fble-pinball "/Pinball/App%" \
     "fble-pinball" $::out/pkgs/pinball/libfble-pinball.a
 }
 
 # graphics package
 eval {
-  pkg graphics [list core app] ""
+  pkg graphics ""
   app $::out/pkgs/graphics/Graphics/fble-graphics "/Graphics/App%" \
     "fble-graphics" $::out/pkgs/graphics/libfble-graphics.a
 }
 
-pkg misc [list core app hwdg sat invaders pinball games graphics md5] ""
+pkg misc ""
 
 # fble-profiles-test
 test $::out/tools/fble-profiles-test.tr \

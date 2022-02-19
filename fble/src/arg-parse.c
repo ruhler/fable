@@ -44,11 +44,11 @@ bool FbleParseStringArg(const char* name, const char** dest, int* argc, const ch
 
 
 // FbleParseSearchPathArg -- See documentation in fble-args.h
-bool FbleParseSearchPathArg(const char* name, FbleSearchPath* dest, int* argc, const char*** argv, bool* error)
+bool FbleParseSearchPathArg(FbleSearchPath* dest, int* argc, const char*** argv, bool* error)
 {
-  if (strcmp(name, (*argv)[0]) == 0) {
+  if (strcmp("-I", (*argv)[0]) == 0) {
     if (*argc < 2) {
-      fprintf(stderr, "Error: missing argument to %s option.\n", name);
+      fprintf(stderr, "Error: missing argument to -I option.\n");
       *error = true;
       return true;
     }
@@ -59,6 +59,14 @@ bool FbleParseSearchPathArg(const char* name, FbleSearchPath* dest, int* argc, c
     (*argv) += 2;
     return true;
   }
+
+  if ((*argv)[0][0] == '-' && (*argv)[0][1] == 'I') {
+    FbleVectorAppend(*dest, (*argv[0]) + 2);
+    (*argc)--;
+    (*argv)++;
+    return true;
+  }
+
   return false;
 }
 
