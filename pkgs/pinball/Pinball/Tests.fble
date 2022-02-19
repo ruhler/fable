@@ -28,6 +28,10 @@
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
+# Import to test compilation.
+% _ = /Pinball/App%;
+% _ = /Pinball/Circle%;
+
 Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   /Pinball/Rotate/Tests%.Tests,
   /Pinball/Quadratic/Tests%.Tests,
@@ -315,4 +319,4 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   }))
 ]);
 
-@(Tests);
+/Core/Test/Run%.Run(Tests);
