@@ -12,16 +12,10 @@
 % _ = /Fble/ProfilesTest%;
 % _ = /Fble/StackSmasher%;
 % _ = /Graphics/App%;
-% _ = /Games/Snake%;
-% _ = /Games/Snake/Bench%;
 
 Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
-  /Games/BenchmarkGame/Tests%.Tests,
-  /Games/GameOfLife/Tests%.Tests,
   /Graphics/2D/Tests%.Tests,
-  /Graphics/Triangle/Tests%.Tests,
-  /Games/Sudoku/Tests%.Tests,
-  /Games/TicTacToe/Tests%.Tests
+  /Graphics/Triangle/Tests%.Tests
 ]);
 
 /Core/Test/Run%.Run(AllTests);

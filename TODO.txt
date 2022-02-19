@@ -1,5 +1,7 @@
+* Separate /Graphics/Tests% from /Fble/Tests%.
+* Split up Tests and Bench into corresponding modules.
+
 * Figure out what to do with misc/Fble modules.
- - Split up Tests and Bench into corresponding modules.
  - Move what remains to fble/test non-package library.
 
 * Factor out common logic for doing fble /Foo/Tests% based tests in build.ninja.tcl
