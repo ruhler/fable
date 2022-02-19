@@ -7,11 +7,11 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /Fble/Bench%;
-% _ = /Fble/DebugTest%;
-% _ = /Fble/ProfilesTest%;
-% _ = /Fble/StackSmasher%;
+% _ = /Graphics/App%;
 
-Test@ Tests = TestSuite(Str|Fble, List<Test@>[]);
+Test@ Tests = TestSuite(Str|Graphics, List<Test@>[
+  /Graphics/2D/Tests%.Tests,
+  /Graphics/Triangle/Tests%.Tests
+]);
 
 /Core/Test/Run%.Run(Tests);

@@ -1,4 +1,3 @@
-* Separate /Graphics/Tests% from /Fble/Tests%.
 * Split up Tests and Bench into corresponding modules.
 
 * Figure out what to do with misc/Fble modules.
