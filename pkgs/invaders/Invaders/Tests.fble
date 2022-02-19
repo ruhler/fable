@@ -1,0 +1,17 @@
+
+<@>% List = /Core/List%.List;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% TestSuite = /Core/Test%.TestSuite;
+
+# Import to test compilation.
+% _ = /Invaders/App%;
+% _ = /Invaders/Bench%;
+% _ = /Invaders/Screenshot/App%;
+
+Test@ Tests = TestSuite(Str|Invaders, List<Test@>[
+]);
+
+/Core/Test/Run%.Run(Tests);
