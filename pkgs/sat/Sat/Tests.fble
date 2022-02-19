@@ -95,4 +95,4 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
   }))
 ]);
 
-@(Tests);
+/Core/Test/Run%.Run(Tests);

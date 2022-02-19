@@ -27,7 +27,6 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Graphics/Triangle/Tests%.Tests,
   /Hwdg/Tests%.Tests,
   /Pinball/Tests%.Tests,
-  /Sat/Tests%.Tests,
   /Games/Sudoku/Tests%.Tests,
   /Games/TicTacToe/Tests%.Tests
 ]);
