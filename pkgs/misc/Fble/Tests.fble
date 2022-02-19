@@ -1,14 +1,6 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% False = /Core/Bool%.False;
-
-<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 
-@ Stdio@ = /Core/Stdio%.Stdio@;
-@ IO@ = /Core/Stdio%.IO@;
-
-@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
@@ -42,14 +34,4 @@ Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
   /Games/TicTacToe/Tests%.Tests
 ]);
 
-Stdio@ Main = (IO@ io, List@<String@> args) {
-  Bool@ verbose = args.?(
-    cons: /Core/String/Eq%.Eq(Str|'--verbose', args.cons.head),
-    nil: False);
-
-  verbose.?(
-    true: /Core/Test%.RunTestsVerbose(io.stdout, AllTests),
-    false: /Core/Test%.RunTests(io.stdout, AllTests));
-};
-
-Main;
+/Core/Test/Run%.Run(AllTests);

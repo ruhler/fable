@@ -1,0 +1,32 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% False = /Core/Bool%.False;
+
+<@>@ List@ = /Core/List%.List@;
+@ Stdio@ = /Core/Stdio%.Stdio@;
+@ IO@ = /Core/Stdio%.IO@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+
+# Run --
+#   Create a Stdio@ program to run a set of tests.
+#
+# Inputs:
+#   tests - the list of tests to run.
+#
+# Result:
+#   A Stdio@ program to run the tests.
+(Test@) { Stdio@; } Run = (Test@ tests)(IO@ io, List@<String@> args) {
+  Bool@ verbose = args.?(
+    cons: /Core/String/Eq%.Eq(Str|'--verbose', args.cons.head),
+    nil: False);
+
+  verbose.?(
+    true: /Core/Test%.RunTestsVerbose(io.stdout, tests),
+    false: /Core/Test%.RunTests(io.stdout, tests));
+};
+
+@(Run);
