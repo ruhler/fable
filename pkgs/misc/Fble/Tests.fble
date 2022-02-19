@@ -21,7 +21,6 @@
 % _ = /Games/Snake/Bench%;
 
 Test@ AllTests = TestSuite(Str|Fble, List<Test@>[
-  /Core/Tests%.Tests,
   /Games/BenchmarkGame/Tests%.Tests,
   /Games/GameOfLife/Tests%.Tests,
   /Graphics/2D/Tests%.Tests,

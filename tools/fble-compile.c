@@ -140,6 +140,7 @@ int main(int argc, const char* argv[])
     FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, NULL);
     if (prgm == NULL) {
       FbleFreeModulePath(mpath);
+      FbleFree(search_path.xs);
       return EX_FAIL;
     }
 
@@ -148,6 +149,7 @@ int main(int argc, const char* argv[])
 
     if (module == NULL) {
       FbleFreeModulePath(mpath);
+      FbleFree(search_path.xs);
       return EX_FAIL;
     }
 

@@ -488,6 +488,16 @@ eval {
   stdio $::out/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
   test $::out/pkgs/core/Core/Stdio/fble-stdio-test.tr $::out/pkgs/core/Core/Stdio/fble-stdio-test \
     "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out > /dev/null"
+
+  # Core/Tests interpreted
+  test $::out/pkgs/core/Core/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Tests.fble.d" \
+    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Tests%" "pool = console"
+
+  # Core/Tests compiled
+  stdio $::out/pkgs/core/Core/core-tests "/Core/Tests%" "fble-core" \
+    $::out/pkgs/core/libfble-core.a
+  test $::out/pkgs/core/Core/core-tests.tr $::out/pkgs/core/Core/core-tests \
+    "$::out/pkgs/core/Core/core-tests" "pool = console"
 }
 
 # fble 'app' library package.

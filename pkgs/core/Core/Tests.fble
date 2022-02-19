@@ -23,4 +23,4 @@ Test@ Tests = TestSuite(Str|Core, List<Test@>[
   /Core/Test/Tests%.Tests
 ]);
 
-@(Tests);
+/Core/Test/Run%.Run(Tests);
