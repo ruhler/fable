@@ -1,0 +1,4 @@
+TODO: Expand this.
+
+perf record -F 997 -d -g ./out/bin/fble-bench
+perf report -q -g folded,count,0 | ./out/bin/fble-perf-profile > bench.perf.txt
