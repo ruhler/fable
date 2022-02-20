@@ -178,11 +178,11 @@ proc pkg {name objs} {
       set mpath "/[file rootname $x]%"
 
       # Generate a .d file to capture dependencies.
-      build $::out/pkgs/$name/$x.d "$::out/tools/fble-deps pkgs/$name/$x" \
-        "$::out/tools/fble-deps $cflags -t $::out/pkgs/$name/$x.d -m $mpath > $::out/pkgs/$name/$x.d" \
+      build $::out/pkgs/$name/$x.d "$::out/fble/bin/fble-deps pkgs/$name/$x" \
+        "$::out/fble/bin/fble-deps $cflags -t $::out/pkgs/$name/$x.d -m $mpath > $::out/pkgs/$name/$x.d" \
         "depfile = $::out/pkgs/$name/$x.d"
 
-      fbleobj $::out/pkgs/$name/$x.o $::out/tools/fble-compile "-c $cflags -m $mpath" $::out/pkgs/$name/$x.d
+      fbleobj $::out/pkgs/$name/$x.o $::out/fble/bin/fble-compile "-c $cflags -m $mpath" $::out/pkgs/$name/$x.d
       lappend objs $::out/pkgs/$name/$x.o
     }
   }
@@ -252,6 +252,20 @@ eval {
 
   set ::libfblecov "$::out/fble/lib/libfble.cov.a"
   lib $::libfblecov $fble_objs_cov
+}
+
+# fble/bin
+eval {
+  lappend ::build_ninja_deps "fble/bin"
+  set cflags [exec pkg-config --cflags fble]
+  set ldflags [exec pkg-config --static --libs fble]
+  set ldflags_cov [exec pkg-config --static --libs fble.cov]
+  foreach {x} [glob fble/bin/*.c] {
+    set base [file rootname [file tail $x]]
+    obj $::out/fble/bin/$base.o $x $cflags
+    bin $::out/fble/bin/$base "$::out/fble/bin/$base.o" $ldflags $::libfble
+    bin_cov $::out/fble/bin/$base.cov "$::out/fble/bin/$base.o" $ldflags_cov $::libfblecov
+  }
 }
 
 # fble tool binaries
@@ -334,10 +348,10 @@ foreach dir [dirs langs/fble ""] {
         set o [string map {.fble .o} $fble]
         lappend objs $o
 
-        fbleobj $o $::out/tools/fble-compile.cov "-c -I $::spectestdir -m $path" $::spectestdir/test.fble
+        fbleobj $o $::out/fble/bin/fble-compile.cov "-c -I $::spectestdir -m $path" $::spectestdir/test.fble
       }
 
-      fbleobj $::spectestdir/test.o $::out/tools/fble-compile.cov "-c -e FbleCompiledMain -I $::spectestdir -m /test%" $::spectestdir/test.fble
+      fbleobj $::spectestdir/test.o $::out/fble/bin/fble-compile.cov "-c -e FbleCompiledMain -I $::spectestdir -m /test%" $::spectestdir/test.fble
       lappend objs $::spectestdir/test.o
 
       lib $::spectestdir/libtest.a $objs
@@ -468,8 +482,8 @@ eval {
   #   libs - additional pkg-config named libraries that this depends on.
   #   args - optional additional dependencies.
   proc stdio { target path libs args} {
-    build $target.s $::out/tools/fble-compile \
-      "$::out/tools/fble-compile --main FbleStdioMain -m $path > $target.s"
+    build $target.s $::out/fble/bin/fble-compile \
+      "$::out/fble/bin/fble-compile --main FbleStdioMain -m $path > $target.s"
     asm $target.o $target.s
     bin $target "$target.o" \
       [exec pkg-config --static --libs fble fble-core {*}$libs] \
@@ -527,8 +541,8 @@ eval {
   #   libs - addition pkg-config named libraries to depend on.
   #   args - optional additional dependencies.
   proc app { target path libs args} {
-    build $target.s $::out/tools/fble-compile \
-      "$::out/tools/fble-compile --main FbleAppMain -m $path > $target.s"
+    build $target.s $::out/fble/bin/fble-compile \
+      "$::out/fble/bin/fble-compile --main FbleAppMain -m $path > $target.s"
     asm $target.o $target.s
     bin $target "$target.o" \
       [exec pkg-config --static --libs fble-app {*}$libs] \
@@ -674,14 +688,14 @@ foreach pkg [list core sat app misc hwdg invaders pinball games graphics md5] {
 # fble-disassemble test
 # TODO: Run fble-disassemble on spec tests, not on an arbitrary fble pkg
 # module.
-test $::out/tools/fble-disassemble.tr \
-  "$::out/tools/fble-disassemble $::out/pkgs/core/Core/Map/Map.fble.d" \
-  "$::out/tools/fble-disassemble -I pkgs/core -m /Core/Map/Map% > $::out/pkgs/core/Core/Map/Map.fbls"
+test $::out/fble/bin/fble-disassemble.tr \
+  "$::out/fble/bin/fble-disassemble $::out/pkgs/core/Core/Map/Map.fble.d" \
+  "$::out/fble/bin/fble-disassemble -I pkgs/core -m /Core/Map/Map% > $::out/pkgs/core/Core/Map/Map.fbls"
 
 stdio $::out/pkgs/misc/fble-debug-test "/Fble/DebugTest%" "fble-misc" $misc_libs
 
 # fble-compiled-profiles-test
-fbleobj $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o $::out/tools/fble-compile \
+fbleobj $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o $::out/fble/bin/fble-compile \
   "-c -e FbleCompiledMain $misc_cflags -m /Fble/ProfilesTest%" \
   pkgs/misc/Fble/ProfilesTest.fble
 bin $::out/pkgs/misc/fble-compiled-profiles-test \
