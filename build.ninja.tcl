@@ -680,7 +680,6 @@ test $::out/pkgs/misc/Fble/fble-tests.tr "$::out/pkgs/core/Core/fble-stdio $::ou
   "$::out/pkgs/core/Core/fble-stdio $misc_cflags -m /Fble/Tests%" "pool = console"
 
 stdio $::out/pkgs/misc/fble-tests "/Fble/Tests%" "fble-sat fble-app fble-misc fble-hwdg fble-invaders fble-pinball fble-games fble-graphics fble-md5" $misc_libs
-stdio $::out/pkgs/misc/fble-bench "/Fble/Bench%" "fble-sat fble-app fble-misc fble-hwdg fble-invaders fble-pinball fble-games fble-graphics fble-md5" $misc_libs
 stdio $::out/pkgs/misc/fble-debug-test "/Fble/DebugTest%" "fble-misc" $misc_libs
 
 

@@ -7,7 +7,6 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /Fble/Bench%;
 % _ = /Fble/DebugTest%;
 % _ = /Fble/ProfilesTest%;
 % _ = /Fble/StackSmasher%;

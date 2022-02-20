@@ -30,6 +30,7 @@
 
 # Import to test compilation.
 % _ = /Pinball/App%;
+% _ = /Pinball/Bench%;
 % _ = /Pinball/Circle%;
 
 Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
