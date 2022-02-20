@@ -1,4 +1,6 @@
 * Split up Tests and Bench into corresponding modules.
+* Change fble-disassemble test to be done per spec test.
+  Otherwise coverage is pretty suspect.
 
 * Figure out what to do with misc/Fble modules.
  - Move what remains to fble/test non-package library.

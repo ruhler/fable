@@ -664,28 +664,21 @@ test $::out/tools/fble-profiles-test.tr \
   "$::out/tools/fble-profiles-test pkgs/misc/Fble/ProfilesTest.fble" \
   "$::out/tools/fble-profiles-test -I pkgs/misc /Fble/ProfilesTest% > $::out/tools/fble-profiles-test.prof"
 
-# fble-disassemble test
 set misc_cflags ""
 set misc_libs ""
 foreach pkg [list core sat app misc hwdg invaders pinball games graphics md5] {
   append misc_cflags " -I pkgs/$pkg"
   append misc_libs " $::out/pkgs/$pkg/libfble-$pkg.a"
 }
+
+# fble-disassemble test
+# TODO: Run fble-disassemble on spec tests, not on an arbitrary fble pkg
+# module.
 test $::out/tools/fble-disassemble.tr \
-  "$::out/tools/fble-disassemble $::out/pkgs/misc/Fble/Tests.fble.d" \
-  "$::out/tools/fble-disassemble $misc_cflags -m /Fble/Tests% > $::out/pkgs/misc/Fble/Tests.fbls"
+  "$::out/tools/fble-disassemble $::out/pkgs/core/Core/Map/Map.fble.d" \
+  "$::out/tools/fble-disassemble -I pkgs/core -m /Core/Map/Map% > $::out/pkgs/core/Core/Map/Map.fbls"
 
-# Fble/Tests.fble tests
-test $::out/pkgs/misc/Fble/fble-tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/misc/Fble/Tests.fble.d" \
-  "$::out/pkgs/core/Core/fble-stdio $misc_cflags -m /Fble/Tests%" "pool = console"
-
-stdio $::out/pkgs/misc/fble-tests "/Fble/Tests%" "fble-sat fble-app fble-misc fble-hwdg fble-invaders fble-pinball fble-games fble-graphics fble-md5" $misc_libs
 stdio $::out/pkgs/misc/fble-debug-test "/Fble/DebugTest%" "fble-misc" $misc_libs
-
-
-# /Fble/Tests% compilation test
-test $::out/pkgs/misc/Fble/fble-compiled-tests.tr $::out/pkgs/misc/fble-tests \
-  "$::out/pkgs/misc/fble-tests" "pool = console"
 
 # fble-compiled-profiles-test
 fbleobj $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o $::out/tools/fble-compile \
