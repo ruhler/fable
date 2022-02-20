@@ -355,6 +355,12 @@ foreach dir [dirs langs/fble ""] {
       lappend objs $::spectestdir/test.o
 
       lib $::spectestdir/libtest.a $objs
+
+      # Run fble-disassemble here to get test coverage fble-disassemble.
+      lappend ::spec_tests $::spectestdir/test.asm.tr
+      test $::spectestdir/test.asm.tr \
+        "$::out/fble/bin/fble-disassemble.cov $::spectestdir/test.fble" \
+        "$::out/fble/bin/fble-disassemble.cov -I $::spectestdir -m /test% > $::spectestdir/test.asm"
     }
 
     proc spec-test-extract {} {
@@ -684,13 +690,6 @@ foreach pkg [list core sat app misc hwdg invaders pinball games graphics md5] {
   append misc_cflags " -I pkgs/$pkg"
   append misc_libs " $::out/pkgs/$pkg/libfble-$pkg.a"
 }
-
-# fble-disassemble test
-# TODO: Run fble-disassemble on spec tests, not on an arbitrary fble pkg
-# module.
-test $::out/fble/bin/fble-disassemble.tr \
-  "$::out/fble/bin/fble-disassemble $::out/pkgs/core/Core/Map/Map.fble.d" \
-  "$::out/fble/bin/fble-disassemble -I pkgs/core -m /Core/Map/Map% > $::out/pkgs/core/Core/Map/Map.fbls"
 
 stdio $::out/pkgs/misc/fble-debug-test "/Fble/DebugTest%" "fble-misc" $misc_libs
 

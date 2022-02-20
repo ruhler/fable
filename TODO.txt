@@ -1,6 +1,3 @@
-* Change fble-disassemble test to be done per spec test.
-  Otherwise coverage is pretty suspect.
-
 * Remove core package dependency from /Fble/DebugTest%?
 
 * Move what remains to fble/test non-package library.
