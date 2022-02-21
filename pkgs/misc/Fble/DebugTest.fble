@@ -1,31 +1,13 @@
 
 # This fble program is used to help test gdb debuggability of fble.
 
-% True = /Core/Bool%.True;
+@ Unit@ = *();
+Unit@ Unit = Unit@();
 
-% Chars = /Core/Char%.Chars;
-
-<@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-
-@ Stdio@ = /Core/Stdio%.Stdio@;
-@ IO@ = /Core/Stdio%.IO@;
-
-@ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
-
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
 
 @ Light@ = +(Unit@ red, Unit@ yellow, Unit@ green);
-
-(Light@) { String@; } Show = (Light@ light) {
-  light.?(
-    red: Str|'red',
-    yellow: Str|'yellow',
-    green: Str|'green');
-};
 
 (Light@) { Light@; } Next = (Light@ light) {
   # Add a let statement to test setting breakpoints after assignment.
@@ -36,26 +18,18 @@
     green: Light@(yellow: u));
 };
 
-(IO@, Light@) { Light@!; } Change = (IO@ io, Light@ light) {
+(Light@) { Light@!; } Change = (Light@ light) {
   Light@ next = Next(light);
-  Unit@ _ := io.stdout(Strs[
-    Str|'the light has changed from ', Show(light),
-    Str|' to ', Show(next), Str[Chars.nl]]);
   !(next);
 };
 
-Stdio@ Main = (IO@ io, List@<String@> args) {
+Unit@! Main = {
   Light@ 0 = Light@(red: Unit);
-  Light@ 1 := Change(io, 0);
-  Light@ 2 := Change(io, 1);
-  Light@ 3 := Change(io, 2);
-  Light@ 4 := Change(io, 3);
-  !(True);
+  Light@ 1 := Change(0);
+  Light@ 2 := Change(1);
+  Light@ 3 := Change(2);
+  Light@ 4 := Change(3);
+  !(Unit);
 };
 
-IO@ io = @(
-  stdin: !(/Core/Maybe%.Nothing<String@>), 
-  stdout: (String@ _) { !(Unit); },
-  stderr: (String@ _) { !(Unit); });
-
-Main(io, List<String@>[]);
+Main;
