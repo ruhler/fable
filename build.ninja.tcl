@@ -200,7 +200,7 @@ set ::env(PKG_CONFIG_TOP_BUILD_DIR) $::out
 set ::env(PKG_CONFIG_PATH) fble
 lappend ::build_ninja_deps "fble/fble.pc"
 lappend ::build_ninja_deps "fble/fble.cov.pc"
-foreach pkg [list core sat app hwdg misc invaders pinball games graphics md5] {
+foreach pkg [list core sat app hwdg invaders pinball games graphics md5] {
   append ::env(PKG_CONFIG_PATH) ":pkgs/$pkg"
   lappend ::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
 }
@@ -478,6 +478,28 @@ build $::out/cov/gcov.txt "$::fble_objs_cov $::spec_tests" \
 test $::out/fble/test/fble-profile-test.tr $::out/fble/test/fble-profile-test \
   "$::out/fble/test/fble-profile-test > /dev/null"
 
+# /Fble/DebugTest%
+build $::out/fble/test/fble-debug-test.s $::out/fble/bin/fble-compile \
+  "$::out/fble/bin/fble-compile --main FbleTestMain -c -I fble/test -m /DebugTest% > $::out/fble/test/fble-debug-test.s"
+asm $::out/fble/test/fble-debug-test.o $::out/fble/test/fble-debug-test.s
+bin $::out/fble/test/fble-debug-test "$::out/fble/test/fble-debug-test.o" \
+  "-L $::out/fble/test -lfbletest $::ldflags_fble" \
+  "$::libfble $::out/fble/test/libfbletest.a"
+
+# Test that there are no dwarf warnings in the generated fble-debug-test
+# binary.
+build "$::out/fble/test/fble-debug-test.dwarf $::out/fble/test/fble-debug-test.dwarf-warnings.txt" \
+  "$::out/fble/test/fble-debug-test" \
+  "objdump --dwarf $::out/fble/test/fble-debug-test > $::out/fble/test/fble-debug-test.dwarf 2> $::out/fble/test/fble-debug-test.dwarf-warnings.txt"
+
+test $::out/fble/test/dwarf-test.tr \
+  "$::out/fble/test/fble-debug-test.dwarf-warnings.txt" \
+  "cmp /dev/null $::out/fble/test/fble-debug-test.dwarf-warnings.txt"
+
+test $::out/fble/test/fble-debug-test.tr \
+  "$::out/fble/test/fble-debug-test fble/test/fble-debug-test.exp" \
+  "expect fble/test/fble-debug-test.exp > /dev/null"
+
 # fble 'core' library package.
 eval {
   set objs [list]
@@ -695,38 +717,6 @@ eval {
     "fble-graphics" $::out/pkgs/graphics/libfble-graphics.a
 }
 
-pkg misc ""
-
-set misc_cflags ""
-set misc_libs ""
-foreach pkg [list core sat app misc hwdg invaders pinball games graphics md5] {
-  append misc_cflags " -I pkgs/$pkg"
-  append misc_libs " $::out/pkgs/$pkg/libfble-$pkg.a"
-}
-
-
-# /Fble/DebugTest%
-build $::out/pkgs/misc/fble-debug-test.s $::out/fble/bin/fble-compile \
-  "$::out/fble/bin/fble-compile --main FbleTestMain -m /Fble/DebugTest% > $::out/pkgs/misc/fble-debug-test.s"
-asm $::out/pkgs/misc/fble-debug-test.o $::out/pkgs/misc/fble-debug-test.s
-bin $::out/pkgs/misc/fble-debug-test "$::out/pkgs/misc/fble-debug-test.o" \
-  "-L $::out/fble/test -lfbletest [exec pkg-config --static --libs fble fble-core fble-misc]" \
-  "$::libfble $::out/fble/test/libfbletest.a $::out/pkgs/core/libfble-core.a $misc_libs"
-
-# Test that there are no dwarf warnings in the generated fble-debug-test
-# binary.
-build "$::out/pkgs/misc/fble-debug-test.dwarf $::out/pkgs/misc/fble-debug-test.dwarf-warnings.txt" \
-  "$::out/pkgs/misc/fble-debug-test" \
-  "objdump --dwarf $::out/pkgs/misc/fble-debug-test > $::out/pkgs/misc/fble-debug-test.dwarf 2> $::out/pkgs/misc/fble-debug-test.dwarf-warnings.txt"
-
-# TODO: Understand why this test fails.
-#test $::out/pkgs/misc/dwarf-test.tr \
-#  "$::out/pkgs/misc/fble-debug-test.dwarf-warnings.txt" \
-#  "cmp /dev/null $::out/pkgs/misc/fble-debug-test.dwarf-warnings.txt"
-
-test $::out/pkgs/misc/fble-debug-test.tr \
-  "$::out/pkgs/misc/fble-debug-test fble/test/fble-debug-test.exp" \
-  "expect fble/test/fble-debug-test.exp > /dev/null"
 
 # test summary
 build $::out/tests.txt "$::tests" "echo $::tests > $::out/tests.txt"

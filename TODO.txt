@@ -1,4 +1,3 @@
-* Remove core package dependency from /Fble/DebugTest%?
 * Should we add option for fble-compile to generate main function for
   interpreted case? Might be nice?
 
