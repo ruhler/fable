@@ -1,6 +1,8 @@
 // profiles-test.c --
 //   Implementation of FbleProfilesTestMain function.
 
+#include "profiles-test.h"
+
 #include <assert.h>   // for assert
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
@@ -104,9 +106,6 @@ static size_t Calls(FbleProfile* profile, const char* caller, const char* callee
 // Inputs:
 //   stream - The output stream to write the usage information to.
 //   module - Non-NULL if a compiled module is provided, NULL otherwise.
-//
-// Result:
-//   None.
 //
 // Side effects:
 //   Outputs usage information to the given stream.
