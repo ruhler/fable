@@ -6,6 +6,7 @@
 % Chars = /Core/Char%.Chars;
 
 <@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
 
 @ Stdio@ = /Core/Stdio%.Stdio@;
 @ IO@ = /Core/Stdio%.IO@;
@@ -52,4 +53,9 @@ Stdio@ Main = (IO@ io, List@<String@> args) {
   !(True);
 };
 
-Main;
+IO@ io = @(
+  stdin: !(/Core/Maybe%.Nothing<String@>), 
+  stdout: (String@ _) { !(Unit); },
+  stderr: (String@ _) { !(Unit); });
+
+Main(io, List<String@>[]);

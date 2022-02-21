@@ -15,7 +15,7 @@ eval {
   spawn gdb --quiet ./out/pkgs/misc/fble-debug-test
   expect "(gdb) "
 
-  set STMT_LINE 31
+  set STMT_LINE 32
   send "break pkgs/misc/Fble/DebugTest.fble:$STMT_LINE\n"
   require "Breakpoint 1 at"
   require "pkgs/misc/Fble/DebugTest.fble, line $STMT_LINE."
@@ -33,7 +33,7 @@ eval {
   spawn gdb --quiet ./out/pkgs/misc/fble-debug-test
   expect "(gdb) "
 
-  set LINE 31
+  set LINE 32
   send "break /Fble/DebugTest%.Next!\n"
   require "Breakpoint 1 at"
   require "pkgs/misc/Fble/DebugTest.fble, line $LINE."
@@ -50,7 +50,7 @@ eval {
   spawn gdb --quiet ./out/pkgs/misc/fble-debug-test
   expect "(gdb) "
 
-  set LINE 32
+  set LINE 33
   send "break pkgs/misc/Fble/DebugTest.fble:$LINE\n"
   require "Breakpoint 1 at"
   require "pkgs/misc/Fble/DebugTest.fble, line $LINE."

@@ -705,7 +705,13 @@ foreach pkg [list core sat app misc hwdg invaders pinball games graphics md5] {
 }
 
 
-stdio $::out/pkgs/misc/fble-debug-test "/Fble/DebugTest%" "fble-misc" $misc_libs
+# /Fble/DebugTest%
+build $::out/pkgs/misc/fble-debug-test.s $::out/fble/bin/fble-compile \
+  "$::out/fble/bin/fble-compile --main FbleTestMain -m /Fble/DebugTest% > $::out/pkgs/misc/fble-debug-test.s"
+asm $::out/pkgs/misc/fble-debug-test.o $::out/pkgs/misc/fble-debug-test.s
+bin $::out/pkgs/misc/fble-debug-test "$::out/pkgs/misc/fble-debug-test.o" \
+  "-L $::out/fble/test -lfbletest [exec pkg-config --static --libs fble fble-core fble-misc]" \
+  "$::libfble $::out/fble/test/libfbletest.a $::out/pkgs/core/libfble-core.a $misc_libs"
 
 # Test that there are no dwarf warnings in the generated fble-debug-test
 # binary.
