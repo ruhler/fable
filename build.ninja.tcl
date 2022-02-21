@@ -268,23 +268,23 @@ eval {
   }
 }
 
-# fble tool binaries
+# fble/test tool binaries
 eval {
-  lappend ::build_ninja_deps "tools"
+  lappend ::build_ninja_deps "fble/test"
   set cflags [exec pkg-config --cflags fble]
   set ldflags [exec pkg-config --static --libs fble]
   set ldflags_cov [exec pkg-config --static --libs fble.cov]
-  foreach {x} [glob tools/*.c] {
+  foreach {x} [glob fble/test/*.c] {
     set base [file rootname [file tail $x]]
-    obj $::out/tools/$base.o $x $cflags
-    bin $::out/tools/$base "$::out/tools/$base.o" $ldflags $::libfble
-    bin_cov $::out/tools/$base.cov "$::out/tools/$base.o" $ldflags_cov $::libfblecov
+    obj $::out/fble/test/$base.o $x $cflags
+    bin $::out/fble/test/$base "$::out/fble/test/$base.o" $ldflags $::libfble
+    bin_cov $::out/fble/test/$base.cov "$::out/fble/test/$base.o" $ldflags_cov $::libfblecov
   }
 
-  # Object files for compiled variations of tools.
-  obj $::out/tools/fble-compiled-test.o tools/fble-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
-  obj $::out/tools/fble-compiled-mem-test.o tools/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
-  obj $::out/tools/fble-compiled-profiles-test.o tools/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
+  # Object files for compiled variations of fble/test.
+  obj $::out/fble/test/fble-compiled-test.o fble/test/fble-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
+  obj $::out/fble/test/fble-compiled-mem-test.o fble/test/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
+  obj $::out/fble/test/fble-compiled-profiles-test.o fble/test/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
 }
 
 # tests
@@ -302,10 +302,10 @@ test $::out/true.tr "" true
 #   in build.ninja from the beginning. Does as little else as possible because
 #   build.ninja.tcl is rerun for lots of reasons. In particular, does not
 #   extract the .fble files from the test.
-# * tools/extract-spec-test.tcl - extracts the .fble files from a particular
+# * fble/test/extract-spec-test.tcl - extracts the .fble files from a particular
 #   test. This is run at build time so we avoid re-extracting the .fble files
 #   repeatedly if the test specification hasn't changed.
-# * tools/run-spec-test.tcl - a helper function to execute a spec test that
+# * fble/test/run-spec-test.tcl - a helper function to execute a spec test that
 #   takes the command to run as input. The primary purpose of this is to
 #   encapsulate an otherwise complex command line to run the test and give us
 #   nice test failure messages. It reads the test spec for the test to run,
@@ -365,8 +365,8 @@ foreach dir [dirs langs/fble ""] {
 
     proc spec-test-extract {} {
       build "$::spectestdir/test.fble"  \
-        "tools/extract-spec-test.tcl $::spectcl langs/fble/Nat.fble" \
-        "tclsh tools/extract-spec-test.tcl $::spectcl $::spectestdir langs/fble/Nat.fble"
+        "fble/test/extract-spec-test.tcl $::spectcl langs/fble/Nat.fble" \
+        "tclsh fble/test/extract-spec-test.tcl $::spectcl $::spectestdir langs/fble/Nat.fble"
     }
 
     proc fble-test { expr args } {
@@ -375,24 +375,24 @@ foreach dir [dirs langs/fble ""] {
 
       # We run with --profile to get better test coverage for profiling.
       lappend ::spec_tests $::spectestdir/test.tr
-      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::out/tools/fble-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::out/tools/fble-test.cov --profile -I $::spectestdir /test%"
+      test $::spectestdir/test.tr "fble/test/run-spec-test.tcl $::out/fble/test/fble-test.cov $::spectestdir/test.fble" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::out/fble/test/fble-test.cov --profile -I $::spectestdir /test%"
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
-        "$::out/tools/fble-compiled-test.o $::spectestdir/libtest.a" \
+        "$::out/fble/test/fble-compiled-test.o $::spectestdir/libtest.a" \
         "$::ldflags_fble -L $::spectestdir -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
-        "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --profile"
+        "fble/test/run-spec-test.tcl $::spectestdir/compiled-test" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --profile"
     }
 
     proc fble-test-compile-error { loc expr args } {
       spec-test-extract
 
       lappend ::spec_tests $::spectestdir/test.tr
-      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::out/tools/fble-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::out/tools/fble-test.cov --compile-error -I $::spectestdir /test%"
+      test $::spectestdir/test.tr "fble/test/run-spec-test.tcl $::out/fble/test/fble-test.cov $::spectestdir/test.fble" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::out/fble/test/fble-test.cov --compile-error -I $::spectestdir /test%"
 
       # TODO: Test that we get the desired compilation error when running the
       # compiler?
@@ -403,16 +403,16 @@ foreach dir [dirs langs/fble ""] {
       spec-test-compile $args
 
       lappend ::spec_tests $::spectestdir/test.tr
-      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::out/tools/fble-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::out/tools/fble-test.cov --runtime-error -I $::spectestdir /test%"
+      test $::spectestdir/test.tr "fble/test/run-spec-test.tcl $::out/fble/test/fble-test.cov $::spectestdir/test.fble" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::out/fble/test/fble-test.cov --runtime-error -I $::spectestdir /test%"
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
-        "$::out/tools/fble-compiled-test.o $::spectestdir/libtest.a" \
+        "$::out/fble/test/fble-compiled-test.o $::spectestdir/libtest.a" \
         "$::ldflags_fble -L $::spectestdir -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
-        "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --runtime-error"
+        "fble/test/run-spec-test.tcl $::spectestdir/compiled-test" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --runtime-error"
     }
 
     proc fble-test-memory-constant { expr } {
@@ -420,16 +420,16 @@ foreach dir [dirs langs/fble ""] {
       spec-test-compile {}
 
       lappend ::spec_tests $::spectestdir/test.tr
-      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::out/tools/fble-mem-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::out/tools/fble-mem-test.cov -I $::spectestdir /test%"
+      test $::spectestdir/test.tr "fble/test/run-spec-test.tcl $::out/fble/test/fble-mem-test.cov $::spectestdir/test.fble" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::out/fble/test/fble-mem-test.cov -I $::spectestdir /test%"
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
-        "$::out/tools/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
+        "$::out/fble/test/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
         "$::ldflags_fble -L $::spectestdir -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
-        "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test"
+        "fble/test/run-spec-test.tcl $::spectestdir/compiled-test" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test"
     }
 
     proc fble-test-memory-growth { expr } {
@@ -437,16 +437,16 @@ foreach dir [dirs langs/fble ""] {
       spec-test-compile {}
 
       lappend ::spec_tests $::spectestdir/test.tr
-      test $::spectestdir/test.tr "tools/run-spec-test.tcl $::out/tools/fble-mem-test.cov $::spectestdir/test.fble" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::out/tools/fble-mem-test.cov --growth -I $::spectestdir /test%"
+      test $::spectestdir/test.tr "fble/test/run-spec-test.tcl $::out/fble/test/fble-mem-test.cov $::spectestdir/test.fble" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::out/fble/test/fble-mem-test.cov --growth -I $::spectestdir /test%"
 
       lappend ::spec_tests $::spectestdir/test-compiled.tr
       bin $::spectestdir/compiled-test \
-        "$::out/tools/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
+        "$::out/fble/test/fble-compiled-mem-test.o $::spectestdir/libtest.a" \
         "$::ldflags_fble -L $::spectestdir -ltest" "$::libfble"
       test $::spectestdir/test-compiled.tr \
-        "tools/run-spec-test.tcl $::spectestdir/compiled-test" \
-        "tclsh tools/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --growth"
+        "fble/test/run-spec-test.tcl $::spectestdir/compiled-test" \
+        "tclsh fble/test/run-spec-test.tcl $::spectcl $::spectestdir/compiled-test --growth"
     }
     source $::spectcl
   }
@@ -457,8 +457,8 @@ build $::out/cov/gcov.txt "$::fble_objs_cov $::spec_tests" \
   "gcov $::fble_objs_cov > $::out/cov/gcov.txt && mv *.gcov $::out/cov"
 
 # fble-profile-test
-test $::out/tools/fble-profile-test.tr $::out/tools/fble-profile-test \
-  "$::out/tools/fble-profile-test > /dev/null"
+test $::out/fble/test/fble-profile-test.tr $::out/fble/test/fble-profile-test \
+  "$::out/fble/test/fble-profile-test > /dev/null"
 
 # fble 'core' library package.
 eval {
@@ -680,9 +680,9 @@ eval {
 pkg misc ""
 
 # fble-profiles-test
-test $::out/tools/fble-profiles-test.tr \
-  "$::out/tools/fble-profiles-test pkgs/misc/Fble/ProfilesTest.fble" \
-  "$::out/tools/fble-profiles-test -I pkgs/misc /Fble/ProfilesTest% > $::out/tools/fble-profiles-test.prof"
+test $::out/fble/test/fble-profiles-test.tr \
+  "$::out/fble/test/fble-profiles-test pkgs/misc/Fble/ProfilesTest.fble" \
+  "$::out/fble/test/fble-profiles-test -I pkgs/misc /Fble/ProfilesTest% > $::out/fble/test/fble-profiles-test.prof"
 
 set misc_cflags ""
 set misc_libs ""
@@ -698,7 +698,7 @@ fbleobj $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o $::out/fble/bin
   "-c -e FbleCompiledMain $misc_cflags -m /Fble/ProfilesTest%" \
   pkgs/misc/Fble/ProfilesTest.fble
 bin $::out/pkgs/misc/fble-compiled-profiles-test \
-  "$::out/tools/fble-compiled-profiles-test.o $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o" \
+  "$::out/fble/test/fble-compiled-profiles-test.o $::out/pkgs/misc/fble-compiled-profiles-test-fble-main.o" \
   "-L $::out/fble/lib -L $::out/pkgs/misc -lfble -lfble-misc" "$::libfble $::out/pkgs/misc/libfble-misc.a"
 test $::out/pkgs/misc/Fble/fble-compiled-profiles-test.tr \
   "$::out/pkgs/misc/fble-compiled-profiles-test" \
@@ -716,13 +716,13 @@ build "$::out/pkgs/misc/fble-debug-test.dwarf $::out/pkgs/misc/fble-debug-test.d
 #  "cmp /dev/null $::out/pkgs/misc/fble-debug-test.dwarf-warnings.txt"
 
 test $::out/pkgs/misc/fble-debug-test.tr \
-  "$::out/pkgs/misc/fble-debug-test tools/fble-debug-test.exp" \
-  "expect tools/fble-debug-test.exp > /dev/null"
+  "$::out/pkgs/misc/fble-debug-test fble/test/fble-debug-test.exp" \
+  "expect fble/test/fble-debug-test.exp > /dev/null"
 
 # test summary
 build $::out/tests.txt "$::tests" "echo $::tests > $::out/tests.txt"
-build $::out/summary.tr "tools/tests.tcl $::out/tests.txt" \
-  "tclsh tools/tests.tcl $::out/tests.txt && echo PASSED > $::out/summary.tr"
+build $::out/summary.tr "fble/test/tests.tcl $::out/tests.txt" \
+  "tclsh fble/test/tests.tcl $::out/tests.txt && echo PASSED > $::out/summary.tr"
 
 # build.ninja
 build $::out/build.ninja "build.ninja.tcl" "tclsh build.ninja.tcl" \
