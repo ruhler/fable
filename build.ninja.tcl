@@ -271,10 +271,20 @@ eval {
 # fble/test tool binaries
 eval {
   lappend ::build_ninja_deps "fble/test"
+
+  set objs [list]
+  foreach {x} [list profiles-test.c] {
+    set object $::out/fble/test/[string map {.c .o} $x]
+    obj $object fble/test/$x "-I fble/include"
+    lappend objs $object
+  }
+  lib $::out/fble/test/libfbletest.a $objs
+
   set cflags [exec pkg-config --cflags fble]
-  set ldflags [exec pkg-config --static --libs fble]
-  set ldflags_cov [exec pkg-config --static --libs fble.cov]
-  foreach {x} [glob fble/test/*.c] {
+  set ldflags "-L $::out/fble/test -lfbletest [exec pkg-config --static --libs fble]"
+  set ldflags_cov "-L $::out/fble/test -lfbletest [exec pkg-config --static --libs fble.cov]"
+
+  foreach {x} [glob fble/test/fble-*.c] {
     set base [file rootname [file tail $x]]
     obj $::out/fble/test/$base.o $x $cflags
     bin $::out/fble/test/$base "$::out/fble/test/$base.o" $ldflags $::libfble
@@ -284,8 +294,23 @@ eval {
   # Object files for compiled variations of fble/test.
   obj $::out/fble/test/fble-compiled-test.o fble/test/fble-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
   obj $::out/fble/test/fble-compiled-mem-test.o fble/test/fble-mem-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
-  obj $::out/fble/test/fble-compiled-profiles-test.o fble/test/fble-profiles-test.c "-DFbleCompiledMain=FbleCompiledMain $cflags"
 }
+
+# fble-profiles-test
+test $::out/fble/test/fble-profiles-test.tr \
+  "$::out/fble/test/fble-profiles-test fble/test/ProfilesTest.fble" \
+  "$::out/fble/test/fble-profiles-test -I fble/test -m /ProfilesTest% > $::out/fble/test/fble-profiles-test.prof"
+
+# fble-compiled-profiles-test
+fbleobj $::out/fble/test/ProfilesTest.o $::out/fble/bin/fble-compile \
+  "-c -e FbleCompiledMain --main FbleProfilesTestMain -I fble/test -m /ProfilesTest%" \
+  fble/test/ProfilesTest.fble
+bin $::out/fble/test/ProfilesTest "$::out/fble/test/ProfilesTest.o" \
+  "-L $::out/fble/test -lfbletest -L $::out/fble/lib -lfble" "$::libfble"
+test $::out/fble/test/ProfilesTest.tr \
+  "$::out/fble/test/ProfilesTest" \
+  "$::out/fble/test/ProfilesTest > $::out/fble/test/ProfilesTest.prof"
+
 
 # tests
 test $::out/true.tr "" true
@@ -686,22 +711,6 @@ foreach pkg [list core sat app misc hwdg invaders pinball games graphics md5] {
   append misc_libs " $::out/pkgs/$pkg/libfble-$pkg.a"
 }
 
-
-# fble-profiles-test
-test $::out/fble/test/fble-profiles-test.tr \
-  "$::out/fble/test/fble-profiles-test fble/test/ProfilesTest.fble" \
-  "$::out/fble/test/fble-profiles-test -I fble/test /ProfilesTest% > $::out/fble/test/fble-profiles-test.prof"
-
-# fble-compiled-profiles-test
-fbleobj $::out/fble/test/ProfilesTest.o $::out/fble/bin/fble-compile \
-  "-c -e FbleCompiledMain -I fble/test -m /ProfilesTest%" \
-  fble/test/ProfilesTest.fble
-bin $::out/fble/test/ProfilesTest \
-  "$::out/fble/test/ProfilesTest.o $::out/fble/test/fble-compiled-profiles-test.o" \
-  "-L $::out/fble/lib -lfble" "$::libfble"
-test $::out/fble/test/ProfilesTest.tr \
-  "$::out/fble/test/ProfilesTest" \
-  "$::out/fble/test/ProfilesTest > $::out/fble/test/ProfilesTest.prof"
 
 stdio $::out/pkgs/misc/fble-debug-test "/Fble/DebugTest%" "fble-misc" $misc_libs
 
