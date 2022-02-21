@@ -171,45 +171,45 @@ int main(int argc, char* argv[])
 
   // Each of these top level let bindings were executed once when the main
   // program ran.
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%", "/Fble/ProfilesTest%.Not"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%", "/Fble/ProfilesTest%.t"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%", "/Fble/ProfilesTest%.f"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%", "/Fble/ProfilesTest%.f2"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.Not"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.t"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.f"));
+  assert(1 == Calls(profile, "/ProfilesTest%", "/ProfilesTest%.f2"));
 
   // The Not function was executed three times, once from each of t, f, and
   // f2.
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%.t", "/Fble/ProfilesTest%.Not!"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%.f", "/Fble/ProfilesTest%.Not!"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%.f2", "/Fble/ProfilesTest%.Not!"));
+  assert(1 == Calls(profile, "/ProfilesTest%.t", "/ProfilesTest%.Not!"));
+  assert(1 == Calls(profile, "/ProfilesTest%.f", "/ProfilesTest%.Not!"));
+  assert(1 == Calls(profile, "/ProfilesTest%.f2", "/ProfilesTest%.Not!"));
 
   // In total, we created Not once and executed three times. 
-  assert(1 == Count(profile, "/Fble/ProfilesTest%.Not"));
-  assert(3 == Count(profile, "/Fble/ProfilesTest%.Not!"));
+  assert(1 == Count(profile, "/ProfilesTest%.Not"));
+  assert(3 == Count(profile, "/ProfilesTest%.Not!"));
 
   // The true branch of Not was executed twice, the false branch once.
-  assert(2 == Calls(profile, "/Fble/ProfilesTest%.Not!", "/Fble/ProfilesTest%.Not!.true"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%.Not!", "/Fble/ProfilesTest%.Not!.false"));
+  assert(2 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.true"));
+  assert(1 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.false"));
 
   // The Id function was executed three times, once from each of e1, e2, and
   // e3 execution.
-  assert(3 == Count(profile, "/Fble/ProfilesTest%.Id!"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%!.e1!", "/Fble/ProfilesTest%.Id!"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%!.e2!", "/Fble/ProfilesTest%.Id!"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%!.e3!", "/Fble/ProfilesTest%.Id!"));
+  assert(3 == Count(profile, "/ProfilesTest%.Id!"));
+  assert(1 == Calls(profile, "/ProfilesTest%!.e1!", "/ProfilesTest%.Id!"));
+  assert(1 == Calls(profile, "/ProfilesTest%!.e2!", "/ProfilesTest%.Id!"));
+  assert(1 == Calls(profile, "/ProfilesTest%!.e3!", "/ProfilesTest%.Id!"));
 
   // Regression test for a bug where had tail-calling the builtin put
   // function. The builtin put didn't do any Enter/Exit calls, and we were
   // using AutoExit to do the tail call. As a result, the profiler thought the
   // caller of the put was calling into whatever function was executed after
   // the caller returned, which is clearly wrong.
-  assert(0 == Calls(profile, "/Fble/ProfilesTest%!.A!!.b", "/Fble/ProfilesTest%!.D!"));
-  assert(1 == Calls(profile, "/Fble/ProfilesTest%!.A!!", "/Fble/ProfilesTest%!.D!"));
+  assert(0 == Calls(profile, "/ProfilesTest%!.A!!.b", "/ProfilesTest%!.D!"));
+  assert(1 == Calls(profile, "/ProfilesTest%!.A!!", "/ProfilesTest%!.D!"));
 
   // Regression test for a bug where the location for the top level profile
   // block was a module path instead of a file path.
   {
-    FbleBlockProfile* block = Block(profile, "/Fble/ProfilesTest%");
-    assert(strcmp(block->name.loc.source->str, "pkgs/misc/Fble/ProfilesTest.fble") == 0);
+    FbleBlockProfile* block = Block(profile, "/ProfilesTest%");
+    assert(strcmp(block->name.loc.source->str, "fble/test/ProfilesTest.fble") == 0);
   }
 
   FbleFreeProfile(profile);
