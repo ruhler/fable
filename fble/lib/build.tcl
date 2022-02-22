@@ -1,6 +1,4 @@
 # Exports:
-#   ::libfble - the path to libfble.a
-#   ::libfblecov - the path to libfble.cov.a
 #   ::fble_objs_cov - list of .o files used in libfble.cov.
 namespace eval "fble/lib" {
   set objs [list]
@@ -40,10 +38,8 @@ namespace eval "fble/lib" {
     lappend objs_cov $object_cov
   }
 
-  set ::libfble "$::out/fble/lib/libfble.a"
-  set ::libfblecov "$::out/fble/lib/libfble.cov.a"
-  set ::fble_objs_cov $objs_cov
+  lib "$::out/fble/lib/libfble.a" $objs
+  lib "$::out/fble/lib/libfble.cov.a" $objs_cov
 
-  lib $::libfble $objs
-  lib $::libfblecov $objs_cov
+  set ::fble_objs_cov $objs_cov
 }

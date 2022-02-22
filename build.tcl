@@ -285,7 +285,7 @@ foreach dir [dirs langs/fble ""] {
 
       bin $::spectestdir/compiled-test $objs \
         "-L $::out/fble/test -lfbletest $::ldflags_fble" \
-        "$::out/fble/test/libfbletest.a $::libfble"
+        "$::out/fble/test/libfbletest.a $::out/fble/lib/libfble.a"
 
       # Run fble-disassemble here to get test coverage fble-disassemble.
       lappend ::spec_tests $::spectestdir/test.asm.tr
@@ -393,7 +393,7 @@ eval {
     [exec pkg-config --cflags fble fble-core]
   bin $::out/pkgs/core/Core/fble-stdio "$::out/pkgs/core/Core/fble-stdio.o" \
     [exec pkg-config --static --libs fble fble-core] \
-    "$::libfble $::out/pkgs/core/libfble-core.a"
+    "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a"
 
   # Build an fble-stdio compiled binary.
   #
@@ -408,7 +408,7 @@ eval {
     asm $target.o $target.s
     bin $target "$target.o" \
       [exec pkg-config --static --libs fble fble-core {*}$libs] \
-      "$::libfble $::out/pkgs/core/libfble-core.a" {*}$args
+      "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a" {*}$args
   }
 
   # /Core/Stdio/Cat% interpreted test.
@@ -452,7 +452,7 @@ eval {
     [exec pkg-config --cflags fble fble-core fble-app]
   bin $::out/pkgs/app/App/fble-app "$::out/pkgs/app/App/fble-app.o" \
     [exec pkg-config --static --libs fble-app] \
-    "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a"
+    "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a"
 
   # Build an fble-app compiled binary.
   #
@@ -467,7 +467,7 @@ eval {
     asm $target.o $target.s
     bin $target "$target.o" \
       [exec pkg-config --static --libs fble-app {*}$libs] \
-      "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a $args"
+      "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a $args"
   }
 }
 
@@ -498,7 +498,7 @@ eval {
     [exec pkg-config --cflags fble fble-core fble-md5]
   bin $::out/pkgs/md5/Md5/fble-md5 "$::out/pkgs/md5/Md5/fble-md5.o" \
     [exec pkg-config --static --libs fble-md5] \
-    "$::libfble $::out/pkgs/core/libfble-core.a $::out/pkgs/md5/libfble-md5.a"
+    "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a $::out/pkgs/md5/libfble-md5.a"
 
   # fble-md5 test
   test $::out/pkgs/md5/Md5/fble-md5.tr "$::out/pkgs/md5/Md5/fble-md5 $::out/pkgs/md5/Md5/Main.fble.d" \
