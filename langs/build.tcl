@@ -20,7 +20,6 @@ namespace eval "lang" {
   #   but only to know what error location, if any, is expected for
   #   fble-test-*-error tests.
   set spec_tests [list]
-  set ::ldflags_fble [exec pkg-config --static --libs fble]
   foreach dir [dirs langs/fble ""] {
     lappend ::build_ninja_deps "langs/fble/$dir"
     foreach {t} [lsort [glob -tails -directory langs/fble -nocomplain -type f $dir/*.tcl]] {
@@ -67,9 +66,9 @@ namespace eval "lang" {
         fbleobj $::spectestdir/test.o $::out/fble/bin/fble-compile.cov "--main $main -c -e FbleCompiledMain -I $::spectestdir -m /test%" $::spectestdir/test.fble
         lappend objs $::spectestdir/test.o
 
-        bin $::spectestdir/compiled-test $objs \
-          "-L $::out/fble/test -lfbletest $::ldflags_fble" \
-          "$::out/fble/test/libfbletest.a $::out/fble/lib/libfble.a"
+        lappend objs $::out/fble/test/libfbletest.a
+        lappend objs $::out/fble/lib/libfble.a
+        bin $::spectestdir/compiled-test $objs ""
 
         # Run fble-disassemble here to get test coverage fble-disassemble.
         lappend lang::spec_tests $::spectestdir/test.asm.tr
