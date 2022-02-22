@@ -1,12 +1,12 @@
 
 default: all
 
-out/build.ninja: build.ninja.tcl
+out/build.ninja: build.tcl
 	tclsh $<
 
 .PHONY: ninja
 ninja:
-	tclsh build.ninja.tcl
+	tclsh build.tcl
 
 .PHONY: all
 all: out/build.ninja

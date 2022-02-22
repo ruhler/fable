@@ -274,10 +274,10 @@ test $::out/true.tr "" true
 # because we want to reuse ninja to build intermediate artifacts used in the
 # test. The intermediate artifacts we need to build depend on the contents of
 # the test specification. We split it up as follows:
-# * build.ninja.tcl (this file) - reads the spec tests and uses it to generate
+# * build.tcl (this file) - reads the spec tests and uses it to generate
 #   build rules, because apparently ninja needs all the build rules to show up
 #   in build.ninja from the beginning. Does as little else as possible because
-#   build.ninja.tcl is rerun for lots of reasons. In particular, does not
+#   build.tcl is rerun for lots of reasons. In particular, does not
 #   extract the .fble files from the test.
 # * fble/test/extract-spec-test.tcl - extracts the .fble files from a particular
 #   test. This is run at build time so we avoid re-extracting the .fble files
@@ -678,7 +678,7 @@ build $::out/summary.tr "fble/test/tests.tcl $::out/tests.txt" \
   "tclsh fble/test/tests.tcl $::out/tests.txt && echo PASSED > $::out/summary.tr"
 
 # build.ninja
-build $::out/build.ninja "build.ninja.tcl" "tclsh build.ninja.tcl" \
+build $::out/build.ninja "build.tcl" "tclsh build.tcl" \
   "depfile = $::out/build.ninja.d"
 
 # build.ninja.d implicit dependency file.
