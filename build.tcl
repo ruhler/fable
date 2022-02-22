@@ -199,7 +199,6 @@ set ::build_ninja_deps [list]
 set ::env(PKG_CONFIG_TOP_BUILD_DIR) $::out
 set ::env(PKG_CONFIG_PATH) fble
 lappend ::build_ninja_deps "fble/fble.pc"
-lappend ::build_ninja_deps "fble/fble.cov.pc"
 foreach pkg [list core sat app hwdg invaders pinball games graphics md5] {
   append ::env(PKG_CONFIG_PATH) ":pkgs/$pkg"
   lappend ::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
