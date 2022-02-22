@@ -1,5 +1,6 @@
 * Remove use of pkg-config in favor of something in tcl.
   Pass .a files directly to bin instead of via -L, -l and extra dependency.
+  Remove $args option to bin procedure.
 
 * Switch to new proposed approach for spec tests.
   See thoughts/fble.spectests.txt.
