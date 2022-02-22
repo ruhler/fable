@@ -1,21 +1,17 @@
 namespace eval "pkgs/core" {
-  set objs [list]
-  set cflags [exec pkg-config --cflags fble]
-
   # .c library files.
+  set objs [list]
   foreach {x} { Core/char.fble Core/int.fble Core/stdio.fble Core/string.fble } {
     lappend objs $::out/pkgs/core/$x.o
-    obj $::out/pkgs/core/$x.o pkgs/core/$x.c "$cflags -I pkgs/core"
+    obj $::out/pkgs/core/$x.o pkgs/core/$x.c "-I fble/include -I pkgs/core"
   }
-
   pkg core [list] $objs
 
   # fble-stdio program.
   obj $::out/pkgs/core/Core/fble-stdio.o pkgs/core/Core/fble-stdio.c \
-    [exec pkg-config --cflags fble fble-core]
-  bin $::out/pkgs/core/Core/fble-stdio "$::out/pkgs/core/Core/fble-stdio.o" \
-    [exec pkg-config --static --libs fble fble-core] \
-    "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a"
+    "-I fble/include -I pkgs/core"
+  bin $::out/pkgs/core/Core/fble-stdio \
+    "$::out/pkgs/core/Core/fble-stdio.o $::out/pkgs/core/libfble-core.a $::out/fble/lib/libfble.a" ""
 
   # Build an fble-stdio compiled binary.
   #

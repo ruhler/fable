@@ -11,10 +11,10 @@ namespace eval "pkgs/app" {
 
   # fble-app program.
   obj $::out/pkgs/app/App/fble-app.o pkgs/app/App/fble-app.c \
-    [exec pkg-config --cflags fble fble-core fble-app]
-  bin $::out/pkgs/app/App/fble-app "$::out/pkgs/app/App/fble-app.o" \
-    [exec pkg-config --static --libs fble-app] \
-    "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a"
+    "-I fble/include -I pkgs/core -I pkgs/app -I/usr/include/SDL2"
+  bin $::out/pkgs/app/App/fble-app \
+    "$::out/pkgs/app/App/fble-app.o $::out/pkgs/app/libfble-app.a $::out/pkgs/core/libfble-core.a $::out/fble/lib/libfble.a" \
+    "-lSDL2 -lGL"
 
   # Build an fble-app compiled binary.
   #
