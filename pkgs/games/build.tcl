@@ -1,5 +1,5 @@
 namespace eval "pkgs/games" {
-  pkg games ""
+  pkg games [list core app] ""
 
   # /Games/Tests% interpreted
   test $::out/pkgs/games/Games/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/games/Games/Tests.fble.d" \

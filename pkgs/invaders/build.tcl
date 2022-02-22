@@ -1,5 +1,5 @@
 namespace eval "pkgs/invaders" {
-  pkg invaders ""
+  pkg invaders [list core app] ""
   app $::out/pkgs/invaders/Invaders/fble-invaders "/Invaders/App%" \
     "fble-invaders" $::out/pkgs/invaders/libfble-invaders.a
 

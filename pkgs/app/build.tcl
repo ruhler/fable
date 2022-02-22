@@ -7,7 +7,7 @@ namespace eval "pkgs/app" {
     obj $::out/pkgs/app/$x.o pkgs/app/$x.c "-I /usr/include/SDL2 -I fble/include -I pkgs/core -I pkgs/app"
   }
 
-  pkg app $objs
+  pkg app [list core] $objs
 
   # fble-app program.
   obj $::out/pkgs/app/App/fble-app.o pkgs/app/App/fble-app.c \

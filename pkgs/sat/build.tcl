@@ -1,5 +1,5 @@
 namespace eval "pkgs/sat" {
-  pkg sat ""
+  pkg sat [list core] ""
 
   # /Sat/Tests% interpreted
   test $::out/pkgs/sat/Sat/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/sat/Sat/Tests.fble.d" \

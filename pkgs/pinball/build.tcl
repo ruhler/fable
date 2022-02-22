@@ -1,5 +1,5 @@
 namespace eval "pkgs/pinball" {
-  pkg pinball ""
+  pkg pinball [list core app] ""
   app $::out/pkgs/pinball/Pinball/fble-pinball "/Pinball/App%" \
     "fble-pinball" $::out/pkgs/pinball/libfble-pinball.a
 

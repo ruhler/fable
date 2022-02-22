@@ -8,7 +8,7 @@ namespace eval "pkgs/core" {
     obj $::out/pkgs/core/$x.o pkgs/core/$x.c "$cflags -I pkgs/core"
   }
 
-  pkg core $objs
+  pkg core [list] $objs
 
   # fble-stdio program.
   obj $::out/pkgs/core/Core/fble-stdio.o pkgs/core/Core/fble-stdio.c \

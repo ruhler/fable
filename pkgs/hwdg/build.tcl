@@ -1,5 +1,5 @@
 namespace eval "pkgs/hwdg" {
-  pkg hwdg ""
+  pkg hwdg [list core app] ""
 
   # /Hwdg/Tests% interpreted
   test $::out/pkgs/hwdg/Hwdg/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/hwdg/Hwdg/Tests.fble.d" \

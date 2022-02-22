@@ -7,7 +7,7 @@ namespace eval "pkgs/md5" {
     obj $::out/pkgs/md5/$x.o pkgs/md5/$x.c "-I fble/include -I pkgs/core -I pkgs/md5"
   }
 
-  pkg md5 $objs
+  pkg md5 [list core] $objs
 
   # Md5/Tests interpreted
   test $::out/pkgs/md5/Md5/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/md5/Md5/Tests.fble.d" \

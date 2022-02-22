@@ -169,9 +169,15 @@ proc fbleobj { obj compile compileargs args } {
 #
 # Inputs:
 #   name - the name of the package, such as 'app'.
+#   deps - list of fble packages (without fble- prefix) this package depends
+#          on.
 #   objs - additional object files to include in the generated library.
-proc pkg {name objs} {
-  set cflags [exec pkg-config --cflags-only-I fble-$name]
+proc pkg {name deps objs} {
+  set cflags "-I pkgs/$name"
+  foreach dep $deps {
+    append cflags " -I pkgs/$dep"
+  }
+
   foreach dir [dirs pkgs/$name ""] {
     lappend ::build_ninja_deps "pkgs/$name/$dir"
     foreach {x} [glob -tails -directory pkgs/$name -nocomplain -type f $dir/*.fble] {
