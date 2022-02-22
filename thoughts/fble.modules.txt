@@ -2259,3 +2259,18 @@ Updates:
   need to link. It's a funny thing, we need to link, but don't want to bring
   in the -I flags. Oh well.
 
+---
+
+We've made good progress. Source code is reorganized into package now. We have
+a compile time search path and restructured code in the build system to only
+give access to packages you depend on.
+
+Next steps:
+* Clean up build.ninja.tcl to put package related code together.
+* Consider splitting build.ninja.tcl into per-package .tcl files.
+* Implement support for .fble.@ header files.
+
+I don't feel the need to really do separate packages yet. Also, there have
+been a lot of changes recently, so I might hold off on .fble.@ header files
+for a while, just to give things space to breath.
+

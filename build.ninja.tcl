@@ -205,54 +205,8 @@ foreach pkg [list core sat app hwdg invaders pinball games graphics md5] {
   lappend ::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
 }
 
-# libfble.a
-eval {
-  set fble_objs [list]
-  set fble_objs_cov [list]
-
-  # parser
-  eval {
-    # Update local includes for fble/lib/parse.y here.
-    # See comment in fble/lib/parse.y.
-    set includes {
-      fble/include/fble-alloc.h
-      fble/include/fble-load.h
-      fble/include/fble-loc.h
-      fble/include/fble-module-path.h
-      fble/include/fble-name.h
-      fble/include/fble-string.h
-      fble/include/fble-vector.h
-      fble/lib/expr.h
-    }
-    set report $::out/fble/lib/parse.tab.report.txt
-    set tabc $::out/fble/lib/parse.tab.c
-    set cmd "bison --report=all --report-file=$report -o $tabc fble/lib/parse.y"
-    build "$tabc $report" "fble/lib/parse.y $includes" $cmd
-
-    obj $::out/fble/lib/parse.tab.o $::out/fble/lib/parse.tab.c "-I fble/include -I fble/lib"
-    obj_cov $::out/fble/lib/parse.tab.cov.o $::out/fble/lib/parse.tab.c "-I fble/include -I fble/lib"
-    lappend fble_objs $::out/fble/lib/parse.tab.o
-    lappend fble_objs_cov $::out/fble/lib/parse.tab.cov.o
-  }
-
-  # .o files
-  lappend ::build_ninja_deps "fble/lib"
-  foreach {x} [glob -tails -directory fble/lib *.c] {
-    set object $::out/fble/lib/[string map {.c .o} $x]
-    set object_cov $::out/fble/lib/[string map {.c .cov.o} $x]
-    obj $object fble/lib/$x "-I fble/include"
-    obj_cov $object_cov fble/lib/$x "-I fble/include"
-    lappend fble_objs $object
-    lappend fble_objs_cov $object_cov
-  }
-
-  # libfble.a
-  set ::libfble "$::out/fble/lib/libfble.a"
-  lib $::libfble $fble_objs
-
-  set ::libfblecov "$::out/fble/lib/libfble.cov.a"
-  lib $::libfblecov $fble_objs_cov
-}
+lappend ::build_ninja_deps "fble/lib/build.tcl"
+source fble/lib/build.tcl
 
 # fble/bin
 eval {

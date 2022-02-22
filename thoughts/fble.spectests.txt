@@ -118,3 +118,29 @@ name, the current module path should be fine?
 
 Good. What do you think? Shall I try doing this cleanup?
 
+---
+
+What are the next steps here? I need to come up with a plan for how to
+implement this.
+
+So we have the .fble code already extracted.
+We get a list of tests from build.ninja.tcl using glob and/or grep.
+We parse the test type from within build.ninja.tcl and call the appropriate
+spec-test-compile, fble-test, fble-test-compile-error, etc. functions.
+
+I'll want to migrate slowly to the new scheme. So duplicate and modify in
+build.ninja.tcl to start. Start with just a handful of tests, get that
+working, and slowly migrate.
+
+What directory structure do I want for the spec tests? Put them in spec
+directory maybe? spec/SpecTests/... I would say the tests are part of the
+spec. 'lang' versus 'spec'? I think 'spec' is more specific. Do we want an
+'fble' prefix? Or is everything okay to be fble based now?
+
+Let's try 'spec/SpecTests', where spec is the -I value and tests go under
+/SpecTests/...%
+
+Immediate next steps:
+* Port the langs/fble/0... tests to new format.
+* Set up build.ninja.tcl infra for running tests in the new format.
+
