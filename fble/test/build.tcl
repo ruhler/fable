@@ -12,6 +12,7 @@ namespace eval "fble/test" {
   }
   lib $::out/fble/test/libfbletest.a $objs
 
+  # test binaries
   lappend ::build_ninja_deps "fble/test"
   foreach {x} [glob fble/test/fble-*.c] {
     set base [file rootname [file tail $x]]
@@ -19,6 +20,10 @@ namespace eval "fble/test" {
     bin $::out/fble/test/$base "$::out/fble/test/$base.o $libs" ""
     bin_cov $::out/fble/test/$base.cov "$::out/fble/test/$base.o $libs_cov" ""
   }
+
+  # fble-profile-test
+  test $::out/fble/test/fble-profile-test.tr $::out/fble/test/fble-profile-test \
+    "$::out/fble/test/fble-profile-test > /dev/null"
 
   # fble-profiles-test
   test $::out/fble/test/fble-profiles-test.tr \
@@ -32,10 +37,6 @@ namespace eval "fble/test" {
   bin $::out/fble/test/ProfilesTest "$::out/fble/test/ProfilesTest.o $libs" ""
   test $::out/fble/test/ProfilesTest.tr "$::out/fble/test/ProfilesTest" \
     "$::out/fble/test/ProfilesTest > $::out/fble/test/ProfilesTest.prof"
-
-  # fble-profile-test
-  test $::out/fble/test/fble-profile-test.tr $::out/fble/test/fble-profile-test \
-    "$::out/fble/test/fble-profile-test > /dev/null"
 
   # /Fble/DebugTest%
   build $::out/fble/test/fble-debug-test.s $::out/fble/bin/fble-compile \
