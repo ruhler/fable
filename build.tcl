@@ -113,7 +113,7 @@ proc lib { lib objs } {
 #
 # Inputs:
 #   bin - the binary file to build.
-#   objs - the list of .o files to build from.
+#   objs - the list of .o and .a files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 #   args - optional additional dependencies.
 proc bin { bin objs lflags args } {
@@ -205,21 +205,9 @@ foreach pkg [list core sat app hwdg invaders pinball games graphics md5] {
   lappend ::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
 }
 
-lappend ::build_ninja_deps "fble/lib/build.tcl"
-source fble/lib/build.tcl
-
-# fble/bin
-eval {
-  lappend ::build_ninja_deps "fble/bin"
-  set cflags [exec pkg-config --cflags fble]
-  set ldflags [exec pkg-config --static --libs fble]
-  set ldflags_cov [exec pkg-config --static --libs fble.cov]
-  foreach {x} [glob fble/bin/*.c] {
-    set base [file rootname [file tail $x]]
-    obj $::out/fble/bin/$base.o $x $cflags
-    bin $::out/fble/bin/$base "$::out/fble/bin/$base.o" $ldflags $::libfble
-    bin_cov $::out/fble/bin/$base.cov "$::out/fble/bin/$base.o" $ldflags_cov $::libfblecov
-  }
+foreach build_dir [list fble/lib fble/bin] {
+  lappend ::build_ninja_deps "$build_dir/build.tcl"
+  source $build_dir/build.tcl
 }
 
 # fble/test library, tools, and tests.
