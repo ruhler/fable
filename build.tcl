@@ -115,7 +115,7 @@ proc lib { lib objs } {
 #   bin - the binary file to build.
 #   objs - the list of .o and .a files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
-#   args - optional additional dependencies.
+#   args - optional additional dependencies. TODO: remove this.
 proc bin { bin objs lflags args } {
   #set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3"
@@ -205,56 +205,15 @@ foreach pkg [list core sat app hwdg invaders pinball games graphics md5] {
   lappend ::build_ninja_deps "pkgs/$pkg/fble-$pkg.pc"
 }
 
-foreach build_dir [list fble/lib fble/bin] {
+set build_dirs {
+  fble/lib
+  fble/bin
+  fble/test
+}
+foreach build_dir $build_dirs {
   lappend ::build_ninja_deps "$build_dir/build.tcl"
   source $build_dir/build.tcl
 }
-
-# fble/test library, tools, and tests.
-eval {
-  lappend ::build_ninja_deps "fble/test"
-
-  set objs [list]
-  foreach {x} [list test.c mem-test.c profiles-test.c] {
-    set object $::out/fble/test/[string map {.c .o} $x]
-    obj $object fble/test/$x "-I fble/include"
-    lappend objs $object
-  }
-  lib $::out/fble/test/libfbletest.a $objs
-
-  set cflags [exec pkg-config --cflags fble]
-  set ldflags "-L $::out/fble/test -lfbletest [exec pkg-config --static --libs fble]"
-  set ldflags_cov "-L $::out/fble/test -lfbletest [exec pkg-config --static --libs fble.cov]"
-
-  foreach {x} [glob fble/test/fble-*.c] {
-    set base [file rootname [file tail $x]]
-    obj $::out/fble/test/$base.o $x $cflags
-    bin $::out/fble/test/$base "$::out/fble/test/$base.o" $ldflags \
-      "$::out/fble/test/libfbletest.a $::libfble"
-    bin_cov $::out/fble/test/$base.cov "$::out/fble/test/$base.o" $ldflags_cov \
-      "$::out/fble/test/libfbletest.a $::libfblecov"
-  }
-}
-
-# fble-profiles-test
-test $::out/fble/test/fble-profiles-test.tr \
-  "$::out/fble/test/fble-profiles-test fble/test/ProfilesTest.fble" \
-  "$::out/fble/test/fble-profiles-test -I fble/test -m /ProfilesTest% > $::out/fble/test/fble-profiles-test.prof"
-
-# fble-compiled-profiles-test
-fbleobj $::out/fble/test/ProfilesTest.o $::out/fble/bin/fble-compile \
-  "-c -e FbleCompiledMain --main FbleProfilesTestMain -I fble/test -m /ProfilesTest%" \
-  fble/test/ProfilesTest.fble
-bin $::out/fble/test/ProfilesTest "$::out/fble/test/ProfilesTest.o" \
-  "-L $::out/fble/test -lfbletest -L $::out/fble/lib -lfble" "$::libfble"
-test $::out/fble/test/ProfilesTest.tr \
-  "$::out/fble/test/ProfilesTest" \
-  "$::out/fble/test/ProfilesTest > $::out/fble/test/ProfilesTest.prof"
-
-
-# tests
-test $::out/true.tr "" true
-#test $::out/false.tr "" false
 
 # fble language spec tests
 # 
@@ -415,32 +374,6 @@ foreach dir [dirs langs/fble ""] {
 # Code coverage from spec tests.
 build $::out/cov/gcov.txt "$::fble_objs_cov $::spec_tests" \
   "gcov $::fble_objs_cov > $::out/cov/gcov.txt && mv *.gcov $::out/cov"
-
-# fble-profile-test
-test $::out/fble/test/fble-profile-test.tr $::out/fble/test/fble-profile-test \
-  "$::out/fble/test/fble-profile-test > /dev/null"
-
-# /Fble/DebugTest%
-build $::out/fble/test/fble-debug-test.s $::out/fble/bin/fble-compile \
-  "$::out/fble/bin/fble-compile --main FbleTestMain -c -I fble/test -m /DebugTest% > $::out/fble/test/fble-debug-test.s"
-asm $::out/fble/test/fble-debug-test.o $::out/fble/test/fble-debug-test.s
-bin $::out/fble/test/fble-debug-test "$::out/fble/test/fble-debug-test.o" \
-  "-L $::out/fble/test -lfbletest $::ldflags_fble" \
-  "$::libfble $::out/fble/test/libfbletest.a"
-
-# Test that there are no dwarf warnings in the generated fble-debug-test
-# binary.
-build "$::out/fble/test/fble-debug-test.dwarf $::out/fble/test/fble-debug-test.dwarf-warnings.txt" \
-  "$::out/fble/test/fble-debug-test" \
-  "objdump --dwarf $::out/fble/test/fble-debug-test > $::out/fble/test/fble-debug-test.dwarf 2> $::out/fble/test/fble-debug-test.dwarf-warnings.txt"
-
-test $::out/fble/test/dwarf-test.tr \
-  "$::out/fble/test/fble-debug-test.dwarf-warnings.txt" \
-  "cmp /dev/null $::out/fble/test/fble-debug-test.dwarf-warnings.txt"
-
-test $::out/fble/test/fble-debug-test.tr \
-  "$::out/fble/test/fble-debug-test fble/test/fble-debug-test.exp" \
-  "expect fble/test/fble-debug-test.exp > /dev/null"
 
 # fble 'core' library package.
 eval {
