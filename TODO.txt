@@ -1,5 +1,3 @@
-* Remove $args option to bin procedure.
-
 * Switch to new proposed approach for spec tests.
   See thoughts/fble.spectests.txt.
 

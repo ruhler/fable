@@ -100,11 +100,9 @@ proc lib { lib objs } {
 #   bin - the binary file to build.
 #   objs - the list of .o and .a files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
-#   args - optional additional dependencies. TODO: remove this.
-proc bin { bin objs lflags args } {
-  #set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
+proc bin { bin objs lflags } {
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3"
-  build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
+  build $bin $objs "gcc $cflags -o $bin $objs $lflags"
 }
 
 # bin_cov --
@@ -114,10 +112,10 @@ proc bin { bin objs lflags args } {
 #   bin - the binary file to build.
 #   objs - the list of .o files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
-#   args - optional additional dependencies.
-proc bin_cov { bin objs lflags args } {
+proc bin_cov { bin objs lflags } {
+  #set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
-  build $bin "$objs $args" "gcc $cflags -o $bin $objs $lflags"
+  build $bin $objs "gcc $cflags -o $bin $objs $lflags"
 }
 
 # test --
