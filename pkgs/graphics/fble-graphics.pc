@@ -1,9 +1,0 @@
-includedir=${pcfiledir}
-libdir=${pc_top_builddir}/pkgs/graphics
-
-Name: Fble Graphics
-Description: The fble graphics library package.
-Version: 0.1
-Requires.private: fble, fble-core, fble-app
-Libs: -L${libdir} -lfble-graphics
-Cflags: -I${includedir}

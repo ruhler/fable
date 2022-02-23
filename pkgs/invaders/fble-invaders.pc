@@ -1,9 +1,0 @@
-includedir=${pcfiledir}
-libdir=${pc_top_builddir}/pkgs/invaders
-
-Name: Fble Invaders
-Description: The fble invaders library package.
-Version: 0.1
-Requires.private: fble, fble-core, fble-app
-Libs: -L${libdir} -lfble-invaders
-Cflags: -I${includedir}

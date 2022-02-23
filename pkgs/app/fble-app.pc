@@ -1,9 +1,0 @@
-includedir=${pcfiledir}
-libdir=${pc_top_builddir}/pkgs/app
-
-Name: Fble App
-Description: The fble app library package.
-Version: 0.1
-Requires.private: fble, fble-core, sdl2, gl
-Libs: -L${libdir} -lfble-app
-Cflags: -I${includedir}

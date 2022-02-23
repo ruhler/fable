@@ -1,9 +1,0 @@
-includedir=${pcfiledir}
-libdir=${pc_top_builddir}/pkgs/hwdg
-
-Name: Fble Hwdg
-Description: The fble hwdg library package.
-Version: 0.1
-Requires.private: fble, fble-core, fble-app
-Libs: -L${libdir} -lfble-hwdg
-Cflags: -I${includedir}

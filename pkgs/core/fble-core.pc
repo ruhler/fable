@@ -1,9 +1,0 @@
-includedir=${pcfiledir}
-libdir=${pc_top_builddir}/pkgs/core
-
-Name: Fble Core
-Description: The fble core library package.
-Version: 0.1
-Requires.private: fble
-Libs: -L${libdir} -lfble-core
-Cflags: -I${includedir}
