@@ -8,8 +8,7 @@ namespace eval "pkgs/pinball" {
     "$::out/pkgs/core/Core/fble-stdio $cflags -m /Pinball/Tests%" "pool = console"
 
   # /Pinball/Tests% compiled
-  stdio $::out/pkgs/pinball/Pinball/pinball-tests "/Pinball/Tests%" "fble-pinball" \
-    "$::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a $::out/pkgs/pinball/libfble-pinball.a"
+  stdio $::out/pkgs/pinball/Pinball/pinball-tests "/Pinball/Tests%" "pinball app"
   test $::out/pkgs/pinball/Pinball/pinball-tests.tr $::out/pkgs/pinball/Pinball/pinball-tests \
     "$::out/pkgs/pinball/Pinball/pinball-tests" "pool = console"
 }

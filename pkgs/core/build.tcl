@@ -18,15 +18,20 @@ namespace eval "pkgs/core" {
   # Inputs:
   #   target - the file to build.
   #   path - the module path to use as Stdio@ main.
-  #   libs - additional pkg-config named libraries that this depends on.
-  #   args - optional additional dependencies.
-  proc ::stdio { target path libs args} {
+  #   libs - additional fble packages this depends on, not including core,
+  #          without the fble- prefix.
+  proc ::stdio { target path libs} {
+    set objs $target.o
+    foreach lib $libs {
+      append objs " $::out/pkgs/$lib/libfble-$lib.a"
+    }
+    append objs " $::out/pkgs/core/libfble-core.a"
+    append objs " $::out/fble/lib/libfble.a"
+
     build $target.s $::out/fble/bin/fble-compile \
       "$::out/fble/bin/fble-compile --main FbleStdioMain -m $path > $target.s"
     asm $target.o $target.s
-    bin $target "$target.o" \
-      [exec pkg-config --static --libs fble fble-core {*}$libs] \
-      "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a" {*}$args
+    bin $target $objs ""
   }
 
   # /Core/Stdio/Cat% interpreted test.
@@ -47,8 +52,7 @@ namespace eval "pkgs/core" {
     "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Tests%" "pool = console"
 
   # Core/Tests compiled
-  stdio $::out/pkgs/core/Core/core-tests "/Core/Tests%" "fble-core" \
-    $::out/pkgs/core/libfble-core.a
+  stdio $::out/pkgs/core/Core/core-tests "/Core/Tests%" ""
   test $::out/pkgs/core/Core/core-tests.tr $::out/pkgs/core/Core/core-tests \
     "$::out/pkgs/core/Core/core-tests" "pool = console"
 }

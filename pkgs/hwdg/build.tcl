@@ -7,8 +7,7 @@ namespace eval "pkgs/hwdg" {
     "$::out/pkgs/core/Core/fble-stdio $cflags -m /Hwdg/Tests%" "pool = console"
 
   # /Hwdg/Tests% compiled
-  stdio $::out/pkgs/hwdg/Hwdg/hwdg-tests "/Hwdg/Tests%" "fble-hwdg" \
-    "$::out/pkgs/core/libfble-core.a $::out/pkgs/hwdg/libfble-hwdg.a"
+  stdio $::out/pkgs/hwdg/Hwdg/hwdg-tests "/Hwdg/Tests%" "hwdg app"
   test $::out/pkgs/hwdg/Hwdg/hwdg-tests.tr $::out/pkgs/hwdg/Hwdg/hwdg-tests \
     "$::out/pkgs/hwdg/Hwdg/hwdg-tests" "pool = console"
 }

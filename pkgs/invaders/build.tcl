@@ -8,8 +8,7 @@ namespace eval "pkgs/invaders" {
     "$::out/pkgs/core/Core/fble-stdio $cflags -m /Invaders/Tests%" "pool = console"
 
   # /Invaders/Tests% compiled
-  stdio $::out/pkgs/invaders/Invaders/invaders-tests "/Invaders/Tests%" "fble-invaders" \
-    "$::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a $::out/pkgs/invaders/libfble-invaders.a"
+  stdio $::out/pkgs/invaders/Invaders/invaders-tests "/Invaders/Tests%" "invaders app"
   test $::out/pkgs/invaders/Invaders/invaders-tests.tr $::out/pkgs/invaders/Invaders/invaders-tests \
     "$::out/pkgs/invaders/Invaders/invaders-tests" "pool = console"
 }

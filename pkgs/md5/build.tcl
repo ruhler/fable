@@ -13,8 +13,7 @@ namespace eval "pkgs/md5" {
     "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -I pkgs/md5 -m /Md5/Tests%" "pool = console"
 
   # Md5/Tests compiled
-  stdio $::out/pkgs/md5/Md5/md5-tests "/Md5/Tests%" "fble-md5" \
-    "$::out/pkgs/core/libfble-core.a $::out/pkgs/md5/libfble-md5.a"
+  stdio $::out/pkgs/md5/Md5/md5-tests "/Md5/Tests%" "md5"
   test $::out/pkgs/md5/Md5/md5-tests.tr $::out/pkgs/md5/Md5/md5-tests \
     "$::out/pkgs/md5/Md5/md5-tests" "pool = console"
 
