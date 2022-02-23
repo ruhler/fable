@@ -21,14 +21,20 @@ namespace eval "pkgs/app" {
   # Inputs:
   #   target - the file to build.
   #   path - the module path to use as App@ main.
-  #   libs - addition pkg-config named libraries to depend on.
-  #   args - optional additional dependencies.
-  proc ::app { target path libs args} {
+  #   libs - addition fble packages to depend on besides core and app
+  #          (without fble- prefix).
+  proc ::app { target path libs} {
+    set objs $target.o
+    foreach lib $libs {
+      append objs " $::out/pkgs/$lib/libfble-$lib.a"
+    }
+    append objs " $::out/pkgs/app/libfble-app.a"
+    append objs " $::out/pkgs/core/libfble-core.a"
+    append objs " $::out/fble/lib/libfble.a"
+    
     build $target.s $::out/fble/bin/fble-compile \
       "$::out/fble/bin/fble-compile --main FbleAppMain -m $path > $target.s"
     asm $target.o $target.s
-    bin $target "$target.o" \
-      [exec pkg-config --static --libs fble-app {*}$libs] \
-      "$::out/fble/lib/libfble.a $::out/pkgs/core/libfble-core.a $::out/pkgs/app/libfble-app.a $args"
+    bin $target $objs "-lSDL2 -lGL"
   }
 }
