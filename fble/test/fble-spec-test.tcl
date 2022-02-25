@@ -1,17 +1,49 @@
 
 # TODO:
-# * Separate parsing from dispatch. Return <type> <msg> instead of calling
-#   directly.
 # * Implement test-* procedures.
 # * Decide best way to specify dir/fble.
-# * Grep for @@fble-test@@ first, before testing all the sub options, to save
-#   performance? Or does that really not matter at all in practice?
 
 set path [lindex $argv 0]
 
 set dir "spec"
 set fble [string range $path 5 end]
 set mpath "/[file rootname $fble]%"
+
+# parse-test-metadata
+#   Parses the test metadata from a .fble file.
+#
+# Inputs:
+#   path - the full path to the .fble file.
+#   typevar - the name of a variable to set with the parsed metadata type.
+#   msgvar - the name of a variable to set with the parsed metadata message.
+#
+# The type variable is set to none if no @@fble-test@@ meta data is present.
+proc parse-test-metadata { path typevar msgvar } {
+  upvar $typevar type
+  upvar $msgvar msg
+
+  set fin [open "$path" "r"]
+  while {[gets $fin line] >= 0} {
+    set first [string first "@@fble-test@@" $line]
+    if {$first != -1} {
+      set index [expr $first + [string length "@@fble-test@@"]]
+      set metadata [string trim [string range $line $index end]]
+      set type $metadata
+      set msg ""
+      set space [string first " " $metadata]
+      if {$space != -1} {
+        set type [string trim [string range $metadata 0 $space]]
+        set msg [string trim [string range $metadata $space end]]
+      }
+      close $fin
+      return
+    }
+  }
+  set type "none"
+  set msg ""
+  close $fin
+  return
+}
 
 proc test-no-error {} {
   puts "no-error"
@@ -37,38 +69,7 @@ proc test-none {} {
   puts "none"
 }
 
-set fin [open "$dir/$fble" "r"]
-while {[gets $fin line] >= 0} {
-  if {1 == [regexp {@@fble-test@@ no-error} $line]} {
-    test-no-error
-    exit 0
-  }
 
-  if {1 == [regexp {@@fble-test@@ compile-error (.*)} $line fullmatch msg]} {
-    test-compile-error $msg
-    exit 0
-  }
-
-  if {1 == [regexp {@@fble-test@@ runtime-error (.*)} $line fullmatch msg]} {
-    test-runtime-error $msg
-    exit 0
-  }
-
-  if {1 == [regexp {@@fble-test@@ memory-constant} $line]} {
-    test-memory-constant
-    exit 0
-  }
-
-  if {1 == [regexp {@@fble-test@@ memory-growth} $line]} {
-    test-memory-growth
-    exit 0
-  }
-
-  if {1 == [regexp {@@fble-test@@} $line]} {
-    throw "invalid fble-test attribute: $line" 
-  }
-}
-
-test-none
-exit 0
+parse-test-metadata $path type msg
+puts "type='$type', msg='$msg'"
 
