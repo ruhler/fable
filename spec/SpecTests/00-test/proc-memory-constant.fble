@@ -1,0 +1,12 @@
+# @@fble-test@@ memory-constant
+#
+# Test memory-constant test infrastructure for processes.
+@ Unit@ = *();
+@ Nat@ = /SpecTest/Nat%.Nat@;
+
+# Executing f(n) requires O(1) memory.
+(Nat@){ Unit@!; } f = (Nat@ n) {
+  !(Unit@());
+};
+
+f;

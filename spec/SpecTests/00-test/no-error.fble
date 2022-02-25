@@ -1,0 +1,5 @@
+# @@fble-test@@ no-error
+#
+# Test no-error test infrastructure.
+@ Unit@ = *();
+Unit@();

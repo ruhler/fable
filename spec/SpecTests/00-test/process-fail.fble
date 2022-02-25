@@ -1,0 +1,7 @@
+# @@fble-test@@ runtime-error 7:9
+#
+# Test runtime-error of evaluated process test infrastructure.
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ false = Bool@(false: Unit@());
+!(false.true);

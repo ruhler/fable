@@ -144,3 +144,28 @@ Immediate next steps:
 * Port the langs/fble/0... tests to new format.
 * Set up build.ninja.tcl infra for running tests in the new format.
 
+---
+
+The easy way to build the new test format is:
+* For every file under SpecTests directory, create a spec test rule that calls
+  a script to run the file. The script reads the metadata, verifies it is a
+  test (trivially passing otherwise), and executes the commands necessary to
+  run the test.
+
+That way we don't have to read the contents of any of the spec tests to
+generate the build.ninja. The downside is we don't know at build time whether
+the test depends on fble-test, fble-compile, fble-mem-test, etc, so we'll end
+up adding a dependency on all of those, which could trigger unnecessary test
+reruns in some (rare?) cases.
+
+The slightly harder way is to parse the test file in build.tcl and generate
+rules depending on the test. Let's start with the easy way. Once we have the
+easy way, we can decide if we want to migrate to the hard way, which needs all
+the same code, just a bit more and in different places.
+
+First steps for implementing script to execute:
+* Pass an include directory and a module path? Or include directory and .fble
+  file name. Either way, want the info necessary for the .fble file name, the
+  include directory, and the module path.
+* Read the file, search for and parse the @@fble-test@@ metadata.
+
