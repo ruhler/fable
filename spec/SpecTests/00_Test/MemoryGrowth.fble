@@ -3,9 +3,9 @@
 # Test memory-growth test infrastructure.
 
 @ Unit@ = *();
-@ Nat@ = /SpecTest/Nat%.Nat@;
-@ S@ = /SpecTest/Nat%.S@;
-% S = /SpecTest/Nat%.S;
+@ Nat@ = /SpecTests/Nat%.Nat@;
+@ S@ = /SpecTests/Nat%.S@;
+% S = /SpecTests/Nat%.S;
 
 @ Sum@ = +(Sum@ S, Unit@ Z);
 

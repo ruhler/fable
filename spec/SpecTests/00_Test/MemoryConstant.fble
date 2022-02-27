@@ -2,7 +2,7 @@
 #
 # Test memory-constant test infrastructure.
 @ Unit@ = *();
-@ Nat@ = /SpecTest/Nat%.Nat@;
+@ Nat@ = /SpecTests/Nat%.Nat@;
 
 # f requires O(1) memory.
 (Nat@){ Unit@; } f = (Nat@ n) {

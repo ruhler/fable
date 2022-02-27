@@ -169,3 +169,111 @@ First steps for implementing script to execute:
   include directory, and the module path.
 * Read the file, search for and parse the @@fble-test@@ metadata.
 
+---
+
+Next step, let's consider the case of no-error.
+* No need to extract anything.
+* We want to compile .fble -> .o all modules the test depends on.
+ - How do we know which modules the test depends on?
+* We want to compile the main .fble -> .o with --main.
+* We want to generate a binary.
+ - Can we call ld directly, or do we need gcc flags?
+ - How does that interact with code coverage?
+* We want to run fble-disassemble, for the fun of it.
+* We want to run interpreter with --profile (can ignore result)
+* We want to run compiled executable.
+* We want to catch any errors and report the test file.
+
+Questions:
+* How to know which modules to compile?
+  - Maybe run fble-deps to get that info?
+  - Can we avoid recompiling, e.g. Nat.o multiple times?
+  - Or should we separate compilable from non-compilable, and just compile all
+    the compilable modules up front in one big go?
+* Where do we put output files?
+  - tempdir? out dir?
+* How to link compiled executable / how does that work with coverage?
+
+I should be able to answer the question about linking on the existing spectest
+infrastructure. Maybe let's start there.
+
+Looks like directly invoking 'ld' doesn't work great, because it's missing
+some standard options and libraries that gcc adds when it calls 'ld'. For
+example, _start as entry point and whatever library implements 'rand'.
+
+Does that suggest we want to reuse the build options in build.ninja for
+building these things? In which case, maybe I really want to parse the spec
+test .fble files and generate build rules from those rather than doing a
+one-off test run directly from the .fble?
+
+---
+
+Here's the issue:
+* Unlike the old approach to spec tests, the new approach does not explicitly
+  list the modules that a test depends on.
+* Using fble-dep to get that information is feasible, but suggests we can't do
+  it as part of generating the build.ninja file, because we need build.ninja
+  to build fble-dep first.
+* The fact that ld isn't trivial to call directly, and that we ideally would
+  like to reuse compilation of Nat.fble, suggests we would prefer to have
+  build.ninja in charge of building for tests.
+
+So we are stuck in a knot. It's a question of how I want to break the knot.
+Some possibilities:
+* Come up with some way to make dependencies explicit in test cases. For
+  example, a test /SpecTest/.../Foo.fble depends on exactly Foo.fble and
+  everything in the directory Foo/, plus Nat.o for memory tests.
+* Don't worry about recompiling Nat.fble or factoring out common code for
+  linking fble-based executables.
+
+As far as building with coverage goes, I think the current approach is the
+best we can do:
+* Run fble-test.cov, fble-compile.cov tools.
+* Link tests against non-coverage libfble.a.
+
+Because I assume gcc needs to generate special code to support coverage, and
+when we are compiling fble code, we bypass gcc and whatever special code you
+need. In other words, compiled fble code does not support code coverage.
+
+I kind of wish there was an alternative to gcov we could use for code
+coverage. Something perf based possibly? I feel like perf would require
+sampling at every instruction, which is way overkill.
+
+---
+
+Solution for build.ninja dependency on fble-deps: see if I can set up a
+subninja file that depends on fble-dep. I feel like ninja should be able to
+read the initial build.ninja file, use it to build fble-deps, use that to
+generate the subninja file, then reload the subninja file, start over again,
+see fble-deps and subninja are up to date, and execute those rules.
+
+Solution for knowing whether we should be able to compile a test .fble or not:
+any .fble file that can't compile should be marked with @@fble-test@@
+compile-error. Even if it's not the main test entry, for example, if we want
+to test reference to a module that doesn't compile. That's a rare case, so
+it's fine to have an extra @@fble-test@@ compile error on the referenced
+module saying that compilation would fail from the top level module too.
+
+So, I guess my vote is the following:
+* Use fble-deps to figure out dependencies we need to compile and link
+  together for a test. We want that regardless of whether we build via ninja
+  or not.
+* Start by using separate test script that duplicates compilations and gcc
+  command lines. Generate intermediate files to out/<path>/ directory. Boot
+  strap that way.
+* If desired, switch to hack for generating subninja dynamically.
+
+Next steps:
+1. Add support for interpreted test cases via script.
+2. Set up spec/build.ninja to run test cases.
+3. Add support for compiled test cases.
+  - Figure out how to know what to compile and link using fble-deps.
+4. Migrate rest of test cases.
+5. Optionally figure out hack for generating subninja dynamically.
+
+---
+
+Note: One thing nice about having the .fble be the source for the test is we
+don't have to output a separate error message to the user to direct them to
+the .tcl file.
+

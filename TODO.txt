@@ -1,10 +1,20 @@
 * Switch to new proposed approach for spec tests.
   See thoughts/fble.spectests.txt.
 
+* Should we allow 'none' as an @fble-test@ metadata type?
+  The motivation to be explicit and avoid parsing the whole file for a .fble
+  file that is not intended to be a test case.
+  Corollary: should we require none to set explicitly?
+
+* Nicer error message for parsing module names with '-' in them.
+  Which technically isn't allowed.
+
+* Consider removing --runtime-error and --compile-error options from fble-test?
+  Instead, return exit status to distinguish between them, and do the check
+  for exit status in the spec test wrapper function?
+
 * Should we add option for fble-compile to generate main function for
   interpreted case? Might be nice?
-
-* Move what remains to fble/test non-package library.
 
 * Factor out common logic for doing fble /Foo/Tests% based tests in build.ninja.tcl
   
