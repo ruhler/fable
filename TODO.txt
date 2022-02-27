@@ -1,5 +1,4 @@
-* Switch to new proposed approach for spec tests.
-  See thoughts/fble.spectests.txt.
+* Add compilation support to fble/test/fble-spec-test.tcl.
 
 * Should we require @@fble-test@@ none to set explicitly?
 

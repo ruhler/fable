@@ -277,3 +277,7 @@ Note: One thing nice about having the .fble be the source for the test is we
 don't have to output a separate error message to the user to direct them to
 the .tcl file.
 
+Err, actually, that's not true. We still need to output an error message
+location in case of unexpected success, or mem-test. Ideally if the test
+fails, we output an error message of the @@fble-test@@ line.
+
