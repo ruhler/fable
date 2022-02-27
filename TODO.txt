@@ -1,10 +1,7 @@
 * Switch to new proposed approach for spec tests.
   See thoughts/fble.spectests.txt.
 
-* Should we allow 'none' as an @fble-test@ metadata type?
-  The motivation to be explicit and avoid parsing the whole file for a .fble
-  file that is not intended to be a test case.
-  Corollary: should we require none to set explicitly?
+* Should we require @@fble-test@@ none to set explicitly?
 
 * Nicer error message for parsing module names with '-' in them.
   Which technically isn't allowed.

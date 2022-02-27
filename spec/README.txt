@@ -49,3 +49,11 @@ Annotation: # @@fble-test@@ memory-growth
 The module value should be a function that takes a single argument of type
 /SpecTests/Nat%.Nat@. The test is considered failing if the function's memory
 use is O(1) in the value of the input argument.
+
+None
+----
+Annotation: # @@fble-test@@ none
+
+This annotation can be used to indicate a .fble file that is not intended to
+be used as a top level test case. For example, the .fble file may be a
+supporting file referenced from another test.

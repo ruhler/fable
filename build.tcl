@@ -201,7 +201,7 @@ set ::build_ninja_deps [list]
 
 set build_dirs {
   fble/lib fble/bin fble/test
-  langs
+  langs spec
   pkgs/core pkgs/app pkgs/md5 pkgs/sat pkgs/hwdg pkgs/games
   pkgs/invaders pkgs/pinball pkgs/graphics
 }

@@ -1,12 +1,25 @@
+# fble-spec-test.tcl
+#
+# Helper script to run a spec test.
+#
+# Usage:
+#   tclsh fble-test-spec.tcl dir path
+#
+#   dir - The fble -I directory for the test.
+#   fble - Path to the fble test file, relative to dir.
+#
+# Example:
+#   tclsh fble-test-spec.tcl spec SpecTests/00_Test/NoError.fble
+#
+# Parses the @@fble-test@@ metadata of $dir/$fble and executes the test
+# appropriately. Reports an error in case of test failure.
+#
+# This script assumes it is run from the top level directory, with access to
+# fble binaries in the out directory.
 
-# TODO:
-# * Implement test-* procedures.
-# * Decide best way to specify dir/fble.
-
-set path [lindex $argv 0]
-
-set dir "spec"
-set fble [string range $path 5 end]
+set ::dir [lindex $argv 0]
+set ::fble [lindex $argv 1]
+set ::path $dir/$fble
 set ::mpath "/[file rootname $fble]%"
 
 # parse-test-metadata
