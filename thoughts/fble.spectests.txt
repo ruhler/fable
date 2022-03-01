@@ -281,3 +281,77 @@ Err, actually, that's not true. We still need to output an error message
 location in case of unexpected success, or mem-test. Ideally if the test
 fails, we output an error message of the @@fble-test@@ line.
 
+---
+
+Okay, we have new spec tests set up for non-compilation cases. I'm actually
+fine not writing out artifacts of the test, just be silent in case of passed.
+Probably saves some IO cost?
+
+Next step is the tricky part: how to support compiled tests. Components:
+* Generate a .d file with fble-deps. We'll actually want to use this as part
+  of the test output in spec/build.ninja because we need these extra build
+  dependencies in ninja.
+* Extract the list of .fble files from fble deps. Compile each of those with
+  fble-compile.cov to a .s file somewhere (temp file?)
+* Compile all the .s files to .o files somewhere, handling the main .fble file
+  slightly specially.
+* Link all the .o files to an executable somewhere.
+* Then run the test.
+* Then delete the temporary files?
+
+Support for temporary files/directories via tcl?
+* We can stream the .s directly to .o. No need for intermediate .s to be
+  saved.
+* file tempfile has a way to create a temporary file, but it opens the file
+  for us, which doesn't work great with the assembler? What if we don't pass
+  -o to as, does it stream it out? That would be okay then. No. 'as' without
+  -o creates an a.out file. Maybe that's okay.
+
+Idea: use tcl's file tempfile, create named files for .o and the compiled
+executable. Pass the filenames to as and gcc. Run the stuff, then as cleanup
+regardless of error condition, delete all the temp files.
+
+Better yet, there is a linux command 'mktemp', that can create a temporary
+directory. Make a temporary directory, generate whatever I want into there,
+then delete the directory recursively when the test is done running. Easier to
+clean up 
+
+---
+
+One idea: we could make fble-deps work regardless of whether the .fble can be
+compiled. Just ignore any errors and write down as many dependencies as we
+see. That way we could do fble-deps as part of build by running it on all
+.fble files in spec directory. We need to add these missing dependencies
+regardless, even before adding support for running compiled tests.
+
+It shouldn't be hard to parse an fble-deps output file. For example:
+
+out/pkgs/core/Core/Stdio.fble.d: pkgs/core/Core/Stdio.fble \
+ pkgs/core/Core/Bool.fble pkgs/core/Core/Unit.fble pkgs/core/Core/List.fble \
+ pkgs/core/Core/Maybe.fble pkgs/core/Core/Process.fble \
+ pkgs/core/Core/String.fble pkgs/core/Core/Char.fble
+
+Split by whitespace, remove '\' entries, remove first entry, then for each
+.fble file, trim the prefix directory.
+
+For it to work properly, in theory, we do need fble-deps to work on .fble
+files with compilation errors. Otherwise we might miss important dependencies
+for compile-error test cases.
+
+My vote is that fble-deps can handle anything, it ignores errors while
+loading, just puts out whatever it has seen as a dependency so far. The only
+slightly annoying thing is how to handle stderr from parser error messages.
+From the point of view of fble-deps as a tool, it makes sense to propagate
+those to the user via stderr. But we want the option to ignore those, which is
+easy enough with 2>/dev/null. What about exit code? I vote, exit success as
+long as we were able to write a meaningful fble-deps file to output.
+
+That sounds like a reasonable next step to me. Add support for this slightly
+unusual fble-deps use case of deps for invalid .fble files.
+
+Next question is: should we run fble-deps as part of build or as part of spec
+test? We need it for build certainly. I assume eventually I'll want to
+move most of spec test logic into build. So it doesn't really matter to get
+started. Let's do it at build time blindly, and for now pass the .d file to
+fble-spec-test.tcl for it to parse.
+

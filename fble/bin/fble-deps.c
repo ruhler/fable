@@ -52,6 +52,10 @@ static void PrintUsage(FILE* stream)
       "  0 on success.\n"
       "  1 on failure.\n"
       "  2 on usage error.\n"
+      "  Note:\n"
+      "    Exit status is 0 in the case where the .fble file cannot be\n"
+      "    parsed successfully, to support the use case of generating\n"
+      "    dependencies for a malformed .fble file.\n"
       "\n"
       "Example:\n"
       "  fble-deps -I prgms -t Foo.fble.d -m /Foo% > Foo.fble.d\n"
@@ -131,14 +135,11 @@ int main(int argc, const char* argv[])
   FbleFreeModulePath(mpath);
   FbleFreeLoadedProgram(prgm);
 
-  if (prgm != NULL) {
-    FbleSaveBuildDeps(stdout, target, deps);
-  }
+  FbleSaveBuildDeps(stdout, target, deps);
 
   for (size_t i = 0; i < deps.size; ++i) {
     FbleFreeString(deps.xs[i]);
   }
   FbleFree(deps.xs);
-
-  return prgm == NULL ? EX_FAIL : EX_SUCCESS;
+  return EX_SUCCESS;
 }
