@@ -1,7 +1,7 @@
-namespace eval "spec" {
+namespace eval "spec-test" {
   set spec_tests [list]
   set deps {
-    fble/test/fble-spec-test.tcl
+    fble/test/spec-test.tcl
     out/fble/bin/fble-disassemble.cov
     out/fble/test/fble-test.cov
     out/fble/test/fble-mem-test.cov
@@ -16,13 +16,13 @@ namespace eval "spec" {
         "$::out/fble/bin/fble-deps -I spec -t $depfile -m $mpath > $depfile 2> /dev/null" \
         "depfile = $depfile"
 
-      lappend spec::spec_tests $::out/spec/$fble.tr
+      lappend spec-test::spec_tests $::out/spec/$fble.tr
       test $::out/spec/$fble.tr "$deps spec/$fble $depfile" \
-        "tclsh fble/test/fble-spec-test.tcl $fble"
+        "tclsh fble/test/spec-test.tcl $fble"
     }
   }
 
   # TODO: Code coverage, once we remove code coverage from langs/build.tcl.
-  #build $::out/cov/gcov.txt "$::fble_objs_cov $spec::spec_tests" \
+  #build $::out/cov/gcov.txt "$::fble_objs_cov $spec-test::spec_tests" \
     "gcov $::fble_objs_cov > $::out/cov/gcov.txt && mv *.gcov $::out/cov"
 }

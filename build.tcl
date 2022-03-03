@@ -199,16 +199,26 @@ proc pkg {name deps objs} {
 # generation of build.ninja.
 set ::build_ninja_deps [list]
 
-set build_dirs {
-  fble/lib fble/bin fble/test
-  langs spec
-  pkgs/core pkgs/app pkgs/md5 pkgs/sat pkgs/hwdg pkgs/games
-  pkgs/invaders pkgs/pinball pkgs/graphics
+set build_tcls {
+  fble/lib/build.tcl
+  fble/bin/build.tcl
+  fble/test/build.tcl
+  fble/test/spec-test.build.tcl
+  langs/build.tcl
+  pkgs/core/build.tcl
+  pkgs/app/build.tcl
+  pkgs/md5/build.tcl
+  pkgs/sat/build.tcl
+  pkgs/hwdg/build.tcl
+  pkgs/games/build.tcl
+  pkgs/invaders/build.tcl
+  pkgs/pinball/build.tcl
+  pkgs/graphics/build.tcl
 }
 
-foreach build_dir $build_dirs {
-  lappend ::build_ninja_deps "$build_dir/build.tcl"
-  source $build_dir/build.tcl
+foreach build_tcl $build_tcls {
+  lappend ::build_ninja_deps $build_tcl
+  source $build_tcl
 }
 
 # test summary
