@@ -355,3 +355,35 @@ move most of spec test logic into build. So it doesn't really matter to get
 started. Let's do it at build time blindly, and for now pass the .d file to
 fble-spec-test.tcl for it to parse.
 
+---
+
+I think it will work well to create a temp directory that we can put
+intermediate files in, then delete non-conditionally at the end of the
+fble-spec-test script. Parsing the .d file is not hard. So, all we need to do
+next is:
+* create a tempdir at the start of the test. Clean it up at the end of the
+  test.
+* invoke the compiler on each of the .fble files.
+  Pass in the FbleFooMain function to the compile procedure.
+* invoke gcc to link them together.
+* Run the compiled binary where and as appropriate.
+
+And then we're all set!
+
+---
+
+On further thought, let me use a directory in the 'out' directory instead of a
+temporary directory. That way it will be easier to reproduce and run gdb on
+failing compile tests. To make sense of build versus fble-spec-test.tcl, move
+spec/build.tcl to fble/test/spec.build.tcl or some such, because it fble/
+should be downstream of spec/ and running the spec tests are really about
+testing fble. If the script and build file are in the same directory, we can
+think of them as one module together.
+
+For directory name, let's use out/spec/$FBLE as a directory.
+For module names, substitute '/' in the file path for '-'. We want to compile
+relative to the test, not the reference module, because multiple different
+tests may reference the same module. In the future, if we move everything to
+build, then we can share compiled modules across tests. For now, let's just
+recompile shared things on a per-test basis.
+
