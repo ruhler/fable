@@ -23,6 +23,10 @@ set ::fble [lindex $argv 0]
 set ::path $dir/$fble
 set ::mpath "/[file rootname $fble]%"
 
+# Directory to use for any artifacts from the test run.
+set ::outdir out/$dir/[file rootname $fble]
+exec mkdir -p $outdir
+
 # Parse the @@fble-test@@ metadata.
 set type "none"
 set loc ""
@@ -46,7 +50,9 @@ while {[gets $fin line] >= 0} {
 }
 close $fin
 
-proc compile {} {
+# compile -- 
+#   main - FbleTestMain or FbleMemTestMain.
+proc compile {main} {
   # Parse the list of .fble files the test depends on from the .d file.
   set fbles [list]
   foreach x [lrange [split [read [open out/spec/$::fble.d "r"]]] 1 end] {
@@ -57,15 +63,31 @@ proc compile {} {
     }
   }
 
-  # TODO: compile each of the .fble files and link into an executable.
-  puts $fbles
+  set objs [list]
+  foreach fble $fbles {
+    set name [string map { "/" "-" } $fble]
+    set m "/[file rootname $fble]%"
+    set asm $::outdir/$name.s
+    set obj $::outdir/$name.o
+    set flags [list]
+    if {$fble == $::fble} {
+      lappend flags "--main"
+      lappend flags $main
+    }
+
+    exec out/fble/bin/fble-compile.cov {*}$flags -c -I $::dir -m $m > $asm
+    exec as -o $obj $asm
+    lappend objs $obj
+  }
+
+  # TODO: Link all the compiled object files.
 }
 
 proc dispatch {} {
   switch $::type {
     no-error {
       # TODO: Run compiled too.
-      compile
+      compile FbleTestMain
       exec out/fble/test/fble-test.cov --profile /dev/null -I spec -m $::mpath
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
@@ -79,7 +101,7 @@ proc dispatch {} {
 
     runtime-error {
       # TODO: Run compiled too.
-      compile
+      compile FbleTestMain
       set output [exec out/fble/test/fble-test.cov --runtime-error -I spec -m $::mpath]
       if {-1 == [string first ":$::loc: error" $output]} {
         error "Expected error at $::loc, but got:\n$output"
@@ -89,14 +111,14 @@ proc dispatch {} {
     
     memory-constant {
       # TODO: Run compiled too.
-      compile
+      compile FbleMemTestMain
       exec out/fble/test/fble-mem-test.cov -I spec -m $::mpath
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
 
     memory-growth {
       # TODO: Run compiled too.
-      compile
+      compile FbleMemTestMain
       exec out/fble/test/fble-mem-test.cov --growth -I spec -m $::mpath
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
