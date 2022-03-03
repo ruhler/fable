@@ -2,9 +2,11 @@ namespace eval "spec-test" {
   set spec_tests [list]
   set deps {
     fble/test/spec-test.run.tcl
+    out/fble/lib/libfble.a
     out/fble/bin/fble-disassemble.cov
     out/fble/test/fble-test.cov
     out/fble/test/fble-mem-test.cov
+    out/fble/test/libfbletest.a
   }
 
   foreach dir [dirs spec ""] {

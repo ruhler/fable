@@ -1,7 +1,8 @@
 Directory Structure
 -------------------
 fble/ - Source code for an fble interpreter implemented in C.
-langs/ - Specifications of the fable languages.
+langs/ - Specifications of the fable languages (to be removed).
+spec/ - Specification of the fble language (to be populated).
 out/ - Directory where build outputs are placed, created as needed.
 pkgs/ - Sample fble library packages.
 thoughts/ - A collection of discussions about fble.

@@ -387,3 +387,10 @@ tests may reference the same module. In the future, if we move everything to
 build, then we can share compiled modules across tests. For now, let's just
 recompile shared things on a per-test basis.
 
+---
+
+Cool! It's all wired up with separate build and run scripts. Next step is to
+port all the rest of the test cases over to the new framework and remove the
+old test cases. I don't see a compelling reason to push the run script into
+the build script at the moment. We can do that later if a compelling reason
+comes up.

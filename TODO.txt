@@ -1,4 +1,5 @@
-* Add compilation support to fble/test/fble-spec-test.tcl.
+* Port rest of spec tests to new format.
+* Port rest of stuff in langs directory to spec directory.
 
 * Should we require @@fble-test@@ none to set explicitly?
 
