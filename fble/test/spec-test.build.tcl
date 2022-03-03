@@ -1,7 +1,7 @@
 namespace eval "spec-test" {
   set spec_tests [list]
   set deps {
-    fble/test/spec-test.tcl
+    fble/test/spec-test.run.tcl
     out/fble/bin/fble-disassemble.cov
     out/fble/test/fble-test.cov
     out/fble/test/fble-mem-test.cov
@@ -18,7 +18,7 @@ namespace eval "spec-test" {
 
       lappend spec-test::spec_tests $::out/spec/$fble.tr
       test $::out/spec/$fble.tr "$deps spec/$fble $depfile" \
-        "tclsh fble/test/spec-test.tcl $fble"
+        "tclsh fble/test/spec-test.run.tcl $fble"
     }
   }
 

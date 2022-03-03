@@ -1,4 +1,4 @@
-# spec-test.tcl
+# spec-test.run.tcl
 #
 # Helper script to run a spec test.
 #
@@ -9,7 +9,7 @@
 #
 # Example:
 #
-#   tclsh test-spec.tcl SpecTests/00_Test/NoError.fble
+#   tclsh spec-test.run.tcl SpecTests/00_Test/NoError.fble
 #
 # Parses the @@fble-test@@ metadata of spec/$FBLE and executes the test
 # appropriately. Reports an error in case of test failure.
