@@ -394,3 +394,32 @@ port all the rest of the test cases over to the new framework and remove the
 old test cases. I don't see a compelling reason to push the run script into
 the build script at the moment. We can do that later if a compelling reason
 comes up.
+
+---
+
+Here's something annoying. Can I have '.' in a module path? As in, 2.2-Kinds
+for the name of the tests corresponding to section 2.2 in the specification?
+Because 02_2_Kinds is much harder to relate back to section 2.2 of the
+specification. 2.2_Kinds ... 2.2-Kinds is kind of what I rather have. That
+language allows that, right, as long as I quote the words? Let me try it at
+least.
+
+So, input path is /SpecTests/2.2-Kinds/Equals/KindsMatch%.
+
+In theory I should be able to change it to:
+  /SpecTests/'2.2-Kinds'/Equals/KindsMatch%
+
+Or, I could just relax the module path parser to accept the original. Is there
+anything wrong with that approach?
+
+The concern is that we would then have two different syntaxes for module
+paths. Let me try injecting single quotes and see if that fixes the issue.
+Yeah. If we put in single quotes it is fine. That's just annoying to remember
+to do from everywhere when we convert a file path to a module path.
+
+And it's even a little uglier, because we have to protect the single quotes if
+passing via shell, and different ways of using the module path require
+different protection.
+
+Let me limit the introduction of quotes to spec tests for now.
+

@@ -18,10 +18,16 @@
 # fble binaries in the out directory and out/spec/${FBLE}.d the result of running
 # fble-deps on the FBLE file.
 
+proc module_path { path } {
+  # Add quotes around module path words so we can name spec tests to match
+  # spec section numbers, e.g. 2.2-Kinds.
+  return "/\'[string map { "/" "\'/\'"} [file rootname $path]]\'%"
+}
+
 set ::dir "spec"
 set ::fble [lindex $argv 0]
 set ::path $dir/$fble
-set ::mpath "/[file rootname $fble]%"
+set ::mpath [module_path $fble]
 
 # Directory to use for any artifacts from the test run.
 set ::outdir out/$dir/[file rootname $fble]
@@ -69,7 +75,7 @@ proc compile {main} {
   set objs [list]
   foreach fble $fbles {
     set name [string map { "/" "-" } $fble]
-    set m "/[file rootname $fble]%"
+    set m [module_path $fble]
     set asm $::outdir/$name.s
     set obj $::outdir/$name.o
     set flags [list]

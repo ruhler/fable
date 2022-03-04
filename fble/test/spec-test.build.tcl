@@ -12,7 +12,9 @@ namespace eval "spec-test" {
   foreach dir [dirs spec ""] {
     lappend ::build_ninja_deps "spec/$dir"
     foreach {fble} [lsort [glob -tails -directory spec -nocomplain -type f $dir/*.fble]] {
-      set mpath "/[file rootname $fble]%"
+      # Add quotes around module path words so we can name spec tests to match
+      # spec section numbers, e.g. 2.2-Kinds.
+      set mpath "/\\'[string map { "/" "\\'/\\'"} [file rootname $fble]]\\'%"
       set depfile $::out/spec/$fble.d
       build $depfile "$::out/fble/bin/fble-deps spec/$fble" \
         "$::out/fble/bin/fble-deps -I spec -t $depfile -m $mpath > $depfile 2> /dev/null" \
