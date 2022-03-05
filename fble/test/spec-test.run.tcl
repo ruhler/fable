@@ -151,7 +151,7 @@ proc dispatch {} {
     }
 
     default {
-      error "Unsupported @@fble-test@@ type: '$type'"
+      error "Unsupported @@fble-test@@ type: '$::type'"
     }
   }
 }

@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 4:4
+
+# The kind is malformed.
+<@,blah>@ Id@ = <@ A@> { A@; };
+<@ B@> { Id@<B@>; };

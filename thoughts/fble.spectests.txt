@@ -423,3 +423,13 @@ different protection.
 
 Let me limit the introduction of quotes to spec tests for now.
 
+I'm thinking it's probably reasonable to allow funny characters in module
+paths passed to FbleParseModulePath, because we know what we are trying to
+parse, and you can't really embed a / in a module path word in practice
+because there's no way to represent the corresponding .fble file in the file
+system. In other words, to parse a module path strip leading '/' and trailing
+'%' and split by '/'.
+
+I guess unless we want to allow users to pass quoted module paths too... Sigh.
+Let's keep it the same for now. This is really more an issue of the build
+system not properly mapping file paths to module paths.
