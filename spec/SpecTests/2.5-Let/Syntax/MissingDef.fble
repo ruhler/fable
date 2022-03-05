@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 5:11
+@ Unit@ = *();
+
+# The variable definition is missing.
+Unit@ x = ;
+Unit@();

@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 4:1
+
+# The variable 'x' is not in scope
+x;

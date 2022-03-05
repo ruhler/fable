@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:22
+@ Unit@ = *();
+
+# The let body is missing.
+{ Unit@ x = Unit@(); };

@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-error 4:11
+
+# The definition for Pair@ has the wrong kind.
+@ Pair@ = <@ T@> {
+  *(T@ first, T@ second);
+};
+
+@ Unit@ = *();
+Pair@<Unit@>(Unit@(), Unit@());

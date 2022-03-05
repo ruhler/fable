@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 5:3
+
+# Unit@ has kind %, so it should be in the normal namespace, not the type
+# namespace. e.g. it should be named Unit instead.
+% Unit@ = *()();
+Unit@;

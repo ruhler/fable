@@ -1,4 +1,6 @@
 * Port rest of spec tests to new format.
+ - double check we don't have any .tcl files in the spec directory when done.
+
 * Port rest of stuff in langs directory to spec directory.
 
 * Nicer error message for parsing module names with '-' in them.

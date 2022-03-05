@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 6:1
+@ Unit@ = *();
+
+# The body of the let is malformed.
+Unit@ x = Unit@();
+???;
