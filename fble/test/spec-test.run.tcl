@@ -34,7 +34,7 @@ set ::outdir out/$dir/[file rootname $fble]
 exec mkdir -p $outdir
 
 # Parse the @@fble-test@@ metadata.
-set type "none"
+set type "???"
 set loc ""
 set fin [open "$path" "r"]
 set test_line 1
