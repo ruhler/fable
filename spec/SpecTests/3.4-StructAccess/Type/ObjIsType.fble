@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:1
+@ Unit@ = *();
+
+# The object of the access is a type, which is not allowed.
+Unit@.just;
