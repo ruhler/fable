@@ -33,8 +33,8 @@ proc renamed { path } {
   return "[join $dirs "/"].fble"
 }
 
-set dir 3.4-struct-access
-set ddir 3.4-StructAccess
+set dir 4.4-union-select
+set ddir 4.4-UnionSelect
 
 foreach {x} [files langs/fble/$dir] {
   set y [renamed $x]

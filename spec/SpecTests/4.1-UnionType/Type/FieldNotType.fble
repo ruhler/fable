@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:12
+# The type for the second field of the union is not a type.
+@ Unit@ = *();
+Unit@ u = Unit@();
++(Unit@ x, u x);

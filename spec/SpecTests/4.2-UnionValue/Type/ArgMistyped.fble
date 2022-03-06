@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-error 9:14
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ true = Bool@(true: Unit@());
+Bool@ false = Bool@(false: Unit@());
+
+# The union value's arg has the wrong type.
+@ Maybe@ = +(Bool@ just, Unit@ nothing);
+Maybe@(just: Unit@());

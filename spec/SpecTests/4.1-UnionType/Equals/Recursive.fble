@@ -1,0 +1,9 @@
+# @@fble-test@@ no-error
+# It should be possible to tell if two recursive types are equal.
+@ Unit@ = *();
+@ NumA@ = +(Unit@ Z, NumA@ S);
+@ NumB@ = +(Unit@ Z, NumB@ S);
+
+NumA@ twoA = NumA@(S: NumA@(S: NumA@(Z: Unit@())));
+NumB@ twoB = twoA;
+twoB;

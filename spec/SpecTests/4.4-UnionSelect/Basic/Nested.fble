@@ -1,0 +1,13 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ true = Bool@(true: Unit@());
+Bool@ false = Bool@(false: Unit@());
+
+# Basic test of a nested conditional expression.
+# This is a regression test for a bug in profiling that improperly kept
+# track of profile blocks for nested conditional expressions.
+true.?(
+  true: false.?(true: false, false: false),
+  false: false
+);
