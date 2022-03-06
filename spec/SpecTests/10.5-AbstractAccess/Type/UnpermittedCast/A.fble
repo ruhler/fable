@@ -1,0 +1,12 @@
+# @@fble-test@@ none
+# This module is referenced by the UnpermittedCast test.
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+
+@ Tok@ = %(/SpecTests/'10.5-AbstractAccess'/Type/UnpermittedCast/A%);
+@ AbsBool@ = Tok@<Bool@>;
+AbsBool@ AbsTrue = Tok@.<AbsBool@>(True);
+AbsTrue;

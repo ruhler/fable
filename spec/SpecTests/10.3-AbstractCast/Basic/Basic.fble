@@ -1,0 +1,11 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# Basic abstract cast.
+@ Tok@ = %(/SpecTests/'10.3-AbstractCast'/Basic/Basic%);
+@ AbsBool@ = Tok@<Bool@>;
+AbsBool@ t = Tok@.<AbsBool@>(Bool@(true: Unit));
+Tok@.<Bool@>(t).true;
