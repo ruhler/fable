@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:11
+# The return type is not a type.
+@ Unit@ = *();
+Unit@ u = Unit@();
+(Unit@) { u; };

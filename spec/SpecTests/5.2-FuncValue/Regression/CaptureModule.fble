@@ -1,0 +1,11 @@
+# @@fble-test@@ no-error
+@ Unit@ = /SpecTests/'5.2-FuncValue'/Regression/CaptureModule/Bool%.Unit@;
+@ Bool@ = /SpecTests/'5.2-FuncValue'/Regression/CaptureModule/Bool%.Bool@;
+
+# Regression test for a bug we had where we were not properly capturing
+# module refs in function values.
+(Unit@) { Bool@; } f = (Unit@ _) {
+  /SpecTests/'5.2-FuncValue'/Regression/CaptureModule/Bool%.True;
+};
+
+f(Unit@()).true;

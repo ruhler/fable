@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:2
+# The argument type is not a type.
+@ Unit@ = *();
+Unit@ u = Unit@();
+(u) { Unit@; };

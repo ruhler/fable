@@ -1,0 +1,8 @@
+# @@fble-test@@ none
+#
+# This module is referenced by the CaptureModule.fble test case.
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+@(Unit@, Bool@, True, False);

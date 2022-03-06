@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 4:2
+# The type of the argument does not compile.
+@ Unit@ = *();
+(zzz@) { Unit@; };

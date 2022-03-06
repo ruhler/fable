@@ -1,0 +1,12 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+@ Int@ = +(Unit@ 0, Unit@ 1, Unit@ 2, Unit@ 3);
+
+# Recursive functions are allowed.
+(Int@) { Int@; } zeroify = (Int@ x) {
+  x.?(0: x,
+      1: zeroify(Int@(0: Unit@())),
+      2: zeroify(Int@(1: Unit@())),
+      3: zeroify(Int@(2: Unit@())));
+};
+zeroify(Int@(3: Unit@())).0;
