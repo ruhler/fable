@@ -1,0 +1,12 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+# Test use of a poly normal kind spec.
+# The type of Nothing will be automatically inferred.
+<@>% Nothing = <@ T@> { Maybe@<T@>(nothing: Unit); };
+
+Maybe@ X = Nothing;
+X;

@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 10:1
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+# There ought to be two few fields in the cons type.
+@ L@ = +(*(Unit@ x) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ _) { Unit; };
+
+f[];

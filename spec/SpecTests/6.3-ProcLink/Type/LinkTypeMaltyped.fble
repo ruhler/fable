@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 5:1
+@ Unit@ = *();
+
+# The type Bool@ has not been defined.
+Bool@ ~ get, put;
+!(Unit@());

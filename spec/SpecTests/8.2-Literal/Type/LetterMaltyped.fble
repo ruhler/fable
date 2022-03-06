@@ -1,0 +1,14 @@
+# @@fble-test@@ compile-error 13:11
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+@ Bool@ = +(Unit@ true, Unit@ false);
+@ Enum@ = +(Unit@ A, Bool@ B, Unit@ C);
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+(L@) { L@; } f = (L@ l) { l; };
+
+# This use of the literal is fine, because the letter B is not involved:
+L@ _ = f|AC; 
+
+# This use is not allowed, because the letter B doesn't have type *();
+L@ _ = f|ABC;
+Unit;

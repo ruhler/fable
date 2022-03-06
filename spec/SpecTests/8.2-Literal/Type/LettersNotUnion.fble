@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 10:1
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+# The element type should be a union type, not Unit@.
+@ L@ = +(*(Unit@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ _) { Unit@(); };
+
+f|'';

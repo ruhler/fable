@@ -33,8 +33,8 @@ proc renamed { path } {
   return "[join $dirs "/"].fble"
 }
 
-set dir 5.4-func-bind
-set ddir 5.4-FuncBind
+set dir 8.2-literal
+set ddir 8.2-Literal
 
 foreach {x} [files langs/fble/$dir] {
   set y [renamed $x]

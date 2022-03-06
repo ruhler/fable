@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:1
+@ Unit@ = *();
+
+# The argument type does not compile.
+zzz@!;

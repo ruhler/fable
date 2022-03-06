@@ -1,0 +1,3 @@
+# @@fble-test@@ compile-error 3:10
+# The body of the poly doesn't compile.
+<@ T@> { zzz; };

@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:11
+@ Unit@ = *();
+
+# The close paren is missing.
+!(Unit@() ;
