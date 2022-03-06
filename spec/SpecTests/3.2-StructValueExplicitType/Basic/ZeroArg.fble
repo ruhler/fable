@@ -1,0 +1,4 @@
+# @@fble-test@@ no-error
+# Construct a basic struct value with no arguments.
+@ Unit@ = *();
+Unit@();

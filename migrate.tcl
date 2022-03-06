@@ -33,8 +33,8 @@ proc renamed { path } {
   return "[join $dirs "/"].fble"
 }
 
-set dir 3.1-struct-type
-set ddir 3.1-StructType
+set dir 3.2-struct-value-explicit-type
+set ddir 3.2-StructValueExplicitType
 
 foreach {x} [files langs/fble/$dir] {
   set y [renamed $x]
