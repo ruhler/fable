@@ -1,0 +1,4 @@
+# @@fble-test@@ no-error
+# A struct type that has a single field.
+@ Unit@ = *();
+*(Unit@ x);

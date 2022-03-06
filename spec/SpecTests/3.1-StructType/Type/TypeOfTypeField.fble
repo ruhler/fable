@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 5:15
+@ Unit@ = *();
+
+# You cannot have a field that is a type of a type.
+*(@<@<Unit@>> x@);

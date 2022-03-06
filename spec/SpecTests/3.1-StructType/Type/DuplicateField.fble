@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 4:18
+# The fields of a struct type must have different names.
+@ Unit@ = *();
+*(Unit@ x, Unit@ x);

@@ -1,0 +1,10 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ true = Bool@(true: Unit@());
+
+# Two struct types with the same fields match.
+@ A@ = *(Unit@ x, Bool@ y);
+@ B@ = *(Unit@ x, Bool@ y);
+A@ x = B@(Unit@(), true);
+x;

@@ -1,0 +1,3 @@
+# @@fble-test@@ no-error
+# A struct type that has no fields.
+*();
