@@ -1,0 +1,4 @@
+# @@fble-test@@ no-error
+# Use an absolute path for importing.
+% Unit = /SpecTests/'9.2-Path'/Basic/Absolute/Unit%.Unit;
+Unit;
