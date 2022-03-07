@@ -1,0 +1,4 @@
+# @@fble-test@@ no-error
+# Import from a child module using an absolute reference.
+% Unit = /SpecTests/'9.2-Path'/Basic/AbsoluteChild/Bool/Unit%.Unit;
+Unit;
