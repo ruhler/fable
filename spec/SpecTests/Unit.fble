@@ -1,0 +1,5 @@
+# @@fble-test@@ no-error
+# This module is referenced from some test cases involving module references.
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+@(Unit@, Unit);

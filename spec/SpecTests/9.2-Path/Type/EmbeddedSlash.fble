@@ -1,0 +1,6 @@
+# @@fble-test@@ compile-error 5:10
+# /'SpecTests/Unit'% is not the same as /SpecTests/Unit%.
+# This should give a "no such module" error.
+% _ = /SpecTests/Unit%.Unit;
+% Unit = /'SpecTests/Unit'%.Unit;
+Unit;
