@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 3:53
+# The module path is not well formed.
+% Unit = /SpecTests/'9.2-Path'/Syntax/Malformed/Unit.Unit;
+Unit;
