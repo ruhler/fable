@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 3:7
+# Relative references are not allowed.
+{ Unit%; @(Unit); };
+Unit;
