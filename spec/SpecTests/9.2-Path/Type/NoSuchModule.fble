@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 3:10
+# The module /DoesNotExist% does not exist.
+% Unit = /DoesNotExist%.Unit;
+Unit;

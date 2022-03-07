@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 3:10
+# The module /SpecTests/NoSuchModule% does not exist.
+% Unit = /Unit/Foo%.Unit;
+Unit;
