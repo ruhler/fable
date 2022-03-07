@@ -8,7 +8,7 @@ canonical one.
 * Top level declarations are capitalized. For example: And, DrawBox.
 * Argument names are lower case. For example: (Foo@ x) { ... }
 * Struct and union fields should be lower case.
-* Module names are capitialized. For example: /Bool%, /GameOfLife%.
+* Module names are capitalized. For example: /Bool%, /GameOfLife%.
 
 * Parenthesized or braced expressions can be split across multiple lines. If so,
   indent by 2 spaces. Put the close brace on its own line and the end aligned
