@@ -6,6 +6,10 @@
 * Nicer error message for parsing module names with '-' in them.
   Which technically isn't allowed.
 
+* vim syntax
+ - fix highlighting of module path with '' word in it
+ - add option to goto file of module path?
+
 * Consider removing --runtime-error and --compile-error options from fble-test?
   Instead, return exit status to distinguish between them, and do the check
   for exit status in the spec test wrapper function?
