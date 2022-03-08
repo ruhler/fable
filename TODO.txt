@@ -1,3 +1,5 @@
+* Move TODO entries to corresponding subdirectories?
+
 * Nicer error message for parsing module names with '-' in them.
   Which technically isn't allowed.
 
@@ -12,7 +14,8 @@
 * Should we add option for fble-compile to generate main function for
   interpreted case? Might be nice?
 
-* Factor out common logic for doing fble /Foo/Tests% based tests in build.ninja.tcl
+* Factor out common logic for doing fble /Foo/Tests% based tests in build.tcl
+  files.
   
 * Fix dependency issue of build.ninja on moved *.fble files
   For example, moving Md5.fble to Md5/Md5.fble didn't trigger rebuild of

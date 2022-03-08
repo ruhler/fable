@@ -16,8 +16,10 @@
 #include "fble-vector.h"      // for FbleVectorInit.
 
 #define EX_SUCCESS 0
-#define EX_FAIL 1
-#define EX_USAGE 2
+#define EX_COMPILE_ERROR 1
+#define EX_RUNTIME_ERROR 2
+#define EX_USAGE_ERROR 3
+#define EX_OTHER_ERROR 4
 
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 
@@ -63,8 +65,10 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "Exit Status:\n"
       "  0 if there no compilation or runtime errors are encountered (except.\n"
       "    in case of --compile-error and --rutime-error options).\n"
-      "  1 if an error is encountered.\n"
-      "  2 on usage error.\n"
+      "  1 on compile error.\n"
+      "  2 on runtime error.\n"
+      "  3 on usage error.\n"
+      "  4 on other error.\n"
       "\n"
       "Example:\n");
   fprintf(stream, "%s%s",
@@ -107,14 +111,14 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   if (error) {
     PrintUsage(stderr, module);
     FbleFree(search_path.xs);
-    return EX_USAGE;
+    return EX_USAGE_ERROR;
   }
 
   if (!module && module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
     FbleFree(search_path.xs);
-    return EX_USAGE;
+    return EX_USAGE_ERROR;
   }
 
   FILE* fprofile = NULL;
@@ -123,7 +127,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
     if (fprofile == NULL) {
       fprintf(stderr, "unable to open %s for writing.\n", profile_file);
       FbleFree(search_path.xs);
-      return EX_FAIL;
+      return EX_OTHER_ERROR;
     }
   }
 
@@ -138,13 +142,13 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return expect_compile_error ? EX_SUCCESS : EX_FAIL;
+    return expect_compile_error ? EX_SUCCESS : EX_COMPILE_ERROR;
   } else if (expect_compile_error) {
     fprintf(original_stderr, "expected compile error, but none encountered.\n");
     FbleReleaseValue(heap, linked);
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return EX_FAIL;
+    return EX_OTHER_ERROR;
   }
 
   stderr = expect_runtime_error ? stdout : original_stderr;
@@ -170,10 +174,10 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   FbleFreeProfile(profile);
 
   if (result == NULL) {
-    return expect_runtime_error ? EX_SUCCESS : EX_FAIL;
+    return expect_runtime_error ? EX_SUCCESS : EX_RUNTIME_ERROR;
   } else if (expect_runtime_error) {
     fprintf(original_stderr, "expected runtime error, but none encountered.\n");
-    return EX_FAIL;
+    return EX_OTHER_ERROR;
   }
 
   return EX_SUCCESS;
