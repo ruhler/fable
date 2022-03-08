@@ -24,6 +24,42 @@ proc module_path { path } {
   return "/\'[string map { "/" "\'/\'"} [file rootname $path]]\'%"
 }
 
+# expect_error
+#   Helper function for expected error case.
+#
+# Inputs:
+#   type - type of error expected: compile or runtime
+#   loc - location of expected error.
+#   args - command to run.
+proc expect_error { type loc args } {
+  switch $type {
+    compile { set es 1 }
+    runtime { set es 2 }
+    default { error "unsupported error type: $type" }
+  }
+
+  set output ""
+  set status 0
+  try {
+    exec {*}$args 2>@1
+  } trap CHILDSTATUS {results options} {
+    set output $results
+    set status [lindex [dict get $options -errorcode] 2]
+  }
+
+  if {$status == 0} {
+    error "Expected $type error, but no error encountered."
+  }
+
+  if {$status != $es} {
+    error "Expected $type error, but got:\n$output"
+  }
+
+  if {-1 == [string first ":$::loc: error" $output]} {
+    error "Expected error at $::loc, but got:\n$output"
+  }
+}
+
 set ::dir "spec"
 set ::fble [lindex $argv 0]
 set ::path $dir/$fble
@@ -107,23 +143,14 @@ proc dispatch {} {
     }
 
     compile-error {
-      set output [exec out/fble/test/fble-test.cov --compile-error -I spec -m $::mpath]
-      if {-1 == [string first ":$::loc: error" $output]} {
-        error "Expected error at $::loc, but got:\n$output"
-      }
+      expect_error compile $::loc out/fble/test/fble-test.cov -I spec -m $::mpath
     }
 
     runtime-error {
-      set output [exec out/fble/test/fble-test.cov --runtime-error -I spec -m $::mpath]
-      if {-1 == [string first ":$::loc: error" $output]} {
-        error "Expected error at $::loc, but got:\n$output"
-      }
+      expect_error runtime $::loc out/fble/test/fble-test.cov -I spec -m $::mpath
 
       compile FbleTestMain
-      set output [exec $::outdir/compiled --runtime-error]
-      if {-1 == [string first ":$::loc: error" $output]} {
-        error "Expected error at $::loc, but got:\n$output"
-      }
+      expect_error runtime $::loc $::outdir/compiled
 
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }

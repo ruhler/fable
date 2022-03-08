@@ -440,3 +440,19 @@ One slightly annoying thing about the new format is for test spanning multiple
 modules, it's slightly harder to get the gist of the overall test, and the
 long module paths are slightly annoying. Oh well. I like the clean up. Lots of
 benefits I think, and only the slight annoyance.
+
+---
+
+Cleanup of fble-test to always return error code in case of error, and check
+it's the right one in the test runner.
+
+Start with compile-error case. Goal is...
+* Execute fble-test
+* Capture exit code and stderr.
+* Check exit code, check stderr.
+* If okay, good. Otherwise, give an error and print stderr.
+
+What exec will let us do:
+* 2>@1 to redirect standard error to the output of the command.
+* 
+
