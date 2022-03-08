@@ -7,10 +7,6 @@
  - fix highlighting of module path with '' word in it
  - add option to goto file of module path?
 
-* Consider removing --runtime-error and --compile-error options from fble-test?
-  Instead, return exit status to distinguish between them, and do the check
-  for exit status in the spec test wrapper function?
-
 * Should we add option for fble-compile to generate main function for
   interpreted case? Might be nice?
 

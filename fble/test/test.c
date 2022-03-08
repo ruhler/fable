@@ -53,18 +53,11 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "     The path of the module to get dependencies for.\n");
   }
   fprintf(stream, "%s",
-      "  --compile-error\n"
-      "     Expect a compilation error. Exits with status 0 in case of compile\n"
-      "     error, non-zero otherwise.\n"
-      "  --runtime-error\n"
-      "     Expect a runtime error. Exits with status 0 in case of runtime\n"
-      "     error, non-zero otherwise.\n"
       "  --profile FILE\n"
       "    Writes a profile of the test run to FILE\n"
       "\n"
       "Exit Status:\n"
-      "  0 if there no compilation or runtime errors are encountered (except.\n"
-      "    in case of --compile-error and --rutime-error options).\n"
+      "  0 on success.\n"
       "  1 on compile error.\n"
       "  2 on runtime error.\n"
       "  3 on usage error.\n"
@@ -85,8 +78,6 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   const char* profile_file = NULL;
   bool help = false;
   bool error = false;
-  bool expect_runtime_error = false;
-  bool expect_compile_error = false;
 
   argc--;
   argv++;
@@ -97,8 +88,6 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
     if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--runtime-error", &expect_runtime_error, &argc, &argv, &error)) continue;
-    if (FbleParseBoolArg("--compile-error", &expect_compile_error, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
@@ -134,24 +123,13 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
 
-  FILE* original_stderr = stderr;
-  stderr = expect_compile_error ? stdout : original_stderr;
-
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
   FbleFree(search_path.xs);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    return expect_compile_error ? EX_SUCCESS : EX_COMPILE_ERROR;
-  } else if (expect_compile_error) {
-    fprintf(original_stderr, "expected compile error, but none encountered.\n");
-    FbleReleaseValue(heap, linked);
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    return EX_OTHER_ERROR;
+    return EX_COMPILE_ERROR;
   }
-
-  stderr = expect_runtime_error ? stdout : original_stderr;
 
   FbleValue* result = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
@@ -174,11 +152,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   FbleFreeProfile(profile);
 
   if (result == NULL) {
-    return expect_runtime_error ? EX_SUCCESS : EX_RUNTIME_ERROR;
-  } else if (expect_runtime_error) {
-    fprintf(original_stderr, "expected runtime error, but none encountered.\n");
-    return EX_OTHER_ERROR;
+    return EX_RUNTIME_ERROR;
   }
-
   return EX_SUCCESS;
 }
