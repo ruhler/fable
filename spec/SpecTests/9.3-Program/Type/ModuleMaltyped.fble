@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 3:1
+# Note: the error location is for the referenced module file.
+% True = /SpecTests/'9.3-Program'/Type/ModuleMaltyped/Bool%.True;
+True.true;

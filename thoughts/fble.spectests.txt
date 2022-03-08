@@ -433,3 +433,10 @@ system. In other words, to parse a module path strip leading '/' and trailing
 I guess unless we want to allow users to pass quoted module paths too... Sigh.
 Let's keep it the same for now. This is really more an issue of the build
 system not properly mapping file paths to module paths.
+
+---
+
+One slightly annoying thing about the new format is for test spanning multiple
+modules, it's slightly harder to get the gist of the overall test, and the
+long module paths are slightly annoying. Oh well. I like the clean up. Lots of
+benefits I think, and only the slight annoyance.

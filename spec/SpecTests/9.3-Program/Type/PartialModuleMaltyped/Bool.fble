@@ -1,0 +1,7 @@
+# @@fble-test@@ none
+@ Unit@ = /SpecTests/Unit%.Unit@;
+
+# The value of the Bool module does not compile. The value of the Unit
+# module does. This tests cleanup of loaded modules when a maltyped module
+# is encountered.
+zzz;

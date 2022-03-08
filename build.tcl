@@ -204,7 +204,6 @@ set build_tcls {
   fble/bin/build.tcl
   fble/test/build.tcl
   fble/test/spec-test.build.tcl
-  langs/build.tcl
   pkgs/core/build.tcl
   pkgs/app/build.tcl
   pkgs/md5/build.tcl

@@ -1,8 +1,3 @@
-* Port rest of spec tests to new format.
- - double check we don't have any .tcl files in the spec directory when done.
-
-* Port rest of stuff in langs directory to spec directory.
-
 * Nicer error message for parsing module names with '-' in them.
   Which technically isn't allowed.
 
@@ -29,8 +24,8 @@
 * Reorder case statements to match updated order of *_EXPR enum.
   In particular, the placement of the ABSTRACT_*_EXPR enums.
 
-* [lang] Should empty path be allowed in package type?
- See langs/fble.txt for more details.
+* [spec] Should empty path be allowed in package type?
+ See spec/fble.txt for more details.
 
 * Should fble-deps be a side effect of other tools instead of a separate
   executable?
@@ -66,7 +61,7 @@
 * [lib] Move more value conversion functions to separate object files.
  - Color, IO, etc.
 
-* [lang] Clean up support for abstract types.
+* [spec] Clean up support for abstract types.
  - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
  - Add more tests.
    Test that you can't access an abstract value with the wrong token type.
@@ -174,8 +169,6 @@ unique?
    FbleNewOutputPortValue in all cases.
 
 * Add option for passing .so files to FbleLinkFromCompiledOrSource?
-* Consider reorganizing 'langs' directory?
- - Separate tests from specification?
 
 * Print full stack trace on abort instead of just the top stack trace?
 * Optimize Sat simplification to avoid lots of repeated traversals?
@@ -281,15 +274,15 @@ unique?
 
 * [libfble] Can fble-stdio check that the function has the right type?
 
-* [lang] Add some way to catch or recover from errors at runtime?
-* [lang] Clarify in spec: is it okay to retain a local variable until a function
+* [spec] Add some way to catch or recover from errors at runtime?
+* [spec] Clarify in spec: is it okay to retain a local variable until a function
   exits, even if that means retaining it longer than its lexical scope?
-* [lang] Clarify spec on when (compile vs runtime) vacuous value error should be
+* [spec] Clarify spec on when (compile vs runtime) vacuous value error should be
   reported.
-* [lang] Revisit notion of packages and public/private access to modules.
-* [lang] Document the runtime memory model,
+* [spec] Revisit notion of packages and public/private access to modules.
+* [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
-* [lang] Document and test that put ports don't retain link values.
+* [spec] Document and test that put ports don't retain link values.
 
 * [typecheck] Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
 * [typecheck] Be more consistent in FbleTc about use of vector versus FbleTc*[].

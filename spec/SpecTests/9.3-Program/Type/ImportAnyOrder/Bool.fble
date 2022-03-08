@@ -1,0 +1,6 @@
+# @@fble-test@@ none
+@ Unit@ = /SpecTests/'9.3-Program'/Type/ImportAnyOrder/Unit%.Unit@;
+% Unit = /SpecTests/'9.3-Program'/Type/ImportAnyOrder/Unit%.Unit;
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit);
+@(Bool@, True);

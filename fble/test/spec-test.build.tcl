@@ -20,13 +20,12 @@ namespace eval "spec-test" {
         "$::out/fble/bin/fble-deps -I spec -t $depfile -m $mpath > $depfile 2> /dev/null" \
         "depfile = $depfile"
 
-      lappend spec-test::spec_tests $::out/spec/$fble.tr
+      lappend spec_tests $::out/spec/$fble.tr
       test $::out/spec/$fble.tr "$deps spec/$fble $depfile" \
         "tclsh fble/test/spec-test.run.tcl $fble"
     }
   }
 
-  # TODO: Code coverage, once we remove code coverage from langs/build.tcl.
-  #build $::out/cov/gcov.txt "$::fble_objs_cov $spec-test::spec_tests" \
+  build $::out/cov/gcov.txt "$::fble_objs_cov $spec_tests" \
     "gcov $::fble_objs_cov > $::out/cov/gcov.txt && mv *.gcov $::out/cov"
 }

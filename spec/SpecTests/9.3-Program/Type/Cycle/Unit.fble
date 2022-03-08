@@ -1,0 +1,8 @@
+# @@fble-test@@ none
+# Recursive module dependencies are not allowed.
+@ Unit@ = *();
+
+@ Bool@ = /SpecTests/'9.3-Program'/Type/Cycle/Bool%.Bool@;
+Bool@ True = Bool@(True: Unit@());
+
+@(Unit@, True);

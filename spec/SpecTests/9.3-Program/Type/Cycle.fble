@@ -1,0 +1,5 @@
+# @@fble-test@@ compile-error 2:11
+# The error message is for illegal recursive module dependency in one of the
+# referenced modules.
+% True = /SpecTests/'9.3-Program'/Type/Cycle/Unit%.True;
+True.true;
