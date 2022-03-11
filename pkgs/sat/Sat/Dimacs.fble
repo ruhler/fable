@@ -103,10 +103,12 @@ ParseFromHeader = (String@ header, List@<String@> lines) {
     : Parse@<Formula@>(error: Strs[Str|'invalid line: ', line]));
 };
 
+(List@<String@>) { Parse@<Formula@>; } ParseLines = ParseFromStart;
+
 (String@) { Parse@<Formula@>; } Parse = (String@ dimacs) {
-  ParseFromStart(Split<Char@>(dimacs, (Char@ c) {
+  ParseLines(Split<Char@>(dimacs, (Char@ c) {
     /Core/Char/Eq%.Eq(c, Chars.nl);
   }));
 };
 
-@(Parse@, Parse);
+@(Parse@, Parse, ParseLines);

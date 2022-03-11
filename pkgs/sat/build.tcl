@@ -9,4 +9,7 @@ namespace eval "pkgs/sat" {
   stdio $::out/pkgs/sat/Sat/sat-tests "/Sat/Tests%" "sat"
   test $::out/pkgs/sat/Sat/sat-tests.tr $::out/pkgs/sat/Sat/sat-tests \
     "$::out/pkgs/sat/Sat/sat-tests" "pool = console"
+
+  # fble-sat binary
+  stdio $::out/pkgs/sat/Sat/fble-sat "/Sat/Main%" "sat"
 }

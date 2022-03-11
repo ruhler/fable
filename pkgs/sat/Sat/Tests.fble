@@ -2,20 +2,15 @@
 % False = /Core/Bool%.False;
 % And = /Core/Bool%.And;
 
-@ Char@ = /Core/Char%.Char@;
-
 <@>@ Eq@ = /Core/Eq%.Eq@;
 
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
 
 <@>% List = /Core/List%.List;
-<@>% Append = /Core/List%.Append;
 
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
-
-<@>@ Show@ = /Core/Show%.Show@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -37,35 +32,26 @@
 % EqId = /Sat/Sat%.EqId;
 % Solve = /Sat/Sat%.Solve;
 
+% ShowResult = /Sat/Show%.ShowResult;
+% ShowParsedFormula = /Sat/Show%.ShowParsedFormula;
+
 <@>@ Parse@ = /Sat/Dimacs%.Parse@;
 % Parse = /Sat/Dimacs%.Parse;
+
 
 # Import to test compilation
 % _ = /Sat/Bench%;
 
 VarId@ X = /Core/Int%.1;
 
-Show@<VarId@> ShowId = /Core/Int/Show%.Show;
-
-Show@<Var@> ShowVar = (Var@ v) {
-  String@ sign = v.polarity.?(true: Str|'+', false: Str|'-');
-  Append<Char@>(sign, ShowId(v.id));
-};
-
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
   And(EqId(a.id, b.id), /Core/Bool/Eq%.Eq(a.polarity, b.polarity));
 };
 
-Show@<Clause@> ShowClause = /Core/List/Show%.Show<Var@>(ShowVar);
 Eq@<Clause@> EqClause = /Core/List/Eq%.Eq<Var@>(EqVar);
 
-Show@<Formula@> ShowFormula = /Core/List/Show%.Show<Clause@>(ShowClause);
 Eq@<Formula@> EqFormula = /Core/List/Eq%.Eq<Clause@>(EqClause);
 
-Show@<Parse@<Formula@>> ShowParsedFormula = (Parse@<Formula@> x) {
-  x.?(error: x.error);
-  ShowFormula(x.parsed);
-};
 
 Eq@<Parse@<Formula@>>
 EqParsedFormula = (Parse@<Formula@> a, Parse@<Formula@> b) {
@@ -73,7 +59,6 @@ EqParsedFormula = (Parse@<Formula@> a, Parse@<Formula@> b) {
       parsed: b.?(parsed: EqFormula(a.parsed, b.parsed), : False));
 };
 
-Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show<Var@>(ShowVar);
 Eq@<Assignment@> EqAssignment = /Core/List/Eq%.Eq<Var@>(EqVar);
 
 Eq@<Result@> EqResult = (Result@ a, Result@ b) {
@@ -81,13 +66,6 @@ Eq@<Result@> EqResult = (Result@ a, Result@ b) {
     sat: b.?(sat: EqAssignment(a.sat, b.sat), : False),
     unsat: b.?(unsat: True, : False),
     timeout: b.?(timeout: True, : False));
-};
-
-Show@<Result@> ShowResult = (Result@ a) {
-  a.?(
-    sat: Append<Char@>(Str|'sat: ', ShowAssignment(a.sat)),
-    unsat: Str|'unsat',
-    timeout: Str|'timeout');
 };
 
 (Result@, Result@) { TestResult@; }

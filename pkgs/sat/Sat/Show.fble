@@ -1,0 +1,45 @@
+
+@ Char@ = /Core/Char%.Char@;
+
+<@>% Append = /Core/List%.Append;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Formula@ = /Sat/Sat%.Formula@;
+@ Clause@ = /Sat/Sat%.Clause@;
+@ VarId@ = /Sat/Sat%.VarId@;
+@ Var@ = /Sat/Sat%.Var@;
+@ Assignment@ = /Sat/Sat%.Assignment@;
+@ Result@ = /Sat/Sat%.Result@;
+
+<@>@ Parse@ = /Sat/Dimacs%.Parse@;
+
+Show@<VarId@> ShowId = /Core/Int/Show%.Show;
+
+Show@<Var@> ShowVar = (Var@ v) {
+  String@ sign = v.polarity.?(true: Str|'+', false: Str|'-');
+  Append<Char@>(sign, ShowId(v.id));
+};
+
+Show@<Clause@> ShowClause = /Core/List/Show%.Show<Var@>(ShowVar);
+Show@<Formula@> ShowFormula = /Core/List/Show%.Show<Clause@>(ShowClause);
+
+Show@<Parse@<Formula@>> ShowParsedFormula = (Parse@<Formula@> x) {
+  x.?(error: x.error);
+  ShowFormula(x.parsed);
+};
+
+Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show<Var@>(ShowVar);
+
+Show@<Result@> ShowResult = (Result@ a) {
+  a.?(
+    sat: Append<Char@>(Str|'sat: ', ShowAssignment(a.sat)),
+    unsat: Str|'unsat',
+    timeout: Str|'timeout');
+};
+
+@(ShowId, ShowVar, ShowClause, ShowFormula, ShowParsedFormula,
+  ShowAssignment, ShowResult);

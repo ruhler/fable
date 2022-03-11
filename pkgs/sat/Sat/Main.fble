@@ -1,0 +1,57 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+% Chars = /Core/Char%.Chars;
+
+@ Int@ = /Core/Int%.Int@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<@>@ Get@ = /Core/Process%.Get@;
+
+@ Stdio@ = /Core/Stdio%.Stdio@;
+@ IO@ = /Core/Stdio%.IO@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+@ Formula@ = /Sat/Sat%.Formula@;
+@ Result@ = /Sat/Sat%.Result@;
+% Solve = /Sat/Sat%.Solve;
+
+<@>@ Parse@ = /Sat/Dimacs%.Parse@;
+% ParseLines = /Sat/Dimacs%.ParseLines;
+% ShowResult = /Sat/Show%.ShowResult;
+
+(Get@<Maybe@<String@>>) { List@<String@>!; }
+GetLines = (Get@<Maybe@<String@>> get) {
+  Maybe@<String@> next := get;
+  next.?(nothing: !(List<String@>[]));
+
+  List@<String@> tail := GetLines(get);
+  !(Cons<String@>(next.just, tail));
+};
+
+Stdio@ Main = (IO@ io, List@<String@> args) {
+  List@<String@> lines := GetLines(io.stdin);
+  Parse@<Formula@> parsed = ParseLines(lines);
+  parsed.?(error: {
+    Unit@ _ := io.stderr(parsed.error);
+    !(False);
+  });
+
+  Result@ result = Solve(parsed.parsed, Nothing<Int@>);
+  Unit@ _ := io.stdout(ShowResult(result));
+  Unit@ _ := io.stdout(Str[Chars.nl]);
+  !(True);
+};
+
+Main;
