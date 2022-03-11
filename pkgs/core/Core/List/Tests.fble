@@ -23,6 +23,7 @@
 <@,@>% Map = /Core/List%.Map;
 <@,@>% ForEach = /Core/List%.ForEach;
 <@>% Length = /Core/List/Length%.Length;
+<@>% Split = /Core/List/Eq%.Split;
 <@>% Sort = /Core/List/Sort%.Sort;
 
 <@>@ Show@ = /Core/Show%.Show@;
@@ -167,6 +168,23 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     Int@ wnt = Int|5;
     Int@ got = Length<Elem@>(EL|ABCDE);
     /Core/Test%.AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+  })),
+
+  Test(Str|'Split', !({
+    @ T@ = +(Unit@ ' ', Unit@ X);
+    Eq@<T@> eq = (T@ a, T@ b) {
+      a.?(' ': b.?(' ': True, 'X': False), 'X': b.?(' ': False, 'X': True));
+    };
+    Show@<T@> show = (T@ x) { x.?(' ': Str|' ', 'X': Str|'X'); };
+
+    (T@) { Bool@; } sep = (T@ x) { x.?(' ': True, 'X': False); };
+    List@<T@> list = List<T@>|'  XXX X  XX ';
+    List@<List@<T@>> want = List<List@<T@>>[List<T@>|XXX, List<T@>|X, List<T@>|XX];
+    List@<List@<T@>> got = Split<T@>(list, sep);
+    /Core/Test%.AssertEquals<List@<List@<T@>>>(
+      /Core/List/Eq%.Eq<List@<T@>>(/Core/List/Eq%.Eq<T@>(eq)),
+      /Core/List/Show%.Show<List@<T@>>(/Core/List/Show%.Show<T@>(show)),
+      want, got);
   }))
 ]);
 

@@ -1,0 +1,47 @@
+Sat Solver
+==========
+
+Let's see if we can improve the sat solver and its performance, as a way of
+exercising the fble language.
+
+First steps:
+1. Implement dimacs cnf parser, make an fble-sat binary that reads dimacs cnf
+as input and outputs in the expected format, with a --timeout option or some
+such.
+
+2. Download, and if necessary modify, some sample sat problems that fble-sat
+can solve in a reasonable amount of time. Say on the order of 1 minute.
+
+3. Optimize the pure literal / unit literal / simplify operation:
+ - Substitute multiple variables at once.
+ - Track unit literals and pure literals during substitution.
+ - Consider making a specialized data structure that tracks each clause a
+   variable belongs to positive or negative and the number of variables per
+   clause. Jump directly to what we need to when we get new information.
+
+If bored:
+- Add support for sat format dimacs.
+- Write an algorithm to pack a sat formula into a grid for a sat game.
+- Come up with more efficient implementations.
+
+Dimacs Format
+-------------
+We can start with simplified format described at:
+   http://www.satcompetition.org/2009/format-benchmarks2009.html
+
+ c
+ c start with comments
+ c
+ c
+ p cnf 5 3        // p cnf <nbvar> <nbclauses>
+ 1 -5 4 0         // 1 line per clause.
+ -1 5 3 4 0       // +x, -x not allowed in same clause
+ -3 -4 0
+
+We'll be reading this from stdin, so should I make it process oriented, line
+oriented, or string oriented?
+
+Process oriented could save memory overhead from loading the entire string
+into memory, but it forces us to use processes in the parser, which means we
+couldn't reuse the same parser for string based. That sucks.
+

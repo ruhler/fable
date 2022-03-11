@@ -2,8 +2,12 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
+
 <@>@ Eq@ = /Core/Eq%.Eq@;
+
 <@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
 
 # Eq --
 #   Implementation of Eq@ for List@. See documentation of /Eq%.Eq@.
@@ -31,4 +35,31 @@ Contains = <@ T@>(Eq@<T@> eq)(List@<T@> l, T@ e) {
     nil: False);
 };
 
-@(Eq, Contains);
+# Split --
+#   Split a list into a list of lists, with boundaries determined by the given
+#   predicate.
+#
+# Inputs:
+#   T@ - The type of element on the list.
+#   list - The list to split.
+#   sep - Predicate specifying separate elements.
+#
+# Occurences of sep elements at the start and back of the list are removed.
+# Sequences of sep elements are treated as a single separator.
+#
+# For example, Split('  hello  there now. ', IsSpace) would result in
+#   ['hello', 'there', 'now.']
+<@ T@>(List@<T@>, (T@) { Bool@; }) { List@<List@<T@>>; }
+Split = <@ T@>(List@<T@> list, (T@) { Bool@; } sep) {
+  list.?(nil: List<List@<T@>>[]);
+
+  List@<List@<T@>> tail = Split<T@>(list.cons.tail, sep);
+  sep(list.cons.head).?(true: tail);
+
+  T@ head = list.cons.head;
+  list.cons.tail.?(nil: List<List@<T@>>[List<T@>[head]]);
+  sep(list.cons.tail.cons.head).?(true: Cons<List@<T@>>(List<T@>[head], tail));
+  Cons<List@<T@>>(Cons<T@>(head, tail.cons.head), tail.cons.tail);
+};
+
+@(Eq, Contains, Split);

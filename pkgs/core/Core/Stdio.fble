@@ -13,8 +13,14 @@
 # IO@ --
 #   Input and output streams for a Stdio program.
 @ IO@ = *(
+  # Gets the next line of input, including the terminating newline.
+  # Returns Nothing if there is no more input to read.
   Get@<Maybe@<String@>> stdin,
+
+  # Outputs a string to stdout.
   Put@<String@> stdout,
+
+  # Outputs a string to stderr.
   Put@<String@> stderr
 );
 

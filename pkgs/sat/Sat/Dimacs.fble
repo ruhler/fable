@@ -1,0 +1,112 @@
+
+@ Char@ = /Core/Char%.Char@;
+% Chars = /Core/Char%.Chars;
+% IsSpace = /Core/Char/Type%.IsSpace;
+
+@ Int@ = /Core/Int%.Int@;
+% Int = /Core/Int/Lit%.Int;
+% Abs = /Core/Int%.Abs;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+<@>% Split = /Core/List/Eq%.Split;
+<@>% Length = /Core/List/Length%.Length;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Var@ = /Sat/Sat%.Var@;
+@ Clause@ = /Sat/Sat%.Clause@;
+@ Formula@ = /Sat/Sat%.Formula@;
+
+# DIMACS cnf parser.
+# http://www.satcompetition.org/2009/format-benchmarks2009.html
+#
+# c
+# c start with comments
+# c
+# c
+# p cnf 5 3        // p cnf <nbvar> <nbclauses>
+# 1 -5 4 0         // 1 line per clause.
+# -1 5 3 4 0       // +x, -x not allowed in same clause
+# -3 -4 0
+
+<@>@ Parse@ = <@ T@> { +(String@ error, T@ parsed); };
+
+(List@<String@>) { Parse@<Clause@>; } ParseVars = (List@<String@> words) {
+  words.?(nil: Parse@<Clause@>(error: Str|'missing clause terminator'));
+
+  Int@ x = /Core/Int/Show%.Read(words.cons.head);
+  /Core/Int/Eq%.Eq(x, Int|0).?(true: Parse@<Clause@>(parsed: List<Var@>[]));
+
+  Var@ v = Var@(Abs(x), /Core/Int/Eq%.Gt(x, Int|0));
+
+  Parse@<Clause@> tail = ParseVars(words.cons.tail);
+  tail.?(error: Parse@<Clause@>(error: tail.error));
+  Parse@<Clause@>(parsed: Cons<Var@>(v, tail.parsed));
+};
+
+(String@) { Parse@<Clause@>; } ParseClause = (String@ line) {
+  ParseVars(Split<Char@>(line, IsSpace));
+};
+
+(List@<String@>) { Parse@<Formula@>; } ParseClauses = (List@<String@> lines) {
+  lines.?(nil: Parse@<Formula@>(parsed: List<Clause@>[]));
+
+  Parse@<Clause@> clause = ParseClause(lines.cons.head);
+  clause.?(error: Parse@<Formula@>(error: clause.error));
+
+  Parse@<Formula@> tail = ParseClauses(lines.cons.tail);
+  tail.?(error: Parse@<Formula@>(error: tail.error));
+
+  Parse@<Formula@>(parsed: Cons<Clause@>(clause.parsed, tail.parsed));
+};
+
+# Parse starting from the 'p cnf...' header line
+(String@, List@<String@>) { Parse@<Formula@>; }
+ParseFromHeader = (String@ header, List@<String@> lines) {
+  List@<String@> words = Split<Char@>(header, IsSpace);
+  Int@ num_words = Length<String@>(words);
+  /Core/Int/Eq%.Eq(num_words, Int|4).?(false: {
+    Parse@<Formula@>(error: Strs[Str|'invalid header line: ', header]);
+  });
+
+  String@ p = words.cons.head;
+  String@ cnf = words.cons.tail.cons.head;
+
+  /Core/String/Eq%.Eq(p, Str|'p').?(false: {
+    Parse@<Formula@>(error: Strs[Str|'expected ''p'', but got: ', p]);
+  });
+
+  /Core/String/Eq%.Eq(cnf, Str|'cnf').?(false: {
+    Parse@<Formula@>(error: Strs[Str|'expected ''cnf'', but got: ', cnf]);
+  });
+
+  # TODO: check syntax and values of nbvars and nbclauses?
+  ParseClauses(lines);
+};
+
+# Parse from the starting state of a file, where there are still comment
+# lines.
+(List@<String@>) { Parse@<Formula@>; } ParseFromStart = (List@<String@> lines) {
+  lines.?(nil: Parse@<Formula@>(error: Str|'no clauses found'));
+
+  String@ line = lines.cons.head;
+  line.?(nil: Parse@<Formula@>(error: Str|'empty line'));
+
+  Char@ c = line.cons.head;
+  c.?(
+    c: ParseFromStart(lines.cons.tail),
+    p: ParseFromHeader(line, lines.cons.tail),
+    : Parse@<Formula@>(error: Strs[Str|'invalid line: ', line]));
+};
+
+(String@) { Parse@<Formula@>; } Parse = (String@ dimacs) {
+  ParseFromStart(Split<Char@>(dimacs, (Char@ c) {
+    /Core/Char/Eq%.Eq(c, Chars.nl);
+  }));
+};
+
+@(Parse@, Parse);

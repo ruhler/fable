@@ -1,22 +1,31 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 % And = /Core/Bool%.And;
+
 @ Char@ = /Core/Char%.Char@;
+
 <@>@ Eq@ = /Core/Eq%.Eq@;
+
 @ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
+
 <@>% List = /Core/List%.List;
 <@>% Append = /Core/List%.Append;
+
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
+
 <@>@ Show@ = /Core/Show%.Show@;
+
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
+
 % Unit = /Core/Unit%.Unit;
 
 @ Formula@ = /Sat/Sat%.Formula@;
@@ -27,6 +36,9 @@
 @ Result@ = /Sat/Sat%.Result@;
 % EqId = /Sat/Sat%.EqId;
 % Solve = /Sat/Sat%.Solve;
+
+<@>@ Parse@ = /Sat/Dimacs%.Parse@;
+% Parse = /Sat/Dimacs%.Parse;
 
 # Import to test compilation
 % _ = /Sat/Bench%;
@@ -42,6 +54,23 @@ Show@<Var@> ShowVar = (Var@ v) {
 
 Eq@<Var@> EqVar = (Var@ a, Var@ b) {
   And(EqId(a.id, b.id), /Core/Bool/Eq%.Eq(a.polarity, b.polarity));
+};
+
+Show@<Clause@> ShowClause = /Core/List/Show%.Show<Var@>(ShowVar);
+Eq@<Clause@> EqClause = /Core/List/Eq%.Eq<Var@>(EqVar);
+
+Show@<Formula@> ShowFormula = /Core/List/Show%.Show<Clause@>(ShowClause);
+Eq@<Formula@> EqFormula = /Core/List/Eq%.Eq<Clause@>(EqClause);
+
+Show@<Parse@<Formula@>> ShowParsedFormula = (Parse@<Formula@> x) {
+  x.?(error: x.error);
+  ShowFormula(x.parsed);
+};
+
+Eq@<Parse@<Formula@>>
+EqParsedFormula = (Parse@<Formula@> a, Parse@<Formula@> b) {
+  a.?(error: b.?(error: /Core/String/Eq%.Eq(a.error, b.error), : False),
+      parsed: b.?(parsed: EqFormula(a.parsed, b.parsed), : False));
 };
 
 Show@<Assignment@> ShowAssignment = /Core/List/Show%.Show<Var@>(ShowVar);
@@ -92,7 +121,28 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
     Result@ want = Result@(timeout: Unit);
     Result@ got = Solve(/Sat/Aim%, Just<Int@>(Int|10));
     AssertEq(want, got);
+  })),
+
+  Test(Str|Dimacs, !({
+    String@ dimacs = Str|'c
+c start with comments
+c
+c
+p cnf 5 3
+1 -5 4 0
+-1 5 3 4 0
+-3 -4 0
+';
+    Formula@ formula = List<Clause@>[
+      List<Var@>[Var@(Int|1, True), Var@(Int|5, False), Var@(Int|4, True)],
+      List<Var@>[Var@(Int|1, False), Var@(Int|5, True), Var@(Int|3, True), Var@(Int|4, True)],
+      List<Var@>[Var@(Int|3, False), Var@(Int|4, False)]];
+
+    Parse@<Formula@> want = Parse@<Formula@>(parsed: formula);
+    Parse@<Formula@> got = Parse(dimacs);
+    AssertEquals<Parse@<Formula@>>(EqParsedFormula, ShowParsedFormula, want, got);
   }))
+
 ]);
 
 /Core/Test/Run%.Run(Tests);
