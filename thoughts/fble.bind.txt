@@ -366,3 +366,367 @@ Single argument bind is a special case of this:
 
 <@ A@, @ X@>(M@<A@>, (A@) { M@<X@>; }) { M@<X@>; }
 
+Syntax option is?
+
+  BIND A@ a := ma, B@ b := mb, ...;
+  ...
+
+That's an interesting idea. Have the 'BIND' operation on the left. Which is
+easier to do now that we pass ma, mb, ... as part of the syntax instead of
+pushing that into BIND.
+  
+  :bind A@ a := ...;
+  ...
+
+  :f(x) A@ a := ...;
+  ...
+
+  f(x): A@ a := ...;
+  ...
+
+Playing around with the syntax a little more...
+
+:exec<A@, B@> a <- ma, b <- mb;  No. Not nice.
+
+Let's say the type M@ is part of the BIND function. So, if I were to
+generalize, I would say BIND is polymorphic in argument types and result type?
+
+Because the thing is, to implement BIND, we want to know A@, B@, ..., X@ as
+types. We don't want an abstract M@<A@>, M@<X@> type.
+
+  bind: String@ line <- get<S@>;
+  bind: Unit@ _ <- F(line).?(true: put<S@>('blah'), false: put<S@>('other blah'));
+  Return<S@, Bool@>(True);
+
+I like that the syntax lines up everything on the left.
+
+What if we don't want to have one-to-one argument to values? Like, maybe we
+want a foreach for a map that extracts separate key and value?
+
+ (Map@<K@, V@>, (K@, V@) { X@; }) { X@; }
+
+Then I would want:
+ foreach: K@ key, Value@ v <- map;
+ ...
+
+Now the syntax is slightly less pleasant, because it looks like partial
+indent. You see that above with the bind too. The fact that the last line is
+not aligned.
+
+How bad is it to do:
+
+  A@ a, B@ b, C@ c <- Exec(ma, mb, mc);
+  ...
+
+One of the few examples I have in practice:
+
+  Unit@ _ := Pad(input, put_padded, /Md5/Bits%.Bit64.BitN.zero),
+  ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
+  !(HexFromABCD(md5));
+
+Would turn into:
+  Unit@ _, ABCD@ md5 <- Exec(
+    Pad(input, put_padded, /Md5/Bits%.Bit64.BitN.zero),
+    PaddedMd5(get_padded, ABCD0));
+  !(HexFromABCD(md5));
+
+That's pretty unpleasant.
+
+Compare to:
+
+ foreach: Entry@ entry <- map;
+ entry.key, entry.value ...
+
+But we really want BIND to be separate if we have multiple x := ... entries in
+the syntax, rather than make it part of the arrow.
+
+  BIND: A@ a := ...;
+  BIND: ...;
+  ...
+
+Could we do parallel exec as a sequence of binds instead of all at once?
+
+Semantics would be...
+
+Start first thing in the background. But then the result is not allowed to be
+visible to the second thing. That's the trouble.
+
+---
+
+It would be nice if we could define a single value interface with static
+methods that could be reused. I'm okay if we want to order calls to methods.
+We can do bind internally in the implementation of the methods. That is: you
+are given sequencing from the external syntax, you have to manage that
+internally yourself.
+
+But again, how would we run such a thing in a pure function?
+
+Should we always push the bind into the operation? Like, instead of Get being
+pure get, have it be get + bind? Or, at least, have an alternative that's like
+that? The individual operations with side effects have the sequencing built
+in?
+
+That's unpleasant from a point of view of composition. We would like to factor
+the sequencing function out, then we could combine it anywhere. But it does
+let us eliminate the BIND object in the syntax. Does it allow parallel
+sequencing? I kind of doubt it.
+
+---
+
+About whether we can 'run' something with general side effects in a pure way.
+I think we can, as long as it doesn't use, like, exec. That is, we can do it
+if we know what all the primitive side effect operations are. We'll want
+separate run functions for different kinds of monads. And a special one for
+real IO/non-determinacy.
+
+Side effects have to be part of the type. They can't be hidden entirely.
+That's important.
+
+Let's revisit the parser example.
+
+I want to define an object with the following possible side effects:
+  - return a result 
+  - report an error
+  - get the next line of input.
+
+Or, the IO object with the following possible side effects:
+  - input a string.
+  - output a string.
+
+The type is a polymorphic result type to represent side effects. We just want
+a syntax that knows how to wire up a bind type specific to the side effect
+type.
+
+A@ a <- ma, B@ b <- mb, ... ;
+...
+
+From this syntax, we know A@, B@, M@, and the final result type (which we
+could maybe or maybe not restrict to M@ and then extract the subtype from it).
+
+How about, syntactically, there is a difference between ',' and ';'. For ',',
+you don't see the variable in the next entry, for ';' you do. That's two
+different kinds of binds.
+
+In other words, we think of
+  A@ a <- ma, B@ b <- mb
+
+As combining somehow into a function... but that's the problem. Types
+changing. Names of things difficult.
+
+So we have one general comma list semicolon terminator combination.
+
+
+  m.do: String@ line <- m.get;
+  m.do: Unit@ _ <- F(line).?(true: m.put('blah'), false: m.put('other blah'));
+  m.return(True);
+
+  String@ line <- m.do: m.get;
+  Unit@ _ <- m.do: F(line).?(true: m.put('blah'), false: m.put('other blah'));
+  m.return(True);
+
+  String@ line <- m.do(m.get);
+  Unit@ _ <- m.do(F(line).?(true: m.put('blah'), false: m.put('other blah')));
+  m.return(True);
+
+The middle one's not bad above. Separates the bind from the argument
+syntactically, so we could pass type information to it.
+
+What about this:
+  A@ a <- x: ma;
+  z;
+
+Is syntactic sugar for:
+  x<A@, Z@>(ma, (A@) { M@<Z@>; }) { M@<Z@>; }
+
+Where type of x is:
+  <@ A@, Z@>(M@<A@>, (A@) { M@<Z@>; }) { M@<Z@>; }
+
+The type of Z@ is extracted given the type A@ and M@<A@> and M@<Z@>.
+  
+And now, if possible, an we allow comma syntax too?
+
+  A@ a <- x: ma, B@ b <- y: mb;
+  z;
+
+This should say:
+  We pass a function (A@, B@) { M@<Z@>} as an argument to y?
+
+* let f = (A@ a, B@ b) { z; }
+* ma and mb do not see a or b.
+* how do x and y interact?
+
+One of x or y or a combination is passed function f. Let's say 'y'.
+It would be nice if x and y could be the same. It would be nicer if I only had
+to mention it once. That would be easy.
+
+  A@ a <- x: ma, B@ b <- mb;
+  z;
+
+Then:
+  let f = (A@ a, B@ b) { z; }
+      Z@ = inferred from A@, @<ma>, @<z>
+  in x<A@, B@, Z@>(ma, mb, f);
+
+But now the syntax is abnormal.
+  
+  A@ a <- x: ma,
+  B@ b <- y: mb;
+  z;
+
+Then:
+  let f = (B@ b) { z; }
+      g = { M@<B@> mb' = mb; (A@ a) { y<B@, Z@>(mb', f); }; }
+      Z@ = inferred from A@, @<ma>, @<z>
+  in x<A@, Z@>(ma, g);
+
+Is that reasonable? In this case, types of x and y are:
+  <@ A@, @ Z@>(M@<A@>, (A@) { M@<Z@>; }) { M@<Z@>; }
+
+So types look okay, and this means the same function can be reused for all
+comma entries. The next question is, how could we implement a parallel thing
+using this? What's the implementation of x for exec?
+
+Conceptually we want to end up with:
+  fork ma
+  fork mb
+  a <- join ma
+  b <- join mb
+  z
+
+Could we change exec to not have this specific behavior? Like, use a different
+interface? For example: let's say we have par and seq functions.
+
+  seq: (M@<A@>, (A@) { M@<Z@>}) { M@<Z@>; }
+      Executes all of ma, takes result, applies it to f.
+  par: (M@<A@>, (M<A@>) { M@<Z@> }) { M@<Z@>; }
+      Starts execution of ma, creates ma', which will block on the result of
+      ma, applies that to f.
+  
+Or maybe instead: 
+
+  par: (M@<A@>) { M@<M@<A@>>; }
+
+Kicks of ma in background, returns a process that blocks on the result.
+
+Then, to do ma and mb in parallel, we would do something like:
+
+  M@<A@> ma' <- seq: par(ma),
+  M@<B@> mb' <- seq: par(mb);
+  A@ a <- seq: ma';
+  B@ b <- seq: mb';
+  z;
+
+If we wanted, for 'seq', we could say waits for all spawned processes to
+complete before finishing execution. That way you can't leak spawned
+processes, for example:
+
+  M@<A@> ma' <- seq: par({ M@<C@> mc' <- seq: par<mc>; ma; }),
+  M@<B@> mb' <- seq: par(mb);
+  A@ a <- seq: ma';
+  B@ b <- seq: mb';
+  z;
+
+Here we say running ma' blocks on mc' finishing.
+
+And, if we want, we can now generalize with comma support internally:
+
+  A@ a, B@ b <- x: ...;
+  ...
+
+Okay? So I have a suggested syntax, suggested type rules. Let me state it for
+the record:
+
+  A@ a, B@ b, ... <- x: m,
+  z;
+
+Then:
+  let f = (A@ a, B@ b, ...) { z; }
+      Z@ inferred from m ???
+  in x<A@, B@, ..., Z@>(m)
+
+where type of x is, for some M@, S@:
+  <@ A@, @ B@, ... @ Z@>(M@<S@>, (A@, B@, ...) { M@<Z@>; }) { M@<Z@>; }
+
+No, I don't think that works. We can't go from fixed S@ to polymorphic A@, B@,
+... So we can't support the general comma format.
+
+Stick to the simpler:
+  A@ a <- x: m;
+  z;
+
+Then:
+  let f = (A@ a) { z; }
+      Z@ inferred from @<m>, @<z>
+  in x<A@, Z@>(m)
+
+where type of x is, for some M@:
+  <@ A@, @ Z@>(M@<A@>, (A@) { M@<Z@>; }) { M@<Z@>; }
+
+---
+
+Okay, so we have a proposal now. I have two concerns with this proposal:
+* Does it support everything we want for processes. I think so, just want to
+  double check.
+* Is it overly specific to monadic bind? For example, in haskell do notation
+  is useful for applicative functors too. Is there some other use cases that
+  we would want to have the nice syntax for that don't match this somewhat
+  specific interface for the BIND function?
+
+In terms of generalization, the summary of key points is I need enough
+information to do a type rule and provide the fundamental types to the bind
+function.
+
+It's really all about type inference now. Particularly now that we simplify
+parallel processes.
+
+The argument types are clearly fundamental and make sense to pass. But the
+BIND function may not be polymorphic in those, which is a pain? Or can we just
+have polymorphic types that we ignore and let type checking verify it's as
+expected?
+
+Then the real challenge is the fundamental part of the return type to infer.
+
+Could we have a general type inference rule that applies only in the bind
+syntax? For example, given a polymorphic type like:
+
+ <@ A@, @ B@, ...>(...);
+
+We are given arguments as input. Infer all type parameters from the arguments
+and fill in every thing we inferred. No need to include all the type
+parameters in the polymorphic list. Just the ones the function depends on.
+
+Which suggests maybe we want a general form of type inference, and then we can
+use the more general bind syntax.
+
+What we need for type inference is to know all the arguments to a function.
+Let's say we can do type inference in those cases where the type parameters
+can be inferred from the arguments. You have a special application syntax:
+
+  f<>(...)
+
+f<> is not a standalone thing, it's part of the application syntax. Then we
+can infer the type parameters and return type of the function. The arguments
+have to be typeable in isolation still, so I think that's fine.
+
+
+  String@ str <- io.do<>(io.get);
+  io.return<>(True);
+
+That's not bad. Much nicer than, say:
+
+  String@ str <- io.do<String@, Bool@>(io.get);
+  io.return<Bool@>(True);
+
+If the problem really is type inference, which I think it is, then how about
+we add a feature for type inference and keep the super general function bind
+syntax? I like that idea. It just depends on how hard it is to implement type
+inference.
+
+Remember, type inference is based on the idea that you do poly + <type params
+to infer> + arguments to use for the inference. We still build types from
+bottom up. You'll never be able to infer, for example, an empty list's type
+based on its result.
+
+Let's explore the type inference approach a little more. Because that sounds
+useful and promising to me.
+

@@ -50,84 +50,90 @@
 # In the case of unsat, the remaining timeout is returned.
 @ Result@ = +(Assignment@ sat, Timeout@ unsat, Unit@ timeout);
 
+@ Vars@ = /Core/Map%.Map@<VarId@, Bool@>;
+% Empty = /Core/Map%.Empty<VarId@, Bool@>;
+% IsEmpty = /Core/Map%.IsEmpty<VarId@, Bool@>;
+% Lookup = /Core/Map%.Lookup<VarId@>(/Core/Int/Eq%.Lt)<Bool@>;
+% Insert = /Core/Map%.Insert<VarId@>(/Core/Int/Eq%.Lt)<Bool@>;
+
 # SubstClause --
 #   Substitute a value for a variable into the given clause.
 #
 # Returns the simplified clause, or Nothing if the clause is now satisfied.
-(Clause@, Var@) { Maybe@<Clause@>; } SubstClause = (Clause@ c, Var@ v) {
+(Clause@, Vars@) { Maybe@<Clause@>; } SubstClause = (Clause@ c, Vars@ vs) {
   c.?(nil: Just<Clause@>(c));
 
   Var@ head = c.cons.head;
-  EqId(head.id, v.id).?(true: {
-    EqPolarity(head.polarity, v.polarity).?(
+  Maybe@<Bool@> mv = Lookup(vs, head.id);
+  mv.?(just: {
+    EqPolarity(head.polarity, mv.just).?(
       true: Nothing<Clause@>,                 # clause satisfied
-      false: SubstClause(c.cons.tail, v));    # variable eliminated
+      false: SubstClause(c.cons.tail, vs));    # variable eliminated
   });
 
-  Maybe@<Clause@> tail = SubstClause(c.cons.tail, v);
+  Maybe@<Clause@> tail = SubstClause(c.cons.tail, vs);
   tail.?(nothing: Nothing<Clause@>);
   Just<Clause@>(Cons<Var@>(head, tail.just));
 };
 
 # Subst --
 #   Substitute a value for a variable into the formula.
-(Formula@, Var@) { Formula@; } Subst = (Formula@ f, Var@ v) {
+(Formula@, Vars@) { Formula@; } Subst = (Formula@ f, Vars@ vs) {
   f.?(nil: f);
 
-  Maybe@<Clause@> c = SubstClause(f.cons.head, v);
-  c.?(nothing: Subst(f.cons.tail, v));
+  Maybe@<Clause@> c = SubstClause(f.cons.head, vs);
+  c.?(nothing: Subst(f.cons.tail, vs));
 
-  Cons<Clause@>(c.just, Subst(f.cons.tail, v));
+  Cons<Clause@>(c.just, Subst(f.cons.tail, vs));
 };
 
 # GetUnit --
-#   Searches for a clause with a single variable.
+#   Returns the set of variables that occur as the only variable in a clause.
 #
 # For example, if we have a clause with the single variable x, we know we can
 # set x to True. This is unit propagation.
-(Formula@) { Maybe@<Var@>; } GetUnit = (Formula@ f) {
-  f.?(nil: Nothing<Var@>);
+(Formula@) { Vars@; } GetUnit = (Formula@ f) {
+  f.?(nil: Empty);
+
+  Vars@ tail = GetUnit(f.cons.tail);
 
   Clause@ clause = f.cons.head;
-  clause.?(nil: GetUnit(f.cons.tail));
-  clause.cons.tail.?(nil: Just<Var@>(clause.cons.head));
-  GetUnit(f.cons.tail);
+  clause.?(nil: tail);
+  clause.cons.tail.?(cons: tail);
+
+  Var@ v = clause.cons.head;
+  Insert(tail, v.id, v.polarity);
 };
 
 # GetPure --
-#   Searches for a pure literal in the given formula.
+#   Gets the list of variables that are pure literals.
 #
 # A pure literal is a variable that shows up with the same polarity in every
 # clause that it appears in. We can eliminate any such variable right away by
 # setting its value to the polarity that it shows up with.
-(Formula@) { Maybe@<Var@>; } GetPure = {
+(Formula@) { Vars@; } GetPure = {
   @ Status@ = +(Bool@ pure, Unit@ impure);
   @ Map@ = /Core/Map%.Map@<VarId@, Status@>;
-  % Empty = /Core/Map%.Empty<VarId@, Status@>;
+  % E = /Core/Map%.Empty<VarId@, Status@>;
   % InsertWith = /Core/Map%.InsertWith<VarId@>(/Core/Int/Eq%.Lt)<Status@>;
 
   (Formula@ f) {
-    Map@ map = /Core/List%.ForEach<Clause@, Map@>(f, Empty,
+    Map@ map = /Core/List%.ForEach<Clause@, Map@>(f, E,
       (Clause@ clause, Map@ map) {
         /Core/List%.ForEach<Var@, Map@>(clause, map, (Var@ v, Map@ map) {
            InsertWith(map, v.id, (Maybe@<Status@> ms) {
-             ms.?(
-               just: ms.just.?(
-                 pure: EqPolarity(ms.just.pure, v.polarity).?(
-                   true: ms.just,
-                   false: Status@(impure: Unit)),
-                 impure: ms.just),
-               nothing: Status@(pure: v.polarity));
+             ms.?(nothing: Status@(pure: v.polarity)); # starts pure
+             ms.just.?(impure: ms.just);               # stays impure
+             EqPolarity(ms.just.pure, v.polarity).?(
+               true: ms.just,                          # stays pure
+               false: Status@(impure: Unit));          # turns impure
            });
         });
-      });
+    });
 
-    # TODO: It would be nice if we could break out of the for loop right
-    # away instead of always traversing the entire map. Or better yet, return
-    # the list of all pure literals intead of just one.
-    /Core/Map%.ForEach<VarId@, Status@, Maybe@<Var@>>(map, Nothing<Var@>,
-      (VarId@ v, Status@ s, Maybe@<Var@> p) {
-        p.?(just: p, nothing: s.?(pure: Just<Var@>(Var@(v, s.pure)), impure: p));
+    /Core/Map%.ForEach<VarId@, Status@, Vars@>(map, Empty,
+      (VarId@ id, Status@ s, Vars@ vs) {
+        s.?(pure: Insert(vs, id, s.pure), impure: vs);
     });
   };
 };
@@ -140,13 +146,22 @@
 # during the simplification process.
 (Formula@, Assignment@) { *(Formula@ simplified, Assignment@ assigns); }
 Simplify = (Formula@ f, Assignment@ a) {
-  Maybe@<Var@> unit = GetUnit(f);
-  unit.?(just: Simplify(Subst(f, unit.just), Cons<Var@>(unit.just, a)));
+  Vars@ unit = GetUnit(f);
+  Vars@ pure = GetPure(f);
 
-  Maybe@<Var@> pure = GetPure(f);
-  pure.?(just: Simplify(Subst(f, pure.just), Cons<Var@>(pure.just, a)));
+  Vars@ all = /Core/Map%.ForEach<VarId@, Bool@, Vars@>(unit, pure,
+    (VarId@ id, Bool@ polarity, Vars@ vs) {
+      Insert(vs, id, polarity);
+  });
 
-  @(simplified: f, assigns: a);
+  IsEmpty(all).?(true: @(simplified: f, assigns: a));
+
+  Assignment@ na = /Core/Map%.ForEach<VarId@, Bool@, Assignment@>(all, a, 
+    (VarId@ id, Bool@ polarity, Assignment@ as) {
+      Cons<Var@>(Var@(id, polarity), as);
+  });
+      
+  Simplify(Subst(f, all), na);
 };
 
 # Countdown --
@@ -183,10 +198,12 @@ Search = (Formula@ f, Assignment@ a, Timeout@ t) {
   f.cons.head.?(nil: Result@(unsat: nt.just));
 
   Var@ v = f.cons.head.cons.head;
-  Result@ attempted = Search(Subst(f, v), Cons<Var@>(v, a), nt.just);
+  Vars@ vs = Insert(Empty, v.id, v.polarity);
+  Result@ attempted = Search(Subst(f, vs), Cons<Var@>(v, a), nt.just);
   attempted.?(unsat: {
     Var@ nv = Var@(v.id, Not(v.polarity));
-    Search(Subst(f, nv), Cons<Var@>(nv, a), attempted.unsat);
+    Vars@ nvs = Insert(Empty, nv.id, nv.polarity);
+    Search(Subst(f, nvs), Cons<Var@>(nv, a), attempted.unsat);
   });
 
   attempted;
