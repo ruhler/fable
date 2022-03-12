@@ -1,0 +1,368 @@
+Fble Bind
+=========
+Not sure the right name for this, but bind seems good enough to start.
+
+Processes provide nice syntax for side effects, but they are fairly limited:
+ - you can't execute processes inside pure functions
+ - there is a single global state that has to be threaded.
+
+'Monads' are very flexible for modeling side effects, but the syntax is a pain.
+
+When I say 'Monad's here, I really mean any abstract data type that operates
+on some internal state in some sequenced fashion using functions. Monads are
+an example of that kind of thing.
+
+My question is, can I get the best of both worlds somehow? Make it easy to
+define and use abstract data types that require some sort of sequencing and
+not requiring tedious syntax that also supports IO and processes?
+
+For example, consider writing a parser for dimacs format. Or anything really.
+I want to read line by line using processes to avoid loading the entire file
+in memory, but I want to read a whole file at once without using processes for
+testing purposes or other internal uses. How can we easily write one parser
+that can be used in both cases?
+
+I want to write a parser that interacts with the world with some abstract
+methods:
+* GetLine - gets the next line of input, or end of input.
+* Error - report an error and stop parsing.
+* Return - return a parsed result.
+
+This is naturally represented using an abstract state type.
+
+GetLine: S@<Maybe@<String@>>
+Error: <@ T@>(String@) { S@<T@>;}
+Return: <@ T@>(T@) { S@<T@>; }
+Bind: <@ A@, @ B@>(S@<A@>, (A@) { S@<B@>; }) { S@<B@>; }
+
+In this case, it's the Bind function that forces sequencing, which orders side
+effects. I could implement process functions using this kind of interface. In
+that case, we would have:
+
+<@>@ S@ = <@ T@> { T@!; }
+
+In other words, the monadic interface is more generally useful than the
+process interface. So why use the process interface at all?
+
+1. Because processes require built in language features for exec and links,
+and it's always nice to have syntax for builtin language features, even if
+they can be wrapped in functions.
+
+2. Because := syntax does type inference that you don't get with function
+bind.
+
+3. Because := syntax implicitly refers to the process monad, so you don't have
+to specify explicitly which state entity you are referring to.
+
+Note an important aspect of using S@<T@> to describe the type instead of,
+e.g. (S@, T@), is that it prevents you from referring to and making copies of
+the underlying state. That is important for IO like things. It's not
+necessarily important for things like pure state monads, where copying is
+okay.
+
+So, the question is, why can't we get all the niceness of process syntax using
+the more general approach? Can we change the fble language to support that? If
+so, how would it look?
+
+I don't care about builtin-ness of processes. That can be wrapped. We can
+provide library functions that cheat. That's not the interface problem.
+
+So the problem is: type inference and, let's say, underlying state inference?
+It's just too tedious otherwise?
+
+Let's compare. What I like to write is things like:
+
+  String@ line := get;
+  Unit@ _ := F(line).?(true: put('blah'), false: put('other blah'));
+  !(True);
+
+What I would have to write, assuming we now have explicit types and explicit
+bind:
+
+  String@ line <- Bind<S@, Bool@>(get<S@>);
+  Unit@ _ <- Bind<S@, Bool@>(F(line).?(true: put<S@>('blah'), false: put<S@>('other blah')));
+  Return<S@, Bool@>(True);
+
+I could write some wrapper functions to simplify perhaps:
+
+  String@ line <- getM<S@, Bool@>;
+  Unit@ _ <- Bind<S@, Bool@>(F(line).?(true: put<S@>('blah'), false: put<S@>('other blah')));
+  Return<S@, Bool@>(True);
+
+But that doesn't scale well and doesn't help all that much.
+
+What do we need for type inference to work? We need to know as part of the
+bind syntax: the bind function, which let's assume includes S@. But we also
+need that information to be propagated to argument and body.
+
+in := syntax, bind function is obvious and type is obvious in argument and
+body.
+
+So the trouble comes from trying to generalize one kind of monad to multiple.
+if it's one kind of monad, no need to specify which one in the := syntax or in
+the arg and body. And we know the type of process bind, so compiler can do
+inference from result to top level expression.
+
+Because the other thing about process is that 'exec' has a pretty specific
+type rule that is built into the compiler. We don't have a generic way to
+teach the compiler about rules like that.
+
+How to be more generic without having to supply tediously more info? How to
+abstract away, so that it's clear from the type of 'Bind' what type
+information is needed?
+
+In general, Bind is:
+  ((A@, B@, ...) { X@; }, A@, ...) { Y@; }
+
+We can't link Y@ to X@ in general.
+
+Unless we can somehow describe that using a polymorphic type transformer
+thing?
+
+---
+
+Imagine the bind operator took a polymorphic function and automatically
+applied arguments. So, if bind is like
+
+  A@ a, B@ b, C@ c <- BIND(...);
+  ...
+
+Where the type of BIND(...) is a function ((A@, B@, C@) { X@; }) { Y@; },
+then we turn BIND into a polymorphic function where A@, B@, C@, and X@ are
+passed as type parameters automatically. What does that give us?
+
+Depends. Are we passed polymorphic functions or concrete? Let me try to add
+some more detail.
+
+  <<@>@>@ I = <<@>@ M@> { *(
+    M@<String@> get,
+    (String@) { M@<Unit@>; } put,
+    <@ T@>(T@) { M@<T@>; } return,
+    ... bind
+  ); };
+     
+
+  <<@>@ M@>(I@<M@>) { M@<Bool@>; }
+  Parse = <<@>@ M@>(I@<M@> m) {
+    String@ line <- m.bind(m.get);
+    Unit@ _ <- m.bind(F(line).?(
+      true: m.put('blah'),
+      false: m.put('other blah')));
+    m.return<Bool@>(True);
+  };
+
+Notice, we don't need to supply M@ with m.get, m.put, m.return. We do need
+to say the argument type with m.return, because that could be anything.
+
+What do we need the type of m.bind to be to make this work?
+It depends on... the type of the argument and the type of the return of the
+function. So it looks like:
+
+Trouble. The argument we have is Unit@ and M@<Bool@>. How do we go from
+M@<Bool@> to Bool@? It would have to be something like:
+
+  <@ A@, @ B@>((A@) { B@; }) { M@<???>; }
+
+So that doesn't work. It would work if there was someway to see inside of A@
+and B@, but there isn't.
+
+What can we do for the type of bind?
+  <@ A@, @ B@>(M@<A@>, (A@) { M@<B@>;}) { M@<B@>; }
+
+Notice: we don't have to pass M@ again, because that's captured by the
+interface type of m. We do have to know the ultimate return value though,
+and the argument value.
+
+Argument value we could infer with bind syntax. That's part of that.
+How can we infer the return type? Actually, we could this way. We could do
+it as:
+
+  <@ A@, @ X@>(M@<A@>, (A@) { X@;}) { X@; }
+
+Except, the implementation of bind needs to know that X@ is M@<B@>. That's
+where it breaks down. And in general, maybe same thing goes for argument?
+
+  <<@>@ M@>(I@<M@>) { M@<Bool@>; }
+  Parse = <<@>@ M@>(I@<M@> m) {
+    String@ line <- m.bind<String@, Bool@>(m.get);
+    Unit@ _ <- m.bind<Unit@, Bool@>(F(line).?(
+      true: m.put('blah'),
+      false: m.put('other blah')));
+    m.return<Bool@>(True);
+  };
+
+What if we define bind locally with the return type we know it should have?
+That way we can get rid of the return type. And maybe it's allowed to take
+argument types as input.
+
+Or, actually, maybe we don't care what the X@ type is? No. We have to if we
+want to infer things from it.
+
+  <<@>@ M@>(I@<M@>) { M@<Bool@>; }
+  Parse = <<@>@ M@>(I@<M@> m) {
+    % B = m.bind<Bool@>;
+    String@ line <- B(m.get);
+    Unit@ _ <- B(F(line).?(
+      true: m.put('blah'),
+      false: m.put('other blah')));
+    m.return<Bool@>(True);
+  };
+
+So it would seem the only thing I can't do today is inference of the
+arguments. We can't infer results, but we can factor that out, because it's
+the same for everything in the monad.
+
+  <<@>@ M@>(I@<M@>) { M@<Bool@>; }
+  Parse = <<@>@ M@>(I@<M@> m) {
+    % M = m.bind<Bool@>;
+    String@ line <- M(m.get);
+    Unit@ _ <- M(F(line).?(
+      true: m.put('blah'),
+      false: m.put('other blah')));
+    m.return<Bool@>(True);
+  };
+
+Still, much less nice than:
+  (I@) { Bool@! } Parse = (I@ m) {
+    String@ line := m.get;
+    Unit@ _ := F(line).?(true: m.put('blah'), false: m.put('other blah'));
+    !(True);
+  };
+
+What if we had syntax to apply a function, taking type arguments from
+arguments of the function. Let's say
+  ...<>(x, y, z)
+
+Is syntax for
+  ...<@<x>, @<y>, @<z>>(x, y, z)
+
+Now we could do
+  m.return<>(True), instead of m.return<Bool@>(True).
+
+Could we improve bind that way? I'm not convinced.
+
+What if we had a syntax :name is the bind operator. Or, what would look
+niceish with single letters?
+
+  String@ line <M get; 
+  String@ line <IO get;
+
+That's not too bad actually. But in practice, with the extra type info?
+
+  % m = M<Bool@>;
+  String@ line <m get;
+  Unit@ _ <m F(line).?(...);
+  return<>(True);
+
+---
+
+Let me explore from a different direction. I like the process syntax. Can we
+make process a little more flexible? Like, could we implement a monad via
+process? The idea being, you control the state parameter via the arguments you
+supply rather than the bind operation. Everything shares the bind and return
+operations.
+
+  @ I@ = *(String! get, (String@) { Unit!; } put);
+
+  (I@) { Bool@! } Parse = (I@ m) {
+    String@ line := m.get;
+    Unit@ _ := F(line).?(true: m.put('blah'), false: m.put('other blah'));
+    !(True);
+  };
+
+Now, how do we implement the instance of I? Say I want the implementation to
+be, like, a pair: strings to read, and strings written.
+
+ (List@<String@>) { I@!; } MkI = (List@<String@> inputs) {
+   @ S@ = *(List@<String@> ins, List@<String@> outs);
+   S@ ~ load, save;
+   save(S@(inputs, nil));
+   
+   String! get = {
+     S@ s := load;
+     Unit@ _ := save(S@(s.inputs.cons.tail, s.outputs));
+     !(s.inputs)
+   }
+
+   (String@) { Unit!; } put = (String@ x) {
+     S@ s := load;
+     save(S@(s.inputs, Cons(x, s.outputs)));
+   };
+
+   @(get, put);
+ }
+
+That's not so unreasonable. But, is there any way we can run this as a pure
+function now? The idea is, wouldn't it be nice if we could run it as a pure
+function, so long as it only does puts and gets on ports defined internally?
+Because if you aren't accessing external ports, there is no issue there. And
+assuming it doesn't use exec with multiple arguments that could leave to
+nondeterministic behavior.
+
+We could add a type to proc type, so it's go two types: the state type and the
+return type. And make it, like, polymorphic in the state type. And have a way
+to run a polymorphic state thing. If it's polymorphic, you know it can't refer
+to any concrete external types.
+
+For example, maybe call the type Proc@<S@, T@>.
+
+Then I could have a run function:
+  <@ X@>(<S@> { Proc@<S@, X@>; }) { X@; } Run
+
+Because the argument is polymorphic, we could make up any type for S@, so that
+can't match it.
+
+And we would pass S@ when we instantiate a link:
+
+  Bool@ ~<S@> get, put;
+
+It would be nice if we could write a function that does IO where some are
+restricted and others are not. We run to eliminate all the ones that are
+restricted. All the others still stay there. Like:
+
+  <@ X@>(<A@> { Proc@<A@, B@, ..., X@>; }) { Proc@<B@, ..., X@>; } Run
+
+Or, maybe we have data types that provide operations, where you take the value
+as an argument. You can't allocate new links internally. That's all done
+externally in the passed argument. Then you can run a function that takes the
+value of the interface as an input?
+
+Like, what if 'Proc' was really an abstract type meaning: some computation
+involving some thing that supports bind and return. No link. No exec.
+
+Let me stew on this. I think I'm getting somewhere. The idea that link and
+exec are somehow special to IO based monad, but in general ... we could have
+other things special to other monads. Like a smten monad. And you have special
+run functions that work. Like...
+
+  runIO :: (MkLink, DoExec) -> Proc(X) -> X
+
+But, does that just bring us back to haskell do notation? Where you can't
+easily mix and match monads and it's not very general?
+
+Like, imagine if bind and return worked for any polymorphic type? No, we need
+to define the bind and return functions.
+
+So, we have a special monadic type. Maybe a function that takes bind and
+return as inputs? Huh?
+
+No. Let it stew. I'm getting confused now.
+
+---
+
+Function bind is currently not used anywhere, and yet I'm afraid to make it
+overly specific. I claim a fully general function bind is not useful if it is
+too tedious, because we aren't using it at all.
+
+So, what if we made bind much more specific, with the goal of removing the
+extra type information that makes it tedious. And then see if I can reasonably
+use that to replace processes with a library.
+
+The use in processes is to replace exec, which would have the function form:
+
+<@ A@, @ B@, ..., @ X@>(M@<A@>, M@<B@>, ..., (A@, B@, ...) { M@<X@> }) { M@<X@>; };
+
+Single argument bind is a special case of this:
+
+<@ A@, @ X@>(M@<A@>, (A@) { M@<X@>; }) { M@<X@>; }
+

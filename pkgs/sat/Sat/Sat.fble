@@ -55,34 +55,29 @@
 #
 # Returns the simplified clause, or Nothing if the clause is now satisfied.
 (Clause@, Var@) { Maybe@<Clause@>; } SubstClause = (Clause@ c, Var@ v) {
-  c.?(
-    cons: {
-      Var@ head = c.cons.head;
-      EqId(head.id, v.id).?(
-        true: EqPolarity(head.polarity, v.polarity).?(
-          true: Nothing<Clause@>,                 # clause satisfied
-          false: SubstClause(c.cons.tail, v)),    # variable eliminated
-        false: {
-          Maybe@<Clause@> tail = SubstClause(c.cons.tail, v);
-          tail.?(
-            just: Just<Clause@>(Cons<Var@>(head, tail.just)),
-            nothing: Nothing<Clause@>);
-        });
-    },
-    nil: Just<Clause@>(c));
+  c.?(nil: Just<Clause@>(c));
+
+  Var@ head = c.cons.head;
+  EqId(head.id, v.id).?(true: {
+    EqPolarity(head.polarity, v.polarity).?(
+      true: Nothing<Clause@>,                 # clause satisfied
+      false: SubstClause(c.cons.tail, v));    # variable eliminated
+  });
+
+  Maybe@<Clause@> tail = SubstClause(c.cons.tail, v);
+  tail.?(nothing: Nothing<Clause@>);
+  Just<Clause@>(Cons<Var@>(head, tail.just));
 };
 
 # Subst --
 #   Substitute a value for a variable into the formula.
 (Formula@, Var@) { Formula@; } Subst = (Formula@ f, Var@ v) {
-  f.?(
-    cons: {
-      Maybe@<Clause@> c = SubstClause(f.cons.head, v);
-      c.?(
-        just: Cons<Clause@>(c.just, Subst(f.cons.tail, v)),
-        nothing: Subst(f.cons.tail, v));
-    },
-    nil: f);
+  f.?(nil: f);
+
+  Maybe@<Clause@> c = SubstClause(f.cons.head, v);
+  c.?(nothing: Subst(f.cons.tail, v));
+
+  Cons<Clause@>(c.just, Subst(f.cons.tail, v));
 };
 
 # GetUnit --
@@ -91,16 +86,12 @@
 # For example, if we have a clause with the single variable x, we know we can
 # set x to True. This is unit propagation.
 (Formula@) { Maybe@<Var@>; } GetUnit = (Formula@ f) {
-  f.?(
-    cons: {
-      Clause@ clause = f.cons.head;
-      clause.?(
-        cons: clause.cons.tail.?(
-          cons: GetUnit(f.cons.tail),
-          nil: Just<Var@>(clause.cons.head)),
-        nil: GetUnit(f.cons.tail));
-    },
-    nil: Nothing<Var@>);
+  f.?(nil: Nothing<Var@>);
+
+  Clause@ clause = f.cons.head;
+  clause.?(nil: GetUnit(f.cons.tail));
+  clause.cons.tail.?(nil: Just<Var@>(clause.cons.head));
+  GetUnit(f.cons.tail);
 };
 
 # GetPure --
@@ -150,14 +141,12 @@
 (Formula@, Assignment@) { *(Formula@ simplified, Assignment@ assigns); }
 Simplify = (Formula@ f, Assignment@ a) {
   Maybe@<Var@> unit = GetUnit(f);
-  unit.?(
-    just: Simplify(Subst(f, unit.just), Cons<Var@>(unit.just, a)),
-    nothing: {
-      Maybe@<Var@> pure = GetPure(f);
-      pure.?(
-        just: Simplify(Subst(f, pure.just), Cons<Var@>(pure.just, a)),
-        nothing: @(simplified: f, assigns: a));
-    });
+  unit.?(just: Simplify(Subst(f, unit.just), Cons<Var@>(unit.just, a)));
+
+  Maybe@<Var@> pure = GetPure(f);
+  pure.?(just: Simplify(Subst(f, pure.just), Cons<Var@>(pure.just, a)));
+
+  @(simplified: f, assigns: a);
 };
 
 # Countdown --
@@ -166,11 +155,9 @@ Simplify = (Formula@ f, Assignment@ a) {
 # Returns:
 #   The timeout decremented by one, Nothing if time is up.
 (Timeout@) { Maybe@<Timeout@>; } Countdown = (Timeout@ t) {
-  t.?(
-    just: t.just.?(
-      p: Just<Timeout@>(Just<Int@>(Dec(t.just))),
-      : Nothing<Timeout@>),
-    nothing: Just<Timeout@>(t));
+  t.?(nothing: Just<Timeout@>(t));
+  t.just.?(p: Just<Timeout@>(Just<Int@>(Dec(t.just))));
+  Nothing<Timeout@>;
 };
 
 # Search --
@@ -191,27 +178,18 @@ Search = (Formula@ f, Assignment@ a, Timeout@ t) {
   Assignment@ a = fa.assigns;
 
   Maybe@<Timeout@> nt = Countdown(t);
-  nt.?(
-    just: {
-      f.?(
-        cons: {
-          f.cons.head.?(
-            cons: {
-              Var@ v = f.cons.head.cons.head;
-              Result@ attempted = Search(Subst(f, v), Cons<Var@>(v, a), nt.just);
-              attempted.?(
-                sat: attempted,
-                unsat: {
-                  Var@ nv = Var@(v.id, Not(v.polarity));
-                  Search(Subst(f, nv), Cons<Var@>(nv, a), attempted.unsat);
-                },
-                timeout: attempted);
-            },
-            nil: Result@(unsat: nt.just));
-        },
-        nil: Result@(sat: a));
-    },
-    nothing: Result@(timeout: Unit));
+  nt.?(nothing: Result@(timeout: Unit));
+  f.?(nil: Result@(sat: a));
+  f.cons.head.?(nil: Result@(unsat: nt.just));
+
+  Var@ v = f.cons.head.cons.head;
+  Result@ attempted = Search(Subst(f, v), Cons<Var@>(v, a), nt.just);
+  attempted.?(unsat: {
+    Var@ nv = Var@(v.id, Not(v.polarity));
+    Search(Subst(f, nv), Cons<Var@>(nv, a), attempted.unsat);
+  });
+
+  attempted;
 };
 
 # Solve --
