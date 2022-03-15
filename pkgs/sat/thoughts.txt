@@ -45,3 +45,54 @@ Process oriented could save memory overhead from loading the entire string
 into memory, but it forces us to use processes in the parser, which means we
 couldn't reuse the same parser for string based. That sucks.
 
+---
+
+Parse is in place. Benchmark is in place. Initial performance improvement is
+in place.
+
+Looking at the profile now, time is dominated by GetPure function. Most of the
+time is the call to InsertWith.
+
+In this example, the GetPure function is called 211 times. I'm thinking perhaps
+the best way to improve performance is to track number of clauses a variable
+appears positive and negative in, and only update that when we eliminate a
+clause containing that variable.
+
+So, eliminate a clause, update just the variables effected, which should be
+small (O(1) instead of O(N)).
+
+So, keep a map from variable to # clauses + and # clauses -. Do a single pass
+to construct that initially. Then maintain it throughout.
+
+Except, we'll have to remember that state at every decision point, which is a
+little unhappy.
+
+Is there a more compact way we could represent the formula?
+
+---
+
+My proposal for next optimization.
+
+Data structure for formula:
+* Map from VarId to pair of Set of clause ids, representing the set of clauses
+  the variable appears positive in and negative in.
+* Map from clause id to map of variable id to whether the variable appears
+  positive or negative in that clause.
+
+For operations to support:
+* Assign var - an update to the variable map.
+* Remove var from clause - an update to the variable map.
+* Remove clause for var - an update to the clause map.
+* Remove var from clause - an update to the clause map.
+
+Each of these 4 operations generates more of those operations. Continue
+processing operations until there are no more left. Record the assignments
+somewhere.
+
+It would maybe be good to separate the interface specification of a sat
+formula and the internal representation.
+
+The hope is, this approach will be better because each clause has a few number
+of vars and each var is in a few number of clauses, and at each step of doing
+something, we deal with a small number of things and figure out directly what
+the next steps are.

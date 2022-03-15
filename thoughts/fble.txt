@@ -227,6 +227,9 @@ Fble Language Thoughts
   default branches, which means the compiler can't check for you that you've
   covered all the cases.
 
+  Note: In hindsight, I use this feature a lot. It makes a huge difference for
+  code writability and readability.
+
 * A funny thing about kind restrictions.
   Something of kind @ cannot be used in a polymorphic function where <@>@ is
   expected. That makes sense.

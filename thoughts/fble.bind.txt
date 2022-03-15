@@ -730,3 +730,400 @@ based on its result.
 Let's explore the type inference approach a little more. Because that sounds
 useful and promising to me.
 
+---
+
+Type inference for bind. I have something like:
+
+  <@ A@, @ B@>(M@<A@>, (A@) { M@<B@>; }) { M@<B@>; }
+
+Given: M@<A@> and (A@) { M@<B@>; }, can I infer A@ and B@?
+* A@ I can infer from the function type.
+* In general, can't infer B@. Because, for example, M could be something like:
+  <@>@ M@ = <@ T@> { Bool@; }
+  If I have Bool@, I can't come up with anything for T@.
+
+But that's a weird case. It just means we can't infer phantom things. Like we
+can't infer things from return types alone. 
+
+Imagine something more likely, where M is something like:
+  <@>@ M@ = <@ T@> { *(S@ s, T@ x); }
+
+Then we have, for example, *(S@ s, Bool@ x). And we compare that against
+M@<A@> which is *(S@ s, A@ x). Then we can infer A@ must be Bool@.
+
+Can we do this with the purely generic bind syntax? Where it takes a single
+function-argument function?
+
+  String@ s <- io.bind<String@>(Get)<>;
+  ...
+
+It's awkward, because we have to split up bind:
+
+  <@ A@>(M@<A@>)<@ B@>((A@) { M@<B@>; }) { M@<B@>; }
+
+We can only get the type inference on the second? No. We can do both. But it
+would look something like this:
+
+  String@ s <- io.bind<>(Get)<>;
+  io.return<>(True);
+
+Can we do type inference implicitly? Like, if you have a poly and you try to
+do an application, that's never allowed. So how about we always try to infer
+when you do function application (and function bind)?
+
+Syntax is pretty nice:
+
+  String@ s <- io.do(io.get);
+  io.return(True);
+
+What if you accidentally forget to supply the type argument? What's an
+example... say for Cons function.
+
+  Cons(True, l);
+
+In this case, it can infer the type. So you're fine.
+
+There will be cases where you cannot infer the type. Then you get an error.
+
+Is this bad? Does this go against my philosophy for the type system?
+
+What's the philosophy:
+* You can determine the type of an entity in isolation. You don't depend on
+  external context.
+
+There are two interpretations of Cons(True, l)
+1. We can't figure out the type of Cons, because it depends on the application.
+2. Cons is a polymorphic type. You can apply arguments to a polymorphic type,
+it works by type inference.
+
+In the second case, I think things are okay. And they are:
+  Cons(True, l)  - Cons is a known poly type
+  Cons<Bool@>(True, l) - Cons<Bool@> is a known non-poly type.
+
+That is, I'm saying Cons is short for Cons<Bool@> or Cons<Unit@> depending on
+the environment. I'm saying Cons is different from Cons<Bool@> and has
+different typing rules for application, because poly (value) application is
+different from function application.
+
+That's a cool idea. I think it might be worth trying. I don't think it's too
+hard to implement. We'll need a specification for type inference, but I also
+don't think that's too hard. And it's pretty nice. A way to have type
+inference, which is one of the annoying things about fble, but in such a way
+that we still give things unique types independent of context, and so
+hopefully types are still obvious.
+
+In this case, type inference is a built in part of poly application. That
+seems natural to me. Poly, because you don't need inference otherwise, and
+application, because you don't have anything to infer from otherwise.
+
+And hey! This solves the tediousness of monads problem. And it does so in a
+general, nice way.
+
+I think we could end up doing inference for a ton of the places where I
+explicitly specify types. Note you can always explicitly specify a type still
+if you want.
+
+So really, the only concern I have with this type inference idea is the fear
+that you could simultaneously forget to annotate the type and make a mistake
+in the type of one of the arguments, and as a result infer the wrong type
+without giving a type error.
+
+I think it's worth a try.
+
+So, in summary, I'm proposing the following:
+1. Add support for type inference to poly apply.
+2. Make sure we have support for type inference for function bind too.
+3. Redesign process IO to be something we can easily wrap without any special
+syntax support (though it will still need special language support). Primarily
+by splitting exec into separate 'fork' and 'seq' operations.
+
+And hey, if I wanted to, I could provide common operations, like:
+
+  String@ s <- io.getM;
+  io.return(True);
+where
+  io.getM = io.do(io.get)
+
+---
+
+Redesign of IO process. What should it look like? I have two alternatives
+proposed right now:
+1. Minimal. sequence, return, primitive side effect (stdin get, stdout put,
+  stderr put, event get, effect put, etc.). In particular, no links, no
+  generic get/put, no concurrent processes.
+
+2. Sequence, return, links, gets, puts, concurrent processes. Which at some
+point I felt was a fundamental thing we could justify.
+
+Current uses of links in all the programs I have written:
+
+* Used to drive Md5 tests, because Md5 relies on get to get inputs.
+  An alternative would be to provide a non-io side effecting 'get' operation,
+  assuming we've generalized Md5 to work with any monad that supports a 'get'
+  operation.
+
+* Md5 implementation, to combine padding versus processes processes.
+  An alternative would be to implement get_padded by keeping track of explicit
+  padding state: pad versus padz, which zero byte we are outputting, which
+  length byte we are outputting.
+
+* Benchmark for md5. Same as md5 test driver case.
+
+* BenchmarkGame test driver.
+  Alternative is to replace primitives for get/put with no-op functions.
+
+* TicTacToe AI
+  Alternative: Replace AI with single 'ChooseBestMove' operation.
+
+* App benchmark driver.
+  Alternative: custom primitive operations.
+
+All of my current use cases could be statically scheduled. In that case the
+only real difference between concurrency and not is whether we track state
+implicitly in the position of the executing program or explicitly using some
+data structure and switch statement. Being able to describe things using
+concurrency is nice, but not required.
+
+The tictactoe AI example is, to me, the best motivator for concurrency.
+For example, imagine if we wanted to play a game and there were two different
+AIs, and whoever made a decision first gets to go next. How could I model that
+without concurrency?
+
+The answer would be to manually split things up into finite chunks of work and
+implement a scheduler manually on top of that. So, I guess the question is,
+should it be a user defined scheduler or a scheduler built into the language?
+
+The main program gets to use implicit thread state. Any other parts of the
+program have to use explicit state. That seems unfair and unscalable.
+
+Another argument for processes is that in real life, not everything is under
+the control of a single scheduler. You have multiple machines interacting. You
+have people acting with machines. You could come up with a scheduling
+protocol so that one thing goes at a time, but that's generally inefficient
+(because everyone else is stopped for the rest of the time) and not how things
+work in reality. Is there not something fundamental about concurrency, then,
+that we should be capable of modeling in the language?
+
+On the flip side, there's not really any such thing in the real world as
+"instantly create a new independently running process". Giving birth or
+building a new machine is a sort of rare event one-time thing. That would
+suggest having a model where all processes are known statically is as
+justifiable as the parallel exec model we have in fble today.
+
+Another example I like to use is implementing a 'screen' app in fble.
+Interesting. I guess in that case everyone can think they are in charge of
+scheduling, but calling into another process acts as an implicit yield.
+
+Another example: imagine you want to implement an app that runs over a
+distributed collection of computers. You want a way to model multiple
+processes running concurrently with explicit communication between them.
+
+If we want concurrent processes, then I think Links with get, put are what we
+want. And some way to fork. For example, maybe something like:
+
+<@>@ Link@ = <@ T@> { *(IO@<T@> get, (T@) { IO@<Unit@>; } put) };
+<@ T@> { IO@<Link@>; } Link;
+  Creates a new link, returning operations to put and get from link.
+
+<@ T@> (IO@<T@>) { IO@<IO@<T@>>; } Spawn;
+  Spawns a new concurrent process, immediately returning an operation to block
+  on the result of that process.
+
+  And maybe with the condition that a parent process will block on all child
+  processes before the parent process finishes. Which seems like an entirely
+  reasonable requirement to me. If some internal child process is still going,
+  conceptually the parent process is still going, because the parent has to
+  manage or take over the work of the child.
+
+That's a pretty straight forward proposal. It needs primitive support.
+
+While I'm at it, we also need primitive support for something like smten in
+fble, which we be another kind of special primitive monad. What would that
+look like? Free, MPlus, Query.
+
+If only there was some generic way to implement support for all of these
+different things. If only concurrency and symbolic execution didn't need to be
+implemented as a core part of the language internally.
+
+---
+
+If we want to support concurrent processes, links with get and put makes sense
+as a way for them to interact.
+
+Composition argument: You are writing a program in fble, such as a stdio
+program or an App@ application. It's fine if that program controls its own
+schedule. The composition argument says it's important that we have the
+language features necessary to compose those top level stdio and app programs
+together. For example it should be reasonable to implement a program like
+'more' or 'screen' by composition of the existing apps the way they are
+written.
+
+I believe in the composition argument. What's not clear to me is if we need
+concurrent process to compose.
+
+Computation scaling argument: In any large program, having a single CPU will
+be a bottleneck. You need some way to scale to multiple CPUs, otherwise
+programs written in the language are fundamentally limited in scale.
+
+The computation scaling argument rings true to me. And I don't believe it
+should be on the implementation to do all that for you. Or, in other words,
+you should describe computation using separate threads of control, it's up to
+the implementation to schedule those appropriately.
+
+So, just as you can allocate a large number of objects in the language,
+we should let you execute a large number of threads.
+
+But if you believe that concurrent threads of execution are such a core part
+of the language, then shouldn't they be more a core part of the language? As
+in, no need to put things in a special IO monad?
+
+Not necessarily. Pure functions are composing blocks within a thread. We could
+need a separate thing for composing threads into a concurrent program, aka,
+processes.
+
+Now, if we have processes, I want the external interface for things like stdio
+and app to use processes, not abstract primitive side effects. Except,
+primitive side effects can support both in-thread composition and cross thread
+composition, whereas ports can only support cross thread composition. For that
+reason, it would be nice when describing a program to think in terms of
+abstract primitive side effects.
+
+Where does that leave us?
+
+* Programs should be described in terms of abstract primitive operations.
+* If you want to use multiple processes, then you should be able to provide
+  implementations of primitive operations based on links and puts and gets.
+* If you don't want to use multiple processes, then you should be able to
+  provide implementations of primitive operations based on normal function
+  calls, and not require the process monad to execute your composed programs.
+
+That suggests to me that whatever interface you use for accessing side effects
+should not have 'processes' as part of the interface. It should either use an
+abstract type variable (which could be tedious to pass around everywhere), or
+somehow hide the real implementation internally.
+
+It would be great if we could hide the real implementation of an abstract
+interface internally, not as part of the types. But I'm not sure that's
+feasible. Which suggests everyone who is using side effects should be
+parameterized by interface type.
+
+The ideal interface is one where you have a constant interface that has side
+effects under the covers. So you don't have to change the interface every time
+you call, but somehow calling the same method multiple times can have
+different results every time. One way to do that is put everything in an
+abstract M@ type with a bind function for sequencing. The state is
+updated/propagated through the bind operation, the interface acts as diff
+functions on whatever state is passed in.
+
+---
+
+Consider 3 different layers.
+
+1. Parameterize code by some abstract type.
+Downside is you have to pass the parameter around everywhere. I'm not sure how
+tedious that is once we have type inference in place. Upside is you can
+describe exactly the interface you want to program against, and implement it
+all sorts of different ways.
+
+2. If we had some sort of STRef like monad. That is, a monad that lets you
+sequence things and allocate a reference to a value that can subsequently be
+modified. That would be enough to allow you to have a constant interface to
+changing state. Concurrency is not required. Link, get, and put is one
+implementation of this.
+
+It's possible to hide the internal state from the type because you can capture
+the references internally in the interface methods. You don't have to pass the
+state between bind calls.
+
+The problem with having a specific monad for these kinds of things is you
+can't control which operations can be done. Anyone who has access to an
+operation in the monad could use it.
+
+3. Concurrency support, for the purposes of scaling computation and, if it
+turns out to be useful/necessary, supporting composition of what would other
+wise be top level programs.
+
+In summary, I think we should get into the habit of using approach (1)
+everywhere we can. We should also have a built in syntax for concurrency, but
+use it primarily via (1) instead of hard coding it. It's okay to require
+concurrency to run concurrency. But don't give a syntactic advantage to
+concurrency over approach (1), because we want people to prefer approach (1).
+
+---
+
+Updates to processes based on the above:
+1. exec does not support parallel exec anymore.
+2. need a new syntax for spawning a thread.  
+
+Let's play around a bit.
+
+  Maybe@<Bit8@> ~ get, put;
+  Md5Hash@ md5 := Md5(get), Unit@ x := PutAll(put, bytes);
+  !(md5);
+
+Becomes:
+
+  Maybe@<Bit8@> ~ get, put;
+  Unit@! _ := &(PutAll(put, bytes));
+  Md5(get);
+  
+Another example:
+
+  Streamed@<Bit8@> ~ get_padded, put_padded;
+  Unit@ _ := &(Pad(input, put_padded, /Md5/Bits%.Bit64.BitN.zero));
+  ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
+
+In general:
+
+  A@ a := ma, B@ b := mb, C@ c := mc;
+  ...
+
+Becomes:
+  A@! a_ := &(ma);
+  B@! b_ := &(mb);
+  C@! c_ := &(mc);
+  A@ a := a_;
+  B@ b := b_;
+  C@ c := c_;
+  ...
+
+So, proposed syntax is:
+
+  &(<expr>)
+
+to get a process the executes the given process in the background and returns
+a future to get its result.
+
+---
+
+I want to circle around again. What's different between put/get and some
+generic, primitive, side effecting operation? For stdio and app, we pass ports
+as abstract processes. Why do those have to be ports? Why can't we pass as
+input arbitrary abstract processes?
+
+And if we are happy to do that, why have a built in syntax for processes
+instead of just pass in the primitive interface that implements it?
+
+Something to do with the compiler not being able to compile it, rather
+treating the primitive as some opaque thing? But that's what we want to do
+with approach (1) above anyway.
+
+I don't know. Needs more thought.
+
+At the very least, I think it makes sense to start with implementing type
+inference support, and see how that makes bind syntax more useful. We can
+worry about what to do about processes later.
+
+---
+
+For process, maybe background process would be better syntax as:
+
+  A@! a &= ma;
+  ...
+
+It combines the background with a bind. If you want without the bind you could
+always do:
+  { A@! a &= ma; !(a); }
+
+I feel like this is more consistent with sequential syntax.
+

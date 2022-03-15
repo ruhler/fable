@@ -850,6 +850,40 @@ The runtime of a poly application is linear in the number of arguments plus
 the runtime of the poly. Unlike function application, poly application does
 not cause the body of the poly to be re-evaluated.
 
+7.4 Poly Inference (Experimental)
+------------------
+Abstract syntax:
+  Expr ::= poly_infer (poly :: Expr) (args :: [Expr])
+
+Concrete syntax:
+  expr ::= expr '(' expr [',' expr [...]] ')'
+
+Examples:
+  fromJust(3)
+
+Poly inference is a function application where the type arguments of the poly
+are inferred by the compiler based on the types of the function arguments.
+Using the example above, where the type of fromJust is:
+
+  <@ T@>(T@) { Maybe@<T@>; }
+
+Assuming the type of 3 is Int@, the expression fromJust(3) is rewritten by the
+compiler to fromJust<Int@>(3).
+
+The motivation for supporting type inference is to prevent cluttering the code
+with types that are otherwise straight forward to infer.
+  
+It is a type error if the compiler is unable to unambiguously infer all the
+type parameters to the poly based on the arguments. For example, it would be
+impossible to infer type arguments to a poly with either of the following
+types:
+  <@ T@>(Unit@) { T@; }
+  <@ T@, @ M@>(M@<T@>) { M@<T@>; }
+
+The type and runtime behavior of a poly inference expression is the same as
+the type and runtime behavior of the target combined poly application and
+function application expressions.
+
 8. Literals
 -----------
 We introduce syntax for describing lists and literals to make it less tedious
@@ -1340,6 +1374,7 @@ Expr ::=
 
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
+ | poly_infer (poly :: Expr) (args :: [Expr])
 
  | package_type (path :: Path)
  | abstract_type (package :: Type) (type :: Type)
@@ -1431,7 +1466,7 @@ expr ::=
            [',' name ':' expr [...]]
            [',' ':' expr ] ')'   
 
- | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
+ | expr '(' expr [',' expr [...]] ')'              (* func_apply, poly_infer *)
 
  | type '!'                                        (* proc_type *)
  | '!(' expr ')'                                   (* proc_eval *)
@@ -1472,9 +1507,9 @@ module ::= stmt                                                      (* module_v
 Notes:
 * struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
-* explicit type struct value, function apply, and abstract value share the
-  same form. The type of the expr is used to distinguish between the three
-  kinds of expressions.
+* explicit type struct value, function apply, poly inference, and abstract
+  value share the same form. The type of the expr is used to distinguish
+  between the four kinds of expressions.
 * Polymorphic application and abstract type share the same form. The type of
   the argument is used to distinguish between the three kinds of expressions.
 * The module value for module /Foo/Bar% is stored in Foo/Bar.fble.
