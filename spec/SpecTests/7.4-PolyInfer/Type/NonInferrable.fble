@@ -1,0 +1,14 @@
+# @@fble-test@@ compile-error 13:19
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+<@ T@>(Unit@) { Maybe@<T@>; } Nothing = <@ T@>(Unit@ u) {
+  Maybe@<T@>(nothing: u);
+};
+
+# It's not possible to infer the return type of this poly from the arguments
+# alone.
+Maybe@<Bool@> m = Nothing(Unit@());
+m.nothing;

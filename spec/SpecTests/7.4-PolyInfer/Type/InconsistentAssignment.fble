@@ -1,0 +1,8 @@
+# @@fble-test@@ compile-error 8:15
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+<@ T@>(T@, T@) { T@; } Poly = <@ T@>(T@ a, T@ b) { a; };
+
+# The type of T@ cannot be uniquely inferred.
+Poly(Unit@(), Bool@(true: Unit@()));

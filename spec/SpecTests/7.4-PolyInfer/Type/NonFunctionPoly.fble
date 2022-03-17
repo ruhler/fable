@@ -1,0 +1,8 @@
+# @@fble-test@@ compile-error 8:8
+@ Unit@ = *();
+
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+<@>% Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
+
+# You can't apply a non-function poly using poly inference.
+Nothing(Unit@());

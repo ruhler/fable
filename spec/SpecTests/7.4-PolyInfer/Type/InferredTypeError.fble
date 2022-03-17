@@ -1,0 +1,9 @@
+# @@fble-test@@ compile-error 8:14
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+<@ T@> (T@) { T@; } Poly = <@ T@> (T@ x) { x; };
+
+# The inferred type of the poly should be to return a Unit@, not a Bool@.
+Bool@ bool = Poly(Unit@());
+bool.false;

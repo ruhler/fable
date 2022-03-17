@@ -1127,3 +1127,20 @@ always do:
 
 I feel like this is more consistent with sequential syntax.
 
+---
+
+Implementing poly inference:
+* Expand TypeEquals implementation to take a list of pairs of type variable
+  and inferred type. Inferred type starts NULL, but is updated as soon as
+  something is inferred. Add a separate entry point to access this inference
+  capability. The implementation should be straight forward.
+* On poly apply: collect the type args into a list, make sure the final body
+  is a function, do type inference on each argument in turn, retaining
+  whatever was inferred for previous arguments. If any of the calls fail, we
+  fail. At the end, make sure we inferred something for each type parameter.
+  Then use those type parameters to compute the return type. Or just rewrite
+  it to a poly apply + func apply and rely on the existing code generation for
+  that.
+
+It's not that hard I don't think. Just some details to put in the right place.
+
