@@ -1182,6 +1182,13 @@ bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
   return TypesEqual(heap, a, b, NULL);
 }
 
+// FbleTypeInfer -- see documentation in type.h
+bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete)
+{
+  assert(false && "TODO: FbleTypeInfer");
+  return false;
+}
+
 // FblePrintType -- see documentation in type.h
 //
 // Notes:

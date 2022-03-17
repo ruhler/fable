@@ -165,6 +165,24 @@ typedef struct {
   FbleType _base;
   FbleType* type;
 } FbleTypeType;
+
+// FbleTypeAssignment --
+//   An assignment of a type to a type variable.
+//
+// Fields:
+//   var - the type variable.
+//   value - the value to assign to the type variable.
+typedef struct {
+  FbleType* var;
+  FbleType* value;
+} FbleTypeAssignment;
+
+// FbleTypeAssignmentV --
+//   A vector of FbleTypeAssignment.
+typedef struct {
+  size_t size;
+  FbleTypeAssignment* xs;
+} FbleTypeAssignmentV;
 
 // FbleGetKind --
 //   Get the kind of a value with the given type.
@@ -462,6 +480,29 @@ FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type);
 // Side effects:
 //   None.
 bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b);
+
+// FbleTypeInfer --
+//   Infer type values for the given type variables to make the abstract type
+//   equal to the concrete type.
+//
+// Inputs:
+//   heap - the heap to use for allocations.
+//   vars - the list of type variables along with their assignments. Initially
+//          the assigned values can be NULL or non-NULL. If an assignment for
+//          a type variable is non-NULL, the type variable is treated as equal
+//          to its assignment.
+//   abstract - the type with occurences of the type variables in it.
+//   concrete - the concrete type to infer the values of type variables from.
+//
+// Returns:
+//   True if the abstract type can be made equal to the concrete type with
+//   type inference, false otherwise.
+//
+// Side effects:
+// * Updates vars assignments based on inferred types. The caller is
+//   responsible for freeing any assignements to the type variables added to
+//   vars.
+bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete);
 
 // FblePrintType --
 //   Print the given compiled type in human readable form to stderr.
