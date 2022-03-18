@@ -101,6 +101,8 @@ static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* th, Tc tc);
 
+static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
+
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type);
@@ -457,6 +459,116 @@ static void FreeTc(FbleTypeHeap* th, Tc tc)
 {
   FbleReleaseType(th, tc.type);
   FbleFreeTc(tc.tc);
+}
+
+// PolyApply --
+//   Helper function for type checking poly application.
+//
+// Inputs:
+//   th - the type heap
+//   scope - the current scope
+//   poly - The type and value of the poly. May be TC_FAILED. Consumed.
+//   arg_type - The type of the arg type to apply the poly to. May be NULL. Consumed.
+//   expr_loc - The location of the application expression.
+//   arg_loc - The location of the argument type.
+//
+// Returns:
+//   The Tc for the application of the poly to the argument, or TC_FAILED in
+//   case of error.
+//
+// Side effects:
+// * Reports an error in case of error.
+// * The caller should call FbleFreeTc when the returned FbleTc is no longer
+//   needed and FbleReleaseType when the returned FbleType is no longer
+//   needed.
+static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc)
+{
+  // Note: typeof(poly<arg>) = typeof(poly)<arg>
+  // poly.type is typeof(poly)
+  if (poly.type == NULL) {
+    FbleReleaseType(th, arg_type);
+    return TC_FAILED;
+  }
+
+  // Note: arg_type is typeof(arg)
+  if (arg_type == NULL) {
+    FreeTc(th, poly);
+    return TC_FAILED;
+  }
+
+  FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(poly.type);
+  if (poly_kind->_base.tag == FBLE_POLY_KIND) {
+    // poly_apply
+    FbleKind* expected_kind = poly_kind->arg;
+    FbleKind* actual_kind = FbleGetKind(arg_type);
+    if (!FbleKindsEqual(expected_kind, actual_kind)) {
+      ReportError(arg_loc,
+          "expected kind %k, but found something of kind %k\n",
+          expected_kind, actual_kind);
+      FbleFreeKind(&poly_kind->_base);
+      FbleFreeKind(actual_kind);
+      FbleReleaseType(th, arg_type);
+      FreeTc(th, poly);
+      return TC_FAILED;
+    }
+    FbleFreeKind(actual_kind);
+    FbleFreeKind(&poly_kind->_base);
+
+    FbleType* arg = FbleValueOfType(th, arg_type);
+    assert(arg != NULL && "TODO: poly apply arg is a value?");
+    FbleReleaseType(th, arg_type);
+
+    FbleType* pat = FbleNewPolyApplyType(th, expr_loc, poly.type, arg);
+    FbleReleaseType(th, arg);
+    FbleReleaseType(th, poly.type);
+
+    // When we erase types, poly application dissappears, because we already
+    // supplied the generic type when creating the poly value.
+    return MkTc(pat, poly.tc);
+  }
+  FbleFreeKind(&poly_kind->_base);
+
+  FbleType* poly_value = FbleValueOfType(th, poly.type);
+  FreeTc(th, poly);
+  if (poly_value != NULL) {
+    FblePackageType* package = (FblePackageType*)FbleNormalType(th, poly_value);
+    FbleReleaseType(th, poly_value);
+    if (package->_base.tag == FBLE_PACKAGE_TYPE) {
+      // abstract_type
+      FbleType* arg = FbleValueOfType(th, arg_type);
+      FbleReleaseType(th, arg_type);
+      if (arg == NULL) {
+        ReportError(arg_loc,
+            "expected type, but found something of kind %%\n");
+        FbleReleaseType(th, &package->_base);
+        return TC_FAILED;
+      }
+
+      FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr_loc);
+      abs_type->package = package;
+      abs_type->type = arg;
+      FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
+      FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
+      FbleReleaseType(th, &abs_type->package->_base);
+      FbleReleaseType(th, abs_type->type);
+
+      FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr_loc);
+      type_type->type = &abs_type->_base;
+      FbleTypeAddRef(th, &type_type->_base, type_type->type);
+      FbleReleaseType(th, &abs_type->_base);
+
+      FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
+      type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
+      type_tc->_base.loc = FbleCopyLoc(expr_loc);
+      return MkTc(&type_type->_base, &type_tc->_base);
+    }
+    FbleReleaseType(th, &package->_base);
+  }
+
+  ReportError(expr_loc,
+      "type application requires a poly or package type\n");
+  FbleReleaseType(th, arg_type);
+  return TC_FAILED;
 }
 
 // TypeCheckExpr --
@@ -1111,94 +1223,9 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
     case FBLE_POLY_APPLY_EXPR: {
       FblePolyApplyExpr* apply = (FblePolyApplyExpr*)expr;
-
-      // Note: typeof(poly<arg>) = typeof(poly)<arg>
-      // TypeCheckExpr gives us typeof(poly)
       Tc poly = TypeCheckExpr(th, scope, apply->poly);
-      if (poly.type == NULL) {
-        return TC_FAILED;
-      }
-
-      // Note: arg_type is typeof(arg)
       FbleType* arg_type = TypeCheckExprForType(th, scope, apply->arg);
-      if (arg_type == NULL) {
-        FreeTc(th, poly);
-        return TC_FAILED;
-      }
-
-      FblePolyKind* poly_kind = (FblePolyKind*)FbleGetKind(poly.type);
-      if (poly_kind->_base.tag == FBLE_POLY_KIND) {
-        // poly_apply
-        FbleKind* expected_kind = poly_kind->arg;
-        FbleKind* actual_kind = FbleGetKind(arg_type);
-        if (!FbleKindsEqual(expected_kind, actual_kind)) {
-          ReportError(apply->arg->loc,
-              "expected kind %k, but found something of kind %k\n",
-              expected_kind, actual_kind);
-          FbleFreeKind(&poly_kind->_base);
-          FbleFreeKind(actual_kind);
-          FbleReleaseType(th, arg_type);
-          FreeTc(th, poly);
-          return TC_FAILED;
-        }
-        FbleFreeKind(actual_kind);
-        FbleFreeKind(&poly_kind->_base);
-
-        FbleType* arg = FbleValueOfType(th, arg_type);
-        assert(arg != NULL && "TODO: poly apply arg is a value?");
-        FbleReleaseType(th, arg_type);
-
-        FbleType* pat = FbleNewPolyApplyType(th, expr->loc, poly.type, arg);
-        FbleReleaseType(th, arg);
-        FbleReleaseType(th, poly.type);
-
-        // When we erase types, poly application dissappears, because we already
-        // supplied the generic type when creating the poly value.
-        return MkTc(pat, poly.tc);
-      }
-      FbleFreeKind(&poly_kind->_base);
-
-      FbleType* poly_value = FbleValueOfType(th, poly.type);
-      FreeTc(th, poly);
-      if (poly_value != NULL) {
-        FblePackageType* package = (FblePackageType*)FbleNormalType(th, poly_value);
-        FbleReleaseType(th, poly_value);
-        if (package->_base.tag == FBLE_PACKAGE_TYPE) {
-          // abstract_type
-          FbleType* arg = FbleValueOfType(th, arg_type);
-          FbleReleaseType(th, arg_type);
-          if (arg == NULL) {
-            ReportError(apply->arg->loc,
-                "expected type, but found something of kind %%\n");
-            FbleReleaseType(th, &package->_base);
-            return TC_FAILED;
-          }
-
-          FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
-          abs_type->package = package;
-          abs_type->type = arg;
-          FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
-          FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-          FbleReleaseType(th, &abs_type->package->_base);
-          FbleReleaseType(th, abs_type->type);
-
-          FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
-          type_type->type = &abs_type->_base;
-          FbleTypeAddRef(th, &type_type->_base, type_type->type);
-          FbleReleaseType(th, &abs_type->_base);
-
-          FbleTypeValueTc* type_tc = FbleAlloc(FbleTypeValueTc);
-          type_tc->_base.tag = FBLE_TYPE_VALUE_TC;
-          type_tc->_base.loc = FbleCopyLoc(expr->loc);
-          return MkTc(&type_type->_base, &type_tc->_base);
-        }
-        FbleReleaseType(th, &package->_base);
-      }
-
-      ReportError(expr->loc,
-          "type application requires a poly or package type\n");
-      FbleReleaseType(th, arg_type);
-      return TC_FAILED;
+      return PolyApply(th, scope, poly, arg_type, expr->loc, apply->arg->loc);
     }
 
     case FBLE_ABSTRACT_CAST_EXPR: {
@@ -1706,6 +1733,91 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
         FbleReleaseType(th, vtype);
         FbleReleaseType(th, vnorm);
+      }
+
+      if (normal->tag == FBLE_POLY_TYPE) {
+        FbleTypeAssignmentV vars;
+        FbleVectorInit(vars);
+
+        FbleType* body = FbleRetainType(th, normal);
+        while (body->tag == FBLE_POLY_TYPE) {
+          FblePolyType* poly = (FblePolyType*)body;
+          FbleTypeAssignment var = { .var = poly->arg, .value = NULL };
+          FbleVectorAppend(vars, var);
+
+          FbleType* next = FbleNormalType(th, poly->body);
+          FbleReleaseType(th, body);
+          body = next;
+        }
+
+        if (body->tag == FBLE_FUNC_TYPE) {
+          FbleFuncType* func_type = (FbleFuncType*)body;
+          if (func_type->args.size != argc) {
+            ReportError(expr->loc,
+              "expected %i args, but found %i\n",
+              func_type->args.size, argc);
+            FbleReleaseType(th, body);
+            for (size_t i = 0; i < vars.size; ++i) {
+              FbleReleaseType(th, vars.xs[i].value);
+            }
+            FbleFree(vars.xs);
+            FreeTc(th, misc);
+            FbleReleaseType(th, normal);
+            for (size_t i = 0; i < argc; ++i) {
+              FreeTc(th, args[i]);
+            }
+            return TC_FAILED;
+          }
+
+          bool okay = true;
+          for (size_t i = 0; okay && i < argc; ++i) {
+            okay = FbleTypeInfer(th, vars, func_type->args.xs[i], args[i].type);
+          }
+
+          for (size_t i = 0; i < vars.size; ++i) {
+            if (vars.xs[i].value == NULL) {
+              okay = false;
+            }
+          }
+
+          if (!okay) {
+            ReportError(expr->loc, "unable to infer types for poly:\n");
+            for (size_t i = 0; i < argc; ++i) {
+              fprintf(stderr, "  ");
+              FblePrintType(vars.xs[i].var);
+              fprintf(stderr, ": ");
+              if (vars.xs[i].value == NULL) {
+                fprintf(stderr, "???");
+              } else {
+                FblePrintType(vars.xs[i].value);
+              }
+              fprintf(stderr, "\n");
+            }
+
+            FbleReleaseType(th, body);
+            for (size_t i = 0; i < vars.size; ++i) {
+              FbleReleaseType(th, vars.xs[i].value);
+            }
+            FbleFree(vars.xs);
+            FreeTc(th, misc);
+            FbleReleaseType(th, normal);
+            for (size_t i = 0; i < argc; ++i) {
+              FreeTc(th, args[i]);
+            }
+            return TC_FAILED;
+          }
+
+          // We succeeded with type inference. Do both poly apply and function
+          // apply together here.
+          assert(false && "TODO");
+          return TC_FAILED;
+        }
+
+        FbleReleaseType(th, body);
+        for (size_t i = 0; i < vars.size; ++i) {
+          FbleReleaseType(th, vars.xs[i].value);
+        }
+        FbleFree(vars.xs);
       }
 
       ReportError(expr->loc,

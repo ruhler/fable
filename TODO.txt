@@ -1,3 +1,7 @@
+* Implement poly inference
+ - Finish implementation in typecheck.c
+ - Implement FbleTypeInfer in type.c
+
 * Move TODO entries to corresponding subdirectories?
 
 * Nicer error message for parsing module names with '-' in them.
