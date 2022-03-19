@@ -101,6 +101,7 @@ static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* th, Tc tc);
 
+static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc);
 static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
@@ -459,6 +460,77 @@ static void FreeTc(FbleTypeHeap* th, Tc tc)
 {
   FbleReleaseType(th, tc.type);
   FbleFreeTc(tc.tc);
+}
+
+// FuncApply --
+//   Helper function for type checking function application.
+//
+// Inputs:
+//   th - the type heap
+//   scope - the current scope
+//   func - The type and value of the function. May be TC_FAILED. Consumed.
+//   func_type - The normal type of the function. Consumed.
+//   argc - the number of arguments.
+//   args - the types and values of the arguments. Values Consumed.
+//   expr_loc - the location of the function application expression.
+//
+// Returns:
+//   The Tc for the application of the function to the argument, or TC_FAILED
+//   in case of error.
+//
+// Side effects:
+// * Reports an error in case of error.
+// * The caller should call FbleFreeTc when the returned FbleTc is no longer
+//   needed and FbleReleaseType when the returned FbleType is no longer
+//   needed.
+static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc)
+{
+  if (func_type->args.size != argc) {
+    ReportError(expr_loc,
+        "expected %i args, but found %i\n",
+        func_type->args.size, argc);
+    FbleReleaseType(th, &func_type->_base);
+    FreeTc(th, func);
+    for (size_t i = 0; i < argc; ++i) {
+      FreeTc(th, args[i]);
+    }
+    return TC_FAILED;
+  }
+
+  for (size_t i = 0; i < argc; ++i) {
+    if (!FbleTypesEqual(th, func_type->args.xs[i], args[i].type)) {
+      ReportError(args[i].tc->loc,
+          "expected type %t, but found %t\n",
+          func_type->args.xs[i], args[i].type);
+      FbleReleaseType(th, &func_type->_base);
+      FreeTc(th, func);
+      // TODO: This double for loop thing is pretty ugly. Anything we
+      // can do to clean up?
+      for (size_t j = 0; j < i; ++j) {
+        FbleFreeTc(args[j].tc);
+      }
+      for (size_t j = i; j < argc; ++j) {
+        FreeTc(th, args[j]);
+      }
+      return TC_FAILED;
+    }
+    FbleReleaseType(th, args[i].type);
+  }
+
+  FbleType* rtype = FbleRetainType(th, func_type->rtype);
+  FbleReleaseType(th, &func_type->_base);
+  FbleReleaseType(th, func.type);
+
+  FbleFuncApplyTc* apply_tc = FbleAlloc(FbleFuncApplyTc);
+  apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
+  apply_tc->_base.loc = FbleCopyLoc(expr_loc);
+  apply_tc->func = func.tc;
+  FbleVectorInit(apply_tc->args);
+  for (size_t i = 0; i < argc; ++i) {
+    FbleVectorAppend(apply_tc->args, args[i].tc);
+  }
+
+  return MkTc(rtype, &apply_tc->_base);
 }
 
 // PolyApply --
@@ -1585,54 +1657,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FbleType* normal = FbleNormalType(th, misc.type);
       if (normal->tag == FBLE_FUNC_TYPE) {
-        // FUNC_APPLY
-        FbleFuncType* func_type = (FbleFuncType*)normal;
-        if (func_type->args.size != argc) {
-          ReportError(expr->loc,
-              "expected %i args, but found %i\n",
-              func_type->args.size, argc);
-          FbleReleaseType(th, normal);
-          FreeTc(th, misc);
-          for (size_t i = 0; i < argc; ++i) {
-            FreeTc(th, args[i]);
-          }
-          return TC_FAILED;
-        }
-
-        for (size_t i = 0; i < argc; ++i) {
-          if (!FbleTypesEqual(th, func_type->args.xs[i], args[i].type)) {
-            ReportError(apply_expr->args.xs[i]->loc,
-                "expected type %t, but found %t\n",
-                func_type->args.xs[i], args[i].type);
-            FbleReleaseType(th, normal);
-            FreeTc(th, misc);
-            // TODO: This double for loop thing is pretty ugly. Anything we
-            // can do to clean up?
-            for (size_t j = 0; j < i; ++j) {
-              FbleFreeTc(args[j].tc);
-            }
-            for (size_t j = i; j < argc; ++j) {
-              FreeTc(th, args[j]);
-            }
-            return TC_FAILED;
-          }
-          FbleReleaseType(th, args[i].type);
-        }
-
-        FbleType* rtype = FbleRetainType(th, func_type->rtype);
-        FbleReleaseType(th, normal);
-        FbleReleaseType(th, misc.type);
-
-        FbleFuncApplyTc* apply_tc = FbleAlloc(FbleFuncApplyTc);
-        apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
-        apply_tc->_base.loc = FbleCopyLoc(expr->loc);
-        apply_tc->func = misc.tc;
-        FbleVectorInit(apply_tc->args);
-        for (size_t i = 0; i < argc; ++i) {
-          FbleVectorAppend(apply_tc->args, args[i].tc);
-        }
-
-        return MkTc(rtype, &apply_tc->_base);
+        return FuncApply(th, scope, misc, (FbleFuncType*)normal, argc, args, expr->loc);
       }
 
       if (normal->tag == FBLE_TYPE_TYPE) {
@@ -1807,10 +1832,22 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
             return TC_FAILED;
           }
 
-          // We succeeded with type inference. Do both poly apply and function
-          // apply together here.
-          assert(false && "TODO");
-          return TC_FAILED;
+          // We succeeded with type inference.
+          // Do the poly apply.
+          Tc poly = misc;
+          for (size_t i = 0; i < vars.size; ++i) {
+            FbleTypeType* arg_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
+            arg_type->type = vars.xs[i].value;
+            FbleTypeAddRef(th, &arg_type->_base, arg_type->type);
+            FbleReleaseType(th, vars.xs[i].value);
+
+            poly = PolyApply(th, scope, poly, &arg_type->_base, expr->loc, expr->loc);
+          }
+
+          // Do the func apply.
+          func_type = (FbleFuncType*)FbleNormalType(th, poly.type);
+          assert(func_type->_base.tag == FBLE_FUNC_TYPE);
+          return FuncApply(th, scope, poly, func_type, argc, args, expr->loc);
         }
 
         FbleReleaseType(th, body);
