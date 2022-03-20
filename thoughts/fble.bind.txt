@@ -1152,3 +1152,21 @@ it works okay with bind.
 Would it be bad to start taking advantage of poly inference everywhere? For
 some reason I'm afraid to do so.
 
+One thing I need to work out is how to describe bind in the spec. Is it
+general syntactic sugar that applies to just func_apply and poly_infer, or
+does it also apply to abstract_value and struct_value? If so, maybe it should
+be in a separate section and called simply 'bind' instead of func_bind.
+
+Certainly it would be worthwhile to work for both func_apply and poly_infer.
+Using it for abstract_value and struct_value seem weird to me, but is there
+any harm in doing so? Regardless, I need to clarify in the spec.
+
+Anyway, what's next in theory, now that we have type inference? Sounds like
+next steps are:
+* Spec and test bind for poly_infer.
+* Rewrite IO spec to use background process instead of parallel exec.
+
+Though, honestly, function inference is a big enough change to the language, I
+feel like I should write some more fble code before doing more language
+changes. The next thing for sat solver is see about using more interesting
+data structures. Might be worth doing now.

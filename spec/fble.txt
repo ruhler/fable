@@ -871,7 +871,10 @@ Assuming the type of 3 is Int@, the expression fromJust(3) is rewritten by the
 compiler to fromJust<Int@>(3).
 
 The motivation for supporting type inference is to prevent cluttering the code
-with types that are otherwise straight forward to infer.
+with types that are otherwise straight forward to infer. This is particularly
+important when used in combination with function bind, where the common use
+case requires specifying the return type repeatedly for each call in a
+function bind chain.
   
 It is a type error if the compiler is unable to unambiguously infer all the
 type parameters to the poly based on the arguments. For example, it would be

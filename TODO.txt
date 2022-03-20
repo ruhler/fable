@@ -3,6 +3,13 @@
 * Add more tests for poly inference to get code coverage.
 * Clarify in spec that poly inference works for function bind
  - And add a test case for this.
+ - Can we use bind for abstract_value too? Is it really syntactic sugar like
+   that? What about a struct value that takes a function as an argument?
+
+* Replace parallel exec with background process.
+  - Update spec.
+  - Implement tests.
+  - Rewrite all current uses of parallel exec.
 
 * Move TODO entries to corresponding subdirectories?
 
