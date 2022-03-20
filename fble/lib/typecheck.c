@@ -1764,6 +1764,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         FbleTypeAssignmentV vars;
         FbleVectorInit(vars);
 
+        // Retain normal to make sure vars.xs[i].var stays alive.
         FbleType* body = FbleRetainType(th, normal);
         while (body->tag == FBLE_POLY_TYPE) {
           FblePolyType* poly = (FblePolyType*)body;
@@ -1806,8 +1807,8 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
           }
 
           if (!okay) {
-            ReportError(expr->loc, "unable to infer types for poly:\n");
-            for (size_t i = 0; i < argc; ++i) {
+            ReportError(expr->loc, "unable to infer types for poly. tried:\n");
+            for (size_t i = 0; i < vars.size; ++i) {
               fprintf(stderr, "  ");
               FblePrintType(vars.xs[i].var);
               fprintf(stderr, ": ");
@@ -1831,6 +1832,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
             }
             return TC_FAILED;
           }
+          FbleReleaseType(th, body);
 
           // We succeeded with type inference.
           // Do the poly apply.
@@ -1842,6 +1844,15 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
             FbleReleaseType(th, vars.xs[i].value);
 
             poly = PolyApply(th, scope, poly, &arg_type->_base, expr->loc, expr->loc);
+          }
+          FbleFree(vars.xs);
+          FbleReleaseType(th, normal);
+
+          if (poly.type == NULL) {
+            for (size_t i = 0; i < argc; ++i) {
+              FreeTc(th, args[i]);
+            }
+            return TC_FAILED;
           }
 
           // Do the func apply.

@@ -850,7 +850,7 @@ The runtime of a poly application is linear in the number of arguments plus
 the runtime of the poly. Unlike function application, poly application does
 not cause the body of the poly to be re-evaluated.
 
-7.4 Poly Inference (Experimental)
+7.4 Poly Inference
 ------------------
 Abstract syntax:
   Expr ::= poly_infer (poly :: Expr) (args :: [Expr])

@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 8:8
+# @@fble-test@@ compile-error 8:1
 @ Unit@ = *();
 
 <@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };

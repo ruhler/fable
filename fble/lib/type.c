@@ -57,7 +57,7 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type);
 static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normalizing);
 static bool HasParam(FbleType* type, FbleType* param, TypeList* visited);
 static FbleType* Subst(FbleTypeHeap* heap, FbleType* src, FbleType* param, FbleType* arg, TypePairs* tps);
-static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs* eq);
+static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypeIdPairs* eq);
 
 // LevelAdjustedKind --
 //   Construct a kind that is a level adjusted version of the given kind.
@@ -610,22 +610,41 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
 }
 
 // TypesEqual --
-//   Test whether the two given evaluated types are equal.
+//   Perform type inference and/or test whether the two given types are equal.
 //
 // Inputs:
 //   heap - heap to use for allocations
-//   a - the first type
-//   b - the second type
+//   vars - variables for type inference.
+//   a - the first type, abstract in the type variables. Borrowed.
+//   b - the second type, which should be concrete. Borrowed.
 //   eq - A set of pairs of type ids that should be assumed to be equal
 //
 // Results:
 //   True if the first type equals the second type, false otherwise.
 //
 // Side effects:
-//   None.
-static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs* eq)
+// * Sets value of assignments to type variables to make the types equal.
+static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a, FbleType* b, TypeIdPairs* eq)
 {
   a = FbleNormalType(heap, a);
+
+  // Check for type inference.
+  for (size_t i = 0; i < vars.size; ++i) {
+    if (a == vars.xs[i].var) {
+      FbleReleaseType(heap, a);
+
+      // We can infer the value of type a is b.
+      if (vars.xs[i].value == NULL) {
+        vars.xs[i].value = FbleRetainType(heap, b);
+        return true;
+      }
+
+      // We should use the previously inferred value for a.
+      a = FbleNormalType(heap, vars.xs[i].value);
+      break;
+    }
+  }
+
   b = FbleNormalType(heap, b);
 
   for (TypeIdPairs* pairs = eq; pairs != NULL; pairs = pairs->next) {
@@ -647,7 +666,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
   if (a->tag == FBLE_ABSTRACT_TYPE) {
     FbleAbstractType* aa = (FbleAbstractType*)a;
     if (!aa->package->opaque) {
-      bool equal = TypesEqual(heap, aa->type, b, &neq);
+      bool equal = TypesEqual(heap, vars, aa->type, b, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return equal;
@@ -657,7 +676,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
   if (b->tag == FBLE_ABSTRACT_TYPE) {
     FbleAbstractType* ab = (FbleAbstractType*)b;
     if (!ab->package->opaque) {
-      bool equal = TypesEqual(heap, a, ab->type, &neq);
+      bool equal = TypesEqual(heap, vars, a, ab->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return equal;
@@ -688,7 +707,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
           return false;
         }
 
-        if (!TypesEqual(heap, dta->fields.xs[i].type, dtb->fields.xs[i].type, &neq)) {
+        if (!TypesEqual(heap, vars, dta->fields.xs[i].type, dtb->fields.xs[i].type, &neq)) {
           FbleReleaseType(heap, a);
           FbleReleaseType(heap, b);
           return false;
@@ -710,14 +729,14 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
       }
 
       for (size_t i = 0; i < fta->args.size; ++i) {
-        if (!TypesEqual(heap, fta->args.xs[i], ftb->args.xs[i], &neq)) {
+        if (!TypesEqual(heap, vars, fta->args.xs[i], ftb->args.xs[i], &neq)) {
           FbleReleaseType(heap, a);
           FbleReleaseType(heap, b);
           return false;
         }
       }
 
-      bool result = TypesEqual(heap, fta->rtype, ftb->rtype, &neq);
+      bool result = TypesEqual(heap, vars, fta->rtype, ftb->rtype, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -726,7 +745,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
     case FBLE_PROC_TYPE: {
       FbleProcType* uta = (FbleProcType*)a;
       FbleProcType* utb = (FbleProcType*)b;
-      bool result = TypesEqual(heap, uta->type, utb->type, &neq);
+      bool result = TypesEqual(heap, vars, uta->type, utb->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -753,7 +772,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
         .b = ptb->arg->id,
         .next = &neq
       };
-      bool result = TypesEqual(heap, pta->body, ptb->body, &pneq);
+      bool result = TypesEqual(heap, vars, pta->body, ptb->body, &pneq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -778,8 +797,8 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
     case FBLE_ABSTRACT_TYPE: {
       FbleAbstractType* aa = (FbleAbstractType*)a;
       FbleAbstractType* ab = (FbleAbstractType*)b;
-      bool result = TypesEqual(heap, &aa->package->_base, &ab->package->_base, &neq)
-                 && TypesEqual(heap, aa->type, ab->type, &neq);
+      bool result = TypesEqual(heap, vars, &aa->package->_base, &ab->package->_base, &neq)
+                 && TypesEqual(heap, vars, aa->type, ab->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -798,7 +817,7 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b, TypeIdPairs
     case FBLE_TYPE_TYPE: {
       FbleTypeType* tta = (FbleTypeType*)a;
       FbleTypeType* ttb = (FbleTypeType*)b;
-      bool result = TypesEqual(heap, tta->type, ttb->type, &neq);
+      bool result = TypesEqual(heap, vars, tta->type, ttb->type, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
       return result;
@@ -1179,14 +1198,14 @@ FbleType* FbleListElementType(FbleTypeHeap* heap, FbleType* type)
 // FbleTypesEqual -- see documentation in type.h
 bool FbleTypesEqual(FbleTypeHeap* heap, FbleType* a, FbleType* b)
 {
-  return TypesEqual(heap, a, b, NULL);
+  FbleTypeAssignmentV vars = { .size = 0, .xs = NULL };
+  return TypesEqual(heap, vars, a, b, NULL);
 }
 
 // FbleTypeInfer -- see documentation in type.h
 bool FbleTypeInfer(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* abstract, FbleType* concrete)
 {
-  assert(false && "TODO: FbleTypeInfer");
-  return false;
+  return TypesEqual(heap, vars, abstract, concrete, NULL);
 }
 
 // FblePrintType -- see documentation in type.h

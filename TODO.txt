@@ -1,6 +1,6 @@
-* Implement poly inference
- - Finish implementation in typecheck.c
- - Implement FbleTypeInfer in type.c
+* Make it easier to run failing tests under valgrind and gdb.
+* Better error message for 7.4-PolyInfer/Type/InconsistentAssignment case.
+* Add more tests for poly inference to get code coverage.
 
 * Move TODO entries to corresponding subdirectories?
 
