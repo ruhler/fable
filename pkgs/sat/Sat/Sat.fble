@@ -61,7 +61,7 @@
 #
 # Returns the simplified clause, or Nothing if the clause is now satisfied.
 (Clause@, Vars@) { Maybe@<Clause@>; } SubstClause = (Clause@ c, Vars@ vs) {
-  c.?(nil: Just<Clause@>(c));
+  c.?(nil: Just(c));
 
   Var@ head = c.cons.head;
   Maybe@<Bool@> mv = Lookup(vs, head.id);
@@ -73,7 +73,7 @@
 
   Maybe@<Clause@> tail = SubstClause(c.cons.tail, vs);
   tail.?(nothing: Nothing<Clause@>);
-  Just<Clause@>(Cons<Var@>(head, tail.just));
+  Just(Cons(head, tail.just));
 };
 
 # Subst --
@@ -84,7 +84,7 @@
   Maybe@<Clause@> c = SubstClause(f.cons.head, vs);
   c.?(nothing: Subst(f.cons.tail, vs));
 
-  Cons<Clause@>(c.just, Subst(f.cons.tail, vs));
+  Cons(c.just, Subst(f.cons.tail, vs));
 };
 
 # GetUnit --
@@ -170,8 +170,8 @@ Simplify = (Formula@ f, Assignment@ a) {
 # Returns:
 #   The timeout decremented by one, Nothing if time is up.
 (Timeout@) { Maybe@<Timeout@>; } Countdown = (Timeout@ t) {
-  t.?(nothing: Just<Timeout@>(t));
-  t.just.?(p: Just<Timeout@>(Just<Int@>(Dec(t.just))));
+  t.?(nothing: Just(t));
+  t.just.?(p: Just(Just(Dec(t.just))));
   Nothing<Timeout@>;
 };
 
@@ -199,11 +199,11 @@ Search = (Formula@ f, Assignment@ a, Timeout@ t) {
 
   Var@ v = f.cons.head.cons.head;
   Vars@ vs = Insert(Empty, v.id, v.polarity);
-  Result@ attempted = Search(Subst(f, vs), Cons<Var@>(v, a), nt.just);
+  Result@ attempted = Search(Subst(f, vs), Cons(v, a), nt.just);
   attempted.?(unsat: {
     Var@ nv = Var@(v.id, Not(v.polarity));
     Vars@ nvs = Insert(Empty, nv.id, nv.polarity);
-    Search(Subst(f, nvs), Cons<Var@>(nv, a), attempted.unsat);
+    Search(Subst(f, nvs), Cons(nv, a), attempted.unsat);
   });
 
   attempted;

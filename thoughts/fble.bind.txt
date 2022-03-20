@@ -1144,3 +1144,11 @@ Implementing poly inference:
 
 It's not that hard I don't think. Just some details to put in the right place.
 
+---
+
+Type inference is implemented now! I feel like I should try it out. And see if
+it works okay with bind.
+
+Would it be bad to start taking advantage of poly inference everywhere? For
+some reason I'm afraid to do so.
+
