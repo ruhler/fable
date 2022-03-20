@@ -96,3 +96,24 @@ The hope is, this approach will be better because each clause has a few number
 of vars and each var is in a few number of clauses, and at each step of doing
 something, we deal with a small number of things and figure out directly what
 the next steps are.
+
+---
+
+Proposal:
+* Have a data structure which is a triple of Vars map, Clause map, and
+  Operations queue. And if it's useful, collection of assignments discovered.
+* Have functions that update the triple given an operation, by updating vars,
+  clauses, and the queue.
+* Have abstract operations to construct the maps a single clause at a time.
+  This can be used by the parser to build the state.
+* Have a special function called after all clauses are added to do an initial
+  pass to discover pure variables and unit literals.
+
+The rest is pretty straight forward.
+
+For development purposes, it might be nice to rewrite the code mostly from
+scratch. Consider putting it into Cnf.fble instead of overwriting Sat.fble.
+
+It might be nice to abstract the parser first to work with some monad that
+provides an 'add clause' method that takes a list of literals.
+

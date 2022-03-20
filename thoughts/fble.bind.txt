@@ -1170,3 +1170,156 @@ Though, honestly, function inference is a big enough change to the language, I
 feel like I should write some more fble code before doing more language
 changes. The next thing for sat solver is see about using more interesting
 data structures. Might be worth doing now.
+
+---
+
+On the specification for bind. I see two options.
+
+1. This is a purely concrete syntactic sugar. It turns anything that matches
+the form:
+
+  A@ a, B@ b, ... <- xxx;
+  yyy;
+
+Into:
+
+  xxx((A@ a, B@ b, ...) { yyy; })
+
+Regardless of what xxx is.
+
+2. Have bind syntax apply specifically to func_apply and poly_infer, or some
+other explicit list. It could be described as another concrete syntactic form
+for those cases, or as, e.g. func_bind and poly_bind abstract syntaxes.
+
+Considerations for choosing between (1) and (2):
+* Today we implement bind at the concrete syntax level. The parser doesn't
+  know the type of xxx, so it can't distinguish, for example, between
+  func/poly and some other form. That means either we use (1), or we need to
+  change the implementation.
+* If bind is a single concept, we can describe it in one place in the spec. If
+  it's specific to func_apply, and poly_infer, then we may have to duplicate
+  the explanation in the spec.
+* Should we support bind syntax for struct value and abstract value too? Seems
+  like a much less common case, but is there any harm in generalizing?
+* You could imagine the compiler wants to take advantage of bind syntax to do
+  optimization. But, on the other hand, you could imagine it's easy enough for
+  the compiler to detect this kind of inline function argument case and
+  optimizing without the special syntax. So I'm not sure that's an argument
+  one way or the other.
+* Error messages may be easier to comprehend if bind isn't just a concrete
+  syntactic sugar. Because if it is, you get the error message on the
+  desugared expression, which you don't see in the source code.
+* Case statements set precedent for alternative concrete syntax for give
+  abstract syntax entities. But in that case there is only a single abstract
+  syntax it would map to.
+
+This also makes you wonder if we should be treating func_apply and poly_infer
+as separate (abstract) syntax. In the implementation we represent both using
+misc_apply.
+
+---
+
+More thoughts on parallel execution. The question is whether it's a bad idea
+to change parallel process to be based on background processes rather than
+fork/join parallel child processes.
+
+* Background processes are as powerful as fork/join parallel child processes.
+  We can simulation fork/join parallel child processes using background
+  processes.
+* Fork/join parallel child processes are not as powerful as background
+  processes, in the sense that they don't allow the parent process to run
+  while there exist any child processes. That's the key difference.
+* Conceptually it makes sense for parent and child processes to run at the
+  same time. Think about people in a company. You are responsible for a job,
+  you hire some workers (spawn some background processes). you continue to
+  work while those workers work. When the jobs done, you stick around until
+  all the people you hired are done, and then you wrap up. It feels arbitrary
+  and convoluted to say the parent process can't run at the same time as
+  children.
+* My concern with background processes is that it's hard to tell by looking at
+  the source code what processes are running. Think goto considered harmful
+  kind of argument. With fork/join parallel child processes, it's clear at any
+  point in the code what's running: the outside world does its thing (you
+  don't care) and either you are running, so no children to worry about, or a
+  fixed number of children are running while you wait, and then you can focus
+  in on a particular child and replace the view. For background processes,
+  there's no easy way to see from the code when a process ends, or what
+  processes are running at any point in time. I think that's a significant
+  enough problem to warrant the restriction to fork/join parallel child
+  processes. Thing how much of a headache it is in pthreads or in bash
+  background processes to know if all children are killed or not when the
+  parent dies, or if you'll end up with zombies?
+* We can have the fork/join parallel child process be reasonable with respect
+  to conceptually having parent and child run by pretending the parent takes
+  the task of running the first child. No need to have an idle processor in
+  practice.
+* I would argue parallel process syntax not being easy to do with function
+  bind is a reasonable feature, because parallel processes really are a
+  special thing. You can't reasonably expect things to run in parallel without
+  them. For example, how would you abstract parallel execution using bind
+  syntax? You would say you run a thing that doesn't return until you run its
+  result, but in practice, it can only run in the background in the very
+  special case of the built in processes. Otherwise it has to be some form of
+  cooperative multithreading, which has fundamental implications for causality
+  and deadlock.
+* Worst case, you can support parallel processes with function bind. For
+  example, limit to two parallel children at a time. Then, instead of:
+    A@! a_ &= { ... };
+    B@! b_ &= { ... };
+    A@ a := a_;
+    A@ b := b_;
+    ...
+
+  You have:
+    A! a_ = { ... };
+    B! b_ = { ... };
+    A@ a, B@ b <- parallel(a_, b_);
+    ...
+
+  Which is not in any sense worse. It's only worse if you want more processes
+  forked, and then, not by too much?
+    A! a_ = { ... };
+    B! b_ = { ... };
+    C! c_ = { ... };
+    A@ a, B@ b, C@ c <- par3(a_, b_, c_);
+
+  Or:
+    A! a_ = { ... };
+    B! b_ = { ... };
+    C! c_ = { ... };
+    Pair@<A@, Pair@<B@, C@>> r <- par(a_, par(b_, c_));
+    A@ a = r.first; B@ b = r.second.first; C@ c = r.second.second;
+    ...
+
+  Or...
+    A@ ~ get_a, put_a;
+    B@ ~ get_b, put_b;
+    C@ ~ get_c, put_c;
+    Unit! a_ = { ...; put_a(result); };
+    Unit! b_ = { ...; put_b(result); };
+    Unit! c_ = { ...; put_c(result); };
+    Unit@ _ := par[a_, b_, c_];
+    A@ a <- get_a;
+    B@ b <- get_b;
+    C@ c <- get_c;
+
+So, in summary, I propose we keep processes as is in fble, no change. We can
+provide function-bind friendly wrappers around it. Just not a fully general
+parallel exec wrapper, which makes sense given the fundamental and special
+nature of concurrent execution and is a price definitely worth paying to be
+able to see clearly from the code what threads are running.
+
+---
+
+A great application to try next would  be to rewrite the sat parser to work
+based on an abstract interface with the following methods:
+* get_line, error.
+* add_clause.
+* do, return.
+
+Which we could then implement to work with io, or pure, construct a list of
+clauses, or construct whatever internal data structure we want.
+
+Or, more generally, have two separate interfaces, one for reading input, the
+other for writing output? That's an interesting question, and worth playing
+around with.
