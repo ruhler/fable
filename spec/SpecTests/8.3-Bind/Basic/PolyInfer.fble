@@ -1,0 +1,17 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+
+<@ T@>((Unit@) { T@; }) { T@; } Apply = <@ T@>((Unit@) { T@; } f) {
+  f(Unit@());
+};
+
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+Bool@ x = {
+  # Verify we can use bind syntax with poly inference, where the return type is
+  # inferred from the type of the function being applied.
+  Unit@ u <- Apply;
+  Bool@(true: u);
+};
+
+x.true;

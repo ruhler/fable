@@ -1323,3 +1323,28 @@ clauses, or construct whatever internal data structure we want.
 Or, more generally, have two separate interfaces, one for reading input, the
 other for writing output? That's an interesting question, and worth playing
 around with.
+
+---
+
+I vote for making bind pure concrete syntactic sugar for now. Have it apply to
+anything that satisfies misc_apply. The only downside I can think is
+potentially error messages. Let's give it a try and see how bad it is.
+
+The question is, what part of the spec should I describe bind in? Concrete
+syntax? A separate chapter? Leave it where it is as part of func_bind even
+though it applies to other things? Maybe generalize the chapter on lists and
+literals and put it there, as a general syntactic sugar thing?
+
+That kind of sounds nice to me. What would I call the chapter? I would have to
+reorganize it a bit.
+
+8. Syntactic Sugar
+Add bind to the overview section.
+
+8.1 List is good.
+8.2 Literal is good.
+8.3 Turn into a chapter on Bind. Move the example content to first List, and
+then Literal, where we can refer to the list example for the literal example.
+
+Cool. That's done then. And because IO is done, I think, in theory, we are
+done here with function bind. All I have to do now is to use it and enjoy.

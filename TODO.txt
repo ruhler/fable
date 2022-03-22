@@ -1,10 +1,6 @@
 * Make it easier to run failing tests under valgrind and gdb.
 * Better error message for 7.4-PolyInfer/Type/InconsistentAssignment case.
 * Add more tests for poly inference to get code coverage.
-* Clarify in spec that poly inference works for function bind
- - And add a test case for this.
- - Can we use bind for abstract_value too? Is it really syntactic sugar like
-   that? What about a struct value that takes a function as an argument?
 
 * Move TODO entries to corresponding subdirectories?
 

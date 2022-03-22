@@ -491,18 +491,8 @@ For example, the following union select expression:
 Is equivalent to the following statement based form:
 
   {
-    x.?(true: {
-      y.?(true: {
-        A;
-      });
-
-      B;
-    });
-
-    y.?(true: {
-      C;
-    });
-
+    x.?(true: { y.?(true: A); B; });
+    y.?(true: C);
     D;
   }
 
@@ -592,71 +582,6 @@ function in the context of the supplied arguments.
 Runtime is O(log(N + M)) plus the runtime of func, the runtimes of each of the
 arguments, and the runtime of the body, where N is the number of arguments to
 the function and M is the number of variables captured by the function.
-
-5.4 Function Bind
------------------
-Abstract Syntax:
-  Expr ::= func_bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
-
-Concrete Syntax:
-  stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
-
-Example:
-  Int@ x <- Map(l);
-  f(x, y)
-
-Function bind is syntactic sugar for calling a function with an anonymous
-function as its only argument. It is equivalent to:
-
-  func_apply func (func_value args [body])
-
-For example, the expression:
-
-  Int@ x <- Map(l);
-  f(x, y)
-
-Desugars to:
-
-  map(l)((Int@ x) { f(x, y); });
-
-Function bind is particularly suited for abstracting glue logic that
-manipulates how program statements are combined. For example, it can be used
-to hide error propagation based on a Maybe monad.
-
-Instead of:
-  Maybe@ a = f(x);
-  a.?(
-    just: {
-      Maybe@ b = g(a.just);
-      b.?(just: h(b.just), nothing: Nothing);
-    },
-    nothing: Nothing);
-
-And instead of the slightly better:
-
-  (Maybe@, (X@) { Maybe@; }) { Maybe@; }
-  Maybe = (Maybe@ m, (X@) { Maybe@; } f) {
-    m.?(just: f(x.just), nothing: Nothing);
-  };
-
-  Maybe(f(x), (X@ a) {
-    Maybe(g(a), (X@ b) {
-      h(b);
-    };
-  };
-
-You can write:
-  
-  (Maybe@)((X@) { Maybe@; }) { Maybe@; }
-  Maybe = (Maybe@ m)((X@) { Maybe@; } f) {
-    m.?(just: f(x.just), nothing: Nothing);
-  };
-
-  X@ a <- Maybe(f(x));
-  X@ b <- Maybe(g(x));
-  h(b);
-
-Which more clearly separates the glue logic from the meat of the program.
 
 6 Processes
 -----------
@@ -887,11 +812,15 @@ The type and runtime behavior of a poly inference expression is the same as
 the type and runtime behavior of the target combined poly application and
 function application expressions.
 
-8. Literals
------------
+8. Syntactic Sugar
+------------------
 We introduce syntax for describing lists and literals to make it less tedious
 to write code involving sequences of elements of the same type and raw
 sequences of data without the overhead of punctuation between data elements.
+
+We introduce bind syntax to facilitate calling a function with an anonymous
+function as its only argument. This is useful for using reusable glue logic to
+compose operations in a monadic style.
 
 8.1 List
 --------
@@ -972,8 +901,8 @@ to f is E@, is desugared to:
 It is a type error if the word contains a letter for which there is no
 corresponding field in the element type E@.
 
-8.3 Example
------------
+8.2.1 Example
+-------------
 To better illustrate the intended use of list and literal expressions, imagine
 we want to define a binary integer literal.
 
@@ -1007,6 +936,75 @@ example:
 
  Int@ 6 = Binary|110;
  Int@ x = Binary[first_bit, second_bit, third_bit];
+
+8.3 Bind
+--------
+Abstract Syntax:
+  Expr ::= bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+
+Concrete Syntax:
+  stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
+
+Example:
+  Int@ x <- Map(l);
+  f(x, y)
+
+Bind is syntactic sugar for calling a function with an anonymous function as
+its only argument. It is equivalent to:
+
+  apply func (func_value args [body])
+
+For example, the expression:
+
+  Int@ x <- Map(l);
+  f(x, y)
+
+Desugars to:
+
+  map(l)((Int@ x) { f(x, y); });
+
+Bind is particularly suited for abstracting glue logic that manipulates how
+program statements are combined. For example, it can be used to hide error
+propagation based on a Maybe monad.
+
+Instead of:
+  Maybe@ a = f(x);
+  a.?(
+    just: {
+      Maybe@ b = g(a.just);
+      b.?(just: h(b.just), nothing: Nothing);
+    },
+    nothing: Nothing);
+
+And instead of the slightly better:
+
+  (Maybe@, (X@) { Maybe@; }) { Maybe@; }
+  Maybe = (Maybe@ m, (X@) { Maybe@; } f) {
+    m.?(just: f(x.just), nothing: Nothing);
+  };
+
+  Maybe(f(x), (X@ a) {
+    Maybe(g(a), (X@ b) {
+      h(b);
+    };
+  };
+
+You can write:
+  
+  (Maybe@)((X@) { Maybe@; }) { Maybe@; }
+  Maybe = (Maybe@ m)((X@) { Maybe@; } f) {
+    m.?(just: f(x.just), nothing: Nothing);
+  };
+
+  X@ a <- Maybe(f(x));
+  X@ b <- Maybe(g(x));
+  h(b);
+
+Which more clearly separates the glue logic from the meat of the program.
+
+Bind works at the level of concrete syntax. It can be used for any expression
+that has the same form as function application, including poly inference,
+explicit type struct value, and abstract value.
 
 9. Modules
 ----------
@@ -1387,6 +1385,7 @@ Expr ::=
 
  | list (func :: Expr) (args :: [Expr])
  | literal (func :: Expr) (letters :: word)
+ | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
  ;
 
 Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
@@ -1499,9 +1498,9 @@ stmt ::=
    expr ';'
  | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
  | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
- | type name [',' type name [...]] '<-' expr ';' stmt                (* func_bind *)
  | type '~' name ',' name ';' stmt                                   (* proc_link *)
  | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
+ | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
  ;
 
 module ::= stmt                                                      (* module_value *)
@@ -1512,7 +1511,8 @@ Notes:
   to distinguish between the two kinds of expressions.
 * explicit type struct value, function apply, poly inference, and abstract
   value share the same form. The type of the expr is used to distinguish
-  between the four kinds of expressions.
+  between the four kinds of expressions. Each of these kinds of expressions
+  can be the target of a bind expression.
 * Polymorphic application and abstract type share the same form. The type of
   the argument is used to distinguish between the three kinds of expressions.
 * The module value for module /Foo/Bar% is stored in Foo/Bar.fble.
