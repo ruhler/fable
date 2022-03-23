@@ -175,4 +175,9 @@ ProcessEach = <@ A@, @ B@>(List@<A@> l, B@ base, (A@, B@) { B@!; } body) {
     nil: !(base));
 };
 
-@(List@, List, Cons, Nil, Append, Init, Concat, Map, ForEach, ProcessEach);
+<@ T@>(List@<T@>) { List@<T@>; } Reverse = <@ T@>(List@<T@> l) {
+  ForEach(l, List<T@>[], (T@ x, List@<T@> nl) { Cons(x, nl); });
+};
+
+@(List@, List, Cons, Nil, Append, Init, Concat, Map, ForEach, ProcessEach,
+  Reverse);

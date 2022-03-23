@@ -22,6 +22,8 @@
 <@>% Concat = /Core/List%.Concat;
 <@,@>% Map = /Core/List%.Map;
 <@,@>% ForEach = /Core/List%.ForEach;
+<@>% Reverse = /Core/List%.Reverse;
+
 <@>% Length = /Core/List/Length%.Length;
 <@>% Split = /Core/List/Eq%.Split;
 <@>% Sort = /Core/List/Sort%.Sort;
@@ -154,6 +156,13 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
       ForEach<Elem@, List@<Elem@>>(l, Nil<Elem@>, (Elem@ e, List@<Elem@> b) {
         Cons<Elem@>(e, b);
       });
+    AssertEquals(wnt, got);
+  })),
+
+  Test(Str|'Reverse', !({
+    List@<Elem@> input = EL|ABCDE;
+    List@<Elem@> wnt = EL|EDCBA;
+    List@<Elem@> got = Reverse(input);
     AssertEquals(wnt, got);
   })),
 

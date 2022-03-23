@@ -1348,3 +1348,16 @@ then Literal, where we can refer to the list example for the literal example.
 
 Cool. That's done then. And because IO is done, I think, in theory, we are
 done here with function bind. All I have to do now is to use it and enjoy.
+
+---
+
+I switched to using a monad for the parser. Observations:
+* It works. Looks pretty nice. Bind notation is totally usable with type
+  inference in place.
+* I like it a little better than Haskell, because we can use functions
+  directly instead of having to wrap/unwrap them in newtypes.
+* I'm finding other things where I want type inference, namely polymorphic
+  struct and union values.
+* I got an error message about unable to infer type. It looked nice to me and
+  was legitimate.
+

@@ -10,12 +10,20 @@
 <@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
+<@>% Reverse = /Core/List%.Reverse;
 <@>% Split = /Core/List/Eq%.Split;
 <@>% Length = /Core/List/Length%.Length;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
 
 @ Var@ = /Sat/Sat%.Var@;
 @ Clause@ = /Sat/Sat%.Clause@;
@@ -33,77 +41,109 @@
 # -1 5 3 4 0       // +x, -x not allowed in same clause
 # -3 -4 0
 
-<@>@ Parse@ = <@ T@> { +(String@ error, T@ parsed); };
+# Parse@ monad definition.
+@ ParseState@ = *(List@<String@> lines, Formula@ formula);
+<@>@ ParseResult@ = <@ T@> { *(ParseState@ state, T@ result); };
+<@>@ ParseStatus@ = <@ T@> { +(String@ error, ParseResult@<T@> parsed); };
+<@>@ ParseM@ = <@ T@> { (ParseState@) { ParseStatus@<T@>; }; };
 
-(List@<String@>) { Parse@<Clause@>; } ParseVars = (List@<String@> words) {
-  words.?(nil: Parse@<Clause@>(error: Str|'missing clause terminator'));
+<@ T@>(T@) { ParseM@<T@>; } Return = <@ T@>(T@ x)(ParseState@ s) {
+  ParseStatus@<T@>(parsed: ParseResult@<T@>(s, x));
+};
+
+<@ A@>(ParseM@<A@>)<@ B@>((A@) { ParseM@<B@>; }) { ParseM@<B@>; }
+Do = <@ A@>(ParseM@<A@> m)<@ B@>((A@) { ParseM@<B@>; } f)(ParseState@ s) {
+  ParseStatus@<A@> r = m(s);
+  r.?(error: ParseStatus@<B@>(error: r.error));
+  f(r.parsed.result)(r.parsed.state);
+};
+
+<@ T@>(String@) { ParseM@<T@>; } Error = <@ T@>(String@ msg)(ParseState@ _) {
+  ParseStatus@<T@>(error: msg);
+};
+
+ParseM@<Maybe@<String@>> GetLine = (ParseState@ state) {
+  state.lines.?(nil: Return(Nothing<String@>)(state));
+
+  ParseState@ nstate = ParseState@(state.lines.cons.tail, state.formula);
+  Return(Just(state.lines.cons.head))(nstate);
+};
+
+(Clause@) { ParseM@<Unit@>; } AddClause = (Clause@ clause)(ParseState@ s) {
+  ParseState@ ns = ParseState@(s.lines, Cons(clause, s.formula));
+  Return(Unit)(ns);
+};
+
+(List@<String@>) { ParseM@<Clause@>; } ParseVars = (List@<String@> words) {
+  words.?(nil: Error<Clause@>(Str|'missing clause terminator'));
 
   Int@ x = /Core/Int/Show%.Read(words.cons.head);
-  /Core/Int/Eq%.Eq(x, Int|0).?(true: Parse@<Clause@>(parsed: List<Var@>[]));
+  /Core/Int/Eq%.Eq(x, Int|0).?(true: Return(List<Var@>[]));
 
   Var@ v = Var@(Abs(x), /Core/Int/Eq%.Gt(x, Int|0));
 
-  Parse@<Clause@> tail = ParseVars(words.cons.tail);
-  tail.?(error: Parse@<Clause@>(error: tail.error));
-  Parse@<Clause@>(parsed: Cons<Var@>(v, tail.parsed));
+  Clause@ tail <- Do(ParseVars(words.cons.tail));
+  Return(Cons(v, tail));
 };
 
-(String@) { Parse@<Clause@>; } ParseClause = (String@ line) {
+(String@) { ParseM@<Clause@>; } ParseClause = (String@ line) {
   ParseVars(Split<Char@>(line, IsSpace));
 };
 
-(List@<String@>) { Parse@<Formula@>; } ParseClauses = (List@<String@> lines) {
-  lines.?(nil: Parse@<Formula@>(parsed: List<Clause@>[]));
+ParseM@<Unit@> ParseClauses = {
+  Maybe@<String@> line <- Do(GetLine);
+  line.?(nothing: Return(Unit));
 
-  Parse@<Clause@> clause = ParseClause(lines.cons.head);
-  clause.?(error: Parse@<Formula@>(error: clause.error));
-
-  Parse@<Formula@> tail = ParseClauses(lines.cons.tail);
-  tail.?(error: Parse@<Formula@>(error: tail.error));
-
-  Parse@<Formula@>(parsed: Cons<Clause@>(clause.parsed, tail.parsed));
+  Clause@ clause <- Do(ParseClause(line.just));
+  Unit@ _ <- Do(AddClause(clause));
+  ParseClauses;
 };
 
 # Parse starting from the 'p cnf...' header line
-(String@, List@<String@>) { Parse@<Formula@>; }
-ParseFromHeader = (String@ header, List@<String@> lines) {
+(String@) { ParseM@<Unit@>; } ParseFromHeader = (String@ header) {
   List@<String@> words = Split<Char@>(header, IsSpace);
   Int@ num_words = Length<String@>(words);
   /Core/Int/Eq%.Eq(num_words, Int|4).?(false: {
-    Parse@<Formula@>(error: Strs[Str|'invalid header line: ', header]);
+    Error<Unit@>(Strs[Str|'invalid header line: ', header]);
   });
 
   String@ p = words.cons.head;
   String@ cnf = words.cons.tail.cons.head;
 
   /Core/String/Eq%.Eq(p, Str|'p').?(false: {
-    Parse@<Formula@>(error: Strs[Str|'expected ''p'', but got: ', p]);
+    Error<Unit@>(Strs[Str|'expected ''p'', but got: ', p]);
   });
 
   /Core/String/Eq%.Eq(cnf, Str|'cnf').?(false: {
-    Parse@<Formula@>(error: Strs[Str|'expected ''cnf'', but got: ', cnf]);
+    Error<Unit@>(Strs[Str|'expected ''cnf'', but got: ', cnf]);
   });
 
   # TODO: check syntax and values of nbvars and nbclauses?
-  ParseClauses(lines);
+  ParseClauses;
 };
 
 # Parse from the starting state of a file, where there are still comment
 # lines.
-(List@<String@>) { Parse@<Formula@>; } ParseFromStart = (List@<String@> lines) {
-  lines.?(nil: Parse@<Formula@>(error: Str|'no clauses found'));
+ParseM@<Unit@> ParseFromStart = {
+  Maybe@<String@> line <- Do(GetLine);
+  line.?(nothing: Error<Unit@>(Str|'no clauses found'));
 
-  String@ line = lines.cons.head;
-  line.?(nil: Parse@<Formula@>(error: Str|'empty line'));
+  line.just.?(nil: Error<Unit@>(Str|'empty line'));
 
-  Char@ c = line.cons.head;
+  Char@ c = line.just.cons.head;
   c.?(
-    c: ParseFromStart(lines.cons.tail),
-    p: ParseFromHeader(line, lines.cons.tail),
-    : Parse@<Formula@>(error: Strs[Str|'invalid line: ', line]));
+    c: ParseFromStart,
+    p: ParseFromHeader(line.just),
+    : Error<Unit@>(Strs[Str|'invalid line: ', line.just]));
 };
 
-(List@<String@>) { Parse@<Formula@>; } ParseLines = ParseFromStart;
+<@>@ Parse@ = <@ T@> { +(String@ error, T@ parsed); };
+
+(List@<String@>) { Parse@<Formula@>; } ParseLines = (List@<String@> lines) {
+  ParseStatus@<Unit@> ps = ParseFromStart(ParseState@(lines, List<Clause@>[]));
+  ps.?(error: Parse@<Formula@>(error: ps.error));
+  Parse@<Formula@>(parsed: Reverse(ps.parsed.state.formula));
+};
 
 (String@) { Parse@<Formula@>; } Parse = (String@ dimacs) {
   ParseLines(Split<Char@>(dimacs, (Char@ c) {
