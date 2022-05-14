@@ -106,3 +106,35 @@ inlining problem, and go from there. Everything we learn from fblf can
 hopefully be transferred to improve fble performance (possibly via elaborate
 expression) eventually.
 
+The State of Fble Update
+========================
+Performance for invaders game is now solved. Though there will always be a
+desire for improved performance.
+
+I've revised abstract data type support to something that seems reasonable to
+me. Though I haven't tried it out too extensively. I've reorganized the fble
+library code into packages that could make use of the abstract data type
+support.
+
+I've added conditional statements and some preliminary type inference, which
+helps a lot with cognitive overheads of programming fble, I hope.
+
+I haven't spent time to seriously clean up the library yet. I still don't
+think we are ready for that.
+
+We have some initial debugger support via dwarf and gdb that's useful enough
+to start.
+
+Top of mind things now are:
+* Clean up the language spec support for type inference, because it would be
+  nice for it to work for struct and union values as well as functions.
+* Burn down TODOs that are easy enough to do, because they always continue to
+  grow.
+* Spend more time programming in fble, for things like sat, etc. To test out
+  the type inference and see if we really have overcome cognitive overheads,
+  or if there are still some fundamental issues (like immutable values and
+  performance still).
+* Start thinking more about cross platform support.
+  I'm working on a game in a different framework because that framework has
+  cross platform support. That means it's important.
+

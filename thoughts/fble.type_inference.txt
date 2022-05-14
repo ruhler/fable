@@ -1,0 +1,38 @@
+Fble Type Inference
+===================
+As part of exploration of bind syntax (see fble.bind.txt), we added limited
+support for type inference. This makes it pretty nice to write code involving
+polymorphic functions.
+
+It doesn't take long to realize there are some other places type inference
+would be nice too. The goal here is to identify all the places it makes sense
+to have type inference and come up with some reasonable way to describe all
+those places in the specification and implement it in the implementation.
+
+I also want to take some time to convince myself again that this form of type
+inference isn't going to be a bad thing for the language. One concern I have
+now is that type inference hides the type application from the syntax. But
+type application is not free in reality in general, so shouldn't it appear in
+the syntax?
+
+Other places where it could be nice to add type inference:
+* struct_value_explicit_type - poly value of a struct type, would be nice to
+  infer the type arguments from the struct value arguments.
+* union_value - poly value of a union type, would be nice to infer the type
+  arguments from the union value arg. Only applicable in the special case when
+  all the type arguments can be inferred from the particular constructor you
+  are using. For example, Maybe@(just: ...) works, but not Maybe@(nothing: ...).
+
+Actually, I think that's all.
+
+Maybe the way to do this in the spec is to expand poly_infer? Or, provide
+poly_func_apply, poly_struct_value_explicit_type, and poly_union_value? Or
+provide some sort of meta abstract to the grammar that does poly<func_apply>,
+which could be useful for bind too?
+
+How about the implementation? In general the implementation approach is the
+same. I want a type of a particular tag. I'll give you a function that, given
+the type with the given tag, gives you a collection of equality constraints
+desired. We can abstract common logic for extracting the underlying type from
+a poly, inferring and auto-applying the types.
+
