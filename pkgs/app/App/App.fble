@@ -14,7 +14,12 @@
   Unit@ left, Unit@ right, Unit@ up, Unit@ down,
   Unit@ space, Unit@ lshift, Unit@ rshift
 );
-@ Event@ = +(Unit@ tick, Key@ key_down, Key@ key_up);
+
+@ Event@ = +(
+  Unit@ tick,      # A tick event has occured in response to a tick request
+  Key@ key_down,   # A key was pressed down.
+  Key@ key_up      # A key was released.
+);
 
 @ Effect@ = +(
   # Request for a tick Event@ to occur after the given number of milliseconds.
@@ -39,8 +44,8 @@
 #   Interface for an App.
 #
 # Fields:
-#   width - The width of the screen.
-#   height - The height of the screen.
+#   width - The initial width of the screen.
+#   height - The initial height of the screen.
 #   event - Get the next input event.
 #   effect - Output an effect.
 @ AppIO@ = *(

@@ -519,12 +519,14 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   SDL_Window* window = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
       SDL_WINDOW_OPENGL);
+  SDL_SetWindowResizable(window, true);
   SDL_GLContext glctx = SDL_GL_CreateContext(window);
   SDL_ShowCursor(SDL_DISABLE);
 
   int width = 0;
   int height = 0;
   SDL_GetWindowSize(window, &width, &height);
+
 
   glShadeModel(GL_FLAT);
   glViewport(0, 0, width, height);

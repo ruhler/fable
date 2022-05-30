@@ -1,0 +1,31 @@
+Fble Platforms
+==============
+It's all well and good to try writing apps in fble that I run locally, but can
+you really imagine someone else using my apps? What we really need is some
+support for cross platform apps that work in ways that users expect from
+today.
+
+Issues to consider:
+* Can we run fble programs on windows, Android, iOS?
+  - What compiler support do we need for different architectures?
+  - How does performance look on those platforms?
+* Some environment for building for different platforms.
+* Support for standard UI components
+  - mouse, touch events, window close events.
+  - menus, buttons, widgets, etc.
+  - fonts and images.
+  - animations and sound.
+  - save and restore user data from disk.
+* Should we have more general interpreter support?
+  - For example, to let users write and run fble code without having to
+    compile it? Perhaps they can link to compiled libraries for performance,
+    and it's fine if they are just writing the driver code?
+
+For example, I could write, say, a tictactoe game in godot framework, with
+artwork, sound, text, animations, shadows, menus, mouse and touch input, etc.
+Then run that app on Linux, Windows, Android, iOS, Mac, and in the browser.
+
+Then the question is: can I do the same thing in fble? Can I make it so I can
+do the same thing in fble? What would that take?
+
+If I wanted to take fble to the next level, this would be it.

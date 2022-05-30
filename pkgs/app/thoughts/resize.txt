@@ -1,0 +1,47 @@
+Window Resize
+=============
+Goal: support dynamic resizing of app window.
+
+Examples:
+* Rotate phone left or right, then window should be resized.
+* On desktop: drag corner of window to change to arbitrary size.
+
+User should be informed when the app is resized and what the new width and
+height are.
+
+I think there's only one real question:
+* If we have resize events, do we need to specify initial window dimensions,
+  or should that be done via a resize event?
+
+Like, we could promise the first event, or some early event, is a resize
+event. Or we could do like now and specify the initial window size to the app.
+
+Benefits of initial size:
+* Because what does it mean to start without any size? Assume 0x0 to start?
+* On some platforms the size may be fixed, in which case, no need for any
+resize events at all?
+
+Benefits of using resize event for initial size:
+* You don't have two different ways of specifying the size of the window.
+Users are forced to handle resize events to get anything working, instead of
+assuming the size is fixed.
+
+I suppose another option would be to add an API for the app to query the
+window size, instead of providing that up front or with a resize event. No
+need to have two different ways to get the width/height info in that case, but
+you do have some communication overhead to get the width/height after being
+notified that the width and height of the window have changed.
+
+I kind of which we had more of a synchronous kind of API with AppIO@. I don't
+want to send a request for size info, then have that go back to some event
+queue. I want a blocking call to get the width of the screen.
+
+Does it make sense for 'tick' to be replaced with a blocking call too then?
+Maybe not. We want to wait for the next tick, but we also want to process
+input events as they arrive.
+
+---
+
+Note, we need to call SDL_SetWindowResizable to make the window resizable.
+Otherwise the user doesn't even have the option to resize it? At least no in
+my fvwm setup.

@@ -86,31 +86,30 @@ World@ acorn = World(List<Coord@>[
       key_up: GetInput(in));
 };
 
-(Get@<Input@>, Put@<Effect@>, Int@, World@) { Unit@!; }
-StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, World@ w) {
-  Unit@ _ := out(Effect@(draw: DrawWorld(w)));
+@ State@ = *(
+  Int@ n,     # number of steps taken so far.
+  Point@ a,   # 'a' coefficient for affine scaling.
+  Point@ b,   # 'b' coefficient for affine scaling.
+  World@ w    # The game world.
+);
+
+(Get@<Input@>, Put@<Effect@>, State@) { Unit@!; }
+StepUI = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
+  Unit@ _ := out(Effect@(draw: Affine(s.a, s.b, DrawWorld(s.w))));
   Unit@ _ := out(Effect@(tick: Int|200));
   Input@ x := in;
   x.?(quit: !(Unit),
-      step: IsZero(n).?(
+      step: IsZero(s.n).?(
               true: !(Unit),
-              false: StepUI(in, out, Dec(n), Step(w))));
+              false: StepUI(in, out, State@(Dec(s.n), s.a, s.b, Step(s.w)))));
 };
 
 App@ Main = (AppIO@ app) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Div(app.width, Width).q, y: Div(app.height, Height).q);
   Point@ b = @(x: Div(app.width, 2).q, y: Div(app.height, 2).q);
-
-  Put@<Effect@> game_out = (Effect@ e) {
-    Effect@ transformed = e.?(
-      tick: e,
-      draw: Effect@(draw: Affine(a, b, e.draw)));
-
-    app.effect(transformed);
-  };
-
-  Unit@ _ := StepUI(GetInput(app.event), game_out, Int|200, acorn);
+  State@ s = State@(Int|200, a, b, acorn);
+  Unit@ _ := StepUI(GetInput(app.event), app.effect, s);
 
   Unit@! WaitForKeyPress = {
     Event@ e := app.event;
