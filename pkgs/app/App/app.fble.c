@@ -399,6 +399,20 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           change = true;
           break;
         }
+
+        case SDL_WINDOWEVENT: {
+          if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+            FbleValue* width = MakeInt(heap, event.window.data1);
+            FbleValue* height = MakeInt(heap, event.window.data2);
+            FbleValue* resized = FbleNewStructValue(heap, 2, width, height);
+            FbleReleaseValue(heap, width);
+            FbleReleaseValue(heap, height);
+            app->event = FbleNewUnionValue(heap, 3, resized);
+            FbleReleaseValue(heap, resized);
+            change = true;
+          }
+          break;
+        }
       }
     }
   }

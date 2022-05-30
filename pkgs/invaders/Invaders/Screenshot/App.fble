@@ -27,7 +27,7 @@ App@ Main = (AppIO@ app) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := app.event;
-    e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
+    e.?(key_down: !(Unit), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };

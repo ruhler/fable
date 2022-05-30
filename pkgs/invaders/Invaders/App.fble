@@ -51,7 +51,8 @@ Input@ Fire = Input@(game: Game.Input@(fire: Unit));
       key_up: e.key_up.?(
         left: !(Stopped),
         right: !(Stopped),
-        : GetInput(in))
+        : GetInput(in)),
+      resize: GetInput(in)
    );
 };
 

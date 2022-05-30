@@ -125,7 +125,8 @@ Memory@ Cells = {
   Event@ e := in;
   e.?(tick: !(Input@(step: Unit)),
       key_down: e.key_down.?(q: !(Input@(quit: Unit)), : GetInput(in)),
-      key_up: GetInput(in));
+      key_up: GetInput(in),
+      resize: GetInput(in));
 };
 
 (Get@<Input@>, Put@<Effect@>, Int@, Design@, Memory@) { Unit@!; }
@@ -153,7 +154,7 @@ App@ Main = (AppIO@ app) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := app.event;
-    e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
+    e.?(key_down: !(Unit), : WaitForKeyPress);
   };
 
   Unit@ _ := game_out(Effect@(draw: Draw(Design, Cells)));

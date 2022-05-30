@@ -1,3 +1,5 @@
+* Fix bugs with resizing window for game of life.
+
 * Make it easier to run failing tests under valgrind and gdb.
 * Better error message for 7.4-PolyInfer/Type/InconsistentAssignment case.
 * Add more tests for poly inference to get code coverage.

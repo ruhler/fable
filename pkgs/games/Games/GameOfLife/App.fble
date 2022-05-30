@@ -3,6 +3,7 @@
 @ AppIO@ = /App/App%.AppIO@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
+@ Resize@ = /App/App%.Resize@;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
 @ Point@ = /App/Drawing%.Point@;
@@ -44,10 +45,10 @@
 
 (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
 
-Int@ XMin = Neg(Int|50);
-Int@ XMax = Int|50;
-Int@ YMin = Neg(Int|50);
-Int@ YMax = Int|50;
+Int@ XMin = Neg(Int|40);
+Int@ XMax = Int|40;
+Int@ YMin = Neg(Int|40);
+Int@ YMax = Int|40;
 Int@ Width = Sub(XMax, XMin);
 Int@ Height = Sub(YMax, YMin);
 
@@ -77,13 +78,14 @@ World@ acorn = World(List<Coord@>[
   });
 };
 
-@ Input@ = +(Unit@ quit, Unit@ step);
+@ Input@ = +(Unit@ quit, Unit@ step, Resize@ resize);
 
 (Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
   Event@ e := in;
   e.?(tick: !(Input@(step: Unit)),
       key_down: e.key_down.?(q: !(Input@(quit: Unit)), : GetInput(in)),
-      key_up: GetInput(in));
+      key_up: GetInput(in),
+      resize: !(Input@(resize: e.resize)));
 };
 
 @ State@ = *(
@@ -101,7 +103,12 @@ StepUI = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
   x.?(quit: !(Unit),
       step: IsZero(s.n).?(
               true: !(Unit),
-              false: StepUI(in, out, State@(Dec(s.n), s.a, s.b, Step(s.w)))));
+              false: StepUI(in, out, State@(Dec(s.n), s.a, s.b, Step(s.w)))),
+      resize: {
+        Point@ a = @(x: Div(x.resize.width, Width).q, y: Div(x.resize.height, Height).q);
+        Point@ b = @(x: Div(x.resize.width, 2).q,     y: Div(x.resize.height, 2).q);
+        StepUI(in, out, State@(s.n, a, b, s.w));
+      });
 };
 
 App@ Main = (AppIO@ app) {
@@ -113,7 +120,7 @@ App@ Main = (AppIO@ app) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := app.event;
-    e.?(tick: WaitForKeyPress, key_down: !(Unit), key_up: WaitForKeyPress);
+    e.?(key_down: !(Unit), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };

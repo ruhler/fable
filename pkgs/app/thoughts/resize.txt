@@ -45,3 +45,15 @@ input events as they arrive.
 Note, we need to call SDL_SetWindowResizable to make the window resizable.
 Otherwise the user doesn't even have the option to resize it? At least no in
 my fvwm setup.
+
+For now, let me start with just adding a resize event, and keeping the initial
+width and height passed to the app. We can try something more complicated
+later. Let's see if we learn anything from this approach.
+
+---
+
+Okay, so I implemented window resize in theory, and I use that to scale game
+of life app, but I'm not convinced it's working correctly or reliably. Some
+window sizes make the life disappear, which shouldn't be the case, I'm pretty
+sure.
+

@@ -15,10 +15,16 @@
   Unit@ space, Unit@ lshift, Unit@ rshift
 );
 
+@ Resize@ = *(
+  Int@ width,
+  Int@ height
+);
+
 @ Event@ = +(
   Unit@ tick,      # A tick event has occured in response to a tick request
   Key@ key_down,   # A key was pressed down.
-  Key@ key_up      # A key was released.
+  Key@ key_up,     # A key was released.
+  Resize@ resize   # The window was resized.
 );
 
 @ Effect@ = +(
@@ -65,4 +71,4 @@
 #   None.
 @ App@ = (AppIO@) { Unit@!; };
 
-@(App@, AppIO@, Key@, Event@, Effect@);
+@(App@, AppIO@, Key@, Resize@, Event@, Effect@);
