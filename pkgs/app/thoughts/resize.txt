@@ -57,3 +57,11 @@ of life app, but I'm not convinced it's working correctly or reliably. Some
 window sizes make the life disappear, which shouldn't be the case, I'm pretty
 sure.
 
+---
+
+Found the issues:
+* We need to update the gl viewport and matrices for the new window size, and
+  deal with clearing the previous window.
+
+Window resizing looks good now.
+

@@ -19,6 +19,7 @@
 % 2 = /Core/Int%.2;
 % Dec = /Core/Int%.Dec;
 % Neg = /Core/Int%.Neg;
+% Add = /Core/Int%.Add;
 % Sub = /Core/Int%.Sub;
 
 % Div = /Core/Int/Div%.Div;
@@ -65,7 +66,10 @@ World@ acorn = World(List<Coord@>[
 ]);
 
 (World@) { Drawing@; } DrawWorld = (World@ w) {
-  Drawing@ clear = Rect(XMin, YMin, Width, Height, Color.Black);
+  Drawing@ clear = Over(
+    Rect(XMin, YMin, Width, Height, Color.Red),
+    Rect(Add(Int|1, XMin), Add(Int|1, YMin),
+         Sub(Width, Int|2), Sub(Height, Int|2), Color.Black));
     
   # 2. For each live cell in range, draw a green unit square.
   ForWorld<Drawing@>(w, clear, (Coord@ coord, Unit@ _, Drawing@ d) {

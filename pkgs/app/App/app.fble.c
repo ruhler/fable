@@ -402,6 +402,12 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
 
         case SDL_WINDOWEVENT: {
           if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+            glViewport(0, 0, event.window.data1, event.window.data2);
+            glMatrixMode( GL_PROJECTION );
+            glLoadIdentity();
+            glOrtho(0, event.window.data1, event.window.data2, 0, -1, 1);
+            glClear(GL_COLOR_BUFFER_BIT);
+
             FbleValue* width = MakeInt(heap, event.window.data1);
             FbleValue* height = MakeInt(heap, event.window.data2);
             FbleValue* resized = FbleNewStructValue(heap, 2, width, height);
