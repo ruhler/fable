@@ -125,8 +125,7 @@ Memory@ Cells = {
   Event@ e := in;
   e.?(tick: !(Input@(step: Unit)),
       key_down: e.key_down.?(q: !(Input@(quit: Unit)), : GetInput(in)),
-      key_up: GetInput(in),
-      resize: GetInput(in));
+      : GetInput(in));
 };
 
 (Get@<Input@>, Put@<Effect@>, Int@, Design@, Memory@) { Unit@!; }

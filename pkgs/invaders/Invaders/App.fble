@@ -52,7 +52,7 @@ Input@ Fire = Input@(game: Game.Input@(fire: Unit));
         left: !(Stopped),
         right: !(Stopped),
         : GetInput(in)),
-      resize: GetInput(in)
+      : GetInput(in)
    );
 };
 

@@ -37,4 +37,9 @@ namespace eval "pkgs/app" {
     asm $target.o $target.s
     bin $target $objs "-lSDL2 -lGL"
   }
+
+  # /App/Tests% interpreted
+  set cflags "-I pkgs/app -I pkgs/core"
+  test $::out/pkgs/app/App/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/app/App/Tests.fble.d" \
+    "$::out/pkgs/core/Core/fble-stdio $cflags -m /App/Tests%" "pool = console"
 }

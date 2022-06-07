@@ -20,11 +20,19 @@
   Int@ height
 );
 
+@ MouseMotion@ = *(
+  Int@ x,     # Final x position of mouse in screen coordinates.
+  Int@ y,     # Final y position of mouse in screen coordinates.
+  Int@ dx,    # Change in x position since previous mouse motion event.
+  Int@ dy     # Change in y position since previous mouse motion event.
+);
+
 @ Event@ = +(
   Unit@ tick,      # A tick event has occured in response to a tick request
   Key@ key_down,   # A key was pressed down.
   Key@ key_up,     # A key was released.
-  Resize@ resize   # The window was resized.
+  Resize@ resize,  # The window was resized.
+  MouseMotion@ mouse_motion   # The mouse has moved.
 );
 
 @ Effect@ = +(

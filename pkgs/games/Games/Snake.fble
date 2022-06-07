@@ -285,9 +285,7 @@ Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
       l: !(Input@(dir: Dir@(right: Unit))),
       q: !(Input@(quit: Unit)),
       : GetInput(in)),
-    key_up: GetInput(in),
-    resize: GetInput(in)
-  );
+    : GetInput(in));
 };
 
 App@ Main = (AppIO@ app) {
@@ -312,11 +310,7 @@ App@ Main = (AppIO@ app) {
 
   Unit@! WaitForKeyPress = {
     Event@ e := app.event;
-    e.?(
-      tick: WaitForKeyPress,
-      key_down: !(Unit),
-      key_up: WaitForKeyPress,
-      resize: WaitForKeyPress);
+    e.?(key_down: !(Unit), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };

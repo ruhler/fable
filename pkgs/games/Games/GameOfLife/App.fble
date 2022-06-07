@@ -88,8 +88,8 @@ World@ acorn = World(List<Coord@>[
   Event@ e := in;
   e.?(tick: !(Input@(step: Unit)),
       key_down: e.key_down.?(q: !(Input@(quit: Unit)), : GetInput(in)),
-      key_up: GetInput(in),
-      resize: !(Input@(resize: e.resize)));
+      resize: !(Input@(resize: e.resize)),
+      : GetInput(in));
 };
 
 @ State@ = *(

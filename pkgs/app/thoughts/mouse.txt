@@ -1,0 +1,32 @@
+Mouse
+=====
+How to support mouse in apps?
+
+Initial proposal is to be simple:
+* Give a mouse event when the mouse moves.
+* Don't worry about button presses yet, but when we want them, add a mouse
+  event for button press.
+* Rely on the app to render the pointer image to start. See if that's
+  efficient enough.
+
+Don't worry about touchscreen or optimizations or anything fancy yet. One step
+at a time.
+
+I expect the mouse event to take the position of the mouse and/or the change
+in the mouse. I could see how both could be useful. See what SDL does.
+
+It makes sense to have the coordinates be in the same coordinate system as
+drawing, right?
+
+Mouse event:
+* Coordinates of mouse relative to window.
+* Relative motion in X/Y directions. Relative is relative to the last motion
+  event.
+
+Coordinate system for drawing is: (0,0) is upper right, +x to the right, +y to
+the bottom of the screen.
+
+Let's start a demo app, to help with (ug, manual) testing of App features. To
+start it can be a black background that draws a small green square around the
+mouse position.
+

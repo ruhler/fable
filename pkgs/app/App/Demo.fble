@@ -1,0 +1,50 @@
+
+@ App@ = /App/App%.App@;
+@ AppIO@ = /App/App%.AppIO@;
+@ Event@ = /App/App%.Event@;
+@ Effect@ = /App/App%.Effect@;
+
+@ Drawing@ = /App/Drawing%.Drawing@;
+% Color = /App/Drawing%.Color;
+% Rect = /App/Drawing%.Rect;
+
+% Sub = /Core/Int%.Sub;
+
+% Int = /Core/Int/Lit%.Int;
+
+
+<@>@ Get@ = /Core/Process%.Get@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+(Get@<Event@>) { Event@!; } FilterEvent = (Get@<Event@> in) {
+  Event@ e := in;
+  e.?(tick: !(e),
+      key_down: e.key_down.?(q: !(e), : FilterEvent(in)),
+      : FilterEvent(in));
+};
+
+(AppIO@) { Unit@!; }
+StepUI = (AppIO@ app) {
+  Drawing@ drawing = Rect(
+    Int|10, Int|10, Sub(app.width, Int|20), Sub(app.height, Int|20),
+    Color.Blue);
+
+  Unit@ _ := app.effect(Effect@(draw: drawing));
+  Unit@ _ := app.effect(Effect@(tick: Int|200));
+  Event@ e := FilterEvent(app.event);
+  e.?(tick: StepUI(app), : !(Unit));
+};
+
+App@ Main = (AppIO@ app) {
+  Unit@ _ := StepUI(app);
+
+  Unit@! WaitForKeyPress = {
+    Event@ e := app.event;
+    e.?(key_down: !(Unit), : WaitForKeyPress);
+  };
+  WaitForKeyPress;
+};
+
+Main;

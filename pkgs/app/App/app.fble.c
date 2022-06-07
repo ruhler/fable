@@ -419,6 +419,22 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           }
           break;
         }
+
+        case SDL_MOUSEMOTION: {
+          FbleValue* x = MakeInt(heap, event.motion.x);
+          FbleValue* y = MakeInt(heap, event.motion.y);
+          FbleValue* dx = MakeInt(heap, event.motion.xrel);
+          FbleValue* dy = MakeInt(heap, event.motion.yrel);
+          FbleValue* motion = FbleNewStructValue(heap, 4, x, y, dx, dy);
+          FbleReleaseValue(heap, x);
+          FbleReleaseValue(heap, y);
+          FbleReleaseValue(heap, dx);
+          FbleReleaseValue(heap, dy);
+          app->event = FbleNewUnionValue(heap, 4, motion);
+          FbleReleaseValue(heap, motion);
+          change = true;
+          break;
+        }
       }
     }
   }
