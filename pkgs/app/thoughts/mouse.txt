@@ -30,3 +30,9 @@ Let's start a demo app, to help with (ug, manual) testing of App features. To
 start it can be a black background that draws a small green square around the
 mouse position.
 
+---
+
+Demo app with small green square around the mouse works great. We should
+probably clean up the demo app to target 60 FPS and only redraw on tick
+instead of for every change to the mouse position.
+
