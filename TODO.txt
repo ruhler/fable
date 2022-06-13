@@ -1,4 +1,6 @@
-* Fix bugs with resizing window for game of life.
+* Add mouse button support to App.
+* Clean up frame rate/event handling of /App/Demo%.
+* Figure out how to support images in Apps.
 
 * Make it easier to run failing tests under valgrind and gdb.
 * Better error message for 7.4-PolyInfer/Type/InconsistentAssignment case.

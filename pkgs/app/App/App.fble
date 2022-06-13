@@ -20,6 +20,9 @@
   Int@ height
 );
 
+@ Button@ = +(Unit@ left, Unit@ right);
+@ MouseButton@ = *(Button@ button, Int@ x, Int@ y);
+
 @ MouseMotion@ = *(
   Int@ x,     # Final x position of mouse in screen coordinates.
   Int@ y,     # Final y position of mouse in screen coordinates.
@@ -31,6 +34,8 @@
   Unit@ tick,      # A tick event has occured in response to a tick request
   Key@ key_down,   # A key was pressed down.
   Key@ key_up,     # A key was released.
+  MouseButton@ mouse_down,  # A mouse button was pressed.
+  MouseButton@ mouse_up,    # A mouse button was released.
   Resize@ resize,  # The window was resized.
   MouseMotion@ mouse_motion   # The mouse has moved.
 );

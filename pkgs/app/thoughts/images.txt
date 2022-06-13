@@ -1,0 +1,26 @@
+Images
+======
+For the set game use case, I have drawn some icons in inkscape, exported to
+png. How can we make use of these images in an fble App?
+
+In this particular instance, the images are described using vector paths, with
+stroke widths, end marker, and curved joins. In general you could imagine
+someone has some fancy editor they use to create an svg or png or other bitmap
+image. For example, you could consider fonts as a collection of images
+rendered with a specific technique we may not want to build into fble.
+
+Any way you look at it, we'll need some representation of the image in fble.
+We could use 'Drawing' with a bunch of rectangles, or something more specific.
+We could introduce the option to define a drawing that we can refer to later
+in the AppIO API. Somehow we'll need to specify an image, either in code, or
+using a routine that can load one from an input stream. Then there is question
+of filesystem support for loading these kinds of assets.
+
+Questions are:
+* Filesystem support for loading images?
+* Some sort of caching mechanism to improve performance?
+* Library in fble for drawing fancy vector graphics?
+* Special representation for drawings, or something built on top of what we
+  already have?
+* Library support for different image formats?
+

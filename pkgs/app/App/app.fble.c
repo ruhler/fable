@@ -50,6 +50,7 @@ static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* draw
 static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
+static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
 static Uint32 OnTimer(Uint32 interval, void* param);
 int FbleStdioMain(int argc, const char* argv[], FbleCompiledModuleFunction* module);
@@ -315,6 +316,35 @@ static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode)
   return NULL;
 }
 
+// MakeButton -- 
+//   Make an FbleValue of type /App%.Button@ for the given button.
+//
+// Inputs:
+//   heap - the heap to use for allocations.
+//   button - the button id.
+//
+// Results:
+//   An FbleValue for the button, or NULL if there is corresponding Button@
+//   for that button
+//
+// Side effects:
+//   Allocates a value that should be freed with FbleReleaseValue when no
+//   longer needed.
+static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
+{
+  int k = -1;
+  switch (button) {
+    case SDL_BUTTON_LEFT: k = 0; break;
+    case SDL_BUTTON_RIGHT: k = 1; break;
+    default: break;
+  }
+
+  if (k >= 0) {
+    return FbleNewEnumValue(heap, k);
+  }
+  return NULL;
+}
+
 // IO --
 //   FbleIO.io function for external ports.
 //   See the corresponding documentation in fble-value.h.
@@ -374,6 +404,12 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
       SDL_Event event;
       SDL_WaitEvent(&event);
       switch (event.type) {
+        case SDL_USEREVENT: {
+          app->event = FbleNewEnumValue(heap, 0);
+          change = true;
+          break;
+        }
+
         case SDL_KEYDOWN: {
           FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
           if (key != NULL) {
@@ -394,9 +430,35 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           break;
         }
 
-        case SDL_USEREVENT: {
-          app->event = FbleNewEnumValue(heap, 0);
-          change = true;
+        case SDL_MOUSEBUTTONDOWN: {
+          FbleValue* button = MakeButton(heap, event.button.button);
+          if (button != NULL) {
+            FbleValue* x = MakeInt(heap, event.button.x);
+            FbleValue* y = MakeInt(heap, event.button.y);
+            FbleValue* mouse_button = FbleNewStructValue(heap, 3, button, x, y);
+            FbleReleaseValue(heap, button);
+            FbleReleaseValue(heap, x);
+            FbleReleaseValue(heap, y);
+            app->event = FbleNewUnionValue(heap, 3, mouse_button);
+            FbleReleaseValue(heap, mouse_button);
+            change = true;
+          }
+          break;
+        }
+
+        case SDL_MOUSEBUTTONUP: {
+          FbleValue* button = MakeButton(heap, event.button.button);
+          if (button != NULL) {
+            FbleValue* x = MakeInt(heap, event.button.x);
+            FbleValue* y = MakeInt(heap, event.button.y);
+            FbleValue* mouse_button = FbleNewStructValue(heap, 3, button, x, y);
+            FbleReleaseValue(heap, button);
+            FbleReleaseValue(heap, x);
+            FbleReleaseValue(heap, y);
+            app->event = FbleNewUnionValue(heap, 4, mouse_button);
+            FbleReleaseValue(heap, mouse_button);
+            change = true;
+          }
           break;
         }
 
@@ -413,7 +475,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
             FbleValue* resized = FbleNewStructValue(heap, 2, width, height);
             FbleReleaseValue(heap, width);
             FbleReleaseValue(heap, height);
-            app->event = FbleNewUnionValue(heap, 3, resized);
+            app->event = FbleNewUnionValue(heap, 5, resized);
             FbleReleaseValue(heap, resized);
             change = true;
           }
@@ -430,7 +492,7 @@ static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
           FbleReleaseValue(heap, y);
           FbleReleaseValue(heap, dx);
           FbleReleaseValue(heap, dy);
-          app->event = FbleNewUnionValue(heap, 4, motion);
+          app->event = FbleNewUnionValue(heap, 6, motion);
           FbleReleaseValue(heap, motion);
           change = true;
           break;

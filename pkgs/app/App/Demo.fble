@@ -5,6 +5,7 @@
 @ Effect@ = /App/App%.Effect@;
 
 @ Drawing@ = /App/Drawing%.Drawing@;
+@ Color@ = /App/Drawing%.Color@;
 % Color = /App/Drawing%.Color;
 % Drawings = /App/Drawing%.Drawings;
 % Rect = /App/Drawing%.Rect;
@@ -22,13 +23,16 @@
 
 @ State@ = *(
   Int@ mouse_x,
-  Int@ mouse_y
+  Int@ mouse_y,
+  Color@ mouse_color
 );
 
 (Get@<Event@>) { Event@!; } FilterEvent = (Get@<Event@> in) {
   Event@ e := in;
   e.?(tick: !(e),
       key_down: e.key_down.?(q: !(e), : FilterEvent(in)),
+      mouse_down: !(e),
+      mouse_up: !(e),
       mouse_motion: !(e),
       : FilterEvent(in));
 };
@@ -48,7 +52,7 @@ StepUI = (AppIO@ app, State@ s) {
     Sub(s.mouse_y, Int|10),
     Int|20,
     Int|20,
-    Color.Green);
+    s.mouse_color);
 
   Drawing@ drawing = Drawings[clear, box, cursor];
 
@@ -57,12 +61,14 @@ StepUI = (AppIO@ app, State@ s) {
   Event@ e := FilterEvent(app.event);
   e.?(
     tick: StepUI(app, s),
-    mouse_motion: StepUI(app, State@(e.mouse_motion.x, e.mouse_motion.y)),
+    mouse_down: StepUI(app, State@(s.mouse_x, s.mouse_y, Color.Red)),
+    mouse_up: StepUI(app, State@(s.mouse_x, s.mouse_y, Color.Green)),
+    mouse_motion: StepUI(app, State@(e.mouse_motion.x, e.mouse_motion.y, s.mouse_color)),
     : !(Unit));
 };
 
 App@ Main = (AppIO@ app) {
-  Unit@ _ := StepUI(app, State@(Int|0, Int|0));
+  Unit@ _ := StepUI(app, State@(Int|0, Int|0, Color.Green));
 
   Unit@! WaitForKeyPress = {
     Event@ e := app.event;

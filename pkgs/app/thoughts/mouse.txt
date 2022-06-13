@@ -36,3 +36,15 @@ Demo app with small green square around the mouse works great. We should
 probably clean up the demo app to target 60 FPS and only redraw on tick
 instead of for every change to the mouse position.
 
+Next step for mouse is button click. Should be easy enough.
+
+To be consistent with keyboard events, I would suggest:
+  mouse_down
+  mouse_up
+
+With MouseButton of Left, Middle, or Right.
+
+And include coordinates of the mouse when it was clicked.
+
+For the demo app, we could toggle the color of the green square whenever you
+click the mouse. Or, turn it a different color on mouse_down versus mouse_up.
