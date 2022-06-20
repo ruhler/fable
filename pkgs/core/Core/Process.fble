@@ -24,4 +24,6 @@
 #  Unit
 <@>@ Put@ = <@ T@>(T@){ Unit@!; };
 
-@(Get@, Put@);
+<@>@ Process@ = <@ T@>{ T@!; };
+
+@(Get@, Put@, Process@);

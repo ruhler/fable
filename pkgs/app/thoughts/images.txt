@@ -24,3 +24,59 @@ Questions are:
   already have?
 * Library support for different image formats?
 
+---
+
+We can separate concerns.
+
+1. Concern that passing data back and forth from fble to C and rerendering the
+image will be costly, so we should have a way to 'define' an image and later
+reference it by id. This is solely performance. Worry about it later.
+
+2. Special representation for drawings: we can already represent raster
+drawings with a bunch of rectangles. No need for a special representation
+except for performance. So this is solely performance. Worry about it later.
+
+That leaves us with some code in fble to convert whatever external image
+format we have into a Drawing@. We want to be able to use external editors
+directly on our assets, which suggests we save them in whatever format the
+external editor wants.
+
+How do we go from some standard image format on the filesystem to something
+fble understands in the running application?
+
+Brainstorm:
+* Add filesystem support to fble.
+  - Define some notion of a File@ as a sequence of bytes.
+  - Have some API for fetching files by file path.
+* Write a tool to convert an image into an fble module.
+  - Again, we'll want some notion of a File@ as a sequence of bytes.
+  - Maybe we can compile the File@ to a literal in fble and import it as a
+    module. Needs a separate (but generic) tool to convert a posix file to a
+    File@ via literal.
+
+The second choice hard codes the file in the application. Which is useful for
+things like image assets, but not for things like a generic image viewer or
+md5sum.
+
+The File@ API can be separate from a way to access a filesystem. We could
+provide static and dynamic filesystem APIs. Maybe we can even write a program
+to compile a directory into a single module FileSystem@ interface, to have
+better access controls over what the program can read and to allow us to embed
+the contents in a compiled execuable for the program.
+
+So, I'm thinking we'll want the following kinds of things:
+
+* Png@ - internal abstract representation of a Png@ best suited for fble.
+* File@ - abstract API for a sequence of bytes.
+* FileSystem@ - abstract API for accessing File@ via named paths.
+* Png@ -> Drawing@ - method to render a Png@.
+
+And the order to try these things out in:
+
+1. Start with File@, change Md5 to use that abstraction.
+2. Add FileSystem@, change Md5 to use that abstraction.
+3. Define Png@. Implement logic to go File@ -> Png@ -> Drawing@.
+
+At some point we'll want to figure out how to standardize / incorporate access
+to the filesystem with Stdio@ and App@.
+

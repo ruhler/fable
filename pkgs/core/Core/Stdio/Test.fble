@@ -5,16 +5,26 @@
 
 <@>@ List@ = /Core/List%.List@;
 
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<@>@ Process@ = /Core/Process%.Process@;
+
 @ Stdio@ = /Core/Stdio%.Stdio@;
 @ IO@ = /Core/Stdio%.IO@;
+
+<<@>@>@ StdioM@ = /Core/StdioM%.StdioM@;
+% IOStdio = /Core/StdioM%.IOStdio;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 Stdio@ Test = (IO@ io, List@<String@> args) {
   # Output a single line to test that we don't drop trailing outputs.
-  Unit@ _ := io.stdout(Str|'PASSED');
-  !(True);
+  StdioM@<Process@> sm = IOStdio(io); 
+  Monad@<Process@> m = sm.m;
+  /Core/StdioM%.Stdio@<Process@> stdio = sm.stdio;
+  Unit@ _ <- m.do(stdio.out(Str|'PASSED'));
+  m.return(True);
 };
 
 Test;

@@ -1,0 +1,205 @@
+Fble No Process
+===============
+Exploratory thought: can / should we remove processes from fble?
+
+Contrast processes with abstract monadic type parameterized interfaces.
+Processes feel magic and built in and special. Abstract monadic type
+parameterized interfaces feel natural (if maybe a bit cumbersome) and general.
+
+This thought keeps coming up, over and over and over. Do we need processes?
+Why can't we do everything with, let me call them, monads instead?
+
+Processes give us:
+* A convenient syntax for sequencing.
+* Concurrency support.
+* A way to create references to values of any type (via links).
+* The option for custom compilation support and optimizations.
+
+Monads are less convenient syntax wise (but more precise from a type point of
+view). It's not obvious if they provide the same concurrency or performance,
+and they don't give a way to create references to values of any type.
+
+We could implement a concurrency monad, but there's no way to implement links
+unless we add a type erasure feature. Proposed new feature: you can convert
+any type to some magic type T, and you can convert magic type T to Maybe of
+any type, depending on whether the T value was originally created from that
+type. It's type safe, but lets you put objects of different types all in the
+same data structure. That allows you to create references (via keys into some
+data structure) to values of mixed types.
+
+Then I'm thinking the following:
+* Get rid of the built-in process type.
+* Have Stdio@, App@ interfaces be based on an abstract monadic type that the
+  stdio.fble.c, app.fble.c implementations can provide their own
+  implementation of.
+* Implement a concurrency monadic interface based on cooperative
+  multithreading for those cases we want concurrency. One implementation of
+  this could be a native implementation. But you could also run things pure.
+
+Benefits:
+* Encourages use of more precise monad types.
+* We can focus optimizations on monads, which are more generally applicable
+  than the process monad was.
+* Programmers don't have to pick between process (easier, more limited) and
+  monad (harder, more general).
+* Simpler implementation, because we don't need to implement processes in the
+  type system or compiler.
+* Better control over scheduling policies, because that can be part of the
+  concurrency monad library rather than being built into the language.
+
+Downsides:
+* Might be harder to get basic programs to run fast, but honestly, better to
+  focus optimization on more general things than a specific, limited use case.
+* Syntax for monads might be less nice. But again, better to focus making more
+  general things easy to use rather than have niceness in a limited use case.
+* Harder to justify magic type T than concurrency for fundamental motivation
+  of inclusion in language?
+
+Concurrency is pretty easy to justify as a fundamental requirement:
+* Your program runs as the main thread of control in the context of an
+  external environment where other things are running.
+* To support composition, we should be able to run your program in the context
+  of a larger fble program.
+* Hence, we should have a way to combine fble programs together in an
+  environment where multiple things are running in their own threads, all
+  within a single fble program. That is concurrency.
+
+On the other hand, the concurrency we care about is the interface, not the
+implementation. One implementation could be native OS threads, another
+implementation could be built in to fble runtime, another implementation could
+be using monads as an fble library. Using monads best fits with the idea of
+concurrency as an interface as opposed to concurrency as an implementation.
+
+Another point that's come up a few times: IO ports versus abstract functions.
+For processes, I think of all side effects in terms of puts/gets to the
+outside world. But when programming, it's nicer to think in terms of abstract
+functions that have side effects. The monadic description is pretty well
+suited to the idea of abstract functions that have side effects. I'm not sure
+there's a fundamental difference one way or the other, but consider how we
+implement side effects now.
+
+Today, all external side effects are done using IO ports, that mean bringing
+data out up to the top level. If we instead used abstract functions, we could
+get rid of the notion of a link entirely in the implementation and instead
+provide a native function that does side effects in place. That feels like it
+would be more efficient than pushing things back and forth over IO ports.
+
+All of this sounds pretty good in terms of arguing for removal of processes.
+
+How do we justify references instead of processes as a fundamental language
+feature? They are needed for concurrency, because you want two different
+threads of control to be able to communicate. The only way that can happen is
+if they have some reference to a shared value. That shared value can be
+modified by one thread at any time, with the other thread seeing the side
+effects. That is a reference.
+
+We could have built in pointers, as many languages do, but that implies a
+built in global synchronization scheme. I like the idea better of being able
+to type erase values. Then users can define their own references and data
+structures to store the data. And it's the maintenance of those data
+structures that naturally leads to synchronization.
+
+For example, the scheduler keeps a map from int to type erased value. Only the
+scheduler thread can modify the map, so synchronization is clear and
+guaranteed, and independent of other pointer values. Everything is very
+explicit.
+
+One way to think of type erased values is like an infinite field union, where
+the fields are done by type. Instead of something like Value@(int: 4), you
+would say, conceptually: T@(Int@: 4). Then that makes sense as a useful kind
+of data type: a type indexed union. It needs special support for tagging and
+checking types.
+
+One concern is, how could you implement that in hardware, for example? If you
+can't possibly know the size of the value ahead of time? Well, that's no
+different than recursive types, so I'm not sure why I would be bothered by
+that.
+
+The implementation in software is pretty straight forward: use an FbleValue*
+for the type. We need special compiler support for tagging and checking types,
+which is some motivation for why this needs to be a built in thing.
+
+Don't we already have some language feature that's like an abstract type? Or
+was that a previous feature since removed?
+
+There is something called an abstract type. Hey, look! We already have
+something called an abstract type. But it's not quite the same, because it
+doesn't allow mixing of abstract types with different internal types. They are
+annoyingly similar concepts, but not the same. In particular, the existing
+abstract type does compile time checking of the erased type, whereas what we
+want for references is runtime checking of the erased type.
+
+It's not hard to define a new feature for type erasure. It would be something
+like:
+
+  ERASE(x), converts something of type X@ to type ERASED@
+  RESTORE(X@, x), converts something of type ERASED@ to type Maybe@<X@>. 
+
+We just need a new type ERASED@ and two new primitive operations: erase and
+restore. It's slightly awkward to have a built in Maybe@ type. Oh well. The
+alternative would be to have a runtime error instead if you try to convert
+something of the wrong type. Just like we have a runtime error if you try to
+access a union of the wrong type. But then, should we have a way the user can
+check the type? Maybe a case statement syntax support?
+  x.?(
+    Int@: ...
+    Bool@: ...
+    : ...);
+
+I'm not sure that makes as much sense as case statement for unions. It's not
+like we'll have a tag in the value to switch to the type. It's more like we'll
+have a type that we can check if it matches or not.
+
+Anyway, theoretically I think getting rid of process is a good idea. To start,
+even before making language changes, we can convert Stdio@ and App@ to the new
+approach. Those don't require concurrency I don't think, so should be straight
+forward. No new language features needed to try that out.
+
+Next step then:
+* Redefine Stdio@ as an abstract polymorphic monad, and see how far we can
+  push that.
+
+That should give us a sense of the tediousness aspect of programming in the
+absence of processes.
+
+---
+
+Seems to work okay. For a first stab, not entirely clean, what was:
+
+   Unit@ _ := io.stdout(Str|'PASSED');
+   !(True);
+
+Turns into:
+
+   Unit@ _ <- m.do(stdio.out(Str|'PASSED'));
+   m.return(True);
+
+That's nice to me. There's just the issue of having to pass 'm' and 'stdio'
+everywhere we want to pass it to. Or deciding if we want to pass it as a
+single StdioM@ type, and then how to nicely extract the 'm' and 'stdio' parts
+from it.
+
+What's next then? This is an interesting question. Like, do we want to change
+Test@ to be StdioM@, or to be MonadM@? If it's parameterized, that's much more
+general, right? But, maybe, also more tedious?
+
+Because some tests maybe we want to do io. Some tests, maybe, we want to do
+concurrency. Some tests, maybe, we want to do App@ operations.
+
+Maybe that's one of the benefits of this parametric approach. We could
+describe a test that does IO, but then run it in a pure environment.
+
+I think I want to learn more from experience about how to structure the
+library with this new approach. How about changing the tictactoe game to use
+the new proposed API? And maybe step back and think about what I want the new
+proposed API to be first.
+
+Actually, tictactoe uses concurrency for the AI. Maybe start with one of the
+benchmark games, where the IO only happens at the top level?
+
+One approach we could use, I suppose, to avoid having to pass Stdio@ and IO@
+to every function would be to define the module as a function that takes
+Stdio@ and IO@ interfaces?
+
+This is going to need trial and error I think.
+

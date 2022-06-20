@@ -1,0 +1,39 @@
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ IO@ = /Core/Stdio%.IO@;
+
+<@>@ Process@ = /Core/Process%.Process@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+<<@>@>@ Stdio@ = <<@>@ M@> { *(
+    M@<Maybe@<String@>> in,
+    (String@) { M@<Unit@>; } out,
+    (String@) { M@<Unit@>; } err
+  );
+};
+
+<<@>@>@ StdioM@ = <<@>@ M@> { *(
+    Monad@<M@> m,
+    Stdio@<M@> stdio
+  );
+};
+
+(IO@) { StdioM@<Process@>; } IOStdio = (IO@ io) {
+  StdioM@<Process@>(
+    Monad@<Process@>(
+      <@ A@>(A@ a) { !(a); },
+      <@ A@>(A@! ma)<@ B@>((A@) { B@!; } f) {
+        A@ a := ma;
+        f(a);
+      }),
+    Stdio@<Process@>(io.stdin, io.stdout, io.stderr));
+};
+
+@(Stdio@, StdioM@, IOStdio);
+
