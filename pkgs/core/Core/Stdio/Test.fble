@@ -1,13 +1,9 @@
 
-@ Unit@ = /Core/Unit%.Unit@;
-
 % True = /Core/Bool%.True;
 
 <@>@ List@ = /Core/List%.List@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
-
-% IOStdio = /Core/IO/Stdio%.IOStdio;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
@@ -15,10 +11,13 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
+
 Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
   # Output a single line to test that we don't drop trailing outputs.
   Unit@ _ <- m.do(stdio.out(Str|'PASSED'));
   m.return(True);
 };
 
-IOStdio(Test);
+/Core/IO/Stdio%.IOStdio(Test);

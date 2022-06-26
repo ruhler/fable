@@ -5,23 +5,25 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-@ Stdio@ = /Core/IO/Stdio%.Stdio@;
-@ IO@ = /Core/IO/Stdio%.IO@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
 # The 'cat' program to cat stdin.
-Stdio@ Cat = (IO@ io, List@<String@> args) {
-  Maybe@<String@> line := io.stdin;
+Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+  Maybe@<String@> line <- m.do(stdio.in);
   line.?(
     just: {
-      Unit@ _ := io.stdout(line.just);
-      Cat(io, args);
+      Unit@ _ <- m.do(stdio.out(line.just));
+      Cat(m, stdio, args);
     },
-    nothing: !(True)
+    nothing: m.return(True)
   );
 };
 
-Cat;
+/Core/IO/Stdio%.IOStdio(Cat);

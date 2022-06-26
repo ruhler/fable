@@ -12,7 +12,7 @@
 // Inputs:
 //   argc - The number of args.
 //   argv - The args.
-//   module - The compiled module to use as the Stdio@ program to run, or NULL
+//   module - The compiled module to use as the App@ program to run, or NULL
 //            to determine the module based on command line options.
 //
 // Result:
