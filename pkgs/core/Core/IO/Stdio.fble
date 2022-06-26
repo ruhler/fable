@@ -5,8 +5,8 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-<@>@ Get@ = /Core/Process%.Get@;
-<@>@ Put@ = /Core/Process%.Put@;
+<@>@ Get@ = /Core/IO/Process%.Get@;
+<@>@ Put@ = /Core/IO/Process%.Put@;
 
 @ String@ = /Core/String%.String@;
 

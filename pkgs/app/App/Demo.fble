@@ -16,7 +16,7 @@
 % Int = /Core/Int/Lit%.Int;
 
 
-<@>@ Get@ = /Core/Process%.Get@;
+<@>@ Get@ = /Core/IO/Process%.Get@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

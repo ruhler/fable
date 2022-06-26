@@ -7,10 +7,10 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-<@>@ Process@ = /Core/Process%.Process@;
+<@>@ Process@ = /Core/IO/Process%.Process@;
 
-@ Stdio@ = /Core/Stdio%.Stdio@;
-@ IO@ = /Core/Stdio%.IO@;
+@ Stdio@ = /Core/IO/Stdio%.Stdio@;
+@ IO@ = /Core/IO/Stdio%.IO@;
 
 <<@>@>@ StdioM@ = /Core/StdioM%.StdioM@;
 % IOStdio = /Core/StdioM%.IOStdio;

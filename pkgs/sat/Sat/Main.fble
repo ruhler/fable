@@ -13,10 +13,10 @@
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ Get@ = /Core/Process%.Get@;
+<@>@ Get@ = /Core/IO/Process%.Get@;
 
-@ Stdio@ = /Core/Stdio%.Stdio@;
-@ IO@ = /Core/Stdio%.IO@;
+@ Stdio@ = /Core/IO/Stdio%.Stdio@;
+@ IO@ = /Core/IO/Stdio%.IO@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

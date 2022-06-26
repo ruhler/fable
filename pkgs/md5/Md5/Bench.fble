@@ -9,7 +9,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ Put@ = /Core/Process%.Put@;
+<@>@ Put@ = /Core/IO/Process%.Put@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;

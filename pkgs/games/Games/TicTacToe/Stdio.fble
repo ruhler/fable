@@ -12,11 +12,11 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ Get@ = /Core/Process%.Get@;
-<@>@ Put@ = /Core/Process%.Put@;
+<@>@ Get@ = /Core/IO/Process%.Get@;
+<@>@ Put@ = /Core/IO/Process%.Put@;
 
-@ Stdio@ = /Core/Stdio%.Stdio@;
-@ IO@ = /Core/Stdio%.IO@;
+@ Stdio@ = /Core/IO/Stdio%.Stdio@;
+@ IO@ = /Core/IO/Stdio%.IO@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

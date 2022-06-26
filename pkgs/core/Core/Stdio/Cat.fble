@@ -5,8 +5,8 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-@ Stdio@ = /Core/Stdio%.Stdio@;
-@ IO@ = /Core/Stdio%.IO@;
+@ Stdio@ = /Core/IO/Stdio%.Stdio@;
+@ IO@ = /Core/IO/Stdio%.IO@;
 
 @ String@ = /Core/String%.String@;
 

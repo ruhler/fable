@@ -21,7 +21,7 @@
 <@,@>% ProcessEach = /Core/List%.ProcessEach;
 <@>% Length = /Core/List/Length%.Length;
 
-<@>@ Put@ = /Core/Process%.Put@;
+<@>@ Put@ = /Core/IO/Process%.Put@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;

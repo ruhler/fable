@@ -19,8 +19,8 @@
 
 <@>% List = /Core/List%.List;
 
-<@>@ Get@ = /Core/Process%.Get@;
-<@>@ Put@ = /Core/Process%.Put@;
+<@>@ Get@ = /Core/IO/Process%.Get@;
+<@>@ Put@ = /Core/IO/Process%.Put@;
 
 
 @ Unit@ = /Core/Unit%.Unit@;

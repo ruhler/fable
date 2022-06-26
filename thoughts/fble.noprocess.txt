@@ -203,3 +203,24 @@ Stdio@ and IO@ interfaces?
 
 This is going to need trial and error I think.
 
+---
+
+Plan:
+1. Move Stdio.fble and Process.fble to IO subdirectory.
+2. Clean up new Monad and Stdio APIs
+  Monad@ is interface with do, return
+  Stdio@ is interface with in, out, err
+  StdioMain@ is the type of the main function for stdio apps.
+  IO/Stdio%.IOStdio converts StdioMain@ to IO/Stdio%.Stdio@.
+3. Migrate things over to new Stdio@ interface. See how tedious it is.
+  Keep Test as !TestResult until we've converted all of the test cases to be
+  pure within that. Note that this will require implementing a concurrency
+  monad or removing concurrency where we currently use it.
+4. Remove IO and other uses of built in processes.
+5. Remove processes from the spec and implementation.
+
+It's a long road. A lot of stuff in the implementation is going to go away and
+otherwise be simplified, but they will be big changes refactor and clean up
+right.
+
+Let's see how goes.

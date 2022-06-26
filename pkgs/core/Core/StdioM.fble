@@ -3,9 +3,9 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-@ IO@ = /Core/Stdio%.IO@;
+@ IO@ = /Core/IO/Stdio%.IO@;
 
-<@>@ Process@ = /Core/Process%.Process@;
+<@>@ Process@ = /Core/IO/Process%.Process@;
 
 @ String@ = /Core/String%.String@;
 
