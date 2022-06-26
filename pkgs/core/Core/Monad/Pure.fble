@@ -1,0 +1,13 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+# Pure@ --
+#   An implementation of a pure monad.
+<@>@ Pure@ = <@ T@> { T@; };
+
+Monad@<Pure@> Pure = @(
+  return: <@ A@>(A@ x) { x; },
+  do: <@ A@>(Pure@<A@> ma)<@ B@>((A@) { Pure@<B@>; } f) { f(ma); }
+);
+
+@(Pure@, Pure);

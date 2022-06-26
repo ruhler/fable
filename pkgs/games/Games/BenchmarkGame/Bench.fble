@@ -1,12 +1,13 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-
 <@>% List = /Core/List%.List;
 
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-@ Stdio@ = /Core/IO/Stdio%.Stdio@;
-@ IO@ = /Core/IO/Stdio%.IO@;
+<@>@ Pure@ = /Core/Monad/Pure%.Pure@;
+% Pure = /Core/Monad/Pure%.Pure;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -14,20 +15,18 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-(Stdio@, String@) { Unit@!; } RunBench = (Stdio@ game, String@ n) {
-  IO@ io = @(
-    stdin: !(Nothing<String@>),
-    stdout: (String@ _) { !(Unit); },
-    stderr: (String@ _) { !(Unit); });
-
-  Bool@ result := game(io, List<String@>[n]);
-  !(result.true);
+(Main@, String@) { Unit@; } RunBench = (Main@ game, String@ n) {
+  Stdio@<Pure@> stdio = @(
+    in: Nothing<String@>,
+    out: (String@ _) { Unit; },
+    err: (String@ _) { Unit; });
+  game<Pure@>(Pure, stdio, List<String@>[n]).true;
 };
 
 # Benchmark for the benchmark games that takes about 1 minute to run.
 Unit@! Bench = {
-  Unit@ _pidigits := RunBench(/Games/BenchmarkGame/PiDigits/Stdio%, Str|22);
-  Unit@ _binarytrees := RunBench(/Games/BenchmarkGame/BinaryTrees/Stdio%, Str|14);
+  Unit@ _pidigits := !(RunBench(/Games/BenchmarkGame/PiDigits%.Main, Str|22));
+  Unit@ _binarytrees := !(RunBench(/Games/BenchmarkGame/BinaryTrees%.Main, Str|14));
   !(Unit);
 };
 
