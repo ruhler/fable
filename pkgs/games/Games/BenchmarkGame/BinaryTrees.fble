@@ -13,8 +13,10 @@
 
 <@>@ List@ = /Core/List%.List@;
 
-@ Stdio@ = /Core/IO/Stdio%.Stdio@;
-@ IO@ = /Core/IO/Stdio%.IO@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -52,7 +54,7 @@ Int@ 2 = Int|2;
   Mul(2, Exp2(Sub(x, 1)));
 };
 
-Stdio@ Main = (IO@ io, List@<String@> args) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
   Int@ n = args.?(cons: /Core/Int/Show%.Read(args.cons.head), nil: 0);
   Int@ max_depth = Gt(Add(2, MinDepth), n).?(
     true: Add(2, MinDepth),
@@ -60,14 +62,14 @@ Stdio@ Main = (IO@ io, List@<String@> args) {
   Int@ stretch_depth = Add(1, max_depth);
 
   Int@ check = Check(Tree(stretch_depth));
-  Unit@ _ := io.stdout(Strs[
+  Unit@ _ <- m.do(stdio.out(Strs[
     Str|'stretch tree of depth ', /Core/Int/Show%.Show(stretch_depth),
-    Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]);
+    Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]));
 
   Tree@ long_lived = Tree(max_depth);
 
-  (Int@) { Unit@!; } ForDepth = (Int@ depth) {
-    Gt(depth, max_depth).?(true: !(Unit));
+  (Int@) { M@<Unit@>; } ForDepth = (Int@ depth) {
+    Gt(depth, max_depth).?(true: m.return(Unit));
 
     Int@ iterations = Exp2(Add(Sub(max_depth, depth), MinDepth));
 
@@ -77,18 +79,18 @@ Stdio@ Main = (IO@ io, List@<String@> args) {
     };
 
     Int@ check = ForIter(0, 1);
-    Unit@ _ := io.stdout(Strs[
+    Unit@ _ <- m.do(stdio.out(Strs[
       /Core/Int/Show%.Show(iterations),
       Str|'	 trees of depth ', /Core/Int/Show%.Show(depth),
-      Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]);
+      Str|'	 check: ', /Core/Int/Show%.Show(check), Str[Chars.nl]]));
     ForDepth(Add(2, depth));
   };
-  Unit@ _ := ForDepth(MinDepth);
-  Unit@ _ := io.stdout(Strs[
+  Unit@ _ <- m.do(ForDepth(MinDepth));
+  Unit@ _ <- m.do(stdio.out(Strs[
     Str|'long lived tree of depth ',
     /Core/Int/Show%.Show(max_depth),
-    Str|'	 check: ', /Core/Int/Show%.Show(Check(long_lived)), Str[Chars.nl]]);
-  !(True);
+    Str|'	 check: ', /Core/Int/Show%.Show(Check(long_lived)), Str[Chars.nl]]));
+  m.return(True);
 };
 
 @(Main);

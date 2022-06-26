@@ -269,8 +269,8 @@ That's step (2) out of the way.
 
 List of things to migrate off of Stdio@:
 * Cat program. Should be easy. Done.
-* PiDigits. Should be easy.
-* BinaryTrees. Should be easy.
+* PiDigits. Should be easy. Done.
+* BinaryTrees. Should be easy. Done
 * BenchmarkGame Bench. Good test of pure implementation of Stdio@.
 * BenchmarkGame Test. Good test of pure implementation of Stdio@.
 * Sat solver. Should be doable. Interesting case of abstraction over
