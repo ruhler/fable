@@ -1,0 +1,10 @@
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+
+# Verify we can test two poly apply types for equality.
+# This requires the poly apply type not be reducable.
+(<<@>@ M@> { M@<Unit@>; }) { Unit@; }
+F = (<<@>@ M@> { M@<Unit@>; } main) { Unit@(); };
+
+F;

@@ -1,3 +1,5 @@
+* Fix vim syntax highlighting for <<@>@ M@>
+  The leading '<' shouldn't be colored, because it's not part of the kind.
 * Add mouse button support to App.
 * Clean up frame rate/event handling of /App/Demo%.
 * Figure out how to support images in Apps.

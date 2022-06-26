@@ -1,0 +1,10 @@
+# @@fble-test@@ compile-error 8:5
+
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+
+# The type ... M@<Unit@> ... does not equal ... M@<Bool@> ...
+(<<@>@ M@> { M@<Unit@>; }) { Unit@; }
+F = (<<@>@ M@> { M@<Bool@>; } main) { Unit@(); };
+
+F;

@@ -5,8 +5,10 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
+<@>@ Process@ = /Core/IO/Process%.Process@;
 <@>@ Get@ = /Core/IO/Process%.Get@;
 <@>@ Put@ = /Core/IO/Process%.Put@;
+% ProcessMonad = /Core/IO/Process%.ProcessMonad;
 
 @ String@ = /Core/String%.String@;
 
@@ -34,4 +36,14 @@
 #   program failed and should exit non-zero.
 @ Stdio@ = (IO@, List@<String@>) { Bool@!; };
 
-@(IO@, Stdio@);
+# IOStdio --
+#   An IO implementation of Stdio@.
+(/Core/Stdio%.Main@) { Stdio@; }
+IOStdio = (/Core/Stdio%.Main@ main)(IO@ io, List@<String@> args) {
+  main<Process@>(
+    ProcessMonad,
+    /Core/Stdio%.Stdio@<Process@>(io.stdin, io.stdout, io.stderr),
+    args);
+};
+
+@(IO@, Stdio@, IOStdio);

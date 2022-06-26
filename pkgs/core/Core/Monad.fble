@@ -1,4 +1,6 @@
 
+# Monad@ --
+#   An interface for monadic computations.
 <<@>@>@ Monad@ = <<@>@ M@> {
   *(
     <@ A@>(A@) { M@<A@>; } return,

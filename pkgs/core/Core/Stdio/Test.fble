@@ -7,24 +7,18 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-<@>@ Process@ = /Core/IO/Process%.Process@;
+% IOStdio = /Core/IO/Stdio%.IOStdio;
 
-@ Stdio@ = /Core/IO/Stdio%.Stdio@;
-@ IO@ = /Core/IO/Stdio%.IO@;
-
-<<@>@>@ StdioM@ = /Core/StdioM%.StdioM@;
-% IOStdio = /Core/StdioM%.IOStdio;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
-Stdio@ Test = (IO@ io, List@<String@> args) {
+Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
   # Output a single line to test that we don't drop trailing outputs.
-  StdioM@<Process@> sm = IOStdio(io); 
-  Monad@<Process@> m = sm.m;
-  /Core/StdioM%.Stdio@<Process@> stdio = sm.stdio;
   Unit@ _ <- m.do(stdio.out(Str|'PASSED'));
   m.return(True);
 };
 
-Test;
+IOStdio(Test);

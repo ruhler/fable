@@ -779,10 +779,13 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
     }
 
     case FBLE_POLY_APPLY_TYPE: {
-      UNREACHABLE("poly apply type is not Normal");
+      FblePolyApplyType* pa = (FblePolyApplyType*)a;
+      FblePolyApplyType* pb = (FblePolyApplyType*)b;
+      bool result = TypesEqual(heap, vars, pa->poly, pb->poly, &neq)
+                 && TypesEqual(heap, vars, pa->arg, pb->arg, &neq);
       FbleReleaseType(heap, a);
       FbleReleaseType(heap, b);
-      return false;
+      return result;
     }
 
     case FBLE_PACKAGE_TYPE: {

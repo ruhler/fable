@@ -1,0 +1,37 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<@>@ List@ = /Core/List%.List@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+# Stdio@ --
+#   Interface for standard input and output operations.
+<<@>@>@ Stdio@ = <<@>@ M@> { *(
+    M@<Maybe@<String@>> in,
+    (String@) { M@<Unit@>; } out,
+    (String@) { M@<Unit@>; } err
+  );
+};
+
+# Main@ --
+#   Type of the main function for a stdio application.
+#
+# Inputs:
+#   M@ - The abstract computation type.
+#   m - A Monad@ interface M@.
+#   stdio - A Stdio@ interface for M@.
+#   args - The list of arguments to the application.
+#
+# Results:
+#   True if the program ran successfully and should exit zero. False if the
+#   program failed and should exit non-zero.
+<<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, Stdio@<M@>, List@<String@>) { M@<Bool@>; };
+
+@(Stdio@, Main@);

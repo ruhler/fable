@@ -1,5 +1,11 @@
 
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
 @ Unit@ = /Core/Unit%.Unit@;
+
+# Process@ -- 
+#   The process type.
+<@>@ Process@ = <@ T@>{ T@!; };
 
 # Get@ --
 #  The builtin type for input ports.
@@ -24,6 +30,13 @@
 #  Unit
 <@>@ Put@ = <@ T@>(T@){ Unit@!; };
 
-<@>@ Process@ = <@ T@>{ T@!; };
+# ProcessMonad --
+#   An instance of the Monad@ interface for Process.
+Monad@<Process@> ProcessMonad = Monad@<Process@>(
+  <@ A@>(A@ a) { !(a); },
+  <@ A@>(A@! ma)<@ B@>((A@) { B@!; } f) {
+    A@ a := ma;
+    f(a);
+  });
 
-@(Get@, Put@, Process@);
+@(Process@, Get@, Put@, ProcessMonad);

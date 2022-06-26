@@ -224,3 +224,46 @@ otherwise be simplified, but they will be big changes refactor and clean up
 right.
 
 Let's see how goes.
+
+---
+
+Step (1) was easy and done.
+
+Step (2)...
+
+fble-compile: fble/lib/type.c|782| TypesEqual: Assertion `false && "poly apply type is not Normal"' failed.
+
+Uh oh. Bug in the type system. That's scary.
+
+We have two PolyApplyTypes we are comparing. The claim is that these are in
+normal form. Is it possible to have a PolyApplyType in normal form? Why not?
+If it's an abstract poly like M@, right?
+
+Yeah. See. It is possible. So I should add a test case for this and fix it.
+
+Question: what two types are being compared here? So I know what to base my
+test case off of.
+
+It's this line:
+
+(/Core/Stdio%.Main@) { Stdio@; }
+IOStdio = (/Core/Stdio%.Main@ main)(IO@ io, List@<String@> args) {
+
+Where Main@ is polymorphic. What do you think, it's because we have M@<Bool@>
+in the return type of the function, so we end up comparing M@<Bool@> with
+M@<Bool@>, where M@ is abstract. That's it, right?
+
+But it may be more complicated to end up substituting like this.
+
+Let's repro, then minimize, then fix.
+
+Repro is done. It's pretty simple and makes sense. Next step is to figure out
+how to do type equality on (normalized) poly application. If it's normal, that
+means you can compare poly and compare args, right?
+
+I feel like we better test not equal too though.
+
+Cool. Easy. Done. Fixed.
+
+That's step (2) out of the way.
+
