@@ -268,7 +268,7 @@ Cool. Easy. Done. Fixed.
 That's step (2) out of the way.
 
 List of things to migrate off of Stdio@:
-* Cat program. Should be easy.
+* Cat program. Should be easy. Done.
 * PiDigits. Should be easy.
 * BinaryTrees. Should be easy.
 * BenchmarkGame Bench. Good test of pure implementation of Stdio@.
@@ -278,3 +278,8 @@ List of things to migrate off of Stdio@:
 * TicTacToe. Depends on concurrency?
 * Test@ - Wait until very end.
 
+---
+
+Experience:
+* Forgetting m.do leads to a somewhat difficult to decipher, though
+  technically quite correct, error message.
