@@ -274,7 +274,7 @@ List of things to migrate off of Stdio@:
 * BenchmarkGame Bench. Good test of pure implementation of Stdio@. Done.
 * BenchmarkGame Test. Good test of pure implementation of Stdio@. Done.
 * Sat solver. Should be doable. Interesting case of abstraction over
-  abstraction.
+  abstraction. Done.
 * TicTacToe. Depends on concurrency?
 * Test@ - Wait until very end.
 
@@ -287,4 +287,23 @@ Experience:
 ---
 
 Next step: migrate BenchmarkGame Test to a pure implementation of Stdio.
+* Works well enough. No complaints from me.
+* One thing that's slightly awkward is we get back a list of strings, and
+  realistically we only care about the concatenated list, not how it's
+  partitioned into different outputs. So there's some notion of causality that
+  we are no longer easily able to test this way. Maybe we could come up with
+  some fancier way to test Stdio applications that's like an expect script.
+  You say: give this input, expect this output, then give this input, etc. I'm
+  confident we could implement such a thing using pure monads. It's just more
+  effort than I want to put right now.
+
+---
+
+Next step: Sat solver. How will this look?
+
+The first thing we do in sat solving is to read all the lines of input from
+IO. That should be easy to reimplement using abstract Stdio. So I think this
+will be pretty straight forward.
+
+Yeah. No issue at all.
 

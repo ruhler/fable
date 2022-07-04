@@ -7,16 +7,16 @@
 @ Int@ = /Core/Int%.Int@;
 
 <@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
 <@>% Cons = /Core/List%.Cons;
+<@>% Nil = /Core/List%.Nil;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
-@ Stdio@ = /Core/IO/Stdio%.Stdio@;
-@ IO@ = /Core/IO/Stdio%.IO@;
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -31,27 +31,27 @@
 % ParseLines = /Sat/Dimacs%.ParseLines;
 % ShowResult = /Sat/Show%.ShowResult;
 
-(Get@<Maybe@<String@>>) { List@<String@>!; }
-GetLines = (Get@<Maybe@<String@>> get) {
-  Maybe@<String@> next := get;
-  next.?(nothing: !(List<String@>[]));
+<<@>@ M@>(Monad@<M@>, M@<Maybe@<String@>>) { M@<List@<String@>>; }
+GetLines = <<@>@ M@>(Monad@<M@> m, M@<Maybe@<String@>> get) {
+  Maybe@<String@> next <- m.do(get);
+  next.?(nothing: m.return(Nil<String@>));
 
-  List@<String@> tail := GetLines(get);
-  !(Cons<String@>(next.just, tail));
+  List@<String@> tail <- m.do(GetLines(m, get));
+  m.return(Cons<String@>(next.just, tail));
 };
 
-Stdio@ Main = (IO@ io, List@<String@> args) {
-  List@<String@> lines := GetLines(io.stdin);
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+  List@<String@> lines <- m.do(GetLines(m, stdio.in));
   Parse@<Formula@> parsed = ParseLines(lines);
   parsed.?(error: {
-    Unit@ _ := io.stderr(parsed.error);
-    !(False);
+    Unit@ _ <- m.do(stdio.err(parsed.error));
+    m.return(False);
   });
 
   Result@ result = Solve(parsed.parsed, Nothing<Int@>);
-  Unit@ _ := io.stdout(ShowResult(result));
-  Unit@ _ := io.stdout(Str[Chars.nl]);
-  !(True);
+  Unit@ _ <- m.do(stdio.out(ShowResult(result)));
+  Unit@ _ <- m.do(stdio.out(Str[Chars.nl]));
+  m.return(True);
 };
 
-Main;
+/Core/IO/Stdio%.IOStdio(Main);
