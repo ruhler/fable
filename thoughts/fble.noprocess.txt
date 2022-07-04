@@ -283,3 +283,8 @@ List of things to migrate off of Stdio@:
 Experience:
 * Forgetting m.do leads to a somewhat difficult to decipher, though
   technically quite correct, error message.
+
+---
+
+Next step: migrate BenchmarkGame Test to a pure implementation of Stdio.
+

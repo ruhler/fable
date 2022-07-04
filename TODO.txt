@@ -1,3 +1,5 @@
+* Should we do type inference on List[Str|a, Str|b]? Why can't it figure that
+  out?
 * Fix vim syntax highlighting for <<@>@ M@>
   The leading '<' shouldn't be colored, because it's not part of the kind.
 * Add mouse button support to App.

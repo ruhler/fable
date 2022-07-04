@@ -1,0 +1,163 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
+@ PureState@ = /Core/Stdio/Pure%.PureState@;
+% Monad = /Core/Stdio/Pure%.Monad;
+% Stdio = /Core/Stdio/Pure%.Stdio;
+<@>% Run = /Core/Stdio/Pure%.Run;
+
+<@>@ Show@ = /Core/Show%.Show@;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+# Import to test compilation.
+% _ = /Core/Stdio/Cat%;
+% _ = /Core/Stdio/Test%;
+
+Eq@<List@<String@>> StrsEq = /Core/List/Eq%.Eq(/Core/String/Eq%.Eq);
+
+Eq@<PureState@> PureStateEq = (PureState@ a, PureState@ b) {
+  StrsEq(a.in, b.in).?(false: False);
+  StrsEq(a.out, b.out).?(false: False);
+  StrsEq(a.err, b.err).?(false: False);
+  True;
+};
+
+<@ A@>(Eq@<A@>) { Eq@<PureResult@<A@>>; }
+PureResultEq = <@ A@>(Eq@<A@> eq)(PureResult@<A@> a, PureResult@<A@> b) {
+  PureStateEq(a.state, b.state).?(false: False);
+  eq(a.result, b.result).?(false: False);
+  True;
+};
+
+Show@<PureState@> PureStateShow = (PureState@ a) {
+  Strs[
+    Str|'In: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.in),
+    Str|', Out: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.out),
+    Str|', Err: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.err)];
+};
+
+<@ A@>(Show@<A@>) { Show@<PureResult@<A@>>; }
+PureResultShow = <@ A@>(Show@<A@> show)(PureResult@<A@> a) {
+  Strs[PureStateShow(a.state), Str|', Result: ', show(a.result)];
+};
+
+# Tests --
+#  A test suite to test the /Stdio% module and friends.
+Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
+  Test(Str|Return, !({
+    List@<String@> inputs = List<String@>[Str|Hello, Str|World];
+    PureResult@<Bool@> wnt = PureResult@<Bool@>(
+      PureState@(inputs, Nil<String@>, Nil<String@>), True);
+    PureResult@<Bool@> got = Run(Monad.return(True), inputs);
+    AssertEquals<PureResult@<Bool@>>(
+      PureResultEq(/Core/Bool/Eq%.Eq),
+      PureResultShow(/Core/Bool/Show%.Show),
+      wnt, got);
+  })),
+
+  Test(Str|In, !({
+    List@<String@> inputs = List<String@>[Str|Hello, Str|World];
+    PureResult@<Maybe@<String@>> wnt = PureResult@<Maybe@<String@>>(
+      PureState@(List<String@>[Str|World], Nil<String@>, Nil<String@>), Just(Str|Hello));
+    PureResult@<Maybe@<String@>> got = Run(Stdio.in, inputs);
+    AssertEquals<PureResult@<Maybe@<String@>>>(
+      PureResultEq(/Core/Maybe/Eq%.Eq(/Core/String/Eq%.Eq)),
+      PureResultShow(/Core/Maybe/Show%.Show(/Core/String/Show%.Show)),
+      wnt, got);
+  })),
+
+  Test(Str|InEnd, !({
+    List@<String@> inputs = Nil<String@>;
+    PureResult@<Maybe@<String@>> wnt = PureResult@<Maybe@<String@>>(
+      PureState@(Nil<String@>, Nil<String@>, Nil<String@>), Nothing<String@>);
+    PureResult@<Maybe@<String@>> got = Run(Stdio.in, inputs);
+    AssertEquals(
+      PureResultEq(/Core/Maybe/Eq%.Eq(/Core/String/Eq%.Eq)),
+      PureResultShow(/Core/Maybe/Show%.Show(/Core/String/Show%.Show)),
+      wnt, got);
+  })),
+
+  Test(Str|Out, !({
+    List@<String@> inputs = List<String@>[Str|Hello, Str|World];
+    PureResult@<Unit@> wnt = PureResult@<Unit@>(
+      PureState@(inputs, List<String@>[Str|There], Nil<String@>), Unit);
+    PureResult@<Unit@> got = Run(Stdio.out(Str|There), inputs);
+    AssertEquals(
+      PureResultEq(/Core/Unit/Eq%.Eq),
+      PureResultShow(/Core/Unit/Show%.Show),
+      wnt, got);
+  })),
+
+  Test(Str|Err, !({
+    List@<String@> inputs = List<String@>[Str|Hello, Str|World];
+    PureResult@<Unit@> wnt = PureResult@<Unit@>(
+      PureState@(inputs, Nil<String@>, List<String@>[Str|There]), Unit);
+    PureResult@<Unit@> got = Run(Stdio.err(Str|There), inputs);
+    AssertEquals(
+      PureResultEq(/Core/Unit/Eq%.Eq),
+      PureResultShow(/Core/Unit/Show%.Show),
+      wnt, got);
+  })),
+
+  Test(Str|DoOuts, !({
+    List@<String@> inputs = List<String@>[Str|Hello, Str|World];
+
+    PureResult@<Unit@> wnt = PureResult@<Unit@>(
+      PureState@(inputs, List<String@>[Str|A, Str|B], Nil<String@>), Unit);
+
+    PureResult@<Unit@> got = Run({
+      Unit@ _ <- Monad.do(Stdio.out(Str|A));
+      Unit@ _ <- Monad.do(Stdio.out(Str|B));
+      Monad.return(Unit);
+    }, inputs);
+
+    AssertEquals(
+      PureResultEq(/Core/Unit/Eq%.Eq),
+      PureResultShow(/Core/Unit/Show%.Show),
+      wnt, got);
+  })),
+
+  Test(Str|DoErrs, !({
+    List@<String@> inputs = List<String@>[Str|Hello, Str|World];
+
+    PureResult@<Unit@> wnt = PureResult@<Unit@>(
+      PureState@(inputs, Nil<String@>, List<String@>[Str|A, Str|B]), Unit);
+
+    PureResult@<Unit@> got = Run({
+      Unit@ _ <- Monad.do(Stdio.err(Str|A));
+      Unit@ _ <- Monad.do(Stdio.err(Str|B));
+      Monad.return(Unit);
+    }, inputs);
+
+    AssertEquals(
+      PureResultEq(/Core/Unit/Eq%.Eq),
+      PureResultShow(/Core/Unit/Show%.Show),
+      wnt, got);
+  }))
+]);
+
+@(Tests);

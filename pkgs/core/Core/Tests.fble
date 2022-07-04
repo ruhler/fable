@@ -8,8 +8,6 @@
 
 # Import to test compilation.
 % _ = /Core/Char/Show%;
-% _ = /Core/Stdio/Cat%;
-% _ = /Core/Stdio/Test%;
 
 Test@ Tests = TestSuite(Str|Core, List<Test@>[
   /Core/Bool/Tests%.Tests,
@@ -19,6 +17,7 @@ Test@ Tests = TestSuite(Str|Core, List<Test@>[
   /Core/LFSR/Tests%.Tests,
   /Core/Maybe/Tests%.Tests,
   /Core/Map/Tests%.Tests,
+  /Core/Stdio/Tests%.Tests,
   /Core/String/Tests%.Tests,
   /Core/Test/Tests%.Tests
 ]);

@@ -36,3 +36,9 @@ the type with the given tag, gives you a collection of equality constraints
 desired. We can abstract common logic for extracting the underlying type from
 a poly, inferring and auto-applying the types.
 
+---
+
+Using type inference more, some requests:
+* List[Str|a, Str|b] should work, right?
+* Foo@(...), where Foo@ is polymorphic would certainly be nice.
+
