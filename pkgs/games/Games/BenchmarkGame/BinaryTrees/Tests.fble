@@ -5,7 +5,7 @@
 
 % Test = /Games/BenchmarkGame/Test%.Test;
 
-Test@ Tests = Test(Str|BinaryTrees, /Games/BenchmarkGame/BinaryTrees/Stdio%,
+Test@ Tests = Test(Str|BinaryTrees, /Games/BenchmarkGame/BinaryTrees%.Main,
   Str|10, Str|
 'stretch tree of depth 11	 check: 4095
 1024	 trees of depth 4	 check: 31744

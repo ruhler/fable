@@ -5,7 +5,7 @@
 
 % Test = /Games/BenchmarkGame/Test%.Test;
 
-Test@ Tests = Test(Str|PiDigits, /Games/BenchmarkGame/PiDigits/Stdio%, Str|10, Str|
+Test@ Tests = Test(Str|PiDigits, /Games/BenchmarkGame/PiDigits%.Main, Str|10, Str|
 '3141592653	:10
 ');
 

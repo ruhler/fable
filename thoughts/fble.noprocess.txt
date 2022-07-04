@@ -272,7 +272,7 @@ List of things to migrate off of Stdio@:
 * PiDigits. Should be easy. Done.
 * BinaryTrees. Should be easy. Done
 * BenchmarkGame Bench. Good test of pure implementation of Stdio@. Done.
-* BenchmarkGame Test. Good test of pure implementation of Stdio@.
+* BenchmarkGame Test. Good test of pure implementation of Stdio@. Done.
 * Sat solver. Should be doable. Interesting case of abstraction over
   abstraction.
 * TicTacToe. Depends on concurrency?

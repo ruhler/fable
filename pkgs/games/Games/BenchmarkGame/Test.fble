@@ -1,49 +1,49 @@
 
 
 @ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
 
 <@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
 
-<@>@ Maybe@ = /Core/Maybe%.Maybe@;
-<@>% Just = /Core/Maybe%.Just;
-<@>% Nothing = /Core/Maybe%.Nothing;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
 
-@ Stdio@ = /Core/IO/Stdio%.Stdio@;
-@ IO@ = /Core/IO/Stdio%.IO@;
+<@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
+<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
+@ PureState@ = /Core/Stdio/Pure%.PureState@;
+% Monad = /Core/Stdio/Pure%.Monad;
+% Stdio = /Core/Stdio/Pure%.Stdio;
+<@>% Run = /Core/Stdio/Pure%.Run;
+<@>% PureResultEq = /Core/Stdio/Pure/Eq%.PureResultEq;
+<@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResultShow;
 
 @ String@ = /Core/String%.String@;
-% Str = /Core/String%.Str;
 % Strs = /Core/String%.Strs;
 
 @ Test@ = /Core/Test%.Test@;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
-@ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
+(String@, Main@, String@, String@) { Test@; }
+Test = (String@ name, Main@ game, String@ n, String@ expected) {
+  /Core/Test%.Test(name, !({
+    PureResult@<Bool@> want = PureResult@<Bool@>(
+      PureState@(Nil<String@>, List<String@>[expected], Nil<String@>), True);
 
-(String@, Stdio@, String@, String@) { Test@; }
-Test = (String@ name, Stdio@ game, String@ n, String@ expected) {
-  /Core/Test%.Test(name, {
-    Maybe@<String@> ~ get, put;
+    PureResult@<Bool@> got = Run(
+      game<Pure@>(Monad, Stdio, List<String@>[n]),
+      Nil<String@>);
 
-    IO@ io = @(
-      stdin: !(Nothing<String@>),
-      stdout: (String@ s) { put(Just<String@>(s)); },
-      stderr: (String@ _) { !(Unit); });
+    # Flatten the output, because we only care about the final results, not
+    # how it's split into different calls to Stdio.out.
+    PureResult@<Bool@> merged = PureResult@<Bool@>(
+      PureState@(got.state.in, List<String@>[Strs(got.state.out)], got.state.err),
+      got.result);
 
-    (String@) { String@!; } ReadOutput = (String@ output) { 
-      Maybe@<String@> ms := get;
-      ms.?(nothing: !(output));
-      ReadOutput(Strs[output, ms.just]);
-    };
-
-    Unit@! RunGame = {
-      Bool@ _ := game(io, List<String@>[n]);
-      put(Nothing<String@>);
-    };
-    Unit@ _ := RunGame, String@ got := ReadOutput(Str|'');
-    !(AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, expected, got));
-  });
+    AssertEquals(
+      PureResultEq(/Core/Bool/Eq%.Eq),
+      PureResultShow(/Core/Bool/Show%.Show),
+      want, merged);
+  }));
 };
 
 @(Test);
