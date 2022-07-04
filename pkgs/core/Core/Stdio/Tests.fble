@@ -16,12 +16,10 @@
 % Stdio = /Core/Stdio/Pure%.Stdio;
 <@>% Run = /Core/Stdio/Pure%.Run;
 <@>% PureResultEq = /Core/Stdio/Pure/Eq%.PureResultEq;
-
-<@>@ Show@ = /Core/Show%.Show@;
+<@>% PureResultShow = /Core/Stdio/Pure/Show%.PureResultShow;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
-% Strs = /Core/String%.Strs;
 
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
@@ -34,18 +32,6 @@
 # Import to test compilation.
 % _ = /Core/Stdio/Cat%;
 % _ = /Core/Stdio/Test%;
-
-Show@<PureState@> PureStateShow = (PureState@ a) {
-  Strs[
-    Str|'In: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.in),
-    Str|', Out: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.out),
-    Str|', Err: ', /Core/List/Show%.Show(/Core/String/Show%.Show)(a.err)];
-};
-
-<@ A@>(Show@<A@>) { Show@<PureResult@<A@>>; }
-PureResultShow = <@ A@>(Show@<A@> show)(PureResult@<A@> a) {
-  Strs[PureStateShow(a.state), Str|', Result: ', show(a.result)];
-};
 
 # Tests --
 #  A test suite to test the /Stdio% module and friends.
