@@ -1,0 +1,30 @@
+
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
+
+<@>@ Eq@ = /Core/Eq%.Eq@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
+@ PureState@ = /Core/Stdio/Pure%.PureState@;
+
+@ String@ = /Core/String%.String@;
+
+Eq@<List@<String@>> StrsEq = /Core/List/Eq%.Eq(/Core/String/Eq%.Eq);
+
+Eq@<PureState@> PureStateEq = (PureState@ a, PureState@ b) {
+  StrsEq(a.in, b.in).?(false: False);
+  StrsEq(a.out, b.out).?(false: False);
+  StrsEq(a.err, b.err).?(false: False);
+  True;
+};
+
+<@ A@>(Eq@<A@>) { Eq@<PureResult@<A@>>; }
+PureResultEq = <@ A@>(Eq@<A@> eq)(PureResult@<A@> a, PureResult@<A@> b) {
+  PureStateEq(a.state, b.state).?(false: False);
+  eq(a.result, b.result).?(false: False);
+  True;
+};
+
+@(PureStateEq, PureResultEq);
