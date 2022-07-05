@@ -12,8 +12,10 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-@ Stdio@ = /Core/IO/Stdio%.Stdio@;
-@ IO@ = /Core/IO/Stdio%.IO@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
 
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
@@ -99,31 +101,32 @@
       nil: Nothing<Input@>);
 };
 
-(IO@, Game@) { Unit@!; } TicTacToe = (IO@ io, Game@ game) {
-  Unit@ _ := io.stdout(ShowGame(game));
+<<@>@ M@>(Monad@<M@>, Stdio@<M@>, Game@) { M@<Unit@>; }
+TicTacToe = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, Game@ game) {
+  Unit@ _ <- m.do(stdio.out(ShowGame(game)));
 
-  Maybe@<String@> s := io.stdin;
-  s.?(nothing: !(Unit));
+  Maybe@<String@> s <- m.do(stdio.in);
+  s.?(nothing: m.return(Unit));
 
   Maybe@<Input@> mi = ParseInput(s.just);
   mi.?(nothing: {
-    Unit@ _ := io.stdout(Strs[
+    Unit@ _ <- m.do(stdio.out(Strs[
       Str|'invalid input: ',
       Str|'expected {A,B,C}{1,2,3}, P, Q, or R',
-      Str[Chars.nl]]);
-    TicTacToe(io, game);
+      Str[Chars.nl]]));
+    TicTacToe(m, stdio, game);
   });
 
-  mi.just.?(quit: !(Unit));
-  mi.just.?(reset: TicTacToe(io, Initial));
-  TicTacToe(io, Play(mi.just.move, game));
+  mi.just.?(quit: m.return(Unit));
+  mi.just.?(reset: TicTacToe(m, stdio, Initial));
+  TicTacToe(m, stdio, Play(mi.just.move, game));
 };
 
 
-# Play a game of tic-tac-toe using the stdio interface.
-Stdio@ Main = (IO@ io, List@<String@> args) {
-  Unit@ _ := TicTacToe(io, Initial);
-  !(True);
+# Play a game of tic-tac-toe.
+Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+  Unit@ _ <- m.do(TicTacToe(m, stdio, Initial));
+  m.return(True);
 };
 
-Main;
+/Core/IO/Stdio%.IOStdio(Main);
