@@ -364,3 +364,5 @@ be all set.
 TicTacToe AI interface cleaned up easily and nicely. Tests updated. Next step
 is to update the Game interface.
 
+Updating the game interface wasn't bad. It's cleaner this way too.
+

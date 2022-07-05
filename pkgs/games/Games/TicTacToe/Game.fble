@@ -1,9 +1,6 @@
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
-
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
@@ -21,46 +18,39 @@
 
 @ GameResult@ = +(Player@ win, Unit@ draw);
 @ GameStatus@ = +(Player@ playing, GameResult@ ended); 
-@ Output@ = *(Board@ board, GameStatus@ status);
+@ Game@ = *(Board@ board, GameStatus@ status, AI@ ai);
 
-# move: Make a move at the given position for the current player. If no
-#       position is supplied, have the computer pick a reasonable move instead.
-# reset: Reset the game.
-# quit: Quit the game.
-@ Input@ = +(Maybe@<Position@> move, Unit@ reset, Unit@ quit);
+@ Move@ = +(Position@ given, Unit@ ai);
 
-(Get@<Input@>, Put@<Output@>, AI@){Unit@!;}
-NewGame = (Input@! input, Put@<Output@> output, AI@ ai) {
-  PlayGame(input, output, ai, EmptyBoard, Player@(X: Unit));
-},
-(Input@!, Put@<Output@>, AI@, Board@, Player@){Unit@!;}
-PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x) {
-  GameStatus@ status := !(BoardStatus(board).?(
-                          X: GameStatus@(ended: GameResult@(win: Player@(X: Unit))),
-                          O: GameStatus@(ended: GameResult@(win: Player@(O: Unit))),
-                          D: GameStatus@(ended: GameResult@(draw: Unit)),
-                          E: GameStatus@(playing: x)));
-  Unit@ _ := output(Output@(board, status));
-  Input@ in := input;
-  in.?(quit: !(Unit));
-  in.?(reset: NewGame(input, output, ai));
-  status.?(ended: PlayGame(input, output, ai, board, x));
+Game@ Initial = Game@(
+  EmptyBoard,
+  GameStatus@(playing: Player@(X: Unit)),
+  AI.Initial
+);
 
-  AIR@ air := in.move.?(
-    just: {
-      Position@ position := !(in.move.just);
-      !(AIR@(ai, position));
-    },
-    nothing: !(AI.Move(ai, board, x)));
+(Move@, Game@) { Game@; } Play = (Move@ move, Game@ game) {
+  game.status.?(ended: game);
 
-  Maybe@<Board@> nboard := !(Move(board, air.position, x));
-  nboard.?(
-      just: PlayGame(input, output, air.ai, nboard.just, x.?(X: Player@(O: Unit), O: Player@(X: Unit))),
-      nothing: PlayGame(input, output, air.ai, board, x));
+  Player@ player = game.status.playing;
+
+  AIR@ air = move.?(
+    given: AIR@(game.ai, move.given),
+    ai: AI.Move(game.ai, game.board, player));
+
+  Maybe@<Board@> nboard = Move(game.board, air.position, player);
+  nboard.?(nothing: game);
+
+  Player@ nplayer = player.?(
+    X: Player@(O: Unit),
+    O: Player@(X: Unit));
+
+  GameStatus@ nstatus = BoardStatus(nboard.just).?(
+    X: GameStatus@(ended: GameResult@(win: Player@(X: Unit))),
+    O: GameStatus@(ended: GameResult@(win: Player@(O: Unit))),
+    D: GameStatus@(ended: GameResult@(draw: Unit)),
+    E: GameStatus@(playing: nplayer));
+
+  Game@(nboard.just, nstatus, air.ai);
 };
 
-(Get@<Input@>, Put@<Output@>){Unit@!;} TicTacToe = (Get@<Input@> input, Put@<Output@> output) {
-  NewGame(input, output, AI.Initial);
-};
-
-@(GameStatus@, Input@, Output@, TicTacToe);
+@(GameStatus@, Game@, Move@, Initial, Play);
