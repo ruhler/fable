@@ -17,12 +17,14 @@
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
 # T --
 #  Tests that a boolean expression evaluates to True.
 #
 # Inputs:
 #  name - the name of the test.
-#  p - a process that evaluates and returns the result of the boolean
+#  p - a function that evaluates and returns the result of the boolean
 #      expression to test.
 #
 # Results:
@@ -30,11 +32,11 @@
 #  True.
 #
 # Example Use:
-#  T(Str|Test_True_Is_True, !(True));
-(String@, Bool@!) { Test@; } T = (String@ name, Bool@! p) {
-  Test(name, {
-    Bool@ x := p;
-    !(AssertEquals<Bool@>(Eq, /Core/Bool/Show%.Show, True, x));
+#  T(Str|Test_True_Is_True, (Unit@ _) { True; });
+(String@, (Unit@) { Bool@; }) { Test@; }
+T = (String@ name, (Unit@) { Bool@; } p) {
+  Test(name, (Unit@ u) {
+    AssertEquals<Bool@>(Eq, /Core/Bool/Show%.Show, True, p(u));
   });
 };
 
@@ -43,7 +45,7 @@
 #
 # Inputs:
 #  name - the name of the test.
-#  p - a process that evaluates and returns the result of the boolean
+#  p - a function that evaluates and returns the result of the boolean
 #      expression to test.
 #
 # Results:
@@ -51,49 +53,49 @@
 #  False.
 #
 # Example Use:
-#  F(Str|Test_False_Is_False, !(False));
-(String@, Bool@!) { Test@; } F = (String@ name, Bool@! p) {
-  Test(name, {
-    Bool@ x := p;
-    !(AssertEquals<Bool@>(Eq, /Core/Bool/Show%.Show, False, x));
+#  F(Str|Test_False_Is_False, (Unit@ _) { False; });
+(String@, (Unit@) { Bool@; }) { Test@; }
+F = (String@ name, (Unit@) { Bool@; } p) {
+  Test(name, (Unit@ u) {
+    AssertEquals<Bool@>(Eq, /Core/Bool/Show%.Show, False, p(u));
   });
 };
 
 # Tests --
 #  A test suite to test the /Core/Bool% module.
 Test@ Tests = TestSuite(Str|Bool, List<Test@>[
-  T(Str|True, !(True)),
-  F(Str|False, !(False)),
+  T(Str|True, (Unit@ _) { True; }),
+  F(Str|False, (Unit@ _) { False; }),
 
-  F(Str|Not_True, !(Not(True))),
-  T(Str|Not_False, !(Not(False))),
+  F(Str|Not_True, (Unit@ _) { Not(True); }),
+  T(Str|Not_False, (Unit@ _) { Not(False); }),
 
-  T(Str|And_True_True, !(And(True, True))),
-  F(Str|And_True_False, !(And(True, False))),
-  F(Str|And_False_True, !(And(False, True))),
-  F(Str|And_False_False, !(And(False, False))),
+  T(Str|And_True_True, (Unit@ _) { And(True, True); }),
+  F(Str|And_True_False, (Unit@ _) { And(True, False); }),
+  F(Str|And_False_True, (Unit@ _) { And(False, True); }),
+  F(Str|And_False_False, (Unit@ _) { And(False, False); }),
 
-  T(Str|Or_True_True, !(Or(True, True))),
-  T(Str|Or_True_False, !(Or(True, False))),
-  T(Str|Or_False_True, !(Or(False, True))),
-  F(Str|Or_False_False, !(Or(False, False))),
+  T(Str|Or_True_True, (Unit@ _) { Or(True, True); }),
+  T(Str|Or_True_False, (Unit@ _) { Or(True, False); }),
+  T(Str|Or_False_True, (Unit@ _) { Or(False, True); }),
+  F(Str|Or_False_False, (Unit@ _) { Or(False, False); }),
 
-  T(Str|Eq_True_True, !(Eq(True, True))),
-  F(Str|Eq_True_False, !(Eq(True, False))),
-  F(Str|Eq_False_True, !(Eq(False, True))),
-  T(Str|Eq_False_False, !(Eq(False, False))),
+  T(Str|Eq_True_True, (Unit@ _) { Eq(True, True); }),
+  F(Str|Eq_True_False, (Unit@ _) { Eq(True, False); }),
+  F(Str|Eq_False_True, (Unit@ _) { Eq(False, True); }),
+  T(Str|Eq_False_False, (Unit@ _) { Eq(False, False); }),
 
-  Test(Str|Show_True, !({
+  Test(Str|Show_True, (Unit@ _) {
     String@ wnt = Str|'True';
     String@ got = /Core/Bool/Show%.Show(True);
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|Show_False, !({
+  Test(Str|Show_False, (Unit@ _) {
     String@ wnt = Str|'False';
     String@ got = /Core/Bool/Show%.Show(False);
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }))
+  })
 ]);
 
 @(Tests);

@@ -65,16 +65,16 @@ Show@<Bit2@> ShowBit2 = (Bit2@ x) {
 <@,@>% ForEach = /Core/Map%.ForEach<Bit2@>;
 
 Test@ Tests = TestSuite(Str|Map, List<Test@>[
-  Test(Str|'empty', !({
+  Test(Str|'empty', (Unit@ _) {
     Maybe@<Unit@> wnt = Nothing<Unit@>;
     Maybe@<Unit@> got = Lookup<Unit@>(Empty<Unit@>, B);
     AssertEquals<Maybe@<Unit@>>(
       /Core/Maybe/Eq%.Eq<Unit@>(/Core/Unit/Eq%.Eq),
       /Core/Maybe/Show%.Show<Unit@>(/Core/Unit/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'not found', !({
+  Test(Str|'not found', (Unit@ _) {
     Map@<Unit@> map = Insert<Unit@>(Empty<Unit@>, C, Unit);
     Maybe@<Unit@> wnt = Nothing<Unit@>;
     Maybe@<Unit@> got = Lookup<Unit@>(map, B);
@@ -82,9 +82,9 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
       /Core/Maybe/Eq%.Eq<Unit@>(/Core/Unit/Eq%.Eq),
       /Core/Maybe/Show%.Show<Unit@>(/Core/Unit/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'found', !({
+  Test(Str|'found', (Unit@ _) {
     Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
       A, False),
       B, True),
@@ -95,9 +95,9 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
       /Core/Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
       /Core/Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'replace', !({
+  Test(Str|'replace', (Unit@ _) {
     Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
       B, False),
       B, True);
@@ -107,9 +107,9 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
       /Core/Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
       /Core/Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'delete', !({
+  Test(Str|'delete', (Unit@ _) {
     Map@<Bool@> map = Delete<Bool@>(Insert<Bool@>(Empty<Bool@>, B, False), B);
     Maybe@<Bool@> wnt = Nothing<Bool@>;
     Maybe@<Bool@> got = Lookup<Bool@>(map, B);
@@ -117,9 +117,9 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
       /Core/Maybe/Eq%.Eq<Bool@>(/Core/Bool/Eq%.Eq),
       /Core/Maybe/Show%.Show<Bool@>(/Core/Bool/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'foreach', !({
+  Test(Str|'foreach', (Unit@ _) {
     Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(Empty<Bool@>,
       B, True),
       A, True),
@@ -142,9 +142,9 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
         /Core/String%.Strs[ShowBit2(e.key), Str|': ', /Core/Bool/Show%.Show(e.value)];
       }),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'eq: equal', !({
+  Test(Str|'eq: equal', (Unit@ _) {
     Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
           Empty<Bool@>, A, True), B, False), C, False);
     Map@<Bool@> b = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
@@ -153,9 +153,9 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Bool@ wnt = True;
     Bool@ got = /Core/Map/Eq%.Eq<Bit2@, Bool@>(EqBit2, /Core/Bool/Eq%.Eq)(a, b);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'eq: value mismatch', !({
+  Test(Str|'eq: value mismatch', (Unit@ _) {
     Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
           Empty<Bool@>, A, True), B, True), C, False);
     Map@<Bool@> b = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
@@ -164,9 +164,9 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Bool@ wnt = False;
     Bool@ got = /Core/Map/Eq%.Eq<Bit2@, Bool@>(EqBit2, /Core/Bool/Eq%.Eq)(a, b);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'eq: different number of elements', !({
+  Test(Str|'eq: different number of elements', (Unit@ _) {
     Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
           Empty<Bool@>, A, True), B, False), C, False);
     Map@<Bool@> b = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>, A, True), B, False);
@@ -174,45 +174,45 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Bool@ wnt = False;
     Bool@ got = /Core/Map/Eq%.Eq<Bit2@, Bool@>(EqBit2, /Core/Bool/Eq%.Eq)(a, b);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'eq: deleted to empty', !({
+  Test(Str|'eq: deleted to empty', (Unit@ _) {
     Map@<Bool@> a = Delete<Bool@>(Insert<Bool@>(Empty<Bool@>, A, True), A);
     Map@<Bool@> b = Empty<Bool@>;
 
     Bool@ wnt = True;
     Bool@ got = /Core/Map/Eq%.Eq<Bit2@, Bool@>(EqBit2, /Core/Bool/Eq%.Eq)(a, b);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'eq: empty from deleted', !({
+  Test(Str|'eq: empty from deleted', (Unit@ _) {
     Map@<Bool@> a = Empty<Bool@>;
     Map@<Bool@> b = Delete<Bool@>(Insert<Bool@>(Empty<Bool@>, A, True), A);
 
     Bool@ wnt = True;
     Bool@ got = /Core/Map/Eq%.Eq<Bit2@, Bool@>(EqBit2, /Core/Bool/Eq%.Eq)(a, b);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'eq: empty from deleted pair second', !({
+  Test(Str|'eq: empty from deleted pair second', (Unit@ _) {
     Map@<Bool@> a = Insert<Bool@>(Empty<Bool@>, A, True);
     Map@<Bool@> b = Delete<Bool@>(Insert<Bool@>(a, B, True), B);
 
     Bool@ wnt = True;
     Bool@ got = /Core/Map/Eq%.Eq<Bit2@, Bool@>(EqBit2, /Core/Bool/Eq%.Eq)(a, b);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'eq: empty from deleted pair first', !({
+  Test(Str|'eq: empty from deleted pair first', (Unit@ _) {
     Map@<Bool@> a = Insert<Bool@>(Empty<Bool@>, A, True);
     Map@<Bool@> b = Delete<Bool@>(Insert<Bool@>(a, C, True), C);
 
     Bool@ wnt = True;
     Bool@ got = /Core/Map/Eq%.Eq<Bit2@, Bool@>(EqBit2, /Core/Bool/Eq%.Eq)(a, b);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'eq: equal any order', !({
+  Test(Str|'eq: equal any order', (Unit@ _) {
     Map@<Bool@> a = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
           Empty<Bool@>, B, False), C, False), A, True);
     Map@<Bool@> b = Insert<Bool@>(Insert<Bool@>(Insert<Bool@>(
@@ -221,28 +221,28 @@ Test@ Tests = TestSuite(Str|Map, List<Test@>[
     Bool@ wnt = True;
     Bool@ got = /Core/Map/Eq%.Eq<Bit2@, Bool@>(EqBit2, /Core/Bool/Eq%.Eq)(a, b);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'Show empty', !({
+  Test(Str|'Show empty', (Unit@ _) {
     Map@<Bool@> map = Empty<Bool@>;
     String@ wnt = Str|'{ }';
     String@ got = /Core/Map/Show%.Show<Bit2@, Bool@>(ShowBit2, /Core/Bool/Show%.Show)(map);
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'Show single', !({
+  Test(Str|'Show single', (Unit@ _) {
     Map@<Bool@> map = Insert<Bool@>(Empty<Bool@>, B, False);
     String@ wnt = Str|'{ 01 => False; }';
     String@ got = /Core/Map/Show%.Show<Bit2@, Bool@>(ShowBit2, /Core/Bool/Show%.Show)(map);
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'Show multi', !({
+  Test(Str|'Show multi', (Unit@ _) {
     Map@<Bool@> map = Insert<Bool@>(Insert<Bool@>(Empty<Bool@>, B, False), C, True);
     String@ wnt = Str|'{ 01 => False; 10 => True; }';
     String@ got = /Core/Map/Show%.Show<Bit2@, Bool@>(ShowBit2, /Core/Bool/Show%.Show)(map);
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }))
+  })
 ]);
 
 @(Tests);

@@ -369,3 +369,47 @@ Updating the game interface wasn't bad. It's cleaner this way too.
 And now the rest of TicTacToe is updated to use pure stdio interface instead
 of processes. Nice.
 
+---
+
+Next step... can we get tests off of use of processes? That's the last place
+we use the IO/Stdio interface.
+
+Um. I'm worried that's blocked on many of the other uses of processes. App@ in
+particular.
+
+The idea is to change TestCase@ to have a function from Unit to TestResult@
+for the test instead of TestResult@!. But that's going to need a lot of work,
+right?
+
+What if we introduce a new kind of Test@: iocase, which is the 'case' of
+today. And then 'case' because the new pure thing. Then slowly transition as
+many tests as I can over to the pure 'case', and then it's clear what remains
+to be transitioned. I don't think we can get rid of IO/Stdio until all of the
+test cases are transitioned off of processes, which probably means almost all
+of everything transitioned off of processes.
+
+Yeah, this sounds like a good approach to me. Add iotest case. Port everything
+over to pure test that we can. Get the list of IO tests. Put that list here,
+and we can see what's left to fix.
+
+---
+
+Using (Unit@) { TestResult@; } is a little clunky for describing tests. Not so
+much worse than !(...), but still leaves a little to be desired. Oh well.
+
+We could do more monadic style:
+ {
+   Unit@ _ <- Test(Str|TestName);
+   ...
+ }
+
+Or maybe add support for zero argument functions?
+ Test(Str|TestName, () { ... });
+
+---
+
+IO todo for tests:
+* MD5 test requires processes.
+
+And that's it! Just MD5. Because Md5 API uses processes.
+

@@ -1,17 +1,21 @@
 
 <@>% List = /Core/List%.List;
+
 % Str = /Core/String%.Str;
+
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
+
+@ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
 # TODO: Test the test runner output. Don't just test that a passing test can
 # be written and passes.
 Test@ Tests = {
-  Test@ pass = Test(Str|pass, !(TestResult@(pass: Unit)));
-  Test@ _fail = Test(Str|fail, !(TestResult@(fail: Str|FAILED)));
+  Test@ pass = Test(Str|pass, (Unit@ _) { TestResult@(pass: Unit); });
+  Test@ _fail = Test(Str|fail, (Unit@ _) { TestResult@(fail: Str|FAILED); });
 
   TestSuite(Str|'Test', List<Test@>[pass]);
 };

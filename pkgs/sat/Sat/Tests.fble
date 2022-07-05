@@ -21,6 +21,7 @@
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
+@ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
 @ Formula@ = /Sat/Sat%.Formula@;
@@ -74,16 +75,16 @@ AssertEq = (Result@ a, Result@ b) {
 };
 
 Test@ Tests = TestSuite(Str|Sat, List<Test@>[
-  Test(Str|Sat, !({
+  Test(Str|Sat, (Unit@ _) {
     Formula@ f = List<Clause@>[
       List<Var@>[Var@(X, True)]
     ];
     Result@ want = Result@(sat: List<Var@>[Var@(X, True)]);
     Result@ got = Solve(f, Nothing<Int@>);
     AssertEq(want, got);
-  })),
+  }),
 
-  Test(Str|Unsat, !({
+  Test(Str|Unsat, (Unit@ _) {
     Formula@ f = List<Clause@>[
       List<Var@>[Var@(X, True)],
       List<Var@>[Var@(X, False)]
@@ -91,17 +92,17 @@ Test@ Tests = TestSuite(Str|Sat, List<Test@>[
     Result@ want = Result@(unsat: Nothing<Int@>);
     Result@ got = Solve(f, Nothing<Int@>);
     AssertEq(want, got);
-  })),
+  }),
 
-  Test(Str|Timeout, !({
+  Test(Str|Timeout, (Unit@ _) {
     # /Sat/Aim% is a real problem. There's no way we should be able to solve
     # it in 10 ticks.
     Result@ want = Result@(timeout: Unit);
     Result@ got = Solve(/Sat/Aim%, Just<Int@>(Int|10));
     AssertEq(want, got);
-  })),
+  }),
 
-  Test(Str|Dimacs, !({
+  Test(Str|Dimacs, (Unit@ _) {
     String@ dimacs = Str|'c
 c start with comments
 c
@@ -119,7 +120,7 @@ p cnf 5 3
     Parse@<Formula@> want = Parse@<Formula@>(parsed: formula);
     Parse@<Formula@> got = Parse(dimacs);
     AssertEquals<Parse@<Formula@>>(EqParsedFormula, ShowParsedFormula, want, got);
-  }))
+  })
 
 ]);
 

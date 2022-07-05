@@ -27,6 +27,8 @@
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
 % _ = /Pinball/Quadratic/Show%;
 
 Eq@<Roots@> EqRoots = (Roots@ a, Roots@ b) {
@@ -41,7 +43,7 @@ Show@<Roots@> ShowRoots = (Roots@ r) {
 };
 
 Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
-  Test(Str|'Roots Basic', !({
+  Test(Str|'Roots Basic', (Unit@ _) {
     # Roots of (x - 4) * (x - 2) should be 2 and 4.
     # x^2 - 6x + 8
     Quadratic@ q = Quadratic@(Int|1, Neg(Int|6), Int|8);
@@ -50,9 +52,9 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     AssertEquals<Maybe@<Roots@>>(
       /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
-  })),
+  }),
 
-  Test(Str|'Roots Same', !({
+  Test(Str|'Roots Same', (Unit@ _) {
     # Roots of (x - 2) * (x - 2) should be 2 and 2.
     # x^2 - 4x + 4
     Quadratic@ q = Quadratic@(Int|1, Neg(Int|4), Int|4);
@@ -61,9 +63,9 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     AssertEquals<Maybe@<Roots@>>(
       /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
-  })),
+  }),
 
-  Test(Str|'Roots None', !({
+  Test(Str|'Roots None', (Unit@ _) {
     # x^2 + 1 has no roots.
     Quadratic@ q = Quadratic@(Int|1, Int|0, Int|1);
     Maybe@<Roots@> want = Nothing<Roots@>;
@@ -71,9 +73,9 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     AssertEquals<Maybe@<Roots@>>(
       /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
-  })),
+  }),
 
-  Test(Str|'Roots Linear', !({
+  Test(Str|'Roots Linear', (Unit@ _) {
     # (x-1), we'll have two roots, 1 and 1?
     Quadratic@ q = Quadratic@(Int|0, Int|1, Neg(Int|1));
     Maybe@<Roots@> want = Just<Roots@>(Roots@(Int|1, Int|1));
@@ -81,9 +83,9 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     AssertEquals<Maybe@<Roots@>>(
       /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
-  })),
+  }),
 
-  Test(Str|'Roots Constant', !({
+  Test(Str|'Roots Constant', (Unit@ _) {
     # 1 has no roots.
     Quadratic@ q = Quadratic@(Int|0, Int|0, Int|1);
     Maybe@<Roots@> want = Nothing<Roots@>;
@@ -91,7 +93,7 @@ Test@ Tests = TestSuite(Str|'Quadratic', List<Test@>[
     AssertEquals<Maybe@<Roots@>>(
       /Core/Maybe/Eq%.Eq<Roots@>(EqRoots), /Core/Maybe/Show%.Show<Roots@>(ShowRoots),
       want, got);
-  }))
+  })
 ]);
 
 @(Tests);

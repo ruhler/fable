@@ -22,6 +22,8 @@
 % Test = /Core/Test%.Test;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
 (LFSR@, Int@) { List@<Bit@>; }
 ShiftN = (LFSR@ lfsr, Int@ n) {
   n.?(0: Nil<Bit@>);
@@ -30,7 +32,7 @@ ShiftN = (LFSR@ lfsr, Int@ n) {
 };
 
 Test@ Tests = TestSuite(Str|LFSR, List<Test@>[
-  Test(Str|Basic, !({
+  Test(Str|Basic, (Unit@ _) {
     # A 3 bit LFSR.
     LFSR@ lfsr = LFSR@(BitStr|110, BitStr|000);
     List@<Bit@> got = ShiftN(lfsr, Int|16);
@@ -38,7 +40,7 @@ Test@ Tests = TestSuite(Str|LFSR, List<Test@>[
     AssertEquals<List@<Bit@>>(
       /Core/List/Eq%.Eq<Bit@>(/Core/Digits/Eq%.EqBit),
       /Core/Digits/Show%.ShowBits, wnt, got);
-  }))
+  })
 ]);
 
 @(Tests);

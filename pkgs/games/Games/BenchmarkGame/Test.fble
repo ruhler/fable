@@ -23,9 +23,11 @@
 @ Test@ = /Core/Test%.Test@;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
 (String@, Main@, String@, String@) { Test@; }
 Test = (String@ name, Main@ game, String@ n, String@ expected) {
-  /Core/Test%.Test(name, !({
+  /Core/Test%.Test(name, (Unit@ _) {
     PureResult@<Bool@> want = PureResult@<Bool@>(
       PureState@(Nil<String@>, List<String@>[expected], Nil<String@>), True);
 
@@ -43,7 +45,7 @@ Test = (String@ name, Main@ game, String@ n, String@ expected) {
       PureResultEq(/Core/Bool/Eq%.Eq),
       PureResultShow(/Core/Bool/Show%.Show),
       want, merged);
-  }));
+  });
 };
 
 @(Test);

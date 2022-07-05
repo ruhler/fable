@@ -25,7 +25,7 @@
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
-% Test = /Core/Test%.Test;
+% IOTest = /Core/Test%.IOTest;
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
@@ -127,7 +127,7 @@
 };
       
 (String@, Md5Hash@, List@<Hex@>) { Test@; } TestStr = (String@ name, Md5Hash@ wnt, List@<Hex@> bytes) {
-  Test(name, {
+  IOTest(name, {
     Md5Hash@ got := Md5Str(Hex2Bytes(bytes));
     !(AssertEquals<Md5Hash@>(Eq, Md5Hash2Str, wnt, got));
   });

@@ -36,7 +36,7 @@
 # Tests --
 #  A test suite to test the /Stdio% module and friends.
 Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
-  Test(Str|Return, !({
+  Test(Str|Return, (Unit@ _) {
     List@<String@> inputs = List<String@>[Str|Hello, Str|World];
     PureResult@<Bool@> wnt = PureResult@<Bool@>(
       PureState@(inputs, Nil<String@>, Nil<String@>), True);
@@ -45,9 +45,9 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureResultEq(/Core/Bool/Eq%.Eq),
       PureResultShow(/Core/Bool/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|In, !({
+  Test(Str|In, (Unit@ _) {
     List@<String@> inputs = List<String@>[Str|Hello, Str|World];
     PureResult@<Maybe@<String@>> wnt = PureResult@<Maybe@<String@>>(
       PureState@(List<String@>[Str|World], Nil<String@>, Nil<String@>), Just(Str|Hello));
@@ -56,9 +56,9 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureResultEq(/Core/Maybe/Eq%.Eq(/Core/String/Eq%.Eq)),
       PureResultShow(/Core/Maybe/Show%.Show(/Core/String/Show%.Show)),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|InEnd, !({
+  Test(Str|InEnd, (Unit@ _) {
     List@<String@> inputs = Nil<String@>;
     PureResult@<Maybe@<String@>> wnt = PureResult@<Maybe@<String@>>(
       PureState@(Nil<String@>, Nil<String@>, Nil<String@>), Nothing<String@>);
@@ -67,9 +67,9 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureResultEq(/Core/Maybe/Eq%.Eq(/Core/String/Eq%.Eq)),
       PureResultShow(/Core/Maybe/Show%.Show(/Core/String/Show%.Show)),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|Out, !({
+  Test(Str|Out, (Unit@ _) {
     List@<String@> inputs = List<String@>[Str|Hello, Str|World];
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, List<String@>[Str|There], Nil<String@>), Unit);
@@ -78,9 +78,9 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureResultEq(/Core/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|Err, !({
+  Test(Str|Err, (Unit@ _) {
     List@<String@> inputs = List<String@>[Str|Hello, Str|World];
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
       PureState@(inputs, Nil<String@>, List<String@>[Str|There]), Unit);
@@ -89,9 +89,9 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureResultEq(/Core/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|DoOuts, !({
+  Test(Str|DoOuts, (Unit@ _) {
     List@<String@> inputs = List<String@>[Str|Hello, Str|World];
 
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
@@ -107,9 +107,9 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureResultEq(/Core/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|DoErrs, !({
+  Test(Str|DoErrs, (Unit@ _) {
     List@<String@> inputs = List<String@>[Str|Hello, Str|World];
 
     PureResult@<Unit@> wnt = PureResult@<Unit@>(
@@ -125,7 +125,7 @@ Test@ Tests = TestSuite(Str|Stdio, List<Test@>[
       PureResultEq(/Core/Unit/Eq%.Eq),
       PureResultShow(/Core/Unit/Show%.Show),
       wnt, got);
-  }))
+  })
 ]);
 
 @(Tests);

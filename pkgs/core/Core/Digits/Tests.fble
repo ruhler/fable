@@ -2,41 +2,47 @@
 @ Bool@ = /Core/Bool%.Bool@;
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
+
 <@>% List = /Core/List%.List;
+
 % Str = /Core/String%.Str;
+
 @ Test@ = /Core/Test%.Test@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
 % Bit = /Core/Digits%.Bit;
 % EqBit = /Core/Digits/Eq%.EqBit;
 
+
 Test@ Tests = TestSuite(Str|Digits, List<Test@>[
   TestSuite(Str|EqBit, List<Test@>[
-    Test(Str|00, !({
+    Test(Str|00, (Unit@ _) {
       Bool@ wnt = True;
       Bool@ got = EqBit(Bit.0, Bit.0);
       AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-    })),
+    }),
 
-    Test(Str|01, !({
+    Test(Str|01, (Unit@ _) {
       Bool@ wnt = False;
       Bool@ got = EqBit(Bit.0, Bit.1);
       AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-    })),
+    }),
 
-    Test(Str|10, !({
+    Test(Str|10, (Unit@ _) {
       Bool@ wnt = False;
       Bool@ got = EqBit(Bit.1, Bit.0);
       AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-    })),
+    }),
 
-    Test(Str|11, !({
+    Test(Str|11, (Unit@ _) {
       Bool@ wnt = True;
       Bool@ got = EqBit(Bit.1, Bit.1);
       AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-    }))])
+    })])
 ]);
 
 @(Tests);

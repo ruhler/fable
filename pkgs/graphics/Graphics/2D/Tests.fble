@@ -21,8 +21,10 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
 Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
-  Test(Str|'Lower Left Right Triangle', !({
+  Test(Str|'Lower Left Right Triangle', (Unit@ _) {
     Drawing@ drawing = Triangle(
       Point@(Int|0, Int|0),
       Point@(Int|0, Int|3),
@@ -40,9 +42,9 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     /App/Drawing/Test%.AssertEquals(wnt, got);
-  })),
+  }),
 
-  Test(Str|'Upper Left Right Triangle', !({
+  Test(Str|'Upper Left Right Triangle', (Unit@ _) {
     Drawing@ drawing = Triangle(
       Point@(Int|0, Int|0),
       Point@(Int|0, Int|3),
@@ -57,9 +59,9 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     /App/Drawing/Test%.AssertEquals(wnt, got);
-  })),
+  }),
 
-  Test(Str|'Adjacent Gap', !({
+  Test(Str|'Adjacent Gap', (Unit@ _) {
     # Regression test for an issue with rounding we had in the past where two
     # adjacent triangles could have a gap between them because we were using
     # inconsistent rounding.
@@ -82,7 +84,7 @@ Test@ Tests = TestSuite(Str|'Graphics.2D', List<Test@>[
     Drawn@ got = Draw(drawing);
       
     /App/Drawing/Test%.AssertEquals(wnt, got);
-  }))
+  })
 ]);
 
 @(Tests);

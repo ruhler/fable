@@ -24,19 +24,18 @@
 # Import to test compilation.
 % _ = /Games/TicTacToe/Stdio%;
 
-TestResult@! TestBoardStatus = {
-  Unit@ _ := !(Unit); # Delay the test until we execute the process
+(Unit@) { TestResult@; } TestBoardStatus = (Unit@ _) {
   Status@ status = BoardStatus(Board@(
         Square@(X: Unit), Square@(O: Unit), Square@(O: Unit),
         Square@(E: Unit), Square@(O: Unit), Square@(X: Unit),
         Square@(O: Unit), Square@(X: Unit), Square@(X: Unit)));
-  !(status.?(
+  status.?(
       O: TestResult@(pass: Unit),
-      : TestResult@(fail: Str|failed)));
+      : TestResult@(fail: Str|failed));
 };
 
 # TODO: Use PositionEquals for test result, and report position when failed?
-TestResult@! TestChooseBestMoveWin = !({
+(Unit@) { TestResult@; } TestChooseBestMoveWin = (Unit@ _) {
   AIR@ air = AI.Move(AI.Initial,
     Board@(Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
            Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
@@ -44,9 +43,9 @@ TestResult@! TestChooseBestMoveWin = !({
     Player@(X: Unit));
   air.position.?(UR: TestResult@(pass: Unit));
   TestResult@(fail: Str|failed);
-});
+};
 
-TestResult@! TestChooseBestMoveNoLose = !({
+(Unit@) { TestResult@; } TestChooseBestMoveNoLose = (Unit@ _) {
   AIR@ air = AI.Move(AI.Initial,
     Board@(Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
            Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
@@ -54,7 +53,7 @@ TestResult@! TestChooseBestMoveNoLose = !({
     Player@(X: Unit));
   air.position.?(UR: TestResult@(pass: Unit));
   TestResult@(fail: Str|failed);
-});
+};
 
 
 Test@ Tests = TestSuite(Str|TicTacToe, List<Test@>[

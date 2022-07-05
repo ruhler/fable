@@ -17,6 +17,8 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 
+@ Unit@ = /Core/Unit%.Unit@;
+
 @ Coord@ = /Hwdg/Coord%.Coord@;
 
 @ Data@ = /Hwdg/Data%.Data@;
@@ -40,7 +42,7 @@
 % _ = /Hwdg/App%;
 
 Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
-  Test(Str|'empty no data', !({
+  Test(Str|'empty no data', (Unit@ _) {
     Memory@ cells = Empty;
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
@@ -49,9 +51,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
       /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'set this data to 0', !({
+  Test(Str|'set this data to 0', (Unit@ _) {
     Memory@ cells = Set(Empty, Coord@(3, 2), Data.0);
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data.0);
@@ -60,9 +62,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
       /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'set this data to 1', !({
+  Test(Str|'set this data to 1', (Unit@ _) {
     Memory@ cells = Set(Empty, Coord@(3, 2), Data.1);
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data.1);
@@ -71,9 +73,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
       /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'set other data', !({
+  Test(Str|'set other data', (Unit@ _) {
     Memory@ cells = Set(Empty, Coord@(2, 3), Data.1);
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
@@ -82,9 +84,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
       /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'clear data', !({
+  Test(Str|'clear data', (Unit@ _) {
     Memory@ cells = Clear(Set(Empty, Coord@(3, 2), Data.1), Coord@(3, 2));
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Nothing<Data@>;
@@ -93,9 +95,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
       /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'clear other data', !({
+  Test(Str|'clear other data', (Unit@ _) {
     Memory@ cells = Clear(Set(Empty, Coord@(3, 2), Data.1), Coord@(2, 3));
     Maybe@<Data@> got = Get(cells, Coord@(3, 2));
     Maybe@<Data@> wnt = Just<Data@>(Data.1);
@@ -104,9 +106,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
       /Core/Maybe/Eq%.Eq<Data@>(/Hwdg/Data%.Eq),
       /Core/Maybe/Show%.Show<Data@>(/Hwdg/Data%.Show),
       wnt, got);
-  })),
+  }),
 
-  Test(Str|'empty gate', !({
+  Test(Str|'empty gate', (Unit@ _) {
     # Make sure we don't get stuck in an infinite loop if there is an empty
     # gate.
     Design@ design = Designs[
@@ -118,9 +120,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Memory@ wnt = cells;
     Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'identity ul to lr', !({
+  Test(Str|'identity ul to lr', (Unit@ _) {
     Design@ design = Designs[
       PlacedRule(0, 0, Rule|'0... => ...0'),
       PlacedRule(0, 0, Rule|'1... => ...1')
@@ -130,9 +132,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Memory@ wnt = Memory[Cell@(1, 1, Data.1)];
     Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'identity ul to lr input blocked', !({
+  Test(Str|'identity ul to lr input blocked', (Unit@ _) {
     Design@ design = Designs[
       PlacedRule(0, 0, Rule|'0... => ...0'),
       PlacedRule(0, 0, Rule|'1... => ...1')
@@ -144,9 +146,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Memory@ wnt = cells;
     Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'identity ul to lr output blocked', !({
+  Test(Str|'identity ul to lr output blocked', (Unit@ _) {
     Design@ design = Designs[
       PlacedRule(0, 0, Rule|'0... => ...0'),
       PlacedRule(0, 0, Rule|'1... => ...1')
@@ -160,9 +162,9 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     Memory@ wnt = cells;
     Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|'identity chain', !({
+  Test(Str|'identity chain', (Unit@ _) {
     # Test a chain of identity gates.
     # -> -> -| .
     # .  .   v .
@@ -195,7 +197,7 @@ Test@ Tests = TestSuite(Str|Hwdg, List<Test@>[
     ];
     Memory@ got = Run(design, cells);
     AssertEquals<Memory@>(/Hwdg/Memory%.Eq, /Hwdg/Memory%.Show, wnt, got);
-  }))
+  })
 ]);
 
 /Core/Test/Run%.Run(Tests);

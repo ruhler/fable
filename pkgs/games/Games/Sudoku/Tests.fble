@@ -227,7 +227,7 @@ Input@ ExpertInput = {
 };
 
 Test@ Tests = TestSuite(Str|Sudoku, List<Test@>[
-  Test(Str|sample, !({
+  Test(Str|sample, (Unit@ _) {
     Maybe@<Solved@> ms = Solve(SampleInput);
     ms.?(
        just: {
@@ -244,7 +244,7 @@ Test@ Tests = TestSuite(Str|Sudoku, List<Test@>[
                    ShowBoard(False)(ms.just)])));
        },
        nothing: TestResult@(fail: Str|'failed to solve board'));
-  }))
+  })
 ]);
 
 Unit@! Bench = {

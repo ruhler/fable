@@ -41,41 +41,41 @@ Show@<Maybe@<AB@>> Show = /Core/Maybe/Show%.Show<AB@>(ShowAB);
 # Tests --
 #  A test suite to test the /Maybe% module and friends.
 Test@ Tests = TestSuite(Str|Maybe, List<Test@>[
-  Test(Str|Eq_JustEq, !({
+  Test(Str|Eq_JustEq, (Unit@ _) {
     Bool@ wnt = True;
     Bool@ got = Eq(Just<AB@>(A), Just<AB@>(A));
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|Eq_JustNe, !({
+  Test(Str|Eq_JustNe, (Unit@ _) {
     Bool@ wnt = False;
     Bool@ got = Eq(Just<AB@>(A), Just<AB@>(B));
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|Eq_JustNothing, !({
+  Test(Str|Eq_JustNothing, (Unit@ _) {
     Bool@ wnt = False;
     Bool@ got = Eq(Just<AB@>(A), Nothing<AB@>);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|Eq_Nothing, !({
+  Test(Str|Eq_Nothing, (Unit@ _) {
     Bool@ wnt = True;
     Bool@ got = Eq(Nothing<AB@>, Nothing<AB@>);
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|Show_Just, !({
+  Test(Str|Show_Just, (Unit@ _) {
     String@ wnt = Str|'Just:b';
     String@ got = Show(Just<AB@>(B));
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  })),
+  }),
 
-  Test(Str|Show_Nothing, !({
+  Test(Str|Show_Nothing, (Unit@ _) {
     String@ wnt = Str|'Nothing';
     String@ got = Show(Nothing<AB@>);
     AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
-  }))
+  })
 ]);
 
 @(Tests);

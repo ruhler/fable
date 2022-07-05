@@ -17,6 +17,7 @@
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
 
+@ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
 @ Coord@ = /Games/GameOfLife%.Coord@;
@@ -41,7 +42,7 @@
 #   OOO.OO.
 #   ....OO.
 #   .....O.
-TestResult@! AcornStep = !({
+(Unit@) { TestResult@; } AcornStep = (Unit@ _) {
   (Int@, Int@) { Coord@; } C = (Int@ x, Int@ y) { Coord@(x, y); };
 
   World@ g0 = World(List<Coord@>[
@@ -60,7 +61,7 @@ TestResult@! AcornStep = !({
     true: TestResult@(pass: Unit),
     false: TestResult@(fail: Str|failed)
   );
-});
+};
 
 Test@ Tests = TestSuite(Str|GameOfLife, List<Test@>[
   Test(Str|AcornStep, AcornStep)
