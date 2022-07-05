@@ -307,3 +307,60 @@ will be pretty straight forward.
 
 Yeah. No issue at all.
 
+---
+
+Next step: TicTacToe. 
+
+I suspect we'll want to do this in two parts. First part is to remove the
+concurrency. Second part is to migrate Stdio.
+
+What we want is to provide a function that takes AI@ state and a Turn@ and
+returns a Position@.
+
+It's actually pretty convoluted the way TicTacToe is currently written. I
+think it will be an improvement to get rid of the concurrency aspects of it.
+Just need to think about how I want it to be organized.
+
+AI: Has a memo table that we want to compute lazily. That makes it slightly
+more complicated. Maybe we should model it as a monad then, with a 'Move'
+function? Or straight up AI@ -> Board@ -> Player@ -> (AI@, Position@).
+
+As a Monad, it would be: Board@ -> Player@ -> AI@<Position@> + Monad@<AI@>. I
+think Monad is overkill in this case. Let's just store AI@ and Position@.
+
+So, AI interface is: @(AI@, Move).
+
+Board% is fine as is.
+
+Game%: Is okay, except TicTacToe should now be...
+
+I think we want Game@. Then you have a function
+ Game@ -> Input@ -> (Game@, Output@)
+
+But Output@ is just the Board@ and GameStatus@. We can store GameStatus@ as
+part of the game. So maybe just:
+
+Input@ -> Game@ -> Game@.
+
+Then Game% is: Game@, Status@, Input@, Initial, Play
+
+Now Testing is really easy. Just be able to compare game states and verify
+various combinations of Input@ and Game@ updating Game@ state.
+
+And Stdio% becomes:
+  Get input, convert to Input@, play round of game, convert and put output. Go
+  until game is over.
+
+TicTacToe becomes a Main@ function.
+
+If we want now it's really easy to test at the Stdio level of granularity?
+
+Let's start by cleaning up the AI interface and updating the tests and
+rest of the game over to that. Then update the Game interface. Then we should
+be all set.
+
+---
+
+TicTacToe AI interface cleaned up easily and nicely. Tests updated. Next step
+is to update the Game interface.
+

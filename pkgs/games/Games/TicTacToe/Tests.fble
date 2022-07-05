@@ -11,12 +11,11 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ AI@ = /Games/TicTacToe/AI%.AI@;
-<@>% WithAI = /Games/TicTacToe/AI%.WithAI;
+@ AIR@ = /Games/TicTacToe/AI%.AIR@;
+% AI = /Games/TicTacToe/AI%;
 
 @ Board@ = /Games/TicTacToe/Board%.Board@;
 @ Player@ = /Games/TicTacToe/Board%.Player@;
-@ Position@ = /Games/TicTacToe/Board%.Position@;
 @ Square@ = /Games/TicTacToe/Board%.Square@;
 @ Status@ = /Games/TicTacToe/Board%.Status@;
 % BoardStatus = /Games/TicTacToe/Board%.BoardStatus;
@@ -37,29 +36,25 @@ TestResult@! TestBoardStatus = {
 };
 
 # TODO: Use PositionEquals for test result, and report position when failed?
-TestResult@! TestChooseBestMoveWin = {
-  WithAI<TestResult@>((AI@ ai) {
-    Position@ position := ai(Board@(
-          Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
-          Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
-          Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)), Player@(X: Unit));
-    !(position.?(
-        UR: TestResult@(pass: Unit),
-          : TestResult@(fail: Str|failed)));
-  });
-};
+TestResult@! TestChooseBestMoveWin = !({
+  AIR@ air = AI.Move(AI.Initial,
+    Board@(Square@(X: Unit), Square@(X: Unit), Square@(E: Unit),
+           Square@(O: Unit), Square@(O: Unit), Square@(E: Unit),
+           Square@(E: Unit), Square@(E: Unit), Square@(E: Unit)),
+    Player@(X: Unit));
+  air.position.?(UR: TestResult@(pass: Unit));
+  TestResult@(fail: Str|failed);
+});
 
-TestResult@! TestChooseBestMoveNoLose = {
-  WithAI<TestResult@>((AI@ ai) {
-    Position@ position := ai(Board@(
-          Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
-          Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
-          Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)), Player@(X: Unit));
-    !(position.?(
-        UR: TestResult@(pass: Unit),
-          : TestResult@(fail: Str|failed)));
-  });
-};
+TestResult@! TestChooseBestMoveNoLose = !({
+  AIR@ air = AI.Move(AI.Initial,
+    Board@(Square@(E: Unit), Square@(E: Unit), Square@(E: Unit),
+           Square@(X: Unit), Square@(X: Unit), Square@(O: Unit),
+           Square@(E: Unit), Square@(E: Unit), Square@(O: Unit)),
+    Player@(X: Unit));
+  air.position.?(UR: TestResult@(pass: Unit));
+  TestResult@(fail: Str|failed);
+});
 
 
 Test@ Tests = TestSuite(Str|TicTacToe, List<Test@>[
@@ -69,11 +64,9 @@ Test@ Tests = TestSuite(Str|TicTacToe, List<Test@>[
 ]);
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.
-Unit@! Bench = {
-  WithAI<Unit@>((AI@ ai) {
-    Position@ _ := ai(EmptyBoard, Player@(X: Unit));
-    !(Unit);
-  });
-};
+Unit@! Bench = !({
+  AIR@ _ = AI.Move(AI.Initial, EmptyBoard, Player@(X: Unit));
+  Unit;
+});
 
 @(Tests, Bench);

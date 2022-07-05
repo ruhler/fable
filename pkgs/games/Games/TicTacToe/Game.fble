@@ -8,7 +8,8 @@
 % Unit = /Core/Unit%.Unit;
 
 @ AI@ = /Games/TicTacToe/AI%.AI@;
-<@>% WithAI = /Games/TicTacToe/AI%.WithAI;
+@ AIR@ = /Games/TicTacToe/AI%.AIR@;
+% AI = /Games/TicTacToe/AI%;
 
 @ Board@ = /Games/TicTacToe/Board%.Board@;
 @ Position@ = /Games/TicTacToe/Board%.Position@;
@@ -41,32 +42,25 @@ PlayGame = (Input@! input, Put@<Output@> output, AI@ ai, Board@ board, Player@ x
                           E: GameStatus@(playing: x)));
   Unit@ _ := output(Output@(board, status));
   Input@ in := input;
-  in.?(
-     move:
-       status.?(
-          playing: {
-            Position@ position := in.move.?(
-              just: !(in.move.just),
-              nothing: ai(board, x));
+  in.?(quit: !(Unit));
+  in.?(reset: NewGame(input, output, ai));
+  status.?(ended: PlayGame(input, output, ai, board, x));
 
-            Maybe@<Board@> nboard := !(Move(board, position, x));
-            nboard.?(
-                just: PlayGame(input, output, ai, nboard.just, x.?(X: Player@(O: Unit), O: Player@(X: Unit))),
-                nothing: PlayGame(input, output, ai, board, x));
+  AIR@ air := in.move.?(
+    just: {
+      Position@ position := !(in.move.just);
+      !(AIR@(ai, position));
+    },
+    nothing: !(AI.Move(ai, board, x)));
 
-          },
-          ended:
-            # The user tried to make a move after the game has ended.
-            # Ignore the move and let the user pick again.
-            PlayGame(input, output, ai, board, x)),
-     reset: NewGame(input, output, ai),
-     quit: !(Unit));
+  Maybe@<Board@> nboard := !(Move(board, air.position, x));
+  nboard.?(
+      just: PlayGame(input, output, air.ai, nboard.just, x.?(X: Player@(O: Unit), O: Player@(X: Unit))),
+      nothing: PlayGame(input, output, air.ai, board, x));
 };
 
 (Get@<Input@>, Put@<Output@>){Unit@!;} TicTacToe = (Get@<Input@> input, Put@<Output@> output) {
-  WithAI<Unit@>((AI@ ai) {
-    NewGame(input, output, ai);
-  });
+  NewGame(input, output, AI.Initial);
 };
 
 @(GameStatus@, Input@, Output@, TicTacToe);

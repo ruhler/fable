@@ -12,10 +12,6 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 <@,@>% DoWhile = /Core/Maybe%.DoWhile;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
-
-@ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
 @ Board@ = /Games/TicTacToe/Board%.Board@;
@@ -233,49 +229,29 @@ ChooseBestMove = (MemoTable@ m, Board@ b, Player@ x) {
     });
 };
 
-MemoTable@ InitialAI = {
+# AI@ --
+#   Internal state for the AI.
+@ AI@ = MemoTable@;
+
+# Initial --
+#   An initial value to use for AI@.
+AI@ Initial = {
   # TODO: It takes a couple of minute to pre-compute the AI.
   # Still too slow to enable. :(
   # ChooseBestMove(Empty, EmptyBoard, Player@(X: Unit)).memo;
   Empty;
 };
 
-@ Turn@ = *(Board@ board, Player@ player);
+# AIR@ --
+#   Result of running the AI.
+@ AIR@ = *(AI@ ai, Position@ position);
 
-(MemoTable@, Get@<Maybe@<Turn@>>, Put@<Position@>){ Unit@!; }
-RunAI = (MemoTable@ ai, Get@<Maybe@<Turn@>> get, Put@<Position@> put) {
-  Maybe@<Turn@> mturn := get;
-  mturn.?(
-    just: {
-      Turn@ turn = mturn.just;
-      MemoState@<PositionResult@> mpr = ChooseBestMove(ai, turn.board, turn.player);
-      Unit@ _ := put(mpr.data.position);
-      RunAI(mpr.memo, get, put);
-    },
-    nothing: !(Unit));
+# Move --
+#   Make a move by AI@.
+(AI@, Board@, Player@) { AIR@; }
+Move = (AI@ ai, Board@ board, Player@ player) {
+  MemoState@<PositionResult@> mpr = ChooseBestMove(ai, board, player);
+  AIR@(mpr.memo, mpr.data.position);
 };
 
-# A TicTacToe AI that will pick a position when it is the given player's turn
-# to move on the given board.
-@ AI@ = (Board@, Player@) { Position@!; };
-
-# Execute a process with access to a TicTacToe AI.
-<@ T@>((AI@){ T@!;}){ T@!; } WithAI = <@ T@>((AI@){ T@!;} p) {
-  Maybe@<Turn@> ~ get_turn, put_turn;
-  Position@ ~ get_position, put_position;
-
-  AI@ ai = (Board@ board, Player@ player) {
-    Unit@ _ := put_turn(Just<Turn@>(Turn@(board, player)));
-    get_position;
-  };
-
-  Unit@ _ := RunAI(InitialAI, get_turn, put_position),
-  T@ result := {
-    T@ result := p(ai); 
-    Unit@ _ := put_turn(Nothing<Turn@>);
-    !(result);
-  };
-  !(result);
-};
-
-@(AI@, WithAI);
+@(AI@, AIR@, Initial, Move);

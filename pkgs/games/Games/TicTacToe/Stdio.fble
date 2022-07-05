@@ -120,4 +120,4 @@ Stdio@ TicTacToe = (IO@ io, List@<String@> args) {
   !(True);
 };
 
-@(TicTacToe);
+TicTacToe;
