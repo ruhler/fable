@@ -1,7 +1,6 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 % And = /Core/Bool%.And;
-% False = /Core/Bool%.False;
 % True = /Core/Bool%.True;
 
 @ Hex@ = /Core/Digits%.Hex@;
@@ -16,6 +15,8 @@
 <@,@>% ForEach = /Core/List%.ForEach;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -424,49 +425,53 @@ Round@ Round4 = RoundX(II, S@(6: Unit), S@(10: Unit), S@(15: Unit), S@(21: Unit)
 #(ABCD@, Block@) { ABCD@; } DoBlock = $(DoBlockImpl);
 (ABCD@, Block@) { ABCD@; } DoBlock = DoBlockImpl;
 
-<@>@ Streamed@ = <@ T@> { *(T@ data, Bool@ last); }; 
-
 # Gets the next word from a pre-padded input
-(Streamed@<Bit8@>!) { Streamed@<Bit32@>!; } GetWord = (Streamed@<Bit8@>! padded) {
-  Streamed@<Bit8@> a := padded;
-  Streamed@<Bit8@> b := padded;
-  Streamed@<Bit8@> c := padded;
-  Streamed@<Bit8@> d := padded;
-  !(Streamed@<Bit32@>(Bit32@(Bit16@(d.data, c.data), Bit16@(b.data, a.data)), d.last));
+(Maybe@<Bit8@>!) { Maybe@<Bit32@>!; } GetWord = (Maybe@<Bit8@>! padded) {
+  Maybe@<Bit8@> a := padded;
+  a.?(nothing: !(Nothing<Bit32@>));
+
+  Maybe@<Bit8@> b := padded;
+  Maybe@<Bit8@> c := padded;
+  Maybe@<Bit8@> d := padded;
+  !(Just(Bit32@(Bit16@(d.just, c.just), Bit16@(b.just, a.just))));
 };
 
 # Gets the next block from a pre-padded input
-(Streamed@<Bit8@>!) { Streamed@<Block@>!; } GetBlock = (Streamed@<Bit8@>! padded) {
-  Streamed@<Bit32@> 0 := GetWord(padded);
-  Streamed@<Bit32@> 1 := GetWord(padded);
-  Streamed@<Bit32@> 2 := GetWord(padded);
-  Streamed@<Bit32@> 3 := GetWord(padded);
-  Streamed@<Bit32@> 4 := GetWord(padded);
-  Streamed@<Bit32@> 5 := GetWord(padded);
-  Streamed@<Bit32@> 6 := GetWord(padded);
-  Streamed@<Bit32@> 7 := GetWord(padded);
-  Streamed@<Bit32@> 8 := GetWord(padded);
-  Streamed@<Bit32@> 9 := GetWord(padded);
-  Streamed@<Bit32@> 10 := GetWord(padded);
-  Streamed@<Bit32@> 11 := GetWord(padded);
-  Streamed@<Bit32@> 12 := GetWord(padded);
-  Streamed@<Bit32@> 13 := GetWord(padded);
-  Streamed@<Bit32@> 14 := GetWord(padded);
-  Streamed@<Bit32@> 15 := GetWord(padded);
-  !(Streamed@<Block@>(
+(Maybe@<Bit8@>!) { Maybe@<Block@>!; } GetBlock = (Maybe@<Bit8@>! padded) {
+  Maybe@<Bit32@> 0 := GetWord(padded);
+  0.?(nothing: !(Nothing<Block@>));
+
+  Maybe@<Bit32@> 1 := GetWord(padded);
+  Maybe@<Bit32@> 2 := GetWord(padded);
+  Maybe@<Bit32@> 3 := GetWord(padded);
+  Maybe@<Bit32@> 4 := GetWord(padded);
+  Maybe@<Bit32@> 5 := GetWord(padded);
+  Maybe@<Bit32@> 6 := GetWord(padded);
+  Maybe@<Bit32@> 7 := GetWord(padded);
+  Maybe@<Bit32@> 8 := GetWord(padded);
+  Maybe@<Bit32@> 9 := GetWord(padded);
+  Maybe@<Bit32@> 10 := GetWord(padded);
+  Maybe@<Bit32@> 11 := GetWord(padded);
+  Maybe@<Bit32@> 12 := GetWord(padded);
+  Maybe@<Bit32@> 13 := GetWord(padded);
+  Maybe@<Bit32@> 14 := GetWord(padded);
+  Maybe@<Bit32@> 15 := GetWord(padded);
+  !(Just(
     Block@(
-      0.data, 1.data, 2.data, 3.data,
-      4.data, 5.data, 6.data, 7.data,
-      8.data, 9.data, 10.data, 11.data,
-      12.data, 13.data, 14.data, 15.data),
-    15.last));
+      0.just, 1.just, 2.just, 3.just,
+      4.just, 5.just, 6.just, 7.just,
+      8.just, 9.just, 10.just, 11.just,
+      12.just, 13.just, 14.just, 15.just)
+    ));
 };
 
 # Computes the MD5 checksum of a pre-padded sequence of bytes.
-(Streamed@<Bit8@>!, ABCD@) { ABCD@!; } PaddedMd5 = (Streamed@<Bit8@>! padded, ABCD@ abcd) {
-  Streamed@<Block@> block := GetBlock(padded);
-  ABCD@ md5 = DoBlock(abcd, block.data);
-  block.last.?(true: !(md5), false: PaddedMd5(padded, md5));
+(Maybe@<Bit8@>!, ABCD@) { ABCD@!; } PaddedMd5 = (Maybe@<Bit8@>! padded, ABCD@ abcd) {
+  Maybe@<Block@> block := GetBlock(padded);
+  block.?(nothing: !(abcd));
+
+  ABCD@ md5 = DoBlock(abcd, block.just);
+  PaddedMd5(padded, md5);
 };
 
 (Bit64@) { Bit64@; } Inc64 = (Bit64@ a) {
@@ -485,38 +490,39 @@ Round@ Round4 = RoundX(II, S@(6: Unit), S@(10: Unit), S@(15: Unit), S@(21: Unit)
 # Add zeros as needed, then the final length to the output message.
 Bit64@ 3f_64 = H2_64(3, Hex.F);
 Bit64@ 08_64 = H2_64(0, 8);
-(Put@<Streamed@<Bit8@>>, Bit64@, Bit64@){Unit@!;} PadZ = (Put@<Streamed@<Bit8@>> output, Bit64@ msglen, Bit64@ length) {
+(Put@<Maybe@<Bit8@>>, Bit64@, Bit64@){Unit@!;} PadZ = (Put@<Maybe@<Bit8@>> output, Bit64@ msglen, Bit64@ length) {
   /Md5/Bits%.Bit64.BitN.iszero(
     /Md5/Bits%.Bit64.BitN.and(3f_64, /Md5/Bits%.Bit64.BitN.add(08_64, length))).?(
        true: {
          Bit64@ bits = shl64(shl64(shl64(msglen)));
-         Unit@ _ := output(Streamed@<Bit8@>(bits.lo.lo.lo, False));
-         Unit@ _ := output(Streamed@<Bit8@>(bits.lo.lo.hi, False));
-         Unit@ _ := output(Streamed@<Bit8@>(bits.lo.hi.lo, False));
-         Unit@ _ := output(Streamed@<Bit8@>(bits.lo.hi.hi, False));
-         Unit@ _ := output(Streamed@<Bit8@>(bits.hi.lo.lo, False));
-         Unit@ _ := output(Streamed@<Bit8@>(bits.hi.lo.hi, False));
-         Unit@ _ := output(Streamed@<Bit8@>(bits.hi.hi.lo, False));
-         Unit@ _ := output(Streamed@<Bit8@>(bits.hi.hi.hi, True));
+         Unit@ _ := output(Just(bits.lo.lo.lo));
+         Unit@ _ := output(Just(bits.lo.lo.hi));
+         Unit@ _ := output(Just(bits.lo.hi.lo));
+         Unit@ _ := output(Just(bits.lo.hi.hi));
+         Unit@ _ := output(Just(bits.hi.lo.lo));
+         Unit@ _ := output(Just(bits.hi.lo.hi));
+         Unit@ _ := output(Just(bits.hi.hi.lo));
+         Unit@ _ := output(Just(bits.hi.hi.hi));
+         Unit@ _ := output(Nothing<Bit8@>);
          !(Unit);
        },
        false: {
-         Unit@ _ := output(Streamed@<Bit8@>(H2(0, 0), False));
+         Unit@ _ := output(Just(H2(0, 0)));
          PadZ(output, msglen, Inc64(length));
        });
 };
 
 # Note: length is in units of bytes
-(Get@<Maybe@<Bit8@>>, Put@<Streamed@<Bit8@>>, Bit64@) { Unit@!; }
-Pad = (Get@<Maybe@<Bit8@>> input, Put@<Streamed@<Bit8@>> output, Bit64@ length) {
+(Get@<Maybe@<Bit8@>>, Put@<Maybe@<Bit8@>>, Bit64@) { Unit@!; }
+Pad = (Get@<Maybe@<Bit8@>> input, Put@<Maybe@<Bit8@>> output, Bit64@ length) {
   Maybe@<Bit8@> x := input;
   x.?(
     just: {
-      Unit@ _ := output(Streamed@<Bit8@>(x.just, False));
+      Unit@ _ := output(Just(x.just));
       Pad(input, output, Inc64(length));
     },
     nothing: {
-      Unit@ _ := output(Streamed@<Bit8@>(H2(8, 0), False));
+      Unit@ _ := output(Just(H2(8, 0)));
       PadZ(output, length, Inc64(length));
     });
 };
@@ -567,7 +573,7 @@ HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
 };
 
 (Maybe@<Bit8@>!) { Md5Hash@!; } Md5 = (Maybe@<Bit8@>! input) {
-  Streamed@<Bit8@> ~ get_padded, put_padded;
+  Maybe@<Bit8@> ~ get_padded, put_padded;
   Unit@ _ := Pad(input, put_padded, /Md5/Bits%.Bit64.BitN.zero),
   ABCD@ md5 := PaddedMd5(get_padded, ABCD0);
   !(HexFromABCD(md5));

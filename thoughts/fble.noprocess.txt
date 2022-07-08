@@ -413,3 +413,119 @@ IO todo for tests:
 
 And that's it! Just MD5. Because Md5 API uses processes.
 
+What's the plan for Md5 then? We want to support reading files a byte at a
+time or so. We kind of want a File@ interface. Like:
+
+<<@>@ M@>(Monad@<M@>, File@<M@>) { M@<Md5Hash@>; }
+
+Where File@ has a single method. So no need to name it? No need to make
+something general about it at this point.
+
+  M@<Maybe@<Bit8@>>
+
+The other thing that needs to change is our use of concurrency. We have Pad,
+which transforms stream of Bit8 into a different format: data + 'last' bit
+with padding added.
+
+The question is, do I still want to leverage concurrency in describing the Pad
+function? How much worse is the code if instead of doing it as concurrency, we
+did it as a stateful GetStreamdByte function?
+
+Concurrency approach:
+* Pass msglen, length as arguments.
+* Separate Pad and PadZ functions to track state.
+
+Non-Concurrency approach:
+* Caller has to hold on to state (make it monadic?).
+* Pass msglen, length, is_padding arguments via state.
+
+Mostly the annoying part will be passing the padding state around the rest of
+the Md5 functions, instead of being able to store it with a complete separate
+process.
+
+In practice this means defining a state monad on top of the file monad.
+
+So, I don't think we need a concurrency approach. Which makes sense for
+controlling scheduling. But we do need a monad for the padder. We can put that
+in a different module, which will be nice. I'm just not sure how to layer the
+different abstract monads here. The padder will be something like, given
+abstract M@, Monad@<M@>, File@<M@>, give us abstract P@, Monad@<P@>,
+Stream@<P@>.
+
+Or, maybe, if you provide something that works for any P@, Monad@<P@> and
+Stream@<P@>, Padder can run that for you and give you something that works for
+any M@, Monad@<M@>, File@<M@>.
+
+Anyway, I think the next step is to try and write a separate padder module,
+using whatever interface makes sense for it.
+
+---
+
+Concurrency is starting to look more attractive for padder. At one point we
+output the 8 bytes worth of the message length. It's nice to be able to do
+that via a sequence of 8 puts. How else would you do it? Have a buffer of the
+next bytes to output and append to those?
+
+Is there a way I could describe it with a Put interface, but interact with it
+with a Get interface? Maybe stash the next element somewhere, and populate
+that with a continuation?
+
+How I want to describe the things:
+
+  Unit@ _ <- Put(1);
+  Unit@ _ <- Put(2);
+  Unit@ _ <- Put(3);
+  return(Unit)
+
+That defines some object, say M@<Unit@>.
+
+How I want to read the things:
+  E@ e <- Get;
+  E@ e2 <- Get;
+  ...
+
+I feel like the state is a Maybe@<E@> plus a function from Unit to itself.
+Really, no need to return in this case, right? As long as we know when it is
+done.
+
+@ M@ = Maybe@<*(E@ e, (Unit@) { M@; } m)>
+
+(E@)((Unit@) { M@; }) { M@; } Put = Just(e, m);
+M@ Return = Nothing;
+
+Except modified slightly because we have the underlying source monad buried in
+there. Let me rename things a bit then:
+
+@ S@ = M@<Maybe@<E@, (Unit@) { S@; })>
+
+We kind of want S@ as part of a state monad. Ugh. This is a bit complicated.
+
+---
+
+Reminder: monad is preferred over explicitly passing around a state because
+that way you don't have to explicitly pass around a state.
+
+It's more complicated than I would like, but here are the components I think
+we'll want:
+* File@ interface. M@<Maybe@<Byte@>>. This is what you have to implement to
+  get Md5 done. This is consumed by the padder.
+* Stream@ interface. M@<Byte, Last>. Because that's what Md5 uses. Otherwise
+  we could reuse the File@ interface here. Maybe that's worth doing as initial
+  cleanup. This is what the padder implements and the md5 round module uses.
+* Padder implementation. Will use something like P@ = M@<Maybe@<Streamed,
+  P@>>. It collects together a sequence of function calls that incrementally
+  output the padded words. We can use bind notation to make this feel like we
+  are implementing it in terms of a sequence of puts.
+* Padder adaptor. Takes P@ that we produced in the padder implementation and
+  provides a Stream@ interface implementation for it.
+* Rounds implementation. Straight forward given abstract Stream@ interface.
+* Top level. Given File@, instantiate a padder, padder adaptor, and rounds
+  implementation and connect them all together.
+
+What's tedious about this is most of these blocks are glue logic. It's only
+the padder implementation and rounds implementation that describes the core
+md5 logic.
+
+I vote we start by seeing if we can get rid of Streamed@ and use
+M@<Maybe@<...>> instead. That will cut down on one interface at least.
+
