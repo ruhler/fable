@@ -1,0 +1,84 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+
+@ Hex@ = /Core/Digits%.Hex@;
+% Hex = /Core/Digits%.Hex;
+% 0 = Hex.0;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+@ Bit@ = /Md5/Bits%.Bit.Bit@;
+@ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
+@ Bit16@ = /Md5/Bits%.Bit16.Bit16@;
+@ Bit32@ = /Md5/Bits%.Bit32.Bit32@;
+@ Bit64@ = /Md5/Bits%.Bit64.Bit64@;
+
+% H2 = /Md5/Bits%.Bit8.H2;
+
+@ T@ = Bit8@;
+
+(Bit64@) { Bit64@; } Inc64 = (Bit64@ a) {
+  /Md5/Bits%.Bit64.BitN.inc(a);
+};
+
+(Hex@, Hex@) { Bit64@; } H2_64 = (Hex@ a, Hex@ b) {
+  Bit8@ 0b8 = H2(0, 0);
+  Bit64@(Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, 0b8)), Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, H2(a, b))));
+};
+
+(Bit64@) { Bit64@; } shl64 = (Bit64@ a) {
+  /Md5/Bits%.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
+};
+
+Bit64@ 3f_64 = H2_64(Hex.3, Hex.F);
+Bit64@ 08_64 = H2_64(Hex.0, Hex.8);
+
+<<@>@ M@>(Monad@<M@> m, M@<Maybe@<T@>> get) {
+  % Stream = /Md5/Stream%(m, get);
+  @ Stream@ = Stream.Stream@;
+  % Put = Stream.Put;
+  % End = Stream.End;
+
+  # Add zeros as needed, then the final length to the output message.
+  (Bit64@, Bit64@) { M@<Stream@>; }
+  PadZ = (Bit64@ msglen, Bit64@ length) {
+    Bool@ end = /Md5/Bits%.Bit64.BitN.iszero(
+      /Md5/Bits%.Bit64.BitN.and(3f_64,
+        /Md5/Bits%.Bit64.BitN.add(08_64, length)));
+
+    end.?(false: {
+      Unit@ _ <- Put(H2(0, 0));
+      PadZ(msglen, Inc64(length));
+    });
+
+    Bit64@ bits = shl64(shl64(shl64(msglen)));
+    Unit@ _ <- Put(bits.lo.lo.lo);
+    Unit@ _ <- Put(bits.lo.lo.hi);
+    Unit@ _ <- Put(bits.lo.hi.lo);
+    Unit@ _ <- Put(bits.lo.hi.hi);
+    Unit@ _ <- Put(bits.hi.lo.lo);
+    Unit@ _ <- Put(bits.hi.lo.hi);
+    Unit@ _ <- Put(bits.hi.hi.lo);
+    Unit@ _ <- Put(bits.hi.hi.hi);
+    m.return(End);
+  };
+
+  # Note: length is in units of bytes
+  (Bit64@) { M@<Stream@>; } Pad = (Bit64@ length) {
+    Maybe@<Bit8@> x <- m.do(get);
+    x.?(nothing: {
+      Unit@ _ <- Put(H2(Hex.8, Hex.0));
+      PadZ(length, Inc64(length));
+    });
+
+    Unit@ _ <- Put(x.just);
+    Pad(Inc64(length));
+  };
+
+  @(Pad: Pad(/Md5/Bits%.Bit64.BitN.zero));
+};

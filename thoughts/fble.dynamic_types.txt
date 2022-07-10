@@ -1,0 +1,20 @@
+Dynamic Types
+=============
+Idea is to be able to stuff a typed value T@ into a generic type ?@ and then
+be able to get back a Maybe@<T@> from the generic value if the type matches
+the original type put in there. Sort of like abstract value, except we track
+the type dynamically instead of statically.
+
+The idea for this feature came up at the thought of removing processes from
+fble, as a way to simulate links in pure code. It lets you make maps of things
+that mix different data types, so we could pass around references.
+
+One idea/question: could we use this feature to turn polymorphic abstract
+types into concrete types somehow? Like, have the interface for something be
+implemented using a dynamic type object for the state and all the functions
+know how to extract internal details from that one object that you pass
+around?
+
+This feature is kind of like adding void* to a language.
+
+Anyway, something to think about.

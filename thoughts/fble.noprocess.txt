@@ -529,3 +529,68 @@ md5 logic.
 I vote we start by seeing if we can get rid of Streamed@ and use
 M@<Maybe@<...>> instead. That will cut down on one interface at least.
 
+---
+
+Minor cleanup done to md5 to get rid of Streamed@ in favor of Maybe@. How do
+things look now? Can we make the glue code a little more generic and reusable?
+
+Basically you have producers and consumers.
+
+Producer: produces a sequence of elements, one at a time, and then finishes.
+Consumer: consumes a sequence of elements, one at a time, until they are all
+consumed. You can switch up the type of element being produced.
+
+* We have an interface you can use to describe a producer. It does puts.
+* We have an interface you can use to describe a consumer. It does gets.
+* We have a way to feed a producer to a consumer. Converts the result of a
+  producer into whatever is needed to run a consumer on.
+
+Maybe we use a type S@ to describe a stream, P@ to be the producer monad, and
+G@ to be the consumer monad. And we provide functions P@ -> S@ to describe a
+stream using a producer and G@, S@ -> M@ to consume a stream.
+
+---
+
+Here is the plan:
+
+* Get% defines Get@ = M@<Maybe@<T@>>
+  An interface to monadic computation to get values of a given type.
+* Stream% defines Stream@ = M@<Maybe@<T@, Stream@>>, Put functions, Get@<Steam@, T@>
+  A type representing a stream, a convenient syntax for constructing a stream
+  using Put and do notation, and an implementation of the Get interface for
+  streams.
+* Round% implements the rounds part of md5, given an abstract Get of pre-padded
+  bytes.
+* Pad% implements the padder, which takes a Get interface and produces a
+  Stream.
+* Md5% combines everything together, calling Pad, then passing the result via
+  Get interface wrapper to Round.
+
+---
+
+Experience: this is really hard to figure out, detail wise.
+
+Okay, so where I'm at right now is to define Stream@ and define a helper Put
+function that works within the original M@ get monad. Rather than define a
+monad specifically for the stream. This way I can implement the Padder pretty
+nicely and end up with an M@<Stream@>.
+
+The next annoying step is to create a new monad which is ...
+
+(M@<Stream@>) { M@<A@>; }
+
+So, a ReaderT like thing that can read the stream. No. Neads to be a StateT to
+keep track of how much of the stream has been read so far.
+
+Okay, so the StateT isn't too bad to implement.
+
+---
+
+I have a draft of the md5 structure in place now. Just needs some cleanup to
+get it to compile. Let's see how goes.
+
+It works. Wow. That's pretty cool. I end up providing different monads for
+benchmarks (Int@ state monad) and tests (List@<Bit8@> state monad). I still
+have to reimplement the fble-md5 C wrapper code. I kind of want to check
+things in first to start though.
+

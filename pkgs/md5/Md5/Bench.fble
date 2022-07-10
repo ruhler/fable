@@ -9,7 +9,7 @@
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
 
-<@>@ Put@ = /Core/IO/Process%.Put@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -17,24 +17,29 @@
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
 % H2 = /Md5/Bits%.Bit8.H2;
 
-@ Md5Hash@ = /Md5/Md5%.Md5Hash@;
-% Md5 = /Md5/Md5%.Md5;
+<<@>@>% Md5 = /Md5/Md5%.Md5;
+@ Hash@ = /Md5/Hash%.Hash@;
 
 Int@ 1 = Int|1;
 
-(Put@<Maybe@<Bit8@>>, Int@) { Unit@!; }
-PutN = (Put@<Maybe@<Bit8@>> out, Int@ n) {
-  n.?(0: out(Nothing<Bit8@>));
+<@>@ R@ = <@ A@> { *(Int@ n, A@ x); },
+<@>@ M@ = <@ A@>(Int@) { R@<A@>; };
 
-  Unit@ _ := out(Just<Bit8@>(H2(Hex.A, Hex.5)));
-  PutN(out, Sub(n, 1));
+Monad@<M@> Monad = @(
+  return: <@ A@>(A@ x)(Int@ n) { R@<A@>(n, x); },
+  do: <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(Int@ n) { 
+    R@<A@> a = ma(n);
+    f(a.x)(a.n);
+  });
+
+M@<Maybe@<Bit8@>> Get = (Int@ n) {
+  n.?(0: R@<Maybe@<Bit8@>>(n ,Nothing<Bit8@>));
+  R@<Maybe@<Bit8@>>(Sub(n, 1), Just(H2(Hex.A, Hex.5)));
 };
-
+    
 # Benchmark for md5 sum that takes about 1 minute to run.
 Unit@! Bench = {
-  Int@ n = Int|60000;
-  Maybe@<Bit8@> ~ get, put;
-  Md5Hash@ md5 := Md5(get), Unit@ x := PutN(put, n);
+  R@<Hash@> md5 := !(Md5<M@>(Monad, Get)(Int|60000));
   !(Unit);
 };
 

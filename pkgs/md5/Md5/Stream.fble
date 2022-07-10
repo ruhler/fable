@@ -1,0 +1,61 @@
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+<@>% Just = /Core/Maybe%.Just;
+<@>% Nothing = /Core/Maybe%.Nothing;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+
+# Stream module, parameterized by get monad and stream type T@.
+<<@>@ M@, @ T@>(Monad@<M@> m, M@<Maybe@<T@>> get) {
+  # Stream@ --
+  #   Represents a stream of values of type T@, read sequentially.
+  @ Next@ = *(T@ next, M@<Stream@> rest),
+  @ Stream@ = Maybe@<Next@>;
+
+  # Put --
+  #   Convenience function for defining a Stream@ of values in terms of a
+  #   sequence of Puts.
+  (T@)((Unit@) { M@<Stream@>; }) { M@<Stream@>; }
+  Put = (T@ x)((Unit@) { M@<Stream@>; } f) {
+    m.return(Just(Next@(x, f(Unit))));
+  };
+
+  # End --
+  #   The end of the stream.
+  Stream@ End = Nothing<Next@>;
+
+  # StreamM@ --
+  #   A monadic type for getting values from a stream.
+  <@>@ Result@ = <@ A@>{ *(M@<Stream@> s, A@ x); };
+  <@>@ StreamM@ = <@ A@>(M@<Stream@>) { M@<Result@<A@>>; };
+
+  # StreamM -- The Monad@ instance for StreamM@.
+  Monad@<StreamM@> StreamM = @(
+    return: <@ A@>(A@ x)(M@<Stream@> s) { m.return(Result@<A@>(s, x)); },
+    do: <@ A@>(StreamM@<A@> ma)<@ B@>((A@ ) { StreamM@<B@>; } f)(M@<Stream@> s) {
+      Result@<A@> r <- m.do(ma(s));
+      f(r.x)(r.s);
+    });
+
+  # Get -- The get instance for StreamM@.
+  StreamM@<Maybe@<T@>> Get = (M@<Stream@> ms) {
+    Stream@ s <- m.do(ms); 
+    s.?(nothing: m.return(Result@<Maybe@<T@>>(ms, Nothing<T@>)));
+    m.return(Result@<Maybe@<T@>>(s.just.rest, Just(s.just.next)));
+  };
+
+  # Run --
+  #   Runs a StreamM monad given the stream of values to get from.
+  <@ A@>(StreamM@<A@>, M@<Stream@>) { M@<A@>; }
+  Run = <@ A@>(StreamM@<A@> s, M@<Stream@> ms) {
+    Result@<A@> r <- m.do(s(ms));
+    m.return(r.x);
+  };
+
+  @(Stream@, Next@, Put, End,
+    StreamM@, StreamM, Get, Run);
+};

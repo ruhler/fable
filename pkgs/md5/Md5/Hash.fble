@@ -1,0 +1,39 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% And = /Core/Bool%.And;
+% True = /Core/Bool%.True;
+
+@ Hex@ = /Core/Digits%.Hex@;
+% Hex = /Core/Digits%.Hex;
+% 0 = Hex.0;
+
+<@>% List = /Core/List%.List;
+<@,@>% ForEach = /Core/List%.ForEach;
+
+% H2 = /Md5/Bits%.Bit8.H2;
+
+@ Hash@ = *(
+  Hex@  0, Hex@  1, Hex@  2, Hex@  3, Hex@  4, Hex@  5, Hex@  6, Hex@  7,
+  Hex@  8, Hex@  9, Hex@ 10, Hex@ 11, Hex@ 12, Hex@ 13, Hex@ 14, Hex@ 15,
+  Hex@ 16, Hex@ 17, Hex@ 18, Hex@ 19, Hex@ 20, Hex@ 21, Hex@ 22, Hex@ 23,
+  Hex@ 24, Hex@ 25, Hex@ 26, Hex@ 27, Hex@ 28, Hex@ 29, Hex@ 30, Hex@ 31);
+
+(Hex@, Hex@) { Bool@; } EqHex = (Hex@ a, Hex@ b) {
+  /Md5/Bits%.Bit8.BitN.eq(H2(0, a), H2(0, b));
+};
+
+(Hash@, Hash@) { Bool@; } Eq = (Hash@ a, Hash@ b) {
+  ForEach<Bool@, Bool@>(
+    List<Bool@>[
+      EqHex(a.0, b.0), EqHex(a.1, b.1), EqHex(a.2, b.2), EqHex(a.3, b.3),
+      EqHex(a.4, b.4), EqHex(a.5, b.5), EqHex(a.6, b.6), EqHex(a.7, b.7),
+      EqHex(a.8, b.8), EqHex(a.9, b.9), EqHex(a.10, b.10), EqHex(a.11, b.11),
+      EqHex(a.12, b.12), EqHex(a.13, b.13), EqHex(a.14, b.14), EqHex(a.15, b.15),
+      EqHex(a.16, b.16), EqHex(a.17, b.17), EqHex(a.18, b.18), EqHex(a.19, b.19),
+      EqHex(a.20, b.20), EqHex(a.21, b.21), EqHex(a.22, b.22), EqHex(a.23, b.23),
+      EqHex(a.24, b.24), EqHex(a.25, b.25), EqHex(a.26, b.26), EqHex(a.27, b.27),
+      EqHex(a.28, b.28), EqHex(a.29, b.29), EqHex(a.30, b.30), EqHex(a.31, b.31)],
+    True, And);
+};
+
+@(Hash@, Eq);
