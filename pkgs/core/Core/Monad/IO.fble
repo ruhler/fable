@@ -1,0 +1,18 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+# World@ --
+#   An abstract type representing the state of the world.
+@ World@ = %(/Core/Monad/IO%)<*()>;
+
+% State = /Core/Monad/State%<World@>;
+
+# IO@ -- 
+#   An IO monad.
+<@>@ IO@ = State.State@;
+
+# Monad --
+#   The Monad instance for IO@.
+Monad@<IO@> Monad = State.State;
+
+@(IO@, Monad);
