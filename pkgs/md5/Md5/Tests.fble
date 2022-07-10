@@ -104,7 +104,7 @@
 % State = /Core/Monad/State%<List@<Bit8@>>;
 
 <@>@ M@ = State.State@;
-Monad@<M@> Monad = State.State;
+Monad@<M@> Monad = State.Monad;
 
 M@<Maybe@<Bit8@>> Get = {
   List@<Bit8@> bytes <- Monad.do(State.Get);

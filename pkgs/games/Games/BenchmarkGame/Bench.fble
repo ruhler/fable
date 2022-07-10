@@ -4,7 +4,7 @@
 <@>% Nothing = /Core/Maybe%.Nothing;
 
 <@>@ Pure@ = /Core/Monad/Pure%.Pure@;
-% Pure = /Core/Monad/Pure%.Pure;
+% Monad = /Core/Monad/Pure%.Monad;
 
 <<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
 <<@>@>@ Main@ = /Core/Stdio%.Main@;
@@ -20,7 +20,7 @@
     in: Nothing<String@>,
     out: (String@ _) { Unit; },
     err: (String@ _) { Unit; });
-  game<Pure@>(Pure, stdio, List<String@>[n]).true;
+  game<Pure@>(Monad, stdio, List<String@>[n]).true;
 };
 
 # Benchmark for the benchmark games that takes about 1 minute to run.

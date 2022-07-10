@@ -13,6 +13,6 @@
 
 # Monad --
 #   The Monad instance for IO@.
-Monad@<IO@> Monad = State.State;
+Monad@<IO@> Monad = State.Monad;
 
 @(IO@, Monad);

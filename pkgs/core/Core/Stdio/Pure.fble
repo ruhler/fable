@@ -28,7 +28,7 @@
 <@>@ Pure@ = State.State@;
 <@>@ PureResult@ = State.R@;
 
-Monad@<Pure@> Monad = State.State;
+Monad@<Pure@> Monad = State.Monad;
 
 Pure@<Maybe@<String@>> In = {
   PureState@ s <- Monad.do(State.Get);

@@ -26,7 +26,7 @@ Int@ 1 = Int|1;
 
 <@>@ M@ = State.State@;
 <@>@ R@ = State.R@;
-Monad@<M@> Monad = State.State;
+Monad@<M@> Monad = State.Monad;
 
 M@<Maybe@<Bit8@>> Get = {
   Int@ n <- Monad.do(State.Get);

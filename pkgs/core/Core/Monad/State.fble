@@ -11,7 +11,7 @@
   <@>@ State@ = <@ T@>(S@) { R@<T@>; };
 
   # State -- The Monad@ instance for State@.
-  Monad@<State@> State = @(
+  Monad@<State@> Monad = @(
     return: <@ A@>(A@ x)(S@ s) { R@<A@>(s, x); },
     do: <@ A@>(State@<A@> ma)<@ B@>((A@) { State@<B@>; } f)(S@ s) {
       R@<A@> ra = ma(s);
@@ -35,5 +35,5 @@
     m(s);
   };
 
-  @(State@, R@, State, Get, Set, Run);
+  @(State@, R@, Monad, Get, Set, Run);
 };
