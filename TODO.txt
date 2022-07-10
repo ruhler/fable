@@ -1,4 +1,9 @@
-* Fix fble-md5.
+* Define State monad
+  - Use it in Md5 Bench, Md5 Test, and Stdio/Pure implementations.
+* Define IO monad.
+  - As a state monad for an abstract World@ type.
+* Fix fble-md5 to use IO monad.
+* Fix fble-stdio to use IO monad.
 
 * Should we do type inference on List[Str|a, Str|b]? Why can't it figure that
   out?

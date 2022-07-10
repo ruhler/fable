@@ -594,3 +594,35 @@ benchmarks (Int@ state monad) and tests (List@<Bit8@> state monad). I still
 have to reimplement the fble-md5 C wrapper code. I kind of want to check
 things in first to start though.
 
+Summary of how code looks now:
+* Padder and Rounds code stays the same. So it is as nice a description as a
+  concurrency/process based one from that sense.
+* We do module level parameters for abstract monad 'm' and get. Seems to work
+  nicely, if slightly more complex.
+* The trick for figuring out Put/Get and streams was to avoid introducing Get@
+  and Put@ abstractions and keep the padder anchored in the original M@ monad
+  instead of trying to define a new monadic type. As expected, the details
+  were hard to think through, but now that I have them it seems pretty easy.
+
+Next up; how to update the fble-md5 C wrapper. This is a great test for how
+we'll want to update the fble-stdio C wrapper.
+
+I don't remember how polys are represented at runtime. Maybe a sneaky thing to
+do would be to use the Pure@ monad for Md5, and just supply a magic Get
+function...
+
+No. We need some sort of sequencing thing. Because Maybe@<Bit8@> is a value.
+We really want a function there so I can pass a custom function to be applied.
+
+So, the sneaky thing to do would be provide a variation of the pure monad?
+
+No. We really want a State monad where the state is Unit@, where Unit@ is the
+stand in for the world. I suppose we could define a generic IO monad as a
+State@ of a private type. We could reuse that for md5, stdio, and any other
+top level side effecting things. Then the C code just needs to provide custom
+functions:
+
+(World@) { *(World@, Maybe@<Bit8@>); }
+
+I could factor out common C code for IO. That sounds nice to me.
+

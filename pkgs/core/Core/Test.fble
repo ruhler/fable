@@ -32,9 +32,8 @@
 
 @ TestResult@ = +(Unit@ pass, String@ fail, Unit@ xfail);
 @ TestCase@ = *(String@ name, (Unit@) { TestResult@; } test);
-@ IOTestCase@ = *(String@ name, TestResult@! test);
 @ TestSuite@ = *(String@ name, List@<Test@> tests),
-@ Test@ = +(TestCase@ case, IOTestCase@ iocase, TestSuite@ suite);
+@ Test@ = +(TestCase@ case, TestSuite@ suite);
 
 # Test --
 #   Creates an individual test.
@@ -45,16 +44,6 @@
 (String@, (Unit@) { TestResult@; }) { Test@; }
 Test = (String@ name, (Unit@) { TestResult@; } test) {
   Test@(case: TestCase@(name, test));
-};
-
-# IOTest --
-#   Creates an individual IO based test case.
-#
-# Inputs:
-#   name - the name of the test
-#   test - a process that returns the result of the test
-(String@, TestResult@!) { Test@; } IOTest = (String@ name, TestResult@! test) {
-  Test@(iocase: IOTestCase@(name, test));
 };
 
 # TestSuite --
@@ -124,18 +113,6 @@ ExpectFails = (TestResult@ result, String@ msg) {
         Int@ xfails = tr.?(xfail: Inc(status.xfails), : status.xfails);
         !(Status@(Inc(status.total), xfails, nfailed));
       },
-      iocase: {
-        IOTestCase@ t = test.iocase;
-        TestResult@ tr := t.test;
-        String@ short = tr.?(pass: Str|'.', fail: Str|'F', xfail: Str|'X');
-        Unit@ _ := out(short);
-        List@<Failure@> nfailed = tr.?(
-          pass: status.failures,
-          fail: Cons<Failure@>(Failure@(Append<Char@>(prefix, t.name), tr.fail), status.failures),
-          xfail: status.failures);
-        Int@ xfails = tr.?(xfail: Inc(status.xfails), : status.xfails);
-        !(Status@(Inc(status.total), xfails, nfailed));
-      },
       suite: {
         String@ nprefix = Concat<Char@>(List<String@>[
             prefix, test.suite.name, Str|'.']);
@@ -193,23 +170,6 @@ ExpectFails = (TestResult@ result, String@ msg) {
             !(False);
           });
       },
-      iocase: {
-        Unit@ _ := Print(out, Append<Char@>(prefix, test.case.name));
-        TestResult@ tr := test.iocase.test;
-        tr.?(
-          pass: {
-            Unit@ _ := PrintLn(out, Nil<Char@>);
-            !(passing);
-          },
-          fail: {
-            Unit@ _ := PrintLn(out, Strs[Str|': FAILED: ', tr.fail]);
-            !(False);
-          },
-          xfail: {
-            Unit@ _ := PrintLn(out, Strs[Str|': EXPECT FAILED']);
-            !(False);
-          });
-      },
       suite: {
         String@ nprefix = Concat<Char@>(List<String@>[
             prefix, test.suite.name, Str|'.']);
@@ -225,4 +185,4 @@ ExpectFails = (TestResult@ result, String@ msg) {
 
 @(
   String@, TestResult@, Test@, TestSuite@, TestCase@,
-  AssertEquals, ExpectFails, Test, IOTest, TestSuite, RunTests, RunTestsVerbose);
+  AssertEquals, ExpectFails, Test, TestSuite, RunTests, RunTestsVerbose);

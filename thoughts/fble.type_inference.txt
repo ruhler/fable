@@ -41,6 +41,7 @@ a poly, inferring and auto-applying the types.
 Using type inference more, some requests:
 * List[Str|a, Str|b] should work, right?
 * Foo@(...), where Foo@ is polymorphic would certainly be nice.
+  Yeah. It really would be nice.
 * It's not obvious to me when I should expect type inference to work and when
   not.
 
