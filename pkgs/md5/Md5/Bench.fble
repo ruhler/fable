@@ -22,19 +22,17 @@
 
 Int@ 1 = Int|1;
 
-<@>@ R@ = <@ A@> { *(Int@ n, A@ x); },
-<@>@ M@ = <@ A@>(Int@) { R@<A@>; };
+% State = /Core/Monad/State%<Int@>;
 
-Monad@<M@> Monad = @(
-  return: <@ A@>(A@ x)(Int@ n) { R@<A@>(n, x); },
-  do: <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(Int@ n) { 
-    R@<A@> a = ma(n);
-    f(a.x)(a.n);
-  });
+<@>@ M@ = State.State@;
+<@>@ R@ = State.R@;
+Monad@<M@> Monad = State.State;
 
-M@<Maybe@<Bit8@>> Get = (Int@ n) {
-  n.?(0: R@<Maybe@<Bit8@>>(n ,Nothing<Bit8@>));
-  R@<Maybe@<Bit8@>>(Sub(n, 1), Just(H2(Hex.A, Hex.5)));
+M@<Maybe@<Bit8@>> Get = {
+  Int@ n <- Monad.do(State.Get);
+  n.?(0: Monad.return(Nothing<Bit8@>));
+  Unit@ _ <- Monad.do(State.Set(Sub(n, 1)));
+  Monad.return(Just(H2(Hex.A, Hex.5)));
 };
     
 # Benchmark for md5 sum that takes about 1 minute to run.

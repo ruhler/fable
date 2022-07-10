@@ -101,19 +101,17 @@
     h24, h25, h26, h27, h28, h29, h30, h31);
 };
 
-<@>@ R@ = <@ A@> { *(List@<Bit8@> bytes, A@ x); },
-<@>@ M@ = <@ A@>(List@<Bit8@>) { R@<A@>; };
+% State = /Core/Monad/State%<List@<Bit8@>>;
 
-Monad@<M@> Monad = @(
-  return: <@ A@>(A@ x)(List@<Bit8@> bytes) { R@<A@>(bytes, x); },
-  do: <@ A@>(M@<A@> ma)<@ B@>((A@) { M@<B@>; } f)(List@<Bit8@> bytes) { 
-    R@<A@> a = ma(bytes);
-    f(a.x)(a.bytes);
-  });
+<@>@ M@ = State.State@;
+<@>@ R@ = State.R@;
+Monad@<M@> Monad = State.State;
 
-M@<Maybe@<Bit8@>> Get = (List@<Bit8@> n) {
-  n.?(nil: R@<Maybe@<Bit8@>>(n, Nothing<Bit8@>));
-  R@<Maybe@<Bit8@>>(n.cons.tail, Just(n.cons.head));
+M@<Maybe@<Bit8@>> Get = {
+  List@<Bit8@> bytes <- Monad.do(State.Get);
+  bytes.?(nil: Monad.return(Nothing<Bit8@>));
+  Unit@ _ <- Monad.do(State.Set(bytes.cons.tail));
+  Monad.return(Just(bytes.cons.head));
 };
 
 # Compute the md5 hash for a string of bytes.
