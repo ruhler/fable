@@ -1,0 +1,39 @@
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+% Unit = /Core/Unit%.Unit;
+
+# Implementation of a state monad parameterized by state type S@.
+<@ S@> {
+  # State@ -- The state monad type.
+  <@>@ R@ = <@ T@> { *(S@ s, T@ x); },
+  <@>@ State@ = <@ T@>(S@) { R@<T@>; };
+
+  # State -- The Monad@ instance for State@.
+  Monad@<State@> State = @(
+    return: <@ A@>(A@ x)(S@ s) { R@<A@>(s, x); },
+    do: <@ A@>(State@<A@> ma)<@ B@>((A@) { State@<B@>; } f)(S@ s) {
+      R@<A@> ra = ma(s);
+      f(ra.x)(ra.s);
+    }
+  );
+
+  # Get -- Get the state value.
+  State@<S@> Get = (S@ s) {
+    R@<S@>(s, s);
+  };
+
+  # Set -- Set the state value.
+  (S@) { State@<Unit@>; } Set = (S@ ns)(S@ _) {
+    R@<Unit@>(ns, Unit);
+  };
+
+  # Run -- Run a state monadic computation with the given state.
+  <@ A@>(State@<A@>, S@) { R@<A@>; }
+  Run = <@ A@>(State@<A@> m, S@ s) {
+    m(s);
+  };
+
+  @(State@, R@, State, Get, Set, Run);
+};

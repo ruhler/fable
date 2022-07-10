@@ -38,8 +38,8 @@ Test = (String@ name, Main@ game, String@ n, String@ expected) {
     # Flatten the output, because we only care about the final results, not
     # how it's split into different calls to Stdio.out.
     PureResult@<Bool@> merged = PureResult@<Bool@>(
-      PureState@(got.state.in, List<String@>[Strs(got.state.out)], got.state.err),
-      got.result);
+      PureState@(got.s.in, List<String@>[Strs(got.s.out)], got.s.err),
+      got.x);
 
     AssertEquals(
       PureResultEq(/Core/Bool/Eq%.Eq),

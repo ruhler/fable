@@ -16,7 +16,7 @@ Show@<PureState@> PureStateShow = (PureState@ a) {
 
 <@ A@>(Show@<A@>) { Show@<PureResult@<A@>>; }
 PureResultShow = <@ A@>(Show@<A@> show)(PureResult@<A@> a) {
-  Strs[PureStateShow(a.state), Str|', Result: ', show(a.result)];
+  Strs[PureStateShow(a.s), Str|', Result: ', show(a.x)];
 };
 
 @(PureStateShow, PureResultShow);

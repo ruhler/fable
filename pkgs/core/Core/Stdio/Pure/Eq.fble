@@ -22,8 +22,8 @@ Eq@<PureState@> PureStateEq = (PureState@ a, PureState@ b) {
 
 <@ A@>(Eq@<A@>) { Eq@<PureResult@<A@>>; }
 PureResultEq = <@ A@>(Eq@<A@> eq)(PureResult@<A@> a, PureResult@<A@> b) {
-  PureStateEq(a.state, b.state).?(false: False);
-  eq(a.result, b.result).?(false: False);
+  PureStateEq(a.s, b.s).?(false: False);
+  eq(a.x, b.x).?(false: False);
   True;
 };
 

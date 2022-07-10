@@ -15,7 +15,6 @@
 @ String@ = /Core/String%.String@;
 
 @ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 @ PureState@ = *(
   List@<String@> in,
@@ -23,43 +22,35 @@
   List@<String@> err
 );
 
-# PureResult@ -- The result of running a pure Stdio computation.
-<@>@ PureResult@ = <@ A@> { *(PureState@ state, A@ result); };
+% State = /Core/Monad/State%<PureState@>;
 
 # Pure@ -- A monad for pure Stdio computation.
-<@>@ Pure@ = <@ A@>(PureState@) { PureResult@<A@>; };
+<@>@ Pure@ = State.State@;
+<@>@ PureResult@ = State.R@;
 
-<@ A@>(A@) { Pure@<A@>; }
-Return = <@ A@>(A@ x)(PureState@ s) {
-  PureResult@<A@>(s, x);
+Monad@<Pure@> Monad = State.State;
+
+Pure@<Maybe@<String@>> In = {
+  PureState@ s <- Monad.do(State.Get);
+  s.in.?(nil: Monad.return(Nothing<String@>));
+  Unit@ _ <- Monad.do(State.Set(PureState@(s.in.cons.tail, s.out, s.err)));
+  Monad.return(Just(s.in.cons.head));
 };
 
-<@ A@>(Pure@<A@>)<@ B@>((A@) { Pure@<B@>; }) { Pure@<B@>; }
-Do = <@ A@>(Pure@<A@> ma)<@ B@>((A@) { Pure@<B@>; } f)(PureState@ s) {
-  PureResult@<A@> ra = ma(s);
-  f(ra.result)(ra.state);
-};
-
-Pure@<Maybe@<String@>> In = (PureState@ s) {
-  s.in.?(nil: PureResult@<Maybe@<String@>>(s, Nothing<String@>));
-  PureResult@<Maybe@<String@>>(
-    PureState@(s.in.cons.tail, s.out, s.err),
-    Just(s.in.cons.head));
-};
-
-(String@) { Pure@<Unit@>; } Out = (String@ str)(PureState@ s) {
+(String@) { Pure@<Unit@>; } Out = (String@ str) {
   # TODO: Prepend instead of append string, and fix up later for improved
   # performance?
-  PureResult@<Unit@>(PureState@(s.in, Append(s.out, List<String@>[str]), s.err), Unit);
+  PureState@ s <- Monad.do(State.Get);
+  State.Set(PureState@(s.in, Append(s.out, List<String@>[str]), s.err));
 };
 
-(String@) { Pure@<Unit@>; } Err = (String@ str)(PureState@ s) {
+(String@) { Pure@<Unit@>; } Err = (String@ str) {
   # TODO: Prepend instead of append string, and fix up later for improved
   # performance?
-  PureResult@<Unit@>(PureState@(s.in, s.out, Append(s.err, List<String@>[str])), Unit);
+  PureState@ s <- Monad.do(State.Get);
+  State.Set(PureState@(s.in, s.out, Append(s.err, List<String@>[str])));
 };
 
-Monad@<Pure@> Monad = Monad@<Pure@>(Return, Do);
 Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err);
 
 # Run --
@@ -70,7 +61,7 @@ Stdio@<Pure@> Stdio = Stdio@<Pure@>(In, Out, Err);
 #   in - The list of input strings.
 <@ A@>(Pure@<A@>, List@<String@>) { PureResult@<A@>; }
 Run = <@ A@>(Pure@<A@> m, List@<String@> in) {
-  m(PureState@(in, Nil<String@>, Nil<String@>));
+  State.Run(m, PureState@(in, Nil<String@>, Nil<String@>));
 };
 
 @(Pure@, PureState@, PureResult@, Monad, Stdio, Run);
