@@ -46,4 +46,4 @@ IOStdio = (/Core/Stdio%.Main@ main)(IO@ io, List@<String@> args) {
     args);
 };
 
-@(IO@, Stdio@, IOStdio);
+@(IOStdio);

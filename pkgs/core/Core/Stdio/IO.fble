@@ -1,0 +1,40 @@
+@ Bool@ = /Core/Bool%.Bool@;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
+
+<@>@ IO@ = /Core/Monad/IO%.IO@;
+@ World@ = /Core/Monad/IO%.World@;
+<@>@ R@ = /Core/Monad/IO%.R@;
+
+@ String@ = /Core/String%.String@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
+# IOStdio --
+#   An IO implementation of Stdio@.
+(/Core/Stdio%.Main@)(
+  IO@<Maybe@<String@>>,
+  (String@, World@) { R@<Unit@>; },
+  (String@, World@) { R@<Unit@>; },
+  List@<String@>) { IO@<Bool@>; }
+IOStdio = (/Core/Stdio%.Main@ main)(
+  IO@<Maybe@<String@>> stdin,
+  (String@, World@) { R@<Unit@>; } stdout,
+  (String@, World@) { R@<Unit@>; } stderr,
+  List@<String@> args) {
+  # Note: We pass stdout and stderr as functions taking the string and the
+  # world rather than a function from string to IO@ just so we don't have to
+  # implement the currying on the native C side.
+  main<IO@>(
+    /Core/Monad/IO%.Monad,
+    /Core/Stdio%.Stdio@<IO@>(
+      stdin,
+      (String@ s)(World@ w) { stdout(s, w); },
+      (String@ s)(World@ w) { stderr(s, w); }),
+    args);
+};
+
+@(IOStdio);

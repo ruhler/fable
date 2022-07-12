@@ -124,4 +124,4 @@ p cnf 5 3
 
 ]);
 
-/Core/Test/Run%.Run(Tests);
+/Core/IO/Stdio%.IOStdio(/Core/Test/Stdio%.Run(Tests));

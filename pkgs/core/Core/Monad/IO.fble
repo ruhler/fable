@@ -10,9 +10,10 @@
 # IO@ -- 
 #   An IO monad.
 <@>@ IO@ = State.State@;
+<@>@ R@ = State.R@;
 
 # Monad --
 #   The Monad instance for IO@.
 Monad@<IO@> Monad = State.Monad;
 
-@(IO@, Monad);
+@(IO@, World@, R@, Monad);

@@ -14,4 +14,4 @@
 Test@ Tests = TestSuite(Str|Invaders, List<Test@>[
 ]);
 
-/Core/Test/Run%.Run(Tests);
+/Core/IO/Stdio%.IOStdio(/Core/Test/Stdio%.Run(Tests));
