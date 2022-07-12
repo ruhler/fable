@@ -213,6 +213,45 @@ size_t FbleUnionValueTag(FbleValue* object);
 //   
 FbleValue* FbleUnionValueAccess(FbleValue* object);
 
+// FbleSimpleFunc --
+//   Typedef for a C function used to implement a simple fble function.
+//
+// Note: don't do anything weird in the implementation of the function like
+// calling back into fble functions.
+//
+// Inputs:
+//   heap - the heap to allocate values on.
+//   args - array of arguments passed to the function. The number of args is
+//          specified in FbleNewSimpleFuncValue.
+//
+// Returns:
+//   The result of executing the function, or NULL to abort execution of the
+//   program.
+//
+// See also FbleNewSimpleFuncValue.
+typedef FbleValue* (*FbleSimpleFunc)(FbleValueHeap* heap, FbleValue** args);
+
+// FbleNewSimpleFuncValue --
+//   Create an fble function value from a C function.
+//
+// TODO: After removing support for processes, figure out how to make this
+// more general. For now we don't allow userdata, static variables, or any of
+// that sort of thing.
+//
+// Inputs:
+//   heap - the heap to allocate the value on.
+//   argc - the number of function arguments.
+//   impl - the implementation of the function.
+//   profile - a profile block id to use when the function is called.
+//
+// Results:
+//   A newly allocated function value.
+//
+// Side effects:
+//   The returned function value must be freed using FbleReleaseValue when no
+//   longer in use.
+FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFunc impl, FbleBlockId profile);
+
 // FbleIsProcValue --
 //   Returns true if the value represents a process value.
 //

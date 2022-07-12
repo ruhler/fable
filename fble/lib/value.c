@@ -653,6 +653,56 @@ FbleExecutable* FbleFuncValueExecutable(FbleValue* func)
   return func_value->executable;
 }
 
+typedef struct {
+  FbleExecutable _base;
+  FbleSimpleFunc impl;
+} SimpleExecutable;
+
+FbleExecStatus SimpleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
+{
+  FuncValue* func = (FuncValue*)thread->stack->func;
+  SimpleExecutable* exec = (SimpleExecutable*)func->executable;
+  FbleValue** args = thread->stack->locals;
+  FbleValue* result = exec->impl(heap, args);
+  assert(result != NULL && "TODO");
+
+  for (size_t i = 0; i < exec->_base.locals; ++i) {
+    FbleReleaseValue(heap, thread->stack->locals[i]);
+  }
+
+  FbleThreadReturn(heap, thread, result);
+  return FBLE_EXEC_FINISHED;
+}
+
+void SimpleAbortFunction(FbleValueHeap* heap, FbleStack* stack)
+{
+  FuncValue* func = (FuncValue*)stack->func;
+  FbleExecutable* exec = func->executable;
+  for (size_t i = 0; i < exec->locals; ++i) {
+    FbleReleaseValue(heap, stack->locals[i]);
+  }
+  *(stack->result) = NULL;
+}
+
+// FbleNewSimpleFuncValue -- see documentation in fble-value.h
+FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFunc impl, FbleBlockId profile)
+{
+  SimpleExecutable* exec = FbleAlloc(SimpleExecutable);
+  exec->_base.refcount = 0;
+  exec->_base.magic = FBLE_EXECUTABLE_MAGIC;
+  exec->_base.args = argc;
+  exec->_base.statics = 0;
+  exec->_base.locals = argc;
+  exec->_base.profile = profile;
+  exec->_base.profile_blocks.size = 0;
+  exec->_base.profile_blocks.xs = NULL;
+  exec->_base.run = &SimpleRunFunction;
+  exec->_base.abort = &SimpleAbortFunction;
+  exec->_base.on_free = &FbleExecutableNothingOnFree;
+  exec->impl = impl;
+  return FbleNewFuncValue(heap, &exec->_base, 0, NULL);
+}
+
 // FbleIsProcValue -- see documentation in fble-value.h
 bool FbleIsProcValue(FbleValue* value)
 {

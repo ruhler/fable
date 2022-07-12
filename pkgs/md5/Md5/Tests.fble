@@ -37,7 +37,7 @@
 
 # Import to test compilation.
 % _ = /Md5/Bench%;
-<<@>@>% _ = /Md5/Main%;
+% _ = /Md5/Main%;
 
 (Hex@) { Char@; } Hex2Char = (Hex@ h) {
   h.?(

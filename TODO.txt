@@ -1,4 +1,3 @@
-* Fix fble-md5 to use IO monad.
 * Fix fble-stdio to use IO monad.
 
 * Should we do type inference on List[Str|a, Str|b]? Why can't it figure that

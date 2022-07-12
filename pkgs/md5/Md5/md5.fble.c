@@ -19,17 +19,11 @@
 #define EX_FAILURE 1
 #define EX_USAGE 2
 
-// Md5IO --
-//   The FbleIO for Md5.
-typedef struct {
-  FbleIO io;
-  FILE* fin;
-
-  FbleValue* input;
-} Md5IO;
+static FILE* g_fin = NULL;
 
 static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data);
-static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
+static FbleValue* GetByte(FbleValueHeap*, FILE* fin);
+static FbleValue* GetFunc(FbleValueHeap* heap, FbleValue** args);
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 int main(int argc, char* argv[]);
 
@@ -62,27 +56,30 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
   return result;
 }
 
-// IO --
-//   FbleIo.io function for external ports.
-//   See the corresponding documentation in fble-value.h.
-static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
+// GetByte --
+//   Get the next byte from the given input stream.
+static FbleValue* GetByte(FbleValueHeap* heap, FILE* fin)
 {
-  Md5IO* mio = (Md5IO*)io;
-  if (block && mio->input == NULL) {
-    // Read the next byte from the file.
-    int c = fgetc(mio->fin);
-    if (c == EOF) {
-      // Maybe<Bit8>:nothing(Unit())
-      mio->input = FbleNewEnumValue(heap, 1);
-    } else {
-      // Maybe<Bit8>:just(c)
-      FbleValue* byte = MkBitN(heap, 8, c);
-      mio->input = FbleNewUnionValue(heap, 0, byte);
-      FbleReleaseValue(heap, byte);
-    }
-    return true;
+  int c = fgetc(fin);
+  if (c == EOF) {
+    // Maybe<Bit8>(nothing: Unit)
+    return FbleNewEnumValue(heap, 1);
   }
-  return false;
+
+  // Maybe<Bit8>(just: c)
+  FbleValue* byte = MkBitN(heap, 8, c);
+  FbleValue* result = FbleNewUnionValue(heap, 0, byte);
+  FbleReleaseValue(heap, byte);
+  return result;
+}
+
+static FbleValue* GetFunc(FbleValueHeap* heap, FbleValue** args)
+{
+  FbleValue* world = args[0];
+  FbleValue* byte = GetByte(heap, g_fin);
+  FbleValue* result = FbleNewStructValue(heap, 2, world, byte);
+  FbleReleaseValue(heap, byte);
+  return result;
 }
 
 // PrintUsage --
@@ -214,55 +211,63 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
     }
   }
 
+  g_fin = fopen(file, "rb");
+  if (g_fin == NULL) {
+    fprintf(stderr, "unable to open %s\n", file);
+    FbleFree(search_path.xs);
+    return EX_FAILURE;
+  }
+
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* md5 = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
+  FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
   FbleFree(search_path.xs);
-  if (md5 == NULL) {
+  if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAILURE;
   }
 
-  FbleValue* func = FbleEval(heap, md5, NULL);
+  // md5 has type (IO@<Maybe@<Bit8@>>) { IO@<Hash@>; }
+  FbleValue* md5 = FbleEval(heap, linked, profile);
+  FbleReleaseValue(heap, linked);
+
+  FbleName block_name;
+  block_name.name = FbleNewString("get!");
+  block_name.loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
+  FbleBlockId block_id = 0;
+  if (profile != NULL) {
+    FbleNameV names = { .size = 1, .xs = &block_name };
+    block_id = FbleProfileAddBlocks(profile, names);
+  }
+  FbleFreeName(block_name);
+
+  // get_func has type IO@<Maybe@<Bit8@>>
+  FbleValue* get_func = FbleNewSimpleFuncValue(heap, 1, GetFunc, block_id);
+  FbleValue* computation = FbleApply(heap, md5, &get_func, profile);
   FbleReleaseValue(heap, md5);
+  FbleReleaseValue(heap, get_func);
 
-  if (func == NULL) {
+  if (computation == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAILURE;
   }
 
-  FILE* fin = fopen(file, "rb");
-  if (fin == NULL) {
-    fprintf(stderr, "unable to open %s\n", file);
-    FbleReleaseValue(heap, func);
+  // computation has type IO@<Hash@>, which is (World@) { R@<Hash@>; }
+  FbleValue* world = FbleNewStructValue(heap, 0);
+  FbleValue* result = FbleApply(heap, computation, &world, profile);
+  FbleReleaseValue(heap, computation);
+  FbleReleaseValue(heap, world);
+
+  if (result == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
     return EX_FAILURE;
   }
 
-  Md5IO mio = {
-    .io = { .io = &IO, },
-    .fin = fin,
-    .input = NULL,
-  };
-
-  FbleValue* input = FbleNewInputPortValue(heap, &mio.input, 0);
-  FbleValue* proc = FbleApply(heap, func, &input, NULL);
-  FbleReleaseValue(heap, func);
-  FbleReleaseValue(heap, input);
-
-  if (proc == NULL) {
-    FbleFreeValueHeap(heap);
-    FbleFreeProfile(profile);
-    return EX_FAILURE;
-  }
-
-  FbleValue* value = FbleExec(heap, &mio.io, proc, NULL);
-
-  FbleReleaseValue(heap, proc);
-  assert(mio.input == NULL);
+  // result has type R@<Hash@>, which is *(s, x)
+  FbleValue* value = FbleStructValueAccess(result, 1);
 
   // Print the md5 hash
   char* hex = "0123456789abcdef";
@@ -274,7 +279,7 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
   }
   printf("\n");
 
-  FbleReleaseValue(heap, value);
+  FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
   FbleFreeProfile(profile);
   return EX_SUCCESS;

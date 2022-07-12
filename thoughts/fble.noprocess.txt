@@ -626,3 +626,124 @@ functions:
 
 I could factor out common C code for IO. That sounds nice to me.
 
+So, the question is, how do I define a function from C code of type
+(World@) { R@(World@, Maybe@<Bit8@>); } 
+
+We have internal API for FbleNewFuncValue, based on FbleExecutable.
+FbleExecutable is also internal.
+
+Really, what would be nice, would be to expose a nice API. The kind of API I
+want is? How about a way to convert a C function of type:
+
+FbleValue* f(FbleValueV args);
+
+To an fble function?
+
+Or, maybe we want to have a fixed number of args. So a one argument function
+is:
+
+FbleValue* f(FbleValue* arg);
+
+Maybe we can supply some static variables at runtime. Like, userdata. But in
+the form of what? void*? FbleValue*?
+
+I like void*. But we also would need some memory management to know when to
+clean up that void* when the function goes away. Also, how to handle aborts?
+
+What if we want to execute Fble code from the function?
+
+So there are lots of open questions about a fully general solution. Maybe to
+start, go with a very narrow solution. I provide a function that takes a
+single FbleValue* and returns an FbleValue* when called?
+
+Better yet, maybe we should make this IO specific. I provide a function that
+takes an FbleValue* and returns an FbleValue*, and can have whatever side
+effects it wants. That will get packaged into something of type 
+
+  (A@) { IO@<B@>; }
+
+And can then be used in IO monad.
+
+We'll need some API to allow us to implement this API in the IO library code
+though. So this is going to be harder than it looks, just because we need to
+figure out the right APIs for users to define custom fble functions that could
+potentially change the state of the world.
+
+Or. Another option would be to define an Md5/IOGet% module that defines the
+IOGet function, and write custom assembly code in the right format to
+implement that module. Except, that requires we use compiled code right? Or,
+we use whatever thing is used in generated code to create an FbleValue for a
+function? Which brings us back to the public API question.
+
+Tricky.
+
+What limited assumptions can we make?
+* The function runs to completion. It can't get blocked. Because processes are
+  going away.
+* There is no way for the function to abort? Maybe we say, if the function
+  returns NULL, that is considered an abort. I like that.
+
+Note: the internal details of how to describe a function are going to change a
+lot once we get rid of processes. No more dealing with spawning threads,
+continuations, io_activity, etc. That's real nice from the point of view of
+simplifying fble implementations. In this case, though, that means definitely
+do not export the current abstraction to users.
+
+In general, I'm thinking we want to make an FbleFunction given:
+* Number of arguments.
+* Abstract userdata void*.
+* Array of static FbleValue* arguments, and number of such statics.
+* A C function of type FbleValue* F(void* user, FbleValue** statics, FbleValue** args).
+* An on_free function to call with user data when it is no longer needed.
+
+Possible simplifications:
+* No statics to start.
+* No userdata or on_free function to start.
+* Fixed number of args.
+
+Questions:
+* How do we deal with profiling blocks? We need a block, but where would we
+  store it? This suggests more that we go with the approach of defining a
+  compiled module to implement the function.
+* Can userdata reference FbleValues? Then we need some kind of GC hookup?
+* Can the function call into other fble functions? How?
+
+I guess a big top level question is whether we should implement this as a C
+api to define a function, or require the user to define an fble module that
+they provide a custom implementation for. Defining an fble module with a
+custom implementation is nice in terms of profiling and better type support
+maybe. But harder, perhaps, to pass command line arguments, like the file to
+read?
+
+---
+
+My proposal: start with the simplest, narrowest approach we can. I expect
+pretty big changes when we remove process support from the fble
+implementation. Do the minimal to enable those changes and we can revisit a
+clean, general solution after that.
+
+So, make it so we can define a function by providing the number of arguments
+and a C function of type FbleValue* F(FbleValue** args). No userdata to start.
+No statics. No need for on_free. We'll pass the input file via a global
+variable to start. In the future we could consider passing it via the IO
+World@ state, or maybe by then we support userdata.
+
+How to deal with functions that return functions, as would be the case for an
+stdout call? Don't on the C side. Wrap those in multi-argument functions on
+the fble side.
+
+How to deal with profile blocks? Same way we do now for ports. Define block
+names, add manually to the profile. Easy.
+
+Cool. I know what I want. Let's do this.
+
+I stubbed out the API and updated md5.fble.c. That looks good to me. All I
+need now is to implement the API.
+
+---
+
+I implemented the API, and now fble-md5 works! Entirely without processes.
+It's a bit tricky keeping track of all the types on the C side, but with that
+in place... cool. And this should work swell for implementing fble-stdio as
+well.
+

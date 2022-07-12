@@ -1,3 +1,17 @@
 
-/Md5/Md5%.Md5;
+<@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
+<@>@ IO@ = /Core/Monad/IO%.IO@;
+
+@ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
+@ Hash@ = /Md5/Hash%.Hash@;
+
+# Main --
+#   Main function for fble-md5 program.
+#
+# Computes md5 hash of given file.
+(IO@<Maybe@<Bit8@>>) { IO@<Hash@>; } Main = (IO@<Maybe@<Bit8@>> file) {
+  /Md5/Md5%.Md5<IO@>(/Core/Monad/IO%.Monad, file);
+};
+
+Main;
