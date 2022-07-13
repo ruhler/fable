@@ -17,4 +17,4 @@ Test@ Tests = TestSuite(Str|Games, List<Test@>[
   /Games/TicTacToe/Tests%.Tests
 ]);
 
-/Core/IO/Stdio%.IOStdio(/Core/Test/Stdio%.Run(Tests));
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));

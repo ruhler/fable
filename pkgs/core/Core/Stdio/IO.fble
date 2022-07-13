@@ -13,14 +13,14 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 
-# IOStdio --
-#   An IO implementation of Stdio@.
+# Run --
+#   An top-level IO implementation for running a Main@ program.
 (/Core/Stdio%.Main@)(
   IO@<Maybe@<String@>>,
   (String@, World@) { R@<Unit@>; },
   (String@, World@) { R@<Unit@>; },
   List@<String@>) { IO@<Bool@>; }
-IOStdio = (/Core/Stdio%.Main@ main)(
+Run = (/Core/Stdio%.Main@ main)(
   IO@<Maybe@<String@>> stdin,
   (String@, World@) { R@<Unit@>; } stdout,
   (String@, World@) { R@<Unit@>; } stderr,
@@ -37,4 +37,4 @@ IOStdio = (/Core/Stdio%.Main@ main)(
     args);
 };
 
-@(IOStdio);
+@(Run);

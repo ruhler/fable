@@ -1,5 +1,4 @@
 * Remove processes from language
- - Fix fble-stdio to use IO monad.
  - Remove /Core/IO/* modules.
 
 * Why does /Core/Test% export String@? Is that needed?

@@ -322,4 +322,4 @@ Test@ Tests = TestSuite(Str|'Pinball', List<Test@>[
   })
 ]);
 
-/Core/IO/Stdio%.IOStdio(/Core/Test/Stdio%.Run(Tests));
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));

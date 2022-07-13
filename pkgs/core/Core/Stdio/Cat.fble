@@ -26,4 +26,4 @@ Main@ Cat = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
   );
 };
 
-/Core/IO/Stdio%.IOStdio(Cat);
+/Core/Stdio/IO%.Run(Cat);

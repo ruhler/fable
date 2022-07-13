@@ -1,2 +1,2 @@
 
-/Core/IO/Stdio%.IOStdio(/Games/BenchmarkGame/PiDigits%.Main);
+/Core/Stdio/IO%.Run(/Games/BenchmarkGame/PiDigits%.Main);

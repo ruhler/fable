@@ -54,4 +54,4 @@ Main@ Main = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
   m.return(True);
 };
 
-/Core/IO/Stdio%.IOStdio(Main);
+/Core/Stdio/IO%.Run(Main);

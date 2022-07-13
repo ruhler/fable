@@ -11,4 +11,4 @@
 
 Test@ Tests = TestSuite(Str|App, List<Test@>[]);
 
-/Core/IO/Stdio%.IOStdio(/Core/Test/Stdio%.Run(Tests));
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests));

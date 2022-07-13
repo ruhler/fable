@@ -1,1 +1,1 @@
-/Core/IO/Stdio%.IOStdio(/Games/BenchmarkGame/BinaryTrees%.Main);
+/Core/Stdio/IO%.Run(/Games/BenchmarkGame/BinaryTrees%.Main);

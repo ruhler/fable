@@ -20,4 +20,4 @@ Main@ Test = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
   m.return(True);
 };
 
-/Core/IO/Stdio%.IOStdio(Test);
+/Core/Stdio/IO%.Run(Test);
