@@ -26,16 +26,10 @@
 #define EX_USAGE 2
 #define EX_FAILURE 3
 
-typedef struct {
-  FbleIO io;
-
-  FbleValue* in;
-  FbleValue* out;
-  FbleValue* err;
-} Stdio;
-
 static void Output(FILE* stream, FbleValue* str);
-static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
+static FbleValue* Stdin(FbleValueHeap* heap, FbleValue** args);
+static FbleValue* Stdout(FbleValueHeap* heap, FbleValue** args);
+static FbleValue* Stderr(FbleValueHeap* heap, FbleValue** args);
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 
 // Output --
@@ -54,48 +48,60 @@ static void Output(FILE* stream, FbleValue* str)
   fflush(stream);
   FbleFree(chars);
 }
-// IO --
-//   FbleIO.io function for external ports.
-//   See the corresponding documentation in fble-value.h.
-//
-// Ports:
-//  in:   Read a line from stdin. Nothing on end of file.
-//  out:  Write to stdout.
-//  err:  Write to stderr.
-static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
+
+// Stdin -- Implementation of stdin function.
+//   IO@<Maybe@<String@>>
+static FbleValue* Stdin(FbleValueHeap* heap, FbleValue** args)
 {
-  Stdio* stdio = (Stdio*)io;
-  bool change = false;
-  if (stdio->out != NULL) {
-    Output(stdout, stdio->out);
-    FbleReleaseValue(heap, stdio->out);
-    stdio->out = NULL;
-    change = true;
-  }
+  FbleValue* world = args[0];
 
-  if (stdio->err != NULL) {
-    Output(stderr, stdio->err);
-    FbleReleaseValue(heap, stdio->err);
-    stdio->err = NULL;
-    change = true;
+  // Read a line from stdin.
+  char* line = NULL;
+  size_t len = 0;
+  ssize_t read = getline(&line, &len, stdin);
+  FbleValue* ms;
+  if (read < 0) {
+    ms = FbleNewEnumValue(heap, 1);
+  } else {
+    FbleValue* charS = FbleNewStringValue(heap, line);
+    ms = FbleNewUnionValue(heap, 0, charS);
+    FbleReleaseValue(heap, charS);
   }
+  free(line);
 
-  if (block && stdio->in == NULL) {
-    // Read a line from stdin.
-    char* line = NULL;
-    size_t len = 0;
-    ssize_t read = getline(&line, &len, stdin);
-    if (read < 0) {
-      stdio->in = FbleNewEnumValue(heap, 1);
-    } else {
-      FbleValue* charS = FbleNewStringValue(heap, line);
-      stdio->in = FbleNewUnionValue(heap, 0, charS);
-      FbleReleaseValue(heap, charS);
-    }
-    free(line);
-    change = true;
-  }
-  return change;
+  FbleValue* result = FbleNewStructValue(heap, 2, world, ms);
+  FbleReleaseValue(heap, ms);
+  return result;
+}
+
+// Stdout -- Implementation of stdout function.
+//   (String@, World@) { R@<Unit@>; }
+static FbleValue* Stdout(FbleValueHeap* heap, FbleValue** args)
+{
+  FbleValue* str = args[0];
+  FbleValue* world = args[1];
+
+  Output(stdout, str);
+
+  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* result = FbleNewStructValue(heap, 2, world, unit);
+  FbleReleaseValue(heap, unit);
+  return result;
+}
+
+// Stderr -- Implementation of stderr function.
+//   (String@, World@) { R@<Unit@>; }
+static FbleValue* Stderr(FbleValueHeap* heap, FbleValue** args)
+{
+  FbleValue* str = args[0];
+  FbleValue* world = args[1];
+
+  Output(stderr, str);
+
+  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* result = FbleNewStructValue(heap, 2, world, unit);
+  FbleReleaseValue(heap, unit);
+  return result;
 }
 
 // PrintUsage --
@@ -155,42 +161,25 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
     return NULL;
   }
 
-  Stdio io = {
-    .io = { .io = &IO, },
-    .in = NULL,
-    .out = NULL,
-    .err = NULL,
-  };
-
   FbleName block_names[5];
-  block_names[0].name = FbleNewString("stdin!");
+  block_names[0].name = FbleNewString("stdin");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[1].name = FbleNewString("stdout!");
+  block_names[1].name = FbleNewString("stdout");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[2].name = FbleNewString("stdout!!");
+  block_names[2].name = FbleNewString("stderr");
   block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[3].name = FbleNewString("stderr!");
-  block_names[3].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[4].name = FbleNewString("stderr!!");
-  block_names[4].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleBlockId block_id = 0;
   if (profile != NULL) {
-    FbleNameV names = { .size = 5, .xs = block_names };
+    FbleNameV names = { .size = 3, .xs = block_names };
     block_id = FbleProfileAddBlocks(profile, names);
   };
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
   FbleFreeName(block_names[2]);
-  FbleFreeName(block_names[3]);
-  FbleFreeName(block_names[4]);
 
-  FbleValue* fble_stdin = FbleNewInputPortValue(heap, &io.in, block_id);
-  FbleValue* fble_stdout = FbleNewOutputPortValue(heap, &io.out, block_id + 1);
-  FbleValue* fble_stderr = FbleNewOutputPortValue(heap, &io.err, block_id + 3);
-  FbleValue* fble_io = FbleNewStructValue(heap, 3, fble_stdin, fble_stdout, fble_stderr);
-  FbleReleaseValue(heap, fble_stdin);
-  FbleReleaseValue(heap, fble_stdout);
-  FbleReleaseValue(heap, fble_stderr);
+  FbleValue* fble_stdin = FbleNewSimpleFuncValue(heap, 1, Stdin, block_id);
+  FbleValue* fble_stdout = FbleNewSimpleFuncValue(heap, 2, Stdout, block_id + 1);
+  FbleValue* fble_stderr = FbleNewSimpleFuncValue(heap, 2, Stderr, block_id + 2);
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
@@ -200,18 +189,30 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
     FbleReleaseValue(heap, argP);
   }
 
-  FbleValue* args[2] = { fble_io, argS };
-  FbleValue* proc = FbleApply(heap, func, args, profile);
+  FbleValue* args[4] = { fble_stdin, fble_stdout, fble_stderr, argS };
+  FbleValue* computation = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
   FbleReleaseValue(heap, args[1]);
+  FbleReleaseValue(heap, args[2]);
+  FbleReleaseValue(heap, args[3]);
 
-  if (proc == NULL) {
+  if (computation == NULL) {
     return NULL;
   }
 
-  FbleValue* value = FbleExec(heap, &io.io, proc, profile);
-  FbleReleaseValue(heap, proc);
+  // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
+  FbleValue* world = FbleNewStructValue(heap, 0);
+  FbleValue* result = FbleApply(heap, computation, &world, profile);
+  FbleReleaseValue(heap, computation);
+  if (result == NULL) {
+    return NULL;
+  }
+
+  // result has type R@<Bool@>, which is *(s, x)
+  FbleValue* value = FbleStructValueAccess(result, 1);
+  FbleRetainValue(heap, value);
+  FbleReleaseValue(heap, result);
   return value;
 }
 

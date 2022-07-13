@@ -6,12 +6,12 @@
 #include "fble-value.h"
 
 // FbleStdio -- 
-//   Execute a /Core/Stdio%.Stdio@ process.
+//   Execute a /Core/Stdio/IO%.IOStdio process.
 //
 // Inputs:
 //   heap - The value heap.
 //   profile - Optional profile to store execution results to. May be NULL.
-//   stdio - The Stdio@ to execute. Borrowed.
+//   stdio - The stdio process to execute. Borrowed.
 //   argc - The number of string arguments to the stdio function. Borrowed.
 //   argv - The string arguments to the stdio function. Borrowed.
 //
