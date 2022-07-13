@@ -766,3 +766,22 @@ Let's forge ahead. I'm feeling good about this. What's next?
 App@ is going to be a big one. Maybe let's start by searching for remaining
 uses of Put@ and Get@ and see what makes sense to tackle next from there.
 
+Every single use of Put@ and Get@ is for the App@ interface. Let's tackle that
+next.
+
+Same approach as stdio: define an App@ interface that has the equivalent of
+put effect and get event, and a Main@ function for top level App@ programs.
+Then define an App/IO%.Run function for the top level wrapper and update
+fble-app.c to run pure.
+
+First step, update the fble code, implement App/IO%.Run using the current App@
+IO based interface.
+
+Apps to do:
+* Graphics
+* Pinball
+* Invaders
+* Hwdg
+* Snake
+* GameOfLife
+* Demo (done)

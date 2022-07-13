@@ -1,6 +1,6 @@
 
-@ App@ = /App/App%.App@;
-@ AppIO@ = /App/App%.AppIO@;
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -32,8 +32,7 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -117,53 +116,57 @@ State@ Initial = Camera(Int|20, Rect@(Neg(Int|32), Neg(Int|24), Int|64, Int|48))
   ];
 };
 
-(Get@<Event@>, Put@<State@>, Unit@!, State@) { Unit@!; }
-Run = (Get@<Event@> in, Put@<State@> draw, Unit@! tick, State@ state) {
-  Event@ e := in;
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
 
-  e.?(tick: {
-    Unit@ _ := tick;
-    Unit@ _ := draw(state);
-    Run(in, draw, tick, state);
-  });
+  M@<Event@> In = app.event;
 
-  e.?(key_down: {
-    e.key_down.?(q: !(Unit));
-
-    State@ new_state = e.key_down.?(
-      a: Translate(Neg(Int|1), Int|0, Int|0, state),
-      d: Translate(Int|1, Int|0, Int|0, state),
-      j: Focus(Neg(Int|1), state),
-      k: Focus(Int|1, state),
-      s: Translate(Int|0, Int|0, Neg(Int|1), state),
-      w: Translate(Int|0, Int|0, Int|1, state),
-
-      left: RotateY(Int|4, state),
-      right: RotateY(Neg(Int|4), state),
-      : state);
-    Run(in, draw, tick, new_state);
-  });
-  Run(in, draw, tick, state);
-};
-
-App@ Main = (AppIO@ app) {
   # Set the window coordinates to (-32, -24) lower left corner, (32, 24) upper
   # right corner.
   Point@ a = @(x: Int|10, y: Neg(Int|10));
   Point@ b = @(x: Int|320, y: Int|240);
 
-  # The target is 60 FPS, or 16 millseconds per frame.
-  Int@ frame_period = Int|16;
-  Unit@! tick = app.effect(Effect@(tick: frame_period));
-
-  (State@) { Unit@!; } draw = (State@ s) {
+  (State@) { M@<Unit@>; } Out = (State@ s) {
     app.effect(Effect@(draw: Over(
-      Rect(Int|0, Int|0, app.width, app.height, Color.Black),
+      Rect(Int|0, Int|0, width, height, Color.Black),
       Affine(a, b, Draw(s)))));
   };
 
-  Unit@ _ := app.effect(Effect@(tick: Int|0));
-  Run(app.event, draw, tick, Initial); 
+
+  (M@<Unit@>, State@) { M@<Unit@>; }
+  Run = (M@<Unit@> tick, State@ state) {
+    Event@ e <- m.do(In);
+
+    e.?(tick: {
+      Unit@ _ <- m.do(tick);
+      Unit@ _ <- m.do(Out(state));
+      Run(tick, state);
+    });
+
+    e.?(key_down: {
+      e.key_down.?(q: m.return(Unit));
+
+      State@ new_state = e.key_down.?(
+        a: Translate(Neg(Int|1), Int|0, Int|0, state),
+        d: Translate(Int|1, Int|0, Int|0, state),
+        j: Focus(Neg(Int|1), state),
+        k: Focus(Int|1, state),
+        s: Translate(Int|0, Int|0, Neg(Int|1), state),
+        w: Translate(Int|0, Int|0, Int|1, state),
+
+        left: RotateY(Int|4, state),
+        right: RotateY(Neg(Int|4), state),
+        : state);
+      Run(tick, new_state);
+    });
+    Run(tick, state);
+  };
+
+  # The target is 60 FPS, or 16 millseconds per frame.
+  Int@ frame_period = Int|16;
+  M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
+
+  Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
+  Run(tick, Initial); 
 };
 
 Main;

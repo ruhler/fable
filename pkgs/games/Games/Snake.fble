@@ -1,6 +1,6 @@
 
-@ App@ = /App/App%.App@;
-@ AppIO@ = /App/App%.AppIO@;
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -31,9 +31,6 @@
 <@>% Cons = /Core/List%.Cons;
 <@,@>% ForEach = /Core/List%.ForEach;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
-
 @ Int@ = /Core/Int%.Int@;
 % 0 = /Core/Int%.0;
 % 1 = /Core/Int%.1;
@@ -53,6 +50,8 @@
 % Int = /Core/Int/Lit%.Int;
 
 % Div = /Core/Int/Div%.Div;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -254,63 +253,62 @@ State@ InitialState = {
   Best(Best(up, down), Best(left, right)).dir;
 };
 
-(Get@<Input@>, Put@<Effect@>, State@) { Unit@!; }
-Snake = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
-  Input@ x := in;
-  x.?(
-    dir: Snake(in, out, State@(x.dir, s.food, s.rand, s.snake, s.speed)),
-    quit: !(Unit),
-    tick: {
-      Dir@ dir = AI(s);
-      State@ ns = State@(dir, s.food, s.rand, s.snake, s.speed);
-      MoveResultM@ m = Move(ns);
-      m.?(
-        dead: !(Unit),
-        state: {
-           Unit@ _ := out(Effect@(draw: Draw(ns)));
-           Unit@ _ := out(Effect@(tick: ns.speed));
-           Snake(in, out, m.state);
-        });
-    });
-};
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+  M@<Input@> GetInput = {
+    Event@ e <- m.do(app.event);
+    e.?(
+      tick: m.return(Input@(tick: Unit)),
+      key_down: e.key_down.?(
+        h: m.return(Input@(dir: Dir@(left: Unit))),
+        j: m.return(Input@(dir: Dir@(down: Unit))),
+        k: m.return(Input@(dir: Dir@(up: Unit))),
+        l: m.return(Input@(dir: Dir@(right: Unit))),
+        q: m.return(Input@(quit: Unit)),
+        : GetInput),
+      : GetInput);
+  };
 
-(Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
-  Event@ e := in;
-  e.?(
-    tick: !(Input@(tick: Unit)),
-    key_down: e.key_down.?(
-      h: !(Input@(dir: Dir@(left: Unit))),
-      j: !(Input@(dir: Dir@(down: Unit))),
-      k: !(Input@(dir: Dir@(up: Unit))),
-      l: !(Input@(dir: Dir@(right: Unit))),
-      q: !(Input@(quit: Unit)),
-      : GetInput(in)),
-    : GetInput(in));
-};
-
-App@ Main = (AppIO@ app) {
-  State@ s = InitialState;
-  
   # Map game coordinates into screen coordinates.
-  Point@ a = @(x: Div(app.width, Add(3, MaxCol)).q,
-               y: Div(app.height, Add(3, MaxRow)).q);
+  Point@ a = @(x: Div(width, Add(3, MaxCol)).q,
+               y: Div(height, Add(3, MaxRow)).q);
   Point@ b = @(x: Int|0, y: Int|0);
 
-  Put@<Effect@> game_out = (Effect@ e) {
+  (Effect@) { M@<Unit@>; } Output = (Effect@ e) {
     Effect@ transformed = e.?(
       tick: e,
       draw: Effect@(draw: Affine(a, b, e.draw)));
     app.effect(transformed);
   };
 
-  Unit@ _ := game_out(Effect@(draw: Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color.Blue)));
-  Unit@ _ := game_out(Effect@(draw: Draw(s)));
-  Unit@ _ := app.effect(Effect@(tick: Int|16));
-  Unit@ _ := Snake(GetInput(app.event), game_out, s);
+  (State@) { M@<Unit@>; } Snake = (State@ s) {
+    Input@ x <- m.do(GetInput);
+    x.?(
+      dir: Snake(State@(x.dir, s.food, s.rand, s.snake, s.speed)),
+      quit: m.return(Unit),
+      tick: {
+        Dir@ dir = AI(s);
+        State@ ns = State@(dir, s.food, s.rand, s.snake, s.speed);
+        MoveResultM@ mr = Move(ns);
+        mr.?(
+          dead: m.return(Unit),
+          state: {
+             Unit@ _ <- m.do(Output(Effect@(draw: Draw(ns))));
+             Unit@ _ <- m.do(Output(Effect@(tick: ns.speed)));
+             Snake(mr.state);
+          });
+      });
+  };
 
-  Unit@! WaitForKeyPress = {
-    Event@ e := app.event;
-    e.?(key_down: !(Unit), : WaitForKeyPress);
+  State@ s = InitialState;
+  
+  Unit@ _ <- m.do(Output(Effect@(draw: Rect(0, 0, Inc(MaxCol), Inc(MaxRow), Color.Blue))));
+  Unit@ _ <- m.do(Output(Effect@(draw: Draw(s))));
+  Unit@ _ <- m.do(app.effect(Effect@(tick: Int|16)));
+  Unit@ _ <- m.do(Snake(s));
+
+  M@<Unit@> WaitForKeyPress = {
+    Event@ e <- m.do(app.event);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };

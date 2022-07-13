@@ -1,6 +1,6 @@
 namespace eval "pkgs/invaders" {
   pkg invaders [list core app] ""
-  app $::out/pkgs/invaders/Invaders/fble-invaders "/Invaders/App%" "invaders"
+  app $::out/pkgs/invaders/Invaders/fble-invaders "/Invaders/AppIO%" "invaders"
 
   # /Invaders/Tests% interpreted
   set cflags "-I pkgs/invaders -I pkgs/app -I pkgs/core"

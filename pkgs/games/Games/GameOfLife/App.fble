@@ -1,6 +1,6 @@
 
-@ App@ = /App/App%.App@;
-@ AppIO@ = /App/App%.AppIO@;
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 @ Resize@ = /App/App%.Resize@;
@@ -31,8 +31,7 @@
 
 <@>% List = /Core/List%.List;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -84,14 +83,6 @@ World@ acorn = World(List<Coord@>[
 
 @ Input@ = +(Unit@ quit, Unit@ step, Resize@ resize);
 
-(Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
-  Event@ e := in;
-  e.?(tick: !(Input@(step: Unit)),
-      key_down: e.key_down.?(q: !(Input@(quit: Unit)), : GetInput(in)),
-      resize: !(Input@(resize: e.resize)),
-      : GetInput(in));
-};
-
 @ State@ = *(
   Int@ n,     # number of steps taken so far.
   Point@ a,   # 'a' coefficient for affine scaling.
@@ -99,32 +90,42 @@ World@ acorn = World(List<Coord@>[
   World@ w    # The game world.
 );
 
-(Get@<Input@>, Put@<Effect@>, State@) { Unit@!; }
-StepUI = (Get@<Input@> in, Put@<Effect@> out, State@ s) {
-  Unit@ _ := out(Effect@(draw: Affine(s.a, s.b, DrawWorld(s.w))));
-  Unit@ _ := out(Effect@(tick: Int|200));
-  Input@ x := in;
-  x.?(quit: !(Unit),
-      step: IsZero(s.n).?(
-              true: !(Unit),
-              false: StepUI(in, out, State@(Dec(s.n), s.a, s.b, Step(s.w)))),
-      resize: {
-        Point@ a = @(x: Div(x.resize.width, Width).q, y: Div(x.resize.height, Height).q);
-        Point@ b = @(x: Div(x.resize.width, 2).q,     y: Div(x.resize.height, 2).q);
-        StepUI(in, out, State@(s.n, a, b, s.w));
-      });
-};
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
 
-App@ Main = (AppIO@ app) {
+  M@<Input@> GetInput = {
+    Event@ e <- m.do(app.event);
+    e.?(tick: m.return(Input@(step: Unit)),
+        key_down: e.key_down.?(q: m.return(Input@(quit: Unit)), : GetInput),
+        resize: m.return(Input@(resize: e.resize)),
+        : GetInput);
+  };
+
+  (Effect@) { M@<Unit@>; } Output = app.effect;
+
+  (State@) { M@<Unit@>; } StepUI = (State@ s) {
+    Unit@ _ <- m.do(Output(Effect@(draw: Affine(s.a, s.b, DrawWorld(s.w)))));
+    Unit@ _ <- m.do(Output(Effect@(tick: Int|200)));
+    Input@ x <- m.do(GetInput);
+    x.?(quit: m.return(Unit),
+        step: IsZero(s.n).?(
+                true: m.return(Unit),
+                false: StepUI(State@(Dec(s.n), s.a, s.b, Step(s.w)))),
+        resize: {
+          Point@ a = @(x: Div(x.resize.width, Width).q, y: Div(x.resize.height, Height).q);
+          Point@ b = @(x: Div(x.resize.width, 2).q,     y: Div(x.resize.height, 2).q);
+          StepUI(State@(s.n, a, b, s.w));
+        });
+  };
+
   # Map game coordinates into screen coordinate.
-  Point@ a = @(x: Div(app.width, Width).q, y: Div(app.height, Height).q);
-  Point@ b = @(x: Div(app.width, 2).q, y: Div(app.height, 2).q);
+  Point@ a = @(x: Div(width, Width).q, y: Div(height, Height).q);
+  Point@ b = @(x: Div(width, 2).q, y: Div(height, 2).q);
   State@ s = State@(Int|200, a, b, acorn);
-  Unit@ _ := StepUI(GetInput(app.event), app.effect, s);
+  Unit@ _ <- m.do(StepUI(s));
 
-  Unit@! WaitForKeyPress = {
-    Event@ e := app.event;
-    e.?(key_down: !(Unit), : WaitForKeyPress);
+  M@<Unit@> WaitForKeyPress = {
+    Event@ e <- m.do(app.event);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };

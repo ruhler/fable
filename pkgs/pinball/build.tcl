@@ -1,6 +1,6 @@
 namespace eval "pkgs/pinball" {
   pkg pinball [list core app] ""
-  app $::out/pkgs/pinball/Pinball/fble-pinball "/Pinball/App%" "pinball"
+  app $::out/pkgs/pinball/Pinball/fble-pinball "/Pinball/AppIO%" "pinball"
 
   # /Pinball/Tests% interpreted
   set cflags "-I pkgs/core -I pkgs/app -I pkgs/pinball"

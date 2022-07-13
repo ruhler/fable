@@ -1,6 +1,6 @@
 
-@ App@ = /App/App%.App@;
-@ AppIO@ = /App/App%.AppIO@;
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -19,9 +19,7 @@
 
 <@>% List = /Core/List%.List;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
-
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -196,57 +194,58 @@ Drawing@ DrawnBall = Circle(Point@(Floor(Int|0), Floor(Int|0)), Floor(Radius), C
     List<Paddle@>[l, RightPaddle(v, r.pos)]);
 };
 
-(Get@<Event@>, Put@<World@>, Unit@!, World@) { Unit@!; }
-Run = (Get@<Event@> in, Put@<World@> draw, Unit@! tick, World@ world) {
-  Event@ e := in;
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+  M@<Event@> GetInput = app.event;
 
-  e.?(tick: {
-    Unit@ _ := tick;
-    Unit@ _ := draw(world);
-    Run(in, draw, tick, Tick(world));
-  });
-
-  e.?(key_down: {
-    e.key_down.?(q: !(Unit));
-    e.key_down.?(s: {
-      Run(in, draw, tick, Initial);
-    });
-    e.key_down.?(lshift: {
-      Run(in, draw, tick, SetLeftPaddleVelocity(PaddleVelocity, world));
-    });
-    e.key_down.?(rshift: {
-      Run(in, draw, tick, SetRightPaddleVelocity(Neg(PaddleVelocity), world));
-    });
-    Run(in, draw, tick, world);
-  });
-
-  e.?(key_up: {
-    e.key_up.?(lshift: {
-      Run(in, draw, tick, SetLeftPaddleVelocity(Neg(PaddleVelocity), world));
-    });
-    e.key_up.?(rshift: {
-      Run(in, draw, tick, SetRightPaddleVelocity(PaddleVelocity, world));
-    });
-    Run(in, draw, tick, world);
-  });
-
-  Run(in, draw, tick, world);
-};
-
-App@ Main = (AppIO@ app) {
   Point@ a = @(x: Floor(Int|1), y: Floor(Neg(Int|1)));
   Point@ b = @(x: Floor(Int|320), y: Floor(Int|240));
-  Int@ frame_period = Floor(Int|16);
-  Unit@! tick = app.effect(Effect@(tick: frame_period));
 
-  (World@) { Unit@!; } draw = (World@ s) {
+  (World@) { M@<Unit@>; } Output = (World@ s) {
     app.effect(Effect@(draw: Over(
-      Rect(Floor(0), Floor(0), app.width, app.height, Color.Black),
+      Rect(Floor(0), Floor(0), width, height, Color.Black),
       Affine(a, b, Draw(s)))));
   };
 
-  Unit@ _ := app.effect(Effect@(tick: Floor(0)));
-  Run(app.event, draw, tick, Initial); 
+  (M@<Unit@>, World@) { M@<Unit@>; }
+  Run = (M@<Unit@> tick, World@ world) {
+    Event@ e <- m.do(GetInput);
+
+    e.?(tick: {
+      Unit@ _ <- m.do(tick);
+      Unit@ _ <- m.do(Output(world));
+      Run(tick, Tick(world));
+    });
+
+    e.?(key_down: {
+      e.key_down.?(q: m.return(Unit));
+      e.key_down.?(s: Run(tick, Initial));
+      e.key_down.?(lshift: {
+        Run(tick, SetLeftPaddleVelocity(PaddleVelocity, world));
+      });
+      e.key_down.?(rshift: {
+        Run(tick, SetRightPaddleVelocity(Neg(PaddleVelocity), world));
+      });
+      Run(tick, world);
+    });
+
+    e.?(key_up: {
+      e.key_up.?(lshift: {
+        Run(tick, SetLeftPaddleVelocity(Neg(PaddleVelocity), world));
+      });
+      e.key_up.?(rshift: {
+        Run(tick, SetRightPaddleVelocity(PaddleVelocity, world));
+      });
+      Run(tick, world);
+    });
+
+    Run(tick, world);
+  };
+
+  Int@ frame_period = Floor(Int|16);
+  M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
+
+  Unit@ _ <- m.do(app.effect(Effect@(tick: Floor(0))));
+  Run(tick, Initial); 
 };
 
 Main;

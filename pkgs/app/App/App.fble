@@ -3,8 +3,7 @@
 
 @ Int@ = /Core/Int%.Int@;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
@@ -59,29 +58,22 @@
   Drawing@ draw
 );
 
-# AppIO@ --
+# App@ --
+#   Interface for application input and output operations.
+<<@>@>@ App@ = <<@>@ M@> { *(
+  M@<Event@> event,
+  (Effect@) { M@<Unit@>; } effect);
+};
+
+# Main@ --
 #   Interface for an App.
 #
-# Fields:
+# Inputs:
+#   M@ - An abstract computation type.
+#   monad - The monad interface for M@.
+#   app - The app interface for M@.
 #   width - The initial width of the screen.
 #   height - The initial height of the screen.
-#   event - Get the next input event.
-#   effect - Output an effect.
-@ AppIO@ = *(
-  Int@ width,
-  Int@ height,
-  Get@<Event@> event,
-  Put@<Effect@> effect
-);
+<<@>@>@ Main@ = <<@>@ M@>(Monad@<M@>, App@<M@>, Int@, Int@) { M@<Unit@>; };
 
-# App@ --
-#   User API for describing an App.
-#
-# Inputs:
-#   io - The interface to the application.
-#
-# Results:
-#   None.
-@ App@ = (AppIO@) { Unit@!; };
-
-@(App@, AppIO@, Key@, Resize@, Event@, Effect@);
+@(App@, Main@, Key@, Resize@, Event@, Effect@);

@@ -7,9 +7,9 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /Invaders/App%;
+% _ = /Invaders/AppIO%;
 % _ = /Invaders/Bench%;
-% _ = /Invaders/Screenshot/App%;
+% _ = /Invaders/Screenshot/AppIO%;
 
 Test@ Tests = TestSuite(Str|Invaders, List<Test@>[
 ]);

@@ -1,6 +1,6 @@
 
-@ App@ = /App/App%.App@;
-@ AppIO@ = /App/App%.AppIO@;
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -15,8 +15,7 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-
-<@>@ Get@ = /Core/IO/Process%.Get@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -27,54 +26,53 @@
   Color@ mouse_color
 );
 
-(Get@<Event@>) { Event@!; } FilterEvent = (Get@<Event@> in) {
-  Event@ e := in;
-  e.?(tick: !(e),
-      key_down: e.key_down.?(q: !(e), : FilterEvent(in)),
-      mouse_down: !(e),
-      mouse_up: !(e),
-      mouse_motion: !(e),
-      : FilterEvent(in));
-};
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+  M@<Event@> FilterEvent = {
+    Event@ e <- m.do(app.event);
+    e.?(tick: m.return(e),
+        key_down: e.key_down.?(q: m.return(e), : FilterEvent),
+        mouse_down: m.return(e),
+        mouse_up: m.return(e),
+        mouse_motion: m.return(e),
+        : FilterEvent);
+  };
 
-(AppIO@, State@) { Unit@!; }
-StepUI = (AppIO@ app, State@ s) {
-  Drawing@ clear = Rect(Int|0, Int|0, app.width, app.height, Color.Black);
-  Drawing@ box = Rect(
-    Int|10,
-    Int|10,
-    Sub(app.width, Int|20),
-    Sub(app.height, Int|20),
-    Color.Blue);
+  (State@) { M@<Unit@>; } StepUI = (State@ s) {
+    Drawing@ clear = Rect(Int|0, Int|0, width, height, Color.Black);
+    Drawing@ box = Rect(
+      Int|10,
+      Int|10,
+      Sub(width, Int|20),
+      Sub(height, Int|20),
+      Color.Blue);
 
-  Drawing@ cursor = Rect(
-    Sub(s.mouse_x, Int|10),
-    Sub(s.mouse_y, Int|10),
-    Int|20,
-    Int|20,
-    s.mouse_color);
+    Drawing@ cursor = Rect(
+      Sub(s.mouse_x, Int|10),
+      Sub(s.mouse_y, Int|10),
+      Int|20,
+      Int|20,
+      s.mouse_color);
 
-  Drawing@ drawing = Drawings[clear, box, cursor];
+    Drawing@ drawing = Drawings[clear, box, cursor];
 
-  Unit@ _ := app.effect(Effect@(draw: drawing));
-  Unit@ _ := app.effect(Effect@(tick: Int|200));
-  Event@ e := FilterEvent(app.event);
-  e.?(
-    tick: StepUI(app, s),
-    mouse_down: StepUI(app, State@(s.mouse_x, s.mouse_y, Color.Red)),
-    mouse_up: StepUI(app, State@(s.mouse_x, s.mouse_y, Color.Green)),
-    mouse_motion: StepUI(app, State@(e.mouse_motion.x, e.mouse_motion.y, s.mouse_color)),
-    : !(Unit));
-};
+    Unit@ _ <- m.do(app.effect(Effect@(draw: drawing)));
+    Unit@ _ <- m.do(app.effect(Effect@(tick: Int|200)));
+    Event@ e <- m.do(FilterEvent);
+    e.?(
+      tick: StepUI(s),
+      mouse_down: StepUI(State@(s.mouse_x, s.mouse_y, Color.Red)),
+      mouse_up: StepUI(State@(s.mouse_x, s.mouse_y, Color.Green)),
+      mouse_motion: StepUI(State@(e.mouse_motion.x, e.mouse_motion.y, s.mouse_color)),
+      : m.return(Unit));
+  };
 
-App@ Main = (AppIO@ app) {
-  Unit@ _ := StepUI(app, State@(Int|0, Int|0, Color.Green));
+  Unit@ _ <- m.do(StepUI(State@(Int|0, Int|0, Color.Green)));
 
-  Unit@! WaitForKeyPress = {
-    Event@ e := app.event;
-    e.?(key_down: !(Unit), : WaitForKeyPress);
+  M@<Unit@> WaitForKeyPress = {
+    Event@ e <- m.do(app.event);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };
 
-Main;
+/App/IO%.Run(Main);

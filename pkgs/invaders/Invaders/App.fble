@@ -1,6 +1,6 @@
 
-@ App@ = /App/App%.App@;
-@ AppIO@ = /App/App%.AppIO@;
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -16,8 +16,7 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -38,56 +37,56 @@ Input@ Right = Input@(game: Game.Input@(dir: Dir@(right: Unit)));
 Input@ Stopped = Input@(game: Game.Input@(dir: Dir@(stopped: Unit)));
 Input@ Fire = Input@(game: Game.Input@(fire: Unit));
 
-(Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
-  Event@ e := in;
-  e.?(
-      tick: !(Input@(tick: Unit)),
-      key_down: e.key_down.?(
-        q: !(Input@(quit: Unit)),
-        left: !(Left),
-        right: !(Right),
-        space: !(Fire),
-        : GetInput(in)),
-      key_up: e.key_up.?(
-        left: !(Stopped),
-        right: !(Stopped),
-        : GetInput(in)),
-      : GetInput(in)
-   );
-};
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+  M@<Input@> GetInput = {
+    Event@ e <- m.do(app.event);
+    e.?(
+        tick: m.return(Input@(tick: Unit)),
+        key_down: e.key_down.?(
+          q: m.return(Input@(quit: Unit)),
+          left: m.return(Left),
+          right: m.return(Right),
+          space: m.return(Fire),
+          : GetInput),
+        key_up: e.key_up.?(
+          left: m.return(Stopped),
+          right: m.return(Stopped),
+          : GetInput),
+        : GetInput
+     );
+  };
 
-(Get@<Input@>, Put@<Game@>, Unit@!, Game@) { Unit@!; }
-Run = (Get@<Input@> in, Put@<Game@> draw, Unit@! tick, Game@ game) {
-  Input@ i := in;
-  i.?(
-     tick: {
-       Unit@ _ := tick;
-       Game@ ngame = Game.Tick(game);
-       Unit@ _ := draw(ngame);
-       Run(in, draw, tick, ngame);
-     },
-     quit: !(Unit),
-     game: Run(in, draw, tick, Game.Input(game, i.game)));
-};
-
-App@ Main = (AppIO@ app) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|2, y: Neg(Int|2));
   Point@ b = @(x: Int|0, y: Int|480);
 
-  # The target is 60 FPS, or 16 millseconds per frame.
-  Int@ frame_period = Int|16;
-  Unit@! tick = app.effect(Effect@(tick: frame_period));
-
-  (Game@) { Unit@!; } draw = (Game@ g) {
+  (Game@) { M@<Unit@>; } Draw = (Game@ g) {
     app.effect(Effect@(draw: Over(
-      Rect(0, 0, app.width, app.height, Color.Black),
+      Rect(0, 0, width, height, Color.Black),
       Affine(a, b, Game.Draw(g)))));
   };
 
+  (M@<Unit@>, Game@) { M@<Unit@>; }
+  Run = (M@<Unit@> tick, Game@ game) {
+    Input@ i <- m.do(GetInput);
+    i.?(
+       tick: {
+         Unit@ _ <- m.do(tick);
+         Game@ ngame = Game.Tick(game);
+         Unit@ _ <- m.do(Draw(ngame));
+         Run(tick, ngame);
+       },
+       quit: m.return(Unit),
+       game: Run(tick, Game.Input(game, i.game)));
+  };
+
+  # The target is 60 FPS, or 16 millseconds per frame.
+  Int@ frame_period = Int|16;
+  M@<Unit@> tick = app.effect(Effect@(tick: frame_period));
+
   Game@ game = Game.Initial;
-  Unit@ _ := app.effect(Effect@(tick: Int|0));
-  Run(GetInput(app.event), draw, tick, game); 
+  Unit@ _ <- m.do(app.effect(Effect@(tick: Int|0)));
+  Run(tick, game); 
 };
 
 Main;

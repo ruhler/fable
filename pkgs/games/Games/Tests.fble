@@ -7,7 +7,7 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /Games/Snake%;
+% _ = /Games/Snake/AppIO%;
 % _ = /Games/Snake/Bench%;
 
 Test@ Tests = TestSuite(Str|Games, List<Test@>[

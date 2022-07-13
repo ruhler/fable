@@ -31,7 +31,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 # Import to test compilation.
-% _ = /Pinball/App%;
+% _ = /Pinball/AppIO%;
 % _ = /Pinball/Bench%;
 % _ = /Pinball/Circle%;
 

@@ -1,6 +1,6 @@
 
-@ App@ = /App/App%.App@;
-@ AppIO@ = /App/App%.AppIO@;
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -47,8 +47,7 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
@@ -121,46 +120,46 @@ Memory@ Cells = {
 
 @ Input@ = +(Unit@ quit, Unit@ step);
 
-(Get@<Event@>) { Get@<Input@>; } GetInput = (Get@<Event@> in) {
-  Event@ e := in;
-  e.?(tick: !(Input@(step: Unit)),
-      key_down: e.key_down.?(q: !(Input@(quit: Unit)), : GetInput(in)),
-      : GetInput(in));
-};
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
+  M@<Input@> GetInput = {
+    Event@ e <- m.do(app.event);
+    e.?(tick: m.return(Input@(step: Unit)),
+        key_down: e.key_down.?(q: m.return(Input@(quit: Unit)), : GetInput),
+        : GetInput);
+  };
 
-(Get@<Input@>, Put@<Effect@>, Int@, Design@, Memory@) { Unit@!; }
-StepUI = (Get@<Input@> in, Put@<Effect@> out, Int@ n, Design@ design, Memory@ cells) {
-  Unit@ _ := out(Effect@(draw: Draw(design, cells)));
-  Unit@ _ := out(Effect@(tick: Int|400));
-  Input@ x := in;
-  x.?(quit: !(Unit),
-      step: IsZero(n).?(
-              true: !(Unit),
-              false: StepUI(in, out, Dec(n), design, Step(design, cells))));
-};
-
-App@ Main = (AppIO@ app) {
   # Map game coordinates into screen coordinate.
-  Point@ a = @(x: Div(app.width, Width).q, y: Div(app.height, Height).q);
-  Point@ b = @(x: Div(app.width, 2).q, y: Div(app.height, 2).q);
+  Point@ a = @(x: Div(width, Width).q, y: Div(height, Height).q);
+  Point@ b = @(x: Div(width, 2).q, y: Div(height, 2).q);
 
-  Put@<Effect@> game_out = (Effect@ e) {
+  (Effect@) { M@<Unit@>; } Output = (Effect@ e) {
     Effect@ transformed = e.?(
       tick: e,
       draw: Effect@(draw: Affine(a, b, e.draw)));
     app.effect(transformed);
   };
 
-  Unit@! WaitForKeyPress = {
-    Event@ e := app.event;
-    e.?(key_down: !(Unit), : WaitForKeyPress);
+  (Int@, Design@, Memory@) { M@<Unit@>; }
+  StepUI = (Int@ n, Design@ design, Memory@ cells) {
+    Unit@ _ <- m.do(Output(Effect@(draw: Draw(design, cells))));
+    Unit@ _ <- m.do(Output(Effect@(tick: Int|400)));
+    Input@ x <- m.do(GetInput);
+    x.?(quit: m.return(Unit),
+        step: IsZero(n).?(
+                true: m.return(Unit),
+                false: StepUI(Dec(n), design, Step(design, cells))));
   };
 
-  Unit@ _ := game_out(Effect@(draw: Draw(Design, Cells)));
-  Unit@ _ := WaitForKeyPress;
-  Unit@ _ := StepUI(GetInput(app.event), game_out, Int|2000, Design, Cells);
+  M@<Unit@> WaitForKeyPress = {
+    Event@ e <- m.do(app.event);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
+  };
+
+  Unit@ _ <- m.do(Output(Effect@(draw: Draw(Design, Cells))));
+  Unit@ _ <- m.do(WaitForKeyPress);
+  Unit@ _ <- m.do(StepUI(Int|2000, Design, Cells));
 
   WaitForKeyPress;
 };
 
-Main;
+/App/IO%.Run(Main);

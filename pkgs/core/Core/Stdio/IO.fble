@@ -14,7 +14,7 @@
 
 
 # Run --
-#   An top-level IO implementation for running a Main@ program.
+#   A top-level IO implementation for running a Stdio Main@ program.
 (/Core/Stdio%.Main@)(
   IO@<Maybe@<String@>>,
   (String@, World@) { R@<Unit@>; },

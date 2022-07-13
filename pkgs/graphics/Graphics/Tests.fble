@@ -7,7 +7,7 @@
 % TestSuite = /Core/Test%.TestSuite;
 
 # Import to test compilation.
-% _ = /Graphics/App%;
+% _ = /Graphics/AppIO%;
 % _ = /Graphics/Bench%;
 
 Test@ Tests = TestSuite(Str|Graphics, List<Test@>[

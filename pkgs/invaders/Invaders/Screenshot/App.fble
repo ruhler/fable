@@ -1,6 +1,6 @@
 
-@ App@ = /App/App%.App@;
-@ AppIO@ = /App/App%.AppIO@;
+<<@>@>@ App@ = /App/App%.App@;
+<<@>@>@ Main@ = /App/App%.Main@;
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
@@ -10,24 +10,27 @@
 
 % Neg = /Core/Int%.Neg;
 
+@ Int@ = /Core/Int%.Int@;
 % Int = /Core/Int/Lit%.Int;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
 % Screenshot = /Invaders/Graphics%.Screenshot;
 
-App@ Main = (AppIO@ app) {
+Main@ Main = <<@>@ M@>(Monad@<M@> m, App@<M@> app, Int@ width, Int@ height) {
   # Map game coordinates into screen coordinate.
   Point@ a = @(x: Int|2, y: Neg(Int|2));
   Point@ b = @(x: Int|0, y: Int|480);
 
   Drawing@ screenshot = Screenshot;
-  Unit@ _ := app.effect(Effect@(draw: Affine(a, b, screenshot)));
+  Unit@ _ <- m.do(app.effect(Effect@(draw: Affine(a, b, screenshot))));
 
-  Unit@! WaitForKeyPress = {
-    Event@ e := app.event;
-    e.?(key_down: !(Unit), : WaitForKeyPress);
+  M@<Unit@> WaitForKeyPress = {
+    Event@ e <- m.do(app.event);
+    e.?(key_down: m.return(Unit), : WaitForKeyPress);
   };
   WaitForKeyPress;
 };

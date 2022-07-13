@@ -27,7 +27,7 @@
 % Step = /Games/GameOfLife%.Step;
 
 # Imports to test compilation.
-% _ = /Games/GameOfLife/App%;
+% _ = /Games/GameOfLife/AppIO%;
 % _ = /Games/GameOfLife/Bench%;
 
 # Do a sigle step of the acorn configuration.
