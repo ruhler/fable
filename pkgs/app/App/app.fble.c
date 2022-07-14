@@ -26,24 +26,8 @@
 // Anything above 60 FPS is counted towards i = 60.
 static int sFpsHistogram[61] = {0};
 
-// AppIO - Implementation of FbleIO for App, with some additional parameters
-// to pass to the IO function.
-//
-// Fields:
-//   _base - The underlying FbleIO object.
-//   window - The window to draw to.
-//   time - The current simulation time in units of SDL_GetTicks.
-//
-//   event - The event input port.
-//   effect - The effect output port.
-typedef struct {
-  FbleIO _base;
-  SDL_Window* window;
-  Uint32 time;
-
-  FbleValue* event;
-  FbleValue* effect;
-} AppIO;
+SDL_Window* gWindow = NULL;
+Uint32 gTime;
 
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 static void Draw(SDL_Surface* s, int ax, int ay, int bx, int by, FbleValue* drawing);
@@ -51,7 +35,8 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
-static bool IO(FbleIO* io, FbleValueHeap* heap, bool block);
+static FbleValue* Event(FbleValueHeap* heap, FbleValue** args);
+static FbleValue* Effect(FbleValueHeap* heap, FbleValue** args);
 static Uint32 OnTimer(Uint32 interval, void* param);
 int FbleStdioMain(int argc, const char* argv[], FbleCompiledModuleFunction* module);
 
@@ -345,163 +330,159 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
   return NULL;
 }
 
-// IO --
-//   FbleIO.io function for external ports.
-//   See the corresponding documentation in fble-value.h.
-static bool IO(FbleIO* io, FbleValueHeap* heap, bool block)
+// Event -- Implementation of event function.
+//   IO@<Event@>
+static FbleValue* Event(FbleValueHeap* heap, FbleValue** args)
 {
-  AppIO* app = (AppIO*)io;
-
-  bool change = false;
-
-  if (app->effect != NULL) {
-    FbleValue* effect = app->effect;
-    switch (FbleUnionValueTag(effect)) {
-      case 0: {
-        int tick = FbleIntValueAccess(FbleUnionValueAccess(effect));
-
-        // TODO: This assumes we don't already have a tick in progress. We
-        // should add proper support for multiple backed up tick requests.
-        Uint32 now = SDL_GetTicks();
-        app->time += tick;
-        if (app->time < now) {
-          app->time = now;
-        }
-        SDL_AddTimer(app->time - now, OnTimer, NULL);
+  FbleValue* world = args[0];
+  FbleValue* value = NULL;
+  while (value == NULL) {
+    SDL_Event event;
+    SDL_WaitEvent(&event);
+    switch (event.type) {
+      case SDL_USEREVENT: {
+        value = FbleNewEnumValue(heap, 0);
         break;
       }
 
-      case 1: {
-        SDL_Surface* surface = SDL_GetWindowSurface(app->window);
-        Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect));
-        SDL_GL_SwapWindow(app->window);
-
-        // Collect status on frame rate.
-        static Uint32 last = 0;
-
-        Uint32 now = SDL_GetTicks();
-        if (last == 0) {
-          last = now;
-        } else if (now > last) {
-          Uint32 fps = 1000/(now - last);
-          if (fps > 60) {
-            fps = 60;
-          }
-          sFpsHistogram[fps]++;
-          last = now;
+      case SDL_KEYDOWN: {
+        FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
+        if (key != NULL) {
+          value = FbleNewUnionValue(heap, 1, key);
+          FbleReleaseValue(heap, key);
         }
         break;
       }
-    }
 
-    FbleReleaseValue(heap, app->effect);
-    app->effect = NULL;
-    change = true;
-  }
-
-  if (block) {
-    while (app->event == NULL) {
-      SDL_Event event;
-      SDL_WaitEvent(&event);
-      switch (event.type) {
-        case SDL_USEREVENT: {
-          app->event = FbleNewEnumValue(heap, 0);
-          change = true;
-          break;
+      case SDL_KEYUP: {
+        FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
+        if (key != NULL) {
+          value = FbleNewUnionValue(heap, 2, key);
+          FbleReleaseValue(heap, key);
         }
+        break;
+      }
 
-        case SDL_KEYDOWN: {
-          FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
-          if (key != NULL) {
-            app->event = FbleNewUnionValue(heap, 1, key);
-            FbleReleaseValue(heap, key);
-            change = true;
-          }
-          break;
-        }
-
-        case SDL_KEYUP: {
-          FbleValue* key = MakeKey(heap, event.key.keysym.scancode);
-          if (key != NULL) {
-            app->event = FbleNewUnionValue(heap, 2, key);
-            FbleReleaseValue(heap, key);
-            change = true;
-          }
-          break;
-        }
-
-        case SDL_MOUSEBUTTONDOWN: {
-          FbleValue* button = MakeButton(heap, event.button.button);
-          if (button != NULL) {
-            FbleValue* x = MakeInt(heap, event.button.x);
-            FbleValue* y = MakeInt(heap, event.button.y);
-            FbleValue* mouse_button = FbleNewStructValue(heap, 3, button, x, y);
-            FbleReleaseValue(heap, button);
-            FbleReleaseValue(heap, x);
-            FbleReleaseValue(heap, y);
-            app->event = FbleNewUnionValue(heap, 3, mouse_button);
-            FbleReleaseValue(heap, mouse_button);
-            change = true;
-          }
-          break;
-        }
-
-        case SDL_MOUSEBUTTONUP: {
-          FbleValue* button = MakeButton(heap, event.button.button);
-          if (button != NULL) {
-            FbleValue* x = MakeInt(heap, event.button.x);
-            FbleValue* y = MakeInt(heap, event.button.y);
-            FbleValue* mouse_button = FbleNewStructValue(heap, 3, button, x, y);
-            FbleReleaseValue(heap, button);
-            FbleReleaseValue(heap, x);
-            FbleReleaseValue(heap, y);
-            app->event = FbleNewUnionValue(heap, 4, mouse_button);
-            FbleReleaseValue(heap, mouse_button);
-            change = true;
-          }
-          break;
-        }
-
-        case SDL_WINDOWEVENT: {
-          if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-            glViewport(0, 0, event.window.data1, event.window.data2);
-            glMatrixMode( GL_PROJECTION );
-            glLoadIdentity();
-            glOrtho(0, event.window.data1, event.window.data2, 0, -1, 1);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            FbleValue* width = MakeInt(heap, event.window.data1);
-            FbleValue* height = MakeInt(heap, event.window.data2);
-            FbleValue* resized = FbleNewStructValue(heap, 2, width, height);
-            FbleReleaseValue(heap, width);
-            FbleReleaseValue(heap, height);
-            app->event = FbleNewUnionValue(heap, 5, resized);
-            FbleReleaseValue(heap, resized);
-            change = true;
-          }
-          break;
-        }
-
-        case SDL_MOUSEMOTION: {
-          FbleValue* x = MakeInt(heap, event.motion.x);
-          FbleValue* y = MakeInt(heap, event.motion.y);
-          FbleValue* dx = MakeInt(heap, event.motion.xrel);
-          FbleValue* dy = MakeInt(heap, event.motion.yrel);
-          FbleValue* motion = FbleNewStructValue(heap, 4, x, y, dx, dy);
+      case SDL_MOUSEBUTTONDOWN: {
+        FbleValue* button = MakeButton(heap, event.button.button);
+        if (button != NULL) {
+          FbleValue* x = MakeInt(heap, event.button.x);
+          FbleValue* y = MakeInt(heap, event.button.y);
+          FbleValue* mouse_button = FbleNewStructValue(heap, 3, button, x, y);
+          FbleReleaseValue(heap, button);
           FbleReleaseValue(heap, x);
           FbleReleaseValue(heap, y);
-          FbleReleaseValue(heap, dx);
-          FbleReleaseValue(heap, dy);
-          app->event = FbleNewUnionValue(heap, 6, motion);
-          FbleReleaseValue(heap, motion);
-          change = true;
-          break;
+          value = FbleNewUnionValue(heap, 3, mouse_button);
+          FbleReleaseValue(heap, mouse_button);
         }
+        break;
+      }
+
+      case SDL_MOUSEBUTTONUP: {
+        FbleValue* button = MakeButton(heap, event.button.button);
+        if (button != NULL) {
+          FbleValue* x = MakeInt(heap, event.button.x);
+          FbleValue* y = MakeInt(heap, event.button.y);
+          FbleValue* mouse_button = FbleNewStructValue(heap, 3, button, x, y);
+          FbleReleaseValue(heap, button);
+          FbleReleaseValue(heap, x);
+          FbleReleaseValue(heap, y);
+          value = FbleNewUnionValue(heap, 4, mouse_button);
+          FbleReleaseValue(heap, mouse_button);
+        }
+        break;
+      }
+
+      case SDL_WINDOWEVENT: {
+        if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+          glViewport(0, 0, event.window.data1, event.window.data2);
+          glMatrixMode( GL_PROJECTION );
+          glLoadIdentity();
+          glOrtho(0, event.window.data1, event.window.data2, 0, -1, 1);
+          glClear(GL_COLOR_BUFFER_BIT);
+
+          FbleValue* width = MakeInt(heap, event.window.data1);
+          FbleValue* height = MakeInt(heap, event.window.data2);
+          FbleValue* resized = FbleNewStructValue(heap, 2, width, height);
+          FbleReleaseValue(heap, width);
+          FbleReleaseValue(heap, height);
+          value = FbleNewUnionValue(heap, 5, resized);
+          FbleReleaseValue(heap, resized);
+        }
+        break;
+      }
+
+      case SDL_MOUSEMOTION: {
+        FbleValue* x = MakeInt(heap, event.motion.x);
+        FbleValue* y = MakeInt(heap, event.motion.y);
+        FbleValue* dx = MakeInt(heap, event.motion.xrel);
+        FbleValue* dy = MakeInt(heap, event.motion.yrel);
+        FbleValue* motion = FbleNewStructValue(heap, 4, x, y, dx, dy);
+        FbleReleaseValue(heap, x);
+        FbleReleaseValue(heap, y);
+        FbleReleaseValue(heap, dx);
+        FbleReleaseValue(heap, dy);
+        value = FbleNewUnionValue(heap, 6, motion);
+        FbleReleaseValue(heap, motion);
+        break;
       }
     }
   }
 
-  return change;
+  FbleValue* result = FbleNewStructValue(heap, 2, world, value);
+  FbleReleaseValue(heap, value);
+  return result;
+}
+
+// Effect -- Implementation of effect function.
+//   (Effect@, World@) { R@<Unit@>; }
+static FbleValue* Effect(FbleValueHeap* heap, FbleValue** args)
+{
+  FbleValue* effect = args[0];
+  FbleValue* world = args[1];
+
+  switch (FbleUnionValueTag(effect)) {
+    case 0: {
+      int tick = FbleIntValueAccess(FbleUnionValueAccess(effect));
+
+      // TODO: This assumes we don't already have a tick in progress. We
+      // should add proper support for multiple backed up tick requests.
+      Uint32 now = SDL_GetTicks();
+      gTime += tick;
+      if (gTime < now) {
+        gTime = now;
+      }
+      SDL_AddTimer(gTime - now, OnTimer, NULL);
+      break;
+    }
+
+    case 1: {
+      SDL_Surface* surface = SDL_GetWindowSurface(gWindow);
+      Draw(surface, 1, 1, 0, 0, FbleUnionValueAccess(effect));
+      SDL_GL_SwapWindow(gWindow);
+
+      // Collect status on frame rate.
+      static Uint32 last = 0;
+
+      Uint32 now = SDL_GetTicks();
+      if (last == 0) {
+        last = now;
+      } else if (now > last) {
+        Uint32 fps = 1000/(now - last);
+        if (fps > 60) {
+          fps = 60;
+        }
+        sFpsHistogram[fps]++;
+        last = now;
+      }
+      break;
+    }
+  }
+
+  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* result = FbleNewStructValue(heap, 2, world, unit);
+  FbleReleaseValue(heap, unit);
+  return result;
 }
 
 // OnTimer --
@@ -614,16 +595,16 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
     return EX_FAILURE;
   }
 
-  SDL_Window* window = SDL_CreateWindow(
+  gWindow = SDL_CreateWindow(
       "Fble App", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480,
       SDL_WINDOW_OPENGL);
-  SDL_SetWindowResizable(window, true);
-  SDL_GLContext glctx = SDL_GL_CreateContext(window);
+  SDL_SetWindowResizable(gWindow, true);
+  SDL_GLContext glctx = SDL_GL_CreateContext(gWindow);
   SDL_ShowCursor(SDL_DISABLE);
 
   int width = 0;
   int height = 0;
-  SDL_GetWindowSize(window, &width, &height);
+  SDL_GetWindowSize(gWindow, &width, &height);
 
 
   glShadeModel(GL_FLAT);
@@ -632,22 +613,13 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   glLoadIdentity();
   glOrtho(0, width, height, 0, -1, 1);
 
-  AppIO io = {
-    ._base = { .io = &IO, },
-    .window = window,
-    .time = SDL_GetTicks(),
+  gTime = SDL_GetTicks();
 
-    .event = NULL,
-    .effect = NULL,
-  };
-
-  FbleName block_names[3];
-  block_names[0].name = FbleNewString("in!");
+  FbleName block_names[2];
+  block_names[0].name = FbleNewString("event!");
   block_names[0].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[1].name = FbleNewString("out!");
+  block_names[1].name = FbleNewString("effect!");
   block_names[1].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
-  block_names[2].name = FbleNewString("out!!");
-  block_names[2].loc = FbleNewLoc(__FILE__, __LINE__-1, 3);
   FbleBlockId block_id = 0;
   if (profile != NULL) {
     FbleNameV names = { .size = 3, .xs = block_names };
@@ -655,37 +627,33 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   }
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
-  FbleFreeName(block_names[2]);
 
+  FbleValue* fble_event = FbleNewSimpleFuncValue(heap, 1, Event, block_id);
+  FbleValue* fble_effect = FbleNewSimpleFuncValue(heap, 2, Effect, block_id + 1);
   FbleValue* fble_width = MakeInt(heap, width);
   FbleValue* fble_height = MakeInt(heap, height);
-  FbleValue* fble_event = FbleNewInputPortValue(heap, &io.event, block_id);
-  FbleValue* fble_effect = FbleNewOutputPortValue(heap, &io.effect, block_id + 1);
-  FbleValue* fble_app = FbleNewStructValue(heap, 4, fble_width, fble_height, fble_event, fble_effect);
-  FbleReleaseValue(heap, fble_width);
-  FbleReleaseValue(heap, fble_height);
-  FbleReleaseValue(heap, fble_event);
-  FbleReleaseValue(heap, fble_effect);
 
-  FbleValue* args[1] = { fble_app };
-  FbleValue* proc = FbleApply(heap, func, args, profile);
+  FbleValue* args[4] = { fble_event, fble_effect, fble_width, fble_height };
+  FbleValue* computation = FbleApply(heap, func, args, profile);
   FbleReleaseValue(heap, func);
   FbleReleaseValue(heap, args[0]);
+  FbleReleaseValue(heap, args[1]);
+  FbleReleaseValue(heap, args[2]);
+  FbleReleaseValue(heap, args[3]);
 
-  if (proc == NULL) {
+  if (computation == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
-    SDL_DestroyWindow(window);
+    SDL_DestroyWindow(gWindow);
     SDL_Quit();
     return EX_FAILURE;
   }
 
-  FbleValue* value = FbleExec(heap, &io._base, proc, profile);
-  FbleReleaseValue(heap, proc);
-  FbleReleaseValue(heap, io.event);
-  FbleReleaseValue(heap, io.effect);
-
-  FbleReleaseValue(heap, value);
+  // computation has type IO@<Unit@>, which is (World@) { R@<Bool@>; }
+  FbleValue* world = FbleNewStructValue(heap, 0);
+  FbleValue* result = FbleApply(heap, computation, &world, profile);
+  FbleReleaseValue(heap, computation);
+  FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 
   if (fprofile != NULL) {
@@ -694,7 +662,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleFreeProfile(profile);
 
   SDL_GL_DeleteContext(glctx);
-  SDL_DestroyWindow(window);
+  SDL_DestroyWindow(gWindow);
   SDL_Quit();
 
   fprintf(stderr, "FPS Histogram:\n");

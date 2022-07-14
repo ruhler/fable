@@ -1,56 +1,33 @@
 
 @ Int@ = /Core/Int%.Int@;
 
-<@>@ Process@ = /Core/IO/Process%.Process@;
-<@>@ Get@ = /Core/IO/Process%.Get@;
-<@>@ Put@ = /Core/IO/Process%.Put@;
-% ProcessMonad = /Core/IO/Process%.ProcessMonad;
+<@>@ IO@ = /Core/Monad/IO%.IO@;
+<@>@ R@ = /Core/Monad/IO%.R@;
+@ World@ = /Core/Monad/IO%.World@;
 
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Event@ = /App/App%.Event@;
 @ Effect@ = /App/App%.Effect@;
 
-@ AppIO@ = *(
-    Int@ width,
-    Int@ height,
-    Get@<Event@> event,
-    Put@<Effect@> effect
-  );
-
-# App@ --
-#   User API for describing an App.
-#
-# Inputs:
-#   io - The interface to the application.
-#
-# Results:
-#   None.
-(/App/App%.Main@)(AppIO@) { Unit@!; }
-Run = (/App/App%.Main@ main)(AppIO@ app) {
-  main<Process@>(ProcessMonad,
-    /App/App%.App@<Process@>(app.event, app.effect),
-    app.width, app.height);
+# Run --
+#   A top-level IO implementation for running an App Main@ program.
+(/App/App%.Main@)(
+  IO@<Event@>,
+  (Effect@, World@) { R@<Unit@>; },
+  Int@, Int@) { IO@<Unit@>; }
+Run = (/App/App%.Main@ main)(
+  IO@<Event@> event,
+  (Effect@, World@) { R@<Unit@>; } effect,
+  Int@ width, Int@ height) {
+  # Note: We pass effect as a function taking the effect and the
+  # world rather than a function from effect to IO@ just so we don't have to
+  # implement the currying on the native C side.
+  main<IO@>(
+    /Core/Monad/IO%.Monad,
+    /App/App%.App@<IO@>(event, (Effect@ e)(World@ w) { effect(e, w); }),
+    width,
+    height);
 };
-
-## Run --
-##   A top-level IO implementation for running an App Main@ program.
-#(/App/App%.Main@)(
-#  IO@<Event@>,
-#  (Effect@) { IO@<Unit@>; },
-#  Int@, Int@) { IO@<Unit@>; }
-#Run = (/App/App%.Main@)(
-#  IO@<Event@> event,
-#  (Effect@, World@) { R@<Unit@>; } effect,
-#  Int@ width, Int@ height) {
-#  # Note: We pass effect as a function taking the effect and the
-#  # world rather than a function from effect to IO@ just so we don't have to
-#  # implement the currying on the native C side.
-#  main<IO@>(
-#    /Core/Monad/IO%.Monad,
-#    /App/App%.App@<IO@>(event, (Effect@ e)(World@ w) { effect(e, w); }),
-#    width,
-#    height);
-#};
 
 @(Run);

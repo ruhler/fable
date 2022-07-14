@@ -1,5 +1,4 @@
 * Remove processes from language
- - Remove use of processes in fble-app.c.
  - Remove /Core/IO/* modules.
 
 * Add tests that at least the compiled apps don't crash when you run them.
