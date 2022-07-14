@@ -1,6 +1,0 @@
-# @@fble-test@@ compile-error 5:14
-@ Unit@ = *();
-
-# The put name is missing.
-Unit@ ~ get, ;
-get;

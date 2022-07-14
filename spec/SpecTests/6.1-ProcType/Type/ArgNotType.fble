@@ -1,6 +1,0 @@
-# @@fble-test@@ compile-error 6:1
-@ Unit@ = *();
-Unit@ u = Unit@();
-
-# The argument type is not a type.
-u!;

@@ -1,5 +1,0 @@
-# @@fble-test@@ compile-error 5:3
-@ Unit@ = *();
-
-# The open paren is missing.
-! Unit@());

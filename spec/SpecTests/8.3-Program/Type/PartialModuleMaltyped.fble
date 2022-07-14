@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 7:1
+# Note: the error location is for the Bool module.
+% True = /SpecTests/'8.3-Program'/Type/PartialModuleMaltyped/Bool%.True;
+True.true;

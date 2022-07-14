@@ -1,8 +1,11 @@
 * Remove processes from language
- - Remove processes from language spec.
- - Remove test cases that use processes.
+ - Disable process syntax.
  - Remove FbleExec API.
- - Remove processes from implementation.
+ - Remove processes from implementation and clean up.
+ - Remove TODOs related to processes.
+
+* Clean up FbleNewSimpleFunc API and use cases
+ - Don't require use of global variables to pass state.
 
 * Add tests that at least the compiled apps don't crash when you run them.
 * Why does /Core/Test% export String@? Is that needed?

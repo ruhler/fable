@@ -1,0 +1,4 @@
+# @@fble-test@@ no-error
+# A basic program making use of modules.
+% True = /SpecTests/'8.3-Program'/Basic/Basic/Bool%.True;
+True.true;

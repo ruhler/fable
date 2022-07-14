@@ -1,6 +1,0 @@
-# @@fble-test@@ compile-error 5:12
-@ Unit@ = *();
-
-# The get and put ports must be named differently.
-Unit@ ~ x, x;
-x;

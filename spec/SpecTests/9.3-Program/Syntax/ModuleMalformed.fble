@@ -1,6 +1,0 @@
-# @@fble-test@@ compile-error 3:1
-# Note: the error location is for the error in the Bool% module.
-@ Bool@ = /SpecTests/'9.3-Program'/Syntax/ModuleMalformed/Bool%.Bool@;
-% True = /SpecTests/'9.3-Program'/Syntax/ModuleMalformed/Bool%.True;
-% Flase = /SpecTests/'9.3-Program'/Syntax/ModuleMalformed/Bool%.Flase;
-True.true;

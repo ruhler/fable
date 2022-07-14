@@ -1,4 +1,0 @@
-# @@fble-test@@ no-error
-# A process type.
-@ Unit@ = *();
-Unit@!;

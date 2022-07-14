@@ -1,5 +1,0 @@
-# @@fble-test@@ no-error
-@ Unit@ = *();
-
-# A basic proc eval.
-!(Unit@());

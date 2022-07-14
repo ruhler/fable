@@ -1,5 +1,0 @@
-# @@fble-test@@ compile-error 5:3
-@ Unit@ = *();
-
-# The argument does not compile.
-!(zzz);

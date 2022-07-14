@@ -1,0 +1,17 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ True = Bool@(true: Unit@());
+Bool@ False = Bool@(false: Unit@());
+
+@ Pkg@ = %(/SpecTests/'7.3-Bind'/Basic/AbstractValue%);
+@ Func@ = (Bool@) { Bool@; };
+@ AbsFunc@ = Pkg@<Func@>;
+
+AbsFunc@ x = {
+  # Verify we can use bind syntax with abstract value. It's a funny case, but
+  # it's legal according to the spec.
+  Bool@ x <- Pkg@;
+  x.?(true: False, false: True);
+};
+x.%(True).false;

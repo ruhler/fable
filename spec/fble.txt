@@ -5,7 +5,7 @@ Richard Uhler <ruhler@degralder.com>
 1. Introduction
 ---------------
 Fble is a general purpose, Turing-complete functional programming language
-with support for concurrent processes, polymorphism, and modularity.
+with support for polymorphism, and modularity.
 
 1.1 Goals
 ---------
@@ -32,8 +32,8 @@ The primary design goals of fble are:
 
 1.2 Overview
 ------------
-Fble is based around the primitive data types of structs, unions, functions,
-and processes. It is a strongly and statically typed language supporting
+Fble is based around the primitive data types of structs, unions, and
+functions. It is a strongly and statically typed language supporting
 polymorphic types and values. Recursive types and values are supported through
 a recursive let construct. Types are treated as another kind of value in fble,
 which allows us to reuse the constructs of variables, lets, polymorphism, and
@@ -583,118 +583,11 @@ Runtime is O(log(N + M)) plus the runtime of func, the runtimes of each of the
 arguments, and the runtime of the body, where N is the number of arguments to
 the function and M is the number of variables captured by the function.
 
-6 Processes
------------
-A process is a computation with side effects that produces a value. Side
-effects take the form of getting and putting values to and from links that can
-be accessed by other running processes.
-
-There are primitive processes for getting a value from a link, putting a value
-to a link, and creating and using a new link. Processes can be combined by
-executing them in parallel and serial.
-
-We make a distinction between when a process is evaluated and when a process
-is executed. Evaluating a process means evaluating the fble expression that
-describes the process, producing a process value. Executing a process means
-executing the process described by a process value, producing the result of
-the process.
-
-6.1 Process Type
-----------------
-Abstract Syntax:
-  Type ::= proc_type (return :: Type)
-
-Concrete Syntax:
-  type ::= type '!'
-
-Example:
-  Int@!
-
-Runtime is O(1).
-
-6.2 Process Eval
-----------------
-Abstract Syntax:
-  Expr ::= proc_eval (body :: Expr)
-
-Concrete Syntax:
-  expr ::= '!(' expr ')'
-
-Example:
-  !(3)
-
-A process that evaluates body and returns its value without performing any
-other actions. The body is not evaluated until the eval process is executed.
-
-Runtime to evaluate is O(N log(M)), where N is the number of variables
-captured by the body and M is the number of variables in scope.
-
-Runtime to execute is O(log(N)) plus the runtime of the body, where N is the
-number of variables captured by the body.
-
-6.3 Process Link
-----------------
-Abstract Syntax:
-  Expr ::= proc_link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
-
-Concrete Syntax:
-  stmt ::= type '~' name ',' name ';' stmt
-
-Example:
-  Int@ ~ input, output; f(input, output)
-
-A link is an unbounded, unidirectional, first-in-first-out pipe for
-transferring typed data from one process to another. The primitive side
-effecting actions that a process can perform are putting a value onto a link
-and getting a taking a value off of a link.
-
-The body of the link process must have type process_type. When executed,
-a link process for link of type T@ creates a new link, then evaluates and
-executes the body with get and put processes of type T@! and (T@){*();}!
-respectively added to the context.
-
-The get process can be used to get the next value from the link, blocking the
-process until a value becomes available if necessary.
-
-The put process can be used to put a value onto the link.
-
-Runtime to evaluate is O(N log(M)), where N is the number of variables
-captured by the body and M is the number of variables in scope.
-
-Runtime to execute is O(log(N)) plus the runtime of the body, where N is the
-number of variables captured by the body.
-
-The runtime to execute a get or a put is O(1).
-
-6.4 Process Exec
-----------------
-Abstract Syntax:
-  Expr ::= proc_exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
-
-Concrete Syntax:
-  stmt ::= type name ':=' expr [',' type name ':=' expr [...]] ';' stmt
-
-Example:
-  Int@ x := getx, Int@ y := gety; !(add(x, y))
-
-Evaluates and executes each process in parallel, then evaluates and executes
-the body with the results of the processes assigned to variables in scope. The
-binding processes are not evaluated until the process is executed.
-
-Runtime to evaluate is the sum of O(N log(M)) for each binding and the body,
-where N is the number of variables captured by the binding or body and M is
-the number of variables in scope.
-
-Runtime to execute is the sum of O(N log(M)) for each binding and the body
-plus the runtime to evaluate and execute the bindings and the body, where N is
-the number of variables captured by the binding or body and M is the number
-of variables in scope of the binding or body.
-
-7. Polymorphism
+6. Polymorphism
 ---------------
 Polymorphism allows expressions to be parameterized by abstract types.
 
-7.1 Poly Kind
+6.1 Poly Kind
 -------------
 Abstract Syntax:
   Kind ::= poly_kind (arg :: Kind) (return :: Kind)
@@ -722,7 +615,7 @@ example, the following two expressions describe the same kind:
   <@, @, @>@
   <@><@><@>@
 
-7.2 Poly Value
+6.2 Poly Value
 --------------
 Abstract Syntax:
   Expr ::= poly_value (arg :: (Kind, TypeName)) (body :: Expr)
@@ -753,7 +646,7 @@ Is the poly type:
 The body of a poly is evaluated as part of evaluation of the poly value. The
 runtime is the runtime of the body.
 
-7.3 Poly Application
+6.3 Poly Application
 --------------------
 Abstract Syntax:
   Expr ::= poly_apply (poly :: Expr) (arg :: Type)
@@ -775,7 +668,7 @@ The runtime of a poly application is linear in the number of arguments plus
 the runtime of the poly. Unlike function application, poly application does
 not cause the body of the poly to be re-evaluated.
 
-7.4 Poly Inference
+6.4 Poly Inference
 ------------------
 Abstract syntax:
   Expr ::= poly_infer (poly :: Expr) (args :: [Expr])
@@ -812,7 +705,7 @@ The type and runtime behavior of a poly inference expression is the same as
 the type and runtime behavior of the target combined poly application and
 function application expressions.
 
-8. Syntactic Sugar
+7. Syntactic Sugar
 ------------------
 We introduce syntax for describing lists and literals to make it less tedious
 to write code involving sequences of elements of the same type and raw
@@ -822,7 +715,7 @@ We introduce bind syntax to facilitate calling a function with an anonymous
 function as its only argument. This is useful for using reusable glue logic to
 compose operations in a monadic style.
 
-8.1 List
+7.1 List
 --------
 Abstract Syntax:
   Expr ::= list (func :: Expr) (args :: [Expr])
@@ -868,7 +761,7 @@ expression, instead of having stand alone list expressions like [a, b, c], is:
 * For consistency with literal expressions, which require a user defined
   letter type to be supplied.
 
-8.2 Literal
+7.2 Literal
 -----------
 Abstract Syntax:
   Expr ::= literal (func :: Expr) (letters :: word)
@@ -901,7 +794,7 @@ to f is E@, is desugared to:
 It is a type error if the word contains a letter for which there is no
 corresponding field in the element type E@.
 
-8.2.1 Example
+7.2.1 Example
 -------------
 To better illustrate the intended use of list and literal expressions, imagine
 we want to define a binary integer literal.
@@ -937,7 +830,7 @@ example:
  Int@ 6 = Binary|110;
  Int@ x = Binary[first_bit, second_bit, third_bit];
 
-8.3 Bind
+7.3 Bind
 --------
 Abstract Syntax:
   Expr ::= bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
@@ -1006,13 +899,13 @@ Bind works at the level of concrete syntax. It can be used for any expression
 that has the same form as function application, including poly inference,
 explicit type struct value, and abstract value.
 
-9. Modules
+8. Modules
 ----------
 Fble code is organized into a hierarchy of reusable modules. Each module
 describes a value that may depend on the value of other modules. A program is
 formed by combining a module with all of its direct and indirect dependencies.
 
-9.1 Organization
+8.1 Organization
 ----------------
 Modules are organized into a tree structure. The purpose of the tree structure
 is to group modules together that are developed by the same organization to
@@ -1047,7 +940,7 @@ For example, you might have the following directory structure:
    Md5/
      Tests.fble
 
-9.2 Path
+8.2 Path
 --------
 Modules may depend on other modules independent of the tree hierarchy of
 modules. A program can include a module without having to depend on any
@@ -1072,7 +965,7 @@ Examples:
   /Unit%
   /Md5/ImplA%
 
-9.3 Program
+8.3 Program
 -----------
 A program is an fble expressions that creates a value that is used however is
 deemed suitable by whoever is executing the program. Commonly this could be:
@@ -1122,8 +1015,8 @@ The same module hierarchy can be used for a program to run List tests:
   StdLib_List = </StdLib/List%>;
   </StdLib/List/Tests%>;
 
-10. Abstract Types
-------------------
+9. Abstract Types
+-----------------
 Abstract types provide a mechanism to define types of values that can only be
 accessed by modules in the same package. This makes it possible to hide
 implementation details from users and enforce invariants on how values are
@@ -1136,8 +1029,8 @@ type that can be used to restrict access to types based on module path.
 Modules that do not have restricted access can only interact with a type using
 publicly available functions.
 
-10.1 Package Type
------------------
+9.1 Package Type
+----------------
 Abstract Syntax:
   Type ::= package_type (path :: Path)
 
@@ -1163,8 +1056,8 @@ it's useful to have for uniformity of interaction with the type?
 
 A package type has kind @. Two package types are considered equal if they have the same path.
 
-10.2 Abstract Type
-------------------
+9.2 Abstract Type
+-----------------
 Abstract Syntax:
   Type ::= abstract_type (package :: Type) (type :: Type)
 
@@ -1182,8 +1075,8 @@ underlying types are equal.
 The package type must be a package type. The underlying type can be any type
 of any kind. The resulting abstract type has kind @.
 
-10.3 Abstract Cast
-------------------
+9.3 Abstract Cast
+-----------------
 Abstract Syntax:
   Expr ::= abstract_cast (package :: Type) (target :: Type) (value :: Expr)
 
@@ -1202,8 +1095,8 @@ all types T@, the type FooBar@<T@> is equal to T@.
 The type of the resulting value is the target type. It is a type error if the
 current module is not a member of the package described by the package type.
 
-10.4 Abstract Value
--------------------
+9.4 Abstract Value
+------------------
 Abstract Syntax:
   Expr ::= abstract_value (package :: Type) (value :: Expr)
 
@@ -1228,8 +1121,8 @@ casting directly to an abstract value. It's not possible in general to use a
 standard function for this case given the package restriction applies to where
 the cast operation occurs.
 
-10.5 Abstract Access
---------------------
+9.5 Abstract Access
+-------------------
 Abstract Syntax:
   Expr ::= abstract_access (value :: Expr)
 
@@ -1255,7 +1148,7 @@ casting directly from an abstract value. It's not possible in general to use a
 standard function for this case given the package restriction applies to where
 the cast operation occurs.
 
-10.6 Abstract Type Example
+9.6 Abstract Type Example
 --------------------------
 The follow example shows how to define a three element enum type that can only
 be accessed externally using the provided methods.
@@ -1280,8 +1173,8 @@ starting with /MyPackage in their path. Other users are unable to construct or
 access fields of the Enum@ type directly; they can only use the provided
 values A, B, C and functions IsA, IsB, and IsC.
 
-10.7 Private Module Example
----------------------------
+9.7 Private Module Example
+--------------------------
 Abstract types can be used to effectively mark modules or parts of modules
 private. For example, consider a module /Foo/Internal%:
 
@@ -1321,7 +1214,7 @@ accessed by modules in the package /Foo%. For example:
 This will result in a type error if the user does not belong to the package
 /Foo%.
 
-11. Abstract Syntax Reference
+10. Abstract Syntax Reference
 ----------------------------
 NormalName ::= (* A string of characters *)
 TypeName ::= (* A string of characters *)
@@ -1368,11 +1261,6 @@ Expr ::=
  | func_value (args :: [(Type, Name)]) (body :: Expr)
  | func_apply (func :: Expr) (args :: [Expr])
 
- | proc_type (result :: Type)
- | proc_eval (body :: Expr)
- | proc_link (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
- | proc_exec (bindings :: [(Type, Name, Expr)]) (body :: Expr)
-
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
  | poly_infer (poly :: Expr) (args :: [Expr])
@@ -1390,9 +1278,9 @@ Expr ::=
 
 Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
 
-12. Concrete Syntax
+11. Concrete Syntax
 -------------------
-12.1 Lexical Syntax
+11.1 Lexical Syntax
 -------------------
 We have the following categories of characters:
 1. whitespace: Any whitespace character, as traditionally classified.
@@ -1425,7 +1313,7 @@ three separate words: 'Foo', '.', and 'Bar', not as a single word 'Foo.Bar'.
 The only exception is when consecutive single quote characters are used to
 embed a single quote character in a word.
 
-12.2 Reference
+11.2 Reference
 --------------
 word ::= (* word as described in the section on lexical syntax *)
 normal_name ::= word
@@ -1470,9 +1358,6 @@ expr ::=
 
  | expr '(' expr [',' expr [...]] ')'              (* func_apply, poly_infer *)
 
- | type '!'                                        (* proc_type *)
- | '!(' expr ')'                                   (* proc_eval *)
-
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
  | '%' '(' path ')'                                (* package_type* )
@@ -1498,8 +1383,6 @@ stmt ::=
    expr ';'
  | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
  | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
- | type '~' name ',' name ';' stmt                                   (* proc_link *)
- | type name ':=' expr [',' type name ':=' expr [...]] ';' stmt      (* proc_exec *)
  | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
  ;
 
@@ -1507,9 +1390,9 @@ module ::= stmt                                                      (* module_v
  ;
 
 Notes:
-* struct and union access share the same form. The type of the object is used
+* Struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
-* explicit type struct value, function apply, poly inference, and abstract
+* Explicit type struct value, function apply, poly inference, and abstract
   value share the same form. The type of the expr is used to distinguish
   between the four kinds of expressions. Each of these kinds of expressions
   can be the target of a bind expression.

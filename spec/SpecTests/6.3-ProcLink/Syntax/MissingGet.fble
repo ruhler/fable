@@ -1,6 +1,0 @@
-# @@fble-test@@ compile-error 5:9
-@ Unit@ = *();
-
-# The get port name is missing.
-Unit@ ~ , put;
-get;

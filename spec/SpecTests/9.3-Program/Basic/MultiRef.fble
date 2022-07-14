@@ -1,4 +1,0 @@
-# @@fble-test@@ no-error
-# It's fine to refer to the same module more than once.
-/SpecTests/'9.3-Program'/Basic/MultiRef/Bool%.Bool@ true = /SpecTests/'9.3-Program'/Basic/MultiRef/Bool%.True;
-true.true;

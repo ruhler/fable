@@ -805,3 +805,9 @@ You can run them all or not? We could write a benchmark running if we wanted
 to that lets you pick which benchmark you want to run.
 
 Let's try that to start.
+
+---
+
+I think all the uses of processes in fble code are gone now. Time to start
+gutting things.
+
