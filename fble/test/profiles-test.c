@@ -234,21 +234,6 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
   assert(2 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.true"));
   assert(1 == Calls(profile, "/ProfilesTest%.Not!", "/ProfilesTest%.Not!.false"));
 
-  // The Id function was executed three times, once from each of e1, e2, and
-  // e3 execution.
-  assert(3 == Count(profile, "/ProfilesTest%.Id!"));
-  assert(1 == Calls(profile, "/ProfilesTest%!.e1!", "/ProfilesTest%.Id!"));
-  assert(1 == Calls(profile, "/ProfilesTest%!.e2!", "/ProfilesTest%.Id!"));
-  assert(1 == Calls(profile, "/ProfilesTest%!.e3!", "/ProfilesTest%.Id!"));
-
-  // Regression test for a bug where had tail-calling the builtin put
-  // function. The builtin put didn't do any Enter/Exit calls, and we were
-  // using AutoExit to do the tail call. As a result, the profiler thought the
-  // caller of the put was calling into whatever function was executed after
-  // the caller returned, which is clearly wrong.
-  assert(0 == Calls(profile, "/ProfilesTest%!.A!!.b", "/ProfilesTest%!.D!"));
-  assert(1 == Calls(profile, "/ProfilesTest%!.A!!", "/ProfilesTest%!.D!"));
-
   // Regression test for a bug where the location for the top level profile
   // block was a module path instead of a file path.
   {

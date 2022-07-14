@@ -91,7 +91,7 @@
 %type <tagged_types> tagged_type_p tagged_type_s
 %type <tagged_expr> implicit_tagged_expr tagged_expr
 %type <tagged_exprs> implicit_tagged_expr_p implicit_tagged_expr_s tagged_expr_p
-%type <bindings> exec_binding_p let_binding_p
+%type <bindings> let_binding_p
 
 %destructor {
   FbleFree((char*)$$);
@@ -398,20 +398,6 @@ expr:
       select_expr->default_ = $8;
       $$ = &select_expr->_base;
    }
- | expr '!' {
-      FbleProcTypeExpr* proc_type = FbleAlloc(FbleProcTypeExpr);
-      proc_type->_base.tag = FBLE_PROC_TYPE_EXPR;
-      proc_type->_base.loc = FbleCopyLoc(@$);
-      proc_type->type = $1;
-      $$ = &proc_type->_base;
-   }
- | '!' '(' expr ')' {
-      FbleEvalExpr* eval_expr = FbleAlloc(FbleEvalExpr);
-      eval_expr->_base.tag = FBLE_EVAL_EXPR;
-      eval_expr->_base.loc = FbleCopyLoc(@$);
-      eval_expr->body = $3;
-      $$ = &eval_expr->_base;
-   }
  | expr '<' expr_p '>' {
       $$ = $1;
       for (size_t i = 0; i < $3.size; ++i) {
@@ -524,24 +510,6 @@ stmt:
       FbleVectorAppend(apply_expr->args, &func_value_expr->_base);
       $$ = &apply_expr->_base;
     }
-  | expr '~' name ',' name ';' stmt {
-      FbleLinkExpr* link_expr = FbleAlloc(FbleLinkExpr);
-      link_expr->_base.tag = FBLE_LINK_EXPR;
-      link_expr->_base.loc = FbleCopyLoc(@$);
-      link_expr->type = $1;
-      link_expr->get = $3;
-      link_expr->put = $5;
-      link_expr->body = $7;
-      $$ = &link_expr->_base;
-    }
-  | exec_binding_p ';' stmt {
-      FbleExecExpr* exec_expr = FbleAlloc(FbleExecExpr);
-      exec_expr->_base.tag = FBLE_EXEC_EXPR;
-      exec_expr->_base.loc = FbleCopyLoc(@$);
-      exec_expr->bindings = $1;
-      exec_expr->body = $3;
-      $$ = &exec_expr->_base;
-    }
   | expr ';' stmt {
       FbleUnionSelectExpr* select_expr = (FbleUnionSelectExpr*)$1;
       if (select_expr->_base.tag != FBLE_UNION_SELECT_EXPR
@@ -647,25 +615,6 @@ tagged_expr_p:
   | tagged_expr_p ',' tagged_expr {
       $$ = $1;
       FbleVectorAppend($$, $3);
-    }
-  ;
-
-exec_binding_p: 
-  expr name ':' '=' expr {
-      FbleVectorInit($$);
-      FbleBinding* binding = FbleVectorExtend($$);
-      binding->kind = NULL;
-      binding->type = $1;
-      binding->name = $2;
-      binding->expr = $5;
-    }
-  | exec_binding_p ',' expr name ':' '=' expr {
-      $$ = $1;
-      FbleBinding* binding = FbleVectorExtend($$);
-      binding->kind = NULL;
-      binding->type = $3;
-      binding->name = $4;
-      binding->expr = $7;
     }
   ;
 

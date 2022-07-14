@@ -18,18 +18,18 @@ Bool@ True = Bool@(true: Unit);
     green: Light@(yellow: u));
 };
 
-(Light@) { Light@!; } Change = (Light@ light) {
+(Light@) { Light@; } Change = (Light@ light) {
   Light@ next = Next(light);
-  !(next);
+  next;
 };
 
-Unit@! Main = {
-  Light@ 0 = Light@(red: Unit);
-  Light@ 1 := Change(0);
-  Light@ 2 := Change(1);
-  Light@ 3 := Change(2);
-  Light@ 4 := Change(3);
-  !(Unit);
+Unit@ Main = {
+  Light@ _0 = Light@(red: Unit);
+  Light@ _1 = Change(0);
+  Light@ _2 = Change(1);
+  Light@ _3 = Change(2);
+  Light@ _4 = Change(3);
+  Unit;
 };
 
 Main;

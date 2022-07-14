@@ -21,21 +21,4 @@ Bool@ f2 = Not(True);
 # past.
 % _ = @(t, f, f2);
 
-(Bool@) { Bool@; } Id = (Bool@ x) {
-  x;
-};
-
-Bool@ e1 := !(Id(True)), Bool@ e2 := !(Id(False));
-Bool@ e3 := !(Id(True));
-Unit@ _ := !(e3.true);
-
-Unit@ ~ get, C;
-(Unit@) { Unit@!; } D = (Unit@ x) { !(x); };
-(Unit@) { Unit@!; } B = (Unit@ x) { C(x); };
-(Unit@) { Unit@!; } A = (Unit@ x) {
-  Unit@ b := B(x);
-  D(b);
-};
-Unit@ _a := A(Unit);
-
-!(@());
+@();
