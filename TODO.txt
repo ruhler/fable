@@ -1,9 +1,7 @@
 * Remove processes from language
  - Remove processes from implementation and clean up.
- - Remove FORK, LINK, JOIN, EXEC, and other proc related instructions.
  - Remove unused process code as guided by code coverage.
  - Remove multithreading logic from profiling code.
- - Remove a bunch of stuff: FbleNewLinkValue
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.

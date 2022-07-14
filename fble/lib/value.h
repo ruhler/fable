@@ -107,22 +107,6 @@ size_t FbleFuncValueProfileBaseId(FbleValue* func);
 //   remains alive.
 FbleExecutable* FbleFuncValueExecutable(FbleValue* func);
 
-// FbleNewLinkValue --
-//   Create a new link value.
-//
-// Inputs:
-//   heap - the heap to allocate the value on.
-//   profile - the id of the first of three consecutive profile block ids
-//             refereing to the profile blocks to associate with get, put apply, and put execute.
-//   get - output variable set to the allocated get side of the link.
-//   put - output variable set to the allocated put side of the link.
-//
-// Side effects:
-// * Allocates new get and put values connected together with a link.
-// * The returned get and put values must be freed using FbleReleaseValue when
-//   no longer in use.
-void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue** get, FbleValue** put);
-
 // FbleNewListValue --
 //   Create a new list value from the given list of arguments.
 //
