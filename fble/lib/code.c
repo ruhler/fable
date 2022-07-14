@@ -228,32 +228,6 @@ static void DumpCode(FILE* fout, FbleCode* code)
           break;
         }
 
-        case FBLE_LINK_INSTR: {
-          FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-          fprintf(fout, "l%zi, l%zi = link;\n", link_instr->get, link_instr->put);
-          break;
-        }
-
-        case FBLE_FORK_INSTR: {
-          FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-          fprintf(fout, "fork [");
-          const char* comma = "";
-          for (size_t j = 0; j < fork_instr->dests.size; ++j) {
-            fprintf(fout, "%sl%zi := %s%zi",
-                comma, fork_instr->dests.xs[j],
-                sections[fork_instr->args.xs[j].section],
-                fork_instr->args.xs[j].index);
-            comma = ", ";
-          }
-          fprintf(fout, "];\n");
-          break;
-        }
-
-        case FBLE_JOIN_INSTR: {
-          fprintf(fout, "join\n");
-          break;
-        }
-
         case FBLE_COPY_INSTR: {
           FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
           fprintf(fout, "l%zi = %s%zi;\n",
@@ -383,10 +357,8 @@ void FbleFreeInstr(FbleInstr* instr)
     case FBLE_UNION_VALUE_INSTR:
     case FBLE_JUMP_INSTR:
     case FBLE_COPY_INSTR:
-    case FBLE_LINK_INSTR:
     case FBLE_REF_VALUE_INSTR:
     case FBLE_RETURN_INSTR:
-    case FBLE_JOIN_INSTR:
     case FBLE_TYPE_INSTR:
     case FBLE_RELEASE_INSTR:
       FbleFree(instr);
@@ -441,14 +413,6 @@ void FbleFreeInstr(FbleInstr* instr)
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       FbleFreeLoc(call_instr->loc);
       FbleFree(call_instr->args.xs);
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_FORK_INSTR: {
-      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      FbleFree(fork_instr->args.xs);
-      FbleFree(fork_instr->dests.xs);
       FbleFree(instr);
       return;
     }

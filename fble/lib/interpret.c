@@ -450,54 +450,6 @@ static Control AbortCallInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* 
   return CONTINUE;
 }
 
-// RunForkInstr -- see documentation of RunInstr
-//   Execute a FORK_INSTR.
-static Control RunForkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity, FbleExecStatus* status)
-{
-  FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-
-  for (size_t i = 0; i < fork_instr->args.size; ++i) {
-    FbleValue* arg = FrameGetStrict(thread, fork_instr->args.xs[i]);
-    FbleValue** result = thread->stack->locals + fork_instr->dests.xs[i];
-    FbleThreadFork(heap, threads, thread, result, arg, NULL);
-  }
-  thread->stack->pc++;
-  return CONTINUE;
-}
-
-// AbortForkInstr -- see documentation of AbortInstr
-//   Execute a FORK_INSTR for abort.
-static Control AbortForkInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
-{
-  FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-
-  for (size_t i = 0; i < fork_instr->args.size; ++i) {
-    stack->locals[fork_instr->dests.xs[i]] = NULL;
-  }
-  stack->pc++;
-  return CONTINUE;
-}
-
-// RunJoinInstr -- see documentation of RunInstr
-//   Execute an FBLE_JOIN_INSTR.
-static Control RunJoinInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity, FbleExecStatus* status)
-{
-  if (thread->children > 0) {
-    *status = FBLE_EXEC_BLOCKED;
-    return RETURN;
-  }
-  thread->stack->pc++;
-  return CONTINUE;
-}
-
-// AbortJoinInstr -- see documentation of AbortInstr
-//   Execute an FBLE_JOIN_INSTR for abort.
-static Control AbortJoinInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
-{
-  stack->pc++;
-  return CONTINUE;
-}
-
 // RunCopyInstr -- see documentation of RunInstr
 //   Execute a COPY_INSTR.
 static Control RunCopyInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity, FbleExecStatus* status)
@@ -515,32 +467,6 @@ static Control AbortCopyInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* 
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
   stack->locals[copy_instr->dest] = NULL;
-  stack->pc++;
-  return CONTINUE;
-}
-
-// RunLinkInstr -- see documentation of RunInstr
-//   Execute a LINK_INSTR.
-static Control RunLinkInstr(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, FbleInstr* instr, bool* io_activity, FbleExecStatus* status)
-{
-  FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-
-  FbleNewLinkValue(heap,
-      FbleFuncValueProfileBaseId(thread->stack->func) + link_instr->profile,
-      thread->stack->locals + link_instr->get,
-      thread->stack->locals + link_instr->put);
-
-  thread->stack->pc++;
-  return CONTINUE;
-}
-
-// AbortLinkInstr -- see documentation of AbortInstr
-//   Execute a LINK_INSTR for abort.
-static Control AbortLinkInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
-{
-  FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-  stack->locals[link_instr->get] = NULL;
-  stack->locals[link_instr->put] = NULL;
   stack->pc++;
   return CONTINUE;
 }
@@ -732,9 +658,6 @@ static RunInstr sRunInstr[] = {
   &RunJumpInstr,             // FBLE_JUMP_INSTR
   &RunFuncValueInstr,        // FBLE_FUNC_VALUE_INSTR
   &RunCallInstr,             // FBLE_CALL_INSTR
-  &RunLinkInstr,             // FBLE_LINK_INSTR
-  &RunForkInstr,             // FBLE_FORK_INSTR
-  &RunJoinInstr,             // FBLE_JOIN_INSTR
   &RunCopyInstr,             // FBLE_COPY_INSTR
   &RunRefValueInstr,         // FBLE_REF_VALUE_INSTR
   &RunRefDefInstr,           // FBLE_REF_DEF_INSTR
@@ -758,9 +681,6 @@ static AbortInstr sAbortInstr[] = {
   &AbortJumpInstr,             // FBLE_JUMP_INSTR
   &AbortFuncValueInstr,        // FBLE_FUNC_VALUE_INSTR
   &AbortCallInstr,             // FBLE_CALL_INSTR
-  &AbortLinkInstr,             // FBLE_LINK_INSTR
-  &AbortForkInstr,             // FBLE_FORK_INSTR
-  &AbortJoinInstr,             // FBLE_JOIN_INSTR
   &AbortCopyInstr,             // FBLE_COPY_INSTR
   &AbortRefValueInstr,         // FBLE_REF_VALUE_INSTR
   &AbortRefDefInstr,           // FBLE_REF_DEF_INSTR

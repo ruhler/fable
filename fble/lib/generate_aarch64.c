@@ -75,7 +75,6 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 
 static size_t StackBytesForCount(size_t count);
 
-static void AddI(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp);
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
@@ -150,9 +149,6 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
         break;
       }
 
-      case FBLE_LINK_INSTR: break;
-      case FBLE_FORK_INSTR: break;
-      case FBLE_JOIN_INSTR: break;
       case FBLE_COPY_INSTR: break;
       case FBLE_REF_VALUE_INSTR: break;
 
@@ -444,27 +440,6 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, Fbl
 static size_t StackBytesForCount(size_t count)
 {
   return 16 * ((count + 1) / 2);
-}
-
-// AddI --
-//   Generate assembly to do an add immediate to a register.
-//
-// Inputs:
-//   fout - the output stream
-//   r_dst - the name of the destination register
-//   r_a - the name of the register to use for the first argument.
-//   b - the immediate size to add
-//   r_tmp - an available temporary register that can be overwritten. 
-//            May be the same as r_dst, but not the same as r_a.
-static void AddI(FILE* fout, const char* r_dst, const char* r_a, size_t b, const char* r_tmp)
-{
-  if (b <= 4096) {
-    fprintf(fout, "  add %s, %s, #%zi\n", r_dst, r_a, b);
-    return;
-  }
-
-  fprintf(fout, "  mov %s, #%zi\n", r_tmp, b);
-  fprintf(fout, "  add %s, %s, %s\n", r_dst, r_a, r_tmp);
 }
 
 // Adr --
@@ -851,48 +826,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       return;
     }
 
-    case FBLE_LINK_INSTR: {
-      FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_PROFILE_BASE_ID\n");
-      fprintf(fout, "  add x1, x1, #%zi\n", link_instr->profile);
-      fprintf(fout, "  add x2, R_LOCALS, #%zi\n", sizeof(FbleValue*) * link_instr->get);
-      fprintf(fout, "  add x3, R_LOCALS, #%zi\n", sizeof(FbleValue*) * link_instr->put);
-      fprintf(fout, "  bl FbleNewLinkValue\n");
-      return;
-    }
-
-    case FBLE_FORK_INSTR: {
-      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      for (size_t i = 0; i < fork_instr->args.size; ++i) {
-        GetFrameVar(fout, "x0", fork_instr->args.xs[i]);
-        fprintf(fout, "  bl FbleStrictValue\n");
-        fprintf(fout, "  mov x4, x0\n");
-
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, threads));
-        fprintf(fout, "  ldr x2, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-        AddI(fout, "x3", "R_LOCALS", sizeof(FbleValue*) * fork_instr->dests.xs[i], "x3");
-        fprintf(fout, "  mov x5, XZR\n");
-        fprintf(fout, "  bl FbleThreadFork\n");
-      }
-
-      // stack->pc = pc + 1
-      fprintf(fout, "  ldr x0, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleThread, stack));
-      fprintf(fout, "  mov x1, #%zi\n", pc+1);  // x1 = pc + 1
-      fprintf(fout, "  str x1, [x0, #%zi]\n", offsetof(FbleStack, pc));
-      return;
-    }
-
-    case FBLE_JOIN_INSTR: {
-      fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_BLOCKED);
-      fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-      fprintf(fout, "  ldr x1, [x1, #%zi]\n", offsetof(FbleThread, children));
-      fprintf(fout, "  cbnz x1, .L._Run_.%p.exit\n", code);
-      return;
-    }
-
     case FBLE_COPY_INSTR: {
       FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
       fprintf(fout, "  mov x0, R_HEAP\n");
@@ -1205,25 +1138,6 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       }
 
       SetFrameVar(fout, "XZR", call_instr->dest);
-      return;
-    }
-
-    case FBLE_LINK_INSTR: {
-      FbleLinkInstr* link_instr = (FbleLinkInstr*)instr;
-      SetFrameVar(fout, "XZR", link_instr->get);
-      SetFrameVar(fout, "XZR", link_instr->put);
-      return;
-    }
-
-    case FBLE_FORK_INSTR: {
-      FbleForkInstr* fork_instr = (FbleForkInstr*)instr;
-      for (size_t i = 0; i < fork_instr->args.size; ++i) {
-        SetFrameVar(fout, "XZR", fork_instr->dests.xs[i]);
-      }
-      return;
-    }
-
-    case FBLE_JOIN_INSTR: {
       return;
     }
 

@@ -122,9 +122,6 @@ typedef enum {
   FBLE_JUMP_INSTR,
   FBLE_FUNC_VALUE_INSTR,
   FBLE_CALL_INSTR,
-  FBLE_LINK_INSTR,
-  FBLE_FORK_INSTR,
-  FBLE_JOIN_INSTR,
   FBLE_COPY_INSTR,
   FBLE_REF_VALUE_INSTR,
   FBLE_REF_DEF_INSTR,
@@ -292,48 +289,6 @@ typedef struct {
   FbleFrameIndex func;
   FbleFrameIndexV args;
 } FbleCallInstr;
-
-// FbleLinkInstr -- FBLE_LINK_INSTR
-//   Allocate a new link with get and put ports.
-//
-// *get = <get port>;
-// *put = <put port>;
-//
-// profile is a profiling block id relative to the function profile base
-// id pointing to three consecutive profile blocks:
-//   profile_base_id + profile + 0:
-//      A block to use when executing get.
-//   profile_base_id + profile + 1:
-//      A block to use when applying the arg to put.
-//   profile_base_id + profile + 2:
-//      A block to use when executing put.
-typedef struct {
-  FbleInstr _base;
-  FbleLocalIndex get;
-  FbleLocalIndex put;
-  FbleBlockId profile;
-} FbleLinkInstr;
-
-// FbleForkInstr -- FBLE_FORK_INSTR
-//   Fork child threads.
-//
-// Each argument should be a proc value. Executes the proc value in the child
-// thread and stores the result to the given destination in the parent
-// thread's stack frame.
-//
-// Fork instructions should always be followed by join instructions to ensure
-// all the children have completed before the parent continues executing.
-typedef struct {
-  FbleInstr _base;
-  FbleFrameIndexV args;
-  FbleLocalIndexV dests;
-} FbleForkInstr;
-
-// FbleJoinInstr -- FBLE_JOIN_INSTR
-//   Blocks a thread until all the thread's children have completed.
-typedef struct {
-  FbleInstr _base;
-} FbleJoinInstr;
 
 // FbleCopyInstr -- FBLE_COPY_INSTR
 //   Copy a value in the stack frame from one location to another.
