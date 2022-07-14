@@ -30,8 +30,6 @@ typedef enum {
   STRUCT_VALUE,
   UNION_VALUE,
   FUNC_VALUE,
-  LINK_VALUE,
-  PORT_VALUE,
   REF_VALUE,
 } ValueTag;
 
@@ -122,29 +120,6 @@ typedef struct Values {
   FbleValue* value;
   struct Values* next;
 } Values;
-
-// LinkValue -- LINK_VALUE
-//   Holds the list of values on a link. Values are added to the tail and taken
-//   from the head. If there are no values on the list, both head and tail are
-//   set to NULL.
-typedef struct {
-  FbleValue _base;
-  Values* head;
-  Values* tail;
-} LinkValue;
-
-// PortValue --
-//   PORT_VALUE
-//
-// Use for input and output values linked to external IO.
-//
-// Fields:
-//   data - a pointer to a value owned externally where data should be put to
-//          and got from.
-typedef struct {
-  FbleValue _base;
-  FbleValue** data;
-} PortValue;
 
 // RefValue --
 //   REF_VALUE
@@ -265,18 +240,6 @@ static void OnFree(FbleValueHeap* heap, FbleValue* value)
       return;
     }
 
-    case LINK_VALUE: {
-      LinkValue* v = (LinkValue*)value;
-      Values* curr = v->head;
-      while (curr != NULL) {
-        Values* tmp = curr;
-        curr = curr->next;
-        FbleFree(tmp);
-      }
-      return;
-    }
-
-    case PORT_VALUE: return;
     case REF_VALUE: return;
   }
 
@@ -335,18 +298,6 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
       for (size_t i = 0; i < v->executable->statics; ++i) {
         Ref(callback, v->statics[i]);
       }
-      break;
-    }
-
-    case LINK_VALUE: {
-      LinkValue* v = (LinkValue*)value;
-      for (Values* elem = v->head; elem != NULL; elem = elem->next) {
-        Ref(callback, elem->value);
-      }
-      break;
-    }
-
-    case PORT_VALUE: {
       break;
     }
 
