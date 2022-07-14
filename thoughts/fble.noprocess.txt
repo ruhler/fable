@@ -785,3 +785,9 @@ Apps to do:
 * Snake
 * GameOfLife
 * Demo (done)
+
+---
+
+Apps are all done! What's next? See if we can remove those temporary modules I
+guess, and then start grepping for ':=', '!', and '~' in the fble code and see
+what's left.

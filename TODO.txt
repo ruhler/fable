@@ -1,5 +1,4 @@
 * Remove processes from language
- - Remove /Core/IO/* modules.
 
 * Add tests that at least the compiled apps don't crash when you run them.
 * Why does /Core/Test% export String@? Is that needed?
