@@ -144,40 +144,8 @@ ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
     nil: base);
 };
 
-# ProcessEach
-#  A process version of ForEach.
-#
-# Type Parameters:
-#   A@ - The type of element on the list.
-#   B@ - The type of value updated and returned by the loop.
-#
-# Arguments:
-#   l - The list to iterate over.
-#   base - The initial value to update and return from the list.
-#   body - The body of the list.
-#
-# Returns:
-#   The result of processing the body consecutively to the base value, once for
-#   each element in the list in list order.
-#
-# Conceptually:
-#   B@ b = base
-#   foreach x in l:
-#     b := body(x, b)
-#   return b
-<@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@!; }) { B@!; }
-ProcessEach = <@ A@, @ B@>(List@<A@> l, B@ base, (A@, B@) { B@!; } body) {
-  l.?(
-    cons: {
-      B@ nbase := body(l.cons.head, base);
-      ProcessEach<A@, B@>(l.cons.tail, nbase, body);
-    },
-    nil: !(base));
-};
-
 <@ T@>(List@<T@>) { List@<T@>; } Reverse = <@ T@>(List@<T@> l) {
   ForEach(l, List<T@>[], (T@ x, List@<T@> nl) { Cons(x, nl); });
 };
 
-@(List@, List, Cons, Nil, Append, Init, Concat, Map, ForEach, ProcessEach,
-  Reverse);
+@(List@, List, Cons, Nil, Append, Init, Concat, Map, ForEach, Reverse);

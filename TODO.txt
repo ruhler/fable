@@ -1,4 +1,8 @@
 * Remove processes from language
+ - Remove processes from language spec.
+ - Remove test cases that use processes.
+ - Remove FbleExec API.
+ - Remove processes from implementation.
 
 * Add tests that at least the compiled apps don't crash when you run them.
 * Why does /Core/Test% export String@? Is that needed?

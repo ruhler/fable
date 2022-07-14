@@ -791,3 +791,11 @@ Apps to do:
 Apps are all done! What's next? See if we can remove those temporary modules I
 guess, and then start grepping for ':=', '!', and '~' in the fble code and see
 what's left.
+
+What grep says about what's next:
+* Benchmarks tend to have type Unit@!.
+  - Md5, Sat, BenchmarkGame, Sudoku, App
+* ProcessEach list function.
+
+That's it. Just need to figure those out and we should be all set.
+
