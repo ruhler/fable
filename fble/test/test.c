@@ -134,15 +134,6 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   FbleValue* result = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
 
-  // As a special case, if the result of evaluation is a process, execute
-  // the process. This allows us to test process execution.
-  if (result != NULL && FbleIsProcValue(result)) {
-    FbleIO io = { .io = &FbleNoIO, };
-    FbleValue* exec_result = FbleExec(heap, &io, result, profile);
-    FbleReleaseValue(heap, result);
-    result = exec_result;
-  }
-
   FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 

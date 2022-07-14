@@ -262,3 +262,6 @@ We can get rid of the pc jump tables in the current design, we just need to
 store native pc values instead of fble pc values. We'll also want to store
 separate abort pc values in case of abort.
 
+---
+
+Note: this is obsolete now that we have removed processes from the language.

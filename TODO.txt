@@ -1,8 +1,10 @@
 * Remove processes from language
- - Disable process syntax.
  - Remove FbleExec API.
+ - Remove FbleIsProcValue API.
+ - Remove FbleNewOutputPortValue and FbleNewInputPortValue APIs.
  - Remove processes from implementation and clean up.
  - Remove TODOs related to processes.
+ - Remove FORK, EXEC, and other proc related instructions.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.
@@ -18,7 +20,7 @@
 * Figure out how to support images in Apps.
 
 * Make it easier to run failing tests under valgrind and gdb.
-* Better error message for 7.4-PolyInfer/Type/InconsistentAssignment case.
+* Better error message for 6.4-PolyInfer/Type/InconsistentAssignment case.
 * Add more tests for poly inference to get code coverage.
 * Add type inference for struct and union value?
    e.g. Maybe@(just: True) instead of Maybe@<Bool@>(just: True)?
@@ -111,11 +113,6 @@
  - Add VarDebugInfo for function static variables.
  - Emit lexical scopes where appropriate.
 
-* Remove function bind syntax again, now that we no longer use it?
-  On the one hand, it seems a shame to have a syntactic sugar that I don't
-  currently use for anything. On the other hand, I must have had good reason
-  to add it back for fblf.
-
 * [/Graphics] Debug clipping artifacts
   Looks like precision gets off some times for clipping, with bits of sky
   showing through the ground. Figure out what's up, right a test and fix it.
@@ -173,10 +170,6 @@
    in the stack?
  - see thoughts/fble.profile.txt
 
-* Investigate why fork-race test generates so many functions with the same
-  name? Is there a bug here somewhere? Shouldn't profile block names be
-unique?
-
 * For loaded submodules, should the module profile block be the module file or
   the place where it was imported from?
  - Seems like it should be the module file, because it could be imported from
@@ -195,8 +188,7 @@ unique?
 * Use some way other than NULL to disable profiling?
  - To encourage all the apps to support optional profiling, including things
    like fble-md5 and fble-app?
- - Check we are passing meaningful block ids to FbleNewInputPortValue and
-   FbleNewOutputPortValue in all cases.
+ - Check we are passing meaningful block ids to FbleNewSimpleFuncValue.
 
 * Add option for passing .so files to FbleLinkFromCompiledOrSource?
 
@@ -211,11 +203,6 @@ unique?
 * Consider changing RELEASE_INSTR to take a vector of args to release?
   - Just to speed up interpreted code for the case where we are freeing a
     bunch of values in a row before returning or tail calling.
-
-* Figure out how to get the profiling block I want around exec bindings?
- - I think the way it's setup, either we'll get no block in some cases, or
-   double blocks in some cases. Is it really that important to fix?
- - Maybe add a test case at least to show the problem in ProfileTests.fble?
 
 * Remove dependence of interpret.c and generated code on value.h.
   Making value functions public as necessary to support this.
@@ -272,7 +259,6 @@ unique?
  - Document all functions.
  - Add tests for full code coverage of all functions.
  - Rename Str to String? Or to S?
- - Only support Int@ officially, not IntP@ and IntS@ too?
  - Consider pulling ForEach and Map out into their own class?
 * [/App%] Change App% back to drawing over the previous screen?
  - It can figure out how to double buffer appropriately on the implementation
@@ -312,7 +298,6 @@ unique?
 * [spec] Revisit notion of packages and public/private access to modules.
 * [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
-* [spec] Document and test that put ports don't retain link values.
 
 * [typecheck] Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
 * [typecheck] Be more consistent in FbleTc about use of vector versus FbleTc*[].
@@ -340,19 +325,6 @@ unique?
   It's tough to keep track of what variables are alive when and need to be
   freed where. Is there some convention we can come up with to make it much
   more obvious what is live when and who is responsible for freeing something?
-
-* [eval] Clean up how we track io activity?
-  See thoughts/fble.threads.txt
-* [eval] Thread execution should be at least somewhat fair.
-  In the current implementation, in theory, a long running non-IO computation
-  could cause IO threads to get blocked. That's certainly against the spirit
-  of the spec, but I don't have a clear definition for how things ought to
-  behave or a decent way to test that. Figure out something better here.
-* [eval] Make child thread execution fair.
-  Children should be time multiplexed, where priority is assigned based on how
-  far down the family tree the child belongs. The amount of time a family gets
-  to spend evaluating should be independent of the number of children in the
-  family.
 
 * [profile] Check if it's okay to add new blocks to a profile in progress.
  - either way, document that clearly.

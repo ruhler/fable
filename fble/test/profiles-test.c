@@ -194,13 +194,6 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
   FbleValue* result = FbleEval(heap, linked, profile);
   FbleReleaseValue(heap, linked);
 
-  if (result != NULL && FbleIsProcValue(result)) {
-    FbleIO io = { .io = &FbleNoIO, };
-    FbleValue* exec_result = FbleExec(heap, &io, result, profile);
-    FbleReleaseValue(heap, result);
-    result = exec_result;
-  }
-
   FbleReleaseValue(heap, result);
   FbleFreeValueHeap(heap);
 

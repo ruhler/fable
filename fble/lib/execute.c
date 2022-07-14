@@ -20,7 +20,7 @@ static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, F
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
 static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
 static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads);
-static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleValue** args, FbleProfile* profile);
+static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
 // PushStackFrame --
 //   Push a frame on top of the thread's stack.
@@ -148,7 +148,7 @@ static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
 //   use. Prints a message to stderr in case of error.
 //   Updates profile based on the execution.
 //   Does not take ownership of the function or the args.
-static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleValue** args, FbleProfile* profile)
+static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
   FbleThreadV threads;
   FbleVectorInit(threads);
@@ -204,22 +204,8 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleIO* io, FbleValue* func, FbleVal
         }
       }
     }
-
-    bool blocked = !unblocked;
-    if (!io->io(io, heap, blocked) && blocked) {
-      FbleLoc loc = FbleNewLoc(__FILE__, 0, 0);
-      FbleReportError("deadlock\n", loc);
-      FbleFreeLoc(loc);
-
-      AbortThreads(heap, &threads);
-      FbleReleaseValue(heap, result);
-      FbleFree(threads.xs);
-      return NULL;
-    }
   }
 
-  // Give a chance to process any remaining io before exiting.
-  io->io(io, heap, false);
   FbleFree(threads.xs);
   return result;
 }
@@ -295,21 +281,8 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
 // FbleApply -- see documentation in fble.h
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
-  FbleIO io = { .io = &FbleNoIO, };
-  FbleValue* result = Eval(heap, &io, func, args, profile);
+  FbleValue* result = Eval(heap, func, args, profile);
   return result;
-}
-
-// FbleNoIO -- See documentation in fble.h
-bool FbleNoIO(FbleIO* io, FbleValueHeap* heap, bool block)
-{
-  return false;
-}
-
-// FbleExec -- see documentation in fble.h
-FbleValue* FbleExec(FbleValueHeap* heap, FbleIO* io, FbleValue* proc, FbleProfile* profile)
-{
-  return Eval(heap, io, proc, NULL, profile);
 }
 
 // FbleFreeExecutable -- see documentation in execute.h
