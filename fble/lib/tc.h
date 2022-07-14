@@ -15,12 +15,6 @@
 // FbleTc is like FbleExpr, except that:
 // * Field and variable names are replaced with integer indicies.
 // * Types are eliminated.
-// * Processes are treated as zero argument functions.
-// * There is no difference between a function context and a process context.
-//   In particular, LINK_TC and EXEC_TC represent the computation that returns
-//   the result of running the link and exec processes, rather than a
-//   computation that creates link and exec process values.
-//
 typedef struct FbleTc FbleTc;
 
 // FbleTcV --
@@ -42,8 +36,6 @@ typedef enum {
   FBLE_DATA_ACCESS_TC,
   FBLE_FUNC_VALUE_TC,
   FBLE_FUNC_APPLY_TC,
-  FBLE_LINK_TC,
-  FBLE_EXEC_TC,
   FBLE_LIST_TC,
   FBLE_LITERAL_TC,
 } FbleTcTag;
@@ -217,34 +209,6 @@ typedef struct {
   FbleTc* func;
   FbleTcV args;
 } FbleFuncApplyTc;
-
-// FbleLinkTc --
-//   FBLE_LINK_TC
-//
-// Represents a process link expression. Unlike FBLE_LINK_EXPR, which
-// evaluates to a proc value, FBLE_LINK_TC evaluates to the result of
-// computing the proc value.
-//
-// 'get' and 'put' fields are the names of the get and put variables for use
-// in profiling.
-typedef struct {
-  FbleTc _base;
-  FbleName get;
-  FbleName put;
-  FbleTc* body;
-} FbleLinkTc;
-
-// FbleExecTc --
-//   FBLE_EXEC_TC
-//
-// Represents a process exec expression. Unlike FBLE_EXEC_EXPR, which
-// evaluates to a proc value, FBLE_EXEC_TC evaluates to the result of
-// computing the proc value.
-typedef struct {
-  FbleTc _base;
-  FbleTcBindingV bindings;
-  FbleTc* body;
-} FbleExecTc;
 
 // FbleListTc --
 //   FBLE_LIST_TC

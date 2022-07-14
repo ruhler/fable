@@ -114,28 +114,6 @@ void FbleFreeTc(FbleTc* tc)
       return;
     }
 
-    case FBLE_LINK_TC: {
-      FbleLinkTc* link_tc = (FbleLinkTc*)tc;
-      FbleFreeName(link_tc->get);
-      FbleFreeName(link_tc->put);
-      FbleFreeTc(link_tc->body);
-      FbleFree(tc);
-      return;
-    }
-
-    case FBLE_EXEC_TC: {
-      FbleExecTc* exec_tc = (FbleExecTc*)tc;
-      for (size_t i = 0; i < exec_tc->bindings.size; ++i) {
-        FbleFreeName(exec_tc->bindings.xs[i].name);
-        FbleFreeLoc(exec_tc->bindings.xs[i].loc);
-        FbleFreeTc(exec_tc->bindings.xs[i].tc);
-      }
-      FbleFree(exec_tc->bindings.xs);
-      FbleFreeTc(exec_tc->body);
-      FbleFree(tc);
-      return;
-    }
-
     case FBLE_LIST_TC: {
       FbleListTc* v = (FbleListTc*)tc;
       for (size_t i = 0; i < v->fieldc; ++i) {
