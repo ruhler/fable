@@ -248,20 +248,6 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleValue* func, FbleValue** args, 
   }
 }
 
-// FbleThreadFork -- see documentation in execute.h
-void FbleThreadFork(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* parent, FbleValue** result, FbleValue* func, FbleValue** args)
-{
-  FbleThread* child = FbleAlloc(FbleThread);
-  child->stack = NULL;
-  child->allocator = FbleNewStackAllocator();
-  child->parent = parent;
-  child->children = 0;
-  parent->children++;
-  child->profile = parent->profile == NULL ? NULL : FbleForkProfileThread(parent->profile);
-  FbleVectorAppend(*threads, child);
-  FbleThreadCall(heap, result, func, args, child);
-}
-
 // FbleThreadReturn -- see documentation in execute.h
 void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result)
 {
