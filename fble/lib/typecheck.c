@@ -105,7 +105,6 @@ static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_
 static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
-static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps);
@@ -665,7 +664,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
   switch (expr->tag) {
     case FBLE_DATA_TYPE_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
-    case FBLE_PROC_TYPE_EXPR:
     case FBLE_PACKAGE_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
     {
@@ -1196,38 +1194,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 
       FreeScope(th, &func_scope);
       return MkTc(&ft->_base, &func_tc->_base);
-    }
-
-    case FBLE_EVAL_EXPR:
-    case FBLE_LINK_EXPR:
-    case FBLE_EXEC_EXPR: {
-      FbleVarIndexV captured;
-      FbleVectorInit(captured);
-      Scope body_scope;
-      InitScope(&body_scope, &captured, scope->module, scope);
-
-      Tc body = TypeCheckExec(th, &body_scope, expr);
-      if (body.type == NULL) {
-        FreeScope(th, &body_scope);
-        FbleFree(captured.xs);
-        return TC_FAILED;
-      }
-
-      FbleProcType* proc_type = FbleNewType(th, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-      proc_type->type = body.type;
-      FbleTypeAddRef(th, &proc_type->_base, proc_type->type);
-      FbleReleaseType(th, body.type);
-
-      FbleFuncValueTc* proc_tc = FbleAlloc(FbleFuncValueTc);
-      proc_tc->_base.tag = FBLE_FUNC_VALUE_TC;
-      proc_tc->_base.loc = FbleCopyLoc(expr->loc);
-      proc_tc->body_loc = FbleCopyLoc(expr->loc);
-      proc_tc->scope = captured;
-      FbleVectorInit(proc_tc->args);
-      proc_tc->body = body.tc;
-
-      FreeScope(th, &body_scope);
-      return MkTc(&proc_type->_base, &proc_tc->_base);
     }
 
     case FBLE_POLY_VALUE_EXPR: {
@@ -1884,216 +1850,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
   return TC_FAILED;
 }
 
-// TypeCheckExec --
-//   Type check the given process expression.
-//
-// Inputs:
-//   th - heap to use for type allocations.
-//   scope - the list of variables in scope.
-//   expr - the expression to compile.
-//
-// Results:
-//   A type checked expression that computes the result of executing the
-//   process expression, or TC_FAILED if the expression is not well typed or
-//   is not a process expression. If the type of the process expression is T!,
-//   the returned type is T.
-//
-// Side effects:
-// * Prints a message to stderr if the expression fails to compile.
-// * The caller should call FbleFreeTc when the returned result is no
-//   longer needed and FbleReleaseType when the returned FbleType is no longer
-//   needed.
-static Tc TypeCheckExec(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
-{
-  switch (expr->tag) {
-    case FBLE_TYPEOF_EXPR:
-    case FBLE_VAR_EXPR:
-    case FBLE_LET_EXPR:
-    case FBLE_DATA_TYPE_EXPR:
-    case FBLE_DATA_ACCESS_EXPR:
-    case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR:
-    case FBLE_UNION_VALUE_EXPR:
-    case FBLE_UNION_SELECT_EXPR:
-    case FBLE_FUNC_TYPE_EXPR:
-    case FBLE_FUNC_VALUE_EXPR:
-    case FBLE_PROC_TYPE_EXPR:
-    case FBLE_POLY_VALUE_EXPR:
-    case FBLE_POLY_APPLY_EXPR:
-    case FBLE_PACKAGE_TYPE_EXPR:
-    case FBLE_LIST_EXPR:
-    case FBLE_LITERAL_EXPR:
-    case FBLE_MODULE_PATH_EXPR:
-    case FBLE_ABSTRACT_CAST_EXPR:
-    case FBLE_ABSTRACT_ACCESS_EXPR:
-    case FBLE_MISC_APPLY_EXPR:
-    {
-      Tc proc = TypeCheckExpr(th, scope, expr);
-      if (proc.type == NULL) {
-        return TC_FAILED;
-      }
-
-      FbleProcType* normal = (FbleProcType*)FbleNormalType(th, proc.type);
-      if (normal->_base.tag != FBLE_PROC_TYPE) {
-        ReportError(expr->loc,
-            "expected process, but found expression of type %t\n",
-            proc);
-        FbleReleaseType(th, &normal->_base);
-        FreeTc(th, proc);
-        return TC_FAILED;
-      }
-
-      FbleType* rtype = FbleRetainType(th, normal->type);
-      FbleReleaseType(th, &normal->_base);
-      FbleReleaseType(th, proc.type);
-
-      FbleFuncApplyTc* apply_tc = FbleAlloc(FbleFuncApplyTc);
-      apply_tc->_base.tag = FBLE_FUNC_APPLY_TC;
-      apply_tc->_base.loc = FbleCopyLoc(expr->loc);
-      apply_tc->func = proc.tc;
-      FbleVectorInit(apply_tc->args);
-
-      return MkTc(rtype, &apply_tc->_base);
-    }
-
-    case FBLE_EVAL_EXPR: {
-      FbleEvalExpr* eval_expr = (FbleEvalExpr*)expr;
-      return TypeCheckExpr(th, scope, eval_expr->body);
-    }
-
-    case FBLE_LINK_EXPR: {
-      FbleLinkExpr* link_expr = (FbleLinkExpr*)expr;
-      if (FbleNamesEqual(link_expr->get, link_expr->put)) {
-        ReportError(link_expr->put.loc,
-            "duplicate port name '%n'\n",
-            link_expr->put);
-        return TC_FAILED;
-      }
-
-      FbleType* port_type = TypeCheckType(th, scope, link_expr->type);
-      if (port_type == NULL) {
-        return TC_FAILED;
-      }
-
-      FbleProcType* get_type = FbleNewType(th, FbleProcType, FBLE_PROC_TYPE, port_type->loc);
-      get_type->type = port_type;
-      FbleTypeAddRef(th, &get_type->_base, get_type->type);
-
-      FbleDataType* unit_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
-      unit_type->datatype = FBLE_STRUCT_DATATYPE;
-      FbleVectorInit(unit_type->fields);
-
-      FbleProcType* unit_proc_type = FbleNewType(th, FbleProcType, FBLE_PROC_TYPE, expr->loc);
-      unit_proc_type->type = &unit_type->_base;
-      FbleTypeAddRef(th, &unit_proc_type->_base, unit_proc_type->type);
-      FbleReleaseType(th, &unit_type->_base);
-
-      FbleFuncType* put_type = FbleNewType(th, FbleFuncType, FBLE_FUNC_TYPE, expr->loc);
-      FbleVectorInit(put_type->args);
-      FbleVectorAppend(put_type->args, port_type);
-      FbleTypeAddRef(th, &put_type->_base, port_type);
-      FbleReleaseType(th, port_type);
-      put_type->rtype = &unit_proc_type->_base;
-      FbleTypeAddRef(th, &put_type->_base, put_type->rtype);
-      FbleReleaseType(th, &unit_proc_type->_base);
-
-      VarName get_var = { .normal = link_expr->get, .module = NULL };
-      VarName put_var = { .normal = link_expr->put, .module = NULL };
-      PushVar(scope, get_var, &get_type->_base);
-      PushVar(scope, put_var, &put_type->_base);
-
-      Tc body = TypeCheckExec(th, scope, link_expr->body);
-
-      PopVar(th, scope);
-      PopVar(th, scope);
-
-      if (body.type == NULL) {
-        return TC_FAILED;
-      }
-
-      FbleLinkTc* link_tc = FbleAlloc(FbleLinkTc);
-      link_tc->_base.tag = FBLE_LINK_TC;
-      link_tc->_base.loc = FbleCopyLoc(expr->loc);
-      link_tc->get = FbleCopyName(link_expr->get);
-      link_tc->put = FbleCopyName(link_expr->put);
-      link_tc->body = body.tc;
-      return MkTc(body.type, &link_tc->_base);
-    }
-
-    case FBLE_EXEC_EXPR: {
-      FbleExecExpr* exec_expr = (FbleExecExpr*)expr;
-      bool error = false;
-
-      // Evaluate the types of the bindings and set up the new vars.
-      FbleType* types[exec_expr->bindings.size];
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        types[i] = TypeCheckType(th, scope, exec_expr->bindings.xs[i].type);
-        error = error || (types[i] == NULL);
-      }
-
-      FbleExecTc* exec_tc = FbleAlloc(FbleExecTc);
-      exec_tc->_base.tag = FBLE_EXEC_TC;
-      exec_tc->_base.loc = FbleCopyLoc(expr->loc);
-      FbleVectorInit(exec_tc->bindings);
-      exec_tc->body = NULL;
-
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        Tc binding = TypeCheckExpr(th, scope, exec_expr->bindings.xs[i].expr);
-        if (binding.type != NULL) {
-          FbleProcType* proc_type = (FbleProcType*)FbleNormalType(th, binding.type);
-          if (proc_type->_base.tag == FBLE_PROC_TYPE) {
-            if (types[i] != NULL && !FbleTypesEqual(th, types[i], proc_type->type)) {
-              error = true;
-              ReportError(exec_expr->bindings.xs[i].expr->loc,
-                  "expected type %t!, but found %t\n",
-                  types[i], binding.type);
-            }
-          } else {
-            error = true;
-            ReportError(exec_expr->bindings.xs[i].expr->loc,
-                "expected process, but found expression of type %t\n",
-                binding.type);
-          }
-          FbleReleaseType(th, &proc_type->_base);
-        } else {
-          error = true;
-        }
-        FbleTcBinding pb = {
-          .name = FbleCopyName(exec_expr->bindings.xs[i].name),
-          .loc = FbleCopyLoc(exec_expr->bindings.xs[i].expr->loc),
-          .tc = binding.tc,
-        };
-        FbleVectorAppend(exec_tc->bindings, pb);
-        FbleReleaseType(th, binding.type);
-      }
-
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        VarName name = { .normal = exec_expr->bindings.xs[i].name, .module = NULL };
-        PushVar(scope, name, types[i]);
-      }
-
-      Tc body = TC_FAILED;
-      if (!error) {
-        body = TypeCheckExec(th, scope, exec_expr->body);
-      }
-
-      for (size_t i = 0; i < exec_expr->bindings.size; ++i) {
-        PopVar(th, scope);
-      }
-
-      if (body.type == NULL) {
-        FbleFreeTc(&exec_tc->_base);
-        return TC_FAILED;
-      }
-
-      exec_tc->body = body.tc;
-      return MkTc(body.type, &exec_tc->_base);
-    }
-  }
-
-  UNREACHABLE("should never get here");
-  return TC_FAILED;
-}
-
 // TypeCheckExprForType --
 //   Type check the given expression, ignoring accesses to variables.
 //
@@ -2228,21 +1984,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
       return &ft->_base;
     }
 
-    case FBLE_PROC_TYPE_EXPR: {
-      FbleProcType* ut = FbleNewType(th, FbleProcType, FBLE_PROC_TYPE, type->loc);
-      ut->type = NULL;
-
-      FbleProcTypeExpr* unary_type = (FbleProcTypeExpr*)type;
-      ut->type = TypeCheckType(th, scope, unary_type->type);
-      if (ut->type == NULL) {
-        FbleReleaseType(th, &ut->_base);
-        return NULL;
-      }
-      FbleTypeAddRef(th, &ut->_base, ut->type);
-      FbleReleaseType(th, ut->type);
-      return &ut->_base;
-    }
-
     case FBLE_PACKAGE_TYPE_EXPR: {
       FblePackageTypeExpr* e = (FblePackageTypeExpr*)type;
       FblePackageType* t = FbleNewType(th, FblePackageType, FBLE_PACKAGE_TYPE, type->loc);
@@ -2258,9 +1999,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     case FBLE_UNION_VALUE_EXPR:
     case FBLE_UNION_SELECT_EXPR:
     case FBLE_FUNC_VALUE_EXPR:
-    case FBLE_EVAL_EXPR:
-    case FBLE_LINK_EXPR:
-    case FBLE_EXEC_EXPR:
     case FBLE_POLY_VALUE_EXPR:
     case FBLE_POLY_APPLY_EXPR:
     case FBLE_LIST_EXPR:

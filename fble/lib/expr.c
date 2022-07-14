@@ -124,45 +124,6 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
-    case FBLE_PROC_TYPE_EXPR: {
-      FbleProcTypeExpr* e = (FbleProcTypeExpr*)expr;
-      FbleFreeExpr(e->type);
-      FbleFree(expr);
-      return;
-    }
-
-    case FBLE_EVAL_EXPR: {
-      FbleEvalExpr* e = (FbleEvalExpr*)expr;
-      FbleFreeExpr(e->body);
-      FbleFree(expr);
-      return;
-    }
-
-    case FBLE_LINK_EXPR: {
-      FbleLinkExpr* e = (FbleLinkExpr*)expr;
-      FbleFreeExpr(e->type);
-      FbleFreeName(e->get);
-      FbleFreeName(e->put);
-      FbleFreeExpr(e->body);
-      FbleFree(expr);
-      return;
-    }
-
-    case FBLE_EXEC_EXPR: {
-      FbleExecExpr* e = (FbleExecExpr*)expr;
-      for (size_t i = 0; i < e->bindings.size; ++i) {
-        FbleBinding* binding = e->bindings.xs + i;
-        FbleFreeKind(binding->kind);
-        FbleFreeExpr(binding->type);
-        FbleFreeName(binding->name);
-        FbleFreeExpr(binding->expr);
-      }
-      FbleFree(e->bindings.xs);
-      FbleFreeExpr(e->body);
-      FbleFree(expr);
-      return;
-    }
-
     case FBLE_POLY_VALUE_EXPR: {
       FblePolyValueExpr* e = (FblePolyValueExpr*)expr;
       FbleFreeKind(e->arg.kind);

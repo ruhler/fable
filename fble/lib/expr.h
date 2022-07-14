@@ -31,11 +31,6 @@ typedef enum {
   FBLE_FUNC_VALUE_EXPR,
   // FBLE_FUNC_APPLY_EXPR = FBLE_MISC_APPLY_EXPR
 
-  FBLE_PROC_TYPE_EXPR,
-  FBLE_EVAL_EXPR,
-  FBLE_LINK_EXPR,
-  FBLE_EXEC_EXPR,
-
   FBLE_POLY_VALUE_EXPR,
   FBLE_POLY_APPLY_EXPR,
 
@@ -158,30 +153,6 @@ typedef struct {
   FbleExpr* body;
 } FbleFuncValueExpr;
 
-// FbleProcTypeExpr --
-//   FBLE_PROC_TYPE_EXPR (type :: Type)
-typedef struct {
-  FbleTypeExpr _base;
-  FbleTypeExpr* type;
-} FbleProcTypeExpr;
-
-// FbleEvalExpr --
-//   FBLE_EVAL_EXPR (body :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleExpr* body;
-} FbleEvalExpr;
-
-// FbleLinkExpr --
-//   FBLE_LINK_EXPR (type :: Type) (get :: Name) (put :: Name) (body :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleTypeExpr* type;
-  FbleName get;
-  FbleName put;
-  FbleExpr* body;
-} FbleLinkExpr;
-
 // FbleBinding --
 //   (Kind, Type, Name, Expr) used in let and exec expressions.
 // Exactly one of Kind or Type should be NULL. If the Kind is null, it is
@@ -200,14 +171,6 @@ typedef struct {
   size_t size;
   FbleBinding* xs;
 } FbleBindingV;
-
-// FbleExecExpr --
-//   FBLE_EXEC_EXPR (bindings :: [(Type, Name, Expr)]) (body :: Expr)
-typedef struct {
-  FbleExpr _base;
-  FbleBindingV bindings;
-  FbleExpr* body;
-} FbleExecExpr;
 
 // FbleVarExpr --
 //   FBLE_VAR_EXPR (name :: Name)
