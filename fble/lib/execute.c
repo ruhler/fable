@@ -18,7 +18,7 @@
 
 static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread);
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
-static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread);
+static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThread* thread);
 static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
@@ -70,7 +70,6 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 //
 // Inputs:
 //   heap - the value heap.
-//   threads - the thread list, for forking threads.
 //   thread - the thread to run.
 //
 // Results:
@@ -78,11 +77,11 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 //
 // Side effects:
 // * The thread is executed, updating its stack.
-static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread)
+static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThread* thread)
 {
   FbleExecStatus status = FBLE_EXEC_FINISHED;
   while ((status == FBLE_EXEC_FINISHED || status == FBLE_EXEC_CONTINUED) && thread->stack != NULL) {
-    status = FbleFuncValueExecutable(thread->stack->func)->run(heap, threads, thread);
+    status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);
   }
   return status;
 }
@@ -98,30 +97,17 @@ static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleT
 //   Cleans up the thread state.
 static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads)
 {
-  while (threads->size > 0) {
-    size_t blocked = 0;
-    for (size_t i = 0; i < threads->size; ++i) {
-      FbleThread* thread = threads->xs[i];
+  for (size_t i = 0; i < threads->size; ++i) {
+    FbleThread* thread = threads->xs[i];
 
-      if (thread->children > 0) {
-        threads->xs[blocked] = thread;
-        blocked++;
-        continue;
-      }
-
-      while (thread->stack != NULL) {
-        FbleFuncValueExecutable(thread->stack->func)->abort(heap, thread->stack);
-        PopStackFrame(heap, thread);
-      }
-
-      FbleFreeStackAllocator(thread->allocator);
-      FbleFreeProfileThread(thread->profile);
-      if (thread->parent != NULL) {
-        thread->parent->children--;
-      }
-      FbleFree(thread);
+    while (thread->stack != NULL) {
+      FbleFuncValueExecutable(thread->stack->func)->abort(heap, thread->stack);
+      PopStackFrame(heap, thread);
     }
-    threads->size = blocked;
+
+    FbleFreeStackAllocator(thread->allocator);
+    FbleFreeProfileThread(thread->profile);
+    FbleFree(thread);
   }
 }
 
@@ -152,8 +138,6 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
   FbleThread* main_thread = FbleAlloc(FbleThread);
   main_thread->stack = NULL;
   main_thread->allocator = FbleNewStackAllocator();
-  main_thread->parent = NULL;
-  main_thread->children = 0;
   main_thread->profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
   FbleVectorAppend(threads, main_thread);
 
@@ -163,7 +147,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
   while (threads.size > 0) {
     for (size_t i = 0; i < threads.size; ++i) {
       FbleThread* thread = threads.xs[i];
-      FbleExecStatus status = RunThread(heap, &threads, thread);
+      FbleExecStatus status = RunThread(heap, thread);
       switch (status) {
         case FBLE_EXEC_CONTINUED: {
           UNREACHABLE("unexpected status");
@@ -174,9 +158,6 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
           assert(thread->stack == NULL);
           FbleFreeStackAllocator(thread->allocator);
           FbleFreeProfileThread(thread->profile);
-          if (thread->parent != NULL) {
-            thread->parent->children--;
-          }
           FbleFree(thread);
 
           threads.xs[i] = threads.xs[threads.size - 1];

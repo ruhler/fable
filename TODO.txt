@@ -1,7 +1,11 @@
 * Remove processes from language
- - Remove processes from implementation and clean up.
- - Remove unused process code as guided by code coverage.
+ - Remove threads argument to RunThread, FbleRunFunction
+ - Remove pc jump tables in functions?
+ - Remove FbleThread parent and children fields.
+ - Remove FbleThreadV.
+ - Rename FbleThreadCall, TailCall, and Return to just FbleCall, etc.
  - Remove multithreading logic from profiling code.
+ - Do a code review to catch any remaining process related code.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.

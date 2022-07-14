@@ -61,15 +61,11 @@ typedef enum {
 //
 // Fields:
 //   stack - the execution stack.
-//   parent - the parent of this thread, NULL for the initial thread.
-//   children - the number of child threads.
 //   profile - the profile thread associated with this thread. May be NULL to
 //             disable profiling.
 typedef struct FbleThread {
   FbleStack* stack;
   FbleStackAllocator* allocator;
-  struct FbleThread* parent;
-  size_t children;
   FbleProfileThread* profile;
 } FbleThread;
 
@@ -137,7 +133,6 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
 //
 // Inputs:
 //   heap - the value heap.
-//   threads - the thread list, for forking new threads.
 //   thread - the thread to run.
 //
 // Results:
@@ -146,7 +141,7 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
 // Side effects:
 // * The fble function on the top of the thread stack is executed, updating
 //   its stack.
-typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread);
+typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThread* thread);
 
 // FbleAbortFunction --
 //   A C function to abort and clean up the fble function on the top of the
