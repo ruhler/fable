@@ -12,22 +12,29 @@
 @ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
+@ Test@ = /Core/Test%.Test@;
+@ TestResult@ = /Core/Test%.TestResult@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-(Main@, String@) { Unit@; } RunBench = (Main@ game, String@ n) {
+(Main@, String@)(Unit@) { TestResult@; }
+RunBench = (Main@ game, String@ n)(Unit@ _) {
   Stdio@<Pure@> stdio = @(
     in: Nothing<String@>,
     out: (String@ _) { Unit; },
     err: (String@ _) { Unit; });
-  game<Pure@>(Monad, stdio, List<String@>[n]).true;
+  Unit@ result = game<Pure@>(Monad, stdio, List<String@>[n]).true;
+  AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, result);
 };
 
 # Benchmark for the benchmark games that takes about 1 minute to run.
-Unit@! Bench = {
-  Unit@ _pidigits := !(RunBench(/Games/BenchmarkGame/PiDigits%.Main, Str|22));
-  Unit@ _binarytrees := !(RunBench(/Games/BenchmarkGame/BinaryTrees%.Main, Str|14));
-  !(Unit);
-};
+Test@ Bench = TestSuite(Str|BenchmarkGame, List<Test@>[
+  Test(Str|PiDigits, RunBench(/Games/BenchmarkGame/PiDigits%.Main, Str|22)),
+  Test(Str|BinaryTrees, RunBench(/Games/BenchmarkGame/BinaryTrees%.Main, Str|14))]
+);
 
 @(Bench);

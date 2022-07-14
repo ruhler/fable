@@ -4,15 +4,21 @@
 
 <@>% Just = /Core/Maybe%.Just;
 
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
 @ Result@ = /Sat/Sat%.Result@;
 % Solve = /Sat/Sat%.Solve;
 
-Unit@! Bench = {
-  Result@ solved := !(Solve(/Sat/Aim%, Just<Int@>(Int|400)));
-  !(Unit);
-};
+Test@ Bench = Test(Str|Sat, (Unit@ _) {
+  Result@ solved = Solve(/Sat/Aim%, Just<Int@>(Int|400));
+  AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, solved.timeout);
+});
 
 @(Bench);

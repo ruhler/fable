@@ -63,9 +63,9 @@ Test@ Tests = TestSuite(Str|TicTacToe, List<Test@>[
 ]);
 
 # Benchmark for TicTacToe AI that takes about 1 minute to run.
-Unit@! Bench = !({
+Test@ Bench = Test(Str|TicTacToe, (Unit@ _) {
   AIR@ _ = AI.Move(AI.Initial, EmptyBoard, Player@(X: Unit));
-  Unit;
+  TestResult@(pass: Unit);
 });
 
 @(Tests, Bench);

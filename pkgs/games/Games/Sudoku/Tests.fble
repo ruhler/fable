@@ -247,13 +247,18 @@ Test@ Tests = TestSuite(Str|Sudoku, List<Test@>[
   })
 ]);
 
-Unit@! Bench = {
-  Solved@ sample := !(Solve(SampleInput).just);
-  Solved@ easy := !(Solve(EasyInput).just);
-  Solved@ medium := !(Solve(MediumInput).just);
-  Solved@ hard := !(Solve(HardInput).just);
-  Solved@ expert := !(Solve(ExpertInput).just);
-  !(Unit);
+(Input@)(Unit@) { TestResult@; }
+BenchTest = (Input@ input)(Unit@ _) {
+  Solved@ _ = Solve(input).just;
+  TestResult@(pass: Unit);
 };
+
+Test@ Bench = TestSuite(Str|Sudoku, List<Test@>[
+  Test(Str|Sample, BenchTest(SampleInput)),
+  Test(Str|Easy, BenchTest(EasyInput)),
+  Test(Str|Medium, BenchTest(MediumInput)),
+  Test(Str|Hard, BenchTest(HardInput)),
+  Test(Str|Expert, BenchTest(ExpertInput))]
+);
 
 @(Tests, Bench);
