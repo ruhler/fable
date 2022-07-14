@@ -151,12 +151,6 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
       break;
     }
 
-    case FBLE_PROC_TYPE: {
-      FbleProcType* pt = (FbleProcType*)type;
-      Ref(callback, pt->type);
-      break;
-    }
-
     case FBLE_POLY_TYPE: {
       FblePolyType* pt = (FblePolyType*)type;
       Ref(callback, pt->arg);
@@ -214,7 +208,6 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
       return;
     }
 
-    case FBLE_PROC_TYPE: return;
     case FBLE_POLY_TYPE: return;
     case FBLE_POLY_APPLY_TYPE: return;
 
@@ -270,7 +263,6 @@ static FbleType* Normal(FbleTypeHeap* heap, FbleType* type, TypeIdList* normaliz
   switch (type->tag) {
     case FBLE_DATA_TYPE: return FbleRetainType(heap, type);
     case FBLE_FUNC_TYPE: return FbleRetainType(heap, type);
-    case FBLE_PROC_TYPE: return FbleRetainType(heap, type);
 
     case FBLE_POLY_TYPE: {
       FblePolyType* poly = (FblePolyType*)type;
@@ -374,11 +366,6 @@ static bool HasParam(FbleType* type, FbleType* param, TypeList* visited)
         }
       }
       return HasParam(ft->rtype, param, &nv);
-    }
-
-    case FBLE_PROC_TYPE: {
-      FbleProcType* ut = (FbleProcType*)type;
-      return HasParam(ut->type, param, &nv);
     }
 
     case FBLE_POLY_TYPE: {
@@ -495,18 +482,6 @@ static FbleType* Subst(FbleTypeHeap* heap, FbleType* type, FbleType* param, Fble
       }
 
       return &sft->_base;
-    }
-
-    case FBLE_PROC_TYPE: {
-      FbleProcType* ut = (FbleProcType*)type;
-      FbleType* body = Subst(heap, ut->type, param, arg, tps);
-
-      FbleProcType* sut = FbleNewType(heap, FbleProcType, FBLE_PROC_TYPE, ut->_base.loc);
-      sut->_base.id = ut->_base.id;
-      sut->type = body;
-      FbleTypeAddRef(heap, &sut->_base, sut->type);
-      FbleReleaseType(heap, sut->type);
-      return &sut->_base;
     }
 
     case FBLE_POLY_TYPE: {
@@ -742,15 +717,6 @@ static bool TypesEqual(FbleTypeHeap* heap, FbleTypeAssignmentV vars, FbleType* a
       return result;
     }
 
-    case FBLE_PROC_TYPE: {
-      FbleProcType* uta = (FbleProcType*)a;
-      FbleProcType* utb = (FbleProcType*)b;
-      bool result = TypesEqual(heap, vars, uta->type, utb->type, &neq);
-      FbleReleaseType(heap, a);
-      FbleReleaseType(heap, b);
-      return result;
-    }
-
     case FBLE_POLY_TYPE: {
       FblePolyType* pta = (FblePolyType*)a;
       FblePolyType* ptb = (FblePolyType*)b;
@@ -839,7 +805,6 @@ FbleKind* FbleGetKind(FbleType* type)
   switch (type->tag) {
     case FBLE_DATA_TYPE:
     case FBLE_FUNC_TYPE:
-    case FBLE_PROC_TYPE:
     case FBLE_PACKAGE_TYPE:
     case FBLE_ABSTRACT_TYPE: {
       FbleBasicKind* kind = FbleAlloc(FbleBasicKind);
@@ -1249,13 +1214,6 @@ void FblePrintType(FbleType* type)
       fprintf(stderr, ") { ");
       FblePrintType(ft->rtype);
       fprintf(stderr, "; }");
-      return;
-    }
-
-    case FBLE_PROC_TYPE: {
-      FbleProcType* ut = (FbleProcType*)type;
-      FblePrintType(ut->type);
-      fprintf(stderr, "!");
       return;
     }
 

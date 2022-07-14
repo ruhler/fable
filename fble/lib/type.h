@@ -18,7 +18,6 @@
 typedef enum {
   FBLE_DATA_TYPE,
   FBLE_FUNC_TYPE,
-  FBLE_PROC_TYPE,
   FBLE_POLY_TYPE,
   FBLE_POLY_APPLY_TYPE,
   FBLE_PACKAGE_TYPE,
@@ -79,12 +78,6 @@ typedef struct {
   FbleTypeV args;
   FbleType* rtype;
 } FbleFuncType;
-
-// FbleProcType -- FBLE_PROC_TYPE
-typedef struct {
-  FbleType _base;
-  FbleType* type;
-} FbleProcType;
 
 // FblePackageType --
 //   FBLE_PACKAGE_TYPE
