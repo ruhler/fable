@@ -18,7 +18,8 @@
 //
 // Fields:
 //   func - the function being executed at this frame of the stack.
-//   pc - the next instruction in func->code to execute.
+//   pc - the next instruction in the function to execute. It's up to the
+//        function definition to prescribe meaning to this value.
 //   result - where to store the result of executing the current frame.
 //   tail - the next frame down in the stack.
 //   locals - array of local variables. Size is func->executable->locals.
@@ -121,8 +122,7 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleValue* func, FbleValue** args, 
 void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result);
 
 // FbleRunFunction --
-//   A C function to run the fble function on the top of the thread stack to
-//   completion or until it can no longer make progress.
+//   A C function to run the fble function on the top of the thread stack.
 //
 // Inputs:
 //   heap - the value heap.

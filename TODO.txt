@@ -1,10 +1,8 @@
 * Remove processes from language
- - Remove threads argument to RunThread, FbleRunFunction
  - Remove pc jump tables in functions?
- - Remove FbleThreadV.
- - Rename FbleThreadCall, TailCall, and Return to just FbleCall, etc.
- - Remove multithreading logic from profiling code.
- - Do a code review to catch any remaining process related code.
+ - Remove multithreading logic from profiling code?
+   - Remove FBLE_ROOT_BLOCK_ID? FbleNewProfileThread? FbleForkProfileThread?
+   - Or just leave as is, because it's a nice feature to support?
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.

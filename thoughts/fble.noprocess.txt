@@ -811,3 +811,8 @@ Let's try that to start.
 I think all the uses of processes in fble code are gone now. Time to start
 gutting things.
 
+---
+
+And things are now gutted. That's almost 4.5K lines of code removed.
+
+Note: I didn't need the magic type T yet. Interesting? Should we add that?
