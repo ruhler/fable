@@ -1,10 +1,12 @@
 * Remove processes from language
- - Remove FbleExec API.
  - Remove FbleIsProcValue API.
  - Remove FbleNewOutputPortValue and FbleNewInputPortValue APIs.
+ - Remove FbleNewLinkValue API.
  - Remove processes from implementation and clean up.
  - Remove TODOs related to processes.
- - Remove FORK, EXEC, and other proc related instructions.
+ - Remove FORK, LINK, JOIN, EXEC, and other proc related instructions.
+ - Remove unused process code as guided by code coverage.
+ - Remove multithreading logic from profiling code.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.

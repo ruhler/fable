@@ -703,16 +703,6 @@ FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFu
   return FbleNewFuncValue(heap, &exec->_base, 0, NULL);
 }
 
-// FbleIsProcValue -- see documentation in fble-value.h
-bool FbleIsProcValue(FbleValue* value)
-{
-  if (!PACKED(value)) {
-    FuncValue* proc = (FuncValue*)value;
-    return value->tag == FUNC_VALUE && proc->executable->args == 0;
-  }
-  return false;
-}
-
 // GetRunFunction --
 //   FbleExecutable.run function for Get value.
 //
@@ -892,18 +882,6 @@ static FbleValue* NewGetValue(FbleValueHeap* heap, FbleValue* port, FbleBlockId 
   return FbleNewFuncValue(heap, &executable, profile, statics);
 }
 
-// FbleNewInputPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile)
-{
-  PortValue* get_port = NewValue(heap, PortValue);
-  get_port->_base.tag = PORT_VALUE;
-  get_port->data = data;
-
-  FbleValue* get = NewGetValue(heap, &get_port->_base, profile);
-  FbleReleaseValue(heap, &get_port->_base);
-  return get;
-}
-
 // NewPutValue --
 //   Create a new put value for the given link.
 //
@@ -950,17 +928,6 @@ void FbleNewLinkValue(FbleValueHeap* heap, FbleBlockId profile, FbleValue** get,
   *get = NewGetValue(heap, &link->_base, profile);
   *put = NewPutValue(heap, &link->_base, profile + 1);
   FbleReleaseValue(heap, &link->_base);
-}
-
-// FbleNewOutputPortValue -- see documentation in fble-value.h
-FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile)
-{
-  PortValue* port_value = NewValue(heap, PortValue);
-  port_value->_base.tag = PORT_VALUE;
-  port_value->data = data;
-  FbleValue* put = NewPutValue(heap, &port_value->_base, profile);
-  FbleReleaseValue(heap, &port_value->_base);
-  return put;
 }
 
 // FbleNewListValue -- see documentation in value.h

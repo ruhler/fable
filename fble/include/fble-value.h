@@ -252,52 +252,6 @@ typedef FbleValue* (*FbleSimpleFunc)(FbleValueHeap* heap, FbleValue** args);
 //   longer in use.
 FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFunc impl, FbleBlockId profile);
 
-// FbleIsProcValue --
-//   Returns true if the value represents a process value.
-//
-// Inputs:
-//   value - the value to check.
-//
-// Results:
-//   true if the value is a proc value, false otherwise.
-//
-// Side effects:
-//   none.
-bool FbleIsProcValue(FbleValue* value);
-
-// FbleNewInputPortValue --
-//   Create a new input port value with given id.
-//
-// Inputs:
-//   heap - the heap to allocate the value on.
-//   data - a pointer to where the input data will be communicated.
-//   profile - a profile block id to use when getting from the input port.
-//
-// Results:
-//   A newly allocated port value.
-//
-// Side effects:
-//   The returned port value must be freed using FbleReleaseValue when no
-//   longer in use.
-FbleValue* FbleNewInputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile);
-
-// FbleNewOutputPortValue --
-//   Create a new output port value with given id.
-//
-// Inputs:
-//   heap - the heap to allocate the value on.
-//   data - a pointer to where the output data will be communicated.
-//   profile - the first of two consecutive profile block ids to use for when
-//             applying an arg to the port to put, and for executing the put.
-//
-// Results:
-//   A newly allocated port value.
-//
-// Side effects:
-//   The returned port value must be freed using FbleReleaseValue when no
-//   longer in use.
-FbleValue* FbleNewOutputPortValue(FbleValueHeap* heap, FbleValue** data, FbleBlockId profile);
-
 // FbleEval --
 //   Evaluate a linked program. The program is assumed to be a zero argument
 //   function as returned by FbleLink.
