@@ -11,8 +11,13 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
 @ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
 % H2 = /Md5/Bits%.Bit8.H2;
@@ -36,9 +41,9 @@ M@<Maybe@<Bit8@>> Get = {
 };
     
 # Benchmark for md5 sum that takes about 1 minute to run.
-Unit@! Bench = {
-  R@<Hash@> md5 := !(Md5<M@>(Monad, Get)(Int|60000));
-  !(Unit);
-};
+Test@ Bench = Test(Str|Md5, (Unit@ _) {
+  R@<Hash@> md5 = Md5<M@>(Monad, Get)(Int|60000);
+  AssertEquals(/Md5/Hash%.Eq, /Md5/Hash%.Show, md5.x, md5.x);
+});
 
 @(Bench);

@@ -4,12 +4,16 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-@ Unit@ = /Core/Unit%.Unit@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+
 % Unit = /Core/Unit%.Unit;
 
-Unit@! Bench = /App/Benchmark%.Benchmark(
+Test@ Bench = Test(Str|GameOfLife, /App/Benchmark%.Benchmark(
   # The GameOfLife App is set to run for 200 iterations. Use a little less
   # than that for the benchmark to avoid deadlock.
-  /Games/GameOfLife/App%, Int|180, Event@(key_down: Key@(q: Unit)));
+  /Games/GameOfLife/App%, Int|180, Event@(key_down: Key@(q: Unit))));
 
 @(Bench);

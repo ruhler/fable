@@ -4,12 +4,16 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-@ Unit@ = /Core/Unit%.Unit@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+
 % Unit = /Core/Unit%.Unit;
 
 # The number of iterations is chosen so that the benchmark takes on the
 # order of 1 minute to run. The target goal is 60 frames a second.
-Unit@! Bench = /App/Benchmark%.Benchmark(
-  /Pinball/App%, Int|720, Event@(key_down: Key@(q: Unit)));
+Test@ Bench = Test(Str|Pinball, /App/Benchmark%.Benchmark(
+  /Pinball/App%, Int|720, Event@(key_down: Key@(q: Unit))));
 
 @(Bench);

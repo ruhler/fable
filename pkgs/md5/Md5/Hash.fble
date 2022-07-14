@@ -3,12 +3,20 @@
 % And = /Core/Bool%.And;
 % True = /Core/Bool%.True;
 
+@ Char@ = /Core/Char%.Char@;
+
 @ Hex@ = /Core/Digits%.Hex@;
 % Hex = /Core/Digits%.Hex;
 % 0 = Hex.0;
 
 <@>% List = /Core/List%.List;
 <@,@>% ForEach = /Core/List%.ForEach;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
+
+% Unit = /Core/Unit%.Unit;
 
 % H2 = /Md5/Bits%.Bit8.H2;
 
@@ -36,4 +44,24 @@
     True, And);
 };
 
-@(Hash@, Eq);
+(Hex@) { Char@; } Hex2Char = (Hex@ h) {
+  h.?(
+    0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),
+    4: Char@(4: Unit), 5: Char@(5: Unit), 6: Char@(6: Unit), 7: Char@(7: Unit),
+    8: Char@(8: Unit), 9: Char@(9: Unit), A: Char@(A: Unit), B: Char@(B: Unit),
+    C: Char@(C: Unit), D: Char@(D: Unit), E: Char@(E: Unit), F: Char@(F: Unit));
+};
+
+(Hash@){ String@; } Show = (Hash@ x) {
+  Strs[
+      Str[Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)],
+      Str[Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)],
+      Str[Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)],
+      Str[Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)],
+      Str[Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)],
+      Str[Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)],
+      Str[Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)],
+      Str[Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)]];
+};
+
+@(Hash@, Eq, Show);

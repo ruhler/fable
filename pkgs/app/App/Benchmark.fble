@@ -10,6 +10,9 @@
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
+@ TestResult@ = /Core/Test%.TestResult@;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
@@ -30,7 +33,8 @@ Monad@<M@> Monad = State.Monad;
 #   app - the app to benchmark.
 #   n - the number of iterations to run the benchmark.
 #   quit - an event that will cause the app to quit when sent to the app.
-(Main@, Int@, Event@) { Unit@!; } Benchmark = (Main@ app, Int@ n, Event@ quit) {
+(Main@, Int@, Event@)(Unit@) { TestResult@; }
+Benchmark = (Main@ app, Int@ n, Event@ quit)(Unit@ _) {
   Int@ w = Int|640;
   Int@ h = Int|480;
 
@@ -45,8 +49,8 @@ Monad@<M@> Monad = State.Monad;
     Monad.return(Unit);
   };
 
-  R@<Unit@> _ := !(app<M@>(Monad, App@<M@>(Event, Effect), w, h)(n));
-  !(Unit);
+  R@<Unit@> r = app<M@>(Monad, App@<M@>(Event, Effect), w, h)(n);
+  AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, r.x, r.x);
 };
 
 @(Benchmark);

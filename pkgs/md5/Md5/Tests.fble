@@ -2,8 +2,6 @@
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
 % H2 = /Md5/Bits%.Bit8.H2;
 
-@ Char@ = /Core/Char%.Char@;
-
 @ Hex@ = /Core/Digits%.Hex@;
 % HexStr = /Core/Digits/String%.HexStr;
 
@@ -11,7 +9,6 @@
 <@>% Cons = /Core/List%.Cons;
 <@>% Nil = /Core/List%.Nil;
 <@>% List = /Core/List%.List;
-<@>% Concat = /Core/List%.Concat;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
@@ -21,6 +18,7 @@
 
 @ Hash@ = /Md5/Hash%.Hash@;
 % Eq = /Md5/Hash%.Eq;
+% Show = /Md5/Hash%.Show;
 
 <<@>@>% Md5 = /Md5/Md5%.Md5;
 
@@ -33,32 +31,10 @@
 <@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 # Import to test compilation.
 % _ = /Md5/Bench%;
 % _ = /Md5/Main%;
-
-(Hex@) { Char@; } Hex2Char = (Hex@ h) {
-  h.?(
-    0: Char@(0: Unit), 1: Char@(1: Unit), 2: Char@(2: Unit), 3: Char@(3: Unit),
-    4: Char@(4: Unit), 5: Char@(5: Unit), 6: Char@(6: Unit), 7: Char@(7: Unit),
-    8: Char@(8: Unit), 9: Char@(9: Unit), A: Char@(A: Unit), B: Char@(B: Unit),
-    C: Char@(C: Unit), D: Char@(D: Unit), E: Char@(E: Unit), F: Char@(F: Unit));
-};
-
-(Hash@){String@;} Md5Hash2Str = (Hash@ x) {
-  Concat<Char@>(
-    List<String@>[
-      Str[Hex2Char(x.0), Hex2Char(x.1), Hex2Char(x.2), Hex2Char(x.3)],
-      Str[Hex2Char(x.4), Hex2Char(x.5), Hex2Char(x.6), Hex2Char(x.7)],
-      Str[Hex2Char(x.8), Hex2Char(x.9), Hex2Char(x.10), Hex2Char(x.11)],
-      Str[Hex2Char(x.12), Hex2Char(x.13), Hex2Char(x.14), Hex2Char(x.15)],
-      Str[Hex2Char(x.16), Hex2Char(x.17), Hex2Char(x.18), Hex2Char(x.19)],
-      Str[Hex2Char(x.20), Hex2Char(x.21), Hex2Char(x.22), Hex2Char(x.23)],
-      Str[Hex2Char(x.24), Hex2Char(x.25), Hex2Char(x.26), Hex2Char(x.26)],
-      Str[Hex2Char(x.28), Hex2Char(x.29), Hex2Char(x.30), Hex2Char(x.31)]]);
-};
 
 # A Hash literal. It should consist of 32 hex digits.
 (List@<Hex@>) { Hash@; } Hash = (List@<Hex@> s00) {
@@ -129,7 +105,7 @@ M@<Maybe@<Bit8@>> Get = {
 (String@, Hash@, List@<Hex@>) { Test@; } TestStr = (String@ name, Hash@ wnt, List@<Hex@> bytes) {
   Test(name, (Unit@ _) {
     Hash@ got = Md5Str(Hex2Bytes(bytes));
-    AssertEquals<Hash@>(Eq, Md5Hash2Str, wnt, got);
+    AssertEquals<Hash@>(Eq, Show, wnt, got);
   });
 };
 

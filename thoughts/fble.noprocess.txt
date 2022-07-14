@@ -799,3 +799,9 @@ What grep says about what's next:
 
 That's it. Just need to figure those out and we should be all set.
 
+How about we reuse the Test@ infrastructure for benchmarks? You get names. It
+prints out the names incrementally. You can collect them together into suites.
+You can run them all or not? We could write a benchmark running if we wanted
+to that lets you pick which benchmark you want to run.
+
+Let's try that to start.

@@ -4,12 +4,16 @@
 
 % Int = /Core/Int/Lit%.Int;
 
-@ Unit@ = /Core/Unit%.Unit@;
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+
 % Unit = /Core/Unit%.Unit;
 
-Unit@! Bench = /App/Benchmark%.Benchmark(
+Test@ Bench = Test(Str|Snake, /App/Benchmark%.Benchmark(
   # 1300 is around the number of iterations the Snake app runs for. Don't try
   # to run more, otherwise we could get deadlock.
-  /Games/Snake%, Int|1300, Event@(key_down: Key@(q: Unit)));
+  /Games/Snake%, Int|1300, Event@(key_down: Key@(q: Unit))));
 
 @(Bench);
