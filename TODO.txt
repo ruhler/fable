@@ -1,7 +1,6 @@
 * Remove processes from language
  - Remove threads argument to RunThread, FbleRunFunction
  - Remove pc jump tables in functions?
- - Remove FbleThread parent and children fields.
  - Remove FbleThreadV.
  - Rename FbleThreadCall, TailCall, and Return to just FbleCall, etc.
  - Remove multithreading logic from profiling code.

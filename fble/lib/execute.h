@@ -69,13 +69,6 @@ typedef struct FbleThread {
   FbleProfileThread* profile;
 } FbleThread;
 
-// FbleThreadV --
-//   A vector of threads.
-typedef struct {
-  size_t size;
-  FbleThread** xs;
-} FbleThreadV;
-
 // FbleThreadCall --
 //   Push a frame onto the execution stack.
 //
