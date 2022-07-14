@@ -53,7 +53,6 @@ typedef struct FbleStack {
 typedef enum {
   FBLE_EXEC_CONTINUED,      // The function requires a continuation to be run.
   FBLE_EXEC_FINISHED,       // The function/thread has finished running.
-  FBLE_EXEC_BLOCKED,        // The thread is blocked on I/O.
   FBLE_EXEC_ABORTED,        // Execution needs to be aborted.
 } FbleExecStatus;
 
@@ -140,8 +139,6 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
 //   heap - the value heap.
 //   threads - the thread list, for forking new threads.
 //   thread - the thread to run.
-//   io_activity - set to true if the thread does any i/o activity that could
-//                 unblock another thread.
 //
 // Results:
 //   The status of running the function.
@@ -149,9 +146,7 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
 // Side effects:
 // * The fble function on the top of the thread stack is executed, updating
 //   its stack.
-// * io_activity is set to true if the thread does any i/o activity that could
-//   unblock another thread.
-typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
+typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread);
 
 // FbleAbortFunction --
 //   A C function to abort and clean up the fble function on the top of the

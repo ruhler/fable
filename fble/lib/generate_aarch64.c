@@ -38,7 +38,6 @@ typedef struct {
   void* heap;
   void* threads;
   void* thread;
-  void* io_activity;
   void* r_heap_save;
   void* r_locals_save;
   void* r_statics_save;
@@ -46,7 +45,6 @@ typedef struct {
   void* r_profile_base_id_save;
   void* r_scratch_0_save;
   void* r_scratch_1_save;
-  void* padding;
 } RunStackFrame;
 
 // AbortStackFrame --
@@ -776,7 +774,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         fprintf(fout, "  mov x0, R_HEAP\n");
         fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, threads));
         fprintf(fout, "  ldr x2, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-        fprintf(fout, "  ldr x3, [SP, #%zi]\n", offsetof(RunStackFrame, io_activity));
         fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
         fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
         fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
@@ -812,7 +809,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, threads));
       fprintf(fout, "  ldr x2, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-      fprintf(fout, "  ldr x3, [SP, #%zi]\n", offsetof(RunStackFrame, io_activity));
       fprintf(fout, "  blr x4\n");               // call run function
       fprintf(fout, "  cmp x0, %i\n", FBLE_EXEC_CONTINUED);
       fprintf(fout, "  b.eq .L._Run_.%p.call.%zi\n", code, pc);
@@ -992,7 +988,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  str x0, [SP, #%zi]\n", offsetof(RunStackFrame, heap));
   fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(RunStackFrame, threads));
   fprintf(fout, "  str x2, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-  fprintf(fout, "  str x3, [SP, #%zi]\n", offsetof(RunStackFrame, io_activity));
 
   // Save callee saved registers for later restoration.
   fprintf(fout, "  str R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));

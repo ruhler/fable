@@ -2,7 +2,6 @@
  - Remove processes from implementation and clean up.
  - Remove unused process code as guided by code coverage.
  - Remove multithreading logic from profiling code.
- - Remove: ABORT status and abort functions.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.

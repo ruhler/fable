@@ -11,7 +11,7 @@
 //   instructions in its instruction block.
 //
 // See documentation of FbleRunFunction in execute.h.
-FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
+FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread);
 
 // FbleInterpreterAbortFunction --
 //   A standard abort function for interpreted code.

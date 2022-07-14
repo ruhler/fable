@@ -596,7 +596,7 @@ typedef struct {
   FbleSimpleFunc impl;
 } SimpleExecutable;
 
-FbleExecStatus SimpleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
+FbleExecStatus SimpleRunFunction(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread)
 {
   FuncValue* func = (FuncValue*)thread->stack->func;
   SimpleExecutable* exec = (SimpleExecutable*)func->executable;

@@ -18,7 +18,7 @@
 
 static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread);
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
-static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity);
+static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread);
 static void AbortThreads(FbleValueHeap* heap, FbleThreadV* threads);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
@@ -72,21 +72,17 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 //   heap - the value heap.
 //   threads - the thread list, for forking threads.
 //   thread - the thread to run.
-//   io_activity - set to true if the thread does any i/o activity that could
-//                 unblock another thread.
 //
 // Results:
 //   The status of running the thread.
 //
 // Side effects:
 // * The thread is executed, updating its stack.
-// * io_activity is set to true if the thread does any i/o activity that could
-//   unblock another thread.
-static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread, bool* io_activity)
+static FbleExecStatus RunThread(FbleValueHeap* heap, FbleThreadV* threads, FbleThread* thread)
 {
   FbleExecStatus status = FBLE_EXEC_FINISHED;
   while ((status == FBLE_EXEC_FINISHED || status == FBLE_EXEC_CONTINUED) && thread->stack != NULL) {
-    status = FbleFuncValueExecutable(thread->stack->func)->run(heap, threads, thread, io_activity);
+    status = FbleFuncValueExecutable(thread->stack->func)->run(heap, threads, thread);
   }
   return status;
 }
@@ -165,19 +161,16 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
   FbleThreadCall(heap, &result, func, args, main_thread);
 
   while (threads.size > 0) {
-    bool unblocked = false;
     for (size_t i = 0; i < threads.size; ++i) {
       FbleThread* thread = threads.xs[i];
-      FbleExecStatus status = RunThread(heap, &threads, thread, &unblocked);
+      FbleExecStatus status = RunThread(heap, &threads, thread);
       switch (status) {
         case FBLE_EXEC_CONTINUED: {
           UNREACHABLE("unexpected status");
-          unblocked = true;
           break;
         }
 
         case FBLE_EXEC_FINISHED: {
-          unblocked = true;
           assert(thread->stack == NULL);
           FbleFreeStackAllocator(thread->allocator);
           FbleFreeProfileThread(thread->profile);
@@ -189,10 +182,6 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
           threads.xs[i] = threads.xs[threads.size - 1];
           threads.size--;
           i--;
-          break;
-        }
-
-        case FBLE_EXEC_BLOCKED: {
           break;
         }
 
