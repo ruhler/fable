@@ -1361,3 +1361,8 @@ I switched to using a monad for the parser. Observations:
 * I got an error message about unable to infer type. It looked nice to me and
   was legitimate.
 
+---
+
+I've started using this now to replace processes in fble. It's a good
+improvement, and definitely here to stay.
+

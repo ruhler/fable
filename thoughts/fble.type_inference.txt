@@ -45,3 +45,142 @@ Using type inference more, some requests:
 * It's not obvious to me when I should expect type inference to work and when
   not.
 
+---
+
+Type inference is the biggest weakness in the language spec right now, the way
+it treats things inconsistently.
+
+There are two aspects. First is where we want to allow type inference or not.
+The second is how to describe the spec in a nice way with respect to type
+inference.
+
+The first should be easy. We want type inference generally whenever we are
+applying arguments to a polymorphic entity. Because we can use the arguments
+to infer the type of the polymorphic entity. This includes:
+* struct_value_explicit_type
+* union_value
+* func_apply
+* list
+* literal
+* bind
+
+Today we only support it for func_apply and bind, where bind is specified as
+desugaring to func_apply for that. The mechanism we use in the spec for this
+is to define a poly_infer which is the type inference variant of func_apply.
+
+Brainstorm of approaches for doing this in the spec:
+* Add poly variants for all these constructs: 
+  poly_struct_value_explicit_type, poly_union_value, poly_func_apply,
+  poly_list, poly_literal, poly_bind.
+* Add a clause to each of these constructs saying the expr may also be a poly,
+  in which case type inference is used.
+
+I think that's the gist of it. The two approaches are: understand the features
+without polymorphism, then add poly. Or understand the features knowing
+polymorphism. It's mostly about what feature you know about when.
+
+It's hard to explain polymorphism without first explaining structs, unions,
+functions.
+
+Note, for the three syntactic sugars, it's not clear from the language spec if
+they are really syntactic sugars or not. For example, could we use list,
+literal, and bind with a struct type? We should say explicitly, and mention
+about polymorphic inference at that point too.
+
+I guess it all comes down to how these three concepts interact:
+* core types: struct, union, function
+* polymorphism - which spans across syntax elements
+* syntactic sugar - which (maybe?) spans across syntax elements
+
+If I were to describe syntactic sugar, I would say it as: desugar at abstract
+syntax level. That's what you get. Doing the same for polymorphism would be
+talking about polymorphism all at once.
+
+I think it's good to keep polymorphism as a separate concept from core types
+and syntactic sugar. We just need to note somewhere how they all interact.
+
+Do I want to introduce new abstract syntax for poly? Or reuse the original?
+
+Strawman:
+* Define core syntax like we do now.
+* Have a section on type inference that lists struct_value_explicit_type,
+  union_value, and func_apply as where it gets applied. That's clear enough
+  without having to introduce a poly_infer or other abstract syntax.
+* Add a note to syntactic sugar that it happens before desugaring, so things
+  like struct values can be used and poly can be used.
+
+I definitely want poly support for list, literal and bind. Do I need struct
+value support? Why not? I suppose why not would be because it's more effort
+and, honestly, who wants to create a struct value list or literal or bind?
+
+Recap:
+* Define polymorphism and syntactic sugar after core types, by listing
+  abstract syntax nodes where it applies rather than introducing new abstract
+  syntax nodes.
+* Support polymorphism for struct, union, and func apply.
+* Support polymorphism for all the syntactic sugars.
+* Only open question: support struct for the syntactic sugars?
+
+Is there any user downside to supporting struct for the syntactic sugars?
+Maybe just the potential for an error, but that's pretty low because you need
+a pretty specific struct type before you could accidentally do a syntactic
+sugar you don't mean to.
+
+And poly has made it clear we would like it to apply to struct types. So let
+me go out on a limb and say the user will want struct types for syntactic
+sugars.
+
+Okay? Then I have a proposal for how to move forward here. I vote we give it a
+try, do a revision of the spec with this in mind, add tests for the various
+combinations, and do the implementation for various combinations.
+
+Uh, we can also ask whether we want to support abstract_value as a poly
+inference or syntactic sugar. That's stretching in a bit, don't you think?
+
+---
+
+Currently bind is implemented as entirely concrete syntactic sugar. List and
+literal get their own abstract syntax entry, because we want to pass info
+about them all the way down to generated instructions level for efficiency
+purposes. Bind desugaring has basically no overhead, whereas list and literal
+have real overheads because they are O(N) in size.
+
+Based on that, in terms of what we support, I propose:
+* poly: struct, union, func, list, literal, bind
+* list, literal: functions and poly functions only.
+* bind: any matching concrete syntax, including function, struct, and abstract
+  value. And any poly that you can get from the desugared.
+
+The proposed specification:
+* struct, union, func as is.
+* poly - no abstract syntax. Say we do inference on struct, union, func
+  applies.
+* list, literal - say function only, including poly functions.
+* bind - say pure concrete syntactic sugar.
+
+We can note the rationale for bind being treated differently from list and
+literal.
+
+Alternatively, we could restrict bind to function only for consistency with
+list and literal. It just means I have to go out of my way to implement it.
+Admittedly, not that far out of the way. So the tension is between consistency
+of specification and ease of implementation. So let's be consistent, right? Do
+the tiny little bit of extra work on the implementation side to disallow
+non-function bind.
+
+Because, honestly, who is going to create a struct type with a single function
+argument and then use bind syntax for that?
+
+I think I prefer consistency in this case over the weird use case of struct
+bind. And I don't want to allow struct list or literal because we really do
+want list and literal to go down into the depths of the implementation.
+
+Here's a question. If list, literal, and bind are specific to functions,
+should we put them in with the section on functions?
+
+Okay, so they aren't. Because list and literal talk about structs and unions
+too.
+
+If we go this route, then keep list, literal, and bind as abstract syntax. But
+remove poly_infer. Just note that type inference is done in these cases.
+

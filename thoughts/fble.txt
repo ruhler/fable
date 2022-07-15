@@ -27,6 +27,8 @@ Fble Language Thoughts
   I think it would be cool if children were executed fairly. In particular,
   the amount of runtime a child gets is independent of how many children its
   siblings has.
+
+  Note: this is obsolete now that processes have been removed from fble.
   
 * It would be awesome to have a well defined style guide for programming in
   fble. And maybe an automatic re-formatter.
@@ -58,7 +60,7 @@ Fble Language Thoughts
   Where the '?=' means Foo@ is abstract outside the body of the type let.
   Easy. Does it let you split things across submodules?
 
-  See fble.adt.txt
+  See fble.adt.txt. This is fixed now.
 
 * How can we make a fast implementation of the language?
   Like, really fast? This, to me, feels like the single most major fundamental
@@ -70,7 +72,7 @@ Fble Language Thoughts
   - immutable data types
   - automatic memory management
   - closures that capture variables from local scope
-  - light weight multithreading
+  - light weight multithreading (no longer applicable)
 
   See fble.performance.txt and friends.
 
