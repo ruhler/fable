@@ -815,4 +815,5 @@ gutting things.
 
 And things are now gutted. That's almost 4.5K lines of code removed.
 
-Note: I didn't need the magic type T yet. Interesting? Should we add that?
+Note: I didn't need the magic type T yet. Interesting? Should we add that? We
+can follow up in fble.dynamic_types.txt.

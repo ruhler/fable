@@ -958,14 +958,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 // * Outputs code to fout with two space indent.
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
-  // Jump table data for jumping to the right fble pc.
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, ".L._Run_%p.pcs:\n", (void*)code);
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "  .xword .L._Run_%p.pc.%zi\n", (void*)code, i);
-  }
-
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
   FbleName function_block = profile_blocks.xs[code->_base.profile];
@@ -1013,14 +1005,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  mov x0, R_SCRATCH_1\n");
   fprintf(fout, "  bl FbleFuncValueProfileBaseId\n");
   fprintf(fout, "  mov R_PROFILE_BASE_ID, x0\n");
-
-  // Jump to the fble instruction at thread->stack->pc.
-  fprintf(fout, "  ldr x0, [R_SCRATCH_0, #%zi]\n", offsetof(FbleStack, pc));
-  fprintf(fout, "  lsl x0, x0, #3\n");     // x0 = 8 * (thread->stack->pc)
-  Adr(fout, "x1", ".L._Run_%p.pcs", (void*)code); // x1 = pcs
-  fprintf(fout, "  add x0, x0, x1\n");     // x0 = &pcs[thread->stack->pc]
-  fprintf(fout, "  ldr x0, [x0]\n");       // x0 = pcs[thread->stack->pc]
-  fprintf(fout, "  br x0\n");              // goto pcs[thread->stack->pc]
 
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
