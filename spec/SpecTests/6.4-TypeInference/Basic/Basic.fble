@@ -6,6 +6,6 @@ Bool@ False = Bool@(false: Unit@());
 
 <@ T@> (T@) { T@; } Poly = <@ T@> (T@ x) { x; };
 
-# Poly inference means we can apply poly directly and the type parameter will
+# Type inference means we can apply poly directly and the type parameter will
 # be automatically inferred.
 Poly(False).false;

@@ -1,10 +1,8 @@
-* Add tests for type inference
+* Fix failing tests.
  - Struct value does type inference.
  - Union value does type inference.
-
-* Fix failing tests.
- - Restrict bind to (poly) function application.
- - Add type inference for list and literal.
+ - List does type inference.
+ - Literal does type inference.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.

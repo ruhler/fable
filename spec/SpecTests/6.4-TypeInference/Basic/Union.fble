@@ -1,0 +1,10 @@
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ False = Bool@(false: Unit@());
+
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+# Type inference works on union values too.
+Maybe@(just: False).just.false;

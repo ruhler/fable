@@ -1,0 +1,10 @@
+# @@fble-test@@ no-error
+
+@ Unit@ = *();
+@ Bool@ = +(Unit@ true, Unit@ false);
+Bool@ False = Bool@(false: Unit@());
+
+<@>@ Poly@ = <@ T@> { *(T@ x); };
+
+# Type inference works on explicit type struct values too.
+Poly@(False).x.false;
