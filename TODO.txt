@@ -1,7 +1,6 @@
-* Test for updated type inference
- - list supports type inference
- - literal supports type inference
- - bind does not support struct or package type
+* Fix failing tests.
+ - Restrict bind to (poly) function application.
+ - Add type inference for list and literal.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.

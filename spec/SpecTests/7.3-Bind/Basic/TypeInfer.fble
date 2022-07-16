@@ -8,7 +8,7 @@
 @ Bool@ = +(Unit@ true, Unit@ false);
 
 Bool@ x = {
-  # Verify we can use bind syntax with poly inference, where the return type is
+  # Verify we can use bind syntax with type inference, where the return type is
   # inferred from the type of the function being applied.
   Unit@ u <- Apply;
   Bool@(true: u);

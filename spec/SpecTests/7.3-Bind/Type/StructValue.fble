@@ -1,4 +1,4 @@
-# @@fble-test@@ no-error
+# @@fble-test@@ compile-error 11:14
 @ Unit@ = *();
 @ Bool@ = +(Unit@ true, Unit@ false);
 Bool@ True = Bool@(true: Unit@());
@@ -7,8 +7,7 @@ Bool@ False = Bool@(false: Unit@());
 @ Foo@ = *((Bool@) { Bool@; } f);
 
 Foo@ x = {
-  # Verify we can use bind syntax with struct value. It's a funny case, but
-  # it's legal according to the spec.
+  # You can't use a struct type as the bind function.
   Bool@ x <- Foo@;
   x.?(true: False, false: True);
 };
