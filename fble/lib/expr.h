@@ -275,10 +275,14 @@ typedef struct {
 //   FBLE_MISC_APPLY_EXPR (misc :: Expr) (args :: [Expr])
 //   FBLE_STRUCT_VALUE_EXPLICIT_TYPE_EXPR (type :: Type) (args :: [Expr])
 //   FBLE_FUNC_APPLY_EXPR (func :: Expr) (args :: [Expr])
+//
+// The 'bind' field is set to true if this application originated from the
+// bind syntax. False otherwise.
 typedef struct {
   FbleExpr _base;
   FbleExpr* misc;
   FbleExprV args;
+  bool bind;
 } FbleApplyExpr;
 
 // FbleDataAccessExpr --

@@ -339,6 +339,7 @@ expr:
       apply_expr->_base.loc = FbleCopyLoc(@$);
       apply_expr->misc = $1;
       apply_expr->args = $3;
+      apply_expr->bind = false;
       $$ = &apply_expr->_base;
    }
  | '@' '(' implicit_tagged_expr_s ')' {
@@ -506,6 +507,7 @@ stmt:
       apply_expr->_base.tag = FBLE_MISC_APPLY_EXPR;
       apply_expr->_base.loc = FbleCopyLoc(@$);
       apply_expr->misc = $4;
+      apply_expr->bind = true;
       FbleVectorInit(apply_expr->args);
       FbleVectorAppend(apply_expr->args, &func_value_expr->_base);
       $$ = &apply_expr->_base;

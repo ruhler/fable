@@ -1,3 +1,7 @@
+* Add tests for type inference
+ - Struct value does type inference.
+ - Union value does type inference.
+
 * Fix failing tests.
  - Restrict bind to (poly) function application.
  - Add type inference for list and literal.

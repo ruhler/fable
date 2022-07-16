@@ -1626,7 +1626,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         return FuncApply(th, scope, misc, (FbleFuncType*)normal, argc, args, expr->loc);
       }
 
-      if (normal->tag == FBLE_TYPE_TYPE) {
+      if (!apply_expr->bind && normal->tag == FBLE_TYPE_TYPE) {
         FbleTypeType* type_type = (FbleTypeType*)normal;
         FbleType* vtype = FbleRetainType(th, type_type->type);
 
@@ -1834,9 +1834,14 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         FbleFree(vars.xs);
       }
 
-      ReportError(expr->loc,
-          "cannot apply arguments to something of type %t\n",
-          misc.type);
+      if (apply_expr->bind) {
+        ReportError(apply_expr->misc->loc,
+            "invalid type for bind function: %t\n", misc.type);
+      } else {
+        ReportError(expr->loc,
+            "cannot apply arguments to something of type %t\n",
+            misc.type);
+      }
       FreeTc(th, misc);
       FbleReleaseType(th, normal);
       for (size_t i = 0; i < argc; ++i) {
