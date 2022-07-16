@@ -1,5 +1,7 @@
-* Revise language spec for type inference 
- - Update tests and implementation as needed to satisfy the new spec.
+* Test for updated type inference
+ - list supports type inference
+ - literal supports type inference
+ - bind does not support struct or package type
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.
@@ -9,8 +11,6 @@
 
 * Add tests that at least the compiled apps don't crash when you run them.
 * Why does /Core/Test% export String@? Is that needed?
-* Should we do type inference on List[Str|a, Str|b]? Why can't it figure that
-  out?
 * Fix vim syntax highlighting for <<@>@ M@>
   The leading '<' shouldn't be colored, because it's not part of the kind.
 * Add mouse button support to App.

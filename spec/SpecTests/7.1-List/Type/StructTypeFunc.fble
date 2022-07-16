@@ -1,0 +1,12 @@
+# @@fble-test@@ compile-error 12:1
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
+@ StructType@ = *(L@ list);
+
+# A struct type cannot be used for a list function.
+StructType@[Enum@(B: Unit), Enum@(A: Unit), Enum@(C: Unit)];
