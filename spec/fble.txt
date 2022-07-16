@@ -566,7 +566,7 @@ variables referenced in the body of the function are captured by the function.
 5.3 Function Application
 ------------------------
 Abstract Syntax:
-  Expr ::= apply (func :: Expr) (args :: [Expr])
+  Expr ::= func_apply (func :: Expr) (args :: [Expr])
 
 Concrete Syntax:
   expr ::= expr '(' expr [',' expr [...]] ')'
@@ -668,25 +668,20 @@ The runtime of a poly application is linear in the number of arguments plus
 the runtime of the poly. Unlike function application, poly application does
 not cause the body of the poly to be re-evaluated.
 
-6.4 Poly Inference
+6.4 Type Inference
 ------------------
-Abstract syntax:
-  Expr ::= poly_infer (poly :: Expr) (args :: [Expr])
+Type inference allows you to use poly values in place of struct types, union
+types, and function values in struct_value_explicit_type, union_value, and
+func_apply respectively. The type arguments of the poly are inferred and
+automatically applied by the compiler based on the types of the arguments to
+the struct_value_explicit_type, union_value, or func_apply.
 
-Concrete syntax:
-  expr ::= expr '(' expr [',' expr [...]] ')'
-
-Examples:
-  fromJust(3)
-
-Poly inference is a function application where the type arguments of the poly
-are inferred by the compiler based on the types of the function arguments.
-Using the example above, where the type of fromJust is:
+For example, assume you have a polymorphic function fromJust of type:
 
   <@ T@>(T@) { Maybe@<T@>; }
 
-Assuming the type of 3 is Int@, the expression fromJust(3) is rewritten by the
-compiler to fromJust<Int@>(3).
+Assuming the type of 3 is Int@, the func_apply expression fromJust(3) is
+rewritten by the compiler to fromJust<Int@>(3).
 
 The motivation for supporting type inference is to prevent cluttering the code
 with types that are otherwise straight forward to infer. This is particularly
@@ -698,12 +693,13 @@ It is a type error if the compiler is unable to unambiguously infer all the
 type parameters to the poly based on the arguments. For example, it would be
 impossible to infer type arguments to a poly with either of the following
 types:
+
   <@ T@>(Unit@) { T@; }
   <@ T@, @ M@>(M@<T@>) { M@<T@>; }
 
 The type and runtime behavior of a poly inference expression is the same as
 the type and runtime behavior of the target combined poly application and
-function application expressions.
+struct_value_explicit_type/union_value/func_apply expression.
 
 7. Syntactic Sugar
 ------------------
@@ -753,6 +749,13 @@ some type V@, is desugared to:
 Each argument to the list expression must have a type E@ matching the element
 type of the list type L@ expected by the function f.
 
+The function provided in the list expression may be a polymorphic function
+value, in which case type inference is performed as with func_apply
+expressions.
+
+Struct types and package types cannot be used for the function in list syntax,
+even though they share a similar concrete syntax to function application.
+
 The motivation for requiring a function to be supplied as part of the list
 expression, instead of having stand alone list expressions like [a, b, c], is:
 * It allows the user to specify what type of list to build instead of assuming
@@ -793,6 +796,14 @@ to f is E@, is desugared to:
 
 It is a type error if the word contains a letter for which there is no
 corresponding field in the element type E@.
+
+The function provided in the literal expression may be a polymorphic function
+value, in which case type inference is performed as with func_apply
+expressions.
+
+Struct types and package types cannot be used for the function in literal
+syntax, even though they share a similar concrete syntax to function
+application.
 
 7.2.1 Example
 -------------
@@ -845,7 +856,7 @@ Example:
 Bind is syntactic sugar for calling a function with an anonymous function as
 its only argument. It is equivalent to:
 
-  apply func (func_value args [body])
+  func_apply func (func_value args [body])
 
 For example, the expression:
 
@@ -895,9 +906,12 @@ You can write:
 
 Which more clearly separates the glue logic from the meat of the program.
 
-Bind works at the level of concrete syntax. It can be used for any expression
-that has the same form as function application, including poly inference,
-explicit type struct value, and abstract value.
+The function provided in the bind expression may be a polymorphic function
+value, in which case type inference is performed as with func_apply
+expressions.
+
+Struct types and package types cannot be used for the function in bind syntax,
+even though they share a similar concrete syntax to function application.
 
 8. Modules
 ----------
@@ -1263,7 +1277,6 @@ Expr ::=
 
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
- | poly_infer (poly :: Expr) (args :: [Expr])
 
  | package_type (path :: Path)
  | abstract_type (package :: Type) (type :: Type)
@@ -1356,7 +1369,7 @@ expr ::=
            [',' name ':' expr [...]]
            [',' ':' expr ] ')'   
 
- | expr '(' expr [',' expr [...]] ')'              (* func_apply, poly_infer *)
+ | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
 
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
@@ -1392,10 +1405,9 @@ module ::= stmt                                                      (* module_v
 Notes:
 * Struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
-* Explicit type struct value, function apply, poly inference, and abstract
-  value share the same form. The type of the expr is used to distinguish
-  between the four kinds of expressions. Each of these kinds of expressions
-  can be the target of a bind expression.
+* Explicit type struct value, function apply, and abstract value share the
+  same form. The type of the expr is used to distinguish between the four
+  kinds of expressions.
 * Polymorphic application and abstract type share the same form. The type of
   the argument is used to distinguish between the three kinds of expressions.
 * The module value for module /Foo/Bar% is stored in Foo/Bar.fble.

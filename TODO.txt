@@ -1,6 +1,5 @@
 * Revise language spec for type inference 
- - see thoughts/fble.type_inference.txt for the details of the update.
- - Update tests and implementation as needed to satisfy the spec.
+ - Update tests and implementation as needed to satisfy the new spec.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.
