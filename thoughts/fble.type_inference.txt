@@ -184,3 +184,90 @@ too.
 If we go this route, then keep list, literal, and bind as abstract syntax. But
 remove poly_infer. Just note that type inference is done in these cases.
 
+---
+
+I updated the spec. All that's left is to add support for type
+inference for struct, union, list, and literal. Ideally in a nice general way.
+
+What we have today:
+* TypeInfer - you call it for each argument, it checks the argument has the
+  correct type and fills in any type parameters it infers.
+* Note that TypeEquals is a special case of TypeInfer where there are no type
+  arguments to be inferred.
+
+MISC_APPLY uses different paths for non-poly and poly function. A nice place
+to start would be to generalize that out I think. So, uh.
+
+1. Reorganize misc apply to depoly at the top.
+ - Eliminate duplicate calls to FuncApply.
+ - Change struct args to use TypeInfer instead of TypeEquals.
+ - Exclude abstract value case if there are any poly args.
+2. Union should be separate and straight forward.
+ - Reuse code from (1) where possible.
+3. List and literal are separate and straight forward.
+
+Okay. So it's doable. If I factor out the right code, it's not too bad I don't
+think. Let's take it one step at a time.
+
+Ugh. It's so hard to make changes to this part of type inference, just given
+how many different error conditions there are and objects to keep track of
+memory management for.
+
+---
+
+Overall flow:
+* type check function (allocates misc)
+* type check args     (allocates args)
+* extract poly        (allocates vars, poly, body)
+* switch on tag
+  func:
+    * check application okay
+    * apply inferred type params (allocates poly_tc)
+    * check poly_tc
+    * allocate result tc
+  type:
+    * get normal type (allocates vtype, vnorm)
+    * switch on tag
+      struct:
+        * check arg count
+        * check args
+        * allocate result
+      package:
+        * check arg count
+        * check module access
+        * allocate result
+      default fall through
+  default:
+    * report error
+
+It's messy trying to clean up things as early as possible and on multiple
+branches. So how about let's try cleaning up things once at the end.
+
+That means no returning out of branches early.
+
+But what about cases where we need results of previous parts? Like, we need
+the args to be okay? Put those cases as nested if statements guarded by the
+args being okay.
+
+How to do the default fall through? We need to distinguish between a case
+being triggered and a case succeeding. For fallthrough, we want to say if no
+other cases were triggered. Slightly annoying, but lets add a bool to keep
+track of that? Call it 'misc_type_acceptable' or some such.
+
+What do you think? Shall we try this? For now, continue to disallow
+polymorphic structs, just to limit the amount of new code we need to add. The
+goal is just to reorganize the existing code.
+
+Uh, it's really annoying to add a layer of nesting in case there was a
+previous error.
+
+Maybe let's be a little more creative. What I would love is to be able to
+return at any time we run into a problem, but also only have cleanup code in
+one place. So maybe we define a helper function that exports a thing to keep
+track of everything that may need to be cleaned up. And call a wrapper
+function. Crazy? How about we give it a try and see?
+
+We can make it even a little nicer by having a generic cleanup object that
+accepts lists of types, type assignments, and tcs. Then anything we want
+cleaned up, we just add it to the list.
+
