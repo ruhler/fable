@@ -271,3 +271,186 @@ We can make it even a little nicer by having a generic cleanup object that
 accepts lists of types, type assignments, and tcs. Then anything we want
 cleaned up, we just add it to the list.
 
+---
+
+Trying the generic cleaner approach, before changing any of the type inference
+logic. It's tricky because Tc is passed by value. We don't currently have a
+way to make a copy. That means we need to transfer ownership away from the
+cleaner somehow to avoid freeing parts that we want to hold on to. Like an
+std::move kind of thing.
+
+Maybe we store the Tc value on the cleaner, everyone else has to reference it
+by pointer, and so they can take ownership and free up by setting the field
+values to NULL via the pointer.
+
+Now there is trickiness with poly, which we sort of do an update in place for.
+That's very awkward, because how can we update it in place and use it to return
+failure to apply poly?
+
+Can I create an std::pointer like type? Would that help with anything?
+
+Note: my draft use of a vector for storing Tc to clean up is going to have
+issues once the vectors start getting resized, because the pointers will point
+to the wrong place.
+
+I feel like we need to preallocate space for everything we want to track on
+the cleaner. It's okay with types where we pass around points and can make
+copies. It's harder with things like Tc, where we have no notion of a copy and
+pass it around by value.
+
+Taking a step back, the goal here is:
+* Be able to return immediately on failure so that subsequent code in the
+  function can assume there hasn't been a failure.
+* Avoid duplicating logic for cleanup.
+
+That means tracking ownership of things as it changes in the function, and
+doing cleanup of ownership in a wrapper function.
+
+Maybe it's worth writing down all the things we may want to clean up at some
+point:
+  Tc misc
+  Tc[] args (Length depends on argc)
+  FbleType* normal (The normalized type of misc)
+  FbleType* vtype  (The value of misc if misc is a type)
+  FbleType* struct_type aka vnorm (The normalized value of misc if misc is a type)
+  FbleType* pkg_type aka vnorm (The normalized value of misc if misc is a type)
+  FbleType* body - for each poly body (The normalized type of a body of misc)
+  FbleTypeAssignmentV vars - vars.xs and FbleType vars.xs[i].value
+
+The only thing I can think of to make this workable is to define a struct for
+the local variables in a wrapper function and clean up there. Make it specific
+to MiscApply. What do you think? Shall we give it a try and see if that works
+better?
+
+It's a bit tedious that we can't just put the wrapper and function body
+together in one place. I'm not tempted enough to use goto. Let's see how the
+body of the MiscApply function looks when we don't have to worry about any
+cleanup.
+
+It's still pretty tedious. I still have to keep track of what we keep or not.
+It feels like there's a whole lot of stuff I have to juggle in my head at
+once, like I can't just focus on one piece of code at a time.
+
+I wonder, do you think we could do it better with a lot of little functions?
+Each function is only responsible for cleaning up what it allocates itself,
+and because you do a lot of function calls, there's less lines of code between
+where you allocate something and where you clean it up?
+
+---
+
+I think lots of little functions will still be difficult, because in some
+cases it takes ownership of an argument, and in others it doesn't, depending
+on whether there is an error or not. As long as we have something like Tc
+that doesn't support reference counting, it's hard to make this modular.
+
+This whole discussion explains why garbage collection really is important.
+
+What if we added reference counts to FbleTc? Then you could "make a copy" or
+an FbleTc. Then we have separate ownership of an FbleTc for the local variable
+and for the result. That means we always clean up the local variable,
+regardless of the result.
+
+To avoid duplication and worrying about everything that's in scope every time
+we return, we aren't allowed to return in the middle of a block where some
+object is allocated. To allow you to return in the middle of a block where
+some object is allocated, you need to use a separate function.
+
+Things would look like this:
+
+  Foo foo = Alloc(...);
+  Result result = DoThing(foo, x, y, z, w, ...);
+  Free(foo);
+  return result;
+
+It's still pretty tedious to pass a whole bunch of local variables and to have
+the body of the function some place else rather than inlined.
+
+Why am I still tempted to use goto?
+
+The goto case would be: put local variables all at the start of the code
+block. Whenever you return, instead of returning directly, do a goto.
+
+  Foo foo = NULL;
+  Foo bar = NULL;
+  ...
+  {
+    Nice code goes here.
+    Result result = ...;
+    goto done;
+  }
+
+  done:
+    Free(foo);
+    Free(bar);
+    return result;
+
+The benefit being we don't need a wrapper type and function to do the cleanup.
+Or we could, if we refer that to goto. Honestly I don't think that matters
+nearly as much as the question of whether ownership of a value belongs with
+the local variable or the result. If we reference count Tc, then ownership can
+always belong with both the local variable and the result.
+
+If we make Tc reference counted, we can use a generic cleaner object. We could
+add to a list of things to clean when we first allocate an object. It stays on
+that list even if we want to return it as a result, because we increment the
+reference count.
+
+The only question then is, when do we invoke the cleaner? We could do it any
+time we exit the function. For example, something like:
+
+ Cleaner cleaner;
+ Foo = Clean(cleaner, Alloc(...));
+ ...
+     return CleanReturn(cleaner, result);
+ 
+ return CleanReturn(cleaner, NULL);
+
+Any issue with a while loop, for example with poly, where we want to allocate
+and clean within that loop? I think we could do local memory management
+outside of the cleaner for that, and just use the cleaner for the out object.
+
+What about things like vectors, where .xs needs to be freed in a non-reference
+counted way? Does everything have to support reference counting for this to
+work?
+
+Let me test this out on FbleType*. I feel like I already tried this, but maybe
+if I focus on FbleType* and be prepared to support reference counts for Tc*
+we'll make more progress.
+
+Define a Cleaner object, a NewCleaner function, a Clean method to add
+something to be cleaned, and a Cleanup function to do all the cleanup?
+
+It's showing potential. To take full advantage of it we need support for Tc.
+Notes:
+* It's nice that every time we return we do Cleanup call instead of specific
+  things. Real easy to check we've done cleanup every time.
+* It would be nice to have a CleanupAnd... function so you could do the
+  Cleanup as part of the return statement.
+* I don't think there will be any easy way to incrementally add cleaner
+  support. There's lots of details that have to be gone through.
+* It will be better once we have cleaners because we explicitly see when we
+  are planning to return some tc value, because we need an explicit retain for
+  it.
+* We can use cleaners for vector .xs. Just have a vector of void* to that will
+  be passed to FbleFree for cleanup.
+
+What do you think? Add reference count to Tc? Switch typecheck to use
+cleaners. Work through all the tedious details. See how things look after
+that?
+
+Maybe I can add incremental support for cleaners by instantiating local
+cleaners one case branch at a time. Once all branches have the local cleaner,
+I can make it into a single function level cleaner. That sounds reasonable.
+Just be willing to accept that the intermediate state is not going to be as
+nice as the final state.
+
+I say let's take a leap. Try it. Worst case we can always roll back. This is a
+good learning experience. But do it incrementally, bit by bit. Otherwise I'll
+be overwhelmed like the last 5 things I've tried.
+
+Steps:
+
+1. Make FbleTc ref counted.
+2. Add cleaner incrementally, one case branch at a time, until all are done.
+3. Review final code, see how I feel about it, and report back here.
+

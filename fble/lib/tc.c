@@ -9,10 +9,36 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+// FbleNewTcRaw -- see documentation in tc.h
+FbleTc* FbleNewTcRaw(size_t size, FbleTcTag tag, FbleLoc loc)
+{
+  FbleTc* tc = (FbleTc*)FbleRawAlloc(size);
+  tc->refcount = 1;
+  tc->magic = FBLE_TC_MAGIC;
+  tc->tag = tag;
+  tc->loc = FbleCopyLoc(loc);
+  return tc;
+}
+
+// FbleCopyTc -- see documentation in tc.h
+FbleTc* FbleCopyTc(FbleTc* tc)
+{
+  tc->refcount++;
+  return tc;
+}
+
 // FbleFreeTc -- see documentation in tc.h
 void FbleFreeTc(FbleTc* tc)
 {
   if (tc == NULL) {
+    return;
+  }
+
+  // If the tc magic is wrong, the tc is corrupted. That suggests we have
+  // already freed this tc, and that something is messed up with tracking
+  // FbleTc refcounts. 
+  assert(tc->magic == FBLE_TC_MAGIC && "corrupt FbleTc");
+  if (--tc->refcount > 0) {
     return;
   }
 

@@ -264,11 +264,11 @@ void FbleFreeTypeHeap(FbleTypeHeap* heap);
 // Inputs:
 //   heap - heap to use for allocations
 //   T - the type of the type to allocate.
-//   tag - the tag of the type
-//   loc - the source loc of the type
+//   tag - the tag of the type.
+//   loc - the source loc of the type. Borrowed.
 //
 // Results:
-//   None.
+//   The newly allocated type.
 //
 // Side effects:
 //   Allocates a new type that should be released when no longer needed.

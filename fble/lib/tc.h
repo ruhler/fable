@@ -48,7 +48,14 @@ typedef enum {
 //
 // loc is the location of the start of the expression in source code, used for
 // general purpose debug information.
+//
+// FbleTc is reference counted. Pass by pointer. Explicit copy and free
+// required. The magic field is set to FBLE_TC_MAGIC and is used to detect
+// double frees of FbleTc.
+#define FBLE_TC_MAGIC 0x5443
 struct FbleTc {
+  size_t refcount;
+  size_t magic;
   FbleTcTag tag;
   FbleLoc loc;
 };
@@ -233,6 +240,54 @@ typedef struct {
   size_t letterc;
   size_t letters[];
 } FbleLiteralTc;
+
+// FbleNewTc --
+//   Allocate a new tc. This function is not type safe.
+//
+// Inputs:
+//   T - the type of the tc to allocate.
+//   tag - the tag of the tc.
+//   loc - the source loc of the tc. Borrowed.
+//
+// Results:
+//   The newly allocated tc.
+//
+// Side effects:
+//   Allocates a new tc that should be freed using FbleFreeTc when no longer
+//   needed.
+#define FbleNewTc(T, tag, loc) ((T*) FbleNewTcRaw(sizeof(T), tag, loc))
+FbleTc* FbleNewTcRaw(size_t size, FbleTcTag tag, FbleLoc loc);
+
+// FbleNewTcExtra --
+//   Allocate a new tc with additional extra space.
+//
+// Inputs:
+//   T - the type of the tc to allocate.
+//   size - the size in bytes of additional extra space to include.
+//   tag - the tag of the tc.
+//   loc - the source loc of the tc. Borrowed.
+//
+// Results:
+//   The newly allocated tc.
+//
+// Side effects:
+//   Allocates a new tc that should be freed using FbleFreeTc when no longer
+//   needed.
+#define FbleNewTcExtra(T, tag, size, loc) ((T*) FbleNewTcRaw(sizeof(T) + size, tag, loc))
+
+// FbleCopyTc --
+//   Make a reference counted copy of the given tc.
+//
+// Inputs:
+//   tc - the tc to copy.
+//
+// Result:
+//   The copy of the tc.
+//
+// Side effects:
+//   The user should arrange for FbleFreeTc to be called on this tc when it is
+//   no longer needed.
+FbleTc* FbleCopyTc(FbleTc* tc);
 
 // FbleFreeTc --
 //   Free resources associated with an FbleTc.
