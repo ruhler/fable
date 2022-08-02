@@ -101,6 +101,17 @@ static Tc TC_FAILED = { .type = NULL, .tc = NULL };
 static Tc MkTc(FbleType* type, FbleTc* tc);
 static void FreeTc(FbleTypeHeap* th, Tc tc);
 
+// Cleaner --
+//   Tracks values to be automatically cleaned up when exiting a typecheck
+//   function.
+typedef struct {
+  FbleTypeV types;
+} Cleaner;
+
+static Cleaner* NewCleaner();
+static FbleType* CleanType(Cleaner* cleaner, FbleType* type);
+static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* type);
+
 static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc);
 static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
 
@@ -459,6 +470,64 @@ static void FreeTc(FbleTypeHeap* th, Tc tc)
 {
   FbleReleaseType(th, tc.type);
   FbleFreeTc(tc.tc);
+}
+
+// NewCleaner --
+//   Allocate and return a new cleaner object.
+//
+// Results:
+//   A newly allocated cleaner object.
+//
+// Side effects:
+//   The user should call a WithCleanup function to free resources associated
+//   with the cleaner object when no longer needed.
+static Cleaner* NewCleaner()
+{
+  Cleaner* cleaner = FbleAlloc(Cleaner);
+  FbleVectorInit(cleaner->types);
+  return cleaner;
+}
+
+// CleanType --
+//   Add a type to the cleaner to be released when cleanup occurs.
+//
+// Inputs:
+//   cleaner - the cleaner to add the type to.
+//   type - the type to track.
+//
+// Results:
+//   The input type.
+//
+// Side effects:
+//   The type will be automatically released when the cleaner is cleaned up.
+static FbleType* CleanType(Cleaner* cleaner, FbleType* type)
+{
+  FbleVectorAppend(cleaner->types, type);
+  return type;
+}
+
+// TypeWithCleanup -- 
+//   Return a type and invoke cleanup.
+//
+// Inputs:
+//   th - the type heap used for cleanup.
+//   cleaner - the cleaner object to trigger cleanup on.
+//   type - the type to return.
+//
+// Result:
+//   The input type.
+//
+// Side effects:
+//   Cleans up all objects tracked by the cleaner along with the cleaner
+//   object itself.
+static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* type)
+{
+  for (size_t i = 0; i < cleaner->types.size; ++i) {
+    FbleReleaseType(th, cleaner->types.xs[i]);
+  }
+  FbleFree(cleaner->types.xs);
+  FbleFree(cleaner);
+  return type;
 }
 
 // FuncApply --
@@ -1876,24 +1945,24 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     }
 
     case FBLE_DATA_TYPE_EXPR: {
+      Cleaner* cleaner = NewCleaner();
       FbleDataTypeExpr* data_type = (FbleDataTypeExpr*)type;
 
       FbleDataType* dt = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, type->loc);
       dt->datatype = data_type->datatype;
       FbleVectorInit(dt->fields);
+      CleanType(cleaner, &dt->_base);
 
       for (size_t i = 0; i < data_type->fields.size; ++i) {
         FbleTaggedTypeExpr* field = data_type->fields.xs + i;
         FbleType* compiled = TypeCheckType(th, scope, field->type);
+        CleanType(cleaner, compiled);
         if (compiled == NULL) {
-          FbleReleaseType(th, &dt->_base);
-          return NULL;
+          return TypeWithCleanup(th, cleaner, NULL);
         }
 
         if (!CheckNameSpace(field->name, compiled)) {
-          FbleReleaseType(th, compiled);
-          FbleReleaseType(th, &dt->_base);
-          return NULL;
+          return TypeWithCleanup(th, cleaner, NULL);
         }
 
         FbleTaggedType cfield = {
@@ -1901,21 +1970,18 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
           .type = compiled
         };
         FbleVectorAppend(dt->fields, cfield);
-
         FbleTypeAddRef(th, &dt->_base, cfield.type);
-        FbleReleaseType(th, cfield.type);
 
         for (size_t j = 0; j < i; ++j) {
           if (FbleNamesEqual(field->name, data_type->fields.xs[j].name)) {
             ReportError(field->name.loc,
                 "duplicate field name '%n'\n",
                 field->name);
-            FbleReleaseType(th, &dt->_base);
-            return NULL;
+            return TypeWithCleanup(th, cleaner, NULL);
           }
         }
       }
-      return &dt->_base;
+      return TypeWithCleanup(th, cleaner, FbleRetainType(th, &dt->_base));
     }
 
     case FBLE_FUNC_TYPE_EXPR: {
