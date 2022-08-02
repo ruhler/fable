@@ -1985,7 +1985,10 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     }
 
     case FBLE_FUNC_TYPE_EXPR: {
+      Cleaner* cleaner = NewCleaner();
       FbleFuncType* ft = FbleNewType(th, FbleFuncType, FBLE_FUNC_TYPE, type->loc);
+      CleanType(cleaner, &ft->_base);
+
       FbleFuncTypeExpr* func_type = (FbleFuncTypeExpr*)type;
 
       FbleVectorInit(ft->args);
@@ -2003,20 +2006,14 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
         FbleReleaseType(th, arg);
       }
 
-      if (error) {
-        FbleReleaseType(th, &ft->_base);
-        return NULL;
-      }
-
       FbleType* rtype = TypeCheckType(th, scope, func_type->rtype);
-      if (rtype == NULL) {
-        FbleReleaseType(th, &ft->_base);
-        return NULL;
+      CleanType(cleaner, rtype);
+      if (error || rtype == NULL) {
+        return TypeWithCleanup(th, cleaner, NULL);
       }
       ft->rtype = rtype;
       FbleTypeAddRef(th, &ft->_base, ft->rtype);
-      FbleReleaseType(th, ft->rtype);
-      return &ft->_base;
+      return TypeWithCleanup(th, cleaner, FbleRetainType(th, &ft->_base));
     }
 
     case FBLE_PACKAGE_TYPE_EXPR: {
