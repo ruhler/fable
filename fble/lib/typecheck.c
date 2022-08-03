@@ -111,6 +111,7 @@ typedef struct {
 static Cleaner* NewCleaner();
 static FbleType* CleanType(Cleaner* cleaner, FbleType* type);
 static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* type);
+static Tc TcWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, Tc tc);
 
 static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc);
 static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
@@ -530,6 +531,30 @@ static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* t
   return type;
 }
 
+// TcWithCleanup -- 
+//   Return a tc and invoke cleanup.
+//
+// Inputs:
+//   th - the type heap used for cleanup.
+//   cleaner - the cleaner object to trigger cleanup on.
+//   tc - the tc to return.
+//
+// Result:
+//   The input tc.
+//
+// Side effects:
+//   Cleans up all objects tracked by the cleaner along with the cleaner
+//   object itself.
+static Tc TcWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, Tc tc)
+{
+  for (size_t i = 0; i < cleaner->types.size; ++i) {
+    FbleReleaseType(th, cleaner->types.xs[i]);
+  }
+  FbleFree(cleaner->types.xs);
+  FbleFree(cleaner);
+  return tc;
+}
+
 // FuncApply --
 //   Helper function for type checking function application.
 //
@@ -732,18 +757,19 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     case FBLE_PACKAGE_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
     {
+      Cleaner* cleaner = NewCleaner();
       FbleType* type = TypeCheckType(th, scope, expr);
+      CleanType(cleaner, type);
       if (type == NULL) {
-        return TC_FAILED;
+        return TcWithCleanup(th, cleaner, TC_FAILED);
       }
 
       FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
       type_type->type = type;
       FbleTypeAddRef(th, &type_type->_base, type_type->type);
-      FbleReleaseType(th, type);
 
       FbleTypeValueTc* type_tc = FbleNewTc(FbleTypeValueTc, FBLE_TYPE_VALUE_TC, expr->loc);
-      return MkTc(&type_type->_base, &type_tc->_base);
+      return TcWithCleanup(th, cleaner, MkTc(&type_type->_base, &type_tc->_base));
     }
 
     case FBLE_VAR_EXPR: {
