@@ -1938,14 +1938,15 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* 
 //   no longer needed.
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type)
 {
+  Cleaner* cleaner = NewCleaner();
   switch (type->tag) {
     case FBLE_TYPEOF_EXPR: {
       FbleTypeofExpr* typeof = (FbleTypeofExpr*)type;
-      return TypeCheckExprForType(th, scope, typeof->expr);
+      FbleType* result = TypeCheckExprForType(th, scope, typeof->expr);
+      return TypeWithCleanup(th, cleaner, result);
     }
 
     case FBLE_DATA_TYPE_EXPR: {
-      Cleaner* cleaner = NewCleaner();
       FbleDataTypeExpr* data_type = (FbleDataTypeExpr*)type;
 
       FbleDataType* dt = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, type->loc);
@@ -1985,7 +1986,6 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     }
 
     case FBLE_FUNC_TYPE_EXPR: {
-      Cleaner* cleaner = NewCleaner();
       FbleFuncType* ft = FbleNewType(th, FbleFuncType, FBLE_FUNC_TYPE, type->loc);
       CleanType(cleaner, &ft->_base);
 
@@ -2021,7 +2021,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
       FblePackageType* t = FbleNewType(th, FblePackageType, FBLE_PACKAGE_TYPE, type->loc);
       t->path = FbleCopyModulePath(e->path);
       t->opaque = true;
-      return &t->_base;
+      return TypeWithCleanup(th, cleaner, &t->_base);
     }
 
     case FBLE_VAR_EXPR:
@@ -2042,25 +2042,22 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
     {
       FbleExpr* expr = type;
       FbleType* type = TypeCheckExprForType(th, scope, expr);
+      CleanType(cleaner, type);
       if (type == NULL) {
-        return NULL;
+        return TypeWithCleanup(th, cleaner, NULL);
       }
 
       FbleType* type_value = FbleValueOfType(th, type);
       if (type_value == NULL) {
-        ReportError(expr->loc,
-            "expected a type, but found value of type %t\n",
-            type);
-        FbleReleaseType(th, type);
-        return NULL;
+        ReportError(expr->loc, "expected a type, but found value of type %t\n", type);
+        return TypeWithCleanup(th, cleaner, NULL);
       }
-      FbleReleaseType(th, type);
-      return type_value;
+      return TypeWithCleanup(th, cleaner, type_value);
     }
   }
 
   UNREACHABLE("should already have returned");
-  return NULL;
+  return TypeWithCleanup(th, cleaner, NULL);
 }
 
 // TypeCheckModule --
