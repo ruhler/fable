@@ -106,10 +106,13 @@ static void FreeTc(FbleTypeHeap* th, Tc tc);
 //   function.
 typedef struct {
   FbleTypeV types;
+  FbleTcV tcs;
 } Cleaner;
 
 static Cleaner* NewCleaner();
 static FbleType* CleanType(Cleaner* cleaner, FbleType* type);
+static Tc CleanTc(Cleaner* cleaner, Tc tc);
+static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
 static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* type);
 static Tc TcWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, Tc tc);
 
@@ -486,6 +489,7 @@ static Cleaner* NewCleaner()
 {
   Cleaner* cleaner = FbleAlloc(Cleaner);
   FbleVectorInit(cleaner->types);
+  FbleVectorInit(cleaner->tcs);
   return cleaner;
 }
 
@@ -507,6 +511,50 @@ static FbleType* CleanType(Cleaner* cleaner, FbleType* type)
   return type;
 }
 
+// CleanTc --
+//   Add a tc to the cleaner to be released when cleanup occurs.
+//
+// Inputs:
+//   cleaner - the cleaner to add the type to.
+//   tc - the tc to track.
+//
+// Results:
+//   The input tc.
+//
+// Side effects:
+//   The tc will be automatically released when the cleaner is cleaned up.
+static Tc CleanTc(Cleaner* cleaner, Tc tc)
+{
+  FbleVectorAppend(cleaner->types, tc.type);
+  FbleVectorAppend(cleaner->tcs, tc.tc);
+  return tc;
+}
+
+// Cleanup -- 
+//   Invoke cleanup.
+//
+// Inputs:
+//   th - the type heap used for cleanup.
+//   cleaner - the cleaner object to trigger cleanup on.
+//
+// Side effects:
+//   Cleans up all objects tracked by the cleaner along with the cleaner
+//   object itself.
+static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
+{
+  for (size_t i = 0; i < cleaner->types.size; ++i) {
+    FbleReleaseType(th, cleaner->types.xs[i]);
+  }
+  FbleFree(cleaner->types.xs);
+
+  for (size_t i = 0; i < cleaner->tcs.size; ++i) {
+    FbleFreeTc(cleaner->tcs.xs[i]);
+  }
+  FbleFree(cleaner->tcs.xs);
+
+  FbleFree(cleaner);
+}
+
 // TypeWithCleanup -- 
 //   Return a type and invoke cleanup.
 //
@@ -523,11 +571,7 @@ static FbleType* CleanType(Cleaner* cleaner, FbleType* type)
 //   object itself.
 static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* type)
 {
-  for (size_t i = 0; i < cleaner->types.size; ++i) {
-    FbleReleaseType(th, cleaner->types.xs[i]);
-  }
-  FbleFree(cleaner->types.xs);
-  FbleFree(cleaner);
+  Cleanup(th, cleaner);
   return type;
 }
 
@@ -547,11 +591,7 @@ static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* t
 //   object itself.
 static Tc TcWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, Tc tc)
 {
-  for (size_t i = 0; i < cleaner->types.size; ++i) {
-    FbleReleaseType(th, cleaner->types.xs[i]);
-  }
-  FbleFree(cleaner->types.xs);
-  FbleFree(cleaner);
+  Cleanup(th, cleaner);
   return tc;
 }
 
@@ -773,17 +813,18 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_VAR_EXPR: {
+      Cleaner* cleaner = NewCleaner();
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
       VarName name = { .normal = var_expr->var, .module = NULL };
       Var* var = GetVar(th, scope, name, false);
       if (var == NULL) {
         ReportError(var_expr->var.loc, "variable '%n' not defined\n", var_expr->var);
-        return TC_FAILED;
+        return TcWithCleanup(th, cleaner, TC_FAILED);
       }
 
       FbleVarTc* var_tc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, expr->loc);
       var_tc->index = var->index;
-      return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
+      return TcWithCleanup(th, cleaner, MkTc(FbleRetainType(th, var->type), &var_tc->_base));
     }
 
     case FBLE_LET_EXPR: {
@@ -966,10 +1007,13 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
+      Cleaner* cleaner = NewCleaner();
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
+
       FbleDataType* struct_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       struct_type->datatype = FBLE_STRUCT_DATATYPE;
       FbleVectorInit(struct_type->fields);
+      CleanType(cleaner, &struct_type->_base);
 
       size_t argc = struct_expr->args.size;
       Tc args[argc];
@@ -978,6 +1022,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         size_t j = argc - i - 1;
         FbleTaggedExpr* arg = struct_expr->args.xs + j;
         args[j] = TypeCheckExpr(th, scope, arg->expr);
+        CleanTc(cleaner, args[j]);
         error = error || (args[j].type == NULL);
       }
 
@@ -1007,21 +1052,16 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       }
 
       if (error) {
-        FbleReleaseType(th, &struct_type->_base);
-        for (size_t i = 0; i < argc; ++i) {
-          FreeTc(th, args[i]);
-        }
-        return TC_FAILED;
+        return TcWithCleanup(th, cleaner, TC_FAILED);
       }
 
       FbleStructValueTc* struct_tc = FbleNewTcExtra(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, argc * sizeof(FbleTc*), expr->loc);
       struct_tc->fieldc = argc;
       for (size_t i = 0; i < argc; ++i) {
-        FbleReleaseType(th, args[i].type);
-        struct_tc->fields[i] = args[i].tc;
+        struct_tc->fields[i] = FbleCopyTc(args[i].tc);
       }
 
-      return MkTc(&struct_type->_base, &struct_tc->_base);
+      return TcWithCleanup(th, cleaner, MkTc(FbleRetainType(th, &struct_type->_base), &struct_tc->_base));
     }
 
     case FBLE_UNION_VALUE_EXPR: {

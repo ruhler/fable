@@ -64,7 +64,7 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "  4 on other error.\n"
       "\n"
       "Example:\n");
-  fprintf(stream, "%s%s",
+  fprintf(stream, "%s%s\n",
       "  fble-test --profile test.prof ",
       module == NULL ? "-I foo -m /Foo% " : "");
 }
