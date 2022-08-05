@@ -454,3 +454,13 @@ Steps:
 2. Add cleaner incrementally, one case branch at a time, until all are done.
 3. Review final code, see how I feel about it, and report back here.
 
+---
+
+* Any better name I can come up with than TypeWithCleanup and TcWithCleanup?
+  Ideally something much shorter?
+* How about a FAILED variant of the cleanup function?
+* Maybe I could use a wrapper function so we can factor out the allocation and
+  cleanup of the cleaner? That should make it cleaner, right? Yeah, I kind of
+  like that idea. No need for 'TypeWithCleanup' and 'TcWithCleanup' that way.
+  We can just use 'Cleanup'.
+

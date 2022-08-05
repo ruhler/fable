@@ -1065,19 +1065,20 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_UNION_VALUE_EXPR: {
+      Cleaner* cleaner = NewCleaner();
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       FbleType* type = TypeCheckType(th, scope, union_value_expr->type);
+      CleanType(cleaner, type);
       if (type == NULL) {
-        return TC_FAILED;
+        return TcWithCleanup(th, cleaner, TC_FAILED);
       }
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(th, type);
+      CleanType(cleaner, &union_type->_base);
       if (union_type->datatype != FBLE_UNION_DATATYPE) {
         ReportError(union_value_expr->type->loc,
             "expected a union type, but found %t\n", type);
-        FbleReleaseType(th, &union_type->_base);
-        FbleReleaseType(th, type);
-        return TC_FAILED;
+        return TcWithCleanup(th, cleaner, TC_FAILED);
       }
 
       FbleType* field_type = NULL;
@@ -1095,34 +1096,26 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         ReportError(union_value_expr->field.loc,
             "'%n' is not a field of type %t\n",
             union_value_expr->field, type);
-        FbleReleaseType(th, &union_type->_base);
-        FbleReleaseType(th, type);
-        return TC_FAILED;
+        return TcWithCleanup(th, cleaner, TC_FAILED);
       }
 
       Tc arg = TypeCheckExpr(th, scope, union_value_expr->arg);
+      CleanTc(cleaner, arg);
       if (arg.type == NULL) {
-        FbleReleaseType(th, &union_type->_base);
-        FbleReleaseType(th, type);
-        return TC_FAILED;
+        return TcWithCleanup(th, cleaner, TC_FAILED);
       }
 
       if (!FbleTypesEqual(th, field_type, arg.type)) {
         ReportError(union_value_expr->arg->loc,
             "expected type %t, but found type %t\n",
             field_type, arg.type);
-        FbleReleaseType(th, type);
-        FbleReleaseType(th, &union_type->_base);
-        FreeTc(th, arg);
-        return TC_FAILED;
+        return TcWithCleanup(th, cleaner, TC_FAILED);
       }
-      FbleReleaseType(th, arg.type);
-      FbleReleaseType(th, &union_type->_base);
 
       FbleUnionValueTc* union_tc = FbleNewTc(FbleUnionValueTc, FBLE_UNION_VALUE_TC, expr->loc);
       union_tc->tag = tag;
-      union_tc->arg = arg.tc;
-      return MkTc(type, &union_tc->_base);
+      union_tc->arg = FbleCopyTc(arg.tc);
+      return TcWithCleanup(th, cleaner, MkTc(FbleRetainType(th, type), &union_tc->_base));
     }
 
     case FBLE_UNION_SELECT_EXPR: {
