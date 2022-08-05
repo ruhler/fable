@@ -471,5 +471,9 @@ Branches remaining:
 * let expr
 * union select expr
 * func expr
-* misc apply
+
+Thoughts:
+* Would be nice to clean FbleTypeAssignmentV too? In misc apply.
+* Should we pass cleaner to PolyApply?
+
 

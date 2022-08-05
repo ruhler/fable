@@ -561,11 +561,11 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
 // Inputs:
 //   th - the type heap
 //   scope - the current scope
-//   func - The type and value of the function. May be TC_FAILED. Consumed.
-//   func_type - The normal type of the function. Consumed.
+//   func - The type and value of the function. Borrowed.
+//   func_type - The normal type of the function. Borrowed.
 //   argc - the number of arguments.
-//   args - the types and values of the arguments. Values Consumed.
-//   expr_loc - the location of the function application expression.
+//   args - the types and values of the arguments. Borrowed.
+//   expr_loc - the location of the function application expression. Borrowed.
 //
 // Returns:
 //   The Tc for the application of the function to the argument, or TC_FAILED
@@ -582,11 +582,6 @@ static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_
     ReportError(expr_loc,
         "expected %i args, but found %i\n",
         func_type->args.size, argc);
-    FbleReleaseType(th, &func_type->_base);
-    FreeTc(th, func);
-    for (size_t i = 0; i < argc; ++i) {
-      FreeTc(th, args[i]);
-    }
     return TC_FAILED;
   }
 
@@ -595,30 +590,17 @@ static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_
       ReportError(args[i].tc->loc,
           "expected type %t, but found %t\n",
           func_type->args.xs[i], args[i].type);
-      FbleReleaseType(th, &func_type->_base);
-      FreeTc(th, func);
-      // TODO: This double for loop thing is pretty ugly. Anything we
-      // can do to clean up?
-      for (size_t j = 0; j < i; ++j) {
-        FbleFreeTc(args[j].tc);
-      }
-      for (size_t j = i; j < argc; ++j) {
-        FreeTc(th, args[j]);
-      }
       return TC_FAILED;
     }
-    FbleReleaseType(th, args[i].type);
   }
 
   FbleType* rtype = FbleRetainType(th, func_type->rtype);
-  FbleReleaseType(th, &func_type->_base);
-  FbleReleaseType(th, func.type);
 
   FbleFuncApplyTc* apply_tc = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr_loc);
-  apply_tc->func = func.tc;
+  apply_tc->func = FbleCopyTc(func.tc);
   FbleVectorInit(apply_tc->args);
   for (size_t i = 0; i < argc; ++i) {
-    FbleVectorAppend(apply_tc->args, args[i].tc);
+    FbleVectorAppend(apply_tc->args, FbleCopyTc(args[i].tc));
   }
 
   return MkTc(rtype, &apply_tc->_base);
@@ -630,8 +612,8 @@ static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_
 // Inputs:
 //   th - the type heap
 //   scope - the current scope
-//   poly - The type and value of the poly. May be TC_FAILED. Consumed.
-//   arg_type - The type of the arg type to apply the poly to. May be NULL. Consumed.
+//   poly - The type and value of the poly. Borrowed.
+//   arg_type - The type of the arg type to apply the poly to. May be NULL. Borrowed.
 //   expr_loc - The location of the application expression.
 //   arg_loc - The location of the argument type.
 //
@@ -649,13 +631,11 @@ static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type,
   // Note: typeof(poly<arg>) = typeof(poly)<arg>
   // poly.type is typeof(poly)
   if (poly.type == NULL) {
-    FbleReleaseType(th, arg_type);
     return TC_FAILED;
   }
 
   // Note: arg_type is typeof(arg)
   if (arg_type == NULL) {
-    FreeTc(th, poly);
     return TC_FAILED;
   }
 
@@ -670,8 +650,6 @@ static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type,
           expected_kind, actual_kind);
       FbleFreeKind(&poly_kind->_base);
       FbleFreeKind(actual_kind);
-      FbleReleaseType(th, arg_type);
-      FreeTc(th, poly);
       return TC_FAILED;
     }
     FbleFreeKind(actual_kind);
@@ -679,27 +657,23 @@ static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type,
 
     FbleType* arg = FbleValueOfType(th, arg_type);
     assert(arg != NULL && "TODO: poly apply arg is a value?");
-    FbleReleaseType(th, arg_type);
 
     FbleType* pat = FbleNewPolyApplyType(th, expr_loc, poly.type, arg);
     FbleReleaseType(th, arg);
-    FbleReleaseType(th, poly.type);
 
     // When we erase types, poly application dissappears, because we already
     // supplied the generic type when creating the poly value.
-    return MkTc(pat, poly.tc);
+    return MkTc(pat, FbleCopyTc(poly.tc));
   }
   FbleFreeKind(&poly_kind->_base);
 
   FbleType* poly_value = FbleValueOfType(th, poly.type);
-  FreeTc(th, poly);
   if (poly_value != NULL) {
     FblePackageType* package = (FblePackageType*)FbleNormalType(th, poly_value);
     FbleReleaseType(th, poly_value);
     if (package->_base.tag == FBLE_PACKAGE_TYPE) {
       // abstract_type
       FbleType* arg = FbleValueOfType(th, arg_type);
-      FbleReleaseType(th, arg_type);
       if (arg == NULL) {
         ReportError(arg_loc,
             "expected type, but found something of kind %%\n");
@@ -728,7 +702,6 @@ static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type,
 
   ReportError(expr_loc,
       "type application requires a poly or package type\n");
-  FbleReleaseType(th, arg_type);
   return TC_FAILED;
 }
 
@@ -1338,7 +1311,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
     case FBLE_POLY_APPLY_EXPR: {
       FblePolyApplyExpr* apply = (FblePolyApplyExpr*)expr;
       Tc poly = TypeCheckExpr(th, scope, apply->poly);
+      CleanTc(cleaner, poly);
       FbleType* arg_type = TypeCheckExprForType(th, scope, apply->arg);
+      CleanType(cleaner, arg_type);
       return PolyApply(th, scope, poly, arg_type, expr->loc, apply->arg->loc);
     }
 
@@ -1625,24 +1600,23 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
       Tc misc = TypeCheckExpr(th, scope, apply_expr->misc);
+      CleanTc(cleaner, misc);
       bool error = (misc.type == NULL);
 
       size_t argc = apply_expr->args.size;
       Tc args[argc];
       for (size_t i = 0; i < argc; ++i) {
         args[i] = TypeCheckExpr(th, scope, apply_expr->args.xs[i]);
+        CleanTc(cleaner, args[i]);
         error = error || (args[i].type == NULL);
       }
 
       if (error) {
-        FreeTc(th, misc);
-        for (size_t i = 0; i < argc; ++i) {
-          FreeTc(th, args[i]);
-        }
         return TC_FAILED;
       }
 
       FbleType* normal = FbleNormalType(th, misc.type);
+      CleanType(cleaner, normal);
       if (normal->tag == FBLE_FUNC_TYPE) {
         return FuncApply(th, scope, misc, (FbleFuncType*)normal, argc, args, expr->loc);
       }
@@ -1650,24 +1624,19 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       if (!apply_expr->bind && normal->tag == FBLE_TYPE_TYPE) {
         FbleTypeType* type_type = (FbleTypeType*)normal;
         FbleType* vtype = FbleRetainType(th, type_type->type);
+        CleanType(cleaner, vtype);
 
         FbleType* vnorm = FbleNormalType(th, vtype);
+        CleanType(cleaner, vnorm);
         FbleDataType* struct_type = (FbleDataType*)vnorm;
         if (struct_type->_base.tag == FBLE_DATA_TYPE
             && struct_type->datatype == FBLE_STRUCT_DATATYPE) {
           // struct_value
-          FbleReleaseType(th, normal);
-          FreeTc(th, misc);
           if (struct_type->fields.size != argc) {
             // TODO: Where should the error message go?
             ReportError(expr->loc,
                 "expected %i args, but %i provided\n",
                  struct_type->fields.size, argc);
-            FbleReleaseType(th, &struct_type->_base);
-            FbleReleaseType(th, vtype);
-            for (size_t i = 0; i < argc; ++i) {
-              FreeTc(th, args[i]);
-            }
             return TC_FAILED;
           }
 
@@ -1683,49 +1652,29 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             }
           }
 
-          FbleReleaseType(th, &struct_type->_base);
-
           if (error) {
-            FbleReleaseType(th, vtype);
-            for (size_t i = 0; i < argc; ++i) {
-              FreeTc(th, args[i]);
-            }
             return TC_FAILED;
           }
 
           FbleStructValueTc* struct_tc = FbleNewTcExtra(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, argc * sizeof(FbleTc*), expr->loc);
           struct_tc->fieldc = argc;
           for (size_t i = 0; i < argc; ++i) {
-            FbleReleaseType(th, args[i].type);
-            struct_tc->fields[i] = args[i].tc;
+            struct_tc->fields[i] = FbleCopyTc(args[i].tc);
           }
-          return MkTc(vtype, &struct_tc->_base);
+          return MkTc(FbleRetainType(th, vtype), &struct_tc->_base);
         }
 
         FblePackageType* pkg_type = (FblePackageType*)vnorm;
         if (pkg_type->_base.tag == FBLE_PACKAGE_TYPE) {
           // abstract_value
-          FbleReleaseType(th, normal);
-          FreeTc(th, misc);
-
           if (argc != 1) {
             ReportError(expr->loc, "expected 1 argument, but %i provided\n", argc);
-            FbleReleaseType(th, &pkg_type->_base);
-            FbleReleaseType(th, vtype);
-            for (size_t i = 0; i < argc; ++i) {
-              FreeTc(th, args[i]);
-            }
             return TC_FAILED;
           }
 
           if (!FbleModuleBelongsToPackage(scope->module, pkg_type->path)) {
             ReportError(expr->loc, "Module %m is not allowed access to package %m\n",
                 scope->module, pkg_type->path);
-            FbleReleaseType(th, &pkg_type->_base);
-            FbleReleaseType(th, vtype);
-            for (size_t i = 0; i < argc; ++i) {
-              FreeTc(th, args[i]);
-            }
             return TC_FAILED;
           }
 
@@ -1734,15 +1683,9 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           abs_type->type = args[0].type;
           FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
           FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-          FbleReleaseType(th, &pkg_type->_base);
-          FbleReleaseType(th, args[0].type);
-          FbleReleaseType(th, vtype);
 
-          return MkTc(&abs_type->_base, args[0].tc);
+          return MkTc(&abs_type->_base, FbleCopyTc(args[0].tc));
         }
-
-        FbleReleaseType(th, vtype);
-        FbleReleaseType(th, vnorm);
       }
 
       if (normal->tag == FBLE_POLY_TYPE) {
@@ -1760,6 +1703,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           FbleReleaseType(th, body);
           body = next;
         }
+        CleanType(cleaner, body);
 
         if (body->tag == FBLE_FUNC_TYPE) {
           FbleFuncType* func_type = (FbleFuncType*)body;
@@ -1767,16 +1711,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             ReportError(expr->loc,
               "expected %i args, but found %i\n",
               func_type->args.size, argc);
-            FbleReleaseType(th, body);
             for (size_t i = 0; i < vars.size; ++i) {
               FbleReleaseType(th, vars.xs[i].value);
             }
             FbleFree(vars.xs);
-            FreeTc(th, misc);
-            FbleReleaseType(th, normal);
-            for (size_t i = 0; i < argc; ++i) {
-              FreeTc(th, args[i]);
-            }
             return TC_FAILED;
           }
 
@@ -1805,19 +1743,12 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
               fprintf(stderr, "\n");
             }
 
-            FbleReleaseType(th, body);
             for (size_t i = 0; i < vars.size; ++i) {
               FbleReleaseType(th, vars.xs[i].value);
             }
             FbleFree(vars.xs);
-            FreeTc(th, misc);
-            FbleReleaseType(th, normal);
-            for (size_t i = 0; i < argc; ++i) {
-              FreeTc(th, args[i]);
-            }
             return TC_FAILED;
           }
-          FbleReleaseType(th, body);
 
           // We succeeded with type inference.
           // Do the poly apply.
@@ -1827,26 +1758,24 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             arg_type->type = vars.xs[i].value;
             FbleTypeAddRef(th, &arg_type->_base, arg_type->type);
             FbleReleaseType(th, vars.xs[i].value);
+            CleanType(cleaner, &arg_type->_base);
 
             poly = PolyApply(th, scope, poly, &arg_type->_base, expr->loc, expr->loc);
+            CleanTc(cleaner, poly);
           }
           FbleFree(vars.xs);
-          FbleReleaseType(th, normal);
 
           if (poly.type == NULL) {
-            for (size_t i = 0; i < argc; ++i) {
-              FreeTc(th, args[i]);
-            }
             return TC_FAILED;
           }
 
           // Do the func apply.
           func_type = (FbleFuncType*)FbleNormalType(th, poly.type);
+          CleanType(cleaner, &func_type->_base);
           assert(func_type->_base.tag == FBLE_FUNC_TYPE);
           return FuncApply(th, scope, poly, func_type, argc, args, expr->loc);
         }
 
-        FbleReleaseType(th, body);
         for (size_t i = 0; i < vars.size; ++i) {
           FbleReleaseType(th, vars.xs[i].value);
         }
@@ -1860,11 +1789,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         ReportError(expr->loc,
             "cannot apply arguments to something of type %t\n",
             misc.type);
-      }
-      FreeTc(th, misc);
-      FbleReleaseType(th, normal);
-      for (size_t i = 0; i < argc; ++i) {
-        FreeTc(th, args[i]);
       }
       return TC_FAILED;
     }
