@@ -1483,33 +1483,29 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleLiteralExpr* literal_expr = (FbleLiteralExpr*)expr;
 
       Tc func = TypeCheckExpr(th, scope, literal_expr->func);
+      CleanTc(cleaner, func);
       if (func.type == NULL) {
         return TC_FAILED;
       }
 
       FbleFuncType* func_type = (FbleFuncType*)FbleNormalType(th, func.type);
+      CleanType(cleaner, &func_type->_base);
       if (func_type->_base.tag != FBLE_FUNC_TYPE || func_type->args.size != 1) {
         ReportError(literal_expr->func->loc, "expected a function of one argument, but found something of type %t\n", func.type);
-        FreeTc(th, func);
-        FbleReleaseType(th, &func_type->_base);
         return TC_FAILED;
       }
 
       FbleType* elem_type = FbleListElementType(th, func_type->args.xs[0]);
+      CleanType(cleaner, elem_type);
       if (elem_type == NULL) {
         ReportError(literal_expr->func->loc, "expected a list type, but the input to the function has type %t\n", func_type->args.xs[0]);
-        FreeTc(th, func);
-        FbleReleaseType(th, &func_type->_base);
         return TC_FAILED;
       }
 
       FbleDataType* elem_data_type = (FbleDataType*)FbleNormalType(th, elem_type);
+      CleanType(cleaner, &elem_data_type->_base);
       if (elem_data_type->_base.tag != FBLE_DATA_TYPE || elem_data_type->datatype != FBLE_UNION_DATATYPE) {
         ReportError(literal_expr->func->loc, "expected union type, but element type of literal expression is %t\n", elem_type);
-        FreeTc(th, func);
-        FbleReleaseType(th, &func_type->_base);
-        FbleReleaseType(th, elem_type);
-        FbleReleaseType(th, &elem_data_type->_base);
         return TC_FAILED;
       }
 
@@ -1519,6 +1515,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleDataType* unit_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
       unit_type->datatype = FBLE_STRUCT_DATATYPE;
       FbleVectorInit(unit_type->fields);
+      CleanType(cleaner, &unit_type->_base);
 
       bool error = false;
       FbleLoc loc = literal_expr->word_loc;
@@ -1552,18 +1549,11 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         loc.col++;
       }
 
-      FbleType* result_type = FbleRetainType(th, func_type->rtype);
-      FbleReleaseType(th, func.type);
-      FbleReleaseType(th, &func_type->_base);
-      FbleReleaseType(th, elem_type);
-      FbleReleaseType(th, &elem_data_type->_base);
-      FbleReleaseType(th, &unit_type->_base);
-
       if (error) {
-        FbleFreeTc(func.tc);
-        FbleReleaseType(th, result_type);
         return TC_FAILED;
       }
+
+      FbleType* result_type = FbleRetainType(th, func_type->rtype);
 
       FbleLiteralTc* literal_tc = FbleNewTcExtra(FbleLiteralTc, FBLE_LITERAL_TC, argc * sizeof(size_t), expr->loc);
       literal_tc->letterc = argc;
@@ -1572,7 +1562,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
-      apply->func = func.tc;
+      apply->func = FbleCopyTc(func.tc);
       FbleVectorInit(apply->args);
       FbleVectorAppend(apply->args, &literal_tc->_base);
       return MkTc(result_type, &apply->_base);
@@ -1597,18 +1587,17 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleDataAccessExpr* access_expr = (FbleDataAccessExpr*)expr;
 
       Tc obj = TypeCheckExpr(th, scope, access_expr->object);
+      CleanTc(cleaner, obj);
       if (obj.type == NULL) {
         return TC_FAILED;
       }
 
       FbleDataType* normal = (FbleDataType*)FbleNormalType(th, obj.type);
+      CleanType(cleaner, &normal->_base);
       if (normal->_base.tag != FBLE_DATA_TYPE) {
         ReportError(access_expr->object->loc,
             "expected value of type struct or union, but found value of type %t\n",
             obj.type);
-
-        FreeTc(th, obj);
-        FbleReleaseType(th, &normal->_base);
         return TC_FAILED;
       }
 
@@ -1616,14 +1605,12 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       for (size_t i = 0; i < fields->size; ++i) {
         if (FbleNamesEqual(access_expr->field, fields->xs[i].name)) {
           FbleType* rtype = FbleRetainType(th, fields->xs[i].type);
-          FbleReleaseType(th, &normal->_base);
 
           FbleDataAccessTc* access_tc = FbleNewTc(FbleDataAccessTc, FBLE_DATA_ACCESS_TC, expr->loc);
           access_tc->datatype = normal->datatype;
-          access_tc->obj = obj.tc;
+          access_tc->obj = FbleCopyTc(obj.tc);
           access_tc->tag = i;
           access_tc->loc = FbleCopyLoc(access_expr->field.loc);
-          FbleReleaseType(th, obj.type);
           return MkTc(rtype, &access_tc->_base);
         }
       }
@@ -1631,8 +1618,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       ReportError(access_expr->field.loc,
           "'%n' is not a field of type %t\n",
           access_expr->field, obj.type);
-      FreeTc(th, obj);
-      FbleReleaseType(th, &normal->_base);
       return TC_FAILED;
     }
 
