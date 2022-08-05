@@ -1296,21 +1296,20 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleType* arg_type = FbleNewVarType(th, poly->arg.name.loc, poly->arg.kind, poly->arg.name);
       FbleType* arg = FbleValueOfType(th, arg_type);
+      CleanType(cleaner, arg);
       assert(arg != NULL);
 
       VarName name = { .normal = poly->arg.name, .module = NULL };
       PushVar(scope, name, arg_type);
       Tc body = TypeCheckExpr(th, scope, poly->body);
+      CleanTc(cleaner, body);
       PopVar(th, scope);
 
       if (body.type == NULL) {
-        FbleReleaseType(th, arg);
         return TC_FAILED;
       }
 
       FbleType* pt = FbleNewPolyType(th, expr->loc, arg, body.type);
-      FbleReleaseType(th, arg);
-      FbleReleaseType(th, body.type);
 
       // A poly value expression gets rewritten as a let when we erase types:
       // <@ T@> ...
@@ -1324,7 +1323,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleLetTc* let_tc = FbleNewTc(FbleLetTc, FBLE_LET_TC, expr->loc);
       let_tc->recursive = false;
-      let_tc->body = body.tc;
+      let_tc->body = FbleCopyTc(body.tc);
       FbleVectorInit(let_tc->bindings);
       FbleTcBinding ltc = {
         .name = FbleCopyName(poly->arg.name),
@@ -1347,41 +1346,34 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleAbstractCastExpr* cast_expr = (FbleAbstractCastExpr*)expr;
 
       FbleType* package_type = TypeCheckType(th, scope, cast_expr->package);
+      CleanType(cleaner, package_type);
       if (package_type == NULL) {
         return TC_FAILED;
       }
 
       FblePackageType* package = (FblePackageType*)FbleNormalType(th, package_type);
+      CleanType(cleaner, &package->_base);
       if (package->_base.tag != FBLE_PACKAGE_TYPE) {
         ReportError(cast_expr->package->loc,
           "expected package type, but found %t\n", package_type);
-        FbleReleaseType(th, &package->_base);
-        FbleReleaseType(th, package_type);
         return TC_FAILED;
       }
 
       FbleType* target = TypeCheckType(th, scope, cast_expr->target);
+      CleanType(cleaner, target);
       if (target == NULL) {
-        FbleReleaseType(th, &package->_base);
-        FbleReleaseType(th, package_type);
         return TC_FAILED;
       }
 
       Tc value = TypeCheckExpr(th, scope, cast_expr->value);
+      CleanTc(cleaner, value);
       if (value.type == NULL) {
-        FbleReleaseType(th, &package->_base);
-        FbleReleaseType(th, package_type);
-        FbleReleaseType(th, target);
         return TC_FAILED;
       }
 
       if (!FbleModuleBelongsToPackage(scope->module, package->path)) {
         ReportError(expr->loc, "Module %m is not allowed access to package %m\n",
             scope->module, package->path);
-        FbleReleaseType(th, &package->_base);
-        FbleReleaseType(th, package_type);
-        FbleReleaseType(th, target);
-        FreeTc(th, value);
         return TC_FAILED;
       }
 
@@ -1392,17 +1384,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       if (!legal) {
         ReportError(expr->loc, "cannot cast value of type %t to %t\n", value.type, target);
-        FbleReleaseType(th, &package->_base);
-        FbleReleaseType(th, package_type);
-        FbleReleaseType(th, target);
-        FreeTc(th, value);
         return TC_FAILED;
       }
 
-      FbleReleaseType(th, &package->_base);
-      FbleReleaseType(th, package_type);
-      FbleReleaseType(th, value.type);
-      return MkTc(target, value.tc);
+      return MkTc(FbleRetainType(th, target), FbleCopyTc(value.tc));
     }
 
     case FBLE_ABSTRACT_ACCESS_EXPR: {
