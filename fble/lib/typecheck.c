@@ -113,7 +113,6 @@ static Cleaner* NewCleaner();
 static FbleType* CleanType(Cleaner* cleaner, FbleType* type);
 static Tc CleanTc(Cleaner* cleaner, Tc tc);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
-static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* type);
 static Tc TcWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, Tc tc);
 
 static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc);
@@ -121,6 +120,7 @@ static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type,
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type);
+static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type, Cleaner* cleaner);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps);
 
@@ -553,26 +553,6 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
   FbleFree(cleaner->tcs.xs);
 
   FbleFree(cleaner);
-}
-
-// TypeWithCleanup -- 
-//   Return a type and invoke cleanup.
-//
-// Inputs:
-//   th - the type heap used for cleanup.
-//   cleaner - the cleaner object to trigger cleanup on.
-//   type - the type to return.
-//
-// Result:
-//   The input type.
-//
-// Side effects:
-//   Cleans up all objects tracked by the cleaner along with the cleaner
-//   object itself.
-static FbleType* TypeWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, FbleType* type)
-{
-  Cleanup(th, cleaner);
-  return type;
 }
 
 // TcWithCleanup -- 
@@ -1998,11 +1978,25 @@ static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* 
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type)
 {
   Cleaner* cleaner = NewCleaner();
+  FbleType* result = TypeCheckTypeWithCleaner(th, scope, type, cleaner);
+  Cleanup(th, cleaner);
+  return result;
+}
+ 
+// TypeCheckTypeWithCleaner --
+//   Same as TypeCheckType, except with a cleaner provided for convenience.
+//
+// See documentation of TypeCheckType.
+//
+// Objects added to the cleaner will be automatically cleaned up by the caller
+// when this function returns.
+static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type, Cleaner* cleaner)
+{
   switch (type->tag) {
     case FBLE_TYPEOF_EXPR: {
       FbleTypeofExpr* typeof = (FbleTypeofExpr*)type;
       FbleType* result = TypeCheckExprForType(th, scope, typeof->expr);
-      return TypeWithCleanup(th, cleaner, result);
+      return result;
     }
 
     case FBLE_DATA_TYPE_EXPR: {
@@ -2018,11 +2012,11 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
         FbleType* compiled = TypeCheckType(th, scope, field->type);
         CleanType(cleaner, compiled);
         if (compiled == NULL) {
-          return TypeWithCleanup(th, cleaner, NULL);
+          return NULL;
         }
 
         if (!CheckNameSpace(field->name, compiled)) {
-          return TypeWithCleanup(th, cleaner, NULL);
+          return NULL;
         }
 
         FbleTaggedType cfield = {
@@ -2037,11 +2031,11 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
             ReportError(field->name.loc,
                 "duplicate field name '%n'\n",
                 field->name);
-            return TypeWithCleanup(th, cleaner, NULL);
+            return NULL;
           }
         }
       }
-      return TypeWithCleanup(th, cleaner, FbleRetainType(th, &dt->_base));
+      return FbleRetainType(th, &dt->_base);
     }
 
     case FBLE_FUNC_TYPE_EXPR: {
@@ -2068,11 +2062,11 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
       FbleType* rtype = TypeCheckType(th, scope, func_type->rtype);
       CleanType(cleaner, rtype);
       if (error || rtype == NULL) {
-        return TypeWithCleanup(th, cleaner, NULL);
+        return NULL;
       }
       ft->rtype = rtype;
       FbleTypeAddRef(th, &ft->_base, ft->rtype);
-      return TypeWithCleanup(th, cleaner, FbleRetainType(th, &ft->_base));
+      return FbleRetainType(th, &ft->_base);
     }
 
     case FBLE_PACKAGE_TYPE_EXPR: {
@@ -2080,7 +2074,7 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
       FblePackageType* t = FbleNewType(th, FblePackageType, FBLE_PACKAGE_TYPE, type->loc);
       t->path = FbleCopyModulePath(e->path);
       t->opaque = true;
-      return TypeWithCleanup(th, cleaner, &t->_base);
+      return &t->_base;
     }
 
     case FBLE_VAR_EXPR:
@@ -2103,20 +2097,20 @@ static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* typ
       FbleType* type = TypeCheckExprForType(th, scope, expr);
       CleanType(cleaner, type);
       if (type == NULL) {
-        return TypeWithCleanup(th, cleaner, NULL);
+        return NULL;
       }
 
       FbleType* type_value = FbleValueOfType(th, type);
       if (type_value == NULL) {
         ReportError(expr->loc, "expected a type, but found value of type %t\n", type);
-        return TypeWithCleanup(th, cleaner, NULL);
+        return NULL;
       }
-      return TypeWithCleanup(th, cleaner, type_value);
+      return type_value;
     }
   }
 
   UNREACHABLE("should already have returned");
-  return TypeWithCleanup(th, cleaner, NULL);
+  return NULL;
 }
 
 // TypeCheckModule --
