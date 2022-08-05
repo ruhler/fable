@@ -113,12 +113,12 @@ static Cleaner* NewCleaner();
 static FbleType* CleanType(Cleaner* cleaner, FbleType* type);
 static Tc CleanTc(Cleaner* cleaner, Tc tc);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
-static Tc TcWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, Tc tc);
 
 static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc);
 static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
+static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* expr, Cleaner* cleaner);
 static FbleType* TypeCheckType(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type);
 static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTypeExpr* type, Cleaner* cleaner);
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
@@ -555,26 +555,6 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
   FbleFree(cleaner);
 }
 
-// TcWithCleanup -- 
-//   Return a tc and invoke cleanup.
-//
-// Inputs:
-//   th - the type heap used for cleanup.
-//   cleaner - the cleaner object to trigger cleanup on.
-//   tc - the tc to return.
-//
-// Result:
-//   The input tc.
-//
-// Side effects:
-//   Cleans up all objects tracked by the cleaner along with the cleaner
-//   object itself.
-static Tc TcWithCleanup(FbleTypeHeap* th, Cleaner* cleaner, Tc tc)
-{
-  Cleanup(th, cleaner);
-  return tc;
-}
-
 // FuncApply --
 //   Helper function for type checking function application.
 //
@@ -771,17 +751,31 @@ static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type,
 //   needed.
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 {
+  Cleaner* cleaner = NewCleaner();
+  Tc result = TypeCheckExprWithCleaner(th, scope, expr, cleaner);
+  Cleanup(th, cleaner);
+  return result;
+}
+
+// TypeCheckExprWithCleaner
+//   Same as TypeCheckExpr, except with a cleaner provided for convenience.
+//
+// See documentation of TypeCheckExpr.
+//
+// Objects added to the cleaner will be automatically cleaned up by the caller
+// when this function returns.
+static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* expr, Cleaner* cleaner)
+{
   switch (expr->tag) {
     case FBLE_DATA_TYPE_EXPR:
     case FBLE_FUNC_TYPE_EXPR:
     case FBLE_PACKAGE_TYPE_EXPR:
     case FBLE_TYPEOF_EXPR:
     {
-      Cleaner* cleaner = NewCleaner();
       FbleType* type = TypeCheckType(th, scope, expr);
       CleanType(cleaner, type);
       if (type == NULL) {
-        return TcWithCleanup(th, cleaner, TC_FAILED);
+        return TC_FAILED;
       }
 
       FbleTypeType* type_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
@@ -789,22 +783,21 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       FbleTypeAddRef(th, &type_type->_base, type_type->type);
 
       FbleTypeValueTc* type_tc = FbleNewTc(FbleTypeValueTc, FBLE_TYPE_VALUE_TC, expr->loc);
-      return TcWithCleanup(th, cleaner, MkTc(&type_type->_base, &type_tc->_base));
+      return MkTc(&type_type->_base, &type_tc->_base);
     }
 
     case FBLE_VAR_EXPR: {
-      Cleaner* cleaner = NewCleaner();
       FbleVarExpr* var_expr = (FbleVarExpr*)expr;
       VarName name = { .normal = var_expr->var, .module = NULL };
       Var* var = GetVar(th, scope, name, false);
       if (var == NULL) {
         ReportError(var_expr->var.loc, "variable '%n' not defined\n", var_expr->var);
-        return TcWithCleanup(th, cleaner, TC_FAILED);
+        return TC_FAILED;
       }
 
       FbleVarTc* var_tc = FbleNewTc(FbleVarTc, FBLE_VAR_TC, expr->loc);
       var_tc->index = var->index;
-      return TcWithCleanup(th, cleaner, MkTc(FbleRetainType(th, var->type), &var_tc->_base));
+      return MkTc(FbleRetainType(th, var->type), &var_tc->_base);
     }
 
     case FBLE_LET_EXPR: {
@@ -987,7 +980,6 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
     }
 
     case FBLE_STRUCT_VALUE_IMPLICIT_TYPE_EXPR: {
-      Cleaner* cleaner = NewCleaner();
       FbleStructValueImplicitTypeExpr* struct_expr = (FbleStructValueImplicitTypeExpr*)expr;
 
       FbleDataType* struct_type = FbleNewType(th, FbleDataType, FBLE_DATA_TYPE, expr->loc);
@@ -1032,7 +1024,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       }
 
       if (error) {
-        return TcWithCleanup(th, cleaner, TC_FAILED);
+        return TC_FAILED;
       }
 
       FbleStructValueTc* struct_tc = FbleNewTcExtra(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, argc * sizeof(FbleTc*), expr->loc);
@@ -1041,16 +1033,15 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         struct_tc->fields[i] = FbleCopyTc(args[i].tc);
       }
 
-      return TcWithCleanup(th, cleaner, MkTc(FbleRetainType(th, &struct_type->_base), &struct_tc->_base));
+      return MkTc(FbleRetainType(th, &struct_type->_base), &struct_tc->_base);
     }
 
     case FBLE_UNION_VALUE_EXPR: {
-      Cleaner* cleaner = NewCleaner();
       FbleUnionValueExpr* union_value_expr = (FbleUnionValueExpr*)expr;
       FbleType* type = TypeCheckType(th, scope, union_value_expr->type);
       CleanType(cleaner, type);
       if (type == NULL) {
-        return TcWithCleanup(th, cleaner, TC_FAILED);
+        return TC_FAILED;
       }
 
       FbleDataType* union_type = (FbleDataType*)FbleNormalType(th, type);
@@ -1058,7 +1049,7 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
       if (union_type->datatype != FBLE_UNION_DATATYPE) {
         ReportError(union_value_expr->type->loc,
             "expected a union type, but found %t\n", type);
-        return TcWithCleanup(th, cleaner, TC_FAILED);
+        return TC_FAILED;
       }
 
       FbleType* field_type = NULL;
@@ -1076,26 +1067,26 @@ static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
         ReportError(union_value_expr->field.loc,
             "'%n' is not a field of type %t\n",
             union_value_expr->field, type);
-        return TcWithCleanup(th, cleaner, TC_FAILED);
+        return TC_FAILED;
       }
 
       Tc arg = TypeCheckExpr(th, scope, union_value_expr->arg);
       CleanTc(cleaner, arg);
       if (arg.type == NULL) {
-        return TcWithCleanup(th, cleaner, TC_FAILED);
+        return TC_FAILED;
       }
 
       if (!FbleTypesEqual(th, field_type, arg.type)) {
         ReportError(union_value_expr->arg->loc,
             "expected type %t, but found type %t\n",
             field_type, arg.type);
-        return TcWithCleanup(th, cleaner, TC_FAILED);
+        return TC_FAILED;
       }
 
       FbleUnionValueTc* union_tc = FbleNewTc(FbleUnionValueTc, FBLE_UNION_VALUE_TC, expr->loc);
       union_tc->tag = tag;
       union_tc->arg = FbleCopyTc(arg.tc);
-      return TcWithCleanup(th, cleaner, MkTc(FbleRetainType(th, type), &union_tc->_base));
+      return MkTc(FbleRetainType(th, type), &union_tc->_base);
     }
 
     case FBLE_UNION_SELECT_EXPR: {

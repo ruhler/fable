@@ -10,6 +10,7 @@
 * Make it so debug test doesn't time out. 
  - By forcing it to run as the only thing during build?
 
+* Make it possible to add expected failing spec tests.
 * Add tests that at least the compiled apps don't crash when you run them.
 * Why does /Core/Test% export String@? Is that needed?
 * Fix vim syntax highlighting for <<@>@ M@>

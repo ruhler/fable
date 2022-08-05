@@ -464,3 +464,6 @@ Steps:
   like that idea. No need for 'TypeWithCleanup' and 'TcWithCleanup' that way.
   We can just use 'Cleanup'.
 
+Yeah. That's good now with the wrapper function. I'll just have to remember to
+convert all the branches to use the cleaner.
+
