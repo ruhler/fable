@@ -1394,54 +1394,49 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleAbstractAccessExpr* access_expr = (FbleAbstractAccessExpr*)expr;
 
       Tc value = TypeCheckExpr(th, scope, access_expr->value);
+      CleanTc(cleaner, value);
       if (value.type == NULL) {
         return TC_FAILED;
       }
 
       FbleAbstractType* abstract_type = (FbleAbstractType*)FbleNormalType(th, value.type);
+      CleanType(cleaner, &abstract_type->_base);
       if (abstract_type->_base.tag != FBLE_ABSTRACT_TYPE) {
         ReportError(expr->loc, "expected value of abstract type, but found some of type %t\n",
             value.type);
-        FbleReleaseType(th, &abstract_type->_base);
-        FreeTc(th, value);
         return TC_FAILED;
       }
 
       if (!FbleModuleBelongsToPackage(scope->module, abstract_type->package->path)) {
         ReportError(expr->loc, "Module %m is not allowed to access package %m\n",
             scope->module, abstract_type->package->path);
-        FbleReleaseType(th, &abstract_type->_base);
-        FreeTc(th, value);
         return TC_FAILED;
       }
 
       FbleType* type = FbleRetainType(th, abstract_type->type);
-      FbleReleaseType(th, &abstract_type->_base);
-      FbleReleaseType(th, value.type);
-      return MkTc(type, value.tc);
+      return MkTc(type, FbleCopyTc(value.tc));
     }
 
     case FBLE_LIST_EXPR: {
       FbleListExpr* list_expr = (FbleListExpr*)expr;
 
       Tc func = TypeCheckExpr(th, scope, list_expr->func);
+      CleanTc(cleaner, func);
       if (func.type == NULL) {
         return TC_FAILED;
       }
 
       FbleFuncType* func_type = (FbleFuncType*)FbleNormalType(th, func.type);
+      CleanType(cleaner, &func_type->_base);
       if (func_type->_base.tag != FBLE_FUNC_TYPE || func_type->args.size != 1) {
         ReportError(list_expr->func->loc, "expected a function of one argument, but found something of type %t\n", func.type);
-        FreeTc(th, func);
-        FbleReleaseType(th, &func_type->_base);
         return TC_FAILED;
       }
 
       FbleType* elem_type = FbleListElementType(th, func_type->args.xs[0]);
+      CleanType(cleaner, elem_type);
       if (elem_type == NULL) {
         ReportError(list_expr->func->loc, "expected a list type, but the input to the function has type %t\n", func_type->args.xs[0]);
-        FreeTc(th, func);
-        FbleReleaseType(th, &func_type->_base);
         return TC_FAILED;
       }
 
@@ -1451,6 +1446,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleTc* args[argc];
       for (size_t i = 0; i < argc; ++i) {
         Tc tc = TypeCheckExpr(th, scope, list_expr->args.xs[i]);
+        CleanTc(cleaner, tc);
         error = error || (tc.type == NULL);
 
         if (tc.type != NULL) {
@@ -1460,34 +1456,24 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
                 "expected type %t, but found something of type %t\n",
                 elem_type, tc.type);
           }
-          FbleReleaseType(th, tc.type);
         }
         args[i] = tc.tc;
       }
 
-      FbleType* result_type = FbleRetainType(th, func_type->rtype);
-      FbleReleaseType(th, func.type);
-      FbleReleaseType(th, &func_type->_base);
-      FbleReleaseType(th, elem_type);
-
       if (error) {
-        for (size_t i = 0; i < argc; ++i) {
-          FbleFreeTc(args[i]);
-        }
-
-        FbleFreeTc(func.tc);
-        FbleReleaseType(th, result_type);
         return TC_FAILED;
       }
+
+      FbleType* result_type = FbleRetainType(th, func_type->rtype);
 
       FbleListTc* list_tc = FbleNewTcExtra(FbleListTc, FBLE_LIST_TC, argc * sizeof(FbleTc*), expr->loc);
       list_tc->fieldc = argc;
       for (size_t i = 0; i < argc; ++i) {
-        list_tc->fields[i] = args[i];
+        list_tc->fields[i] = FbleCopyTc(args[i]);
       }
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
-      apply->func = func.tc;
+      apply->func = FbleCopyTc(func.tc);
       FbleVectorInit(apply->args);
       FbleVectorAppend(apply->args, &list_tc->_base);
       return MkTc(result_type, &apply->_base);

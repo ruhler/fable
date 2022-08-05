@@ -472,5 +472,5 @@ Branches remaining:
 * union select expr
 * func expr
 
-* abstract access, list, literal, module path, data access, misc apply
+* literal, module path, data access, misc apply
 
