@@ -480,4 +480,50 @@ The trouble with FbleTypeAssignmentV is if I pass by pointer, then it doesn't
 survive the stack. If I pass by value we don't get updates. I guess I have to
 dynamically allocate it and free it in the cleanup?
 
+So, the last three, let, union select, and func value are a little tricky. Let
+me just leave them as they are right now. I can clean them up later if it
+seems worth the effort.
+
+Reviewing the diff before and after cleanup, thoughts are:
+* Much nicer. I'm happy with that.
+
+Now, the real question is, did that make it easier to update type inference
+support? And do I remember what it was I was trying to update in terms of type
+inference?
+
+Here's where I left off:
+
+1. Reorganize misc apply to depoly at the top.
+ - Eliminate duplicate calls to FuncApply.
+ - Change struct args to use TypeInfer instead of TypeEquals.
+ - Exclude abstract value case if there are any poly args.
+2. Union should be separate and straight forward.
+ - Reuse code from (1) where possible.
+3. List and literal are separate and straight forward.
+
+---
+
+How should type checking with poly inference work in general?
+
+* Check that we have the right number of function args.
+* For each arg, check for equality consistent with type inference.
+  - If it fails, give an error message.
+* Check that we have inferred values for all the type variables.
+  - And that the kinds of the inferred type variables are correct.
+* Do the poly and function application at the tc level and figure out the
+  return type.
+
+Can we give a meaningful error message when an argument fails? I think yes.
+Do we need to double check the types after inferring them? I think no. Just
+make sure we check the kinds.
+
+Okay. Let me try to simplify the code this way.
+
+No, the issue is, when we report the error, we want to do it on the poly
+applied types, right? Not sure. Let's see what kind of error messages we get
+in practice. I think it's okay to show a variable and then below that show how
+the variables are defined.
+
+Cool. That works nicely I think. Nicer error message, and we check more args
+before giving up in the case of function application.
 

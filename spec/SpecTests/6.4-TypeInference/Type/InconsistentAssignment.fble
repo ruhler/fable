@@ -1,4 +1,4 @@
-# @@fble-test@@ compile-error 8:1
+# @@fble-test@@ compile-error 8:15
 @ Unit@ = *();
 @ Bool@ = +(Unit@ true, Unit@ false);
 

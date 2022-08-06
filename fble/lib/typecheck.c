@@ -119,7 +119,6 @@ static void CleanTc(Cleaner* cleaner, Tc tc);
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
 
-static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc);
 static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
@@ -576,57 +575,6 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
   FbleFree(cleaner->tyvars.xs);
 
   FbleFree(cleaner);
-}
-
-// FuncApply --
-//   Helper function for type checking function application.
-//
-// Inputs:
-//   th - the type heap
-//   scope - the current scope
-//   func - The type and value of the function. Borrowed.
-//   func_type - The normal type of the function. Borrowed.
-//   argc - the number of arguments.
-//   args - the types and values of the arguments. Borrowed.
-//   expr_loc - the location of the function application expression. Borrowed.
-//
-// Returns:
-//   The Tc for the application of the function to the argument, or TC_FAILED
-//   in case of error.
-//
-// Side effects:
-// * Reports an error in case of error.
-// * The caller should call FbleFreeTc when the returned FbleTc is no longer
-//   needed and FbleReleaseType when the returned FbleType is no longer
-//   needed.
-static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc)
-{
-  if (func_type->args.size != argc) {
-    ReportError(expr_loc,
-        "expected %i args, but found %i\n",
-        func_type->args.size, argc);
-    return TC_FAILED;
-  }
-
-  for (size_t i = 0; i < argc; ++i) {
-    if (!FbleTypesEqual(th, func_type->args.xs[i], args[i].type)) {
-      ReportError(args[i].tc->loc,
-          "expected type %t, but found %t\n",
-          func_type->args.xs[i], args[i].type);
-      return TC_FAILED;
-    }
-  }
-
-  FbleType* rtype = FbleRetainType(th, func_type->rtype);
-
-  FbleFuncApplyTc* apply_tc = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr_loc);
-  apply_tc->func = FbleCopyTc(func.tc);
-  FbleVectorInit(apply_tc->args);
-  for (size_t i = 0; i < argc; ++i) {
-    FbleVectorAppend(apply_tc->args, FbleCopyTc(args[i].tc));
-  }
-
-  return MkTc(rtype, &apply_tc->_base);
 }
 
 // PolyApply --
@@ -1622,10 +1570,12 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
     case FBLE_MISC_APPLY_EXPR: {
       FbleApplyExpr* apply_expr = (FbleApplyExpr*)expr;
 
+      // Type check the function.
       Tc misc = TypeCheckExpr(th, scope, apply_expr->misc);
       CleanTc(cleaner, misc);
       bool error = (misc.type == NULL);
 
+      // Type check the args.
       size_t argc = apply_expr->args.size;
       Tc args[argc];
       for (size_t i = 0; i < argc; ++i) {
@@ -1638,14 +1588,103 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleType* normal = FbleNormalType(th, misc.type);
-      CleanType(cleaner, normal);
-      if (normal->tag == FBLE_FUNC_TYPE) {
-        return FuncApply(th, scope, misc, (FbleFuncType*)normal, argc, args, expr->loc);
+      // Unwrap any layers of polymorphism from the function in preparation
+      // for type inference.
+      FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
+      FbleVectorInit(*vars);
+      CleanTypeAssignmentV(cleaner, vars);
+
+      FbleType* pbody = FbleNormalType(th, misc.type);
+      while (pbody->tag == FBLE_POLY_TYPE) {
+        FblePolyType* poly = (FblePolyType*)pbody;
+        FbleTypeAssignment var = { .var = poly->arg, .value = NULL };
+        FbleVectorAppend(*vars, var);
+
+        FbleType* next = FbleNormalType(th, poly->body);
+        FbleReleaseType(th, pbody);
+        pbody = next;
+      }
+      CleanType(cleaner, pbody);
+
+      if (pbody->tag == FBLE_FUNC_TYPE) {
+        FbleFuncType* func_type = (FbleFuncType*)pbody;
+        if (func_type->args.size != argc) {
+          ReportError(expr->loc, "expected %i args, but found %i\n", func_type->args.size, argc);
+          return TC_FAILED;
+        }
+
+        // Check function arg types match what is expected.
+        // Infer values for poly type variables as we go.
+        for (size_t i = 0; i < argc; ++i) {
+          if (!FbleTypeInfer(th, *vars, func_type->args.xs[i], args[i].type)) {
+            ReportError(args[i].tc->loc,
+                "expected type %t, but found %t\n",
+                func_type->args.xs[i], args[i].type);
+            error = true;
+          }
+        }
+
+        // Apply type variables to the poly.
+        // This checks that the inferred type variables have the correct kind.
+        Tc poly = misc;
+        for (size_t i = 0; !error && i < vars->size; ++i) {
+          if (vars->xs[i].value == NULL) {
+            ReportError(expr->loc, "unable to infer types for poly.\n");
+            error = true;
+            break;
+          }
+
+          FbleTypeType* arg_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
+          arg_type->type = vars->xs[i].value;
+          FbleTypeAddRef(th, &arg_type->_base, arg_type->type);
+          CleanType(cleaner, &arg_type->_base);
+
+          poly = PolyApply(th, scope, poly, &arg_type->_base, expr->loc, expr->loc);
+          CleanTc(cleaner, poly);
+          if (poly.type == NULL) {
+            error = true;
+          }
+        }
+
+        if (error) {
+          // An error message should already have been output for the error.
+          // Add info about the inferred type variables.
+          if (vars->size > 0) {
+            fprintf(stderr, "Inferred types:\n");
+            for (size_t i = 0; i < vars->size; ++i) {
+              fprintf(stderr, "  ");
+              FblePrintType(vars->xs[i].var);
+              fprintf(stderr, ": ");
+              if (vars->xs[i].value == NULL) {
+                fprintf(stderr, "???");
+              } else {
+                FblePrintType(vars->xs[i].value);
+              }
+              fprintf(stderr, "\n");
+            }
+          }
+          return TC_FAILED;
+        }
+
+        // Do the func apply.
+        func_type = (FbleFuncType*)FbleNormalType(th, poly.type);
+        CleanType(cleaner, &func_type->_base);
+        assert(func_type->_base.tag == FBLE_FUNC_TYPE);
+
+        FbleType* rtype = FbleRetainType(th, func_type->rtype);
+
+        FbleFuncApplyTc* apply_tc = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
+        apply_tc->func = FbleCopyTc(poly.tc);
+        FbleVectorInit(apply_tc->args);
+        for (size_t i = 0; i < argc; ++i) {
+          FbleVectorAppend(apply_tc->args, FbleCopyTc(args[i].tc));
+        }
+        return MkTc(rtype, &apply_tc->_base);
       }
 
-      if (!apply_expr->bind && normal->tag == FBLE_TYPE_TYPE) {
-        FbleTypeType* type_type = (FbleTypeType*)normal;
+      // TODO: support type inference on struct value.
+      if (vars->size == 0 && !apply_expr->bind && pbody->tag == FBLE_TYPE_TYPE) {
+        FbleTypeType* type_type = (FbleTypeType*)pbody;
         FbleType* vtype = FbleRetainType(th, type_type->type);
         CleanType(cleaner, vtype);
 
@@ -1657,9 +1696,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           // struct_value
           if (struct_type->fields.size != argc) {
             // TODO: Where should the error message go?
-            ReportError(expr->loc,
-                "expected %i args, but %i provided\n",
-                 struct_type->fields.size, argc);
+            ReportError(expr->loc, "expected %i args, but %i provided\n", struct_type->fields.size, argc);
             return TC_FAILED;
           }
 
@@ -1668,9 +1705,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             FbleTaggedType* field = struct_type->fields.xs + i;
 
             if (!FbleTypesEqual(th, field->type, args[i].type)) {
-              ReportError(apply_expr->args.xs[i]->loc,
-                  "expected type %t, but found %t\n",
-                  field->type, args[i]);
+              ReportError(apply_expr->args.xs[i]->loc, "expected type %t, but found %t\n", field->type, args[i]);
               error = true;
             }
           }
@@ -1711,92 +1746,12 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         }
       }
 
-      if (normal->tag == FBLE_POLY_TYPE) {
-        FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
-        FbleVectorInit(*vars);
-        CleanTypeAssignmentV(cleaner, vars);
-
-        // Retain normal to make sure vars.xs[i].var stays alive.
-        FbleType* body = FbleRetainType(th, normal);
-        while (body->tag == FBLE_POLY_TYPE) {
-          FblePolyType* poly = (FblePolyType*)body;
-          FbleTypeAssignment var = { .var = poly->arg, .value = NULL };
-          FbleVectorAppend(*vars, var);
-
-          FbleType* next = FbleNormalType(th, poly->body);
-          FbleReleaseType(th, body);
-          body = next;
-        }
-        CleanType(cleaner, body);
-
-        if (body->tag == FBLE_FUNC_TYPE) {
-          FbleFuncType* func_type = (FbleFuncType*)body;
-          if (func_type->args.size != argc) {
-            ReportError(expr->loc,
-              "expected %i args, but found %i\n",
-              func_type->args.size, argc);
-            return TC_FAILED;
-          }
-
-          bool okay = true;
-          for (size_t i = 0; okay && i < argc; ++i) {
-            okay = FbleTypeInfer(th, *vars, func_type->args.xs[i], args[i].type);
-          }
-
-          for (size_t i = 0; i < vars->size; ++i) {
-            if (vars->xs[i].value == NULL) {
-              okay = false;
-            }
-          }
-
-          if (!okay) {
-            ReportError(expr->loc, "unable to infer types for poly. tried:\n");
-            for (size_t i = 0; i < vars->size; ++i) {
-              fprintf(stderr, "  ");
-              FblePrintType(vars->xs[i].var);
-              fprintf(stderr, ": ");
-              if (vars->xs[i].value == NULL) {
-                fprintf(stderr, "???");
-              } else {
-                FblePrintType(vars->xs[i].value);
-              }
-              fprintf(stderr, "\n");
-            }
-            return TC_FAILED;
-          }
-
-          // We succeeded with type inference.
-          // Do the poly apply.
-          Tc poly = misc;
-          for (size_t i = 0; i < vars->size; ++i) {
-            FbleTypeType* arg_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
-            arg_type->type = vars->xs[i].value;
-            FbleTypeAddRef(th, &arg_type->_base, arg_type->type);
-            CleanType(cleaner, &arg_type->_base);
-
-            poly = PolyApply(th, scope, poly, &arg_type->_base, expr->loc, expr->loc);
-            CleanTc(cleaner, poly);
-          }
-
-          if (poly.type == NULL) {
-            return TC_FAILED;
-          }
-
-          // Do the func apply.
-          func_type = (FbleFuncType*)FbleNormalType(th, poly.type);
-          CleanType(cleaner, &func_type->_base);
-          assert(func_type->_base.tag == FBLE_FUNC_TYPE);
-          return FuncApply(th, scope, poly, func_type, argc, args, expr->loc);
-        }
-      }
-
       if (apply_expr->bind) {
         ReportError(apply_expr->misc->loc,
             "invalid type for bind function: %t\n", misc.type);
       } else {
         ReportError(expr->loc,
-            "cannot apply arguments to something of type %t\n",
-            misc.type);
+            "cannot apply arguments to something of type %t\n", misc.type);
       }
       return TC_FAILED;
     }
