@@ -321,10 +321,6 @@
 
   We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
   Should we instead get: expected type Maybe@<Bool@>? 
-* [typecheck] Clean up memory management code somehow?
-  It's tough to keep track of what variables are alive when and need to be
-  freed where. Is there some convention we can come up with to make it much
-  more obvious what is live when and who is responsible for freeing something?
 
 * [profile] Check if it's okay to add new blocks to a profile in progress.
  - either way, document that clearly.

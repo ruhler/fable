@@ -476,4 +476,8 @@ Thoughts:
 * Would be nice to clean FbleTypeAssignmentV too? In misc apply.
 * Should we pass cleaner to PolyApply?
 
+The trouble with FbleTypeAssignmentV is if I pass by pointer, then it doesn't
+survive the stack. If I pass by value we don't get updates. I guess I have to
+dynamically allocate it and free it in the cleanup?
+
 

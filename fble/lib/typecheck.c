@@ -107,11 +107,16 @@ static void FreeTc(FbleTypeHeap* th, Tc tc);
 typedef struct {
   FbleTypeV types;
   FbleTcV tcs;
+  struct {
+    size_t size;
+    FbleTypeAssignmentV** xs;
+  } tyvars;
 } Cleaner;
 
 static Cleaner* NewCleaner();
-static FbleType* CleanType(Cleaner* cleaner, FbleType* type);
-static Tc CleanTc(Cleaner* cleaner, Tc tc);
+static void CleanType(Cleaner* cleaner, FbleType* type);
+static void CleanTc(Cleaner* cleaner, Tc tc);
+static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
 
 static Tc FuncApply(FbleTypeHeap* th, Scope* scope, Tc func, FbleFuncType* func_type, size_t argc, Tc* args, FbleLoc expr_loc);
@@ -490,6 +495,7 @@ static Cleaner* NewCleaner()
   Cleaner* cleaner = FbleAlloc(Cleaner);
   FbleVectorInit(cleaner->types);
   FbleVectorInit(cleaner->tcs);
+  FbleVectorInit(cleaner->tyvars);
   return cleaner;
 }
 
@@ -500,15 +506,11 @@ static Cleaner* NewCleaner()
 //   cleaner - the cleaner to add the type to.
 //   type - the type to track.
 //
-// Results:
-//   The input type.
-//
 // Side effects:
 //   The type will be automatically released when the cleaner is cleaned up.
-static FbleType* CleanType(Cleaner* cleaner, FbleType* type)
+static void CleanType(Cleaner* cleaner, FbleType* type)
 {
   FbleVectorAppend(cleaner->types, type);
-  return type;
 }
 
 // CleanTc --
@@ -518,16 +520,27 @@ static FbleType* CleanType(Cleaner* cleaner, FbleType* type)
 //   cleaner - the cleaner to add the type to.
 //   tc - the tc to track.
 //
-// Results:
-//   The input tc.
-//
 // Side effects:
 //   The tc will be automatically released when the cleaner is cleaned up.
-static Tc CleanTc(Cleaner* cleaner, Tc tc)
+static void CleanTc(Cleaner* cleaner, Tc tc)
 {
   FbleVectorAppend(cleaner->types, tc.type);
   FbleVectorAppend(cleaner->tcs, tc.tc);
-  return tc;
+}
+
+// CleanTc --
+//   Add an FbleTypeAssignmentV to the cleaner to be released when cleanup
+//   occurs.
+//
+// Inputs:
+//   cleaner - the cleaner to add the type to.
+//   vars - the vars to track. Should be allocated with FbleAlloc.
+//
+// Side effects:
+//   The vars will be automatically released when the cleaner is cleaned up.
+static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars)
+{
+  FbleVectorAppend(cleaner->tyvars, vars);
 }
 
 // Cleanup -- 
@@ -551,6 +564,16 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
     FbleFreeTc(cleaner->tcs.xs[i]);
   }
   FbleFree(cleaner->tcs.xs);
+
+  for (size_t i = 0; i < cleaner->tyvars.size; ++i) {
+    FbleTypeAssignmentV* vars = cleaner->tyvars.xs[i];
+    for (size_t j = 0; j < vars->size; ++j) {
+      FbleReleaseType(th, vars->xs[j].value);
+    }
+    FbleFree(vars->xs);
+    FbleFree(vars);
+  }
+  FbleFree(cleaner->tyvars.xs);
 
   FbleFree(cleaner);
 }
@@ -1689,15 +1712,16 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       if (normal->tag == FBLE_POLY_TYPE) {
-        FbleTypeAssignmentV vars;
-        FbleVectorInit(vars);
+        FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
+        FbleVectorInit(*vars);
+        CleanTypeAssignmentV(cleaner, vars);
 
         // Retain normal to make sure vars.xs[i].var stays alive.
         FbleType* body = FbleRetainType(th, normal);
         while (body->tag == FBLE_POLY_TYPE) {
           FblePolyType* poly = (FblePolyType*)body;
           FbleTypeAssignment var = { .var = poly->arg, .value = NULL };
-          FbleVectorAppend(vars, var);
+          FbleVectorAppend(*vars, var);
 
           FbleType* next = FbleNormalType(th, poly->body);
           FbleReleaseType(th, body);
@@ -1711,59 +1735,48 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
             ReportError(expr->loc,
               "expected %i args, but found %i\n",
               func_type->args.size, argc);
-            for (size_t i = 0; i < vars.size; ++i) {
-              FbleReleaseType(th, vars.xs[i].value);
-            }
-            FbleFree(vars.xs);
             return TC_FAILED;
           }
 
           bool okay = true;
           for (size_t i = 0; okay && i < argc; ++i) {
-            okay = FbleTypeInfer(th, vars, func_type->args.xs[i], args[i].type);
+            okay = FbleTypeInfer(th, *vars, func_type->args.xs[i], args[i].type);
           }
 
-          for (size_t i = 0; i < vars.size; ++i) {
-            if (vars.xs[i].value == NULL) {
+          for (size_t i = 0; i < vars->size; ++i) {
+            if (vars->xs[i].value == NULL) {
               okay = false;
             }
           }
 
           if (!okay) {
             ReportError(expr->loc, "unable to infer types for poly. tried:\n");
-            for (size_t i = 0; i < vars.size; ++i) {
+            for (size_t i = 0; i < vars->size; ++i) {
               fprintf(stderr, "  ");
-              FblePrintType(vars.xs[i].var);
+              FblePrintType(vars->xs[i].var);
               fprintf(stderr, ": ");
-              if (vars.xs[i].value == NULL) {
+              if (vars->xs[i].value == NULL) {
                 fprintf(stderr, "???");
               } else {
-                FblePrintType(vars.xs[i].value);
+                FblePrintType(vars->xs[i].value);
               }
               fprintf(stderr, "\n");
             }
-
-            for (size_t i = 0; i < vars.size; ++i) {
-              FbleReleaseType(th, vars.xs[i].value);
-            }
-            FbleFree(vars.xs);
             return TC_FAILED;
           }
 
           // We succeeded with type inference.
           // Do the poly apply.
           Tc poly = misc;
-          for (size_t i = 0; i < vars.size; ++i) {
+          for (size_t i = 0; i < vars->size; ++i) {
             FbleTypeType* arg_type = FbleNewType(th, FbleTypeType, FBLE_TYPE_TYPE, expr->loc);
-            arg_type->type = vars.xs[i].value;
+            arg_type->type = vars->xs[i].value;
             FbleTypeAddRef(th, &arg_type->_base, arg_type->type);
-            FbleReleaseType(th, vars.xs[i].value);
             CleanType(cleaner, &arg_type->_base);
 
             poly = PolyApply(th, scope, poly, &arg_type->_base, expr->loc, expr->loc);
             CleanTc(cleaner, poly);
           }
-          FbleFree(vars.xs);
 
           if (poly.type == NULL) {
             return TC_FAILED;
@@ -1775,11 +1788,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           assert(func_type->_base.tag == FBLE_FUNC_TYPE);
           return FuncApply(th, scope, poly, func_type, argc, args, expr->loc);
         }
-
-        for (size_t i = 0; i < vars.size; ++i) {
-          FbleReleaseType(th, vars.xs[i].value);
-        }
-        FbleFree(vars.xs);
       }
 
       if (apply_expr->bind) {
