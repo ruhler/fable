@@ -1,3 +1,6 @@
+* Factor out common poly type inference apply logic used for func apply and
+  struct value.
+
 * Fix failing tests.
  - Struct value does type inference.
  - Union value does type inference.

@@ -119,6 +119,7 @@ static void CleanTc(Cleaner* cleaner, Tc tc);
 static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
 
+static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars);
 static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
@@ -575,6 +576,37 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
   FbleFree(cleaner->tyvars.xs);
 
   FbleFree(cleaner);
+}
+
+// DepolyType --
+//   Normalize and remove any layers of polymorphic type variables from the
+//   given type.
+//
+// Inputs:
+//   th - the type heap
+//   type - the type to normalize and unwrap poly type vars from.
+//   vars - output variable to populate unwrapped type variables to.
+//
+// Results:
+//   The normalized and depolyed type.
+//
+// Side effects:
+// * Adds unwrapped type variables to vars.
+// * The caller should call FbleReleaseType on the returned type when no
+//   longer needed.
+static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars)
+{
+  FbleType* pbody = FbleNormalType(th, type);
+  while (pbody->tag == FBLE_POLY_TYPE) {
+    FblePolyType* poly = (FblePolyType*)pbody;
+    FbleTypeAssignment var = { .var = poly->arg, .value = NULL };
+    FbleVectorAppend(*vars, var);
+
+    FbleType* next = FbleNormalType(th, poly->body);
+    FbleReleaseType(th, pbody);
+    pbody = next;
+  }
+  return pbody;
 }
 
 // PolyApply --
@@ -1594,16 +1626,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       FbleVectorInit(*vars);
       CleanTypeAssignmentV(cleaner, vars);
 
-      FbleType* pbody = FbleNormalType(th, misc.type);
-      while (pbody->tag == FBLE_POLY_TYPE) {
-        FblePolyType* poly = (FblePolyType*)pbody;
-        FbleTypeAssignment var = { .var = poly->arg, .value = NULL };
-        FbleVectorAppend(*vars, var);
-
-        FbleType* next = FbleNormalType(th, poly->body);
-        FbleReleaseType(th, pbody);
-        pbody = next;
-      }
+      FbleType* pbody = DepolyType(th, misc.type, vars);
       CleanType(cleaner, pbody);
 
       if (pbody->tag == FBLE_FUNC_TYPE) {

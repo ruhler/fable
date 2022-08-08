@@ -527,3 +527,63 @@ the variables are defined.
 Cool. That works nicely I think. Nicer error message, and we check more args
 before giving up in the case of function application.
 
+---
+
+Next is to add type inference to struct application. Can we factor out common
+code for apply poly args, checking kinds, and showing inferred type variables
+in case of error? That should be useful for almost all cases of type
+inference, right?
+
+Starting with just duplicating code for struct value, so it's easier to
+see what we want to factor out. Next step will be to factor out the common
+code between function application and struct value.
+
+Trouble: For a poly struct type like Poly@, the type of Poly@ is
+TYPEOF(Poly@), which is not a poly. So we don't unwrap anything. Then we get
+the value of the type and see it is Poly@ which is a poly. So we need to
+unwrap the poly at that point, not before extracting the type value. That's
+annoying.
+
+It's almost like we want some function analogous to FbleNormalType that
+unwraps poly args in the process. Then we could say:
+
+Unwrap.
+* TypeType ->
+    Unwrap. Struct -> ..., Package -> ...
+* Func -> ...
+
+Which begs the question, is it possible we would have
+POLY_OF(TYPE_OF(POLY_OF(STRUCT))) ?
+
+No. We have an invariant that poly of a typeof is constructed as a typeof a
+poly.
+
+I guess we'll want to go a little back to the drawing board. Maybe the way to
+struct the code is:
+
+If type_type
+  if package_type
+    ...
+  else
+    de-poly
+    if struct
+      ...
+else
+  de-poly
+  if func
+    ...
+
+The common code in this case is:
+1. DepolyType(type heap, type, type assignment vector).
+  Same as FbleNormalType, except unwraps any/all layers of polys.
+  Maybe makes sense to put in type.c?
+
+2. TypeInferArgs(type heap, type vars, expect args types, actual arg types, poly)
+  Does type check on all the args.
+  Prints error message in case of error, including inferred types.
+  Returns the new value of poly with inferred types applied.
+
+That sounds good to me. Maybe start by factoring those out. And I can use
+those to hopefully simplify the implementation of list and literal and union
+as well.
+
