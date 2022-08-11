@@ -1117,8 +1117,13 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleDataType* union_type = (FbleDataType*)FbleNormalType(th, type);
+      FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
+      FbleVectorInit(*vars);
+      CleanTypeAssignmentV(cleaner, vars);
+
+      FbleDataType* union_type = (FbleDataType*)DepolyType(th, type, vars);
       CleanType(cleaner, &union_type->_base);
+
       if (union_type->datatype != FBLE_UNION_DATATYPE) {
         ReportError(union_value_expr->type->loc,
             "expected a union type, but found %t\n", type);
@@ -1149,17 +1154,28 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      if (!FbleTypesEqual(th, field_type, arg.type)) {
-        ReportError(union_value_expr->arg->loc,
-            "expected type %t, but found type %t\n",
-            field_type, arg.type);
+      FbleTypeV expected = { .size = 1, .xs = &field_type };
+      TcV argv = { .size = 1, .xs = &arg };
+
+      // Create a dummy tc value to pass location information to
+      // TypeInferArgs.
+      // TODO: Any cleaner way we can do this?
+      FbleStructValueTc* unit_tc = FbleNewTc(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, expr->loc);
+      unit_tc->fieldc = 0;
+      Tc vtc = { .type = FbleRetainType(th, type), .tc = &unit_tc->_base };
+      CleanTc(cleaner, vtc);
+
+      Tc poly = TypeInferArgs(th, scope, *vars, expected, argv, vtc);
+      CleanTc(cleaner, poly);
+
+      if (poly.type == NULL) {
         return TC_FAILED;
       }
 
       FbleUnionValueTc* union_tc = FbleNewTc(FbleUnionValueTc, FBLE_UNION_VALUE_TC, expr->loc);
       union_tc->tag = tag;
       union_tc->arg = FbleCopyTc(arg.tc);
-      return MkTc(FbleRetainType(th, type), &union_tc->_base);
+      return MkTc(FbleRetainType(th, poly.type), &union_tc->_base);
     }
 
     case FBLE_UNION_SELECT_EXPR: {
