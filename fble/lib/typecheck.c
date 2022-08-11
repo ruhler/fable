@@ -1728,6 +1728,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         FbleType* vnorm = FbleNormalType(th, vtype);
         CleanType(cleaner, vnorm);
 
+        // Typecheck for abstract type expression.
         FblePackageType* pkg_type = (FblePackageType*)vnorm;
         if (pkg_type->_base.tag == FBLE_PACKAGE_TYPE) {
           // abstract_value
@@ -1751,27 +1752,29 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           return MkTc(&abs_type->_base, FbleCopyTc(args[0].tc));
         }
 
-        FbleDataType* struct_type = (FbleDataType*)vnorm;
+        // Typecheck for possibly polymorphic struct value expression.
+        FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
+        FbleVectorInit(*vars);
+        CleanTypeAssignmentV(cleaner, vars);
+
+        FbleDataType* struct_type = (FbleDataType*)DepolyType(th, vtype, vars);
+        CleanType(cleaner, &struct_type->_base);
+
         if (struct_type->_base.tag == FBLE_DATA_TYPE
             && struct_type->datatype == FBLE_STRUCT_DATATYPE) {
-          // struct_value
-          if (struct_type->fields.size != argc) {
-            // TODO: Where should the error message go?
-            ReportError(expr->loc, "expected %i args, but %i provided\n", struct_type->fields.size, argc);
-            return TC_FAILED;
+          FbleTypeV expected;
+          FbleVectorInit(expected);
+          for (size_t i = 0; i < struct_type->fields.size; ++i) {
+            FbleVectorAppend(expected, struct_type->fields.xs[i].type);
           }
 
-          bool error = false;
-          for (size_t i = 0; i < argc; ++i) {
-            FbleTaggedType* field = struct_type->fields.xs + i;
+          TcV argv = { .size = argc, .xs = args };
+          Tc vtc = { .type = vtype, .tc = misc.tc };
+          Tc poly = TypeInferArgs(th, scope, *vars, expected, argv, vtc);
+          CleanTc(cleaner, poly);
+          FbleFree(expected.xs);
 
-            if (!FbleTypesEqual(th, field->type, args[i].type)) {
-              ReportError(apply_expr->args.xs[i]->loc, "expected type %t, but found %t\n", field->type, args[i]);
-              error = true;
-            }
-          }
-
-          if (error) {
+          if (poly.type == NULL) {
             return TC_FAILED;
           }
 
@@ -1780,13 +1783,11 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           for (size_t i = 0; i < argc; ++i) {
             struct_tc->fields[i] = FbleCopyTc(args[i].tc);
           }
-          return MkTc(FbleRetainType(th, vtype), &struct_tc->_base);
+          return MkTc(FbleRetainType(th, poly.type), &struct_tc->_base);
         }
-
       }
 
-      // Unwrap any layers of polymorphism from the function in preparation
-      // for type inference.
+      // Typecheck for possibly polymorphic function application.
       FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
       FbleVectorInit(*vars);
       CleanTypeAssignmentV(cleaner, vars);
