@@ -1717,6 +1717,74 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
+      FbleType* nmisc = FbleNormalType(th, misc.type);
+      CleanType(cleaner, nmisc);
+
+      if (!apply_expr->bind && nmisc->tag == FBLE_TYPE_TYPE) {
+        FbleTypeType* type_type = (FbleTypeType*)nmisc;
+        FbleType* vtype = FbleRetainType(th, type_type->type);
+        CleanType(cleaner, vtype);
+
+        FbleType* vnorm = FbleNormalType(th, vtype);
+        CleanType(cleaner, vnorm);
+
+        FblePackageType* pkg_type = (FblePackageType*)vnorm;
+        if (pkg_type->_base.tag == FBLE_PACKAGE_TYPE) {
+          // abstract_value
+          if (argc != 1) {
+            ReportError(expr->loc, "expected 1 argument, but %i provided\n", argc);
+            return TC_FAILED;
+          }
+
+          if (!FbleModuleBelongsToPackage(scope->module, pkg_type->path)) {
+            ReportError(expr->loc, "Module %m is not allowed access to package %m\n",
+                scope->module, pkg_type->path);
+            return TC_FAILED;
+          }
+
+          FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
+          abs_type->package = pkg_type;
+          abs_type->type = args[0].type;
+          FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
+          FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
+
+          return MkTc(&abs_type->_base, FbleCopyTc(args[0].tc));
+        }
+
+        FbleDataType* struct_type = (FbleDataType*)vnorm;
+        if (struct_type->_base.tag == FBLE_DATA_TYPE
+            && struct_type->datatype == FBLE_STRUCT_DATATYPE) {
+          // struct_value
+          if (struct_type->fields.size != argc) {
+            // TODO: Where should the error message go?
+            ReportError(expr->loc, "expected %i args, but %i provided\n", struct_type->fields.size, argc);
+            return TC_FAILED;
+          }
+
+          bool error = false;
+          for (size_t i = 0; i < argc; ++i) {
+            FbleTaggedType* field = struct_type->fields.xs + i;
+
+            if (!FbleTypesEqual(th, field->type, args[i].type)) {
+              ReportError(apply_expr->args.xs[i]->loc, "expected type %t, but found %t\n", field->type, args[i]);
+              error = true;
+            }
+          }
+
+          if (error) {
+            return TC_FAILED;
+          }
+
+          FbleStructValueTc* struct_tc = FbleNewTcExtra(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, argc * sizeof(FbleTc*), expr->loc);
+          struct_tc->fieldc = argc;
+          for (size_t i = 0; i < argc; ++i) {
+            struct_tc->fields[i] = FbleCopyTc(args[i].tc);
+          }
+          return MkTc(FbleRetainType(th, vtype), &struct_tc->_base);
+        }
+
+      }
+
       // Unwrap any layers of polymorphism from the function in preparation
       // for type inference.
       FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
@@ -1750,70 +1818,6 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           FbleVectorAppend(apply_tc->args, FbleCopyTc(args[i].tc));
         }
         return MkTc(rtype, &apply_tc->_base);
-      }
-
-      // TODO: support type inference on struct value.
-      if (vars->size == 0 && !apply_expr->bind && pbody->tag == FBLE_TYPE_TYPE) {
-        FbleTypeType* type_type = (FbleTypeType*)pbody;
-        FbleType* vtype = FbleRetainType(th, type_type->type);
-        CleanType(cleaner, vtype);
-
-        FbleType* vnorm = FbleNormalType(th, vtype);
-        CleanType(cleaner, vnorm);
-        FbleDataType* struct_type = (FbleDataType*)vnorm;
-        if (struct_type->_base.tag == FBLE_DATA_TYPE
-            && struct_type->datatype == FBLE_STRUCT_DATATYPE) {
-          // struct_value
-          if (struct_type->fields.size != argc) {
-            // TODO: Where should the error message go?
-            ReportError(expr->loc, "expected %i args, but %i provided\n", struct_type->fields.size, argc);
-            return TC_FAILED;
-          }
-
-          bool error = false;
-          for (size_t i = 0; i < argc; ++i) {
-            FbleTaggedType* field = struct_type->fields.xs + i;
-
-            if (!FbleTypesEqual(th, field->type, args[i].type)) {
-              ReportError(apply_expr->args.xs[i]->loc, "expected type %t, but found %t\n", field->type, args[i]);
-              error = true;
-            }
-          }
-
-          if (error) {
-            return TC_FAILED;
-          }
-
-          FbleStructValueTc* struct_tc = FbleNewTcExtra(FbleStructValueTc, FBLE_STRUCT_VALUE_TC, argc * sizeof(FbleTc*), expr->loc);
-          struct_tc->fieldc = argc;
-          for (size_t i = 0; i < argc; ++i) {
-            struct_tc->fields[i] = FbleCopyTc(args[i].tc);
-          }
-          return MkTc(FbleRetainType(th, vtype), &struct_tc->_base);
-        }
-
-        FblePackageType* pkg_type = (FblePackageType*)vnorm;
-        if (pkg_type->_base.tag == FBLE_PACKAGE_TYPE) {
-          // abstract_value
-          if (argc != 1) {
-            ReportError(expr->loc, "expected 1 argument, but %i provided\n", argc);
-            return TC_FAILED;
-          }
-
-          if (!FbleModuleBelongsToPackage(scope->module, pkg_type->path)) {
-            ReportError(expr->loc, "Module %m is not allowed access to package %m\n",
-                scope->module, pkg_type->path);
-            return TC_FAILED;
-          }
-
-          FbleAbstractType* abs_type = FbleNewType(th, FbleAbstractType, FBLE_ABSTRACT_TYPE, expr->loc);
-          abs_type->package = pkg_type;
-          abs_type->type = args[0].type;
-          FbleTypeAddRef(th, &abs_type->_base, &abs_type->package->_base);
-          FbleTypeAddRef(th, &abs_type->_base, abs_type->type);
-
-          return MkTc(&abs_type->_base, FbleCopyTc(args[0].tc));
-        }
       }
 
       if (apply_expr->bind) {
