@@ -1,0 +1,20 @@
+# @@fble-test@@ no-error
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+<@>@ Maybe@ = <@ T@> { +(T@ just, Unit@ nothing); };
+
+<@>@ L@ = <@ T@> { +(*(T@ head, L@<T@> tail) cons, Unit@ nil); };
+
+<@ T@>(L@<T@>) { Maybe@<T@>; } f = <@ T@>(L@<T@> l) {
+  Maybe@<T@>(nothing: Unit);
+};
+
+@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+
+# Regression test of specifying types explicitly while not providing arguments
+# to a list expression. This caused an internal assertion to be triggered in
+# the past because we forgot to normalize the type of f after going through
+# type inference.
+Maybe@<Enum@> e = f<Enum@>[];
+e.nothing;

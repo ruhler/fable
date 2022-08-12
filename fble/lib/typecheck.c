@@ -1517,7 +1517,11 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         return TC_FAILED;
       }
 
-      FbleFuncType* func_type = (FbleFuncType*)FbleNormalType(th, func.type);
+      FbleTypeAssignmentV* vars = FbleAlloc(FbleTypeAssignmentV);
+      FbleVectorInit(*vars);
+      CleanTypeAssignmentV(cleaner, vars);
+
+      FbleFuncType* func_type = (FbleFuncType*)DepolyType(th, func.type, vars);
       CleanType(cleaner, &func_type->_base);
       if (func_type->_base.tag != FBLE_FUNC_TYPE || func_type->args.size != 1) {
         ReportError(list_expr->func->loc, "expected a function of one argument, but found something of type %t\n", func.type);
@@ -1534,37 +1538,42 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       bool error = false;
 
       size_t argc = list_expr->args.size;
-      FbleTc* args[argc];
+      FbleType* expected_arg_types[argc];
+      Tc args[argc];
       for (size_t i = 0; i < argc; ++i) {
-        Tc tc = TypeCheckExpr(th, scope, list_expr->args.xs[i]);
-        CleanTc(cleaner, tc);
-        error = error || (tc.type == NULL);
-
-        if (tc.type != NULL) {
-          if (!FbleTypesEqual(th, elem_type, tc.type)) {
-            error = true;
-            ReportError(list_expr->args.xs[i]->loc,
-                "expected type %t, but found something of type %t\n",
-                elem_type, tc.type);
-          }
-        }
-        args[i] = tc.tc;
+        args[i] = TypeCheckExpr(th, scope, list_expr->args.xs[i]);
+        CleanTc(cleaner, args[i]);
+        error = error || (args[i].type == NULL);
+        expected_arg_types[i] = elem_type;
       }
 
       if (error) {
         return TC_FAILED;
       }
 
-      FbleType* result_type = FbleRetainType(th, func_type->rtype);
+      TcV argv = { .size = argc, .xs = args };
+      FbleTypeV expected = { .size = argc, .xs = expected_arg_types };
+      Tc poly = TypeInferArgs(th, scope, *vars, expected, argv, func);
+      CleanTc(cleaner, poly);
+
+      if (poly.type == NULL) {
+        return TC_FAILED;
+      }
+
+      FbleFuncType* inferred_func_type = (FbleFuncType*)FbleNormalType(th, poly.type);
+      CleanType(cleaner, &inferred_func_type->_base);
+      assert(inferred_func_type->_base.tag == FBLE_FUNC_TYPE);
+
+      FbleType* result_type = FbleRetainType(th, inferred_func_type->rtype);
 
       FbleListTc* list_tc = FbleNewTcExtra(FbleListTc, FBLE_LIST_TC, argc * sizeof(FbleTc*), expr->loc);
       list_tc->fieldc = argc;
       for (size_t i = 0; i < argc; ++i) {
-        list_tc->fields[i] = FbleCopyTc(args[i]);
+        list_tc->fields[i] = FbleCopyTc(args[i].tc);
       }
 
       FbleFuncApplyTc* apply = FbleNewTc(FbleFuncApplyTc, FBLE_FUNC_APPLY_TC, expr->loc);
-      apply->func = FbleCopyTc(func.tc);
+      apply->func = FbleCopyTc(poly.tc);
       FbleVectorInit(apply->args);
       FbleVectorAppend(apply->args, &list_tc->_base);
       return MkTc(result_type, &apply->_base);
