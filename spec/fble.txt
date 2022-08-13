@@ -797,13 +797,11 @@ to f is E@, is desugared to:
 It is a type error if the word contains a letter for which there is no
 corresponding field in the element type E@.
 
-The function provided in the literal expression may be a polymorphic function
-value, in which case type inference is performed as with func_apply
-expressions.
 
 Struct types and package types cannot be used for the function in literal
 syntax, even though they share a similar concrete syntax to function
-application.
+application. Type inference is not supported with literals because the word
+provides no information about what type the function should be.
 
 7.2.1 Example
 -------------

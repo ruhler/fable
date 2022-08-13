@@ -1,11 +1,3 @@
-* Factor out common poly type inference apply logic used for func apply and
-  struct value.
-
-* Fix failing tests.
- - Struct value does type inference.
- - Union value does type inference.
- - List does type inference.
- - Literal does type inference.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.
@@ -24,9 +16,7 @@
 
 * Make it easier to run failing tests under valgrind and gdb.
 * Better error message for 6.4-PolyInfer/Type/InconsistentAssignment case.
-* Add more tests for poly inference to get code coverage.
-* Add type inference for struct and union value?
-   e.g. Maybe@(just: True) instead of Maybe@<Bool@>(just: True)?
+* Add more tests for type inference to get code coverage.
 
 * Move TODO entries to corresponding subdirectories?
 

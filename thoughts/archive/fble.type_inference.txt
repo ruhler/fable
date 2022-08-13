@@ -587,3 +587,13 @@ That sounds good to me. Maybe start by factoring those out. And I can use
 those to hopefully simplify the implementation of list and literal and union
 as well.
 
+---
+
+Note, it makes no sense to do type inference on literals. There's nothing to
+infer types from.
+
+Which means we are now all set with the implementation of type inference. In
+theory this is done. Yay!
+
+Next step is to use the type inference features, enjoy, and see how it feels.
+That can be done organically.
