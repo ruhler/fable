@@ -1,11 +1,11 @@
-Fable E
-=======
+Fble
+====
 Richard Uhler <ruhler@degralder.com>
 
 1. Introduction
 ---------------
-Fble is a general purpose, Turing-complete functional programming language
-with support for polymorphism, and modularity.
+Fble is a general purpose functional programming language with support for
+polymorphism and modularity.
 
 1.1 Goals
 ---------
@@ -425,7 +425,8 @@ Example:
 
 Returns the value passed to the union at the corresponding field position when
 the union was constructed. Behavior is undefined if the union tag does not
-match the field being accessed.
+match the field being accessed; implementations are encouraged to provide
+meaningful error messages in this case.
 
 The object must be a union value. The field must refer to a field of that
 union value. The type of the expression is the type of the field being
@@ -517,13 +518,13 @@ Concrete Syntax:
   block ::= '(' type [',' type [...]] ')' block
 
 Examples:
-  (Int@, Int@){ Bool@; }
+  (Int@, Int@) { Bool@; }
 
 The function type describes the type of a function value by specifying the
 function's argument and return types.
 
 Function arguments can be any kind of value, including types, structs, unions,
-functions, or processes.
+or functions.
 
 Two function types are equal if their argument and return types are equal.
 
@@ -531,7 +532,7 @@ Curried function types are not considered equal. For example, the following
 two expressions describe different types:
 
  (a, b) { c; }
- (a) { (b) { c;}; }
+ (a) { (b) { c; }; }
   
 We distinguish between these types because in practice there are performance
 implications for which type you choose.
@@ -555,9 +556,7 @@ the function is inferred to be the type of the body of the function. The
 argument names chosen when defining a function have no effect on the type of
 the function.
 
-Arguments to multi-argument functions must have distinct names, because it's
-more likely you gave multiple arguments the same name accidentally than on
-purpose.
+Arguments to multi-argument functions must have distinct names.
 
 Runtime is O(N log(M)), where N is the number of variables in scope that are
 captured by the function and M is the number of variables in scope. Only
@@ -575,9 +574,9 @@ Example:
   foo(x, y)
 
 The application expression is used to apply a function to some arguments. The
-supplied arguments must match the type of arguments specified for the
-function. The application expression evaluates to the value of the body of the
-function in the context of the supplied arguments.
+supplied arguments must match the type and number of arguments specified for
+the function. The application expression evaluates to the value of the body of
+the function in the context of the supplied arguments.
 
 Runtime is O(log(N + M)) plus the runtime of func, the runtimes of each of the
 arguments, and the runtime of the body, where N is the number of arguments to
@@ -597,7 +596,7 @@ Concrete Syntax:
 
 Examples:
   <@>@
-  <@, @>%
+  <@,@>%
 
 A poly kind describes the kind of a polymorphic value. It describes what kinds
 of values can be used as arguments to polymorphic values.
@@ -612,7 +611,8 @@ The argument kind of a poly kind must be a type kind.
 The concrete syntax allows you to specify multiple arguments in a poly kind.
 This is syntactic sugar for nested single argument poly kinds. For
 example, the following two expressions describe the same kind:
-  <@, @, @>@
+ 
+  <@,@,@>@
   <@><@><@>@
 
 6.2 Poly Value
@@ -685,9 +685,9 @@ rewritten by the compiler to fromJust<Int@>(3).
 
 The motivation for supporting type inference is to prevent cluttering the code
 with types that are otherwise straight forward to infer. This is particularly
-important when used in combination with function bind, where the common use
-case requires specifying the return type repeatedly for each call in a
-function bind chain.
+important when used in combination with function bind (described later), where
+the common use case requires specifying the return type repeatedly for each
+call in a function bind chain.
   
 It is a type error if the compiler is unable to unambiguously infer all the
 type parameters to the poly based on the arguments. For example, it would be
@@ -761,7 +761,7 @@ expression, instead of having stand alone list expressions like [a, b, c], is:
 * It allows the user to specify what type of list to build instead of assuming
   a single builtin list type.
 * It make it possible to specify the type for empty lists.
-* For consistency with literal expressions, which require a user defined
+* It is consistent with literal expressions, which require a user defined
   letter type to be supplied.
 
 7.2 Literal
@@ -797,7 +797,6 @@ to f is E@, is desugared to:
 It is a type error if the word contains a letter for which there is no
 corresponding field in the element type E@.
 
-
 Struct types and package types cannot be used for the function in literal
 syntax, even though they share a similar concrete syntax to function
 application. Type inference is not supported with literals because the word
@@ -821,12 +820,10 @@ The function specifies how to transform a list of bits into an integer,
 assuming some int type Int@:
 
   (Int@, Bits@) { Int@; } Helper = (Int@ n, Bits@ bits) {
-    bits.?(
-      cons: {
-        Int@ m = Add(Mul(2, n), bits.cons.head.?(0: 0, 1: 1))
-        Helper(m, bit.cons.tail);
-      } ,
-      nil: n);
+    bits.?(nil: n);
+
+    Int@ m = Add(Mul(2, n), bits.cons.head.?(0: 0, 1: 1))
+    Helper(m, bit.cons.tail);
   };
 
   (Bits@) { Int@; } Binary = (Bits@ bits) {
@@ -863,7 +860,7 @@ For example, the expression:
 
 Desugars to:
 
-  map(l)((Int@ x) { f(x, y); });
+  Map(l)((Int@ x) { f(x, y); });
 
 Bind is particularly suited for abstracting glue logic that manipulates how
 program statements are combined. For example, it can be used to hide error
@@ -957,9 +954,8 @@ For example, you might have the following directory structure:
 Modules may depend on other modules independent of the tree hierarchy of
 modules. A program can include a module without having to depend on any
 descendants of that module. The only restrictions on module dependencies are
-that there must not be any cyclic dependencies and module visibility rules
-must be obeyed. A module may not reference itself, as that is considered a
-form of cyclic dependency.
+that there must not be any cyclic dependencies. A module may not reference
+itself, as that is considered a form of cyclic dependency.
 
 A module is referred to using an absolute path, which describes a path of
 named children from the root of the module hierarchy.
@@ -979,14 +975,26 @@ Examples:
 
 8.3 Program
 -----------
-A program is an fble expressions that creates a value that is used however is
-deemed suitable by whoever is executing the program. Commonly this could be:
+A program is an fble expression that creates a value that is used however is
+deemed suitable by whoever is executing the program.
 
-* struct: evaluate and output the value
-* union: evaluate and output the value
-* function: apply the function to arguments provided on the command line,
-  evaluate and output the resulting value
-* process: run the process, evaluate and output the resulting value.
+In practice, the value could be a polymorphic function value of abstract
+monadic type. The function is applied to a builtin instance of the monadic
+type that can have side effects. For example, the type of the value might be:
+
+ <<@>@ M@>(Monad@<M@>, Stdio@<M@>, List@<String@>) { M@<Bool@>; };
+
+The function is provided with instances of the Monad@ and Stdio@ interface and
+a list of command line arguments. The function is executed, resulting in input
+and output operations over the Stdio@ interface, and the final result is
+converted to a standard exit code.
+
+Other examples of ways to execute an fble program:
+* Evaluate the value to ensure there are no runtime errors, for testing
+  purposes.
+* The value is a polymorphic function of abstract monadic type that takes an
+  interface to a graphical display. The function is executed, resulting in
+  updates to the display of an application window.
 
 A program is formed of a module and all of its direct and indirect
 dependencies. For example, consider the following module hierarchy:
@@ -1066,7 +1074,8 @@ accessible to all modules? Do we allow empty path in general? It seems
 unnecessary to make an abstract type that every module can access, but maybe
 it's useful to have for uniformity of interaction with the type?
 
-A package type has kind @. Two package types are considered equal if they have the same path.
+A package type has kind @. Two package types are considered equal if they have
+the same path.
 
 9.2 Abstract Type
 -----------------
@@ -1180,7 +1189,7 @@ be accessed externally using the provided methods.
 
   @(Enum@, A, B, C, IsA, IsB, IsC);
 
-The Pkg@ type restricts asscess to the internals of the Enum@ type to modules
+The Pkg@ type restricts access to the internals of the Enum@ type to modules
 starting with /MyPackage in their path. Other users are unable to construct or
 access fields of the Enum@ type directly; they can only use the provided
 values A, B, C and functions IsA, IsB, and IsC.
@@ -1276,15 +1285,15 @@ Expr ::=
  | poly_value (arg :: (Kind, Name)) (body :: Expr)
  | poly_apply (poly :: Expr) (arg :: Expr)
 
+ | list (func :: Expr) (args :: [Expr])
+ | literal (func :: Expr) (letters :: word)
+ | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+
  | package_type (path :: Path)
  | abstract_type (package :: Type) (type :: Type)
  | abstract_cast (package :: Type) (target :: Type) (value :: Expr)
  | abstract_value (package :: Type) (value :: Expr)
  | abstract_access (package :: Type) (value :: Expr)
-
- | list (func :: Expr) (args :: [Expr])
- | literal (func :: Expr) (letters :: word)
- | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
  ;
 
 Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
@@ -1324,8 +1333,8 @@ three separate words: 'Foo', '.', and 'Bar', not as a single word 'Foo.Bar'.
 The only exception is when consecutive single quote characters are used to
 embed a single quote character in a word.
 
-11.2 Reference
---------------
+11.2 Concrete Syntax Reference
+------------------------------
 word ::= (* word as described in the section on lexical syntax *)
 normal_name ::= word
 type_name ::=   word '@'
@@ -1371,14 +1380,14 @@ expr ::=
 
  | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
+ | expr '['[expr [',' expr [...]] ']'              (* list *)
+ | expr '|' word                                   (* literal *)
+
  | '%' '(' path ')'                                (* package_type* )
  | type '<' type '>'                               (* abstract_type *) 
  | type '.' '<' type '>' '(' expr ')'              (* abstract_cast *) 
  | type '(' expr ')'                               (* abstract_value *) 
  | expr '.' '%'                                    (* abstract_access *) 
-
- | expr '['[expr [',' expr [...]] ']'              (* list *)
- | expr '|' word                                   (* literal *)
 
  | block
  ;
@@ -1404,8 +1413,8 @@ Notes:
 * Struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
 * Explicit type struct value, function apply, and abstract value share the
-  same form. The type of the expr is used to distinguish between the four
-  kinds of expressions.
+  same form. The type of the expr is used to distinguish between these kinds
+  of expressions.
 * Polymorphic application and abstract type share the same form. The type of
-  the argument is used to distinguish between the three kinds of expressions.
+  the argument is used to distinguish between these kinds of expressions.
 * The module value for module /Foo/Bar% is stored in Foo/Bar.fble.
