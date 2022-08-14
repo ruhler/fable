@@ -1,3 +1,15 @@
+* Add tests for code coverage.
+* Make it possible to add expected failing spec tests.
+* Make it easier to run failing tests under valgrind and gdb.
+
+* vim syntax
+ - fix highlighting of module path with '' word in it
+ - add option to goto file of module path?
+ - fix vim syntax highlighting for <<@>@ M@>
+    The leading '<' shouldn't be colored, because it's not part of the kind.
+
+* Nicer error message for parsing module names with '-' in them.
+  Which technically isn't allowed.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.
@@ -5,27 +17,17 @@
 * Make it so debug test doesn't time out. 
  - By forcing it to run as the only thing during build?
 
-* Make it possible to add expected failing spec tests.
 * Add tests that at least the compiled apps don't crash when you run them.
 * Why does /Core/Test% export String@? Is that needed?
-* Fix vim syntax highlighting for <<@>@ M@>
-  The leading '<' shouldn't be colored, because it's not part of the kind.
 * Add mouse button support to App.
 * Clean up frame rate/event handling of /App/Demo%.
 * Figure out how to support images in Apps.
 
-* Make it easier to run failing tests under valgrind and gdb.
 * Better error message for 6.4-PolyInfer/Type/InconsistentAssignment case.
-* Add more tests for type inference to get code coverage.
 
 * Move TODO entries to corresponding subdirectories?
 
-* Nicer error message for parsing module names with '-' in them.
-  Which technically isn't allowed.
 
-* vim syntax
- - fix highlighting of module path with '' word in it
- - add option to goto file of module path?
 
 * Should we add option for fble-compile to generate main function for
   interpreted case? Might be nice?
