@@ -1,0 +1,14 @@
+# @@fble-test@@ compile-error 14:19
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ Enum@ = +(Unit@ A, Unit@ B, Unit@ C);
+
+@ L@ = +(*(Enum@ head, L@ tail) cons, Unit@ nil);
+
+(L@) { Unit@; } f = (L@ l) {
+  Unit;
+};
+
+# The second argument is not well typed.
+f[Enum@(B: Unit), zzz, Enum@(C: Unit)];

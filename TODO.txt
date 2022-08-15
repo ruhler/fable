@@ -1,4 +1,3 @@
-* Add tests for code coverage.
 * Make it possible to add expected failing spec tests.
 * Make it easier to run failing tests under valgrind and gdb.
 

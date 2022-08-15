@@ -1,0 +1,4 @@
+# @@fble-test@@ compile-error 4:1
+
+# The value is not well typed.
+zzz.%.true;
