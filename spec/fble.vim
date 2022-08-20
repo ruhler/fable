@@ -2,7 +2,12 @@
 " Language:	Fble
 " Maintainer:	Richard Uhler <ruhler@degralder.com>
 
+if exists("b:current_syntax")
+  finish
+endif
+
 " Indent stuff.
+" TODO: Move this to a separate indent file.
 set comments=:#
 set formatoptions=croqtl
 set cindent
@@ -10,31 +15,34 @@ set cinkeys=0{,0},!^F,o,O
 set cinwords=
 set cinoptions=(1s
 
-" TODO: Using \w for normal characters fails to match many characters.
-" Is there some way to factor out the actual regex for a normal character?
+" Use lower and upper character classes for unquoted words, which support
+" multibyte characters where alnum does not according to the vim help text.
+let s:unquoted = '\([[:lower:][:upper:][:digit:]_]\+\)'
+let s:quoted = "'\\(\\([^']\\|''\\)*'\\)"
+let s:word = '\(' . s:unquoted . '\|' . s:quoted . '\)'
 
-" Highlight comments as comments.
-syn match Comment "#.*"
+exec 'syn match fbleComment "#.*"'
+exec 'syn match fbleType "' . s:word . '@"'
+exec 'syn match fbleLabel "' . s:word . ':"'
+exec 'syn match fbleLabel ":"'
+exec 'syn match fbleLiteral "|' . s:word . '"'
+exec 'syn match fbleModulePath "\(/' . s:word . '\)\+%"'
 
-" Highlight type variables as types.
-syn match Type "\w\+@"
+" A kind is a sequence of <@,> characters ending in % or @.
+" Except for:
+"   * the '<' at the begining of '<' kind name ... syntax
+"   * @<...> typeof expression
+" TODO: Fix and clean this up.
+let s:kind = '\(<[<>@,[:space:]]*>\)\?[@%]'
+exec 'syn match fbleKind "' . s:kind . '"'
+exec 'syn match fbleNotKind "@<"'
 
-" Highlight kinds as special, to distinguish from types.
-syn match xNotKind "@("
-syn match xNotKind "@<"
-syn match Special "\(<[<@, >]*>\)\?[@%]" contains=xNotKind
-syn match Special "@?"
+" Specify highlight groups to use for each of the syntax groups.
+hi def link fbleComment Comment
+hi def link fbleLiteral String
+hi def link fbleLabel Label
+hi def link fbleModulePath Include
+hi def link fbleType Type
+hi def link fbleKind Special
 
-
-" Highlight fields used in union select and implicit type struct values as
-" labels.
-syn match Label "\w*:"
-syn match Label "\w\+@:"
-
-" Highlight module paths as include.
-syn match Include "\(\w\|[/]\)\+%"
-
-" Highlight literals as strings.
-syn match String "|\w\+"
-syn region String start=+'+ skip=+''+ end=+'+
-
+let b:current_syntax = "fble"

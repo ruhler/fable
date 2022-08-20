@@ -1,0 +1,307 @@
+Fble Vim Syntax File
+====================
+Goal is to work out a nice way to do it.
+
+Current known issues:
+* \w+ used as approximation for words doesn't cover everything
+  For example:
+   'Foo'@  should probably highlight like Foo@?
+   2π@ should probably highlight like 2p@
+* Literals should be whatever is after |, not what's in '...'
+* <<@>@ M@> is coloring the leading '<' when it shouldn't be.
+* Add 'gf' command option when hovered over a module path, if at all possible.
+
+So the big thing is having some better way to match a word, that includes
+single quote stuff. Then using that everywhere.
+
+First question: can we define some abstraction for a regex, like a word token,
+that we reuse elsewhere in the vim syntax file?
+
+Here's what I would love to be able to write. Something like:
+
+whitespace = \w
+punctuation = [...]
+normal = !whitespace && !punctiation
+
+unquoted_word = normal+
+quoted_word = '.*' (with appropriate adjustment for '' in the word)
+word = unquoted_word | quoted_word
+
+And now we can use word in all the syntax elements.
+
+Let's see what vim syntax highlighting supports.
+
+Notes from reading through the vim syntax manual:
+* Syntax groups that I'll want, from fble point of view:
+  fbleKind, fbleType, fbleComment, fbleLabel, fbleLiteral, fbleModulePath
+* Highlight Groups:
+  Comment for fbleComment
+  String for fbleLiteral
+  Label for fbleLabel
+  Include for fbleModulePath
+  Type for fbleType
+  Special for fbleKind
+* We will not use keywords. We have none.
+* Use Region for quoted words
+   start at '
+   end at '
+   skip ''
+  But can we embed definition of a group in a bigger syntax item?
+  Worst case, I suppose we provide two definitions for all items, the quoted
+  word and unquoted definitions?
+* Last item defined has priority if multiple things match.
+* Maybe we want to enable spell checking for comments?
+   Use @Spell cluster. See :syn-spell for more details.
+
+I don't see anything that would let us put a region definition inside another
+match. Let me brute force it and define two variants of every match: a quoted
+word version and a non-quoted word version.
+
+I also don't see any way of defining a reusable pattern. Maybe I need to use
+vim variables, or read about patterns in vim. Googling suggests there is no
+nice way to include variables in patterns. We would need to form a command and
+execute it. Almost doesn't seem worth it.
+
+Let me take a peek at some existing syntax files and see if they have a
+similar issue, like what is considered a word. Hey, wait. Can't I define what
+is considered a word, and then use \w?
+
+Oh, I can be hacky here. There are no keywords in fble. So I can repurpose
+:syntax iskeyword to define a word. The use \k in patterns. Sneaky. I like it.
+
+Actually, iskeyword doesn't take regex, it takes a list of characters to
+match, which is not as convenient?
+
+What do I really want for keywords? That is, what do I want to exclude? I
+think I need to list my punctuation characters explicitly?
+
+Maybe the question is, what punctuation characters do I want to allow in
+words?
+
+Excluded: (){};,:?=.<>+*-!$@~'\[]%/
+Included: _
+???: "#&^`
+
+Okay. That's just silly. I should do something standard. All ascii punctuation
+characters, except '_'.
+
+I would like things like π to be considered alpha. Is that included in
+iswalpha?
+
+I should maybe print a bunch of characters and see what they are considered
+as. In particular, what isspace, ispunct, and isalnum. I'm thinking something
+like:
+
+isspace for whitespace.
+ispunct for punctuation.
+isalnum for normal.
+Except:
+* _ is treated as normal instead of punctuation.
+* # is treated as comment.
+
+But I want things like the pi character to be normal. So let's just check if
+they are? Yes. pi is alnum. Cool. Note, there are a class of control
+characters that are neither punctuation, alphanum, or space. But I think space
++ punct + alphanum + control should cover everything.
+
+So, maybe what I should do for fble spec is to say:
+
+* A word character is: alnum + '_'.
+* ctrl, space and comments are delimiters, but otherwise ignored (if not in
+  quotes)
+* punctuation, except '_'.
+
+Cool, eh? Nice and simple. We can use wctype in the implementation. People can
+change things based on their local.
+
+That would help syntax highlighting too. For word, we just use ... Hmm...
+Looks like the character classes in vim are ASCII only? That's annoying. I'd
+have to highlight by negation, and then the unicode stuff would be messed up?
+
+What's interesting is I use fgetc to read from a file in the implementation.
+And char*. So we can't support pi as a character internally anyway, can we? Or
+will it be treated as a multibyte character, so that 'π' is treated as a
+string?
+
+I'm confused. I can use a variable name like 2π just fine in my current
+implementation. I just want the highlighting to work correctly.
+
+Then maybe the thing to say is:
+
+space: ASCII isspace
+punct: ASCII ispunct less '_'
+all else: can be used as words, including control characters and non-ASCII
+space characters and non-ASCII punctuation characters.
+
+Then the character class to highlight for a word is:
+  [^\s[:punct:]] or '_'
+
+Oh, there's a note. For multibyte alpha we can use [[:lower:][:upper:]]. So if
+I want I could syntax highlight a word, including non-ASCII, as
+[[:lower:][:upper:][:digit:]_]. Maybe that's nicer. But requires the new
+engine?
+
+Need to think about it a bit more.
+
+Honestly, I don't think it's too important. I just want non-ASCII alpha
+characters to be highlighted properly. I don't really care about things like
+highlighting or treatment of non-ASCII control, space, or punctuation
+characters. And we don't have to perfectly implement the spec, either in the
+syntax highlighting or the fble implementation.
+
+So there can be three variations:
+1. spec.
+2. fble lib impl.
+3. vim syntax highlighting.
+
+I don't know what kind of non-ASCII space characters there are. Looks like en
+space, em space, etc. So there are space characters we really ought to treat
+as such.
+
+Interesting, looks like there are unicode recommendations for identifiers. See
+http://www.unicode.org/reports/tr31/#Default_Identifier_Syntax
+
+We could say: identifiers are defined by the Unicode properties, with the
+addition of '_'. Except that we don't distinguish starting characters
+differently. For example, you can start an identifier with a digit.
+
+I think, fundamentally what I want is:
+* Any unicode space treated as space. Users can format how they like.
+* The specific punctuation characters we need for fble syntax and any we may
+  foresee needed at some point, or any that are indistinguishable from the
+  aforesaid should be considered punctuation.
+* alpha numeric + '_' is minimum for identifiers.
+
+That leaves a bit of gray space:
+* How to treat control characters? Like white space, punctuation, or normal?
+  I'm tempted to say like space characters: put them in if you want. They
+  don't have an effect on the program. Except for end of file.
+* How to treat unused punctuation characters? Allow them in identifiers or no?
+* What about '-' in identifiers?
+
+I think this is making things a bit too complicated. Go with the simplest
+spec I think. For example:
+
+* space is unicode space class.
+* identifiers are unicode alnum + '_'.
+* anything else is treated as punctuation, including punctuation and non-space
+  control characters.
+
+The weird thing is, any punctuation not explicitly used by the language is
+basically unusable. So why wouldn't you allow it?
+
+In other words, what I am proposing is:
+
+* space is unicode space class. Delimiter, otherwise ignored.
+* punctuation is explicit list of what's used in the language syntax.
+* anything else is 'normal'.
+
+Questions from that, then, are:
+* Any control characters we might want to treat like space?
+* Want to avoid punctuation looking things in words?
+
+Given we have the option of quoting to include weird things in names, how
+about:
+
+* space is unicode space class.
+* normal is unicode alnum + '_'
+* everything else is known punctuation or not allowed unless quoted.
+
+Honestly, I think that's the best so far. You get all the basics that you want
+in a general way. No weird stuff, unless you explicitly introduce it with
+quotes.
+
+I suppose there is a question about control characters needed in identifiers,
+but I don't have the information needed to decide on that. Better to be very
+explicit, and this proposal is pretty explicit.
+
+Shall I update the spec, the implementation, some test cases, and the vim
+syntax based on this?
+
+Okay, so I'm liking my draft updated syntax file. A few issues:
+* How to distinguish between '...'@ and '...':
+* The kind issue looks tricky. How to know if '<' should be included or not?
+
+User guide suggests we can't use a region in that case. Have to use a match.
+So... how do I match a quoted word?
+
+  '[^']*'
+
+That's close, but how to skip over the ''? Maybe:
+
+ '([^']\|'')\*'
+
+Cool. Let's try that.
+
+Okay, technically it's: '\([^']\|''\)*'
+
+That works great. How about we use that everywhere?
+
+Note: match is nicer than region because it doesn't color it too early. Only
+use region for comments.
+
+Okay, word is complicated enough. Let me see if I can figure out how to pass
+variables as arguments to vim commands and do at least enough string
+manipulation to do concatenation of strings with variables. That will be much
+nicer.
+
+Looks like :execute command is the only way. Otherwise it won't substitute.
+It's not too terrible, I don't think. For example:
+
+  let x = 'he'
+  exec "syn match Special" "\"" . x . "@" . "\""
+
+Use . between args to avoid a space. Everything is a string, it all does
+string concatenation, so you need to quote things.
+
+Let me give it a try and see how bad it gets.
+
+Yeah. That's definitely worth doing. I like it.
+
+Cool. Everything is looking great now. Just need to figure out the kind issue,
+because that's where we have nesting.
+
+Requirements:
+* ends in '@' or '%'
+* May have '<' [<@,\s>]* '>' in front, but ideally matched? How else can we
+  know to exclude '<' in case it's a poly?
+
+What's tricky is...
+
+<<@>@         >@    - the leading '<' is a kind.
+<<@>@         X@>   - the leading '<' is not a kind.
+
+Because it depends on the end, we can't use a region for this. We would have
+to use a match.
+
+Can we do it with regions? Have a poly group and a kind group, and poly
+contains kind. We color kind but not poly.
+
+Then a poly group is:  < ... >, it can contain poly itself.
+Then a kind is: < ... >@, or < ... >% . It can contain kind itself.
+
+No. Regions can't know what to choose based on the end. They can only be
+extended longer. I don't think it's possible to make this work with just
+regex.
+
+I wonder if we can do contains with match. Like, maybe: match '< kind word'
+with higher priority than kind, but say it contains kind and word. Maybe worth
+a try?
+
+Start by defining kind match then.
+
+No. Trouble is that 'contains' will include the first character as part of a
+kind.
+
+I don't think it's possible to distinguish without a parser. Is this an
+argument for making a change to the syntax to avoid this kind of ambiguity?
+
+For example, use [] instead of <> for kinds? Then we have:
+
+<[@]@ M@>
+[[@]@]@ M@ = 
+
+Super easy to syntax highlight and distinguish between poly and kind.
+Honestly, I think some distinction would help.
+
+Brainstorm more distinctions?

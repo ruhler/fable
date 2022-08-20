@@ -5,10 +5,11 @@
   passing in terms of return code.
 
 * vim syntax
- - fix highlighting of module path with '' word in it
  - add option to goto file of module path?
  - fix vim syntax highlighting for <<@>@ M@>
     The leading '<' shouldn't be colored, because it's not part of the kind.
+
+* Is <%,%>% a legal kind? What would you use it for?
 
 * Nicer error message for parsing module names with '-' in them.
   Which technically isn't allowed.

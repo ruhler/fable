@@ -1396,7 +1396,7 @@ block ::=
    '{' stmt '}'
  | '(' type [',' type [...]] ')' block               (* func_type *)
  | '(' type name [',' type name [...]] ')' block     (* func_value *)
- | '<' tkind name [',' tkind name [...]] '>' block   (* poly_value *)
+ | '<' kind name [',' kind name [...]] '>' block     (* poly_value *)
  ;
 
 stmt ::=
