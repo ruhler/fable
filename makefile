@@ -10,7 +10,7 @@ ninja:
 
 .PHONY: all
 all: out/build.ninja
-	ninja -f out/build.ninja -k0
+	ninja -f out/build.ninja
 
 .PHONY: clean
 clean:

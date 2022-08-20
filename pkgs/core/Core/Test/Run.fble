@@ -36,9 +36,6 @@
 
 <<@>@ M@>(Monad@<M@> m, (String@) { M@<Unit@>; } out) {
 
-  # Print a string to the output stream.
-  (String@) { M@<Unit@>; } Print = out;
-
   # Print a string and newline to the given output stream.
   (String@) { M@<Unit@>; } PrintLn = (String@ str) {
     out(Append<Char@>(str, Str[Chars.nl]));
@@ -61,7 +58,7 @@
           Unit@ _ <- m.do(out(short));
           List@<Failure@> nfailed = tr.?(
             pass: status.failures,
-            fail: Cons<Failure@>(Failure@(Append<Char@>(prefix, t.name), tr.fail), status.failures),
+            fail: Cons(Failure@(Append(prefix, t.name), tr.fail), status.failures),
             xfail: status.failures);
           Int@ xfails = tr.?(xfail: Inc(status.xfails), : status.xfails);
           m.return(Status@(Inc(status.total), xfails, nfailed));
@@ -84,7 +81,7 @@
     Unit@ _ <- m.do(ForEach<Failure@, M@<Unit@>>(failures, m.return(Unit),
         (Failure@ f, M@<Unit@> mu) {
       Unit@ _ <- m.do(mu);
-      PrintLn(Concat<Char@>(List<String@>[f.name, Str|': FAILED: ', f.msg]));
+      PrintLn(Strs[Str|'@[', f.name, Str|']: @FAILED: ', f.msg]);
     }));
     Unit@ _ <- m.do(PrintLn(Nil<Char@>));
 
@@ -92,13 +89,13 @@
     Int@ num_failed = Length<Failure@>(failures);
     Int@ num_xfailed = status.xfails;
     Int@ num_passed = Sub(num_total, Add(num_failed, num_xfailed));
-    Unit@ _ <- m.do(PrintLn(Concat<Char@>(List<String@>[
+    Unit@ _ <- m.do(PrintLn(Strs[
       Str|'Test Summary: ',
       /Core/Int/Show%.Show(num_passed), Str|' passed, ',
       /Core/Int/Show%.Show(num_failed), Str|' failed, ',
       /Core/Int/Show%.Show(num_xfailed), Str|' expect failed, ',
       /Core/Int/Show%.Show(num_total), Str|' total'
-    ])));
+    ]));
 
     m.return(failures.?(cons: False, nil: True));
   };
@@ -110,20 +107,21 @@
     Run = (Test@ test, String@ prefix, Bool@ passing) {
       test.?(
         case: {
-          Unit@ _ <- m.do(Print(Append<Char@>(prefix, test.case.name)));
+          String@ name = Strs[prefix, test.case.name];
+          Unit@ _ <- m.do(out(Strs[Str|'@[', name, Str|']: ' ]));
           TestResult@ tr = test.case.test(Unit);
           tr.?(
             pass: {
-              Unit@ _ <- m.do(PrintLn(Nil<Char@>));
+              Unit@ _ <- m.do(PrintLn(Str|'@PASSED'));
               m.return(passing);
             },
             fail: {
-              Unit@ _ <- m.do(PrintLn(Strs[Str|': FAILED: ', tr.fail]));
+              Unit@ _ <- m.do(PrintLn(Strs[Str|'@FAILED: ', tr.fail]));
               m.return(False);
             },
             xfail: {
-              Unit@ _ <- m.do(PrintLn(Strs[Str|': EXPECT FAILED']));
-              m.return(False);
+              Unit@ _ <- m.do(PrintLn(Str|'@XFAILED'));
+              m.return(passing);
             });
         },
         suite: {

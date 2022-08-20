@@ -1,6 +1,9 @@
 * Make it possible to add expected failing spec tests.
 * Make it easier to run failing tests under valgrind and gdb.
 
+* Add test for /Core/Test/Run/RunTestVerbose% that xfail is treated like
+  passing in terms of return code.
+
 * vim syntax
  - fix highlighting of module path with '' word in it
  - add option to goto file of module path?
@@ -9,6 +12,12 @@
 
 * Nicer error message for parsing module names with '-' in them.
   Which technically isn't allowed.
+
+* Do something with .@ module value vs. type?
+  - There's currently unexercised code for it.
+
+* Do something with data type instruction?
+  - There's currently unexercised code for it.
 
 * Clean up FbleNewSimpleFunc API and use cases
  - Don't require use of global variables to pass state.

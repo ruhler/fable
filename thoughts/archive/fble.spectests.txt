@@ -456,3 +456,359 @@ What exec will let us do:
 * 2>@1 to redirect standard error to the output of the command.
 * 
 
+---
+
+Revisiting after a while. Question about expect failure case, and what, if
+any, cleanup we want to do of tests.tcl.
+
+Thoughts on expect failure:
+* It would be nice to have, rather than have to run all tests and skip over
+  any that are failing.
+* We want a way to specify the original test and the currently failing
+  message. Note that we can already do this. We can already write a test for a
+  failing case or a passing case.
+* Really what's important about expected failure versus a normal test is that
+  it's visible somewhere as a thing to fix. So, like, in the final summary
+  line. Or as an 'X' that is pretty visible.
+
+Proposed syntax:
+  @@fble-test-xfail@@ ...
+
+Same syntax as @@fble-test@@, same subcommands supported, but if this is
+present, then the original @@fble-test@@ line is ignored and this is noted as
+an expected failure test.
+
+Alternatives:
+* Comment out the original @@fble-test@@, add a new @@fble-test@@ with current
+  behavior, and use some other method to indicate it is expected failure?
+
+Oh. I remember now. Conceptually it doesn't make sense to mark expected
+failure in the test, because it's the implementation where the failure is
+expected, not the test case itself. That suggests we would need to store the
+info elsewhere. Like, maybe keep a list of expected failures somewhere? With
+the name of the test and an @@fble-test@@ line describing the current failure
+with the test?
+
+Note: only the first @@fble-test@@ line in the file has effect in the current
+implementation.
+  
+Maybe a practical easy approach to take would be, add an @@fble-test-xfail@@
+line to the file. It treats it as a test case, but you give the known failure
+message. Then it records it as xfail somewhere. Who cares if it doesn't make
+sense conceptually? It's useful for development purposes. Or, just ,
+@@fble-xfail@@, which is shorter maybe. Cool. Sounds good to me. Worry about
+implementation later.
+
+That brings us to our next question: should we summarize tests? What, and how?
+
+I think having the test failure be a build failure works great. Worst case I
+can do build all to see all things.
+
+Having a test summary line at the end is sort of nice, but honestly, not very
+useful. It doesn't even print if there's nothing to be done. I don't know the
+number, so it won't help me know if I added a test case successfully or not.
+
+---
+
+There are three options for test
+1. build failure yes or no.
+2. support expected failure yes or no.
+3. show status at end yes or no.
+
+Where we have things like:
+  no_build_failure ==> show_status
+  expected_failure ==> show_status
+
+From a users point of view, expected_failure and show_status don't hurt to
+have. The real question is build failure or not. It could hurt to have to wait
+for all the tests to finish before seeing that one of them failed. And you can
+always do -k0 in ninja if you want that behavior. In which case, status would
+be nice. But as currently implemented, -k0 doesn't give you status.
+
+Implementation wise, note that we have spec tests as different kinds of tests
+from other tests. Currently it's the build system that outputs PASSED for
+passing tests. We don't ever output FAILED for a failing test, for example.
+
+Taking a step back, how does something like dejagnu work in terms of reporting
+test results?
+
+The test runner outputs a .sum file, with PASS, XPASS, FAIL, or XFAIL for each
+test, and then a summary line with counts at the bottom. It outputs a .log
+file with detailed test output.
+
+The unit test protocol is:
+* output NOTE: ...
+* output PASSED, FAILED, XPASSED, XFAILED, UNTESTED, UNRESOLVED followed by
+  test name. This allows multiple tests in the same run I guess.
+
+I suppose the question is, is there a nice way we could support both spec
+tests and general ninja tests together in one common format? And have it all
+work together? Maybe we could even support fble program test cases that way
+too?
+
+I certainly want to take advantage of ninja to only run a test if necessary.
+
+What I want is some generic API for tests. You run a command that is a test,
+or a set of tests. It has a way of indicating PASS, FAIL, XFAIL, possibly for
+a number of tests. We have a way to run such a program and summarize the
+results. For build, we run a bunch of separate programs, concatenate the
+results together, and get the overall test summary. But allow individual tests
+to fail.
+
+We have output and exit status. Exit status would be a summary status, 0 for
+all passed, non-zero for anything else. In build, it's up to us to decide if
+we want non-zero exit status to stop build or not. Perhaps different items we
+choose differently.
+
+Interesting thought. Interesting idea. The high level thinking is:
+* Come up with an output format test protocol that allows multiple tests in a
+  single command run.
+* exit status is summary of output results: 0 for all good, non-zero for some
+  issue.
+* Build builds fragments of outputs that we can stitch together at the end.
+* We can decide if we want to treat exit 0 as build failure or not per
+  fragment.
+
+Is there an existing test standard, like dejagnu, that it would make sense to
+reuse?
+
+---
+
+Here's the plan:
+* Reuse dejagnu for my tests. So, output PASSED: ..., XFAIL: ..., or FAIL: ...
+  as output to indicate test status.
+* To support composition, do one of:
+ A. See if dejagnu has support for test suites.
+ B. Add a special TESTSUITE: tag or some other enter/exit for scoping.
+ C. Pass the path to the test suite as input and have it auto add that.
+* Update fble tests to have a dejagnu output format.
+* Update spec tests to output dejagnu format. Add support for xfail.
+* Update other misc tests we have in build.tcl files to use dejagnu format.
+* Output of a build.tcl test is written to a file.
+* Write a script to read a test output file and convert it into pass/fail
+  and/or summary status.
+* Choose whether I want to convert to pass/fail at individual build.tcl test
+  level, or if we want to cat all the test results together and have one file
+  summary thing.
+
+It will be fun to try, fun to learn, support things generally, support status
+lines, support expected failures. Basically gives me everything and all
+options in a clean way, even if I don't need the full generality.
+
+Next step, then, is to play around with dejagnu to better understand it. And
+in particular, see about test suite options.
+
+Reading about dejagnu:
+* Seems like I really want to use dejagnu unit testing format. Not the rest of
+  the framework in general.
+* I don't see anything interesting for test suites or composition of tests.
+
+Can we find some other standardish test format?
+
+I don't see anything obvious. It sounds simple enough. Can I write my own
+proposal and go with that?
+
+Goals:
+* Tests can pass, fail, or expected fail.
+* A test is a program that runs and uses its output and/or exit status to
+  indicate test state.
+* Test results can be saved to a file and replayed.
+* Test results can be composed together into test suites, where a test suite
+  is itself a test.
+* Tests are identified by name or other uniquely identifiable information that
+  can be used to locate the test. Let's say it's a name.
+
+For the purpose of composition, then, we have:
+* A leaf node is a test name + status, where status is PASS, FAIL, or XFAIL.
+  We also can have any output that would be useful to debug a test, or just
+  general info.
+* A general test is a list of test results, possibly organized by test suite.
+
+It would be great if you could concatenate the output of a bunch of tests
+together into a suite. It would be nice, I think, if you could see what test
+is running as it progresses. So, output the name first, then any log/debug
+info, and then a status at the end.
+
+I'm not going to worry about compatibility with dejagnu I don't think.
+
+Proposal:
+* @@TEST <name>
+  Indicates the start of a test with the given name. name is an arbitrary
+  string.
+* @@PASS, @@FAIL, @@XFAIL
+  Indicates whether the previously named test passes or fails.
+  If no status is indicated, it is treated as a failure.
+  If multiple status are indicated, it is treated as a failure.
+* @@SUITE <name>
+  Indicates the start of a test suite.
+* @@END
+  Indicates the end of a test suite.
+
+We can debate what syntax we want to use to make the test keywords stand out,
+if you don't like @@.
+
+Exit status is not meaningful, though if the test ends prematurely...
+
+What if a test suite ends prematurely and there is no @@END? How do we
+distinguish between a nested test suite versus an adjacent test suite?
+
+The only purpose of @@SUITE is to provide a common prefix...
+
+Next proposal:
+* Pass the test suite name to whoever runs the test. Make sure whenever you
+  run a test you take a test suite as input, your job is to use that as a
+  prefix to your test names.
+* This means we could potentially be dejagnu unit test format compatible. You
+  can concatenate everything. If we are dejagnu compatible, how do we show
+  what test is currently running before showing the result? Do I need that?
+  Not for status results, unless we want a way to say a test failed instead of
+  not running it at all, which would be nice...
+
+* TEST: <name>
+  Indicates the start of a test.
+* PASSED: <name>, FAILED: <name>, XFAILED: <name>
+  Indicates status of the most recent test.
+  If no status is indicated, it is treated as a failure.
+  If multiple status are indicated, it is treated as a failure.
+
+Note: we want <name> with the test status so it's easy to confirm which test
+passed or failed. We want name before that too, so we know what test is
+running and we can know it failed if we don't get a test status from it.
+
+I think it's important to specify the test name at the beginning of a test
+case. We are eliminating hierarchy in this proposal. Or rather, doing
+hierarchy by name. It's annoyingly close to dejagnu, but different.
+
+To make it compatible with dejagnu, we either assume it's okay to use TEST:,
+even thought that is reserved. Or, we use a non-reserved variation. For
+example: TEST: at the start of a line instead of after a tab.
+
+That sounds good to me. I can be dejagnu standard, but also have extra info to
+know what test is running and detect test failures that resulted in not being
+able to print the test result.
+
+Biggest downside for now is requiring every test to accept a prefix to use for
+the name. It means you have to know the full hierarchy of tests when running.
+You can't reorganize after the tests have finished running. The benefit is you
+can use that as a way to do test organization with dejagnu?
+
+Looks like dejagnu is tricky to use in the first place. So maybe not worth
+even trying to be compatible.
+
+How would a non-compatible protocol look?
+
+* @@ TEST <name>
+* @@ PASSED <name>
+* @@ FAILED <name>
+* @@ XFAILED <name>
+
+Cool. And that's it. The entire protocol. Test names have to be unique. When
+you run a test, you give it the name of whatever test suite you want it in. We
+can easily concatenate test results together to get a bigger suite.
+
+I'll want some utilities:
+* Given a test results file, print out a summary and return exit status 0 or
+  non-zero.
+  - Concise: '.', 'F', 'X' for results, plus a summary line.
+  - Summary: Show all @@ test lines, ignore the rest, plus a summary line.
+    Or, convert to: @@ TEST <name> <STATUS>, as you go. I like that.
+  - Full: output the full test results file, plus a summary line.
+  - Maybe have an option to capture logs between TEST line and status line and
+    print those only in case of test failure?
+* Given a command to run and a test name, wrap it in @@ TEST , @@ <STATUS>
+  lines, based on exit code of command. Something like:
+   echo TEST $name ; <cmd> && echo PASSED $name || FAILED $name
+
+Cool. That sounds like a plan to me. What does this look like in practice?
+* Write the two utility programs.
+* Update build.tcl and spec tests and fble tests to support this format.
+* Combine everything together and try it out.
+
+Maybe I start with fble test runner. That gives me good data to start with.
+Then write the summary script. That let's me test that manually. Then convert
+all the rest.
+
+---
+
+Should we support single line test output? Like:
+
+@@ TEST <name> PASSED
+
+As opposed to:
+
+@@ TEST <name>
+@@ PASSED <name>
+
+Maybe we could use a different delimiter to allow both on the same line? Like:
+
+@TEST[<name>]
+@PASSED[<name>]
+
+And then we could do:
+@TEST[<name>] @PASSED[<name>]
+
+That's a bit awkward.
+
+Maybe the TEST command can be optional? Like, I'm going to run a test, and it
+may take a while or there is a chance it could crash, so if you don't see a
+result for it, take that as failure? But no. I want to see what test is
+running.
+
+---
+
+What if we used something more like a build failure? That's done with
+something like:
+
+foo.c:13:13: error: invalid operands to binary == (have ‘U’ {aka ‘union
+
+In other words...
+
+NAME: STATUS: MSG
+
+Or we could do:
+
+NAME: PASS
+NAME: XFAIL
+
+The nice thing about this is it supports putting the name first as you run the
+test, and putting the error message on the same line. Does it support having
+output between the name and the status though?
+
+How can we separate the test lines and status from other arbitrary output?
+
+@[<name>]: @PASSED
+
+@[My Test]: @PASSED
+@[My Test]: @FAILED: ...
+@[My Test]:
+Has output some misc stuff.
+@FAILED: ...
+
+You know? I kind of like that syntax.
+* It's nice to allow the error message on the same line as status.
+* It's nice to allow the status on the same line as the test.
+
+This removes line-by-line syntax. Think of it as a stream of characters then.
+
+@[...] refers to the name of the test. Test name can't have ']' in it.
+@PASSED says the previously named test passed.
+@FAILED says the previously named test failed.
+@XFAILED says the previously named test failed as expected.
+
+Output for a test is everything between @[...] and the next test.
+If there is no status between @[...] and the next test, the test is considered
+failing.
+
+Yeah. I like that proposal. It looks nice to run. Very flexible.
+
+---
+
+I think it would be cool to have one big summary of all the tests that we run
+at the end. Have the verbose part while they are running. That way you can
+easily see what test takes a long time to run, and also a nice summary at the
+end with all the failures and expected failures? I'm not sure.
+
+
+
+
+
