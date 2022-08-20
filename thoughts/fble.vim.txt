@@ -305,3 +305,15 @@ Super easy to syntax highlight and distinguish between poly and kind.
 Honestly, I think some distinction would help.
 
 Brainstorm more distinctions?
+
+---
+
+No. I don't want to change the syntax of kinds. I want consistency between
+kinds and polys. That's implies we'll have issues with whatever syntax we
+choose. I'm okay with that.
+
+One idea: maybe we can highlight <>@% special when not included elsewhere. So
+at least we are consistently highlighting poly?
+
+I don't know. I'm on the fence. That's a lot of red. But I could see how it's
+nice maybe. Let's go with that to try for now. We can always revert later.

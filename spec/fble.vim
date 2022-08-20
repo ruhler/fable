@@ -2,10 +2,6 @@
 " Language:	Fble
 " Maintainer:	Richard Uhler <ruhler@degralder.com>
 
-if exists("b:current_syntax")
-  finish
-endif
-
 " Indent stuff.
 " TODO: Move this to a separate indent file.
 set comments=:#
@@ -27,15 +23,8 @@ exec 'syn match fbleLabel "' . s:word . ':"'
 exec 'syn match fbleLabel ":"'
 exec 'syn match fbleLiteral "|' . s:word . '"'
 exec 'syn match fbleModulePath "\(/' . s:word . '\)\+%"'
-
-" A kind is a sequence of <@,> characters ending in % or @.
-" Except for:
-"   * the '<' at the begining of '<' kind name ... syntax
-"   * @<...> typeof expression
-" TODO: Fix and clean this up.
-let s:kind = '\(<[<>@,[:space:]]*>\)\?[@%]'
-exec 'syn match fbleKind "' . s:kind . '"'
-exec 'syn match fbleNotKind "@<"'
+exec 'syn match fblePoly "[@<>%]"'
+exec 'syn match fbleNotPoly "<-"'
 
 " Specify highlight groups to use for each of the syntax groups.
 hi def link fbleComment Comment
@@ -43,6 +32,4 @@ hi def link fbleLiteral String
 hi def link fbleLabel Label
 hi def link fbleModulePath Include
 hi def link fbleType Type
-hi def link fbleKind Special
-
-let b:current_syntax = "fble"
+hi def link fblePoly Special

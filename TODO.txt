@@ -6,10 +6,10 @@
 
 * vim syntax
  - add option to goto file of module path?
- - fix vim syntax highlighting for <<@>@ M@>
-    The leading '<' shouldn't be colored, because it's not part of the kind.
 
 * Is <%,%>% a legal kind? What would you use it for?
+  No. This should not be allowed. Double check the spec and implementation on
+  this. We should use <@ X@>(X@ x) { ... } instead of <% x> { ... }.
 
 * Nicer error message for parsing module names with '-' in them.
   Which technically isn't allowed.
