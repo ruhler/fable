@@ -856,3 +856,17 @@ TODO: How to give prefix to fble-stdio test? I should add an option for that.
 Okay. I'm not sure how reliable it is yet, but we have a start now. Let me
 see. I'll want to double check every now and then that test failures stay
 failing.
+
+---
+
+It would be great to have some way to do a ninja command that outputs stdout
+and stderr, to dupe those to a file, and still exit with the commands status
+code. Maybe I should do some tests with ninja. In particular, I want:
+
+* If no error, just saves everything to a file and continues.
+* If error, prints at least stderr and maybe stdout on screen, saves it all to
+  a file, and treats it as a build failure. Rerunning make reruns the command
+  and triggers the error again.
+
+That's how normal building of things works, right? Sort of?
+

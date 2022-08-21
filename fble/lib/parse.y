@@ -27,11 +27,14 @@
   //   loc - The location corresponding to the character c.
   //   fin - The input stream, if reading from a file. NULL otherwise.
   //   sin - The input stream, if reading from a string. NULL otherwise.
+  //   start_token - If not zero, a token to emit once at the start.
+  //      Used to switch between different kinds of entities to parse.
   typedef struct {
     int c;
     FbleLoc loc;
     FILE* fin;
     const char* sin;
+    int start_token;
   } Lex;
 
   #define YYLTYPE FbleLoc
@@ -76,8 +79,8 @@
 %parse-param {FbleExpr** result} {FbleModulePathV* deps}
 
 %token END 0 "end of file"
-%token INVALID "invalid character"
-
+%token PARSE_PROGRAM
+%token PARSE_MODULE_PATH
 %token <word> WORD
 
 %type <name> name
@@ -173,7 +176,16 @@
 
 %%
 
-start: stmt { *result = $1; } ;
+start:
+   PARSE_PROGRAM stmt {
+     // Parsed program is stored in result.
+     *result = $2;
+   }
+ | PARSE_MODULE_PATH module_path {
+     // Parsed module path is stored in deps.
+     FbleVectorAppend(*deps, $2);
+   }
+ ;
 
 name:
    WORD {
@@ -786,6 +798,12 @@ static void ReadNextChar(Lex* lex)
 //   loc accordingly.
 static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
 {
+  if (lex->start_token) {
+    int token = lex->start_token;
+    lex->start_token = 0;
+    return token;
+  }
+
   // Skip past white space and comments.
   bool is_comment_start = (lex->c == '#');
   while (isspace(lex->c) || is_comment_start) {
@@ -869,6 +887,7 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps)
     .loc = { .source = filename, .line = 1, .col = 0 },
     .fin = fin,
     .sin = NULL,
+    .start_token = PARSE_PROGRAM
   };
   FbleExpr* result = NULL;
   yyparse(&lex, &result, deps);
@@ -879,67 +898,30 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps)
 // FbleParseModulePath -- see documentation in fble-module-path.h
 FbleModulePath* FbleParseModulePath(const char* string)
 {
+  char source[strlen(string) + 3];
+  source[0] = '\0';
+  strcat(source, "'");
+  strcat(source, string);
+  strcat(source, "'");
+
   Lex lex = {
     .c = ' ',
-    .loc = { .source = FbleNewString(string), .line = 1, .col = 0 },
+    .loc = { .source = FbleNewString(source), .line = 1, .col = 0 },
     .fin = NULL,
     .sin = string,
+    .start_token = PARSE_MODULE_PATH
   };
 
-  FbleModulePath* path = FbleNewModulePath(lex.loc);
-
-  YYSTYPE val;
-  FbleLoc loc;
-
-  int tok = yylex(&val, &loc, &lex);
-  if (tok != '/') {
-    yyerror(&loc, &lex, NULL, NULL, "expected '/'");
-    if (tok == WORD) {
-      FbleFree((char*)val.word);
-    }
-    FbleFreeModulePath(path);
-    FbleFreeLoc(lex.loc);
-    return NULL;
-  }
-
-  while (tok == '/') {
-    tok = yylex(&val, &loc, &lex);
-    if (tok != WORD) {
-      yyerror(&loc, &lex, NULL, NULL, "expected WORD");
-      FbleFreeModulePath(path);
-      FbleFreeLoc(lex.loc);
-      return NULL;
-    }
-   
-    FbleName* name = FbleVectorExtend(path->path);
-    name->name = ToString(val.word);
-    name->space = FBLE_NORMAL_NAME_SPACE;
-    name->loc = FbleCopyLoc(loc);
-  
-    tok = yylex(&val, &loc, &lex);
-  }
-
-  if (tok != '%') {
-    yyerror(&loc, &lex, NULL, NULL, "expected '%'");
-    if (tok == WORD) {
-      FbleFree((char*)val.word);
-    }
-    FbleFreeModulePath(path);
-    FbleFreeLoc(lex.loc);
-    return NULL;
-  }
-
-  tok = yylex(&val, &loc, &lex);
-  if (tok != END) {
-    yyerror(&loc, &lex, NULL, NULL, "expected EOF");
-    if (tok == WORD) {
-      FbleFree((char*)val.word);
-    }
-    FbleFreeModulePath(path);
-    FbleFreeLoc(lex.loc);
-    return NULL;
-  }
-
+  FbleModulePathV path;
+  FbleVectorInit(path);
+  yyparse(&lex, NULL, &path);
   FbleFreeLoc(lex.loc);
-  return path;
+
+  FbleModulePath* result = NULL;
+  assert(path.size < 2);
+  if (path.size > 0) {
+    result = path.xs[0];
+  }
+  FbleFree(path.xs);
+  return result;
 }
