@@ -13,6 +13,7 @@ let s:unquoted = '\([[:lower:][:upper:][:digit:]_]\+\)'
 let s:quoted = "'\\(\\([^']\\|''\\)*'\\)"
 let s:word = '\(' . s:unquoted . '\|' . s:quoted . '\)'
 
+exec 'syn match fbleQuotedWord "' . s:quoted .'"'
 exec 'syn match fbleComment "#.*"'
 exec 'syn match fbleType "' . s:word . '@"'
 exec 'syn match fbleLabel "' . s:word . ':"'
@@ -27,6 +28,7 @@ hi def link fbleComment Comment
 hi def link fbleLiteral String
 hi def link fbleLabel Label
 hi def link fbleModulePath Include
+hi def link fbleQuotedWord Identifier
 hi def link fbleType Type
 hi def link fblePoly Special
 
