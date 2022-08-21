@@ -65,5 +65,5 @@ ExpectFails = (TestResult@ result, String@ msg) {
     xfail: TestResult@(fail: Str|'Expected failure, but was xfail'));
 };
 
-@(String@, TestResult@, Test@, TestSuite@, TestCase@,
+@(TestResult@, Test@, TestSuite@, TestCase@,
   AssertEquals, ExpectFails, Test, TestSuite);
