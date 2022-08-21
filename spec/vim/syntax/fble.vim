@@ -2,14 +2,9 @@
 " Language:	Fble
 " Maintainer:	Richard Uhler <ruhler@degralder.com>
 
-" Indent stuff.
-" TODO: Move this to a separate indent file.
-set comments=:#
-set formatoptions=croqtl
-set cindent
-set cinkeys=0{,0},!^F,o,O
-set cinwords=
-set cinoptions=(1s
+if exists("b:current_syntax")
+  finish
+endif
 
 " Use lower and upper character classes for unquoted words, which support
 " multibyte characters where alnum does not according to the vim help text.
@@ -33,3 +28,5 @@ hi def link fbleLabel Label
 hi def link fbleModulePath Include
 hi def link fbleType Type
 hi def link fblePoly Special
+
+let b:current_syntax = "fble"

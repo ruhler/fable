@@ -317,3 +317,70 @@ at least we are consistently highlighting poly?
 
 I don't know. I'm on the fence. That's a lot of red. But I could see how it's
 nice maybe. Let's go with that to try for now. We can always revert later.
+
+---
+
+How to set up 'gf':
+  Just need an includeexpr. Strip the leading '/' and trailing '%', then add
+  .fble. Maybe I can give it a try?
+
+Note, for me in practice it may not work so well, because I don't have files
+in my path. But maybe there are options for searching upwards and downwards.
+
+Also, question: where do I put things like definition of includeexpr?
+
+try
+  :set includeexpr=v:fname[1:-2].'.fble'
+
+Doesn't support quoted words, but maybe okay to start? I think that's fine.
+Otherwise too hard to know where to match. vim recommends not including space
+even if files have spaces in their names. It's just like that.
+
+But I do need to exclude '.' from the name. No 46. Otherwise /Core/Unit%.Unit
+doesn't work nicely. Or, maybe exclude '%' from the name instead? That's 37.
+That's good to recognized the end. I like that.
+
+Try:
+  set isfname=@,48-57,/,.,-,_,+,,,#,$,~,=
+  set includeexpr=v:fname[1:].'.fble'
+
+Works great. I just need to figure a nice setting for path. And who should set
+that? Not part of the language. But maybe I can do it for fble somewhere as
+pkgs/*
+
+Oh yeah. That's really nice.
+
+---
+
+Next question: how should I be splitting up files?
+Options:
+* syntax - pretty clear what this is for. Highlighting only.
+* indent - for indent related stuff. Seems reasonable.
+* ftplugin - settings for 95% of users to use.
+   So, things like goto file, right?
+   I see things like: formatoptions, comments,
+
+Looks like the entry point should be something like:
+
+  au BufNewFile,BufRead *.fble      setf fble
+
+I add that to my vimrc.
+
+Now, I create indent/fble.vim, syntax/fble.vim, and ftplugin/fble.vim. Check
+them in under spec/vim directory. Symlink to them from my ~/.vim directories.
+
+Let's figure out where the following commands go:
+
+ftplugin:
+  set comments=:#
+  set formatoptions=croqtl
+  set isfname=@,48-57,/,.,-,_,+,,,#,$,~,=
+  set includeexpr=v:fname[1:].'.fble'
+
+indent:
+  set cindent
+  set cinkeys=0{,0},!^F,o,O
+  set cinwords=
+  set cinoptions=(1s
+
+And the rest in syntax. Cool. Let's do it.

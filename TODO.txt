@@ -4,9 +4,6 @@
 * Add test for /Core/Test/Run/RunTestVerbose% that xfail is treated like
   passing in terms of return code.
 
-* vim syntax
- - add option to goto file of module path?
-
 * Is <%,%>% a legal kind? What would you use it for?
   No. This should not be allowed. Double check the spec and implementation on
   this. We should use <@ X@>(X@ x) { ... } instead of <% x> { ... }.
