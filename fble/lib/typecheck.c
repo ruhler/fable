@@ -1260,7 +1260,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
                 union_type->fields.xs[i].name, select_expr->choices.xs[branch].name);
           } else {
             ReportError(expr->loc,
-                "missing tag '%n'\n",
+                "tag '%n' missing from union select\n",
                 union_type->fields.xs[i].name);
           }
         } else {
@@ -1280,7 +1280,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       if (branch < select_expr->choices.size) {
         ReportError(select_expr->choices.xs[branch].name.loc,
-            "unexpected tag '%n'\n",
+            "illegal use of tag '%n' in union select\n",
             select_expr->choices.xs[branch]);
         error = true;
       }

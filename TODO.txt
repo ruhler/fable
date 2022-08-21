@@ -28,20 +28,10 @@
 * Clean up frame rate/event handling of /App/Demo%.
 * Figure out how to support images in Apps.
 
-* Better error message for 6.4-PolyInfer/Type/InconsistentAssignment case.
-
 * Move TODO entries to corresponding subdirectories?
-
-
 
 * Should we add option for fble-compile to generate main function for
   interpreted case? Might be nice?
-
-* unexpected tag error message improvements
-  If you put tags in wrong order, you get unexpected tag. It's not clear this
-  is because you got them in the wrong order or parser was expecting something
-  other than a tag. If it's due to wrong order, make that clear in the error
-  message.
 
 * Factor out common logic for doing fble /Foo/Tests% based tests in build.tcl
   files.
