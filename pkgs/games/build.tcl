@@ -3,11 +3,11 @@ namespace eval "pkgs/games" {
 
   # /Games/Tests% interpreted
   set cflags "-I pkgs/games -I pkgs/app -I pkgs/core"
-  test $::out/pkgs/games/Games/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/games/Games/Tests.fble.d" \
-    "$::out/pkgs/core/Core/fble-stdio $cflags -m /Games/Tests%" "pool = console"
+  testsuite $::out/pkgs/games/Games/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/games/Games/Tests.fble.d" \
+    "$::out/pkgs/core/Core/fble-stdio $cflags -m /Games/Tests% --prefix Interpreted."
 
   # /Games/Tests% compiled
   stdio $::out/pkgs/games/Games/games-tests "/Games/Tests%" "games app"
-  test $::out/pkgs/games/Games/games-tests.tr $::out/pkgs/games/Games/games-tests \
-    "$::out/pkgs/games/Games/games-tests" "pool = console"
+  testsuite $::out/pkgs/games/Games/games-tests.tr $::out/pkgs/games/Games/games-tests \
+    "$::out/pkgs/games/Games/games-tests --prefix Compiled."
 }

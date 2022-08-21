@@ -1,43 +1,59 @@
-# Summarize the status of tests.
+# Summarize test results.
 #
-# Usage: tclsh tests.tcl tests.txt
+# Usage: tclsh tests.tcl
 #
-# The file tests.txt should contain a whitespace separated list of *.tr test
-# result files. A foo.tr test result file describes the results of the test
-# named 'foo'. The contents of the file should be 'PASSED' for passing tests
-# and 'FAILED' for failing tests.
+# Test results are read from stdin using the following protocol:
+# * @[<name>] identifies a test.
+# * @PASSED says the previously named test passed.
+# * @FAILED says the previously named test failed.
+# * @XFAILED says the previously named test failed as expected.
+# * Output for a test is everything between @[...] and the next test.
+# * If there is no status between @[...] and the next test, the test is
+#   considered as failing.
 #
-# A test summary is printed to stdout.
-# Exit code is 0 if all tests are passing, 1 otherwise.
+# The @[...] string should be at the beginning of a line. The test status can
+# be anywhere in a line.
+#
+# This script outputs the list of failed tests and a summary of the number of
+# tests run, passed, failed, etc. Exit status is 0 if all tests pass, non-zero
+# otherwise.
 
-set passed 0
-set failed 0
-set failures [list]
+set ::passed 0
+set ::xfailed 0
+set ::failed 0
 
-set tests [string trim [read [open [lindex $argv 0]]]]
-foreach t $tests {
-  set status [string trim [read [open $t]]]
-  set name [file rootname $t]
-  if {$status == "PASSED"} {
-    incr passed
-  } elseif {$status == "FAILED"} {
-    incr failed
-    lappend failures $name
-  } else {
-    error "$t:1:0: error: invalid status for test $t: '$status'"
+# process --
+#   Given a string with the contents of a test, including test name and
+#   status, process it.
+proc process { test } {
+  if {[regexp {@\[(.*)\]} $test _ name]} {
+    if {[string first "@FAILED" $test] != -1} {
+      incr ::failed
+      puts "$test\n"
+    } elseif {[string first "@XFAILED" $test] != -1} {
+      incr ::xfailed
+    } elseif {[string first "@PASSED" $test] != -1} {
+      incr ::passed
+    } else {
+      incr ::failed
+      puts "$test\n"
+    }
   }
 }
 
-if {$failed != 0} {
-  puts "Failed Tests:"
-  foreach test $::failures {
-    puts "  $test"
+set lines [list]
+while {[gets stdin line] >= 0} {
+  if {[string match {@\[*\]*} $line]} {
+    process [join $lines "\n"]
+    set lines [list]
   }
-  puts ""
+  lappend lines $line
 }
+process [join $lines "\n"]
 
-puts "Test Summary: $passed passed, $failed failed, [expr $passed + $failed] total"
+set total [expr $::passed + $::xfailed + $::failed]
+puts "Test Summary: $::passed passed, $::xfailed xfailed, $::failed failed, $total total"
 
-if {$failed != 0} {
+if {$::failed != 0} {
   exit 1
 }

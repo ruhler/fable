@@ -1,7 +1,4 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-% False = /Core/Bool%.False;
-
 <@>@ List@ = /Core/List%.List@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
@@ -25,13 +22,13 @@
 (Test@) { Main@; } Run = (Test@ tests)<<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
   % Runners = /Core/Test/Run%(m, stdio.out);
 
-  Bool@ verbose = args.?(
-    cons: /Core/String/Eq%.Eq(Str|'--verbose', args.cons.head),
-    nil: False);
+  String@ prefix = {
+    args.?(nil: Str|'');
+    /Core/String/Eq%.Eq(Str|'--prefix', args.cons.head).?(false: Str|'');
+    args.cons.tail.cons.head;
+  };
 
-  verbose.?(
-    true: Runners.RunTestsVerbose(tests),
-    false: Runners.RunTests(tests));
+  Runners.RunTests(prefix, tests);
 };
 
 @(Run);

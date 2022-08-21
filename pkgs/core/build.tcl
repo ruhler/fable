@@ -40,19 +40,19 @@ namespace eval "pkgs/core" {
 
   # /Core/Stdio/Test% interpreted test.
   test $::out/pkgs/core/Core/Stdio/fble-stdio.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Test.fble.d" \
-    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Test% > $::out/pkgs/core/Core/Stdio/fble-stdio.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio.out > /dev/null"
+    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Test% > $::out/pkgs/core/Core/Stdio/fble-stdio.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio.out"
 
   # /Core/Stdio/Test% compiled test.
   stdio $::out/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
   test $::out/pkgs/core/Core/Stdio/fble-stdio-test.tr $::out/pkgs/core/Core/Stdio/fble-stdio-test \
-    "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out > /dev/null"
+    "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
 
   # Core/Tests interpreted
-  test $::out/pkgs/core/Core/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Tests.fble.d" \
-    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Tests%" "pool = console"
+  testsuite $::out/pkgs/core/Core/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Tests.fble.d" \
+    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Tests% --prefix Interpreted."
 
   # Core/Tests compiled
   stdio $::out/pkgs/core/Core/core-tests "/Core/Tests%" ""
-  test $::out/pkgs/core/Core/core-tests.tr $::out/pkgs/core/Core/core-tests \
-    "$::out/pkgs/core/Core/core-tests" "pool = console"
+  testsuite $::out/pkgs/core/Core/core-tests.tr $::out/pkgs/core/Core/core-tests \
+    "$::out/pkgs/core/Core/core-tests --prefix Compiled."
 }

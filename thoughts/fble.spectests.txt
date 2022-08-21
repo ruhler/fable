@@ -808,7 +808,51 @@ at the end. Have the verbose part while they are running. That way you can
 easily see what test takes a long time to run, and also a nice summary at the
 end with all the failures and expected failures? I'm not sure.
 
+---
 
+I notice now while running tests that it would be nice to see which test is
+running rather than just '.'. Like, I want the verbose output from tests now
+instead of the shortened version.
 
+---
 
+Here is what I propose:
+* During build, don't show output of tests. Save it to a file. No need to see
+  anything about the running test during build.
+* Fail build at test failure for now, at which point it shows the output from
+  running the test to show the error.
+* At end of build, show summary output for all tests that includes
+  - output from failed tests (should be none if build got that far)
+  - counts of tests run, passed, failed, xfailed.
+  - summary 'fails' if any tests failed.
+* We could not treat individual test failure as build failure, in which case
+  we fail build at the end and see all the test failures at the end.
 
+What this means in terms of implementation:
+* fble test runner can always be verbose. No need for the option.
+* build.tcl test should run the test, save to file, add appropriate tags.
+* summarizer: reads through file, prints errors as it goes, then gives summary
+  counts.
+
+Let me start by writing a summarizer. Can repurpose tests.tcl for that.
+
+Steps:
+1. Rewrite tests.tcl to be a summarizer. Try it on output of verbose run
+tests. Comment out that part of build.
+2. Change fble tests to always be verbose.
+3. Change fble tests to save output to file and use tests.tcl to summarize all
+of them together at the end.
+4. Update spec tests to use proposed output format.
+Add those to the list of tests summarized by the summarizer.
+5. Change miscellaneous tests to save output to file, using helper function in
+build.tcl.
+
+At this point we should be all set.
+
+---
+
+TODO: How to give prefix to fble-stdio test? I should add an option for that.
+
+Okay. I'm not sure how reliable it is yet, but we have a start now. Let me
+see. I'll want to double check every now and then that test failures stay
+failing.

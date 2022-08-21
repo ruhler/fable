@@ -1,7 +1,12 @@
-* Make it possible to add expected failing spec tests.
+* Tests cleanup
+ - Change spec tests to testsuite format.
+ - Add xfail support to spec tests.
+ - Figure out how to save output and print output and have exit code in ninja
+   build? Use for summary.tr.
+
 * Make it easier to run failing tests under valgrind and gdb.
 
-* Add test for /Core/Test/Run/RunTestVerbose% that xfail is treated like
+* Add test for /Core/Test/Run/RunTest% that xfail is treated like
   passing in terms of return code.
 
 * Is <%,%>% a legal kind? What would you use it for?
@@ -240,11 +245,6 @@
  Borrowed: no transfer of ownership.
  Consumed: ownership transferred from caller to callee.
  Outlives: caller responsible for keeping alive as long as returned result is.
-
-* [build] Decide whether individual test failures should fail to build or not.
-  If they should fail to build, then tools/tests.tcl could be simplified?
- - building with -k 0 and grepping for FAILED is a decent way to see the list
-   of all current failures.
 
 * [tests] Any way to improve memory growth tests?
  It feels wrong to me to have to do a full gc for the tests to pass. It feels

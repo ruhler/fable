@@ -132,7 +132,25 @@ proc bin_cov { bin objs lflags } {
 set ::tests [list]
 proc test { tr deps cmd args} {
   lappend ::tests $tr
-  build $tr $deps "$cmd && echo PASSED > $tr" {*}$args
+  set name [file rootname $tr]
+  build $tr $deps "(echo @\[$name\] && $cmd && echo @PASSED || echo @FAILED) > $tr" {*}$args
+}
+
+# test --
+#   Build a test result from a test suite.
+#
+# Inputs:
+#   tr - the .tr file to output the results to.
+#   deps - depencies for the test.
+#   cmd - the testsuite command to run, which should output @[...] test info,
+#         exit 0 to indicate the test passed and non-zero to indicate the test
+#         failed.
+#   args - optional additional "key = argument" pairs to use for ninja rule.
+#
+# Adds the .tr file to global list of tests.
+proc testsuite { tr deps cmd args} {
+  lappend ::tests $tr
+  build $tr $deps "$cmd > $tr || true" {*}$args
 }
 
 # Returns the list of all subdirectories, recursively, of the given directory.
@@ -220,10 +238,10 @@ foreach build_tcl $build_tcls {
   source $build_tcl
 }
 
-# test summary
-build $::out/tests.txt "$::tests" "echo $::tests > $::out/tests.txt"
-build $::out/summary.tr "fble/test/tests.tcl $::out/tests.txt" \
-  "tclsh fble/test/tests.tcl $::out/tests.txt && echo PASSED > $::out/summary.tr"
+# Test summary.
+build $::out/detail.tr $::tests "cat $::tests > $::out/detail.tr"
+build $::out/summary.tr "$::out/detail.tr fble/test/tests.tcl" \
+  "tclsh fble/test/tests.tcl < $::out/detail.tr"
 
 # build.ninja
 build $::out/build.ninja "build.tcl" "tclsh build.tcl" \

@@ -6,20 +6,10 @@
 @ Char@ = /Core/Char%.Char@;
 % Chars = /Core/Char%.Chars;
 
-@ Int@ = /Core/Int%.Int@;
-% Add = /Core/Int%.Add;
-% Sub = /Core/Int%.Sub;
-% Inc = /Core/Int%.Inc;
-% 0 = /Core/Int%.0;
-
-<@>@ List@ = /Core/List%.List@;
 <@>% List = /Core/List%.List;
-<@>% Cons = /Core/List%.Cons;
-<@>% Nil = /Core/List%.Nil;
 <@>% Append = /Core/List%.Append;
 <@>% Concat = /Core/List%.Concat;
 <@,@>% ForEach = /Core/List%.ForEach;
-<@>% Length = /Core/List/Length%.Length;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
@@ -28,7 +18,6 @@
 % Strs = /Core/String%.Strs;
 
 @ Test@ = /Core/Test%.Test@;
-@ TestCase@ = /Core/Test%.TestCase@;
 @ TestResult@ = /Core/Test%.TestResult@;
 
 @ Unit@ = /Core/Unit%.Unit@;
@@ -41,67 +30,8 @@
     out(Append<Char@>(str, Str[Chars.nl]));
   };
 
-  # Returns True if the test passes, false otherwise.
-  (Test@) { M@<Bool@>; } RunTests = (Test@ test) {
-    @ Failure@ = *(String@ name, String@ msg);
-
-    # Run all the tests, given a list of tests that failed so far.
-    # Returns the number of total tests executed and the list of failing tests.
-    @ Status@ = *(Int@ total, Int@ xfails, List@<Failure@> failures);
-    (Test@, String@, Status@) { M@<Status@>; }
-    Run = (Test@ test, String@ prefix, Status@ status) {
-      test.?(
-        case: {
-          TestCase@ t = test.case;
-          TestResult@ tr = t.test(Unit);
-          String@ short = tr.?(pass: Str|'.', fail: Str|'F', xfail: Str|'X');
-          Unit@ _ <- m.do(out(short));
-          List@<Failure@> nfailed = tr.?(
-            pass: status.failures,
-            fail: Cons(Failure@(Append(prefix, t.name), tr.fail), status.failures),
-            xfail: status.failures);
-          Int@ xfails = tr.?(xfail: Inc(status.xfails), : status.xfails);
-          m.return(Status@(Inc(status.total), xfails, nfailed));
-        },
-        suite: {
-          String@ nprefix = Concat<Char@>(List<String@>[
-              prefix, test.suite.name, Str|'.']);
-          ForEach<Test@, M@<Status@>>(test.suite.tests, m.return(status),
-            (Test@ t, M@<Status@> ms) {
-              Status@ s <- m.do(ms);
-              Run(t, nprefix, s);
-            });
-        });
-    };
-
-    Status@ status <- m.do(Run(test, Nil<Char@>, Status@(0, 0, Nil<Failure@>)));
-    List@<Failure@> failures = status.failures;
-
-    Unit@ _ <- m.do(PrintLn(Nil<Char@>));
-    Unit@ _ <- m.do(ForEach<Failure@, M@<Unit@>>(failures, m.return(Unit),
-        (Failure@ f, M@<Unit@> mu) {
-      Unit@ _ <- m.do(mu);
-      PrintLn(Strs[Str|'@[', f.name, Str|']: @FAILED: ', f.msg]);
-    }));
-    Unit@ _ <- m.do(PrintLn(Nil<Char@>));
-
-    Int@ num_total = status.total;
-    Int@ num_failed = Length<Failure@>(failures);
-    Int@ num_xfailed = status.xfails;
-    Int@ num_passed = Sub(num_total, Add(num_failed, num_xfailed));
-    Unit@ _ <- m.do(PrintLn(Strs[
-      Str|'Test Summary: ',
-      /Core/Int/Show%.Show(num_passed), Str|' passed, ',
-      /Core/Int/Show%.Show(num_failed), Str|' failed, ',
-      /Core/Int/Show%.Show(num_xfailed), Str|' expect failed, ',
-      /Core/Int/Show%.Show(num_total), Str|' total'
-    ]));
-
-    m.return(failures.?(cons: False, nil: True));
-  };
-
   # Returns True if the tests all pass, false otherwise.
-  (Test@) { M@<Bool@>; } RunTestsVerbose = (Test@ test) {
+  (String@, Test@) { M@<Bool@>; } RunTests = (String@ prefix, Test@ test) {
 
     (Test@, String@, Bool@) { M@<Bool@>; }
     Run = (Test@ test, String@ prefix, Bool@ passing) {
@@ -135,8 +65,8 @@
         });
     };
 
-    Run(test, Nil<Char@>, True);
+    Run(test, prefix, True);
   };
 
-  @(RunTests, RunTestsVerbose);
+  @(RunTests: RunTests);
 };
