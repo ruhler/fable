@@ -141,29 +141,6 @@ void FbleFreeExpr(FbleExpr* expr)
       return;
     }
 
-    case FBLE_PACKAGE_TYPE_EXPR: {
-      FblePackageTypeExpr* e = (FblePackageTypeExpr*)expr;
-      FbleFreeModulePath(e->path);
-      FbleFree(expr);
-      return;
-    }
-
-    case FBLE_ABSTRACT_CAST_EXPR: {
-      FbleAbstractCastExpr* e = (FbleAbstractCastExpr*)expr;
-      FbleFreeExpr(e->package);
-      FbleFreeExpr(e->target);
-      FbleFreeExpr(e->value);
-      FbleFree(expr);
-      return;
-    }
-
-    case FBLE_ABSTRACT_ACCESS_EXPR: {
-      FbleAbstractAccessExpr* e = (FbleAbstractAccessExpr*)expr;
-      FbleFreeExpr(e->value);
-      FbleFree(expr);
-      return;
-    }
-
     case FBLE_LIST_EXPR: {
       FbleListExpr* e = (FbleListExpr*)expr;
       FbleFreeExpr(e->func);
@@ -187,6 +164,29 @@ void FbleFreeExpr(FbleExpr* expr)
     case FBLE_MODULE_PATH_EXPR: {
       FbleModulePathExpr* e = (FbleModulePathExpr*)expr;
       FbleFreeModulePath(e->path);
+      FbleFree(expr);
+      return;
+    }
+
+    case FBLE_PACKAGE_TYPE_EXPR: {
+      FblePackageTypeExpr* e = (FblePackageTypeExpr*)expr;
+      FbleFreeModulePath(e->path);
+      FbleFree(expr);
+      return;
+    }
+
+    case FBLE_ABSTRACT_CAST_EXPR: {
+      FbleAbstractCastExpr* e = (FbleAbstractCastExpr*)expr;
+      FbleFreeExpr(e->package);
+      FbleFreeExpr(e->target);
+      FbleFreeExpr(e->value);
+      FbleFree(expr);
+      return;
+    }
+
+    case FBLE_ABSTRACT_ACCESS_EXPR: {
+      FbleAbstractAccessExpr* e = (FbleAbstractAccessExpr*)expr;
+      FbleFreeExpr(e->value);
       FbleFree(expr);
       return;
     }

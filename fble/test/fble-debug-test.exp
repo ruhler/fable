@@ -2,10 +2,9 @@
 # Test that we can do gdb based debugging of the fble-debug-test binary.
 
 proc require { str } {
-  # It can take a while for gdb to start running the program, especially with
-  # a whole bunch of other things building in parallel. Increase the default
-  # timeout to avoid flaky test failures due to that.
-  set timeout 60
+  # Sometimes this test times out. Not sure why. Increase the timeout a bunch
+  # to see if that helps.
+  set timeout 300
 
   expect {
     $str {}

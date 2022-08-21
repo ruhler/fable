@@ -43,9 +43,6 @@
 * Add an app package specific test case.
   Maybe a simple demo app?
 
-* Reorder case statements to match updated order of *_EXPR enum.
-  In particular, the placement of the ABSTRACT_*_EXPR enums.
-
 * [spec] Should empty path be allowed in package type?
  See spec/fble.txt for more details.
 
