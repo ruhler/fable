@@ -56,5 +56,5 @@ namespace eval "fble/test" {
 
   test $::out/fble/test/fble-debug-test.tr \
     "$::out/fble/test/fble-debug-test fble/test/fble-debug-test.exp" \
-    "expect fble/test/fble-debug-test.exp > /dev/null"
+    "expect fble/test/fble-debug-test.exp"
 }

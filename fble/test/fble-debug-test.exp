@@ -2,8 +2,14 @@
 # Test that we can do gdb based debugging of the fble-debug-test binary.
 
 proc require { str } {
+  # It can take a while for gdb to start running the program, especially with
+  # a whole bunch of other things building in parallel. Increase the default
+  # timeout to avoid flaky test failures due to that.
+  set timeout 60
+
   expect {
     $str {}
+    "(gdb) " { error "got prompt instead of \"$str\"" }
     timeout {error "timeout waiting for \"$str\"" }
     eof {error "eof waiting for \"$str\"" }
   }
@@ -13,7 +19,7 @@ eval {
   # Test that we can set a breakpoint at a particular line in a file and run to
   # that breakpoint.
   spawn gdb --quiet ./out/fble/test/fble-debug-test
-  expect "(gdb) "
+  require "(gdb) "
 
   set STMT_LINE 14
   send "break fble/test/DebugTest.fble:$STMT_LINE\n"
