@@ -384,3 +384,43 @@ indent:
   set cinoptions=(1s
 
 And the rest in syntax. Cool. Let's do it.
+
+---
+
+Coming back to the question of lexical syntax. When I tried to say punctuation
+is everything else, unicode stops working. Because it treats whatever byte
+extender thing as punctuation and messes things up. Is it really so bad to
+have an explicit list of punctuation? That's probably not hard to do syntax
+highlighting for either, now that it turns out we don't take advantage of
+character classes in syntax highlighting.
+
+So, I guess now I'm proposing the other way around. Whitespace using isspace.
+Punctuation as explicit list. Everything else you can use in a word without
+quoting. I'm confident we can get the implementation and syntax highlighting
+to match the spec, except for non-ASCII whitespace.
+
+I suppose I could be vague and say punctuation as explicit list, word
+character as alnum + '_', anything not mentioned is up to the implementation.
+That's, of course, a terrible idea, because people will write code that works
+on one implementation but not another. But I really want unicode in word
+characters without having to implement unicode properly.
+
+Here is my punctuation list:
+  (){};,:?=.<>+*-!$@~'\[]%/
+
+Which ones do we not use currently?
+  !$~\
+
+None of those are useful in identifiers in my opinion. I would rather they be
+considered punctuation.
+
+Okay. I think go with the explicit list of punctuation that I have, including
+those four not currently in use. Maybe we'll want to start using them later
+for something. We certainly have in the past.
+
+Oh, ^ is another punctuation character we might like to use. Add that to the
+list? Yeah.
+
+For syntax highlighting, it's a little annoying to list all these characters,
+and maybe cause performance issues? Is my current approximation okay? It's
+also a pain to write down all the punctuation chars.

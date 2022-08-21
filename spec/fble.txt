@@ -1303,11 +1303,11 @@ Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
 11.1 Lexical Syntax
 -------------------
 We have the following categories of characters:
-1. whitespace: Any whitespace character, as traditionally classified.
+1. Whitespace: any whitespace character, as traditionally classified.
 2. The comment character '#'.
-3. punctuation: Any of the following characters:
-  (){};,:?=.<>+*-!$@~'\[]%/
-4. normal: any other character.
+3. Punctuation: Any of the following characters:
+  (){};,:?=.<>+*-!$@~'\[]%/^
+4. Word character: any other character.
 
 The lexical syntax is used to interpret a string of arbitrary characters as a
 sequence of punctuation characters and words.
@@ -1316,10 +1316,10 @@ Whitespace is treated as a delimiter of words. The comment character and any
 following characters on the same line are treated as a delimiter of words.
 Whitespace and comments are otherwise ignored.
 
-A sequence of continuous normal characters is grouped together into a word.
+A sequence of continuous word characters is grouped together into a word.
 
 A sequence of characters surrounded by single quotes is treated as a sequence
-of normal characters, regardless of what class the characters come from. This
+of word characters, regardless of what class the characters come from. This
 makes it possible to specify words containing whitespace, comment, and
 punctuation characters. For example, 'Foo,Bar' is treated as a single word
 where the fourth character of the word is a comma.

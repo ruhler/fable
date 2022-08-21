@@ -1,0 +1,4 @@
+# @@fble-test@@ no-error
+# It should be fine to include alphanumeric unicode characters in names.
+@ Απ@ = *();
+Απ@();

@@ -6,7 +6,8 @@ if exists("b:current_syntax")
   finish
 endif
 
-" Use lower and upper character classes for unquoted words, which support
+" Approximate unquoted word characters using alnum for simplicity, but
+" use lower and upper character classes for unquoted words, which support
 " multibyte characters where alnum does not according to the vim help text.
 let s:unquoted = '\([[:lower:][:upper:][:digit:]_]\+\)'
 let s:quoted = "'\\(\\([^']\\|''\\)*'\\)"

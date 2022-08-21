@@ -63,7 +63,7 @@
   static FbleString* ToString(const char* str);
   static bool IsSpaceChar(int c);
   static bool IsPunctuationChar(int c);
-  static bool IsNormalChar(int c);
+  static bool IsWordChar(int c);
   static void ReadNextChar(Lex* lex);
   static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex);
   static void yyerror(YYLTYPE* llocp, Lex* lex, FbleExpr** result, FbleModulePathV* deps, const char* msg);
@@ -707,10 +707,10 @@ static bool IsSpaceChar(int c)
 //   None.
 static bool IsPunctuationChar(int c)
 {
-  return c == EOF || strchr("(){}[];,:?=.<>+*-!$@~&|%/", c) != NULL;
+  return c == EOF || strchr("(){}[];,:?=.<>+*-!$@~&|%/^", c) != NULL;
 }
 
-// IsNormalChar --
+// IsWordChar --
 //   Tests whether a character is a normal character suitable for direct use
 //   in fble words.
 //
@@ -723,7 +723,7 @@ static bool IsPunctuationChar(int c)
 //
 // Side effects:
 //   None.
-static bool IsNormalChar(int c)
+static bool IsWordChar(int c)
 {
   if (IsSpaceChar(c) || IsPunctuationChar(c) || c == '\'' || c == '#') {
     return false;
@@ -825,7 +825,7 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
       ReadNextChar(lex);
     } while (lex->c == '\'');
   } else {
-    while (IsNormalChar(lex->c)) {
+    while (IsWordChar(lex->c)) {
       FbleVectorAppend(wordv, lex->c);
       ReadNextChar(lex);
     }
