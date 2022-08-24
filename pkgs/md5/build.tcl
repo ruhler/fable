@@ -27,7 +27,11 @@ namespace eval "pkgs/md5" {
   bin $::out/pkgs/md5/Md5/fble-md5 $objs ""
 
   # fble-md5 test
-  test $::out/pkgs/md5/Md5/fble-md5.tr "$::out/pkgs/md5/Md5/fble-md5 $::out/pkgs/md5/Md5/Main.fble.d" \
-    "$::out/pkgs/md5/Md5/fble-md5 -I pkgs/core -I pkgs/md5 -m /Md5/Main% /dev/null > $::out/pkgs/md5/Md5/fble-md5.out && grep d41d8cd98f00b204e9800998ecf8427e $::out/pkgs/md5/Md5/fble-md5.out"
+  build $::out/pkgs/md5/Md5/fble-md5.out \
+    "$::out/pkgs/md5/Md5/fble-md5 $::out/pkgs/md5/Md5/Main.fble.d" \
+    "$::out/pkgs/md5/Md5/fble-md5 -I pkgs/core -I pkgs/md5 -m /Md5/Main% /dev/null > $::out/pkgs/md5/Md5/fble-md5.out"
+  test $::out/pkgs/md5/Md5/fble-md5.tr \
+    "$::out/pkgs/md5/Md5/fble-md5.out" \
+    "grep d41d8cd98f00b204e9800998ecf8427e $::out/pkgs/md5/Md5/fble-md5.out"
 }
 

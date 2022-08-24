@@ -35,17 +35,24 @@ namespace eval "pkgs/core" {
   }
 
   # /Core/Stdio/Cat% interpreted test.
-  test $::out/pkgs/core/Core/Stdio/fble-cat.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Cat.fble.d" \
-    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Cat% < README.txt > $::out/pkgs/core/Core/Stdio/fble-cat.out && cmp $::out/pkgs/core/Core/Stdio/fble-cat.out README.txt"
+  build $::out/pkgs/core/Core/Stdio/fble-cat.out \
+    "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Cat.fble.d" \
+    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Cat% < README.txt > $::out/pkgs/core/Core/Stdio/fble-cat.out"
+  test $::out/pkgs/core/Core/Stdio/fble-cat.tr \
+    "$::out/pkgs/core/Core/Stdio/fble-cat.out" \
+    "cmp $::out/pkgs/core/Core/Stdio/fble-cat.out README.txt"
 
   # /Core/Stdio/Test% interpreted test.
   test $::out/pkgs/core/Core/Stdio/fble-stdio.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Test.fble.d" \
-    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Test% > $::out/pkgs/core/Core/Stdio/fble-stdio.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio.out"
+    "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Test% | grep PASSED"
 
   # /Core/Stdio/Test% compiled test.
   stdio $::out/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
-  test $::out/pkgs/core/Core/Stdio/fble-stdio-test.tr $::out/pkgs/core/Core/Stdio/fble-stdio-test \
-    "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out && grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
+  test $::out/pkgs/core/Core/Stdio/fble-stdio-test.out \
+    $::out/pkgs/core/Core/Stdio/fble-stdio-test \
+    "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
+  test $::out/pkgs/core/Core/Stdio/fble-stdio-test.tr $::out/pkgs/core/Core/Stdio/fble-stdio-test.out \
+    "grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
 
   # Core/Tests interpreted
   testsuite $::out/pkgs/core/Core/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Tests.fble.d" \

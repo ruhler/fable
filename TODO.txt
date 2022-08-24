@@ -167,8 +167,6 @@
  - Generate a sparse pc jump table?
  - Avoid emitting unused labels?
 
-* Move prototype for FbleLoadCompiled to a better place?
-
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense?
 
@@ -277,7 +275,6 @@
   exits, even if that means retaining it longer than its lexical scope?
 * [spec] Clarify spec on when (compile vs runtime) vacuous value error should be
   reported.
-* [spec] Revisit notion of packages and public/private access to modules.
 * [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
 

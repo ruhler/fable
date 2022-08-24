@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+#
+# Usage: test NAME CMD [ARG]...
+# 
+# Executes CMD as a test case, adorning the output with the name and status
+# of the test.
+name=$1
+shift 1
+
+echo @[$name]
+$* && echo @PASSED || echo @FAILED

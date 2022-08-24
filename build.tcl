@@ -133,7 +133,8 @@ set ::tests [list]
 proc test { tr deps cmd args} {
   lappend ::tests $tr
   set name [file rootname $tr]
-  build $tr $deps "(echo @\[$name\] && $cmd && echo @PASSED || echo @FAILED) > $tr" {*}$args
+  build $tr "fble/test/log fble/test/test $deps" \
+    "fble/test/log $tr fble/test/test $name $cmd" {*}$args
 }
 
 # test --
@@ -240,8 +241,8 @@ foreach build_tcl $build_tcls {
 
 # Test summary.
 build $::out/detail.tr $::tests "cat $::tests > $::out/detail.tr"
-build $::out/summary.tr "$::out/detail.tr fble/test/tests.tcl" \
-  "tclsh fble/test/tests.tcl < $::out/detail.tr"
+build $::out/summary.tr "fble/test/log $::out/detail.tr fble/test/tests.tcl" \
+  "fble/test/log $::out/summary.tr tclsh fble/test/tests.tcl < $::out/detail.tr"
 
 # build.ninja
 build $::out/build.ninja "build.tcl" "tclsh build.tcl" \

@@ -870,3 +870,78 @@ code. Maybe I should do some tests with ninja. In particular, I want:
 
 That's how normal building of things works, right? Sort of?
 
+My tests just output stuff to, let's say, stdout and stderr. So let's do some
+experiments around that.
+
+* stderr and stdout who up as build output. I think after the build rule has
+  completed. Regardless of whether the command passed or failed.
+* Output is written and survives after build, even in case of failure.
+* Next time we run ninja, it tries to rerun the failing test case only.
+* Looks like ninja records the rules that succeeded in its log, which is how
+  it knows to rerun the failing rule.
+
+I guess most of the build commands I run are silent. Like gcc, it just does
+its work quietly, without giving output except in the case of error. We see
+the errors as build progress. We see warnings too, even if the command
+completes.
+
+Okay. That simplifies things. So what I want for a test is...
+* Do we want stdout/stderr of test running, or just save that to the file?
+  Let's say yes. We want to see the output so we can see what failed if it
+  fails. Why not? It's up to the test really if it wants to have useful
+  output. Probably it should.
+
+And I know I want to save the output to a file, so we can concat test results
+later, and see them logged. What's the magic to do this while getting exit
+codes? Something fancy I can do with shell redirection?
+
+Goal:
+* stdout goes to stdout
+* stderr goes to stderr
+* stdout and stderr together go to some file foo.txt
+
+So, 
+  3> foo.txt   would redirect fd 3 to foo.txt
+
+  3>&4   would say 3 is now the same as 4, so wherever 4 goes, 3 goes.
+
+I think this issue is, when you write to some fd, say stdout, that has to go
+one place. There's only one thing it can refer to. A file. Or stdout. Not
+both?
+
+* set -o pipefail ; ./foo 2>&1 | tee out.txt
+  Should fail if foo fails.
+* { ./foo 2>&1; ret=$?; } | tee out.txt; (exit $ret)
+* bash -o pipefail  -c "command1 | tee output"
+* command > >(tee out.txt)
+  That's sneaky.
+
+Let's try some of these.
+  
+Here's the magic:
+   ./foo > >(tee out.txt) 2>&1
+
+Shall we try it?
+
+Complains because it's run using sh, not bash. Can I write a wrapper script?
+What would I call it? How about... 'tee'?
+
+Except passing commands to a bash script is no fun. That would be ideal
+though, because I can hide it all behind the abstraction.
+
+teed out.txt -- ./foo
+
+Or... log?
+
+log out.txt -- ./foo
+
+log out.txt ./foo ...
+
+---
+
+Sort of works nicely. All except the funny tests that redirect output and
+such. Can I write those as proper tests? Like, put them in separate .sh files?
+
+The funny tests are easy to fix by separating them into two separate build
+rules: one to run the test and generate the output, another to do the
+assertion on the output.

@@ -1,0 +1,11 @@
+#!/usr/bin/bash
+
+# Usage:
+#   log FILE CMD [ARG]...
+#
+# Runs CMD, logging stdout and stderr to FILE in the process.
+# Exits with the same status as CMD.
+
+fout=$1
+shift 1
+$* > >(tee $fout) 2>&1
