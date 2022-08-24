@@ -48,14 +48,17 @@ proc expect_error { type loc args } {
   }
 
   if {$status == 0} {
+    puts "@FAILED"
     error "Expected $type error, but no error encountered."
   }
 
   if {$status != $es} {
+    puts "@FAILED"
     error "Expected $type error, but got:\n$output"
   }
 
   if {-1 == [string first ":$::loc: error" $output]} {
+    puts "@FAILED"
     error "Expected error at $::loc, but got:\n$output"
   }
 }
@@ -64,6 +67,8 @@ set ::dir "spec"
 set ::fble [lindex $argv 0]
 set ::path $dir/$fble
 set ::mpath [module_path $fble]
+
+puts "@\[$fble\]"
 
 # Directory to use for any artifacts from the test run.
 set ::outdir out/$dir/[file rootname $fble]
@@ -178,6 +183,7 @@ proc dispatch {} {
     }
 
     default {
+      puts "@FAILED"
       error "Unsupported @@fble-test@@ type: '$::type'"
     }
   }
@@ -188,5 +194,6 @@ if { [catch dispatch msg] } {
   puts "$msg"
   exit 1
 }
+puts "@PASSED"
 exit 0
 

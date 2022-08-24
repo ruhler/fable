@@ -1,8 +1,5 @@
 * Tests cleanup
- - Change spec tests to testsuite format.
  - Add xfail support to spec tests.
- - Figure out how to save output and print output and have exit code in ninja
-   build? Use for summary.tr.
  - Fix problem where flaky debug test failure doesn't get rerun.
 
 * Make it easier to run failing tests under valgrind and gdb.

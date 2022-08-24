@@ -945,3 +945,15 @@ such. Can I write those as proper tests? Like, put them in separate .sh files?
 The funny tests are easy to fix by separating them into two separate build
 rules: one to run the test and generate the output, another to do the
 assertion on the output.
+
+---
+
+How to switch spec tests over to new test format:
+* Change 'test' to 'testsuite' in spec-test.build.tcl
+* Change spec-test.build.tcl to use log wrapper function.
+* Change spec-test.run.tcl to output @[name], with name the FBLE file.
+* Change spec-test.run.tcl to output @PASSED when it passes, @FAILED when it
+  exits with an error.
+
+Easy, no?
+

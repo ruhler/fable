@@ -21,7 +21,7 @@ namespace eval "spec-test" {
         "depfile = $depfile"
 
       lappend spec_tests $::out/spec/$fble.tr
-      test $::out/spec/$fble.tr "$deps spec/$fble $depfile" \
+      testsuite $::out/spec/$fble.tr "$deps spec/$fble $depfile" \
         "tclsh fble/test/spec-test.run.tcl $fble"
     }
   }

@@ -151,7 +151,7 @@ proc test { tr deps cmd args} {
 # Adds the .tr file to global list of tests.
 proc testsuite { tr deps cmd args} {
   lappend ::tests $tr
-  build $tr $deps "$cmd > $tr || true" {*}$args
+  build $tr "fble/test/log $deps" "fble/test/log $tr $cmd" {*}$args
 }
 
 # Returns the list of all subdirectories, recursively, of the given directory.
