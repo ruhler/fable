@@ -957,3 +957,15 @@ How to switch spec tests over to new test format:
 
 Easy, no?
 
+---
+
+I wonder if I should use 'testsuite' as the name of my testing protocol.
+
+Anyway, next step is to add support for expected failures to spec tests.
+
+It's pretty straight forward. Have some indication we an turn into a flag
+about whether a test is expected to fail or not. From inside the tcl file, we
+just predicate the final output as @PASSED or @XFAILED depending on that flag.
+
+How to specify the flag value?
+

@@ -6,6 +6,9 @@ modules that contain @@fble-test@@ in a comment in the file indicate a test
 case, with the following arguments describing the expected behavior when
 running the test.
 
+Aside from the xfail case, only the first occurrence of @@fble-test@@ in a
+file takes effect. Any subsequent occurrences of @@fble-test@@ are ignored.
+
 The following @@fble-test@@ arguments are supported for describing test
 cases:
 
@@ -57,3 +60,24 @@ Annotation: # @@fble-test@@ none
 This annotation can be used to indicate a .fble file that is not intended to
 be used as a top level test case. For example, the .fble file may be a
 supporting file referenced from another test.
+
+Expected Failure
+----------------
+Annotation: # @@fble-test@@ xfail
+
+This annotation can be used to indicate that the subsequent @@fble-test@@
+tag denotes an expected failure case of the test. For example of how this
+might be used:
+
+# @@fble-test@@ xfail
+# @@fble-test@@ no-error
+# @@fble-test@@ compile-error 3:4
+
+Imagine for this example that the spec says there should be a compile error at
+location 3:4, but the implementation incorrectly fails to give any error. The
+sequence above says that currently the test is expected to fail, the behavior
+we see in practice is no-error. If every worked according to the spec, we
+would see compile-error 3:4. Note that the presence of the no-error line
+causes all subsequent @@fble-test@@ lines to be ignored, including the
+compile-error 3:4 line.
+

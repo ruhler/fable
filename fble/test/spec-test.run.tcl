@@ -79,7 +79,13 @@ set type "???"
 set loc ""
 set fin [open "$path" "r"]
 set test_line 1
+set passed "@PASSED"
 while {[gets $fin line] >= 0} {
+  if {[string first "@@fble-test@@ xfail" $line] != -1} {
+    set passed "@XFAILED"
+    continue
+  }
+
   set first [string first "@@fble-test@@" $line]
   if {$first != -1} {
     set index [expr $first + [string length "@@fble-test@@"]]
@@ -194,6 +200,6 @@ if { [catch dispatch msg] } {
   puts "$msg"
   exit 1
 }
-puts "@PASSED"
+puts $passed
 exit 0
 
