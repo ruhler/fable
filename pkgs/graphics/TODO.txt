@@ -1,0 +1,23 @@
+* Figure out what to do about my Triangle drawing implementation now that we
+  can draw triangles directly.
+
+* Debug clipping artifacts
+  Looks like precision gets off some times for clipping, with bits of sky
+  showing through the ground. Figure out what's up, right a test and fix it.
+    Try a triangle with points (-20, -6, -30), (-20, -6, 30), (20, -6, -30).
+    The lower left corner gets clipped wrong? Focus 10, camera at (1,0,0).
+
+  The issue:
+  1. Clip X axis, so that X point is right on the edge, but just outside.
+  2. Clip Y axis, so that Y point is right on the edge, but just outside.
+  But rounding Y coord just outside rounds X coord just inside.
+
+  In this example, if we clip Y first, we don't have a problem, because then
+  we end up clipping towards a point outside both x and y. Otherwise we end up
+  clipping towards a point outside y but inside x.
+  
+  Not sure what the solution is though.
+
+* Add a left to right scan version of Triangles and pick that if
+  the distance is shorter than bottom to top.
+

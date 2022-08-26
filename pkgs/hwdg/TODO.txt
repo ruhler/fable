@@ -1,0 +1,7 @@
+* Implement md5 in Hwdg
+ -  Give separate Tests modules for each submodule.
+ -  Move Adder module to a Designs subdirectory.
+ -  Figure out a nicer API for Adder.
+ -  Add tests for the Adder module.
+* [/Hwdg%] Improve the API for describing a bunch of gates with modules.
+* [/Hwdg%] Add test case for nondeterministic/conflicting gates case.

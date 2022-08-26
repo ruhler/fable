@@ -1,0 +1,10 @@
+* Improve performance somehow.
+* Give width to paddle.
+* Fix issue with ball not hitting end points of edges.
+* Test and fix issue with ball getting stuck bouncing between two close
+  bumpers.
+
+* Design a relatively complete traditional pinball play field I can use to
+  exercise everything of what I expect I may want to support.
+* Figure out how to deal with imprecision in test.
+* Change paddle velocity to increase gradually instead of instantly?

@@ -1,3 +1,17 @@
+* [spec] Clean up support for abstract types.
+ - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
+ - Add more tests.
+   Test that name of token type is a type name.
+   Test what happens if a value is passed in <...> instead of a type.
+   Test error that would cause a raw abstract type to be printed.
+   Test you can only create abstract types using token types, not arbitrary
+   types. In particular, not arbitrary abstract variable types.
+   A test for application to non-data type.
+   Test more complex illegal casts.
+
+   For example, (Unit@) { Unit@; }(xxx);
+ - Try turning Int@ into an abstract type.
+
 * Make it easier to run failing tests under valgrind and gdb.
 
 * Do something with .@ module value vs. type?
@@ -10,24 +24,10 @@
  - Don't require use of global variables to pass state.
 
 * Add tests that at least the compiled apps don't crash when you run them.
-* Add mouse button support to App.
-* Clean up frame rate/event handling of /App/Demo%.
-* Figure out how to support images in Apps.
-
-* Move TODO entries to corresponding subdirectories?
-
-* Should we add option for fble-compile to generate main function for
-  interpreted case? Might be nice?
-
-* Factor out common logic for doing fble /Foo/Tests% based tests in build.tcl
-  files.
   
 * Fix dependency issue of build.ninja on moved *.fble files
   For example, moving Md5.fble to Md5/Md5.fble didn't trigger rebuild of
   build.ninja file.
-
-* Add an app package specific test case.
-  Maybe a simple demo app?
 
 * [spec] Should empty path be allowed in package type?
  See spec/fble.txt for more details.
@@ -47,96 +47,20 @@
  - Test all combinations of .fble/.fble.@, with all combinations of type
    errors in one or the other or both.
 
-* [graphics]
- - Figure out what to do about my Triangle drawing implementation now that we
-   can draw triangles directly.
-
-* [pinball] 
- - Improve performance somehow.
- - Give width to paddle.
- - Fix issue with ball not hitting end points of edges.
- - Test and fix issue with ball getting stuck bouncing between two close
-   bumpers.
-
- - Design a relatively complete traditional pinball play field I can use to
-   exercise everything of what I expect I may want to support.
- - Figure out how to deal with imprecision in test.
- - Change paddle velocity to increase gradually instead of instantly?
-
 * [lib] Move more value conversion functions to separate object files.
  - Color, IO, etc.
-
-* [spec] Clean up support for abstract types.
- - Rename FBLE_POLY_APPLY_EXPR to FBLE_MISC_TYPE_APPLY_EXPR?
- - Add more tests.
-   Test that you can't access an abstract value with the wrong token type.
-   Test use of non-token type to access an abstract value?
-   Test that name of token type is a type name.
-   Test what happens if a value is passed in <...> instead of a type.
-   Test error that would cause a raw abstract type to be printed.
-   Test you can only create abstract types using token types, not arbitrary
-   types. In particular, not arbitrary abstract variable types.
-   A test for application to non-data type.
-   Test more complex illegal casts.
-
-   For example, (Unit@) { Unit@; }(xxx);
- - Try turning Int@ into an abstract type.
 
 * [debugger] Improve support for printing variables
  - Add VarDebugInfo for function static variables.
  - Emit lexical scopes where appropriate.
 
-* [/Graphics] Debug clipping artifacts
-  Looks like precision gets off some times for clipping, with bits of sky
-  showing through the ground. Figure out what's up, right a test and fix it.
-    Try a triangle with points (-20, -6, -30), (-20, -6, 30), (20, -6, -30).
-    The lower left corner gets clipped wrong? Focus 10, camera at (1,0,0).
-
-  The issue:
-  1. Clip X axis, so that X point is right on the edge, but just outside.
-  2. Clip Y axis, so that Y point is right on the edge, but just outside.
-  But rounding Y coord just outside rounds X coord just inside.
-
-  In this example, if we clip Y first, we don't have a problem, because then
-  we end up clipping towards a point outside both x and y. Otherwise we end up
-  clipping towards a point outside y but inside x.
-  
-  Not sure what the solution is though.
-
-* [/Graphics] Add a left to right scan version of Triangles and pick that if
-  the distance is shorter than bottom to top.
-
-* Implement fannkuchredux benchmark?
-  Permutation order looks like:
-    0, 1, 2, 3, ..., n
-    all subpermutations of length n-1
-    1, 2, 3, ..., n, 0
-    all subpermutations ...
-    2, 3, 4, ..., 0, 1
-    etc.
-    In other words, keep track of current length, rotate the first n elements.
-* Implement IEEE floating point?
-* Implement a regular expression engine?
-
-* Can we make tail calls from compiled to compiled code more efficient?
- - Seems like, if we know we are calling into compiled code, we could avoid
-   resetting the stack frame on tail call and it would be much more efficient?
-
 * Consider running some of the tests under valgrind?
  - To catch memory issues that could otherwise go undetected?
-
-* Implement md5 in Hwdg
- -  Give separate Tests modules for each submodule.
- -  Move Adder module to a Designs subdirectory.
- -  Figure out a nicer API for Adder.
- -  Add tests for the Adder module.
 
 * Implement support for packed data values.
  - Change the compiler to allocate FbleDataTypeValue when appropriate.
  - Pass type to struct and union construction and access functions.
  - Implement packing for struct and union values.
-* Avoid calling 'FbleRelease' in those cases where the compiler can tell
-  statically that a value will be packed?
 
 * Improve performance with profiling enabled?
  - Now that we removed the optimization for detecting duplicate call entries
@@ -147,11 +71,6 @@
   the place where it was imported from?
  - Seems like it should be the module file, because it could be imported from
    multiple places?
-
-* Try to reduce size of generated assembly?
- - Factor out slow paths for profiling and returning abort?
- - Generate a sparse pc jump table?
- - Avoid emitting unused labels?
 
 * Change FbleProfile functions to accept NULL, and clean up code to take
   advantage of that where it makes sense?
@@ -164,16 +83,11 @@
 * Add option for passing .so files to FbleLinkFromCompiledOrSource?
 
 * Print full stack trace on abort instead of just the top stack trace?
-* Optimize Sat simplification to avoid lots of repeated traversals?
 
 * Run fble-test-compile-error tests in compilation mode?
 
 * Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
   Their implementations may be different enough now to warrant it?
-
-* Consider changing RELEASE_INSTR to take a vector of args to release?
-  - Just to speed up interpreted code for the case where we are freeing a
-    bunch of values in a row before returning or tail calling.
 
 * Remove dependence of interpret.c and generated code on value.h.
   Making value functions public as necessary to support this.
@@ -226,28 +140,13 @@
  - Add tests for full code coverage of all functions.
  - Rename Str to String? Or to S?
  - Consider pulling ForEach and Map out into their own class?
-* [/App%] Change App% back to drawing over the previous screen?
- - It can figure out how to double buffer appropriately on the implementation
-   side, for example by drawing the last two updates to the buffer.
- - Because presumably, if not much has changed, that can be much more
-   efficient? And if a lot has changed, we can optimize 'Over' to throw away
-   the previous frame entirely if you start with a blank screen?
-
-   Maybe more accurate is, if your point of view isn't changing, delta is
-   better. If your point of view is changing, you probably have to redraw
-   everything regardless and it would be nice to avoid drawing a bunch of
-   stuff and then covering it up right away.
 * [/Int%] Add test coverage for the Int routines.
 * [/Fble/Test%] Clean up fble test framework
  - Use AssertEquals for more of the tests.
  - Add an AssertLt or similar methods? Or generalize AssertEquals?
  - Properly test the test infra.
 * [/GameOfLife%] Switch to a target 60 FPS?
-* [/Hwdg%] Improve the API for describing a bunch of gates with modules.
-* [/Hwdg%] Add test case for nondeterministic/conflicting gates case.
 * [/Map%] Add tests for balancing of /Map%?
-* [/Sat%] Optimize the solver.
-* [/Sat%] Implement dimacs cnf parser.
 * [/Snake%] Switch to a target 60 FPS?
 * [/Snake%] Test and fix bug when snake eats its tail.
 * [/Snake%] Ignore moves that aren't orthogonal to current snake direction.
@@ -264,7 +163,6 @@
 * [spec] Document the runtime memory model,
   - Including that tail recursive functions should not smash the stack.
 
-* [typecheck] Change FbleFuncValueTc scope to be FbleTcV? Isn't that more natural?
 * [typecheck] Be more consistent in FbleTc about use of vector versus FbleTc*[].
 * [typecheck] We don't get a warning about an unused self recursive function.
   More generally, we don't get warnings about variables that are referenced
@@ -277,9 +175,9 @@
 * [typecheck] Test and fix error message for type of anonymous type let values.
  - The type should be the computed type for the value, not the introduced
    abstract type?
-* [typecheck] Figure out why Normal is called so often
+* [typecheck] Figure out why FbleNormalType is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
- - Profiling said its all in TypeEquals. Maybe something pathological?
+ - Profiling said its all in FbleTypesEqual. Maybe something pathological?
 * [typecheck] Improve type error in case of this?
   <@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
   True.?(true: Nothing<Bool@>, false: True);
@@ -289,9 +187,6 @@
 
 * [profile] Check if it's okay to add new blocks to a profile in progress.
  - either way, document that clearly.
-
-* [debugger] Implement an fble debugger?
-  see thoughts/fble.debugger.txt
 
 * [release] Write man pages for fble and friends?
  

@@ -1,0 +1,15 @@
+* Add mouse button support.
+* Clean up frame rate/event handling of /App/Demo%.
+* Figure out how to support images in Apps.
+
+* Change App% back to drawing over the previous screen?
+ - It can figure out how to double buffer appropriately on the implementation
+   side, for example by drawing the last two updates to the buffer.
+ - Because presumably, if not much has changed, that can be much more
+   efficient? And if a lot has changed, we can optimize 'Over' to throw away
+   the previous frame entirely if you start with a blank screen?
+
+   Maybe more accurate is, if your point of view isn't changing, delta is
+   better. If your point of view is changing, you probably have to redraw
+   everything regardless and it would be nice to avoid drawing a bunch of
+   stuff and then covering it up right away.

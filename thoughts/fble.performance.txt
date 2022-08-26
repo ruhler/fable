@@ -552,4 +552,15 @@ Actual savings from inlining:
 
 That's pretty awesome how close it was predicted by both forms of profiling.
   
+---
 
+Collecting together some old brainstorming thoughts on how to improve
+performance:
+* Can we make tail calls from compiled to compiled code more efficient?
+ - Seems like, if we know we are calling into compiled code, we could avoid
+   resetting the stack frame on tail call and it would be much more efficient?
+* Avoid calling 'FbleRelease' in those cases where the compiler can tell
+  statically that a value will be packed?
+* Consider changing RELEASE_INSTR to take a vector of args to release?
+  - Just to speed up interpreted code for the case where we are freeing a
+    bunch of values in a row before returning or tail calling.
