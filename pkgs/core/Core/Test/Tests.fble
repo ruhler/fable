@@ -1,23 +1,59 @@
 
-<@>% List = /Core/List%.List;
+@ Bool@ = /Core/Bool%.Bool@;
+% True = /Core/Bool%.True;
+% False = /Core/Bool%.False;
 
+<@>% List = /Core/List%.List;
+<@>% Nil = /Core/List%.Nil;
+
+<@>@ PureResult@ = /Core/Stdio/Pure%.PureResult@;
+<@>@ Pure@ = /Core/Stdio/Pure%.Pure@;
+% Monad = /Core/Stdio/Pure%.Monad;
+% Stdio = /Core/Stdio/Pure%.Stdio;
+<@>% Run = /Core/Stdio/Pure%.Run;
+
+@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
 
 @ Test@ = /Core/Test%.Test@;
 @ TestResult@ = /Core/Test%.TestResult@;
 % Test = /Core/Test%.Test;
 % TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
 
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-# TODO: Test the test runner output. Don't just test that a passing test can
-# be written and passes.
-Test@ Tests = {
-  Test@ pass = Test(Str|pass, (Unit@ _) { TestResult@(pass: Unit); });
-  Test@ _fail = Test(Str|fail, (Unit@ _) { TestResult@(fail: Str|FAILED); });
+% RunTests = /Core/Test/Run%<Pure@>(Monad, Stdio.out).RunTests;
 
-  TestSuite(Str|'Test', List<Test@>[pass]);
-};
+Test@ pass = Test(Str|pass, (Unit@ _) { TestResult@(pass: Unit); });
+Test@ fail = Test(Str|fail, (Unit@ _) { TestResult@(fail: Str|Failed); });
+Test@ xfail = Test(Str|xfail, (Unit@ _) { TestResult@(xfail: Unit); });
+
+Test@ Tests = TestSuite(Str|'Test', List[
+  Test(Str|'RunTest.pass_passes', (Unit@ _) {
+    PureResult@<Bool@> result = Run(RunTests(Str|'', pass), Nil<String@>);
+
+    Bool@ wnt = True;
+    Bool@ got = result.x;
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    }),
+
+  Test(Str|'RunTest.fail_fails', (Unit@ _) {
+    PureResult@<Bool@> result = Run(RunTests(Str|'', fail), Nil<String@>);
+
+    Bool@ wnt = False;
+    Bool@ got = result.x;
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    }),
+
+  Test(Str|'RunTest.xfail_passes', (Unit@ _) {
+    PureResult@<Bool@> result = Run(RunTests(Str|'', xfail), Nil<String@>);
+
+    Bool@ wnt = True;
+    Bool@ got = result.x;
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    })
+]);
 
 @(Tests);

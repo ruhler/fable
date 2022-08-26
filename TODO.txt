@@ -1,14 +1,4 @@
-* Tests cleanup
- - Fix problem where flaky debug test failure doesn't get rerun.
-
 * Make it easier to run failing tests under valgrind and gdb.
-
-* Add test for /Core/Test/Run/RunTest% that xfail is treated like
-  passing in terms of return code.
-
-* Is <%,%>% a legal kind? What would you use it for?
-  No. This should not be allowed. Double check the spec and implementation on
-  this. We should use <@ X@>(X@ x) { ... } instead of <% x> { ... }.
 
 * Do something with .@ module value vs. type?
   - There's currently unexercised code for it.
