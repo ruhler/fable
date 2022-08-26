@@ -35,46 +35,46 @@ Show@<AB@> ShowAB = (AB@ x) {
   x.?(a: Str|a, b: Str|b);
 };
 
-Eq@<Maybe@<AB@>> Eq = /Core/Maybe/Eq%.Eq<AB@>(EqAB);
-Show@<Maybe@<AB@>> Show = /Core/Maybe/Show%.Show<AB@>(ShowAB);
+Eq@<Maybe@<AB@>> Eq = /Core/Maybe/Eq%.Eq(EqAB);
+Show@<Maybe@<AB@>> Show = /Core/Maybe/Show%.Show(ShowAB);
 
 # Tests --
 #  A test suite to test the /Maybe% module and friends.
-Test@ Tests = TestSuite(Str|Maybe, List<Test@>[
+Test@ Tests = TestSuite(Str|Maybe, List[
   Test(Str|Eq_JustEq, (Unit@ _) {
     Bool@ wnt = True;
-    Bool@ got = Eq(Just<AB@>(A), Just<AB@>(A));
+    Bool@ got = Eq(Just(A), Just(A));
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Eq_JustNe, (Unit@ _) {
     Bool@ wnt = False;
-    Bool@ got = Eq(Just<AB@>(A), Just<AB@>(B));
+    Bool@ got = Eq(Just(A), Just(B));
     AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Eq_JustNothing, (Unit@ _) {
     Bool@ wnt = False;
-    Bool@ got = Eq(Just<AB@>(A), Nothing<AB@>);
-    AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    Bool@ got = Eq(Just(A), Nothing<AB@>);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Eq_Nothing, (Unit@ _) {
     Bool@ wnt = True;
     Bool@ got = Eq(Nothing<AB@>, Nothing<AB@>);
-    AssertEquals<Bool@>(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
+    AssertEquals(/Core/Bool/Eq%.Eq, /Core/Bool/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Just, (Unit@ _) {
     String@ wnt = Str|'Just:b';
-    String@ got = Show(Just<AB@>(B));
-    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    String@ got = Show(Just(B));
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Nothing, (Unit@ _) {
     String@ wnt = Str|'Nothing';
     String@ got = Show(Nothing<AB@>);
-    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
 

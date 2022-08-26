@@ -3,13 +3,12 @@
 % True = /Core/Bool%.True;
 % False = /Core/Bool%.False;
 
-@ Char@ = /Core/Char%.Char@;
 <@>@ Eq@ = /Core/Eq%.Eq@;
 @ String@ = /Core/String%.String@;
 
 # Eq --
 #   Implementation of Eq@ for String@. See documentation of /Eq%.Eq@.
-Eq@<String@> Eq = /Core/List/Eq%.Eq<Char@>(/Core/Char/Eq%.Eq);
+Eq@<String@> Eq = /Core/List/Eq%.Eq(/Core/Char/Eq%.Eq);
 
 # StartsWith --
 #   Returns true if the string str starts with sub.

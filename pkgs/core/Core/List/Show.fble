@@ -1,14 +1,10 @@
 
-@ Char@ = /Core/Char%.Char@;
-
 <@>@ List@ = /Core/List%.List@;
-<@>% List = /Core/List%.List;
-<@>% Concat = /Core/List%.Concat;
 
 <@>@ Show@ = /Core/Show%.Show@;
 
-@ String@ = /Core/String%.String@;
 % Str = /Core/String%.Str;
+% Strs = /Core/String%.Strs;
 
 # ShowTail --
 #   Shows the tail part of a list.
@@ -25,13 +21,8 @@
 #   [1, 2, 3] is shown as ", 1, 2, 3]"
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
-  l.?(
-    cons:
-      Concat<Char@>(List<String@>[
-          Str|', ',
-          show(l.cons.head),
-          ShowTail<T@>(show)(l.cons.tail)]),
-    nil: Str|']');
+  l.?(nil: Str|']');
+  Strs[Str|', ', show(l.cons.head), ShowTail(show)(l.cons.tail)];
 };
 
 # Show --
@@ -50,12 +41,8 @@ ShowTail = <@ T@>(Show@<T@> show)(List@<T@> l) {
 #   be shown as "[1, 2, 3]"
 <@ T@>(Show@<T@>) { Show@<List@<T@>>; }
 Show = <@ T@>(Show@<T@> show)(List@<T@> l) {
-  l.?(
-    cons: Concat<Char@>(List<String@>[
-        Str|'[',
-        show(l.cons.head),
-        ShowTail<T@>(show)(l.cons.tail)]),
-    nil: Str|'[]');
+  l.?(nil: Str|'[]');
+  Strs[Str|'[', show(l.cons.head), ShowTail(show)(l.cons.tail)];
 };
 
 @(Show);

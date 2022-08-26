@@ -36,7 +36,7 @@
 (String@, (Unit@) { Bool@; }) { Test@; }
 T = (String@ name, (Unit@) { Bool@; } p) {
   Test(name, (Unit@ u) {
-    AssertEquals<Bool@>(Eq, /Core/Bool/Show%.Show, True, p(u));
+    AssertEquals(Eq, /Core/Bool/Show%.Show, True, p(u));
   });
 };
 
@@ -57,13 +57,13 @@ T = (String@ name, (Unit@) { Bool@; } p) {
 (String@, (Unit@) { Bool@; }) { Test@; }
 F = (String@ name, (Unit@) { Bool@; } p) {
   Test(name, (Unit@ u) {
-    AssertEquals<Bool@>(Eq, /Core/Bool/Show%.Show, False, p(u));
+    AssertEquals(Eq, /Core/Bool/Show%.Show, False, p(u));
   });
 };
 
 # Tests --
 #  A test suite to test the /Core/Bool% module.
-Test@ Tests = TestSuite(Str|Bool, List<Test@>[
+Test@ Tests = TestSuite(Str|Bool, List[
   T(Str|True, (Unit@ _) { True; }),
   F(Str|False, (Unit@ _) { False; }),
 
@@ -88,13 +88,13 @@ Test@ Tests = TestSuite(Str|Bool, List<Test@>[
   Test(Str|Show_True, (Unit@ _) {
     String@ wnt = Str|'True';
     String@ got = /Core/Bool/Show%.Show(True);
-    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_False, (Unit@ _) {
     String@ wnt = Str|'False';
     String@ got = /Core/Bool/Show%.Show(False);
-    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
 

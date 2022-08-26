@@ -37,7 +37,7 @@
 
 Show@<Int@> Show = (Int@ x) {
   x.?(
-    n: Append<Char@>(Str|'-', /Core/Int/IntP/Show%.Show(x.n)),
+    n: Append(Str|'-', /Core/Int/IntP/Show%.Show(x.n)),
     0: Str|0,
     p: /Core/Int/IntP/Show%.Show(x.p));
 };

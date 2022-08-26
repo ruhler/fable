@@ -27,7 +27,7 @@ ShiftInt = (LFSR@ lfsr, Int@ max) {
   };
 
   State@ s = F(State@(lfsr, Int|1, Int|0));
-  Lt(s.x, max).?(true: Shifted@<Int@>(s.lfsr, s.x));
+  Lt(s.x, max).?(true: Shifted@(s.lfsr, s.x));
   ShiftInt(s.lfsr, max);
 };
 

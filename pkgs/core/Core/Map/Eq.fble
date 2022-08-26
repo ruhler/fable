@@ -45,13 +45,13 @@ EqEntry = <@ K@, @ V@>(Eq@<K@> keq, Eq@<V@> veq)(Entry@<K@, V@> a, Entry@<K@, V@
 Eq = <@ K@, @ V@>(Eq@<K@> keq, Eq@<V@> veq)(Map@<K@, V@> a, Map@<K@, V@> b) {
   List@<Entry@<K@, V@>> aes = ForEach<K@, V@, List@<Entry@<K@, V@>>>(a,
     Nil<Entry@<K@, V@>>, (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
-      Cons<Entry@<K@, V@>>(Entry@<K@, V@>(k, v), b);
+      Cons(Entry@<K@, V@>(k, v), b);
   });
   List@<Entry@<K@, V@>> bes = ForEach<K@, V@, List@<Entry@<K@, V@>>>(b,
     Nil<Entry@<K@, V@>>, (K@ k, V@ v, List@<Entry@<K@, V@>> b) {
-      Cons<Entry@<K@, V@>>(Entry@<K@, V@>(k, v), b);
+      Cons(Entry@<K@, V@>(k, v), b);
   });
-  /Core/List/Eq%.Eq<Entry@<K@, V@>>(EqEntry<K@, V@>(keq, veq))(aes, bes);
+  /Core/List/Eq%.Eq(EqEntry(keq, veq))(aes, bes);
 };
 
 @(IsEmpty, Eq);

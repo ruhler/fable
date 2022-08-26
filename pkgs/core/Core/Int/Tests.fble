@@ -56,11 +56,11 @@ T = (String@ name, (Unit@) { Bool@; } p) {
 (String@, Int@, (Unit@) { Int@; }) { Test@; }
 TEq = (String@ name, Int@ a, (Unit@) { Int@; } b) {
   Test(name, (Unit@ u) {
-    AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, a, b(u));
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, a, b(u));
   });
 };
 
-Test@ Tests = TestSuite(Str|Int, List<Test@>[
+Test@ Tests = TestSuite(Str|Int, List[
   T(Str|Eq_0_0, (Unit@ _ ) { Eq(0, 0); }),
   T(Str|Eq_0_1, (Unit@ _ ) { Not(Eq(0, 1)); }),
   T(Str|Eq_4_4, (Unit@ _ ) { Eq(4, 4); }),
@@ -153,31 +153,31 @@ Test@ Tests = TestSuite(Str|Int, List<Test@>[
   Test(Str|Read_Positive, (Unit@ _) {
     Int@ wnt = Int|49113;
     Int@ got = /Core/Int/Show%.Read(Str|49113);
-    AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   }),
 
   Test(Str|Read_Negative, (Unit@ _) {
     Int@ wnt = Neg(Int|49113);
     Int@ got = /Core/Int/Show%.Read(Str|'-49113');
-    AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+    AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Positive, (Unit@ _) {
     String@ wnt = Str|'10325487960';
     String@ got = /Core/Int/Show%.Show(Int|10325487960);
-    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Zero, (Unit@ _) {
     String@ wnt = Str|'0';
     String@ got = /Core/Int/Show%.Show(Int|0);
-    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   }),
 
   Test(Str|Show_Negative, (Unit@ _) {
     String@ wnt = Str|'-42';
     String@ got = /Core/Int/Show%.Show(Neg(Int|42));
-    AssertEquals<String@>(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
+    AssertEquals(/Core/String/Eq%.Eq, /Core/String/Show%.Show, wnt, got);
   })
 ]);
 

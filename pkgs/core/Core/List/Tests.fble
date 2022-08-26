@@ -74,7 +74,7 @@ Show@<List@<Elem@>> Show = /Core/List/Show%.Show<Elem@>(ElemShow);
 
 (List@<Elem@>, List@<Elem@>) { TestResult@; }
 AssertEquals = (List@<Elem@> a, List@<Elem@> b) {
-  /Core/Test%.AssertEquals<List@<Elem@>>(Eq, Show, a, b);
+  /Core/Test%.AssertEquals(Eq, Show, a, b);
 };
 
 Test@ Tests = TestSuite(Str|List, List<Test@>[
@@ -115,19 +115,19 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> a = EL|ABC;
     List@<Elem@> b = EL|DEE;
     List@<Elem@> wnt = EL|ABCDEE;
-    List@<Elem@> got = Append<Elem@>(a, b);
+    List@<Elem@> got = Append(a, b);
     AssertEquals(wnt, got);
   }),
 
   Test(Str|'Init', (Unit@ _) {
     List@<Elem@> l = EL|ABCDE;
     List@<Elem@> wnt = EL|ABCD;
-    List@<Elem@> got = Init<Elem@>(l);
+    List@<Elem@> got = Init(l);
     AssertEquals(wnt, got);
   }),
 
   Test(Str|'Concat', (Unit@ _) {
-    List@<List@<Elem@>> l = List<List@<Elem@>>[
+    List@<List@<Elem@>> l = List[
       EL|ABC,
       EL|DEA,
       EL|BB
@@ -153,7 +153,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<Elem@> l = EL|ABCDE;
     List@<Elem@> wnt = EL|EDCBA;
     List@<Elem@> got =
-      ForEach<Elem@, List@<Elem@>>(l, Nil<Elem@>, (Elem@ e, List@<Elem@> b) {
+      ForEach(l, Nil<Elem@>, (Elem@ e, List@<Elem@> b) {
         Cons<Elem@>(e, b);
       });
     AssertEquals(wnt, got);
@@ -176,7 +176,7 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
   Test(Str|'Length', (Unit@ _) {
     Int@ wnt = Int|5;
     Int@ got = Length<Elem@>(EL|ABCDE);
-    /Core/Test%.AssertEquals<Int@>(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
+    /Core/Test%.AssertEquals(/Core/Int/Eq%.Eq, /Core/Int/Show%.Show, wnt, got);
   }),
 
   Test(Str|'Split', (Unit@ _) {
@@ -190,9 +190,9 @@ Test@ Tests = TestSuite(Str|List, List<Test@>[
     List@<T@> list = List<T@>|'  XXX X  XX ';
     List@<List@<T@>> want = List<List@<T@>>[List<T@>|XXX, List<T@>|X, List<T@>|XX];
     List@<List@<T@>> got = Split<T@>(list, sep);
-    /Core/Test%.AssertEquals<List@<List@<T@>>>(
-      /Core/List/Eq%.Eq<List@<T@>>(/Core/List/Eq%.Eq<T@>(eq)),
-      /Core/List/Show%.Show<List@<T@>>(/Core/List/Show%.Show<T@>(show)),
+    /Core/Test%.AssertEquals(
+      /Core/List/Eq%.Eq(/Core/List/Eq%.Eq(eq)),
+      /Core/List/Show%.Show(/Core/List/Show%.Show(show)),
       want, got);
   })
 ]);

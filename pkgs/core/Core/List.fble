@@ -58,7 +58,7 @@ List@ Nil = <@ T@> {
 #   A list that contains the elements of 'a' followed by the elements of 'b'.
 <@ T@>(List@<T@>, List@<T@>) { List@<T@>; }
 Append = <@ T@>(List@<T@> a, List@<T@> b) {
-  a.?(cons: Cons<T@>(a.cons.head, Append<T@>(a.cons.tail, b)), nil: b);
+  a.?(cons: Cons(a.cons.head, Append(a.cons.tail, b)), nil: b);
 };
 
 # Init --
@@ -76,7 +76,7 @@ Append = <@ T@>(List@<T@> a, List@<T@> b) {
 <@ T@>(List@<T@>) { List@<T@>; } Init = <@ T@>(List@<T@> list) {
   list.?(
     cons: list.cons.tail.?(
-      cons: Cons<T@>(list.cons.head, Init<T@>(list.cons.tail)),
+      cons: Cons(list.cons.head, Init(list.cons.tail)),
       nil: Nil<T@>),
     nil: Nil<T@>);
 };
@@ -93,7 +93,7 @@ Append = <@ T@>(List@<T@> a, List@<T@> b) {
 # Returns:
 #   A list with all elements from the list of lists x, in order.
 <@ T@>(List@<List@<T@>>) { List@<T@>; } Concat = <@ T@>(List@<List@<T@>> x) {
-  x.?(cons: Append<T@>(x.cons.head, Concat<T@>(x.cons.tail)), nil: Nil<T@>);
+  x.?(cons: Append(x.cons.head, Concat<T@>(x.cons.tail)), nil: Nil<T@>);
 };
 
 # Map --
@@ -112,7 +112,7 @@ Append = <@ T@>(List@<T@> a, List@<T@> b) {
 <@ A@, @ B@>(List@<A@>, (A@) { B@; }) { List@<B@>; }
 Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
   a.?(
-    cons: Cons<B@>(f(a.cons.head), Map<A@, B@>(a.cons.tail, f)),
+    cons: Cons(f(a.cons.head), Map<A@, B@>(a.cons.tail, f)),
     nil: Nil<B@>);
 };
 
@@ -140,7 +140,7 @@ Map = <@ A@, @ B@>(List@<A@> a, (A@) { B@; } f) {
 <@ A@, @ B@>(List@<A@>, B@, (A@, B@) { B@; }) { B@; }
 ForEach = <@ A@, @ B@>(List@<A@> list, B@ base, (A@, B@) { B@; } body) {
   list.?(
-    cons: ForEach<A@, B@>(list.cons.tail, body(list.cons.head, base), body),
+    cons: ForEach(list.cons.tail, body(list.cons.head, base), body),
     nil: base);
 };
 

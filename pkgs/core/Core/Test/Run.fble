@@ -27,7 +27,7 @@
 
   # Print a string and newline to the given output stream.
   (String@) { M@<Unit@>; } PrintLn = (String@ str) {
-    out(Append<Char@>(str, Str[Chars.nl]));
+    out(Append(str, Str[Chars.nl]));
   };
 
   # Returns True if the tests all pass, false otherwise.

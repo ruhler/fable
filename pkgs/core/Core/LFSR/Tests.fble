@@ -31,14 +31,14 @@ ShiftN = (LFSR@ lfsr, Int@ n) {
   Cons<Bit@>(shifted.output, ShiftN(shifted.lfsr, Sub(n, Int|1)));
 };
 
-Test@ Tests = TestSuite(Str|LFSR, List<Test@>[
+Test@ Tests = TestSuite(Str|LFSR, List[
   Test(Str|Basic, (Unit@ _) {
     # A 3 bit LFSR.
     LFSR@ lfsr = LFSR@(BitStr|110, BitStr|000);
     List@<Bit@> got = ShiftN(lfsr, Int|16);
     List@<Bit@> wnt = BitStr|0001101000110100;
-    AssertEquals<List@<Bit@>>(
-      /Core/List/Eq%.Eq<Bit@>(/Core/Digits/Eq%.EqBit),
+    AssertEquals(
+      /Core/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
       /Core/Digits/Show%.ShowBits, wnt, got);
   })
 ]);

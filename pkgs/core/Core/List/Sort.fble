@@ -23,9 +23,9 @@
 Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
   l.?(
     cons: le(x, l.cons.head).?(
-      true: Cons<T@>(x, l),
-      false: Cons<T@>(l.cons.head, Insert<T@>(le, x, l.cons.tail))),
-    nil: Cons<T@>(x, Nil<T@>));
+      true: Cons(x, l),
+      false: Cons(l.cons.head, Insert(le, x, l.cons.tail))),
+    nil: Cons(x, Nil<T@>));
 };
 
 # Sort --
@@ -48,7 +48,7 @@ Insert = <@ T@>((T@, T@) { Bool@; } le, T@ x, List@<T@> l) {
 <@ T@>((T@, T@) { Bool@; }, List@<T@>) { List@<T@>; }
 Sort = <@ T@>((T@, T@) { Bool@; } le, List@<T@> l) {
   l.?(
-    cons: Insert<T@>(le, l.cons.head, Sort<T@>(le, l.cons.tail)),
+    cons: Insert(le, l.cons.head, Sort(le, l.cons.tail)),
     nil: l);
 };
 

@@ -17,7 +17,7 @@ Eq = <@ T@>(Eq@<T@> eq)(List@<T@> a, List@<T@> b) {
     cons: b.?(
       cons: {
         eq(a.cons.head, b.cons.head).?(
-          true: Eq<T@>(eq)(a.cons.tail, b.cons.tail),
+          true: Eq(eq)(a.cons.tail, b.cons.tail),
           false: False);
       },
       nil: False),
@@ -31,7 +31,7 @@ Contains = <@ T@>(Eq@<T@> eq)(List@<T@> l, T@ e) {
   l.?(
     cons: eq(l.cons.head, e).?(
       true: True,
-      false: Contains<T@>(eq)(l.cons.tail, e)),
+      false: Contains(eq)(l.cons.tail, e)),
     nil: False);
 };
 
@@ -53,13 +53,13 @@ Contains = <@ T@>(Eq@<T@> eq)(List@<T@> l, T@ e) {
 Split = <@ T@>(List@<T@> list, (T@) { Bool@; } sep) {
   list.?(nil: List<List@<T@>>[]);
 
-  List@<List@<T@>> tail = Split<T@>(list.cons.tail, sep);
+  List@<List@<T@>> tail = Split(list.cons.tail, sep);
   sep(list.cons.head).?(true: tail);
 
   T@ head = list.cons.head;
-  list.cons.tail.?(nil: List<List@<T@>>[List<T@>[head]]);
-  sep(list.cons.tail.cons.head).?(true: Cons<List@<T@>>(List<T@>[head], tail));
-  Cons<List@<T@>>(Cons<T@>(head, tail.cons.head), tail.cons.tail);
+  list.cons.tail.?(nil: List[List[head]]);
+  sep(list.cons.tail.cons.head).?(true: Cons(List[head], tail));
+  Cons(Cons(head, tail.cons.head), tail.cons.tail);
 };
 
 @(Eq, Contains, Split);

@@ -1,5 +1,4 @@
 
-@ Char@ = /Core/Char%.Char@;
 <@>% Append = /Core/List%.Append;
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>@ Show@ = /Core/Show%.Show@;
@@ -11,7 +10,7 @@
 <@ T@>(Show@<T@>) { Show@<Maybe@<T@>>; }
 Show = <@ T@>(Show@<T@> show)(Maybe@<T@> m) {
   m.?(
-    just: Append<Char@>(Str|'Just:', show(m.just)),
+    just: Append(Str|'Just:', show(m.just)),
     nothing: Str|'Nothing');
 };
 
