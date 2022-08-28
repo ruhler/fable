@@ -1,0 +1,14 @@
+# @@fble-test@@ compile-error 11:21
+
+@ Unit@ = *();
+Unit@ Unit = Unit@();
+
+@ TokA@ = %(/Foo/Bar%);
+@ TokB@ = %(/Foo/Bar/Sludge%);
+
+(TokA@<Unit@> x) {
+  # The package type of _y does not match the package type of x.
+  TokB@<Unit@> _y = x;
+  Unit;
+};
+
