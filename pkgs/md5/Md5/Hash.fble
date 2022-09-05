@@ -27,7 +27,7 @@
   Hex@ 24, Hex@ 25, Hex@ 26, Hex@ 27, Hex@ 28, Hex@ 29, Hex@ 30, Hex@ 31);
 
 (Hex@, Hex@) { Bool@; } EqHex = (Hex@ a, Hex@ b) {
-  /Md5/Bits%.Bit8.BitN.eq(H2(0, a), H2(0, b));
+  /Md5/Bits%.Bit8.Bits.eq(H2(0, a), H2(0, b));
 };
 
 (Hash@, Hash@) { Bool@; } Eq = (Hash@ a, Hash@ b) {

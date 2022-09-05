@@ -2,7 +2,9 @@
 @ Bool@ = /Core/Bool%.Bool@;
 @ Bit@ = /Core/Digits%.Bit@;
 
-<@>@ BitN@ = <@ T@> {
+# Bits@ --
+#   Interface for a fixed-width bit vector.
+<@>@ Bits@ = <@ T@> {
   @ Result@ = *(T@ z, Bit@ cout);
   *(
     @<Result@> Result@,
@@ -22,4 +24,4 @@
   );
 };
 
-@(BitN@);
+@(Bits@);

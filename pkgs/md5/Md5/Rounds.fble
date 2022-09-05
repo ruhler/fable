@@ -28,11 +28,11 @@
 
 % H2 = /Md5/Bits%.Bit8.H2;
 
-% and = /Md5/Bits%.Bit32.BitN.and;
-% or = /Md5/Bits%.Bit32.BitN.or;
-% not = /Md5/Bits%.Bit32.BitN.not;
-% xor = /Md5/Bits%.Bit32.BitN.xor;
-% add = /Md5/Bits%.Bit32.BitN.add;
+% and = /Md5/Bits%.Bit32.Bits.and;
+% or = /Md5/Bits%.Bit32.Bits.or;
+% not = /Md5/Bits%.Bit32.Bits.not;
+% xor = /Md5/Bits%.Bit32.Bits.xor;
+% add = /Md5/Bits%.Bit32.Bits.add;
 
 # Construct a Bit32 in hex, with high-order byte first.
 (List@<Hex@>) { Bit32@; } H8 = (List@<Hex@> s) {

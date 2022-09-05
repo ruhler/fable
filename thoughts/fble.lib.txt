@@ -188,6 +188,7 @@ Summary of changes from what's currently implemented:
 * Clean up coding style with regards to braces.
 * Add literal support into Bits@ interface.
   Both binary and hex.
+  Use this to replace 'zero', which should no longer be needed?
 * Move from Md5 package to Core package.
 
 Let's see if I can make some of these improvements incrementally.

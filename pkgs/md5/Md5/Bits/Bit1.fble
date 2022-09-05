@@ -4,7 +4,7 @@
 % False = /Core/Bool%.False;
 
 @ Bit@ = /Core/Digits%.Bit@;
-<@>@ BitN@ = /Md5/Bits/BitN%.BitN@;
+<@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
 
 Bit@ 0 = /Core/Digits%.Bit.0;
 Bit@ 1 = /Core/Digits%.Bit.1;
@@ -64,7 +64,7 @@ Bit1@ zero = 0;
   Result@(cin, a);
 };
 
-BitN@<Bit1@> BitN = @(
+Bits@<Bit1@> Bits = @(
   Result@,
   not, and, or, xor,
   add, inc,
@@ -73,4 +73,4 @@ BitN@<Bit1@> BitN = @(
   fulladd, fullinc, lshift
 );
 
-@(Bit1@, BitN);
+@(Bit1@, Bits);

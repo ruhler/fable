@@ -23,7 +23,7 @@
 @ T@ = Bit8@;
 
 (Bit64@) { Bit64@; } Inc64 = (Bit64@ a) {
-  /Md5/Bits%.Bit64.BitN.inc(a);
+  /Md5/Bits%.Bit64.Bits.inc(a);
 };
 
 (Hex@, Hex@) { Bit64@; } H2_64 = (Hex@ a, Hex@ b) {
@@ -32,7 +32,7 @@
 };
 
 (Bit64@) { Bit64@; } shl64 = (Bit64@ a) {
-  /Md5/Bits%.Bit64.BitN.lshift(a, Bit@(0: Unit)).z;
+  /Md5/Bits%.Bit64.Bits.lshift(a, Bit@(0: Unit)).z;
 };
 
 Bit64@ 3f_64 = H2_64(Hex.3, Hex.F);
@@ -47,9 +47,9 @@ Bit64@ 08_64 = H2_64(Hex.0, Hex.8);
   # Add zeros as needed, then the final length to the output message.
   (Bit64@, Bit64@) { M@<Stream@>; }
   PadZ = (Bit64@ msglen, Bit64@ length) {
-    Bool@ end = /Md5/Bits%.Bit64.BitN.iszero(
-      /Md5/Bits%.Bit64.BitN.and(3f_64,
-        /Md5/Bits%.Bit64.BitN.add(08_64, length)));
+    Bool@ end = /Md5/Bits%.Bit64.Bits.iszero(
+      /Md5/Bits%.Bit64.Bits.and(3f_64,
+        /Md5/Bits%.Bit64.Bits.add(08_64, length)));
 
     end.?(false: {
       Unit@ _ <- Put(H2(0, 0));
@@ -80,5 +80,5 @@ Bit64@ 08_64 = H2_64(Hex.0, Hex.8);
     Pad(Inc64(length));
   };
 
-  @(Pad: Pad(/Md5/Bits%.Bit64.BitN.zero));
+  @(Pad: Pad(/Md5/Bits%.Bit64.Bits.zero));
 };
