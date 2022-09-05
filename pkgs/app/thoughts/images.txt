@@ -80,3 +80,117 @@ And the order to try these things out in:
 At some point we'll want to figure out how to standardize / incorporate access
 to the filesystem with Stdio@ and App@.
 
+---
+
+The abstraction we are using for File in Md5 now is:
+
+  <<@>@ M@>(Monad@<M@> m, M@<Maybe@<Bit8@>> get)
+
+To make it feel more like a File, we could introduce a type:
+
+<<@>@>@ File@ = <<@>@ M@> { *(M@<Maybe@<Bit8@>> get); };
+
+More general would be a stream of values of some type T@. Maybe we say "File@"
+is a Stream@ of Bit8@?
+
+The issue is, I don't like the general file abstraction from linux. Too
+complicated. With permissions, and truncation, and rewriting, and all that.
+But in practice, to communicate and compose with other existing applications,
+we need a way to work with files and filesystems.
+
+Perhaps we can minimize where we deal with linux specific filesystem stuff,
+and hold off on adding features until we need them.
+
+The features I need now?
+
+* Open a file for reading, and read it a byte at a time until reaching the
+  end.
+
+How do we know which file to read? Either the file is given as input, in which
+case it's the C code that converts whatever the user specifies to a file, or
+we take a filesystem and a string name of the file as input. May as well take
+the filename as input as a string.
+
+Let's look at filesystem then. In this case a filesystem for reading files.
+Unless we want to take advantage of bash to do redirections from file names to
+file descriptors. That sounds like a pain though.
+
+If general approach to passing args is by string, we need ways to convert
+things from strings to actual args. In this case, from string to file. That
+means naming the file on the command line.
+
+How do we deal with access controls? Wouldn't it be nice to say a program can
+only even see a subset of available files? Wouldn't you want the caller to
+control what files a program can access, not the program itself? In which
+case, wouldn't you want to pass the file as a file explicitly, without names
+and such?
+
+We could do that with stdin, if we treat it as a sequence of bytes instead of
+a sequence of strings.
+
+Another thing you can do with file names is list them in the output. For
+example, md5sum can take multiple files and list the md5sum of each by name.
+
+Maybe what we want is a way to provide an extra argument to the 'filesystem'
+component which is the list of files the program is allowed to access.
+
+---
+
+This is tricky. Let me break it down again into pieces:
+* Standard Byte and File library that we can use.
+  - reuse it for md5 and for images.
+* Filesystem support.
+
+For filesystem, the concern is about security. Specifically:
+* Instead of letting a program do whatever it wants to any files the user it
+  has access to, have the user specify what the program can do when the user
+  runs the program.
+
+There's another concern about format:
+* Is sequence of bytes the thing we want to use in fble? Couldn't we come up
+  with some better typed thing?
+
+If you think about it, filesystem is really about:
+* Having a way to persist storage across instances of a program.
+* Having a way to share data between different programs whose lifetimes don't
+  overlap.
+* As a corollary: being able to share data between different revisions of the
+  same program.
+
+For example:
+* I want to use inkscape to periodically edit a .png file.
+* I want to access that .png file from my program, across many versions of the
+  program.
+
+In general you'll want to be able to add and remove entries from this
+persistence/share store. We need some way to be able to identify items. Seems
+like a string of some sort. For content, we maybe want typed things. But
+serialization is tricky. May as well use a common type for everything.
+
+What I'm saying is, if you look at what a filesystem provides, it sort of may
+as well end up with the way we do filesystems on unix today in terms of
+hierarchical paths and files as sequences of bytes.
+
+The way bash command line expansions and completion works today, it's really
+only convenient to refer to files as raw paths. For example, it would be
+annoying as a user to adorn files with extra info to say if a program can read
+or write or do other things with them, because how would you apply that to a
+wildcard list of files or a directory of files?
+
+Things to think about:
+* How would I make the Byte standard library better than what we use for md5
+  today?
+* How would I add support for linux filesystem access as an fble library?
+* Is there anything creative I can do to give programs access to persistence
+  storage in fble in a way that's better than direct filesystem access?
+
+Filesystems, in a way, are like composing together different programs across
+time. Like, you compose together inkscape and multiple revisions of an fble
+png viewer with a .png file as part of the connection between them.
+
+As a contrast to filesystems, you could imagine a data structure that a
+program takes as input and returns as output. Think like Android apps. It
+could take a Maybe data structure as input and output a version of that at the
+end. The next time you run it, we arrange for it to get the output of the
+previous thing you ran.
+

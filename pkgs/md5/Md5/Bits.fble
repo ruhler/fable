@@ -1,10 +1,9 @@
 
 % Unit = /Core/Unit%.Unit;
 
+@ Bit@ = /Core/Digits%.Bit@;
 @ Hex@ = /Core/Digits%.Hex@;
 % 0 = /Core/Digits%.Hex.0;
-
-@ Bit@ = /Md5/Bits/BitN%.Bit@;
 
 <@>@ Bit2X@ = /Md5/Bits/Bit2XN%.Bit2X@;
 <@>% Bit2XN = /Md5/Bits/Bit2XN%.Bit2XN;

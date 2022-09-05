@@ -1,5 +1,7 @@
 * Why doesn't type inference work for Concat function?
 
+* Add test that you can use a unicode character in a literal?
+
 * Make it easier to run failing tests under valgrind and gdb.
 
 * Do something with .@ module value vs. type?
@@ -166,12 +168,6 @@
 * [typecheck] Figure out why FbleNormalType is called so often
  - See if we can fix that to reduce the now annoyingly long compile times.
  - Profiling said its all in FbleTypesEqual. Maybe something pathological?
-* [typecheck] Improve type error in case of this?
-  <@ T@>{ Maybe@<T@>; } Nothing = <@ T@> { Maybe@<T@>(nothing: Unit@()); };
-  True.?(true: Nothing<Bool@>, false: True);
-
-  We get: expected type <@ T@> { Maybe@<T@>; }<Bool@>
-  Should we instead get: expected type Maybe@<Bool@>? 
 
 * [profile] Check if it's okay to add new blocks to a profile in progress.
  - either way, document that clearly.

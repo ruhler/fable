@@ -1,0 +1,39 @@
+
+PNG spec is here: http://www.w3.org/TR/PNG
+
+Not worrying about files or filesystems or things like that, how should we
+represent a png file in fble?
+
+Brainstorm:
+* We should be able to faithfully represent how a png is encoded. For example,
+  be able to distinguish between different encodings, different compressions,
+  metadata, etc. in the png representation in fble.
+
+I'm thinking: sequence of bytes -> Png@ is a direct decoding process that
+captures full information. We could go Png@ -> sequence of bytes and have it
+basically be the same.
+
+Png@ -> raster image will be a separate step.
+
+Concepts:
+* Reference Image: 2D array of either rgb or argb channels, each channel is 1
+  to 16 bits.
+
+So maybe I want to distinguish between Png@ and reference image? But in this
+case, reference image can just be however I want to raster, with argb and at
+least 16 bits per channel?
+
+Really, Png@ is a compression format for images.
+
+Some prep work we may want to do:
+* Support for underlying compression algorithms.
+  - Deflate with sliding window stored in zlib format (RFC-1950, RFC-1951)
+* Support for CRC.
+  - ISO-3309 specifies the CRC algorithm.
+  - png spec specifies the polynomial and initial seed.
+  - See the wikipedia article.
+  - Linux cksum command calculates CRC? I'm not sure what polynomial it uses
+    though.
+   
+So maybe it's worth starting by implementing generic CRC and deflate
+compression?

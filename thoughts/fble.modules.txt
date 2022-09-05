@@ -2274,3 +2274,27 @@ I don't feel the need to really do separate packages yet. Also, there have
 been a lot of changes recently, so I might hold off on .fble.@ header files
 for a while, just to give things space to breath.
 
+---
+
+Question on how to organize packages now. We've gotten rid of processes, so
+things like the Stdio interface now use abstract monadic types. In practice we
+pass any builtin primitives required by a program via the wrapper function,
+e.g. fble-stdio or fble-app.
+
+There are two different approaches we could take here:
+1. The approach we use now. If you want access to some primitive builtin
+functions, they must be passed in from the top level.
+2. We provide builtin module implementations that provide primitive builtin
+functions, and require them to operate in some specific IO monad.
+
+Option (1) is very explicit about what the primitive builtin functions are,
+but it doesn't compose well. You would need a different top level wrapper
+function for every combination of primitives you want to use.
+
+Option (2) composes well in terms of letting you reuse a single top level
+wrapper function for any combination of primitives you want to use, but I
+worry it encourages people to work directly in an IO monad, and it would make
+it much harder to do things like smten or other different ways of running
+code, because you would have to reimplement all the builtins for different
+execution modes like that.
+
