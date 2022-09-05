@@ -1,0 +1,79 @@
+
+@ Bool@ = /Core/Bool%.Bool@;
+% And = /Core/Bool%.And;
+
+<@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
+<@>@ Overflow@ = /Md5/Bits/Bits%.Overflow@;
+
+
+<@ X@, @ Y@>(Bits@<X@> X, Bits@<Y@> Y) {
+
+  @ BitXY@ = *(X@ hi, Y@ lo);
+
+  (BitXY@) { BitXY@; } not = (BitXY@ a) {
+    BitXY@(X.not(a.hi), Y.not(a.lo));
+  };
+
+  (BitXY@, BitXY@) { BitXY@; } and = (BitXY@ a, BitXY@ b) {
+    BitXY@(X.and(a.hi, b.hi), Y.and(a.lo, b.lo));
+  };
+
+  (BitXY@, BitXY@) { BitXY@; } or = (BitXY@ a, BitXY@ b) {
+    BitXY@(X.or(a.hi, b.hi), Y.or(a.lo, b.lo));
+  };
+
+  (BitXY@, BitXY@) { BitXY@; } xor = (BitXY@ a, BitXY@ b) {
+    BitXY@(X.xor(a.hi, b.hi), Y.xor(a.lo, b.lo));
+  };
+
+  (BitXY@, BitXY@, /Md5/Bits/Bit1%.Bit1@) { Overflow@<BitXY@>; }
+  add_overflow = (BitXY@ a, BitXY@ b, /Md5/Bits/Bit1%.Bit1@ cin) {
+    Overflow@<Y@> rlo = Y.add_overflow(a.lo, b.lo, cin);
+    Overflow@<X@> rhi = X.add_overflow(a.hi, b.hi, rlo.out);
+    Overflow@(BitXY@(rhi.x, rlo.x), rhi.out);
+  };
+
+  (BitXY@, BitXY@) { BitXY@; } add = (BitXY@ a, BitXY@ b) {
+    add_overflow(a, b, /Md5/Bits/Bit1%.Bits.zero).x;
+  };
+
+  (BitXY@) { Overflow@<BitXY@>; } inc_overflow = (BitXY@ a) {
+    Overflow@<Y@> rlo = Y.inc_overflow(a.lo);
+    rlo.out.?(0: Overflow@(BitXY@(a.hi, rlo.x), /Md5/Bits/Bit1%.Bits.zero));
+
+    Overflow@<X@> rhi = X.inc_overflow(a.hi);
+    Overflow@(BitXY@(rhi.x, rlo.x), rhi.out);
+  };
+
+  (BitXY@) { BitXY@; } inc = (BitXY@ a) {
+    inc_overflow(a).x;
+  };
+
+  BitXY@ zero = BitXY@(X.zero, Y.zero);
+
+  (BitXY@) { Bool@; } iszero = (BitXY@ a) {
+    And(X.iszero(a.hi), Y.iszero(a.lo));
+  };
+
+  (BitXY@, BitXY@) { Bool@; } eq = (BitXY@ a, BitXY@ b) {
+    And(X.eq(a.hi, b.hi), Y.eq(a.lo, b.lo));
+  };
+
+  (BitXY@) { /Md5/Bits/Bit1%.Bit1@; } msb = (BitXY@ a) {
+    X.msb(a.hi);
+  };
+
+  (BitXY@, /Md5/Bits/Bit1%.Bit1@) { Overflow@<BitXY@>; }
+  lshift_overflow = (BitXY@ a, /Md5/Bits/Bit1%.Bit1@ cin) {
+    Overflow@<Y@> rlo = Y.lshift_overflow(a.lo, cin);
+    Overflow@<X@> rhi = X.lshift_overflow(a.hi, rlo.out);
+    Overflow@(BitXY@(rhi.x, rlo.x), rhi.out);
+  };
+
+  Bits@<BitXY@> Bits = Bits@<BitXY@>(
+    not, and, or, xor, add, inc, zero, iszero, eq, msb,
+    add_overflow, inc_overflow, lshift_overflow
+  );
+
+  @(BitXY@, Bits);
+};

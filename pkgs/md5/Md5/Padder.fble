@@ -1,6 +1,7 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 
+@ Bit@ = /Core/Digits%.Bit@;
 @ Hex@ = /Core/Digits%.Hex@;
 % Hex = /Core/Digits%.Hex;
 % 0 = Hex.0;
@@ -12,7 +13,6 @@
 @ Unit@ = /Core/Unit%.Unit@;
 % Unit = /Core/Unit%.Unit;
 
-@ Bit@ = /Md5/Bits%.Bit.Bit@;
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
 @ Bit16@ = /Md5/Bits%.Bit16.Bit16@;
 @ Bit32@ = /Md5/Bits%.Bit32.Bit32@;

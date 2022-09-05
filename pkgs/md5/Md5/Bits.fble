@@ -5,16 +5,18 @@
 @ Hex@ = /Core/Digits%.Hex@;
 % 0 = /Core/Digits%.Hex.0;
 
-<@>@ Bit2X@ = /Md5/Bits/Bit2XN%.Bit2X@;
-<@>% Bit2XN = /Md5/Bits/Bit2XN%.Bit2XN;
-
-% Bit = @(Bit@);
 % Bit1 = /Md5/Bits/Bit1%;
-% Bit2 = @(Bit2@: Bit2X@<Bit@>, Bits: Bit2XN<Bit@>(Bit1.Bits));
+
+% Bit2 = {
+  % BitXY = /Md5/Bits/BitXY%(Bit1.Bits, Bit1.Bits);
+  @(Bit2@: BitXY.BitXY@, Bits: BitXY.Bits);
+};
 
 % Bit4 = {
+  % BitXY = /Md5/Bits/BitXY%(Bit2.Bits, Bit2.Bits);
   @ Bit2@ = Bit2.Bit2@;
-  @ Bit4@ = Bit2X@<Bit2@>;
+  @ Bit4@ = BitXY.BitXY@;
+
   (Hex@){Bit4@;} H1 = (Hex@ x) {
     Bit@ 0 = Bit@(0: Unit);
     Bit@ 1 = Bit@(1: Unit);
@@ -35,13 +37,14 @@
         E: Bit4@(Bit2@(1, 1), Bit2@(1, 0)),
         F: Bit4@(Bit2@(1, 1), Bit2@(1, 1)));
   };
-  @(Bit4@, Bits: Bit2XN<Bit2@>(Bit2.Bits), H1);
+  @(Bit4@, Bits: BitXY.Bits, H1);
 };
 
 % Bit8 = {
-  @ Bit8@ = Bit2X@<Bit4.Bit4@>;
+  % BitXY = /Md5/Bits/BitXY%(Bit4.Bits, Bit4.Bits);
+  @ Bit8@ = BitXY.BitXY@;
 
-  (Hex@, Hex@){Bit8@;} H2 = (Hex@ hi, Hex@ lo) {
+  (Hex@, Hex@) { Bit8@; } H2 = (Hex@ hi, Hex@ lo) {
     Bit8@(Bit4.H1(hi), Bit4.H1(lo));
   };
 
@@ -49,11 +52,22 @@
     H2(0, x);
   };
 
-  @(Bit8@, Bits: Bit2XN<Bit4.Bit4@>(Bit4.Bits), H1, H2);
+  @(Bit8@, Bits: BitXY.Bits, H1, H2);
 };
 
-% Bit16 = @(Bit16@: Bit2X@<Bit8.Bit8@>, Bits: Bit2XN<Bit8.Bit8@>(Bit8.Bits));
-% Bit32 = @(Bit32@: Bit2X@<Bit16.Bit16@>, Bits: Bit2XN<Bit16.Bit16@>(Bit16.Bits));
-% Bit64 = @(Bit64@: Bit2X@<Bit32.Bit32@>, Bits: Bit2XN<Bit32.Bit32@>(Bit32.Bits));
+% Bit16 = {
+  % BitXY = /Md5/Bits/BitXY%(Bit8.Bits, Bit8.Bits);
+  @(Bit16@: BitXY.BitXY@, Bits: BitXY.Bits);
+};
+
+% Bit32 = {
+  % BitXY = /Md5/Bits/BitXY%(Bit16.Bits, Bit16.Bits);
+  @(Bit32@: BitXY.BitXY@, Bits: BitXY.Bits);
+};
+
+% Bit64 = {
+  % BitXY = /Md5/Bits/BitXY%(Bit32.Bits, Bit32.Bits);
+  @(Bit64@: BitXY.BitXY@, Bits: BitXY.Bits);
+};
   
-@(Bit, Bit1, Bit2, Bit4, Bit8, Bit16, Bit32, Bit64);
+@(Bit1, Bit2, Bit4, Bit8, Bit16, Bit32, Bit64);

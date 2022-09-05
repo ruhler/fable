@@ -1,4 +1,5 @@
 
+@ Bit@ = /Core/Digits%.Bit@;
 @ Hex@ = /Core/Digits%.Hex@;
 % Hex = /Core/Digits%.Hex;
 % 0 = Hex.0; % 1 = Hex.1; % 2 = Hex.2; % 3 = Hex.3;
@@ -19,7 +20,6 @@
 
 @ Hash@ = /Md5/Hash%.Hash@;
 
-@ Bit@ = /Md5/Bits%.Bit.Bit@;
 @ Bit2@ = /Md5/Bits%.Bit2.Bit2@;
 @ Bit4@ = /Md5/Bits%.Bit4.Bit4@;
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
