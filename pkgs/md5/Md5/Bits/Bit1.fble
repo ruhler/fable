@@ -5,12 +5,12 @@
 
 @ Bit@ = /Core/Digits%.Bit@;
 <@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
+<@>@ Overflow@ = /Md5/Bits/Bits%.Overflow@;
 
 Bit@ 0 = /Core/Digits%.Bit.0;
 Bit@ 1 = /Core/Digits%.Bit.1;
 
 @ Bit1@ = Bit@;
-@ Result@ = *(Bit@ z, Bit@ cout);
 
 (Bit1@) { Bit1@; } not = (Bit1@ a) {
   a.?(0: 1, 1: 0);
@@ -28,21 +28,22 @@ Bit@ 1 = /Core/Digits%.Bit.1;
   a.?(0: b, 1: not(b));
 };
 
-(Bit1@, Bit1@, Bit1@) { Result@; } fulladd = (Bit1@ a, Bit1@ b, Bit1@ c) {
+(Bit1@, Bit1@, Bit1@) { Overflow@<Bit1@>; }
+add_overflow = (Bit1@ a, Bit1@ b, Bit1@ c) {
   Bit1@ x = xor(a, b);
-  Result@(xor(x, c), x.?(0: a, 1: c));
+  Overflow@<Bit1@>(xor(x, c), x.?(0: a, 1: c));
 };
 
 (Bit1@, Bit1@) { Bit1@; } add = (Bit1@ a, Bit1@ b) {
-  fulladd(a, b, 0).z;
+  add_overflow(a, b, 0).x;
 };
 
-(Bit1@) { Result@; } fullinc = (Bit1@ a) {
-  Result@(not(a), a);
+(Bit1@) { Overflow@<Bit1@>; } inc_overflow = (Bit1@ a) {
+  Overflow@<Bit1@>(not(a), a);
 };
 
 (Bit1@) { Bit1@; } inc = (Bit1@ a) {
-  fullinc(a).z;
+  inc_overflow(a).x;
 };
 
 Bit1@ zero = 0;
@@ -60,17 +61,16 @@ Bit1@ zero = 0;
   a;
 };
 
-(Bit1@, Bit1@) { Result@; } lshift = (Bit1@ a, Bit@ cin) {
-  Result@(cin, a);
+(Bit1@, Bit1@) { Overflow@<Bit1@>; } lshift_overflow = (Bit1@ a, Bit@ cin) {
+  Overflow@<Bit1@>(cin, a);
 };
 
 Bits@<Bit1@> Bits = @(
-  Result@,
   not, and, or, xor,
   add, inc,
   zero, iszero, eq,
   msb,
-  fulladd, fullinc, lshift
+  add_overflow, inc_overflow, lshift_overflow
 );
 
 @(Bit1@, Bits);

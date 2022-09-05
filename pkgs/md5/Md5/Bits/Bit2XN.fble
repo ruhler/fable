@@ -3,12 +3,12 @@
 % And = /Core/Bool%.And;
 
 <@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
+<@>@ Overflow@ = /Md5/Bits/Bits%.Overflow@;
 
 <@>@ Bit2XT@ = <@ T@> { *(T@ hi, T@ lo); };
 
 @(Bit2X@: Bit2XT@, Bit2XN: <@ T@>(Bits@<T@> B) {
   @ Bit2X@ = Bit2XT@<T@>;
-  @ Result@ = *(Bit2X@ z, /Md5/Bits/Bit1%.Bit1@ cout);
 
   (Bit2X@){Bit2X@;} not = (Bit2X@ a) {
     Bit2X@(B.not(a.hi), B.not(a.lo));
@@ -26,28 +26,29 @@
     Bit2X@(B.xor(a.hi, b.hi), B.xor(a.lo, b.lo));
   };
 
-  (Bit2X@, Bit2X@, /Md5/Bits/Bit1%.Bit1@){Result@;} fulladd = (Bit2X@ a, Bit2X@ b, /Md5/Bits/Bit1%.Bit1@ cin) {
-      B.Result@ rlo = B.fulladd(a.lo, b.lo, cin);
-      B.Result@ rhi = B.fulladd(a.hi, b.hi, rlo.cout);
-      Result@(Bit2X@(rhi.z, rlo.z), rhi.cout);
+  (Bit2X@, Bit2X@, /Md5/Bits/Bit1%.Bit1@) { Overflow@<Bit2X@>; }
+  add_overflow = (Bit2X@ a, Bit2X@ b, /Md5/Bits/Bit1%.Bit1@ cin) {
+      Overflow@<T@> rlo = B.add_overflow(a.lo, b.lo, cin);
+      Overflow@<T@> rhi = B.add_overflow(a.hi, b.hi, rlo.out);
+      Overflow@(Bit2X@(rhi.x, rlo.x), rhi.out);
     };
 
   (Bit2X@, Bit2X@){Bit2X@;} add = (Bit2X@ a, Bit2X@ b) {
-    fulladd(a, b, /Md5/Bits/Bit1%.Bits.zero).z;
+    add_overflow(a, b, /Md5/Bits/Bit1%.Bits.zero).x;
   };
 
-  (Bit2X@){Result@;} fullinc = (Bit2X@ a) {
-      B.Result@ rlo = B.fullinc(a.lo);
-      rlo.cout.?(
-          0: Result@(Bit2X@(a.hi, rlo.z), /Md5/Bits/Bit1%.Bits.zero),
+  (Bit2X@) { Overflow@<Bit2X@>; } inc_overflow = (Bit2X@ a) {
+      Overflow@<T@> rlo = B.inc_overflow(a.lo);
+      rlo.out.?(
+          0: Overflow@(Bit2X@(a.hi, rlo.x), /Md5/Bits/Bit1%.Bits.zero),
           1: {
-              B.Result@ rhi = B.fullinc(a.hi);
-              Result@(Bit2X@(rhi.z, rlo.z), rhi.cout);
+              Overflow@<T@> rhi = B.inc_overflow(a.hi);
+              Overflow@(Bit2X@(rhi.x, rlo.x), rhi.out);
           });
     };
 
   (Bit2X@){Bit2X@;} inc = (Bit2X@ a) {
-    fullinc(a).z;
+    inc_overflow(a).x;
   };
 
   Bit2X@ zero = Bit2X@(B.zero, B.zero);
@@ -64,14 +65,15 @@
     B.msb(a.hi);
   };
 
-  (Bit2X@, /Md5/Bits/Bit1%.Bit1@){Result@;} lshift = (Bit2X@ a, /Md5/Bits/Bit1%.Bit1@ cin) {
-      B.Result@ rlo = B.lshift(a.lo, cin);
-      B.Result@ rhi = B.lshift(a.hi, rlo.cout);
-      Result@(Bit2X@(rhi.z, rlo.z), rhi.cout);
+  (Bit2X@, /Md5/Bits/Bit1%.Bit1@) { Overflow@<Bit2X@>; }
+  lshift_overflow = (Bit2X@ a, /Md5/Bits/Bit1%.Bit1@ cin) {
+      Overflow@<T@> rlo = B.lshift_overflow(a.lo, cin);
+      Overflow@<T@> rhi = B.lshift_overflow(a.hi, rlo.out);
+      Overflow@(Bit2X@(rhi.x, rlo.x), rhi.out);
     };
 
   Bits@<Bit2X@>(
-    Result@, not, and, or, xor, add, inc, zero, iszero, eq, msb,
-    fulladd, fullinc, lshift
+    not, and, or, xor, add, inc, zero, iszero, eq, msb,
+    add_overflow, inc_overflow, lshift_overflow
   );
 });

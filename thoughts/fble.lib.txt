@@ -182,9 +182,9 @@ How about this:
 We can reuse /Core/Digits%.Bit@ type for Bit1@.
 
 Summary of changes from what's currently implemented:
-* Rename BitN@ to Bits@.
+* Rename BitN@ to Bits@. (done)
 * Change Bit2X@ to BitXY@.
-* Rename Result@ to Overflow@. 
+* Rename Result@ to Overflow@. (done)
 * Clean up coding style with regards to braces.
 * Add literal support into Bits@ interface.
   Both binary and hex.
@@ -199,4 +199,10 @@ name of Result@ to T_@? Brainstorming: 'add_overflow', 'inc_overflow',
 Overflow@. 'add_ov', 'inc_ov', 'Ov@'.
 
 Let's just be explicit: add_overflow, inc_overflow, lshift_overflow.
+
+Ov@ is nice too? Then Ov@ = <@ T@> { *(T@ x, Bit@ ov); };
+
+Or, 'o', where 'o' could stand for overflow or out? Or...
+
+Overflow = <@ T@> { *(T@ x, Bit@ out); }?
 

@@ -2,12 +2,14 @@
 @ Bool@ = /Core/Bool%.Bool@;
 @ Bit@ = /Core/Digits%.Bit@;
 
+# Overflow@ --
+#   A result with overflow bit.
+<@>@ Overflow@ = <@ T@> { *(T@ x, Bit@ out); };
+
 # Bits@ --
 #   Interface for a fixed-width bit vector.
 <@>@ Bits@ = <@ T@> {
-  @ Result@ = *(T@ z, Bit@ cout);
   *(
-    @<Result@> Result@,
     (T@) { T@; } not,          # !a
     (T@, T@) { T@; } and,      # a & b
     (T@, T@) { T@; } or,       # a | b
@@ -18,10 +20,10 @@
     (T@) { Bool@; } iszero,    # a == 0
     (T@, T@) { Bool@; } eq,    # a == b
     (T@) { Bit@; } msb,        # most significant bit
-    (T@, T@, Bit@) { Result@; } fulladd,
-    (T@) { Result@; } fullinc,
-    (T@, Bit@) { Result@; } lshift # left shift by 1
+    (T@, T@, Bit@) { Overflow@<T@>; } add_overflow, # add with overflow
+    (T@) { Overflow@<T@>; } inc_overflow,           # inc with overflow
+    (T@, Bit@) { Overflow@<T@>; } lshift_overflow   # left shift by 1
   );
 };
 
-@(Bits@);
+@(Bits@, Overflow@);

@@ -32,7 +32,7 @@
 };
 
 (Bit64@) { Bit64@; } shl64 = (Bit64@ a) {
-  /Md5/Bits%.Bit64.Bits.lshift(a, Bit@(0: Unit)).z;
+  /Md5/Bits%.Bit64.Bits.lshift_overflow(a, Bit@(0: Unit)).x;
 };
 
 Bit64@ 3f_64 = H2_64(Hex.3, Hex.F);
