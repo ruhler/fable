@@ -2,9 +2,6 @@
 @ Bool@ = /Core/Bool%.Bool@;
 
 @ Bit@ = /Core/Digits%.Bit@;
-@ Hex@ = /Core/Digits%.Hex@;
-% Hex = /Core/Digits%.Hex;
-% 0 = Hex.0;
 
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
@@ -14,11 +11,10 @@
 % Unit = /Core/Unit%.Unit;
 
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
-@ Bit16@ = /Md5/Bits%.Bit16.Bit16@;
-@ Bit32@ = /Md5/Bits%.Bit32.Bit32@;
 @ Bit64@ = /Md5/Bits%.Bit64.Bit64@;
 
-% H2 = /Md5/Bits%.Bit8.H2;
+% H8 = /Md5/Bits%.Bit8.H8;
+% H64 = /Md5/Bits%.Bit64.H64;
 
 @ T@ = Bit8@;
 
@@ -26,17 +22,12 @@
   /Md5/Bits%.Bit64.Bits.inc(a);
 };
 
-(Hex@, Hex@) { Bit64@; } H2_64 = (Hex@ a, Hex@ b) {
-  Bit8@ 0b8 = H2(0, 0);
-  Bit64@(Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, 0b8)), Bit32@(Bit16@(0b8, 0b8), Bit16@(0b8, H2(a, b))));
-};
-
 (Bit64@) { Bit64@; } shl64 = (Bit64@ a) {
   /Md5/Bits%.Bit64.Bits.lshift_overflow(a, Bit@(0: Unit)).x;
 };
 
-Bit64@ 3f_64 = H2_64(Hex.3, Hex.F);
-Bit64@ 08_64 = H2_64(Hex.0, Hex.8);
+Bit64@ 3f_64 = H64|3F;
+Bit64@ 08_64 = H64|08;
 
 <<@>@ M@>(Monad@<M@> m, M@<Maybe@<T@>> get) {
   % Stream = /Md5/Stream%(m, get);
@@ -52,7 +43,7 @@ Bit64@ 08_64 = H2_64(Hex.0, Hex.8);
         /Md5/Bits%.Bit64.Bits.add(08_64, length)));
 
     end.?(false: {
-      Unit@ _ <- Put(H2(0, 0));
+      Unit@ _ <- Put(H8|0);
       PadZ(msglen, Inc64(length));
     });
 
@@ -72,7 +63,7 @@ Bit64@ 08_64 = H2_64(Hex.0, Hex.8);
   (Bit64@) { M@<Stream@>; } Pad = (Bit64@ length) {
     Maybe@<Bit8@> x <- m.do(get);
     x.?(nothing: {
-      Unit@ _ <- Put(H2(Hex.8, Hex.0));
+      Unit@ _ <- Put(H8|80);
       PadZ(length, Inc64(length));
     });
 

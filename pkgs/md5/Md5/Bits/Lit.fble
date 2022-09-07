@@ -1,0 +1,32 @@
+
+@ Bit@ = /Core/Digits%.Bit@;
+@ Hex@ = /Core/Digits%.Hex@;
+
+% HexToBits = /Core/Digits/String%.HexToBits;
+
+<@>@ List@ = /Core/List%.List@;
+
+<@>@ Bits@ = /Md5/Bits/Bits%.Bits@;
+
+<@ T@>(Bits@<T@> T) {
+  # B_helper --
+  #   Helper function for binary literals.
+  (T@, List@<Bit@>) { T@; } B_helper = (T@ t, List@<Bit@> bs) {
+    bs.?(nil: t);
+    B_helper(T.lshift_overflow(t, bs.cons.head).x, bs.cons.tail);
+  };
+
+  # B --
+  #   Create a bit vector from a binary literal.
+  (List@<Bit@>) { T@; } B = (List@<Bit@> bs) {
+    B_helper(T.zero, bs);
+  };
+
+  # H --
+  #   Create a bit vector from a hex literal.
+  (List@<Hex@>) { T@; } H = (List@<Hex@> hs) {
+    B(HexToBits(hs));
+  };
+
+  @(B, H);
+};

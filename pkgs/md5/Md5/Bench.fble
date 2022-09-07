@@ -1,6 +1,4 @@
 
-% Hex = /Core/Digits%.Hex;
-
 @ Int@ = /Core/Int%.Int@;
 % Sub = /Core/Int%.Sub;
 % Int = /Core/Int/Lit%.Int;
@@ -20,7 +18,7 @@
 @ Unit@ = /Core/Unit%.Unit@;
 
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
-% H2 = /Md5/Bits%.Bit8.H2;
+% H8 = /Md5/Bits%.Bit8.H8;
 
 <<@>@>% Md5 = /Md5/Md5%.Md5;
 @ Hash@ = /Md5/Hash%.Hash@;
@@ -37,7 +35,7 @@ M@<Maybe@<Bit8@>> Get = {
   Int@ n <- Monad.do(State.Get);
   n.?(0: Monad.return(Nothing<Bit8@>));
   Unit@ _ <- Monad.do(State.Set(Sub(n, 1)));
-  Monad.return(Just(H2(Hex.A, Hex.5)));
+  Monad.return(Just(H8|A5));
 };
     
 # Benchmark for md5 sum that takes about 1 minute to run.

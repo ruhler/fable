@@ -1,6 +1,6 @@
 
 @ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
-% H2 = /Md5/Bits%.Bit8.H2;
+% H8 = /Md5/Bits%.Bit8.H8;
 
 @ Hex@ = /Core/Digits%.Hex@;
 % HexStr = /Core/Digits/String%.HexStr;
@@ -97,7 +97,7 @@ M@<Maybe@<Bit8@>> Get = {
 (List@<Hex@>) { List@<Bit8@>; } Hex2Bytes = (List@<Hex@> hex) {
   hex.?(
     cons: Cons<Bit8@>(
-      H2(hex.cons.head, hex.cons.tail.cons.head),
+      H8[hex.cons.head, hex.cons.tail.cons.head],
       Hex2Bytes(hex.cons.tail.cons.tail)),
     nil: Nil<Bit8@>);
 };

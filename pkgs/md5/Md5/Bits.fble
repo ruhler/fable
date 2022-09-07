@@ -1,10 +1,4 @@
 
-% Unit = /Core/Unit%.Unit;
-
-@ Bit@ = /Core/Digits%.Bit@;
-@ Hex@ = /Core/Digits%.Hex@;
-% 0 = /Core/Digits%.Hex.0;
-
 % Bit1 = /Md5/Bits/Bit1%;
 
 % Bit2 = {
@@ -14,45 +8,24 @@
 
 % Bit4 = {
   % BitXY = /Md5/Bits/BitXY%(Bit2.Bits, Bit2.Bits);
-  @ Bit2@ = Bit2.Bit2@;
   @ Bit4@ = BitXY.BitXY@;
 
-  (Hex@){Bit4@;} H1 = (Hex@ x) {
-    Bit@ 0 = Bit@(0: Unit);
-    Bit@ 1 = Bit@(1: Unit);
-    x.?(0: Bit4@(Bit2@(0, 0), Bit2@(0, 0)),
-        1: Bit4@(Bit2@(0, 0), Bit2@(0, 1)),
-        2: Bit4@(Bit2@(0, 0), Bit2@(1, 0)),
-        3: Bit4@(Bit2@(0, 0), Bit2@(1, 1)),
-        4: Bit4@(Bit2@(0, 1), Bit2@(0, 0)),
-        5: Bit4@(Bit2@(0, 1), Bit2@(0, 1)),
-        6: Bit4@(Bit2@(0, 1), Bit2@(1, 0)),
-        7: Bit4@(Bit2@(0, 1), Bit2@(1, 1)),
-        8: Bit4@(Bit2@(1, 0), Bit2@(0, 0)),
-        9: Bit4@(Bit2@(1, 0), Bit2@(0, 1)),
-        A: Bit4@(Bit2@(1, 0), Bit2@(1, 0)),
-        B: Bit4@(Bit2@(1, 0), Bit2@(1, 1)),
-        C: Bit4@(Bit2@(1, 1), Bit2@(0, 0)),
-        D: Bit4@(Bit2@(1, 1), Bit2@(0, 1)),
-        E: Bit4@(Bit2@(1, 1), Bit2@(1, 0)),
-        F: Bit4@(Bit2@(1, 1), Bit2@(1, 1)));
-  };
-  @(Bit4@, Bits: BitXY.Bits, H1);
+  % Lit = /Md5/Bits/Lit%(BitXY.Bits);
+  % B4 = Lit.B;
+  % H4 = Lit.H;
+
+  @(Bit4@, Bits: BitXY.Bits, B4, H4);
 };
 
 % Bit8 = {
   % BitXY = /Md5/Bits/BitXY%(Bit4.Bits, Bit4.Bits);
   @ Bit8@ = BitXY.BitXY@;
 
-  (Hex@, Hex@) { Bit8@; } H2 = (Hex@ hi, Hex@ lo) {
-    Bit8@(Bit4.H1(hi), Bit4.H1(lo));
-  };
+  % Lit = /Md5/Bits/Lit%(BitXY.Bits);
+  % B8 = Lit.B;
+  % H8 = Lit.H;
 
-  (Hex@){Bit8@;} H1 = (Hex@ x) {
-    H2(0, x);
-  };
-
-  @(Bit8@, Bits: BitXY.Bits, H1, H2);
+  @(Bit8@, Bits: BitXY.Bits, B8, H8);
 };
 
 % Bit16 = {
@@ -62,12 +35,22 @@
 
 % Bit32 = {
   % BitXY = /Md5/Bits/BitXY%(Bit16.Bits, Bit16.Bits);
-  @(Bit32@: BitXY.BitXY@, Bits: BitXY.Bits);
+
+  % Lit = /Md5/Bits/Lit%(BitXY.Bits);
+  % B32 = Lit.B;
+  % H32 = Lit.H;
+
+  @(Bit32@: BitXY.BitXY@, Bits: BitXY.Bits, B32, H32);
 };
 
 % Bit64 = {
   % BitXY = /Md5/Bits/BitXY%(Bit32.Bits, Bit32.Bits);
-  @(Bit64@: BitXY.BitXY@, Bits: BitXY.Bits);
+
+  % Lit = /Md5/Bits/Lit%(BitXY.Bits);
+  % B64 = Lit.B;
+  % H64 = Lit.H;
+
+  @(Bit64@: BitXY.BitXY@, Bits: BitXY.Bits, B64, H64);
 };
   
 @(Bit1, Bit2, Bit4, Bit8, Bit16, Bit32, Bit64);

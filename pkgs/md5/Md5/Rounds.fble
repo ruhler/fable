@@ -7,8 +7,6 @@
 % 8 = Hex.8; % 9 = Hex.9; % A = Hex.A; % B = Hex.B;
 % C = Hex.C; % D = Hex.D; % E = Hex.E;
 
-<@>@ List@ = /Core/List%.List@;
-
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 <@>% Just = /Core/Maybe%.Just;
 <@>% Nothing = /Core/Maybe%.Nothing;
@@ -26,26 +24,13 @@
 @ Bit16@ = /Md5/Bits%.Bit16.Bit16@;
 @ Bit32@ = /Md5/Bits%.Bit32.Bit32@;
 
-% H2 = /Md5/Bits%.Bit8.H2;
+% H32 = /Md5/Bits%.Bit32.H32;
 
 % and = /Md5/Bits%.Bit32.Bits.and;
 % or = /Md5/Bits%.Bit32.Bits.or;
 % not = /Md5/Bits%.Bit32.Bits.not;
 % xor = /Md5/Bits%.Bit32.Bits.xor;
 % add = /Md5/Bits%.Bit32.Bits.add;
-
-# Construct a Bit32 in hex, with high-order byte first.
-(List@<Hex@>) { Bit32@; } H8 = (List@<Hex@> s) {
-  Hex@ 7 = s.cons.head;
-  Hex@ 6 = s.cons.tail.cons.head;
-  Hex@ 5 = s.cons.tail.cons.tail.cons.head;
-  Hex@ 4 = s.cons.tail.cons.tail.cons.tail.cons.head;
-  Hex@ 3 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-  Hex@ 2 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-  Hex@ 1 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-  Hex@ 0 = s.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.tail.cons.head;
-  Bit32@(Bit16@(H2(7, 6), H2(5, 4)), Bit16@(H2(3, 2), H2(1, 0)));
-};
 
 @ Block@ = *(
   Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,
@@ -54,42 +39,42 @@
   Bit32@ 12, Bit32@ 13, Bit32@ 14, Bit32@ 15);
 
 Block@ T1 = Block@(
-  H8|D76AA478, H8|E8C7B756, H8|242070DB, H8|C1BDCEEE,
-  H8|F57C0FAF, H8|4787C62A, H8|A8304613, H8|FD469501,
-  H8|698098D8, H8|8B44F7AF, H8|FFFF5BB1, H8|895CD7BE,
-  H8|6B901122, H8|FD987193, H8|A679438E, H8|49B40821
+  H32|D76AA478, H32|E8C7B756, H32|242070DB, H32|C1BDCEEE,
+  H32|F57C0FAF, H32|4787C62A, H32|A8304613, H32|FD469501,
+  H32|698098D8, H32|8B44F7AF, H32|FFFF5BB1, H32|895CD7BE,
+  H32|6B901122, H32|FD987193, H32|A679438E, H32|49B40821
 );
 
 Block@ T2 = Block@(
-  H8|F61E2562, H8|C040B340, H8|265E5A51, H8|E9B6C7AA,
-  H8|D62F105D, H8|02441453, H8|D8A1E681, H8|E7D3FBC8,
-  H8|21E1CDE6, H8|C33707D6, H8|F4D50D87, H8|455A14ED,
-  H8|A9E3E905, H8|FCEFA3F8, H8|676F02D9, H8|8D2A4C8A
+  H32|F61E2562, H32|C040B340, H32|265E5A51, H32|E9B6C7AA,
+  H32|D62F105D, H32|02441453, H32|D8A1E681, H32|E7D3FBC8,
+  H32|21E1CDE6, H32|C33707D6, H32|F4D50D87, H32|455A14ED,
+  H32|A9E3E905, H32|FCEFA3F8, H32|676F02D9, H32|8D2A4C8A
 );
 
 Block@ T3 = Block@(
-  H8|FFFA3942, H8|8771F681, H8|6D9D6122, H8|FDE5380C,
-  H8|A4BEEA44, H8|4BDECFA9, H8|F6BB4B60, H8|BEBFBC70,
-  H8|289B7EC6, H8|EAA127FA, H8|D4EF3085, H8|04881D05,
-  H8|D9D4D039, H8|E6DB99E5, H8|1FA27CF8, H8|C4AC5665
+  H32|FFFA3942, H32|8771F681, H32|6D9D6122, H32|FDE5380C,
+  H32|A4BEEA44, H32|4BDECFA9, H32|F6BB4B60, H32|BEBFBC70,
+  H32|289B7EC6, H32|EAA127FA, H32|D4EF3085, H32|04881D05,
+  H32|D9D4D039, H32|E6DB99E5, H32|1FA27CF8, H32|C4AC5665
 );
 
 Block@ T4 = Block@(
-  H8|F4292244, H8|432AFF97, H8|AB9423A7, H8|FC93A039,
-  H8|655B59C3, H8|8F0CCC92, H8|FFEFF47D, H8|85845DD1,
-  H8|6FA87E4F, H8|FE2CE6E0, H8|A3014314, H8|4E0811A1,
-  H8|F7537E82, H8|BD3AF235, H8|2AD7D2BB, H8|EB86D391
+  H32|F4292244, H32|432AFF97, H32|AB9423A7, H32|FC93A039,
+  H32|655B59C3, H32|8F0CCC92, H32|FFEFF47D, H32|85845DD1,
+  H32|6FA87E4F, H32|FE2CE6E0, H32|A3014314, H32|4E0811A1,
+  H32|F7537E82, H32|BD3AF235, H32|2AD7D2BB, H32|EB86D391
 );
 
 @ ABCD@ = *(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d);
 
 ABCD@ ABCD0 = ABCD@(
-  # Note: the spec lists these low-order byte first, but H8 takes high
+  # Note: the spec lists these low-order byte first, but H32 takes high
   # order byte first.
-  H8|67452301,
-  H8|EFCDAB89,
-  H8|98BADCFE,
-  H8|10325476);
+  H32|67452301,
+  H32|EFCDAB89,
+  H32|98BADCFE,
+  H32|10325476);
 
 (Bit@, Bit@, Bit@, Bit@) { Hex@; }
 HexFromBits = (Bit@ b3, Bit@ b2, Bit@ b1, Bit@ b0) {
