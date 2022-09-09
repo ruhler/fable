@@ -71,5 +71,5 @@ Bit64@ 08_64 = H64|08;
     Pad(Inc64(length));
   };
 
-  @(Pad: Pad(/Md5/Bits%.Bit64.Bits.zero));
+  @(Pad: Pad(/Md5/Bits%.Bit64.Bits.0));
 };

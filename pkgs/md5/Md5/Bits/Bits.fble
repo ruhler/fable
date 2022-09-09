@@ -16,7 +16,7 @@
     (T@, T@) { T@; } xor,      # a ^ b
     (T@, T@) { T@; } add,      # a + b
     (T@) { T@; } inc,          # a++
-    T@ zero,                   # 0
+    T@ 0,                      # 0
     (T@) { Bool@; } iszero,    # a == 0
     (T@, T@) { Bool@; } eq,    # a == b
     (T@) { Bit@; } msb,        # most significant bit

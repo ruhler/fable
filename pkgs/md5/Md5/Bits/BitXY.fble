@@ -34,12 +34,12 @@
   };
 
   (BitXY@, BitXY@) { BitXY@; } add = (BitXY@ a, BitXY@ b) {
-    add_overflow(a, b, /Md5/Bits/Bit1%.Bits.zero).x;
+    add_overflow(a, b, /Md5/Bits/Bit1%.Bits.0).x;
   };
 
   (BitXY@) { Overflow@<BitXY@>; } inc_overflow = (BitXY@ a) {
     Overflow@<Y@> rlo = Y.inc_overflow(a.lo);
-    rlo.out.?(0: Overflow@(BitXY@(a.hi, rlo.x), /Md5/Bits/Bit1%.Bits.zero));
+    rlo.out.?(0: Overflow@(BitXY@(a.hi, rlo.x), /Md5/Bits/Bit1%.Bits.0));
 
     Overflow@<X@> rhi = X.inc_overflow(a.hi);
     Overflow@(BitXY@(rhi.x, rlo.x), rhi.out);
@@ -49,7 +49,7 @@
     inc_overflow(a).x;
   };
 
-  BitXY@ zero = BitXY@(X.zero, Y.zero);
+  BitXY@ 0 = BitXY@(X.0, Y.0);
 
   (BitXY@) { Bool@; } iszero = (BitXY@ a) {
     And(X.iszero(a.hi), Y.iszero(a.lo));
@@ -71,7 +71,7 @@
   };
 
   Bits@<BitXY@> Bits = Bits@<BitXY@>(
-    not, and, or, xor, add, inc, zero, iszero, eq, msb,
+    not, and, or, xor, add, inc, 0, iszero, eq, msb,
     add_overflow, inc_overflow, lshift_overflow
   );
 

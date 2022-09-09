@@ -46,8 +46,6 @@ add_overflow = (Bit1@ a, Bit1@ b, Bit1@ c) {
   inc_overflow(a).x;
 };
 
-Bit1@ zero = 0;
-
 (Bit1@) { Bool@; } iszero = (Bit1@ a) {
   a.?(0: True, 1: False);
 };
@@ -68,7 +66,7 @@ Bit1@ zero = 0;
 Bits@<Bit1@> Bits = @(
   not, and, or, xor,
   add, inc,
-  zero, iszero, eq,
+  0, iszero, eq,
   msb,
   add_overflow, inc_overflow, lshift_overflow
 );

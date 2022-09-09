@@ -19,7 +19,7 @@
   # B --
   #   Create a bit vector from a binary literal.
   (List@<Bit@>) { T@; } B = (List@<Bit@> bs) {
-    B_helper(T.zero, bs);
+    B_helper(T.0, bs);
   };
 
   # H --

@@ -186,7 +186,7 @@ Summary of changes from what's currently implemented:
 * Change Bit2X@ to BitXY@. (done)
 * Rename Result@ to Overflow@. (done)
 * Clean up coding style with regards to braces. (done)
-* Rename 'zero' to '0'?
+* Rename 'zero' to '0'? (done)
 * Move from Md5 package to Core package.
 
 Let's see if I can make some of these improvements incrementally.
