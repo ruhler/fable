@@ -3,7 +3,7 @@
 
 <@>@ IO@ = /Core/Monad/IO%.IO@;
 
-@ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
+@ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
 @ Hash@ = /Md5/Hash%.Hash@;
 
 # Main --

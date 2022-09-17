@@ -1,0 +1,8 @@
+% BitXY = /Md5/Bits/BitXY%(/Md5/Bits/Bit4%.Bits, /Md5/Bits/Bit4%.Bits);
+@ Bit8@ = BitXY.BitXY@;
+
+% Lit = /Md5/Bits/Lit%(BitXY.Bits);
+% B8 = Lit.B;
+% H8 = Lit.H;
+
+@(Bit8@, Bits: BitXY.Bits, B8, H8);

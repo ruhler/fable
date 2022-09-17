@@ -1,0 +1,279 @@
+Bytes
+-----
+We use bytes for md5. We want it for crc, compress, files, png, etc.
+
+So I want to do some cleanup of the interface for bits.
+
+Thoughts:
+* Support arbitrary bit lengths in a standard way.
+* Have the type be different from comparison operators. So don't distinguish
+  between signed and unsigned. The type is the same regardless.
+
+So, generically, a BitN has the following interface:
+  NOT, AND, OR, XOR, ADD, INC, ZERO,
+  ISZERO, EQUALS, MSB, 
+  FULLADD, FULLINC, SHIFTL.
+
+Because that's what we have today. But also the type: T@ and T@ with overflow.
+
+Some bits we'll want to also support literals, like binary and hex. Some maybe
+worth supporting that for all kinds of bit literals.
+
+How literals should work:
+* If too few digits, assume most significant bits are 0.
+* If too many digits, truncate.
+  So, for example, if you specify 0x123 on a byte, that turns into 0x23?
+  Or do we have to worry about signed vs unsigned in that case?
+
+  Or, consider it an error. I guess we could do either way.
+
+I want an abstract interface BitN@<T@>, where T@ is the bit type.
+I'll want a type name too. So, like, Bit8@. That doesn't make sense to include
+in the abstract interface.
+
+How do we want the implementation structured? I think
+  2 = 1+1
+  4 = 2+2
+  8 = 4+4
+
+As opposed, to, for example: 8 = 1+1+1+1+1+1+1+1.
+
+More generally, Z = X+Y.
+
+So we'll want a module for Bit1 that provides Bit1@ and an instance of
+BitN@<Bit1@>.
+
+And a module for Bit8 that provides Bit8@ and an instance of BitN@<Bit8@>.
+And a module for Bit_X_plus_Y that provides T@ and an instance of BitN@<T@>,
+given two instances for BitN@.
+
+Should Bit8 be a separate module, or should we have one module, like today,
+that defines Bit8, Bit16, Bit32, Bit64, etc.?
+
+What names would we use?
+
+Bit8.Bit8@, Bit8.BitN
+
+I guess I'm suggesting we do that. Each module defines a pair of entities: the
+type and the instance of BitN@ for that type.
+
+Then we could have a single top level module that defines Bit8, Bit16, etc.
+
+Proposed module hierarchy:
+
+/Core/BitN/BitN%
+  Definition of BitN@ interface.
+/Core/BitN%
+
+Hmm... Maybe use Bits@ instead of BitN@?
+
+/Core/Bits/Bits% - Definition of Bits@ interface.
+/Core/Bits/Bit1% - Implementation of Bits@ for Bit1@.
+/Core/Bits/BitXY% - Implementation of Bits@ for BitX@ + BitY@.
+/Core/Bits/Bit8% - Implementation of Bits@ for Bit8@.
+/Core/Bits/Bit16% - Implementation of Bits@ for Bit16@.
+/Core/Bits/Bit32% - Implementation of Bits@ for Bit32@.
+
+etc..
+
+If people want to use, for example, Bit4%, they should just redefine it
+themselves, even though it's defined and used in the implementation of Bit8@?
+
+The option is to have
+/Core/Bits/BitN% - That defines Bit1, Bit2, Bit4, Bit8, Bit16, Bit32, and Bit64?
+
+No. I would prefer to import /Core/Bits/Bit8%. Or, perhaps /Core/Bits%.Bit8?
+
+How about this:
+  /Core/Bits/Bits% - @(Bits@)
+  /Core/Bits/Bit1% - @(Bit1@, Bits)
+  /Core/Bits/BitXY% - <@ X@, @ Y@>(Bits@<X@>, Bits@<Y@>) { @(BitXY@, Bits); }
+  /Core/Bits%% - @(Bit1, Bit2, Bit4, Bit8, Bit16, Bit32, Bit64)
+
+We can reuse /Core/Digits%.Bit@ type for Bit1@.
+
+Summary of changes from what's currently implemented:
+* Rename BitN@ to Bits@. (done)
+* Change Bit2X@ to BitXY@. (done)
+* Rename Result@ to Overflow@. (done)
+* Clean up coding style with regards to braces. (done)
+* Rename 'zero' to '0'? (done)
+* Move from Md5 package to Core package.
+
+Let's see if I can make some of these improvements incrementally.
+
+Can we come up with a nicer convention for 'with overflow' naming? Like,
+instead of 'add', add with overflow is 'add_o', or 'add_'? Then we can change
+name of Result@ to T_@? Brainstorming: 'add_overflow', 'inc_overflow',
+Overflow@. 'add_ov', 'inc_ov', 'Ov@'.
+
+Let's just be explicit: add_overflow, inc_overflow, lshift_overflow.
+
+Ov@ is nice too? Then Ov@ = <@ T@> { *(T@ x, Bit@ ov); };
+
+Or, 'o', where 'o' could stand for overflow or out? Or...
+
+Overflow = <@ T@> { *(T@ x, Bit@ out); }?
+
+---
+
+The real concern I have with the bits API is the distinction between
+'primitive' functions that are part of the Bits interface and other functions
+implemented on top of those that either could be included in the interface or
+not.
+
+With normal functions it's nice because anyone can add a function. Not anyone
+can add a function to the Bits interface. So, as we scale, I would expect most
+of utilities for working with bits to be outside of the Bits interface,
+right? That suggests keeping Bits as small as possible?
+
+Note: we can always copy functions from bits to top level for a particular
+type, and we can always create more parameterized variations on Bits. From
+that point of view, seems like this isn't really so important an issue to
+worry about?
+
+---
+
+A flash of insight tells me the Bits interface should be an internal
+implementation detail. I should start by making the BitXY@ type abstract, move
+circular left shift to the library, then export all the top level named
+functions you would want to use with bits rather than export the Bits
+interface. After that, I can move /Bits% to core and add test cases.
+
+Double checking the places where hi/lo fields are accessed:
+* HexFromBits, HexFromBit4, HexFromByte, HexFromABCD
+  - General conversion of bits to list of hex digits.
+* cls
+  - Circular shift left by N.
+  - I guess this would normally be something like:
+      (x << N) | (x >> (32 - N))
+  - I should have shift left and shift right functions that take an Int@ as
+    the amount to shift by.
+* Pad, which outputs one byte of a 64 bit word at a time
+  - I guess this would normally be something like:
+      Truncate(x >> 8)
+
+It would be nice if we could do a bit slicing operation. Treat bits as an
+array of bits and get a substring. I feel like that would be a much simpler
+implementation too, because we can use the same underlying type (list of bits)
+for all bit types, instead of having to define a bunch of different types
+using polymorphism.
+
+The benefit of packing bits into a struct is in theory you can put 32 bits
+into 32 bits, instead of need, say, 64 bits to represent 32 bits.
+
+In C code, to convert to hex, I would just do shift, truncate, and then
+arithmetic or index into an array. I guess the closest thing in fble would be
+to use a map instead of an array, support shift and truncate. But how do we
+support truncate? There are some many combinations of source and destination
+types. Unless we assume that, for example, bit 64 is implemented is a
+combination of bit 8 somewhere inside, so we can truncate. Maybe truncate in
+half? But that's just 'hi' and 'lo' field access?
+
+Another option could be a function to get the 'ith' bit.
+
+Easiest is just to convert to a list of bits, then convert that list of bits
+to a list of hex.
+
+---
+
+Extracting sub bits is expensive. That's natural. I can't do arbitrary array
+access. Imagine you have a trillion bit string and want 7 bits starting at
+5223413. You aren't going to be able to do that in constant time.
+
+How we organize bits matters. If you want the low 4 bits from a Bit8, and we
+organize Bit8 as 4+4, it's fundamentally more efficient than organizing Bit8
+as 5+3.
+
+The most natural representation of Bit8 as the sum of two sizes is 4+4. I
+think it's fair to let users know and take advantage of Bit8 as 4+4.
+
+That's extra knowledge you can't easily encode in BitXY. But you could in
+Bit2X like we had before.
+
+I still think Bits should be more of an internal helper thing or used in rare
+cases. Each BitN you define should have a top level interface of function.
+That allows us to do functions specific to a type. For example, L4, L8, etc.
+
+I almost wonder, for the whole polymorphism thing, if it isn't better to just
+go piecemeal. Polymorphic add takes the sub add function. Polymorphic shift
+takes the sub shift function, etc. That way you avoid bundling things
+together into a closed set. People can add new polymorphic functions tailored
+to exactly what they need.
+
+In summary:
+* Use top level functions when interacting with BitN types.
+* Explicitly construct bit types using power of two.
+* Define "least_significant_8" function to extract bytes from larger types.
+  Etc. 
+* We really ought to support general shift left and shift right.
+* I do think BitN types are suitable for use as abstract types.
+  - Then we could easily try out switching to list or other representations.
+  - Just allow users to assume the functions we provide, e.g. ls8, are
+    reasonably efficient to implement.
+
+How to do shift in general? I mean, shift by N?
+
+Let's take a Bit32. The most it makes sense to shift left or right by is 32
+bits. So, what type do you use to represent that number <= 32?
+
+Brainstorm:
+* Bit32. It's a type we have. We ignore all the high bits. That's like what
+  happens in C and other languages. I guess we could ignore the high bits, or
+  see if they are non-zero or not.
+* Bit5. Accurately captures what the range is, though you couldn't shift by 32
+  in this case. But how do users create the Bit5? If it's always just by
+  truncation, maybe that's not great?
+* Bit8. As the closest power of 2 to Bit5. Let's people shift by 32,
+  presumably more general support. But also a bit of a step function.
+* Int. As a general integral type to shift by. Though this adds a dependency
+  on Int for shifting, which maybe it would be nice to avoid.
+
+The kind of shifting I would want to do so far:
+* shift by 8, or 4, to extract segments of a larger number.
+* shift by up to 24 in md5 circular shift code.
+
+Is there anything that would be convenient for implementing shift by
+composition? I like thinking of the shift as a sum of powers of 2. Then we can
+implement it with a barrel shifter approach: shift by 4 yes/no, shift by 2
+yes/no, shift by 1 yes/no.
+
+I suppose we could implement it as a series of fixed shifts:
+   shl1, shl2, shl4, shl8, ...
+
+We can optimize each of those, and we could write wrappers on top for things
+like Int or larger Bit.
+
+One benefit of having constant shift values is we can easily represent the
+bits shifted in or out, to chain things together composition wise.
+
+For example, take a byte.
+
+shl8: x = in, output x
+shl4: hi = lo, lo = in, output hi
+shl2: ...
+
+In general, shlN:
+  BitN tmp = shlN(lo, in);
+  shlN(hi, tmp)
+
+Which is really simple to implement. We could implement it polymorphically. I
+like this idea. I think it's at least worth trying out.
+
+Okay. Plan? Steps?
+
+Steps are:
+* Implement shlN and shrN for the bit types.
+* Reimplement circular shift in Md5 using shlN and shrN.
+* Move BitN type definitions to separate modules. Done.
+* Export top level functions for the bits types.
+* Switch to using top level functions for the bits types.
+* Implement LowN functions, at least Low8 and Low4 to extract bytes and Bit4.
+* Implement conversion from Bit4 to hex digit.
+* Implement general conversion from BitN to hex string using shift and Bit4
+  extraction.
+* Get rid of Bits type, replace with individual polymorphic functions.
+* Turn bits types into abstract types.
+
+Let's do one step at a time, in whatever order is easiest, and see where we
+end up.

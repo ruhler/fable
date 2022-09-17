@@ -17,8 +17,8 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
-@ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
-% H8 = /Md5/Bits%.Bit8.H8;
+@ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
+% H8 = /Md5/Bits/Bit8%.H8;
 
 <<@>@>% Md5 = /Md5/Md5%.Md5;
 @ Hash@ = /Md5/Hash%.Hash@;

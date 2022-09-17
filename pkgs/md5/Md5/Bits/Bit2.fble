@@ -1,0 +1,5 @@
+
+% BitXY = /Md5/Bits/BitXY%(/Md5/Bits/Bit1%.Bits, /Md5/Bits/Bit1%.Bits);
+
+@(Bit2@: BitXY.BitXY@, Bits: BitXY.Bits);
+

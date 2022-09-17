@@ -18,19 +18,19 @@
 
 @ Hash@ = /Md5/Hash%.Hash@;
 
-@ Bit2@ = /Md5/Bits%.Bit2.Bit2@;
-@ Bit4@ = /Md5/Bits%.Bit4.Bit4@;
-@ Bit8@ = /Md5/Bits%.Bit8.Bit8@;
-@ Bit16@ = /Md5/Bits%.Bit16.Bit16@;
-@ Bit32@ = /Md5/Bits%.Bit32.Bit32@;
+@ Bit2@ = /Md5/Bits/Bit2%.Bit2@;
+@ Bit4@ = /Md5/Bits/Bit4%.Bit4@;
+@ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
+@ Bit16@ = /Md5/Bits/Bit16%.Bit16@;
+@ Bit32@ = /Md5/Bits/Bit32%.Bit32@;
 
-% H32 = /Md5/Bits%.Bit32.H32;
+% H32 = /Md5/Bits/Bit32%.H32;
 
-% and = /Md5/Bits%.Bit32.Bits.and;
-% or = /Md5/Bits%.Bit32.Bits.or;
-% not = /Md5/Bits%.Bit32.Bits.not;
-% xor = /Md5/Bits%.Bit32.Bits.xor;
-% add = /Md5/Bits%.Bit32.Bits.add;
+% and = /Md5/Bits/Bit32%.Bits.and;
+% or = /Md5/Bits/Bit32%.Bits.or;
+% not = /Md5/Bits/Bit32%.Bits.not;
+% xor = /Md5/Bits/Bit32%.Bits.xor;
+% add = /Md5/Bits/Bit32%.Bits.add;
 
 @ Block@ = *(
   Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,
