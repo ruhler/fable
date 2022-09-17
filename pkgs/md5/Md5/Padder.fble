@@ -1,30 +1,24 @@
 
 @ Bool@ = /Core/Bool%.Bool@;
 
-@ Bit@ = /Core/Digits%.Bit@;
-
 <@>@ Maybe@ = /Core/Maybe%.Maybe@;
 
 <<@>@>@ Monad@ = /Core/Monad%.Monad@;
 
 @ Unit@ = /Core/Unit%.Unit@;
-% Unit = /Core/Unit%.Unit;
 
 @ Bit8@ = /Md5/Bits/Bit8%.Bit8@;
 % H8 = /Md5/Bits/Bit8%.H8;
 
 @ Bit64@ = /Md5/Bits/Bit64%.Bit64@;
+% And = /Md5/Bits/Bit64%.And;
+% Add = /Md5/Bits/Bit64%.Add;
+% Shl1 = /Md5/Bits/Bit64%.Shl1;
+% Inc = /Md5/Bits/Bit64%.Inc;
+% IsZero = /Md5/Bits/Bit64%.IsZero;
 % H64 = /Md5/Bits/Bit64%.H64;
 
 @ T@ = Bit8@;
-
-(Bit64@) { Bit64@; } Inc64 = (Bit64@ a) {
-  /Md5/Bits/Bit64%.Bits.inc(a);
-};
-
-(Bit64@) { Bit64@; } shl64 = (Bit64@ a) {
-  /Md5/Bits/Bit64%.Bits.lshift_overflow(a, Bit@(0: Unit)).x;
-};
 
 Bit64@ 3f_64 = H64|3F;
 Bit64@ 08_64 = H64|08;
@@ -38,16 +32,13 @@ Bit64@ 08_64 = H64|08;
   # Add zeros as needed, then the final length to the output message.
   (Bit64@, Bit64@) { M@<Stream@>; }
   PadZ = (Bit64@ msglen, Bit64@ length) {
-    Bool@ end = /Md5/Bits/Bit64%.Bits.iszero(
-      /Md5/Bits/Bit64%.Bits.and(3f_64,
-        /Md5/Bits/Bit64%.Bits.add(08_64, length)));
-
+    Bool@ end = IsZero(And(3f_64, Add(08_64, length)));
     end.?(false: {
       Unit@ _ <- Put(H8|0);
-      PadZ(msglen, Inc64(length));
+      PadZ(msglen, Inc(length));
     });
 
-    Bit64@ bits = shl64(shl64(shl64(msglen)));
+    Bit64@ bits = Shl1(Shl1(Shl1(msglen)));
     Unit@ _ <- Put(bits.lo.lo.lo);
     Unit@ _ <- Put(bits.lo.lo.hi);
     Unit@ _ <- Put(bits.lo.hi.lo);
@@ -64,12 +55,12 @@ Bit64@ 08_64 = H64|08;
     Maybe@<Bit8@> x <- m.do(get);
     x.?(nothing: {
       Unit@ _ <- Put(H8|80);
-      PadZ(length, Inc64(length));
+      PadZ(length, Inc(length));
     });
 
     Unit@ _ <- Put(x.just);
-    Pad(Inc64(length));
+    Pad(Inc(length));
   };
 
-  @(Pad: Pad(/Md5/Bits/Bit64%.Bits.0));
+  @(Pad: Pad(H64|0));
 };

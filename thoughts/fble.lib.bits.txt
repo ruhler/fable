@@ -277,3 +277,10 @@ Steps are:
 
 Let's do one step at a time, in whatever order is easiest, and see where we
 end up.
+
+What name to use for least significant bits and most significant bits
+functions? Include the number of bits at the end, that's fine. Otherwise, MSB,
+LSB? Msb, Lsb? Maybe Msb4, Lsb4? I like that. Most significant bit4, Least
+significant bit4 is a way to read it. It leaves the common 'msb' and 'lsb'
+acronyms in the name. Most and least significant bit is more precise than high
+and low I think. Let's go with that.
