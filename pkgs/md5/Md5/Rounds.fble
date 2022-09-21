@@ -26,11 +26,11 @@
 
 % H32 = /Md5/Bits/Bit32%.H32;
 
-% and = /Md5/Bits/Bit32%.Bits.and;
-% or = /Md5/Bits/Bit32%.Bits.or;
-% not = /Md5/Bits/Bit32%.Bits.not;
-% xor = /Md5/Bits/Bit32%.Bits.xor;
-% add = /Md5/Bits/Bit32%.Bits.add;
+% And = /Md5/Bits/Bit32%.Bits.And;
+% Or = /Md5/Bits/Bit32%.Bits.Or;
+% Not = /Md5/Bits/Bit32%.Bits.Not;
+% Xor = /Md5/Bits/Bit32%.Bits.Xor;
+% Add = /Md5/Bits/Bit32%.Bits.Add;
 
 @ Block@ = *(
   Bit32@ 0, Bit32@ 1, Bit32@ 2, Bit32@ 3,
@@ -361,7 +361,7 @@ B32 =
 @ XX@ = (Bit32@, Bit32@, Bit32@, Bit32@, Bit32@, S@, Bit32@) { Bit32@; };
 
 (X@) { XX@; } XX = (X@ xf)(Bit32@ a, Bit32@ b, Bit32@ c, Bit32@ d, Bit32@ x, S@ s, Bit32@ t) {
-  add(b, cls(add(add(a, xf(b, c, d)), add(x, t)), s));
+  Add(b, cls(Add(Add(a, xf(b, c, d)), Add(x, t)), s));
 };
 
 @ Round@ = (Bit32@, Bit32@, Bit32@, Bit32@, Block@) { ABCD@; };
@@ -394,10 +394,10 @@ RoundX = (XX@ xx, S@ s0, S@ s1, S@ s2, S@ s3, Block@ t, (Block@) { Block@; } per
   ABCD@(a4, b4, c4, d4);
 };
 
-X@ F = (Bit32@ x, Bit32@ y, Bit32@ z) { or(and(x, y), and(not(x), z)); };
-X@ G = (Bit32@ x, Bit32@ y, Bit32@ z) { or(and(x, z), and(y, not(z))); };
-X@ H = (Bit32@ x, Bit32@ y, Bit32@ z) { xor(x, xor(y, z)); };
-X@ I = (Bit32@ x, Bit32@ y, Bit32@ z) { xor(y, or(x, not(z))); };
+X@ F = (Bit32@ x, Bit32@ y, Bit32@ z) { Or(And(x, y), And(Not(x), z)); };
+X@ G = (Bit32@ x, Bit32@ y, Bit32@ z) { Or(And(x, z), And(y, Not(z))); };
+X@ H = (Bit32@ x, Bit32@ y, Bit32@ z) { Xor(x, Xor(y, z)); };
+X@ I = (Bit32@ x, Bit32@ y, Bit32@ z) { Xor(y, Or(x, Not(z))); };
 
 XX@ FF = XX(F);
 XX@ GG = XX(G);
@@ -437,7 +437,7 @@ Round@ Round4 = RoundX(II, S@(6: Unit), S@(10: Unit), S@(15: Unit), S@(21: Unit)
   ABCD@ r2 = Round2(r1.a, r1.b, r1.c, r1.d, block);
   ABCD@ r3 = Round3(r2.a, r2.b, r2.c, r2.d, block);
   ABCD@ r4 = Round4(r3.a, r3.b, r3.c, r3.d, block);
-  ABCD@(add(abcd.a, r4.a), add(abcd.b, r4.b), add(abcd.c, r4.c), add(abcd.d, r4.d));
+  ABCD@(Add(abcd.a, r4.a), Add(abcd.b, r4.b), Add(abcd.c, r4.c), Add(abcd.d, r4.d));
 };
 
 #(ABCD@, Block@) { ABCD@; } DoBlock = $(DoBlockImpl);

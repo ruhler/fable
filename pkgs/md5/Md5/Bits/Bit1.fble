@@ -12,63 +12,63 @@ Bit@ 1 = /Core/Digits%.Bit.1;
 
 @ Bit1@ = Bit@;
 
-(Bit1@) { Bit1@; } not = (Bit1@ a) {
+(Bit1@) { Bit1@; } Not = (Bit1@ a) {
   a.?(0: 1, 1: 0);
 };
 
-(Bit1@, Bit1@) { Bit1@; } and = (Bit1@ a, Bit1@ b) {
+(Bit1@, Bit1@) { Bit1@; } And = (Bit1@ a, Bit1@ b) {
   a.?(0: a, 1: b);
 };
 
-(Bit1@, Bit1@) { Bit1@; } or = (Bit1@ a, Bit1@ b) {
+(Bit1@, Bit1@) { Bit1@; } Or = (Bit1@ a, Bit1@ b) {
   a.?(0: b, 1: a);
 };
 
-(Bit1@, Bit1@) { Bit1@; } xor = (Bit1@ a, Bit1@ b) {
-  a.?(0: b, 1: not(b));
+(Bit1@, Bit1@) { Bit1@; } Xor = (Bit1@ a, Bit1@ b) {
+  a.?(0: b, 1: Not(b));
 };
 
 (Bit1@, Bit1@, Bit1@) { Overflow@<Bit1@>; }
-add_overflow = (Bit1@ a, Bit1@ b, Bit1@ c) {
-  Bit1@ x = xor(a, b);
-  Overflow@<Bit1@>(xor(x, c), x.?(0: a, 1: c));
+Addx = (Bit1@ a, Bit1@ b, Bit1@ c) {
+  Bit1@ x = Xor(a, b);
+  Overflow@<Bit1@>(Xor(x, c), x.?(0: a, 1: c));
 };
 
-(Bit1@, Bit1@) { Bit1@; } add = (Bit1@ a, Bit1@ b) {
-  add_overflow(a, b, 0).x;
+(Bit1@, Bit1@) { Bit1@; } Add = (Bit1@ a, Bit1@ b) {
+  Addx(a, b, 0).x;
 };
 
-(Bit1@) { Overflow@<Bit1@>; } inc_overflow = (Bit1@ a) {
-  Overflow@<Bit1@>(not(a), a);
+(Bit1@) { Overflow@<Bit1@>; } Incx = (Bit1@ a) {
+  Overflow@<Bit1@>(Not(a), a);
 };
 
-(Bit1@) { Bit1@; } inc = (Bit1@ a) {
-  inc_overflow(a).x;
+(Bit1@) { Bit1@; } Inc = (Bit1@ a) {
+  Incx(a).x;
 };
 
-(Bit1@) { Bool@; } iszero = (Bit1@ a) {
+(Bit1@) { Bool@; } IsZero = (Bit1@ a) {
   a.?(0: True, 1: False);
 };
 
-(Bit1@, Bit1@) { Bool@; } eq = (Bit1@ a, Bit1@ b) {
+(Bit1@, Bit1@) { Bool@; } Eq = (Bit1@ a, Bit1@ b) {
   a.?(0: b.?(0: True,  1: False),
       1: b.?(0: False, 1: True));
 };
 
-(Bit1@) { Bit1@; } msb = (Bit1@ a) {
+(Bit1@) { Bit1@; } Msb = (Bit1@ a) {
   a;
 };
 
-(Bit1@, Bit1@) { Overflow@<Bit1@>; } lshift_overflow = (Bit1@ a, Bit@ cin) {
+(Bit1@, Bit1@) { Overflow@<Bit1@>; } Shlx = (Bit1@ a, Bit@ cin) {
   Overflow@<Bit1@>(cin, a);
 };
 
 Bits@<Bit1@> Bits = @(
-  not, and, or, xor,
-  add, inc,
-  0, iszero, eq,
-  msb,
-  add_overflow, inc_overflow, lshift_overflow
+  Not, And, Or, Xor,
+  Add, Inc,
+  0, IsZero, Eq,
+  Msb,
+  Addx, Incx, Shlx
 );
 
 @(Bit1@, Bits);

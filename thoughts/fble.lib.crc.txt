@@ -1,0 +1,43 @@
+CRC Library
+
+Seems like a good thing to add to fble library. Useful for png, among
+apparently many other things.
+
+https://reveng.sourceforge.io/ is a nice reference for the kind of CRCs we may
+want to support, and as a reference implementation to test against.
+
+I like the idea of a general implementation that supports arbitrary bit
+lengths. But how could we make that efficient? Like, we could implement it on
+top of list of bits. Or we could implement it on top of some abstract BitN@
+type. I think I prefer the latter.
+
+Maybe the thing to do is figure out what interface we need for a BitN type and
+advertise that interface. If it doesn't line up exactly with the BitN
+interface we implement elsewhere, we can always add an adaptor function to
+convert interfaces with practically no cost.
+
+Hmm... Except we may want to use lookup tables to help in the implementation.
+Is it still reasonable to do that with a generic BitN type?
+
+Anyway, general interface would be:
+* Width. Number of bits. Probably parameterize by BitN type.
+* Initial register value, I assume BitN@.
+* Polynomial. Maybe described using a BitN@?
+
+Based on wikipedia:
+* N bits: the length of the check value.
+* Polynomial - of degree n. Can be encoded with N bits.
+
+Computation: 
+ * Pad the input with 0s to make it a multiple of N bits in length.
+ * While there is more input:
+    uh... I'll need to understand in better detail.
+
+The crc32 shortcut is:
+  sum = init
+  for each byte:
+     index = (sum XOR byte) & 0xFF
+     sum = (sum >> 8) XOR LOOKUP[index]
+     
+  
+

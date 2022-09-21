@@ -284,3 +284,123 @@ LSB? Msb, Lsb? Maybe Msb4, Lsb4? I like that. Most significant bit4, Least
 significant bit4 is a way to read it. It leaves the common 'msb' and 'lsb'
 acronyms in the name. Most and least significant bit is more precise than high
 and low I think. Let's go with that.
+
+---
+
+How to distinguish between shift where I want to be able to shift in and out
+bits, versus shift where we always shift in 0 and ignore top bits? What should
+the names be? We'll want a number suffix for number of bits to shift in and
+out for fixed sized shift.
+
+It's sort of similar to the question of Add versus AddOverflow. I kind of want
+something like: Add and AddEx, or Add and Add_. ShiftLeft and ShiftLeft*. Shl
+versus ShlG, where G is for general?
+
+shl
+lsh
+
+shr
+rsh
+
+I think I prefer shl and shr over lsh and rsh.
+
+Shl4 and Shl4x? Where 'x' is for 'extra'?
+Shr4 and Shr4x?
+
+Shl4 and Shlx4?
+Add and Addx?
+
+That's not too bad. Short. Concise. Not too crazy. x is unlikely to blend in a
+strange way with the previous characters. What if we try that convention?
+
+So: Shl and Shlx.
+
+Partly where this came about was in thinking about minimal requirements for
+implementing literals. The idea is:
+  start with 0, shift in a bit at a time.
+
+Some possible collections:
+* 0, Shlx1
+* 0, 1, Shl1, Add
+* 0, Shl1, Inc
+* 0, 1, Shl1, And
+
+I think the first is most direct and to the point. Most efficient. It's
+exactly what we need: start with zero, shift a bit in at a time. And who
+knows, maybe we want to verify it doesn't overflow, so it's useful to check
+the output bit.
+
+What to use for the name of the type of the shlx function? It's something
+like:
+
+(BitN@, BitX@) -> (BitN@, BitX@).
+
+Similar in a sense to overflow, except overflow is a single bit, right?
+
+And what to use for field names?
+
+For shift, let's assume we have MsbX and LsbX functions. Then you don't
+actually need to shift out the bits. You could use MsbX and LsbX to get
+whatever you would have shifted out.
+
+And you don't really need to shift in bits. You could instead say AND the bits
+you want to shift in.
+
+If we go that route, then the shift function interface is much simpler: 
+BitN@ -> BitN@. And because we don't have BitX@ in the type, it's much more
+natural to support a generic shift function: (BitN@, Int@) -> BitN@. Assuming
+we have a generic Msb and Lsb functions, it's not even that hard to implement,
+right?
+
+Shift the lo. Shift the hi. And the msb of the original lo with the shifted hi.
+
+What interface do we use for generic Msb/Lsb? Msb you could get by right
+shifting (uh... make sure we aren't circularly defining things here). Lsb you
+could get by masking or left shift followed by right shift. In either case, a
+natural format for outputting Msb and Lsb for, say, BitN@ is a BitN@ where the
+Msb or Lsb are in the least significant bits of the returned value.
+
+All of which is suggesting to me an interface like:
+  (Bit8@, Int@) { Bit8@; } Shl;
+  (Bit8@, Int@) { Bit8@; } Shr;
+  (Bit8@, Int@) { Bit8@; } Msb;
+  (Bit8@, Int@) { Bit8@; } Lsb;
+  
+Note, the same kind of thing doesn't work for overflow of addition. I think we
+need to do the addition to know if there will be overflow.
+
+Int@ in general is useful as a type to identify a number of bits or a
+particular bit. How awful would it be to add the dependency on Int@? We could
+add a Int@ Sizeof field to facilitate arithmetic.
+
+If we go this route, then to implement a literal, we would want, I think: 0,
+1, Shl, Or. Which is slightly less convenient to have to assume and pass
+around. You would almost think we want conversion between BitN@ and list of
+bits to be the primitive constructor/inspector. Like, a BitN@ is a more
+compact implementation of a list of bits.
+
+Now I'm starting to second guess my decision to move things out of a Bits
+interface. If we can use generic interfaces that work for arbitrary N, then
+it's really nice to have the Bits interface because:
+* It standardizes what you can expect to have defined for a bit N type.
+* You can factor out the entire implementation of it.
+* You don't have to worry about things like: what combination of functions are
+  required to implement a polymorphic thing.
+
+A reminder of what's on the other side, if you don't have a Bits interface:
+* You don't have to worry about what's goes inside or outside of that
+  interface. It's more natural to add new custom functions.
+* You don't over-specify what's required for a particular function.
+* You can more naturally mix type specific things, like Bit8@ instead of
+  Bits.BitN@, and Lsb4 for Bit8.
+
+---
+
+I'm really going back and forth on this question of having a Bits interface
+with common bits functions. For testing purposes, it would be great if I could
+provide a test suite parameterized by bit type. That really wants a general
+Bits interface.
+
+Instead of thinking about every function being part of the Bits interface or
+not, we could think about having collections of different subinterfaces.
+Anyone can add their own subinterface pretty easily.

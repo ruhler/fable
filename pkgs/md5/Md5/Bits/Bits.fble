@@ -10,19 +10,19 @@
 #   Interface for a fixed-width bit vector.
 <@>@ Bits@ = <@ T@> {
   *(
-    (T@) { T@; } not,          # !a
-    (T@, T@) { T@; } and,      # a & b
-    (T@, T@) { T@; } or,       # a | b
-    (T@, T@) { T@; } xor,      # a ^ b
-    (T@, T@) { T@; } add,      # a + b
-    (T@) { T@; } inc,          # a++
+    (T@) { T@; } Not,          # !a
+    (T@, T@) { T@; } And,      # a & b
+    (T@, T@) { T@; } Or,       # a | b
+    (T@, T@) { T@; } Xor,      # a ^ b
+    (T@, T@) { T@; } Add,      # a + b
+    (T@) { T@; } Inc,          # a++
     T@ 0,                      # 0
-    (T@) { Bool@; } iszero,    # a == 0
-    (T@, T@) { Bool@; } eq,    # a == b
-    (T@) { Bit@; } msb,        # most significant bit
-    (T@, T@, Bit@) { Overflow@<T@>; } add_overflow, # add with overflow
-    (T@) { Overflow@<T@>; } inc_overflow,           # inc with overflow
-    (T@, Bit@) { Overflow@<T@>; } lshift_overflow   # left shift by 1
+    (T@) { Bool@; } IsZero,    # a == 0
+    (T@, T@) { Bool@; } Eq,    # a == b
+    (T@) { Bit@; } Msb,        # most significant bit
+    (T@, T@, Bit@) { Overflow@<T@>; } Addx, # add with overflow
+    (T@) { Overflow@<T@>; } Incx,           # inc with overflow
+    (T@, Bit@) { Overflow@<T@>; } Shlx      # left shift by 1
   );
 };
 

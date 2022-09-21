@@ -1,6 +1,4 @@
 
-@ Bool@ = /Core/Bool%.Bool@;
-
 % Bit = /Core/Digits%.Bit;
 
 % BitXY = /Md5/Bits/BitXY%(/Md5/Bits/Bit32%.Bits, /Md5/Bits/Bit32%.Bits);
@@ -11,26 +9,17 @@
 % B64 = Lit.B;
 % H64 = Lit.H;
 
-(Bit64@, Bit64@) { Bit64@; } And = Bits.and;
-
-# a + 1
-(Bit64@) { Bit64@; } Inc = (Bit64@ a) {
-  Bits.inc(a);
-};
-
-(Bit64@, Bit64@) { Bit64@; } Add = Bits.add;
-
 # a << 1
 (Bit64@) { Bit64@; } Shl1 = (Bit64@ a) {
-  Bits.lshift_overflow(a, Bit.0).x;
+  Bits.Shlx(a, Bit.0).x;
 };
-
-(Bit64@) { Bool@; } IsZero = Bits.iszero;
 
 @(
   Bit64@,
-  And,
-  Inc, Add, Shl1,
-  IsZero,
+  And: Bits.And,
+  Inc: Bits.Inc,
+  Add: Bits.Add,
+  Shl1,
+  IsZero: Bits.IsZero,
   B64, H64
 );

@@ -13,7 +13,7 @@
   #   Helper function for binary literals.
   (T@, List@<Bit@>) { T@; } B_helper = (T@ t, List@<Bit@> bs) {
     bs.?(nil: t);
-    B_helper(T.lshift_overflow(t, bs.cons.head).x, bs.cons.tail);
+    B_helper(T.Shlx(t, bs.cons.head).x, bs.cons.tail);
   };
 
   # B --
