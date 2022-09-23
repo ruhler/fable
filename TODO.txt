@@ -1,3 +1,5 @@
+* Debug CRC test failure.
+
 * Why doesn't type inference work for Concat function?
 
 * Add test that you can use a unicode character in a literal?

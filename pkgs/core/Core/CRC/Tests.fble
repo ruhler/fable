@@ -1,0 +1,42 @@
+
+@ CRC@ = /Core/CRC%.CRC@;
+% Feeds = /Core/CRC%.Feeds;
+
+@ Bit@ = /Core/Digits%.Bit@;
+% Bit = /Core/Digits%.Bit;
+
+% HexToBits = /Core/Digits/String%.HexToBits;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% List = /Core/List%.List;
+<@>% Cons = /Core/List%.Cons;
+
+% Str = /Core/String%.Str;
+
+@ Test@ = /Core/Test%.Test@;
+% Test = /Core/Test%.Test;
+% TestSuite = /Core/Test%.TestSuite;
+<@>% AssertEquals = /Core/Test%.AssertEquals;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+Test@ Tests = TestSuite(Str|CRC, List[
+  Test(Str|'cksum', (Unit@ _) {
+    List@<Bit@> poly = Cons(Bit.1, HexToBits|04C11DB7);
+    List@<Bit@> init = HexToBits|00000000;
+    CRC@ crc = CRC@(poly, init);
+    CRC@ result = Feeds(crc, HexToBits|313233343536373839);
+
+    List@<Bit@> want = HexToBits|765E7680;
+    List@<Bit@> got = result.checksum;
+
+    # TODO: Debug this test failure.
+    /Core/Test%.ExpectFails(AssertEquals(
+      /Core/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
+      /Core/Digits/Show%.ShowBits,
+      want, got), Str|'');
+  })
+]);
+
+
+@(Tests);

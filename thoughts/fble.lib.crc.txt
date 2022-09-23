@@ -39,5 +39,50 @@ The crc32 shortcut is:
      index = (sum XOR byte) & 0xFF
      sum = (sum >> 8) XOR LOOKUP[index]
      
-  
+---
 
+The shortcut is really just precomputation and lookup table. The fact that it
+uses 8 bits has nothing to do with the definition of the CRC. In general, we
+have a clear N bit register/checksum, and we feed in a single bit at a time.
+We could feed in batches of M bits at a time for performance if we wanted.
+
+Let me start by doing some implementation that I can test is correct. Let me
+start by writing a test case. Don't worry too much about the interface or
+performance to start.
+
+Let's use cksum to start. Because it's easy for me to generate reference test
+cases.
+
+cksum parameters:
+
+  CRC-32/CKSUM
+
+   width=32 poly=0x04c11db7 init=0x00000000 refin=false refout=false
+   xorout=0xffffffff check=0x765e7680 residue=0xc704dd7b name="CRC-32/CKSUM"
+
+   The cksum program processes a representation of the input stream
+   length following the input. It returns 930766865 (0x377A6011) on the
+   check string, processed internally as 31 32 33 34 35 36 37 38 39 09.
+
+That suggests the check string is: 123456789\t
+
+Can I repro this example using cksum?
+
+Yes. The file is the 9 characters: 123456789. The cksum program adds the
+length 09 after that. The result is 0x377A6011.
+
+Note the 'check' value listed is the contents of the register after reading
+"123456789" as 8 bit characters.
+
+'refin=false' means message is read most significant most significant bit
+first.
+
+So, in this case, we feed a byte at a time, which is translated to bits at a
+time. If I want to, I could write the test case and API entirely in terms of
+sequences of bits.
+
+Note, 'poly' is in MSB first code, highest order term is omitted.
+
+Cool. Let's start with a list of bits implementation, like we have for LFSR (I
+wonder if we can somehow reuse/share the LFSR code?). Test that on cksum, and
+then go from there.

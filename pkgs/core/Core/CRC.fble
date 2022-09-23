@@ -1,0 +1,51 @@
+
+
+@ Bit@ = /Core/Digits%.Bit@;
+% Bit = /Core/Digits%.Bit;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+<@>% List = /Core/List%.List;
+<@>% Append = /Core/List%.Append;
+
+# CRC@ --
+#   State for a cyclic redundancy check.
+#
+# Fields:
+#   poly - Polynomial used in the CRC, in order of most to least significant
+#          bit, including high and low bits. For an 8 bit CRC, for example,
+#          poly will have 9 bits.
+#   checksum - The checksum, in order of most to least significant bit.
+@ CRC@ = *(List@<Bit@> poly, List@<Bit@> checksum);
+
+# Xor --
+#   Bitwise XOR. Assumes the input lists both have the same length.
+(List@<Bit@>, List@<Bit@>) { List@<Bit@>; } Xor = (List@<Bit@> a, List@<Bit@> b) {
+  a.?(nil: a);
+  List@<Bit@> tail = Xor(a.cons.tail, b.cons.tail);
+
+  Bit@ av = a.cons.head;
+  Bit@ bv = b.cons.head;
+  Bit@ x = av.?(0: bv, 1: bv.?(0: Bit.1, 1: Bit.0));
+  Cons(x, tail);
+};
+
+# Feed --
+#   Feed the next bit into the CRC calculation.
+(CRC@, Bit@) { CRC@; } Feed = (CRC@ crc, Bit@ bit) {
+  List@<Bit@> bits = Append(crc.checksum, List[bit]);
+  List@<Bit@> rem = bits.cons.head.?(
+    0: bits.cons.tail,
+    1: Xor(crc.poly, bits).cons.tail);
+  CRC@(crc.poly, rem);
+};
+
+# Feeds --
+#   Feed a sequence of bits in order into the CRC calculation.
+(CRC@, List@<Bit@>) { CRC@; } Feeds = (CRC@ crc, List@<Bit@> bits) {
+  bits.?(nil: crc);
+  Feeds(Feed(crc, bits.cons.head), bits.cons.tail);
+};
+
+@(CRC@, Feed, Feeds);
+
