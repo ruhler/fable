@@ -86,3 +86,82 @@ Note, 'poly' is in MSB first code, highest order term is omitted.
 Cool. Let's start with a list of bits implementation, like we have for LFSR (I
 wonder if we can somehow reuse/share the LFSR code?). Test that on cksum, and
 then go from there.
+
+---
+
+My first draft doesn't work. Debugging.
+
+Ideas:
+* Is my bit order wrong? Is it most significant bit first of a byte or least
+  significant bit first? According to above, most significant bit, which is
+  the order I input bits.
+* Let's try the wikipedia example and debug that. That should be easier.
+
+I think I'm just not understanding the algorithm correctly. I should figure it
+out by hand on the wikipedia example first.
+
+Turns out you do need to add n bits of 0 to the end. The math is:
+
+M(x)*x^n = Q(x)*G(x)+R(x),
+
+Where M is the message, Q is the quotient (ignored), G is the polynomial, and
+R is the remainder checksum. But it's in a funny math land where 1 + 1 = 0 for
+all the coefficients.
+
+Rather than have to pass through a bunch of zeroes at the end, you can use a
+different algorithm that shifts bits in to the most significant bit instead of
+the least significant bit.
+
+The algorithm is something like:
+  R = 0
+  for each bit
+    R = R << 1
+    R[msb] = R[msb] XOR bit
+    if R[msb] == 1
+       R = R XOR G
+    
+So, a couple things I can try.
+
+1. modify my existing test cases to append zeroes to the message. Just to
+check if I get the magic values I hope.
+2. Reimplement CRC with the above algorithm and remove the zeroes padded to
+the messages and see if I get the magic values I hope.
+
+Tried (1). It doesn't work. So maybe I have a bug elsewhere in my code.
+
+Code looks okay by manual inspection. Maybe worth pulling out the debugger,
+step through the code, and see from there?
+      
+---
+
+The problem was my initial value was Hex|000 instead of Binary|000. That fixes
+the wikipedia example. The cksum example still isn't working as I expect
+though. Perhaps I have an incorrect interpretation of 'check'. Maybe we need
+to feed in the check and verify the output is zero in that case?
+
+Check is:
+
+   The contents of the register after initialising, reading the UTF-8 string
+   "123456789" (as 8-bit characters), optionally reflecting, and applying the
+   final XOR.
+
+Note that xorout is set to 0xffffffff. And we have a residue What's residue
+and xorout? xorout is what we apply to the final message.
+
+residue is is before the final XOR. Does that make sense? No. I clearly don't
+understand. residue is 0xc704dd7b. XOR that with 0xffffffff would give
+0x38fb2284, or something like that.
+
+The value I get at the end is
+1000 1001 1010 0001 1000 1001 0111 1111
+89a1897f
+
+Hey, that looks right, as inverted check value:
+1000 1001 1010 0001 1000 1001 0111 1111
+0111 0110 0101 1110 0111 0110 1000 0000
+765e7680.
+
+Perfect. So it works. I just need to interpret the check bit properly.
+
+
+

@@ -5,6 +5,7 @@
 @ Bit@ = /Core/Digits%.Bit@;
 % Bit = /Core/Digits%.Bit;
 
+% BitStr = /Core/Digits/String%.BitStr;
 % HexToBits = /Core/Digits/String%.HexToBits;
 
 <@>@ List@ = /Core/List%.List@;
@@ -20,21 +21,45 @@
 
 @ Unit@ = /Core/Unit%.Unit@;
 
+% _ = /Core/CRC/Debug%;
+
 Test@ Tests = TestSuite(Str|CRC, List[
+  Test(Str|'wiki', (Unit@ _) {
+    # Test case from wikipedia article on CRC.
+    List@<Bit@> poly = BitStr|1011;
+    List@<Bit@> init = BitStr|000;
+    CRC@ crc = CRC@(poly, init);
+
+    # TODO: Don't require the user to feed in N zeroes.
+    CRC@ result = Feeds(Feeds(crc, BitStr|11010011101100), BitStr|000);
+
+    List@<Bit@> want = BitStr|100;
+    List@<Bit@> got = result.checksum;
+
+    AssertEquals(
+      /Core/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
+      /Core/Digits/Show%.ShowBits,
+      want, got);
+  }),
+
   Test(Str|'cksum', (Unit@ _) {
     List@<Bit@> poly = Cons(Bit.1, HexToBits|04C11DB7);
     List@<Bit@> init = HexToBits|00000000;
     CRC@ crc = CRC@(poly, init);
-    CRC@ result = Feeds(crc, HexToBits|313233343536373839);
 
-    List@<Bit@> want = HexToBits|765E7680;
+    # TODO: Don't require the user to feed in N zeroes.
+    CRC@ result = Feeds(Feeds(crc, HexToBits|313233343536373839),
+      HexToBits|00000000);
+
+    # Note: check value is 0x765E7680, xorout is 0xffffffff, so we expect to
+    # see the value of check XOR xorout = 0x89a1897f
+    List@<Bit@> want = HexToBits|89A1897F;
     List@<Bit@> got = result.checksum;
 
-    # TODO: Debug this test failure.
-    /Core/Test%.ExpectFails(AssertEquals(
+    AssertEquals(
       /Core/List/Eq%.Eq(/Core/Digits/Eq%.EqBit),
       /Core/Digits/Show%.ShowBits,
-      want, got), Str|'');
+      want, got);
   })
 ]);
 

@@ -1,0 +1,53 @@
+
+% True = /Core/Bool%.True;
+
+% Chars = /Core/Char%.Chars;
+
+@ CRC@ = /Core/CRC%.CRC@;
+% Feed = /Core/CRC%.Feed;
+
+@ Bit@ = /Core/Digits%.Bit@;
+% Bit = /Core/Digits%.Bit;
+
+% HexToBits = /Core/Digits/String%.HexToBits;
+
+% ShowBits = /Core/Digits/Show%.ShowBits;
+
+<@>@ List@ = /Core/List%.List@;
+<@>% Cons = /Core/List%.Cons;
+
+@ String@ = /Core/String%.String@;
+% Str = /Core/String%.Str;
+
+<<@>@>@ Monad@ = /Core/Monad%.Monad@;
+
+<<@>@>@ Stdio@ = /Core/Stdio%.Stdio@;
+<<@>@>@ Main@ = /Core/Stdio%.Main@;
+
+@ Unit@ = /Core/Unit%.Unit@;
+
+
+Main@ Debug = <<@>@ M@>(Monad@<M@> m, Stdio@<M@> stdio, List@<String@> args) {
+  (CRC@, List@<Bit@>) { M@<CRC@>; } DFeeds = (CRC@ crc, List@<Bit@> bits) {
+    bits.?(nil: m.return(crc));
+
+    CRC@ ncrc = Feed(crc, bits.cons.head);
+    Unit@ _ <- m.do(stdio.out(ShowBits(ncrc.checksum)));
+    Unit@ _ <- m.do(stdio.out(Str[Chars.nl]));
+    DFeeds(ncrc, bits.cons.tail);
+  };
+
+  #List@<Bit@> poly = BitStr|1011;
+  #List@<Bit@> init = BitStr|000;
+  #CRC@ crc = CRC@(poly, init);
+  #CRC@ result <- m.do(DFeeds(crc, BitStr|11010011101100000));
+
+  List@<Bit@> poly = Cons(Bit.1, HexToBits|04C11DB7);
+  List@<Bit@> init = HexToBits|00000000;
+  CRC@ crc = CRC@(poly, init);
+  CRC@ result <- m.do(DFeeds(crc, HexToBits|31323334353637383900000000));
+
+  m.return(True);
+};
+
+/Core/Stdio/IO%.Run(Debug);
