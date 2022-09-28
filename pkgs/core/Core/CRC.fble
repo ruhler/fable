@@ -18,15 +18,19 @@
 #   checksum - The checksum, in order of most to least significant bit.
 @ CRC@ = *(List@<Bit@> poly, List@<Bit@> checksum);
 
-# Xor --
-#   Bitwise XOR. Assumes the input lists both have the same length.
-(List@<Bit@>, List@<Bit@>) { List@<Bit@>; } Xor = (List@<Bit@> a, List@<Bit@> b) {
-  a.?(nil: a);
-  List@<Bit@> tail = Xor(a.cons.tail, b.cons.tail);
+(Bit@, Bit@) { Bit@; } Xor = (Bit@ a, Bit@ b) {
+  a.?(0: b);
+  b.?(0: a);
+  Bit.0;
+};
 
-  Bit@ av = a.cons.head;
-  Bit@ bv = b.cons.head;
-  Bit@ x = av.?(0: bv, 1: bv.?(0: Bit.1, 1: Bit.0));
+# Xors --
+#   Bitwise XOR. Assumes the input lists both have the same length.
+(List@<Bit@>, List@<Bit@>) { List@<Bit@>; } Xors = (List@<Bit@> a, List@<Bit@> b) {
+  a.?(nil: a);
+  List@<Bit@> tail = Xors(a.cons.tail, b.cons.tail);
+
+  Bit@ x = Xor(a.cons.head, b.cons.head);
   Cons(x, tail);
 };
 
@@ -36,7 +40,7 @@
   List@<Bit@> bits = Append(crc.checksum, List[bit]);
   List@<Bit@> rem = bits.cons.head.?(
     0: bits.cons.tail,
-    1: Xor(crc.poly, bits).cons.tail);
+    1: Xors(crc.poly, bits).cons.tail);
   CRC@(crc.poly, rem);
 };
 
