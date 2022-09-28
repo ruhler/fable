@@ -30,8 +30,7 @@ Test@ Tests = TestSuite(Str|CRC, List[
     List@<Bit@> init = BitStr|000;
     CRC@ crc = CRC@(poly, init);
 
-    # TODO: Don't require the user to feed in N zeroes.
-    CRC@ result = Feeds(Feeds(crc, BitStr|11010011101100), BitStr|000);
+    CRC@ result = Feeds(crc, BitStr|11010011101100);
 
     List@<Bit@> want = BitStr|100;
     List@<Bit@> got = result.checksum;
@@ -47,9 +46,7 @@ Test@ Tests = TestSuite(Str|CRC, List[
     List@<Bit@> init = HexToBits|00000000;
     CRC@ crc = CRC@(poly, init);
 
-    # TODO: Don't require the user to feed in N zeroes.
-    CRC@ result = Feeds(Feeds(crc, HexToBits|313233343536373839),
-      HexToBits|00000000);
+    CRC@ result = Feeds(crc, HexToBits|313233343536373839);
 
     # Note: check value is 0x765E7680, xorout is 0xffffffff, so we expect to
     # see the value of check XOR xorout = 0x89a1897f

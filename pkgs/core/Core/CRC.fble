@@ -37,10 +37,12 @@
 # Feed --
 #   Feed the next bit into the CRC calculation.
 (CRC@, Bit@) { CRC@; } Feed = (CRC@ crc, Bit@ bit) {
-  List@<Bit@> bits = Append(crc.checksum, List[bit]);
-  List@<Bit@> rem = bits.cons.head.?(
-    0: bits.cons.tail,
-    1: Xors(crc.poly, bits).cons.tail);
+  Bit@ msb = Xor(crc.checksum.cons.head, bit);
+  List@<Bit@> r = Cons(msb, Append(crc.checksum.cons.tail, List[Bit.0]));
+
+  List@<Bit@> rem = msb.?(
+    0: r.cons.tail,
+    1: Xors(crc.poly, r).cons.tail);
   CRC@(crc.poly, rem);
 };
 

@@ -168,3 +168,4 @@ Perfect. So it works. I just need to interpret the check bit properly.
 Next step: re-implement it so we don't need to feed in the extra bits at the
 end.
 
+It works great.
