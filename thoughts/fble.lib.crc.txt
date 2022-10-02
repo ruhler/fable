@@ -169,3 +169,20 @@ Next step: re-implement it so we don't need to feed in the extra bits at the
 end.
 
 It works great.
+
+What's next? Brainstorm:
+* Add things like refout?
+* Change interface to use BitN@ types?
+* Change interface to be a single feed function that we generate?
+* Implement cksum program, or figure out how I would given special processing
+  needed?
+* Create library of specific CRCs?
+* Add test cases for all the CRCs with check values in the catalog of CRCs
+  referenced above?
+
+I guess it's mostly a question of what user interface I want for the various
+CRC algorithms. For cksum, I would imagine being able to feed in bytes at a
+time, and then call 'finish' to compute the final checksum. I'm not sure if
+the library or the user should be responsible for counting bytes. Probably the
+cksum wrapper?
+

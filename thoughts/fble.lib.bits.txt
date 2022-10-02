@@ -404,3 +404,50 @@ Bits interface.
 Instead of thinking about every function being part of the Bits interface or
 not, we could think about having collections of different subinterfaces.
 Anyone can add their own subinterface pretty easily.
+
+---
+
+What are the next steps here? How to move forward?
+
+Because it would be really nice to have a standard Bit8@ type that I could use
+to stream in for programs like md5sum and cksum.
+
+Things that are getting in my way of progress here:
+* Do we want a common Bits interface or not? Arguments above suggest we do.
+* Do we want to use Int@ in the interface or not?
+ - It would be great to have, for sizeOf, shift, select, etc.
+ - It adds an extra dependency.
+
+If we were to have two different subinterfaces for bits, one without Int (to
+avoid the dependency) and one with Int, what we call them? And how would we
+export them separately?
+
+Brainstorm of names:
+* Core
+* Int, Length, Size, BitsI? None of these sound good to me.
+
+/Bits/Bit8/Core%, /Bits/Bit8/Int%. That looks okay to me, in terms of having
+multiple different subdirectories for an int type.
+
+Just need a good name for what would go into the Int interface.
+
+Core:
+* 0
+* Not, And, Or, Xor
+* Add, Inc
+* IsZero, Eq
+* Msb1, Lsb1, Shl1, Shr1
+
+"Int":
+* Msb, Lsb, Shl, Shr, Sizeof
+* Get, Set
+
+It feels right to me to have these in separate packages. I just need a decent
+name for the "Int" package. "Select"? They all seem to be about selecting
+various subbits. "Sub", or "Subset"? "Shift"? Those aren't too bad.
+
+Here's my vote:
+* Try having two separate subinterfaces. One without Int@, the other with
+  Int@. Pick a decent enough name to start for the one with Int@, maybe
+  "Shift". Implement it, see how goes, and report back.
+
