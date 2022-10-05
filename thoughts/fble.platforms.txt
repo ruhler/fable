@@ -29,3 +29,16 @@ Then the question is: can I do the same thing in fble? Can I make it so I can
 do the same thing in fble? What would that take?
 
 If I wanted to take fble to the next level, this would be it.
+
+---
+
+Thoughts on how to test different platforms conveniently:
+* VirtualBox only supports x86?
+* QEMU looks like it has user mode emulation, which could be useful?
+
+For example, maybe I can run qemu-arm and qemu-i386 and qemu-x86_64
+
+Note, that's a different approach than setting up a virtual machine, for
+example, with a different distro running on it. I'm not even sure I could run
+a virtual machine for an x86 device on an arm processor.
+
