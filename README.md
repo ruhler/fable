@@ -23,7 +23,11 @@ out/ - Directory where build outputs are placed, created as needed.
 ## Requirements
 
 TODO:
-* make, ninja, libsdl, tcl, gcc, as
+* ninja, make, tcl,
+* gcc, as, bison
+* grep, cmp
+* gdb, expect, objdump
+* libsdl, libgl
 * aarch64
 * others?
 
