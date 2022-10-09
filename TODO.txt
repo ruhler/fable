@@ -1,4 +1,4 @@
-* Debug CRC test failure.
+* Add test for proper markdown syntax in README.md?
 
 * Why doesn't type inference work for Concat function?
 
@@ -175,4 +175,5 @@
  - either way, document that clearly.
 
 * [release] Write man pages for fble and friends?
+ - see thoughts/fble.release.txt
  

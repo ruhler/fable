@@ -92,3 +92,46 @@ like users should be able to set up their own redirects: any time you use
 package "/foo/...", rename it to, for example, "/foo-3.4.1/...". That's at
 compile time.
 
+---
+
+Another big consideration for release is that different people have different
+goals in how they interact with building, testing, and installing:
+* developers probably want/ought to build and test as much as they can.
+* users may only want to build and install the bits they care about,
+  especially if it means they can avoid installing dependencies they otherwise
+  don't want to.
+
+How can we organize it so that users can easily specify what dependencies they
+have where? Some kind of configure script, right?
+
+I see 4 classes of things that a user may want to build:
+1. Everything, including things not necessarily buildable on a single computer.
+   This would be for developers testing their changes to break anything.
+   Including compilation to other architectures.
+2. Everything that can be done on a single computer. This would also be for
+   developers testing their changes don't break things, but with the more
+   realistic restriction that you can, in theory, do everything on one
+   computer.
+3. Some subset of things. For those who don't want to install dependencies for
+   bits they don't care about. This would be configure time options. Assume
+   you still want to run all possible tests.
+4. Install. For those who don't want to run all the tests, for example. Or
+   don't want to build everything even if all the dependencies are satisfied.
+
+The difference between (1) and (2) is perhaps academic at this point. The
+difference between (3) and (4) doesn't seem worth worrying about: just build
+and test everything you can, it doesn't take that long.
+
+That suggests the first focus should be on a mechanism to support (3), aka a
+configure script.
+
+How I can test in an automated fashion that the configure script works is
+beyond me.
+
+Another approach for optional dependencies is to pull them out into different
+packages. In other words, we say no individual package has any optional
+dependencies. It's up to the user to decide which packages they want to
+download and install. This seems a bit inflexible to me.
+
+Let's start down the configure route. Follow up in
+thoughts/fble.configure.txt.
