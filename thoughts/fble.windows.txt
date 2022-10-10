@@ -1,0 +1,28 @@
+Using Fble on Windows
+=====================
+Via cygwin.
+
+1. Install ninja.
+Easy enough.
+
+2. Install bison.
+Easy enough.
+
+3. Compiler warning in SizeofSanitizedString. Interesting.
+
+  for (const char* p = str; *p != '\0'; p++) {
+    size += isalnum(*p) ? 1 : 4;
+
+fble/lib/generate_aarch64.c|1269 col 21| error: array subscript has type ‘char’ [-Werror=char-subscripts]
+
+Looks like we need to be explicit about the conversion from const char to
+whatever isalnum expects. What does isalnum expect? Or is the issue that char
+is signed? Oh. Internally isalnum is a macro that uses the argument as an
+index? So negative is bad.
+
+The header file has a comment saying the warning is intentional in this case.
+Looks like I need to cast to unsigned char?
+
+Yeah. That fixes it. Hopefully that works too on linux.
+
+4. We don't have aarch64.

@@ -1266,7 +1266,7 @@ static size_t SizeofSanitizedString(const char* str)
 {
   size_t size = 1;
   for (const char* p = str; *p != '\0'; p++) {
-    size += isalnum(*p) ? 1 : 4;
+    size += isalnum((unsigned char)*p) ? 1 : 4;
   }
   return size;
 }
@@ -1286,7 +1286,7 @@ static void SanitizeString(const char* str, char* dst)
   dst[0] = '\0';
   for (const char* p = str; *p != '\0'; p++) {
     char x[5];
-    sprintf(x, isalnum(*p) ? "%c" : "_%02x_", *p);
+    sprintf(x, isalnum((unsigned char)*p) ? "%c" : "_%02x_", *p);
     strcat(dst, x);
   }
 }
@@ -1319,7 +1319,7 @@ static FbleString* LabelForPath(FbleModulePath* path)
   for (size_t i = 0; i < path->path.size; ++i) {
     len += 4;   // translated '/' character.
     for (const char* p = path->path.xs[i].name->str; *p != '\0'; p++) {
-      if (isalnum(*p)) {
+      if (isalnum((unsigned char)*p)) {
         len++;        // untranslated character
       } else {
         len += 4;     // translated character
@@ -1337,7 +1337,7 @@ static FbleString* LabelForPath(FbleModulePath* path)
     sprintf(translated, "_%02x_", '/');
     strcat(name, translated);
     for (const char* p = path->path.xs[i].name->str; *p != '\0'; p++) {
-      if (isalnum(*p)) {
+      if (isalnum((unsigned char)*p)) {
         sprintf(translated, "%c", *p);
         strcat(name, translated);
       } else {
