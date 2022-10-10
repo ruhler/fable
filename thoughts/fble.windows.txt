@@ -26,3 +26,23 @@ Looks like I need to cast to unsigned char?
 Yeah. That fixes it. Hopefully that works too on linux.
 
 4. We don't have aarch64.
+
+Let's see if I can hack something up to start. Then clean it up.
+
+Looks like best place to handle this is in spec-test.run.tcl. Skip running the
+compiled part of the tests if architecture is not supported.
+
+There are some other compiled tests though, not just spec tests. I should mark
+those as skipped if possible, rather than just not compiling them?
+
+5. -lGL cannot be found. Let's install that?
+Yes.
+
+And that's all I need for the compile to go through. Can I try running the
+invaders game to see if it works? At least in interpreted mode?
+
+I get an error from SDL: unable to initialize video device. Oh well. Also,
+memory leak in that case.
+
+How about md5sum? Totally works. Though I need to update the usage info for
+md5 to point to the right example module /Md5/Main%.

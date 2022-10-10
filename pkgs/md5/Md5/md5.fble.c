@@ -122,7 +122,7 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "Example:\n");
   fprintf(stream, "%s%s%s",
       "  fble-md5 --profile foo.prof ",
-      module == NULL ? "-I md5 -m /Md5/Md5% " : "",
+      module == NULL ? "-I md5 -m /Md5/Main% " : "",
       "foo.txt\n");
 }
 
