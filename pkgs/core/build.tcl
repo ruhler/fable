@@ -46,20 +46,24 @@ namespace eval "pkgs/core" {
   test $::out/pkgs/core/Core/Stdio/fble-stdio.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Stdio/Test.fble.d" \
     "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Stdio/Test% | grep PASSED"
 
-  # /Core/Stdio/Test% compiled test.
-  stdio $::out/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
-  test $::out/pkgs/core/Core/Stdio/fble-stdio-test.out \
-    $::out/pkgs/core/Core/Stdio/fble-stdio-test \
-    "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
-  test $::out/pkgs/core/Core/Stdio/fble-stdio-test.tr $::out/pkgs/core/Core/Stdio/fble-stdio-test.out \
-    "grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
+  if {$::arch == "aarch64"} {
+    # /Core/Stdio/Test% compiled test.
+    stdio $::out/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
+    test $::out/pkgs/core/Core/Stdio/fble-stdio-test.out \
+      $::out/pkgs/core/Core/Stdio/fble-stdio-test \
+      "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
+    test $::out/pkgs/core/Core/Stdio/fble-stdio-test.tr $::out/pkgs/core/Core/Stdio/fble-stdio-test.out \
+      "grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
+  }
 
   # Core/Tests interpreted
   testsuite $::out/pkgs/core/Core/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/core/Core/Tests.fble.d" \
     "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -m /Core/Tests% --prefix Interpreted."
 
-  # Core/Tests compiled
-  stdio $::out/pkgs/core/Core/core-tests "/Core/Tests%" ""
-  testsuite $::out/pkgs/core/Core/core-tests.tr $::out/pkgs/core/Core/core-tests \
-    "$::out/pkgs/core/Core/core-tests --prefix Compiled."
+  if {$::arch == "aarch64"} {
+    # Core/Tests compiled
+    stdio $::out/pkgs/core/Core/core-tests "/Core/Tests%" ""
+    testsuite $::out/pkgs/core/Core/core-tests.tr $::out/pkgs/core/Core/core-tests \
+      "$::out/pkgs/core/Core/core-tests --prefix Compiled."
+  }
 }

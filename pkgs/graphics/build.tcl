@@ -1,4 +1,6 @@
 namespace eval "pkgs/graphics" {
   pkg graphics [list core app] ""
-  app $::out/pkgs/graphics/Graphics/fble-graphics "/Graphics/AppIO%" "graphics"
+  if {$::arch == "aarch64"} {
+    app $::out/pkgs/graphics/Graphics/fble-graphics "/Graphics/AppIO%" "graphics"
+  }
 }

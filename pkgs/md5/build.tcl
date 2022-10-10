@@ -12,10 +12,12 @@ namespace eval "pkgs/md5" {
   testsuite $::out/pkgs/md5/Md5/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/md5/Md5/Tests.fble.d" \
     "$::out/pkgs/core/Core/fble-stdio -I pkgs/core -I pkgs/md5 -m /Md5/Tests% --prefix Interpreted."
 
-  # Md5/Tests compiled
-  stdio $::out/pkgs/md5/Md5/md5-tests "/Md5/Tests%" "md5"
-  testsuite $::out/pkgs/md5/Md5/md5-tests.tr $::out/pkgs/md5/Md5/md5-tests \
-    "$::out/pkgs/md5/Md5/md5-tests --prefix Compiled."
+  if {$::arch == "aarch64"} {
+    # Md5/Tests compiled
+    stdio $::out/pkgs/md5/Md5/md5-tests "/Md5/Tests%" "md5"
+    testsuite $::out/pkgs/md5/Md5/md5-tests.tr $::out/pkgs/md5/Md5/md5-tests \
+      "$::out/pkgs/md5/Md5/md5-tests --prefix Compiled."
+  }
 
   # fble-md5 program.
   obj $::out/pkgs/md5/Md5/fble-md5.o pkgs/md5/Md5/fble-md5.c \

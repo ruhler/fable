@@ -18,6 +18,8 @@
 # fble binaries in the out directory and out/spec/${FBLE}.d the result of running
 # fble-deps on the FBLE file.
 
+set ::arch [exec arch]
+
 proc module_path { path } {
   # Add quotes around module path words so we can name spec tests to match
   # spec section numbers, e.g. 2.2-Kinds.
@@ -147,8 +149,10 @@ proc dispatch {} {
     no-error {
       exec out/fble/test/fble-test.cov --profile /dev/null -I spec -m $::mpath
 
-      compile FbleTestMain
-      exec $::outdir/compiled --profile /dev/null
+      if {$::arch == "aarch64"} {
+        compile FbleTestMain
+        exec $::outdir/compiled --profile /dev/null
+      }
 
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
@@ -160,8 +164,10 @@ proc dispatch {} {
     runtime-error {
       expect_error runtime $::loc out/fble/test/fble-test.cov -I spec -m $::mpath
 
-      compile FbleTestMain
-      expect_error runtime $::loc $::outdir/compiled
+      if {$::arch == "aarch64"} {
+        compile FbleTestMain
+        expect_error runtime $::loc $::outdir/compiled
+      }
 
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
@@ -169,8 +175,10 @@ proc dispatch {} {
     memory-constant {
       exec out/fble/test/fble-mem-test.cov -I spec -m $::mpath
 
-      compile FbleMemTestMain
-      exec $::outdir/compiled
+      if {$::arch == "aarch64"} {
+        compile FbleMemTestMain
+        exec $::outdir/compiled
+      }
 
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
@@ -178,8 +186,10 @@ proc dispatch {} {
     memory-growth {
       exec out/fble/test/fble-mem-test.cov --growth -I spec -m $::mpath
 
-      compile FbleMemTestMain
-      exec $::outdir/compiled --growth
+      if {$::arch == "aarch64"} {
+        compile FbleMemTestMain
+        exec $::outdir/compiled --growth
+      }
 
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }

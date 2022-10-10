@@ -46,3 +46,9 @@ memory leak in that case.
 
 How about md5sum? Totally works. Though I need to update the usage info for
 md5 to point to the right example module /Md5/Main%.
+
+---
+
+Next steps:
+1. Decide how to cleanly handle build with different architectures.
+2. Figure out why sdl doesn't work on windows.
