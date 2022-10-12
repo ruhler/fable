@@ -175,4 +175,66 @@ void FbleGenerateAArch64Export(FILE* fout, const char* name, FbleModulePath* pat
 // * Generates aarch64 code for the given code.
 void FbleGenerateAArch64Main(FILE* fout, const char* main, FbleModulePath* path);
 
+// FbleGenerateC --
+//   Generate C code for an fble compiled module.
+//
+// The generated code will export a single function named based on the
+// module path with the following signature:
+//  
+//   void <name>(FbleCompiledProgram* program);
+//
+// Calling this function will append this module to the given program if it
+// does not already belong to the given program.
+//
+// Inputs:
+//   fout - the output stream to write the C code to.
+//   module - the module to generate code for.
+//
+// Side effects:
+// * Generates C code for the given code.
+void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
+
+// FbleGenerateCExport --
+//   Generate C code to export the code for a compiled module.
+//
+// The generated code will export a single function with the given name with
+// the following signature
+//  
+//   FbleValue* <name>(FbleValueHeap* heap);
+//
+// Calling this function will allocate an FbleValue representing a zero
+// argument function that can be executed to compute the value of the given
+// module.
+//
+// Inputs:
+//   fout - the output stream to write the C code to.
+//   name - the name of the function to generate.
+//   path - the path to the module to export.
+//
+// Side effects:
+// * Generates C code for the given code.
+void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path);
+
+// FbleGenerateCMain --
+//   Generate C code for a main function that invokes a compiled module
+//   with the given wrapper function.
+//
+// The generated code will export a main function of the following form:
+//  
+// int main(int argc, const char** argv) {
+//   return <main>(argc, argv, <compiled module>);
+// }
+//
+// Where <compiled module> is the FbleCompiledModuleFunction* corresponding to
+// the given module path.
+//
+// Inputs:
+//   fout - the output stream to write the C code to.
+//   main - the name of the wrapper function to invoke.
+//   path - the path to the module to pass to the wrapper function.
+//
+// Side effects:
+// * Generates C code for the given code.
+void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path);
+
 #endif // FBLE_COMPILE_H_

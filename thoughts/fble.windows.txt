@@ -52,3 +52,38 @@ md5 to point to the right example module /Md5/Main%.
 Next steps:
 1. Decide how to cleanly handle build with different architectures.
 2. Figure out why sdl doesn't work on windows.
+ - Maybe because it's an X based sdl implementation, so I would need to
+   start an X server?
+
+In terms of cleanly handling the build with different architectures, it's
+really hard to say before we support different architectures.
+
+Imagine we support the following targets: aarch64, x86_64, c.
+
+Ideally we want to generate code for all architectures, regardless of what
+machine you are running on. But we would only want to do final compile, link,
+and run for architectures your machine supports. Note that in the example
+above, there could be more than one path that works on your machine, e.g.
+aarch64 and c.
+
+Current logic in build system is something like:
+
+if {$::arch == "aarch64"} {
+  build rules for thing that is compiled.
+}
+
+Now it seems I want something like:
+
+foreach arch $archs {
+  build rules for generating arch.
+  if machine_supports arch
+     final compile, link, run rules for arch.
+}
+
+It's tough on composition though, because often we want a single function that
+does the build rules and final compile, link, and run rules.
+
+Really, the best would be if we could generate C code and have that be fast
+enough.
+
+

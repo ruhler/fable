@@ -16,6 +16,11 @@
 #define EX_USAGE 2
 
 static void PrintUsage(FILE* stream);
+
+typedef enum {
+  TARGET_AARCH64,
+  TARGET_C
+} Target;
 
 // PrintUsage --
 //   Prints help info to the given output stream.
@@ -34,7 +39,7 @@ static void PrintUsage(FILE* stream)
       "Usage: fble-compile [OPTIONS...] -m MODULE_PATH\n"
       "\n"
       "Description:\n"
-      "  Compiles an fble module to assembly code.\n"
+      "  Compiles an fble module.\n"
       "\n"
       "Options:\n"
       "  -h, --help\n"
@@ -43,8 +48,11 @@ static void PrintUsage(FILE* stream)
       "    Add DIR to the module search path.\n"
       "  -m, --module MODULE_PATH\n"
       "     The path of the module to get dependencies for.\n"
+      "  -t, --target [aarch64 | c]\n"
+      "     Specify whether generate aarch64 assembly or c code.\n"
+      "     Defaults to aarch64.\n"
       "  -c, --compile\n"
-      "    Compile the module to assembly.\n"
+      "    Compile the module.\n"
       "  -e, --export NAME\n"
       "    Generate a function with the given NAME to export the module.\n"
       "  --main NAME\n"
@@ -84,6 +92,7 @@ int main(int argc, const char* argv[])
   const char* export = NULL;
   const char* main_ = NULL;
   const char* mpath_string = NULL;
+  const char* target_string = "aarch64";
   bool help = false;
   bool error = false;
 
@@ -95,6 +104,8 @@ int main(int argc, const char* argv[])
     if (FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("-t", &target_string, &argc, &argv, &error)) continue;
+    if (FbleParseStringArg("--target", &target_string, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("-c", &compile, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--compile", &compile, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-e", &export, &argc, &argv, &error)) continue;
@@ -115,6 +126,18 @@ int main(int argc, const char* argv[])
     return EX_USAGE;
   }
 
+  Target target;
+  if (strcmp(target_string, "aarch64") == 0) {
+    target = TARGET_AARCH64;
+  } else if (strcmp(target_string, "c") == 0) {
+    target = TARGET_C;
+  } else {
+    fprintf(stderr, "unsupported target '%s'\n", target_string);
+    PrintUsage(stderr);
+    FbleFree(search_path.xs);
+    return EX_USAGE;
+  }
+
   if (!compile && export == NULL && main_ == NULL) {
     fprintf(stderr, "one of --export NAME, --compile, or --main NAME must be specified.\n");
     PrintUsage(stderr);
@@ -129,11 +152,17 @@ int main(int argc, const char* argv[])
   }
 
   if (export != NULL) {
-    FbleGenerateAArch64Export(stdout, export, mpath);
+    switch (target) {
+      case TARGET_AARCH64: FbleGenerateAArch64Export(stdout, export, mpath); break;
+      case TARGET_C: FbleGenerateCExport(stdout, export, mpath); break;
+    }
   }
 
   if (main_ != NULL) {
-    FbleGenerateAArch64Main(stdout, main_, mpath);
+    switch (target) {
+      case TARGET_AARCH64: FbleGenerateAArch64Main(stdout, main_, mpath); break;
+      case TARGET_C: FbleGenerateCMain(stdout, main_, mpath); break;
+    }
   }
 
   if (compile) {
@@ -156,7 +185,10 @@ int main(int argc, const char* argv[])
     FbleFreeModulePath(module->path);
     module->path = FbleCopyModulePath(mpath);
 
-    FbleGenerateAArch64(stdout, module);
+    switch (target) {
+      case TARGET_AARCH64: FbleGenerateAArch64(stdout, module); break;
+      case TARGET_C: FbleGenerateC(stdout, module); break;
+    }
 
     FbleFreeCompiledModule(module);
   }

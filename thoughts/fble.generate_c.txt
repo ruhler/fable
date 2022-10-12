@@ -1,0 +1,38 @@
+Fble Generate C
+===============
+It's been a while since we tried generating c code for fble compilation. Now
+that we're considering cross platform support, seems like it's worth trying
+again.
+
+The problem we had with generating C before was that it took too much memory
+(>1GB) to compile the generated C code. A lot of things have changed in fble
+since then. Perhaps most importantly, we pass list and literals all the way
+through the compiler instead of desugaring them first. Also, we are single
+threaded now and have a standard way of supporting tail recursion at the C
+level.
+
+The benefits of generating C code are:
+* Support all platforms we can build fble for without any extra dependencies.
+
+The potential disadvantages of C code, compared to custom assembly:
+* Compile time memory and performance costs.
+* Runtime performance costs.
+
+My vote is to give it a try, again. See if we can get past the compile time
+memory costs and how close we can get to runtime performance. This will help a
+lot for cross platform support.
+
+How about I do it from scratch, ish. Based of generate_aarch64.
+
+Initial thoughts looking over generate_aarch64:
+* I think there's a lot of code we can reuse from aarch64. My vote is reuse by
+  copy-paste, under the assumption we keep either one or the other in the end,
+  but likely not both.
+* Function args: heap, thread, locals, statics, profile
+* Don't worry about debug info to start.
+
+There will be some tricky parts, but for the most part, I think it should be
+straight forward.
+
+First step: wire up some stub code and make it so I can run it.
+
