@@ -36,3 +36,13 @@ straight forward.
 
 First step: wire up some stub code and make it so I can run it.
 
+---
+
+How can we do debug info? Like, what does bison do in its generated code?
+
+We have pragmas like:
+
+#line 3 "fble/lib/parse.y"
+
+Let's start with that then.
+

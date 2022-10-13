@@ -23,7 +23,7 @@
 //
 // The number is turned into a label using printf format LABEL.
 typedef unsigned int LabelId;
-#define LABEL ".L.%x"
+#define LABEL "l%x"
 
 typedef struct {
   size_t size;
@@ -1363,48 +1363,9 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocksAndLocs(&blocks, &locs, module->code);
 
-  fprintf(fout, "  .file 1 \"%s\"\n", module->path->loc.source->str);
-
-  // Common things we hold in callee saved registers for Run and Abort
-  // functions.
-  fprintf(fout, "  R_HEAP .req x19\n");
-  fprintf(fout, "  R_LOCALS .req x20\n");
-  fprintf(fout, "  R_STATICS .req x21\n");
-  fprintf(fout, "  R_PROFILE .req x22\n");
-  fprintf(fout, "  R_PROFILE_BASE_ID .req x23\n");
-  fprintf(fout, "  R_SCRATCH_0 .req x24\n");
-  fprintf(fout, "  R_SCRATCH_1 .req x25\n");
-
-  // Error messages.
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, ".L.ErrorFormatString:\n");
-  fprintf(fout, "  .string \"%%s:%%d:%%d: error: %%s\"\n");
-  fprintf(fout, ".L.UndefinedStructValue:\n");
-  fprintf(fout, "  .string \"undefined struct value access\\n\"\n");
-  fprintf(fout, ".L.UndefinedUnionValue:\n");
-  fprintf(fout, "  .string \"undefined union value access\\n\";\n");
-  fprintf(fout, ".L.UndefinedUnionSelect:\n");
-  fprintf(fout, "  .string \"undefined union value select\\n\";\n");
-  fprintf(fout, ".L.WrongUnionTag:\n");
-  fprintf(fout, "  .string \"union field access undefined: wrong tag\\n\";\n");
-  fprintf(fout, ".L.UndefinedFunctionValue:\n");
-  fprintf(fout, "  .string \"called undefined function\\n\";\n");
-  fprintf(fout, ".L.VacuousValue:\n");
-  fprintf(fout, "  .string \"vacuous value\\n\";\n");
-
-  // Definitions of source code locations.
-  for (size_t i = 0; i < locs.size; ++i) {
-    char label[SizeofSanitizedString(locs.xs[i])];
-    SanitizeString(locs.xs[i], label);
-    fprintf(fout, ".L.loc.%s:\n  .string \"%s\"\n", label, locs.xs[i]);
-  }
-
-  fprintf(fout, "  .text\n");
-  fprintf(fout, "  .align 2\n");
-  fprintf(fout, ".Llow_pc:\n");
+  fprintf(fout, "#line 1 \"%s\"\n", module->path->loc.source->str);
 
   FbleNameV profile_blocks = module->code->_base.profile_blocks;
-
   for (int i = 0; i < blocks.size; ++i) {
     // RunFunction
     EmitCode(fout, profile_blocks, blocks.xs[i]);
@@ -1413,192 +1374,23 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   LabelId label_id = 0;
   LabelId module_id = StaticExecutableModule(fout, &label_id, module);
-  LabelId deps_id = label_id++;
 
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, LABEL ":\n", deps_id);
+  LabelId deps_id = label_id++;
+  fprintf(fout, "FbleCompiledModuleFunction* " LABEL "[] = {\n", deps_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleString* dep_name = LabelForPath(module->deps.xs[i]);
-    fprintf(fout, "  .xword %s\n", dep_name->str);
+    fprintf(fout, "  %s\n", dep_name->str);
     FbleFreeString(dep_name);
   }
+  fprintf(fout, "}\n");
 
   FbleString* func_name = LabelForPath(module->path);
-  fprintf(fout, "  .text\n");
-  fprintf(fout, "  .align 2\n");
-  fprintf(fout, "  .global %s\n", func_name->str);
-  fprintf(fout, "%s:\n", func_name->str);
-  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
-  fprintf(fout, "  mov FP, SP\n");
-
-  Adr(fout, "x1", LABEL, module_id);
-  fprintf(fout, "  mov x2, %zi\n", module->deps.size);
-  Adr(fout, "x3", LABEL, deps_id);
-  fprintf(fout, "  bl FbleLoadFromCompiled\n");
-
-  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
-  fprintf(fout, "  ret\n");
-  fprintf(fout, ".Lhigh_pc:\n");
+  fprintf(fout, "void %s(FbleCompiledProgram* program)\n", func_name->str);
+  fprintf(fout, "{\n");
+  fprintf(fout, "  FbleLoadFromCompiled(program, " LABEL ", %zi, " LABEL ");\n",
+      module_id, module->deps.size, deps_id);
+  fprintf(fout, "}\n");
   FbleFreeString(func_name);
-
-  // Emit dwarf debug info.
-  fprintf(fout, "  .section .debug_info\n");
-
-  // Compilation Unit Header
-  fprintf(fout, ".Ldebug_info:\n");
-  fprintf(fout, "  .4byte .Ldebug_info_end-.Ldebug_info-4\n");  // length
-  fprintf(fout, "  .2byte 2\n");                // DWARF version 2
-  fprintf(fout, "  .4byte .Ldebug_abbrev\n");   // .debug_abbrev offset
-  fprintf(fout, "  .byte 8\n");                 // pointer size in bytes
-
-  // compile_unit entry
-  char cwd[1024];
-  char* gotten = getcwd(cwd, 1024);
-  assert(gotten && "TODO: handle longer paths");
-  fprintf(fout, "  .uleb128 1\n");       // abbrev code for compile_unit
-  fprintf(fout, "  .8byte .Llow_pc\n");  // low_pc value.
-  fprintf(fout, "  .8byte .Lhigh_pc\n"); // high_pc value.
-  fprintf(fout, "  .string \"%s\"\n",    // source file name.
-      module->path->loc.source->str);    
-  fprintf(fout, "  .4byte .Ldebug_line\n");          // stmt_list offset.
-  fprintf(fout, "  .string \"%s\"\n", cwd); // compilation directory.
-  fprintf(fout, "  .string \"FBLE\"\n"); // producer.
-
-  // FbleValue* type entry
-  fprintf(fout, ".LFbleValuePointerType:\n");
-  fprintf(fout, "  .uleb128 4\n");       // abbrev code for point type
-  fprintf(fout, "  .byte 8\n");          // bite_size value
-  fprintf(fout, "  .8byte .LFbleValueStructType\n");  // type value
-
-  fprintf(fout, ".LFbleValueStructType:\n");
-  fprintf(fout, "  .uleb128 5\n");            // abbrev code for structure type
-  fprintf(fout, "  .string \"FbleValue\"\n"); // name
-  fprintf(fout, "  .byte 1\n");               // declaration
-
-  // subprogram entries
-  for (int i = 0; i < blocks.size; ++i) {
-    FbleCode* code = blocks.xs[i];
-
-    FbleName function_block = profile_blocks.xs[code->_base.profile];
-    char function_label[SizeofSanitizedString(function_block.name->str)];
-    SanitizeString(function_block.name->str, function_label);
-
-    fprintf(fout, "  .uleb128 2\n");       // abbrev code for subprogram.
-    fprintf(fout, "  .string \"%s\"\n",    // source function name.
-        function_block.name->str);
-
-    // low_pc and high_pc attributes.
-    fprintf(fout, "  .8byte _Run.%p.%s\n", (void*)code, function_label);
-    fprintf(fout, "  .8byte .L.%p.%s.high_pc\n", (void*)code, function_label);
-
-    for (size_t j = 0; j < code->instrs.size; ++j) {
-      FbleInstr* instr = code->instrs.xs[j];
-      for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
-        if (info->tag == FBLE_VAR_DEBUG_INFO) {
-          FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
-          fprintf(fout, "  .uleb128 3\n");  // abbrev code for var.
-
-          // variable name.
-          fprintf(fout, "  .string \"");
-          FblePrintName(fout, var->var);
-          fprintf(fout, "\"\n");
-
-          // location.
-          static const char* sections[] = { "0x85", "0x84"};
-          fprintf(fout, "  .byte 1f - 0f\n");   // length of block.
-          fprintf(fout, "0:\n");
-          fprintf(fout, "  .byte %s\n", sections[var->index.section]);
-          fprintf(fout, "  .sleb128 %zi\n", sizeof(FbleValue*) * var->index.index);
-          fprintf(fout, "1:\n");
-
-          // start_scope
-          fprintf(fout, "  .8byte .L._Run_%p.pc.%zi - _Run.%p.%s\n",
-              (void*)code, j,
-              (void*)code, function_label);
-
-          // type
-          fprintf(fout, "  .8byte .LFbleValuePointerType\n");
-        }
-      }
-    }
-    fprintf(fout, "  .uleb128 0\n");    // abbrev code for NULL (end of list).
-  };
-
-  fprintf(fout, "  .uleb128 0\n");    // abbrev code for NULL (end of list).
-
-  fprintf(fout, ".Ldebug_info_end:\n");
-
-  fprintf(fout, "  .section .debug_abbrev\n");
-  fprintf(fout, ".Ldebug_abbrev:\n");
-  fprintf(fout, "  .uleb128 1\n");     // compile_unit abbrev code declaration
-  fprintf(fout, "  .uleb128 0x11\n");  // DW_TAG_compile_unit
-  fprintf(fout, "  .byte 1\n");        // DW_CHILDREN_yes
-  fprintf(fout, "  .uleb128 0x11\n");  // DW_AT_low_pc
-  fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
-  fprintf(fout, "  .uleb128 0x12\n");  // DW_AT_high_pc
-  fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
-  fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
-  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
-  fprintf(fout, "  .uleb128 0x10\n");  // DW_AT_stmt_list
-  fprintf(fout, "  .uleb128 0x06\n");  // DW_FORM_data4 (expected by dwarfdump)
-  fprintf(fout, "  .uleb128 0x1b\n");  // DW_AT_comp_dir
-  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
-  fprintf(fout, "  .uleb128 0x25\n");  // DW_AT_producer
-  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
-
-  fprintf(fout, "  .uleb128 2\n");     // subprogram abbrev code declaration
-  fprintf(fout, "  .uleb128 0x2e\n");  // DW_TAG_subprogram
-  fprintf(fout, "  .byte 1\n");        // DW_CHILDREN_yes
-  fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
-  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
-  fprintf(fout, "  .uleb128 0x11\n");  // DW_AT_low_pc
-  fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
-  fprintf(fout, "  .uleb128 0x12\n");  // DW_AT_high_pc
-  fprintf(fout, "  .uleb128 0x01\n");  // DW_FORM_addr
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
-
-  fprintf(fout, "  .uleb128 3\n");     // var abbrev code declaration
-  fprintf(fout, "  .uleb128 0x34\n");  // DW_TAG_variable
-  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_yes
-  fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
-  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
-  fprintf(fout, "  .uleb128 0x02\n");  // DW_AT_location
-  fprintf(fout, "  .uleb128 0x0a\n");  // DW_FORM_block1
-  fprintf(fout, "  .uleb128 0x2c\n");  // DW_AT_start_scope
-  fprintf(fout, "  .uleb128 0x07\n");  // DW_FORM_data8
-  fprintf(fout, "  .uleb128 0x49\n");  // DW_AT_type
-  fprintf(fout, "  .uleb128 0x10\n");  // DW_FORM_ref_addr
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
-
-  fprintf(fout, "  .uleb128 4\n");     // pointer type abbrev code declaration
-  fprintf(fout, "  .uleb128 0x0f\n");  // DW_TAG_pointer_type
-  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_no
-  fprintf(fout, "  .uleb128 0x0b\n");  // DW_AT_byte_size
-  fprintf(fout, "  .uleb128 0x0b\n");  // DW_FORM_data1
-  fprintf(fout, "  .uleb128 0x49\n");  // DW_AT_type
-  fprintf(fout, "  .uleb128 0x10\n");  // DW_FORM_ref_addr
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
-
-  fprintf(fout, "  .uleb128 5\n");     // struct type abbrev code declaration
-  fprintf(fout, "  .uleb128 0x13\n");  // DW_TAG_structure_type
-  fprintf(fout, "  .byte 0\n");        // DW_CHILDREN_no
-  fprintf(fout, "  .uleb128 0x03\n");  // DW_AT_name
-  fprintf(fout, "  .uleb128 0x08\n");  // DW_FORM_string
-  fprintf(fout, "  .uleb128 0x3c\n");  // DW_AT_declaration
-  fprintf(fout, "  .uleb128 0x0c\n");  // DW_FORM_flag
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute NAME
-  fprintf(fout, "  .uleb128 0\n");     // NULL attribute FORM
-
-  fprintf(fout, "  .uleb128 0\n");     // End of abbrev declarations.
-
-  fprintf(fout, "  .section .debug_line\n");
-  fprintf(fout, ".Ldebug_line:\n");
 
   FbleFree(blocks.xs);
   FbleFree(locs.xs);
@@ -1607,38 +1399,24 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 // FbleGenerateCExport -- see documentation in fble-compile.h
 void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
-  fprintf(fout, "  .text\n");
-  fprintf(fout, "  .align 2\n");
-  fprintf(fout, "  .global %s\n", name);
-  fprintf(fout, "%s:\n", name);
-  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
-  fprintf(fout, "  mov FP, SP\n");
-
   FbleString* module_name = LabelForPath(path);
-  fprintf(fout, "  bl %s\n\n", module_name->str);
-  FbleFreeString(module_name);
 
-  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
-  fprintf(fout, "  ret\n");
+  fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", name);
+  fprintf(fout, "{\n");
+  fprintf(fout, "  return %s(heap)\n", module_name->str);
+  fprintf(fout, "}\n");
+  FbleFreeString(module_name);
 }
 
 // FbleGenerateCMain -- see documentation in fble-compile.h
 void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path)
 {
-  fprintf(fout, "  .text\n");
-  fprintf(fout, "  .align 2\n");
-  fprintf(fout, "  .global main\n");
-  fprintf(fout, "main:\n");
-  fprintf(fout, "  stp FP, LR, [SP, #-16]!\n");
-  fprintf(fout, "  mov FP, SP\n");
-
   FbleString* module_name = LabelForPath(path);
-  Adr(fout, "x2", "%s", module_name->str);
+
+  fprintf(fout, "int main(int argc, const char** argv)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  return %s(argc, argv, %s);\n", main, module_name->str);
+  fprintf(fout, "}\n");
+
   FbleFreeString(module_name);
-
-  Adr(fout, "x3", "%s", main);
-
-  fprintf(fout, "  br x3\n");
-  fprintf(fout, "  ldp FP, LR, [SP], #16\n");
-  fprintf(fout, "  ret\n");
 }

@@ -92,7 +92,7 @@ int main(int argc, const char* argv[])
   const char* export = NULL;
   const char* main_ = NULL;
   const char* mpath_string = NULL;
-  const char* target_string = "aarch64";
+  const char* target_string = NULL;
   bool help = false;
   bool error = false;
 
@@ -127,7 +127,9 @@ int main(int argc, const char* argv[])
   }
 
   Target target;
-  if (strcmp(target_string, "aarch64") == 0) {
+  if (target_string == NULL) {
+    target = TARGET_AARCH64;
+  } else if (strcmp(target_string, "aarch64") == 0) {
     target = TARGET_AARCH64;
   } else if (strcmp(target_string, "c") == 0) {
     target = TARGET_C;
