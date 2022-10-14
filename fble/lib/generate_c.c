@@ -71,8 +71,6 @@ static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index);
 static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
 static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
 
-static size_t StackBytesForCount(size_t count);
-
 static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
@@ -391,53 +389,17 @@ static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
 //   fout - the output stream.
 //   code - pointer to current code block to use for labels.
 //   pc - the program counter of the abort location.
-//   lmsg - the label of the error message to use.
+//   msg - the error message to use.
 //   loc - the location to report with the error message.
 //
 // Side effects:
 //   Emit code to return the error.
-static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc)
+static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* msg, FbleLoc loc)
 {
-  // stack->pc = pc
-  fprintf(fout, "  ldr x0, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-  fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleThread, stack));
-  fprintf(fout, "  mov x1, #%zi\n", pc);    // x1 = pc
-  fprintf(fout, "  str x1, [x0, #%zi]\n", offsetof(FbleStack, pc));
-
-  // Print error message.
-  Adr(fout, "x0", "stderr");
-  fprintf(fout, "  ldr x0, [x0]\n");
-  Adr(fout, "x1", ".L.ErrorFormatString");
-
-  char label[SizeofSanitizedString(loc.source->str)];
-  SanitizeString(loc.source->str, label);
-  Adr(fout, "x2", ".L.loc.%s", label);
-
-  fprintf(fout, "  mov x3, %i\n", loc.line);
-  fprintf(fout, "  mov x4, %i\n", loc.col);
-  Adr(fout, "x5", "%s", lmsg);
-  fprintf(fout, "  bl fprintf\n");
-
-  // Return FBLE_EXEC_ABORTED
-  fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
-  fprintf(fout, "  b .L._Run_.%p.exit\n", code);
-}
-
-// StackBytesForCount --
-//   Calculate a 16 byte aligned number of bytes sufficient to store count
-//   xwords.
-//
-// Inputs:
-//   count - the number of xwords.
-//
-// Returns:
-//   The number of bytes to allocate on the stack.
-//
-// Side effects:
-//   None.
-static size_t StackBytesForCount(size_t count)
-{
-  return 16 * ((count + 1) / 2);
+  fprintf(fout, "  thread->stack->pc = %zi;\n", pc);
+  fprintf(fout, "  fprintf(stderr, \"%s:%d:%d: error: %s\\n\");\n",
+      loc.source->str, loc.line, loc.col, msg);
+  fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
 }
 
 // Adr --
@@ -612,70 +574,58 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-      fprintf(fout, "  .section .data\n");
-      fprintf(fout, "  .align 3\n");
-      fprintf(fout, ".L._Run_%p.%zi.exe:\n", code, pc);
-      fprintf(fout, "  .xword 1\n");                          // .refcount
-      fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.args);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.statics);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.locals);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.profile);
-      fprintf(fout, "  .xword 0\n"); // .profile_blocks.size
-      fprintf(fout, "  .xword 0\n"); // .profile_blocks.xs
 
       FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile];
       char function_label[SizeofSanitizedString(function_block.name->str)];
       SanitizeString(function_block.name->str, function_label);
-      fprintf(fout, "  .xword _Run.%p.%s\n", (void*)func_instr->code, function_label);
-      fprintf(fout, "  .xword _Abort.%p.%s\n", (void*)func_instr->code, function_label);
-      fprintf(fout, "  .xword 0\n"); // .on_free
 
-      fprintf(fout, "  .text\n");
-      fprintf(fout, "  .align 2\n");
+      fprintf(fout, "  {\n");
+      fprintf(fout, "    static FbleExecutable e = {\n");
+      fprintf(fout, "      .refcount = 1,\n");
+      fprintf(fout, "      .magic = FBLE_EXECUTABLE_MAGIC,\n");
+      fprintf(fout, "      .args = %zi,\n", func_instr->code->_base.args);
+      fprintf(fout, "      .statics = %zi,\n", func_instr->code->_base.statics);
+      fprintf(fout, "      .locals = %zi,\n", func_instr->code->_base.locals);
+      fprintf(fout, "      .profile = %zi\n", func_instr->code->_base.profile);
+      fprintf(fout, "      .profile_blocks = { .size = 0, .xs = NULL 0},\n");
+      fprintf(fout, "      .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
+      fprintf(fout, "      .abort = &_Abort_%p_%s,\n", (void*)func_instr->code, function_label);
+      fprintf(fout, "      .on_free = NULL\n");
+      fprintf(fout, "    };\n");
 
-      // Allocate space for the statics array on the stack.
-      size_t sp_offset = StackBytesForCount(func_instr->code->_base.statics);
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      fprintf(fout, "    FbleValue* statics[%zi];\n", func_instr->code->_base.statics);
       for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
-        GetFrameVar(fout, "x0", func_instr->scope.xs[i]);
-        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+        fprintf(fout, "    statics[%zi] = %s[%zi];\n", i,
+            section[func_instr->scope.xs[i].section],
+            func_instr->scope.xs[i].index);
       }
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      Adr(fout, "x1", ".L._Run_%p.%zi.exe", code, pc);
-      fprintf(fout, "  mov x2, R_PROFILE_BASE_ID\n");
-      fprintf(fout, "  mov x3, SP\n");
-      fprintf(fout, "  bl FbleNewFuncValue\n");
-      SetFrameVar(fout, "x0", func_instr->dest);
-
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
+      fprintf(fout, "    l[%zi] = FbleNewFuncValue(heap, &e, profile_base_id, statics)\n",
+          func_instr->dest);
+      fprintf(fout, "  }\n");
       return;
     }
 
     case FBLE_CALL_INSTR: {
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      GetFrameVar(fout, "x0", call_instr->func);
-      fprintf(fout, "  bl FbleStrictValue\n");
-      fprintf(fout, "  mov R_SCRATCH_0, x0\n");
 
-      fprintf(fout, "  cbnz R_SCRATCH_0, .L.%p.%zi.ok\n", code, pc);
-      ReturnAbort(fout, code, pc, ".L.UndefinedFunctionValue", call_instr->loc);
+      fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+          section[call_instr->func.section],
+          call_instr->func.index);
+      fprintf(fout, "  if (!x0) {\n");
+      ReturnAbort(fout, code, pc, "called undefined function", call_instr->loc);
+      fprintf(fout, "  }\n");
 
-      fprintf(fout, ".L.%p.%zi.ok:\n", code, pc);
-
-      // Allocate space for the arguments array on the stack.
-      size_t sp_offset = StackBytesForCount(call_instr->args.size);
-      fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
+      fprintf(fout, "  {\n");
+      fprintf(fout, "    FbleValue* args[%zi];\n", call_instr->args.size);
       for (size_t i = 0; i < call_instr->args.size; ++i) {
-        GetFrameVar(fout, "x0", call_instr->args.xs[i]);
-        fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
+        fprintf(fout, "    args[%zi] = %s[%zi];\n", i,
+            section[call_instr->args.xs[i].section],
+            call_instr->args.xs[i].index);
       }
 
       if (call_instr->exit) {
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  mov x1, R_SCRATCH_0\n");
-        fprintf(fout, "  bl FbleRetainValue\n");
+        fprintf(fout, "    FbleRetainValue(heap, x0);\n");
 
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           // We need to do a Retain on every arg from statics. For args from
@@ -692,57 +642,22 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
           }
 
           if (retain) {
-            fprintf(fout, "  mov x0, R_HEAP\n");
-            fprintf(fout, "  ldr x1, [SP, #%zi]\n", sizeof(FbleValue*)*i);
-            fprintf(fout, "  bl FbleRetainValue\n");
+            fprintf(fout, "    FbleRetainValue(heap, args[%zi]);\n", i);
           }
         }
 
         if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
-          fprintf(fout, "  mov x0, R_HEAP\n");
-          fprintf(fout, "  ldr x1, [R_LOCALS, #%zi]\n", sizeof(FbleValue*)*call_instr->func.index);
-          fprintf(fout, "  bl FbleReleaseValue\n");
+          fprintf(fout, "    FbleReleaseValue(heap, l[%zi])\n", call_instr->func.index);
         }
 
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  mov x1, R_SCRATCH_0\n");                   // func
-        fprintf(fout, "  mov x2, SP\n");                            // args
-        fprintf(fout, "  ldr x3, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread));
-        fprintf(fout, "  bl FbleThreadTailCall\n");
-
-        fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
-        fprintf(fout, "  mov x0, R_SCRATCH_0\n");
-
-        // Restore stack and frame pointer and do a tail call.
-        fprintf(fout, "  bl FbleFuncValueExecutable\n");
-        fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleExecutable, run));
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-        fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
-        fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
-        fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-        fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
-        fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
-        fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
-        fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
-        fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
-        fprintf(fout, "  br x4\n");
+        fprintf(fout, "    FbleThreadTailCall(heap, x0, args, thread);\n");
+        fprintf(fout, "    return FBLE_EXEC_CONTINUED;\n");
         return;
       }
 
       // stack->pc = pc + 1
-      fprintf(fout, "  ldr x0, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread));
-      fprintf(fout, "  ldr x0, [x0, #%zi]\n", offsetof(FbleThread, stack));
-      fprintf(fout, "  mov x1, #%zi\n", pc + 1);  // x1 = pc + 1
-      fprintf(fout, "  str x1, [x0, #%zi]\n", offsetof(FbleStack, pc));
-
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  add x1, R_LOCALS, #%zi\n", sizeof(FbleValue*)*call_instr->dest);
-      fprintf(fout, "  mov x2, R_SCRATCH_0\n");   // func
-      fprintf(fout, "  mov x3, SP\n");
-      fprintf(fout, "  ldr x4, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread)); // thread
-      fprintf(fout, "  bl FbleThreadCall\n");
-      fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
+      fprintf(fout, "    thread->stack->pc = %zi;\n", pc + 1);
+      fprintf(fout, "    FbleThreadCall(heap, l+%zi, x0, args, thread);\n", call_instr->dest);
 
       // Call the function repeatedly for as long as it results in
       // FBLE_EXEC_CONTINUED.
@@ -875,7 +790,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "#line %d\n", function_block.loc.line);
-  fprintf(fout, "FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread)\n", (void*)code, function_label);
+  fprintf(fout, "static FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread)\n", (void*)code, function_label);
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleProfilethread* profile = thread->profile;\n");
   fprintf(fout, "  FbleStack* stack = thread->stack;\n");
