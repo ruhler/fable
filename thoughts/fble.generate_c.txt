@@ -137,3 +137,25 @@ It might be fun to try compiling everything with generate_c on my windows
 computer, which is x86_64 and has lots of memory. Just to see if it works and
 maybe try running some benchmarks to compare interpreted, aarch64, and c.
 
+---
+
+The compiler appears to work fine on my windows computer. Max memory use I see
+for compilation is around 500MB, which suggests perhaps we're close to being
+able to do it on my Raspberry pi. Things that need to change to be able to
+check this in:
+* Distinguish better between hand written c code and generated c. In
+  particular, we need different names for object files in both cases, e.g.
+  Stdio/stdio.fble.o could be from Stdio/stdio.fble.c or Stdio/Stdio.fble.
+  Don't assume case is sufficient to distinguish them.
+* Use fbleobj instead of manual invocation to fble-compile where possible.
+* Figure out how to decide which approach to build with: one, the other, or
+  both.
+
+It would be great to set up some benchmarks to understand how performance is
+looking on c versus aarch64 target.
+
+The path to getting rid of aarch64 target:
+* Check in cleaned up changes to avoid name conflict in stdio.fble.o file and
+  friends.
+* Get it to compile on low memory.
+* Setup benchmarks, check if they are within, say, 20% of aarch64.

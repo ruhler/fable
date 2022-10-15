@@ -86,4 +86,9 @@ does the build rules and final compile, link, and run rules.
 Really, the best would be if we could generate C code and have that be fast
 enough.
 
+---
 
+Using generated C code:
+* Windows filesystem looks like it's not case sensitive, which is leading to a
+  conflict in name between generated c code for a module, and, for example,
+  the hand written stdio.fble.c code. I'll want to clean that up.
