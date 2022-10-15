@@ -138,11 +138,10 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module);
 // The generated code will export a single function with the given name with
 // the following signature
 //  
-//   FbleValue* <name>(FbleValueHeap* heap);
+//   void <name>(FbleExecutableProgram* program);
 //
-// Calling this function will allocate an FbleValue representing a zero
-// argument function that can be executed to compute the value of the given
-// module.
+// Calling this function add the module and any dependencies to the given
+// executable program.
 //
 // Inputs:
 //   fout - the output stream to write the C code to.
@@ -200,11 +199,10 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module);
 // The generated code will export a single function with the given name with
 // the following signature
 //  
-//   FbleValue* <name>(FbleValueHeap* heap);
+//   void <name>(FbleExecutableProgram* program);
 //
-// Calling this function will allocate an FbleValue representing a zero
-// argument function that can be executed to compute the value of the given
-// module.
+// Calling this function add the module and any dependencies to the given
+// executable program.
 //
 // Inputs:
 //   fout - the output stream to write the C code to.

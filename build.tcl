@@ -177,8 +177,10 @@ proc dirs { root dir } {
 proc fbleobj { obj compile compileargs args } {
   set s [string map {.o .s} $obj]
   build $s "$compile $args" "$compile $compileargs > $s"
-
   set cmd "as -o $obj $s"
+  #set c [string map {.o .c} $obj]
+  #build $c "$compile $args" "$compile -t c $compileargs > $c"
+  #set cmd "gcc -c -o $obj -I fble/include -I fble/lib $c"
   build $obj "$s $args" $cmd
 }
 

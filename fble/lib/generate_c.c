@@ -173,8 +173,8 @@ static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
   LabelId id = (*label_id)++;
 
   fprintf(fout, "static FbleString " LABEL " = {\n", id);
-  fprintf(fout, "  .refcount = 1\n");
-  fprintf(fout, "  .magic = FBLE_STRING_MAGIC\n");
+  fprintf(fout, "  .refcount = 1,\n");
+  fprintf(fout, "  .magic = FBLE_STRING_MAGIC,\n");
   fprintf(fout, "  .str = ");
   StringLit(fout, string);
   fprintf(fout, "\n};\n");
@@ -206,11 +206,12 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
   LabelId id = (*label_id)++;
   fprintf(fout, "static FbleName " LABEL "[] = {\n", id);
   for (size_t i = 0; i < names.size; ++i) {
-    fprintf(fout, "  { .name = " LABEL ",\n", str_ids[i]);
-    fprintf(fout, "    .space = %i\n", names.xs[i].space);
-    fprintf(fout, "    .loc = { .src = " LABEL ", .line = %i, .col = %i }},\n",
+    fprintf(fout, "  { .name = &" LABEL ",\n", str_ids[i]);
+    fprintf(fout, "    .space = %i,\n", names.xs[i].space);
+    fprintf(fout, "    .loc = { .source = &" LABEL ", .line = %i, .col = %i }},\n",
         src_ids[i], names.xs[i].loc.line, names.xs[i].loc.col);
   }
+  fprintf(fout, "};\n");
   return id;
 }
 
@@ -237,10 +238,11 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
   fprintf(fout, "static FbleModulePath " LABEL " = {\n", path_id);
   fprintf(fout, "  .refcount = 1,\n");
   fprintf(fout, "  .magic = FBLE_MODULE_PATH_MAGIC,\n");
-  fprintf(fout, "  .loc = { .src = " LABEL ", .line = %i, .loc = %i },\n",
+  fprintf(fout, "  .loc = { .source = &" LABEL ", .line = %i, .col = %i },\n",
       src_id, path->loc.line, path->loc.col);
-  fprintf(fout, "  .path = { .size = %zi, .xs = " LABEL "}\n",
+  fprintf(fout, "  .path = { .size = %zi, .xs = " LABEL "},\n",
       path->path.size, names_id);
+  fprintf(fout, "};\n");
   return path_id;
 }
 
@@ -270,7 +272,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   LabelId deps_xs_id = (*label_id)++;
   fprintf(fout, "static FbleModulePath* " LABEL "[] = {\n", deps_xs_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
-    fprintf(fout, "  " LABEL ",\n", dep_ids[i]);
+    fprintf(fout, "  &" LABEL ",\n", dep_ids[i]);
   }
   fprintf(fout, "};\n");
 
@@ -299,11 +301,11 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "static FbleExecutableModule " LABEL " = {\n", module_id);
   fprintf(fout, "  .refcount = 1,\n");
   fprintf(fout, "  .magic = FBLE_EXECUTABLE_MODULE_MAGIC,\n");
-  fprintf(fout, "  .path = " LABEL "\n", path_id);
+  fprintf(fout, "  .path = &" LABEL ",\n", path_id);
   fprintf(fout, "  .deps = { .size = %zi, .xs = " LABEL "},\n",
       module->deps.size, deps_xs_id);
-  fprintf(fout, "  .executable = " LABEL "\n", executable_id);
-  fprintf(fout, "}\n");
+  fprintf(fout, "  .executable = &" LABEL "\n", executable_id);
+  fprintf(fout, "};\n");
   return module_id;
 }
 
@@ -341,13 +343,6 @@ static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* msg, Fble
 // * Outputs code to fout.
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr)
 {
-  for (FbleDebugInfo* info = instr->debug_info; info != NULL; info = info->next) {
-    if (info->tag == FBLE_STATEMENT_DEBUG_INFO) {
-      FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
-      fprintf(fout, "#line %i\n", stmt->loc.line);
-    }
-  }
-
   fprintf(fout, "  if (profile) {\n");
   fprintf(fout, "    if (rand() %% 1024 == 0) FbleProfileSample(profile, 1);\n");
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
@@ -466,7 +461,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
     case FBLE_JUMP_INSTR: {
       FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      fprintf(fout, "  goto pc_%zi\n", pc + 1 + jump_instr->count);
+      fprintf(fout, "  goto pc_%zi;\n", pc + 1 + jump_instr->count);
       return;
     }
 
@@ -484,8 +479,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "      .args = %zi,\n", func_instr->code->_base.args);
       fprintf(fout, "      .statics = %zi,\n", func_instr->code->_base.statics);
       fprintf(fout, "      .locals = %zi,\n", func_instr->code->_base.locals);
-      fprintf(fout, "      .profile = %zi\n", func_instr->code->_base.profile);
-      fprintf(fout, "      .profile_blocks = { .size = 0, .xs = NULL 0},\n");
+      fprintf(fout, "      .profile = %zi,\n", func_instr->code->_base.profile);
+      fprintf(fout, "      .profile_blocks = { .size = 0, .xs = NULL },\n");
       fprintf(fout, "      .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
       fprintf(fout, "      .abort = &_Abort_%p_%s,\n", (void*)func_instr->code, function_label);
       fprintf(fout, "      .on_free = NULL\n");
@@ -498,7 +493,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
             func_instr->scope.xs[i].index);
       }
 
-      fprintf(fout, "    l[%zi] = FbleNewFuncValue(heap, &e, profile_base_id, statics)\n",
+      fprintf(fout, "    l[%zi] = FbleNewFuncValue(heap, &e, profile_base_id, statics);\n",
           func_instr->dest);
       fprintf(fout, "  }\n");
       return;
@@ -545,11 +540,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         }
 
         if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
-          fprintf(fout, "    FbleReleaseValue(heap, l[%zi])\n", call_instr->func.index);
+          fprintf(fout, "    FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
         }
 
         fprintf(fout, "    FbleThreadTailCall(heap, x0, args, thread);\n");
         fprintf(fout, "    return FBLE_EXEC_CONTINUED;\n");
+        fprintf(fout, "  }\n");
         return;
       }
 
@@ -640,6 +636,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       }
 
       fprintf(fout, "    l[%zi] = FbleNewListValue(heap, %zi, args);\n", list_instr->dest, argc);
+      fprintf(fout, "  }\n");
       return;
     }
 
@@ -674,10 +671,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   FbleName function_block = profile_blocks.xs[code->_base.profile];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "#line %d\n", function_block.loc.line);
   fprintf(fout, "static FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread)\n", (void*)code, function_label);
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleProfilethread* profile = thread->profile;\n");
+  fprintf(fout, "  FbleProfileThread* profile = thread->profile;\n");
   fprintf(fout, "  FbleStack* stack = thread->stack;\n");
   fprintf(fout, "  FbleValue** l = stack->locals;\n");
   fprintf(fout, "  FbleValue* func = stack->func;\n");
@@ -853,7 +849,7 @@ static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* cod
   FbleName function_block = profile_blocks.xs[code->_base.profile];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "static void _Abort_%p_%s(FbleValue* heap, FbleStack* stack);\n", (void*)code, function_label);
+  fprintf(fout, "static void _Abort_%p_%s(FbleValueHeap* heap, FbleStack* stack)\n", (void*)code, function_label);
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleValue** l = stack->locals;\n");
   fprintf(fout, "  switch (stack->pc)\n");
@@ -981,11 +977,26 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocksAndLocs(&blocks, &locs, module->code);
 
-  fprintf(fout, "#line 1 \"%s\"\n", module->path->loc.source->str);
+  fprintf(fout, "#include <stdlib.h>\n");         // for rand
+  fprintf(fout, "#include \"fble-value.h\"\n");   // for FbleFuncValueStatics, etc.
+  fprintf(fout, "#include \"execute.h\"\n");
+  fprintf(fout, "#include \"value.h\"\n");
 
+  // Generate prototypes for all the run and abort functions.
   FbleNameV profile_blocks = module->code->_base.profile_blocks;
   for (int i = 0; i < blocks.size; ++i) {
-    // RunFunction
+    FbleCode* code = blocks.xs[i];
+    FbleName function_block = profile_blocks.xs[code->_base.profile];
+    char function_label[SizeofSanitizedString(function_block.name->str)];
+    SanitizeString(function_block.name->str, function_label);
+    fprintf(fout, "static FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread);\n",
+        (void*)code, function_label);
+    fprintf(fout, "static void _Abort_%p_%s(FbleValueHeap* heap, FbleStack* stack);\n",
+        (void*)code, function_label);
+  }
+
+  // Generate the implementations of all the run and abort functions.
+  for (int i = 0; i < blocks.size; ++i) {
     EmitCode(fout, profile_blocks, blocks.xs[i]);
     EmitCodeForAbort(fout, profile_blocks, blocks.xs[i]);
   }
@@ -993,19 +1004,26 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   LabelId label_id = 0;
   LabelId module_id = StaticExecutableModule(fout, &label_id, module);
 
+  // Generate prototypes for dependencies.
+  for (size_t i = 0; i < module->deps.size; ++i) {
+    FbleString* dep_name = LabelForPath(module->deps.xs[i]);
+    fprintf(fout, "void %s(FbleExecutableProgram* program);\n", dep_name->str);
+    FbleFreeString(dep_name);
+  }
+
   LabelId deps_id = label_id++;
   fprintf(fout, "FbleCompiledModuleFunction* " LABEL "[] = {\n", deps_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleString* dep_name = LabelForPath(module->deps.xs[i]);
-    fprintf(fout, "  %s\n", dep_name->str);
+    fprintf(fout, "  &%s,\n", dep_name->str);
     FbleFreeString(dep_name);
   }
-  fprintf(fout, "}\n");
+  fprintf(fout, "};\n");
 
   FbleString* func_name = LabelForPath(module->path);
-  fprintf(fout, "void %s(FbleCompiledProgram* program)\n", func_name->str);
+  fprintf(fout, "void %s(FbleExecutableProgram* program)\n", func_name->str);
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleLoadFromCompiled(program, " LABEL ", %zi, " LABEL ");\n",
+  fprintf(fout, "  FbleLoadFromCompiled(program, &" LABEL ", %zi, " LABEL ");\n",
       module_id, module->deps.size, deps_id);
   fprintf(fout, "}\n");
   FbleFreeString(func_name);
@@ -1019,9 +1037,12 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
 
-  fprintf(fout, "FbleValue* %s(FbleValueHeap* heap)\n", name);
+  fprintf(fout, "#include \"fble-execute.h\"\n");
+  fprintf(fout, "#include \"fble-value.h\"\n");
+  fprintf(fout, "void %s(FbleExecutableProgram* program);\n", module_name->str);
+  fprintf(fout, "void %s(FbleExecutableProgram* program)\n", name);
   fprintf(fout, "{\n");
-  fprintf(fout, "  return %s(heap)\n", module_name->str);
+  fprintf(fout, "  return %s(program);\n", module_name->str);
   fprintf(fout, "}\n");
   FbleFreeString(module_name);
 }
@@ -1031,6 +1052,8 @@ void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
 
+  fprintf(fout, "#include \"fble-link.h\"\n");
+  fprintf(fout, "int %s(int argc, const char** argv, FbleCompiledModuleFunction* module);\n", main);
   fprintf(fout, "int main(int argc, const char** argv)\n");
   fprintf(fout, "{\n");
   fprintf(fout, "  return %s(argc, argv, %s);\n", main, module_name->str);

@@ -46,3 +46,73 @@ We have pragmas like:
 
 Let's start with that then.
 
+---
+
+I'm getting close. Some observations:
+* The #line pragmas are making debug the code generation logic annoying. Can I
+  get rid of them for now? I don't think they work the way I think either. I
+  think we need a separate way to get dwarf.
+* I'm getting real mixed up on what GenerateCMain and GenerateCExport should
+  do.
+
+GenerateCMain:
+int main(int argc, const char** argv) {
+  return <main>(argc, argv, <compiled module>);
+}
+
+Type of <compiled module> is FbleCompiledModuleFunction.
+
+That looks fine.
+
+Next, GenerateCExport: it should take a heap as input. What does it do? I
+guess it should call the module function, passing the heap argument?
+
+Maybe my comment in the documentation is wrong? The assembly code is literally
+branching to the module function and returning the result. It must be passing
+all the arguments directly.
+
+Uh... I'm lost.
+
+FbleCompiledModuleFunction is a function that, given a program, adds the
+module to that program. That's what we define. What's what we call to ensure
+dependencies are loaded, right? That's what we pass to a main function to be
+able to instantiate a program. Export 'main' invokes main function on that,
+and that's what we generate code for. That all makes sense.
+
+What I don't understand is the CExport function. What type is that supposed to
+have? I assume it's supposed to be a wrapper something or other?
+
+According to docs, the exported function should return a zero argument fble
+function that can be executed to compute the value of the given module. How
+does it work? I don't understand what generate_aarch64 is doing. That can't be
+correct, can it?
+
+Step back. How would I generate the FbleValue in the first place?
+
+I think the documentation is wrong. That must be out of date. It should just
+give a nice name to the FbleCompiledModuleFunction with the internal name,
+that is: void X(FbleExecutableProgram* program), right? Yeah. That makes
+sense.
+
+Next issue: Need to generate prototypes for all Run and Abort functions up
+front.
+
+Notes:
+* Double check if spec tests are using the c target or aarch64. I think it may
+  be different.
+* Will want to clean up includes of execute.h, value.h at some point.
+* Memory use for compiling the generated c code is looking not too bad so far?
+* Runtime for compiling the generated code isn't great.
+
+Actually, we're starting to hit issues with gcc memory use to compile the
+generated code. Let's see if I can find out which one it is.
+
+  out/pkgs/md5/Md5/Rounds.fble.c
+
+It's 100K lines of C code. Ugh.
+
+Well, something to dig into next:
+* Why is Rounds.fble.c so big. Anything we can do to cut that down by an order
+  of magnitude?
+* Try running just the spec tests with -c target, see if everything passes.
+
