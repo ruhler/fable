@@ -30,34 +30,6 @@ typedef struct {
   const char** xs;
 } LocV;
 
-// RunStackFrame --
-//   A type representing the stack frame layout we'll use for _Run_ functions.
-typedef struct {
-  void* FP;
-  void* LR;
-  void* heap;
-  void* thread;
-  void* r_heap_save;
-  void* r_locals_save;
-  void* r_statics_save;
-  void* r_profile_save;
-  void* r_profile_base_id_save;
-  void* r_scratch_0_save;
-  void* r_scratch_1_save;
-  void* padding;
-} RunStackFrame;
-
-// AbortStackFrame --
-//   A type representing the stack frame layout we'll use for _Abort_ functions.
-typedef struct {
-  void* FP;
-  void* LR;
-  void* heap;
-  void* stack;
-  void* r_heap_save;
-  void* r_locals_save;
-} AbortStackFrame;
-
 static void AddLoc(const char* source, LocV* locs);
 static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code);
 
@@ -67,11 +39,7 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
-static void GetFrameVar(FILE* fout, const char* rdst, FbleFrameIndex index);
-static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index);
 static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
-
-static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...);
 
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
@@ -204,14 +172,12 @@ static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string)
 {
   LabelId id = (*label_id)++;
 
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, "  .align 3\n");                       // 64 bit alignment
-  fprintf(fout, LABEL ":\n", id);
-  fprintf(fout, "  .xword 1\n");                       // .refcount = 1
-  fprintf(fout, "  .xword %i\n", FBLE_STRING_MAGIC);   // .magic
-  fprintf(fout, "  .string ");                         // .str
+  fprintf(fout, "static FbleString " LABEL " = {\n", id);
+  fprintf(fout, "  .refcount = 1\n");
+  fprintf(fout, "  .magic = FBLE_STRING_MAGIC\n");
+  fprintf(fout, "  .str = ");
   StringLit(fout, string);
-  fprintf(fout, "\n");
+  fprintf(fout, "\n};\n");
   return id;
 }
 
@@ -238,16 +204,12 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names)
   }
 
   LabelId id = (*label_id)++;
-  fprintf(fout, "  .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, LABEL ":\n", id);
+  fprintf(fout, "static FbleName " LABEL "[] = {\n", id);
   for (size_t i = 0; i < names.size; ++i) {
-    fprintf(fout, "  .xword " LABEL "\n", str_ids[i]);    // name
-    fprintf(fout, "  .word %i\n", names.xs[i].space);     // space
-    fprintf(fout, "  .zero 4\n");                         // padding
-    fprintf(fout, "  .xword " LABEL "\n", src_ids[i]);    // loc.src
-    fprintf(fout, "  .word %i\n", names.xs[i].loc.line);  // loc.line
-    fprintf(fout, "  .word %i\n", names.xs[i].loc.col);   // loc.col
+    fprintf(fout, "  { .name = " LABEL ",\n", str_ids[i]);
+    fprintf(fout, "    .space = %i\n", names.xs[i].space);
+    fprintf(fout, "    .loc = { .src = " LABEL ", .line = %i, .col = %i }},\n",
+        src_ids[i], names.xs[i].loc.line, names.xs[i].loc.col);
   }
   return id;
 }
@@ -272,16 +234,13 @@ static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* p
   LabelId names_id = StaticNames(fout, label_id, path->path);
   LabelId path_id = (*label_id)++;
 
-  fprintf(fout, "  .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, LABEL ":\n", path_id);
-  fprintf(fout, "  .xword 1\n");                  // .refcount
-  fprintf(fout, "  .xword 2004903300\n");         // .magic
-  fprintf(fout, "  .xword " LABEL "\n", src_id);        // path->loc.src
-  fprintf(fout, "  .word %i\n", path->loc.line);
-  fprintf(fout, "  .word %i\n", path->loc.col);
-  fprintf(fout, "  .xword %zi\n", path->path.size);
-  fprintf(fout, "  .xword " LABEL "\n", names_id);
+  fprintf(fout, "static FbleModulePath " LABEL " = {\n", path_id);
+  fprintf(fout, "  .refcount = 1,\n");
+  fprintf(fout, "  .magic = FBLE_MODULE_PATH_MAGIC,\n");
+  fprintf(fout, "  .loc = { .src = " LABEL ", .line = %i, .loc = %i },\n",
+      src_id, path->loc.line, path->loc.col);
+  fprintf(fout, "  .path = { .size = %zi, .xs = " LABEL "}\n",
+      path->path.size, names_id);
   return path_id;
 }
 
@@ -309,77 +268,43 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   }
 
   LabelId deps_xs_id = (*label_id)++;
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, LABEL ":\n", deps_xs_id);
+  fprintf(fout, "static FbleModulePath* " LABEL "[] = {\n", deps_xs_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
-    fprintf(fout, "  .xword " LABEL "\n", dep_ids[i]);
+    fprintf(fout, "  " LABEL ",\n", dep_ids[i]);
   }
+  fprintf(fout, "};\n");
 
   LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->code->_base.profile_blocks);
 
   LabelId executable_id = (*label_id)++;
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, LABEL ":\n", executable_id);
-  fprintf(fout, "  .xword 1\n");                          // .refcount
-  fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
-  fprintf(fout, "  .xword %zi\n", module->code->_base.args);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.statics);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.locals);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.profile);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.profile_blocks.size);
-  fprintf(fout, "  .xword " LABEL "\n", profile_blocks_xs_id);
+  fprintf(fout, "static FbleExecutable " LABEL " = {\n", executable_id);
+  fprintf(fout, "  .refcount = 1,\n");
+  fprintf(fout, "  .magic = FBLE_EXECUTABLE_MAGIC,\n");
+  fprintf(fout, "  .args = %zi, \n", module->code->_base.args);
+  fprintf(fout, "  .statics = %zi,\n", module->code->_base.statics);
+  fprintf(fout, "  .locals = %zi,\n", module->code->_base.locals);
+  fprintf(fout, "  .profile = %zi,\n", module->code->_base.profile);
+  fprintf(fout, "  .profile_blocks = { .size = %zi, .xs = " LABEL "},\n",
+      module->code->_base.profile_blocks.size, profile_blocks_xs_id);
 
   FbleName function_block = module->code->_base.profile_blocks.xs[module->code->_base.profile];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "  .xword _Run.%p.%s\n", (void*)module->code, function_label);
-  fprintf(fout, "  .xword _Abort.%p.%s\n", (void*)module->code, function_label);
-  fprintf(fout, "  .xword FbleExecutableNothingOnFree\n");
+  fprintf(fout, "  .run = &_Run_%p_%s,\n", (void*)module->code, function_label);
+  fprintf(fout, "  .abort = &_Abort_%p_%s,\n", (void*)module->code, function_label);
+  fprintf(fout, "  .on_free = &FbleExecutableNothingOnFree\n");
+  fprintf(fout, "};\n");
 
   LabelId module_id = (*label_id)++;
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, LABEL ":\n", module_id);
-  fprintf(fout, "  .xword 1\n");                                  // .refcount
-  fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MODULE_MAGIC);   // .magic
-  fprintf(fout, "  .xword " LABEL "\n", path_id);                       // .path
-  fprintf(fout, "  .xword %zi\n", module->deps.size);
-  fprintf(fout, "  .xword " LABEL "\n", deps_xs_id);
-  fprintf(fout, "  .xword " LABEL "\n", executable_id);
+  fprintf(fout, "static FbleExecutableModule " LABEL " = {\n", module_id);
+  fprintf(fout, "  .refcount = 1,\n");
+  fprintf(fout, "  .magic = FBLE_EXECUTABLE_MODULE_MAGIC,\n");
+  fprintf(fout, "  .path = " LABEL "\n", path_id);
+  fprintf(fout, "  .deps = { .size = %zi, .xs = " LABEL "},\n",
+      module->deps.size, deps_xs_id);
+  fprintf(fout, "  .executable = " LABEL "\n", executable_id);
+  fprintf(fout, "}\n");
   return module_id;
-}
-
-// GetFrameVar --
-//   Generate code to read a variable from the current frame into expression dst.
-//
-// Inputs:
-//   fout - the output stream
-//   dst - the name of the register to read the variable into
-//   index - the variable to read.
-//
-// Side effects:
-// * Writes to the output stream.
-static void GetFrameVar(FILE* fout, const char* dst, FbleFrameIndex index)
-{
-  static const char* section[] = { "statics", "locals" };
-  fprintf(fout, "    %s = %s[%zi];\n", dst, section[index.section], index.index);
-}
-
-// SetFrameVar --
-//   Generate code to write a variable to the current frame from register rsrc.
-//
-// Inputs:
-//   fout - the output stream
-//   rsrc - the name of the register with the value to write.
-//   index - the index of the value to write.
-//
-// Side effects:
-// * Writes to the output stream.
-static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
-{
-  fprintf(fout, "  str %s, [R_LOCALS, #%zi]\n", rsrc, sizeof(FbleValue*) * index);
 }
 
 // ReturnAbort --
@@ -396,37 +321,10 @@ static void SetFrameVar(FILE* fout, const char* rsrc, FbleLocalIndex index)
 //   Emit code to return the error.
 static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* msg, FbleLoc loc)
 {
-  fprintf(fout, "  thread->stack->pc = %zi;\n", pc);
-  fprintf(fout, "  fprintf(stderr, \"%s:%d:%d: error: %s\\n\");\n",
+  fprintf(fout, "    thread->stack->pc = %zi;\n", pc);
+  fprintf(fout, "    fprintf(stderr, \"%s:%d:%d: error: %s\\n\");\n",
       loc.source->str, loc.line, loc.col, msg);
-  fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
-}
-
-// Adr --
-//   Emit an adr instruction to load a label into a register.
-//
-// Inputs:
-//   fout - the output stream
-//   r_dst - the name of the register to load the label into
-//   fmt, ... - a printf format string for the label to load.
-//
-// Side effects:
-//   Emits a sequence of instructions to load the label into the register.
-static void Adr(FILE* fout, const char* r_dst, const char* fmt, ...)
-{
-  va_list ap;
-
-  fprintf(fout, "  adrp %s, ", r_dst);
-  va_start(ap, fmt);
-  vfprintf(fout, fmt, ap);
-  va_end(ap);
-  fprintf(fout, "\n");
-
-  fprintf(fout, "  add %s, %s, :lo12:", r_dst, r_dst);
-  va_start(ap, fmt);
-  vfprintf(fout, fmt, ap);
-  va_end(ap);
-  fprintf(fout, "\n");
+  fprintf(fout, "    return FBLE_EXEC_ABORTED;\n");
 }
 
 // EmitInstr --
@@ -658,25 +556,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       // stack->pc = pc + 1
       fprintf(fout, "    thread->stack->pc = %zi;\n", pc + 1);
       fprintf(fout, "    FbleThreadCall(heap, l+%zi, x0, args, thread);\n", call_instr->dest);
-
-      // Call the function repeatedly for as long as it results in
-      // FBLE_EXEC_CONTINUED.
-      fprintf(fout, ".L._Run_.%p.call.%zi:\n", code, pc);
-      fprintf(fout, "  mov x0, R_SCRATCH_0\n");   // func
-      fprintf(fout, "  bl FbleFuncValueExecutable\n");
-      fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleExecutable, run));
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-      fprintf(fout, "  blr x4\n");               // call run function
-      fprintf(fout, "  cmp x0, %i\n", FBLE_EXEC_CONTINUED);
-      fprintf(fout, "  b.eq .L._Run_.%p.call.%zi\n", code, pc);
-
-      // If the called function finished, continue to the next instruction.
-      fprintf(fout, "  cmp x0, %i\n", FBLE_EXEC_FINISHED);
-      fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", code, pc + 1);
-
-      // If the called function aborted or yielded or blocked, return now.
-      fprintf(fout, "  b .L._Run_.%p.exit\n", code);
+      fprintf(fout, "    FbleExecStatus status;\n");
+      fprintf(fout, "    do {\n");
+      fprintf(fout, "      status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);\n");
+      fprintf(fout, "    } while (status == FBLE_EXEC_CONTINUED);\n");
+      fprintf(fout, "    if (status != FBLE_EXEC_FINISHED) return status;\n");
+      fprintf(fout, "  }\n");
       return;
     }
 
@@ -827,49 +712,49 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
   switch (instr->tag) {
     case FBLE_DATA_TYPE_INSTR: {
       FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-      SetFrameVar(fout, "XZR", dt_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", dt_instr->dest);
       return;
     }
 
     case FBLE_STRUCT_VALUE_INSTR: {
       FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      SetFrameVar(fout, "XZR", struct_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", struct_instr->dest);
       return;
     }
 
     case FBLE_UNION_VALUE_INSTR: {
       FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-      SetFrameVar(fout, "XZR", union_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", union_instr->dest);
       return;
     }
 
     case FBLE_STRUCT_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      SetFrameVar(fout, "XZR", access_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", access_instr->dest);
       return;
     }
 
     case FBLE_UNION_ACCESS_INSTR: {
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      SetFrameVar(fout, "XZR", access_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", access_instr->dest);
       return;
     }
 
     case FBLE_UNION_SELECT_INSTR: {
       FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc + 1 + select_instr->jumps.xs[0]);
+      fprintf(fout, "  goto pc_%zi;\n", pc + 1 + select_instr->jumps.xs[0]);
       return;
     }
 
     case FBLE_JUMP_INSTR: {
       FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc + 1 + jump_instr->count);
+      fprintf(fout, "  goto pc_%zi;\n", pc + 1 + jump_instr->count);
       return;
     }
 
     case FBLE_FUNC_VALUE_INSTR: {
       FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-      SetFrameVar(fout, "XZR", func_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", func_instr->dest);
       return;
     }
 
@@ -877,39 +762,33 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       FbleCallInstr* call_instr = (FbleCallInstr*)instr;
       if (call_instr->exit) {
         if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
-          fprintf(fout, "  mov x0, R_HEAP\n");
-          GetFrameVar(fout, "x1", call_instr->func);
-          fprintf(fout, "  bl FbleReleaseValue\n");
-          SetFrameVar(fout, "XZR", call_instr->func.index);
+          fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
+          fprintf(fout, "  l[%zi] = NULL;\n", call_instr->func.index);
         }
 
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
-            fprintf(fout, "  mov x0, R_HEAP\n");
-            GetFrameVar(fout, "x1", call_instr->args.xs[i]);
-            fprintf(fout, "  bl FbleReleaseValue\n");
-            SetFrameVar(fout, "XZR", call_instr->args.xs[i].index);
+            fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->args.xs[i].index);
+            fprintf(fout, "  l[%zi] = NULL;\n", call_instr->args.xs[i].index);
           }
         }
 
-        fprintf(fout, "  ldr x0, [SP, #%zi]\n", offsetof(AbortStackFrame, stack));
-        fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleStack, result));
-        fprintf(fout, "  str XZR, [x1]\n");       // stack->result = NULL;
+        fprintf(fout, "  stack->result = NULL;\n");
       }
 
-      SetFrameVar(fout, "XZR", call_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", call_instr->dest);
       return;
     }
 
     case FBLE_COPY_INSTR: {
       FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-      SetFrameVar(fout, "XZR", copy_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", copy_instr->dest);
       return;
     }
 
     case FBLE_REF_VALUE_INSTR: {
       FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-      SetFrameVar(fout, "XZR", ref_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", ref_instr->dest);
       return;
     }
 
@@ -922,49 +801,37 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       switch (return_instr->result.section) {
         case FBLE_STATICS_FRAME_SECTION: break;
         case FBLE_LOCALS_FRAME_SECTION: {
-          fprintf(fout, "  mov x0, R_HEAP\n");
-          GetFrameVar(fout, "x1", return_instr->result);
-          fprintf(fout, "  bl FbleReleaseValue\n");
+          fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", return_instr->result.index);
           break;
         }
       }
 
-      fprintf(fout, "  ldr x0, [SP, #%zi]\n", offsetof(AbortStackFrame, stack));
-      fprintf(fout, "  ldr x1, [x0, #%zi]\n", offsetof(FbleStack, result));
-      fprintf(fout, "  str XZR, [x1]\n");       // stack->result = NULL;
-
-      fprintf(fout, "  b .L._Abort_.%p.exit\n", code);
+      fprintf(fout, "  stack->result = NULL;\n");
+      fprintf(fout, "  return;\n");
       return;
     }
 
     case FBLE_TYPE_INSTR: {
       FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-      SetFrameVar(fout, "XZR", type_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", type_instr->dest);
       return;
     }
 
     case FBLE_RELEASE_INSTR: {
       FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-      fprintf(fout, "  mov x0, R_HEAP\n");
-
-      FbleFrameIndex target_index = {
-        .section = FBLE_LOCALS_FRAME_SECTION,
-        .index = release_instr->target
-      };
-      GetFrameVar(fout, "x1", target_index);
-      fprintf(fout, "  bl FbleReleaseValue\n");
+      fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", release_instr->target);
       return;
     }
 
     case FBLE_LIST_INSTR: {
       FbleListInstr* list_instr = (FbleListInstr*)instr;
-      SetFrameVar(fout, "XZR", list_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", list_instr->dest);
       return;
     }
 
     case FBLE_LITERAL_INSTR: {
       FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-      SetFrameVar(fout, "XZR", literal_instr->dest);
+      fprintf(fout, "  l[%zi] = NULL;\n", literal_instr->dest);
       return;
     }
   }
@@ -983,58 +850,25 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
   // Jump table data for jumping to the right fble pc.
-  fprintf(fout, "  .section .data\n");
-  fprintf(fout, "  .align 3\n");
-  fprintf(fout, ".L._Abort_%p.pcs:\n", (void*)code);
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "  .xword .L._Abort_%p.pc.%zi\n", (void*)code, i);
-  }
-
-  fprintf(fout, "  .text\n");
-  fprintf(fout, "  .align 2\n");
   FbleName function_block = profile_blocks.xs[code->_base.profile];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "_Abort.%p.%s:\n", (void*)code, function_label);
-
-  // Set up stack and frame pointer.
-  fprintf(fout, "  stp FP, LR, [SP, #-%zi]!\n", sizeof(AbortStackFrame));
-  fprintf(fout, "  mov FP, SP\n");
-
-  // Save args to the stack for later reference.
-  fprintf(fout, "  str x0, [SP, #%zi]\n", offsetof(AbortStackFrame, heap));
-  fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(AbortStackFrame, stack)); // stack
-
-  // Save callee saved registers for later restoration.
-  fprintf(fout, "  str R_HEAP, [SP, #%zi]\n", offsetof(AbortStackFrame, r_heap_save));
-  fprintf(fout, "  str R_LOCALS, [SP, #%zi]\n", offsetof(AbortStackFrame, r_locals_save));
-
-  // Set up common registers.
-  fprintf(fout, "  ldr x2, [x1, #%zi]\n", offsetof(FbleStack, func));
-  fprintf(fout, "  mov R_HEAP, x0\n");
-  fprintf(fout, "  add R_LOCALS, x1, #%zi\n", offsetof(FbleStack, locals));
-
-  // Jump to the fble instruction at thread->stack->pc.
-  fprintf(fout, "  ldr x0, [x1, #%zi]\n", offsetof(FbleStack, pc));
-  fprintf(fout, "  lsl x0, x0, #3\n");     // x0 = 8 * (stack->pc)
-  Adr(fout, "x1", ".L._Abort_%p.pcs", (void*)code); // x1 = pcs
-  fprintf(fout, "  add x0, x0, x1\n");     // x0 = &pcs[stack->pc]
-  fprintf(fout, "  ldr x0, [x0]\n");       // x0 = pcs[stack->pc]
-  fprintf(fout, "  br x0\n");              // goto pcs[stack->pc]
+  fprintf(fout, "static void _Abort_%p_%s(FbleValue* heap, FbleStack* stack);\n", (void*)code, function_label);
+  fprintf(fout, "{\n");
+  fprintf(fout, "  FbleValue** l = stack->locals;\n");
+  fprintf(fout, "  switch (stack->pc)\n");
+  fprintf(fout, "  {\n");
+  for (size_t i = 0; i < code->instrs.size; ++i) {
+    fprintf(fout, "    case %zi: goto pc_%zi;\n", i, i);
+  }
+  fprintf(fout, "  }\n");
 
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, ".L._Abort_%p.pc.%zi:\n", (void*)code, i);
+    fprintf(fout, "pc_%zi:\n", i);
     EmitInstrForAbort(fout, code, i, code->instrs.xs[i]);
   }
-
-  // Restore stack and frame pointer and return whatever is in x0.
-  // Common code for exiting a run function.
-  fprintf(fout, ".L._Abort_.%p.exit:\n", (void*)code);
-  fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(AbortStackFrame, r_heap_save));
-  fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(AbortStackFrame, r_locals_save));
-  fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(AbortStackFrame));
-  fprintf(fout, "  ret\n");
+  fprintf(fout, "}\n");
 }
 
 // SizeofSanitizedString --
