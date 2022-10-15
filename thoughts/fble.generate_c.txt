@@ -115,4 +115,25 @@ Well, something to dig into next:
 * Why is Rounds.fble.c so big. Anything we can do to cut that down by an order
   of magnitude?
 * Try running just the spec tests with -c target, see if everything passes.
+* Try running some program manually that's compiled, just to convince myself
+  it actually works.
+
+One thing that stands out scanning through Rounds.fble.c is a whole lot of
+struct accesses, each of which has an error case. And a function with a lot of
+instructions, which leads to a pretty big case statement and per-instruction
+overhead.
+
+---
+
+Seeing if I can add c code generation to spec tests at least. Looks like they
+expose some more bugs. A couple of bugs fixed. All the spec tests pass with
+the compiler. Let me figure out how to do both aarch64 and c tests in the spec
+tests in a hopefully clean way.
+
+Yeah. This works well. We can abstract away all the different targets and make
+sure we test them all in spec tests. Or, at least, all of the available ones.
+
+It might be fun to try compiling everything with generate_c on my windows
+computer, which is x86_64 and has lots of memory. Just to see if it works and
+maybe try running some benchmarks to compare interpreted, aarch64, and c.
 

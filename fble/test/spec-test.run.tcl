@@ -109,8 +109,12 @@ close $fin
 #   Compiles the test .fble file into an $outdir/compiled binary.
 #
 # Inputs:
+#   target - "aarch64" or "c", the compilation target to use.
 #   main - FbleTestMain or FbleMemTestMain.
-proc compile {main} {
+#
+# Results:
+#   The path to the compiled executable.
+proc compile {target main} {
   # Parse the list of .fble files the test depends on from the .d file.
   set fbles [list]
   foreach x [lrange [split [read [open out/spec/$::fble.d "r"]]] 1 end] {
@@ -125,35 +129,56 @@ proc compile {main} {
   foreach fble $fbles {
     set name [string map { "/" "-" } $fble]
     set m [module_path $fble]
-    set asm $::outdir/$name.s
-    set obj $::outdir/$name.o
+    set exe $::outdir/$name.$target
+    set obj $exe.o
+    switch $target {
+      aarch64 { set out $exe.s }
+      c       { set out $exe.c }
+    }
     set flags [list]
     if {$fble == $::fble} {
       lappend flags "--main"
       lappend flags $main
     }
+    exec out/fble/bin/fble-compile.cov {*}$flags -t $target -c -I $::dir -m $m > $out
 
-    exec out/fble/bin/fble-compile.cov {*}$flags -c -I $::dir -m $m > $asm
-    exec as -o $obj $asm
+    switch $target {
+      aarch64 { exec as -o $obj $out }
+      c { exec gcc -c -o $obj -I fble/include -I fble/lib $out }
+    }
     lappend objs $obj
   }
 
   lappend objs out/fble/test/libfbletest.a
   lappend objs out/fble/lib/libfble.a
-  exec gcc -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o \
-    $::outdir/compiled {*}$objs
+  exec gcc -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o $exe {*}$objs
+  return $exe
+}
+
+# compile_and_run --
+#   Compiles the test and runs it for each available target architecture.
+#
+# Inputs:
+#   main - FbleTestMain or FbleMemTestMain.
+#   body - The body of a tcl proc that takes the compiled executable as an
+#          argument and runs the compiled code as desired.
+proc compile_and_run {main body} {
+  proc do_body {compiled} $body
+
+  if {$::arch == "aarch64"} {
+    set compiled [compile aarch64 $main]
+    do_body $compiled
+  }
+
+  set compiled [compile c $main]
+  do_body $compiled
 }
 
 proc dispatch {} {
   switch $::type {
     no-error {
       exec out/fble/test/fble-test.cov --profile /dev/null -I spec -m $::mpath
-
-      if {$::arch == "aarch64"} {
-        compile FbleTestMain
-        exec $::outdir/compiled --profile /dev/null
-      }
-
+      compile_and_run FbleTestMain { exec $compiled --profile /dev/null }
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
 
@@ -163,34 +188,19 @@ proc dispatch {} {
 
     runtime-error {
       expect_error runtime $::loc out/fble/test/fble-test.cov -I spec -m $::mpath
-
-      if {$::arch == "aarch64"} {
-        compile FbleTestMain
-        expect_error runtime $::loc $::outdir/compiled
-      }
-
+      compile_and_run FbleTestMain { expect_error runtime $::loc $compiled }
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
     
     memory-constant {
       exec out/fble/test/fble-mem-test.cov -I spec -m $::mpath
-
-      if {$::arch == "aarch64"} {
-        compile FbleMemTestMain
-        exec $::outdir/compiled
-      }
-
+      compile_and_run FbleMemTestMain { exec $compiled }
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
 
     memory-growth {
       exec out/fble/test/fble-mem-test.cov --growth -I spec -m $::mpath
-
-      if {$::arch == "aarch64"} {
-        compile FbleMemTestMain
-        exec $::outdir/compiled --growth
-      }
-
+      compile_and_run FbleMemTestMain { exec $compiled --growth }
       exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
     }
 

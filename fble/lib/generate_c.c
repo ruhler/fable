@@ -1012,7 +1012,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   }
 
   LabelId deps_id = label_id++;
-  fprintf(fout, "FbleCompiledModuleFunction* " LABEL "[] = {\n", deps_id);
+  fprintf(fout, "static FbleCompiledModuleFunction* " LABEL "[] = {\n", deps_id);
   for (size_t i = 0; i < module->deps.size; ++i) {
     FbleString* dep_name = LabelForPath(module->deps.xs[i]);
     fprintf(fout, "  &%s,\n", dep_name->str);
@@ -1053,6 +1053,7 @@ void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path)
   FbleString* module_name = LabelForPath(path);
 
   fprintf(fout, "#include \"fble-link.h\"\n");
+  fprintf(fout, "void %s(FbleExecutableProgram* program);\n", module_name->str);
   fprintf(fout, "int %s(int argc, const char** argv, FbleCompiledModuleFunction* module);\n", main);
   fprintf(fout, "int main(int argc, const char** argv)\n");
   fprintf(fout, "{\n");

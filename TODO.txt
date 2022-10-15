@@ -1,3 +1,8 @@
+
+* Clean up generate_c things
+  - Don't require access to private includes.
+  - Better instructions on required include paths.
+
 * Add test for proper markdown syntax in README.md?
 
 * Why doesn't type inference work for Concat function?
