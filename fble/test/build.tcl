@@ -40,9 +40,8 @@ namespace eval "fble/test" {
       "$::out/fble/test/ProfilesTest > $::out/fble/test/ProfilesTest.prof"
 
     # /Fble/DebugTest%
-    build $::out/fble/test/fble-debug-test.s $::out/fble/bin/fble-compile \
-      "$::out/fble/bin/fble-compile --main FbleTestMain -c -I fble/test -m /DebugTest% > $::out/fble/test/fble-debug-test.s"
-    asm $::out/fble/test/fble-debug-test.o $::out/fble/test/fble-debug-test.s
+    fbleobj $::out/fble/test/fble-debug-test.o $::out/fble/bin/fble-compile \
+      "--main FbleTestMain -c -I fble/test -m /DebugTest%"
     bin $::out/fble/test/fble-debug-test "$::out/fble/test/fble-debug-test.o $libs" ""
 
     # Test that there are no dwarf warnings in the generated fble-debug-test

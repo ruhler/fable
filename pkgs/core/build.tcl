@@ -28,9 +28,8 @@ namespace eval "pkgs/core" {
     append objs " $::out/pkgs/core/libfble-core.a"
     append objs " $::out/fble/lib/libfble.a"
 
-    build $target.s $::out/fble/bin/fble-compile \
-      "$::out/fble/bin/fble-compile --main FbleStdioMain -m $path > $target.s"
-    asm $target.o $target.s
+    fbleobj $target.o $::out/fble/bin/fble-compile \
+      "--main FbleStdioMain -m $path"
     bin $target $objs ""
   }
 
