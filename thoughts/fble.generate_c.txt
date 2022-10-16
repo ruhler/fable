@@ -159,3 +159,101 @@ The path to getting rid of aarch64 target:
   friends.
 * Get it to compile on low memory.
 * Setup benchmarks, check if they are within, say, 20% of aarch64.
+* Figure out how to emit debugging info via C approach.
+
+---
+
+Goal: See how close we are to being able to compile everything with 1GB RAM,
+and what we could do to get us closer.
+
+Let's see how much memory it actually takes on what files.
+
+Part of the challenge is, even the ones that don't take a ton of memory can
+take multiple minutes to compile. Any way I can profile that? Maybe ninja -d
+stats?
+
+There are 4 culprits:
+
+/Md5/Rounds%
+/Sat/Aim%
+/Invaders/Graphics%
+/Graphics/Camera/SinCos%
+
+Let me let them run for longer and see if any come close to finishing.
+
+I clearly can't run all four at the same time. Let's try one at a time:
+
+/Md5/Rounds%: Goes up to 60% memory and then completes okay.
+/Sat/Aim%: Goes up to 72% memory and then completes okay.
+/Invaders/Graphics%: Goes up to 45% memory then completes okay.
+/Graphics/Camera/SinCos%: Goes up to 40% memory then completes okay.
+
+So we're close. If I could get an order of magnitude better. Or even just
+compile all of these one at a time, I maybe could swing it.
+
+Let's see if number of lines of C code correlates here. It would be nice if we
+could use that as a metric to try and improve.
+
+Yes. That's shows it pretty clearly:
+
+   108797 out/pkgs/md5/Md5/Rounds.fble.c
+   105934 out/pkgs/sat/Sat/Aim.fble.c
+    76723 out/pkgs/invaders/Invaders/Graphics.fble.c
+    60029 out/pkgs/graphics/Graphics/Camera/SinCos.fble.c
+    34514 out/pkgs/graphics/Graphics/Triangle/Tests.fble.c
+    22824 out/pkgs/core/Core/Int/Tests.fble.c
+    22319 out/pkgs/pinball/Pinball/Tests.fble.c
+
+The top four. Looks like 40K lines maybe a good target to shoot for.
+
+Where are all these lines coming from? Let's review the modules and see what
+they do.
+
+Rounds:
+* Lots of hex literals.
+* Lots of big structs.
+* Lots of deep chains of struct accesses.
+* C code shows lots of struct access instructions, including check for
+  FbleStrictValue and corresponding error message.
+* Some functions with 5K or more instructions.
+
+Aim:
+* Lots of int literals.
+* Long nested list literals. There are no struct accesses at all.
+* Some functions with 5K or more instructions.
+* Lots of aborts and error messages.
+
+Invaders Graphics:
+* Lots of int literals and list literals.
+* Some functions with 5K or more instructions.
+* Lots of error messages.
+
+Graphics SinCos:
+* Lots of int literals.
+* Long list literal.
+* Some functions with 5K or more instructions.
+* Lots of error messages.
+
+Note: none of the fble files are particularly large. I expect all of these
+should compile just fine.
+
+Brainstorm of things to try:
+* abort on error instead of have error handling.
+* Remove 'abort' function implementations.
+* Remove profiling code at every instruction.
+* Use different options to gcc to optimize for memory somehow?
+* Use initializer list instead of assignments for literal instructions.
+ - Also for "statics".
+
+What sticks out to me is:
+* From fble side: lots of literals. See if I can improve code generation for
+  that.
+* They all have 5K+ instruction functions with lots of abort cases.
+
+Let me start with something easy and noncontroversial: Generate as many arrays
+using initializers as I can rather than separate assignment statements. It
+won't reduce lines of code, but hopefully it helps with something inside. I'm
+not sure if I expect much, but it's worth a try.
+
+I don't see any memory improvement from this change. I like it anyway though,
+so I'll keep it.

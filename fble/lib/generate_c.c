@@ -372,12 +372,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       size_t fieldc = dt_instr->fields.size;
 
       fprintf(fout, "  {\n");
-      fprintf(fout, "    FbleValue* fields[%zi];\n", fieldc);
+      fprintf(fout, "    FbleValue* fields[] = {\n");
       for (size_t i = 0; i < fieldc; ++i) {
-        fprintf(fout, "    fields[%zi] = %s[%zi];\n", i,
+        fprintf(fout, "      %s[%zi],\n",
             section[dt_instr->fields.xs[i].section],
             dt_instr->fields.xs[i].index);
       };
+      fprintf(fout, "    };\n");
 
       static const char* dtkind[] = { "FBLE_STRUCT_DATATYPE", "FBLE_UNION_DATATYPE" };
       fprintf(fout, "    l[%zi] = FbleNewDataTypeValue(heap, %s, %zi, fields);\n",
@@ -486,12 +487,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "      .on_free = NULL\n");
       fprintf(fout, "    };\n");
 
-      fprintf(fout, "    FbleValue* statics[%zi];\n", func_instr->code->_base.statics);
+      fprintf(fout, "    FbleValue* statics[] = {\n");
       for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
-        fprintf(fout, "    statics[%zi] = %s[%zi];\n", i,
+        fprintf(fout, "      %s[%zi],\n",
             section[func_instr->scope.xs[i].section],
             func_instr->scope.xs[i].index);
       }
+      fprintf(fout, "    };\n");
 
       fprintf(fout, "    l[%zi] = FbleNewFuncValue(heap, &e, profile_base_id, statics);\n",
           func_instr->dest);
@@ -510,12 +512,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  }\n");
 
       fprintf(fout, "  {\n");
-      fprintf(fout, "    FbleValue* args[%zi];\n", call_instr->args.size);
+      fprintf(fout, "    FbleValue* args[] = {\n");
       for (size_t i = 0; i < call_instr->args.size; ++i) {
-        fprintf(fout, "    args[%zi] = %s[%zi];\n", i,
+        fprintf(fout, "      %s[%zi],\n",
             section[call_instr->args.xs[i].section],
             call_instr->args.xs[i].index);
       }
+      fprintf(fout, "    };\n");
 
       if (call_instr->exit) {
         fprintf(fout, "    FbleRetainValue(heap, x0);\n");
@@ -628,12 +631,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       size_t argc = list_instr->args.size;
 
       fprintf(fout, "  {\n");
-      fprintf(fout, "    FbleValue* args[%zi];\n", argc);
+      fprintf(fout, "    FbleValue* args[] = {\n");
       for (size_t i = 0; i < argc; ++i) {
-        fprintf(fout, "    args[%zi] = %s[%zi];\n", i,
+        fprintf(fout, "      %s[%zi],\n",
             section[list_instr->args.xs[i].section],
             list_instr->args.xs[i].index);
       }
+      fprintf(fout, "    };\n");
 
       fprintf(fout, "    l[%zi] = FbleNewListValue(heap, %zi, args);\n", list_instr->dest, argc);
       fprintf(fout, "  }\n");
@@ -644,10 +648,11 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
       size_t argc = literal_instr->letters.size;
       fprintf(fout, "  {\n");
-      fprintf(fout, "    size_t args[%zi];\n", argc);
+      fprintf(fout, "    size_t args[] = {\n");
       for (size_t i = 0; i < argc; ++i) {
-        fprintf(fout, "    args[%zi] = %zi;\n", i, literal_instr->letters.xs[i]);
+        fprintf(fout, "      %zi,\n", literal_instr->letters.xs[i]);
       }
+      fprintf(fout, "    };\n");
       fprintf(fout, "    l[%zi] = FbleNewLiteralValue(heap, %zi, args);\n",
           literal_instr->dest, argc);
       fprintf(fout, "  }\n");
