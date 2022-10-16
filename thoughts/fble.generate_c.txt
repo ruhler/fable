@@ -257,3 +257,18 @@ not sure if I expect much, but it's worth a try.
 
 I don't see any memory improvement from this change. I like it anyway though,
 so I'll keep it.
+
+Next thing to try, just because it's easy to try: put all these array
+initializers on a single line instead of spreading across lines. Clearly the
+structure of the code is identical. But I'm wondering if the memory is
+proportional to number of lines in terms of, perhaps, debug info. This
+approach should drastically cut down on number of lines. I can see by how
+much. And then we can see if it helps with memory.
+
+If it helps with memory, I'll take it. If not... I'll look at some of the code
+and see how hard it is to digest.
+
+Looks like it actually doesn't make a difference in overall line counts, aside
+from a few thousand lines saved. The code looks good. Longest line I'm seeing
+is 255 lines or so, it doesn't look too bad. Most of these all fit easily in
+80 characters. I'll keep this change.
