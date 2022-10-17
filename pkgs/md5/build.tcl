@@ -17,6 +17,9 @@ namespace eval "pkgs/md5" {
     stdio $::out/pkgs/md5/Md5/md5-tests "/Md5/Tests%" "md5"
     testsuite $::out/pkgs/md5/Md5/md5-tests.tr $::out/pkgs/md5/Md5/md5-tests \
       "$::out/pkgs/md5/Md5/md5-tests --prefix Compiled."
+
+    # Md5/Bench compiled
+    stdio $::out/pkgs/md5/Md5/md5-bench "/Md5/Bench%" "md5"
   }
 
   # fble-md5 program.

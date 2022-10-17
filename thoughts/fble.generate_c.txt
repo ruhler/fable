@@ -272,3 +272,159 @@ Looks like it actually doesn't make a difference in overall line counts, aside
 from a few thousand lines saved. The code looks good. Longest line I'm seeing
 is 255 lines or so, it doesn't look too bad. Most of these all fit easily in
 80 characters. I'll keep this change.
+
+   106841 out/pkgs/md5/Md5/Rounds.fble.c
+    99785 out/pkgs/sat/Sat/Aim.fble.c
+    72427 out/pkgs/invaders/Invaders/Graphics.fble.c
+    55915 out/pkgs/graphics/Graphics/Camera/SinCos.fble.c
+    32884 out/pkgs/graphics/Graphics/Triangle/Tests.fble.c
+    21252 out/pkgs/core/Core/Int/Tests.fble.c
+
+Next thing to try? I'm thinking either abort or profiling code. Both of which
+are sort of not needed for typical use case and potentially take up a lot of
+extra code.
+
+A couple different experiments we can do for abort:
+* Don't generate an abort function. Just use NULL.
+* Don't output error messages on aborts.
+* Don't generate tests for aborting.
+
+I want to get a sense of what makes more or less difference. Let's try one at
+a time and see if any are particularly noticeable.
+
+1. Don't generate an abort function.
+
+Interestingly enough, only about 25% of the generated C code is Abort
+functions:
+
+    79447 out/pkgs/md5/Md5/Rounds.fble.c
+    73327 out/pkgs/sat/Sat/Aim.fble.c
+    55834 out/pkgs/invaders/Invaders/Graphics.fble.c
+    43343 out/pkgs/graphics/Graphics/Camera/SinCos.fble.c
+    25419 out/pkgs/graphics/Graphics/Triangle/Tests.fble.c
+
+More importantly, removing them doesn't have a significant effect on memory
+use. Maybe it drops from 63% down to 57%. 72% down to 69%.
+
+Next thing to try:
+* Remove all checks for abort behavior. Add this on top of the no abort
+  functions change. I'm looking for something to make a substantial
+  difference.
+
+They still take a long time to compile. Rounds is down from 57% to maybe 45%
+with this change. Sat/Aim is down from 69% to 63% from this change.
+
+We haven't reached an order of magnitude yet. And
+interestingly enough, it's only shaved off maybe 15% of lines of code:
+
+    65292 out/pkgs/sat/Sat/Aim.fble.c
+    57523 out/pkgs/md5/Md5/Rounds.fble.c
+    48176 out/pkgs/invaders/Invaders/Graphics.fble.c
+    36794 out/pkgs/graphics/Graphics/Camera/SinCos.fble.c
+
+Next thing to try, again on top of all this: remove profiling code.
+
+That's it. Removing all the profiling code makes a big difference. Cut down
+memory use by half. We can now compiling everything in parallel no problem.
+
+    38828 out/pkgs/sat/Sat/Aim.fble.c
+    31953 out/pkgs/md5/Md5/Rounds.fble.c
+    31433 out/pkgs/invaders/Invaders/Graphics.fble.c
+    24234 out/pkgs/graphics/Graphics/Camera/SinCos.fble.c
+    15611 out/pkgs/core/Core/Char/Eq.fble.c
+
+It also put us under the 40K line mark.
+
+Interesting. Let's see if I can walk back some of the abort changes. Can
+everything be explained by profiling, or is it some mix?
+
+I'm starting to suspect the issue is total number of conditions in a single
+function.
+
+---
+
+Focusing on Aim now. Let's add back abort checks while leaving out profiling.
+
+Remember where we are:
+* 72% baseline memory use.
+* 69% -ABORT_FUNC
+* 63% -ABORT_FUNC, -ABORT_CHECK
+* 30% (?) -ABORT_FUNC, -ABORT_CHECK, -PROFILE
+
+Add back abort check now:
+* 40% -ABORT_FUNC, -PROFILE, but still it's fast to run (40s, not 2 minutes).
+
+Add back abort function now:
+* 44% -PROFILE, still fast, but not quite as fast.
+
+Something to try: enable dumping of info from gcc. Things to try (from
+https://gcc.gnu.org/onlinedocs/gcc/Developer-Options.html):
+  -ftime-report
+  -fmem-report
+  -time
+  -fdump-statistics (doesn't seem to do anything?)
+  -fdump-statistics-option [-detail | -stats]
+
+Looks like -ftime-report and -fmem-report are good starts.
+
+Most of the time is spent in phase opt and generate. That's a little broad.
+Can we get more detail?
+
+I can't figure out a combination of options to give a summary of time spent in
+each pass with more detail than -ftime-report.
+
+Could we reproduce the issue, you think, by writing a function that's pure
+profiling code? Just a bunch of:
+  if (profile) {
+    if (rand() % 1024 == 0) FbleProfileSample(profile, 1);
+  }
+
+Back to back to back?
+
+---
+
+I'm not sure what to do. Misc ideas:
+* We could coalesce profile blocks into one. Do a single sample for a combined
+  straight line of instructions. Not sure if the math is straight forward for
+  the random of the sample, but that would cut down on calls to profiling.
+* We could statically detect potential undefined values and avoid inserting
+  abort checks if we know they can't trigger statically.
+* We could wrap the condition around a function. For example, 
+   ProfileSample(profile) = if (profile && rand() % 1024 == 0) FbleProfile(sample
+  That way we get straight line code in the generated functions, and even
+  though there is overhead to doing the function call, at least, hopefully,
+  the compiler can handle compiling better.
+
+I think, at this point, it would be good to get some benchmarks. Some sense of
+how much performance we get interpreted versus aarch64 versus c generation
+with various gcc compile options. For example, if C code is faster than
+aarch64 even with putting conditions behind functions, then that would be
+great, right? Or at least make the decision to add that indirection in the
+generated code.
+
+What benchmarks did we have before? What's the state of them today?
+
+I see the following:
+pkgs/graphics/Graphics/Bench.fble
+pkgs/md5/Md5/Bench.fble
+pkgs/pinball/Pinball/Bench.fble
+pkgs/invaders/Invaders/Bench.fble
+pkgs/sat/Sat/Bench.fble
+pkgs/games/Games/GameOfLife/Bench.fble
+pkgs/games/Games/Snake/Bench.fble
+pkgs/games/Games/BenchmarkGame/Bench.fble
+
+Here's what I think: each package should define a compiled program that is a
+benchmark for the package. Assuming there is something interesting enough to
+benchmark. I think initially Md5 and Sat would be great to start to get an
+initial idea of performance.
+
+Looks like the benchmarks are expressed as tests. So we could run them using
+whatever we do to run tests.
+
+Tests are wrapped in /Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests)). Let's
+try the same for md5.
+
+md5-bench interpreted  1m22s
+md5-bench aarch64        50s
+md5-bench c

@@ -44,4 +44,4 @@ Test@ Bench = Test(Str|Md5, (Unit@ _) {
   AssertEquals(/Md5/Hash%.Eq, /Md5/Hash%.Show, md5.x, md5.x);
 });
 
-@(Bench);
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Bench));
