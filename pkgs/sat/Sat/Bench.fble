@@ -21,4 +21,4 @@ Test@ Bench = Test(Str|Sat, (Unit@ _) {
   AssertEquals(/Core/Unit/Eq%.Eq, /Core/Unit/Show%.Show, Unit, solved.timeout);
 });
 
-@(Bench);
+/Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Bench));

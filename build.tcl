@@ -175,13 +175,22 @@ proc dirs { root dir } {
 #   compileargs - args to pass to the fble compiler.
 #   args - additional dependencies, typically including the .fble file.
 proc fbleobj { obj compile compileargs args } {
+  set target aarch64
+  #set target c
   set s [string map {.o .s} $obj]
-  build $s "$compile $args" "$compile $compileargs > $s"
-  set cmd "as -o $obj $s"
-  #set c [string map {.o .c} $obj]
-  #build $c "$compile $args" "$compile -t c $compileargs > $c"
-  #set cmd "gcc -c -o $obj -I fble/include -I fble/lib $c"
-  build $obj "$s $args" $cmd
+  set c [string map {.o .c} $obj]
+  switch $target {
+    aarch64 {
+      build $s "$compile $args" "$compile $compileargs > $s"
+      set cmd "as -o $obj $s"
+      build $obj "$s $args" $cmd
+    }
+    c {
+      build $c "$compile $args" "$compile -t c $compileargs > $c"
+      set cmd "gcc -c -o $obj -I fble/include -I fble/lib $c"
+      build $obj "$c $args" $cmd
+    }
+  }
 }
 
 # pkg --

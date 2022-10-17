@@ -425,6 +425,80 @@ whatever we do to run tests.
 Tests are wrapped in /Core/Stdio/IO%.Run(/Core/Test/Stdio%.Run(Tests)). Let's
 try the same for md5.
 
-md5-bench interpreted  1m22s
-md5-bench aarch64        50s
-md5-bench c
+md5-bench interpreted:  1m22s
+md5-bench aarch64:        50s
+md5-bench c:              57s (no special gcc options.)
+
+---
+
+Note: it doesn't look like there's any way to specify dwarf debugging info as
+input to a c compiler. We would need to target the gcc or llvm IR level.
+That's rather annoying. I don't see any options for llvm text based bytecode
+dwarf either.
+
+The tradeoffs for custom code generator versus targeting something generic
+like C or llvm:
+* Custom code generator is faster, less memory to compile.
+* Custom code generator has full flexibility on dwarf debug info.
+* Custom code generator has lots of flexibility on compiled code.
+* Targeting c or llvm means lots more architectures supported.
+* Targeting c or llvm probably gives better runtime performance with
+  sufficient optimization options than I'll ever get in my own compiler.
+
+Some possible compromises:
+* Be able to generate c/llvm, but still do architecture specific dwarf info?
+  Is that feasible? Or would we have to generate the assembly ourself to be
+  able to do that?
+* Specify a set of supported architectures.
+
+Really, if we are going to support multiple architectures, I see no reason not
+to generate C code as another option. That doesn't add any extra effort, but
+gives much better tail coverage of weird platforms. Presumably without debug
+support.
+
+In terms of which architectures to support, I vote for: arm, aarch64, x86_64
+to start. Or, in other words, just the ones that I have computers to test on.
+Let other people worry about other architectures if they care.
+
+Ok. I like this approach. Multiple specific target architectures, as I desire,
+and a generic C architecture as a catch all. Debug capabilities are only
+available on the specific target architectures.
+
+What's my strategy around build and test?
+* We can only test targets supported by the architecture: the specific one and
+  C. Unless we want to do some qemu thing, which sounds complicated. We would
+  need to cross compile the fble library, which means we would need a cross
+  compiler.
+* I think prefer to compile a specific architecture. But, for example, maybe
+  we build benchmarks, and possible compiled tests in specific and generic
+  targets, to improve test coverage.
+
+That sounds reasonable. Everyone is responsible for testing the 'C' target.
+Otherwise, only make changes to your own specific target and make sure that
+keeps working. Worst case, if we break some other target, at least they can
+use 'C' as a target until they have a chance to fix it.
+
+Strawman:
+* For each benchmark and test, provide foo-tests-c, foo-tests-aarch64,
+  foo-bench-c, foo-bench-aarch64 variants. Run both tests.
+* That means, for each file, we really want libfoo-c and libfoo-aarch64.
+  That's a lot of compiling to be doing, which means we need to get past the
+  high C compilation overhead issue before we can do this for real.
+
+TODO:
+* Set up sat-bench, get some initial numbers.
+* Set up aarch64 and c versions of the profiles-test
+  - Debug and fix failing c version.
+* Factor conditions out of profile code, see if that helps compilation while
+  continuing to enable profiling.
+* Factor common strings out of abort code. Who knows, maybe that will help a
+  little bit with memory requirements.
+* See if I can add static analysis to compiler to track what values may be
+  undefined or not. I think that could help performance and code generation
+  for both aarch64 and C code.
+
+---
+
+sat-bench interpreted:  2m00s
+sat-bench aarch64:      1m16s
+sat-bench c:                s (no special gcc options.)

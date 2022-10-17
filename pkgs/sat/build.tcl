@@ -11,6 +11,9 @@ namespace eval "pkgs/sat" {
     testsuite $::out/pkgs/sat/Sat/sat-tests.tr $::out/pkgs/sat/Sat/sat-tests \
       "$::out/pkgs/sat/Sat/sat-tests --prefix Compiled."
 
+    # /Sat/Bench% compiled
+    stdio $::out/pkgs/sat/Sat/sat-bench "/Sat/Bench%" "sat"
+
     # fble-sat binary
     stdio $::out/pkgs/sat/Sat/fble-sat "/Sat/Main%" "sat"
   }
