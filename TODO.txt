@@ -1,7 +1,7 @@
-
-* Define separate fbleobj_c and fbleobj_aarch64 functions.
-  - So we can more explicitly specify what kind of objects to build if
-    desired.
+* Factor out common strings and error messages in generated c code.
+  - See if it helps with compile times.
+* Hide profiling condition behind function in generated c code.
+  - See if it helps with compile times.
 
 * Clean up generate_c things
   - Don't require access to private includes.

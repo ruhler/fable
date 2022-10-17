@@ -501,4 +501,11 @@ TODO:
 
 sat-bench interpreted:  2m00s
 sat-bench aarch64:      1m16s
-sat-bench c:                s (no special gcc options.)
+sat-bench c:            1m25s (no special gcc options.)
+
+That's within 15%. So I think I'm satisfied, at least in the current
+implementation, that compiling via C code will result in code that runs fast
+enough compared to compiling via aarch64 code.
+
+It's more the issue of compile times, compile memory, and debug info to be
+worried about.
