@@ -30,17 +30,27 @@ namespace eval "fble/test" {
     "$::out/fble/test/fble-profiles-test fble/test/ProfilesTest.fble" \
     "$::out/fble/test/fble-profiles-test -I fble/test -m /ProfilesTest% > $::out/fble/test/fble-profiles-test.prof"
 
+  # fble-compiled-profiles-test-c
+  fbleobj_c $::out/fble/test/ProfilesTest.c.o $::out/fble/bin/fble-compile \
+    "-c -e FbleCompiledMain --main FbleProfilesTestMain -I fble/test -m /ProfilesTest%" \
+    fble/test/ProfilesTest.fble
+  bin $::out/fble/test/ProfilesTest.c "$::out/fble/test/ProfilesTest.c.o $libs" ""
+
+  # TODO: fix this failing test:
+  #test $::out/fble/test/ProfilesTest.c.tr "$::out/fble/test/ProfilesTest.c" \
+    "$::out/fble/test/ProfilesTest.c > $::out/fble/test/ProfilesTest.c.prof"
+
   if {$::arch == "aarch64"} {
-    # fble-compiled-profiles-test
-    fbleobj $::out/fble/test/ProfilesTest.o $::out/fble/bin/fble-compile \
+    # fble-compiled-profiles-test-aarch64
+    fbleobj_aarch64 $::out/fble/test/ProfilesTest.aarch64.o $::out/fble/bin/fble-compile \
       "-c -e FbleCompiledMain --main FbleProfilesTestMain -I fble/test -m /ProfilesTest%" \
       fble/test/ProfilesTest.fble
-    bin $::out/fble/test/ProfilesTest "$::out/fble/test/ProfilesTest.o $libs" ""
-    test $::out/fble/test/ProfilesTest.tr "$::out/fble/test/ProfilesTest" \
-      "$::out/fble/test/ProfilesTest > $::out/fble/test/ProfilesTest.prof"
+    bin $::out/fble/test/ProfilesTest.aarch64 "$::out/fble/test/ProfilesTest.aarch64.o $libs" ""
+    test $::out/fble/test/ProfilesTest.aarch64.tr "$::out/fble/test/ProfilesTest.aarch64" \
+      "$::out/fble/test/ProfilesTest.aarch64 > $::out/fble/test/ProfilesTest.aarch64.prof"
 
     # /Fble/DebugTest%
-    fbleobj $::out/fble/test/fble-debug-test.o $::out/fble/bin/fble-compile \
+    fbleobj_aarch64 $::out/fble/test/fble-debug-test.o $::out/fble/bin/fble-compile \
       "--main FbleTestMain -c -I fble/test -m /DebugTest%"
     bin $::out/fble/test/fble-debug-test "$::out/fble/test/fble-debug-test.o $libs" ""
 

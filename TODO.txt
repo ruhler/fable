@@ -1,5 +1,4 @@
-* Hide profiling condition behind function in generated c code.
-  - See if it helps with compile times.
+* Debug and fix failing fble-compiled-profiles-test-c test.
 
 * Clean up generate_c things
   - Don't require access to private includes.

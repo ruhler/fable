@@ -236,10 +236,8 @@ proc pkg {name deps objs} {
         "$::out/fble/bin/fble-deps $cflags -t $::out/pkgs/$name/$x.d -m $mpath > $::out/pkgs/$name/$x.d" \
         "depfile = $::out/pkgs/$name/$x.d"
 
-      if {$::arch == "aarch64"} {
-        fbleobj $::out/pkgs/$name/$x.o $::out/fble/bin/fble-compile "-c $cflags -m $mpath" $::out/pkgs/$name/$x.d
-        lappend objs $::out/pkgs/$name/$x.o
-      }
+      fbleobj $::out/pkgs/$name/$x.o $::out/fble/bin/fble-compile "-c $cflags -m $mpath" $::out/pkgs/$name/$x.d
+      lappend objs $::out/pkgs/$name/$x.o
     }
   }
 

@@ -38,9 +38,6 @@ version numbers provided are versions that are known to work:
 * GNU grep 3.3 - Used for some test cases.
 * GNU diffutils 3.7 - Used for some test cases.
 
-Fable must be built on an aarch64 machine, because the fble compiler currently
-generates aarch64 code.
-
 ## Build and Test
 
 To build and test everything, run:

@@ -528,3 +528,9 @@ sat-bench c:    1m25s ==> 1m30s.
 
 Which is still much better than 2 minutes for interpreted. Cool. Let's stick
 with that then. Is that good enough to fix all my compilation woes?
+
+Yes! Compilation woes are fixed in terms of memory use requirements. Though
+we are sort of on the upper edge of what's available memory wise, so ideally
+try to improve things over time. Otherwise we could fall over the edge.
+
+
