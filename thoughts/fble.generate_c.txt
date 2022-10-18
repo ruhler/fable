@@ -509,3 +509,22 @@ enough compared to compiling via aarch64 code.
 
 It's more the issue of compile times, compile memory, and debug info to be
 worried about.
+
+---
+
+What if we use -O0 when building fble objects from c? Does it make a noticeable
+difference in compile memory use?
+
+Aim goes down from 70% memory to... 71%. So no. No improvement with -O0.
+
+How about by pulling conditions for profiling logic out into separate
+functions?
+
+Aim goes down from 70% memory to... 48% memory. That's pretty nice.
+
+What about the benchmark performance?
+
+sat-bench c:    1m25s ==> 1m30s.
+
+Which is still much better than 2 minutes for interpreted. Cool. Let's stick
+with that then. Is that good enough to fix all my compilation woes?
