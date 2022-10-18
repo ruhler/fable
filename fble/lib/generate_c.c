@@ -39,7 +39,7 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
-static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc loc);
+static void ReturnAbort(FILE* fout, size_t pc, const char* lmsg, FbleLoc loc);
 
 static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
@@ -316,17 +316,15 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 //   fout - the output stream.
 //   code - pointer to current code block to use for labels.
 //   pc - the program counter of the abort location.
-//   msg - the error message to use.
+//   lmsg - the name of the error message to use.
 //   loc - the location to report with the error message.
 //
 // Side effects:
 //   Emit code to return the error.
-static void ReturnAbort(FILE* fout, void* code, size_t pc, const char* msg, FbleLoc loc)
+static void ReturnAbort(FILE* fout, size_t pc, const char* lmsg, FbleLoc loc)
 {
-  fprintf(fout, "    thread->stack->pc = %zi;\n", pc);
-  fprintf(fout, "    fprintf(stderr, \"%s:%d:%d: error: %s\\n\");\n",
-      loc.source->str, loc.line, loc.col, msg);
-  fprintf(fout, "    return FBLE_EXEC_ABORTED;\n");
+  fprintf(fout, "return Abort(thread, %zi, %s, %d, %d);\n",
+      pc, lmsg, loc.line, loc.col);
 }
 
 // EmitInstr --
@@ -415,9 +413,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
           section[access_instr->obj.section], access_instr->obj.index);
-      fprintf(fout, "  if (!x0) {\n");
-      ReturnAbort(fout, code, pc, "undefined struct value access", access_instr->loc);
-      fprintf(fout, "  }\n");
+      fprintf(fout, "  if (!x0) ");
+      ReturnAbort(fout, pc, "UndefinedStructValue", access_instr->loc);
 
       fprintf(fout, "  l[%zi] = FbleStructValueAccess(x0, %zi);\n",
           access_instr->dest, access_instr->tag);
@@ -429,13 +426,11 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
       fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
           section[access_instr->obj.section], access_instr->obj.index);
-      fprintf(fout, "  if (!x0) {\n");
-      ReturnAbort(fout, code, pc, "undefined union value access", access_instr->loc);
-      fprintf(fout, "  }\n");
+      fprintf(fout, "  if (!x0) ");
+      ReturnAbort(fout, pc, "UndefinedUnionValue", access_instr->loc);
 
-      fprintf(fout, "  if (%zi != FbleUnionValueTag(x0)) {\n", access_instr->tag);
-      ReturnAbort(fout, code, pc, "union field access undefined: wrong tag", access_instr->loc);
-      fprintf(fout, "  }\n");
+      fprintf(fout, "  if (%zi != FbleUnionValueTag(x0)) ", access_instr->tag);
+      ReturnAbort(fout, pc, "WrongUnionTag", access_instr->loc);
 
       fprintf(fout, "  l[%zi] = FbleUnionValueAccess(x0);\n", access_instr->dest);
       fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", access_instr->dest);
@@ -448,9 +443,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
           section[select_instr->condition.section],
           select_instr->condition.index);
-      fprintf(fout, "  if (!x0) {\n");
-      ReturnAbort(fout, code, pc, "undefined union value select", select_instr->loc);
-      fprintf(fout, "  }\n");
+      fprintf(fout, "  if (!x0) ");
+      ReturnAbort(fout, pc, "UndefinedUnionSelect", select_instr->loc);
 
       fprintf(fout, "  switch (FbleUnionValueTag(x0)) {\n");
       for (size_t i = 0; i < select_instr->jumps.size; ++i) {
@@ -507,9 +501,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
           section[call_instr->func.section],
           call_instr->func.index);
-      fprintf(fout, "  if (!x0) {\n");
-      ReturnAbort(fout, code, pc, "called undefined function", call_instr->loc);
-      fprintf(fout, "  }\n");
+      fprintf(fout, "  if (!x0) ");
+      ReturnAbort(fout, pc, "UndefinedFunctionValue", call_instr->loc);
 
       fprintf(fout, "  {\n");
       fprintf(fout, "    FbleValue* args[] = {");
@@ -583,12 +576,11 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     case FBLE_REF_DEF_INSTR: {
       FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
 
-      fprintf(fout, "  if (!FbleAssignRefValue(heap, l[%zi], %s[%zi])) {\n",
+      fprintf(fout, "  if (!FbleAssignRefValue(heap, l[%zi], %s[%zi])) ",
           ref_instr->ref,
           section[ref_instr->value.section],
           ref_instr->value.index);
-      ReturnAbort(fout, code, pc, "vacuous value", ref_instr->loc);
-      fprintf(fout, "  }\n");
+      ReturnAbort(fout, pc, "VacuousValue", ref_instr->loc);
       return;
     }
 
@@ -949,7 +941,7 @@ static FbleString* LabelForPath(FbleModulePath* path)
 
   // Construct the name.
   char name[len];
-  char translated[5]; 
+  char translated[5];
   name[0] = '\0';
   strcat(name, "_Fble");
   for (size_t i = 0; i < path->path.size; ++i) {
@@ -985,7 +977,23 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "#include <stdlib.h>\n");         // for rand
   fprintf(fout, "#include \"fble-value.h\"\n");   // for FbleFuncValueStatics, etc.
   fprintf(fout, "#include \"execute.h\"\n");
-  fprintf(fout, "#include \"value.h\"\n");
+  fprintf(fout, "#include \"value.h\"\n\n");
+
+  // Error messages.
+  fprintf(fout, "static const char* UndefinedStructValue = \"undefined struct value access\";\n");
+  fprintf(fout, "static const char* UndefinedUnionValue = \"undefined union value access\";\n");
+  fprintf(fout, "static const char* UndefinedUnionSelect = \"undefined union value select\";\n");
+  fprintf(fout, "static const char* WrongUnionTag = \"union field access undefined: wrong tag\";\n");
+  fprintf(fout, "static const char* UndefinedFunctionValue = \"called undefined function\";\n");
+  fprintf(fout, "static const char* VacuousValue = \"vacuous value\";\n");
+
+  fprintf(fout, "static FbleExecStatus Abort(FbleThread* thread, size_t pc, const char* msg, int line, int col)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  thread->stack->pc = pc;");
+  fprintf(fout, "  fprintf(stderr, \"%s:%%d:%%d: error: %%s\\n\", line, col, msg);\n",
+      module->path->loc.source->str);
+  fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
+  fprintf(fout, "}\n");
 
   // Generate prototypes for all the run and abort functions.
   FbleNameV profile_blocks = module->code->_base.profile_blocks;

@@ -1,5 +1,3 @@
-* Factor out common strings and error messages in generated c code.
-  - See if it helps with compile times.
 * Hide profiling condition behind function in generated c code.
   - See if it helps with compile times.
 
