@@ -3,8 +3,8 @@ namespace eval "pkgs/invaders" {
 
   # /Invaders/Tests% interpreted
   set cflags "-I pkgs/invaders -I pkgs/app -I pkgs/core"
-  test $::out/pkgs/invaders/Invaders/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/invaders/Invaders/Tests.fble.d" \
-    "$::out/pkgs/core/Core/fble-stdio $cflags -m /Invaders/Tests%" "pool = console"
+  test $::out/pkgs/invaders/Invaders/tests.tr "$::out/pkgs/core/fble-stdio $::out/pkgs/invaders/Invaders/Tests.fble.d" \
+    "$::out/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%" "pool = console"
 
   app $::out/pkgs/invaders/Invaders/fble-invaders "/Invaders/AppIO%" "invaders"
 

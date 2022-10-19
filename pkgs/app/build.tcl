@@ -2,7 +2,7 @@ namespace eval "pkgs/app" {
   set objs [list]
 
   # .c library files.
-  foreach {x} { App/app.fble } {
+  foreach {x} { app.fble } {
     lappend objs $::out/pkgs/app/$x.o
     obj $::out/pkgs/app/$x.o pkgs/app/$x.c "-I /usr/include/SDL2 -I fble/include -I pkgs/core -I pkgs/app"
   }
@@ -10,10 +10,10 @@ namespace eval "pkgs/app" {
   pkg app [list core] $objs
 
   # fble-app program.
-  obj $::out/pkgs/app/App/fble-app.o pkgs/app/App/fble-app.c \
+  obj $::out/pkgs/app/fble-app.o pkgs/app/fble-app.c \
     "-I fble/include -I pkgs/core -I pkgs/app -I/usr/include/SDL2"
-  bin $::out/pkgs/app/App/fble-app \
-    "$::out/pkgs/app/App/fble-app.o $::out/pkgs/app/libfble-app.a $::out/pkgs/core/libfble-core.a $::out/fble/lib/libfble.a" \
+  bin $::out/pkgs/app/fble-app \
+    "$::out/pkgs/app/fble-app.o $::out/pkgs/app/libfble-app.a $::out/pkgs/core/libfble-core.a $::out/fble/lib/libfble.a" \
     "-lSDL2 -lGL"
 
   # Build an fble-app compiled binary.
@@ -39,6 +39,6 @@ namespace eval "pkgs/app" {
 
   # /App/Tests% interpreted
   set cflags "-I pkgs/app -I pkgs/core"
-  test $::out/pkgs/app/App/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/app/App/Tests.fble.d" \
-    "$::out/pkgs/core/Core/fble-stdio $cflags -m /App/Tests%" "pool = console"
+  test $::out/pkgs/app/App/tests.tr "$::out/pkgs/core/fble-stdio $::out/pkgs/app/App/Tests.fble.d" \
+    "$::out/pkgs/core/fble-stdio $cflags -m /App/Tests%" "pool = console"
 }

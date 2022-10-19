@@ -14,9 +14,9 @@
 #include "fble-value.h"       // for FbleValue, etc.
 #include "fble-vector.h"      // for FbleVectorInit.
 
-#include "Core/char.fble.h"    // for FbleCharValueAccess
-#include "Core/int.fble.h"     // for FbleIntValueAccess
-#include "Core/string.fble.h"  // for FbleStringValueAccess
+#include "char.fble.h"    // for FbleCharValueAccess
+#include "int.fble.h"     // for FbleIntValueAccess
+#include "string.fble.h"  // for FbleStringValueAccess
 
 #define EX_SUCCESS 0
 #define EX_FAILURE 1

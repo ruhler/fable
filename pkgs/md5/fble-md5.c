@@ -1,7 +1,7 @@
 // fble-md5
 //   A program to compute the md5 sum of a file.
 
-#include "Md5/md5.fble.h"   // for FbleMd5Main
+#include "md5.fble.h"   // for FbleMd5Main
 
 
 // main --

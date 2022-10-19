@@ -3,8 +3,8 @@ namespace eval "pkgs/pinball" {
 
   # /Pinball/Tests% interpreted
   set cflags "-I pkgs/core -I pkgs/app -I pkgs/pinball"
-  testsuite $::out/pkgs/pinball/Pinball/tests.tr "$::out/pkgs/core/Core/fble-stdio $::out/pkgs/pinball/Pinball/Tests.fble.d" \
-    "$::out/pkgs/core/Core/fble-stdio $cflags -m /Pinball/Tests% --prefix Interpreted."
+  testsuite $::out/pkgs/pinball/Pinball/tests.tr "$::out/pkgs/core/fble-stdio $::out/pkgs/pinball/Pinball/Tests.fble.d" \
+    "$::out/pkgs/core/fble-stdio $cflags -m /Pinball/Tests% --prefix Interpreted."
 
   app $::out/pkgs/pinball/Pinball/fble-pinball "/Pinball/AppIO%" "pinball"
 
