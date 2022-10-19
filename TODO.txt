@@ -1,5 +1,3 @@
-* Debug and fix failing fble-compiled-profiles-test-c test.
-
 * Clean up generate_c things
   - Don't require access to private includes.
   - Better instructions on required include paths.

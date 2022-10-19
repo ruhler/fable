@@ -36,8 +36,7 @@ namespace eval "fble/test" {
     fble/test/ProfilesTest.fble
   bin $::out/fble/test/ProfilesTest.c "$::out/fble/test/ProfilesTest.c.o $libs" ""
 
-  # TODO: fix this failing test:
-  #test $::out/fble/test/ProfilesTest.c.tr "$::out/fble/test/ProfilesTest.c" \
+  test $::out/fble/test/ProfilesTest.c.tr "$::out/fble/test/ProfilesTest.c" \
     "$::out/fble/test/ProfilesTest.c > $::out/fble/test/ProfilesTest.c.prof"
 
   if {$::arch == "aarch64"} {

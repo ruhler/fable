@@ -345,12 +345,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
     switch (op->tag) {
       case FBLE_PROFILE_ENTER_OP: {
-        fprintf(fout, "  ProfileEnterBlock(profile, %zi);\n", op->block);
+        fprintf(fout, "  ProfileEnterBlock(profile, profile_base_id + %zi);\n", op->block);
         break;
       }
 
       case FBLE_PROFILE_REPLACE_OP: {
-        fprintf(fout, "  ProfileReplaceBlock(profile, %zi);\n", op->block);
+        fprintf(fout, "  ProfileReplaceBlock(profile, profile_base_id + %zi);\n", op->block);
         break;
       }
 
