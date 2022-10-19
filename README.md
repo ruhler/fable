@@ -12,13 +12,13 @@ programming language.
 
 ## Directory Structure
 
-spec/ - Specification of the fble language, including spec tests.
-fble/ - Source code for an fble interpreter and compiler implemented in C.
-pkgs/ - Sample fble library and application packages.
-thoughts/ - A collection of running discussions about fble.
-docs/ - A collection of user guides.
-book/ - Another collection of discussions about fble.
-out/ - Directory where build outputs are placed, created as needed.
+* spec/ - Specification of the fble language, including spec tests.
+* fble/ - Source code for an fble interpreter and compiler implemented in C.
+* pkgs/ - Sample fble library and application packages.
+* thoughts/ - A collection of running discussions about fble.
+* docs/ - A collection of user guides.
+* book/ - Another collection of discussions about fble.
+* out/ - Directory where build outputs are placed, created as needed.
 
 ## Build Requirements
 
@@ -42,7 +42,7 @@ version numbers provided are versions that are known to work:
 
 To build and test everything, run:
 
-  $ make
+> $ make
 
 The results are placed in the out/ directory.
 

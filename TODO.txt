@@ -3,6 +3,7 @@
   - Better instructions on required include paths.
 
 * Add test for proper markdown syntax in README.md?
+  Not sure how.
 
 * Why doesn't type inference work for Concat function?
 
