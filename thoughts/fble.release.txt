@@ -49,7 +49,7 @@ useful for limiting what packages need to be available at compile time.
 
 Conceptually we want to be able to compile a module in the presence of other
 packages, listed explicitly. Then from the compiler point of view a package
-needs to least for each module path in the package, the type of the module.
+needs to list for each module path in the package, the type of the module.
 That should be enough info for the compiler. We can think about embedding the
 type of a module in the elf file for the package so all you have to do is pass
 around the library file.
@@ -135,3 +135,193 @@ download and install. This seems a bit inflexible to me.
 
 Let's start down the configure route. Follow up in
 thoughts/fble.configure.txt.
+
+---
+
+Now we have support for compiling to C code as well as aarch64, I want to
+revisit the idea of a release again. There are lots of things to work out in a
+release. Here's a brainstorm of things to think about.
+
+* Configuration: what are we installing where.
+ - Currently the only dependency I think we want to make optional is libsdl.
+ - We may want to make it optional to install or not install certain fble
+   library packages.
+* Version numbering systems.
+ - Release implies compatibility guarantees. What should those be?
+ - Do we version all the components separately, or all under one number?
+ - Components are: language spec (and spec tests), libfble, each separate fble
+   library package.
+* Post-install build/search path
+ - After installing, how will users build fble programs?
+ - Is there a standard search path we use, or it's up to users to specify
+   that?
+ - Do we do something with pkg-config to find installed fble packages?
+ - Do we share any of the build.tcl infrastructure to help build fble
+   packages?
+* libfble interface cleanup
+ - Clean up odds and ends in the libfble API.
+ - In particular, create a cleaner interface between libfble and compiled fble
+   code.
+ - Think about potentially upcoming changes for packing values based on known
+   types.
+* Modular/compiled fble package release
+ - Do we have to release fble programs as source?
+ - Should we add support for releasing an fble package entirely as a .so file?
+ - Should we add support for .fble.@ header files?
+* Documentation
+ - Clean up existing documentation. Make sure it's up to date.
+ - Add getting started / tutorial guides.
+ - Add man pages.
+* TODOs
+ - How much of the existing TODOs do I want to tackle before making the
+   release? It's not feasible to do them all.
+* Fble libraries
+ - I suggest not worrying about having clean APIs for .fble libraries for the
+   first release. That's too big a scope. Focus on language specification and
+   reference implementation (interpreter/compiler) for the first release.
+ - But do I want to change Stdio@ to use a File@ interface? Perhaps to avoid
+   need for gnu getline?
+ 
+That's a pretty good summary list of things to tackle. Shall we go one by one?
+
+---
+
+Version numbering systems
+
+The goal of version numbering is to communicate compatibility. The language
+itself is independent of reference implementation and libraries. In theory it
+could be versioned separately. I think three components: A.B.C
+C - No change to language spec, but could be improvements in spec tests or
+    description of the language.
+B - Backwards compatible changes to the language spec. Existing programs
+    should continue to work, but adds some new features that won't work on
+    older implementations
+A - Incompatible changes to the language spec. Old programs will no longer
+    work.
+
+Next is the reference implementation. In theory there could be multiple
+implementations for a given language version. Any A or B change to the
+language spec will require a new libfble to support that change. Other changes
+you could make without a change to the language spec, let's call them: D.E.F
+F - No change to interface. Maybe cleanup, bug fixes, performance
+    improvements.
+E - Backwards compatible change to API. Old programs should still work. New
+    ones may take advantage of features not supported on older releases.
+D - Incompatible change to API.
+
+There is the question whether we are talking about source level compatibility
+or binary compatibility at this point.
+
+If we include language spec version in libfble version, we get a version
+string like: A.B.D.E.F. That's a bit ridiculous.
+
+Next is per fble package version numbers. Again we have a triple for bug
+fixes, backwards compatible changes, or incompatible changes. These will
+depend on language version certain, and also possibly libfble version for any
+use of those APIs. A.B.D.E.G.H.I?
+
+Is there a single versioning scheme that makes sense to bundle together all
+these components under a single version number? Maybe an: A.B.C.D, for
+A: incompatible language change.
+B: incompatible libfble change.
+C: incompatible library package change.
+D: internal/compatible change.
+
+We could consider a backwards compatible language change as an incompatible
+libfble change? And consider a backwards compatible libfble change as a
+library incompatible change?
+
+Honestly, my expectation to begin is that we change the language hopefully
+fairly rarely. We change the libfble API a little less rarely. In practice we
+are pretty likely to change the fble library. The goal of having a versioning
+number, besides uniquely identifying a release, is to say something like, if
+my code works on X.Y, then it also works on X.Z for all Z > Y. I suspect
+pretty much all code would be written against the fble library to start, in
+which case, in practice, nothing will be compatible release to release early
+on. In that case, why bother? How about let's just have 0.1, 0.2, ... where
+'0' means too early in the project lifecycle to have any compatibility
+guarantees, and 1, 2, ... identify unique releases ordered in time. We can
+target a major release bump to 1.* when things are stable enough that we can
+have a useful breakdown after that where releases are less likely to break
+things.
+
+Another point to make:
+
+Ideally libfble works with any of the previous language versions. For example,
+you could put it in language 1.* mode, language 2.* mode, etc. and it would,
+restrict the language settings to match that given mode. That way, in a sense,
+libfble is independent of language version. Version X of libfble supports all
+language versions Y that were released up until the date when libfble X is
+released. The main goal, I think, would be to be able to write older language
+compatible programs where libfble enforces that you aren't relying on any
+newer language features.
+
+I don't want to start versioning fble libraries yet. I don't want to have to
+worry about compatible changes. They are too early for that. Long term,
+ideally each different library package has its own version and release
+cadence. They each target their preferred language version. They work with any
+libfble with required libfble API and supported language version.
+
+So, in summary, for now just stick with version 0.1, 0.2, ... Later on, plan
+to have more flexibility in versioning support. The first release is like a
+preview release. The goal is to let people try it easily. Not to promise there
+won't be breaking changes.
+
+---
+
+What do we install where? And how to we build against that?
+
+$bindir
+  fble-test
+  fble-compile
+  fble-md5
+  fble-stdio
+  fble-invaders
+  ...
+
+$includedir:
+  fble-alloc.h
+  fble-arg-parse.h
+  ...
+
+$libdir:
+  libfble.a
+  libfble-md5.a
+  ...
+
+man pages, etc. All of this is straight forward.
+
+The real question is: where do we install the .fble files? Maybe datarootdir,
+which is /usr/local/share, for example? So:
+ /usr/local/share/fble/core/Core/...
+ /usr/local/share/fble/md5/Md5/...
+
+It would be a pain to have to manually add -I options for each of these
+directories, on the one hand. On the other hand, maybe that's the whole point:
+to specify explicitly everything you depend on. It's kind of like how I need
+to add a -I option to compile against libsdl. In that case, I think that's
+fine. -I /usr/share/fble/md5 is reasonable.
+  
+That's all fairly straight forward. The more interesting question is about
+configure. I think I should have a configure script. I think it should give
+options for standard include directory settings. I think it should work as in
+thoughts/fble.configure.txt. I think we should have an option to enable or
+disable any of the fble library packages.
+
+---
+
+Post-install build/search path
+
+As above, I think no need to specify a default search path. We don't really
+have a standard library yet.
+
+Should we use pkg-config? That gave me trouble in the past I feel like,
+because it doesn't support a separate language very easily. I think fine to
+use it for c parts of the packages, but not the include paths for the fble
+parts of the packages.
+
+Should we expose parts of build.tcl? I don't want to enforce any sort of build
+system on users, much less a funny one like build.tcl. My vote is not to
+supply any build scripts for the initial release. Just make it clear to users
+how they can do things their own way.
+

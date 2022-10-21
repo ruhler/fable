@@ -156,3 +156,75 @@ aarch64 doesn't make sense as an enable flag. It's more like, if you have
 aarch64, we can run those tests. Otherwise we have to skip those tests.
 There's no choice for the user to make here.
 
+---
+
+Now we have a generate_c option as well as generate_aarch64. The build system
+is set up to pick aarch64 if available, otherwise fall back to generate_c. So
+let's revisit what I want to do for configure in the context of making a
+release.
+
+Features to support:
+* build anywhere, in or out of tree.
+* specify directories to install things in
+  - And as a corollary, have options to install things.
+* Support make, make install, and make check.
+  - Question: should make check be an extra step, or always do it?
+  - Answer: ... probably worth making it a separate extra step?
+* Support env variable settings: CC, CPP, LDFLAGS, whatever options are
+  standard and relevant.
+* Option to enable or disable sdl/gl.
+  - This can be the only option for now. Everything else we may as well
+    just always include.
+
+Interface should be as a user would expect for basic use case:
+  ./configure, takes standard options, generates a Makefile.
+  make, make install, make check, make clean does all the right things.
+
+I still like the design proposal from before. Some questions:
+* Should we make configure a shell script, so it can detect if we have tcl? Or
+  is it okay to make it a tcl script directly, and leave that bit to the
+  README? If we make it a shell script, I vote we have a configure.tcl script
+  that we call into very soon in the process.
+
+Anyway, what's the path to implement this?
+1. Add manual config.tcl script and add features to that to make things
+compile with the options I want.
+2. Simplify and clean up the makefile to be what I want to generate.
+3. Write configure script.
+
+In terms of features, what's a good order? I don't think it matters too much
+what order to do things in.
+
+* make sdl optional.
+* be able to change build directory.
+* Add env variable overrides.
+* add different ninja targets for make, make install, make check.
+* Add install directory overrides.
+
+Cool. Easy. No?
+
+Where to start?
+
+I feel like the option to build from a different directory would be a good
+place to start.
+
+So we have separate source and build directories that could be the same in
+practice. The build directory contains config.tcl and Makefile. Everything
+else is in the source directory to start.
+
+What names should we give to these in terms of variables in the build script?
+* Looks like VPATH is used for source path
+* I also see: top_builddir, top_srcdir. Those seem like useful names to me.
+
+I don't have recursive builds, so I think also fine to shorten to srcdir and
+builddir.
+
+So, immediate next steps would be:
+* rename ::out to ::builddir.
+* add a ::srcdir variable and start using it.
+* define ::builddir and ::srcdir in config.tcl, source config.tcl in
+  build.tcl, and remember to put a dependency of build.ninja on build.tcl.
+
+Note: builddir will be same as current working directory. I'll just have to
+get used to either building in place or build in a different directory.
+

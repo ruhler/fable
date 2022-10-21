@@ -1,0 +1,37 @@
+Tutorial
+========
+Goal: write an fble tutorial to help people with getting started.
+
+I'm thinking we could start with a program that does 4 bit bitwise arithmetic
+operations, without any use of the core packages or other libraries.
+
+Brainstorm of chapters:
+* introduction, goals, scope of tutorial.
+* first fble program
+  - 4 bit AND operation, including types, variables, functions.
+  - use fble-test program to assert you get the right result.
+* first fble program in detail
+  - Add lots of extra details about all the bits of the program in the
+    previous section. Things like kinds versus types, types as values, etc.
+    Assuming there is enough of interest there.
+* Writing your own main function.
+  - Write a main function to print out the result of a computation instead of
+    using asserts.
+  - Write a main function that takes inputs on the command line, calls a
+    function, and then outputs the result.
+  - Run both of these with the interpreter.
+* Compiling code.
+  - Using the main function from before, invoke the compiler to compile the
+    code. Either via C or via aarch64.
+* Profiling code.
+  - with --profile
+  - with linux perf
+* Debugging code.
+* Working with modules.
+  - How to run interpreted.
+  - How to compile with all the right dependencies.
+* Core library: Stdio program
+  - intro to core package and common modules in there.
+  - discussion of monads and what all that involves.
+  - stdio@ interface.
+  

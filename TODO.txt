@@ -1,3 +1,16 @@
+* Release
+ - Add configure script.
+ - Add --version option to things.
+ - Clean up libfble interface.
+ - Write man pages.
+ See thoughts/fble.release.txt
+
+* Check whether tclsh is widely available or it should be changed to tclsh8.6
+  or some such.
+
+* Write a tutorial
+  See thoughts/fble.tutorial.txt
+
 * Clean up generate_c things
   - Don't require access to private includes.
   - Better instructions on required include paths.

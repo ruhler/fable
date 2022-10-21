@@ -4,8 +4,10 @@ Fble has some limited support for debugging. This document explains tips and
 tricks for making the most of the currently available debug support.
 
 * Compile your code.
-  There is debug support for compiled fble code, not interpreted fble code.
-  Compile your code to access that debug support.
+  There is debug support for compiled fble code generated using the aarch64
+  target. There is not currently debug support for compiled fble generated
+  using the c target nor for interpreted fble code. Compile your code using
+  the aarch64 target to access that debug support.
 
 * To print an Int@ variable value in gdb:
   print FbleIntValueAccess(foo)
