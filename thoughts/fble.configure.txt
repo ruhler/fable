@@ -272,3 +272,44 @@ Some troubles with the implementation:
   build.ninja into a bad state? You can always re-run configure. But maybe it
   would be better to generate build.ninja.full or some such, and then copy
   over the bootstrap build.ninja file only when the full one is done?
+
+---
+
+Initial sketch of configure && ninja is in place. I suspect a lot of corner
+cases around when to rebuild things like configure, build.ninja, etc. When to
+rerun configure?
+
+Anyway, next step is make targets. I'm thinking at least default, check, and
+eventually install. Any others, and anything more specific? I think default
+should be anything that would be installed by install.
+
+From GNU standard targets:
+
+all - the entire program. This is default.
+install - install executables, etc, and run a simple test to verify they are
+  properly installed. Shouldn't modify anything after 'make all'.
+install-<doc> for doc format.
+uninstall - deletes installed targets.
+install-strip - install with executable files stripped.
+clean - delete files, except don't delete configuration or files included in
+  the distributions.
+distclean - Delete all files created by config and build of program, including
+  config.
+maintainer-clean - Delete everything that can possibly be rebuilt, except
+  configure.
+TAGS - for tags.
+<doc> - Build info, dvi, html, pdf, ps, etc. These are not built by default.
+dist - build a tar file.
+check - run tests assuming program is built but not installed.
+installcheck - run tests against installation.
+
+Which ones do I want to start?
+ - all, check.
+
+I think that's good enough for now.
+
+What if you run 'check' before running 'all'? The GNU doc suggests users
+need to run all first. But what if you don't? Let's just build whatever needs
+to be built for that.
+
+

@@ -40,14 +40,16 @@ version numbers provided are versions that are known to work:
 
 ## Build and Test
 
-To build and test everything, run:
+To build:
 
 > $ mkdir build
 > $ cd build
 > $ ../configure 
 > $ ninja
 
-The results are placed in the build directory.
+To test after building:
+
+> $ ninja check
 
 ## Vim Files
 

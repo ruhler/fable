@@ -48,6 +48,26 @@ proc build { targets dependencies command args } {
   }
 }
 
+# phony --
+#   Sets an phony target for building the given collection of dependencies.
+#
+# As per ninja, this should be called after the dependencies have been
+# defined.
+#
+# Inputs:
+#   target - the name of the phony target
+#   dependencies - the dependencies to build as part of the phony target.
+proc phony { target dependencies } {
+  puts $::build_ninja "build $target: phony [join $dependencies]"
+}
+
+# Indicate that the target should be included in the list of default targets
+# when running 'ninja all'
+set ::all [list]
+proc all { target } {
+  lappend ::all $target
+}
+
 # obj --
 #   Builds a .o file.
 #
@@ -96,6 +116,7 @@ proc asm { obj src args } {
 #   objs - the list of .o files to include in the library.
 proc lib { lib objs } {
   build $lib $objs "rm -f $lib ; ar rcs $lib $objs"
+  all $lib
 }
 
 # bin --
@@ -108,6 +129,7 @@ proc lib { lib objs } {
 proc bin { bin objs lflags } {
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
+  all $bin
 }
 
 # bin_cov --
@@ -121,6 +143,7 @@ proc bin_cov { bin objs lflags } {
   #set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
+  all $bin
 }
 
 # test --
@@ -278,6 +301,11 @@ build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"
 build $::b/summary.tr \
   "$::s/fble/test/log $::b/detail.tr $::s/fble/test/tests.tcl" \
   "$::s/fble/test/log $::b/summary.tr tclsh $::s/fble/test/tests.tcl < $::b/detail.tr"
+
+# Phony targets.
+phony "check" $::b/summary.tr
+phony "all" $::all
+puts $::build_ninja "default all"
 
 # build.ninja
 build $::b/build.ninja "$::s/build.tcl" "tclsh $::s/build.tcl $::b/build.ninja" \

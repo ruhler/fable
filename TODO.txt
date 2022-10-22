@@ -1,5 +1,4 @@
 * Release
- - Add configure script.
  - Add --version option to things.
  - Clean up libfble interface.
  - Write man pages.
