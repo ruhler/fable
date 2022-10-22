@@ -2,15 +2,15 @@ namespace eval "pkgs/invaders" {
   pkg invaders [list core app] ""
 
   # /Invaders/Tests% interpreted
-  set cflags "-I pkgs/invaders -I pkgs/app -I pkgs/core"
-  test $::out/pkgs/invaders/Invaders/tests.tr "$::out/pkgs/core/fble-stdio $::out/pkgs/invaders/Invaders/Tests.fble.d" \
-    "$::out/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%" "pool = console"
+  set cflags "-I $::s/pkgs/invaders -I $::s/pkgs/app -I $::s/pkgs/core"
+  test $::b/pkgs/invaders/Invaders/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/invaders/Invaders/Tests.fble.d" \
+    "$::b/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%"
 
-  app $::out/pkgs/invaders/Invaders/fble-invaders "/Invaders/AppIO%" "invaders"
+  app $::b/pkgs/invaders/Invaders/fble-invaders "/Invaders/AppIO%" "invaders"
 
   # /Invaders/Tests% compiled
-  stdio $::out/pkgs/invaders/Invaders/invaders-tests "/Invaders/Tests%" "invaders app"
-  test $::out/pkgs/invaders/Invaders/invaders-tests.tr $::out/pkgs/invaders/Invaders/invaders-tests \
-    "$::out/pkgs/invaders/Invaders/invaders-tests" "pool = console"
+  stdio $::b/pkgs/invaders/Invaders/invaders-tests "/Invaders/Tests%" "invaders app"
+  test $::b/pkgs/invaders/Invaders/invaders-tests.tr $::b/pkgs/invaders/Invaders/invaders-tests \
+    "$::b/pkgs/invaders/Invaders/invaders-tests"
 }
 

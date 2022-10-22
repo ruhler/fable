@@ -1,0 +1,15 @@
+#!/usr/bin/tclsh
+
+set srcdir [file dirname [info script]]
+set builddir "."
+
+proc subst_in { src dest } {
+  exec sed \
+    -e "s=@srcdir@=$::srcdir=g" \
+    -e "s=@builddir@=$::builddir=g" \
+    $src > $dest
+}
+
+subst_in $::srcdir/config.tcl.in $::builddir/config.tcl
+subst_in $::srcdir/build.ninja.in $::builddir/build.ninja
+

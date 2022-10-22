@@ -3,20 +3,22 @@
 # Helper script to run a spec test.
 #
 # Usage:
-#   tclsh test-spec.tcl FBLE
+#   tclsh srcdir builddir test-spec.tcl FBLE
 #
+#   srcdir - Path to the source directory containing the spec/ directory.
+#   builddir - Path to the build directory.
 #   FBLE - Path to the fble test file, relative to spec/ directory.
 #
 # Example:
 #
-#   tclsh spec-test.run.tcl SpecTests/00_Test/NoError.fble
+#   tclsh .. . spec-test.run.tcl SpecTests/00_Test/NoError.fble
 #
-# Parses the @@fble-test@@ metadata of spec/$FBLE and executes the test
-# appropriately. Reports an error in case of test failure.
+# Parses the @@fble-test@@ metadata of $srcdir/spec/$FBLE and executes the
+# test appropriately. Reports an error in case of test failure.
 #
-# This script assumes it is run from the top level directory, with access to
-# fble binaries in the out directory and out/spec/${FBLE}.d the result of running
-# fble-deps on the FBLE file.
+# This script assumes it is run from the build directory, with access to
+# fble binaries in the build directory and $builddir/spec/${FBLE}.d the result
+# of running fble-deps on the FBLE file.
 
 set ::arch [exec arch]
 
@@ -65,15 +67,16 @@ proc expect_error { type loc args } {
   }
 }
 
-set ::dir "spec"
-set ::fble [lindex $argv 0]
-set ::path $dir/$fble
+set ::s [lindex $argv 0]
+set ::b [lindex $argv 1]
+set ::fble [lindex $argv 2]
+set ::path $::s/spec/$fble
 set ::mpath [module_path $fble]
 
 puts "@\[$fble\]"
 
 # Directory to use for any artifacts from the test run.
-set ::outdir out/$dir/[file rootname $fble]
+set ::outdir $::b/spec/[file rootname $fble]
 exec mkdir -p $outdir
 
 # Parse the @@fble-test@@ metadata.
@@ -117,11 +120,11 @@ close $fin
 proc compile {target main} {
   # Parse the list of .fble files the test depends on from the .d file.
   set fbles [list]
-  foreach x [lrange [split [read [open out/spec/$::fble.d "r"]]] 1 end] {
+  foreach x [lrange [split [read [open $::b/spec/$::fble.d "r"]]] 1 end] {
     switch $x {
       {} {}
       "\\" {}
-      default { lappend fbles [string map { "spec/" "" } $x] }
+      default { lappend fbles [string map [list "$::s/spec/" ""] $x] }
     }
   }
 
@@ -140,17 +143,17 @@ proc compile {target main} {
       lappend flags "--main"
       lappend flags $main
     }
-    exec out/fble/bin/fble-compile.cov {*}$flags -t $target -c -I $::dir -m $m > $out
+    exec $::b/fble/bin/fble-compile.cov {*}$flags -t $target -c -I $::s/spec -m $m > $out
 
     switch $target {
       aarch64 { exec as -o $obj $out }
-      c { exec gcc -c -o $obj -I fble/include -I fble/lib $out }
+      c { exec gcc -c -o $obj -I $::s/fble/include -I $::s/fble/lib $out }
     }
     lappend objs $obj
   }
 
-  lappend objs out/fble/test/libfbletest.a
-  lappend objs out/fble/lib/libfble.a
+  lappend objs $::b/fble/test/libfbletest.a
+  lappend objs $::b/fble/lib/libfble.a
   exec gcc -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o $exe {*}$objs
   return $exe
 }
@@ -177,31 +180,31 @@ proc compile_and_run {main body} {
 proc dispatch {} {
   switch $::type {
     no-error {
-      exec out/fble/test/fble-test.cov --profile /dev/null -I spec -m $::mpath
+      exec $::b/fble/test/fble-test.cov --profile /dev/null -I $::s/spec -m $::mpath
       compile_and_run FbleTestMain { exec $compiled --profile /dev/null }
-      exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
+      exec $::b/fble/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
 
     compile-error {
-      expect_error compile $::loc out/fble/test/fble-test.cov -I spec -m $::mpath
+      expect_error compile $::loc $::b/fble/test/fble-test.cov -I $::s/spec -m $::mpath
     }
 
     runtime-error {
-      expect_error runtime $::loc out/fble/test/fble-test.cov -I spec -m $::mpath
+      expect_error runtime $::loc $::b/fble/test/fble-test.cov -I $::s/spec -m $::mpath
       compile_and_run FbleTestMain { expect_error runtime $::loc $compiled }
-      exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
+      exec $::b/fble/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
     
     memory-constant {
-      exec out/fble/test/fble-mem-test.cov -I spec -m $::mpath
+      exec $::b/fble/test/fble-mem-test.cov -I $::s/spec -m $::mpath
       compile_and_run FbleMemTestMain { exec $compiled }
-      exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
+      exec $::b/fble/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
 
     memory-growth {
-      exec out/fble/test/fble-mem-test.cov --growth -I spec -m $::mpath
+      exec $::b/fble/test/fble-mem-test.cov --growth -I $::s/spec -m $::mpath
       compile_and_run FbleMemTestMain { exec $compiled --growth }
-      exec out/fble/bin/fble-disassemble.cov -I spec -m $::mpath
+      exec $::b//fble/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
 
     none {

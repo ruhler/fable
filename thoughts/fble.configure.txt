@@ -228,3 +228,47 @@ So, immediate next steps would be:
 Note: builddir will be same as current working directory. I'll just have to
 get used to either building in place or build in a different directory.
 
+---
+
+Looks like Makefile will need access to $srcdir at least. How should I do
+that? Via subst?
+
+Is there an easy way to implement subst? Like, given a file, replace all
+occurrences of @FOO@ in the file? Either from shell (sed?) or from tcl.
+Ideally all in one go instead of one at a time.
+
+Sed works fine. For example:
+
+  sed -e s/@FOO@/foo/ -e s/@BAR@/bar/ foo.in > foo
+
+---
+
+Do I need make? It seems hard to wrap ninja in a make interface. How about we
+just ask users to use ninja instead? So, instead of:
+
+  ./configure && make
+
+Users run:
+  ./configure && ninja
+
+To implement it, configure generates a skeleton build.ninja file that says it
+should regenerate itself from build.tcl. Then you could do all fancy options
+and direct targets.
+
+The only real inconvenience for me would be setting makeprg properly in vim.
+Could I add a local ninja command to my vim that says set makeprg to ninja and
+then call make? Why even pretend to use make?
+
+My thought:
+* Let's use ninja without make. It's time to move on to an age where make no
+  longer has dominance.
+* I can set up personal vim commands, like Makef or some such that know the
+  right directories and commands to use for building fble.
+
+---
+
+Some troubles with the implementation:
+* Can we make it more robust against errors in build.tcl? Like, never put
+  build.ninja into a bad state? You can always re-run configure. But maybe it
+  would be better to generate build.ninja.full or some such, and then copy
+  over the bootstrap build.ninja file only when the full one is done?

@@ -2,16 +2,16 @@ namespace eval "pkgs/core" {
   # .c library files.
   set objs [list]
   foreach {x} { char.fble int.fble stdio.fble string.fble } {
-    lappend objs $::out/pkgs/core/$x.o
-    obj $::out/pkgs/core/$x.o pkgs/core/$x.c "-I fble/include -I pkgs/core"
+    lappend objs $::b/pkgs/core/$x.o
+    obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c "-I $::s/fble/include -I $::s/pkgs/core"
   }
   pkg core [list] $objs
 
   # fble-stdio program.
-  obj $::out/pkgs/core/fble-stdio.o pkgs/core/fble-stdio.c \
-    "-I fble/include -I pkgs/core"
-  bin $::out/pkgs/core/fble-stdio \
-    "$::out/pkgs/core/fble-stdio.o $::out/pkgs/core/libfble-core.a $::out/fble/lib/libfble.a" ""
+  obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
+    "-I $::s/fble/include -I $::s/pkgs/core"
+  bin $::b/pkgs/core/fble-stdio \
+    "$::b/pkgs/core/fble-stdio.o $::b/pkgs/core/libfble-core.a $::b/fble/lib/libfble.a" ""
 
   # Build an fble-stdio compiled binary.
   #
@@ -23,42 +23,42 @@ namespace eval "pkgs/core" {
   proc ::stdio { target path libs} {
     set objs $target.o
     foreach lib $libs {
-      append objs " $::out/pkgs/$lib/libfble-$lib.a"
+      append objs " $::b/pkgs/$lib/libfble-$lib.a"
     }
-    append objs " $::out/pkgs/core/libfble-core.a"
-    append objs " $::out/fble/lib/libfble.a"
+    append objs " $::b/pkgs/core/libfble-core.a"
+    append objs " $::b/fble/lib/libfble.a"
 
-    fbleobj $target.o $::out/fble/bin/fble-compile \
+    fbleobj $target.o $::b/fble/bin/fble-compile \
       "--main FbleStdioMain -m $path"
     bin $target $objs ""
   }
 
   # /Core/Stdio/Cat% interpreted test.
-  build $::out/pkgs/core/Core/Stdio/fble-cat.out \
-    "$::out/pkgs/core/fble-stdio $::out/pkgs/core/Core/Stdio/Cat.fble.d" \
-    "$::out/pkgs/core/fble-stdio -I pkgs/core -m /Core/Stdio/Cat% < README.md > $::out/pkgs/core/Core/Stdio/fble-cat.out"
-  test $::out/pkgs/core/Core/Stdio/fble-cat.tr \
-    "$::out/pkgs/core/Core/Stdio/fble-cat.out" \
-    "cmp $::out/pkgs/core/Core/Stdio/fble-cat.out README.md"
+  build $::b/pkgs/core/Core/Stdio/fble-cat.out \
+    "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/Cat.fble.d" \
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Cat% < $::s/README.md > $::b/pkgs/core/Core/Stdio/fble-cat.out"
+  test $::b/pkgs/core/Core/Stdio/fble-cat.tr \
+    "$::b/pkgs/core/Core/Stdio/fble-cat.out" \
+    "cmp $::b/pkgs/core/Core/Stdio/fble-cat.out $::s/README.md"
 
   # /Core/Stdio/Test% interpreted test.
-  test $::out/pkgs/core/Core/Stdio/fble-stdio.tr "$::out/pkgs/core/fble-stdio $::out/pkgs/core/Core/Stdio/Test.fble.d" \
-    "$::out/pkgs/core/fble-stdio -I pkgs/core -m /Core/Stdio/Test% | grep PASSED"
+  test $::b/pkgs/core/Core/Stdio/fble-stdio.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Stdio/Test.fble.d" \
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Stdio/Test% | grep PASSED"
 
   # /Core/Stdio/Test% compiled test.
-  stdio $::out/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
-  test $::out/pkgs/core/Core/Stdio/fble-stdio-test.out \
-    $::out/pkgs/core/Core/Stdio/fble-stdio-test \
-    "$::out/pkgs/core/Core/Stdio/fble-stdio-test > $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
-  test $::out/pkgs/core/Core/Stdio/fble-stdio-test.tr $::out/pkgs/core/Core/Stdio/fble-stdio-test.out \
-    "grep PASSED $::out/pkgs/core/Core/Stdio/fble-stdio-test.out"
+  stdio $::b/pkgs/core/Core/Stdio/fble-stdio-test "/Core/Stdio/Test%" ""
+  test $::b/pkgs/core/Core/Stdio/fble-stdio-test.out \
+    $::b/pkgs/core/Core/Stdio/fble-stdio-test \
+    "$::b/pkgs/core/Core/Stdio/fble-stdio-test > $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
+  test $::b/pkgs/core/Core/Stdio/fble-stdio-test.tr $::b/pkgs/core/Core/Stdio/fble-stdio-test.out \
+    "grep PASSED $::b/pkgs/core/Core/Stdio/fble-stdio-test.out"
 
   # Core/Tests interpreted
-  testsuite $::out/pkgs/core/Core/tests.tr "$::out/pkgs/core/fble-stdio $::out/pkgs/core/Core/Tests.fble.d" \
-    "$::out/pkgs/core/fble-stdio -I pkgs/core -m /Core/Tests% --prefix Interpreted."
+  testsuite $::b/pkgs/core/Core/tests.tr "$::b/pkgs/core/fble-stdio $::b/pkgs/core/Core/Tests.fble.d" \
+    "$::b/pkgs/core/fble-stdio -I $::s/pkgs/core -m /Core/Tests% --prefix Interpreted."
 
   # Core/Tests compiled
-  stdio $::out/pkgs/core/Core/core-tests "/Core/Tests%" ""
-  testsuite $::out/pkgs/core/Core/core-tests.tr $::out/pkgs/core/Core/core-tests \
-    "$::out/pkgs/core/Core/core-tests --prefix Compiled."
+  stdio $::b/pkgs/core/Core/core-tests "/Core/Tests%" ""
+  testsuite $::b/pkgs/core/Core/core-tests.tr $::b/pkgs/core/Core/core-tests \
+    "$::b/pkgs/core/Core/core-tests --prefix Compiled."
 }

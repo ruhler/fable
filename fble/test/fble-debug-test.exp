@@ -1,5 +1,12 @@
 
 # Test that we can do gdb based debugging of the fble-debug-test binary.
+# Usage:
+#   expect fble-debug-test.exp srcdir builddir 
+
+#   srcdir - Path to the source directory containing the spec/ directory.
+#   builddir - Path to the build directory.
+set ::s [lindex $argv 0]
+set ::b [lindex $argv 1]
 
 proc require { str } {
   # Sometimes this test times out. Not sure why. Increase the timeout a bunch
@@ -17,17 +24,17 @@ proc require { str } {
 eval {
   # Test that we can set a breakpoint at a particular line in a file and run to
   # that breakpoint.
-  spawn gdb --quiet ./out/fble/test/fble-debug-test
+  spawn gdb --quiet $::b/fble/test/fble-debug-test
   require "(gdb) "
 
   set STMT_LINE 14
-  send "break fble/test/DebugTest.fble:$STMT_LINE\n"
+  send "break $::s/fble/test/DebugTest.fble:$STMT_LINE\n"
   require "Breakpoint 1 at"
-  require "fble/test/DebugTest.fble, line $STMT_LINE."
+  require "$::s/fble/test/DebugTest.fble, line $STMT_LINE."
   require "(gdb) "
 
   send "run\n"
-  require "at fble/test/DebugTest.fble:$STMT_LINE"
+  require "at $::s/fble/test/DebugTest.fble:$STMT_LINE"
   require "(gdb) "
   close
 }
@@ -35,34 +42,34 @@ eval {
 eval {
   # Test that we can set a breakpoint at a particular function and run to
   # that breakpoint.
-  spawn gdb --quiet ./out/fble/test/fble-debug-test
+  spawn gdb --quiet $::b/fble/test/fble-debug-test
   expect "(gdb) "
 
   set LINE 14
   send "break /DebugTest%.Next!\n"
   require "Breakpoint 1 at"
-  require "fble/test/DebugTest.fble, line $LINE."
+  require "$::s/fble/test/DebugTest.fble, line $LINE."
   require "(gdb) "
 
   send "run\n"
-  require "at fble/test/DebugTest.fble:$LINE"
+  require "at $::s/fble/test/DebugTest.fble:$LINE"
   require "(gdb) "
   close
 }
 
 eval {
   # Test that we can print values of local variables
-  spawn gdb --quiet ./out/fble/test/fble-debug-test
+  spawn gdb --quiet $::b/fble/test/fble-debug-test
   expect "(gdb) "
 
   set LINE 15
-  send "break fble/test/DebugTest.fble:$LINE\n"
+  send "break $::s/fble/test/DebugTest.fble:$LINE\n"
   require "Breakpoint 1 at"
-  require "fble/test/DebugTest.fble, line $LINE."
+  require "$::s/fble/test/DebugTest.fble, line $LINE."
   require "(gdb) "
 
   send "run\n"
-  require "at fble/test/DebugTest.fble:$LINE"
+  require "at $::s/fble/test/DebugTest.fble:$LINE"
   require "(gdb) "
 
   send "info locals\n"

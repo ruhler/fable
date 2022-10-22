@@ -42,9 +42,12 @@ version numbers provided are versions that are known to work:
 
 To build and test everything, run:
 
-> $ make
+> $ mkdir build
+> $ cd build
+> $ ../configure 
+> $ ninja
 
-The results are placed in the out/ directory.
+The results are placed in the build directory.
 
 ## Vim Files
 

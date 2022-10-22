@@ -231,7 +231,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
   // block was a module path instead of a file path.
   {
     FbleBlockProfile* block = Block(profile, "/ProfilesTest%");
-    assert(strcmp(block->name.loc.source->str, "fble/test/ProfilesTest.fble") == 0);
+    assert(strstr(block->name.loc.source->str, "fble/test/ProfilesTest.fble"));
   }
 
   FbleFreeProfile(profile);

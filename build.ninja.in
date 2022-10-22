@@ -1,0 +1,5 @@
+
+rule build_ninja
+  command = tclsh @srcdir@/build.tcl > $out
+
+build @builddir@/build.ninja: build_ninja @srcdir@/build.tcl @builddir@/config.tcl

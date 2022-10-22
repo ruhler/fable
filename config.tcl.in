@@ -1,0 +1,8 @@
+
+# The build directory
+set ::builddir @builddir@
+
+# The top level directory containing the fble source code. This is the
+# directory that contains the 'configure' script.
+set ::srcdir @srcdir@
+

@@ -1,3 +1,7 @@
+* Remove uses of pool = console?
+* Generate build.ninja.full and then copy to build.ninja, to avoid messing up
+  the bootstrap ninja file in case of build.tcl error.
+
 * Release
  - Add configure script.
  - Add --version option to things.
