@@ -4,6 +4,7 @@ set srcdir [file dirname [info script]]
 set builddir "."
 
 proc subst_in { src dest } {
+  puts "creating $dest"
   exec sed \
     -e "s=@srcdir@=$::srcdir=g" \
     -e "s=@builddir@=$::builddir=g" \
