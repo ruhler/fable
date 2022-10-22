@@ -1,10 +1,10 @@
 # ninja-based description of how to build fble and friends.
 #
 # First time setup:
-#   tclsh build.ninja
+#   tclsh build.tcl build.ninja
 #
 # Afterwards:
-#   ninja -f out/build.ninja
+#   ninja
 
 # Source configuration options.
 #   ::builddir
@@ -14,7 +14,8 @@ source config.tcl
 set ::s $::srcdir
 set ::b $::builddir
 
-set ::build_ninja [open "$::b/build.ninja" "w"]
+set ::build_ninja_filename [lindex $argv 0]
+set ::build_ninja [open "$::build_ninja_filename" "w"]
 set ::arch [exec arch]
 
 # build.ninja header.
@@ -130,15 +131,14 @@ proc bin_cov { bin objs lflags } {
 #   deps - depencies for the test.
 #   cmd - the test command to run, which should exit 0 to indicate the test
 #         passed and non-zero to indicate the test failed.
-#   args - optional additional "key = argument" pairs to use for ninja rule.
 #
 # Adds the .tr file to global list of tests.
 set ::tests [list]
-proc test { tr deps cmd args} {
+proc test { tr deps cmd } {
   lappend ::tests $tr
   set name [file rootname $tr]
   build $tr "$::s/fble/test/log $::s/fble/test/test $deps" \
-    "$::s/fble/test/log $tr $::s/fble/test/test $name $cmd" {*}$args
+    "$::s/fble/test/log $tr $::s/fble/test/test $name $cmd"
 }
 
 # test --
@@ -150,13 +150,12 @@ proc test { tr deps cmd args} {
 #   cmd - the testsuite command to run, which should output @[...] test info,
 #         exit 0 to indicate the test passed and non-zero to indicate the test
 #         failed.
-#   args - optional additional "key = argument" pairs to use for ninja rule.
 #
 # Adds the .tr file to global list of tests.
-proc testsuite { tr deps cmd args} {
+proc testsuite { tr deps cmd } {
   lappend ::tests $tr
   build $tr "$::s/fble/test/log $deps" \
-    "$::s/fble/test/log $tr $cmd" {*}$args
+    "$::s/fble/test/log $tr $cmd"
 }
 
 # Returns the list of all subdirectories, recursively, of the given directory.
@@ -281,7 +280,7 @@ build $::b/summary.tr \
   "$::s/fble/test/log $::b/summary.tr tclsh $::s/fble/test/tests.tcl < $::b/detail.tr"
 
 # build.ninja
-build $::b/build.ninja "$::s/build.tcl" "tclsh $::s/build.tcl" \
+build $::b/build.ninja "$::s/build.tcl" "tclsh $::s/build.tcl $::b/build.ninja" \
   "depfile = $::b/build.ninja.d"
 
 # build.ninja.d implicit dependency file.

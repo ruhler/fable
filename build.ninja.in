@@ -1,5 +1,9 @@
 
-rule build_ninja
-  command = tclsh @srcdir@/build.tcl > $out
+rule build_ninja_full
+  command = tclsh @srcdir@/build.tcl $out
 
-build @builddir@/build.ninja: build_ninja @srcdir@/build.tcl @builddir@/config.tcl
+rule build_ninja
+  command = cp $in $out
+
+build @builddir@/build.ninja: build_ninja @builddir@/build.ninja.full
+build @builddir@/build.ninja.full: build_ninja_full @srcdir@/build.tcl @builddir@/config.tcl
