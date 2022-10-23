@@ -602,24 +602,19 @@ FbleExecStatus SimpleRunFunction(FbleValueHeap* heap, FbleThread* thread)
   SimpleExecutable* exec = (SimpleExecutable*)func->executable;
   FbleValue** args = thread->stack->locals;
   FbleValue* result = exec->impl(heap, args);
-  assert(result != NULL && "TODO");
 
   for (size_t i = 0; i < exec->_base.locals; ++i) {
     FbleReleaseValue(heap, thread->stack->locals[i]);
   }
 
   FbleThreadReturn(heap, thread, result);
-  return FBLE_EXEC_FINISHED;
+  return result == NULL ? FBLE_EXEC_ABORTED : FBLE_EXEC_FINISHED;
 }
 
 void SimpleAbortFunction(FbleValueHeap* heap, FbleStack* stack)
 {
-  FuncValue* func = (FuncValue*)stack->func;
-  FbleExecutable* exec = func->executable;
-  for (size_t i = 0; i < exec->locals; ++i) {
-    FbleReleaseValue(heap, stack->locals[i]);
-  }
-  *(stack->result) = NULL;
+  // TODO: Remove this function once abort functions are no longer separate
+  // from run functions.
 }
 
 // FbleNewSimpleFuncValue -- see documentation in fble-value.h

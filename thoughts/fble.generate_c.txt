@@ -533,4 +533,128 @@ Yes! Compilation woes are fixed in terms of memory use requirements. Though
 we are sort of on the upper edge of what's available memory wise, so ideally
 try to improve things over time. Otherwise we could fall over the edge.
 
+---
+
+How to clean up the interface between compiled code and libfble? Currently we
+need access to some internal header files. Can I make those public or
+eliminate the need for them? This is important, because I don't want to
+install internal header files, but they need to be available somewhere.
+
+I guess worst case we could make a special header meant only for compiled
+code, but let's see if I can't clean up things first.
+
+What do we need access to and why?
+
+execute.h:
+ - FbleExecStatus, FbleThread, FbleStack, FbleExecutable
+
+value.h:
+ - FbleFuncValueStatics, FbleFuncValueProfileBaseId, FbleGenericTypeValue,
+   FbleNewFuncValue, FbleStrictValue, FbleFuncValueExecutable
+
+Where are this originating from?
+
+Obviously we need a way to define a function value. What's a good public way
+to do that?
+
+FbleNewFuncValue:
+ - heap, statics make perfect sense.
+ - profile_base_id is a little bit sketch?
+
+We need to specify number of args, number of statics, and number of local
+variables, in order to call the function, right?
+
+We need to specify a run function. That run function has to have access to the
+thread and the stack, though perhaps as opaque things?
+
+The question is, what code needs to be invoked to execute a function value and
+to create one?
+
+In order to run a function, you need:
+* Access to static variables captured by the function. But this can be tied to
+  the function implementation. It doesn't need to be general.
+* Access to the arguments supplied to the function. This could be passed as a
+  list of arguments, right?
+* To know if the function is finished, aborted, or needs to be tail called 
+  - A function ought to be able to clean up itself on abort. So that can be
+    internal.
+  - If a function needs to be tail called, it needs somewhere to keep track of
+    arguments.
+
+Maybe the big thing is, for GC to run, GC has to be able to find all statics
+and arguments passed to the function. Well, we keep those on the stack? We
+keep statics with the function, arguments and locals on the stack. What else
+do you need?
+
+That suggests the stack does need to be a known thing. I think that's fair
+enough. And if the stack is known, we can use that for storing things on tail
+calls.
+
+So, the following should be public:
+* FbleExecStatus
+* FbleThread having stack and profile. allocator can be abstract?
+* FbleStack having func, result, tail, locals.
+  But not pc. Pc is an internal state thing specific to the interpreter I
+  feel like. So instead of pc, we want user defined non-FbleValue state? No.
+  we shouldn't need that internal state. When you run the code it should
+  always start from pc = 0 and go through until the function is either
+  completed, aborted, or replaced with a tail call.
+
+Things to do:
+* Remove 'pc' from FbleStack.
+* Make FbleStack and FbleThread public.
+* Make functions for manipulating the thread public. e.g. FbleThreadCall, tail
+  call, return.
+
+Actually, if we have functions for manipulating a thread, can we use those
+instead for all access to the stack? Have functions for accessing local
+variables from the top of the stack for a given thread?
+
+To allocate a new function, we need to give the list of statics, the number of
+required local variables. Probably don't need the number of args, but maybe
+couldn't hurt? And you need a function capable of running given the thread
+state for the function.
+
+Back to initial TODOs:
+* Remove pc from FbleStack.
+* Remove abort function from FbleExecutable.
+ - Abort directly from the run function instead.
+* Encapsulate access to stack via functions.
+* Make appropriate functions public.
+ - We can put them in fble-execute.h. That seems a natural place to me.
+
+I'm not sure what to do about profiling. Let's take it one step at a time.
+
+Maybe start by removing the abort function. Just call that ourselves on abort
+instead of return 'ABORTED' and then having someone else call it for us. Once
+that's gone, the need to pass pc is gone too, so we should be able to pretty
+easily get rid of that.
+ 
+---
+
+Let's contrast these changes with simple function API. The difference is the
+SimpleFunc API doesn't have access to static values or tail calls. We will
+want something in between.
+
+Anyway, notes on uses of abort:
+* When we abort, execution unwinds the entire call stack. Instead, function
+  calls will need to abort themselves if their callee aborts.
+
+Rolling this out could be a little bit tricky. First step, I think, is to
+incrementally change code to use nothing on abort function with cleanup in the
+run function. Start with the SimpleFunc API, though I'm not sure that's well
+tested. Then go to interpreter, then generate_c, then generate_aarch64.
+
+The trouble is, before that will work, we need to handle abort when a callee
+aborts. And whose job is it to call PopStackFrame and FbleReleaseValue on the
+result when a function aborts? The callee? Surely that's the responsibility of
+the callee, just like it is when the exit normally. Maybe add an
+FbleThreadAbort function that the callee can call to achieve that.
+
+I think my proposal is good, it's just going to be a lot of detail work to
+implement properly, and I'm not sure there is a reasonable incremental path.
+
+Let's just go one at a time, moving abort logic from Abort function to Run
+function, and remembering that any time we call a function, we need to check
+it's result for abort and handle that there.
 

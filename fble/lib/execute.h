@@ -110,7 +110,8 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleValue* func, FbleValue** args, 
 // Inputs:
 //   heap - the value heap.
 //   thread - the thread to do the return on.
-//   result - the result to return. Consumed.
+//   result - the result to return. Consumed. May be NULL if aborting from the
+//            function.
 //
 // Side effects:
 // * Sets the return result for the current stack frame and pops the frame off

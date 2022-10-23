@@ -312,4 +312,10 @@ What if you run 'check' before running 'all'? The GNU doc suggests users
 need to run all first. But what if you don't? Let's just build whatever needs
 to be built for that.
 
+---
+
+What features to work on next? Brainstorm:
+* install
+* sdl enable/disable
+* env vars for things like CC, FLAGS, etc.
 
