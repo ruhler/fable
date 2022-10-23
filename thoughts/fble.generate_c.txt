@@ -658,3 +658,21 @@ Let's just go one at a time, moving abort logic from Abort function to Run
 function, and remembering that any time we call a function, we need to check
 it's result for abort and handle that there.
 
+Yeah, the problem is if compiled code returns ABORTED and that finds its way
+to interpreted code, the interpreter doesn't know how to abort that compiled
+code. I think we need to do this all in one go.
+
+This will be tricky, but I should be able to slog through it. Only 4 cases to
+handle, right: simple func, interpreter, generate_aarch64, and generate_c.
+
+* simple func is basically done.
+* interpreter means calling abort function internally, then abort.
+* generate_c means putting abort logic in same function with different pc
+  labels and jumping right to the abort logic.
+* generate_aarch64 means putting abort logic in the same function with
+  different pc labels and jumping right to the abort logic.
+
+Maybe an easy first step would be to pass FbleThread to the abort function,
+and ask abort functions to do the equivalent of PopStackFrame.
+
+

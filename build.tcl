@@ -303,8 +303,8 @@ build $::b/summary.tr \
   "$::s/fble/test/log $::b/summary.tr tclsh $::s/fble/test/tests.tcl < $::b/detail.tr"
 
 # Phony targets.
-phony "check" $::b/summary.tr
 phony "all" $::all
+phony "check" [list $::b/summary.tr all]
 puts $::build_ninja "default all"
 
 # build.ninja

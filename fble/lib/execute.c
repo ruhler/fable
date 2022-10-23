@@ -112,8 +112,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
         FbleFuncValueExecutable(thread.stack->func)->abort(heap, thread.stack);
         PopStackFrame(heap, &thread);
       }
-      FbleReleaseValue(heap, result);
-      result = NULL;
+      assert(result == NULL);
       break;
     }
   }
