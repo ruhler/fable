@@ -579,10 +579,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         }
 
         fprintf(fout, "    FbleThreadCall(heap, l+%zi, x0, args, thread);\n", call_instr->dest);
-        fprintf(fout, "    FbleExecStatus status;\n");
-        fprintf(fout, "    do {\n");
-        fprintf(fout, "      status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);\n");
-        fprintf(fout, "    } while (status == FBLE_EXEC_CONTINUED);\n");
+        fprintf(fout, "    FbleExecStatus status = Call(heap, thread);\n");
         fprintf(fout, "    if (status == FBLE_EXEC_ABORTED) ");
         ReturnAbort(fout, code, function_label, pc, "CalleeAborted", call_instr->loc);
         fprintf(fout, "  }\n");
@@ -992,6 +989,15 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "{\n");
   fprintf(fout, "  fprintf(stderr, \"%s:%%d:%%d: error: %%s\\n\", line, col, msg);\n",
       module->path->loc.source->str);
+  fprintf(fout, "}\n");
+
+  fprintf(fout, "static FbleExecStatus Call(FbleValueHeap* heap, FbleThread* thread)\n");
+  fprintf(fout, "{\n");
+  fprintf(fout, "  FbleExecStatus status;\n");
+  fprintf(fout, "  do {\n");
+  fprintf(fout, "    status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);\n");
+  fprintf(fout, "  } while (status == FBLE_EXEC_CONTINUED);\n");
+  fprintf(fout, "  return status;\n");
   fprintf(fout, "}\n");
 
   // Helpers for profiling.
