@@ -719,3 +719,9 @@ from the error check.
 
 I think jumping to the right place directly is better. Let me try that to
 start.
+
+---
+
+Oh. I guess what happened is I don't even use generate_c for the big apps when
+aarch64 is supported. That's why I didn't run into generate_c issues there
+recently. Still worth trying to optimize? Why not?
