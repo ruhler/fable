@@ -41,7 +41,6 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 
 static void ReturnAbort(FILE* fout, void* code, const char* function_label, size_t pc, const char* lmsg, FbleLoc loc);
 
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const char* function_label, size_t pc, FbleInstr* instr, bool* jump_target);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
@@ -329,338 +328,6 @@ static void ReturnAbort(FILE* fout, void* code, const char* function_label, size
   fprintf(fout, "  }\n");
 }
 
-// EmitInstr --
-//   Generate code to execute an instruction.
-//
-// Inputs:
-//   fout - the output stream to write the code to.
-//   profile_blocks - the list of profile block names for the module.
-//   code - pointer to the current code block, for referencing labels.
-//   function_label - label of the function, for knowing what _Abort_ function
-//     to call.
-//   pc - the program counter of the instruction.
-//   instr - the instruction to execute.
-//   jump_target - jump_target[i] should be set if jumping to instruction i.
-//
-// Side effects:
-// * Outputs code to fout.
-// * Sets jump_target[i] to true if generating code that jumps to pc 'i'.
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const char* function_label, size_t pc, FbleInstr* instr, bool* jump_target)
-{
-  fprintf(fout, "  ProfileSample(profile);\n");
-  for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-    switch (op->tag) {
-      case FBLE_PROFILE_ENTER_OP: {
-        fprintf(fout, "  ProfileEnterBlock(profile, profile_base_id + %zi);\n", op->block);
-        break;
-      }
-
-      case FBLE_PROFILE_REPLACE_OP: {
-        fprintf(fout, "  ProfileReplaceBlock(profile, profile_base_id + %zi);\n", op->block);
-        break;
-      }
-
-      case FBLE_PROFILE_EXIT_OP: {
-        fprintf(fout, "  ProfileExitBlock(profile);\n");
-        break;
-      }
-    }
-  }
-
-  static const char* section[] = { "s", "l" };
-  switch (instr->tag) {
-    case FBLE_DATA_TYPE_INSTR: {
-      FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-      size_t fieldc = dt_instr->fields.size;
-
-      fprintf(fout, "  {\n");
-      fprintf(fout, "    FbleValue* fields[] = {");
-      for (size_t i = 0; i < fieldc; ++i) {
-        fprintf(fout, " %s[%zi],",
-            section[dt_instr->fields.xs[i].section],
-            dt_instr->fields.xs[i].index);
-      };
-      fprintf(fout, " };\n");
-
-      static const char* dtkind[] = { "FBLE_STRUCT_DATATYPE", "FBLE_UNION_DATATYPE" };
-      fprintf(fout, "    l[%zi] = FbleNewDataTypeValue(heap, %s, %zi, fields);\n",
-          dt_instr->dest, dtkind[dt_instr->kind], fieldc);
-      fprintf(fout, "  }\n");
-      return;
-    }
-
-    case FBLE_STRUCT_VALUE_INSTR: {
-      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      size_t argc = struct_instr->args.size;
-
-      fprintf(fout, "  l[%zi] = FbleNewStructValue(heap, %zi", struct_instr->dest, argc);
-      for (size_t i = 0; i < argc; ++i) {
-        fprintf(fout, ", %s[%zi]",
-            section[struct_instr->args.xs[i].section],
-            struct_instr->args.xs[i].index);
-      };
-
-      fprintf(fout, ");\n");
-      return;
-    }
-
-    case FBLE_UNION_VALUE_INSTR: {
-      FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
-      fprintf(fout, "  l[%zi] = FbleNewUnionValue(heap, %zi, %s[%zi]);\n",
-          union_instr->dest, union_instr->tag,
-          section[union_instr->arg.section],
-          union_instr->arg.index);
-      return;
-    }
-
-    case FBLE_STRUCT_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-          section[access_instr->obj.section], access_instr->obj.index);
-      fprintf(fout, "  if (!x0) ");
-      ReturnAbort(fout, code, function_label, pc, "UndefinedStructValue", access_instr->loc);
-
-      fprintf(fout, "  l[%zi] = FbleStructValueAccess(x0, %zi);\n",
-          access_instr->dest, access_instr->tag);
-      fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", access_instr->dest);
-      return;
-    }
-
-    case FBLE_UNION_ACCESS_INSTR: {
-      FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-      fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-          section[access_instr->obj.section], access_instr->obj.index);
-      fprintf(fout, "  if (!x0) ");
-      ReturnAbort(fout, code, function_label, pc, "UndefinedUnionValue", access_instr->loc);
-
-      fprintf(fout, "  if (%zi != FbleUnionValueTag(x0)) ", access_instr->tag);
-      ReturnAbort(fout, code, function_label, pc, "WrongUnionTag", access_instr->loc);
-
-      fprintf(fout, "  l[%zi] = FbleUnionValueAccess(x0);\n", access_instr->dest);
-      fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", access_instr->dest);
-      return;
-    }
-
-    case FBLE_UNION_SELECT_INSTR: {
-      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-
-      fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-          section[select_instr->condition.section],
-          select_instr->condition.index);
-      fprintf(fout, "  if (!x0) ");
-      ReturnAbort(fout, code, function_label, pc, "UndefinedUnionSelect", select_instr->loc);
-
-      fprintf(fout, "  switch (FbleUnionValueTag(x0)) {\n");
-      for (size_t i = 0; i < select_instr->jumps.size; ++i) {
-        size_t target = pc + 1 + select_instr->jumps.xs[i];
-        assert(target > pc);
-        jump_target[target] = true;
-        fprintf(fout, "    case %zi: goto pc_%zi;\n", i, target);
-      }
-      fprintf(fout, "  }\n");
-      return;
-    }
-
-    case FBLE_JUMP_INSTR: {
-      FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      size_t target = pc + 1 + jump_instr->count;
-      assert(target > pc);
-      jump_target[target] = true;
-      fprintf(fout, "  goto pc_%zi;\n", target);
-      return;
-    }
-
-    case FBLE_FUNC_VALUE_INSTR: {
-      FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
-
-      FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile];
-      char function_label[SizeofSanitizedString(function_block.name->str)];
-      SanitizeString(function_block.name->str, function_label);
-
-      fprintf(fout, "  {\n");
-      fprintf(fout, "    static FbleExecutable e = {\n");
-      fprintf(fout, "      .refcount = 1,\n");
-      fprintf(fout, "      .magic = FBLE_EXECUTABLE_MAGIC,\n");
-      fprintf(fout, "      .args = %zi,\n", func_instr->code->_base.args);
-      fprintf(fout, "      .statics = %zi,\n", func_instr->code->_base.statics);
-      fprintf(fout, "      .locals = %zi,\n", func_instr->code->_base.locals);
-      fprintf(fout, "      .profile = %zi,\n", func_instr->code->_base.profile);
-      fprintf(fout, "      .profile_blocks = { .size = 0, .xs = NULL },\n");
-      fprintf(fout, "      .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
-      fprintf(fout, "      .on_free = NULL\n");
-      fprintf(fout, "    };\n");
-
-      fprintf(fout, "    FbleValue* statics[] = {");
-      for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
-        fprintf(fout, " %s[%zi],",
-            section[func_instr->scope.xs[i].section],
-            func_instr->scope.xs[i].index);
-      }
-      fprintf(fout, " };\n");
-
-      fprintf(fout, "    l[%zi] = FbleNewFuncValue(heap, &e, profile_base_id, statics);\n",
-          func_instr->dest);
-      fprintf(fout, "  }\n");
-      return;
-    }
-
-    case FBLE_CALL_INSTR: {
-      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-
-      fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
-          section[call_instr->func.section],
-          call_instr->func.index);
-      fprintf(fout, "  if (!x0) ");
-      ReturnAbort(fout, code, function_label, pc, "UndefinedFunctionValue", call_instr->loc);
-
-      fprintf(fout, "  {\n");
-      fprintf(fout, "    FbleValue* args[] = {");
-      for (size_t i = 0; i < call_instr->args.size; ++i) {
-        fprintf(fout, " %s[%zi],",
-            section[call_instr->args.xs[i].section],
-            call_instr->args.xs[i].index);
-      }
-      fprintf(fout, " };\n");
-
-      if (call_instr->exit) {
-        fprintf(fout, "    FbleRetainValue(heap, x0);\n");
-
-        for (size_t i = 0; i < call_instr->args.size; ++i) {
-          // We need to do a Retain on every arg from statics. For args from
-          // locals, we don't need to do a Retain on the arg the first time we
-          // see the local, because we can transfer the caller's ownership of
-          // the local to the callee for that arg.
-          bool retain = call_instr->args.xs[i].section != FBLE_LOCALS_FRAME_SECTION;
-          for (size_t j = 0; j < i; ++j) {
-            if (call_instr->args.xs[i].section == call_instr->args.xs[j].section
-                && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
-              retain = true;
-              break;
-            }
-          }
-
-          if (retain) {
-            fprintf(fout, "    FbleRetainValue(heap, args[%zi]);\n", i);
-          }
-        }
-
-        if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
-          fprintf(fout, "    FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
-        }
-
-        fprintf(fout, "    FbleThreadTailCall(heap, x0, args, thread);\n");
-        fprintf(fout, "    return FBLE_EXEC_CONTINUED;\n");
-        fprintf(fout, "  }\n");
-        return;
-      }
-
-      fprintf(fout, "    FbleThreadCall(heap, l+%zi, x0, args, thread);\n", call_instr->dest);
-      fprintf(fout, "    FbleExecStatus status;\n");
-      fprintf(fout, "    do {\n");
-      fprintf(fout, "      status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);\n");
-      fprintf(fout, "    } while (status == FBLE_EXEC_CONTINUED);\n");
-      fprintf(fout, "    if (status == FBLE_EXEC_ABORTED) ");
-      ReturnAbort(fout, code, function_label, pc, "CalleeAborted", call_instr->loc);
-      fprintf(fout, "  }\n");
-      return;
-    }
-
-    case FBLE_COPY_INSTR: {
-      FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-      fprintf(fout, "  l[%zi] = %s[%zi];\n",
-          copy_instr->dest,
-          section[copy_instr->source.section],
-          copy_instr->source.index);
-      fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", copy_instr->dest);
-      return;
-    }
-
-    case FBLE_REF_VALUE_INSTR: {
-      FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-      fprintf(fout, "  l[%zi] = FbleNewRefValue(heap);\n", ref_instr->dest);
-      return;
-    }
-
-    case FBLE_REF_DEF_INSTR: {
-      FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
-
-      fprintf(fout, "  if (!FbleAssignRefValue(heap, l[%zi], %s[%zi])) ",
-          ref_instr->ref,
-          section[ref_instr->value.section],
-          ref_instr->value.index);
-      ReturnAbort(fout, code, function_label, pc, "VacuousValue", ref_instr->loc);
-      return;
-    }
-
-    case FBLE_RETURN_INSTR: {
-      FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-
-      switch (return_instr->result.section) {
-        case FBLE_STATICS_FRAME_SECTION: {
-          fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
-              section[return_instr->result.section],
-              return_instr->result.index);
-          break;
-        }
-
-        case FBLE_LOCALS_FRAME_SECTION: break;
-      }
-
-      fprintf(fout, "  FbleThreadReturn(heap, thread, %s[%zi]);\n",
-          section[return_instr->result.section],
-          return_instr->result.index);
-
-      fprintf(fout, "  return FBLE_EXEC_FINISHED;\n");
-      return;
-    }
-
-    case FBLE_TYPE_INSTR: {
-      FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-      fprintf(fout, "  l[%zi] = FbleGenericTypeValue;\n", type_instr->dest);
-      return;
-    }
-
-    case FBLE_RELEASE_INSTR: {
-      FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-      fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", release_instr->target);
-      return;
-    }
-
-    case FBLE_LIST_INSTR: {
-      FbleListInstr* list_instr = (FbleListInstr*)instr;
-      size_t argc = list_instr->args.size;
-
-      fprintf(fout, "  {\n");
-      fprintf(fout, "    FbleValue* args[] = {");
-      for (size_t i = 0; i < argc; ++i) {
-        fprintf(fout, " %s[%zi],",
-            section[list_instr->args.xs[i].section],
-            list_instr->args.xs[i].index);
-      }
-      fprintf(fout, " };\n");
-
-      fprintf(fout, "    l[%zi] = FbleNewListValue(heap, %zi, args);\n", list_instr->dest, argc);
-      fprintf(fout, "  }\n");
-      return;
-    }
-
-    case FBLE_LITERAL_INSTR: {
-      FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-      size_t argc = literal_instr->letters.size;
-      fprintf(fout, "  {\n");
-      fprintf(fout, "    size_t args[] = {");
-      for (size_t i = 0; i < argc; ++i) {
-        fprintf(fout, " %zi,", literal_instr->letters.xs[i]);
-      }
-      fprintf(fout, " };\n");
-      fprintf(fout, "    l[%zi] = FbleNewLiteralValue(heap, %zi, args);\n",
-          literal_instr->dest, argc);
-      fprintf(fout, "  }\n");
-      return;
-    }
-  }
-}
-
 // EmitCode --
 //   Generate code to execute an FbleCode block.
 //
@@ -692,11 +359,330 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Emit code for each fble instruction
   bool jump_target[code->instrs.size];
   memset(jump_target, 0, sizeof(bool) * code->instrs.size);
-  for (size_t i = 0; i < code->instrs.size; ++i) {
-    if (jump_target[i]) {
-      fprintf(fout, "pc_%zi:\n", i);
+  for (size_t pc = 0; pc < code->instrs.size; ++pc) {
+    FbleInstr* instr = code->instrs.xs[pc];
+
+    // Output a label for the instruction for other instructions to jump to if
+    // needed. Avoid outputting a label otherwise to reduce the memory
+    // overheads of compiling the generated code by a tiny bit.
+    if (jump_target[pc]) {
+      fprintf(fout, "pc_%zi:\n", pc);
     }
-    EmitInstr(fout, profile_blocks, code, function_label, i, code->instrs.xs[i], jump_target);
+
+    // Profiling logic.
+    fprintf(fout, "  ProfileSample(profile);\n");
+    for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+      switch (op->tag) {
+        case FBLE_PROFILE_ENTER_OP: {
+          fprintf(fout, "  ProfileEnterBlock(profile, profile_base_id + %zi);\n", op->block);
+          break;
+        }
+
+        case FBLE_PROFILE_REPLACE_OP: {
+          fprintf(fout, "  ProfileReplaceBlock(profile, profile_base_id + %zi);\n", op->block);
+          break;
+        }
+
+        case FBLE_PROFILE_EXIT_OP: {
+          fprintf(fout, "  ProfileExitBlock(profile);\n");
+          break;
+        }
+      }
+    }
+
+    // Instruction logic.
+    static const char* section[] = { "s", "l" };
+    switch (instr->tag) {
+      case FBLE_DATA_TYPE_INSTR: {
+        FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
+        size_t fieldc = dt_instr->fields.size;
+
+        fprintf(fout, "  {\n");
+        fprintf(fout, "    FbleValue* fields[] = {");
+        for (size_t i = 0; i < fieldc; ++i) {
+          fprintf(fout, " %s[%zi],",
+              section[dt_instr->fields.xs[i].section],
+              dt_instr->fields.xs[i].index);
+        };
+        fprintf(fout, " };\n");
+
+        static const char* dtkind[] = { "FBLE_STRUCT_DATATYPE", "FBLE_UNION_DATATYPE" };
+        fprintf(fout, "    l[%zi] = FbleNewDataTypeValue(heap, %s, %zi, fields);\n",
+            dt_instr->dest, dtkind[dt_instr->kind], fieldc);
+        fprintf(fout, "  }\n");
+        break;
+      }
+
+      case FBLE_STRUCT_VALUE_INSTR: {
+        FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
+        size_t argc = struct_instr->args.size;
+
+        fprintf(fout, "  l[%zi] = FbleNewStructValue(heap, %zi", struct_instr->dest, argc);
+        for (size_t i = 0; i < argc; ++i) {
+          fprintf(fout, ", %s[%zi]",
+              section[struct_instr->args.xs[i].section],
+              struct_instr->args.xs[i].index);
+        };
+
+        fprintf(fout, ");\n");
+        break;
+      }
+
+      case FBLE_UNION_VALUE_INSTR: {
+        FbleUnionValueInstr* union_instr = (FbleUnionValueInstr*)instr;
+        fprintf(fout, "  l[%zi] = FbleNewUnionValue(heap, %zi, %s[%zi]);\n",
+            union_instr->dest, union_instr->tag,
+            section[union_instr->arg.section],
+            union_instr->arg.index);
+        break;
+      }
+
+      case FBLE_STRUCT_ACCESS_INSTR: {
+        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+            section[access_instr->obj.section], access_instr->obj.index);
+        fprintf(fout, "  if (!x0) ");
+        ReturnAbort(fout, code, function_label, pc, "UndefinedStructValue", access_instr->loc);
+
+        fprintf(fout, "  l[%zi] = FbleStructValueAccess(x0, %zi);\n",
+            access_instr->dest, access_instr->tag);
+        fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", access_instr->dest);
+        break;
+      }
+
+      case FBLE_UNION_ACCESS_INSTR: {
+        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+            section[access_instr->obj.section], access_instr->obj.index);
+        fprintf(fout, "  if (!x0) ");
+        ReturnAbort(fout, code, function_label, pc, "UndefinedUnionValue", access_instr->loc);
+
+        fprintf(fout, "  if (%zi != FbleUnionValueTag(x0)) ", access_instr->tag);
+        ReturnAbort(fout, code, function_label, pc, "WrongUnionTag", access_instr->loc);
+
+        fprintf(fout, "  l[%zi] = FbleUnionValueAccess(x0);\n", access_instr->dest);
+        fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", access_instr->dest);
+        break;
+      }
+
+      case FBLE_UNION_SELECT_INSTR: {
+        FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+
+        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+            section[select_instr->condition.section],
+            select_instr->condition.index);
+        fprintf(fout, "  if (!x0) ");
+        ReturnAbort(fout, code, function_label, pc, "UndefinedUnionSelect", select_instr->loc);
+
+        fprintf(fout, "  switch (FbleUnionValueTag(x0)) {\n");
+        for (size_t i = 0; i < select_instr->jumps.size; ++i) {
+          size_t target = pc + 1 + select_instr->jumps.xs[i];
+          assert(target > pc);
+          jump_target[target] = true;
+          fprintf(fout, "    case %zi: goto pc_%zi;\n", i, target);
+        }
+        fprintf(fout, "  }\n");
+        break;
+      }
+
+      case FBLE_JUMP_INSTR: {
+        FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+        size_t target = pc + 1 + jump_instr->count;
+        assert(target > pc);
+        jump_target[target] = true;
+        fprintf(fout, "  goto pc_%zi;\n", target);
+        break;
+      }
+
+      case FBLE_FUNC_VALUE_INSTR: {
+        FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
+
+        FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile];
+        char function_label[SizeofSanitizedString(function_block.name->str)];
+        SanitizeString(function_block.name->str, function_label);
+
+        fprintf(fout, "  {\n");
+        fprintf(fout, "    static FbleExecutable e = {\n");
+        fprintf(fout, "      .refcount = 1,\n");
+        fprintf(fout, "      .magic = FBLE_EXECUTABLE_MAGIC,\n");
+        fprintf(fout, "      .args = %zi,\n", func_instr->code->_base.args);
+        fprintf(fout, "      .statics = %zi,\n", func_instr->code->_base.statics);
+        fprintf(fout, "      .locals = %zi,\n", func_instr->code->_base.locals);
+        fprintf(fout, "      .profile = %zi,\n", func_instr->code->_base.profile);
+        fprintf(fout, "      .profile_blocks = { .size = 0, .xs = NULL },\n");
+        fprintf(fout, "      .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
+        fprintf(fout, "      .on_free = NULL\n");
+        fprintf(fout, "    };\n");
+
+        fprintf(fout, "    FbleValue* statics[] = {");
+        for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
+          fprintf(fout, " %s[%zi],",
+              section[func_instr->scope.xs[i].section],
+              func_instr->scope.xs[i].index);
+        }
+        fprintf(fout, " };\n");
+
+        fprintf(fout, "    l[%zi] = FbleNewFuncValue(heap, &e, profile_base_id, statics);\n",
+            func_instr->dest);
+        fprintf(fout, "  }\n");
+        break;
+      }
+
+      case FBLE_CALL_INSTR: {
+        FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+
+        fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
+            section[call_instr->func.section],
+            call_instr->func.index);
+        fprintf(fout, "  if (!x0) ");
+        ReturnAbort(fout, code, function_label, pc, "UndefinedFunctionValue", call_instr->loc);
+
+        fprintf(fout, "  {\n");
+        fprintf(fout, "    FbleValue* args[] = {");
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          fprintf(fout, " %s[%zi],",
+              section[call_instr->args.xs[i].section],
+              call_instr->args.xs[i].index);
+        }
+        fprintf(fout, " };\n");
+
+        if (call_instr->exit) {
+          fprintf(fout, "    FbleRetainValue(heap, x0);\n");
+
+          for (size_t i = 0; i < call_instr->args.size; ++i) {
+            // We need to do a Retain on every arg from statics. For args from
+            // locals, we don't need to do a Retain on the arg the first time we
+            // see the local, because we can transfer the caller's ownership of
+            // the local to the callee for that arg.
+            bool retain = call_instr->args.xs[i].section != FBLE_LOCALS_FRAME_SECTION;
+            for (size_t j = 0; j < i; ++j) {
+              if (call_instr->args.xs[i].section == call_instr->args.xs[j].section
+                  && call_instr->args.xs[i].index == call_instr->args.xs[j].index) {
+                retain = true;
+                break;
+              }
+            }
+
+            if (retain) {
+              fprintf(fout, "    FbleRetainValue(heap, args[%zi]);\n", i);
+            }
+          }
+
+          if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+            fprintf(fout, "    FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
+          }
+
+          fprintf(fout, "    FbleThreadTailCall(heap, x0, args, thread);\n");
+          fprintf(fout, "    return FBLE_EXEC_CONTINUED;\n");
+          fprintf(fout, "  }\n");
+          break;
+        }
+
+        fprintf(fout, "    FbleThreadCall(heap, l+%zi, x0, args, thread);\n", call_instr->dest);
+        fprintf(fout, "    FbleExecStatus status;\n");
+        fprintf(fout, "    do {\n");
+        fprintf(fout, "      status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);\n");
+        fprintf(fout, "    } while (status == FBLE_EXEC_CONTINUED);\n");
+        fprintf(fout, "    if (status == FBLE_EXEC_ABORTED) ");
+        ReturnAbort(fout, code, function_label, pc, "CalleeAborted", call_instr->loc);
+        fprintf(fout, "  }\n");
+        break;
+      }
+
+      case FBLE_COPY_INSTR: {
+        FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+        fprintf(fout, "  l[%zi] = %s[%zi];\n",
+            copy_instr->dest,
+            section[copy_instr->source.section],
+            copy_instr->source.index);
+        fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", copy_instr->dest);
+        break;
+      }
+
+      case FBLE_REF_VALUE_INSTR: {
+        FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+        fprintf(fout, "  l[%zi] = FbleNewRefValue(heap);\n", ref_instr->dest);
+        break;
+      }
+
+      case FBLE_REF_DEF_INSTR: {
+        FbleRefDefInstr* ref_instr = (FbleRefDefInstr*)instr;
+
+        fprintf(fout, "  if (!FbleAssignRefValue(heap, l[%zi], %s[%zi])) ",
+            ref_instr->ref,
+            section[ref_instr->value.section],
+            ref_instr->value.index);
+        ReturnAbort(fout, code, function_label, pc, "VacuousValue", ref_instr->loc);
+        break;
+      }
+
+      case FBLE_RETURN_INSTR: {
+        FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
+
+        switch (return_instr->result.section) {
+          case FBLE_STATICS_FRAME_SECTION: {
+            fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
+                section[return_instr->result.section],
+                return_instr->result.index);
+            break;
+          }
+
+          case FBLE_LOCALS_FRAME_SECTION: break;
+        }
+
+        fprintf(fout, "  FbleThreadReturn(heap, thread, %s[%zi]);\n",
+            section[return_instr->result.section],
+            return_instr->result.index);
+
+        fprintf(fout, "  return FBLE_EXEC_FINISHED;\n");
+        break;
+      }
+
+      case FBLE_TYPE_INSTR: {
+        FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
+        fprintf(fout, "  l[%zi] = FbleGenericTypeValue;\n", type_instr->dest);
+        break;
+      }
+
+      case FBLE_RELEASE_INSTR: {
+        FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
+        fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", release_instr->target);
+        break;
+      }
+
+      case FBLE_LIST_INSTR: {
+        FbleListInstr* list_instr = (FbleListInstr*)instr;
+        size_t argc = list_instr->args.size;
+
+        fprintf(fout, "  {\n");
+        fprintf(fout, "    FbleValue* args[] = {");
+        for (size_t i = 0; i < argc; ++i) {
+          fprintf(fout, " %s[%zi],",
+              section[list_instr->args.xs[i].section],
+              list_instr->args.xs[i].index);
+        }
+        fprintf(fout, " };\n");
+
+        fprintf(fout, "    l[%zi] = FbleNewListValue(heap, %zi, args);\n", list_instr->dest, argc);
+        fprintf(fout, "  }\n");
+        break;
+      }
+
+      case FBLE_LITERAL_INSTR: {
+        FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+        size_t argc = literal_instr->letters.size;
+        fprintf(fout, "  {\n");
+        fprintf(fout, "    size_t args[] = {");
+        for (size_t i = 0; i < argc; ++i) {
+          fprintf(fout, " %zi,", literal_instr->letters.xs[i]);
+        }
+        fprintf(fout, " };\n");
+        fprintf(fout, "    l[%zi] = FbleNewLiteralValue(heap, %zi, args);\n",
+            literal_instr->dest, argc);
+        fprintf(fout, "  }\n");
+        break;
+      }
+    }
   }
   fprintf(fout, "}\n");
 }
