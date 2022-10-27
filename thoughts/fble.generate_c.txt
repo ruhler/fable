@@ -729,3 +729,17 @@ recently. Still worth trying to optimize? Why not?
 ---
 
 Let's work on removing pc from FbleStack to start.
+
+Done. That was easy.
+
+Let's try some optimizations to generate_c for the fun of it. Back to
+benchmarking via /Sat/Aim%.
+
+/Sat/Aim%: 83782 lines of c code, 52.5% memory to compile at peak.
+
+First thing to try: remove unused pcs in the run function.
+
+/Sat/Aim%: 74966 lines of c code, 50.9% memory to compile at peak.
+
+Cool. Not bad. The code feels slightly messy. Oh well.
+

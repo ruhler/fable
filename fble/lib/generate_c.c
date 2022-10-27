@@ -6,7 +6,7 @@
 #include <stdio.h>    // for sprintf
 #include <stdarg.h>   // for va_list, va_start, va_end.
 #include <stddef.h>   // for offsetof
-#include <string.h>   // for strlen, strcat
+#include <string.h>   // for strlen, strcat, memset
 #include <unistd.h>   // for getcwd
 
 #include "fble-vector.h"    // for FbleVectorInit, etc.
@@ -41,7 +41,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 
 static void ReturnAbort(FILE* fout, void* code, const char* function_label, size_t pc, const char* lmsg, FbleLoc loc);
 
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const char* function_label, size_t pc, FbleInstr* instr);
+static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const char* function_label, size_t pc, FbleInstr* instr, bool* jump_target);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
@@ -340,10 +340,12 @@ static void ReturnAbort(FILE* fout, void* code, const char* function_label, size
 //     to call.
 //   pc - the program counter of the instruction.
 //   instr - the instruction to execute.
+//   jump_target - jump_target[i] should be set if jumping to instruction i.
 //
 // Side effects:
 // * Outputs code to fout.
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const char* function_label, size_t pc, FbleInstr* instr)
+// * Sets jump_target[i] to true if generating code that jumps to pc 'i'.
+static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const char* function_label, size_t pc, FbleInstr* instr, bool* jump_target)
 {
   fprintf(fout, "  ProfileSample(profile);\n");
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
@@ -450,7 +452,10 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const ch
 
       fprintf(fout, "  switch (FbleUnionValueTag(x0)) {\n");
       for (size_t i = 0; i < select_instr->jumps.size; ++i) {
-        fprintf(fout, "    case %zi: goto pc_%zi;\n", i, pc + 1 + select_instr->jumps.xs[i]);
+        size_t target = pc + 1 + select_instr->jumps.xs[i];
+        assert(target > pc);
+        jump_target[target] = true;
+        fprintf(fout, "    case %zi: goto pc_%zi;\n", i, target);
       }
       fprintf(fout, "  }\n");
       return;
@@ -458,7 +463,10 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const ch
 
     case FBLE_JUMP_INSTR: {
       FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-      fprintf(fout, "  goto pc_%zi;\n", pc + 1 + jump_instr->count);
+      size_t target = pc + 1 + jump_instr->count;
+      assert(target > pc);
+      jump_target[target] = true;
+      fprintf(fout, "  goto pc_%zi;\n", target);
       return;
     }
 
@@ -682,9 +690,13 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  FbleValue* x0 = NULL;\n");
 
   // Emit code for each fble instruction
+  bool jump_target[code->instrs.size];
+  memset(jump_target, 0, sizeof(bool) * code->instrs.size);
   for (size_t i = 0; i < code->instrs.size; ++i) {
-    fprintf(fout, "pc_%zi:\n", i);
-    EmitInstr(fout, profile_blocks, code, function_label, i, code->instrs.xs[i]);
+    if (jump_target[i]) {
+      fprintf(fout, "pc_%zi:\n", i);
+    }
+    EmitInstr(fout, profile_blocks, code, function_label, i, code->instrs.xs[i], jump_target);
   }
   fprintf(fout, "}\n");
 }
