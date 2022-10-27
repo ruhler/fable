@@ -675,4 +675,47 @@ handle, right: simple func, interpreter, generate_aarch64, and generate_c.
 Maybe an easy first step would be to pass FbleThread to the abort function,
 and ask abort functions to do the equivalent of PopStackFrame.
 
+---
 
+Let's take the plunge. Just do it all at once. Wish me luck.
+
+For the time being I'm skipping aarch64. Let's get everything else working
+first and then deal with that.
+
+I need to come up with a nicer way to print what code is running when I run a
+spec test, so I can manually reproduce errors. Maybe make my own exec function
+and use that to echo the command being run for any test related executions
+(fble-test, fble-compile, etc.).
+
+---
+
+Trouble: I think we've spilled over the edge of memory allowance on Sat Aim
+again. What can we do? I bet we need to keep the _Abort_* implementation
+function as is. Call it directly in ReturnAbort.
+
+I think that's better, but I'm still running into high memory use issues. In
+this case when we have all three or four big modules compiling at the same
+time. Maybe I was lucky before and they got interleaved, but not now?
+
+Looks like we've regressed maybe 6% on memory use on Sat/Aim. Think about
+what other things I could do. Only emit goto labels that we would actually
+jump to?
+
+---
+
+Here's the plan:
+1. Update aarch64 code to remove abort function.
+2. Take some more time to try and optimize generate_c:
+ - Don't emit unused pc labels
+ - Wrap function call while loop in a separate function.
+ - Use shorter labels for function names.
+ - Avoid introducing variables in {} statements, use shared local variables
+   for the full function.
+
+First, how to update aarch64 code? Two ideas:
+1. Just manually call the existing _abort_ function.
+2. Include abort instructions in same function definition, jump there directly
+from the error check.
+
+I think jumping to the right place directly is better. Let me try that to
+start.

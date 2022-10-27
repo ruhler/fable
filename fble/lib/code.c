@@ -447,7 +447,6 @@ FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals, FbleBlockId pr
   code->_base.profile = profile;
   FbleVectorInit(code->_base.profile_blocks);
   code->_base.run = &FbleInterpreterRunFunction;
-  code->_base.abort = &FbleInterpreterAbortFunction;
   code->_base.on_free = &OnFree;
   FbleVectorInit(code->instrs);
   return code;

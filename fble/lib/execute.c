@@ -108,10 +108,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
     }
 
     case FBLE_EXEC_ABORTED: {
-      while (thread.stack != NULL) {
-        FbleFuncValueExecutable(thread.stack->func)->abort(heap, thread.stack);
-        PopStackFrame(heap, &thread);
-      }
+      assert(thread.stack == NULL);
       assert(result == NULL);
       break;
     }

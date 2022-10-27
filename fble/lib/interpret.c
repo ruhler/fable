@@ -723,18 +723,16 @@ FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThread* threa
 
     control = sRunInstr[instr->tag](heap, thread, instr, &status);
   }
-  return status;
-}
-
-// FbleInterpreterAbortFunction -- see documentation in interpret.h
-void FbleInterpreterAbortFunction(FbleValueHeap* heap, FbleStack* stack)
-{
-  FbleInstr** code = ((FbleCode*)FbleFuncValueExecutable(stack->func))->instrs.xs;
-  Control control = CONTINUE;
-  while (control == CONTINUE) {
-    FbleInstr* instr = code[stack->pc];
-    control = sAbortInstr[instr->tag](heap, stack, instr);
+
+  if (status == FBLE_EXEC_ABORTED) {
+    Control control = CONTINUE;
+    while (control == CONTINUE) {
+      FbleInstr* instr = code[thread->stack->pc];
+      control = sAbortInstr[instr->tag](heap, thread->stack, instr);
+    }
+    FbleThreadReturn(heap, thread, NULL);
   }
+  return status;
 }
 
 // FbleInterpret -- see documentation in fble-interpret.h

@@ -39,9 +39,9 @@ static LabelId StaticNames(FILE* fout, LabelId* label_id, FbleNameV names);
 static LabelId StaticModulePath(FILE* fout, LabelId* label_id, FbleModulePath* path);
 static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompiledModule* module);
 
-static void ReturnAbort(FILE* fout, size_t pc, const char* lmsg, FbleLoc loc);
+static void ReturnAbort(FILE* fout, void* code, const char* function_label, size_t pc, const char* lmsg, FbleLoc loc);
 
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr);
+static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const char* function_label, size_t pc, FbleInstr* instr);
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* instr);
 static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
@@ -293,7 +293,6 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "  .run = &_Run_%p_%s,\n", (void*)module->code, function_label);
-  fprintf(fout, "  .abort = &_Abort_%p_%s,\n", (void*)module->code, function_label);
   fprintf(fout, "  .on_free = &FbleExecutableNothingOnFree\n");
   fprintf(fout, "};\n");
 
@@ -321,10 +320,13 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 //
 // Side effects:
 //   Emit code to return the error.
-static void ReturnAbort(FILE* fout, size_t pc, const char* lmsg, FbleLoc loc)
+static void ReturnAbort(FILE* fout, void* code, const char* function_label, size_t pc, const char* lmsg, FbleLoc loc)
 {
-  fprintf(fout, "return Abort(thread, %zi, %s, %d, %d);\n",
-      pc, lmsg, loc.line, loc.col);
+  fprintf(fout, "{\n");
+  fprintf(fout, "    ReportAbort(%s, %d, %d);\n", lmsg, loc.line, loc.col);
+  fprintf(fout, "    return _Abort_%p_%s(heap, thread, %zi);\n",
+      code, function_label, pc);
+  fprintf(fout, "  }\n");
 }
 
 // EmitInstr --
@@ -334,12 +336,14 @@ static void ReturnAbort(FILE* fout, size_t pc, const char* lmsg, FbleLoc loc)
 //   fout - the output stream to write the code to.
 //   profile_blocks - the list of profile block names for the module.
 //   code - pointer to the current code block, for referencing labels.
+//   function_label - label of the function, for knowing what _Abort_ function
+//     to call.
 //   pc - the program counter of the instruction.
 //   instr - the instruction to execute.
 //
 // Side effects:
 // * Outputs code to fout.
-static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t pc, FbleInstr* instr)
+static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, const char* function_label, size_t pc, FbleInstr* instr)
 {
   fprintf(fout, "  ProfileSample(profile);\n");
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
@@ -412,7 +416,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
           section[access_instr->obj.section], access_instr->obj.index);
       fprintf(fout, "  if (!x0) ");
-      ReturnAbort(fout, pc, "UndefinedStructValue", access_instr->loc);
+      ReturnAbort(fout, code, function_label, pc, "UndefinedStructValue", access_instr->loc);
 
       fprintf(fout, "  l[%zi] = FbleStructValueAccess(x0, %zi);\n",
           access_instr->dest, access_instr->tag);
@@ -425,10 +429,10 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  x0 = FbleStrictValue(%s[%zi]);\n",
           section[access_instr->obj.section], access_instr->obj.index);
       fprintf(fout, "  if (!x0) ");
-      ReturnAbort(fout, pc, "UndefinedUnionValue", access_instr->loc);
+      ReturnAbort(fout, code, function_label, pc, "UndefinedUnionValue", access_instr->loc);
 
       fprintf(fout, "  if (%zi != FbleUnionValueTag(x0)) ", access_instr->tag);
-      ReturnAbort(fout, pc, "WrongUnionTag", access_instr->loc);
+      ReturnAbort(fout, code, function_label, pc, "WrongUnionTag", access_instr->loc);
 
       fprintf(fout, "  l[%zi] = FbleUnionValueAccess(x0);\n", access_instr->dest);
       fprintf(fout, "  FbleRetainValue(heap, l[%zi]);\n", access_instr->dest);
@@ -442,7 +446,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
           section[select_instr->condition.section],
           select_instr->condition.index);
       fprintf(fout, "  if (!x0) ");
-      ReturnAbort(fout, pc, "UndefinedUnionSelect", select_instr->loc);
+      ReturnAbort(fout, code, function_label, pc, "UndefinedUnionSelect", select_instr->loc);
 
       fprintf(fout, "  switch (FbleUnionValueTag(x0)) {\n");
       for (size_t i = 0; i < select_instr->jumps.size; ++i) {
@@ -475,7 +479,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "      .profile = %zi,\n", func_instr->code->_base.profile);
       fprintf(fout, "      .profile_blocks = { .size = 0, .xs = NULL },\n");
       fprintf(fout, "      .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
-      fprintf(fout, "      .abort = &_Abort_%p_%s,\n", (void*)func_instr->code, function_label);
       fprintf(fout, "      .on_free = NULL\n");
       fprintf(fout, "    };\n");
 
@@ -500,7 +503,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
           section[call_instr->func.section],
           call_instr->func.index);
       fprintf(fout, "  if (!x0) ");
-      ReturnAbort(fout, pc, "UndefinedFunctionValue", call_instr->loc);
+      ReturnAbort(fout, code, function_label, pc, "UndefinedFunctionValue", call_instr->loc);
 
       fprintf(fout, "  {\n");
       fprintf(fout, "    FbleValue* args[] = {");
@@ -543,14 +546,13 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         return;
       }
 
-      // stack->pc = pc + 1
-      fprintf(fout, "    thread->stack->pc = %zi;\n", pc + 1);
       fprintf(fout, "    FbleThreadCall(heap, l+%zi, x0, args, thread);\n", call_instr->dest);
       fprintf(fout, "    FbleExecStatus status;\n");
       fprintf(fout, "    do {\n");
       fprintf(fout, "      status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);\n");
       fprintf(fout, "    } while (status == FBLE_EXEC_CONTINUED);\n");
-      fprintf(fout, "    if (status != FBLE_EXEC_FINISHED) return status;\n");
+      fprintf(fout, "    if (status == FBLE_EXEC_ABORTED) ");
+      ReturnAbort(fout, code, function_label, pc, "CalleeAborted", call_instr->loc);
       fprintf(fout, "  }\n");
       return;
     }
@@ -578,7 +580,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
           ref_instr->ref,
           section[ref_instr->value.section],
           ref_instr->value.index);
-      ReturnAbort(fout, pc, "VacuousValue", ref_instr->loc);
+      ReturnAbort(fout, code, function_label, pc, "VacuousValue", ref_instr->loc);
       return;
     }
 
@@ -682,7 +684,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, "pc_%zi:\n", i);
-    EmitInstr(fout, profile_blocks, code, i, code->instrs.xs[i]);
+    EmitInstr(fout, profile_blocks, code, function_label, i, code->instrs.xs[i]);
   }
   fprintf(fout, "}\n");
 }
@@ -764,7 +766,8 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
           }
         }
 
-        fprintf(fout, "  stack->result = NULL;\n");
+        fprintf(fout, "  FbleThreadReturn(heap, thread, NULL);\n");
+        fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
       }
 
       fprintf(fout, "  l[%zi] = NULL;\n", call_instr->dest);
@@ -797,8 +800,8 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
         }
       }
 
-      fprintf(fout, "  stack->result = NULL;\n");
-      fprintf(fout, "  return;\n");
+      fprintf(fout, "  FbleThreadReturn(heap, thread, NULL);\n");
+      fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
       return;
     }
 
@@ -844,10 +847,11 @@ static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* cod
   FbleName function_block = profile_blocks.xs[code->_base.profile];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "static void _Abort_%p_%s(FbleValueHeap* heap, FbleStack* stack)\n", (void*)code, function_label);
+  fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, size_t pc)\n", (void*)code, function_label);
   fprintf(fout, "{\n");
+  fprintf(fout, "  FbleStack* stack = thread->stack;\n");
   fprintf(fout, "  FbleValue** l = stack->locals;\n");
-  fprintf(fout, "  switch (stack->pc)\n");
+  fprintf(fout, "  switch (pc)\n");
   fprintf(fout, "  {\n");
   for (size_t i = 0; i < code->instrs.size; ++i) {
     fprintf(fout, "    case %zi: goto pc_%zi;\n", i, i);
@@ -978,6 +982,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "#include \"value.h\"\n\n");
 
   // Error messages.
+  fprintf(fout, "static const char* CalleeAborted = \"callee aborted\";\n");
   fprintf(fout, "static const char* UndefinedStructValue = \"undefined struct value access\";\n");
   fprintf(fout, "static const char* UndefinedUnionValue = \"undefined union value access\";\n");
   fprintf(fout, "static const char* UndefinedUnionSelect = \"undefined union value select\";\n");
@@ -985,12 +990,10 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "static const char* UndefinedFunctionValue = \"called undefined function\";\n");
   fprintf(fout, "static const char* VacuousValue = \"vacuous value\";\n");
 
-  fprintf(fout, "static FbleExecStatus Abort(FbleThread* thread, size_t pc, const char* msg, int line, int col)\n");
+  fprintf(fout, "static void ReportAbort(const char* msg, int line, int col)\n");
   fprintf(fout, "{\n");
-  fprintf(fout, "  thread->stack->pc = pc;");
   fprintf(fout, "  fprintf(stderr, \"%s:%%d:%%d: error: %%s\\n\", line, col, msg);\n",
       module->path->loc.source->str);
-  fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
   fprintf(fout, "}\n");
 
   // Helpers for profiling.
@@ -1031,7 +1034,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     SanitizeString(function_block.name->str, function_label);
     fprintf(fout, "static FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread);\n",
         (void*)code, function_label);
-    fprintf(fout, "static void _Abort_%p_%s(FbleValueHeap* heap, FbleStack* stack);\n",
+    fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, size_t pc);\n",
         (void*)code, function_label);
   }
 

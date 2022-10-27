@@ -611,12 +611,6 @@ FbleExecStatus SimpleRunFunction(FbleValueHeap* heap, FbleThread* thread)
   return result == NULL ? FBLE_EXEC_ABORTED : FBLE_EXEC_FINISHED;
 }
 
-void SimpleAbortFunction(FbleValueHeap* heap, FbleStack* stack)
-{
-  // TODO: Remove this function once abort functions are no longer separate
-  // from run functions.
-}
-
 // FbleNewSimpleFuncValue -- see documentation in fble-value.h
 FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFunc impl, FbleBlockId profile)
 {
@@ -630,7 +624,6 @@ FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFu
   exec->_base.profile_blocks.size = 0;
   exec->_base.profile_blocks.xs = NULL;
   exec->_base.run = &SimpleRunFunction;
-  exec->_base.abort = &SimpleAbortFunction;
   exec->_base.on_free = &FbleExecutableNothingOnFree;
   exec->impl = impl;
   return FbleNewFuncValue(heap, &exec->_base, 0, NULL);

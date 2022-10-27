@@ -125,6 +125,11 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
 // FbleRunFunction --
 //   A C function to run the fble function on the top of the thread stack.
 //
+// The FbleRunFunction should clean up and pop the stack frame before
+// returning, regardless of whether the function completes, aborts, or needs a
+// continuation. In case of continuation, a continuation stack frame is pushed
+// after popping the current stack frame.
+//
 // Inputs:
 //   heap - the value heap.
 //   thread - the thread to run.
@@ -133,21 +138,9 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
 //   The status of running the function.
 //
 // Side effects:
-// * The fble function on the top of the thread stack is executed, updating
-//   its stack.
+// * The fble function on the top of the thread stack is executed.
+// * The stack frame is cleaned up and popped from the stack.
 typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThread* thread);
-
-// FbleAbortFunction --
-//   A C function to abort and clean up the fble function on the top of the
-//   thread stack.
-//
-// Inputs:
-//   heap - the value heap.
-//   stack - the stack frame to clean up.
-//
-// Side effects:
-// * Local variables and intermediate execution state should be freed.
-typedef void FbleAbortFunction(FbleValueHeap* heap, FbleStack* stack);
 
 // FbleExecutable --
 //   A reference counted, partially abstract data type describing how to
@@ -173,7 +166,6 @@ struct FbleExecutable {
   FbleBlockId profile;
   FbleNameV profile_blocks;
   FbleRunFunction* run;       // How to run the function.
-  FbleAbortFunction* abort;   // How to abort the function.
   void (*on_free)(FbleExecutable* this);
 };
 
