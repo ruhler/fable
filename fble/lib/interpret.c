@@ -39,15 +39,18 @@ typedef enum {
 //   thread - the current thread state.
 //   instr - the instruction to execute.
 //   status - set to the exec status to return if result is RETURN.
+//   pc - the program counter.
 //
 // Results:
-//   CONTINUE to indicate the interpreter instruction loop should continue
-//   executing instructions from this function. RETURN to indicate the
-//   interpreter instruction loop should return 'status'.
+// * CONTINUE to indicate the interpreter instruction loop should continue
+//   executing instructions from this function.
+// * RETURN to indicate the interpreter instruction loop should return
+//   'status'.
 //
 // Side effects:
-//   Executes the instruction.
-typedef Control (*RunInstr)(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status);
+// * Executes the instruction.
+// * Updates pc to point to appropriate next value.
+typedef Control (*RunInstr)(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc);
 
 // AbortInstr --
 //   A function that executes an instruction for the purposes of aborting.
@@ -63,14 +66,16 @@ typedef Control (*RunInstr)(FbleValueHeap* heap, FbleThread* thread, FbleInstr* 
 //   heap - heap to use for allocations.
 //   stack - the stack frame to abort.
 //   instr - the instruction to execute.
+//   pc - the program counter.
 //
 // Results:
-//   RETURN - if the function is done aborting.
-//   CONTINUE - if there are more instructions in the function to execute.
+// * RETURN - if the function is done aborting.
+// * CONTINUE - if there are more instructions in the function to execute.
 //
 // Side effects:
-//   Executes the instruction for the purposes of aborting the stack frame.
-typedef Control (*AbortInstr)(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr);
+// * Executes the instruction for the purposes of aborting the stack frame.
+// * Updates pc to point to appropriate next value.
+typedef Control (*AbortInstr)(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc);
 
 // FrameGet --
 //   Get a value from the frame on the top of the execution stack.
@@ -155,7 +160,7 @@ static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalI
 
 // RunDataTypeInstr -- see documentation of RunInstr.
 //   Execute an FBLE_DATA_TYPE_INSTR.
-static Control RunDataTypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunDataTypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
   size_t fieldc = data_type_instr->fields.size;
@@ -166,23 +171,23 @@ static Control RunDataTypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleIns
 
   FbleValue* value = FbleNewDataTypeValue(heap, data_type_instr->kind, fieldc, fields);
   FrameSetConsumed(heap, thread, data_type_instr->dest, value);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortDataTypeInstr -- see documentation of AbortInstr.
 //   Execute a FBLE_DATA_TYPE_INSTR for abort.
-static Control AbortDataTypeInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortDataTypeInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
   stack->locals[data_type_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunStructValueInstr -- see documentation of RunInstr.
 //   Execute a STRUCT_VALUE_INSTR.
-static Control RunStructValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunStructValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
   size_t argc = struct_value_instr->args.size;
@@ -193,46 +198,46 @@ static Control RunStructValueInstr(FbleValueHeap* heap, FbleThread* thread, Fble
 
   FbleValue* value = FbleNewStructValue_(heap, argc, args);
   FrameSetConsumed(heap, thread, struct_value_instr->dest, value);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortStructValueInstr -- see documentation of AbortInstr.
 //   Execute a STRUCT_VALUE_INSTR for abort.
-static Control AbortStructValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortStructValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
   stack->locals[struct_value_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunUnionValueInstr -- see documentation of RunInstr
 //   Execute a UNION_VALUE_INSTR.
-static Control RunUnionValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunUnionValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
   size_t tag = union_value_instr->tag;
   FbleValue* arg = FrameGet(thread, union_value_instr->arg);
   FbleValue* value = FbleNewUnionValue(heap, tag, arg);
   FrameSetConsumed(heap, thread, union_value_instr->dest, value);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortUnionValueInstr -- see documentation of AbortInstr
 //   Execute a UNION_VALUE_INSTR for abort.
-static Control AbortUnionValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortUnionValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
   stack->locals[union_value_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunStructAccessInstr -- see documentation of RunInstr
 //   Execute a STRUCT_ACCESS_INSTR.
-static Control RunStructAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunStructAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
@@ -245,23 +250,23 @@ static Control RunStructAccessInstr(FbleValueHeap* heap, FbleThread* thread, Fbl
 
   FbleValue* v = FbleStructValueAccess(sv, access_instr->tag);
   FrameSetBorrowed(heap, thread, access_instr->dest, v);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortStructAccessInstr -- see documentation of AbortInstr
 //   Execute a STRUCT_ACCESS_INSTR for abort.
-static Control AbortStructAccessInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortStructAccessInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
   stack->locals[access_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunUnionAccessInstr -- see documentation of RunInstr
 //   Execute a UNION_ACCESS_INSTR.
-static Control RunUnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunUnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
 
@@ -279,23 +284,23 @@ static Control RunUnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, Fble
   }
 
   FrameSetBorrowed(heap, thread, access_instr->dest, FbleUnionValueAccess(uv));
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortUnionAccessInstr -- see documentation of AbortInstr
 //   Execute a UNION_ACCESS_INSTR.
-static Control AbortUnionAccessInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortUnionAccessInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
   stack->locals[access_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunUnionSelectInstr -- see documentation of RunInstr
 //   Execute a UNION_SELECT_INSTR.
-static Control RunUnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunUnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
   FbleValue* uv = FrameGetStrict(thread, select_instr->condition);
@@ -304,43 +309,43 @@ static Control RunUnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, Fble
     *status = FBLE_EXEC_ABORTED;
     return RETURN;
   }
-  thread->stack->pc += 1 + select_instr->jumps.xs[FbleUnionValueTag(uv)];
+  *pc += 1 + select_instr->jumps.xs[FbleUnionValueTag(uv)];
   return CONTINUE;
 }
 
 // AbortUnionSelectInstr -- see documentation of AbortInstr
 //   Execute a UNION_SELECT_INSTR for abort.
-static Control AbortUnionSelectInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortUnionSelectInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   // For the purposes of abort, it doesn't matter which branch we take,
   // because all branches have to clean up memory the same way.
   FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
   assert(select_instr->jumps.size > 0);
-  stack->pc += 1 + select_instr->jumps.xs[0];
+  *pc += 1 + select_instr->jumps.xs[0];
   return CONTINUE;
 }
 
 // RunJumpInstr -- see documentation of RunInstr
 //   Execute a JUMP_INSTR.
-static Control RunJumpInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunJumpInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-  thread->stack->pc += 1 + jump_instr->count;
+  *pc += 1 + jump_instr->count;
   return CONTINUE;
 }
 
 // AbortJumpInstr -- see documentation of AbortInstr
 //   Execute a JUMP_INSTR for abort.
-static Control AbortJumpInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortJumpInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-  stack->pc += 1 + jump_instr->count;
+  *pc += 1 + jump_instr->count;
   return CONTINUE;
 }
 
 // RunFuncValueInstr -- see documentation of RunInstr
 //   Execute a FUNC_VALUE_INSTR.
-static Control RunFuncValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunFuncValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
   FbleValue* statics[func_value_instr->scope.size];
@@ -350,23 +355,23 @@ static Control RunFuncValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleIn
 
   FbleValue* value = FbleNewFuncValue(heap, &func_value_instr->code->_base, FbleFuncValueProfileBaseId(thread->stack->func), statics);
   FrameSetConsumed(heap, thread, func_value_instr->dest, value);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortFuncValueInstr -- see documentation of AbortInstr
 //   Execute a FUNC_VALUE_INSTR for abort.
-static Control AbortFuncValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortFuncValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
   stack->locals[func_value_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunCallInstr -- see documentation of RunInstr
 //   Execute a CALL_INSTR.
-static Control RunCallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunCallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleCallInstr* call_instr = (FbleCallInstr*)instr;
   FbleValue* func = FrameGetStrict(thread, call_instr->func);
@@ -405,7 +410,7 @@ static Control RunCallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* 
     return RETURN;
   }
 
-  thread->stack->pc++;
+  (*pc)++;
   FbleThreadCall(heap, thread->stack->locals + call_instr->dest, func, args, thread);
   do {
     *status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);
@@ -415,7 +420,7 @@ static Control RunCallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* 
 
 // AbortCallInstr -- see documentation of AbortInstr
 //   Execute a CALL_INSTR for abort.
-static Control AbortCallInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortCallInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleCallInstr* call_instr = (FbleCallInstr*)instr;
 
@@ -443,55 +448,55 @@ static Control AbortCallInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* 
   }
 
   stack->locals[call_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunCopyInstr -- see documentation of RunInstr
 //   Execute a COPY_INSTR.
-static Control RunCopyInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunCopyInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
   FbleValue* value = FrameGet(thread, copy_instr->source);
   FrameSetBorrowed(heap, thread, copy_instr->dest, value);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortCopyInstr -- see documentation of AbortInstr
 //   Execute a COPY_INSTR for abort.
-static Control AbortCopyInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortCopyInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
   stack->locals[copy_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunRefValueInstr -- see documentation of RunInstr
 //   Execute a REF_VALUE_INSTR.
-static Control RunRefValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunRefValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
   FbleValue* rv = FbleNewRefValue(heap);
   FrameSetConsumed(heap, thread, ref_instr->dest, rv);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortRefValueInstr -- see documentation of AbortInstr
 //   Execute a REF_VALUE_INSTR for abort.
-static Control AbortRefValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortRefValueInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
   stack->locals[ref_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunRefDefInstr -- see documentation of RunInstr
 //   Execute a REF_DEF_INSTR.
-static Control RunRefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunRefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
   FbleValue* ref = thread->stack->locals[ref_def_instr->ref];
@@ -502,21 +507,21 @@ static Control RunRefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr
     return RETURN;
   }
 
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortRefDefInstr -- see documentation of AbortInstr
 //   Execute a REF_DEF_INSTR for abort
-static Control AbortRefDefInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortRefDefInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunReturnInstr -- see documentation of RunInstr
 //   Execute a RETURN_INSTR.
-static Control RunReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
   FbleValue* result = NULL;
@@ -540,7 +545,7 @@ static Control RunReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr
 
 // AbortReturnInstr -- see documentation of AbortInstr
 //   Execute a RETURN_INSTR for abort.
-static Control AbortReturnInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortReturnInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
   switch (return_instr->result.section) {
@@ -557,47 +562,47 @@ static Control AbortReturnInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr
 
 // RunTypeInstr -- see documentation of RunInstr
 //   Execute a FBLE_TYPE_INSTR.
-static Control RunTypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunTypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
   FrameSetConsumed(heap, thread, type_instr->dest, FbleGenericTypeValue);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortTypeInstr -- see documentation of AbortInstr
 //   Execute a FBLE_TYPE_INSTR for abort.
-static Control AbortTypeInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortTypeInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
   stack->locals[type_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunReleaseInstr -- see documentation of RunInstr
 //   Execute a FBLE_RELEASE_INSTR.
-static Control RunReleaseInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunReleaseInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
   FbleReleaseValue(heap, thread->stack->locals[release_instr->target]);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortReleaseInstr -- see documentation of AbortInstr
 //   Execute a FBLE_RELEASE_INSTR for abort.
-static Control AbortReleaseInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortReleaseInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
   FbleReleaseValue(heap, stack->locals[release_instr->target]);
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunListInstr -- see documentation of RunInstr.
 //   Execute an FBLE_LIST_INSTR.
-static Control RunListInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunListInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleListInstr* list_instr = (FbleListInstr*)instr;
   size_t argc = list_instr->args.size;
@@ -608,38 +613,38 @@ static Control RunListInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* 
 
   FbleValue* list = FbleNewListValue(heap, argc, args);
   FrameSetConsumed(heap, thread, list_instr->dest, list);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortListInstr -- see documentation of AbortInstr.
 //   Execute a LIST_INSTR for abort.
-static Control AbortListInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortListInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleListInstr* list_instr = (FbleListInstr*)instr;
   stack->locals[list_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // RunLiteralInstr -- see documentation of RunInstr.
 //   Execute an FBLE_LITERAL_INSTR.
-static Control RunLiteralInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status)
+static Control RunLiteralInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
 {
   FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
   FbleValue* list = FbleNewLiteralValue(heap, literal_instr->letters.size, literal_instr->letters.xs);
   FrameSetConsumed(heap, thread, literal_instr->dest, list);
-  thread->stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
 // AbortLiteralInstr -- see documentation of AbortInstr.
 //   Execute a FBLE_LITERAL_INSTR for abort.
-static Control AbortLiteralInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr)
+static Control AbortLiteralInstr(FbleValueHeap* heap, FbleStack* stack, FbleInstr* instr, size_t* pc)
 {
   FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
   stack->locals[literal_instr->dest] = NULL;
-  stack->pc++;
+  (*pc)++;
   return CONTINUE;
 }
 
@@ -697,8 +702,9 @@ FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThread* threa
 
   FbleExecStatus status = FBLE_EXEC_ABORTED;
   Control control = CONTINUE; 
+  size_t pc = 0;
   while (control == CONTINUE) {
-    FbleInstr* instr = code[thread->stack->pc];
+    FbleInstr* instr = code[pc];
     if (profile != NULL) {
       if (rand() % PROFILE_SAMPLE_PERIOD == 0) {
         FbleProfileSample(profile, 1);
@@ -721,14 +727,14 @@ FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThread* threa
       }
     }
 
-    control = sRunInstr[instr->tag](heap, thread, instr, &status);
+    control = sRunInstr[instr->tag](heap, thread, instr, &status, &pc);
   }
 
   if (status == FBLE_EXEC_ABORTED) {
     Control control = CONTINUE;
     while (control == CONTINUE) {
-      FbleInstr* instr = code[thread->stack->pc];
-      control = sAbortInstr[instr->tag](heap, thread->stack, instr);
+      FbleInstr* instr = code[pc];
+      control = sAbortInstr[instr->tag](heap, thread->stack, instr, &pc);
     }
     FbleThreadReturn(heap, thread, NULL);
   }

@@ -725,3 +725,7 @@ start.
 Oh. I guess what happened is I don't even use generate_c for the big apps when
 aarch64 is supported. That's why I didn't run into generate_c issues there
 recently. Still worth trying to optimize? Why not?
+
+---
+
+Let's work on removing pc from FbleStack to start.

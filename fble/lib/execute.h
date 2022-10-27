@@ -18,8 +18,6 @@
 //
 // Fields:
 //   func - the function being executed at this frame of the stack.
-//   pc - the next instruction in the function to execute. It's up to the
-//        function definition to prescribe meaning to this value.
 //   result - where to store the result of executing the current frame.
 //   tail - the next frame down in the stack.
 //   locals - array of local variables. Size is func->executable->locals.
@@ -32,7 +30,6 @@
 //   receive a strong reference to the return value.
 typedef struct FbleStack {
   FbleValue* func;
-  size_t pc;
   FbleValue** result;
   struct FbleStack* tail;
   FbleValue* locals[];

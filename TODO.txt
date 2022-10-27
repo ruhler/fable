@@ -1,3 +1,10 @@
+* Optimize code for generate_c for low gcc memory use:
+ - Don't emit unused pc labels
+ - Wrap function call while loop in a separate function.
+ - Use shorter labels for function names.
+ - Avoid introducing variables in {} statements, use shared local variables
+   for the full function.
+
 * Release
  - Add --version option to things.
  - Clean up libfble interface.

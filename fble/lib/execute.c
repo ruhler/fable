@@ -39,7 +39,6 @@ static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, F
 {
   FbleStack* stack = FbleStackAllocExtra(thread->allocator, FbleStack, locals * sizeof(FbleValue*));
   stack->func = func;
-  stack->pc = 0;
   stack->result = result;
   stack->tail = thread->stack;
   thread->stack = stack;
