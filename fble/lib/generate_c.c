@@ -359,6 +359,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Emit code for each fble instruction
   bool jump_target[code->instrs.size];
   memset(jump_target, 0, sizeof(bool) * code->instrs.size);
+  size_t lit_id = 0;
   for (size_t pc = 0; pc < code->instrs.size; ++pc) {
     FbleInstr* instr = code->instrs.xs[pc];
 
@@ -668,15 +669,14 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_LITERAL_INSTR: {
         FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
         size_t argc = literal_instr->letters.size;
-        fprintf(fout, "  {\n");
-        fprintf(fout, "    size_t args[] = {");
+        fprintf(fout, "  static size_t lit_%zi[] = {", lit_id);
         for (size_t i = 0; i < argc; ++i) {
           fprintf(fout, " %zi,", literal_instr->letters.xs[i]);
         }
         fprintf(fout, " };\n");
-        fprintf(fout, "    l[%zi] = FbleNewLiteralValue(heap, %zi, args);\n",
-            literal_instr->dest, argc);
-        fprintf(fout, "  }\n");
+        fprintf(fout, "  l[%zi] = FbleNewLiteralValue(heap, %zi, lit_%zi);\n",
+            literal_instr->dest, argc, lit_id);
+        lit_id++;
         break;
       }
     }

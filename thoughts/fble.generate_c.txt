@@ -751,3 +751,7 @@ output info about locations elsewhere?
 Maybe more promising to start is a helper function to call functions.
 
 /Sat/Aim%: 70174 lines of c code, 48.0% memory to compile at peak.
+
+Using static size_t lit_[] = { ... }
+
+/Sat/Aim%: 67776 lines of c code, 44.0% memory to compile at peak.
