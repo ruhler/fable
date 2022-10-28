@@ -196,7 +196,7 @@ static Control RunStructValueInstr(FbleValueHeap* heap, FbleThread* thread, Fble
     args[i] = FrameGet(thread, struct_value_instr->args.xs[i]);
   }
 
-  FbleValue* value = FbleNewStructValue_(heap, argc, args);
+  FbleValue* value = FbleNewStructValue(heap, argc, args);
   FrameSetConsumed(heap, thread, struct_value_instr->dest, value);
   (*pc)++;
   return CONTINUE;

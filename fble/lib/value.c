@@ -348,20 +348,7 @@ static size_t PackedValueLength(intptr_t data)
 }
 
 // FbleNewStructValue -- see documentation in fble-value.h
-FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...)
-{
-  FbleValue* args[argc];
-  va_list ap;
-  va_start(ap, argc);
-  for (size_t i = 0; i < argc; ++i) {
-    args[i] = va_arg(ap, FbleValue*);
-  }
-  va_end(ap);
-  return FbleNewStructValue_(heap, argc, args);
-}
-
-// FbleNewStructValue_ -- see documentation in fble-value.h
-FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** args)
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
   // Try packing optimistically.
   intptr_t data = 0;
@@ -404,6 +391,19 @@ FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** arg
   }
 
   return &value->_base;
+}
+
+// FbleNewStructValue_ -- see documentation in fble-value.h
+FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...)
+{
+  FbleValue* args[argc];
+  va_list ap;
+  va_start(ap, argc);
+  for (size_t i = 0; i < argc; ++i) {
+    args[i] = va_arg(ap, FbleValue*);
+  }
+  va_end(ap);
+  return FbleNewStructValue(heap, argc, args);
 }
 
 // FbleStructValueAccess -- see documentation in fble-value.h
@@ -466,7 +466,7 @@ FbleValue* FbleNewUnionValue(FbleValueHeap* heap, size_t tag, FbleValue* arg)
 // FbleNewEnumValue -- see documentation in fble-value.h
 FbleValue* FbleNewEnumValue(FbleValueHeap* heap, size_t tag)
 {
-  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewUnionValue(heap, tag, unit);
   FbleReleaseValue(heap, unit);
   return result;
@@ -632,12 +632,12 @@ FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFu
 // FbleNewListValue -- see documentation in value.h
 FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 {
-  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* tail = FbleNewUnionValue(heap, 1, unit);
   FbleReleaseValue(heap, unit);
   for (size_t i = 0; i < argc; ++i) {
     FbleValue* arg = args[argc - i - 1];
-    FbleValue* cons = FbleNewStructValue(heap, 2, arg, tail);
+    FbleValue* cons = FbleNewStructValue_(heap, 2, arg, tail);
     FbleReleaseValue(heap, tail);
 
     tail = FbleNewUnionValue(heap, 0, cons);
@@ -649,13 +649,13 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
 // FbleNewLiteralValue -- see documentation in value.h
 FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 {
-  FbleValue* unit = FbleNewStructValue(heap, 0);
+  FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* tail = FbleNewUnionValue(heap, 1, unit);
   FbleReleaseValue(heap, unit);
   for (size_t i = 0; i < argc; ++i) {
     size_t letter = args[argc - i - 1];
     FbleValue* arg = FbleNewUnionValue(heap, letter, unit);
-    FbleValue* cons = FbleNewStructValue(heap, 2, arg, tail);
+    FbleValue* cons = FbleNewStructValue_(heap, 2, arg, tail);
     FbleReleaseValue(heap, arg);
     FbleReleaseValue(heap, tail);
 

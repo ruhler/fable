@@ -418,7 +418,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
         size_t argc = struct_instr->args.size;
 
-        fprintf(fout, "  l[%zi] = FbleNewStructValue(heap, %zi", struct_instr->dest, argc);
+        fprintf(fout, "  l[%zi] = FbleNewStructValue_(heap, %zi", struct_instr->dest, argc);
         for (size_t i = 0; i < argc; ++i) {
           fprintf(fout, ", %s[%zi]",
               section[struct_instr->args.xs[i].section],

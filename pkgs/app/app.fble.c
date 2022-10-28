@@ -368,7 +368,7 @@ static FbleValue* Event(FbleValueHeap* heap, FbleValue** args)
         if (button != NULL) {
           FbleValue* x = MakeInt(heap, event.button.x);
           FbleValue* y = MakeInt(heap, event.button.y);
-          FbleValue* mouse_button = FbleNewStructValue(heap, 3, button, x, y);
+          FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
           FbleReleaseValue(heap, button);
           FbleReleaseValue(heap, x);
           FbleReleaseValue(heap, y);
@@ -383,7 +383,7 @@ static FbleValue* Event(FbleValueHeap* heap, FbleValue** args)
         if (button != NULL) {
           FbleValue* x = MakeInt(heap, event.button.x);
           FbleValue* y = MakeInt(heap, event.button.y);
-          FbleValue* mouse_button = FbleNewStructValue(heap, 3, button, x, y);
+          FbleValue* mouse_button = FbleNewStructValue_(heap, 3, button, x, y);
           FbleReleaseValue(heap, button);
           FbleReleaseValue(heap, x);
           FbleReleaseValue(heap, y);
@@ -403,7 +403,7 @@ static FbleValue* Event(FbleValueHeap* heap, FbleValue** args)
 
           FbleValue* width = MakeInt(heap, event.window.data1);
           FbleValue* height = MakeInt(heap, event.window.data2);
-          FbleValue* resized = FbleNewStructValue(heap, 2, width, height);
+          FbleValue* resized = FbleNewStructValue_(heap, 2, width, height);
           FbleReleaseValue(heap, width);
           FbleReleaseValue(heap, height);
           value = FbleNewUnionValue(heap, 5, resized);
@@ -417,7 +417,7 @@ static FbleValue* Event(FbleValueHeap* heap, FbleValue** args)
         FbleValue* y = MakeInt(heap, event.motion.y);
         FbleValue* dx = MakeInt(heap, event.motion.xrel);
         FbleValue* dy = MakeInt(heap, event.motion.yrel);
-        FbleValue* motion = FbleNewStructValue(heap, 4, x, y, dx, dy);
+        FbleValue* motion = FbleNewStructValue_(heap, 4, x, y, dx, dy);
         FbleReleaseValue(heap, x);
         FbleReleaseValue(heap, y);
         FbleReleaseValue(heap, dx);
@@ -429,7 +429,7 @@ static FbleValue* Event(FbleValueHeap* heap, FbleValue** args)
     }
   }
 
-  FbleValue* result = FbleNewStructValue(heap, 2, world, value);
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, value);
   FbleReleaseValue(heap, value);
   return result;
 }
@@ -479,8 +479,8 @@ static FbleValue* Effect(FbleValueHeap* heap, FbleValue** args)
     }
   }
 
-  FbleValue* unit = FbleNewStructValue(heap, 0);
-  FbleValue* result = FbleNewStructValue(heap, 2, world, unit);
+  FbleValue* unit = FbleNewStructValue_(heap, 0);
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
   return result;
 }
@@ -650,7 +650,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   }
 
   // computation has type IO@<Unit@>, which is (World@) { R@<Bool@>; }
-  FbleValue* world = FbleNewStructValue(heap, 0);
+  FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, &world, profile);
   FbleReleaseValue(heap, computation);
   FbleReleaseValue(heap, result);

@@ -50,7 +50,7 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data)
   int halfn = n / 2;
   FbleValue* hi = MkBitN(heap, halfn, (data >> halfn));
   FbleValue* lo = MkBitN(heap, halfn, data);
-  FbleValue* result = FbleNewStructValue(heap, 2, hi, lo);
+  FbleValue* result = FbleNewStructValue_(heap, 2, hi, lo);
   FbleReleaseValue(heap, hi);
   FbleReleaseValue(heap, lo);
   return result;
@@ -77,7 +77,7 @@ static FbleValue* GetFunc(FbleValueHeap* heap, FbleValue** args)
 {
   FbleValue* world = args[0];
   FbleValue* byte = GetByte(heap, g_fin);
-  FbleValue* result = FbleNewStructValue(heap, 2, world, byte);
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, byte);
   FbleReleaseValue(heap, byte);
   return result;
 }
@@ -255,7 +255,7 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
   }
 
   // computation has type IO@<Hash@>, which is (World@) { R@<Hash@>; }
-  FbleValue* world = FbleNewStructValue(heap, 0);
+  FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, &world, profile);
   FbleReleaseValue(heap, computation);
   FbleReleaseValue(heap, world);

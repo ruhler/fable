@@ -545,7 +545,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, %zi\n", argc);
       fprintf(fout, "  mov x2, SP\n");
-      fprintf(fout, "  bl FbleNewStructValue_\n");
+      fprintf(fout, "  bl FbleNewStructValue\n");
       SetFrameVar(fout, "x0", struct_instr->dest);
 
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);

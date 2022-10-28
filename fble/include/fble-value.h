@@ -107,23 +107,6 @@ void FbleValueFullGc(FbleValueHeap* heap);
 // Inputs:
 //   heap - The heap to allocate the value on.
 //   argc - The number of fields in the struct value.
-//   ... - argc FbleValue arguments to the struct value. Args are borrowed,
-//         and may be NULL.
-//
-// Results:
-//   A newly allocated struct value with given args.
-//
-// Side effects:
-//   The returned struct value must be freed using FbleReleaseValue when no
-//   longer in use.
-FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...);
-
-// FbleNewStructValue_ --
-//   Create a new struct value with given arguments.
-//
-// Inputs:
-//   heap - The heap to allocate the value on.
-//   argc - The number of fields in the struct value.
 //   args - argc FbleValue arguments to the struct value. Args are borrowed,
 //          and may be NULL.
 //
@@ -133,7 +116,25 @@ FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, ...);
 // Side effects:
 //   The returned struct value must be freed using FbleReleaseValue when no
 //   longer in use.
-FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, FbleValue** args);
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+
+
+// FbleNewStructValue_ --
+//   Create a new struct value with given arguments.
+//
+// Inputs:
+//   heap - The heap to allocate the value on.
+//   argc - The number of fields in the struct value.
+//   ... - argc FbleValue arguments to the struct value. Args are borrowed,
+//         and may be NULL.
+//
+// Results:
+//   A newly allocated struct value with given args.
+//
+// Side effects:
+//   The returned struct value must be freed using FbleReleaseValue when no
+//   longer in use.
+FbleValue* FbleNewStructValue_(FbleValueHeap* heap, size_t argc, ...);
 
 // FbleStructValueAccess --
 //   Gets the given field value of a struct value.

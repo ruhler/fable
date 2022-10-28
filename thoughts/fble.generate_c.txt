@@ -755,3 +755,46 @@ Maybe more promising to start is a helper function to call functions.
 Using static size_t lit_[] = { ... }
 
 /Sat/Aim%: 67776 lines of c code, 44.0% memory to compile at peak.
+
+---
+
+Next: 
+
+Vararg version of FbleNewListValue. What to call it? That's the real question.
+
+FbleNewStructValue - ...
+FbleNewStructValue_ - FbleValue** args
+
+I would like both to be easy to use. But also, want to avoid people
+accidentally passing an FbleValue** to the vararg one. And ideally we be
+consistent in terms of naming everywhere we support vararg.
+
+Things like printf use vprintf for things that take va_list as an argument.
+That's not really what my situation is.
+
+Let's brainstorm some different options:
+FbleNewStructValueVA
+FbleNewStructValueX
+FbleNewStructValueS
+FbleNewStructValue_v
+FbleNewStructValueA
+FbleNewStructValue_a
+FbleNewStructValue_l
+FbleNewStructValueL
+
+I don't know. How about just do what I'm doing now. Default is var args, '_'
+suffix means a list? But which is the default to use? Maybe something more
+verbose?
+
+FbleNewListValueVarArgs
+FbleNewListValue_va
+
+I don't know. I think the last one looks best to me. And I kind of feel like
+we should always use _va for the var args version, and the default should be
+FbleValue**.
+
+Or use FbleNewListValue_, FbleNewStructValue_ for the va approach. You have to
+be explicit that way, it's different, not default, but also pretty easy to
+use.
+
+Okay. Let's start with that. The old switcheroo.

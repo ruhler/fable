@@ -69,7 +69,7 @@ static FbleValue* Stdin(FbleValueHeap* heap, FbleValue** args)
   }
   free(line);
 
-  FbleValue* result = FbleNewStructValue(heap, 2, world, ms);
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, ms);
   FbleReleaseValue(heap, ms);
   return result;
 }
@@ -83,8 +83,8 @@ static FbleValue* Stdout(FbleValueHeap* heap, FbleValue** args)
 
   Output(stdout, str);
 
-  FbleValue* unit = FbleNewStructValue(heap, 0);
-  FbleValue* result = FbleNewStructValue(heap, 2, world, unit);
+  FbleValue* unit = FbleNewStructValue_(heap, 0);
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
   return result;
 }
@@ -98,8 +98,8 @@ static FbleValue* Stderr(FbleValueHeap* heap, FbleValue** args)
 
   Output(stderr, str);
 
-  FbleValue* unit = FbleNewStructValue(heap, 0);
-  FbleValue* result = FbleNewStructValue(heap, 2, world, unit);
+  FbleValue* unit = FbleNewStructValue_(heap, 0);
+  FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
   return result;
 }
@@ -183,7 +183,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
-    FbleValue* argP = FbleNewStructValue(heap, 2, argv[argc - i -1], argS);
+    FbleValue* argP = FbleNewStructValue_(heap, 2, argv[argc - i -1], argS);
     FbleReleaseValue(heap, argS);
     argS = FbleNewUnionValue(heap, 0, argP);
     FbleReleaseValue(heap, argP);
@@ -202,7 +202,7 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   }
 
   // computation has type IO@<Bool@>, which is (World@) { R@<Bool@>; }
-  FbleValue* world = FbleNewStructValue(heap, 0);
+  FbleValue* world = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleApply(heap, computation, &world, profile);
   FbleReleaseValue(heap, computation);
   if (result == NULL) {

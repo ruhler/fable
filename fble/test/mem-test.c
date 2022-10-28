@@ -57,7 +57,7 @@ size_t Run(FbleValueHeap* heap, FbleValue* func, FbleProfile* profile, size_t us
   for (size_t i = 0; i < num_bits; ++i) {
     FbleValue* bit = (use_n % 2 == 0) ? zero : one;
     use_n /= 2;
-    FbleValue* cons = FbleNewStructValue(heap, 2, bit, tail);
+    FbleValue* cons = FbleNewStructValue_(heap, 2, bit, tail);
     FbleReleaseValue(heap, tail);
     tail = FbleNewUnionValue(heap, 0, cons);
     FbleReleaseValue(heap, cons);
