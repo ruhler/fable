@@ -652,17 +652,13 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleListInstr* list_instr = (FbleListInstr*)instr;
         size_t argc = list_instr->args.size;
 
-        fprintf(fout, "  {\n");
-        fprintf(fout, "    FbleValue* args[] = {");
+        fprintf(fout, "  l[%zi] = FbleNewListValue_(heap, %zi", list_instr->dest, argc);
         for (size_t i = 0; i < argc; ++i) {
-          fprintf(fout, " %s[%zi],",
+          fprintf(fout, ", %s[%zi]",
               section[list_instr->args.xs[i].section],
               list_instr->args.xs[i].index);
         }
-        fprintf(fout, " };\n");
-
-        fprintf(fout, "    l[%zi] = FbleNewListValue(heap, %zi, args);\n", list_instr->dest, argc);
-        fprintf(fout, "  }\n");
+        fprintf(fout, ");\n");
         break;
       }
 

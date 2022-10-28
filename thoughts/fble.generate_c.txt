@@ -798,3 +798,7 @@ be explicit that way, it's different, not default, but also pretty easy to
 use.
 
 Okay. Let's start with that. The old switcheroo.
+
+Using varargs FbleNewListValue_ function:
+
+/Sat/Aim%: 66573 lines of c code, 43.8% memory to compile at peak.

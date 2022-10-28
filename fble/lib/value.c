@@ -646,6 +646,19 @@ FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args)
   return tail;
 }
 
+// FbleNewListValue_ -- see documentation in value.h
+FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...)
+{
+  FbleValue* args[argc];
+  va_list ap;
+  va_start(ap, argc);
+  for (size_t i = 0; i < argc; ++i) {
+    args[i] = va_arg(ap, FbleValue*);
+  }
+  va_end(ap);
+  return FbleNewListValue(heap, argc, args);
+}
+
 // FbleNewLiteralValue -- see documentation in value.h
 FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args)
 {

@@ -123,6 +123,22 @@ FbleExecutable* FbleFuncValueExecutable(FbleValue* func);
 //   use.
 FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
+// FbleNewListValue_ --
+//   Create a new list value from the given list of arguments.
+//
+// Inputs:
+//   heap - the heap to allocate the value on.
+//   argc - the number of elements on the list.
+//   ... - argc FbleValue elements to put on the list. Borrowed.
+//
+// Results:
+//   A newly allocated list value.
+//
+// Side effects:
+//   The returned value must be freed using FbleReleaseValue when no longer in
+//   use.
+FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
+
 // FbleNewLiteralValue --
 //   Create a new literal value from the given list of letters.
 //
