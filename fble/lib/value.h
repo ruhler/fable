@@ -53,6 +53,24 @@ FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_
 //   FbleReleaseValue when it is no longer needed.
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id, FbleValue** statics);
 
+// FbleNewFuncValue_ --
+//   Allocates a new function value that runs the given executable.
+//
+// Inputs:
+//   heap - heap to use for allocations.
+//   executable - the executable to run. Borrowed.
+//   profile_base_id - the profile_base_id to use for the function.
+//   ... - static variables for the function. The count should match
+//         executable->statics.
+//
+// Results:
+//   A newly allocated function value.
+//
+// Side effects:
+// * Allocates a new function value that should be freed using
+// * FbleReleaseValue when it is no longer needed.
+FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id, ...);
+
 // FbleNewUnionTypeValue --
 //   Allocates a new union type value.
 //

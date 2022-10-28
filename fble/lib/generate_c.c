@@ -360,6 +360,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   bool jump_target[code->instrs.size];
   memset(jump_target, 0, sizeof(bool) * code->instrs.size);
   size_t lit_id = 0;
+  size_t exe_id = 0;
   for (size_t pc = 0; pc < code->instrs.size; ++pc) {
     FbleInstr* instr = code->instrs.xs[pc];
 
@@ -502,30 +503,25 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         char function_label[SizeofSanitizedString(function_block.name->str)];
         SanitizeString(function_block.name->str, function_label);
 
-        fprintf(fout, "  {\n");
-        fprintf(fout, "    static FbleExecutable e = {\n");
-        fprintf(fout, "      .refcount = 1,\n");
-        fprintf(fout, "      .magic = FBLE_EXECUTABLE_MAGIC,\n");
-        fprintf(fout, "      .args = %zi,\n", func_instr->code->_base.args);
-        fprintf(fout, "      .statics = %zi,\n", func_instr->code->_base.statics);
-        fprintf(fout, "      .locals = %zi,\n", func_instr->code->_base.locals);
-        fprintf(fout, "      .profile = %zi,\n", func_instr->code->_base.profile);
-        fprintf(fout, "      .profile_blocks = { .size = 0, .xs = NULL },\n");
-        fprintf(fout, "      .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
-        fprintf(fout, "      .on_free = NULL\n");
-        fprintf(fout, "    };\n");
-
-        fprintf(fout, "    FbleValue* statics[] = {");
+        fprintf(fout, "  static FbleExecutable exe_%zi = {\n", exe_id);
+        fprintf(fout, "    .refcount = 1,\n");
+        fprintf(fout, "    .magic = FBLE_EXECUTABLE_MAGIC,\n");
+        fprintf(fout, "    .args = %zi,\n", func_instr->code->_base.args);
+        fprintf(fout, "    .statics = %zi,\n", func_instr->code->_base.statics);
+        fprintf(fout, "    .locals = %zi,\n", func_instr->code->_base.locals);
+        fprintf(fout, "    .profile = %zi,\n", func_instr->code->_base.profile);
+        fprintf(fout, "    .profile_blocks = { .size = 0, .xs = NULL },\n");
+        fprintf(fout, "    .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
+        fprintf(fout, "    .on_free = NULL\n");
+        fprintf(fout, "  };\n");
+        fprintf(fout, "  l[%zi] = FbleNewFuncValue_(heap, &exe_%zi, profile_base_id", func_instr->dest, exe_id);
+        exe_id++;
         for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
-          fprintf(fout, " %s[%zi],",
+          fprintf(fout, ", %s[%zi]",
               section[func_instr->scope.xs[i].section],
               func_instr->scope.xs[i].index);
         }
-        fprintf(fout, " };\n");
-
-        fprintf(fout, "    l[%zi] = FbleNewFuncValue(heap, &e, profile_base_id, statics);\n",
-            func_instr->dest);
-        fprintf(fout, "  }\n");
+        fprintf(fout, ");\n");
         break;
       }
 

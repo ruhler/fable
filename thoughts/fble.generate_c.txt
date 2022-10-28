@@ -802,3 +802,39 @@ Okay. Let's start with that. The old switcheroo.
 Using varargs FbleNewListValue_ function:
 
 /Sat/Aim%: 66573 lines of c code, 43.8% memory to compile at peak.
+
+Remaining similar cases:
+* Data type instruction. Though that's not used currently.
+* FUNC_VALUE_INSTR - FbleNewFuncValue
+* FBLE_CALL_INSTR - FbleThreadTailCall, FbleThreadCall
+  This could be a tricky one though.
+
+And that's it.
+
+Fixing up FbleNewFuncValue:
+
+/Sat/Aim%: 66573 lines of c code, 43.8% memory to compile at peak.
+
+Because /Sat/Aim% does not create any new functions. Fair enough.
+
+---
+
+Thinking about what should move to public API and what is okay to move to
+public API, it's things from execute.h and value.h.
+
+Reminder from before:
+
+execute.h:
+ - FbleExecStatus - can be made public.
+ - FbleThread - can we make it abstract? Is 'stack' and 'profile' necessary?
+ - FbleStack - can we make it abstract?
+ - FbleExecutable - we would have to make it public. That should be fine.
+
+So, real question here is whether we can abstract away access to stack and
+profile fields of FbleThread. Because I would rather keep FbleStackAllocator
+private.
+
+value.h:
+ - FbleFuncValueStatics, FbleFuncValueProfileBaseId, FbleGenericTypeValue,
+   FbleNewFuncValue, FbleStrictValue, FbleFuncValueExecutable
+
