@@ -834,6 +834,16 @@ So, real question here is whether we can abstract away access to stack and
 profile fields of FbleThread. Because I would rather keep FbleStackAllocator
 private.
 
+Who accesses FbleThread fields for what reason?
+* generated code, for access to 'profile' and 'stack.
+* stack, for access to locals and function.
+* function for access to statics and profile_base_id.
+
+Here's what I think:
+* Pass func, locals, and statics as argument to run function.
+* Wrap access profile functions in versions that take FbleThread*
+  Or: pass profile and profile_base_id in run function too.
+
 value.h:
  - FbleFuncValueStatics, FbleFuncValueProfileBaseId, FbleGenericTypeValue,
    FbleNewFuncValue, FbleStrictValue, FbleFuncValueExecutable

@@ -1,3 +1,7 @@
+* Move fble-invaders to pkg/invaders directory
+ - And same with other binaries, rather than have them deeper into the package
+   module directory structure.
+
 * Figure out timeout issue for gdb test.
 * Optimize code for generate_c for low gcc memory use:
  - Use shorter labels for function names.
@@ -25,8 +29,6 @@
 * Why doesn't type inference work for Concat function?
 
 * Add test that you can use a unicode character in a literal?
-
-* Make it easier to run failing tests under valgrind and gdb.
 
 * Do something with .@ module value vs. type?
   - There's currently unexercised code for it.

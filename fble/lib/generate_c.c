@@ -30,8 +30,7 @@ typedef struct {
   const char** xs;
 } LocV;
 
-static void AddLoc(const char* source, LocV* locs);
-static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code);
+static void CollectBlocks(FbleCodeV* blocks, FbleCode* code);
 
 static void StringLit(FILE* fout, const char* string);
 static LabelId StaticString(FILE* fout, LabelId* label_id, const char* string);
@@ -48,35 +47,14 @@ static size_t SizeofSanitizedString(const char* str);
 static void SanitizeString(const char* str, char* dst);
 static FbleString* LabelForPath(FbleModulePath* path);
 
-// AddLoc --
-//   Add a source location to the list of locations.
-//
-// Inputs:
-//   source - the source file name to add
-//   locs - the list of locs to add to.
-//
-// Side effects:
-//   Adds the source filename to the list of locations if it is not already
-//   present in the list.
-static void AddLoc(const char* source, LocV* locs)
-{
-  for (size_t i = 0; i < locs->size; ++i) {
-    if (strcmp(source, locs->xs[i]) == 0) {
-      return;
-    }
-  }
-  FbleVectorAppend(*locs, source);
-}
-
-// CollectBlocksAndLocs --
-//   Get the list of all instruction blocks and location source file names
-//   referenced from the given block of code, including the code itself.
+// CollectBlocks --
+//   Get the list of all instruction blocks referenced from the given block of
+//   code, including the code itself.
 //
 // Inputs:
 //   blocks - the collection of blocks to add to.
-//   locs - the collection of location source names to add to.
 //   code - the code to collect the blocks from.
-static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
+static void CollectBlocks(FbleCodeV* blocks, FbleCode* code)
 {
   FbleVectorAppend(*blocks, code);
   for (size_t i = 0; i < code->instrs.size; ++i) {
@@ -84,43 +62,21 @@ static void CollectBlocksAndLocs(FbleCodeV* blocks, LocV* locs, FbleCode* code)
       case FBLE_DATA_TYPE_INSTR: break;
       case FBLE_STRUCT_VALUE_INSTR: break;
       case FBLE_UNION_VALUE_INSTR: break;
-
-      case FBLE_STRUCT_ACCESS_INSTR:
-      case FBLE_UNION_ACCESS_INSTR: {
-        FbleAccessInstr* instr = (FbleAccessInstr*)code->instrs.xs[i];
-        AddLoc(instr->loc.source->str, locs);
-        break;
-      }
-
-      case FBLE_UNION_SELECT_INSTR: {
-        FbleUnionSelectInstr* instr = (FbleUnionSelectInstr*)code->instrs.xs[i];
-        AddLoc(instr->loc.source->str, locs);
-        break;
-      }
-
+      case FBLE_STRUCT_ACCESS_INSTR: break;
+      case FBLE_UNION_ACCESS_INSTR: break;
+      case FBLE_UNION_SELECT_INSTR: break;
       case FBLE_JUMP_INSTR: break;
 
       case FBLE_FUNC_VALUE_INSTR: {
         FbleFuncValueInstr* instr = (FbleFuncValueInstr*)code->instrs.xs[i];
-        CollectBlocksAndLocs(blocks, locs, instr->code);
+        CollectBlocks(blocks, instr->code);
         break;
       }
 
-      case FBLE_CALL_INSTR: {
-        FbleCallInstr* instr = (FbleCallInstr*)code->instrs.xs[i];
-        AddLoc(instr->loc.source->str, locs);
-        break;
-      }
-
+      case FBLE_CALL_INSTR: break;
       case FBLE_COPY_INSTR: break;
       case FBLE_REF_VALUE_INSTR: break;
-
-      case FBLE_REF_DEF_INSTR: {
-        FbleRefDefInstr* instr = (FbleRefDefInstr*)code->instrs.xs[i];
-        AddLoc(instr->loc.source->str, locs);
-        break;
-      }
-
+      case FBLE_REF_DEF_INSTR: break;
       case FBLE_RETURN_INSTR: break;
       case FBLE_TYPE_INSTR: break;
       case FBLE_RELEASE_INSTR: break;
@@ -958,10 +914,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   FbleCodeV blocks;
   FbleVectorInit(blocks);
 
-  LocV locs;
-  FbleVectorInit(locs);
-
-  CollectBlocksAndLocs(&blocks, &locs, module->code);
+  CollectBlocks(&blocks, module->code);
 
   fprintf(fout, "#include <stdlib.h>\n");         // for rand
   fprintf(fout, "#include \"fble-value.h\"\n");   // for FbleFuncValueStatics, etc.
@@ -1068,7 +1021,6 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   FbleFreeString(func_name);
 
   FbleFree(blocks.xs);
-  FbleFree(locs.xs);
 }
 
 // FbleGenerateCExport -- see documentation in fble-compile.h
