@@ -525,13 +525,13 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             fprintf(fout, "    FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
           }
 
-          fprintf(fout, "    FbleThreadTailCall(heap, x0, args, thread);\n");
+          fprintf(fout, "    FbleThreadTailCall(heap, thread, x0, args);\n");
           fprintf(fout, "    return FBLE_EXEC_CONTINUED;\n");
           fprintf(fout, "  }\n");
           break;
         }
 
-        fprintf(fout, "    FbleThreadCall(heap, l+%zi, x0, args, thread);\n", call_instr->dest);
+        fprintf(fout, "    FbleThreadCall(heap, thread, l+%zi, x0, args);\n", call_instr->dest);
         fprintf(fout, "    FbleExecStatus status = Call(heap, thread);\n");
         fprintf(fout, "    if (status == FBLE_EXEC_ABORTED) ");
         ReturnAbort(fout, code, function_label, pc, "CalleeAborted", call_instr->loc);

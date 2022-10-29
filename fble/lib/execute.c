@@ -88,7 +88,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
   thread.profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
 
   FbleValue* result = NULL;
-  FbleThreadCall(heap, &result, func, args, &thread);
+  FbleThreadCall(heap, &thread, &result, func, args);
 
   FbleExecStatus status = FBLE_EXEC_FINISHED;
   while ((status == FBLE_EXEC_FINISHED || status == FBLE_EXEC_CONTINUED) && thread.stack != NULL) {
@@ -119,7 +119,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 }
 
 // FbleThreadCall -- see documentation in execute.h
-void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleValue* func, FbleValue** args, FbleThread* thread)
+void FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, FbleValue** args)
 {
   FbleExecutable* executable = FbleFuncValueExecutable(func);
   if (thread->profile != NULL) {
@@ -138,7 +138,7 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleValue* func, Fb
 }
 
 // FbleThreadTailCall -- see documentation in execute.h
-void FbleThreadTailCall(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleThread* thread)
+void FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
   FbleExecutable* executable = FbleFuncValueExecutable(func);
   if (thread->profile != NULL) {

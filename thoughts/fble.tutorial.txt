@@ -35,3 +35,21 @@ Brainstorm of chapters:
   - discussion of monads and what all that involves.
   - stdio@ interface.
   
+---
+
+The tutorial is a good exercise for cleaning up fble. Install things the right
+places, clean up the interfaces, etc.
+
+What are some tutorials for other languages that would be good reference? The
+Java tutorials are good.
+
+It starts with motivation for Java, what it's good for. That's valuable to
+have, but let me skip that to start. Looks like they give a reference to
+downloading the software, but otherwise assume you have it installed. Perhaps
+it's reasonable to start assuming you have installed fble. Either as a package
+install, or manual, to whatever location you want. Let me assume it's
+installed and accessible from standard path environment variables for binaries
+and libraries.
+
+
+

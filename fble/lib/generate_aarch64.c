@@ -740,9 +740,9 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         }
 
         fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  mov x1, R_SCRATCH_0\n");                   // func
-        fprintf(fout, "  mov x2, SP\n");                            // args
-        fprintf(fout, "  ldr x3, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread));
+        fprintf(fout, "  ldr x1, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread));
+        fprintf(fout, "  mov x2, R_SCRATCH_0\n");                   // func
+        fprintf(fout, "  mov x3, SP\n");                            // args
         fprintf(fout, "  bl FbleThreadTailCall\n");
 
         fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
@@ -766,10 +766,10 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       }
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  add x1, R_LOCALS, #%zi\n", sizeof(FbleValue*)*call_instr->dest);
-      fprintf(fout, "  mov x2, R_SCRATCH_0\n");   // func
-      fprintf(fout, "  mov x3, SP\n");
-      fprintf(fout, "  ldr x4, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread)); // thread
+      fprintf(fout, "  ldr x1, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread)); // thread
+      fprintf(fout, "  add x2, R_LOCALS, #%zi\n", sizeof(FbleValue*)*call_instr->dest);
+      fprintf(fout, "  mov x3, R_SCRATCH_0\n");   // func
+      fprintf(fout, "  mov x4, SP\n");
       fprintf(fout, "  bl FbleThreadCall\n");
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
 

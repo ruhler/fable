@@ -73,14 +73,14 @@ typedef struct FbleThread {
 // Inputs:
 //   result - where to store a strong reference to the result of executing the
 //            function.
+//   thread - the thread whose stack to push the frame on to.
 //   func - the function to execute. Borrowed.
 //   args - arguments to pass to the function. length == func->argc. Borrowed.
-//   thread - the thread whose stack to push the frame on to.
 //
 // Side effects:
 // * Updates the threads stack.
 // * Enters a profiling block for the function being called.
-void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleValue* func, FbleValue** args, FbleThread* thread);
+void FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, FbleValue** args);
 
 // FbleThreadTailCall --
 //   Replace the current frame with a new one.
@@ -88,9 +88,9 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleValue* func, Fb
 // Inputs:
 //   heap - the value heap.
 //   func - the function to execute. Consumed.
+//   thread - the thread with the stack to change.
 //   args - args to the function. length == func->argc.
 //          Array borrowed, elements consumed.
-//   thread - the thread with the stack to change.
 //
 // Side effects:
 // * Exits the current frame, which potentially frees any instructions
@@ -99,7 +99,7 @@ void FbleThreadCall(FbleValueHeap* heap, FbleValue** result, FbleValue* func, Fb
 //   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
 //   doing an FbleReleaseValue call for func and args.
 // * Replaces the profiling block for the function being called.
-void FbleThreadTailCall(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleThread* thread);
+void FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
 
 // FbleThreadReturn --
 //   Return from the current frame on the thread's stack.
