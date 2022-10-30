@@ -18,14 +18,12 @@ programming language.
 * thoughts/ - A collection of running discussions about fble.
 * docs/ - A collection of user guides.
 * book/ - Another collection of discussions about fble.
-* out/ - Directory where build outputs are placed, created as needed.
 
 ## Build Requirements
 
 To build and run the tests for Fable, the following software is required. The
 version numbers provided are versions that are known to work:
 
-* GNU Make 4.2.1 - For convenience launching build and test.
 * Ninja 1.10.1 - For the build system.
 * Tcl 8.6 - For generating build ninja files.
 * GNU Compiler Collection (Debian 8.3.0-6) 8.3.0 - For compiling fble.
@@ -42,14 +40,14 @@ version numbers provided are versions that are known to work:
 
 To build:
 
-> $ mkdir build
-> $ cd build
-> $ ../configure 
-> $ ninja
+    $ mkdir build
+    $ cd build
+    $ ../configure 
+    $ ninja
 
 To test after building:
 
-> $ ninja check
+    $ ninja check
 
 ## Vim Files
 
@@ -57,3 +55,7 @@ Vim ftplugin, syntax, and indent files for the fble language are available in
 the spec/vim directory. Consult the vim documentation for how to install if
 desired.
   
+## Next Steps
+
+See tutorials/Tutorial1.md for the first in a series of tutorials about the
+fble language to get started.
