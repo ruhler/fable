@@ -82,6 +82,21 @@ typedef struct FbleThread {
 // * Enters a profiling block for the function being called.
 void FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, FbleValue** args);
 
+// FbleThreadCall_ --
+//   Push a frame onto the execution stack.
+//
+// Inputs:
+//   result - where to store a strong reference to the result of executing the
+//            function.
+//   thread - the thread whose stack to push the frame on to.
+//   func - the function to execute. Borrowed.
+//   ... - func->argc number of arguments to pass to the function. Borrowed.
+//
+// Side effects:
+// * Updates the threads stack.
+// * Enters a profiling block for the function being called.
+void FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, ...);
+
 // FbleThreadTailCall --
 //   Replace the current frame with a new one.
 //
@@ -100,6 +115,24 @@ void FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result,
 //   doing an FbleReleaseValue call for func and args.
 // * Replaces the profiling block for the function being called.
 void FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
+
+// FbleThreadTailCall_ --
+//   Replace the current frame with a new one.
+//
+// Inputs:
+//   heap - the value heap.
+//   func - the function to execute. Consumed.
+//   thread - the thread with the stack to change.
+//   ... - func->args number of args to the function. Args consumed.
+//
+// Side effects:
+// * Exits the current frame, which potentially frees any instructions
+//   belonging to that frame.
+// * The func and all args have their ownership transferred to
+//   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
+//   doing an FbleReleaseValue call for func and args.
+// * Replaces the profiling block for the function being called.
+void FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
 
 // FbleThreadReturn --
 //   Return from the current frame on the thread's stack.

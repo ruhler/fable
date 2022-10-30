@@ -4,6 +4,7 @@
 #include "execute.h"
 
 #include <assert.h>   // for assert
+#include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdlib.h>   // for NULL
 
 #include "fble-alloc.h"     // for FbleAlloc, FbleFree, etc.
@@ -137,6 +138,21 @@ void FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result,
   }
 }
 
+// FbleThreadCall_ -- see documentation in execute.h
+void FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, ...)
+{
+  FbleExecutable* executable = FbleFuncValueExecutable(func);
+  size_t argc = executable->args;
+  FbleValue* args[argc];
+  va_list ap;
+  va_start(ap, func);
+  for (size_t i = 0; i < argc; ++i) {
+    args[i] = va_arg(ap, FbleValue*);
+  }
+  va_end(ap);
+  FbleThreadCall(heap, thread, result, func, args);
+}
+
 // FbleThreadTailCall -- see documentation in execute.h
 void FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
@@ -154,6 +170,21 @@ void FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func
   for (size_t i = 0; i < executable->args; ++i) {
     thread->stack->locals[i] = args[i];
   }
+}
+
+// FbleThreadTailCall_ -- see documentation in execute.h
+void FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...)
+{
+  FbleExecutable* executable = FbleFuncValueExecutable(func);
+  size_t argc = executable->args;
+  FbleValue* args[argc];
+  va_list ap;
+  va_start(ap, func);
+  for (size_t i = 0; i < argc; ++i) {
+    args[i] = va_arg(ap, FbleValue*);
+  }
+  va_end(ap);
+  FbleThreadTailCall(heap, thread, func, args);
 }
 
 // FbleThreadReturn -- see documentation in execute.h

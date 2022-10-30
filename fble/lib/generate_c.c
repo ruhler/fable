@@ -490,17 +490,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "  if (!x0) ");
         ReturnAbort(fout, code, function_label, pc, "UndefinedFunctionValue", call_instr->loc);
 
-        fprintf(fout, "  {\n");
-        fprintf(fout, "    FbleValue* args[] = {");
-        for (size_t i = 0; i < call_instr->args.size; ++i) {
-          fprintf(fout, " %s[%zi],",
-              section[call_instr->args.xs[i].section],
-              call_instr->args.xs[i].index);
-        }
-        fprintf(fout, " };\n");
-
         if (call_instr->exit) {
-          fprintf(fout, "    FbleRetainValue(heap, x0);\n");
+          fprintf(fout, "  FbleRetainValue(heap, x0);\n");
 
           for (size_t i = 0; i < call_instr->args.size; ++i) {
             // We need to do a Retain on every arg from statics. For args from
@@ -517,25 +508,38 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             }
 
             if (retain) {
-              fprintf(fout, "    FbleRetainValue(heap, args[%zi]);\n", i);
+              fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
+                  section[call_instr->args.xs[i].section],
+                  call_instr->args.xs[i].index);
             }
           }
 
           if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
-            fprintf(fout, "    FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
+            fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
           }
 
-          fprintf(fout, "    FbleThreadTailCall(heap, thread, x0, args);\n");
-          fprintf(fout, "    return FBLE_EXEC_CONTINUED;\n");
-          fprintf(fout, "  }\n");
+          fprintf(fout, "  FbleThreadTailCall_(heap, thread, x0");
+          for (size_t i = 0; i < call_instr->args.size; ++i) {
+            fprintf(fout, ", %s[%zi]",
+                section[call_instr->args.xs[i].section],
+                call_instr->args.xs[i].index);
+          }
+          fprintf(fout, ");\n");
+
+          fprintf(fout, "  return FBLE_EXEC_CONTINUED;\n");
           break;
         }
 
-        fprintf(fout, "    FbleThreadCall(heap, thread, l+%zi, x0, args);\n", call_instr->dest);
-        fprintf(fout, "    FbleExecStatus status = Call(heap, thread);\n");
-        fprintf(fout, "    if (status == FBLE_EXEC_ABORTED) ");
+        fprintf(fout, "  FbleThreadCall_(heap, thread, l+%zi, x0", call_instr->dest);
+        for (size_t i = 0; i < call_instr->args.size; ++i) {
+          fprintf(fout, ", %s[%zi]",
+              section[call_instr->args.xs[i].section],
+              call_instr->args.xs[i].index);
+        }
+        fprintf(fout, ");\n");
+
+        fprintf(fout, "  if (Call(heap,thread) == FBLE_EXEC_ABORTED) ");
         ReturnAbort(fout, code, function_label, pc, "CalleeAborted", call_instr->loc);
-        fprintf(fout, "  }\n");
         break;
       }
 

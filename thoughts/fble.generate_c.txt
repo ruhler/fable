@@ -848,3 +848,10 @@ value.h:
  - FbleFuncValueStatics, FbleFuncValueProfileBaseId, FbleGenericTypeValue,
    FbleNewFuncValue, FbleStrictValue, FbleFuncValueExecutable
 
+---
+
+After using varargs for call functions and removing {} scopes in generated c
+code:
+
+/Sat/Aim%: 60173 lines of c code, 42.9% memory to compile at peak.
+
