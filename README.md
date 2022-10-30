@@ -42,12 +42,16 @@ To build:
 
     $ mkdir build
     $ cd build
-    $ ../configure 
+    $ ../configure --prefix=/usr/local
     $ ninja
 
-To test after building:
+To run tests:
 
     $ ninja check
+
+To install:
+
+    $ ninja install
 
 ## Vim Files
 

@@ -4,7 +4,54 @@ set ::srcdir [file dirname [info script]]
 set ::builddir "."
 
 set ::prefix "/usr/local"
+
+# usage -- output usage info to the given channel.
+proc usage { channel } {
+  puts $channel {
+Usage: ../configure [OPTION]...
+
+Options:
+  -h, --help          display this help and exit
+  --prefix=PREFIX     install files in PREFIX [/usr/local]
+}
+}
+
+while {[llength $::argv] > 0} {
+  set arg [lindex $::argv 0]
+  set ::argv [lrange $::argv 1 end]
+  switch -glob $arg {
+    -h -
+    --help {
+      usage stdout
+      exit 0
+    }
+    --prefix {
+      if {[llength $::argv] == 0} {
+        puts stderr "configure: error: missing argument to --prefix"
+        exit 1
+      }
+
+      set ::prefix [lindex $::argv 0]
+      set ::argv [lrange $::argv 1 end]
+    }
+    --prefix=* {
+      set ::prefix [string range $arg [string length "--prefix="] end]
+    }
+    default {
+      puts stderr "configure: error: unrecognized option: `$arg'"
+      usage stderr
+      exit 1
+    }
+  }
+}
+
 set ::bindir $::prefix/bin
+
+puts "Configuration:"
+puts "  srcdir=$::srcdir"
+puts "  builddir=$::builddir"
+puts "  prefix=$::prefix"
+puts "  bindir=$::bindir"
 
 proc subst_in { src dest } {
   puts "creating $dest"
