@@ -28,6 +28,7 @@ namespace eval "pkgs/md5" {
   append objs " $::b/pkgs/core/libfble-core.a"
   append objs " $::b/fble/lib/libfble.a"
   bin $::b/pkgs/md5/fble-md5 $objs ""
+  install_bin $::b/pkgs/md5/fble-md5
 
   # fble-md5 test
   build $::b/pkgs/md5/fble-md5.out \

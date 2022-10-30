@@ -6,5 +6,6 @@ namespace eval "fble/bin" {
       "$::b/fble/bin/$base.o $::b/fble/lib/libfble.a" ""
     bin_cov $::b/fble/bin/$base.cov \
       "$::b/fble/bin/$base.o $::b/fble/lib/libfble.cov.a" ""
+    install_bin $::b/fble/bin/$base
   }
 }

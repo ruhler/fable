@@ -12,6 +12,7 @@ namespace eval "pkgs/core" {
     "-I $::s/fble/include -I $::s/pkgs/core"
   bin $::b/pkgs/core/fble-stdio \
     "$::b/pkgs/core/fble-stdio.o $::b/pkgs/core/libfble-core.a $::b/fble/lib/libfble.a" ""
+  install_bin $::b/pkgs/core/fble-stdio
 
   # Build an fble-stdio compiled binary.
   #

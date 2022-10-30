@@ -319,3 +319,19 @@ What features to work on next? Brainstorm:
 * sdl enable/disable
 * env vars for things like CC, FLAGS, etc.
 
+---
+
+First thing to install: fble-test in bindir.
+
+Default prefix is /usr/local, override with --prefix=...
+Bin dir via --bindir=..., default to <prefix>/bin
+
+Do we support --prefix <...>, or just --prefix=<...>? Let's support both.
+
+Approach:
+
+* Define ::bindir in config.tcl.
+* Add an install command for fble-test
+  install fble/test/fble-test $::bindir
+* Add support for parsing --prefix and --bindir options to configure.
+

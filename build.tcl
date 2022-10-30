@@ -7,8 +7,9 @@
 #   ninja
 
 # Source configuration options.
-#   ::builddir
-#   ::srcdir
+#   ::builddir -- top level build directory.
+#   ::srcdir -- top level source directory.
+#   ::bindir -- directory to install binaries to.
 source config.tcl
 
 set ::s $::srcdir
@@ -144,6 +145,18 @@ proc bin_cov { bin objs lflags } {
   set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
   all $bin
+}
+
+# install_bin --
+#   Cause the given binary to be installed when the install target is invoked.
+#
+# Inputs:
+#   binary - the binary to install.
+set ::installs [list]
+proc install_bin { binary } {
+  set target $::bindir/[file tail $binary]
+  build $target $binary "install $binary $::bindir"
+  lappend ::installs $target
 }
 
 # test --
@@ -305,6 +318,7 @@ build $::b/summary.tr \
 # Phony targets.
 phony "all" $::all
 phony "check" [list $::b/summary.tr all]
+phony "install" [list $::installs]
 puts $::build_ninja "default all"
 
 # build.ninja

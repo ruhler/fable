@@ -1,13 +1,17 @@
 #!/usr/bin/tclsh
 
-set srcdir [file dirname [info script]]
-set builddir "."
+set ::srcdir [file dirname [info script]]
+set ::builddir "."
+
+set ::prefix "/usr/local"
+set ::bindir $::prefix/bin
 
 proc subst_in { src dest } {
   puts "creating $dest"
   exec sed \
     -e "s=@srcdir@=$::srcdir=g" \
     -e "s=@builddir@=$::builddir=g" \
+    -e "s=@bindir@=$::bindir=g" \
     $src > $dest
 }
 

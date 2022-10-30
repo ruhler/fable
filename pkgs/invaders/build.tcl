@@ -7,6 +7,7 @@ namespace eval "pkgs/invaders" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Invaders/Tests%"
 
   app $::b/pkgs/invaders/Invaders/fble-invaders "/Invaders/AppIO%" "invaders"
+  install_bin $::b/pkgs/invaders/Invaders/fble-invaders
 
   # /Invaders/Tests% compiled
   stdio $::b/pkgs/invaders/Invaders/invaders-tests "/Invaders/Tests%" "invaders app"

@@ -16,6 +16,7 @@ namespace eval "pkgs/app" {
   bin $::b/pkgs/app/fble-app \
     "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a $::b/fble/lib/libfble.a" \
     "-lSDL2 -lGL"
+  install_bin $::b/pkgs/app/fble-app
 
   # Build an fble-app compiled binary.
   #

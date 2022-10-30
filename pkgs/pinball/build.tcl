@@ -7,6 +7,7 @@ namespace eval "pkgs/pinball" {
     "$::b/pkgs/core/fble-stdio $cflags -m /Pinball/Tests% --prefix Interpreted."
 
   app $::b/pkgs/pinball/Pinball/fble-pinball "/Pinball/AppIO%" "pinball"
+  install_bin $::b/pkgs/pinball/Pinball/fble-pinball
 
   # /Pinball/Tests% compiled
   stdio $::b/pkgs/pinball/Pinball/pinball-tests "/Pinball/Tests%" "pinball app"
