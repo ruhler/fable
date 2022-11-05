@@ -1024,7 +1024,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "}\n");
   FbleFreeString(func_name);
 
-  FbleFree(blocks.xs);
+  FbleVectorFree(blocks);
 }
 
 // FbleGenerateCExport -- see documentation in fble-compile.h

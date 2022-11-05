@@ -542,20 +542,20 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
 
   if (help) {
     PrintUsage(stdout, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (!module && module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
@@ -564,7 +564,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
     fprofile = fopen(profile_file, "w");
     if (fprofile == NULL) {
       fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleFree(search_path.xs);
+      FbleVectorFree(search_path);
       return EX_FAILURE;
     }
   }
@@ -573,7 +573,7 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* app = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
-  FbleFree(search_path.xs);
+  FbleVectorFree(search_path);
   if (app == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

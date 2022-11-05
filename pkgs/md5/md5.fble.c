@@ -177,27 +177,27 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
 
   if (help) {
     PrintUsage(stdout, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (!module && module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (file == NULL) {
     fprintf(stderr, "no input provided.\n");
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
@@ -206,7 +206,7 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
     fprofile = fopen(profile_file, "w");
     if (fprofile == NULL) {
       fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleFree(search_path.xs);
+      FbleVectorFree(search_path);
       return EX_FAILURE;
     }
   }
@@ -214,14 +214,14 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
   g_fin = fopen(file, "rb");
   if (g_fin == NULL) {
     fprintf(stderr, "unable to open %s\n", file);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_FAILURE;
   }
 
   FbleProfile* profile = fprofile == NULL ? NULL : FbleNewProfile();
   FbleValueHeap* heap = FbleNewValueHeap();
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
-  FbleFree(search_path.xs);
+  FbleVectorFree(search_path);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

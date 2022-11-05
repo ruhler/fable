@@ -116,7 +116,7 @@
   for (size_t i = 0; i < $$.size; ++i) {
     FbleFreeKind($$.xs[i]);
   }
-  FbleFree($$.xs);
+  FbleVectorFree($$);
 } <kinds>
 
 %destructor { 
@@ -124,7 +124,7 @@
     FbleFreeKind($$.xs[i].kind);
     FbleFreeName($$.xs[i].name);
   }
-  FbleFree($$.xs);
+  FbleVectorFree($$);
 } <tagged_kinds>
 
 %destructor {
@@ -135,7 +135,7 @@
   for (size_t i = 0; i < $$.size; ++i) {
     FbleFreeExpr($$.xs[i]);
   }
-  FbleFree($$.xs);
+  FbleVectorFree($$);
 } <exprs>
 
 %destructor { 
@@ -148,7 +148,7 @@
     FbleFreeExpr($$.xs[i].type);
     FbleFreeName($$.xs[i].name);
   }
-  FbleFree($$.xs);
+  FbleVectorFree($$);
 } <tagged_types>
 
 %destructor {
@@ -161,7 +161,7 @@
     FbleFreeName($$.xs[i].name);
     FbleFreeExpr($$.xs[i].expr);
   }
-  FbleFree($$.xs);
+  FbleVectorFree($$);
 } <tagged_exprs>
 
 %destructor {
@@ -171,7 +171,7 @@
     FbleFreeName($$.xs[i].name);
     FbleFreeExpr($$.xs[i].expr);
   }
-  FbleFree($$.xs);
+  FbleVectorFree($$);
 } <bindings>
 
 %%
@@ -245,7 +245,7 @@ nkind:
         poly_kind->rkind = kind;
         kind = &poly_kind->_base;
       }
-      FbleFree($2.xs);
+      FbleVectorFree($2);
       $$ = kind;
    }
  ;
@@ -271,7 +271,7 @@ tkind:
         poly_kind->rkind = kind;
         kind = &poly_kind->_base;
       }
-      FbleFree($2.xs);
+      FbleVectorFree($2);
       $$ = kind;
    }
  ;
@@ -421,7 +421,7 @@ expr:
         poly_apply_expr->arg = $3.xs[i];
         $$ = &poly_apply_expr->_base;
       }
-      FbleFree($3.xs);
+      FbleVectorFree($3);
    }
  | expr '.' '%' {
      FbleAbstractAccessExpr* access_expr = FbleAlloc(FbleAbstractAccessExpr);
@@ -493,7 +493,7 @@ block:
         poly_expr->body = expr;
         expr = &poly_expr->_base;
       }
-      FbleFree($2.xs);
+      FbleVectorFree($2);
       $$ = expr;
    }
  ;
@@ -922,6 +922,6 @@ FbleModulePath* FbleParseModulePath(const char* string)
   if (path.size > 0) {
     result = path.xs[0];
   }
-  FbleFree(path.xs);
+  FbleVectorFree(path);
   return result;
 }

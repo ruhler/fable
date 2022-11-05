@@ -330,12 +330,12 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
     FbleReleaseType(heap, scope->statics.xs[i]->type);
     FbleFree(scope->statics.xs[i]);
   }
-  FbleFree(scope->statics.xs);
+  FbleVectorFree(scope->statics);
 
   while (scope->vars.size > 0) {
     PopVar(heap, scope);
   }
-  FbleFree(scope->vars.xs);
+  FbleVectorFree(scope->vars);
   FbleFreeModulePath(scope->module);
 }
 
@@ -566,23 +566,22 @@ static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner)
   for (size_t i = 0; i < cleaner->types.size; ++i) {
     FbleReleaseType(th, cleaner->types.xs[i]);
   }
-  FbleFree(cleaner->types.xs);
+  FbleVectorFree(cleaner->types);
 
   for (size_t i = 0; i < cleaner->tcs.size; ++i) {
     FbleFreeTc(cleaner->tcs.xs[i]);
   }
-  FbleFree(cleaner->tcs.xs);
+  FbleVectorFree(cleaner->tcs);
 
   for (size_t i = 0; i < cleaner->tyvars.size; ++i) {
     FbleTypeAssignmentV* vars = cleaner->tyvars.xs[i];
     for (size_t j = 0; j < vars->size; ++j) {
       FbleReleaseType(th, vars->xs[j].value);
     }
-    FbleFree(vars->xs);
+    FbleVectorFree(*vars);
     FbleFree(vars);
   }
-  FbleFree(cleaner->tyvars.xs);
-
+  FbleVectorFree(cleaner->tyvars);
   FbleFree(cleaner);
 }
 
@@ -1321,7 +1320,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         for (size_t i = 0; i < argc; ++i) {
           FbleReleaseType(th, arg_types.xs[i]);
         }
-        FbleFree(arg_types.xs);
+        FbleVectorFree(arg_types);
         return TC_FAILED;
       }
 
@@ -1339,8 +1338,8 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       Tc func_result = TypeCheckExpr(th, &func_scope, func_value_expr->body);
       if (func_result.type == NULL) {
         FreeScope(th, &func_scope);
-        FbleFree(arg_types.xs);
-        FbleFree(captured.xs);
+        FbleVectorFree(arg_types);
+        FbleVectorFree(captured);
         return TC_FAILED;
       }
 
@@ -1798,7 +1797,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
           Tc vtc = { .type = vtype, .tc = misc.tc };
           Tc poly = TypeInferArgs(th, scope, *vars, expected, argv, vtc);
           CleanTc(cleaner, poly);
-          FbleFree(expected.xs);
+          FbleVectorFree(expected);
 
           if (poly.type == NULL) {
             return TC_FAILED;

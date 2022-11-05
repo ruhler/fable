@@ -163,20 +163,20 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
 
   if (help) {
     PrintUsage(stdout, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (!module && module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
@@ -184,7 +184,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
-  FbleFree(search_path.xs);
+  FbleVectorFree(search_path);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

@@ -230,7 +230,7 @@ void FbleFreeExecutable(FbleExecutable* executable)
     for (size_t i = 0; i < executable->profile_blocks.size; ++i) {
       FbleFreeName(executable->profile_blocks.xs[i]);
     }
-    FbleFree(executable->profile_blocks.xs);
+    FbleVectorFree(executable->profile_blocks);
 
     executable->on_free(executable);
     FbleFree(executable);
@@ -250,7 +250,7 @@ void FbleFreeExecutableModule(FbleExecutableModule* module)
     for (size_t j = 0; j < module->deps.size; ++j) {
       FbleFreeModulePath(module->deps.xs[j]);
     }
-    FbleFree(module->deps.xs);
+    FbleVectorFree(module->deps);
     FbleFreeExecutable(module->executable);
     FbleFree(module);
   }
@@ -263,7 +263,7 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program)
     for (size_t i = 0; i < program->modules.size; ++i) {
       FbleFreeExecutableModule(program->modules.xs[i]);
     }
-    FbleFree(program->modules.xs);
+    FbleVectorFree(program->modules);
     FbleFree(program);
   }
 }

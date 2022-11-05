@@ -92,20 +92,20 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
 
   if (help) {
     PrintUsage(stdout, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE_ERROR;
   }
 
   if (!module && module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE_ERROR;
   }
 
@@ -114,7 +114,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
     fprofile = fopen(profile_file, "w");
     if (fprofile == NULL) {
       fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleFree(search_path.xs);
+      FbleVectorFree(search_path);
       return EX_OTHER_ERROR;
     }
   }
@@ -123,7 +123,7 @@ int FbleTestMain(int argc, const char** argv, FbleCompiledModuleFunction* module
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* linked = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
-  FbleFree(search_path.xs);
+  FbleVectorFree(search_path);
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);

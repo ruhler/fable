@@ -243,11 +243,11 @@ void FbleFreeLoadedProgram(FbleLoadedProgram* program)
       for (size_t j = 0; j < module->deps.size; ++j) {
         FbleFreeModulePath(module->deps.xs[j]);
       }
-      FbleFree(module->deps.xs);
+      FbleVectorFree(module->deps);
       FbleFreeExpr(module->type);
       FbleFreeExpr(module->value);
     }
-    FbleFree(program->modules.xs);
+    FbleVectorFree(program->modules);
     FbleFree(program);
   }
 }

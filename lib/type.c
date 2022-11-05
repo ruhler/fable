@@ -199,13 +199,13 @@ static void OnFree(FbleTypeHeap* heap, FbleType* type)
       for (size_t i = 0; i < dt->fields.size; ++i) {
         FbleFreeName(dt->fields.xs[i].name);
       }
-      FbleFree(dt->fields.xs);
+      FbleVectorFree(dt->fields);
       return;
     }
 
     case FBLE_FUNC_TYPE: {
       FbleFuncType* ft = (FbleFuncType*)type;
-      FbleFree(ft->args.xs);
+      FbleVectorFree(ft->args);
       return;
     }
 
@@ -1260,7 +1260,7 @@ void FblePrintType(FbleType* type)
         prefix = ", ";
       }
       fprintf(stderr, ">");
-      FbleFree(args.xs);
+      FbleVectorFree(args);
       return;
     }
 

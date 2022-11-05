@@ -1519,8 +1519,8 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .section .debug_line\n");
   fprintf(fout, ".Ldebug_line:\n");
 
-  FbleFree(blocks.xs);
-  FbleFree(locs.xs);
+  FbleVectorFree(blocks);
+  FbleVectorFree(locs);
 }
 
 // FbleGenerateAArch64Export -- see documentation in fble-compile.h

@@ -87,31 +87,31 @@ int main(int argc, const char* argv[])
 
   if (help) {
     PrintUsage(stdout);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
     PrintUsage(stderr);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (mpath_string == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   FbleModulePath* mpath = FbleParseModulePath(mpath_string);
   if (mpath == NULL) {
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_FAIL;
   }
 
   FbleLoadedProgram* prgm = FbleLoad(search_path, mpath, NULL);
-  FbleFree(search_path.xs);
+  FbleVectorFree(search_path);
   FbleFreeModulePath(mpath);
   if (prgm == NULL) {
     return EX_FAIL;

@@ -6,6 +6,7 @@
 #include <assert.h>     // for assert
 
 #include <fble/fble-alloc.h>   // for FbleFree
+#include <fble/fble-vector.h>  // for FbleVectorFree
 
 #define UNREACHABLE(x) assert(false && x)
 
@@ -62,7 +63,7 @@ void FbleFreeTc(FbleTc* tc)
         FbleFreeLoc(let_tc->bindings.xs[i].loc);
         FbleFreeTc(let_tc->bindings.xs[i].tc);
       }
-      FbleFree(let_tc->bindings.xs);
+      FbleVectorFree(let_tc->bindings);
       FbleFreeTc(let_tc->body);
       FbleFree(tc);
       return;
@@ -103,7 +104,7 @@ void FbleFreeTc(FbleTc* tc)
           FbleFreeTc(v->choices.xs[i].tc);
         }
       }
-      FbleFree(v->choices.xs);
+      FbleVectorFree(v->choices);
       FbleFree(tc);
       return;
     }
@@ -120,11 +121,11 @@ void FbleFreeTc(FbleTc* tc)
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)tc;
       FbleFreeLoc(func_tc->body_loc);
       FbleFreeTc(func_tc->body);
-      FbleFree(func_tc->scope.xs);
+      FbleVectorFree(func_tc->scope);
       for (size_t i = 0; i < func_tc->args.size; ++i) {
         FbleFreeName(func_tc->args.xs[i]);
       }
-      FbleFree(func_tc->args.xs);
+      FbleVectorFree(func_tc->args);
       FbleFree(tc);
       return;
     }
@@ -135,7 +136,7 @@ void FbleFreeTc(FbleTc* tc)
       for (size_t i = 0; i < apply_tc->args.size; ++i) {
         FbleFreeTc(apply_tc->args.xs[i]);
       }
-      FbleFree(apply_tc->args.xs);
+      FbleVectorFree(apply_tc->args);
       FbleFree(tc);
       return;
     }

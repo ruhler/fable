@@ -317,19 +317,19 @@ static void FreeScope(Scope* scope)
   for (size_t i = 0; i < scope->statics.size; ++i) {
     FbleFree(scope->statics.xs[i]);
   }
-  FbleFree(scope->statics.xs);
+  FbleVectorFree(scope->statics);
 
   while (scope->vars.size > 0) {
     PopVar(scope, true);
   }
-  FbleFree(scope->vars.xs);
+  FbleVectorFree(scope->vars);
 
   for (size_t i = 0; i < scope->locals.size; ++i) {
     if (scope->locals.xs[i] != NULL) {
       FbleFree(scope->locals.xs[i]);
     }
   }
-  FbleFree(scope->locals.xs);
+  FbleVectorFree(scope->locals);
   FbleFreeDebugInfo(scope->pending_debug_info);
 
   while (scope->pending_profile_ops != NULL) {
@@ -983,8 +983,8 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name)
 
   FreeScope(&scope);
   assert(blocks.stack.size == 0);
-  FbleFree(blocks.stack.xs);
-  FbleFree(code->_base.profile_blocks.xs);
+  FbleVectorFree(blocks.stack);
+  FbleVectorFree(code->_base.profile_blocks);
   code->_base.profile_blocks = blocks.profile;
   return code;
 }
@@ -1019,7 +1019,7 @@ static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
   for (size_t i = 0; i < args.size; ++i) {
     FbleFreeName(args.xs[i]);
   }
-  FbleFree(args.xs);
+  FbleVectorFree(args);
   FbleFreeName(label);
   return compiled;
 }
@@ -1031,7 +1031,7 @@ void FbleFreeCompiledModule(FbleCompiledModule* module)
   for (size_t j = 0; j < module->deps.size; ++j) {
     FbleFreeModulePath(module->deps.xs[j]);
   }
-  FbleFree(module->deps.xs);
+  FbleVectorFree(module->deps);
   FbleFreeCode(module->code);
   FbleFree(module);
 }
@@ -1043,7 +1043,7 @@ void FbleFreeCompiledProgram(FbleCompiledProgram* program)
     for (size_t i = 0; i < program->modules.size; ++i) {
       FbleFreeCompiledModule(program->modules.xs[i]);
     }
-    FbleFree(program->modules.xs);
+    FbleVectorFree(program->modules);
     FbleFree(program);
   }
 }

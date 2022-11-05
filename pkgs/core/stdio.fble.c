@@ -252,20 +252,20 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
 
   if (help) {
     PrintUsage(stdout, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_TRUE;
   }
 
   if (error) {
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (!module && module_path == NULL) {
     fprintf(stderr, "missing required --module option.\n");
     PrintUsage(stderr, module);
-    FbleFree(search_path.xs);
+    FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
@@ -274,7 +274,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
     fprofile = fopen(profile_file, "w");
     if (fprofile == NULL) {
       fprintf(stderr, "unable to open %s for writing.\n", profile_file);
-      FbleFree(search_path.xs);
+      FbleVectorFree(search_path);
       return EX_FAILURE;
     }
   }
@@ -283,7 +283,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   FbleValueHeap* heap = FbleNewValueHeap();
 
   FbleValue* stdio = FbleLinkFromCompiledOrSource(heap, profile, module, search_path, module_path);
-  FbleFree(search_path.xs);
+  FbleVectorFree(search_path);
   if (stdio == NULL) {
     FbleFreeValueHeap(heap);
     FbleFreeProfile(profile);
@@ -302,7 +302,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   for (size_t i = 0; i < stdio_args.size; ++i) {
     FbleReleaseValue(heap, stdio_args.xs[i]);
   }
-  FbleFree(stdio_args.xs);
+  FbleVectorFree(stdio_args);
 
   size_t result = EX_FAILURE;
   if (value != NULL) {
