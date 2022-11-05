@@ -158,3 +158,6 @@ also importing fble/internal/*.h. Which is the big thing I don't want.
 Okay. Let's hold off on changing the strategy for now. Keep using <fble/*.h>
 and "*.h" to distinguish public headers versus internal.
 
+---
+
+Cool. This is all done now. Let's see how it goes in practice.

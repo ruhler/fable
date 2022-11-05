@@ -6,8 +6,11 @@ set ::builddir @builddir@
 # directory that contains the 'configure' script.
 set ::srcdir @srcdir@
 
-# The directory to install binaries to.
-set ::bindir @bindir@
-
 # The directory to install includes to.
 set ::includedir @includedir@
+
+# The directory to install libraries to.
+set ::libdir @libdir@
+
+# The directory to install binaries to.
+set ::bindir @bindir@

@@ -167,7 +167,19 @@ proc install_bin { binary } {
 #   header - the header file to install.
 proc install_header { header } {
   set target $::includedir/fble/[file tail $header]
-  build $target $header "cp $header $::includedir/fble"
+  build $target $header "cp $header $target"
+  lappend ::installs $target
+}
+
+# install_lib --
+#   Cause the given library file to be installed when the install target is
+#   invoked.
+#
+# Inputs:
+#   lib - the header file to install.
+proc install_lib { lib } {
+  set target $::libdir/[file tail $lib]
+  build $target $lib "cp $lib $target"
   lappend ::installs $target
 }
 
