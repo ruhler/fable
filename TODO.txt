@@ -1,3 +1,12 @@
+* Update header file organization:
+ - Rename generate_c.c and generate_aarch64.c to generate-c.c and
+ - generate-aarch64.c
+ - Add an fble.h header file.
+ - Move subdirectories of fble/ out and then remove empty fble/ directory.
+ - Use <> and fble.h when currently including fble-* files.
+ - Change fble-*.h files to use single quotes for include.
+ - Install fble/fble-*.h files as part of ninja install target.
+
 * Error checking of arguments to configure
  - absolute path instead of relative?
  - duplicate options?

@@ -39,8 +39,7 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
   fprintf(stream, "%s",
       "\n"
       "Description:\n"
-      "  Evaluates an fble program. If the result is a process, executes the\n"
-      "  the process too.\n"
+      "  Evaluates an fble program.\n"
       "\n"
       "Options:\n"
       "  -h, --help\n"
