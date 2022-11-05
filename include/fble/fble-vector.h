@@ -39,6 +39,21 @@
   (vector).size = 0; \
   (vector).xs = FbleRawAlloc(sizeof(*((vector).xs)))
 
+// FbleVectorFree --
+//   Free resources associated with a vector.
+//
+// This function does not free individual vector elements. It is the
+// responsibility of the caller to free individual elements as they wish. This
+// function only frees internal resources allocated for the vector.
+//
+// Inputs:
+//   vector - The vector whose resources to free.
+//
+// Side effects:
+// * Frees resources of the vector.
+#define FbleVectorFree(vector) \
+  FbleFree((vector).xs)
+
 // FbleVectorExtend --
 //   Append an uninitialized element to the vector.
 //
