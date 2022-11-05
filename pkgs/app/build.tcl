@@ -5,16 +5,16 @@ namespace eval "pkgs/app" {
   foreach {x} { app.fble } {
     lappend objs $::b/pkgs/app/$x.o
     obj $::b/pkgs/app/$x.o $::s/pkgs/app/$x.c \
-      "-I /usr/include/SDL2 -I $::s/fble/include -I $::s/pkgs/core -I $::s/pkgs/app"
+      "-I /usr/include/SDL2 -I $::s/include/fble -I $::s/pkgs/core -I $::s/pkgs/app"
   }
 
   pkg app [list core] $objs
 
   # fble-app program.
   obj $::b/pkgs/app/fble-app.o $::s/pkgs/app/fble-app.c \
-    "-I $::s/fble/include -I $::s/pkgs/core -I $::s/pkgs/app -I/usr/include/SDL2"
+    "-I $::s/include/fble -I $::s/pkgs/core -I $::s/pkgs/app -I/usr/include/SDL2"
   bin $::b/pkgs/app/fble-app \
-    "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a $::b/fble/lib/libfble.a" \
+    "$::b/pkgs/app/fble-app.o $::b/pkgs/app/libfble-app.a $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" \
     "-lSDL2 -lGL"
   install_bin $::b/pkgs/app/fble-app
 
@@ -32,9 +32,9 @@ namespace eval "pkgs/app" {
     }
     append objs " $::b/pkgs/app/libfble-app.a"
     append objs " $::b/pkgs/core/libfble-core.a"
-    append objs " $::b/fble/lib/libfble.a"
+    append objs " $::b/lib/libfble.a"
     
-    fbleobj $target.o $::b/fble/bin/fble-compile \
+    fbleobj $target.o $::b/bin/fble-compile \
       "--main FbleAppMain -m $path"
     bin $target $objs "-lSDL2 -lGL"
   }

@@ -12,12 +12,15 @@ programming language.
 
 ## Directory Structure
 
-* spec/ - Specification of the fble language, including spec tests.
-* fble/ - Source code for an fble interpreter and compiler implemented in C.
+* bin/ - Source code for fble compiler binaries.
+* book/ - Drafts for a book about the design of the fble language.
+* include/ - Public header files for the fble library.
+* lib/ - Source code for an fble interpreter and compiler implemented in C.
 * pkgs/ - Sample fble library and application packages.
+* spec/ - Specification of the fble language, including spec tests.
+* test/ - Source code for fble test binaries and other test utilities.
 * thoughts/ - A collection of running discussions about fble.
-* docs/ - A collection of user guides.
-* book/ - Another collection of discussions about fble.
+* tutorials/ - Tutorials for getting started with fble.
 
 ## Build Requirements
 

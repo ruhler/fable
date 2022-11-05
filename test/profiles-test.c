@@ -138,7 +138,7 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "Example:\n");
   fprintf(stream, "%s%s",
       "  fble-profiles-test ",
-      module == NULL ? "-I fble/test -m /ProfilesTest% " : "");
+      module == NULL ? "-I test -m /ProfilesTest% " : "");
 }
 
 // FbleProfilesTestMain -- see documentation in profiles-test.h
@@ -231,7 +231,7 @@ int FbleProfilesTestMain(int argc, const char** argv, FbleCompiledModuleFunction
   // block was a module path instead of a file path.
   {
     FbleBlockProfile* block = Block(profile, "/ProfilesTest%");
-    assert(strstr(block->name.loc.source->str, "fble/test/ProfilesTest.fble"));
+    assert(strstr(block->name.loc.source->str, "test/ProfilesTest.fble"));
   }
 
   FbleFreeProfile(profile);

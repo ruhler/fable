@@ -3,15 +3,15 @@ namespace eval "pkgs/core" {
   set objs [list]
   foreach {x} { char.fble int.fble stdio.fble string.fble } {
     lappend objs $::b/pkgs/core/$x.o
-    obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c "-I $::s/fble/include -I $::s/pkgs/core"
+    obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c "-I $::s/include/fble -I $::s/pkgs/core"
   }
   pkg core [list] $objs
 
   # fble-stdio program.
   obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
-    "-I $::s/fble/include -I $::s/pkgs/core"
+    "-I $::s/include/fble -I $::s/pkgs/core"
   bin $::b/pkgs/core/fble-stdio \
-    "$::b/pkgs/core/fble-stdio.o $::b/pkgs/core/libfble-core.a $::b/fble/lib/libfble.a" ""
+    "$::b/pkgs/core/fble-stdio.o $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" ""
   install_bin $::b/pkgs/core/fble-stdio
 
   # Build an fble-stdio compiled binary.
@@ -27,9 +27,9 @@ namespace eval "pkgs/core" {
       append objs " $::b/pkgs/$lib/libfble-$lib.a"
     }
     append objs " $::b/pkgs/core/libfble-core.a"
-    append objs " $::b/fble/lib/libfble.a"
+    append objs " $::b/lib/libfble.a"
 
-    fbleobj $target.o $::b/fble/bin/fble-compile \
+    fbleobj $target.o $::b/bin/fble-compile \
       "--main FbleStdioMain -m $path"
     bin $target $objs ""
   }

@@ -1,9 +1,13 @@
 * Update header file organization:
  - Add an fble.h header file.
- - Move subdirectories of fble/ out and then remove empty fble/ directory.
  - Use <> and fble.h when currently including fble-* files.
  - Change fble-*.h files to use single quotes for include.
  - Install fble/fble-*.h files as part of ninja install target.
+
+* How to check errors from stale files in build directory?
+  For example, sat/Sat/sat-tests still existed, even though now were compiling
+  to sat/sat-tests, but accidentally referencing the old sat/Sat/sat-tests
+  path.
 
 * Error checking of arguments to configure
  - absolute path instead of relative?

@@ -95,7 +95,7 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "\n"
       "Description:\n"
       "  Tests for memory behavior of an fble function. The function should\n"
-      "  a langs/fble/Nat.fble Nat@ as an argument. The function is evaluated\n"
+      "  take a /SpecTests/Nat%.Nat@ as an argument. The function is evaluated\n"
       "  with various values to see how memory use depends on the input value.\n"
       "  If the function returns a process, the resulting process is executed\n"
       "  with its memory use included for the purpose of memory testing.\n"

@@ -173,8 +173,8 @@ set ::tests [list]
 proc test { tr deps cmd } {
   lappend ::tests $tr
   set name [file rootname $tr]
-  build $tr "$::s/fble/test/log $::s/fble/test/test $deps" \
-    "$::s/fble/test/log $tr $::s/fble/test/test $name $cmd"
+  build $tr "$::s/test/log $::s/test/test $deps" \
+    "$::s/test/log $tr $::s/test/test $name $cmd"
 }
 
 # test --
@@ -190,8 +190,8 @@ proc test { tr deps cmd } {
 # Adds the .tr file to global list of tests.
 proc testsuite { tr deps cmd } {
   lappend ::tests $tr
-  build $tr "$::s/fble/test/log $deps" \
-    "$::s/fble/test/log $tr $cmd"
+  build $tr "$::s/test/log $deps" \
+    "$::s/test/log $tr $cmd"
 }
 
 # Returns the list of all subdirectories, recursively, of the given directory.
@@ -230,7 +230,7 @@ proc fbleobj_aarch64 { obj compile compileargs args } {
 proc fbleobj_c { obj compile compileargs args } {
   set c [string map {.o .c} $obj]
   build $c "$compile $args" "$compile -t c $compileargs > $c"
-  set cmd "gcc -c -o $obj -I $::s/fble/include -I $::s/fble/lib $c"
+  set cmd "gcc -c -o $obj -I $::s/include/fble -I $::s/lib $c"
   build $obj "$c $args" $cmd
 }
 
@@ -271,11 +271,11 @@ proc pkg {name deps objs} {
       set mpath "/[file rootname $x]%"
 
       # Generate a .d file to capture dependencies.
-      build $::b/pkgs/$name/$x.d "$::b/fble/bin/fble-deps $::s/pkgs/$name/$x" \
-        "$::b/fble/bin/fble-deps $cflags -t $::b/pkgs/$name/$x.d -m $mpath > $::b/pkgs/$name/$x.d" \
+      build $::b/pkgs/$name/$x.d "$::b/bin/fble-deps $::s/pkgs/$name/$x" \
+        "$::b/bin/fble-deps $cflags -t $::b/pkgs/$name/$x.d -m $mpath > $::b/pkgs/$name/$x.d" \
         "depfile = $::b/pkgs/$name/$x.d"
 
-      fbleobj $::b/pkgs/$name/$x.o $::b/fble/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
+      fbleobj $::b/pkgs/$name/$x.o $::b/bin/fble-compile "-c $cflags -m $mpath" $::b/pkgs/$name/$x.d
       lappend objs $::b/pkgs/$name/$x.o
     }
   }
@@ -289,10 +289,10 @@ proc pkg {name deps objs} {
 set ::build_ninja_deps [list]
 
 set build_tcls [list \
-  $::s/fble/lib/build.tcl \
-  $::s/fble/bin/build.tcl \
-  $::s/fble/test/build.tcl \
-  $::s/fble/test/spec-test.build.tcl \
+  $::s/lib/build.tcl \
+  $::s/bin/build.tcl \
+  $::s/test/build.tcl \
+  $::s/test/spec-test.build.tcl \
   $::s/pkgs/core/build.tcl \
   $::s/pkgs/app/build.tcl \
   $::s/pkgs/md5/build.tcl \
@@ -312,8 +312,8 @@ foreach build_tcl $build_tcls {
 # Test summary.
 build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"
 build $::b/summary.tr \
-  "$::s/fble/test/log $::b/detail.tr $::s/fble/test/tests.tcl" \
-  "$::s/fble/test/log $::b/summary.tr tclsh $::s/fble/test/tests.tcl < $::b/detail.tr"
+  "$::s/test/log $::b/detail.tr $::s/test/tests.tcl" \
+  "$::s/test/log $::b/summary.tr tclsh $::s/test/tests.tcl < $::b/detail.tr"
 
 # Phony targets.
 phony "all" $::all

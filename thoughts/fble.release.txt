@@ -427,3 +427,19 @@ Cool. Decisions made. Time for action:
 * Move subdirectories of fble/ out and then remove empty fble/ directory.
 * Use <> and fble.h when currently including fble-* files.
 * Change fble-*.h files to use single quotes for include.
+
+---
+
+## What to do about man pages?
+
+In my ideal world, we have man pages for all of the installed binaries and
+public library functions. In a practical world, there are some questions:
+* Should each library function have its own man page, or should we group them
+  together? If we group them together, what should the groupings be?
+* How do we generate the man pages?
+ - By hand, and check them in?
+ - Using some tool?
+* How do we deal with duplicate information in man pages, --help usage
+  messages, and function doc comments in header files?
+
+

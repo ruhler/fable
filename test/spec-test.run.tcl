@@ -148,17 +148,17 @@ proc compile {target main} {
       lappend flags "--main"
       lappend flags $main
     }
-    execv $::b/fble/bin/fble-compile.cov {*}$flags -t $target -c -I $::s/spec -m $m > $out
+    execv $::b/bin/fble-compile.cov {*}$flags -t $target -c -I $::s/spec -m $m > $out
 
     switch $target {
       aarch64 { exec as -o $obj $out }
-      c { exec gcc -c -o $obj -I $::s/fble/include -I $::s/fble/lib $out }
+      c { exec gcc -c -o $obj -I $::s/include/fble -I $::s/lib $out }
     }
     lappend objs $obj
   }
 
-  lappend objs $::b/fble/test/libfbletest.a
-  lappend objs $::b/fble/lib/libfble.a
+  lappend objs $::b/test/libfbletest.a
+  lappend objs $::b/lib/libfble.a
   exec gcc -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3 -o $exe {*}$objs
   return $exe
 }
@@ -185,31 +185,31 @@ proc compile_and_run {main body} {
 proc dispatch {} {
   switch $::type {
     no-error {
-      execv $::b/fble/test/fble-test.cov --profile /dev/null -I $::s/spec -m $::mpath
+      execv $::b/test/fble-test.cov --profile /dev/null -I $::s/spec -m $::mpath
       compile_and_run FbleTestMain { execv $compiled --profile /dev/null }
-      execv $::b/fble/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
+      execv $::b/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
 
     compile-error {
-      expect_error compile $::loc $::b/fble/test/fble-test.cov -I $::s/spec -m $::mpath
+      expect_error compile $::loc $::b/test/fble-test.cov -I $::s/spec -m $::mpath
     }
 
     runtime-error {
-      expect_error runtime $::loc $::b/fble/test/fble-test.cov -I $::s/spec -m $::mpath
+      expect_error runtime $::loc $::b/test/fble-test.cov -I $::s/spec -m $::mpath
       compile_and_run FbleTestMain { expect_error runtime $::loc $compiled }
-      execv $::b/fble/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
+      execv $::b/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
     
     memory-constant {
-      execv $::b/fble/test/fble-mem-test.cov -I $::s/spec -m $::mpath
+      execv $::b/test/fble-mem-test.cov -I $::s/spec -m $::mpath
       compile_and_run FbleMemTestMain { execv $compiled }
-      execv $::b/fble/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
+      execv $::b/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
 
     memory-growth {
-      execv $::b/fble/test/fble-mem-test.cov --growth -I $::s/spec -m $::mpath
+      execv $::b/test/fble-mem-test.cov --growth -I $::s/spec -m $::mpath
       compile_and_run FbleMemTestMain { execv $compiled --growth }
-      execv $::b//fble/bin/fble-disassemble.cov -I $::s/spec -m $::mpath
+      execv $::b//bin/fble-disassemble.cov -I $::s/spec -m $::mpath
     }
 
     none {

@@ -9,7 +9,7 @@ namespace eval "pkgs/sat" {
   stdio $::b/pkgs/sat/sat-tests "/Sat/Tests%" "sat"
   testsuite $::b/pkgs/sat/tests-compiled.tr \
     $::b/pkgs/sat/sat-tests \
-    "$::b/pkgs/sat/Sat/sat-tests --prefix Compiled."
+    "$::b/pkgs/sat/sat-tests --prefix Compiled."
 
   # /Sat/Bench% compiled
   stdio $::b/pkgs/sat/sat-bench "/Sat/Bench%" "sat"
