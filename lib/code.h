@@ -5,8 +5,9 @@
 #ifndef FBLE_INTERNAL_CODE_H_
 #define FBLE_INTERNAL_CODE_H_
 
-#include "fble-compile.h"   // for FbleCode forward declaration.
-#include "fble-profile.h"   // for FbleBlockId.
+#include <fble/fble-compile.h>   // for FbleCode forward declaration.
+#include <fble/fble-profile.h>   // for FbleBlockId.
+
 #include "execute.h"        // for FbleExecutable.
 #include "kind.h"           // for FbleDataTypeTag.
 

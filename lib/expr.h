@@ -6,8 +6,8 @@
 
 #include <sys/types.h>    // for size_t
 
-#include "fble-load.h"    // for public typedef of FbleExpr.
-#include "fble-name.h"
+#include <fble/fble-load.h>    // for public typedef of FbleExpr.
+#include <fble/fble-name.h>
 
 #include "kind.h"
 

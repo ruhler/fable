@@ -1,7 +1,4 @@
 * Update header file organization:
- - Add an fble.h header file.
- - Use <> and fble.h when currently including fble-* files.
- - Change fble-*.h files to use single quotes for include.
  - Install fble/fble-*.h files as part of ninja install target.
 
 * How to check errors from stale files in build directory?

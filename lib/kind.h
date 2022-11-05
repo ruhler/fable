@@ -6,7 +6,7 @@
 
 #include <sys/types.h>    // for size_t
 
-#include "fble-loc.h"     // for FbleLoc
+#include <fble/fble-loc.h>     // for FbleLoc
 
 // FbleKindTag --
 //   A tag used to distinguish between the two kinds of kinds.

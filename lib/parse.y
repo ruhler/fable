@@ -8,14 +8,14 @@
   #include <string.h>   // for strchr, strcpy
 
   // For any changes to this list of includes, please update the
-  // parser 'includes' variable in build.ninja.tcl.
-  #include "fble-alloc.h"
-  #include "fble-load.h"
-  #include "fble-loc.h"
-  #include "fble-module-path.h"
-  #include "fble-name.h"
-  #include "fble-string.h"
-  #include "fble-vector.h"
+  // parser 'includes' variable in lib/build.tcl.
+  #include <fble/fble-alloc.h>
+  #include <fble/fble-load.h>
+  #include <fble/fble-loc.h>
+  #include <fble/fble-module-path.h>
+  #include <fble/fble-name.h>
+  #include <fble/fble-string.h>
+  #include <fble/fble-vector.h>
   #include "expr.h"
 
   // Lex --

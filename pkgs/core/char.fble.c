@@ -4,7 +4,7 @@
 
 #include "char.fble.h"
 
-#include "fble-value.h"   // for FbleValue, etc.
+#include <fble/fble-value.h>   // for FbleValue, etc.
 
 // Chars --
 //   The list of characters (in tag order) supported by the /Core/Char%.Char@ type.

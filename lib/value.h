@@ -7,9 +7,10 @@
 #ifndef FBLE_INTERNAL_VALUE_H_
 #define FBLE_INTERNAL_VALUE_H_
 
-#include "fble-value.h"
+#include <fble/fble-value.h>
 
-#include "fble-link.h"    // for typedef of FbleExecutable
+#include <fble/fble-link.h>    // for typedef of FbleExecutable
+
 #include "heap.h"
 #include "kind.h"         // for FbleDataTypeTag
 

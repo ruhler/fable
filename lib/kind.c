@@ -6,7 +6,7 @@
 #include <assert.h>   // for assert.
 #include <stdlib.h>   // for NULL
 
-#include "fble-alloc.h"   // for FbleFree
+#include <fble/fble-alloc.h>   // for FbleFree
 
 // FbleCopyKind -- see documentation in kind.h
 FbleKind* FbleCopyKind(FbleKind* kind)

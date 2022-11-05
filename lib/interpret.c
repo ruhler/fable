@@ -4,9 +4,9 @@
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for rand
 
-#include "fble-alloc.h"   // for FbleAlloc, FbleFree
-#include "fble-interpret.h"
-#include "fble-vector.h"  // for FbleVectorInit, etc.
+#include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree
+#include <fble/fble-interpret.h>
+#include <fble/fble-vector.h>  // for FbleVectorInit, etc.
 
 #include "code.h"
 #include "execute.h"

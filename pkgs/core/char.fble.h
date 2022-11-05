@@ -2,7 +2,7 @@
 #ifndef FBLE_CORE_CHAR_FBLE_H_
 #define FBLE_CORE_CHAR_FBLE_H_
 
-#include "fble-value.h"   // for FbleValue, etc.
+#include <fble/fble-value.h>   // for FbleValue, etc.
 
 // FbleNewCharValue --
 //   Create an FbleValue of type /Core/Char%.Char@.

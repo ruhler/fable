@@ -1,12 +1,13 @@
 // heap.c --
 //   This file implements a mark-sweep based heap.
 
+#include "heap.h"
+
 #include <assert.h>   // for assert
 #include <stdbool.h>  // for bool
 #include <stdlib.h>   // for NULL
 
-#include "fble-alloc.h"
-#include "heap.h"
+#include <fble/fble-alloc.h>
 
 // Space --
 //   Which space the object belongs to.

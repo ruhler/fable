@@ -2,7 +2,7 @@
 #ifndef FBLE_CORE_STRING_FBLE_H_
 #define FBLE_CORE_STRING_FBLE_H_
 
-#include "fble-value.h"
+#include <fble/fble-value.h>
 
 // FbleNewStringValue --
 //   Convert a C string to an Fble /Core/String%.String@.

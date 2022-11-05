@@ -5,9 +5,10 @@
 #ifndef FBLE_INTERNAL_TC_H_
 #define FBLE_INTERNAL_TC_H_
 
+#include <fble/fble-loc.h>
+#include <fble/fble-name.h>
+
 #include "kind.h"       // for FbleDataTypeTag
-#include "fble-loc.h"
-#include "fble-name.h"
 
 // FbleTc --
 //   An already type-checked representation of an fble syntactic expression.

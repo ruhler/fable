@@ -1,10 +1,10 @@
 
-#include "fble-string.h"
+#include <fble/fble-string.h>
 
 #include <assert.h>   // for assert
 #include <string.h>   // for strlen, strcpy
 
-#include "fble-alloc.h"
+#include <fble/fble-alloc.h>
 
 // FbleNewString -- see documentation in fble-string.h
 FbleString* FbleNewString(const char* str)

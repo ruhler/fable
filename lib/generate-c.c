@@ -9,10 +9,10 @@
 #include <string.h>   // for strlen, strcat, memset
 #include <unistd.h>   // for getcwd
 
-#include "fble-vector.h"    // for FbleVectorInit, etc.
+#include <fble/fble-compile.h>
+#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
 
 #include "code.h"
-#include "fble-compile.h"
 #include "tc.h"
 #include "value.h"
 
@@ -921,7 +921,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   CollectBlocks(&blocks, module->code);
 
   fprintf(fout, "#include <stdlib.h>\n");         // for rand
-  fprintf(fout, "#include \"fble-value.h\"\n");   // for FbleFuncValueStatics, etc.
+  fprintf(fout, "#include <fble/fble-value.h>\n");   // for FbleFuncValueStatics, etc.
   fprintf(fout, "#include \"execute.h\"\n");
   fprintf(fout, "#include \"value.h\"\n\n");
 
@@ -1032,8 +1032,8 @@ void FbleGenerateCExport(FILE* fout, const char* name, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
 
-  fprintf(fout, "#include \"fble-execute.h\"\n");
-  fprintf(fout, "#include \"fble-value.h\"\n");
+  fprintf(fout, "#include <fble/fble-execute.h>\n");
+  fprintf(fout, "#include <fble/fble-value.h>\n");
   fprintf(fout, "void %s(FbleExecutableProgram* program);\n", module_name->str);
   fprintf(fout, "void %s(FbleExecutableProgram* program)\n", name);
   fprintf(fout, "{\n");
@@ -1047,7 +1047,7 @@ void FbleGenerateCMain(FILE* fout, const char* main, FbleModulePath* path)
 {
   FbleString* module_name = LabelForPath(path);
 
-  fprintf(fout, "#include \"fble-link.h\"\n");
+  fprintf(fout, "#include <fble/fble-link.h>\n");
   fprintf(fout, "void %s(FbleExecutableProgram* program);\n", module_name->str);
   fprintf(fout, "int %s(int argc, const char** argv, FbleCompiledModuleFunction* module);\n", main);
   fprintf(fout, "int main(int argc, const char** argv)\n");

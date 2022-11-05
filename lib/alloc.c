@@ -3,6 +3,8 @@
 
 #define _GNU_SOURCE   // for MAP_ANONYMOUS
 
+#include <fble/fble-alloc.h>
+
 #include <assert.h>   // for assert
 #include <stdio.h>    // for fprintf, stderr
 #include <stdbool.h>  // for bool
@@ -10,7 +12,6 @@
 #include <sys/mman.h> // for mmap, munmap
 #include <unistd.h>   // for sysconf
 
-#include "fble-alloc.h"
 
 // gTotalBytesAllocated --
 //   The total number of bytes currently allocated via FbleAlloc routines.

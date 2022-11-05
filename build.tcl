@@ -230,7 +230,7 @@ proc fbleobj_aarch64 { obj compile compileargs args } {
 proc fbleobj_c { obj compile compileargs args } {
   set c [string map {.o .c} $obj]
   build $c "$compile $args" "$compile -t c $compileargs > $c"
-  set cmd "gcc -c -o $obj -I $::s/include/fble -I $::s/lib $c"
+  set cmd "gcc -c -o $obj -I $::s/include -I $::s/lib $c"
   build $obj "$c $args" $cmd
 }
 

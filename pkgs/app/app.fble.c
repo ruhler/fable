@@ -9,10 +9,10 @@
 #include <SDL.h>          // for SDL_*
 #include <GL/gl.h>        // for gl*
 
-#include "fble-alloc.h"       // for FbleFree.
-#include "fble-arg-parse.h"   // for FbleParseBoolArg, etc.
-#include "fble-value.h"       // for FbleValue, etc.
-#include "fble-vector.h"      // for FbleVectorInit.
+#include <fble/fble-alloc.h>       // for FbleFree.
+#include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
+#include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-vector.h>      // for FbleVectorInit.
 
 #include "char.fble.h"    // for FbleCharValueAccess
 #include "int.fble.h"     // for FbleIntValueAccess

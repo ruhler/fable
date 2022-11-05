@@ -1,9 +1,9 @@
 #ifndef FBLE_TEST_MEM_TEST_H_
 #define FBLE_TEST_MEM_TEST_H_
 
-#include "fble-link.h"
-#include "fble-profile.h"
-#include "fble-value.h"
+#include <fble/fble-link.h>
+#include <fble/fble-profile.h>
+#include <fble/fble-value.h>
 
 // FbleMemTestMain -- 
 //   A main function for running an fble memory test.

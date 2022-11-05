@@ -1,10 +1,11 @@
 // vector.c --
 //   This file implements the fble vector routines.
 
+#include <fble/fble-vector.h>
+
 #include <string.h>     // for memcpy
 
-#include "fble-alloc.h"
-#include "fble-vector.h"
+#include <fble/fble-alloc.h>
 
 // FbleVectorIncrSize -- see fble.h for documentation of this function.
 void FbleVectorIncrSize(size_t elem_size, size_t* size, void** xs)

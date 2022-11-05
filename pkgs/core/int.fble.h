@@ -1,7 +1,7 @@
 #ifndef FBLE_CORE_INT_FBLE_H_
 #define FBLE_CORE_INT_FBLE_H_
 
-#include "fble-value.h"
+#include <fble/fble-value.h>
 
 // FbleIntValueAccess --
 //   Read a number from an FbleValue of type /Core/Int%.Int@.

@@ -6,9 +6,9 @@
 
 #include <stdint.h>   // for uintptr_t
 
-#include "fble-loc.h"
-#include "fble-module-path.h"
-#include "fble-name.h"
+#include <fble/fble-loc.h>
+#include <fble/fble-module-path.h>
+#include <fble/fble-name.h>
 
 #include "heap.h"
 #include "kind.h"     // for FbleKind

@@ -1,11 +1,11 @@
 
-#include "fble-module-path.h"
+#include <fble/fble-module-path.h>
 
 #include <assert.h>     // for assert
 #include <string.h>     // for strlen, strcat
 
-#include "fble-alloc.h"
-#include "fble-vector.h"
+#include <fble/fble-alloc.h>
+#include <fble/fble-vector.h>
 
 // FbleNewModulePath -- see documentation in fble-module-path.h
 FbleModulePath* FbleNewModulePath(FbleLoc loc)

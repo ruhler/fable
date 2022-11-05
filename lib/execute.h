@@ -7,12 +7,13 @@
 #ifndef FBLE_INTERNAL_EXECUTE_H_
 #define FBLE_INTERNAL_EXECUTE_H_
 
+#include <fble/fble-execute.h>   // for FbleExecutable typedef.
+
 #include <stdbool.h>      // for bool
 
-#include "fble-alloc.h"     // for FbleStackAllocator, etc.
-#include "fble-execute.h"   // for FbleExecutable typedef.
-#include "fble-profile.h"   // for FbleProfileThread
-#include "fble-value.h"     // for FbleValueHeap
+#include <fble/fble-alloc.h>     // for FbleStackAllocator, etc.
+#include <fble/fble-profile.h>   // for FbleProfileThread
+#include <fble/fble-value.h>     // for FbleValueHeap
 
 // FbleStack --
 //

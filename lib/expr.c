@@ -5,7 +5,7 @@
 
 #include <assert.h>       // for assert
 
-#include "fble-alloc.h"   // for FbleFree
+#include <fble/fble-alloc.h>   // for FbleFree
 
 #define UNREACHABLE(x) assert(false && x)
 

@@ -7,11 +7,11 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble-alloc.h"       // for FbleFree, FbleMaxTotalBytesAllocated.
-#include "fble-arg-parse.h"   // for FbleParseBoolArg, etc.
-#include "fble-link.h"        // for FbleLinkFromCompiledOrSource.
-#include "fble-value.h"       // for FbleValue, etc.
-#include "fble-vector.h"      // for FbleVectorInit.
+#include <fble/fble-alloc.h>       // for FbleFree, FbleMaxTotalBytesAllocated.
+#include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
+#include <fble/fble-link.h>        // for FbleLinkFromCompiledOrSource.
+#include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-vector.h>      // for FbleVectorInit.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

@@ -1,9 +1,9 @@
 #ifndef FBLE_CORE_STDIO_FBLE_H_
 #define FBLE_CORE_STDIO_FBLE_H_
 
-#include "fble-link.h"
-#include "fble-profile.h"
-#include "fble-value.h"
+#include <fble/fble-link.h>
+#include <fble/fble-profile.h>
+#include <fble/fble-value.h>
 
 // FbleStdio -- 
 //   Execute a /Core/Stdio/IO%.IOStdio process.

@@ -1,10 +1,11 @@
 // typecheck.h --
-//   Header file for fble type checking.
+//   Internal header file for fble type checking.
 
 #ifndef FBLE_INTERNAL_TYPECHECK_H_
 #define FBLE_INTERNAL_TYPECHECK_H_
 
-#include "fble-load.h"
+#include <fble/fble-load.h>
+
 #include "tc.h"
 
 // FbleTypeCheckModule -- 

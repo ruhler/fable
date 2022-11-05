@@ -4,7 +4,7 @@ namespace eval "pkgs/md5" {
   set objs [list]
   foreach {x} { md5.fble } {
     lappend objs $::b/pkgs/md5/$x.o
-    obj $::b/pkgs/md5/$x.o $::s/pkgs/md5/$x.c "-I $::s/include/fble -I $::s/pkgs/core -I $::s/pkgs/md5"
+    obj $::b/pkgs/md5/$x.o $::s/pkgs/md5/$x.c "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/md5"
   }
   pkg md5 [list core] $objs
 
@@ -22,7 +22,7 @@ namespace eval "pkgs/md5" {
 
   # fble-md5 program.
   obj $::b/pkgs/md5/fble-md5.o $::s/pkgs/md5/fble-md5.c \
-    "-I $::s/include/fble -I $::s/pkgs/core -I $::s/pkgs/md5"
+    "-I $::s/include -I $::s/pkgs/core -I $::s/pkgs/md5"
   set objs "$::b/pkgs/md5/fble-md5.o"
   append objs " $::b/pkgs/md5/libfble-md5.a"
   append objs " $::b/pkgs/core/libfble-core.a"

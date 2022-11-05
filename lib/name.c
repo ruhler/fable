@@ -1,5 +1,5 @@
 
-#include "fble-name.h"
+#include <fble/fble-name.h>
 
 #include <string.h>   // for strcmp
 

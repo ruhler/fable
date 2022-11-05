@@ -5,11 +5,11 @@
 #include <stdio.h>      // for FILE, printf, fprintf
 #include <stdint.h>     // for uint64_t
 
-#include "fble-alloc.h"       // for FbleFree
-#include "fble-arg-parse.h"   // for FbleParseBoolArg, etc.
-#include "fble-link.h"        // for FbleCompiledModuleFunction.
-#include "fble-value.h"       // for FbleValue, etc.
-#include "fble-vector.h"      // for FbleVectorInit.
+#include <fble/fble-alloc.h>       // for FbleFree
+#include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
+#include <fble/fble-link.h>        // for FbleCompiledModuleFunction.
+#include <fble/fble-value.h>       // for FbleValue, etc.
+#include <fble/fble-vector.h>      // for FbleVectorInit.
 
 #include "char.fble.h"    // for FbleCharValueAccess
 #include "int.fble.h"     // for FbleIntValueAccess

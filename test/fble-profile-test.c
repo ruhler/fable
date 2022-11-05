@@ -4,8 +4,8 @@
 #include <string.h>   // for strcpy
 #include <stdlib.h>   // for rand
 
-#include "fble-alloc.h"     // for FbleResetMaxTotalBytesAllocated, etc.
-#include "fble-profile.h"
+#include <fble/fble-alloc.h>     // for FbleResetMaxTotalBytesAllocated, etc.
+#include <fble/fble-profile.h>
 
 
 static bool sTestsFailed = false;

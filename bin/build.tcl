@@ -1,7 +1,7 @@
 namespace eval "bin" {
   foreach {x} [glob $::s/bin/*.c] {
     set base [file rootname [file tail $x]]
-    obj $::b/bin/$base.o $x "-I $::s/include/fble"
+    obj $::b/bin/$base.o $x "-I $::s/include"
     bin $::b/bin/$base \
       "$::b/bin/$base.o $::b/lib/libfble.a" ""
     bin_cov $::b/bin/$base.cov \

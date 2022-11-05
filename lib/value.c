@@ -7,8 +7,8 @@
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdlib.h>   // for NULL
 
-#include "fble-alloc.h"   // for FbleAlloc, FbleFree, etc.
-#include "fble-vector.h"  // for FbleVectorInit, etc.
+#include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree, etc.
+#include <fble/fble-vector.h>  // for FbleVectorInit, etc.
 
 #include "heap.h"
 #include "execute.h"

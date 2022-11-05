@@ -4,12 +4,12 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble-alloc.h"     // for FbleFree.
-#include "fble-arg-parse.h" // for FbleParseBoolArg, etc.
-#include "fble-compile.h"   // for FbleCompile, FbleDisassemble.
-#include "fble-load.h"      // for FbleLoad.
-#include "fble-profile.h"   // for FbleNewProfile, etc.
-#include "fble-vector.h"    // for FbleVectorInit.
+#include <fble/fble-alloc.h>     // for FbleFree.
+#include <fble/fble-arg-parse.h> // for FbleParseBoolArg, etc.
+#include <fble/fble-compile.h>   // for FbleCompile, FbleDisassemble.
+#include <fble/fble-load.h>      // for FbleLoad.
+#include <fble/fble-profile.h>   // for FbleNewProfile, etc.
+#include <fble/fble-vector.h>    // for FbleVectorInit.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

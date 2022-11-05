@@ -1,7 +1,7 @@
 #ifndef FBLE_MD5_MD5_FBLE_H_
 #define FBLE_MD5_MD5_FBLE_H_
 
-#include "fble-link.h"
+#include <fble/fble-link.h>
 
 // FbleMd5Main -- 
 //   A main function for running an Md5 program with standard command line

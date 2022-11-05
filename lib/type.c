@@ -1,9 +1,10 @@
 
+#include "type.h"
+
 #include <assert.h>   // for assert
 
-#include "fble-module-path.h"
-#include "fble-vector.h"
-#include "type.h"
+#include <fble/fble-module-path.h>
+#include <fble/fble-vector.h>
 
 #define UNREACHABLE(x) assert(false && x)
 

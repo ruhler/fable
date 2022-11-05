@@ -8,10 +8,10 @@
 #include <string.h>   // for memset, memcpy
 #include <sys/time.h> // for gettimeofday
 
-#include "fble-alloc.h"
-#include "fble-name.h"
-#include "fble-profile.h"
-#include "fble-vector.h"
+#include <fble/fble-alloc.h>
+#include <fble/fble-name.h>
+#include <fble/fble-profile.h>
+#include <fble/fble-vector.h>
 
 // Notes on profiling
 // ------------------

@@ -22,8 +22,8 @@ namespace eval "lib" {
   build "$tabc $report" "$::s/lib/parse.y $includes" $cmd
 
   # parse.tab.o
-  obj $::b/lib/parse.tab.o $::b/lib/parse.tab.c "-I $::s/include/fble -I $::s/lib"
-  obj_cov $::b/lib/parse.tab.cov.o $::b/lib/parse.tab.c "-I $::s/include/fble -I $::s/lib"
+  obj $::b/lib/parse.tab.o $::b/lib/parse.tab.c "-I $::s/include -I $::s/lib"
+  obj_cov $::b/lib/parse.tab.cov.o $::b/lib/parse.tab.c "-I $::s/include -I $::s/lib"
   lappend objs $::b/lib/parse.tab.o
   lappend objs_cov $::b/lib/parse.tab.cov.o
 
@@ -32,8 +32,8 @@ namespace eval "lib" {
   foreach {x} [glob -tails -directory $::s/lib *.c] {
     set object $::b/lib/[string map {.c .o} $x]
     set object_cov $::b/lib/[string map {.c .cov.o} $x]
-    obj $object $::s/lib/$x "-I $::s/include/fble"
-    obj_cov $object_cov $::s/lib/$x "-I $::s/include/fble"
+    obj $object $::s/lib/$x "-I $::s/include"
+    obj_cov $object_cov $::s/lib/$x "-I $::s/include"
     lappend objs $object
     lappend objs_cov $object_cov
   }

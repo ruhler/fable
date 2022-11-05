@@ -1,11 +1,11 @@
 
-#include "fble-loc.h"
+#include <fble/fble-loc.h>
 
 #include <stdarg.h>   // for va_list, va_start, va_end
 #include <stdio.h>    // for fprintf, vfprintf, stderr
 
-#include "fble-alloc.h"
-#include "fble-string.h"
+#include <fble/fble-alloc.h>
+#include <fble/fble-string.h>
 
 // FbleNewLoc -- see documentation in fble-loc.h
 FbleLoc FbleNewLoc(const char* source, int line, int col)

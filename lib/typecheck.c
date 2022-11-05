@@ -1,5 +1,7 @@
-// compile.c --
-//   This file implements the fble compilation routines.
+// typecheck.c --
+//   This file implements the fble type checker.
+
+#include "typecheck.h"
 
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_arg, va_end
@@ -7,12 +9,11 @@
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
-#include "fble-vector.h"
+#include <fble/fble-vector.h>
 
 #include "expr.h"
 #include "tc.h"
 #include "type.h"
-#include "typecheck.h"
 
 #define UNREACHABLE(x) assert(false && x)
 

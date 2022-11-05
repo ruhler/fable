@@ -6,10 +6,10 @@
 #include <string.h>   // for strcmp, strlen
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble-alloc.h"     // for FbleFree.
-#include "fble-arg-parse.h" // for FbleParseBoolArg, FbleParseStringArg
-#include "fble-load.h"      // for FbleLoad.
-#include "fble-vector.h"    // for FbleVectorInit.
+#include <fble/fble-alloc.h>     // for FbleFree.
+#include <fble/fble-arg-parse.h> // for FbleParseBoolArg, FbleParseStringArg
+#include <fble/fble-load.h>      // for FbleLoad.
+#include <fble/fble-vector.h>    // for FbleVectorInit.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

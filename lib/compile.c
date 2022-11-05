@@ -1,12 +1,14 @@
 // compile.c --
 //   This file describes code to compile fble values into fble instructions.
 
+#include <fble/fble-compile.h>
+
 #include <assert.h>   // for assert
 #include <string.h>   // for strlen, strcat
 #include <stdlib.h>   // for NULL
 
-#include "fble-alloc.h"     // for FbleAlloc, etc.
-#include "fble-vector.h"    // for FbleVectorInit, etc.
+#include <fble/fble-alloc.h>     // for FbleAlloc, etc.
+#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
 
 #include "code.h"
 #include "tc.h"

@@ -1,11 +1,11 @@
 
-#include "fble-link.h"
+#include <fble/fble-link.h>
 
 #include <assert.h>     // for assert
 
-#include "fble-alloc.h"     // for FbleAlloc, etc.
-#include "fble-interpret.h" // for FbleInterpret
-#include "fble-vector.h"    // for FbleVectorInit, etc.
+#include <fble/fble-alloc.h>     // for FbleAlloc, etc.
+#include <fble/fble-interpret.h> // for FbleInterpret
+#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
 
 #include "code.h"
 #include "value.h"

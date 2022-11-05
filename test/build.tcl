@@ -1,5 +1,5 @@
 namespace eval "test" {
-  set cflags "-I $::s/include/fble"
+  set cflags "-I $::s/include"
   set libs "$::b/test/libfbletest.a $::b/lib/libfble.a"
   set libs_cov "$::b/test/libfbletest.a $::b/lib/libfble.cov.a"
 

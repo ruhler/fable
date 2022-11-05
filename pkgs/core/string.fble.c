@@ -1,10 +1,10 @@
 
-#include <string.h>         // for strlen
-
 #include "string.fble.h"
 
-#include "fble-value.h"     // for FbleValue, etc.
-#include "fble-vector.h"    // for FbleVectorInit, etc.
+#include <string.h>         // for strlen
+
+#include <fble/fble-value.h>     // for FbleValue, etc.
+#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
 
 #include "char.fble.h" // for FbleCharValueAccess, FbleNewCharValue
 

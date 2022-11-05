@@ -1,9 +1,9 @@
 #ifndef FBLE_TEST_TEST_H_
 #define FBLE_TEST_TEST_H_
 
-#include "fble-link.h"
-#include "fble-profile.h"
-#include "fble-value.h"
+#include <fble/fble-link.h>
+#include <fble/fble-profile.h>
+#include <fble/fble-value.h>
 
 // FbleTestMain -- 
 //   A main function for running a basic fble test.

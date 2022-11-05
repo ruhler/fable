@@ -4,7 +4,7 @@
 
 #include "int.fble.h"
 
-#include "fble-value.h"   // for FbleValue, etc.
+#include <fble/fble-value.h>   // for FbleValue, etc.
 
 static int64_t ReadIntP(FbleValue* num);
 

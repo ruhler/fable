@@ -7,7 +7,7 @@
 #include <stdlib.h>     // for free
 #include <string.h>     // for strcmp, strchr
 
-#include "fble-profile.h"
+#include <fble/fble-profile.h>
 
 static FbleBlockId GetBlockId(FbleProfile* profile, char* name);
 static void Sample(FbleProfile* profile, FbleProfileThread* thread, int count, char* s);

@@ -5,11 +5,11 @@
 #include <string.h>   // for strcmp
 #include <stdio.h>    // for FILE, fprintf, stderr
 
-#include "fble-alloc.h"         // for FbleFree.
-#include "fble-arg-parse.h"     // for FbleParseBoolArg, etc.
-#include "fble-compile.h"       // for FbleCompile, etc.
-#include "fble-module-path.h"   // for FbleParseModulePath.
-#include "fble-vector.h"        // for FbleVectorInit.
+#include <fble/fble-alloc.h>         // for FbleFree.
+#include <fble/fble-arg-parse.h>     // for FbleParseBoolArg, etc.
+#include <fble/fble-compile.h>       // for FbleCompile, etc.
+#include <fble/fble-module-path.h>   // for FbleParseModulePath.
+#include <fble/fble-vector.h>        // for FbleVectorInit.
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1

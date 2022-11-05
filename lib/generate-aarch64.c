@@ -9,10 +9,10 @@
 #include <string.h>   // for strlen, strcat
 #include <unistd.h>   // for getcwd
 
-#include "fble-vector.h"    // for FbleVectorInit, etc.
+#include <fble/fble-compile.h>
+#include <fble/fble-vector.h>    // for FbleVectorInit, etc.
 
 #include "code.h"
-#include "fble-compile.h"
 #include "tc.h"
 #include "value.h"
 

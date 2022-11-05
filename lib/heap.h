@@ -4,6 +4,8 @@
 #ifndef FBLE_INTERNAL_HEAP_H_
 #define FBLE_INTERNAL_HEAP_H_
 
+#include <sys/types.h>  // for size_t
+
 // FbleHeapCallback --
 //   A callback function used when traversing objects on a heap.
 //

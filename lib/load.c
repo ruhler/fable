@@ -1,16 +1,17 @@
 // load.c --
 //   This file implements routines for loading an fble program.
 
-#include "fble-load.h"
+#include <fble/fble-load.h>
 
 #include <assert.h>   // for assert
 #include <string.h>   // for strcat
 #include <unistd.h>   // for access, F_OK
 
+#include <fble/fble-alloc.h>
+#include <fble/fble-name.h>
+#include <fble/fble-vector.h>
+
 #include "expr.h"
-#include "fble-alloc.h"
-#include "fble-name.h"
-#include "fble-vector.h"
 
 // Stack --
 //   A stack of modules in the process of being loaded.

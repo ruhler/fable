@@ -1,10 +1,10 @@
 
-#include "fble-arg-parse.h"
+#include <fble/fble-arg-parse.h>
 
 #include <stdio.h>    // for fprintf
 #include <string.h>   // for strcmp
 
-#include "fble-vector.h"    // for FbleVectorAppend
+#include <fble/fble-vector.h>    // for FbleVectorAppend
 
 // FbleParseBoolArg -- See documentation in fble-arg-parse.h
 bool FbleParseBoolArg(const char* name, bool* dest, int* argc, const char*** argv, bool* error)

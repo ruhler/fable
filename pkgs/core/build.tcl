@@ -3,13 +3,13 @@ namespace eval "pkgs/core" {
   set objs [list]
   foreach {x} { char.fble int.fble stdio.fble string.fble } {
     lappend objs $::b/pkgs/core/$x.o
-    obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c "-I $::s/include/fble -I $::s/pkgs/core"
+    obj $::b/pkgs/core/$x.o $::s/pkgs/core/$x.c "-I $::s/include -I $::s/pkgs/core"
   }
   pkg core [list] $objs
 
   # fble-stdio program.
   obj $::b/pkgs/core/fble-stdio.o $::s/pkgs/core/fble-stdio.c \
-    "-I $::s/include/fble -I $::s/pkgs/core"
+    "-I $::s/include -I $::s/pkgs/core"
   bin $::b/pkgs/core/fble-stdio \
     "$::b/pkgs/core/fble-stdio.o $::b/pkgs/core/libfble-core.a $::b/lib/libfble.a" ""
   install_bin $::b/pkgs/core/fble-stdio
