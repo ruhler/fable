@@ -1,6 +1,3 @@
-* Update header file organization:
- - Install fble/fble-*.h files as part of ninja install target.
-
 * How to check errors from stale files in build directory?
   For example, sat/Sat/sat-tests still existed, even though now were compiling
   to sat/sat-tests, but accidentally referencing the old sat/Sat/sat-tests
@@ -204,5 +201,5 @@
  - either way, document that clearly.
 
 * [release] Write man pages for fble and friends?
- - see thoughts/fble.release.txt
+ - see thoughts/fble.man.txt
  

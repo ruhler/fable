@@ -8,3 +8,6 @@ set ::srcdir @srcdir@
 
 # The directory to install binaries to.
 set ::bindir @bindir@
+
+# The directory to install includes to.
+set ::includedir @includedir@

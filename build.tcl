@@ -159,6 +159,18 @@ proc install_bin { binary } {
   lappend ::installs $target
 }
 
+# install_header --
+#   Cause the given header file to be installed when the install target is
+#   invoked.
+#
+# Inputs:
+#   header - the header file to install.
+proc install_header { header } {
+  set target $::includedir/fble/[file tail $header]
+  build $target $header "cp $header $::includedir/fble"
+  lappend ::installs $target
+}
+
 # test --
 #   Build a test result.
 #
@@ -289,6 +301,7 @@ proc pkg {name deps objs} {
 set ::build_ninja_deps [list]
 
 set build_tcls [list \
+  $::s/include/build.tcl \
   $::s/lib/build.tcl \
   $::s/bin/build.tcl \
   $::s/test/build.tcl \

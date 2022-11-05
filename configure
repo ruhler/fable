@@ -45,12 +45,14 @@ while {[llength $::argv] > 0} {
   }
 }
 
+set ::includedir $::prefix/include
 set ::bindir $::prefix/bin
 
 puts "Configuration:"
 puts "  srcdir=$::srcdir"
 puts "  builddir=$::builddir"
 puts "  prefix=$::prefix"
+puts "  includedir=$::includedir"
 puts "  bindir=$::bindir"
 
 proc subst_in { src dest } {
@@ -58,6 +60,7 @@ proc subst_in { src dest } {
   exec sed \
     -e "s=@srcdir@=$::srcdir=g" \
     -e "s=@builddir@=$::builddir=g" \
+    -e "s=@includedir@=$::includedir=g" \
     -e "s=@bindir@=$::bindir=g" \
     $src > $dest
 }
