@@ -1,4 +1,4 @@
-// generate_aarch64.c --
+// generate-aarch64.c --
 //   This file describes code to generate 64-bit ARM code for fble modules.
 
 #include <assert.h>   // for assert

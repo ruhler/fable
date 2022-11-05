@@ -1,6 +1,4 @@
 * Update header file organization:
- - Rename generate_c.c and generate_aarch64.c to generate-c.c and
- - generate-aarch64.c
  - Add an fble.h header file.
  - Move subdirectories of fble/ out and then remove empty fble/ directory.
  - Use <> and fble.h when currently including fble-* files.

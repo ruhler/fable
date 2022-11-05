@@ -1,4 +1,4 @@
-// generate_c.c --
+// generate-c.c --
 //   This file describes code to generate C code for fble modules.
 
 #include <assert.h>   // for assert
