@@ -14,3 +14,6 @@ set ::libdir @libdir@
 
 # The directory to install binaries to.
 set ::bindir @bindir@
+
+# The directory to install manual pages to.
+set ::mandir @mandir@

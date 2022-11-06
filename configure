@@ -48,6 +48,7 @@ while {[llength $::argv] > 0} {
 set ::includedir $::prefix/include
 set ::libdir $::prefix/lib
 set ::bindir $::prefix/bin
+set ::mandir $::prefix/man
 
 puts "Configuration:"
 puts "  srcdir=$::srcdir"
@@ -56,6 +57,7 @@ puts "  prefix=$::prefix"
 puts "  includedir=$::includedir"
 puts "  libdir=$::libdir"
 puts "  bindir=$::bindir"
+puts "  mandir=$::mandir"
 
 proc subst_in { src dest } {
   puts "creating $dest"
@@ -65,6 +67,7 @@ proc subst_in { src dest } {
     -e "s=@includedir@=$::includedir=g" \
     -e "s=@libdir@=$::libdir=g" \
     -e "s=@bindir@=$::bindir=g" \
+    -e "s=@mandir@=$::mandir=g" \
     $src > $dest
 }
 

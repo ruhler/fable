@@ -10,15 +10,30 @@
 #include <fble/fble-arg-parse.h> // for FbleParseBoolArg, FbleParseStringArg
 #include <fble/fble-load.h>      // for FbleLoad.
 #include <fble/fble-vector.h>    // for FbleVectorInit.
+#include <fble/fble-version.h>   // for FBLE_VERSION
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static void PrintUsage(FILE* stream);
+static void PrintVersion(FILE* stream);
+static void PrintHelp(FILE* stream);
 int main(int argc, const char* argv[]);
 
-// PrintUsage --
+// PrintVersion --
+//   Prints version info to the given output stream.
+//
+// Inputs:
+//   stream - The output stream to write the version information to.
+//
+// Side effects:
+//   Outputs version information to the given stream.
+static void PrintVersion(FILE* stream)
+{
+  fprintf(stream, "fble-deps %s\n", FBLE_VERSION);
+}
+
+// PrintHelp --
 //   Prints help info to the given output stream.
 //
 // Inputs:
@@ -29,36 +44,42 @@ int main(int argc, const char* argv[]);
 //
 // Side effects:
 //   Outputs usage information to the given stream.
-static void PrintUsage(FILE* stream)
+static void PrintHelp(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-deps [OPTION...] -t TARGET -m MODULE_PATH\n"
-      "\n"
-      "Description:\n"
-      "  Outputs a depfile suitable for use with ninja build specifying the\n"
-      "  .fble files the given module depends on.\n"
-      "\n"
-      "Options:\n"
-      "  -h, --help\n"
-      "     Print this help message and exit.\n"
-      "  -I DIR\n"
-      "     Adds DIR to the module search path.\n"
-      "  -t, --target TARGET\n"
-      "     Specifies the name of the target to use in the generated depfile.\n"
-      "  -m, --module MODULE_PATH\n"
-      "     The path of the module to get dependencies for.\n"
-      "\n"
-      "Exit Status:\n"
-      "  0 on success.\n"
-      "  1 on failure.\n"
-      "  2 on usage error.\n"
-      "  Note:\n"
-      "    Exit status is 0 in the case where the .fble file cannot be\n"
-      "    parsed successfully, to support the use case of generating\n"
-      "    dependencies for a malformed .fble file.\n"
-      "\n"
-      "Example:\n"
-      "  fble-deps -I prgms -t Foo.fble.d -m /Foo% > Foo.fble.d\n"
+"Usage: fble-deps [OPTION...] -t TARGET -m MODULE_PATH\n"
+"\n"
+"Outputs a depfile suitable for use with make and ninja specifying the\n"
+".fble files the given module depends on.\n"
+"\n"
+"*Options*\n"
+"\n"
+"Generic Program Information:\n"
+"  -h, --help                 display this help text and exit\n"
+"  -v, --version              display version information and exit\n"
+"\n"
+"Input control:\n"
+"  -I DIR                     add DIR to the module search path\n"
+"  -m, --module MODULE_PATH   the path of the module to compile\n"
+"\n"
+"Output control:\n"
+"  -t, --target TARGET        the target name to use in generated depfile\n"
+"\n"
+"*Exit Status*\n"
+"\n"
+"0 on success\n"
+"\n"
+"1 on failure\n"
+"\n"
+"2 on usage error\n"
+"\n"
+"Exit status is 0 in the case where the .fble file cannot be parsed\n"
+"successfully, to support the use case of generating dependencies for a\n"
+"malformed .fble file.\n"
+"\n"
+"*Example*\n"
+"\n"
+"fble-deps -I foo -t Foo.fble.d -m /Foo% > Foo.fble.d\n"
   );
 }
 
@@ -80,14 +101,17 @@ int main(int argc, const char* argv[])
   FbleVectorInit(search_path);
   const char* target = NULL;
   const char* mpath_string = NULL;
+  bool version = false;
   bool help = false;
   bool error = false;
 
   argc--;
   argv++;
-  while (!error && argc > 0) {
+  while (!(help || version || error) && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-t", &target, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--target", &target, &argc, &argv, &error)) continue;
@@ -96,28 +120,34 @@ int main(int argc, const char* argv[])
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
+  if (version) {
+    PrintVersion(stdout);
+    FbleVectorFree(search_path);
+    return EX_SUCCESS;
+  }
+
   if (help) {
-    PrintUsage(stdout);
+    PrintHelp(stdout);
     FbleVectorFree(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintUsage(stderr);
+    PrintHelp(stderr);
     FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (target == NULL) {
     fprintf(stderr, "missing required --target option.\n");
-    PrintUsage(stderr);
+    PrintHelp(stderr);
     FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (mpath_string == NULL) {
     fprintf(stderr, "missing required --module option.\n");
-    PrintUsage(stderr);
+    PrintHelp(stderr);
     FbleVectorFree(search_path);
     return EX_USAGE;
   }

@@ -9,6 +9,6 @@ namespace eval "bin" {
     install_bin $::b/bin/$base
   }
 
-  build $::b/bin/fble-compile.1 $::b/bin/fble-compile \
-    "help2man -N -o $::b/bin/fble-compile.1 -n 'compile an fble module' $::b/bin/fble-compile"
+  man1 $::b/bin/fble-compile "compile an fble module"
+  man1 $::b/bin/fble-deps "generate depfile for an fble module"
 }

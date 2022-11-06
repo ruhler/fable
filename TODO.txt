@@ -7,7 +7,6 @@
   fble-graphics
   fble-perf-profile
   fble-stdio
-  fble-deps
   fble-invaders
   fble-pinball
   fble-test
