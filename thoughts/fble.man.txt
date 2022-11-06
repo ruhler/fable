@@ -10,5 +10,164 @@ public library functions. In a practical world, there are some questions:
 * How do we deal with duplicate information in man pages, --help usage
   messages, and function doc comments in header files?
 
+Misc thoughts:
+* In past projects I have used ascidoc to generate man pages from .txt files.
+* If I have structured content, I could probably write a tcl script that can
+  generate man pages easily enough.
+* There are a projects available to generate man pages from markdown:
+ - ronn - ruby based though, and I don't want that as a build dependency.
+ - pandoc - Haskell based though, and I don't want that as a build dependency.
 
+Does doxygen support generation of man pages? Apparently it does. That could
+be nice.
+
+Syntax:
+    /// ...
+Or  //! ...
+
+I'll have to play around a bit to better understand what doxygen syntax can be
+made to look like or do. It would be good to use a standard doc format.
+Hopefully they aren't too verbose.
+
+I notice the doxygen man page doesn't look great. That may be a bad sign.
+* It generates a man page per file, not per function. And the man page is
+  named after the file. That's not really what I want.
+* It requires @param or \param to comment parameters.
+
+So, instead of, for example:
+
+// FbleNewStructValue --
+//   Create a new struct value with given arguments.
+//
+// Inputs:
+//   heap - The heap to allocate the value on.
+//   argc - The number of fields in the struct value.
+//   args - argc FbleValue arguments to the struct value. Args are borrowed,
+//          and may be NULL.
+//
+// Results:
+//   A newly allocated struct value with given args.
+//
+// Side effects:
+//   The returned struct value must be freed using FbleReleaseValue when no
+//   longer in use.
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+
+We could do:
+
+/// Create a new struct value with given arguments.
+/// 
+/// \param heap The heap to allocate the value on.
+/// \param argc The number of fields in the struct value.
+/// \param args argc FbleValue arguments to the struct value. Args are borrowed,
+///          and may be NULL.
+/// 
+/// \returns A newly allocated struct value with given args.
+/// 
+/// Side effects:
+///   The returned struct value must be freed using FbleReleaseValue when no
+///   longer in use.
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+
+I'll say, I don't really like it, and the doxygen manual doesn't give me much
+confidence in it.
+
+Alternatives to doxygen:
+* sphinx (designed for python)
+* cldoc (based on clang)
+
+cldoc at least has nicer doc comment syntax:
+
+// FbleNewStructValue --
+//   Create a new struct value with given arguments.
+//
+// Inputs:
+//   @heap - The heap to allocate the value on.
+//   @argc - The number of fields in the struct value.
+//   @args - argc FbleValue arguments to the struct value. Args are borrowed,
+//          and may be NULL.
+//
+// Results:
+//   @return A newly allocated struct value with given args.
+//
+// Side effects:
+//   The returned struct value must be freed using FbleReleaseValue when no
+//   longer in use.
+FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+
+But it doesn't generate man pages.
+
+How about I just write my own tcl scripts to do what I want. It's very narrow.
+I can get exactly what I want, what I need, and with no new dependency
+requirements.
+
+We have a few things:
+1. Function comments.
+2. References to function comments.
+
+Focusing on those to start, it's pretty easy, no?
+
+// <name> --
+//   <brief>
+//
+<proto>
+
+err... Trouble is, man page needs types and such. I don't want to duplicate
+those. Also, if we want to check everything is documented.
+
+Taking a step back... what's the goal of using something like deoxygen?
+1. We could create a website from the info if we wanted.
+2. Auto-generate man pages, without having to duplicate info.
+3. Enforcement of documentation practices.
+
+But (2) doesn't work so great from a point of view of having multiple
+functions defined in the same man page.
+
+What about asciidoc? I can write the man pages manually in asciidoc and
+convert.
+
+Note: `man 7 man-pages` for recommended conventions.
+
+---
+
+GNU has a help2man program. How about that for man 1 pages?
+
+It looks like input is:
+* metadata for man page via command line arguments.
+* --help, --version options to the program.
+* optional additional files to include.
+
+It looks pretty reasonable to me. Benefits:
+* Produces decent looking man pages (to be confirmed by me)
+* No need to duplicate documentation.
+* Improvements to man page result in improvements to --help and vice versa.
+
+Yeah. I like that. I think help2man is a good route to go for binary files.
+And if we want, we can pre-include the generated man pages in the distribution
+so normal users don't need to have help2man installed if they don't want.
+
+Let me try this for fble-compile as a sanity check. First step is to improve
+the help documentation.
+
+GNU coding standards (https://www.gnu.org/prep/standards/standards.html)
+specify what --version and --help should produce. Presumably we can just
+follow those for best results.
+
+For example, --version on fble-compile:
+
+fble-compile (Fable) 0.1
+
+Is probably good enough to start. We can debate the "Fable" part. So, for now,
+maybe just: 'fble-compile 0.1'.
+
+And for --help, so help2man documentation.
+
+---
+
+Yeah, help2man is pretty good I think. Let's provisionally go that route. I
+just need a few tweaks to make it work better.
+
+Cool. I like this. It's a little finicky in terms of how to format the help
+text, but I can make it work. In particular, label sections with *xxx*, use
+plenty of blank line separators and align things far to the left.
 

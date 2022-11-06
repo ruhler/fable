@@ -8,4 +8,7 @@ namespace eval "bin" {
       "$::b/bin/$base.o $::b/lib/libfble.cov.a" ""
     install_bin $::b/bin/$base
   }
+
+  build $::b/bin/fble-compile.1 $::b/bin/fble-compile \
+    "help2man -N -o $::b/bin/fble-compile.1 -n 'compile an fble module' $::b/bin/fble-compile"
 }

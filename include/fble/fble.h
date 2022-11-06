@@ -18,5 +18,6 @@
 #include "fble-string.h"
 #include "fble-value.h"
 #include "fble-vector.h"
+#include "fble-version.h"
 
 #endif // FBLE_H_

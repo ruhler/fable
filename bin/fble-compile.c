@@ -10,65 +10,103 @@
 #include <fble/fble-compile.h>       // for FbleCompile, etc.
 #include <fble/fble-module-path.h>   // for FbleParseModulePath.
 #include <fble/fble-vector.h>        // for FbleVectorInit.
+#include <fble/fble-version.h>       // for FBLE_VERSION
 
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
 
-static void PrintUsage(FILE* stream);
+static void PrintVersion(FILE* stream);
+static void PrintHelp(FILE* stream);
 
 typedef enum {
   TARGET_AARCH64,
   TARGET_C
 } Target;
 
-// PrintUsage --
+// PrintVersion --
+//   Prints version info to the given output stream.
+//
+// Inputs:
+//   stream - The output stream to write the version information to.
+//
+// Side effects:
+//   Outputs version information to the given stream.
+static void PrintVersion(FILE* stream)
+{
+  fprintf(stream, "fble-compile %s\n", FBLE_VERSION);
+}
+
+// PrintHelp --
 //   Prints help info to the given output stream.
 //
 // Inputs:
 //   stream - The output stream to write the usage information to.
 //
-// Result:
-//   None.
-//
 // Side effects:
 //   Outputs usage information to the given stream.
-static void PrintUsage(FILE* stream)
+static void PrintHelp(FILE* stream)
 {
   fprintf(stream, "%s",
-      "Usage: fble-compile [OPTIONS...] -m MODULE_PATH\n"
-      "\n"
-      "Description:\n"
-      "  Compiles an fble module.\n"
-      "\n"
-      "Options:\n"
-      "  -h, --help\n"
-      "    Print this help message and exit.\n"
-      "  -I DIR\n"
-      "    Add DIR to the module search path.\n"
-      "  -m, --module MODULE_PATH\n"
-      "     The path of the module to get dependencies for.\n"
-      "  -t, --target [aarch64 | c]\n"
-      "     Specify whether generate aarch64 assembly or c code.\n"
-      "     Defaults to aarch64.\n"
-      "  -c, --compile\n"
-      "    Compile the module.\n"
-      "  -e, --export NAME\n"
-      "    Generate a function with the given NAME to export the module.\n"
-      "  --main NAME\n"
-      "    Generate a main function using NAME as the wrapper function.\n"
-      "\n"
-      "  At least one of --compile, --export, or --main must be provided.\n"
-      "\n"
-      "Exit Status:\n"
-      "  0 on success.\n"
-      "  1 on failure.\n"
-      "  2 on usage error.\n"
-      "\n"
-      "Example:\n"
-      "  fble-compile -c -I prgms -m /Foo% > Foo.fble.s\n"
-      "  fble-compile -e FbleCompiledMain -m /Foo% > Foo.fble.main.s\n"
-      "  fble-compile --main FbleStdioMain -m /Foo% > Foo.fble.main.s\n"
+"Usage: fble-compile [OPTION...] -m MODULE_PATH\n"
+"\n"
+"Compile the fble module identified by MODULE_PATH.\n"
+"\n"
+"There are three kinds of things that can be included in the generated code:\n"
+"\n"
+"1. Code generated for executing the given module. This will generate an\n"
+"FbleCompiledModuleFunction for the module under an internal name that\n"
+"users should not directly reference.\n"
+"\n"
+"2. A named FbleCompiledModuleFunction function to export the code generated\n"
+"for a module. Users provide their desired name for this function. The\n"
+"compiler will re-export the internally named FbleCompiledModuleFunction from\n"
+"(1) under this user specified name.\n"
+"\n"
+"3. A standard 'main' function that invokes a user provided wrapper function.\n"
+"The wrapper function should have type:\n"
+"\n"
+"  int <name>(int argc, const char** argv, FbleCompiledModuleFunction* module);\n"
+"\n"
+"It will be called passing argc and argv from `main' and the compiled module\n"
+"generated in (1).\n"
+"\n"
+"*Options*\n"
+"\n"
+"Generic Program Information:\n"
+"  -h, --help                 display this help text and exit\n"
+"  -v, --version              display version information and exit\n"
+"\n"
+"Input control:\n"
+"  -I DIR                     add DIR to the module search path\n"
+"  -m, --module MODULE_PATH   the path of the module to compile\n"
+"\n"
+"Target control:\n"
+"  -t, --target [aarch64 | c] what to compile to, defaults to aarch64\n"
+"\n"
+"Output control:\n"
+"  -c, --compile              generate compiled code for the module\n"
+"  -e, --export NAME          generate NAME function to export the module\n"
+"      --main NAME            generate main function using NAME wrapper\n"
+"\n"
+"At least one of --compile, --export, or --main must be provided.\n"
+"\n"
+"*Exit Status*\n"
+"\n"
+"0 on success\n"
+"\n"
+"1 on failure\n"
+"\n"
+"2 on usage error\n"
+"\n"
+"*Example*\n"
+"\n"
+"fble-compile -c -e CompiledFoo -I pkgs -m /Foo% > Foo.fble.s\n"
+"  Compiles /Foo% to an FbleCompiledModuleFunction* called `CompiledFoo'\n"
+"fble-compile -c --main FbleStdioMain -I pkgs -m /Foo% > foo.s\n"
+"  Generates a standalone program that invokes FbleStdioMain on the compiled\n"
+"  code for /Foo% when run.\n"
+"\n"
   );
 }
 
@@ -95,12 +133,15 @@ int main(int argc, const char* argv[])
   const char* target_string = NULL;
   bool help = false;
   bool error = false;
+  bool version = false;
 
   argc--;
   argv++;
-  while (!error && argc > 0) {
+  while (!(help || error || version)  && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
@@ -114,14 +155,20 @@ int main(int argc, const char* argv[])
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
   }
 
+  if (version) {
+    PrintVersion(stdout);
+    FbleVectorFree(search_path);
+    return EX_SUCCESS;
+  }
+
   if (help) {
-    PrintUsage(stdout);
+    PrintHelp(stdout);
     FbleVectorFree(search_path);
     return EX_SUCCESS;
   }
 
   if (error) {
-    PrintUsage(stderr);
+    PrintHelp(stderr);
     FbleVectorFree(search_path);
     return EX_USAGE;
   }
@@ -135,14 +182,14 @@ int main(int argc, const char* argv[])
     target = TARGET_C;
   } else {
     fprintf(stderr, "unsupported target '%s'\n", target_string);
-    PrintUsage(stderr);
+    PrintHelp(stderr);
     FbleVectorFree(search_path);
     return EX_USAGE;
   }
 
   if (!compile && export == NULL && main_ == NULL) {
     fprintf(stderr, "one of --export NAME, --compile, or --main NAME must be specified.\n");
-    PrintUsage(stderr);
+    PrintHelp(stderr);
     FbleVectorFree(search_path);
     return EX_USAGE;
   }

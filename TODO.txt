@@ -1,3 +1,18 @@
+* Man pages
+ - Update --version and --help for each installed binary.
+  fble-app
+  fble-disassemble
+  fble-md5
+  fble-sat
+  fble-graphics
+  fble-perf-profile
+  fble-stdio
+  fble-deps
+  fble-invaders
+  fble-pinball
+  fble-test
+ - Automatically generate and install man pages with installed binaries?
+
 * How to check errors from stale files in build directory?
   For example, sat/Sat/sat-tests still existed, even though now were compiling
   to sat/sat-tests, but accidentally referencing the old sat/Sat/sat-tests
@@ -19,7 +34,7 @@
 * Release
  - Add --version option to things.
  - Clean up libfble interface.
- - Write man pages.
+ - Write man pages (fble.man.txt)
  See thoughts/fble.release.txt
 
 * Check whether tclsh is widely available or it should be changed to tclsh8.6
@@ -207,7 +222,3 @@
 
 * [profile] Check if it's okay to add new blocks to a profile in progress.
  - either way, document that clearly.
-
-* [release] Write man pages for fble and friends?
- - see thoughts/fble.man.txt
- 
