@@ -171,3 +171,52 @@ Cool. I like this. It's a little finicky in terms of how to format the help
 text, but I can make it work. In particular, label sections with *xxx*, use
 plenty of blank line separators and align things far to the left.
 
+---
+
+Now that the question of man pages for binaries is settled, on to the question
+about man pages for library functions.
+
+Presumably I have enough info in my header file comments to generate a man
+page from them. Maybe we want to add a little extra boiler plate. Maybe we
+want to add a little more structure for things like 'see also'. How hard would
+it be to scrape that info from each file in include/fble/*?
+
+Maybe I should start by drafting a man page for one of the functions, just to
+see what the end result might look like, and what, if any, information I would
+need to add.
+
+Okay, I've got a draft of include/fble/FbleNewStructValue.3. The structured
+info I want:
+
+* function name
+* brief description. Like, really brief.
+* detailed description
+* list of args, for each arg: name, description (optional if no inputs)
+* side effects, general description? list? (optional if no side effects)
+* return value description (optional if return void)
+* prototype, split up by argname/non-argname components.
+
+Let me browse through the header files and see if any issues stand out:
+* Not consistently separating brief from more detailed description.
+ - Could be fixed by putting brief description on same line as name?
+* Documenting macros as opposed to functions.
+* Formatted code in description, and other layout things.
+* Documentation of types as opposed to functions.
+* See also would probably be useful to have somehow.
+* Some functions missing the '--' on the comment.
+* Types like 'const char*' could make it harder to see which is the arg?
+* #define or other thing between comment and function prototype.
+* TODO in the comment.
+* Embedded things like NULL that we might want to highlight differently.
+* varargs '...' argument
+
+How important is it to stick with standard man page style?
+* Do we really need a super brief description with as part of the name?
+* Do we really need to use 'RETURN VALUE' section for that info? Should we
+  avoid separate sections for side effects?
+
+Because part of my wants to be, like: we extract the name and synopsys from
+the prototype, the rest we treat as pure markdown that we format and put into
+the DESCRIPTION section. No RETURN VALUE section. Possibly no 'brief' name, or
+we could make that part of the syntax for the function description.
+

@@ -118,7 +118,6 @@ void FbleValueFullGc(FbleValueHeap* heap);
 //   longer in use.
 FbleValue* FbleNewStructValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
 
-
 // FbleNewStructValue_ --
 //   Create a new struct value with given arguments.
 //

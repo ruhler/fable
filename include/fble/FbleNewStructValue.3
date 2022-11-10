@@ -1,0 +1,27 @@
+.TH FbleNewStructValue 3 2022-11-06 "" "Fable Manual"
+.SH NAME
+FbleNewStructValue \- Create a new struct value with given arguments.
+.SH SYNOPSIS
+.nf
+.B #include <fble/fble.h>
+.PP
+.BI "FbleValue* FbleNewStructValue(FbleValueHeap* " heap ", size_t " argc ", FbleValue**" args );
+.PP
+.fi
+.SH DESCRIPTION
+Create a new struct value with given arguments.
+.SH INPUTS
+.TP
+heap
+The heap to allocate the value on.
+.TP
+argc
+The number of fields in the struct value.
+.TP
+args
+argc FbleValue arguments to the struct value. Args are borrowed, and may be NULL.
+.SH SIDE EFFECTS
+The returned struct value must be freed using FbleReleaseValue when no
+longer in use.
+.SH RETURN VALUE
+A newly allocated struct value with given args.
