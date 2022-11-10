@@ -65,5 +65,5 @@ desired.
   
 ## Next Steps
 
-See tutorials/Tutorial1.md for the first in a series of tutorials about the
-fble language to get started.
+See tutorials/Tutorials.md for a series of tutorials about the fble language
+to get started.

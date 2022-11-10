@@ -1,16 +1,17 @@
-# Tutorial 2: Main Functions
+# Entry Points
 
-This tutorial walks you through how to write a main function for the fble
-program from tutorial 1. By the end of the tutorial you'll be able to pass bit
-vectors on the command line and see the results of bitwise operations printed
-out.
+This tutorial walks you through how to write a main function for the
+fble program from FirstProgram.md. By the end of the tutorial you'll be able
+to pass bit vectors on the command line and see the results of bitwise
+operations printed out.
 
 ## No Main Function
 
-The fble language doesn't have a concept of a `main` function like many other
-languages. There are no built-in integer, string, or array types, and there is
-no access to operating system calls from the language for reading and writing
-files. Instead, you can write C code to define your own main functions.
+Unlike many other languages, the fble language doesn't have a concept of a
+`main` function. There are no built-in integer, string, or array types, and
+there is no access to operating system calls from the language for reading and
+writing files. Instead, you can write C code to define your own main
+functions.
 
 An fble program describes how to evaluate an fble value. The value could be a
 struct value, a union value, or a function value, for example. What to do with
@@ -18,7 +19,7 @@ the resulting value is up to driver code written in C. We've already seen one
 example of fble driver code: the `fble-test` program, which evaluates the
 program and discards the result.
 
-In tutorial 1 we wrote a program that computes the bitwise `AND` of two 4-bit
+In FirstProgram.md we wrote a program that computes the bitwise `AND` of two 4-bit
 bit vectors. Let's write some driver code that runs the program and prints out
 whatever `Bit4@` value is returned by the program.
 

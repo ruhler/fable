@@ -1,11 +1,11 @@
-# Tutorial 1: First Program
+# First Program
 
 This tutorial walks you through writing and testing your first fble program.
 You'll implement a bitwise `AND` operation on a 4 bit bit-vector. To
 better focus on the basics, the program is written from scratch, without
 making use of any existing libraries.
 
-In your favorite text editor, start a new file called `Tutorial1.fble`. The
+In your favorite text editor, start a new file called `FirstProgram.fble`. The
 `.fble` extension is used for fble programs, and required for the fble
 interpreter and compiler to be able to locate your code.
 
@@ -171,33 +171,32 @@ can be used to run fble programs. `fble-test` runs an fble program and
 discards its result. It will report any syntax, compiler, or runtime errors
 encountered.
 
-Try running our program using the following:
+Try running your program using the following:
 
-    fble-test -I tutorials -m /Tutorial1%
+    fble-test -I . -m /FirstProgram%
 
-(If you have built fble yourself and haven't yet installed `fble-test`, it
-should be available at the path `fble/test/fble-test` in your build
-directory.)
+**Note:** If you have built fble yourself and haven't yet installed
+`fble-test`, it should be available at the path `fble/test/fble-test` in your
+build directory.
 
-The `-I tutorials` option says to look in the directory `tutorials` for your
-fble program. You can use this to try running the `tutorials/Tutorial1.fble`
-program included alongside this tutorial. To run your own `Tutorial1.fble`
-file, replace `tutorials` with the path to the directory containing your
-`Tutorial1.fble` file.
+The `-I .` option says to look in the current directory  for your
+`FirstProgram.fble`. You could change this to `-I tutorials/FirstProgram`, for
+example, to try running the `tutorials/FirstProgram/FirstProgram.fble` program
+included alongside this tutorial instead.
 
-The `-m /Tutorial1%` option says which fble module to run. We haven't
-introduced modules in this tutorial, but briefly, Tutorial1.fble defines a
-module referenced by the module path `/Tutorial1%` from the include directory
+The `-m /FirstProgram%` option says which fble module to run. We haven't
+introduced modules in this tutorial, but briefly, FirstProgram.fble defines a
+module referenced by the module path `/FirstProgram%` from the include directory
 specified by the `-I` option discussed above. The `fble-test` program will
-convert the module path `/Tutorial1%` to the file name `Tutorial1.fble` and
-search for that file to run in the given include path.
+convert the module path `/FirstProgram%` to the file name `FirstProgram.fble`
+and search for that file to run in the given include path.
 
 If all goes well, nothing should be printed out. That means there weren't any
 errors. To force an error, change one of the `Unit@ _ = ...` lines. For
 example, change `Unit@ _ = z.3.0;` to `Unit@ _ = z.3.1;`. Rerun the command
 above, and you should get an error message:
 
-> tutorials/Tutorial1.fble:29:15: error: union field access undefined: wrong tag
+> FirstProgram.fble:29:15: error: union field access undefined: wrong tag
 
 This error message means you tried to access a union field that was different
 from the tag associated with the union value. In this case, the union value
@@ -211,3 +210,9 @@ was tagged with `0`, and you tried to access its field `0`.
    `Bit@` like how we defined `Bit4@`.
 3. Try implementing a 4-bit `Add` function that can add two `Bit4@`
    interpreted as twos-complement integers.
+
+## Next Steps
+
+Head over to EntryPoints.md to learn how to write a proper main function for
+your program.
+

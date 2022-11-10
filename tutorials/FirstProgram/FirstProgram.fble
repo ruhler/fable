@@ -1,4 +1,4 @@
-# fble program for Tutorial 1: First Program.
+# fble program for First Program tutorial.
 
 # Types:
 @ Unit@ = *();

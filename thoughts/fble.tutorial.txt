@@ -51,5 +51,95 @@ install, or manual, to whatever location you want. Let me assume it's
 installed and accessible from standard path environment variables for binaries
 and libraries.
 
+---
 
+Question: How should I name tutorials? There is a clear order to them, in my
+mind. But I fear if I talk a lot about the tutorial number in the tutorial,
+that's going to make it much harder to insert a new tutorial somewhere in the
+mix. What options do I have?
 
+* Number tutorials, refer to by number, as now.
+* Number tutorials, refer to by name in the tutorial.
+  - Then we need to pick decent names.
+* Only name tutorials.
+  - Then we need to pick decent names.
+  - Use asciidoc or some other table of contents to put them in order?
+
+How does java tutorial do it? They just use names, like "First Java Program",
+which is called simple-program-of-java in the URL. And file names, in this
+case, things like "Simple.java".
+
+Let's try adjusting and go that route. How about, just to force decent pick of
+names, remove number entirely from the name of the tutorial. Have a table of
+contents for tutorials, and maybe each tutorial can give the name or a link to
+the previous tutorial and the next tutorial at the top and the bottom.
+
+Tutorial1 name brainstorm:
+* FirstProgram. That's pretty obvious.
+
+Tutorial2 name brainstorm:
+* Main. I think 'functions' is maybe not necessary? Because it doesn't have to
+  be a function. Except it is a function on the c side. And "Main Function"
+  makes it a little more clear that we aren't talking about, for example, the
+  main tutorial, or main explanation of fble.
+* Main Function
+* Entry Point. Actually, that's good: EntryPoints.
+"In computer programming, an entry point is the place in a program where the
+execution of a program begins, and where the program has access to command
+line arguments."
+
+I like that.
+
+So, let's update things to be FirstProgram and EntryPoints.
+
+Also, I should add some tests that we can compile and run the commands in the
+programs.
+
+Next question: what about sample code names?
+* In theory users should write their own code from the text of the tutorial.
+* But if they are lazy, or need some help putting it together, I want to
+  provide a copy of the sample code.
+* Some tutorials, like EntryPoints, may have multiple variations of the code.
+  Then you want copies of all variations.
+* When giving examples for how to run, do you tell them based on the code they
+  right, or the sample program supplied?
+
+For a tutorial, EntryPoints, I assume code would be: EntryPoints.fble. That's
+what we ask the user to write. The sample code would be: EntryPoints1.fble,
+EntryPoints2.fble? or EntryPointsA.fble, EntryPointsB.fble?
+EntryPoints_1.fble, EntryPoints_2.fble? 1/EntryPoints.fble,
+2/EntryPoints.fble? EntryPoints_NoMainFunction.fble, where 'NoMainFunction' is
+the section where we do that code? EntryPoints/1.fble, EntryPoints/2.fble
+EntryPoints/NoMainFunction.fble, EntryPoints/...
+
+Use of a subdirectory for artifacts related to the tutorial is appealing to
+me. Then any build artifacts, etc, can go in that subdirectory? Or, we keep
+things out of the way of whatever the user is writing in their own directory
+if they are working from the tutorials directory?
+
+FirstProgram/FirstProgram.fble
+FirstProgram.md
+
+Versus
+
+FirstProgram.md
+FirstProgram.fble
+
+Yeah, I like the organization of subdirectories. Much easier to see artifacts
+for that particular tutorial.
+
+Let me assume the reader is working in some directory other than the tutorial
+directory. Use '.' to name that directory. Then we can say, if using sample
+program, copy it to '.', or run directly with tutorials/FirstProgram, etc as
+the include path.
+
+Not sure. Let's try and see. This should be a decent improvement at least.
+
+---
+
+I'm not really into markdown. It's too limited in what you can do. Consider
+switching over to asciidoc syntax. That way I could provide a much nicer book
+format in the end.
+
+What extension does asciidoc use? .adoc. Hmm... that's a little annoying. I
+would rather it be, like .txt. Maybe we can use .txt anyway.
