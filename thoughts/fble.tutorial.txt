@@ -143,3 +143,13 @@ format in the end.
 
 What extension does asciidoc use? .adoc. Hmm... that's a little annoying. I
 would rather it be, like .txt. Maybe we can use .txt anyway.
+
+---
+
+One thing we can do is use a generic name for the programs, like
+'Program.fble'. That way we can reuse the same name from tutorial to tutorial,
+ provide different sample versions for different tutorials using
+subdirectories, and at the same time allow the user to reuse the same file in
+place?
+
+Yeah, that's good.

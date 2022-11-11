@@ -9,10 +9,15 @@ int main(int argc, const char* argv[])
   FbleVectorInit(search_path);
   FbleVectorAppend(search_path, ".");
 
-  const char* module_path = "/Tutorial2a%";
+  FbleModulePath* module_path = FbleParseModulePath("/Hello%");
+  if (module_path == NULL) {
+    fprintf(stderr, "Failed to parse module path.\n");
+    return 1;
+  }
 
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleLinkFromCompiledOrSource(heap, NULL, NULL, search_path, module_path);
+  FbleValue* linked = FbleLinkFromSource(heap, search_path, module_path, NULL);
+  FbleFreeModulePath(module_path);
   FbleVectorFree(search_path);
 
   if (linked == NULL) {

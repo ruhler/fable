@@ -197,7 +197,7 @@ void FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result
   PopStackFrame(heap, thread);
 }
 
-// FbleEval -- see documentation in fble.h
+// FbleEval -- see documentation in fble-value.h
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {
   return FbleApply(heap, program, NULL, profile);

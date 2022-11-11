@@ -5,7 +5,7 @@ You'll implement a bitwise `AND` operation on a 4 bit bit-vector. To
 better focus on the basics, the program is written from scratch, without
 making use of any existing libraries.
 
-In your favorite text editor, start a new file called `FirstProgram.fble`. The
+In your favorite text editor, start a new file called `Hello.fble`. The
 `.fble` extension is used for fble programs, and required for the fble
 interpreter and compiler to be able to locate your code.
 
@@ -173,22 +173,22 @@ encountered.
 
 Try running your program using the following:
 
-    fble-test -I . -m /FirstProgram%
+    fble-test -I . -m /Hello%
 
 **Note:** If you have built fble yourself and haven't yet installed
 `fble-test`, it should be available at the path `fble/test/fble-test` in your
 build directory.
 
 The `-I .` option says to look in the current directory  for your
-`FirstProgram.fble`. You could change this to `-I tutorials/FirstProgram`, for
-example, to try running the `tutorials/FirstProgram/FirstProgram.fble` program
+`Hello.fble`. You could change this to `-I tutorials/FirstProgram`, for
+example, to try running the `tutorials/FirstProgram/Hello.fble` program
 included alongside this tutorial instead.
 
-The `-m /FirstProgram%` option says which fble module to run. We haven't
-introduced modules in this tutorial, but briefly, FirstProgram.fble defines a
-module referenced by the module path `/FirstProgram%` from the include directory
+The `-m /Hello%` option says which fble module to run. We haven't
+introduced modules in this tutorial, but briefly, `Hello.fble` defines a
+module referenced by the module path `/Hello%` from the include directory
 specified by the `-I` option discussed above. The `fble-test` program will
-convert the module path `/FirstProgram%` to the file name `FirstProgram.fble`
+convert the module path `/Hello%` to the file name `Hello.fble`
 and search for that file to run in the given include path.
 
 If all goes well, nothing should be printed out. That means there weren't any
@@ -196,7 +196,7 @@ errors. To force an error, change one of the `Unit@ _ = ...` lines. For
 example, change `Unit@ _ = z.3.0;` to `Unit@ _ = z.3.1;`. Rerun the command
 above, and you should get an error message:
 
-> FirstProgram.fble:29:15: error: union field access undefined: wrong tag
+> Hello.fble:29:15: error: union field access undefined: wrong tag
 
 This error message means you tried to access a union field that was different
 from the tag associated with the union value. In this case, the union value
