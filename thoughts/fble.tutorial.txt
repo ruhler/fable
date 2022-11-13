@@ -153,3 +153,9 @@ subdirectories, and at the same time allow the user to reuse the same file in
 place?
 
 Yeah, that's good.
+
+---
+
+I'm second guessing the name of the second tutorial. Entry points feels like a
+weird name. How about "main driver" instead? I think that's better.
+

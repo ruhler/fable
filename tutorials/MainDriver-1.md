@@ -1,6 +1,6 @@
-# Entry Points, Part I
+# Main Driver, Part I
 
-This tutorial walks you through how to write a main function for the
+This tutorial walks you through how to write main driver code for the
 fble program from FirstProgram.md.
 
 This is part 1 of a two part tutorial. The first part shows how to print the
@@ -13,8 +13,8 @@ bitwise operation.
 Unlike many other languages, the fble language doesn't have a concept of a
 `main` function. There are no built-in integer, string, or array types, and
 there is no access to operating system calls from the language for reading and
-writing files. Instead, you can write C code to define your own main
-functions.
+writing files. Instead, you can write C code to drive execution of your
+program and print out the results.
 
 An fble program describes how to evaluate an fble value. The value could be a
 struct value, a union value, or a function value, for example. What to do with
@@ -181,6 +181,8 @@ following code:
 
 The `FbleStructValueAccess` function accesses a field of a struct by
 position. The `FbleUnionValueTag` function returns the tag of a union value.
+There's also an `FbleUnionValueAccess` function you could use to access the
+field of a union value if you wanted to.
 
 ### Cleaning up
 
@@ -193,7 +195,8 @@ return from our main function:
   }
 
 And that's it! You have finished writing driver code to run your fble program
-with the interpreter and print out the resulting `Bit4@` value.
+with the interpreter and print out the resulting `Bit4@` value. You can
+compare your code with the `hello.c` file shipped alongside this tutorial.
 
 ## Running the Code
 
@@ -234,5 +237,5 @@ If all goes well, you should see:
 
 ## Next Steps
 
-Head over to EntryPoints-2.md to learn how to pass `x` and `y` on the command
+Head over to MainDriver-2.md to learn how to pass `x` and `y` on the command
 line when running the `hello` program.
