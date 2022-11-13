@@ -213,6 +213,6 @@ was tagged with `0`, and you tried to access its field `0`.
 
 ## Next Steps
 
-Head over to EntryPoints.md to learn how to write a proper main function for
+Head over to EntryPoints-1.md to learn how to write a proper main function for
 your program.
 

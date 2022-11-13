@@ -149,9 +149,90 @@ have printed an error message to `stderr` in case of an error.
 
 ### Evaluating the Program
 
+We use `FbleEval` to evaluate the program. This runs the code for the program
+and returns the result:
+
     FbleValue* result = FbleEval(heap, linked, NULL);
     FbleReleaseValue(heap, linked);
 
-## TODO
+    if (result == NULL) {
+      FbleFreeValueHeap(heap);
+      return 1;
+    }
 
-   gcc -o tutorial2a Tutorial2a.c -I ../install/include -L ../install/lib -lfble 
+As before, we pass `NULL` for the profiling argument. We call
+`FbleReleaseValue` on `linked` after evaluating the program to tell the
+garbage collector it no longer needs to hold on to the `linked` value. And
+finally we check if the result is `NULL`, which would indicate a runtime error
+occurred.
+
+### Printing the Result
+
+The resulting value should have type `Bit4@`. We can iterate over each field
+of that structure and print whether the bits are `0` or `1` using the
+following code:
+
+    printf("Result: ");
+    for (size_t i = 0; i < 4; ++i) {
+      FbleValue* bit = FbleStructValueAccess(result, i);
+      printf("%c", FbleUnionValueTag(bit) == 0 ? '0' : '1');
+    }
+    printf("\n");
+
+The `FbleStructValueAccess` function accesses a field of a struct by
+position. The `FbleUnionValueTag` function returns the tag of a union value.
+
+### Cleaning up
+
+When we are done, we need to release the `result` value, free the `heap`, and
+return from our main function:
+
+    FbleReleaseValue(heap, result);
+    FbleFreeValueHeap(heap);
+    return 0;
+  }
+
+And that's it! You have finished writing driver code to run your fble program
+with the interpreter and print out the resulting `Bit4@` value.
+
+## Running the Code
+
+To try running the code, we need to compile `hello.c` into a binary, and then
+invoke that binary:
+
+   $ gcc -o hello hello.c -lfble 
+   $ ./hello
+
+Whether this works depends on where the include files and library files for
+fble are installed. If your include files or library files are installed at in
+a non-standard path, you may need to use the `-I` and `-L` options to gcc. For
+example, if you have built fble but not yet installed it, the include files
+will be in the source directory under include/ and the library will be in your
+build directory under lib/. Assuming $SOURCE points to your source directory
+and $BUILD points to your build directory, you would want:
+
+   $ gcc -o hello hello.c -I $SOURCE/include -L $BUILD/lib -lfble 
+
+Because we hard coded `.` as the search path, you'll also need to run your
+`hello` binary from the same directory where `Hello.fble` lives.
+
+If all goes well, you should see:
+
+    $ ./hello
+    $ Result: 0010
+
+## Exercises
+
+1. Change the values of `x` and `y` in `Hello.fble` and rerun the `hello`
+   program. Does the output match what you expect?
+2. Change your `hello` program to take the search path and module path as
+   command line arguments. Try running `hello` from a different directory and
+   using a different name for the `Hello.fble` file.
+3. Define a `Bit8@` type as a structure with two `Bit4@` fields. Update
+   `Hello.fble` to do bitwise `And8` on `Bit8@` values and update `hello.c` to
+   print the resulting 8-bit value as output.
+
+## Next Steps
+
+Head over to EntryPoints-2.md to learn how to pass `x` and `y` on the command
+line when running the `hello` program.
