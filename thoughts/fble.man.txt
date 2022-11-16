@@ -220,3 +220,27 @@ the prototype, the rest we treat as pure markdown that we format and put into
 the DESCRIPTION section. No RETURN VALUE section. Possibly no 'brief' name, or
 we could make that part of the syntax for the function description.
 
+---
+
+Let's start simple, mostly unstructured?
+
+// <name> --
+// <description>
+// ...
+... <name> (...);
+
+Where description is formatted with:
+  Foo: ... for a section
+  * ... for a list
+
+Or, if we are willing to use some additional tool to generate the man page,
+like markdown2man or asciidoc, then have it be asciidoc syntax. Generate
+asciidoc, and have that convert to the man page.
+
+I think it's time to investigate more about whether we should be using
+markdown or asciidoc for documentation. See thoughts/fble.docs.txt.
+
+Discussion suggests we give asciidoc a try. Then treat the doc comments as raw
+asciidoc markdown to include in the generated man page. Let's let asciidoc
+conversion happen first though, in case I find reasons not to like asciidoc.
+

@@ -189,10 +189,10 @@ field of a union value if you wanted to.
 When we are done, we need to release the `result` value, free the `heap`, and
 return from our main function:
 
-    FbleReleaseValue(heap, result);
-    FbleFreeValueHeap(heap);
-    return 0;
-  }
+      FbleReleaseValue(heap, result);
+      FbleFreeValueHeap(heap);
+      return 0;
+    }
 
 And that's it! You have finished writing driver code to run your fble program
 with the interpreter and print out the resulting `Bit4@` value. You can

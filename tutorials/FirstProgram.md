@@ -196,7 +196,7 @@ errors. To force an error, change one of the `Unit@ _ = ...` lines. For
 example, change `Unit@ _ = z.3.0;` to `Unit@ _ = z.3.1;`. Rerun the command
 above, and you should get an error message:
 
-> Hello.fble:29:15: error: union field access undefined: wrong tag
+    Hello.fble:29:15: error: union field access undefined: wrong tag
 
 This error message means you tried to access a union field that was different
 from the tag associated with the union value. In this case, the union value

@@ -1,0 +1,252 @@
+Fble Docs
+=========
+In the process of writing tutorials and trying to generate man pages, the
+question has come up of whether we should use markdown or asciidoc. Let's
+discuss.
+
+Markdown is fairly standard and reasonable enough to use. But it doesn't
+consistently support advanced features I would want for real documentation or
+anything more basic than headings, links, and lists. I want things like
+includes and definition lists.
+
+I would love a tool that can check the syntax of my docs. And also be able to
+convert to man pages in a fairly standard way.
+
+I feel like asciidoc is more likely to have well defined syntax, advanced
+features for more complicated docs, and conversion to man pages.
+
+The potential downsides of asciidoc:
+* Another dependency to add to the project. Though it could be set up as a
+  dist dependency rather than a build or run dependency.
+* Potentially less appealing syntax? Need to double check.
+* Less standard, for example, integration with github readme.
+
+Where I'm thinking about using docs:
+* Project README - how does it show up on github?
+* Tutorials - how easy to connect tutorials together?
+* Book - booklike stuff wanted.
+* Program help text to convert to man pages.
+* Library function doc comments to convert to man pages.
+
+I would like to check the syntax of asciidoc too:
+* Support for '##' style headers instead of '~~~~~~~'?
+  == Title ==, === Title === looks like is what we would use.
+  Not consistent with markdown.
+* Support for definition lists?
+  Yes. For example:
+   x:: ...
+
+See /usr/share/doc/asciidoc/userguide.html for asciidoc docs.
+
+In general, it's pretty clear that asciidoc will not be compatible with
+markdown.
+
+Apparently github does support asciidoc? Yes. I just need to use '.adoc',
+'.ad', or .asciidoc extension.
+
+I don't see an obvious syntax checker for asciidoc yet, but maybe we could
+enable warnings and give an error if there is a warning generating some
+format for asciidoc.
+
+My vote: let's give asciidoc a shot. I know how I feel about markdown. It's
+been a while since I tried asciidoc.
+
+To start:
+* Update README, tutorials
+  - Add build commands to call asciidoc or asciidoctor as seems best for
+    syntax checks.
+* Consider generating man pages for --help via asciidoc fragments instead of
+  using help2man.
+
+Oh, I guess one question is how a doc comment would look as an asciidoc.
+
+// Foo --
+// Inputs::
+// * ...
+// Side effects::
+// * ...
+// Returns::
+
+I think it works via definition list just fine. Cool. Is it worth changing the
+header too?
+
+// = Foo =
+// Inputs::
+// * ...
+// Side effects::
+// * ...
+// Returns::
+
+That's just as easy to parse as // Foo --. I think it looks fine.
+
+---
+
+Initial reactions after converting README.md to README.adoc:
+* asciidoc does give an error in some cases.
+* Reading the asciidoc.txt sample file, it's not quite as easy for me to read
+  in ascii format as I would have liked.
+* I don't like having 'XXXXXXXXXXXXXXXXXXXXXXXXXXXX' delimiters for things.
+  Seems like arbitrary length lines are asked for. Just use 4 chars to start?
+* It's nice having definition lists. I like that.
+
+---
+
+I wonder if I can write help usage for programs directly in asciidoc, and
+import the rendered text to use in --help. Wouldn't that be nicer? Then we
+could read it separately, include in a bigger manual, generate man pages, all
+that from the raw source documentation?
+
+Trouble is, manpage input format has special requirements different from help
+text and generic asciidoc description.
+
+Also, trying to generate text output from asciidoc is a pain. And I don't like
+the generated output style at the moment (lots of horizontal rules for no
+apparent reason?).
+
+Ugh. I'm going to be honest. I feel like really all I want is:
+* title, section headers, paragraphs, unordered lists, ordered lists,
+  definition lists, code blocks, inline code blocks, comments, callouts (todo,
+  warning, note, etc.), references to other docs, links.
+
+Markdown and asciidoc are both so close, but not quite there?
+* markdown is missing definition lists, callouts, references to other docs?
+* asciidoc is missing... none of these? But it doesn't do nested indenting
+  well. Like, definition lists can't be indented, right? No, it looks like you
+  can indent them.
+
+---
+
+The real problem is, I don't have enough control over how things are
+generated, because I don't have my own programmatic representation of a
+document. Imagine I could parse a document and represent it abstractly. Then I
+could easily generate whatever I want in terms of man pages and checking
+proper document format.
+
+But, guess what? I have a programming language that I could use for this. Why
+not write a doc package in fble? Generating man pages is not going to be
+difficult.
+
+How things could work:
+* fble program to parse header files and generate man pages.
+* fble program to parse help text and generate man pages.
+ - I don't think we want to generate help text from an fble program, because
+   that gives us an annoying bootstrapping problem.
+
+But that still leaves open the question: what syntax do we use? Do we keep
+README as a markdown format? What syntax do we use for tutorials, markdown?
+Asciidoc?
+
+I'll tell you the syntax I like: markdown plus definition lists. I guess
+technically we could use asciidoc for that, because I think asciidoc,
+technically, supports the '## ...' style section titles (though vim doesn't
+syntax highlight that).
+
+My documentation needs are not complex. If I want to go for a standard
+approach, asciidoc is better because it supports everything I could want in a
+more standard way than markdown. For man pages, I really would prefer to
+generate them myself.
+
+So, here is what I propose: Use a strict, small, subset of asciidoc. Write an
+fble program that can parse that subset of asciidoc. Use it for the following:
+* To extract doc comments on header files and generate man pages.
+* To extract help text on main program and generate man pages.
+* To syntax check my README file and tutorials.
+
+How about if I don't want to write my own program? If I don't want to be
+restricted to a subset of asciidoc?
+* README file and tutorials can be fullblown asciidoc.
+* Write code to extract general description and convert to custom format man
+  page for library code. As in, everything in the doc comment goes to the
+  description section of the man page. Ignore RETURN VALUE section of man
+  page. Write my own wrapper around the asciidoc.
+* Continue to use help2man for commands? Or write them in such a way that I
+  can extract asciidoc directly?
+ - The hard part is separating synopsys and options? Honestly, I don't really
+   want asciidoc syntax in the output of --help.
+
+Perhaps another option is to write my own asciidoc backend to generate text
+to use as input to --help and for man pages? That's an idea worth exploring I
+think.
+
+So, here's where we stand at the moment:
+* Continue to push ahead with asciidoc approach, but explore more advanced
+  options. Don't give up on asciidoc yet.
+
+Proposal:
+* README and tutorials in asciidoc.
+* --help text for commands generated automatically from fble-foo.adoc file
+  using a custom asciidoc backend.
+* man page for commands generated automatically from fble-foo.adoc file using
+  another custom asciidoc backend.
+* Use tcl to extract header file doc info and generate man pages from them via
+  asciidoc using another custom asciidoc backend.
+
+
+Let's start by seeing if we can generate useful --help from an asciidoc file.
+
+Features to look for:
+* attribute to define brief format for man page.
+* attribute to define synopsys/usage text.
+
+Ug. It's just hard. Asciidoc is so complicated. I really am tempted to just
+write my own. It can't possibly be that hard to parse basic formatting, can
+it?
+
+---
+
+Before going down that route, let's just double check if there isn't some
+other standard document format that meets my requirements.
+
+creole - no definition lists
+github flavored markdown - no definition lists
+mediawiki - no definition lists
+reStructuredText - no definition lists, overly verbose.
+
+No, I don't see any that I like. Best bet, I feel like, is to use a subset of
+asciidoc, call it asciidoc, but implement my own parser for the subset.
+Hopefully that gets me the best of most worlds:
+* Standard doc format that can be read by things like github and vim syntax
+  highlighting.
+* Full control over generated output.
+* Can implement my own checker.
+* No need to have asciidoc installed.
+
+With the plus of having another fble program to try to write.
+
+Let's be honest about what this really means:
+* For doc comments and --help text, use a subset of asciidoc.
+* For everything else, may as well use full asciidoc.
+
+Because I only need to generate man pages from doc comments and --help
+text.
+
+---
+
+Every time I try to do asciidoc, it feels like a slog. I'm playing around with
+labelled lists using fairly commonly accepted syntax of:
+
+label
+: definition
+label
+: definition
+
+It's actually not so bad.
+
+Oh, and I should remember I probably want the language spec to be turned into
+a doc with whatever format I choose.
+
+I'm not sure if github supports definition lists in its markdown.
+
+Options:
+* markdown with definition lists
+ - custom parser and man page generator for a subset?
+ - or use pandoc or some such for generating man pages.
+* asciidoc 
+ - custom parser and man page generator for a subset?
+
+---
+
+Screw it. Let's me have some fun and do my own doc format from scratch. It can
+be whatever I want: as similar or different from markdown or asciidoc. No
+worry about standards or anything like that. How would I do it?
+
