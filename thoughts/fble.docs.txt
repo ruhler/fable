@@ -250,3 +250,495 @@ Screw it. Let's me have some fun and do my own doc format from scratch. It can
 be whatever I want: as similar or different from markdown or asciidoc. No
 worry about standards or anything like that. How would I do it?
 
+We have a lot of docs existing to work with. Let's start with adding minimal
+features needed for those. Starting with README:
+
+* Title (or section 0?)
+* Sections (each with a title)
+* Paragraphs
+* Definition list.
+* Verbatim blocks.
+* Inline verbatim.
+
+Start with those.
+
+The syntax I'm thinking about:
+* section syntax, paragraphs, verbatim blocks, inline verbatim from markdown.
+  Ish.
+* definition list is:  '@ <label>: <definition>'.
+
+Let's see how that might look.
+
+What extension should I use for my doc format? .txt perhaps? .fbld, short for
+fbledoc? Let's stick with .txt for now. README.txt looks okay to me for now.
+It would look even better with syntax highlighting.
+
+Anyway, more important than the concrete syntax is the abstract syntax.
+
+First question: is everything in a section, or can there be things not in a
+section? Explicit sections have titles. If you had something in an implicit
+section, would it be a section without a title?
+
+Once you start a section, the only way out is to start a new section or end
+the document. We don't have explicit section end markers. That, to me,
+suggests a section has a title, optional (non subsection) content, followed by
+a list of subsections.
+
+Then it makes sense for a whole doc to be a top level section. The title of
+the top level section is the title of the doc?
+
+Question: what's the difference between the 'root' section, and a top level
+section? For example, if we use:
+
+# Foo
+...
+
+To give the title of the doc, what if you say:
+
+# Foo
+...
+
+# Bar
+...
+
+Then we don't have a document title, but rather two level 1 subsections in the
+document. Options:
+* Don't allow level 1 section anywhere in doc except at the beginning.
+* Use a separate syntax to describe the title of the doc.
+
+I'm leaning towards using separate syntax for the document title.
+
+Historically I've used:
+
+Title
+=====
+Author
+
+Anyway, that's back to a concrete syntax issue. Sounds like sections are clear
+to me.
+
+Section:
+  (title :: String)
+  (content :: Maybe Content)
+  (subsections :: [Section])
+
+Where a top level document is of type Section.
+
+Question: Can we use inline formatting in titles? I don't think I personally
+tend to do that in practice. Let's simplify and say no for now. We can add
+that back later.
+
+What is content?
+
+Content is a list of (non-section) blocks.
+
+Content: (blocks :: [Block])
+
+Block: ParagraphBlock | CodeBlock | DefinitionListBlock
+ParagraphBlock: (spans :: [Span])
+CodeBlock: (text :: String)
+DefinitionListBlock: [(label :: String, content :: Content)]
+
+Span: TextSpan | CodeSpan
+TextSpan: (text :: String)
+CodeSpan: (text :: String)
+
+Note, in particular, the body of a labelled list element is Content, which
+could be multiple paragraphs. At minimum it is at least a single paragraph.
+I'm not sure if that's right, but it's a good place to start. It's only wrong
+if we have reason to distinguish between a paragraph and a list of spans. I
+don't see a reason to.
+
+Cool. We have a draft spec for documents. Shall I codify it? Then we can dig
+into the nitty gritty of the concrete syntax.
+
+Section:
+* '#' in left column, number of consecutive '#' is section level. Whitespace 
+  after last '#'. Everything following the whitespace to the end of the line
+  is the name of the title.
+* Let's say line before and after have to be blank lines. So blank lines form
+  a kind of delimiter here.
+* Content is everything that follows up until the next section that's not at a
+  subsection level from this one.
+
+Document title brainstorm:
+
+Foo
+===
+
+# Foo
+
+% Foo
+
+Honestly, I like the first one from a human reader point of view. It gives
+weight enough to make it look like a title, and leaves room for metadata
+beneath it. I think better to be entirely separate from section syntax, even
+though the whole doc is meant to be one big section.
+
+Okay, so, ignore any initial blank lines in the document.
+The first non-blank line should be followed by a line of '===...' of same
+length as previous line? Let's say it's an error not to include a title? Or
+should the title be optional? Can the title be empty?
+
+Food Thought
+====
+
+Food
+=========
+
+I don't like having to match the number of '=' to the length of the title. I
+don't like it being mismatched. Anything better we could do instead?
+
+= Foo =
+Richard Uhler <...>
+
+Actually, I think a single '=' sign beneath looks okay.
+
+Foo
+=
+Richard Uhler <...>
+
+
+Okay, let's say title is first non-blank line, and it must be followed by a
+line consisting of one or more consecutive '=' signs, of any number.
+
+To have an empty tile? A section title could be empty by just not providing
+one. How about same here: empty title by having the line of '=' be the first
+thing.
+
+What about no title at all? Like, no '=' at all? I don't like it. I want it to
+be required.
+
+Okay, so, start of document is:
+  <blank lines>
+  non-blank line followed by '==' line
+  or '==' line
+
+And content starts after a blank line, then beyond.
+
+That's sections for you. Next is blocks, which could be at some indent level,
+because we may want nested lists. We keep track of a current indent level and
+read blocks relative to that.
+
+Skip blank lines. Interesting question: can we always use blank lines for
+delimiters? Is there ever a time we don't want to do that? I'm thinking of a
+code block with blank lines in it. If we treat blank line as delimiter, that
+would mean we have multiple code blocks back to back rather than a single code
+block.
+
+I certainly have code blocks in question with blank lines in them. Potentially
+multiple blank lines. Imagine we want to highlight a code block a different
+color. I think we need to consider code blocks with blank lines inside them
+all as one code block. Don't get rid of the blank line. Especially if there
+are multiple.
+
+How about start and end of a code block? Strip blank lines? Then, is it not
+possible to have an initial blank line?
+
+How about this: code blocks are always indented. That's the concrete syntax
+for them. So, if you want to continue the code block, continue the indent.
+
+So, a single code block:
+
+....@ Unit@ = *();
+....@ Bit@ = +(Unit@ 0, Unit@ 1);
+....@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+....
+....Unit@ Unit = Unit@();
+....
+....Bit@ 0 = Bit@(0: Unit);
+....Bit@ 1 = Bit@(1: Unit);
+
+And three adjacent code blocks:
+
+....@ Unit@ = *();
+....@ Bit@ = +(Unit@ 0, Unit@ 1);
+....@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+
+....Unit@ Unit = Unit@();
+
+....Bit@ 0 = Bit@(0: Unit);
+....Bit@ 1 = Bit@(1: Unit);
+
+From a viewer's perspective, they look the same. No harm. The hardest part
+will be writing them and remembering to indent if you want it to be a single
+block.
+
+This way you can do blank lines before and after the same way. I like that.
+
+And this way, we can treat blank lines as delimiters of content.
+
+In terms of blocks, taking into account the indent level to know how much of
+the stack of current elements to close:
+* '# ' starts a new section.
+* '* ' is a list element.
+* '@ ' denotes a labeled list element.
+* '  ' or other indent is a code block.
+* Anything else is a paragraph. Hopefully you don't want to start a paragraph
+  with '#', '*', or '@'. If you do, uh... We should have a paragraph symbol
+  you can use to escape those? Or, just escape with a '\' character? But what
+  if we want, for example, bold to start the paragraph, versus '*' to start
+  the paragraph? Maybe have '$ ' or '^ ' be an optional paragraph marker for
+  those special cases? Or '*' versus \*? No, I like '$ ' or '^ ' for an
+  explicit paragraph, as opposed to an implicit paragraph. Then *foo* could
+  still be a bolded thing at the front a paragraph, and \* foo could be a
+  literal '*' character at the start of a paragraph.
+
+* this is a list item
+$ *this* is a bolded first word of a paragraph.
+$ \*\*\* is three asterisks at the start of a paragraph.
+$ *\** is a bold asterisk at the start of a paragraph.
+
+---
+
+An important challenge is going to be allowing special characters to show up
+as regular characters in paragraphs. Here is what I propose:
+* A blank line is required after a paragraph before you consider anything a
+  special character. Blank line between paragraph and section, list, etc.
+* Option, or maybe always have it be, so the first line clearly denotes a
+  paragraph.
+
+For example, maybe paragraphs always have a single space to start? Is that
+sufficient? So we don't have to worry about what may be a special character,
+and we can add all sorts of new special characters later on like, 1, 2, 3, a,
+b, c, A, B, C, i, I, etc.
+
+I don't know. Single space to start each paragraph feels weird to me. Too
+subtle perhaps. Awkward with single line paragraphs. Maybe for now stick with
+the idea of '$' optional to start? Or, think about it more.
+
+Maybe a better approach would be to make special characters more special. They
+don't show up too often. Not as much as paragraphs. For example, maybe '@' is
+in front of every special character, and we just need to escape @@?
+
+@## Section
+@* list item 1
+@* list item 2
+   @* nested list item
+@. X: labeled.
+
+Who puts '@' in a paragraph anyway?
+
+No. I think go with what we had before. No special '@' character. Take our
+changes with having to know what to escape. Allow '$' as an explicit paragraph
+marker to support those escapes.
+
+---
+
+Next topic of discussion: whitespace and the vagaries thereof.
+
+Is it okay to align, for example, definition lists? I'm pretty sure I would
+want to. For example:
+
+  -I DIR::                     add DIR to the module search path
+  -m, --module MODULE_PATH::   the path of the module to compile
+
+The definitions are left aligned. That means there is an arbitrary amount of
+space between the label and the definition.
+
+According to our abstract syntax, the definition is <Content>. Content can be
+a code block, and a code block is denoted by using indent. If we support
+arbitrary whitespace between label and definition, how could we possibly code
+block content for that definition?
+
+Options:
+* Don't allow arbitrary whitespace. Always use a single space.
+* Use '> ...' as an indicator for code block instead of indent.
+* Have some sort of invisible hack, for example, where we put the verbatim
+  text on the next line.
+
+That also begs the question: for definition lists:
+* What is the indent level set to for subsequent lines.
+* How to put the definition on a separate line?
+
+For example:
+   @ foo: this is a really long example text in
+          a short window
+   @ bar: here is a another example that is
+     slightly different
+   @ sludge:
+     here is a definition on a different line.
+   @ also:             left aligned definition
+     that wraps back to the beginning.
+   @ and also:         left aligned definition
+                       that wraps back to the 
+                       alignment
+  
+More examples:
+  @ -I DIR:                     add DIR to the module search path
+  @ -m, --module MODULE_PATH:   the path of the module to compile
+
+  @ -I DIR: add DIR to the module search path
+  @ -m, --module MODULE_PATH: the path of the module to compile
+
+  @ -I DIR:
+    add DIR to the module search path
+  @ -m, --module MODULE_PATH:
+    the path of the module to compile
+
+  @ bin/:
+    Source code for fble compiler binaries.
+  @ book/:
+    Drafts for a book about the design of the fble language.
+  @ include/:
+    Public header files for the fble library.
+  @ lib/:
+    Source code for an fble interpreter and compiler implemented in C.
+  @ pkgs/:
+    Sample fble library and application packages.
+  @ spec/:
+    Specification of the fble language, including spec tests.
+  @ test/:
+    Source code for fble test binaries and other test utilities.
+  @ thoughts/:
+    A collection of running discussions about fble.
+  @ tutorials/:
+    Tutorials for getting started with fble.
+
+Okay. That's actually growing on me. In this case, we require the label to be
+on its own line. The content starts at 2 space indent on the next line. The
+above examples are worst case examples where you might want compact definition
+lists. They aren't so bad. They are all aligned. And now, in theory, we could
+have a code block:
+
+  @ foo:
+        code block is here
+
+Question: do we need the colon at all now?
+
+  @ -I DIR
+    add DIR to the module search path
+  @ -m, --module MODULE_PATH
+    the path of the module to compile
+
+
+  @ test/
+    Source code for fble test binaries and other test utilities.
+  @ thoughts/
+    A collection of running discussions about fble.
+  @ tutorials/
+    Tutorials for getting started with fble.
+
+I feel like no, we don't.
+
+---
+
+Next topic: how many spaces to indent?
+* always 2 spaces?
+* let the user decide?
+
+It's related to the above discussion. If it's not a fixed number of spaces,
+then code blocks aren't obvious to start when entering a new indent level.
+
+I personally would always decide 2 spaces. This is for me. Let's just require
+2 space indent everywhere.
+
+---
+
+Idea: let's call this format fbld. Recycle the name. Where 'd' stands for doc.
+You could imagine having 'fblt' for my 'test' format.
+
+---
+
+Question: how do you have two back-to-back lists? For example:
+
+* l1.1
+* l1.2
+
+* l2.1
+* l2.2
+
+Is that one list or two? Now, consider instead:
+
+* l1.1
+
+* l1.2
+
+* l2.1
+
+* l2.2
+
+That's clearly one list. How about:
+
+* l1.1
+
+* l1.2
+
+
+* l2.1
+
+* l2.2
+
+How about:
+
+* l1.1
+
+* l1.2 
+
+  which in this case is a multi-line list item.
+
+  Which makes it much harder to keep track of the end.
+
+* l2.1
+
+* l2.2
+
+Actually, it's not too hard. If we want to support multiple lists back to
+back, put two blank lines before the list element instead of a single blank
+line. This suggests we can't coalesce blank lines together into generic
+delimiters, because we want to allow blank lines between list items, but also,
+in this case, between lists.
+
+Whitespace means so much in this language. I guess that's not surprising,
+given the goal is to have something structured and uncluttered. So we use
+whitespace for the structure without having it clutter things up.
+
+---
+
+Anyway, I think we have enough worked out to get going. I think it could be
+easier to write the spec after first writing an implementation. This spec
+sounds hard to me to write, given the effect of whitespace, indent, and
+context on the meaning of the syntax.
+
+Things to do:
+* Draft fbld.txt spec.
+* Start pkgs/fbld with definition of Doc@ types.
+* Implement printer for Doc@.
+  - Do it right, so we can use this to see if there are any kinds of documents
+    you can't express in the concrete syntax.
+* Implement parser for Doc@.
+* Write a vim syntax file.
+
+Summary of decisions so I don't forget:
+* title\n=== for title, where any number of '=' characters allowed.
+* '#' for section
+* '*' for unordered list
+* '@ <label>\n  <content>' for definition list.
+* '$' optionally for paragraph
+* paragraph requires blank line to end.
+* 2 space indent for code block
+* 2 space indent for continuation.
+* 2 blank lines splits lists in two.
+* `...` for code inline
+
+Future work:
+* *...* for bold inline? italic inline? mixed bold/italic?
+* Numbered lists.
+* link to other file.
+* 'include' other file (with some handling of section levels).
+
+---
+
+Interesting side note: github renders markdown files nicely, and asciidoc
+files. It would be nice if links between files worked for that. Presumably
+using my own markup language will not work with github.
+
+Looks like links in theory would be: [display](tutorials/Tutorials.md). So
+that would be, uh, [tutorials/Tutorials.md](tutorials/Tutorials.md)? Could I
+just do (tutorials/Tutorials.md) instead? In asciidoc, you can do
+link:tutorial/Tutorials.md[]. Maybe markdown can do
+[](tutorials/Tutorials.md)? Apparently not.
+
+In that case, maybe I want to use asciidoc primarily while in the progress of
+switching to my own format? Now because it has definition lists and more
+convenient local reference links.
