@@ -66,5 +66,5 @@ desired.
   
 == Next Steps ==
 
-See link:tutorials/Tutorials.md[] for a series of tutorials about the
+See link:tutorials/Tutorials.adoc[] for a series of tutorials about the
 fble language to get started.
