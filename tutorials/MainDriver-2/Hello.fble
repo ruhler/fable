@@ -1,4 +1,4 @@
-# fble program for MainDriver-1 tutorial.
+# fble program for MainDriver-2 tutorial.
 
 @ Unit@ = *();
 @ Bit@ = +(Unit@ 0, Unit@ 1);
@@ -7,10 +7,6 @@
 Unit@ Unit = Unit@();
 
 Bit@ 0 = Bit@(0: Unit);
-Bit@ 1 = Bit@(1: Unit);
-
-Bit4@ x = Bit4@(0, 0, 1, 1);
-Bit4@ y = Bit4@(1, 0, 1, 0);
 
 (Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
   a.?(0: 0, 1: b);
@@ -20,6 +16,4 @@ Bit4@ y = Bit4@(1, 0, 1, 0);
   Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
 };
 
-Bit4@ z = And4(x, y);
-
-z;
+And4;

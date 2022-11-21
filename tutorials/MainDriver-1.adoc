@@ -2,7 +2,7 @@ Main Driver, Part I
 ===================
 
 This tutorial walks you through how to write main driver code for the
-fble program from FirstProgram.md.
+fble program from link:FirstProgram.adoc[].
 
 This is part 1 of a two part tutorial. The first part shows how to print the
 result of the bitwise computation to the screen in a user friendly way. The
