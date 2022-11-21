@@ -334,6 +334,7 @@ set build_tcls [list \
   $::s/bin/build.tcl \
   $::s/test/build.tcl \
   $::s/test/spec-test.build.tcl \
+  $::s/tutorials/build.tcl \
   $::s/pkgs/core/build.tcl \
   $::s/pkgs/app/build.tcl \
   $::s/pkgs/md5/build.tcl \

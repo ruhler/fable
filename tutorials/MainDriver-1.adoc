@@ -223,7 +223,7 @@ Because we hard coded `.` as the search path, you'll also need to run your
 If all goes well, you should see:
 
   $ ./hello
-  $ Result: 0010
+  Result: 0010
 
 == Exercises ==
 

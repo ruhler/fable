@@ -742,3 +742,298 @@ link:tutorial/Tutorials.md[]. Maybe markdown can do
 In that case, maybe I want to use asciidoc primarily while in the progress of
 switching to my own format? Now because it has definition lists and more
 convenient local reference links.
+
+---
+
+Let me give asciidoc another chance. It seems to be okay for tutorials,
+readme. Can we use it reasonably for man pages is the question. I think it's
+worth having the same discussion again that we had before, in case anything
+different comes out of it.
+
+First commands:
+* Writing the man page in asciidoc creates a reasonable description to read. I
+  have no complaints with, for example, bin/fble-compile.adoc.
+* The generated man page is not great, but it's serviceable.
+  - Examples don't render very well.
+  - No bold/italics in synopsis.
+  - But aside from minor things like that, it's fine.
+  - I guess this is because I haven't manually done the markup. I can add
+    that.
+* Any way to get --help text from this?
+  - The default generated text is not nearly concise enough. Table of
+    contents, lots of blank lines, lots of -------------- lines.
+
+The question, then, is how can I change the style of the output? Maybe now's a
+good time to read the documentation for asciidoc in detail, with an eye for
+how to do my own output formatting.
+
+Notes from reading asciidoc docs:
+* Learn about DocBook.
+* In theory I can change the input language by changing config files.
+* DocBook is XML. XSLT is a style sheet. Looks like we could provide custom
+  XSLT and CSS stylesheets.
+* See manpage.xsl for the manpage style sheet.
+* There is something called themes, which changes .css and .js for generated
+  html?
+* It's possible to annotate a section with a template name, which appears to
+  get processed in a template-specific way in the backend. For example:
+  'bibliography' section.
+* We can automatically set the template for a section based on its title using
+  [specialsections] part of an asciidoc .conf file. But this use is not
+  recommended. They say it is deprecated.
+* Looks like the .conf file contains templates for generating documents.
+
+Okay, so how does the text backend work when invoking a2x? Does asciidoc
+generate docbook via docbook backend, and then use xslt to turn that into
+text? Or does it go straight asciidoc to text?
+
+It goes:
+foo.adoc =(asciidoc)=> foo.xml =(xsltproc)=> foo.text.html =(w3m)=> foo.text
+
+In this case, a lot of the junk is brought in by xsltproc.
+
+So, we have options. We could try to add special config file to go straight to
+text from foo.adoc. Or we could try to improve xsltproc.
+
+How do man pages work right now? It generates a different foo.xml file that is
+a refentry format instead of article format. Then uses xsltproc with a manpage
+xslt sytlesheet to generate the man page.
+
+Let's first understand the asciidoc conf files and how the .xml file is
+generated. For man pages:
+
+/etc/asciidoc/asciidoc.conf
+- defines input language format.
+
+/etc/asciidoc/docbook45.conf
+- generates the xml tags using templates.
+
+Then a bunch of mostly irrelevant filters:
+  /etc/asciidoc/filters/graphviz/graphviz-filter.conf
+  /etc/asciidoc/filters/source/source-highlight-filter.conf
+  /etc/asciidoc/filters/music/music-filter.conf
+  /etc/asciidoc/filters/latex/latex-filter.conf
+  /etc/asciidoc/filters/code/code-filter.conf
+
+/etc/asciidoc/lang-en.conf
+  English language stuff.
+
+Can I try doing my own configuration files to start? Or, are there any other
+configuration files available I could use instead? No. But I bet I could write
+my own.
+
+How about we start here then? How would I turn my man-page structured
+fble-compile.adoc file into help-text suitable output?
+
+* <NAME> section
+* Add 'Usage:' in front of synopsys section text, same line.
+* Render description in as-is formatted text, limited to 80 cols.
+  Maybe go through roff or something to do the formatting for me?
+* Change sect2 titles to '<Title>'
+* Change sect3 titles to '<Title>:'
+
+It's all the same info. I think it's reasonable to try and generate help text
+from the man page asciidoc input.
+
+Shall I try?
+
+Looks like I could use:
+  asciidoc -v -e -f /etc/asciidoc/asciidoc.conf -f ruhler.conf fble-compile.adoc
+
+To try and pass my own custom .conf file. I'm not sure how to use my own
+backend otherwise.
+
+---
+
+Working through how to make a config file that would translate
+fble-compile.adoc to a reasonable usage help text:
+* How to add Usage: as special case for SYNOPSIS section?
+* How to get rid of &#8230; for '...' in synopsis?
+* How to add blank lines between paragraphs in the description?
+* How to get list item numbers?
+  - {listindex} is the attribute (found by reading /usr/bin/asciidoc).
+* How to put first list line on the same line as list index?
+  - I don't think I can.
+* Indent options. How to put definition on same line?
+* How to show 'EXIT STATUS', 'EXAMPLE' titles as special case for those
+  sections?
+  - Or maybe remove NAME, SYNOPSYS, DESCRIPTION, OPTIONs as special cases?
+* Remove footer text. DONE.
+  
+The generated output from asciidoc includes raw text from the input file. That
+means I can't do direct processing on that text, like stripping newlines,
+reflowing to fit column width, etc. Things like aligning list definitions will
+be hard. This suggests I'll want to pass the output through some post
+processor that can do wrapping and alignment for me.
+
+Two post-processors come to mind:
+1. Whatever is used for man pages. roff?
+2. xsltproc.
+
+Perhaps it's worth learning about xsltproc first.
+
+Okay, I guess let's read about xslt:
+* Ugh. It's a template language in xml syntax. I'm not convinced it will be
+  sufficient to address the problem I'm having. That is, I don't think it will
+  provide layout functionality. If it doesn't, then there is no value using it
+  instead of using asciidoc for that part.
+
+Why is this so hard? Why can't we just have a data structure that I can write
+python code to generate output from, for example? I could probably write a raw
+xml backend to asciidoc, and then use xml libraries in python to generate
+output.
+
+Maybe now is a good time to step back and ask what I'm trying to accomplish in
+this case anyway. I want to have a single source of truth for the
+documentation of an fble binary program that can be reused in the man page and
+--help text. I've said asciidoc is nice to use to describe the single source
+of truth, because it has the structure elements for lists, sections, etc. In
+that case, however, we would require asciidoc to generate the executable. Is
+that really what I want? Like, is this worth the complexity and overhead? Just
+duplicate the usage info. It's not that much.
+
+I could, of course, go the other direction, like I have now. Custom structured
+usage text that I generate asciidoc and/or man pages from. It's limited
+because I want to use the compact text form as the source of truth, which
+makes it hard to extract structure.
+
+There are a few cruxes here:
+* How to capture structure in compact text?
+  - For if I want --help to be source of truth.
+  - For library function doc comments.
+* How to avoid bootstrap problem for fble binaries
+  - To minimize dependencies needed to build them.
+  - To have them not depend on themselves.
+* How to minimize dependencies on external tools.
+  - Like help2man, asciidoc, xsltproc, etc.
+* How to take advantage of github / other standard processing of docs?
+
+If it weren't for github showing asciidoc and markdown nicely, it makes sense
+to have a custom format:
+* --help text and doc comments are source of truth.
+* So no issue with bootstrapping.
+* No extra dependencies.
+* Full control over generated code.
+* A fun example to add to fble.
+
+The downsides being:
+* Github doesn't render things in a pretty fashion.
+* Readers won't be able to google to understand the syntax of documentation.
+* It could be a fair amount of work to define my own markup language.
+
+Perhaps fble binaries are a bad place to start, because they don't really need
+clear text source of truth. But library doc comments do need a clear text
+source of truth, because they are comments in code.
+
+// # FbleNewStructValue
+//
+// Create a new struct value with given arguments.
+//
+// @ Inputs
+//   @ heap
+//     The heap to allocate the value on.
+//   @ argc
+//     The number of fields in the struct value.
+//   @ args
+//     'argc' `FbleValue` arguments to the struct value. Args are borrowed,
+//     and may be `NULL`.
+//
+// @ Results
+//   A newly allocated struct value with given args.
+//
+// @ Side effects
+//   * The returned struct value must be freed using FbleReleaseValue when no
+//     longer in use.
+
+That's a little less compact than I want though. I would prefer:
+
+// FbleNewStructValue --
+//
+// Create a new struct value with given arguments.
+//
+// Inputs:
+//   heap - The heap to allocate the value on.
+//   argc - The number of fields in the struct value.
+//   args - 'argc' `FbleValue` arguments to the struct value. Args are borrowed,
+//          and may be `NULL`.
+//
+// Results:
+//   A newly allocated struct value with given args.
+//
+// Side effects:
+// * The returned struct value must be freed using FbleReleaseValue when no
+//   longer in use.
+
+That is, the '@ ' of a definition list shifts things two characters to the
+right, and the newline shifts things down an extra line.
+
+Compare to doxygen:
+
+/**
+ * \brief Create a new struct value with given arguments.
+ *
+ * \param heap  The heap to allocate the value on.
+ * \param argc  The number of fields in the struct value.
+ * \param args  'argc' `FbleValue` arguments to the struct value.
+ *              Args are borrowed, and may be `NULL`.
+ *
+ * \return A newly allocated struct value with given args.
+ *
+ * @ Side effects
+ *   * The returned struct value must be freed using FbleReleaseValue when no
+ *     longer in use.
+ */
+
+Which is slightly more compact, because it doesn't use extra lines for
+'Inputs', 'Results', and 'Side effects' sections or the title of the function.
+
+Maybe I come up with my own doc comment format?
+
+Why not use doxygen:
+* It doesn't generate output the way I want.
+* No tag for side effects.
+* Doesn't have title of function at top of comment.
+* \brief seems not useful to me.
+* I don't like /** ... */ to denote doc comment? Though I guess I don't care
+  that much. This could be a decent way to denote what is a doc comment versus
+  general code comment.
+
+I might prefer something like:
+
+/**
+ * FbleNewStructValue
+ * 
+ * Create a new struct value with given arguments.
+ *
+ * \param heap  The heap to allocate the value on.
+ * \param argc  The number of fields in the struct value.
+ * \param args  'argc' `FbleValue` arguments to the struct value.
+ *              Args are borrowed, and may be `NULL`.
+ *
+ * \return A newly allocated struct value with given args.
+ *
+ * \effect The returned struct value must be freed using FbleReleaseValue when
+ *         no longer in use.
+ * \effect Some other effect, just for example purposes.
+ */
+
+Asciidoc would give us:
+
+// FbleNewStructValue
+// ------------------
+// Create a new struct value with given arguments.
+//
+// Inputs::
+//   heap:: The heap to allocate the value on.
+//   argc:: The number of fields in the struct value.
+//   args:: 'argc' `FbleValue` arguments to the struct value.
+//     Args are borrowed and may be `NULL`.
+//
+// Results::
+//   A newly allocated struct value with given args.
+//
+// Side effects::
+//   * The returned struct value must be freed using FbleReleaseValue when no
+//     longer in use.
+
+That's pretty compact.

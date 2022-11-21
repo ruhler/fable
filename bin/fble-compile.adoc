@@ -1,5 +1,5 @@
-Fble Compile
-============
+Fble Compile(1)
+===============
 
 == NAME ==
 
@@ -7,11 +7,11 @@ fble-compile - compile an fble module
 
 == SYNOPSYS ==
 
-  fble-compile [OPTION...] -m MODULE_PATH
+*fble-compile* ['OPTION'...] *-m* 'MODULE_PATH'
 
 == DESCRIPTION ==
 
-Compile the fble module identified by MODULE_PATH.
+Compile the fble module identified by 'MODULE_PATH'.
 
 There are three kinds of things that can be included in the generated code:
 
@@ -19,53 +19,57 @@ There are three kinds of things that can be included in the generated code:
 FbleCompiledModuleFunction for the module under an internal name that
 users should not directly reference.
 
-2. A named FbleCompiledModuleFunction function to export the code generated
+2. A named *FbleCompiledModuleFunction* function to export the code generated
 for a module. Users provide their desired name for this function. The
-compiler will re-export the internally named FbleCompiledModuleFunction from
+compiler will re-export the internally named *FbleCompiledModuleFunction* from
 (1) under this user specified name.
 
-3. A standard `main` function that invokes a user provided wrapper function.
+3. A standard *main* function that invokes a user provided wrapper function.
 The wrapper function should have type:
-
-  int <name>(int argc, const char** argv, FbleCompiledModuleFunction* module);
-
-It will be called passing argc and argv from `main' and the compiled module
-generated in (1).
++
+*int* 'NAME'**(int argc, const char argv, FbleCompiledModuleFunction* module);**
++
+It will be called passing 'argc' and 'argv' from *main* and the compiled
+module generated in (1).
 
 == OPTIONS ==
 === Generic Program Information ===
--h, --help
-: display this help text and exit
--v, --version
-: display version information and exit
+*-h, --help*::
+  display this help text and exit
+*-v, --version*::
+  display version information and exit
 
 === Input control ===
--I DIR::                     add DIR to the module search path
--m, --module MODULE_PATH::   the path of the module to compile
+*-I* 'DIR'::
+  add 'DIR' to the module search path
+*-m, --module MODULE_PATH*::
+  path of the module to compile
 
 === Target control ===
--t, --target [aarch64 | c]:: what to compile to, defaults to aarch64
+*-t, --target* [*aarch64* | *c*]::
+  what to compile to, defaults to *aarch64*
 
 === Output control ===
--c, --compile::      generate compiled code for the module
--e, --export NAME::  generate NAME function to export the module
---main NAME::        generate main function using NAME wrapper
+*-c, --compile*::
+  generate compiled code for the module
+*-e, --export* 'NAME'::
+  generate 'NAME' function to export the module
+*--main* 'NAME'::
+  generate main function using 'NAME' wrapper
 
-At least one of --compile, --export, or --main must be provided.
+At least one of *--compile*, *--export*, or *--main* must be provided.
 
 == EXIT STATUS ==
 
-* 0 on success
-* 1 on failure
-* 2 on usage error
+*0*:: Success
+*1*:: Failure
+*2*:: Usage Error
 
 == EXAMPLE ==
 
-  fble-compile -c -e CompiledFoo -I foo -m /Foo% > Foo.fble.s
+*fble-compile -c -e CompiledFoo -I foo -m /Foo% > Foo.fble.s*::
+  Compiles */Foo%* to an **FbleCompiledModuleFunction*** called *CompiledFoo*.
 
-Compiles /Foo% to an FbleCompiledModuleFunction* called `CompiledFoo'
-
-  fble-compile -c --main FbleStdioMain -I foo -m /Foo% > foo.s
-
-Generates a standalone program that invokes FbleStdioMain on the compiled code
-for `/Foo%` when run.
+*fble-compile -c --main FbleStdioMain -I foo -m /Foo% > foo.s*::
+  Generates a standalone program that invokes *FbleStdioMain* on the compiled
+  code for */Foo%* when run.
