@@ -1,0 +1,19 @@
+# fble program for MainDriver-2 tutorial.
+
+@ Unit@ = *();
+@ Bit@ = +(Unit@ 0, Unit@ 1);
+@ Bit4@ = *(Bit@ 3, Bit@ 2, Bit@ 1, Bit@ 0);
+
+Unit@ Unit = Unit@();
+
+Bit@ 0 = Bit@(0: Unit);
+
+(Bit@, Bit@) { Bit@; } And = (Bit@ a, Bit@ b) {
+  a.?(0: 0, 1: b);
+};
+
+(Bit4@, Bit4@) { Bit4@; } And4 = (Bit4@ a, Bit4@ b) {
+  Bit4@(And(a.3, b.3), And(a.2, b.2), And(a.1, b.1), And(a.0, b.0));
+};
+
+And4;
