@@ -331,3 +331,5 @@ Some things to figure out:
 * How to reference a field of the struct I'm document?
 * Convention on brief descriptions: Lower case? Phrase? Sentence?
 
+Let's move this discussion over to thoughts/fble.doxygen.
+

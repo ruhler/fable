@@ -1,0 +1,20 @@
+Fble Doxygen
+============
+So I've decided to try using doxygen for fable. See thoughts/fble.man.txt and
+thoughts/fble.docs.txt for context.
+
+This discussion is to track cleanup work on the use of doxygen.
+
+Things that need to be done:
+* Convert all doc comments over to doxygen.
+* Enable warnings as errors once everything is converted.
+* Fix dependency tracking.
+* Add man pages to be installed.
+* Figure out how to use relative include path instead of absolute in man page
+  name.
+* Figure out how to add proper #include to SYNOPSIS of generated man pages.
+* Come up with a doc comment style guide.
+ - style for brief?
+ - style for @param description?
+ - style for @returns description?
+

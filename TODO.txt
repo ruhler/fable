@@ -1,5 +1,7 @@
 * Fix dependency tracking for configure
   For example, rerun configure if any of the .in files change.
+* Fix dependency tracking for doxygen.
+  If you change a header file, that should cause rebuild of doxygen.
 * See if FbleStack and/or FbleThread can be made abstract.
 
 * Man pages
