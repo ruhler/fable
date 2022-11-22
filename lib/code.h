@@ -6,9 +6,9 @@
 #define FBLE_INTERNAL_CODE_H_
 
 #include <fble/fble-compile.h>   // for FbleCode forward declaration.
+#include <fble/fble-execute.h>   // for FbleExecutable.
 #include <fble/fble-profile.h>   // for FbleBlockId.
 
-#include "execute.h"        // for FbleExecutable.
 #include "kind.h"           // for FbleDataTypeTag.
 
 // FbleFrameSection --

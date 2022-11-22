@@ -855,3 +855,13 @@ code:
 
 /Sat/Aim%: 60173 lines of c code, 42.9% memory to compile at peak.
 
+---
+
+Revisiting this now, because we still need to remove internal includes from
+compiled c code. Looks like the first thought was to pass func, locals, and
+statics as argument to the run function. The goal being to remove the need for
+FbleFuncValueStatics to start.
+
+First step is to move everything from execute.h to fble-execute.h. But I do
+wonder if we can make FbleStack and FbleThread abstract types somehow?
+

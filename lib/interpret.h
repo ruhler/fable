@@ -4,7 +4,7 @@
 #ifndef FBLE_INTERNAL_INTERPRET_H_
 #define FBLE_INTERNAL_INTERPRET_H_
 
-#include "execute.h"
+#include <fble/fble-execute.h>
 
 // FbleInterpreterRunFunction --
 //   An standard run function that runs an fble function by interpreting the

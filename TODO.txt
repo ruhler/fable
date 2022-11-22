@@ -25,7 +25,6 @@
  - absolute path instead of relative?
  - duplicate options?
 
-* Figure out timeout issue for gdb test.
 * Optimize code for generate_c for low gcc memory use:
  - Use shorter labels for function names?
  - Only output labels for pc aborts that are actually jumped to.

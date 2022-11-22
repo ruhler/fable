@@ -8,10 +8,10 @@
 #include <stdlib.h>   // for NULL
 
 #include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree, etc.
+#include <fble/fble-execute.h>
 #include <fble/fble-vector.h>  // for FbleVectorInit, etc.
 
 #include "tc.h"
-#include "execute.h"
 #include "interpret.h"
 
 #define UNREACHABLE(x) assert(false && x)

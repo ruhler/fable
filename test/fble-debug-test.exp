@@ -9,16 +9,11 @@ set ::s [lindex $argv 0]
 set ::b [lindex $argv 1]
 
 proc require { str } {
-  # Sometimes this test times out. Not sure why. Increase the timeout a bunch
-  # to see if that helps.
-  set timeout 300
-
-  expect {
-    $str {}
-    "(gdb) " { error "got prompt instead of \"$str\"" }
-    timeout {error "timeout waiting for \"$str\"" }
+  expect -ex \
+    $str {} \
+    "(gdb) " { error "got prompt instead of \"$str\"" } \
+    timeout {error "timeout waiting for \"$str\"" } \
     eof {error "eof waiting for \"$str\"" }
-  }
 }
 
 eval {

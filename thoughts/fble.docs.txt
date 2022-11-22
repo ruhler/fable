@@ -1037,3 +1037,13 @@ Asciidoc would give us:
 //     longer in use.
 
 That's pretty compact.
+
+---
+
+Let me take a break from this to start working on what needs to be done
+regardless: extract the doc comments from the header files. I'm thinking in
+tcl.
+
+Can we get everything with some regex? My goal would be: given a header file,
+extract all the doc comments into a list.
+

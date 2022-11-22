@@ -1,7 +1,7 @@
 // execute.c --
 //   Code for executing fble instructions, functions, and processes.
 
-#include "execute.h"
+#include <fble/fble-execute.h>
 
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_end

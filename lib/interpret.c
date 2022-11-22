@@ -1,15 +1,15 @@
 
+#include <fble/fble-interpret.h>
 #include "interpret.h"
 
 #include <assert.h>   // for assert
 #include <stdlib.h>   // for rand
 
 #include <fble/fble-alloc.h>   // for FbleAlloc, FbleFree
-#include <fble/fble-interpret.h>
+#include <fble/fble-execute.h>
 #include <fble/fble-vector.h>  // for FbleVectorInit, etc.
 
 #include "code.h"
-#include "execute.h"
 #include "value.h"
 
 #define UNREACHABLE(x) assert(false && x)

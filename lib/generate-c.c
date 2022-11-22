@@ -922,7 +922,6 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   fprintf(fout, "#include <stdlib.h>\n");         // for rand
   fprintf(fout, "#include <fble/fble-value.h>\n");   // for FbleFuncValueStatics, etc.
-  fprintf(fout, "#include \"execute.h\"\n");
   fprintf(fout, "#include \"value.h\"\n\n");
 
   // Error messages.

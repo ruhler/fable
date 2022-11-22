@@ -159,3 +159,9 @@ Yeah, that's good.
 I'm second guessing the name of the second tutorial. Entry points feels like a
 weird name. How about "main driver" instead? I think that's better.
 
+---
+
+Going on to CompiledCode tutorial. I need to remove references to internal
+header files from compiled code before this makes sense. That should be a
+priority to work on.
+
