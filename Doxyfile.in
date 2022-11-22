@@ -1,3 +1,4 @@
+QUIET = YES
 PROJECT_NAME = "Fable"
 OUTPUT_DIRECTORY = @builddir@/doxygen
 JAVADOC_AUTOBRIEF = YES

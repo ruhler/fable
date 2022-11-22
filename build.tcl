@@ -358,9 +358,9 @@ build $::b/summary.tr \
   "$::s/test/log $::b/summary.tr tclsh $::s/test/tests.tcl < $::b/detail.tr"
 
 # Doxygen
-# TODO: fix the dependencies!
+lappend ::build_ninja_deps "$::s/include/fble"
 build $::b/doxygen.log \
-  "$::s/test/log $::b/Doxyfile" \
+  "$::s/test/log $::b/Doxyfile [glob $::s/include/fble/*.h]" \
   "$::s/test/log $::b/doxygen.log doxygen"
 
 # Phony targets.
