@@ -1,6 +1,6 @@
 /**
  * @file fble-arg-parse.h
- * Header for command line argument parsing library.
+ * Command line argument parsing.
  */
 
 #ifndef FBLE_ARG_PARSE_H_

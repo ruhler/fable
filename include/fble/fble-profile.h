@@ -1,5 +1,7 @@
-// fble-profile.h --
-//   Header file describing profiling functionality for fble.
+/**
+ * @file fble-profile.h
+ * Fble Profiling API.
+ */
 
 #ifndef FBLE_PROFILE_H_
 #define FBLE_PROFILE_H_
@@ -10,13 +12,14 @@
 
 #include "fble-name.h"
 
-// FbleBlockId --
-//  An identifier for a program block
+/** Identifier for a program block. */
 typedef size_t FbleBlockId;
 
-// FBLE_ROOT_BLOCK_ID --
-//   The block id for the "root" block, which is the initial block for new
-//   threads.
+/**
+ * FbleBlockId of the root block.
+ *
+ * The root block is the initial block for new threads.
+ */
 #define FBLE_ROOT_BLOCK_ID 0
 
 /** A vector of BlockId. */
@@ -25,17 +28,24 @@ typedef struct {
   FbleBlockId* xs;
 } FbleBlockIdV;
 
-// FbleCallData --
-//   Represents the number of calls and time spent when calling into or from
-//   another block.
-//
-// Fields:
-//   id - the id of the caller/callee block.
-//   count - the number of times the call was made.
-//   time - the amount of time spent in the call.
+/**
+ * Info about calls to a block.
+ *
+ * Represents the number of calls and time spent when calling into or from
+ * another block.
+ * Fields:
+ *   id - The id of the caller/callee block.
+ *   count - The number of times the call was made.
+ *   time - The amount of time spent in the call.
+ */
 typedef struct {
+  /** Id of the caller/callee block. */
   FbleBlockId id;
+
+  /** Number of times the call was made. */
   uint64_t count;
+
+  /** Amount of time spent in the call. */
   uint64_t time;
 } FbleCallData;
 
@@ -47,13 +57,13 @@ typedef struct {
 
 /** Profile information for a particular block. */
 typedef struct {
-  /** the name of this block. */
+  /** Name of the block. */
   FbleName name;
 
-  /** time spent in this block. Not including callees of this block. */
+  /** Time spent in the block. Not including callees of this block. */
   uint64_t self;
 
-  /** the id, summary count, and time spent in this block. */
+  /** Id, summary count, and time spent in this block. */
   FbleCallData block;
 
   /**
@@ -70,173 +80,187 @@ typedef struct {
   FbleBlockProfile** xs;
 } FbleBlockProfileV;
 
-/** Profiling information for a program. */
+/** Profiling data collected for a program. */
 typedef struct {
   /**
-   * Profiling blocks.
-   * blocks.xs[i] contains block and callee information for block i.
+   * Profiling blocks. blocks.xs[i] contains block and callee information for
+   * block i.
    */
   FbleBlockProfileV blocks;
 } FbleProfile;
 
-// FbleNewProfile --
-//   Creates a new profile with a single root block.
-//
-// Results:
-//   A new profile with a single root block.
-//
-// Side effects:
-//   Allocates a new profile that should be freed with FbleFreeProfile when
-//   no longer in use.
+/**
+ * Creates a new profile.
+ *
+ * @returns
+ *   A new profile with a single root block.
+ *
+ * @sideeffects
+ * * Allocates a new profile that should be freed with FbleFreeProfile() when
+ *   no longer in use.
+ */
 FbleProfile* FbleNewProfile();
 
-// FbleProfileAddBlock --
-//   Add a new block to the profile.
-//
-// Inputs:
-//   profile - the profile to add the block to
-//   name - the name of the block
-//
-// Results:
-//   The id of the newly added block.
-//
-// Side effects:
-// * Takes ownership of name, which will be freed when FbleFreeProfile is
-// called.
+/**
+ * Adds a block to the profile.
+ *
+ * @param profile   The profile to add the block to
+ * @param name      The name of the block
+ *
+ * @returns
+ *   The id of the newly added block.
+ *
+ * @sideeffects
+ * * Takes ownership of name, which will be freed when FbleFreeProfile() is
+ *   called.
+ */
 FbleBlockId FbleProfileAddBlock(FbleProfile* profile, FbleName name);
 
-// FbleProfileAddBlocks --
-//   Add multiple new block to the profile using a contiguous range of block
-//   ids.
-//
-// Inputs:
-//   profile - the profile to add the blocks to
-//   names - the names of the block to add. Borrowed.
-//
-// Results:
-//   The id of the first added block.
-//
-// Side effects:
-// * Adds blocks to the profile.
+/**
+ * Add blocks to the profile.
+ *
+ * Add multiple new block to the profile using a contiguous range of block
+ * ids.
+ *
+ * @param profile   The profile to add the blocks to
+ * @param names     The names of the block to add. Borrowed.
+ *
+ * @returns
+ *   The id of the first added block.
+ *
+ * @sideeffects
+ * * Adds blocks to the profile.
+ */
 FbleBlockId FbleProfileAddBlocks(FbleProfile* profile, FbleNameV names);
 
-// FbleFreeProfile --
-//   Free a profile.
-//
-// Input:
-//   profile - the profile to free. May be NULL.
-//
-// Side effects:
-//   Frees the memory resources associated with the given profile, including
-//   the memory for the block names supplied to FbleProfileAddBlock.
+/**
+ * Frees a profile.
+ *
+ * @param profile   The profile to free. May be NULL.
+ *
+ * @sideeffects
+ * * Frees the memory resources associated with the given profile, including
+ *   the memory for the block names supplied to FbleProfileAddBlock.
+ */
 void FbleFreeProfile(FbleProfile* profile);
 
-// FbleProfileThread --
-//   A thread of calls used to generate profile data.
+/** Profiling state for a running thread. */
 typedef struct FbleProfileThread FbleProfileThread;
 
-// FbleNewProfileThread --
-//   Allocate a new profile thread.
-//
-//   The new thread starts in the FBLE_ROOT_BLOCK_ID block. See
-//   FbleForkProfileThread for an alternative way to create a new profile
-//   thread.
-//
-// Inputs:
-//   profile - the profile to save profiling data to.
-//
-// Results:
-//   A new profile thread.
-//
-// Side effects:
-//   Allocates a new profile thread that should be freed with
-//   FreeProfileThread when no longer in use.
+/**
+ * Allocates a new profile thread.
+ *
+ * The new thread starts in the FBLE_ROOT_BLOCK_ID block. See
+ * FbleForkProfileThread() for an alternative way to create a new profile
+ * thread.
+ *
+ * @param profile   The profile to save profiling data to.
+ *
+ * @returns
+ *   A new profile thread.
+ *
+ * @sideeffects
+ *   Allocates a new profile thread that should be freed with
+ *   FreeProfileThread when no longer in use.
+ */
 FbleProfileThread* FbleNewProfileThread(FbleProfile* profile);
 
-// FbleForkProfileThread --
-//   Allocate a new profile thread.
-//
-//   The new thread starts with a copy of the parent thread's call stack.
-//
-// Inputs:
-//   parent - the parent thread to fork from.
-//
-// Results:
-//   A new profile thread.
-//
-// Side effects:
-//   Allocates a new profile thread that should be freed with
-//   FreeProfileThread when no longer in use.
+/**
+ * Allocates a new profile thread by forking.
+ *
+ * The new thread starts with a copy of the parent thread's call stack.
+ *
+ * @param parent    The parent thread to fork from.
+ *
+ * @returns
+ *   A new profile thread.
+ *
+ * @sideeffects
+ *   Allocates a new profile thread that should be freed with
+ *   FreeProfileThread when no longer in use.
+ */
 FbleProfileThread* FbleForkProfileThread(FbleProfileThread* parent);
 
-// FbleFreeProfileThread --
-//   Free resources associated with the given profile thread. Does not free
-//   the profile associated with the given profile thread.
-//
-// Inputs:
-//   thread - thread to free. May be NULL.
-//
-// Side effects:
-//   Frees resources associated with the given profile thread.
+/**
+ * Frees a profile thread.
+ *
+ * Free resources associated with the given profile thread. Does not free the
+ * profile associated with the given profile thread.
+ *
+ * @param thread    Thread to free. May be NULL.
+ *
+ * @sideeffects
+ *   Frees resources associated with the given profile thread.
+ */
 void FbleFreeProfileThread(FbleProfileThread* thread);
 
-// FbleProfileSample --
-//   Take an explicit profiling sample.
-//
-// Inputs:
-//   thread - the profile thread to sample.
-//   time - the amount of profile time to advance.
-//
-// Side effects:
-//   Charges calls on the current thread with the given time.
+/**
+ * Takes a profiling sample.
+ *
+ * @param thread    The profile thread to sample.
+ * @param time      The amount of profile time to advance.
+ *
+ * @sideeffects
+ *   Charges calls on the current thread with the given time.
+ */
 void FbleProfileSample(FbleProfileThread* thread, uint64_t time);
 
-// FbleProfileEnterBlock -- 
-//   Enter a block on the given profile thread.
-//
-// Inputs:
-//   thread - the thread to do the call on.
-//   block - the block to call into.
-//
-// Side effects:
-//   A corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
-//   should be made when the call leaves, for proper accounting and resource
-//   management.
+/**
+ * Enters a profiling block.
+ *
+ * When calling into a function, use this function to tell the profiling logic
+ * what block is being called into.
+ *
+ * @param thread    The thread to do the call on.
+ * @param block     The block to call into.
+ *
+ * @sideeffects
+ *   A corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
+ *   should be made when the call leaves, for proper accounting and resource
+ *   management.
+ */
 void FbleProfileEnterBlock(FbleProfileThread* thread, FbleBlockId block);
 
-// FbleProfileReplaceBlock -- 
-//   Replace a block on the given profile thread.
-//
-// Inputs:
-//   thread - the thread to do the call on.
-//   block - the block to tail call into.
-//
-// Side effects:
-//   Replaces the current profiling block with the new block. Frees resources
-//   associated with the block being replaced, but the a corresponding call to
-//   FbleProfileExitBlock or FbleProfileReplaceBlock will still needed to free
-//   resources associated with the replacement block.
+/**
+ * Replaces a profiling block.
+ *
+ * When tail-calling into a function, use this function to tell the profiling
+ * logic what block is being called into.
+ *
+ * @param thread    The thread to do the call on.
+ * @param block     The block to tail call into.
+ *
+ * @sideeffects
+ * * Replaces the current profiling block with the new block.
+ * * Frees resources associated with the block being replaced, but a
+ *   corresponding call to FbleProfileExitBlock or FbleProfileReplaceBlock
+ *   will still needed to free resources associated with the replacement
+ *   block.
+ */
 void FbleProfileReplaceBlock(FbleProfileThread* thread, FbleBlockId block);
 
-// FbleProfileExitBlock --
-//   Exits the current block on the given profile thread.
-//
-// Inputs:
-//   thread - the thread to exit the call on.
-//
-// Side effects:
-//   Updates the profile data associated with the given thread.
+/**
+ * Exits a profiling block.
+ *
+ * When returning from a function, use this function to tell the profiling
+ * logic what block is being exited.
+ *
+ * @param thread    The thread to exit the call on.
+ *
+ * @sideeffects
+ *   Updates the profile data associated with the given thread.
+ */
 void FbleProfileExitBlock(FbleProfileThread* thread);
 
-// FbleProfileReport --
-//   Generate a human readable profile report.
-//
-// Inputs:
-//   fout - the file to output the profile report to.
-//   profile - the profile to generate a report for.
-//
-// Side effects:
-//   Writes a profile report to the given file.
+/**
+ * Generates a profiling report.
+ *
+ * @param fout      The file to output the profile report to.
+ * @param profile   The profile to generate a report for.
+ *
+ * @sideeffects
+ *   Writes a profile report to the given file.
+ */
 void FbleProfileReport(FILE* fout, FbleProfile* profile);
 
 #endif // FBLE_PROFILE_H_

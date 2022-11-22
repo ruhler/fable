@@ -10,13 +10,52 @@ Things that need to be done:
 * Enable warnings as errors once everything is converted.
 * Fix dependency tracking.
 * Add man pages to be installed.
-* Figure out how to use relative include path instead of absolute in man page
-  name.
+* Figure out how to use relative include path instead of absolute in man page  
+  name. DONE.
 * Figure out how to add proper #include to SYNOPSIS of generated man pages.
 * Come up with a doc comment style guide.
- - style for brief?
+ - style for brief? DONE
  - style for @param description?
  - style for @returns description?
 
 How do I change the file name used in the man page? FULL_PATH_NAMES = NO
 maybe? Yeah. That does it.
+
+Any way to avoid generating man pages for individual fields?
+
+INLINE_SIMPLE_STRUCTS  = YES?
+
+No. Doesn't seem to do anything. I suppose I could always just avoid
+installing those man pages?
+
+Thoughts on style guide:
+
+Brief. How is it used?
+
+* brief for NAME of file in generated man page.
+* Description under a function for SYNOPSIS section of man page.
+* In table of contents listing in latex output.
+
+Based on how it shows up, I'm initially leaning:
+* Short description phrase. Capitalize first word.
+
+For example:
+* "Command line argument parsing."
+* "Parse boolean flag."
+
+Other inputs:
+* man page brief is usually all lowercase:
+  - "binary stream input/output"
+  - "input of characters and strings"
+  - "copy memory area"
+* Sample brief descriptions from doxygen documentation:
+  - "A brief history of JavaDoc-style (C-style) banner comments."
+  - "Opens a file descriptor."
+  - "A macro that returns the maximum of \a a and \a b."
+
+I'm happy with my own leaning. I don't much care about traditional man page
+styles. And probably best to be descriptive, as in, "Opens a file descriptor"
+instead of "Open a file descriptor".
+
+Same for @param and field briefs.
+
