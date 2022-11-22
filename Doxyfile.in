@@ -1,15 +1,24 @@
-QUIET = YES
-PROJECT_NAME = "Fable"
-OUTPUT_DIRECTORY = @builddir@/doxygen
-JAVADOC_AUTOBRIEF = YES
+# Add @sideeffects tag that can be used in doc comments.
 ALIASES = "sideeffects=@par Side Effects:\n"
-OPTIMIZE_OUTPUT_FOR_C = YES
-SHOW_INCLUDE_FILES = NO
-SORT_MEMBER_DOCS = NO
-WARN_NO_PARAMDOC = YES
-WARN_AS_ERROR = NO
+JAVADOC_AUTOBRIEF = YES
+
 INPUT = @srcdir@/include/fble
 FILE_PATTERNS = *.h *.c
+OPTIMIZE_OUTPUT_FOR_C = YES
+
+QUIET = YES
+WARN_AS_ERROR = NO
+WARN_NO_PARAMDOC = YES
+PROJECT_NAME = "Fable"
+OUTPUT_DIRECTORY = @builddir@/doxygen
+SHOW_INCLUDE_FILES = NO
+SORT_MEMBER_DOCS = NO
+
+# Output things like "fble-value.h" in man pages instead of
+# full paths like "/home/richard/.../fble-value.h".
+FULL_PATH_NAMES = NO
+
 GENERATE_MAN = YES
 MAN_LINKS = YES
+
 HAVE_DOT = NO

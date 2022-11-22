@@ -18,3 +18,5 @@ Things that need to be done:
  - style for @param description?
  - style for @returns description?
 
+How do I change the file name used in the man page? FULL_PATH_NAMES = NO
+maybe? Yeah. That does it.
