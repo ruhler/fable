@@ -6,22 +6,23 @@
 
 #include <sys/types.h>    // for size_t
 
-// FbleString --
-//   A reference counted string of characters.
-//
-// Pass by pointer. Explicit copy and free required.
-//
-// Note: The magic field is set to FBLE_STRING_MAGIC and is used to detect
-// double frees of FbleString, which we have had trouble with in the past.
 #define FBLE_STRING_MAGIC 0x516179
+
+/**
+ * A reference counted string of characters.
+ *
+ * Pass by pointer. Explicit copy and free required.
+ *
+ * Note: The magic field is set to FBLE_STRING_MAGIC and is used to detect
+ * double frees of FbleString, which we have had trouble with in the past.
+ */
 typedef struct {
   size_t refcount;
   size_t magic;
   char str[];
 } FbleString;
 
-// FbleStringV --
-//   A vector of FbleString. 
+/** A vector of FbleString. */
 typedef struct {
   size_t size;
   FbleString** xs;

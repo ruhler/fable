@@ -11,32 +11,42 @@
 
 // FbleExecutable --
 //   Abstract type representing executable code.
+//
+// TODO: But we define the type below, so what's up? We should either make it
+// abstract here and not define it below, or not make it abstract at all.
 typedef struct FbleExecutable FbleExecutable;
 
-// FbleExecutableModule --
-//   Represents an executable module.
-//
-// Reference counted. Pass by pointer. Explicit copy and free required.
-//
-// Note: The magic field is set to FBLE_EXECUTABLE_MODULE_MAGIC and is used to
-// help detect double frees.
-// 
-// Fields:
-//   path - the path to the module.
-//   deps - a list of distinct modules this module depends on.
-//   executable - code to compute the value of the module, suitable for use in
-//          the body of a that function takes the computed module values for
-//          each module listed in module->deps as arguments to the function.
 #define FBLE_EXECUTABLE_MODULE_MAGIC 0x38333
+
+/**
+ * An executable module.
+ *
+ * Reference counted. Pass by pointer. Explicit copy and free required.
+ *
+ * Note: The magic field is set to FBLE_EXECUTABLE_MODULE_MAGIC and is used to
+ * help detect double frees.
+ */ 
 typedef struct {
   size_t refcount;
   size_t magic;
+
+  /** the path to the module */
   FbleModulePath* path;
+
+  /** list of distinct modules this module depends on. */
   FbleModulePathV deps;
+
+  /**
+   * Code to compute the value of the module.
+   *
+   * Suiteable for use in the body of a function that takes the computed
+   * module values for each module listed in 'deps' as arguments to the
+   * function.
+   */
   FbleExecutable* executable;
 } FbleExecutableModule;
 
-// FbleExecutableModuleV -- A vector of FbleExecutableModule.
+/** A vector of FbleExecutableModule. */
 typedef struct {
   size_t size;
   FbleExecutableModule** xs;
@@ -53,15 +63,16 @@ typedef struct {
 //   Frees resources associated with the module as appropriate.
 void FbleFreeExecutableModule(FbleExecutableModule* module);
 
-// FbleExecutableProgram --
-//   An executable program.
-//
-// The program is represented as a list of executable modules in topological
-// dependency order. Later modules in the list may depend on earlier modules
-// in the list, but not the other way around.
-//
-// The last module in the list is the main program. The module path for the
-// main module is /%.
+/**
+ * An executable program.
+ *
+ * The program is represented as a list of executable modules in topological
+ * dependency order. Later modules in the list may depend on earlier modules
+ * in the list, but not the other way around.
+ *
+ * The last module in the list is the main program. The module path for the
+ * main module is /%.
+ */
 typedef struct {
   FbleExecutableModuleV modules;
 } FbleExecutableProgram;
@@ -90,37 +101,44 @@ typedef enum {
   FBLE_EXEC_ABORTED,        // The function has aborted.
 } FbleExecStatus;
 
-// FbleStack --
-//
+/**
+ * Managed execution stack.
+ *
+ * Memory Management:
+ *   Each thread owns its stack. The stack owns its tail.
+ *
+ *   The stack holds a strong reference to func and any non-NULL locals.
+ *   'result' is a pointer to something that is initially NULL and expects to
+ *   receive a strong reference to the return value.
+ */
 // Fields:
-//   func - the function being executed at this frame of the stack.
-//   result - where to store the result of executing the current frame.
-//   tail - the next frame down in the stack.
-//   locals - array of local variables. Size is func->executable->locals.
 //
-// Memory Management:
-//   Each thread owns its stack. The stack owns its tail.
-//
-//   The stack holds a strong reference to func and any non-NULL locals.
-//   'result' is a pointer to something that is initially NULL and expects to
-//   receive a strong reference to the return value.
 typedef struct FbleStack {
+  /** the function being executed at this frame of the stack. */
   FbleValue* func;
+
+  /** where to store the result of executing the current frame. */
   FbleValue** result;
+
+  /** the next frame down in the stack. */
   struct FbleStack* tail;
+
+  /** array of local variables. Size is func->executable->locals. */
   FbleValue* locals[];
 } FbleStack;
 
-// FbleThread --
-//   Represents a thread of execution.
-//
-// Fields:
-//   stack - the execution stack.
-//   profile - the profile thread associated with this thread. May be NULL to
-//             disable profiling.
+/**
+ * A thread of execution.
+ */
 typedef struct FbleThread {
+  /** the execution stack. */
   FbleStack* stack;
   FbleStackAllocator* allocator;
+
+  /**
+   * The profile associated with this thread.
+   * May be NULL to disable profiling.
+   */
   FbleProfileThread* profile;
 } FbleThread;
 
@@ -247,30 +265,52 @@ FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleVal
 // * The stack frame is cleaned up and popped from the stack.
 typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThread* thread);
 
-// FbleExecutable --
-//   A reference counted, partially abstract data type describing how to
-//   execute a function.
-//
-// 'profile' is the profiling block id associated with execution of this
-// executable, relative to the function profile_base_id.
-//
-// 'profile_blocks' is an optional list of names of profile blocks used in the
-// FbleExecutable. This is intended to be used for FbleExecutable's
-// representing top level modules only.
-//
-// The 'on_free' function is called passing this as an argument just before
-// the FbleExecutable object is freed. Subclasses should use this to free any
-// custom state.
 #define FBLE_EXECUTABLE_MAGIC 0xB10CE
+
+/**
+ * Describes how to execute a function.
+ *
+ * FbleExecutable is a reference counted, partially abstract data type
+ * describing how to execute a function.
+ */
 struct FbleExecutable {
-  size_t refcount;            // reference count.
-  size_t magic;               // FBLE_EXECUTABLE_MAGIC.
-  size_t args;                // The number of arguments expected by the function.
-  size_t statics;             // The number of statics used by the function.
-  size_t locals;              // The number of locals used by the function.
+  /** reference count. */
+  size_t refcount;
+
+  /** FBLE_EXECUTABLE_MAGIC */
+  size_t magic;
+
+  /** Number of args to the function. */
+  size_t args;
+
+  /** Number of static values used by the function. */
+  size_t statics;
+
+  /** Number of local values used by the function. */
+  size_t locals;
+
+  /**
+   * Profiling block associated with this executable. Relative to the
+   * function's profile_base_id.
+   */
   FbleBlockId profile;
+
+  /**
+   * Profile blocks used in this FbleExecutable.
+   *
+   * Optional. This is intended to be used for FbleExecutable's representing
+   * top level modules only.
+   */
   FbleNameV profile_blocks;
-  FbleRunFunction* run;       // How to run the function.
+
+  /** How to run the function. */
+  FbleRunFunction* run;
+
+  /**
+   * Called to free this FbleExecutable.
+   *
+   * Subclasses of FbleExecutable should use this to free any custom state.
+   */
   void (*on_free)(FbleExecutable* this);
 };
 

@@ -905,3 +905,12 @@ stack, where before we popped them off the native stack before doing the call.
 Perhaps that's a future opportunity to make better use of the native stack for
 arguments. I'm not going to worry about it right now.
 
+---
+
+What if we changed run function to take executable too? In other words, you
+get everything you created the function with, plus local variables with the
+arguments. Sounds good, right?
+
+Should we pass 'result' too? No. We have FbleThreadReturn for that. And I
+should start making use of that everywhere. That means passing around thread
+instead of stack for interpreter abort functions. Maybe I can do that later.

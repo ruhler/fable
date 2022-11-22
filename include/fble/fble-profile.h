@@ -19,8 +19,7 @@ typedef size_t FbleBlockId;
 //   threads.
 #define FBLE_ROOT_BLOCK_ID 0
 
-// FbleBlockIdV --
-//   A vector of BlockId
+/** A vector of BlockId. */
 typedef struct {
   size_t size;
   FbleBlockId* xs;
@@ -40,43 +39,43 @@ typedef struct {
   uint64_t time;
 } FbleCallData;
 
-// FbleCallDataV --
-//   A vector of FbleCallData
+/** A vector of FbleCallData. */
 typedef struct {
   size_t size;
   FbleCallData** xs;
 } FbleCallDataV;
 
-// FbleBlockProfile -- 
-//   Profile information for a particular block.
-//
-// Fields:
-//   name - the name of this block.
-//   self - the time spent in this block, not including callees of this block.
-//   block - the id, summary count and time spent in this block.
-//   callees - info about calls from this block into other blocks, sorted in
-//             increasing order of callee. Only callees that have been called
-//             from this block are included.
+/** Profile information for a particular block. */
 typedef struct {
+  /** the name of this block. */
   FbleName name;
+
+  /** time spent in this block. Not including callees of this block. */
   uint64_t self;
+
+  /** the id, summary count, and time spent in this block. */
   FbleCallData block;
+
+  /**
+   * Info about calls from this block into other blocks. Sorted in increasing
+   * order of callee. Only callees that have been called from this block are
+   * included.
+   */
   FbleCallDataV callees;
 } FbleBlockProfile;
 
-// FbleBlockProfileV --
-//   A vector of FbleBlockProfile.
+/** A vector of FbleBlockProfile. */
 typedef struct {
   size_t size;
   FbleBlockProfile** xs;
 } FbleBlockProfileV;
 
-// FbleProfile --
-//   Profiling information for a program.
-//
-// Fields:
-//   blocks - blocks.xs[i] contains block and callee information for block i.
+/** Profiling information for a program. */
 typedef struct {
+  /**
+   * Profiling blocks.
+   * blocks.xs[i] contains block and callee information for block i.
+   */
   FbleBlockProfileV blocks;
 } FbleProfile;
 

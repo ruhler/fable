@@ -1,5 +1,7 @@
-// fble-loc.h --
-//   Header file for FbleLoc type.
+/**
+ * @file fble-loc.h
+ * Header for FbleLoc type.
+ */
 
 #ifndef FBLE_LOC_H_
 #define FBLE_LOC_H_
@@ -8,19 +10,27 @@
 
 #include "fble-string.h"  // for FbleString
 
-// FbleLoc --
-//   Represents a location in a source file.
-//
-// Pass by value. Explicit copy and free required.
-//
-// Fields:
-//   source - The name of the source file or other description of the source
-//            of the program text. Owned by this FbleLoc.
-//   line - The line within the file for the location.
-//   col - The column within the line for the location.
+/**
+ * A location in a source file.
+ *
+ * Pass by value. Explicit copy and free required.
+ *
+ */
 typedef struct {
+  /**
+   * Source file name. Or other description of the source of the program text.
+   * Owned by this FbleLoc.
+   */
   FbleString* source;
+
+  /**
+   * Line number for the location.
+   */
   int line;
+
+  /**
+   * Column number of the location.
+   */
   int col;
 } FbleLoc;
 

@@ -7,16 +7,20 @@
 #include "fble-loc.h"    // for FbleLoc
 #include "fble-name.h"    // for FbleName
 
-// FbleModulePath --
-//   A module path, such as /Foo/Bar%.
-//
-// Pass by pointer. Explicitly copy and free required.
-//
-// By convention, all names in the path belong to the FBLE_NORMAL_NAME_SPACE.
-// 
-// The magic field is set to FBLE_MODULE_PATH_MAGIC and is used to detect
-// double frees of FbleModulePath.
 #define FBLE_MODULE_PATH_MAGIC 0x77806584
+
+/**
+ * A module path.
+ *
+ * For example: /Foo/Bar%.
+ *
+ * Pass by pointer. Explicitly copy and free required.
+ * 
+ * By convention, all names in the path belong to the FBLE_NORMAL_NAME_SPACE.
+ *  
+ * The magic field is set to FBLE_MODULE_PATH_MAGIC and is used to detect
+ * double frees of FbleModulePath.
+ */
 typedef struct {
   size_t refcount;
   size_t magic;
@@ -24,7 +28,7 @@ typedef struct {
   FbleNameV path;
 } FbleModulePath;
 
-// FbleModulePathV -- A vector of FbleModulePath.
+/** A vector of FbleModulePath. */
 typedef struct {
   size_t size;
   FbleModulePath** xs;

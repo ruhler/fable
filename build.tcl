@@ -357,9 +357,16 @@ build $::b/summary.tr \
   "$::s/test/log $::b/detail.tr $::s/test/tests.tcl" \
   "$::s/test/log $::b/summary.tr tclsh $::s/test/tests.tcl < $::b/detail.tr"
 
+# Doxygen
+# TODO: fix the dependencies!
+build $::b/doxygen.log \
+  "$::s/test/log $::b/Doxyfile" \
+  "$::s/test/log $::b/doxygen.log doxygen"
+
 # Phony targets.
 phony "all" $::all
-phony "check" [list $::b/summary.tr all]
+phony "doxygen" $::b/doxygen.log
+phony "check" [list $::b/summary.tr all doxygen]
 phony "install" [list $::installs]
 puts $::build_ninja "default all"
 

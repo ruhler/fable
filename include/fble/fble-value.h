@@ -14,8 +14,7 @@ typedef struct FbleHeap FbleValueHeap;
 //   Abstract type for fble values.
 typedef struct FbleValue FbleValue;
 
-// FbleValueV --
-//   A vector of FbleValue*
+/** A vector of FbleValue* */
 typedef struct {
   size_t size;
   FbleValue** xs;

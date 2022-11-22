@@ -244,3 +244,90 @@ Discussion suggests we give asciidoc a try. Then treat the doc comments as raw
 asciidoc markdown to include in the generated man page. Let's let asciidoc
 conversion happen first though, in case I find reasons not to like asciidoc.
 
+---
+
+Here's a radical idea: how about I write all the man pages separately from doc
+comments? For library functions, I can group them by topic. For example, have
+a single man page for all the struct value functions. That's better for
+context.
+
+Thoughts:
+* Well, then we may as well use doxygen to generate them? Possibly with some
+  manual fixup to install them under all the right names?
+* But then, how do we make sure they are kept up to date (if not using
+  doxygen?). Do a manual audit at release time?
+
+Issues with doxygen, again:
+* It lists the include files from the header in the synopsys section, not the
+  header itself. That's just silly.
+  - We can disable that with SHOW_INCLUDE_FILES=NO in the config.
+* Looks like we can add an @sideeffects command if we want. Grep for
+  sideeffects in the config file for example.
+* The MAN_LINKS option can be used to generate a copy of the man page for each
+  entity within.
+
+So, maybe it's not so bad to try doxygen? Review of benefits:
+* Standard format for doc comments that includes markdown.
+* Generates man pages from source.
+* Generated documentation is in sync with the source code.
+* Warnings for missing parameters in doc comments.
+* Keeps documentation with source code for header files.
+
+Disadvantages:
+* It's a little clunky, and a bit more feature full than I need right now.
+
+How about we try it and see how I feel after?
+
+Goal: All public header files use doc comments from doxygen. We can update all
+doc comments to that too. Generate man pages for public header files that
+look, hopefully, half decent and are, at least, useful.
+
+Okay, let's make some decisions. How do I want to format my doc comments?
+
+* Doxyfile is default config file.
+* Specify INPUT with path to source dirs
+* I'm going to need to figure out how doxygen integrates with the build
+  system.
+
+How to do doc comments:
+* brief and detailed description.
+
+ /**
+  * ... text ...
+  */
+
+@param name description goes here.
+@return return goes here
+@see Foo()
+
+No title.
+
+I think use JAVADOC_AUTOBRIEF, so first line is brief description.
+
+Let's use javadoc style as much as possible.
+
+/** @file foo.h
+ * ...
+ */
+
+Start with one header file, go from there? It's a bit tricky. Things to work
+out:
+* How to actually write my comments to work.
+* What the config should be set to.
+* How to integrate with the build system.
+
+It looks like output info, etc. is all set as part of the config. So I'll want
+a Doxyfile.in perhaps that does substitutions based on configure, and then you
+run it from the top level of the build directory? That sounds reasonable to me.
+
+Let me set it up like that first. Add it to the build system so it's easy to
+play around with.
+
+---
+
+I'm liking doxygen so far. I like the structure it's enforcing.
+
+Some things to figure out:
+* How to reference a field of the struct I'm document?
+* Convention on brief descriptions: Lower case? Phrase? Sentence?
+

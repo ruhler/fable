@@ -1,5 +1,7 @@
-// fble-compile.h --
-//   Public header file for fble compilation related functions.
+/**
+ * @file fble-compile.h
+ * Header for fble compilation functions.
+ */
 
 #ifndef FBLE_COMPILE_H_
 #define FBLE_COMPILE_H_
@@ -15,36 +17,46 @@
 //   Abstract type representing compiled code.
 typedef struct FbleCode FbleCode;
 
-// FbleCompiledModule --
-//   Represents a compiled module.
-// 
-// Fields:
-//   path - the path to the module.
-//   deps - a list of distinct modules this module depends on.
-//   code - code to compute the value of the module, suitable for use in the
-//          body of a function takes the computed module values for each
-//          module listed in module->deps as arguments to the function.
+/**
+ * A compiled module.
+ */
 typedef struct {
+  /**
+   * Path to the module.
+   */
   FbleModulePath* path;
+
+  /**
+   * List of distinct modules this module depends on.
+   */
   FbleModulePathV deps;
+
+  /**
+   * Code to compute the module's value.
+   *
+   * The code should be suitable for use in the body of a function that takes
+   * the computed module values for each module listed in 'deps' as
+   * arguments to the function
+   */
   FbleCode* code;
 } FbleCompiledModule;
 
-// FbleCompiledModuleV -- A vector of compiled modules.
+/** A vector of compiled modules. */
 typedef struct {
   size_t size;
   FbleCompiledModule** xs;
 } FbleCompiledModuleV;
 
-// FbleCompiledProgram --
-//   A compiled program.
-//
-// The program is represented as a list of compiled modules in topological
-// dependency order. Later modules in the list may depend on earlier modules
-// in the list, but not the other way around.
-//
-// The last module in the list is the main program. The module path for the
-// main module is /%.
+/**
+ * A compiled program.
+ *
+ * The program is represented as a list of compiled modules in topological
+ * dependency order. Later modules in the list may depend on earlier modules
+ * in the list, but not the other way around.
+ *
+ * The last module in the list is the main program. The module path for the
+ * main module is /%.
+ */
 typedef struct {
   FbleCompiledModuleV modules;
 } FbleCompiledProgram;

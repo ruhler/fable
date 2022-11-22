@@ -73,4 +73,5 @@ proc subst_in { src dest } {
 
 subst_in $::srcdir/config.tcl.in $::builddir/config.tcl
 subst_in $::srcdir/build.ninja.in $::builddir/build.ninja
+subst_in $::srcdir/Doxyfile.in $::builddir/Doxyfile
 

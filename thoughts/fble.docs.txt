@@ -1047,3 +1047,7 @@ tcl.
 Can we get everything with some regex? My goal would be: given a header file,
 extract all the doc comments into a list.
 
+---
+
+I'm going to take a detour and try the doxygen route. I'll get back to you on
+how well that works out.

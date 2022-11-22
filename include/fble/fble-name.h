@@ -11,28 +11,29 @@
 #include "fble-loc.h"     // for FbleLoc
 #include "fble-string.h"  // for FbleString
 
-// FbleNamespace --
-//   Enum used to distinguish among different name spaces.
+/** Enum used to distinguish among different name spaces. */
 typedef enum {
   FBLE_NORMAL_NAME_SPACE,
   FBLE_TYPE_NAME_SPACE,
 } FbleNameSpace;
 
-// FbleName -- 
-//   A name along with its associated location in a source file. The location
-//   is typically used for error reporting purposes.
-//
-// Pass by value. Explicit copy and free required.
-//
-// The name and loc fields are owned by this FbleName.
+/**
+ * A type or variable name.
+ *
+ * Along with its associated location in a source file. The location is
+ * typically used for error reporting purposes.
+ *
+ * Pass by value. Explicit copy and free required.
+ *
+ * The name and loc fields are owned by this FbleName.
+ */
 typedef struct {
   FbleString* name;
   FbleNameSpace space;
   FbleLoc loc;
 } FbleName;
 
-// FbleNameV --
-//   A vector of FbleNames.
+/** A vector of FbleNames. */
 typedef struct {
   size_t size;
   FbleName* xs;

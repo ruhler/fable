@@ -1,3 +1,5 @@
+* Fix dependency tracking for configure
+  For example, rerun configure if any of the .in files change.
 * See if FbleStack and/or FbleThread can be made abstract.
 
 * Man pages
