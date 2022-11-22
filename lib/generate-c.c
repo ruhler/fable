@@ -931,15 +931,6 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
       module->path->loc.source->str);
   fprintf(fout, "}\n");
 
-  fprintf(fout, "static FbleExecStatus Call(FbleValueHeap* heap, FbleThread* thread)\n");
-  fprintf(fout, "{\n");
-  fprintf(fout, "  FbleExecStatus status;\n");
-  fprintf(fout, "  do {\n");
-  fprintf(fout, "    status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);\n");
-  fprintf(fout, "  } while (status == FBLE_EXEC_CONTINUED);\n");
-  fprintf(fout, "  return status;\n");
-  fprintf(fout, "}\n");
-
   // Helpers for profiling.
   fprintf(fout, "static void ProfileSample(FbleProfileThread* profile)\n");
   fprintf(fout, "{\n");

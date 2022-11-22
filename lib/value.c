@@ -103,10 +103,6 @@ typedef struct {
 //                     function.
 //   statics - static variables captured by the function.
 //             Size is executable->statics
-//
-// Note: Function values are used for both pure functions and processes. We
-// don't distinguish between the two at runtime, except that
-// executable->args == 0 suggests this is for a process instead of a function.
 typedef struct {
   FbleValue _base;
   FbleExecutable* executable;
