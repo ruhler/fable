@@ -405,16 +405,12 @@ static Control RunCallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* 
       }
     }
 
-    FbleThreadTailCall(heap, thread, func, args);
-    *status = FBLE_EXEC_CONTINUED;
+    *status = FbleThreadTailCall(heap, thread, func, args);
     return RETURN;
   }
 
   (*pc)++;
-  FbleThreadCall(heap, thread, thread->stack->locals + call_instr->dest, func, args);
-  do {
-    *status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);
-  } while (*status == FBLE_EXEC_CONTINUED);
+  *status = FbleThreadCall(heap, thread, thread->stack->locals + call_instr->dest, func, args);
   return (*status == FBLE_EXEC_FINISHED) ? CONTINUE : RETURN;
 }
 
@@ -538,8 +534,7 @@ static Control RunReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr
     }
   }
 
-  FbleThreadReturn(heap, thread, result);
-  *status = FBLE_EXEC_FINISHED;
+  *status = FbleThreadReturn(heap, thread, result);
   return RETURN;
 }
 

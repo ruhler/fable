@@ -865,3 +865,43 @@ FbleFuncValueStatics to start.
 First step is to move everything from execute.h to fble-execute.h. But I do
 wonder if we can make FbleStack and FbleThread abstract types somehow?
 
+---
+
+Current uses of stack-> in generated c code:
+* Call function on top of stack.
+  - This code could be factored out into an FbleThreadCall function of some
+    sort?
+* Get locals
+  - This could be avoided by passing locals to run function.
+* Get func
+  - This could be avoided by passing statics and profile_base_id to run
+    function.
+
+And that's it. How about let's change the run function to take those as
+arguments then?
+
+1. Factor out 'Call' function, so we never need to call run ourselves.
+2. Change run function signature to take locals, statics, profile_base_id.
+3. Make FbleStack an abstract type.
+ - Or, even better, make it a completely internal type?
+
+What should we call this 'Call' function? The idea is it should run the
+function at the top of the stack.
+
+Can we make it part of FbleThreadCall_?
+* That would be useful for generate-aarch64.c too.
+* That would be useful for interpret.c too.
+* That would be useful for execute.c too.
+
+This sounds like good cleanup to me.
+
+Maybe we want to update FbleThreadTailCall_ to return FBLE_EXEC_CONTINUE or
+something?
+
+Note: having FbleThreadCall do the follow up call has an implication for stack
+space: we are duplicating the arguments on the native stack and the managed
+stack, where before we popped them off the native stack before doing the call.
+
+Perhaps that's a future opportunity to make better use of the native stack for
+arguments. I'm not going to worry about it right now.
+

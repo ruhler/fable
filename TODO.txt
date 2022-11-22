@@ -1,3 +1,5 @@
+* See if FbleStack and/or FbleThread can be made abstract.
+
 * Man pages
  - Update --version and --help for each installed binary.
   fble-app

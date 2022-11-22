@@ -518,27 +518,23 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
             fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", call_instr->func.index);
           }
 
-          fprintf(fout, "  FbleThreadTailCall_(heap, thread, x0");
+          fprintf(fout, "  return FbleThreadTailCall_(heap, thread, x0");
           for (size_t i = 0; i < call_instr->args.size; ++i) {
             fprintf(fout, ", %s[%zi]",
                 section[call_instr->args.xs[i].section],
                 call_instr->args.xs[i].index);
           }
           fprintf(fout, ");\n");
-
-          fprintf(fout, "  return FBLE_EXEC_CONTINUED;\n");
           break;
         }
 
-        fprintf(fout, "  FbleThreadCall_(heap, thread, l+%zi, x0", call_instr->dest);
+        fprintf(fout, "  if (FbleThreadCall_(heap, thread, l+%zi, x0", call_instr->dest);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           fprintf(fout, ", %s[%zi]",
               section[call_instr->args.xs[i].section],
               call_instr->args.xs[i].index);
         }
-        fprintf(fout, ");\n");
-
-        fprintf(fout, "  if (Call(heap,thread) == FBLE_EXEC_ABORTED) ");
+        fprintf(fout, ") == FBLE_EXEC_ABORTED) ");
         ReturnAbort(fout, code, function_label, pc, "CalleeAborted", call_instr->loc);
         break;
       }
@@ -584,11 +580,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
           case FBLE_LOCALS_FRAME_SECTION: break;
         }
 
-        fprintf(fout, "  FbleThreadReturn(heap, thread, %s[%zi]);\n",
+        fprintf(fout, "  return FbleThreadReturn(heap, thread, %s[%zi]);\n",
             section[return_instr->result.section],
             return_instr->result.index);
-
-        fprintf(fout, "  return FBLE_EXEC_FINISHED;\n");
         break;
       }
 
@@ -713,8 +707,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
           }
         }
 
-        fprintf(fout, "  FbleThreadReturn(heap, thread, NULL);\n");
-        fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
+        fprintf(fout, "  return FbleThreadReturn(heap, thread, NULL);\n");
       }
 
       fprintf(fout, "  l[%zi] = NULL;\n", call_instr->dest);
@@ -747,8 +740,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
         }
       }
 
-      fprintf(fout, "  FbleThreadReturn(heap, thread, NULL);\n");
-      fprintf(fout, "  return FBLE_EXEC_ABORTED;\n");
+      fprintf(fout, "  return FbleThreadReturn(heap, thread, NULL);\n");
       return;
     }
 

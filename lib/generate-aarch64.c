@@ -773,18 +773,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  bl FbleThreadCall\n");
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
 
-      // Call the function repeatedly for as long as it results in
-      // FBLE_EXEC_CONTINUED.
-      fprintf(fout, ".L._Run_.%p.call.%zi:\n", code, pc);
-      fprintf(fout, "  mov x0, R_SCRATCH_0\n");   // func
-      fprintf(fout, "  bl FbleFuncValueExecutable\n");
-      fprintf(fout, "  ldr x4, [x0, #%zi]\n", offsetof(FbleExecutable, run));
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-      fprintf(fout, "  blr x4\n");               // call run function
-      fprintf(fout, "  cmp x0, %i\n", FBLE_EXEC_CONTINUED);
-      fprintf(fout, "  b.eq .L._Run_.%p.call.%zi\n", code, pc);
-
       // If the called function finished, continue to the next instruction.
       fprintf(fout, "  cmp x0, %i\n", FBLE_EXEC_FINISHED);
       fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", code, pc + 1);
@@ -849,7 +837,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  mov x2, R_SCRATCH_0\n");
       fprintf(fout, "  bl FbleThreadReturn\n");
 
-      fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_FINISHED);
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
@@ -1093,7 +1080,6 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
         fprintf(fout, "  mov x2, XZR\n");
         fprintf(fout, "  bl FbleThreadReturn\n");
 
-        fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
         fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       }
 
@@ -1134,7 +1120,6 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       fprintf(fout, "  mov x2, XZR\n");
       fprintf(fout, "  bl FbleThreadReturn\n");
 
-      fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }

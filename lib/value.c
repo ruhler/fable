@@ -621,8 +621,7 @@ FbleExecStatus SimpleRunFunction(FbleValueHeap* heap, FbleThread* thread)
     FbleReleaseValue(heap, thread->stack->locals[i]);
   }
 
-  FbleThreadReturn(heap, thread, result);
-  return result == NULL ? FBLE_EXEC_ABORTED : FBLE_EXEC_FINISHED;
+  return FbleThreadReturn(heap, thread, result);
 }
 
 // FbleNewSimpleFuncValue -- see documentation in fble-value.h
