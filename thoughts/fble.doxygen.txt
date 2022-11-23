@@ -63,3 +63,10 @@ Same for @param and field briefs.
 
 Okay! All public include files are converted over to doxygen now. I'm happy
 with the change.
+
+---
+
+Note: I can remove the 'AUTHOR' section of a manpage by generating a layout
+xml file with doxygen -l, then adding visible="no" to the authorsect of the
+files page.
+
