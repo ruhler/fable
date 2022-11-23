@@ -1,5 +1,7 @@
-// fble-execute.h --
-//   Public header file for fble execution related types and functions.
+/**
+ * @file fble-execute.h
+ * Routines for describing fble functions.
+ */
 
 #ifndef FBLE_EXECUTE_H_
 #define FBLE_EXECUTE_H_
@@ -16,6 +18,9 @@
 // abstract here and not define it below, or not make it abstract at all.
 typedef struct FbleExecutable FbleExecutable;
 
+/**
+ * Magic number used by FbleExecutableModule.
+ */
 #define FBLE_EXECUTABLE_MODULE_MAGIC 0x38333
 
 /**
@@ -131,8 +136,10 @@ typedef struct FbleStack {
  * A thread of execution.
  */
 typedef struct FbleThread {
-  /** the execution stack. */
+  /** The execution stack. */
   FbleStack* stack;
+
+  /** Memory allocator for the stack. */
   FbleStackAllocator* allocator;
 
   /**
@@ -265,6 +272,9 @@ FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleVal
 // * The stack frame is cleaned up and popped from the stack.
 typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThread* thread);
 
+/**
+ * Magic number used by FbleExecutable.
+ */
 #define FBLE_EXECUTABLE_MAGIC 0xB10CE
 
 /**

@@ -1,5 +1,7 @@
-// fble-name.h --
-//   Header file for fble name and associated types.
+/**
+ * @file fble-name.h
+ * FbleName API.
+ */
 
 #ifndef FBLE_NAME_H_
 #define FBLE_NAME_H_
@@ -39,58 +41,56 @@ typedef struct {
   FbleName* xs;   /**< Elements. */
 } FbleNameV;
 
-// FbleCopyName --
-//   Make a (possibly shared) copy of the name.
-//
-// Inputs:
-//   name - the name to copy.
-//
-// Results:
-//   A (possibly shared) copy of the name.
-//
-// Side effects:
-//   The user should call FbleFreeName on the returned name when it is no
-//   longer needed.
+/**
+ * Copies an FbleName.
+ *
+ * @param name  The name to copy.
+ *
+ * @returns
+ *   A (possibly shared) copy of the name.
+ *
+ * @sideeffects
+ *   The user should call FbleFreeName on the returned name when it is no
+ *   longer needed.
+ */
 FbleName FbleCopyName(FbleName name);
 
-// FbleFreeName --
-//   Free resources associated with a name.
-//
-// Inputs:
-//   name - the name to free resources of.
-//
-// Side effects:
-//   Frees resources associated with the name.
+/**
+ * Frees an FbleName.
+ *
+ * @param name  The name to free resources of.
+ *
+ * @sideeffects
+ *   Frees resources associated with the name.
+ */
 void FbleFreeName(FbleName name);
 
-// FbleNamesEqual --
-//   Test whether two names are equal. Two names are considered equal if they
-//   have the same name and belong to the same namespace. Location is not
-//   relevant for this check.
-//
-// Inputs:
-//   a - The first name.
-//   b - The second name.
-//
-// Results:
-//   true if the first name equals the second, false otherwise.
-//
-// Side effects:
-//   None.
+/**
+ * Tests if two names are equals.
+ *
+ * Two names are considered equal if they have the same name and belong to the
+ * same namespace. Location is not relevant for this check.
+ *
+ * @param a   The first name.
+ * @param b   The second name.
+ *
+ * @returns
+ *   true if the first name equals the second, false otherwise.
+ *
+ * @sideeffects
+ *   None.
+ */
 bool FbleNamesEqual(FbleName a, FbleName b);
 
-// FblePrintName --
-//   Print a name in human readable form to the given stream.
-//
-// Inputs:
-//   stream - the stream to print to
-//   name - the name to print
-//
-// Results:
-//   none.
-//
-// Side effects:
-//   Prints the given name to the given stream.
+/**
+ * Prints an FbleName. In human readable form.
+ *
+ * @param stream  The stream to print to.
+ * @param name    The name to print.
+ *
+ * @sideeffects
+ *   Outputs the name to the given file.
+ */
 void FblePrintName(FILE* stream, FbleName name);
 
 #endif // FBLE_NAME_H_

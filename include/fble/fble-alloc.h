@@ -1,6 +1,6 @@
 /**
  * @file fble-alloc.h
- * Header for memory allocation routines.
+ * Memory allocation routines.
  */
 
 #ifndef FBLE_ALLOC_H_

@@ -1,11 +1,16 @@
-// fble-string.h --
-//   Header file for FbleString type.
+/**
+ * @file fble-string.h
+ * FbleString API.
+ */
 
 #ifndef FBLE_STRING_H_
 #define FBLE_STRING_H_
 
 #include <sys/types.h>    // for size_t
 
+/**
+ * Magic number used in FbleString.
+ */
 #define FBLE_STRING_MAGIC 0x516179
 
 /**
@@ -17,51 +22,51 @@
  * double frees of FbleString, which we have had trouble with in the past.
  */
 typedef struct {
-  size_t refcount;
-  size_t magic;
-  char str[];
+  size_t refcount;    /**< The reference count. */
+  size_t magic;       /**< FBLE_STRING_MAGIC. */
+  char str[];         /**< The string contents. */
 } FbleString;
 
-/** A vector of FbleString. */
+/** Vector of FbleString. */
 typedef struct {
-  size_t size;
-  FbleString** xs;
+  size_t size;      /**< Number of elements. */
+  FbleString** xs;  /**< Elements. */
 } FbleStringV;
 
-// FbleNewString --
-//   Allocate a new FbleString.
-//
-// Inputs:
-//   str - the contents of the string.
-//
-// Results:
-//   A newly allocated string with a reference count that should be released
-//   using FbleFreeString when no longer needed.
-//   Does not take ownership of str - makes a copy instead.
+/**
+ * Allocates an FbleString.
+ *
+ * @param str  The contents of the string. Borrowed. This function does not
+ *             take ownership of str, it makes a copy internally instead.
+ *
+ * @returns
+ *   A newly allocated string with a reference count that should be released
+ *   using FbleFreeString when no longer needed.
+ */
 FbleString* FbleNewString(const char* str);
 
-// FbleCopyString -- 
-//   Make a (possibly shared) copy of the given string.
-//
-// Inputs:
-//   string - the string to copy.
-// 
-// Results:
-//   The new (possibly shared) copy of the string.
-//
-// Side effects:
-//   The user should arrange for FbleFreeString to be called on this string
-//   copy when it is no longer needed.
+/**
+ * Copies an FbleString.
+ *
+ * @param string  The string to copy.
+ * 
+ * @returns
+ *   The new (possibly shared) copy of the string.
+ *
+ * @sideeffects
+ *   The user should arrange for FbleFreeString to be called on this string
+ *   copy when it is no longer needed.
+ */
 FbleString* FbleCopyString(FbleString* string);
 
-// FbleFreeString -- 
-//   Free resources associated with the given string.
-//
-// Inputs:
-//   string - the string to free.
-//
-// Side effects:
-//   Frees resources associated the string and its contents.
+/**
+ * Frees an FbleString.
+ *
+ * @param string  The string to free.
+ *
+ * @sideeffects
+ *   Frees resources associated the string and its contents.
+ */
 void FbleFreeString(FbleString* string);
 
 #endif // FBLE_STRING_H_

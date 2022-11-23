@@ -1,5 +1,7 @@
-// fble.h --
-//   Main header file for the fble library.
+/**
+ * @file fble.h
+ * User header file.
+ */
 
 #ifndef FBLE_H_
 #define FBLE_H_

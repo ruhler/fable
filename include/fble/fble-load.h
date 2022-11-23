@@ -1,5 +1,7 @@
-// fble-load.h --
-//   Header file for FbleLoad.
+/**
+ * @file fble-load.h
+ * Load fble source files.
+ */
 
 #ifndef FBLE_LOAD_H_
 #define FBLE_LOAD_H_
@@ -9,8 +11,9 @@
 #include "fble-module-path.h"
 #include "fble-string.h"
 
-// FbleExpr --
-//   Type used to represent an fble abstract syntax tree.
+/**
+ * Abstract syntax tree of an expression.
+ */
 typedef struct FbleExpr FbleExpr;
 
 /**
@@ -53,25 +56,25 @@ typedef struct {
  * main module is the empty path /%.
  */
 typedef struct {
-  FbleLoadedModuleV modules;  /** Program modules. */
+  FbleLoadedModuleV modules;  /**< Program modules. */
 } FbleLoadedProgram;
 
-// FbleParse --
-//   Parse an expression from a file.
-//
-// Inputs:
-//   filename - The name of the file to parse the program from.
-//   deps - Output param: A list of the modules that the parsed expression
-//          references. Modules will appear at most once in the list.
-//
-// Results:
-//   The parsed program, or NULL in case of error.
-//
-// Side effects:
-// * Prints an error message to stderr if the program cannot be parsed.
-// * Appends module paths in the parsed expression to deps, which
-//   is assumed to be a pre-initialized vector. The caller is responsible for
-//   calling FbleFreeModulePath on each path when it is no longer needed.
+/**
+ * Parses an fble module from a file.
+ *
+ * @param filename   The name of the file to parse the program from.
+ * @param[out] deps  A list of the modules that the parsed expression
+ *                   references. Modules will appear at most once in the list.
+ *
+ * @returns
+ *   The parsed program, or NULL in case of error.
+ *
+ * @sideeffects
+ * * Prints an error message to stderr if the program cannot be parsed.
+ * * Appends module paths in the parsed expression to deps, which
+ *   is assumed to be a pre-initialized vector. The caller is responsible for
+ *   calling FbleFreeModulePath on each path when it is no longer needed.
+ */
 FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
 
 /**
@@ -85,56 +88,58 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
  * Note: FbleSearchPath is a vector of const char*.
  */
 typedef struct {
-  size_t size;      /** Number of elements. */
-  const char** xs;  /** Elements .*/
+  size_t size;      /**< Number of elements. */
+  const char** xs;  /**< Elements .*/
 } FbleSearchPath;
 
-// FbleLoad --
-//   Load an fble program.
-//
-// Inputs:
-//   search_path - The search path to use for location .fble files. Borrowed.
-//   module_path - The module path for the main module to load. Borrowed.
-//   build_deps - Output to store list of files the load depended on.
-//                This should be a preinitialized vector, or NULL.
-//
-// Results:
-//   The parsed program, or NULL in case of error.
-//
-// Side effects:
-// * Prints an error message to stderr if the program cannot be parsed.
-// * The user should call FbleFreeLoadedProgram to free resources associated
-//   with the given program when it is no longer needed.
-// * The user should free strings added to build_deps when no longer needed,
-//   including in the case when program loading fails.
+/**
+ * Loads an fble program.
+ *
+ * @param search_path   The search path to use for location .fble files. Borrowed.
+ * @param module_path   The module path for the main module to load. Borrowed.
+ * @param build_deps    Output to store list of files the load depended on.
+ *                      This should be a preinitialized vector, or NULL.
+ *
+ * @returns
+ *   The parsed program, or NULL in case of error.
+ *
+ * @sideeffects
+ * * Prints an error message to stderr if the program cannot be parsed.
+ * * The user should call FbleFreeLoadedProgram to free resources associated
+ *   with the given program when it is no longer needed.
+ * * The user should free strings added to build_deps when no longer needed,
+ *   including in the case when program loading fails.
+ */
 FbleLoadedProgram* FbleLoad(FbleSearchPath search_path, FbleModulePath* module_path, FbleStringV* build_deps);
 
-// FbleFreeLoadedProgram --
-//   Free resources associated with the given program.
-//
-// Inputs:
-//   program - the program to free, may be NULL.
-//
-// Side effects:
-//   Frees resources associated with the given program.
+/**
+ * Frees an FbleLoadedProgram.
+ *
+ * @param program  The program to free. May be NULL.
+ *
+ * @sideeffects
+ *   Frees resources associated with the given program.
+ */
 void FbleFreeLoadedProgram(FbleLoadedProgram* program);
 
-// FbleSaveBuildDeps --
-//   Save the list of build dependencies to a depfile suitable for use with
-//   ninja or make.
-//
-// For example, it would generate something like:
-//   target: build_deps1 build_deps2 build_deps3
-//     build_deps4 build_deps5 ...
-//
-// Inputs:
-//   fout - output stream to write the dependency file to.
-//   target - the target of the dependencies to generate.
-//   build_deps - the list of file dependencies.
-//
-// Side effects:
-// * Creates a build dependency file.
-// * Outputs an error message to stderr in case of error.
+/**
+ * Saves a depfile.
+ *
+ * Save the list of build dependencies to a depfile suitable for use with
+ * ninja or make.
+ *
+ * For example, it would generate something like:
+ *   target: build_deps1 build_deps2 build_deps3
+ *     build_deps4 build_deps5 ...
+ *
+ * @param fout         Output stream to write the dependency file to.
+ * @param target       The target of the dependencies to generate.
+ * @param build_deps   The list of file dependencies.
+ *
+ * @sideeffects
+ * * Creates a build dependency file.
+ * * Outputs an error message to stderr in case of error.
+ */
 void FbleSaveBuildDeps(FILE* fout, const char* target, FbleStringV build_deps);
 
 #endif // FBLE_LOAD_H_

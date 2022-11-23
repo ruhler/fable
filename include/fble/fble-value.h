@@ -1,5 +1,7 @@
-// fble-value.h --
-//   Header file for the fble value APIs.
+/**
+ * @file fble-value.h
+ * API for interacting with fble values.
+ */
 
 #ifndef FBLE_VALUE_H_
 #define FBLE_VALUE_H_
@@ -14,10 +16,10 @@ typedef struct FbleHeap FbleValueHeap;
 //   Abstract type for fble values.
 typedef struct FbleValue FbleValue;
 
-/** A vector of FbleValue* */
+/** Vector of FbleValue* */
 typedef struct {
-  size_t size;
-  FbleValue** xs;
+  size_t size;      /**< Number of elements. */
+  FbleValue** xs;   /**< Elements .*/
 } FbleValueV;
 
 // FbleNewValueHeap --
