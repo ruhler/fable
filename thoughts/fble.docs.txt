@@ -1051,3 +1051,25 @@ extract all the doc comments into a list.
 
 I'm going to take a detour and try the doxygen route. I'll get back to you on
 how well that works out.
+
+---
+
+Here's where we are currently at with documentation:
+
+* binaries:
+ - help usage as plain text in program.
+ - man pages via help2text or asciidoc. Need to make a decision.
+* library functions:
+ - doxygen in source code.
+ - man pages via doxygen. Need to set up install.
+* tutorials, readme, spec, etc.
+ - asciidoc.
+
+And general thoughts:
+* asciidoc takes a long time to convert spec to html, and syntax highlighting
+  in vim doesn't work at all. Yet another case of asciidoc "ugh".
+* It would be great to have easy programmatic access to the structure of these
+  docs, because then I could generate whatever I want from them.
+* If I'm doing my own doc format, maybe don't rely on indentation for meaning?
+  Because vim syntax highlighting sounds hard in that case. And if it's hard
+  for vim, it's hard for anyone.

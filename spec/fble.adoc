@@ -1319,66 +1319,68 @@ This will result in a type error if the user does not belong to the package
 
 == 10. Abstract Syntax Reference ==
 
-  NormalName ::= (* A string of characters *)
-  TypeName ::= (* A string of characters *)
+....
+NormalName ::= (* A string of characters *)
+TypeName ::= (* A string of characters *)
 
-  Name ::=
-     normal_name (name : NormalName)
-   | type_name (name : TypeName)
-   ;
+Name ::=
+   normal_name (name : NormalName)
+ | type_name (name : TypeName)
+ ;
 
-  Path ::=
-     abs_path (name : [Name])
-   ;
+Path ::=
+   abs_path (name : [Name])
+ ;
 
-  Kind ::=
-     basic_normal_kind
-   | basic_type_kind
-   | poly_kind (arg : Kind) (result : Kind)
-   ;
+Kind ::=
+   basic_normal_kind
+ | basic_type_kind
+ | poly_kind (arg : Kind) (result : Kind)
+ ;
 
-  Type ::= (* synonym for Expr where a type is expected *)
+Type ::= (* synonym for Expr where a type is expected *)
 
-  Spec ::=
-     kind_spec (kind : Kind)
-   | type_spec (type : Type)
-   ;
-       
-  Expr ::=
-     typeof (expr : Expr)
-   | var (name : Name)
-   | let (bindings : [(Spec, Name, Expr)]) (body : Expr)
-   | module_path (path : Path)
+Spec ::=
+   kind_spec (kind : Kind)
+ | type_spec (type : Type)
+ ;
+     
+Expr ::=
+   typeof (expr : Expr)
+ | var (name : Name)
+ | let (bindings : [(Spec, Name, Expr)]) (body : Expr)
+ | module_path (path : Path)
 
-   | struct_type (fields : [(Type, Name)])
-   | struct_value_explicit_type (type : Type) (args : [Expr])
-   | struct_value_implicit_type (args : [(Name, Expr)])
-   | struct_access (object : Expr) (field : Name)
+ | struct_type (fields : [(Type, Name)])
+ | struct_value_explicit_type (type : Type) (args : [Expr])
+ | struct_value_implicit_type (args : [(Name, Expr)])
+ | struct_access (object : Expr) (field : Name)
 
-   | union_type (fields : [(Type, Name)])
-   | union_value (type : Type) (field : Name) (arg : Expr)
-   | union_access (object : Expr) (field : Name)
-   | union_select (condition : Expr) (choices : [(Name, Expr)]) (default : Expr)
+ | union_type (fields : [(Type, Name)])
+ | union_value (type : Type) (field : Name) (arg : Expr)
+ | union_access (object : Expr) (field : Name)
+ | union_select (condition : Expr) (choices : [(Name, Expr)]) (default : Expr)
 
-   | func_type (args : [Type]) (result : Type)
-   | func_value (args : [(Type, Name)]) (body : Expr)
-   | func_apply (func : Expr) (args : [Expr])
+ | func_type (args : [Type]) (result : Type)
+ | func_value (args : [(Type, Name)]) (body : Expr)
+ | func_apply (func : Expr) (args : [Expr])
 
-   | poly_value (arg : (Kind, Name)) (body : Expr)
-   | poly_apply (poly : Expr) (arg : Expr)
+ | poly_value (arg : (Kind, Name)) (body : Expr)
+ | poly_apply (poly : Expr) (arg : Expr)
 
-   | list (func : Expr) (args : [Expr])
-   | literal (func : Expr) (letters : word)
-   | bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
+ | list (func : Expr) (args : [Expr])
+ | literal (func : Expr) (letters : word)
+ | bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
 
-   | package_type (path : Path)
-   | abstract_type (package : Type) (type : Type)
-   | abstract_cast (package : Type) (target : Type) (value : Expr)
-   | abstract_value (package : Type) (value : Expr)
-   | abstract_access (package : Type) (value : Expr)
-   ;
+ | package_type (path : Path)
+ | abstract_type (package : Type) (type : Type)
+ | abstract_cast (package : Type) (target : Type) (value : Expr)
+ | abstract_value (package : Type) (value : Expr)
+ | abstract_access (package : Type) (value : Expr)
+ ;
 
-  Module ::= (value : Expr) (public : [Module]) (private : [Module])
+Module ::= (value : Expr) (public : [Module]) (private : [Module])
+....
 
 == 11. Concrete Syntax ==
 
@@ -1423,79 +1425,81 @@ characters are used to embed a single quote character in a word.
 
 === 11.2 Concrete Syntax Reference ===
 
-  word ::= (* word as described in the section on lexical syntax *)
-  normal_name ::= word
-  type_name ::=   word '@'
+....
+word ::= (* word as described in the section on lexical syntax *)
+normal_name ::= word
+type_name ::=   word '@'
 
-  name ::= 
-     normal_name
-   | type_name
-   ;
+name ::= 
+   normal_name
+ | type_name
+ ;
 
-  path ::= '/' name ['/' name [...]] '%' ;
+path ::= '/' name ['/' name [...]] '%' ;
 
-  kind ::=
-     '%'                                         (* normal_kind *)
-   | '@'                                         (* type_kind *)
-   | '<' kind [',' kind [...]] '>' kind          (* poly_kind *)
-   ;
+kind ::=
+   '%'                                             (* normal_kind *)
+ | '@'                                             (* type_kind *)
+ | '<' kind [',' kind [...]] '>' kind              (* poly_kind *)
+ ;
 
-  type ::= expr ;
+type ::= expr ;
 
-  spec ::= 
-     kind                                        (* kind_spec *)
-   | type                                        (* type_spec *)
-   ;
+spec ::= 
+   kind                                            (* kind_spec *)
+ | type                                            (* type_spec *)
+ ;
 
-  expr ::= 
-     '@' '<' expr '>'                            (* typeof *)
-   | name                                        (* var *)
-   | path                                        (* module_path *)
+expr ::= 
+   '@' '<' expr '>'                                (* typeof *)
+ | name                                            (* var *)
+ | path                                            (* module_path *)
 
-   | '*(' [type name [',' type name [...]]] ')'  (* struct_type *)
-   | type '(' [expr [',' expr [...]]] ')'        (* struct_value_explicit_type *)
-   | '@(' [name [':' expr] [',' ...]] ')'        (* struct_value_implicit_type *)
-   | expr '.' name                               (* struct_access *)
+ | '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
+ | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type *)
+ | '@(' [name [':' expr] [',' ...]] ')'            (* struct_value_implicit_type *)
+ | expr '.' name                                   (* struct_access *)
 
-   | '+(' type name [',' type name [...]] ')'    (* union_type *)
-   | type '(' name ':' expr ')'                  (* union_value *)
-   | expr '.' name                               (* union_access *)
-   | expr '.?(' name ':' expr                    (* union_select *)
-             [',' name ':' expr [...]]
-             [',' ':' expr ] ')'   
+ | '+(' type name [',' type name [...]] ')'        (* union_type *)
+ | type '(' name ':' expr ')'                      (* union_value *)
+ | expr '.' name                                   (* union_access *)
+ | expr '.?(' name ':' expr                        (* union_select *)
+           [',' name ':' expr [...]]
+           [',' ':' expr ] ')'   
 
-   | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
+ | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
 
-   | expr '<' type [',' type [...]] '>'              (* poly_apply *)
+ | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
-   | expr '['[expr [',' expr [...]] ']'              (* list *)
-   | expr '|' word                                   (* literal *)
+ | expr '['[expr [',' expr [...]] ']'              (* list *)
+ | expr '|' word                                   (* literal *)
 
-   | '%' '(' path ')'                                (* package_type* )
-   | type '<' type '>'                               (* abstract_type *) 
-   | type '.' '<' type '>' '(' expr ')'              (* abstract_cast *) 
-   | type '(' expr ')'                               (* abstract_value *) 
-   | expr '.' '%'                                    (* abstract_access *) 
+ | '%' '(' path ')'                                (* package_type* )
+ | type '<' type '>'                               (* abstract_type *) 
+ | type '.' '<' type '>' '(' expr ')'              (* abstract_cast *) 
+ | type '(' expr ')'                               (* abstract_value *) 
+ | expr '.' '%'                                    (* abstract_access *) 
 
-   | block
-   ;
+ | block
+ ;
 
-  block ::=
-     '{' stmt '}'
-   | '(' type [',' type [...]] ')' block             (* func_type *)
-   | '(' type name [',' type name [...]] ')' block   (* func_value *)
-   | '<' kind name [',' kind name [...]] '>' block   (* poly_value *)
-   ;
+block ::=
+   '{' stmt '}'
+ | '(' type [',' type [...]] ')' block             (* func_type *)
+ | '(' type name [',' type name [...]] ')' block   (* func_value *)
+ | '<' kind name [',' kind name [...]] '>' block   (* poly_value *)
+ ;
 
-  stmt ::=
-     expr ';'
-   | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
-   | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
-   | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
-   ;
+stmt ::=
+   expr ';'
+ | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
+ | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
+ | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
+ ;
 
-  module ::= stmt                                    (* module_value *)
-   ;
+module ::= stmt                                    (* module_value *)
+ ;
+....
 
 Notes:
 
