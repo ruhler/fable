@@ -27,8 +27,8 @@ typedef struct FbleExecutable FbleExecutable;
  * help detect double frees.
  */ 
 typedef struct {
-  size_t refcount;
-  size_t magic;
+  size_t refcount;  /**< Current reference count. */
+  size_t magic;     /**< FBLE_EXECUTABLE_MODULE_MAGIC. */
 
   /** the path to the module */
   FbleModulePath* path;
@@ -48,8 +48,8 @@ typedef struct {
 
 /** A vector of FbleExecutableModule. */
 typedef struct {
-  size_t size;
-  FbleExecutableModule** xs;
+  size_t size;                /**< Number of elements. */
+  FbleExecutableModule** xs;  /**< Elements. */
 } FbleExecutableModuleV;
 
 // FbleFreeExecutableModule --
@@ -74,7 +74,7 @@ void FbleFreeExecutableModule(FbleExecutableModule* module);
  * main module is /%.
  */
 typedef struct {
-  FbleExecutableModuleV modules;
+  FbleExecutableModuleV modules;  /**< Program modules. */
 } FbleExecutableProgram;
 
 // FbleFreeExecutableProgram --

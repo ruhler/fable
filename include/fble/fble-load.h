@@ -36,10 +36,10 @@ typedef struct {
   FbleExpr* value;
 } FbleLoadedModule;
 
-/** A vector of FbleLoadedModule. */
+/** Vector of FbleLoadedModule. */
 typedef struct {
-  size_t size;
-  FbleLoadedModule* xs;
+  size_t size;            /**< Number of elements. */
+  FbleLoadedModule* xs;   /**< Elements. */
 } FbleLoadedModuleV;
 
 /**
@@ -53,7 +53,7 @@ typedef struct {
  * main module is the empty path /%.
  */
 typedef struct {
-  FbleLoadedModuleV modules;
+  FbleLoadedModuleV modules;  /** Program modules. */
 } FbleLoadedProgram;
 
 // FbleParse --
@@ -85,8 +85,8 @@ FbleExpr* FbleParse(FbleString* filename, FbleModulePathV* deps);
  * Note: FbleSearchPath is a vector of const char*.
  */
 typedef struct {
-  size_t size;
-  const char** xs;
+  size_t size;      /** Number of elements. */
+  const char** xs;  /** Elements .*/
 } FbleSearchPath;
 
 // FbleLoad --

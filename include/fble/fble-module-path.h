@@ -22,16 +22,16 @@
  * double frees of FbleModulePath.
  */
 typedef struct {
-  size_t refcount;
-  size_t magic;
-  FbleLoc loc;
-  FbleNameV path;
+  size_t refcount;    /**< Current reference count. */
+  size_t magic;       /**< FBLE_MODULE_PATH_MAGIC. */
+  FbleLoc loc;        /**< Location associated with the path. */
+  FbleNameV path;     /**< Name of the path. */
 } FbleModulePath;
 
 /** A vector of FbleModulePath. */
 typedef struct {
-  size_t size;
-  FbleModulePath** xs;
+  size_t size;          /**< Number of elements. */
+  FbleModulePath** xs;  /**< Elements. */
 } FbleModulePathV;
 
 // FbleNewModulePath --

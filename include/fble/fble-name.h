@@ -28,15 +28,15 @@ typedef enum {
  * The name and loc fields are owned by this FbleName.
  */
 typedef struct {
-  FbleString* name;
-  FbleNameSpace space;
-  FbleLoc loc;
+  FbleString* name;     /**< The name. */
+  FbleNameSpace space;  /**< Namespace of the name. */
+  FbleLoc loc;          /**< Location of name's occurrence. */
 } FbleName;
 
-/** A vector of FbleNames. */
+/** Vector of FbleNames. */
 typedef struct {
-  size_t size;
-  FbleName* xs;
+  size_t size;    /**< Number of elements. */
+  FbleName* xs;   /**< Elements. */
 } FbleNameV;
 
 // FbleCopyName --

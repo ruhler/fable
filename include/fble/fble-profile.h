@@ -24,8 +24,8 @@ typedef size_t FbleBlockId;
 
 /** A vector of BlockId. */
 typedef struct {
-  size_t size;
-  FbleBlockId* xs;
+  size_t size;      /**< Number of elements. */
+  FbleBlockId* xs;  /**< Elements. */
 } FbleBlockIdV;
 
 /**
@@ -51,8 +51,8 @@ typedef struct {
 
 /** A vector of FbleCallData. */
 typedef struct {
-  size_t size;
-  FbleCallData** xs;
+  size_t size;        /**< Number of elements. */
+  FbleCallData** xs;  /**< Elements. */
 } FbleCallDataV;
 
 /** Profile information for a particular block. */
@@ -76,8 +76,8 @@ typedef struct {
 
 /** A vector of FbleBlockProfile. */
 typedef struct {
-  size_t size;
-  FbleBlockProfile** xs;
+  size_t size;            /**< Number of elements. */
+  FbleBlockProfile** xs;  /**< Elements. */
 } FbleBlockProfileV;
 
 /** Profiling data collected for a program. */

@@ -1,6 +1,6 @@
 /**
  * @file fble-loc.h
- * Header for FbleLoc type.
+ * Fble source locations API.
  */
 
 #ifndef FBLE_LOC_H_
@@ -11,10 +11,9 @@
 #include "fble-string.h"  // for FbleString
 
 /**
- * A location in a source file.
+ * Source file location.
  *
  * Pass by value. Explicit copy and free required.
- *
  */
 typedef struct {
   /**
@@ -24,85 +23,85 @@ typedef struct {
   FbleString* source;
 
   /**
-   * Line number for the location.
+   * The line number.
    */
   int line;
 
   /**
-   * Column number of the location.
+   * The column number.
    */
   int col;
 } FbleLoc;
 
-// FbleNewLoc --
-//   Convenience function for creating an FbleLoc from a char* source name.
-//
-// Inputs:
-//   source - the name of the source file for the location. Borrowed.
-//   line - the line within the file.
-//   col - the column within the line.
-//
-// Results:
-//   An FbleLoc with given source, line, and col. Copy of the source string is
-//   made.
-//
-// Side effects:
-//   Allocates resources for an FbleLoc that should be freed using FbleFreeLoc
-//   when no longer needed.
+/**
+ * Creates a new FbleLoc.
+ *
+ * Convenience function for creating an FbleLoc from a char* source name.
+ *
+ * @param source  The name of the source file for the location. Borrowed.
+ * @param line    The line within the file.
+ * @param col     The column within the line.
+ *
+ * @returns
+ *   An FbleLoc with given source, line, and col. A copy of the source string
+ *   is made.
+ *
+ * @sideeffects
+ *   Allocates resources for an FbleLoc that should be freed using FbleFreeLoc
+ *   when no longer needed.
+ */
 FbleLoc FbleNewLoc(const char* source, int line, int col);
 
-// FbleCopyLoc --
-//   Make a (possibly shared) copy of a location.
-//
-// Inputs:
-//   loc - the loc to copy.
-//
-// Result:
-//   A (possibly shared) copy of the loc.
-//
-// Side effects:
-//   The user should call FbleFreeLoc on the returned loc when it is no longer
-//   needed.
+/**
+ * Copies an Fble Loc
+ *
+ * @param loc  The loc to copy.
+ *
+ * @returns
+ *   A (possibly shared) copy of the loc.
+ *
+ * @sideeffects
+ *   The user should call FbleFreeLoc on the returned loc when it is no longer
+ *   needed.
+ */
 FbleLoc FbleCopyLoc(FbleLoc loc);
 
-// FbleFreeLoc --
-//   Free resources associated with the given loc.
-//
-// Inputs:
-//   loc - the location to free resources of.
-//
-// Side effects
-//   Frees resources associated with the given loc.
+/**
+ * Frees an FbleLoc.
+ *
+ * @param loc   The location to free resources of.
+ *
+ * @sideeffects
+ *   Frees resources associated with the given loc.
+ */
 void FbleFreeLoc(FbleLoc loc);
 
-// FbleReportWarning --
-//   Report a warning message associated with a location in a source file.
-//
-// Inputs:
-//   format - A printf format string for the warning message.
-//   loc - The location of the warning message to report.
-//   ... - printf arguments as specified by the format string.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints a warning message to stderr with error location.
+/**
+ * Outputs a compiler warning.
+ *
+ * Reports a warning message associated with a location in a source file.
+ *
+ * @param format  A printf format string for the warning message.
+ * @param loc     The location of the warning message to report.
+ * @param ...     Format arguments as specified by the format string.
+ *
+ * @sideeffects
+ *   Prints a warning message to stderr with error location.
+ */
 void FbleReportWarning(const char* format, FbleLoc loc, ...);
 
-// FbleReportError --
-//   Report an error message associated with a location in a source file.
-//
-// Inputs:
-//   format - A printf format string for the error message.
-//   loc - The location of the error message to report.
-//   ... - printf arguments as specified by the format string.
-//
-// Results:
-//   None.
-//
-// Side effects:
-//   Prints an error message to stderr with error location.
+/**
+ * Outputs a compiler error.
+ *
+ * Reports an error message associated with a location in a source file.
+ *
+ * @param format  A printf format string for the error message.
+ * @param loc     The location of the error message to report.
+ * @param ...     Format arguments as specified by the format string.
+ *
+ * @sideeffects
+ *   Prints an error message to stderr with error location.
+ */
 void FbleReportError(const char* format, FbleLoc loc, ...);
 
 #endif // FBLE_LOC_H_
