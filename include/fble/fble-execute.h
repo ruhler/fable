@@ -11,11 +11,12 @@
 #include "fble-profile.h"     // for FbleProfileThread
 #include "fble-value.h"       // for FbleValueHeap
 
-// FbleExecutable --
-//   Abstract type representing executable code.
-//
-// TODO: But we define the type below, so what's up? We should either make it
-// abstract here and not define it below, or not make it abstract at all.
+/**
+ * Executable code.
+ *
+ * TODO: But we define the type below, so what's up? We should either make it
+ * abstract here and not define it below, or not make it abstract at all.
+ */
 typedef struct FbleExecutable FbleExecutable;
 
 /**
@@ -57,15 +58,17 @@ typedef struct {
   FbleExecutableModule** xs;  /**< Elements. */
 } FbleExecutableModuleV;
 
-// FbleFreeExecutableModule --
-//   Decrement the reference count and if appropriate free resources
-//   associated with the given module.
-//
-// Inputs:
-//   module - the module to free
-//
-// Side effects:
-//   Frees resources associated with the module as appropriate.
+/**
+ * Frees an FbleExecutableModule.
+ *
+ * Decrement the reference count and if appropriate free resources associated
+ * with the given module.
+ *
+ * @param module  The module to free
+ *
+ * @sideeffects
+ *   Frees resources associated with the module as appropriate.
+ */
 void FbleFreeExecutableModule(FbleExecutableModule* module);
 
 /**
@@ -82,28 +85,29 @@ typedef struct {
   FbleExecutableModuleV modules;  /**< Program modules. */
 } FbleExecutableProgram;
 
-// FbleFreeExecutableProgram --
-//   Free resources associated with the given program.
-//
-// Inputs:
-//   program - the program to free, may be NULL.
-//
-// Side effects:
-//   Frees resources associated with the given program.
+/**
+ * Frees and FbleExecutableProgram.
+ *
+ * @param program  The program to free, may be NULL.
+ *
+ * @sideeffects
+ *   Frees resources associated with the given program.
+ */
 void FbleFreeExecutableProgram(FbleExecutableProgram* program);
 
-// FbleExecStatus -- 
-//   Status code used for returning status from running a function.
-//
-// FBLE_EXEC_CONTINUED is used in the case when a function needs to perform a
-// tail call. In this case, the function pushes the tail call on the managed
-// stack and returns FBLE_EXEC_CONTINUED. It is the callers responsibility to
-// execute the function on top of the managed stack to completion before
-// continuing itself.
+/**
+ * Status result of running a function.
+ *
+ * FBLE_EXEC_CONTINUED is used in the case when a function needs to perform a
+ * tail call. In this case, the function pushes the tail call on the managed
+ * stack and returns FBLE_EXEC_CONTINUED. It is the callers responsibility to
+ * execute the function on top of the managed stack to completion before
+ * continuing itself.
+ */
 typedef enum {
-  FBLE_EXEC_CONTINUED,      // The function requires a continuation to be run.
-  FBLE_EXEC_FINISHED,       // The function has finished running.
-  FBLE_EXEC_ABORTED,        // The function has aborted.
+  FBLE_EXEC_CONTINUED, /**< The function requires a continuation to be run. */
+  FBLE_EXEC_FINISHED,  /**< The function has finished running. */
+  FBLE_EXEC_ABORTED,   /**< The function has aborted. */
 } FbleExecStatus;
 
 /**
@@ -116,8 +120,6 @@ typedef enum {
  *   'result' is a pointer to something that is initially NULL and expects to
  *   receive a strong reference to the return value.
  */
-// Fields:
-//
 typedef struct FbleStack {
   /** the function being executed at this frame of the stack. */
   FbleValue* func;
@@ -149,127 +151,137 @@ typedef struct FbleThread {
   FbleProfileThread* profile;
 } FbleThread;
 
-// FbleThreadCall --
-//   Call an fble function.
-//
-// Inputs:
-//   result - where to store a strong reference to the result of executing the
-//            function.
-//   thread - the thread whose stack to push the frame on to.
-//   func - the function to execute. Borrowed.
-//   args - arguments to pass to the function. length == func->argc. Borrowed.
-//
-// Results:
-//   The status of the execution. FBLE_EXEC_CONTINUED will never be returned.
-//
-// Side effects:
-// * Updates the threads stack.
-// * Enters a profiling block for the function being called.
-// * Executes the called function to completion, returning the result.
+/**
+ * Calls an fble function.
+ *
+ * @param heap    The value heap.
+ * @param thread  The thread whose stack to push the frame on to.
+ * @param result  Where to store a strong reference to the result of executing
+ *                the function.
+ * @param func    The function to execute. Borrowed.
+ * @param args    Arguments to pass to the function. length == func->argc.
+ *                Borrowed.
+ *
+ * @returns
+ *   The status of the execution. FBLE_EXEC_CONTINUED will never be returned.
+ *
+ * @sideeffects
+ * * Updates the threads stack.
+ * * Enters a profiling block for the function being called.
+ * * Executes the called function to completion, returning the result.
+ */
 FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, FbleValue** args);
 
-// FbleThreadCall_ --
-//   Push a frame onto the execution stack.
-//
-// Inputs:
-//   result - where to store a strong reference to the result of executing the
-//            function.
-//   thread - the thread whose stack to push the frame on to.
-//   func - the function to execute. Borrowed.
-//   ... - func->argc number of arguments to pass to the function. Borrowed.
-//
-// Results:
-//   The status of the execution. FBLE_EXEC_CONTINUED will never be returned.
-//
-// Side effects:
-// * Updates the threads stack.
-// * Enters a profiling block for the function being called.
-// * Executes the called function to completion, returning the result.
+/**
+ * Calls an fble function using varags.
+ *
+ * @param heap     The value heap.
+ * @param thread   The thread whose stack to push the frame on to.
+ * @param result   Where to store a strong reference to the result of executing the
+ *                 function.
+ * @param func     The function to execute. Borrowed.
+ * @param ...      func->argc number of arguments to pass to the function.
+ *                 Borrowed.
+ *
+ * @returns
+ *   The status of the execution. FBLE_EXEC_CONTINUED will never be returned.
+ *
+ * @sideeffects
+ * * Updates the threads stack.
+ * * Enters a profiling block for the function being called.
+ * * Executes the called function to completion, returning the result.
+ */
 FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, ...);
 
-// FbleThreadTailCall --
-//   Replace the current frame with a new one.
-//
-// Inputs:
-//   heap - the value heap.
-//   func - the function to execute. Consumed.
-//   thread - the thread with the stack to change.
-//   args - args to the function. length == func->argc.
-//          Array borrowed, elements consumed.
-//
-// Results:
-//   FBLE_EXEC_CONTINUED.
-//
-// Side effects:
-// * Exits the current frame, which potentially frees any instructions
-//   belonging to that frame.
-// * The func and all args have their ownership transferred to
-//   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
-//   doing an FbleReleaseValue call for func and args.
-// * Replaces the profiling block for the function being called.
+/**
+ * Tail calls an fble function.
+ *
+ * Replaces the current frame with a new one.
+ *
+ * @param heap    The value heap.
+ * @param func    The function to execute. Consumed.
+ * @param thread  The thread with the stack to change.
+ * @param args    Args to the function. length == func->argc.
+ *                Array borrowed, elements consumed.
+ *
+ * @returns
+ *   FBLE_EXEC_CONTINUED.
+ *
+ * @sideeffects
+ * * Exits the current frame, which potentially frees any instructions
+ *   belonging to that frame.
+ * * The func and all args have their ownership transferred to
+ *   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
+ *   doing an FbleReleaseValue call for func and args.
+ * * Replaces the profiling block for the function being called.
+ */
 FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
 
-// FbleThreadTailCall_ --
-//   Replace the current frame with a new one.
-//
-// Inputs:
-//   heap - the value heap.
-//   func - the function to execute. Consumed.
-//   thread - the thread with the stack to change.
-//   ... - func->args number of args to the function. Args consumed.
-//
-// Results:
-//   FBLE_EXEC_CONTINUED.
-//
-// Side effects:
-// * Exits the current frame, which potentially frees any instructions
-//   belonging to that frame.
-// * The func and all args have their ownership transferred to
-//   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
-//   doing an FbleReleaseValue call for func and args.
-// * Replaces the profiling block for the function being called.
+/**
+ * Tail aclls an fble function using varargs.
+ *
+ * Replaces the current frame with a new one.
+ *
+ * @param heap    The value heap.
+ * @param func    The function to execute. Consumed.
+ * @param thread  The thread with the stack to change.
+ * @param ...     func->args number of args to the function. Args consumed.
+ *
+ * @returns
+ *   FBLE_EXEC_CONTINUED.
+ *
+ * @sideeffects
+ * * Exits the current frame, which potentially frees any instructions
+ *   belonging to that frame.
+ * * The func and all args have their ownership transferred to
+ *   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
+ *   doing an FbleReleaseValue call for func and args.
+ * * Replaces the profiling block for the function being called.
+ */
 FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
 
-// FbleThreadReturn --
-//   Return from the current frame on the thread's stack.
-//
-// Inputs:
-//   heap - the value heap.
-//   thread - the thread to do the return on.
-//   result - the result to return. Consumed. May be NULL if aborting from the
-//            function.
-//
-// Results:
-//   FBLE_EXEC_FINISHED or FBLE_EXEC_ABORTED depending on whether the argument
-//   is NULL.
-//
-// Side effects:
-// * Sets the return result for the current stack frame and pops the frame off
-//   the stack. 
-// * Exits the current profiling block.
-// * Takes over ownership of result. FbleThreadReturn will call
-//   FbleReleaseValue on the result on behalf of the caller when the result is
-//   no longer needed.
+/**
+ * Returns from an fble function.
+ *
+ * @param heap     The value heap.
+ * @param thread   The thread to do the return on.
+ * @param result   The result to return. Consumed. May be NULL if aborting
+ *                 from the function.
+ *
+ * @returns
+ *   FBLE_EXEC_FINISHED or FBLE_EXEC_ABORTED depending on whether the argument
+ *   is NULL.
+ *
+ * @sideeffects
+ * * Sets the return result for the current stack frame and pops the frame off
+ *   the stack. 
+ * * Exits the current profiling block.
+ * * Takes over ownership of result. FbleThreadReturn will call
+ *   FbleReleaseValue on the result on behalf of the caller when the result is
+ *   no longer needed.
+ */
 FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result);
 
-// FbleRunFunction --
-//   A C function to run the fble function on the top of the thread stack.
-//
-// The FbleRunFunction should clean up and pop the stack frame before
-// returning, regardless of whether the function completes, aborts, or needs a
-// continuation. In case of continuation, a continuation stack frame is pushed
-// after popping the current stack frame.
-//
-// Inputs:
-//   heap - the value heap.
-//   thread - the thread to run.
-//
-// Results:
-//   The status of running the function.
-//
-// Side effects:
-// * The fble function on the top of the thread stack is executed.
-// * The stack frame is cleaned up and popped from the stack.
+/**
+ * Implementation of fble function logic.
+ *
+ * A C function to run the fble function on the top of the thread stack.
+ *
+ * The FbleRunFunction should clean up and pop the stack frame before
+ * returning, regardless of whether the function completes, aborts, or needs a
+ * continuation. In case of continuation, a continuation stack frame is pushed
+ * after popping the current stack frame.
+ *
+ * @param heap    The value heap.
+ * @param thread  The thread to run.
+ *
+ * @returns
+ *   The status of running the function.
+ *
+ * @sideeffects
+ * * The fble function on the top of the thread stack is executed.
+ * * The stack frame is cleaned up and popped from the stack.
+ */
 typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThread* thread);
 
 /**
@@ -324,22 +336,30 @@ struct FbleExecutable {
   void (*on_free)(FbleExecutable* this);
 };
 
-// FbleFreeExecutable --
-//   Decrement the refcount and, if necessary, free resources associated with
-//   the given executable.
-//
-// Inputs:
-//   executable - the executable to free. May be NULL.
-//
-// Side effects:
-//   Decrements the refcount and, if necessary, calls executable->on_free and
-//   free resources associated with the given executable.
+/**
+ * Frees an FbleExecutable.
+ *
+ * Decrement the refcount and, if necessary, free resources associated with
+ * the given executable.
+ *
+ * @param executable   The executable to free. May be NULL.
+ *
+ * @sideeffects
+ *   Decrements the refcount and, if necessary, calls executable->on_free and
+ *   free resources associated with the given executable.
+ */
 void FbleFreeExecutable(FbleExecutable* executable);
 
-// FbleExecutableNothingOnFree --
-//   Implementation of a no-op FbleExecutable.on_free function.
-//
-// See documentation of FbleExecutable.on_free above.
+/**
+ * No-op FbleExecutable on_free function.
+ * 
+ * Implementation of a no-op FbleExecutable.on_free function.
+ *
+ * @param this  The FbleExecutable to free.
+ *
+ * @sideeffects
+ *   None.
+ */
 void FbleExecutableNothingOnFree(FbleExecutable* this);
 
 #endif // FBLE_EXECUTE_H_
