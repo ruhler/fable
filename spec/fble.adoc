@@ -2,13 +2,13 @@ Fble
 ====
 Richard Uhler <ruhler@degralder.com>
 
-1. Introduction
----------------
+== 1. Introduction ==
+
 Fble is a general purpose functional programming language with support for
 polymorphism and modularity.
 
-1.1 Goals
----------
+=== 1.1 Goals ===
+
 The primary design goals of fble are:
 
 * Fble should be as simple a language as possible while still being useful.
@@ -30,8 +30,8 @@ The primary design goals of fble are:
   composition of modules developed by different individual developers or
   organizations.
 
-1.2 Overview
-------------
+=== 1.2 Overview ===
+
 Fble is based around the primitive data types of structs, unions, and
 functions. It is a strongly and statically typed language supporting
 polymorphic types and values. Recursive types and values are supported through
@@ -40,10 +40,9 @@ which allows us to reuse the constructs of variables, lets, polymorphism, and
 structs for types in addition to normal values. Additional syntax is provided
 to make structs suitable for describing and manipulating namespaces.
 
-2. Types, Kinds, and Variables
-------------------------------
-2.1 Types
----------
+== 2. Types, Kinds, and Variables ==
+
+=== 2.1 Types ===
 Data values and the expressions that describe them are strongly typed. A
 value's type describes the kinds of operations that can legally be performed
 on that value. Types are used to check that an fble program is well formed
@@ -59,12 +58,12 @@ To ensure all type information is available at compile time, there is a
 one-to-one mapping between a type and the type of that type. As a consequence,
 you can determine the value of a type if you know the type of that type.
 
-For example, the boolean value 'True' is a normal value. The type of 'True' is
-the type 'Bool@', which is a union type. 'Bool@' is a type value. The type of
-'Bool@' is known only as the type of Bool@, expressed using the syntax:
-'@<Bool@>'. '@<Bool@>' is also a type value, and the type of that value is
-'@<@<Bool@>>'. If you have an expression of type '@<Bool@>', you know
-statically that the value of that expression must be 'Bool@', so the
+For example, the boolean value `True` is a normal value. The type of `True` is
+the type `Bool@`, which is a union type. `Bool@` is a type value. The type of
+`Bool@` is known only as the type of `Bool@`, expressed using the syntax:
+`@<Bool@>`. `@<Bool@>` is also a type value, and the type of that value is
+`@<@<Bool@>>`. If you have an expression of type `@<Bool@>`, you know
+statically that the value of that expression must be `Bool@`, so the
 expression need not be evaluated at runtime.
 
 Type information is stripped away at runtime. The value of a type at runtime
@@ -74,27 +73,29 @@ reason we say types do not take meaningful part in the dynamic execution of an
 fble program after it has been statically checked, though the special unit
 value for types may exist at runtime when using an fble native interface.
 
-2.2 Kinds
----------
+=== 2.2 Kinds ===
 Abstract Syntax:
+
   Kind ::= normal_kind
   Kind ::= type_kind
 
 Concrete Syntax:
+
   kind ::= '%'    (* normal_kind *)
   kind ::= '@'    (* type_kind *)
 
 Examples:
+
   %
   @
 
 Kinds are used to classify whether a value is a normal value, a type value, or
 something else. Using the example in the previous section:
 
-* True is a normal value. It is of normal kind.
-* Bool@ is a type value. It is of type kind.
-* @<Bool@> is a type of a type value. It is of higher kind.
-* @<@<Bool@>> is also of higher kind.
+* `True` is a normal value. It is of normal kind.
+* `Bool@` is a type value. It is of type kind.
+* `@<Bool@>` is a type of a type value. It is of higher kind.
+* `@<@<Bool@>>` is also of higher kind.
 
 Kinds are analogous to types in that they describe what operations are
 supported by a particular value, but they are much more restricted in the
@@ -108,26 +109,29 @@ It is useful to be able to recognize immediately whether a variable refers to
 a normal value, a type value, or something else. For that reason, we require
 different namespaces be used for different kinds of values. In the concrete
 syntax, names of normal variables are unadorned, while names of type variables
-must end with the character '@'. So, for example, 'True' is a normal value,
-and 'Bool@' is a type value.
+must end with the character `@`. So, for example, `True` is a normal value,
+and `Bool@` is a type value.
 
 You are not allowed to use a variable to refer to a higher kinded value, because
-then using '@' in variable names to distinguish between normal variables and
+then using `@` in variable names to distinguish between normal variables and
 type variables would be insufficient. In practice this should not be a
 significant limitation because you should be able to use a type variable for
 the value of the type and use the typeof operator to get the type of the type
 as needed. For this reason, there is no syntax for describing a higher
 kind, though it is possible to describe types and expressions of higher kind.
 
-2.3 Typeof
-----------
+=== 2.3 Typeof ===
+
 Abstract Syntax:
-  Type ::= typeof (expr :: Expr)
+
+  Type ::= typeof (expr : Expr)
 
 Concrete Syntax:
+
   type ::= '@' '<' expr '>'
 
 Example:
+
   @<x>
 
 Evaluates to the type of the expression, without evaluating the expression
@@ -136,15 +140,18 @@ struct that has type fields.
 
 Runtime is O(1).
 
-2.4 Variables
--------------
+=== 2.4 Variables ===
+
 Abstract Syntax:
-  Expr ::= var (name :: Name)
+
+  Expr ::= var (name : Name)
 
 Concrete Syntax:
+
   expr ::= name
 
 Example:
+
   x
 
 Variables allow data values to be reused multiple times within a program. In
@@ -172,19 +179,22 @@ of delayed evaluation of functions and processes, the number of variables in
 scope is limited by the number of variables captured by the function or
 process when it is created.
 
-2.5 Let
--------
+=== 2.5 Let ===
+
 Abstract Syntax:
-  Spec ::= kind_spec (kind :: Kind)
-  Spec ::= type_spec (type :: Type) ;
-  Expr ::= let (bindings :: [(Spec, Name, Expr)]) (body :: Expr)
+
+  Spec ::= kind_spec (kind : Kind)
+  Spec ::= type_spec (type : Type) ;
+  Expr ::= let (bindings : [(Spec, Name, Expr)]) (body : Expr)
 
 Concrete Syntax:
+
   spec ::= kind ;
   spec ::= type ;
   stmt ::= spec name '=' expr [',' spec name = expr [...]] ';' stmt
 
 Example:
+
   Int@ x = mul(3, 3); mul(x, x)
   @ Bool@ = +(Unit@ true, Unit@ false); ...
 
@@ -222,14 +232,14 @@ to better document types for readers of the code.
 Recursively defined values must not be vacuously recursive. For example, the
 following definitions are not allowed:
    
-   @ T@ = T@; ...
-   <@>@ F@ = <@ T@>{ F@<T@>; }; ...
+  @ T@ = T@; ...
+  <@>@ F@ = <@ T@>{ F@<T@>; }; ...
 
 But it is okay to define recursive types and values that involve a constructor
 somewhere, such as:
 
-   @ T@ = +(T@ x);
-   <@>@ F@ = <@ T@>{ *(F@<F@<T@>> x); }
+  @ T@ = +(T@ x);
+  <@>@ F@ = <@ T@>{ *(F@<F@<T@>> x); }
 
 TODO: Clarify what we mean by "must not be". Is it that vacuous types are
 reported as compile errors and vacuous values reported as runtime errors?
@@ -251,8 +261,8 @@ Runtime is O(N log(M)) plus the runtimes of the bindings and the runtime of
 the body, where N is the number of bindings and M is the number of variables
 in scope.
 
-3. Structs
-----------
+== 3. Structs ==
+
 A struct value is a grouping of other values. The items of a struct are
 organized into a finite number of fields. Each field has a name, used to
 identify the field, and a type, specifying the type of value for that field.
@@ -264,15 +274,18 @@ Struct values can be used for namespaces, by grouping together a collection of
 types and normal values. Syntax is provided for creating struct values with
 implicit types to facilitate this use case.
 
-3.1 Struct Type
----------------
+=== 3.1 Struct Type ===
+
 Abstract Syntax:
-  Expr ::= struct_type (fields :: [(Type, Name)])
+
+  Expr ::= struct_type (fields : [(Type, Name)])
 
 Concrete Syntax:
+
   expr ::= '*(' [type name [',' type name [...]]] ')'
 
 Examples:
+
   *()                 is the Unit type
   *(Int@ x, Int@ y)   is the type of a pair of ints x, y.
 
@@ -281,15 +294,18 @@ types, field names, and the order of the fields.
 
 Runtime is O(1).
 
-3.2 Struct Value Explicit Type
-------------------------------
+=== 3.2 Struct Value Explicit Type ===
+
 Abstract Syntax:
-  Expr ::= struct_value_explicit_type (type :: Type) (args :: [Expr])
+
+  Expr ::= struct_value_explicit_type (type : Type) (args : [Expr])
 
 Concrete Syntax:
+
   expr ::= type '(' [expr [',' expr [...]]] ')'
 
 Example:
+
   Coord@(3, 5)
 
 The type of the struct value is the explicit type provided, which must be a
@@ -304,15 +320,18 @@ sequentially or in parallel.
 Runtime is O(N) plus the runtimes of the arguments, where N is the number of
 arguments.
 
-3.3 Struct Value Implicit Type
-------------------------------
+=== 3.3 Struct Value Implicit Type ===
+
 Abstract Syntax:
-  Expr ::= struct_value_implicit_type (args :: [(Name, Expr)])
+
+  Expr ::= struct_value_implicit_type (args : [(Name, Expr)])
 
 Concrete Syntax:
+
   expr ::= '@' '(' [name [':' expr] [',' ...]] ')'
 
 Example:
+
   @(x: 3, y: 5)
   @(Bool@, True, False, Not: NotInternal)
 
@@ -339,15 +358,18 @@ sequentially or in parallel.
 Runtime is O(N) plus the runtimes of the arguments, where N is the number of
 arguments.
 
-3.4 Struct Access
------------------
+=== 3.4 Struct Access ===
+
 Abstract Syntax:
-  Expr ::= struct_access (object :: Expr) (field :: Name)
+
+  Expr ::= struct_access (object : Expr) (field : Name)
 
 Concrete Syntax:
+
   expr '.' name
 
 Example:
+
   x.first
 
 Returns the value passed to the struct at the corresponding field position
@@ -363,8 +385,8 @@ value.
 Runtime is O(log(N)) plus the runtime of the struct object, where N is the
 number of fields in the struct.
 
-4. Unions
----------
+== 4. Unions ==
+
 A union value is a particular value chosen from a group of possible values.
 The possible choices are organized into a finite number of fields. Each field
 has a name, used to identify the field, and a type, specifying the type of
@@ -375,15 +397,18 @@ the union. The particular value for the union can be accessed by field name,
 and the union can be used to select among other values and expressions based
 on the field present in the union value.
 
-4.1 Union Type
---------------
+=== 4.1 Union Type ===
+
 Abstract Syntax:
-  Type ::= union_type (fields :: [(Type, Name)])
+
+  Type ::= union_type (fields : [(Type, Name)])
 
 Concrete Syntax:
+
   type ::= '+(' type name [',' type name [...]] ')'
 
 Example:
+
   +(Unit@ true, Unit@ false)
 
 Union types are considered equal if their fields are equal, including field
@@ -391,15 +416,18 @@ types, field names, and the order of the fields.
 
 Runtime is O(1).
 
-4.2 Union Value
----------------
+=== 4.2 Union Value ===
+
 Abstract Syntax:
-  Expr ::= union_value (type :: Type) (field :: Name) (arg :: Expr)
+
+  Expr ::= union_value (type : Type) (field : Name) (arg : Expr)
 
 Concrete Syntax:
+
   expr ::= type '(' name ':' expr ')'
 
 Example:
+
   Maybe@(Just: 3)
 
 The type of the union value is the type provided, which must be a union type.
@@ -412,15 +440,18 @@ value with the result.
 Runtime is O(log(N)) plus the runtime of the arg, where N is the number of
 fields in the union.
 
-4.3 Union Access
-----------------
+=== 4.3 Union Access ===
+
 Abstract Syntax:
-  Expr ::= union_access (object :: Expr) (field :: Name)
+
+  Expr ::= union_access (object : Expr) (field : Name)
 
 Concrete Syntax:
+
   expr ::= expr '.' name
 
 Example:
+
   x.just
 
 Returns the value passed to the union at the corresponding field position when
@@ -438,16 +469,19 @@ value.
 Runtime is O(log(N)) plus the runtime of the object, where N is the number of
 fields in the union.
 
-4.4 Union Select
-----------------
+=== 4.4 Union Select ===
+
 Abstract Syntax:
-  Expr ::= union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
+
+  Expr ::= union_select (condition : Expr) (choices : [(Name, Expr)]) (default :: Expr)
 
 Concrete Syntax:
+
   expr ::= expr '.?(' name ':' expr [',' name ':' expr [...]] [',' ':' expr]')'
   stmt ::= expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt
 
 Example:
+
   mfoo.?(Just: mfoo.Just, Nothing: 3)
   char.?(a: True, b: True, : False)
   { char.?(a: True, b: True); False; }
@@ -497,8 +531,8 @@ Is equivalent to the following statement based form:
     D;
   }
 
-5. Functions
-------------
+== 5. Functions ==
+
 A function is a mapping from one or more argument values to a result value.
 Each argument has a name, used to identify the argument in the body of the
 function, and a type, specifying the type of value that can be supplied for
@@ -509,15 +543,18 @@ Functions are described using the fble expression language. A function can be
 applied to arguments of appropriate type to produce a value with the return
 type of the function.
 
-5.1 Function Type
------------------
+=== 5.1 Function Type ===
+
 Abstract Syntax:
-  Type ::= func_type (args :: [Type]) (return :: Type)
+
+  Type ::= func_type (args : [Type]) (return : Type)
 
 Concrete Syntax:
+
   block ::= '(' type [',' type [...]] ')' block
 
 Examples:
+
   (Int@, Int@) { Bool@; }
 
 The function type describes the type of a function value by specifying the
@@ -537,17 +574,20 @@ two expressions describe different types:
 We distinguish between these types because in practice there are performance
 implications for which type you choose.
 
-Runtime is O(1);
+Runtime is O(1).
 
-5.2 Function Value
-------------------
+=== 5.2 Function Value ===
+
 Abstract Syntax:
-  Expr ::= func_value (args :: [(Type, Name)]) (body :: Expr)
+
+  Expr ::= func_value (args : [(Type, Name)]) (body : Expr)
 
 Concrete Syntax:
+
   block ::= '(' type name [',' type name [...]] ')' block
 
 Example:
+
   (Bool@ a, Bool@ b) { a.?(true: b, false: False); }
 
 The function value expression is used to describe a primitive function value
@@ -562,15 +602,18 @@ Runtime is O(N log(M)), where N is the number of variables in scope that are
 captured by the function and M is the number of variables in scope. Only
 variables referenced in the body of the function are captured by the function.
 
-5.3 Function Application
-------------------------
+=== 5.3 Function Application ===
+
 Abstract Syntax:
-  Expr ::= func_apply (func :: Expr) (args :: [Expr])
+
+  Expr ::= func_apply (func : Expr) (args : [Expr])
 
 Concrete Syntax:
+
   expr ::= expr '(' expr [',' expr [...]] ')'
 
 Example:
+
   foo(x, y)
 
 The application expression is used to apply a function to some arguments. The
@@ -582,19 +625,22 @@ Runtime is O(log(N + M)) plus the runtime of func, the runtimes of each of the
 arguments, and the runtime of the body, where N is the number of arguments to
 the function and M is the number of variables captured by the function.
 
-6. Polymorphism
----------------
+== 6. Polymorphism ==
+
 Polymorphism allows expressions to be parameterized by abstract types.
 
-6.1 Poly Kind
--------------
+=== 6.1 Poly Kind ===
+
 Abstract Syntax:
-  Kind ::= poly_kind (arg :: Kind) (return :: Kind)
+
+  Kind ::= poly_kind (arg : Kind) (return : Kind)
 
 Concrete Syntax:
+
   kind ::= '<' kind [',' kind [...]] '>' kind
 
 Examples:
+
   <@>@
   <@,@>%
 
@@ -615,15 +661,18 @@ example, the following two expressions describe the same kind:
   <@,@,@>@
   <@><@><@>@
 
-6.2 Poly Value
---------------
+=== 6.2 Poly Value ===
+
 Abstract Syntax:
-  Expr ::= poly_value (arg :: (Kind, TypeName)) (body :: Expr)
+
+  Expr ::= poly_value (arg : (Kind, TypeName)) (body : Expr)
 
 Concrete Syntax:
+
   block ::= '<' kind type_name [',' kind type_name [...] '>' block
  
 Examples:
+
   <@ T@> { +(T@ just, Unit@ nothing); }
   <@ T@>(T@ x){ Maybe@<T@>(just: x); }
 
@@ -646,15 +695,18 @@ Is the poly type:
 The body of a poly is evaluated as part of evaluation of the poly value. The
 runtime is the runtime of the body.
 
-6.3 Poly Application
---------------------
+=== 6.3 Poly Application ===
+
 Abstract Syntax:
-  Expr ::= poly_apply (poly :: Expr) (arg :: Type)
+
+  Expr ::= poly_apply (poly : Expr) (arg : Type)
 
 Concrete Syntax:
+
   expr ::= expr '<' type [',' type [...]] '>'
 
 Examples:
+
   Maybe@<Int@>
   fromJust<Int@>(3)
 
@@ -668,8 +720,8 @@ The runtime of a poly application is linear in the number of arguments plus
 the runtime of the poly. Unlike function application, poly application does
 not cause the body of the poly to be re-evaluated.
 
-6.4 Type Inference
-------------------
+=== 6.4 Type Inference ===
+
 Type inference allows you to use poly values in place of struct types, union
 types, and function values in struct_value_explicit_type, union_value, and
 func_apply respectively. The type arguments of the poly are inferred and
@@ -701,8 +753,8 @@ The type and runtime behavior of a poly inference expression is the same as
 the type and runtime behavior of the target combined poly application and
 struct_value_explicit_type/union_value/func_apply expression.
 
-7. Syntactic Sugar
-------------------
+== 7. Syntactic Sugar ==
+
 We introduce syntax for describing lists and literals to make it less tedious
 to write code involving sequences of elements of the same type and raw
 sequences of data without the overhead of punctuation between data elements.
@@ -711,15 +763,18 @@ We introduce bind syntax to facilitate calling a function with an anonymous
 function as its only argument. This is useful for using reusable glue logic to
 compose operations in a monadic style.
 
-7.1 List
---------
+=== 7.1 List ===
+
 Abstract Syntax:
-  Expr ::= list (func :: Expr) (args :: [Expr])
+
+  Expr ::= list (func : Expr) (args : [Expr])
   
 Concrete Syntax:
+
   expr ::= expr '['[expr [',' expr [...]]] ']'
 
 Examples: 
+
   List<Int@>[]
   List<Int@>[x]
   List<Int@>[x, f(y), z]
@@ -758,21 +813,25 @@ even though they share a similar concrete syntax to function application.
 
 The motivation for requiring a function to be supplied as part of the list
 expression, instead of having stand alone list expressions like [a, b, c], is:
+
 * It allows the user to specify what type of list to build instead of assuming
   a single builtin list type.
 * It make it possible to specify the type for empty lists.
 * It is consistent with literal expressions, which require a user defined
   letter type to be supplied.
 
-7.2 Literal
------------
+=== 7.2 Literal ===
+
 Abstract Syntax:
-  Expr ::= literal (func :: Expr) (letters :: word)
+
+  Expr ::= literal (func : Expr) (letters : word)
 
 Concrete Syntax:
+
   expr ::= expr '|' word
 
 Example:
+
   Octal|177
   Str|'hello there!'
 
@@ -802,8 +861,8 @@ syntax, even though they share a similar concrete syntax to function
 application. Type inference is not supported with literals because the word
 provides no information about what type the function should be.
 
-7.2.1 Example
--------------
+==== 7.2.1 Example ====
+
 To better illustrate the intended use of list and literal expressions, imagine
 we want to define a binary integer literal.
 
@@ -836,15 +895,18 @@ example:
  Int@ 6 = Binary|110;
  Int@ x = Binary[first_bit, second_bit, third_bit];
 
-7.3 Bind
---------
+=== 7.3 Bind ===
+
 Abstract Syntax:
-  Expr ::= bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+
+  Expr ::= bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
 
 Concrete Syntax:
+
   stmt ::= type name [',' type name [...]] '<-' expr ';' stmt
 
 Example:
+
   Int@ x <- Map(l);
   f(x, y)
 
@@ -867,6 +929,7 @@ program statements are combined. For example, it can be used to hide error
 propagation based on a Maybe monad.
 
 Instead of:
+
   Maybe@ a = f(x);
   a.?(
     just: {
@@ -908,14 +971,14 @@ expressions.
 Struct types and package types cannot be used for the function in bind syntax,
 even though they share a similar concrete syntax to function application.
 
-8. Modules
-----------
+== 8. Modules ==
+
 Fble code is organized into a hierarchy of reusable modules. Each module
 describes a value that may depend on the value of other modules. A program is
 formed by combining a module with all of its direct and indirect dependencies.
 
-8.1 Organization
-----------------
+=== 8.1 Organization ===
+
 Modules are organized into a tree structure. The purpose of the tree structure
 is to group modules together that are developed by the same organization to
 help avoid name conflicts.
@@ -949,8 +1012,8 @@ For example, you might have the following directory structure:
    Md5/
      Tests.fble
 
-8.2 Path
---------
+=== 8.2 Path ===
+
 Modules may depend on other modules independent of the tree hierarchy of
 modules. A program can include a module without having to depend on any
 descendants of that module. The only restrictions on module dependencies are
@@ -961,20 +1024,23 @@ A module is referred to using an absolute path, which describes a path of
 named children from the root of the module hierarchy.
 
 Abstract Syntax:
-  Path ::= abs_path (name :: [Name])
-  Expr ::= module_path (ref :: Path)
+
+  Path ::= abs_path (name : [Name])
+  Expr ::= module_path (ref : Path)
 
 Concrete Syntax:
+
   path ::= '/' name ['/' name [...]] '%'
   expr ::= path ;
 
 Examples:
+
   /StdLib/List%
   /Unit%
   /Md5/ImplA%
 
-8.3 Program
------------
+=== 8.3 Program ===
+
 A program is an fble expression that creates a value that is used however is
 deemed suitable by whoever is executing the program.
 
@@ -990,6 +1056,7 @@ and output operations over the Stdio@ interface, and the final result is
 converted to a standard exit code.
 
 Other examples of ways to execute an fble program:
+
 * Evaluate the value to ensure there are no runtime errors, for testing
   purposes.
 * The value is a polymorphic function of abstract monadic type that takes an
@@ -1035,8 +1102,8 @@ The same module hierarchy can be used for a program to run List tests:
   StdLib_List = </StdLib/List%>;
   </StdLib/List/Tests%>;
 
-9. Abstract Types
------------------
+== 9. Abstract Types ==
+
 Abstract types provide a mechanism to define types of values that can only be
 accessed by modules in the same package. This makes it possible to hide
 implementation details from users and enforce invariants on how values are
@@ -1049,15 +1116,18 @@ type that can be used to restrict access to types based on module path.
 Modules that do not have restricted access can only interact with a type using
 publicly available functions.
 
-9.1 Package Type
-----------------
+=== 9.1 Package Type ===
+
 Abstract Syntax:
-  Type ::= package_type (path :: Path)
+
+  Type ::= package_type (path : Path)
 
 Concrete Syntax:
+
   type ::= '%(' path ')'
 
 Example:
+
   @ FooBar@ = %(/Foo/Bar%);
   ...
 
@@ -1077,15 +1147,18 @@ it's useful to have for uniformity of interaction with the type?
 A package type has kind @. Two package types are considered equal if they have
 the same path.
 
-9.2 Abstract Type
------------------
+=== 9.2 Abstract Type ===
+
 Abstract Syntax:
-  Type ::= abstract_type (package :: Type) (type :: Type)
+
+  Type ::= abstract_type (package : Type) (type : Type)
 
 Concrete Syntax:
+
   type ::= type '<' type '>'
 
 Example:
+
   @ FooBar@ = %(/Foo/Bar%);
   @ AbstractBool = FooBar@<Bool@>;
   
@@ -1096,15 +1169,18 @@ underlying types are equal.
 The package type must be a package type. The underlying type can be any type
 of any kind. The resulting abstract type has kind @.
 
-9.3 Abstract Cast
------------------
+=== 9.3 Abstract Cast ===
+
 Abstract Syntax:
-  Expr ::= abstract_cast (package :: Type) (target :: Type) (value :: Expr)
+
+  Expr ::= abstract_cast (package : Type) (target : Type) (value : Expr)
 
 Concrete Syntax:
+
   expr ::= type '.' '<' type '>' '(' expr ')'
 
 Example:
+
   @ FooBar@ = %(/Foo/Bar%);
   @ AbstractBool@ = FooBar@<Bool@>;
   AbstractBool@ AbstractTrue = FooBar@.<AbstractBool@>(True);
@@ -1116,15 +1192,18 @@ all types T@, the type FooBar@<T@> is equal to T@.
 The type of the resulting value is the target type. It is a type error if the
 current module is not a member of the package described by the package type.
 
-9.4 Abstract Value
-------------------
+=== 9.4 Abstract Value ===
+
 Abstract Syntax:
-  Expr ::= abstract_value (package :: Type) (value :: Expr)
+
+  Expr ::= abstract_value (package : Type) (value : Expr)
 
 Concrete Syntax:
+
   expr ::= type '(' expr ')'
 
 Example:
+
   @ FooBar@ = %(/Foo/Bar%);
   @ AbstractBool@ = FooBar@<Bool@>;
   AbstractBool@ AbstractTrue = FooBar@(True);
@@ -1142,15 +1221,18 @@ casting directly to an abstract value. It's not possible in general to use a
 standard function for this case given the package restriction applies to where
 the cast operation occurs.
 
-9.5 Abstract Access
--------------------
+=== 9.5 Abstract Access ===
+
 Abstract Syntax:
-  Expr ::= abstract_access (value :: Expr)
+
+  Expr ::= abstract_access (value : Expr)
 
 Concrete Syntax:
+
   expr ::= expr '.' '%'
 
 Example:
+
   @ FooBar@ = %(/Foo/Bar%);
   @ AbstractBool@ = FooBar@<Bool@>;
   AbstractBool@ AbstractTrue = FooBar@(True);
@@ -1169,8 +1251,8 @@ casting directly from an abstract value. It's not possible in general to use a
 standard function for this case given the package restriction applies to where
 the cast operation occurs.
 
-9.6 Abstract Type Example
---------------------------
+=== 9.6 Abstract Type Example ===
+
 The follow example shows how to define a three element enum type that can only
 be accessed externally using the provided methods.
 
@@ -1194,8 +1276,8 @@ starting with /MyPackage in their path. Other users are unable to construct or
 access fields of the Enum@ type directly; they can only use the provided
 values A, B, C and functions IsA, IsB, and IsC.
 
-9.7 Private Module Example
---------------------------
+=== 9.7 Private Module Example ===
+
 Abstract types can be used to effectively mark modules or parts of modules
 private. For example, consider a module /Foo/Internal%:
 
@@ -1235,78 +1317,81 @@ accessed by modules in the package /Foo%. For example:
 This will result in a type error if the user does not belong to the package
 /Foo%.
 
-10. Abstract Syntax Reference
-----------------------------
-NormalName ::= (* A string of characters *)
-TypeName ::= (* A string of characters *)
+== 10. Abstract Syntax Reference ==
 
-Name ::=
-   normal_name (name :: NormalName)
- | type_name (name :: TypeName)
- ;
+  NormalName ::= (* A string of characters *)
+  TypeName ::= (* A string of characters *)
 
-Path ::=
-   abs_path (name :: [Name])
- ;
+  Name ::=
+     normal_name (name : NormalName)
+   | type_name (name : TypeName)
+   ;
 
-Kind ::=
-   basic_normal_kind
- | basic_type_kind
- | poly_kind (arg :: Kind) (result :: Kind)
- ;
+  Path ::=
+     abs_path (name : [Name])
+   ;
 
-Type ::= (* synonym for Expr where a type is expected *)
+  Kind ::=
+     basic_normal_kind
+   | basic_type_kind
+   | poly_kind (arg : Kind) (result : Kind)
+   ;
 
-Spec ::=
-   kind_spec (kind :: Kind)
- | type_spec (type :: Type)
- ;
-     
-Expr ::=
-   typeof (expr :: Expr)
- | var (name :: Name)
- | let (bindings :: [(Spec, Name, Expr)]) (body :: Expr)
- | module_path (path :: Path)
+  Type ::= (* synonym for Expr where a type is expected *)
 
- | struct_type (fields :: [(Type, Name)])
- | struct_value_explicit_type (type :: Type) (args :: [Expr])
- | struct_value_implicit_type (args :: [(Name, Expr)])
- | struct_access (object :: Expr) (field :: Name)
+  Spec ::=
+     kind_spec (kind : Kind)
+   | type_spec (type : Type)
+   ;
+       
+  Expr ::=
+     typeof (expr : Expr)
+   | var (name : Name)
+   | let (bindings : [(Spec, Name, Expr)]) (body : Expr)
+   | module_path (path : Path)
 
- | union_type (fields :: [(Type, Name)])
- | union_value (type :: Type) (field :: Name) (arg :: Expr)
- | union_access (object :: Expr) (field :: Name)
- | union_select (condition :: Expr) (choices :: [(Name, Expr)]) (default :: Expr)
+   | struct_type (fields : [(Type, Name)])
+   | struct_value_explicit_type (type : Type) (args : [Expr])
+   | struct_value_implicit_type (args : [(Name, Expr)])
+   | struct_access (object : Expr) (field : Name)
 
- | func_type (args :: [Type]) (result :: Type)
- | func_value (args :: [(Type, Name)]) (body :: Expr)
- | func_apply (func :: Expr) (args :: [Expr])
+   | union_type (fields : [(Type, Name)])
+   | union_value (type : Type) (field : Name) (arg : Expr)
+   | union_access (object : Expr) (field : Name)
+   | union_select (condition : Expr) (choices : [(Name, Expr)]) (default : Expr)
 
- | poly_value (arg :: (Kind, Name)) (body :: Expr)
- | poly_apply (poly :: Expr) (arg :: Expr)
+   | func_type (args : [Type]) (result : Type)
+   | func_value (args : [(Type, Name)]) (body : Expr)
+   | func_apply (func : Expr) (args : [Expr])
 
- | list (func :: Expr) (args :: [Expr])
- | literal (func :: Expr) (letters :: word)
- | bind (args :: [(Type, Name)]) (func :: Expr) (body :: Expr)
+   | poly_value (arg : (Kind, Name)) (body : Expr)
+   | poly_apply (poly : Expr) (arg : Expr)
 
- | package_type (path :: Path)
- | abstract_type (package :: Type) (type :: Type)
- | abstract_cast (package :: Type) (target :: Type) (value :: Expr)
- | abstract_value (package :: Type) (value :: Expr)
- | abstract_access (package :: Type) (value :: Expr)
- ;
+   | list (func : Expr) (args : [Expr])
+   | literal (func : Expr) (letters : word)
+   | bind (args : [(Type, Name)]) (func : Expr) (body : Expr)
 
-Module ::= (value :: Expr) (public :: [Module]) (private :: [Module])
+   | package_type (path : Path)
+   | abstract_type (package : Type) (type : Type)
+   | abstract_cast (package : Type) (target : Type) (value : Expr)
+   | abstract_value (package : Type) (value : Expr)
+   | abstract_access (package : Type) (value : Expr)
+   ;
 
-11. Concrete Syntax
--------------------
-11.1 Lexical Syntax
--------------------
+  Module ::= (value : Expr) (public : [Module]) (private : [Module])
+
+== 11. Concrete Syntax ==
+
+=== 11.1 Lexical Syntax ===
+
 We have the following categories of characters:
+
 1. Whitespace: any whitespace character, as traditionally classified.
-2. The comment character '#'.
+2. The comment character `#`.
 3. Punctuation: Any of the following characters:
+
   (){};,:?=.<>+*-!$@~'\[]%/^
+
 4. Word character: any other character.
 
 The lexical syntax is used to interpret a string of arbitrary characters as a
@@ -1321,95 +1406,99 @@ A sequence of continuous word characters is grouped together into a word.
 A sequence of characters surrounded by single quotes is treated as a sequence
 of word characters, regardless of what class the characters come from. This
 makes it possible to specify words containing whitespace, comment, and
-punctuation characters. For example, 'Foo,Bar' is treated as a single word
+punctuation characters. For example, `'Foo,Bar'` is treated as a single word
 where the fourth character of the word is a comma.
 
 Within a single quoted word, a single quote character can be expressed by
-using two adjacent single quote characters. For example, 'Foo''Bar' is treated
+using two adjacent single quote characters. For example, `'Foo''Bar'` is treated
 as a single word where the fourth character of the word is a single quote.
 
-Single quotes act as word delimiters. For example, Foo'.'Bar is treated as
-three separate words: 'Foo', '.', and 'Bar', not as a single word 'Foo.Bar'.
-The only exception is when consecutive single quote characters are used to
-embed a single quote character in a word.
+Single quotes act as word delimiters. For example,
 
-11.2 Concrete Syntax Reference
-------------------------------
-word ::= (* word as described in the section on lexical syntax *)
-normal_name ::= word
-type_name ::=   word '@'
+  Foo'.'Bar
 
-name ::= 
-   normal_name
- | type_name
- ;
+is treated as three separate words: `'Foo'`, `'.'`, and `'Bar'`, not as a
+single word `'Foo.Bar'`.  The only exception is when consecutive single quote
+characters are used to embed a single quote character in a word.
 
-path ::= '/' name ['/' name [...]] '%' ;
+=== 11.2 Concrete Syntax Reference ===
 
-kind ::=
-   '%'                                             (* normal_kind *)
- | '@'                                             (* type_kind *)
- | '<' kind [',' kind [...]] '>' kind              (* poly_kind *)
- ;
+  word ::= (* word as described in the section on lexical syntax *)
+  normal_name ::= word
+  type_name ::=   word '@'
 
-type ::= expr ;
+  name ::= 
+     normal_name
+   | type_name
+   ;
 
-spec ::= 
-   kind                                            (* kind_spec *)
- | type                                            (* type_spec *)
- ;
+  path ::= '/' name ['/' name [...]] '%' ;
 
-expr ::= 
-   '@' '<' expr '>'                                (* typeof *)
- | name                                            (* var *)
- | path                                            (* module_path *)
+  kind ::=
+     '%'                                         (* normal_kind *)
+   | '@'                                         (* type_kind *)
+   | '<' kind [',' kind [...]] '>' kind          (* poly_kind *)
+   ;
 
- | '*(' [type name [',' type name [...]]] ')'      (* struct_type *)
- | type '(' [expr [',' expr [...]]] ')'            (* struct_value_explicit_type *)
- | '@(' [name [':' expr] [',' ...]] ')'            (* struct_value_implicit_type *)
- | expr '.' name                                   (* struct_access *)
+  type ::= expr ;
 
- | '+(' type name [',' type name [...]] ')'        (* union_type *)
- | type '(' name ':' expr ')'                      (* union_value *)
- | expr '.' name                                   (* union_access *)
- | expr '.?(' name ':' expr                        (* union_select *)
-           [',' name ':' expr [...]]
-           [',' ':' expr ] ')'   
+  spec ::= 
+     kind                                        (* kind_spec *)
+   | type                                        (* type_spec *)
+   ;
 
- | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
+  expr ::= 
+     '@' '<' expr '>'                            (* typeof *)
+   | name                                        (* var *)
+   | path                                        (* module_path *)
 
- | expr '<' type [',' type [...]] '>'              (* poly_apply *)
+   | '*(' [type name [',' type name [...]]] ')'  (* struct_type *)
+   | type '(' [expr [',' expr [...]]] ')'        (* struct_value_explicit_type *)
+   | '@(' [name [':' expr] [',' ...]] ')'        (* struct_value_implicit_type *)
+   | expr '.' name                               (* struct_access *)
 
- | expr '['[expr [',' expr [...]] ']'              (* list *)
- | expr '|' word                                   (* literal *)
+   | '+(' type name [',' type name [...]] ')'    (* union_type *)
+   | type '(' name ':' expr ')'                  (* union_value *)
+   | expr '.' name                               (* union_access *)
+   | expr '.?(' name ':' expr                    (* union_select *)
+             [',' name ':' expr [...]]
+             [',' ':' expr ] ')'   
 
- | '%' '(' path ')'                                (* package_type* )
- | type '<' type '>'                               (* abstract_type *) 
- | type '.' '<' type '>' '(' expr ')'              (* abstract_cast *) 
- | type '(' expr ')'                               (* abstract_value *) 
- | expr '.' '%'                                    (* abstract_access *) 
+   | expr '(' expr [',' expr [...]] ')'              (* func_apply *)
 
- | block
- ;
+   | expr '<' type [',' type [...]] '>'              (* poly_apply *)
 
-block ::=
-   '{' stmt '}'
- | '(' type [',' type [...]] ')' block               (* func_type *)
- | '(' type name [',' type name [...]] ')' block     (* func_value *)
- | '<' kind name [',' kind name [...]] '>' block     (* poly_value *)
- ;
+   | expr '['[expr [',' expr [...]] ']'              (* list *)
+   | expr '|' word                                   (* literal *)
 
-stmt ::=
-   expr ';'
- | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
- | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
- | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
- ;
+   | '%' '(' path ')'                                (* package_type* )
+   | type '<' type '>'                               (* abstract_type *) 
+   | type '.' '<' type '>' '(' expr ')'              (* abstract_cast *) 
+   | type '(' expr ')'                               (* abstract_value *) 
+   | expr '.' '%'                                    (* abstract_access *) 
 
-module ::= stmt                                                      (* module_value *)
- ;
+   | block
+   ;
+
+  block ::=
+     '{' stmt '}'
+   | '(' type [',' type [...]] ')' block             (* func_type *)
+   | '(' type name [',' type name [...]] ')' block   (* func_value *)
+   | '<' kind name [',' kind name [...]] '>' block   (* poly_value *)
+   ;
+
+  stmt ::=
+     expr ';'
+   | spec name '=' expr [',' spec name '=' expr [...]] ';' stmt        (* let *)
+   | expr '.?(' name ':' expr [',' name ':' expr [...]] ')' ';' stmt   (* union_select *)
+   | type name [',' type name [...]] '<-' expr ';' stmt                (* bind *)
+   ;
+
+  module ::= stmt                                    (* module_value *)
+   ;
 
 Notes:
+
 * Struct and union access share the same form. The type of the object is used
   to distinguish between the two kinds of expressions.
 * Explicit type struct value, function apply, and abstract value share the
