@@ -22,7 +22,7 @@ namespace eval "spec-test" {
 
       lappend spec_tests $::b/spec/$fble.tr
       testsuite $::b/spec/$fble.tr "$deps $::s/spec/$fble $depfile" \
-        "tclsh $::s/test/spec-test.run.tcl $::s $::b $fble"
+        "tclsh8.6 $::s/test/spec-test.run.tcl $::s $::b $fble"
     }
   }
 

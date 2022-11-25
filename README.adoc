@@ -29,6 +29,7 @@ To build and run the tests for Fable, the following software is required. The
 version numbers provided are versions that are known to work:
 
 Doxygen 1.8.13:: For source code documentation.
+Expect 5.45.4:: To test fble debugging.
 GNU Binutils for Debian 2.31.1:: For assembling compiled fble programs.
 GNU Bison 3.3.2:: For generating the fble parser.
 GNU Compiler Collection (Debian 8.3.0-6) 8.3.0:: For compiling fble.
@@ -40,7 +41,6 @@ Ninja 1.10.1:: For the build system.
 Open GL 1.2:: For graphical fble apps.
 Simple DirectMedia Layer 2.0.9:: For graphical fble apps.
 Tcl 8.6:: For generating build ninja files.
-Tcl Expect 8.6:: To test fble debugging.
 
 == Build and Test ==
 

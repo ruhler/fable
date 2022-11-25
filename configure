@@ -1,4 +1,6 @@
-#!/usr/bin/tclsh
+#!/bin/sh
+# configure script for fable\
+exec tclsh8.6 "$0" "$@"
 
 set ::srcdir [file dirname [info script]]
 set ::builddir "."

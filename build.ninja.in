@@ -1,6 +1,6 @@
 
 rule build_ninja_full
-  command = tclsh @srcdir@/build.tcl $out
+  command = tclsh8.6 @srcdir@/build.tcl $out
 
 rule build_ninja
   command = cp $in $out

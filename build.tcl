@@ -1,7 +1,7 @@
 # ninja-based description of how to build fble and friends.
 #
 # First time setup:
-#   tclsh build.tcl build.ninja
+#   tclsh8.6 build.tcl build.ninja
 #
 # Afterwards:
 #   ninja
@@ -355,7 +355,7 @@ foreach build_tcl $build_tcls {
 build $::b/detail.tr $::tests "cat $::tests > $::b/detail.tr"
 build $::b/summary.tr \
   "$::s/test/log $::b/detail.tr $::s/test/tests.tcl" \
-  "$::s/test/log $::b/summary.tr tclsh $::s/test/tests.tcl < $::b/detail.tr"
+  "$::s/test/log $::b/summary.tr tclsh8.6 $::s/test/tests.tcl < $::b/detail.tr"
 
 # Doxygen
 lappend ::build_ninja_deps "$::s/include/fble"
@@ -371,7 +371,7 @@ phony "install" [list $::installs]
 puts $::build_ninja "default all"
 
 # build.ninja
-build $::b/build.ninja "$::s/build.tcl" "tclsh $::s/build.tcl $::b/build.ninja" \
+build $::b/build.ninja "$::s/build.tcl" "tclsh8.6 $::s/build.tcl $::b/build.ninja" \
   "depfile = $::b/build.ninja.d"
 
 # build.ninja.d implicit dependency file.

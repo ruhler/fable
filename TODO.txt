@@ -39,13 +39,6 @@
  - Write man pages (fble.man.txt)
  See thoughts/fble.release.txt
 
-* Check whether tclsh is widely available or it should be changed to tclsh8.6
-  or some such.
- - I just noticed a past project I used:
-  #!/bin/sh
-  # configure script for focus\
-  exec tclsh "$0" "$@"
-
 * Write a tutorial
   See thoughts/fble.tutorial.txt
 

@@ -1073,3 +1073,181 @@ And general thoughts:
 * If I'm doing my own doc format, maybe don't rely on indentation for meaning?
   Because vim syntax highlighting sounds hard in that case. And if it's hard
   for vim, it's hard for anyone.
+
+What if I take a break by implementing a markdown library in fble? It's been
+too long since I've written fble code. Anything I write I could later adapt to
+support a custom format if I want, or asciidoc, or some subset of
+markdown/asciidoc, and get more control over generated manpages, etc. Not
+necessarily for practical purposes, but for example purposes?
+
+Start with commonmark, which is best standardized. But what do you do with it?
+Parse it? Convert it to something? Convert it to a man page?
+
+---
+
+Let the spiral continue.
+
+Imagine I wanted to invent my own doc format. What are the goals and use
+cases?
+
+* vim syntax highlighting that works.
+  - e.g. metadata colored differently, section titles highlighted, definition
+    terms. Just a little bit to add color here and there.
+* Be able to write code to generate whatever outputs I want based on document
+  structure.
+* Be able to clearly specify structure document.
+* Be able to capture all the structure I care about it my own documents.
+  - e.g. definition lists, links, etc.
+* Support for document-specific custom structure
+  - e.g. sideeffects, synopsis, concrete/abstract/example.
+* Support for generating man pages, latex, html.
+  - man pages for distribution. latex and html as option to share more
+    formally.
+* Content can be understood easily from reading document source.
+* Focus on structure only, not on presentation.
+* Easy to parse structure by computer or by human.
+* Would be nice if we could have a linter/error checker to detect errors in
+  syntax.
+* Would be nice if things like github could auto-display the formatted
+  version, but I assume that won't happen for anything custom I do.
+* Nice concrete syntax to write (whatever that means).
+
+As we've said before, we can separate into two parts: abstract syntax and
+concrete syntax. The abstract syntax will be whatever is important to me. I
+can look at my existing docs to get an idea.
+
+What's wrong with existing formats?
+* Markdown
+  - Lacks structure I care about, like definition lists (though I could pick
+    one of the extended formats that does have definition lists).
+  - I don't have my own parser for it (though I could write one).
+  - Structure not entirely obvious from reading. Just look at how complicated
+    the specs are.
+* asciidoc
+  - vim syntax highlighting doesn't work.
+  - I don't have a parser for it.
+  - Structure is not clear from text, in my opinion.
+* xml
+  - I don't have a parser for it. But would be easy to write.
+  - I would have to come up with a schema definition.
+  - Having <p> around all paragraphs too annoying to write?
+    This suggests a new requirement?
+* plain text
+  - No syntax highlighting.
+  - I don't have a parser for it. Structure is not clear from the text.
+* tcl
+  - Braces and substitution within braces is awkward.
+
+Markdown and asciidoc specify the abstract and concrete syntax. xml/tcl don't
+specify an abstract syntax, which means I could make them work just fine with
+whatever abstract syntax I choose. That suggests I really do care about the
+concrete syntax. It might be nice if I can separate abstract syntax and
+concrete syntax, so that you could reuse the concrete syntax for other
+kinds of structures. But then, why not just use xml?
+
+It's way too verbose. Just compare:
+
+<dl>
+ <dt>bin</dt>
+ <dd>Source code for fble compiler binaries.</dd>
+ <dt>book</dt>
+ <dd>Drafts for a book about the design of the fble language.</dd>
+ <dt>include</dt>
+ <dd>Public header files for the fble library.</dd>
+ <dt>lib</dt>
+ <dd>Source code for an fble interpreter and compiler implemented in C.</dd>
+</dl>
+
+versus:
+
+bin/:: Source code for fble compiler binaries.
+book/:: Drafts for a book about the design of the fble language.
+include/:: Public header files for the fble library.
+lib/:: Source code for an fble interpreter and compiler implemented in C.
+
+Particularly with syntax highlighting on the later. It's too much tags. It
+really gets in the way of reading the document and seeing the content of the
+text.
+
+I'm thinking instead something like:
+
+[def] bin/:     Source code for fble compiler binaries.
+[def] book/:    Drafts for a book about the design of the fble language.
+[def] include/: Public header files for the fble library.
+[def] lib/:     Source code for an fble interpreter and compiler implemented in C.
+
+So, we still give an initial tag. But there is some built in structure to say
+a list definition item is the item followed by the content. And maybe,
+somehow, it knows to use ':' as the separator?
+
+That's the biggest challenge here. How to clearly separate arguments to a
+structure without becoming overly cumbersome? Specify the terminator as part
+of the command?
+
+[def /] bin/     Source code for fble compiler binaries.
+[def /] book/    Drafts for a book about the design of the fble language.
+[def /] include/ Public header files for the fble library.
+[def /] lib/     Source code for an fble interpreter and compiler implemented in C.
+
+[def :] bin/:     Source code for fble compiler binaries.
+[def :] book/:    Drafts for a book about the design of the fble language.
+[def :] include/: Public header files for the fble library.
+[def :] lib/:     Source code for an fble interpreter and compiler implemented in C.
+
+[def  ] bin/      Source code for fble compiler binaries.
+[def  ] book/     Drafts for a book about the design of the fble language.
+[def  ] include/  Public header files for the fble library.
+[def  ] lib/      Source code for an fble interpreter and compiler implemented in C.
+
+[def \n] bin/
+  Source code for fble compiler binaries.
+[def \n] book/
+  Drafts for a book about the design of the fble language.
+[def \n] include/
+  Public header files for the fble library.
+[def \n] lib/
+  Source code for an fble interpreter and compiler implemented in C.
+
+The last one is stretching it. That's a bit hard to read.
+
+[def] bin/     ' Source code for fble compiler binaries.
+[def] book/    ' Drafts for a book about the design of the fble language.
+[def] include/ ' Public header files for the fble library.
+[def] lib/     ' Source code for an fble interpreter and compiler implemented in C.
+
+[def]{bin/}     Source code for fble compiler binaries.
+[def]{book/}    Drafts for a book about the design of the fble language.
+[def]{include/} Public header files for the fble library.
+[def]{lib/}     Source code for an fble interpreter and compiler implemented in C.
+
+@def' bin/'     Source code for fble compiler binaries.
+@def' book/'    Drafts for a book about the design of the fble language.
+@def' include/' Public header files for the fble library.
+@def' lib/'     Source code for an fble interpreter and compiler implemented in C.
+
+@def "bin/"     Source code for fble compiler binaries.
+@def "book/"    Drafts for a book about the design of the fble language.
+@def "include/" Public header files for the fble library.
+@def "lib/"     Source code for an fble interpreter and compiler implemented in C.
+
+@def 'bin/'     Source code for fble compiler binaries.
+@def 'book/'    Drafts for a book about the design of the fble language.
+@def 'include/' Public header files for the fble library.
+@def 'lib/'     Source code for an fble interpreter and compiler implemented in C.
+
+Some thoughts when playing around with things:
+* Blank lines, new lines, spaces are all natural boundaries for things.
+* @foo[text] is decent for inline items. Unclear if we can naturally nest
+  things like that.
+
+@def bin/     @= Source code for fble compiler binaries.
+@def book/    @= Drafts for a book about the design of the fble language.
+@def include/ @= Public header files for the fble library.
+@def lib/     @= Source code for an fble interpreter and compiler implemented in C.
+
+@def[bin]     Source code for fble compiler binaries.
+@def[book]    Drafts for a book about the design of the fble language.
+@def[include] Public header files for the fble library.
+@def[lib]     Source code for an fble interpreter and compiler implemented in C.
+
+Think about it more.

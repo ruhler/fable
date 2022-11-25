@@ -1,6 +1,6 @@
 # Summarize test results.
 #
-# Usage: tclsh tests.tcl
+# Usage: tclsh8.6 tests.tcl
 #
 # Test results are read from stdin using the following protocol:
 # * @[<name>] identifies a test.

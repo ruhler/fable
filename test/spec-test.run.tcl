@@ -3,7 +3,7 @@
 # Helper script to run a spec test.
 #
 # Usage:
-#   tclsh srcdir builddir test-spec.tcl FBLE
+#   tclsh8.6 srcdir builddir test-spec.tcl FBLE
 #
 #   srcdir - Path to the source directory containing the spec/ directory.
 #   builddir - Path to the build directory.
@@ -11,7 +11,7 @@
 #
 # Example:
 #
-#   tclsh .. . spec-test.run.tcl SpecTests/00_Test/NoError.fble
+#   tclsh8.6 .. . spec-test.run.tcl SpecTests/00_Test/NoError.fble
 #
 # Parses the @@fble-test@@ metadata of $srcdir/spec/$FBLE and executes the
 # test appropriately. Reports an error in case of test failure.
