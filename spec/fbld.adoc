@@ -1,0 +1,191 @@
+Fbld
+====
+Richard Uhler <ruhler@degralder.com>
+
+== Introduction ==
+
+Fbld is a lightweight markup language for structured text. It aims to balance
+the readibilty of markup languages like asciidoc and markdown with the
+extensibility and clarity of structure of markup languages like xml.
+
+Note: Fbld should not be confused with the predecessor to fble, which was also
+called fbld. We reuse the name `fbld' in this case to suggest the term `Fable
+Doc Language`.
+
+=== Goals ===
+
+The primary design goals of fbld are:
+
+* It should be easy to parse, by both human and computer. There should not be
+  weird corner cases, ambiguity, or complex resolution rules for parsing like
+  there are for markdown, for example.
+
+* The main textural content should be easy to read from source by a human. It
+  should not include excessive clutter from tags that overly distract from the
+  contents of the text, as is the case with roff and xml, for example.
+
+* It should be easy to provide custom processing of the document. For example,
+  conversion to html, latex, roff, or anything you might like.
+
+* It should support custom structure. A user could define their own new kinds
+  of structures and use those to describe the structure of their documents.
+
+=== Use Cases ===
+
+* Document functions in code and automatically generate man pages from it.
+* Document command line usage and automatically generate both man page and
+  help usage text from it.
+* Mark up README files, tutorials, and language specifications to add clarity
+  to structure and make it possible to generate books, webpages, etc. with
+  that information.
+
+=== Comparisons ===
+
+Markdown::
+* Subtlties in how to parse correctly.
+* No support for custom structure components.
+
+Asciidoc::
+* Complex to parse and provide custom processing of the document.
+* Too hard to provide functioning vim syntax highlighting.
+* Have to know what particular symbols mean to understand the structure of a
+  document. For example, `......` versus `////////`.
+
+XML::
+* Tags clutter the doc too much.
+
+roff::
+* Tags clutter the doc too much.
+
+doxygen::
+* Not generally extensible to things beyond code documentation.
+
+tcl::
+* Too tedious to have nested inlined structure.
+
+== Concepts ==
+
+An fbld document describes a sequence of commands to execute. Commands are
+entirely user defined. Each command takes a list of string string arguments.
+
+There are two different forms of command sequence: block and inline. Block
+sequences are intended to be used for structures spanning many lines, where it
+doesn't hurt to use vertical space in the document to convey structure. Inline
+sequences are intended to be used for markup within a span of text, where
+introduction of new lines would break the flow of text.
+
+For example, imagine we have a `paragraph` command that takes a single
+argument which is the text of a paragraph. We could describe a document with
+three paragraphs using:
+
+....
+@paragraph[This is the text of the first paragraph]
+
+@paragraph[This is the text of the second paragraph]
+
+@paragraph[This is the text of the third paragraph]
+....
+
+The notation `@paragraph` says to execute the user provided paragraph command,
+passing the text in between `[` and `]` as its argument.
+
+Within a paragraph, we might want inline structure. For example, some bold
+words:
+
+....
+This is the text of a paragraph with a @bold[bold] word, or @bold[multiple
+bold words].
+....
+
+This text, if interpreted using inline structure, and assuming a default
+inline command named `text` is interpreted as the following sequence of
+commands:
+
+....
+@text[This is the text of a paragraph with a ]
+@bold[bold]
+@text[ word, or ]
+@bold[multiple bold words]
+@text[.]
+....
+
+=== Block Structure ===
+
+Commands can take any number of arguments. The magic idea behind block
+structure is that the last argument can be specified without `[` and `]`, in
+one of two ways. Either it is take as all the text to the end of the same
+line, as in:
+
+....
+@paragraph This is the text of the first paragraph
+....
+
+Or as all the text to the next blank line, as in:
+
+....
+@paragraph
+This is the text of the first paragraph. It happens
+to be a long paragraph that spans multiple lines.
+
+....
+
+The difference is, in the first case, the text of the argument starts on the
+same line as the tag. In the second case, the text of the argument starts on
+the line after the tag.
+
+== Block Structure ==
+
+The block pass interprets text as a sequence of block commands and executes
+those. The procedure for parsing block structure is as follows:
+1. Skip blank lines. While not at end of input:
+2. If next character is not `'@'`, read all characters until the next blank
+   line. Issue the 'default block' command with the string read as the single
+   argument. Then go to (1).
+2. If next character is `'@'`, read `'@'` and the tag.
+3. If next character is not newline or `'['`, read all characters until end of
+   line. Add that as the last argument to the current command. Issue the
+   current command, and go to (1).
+4. If next character is `'['`, read all characters until matching `']'`. Add that
+   as next argument to current command. Go to (3).
+5. If next character is newline, skip passed that and go to 6.
+6. If next character is `'['`, read all characters until matching `']'`. Add that
+   as next argument to current command. Go to (3).
+7. If next character is newline, issue the current command. Go to (1).
+8. Read all characters up until next blank line. Add those as an arg to
+   current command issue the current command, and go to (1).
+
+== Inline Structure ==
+
+The inline pass interprets text as a sequence of inline commands and executes
+those. The procedure for parsing inline structure is as follows:
+1. While not at end of input:
+2. If next character is not `'@'`, read all characters until the next `'@'`.
+   Issue the 'default inline' command with the string read as the single
+   argument. Then go to (1).
+3. If next characters is `'@'`, read `'@'` and the tag.
+4. If next characters is `'['`, read all characters until matching `']'`. Add
+   that as next argument to current command. Go to (4).
+5. If next character is not `'['`, issue the current command and go to (1).
+
+== Lexical Syntax ==
+
+The following characters are special:
+`'@'`:: Denotes the start of a tag.
+`'['`:: Denotes the start of an argument.
+`']'`:: Denotes the end of an argument.
+`'\'`:: Used for character escapes.
+
+The following character escapes are supported:
+`'\@'`:: Literal `'@'` character.
+`'\['`:: Literal `'['` character.
+`'\]'`:: Literal `']'` character.
+`'\\'`:: Literal `'\'` character.
+
+Tags are made up of alphanumeric characters and underscores.
+
+== Miscellaneous Notes ==
+
+* It's up to a command how it wants to interpret it's arguments. Either as
+  block structured text, inline structured text, or unstructured text.
+* To have inline structured text at the start of a default block, use the
+  default block structure command explicitly in the block structured text.
