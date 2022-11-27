@@ -5,8 +5,7 @@ Compile the fble module identified by @arg[MODULE_PATH].
 
 There are three kinds of things that can be included in the generated code:
 
-@ordered
-[
+@ordered[
 @li[@id[1]]
 Code generated for executing the given module. This will generate an
 @ent[FbleCompiledModuleFunction] for the module under an internal name that
@@ -18,8 +17,7 @@ for a module. Users provide their desired name for this function. The compiler
 will re-export the internally named @ent[FbleCompiledModuleFunction] from
 @ref[1] under this user specified name.
 
-@li
-[
+@li[
 A standard @ent[main] function that invokes a user provided wrapper function.
 The wrapper function should have type:
 
@@ -31,8 +29,7 @@ compiled module generated in @ref[1].
 ]
 ]
 
-@options
-[
+@options[
 @subsection[Generic Program Information]
 @opt[-h, --help]      display this help text and exit
 @opt[-v, --version]   display version information and exit
@@ -48,8 +45,7 @@ compiled module generated in @ref[1].
 @def[1] Failure.
 @def[2] Usage error.
 
-@examples
-[
+@examples[
 @ex[fble-compile -c -e CompiledFoo -I foo -m /Foo% > Foo.fble.s]
 Compiles /Foo% to an FbleCompiledModuleFunction* called CompiledFoo.
 

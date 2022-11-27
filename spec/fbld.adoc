@@ -286,13 +286,18 @@ item "Second item of a list."
 Whitespace is treated differently for block structured text than it is for
 inline structured test. In particular:
 
-* Blank lines between blocks are treated as delimiters, the whitespace of
-  those blank lines is ignored.
-* Whitespace between ']' and the start of a same-line last argument is treated
-  as a delimiter and otherwise ignored.
+* A blank line is a line with a single newline character. It's not considered
+  a blank line if there are other whitespace characters in the line.
+* Blank lines between blocks are treated as delimiters and otherwise ignored.
+* Block commands must start on the first character of a line. They cannot be
+  indented.
+* Spaces and tabs are allowed between ']' closing an argument and '[' starting
+  the next argument.
+* Spaces and tabs between ']' and the start of a same-line last argument is
+  treated as a delimiter and otherwise ignored.
 * A `[` can be used in for an argument starting on the next line. In this case
   the newline between the command or previous arguments `]` is allowed and
-  ignored.
+  ignored. The `[` must be on column 0 of the next line in this case.
 
 === Escaping Inline Commands ===
 
@@ -371,3 +376,8 @@ before rendering the text.
   to escape them, right? Only need to escape square brackets when parsing
   arguments? This would be a problem if it was within an argument. Maybe best
   to require escaping in all cases for consistency.
+
+* The trailing newline is included in args that go to blank line. The blank
+  line is not included.
+
+* Should we allow block commands to be indented?

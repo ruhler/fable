@@ -1598,3 +1598,37 @@ I started pulling together thoughts in specs/fbld.txt. That needs a lot of
 work, but better than nothing right now.
 
 Let's see if we can implement it next in tcl. Call it 'fbld.tcl'.
+
+---
+
+I implemented the parser for inline structured text. It was annoying, but not
+bad. Note: I prefer to pass a generic 'invoke' function as an argument to the
+tcl function that can reroute commands given command name and args. That's
+nicer for my test case, for example, where I want all commands treated the
+same way.
+
+Next (and final?) step in the fbld implementation: implement support for
+parsing block structured text. How to do that? Just plow ahead and see how it
+goes I guess. Maybe shouldn't be too hard?
+
+Can I do parsing of block level structure entirely on a line-by line basis? I
+should be able to, right? Let's give it a try.
+
+Well, except matching [] can span across multiple lines, which would be
+awkward. Maybe don't short cut for now.
+
+---
+
+Okay, my draft of parsing block structure is done. Again, a bit tedious, but
+otherwise pretty simple and straight forward.
+
+Cool! Next step is to try generating some help text or man pages for my usage
+doc.
+
+Maybe we write something called usage.tcl that defines three modes:
+1. Check that commands are valid with expected number of arguments and proper
+subparsing.
+2. Convert to usage text (as a C header file like xxd -i produces?)
+3. Convert to man page.
+
+That will be the real test.
