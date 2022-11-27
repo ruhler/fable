@@ -364,3 +364,10 @@ default "."
 To actually display the text, the `@bold` command should remove the backslash
 before rendering the text.
 
+== TODO ==
+
+* Is the following valid? `hello ] [ @there.` The square brackets are supposed
+  to be special, but it's not within a command, so there shouldn't be any need
+  to escape them, right? Only need to escape square brackets when parsing
+  arguments? This would be a problem if it was within an argument. Maybe best
+  to require escaping in all cases for consistency.
