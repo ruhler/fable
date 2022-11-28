@@ -10,26 +10,25 @@ Compile the fble module identified by @a[MODULE_PATH].
 There are three kinds of things that can be included in the generated code:
 
 @defs[
-@def[Compiled Module]
+@definition[Compiled Module]
 Code generated for executing the given module. This will generate an
 @l[FbleCompiledModuleFunction] for the module under an internal name that
 users should not directly reference.
 
-@def[Exported Module]
+@definition[Exported Module]
 A named @l[FbleCompiledModuleFunction] function to export the code generated
 for a module using the Compiled Module option. Users provide their desired
 name for the exported module function. The compiler will re-export the
 internally named @l[FbleCompiledModuleFunction] compiled module function under
 the user specified exported module name.
 
-@def[Main Function][
+@definition[Main Function][
 A standard @l[main] function that invokes a user provided wrapper function.
 The wrapper function should have type:
 
-  @l[int] @a[name]@l[(]@l[int] @a[argc],
-                       @l[const char**] @a[argv],
-                       @l[FbleCompiledModuleFunction*] @a[module]
-                  @l[);]
+@par
+@l[int] @a[NAME]@l[(]@l[int] @a[argc], @l[const char**] @a[argv],
+@l[FbleCompiledModuleFunction*] @a[module] @l[);]
 
 It will be called passing @a[argc] and @a[argv] from @l[main] and the
 compiled module generated using the Compiled Module option.

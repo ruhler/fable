@@ -1737,3 +1737,16 @@ Okay, so I think I got it down to three issues:
    one big long line, and then parse the inline structure?
 
 Let me think on the paragraphs and definition lists things.
+
+---
+
+The most obvious thing to do about definition lists is have two kinds of
+definitions: a short definition that takes inline structured text, and a long
+definition that takes blocked structured text. The expectation is the short
+definition goes on the same line as the label if it fits, and the long
+definition always starts on the next line.
+
+For paragraphs, this is admittedly a weird case. In general, it's just a
+matter of defining how paragraphs should behave with respect to whitespace
+and implementing it.
+

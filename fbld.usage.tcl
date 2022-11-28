@@ -61,14 +61,24 @@ proc man {title input} {
     ::fbld::block block_invoke $text
   }
 
-  # @def[name][value]
-  # Used for a definition.
-  proc block_def {name text} {
+  # @definition[name][value]
+  # Used for a long definition.
+  proc block_definition {name text} {
     puts ".P"
     ::fbld::inline inline_invoke [string trim $name]
     puts "\n.RS"
     ::fbld::block block_invoke $text
     puts ".RE"
+  }
+
+  # @def[name][value]
+  # Used for a short definition.
+  proc block_def {name text} {
+    puts ".TP 4"
+    ::fbld::inline inline_invoke [string trim $name]
+    puts ""
+    ::fbld::inline inline_invoke [string trim $text]
+    puts ""
   }
 
   proc block_options {text} {
