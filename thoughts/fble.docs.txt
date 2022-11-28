@@ -1632,3 +1632,60 @@ subparsing.
 3. Convert to man page.
 
 That will be the real test.
+
+---
+
+Let's start with man page generation. What markup do I need?
+* name, brief
+* synopsys:  
+  - distinguish between bold for 'as-is', italics for args.
+* options
+* exit status
+* examples
+* filenames italics
+
+What do I want to for inline commands?
+* @arg.  Call it @a for short?
+* @file. Call it @f for short?
+* @lit.  Call it @l for short?
+
+Let's try that.
+
+The only thing I'm not sure how to do right is referencing an element of a
+list. Can I avoid having to do that to start? Yeah. I think I can manage.
+
+Let's start by cleaning up bin/fble-compile.fbld.
+
+Top level commands:
+* default: @par[inline]
+* @usage[inline]
+* @defs[block]
+* @options[block]
+* @subsection[text][block]
+* @exitstatus[block]
+* @examples
+
+Within @options
+* @opt[inline][inline]
+
+Within @examples
+* @ex[text][inline]
+
+Within @defs:
+* @def[inline][block]
+
+
+Inline Commands:
+* @l[text]
+* @a[text]
+
+---
+
+Observations when trying to implement man page generator:
+* I'm ignoring outer structure like @defs, just passing through to @def. So
+  should I not need @defs tag? Or should I somehow make use of the overall
+  @defs structure?
+* My implementation is not right, in that it really depends what indent level
+  you are at for things. Somehow we need to keep that context, for example if
+  you are printing a paragraph inside a list? Not sure.
+

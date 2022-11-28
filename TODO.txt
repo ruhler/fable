@@ -1,4 +1,5 @@
 * Come up with a more formal test suite for fbld.
+* Use namespaces for fbld.tcl.
 * Fix dependency tracking for configure
   For example, rerun configure if any of the .in files change.
 * See if FbleStack and/or FbleThread can be made abstract.

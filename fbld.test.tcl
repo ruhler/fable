@@ -2,53 +2,62 @@
 
 source fbld.tcl
 
-proc test_invoke { cmd args } {
-  puts "cmd: '$cmd'"
-  set i 0
-  foreach arg $args {
-    puts "arg $i: {$arg}"
-    incr i
+proc invoke { cmd args } {
+  lappend ::invoked [list $cmd $args]
+}
+
+# Test parsing of fbld.
+# @arg fbld  Either "inline" or "block".
+# @arg text  The text to parse
+# @arg expected A script that manually invokes the expected commands using the
+#               invoke procedure, for comparison against what fbld invokes.
+proc test { fbld text expected } {
+  set ::invoked [list]
+  eval $expected
+  set want $::invoked
+
+  set ::invoked [list]
+  ::fbld::$fbld invoke $text
+  set got $::invoked
+
+  if {![string equal $want $got]} {
+    error "EXPECTED:\n$want\nGOT:\n$got\n"
   }
 }
 
-puts "INLINE TEST INVOKE"
-inline test_invoke {
-It's @emph[really] important to check the result of the @code[malloc] function
-in C, in case it returns @NULL. See
-@link[the malloc man page][https://manpages.org/malloc] for more details.
+# Basic parsing of block structured text.
+test inline {Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands} {
+  invoke "" "Inline "
+  invoke emph "text"
+  invoke "" " with "
+  invoke SINGLE
+  invoke "" " and "
+  invoke multi "abc" "def"
+  invoke "" " arg commands"
 }
 
-puts "BLOCK TEST INVOKE"
-block test_invoke {
-@title A Bigger Example
+# Basic parsing of block structured text.
+test block {
+@title A title
 
-Some introductory text here.
+Some intro text.
 
 @section[First Section]
+With some text
+spanning over lines.
+
+And some final text.
+} {
+  invoke title "A title"
+  invoke "" "Some intro text.\n"
+  invoke section "First Section" "With some text\nspanning over lines.\n"
+  invoke "" "And some final text.\n"
+}
+
+# Test end of file after the last ]
+test block {
+@foo[A]
 [
-@paragraph
-Here is a paragraph in the first
-section of the doc.
-
-@list
-@item First item of a list.
-@item Second item of a list.
-]
-}
-
-puts "BLOCK TEST INVOKE 2"
-block test_invoke {
-@paragraph
-Here is a paragraph in the first
-section of the doc.
-
-@list
-@item First item of a list.
-@item Second item of a list.
-}
-
-puts "BLOCK TEST INVOKE 3"
-block test_invoke {
-@item First item of a list.
-@item Second item of a list.
+B]} {
+  invoke foo "A" "\nB"
 }

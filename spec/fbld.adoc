@@ -381,3 +381,8 @@ before rendering the text.
   line is not included.
 
 * Should we allow block commands to be indented?
+
+* Is the newline included in the arg for a same line arg? I feel like it
+  shouldn't be?
+
+* Clarify behavior of end of input for block commands, after ].

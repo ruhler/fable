@@ -1,55 +1,82 @@
-@usage
-fble-compile \[@arg[OPTION]...\] -m @arg[MODULE_PATH]
+@name[fble-compile]
+compile an fble module
 
-Compile the fble module identified by @arg[MODULE_PATH].
+@usage
+@l[fble-compile] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+
+@description[
+Compile the fble module identified by @a[MODULE_PATH].
 
 There are three kinds of things that can be included in the generated code:
 
-@ordered[
-@li[@id[1]]
+@defs[
+@def[Compiled Module]
 Code generated for executing the given module. This will generate an
-@ent[FbleCompiledModuleFunction] for the module under an internal name that
+@l[FbleCompiledModuleFunction] for the module under an internal name that
 users should not directly reference.
 
-@li
-A named @ent[FbleCompiledModuleFunction] function to export the code generated
-for a module. Users provide their desired name for this function. The compiler
-will re-export the internally named @ent[FbleCompiledModuleFunction] from
-@ref[1] under this user specified name.
+@def[Exported Module]
+A named @l[FbleCompiledModuleFunction] function to export the code generated
+for a module using the Compiled Module option. Users provide their desired
+name for the exported module function. The compiler will re-export the
+internally named @l[FbleCompiledModuleFunction] compiled module function under
+the user specified exported module name.
 
-@li[
-A standard @ent[main] function that invokes a user provided wrapper function.
+@def[Main Funcion][
+A standard @l[main] function that invokes a user provided wrapper function.
 The wrapper function should have type:
 
-@code
-int <name>(int argc, const char** argv, FbleCompiledModuleFunction* module);
+  @l[int] @a[name]@l[(]@l[int] @a[argc],
+                       @l[const char**] @a[argv],
+                       @l[FbleCompiledModuleFunction*] @a[module]
+                  @l[);]
 
-It will be called passing @arg[argc] and @arg[argv] from @ent[main] and the
-compiled module generated in @ref[1].
-]
-]
+It will be called passing @a[argc] and @a[argv] from @l[main] and the
+compiled module generated using the Compiled Module option.
+]]]
 
 @options[
-@subsection[Generic Program Information]
-@opt[-h, --help]      display this help text and exit
-@opt[-v, --version]   display version information and exit
+@subsection[Generic Program Information][
+@opt[@l[-h], @l[--help]]
+display this help text and exit
 
-@subsection[Input Control]
-@opt[-I @arg[DIR]]                   add @arg[DIR] to the module search path
-@opt[-m, --module @arg[MODULE_PATH]] the path of the module to compile
+@opt[@l[-v], @l[--version]]
+display version information and exit
 ]
 
+@subsection[Input Control][
+@opt[@l[-I] @a[DIR]]
+add @a[DIR] to the module search path
+
+@opt[@l[-m], @l[--module] @a[MODULE_PATH]]
+the path of the module to compile
+]
+
+@subsection[Output Control][
+@opt[@l[-c], @l[--compile]]
+generate compiled code for the module
+
+@opt[@l[-e], @l[--export] @a[NAME]]
+generate @a[NAME] function to export the module
+
+@opt[@l[--main] @a[NAME]]
+generate main function using @a[NAME] wrapper
+
+At least one of @l[--compile], @l[--export], or @l[--main] must be provided.
+]]
+
 @exitstatus
-@definitions
+@defs
 @def[0] Success.
 @def[1] Failure.
 @def[2] Usage error.
 
 @examples[
 @ex[fble-compile -c -e CompiledFoo -I foo -m /Foo% > Foo.fble.s]
-Compiles /Foo% to an FbleCompiledModuleFunction* called CompiledFoo.
+Compiles @l[/Foo%] to an @l[FbleCompiledModuleFunction*] called
+@l[CompiledFoo.]
 
 @ex[fble-compile -c --main FbleStdioMain -I foo -m /Foo% > foo.s]
-Generates a standalone program that invokes FbleStdioMain on the compiled
-code for /Foo% when run.
+Generates a standalone program that invokes @l[FbleStdioMain] on the compiled
+code for @l[/Foo%] when run.
 ]
