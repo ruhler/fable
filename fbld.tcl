@@ -142,6 +142,7 @@ namespace eval fbld {
         set arg [string range $text $i $arg_end]
         $invoke "" $arg
         set i $arg_end
+        incr i
         continue
       }
 

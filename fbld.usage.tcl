@@ -8,7 +8,7 @@ source fbld.tcl
 proc man {title input} {
   # default command for line text.
   proc inline_ {text} {
-    puts -nonewline $text
+    puts -nonewline [::fbld::unescape $text]
   }
 
   # @a[text].
@@ -38,9 +38,7 @@ proc man {title input} {
   # Renders the usage text used in a synopsis.
   proc block_usage {text} {
     puts {.SH "SYNOPSIS"}
-    puts {.SY}
     ::fbld::inline inline_invoke $text
-    puts {.YS}
   }
 
   # @description[block]
@@ -53,7 +51,8 @@ proc man {title input} {
   # Default paragraph block.
   proc block_par {text} {
     puts {.P}
-    ::fbld::inline inline_invoke $text
+    ::fbld::inline inline_invoke [string trim $text]
+    puts ""
   }
 
   # @defs[block]
@@ -65,9 +64,11 @@ proc man {title input} {
   # @def[name][value]
   # Used for a definition.
   proc block_def {name text} {
-    puts {.TP}
-    ::fbld::inline inline_invoke $name
-    ::fbld::inline inline_invoke $text
+    puts ".P"
+    ::fbld::inline inline_invoke [string trim $name]
+    puts "\n.RS"
+    ::fbld::block block_invoke $text
+    puts ".RE"
   }
 
   proc block_options {text} {
@@ -86,9 +87,7 @@ proc man {title input} {
   }
 
   proc block_opt {opt desc} {
-    puts ".TP"
-    ::fbld::inline inline_invoke $opt
-    ::fbld::block block_invoke $desc
+    block_def $opt $desc
   }
 
   proc block_examples {text} {
@@ -97,9 +96,10 @@ proc man {title input} {
   }
 
   proc block_ex {text desc} {
-    puts {.EX}
-    ::fbld::inline inline_invoke $text
-    puts {.EE}
+    puts ".P"
+    puts -nonewline ".B "
+    ::fbld::inline inline_invoke [string trim $text]
+    puts "\n.P"
     ::fbld::block block_invoke $desc
   }
 

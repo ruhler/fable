@@ -1689,3 +1689,51 @@ Observations when trying to implement man page generator:
   you are at for things. Somehow we need to keep that context, for example if
   you are printing a paragraph inside a list? Not sure.
 
+---
+
+Issues with my man page generation:
+* Extra space between fble-compile and -m in usage, and in front of
+  fble-compile.
+ - Let me skip this .SY thing. That helps with the first space, but not the
+   second. Maybe need a non-breaking space \& somewhere?
+* definition lists have no space between tag and content.
+ - Because the label doesn't include a newline. We should manually add a
+   newline. DONE.
+* Default nest for definition list 8 chars. Change to 4?
+ - Change ".TP" to ".TP 4" fixes this.
+* Need to strip whitespace from main function function paragraph?
+* Option shows .P as part of the option.
+ - Same issue as defs.
+* Defs shows .TP for exit status.
+ - Because there's no newline after the definition in this case.
+ - So, strip whatever newline is there, and add my own?
+* opts not nearly so compact as I would like.
+ - Because it's using .P for block text. Should I treat it as inline instead
+   of block?
+* Newline needed after example so .EE tag works as expected.
+* Main Function has a blank line before it, but Exported Module and Compiled
+  Module do not.
+  - Are we parsing definition value as inline instead of block? Yes. We were.
+    If we go back to block, we get stuck in an infinite loop somehow.
+  - It's parsing "Success." as a default, then seems to get stuck trying to
+    parse the next one?
+
+Definition lists are tricky. Assume the definitions are block level structure,
+which is needed in some cases, such as my definition for "Main Function". That
+means they will output a .P tag to start, but that doesn't fit with the .TP we
+use.
+
+---
+
+Okay, so I think I got it down to three issues:
+1. How to do definition lists supporting block definitions and compact lists.
+2. That extra space in the usage before -m.
+ - It's not just an extra space. It was an entire missing [...], because we
+   didn't remember to unescape the final text. I can fix that.
+ - Cool. This is fixed now.
+3. The extra whitespace in the main function example.
+ - It's almost like, for a paragraph, we want to split it into lines, trim
+   each of the lines, concatenate those all together with a single space into
+   one big long line, and then parse the inline structure?
+
+Let me think on the paragraphs and definition lists things.

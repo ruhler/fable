@@ -61,3 +61,8 @@ test block {
 B]} {
   invoke foo "A" "\nB"
 }
+
+# Regression test for a default block that runs to the end of the file.
+test block "Foo" {
+  invoke "" "Foo"
+}

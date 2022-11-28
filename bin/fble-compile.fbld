@@ -22,7 +22,7 @@ name for the exported module function. The compiler will re-export the
 internally named @l[FbleCompiledModuleFunction] compiled module function under
 the user specified exported module name.
 
-@def[Main Funcion][
+@def[Main Function][
 A standard @l[main] function that invokes a user provided wrapper function.
 The wrapper function should have type:
 
