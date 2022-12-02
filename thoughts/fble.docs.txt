@@ -1792,3 +1792,24 @@ Cool. I'm happy with the generated usage text.
 Next steps:
 * Write some tcl code to invoke groff and convert output to a c header file
   like xxd.
+* See if I can increase the text width for roff to 78 chars or some such.
+ - grotty is the back end. I don't see any options there.
+ - Maybe it's a page size option?
+  .ll for line length perhaps? And .l for the current value?
+  Yup. .ll 78 uses 78 characters.
+
+I want: generate roff ==> groff ==> tcl string ==> header file.
+
+What's the easiest way to invoke groff from tcl, passing the generated roff
+text?
+
+Options:
+* Write to temp files and pass those around.
+* Write to a pipe of some sort in tcl and pass that around?
+* Write to a tcl string and pass that in.
+
+I think, let's use the string form. Generate the roff as a tcl string, exec
+groff returning the output string, and process that returned string.
+
+So, change 'puts' to a more generic output function?
+

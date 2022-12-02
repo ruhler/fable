@@ -130,7 +130,7 @@ proc man {title input} {
 proc roff {input} {
   # default command for line text.
   proc inline_ {text} {
-    puts -nonewline [::fbld::unescape $text]
+    ::output [::fbld::unescape $text]
   }
 
   proc inline_a {text} { inline_ $text }
@@ -143,16 +143,16 @@ proc roff {input} {
   # @name[text][text]
   # The name and brief description of the command.
   proc block_name {name brief} {
-    puts "$name \\- [string trim $brief]"
-    puts ".br"
+    ::output "$name \\- [string trim $brief]\n"
+    ::output ".br\n"
   }
 
   # @usage[inline]
   # Renders the usage text used in a synopsis.
   proc block_usage {text} {
-    puts -nonewline "Usage: "
+    ::output "Usage: "
     ::fbld::inline inline_invoke [string trim $text]
-    puts "\n.br"
+    ::output "\n.br\n"
   }
 
   # @description[block]
@@ -163,9 +163,9 @@ proc roff {input} {
   # @par[inline]
   # Default paragraph block.
   proc block_par {text} {
-    puts ".sp"
+    ::output ".sp\n"
     ::fbld::inline inline_invoke [string trim $text]
-    puts "\n.br"
+    ::output "\n.br\n"
   }
 
   # @defs[block]
@@ -177,20 +177,20 @@ proc roff {input} {
   # @definition[name][value]
   # Used for a long definition.
   proc block_definition {name text} {
-    puts ".sp"
+    ::output ".sp\n"
     ::fbld::inline inline_invoke [string trim $name]
-    puts ":\n.br\n.in +2"
+    ::output ":\n.br\n.in +2\n"
     ::fbld::block block_invoke $text
-    puts "\n.in -2"
+    ::output "\n.in -2\n"
   }
 
   # @def[name][value]
   # Used for a short definition.
   proc block_def {name text} {
     ::fbld::inline inline_invoke [string trim $name]
-    puts "\n.br\n.in +4"
+    ::output "\n.br\n.in +4\n"
     ::fbld::inline inline_invoke [string trim $text]
-    puts "\n.br\n.in -4"
+    ::output "\n.br\n.in -4\n"
   }
 
   proc block_options {text} {
@@ -198,15 +198,15 @@ proc roff {input} {
   }
 
   proc block_exitstatus {text} {
-    puts "Exit Status:\n.br\n.in +2"
+    ::output "Exit Status:\n.br\n.in +2\n"
     ::fbld::block block_invoke $text
-    puts "\n.in -2"
+    ::output "\n.in -2\n"
   }
 
   proc block_subsection {title body} {
-    puts "$title:\n.br\n.in +2"
+    ::output "$title:\n.br\n.in +2\n"
     ::fbld::block block_invoke $body
-    puts "\n.in -2"
+    ::output "\n.in -2\n"
   }
 
   proc block_opt {opt desc} {
@@ -214,15 +214,15 @@ proc roff {input} {
   }
 
   proc block_examples {text} {
-    puts "Examples:\n.br\n.in +2"
+    ::output "Examples:\n.br\n.in +2\n"
     ::fbld::block block_invoke $text
-    puts "\n.in -2"
+    ::output "\n.in -2\n"
   }
 
   proc block_ex {text desc} {
-    puts ".sp"
+    ::output ".sp\n"
     ::fbld::inline inline_invoke [string trim $text]
-    puts "\n.sp"
+    ::output "\n.sp\n"
     ::fbld::block block_invoke $desc
   }
 
@@ -234,8 +234,42 @@ proc roff {input} {
     block_$cmd {*}$args
   }
 
+  ::output ".ll 78\n"
   ::fbld::block block_invoke [read [open $input "r"]]
 }
 
+# cstrlit --
+#   Create a c header file that defines a c string literal of the given name
+#   with the given contents.
+proc cstrlit { name text } {
+  set output "const unsigned_char $name\[\] = \{\n  ";
+  set c 2
+  set i 0
+  set len [string length $text]
+  while {$i < $len} {
+    if {$c > 70} {
+      append output "\n  "
+      set c 2
+    }
+    set code "[scan [string index $text $i] %c], "
+    append output $code
+    incr c [string length $code]
+    incr i
+  }
+  append output "\n\};"
+  return $output
+}
+
 #man [lindex $argv 0] [lindex $argv 1]
+
+set roffstr ""
+proc output { line } {
+  append ::roffstr "$line"
+}
 roff [lindex $argv 0]
+
+set ascii [string trim [exec groff -T ascii << $roffstr]]
+
+set header [cstrlit "usage_text" $ascii]
+puts $header
+
