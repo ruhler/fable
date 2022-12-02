@@ -1,5 +1,5 @@
 @name[fble-compile]
-compile an fble module
+compiles an fble module
 
 @usage
 @l[fble-compile] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]

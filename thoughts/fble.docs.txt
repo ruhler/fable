@@ -1750,3 +1750,45 @@ For paragraphs, this is admittedly a weird case. In general, it's just a
 matter of defining how paragraphs should behave with respect to whitespace
 and implementing it.
 
+---
+
+Cool. Man page is done. Looks decent. Next step is to generate help text. Let
+me see if I can reuse groff for that to format the text?
+
+How to run groff?
+* Need to specify output format. Looks like it defaults to postscript.
+ - Looks like -T ascii?
+* Maybe also -m man to get those macros?
+* Is there a way to set column width? I don't see an option. Maybe in the doc
+  itself using some formatting tags?
+
+Looks like -m man requires a .TH tag to work, which I don't really want. I
+should learn how to format the document using pure troff formatting, without
+the man page macros, so I don't need to pass -m man to groff.
+
+The formatting I want:
+* Newline
+ - .br for go to next line.
+ - .sp for single blank line.
+* Indent margin for definitions.
+ - .in +2, .in -2
+* Tagged paragraphs for compact definitions.
+* Section headers (flush left)
+ Just regular text.
+* Indent margin for sections.
+ - .in +2, .in -2
+
+Let's read through the troff user manual in detail and see what I learn.
+
+Next things to find:
+* Figure out how not to get a bunch of white space on the output at the end.
+* Any decent way to set options on same line as tag if tag is not too long? Or
+  would that require an if statement that I don't feel like writing?
+ - Maybe not worth it. Just trim from the end in tcl before create a c header
+   file.
+
+Cool. I'm happy with the generated usage text.
+
+Next steps:
+* Write some tcl code to invoke groff and convert output to a c header file
+  like xxd.
