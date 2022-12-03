@@ -37,7 +37,7 @@ GNU Compiler Collection (Debian 8.3.0-6) 8.3.0:: For compiling fble.
 GNU Debugger (Debian 8.2.1-2+b3) 8.2.1:: Used to test fble debugging.
 GNU diffutils 3.7:: For some test cases.
 GNU grep 3.3:: For some test cases.
-GNU help2man 1.47.8:: For generating man pages.
+GNU groff version 1.22.4:: For formatting help usage text.
 Ninja 1.10.1:: For the build system.
 Open GL 1.2:: For graphical fble apps.
 Simple DirectMedia Layer 2.0.9:: For graphical fble apps.

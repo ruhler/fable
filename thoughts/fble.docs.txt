@@ -1813,3 +1813,37 @@ groff returning the output string, and process that returned string.
 
 So, change 'puts' to a more generic output function?
 
+---
+
+We're far enough along on fbld to do some cleanup. What is it that I want to
+show?
+
+* Generate fble-compile.1 via fbld.
+* Generate fble-compile --help usage text via fbld.
+* Generate fble-deps.1 via fbld.
+* Generate fble-deps --help usage text via fbld.
+* Remove dependency on help2man and replace it with dependency on groff.
+
+To get there: fbld.usage.tcl needs to support different options. I'm thinking:
+
+Well, I'm seeing any shared code right now. So how about:
+* fbld.usage.man.tcl for generating man pages.
+* fbld.usage.help.tcl for generating help text.
+
+Or do I prefer to have target option? Yeah, I kind of feel like target option
+would be nice?
+
+fbld.usage.tcl --target [man | help]
+
+The info needed for a man page:
+* title of the man page. So, --title ...
+
+The info needed for help text:
+* Nothing. Just the input.
+
+Take input on stdin? Sure, why not. That's easy. Or, pass on command line. How
+about command line for now.
+ 
+Too tedious. For now, let me have separate scripts.
+
+Cool. Works great.

@@ -1,0 +1,39 @@
+@name[fble-disassemble]
+disassembles an fble module
+
+@usage
+@l[fble-disassemble] \[@a[OPTION]...\] @l[-m] @a[MODULE_PATH]
+
+@description[
+Generates human readable disassembly for the given fble module.
+
+This is for debugging purposes only. The assembly format is an
+implementation-dependant internal bytecode specific to this implementation of
+fble.
+]
+
+@options[
+@subsection[Generic Program Information][
+@opt[@l[-h], @l[--help]]
+display this help text and exit
+]
+
+@subsection[Input Control][
+@opt[@l[-I] @a[DIR]]
+add @a[DIR] to the module search path
+
+@opt[@l[-m], @l[--module] @a[MODULE_PATH]]
+the path of the module to compile
+]
+]
+
+@exitstatus[
+@defs
+@def[0] Success.
+@def[1] Failure.
+@def[2] Usage error.
+]
+
+@examples
+@ex[fble-disassemble -I prgms -m /Foo%][]
+

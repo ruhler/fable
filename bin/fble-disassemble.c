@@ -11,6 +11,8 @@
 #include <fble/fble-profile.h>   // for FbleNewProfile, etc.
 #include <fble/fble-vector.h>    // for FbleVectorInit.
 
+#include "fble-disassemble.usage.h"  // for fbldUsageHelpText
+
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
@@ -30,28 +32,7 @@ static void PrintUsage(FILE* stream);
 //   Outputs usage information to the given stream.
 static void PrintUsage(FILE* stream)
 {
-  fprintf(stream, "%s",
-      "Usage: fble-disassemble [OPTION ...] -m MODULE_PATH\n"
-      "\n"
-      "Description:\n"
-      "  Disassemble an fble program.\n"
-      "\n"
-      "Options:\n"
-      "  -h, --help\n"
-      "     Print this help message and exit.\n"
-      "  -I DIR\n"
-      "     Adds DIR to the module search path.\n"
-      "  -m, --module MODULE_PATH\n"
-      "     The path of the module to get dependencies for.\n"
-      "\n"
-      "Exit Status:\n"
-      "  0 on success.\n"
-      "  1 on failure.\n"
-      "  2 on usage error.\n"
-      "\n"
-      "Example:\n"
-      "  fble-disassemble -I prgms -m /Foo%\n"
-  );
+  fprintf(stream, "%s", fbldUsageHelpText);
 }
 
 // main --

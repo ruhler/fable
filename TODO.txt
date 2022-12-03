@@ -1,5 +1,8 @@
 * Come up with a more formal test suite for fbld.
-* Use namespaces for fbld.tcl.
+* Print line and column number on fbld usage errors.
+  Instead of 'Index' number.
+* Print line and col number on fbld usage command errors
+  Such as wrong number of args.
 * Fix dependency tracking for configure
   For example, rerun configure if any of the .in files change.
 * See if FbleStack and/or FbleThread can be made abstract.

@@ -12,6 +12,8 @@
 #include <fble/fble-vector.h>    // for FbleVectorInit.
 #include <fble/fble-version.h>   // for FBLE_VERSION
 
+#include "fble-deps.usage.h"     // for fbldUsageHelpText
+
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
@@ -46,41 +48,7 @@ static void PrintVersion(FILE* stream)
 //   Outputs usage information to the given stream.
 static void PrintHelp(FILE* stream)
 {
-  fprintf(stream, "%s",
-"Usage: fble-deps [OPTION...] -t TARGET -m MODULE_PATH\n"
-"\n"
-"Outputs a depfile suitable for use with make and ninja specifying the\n"
-".fble files the given module depends on.\n"
-"\n"
-"*Options*\n"
-"\n"
-"Generic Program Information:\n"
-"  -h, --help                 display this help text and exit\n"
-"  -v, --version              display version information and exit\n"
-"\n"
-"Input control:\n"
-"  -I DIR                     add DIR to the module search path\n"
-"  -m, --module MODULE_PATH   the path of the module to compile\n"
-"\n"
-"Output control:\n"
-"  -t, --target TARGET        the target name to use in generated depfile\n"
-"\n"
-"*Exit Status*\n"
-"\n"
-"0 on success\n"
-"\n"
-"1 on failure\n"
-"\n"
-"2 on usage error\n"
-"\n"
-"Exit status is 0 in the case where the .fble file cannot be parsed\n"
-"successfully, to support the use case of generating dependencies for a\n"
-"malformed .fble file.\n"
-"\n"
-"*Example*\n"
-"\n"
-"fble-deps -I foo -t Foo.fble.d -m /Foo% > Foo.fble.d\n"
-  );
+  fprintf(stream, "%s", fbldUsageHelpText);
 }
 
 // main --

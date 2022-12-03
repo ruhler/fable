@@ -1,14 +1,25 @@
 namespace eval "bin" {
   foreach {x} [glob $::s/bin/*.c] {
     set base [file rootname [file tail $x]]
-    obj $::b/bin/$base.o $x "-I $::s/include"
+
+    # Generated header file for help usage text.
+    build $::b/bin/$base.usage.h \
+      "$::s/fbld/fbld.usage.help.tcl $::s/bin/$base.fbld" \
+      "tclsh8.6 $::s/fbld/fbld.usage.help.tcl $::s/bin/$base.fbld > $::b/bin/$base.usage.h"
+
+    # The binary.
+    obj $::b/bin/$base.o $x "-I $::s/include -I $::b/bin" \
+      $::b/bin/$base.usage.h
     bin $::b/bin/$base \
       "$::b/bin/$base.o $::b/lib/libfble.a" ""
     bin_cov $::b/bin/$base.cov \
       "$::b/bin/$base.o $::b/lib/libfble.cov.a" ""
     install_bin $::b/bin/$base
-  }
 
-  man1 $::b/bin/fble-compile "compile an fble module"
-  man1 $::b/bin/fble-deps "generate depfile for an fble module"
+    # Man page.
+    build $::b/bin/$base.1 \
+      "$::s/fbld/fbld.usage.man.tcl $::s/bin/$base.fbld" \
+      "tclsh8.6 $::s/fbld/fbld.usage.man.tcl $base $::s/bin/$base.fbld > $::b/bin/$base.1"
+    install_man1 $::b/bin/$base.1
+  }
 }

@@ -183,20 +183,15 @@ proc install_lib { lib } {
   lappend ::installs $target
 }
 
-# man1 --
-#   Build and install a man page in the user commands section.
-#
-# Uses help2man to generate the man page from the --help option to the
-# command.
-#
+# install_man1 --
+#   Cause the given man page to be installed when the install target is
+#   invoked.
 # Inputs:
-#   binary - the binary to generate and install a man page for.
-#   description - brief description to use in NAME section of man page.
-proc man1 { binary description } {
-  build $binary.1 $binary "help2man -N -o $binary.1 -n '$description' $binary"
-  set target $::mandir/man1/[file tail $binary.1]
-  build $target $binary.1 "cp $binary.1 $target"
-  lappend ::installs $target
+#   target - the man page to install.
+proc install_man1 { target } {
+  set install_target $::mandir/man1/[file tail $target]
+  build $install_target $target "cp $target $install_target"
+  lappend ::installs $install_target
 }
 
 # test --

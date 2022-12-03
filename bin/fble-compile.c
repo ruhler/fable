@@ -12,6 +12,8 @@
 #include <fble/fble-vector.h>        // for FbleVectorInit.
 #include <fble/fble-version.h>       // for FBLE_VERSION
 
+#include "fble-compile.usage.h"      // for fbldUsageHelpText
+
 #define EX_SUCCESS 0
 #define EX_FAIL 1
 #define EX_USAGE 2
@@ -47,67 +49,7 @@ static void PrintVersion(FILE* stream)
 //   Outputs usage information to the given stream.
 static void PrintHelp(FILE* stream)
 {
-  fprintf(stream, "%s",
-"Usage: fble-compile [OPTION...] -m MODULE_PATH\n"
-"\n"
-"Compile the fble module identified by MODULE_PATH.\n"
-"\n"
-"There are three kinds of things that can be included in the generated code:\n"
-"\n"
-"1. Code generated for executing the given module. This will generate an\n"
-"FbleCompiledModuleFunction for the module under an internal name that\n"
-"users should not directly reference.\n"
-"\n"
-"2. A named FbleCompiledModuleFunction function to export the code generated\n"
-"for a module. Users provide their desired name for this function. The\n"
-"compiler will re-export the internally named FbleCompiledModuleFunction from\n"
-"(1) under this user specified name.\n"
-"\n"
-"3. A standard 'main' function that invokes a user provided wrapper function.\n"
-"The wrapper function should have type:\n"
-"\n"
-"  int <name>(int argc, const char** argv, FbleCompiledModuleFunction* module);\n"
-"\n"
-"It will be called passing argc and argv from `main' and the compiled module\n"
-"generated in (1).\n"
-"\n"
-"*Options*\n"
-"\n"
-"Generic Program Information:\n"
-"  -h, --help                 display this help text and exit\n"
-"  -v, --version              display version information and exit\n"
-"\n"
-"Input control:\n"
-"  -I DIR                     add DIR to the module search path\n"
-"  -m, --module MODULE_PATH   the path of the module to compile\n"
-"\n"
-"Target control:\n"
-"  -t, --target [aarch64 | c] what to compile to, defaults to aarch64\n"
-"\n"
-"Output control:\n"
-"  -c, --compile              generate compiled code for the module\n"
-"  -e, --export NAME          generate NAME function to export the module\n"
-"      --main NAME            generate main function using NAME wrapper\n"
-"\n"
-"At least one of --compile, --export, or --main must be provided.\n"
-"\n"
-"*Exit Status*\n"
-"\n"
-"0 on success\n"
-"\n"
-"1 on failure\n"
-"\n"
-"2 on usage error\n"
-"\n"
-"*Example*\n"
-"\n"
-"fble-compile -c -e CompiledFoo -I foo -m /Foo% > Foo.fble.s\n"
-"  Compiles /Foo% to an FbleCompiledModuleFunction* called `CompiledFoo'\n"
-"fble-compile -c --main FbleStdioMain -I foo -m /Foo% > foo.s\n"
-"  Generates a standalone program that invokes FbleStdioMain on the compiled\n"
-"  code for /Foo% when run.\n"
-"\n"
-  );
+  fprintf(stream, "%s", fbldUsageHelpText);
 }
 
 // main --
