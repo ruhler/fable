@@ -10,6 +10,7 @@
 #include <fble/fble-load.h>      // for FbleLoad.
 #include <fble/fble-profile.h>   // for FbleNewProfile, etc.
 #include <fble/fble-vector.h>    // for FbleVectorInit.
+#include <fble/fble-version.h>   // for FBLE_VERSION
 
 #include "fble-disassemble.usage.h"  // for fbldUsageHelpText
 
@@ -52,18 +53,27 @@ int main(int argc, const char* argv[])
   FbleSearchPath search_path;
   FbleVectorInit(search_path);
   const char* mpath_string = NULL;
+  bool version = false;
   bool help = false;
   bool error = false;
 
   argc--;
   argv++;
-  while (!error && argc > 0) {
+  while (!(help || version || error) && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("-m", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--module", &mpath_string, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
+  }
+
+  if (version) {
+    printf("fble-disassemble %s\n", FBLE_VERSION);
+    FbleVectorFree(search_path);
+    return EX_SUCCESS;
   }
 
   if (help) {

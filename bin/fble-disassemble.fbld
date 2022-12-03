@@ -16,6 +16,9 @@ fble.
 @subsection[Generic Program Information][
 @opt[@l[-h], @l[--help]]
 display this help text and exit
+
+@opt[@l[-v], @l[--version]]
+display version information and exit
 ]
 
 @subsection[Input Control][

@@ -1847,3 +1847,15 @@ about command line for now.
 Too tedious. For now, let me have separate scripts.
 
 Cool. Works great.
+
+---
+
+What are some next steps? Brainstorm:
+* Better error messages when processing fbld formatted files.
+* Better define/clean up the fbld 'usage' document structure?
+ - For example, some tags seem unused.
+ - Should we enforce more about what tags can appear where?
+ - Should section headers be just headers instead of sections too?
+* Remove all uses of asciidoc?
+ - Tutorials, READMEs, and language specs.
+

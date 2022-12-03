@@ -10,7 +10,6 @@
 * Man pages
  - Update --version and --help for each installed binary.
   fble-app
-  fble-disassemble
   fble-md5
   fble-sat
   fble-graphics
