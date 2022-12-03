@@ -1,6 +1,8 @@
 # Ad-hoc tests for fbld.tcl implementation.
 
-source fbld.tcl
+set fblddir [file dirname [file normalize [info script]]]
+
+source $fblddir/fbld.tcl
 
 proc invoke { cmd args } {
   lappend ::invoked [list $cmd $args]
@@ -25,7 +27,7 @@ proc test { fbld text expected } {
   }
 }
 
-# Basic parsing of block structured text.
+# Basic parsing of inline structured text.
 test inline {Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands} {
   invoke "" "Inline "
   invoke emph "text"
@@ -34,6 +36,13 @@ test inline {Inline @emph[text] with @SINGLE and @multi[abc][def] arg commands} 
   invoke "" " and "
   invoke multi "abc" "def"
   invoke "" " arg commands"
+}
+
+# Nested commands
+test inline {Ab @c[de @f[gh] ij] kl} {
+  invoke "" "Ab "
+  invoke c {de @f[gh] ij}
+  invoke "" " kl"
 }
 
 # Basic parsing of block structured text.

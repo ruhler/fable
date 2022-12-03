@@ -332,6 +332,7 @@ set build_tcls [list \
   $::s/include/build.tcl \
   $::s/lib/build.tcl \
   $::s/bin/build.tcl \
+  $::s/fbld/build.tcl \
   $::s/test/build.tcl \
   $::s/test/spec-test.build.tcl \
   $::s/tutorials/build.tcl \

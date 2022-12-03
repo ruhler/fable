@@ -15,6 +15,7 @@ programming language.
 
 bin/:: Source code for fble compiler binaries.
 book/:: Drafts for a book about the design of the fble language.
+fbld/:: A lightweight document markup language used for documenting fble.
 include/:: Public header files for the fble library.
 lib/:: Source code for an fble interpreter and compiler implemented in C.
 pkgs/:: Sample fble library and application packages.
