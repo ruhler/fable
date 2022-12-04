@@ -10,6 +10,7 @@
 #include <fble/fble-link.h>        // for FbleCompiledModuleFunction.
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleVectorInit.
+#include <fble/fble-version.h>     // for FBLE_VERSION
 
 #include "char.fble.h"    // for FbleCharValueAccess
 #include "int.fble.h"     // for FbleIntValueAccess
@@ -102,7 +103,9 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "\n"
       "Options:\n"
       "  -h, --help\n"
-      "     Print this help message and exit.\n");
+      "     Print this help message and exit.\n"
+      "  -v, --version\n"
+      "     Print version information and exit.\n");
   if (module == NULL) {
     fprintf(stream, "%s",
       "  -I DIR\n"
@@ -153,12 +156,15 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
   const char* file = NULL;
   bool help = false;
   bool error = false;
+  bool version = false;
 
   argc--;
   argv++;
-  while (!error && argc > 0) {
+  while (!(help || error || version) && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (!module && FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
@@ -173,6 +179,12 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
 
     file = argv[0];
     break;
+  }
+
+  if (version) {
+    printf("fble-md5 %s\n", FBLE_VERSION);
+    FbleVectorFree(search_path);
+    return EX_SUCCESS;
   }
 
   if (help) {

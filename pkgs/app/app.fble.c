@@ -13,6 +13,7 @@
 #include <fble/fble-arg-parse.h>   // for FbleParseBoolArg, etc.
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleVectorInit.
+#include <fble/fble-version.h>     // for FBLE_VERSION
 
 #include "char.fble.h"    // for FbleCharValueAccess
 #include "int.fble.h"     // for FbleIntValueAccess
@@ -60,7 +61,9 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "\n"
       "Options:\n"
       "  -h, --help\n"
-      "     Print this help message and exit.\n");
+      "     Print this help message and exit.\n"
+      "  -v, --version\n"
+      "     Print version information and exit.\n");
   if (module == NULL) {
     fprintf(stream, "%s",
       "  -I DIR\n"
@@ -527,17 +530,26 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   const char* profile_file = NULL;
   bool help = false;
   bool error = false;
+  bool version = false;
 
   argc--;
   argv++;
-  while (!error && argc > 0) {
+  while (!(help || error || version) && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (!module && FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
     if (FbleParseStringArg("--profile", &profile_file, &argc, &argv, &error)) continue;
     if (FbleParseInvalidArg(&argc, &argv, &error)) continue;
+  }
+
+  if (version) {
+    printf("fble-app %s\n", FBLE_VERSION);
+    FbleVectorFree(search_path);
+    return EX_SUCCESS;
   }
 
   if (help) {

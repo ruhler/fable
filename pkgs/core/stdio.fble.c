@@ -16,6 +16,7 @@
 #include <fble/fble-link.h>        // for FbleCompiledModuleFunction.
 #include <fble/fble-value.h>       // for FbleValue, etc.
 #include <fble/fble-vector.h>      // for FbleVectorInit.
+#include <fble/fble-version.h>     // for FBLE_VERSION
 
 #include "char.fble.h"        // for FbleCharValueAccess
 #include "int.fble.h"         // for FbleIntValueAccess
@@ -124,7 +125,9 @@ static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module)
       "\n"
       "Options:\n"
       "  -h, --help\n"
-      "     Print this help message and exit.\n");
+      "     Print this help message and exit.\n"
+      "  -v, --version\n"
+      "     Print version information and exit.\n");
   if (module == NULL) {
     fprintf(stream, "%s",
       "  -I DIR\n"
@@ -232,12 +235,15 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
   bool end_of_options = false;
   bool help = false;
   bool error = false;
+  bool version = false;
 
   argc--;
   argv++;
-  while (!error && !end_of_options && argc > 0) {
+  while (!(help || error || version) && !end_of_options && argc > 0) {
     if (FbleParseBoolArg("-h", &help, &argc, &argv, &error)) continue;
     if (FbleParseBoolArg("--help", &help, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("-v", &version, &argc, &argv, &error)) continue;
+    if (FbleParseBoolArg("--version", &version, &argc, &argv, &error)) continue;
     if (!module && FbleParseSearchPathArg(&search_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("-m", &module_path, &argc, &argv, &error)) continue;
     if (!module && FbleParseStringArg("--module", &module_path, &argc, &argv, &error)) continue;
@@ -248,6 +254,12 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
       argc--;
       argv++;
     }
+  }
+
+  if (version) {
+    printf("fble-stdio %s\n", FBLE_VERSION);
+    FbleVectorFree(search_path);
+    return EX_TRUE;
   }
 
   if (help) {

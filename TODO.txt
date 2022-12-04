@@ -7,8 +7,11 @@
   For example, rerun configure if any of the .in files change.
 * See if FbleStack and/or FbleThread can be made abstract.
 
-* Man pages
- - Update --version and --help for each installed binary.
+* Figure out how to customize usage for compiled binaries
+ - for example, fble-invaders should say fble-invaders in the usage, not
+   fble-app.
+
+* Generate fbld based man pages for binaries.
   fble-app
   fble-md5
   fble-sat
@@ -18,7 +21,6 @@
   fble-invaders
   fble-pinball
   fble-test
- - Automatically generate and install man pages with installed binaries?
 
 * How to check errors from stale files in build directory?
   For example, sat/Sat/sat-tests still existed, even though now were compiling
