@@ -28,17 +28,19 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
   // module given values of the modules it depends on.
   FbleValue* funcs[modulec];
   for (size_t i = 0; i < modulec; ++i) {
-    FbleExecutable* module = program->modules.xs[i]->executable;
+    FbleExecutableModule* module = program->modules.xs[i];
+    FbleExecutable* exe = module->executable;
 
-    assert(module->statics == 0);
+    // TODO: Return error messages in these cases instead of assert failures?
+    assert(exe->statics == 0 && "Module cannot have statics");
+    assert(module->deps.size == exe->args && "Module args mismatch");
 
     size_t profile_base_id = 0;
     if (profile != NULL) {
-      profile_base_id = FbleProfileAddBlocks(profile,
-          program->modules.xs[i]->profile_blocks);
+      profile_base_id = FbleProfileAddBlocks(profile, module->profile_blocks);
     }
 
-    funcs[i] = FbleNewFuncValue(heap, module, profile_base_id, NULL);
+    funcs[i] = FbleNewFuncValue(heap, exe, profile_base_id, NULL);
   }
 
   // Write some code to call each of module functions in turn with the

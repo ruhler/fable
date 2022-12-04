@@ -1067,7 +1067,7 @@ Revised proposal:
       (relative to profile_block_offset passed to FbleNewFuncValue)
     FbleRunFunction* run_function
     void (*on_free)(void*)
-* FbleExecutableModule:
+* FbleExecutableModule: DONE
     ...
     FbleExecutable* executable
       assert that num_args is deps.size

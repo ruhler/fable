@@ -48,6 +48,9 @@ typedef struct {
    * Suiteable for use in the body of a function that takes the computed
    * module values for each module listed in 'deps' as arguments to the
    * function.
+   *
+   * executable->args must be the same as deps.size.
+   * executable->statics must be 0.
    */
   FbleExecutable* executable;
 
