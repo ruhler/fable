@@ -158,15 +158,15 @@ void FbleFreeInstr(FbleInstr* instr)
 }
 
 // FbleNewCode -- see documentation in code.h
-FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals, FbleBlockId profile)
+FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, FbleBlockId profile_block_id)
 {
   FbleCode* code = FbleAlloc(FbleCode);
   code->_base.refcount = 1;
   code->_base.magic = FBLE_EXECUTABLE_MAGIC;
-  code->_base.args = args;
-  code->_base.statics = statics;
-  code->_base.locals = locals;
-  code->_base.profile = profile;
+  code->_base.num_args = num_args;
+  code->_base.num_statics = num_statics;
+  code->_base.num_locals = num_locals;
+  code->_base.profile_block_id = profile_block_id;
   code->_base.run = &FbleInterpreterRunFunction;
   code->_base.on_free = &OnFree;
   FbleVectorInit(code->instrs);
@@ -205,10 +205,10 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
   FbleNameV profile_blocks = module->profile_blocks;
   while (blocks.size > 0) {
     FbleCode* block = blocks.xs[--blocks.size];
-    FbleName block_name = profile_blocks.xs[block->_base.profile];
+    FbleName block_name = profile_blocks.xs[block->_base.profile_block_id];
     fprintf(fout, "%s[%04zx] args[%zi] statics[%zi] locals[%zi]: // %s:%d:%d\n",
-        block_name.name->str, block->_base.profile,
-        block->_base.args, block->_base.statics, block->_base.locals,
+        block_name.name->str, block->_base.profile_block_id,
+        block->_base.num_args, block->_base.num_statics, block->_base.num_locals,
         block_name.loc.source->str, block_name.loc.line, block_name.loc.col);
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];
@@ -335,10 +335,10 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
         case FBLE_FUNC_VALUE_INSTR: {
           FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
           FbleCode* func = func_value_instr->code;
-          FbleName func_name = profile_blocks.xs[func->_base.profile];
+          FbleName func_name = profile_blocks.xs[func->_base.profile_block_id];
           fprintf(fout, "l%zi = func %s[%04zx] [",
               func_value_instr->dest,
-              func_name.name->str, func->_base.profile);
+              func_name.name->str, func->_base.profile_block_id);
           const char* comma = "";
           for (size_t j = 0; j < func_value_instr->scope.size; ++j) {
             fprintf(fout, "%s%s%zi",

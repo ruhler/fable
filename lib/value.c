@@ -99,14 +99,14 @@ typedef struct {
 //
 // Fields:
 //   executable - The code for the function.
-//   profile_base_id - An offset to use for profile blocks referenced from this
-//                     function.
+//   profile_block_offset -
+//     An offset to use for profile blocks referenced from this function.
 //   statics - static variables captured by the function.
 //             Size is executable->statics
 typedef struct {
   FbleValue _base;
   FbleExecutable* executable;
-  size_t profile_base_id;
+  size_t profile_block_offset;
   FbleValue* statics[];
 } FuncValue;
 
@@ -291,7 +291,7 @@ static void Refs(FbleHeapCallback* callback, FbleValue* value)
 
     case FUNC_VALUE: {
       FuncValue* v = (FuncValue*)value;
-      for (size_t i = 0; i < v->executable->statics; ++i) {
+      for (size_t i = 0; i < v->executable->num_statics; ++i) {
         Ref(callback, v->statics[i]);
       }
       break;
@@ -552,14 +552,14 @@ FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_
 }
 
 // FbleNewFuncValue -- see documentation in value.h
-FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id, FbleValue** statics)
+FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, FbleValue** statics)
 {
-  FuncValue* v = NewValueExtra(heap, FuncValue, sizeof(FbleValue*) * executable->statics);
+  FuncValue* v = NewValueExtra(heap, FuncValue, sizeof(FbleValue*) * executable->num_statics);
   v->_base.tag = FUNC_VALUE;
-  v->profile_base_id = profile_base_id;
+  v->profile_block_offset = profile_block_offset;
   v->executable = executable;
   v->executable->refcount++;
-  for (size_t i = 0; i < executable->statics; ++i) {
+  for (size_t i = 0; i < executable->num_statics; ++i) {
     v->statics[i] = statics[i];
     FbleValueAddRef(heap, &v->_base, statics[i]);
   }
@@ -567,17 +567,17 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
 }
 
 // FbleNewFuncValue_ -- see documentation in value.h
-FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_base_id, ...)
+FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...)
 {
-  size_t argc = executable->statics;
+  size_t argc = executable->num_statics;
   FbleValue* args[argc];
   va_list ap;
-  va_start(ap, profile_base_id);
+  va_start(ap, profile_block_offset);
   for (size_t i = 0; i < argc; ++i) {
     args[i] = va_arg(ap, FbleValue*);
   }
   va_end(ap);
-  return FbleNewFuncValue(heap, executable, profile_base_id, args);
+  return FbleNewFuncValue(heap, executable, profile_block_offset, args);
 }
 
 // FbleFuncValueStatics -- see documentation in value.h
@@ -591,7 +591,7 @@ FbleValue** FbleFuncValueStatics(FbleValue* func)
 size_t FbleFuncValueProfileBaseId(FbleValue* func)
 {
   FuncValue* func_value = (FuncValue*)func;
-  return func_value->profile_base_id;
+  return func_value->profile_block_offset;
 }
 
 // FbleFuncValueExecutable -- see documentation in value.h
@@ -613,7 +613,7 @@ FbleExecStatus SimpleRunFunction(FbleValueHeap* heap, FbleThread* thread)
   FbleValue** args = thread->stack->locals;
   FbleValue* result = exec->impl(heap, args);
 
-  for (size_t i = 0; i < exec->_base.locals; ++i) {
+  for (size_t i = 0; i < exec->_base.num_locals; ++i) {
     FbleReleaseValue(heap, thread->stack->locals[i]);
   }
 
@@ -626,10 +626,10 @@ FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFu
   SimpleExecutable* exec = FbleAlloc(SimpleExecutable);
   exec->_base.refcount = 0;
   exec->_base.magic = FBLE_EXECUTABLE_MAGIC;
-  exec->_base.args = argc;
-  exec->_base.statics = 0;
-  exec->_base.locals = argc;
-  exec->_base.profile = profile;
+  exec->_base.num_args = argc;
+  exec->_base.num_statics = 0;
+  exec->_base.num_locals = argc;
+  exec->_base.profile_block_id = profile;
   exec->_base.run = &SimpleRunFunction;
   exec->_base.on_free = &FbleExecutableNothingOnFree;
   exec->impl = impl;

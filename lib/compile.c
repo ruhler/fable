@@ -117,7 +117,7 @@ static Local* NewLocal(Scope* scope)
 
   if (index == scope->locals.size) {
     FbleVectorAppend(scope->locals, NULL);
-    scope->code->_base.locals = scope->locals.size;
+    scope->code->_base.num_locals = scope->locals.size;
   }
 
   Local* local = FbleAlloc(Local);

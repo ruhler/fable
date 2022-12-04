@@ -235,12 +235,12 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "static FbleExecutable " LABEL " = {\n", executable_id);
   fprintf(fout, "  .refcount = 1,\n");
   fprintf(fout, "  .magic = FBLE_EXECUTABLE_MAGIC,\n");
-  fprintf(fout, "  .args = %zi, \n", module->code->_base.args);
-  fprintf(fout, "  .statics = %zi,\n", module->code->_base.statics);
-  fprintf(fout, "  .locals = %zi,\n", module->code->_base.locals);
-  fprintf(fout, "  .profile = %zi,\n", module->code->_base.profile);
+  fprintf(fout, "  .num_args = %zi, \n", module->code->_base.num_args);
+  fprintf(fout, "  .num_statics = %zi,\n", module->code->_base.num_statics);
+  fprintf(fout, "  .num_locals = %zi,\n", module->code->_base.num_locals);
+  fprintf(fout, "  .profile_block_id = %zi,\n", module->code->_base.profile_block_id);
 
-  FbleName function_block = module->profile_blocks.xs[module->code->_base.profile];
+  FbleName function_block = module->profile_blocks.xs[module->code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "  .run = &_Run_%p_%s,\n", (void*)module->code, function_label);
@@ -296,7 +296,7 @@ static void ReturnAbort(FILE* fout, void* code, const char* function_label, size
 // * Outputs code to fout with two space indent.
 static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
-  FbleName function_block = profile_blocks.xs[code->_base.profile];
+  FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "static FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread)\n", (void*)code, function_label);
@@ -306,7 +306,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  FbleValue** l = stack->locals;\n");
   fprintf(fout, "  FbleValue* func = stack->func;\n");
   fprintf(fout, "  FbleValue** s = FbleFuncValueStatics(func);\n");
-  fprintf(fout, "  size_t profile_base_id = FbleFuncValueProfileBaseId(func);\n");
+  fprintf(fout, "  size_t profile_block_offset = FbleFuncValueProfileBaseId(func);\n");
 
   // x0 is a temporary variable individual instructions can use however they
   // wish.
@@ -332,12 +332,12 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
       switch (op->tag) {
         case FBLE_PROFILE_ENTER_OP: {
-          fprintf(fout, "  ProfileEnterBlock(profile, profile_base_id + %zi);\n", op->block);
+          fprintf(fout, "  ProfileEnterBlock(profile, profile_block_offset + %zi);\n", op->block);
           break;
         }
 
         case FBLE_PROFILE_REPLACE_OP: {
-          fprintf(fout, "  ProfileReplaceBlock(profile, profile_base_id + %zi);\n", op->block);
+          fprintf(fout, "  ProfileReplaceBlock(profile, profile_block_offset + %zi);\n", op->block);
           break;
         }
 
@@ -455,23 +455,23 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       case FBLE_FUNC_VALUE_INSTR: {
         FbleFuncValueInstr* func_instr = (FbleFuncValueInstr*)instr;
 
-        FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile];
+        FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile_block_id];
         char function_label[SizeofSanitizedString(function_block.name->str)];
         SanitizeString(function_block.name->str, function_label);
 
         fprintf(fout, "  static FbleExecutable exe_%zi = {\n", exe_id);
         fprintf(fout, "    .refcount = 1,\n");
         fprintf(fout, "    .magic = FBLE_EXECUTABLE_MAGIC,\n");
-        fprintf(fout, "    .args = %zi,\n", func_instr->code->_base.args);
-        fprintf(fout, "    .statics = %zi,\n", func_instr->code->_base.statics);
-        fprintf(fout, "    .locals = %zi,\n", func_instr->code->_base.locals);
-        fprintf(fout, "    .profile = %zi,\n", func_instr->code->_base.profile);
+        fprintf(fout, "    .num_args = %zi,\n", func_instr->code->_base.num_args);
+        fprintf(fout, "    .num_statics = %zi,\n", func_instr->code->_base.num_statics);
+        fprintf(fout, "    .num_locals = %zi,\n", func_instr->code->_base.num_locals);
+        fprintf(fout, "    .profile_block_id = %zi,\n", func_instr->code->_base.profile_block_id);
         fprintf(fout, "    .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
         fprintf(fout, "    .on_free = NULL\n");
         fprintf(fout, "  };\n");
-        fprintf(fout, "  l[%zi] = FbleNewFuncValue_(heap, &exe_%zi, profile_base_id", func_instr->dest, exe_id);
+        fprintf(fout, "  l[%zi] = FbleNewFuncValue_(heap, &exe_%zi, profile_block_offset", func_instr->dest, exe_id);
         exe_id++;
-        for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
+        for (size_t i = 0; i < func_instr->code->_base.num_statics; ++i) {
           fprintf(fout, ", %s[%zi]",
               section[func_instr->scope.xs[i].section],
               func_instr->scope.xs[i].index);
@@ -782,7 +782,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
 static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
   // Jump table data for jumping to the right fble pc.
-  FbleName function_block = profile_blocks.xs[code->_base.profile];
+  FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, size_t pc)\n", (void*)code, function_label);
@@ -963,7 +963,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   FbleNameV profile_blocks = module->profile_blocks;
   for (int i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
-    FbleName function_block = profile_blocks.xs[code->_base.profile];
+    FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
     char function_label[SizeofSanitizedString(function_block.name->str)];
     SanitizeString(function_block.name->str, function_label);
     fprintf(fout, "static FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread);\n",

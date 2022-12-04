@@ -41,7 +41,7 @@ typedef struct {
   void* r_locals_save;
   void* r_statics_save;
   void* r_profile_save;
-  void* r_profile_base_id_save;
+  void* r_profile_block_offset_save;
   void* r_scratch_0_save;
   void* r_scratch_1_save;
   void* padding;
@@ -312,12 +312,12 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, LABEL ":\n", executable_id);
   fprintf(fout, "  .xword 1\n");                          // .refcount
   fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
-  fprintf(fout, "  .xword %zi\n", module->code->_base.args);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.statics);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.locals);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.profile);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.num_args);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.num_statics);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.num_locals);
+  fprintf(fout, "  .xword %zi\n", module->code->_base.profile_block_id);
 
-  FbleName function_block = module->profile_blocks.xs[module->code->_base.profile];
+  FbleName function_block = module->profile_blocks.xs[module->code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "  .xword _Run.%p.%s\n", (void*)module->code, function_label);
@@ -653,12 +653,12 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, ".L._Run_%p.%zi.exe:\n", code, pc);
       fprintf(fout, "  .xword 1\n");                          // .refcount
       fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.args);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.statics);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.locals);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.profile);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_args);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_statics);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_locals);
+      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.profile_block_id);
 
-      FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile];
+      FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile_block_id];
       char function_label[SizeofSanitizedString(function_block.name->str)];
       SanitizeString(function_block.name->str, function_label);
       fprintf(fout, "  .xword _Run.%p.%s\n", (void*)func_instr->code, function_label);
@@ -668,9 +668,9 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  .align 2\n");
 
       // Allocate space for the statics array on the stack.
-      size_t sp_offset = StackBytesForCount(func_instr->code->_base.statics);
+      size_t sp_offset = StackBytesForCount(func_instr->code->_base.num_statics);
       fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
-      for (size_t i = 0; i < func_instr->code->_base.statics; ++i) {
+      for (size_t i = 0; i < func_instr->code->_base.num_statics; ++i) {
         GetFrameVar(fout, "x0", func_instr->scope.xs[i]);
         fprintf(fout, "  str x0, [SP, #%zi]\n", sizeof(FbleValue*) * i);
       }
@@ -904,7 +904,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
   fprintf(fout, "  .text\n");
   fprintf(fout, "  .align 2\n");
-  FbleName function_block = profile_blocks.xs[code->_base.profile];
+  FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "_Run.%p.%s:\n", (void*)code, function_label);
@@ -927,7 +927,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  str R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  str R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
   fprintf(fout, "  str R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
-  fprintf(fout, "  str R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
+  fprintf(fout, "  str R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  str R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
   fprintf(fout, "  str R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
 
@@ -968,7 +968,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
   fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
-  fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_base_id_save));
+  fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
   fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
@@ -1367,7 +1367,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   for (int i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
 
-    FbleName function_block = profile_blocks.xs[code->_base.profile];
+    FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
     char function_label[SizeofSanitizedString(function_block.name->str)];
     SanitizeString(function_block.name->str, function_label);
 

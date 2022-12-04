@@ -1059,7 +1059,7 @@ from link, which is the module profile blocks, or FbleRunFunction, which is
 whatever the current module's block offset is.
 
 Revised proposal:
-* FbleExecutable: (subclassed for user data)
+* FbleExecutable: (subclassed for user data) DONE
     size_t num_args
     size_t num_locals
     size_t num_statics

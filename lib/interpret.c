@@ -382,14 +382,14 @@ static Control RunCallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* 
   };
 
   FbleExecutable* executable = FbleFuncValueExecutable(func);
-  FbleValue* args[executable->args];
-  for (size_t i = 0; i < executable->args; ++i) {
+  FbleValue* args[executable->num_args];
+  for (size_t i = 0; i < executable->num_args; ++i) {
     args[i] = FrameGet(thread, call_instr->args.xs[i]);
   }
 
   if (call_instr->exit) {
     FbleRetainValue(heap, func);
-    for (size_t i = 0; i < executable->args; ++i) {
+    for (size_t i = 0; i < executable->num_args; ++i) {
       FbleRetainValue(heap, args[i]);
     }
 
@@ -692,7 +692,7 @@ static AbortInstr sAbortInstr[] = {
 FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThread* thread)
 {
   FbleProfileThread* profile = thread->profile;
-  FbleBlockId profile_base_id = FbleFuncValueProfileBaseId(thread->stack->func);
+  FbleBlockId profile_block_offset = FbleFuncValueProfileBaseId(thread->stack->func);
   FbleInstr** code = ((FbleCode*)FbleFuncValueExecutable(thread->stack->func))->instrs.xs;
 
   FbleExecStatus status = FBLE_EXEC_ABORTED;
@@ -708,11 +708,11 @@ FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThread* threa
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP:
-            FbleProfileEnterBlock(profile, profile_base_id + op->block);
+            FbleProfileEnterBlock(profile, profile_block_offset + op->block);
             break;
 
           case FBLE_PROFILE_REPLACE_OP:
-            FbleProfileReplaceBlock(profile, profile_base_id + op->block);
+            FbleProfileReplaceBlock(profile, profile_block_offset + op->block);
             break;
 
           case FBLE_PROFILE_EXIT_OP:

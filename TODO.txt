@@ -1,5 +1,4 @@
 * Clean up FbleNewFuncValue API
- - Rename fields and update documentation.
  - Change signature for FbleRunFunction.
  - Remove FbleSimpleFunc* API.
  - Make FbleStack private.

@@ -32,15 +32,15 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
     FbleExecutable* exe = module->executable;
 
     // TODO: Return error messages in these cases instead of assert failures?
-    assert(exe->statics == 0 && "Module cannot have statics");
-    assert(module->deps.size == exe->args && "Module args mismatch");
+    assert(exe->num_statics == 0 && "Module cannot have statics");
+    assert(module->deps.size == exe->num_args && "Module args mismatch");
 
-    size_t profile_base_id = 0;
+    size_t profile_block_offset = 0;
     if (profile != NULL) {
-      profile_base_id = FbleProfileAddBlocks(profile, module->profile_blocks);
+      profile_block_offset = FbleProfileAddBlocks(profile, module->profile_blocks);
     }
 
-    funcs[i] = FbleNewFuncValue(heap, exe, profile_base_id, NULL);
+    funcs[i] = FbleNewFuncValue(heap, exe, profile_block_offset, NULL);
   }
 
   // Write some code to call each of module functions in turn with the
