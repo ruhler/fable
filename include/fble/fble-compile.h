@@ -38,6 +38,13 @@ typedef struct {
    * arguments to the function
    */
   FbleCode* code;
+
+  /**
+   * Profile blocks used by functions in the module.
+   *
+   * This FbleCompiledModule owns the names and the vector.
+   */
+  FbleNameV profile_blocks;
 } FbleCompiledModule;
 
 /** Vector of compiled modules. */
@@ -120,13 +127,17 @@ FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program);
  * Writes a disassembled version of an instruction block in human readable
  * format to the given file. For debugging purposes.
  *
- * @param fout   The file to write the disassembled program to.
- * @param code   The code to disassemble.
+ * @param fout
+ *   The file to write the disassembled program to.
+ * @param profile_blocks
+ *   Profiling blocks referenced by the code.
+ * @param code
+ *   The code to disassemble.
  *
  * @sideeffects
  *   A disassembled version of the code is printed to fout.
  */
-void FbleDisassemble(FILE* fout, FbleCode* code);
+void FbleDisassemble(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 
 /**
  * Generates aarch64 for a compiled module.

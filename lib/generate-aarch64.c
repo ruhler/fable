@@ -306,8 +306,6 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
     fprintf(fout, "  .xword " LABEL "\n", dep_ids[i]);
   }
 
-  LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->code->_base.profile_blocks);
-
   LabelId executable_id = (*label_id)++;
   fprintf(fout, "  .section .data\n");
   fprintf(fout, "  .align 3\n");
@@ -318,14 +316,14 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .xword %zi\n", module->code->_base.statics);
   fprintf(fout, "  .xword %zi\n", module->code->_base.locals);
   fprintf(fout, "  .xword %zi\n", module->code->_base.profile);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.profile_blocks.size);
-  fprintf(fout, "  .xword " LABEL "\n", profile_blocks_xs_id);
 
-  FbleName function_block = module->code->_base.profile_blocks.xs[module->code->_base.profile];
+  FbleName function_block = module->profile_blocks.xs[module->code->_base.profile];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "  .xword _Run.%p.%s\n", (void*)module->code, function_label);
   fprintf(fout, "  .xword FbleExecutableNothingOnFree\n");
+
+  LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
 
   LabelId module_id = (*label_id)++;
   fprintf(fout, "  .section .data\n");
@@ -333,10 +331,12 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, LABEL ":\n", module_id);
   fprintf(fout, "  .xword 1\n");                                  // .refcount
   fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MODULE_MAGIC);   // .magic
-  fprintf(fout, "  .xword " LABEL "\n", path_id);                       // .path
+  fprintf(fout, "  .xword " LABEL "\n", path_id);                 // .path
   fprintf(fout, "  .xword %zi\n", module->deps.size);
   fprintf(fout, "  .xword " LABEL "\n", deps_xs_id);
   fprintf(fout, "  .xword " LABEL "\n", executable_id);
+  fprintf(fout, "  .xword %zi\n", module->profile_blocks.size);
+  fprintf(fout, "  .xword " LABEL "\n", profile_blocks_xs_id);
   return module_id;
 }
 
@@ -657,8 +657,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.statics);
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.locals);
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.profile);
-      fprintf(fout, "  .xword 0\n"); // .profile_blocks.size
-      fprintf(fout, "  .xword 0\n"); // .profile_blocks.xs
 
       FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile];
       char function_label[SizeofSanitizedString(function_block.name->str)];
@@ -1294,7 +1292,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .align 2\n");
   fprintf(fout, ".Llow_pc:\n");
 
-  FbleNameV profile_blocks = module->code->_base.profile_blocks;
+  FbleNameV profile_blocks = module->profile_blocks;
 
   for (int i = 0; i < blocks.size; ++i) {
     EmitCode(fout, profile_blocks, blocks.xs[i]);

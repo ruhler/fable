@@ -630,8 +630,6 @@ FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFu
   exec->_base.statics = 0;
   exec->_base.locals = argc;
   exec->_base.profile = profile;
-  exec->_base.profile_blocks.size = 0;
-  exec->_base.profile_blocks.xs = NULL;
   exec->_base.run = &SimpleRunFunction;
   exec->_base.on_free = &FbleExecutableNothingOnFree;
   exec->impl = impl;

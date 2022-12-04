@@ -231,8 +231,6 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   }
   fprintf(fout, "};\n");
 
-  LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->code->_base.profile_blocks);
-
   LabelId executable_id = (*label_id)++;
   fprintf(fout, "static FbleExecutable " LABEL " = {\n", executable_id);
   fprintf(fout, "  .refcount = 1,\n");
@@ -241,15 +239,15 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .statics = %zi,\n", module->code->_base.statics);
   fprintf(fout, "  .locals = %zi,\n", module->code->_base.locals);
   fprintf(fout, "  .profile = %zi,\n", module->code->_base.profile);
-  fprintf(fout, "  .profile_blocks = { .size = %zi, .xs = " LABEL "},\n",
-      module->code->_base.profile_blocks.size, profile_blocks_xs_id);
 
-  FbleName function_block = module->code->_base.profile_blocks.xs[module->code->_base.profile];
+  FbleName function_block = module->profile_blocks.xs[module->code->_base.profile];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
   fprintf(fout, "  .run = &_Run_%p_%s,\n", (void*)module->code, function_label);
   fprintf(fout, "  .on_free = &FbleExecutableNothingOnFree\n");
   fprintf(fout, "};\n");
+
+  LabelId profile_blocks_xs_id = StaticNames(fout, label_id, module->profile_blocks);
 
   LabelId module_id = (*label_id)++;
   fprintf(fout, "static FbleExecutableModule " LABEL " = {\n", module_id);
@@ -258,7 +256,9 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .path = &" LABEL ",\n", path_id);
   fprintf(fout, "  .deps = { .size = %zi, .xs = " LABEL "},\n",
       module->deps.size, deps_xs_id);
-  fprintf(fout, "  .executable = &" LABEL "\n", executable_id);
+  fprintf(fout, "  .executable = &" LABEL ",\n", executable_id);
+  fprintf(fout, "  .profile_blocks = { .size = %zi, .xs = " LABEL "},\n",
+      module->profile_blocks.size, profile_blocks_xs_id);
   fprintf(fout, "};\n");
   return module_id;
 }
@@ -466,7 +466,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "    .statics = %zi,\n", func_instr->code->_base.statics);
         fprintf(fout, "    .locals = %zi,\n", func_instr->code->_base.locals);
         fprintf(fout, "    .profile = %zi,\n", func_instr->code->_base.profile);
-        fprintf(fout, "    .profile_blocks = { .size = 0, .xs = NULL },\n");
         fprintf(fout, "    .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
         fprintf(fout, "    .on_free = NULL\n");
         fprintf(fout, "  };\n");
@@ -961,7 +960,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "}\n");
 
   // Generate prototypes for all the run and abort functions.
-  FbleNameV profile_blocks = module->code->_base.profile_blocks;
+  FbleNameV profile_blocks = module->profile_blocks;
   for (int i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
     FbleName function_block = profile_blocks.xs[code->_base.profile];

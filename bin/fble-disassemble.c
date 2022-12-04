@@ -115,7 +115,7 @@ int main(int argc, const char* argv[])
     return EX_FAIL;
   }
 
-  FbleDisassemble(stdout, compiled->code);
+  FbleDisassemble(stdout, compiled->profile_blocks, compiled->code);
 
   FbleFreeCompiledModule(compiled);
   return EX_SUCCESS;

@@ -757,6 +757,12 @@ FbleExecutableProgram* FbleInterpret(FbleCompiledProgram* program)
     executable_module->executable = &module->code->_base;
     executable_module->executable->refcount++;
 
+    FbleVectorInit(executable_module->profile_blocks);
+    for (size_t n = 0; n < module->profile_blocks.size; ++n) {
+      FbleVectorAppend(executable_module->profile_blocks,
+          FbleCopyName(module->profile_blocks.xs[n]));
+    }
+
     FbleVectorAppend(executable->modules, executable_module);
   }
 

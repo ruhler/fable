@@ -17,7 +17,7 @@
 #define UNREACHABLE(x) assert(false && x)
 
 static void OnFree(FbleExecutable* executable);
-static void DumpCode(FILE* fout, FbleCode* code);
+static void DumpCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 
 // OnFree --
 //   The FbleExecutable.on_free function for FbleCode.
@@ -30,25 +30,25 @@ static void OnFree(FbleExecutable* executable)
   FbleVectorFree(code->instrs);
 }
 
-// DumpCode -- 
-//   For debugging purposes, dump the given code block in human readable
-//   format to the given file.
-//
-// Inputs:
-//   fout - where to dump the blocks to.
-//   code - the code block to dump.
-//
-// Results:
-//   none
-//
-// Side effects:
-//   Prints the code block in human readable format to stderr.
-static void DumpCode(FILE* fout, FbleCode* code)
+/**
+ * Dumps code in human readable form.
+ *
+ * This is for debugging purposes.
+ *
+ * @param fout
+ *   Where to dump the blocks to.
+ * @param profile_blocks
+ *   Profile blocks referenced by the code.
+ * @param code
+ *   The code block to dump.
+ *
+ * @sideeffects
+ *   Prints the code block in human readable format to fout.
+ */
+static void DumpCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
   // Map from FbleFrameSection to short descriptor of the section.
   static const char* sections[] = {"s", "l"};
-
-  FbleNameV profile_blocks = code->_base.profile_blocks;
 
   struct { size_t size; FbleCode** xs; } blocks;
   FbleVectorInit(blocks);
@@ -445,7 +445,6 @@ FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals, FbleBlockId pr
   code->_base.statics = statics;
   code->_base.locals = locals;
   code->_base.profile = profile;
-  FbleVectorInit(code->_base.profile_blocks);
   code->_base.run = &FbleInterpreterRunFunction;
   code->_base.on_free = &OnFree;
   FbleVectorInit(code->instrs);
@@ -459,7 +458,7 @@ void FbleFreeCode(FbleCode* code)
 }
 
 // FbleDisassmeble -- see documentation in fble-compile.h.
-void FbleDisassemble(FILE* fout, FbleCode* code)
+void FbleDisassemble(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
 {
-  DumpCode(fout, code);
+  DumpCode(fout, profile_blocks, code);
 }

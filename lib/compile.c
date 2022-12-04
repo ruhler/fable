@@ -90,7 +90,7 @@ static void ExitBlock(Blocks* blocks, Scope* scope, bool exit);
 
 static void CompileExit(bool exit, Scope* scope, Local* result);
 static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* tc);
-static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name);
+static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* profile_blocks);
 static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc);
 
 // NewLocal --
@@ -947,22 +947,24 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
   return NULL;
 }
 
-// Compile --
-//   Compile a type-checked expression.
-//
-// Inputs:
-//   args - local variables to reserve for arguments.
-//   tc - the type-checked expression to compile.
-//   name - the name of the expression to use in profiling. Borrowed.
-//
-// Results:
-//   The compiled program.
-//
-// Side effects:
-// * Adds blocks to the given profile.
-// * The caller should call FbleFreeCode to release resources
-//   associated with the returned program when it is no longer needed.
-static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name)
+/**
+ * Compiles a type-checked expression.
+ *
+ * @param args            Local variables to reserve for arguments.
+ * @param tc              The type-checked expression to compile.
+ * @param name            The name of the expression to use in profiling. Borrowed.
+ * @param profile_blocks  Uninitialized vector to store profile blocks to.
+ *
+ * @returns The compiled program.
+ *
+ * @sideeffects
+ * * Initializes and fills profile_blocks vector. The caller should free the
+ *   elements and vector itself when no longer needed.
+ * * Adds blocks to the given profile.
+ * * The caller should call FbleFreeCode to release resources
+ *   associated with the returned program when it is no longer needed.
+ */
+static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* profile_blocks)
 {
   Blocks blocks;
   FbleVectorInit(blocks.stack);
@@ -984,8 +986,7 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name)
   FreeScope(&scope);
   assert(blocks.stack.size == 0);
   FbleVectorFree(blocks.stack);
-  FbleVectorFree(code->_base.profile_blocks);
-  code->_base.profile_blocks = blocks.profile;
+  *profile_blocks = blocks.profile;
   return code;
 }
 
@@ -1015,7 +1016,7 @@ static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
   }
 
   FbleName label = FbleModulePathName(module->path);
-  compiled->code = Compile(args, tc, label);
+  compiled->code = Compile(args, tc, label, &compiled->profile_blocks);
   for (size_t i = 0; i < args.size; ++i) {
     FbleFreeName(args.xs[i]);
   }
@@ -1028,11 +1029,16 @@ static FbleCompiledModule* CompileModule(FbleLoadedModule* module, FbleTc* tc)
 void FbleFreeCompiledModule(FbleCompiledModule* module)
 {
   FbleFreeModulePath(module->path);
-  for (size_t j = 0; j < module->deps.size; ++j) {
-    FbleFreeModulePath(module->deps.xs[j]);
+  for (size_t i = 0; i < module->deps.size; ++i) {
+    FbleFreeModulePath(module->deps.xs[i]);
   }
   FbleVectorFree(module->deps);
   FbleFreeCode(module->code);
+  for (size_t i = 0; i < module->profile_blocks.size; ++i) {
+    FbleFreeName(module->profile_blocks.xs[i]);
+  }
+  FbleVectorFree(module->profile_blocks);
+
   FbleFree(module);
 }
 

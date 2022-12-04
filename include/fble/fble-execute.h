@@ -50,6 +50,13 @@ typedef struct {
    * function.
    */
   FbleExecutable* executable;
+
+  /**
+   * Profile blocks used by functions in the module.
+   *
+   * This FbleExecutableModule owns the names and the vector.
+   */
+  FbleNameV profile_blocks;
 } FbleExecutableModule;
 
 /** A vector of FbleExecutableModule. */
@@ -316,14 +323,6 @@ struct FbleExecutable {
    * function's profile_base_id.
    */
   FbleBlockId profile;
-
-  /**
-   * Profile blocks used in this FbleExecutable.
-   *
-   * Optional. This is intended to be used for FbleExecutable's representing
-   * top level modules only.
-   */
-  FbleNameV profile_blocks;
 
   /** How to run the function. */
   FbleRunFunction* run;

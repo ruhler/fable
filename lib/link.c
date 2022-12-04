@@ -34,7 +34,8 @@ FbleValue* FbleLink(FbleValueHeap* heap, FbleExecutableProgram* program, FblePro
 
     size_t profile_base_id = 0;
     if (profile != NULL) {
-      profile_base_id = FbleProfileAddBlocks(profile, module->profile_blocks);
+      profile_base_id = FbleProfileAddBlocks(profile,
+          program->modules.xs[i]->profile_blocks);
     }
 
     funcs[i] = FbleNewFuncValue(heap, module, profile_base_id, NULL);

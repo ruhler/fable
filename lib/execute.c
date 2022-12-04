@@ -231,11 +231,6 @@ void FbleFreeExecutable(FbleExecutable* executable)
   assert(executable->refcount > 0);
   executable->refcount--;
   if (executable->refcount == 0) {
-    for (size_t i = 0; i < executable->profile_blocks.size; ++i) {
-      FbleFreeName(executable->profile_blocks.xs[i]);
-    }
-    FbleVectorFree(executable->profile_blocks);
-
     executable->on_free(executable);
     FbleFree(executable);
   }
@@ -256,6 +251,10 @@ void FbleFreeExecutableModule(FbleExecutableModule* module)
     }
     FbleVectorFree(module->deps);
     FbleFreeExecutable(module->executable);
+    for (size_t i = 0; i < module->profile_blocks.size; ++i) {
+      FbleFreeName(module->profile_blocks.xs[i]);
+    }
+    FbleVectorFree(module->profile_blocks);
     FbleFree(module);
   }
 }

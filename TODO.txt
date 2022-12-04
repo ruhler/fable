@@ -1,12 +1,13 @@
 * Clean up FbleNewFuncValue API
  - Rename fields and update documentation.
- - Move profile_blocks from FbleExecutable to FbleExecutableModule.
  - Change signature for FbleRunFunction.
  - Remove FbleSimpleFunc* API.
  - Make FbleStack private.
  - Make FbleThread abstract.
  - Clean up prior uses of FbleSimpleFunc* API to not make use of global state.
  - Remove include of value.h in generated c programs.
+
+* Change FbleDisassemble to take an FbleCompiledModule*?
 
 * Fbld Cleanup
  - Come up with a more formal test suite for fbld.
