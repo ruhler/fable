@@ -914,3 +914,193 @@ arguments. Sounds good, right?
 Should we pass 'result' too? No. We have FbleThreadReturn for that. And I
 should start making use of that everywhere. That means passing around thread
 instead of stack for interpreter abort functions. Maybe I can do that later.
+
+---
+
+Let's revisit from the top: what information do we need to define an fble
+function?
+
+To define an fble function:
+* Access to locals/args.
+* Access to static variables.
+* Ability to return a value, abort, or continue.
+* Access to user defined data (such as bytecode to interpret).
+* Profile block base id, assuming that's not implicit from context.
+  - For example, we could have PushBaseBlockId/PopBaseBlockId functions to
+    maintain the stack of profile block ids in a way that users don't have to
+    care.
+
+To use a function:
+* Number of args and locals.
+* Know where the result should go.
+* Check the result is finished/continued/aborted.
+* Know the profile id of the function block.
+
+To construct a function:
+* Info for how to run and use a function.
+* Static variables.
+* Profile base id.
+
+To free a function:
+* How to clean up user data.
+
+Special case:
+* For module level functions, we want list of profile blocks to add to
+  profile.
+
+Note:
+* We want to be able to represent information about an 'executable' using a
+  static definition of a struct for generated code purposes.
+
+There's a lot going on here. A lot of info we need, a lot of details to work
+out. Rather than do it all at once, how about we take an incremental approach?
+
+Hmm... But what's the goal here? Two goals:
+1. Don't require including "value.h" for generated c code.
+* Remove need for FbleFuncValueStatics by passing statics to run function.
+* Remove need for FbleFuncValueProfileBaseId by passing it to run function.
+  Or making it implicit based on context.
+* Make FbleGenericTypeValue public.
+* Make FbleNewFuncValue_ public.
+* Make FbleStrictValue public.
+2. Avoid exposing too many internal implementation details for how functions
+are represented.
+* Make FbleStack private. There should be no need to reference it.
+* Make FbleThread abstract.
+* Make FbleExecutable private.
+3. Avoid need for separate FbleNewFuncValue and FbleNewSimpleFuncValue APIs.
+
+Strawman proposal:
+  FbleValue* FbleNewFuncValue(
+    FbleValueHeap* heap,
+    size_t num_args,
+    size_t num_locals,
+    size_t num_statics,
+    FbleRunFunction* run_function,
+    void* user,
+    void (*on_free)(void*))
+
+The problem is, we need a way to define an FbleExecutable for defining a
+module before we have a value heap. That suggests FbleExecutable, or some
+equivalent, needs to be a public structure. If we have that anyway, as a
+template for constructing functions, we may as well reuse that for both
+modules and functions. For a module, we need block ids. But we can have those
+associated with FbleExecutableModule, rather than FbleExecutable, right?
+
+Strawman Proposal 2:
+* FbleExecutable: (subclassed for user data)
+    size_t num_args
+    size_t num_locals
+    size_t num_statics
+    FbleBlockId profile   (relative to module that the executable belongs to)
+    FbleRunFunction* run_function
+    void (*on_free)(void*)
+* FbleExecutableModule:
+    ...
+    FbleExecutable* executable
+      assert that num_args is deps.size
+      assert that num_statics is 0
+    FbleNameV profile_blocks;
+* FbleValue* FbleNewFuncValue(
+    FbleValueHeap* heap,
+    FbleExecutable* executable,
+    FbleBlockId module_profile_base_id,
+    FbleValue** statics)
+* FbleExecStatus FbleRunFunction(
+    FbleValueHeap* heap,
+    FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals,
+    FbleValue** statics,
+    FbleProfileId module_profile_base_id)
+
+This sounds good to me. Just want to think about if we can do anything better
+for profile ids. Each module has some profile blocks associated with it.
+Modules get relocated at runtime. We have to know where the module was
+relocated to.
+
+We don't know where a module is relocated to (profile block wise) until we
+load the module and create the module function. The module function is like
+any other function when we execute it. We don't treat it specially. But it
+does get called from the top level, where profile base id is 0.
+
+So, if there's one thing we could do to simplify, it would be this:
+* We keep current profile base on the stack.
+* FbleNewFuncValue takes profile_offset, which is relative to the current
+  profile base at the time the function is allocated.
+* We update current profile base before calling FbleRunFunction.
+* Calls to enter/exit blocks are relative to current profile base.
+
+The benefit being, this way we don't need to pass a profile base id to
+FbleRunFunction. We still need to pass an offset to FbleNewFuncValue though,
+and in practice I expect the offset passed to FbleNewFuncValue is zero for
+anything except a module. If we wanted, we could define an FbleNewModuleValue
+that takes module_profile_base_id without statics, and don't allow profile
+base id to specified as part of FbleNewFuncValue.
+
+What's awkward about this suggestion is:
+1. We need wrapper functions for calling profile enter/exit, unless we want to
+make profile base ids part of the profiling API.
+2. It's not obvious to me when calling FbleNewFuncValue what the current
+profile id is. We could fix that by passing a thread instead, but I kind of
+prefer us not to have to have a thread ready when allocating a function value.
+
+All of which suggests I stick with the above proposal. The only question being
+whether we want to change the name of the argument.
+
+Names are:
+* profile => profile_block_id (relative to profile_block_offset)
+* module_profile_base_id => profile_block_offset
+
+Does profile_block_id make sense to be relative to profile_block_offset? How
+do you know what offset it is relative to? Easy: whatever profile_block_offset
+is passed to FbleNewFuncValue. And where we get that in practice, is either
+from link, which is the module profile blocks, or FbleRunFunction, which is
+whatever the current module's block offset is.
+
+Revised proposal:
+* FbleExecutable: (subclassed for user data)
+    size_t num_args
+    size_t num_locals
+    size_t num_statics
+    FbleBlockId profile_block_id
+      (relative to profile_block_offset passed to FbleNewFuncValue)
+    FbleRunFunction* run_function
+    void (*on_free)(void*)
+* FbleExecutableModule:
+    ...
+    FbleExecutable* executable
+      assert that num_args is deps.size
+      assert that num_statics is 0
+    FbleNameV profile_blocks;
+* FbleValue* FbleNewFuncValue(
+    FbleValueHeap* heap,
+    FbleExecutable* executable,
+    FbleBlockId profile_block_offset,
+    FbleValue** statics)
+* FbleExecStatus FbleRunFunction(
+    FbleValueHeap* heap,
+    FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals,
+    FbleValue** statics,
+    FbleProfileId profile_block_offset)
+
+Note: it's not weird that the same FbleExecutable can be used with different
+profile block offsets: because we want a static value for FbleExecutable that
+can be reused with programs that have different sets of modules. This all
+makes sense.
+
+Good. We have a clear proposal. I like the proposal. Next steps are to
+implement it. How so? What changes do we need to get there?
+
+* Rename fields and update documentation.
+* Move profile_blocks from FbleExecutable to FbleExecutableModule.
+* Change signature for FbleRunFunction.
+* Remove FbleSimpleFunc* API.
+* Make FbleStack private.
+* Make FbleThread abstract.
+
+Nifty. Let's get to work.
+            
+

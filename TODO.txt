@@ -1,11 +1,22 @@
-* Come up with a more formal test suite for fbld.
-* Print line and column number on fbld usage errors.
-  Instead of 'Index' number.
-* Print line and col number on fbld usage command errors
-  Such as wrong number of args.
+* Clean up FbleNewFuncValue API
+ - Rename fields and update documentation.
+ - Move profile_blocks from FbleExecutable to FbleExecutableModule.
+ - Change signature for FbleRunFunction.
+ - Remove FbleSimpleFunc* API.
+ - Make FbleStack private.
+ - Make FbleThread abstract.
+ - Clean up prior uses of FbleSimpleFunc* API to not make use of global state.
+ - Remove include of value.h in generated c programs.
+
+* Fbld Cleanup
+ - Come up with a more formal test suite for fbld.
+ - Print line and column number on fbld usage errors.
+   Instead of 'Index' number.
+ - Print line and col number on fbld usage command errors
+   Such as wrong number of args.
+
 * Fix dependency tracking for configure
   For example, rerun configure if any of the .in files change.
-* See if FbleStack and/or FbleThread can be made abstract.
 
 * Figure out how to customize usage for compiled binaries
  - for example, fble-invaders should say fble-invaders in the usage, not
@@ -40,17 +51,12 @@
  - Only output labels for pc aborts that are actually jumped to.
 
 * Release
- - Add --version option to things.
  - Clean up libfble interface.
  - Write man pages (fble.man.txt)
  See thoughts/fble.release.txt
 
 * Write a tutorial
   See thoughts/fble.tutorial.txt
-
-* Clean up generate_c things
-  - Don't require access to private includes.
-  - Better instructions on required include paths.
 
 * Why doesn't type inference work for Concat function?
 
@@ -61,9 +67,6 @@
 
 * Do something with data type instruction?
   - There's currently unexercised code for it.
-
-* Clean up FbleNewSimpleFunc API and use cases
- - Don't require use of global variables to pass state.
 
 * Add tests that at least the compiled apps don't crash when you run them.
   
@@ -131,30 +134,9 @@
 * Consider having separate CALL_INSTR and TAIL_CALL_INSTR.
   Their implementations may be different enough now to warrant it?
 
-* Remove dependence of interpret.c and generated code on value.h.
-  Making value functions public as necessary to support this.
-  - Need public access to FbleFuncValue.statics.
-  - Need FbleStrictValue. Or should this be done inside the value functions?
-  - Use FbleStructValueAccess for generated code.
-  - Use FbleNewStructValue for interpret.c somehow.
-  and so on...
-
 * Change FbleLink to use FbleExecutable directly instead of FbleCode?
  - Does this mean making a copy of the FbleExecutableProgram? That's tedious.
 
-* [compilation] Switch over entirely to compilation use case?
- - Remove interpreter entirely? Any significant downside?
- - We could always write a wrapper script that calls the compiler, for
-   example, to give the same user experience as the interpreter currently
-   gives us.
- - Note: currently the interpreter case is my answer for how to run on
-   architectures other than aarch64.
-
-* [compilation] Cleanup API between execute/value/interpret/generated code.
- - Can I cleanup/break the dependency cycle between execute.h and value.h?
- - Should definition of FbleThread* be private to execute.c?
-* [compilation] Make public headers available for compiled code to use so we don't have to
-  give direct access to internal header files.
 * [compilation] Add support for .fble.@ files and modular compilation.
 
 * [cleanup] For things like FbleValueAddRef, is it okay if dst is NULL?
