@@ -299,14 +299,16 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "static FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread)\n", (void*)code, function_label);
+  fprintf(fout, "static FbleExecStatus _Run_%p_%s("
+      "FbleValueHeap* heap, FbleThread* thread, "
+      "FbleExecutable* executable, FbleValue** locals, "
+      "FbleValue** statics, FbleBlockId profile_block_offset)\n",
+      (void*)code, function_label);
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleProfileThread* profile = thread->profile;\n");
   fprintf(fout, "  FbleStack* stack = thread->stack;\n");
-  fprintf(fout, "  FbleValue** l = stack->locals;\n");
-  fprintf(fout, "  FbleValue* func = stack->func;\n");
-  fprintf(fout, "  FbleValue** s = FbleFuncValueStatics(func);\n");
-  fprintf(fout, "  size_t profile_block_offset = FbleFuncValueProfileBaseId(func);\n");
+  fprintf(fout, "  FbleValue** l = locals;\n");
+  fprintf(fout, "  FbleValue** s = statics;\n");
 
   // x0 is a temporary variable individual instructions can use however they
   // wish.
@@ -966,7 +968,10 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
     char function_label[SizeofSanitizedString(function_block.name->str)];
     SanitizeString(function_block.name->str, function_label);
-    fprintf(fout, "static FbleExecStatus _Run_%p_%s(FbleValueHeap* heap, FbleThread* thread);\n",
+    fprintf(fout, "static FbleExecStatus _Run_%p_%s("
+      "FbleValueHeap* heap, FbleThread* thread, "
+      "FbleExecutable* executable, FbleValue** locals, "
+      "FbleValue** statics, FbleBlockId profile_block_offset);\n",
         (void*)code, function_label);
     fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, size_t pc);\n",
         (void*)code, function_label);

@@ -12,6 +12,20 @@
 #include "fble-value.h"       // for FbleValueHeap
 
 /**
+ * Describes how to execute a function.
+ *
+ * FbleExecutable is a reference counted, partially abstract data type
+ * describing how to execute a function. Users can subclass this type to
+ * provide their own implementations for fble functions.
+ */
+typedef struct FbleExecutable FbleExecutable;
+
+/**
+ * A thread of execution.
+ */
+typedef struct FbleThread FbleThread;
+
+/**
  * Status result of running a function.
  *
  * FBLE_EXEC_CONTINUED is used in the case when a function needs to perform a
@@ -57,7 +71,7 @@ typedef struct FbleStack {
  *
  * TODO: Make this abstract.
  */
-typedef struct FbleThread {
+struct FbleThread {
   /** The execution stack. */
   FbleStack* stack;
 
@@ -69,8 +83,7 @@ typedef struct FbleThread {
    * May be NULL to disable profiling.
    */
   FbleProfileThread* profile;
-} FbleThread;
-
+};
 
 /**
  * Implementation of fble function logic.
@@ -82,17 +95,27 @@ typedef struct FbleThread {
  * continuation. In case of continuation, a continuation stack frame is pushed
  * after popping the current stack frame.
  *
- * @param heap    The value heap.
- * @param thread  The thread to run.
+ * @param heap        The value heap.
+ * @param thread      The thread to run.
+ * @param executable  The FbleExecutable associated with the function.
+ * @param locals      Space for the function's local variables.
+ * @param statics     The function's static variables.
+ * @param profile_block_offset  The function profile block offset.
  *
  * @returns
- *   The status of running the function.
+ *   The status result of running the function.
  *
  * @sideeffects
  * * The fble function on the top of the thread stack is executed.
  * * The stack frame is cleaned up and popped from the stack.
  */
-typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThread* thread);
+typedef FbleExecStatus FbleRunFunction(
+    FbleValueHeap* heap,
+    FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals,
+    FbleValue** statics,
+    FbleBlockId profile_block_offset);
 
 /**
  * Magic number used by FbleExecutable.
@@ -106,7 +129,7 @@ typedef FbleExecStatus FbleRunFunction(FbleValueHeap* heap, FbleThread* thread);
  * describing how to execute a function. Users can subclass this type to
  * provide their own implementations for fble functions.
  */
-typedef struct FbleExecutable {
+struct FbleExecutable {
   /** reference count. */
   size_t refcount;
 
@@ -142,7 +165,7 @@ typedef struct FbleExecutable {
    * Subclasses of FbleExecutable should use this to free any custom state.
    */
   void (*on_free)(struct FbleExecutable* this);
-} FbleExecutable;
+};
 
 /**
  * Frees an FbleExecutable.

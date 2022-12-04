@@ -132,7 +132,14 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
 
   FbleExecStatus status = FBLE_EXEC_CONTINUED;
   while (status == FBLE_EXEC_CONTINUED) {
-    status = FbleFuncValueExecutable(thread->stack->func)->run(heap, thread);
+    FbleValue* func = thread->stack->func;
+    FbleExecutable* executable = FbleFuncValueExecutable(func);
+    status = executable->run(
+        heap, thread,
+        executable,
+        thread->stack->locals,
+        FbleFuncValueStatics(func),
+        FbleFuncValueProfileBaseId(func));
   }
   return status;
 }

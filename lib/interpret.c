@@ -689,11 +689,16 @@ static AbortInstr sAbortInstr[] = {
 };
 
 // See documentation in interpret.h
-FbleExecStatus FbleInterpreterRunFunction(FbleValueHeap* heap, FbleThread* thread)
+FbleExecStatus FbleInterpreterRunFunction(
+    FbleValueHeap* heap,
+    FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals,
+    FbleValue** statics,
+    FbleBlockId profile_block_offset)
 {
   FbleProfileThread* profile = thread->profile;
-  FbleBlockId profile_block_offset = FbleFuncValueProfileBaseId(thread->stack->func);
-  FbleInstr** code = ((FbleCode*)FbleFuncValueExecutable(thread->stack->func))->instrs.xs;
+  FbleInstr** code = ((FbleCode*)executable)->instrs.xs;
 
   FbleExecStatus status = FBLE_EXEC_ABORTED;
   Control control = CONTINUE; 

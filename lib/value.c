@@ -606,15 +606,24 @@ typedef struct {
   FbleSimpleFunc impl;
 } SimpleExecutable;
 
-FbleExecStatus SimpleRunFunction(FbleValueHeap* heap, FbleThread* thread)
+/**
+ * FbleRunFunction for SimpleFunction API.
+ *
+ * See FbleRunFunction for more information.
+ */
+static FbleExecStatus SimpleRunFunction(
+    FbleValueHeap* heap,
+    FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals,
+    FbleValue** statics,
+    FbleBlockId profile_block_offset)
 {
-  FuncValue* func = (FuncValue*)thread->stack->func;
-  SimpleExecutable* exec = (SimpleExecutable*)func->executable;
-  FbleValue** args = thread->stack->locals;
-  FbleValue* result = exec->impl(heap, args);
+  SimpleExecutable* exec = (SimpleExecutable*)executable;
+  FbleValue* result = exec->impl(heap, locals);
 
-  for (size_t i = 0; i < exec->_base.num_locals; ++i) {
-    FbleReleaseValue(heap, thread->stack->locals[i]);
+  for (size_t i = 0; i < executable->num_locals; ++i) {
+    FbleReleaseValue(heap, locals[i]);
   }
 
   return FbleThreadReturn(heap, thread, result);
