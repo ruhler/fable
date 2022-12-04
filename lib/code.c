@@ -17,7 +17,6 @@
 #define UNREACHABLE(x) assert(false && x)
 
 static void OnFree(FbleExecutable* executable);
-static void DumpCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
 
 // OnFree --
 //   The FbleExecutable.on_free function for FbleCode.
@@ -30,30 +29,180 @@ static void OnFree(FbleExecutable* executable)
   FbleVectorFree(code->instrs);
 }
 
-/**
- * Dumps code in human readable form.
- *
- * This is for debugging purposes.
- *
- * @param fout
- *   Where to dump the blocks to.
- * @param profile_blocks
- *   Profile blocks referenced by the code.
- * @param code
- *   The code block to dump.
- *
- * @sideeffects
- *   Prints the code block in human readable format to fout.
- */
-static void DumpCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
+// FbleRawAllocInstr -- see documentation in code.h
+void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
+{
+  assert(sizeof(FbleInstr) <= size);
+  FbleInstr* instr = FbleRawAlloc(size);
+  instr->tag = tag;
+  instr->debug_info = NULL;
+  instr->profile_ops = NULL;
+  return instr;
+}
+
+// FbleFreeDebugInfo -- see documentation in code.h
+void FbleFreeDebugInfo(FbleDebugInfo* info)
+{
+  while (info != NULL) {
+    FbleDebugInfo* next = info->next;
+    switch (info->tag) {
+      case FBLE_STATEMENT_DEBUG_INFO: {
+        FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
+        FbleFreeLoc(stmt->loc);
+        break;
+      }
+
+      case FBLE_VAR_DEBUG_INFO: {
+        FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
+        FbleFreeName(var->var);
+        break;
+      }
+    }
+    FbleFree(info);
+    info = next;
+  }
+}
+
+// FbleFreeInstr -- see documentation in code.h
+void FbleFreeInstr(FbleInstr* instr)
+{
+  assert(instr != NULL);
+  FbleFreeDebugInfo(instr->debug_info);
+
+  while (instr->profile_ops != NULL) {
+    FbleProfileOp* op = instr->profile_ops;
+    instr->profile_ops = op->next;
+    FbleFree(op);
+  }
+
+  switch (instr->tag) {
+    case FBLE_UNION_VALUE_INSTR:
+    case FBLE_JUMP_INSTR:
+    case FBLE_COPY_INSTR:
+    case FBLE_REF_VALUE_INSTR:
+    case FBLE_RETURN_INSTR:
+    case FBLE_TYPE_INSTR:
+    case FBLE_RELEASE_INSTR:
+      FbleFree(instr);
+      return;
+
+    case FBLE_REF_DEF_INSTR: {
+      FbleRefDefInstr* i = (FbleRefDefInstr*)instr;
+      FbleFreeLoc(i->loc);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_STRUCT_ACCESS_INSTR:
+    case FBLE_UNION_ACCESS_INSTR: {
+      FbleAccessInstr* i = (FbleAccessInstr*)instr;
+      FbleFreeLoc(i->loc);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_DATA_TYPE_INSTR: {
+      FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
+      FbleVectorFree(dt_instr->fields);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_STRUCT_VALUE_INSTR: {
+      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
+      FbleVectorFree(struct_instr->args);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_UNION_SELECT_INSTR: {
+      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+      FbleFreeLoc(select_instr->loc);
+      FbleVectorFree(select_instr->jumps);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_FUNC_VALUE_INSTR: {
+      FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
+      FbleFreeCode(func_value_instr->code);
+      FbleVectorFree(func_value_instr->scope);
+      FbleFree(func_value_instr);
+      return;
+    }
+
+    case FBLE_CALL_INSTR: {
+      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+      FbleFreeLoc(call_instr->loc);
+      FbleVectorFree(call_instr->args);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_LIST_INSTR: {
+      FbleListInstr* list_instr = (FbleListInstr*)instr;
+      FbleVectorFree(list_instr->args);
+      FbleFree(instr);
+      return;
+    }
+
+    case FBLE_LITERAL_INSTR: {
+      FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+      FbleVectorFree(literal_instr->letters);
+      FbleFree(instr);
+      return;
+    }
+  }
+
+  UNREACHABLE("invalid instruction");
+}
+
+// FbleNewCode -- see documentation in code.h
+FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals, FbleBlockId profile)
+{
+  FbleCode* code = FbleAlloc(FbleCode);
+  code->_base.refcount = 1;
+  code->_base.magic = FBLE_EXECUTABLE_MAGIC;
+  code->_base.args = args;
+  code->_base.statics = statics;
+  code->_base.locals = locals;
+  code->_base.profile = profile;
+  code->_base.run = &FbleInterpreterRunFunction;
+  code->_base.on_free = &OnFree;
+  FbleVectorInit(code->instrs);
+  return code;
+}
+
+// FbleFreeCode -- see documentation in code.h
+void FbleFreeCode(FbleCode* code)
+{
+  FbleFreeExecutable(&code->_base);
+}
+
+// FbleDisassmeble -- see documentation in fble-compile.h.
+void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
 {
   // Map from FbleFrameSection to short descriptor of the section.
   static const char* sections[] = {"s", "l"};
 
+  fprintf(fout, "Disassembly of module ");
+  FblePrintModulePath(fout, module->path);
+  fprintf(fout, "\n\n");
+
+  fprintf(fout, "Dependencies: \n");
+  for (size_t i = 0; i < module->deps.size; ++i) {
+    fprintf(fout, "  ");
+    FblePrintModulePath(fout, module->deps.xs[i]);
+    fprintf(fout, "\n");
+  }
+
+  fprintf(fout, "\n");
+
   struct { size_t size; FbleCode** xs; } blocks;
   FbleVectorInit(blocks);
-  FbleVectorAppend(blocks, code);
+  FbleVectorAppend(blocks, module->code);
 
+  FbleNameV profile_blocks = module->profile_blocks;
   while (blocks.size > 0) {
     FbleCode* block = blocks.xs[--blocks.size];
     FbleName block_name = profile_blocks.xs[block->_base.profile];
@@ -304,161 +453,12 @@ static void DumpCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     fprintf(fout, "\n\n");
   }
 
+  fprintf(fout, "Profile Blocks:\n");
+  for (size_t i = 0; i < module->profile_blocks.size; ++i) {
+    FbleName name = module->profile_blocks.xs[i];
+    fprintf(fout, "  [%04zx] %s %s:%d:%d\n", i, name.name->str,
+        name.loc.source->str, name.loc.line, name.loc.col);
+  }
+
   FbleVectorFree(blocks);
-}
-
-// FbleRawAllocInstr -- see documentation in code.h
-void* FbleRawAllocInstr(size_t size, FbleInstrTag tag)
-{
-  assert(sizeof(FbleInstr) <= size);
-  FbleInstr* instr = FbleRawAlloc(size);
-  instr->tag = tag;
-  instr->debug_info = NULL;
-  instr->profile_ops = NULL;
-  return instr;
-}
-
-// FbleFreeDebugInfo -- see documentation in code.h
-void FbleFreeDebugInfo(FbleDebugInfo* info)
-{
-  while (info != NULL) {
-    FbleDebugInfo* next = info->next;
-    switch (info->tag) {
-      case FBLE_STATEMENT_DEBUG_INFO: {
-        FbleStatementDebugInfo* stmt = (FbleStatementDebugInfo*)info;
-        FbleFreeLoc(stmt->loc);
-        break;
-      }
-
-      case FBLE_VAR_DEBUG_INFO: {
-        FbleVarDebugInfo* var = (FbleVarDebugInfo*)info;
-        FbleFreeName(var->var);
-        break;
-      }
-    }
-    FbleFree(info);
-    info = next;
-  }
-}
-
-// FbleFreeInstr -- see documentation in code.h
-void FbleFreeInstr(FbleInstr* instr)
-{
-  assert(instr != NULL);
-  FbleFreeDebugInfo(instr->debug_info);
-
-  while (instr->profile_ops != NULL) {
-    FbleProfileOp* op = instr->profile_ops;
-    instr->profile_ops = op->next;
-    FbleFree(op);
-  }
-
-  switch (instr->tag) {
-    case FBLE_UNION_VALUE_INSTR:
-    case FBLE_JUMP_INSTR:
-    case FBLE_COPY_INSTR:
-    case FBLE_REF_VALUE_INSTR:
-    case FBLE_RETURN_INSTR:
-    case FBLE_TYPE_INSTR:
-    case FBLE_RELEASE_INSTR:
-      FbleFree(instr);
-      return;
-
-    case FBLE_REF_DEF_INSTR: {
-      FbleRefDefInstr* i = (FbleRefDefInstr*)instr;
-      FbleFreeLoc(i->loc);
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_STRUCT_ACCESS_INSTR:
-    case FBLE_UNION_ACCESS_INSTR: {
-      FbleAccessInstr* i = (FbleAccessInstr*)instr;
-      FbleFreeLoc(i->loc);
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_DATA_TYPE_INSTR: {
-      FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
-      FbleVectorFree(dt_instr->fields);
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_STRUCT_VALUE_INSTR: {
-      FbleStructValueInstr* struct_instr = (FbleStructValueInstr*)instr;
-      FbleVectorFree(struct_instr->args);
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_UNION_SELECT_INSTR: {
-      FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-      FbleFreeLoc(select_instr->loc);
-      FbleVectorFree(select_instr->jumps);
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_FUNC_VALUE_INSTR: {
-      FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-      FbleFreeCode(func_value_instr->code);
-      FbleVectorFree(func_value_instr->scope);
-      FbleFree(func_value_instr);
-      return;
-    }
-
-    case FBLE_CALL_INSTR: {
-      FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-      FbleFreeLoc(call_instr->loc);
-      FbleVectorFree(call_instr->args);
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_LIST_INSTR: {
-      FbleListInstr* list_instr = (FbleListInstr*)instr;
-      FbleVectorFree(list_instr->args);
-      FbleFree(instr);
-      return;
-    }
-
-    case FBLE_LITERAL_INSTR: {
-      FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-      FbleVectorFree(literal_instr->letters);
-      FbleFree(instr);
-      return;
-    }
-  }
-
-  UNREACHABLE("invalid instruction");
-}
-
-// FbleNewCode -- see documentation in code.h
-FbleCode* FbleNewCode(size_t args, size_t statics, size_t locals, FbleBlockId profile)
-{
-  FbleCode* code = FbleAlloc(FbleCode);
-  code->_base.refcount = 1;
-  code->_base.magic = FBLE_EXECUTABLE_MAGIC;
-  code->_base.args = args;
-  code->_base.statics = statics;
-  code->_base.locals = locals;
-  code->_base.profile = profile;
-  code->_base.run = &FbleInterpreterRunFunction;
-  code->_base.on_free = &OnFree;
-  FbleVectorInit(code->instrs);
-  return code;
-}
-
-// FbleFreeCode -- see documentation in code.h
-void FbleFreeCode(FbleCode* code)
-{
-  FbleFreeExecutable(&code->_base);
-}
-
-// FbleDisassmeble -- see documentation in fble-compile.h.
-void FbleDisassemble(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
-{
-  DumpCode(fout, profile_blocks, code);
 }

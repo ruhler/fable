@@ -7,8 +7,6 @@
  - Clean up prior uses of FbleSimpleFunc* API to not make use of global state.
  - Remove include of value.h in generated c programs.
 
-* Change FbleDisassemble to take an FbleCompiledModule*?
-
 * Fbld Cleanup
  - Come up with a more formal test suite for fbld.
  - Print line and column number on fbld usage errors.

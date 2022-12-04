@@ -122,22 +122,19 @@ FbleCompiledModule* FbleCompileModule(FbleLoadedProgram* program);
 FbleCompiledProgram* FbleCompileProgram(FbleLoadedProgram* program);
 
 /**
- * Dissassembles a compiled program.
+ * Dissassembles a compiled module.
  *
- * Writes a disassembled version of an instruction block in human readable
- * format to the given file. For debugging purposes.
+ * Writes a disassembled version of the given module in human readable format
+ * to the given file. This is for debugging purposes only. The outupt is
+ * implementation dependant and subject to change.
  *
- * @param fout
- *   The file to write the disassembled program to.
- * @param profile_blocks
- *   Profiling blocks referenced by the code.
- * @param code
- *   The code to disassemble.
+ * @param fout    The file to write the disassembled program to.
+ * @param module  The module to disassemble.
  *
  * @sideeffects
- *   A disassembled version of the code is printed to fout.
+ *   A disassembled version of the module is printed to fout.
  */
-void FbleDisassemble(FILE* fout, FbleNameV profile_blocks, FbleCode* code);
+void FbleDisassemble(FILE* fout, FbleCompiledModule* module);
 
 /**
  * Generates aarch64 for a compiled module.
