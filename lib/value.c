@@ -725,7 +725,7 @@ bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value)
   return true;
 }
 
-// FbleStrictValue -- see documentation in value.h
+// FbleStrictValue -- see documentation in fble-value.h
 FbleValue* FbleStrictValue(FbleValue* value)
 {
   while (!PACKED(value) && value != NULL && value->tag == REF_VALUE) {

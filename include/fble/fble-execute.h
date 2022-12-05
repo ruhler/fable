@@ -9,16 +9,7 @@
 #include "fble-alloc.h"       // for FbleStackAllocator, etc.
 #include "fble-module-path.h" // for FbleModulePath
 #include "fble-profile.h"     // for FbleProfileThread
-#include "fble-value.h"       // for FbleValueHeap
-
-/**
- * Describes how to execute a function.
- *
- * FbleExecutable is a reference counted, partially abstract data type
- * describing how to execute a function. Users can subclass this type to
- * provide their own implementations for fble functions.
- */
-typedef struct FbleExecutable FbleExecutable;
+#include "fble-value.h"       // for FbleValue, FbleValueHeap
 
 /**
  * A thread of execution.

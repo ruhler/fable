@@ -913,9 +913,10 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocks(&blocks, module->code);
 
-  fprintf(fout, "#include <stdlib.h>\n");         // for rand
-  fprintf(fout, "#include <fble/fble-value.h>\n");   // for FbleFuncValueStatics, etc.
-  fprintf(fout, "#include \"value.h\"\n\n");
+  fprintf(fout, "#include <stdlib.h>\n");             // for rand
+  fprintf(fout, "#include <fble/fble-execute.h>\n");  // for FbleExecStatus
+  fprintf(fout, "#include <fble/fble-link.h>\n");     // for FbleCompiledModuleFunction
+  fprintf(fout, "#include <fble/fble-value.h>\n");    // for FbleValue
 
   // Error messages.
   fprintf(fout, "static const char* CalleeAborted = \"callee aborted\";\n");

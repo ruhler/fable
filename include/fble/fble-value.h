@@ -11,6 +11,13 @@
 #include "fble-profile.h"   // for FbleProfile
 
 /**
+ * Forward reference for FbleExecutable
+ *
+ * See fble-execute.h for the full definition.
+ */
+typedef struct FbleExecutable FbleExecutable;
+
+/**
  * Memory heap for allocating fble values.
  */
 typedef struct FbleHeap FbleValueHeap;
@@ -105,6 +112,14 @@ void FbleValueAddRef(FbleValueHeap* heap, FbleValue* src, FbleValue* dst);
  *   Frees any unreachable objects currently on the heap.
  */
 void FbleValueFullGc(FbleValueHeap* heap);
+
+/**
+ * FbleValue instance for types.
+ *
+ * Used as an instance of an fble type for those types that don't need any
+ * extra information at runtime.
+ */
+extern FbleValue* FbleGenericTypeValue;
 
 /**
  * Creates a new struct value.
@@ -218,6 +233,87 @@ size_t FbleUnionValueTag(FbleValue* object);
 FbleValue* FbleUnionValueAccess(FbleValue* object);
 
 /**
+ * Creates an fble list value.
+ *
+ * @param heap  The heap to allocate the value on.
+ * @param argc  The number of elements on the list.
+ * @param args  The elements to put on the list. Borrowed.
+ *
+ * @returns A newly allocated list value.
+ *
+ * @sideeffects
+ *   The returned value must be freed using FbleReleaseValue when no longer in
+ *   use.
+ */
+FbleValue* FbleNewListValue(FbleValueHeap* heap, size_t argc, FbleValue** args);
+
+/**
+ * Creates an fble list value using varargs.
+ *
+ * @param heap  The heap to allocate the value on.
+ * @param argc  The number of elements on the list.
+ * @param ...   argc FbleValue elements to put on the list. Borrowed.
+ *
+ * @returns A newly allocated list value.
+ *
+ * @sideeffects
+ *   The returned value must be freed using FbleReleaseValue when no longer in
+ *   use.
+ */
+FbleValue* FbleNewListValue_(FbleValueHeap* heap, size_t argc, ...);
+
+/**
+ * Creates an fble literal value.
+ *
+ * @param heap  The heap to allocate the value on.
+ * @param argc  The number of letters in the literal.
+ * @param args  The tags of the letters in the literal.
+ *
+ * @returns A newly allocated literal value.
+ *
+ * @sideeffects
+ *   The returned value must be freed using FbleReleaseValue when no longer in
+ *   use.
+ */
+FbleValue* FbleNewLiteralValue(FbleValueHeap* heap, size_t argc, size_t* args);
+
+/**
+ * Creates an fble function value.
+ *
+ * @param heap  Heap to use for allocations.
+ * @param executable  The executable to run. Borrowed.
+ * @param profile_block_offset  The profile block offset to use for the function.
+ * @param statics  The array of static variables for the function. The count
+ *   should match executable->statics.
+ *
+ * @returns A newly allocated function value.
+ *
+ * @sideeffects
+ *   Allocates a new function value that should be freed using
+ *   FbleReleaseValue when it is no longer needed.
+ */
+FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, FbleValue** statics);
+
+/**
+ * Creates an fble function value using varargs.
+ *
+ * Inputs:
+ * @param heap  Heap to use for allocations.
+ * @param executable  The executable to run. Borrowed.
+ * @param profile_block_offset  The profile block offset to use for the function.
+ * @param ...  Static variables for the function. The count should match
+ *             executable->statics.
+ *
+ * @returns A newly allocated function value.
+ *
+ * Side effects:
+ * * Allocates a new function value that should be freed using
+ * * FbleReleaseValue when it is no longer needed.
+ */
+FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...);
+
+
+/**
  * C interface for simple fble functions.
  *
  * @warning
@@ -299,5 +395,53 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
  * * Updates the profile with stats from the evaluation.
  */
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
+
+/**
+ * Creates a reference value.
+ *
+ * Used internally for recursive let declarations. A reference value is a
+ * possibly as-of-yet undefined pointer to another value.
+ *
+ * @param heap  The heap to allocate the value on.
+ *
+ * @returns  A newly allocated reference value.
+ *
+ * @sideeffects
+ *   The returned value must be freed using FbleReleaseValue when no longer in
+ *   use.
+ */
+FbleValue* FbleNewRefValue(FbleValueHeap* heap);
+
+/**
+ * Sets the value pointed to by a ref value.
+ *
+ * @param heap  The heap to use for allocations
+ * @param ref  The reference to assign to
+ * @param value  The value to assign to the reference.
+ *
+ * @returns
+ *   True on success. False if the assignment would produce a vacuous value.
+ *
+ * @sideeffects
+ *   Updates ref to point to value.
+ */
+bool FbleAssignRefValue(FbleValueHeap* heap, FbleValue* ref, FbleValue* value);
+
+/**
+ * Removes layers of refs from a value.
+ *
+ * Gets the strict value associated with the given value, which will either be
+ * the value itself, or the dereferenced value if the value is a reference.
+ *
+ * @param value  The value to get the strict version of.
+ *
+ * @returns
+ *   The value with all layers of reference indirection removed. NULL if the
+ *   value is a reference that has no value yet.
+ *
+ * @sideeffects
+ *   None.
+ */
+FbleValue* FbleStrictValue(FbleValue* value);
 
 #endif // FBLE_VALUE_H_

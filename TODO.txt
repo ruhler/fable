@@ -4,7 +4,6 @@
  - Remove FbleFuncValueExecutable and friends.
  - Remove FbleSimpleFunc* API.
  - Clean up prior uses of FbleSimpleFunc* API to not make use of global state.
- - Remove include of value.h in generated c programs.
  - Improve documentation for how to write an FbleRunFunction.
 
 * Fbld Cleanup
