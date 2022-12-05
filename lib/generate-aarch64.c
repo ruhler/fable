@@ -35,7 +35,7 @@ typedef struct {
 typedef struct {
   void* FP;
   void* LR;
-  void* heap;
+  void* heap;             // TODO: This is unused? If so, remove it.
   void* thread;
   void* r_heap_save;
   void* r_locals_save;
@@ -934,21 +934,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Set up common registers.
   fprintf(fout, "  mov R_HEAP, x0\n");
   fprintf(fout, "  ldr R_PROFILE, [x1, #%zi]\n", offsetof(FbleThread, profile));
-
-  // R_SCRATCH_0: stack
-  fprintf(fout, "  ldr R_SCRATCH_0, [x1, #%zi]\n", offsetof(FbleThread, stack));
-  fprintf(fout, "  add R_LOCALS, R_SCRATCH_0, #%zi\n", offsetof(FbleStack, locals));
-
-  // R_SCRATCH_1: func
-  fprintf(fout, "  ldr R_SCRATCH_1, [R_SCRATCH_0, #%zi]\n", offsetof(FbleStack, func));
-
-  fprintf(fout, "  mov x0, R_SCRATCH_1\n");
-  fprintf(fout, "  bl FbleFuncValueStatics\n");
-  fprintf(fout, "  mov R_STATICS, x0\n");
-
-  fprintf(fout, "  mov x0, R_SCRATCH_1\n");
-  fprintf(fout, "  bl FbleFuncValueProfileBaseId\n");
-  fprintf(fout, "  mov R_PROFILE_BASE_ID, x0\n");
+  fprintf(fout, "  mov R_LOCALS, x3\n");
+  fprintf(fout, "  mov R_STATICS, x4\n");
+  fprintf(fout, "  mov R_PROFILE_BASE_ID, x5\n");
 
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {

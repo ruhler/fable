@@ -1,5 +1,7 @@
 * Clean up FbleNewFuncValue API
  - Make FbleStack private.
+   Remove references in generate-c.c
+   Remove references in interpret.c
  - Make FbleThread abstract.
  - Remove FbleFuncValueExecutable and friends.
  - Remove FbleSimpleFunc* API.
