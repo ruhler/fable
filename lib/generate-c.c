@@ -279,7 +279,7 @@ static void ReturnAbort(FILE* fout, void* code, const char* function_label, size
 {
   fprintf(fout, "{\n");
   fprintf(fout, "    ReportAbort(%s, %d, %d);\n", lmsg, loc.line, loc.col);
-  fprintf(fout, "    return _Abort_%p_%s(heap, thread, %zi);\n",
+  fprintf(fout, "    return _Abort_%p_%s(heap, thread, locals, %zi);\n",
       code, function_label, pc);
   fprintf(fout, "  }\n");
 }
@@ -306,7 +306,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       (void*)code, function_label);
   fprintf(fout, "{\n");
   fprintf(fout, "  FbleProfileThread* profile = thread->profile;\n");
-  fprintf(fout, "  FbleStack* stack = thread->stack;\n");
   fprintf(fout, "  FbleValue** l = locals;\n");
   fprintf(fout, "  FbleValue** s = statics;\n");
 
@@ -787,10 +786,9 @@ static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* cod
   FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
   char function_label[SizeofSanitizedString(function_block.name->str)];
   SanitizeString(function_block.name->str, function_label);
-  fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, size_t pc)\n", (void*)code, function_label);
+  fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** locals, size_t pc)\n", (void*)code, function_label);
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleStack* stack = thread->stack;\n");
-  fprintf(fout, "  FbleValue** l = stack->locals;\n");
+  fprintf(fout, "  FbleValue** l = locals;\n");
   fprintf(fout, "  switch (pc)\n");
   fprintf(fout, "  {\n");
   for (size_t i = 0; i < code->instrs.size; ++i) {
@@ -974,7 +972,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
       "FbleExecutable* executable, FbleValue** locals, "
       "FbleValue** statics, FbleBlockId profile_block_offset);\n",
         (void*)code, function_label);
-    fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, size_t pc);\n",
+    fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** locals, size_t pc);\n",
         (void*)code, function_label);
   }
 
