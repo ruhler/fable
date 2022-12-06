@@ -611,11 +611,11 @@ static void CompileExit(bool exit, Scope* scope, Local* result)
 static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, FbleTc* v)
 {
   if (stmt) {
-    FbleStatementDebugInfo* stmt = FbleAlloc(FbleStatementDebugInfo);
-    stmt->_base.tag = FBLE_STATEMENT_DEBUG_INFO;
-    stmt->_base.next = NULL;
-    stmt->loc = FbleCopyLoc(v->loc);
-    AppendDebugInfo(scope, &stmt->_base);
+    FbleStatementDebugInfo* info = FbleAlloc(FbleStatementDebugInfo);
+    info->_base.tag = FBLE_STATEMENT_DEBUG_INFO;
+    info->_base.next = NULL;
+    info->loc = FbleCopyLoc(v->loc);
+    AppendDebugInfo(scope, &info->_base);
   }
 
   switch (v->tag) {

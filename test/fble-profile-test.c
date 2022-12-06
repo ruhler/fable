@@ -114,6 +114,9 @@ static size_t ReplaceMaxMem(size_t n)
 //   Prints an error to stderr and exits the program in the case of error.
 int main(int argc, char* argv[])
 {
+  (void)argc;
+  (void)argv;
+
   {
     // Test a simple call profile:
     // <root> -> 1 -> 2 -> 3

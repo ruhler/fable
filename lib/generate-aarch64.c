@@ -1282,7 +1282,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
 
   FbleNameV profile_blocks = module->profile_blocks;
 
-  for (int i = 0; i < blocks.size; ++i) {
+  for (size_t i = 0; i < blocks.size; ++i) {
     EmitCode(fout, profile_blocks, blocks.xs[i]);
   }
 
@@ -1352,7 +1352,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  .byte 1\n");               // declaration
 
   // subprogram entries
-  for (int i = 0; i < blocks.size; ++i) {
+  for (size_t i = 0; i < blocks.size; ++i) {
     FbleCode* code = blocks.xs[i];
 
     FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];

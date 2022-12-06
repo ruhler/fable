@@ -870,6 +870,10 @@ static int yylex(YYSTYPE* lvalp, YYLTYPE* llocp, Lex* lex)
 //   An error message is printed to stderr.
 static void yyerror(YYLTYPE* llocp, Lex* lex, FbleExpr** result, FbleModulePathV* deps, const char* msg)
 {
+  (void)lex;
+  (void)result;
+  (void)deps;
+
   FbleReportError("%s\n", *llocp, msg);
 }
 

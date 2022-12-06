@@ -25,7 +25,7 @@ rule build
   description = $out
   command = $cmd
 
-cflags = -std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -O3
+cflags = -std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -O3
 rule obj
   description = $out
   command = gcc -MMD -MF $out.d $cflags $iflags -c -o $out $src
@@ -93,7 +93,7 @@ proc obj { obj src iflags args } {
 #   args - optional additional dependencies.
 proc obj_cov { obj src iflags args } {
   set gcda [string map {.o .gcda} $obj]
-  set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
+  set cflags "-std=c99 -pedantic -Wall -Werror -Wshadow -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   set cmd "rm -f $gcda ; gcc -MMD -MF $obj.d $cflags $iflags -c -o $obj $src"
   build $obj "$src $args" $cmd "depfile = $obj.d"
 }
@@ -128,7 +128,7 @@ proc lib { lib objs } {
 #   objs - the list of .o and .a files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 proc bin { bin objs lflags } {
-  set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -O3"
+  set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -O3"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
   all $bin
 }
@@ -141,8 +141,8 @@ proc bin { bin objs lflags } {
 #   objs - the list of .o files to build from.
 #   lflags - library flags, e.g. "-L foo/ -lfoo".
 proc bin_cov { bin objs lflags } {
-  #set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
-  set cflags "-std=c99 -pedantic -Wall -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
+  #set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -no-pie -fprofile-arcs -ftest-coverage -pg"
+  set cflags "-std=c99 -pedantic -Wall -Wextra -Wshadow -Werror -gdwarf-3 -ggdb -fprofile-arcs -ftest-coverage"
   build $bin $objs "gcc $cflags -o $bin $objs $lflags"
   all $bin
 }

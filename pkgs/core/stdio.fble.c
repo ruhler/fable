@@ -304,7 +304,7 @@ int FbleStdioMain(int argc, const char** argv, FbleCompiledModuleFunction* modul
 
   FbleValueV stdio_args;
   FbleVectorInit(stdio_args);
-  for (size_t i = 0; i < argc; ++i) {
+  for (int i = 0; i < argc; ++i) {
     FbleVectorAppend(stdio_args, FbleNewStringValue(heap, argv[i]));
   }
 

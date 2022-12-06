@@ -235,19 +235,19 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
       for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
         switch (op->tag) {
           case FBLE_PROFILE_ENTER_OP: {
-            FbleBlockId block = op->block;
-            FbleName* name = &profile_blocks.xs[block];
-            fprintf(fout, "    .  profile enter [%04zx]; ", block);
-            fprintf(fout, "// %s[%04zx]: %s:%d:%d\n", name->name->str, block,
+            FbleBlockId block_id = op->block;
+            FbleName* name = &profile_blocks.xs[block_id];
+            fprintf(fout, "    .  profile enter [%04zx]; ", block_id);
+            fprintf(fout, "// %s[%04zx]: %s:%d:%d\n", name->name->str, block_id,
                 name->loc.source->str, name->loc.line, name->loc.col);
             break;
           }
 
           case FBLE_PROFILE_REPLACE_OP: {
-            FbleBlockId block = op->block;
-            FbleName* name = &profile_blocks.xs[block];
-            fprintf(fout, "    .  profile replace [%04zx]; ", block);
-            fprintf(fout, "// %s[%04zx]: %s:%d:%d\n", name->name->str, block,
+            FbleBlockId block_id = op->block;
+            FbleName* name = &profile_blocks.xs[block_id];
+            fprintf(fout, "    .  profile replace [%04zx]; ", block_id);
+            fprintf(fout, "// %s[%04zx]: %s:%d:%d\n", name->name->str, block_id,
                 name->loc.source->str, name->loc.line, name->loc.col);
             break;
           }
@@ -316,8 +316,8 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
               sections[select_instr->condition.section],
               select_instr->condition.index);
           const char* comma = "";
-          for (size_t i = 0; i < select_instr->jumps.size; ++i) {
-            fprintf(fout, "%s%zi", comma, select_instr->jumps.xs[i]);
+          for (size_t j = 0; j < select_instr->jumps.size; ++j) {
+            fprintf(fout, "%s%zi", comma, select_instr->jumps.xs[j]);
             comma = ", ";
           }
           fprintf(fout, ");  // %s:%i:%i\n",
@@ -364,10 +364,10 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
               call_instr->func.index);
 
           const char* comma = "";
-          for (size_t i = 0; i < call_instr->args.size; ++i) {
+          for (size_t j = 0; j < call_instr->args.size; ++j) {
             fprintf(fout, "%s%s%zi", comma, 
-              sections[call_instr->args.xs[i].section],
-              call_instr->args.xs[i].index);
+              sections[call_instr->args.xs[j].section],
+              call_instr->args.xs[j].index);
             comma = ", ";
           }
               

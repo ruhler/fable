@@ -127,8 +127,8 @@ static void CleanTypeAssignmentV(Cleaner* cleaner, FbleTypeAssignmentV* vars);
 static void Cleanup(FbleTypeHeap* th, Cleaner* cleaner);
 
 static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignmentV* vars);
-static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
-static Tc TypeInferArgs(FbleTypeHeap* th, Scope* scope, FbleTypeAssignmentV vars, FbleTypeV expected, TcV actual, Tc poly);
+static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc);
+static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV expected, TcV actual, Tc poly);
 
 static Tc TypeCheckExpr(FbleTypeHeap* th, Scope* scope, FbleExpr* expr);
 static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* expr, Cleaner* cleaner);
@@ -621,7 +621,6 @@ static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignment
 //
 // Inputs:
 //   th - the type heap
-//   scope - the current scope
 //   poly - The type and value of the poly. Borrowed.
 //   arg_type - The type of the arg type to apply the poly to. May be NULL. Borrowed.
 //   expr_loc - The location of the application expression.
@@ -636,7 +635,7 @@ static FbleType* DepolyType(FbleTypeHeap* th, FbleType* type, FbleTypeAssignment
 // * The caller should call FbleFreeTc when the returned FbleTc is no longer
 //   needed and FbleReleaseType when the returned FbleType is no longer
 //   needed.
-static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc)
+static Tc PolyApply(FbleTypeHeap* th, Tc poly, FbleType* arg_type, FbleLoc expr_loc, FbleLoc arg_loc)
 {
   // Note: typeof(poly<arg>) = typeof(poly)<arg>
   // poly.type is typeof(poly)
@@ -734,7 +733,7 @@ static Tc PolyApply(FbleTypeHeap* th, Scope* scope, Tc poly, FbleType* arg_type,
 // * Prints error message in case of failure to type check.
 // * Populates values of vars based on type inference.
 // * Allocates a Tc that should be freed with FreeTc when no longer needed.
-static Tc TypeInferArgs(FbleTypeHeap* th, Scope* scope, FbleTypeAssignmentV vars, FbleTypeV expected, TcV actual, Tc poly)
+static Tc TypeInferArgs(FbleTypeHeap* th, FbleTypeAssignmentV vars, FbleTypeV expected, TcV actual, Tc poly)
 {
   if (poly.type == NULL) {
     return TC_FAILED;
@@ -774,7 +773,7 @@ static Tc TypeInferArgs(FbleTypeHeap* th, Scope* scope, FbleTypeAssignmentV vars
     FbleReleaseType(th, &arg_type->_base);
 
     Tc prev = result;
-    result = PolyApply(th, scope, result, &arg_type->_base, loc, loc);
+    result = PolyApply(th, result, &arg_type->_base, loc, loc);
     FreeTc(th, prev);
     if (result.type == NULL) {
       error = true;
@@ -1165,7 +1164,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       Tc vtc = { .type = FbleRetainType(th, type), .tc = &unit_tc->_base };
       CleanTc(cleaner, vtc);
 
-      Tc poly = TypeInferArgs(th, scope, *vars, expected, argv, vtc);
+      Tc poly = TypeInferArgs(th, *vars, expected, argv, vtc);
       CleanTc(cleaner, poly);
 
       if (poly.type == NULL) {
@@ -1430,7 +1429,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       CleanTc(cleaner, poly);
       FbleType* arg_type = TypeCheckExprForType(th, scope, apply->arg);
       CleanType(cleaner, arg_type);
-      return PolyApply(th, scope, poly, arg_type, expr->loc, apply->arg->loc);
+      return PolyApply(th, poly, arg_type, expr->loc, apply->arg->loc);
     }
 
     case FBLE_LIST_EXPR: {
@@ -1478,7 +1477,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       TcV argv = { .size = argc, .xs = args };
       FbleTypeV expected = { .size = argc, .xs = expected_arg_types };
-      Tc poly = TypeInferArgs(th, scope, *vars, expected, argv, func);
+      Tc poly = TypeInferArgs(th, *vars, expected, argv, func);
       CleanTc(cleaner, poly);
 
       if (poly.type == NULL) {
@@ -1795,7 +1794,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
           TcV argv = { .size = argc, .xs = args };
           Tc vtc = { .type = vtype, .tc = misc.tc };
-          Tc poly = TypeInferArgs(th, scope, *vars, expected, argv, vtc);
+          Tc poly = TypeInferArgs(th, *vars, expected, argv, vtc);
           CleanTc(cleaner, poly);
           FbleVectorFree(expected);
 
@@ -1824,7 +1823,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
         FbleFuncType* func_type = (FbleFuncType*)pbody;
 
         TcV argv = { .size = argc, .xs = args };
-        Tc poly = TypeInferArgs(th, scope, *vars, func_type->args, argv, misc);
+        Tc poly = TypeInferArgs(th, *vars, func_type->args, argv, misc);
         CleanTc(cleaner, poly);
         if (poly.type == NULL) {
           return TC_FAILED;
@@ -2028,15 +2027,15 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
     case FBLE_MISC_APPLY_EXPR:
     {
       FbleExpr* expr = type;
-      FbleType* type = TypeCheckExprForType(th, scope, expr);
-      CleanType(cleaner, type);
-      if (type == NULL) {
+      FbleType* type_type = TypeCheckExprForType(th, scope, expr);
+      CleanType(cleaner, type_type);
+      if (type_type == NULL) {
         return NULL;
       }
 
-      FbleType* type_value = FbleValueOfType(th, type);
+      FbleType* type_value = FbleValueOfType(th, type_type);
       if (type_value == NULL) {
-        ReportError(expr->loc, "expected a type, but found value of type %t\n", type);
+        ReportError(expr->loc, "expected a type, but found value of type %t\n", type_type);
         return NULL;
       }
       return type_value;
@@ -2075,7 +2074,7 @@ static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType**
   Scope scope;
   InitScope(&scope, NULL, module->path, NULL);
 
-  for (int i = 0; i < module->deps.size; ++i) {
+  for (size_t i = 0; i < module->deps.size; ++i) {
     VarName name = { .module = module->deps.xs[i] };
     PushVar(&scope, name, FbleRetainType(th, deps[i]));
   }
@@ -2150,14 +2149,14 @@ FbleTc** FbleTypeCheckProgram(FbleLoadedProgram* program)
   FbleTypeHeap* th = FbleNewTypeHeap();
   FbleType* types[program->modules.size];
 
-  for (int i = 0; i < program->modules.size; ++i) {
+  for (size_t i = 0; i < program->modules.size; ++i) {
     FbleLoadedModule* module = program->modules.xs + i;
     FbleType* deps[module->deps.size];
 
     bool skip = false;
-    for (int d = 0; d < module->deps.size; ++d) {
+    for (size_t d = 0; d < module->deps.size; ++d) {
       deps[d] = NULL;
-      for (int t = 0; t < i; ++t) {
+      for (size_t t = 0; t < i; ++t) {
         if (FbleModulePathsEqual(module->deps.xs[d], program->modules.xs[t].path)) {
           deps[d] = types[t];
           break;
@@ -2181,7 +2180,7 @@ FbleTc** FbleTypeCheckProgram(FbleLoadedProgram* program)
     }
   }
 
-  for (int i = 0; i < program->modules.size; ++i) {
+  for (size_t i = 0; i < program->modules.size; ++i) {
     FbleReleaseType(th, types[i]);
   }
   FbleFreeTypeHeap(th);

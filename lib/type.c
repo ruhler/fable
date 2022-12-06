@@ -192,6 +192,8 @@ static void Refs(FbleHeapCallback* callback, FbleType* type)
 //   The on_free function for types. See documentation in heap.h
 static void OnFree(FbleTypeHeap* heap, FbleType* type)
 {
+  (void)heap;
+
   FbleFreeLoc(type->loc);
   switch (type->tag) {
     case FBLE_DATA_TYPE: {

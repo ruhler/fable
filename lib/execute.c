@@ -132,14 +132,14 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
 
   FbleExecStatus status = FBLE_EXEC_CONTINUED;
   while (status == FBLE_EXEC_CONTINUED) {
-    FbleValue* func = thread->stack->func;
-    FbleExecutable* executable = FbleFuncValueExecutable(func);
-    status = executable->run(
+    FbleValue* function = thread->stack->func;
+    FbleExecutable* func_exe = FbleFuncValueExecutable(function);
+    status = func_exe->run(
         heap, thread,
-        executable,
+        func_exe,
         thread->stack->locals,
-        FbleFuncValueStatics(func),
-        FbleFuncValueProfileBaseId(func));
+        FbleFuncValueStatics(function),
+        FbleFuncValueProfileBaseId(function));
   }
   return status;
 }
@@ -243,7 +243,9 @@ void FbleFreeExecutable(FbleExecutable* executable)
 
 // FbleExecutableNothingOnFree -- see documentation in execute.h
 void FbleExecutableNothingOnFree(FbleExecutable* this)
-{}
+{
+  (void)this;
+}
 
 // FbleFreeExecutableModule -- see documentation in fble-execute.h
 void FbleFreeExecutableModule(FbleExecutableModule* module)

@@ -502,6 +502,9 @@ static FbleValue* Effect(FbleValueHeap* heap, FbleValue** args)
 //   Pushes a user event onto the SDL event queue.
 static Uint32 OnTimer(Uint32 interval, void* param)
 {
+  (void)interval;
+  (void)param;
+
   SDL_UserEvent user;
   user.type = SDL_USEREVENT;
   user.code = 0;

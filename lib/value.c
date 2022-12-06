@@ -225,6 +225,8 @@ void FbleValueFullGc(FbleValueHeap* heap)
 //   The 'on_free' function for values. See documentation in heap.h
 static void OnFree(FbleValueHeap* heap, FbleValue* value)
 {
+  (void)heap;
+
   switch (value->tag) {
     case DATA_TYPE_VALUE: return;
     case STRUCT_VALUE: return;
@@ -531,7 +533,7 @@ FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_
 
     case FBLE_UNION_DATATYPE:
       tag_size = 1;
-      while ((1 << tag_size) <= fieldc) {
+      while (((size_t)1 << tag_size) <= fieldc) {
         tag_size++;
       }
       break;
@@ -619,6 +621,9 @@ static FbleExecStatus SimpleRunFunction(
     FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
+  (void)statics;
+  (void)profile_block_offset;
+
   SimpleExecutable* exec = (SimpleExecutable*)executable;
   FbleValue* result = exec->impl(heap, locals);
 
