@@ -1103,4 +1103,24 @@ implement it. How so? What changes do we need to get there?
 
 Nifty. Let's get to work.
             
+---
+
+I'm going to revert back to switch statement in the interpreter, because it
+will be cleaner and easier to get rid of references to FbleStack. For the fun
+of it, let's see how much it effects performance. It's tough for me to
+predict.
+
+Before change:
+* /Md5/Bench%: 1m23.615s
+* /Sat/Bench%: 2m1.172s
+
+After change:
+* /Md5/Bench%: 1m12.535s
+* /Sat/Bench%: 1m48.365s
+
+Yeah, so, there you have it. Cleaner, simpler, faster code.
+
+Looking at git history, looks like even when I first made the change from a
+switch statement to functions resulted in a performance regression of a few
+seconds. Oh well. There you have it.
 

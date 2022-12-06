@@ -23,35 +23,7 @@ static FbleValue* FrameGet(FbleThread* thread, FbleFrameIndex index);
 static FbleValue* FrameGetStrict(FbleThread* thread, FbleFrameIndex index);
 static void FrameSetBorrowed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
 static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalIndex index, FbleValue* value);
-static void RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, size_t pc);
-
-// Control --
-//   Used to control the interpreter loop from executed instructions.
-typedef enum {
-  RETURN,        // Break out of the interpreter loop.
-  CONTINUE       // Continue executing instructions.
-} Control;
-
-// RunInstr --
-//   A function that executes an instruction.
-//
-// Inputs:
-//   heap - heap to use for allocations.
-//   thread - the current thread state.
-//   instr - the instruction to execute.
-//   status - set to the exec status to return if result is RETURN.
-//   pc - the program counter.
-//
-// Results:
-// * CONTINUE to indicate the interpreter instruction loop should continue
-//   executing instructions from this function.
-// * RETURN to indicate the interpreter instruction loop should return
-//   'status'.
-//
-// Side effects:
-// * Executes the instruction.
-// * Updates pc to point to appropriate next value.
-typedef Control (*RunInstr)(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc);
+static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, size_t pc);
 
 
 // FrameGet --
@@ -135,312 +107,6 @@ static void FrameSetConsumed(FbleValueHeap* heap, FbleThread* thread, FbleLocalI
   thread->stack->locals[index] = value;
 }
 
-// RunDataTypeInstr -- see documentation of RunInstr.
-//   Execute an FBLE_DATA_TYPE_INSTR.
-static Control RunDataTypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
-  size_t fieldc = data_type_instr->fields.size;
-  FbleValue* fields[fieldc];
-  for (size_t i = 0; i < fieldc; ++i) {
-    fields[i] = FrameGet(thread, data_type_instr->fields.xs[i]);
-  }
-
-  FbleValue* value = FbleNewDataTypeValue(heap, data_type_instr->kind, fieldc, fields);
-  FrameSetConsumed(heap, thread, data_type_instr->dest, value);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunStructValueInstr -- see documentation of RunInstr.
-//   Execute a STRUCT_VALUE_INSTR.
-static Control RunStructValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
-  size_t argc = struct_value_instr->args.size;
-  FbleValue* args[argc];
-  for (size_t i = 0; i < argc; ++i) {
-    args[i] = FrameGet(thread, struct_value_instr->args.xs[i]);
-  }
-
-  FbleValue* value = FbleNewStructValue(heap, argc, args);
-  FrameSetConsumed(heap, thread, struct_value_instr->dest, value);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunUnionValueInstr -- see documentation of RunInstr
-//   Execute a UNION_VALUE_INSTR.
-static Control RunUnionValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
-  size_t tag = union_value_instr->tag;
-  FbleValue* arg = FrameGet(thread, union_value_instr->arg);
-  FbleValue* value = FbleNewUnionValue(heap, tag, arg);
-  FrameSetConsumed(heap, thread, union_value_instr->dest, value);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunStructAccessInstr -- see documentation of RunInstr
-//   Execute a STRUCT_ACCESS_INSTR.
-static Control RunStructAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-
-  FbleValue* sv = FrameGetStrict(thread, access_instr->obj);
-  if (sv == NULL) {
-    FbleReportError("undefined struct value access\n", access_instr->loc);
-    *status = FBLE_EXEC_ABORTED;
-    return RETURN;
-  }
-
-  FbleValue* v = FbleStructValueAccess(sv, access_instr->tag);
-  FrameSetBorrowed(heap, thread, access_instr->dest, v);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunUnionAccessInstr -- see documentation of RunInstr
-//   Execute a UNION_ACCESS_INSTR.
-static Control RunUnionAccessInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
-
-  FbleValue* uv = FrameGetStrict(thread, access_instr->obj);
-  if (uv == NULL) {
-    FbleReportError("undefined union value access\n", access_instr->loc);
-    *status = FBLE_EXEC_ABORTED;
-    return RETURN;
-  }
-
-  if (FbleUnionValueTag(uv) != access_instr->tag) {
-    FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-    *status = FBLE_EXEC_ABORTED;
-    return RETURN;
-  }
-
-  FrameSetBorrowed(heap, thread, access_instr->dest, FbleUnionValueAccess(uv));
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunUnionSelectInstr -- see documentation of RunInstr
-//   Execute a UNION_SELECT_INSTR.
-static Control RunUnionSelectInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
-  FbleValue* uv = FrameGetStrict(thread, select_instr->condition);
-  if (uv == NULL) {
-    FbleReportError("undefined union value select\n", select_instr->loc);
-    *status = FBLE_EXEC_ABORTED;
-    return RETURN;
-  }
-  *pc += 1 + select_instr->jumps.xs[FbleUnionValueTag(uv)];
-  return CONTINUE;
-}
-
-// RunJumpInstr -- see documentation of RunInstr
-//   Execute a JUMP_INSTR.
-static Control RunJumpInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
-  *pc += 1 + jump_instr->count;
-  return CONTINUE;
-}
-
-// RunFuncValueInstr -- see documentation of RunInstr
-//   Execute a FUNC_VALUE_INSTR.
-static Control RunFuncValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
-  FbleValue* statics[func_value_instr->scope.size];
-  for (size_t i = 0; i < func_value_instr->scope.size; ++i) {
-    statics[i] = FrameGet(thread, func_value_instr->scope.xs[i]);
-  }
-
-  FbleValue* value = FbleNewFuncValue(heap, &func_value_instr->code->_base, FbleFuncValueProfileBaseId(thread->stack->func), statics);
-  FrameSetConsumed(heap, thread, func_value_instr->dest, value);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunCallInstr -- see documentation of RunInstr
-//   Execute a CALL_INSTR.
-static Control RunCallInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleCallInstr* call_instr = (FbleCallInstr*)instr;
-  FbleValue* func = FrameGetStrict(thread, call_instr->func);
-  if (func == NULL) {
-    FbleReportError("called undefined function\n", call_instr->loc);
-    *status = FBLE_EXEC_ABORTED;
-    return RETURN;
-  };
-
-  FbleExecutable* executable = FbleFuncValueExecutable(func);
-  FbleValue* args[executable->num_args];
-  for (size_t i = 0; i < executable->num_args; ++i) {
-    args[i] = FrameGet(thread, call_instr->args.xs[i]);
-  }
-
-  if (call_instr->exit) {
-    FbleRetainValue(heap, func);
-    for (size_t i = 0; i < executable->num_args; ++i) {
-      FbleRetainValue(heap, args[i]);
-    }
-
-    if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
-      FbleReleaseValue(heap, thread->stack->locals[call_instr->func.index]);
-      thread->stack->locals[call_instr->func.index] = NULL;
-    }
-
-    for (size_t i = 0; i < call_instr->args.size; ++i) {
-      if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
-        FbleReleaseValue(heap, thread->stack->locals[call_instr->args.xs[i].index]);
-        thread->stack->locals[call_instr->args.xs[i].index] = NULL;
-      }
-    }
-
-    *status = FbleThreadTailCall(heap, thread, func, args);
-    return RETURN;
-  }
-
-  (*pc)++;
-  *status = FbleThreadCall(heap, thread, thread->stack->locals + call_instr->dest, func, args);
-  return (*status == FBLE_EXEC_FINISHED) ? CONTINUE : RETURN;
-}
-
-// RunCopyInstr -- see documentation of RunInstr
-//   Execute a COPY_INSTR.
-static Control RunCopyInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
-  FbleValue* value = FrameGet(thread, copy_instr->source);
-  FrameSetBorrowed(heap, thread, copy_instr->dest, value);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunRefValueInstr -- see documentation of RunInstr
-//   Execute a REF_VALUE_INSTR.
-static Control RunRefValueInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
-  FbleValue* rv = FbleNewRefValue(heap);
-  FrameSetConsumed(heap, thread, ref_instr->dest, rv);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunRefDefInstr -- see documentation of RunInstr
-//   Execute a REF_DEF_INSTR.
-static Control RunRefDefInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
-  FbleValue* ref = thread->stack->locals[ref_def_instr->ref];
-  FbleValue* value = FrameGet(thread, ref_def_instr->value);
-  if (!FbleAssignRefValue(heap, ref, value)) {
-    FbleReportError("vacuous value\n", ref_def_instr->loc);
-    *status = FBLE_EXEC_ABORTED;
-    return RETURN;
-  }
-
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunReturnInstr -- see documentation of RunInstr
-//   Execute a RETURN_INSTR.
-static Control RunReturnInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
-  FbleValue* result = NULL;
-  switch (return_instr->result.section) {
-    case FBLE_STATICS_FRAME_SECTION: {
-      result = FbleFuncValueStatics(thread->stack->func)[return_instr->result.index];
-      FbleRetainValue(heap, result);
-      break;
-    }
-
-    case FBLE_LOCALS_FRAME_SECTION: {
-      result = thread->stack->locals[return_instr->result.index];
-      break;
-    }
-  }
-
-  *status = FbleThreadReturn(heap, thread, result);
-  return RETURN;
-}
-
-// RunTypeInstr -- see documentation of RunInstr
-//   Execute a FBLE_TYPE_INSTR.
-static Control RunTypeInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
-  FrameSetConsumed(heap, thread, type_instr->dest, FbleGenericTypeValue);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunReleaseInstr -- see documentation of RunInstr
-//   Execute a FBLE_RELEASE_INSTR.
-static Control RunReleaseInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
-  FbleReleaseValue(heap, thread->stack->locals[release_instr->target]);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunListInstr -- see documentation of RunInstr.
-//   Execute an FBLE_LIST_INSTR.
-static Control RunListInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleListInstr* list_instr = (FbleListInstr*)instr;
-  size_t argc = list_instr->args.size;
-  FbleValue* args[argc];
-  for (size_t i = 0; i < argc; ++i) {
-    args[i] = FrameGet(thread, list_instr->args.xs[i]);
-  }
-
-  FbleValue* list = FbleNewListValue(heap, argc, args);
-  FrameSetConsumed(heap, thread, list_instr->dest, list);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// RunLiteralInstr -- see documentation of RunInstr.
-//   Execute an FBLE_LITERAL_INSTR.
-static Control RunLiteralInstr(FbleValueHeap* heap, FbleThread* thread, FbleInstr* instr, FbleExecStatus* status, size_t* pc)
-{
-  FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
-  FbleValue* list = FbleNewLiteralValue(heap, literal_instr->letters.size, literal_instr->letters.xs);
-  FrameSetConsumed(heap, thread, literal_instr->dest, list);
-  (*pc)++;
-  return CONTINUE;
-}
-
-// sRunInstr --
-//   Implementations of instructions, indexed by instruction tag.
-static RunInstr sRunInstr[] = {
-  &RunDataTypeInstr,         // FBLE_DATA_TYPE_INSTR
-  &RunStructValueInstr,      // FBLE_STRUCT_VALUE_INSTR
-  &RunUnionValueInstr,       // FBLE_UNION_VALUE_INSTR
-  &RunStructAccessInstr,     // FBLE_STRUCT_ACCESS_INSTR
-  &RunUnionAccessInstr,      // FBLE_UNION_ACCESS_INSTR
-  &RunUnionSelectInstr,      // FBLE_UNION_SELECT_INSTR
-  &RunJumpInstr,             // FBLE_JUMP_INSTR
-  &RunFuncValueInstr,        // FBLE_FUNC_VALUE_INSTR
-  &RunCallInstr,             // FBLE_CALL_INSTR
-  &RunCopyInstr,             // FBLE_COPY_INSTR
-  &RunRefValueInstr,         // FBLE_REF_VALUE_INSTR
-  &RunRefDefInstr,           // FBLE_REF_DEF_INSTR
-  &RunReturnInstr,           // FBLE_RETURN_INSTR
-  &RunTypeInstr,             // FBLE_TYPE_INSTR
-  &RunReleaseInstr,          // FBLE_RELEASE_INSTR
-  &RunListInstr,             // FBLE_LIST_INSTR
-  &RunLiteralInstr,          // FBLE_LITERAL_INSTR
-};
 
 /**
  * Aborts a function.
@@ -457,10 +123,12 @@ static RunInstr sRunInstr[] = {
  * @param code  The code for the function.
  * @param pc  The pc to start aborting from.
  *
+ * @return FBLE_EXEC_ABORTED for convenience.
+ *
  * @sideeffects
  * Cleans up all resources associated with the function call.
  */
-static void RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, size_t pc)
+static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, size_t pc)
 {
   FbleValue** locals = thread->stack->locals;
   while (true) {
@@ -547,7 +215,7 @@ static void RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, si
           }
 
           FbleThreadReturn(heap, thread, NULL);
-          return;
+          return FBLE_EXEC_ABORTED;
         }
 
         locals[call_instr->dest] = NULL;
@@ -585,7 +253,7 @@ static void RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, si
         }
 
         FbleThreadReturn(heap, thread, NULL);
-        return;
+        return FBLE_EXEC_ABORTED;
       }
 
       case FBLE_TYPE_INSTR: {
@@ -617,6 +285,9 @@ static void RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, si
       }
     }
   }
+
+  UNREACHABLE("Should never get here");
+  return FBLE_EXEC_ABORTED;
 }
 
 // See documentation in interpret.h
@@ -629,13 +300,12 @@ FbleExecStatus FbleInterpreterRunFunction(
     FbleBlockId profile_block_offset)
 {
   FbleProfileThread* profile = thread->profile;
-  FbleInstr** code = ((FbleCode*)executable)->instrs.xs;
+  FbleCode* code = (FbleCode*)executable;
+  FbleInstr** instrs = code->instrs.xs;
 
-  FbleExecStatus status = FBLE_EXEC_ABORTED;
-  Control control = CONTINUE; 
   size_t pc = 0;
-  while (control == CONTINUE) {
-    FbleInstr* instr = code[pc];
+  while (true) {
+    FbleInstr* instr = instrs[pc];
     if (profile != NULL) {
       if (rand() % PROFILE_SAMPLE_PERIOD == 0) {
         FbleProfileSample(profile, 1);
@@ -658,13 +328,236 @@ FbleExecStatus FbleInterpreterRunFunction(
       }
     }
 
-    control = sRunInstr[instr->tag](heap, thread, instr, &status, &pc);
-  }
+    switch (instr->tag) {
+      case FBLE_DATA_TYPE_INSTR: {
+        FbleDataTypeInstr* data_type_instr = (FbleDataTypeInstr*)instr;
+        size_t fieldc = data_type_instr->fields.size;
+        FbleValue* fields[fieldc];
+        for (size_t i = 0; i < fieldc; ++i) {
+          fields[i] = FrameGet(thread, data_type_instr->fields.xs[i]);
+        }
 
-  if (status == FBLE_EXEC_ABORTED) {
-    RunAbort(heap, thread, (FbleCode*)executable, pc);
+        FbleValue* value = FbleNewDataTypeValue(heap, data_type_instr->kind, fieldc, fields);
+        FrameSetConsumed(heap, thread, data_type_instr->dest, value);
+        pc++;
+        break;
+      }
+
+      case FBLE_STRUCT_VALUE_INSTR: {
+        FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
+        size_t argc = struct_value_instr->args.size;
+        FbleValue* args[argc];
+        for (size_t i = 0; i < argc; ++i) {
+          args[i] = FrameGet(thread, struct_value_instr->args.xs[i]);
+        }
+
+        FbleValue* value = FbleNewStructValue(heap, argc, args);
+        FrameSetConsumed(heap, thread, struct_value_instr->dest, value);
+        pc++;
+        break;
+      }
+
+      case FBLE_UNION_VALUE_INSTR: {
+        FbleUnionValueInstr* union_value_instr = (FbleUnionValueInstr*)instr;
+        size_t tag = union_value_instr->tag;
+        FbleValue* arg = FrameGet(thread, union_value_instr->arg);
+        FbleValue* value = FbleNewUnionValue(heap, tag, arg);
+        FrameSetConsumed(heap, thread, union_value_instr->dest, value);
+        pc++;
+        break;
+      }
+
+      case FBLE_STRUCT_ACCESS_INSTR: {
+        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+
+        FbleValue* sv = FrameGetStrict(thread, access_instr->obj);
+        if (sv == NULL) {
+          FbleReportError("undefined struct value access\n", access_instr->loc);
+          return RunAbort(heap, thread, code, pc);
+        }
+
+        FbleValue* v = FbleStructValueAccess(sv, access_instr->tag);
+        FrameSetBorrowed(heap, thread, access_instr->dest, v);
+        pc++;
+        break;
+      }
+
+      case FBLE_UNION_ACCESS_INSTR: {
+        FbleAccessInstr* access_instr = (FbleAccessInstr*)instr;
+
+        FbleValue* uv = FrameGetStrict(thread, access_instr->obj);
+        if (uv == NULL) {
+          FbleReportError("undefined union value access\n", access_instr->loc);
+          return RunAbort(heap, thread, code, pc);
+        }
+
+        if (FbleUnionValueTag(uv) != access_instr->tag) {
+          FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
+          return RunAbort(heap, thread, code, pc);
+        }
+
+        FrameSetBorrowed(heap, thread, access_instr->dest, FbleUnionValueAccess(uv));
+        pc++;
+        break;
+      }
+
+      case FBLE_UNION_SELECT_INSTR: {
+        FbleUnionSelectInstr* select_instr = (FbleUnionSelectInstr*)instr;
+        FbleValue* uv = FrameGetStrict(thread, select_instr->condition);
+        if (uv == NULL) {
+          FbleReportError("undefined union value select\n", select_instr->loc);
+          return RunAbort(heap, thread, code, pc);
+        }
+        pc += 1 + select_instr->jumps.xs[FbleUnionValueTag(uv)];
+        break;
+      }
+
+      case FBLE_JUMP_INSTR: {
+        FbleJumpInstr* jump_instr = (FbleJumpInstr*)instr;
+        pc += 1 + jump_instr->count;
+        break;
+      }
+
+      case FBLE_FUNC_VALUE_INSTR: {
+        FbleFuncValueInstr* func_value_instr = (FbleFuncValueInstr*)instr;
+        FbleValue* statics[func_value_instr->scope.size];
+        for (size_t i = 0; i < func_value_instr->scope.size; ++i) {
+          statics[i] = FrameGet(thread, func_value_instr->scope.xs[i]);
+        }
+
+        FbleValue* value = FbleNewFuncValue(heap, &func_value_instr->code->_base, FbleFuncValueProfileBaseId(thread->stack->func), statics);
+        FrameSetConsumed(heap, thread, func_value_instr->dest, value);
+        pc++;
+        break;
+      }
+
+      case FBLE_CALL_INSTR: {
+        FbleCallInstr* call_instr = (FbleCallInstr*)instr;
+        FbleValue* func = FrameGetStrict(thread, call_instr->func);
+        if (func == NULL) {
+          FbleReportError("called undefined function\n", call_instr->loc);
+          return RunAbort(heap, thread, code, pc);
+        };
+
+        FbleExecutable* executable = FbleFuncValueExecutable(func);
+        FbleValue* args[executable->num_args];
+        for (size_t i = 0; i < executable->num_args; ++i) {
+          args[i] = FrameGet(thread, call_instr->args.xs[i]);
+        }
+
+        if (call_instr->exit) {
+          FbleRetainValue(heap, func);
+          for (size_t i = 0; i < executable->num_args; ++i) {
+            FbleRetainValue(heap, args[i]);
+          }
+
+          if (call_instr->func.section == FBLE_LOCALS_FRAME_SECTION) {
+            FbleReleaseValue(heap, thread->stack->locals[call_instr->func.index]);
+            thread->stack->locals[call_instr->func.index] = NULL;
+          }
+
+          for (size_t i = 0; i < call_instr->args.size; ++i) {
+            if (call_instr->args.xs[i].section == FBLE_LOCALS_FRAME_SECTION) {
+              FbleReleaseValue(heap, thread->stack->locals[call_instr->args.xs[i].index]);
+              thread->stack->locals[call_instr->args.xs[i].index] = NULL;
+            }
+          }
+
+          return FbleThreadTailCall(heap, thread, func, args);
+        }
+
+        pc++;
+        if (FbleThreadCall(heap, thread, thread->stack->locals + call_instr->dest, func, args) == FBLE_EXEC_ABORTED) {
+          return RunAbort(heap, thread, code, pc);
+        }
+        break;
+      }
+
+      case FBLE_COPY_INSTR: {
+        FbleCopyInstr* copy_instr = (FbleCopyInstr*)instr;
+        FbleValue* value = FrameGet(thread, copy_instr->source);
+        FrameSetBorrowed(heap, thread, copy_instr->dest, value);
+        pc++;
+        break;
+      }
+
+      case FBLE_REF_VALUE_INSTR: {
+        FbleRefValueInstr* ref_instr = (FbleRefValueInstr*)instr;
+        FbleValue* rv = FbleNewRefValue(heap);
+        FrameSetConsumed(heap, thread, ref_instr->dest, rv);
+        pc++;
+        break;
+      }
+
+      case FBLE_REF_DEF_INSTR: {
+        FbleRefDefInstr* ref_def_instr = (FbleRefDefInstr*)instr;
+        FbleValue* ref = thread->stack->locals[ref_def_instr->ref];
+        FbleValue* value = FrameGet(thread, ref_def_instr->value);
+        if (!FbleAssignRefValue(heap, ref, value)) {
+          FbleReportError("vacuous value\n", ref_def_instr->loc);
+          return RunAbort(heap, thread, code, pc);
+        }
+
+        pc++;
+        break;
+      }
+
+      case FBLE_RETURN_INSTR: {
+        FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
+        FbleValue* result = NULL;
+        switch (return_instr->result.section) {
+          case FBLE_STATICS_FRAME_SECTION: {
+            result = FbleFuncValueStatics(thread->stack->func)[return_instr->result.index];
+            FbleRetainValue(heap, result);
+            break;
+          }
+
+          case FBLE_LOCALS_FRAME_SECTION: {
+            result = thread->stack->locals[return_instr->result.index];
+            break;
+          }
+        }
+
+        return FbleThreadReturn(heap, thread, result);
+      }
+
+      case FBLE_TYPE_INSTR: {
+        FbleTypeInstr* type_instr = (FbleTypeInstr*)instr;
+        FrameSetConsumed(heap, thread, type_instr->dest, FbleGenericTypeValue);
+        pc++;
+        break;
+      }
+
+      case FBLE_RELEASE_INSTR: {
+        FbleReleaseInstr* release_instr = (FbleReleaseInstr*)instr;
+        FbleReleaseValue(heap, thread->stack->locals[release_instr->target]);
+        pc++;
+        break;
+      }
+
+      case FBLE_LIST_INSTR: {
+        FbleListInstr* list_instr = (FbleListInstr*)instr;
+        size_t argc = list_instr->args.size;
+        FbleValue* args[argc];
+        for (size_t i = 0; i < argc; ++i) {
+          args[i] = FrameGet(thread, list_instr->args.xs[i]);
+        }
+
+        FbleValue* list = FbleNewListValue(heap, argc, args);
+        FrameSetConsumed(heap, thread, list_instr->dest, list);
+        pc++;
+        break;
+      }
+
+      case FBLE_LITERAL_INSTR: {
+        FbleLiteralInstr* literal_instr = (FbleLiteralInstr*)instr;
+        FbleValue* list = FbleNewLiteralValue(heap, literal_instr->letters.size, literal_instr->letters.xs);
+        FrameSetConsumed(heap, thread, literal_instr->dest, list);
+        pc++;
+        break;
+      }
+    }
   }
-  return status;
 }
 
 // FbleInterpret -- see documentation in fble-interpret.h
