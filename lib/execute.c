@@ -17,6 +17,49 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
+/**
+ * Managed execution stack.
+ *
+ * Memory Management:
+ *   Each thread owns its stack. The stack owns its tail.
+ *
+ *   The stack holds a strong reference to func and any non-NULL locals.
+ *   'result' is a pointer to something that is initially NULL and expects to
+ *   receive a strong reference to the return value.
+ */
+typedef struct Stack {
+  /** the function being executed at this frame of the stack. */
+  FbleValue* func;
+
+  /** where to store the result of executing the current frame. */
+  FbleValue** result;
+
+  /** the next frame down in the stack. */
+  struct Stack* tail;
+
+  /** array of local variables. Size is func->executable->locals. */
+  // TODO: Let users keep track of locals themselves and only store args here?
+  FbleValue* locals[];
+} Stack;
+
+/**
+ * A thread of execution.
+ */
+struct FbleThread {
+  /** The execution stack. */
+  Stack* stack;
+
+  /** Memory allocator for the stack. */
+  FbleStackAllocator* allocator;
+
+  /**
+   * The profile associated with this thread.
+   * May be NULL to disable profiling.
+   */
+  FbleProfileThread* profile;
+};
+
+
 static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread);
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
@@ -38,7 +81,7 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 //   called.
 static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, FbleThread* thread)
 {
-  FbleStack* stack = FbleStackAllocExtra(thread->allocator, FbleStack, locals * sizeof(FbleValue*));
+  Stack* stack = FbleStackAllocExtra(thread->allocator, Stack, locals * sizeof(FbleValue*));
   stack->func = func;
   stack->result = result;
   stack->tail = thread->stack;
@@ -56,7 +99,7 @@ static void PushStackFrame(FbleValue* func, FbleValue** result, size_t locals, F
 //   Pops the top frame off the stack.
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 {
-  FbleStack* stack = thread->stack;
+  Stack* stack = thread->stack;
   thread->stack = thread->stack->tail;
   FbleReleaseValue(heap, stack->func);
   FbleStackFree(thread->allocator, stack);

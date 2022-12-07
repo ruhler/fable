@@ -13,6 +13,9 @@
 
 /**
  * A thread of execution.
+ *
+ * This is an abstract handle for use with FbleThread* APIs used to implement
+ * fble functions.
  */
 typedef struct FbleThread FbleThread;
 
@@ -30,51 +33,6 @@ typedef enum {
   FBLE_EXEC_FINISHED,  /**< The function has finished running. */
   FBLE_EXEC_ABORTED,   /**< The function has aborted. */
 } FbleExecStatus;
-
-/**
- * Managed execution stack.
- *
- * TODO: Make this private.
- *
- * Memory Management:
- *   Each thread owns its stack. The stack owns its tail.
- *
- *   The stack holds a strong reference to func and any non-NULL locals.
- *   'result' is a pointer to something that is initially NULL and expects to
- *   receive a strong reference to the return value.
- */
-typedef struct FbleStack {
-  /** the function being executed at this frame of the stack. */
-  FbleValue* func;
-
-  /** where to store the result of executing the current frame. */
-  FbleValue** result;
-
-  /** the next frame down in the stack. */
-  struct FbleStack* tail;
-
-  /** array of local variables. Size is func->executable->locals. */
-  FbleValue* locals[];
-} FbleStack;
-
-/**
- * A thread of execution.
- *
- * TODO: Make this abstract.
- */
-struct FbleThread {
-  /** The execution stack. */
-  FbleStack* stack;
-
-  /** Memory allocator for the stack. */
-  FbleStackAllocator* allocator;
-
-  /**
-   * The profile associated with this thread.
-   * May be NULL to disable profiling.
-   */
-  FbleProfileThread* profile;
-};
 
 /**
  * Implementation of fble function logic.
