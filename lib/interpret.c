@@ -14,11 +14,6 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-// PROFILE_SAMPLE_PERIOD --
-//   The approximate number of instructions to execute before taking another
-//   profiling sample.
-#define PROFILE_SAMPLE_PERIOD 1024
-
 static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, FbleValue** locals, size_t pc);
 
 
@@ -213,7 +208,6 @@ FbleExecStatus FbleInterpreterRunFunction(
     FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
-  FbleProfileThread* profile = thread->profile;
   FbleCode* code = (FbleCode*)executable;
   FbleInstr** instrs = code->instrs.xs;
 
@@ -223,25 +217,21 @@ FbleExecStatus FbleInterpreterRunFunction(
   size_t pc = 0;
   while (true) {
     FbleInstr* instr = instrs[pc];
-    if (profile != NULL) {
-      if (rand() % PROFILE_SAMPLE_PERIOD == 0) {
-        FbleProfileSample(profile, 1);
-      }
+    FbleThreadSample(thread);
 
-      for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
-        switch (op->tag) {
-          case FBLE_PROFILE_ENTER_OP:
-            FbleProfileEnterBlock(profile, profile_block_offset + op->block);
-            break;
+    for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
+      switch (op->tag) {
+        case FBLE_PROFILE_ENTER_OP:
+          FbleThreadEnterBlock(thread, profile_block_offset + op->block);
+          break;
 
-          case FBLE_PROFILE_REPLACE_OP:
-            FbleProfileReplaceBlock(profile, profile_block_offset + op->block);
-            break;
+        case FBLE_PROFILE_REPLACE_OP:
+          FbleThreadReplaceBlock(thread, profile_block_offset + op->block);
+          break;
 
-          case FBLE_PROFILE_EXIT_OP:
-            FbleProfileExitBlock(profile);
-            break;
-        }
+        case FBLE_PROFILE_EXIT_OP:
+          FbleThreadExitBlock(thread);
+          break;
       }
     }
 

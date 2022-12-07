@@ -305,7 +305,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
       "FbleValue** statics, FbleBlockId profile_block_offset)\n",
       (void*)code, label);
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleProfileThread* profile = thread->profile;\n");
   fprintf(fout, "  FbleValue** l = locals;\n");
   fprintf(fout, "  FbleValue** s = statics;\n");
 
@@ -329,21 +328,21 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     }
 
     // Profiling logic.
-    fprintf(fout, "  ProfileSample(profile);\n");
+    fprintf(fout, "  FbleThreadSample(thread);\n");
     for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
       switch (op->tag) {
         case FBLE_PROFILE_ENTER_OP: {
-          fprintf(fout, "  ProfileEnterBlock(profile, profile_block_offset + %zi);\n", op->block);
+          fprintf(fout, "  FbleThreadEnterBlock(thread, profile_block_offset + %zi);\n", op->block);
           break;
         }
 
         case FBLE_PROFILE_REPLACE_OP: {
-          fprintf(fout, "  ProfileReplaceBlock(profile, profile_block_offset + %zi);\n", op->block);
+          fprintf(fout, "  FbleThreadReplaceBlock(thread, profile_block_offset + %zi);\n", op->block);
           break;
         }
 
         case FBLE_PROFILE_EXIT_OP: {
-          fprintf(fout, "  ProfileExitBlock(profile);\n");
+          fprintf(fout, "  FbleThreadExitBlock(thread);\n");
           break;
         }
       }
@@ -910,7 +909,6 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocks(&blocks, module->code);
 
-  fprintf(fout, "#include <stdlib.h>\n");             // for rand
   fprintf(fout, "#include <fble/fble-execute.h>\n");  // for FbleExecStatus
   fprintf(fout, "#include <fble/fble-link.h>\n");     // for FbleCompiledModuleFunction
   fprintf(fout, "#include <fble/fble-value.h>\n");    // for FbleValue
@@ -928,35 +926,6 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "{\n");
   fprintf(fout, "  fprintf(stderr, \"%s:%%d:%%d: error: %%s\\n\", line, col, msg);\n",
       module->path->loc.source->str);
-  fprintf(fout, "}\n");
-
-  // Helpers for profiling.
-  fprintf(fout, "static void ProfileSample(FbleProfileThread* profile)\n");
-  fprintf(fout, "{\n");
-  fprintf(fout, "  if (profile && (rand() %% 1024 == 0)) {\n");
-  fprintf(fout, "    FbleProfileSample(profile, 1);\n");
-  fprintf(fout, "  }\n");
-  fprintf(fout, "}\n");
-
-  fprintf(fout, "static void ProfileEnterBlock(FbleProfileThread* profile, FbleBlockId block)\n");
-  fprintf(fout, "{\n");
-  fprintf(fout, "  if (profile) {\n");
-  fprintf(fout, "    FbleProfileEnterBlock(profile, block);\n");
-  fprintf(fout, "  }\n");
-  fprintf(fout, "}\n");
-
-  fprintf(fout, "static void ProfileReplaceBlock(FbleProfileThread* profile, FbleBlockId block)\n");
-  fprintf(fout, "{\n");
-  fprintf(fout, "  if (profile) {\n");
-  fprintf(fout, "    FbleProfileReplaceBlock(profile, block);\n");
-  fprintf(fout, "  }\n");
-  fprintf(fout, "}\n");
-
-  fprintf(fout, "static void ProfileExitBlock(FbleProfileThread* profile)\n");
-  fprintf(fout, "{\n");
-  fprintf(fout, "  if (profile) {\n");
-  fprintf(fout, "    FbleProfileExitBlock(profile);\n");
-  fprintf(fout, "  }\n");
   fprintf(fout, "}\n");
 
   // Generate prototypes for all the run and abort functions.

@@ -1,7 +1,7 @@
 * Clean up FbleNewFuncValue API
- - Make FbleStack private.
-   Remove references in interpret.c
  - Make FbleThread abstract.
+   By exporting FbleThreadProfile* functions.
+ - Make FbleStack private.
  - Remove FbleFuncValueExecutable and friends.
  - Remove FbleSimpleFunc* API.
  - Clean up prior uses of FbleSimpleFunc* API to not make use of global state.

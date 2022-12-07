@@ -5,7 +5,7 @@
 
 #include <assert.h>   // for assert
 #include <stdarg.h>   // for va_list, va_start, va_end
-#include <stdlib.h>   // for NULL
+#include <stdlib.h>   // for NULL, rand
 
 #include <fble/fble-alloc.h>     // for FbleAlloc, FbleFree, etc.
 #include <fble/fble-value.h>     // for FbleValue, etc.
@@ -275,5 +275,37 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program)
     }
     FbleVectorFree(program->modules);
     FbleFree(program);
+  }
+}
+
+// See documentation in fble-execute.h
+void FbleThreadSample(FbleThread* thread)
+{
+  if (thread->profile && (rand() % 1024 == 0)) {
+    FbleProfileSample(thread->profile, 1);
+  }
+}
+
+// See documentation in fble-execute.h
+void FbleThreadEnterBlock(FbleThread* thread, FbleBlockId block)
+{
+  if (thread->profile) {
+    FbleProfileEnterBlock(thread->profile, block);
+  }
+}
+
+// See documentation in fble-execute.h
+void FbleThreadReplaceBlock(FbleThread* thread, FbleBlockId block)
+{
+  if (thread->profile) {
+    FbleProfileReplaceBlock(thread->profile, block);
+  }
+}
+
+// See documentation in fble-execute.h
+void FbleThreadExitBlock(FbleThread* thread)
+{
+  if (thread->profile) {
+    FbleProfileExitBlock(thread->profile);
   }
 }

@@ -381,4 +381,66 @@ FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, Fble
  */
 FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result);
 
+/**
+ * Takes a profiling sample on the thread.
+ *
+ * @param thread    The profile thread to sample.
+ *
+ * @sideeffects
+ * * Charges calls on the current thread with the given time.
+ * * Has no effect if profiling is currently disabled.
+ */
+void FbleThreadSample(FbleThread* thread);
+
+/**
+ * Enters a profiling block.
+ *
+ * When calling into a function, use this function to tell the profiling logic
+ * what block is being called into.
+ *
+ * @param thread    The thread to do the call on.
+ * @param block     The block to call into.
+ *
+ * @sideeffects
+ * * A corresponding call to FbleThreadExitBlock or FbleThreadReplaceBlock
+ *   should be made when the call leaves, for proper accounting and resource
+ *   management.
+ * * Has no effect if profiling is currently disabled.
+ */
+void FbleThreadEnterBlock(FbleThread* thread, FbleBlockId block);
+
+/**
+ * Replaces a profiling block.
+ *
+ * When tail-calling into a function, use this function to tell the profiling
+ * logic what block is being called into.
+ *
+ * @param thread    The thread to do the call on.
+ * @param block     The block to tail call into.
+ *
+ * @sideeffects
+ * * Replaces the current profiling block with the new block.
+ * * Frees resources associated with the block being replaced, but a
+ *   corresponding call to FbleThreadExitBlock or FbleThreadReplaceBlock
+ *   will still needed to free resources associated with the replacement
+ *   block.
+ * * Has no effect if profiling is currently disabled.
+ */
+void FbleThreadReplaceBlock(FbleThread* thread, FbleBlockId block);
+
+/**
+ * Exits a profiling block.
+ *
+ * When returning from a function, use this function to tell the profiling
+ * logic what block is being exited.
+ *
+ * @param thread    The thread to exit the call on.
+ *
+ * @sideeffects
+ * * Updates the profile data associated with the given thread.
+ * * Has no effect if profiling is currently disabled.
+ */
+void FbleThreadExitBlock(FbleThread* thread);
+
+
 #endif // FBLE_EXECUTE_H_

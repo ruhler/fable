@@ -1124,3 +1124,20 @@ Looking at git history, looks like even when I first made the change from a
 switch statement to functions resulted in a performance regression of a few
 seconds. Oh well. There you have it.
 
+---
+
+Next goal: make FbleThread abstract. But I think this one will be trickier.
+Where we need to know it:
+* For thread->profile, used in Profiling functions.
+
+That's not too bad. Shall we just create some FbleThreadProfile* variants?
+* FbleThreadProfileSample(FbleThread* thread)
+  - FbleProfileSample(profile, 1) if profile and rand() % 1024.
+* FbleThreadProfileEnterBlock(FbleThread* thread, FbleBlockId block);
+* FbleThreadProfileReplaceBlock(FbleThread* thread, FbleBlockId block);
+* FbleThreadProfileExitBlock(FbleThread* thread, FbleBlockId block);
+
+That's actually perfect. Central logic for profile sampling, and don't have to
+worry if profile is NULL or not. That's taken care of internally.
+
+
