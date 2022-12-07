@@ -345,7 +345,7 @@ FbleExecStatus FbleInterpreterRunFunction(
           return RunAbort(heap, thread, code, locals, pc);
         };
 
-        FbleExecutable* func_exe = FbleFuncValueExecutable(func);
+        FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
         FbleValue* args[func_exe->num_args];
         for (size_t i = 0; i < func_exe->num_args; ++i) {
           args[i] = GET(call_instr->args.xs[i]);

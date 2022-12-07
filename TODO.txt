@@ -1,5 +1,4 @@
 * Clean up FbleNewFuncValue API
- - Remove FbleFuncValueExecutable and friends.
  - Remove FbleSimpleFunc* API.
  - Clean up prior uses of FbleSimpleFunc* API to not make use of global state.
  - Improve documentation for how to write an FbleRunFunction.

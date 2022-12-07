@@ -159,9 +159,11 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 // FbleThreadCall -- see documentation in execute.h
 FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, FbleValue** args)
 {
-  FbleExecutable* executable = FbleFuncValueExecutable(func);
+  FbleFuncInfo info = FbleFuncValueInfo(func);
+
+  FbleExecutable* executable = info.executable;
   if (thread->profile != NULL) {
-    FbleProfileEnterBlock(thread->profile, FbleFuncValueProfileBaseId(func) + executable->profile_block_id);
+    FbleProfileEnterBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
   }
 
   FbleRetainValue(heap, func);
@@ -176,13 +178,14 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
   FbleExecStatus status = FBLE_EXEC_CONTINUED;
   while (status == FBLE_EXEC_CONTINUED) {
     FbleValue* function = thread->stack->func;
-    FbleExecutable* func_exe = FbleFuncValueExecutable(function);
+    FbleFuncInfo func_info = FbleFuncValueInfo(function);
+    FbleExecutable* func_exe = func_info.executable;
     status = func_exe->run(
         heap, thread,
         func_exe,
         thread->stack->locals,
-        FbleFuncValueStatics(function),
-        FbleFuncValueProfileBaseId(function));
+        func_info.statics,
+        func_info.profile_block_offset);
   }
   return status;
 }
@@ -190,7 +193,7 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
 // FbleThreadCall_ -- see documentation in execute.h
 FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, ...)
 {
-  FbleExecutable* executable = FbleFuncValueExecutable(func);
+  FbleExecutable* executable = FbleFuncValueInfo(func).executable;
   size_t argc = executable->num_args;
   FbleValue* args[argc];
   va_list ap;
@@ -205,9 +208,10 @@ FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValu
 // FbleThreadTailCall -- see documentation in execute.h
 FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
-  FbleExecutable* executable = FbleFuncValueExecutable(func);
+  FbleFuncInfo info = FbleFuncValueInfo(func);
+  FbleExecutable* executable = info.executable;
   if (thread->profile != NULL) {
-    FbleProfileReplaceBlock(thread->profile, FbleFuncValueProfileBaseId(func) + executable->profile_block_id);
+    FbleProfileReplaceBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
   }
 
   FbleValue** result = thread->stack->result;
@@ -225,7 +229,7 @@ FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleV
 // FbleThreadTailCall_ -- see documentation in execute.h
 FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...)
 {
-  FbleExecutable* executable = FbleFuncValueExecutable(func);
+  FbleExecutable* executable = FbleFuncValueInfo(func).executable;
   size_t argc = executable->num_args;
   FbleValue* args[argc];
   va_list ap;

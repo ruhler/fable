@@ -47,42 +47,4 @@ FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_
 //   FbleReleaseValue when it is no longer needed.
 FbleValue* FbleNewUnionTypeValue(FbleValueHeap* heap, size_t fieldc, FbleValue** fields);
 
-// FbleFuncValueStatics --
-//   Gets the array of static variables used by a function.
-//
-// Inputs:
-//   func - the function to get the static variables for.
-//
-// Results:
-//   The pointer to the static variables of the function.
-//
-// Side effects:
-//   The returned pointer is only valid for as long as the function value
-//   remains alive.
-FbleValue** FbleFuncValueStatics(FbleValue* func);
-
-// FbleFuncValueProfileBaseId --
-//   Gets the profile base id associated with a function.
-//
-// Inputs:
-//   func - the function to get the profile base id for.
-//
-// Results:
-//   The profile base id of the function.
-size_t FbleFuncValueProfileBaseId(FbleValue* func);
-
-// FbleFuncValueExecutable --
-//   Gets the FbleExecutable associated with a function.
-//
-// Inputs:
-//   func - the function to get the FbleExecutable for.
-//
-// Results:
-//   The FbleExecutable for the function.
-//
-// Side effects:
-//   The returned pointer is only valid for as long as the function value
-//   remains alive.
-FbleExecutable* FbleFuncValueExecutable(FbleValue* func);
-
 #endif // FBLE_INTERNAL_VALUE_H_

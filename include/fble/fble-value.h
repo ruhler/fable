@@ -302,7 +302,7 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
  * @param executable  The executable to run. Borrowed.
  * @param profile_block_offset  The profile block offset to use for the function.
  * @param ...  Static variables for the function. The count should match
- *             executable->statics.
+ *             executable->num_statics.
  *
  * @returns A newly allocated function value.
  *
@@ -312,6 +312,36 @@ FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, siz
  */
 FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, ...);
 
+/**
+ * Info associated with an fble function value.
+ */
+typedef struct {
+  /** Executable for running the function. */
+  FbleExecutable* executable;
+
+  /** Relative offset for block ids referenced from the function. */
+  size_t profile_block_offset;
+
+  /**
+   * The function's static variables.
+   *
+   * The number of elements is executable->num_statics.
+   */
+  FbleValue** statics;
+} FbleFuncInfo;
+
+/**
+ * Gets the info associated with a function.
+ *
+ * The returned info is owned by the function. It is only valid for as long as
+ * the function is valid, and it will be automatically cleaned up as part of
+ * the function's cleanup.
+ *
+ * @param func  The function to get the info for.
+ * @returns The info for the function.
+ * @sideeffects None.
+ */
+FbleFuncInfo FbleFuncValueInfo(FbleValue* func);
 
 /**
  * C interface for simple fble functions.

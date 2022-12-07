@@ -582,25 +582,16 @@ FbleValue* FbleNewFuncValue_(FbleValueHeap* heap, FbleExecutable* executable, si
   return FbleNewFuncValue(heap, executable, profile_block_offset, args);
 }
 
-// FbleFuncValueStatics -- see documentation in value.h
-FbleValue** FbleFuncValueStatics(FbleValue* func)
+// FbleFuncValueInfo -- see documentation in value.h
+FbleFuncInfo FbleFuncValueInfo(FbleValue* func)
 {
   FuncValue* func_value = (FuncValue*)func;
-  return func_value->statics;
-}
-
-// FbleFuncValueProfileBaseId -- see documentation in value.h
-size_t FbleFuncValueProfileBaseId(FbleValue* func)
-{
-  FuncValue* func_value = (FuncValue*)func;
-  return func_value->profile_block_offset;
-}
-
-// FbleFuncValueExecutable -- see documentation in value.h
-FbleExecutable* FbleFuncValueExecutable(FbleValue* func)
-{
-  FuncValue* func_value = (FuncValue*)func;
-  return func_value->executable;
+  FbleFuncInfo info = {
+    .executable = func_value->executable,
+    .profile_block_offset = func_value->profile_block_offset,
+    .statics = func_value->statics
+  };
+  return info;
 }
 
 typedef struct {
