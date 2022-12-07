@@ -35,12 +35,10 @@ typedef struct {
 typedef struct {
   void* FP;
   void* LR;
-  void* heap;             // TODO: This is unused? If so, remove it.
-  void* thread;
   void* r_heap_save;
+  void* r_thread_save;
   void* r_locals_save;
   void* r_statics_save;
-  void* r_profile_save;
   void* r_profile_block_offset_save;
   void* r_scratch_0_save;
   void* r_scratch_1_save;
@@ -470,42 +468,35 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
     }
   }
 
-  fprintf(fout, "  cbz R_PROFILE, .L._Run_%p.%zi.postprofile\n", code, pc);
-  fprintf(fout, "  bl rand\n");
-  fprintf(fout, "  and w0, w0, #0x3ff\n");    // rand() % 1024
-  fprintf(fout, "  cbnz w0, .L._Run_%p.%zi.postsample\n", code, pc);
-  fprintf(fout, "  mov x0, R_PROFILE\n");
-  fprintf(fout, "  mov x1, #1\n");
-  fprintf(fout, "  bl FbleProfileSample\n");
+  fprintf(fout, "  mov x0, R_THREAD\n");
+  fprintf(fout, "  bl FbleThreadSample\n");
 
-  fprintf(fout, ".L._Run_%p.%zi.postsample:\n", code, pc);
   for (FbleProfileOp* op = instr->profile_ops; op != NULL; op = op->next) {
     switch (op->tag) {
       case FBLE_PROFILE_ENTER_OP: {
-        fprintf(fout, "  mov x0, R_PROFILE\n");
+        fprintf(fout, "  mov x0, R_THREAD\n");
         fprintf(fout, "  mov x1, R_PROFILE_BASE_ID\n");
         fprintf(fout, "  add x1, x1, #%zi\n", op->block);
-        fprintf(fout, "  bl FbleProfileEnterBlock\n");
+        fprintf(fout, "  bl FbleThreadEnterBlock\n");
         break;
       }
 
       case FBLE_PROFILE_REPLACE_OP: {
-        fprintf(fout, "  mov x0, R_PROFILE\n");
+        fprintf(fout, "  mov x0, R_THREAD\n");
         fprintf(fout, "  mov x1, R_PROFILE_BASE_ID\n");
         fprintf(fout, "  add x1, x1, #%zi\n", op->block);
-        fprintf(fout, "  bl FbleProfileReplaceBlock\n");
+        fprintf(fout, "  bl FbleThreadReplaceBlock\n");
         break;
       }
 
       case FBLE_PROFILE_EXIT_OP: {
-        fprintf(fout, "  mov x0, R_PROFILE\n");
-        fprintf(fout, "  bl FbleProfileExitBlock\n");
+        fprintf(fout, "  mov x0, R_THREAD\n");
+        fprintf(fout, "  bl FbleThreadExitBlock\n");
         break;
       }
     }
   }
 
-  fprintf(fout, ".L._Run_%p.%zi.postprofile:\n", code, pc);
   switch (instr->tag) {
     case FBLE_DATA_TYPE_INSTR: {
       FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
@@ -738,7 +729,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         }
 
         fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  ldr x1, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread));
+        fprintf(fout, "  mov x1, R_THREAD\n");
         fprintf(fout, "  mov x2, R_SCRATCH_0\n");                   // func
         fprintf(fout, "  mov x3, SP\n");                            // args
         fprintf(fout, "  bl FbleThreadTailCall\n");
@@ -749,7 +740,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       }
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  ldr x1, [SP, #%zi]\n", sp_offset + offsetof(RunStackFrame, thread)); // thread
+      fprintf(fout, "  mov x1, R_THREAD\n");
       fprintf(fout, "  add x2, R_LOCALS, #%zi\n", sizeof(FbleValue*)*call_instr->dest);
       fprintf(fout, "  mov x3, R_SCRATCH_0\n");   // func
       fprintf(fout, "  mov x4, SP\n");
@@ -816,7 +807,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       }
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
+      fprintf(fout, "  mov x1, R_THREAD\n");
       fprintf(fout, "  mov x2, R_SCRATCH_0\n");
       fprintf(fout, "  bl FbleThreadReturn\n");
 
@@ -918,22 +909,18 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  stp FP, LR, [SP, #-%zi]!\n", sizeof(RunStackFrame));
   fprintf(fout, "  mov FP, SP\n");
 
-  // Save args to the stack for later reference.
-  fprintf(fout, "  str x0, [SP, #%zi]\n", offsetof(RunStackFrame, heap));
-  fprintf(fout, "  str x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
-
   // Save callee saved registers for later restoration.
   fprintf(fout, "  str R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  str R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_thread_save));
   fprintf(fout, "  str R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  str R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  str R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
   fprintf(fout, "  str R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  str R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
   fprintf(fout, "  str R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
 
   // Set up common registers.
   fprintf(fout, "  mov R_HEAP, x0\n");
-  fprintf(fout, "  ldr R_PROFILE, [x1, #%zi]\n", offsetof(FbleThread, profile));
+  fprintf(fout, "  mov R_THREAD, x1\n");
   fprintf(fout, "  mov R_LOCALS, x3\n");
   fprintf(fout, "  mov R_STATICS, x4\n");
   fprintf(fout, "  mov R_PROFILE_BASE_ID, x5\n");
@@ -953,9 +940,9 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Restores stack and frame pointer and return whatever is in x0.
   fprintf(fout, ".L._Run_.%p.exit:\n", (void*)code);
   fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
+  fprintf(fout, "  ldr R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_thread_save));
   fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
   fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
-  fprintf(fout, "  ldr R_PROFILE, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_save));
   fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
   fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
@@ -1047,7 +1034,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
         }
 
         fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
+        fprintf(fout, "  mov x1, R_THREAD\n");
         fprintf(fout, "  mov x2, XZR\n");
         fprintf(fout, "  bl FbleThreadReturn\n");
 
@@ -1087,7 +1074,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       }
 
       fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  ldr x1, [SP, #%zi]\n", offsetof(RunStackFrame, thread));
+      fprintf(fout, "  mov x1, R_THREAD\n");
       fprintf(fout, "  mov x2, XZR\n");
       fprintf(fout, "  bl FbleThreadReturn\n");
 
@@ -1243,9 +1230,9 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   // Common things we hold in callee saved registers for Run and Abort
   // functions.
   fprintf(fout, "  R_HEAP .req x19\n");
-  fprintf(fout, "  R_LOCALS .req x20\n");
-  fprintf(fout, "  R_STATICS .req x21\n");
-  fprintf(fout, "  R_PROFILE .req x22\n");
+  fprintf(fout, "  R_THREAD .req x20\n");
+  fprintf(fout, "  R_LOCALS .req x21\n");
+  fprintf(fout, "  R_STATICS .req x22\n");
   fprintf(fout, "  R_PROFILE_BASE_ID .req x23\n");
   fprintf(fout, "  R_SCRATCH_0 .req x24\n");
   fprintf(fout, "  R_SCRATCH_1 .req x25\n");
