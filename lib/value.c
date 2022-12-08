@@ -553,7 +553,7 @@ FbleValue* FbleNewDataTypeValue(FbleValueHeap* heap, FbleDataTypeTag kind, size_
   return &value->_base;
 }
 
-// FbleNewFuncValue -- see documentation in value.h
+// FbleNewFuncValue -- see documentation in fble-value.h
 FbleValue* FbleNewFuncValue(FbleValueHeap* heap, FbleExecutable* executable, size_t profile_block_offset, FbleValue** statics)
 {
   FuncValue* v = NewValueExtra(heap, FuncValue, sizeof(FbleValue*) * executable->num_statics);
@@ -592,53 +592,6 @@ FbleFuncInfo FbleFuncValueInfo(FbleValue* func)
     .statics = func_value->statics
   };
   return info;
-}
-
-typedef struct {
-  FbleExecutable _base;
-  FbleSimpleFunc impl;
-} SimpleExecutable;
-
-/**
- * FbleRunFunction for SimpleFunction API.
- *
- * See FbleRunFunction for more information.
- */
-static FbleExecStatus SimpleRunFunction(
-    FbleValueHeap* heap,
-    FbleThread* thread,
-    FbleExecutable* executable,
-    FbleValue** locals,
-    FbleValue** statics,
-    FbleBlockId profile_block_offset)
-{
-  (void)statics;
-  (void)profile_block_offset;
-
-  SimpleExecutable* exec = (SimpleExecutable*)executable;
-  FbleValue* result = exec->impl(heap, locals);
-
-  for (size_t i = 0; i < executable->num_locals; ++i) {
-    FbleReleaseValue(heap, locals[i]);
-  }
-
-  return FbleThreadReturn(heap, thread, result);
-}
-
-// FbleNewSimpleFuncValue -- see documentation in fble-value.h
-FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFunc impl, FbleBlockId profile)
-{
-  SimpleExecutable* exec = FbleAlloc(SimpleExecutable);
-  exec->_base.refcount = 0;
-  exec->_base.magic = FBLE_EXECUTABLE_MAGIC;
-  exec->_base.num_args = argc;
-  exec->_base.num_statics = 0;
-  exec->_base.num_locals = argc;
-  exec->_base.profile_block_id = profile;
-  exec->_base.run = &SimpleRunFunction;
-  exec->_base.on_free = &FbleExecutableNothingOnFree;
-  exec->impl = impl;
-  return FbleNewFuncValue(heap, &exec->_base, 0, NULL);
 }
 
 // FbleNewListValue -- see documentation in value.h

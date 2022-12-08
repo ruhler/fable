@@ -1140,4 +1140,48 @@ That's not too bad. Shall we just create some FbleThreadProfile* variants?
 That's actually perfect. Central logic for profile sampling, and don't have to
 worry if profile is NULL or not. That's taken care of internally.
 
+---
+
+What to do about SimpleFunc API? In theory we don't need it. But in practice
+it's annoying to have to define your own FbleExecutable.
+
+What if I make it easier to create an FbleExecutable? The challenge there is
+how to get any custom user data.
+
+What if I change FbleExecutable to have a void* user data field instead of
+having it be subclassed? That should be easier because I can write a function
+to create a new one and users can directly access the userdata from the
+executable field. Then we can remove the SimpleFunc API.
+
+The only place I currently subclass FbleExecutable is FbleCode, right? User
+data is very straight forward in that case: it takes an FbleInstrV*. We can
+wrap that in something called FbleCode, so it takes an FbleCode*.
+
+I think it's worth a try, see how it goes, how clean it feels.
+
+---
+
+On second thought, I want to keep with the current subclassing approach,
+because that way I can pass around FbleCode* and type safely convert that to
+FbleExecutable*.
+
+Let me convert some uses of the SimpleFunc API first and see how painful it
+is.
+
+It's not bad. Just a bit excessive boiler plate wise. The additional code we
+have is:
+* The definition of an Executable subclass. But that gets us away from global
+  variable, which is a plus. We wouldn't need it if we wanted a global
+  variable.
+* The OnFree function. Again, not bad.
+* The FbleRunFunction, which is mostly annoying for the complex prototype.
+* The FbleExecutable* initialization. That's the worst part I think, having to
+  know about refcount and magic and stuff.
+
+Let's ditch SimpleFunc API and worry later about whether we need some helper
+functions.
+
+Another annoying thing: we have to remember to release all the args before
+returning. That's not obvious and ought to be clearly documented somewhere.
+
 

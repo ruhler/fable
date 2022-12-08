@@ -36,8 +36,18 @@ static FbleValue* MakeIntP(FbleValueHeap* heap, int x);
 static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
-static FbleValue* Event(FbleValueHeap* heap, FbleValue** args);
-static FbleValue* Effect(FbleValueHeap* heap, FbleValue** args);
+
+static FbleExecStatus EventImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset);
+static FbleExecStatus EffectImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset);
+
 static Uint32 OnTimer(Uint32 interval, void* param);
 int FbleStdioMain(int argc, const char* argv[], FbleCompiledModuleFunction* module);
 
@@ -335,9 +345,17 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 
 // Event -- Implementation of event function.
 //   IO@<Event@>
-static FbleValue* Event(FbleValueHeap* heap, FbleValue** args)
+static FbleExecStatus EventImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset)
 {
-  FbleValue* world = args[0];
+  (void)executable;
+  (void)statics;
+  (void)profile_block_offset;
+
+  FbleValue* world = locals[0];
   FbleValue* value = NULL;
   while (value == NULL) {
     SDL_Event event;
@@ -434,15 +452,25 @@ static FbleValue* Event(FbleValueHeap* heap, FbleValue** args)
 
   FbleValue* result = FbleNewStructValue_(heap, 2, world, value);
   FbleReleaseValue(heap, value);
-  return result;
+
+  FbleReleaseValue(heap, locals[0]);
+  return FbleThreadReturn(heap, thread, result);
 }
 
 // Effect -- Implementation of effect function.
 //   (Effect@, World@) { R@<Unit@>; }
-static FbleValue* Effect(FbleValueHeap* heap, FbleValue** args)
+static FbleExecStatus EffectImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset)
 {
-  FbleValue* effect = args[0];
-  FbleValue* world = args[1];
+  (void)executable;
+  (void)statics;
+  (void)profile_block_offset;
+
+  FbleValue* effect = locals[0];
+  FbleValue* world = locals[1];
 
   switch (FbleUnionValueTag(effect)) {
     case 0: {
@@ -485,7 +513,10 @@ static FbleValue* Effect(FbleValueHeap* heap, FbleValue** args)
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
-  return result;
+
+  FbleReleaseValue(heap, locals[0]);
+  FbleReleaseValue(heap, locals[1]);
+  return FbleThreadReturn(heap, thread, result);
 }
 
 // OnTimer --
@@ -643,8 +674,28 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   FbleFreeName(block_names[0]);
   FbleFreeName(block_names[1]);
 
-  FbleValue* fble_event = FbleNewSimpleFuncValue(heap, 1, Event, block_id);
-  FbleValue* fble_effect = FbleNewSimpleFuncValue(heap, 2, Effect, block_id + 1);
+  FbleExecutable* event_exe = FbleAlloc(FbleExecutable);
+  event_exe->refcount = 0;
+  event_exe->magic = FBLE_EXECUTABLE_MAGIC;
+  event_exe->num_args = 1;
+  event_exe->num_statics = 0;
+  event_exe->num_locals = 1;
+  event_exe->profile_block_id = block_id;
+  event_exe->run = &EventImpl;
+  event_exe->on_free = &FbleExecutableNothingOnFree;
+  FbleValue* fble_event = FbleNewFuncValue(heap, event_exe, 0, NULL);
+
+  FbleExecutable* effect_exe = FbleAlloc(FbleExecutable);
+  effect_exe->refcount = 0;
+  effect_exe->magic = FBLE_EXECUTABLE_MAGIC;
+  effect_exe->num_args = 2;
+  effect_exe->num_statics = 0;
+  effect_exe->num_locals = 2;
+  effect_exe->profile_block_id = block_id + 1;
+  effect_exe->run = &EffectImpl;
+  effect_exe->on_free = &FbleExecutableNothingOnFree;
+  FbleValue* fble_effect = FbleNewFuncValue(heap, effect_exe, 0, NULL);
+
   FbleValue* fble_width = MakeInt(heap, width);
   FbleValue* fble_height = MakeInt(heap, height);
 

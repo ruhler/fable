@@ -241,7 +241,7 @@ FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, Fble
   return FbleThreadTailCall(heap, thread, func, args);
 }
 
-// FbleThreadReturn -- see documentation in execute.h
+// FbleThreadReturn -- see documentation in fble-execute.h
 FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result)
 {
   if (thread->profile != NULL) {

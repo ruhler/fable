@@ -20,11 +20,21 @@
 #define EX_FAILURE 1
 #define EX_USAGE 2
 
-static FILE* g_fin = NULL;
+typedef struct {
+  FbleExecutable _base;
+  FILE* fin;
+} Executable;
 
 static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data);
 static FbleValue* GetByte(FbleValueHeap*, FILE* fin);
-static FbleValue* GetFunc(FbleValueHeap* heap, FbleValue** args);
+
+static void OnFree(FbleExecutable* this);
+static FbleExecStatus GetImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset);
+
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 int main(int argc, char* argv[]);
 
@@ -74,13 +84,40 @@ static FbleValue* GetByte(FbleValueHeap* heap, FILE* fin)
   return result;
 }
 
-static FbleValue* GetFunc(FbleValueHeap* heap, FbleValue** args)
+/**
+ * on_free callback for GetFunctionExecutable.
+ *
+ * @param this  The executable to clean up.
+ * @sideeffects  Frees resources associated with the Executable.
+ */
+static void OnFree(FbleExecutable* this)
 {
-  FbleValue* world = args[0];
-  FbleValue* byte = GetByte(heap, g_fin);
+  Executable* exe = (Executable*)this;
+  fclose(exe->fin);
+}
+
+/**
+ * Implements Md5 'get' function.
+ *
+ * See FbleRunFunction documentation for more info.
+ */
+static FbleExecStatus GetImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset)
+{
+  (void)statics;
+  (void)profile_block_offset;
+
+  Executable* exe = (Executable*)executable;
+  FbleValue* world = locals[0];
+  FbleValue* byte = GetByte(heap, exe->fin);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, byte);
   FbleReleaseValue(heap, byte);
-  return result;
+
+  FbleReleaseValue(heap, locals[0]);
+  return FbleThreadReturn(heap, thread, result);
 }
 
 // PrintUsage --
@@ -223,8 +260,8 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
     }
   }
 
-  g_fin = fopen(file, "rb");
-  if (g_fin == NULL) {
+  FILE* fin = fopen(file, "rb");
+  if (fin == NULL) {
     fprintf(stderr, "unable to open %s\n", file);
     FbleVectorFree(search_path);
     return EX_FAILURE;
@@ -255,7 +292,18 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
   FbleFreeName(block_name);
 
   // get_func has type IO@<Maybe@<Bit8@>>
-  FbleValue* get_func = FbleNewSimpleFuncValue(heap, 1, GetFunc, block_id);
+  Executable* exec = FbleAlloc(Executable);
+  exec->_base.refcount = 0;
+  exec->_base.magic = FBLE_EXECUTABLE_MAGIC;
+  exec->_base.num_args = 1;
+  exec->_base.num_statics = 0;
+  exec->_base.num_locals = 1;
+  exec->_base.profile_block_id = block_id;
+  exec->_base.run = &GetImpl;
+  exec->_base.on_free = &OnFree;
+  exec->fin = fin;
+  FbleValue* get_func = FbleNewFuncValue(heap, &exec->_base, 0, NULL);
+
   FbleValue* computation = FbleApply(heap, md5, &get_func, profile);
   FbleReleaseValue(heap, md5);
   FbleReleaseValue(heap, get_func);

@@ -344,45 +344,6 @@ typedef struct {
 FbleFuncInfo FbleFuncValueInfo(FbleValue* func);
 
 /**
- * C interface for simple fble functions.
- *
- * @warning
- *   Don't do anything weird in the implementation of the function like
- *   calling back into fble functions.
- *
- * @param heap   The heap to allocate values on.
- * @param args   Array of arguments passed to the function. The number of args
- *               is specified in FbleNewSimpleFuncValue.
- *
- * @returns
- *   The result of executing the function, or NULL to abort execution of the
- *   program.
- *
- * @see FbleNewSimpleFuncValue.
- */
-typedef FbleValue* (*FbleSimpleFunc)(FbleValueHeap* heap, FbleValue** args);
-
-/**
- * Creates an fble function value.
- *
- * TODO: Figure out how to make this more general. For now we don't allow
- * userdata, static variables, or any of that sort of thing.
- *
- * @param heap     The heap to allocate the value on.
- * @param argc     The number of function arguments.
- * @param impl     The implementation of the function.
- * @param profile  A profile block id to use when the function is called.
- *
- * @returns
- *   A newly allocated function value.
- *
- * @sideeffects
- *   The returned function value must be freed using FbleReleaseValue when no
- *   longer in use.
- */
-FbleValue* FbleNewSimpleFuncValue(FbleValueHeap* heap, size_t argc, FbleSimpleFunc impl, FbleBlockId profile);
-
-/**
  * Evaluates a linked program.
  * 
  * The program is assumed to be a zero argument function as returned by

@@ -28,9 +28,23 @@
 #define EX_FAILURE 3
 
 static void Output(FILE* stream, FbleValue* str);
-static FbleValue* Stdin(FbleValueHeap* heap, FbleValue** args);
-static FbleValue* Stdout(FbleValueHeap* heap, FbleValue** args);
-static FbleValue* Stderr(FbleValueHeap* heap, FbleValue** args);
+
+static FbleExecStatus StdinImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset);
+static FbleExecStatus StdoutImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset);
+static FbleExecStatus StderrImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset);
+
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
 
 // Output --
@@ -52,9 +66,17 @@ static void Output(FILE* stream, FbleValue* str)
 
 // Stdin -- Implementation of stdin function.
 //   IO@<Maybe@<String@>>
-static FbleValue* Stdin(FbleValueHeap* heap, FbleValue** args)
+static FbleExecStatus StdinImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset)
 {
-  FbleValue* world = args[0];
+  (void)executable;
+  (void)statics;
+  (void)profile_block_offset;
+
+  FbleValue* world = locals[0];
 
   // Read a line from stdin.
   char* line = NULL;
@@ -72,37 +94,61 @@ static FbleValue* Stdin(FbleValueHeap* heap, FbleValue** args)
 
   FbleValue* result = FbleNewStructValue_(heap, 2, world, ms);
   FbleReleaseValue(heap, ms);
-  return result;
+
+  FbleReleaseValue(heap, locals[0]);
+  return FbleThreadReturn(heap, thread, result);
 }
 
 // Stdout -- Implementation of stdout function.
 //   (String@, World@) { R@<Unit@>; }
-static FbleValue* Stdout(FbleValueHeap* heap, FbleValue** args)
+static FbleExecStatus StdoutImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset)
 {
-  FbleValue* str = args[0];
-  FbleValue* world = args[1];
+  (void)executable;
+  (void)statics;
+  (void)profile_block_offset;
+
+  FbleValue* str = locals[0];
+  FbleValue* world = locals[1];
 
   Output(stdout, str);
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
-  return result;
+
+  FbleReleaseValue(heap, locals[0]);
+  FbleReleaseValue(heap, locals[1]);
+  return FbleThreadReturn(heap, thread, result);
 }
 
 // Stderr -- Implementation of stderr function.
 //   (String@, World@) { R@<Unit@>; }
-static FbleValue* Stderr(FbleValueHeap* heap, FbleValue** args)
+static FbleExecStatus StderrImpl(
+    FbleValueHeap* heap, FbleThread* thread,
+    FbleExecutable* executable,
+    FbleValue** locals, FbleValue** statics,
+    FbleBlockId profile_block_offset)
 {
-  FbleValue* str = args[0];
-  FbleValue* world = args[1];
+  (void)executable;
+  (void)statics;
+  (void)profile_block_offset;
+
+  FbleValue* str = locals[0];
+  FbleValue* world = locals[1];
 
   Output(stderr, str);
 
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
-  return result;
+
+  FbleReleaseValue(heap, locals[0]);
+  FbleReleaseValue(heap, locals[1]);
+  return FbleThreadReturn(heap, thread, result);
 }
 
 // PrintUsage --
@@ -180,9 +226,38 @@ FbleValue* FbleStdio(FbleValueHeap* heap, FbleProfile* profile, FbleValue* stdio
   FbleFreeName(block_names[1]);
   FbleFreeName(block_names[2]);
 
-  FbleValue* fble_stdin = FbleNewSimpleFuncValue(heap, 1, Stdin, block_id);
-  FbleValue* fble_stdout = FbleNewSimpleFuncValue(heap, 2, Stdout, block_id + 1);
-  FbleValue* fble_stderr = FbleNewSimpleFuncValue(heap, 2, Stderr, block_id + 2);
+  FbleExecutable* stdin_exe = FbleAlloc(FbleExecutable);
+  stdin_exe->refcount = 0;
+  stdin_exe->magic = FBLE_EXECUTABLE_MAGIC;
+  stdin_exe->num_args = 1;
+  stdin_exe->num_statics = 0;
+  stdin_exe->num_locals = 1;
+  stdin_exe->profile_block_id = block_id;
+  stdin_exe->run = &StdinImpl;
+  stdin_exe->on_free = &FbleExecutableNothingOnFree;
+  FbleValue* fble_stdin = FbleNewFuncValue(heap, stdin_exe, 0, NULL);
+
+  FbleExecutable* stdout_exe = FbleAlloc(FbleExecutable);
+  stdout_exe->refcount = 0;
+  stdout_exe->magic = FBLE_EXECUTABLE_MAGIC;
+  stdout_exe->num_args = 2;
+  stdout_exe->num_statics = 0;
+  stdout_exe->num_locals = 2;
+  stdout_exe->profile_block_id = block_id + 1;
+  stdout_exe->run = &StdoutImpl;
+  stdout_exe->on_free = &FbleExecutableNothingOnFree;
+  FbleValue* fble_stdout = FbleNewFuncValue(heap, stdout_exe, 0, NULL);
+
+  FbleExecutable* stderr_exe = FbleAlloc(FbleExecutable);
+  stderr_exe->refcount = 0;
+  stderr_exe->magic = FBLE_EXECUTABLE_MAGIC;
+  stderr_exe->num_args = 2;
+  stderr_exe->num_statics = 0;
+  stderr_exe->num_locals = 2;
+  stderr_exe->profile_block_id = block_id + 2;
+  stderr_exe->run = &StderrImpl;
+  stderr_exe->on_free = &FbleExecutableNothingOnFree;
+  FbleValue* fble_stderr = FbleNewFuncValue(heap, stderr_exe, 0, NULL);
 
   FbleValue* argS = FbleNewEnumValue(heap, 1);
   for (size_t i = 0; i < argc; ++i) {
