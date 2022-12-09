@@ -1,6 +1,20 @@
+* Switch to using native stack for everything except tail calls.
+ - Remove results field.
+ - Remove func field.
+ - Only create a stack entry for tail calls.
+ - Change generate code to allocate its own space for locals.
+ - Rename 'locals' to 'args'.
+ - Change to convention where arguments are owned by caller rather than
+   callee.
 
-* Replace 'locals' with 'args' in FbleRunFunction?
- - Let functions define and track their own locals?
+
+* Switch to .fbld format for specs, readmes, and tutorials.
+ - For first attempt, do something best effort. Certainly doesn't need to be
+   perfect from day one. Just trying to exercise and learn more about
+   fbld.
+
+* Stop using global variables in app.fble.c for gWindow and gTime.
+ - We should be able to pass that via the executable somehow?
 
 * Improve documentation for how to write an FbleRunFunction.
  - Note: users need to FbleReleaseValue on all args before returning!

@@ -1184,4 +1184,8 @@ functions.
 Another annoying thing: we have to remember to release all the args before
 returning. That's not obvious and ought to be clearly documented somewhere.
 
+---
+
+Next big question, I suppose, is how to offer nice debug support for the
+generated C code. Is there anything we can do at all dwarf wise?
 

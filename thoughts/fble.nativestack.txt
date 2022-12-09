@@ -1,0 +1,81 @@
+Native Stack
+============
+Currently we use a mix of native and managed stack. The managed stack comes
+from the days when we had concurrency built in and we used garbage collection
+on the stack. Now that we don't have that, I think we can almost get rid of
+the managed stack. Everything except for tail
+calls.
+
+How could we do that? And why should we?
+
+The why is for cleanup purposes and performance. No need to have a managed
+stack if we can do it with a native stack. In the case of no tail calls, we
+can avoid any managed stack allocations entirely. In the case of tail calls, I
+think we still need some allocation, to pass arguments from the callee back to
+the caller so it can do the tail call on behalf of the callee.
+
+For the how we could do it, I think we can go a step at a time. Starting with
+result and func fields, which I think should be easy to get rid of. Right?
+
+Maybe let's start with the function. Where do we use that?
+* In tail call, to know what function to call. In other words, seems like
+  we'll want to keep that for the tail call stack anyway.
+
+Okay, how about return value?
+* FbleThreadReturn uses that to know where to save the result.
+
+So we need to save result pointer to know where to store the result. How about
+making it more like a function? As in, FbleRunFunction can return the
+FbleValue* which is the result. We use some other mechanism to notify of tail
+call or abort conditions.
+
+Except we still want to make sure FbleThreadReturn is called, to do the
+profile exit block call? No. That can be done in the FbleThreadCall function.
+
+Proposal: return NULL for abort, FbleValue* for finished, and some special
+sentinel value for 'continue'. In case of continue, we continue from the tail
+call stack, which we will have saved the func and args to call.
+
+So, user API is:
+  FbleValue* FbleThreadCall(heap, thread, func, args);
+    Calls the function, returns the result, or NULL in case of abort.
+  FbleValue* FbleThreadTailCall(heap, thread, func, args)
+    Arranges for func and args to be called by the caller (internally via the
+    managed tail call stack)
+
+There is no FbleThreadReturn function. You just directly return NULL or the
+value or the result of FbleThreadTailCall in any of those cases.
+
+Now then, how do we manage profiling blocks and ownership of func and args?
+
+Version 1:
+* FbleThreadCall does the first enter call.
+* FbleThreadCall does replace calls as required for tail calls.
+* FbleThreadCall does the final exit call.
+* FbleThreadCall retains args. Callee is responsible for freeing args.
+
+Version 2:
+* FbleThreadCall does the first enter call.
+* FbleThreadCall does replace calls as required for tail calls.
+* FbleThreadCall does the final exit call.
+* Callee is not responsible for freeing any args.
+* return transfers ownership of return value from callee to caller.
+
+Version 2 sounds good. Simpler. Maybe good to jump directly to it?
+
+Proposed changes are:
+* Move all profiling stuff to FbleThreadCall function.
+* Change things to return FbleValue* directly.
+* Callee doesn't have ownership of args.
+* Callee responsible for allocating space for its own locals.
+
+Two of these things we can separate: profiling stuff, and args versus locals.
+The last bit is going to be harder to separate. I think better to do the last
+bit all at once.
+
+Let's see if I can do the profiling change first. Then think about locals
+versus args.
+
+
+
+

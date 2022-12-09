@@ -162,9 +162,6 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
   FbleFuncInfo info = FbleFuncValueInfo(func);
 
   FbleExecutable* executable = info.executable;
-  if (thread->profile != NULL) {
-    FbleProfileEnterBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
-  }
 
   FbleRetainValue(heap, func);
 
@@ -175,18 +172,30 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
     FbleRetainValue(heap, args[i]);
   }
 
-  FbleExecStatus status = FBLE_EXEC_CONTINUED;
-  while (status == FBLE_EXEC_CONTINUED) {
-    FbleValue* function = thread->stack->func;
-    FbleFuncInfo func_info = FbleFuncValueInfo(function);
-    FbleExecutable* func_exe = func_info.executable;
-    status = func_exe->run(
-        heap, thread,
-        func_exe,
-        thread->stack->locals,
-        func_info.statics,
-        func_info.profile_block_offset);
+  if (thread->profile != NULL) {
+    FbleProfileEnterBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
   }
+  FbleExecStatus status = executable->run(
+        heap, thread, executable, thread->stack->locals,
+        info.statics, info.profile_block_offset);
+  while (status == FBLE_EXEC_CONTINUED) {
+    func = thread->stack->func;
+    info = FbleFuncValueInfo(func);
+    executable = info.executable;
+
+    if (thread->profile != NULL) {
+      FbleProfileReplaceBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
+    }
+
+    status = executable->run(
+        heap, thread, executable, thread->stack->locals,
+        info.statics, info.profile_block_offset);
+  }
+
+  if (thread->profile != NULL) {
+    FbleProfileExitBlock(thread->profile);
+  }
+
   return status;
 }
 
@@ -210,10 +219,6 @@ FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleV
 {
   FbleFuncInfo info = FbleFuncValueInfo(func);
   FbleExecutable* executable = info.executable;
-  if (thread->profile != NULL) {
-    FbleProfileReplaceBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
-  }
-
   FbleValue** result = thread->stack->result;
 
   PopStackFrame(heap, thread);
@@ -244,12 +249,8 @@ FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, Fble
 // FbleThreadReturn -- see documentation in fble-execute.h
 FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result)
 {
-  if (thread->profile != NULL) {
-    FbleProfileExitBlock(thread->profile);
-  }
   *(thread->stack->result) = result;
   PopStackFrame(heap, thread);
-
   return result == NULL ? FBLE_EXEC_ABORTED : FBLE_EXEC_FINISHED;
 }
 
