@@ -51,6 +51,10 @@ add @a[DIR] to the module search path
 the path of the module to compile
 ]
 
+@subsection[Target Control]
+@opt[@l[-t], @l[--target] \[@l[aarch64] | @l[c]\]]
+what to compile to, defaults to aarch64
+
 @subsection[Output Control][
 @opt[@l[-c], @l[--compile]]
 generate compiled code for the module

@@ -1,4 +1,4 @@
-# fble program for MainDriver-2 tutorial.
+# fble program for CompiledCode tutorial.
 
 @ Unit@ = *();
 @ Bit@ = +(Unit@ 0, Unit@ 1);

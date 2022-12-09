@@ -1,11 +1,10 @@
 * Switch to using native stack for everything except tail calls.
- - Remove results field.
- - Remove func field.
- - Only create a stack entry for tail calls.
- - Change generate code to allocate its own space for locals.
- - Rename 'locals' to 'args'.
- - Change to convention where arguments are owned by caller rather than
-   callee.
+ See thoughts/fble.nativestack.txt
+
+* Write CompiledCode tutorial
+ - Fix code to not leak memory in case of failure to provide command line
+   args.
+ - Draft text of tutorial.
 
 
 * Switch to .fbld format for specs, readmes, and tutorials.
@@ -68,9 +67,6 @@
  - Clean up libfble interface.
  - Write man pages (fble.man.txt)
  See thoughts/fble.release.txt
-
-* Write a tutorial
-  See thoughts/fble.tutorial.txt
 
 * Why doesn't type inference work for Concat function?
 

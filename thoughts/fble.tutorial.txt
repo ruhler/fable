@@ -165,3 +165,11 @@ Going on to CompiledCode tutorial. I need to remove references to internal
 header files from compiled code before this makes sense. That should be a
 priority to work on.
 
+---
+
+References to internal header files are removed. Next question: should we use
+aarch64 or c as the target? I'm kind of thinking c might be better to start,
+so that people don't need to be running aarch64 to try. And maybe have an
+extra optional section of the tutorial that shows how to compile via aarch64
+after that.
+

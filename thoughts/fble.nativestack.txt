@@ -76,6 +76,53 @@ bit all at once.
 Let's see if I can do the profiling change first. Then think about locals
 versus args.
 
+Good. Works great.
 
+Next step: let's work on some uses of locals. Where do we have num_locals not
+matching num_args?
+* generate-c, if FbleCode stores a different number of locals than args.
+* generate-aarch64.c, if FbleCode stores a different number of locals than
+  args.
 
+Just those two cases. How should we track locals in general? Still via
+FbleExecutable? I think there are two separate parts:
+1. Passing num locals from compiler to codegen/interpreter.
+2. Using num locals for generated code / interpreter.
+
+Trouble is, currently we assume args and locals are contiguous. And maybe we
+allow the compiler to reuse arg space for locals? In an instruction, we would
+need to know whether an variable is in an arg versus in a local versus in a
+static. That requires changes to instructions. It's not so easy to change. But
+kind of a prerequisite for using the native stack, because the caller doesn't
+know how much local variable space to allocate, but it does know how many args
+to allocate.
+
+I think this is a change worth doing, and before we try to make more use of
+the native stack. It means working out the front end details:
+
+* Add an FBLE_ARGS_FRAME_SECTION.
+* Change FbleCode to have instrs and num_locals.
+* Remove num_locals from FbleExecutable*.
+...
+
+The real question is whether there is an incremental path to implement this,
+or if we just need to do it all in one big change.
+
+I'm thinking this will be easiest as an all in one big change. Which isn't to
+say it will be easy.
+
+Okay. Let's brainstorm the list of changes to make all at once:
+* Add an FBLE_ARGS_FRAME_SECTION.
+* Update everywhere we refer to frame section to support this new case.
+* Make sure to fix GET and GET_STRICT macros to handle all three cases of
+  section.
+* Update compiler to distinguish between args and locals.
+* Rename 'locals' variable of run function to 'args'.
+* Allocate local 'locals' variable in interpreter and generated c and aarch64
+  code.
+* Add num_locals field to FbleCode.
+* Remove num_locals from FbleExecutable*.
+* Update disassembler for these changes.
+
+Wish me luck.
 

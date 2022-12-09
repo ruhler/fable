@@ -42,7 +42,7 @@ FbleValue* ParseArg(FbleValueHeap* heap, const char* arg)
 int main(int argc, const char* argv[])
 {
   FbleValueHeap* heap = FbleNewValueHeap();
-  FbleValue* linked = FbleLinkFromCompiled(heap, HelloModule, NULL);
+  FbleValue* linked = FbleLinkFromCompiled(HelloModule, heap, NULL);
 
   if (linked == NULL) {
     FbleFreeValueHeap(heap);
