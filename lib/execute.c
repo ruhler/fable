@@ -20,13 +20,13 @@
 /**
  * Managed execution stack.
  *
- * Memory Management:
- *   Each thread owns its stack. The stack owns its tail.
- *
- *   The stack holds a strong reference to func and args.
+ * This is used to store function and arguments for tail calls.
  */
 typedef struct Stack {
-  /** the function being executed at this frame of the stack. */
+  /** Number of non-tail call stack frames above this frame on the stack. */
+  size_t normal_call_frames;
+
+  /** The function being executed at this frame of the stack. */
   FbleValue* func;
 
   /** the next frame down in the stack. */
@@ -62,12 +62,26 @@ struct FbleThread {
  */
 static FbleValue* sTailCallSentinelValue = (FbleValue*)"TAIL CALL SENTINEL VALUE";
 
-static void PushStackFrame(FbleValue* func, FbleValue** args, FbleThread* thread);
+static void PushNormalCallStackFrame(FbleThread* thread);
+static void PushTailCallStackFrame(FbleValue* func, FbleValue** args, FbleThread* thread);
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
 
 
-// PushStackFrame --
+// PushNormalCallStackFrame --
+//   Push a frame on top of the thread's stack for a normal function call.
+//
+// Inputs:
+//   thread - the thread whose stack to push to.
+//
+// Side effects:
+// * The caller should call PopStackFrame when this frame is done executing.
+static void PushNormalCallStackFrame(FbleThread* thread)
+{
+  thread->stack->normal_call_frames++;
+}
+
+// PushTailCallStackFrame --
 //   Push a frame on top of the thread's stack.
 //
 // Inputs:
@@ -77,15 +91,16 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 //   thread - the thread whose stack to push to.
 //
 // Side effects:
-// * Pushes a frame on top of the stack. Local variables are not initialized.
+// * Pushes a frame on top of the stack.
 // * Allocates memory that should be freed with a corresponding call to
 //   PopStackFrame.
-static void PushStackFrame(FbleValue* func, FbleValue** args, FbleThread* thread)
+static void PushTailCallStackFrame(FbleValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleFuncInfo info = FbleFuncValueInfo(func);
   FbleExecutable* executable = info.executable;
 
   Stack* stack = FbleStackAllocExtra(thread->allocator, Stack, executable->num_args * sizeof(FbleValue*));
+  stack->normal_call_frames = 0;
   stack->func = func;
   stack->tail = thread->stack;
 
@@ -107,6 +122,11 @@ static void PushStackFrame(FbleValue* func, FbleValue** args, FbleThread* thread
 // * Pops the top frame off the stack.
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 {
+  if (thread->stack->normal_call_frames > 0) {
+    --thread->stack->normal_call_frames;
+    return;
+  }
+
   Stack* stack = thread->stack;
   thread->stack = thread->stack->tail;
 
@@ -141,13 +161,19 @@ static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread)
 //   Does not take ownership of the function or the args.
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
+  Stack stack = {
+    .normal_call_frames = 0,
+    .func = NULL,
+    .tail = NULL
+  };
+
   FbleThread thread;
-  thread.stack = NULL;
+  thread.stack = &stack;
   thread.allocator = FbleNewStackAllocator();
   thread.profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
 
   FbleValue* result = FbleThreadCall(heap, &thread, func, args);
-  assert(thread.stack == NULL);
+  assert(thread.stack == &stack);
   FbleFreeStackAllocator(thread.allocator);
   FbleFreeProfileThread(thread.profile);
   return result;
@@ -159,20 +185,17 @@ FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* fu
   FbleFuncInfo info = FbleFuncValueInfo(func);
   FbleExecutable* executable = info.executable;
 
-  FbleRetainValue(heap, func);
-  for (size_t i = 0; i < executable->num_args; ++i) {
-    FbleRetainValue(heap, args[i]);
-  }
-  PushStackFrame(func, args, thread);
+  PushNormalCallStackFrame(thread);
 
   if (thread->profile != NULL) {
     FbleProfileEnterBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
   }
 
   FbleValue* result = executable->run(
-        heap, thread, executable, thread->stack->args,
+        heap, thread, executable, args,
         info.statics, info.profile_block_offset);
   while (result == sTailCallSentinelValue) {
+    assert(thread->stack->normal_call_frames == 0);
     func = thread->stack->func;
     info = FbleFuncValueInfo(func);
     executable = info.executable;
@@ -213,7 +236,7 @@ FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* f
 FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
   PopStackFrame(heap, thread);
-  PushStackFrame(func, args, thread);
+  PushTailCallStackFrame(func, args, thread);
   return sTailCallSentinelValue;
 }
 

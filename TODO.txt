@@ -1,6 +1,3 @@
-* Switch to using native stack for everything except tail calls.
- See thoughts/fble.nativestack.txt
-
 * Write CompiledCode tutorial
  - Fix code to not leak memory in case of failure to provide command line
    args.

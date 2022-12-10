@@ -315,3 +315,19 @@ way to distinguish between tail call push and normal call push. For normal
 call push, increment a counter rather than do an allocation. For
 PopStackFrame, decrement the counter rather than pop the stack frame. Easy.
 
+What's next? It might be fun to see what performance is after this change,
+compared to whatever I last reported. Otherwise, we're kind of done, right?
+We're using the native stack for everything except tail calls.
+
+Looks like I only have interpreter times to compare against.
+
+/Md5/Bench%: 1m13s ==> 1m06s
+/Sat/Bench%: 1m48s ==> 1m44s
+
+That's not too bad. And compiled via aarch64, for comparison:
+
+md5-bench: 44s
+sat-bench: 1m13s
+
+
+
