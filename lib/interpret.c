@@ -155,6 +155,7 @@ static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
         switch (return_instr->result.tag) {
           case FBLE_STATIC_VAR: break;
+          case FBLE_ARG_VAR: break;
           case FBLE_LOCAL_VAR: {
             FbleReleaseValue(heap, locals[return_instr->result.index]);
             break;
@@ -204,14 +205,20 @@ FbleExecStatus FbleInterpreterRunFunction(
     FbleValueHeap* heap,
     FbleThread* thread,
     FbleExecutable* executable,
-    FbleValue** locals,
+    FbleValue** args,
     FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
   FbleCode* code = (FbleCode*)executable;
   FbleInstr** instrs = code->instrs.xs;
+  FbleValue* locals[code->num_locals];
 
-  #define GET(idx) (idx.tag == FBLE_STATIC_VAR ? statics[idx.index] : locals[idx.index])
+  FbleValue** vars[3];
+  vars[FBLE_STATIC_VAR] = statics;
+  vars[FBLE_ARG_VAR] = args;
+  vars[FBLE_LOCAL_VAR] = locals;
+
+  #define GET(idx) (vars[idx.tag][idx.index])
   #define GET_STRICT(idx) FbleStrictValue(GET(idx))
 
   size_t pc = 0;
@@ -252,12 +259,12 @@ FbleExecStatus FbleInterpreterRunFunction(
       case FBLE_STRUCT_VALUE_INSTR: {
         FbleStructValueInstr* struct_value_instr = (FbleStructValueInstr*)instr;
         size_t argc = struct_value_instr->args.size;
-        FbleValue* args[argc];
+        FbleValue* struct_args[argc];
         for (size_t i = 0; i < argc; ++i) {
-          args[i] = GET(struct_value_instr->args.xs[i]);
+          struct_args[i] = GET(struct_value_instr->args.xs[i]);
         }
 
-        locals[struct_value_instr->dest] = FbleNewStructValue(heap, argc, args);
+        locals[struct_value_instr->dest] = FbleNewStructValue(heap, argc, struct_args);
         pc++;
         break;
       }
@@ -346,15 +353,15 @@ FbleExecStatus FbleInterpreterRunFunction(
         };
 
         FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
-        FbleValue* args[func_exe->num_args];
+        FbleValue* call_args[func_exe->num_args];
         for (size_t i = 0; i < func_exe->num_args; ++i) {
-          args[i] = GET(call_instr->args.xs[i]);
+          call_args[i] = GET(call_instr->args.xs[i]);
         }
 
         if (call_instr->exit) {
           FbleRetainValue(heap, func);
           for (size_t i = 0; i < func_exe->num_args; ++i) {
-            FbleRetainValue(heap, args[i]);
+            FbleRetainValue(heap, call_args[i]);
           }
 
           if (call_instr->func.tag == FBLE_LOCAL_VAR) {
@@ -369,11 +376,11 @@ FbleExecStatus FbleInterpreterRunFunction(
             }
           }
 
-          return FbleThreadTailCall(heap, thread, func, args);
+          return FbleThreadTailCall(heap, thread, func, call_args);
         }
 
         pc++;
-        if (FbleThreadCall(heap, thread, locals + call_instr->dest, func, args) == FBLE_EXEC_ABORTED) {
+        if (FbleThreadCall(heap, thread, locals + call_instr->dest, func, call_args) == FBLE_EXEC_ABORTED) {
           return RunAbort(heap, thread, code, locals, pc);
         }
         break;
@@ -418,6 +425,12 @@ FbleExecStatus FbleInterpreterRunFunction(
             break;
           }
 
+          case FBLE_ARG_VAR: {
+            result = args[return_instr->result.index];
+            FbleRetainValue(heap, result);
+            break;
+          }
+
           case FBLE_LOCAL_VAR: {
             result = locals[return_instr->result.index];
             break;
@@ -444,12 +457,12 @@ FbleExecStatus FbleInterpreterRunFunction(
       case FBLE_LIST_INSTR: {
         FbleListInstr* list_instr = (FbleListInstr*)instr;
         size_t argc = list_instr->args.size;
-        FbleValue* args[argc];
+        FbleValue* list_args[argc];
         for (size_t i = 0; i < argc; ++i) {
-          args[i] = GET(list_instr->args.xs[i]);
+          list_args[i] = GET(list_instr->args.xs[i]);
         }
 
-        locals[list_instr->dest] = FbleNewListValue(heap, argc, args);
+        locals[list_instr->dest] = FbleNewListValue(heap, argc, list_args);
         pc++;
         break;
       }

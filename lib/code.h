@@ -126,6 +126,7 @@ typedef struct {
 //   instructions.
 struct FbleCode {
   FbleExecutable _base;
+  size_t num_locals;
   FbleInstrV instrs;
 };
 

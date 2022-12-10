@@ -40,6 +40,8 @@ typedef struct {
 // Fields:
 //   statics - variables captured from the parent scope.
 //     Owns the Locals.
+//   args - arguments to the function.
+//     Owns the Locals.
 //   vars - stack of local variables in scope order. Entries may be NULL.
 //     Owns the Locals.
 //   locals - local values. Entries may be NULL to indicate a free slot.
@@ -50,6 +52,7 @@ typedef struct {
 //   parent - the parent of this scope. May be NULL.
 typedef struct Scope {
   LocalV statics;
+  LocalV args;
   LocalV vars;
   LocalV locals;
   FbleCode* code;
@@ -65,7 +68,7 @@ static void PopVar(Scope* scope, bool exit);
 static Local* GetVar(Scope* scope, FbleVar index);
 static void SetVar(Scope* scope, size_t index, FbleName name, Local* local);
 
-static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, FbleBlockId block, Scope* parent);
+static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, size_t statics, FbleBlockId block, Scope* parent);
 static void FreeScope(Scope* scope);
 static void AppendInstr(Scope* scope, FbleInstr* instr);
 static void AppendDebugInfo(Scope* scope, FbleDebugInfo* info);
@@ -117,7 +120,7 @@ static Local* NewLocal(Scope* scope)
 
   if (index == scope->locals.size) {
     FbleVectorAppend(scope->locals, NULL);
-    scope->code->_base.num_locals = scope->locals.size;
+    scope->code->num_locals = scope->locals.size;
   }
 
   Local* local = FbleAlloc(Local);
@@ -149,14 +152,16 @@ static void ReleaseLocal(Scope* scope, Local* local, bool exit)
 
   local->refcount--;
   if (local->refcount == 0) {
+    // refcount should never drop to 0 on static or arg vars.
+    assert(local->var.tag == FBLE_LOCAL_VAR);
+    assert(scope->locals.xs[local->var.index] == local);
+
     if (!exit) {
       FbleReleaseInstr* release_instr = FbleAllocInstr(FbleReleaseInstr, FBLE_RELEASE_INSTR);
       release_instr->target = local->var.index;
       AppendInstr(scope, &release_instr->_base);
     }
 
-    assert(local->var.tag == FBLE_LOCAL_VAR);
-    assert(scope->locals.xs[local->var.index] == local);
     scope->locals.xs[local->var.index] = NULL;
     FbleFree(local);
   }
@@ -223,14 +228,19 @@ static void PopVar(Scope* scope, bool exit)
 static Local* GetVar(Scope* scope, FbleVar var)
 {
   switch (var.tag) {
-    case FBLE_LOCAL_VAR: {
-      assert(var.index < scope->vars.size && "invalid local var index");
-      return scope->vars.xs[var.index];
-    }
-
     case FBLE_STATIC_VAR: {
       assert(var.index < scope->statics.size && "invalid static var index");
       return scope->statics.xs[var.index];
+    }
+
+    case FBLE_ARG_VAR: {
+      assert(var.index < scope->args.size && "invalid arg var index");
+      return scope->args.xs[var.index];
+    }
+
+    case FBLE_LOCAL_VAR: {
+      assert(var.index < scope->vars.size && "invalid local var index");
+      return scope->vars.xs[var.index];
     }
   }
 
@@ -271,7 +281,7 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
 // Inputs:
 //   scope - the scope to initialize.
 //   code - a pointer to store the allocated code block for this scope.
-//   args - the number of arguments to the function the scope is for.
+//   args - the arguments to the function the scope is for.
 //   statics - the number of statics captured by the scope (??).
 //   block - the profile block id to enter when executing this scope.
 //   parent - the parent of the scope to initialize. May be NULL.
@@ -282,7 +292,7 @@ static void SetVar(Scope* scope, size_t index, FbleName name, Local* local)
 //   and the parent scope must exceed the lifetime of this scope.
 // * The caller is responsible for calling FbleFreeCode on *code when it
 //   is no longer needed.
-static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics, FbleBlockId block, Scope* parent)
+static void InitScope(Scope* scope, FbleCode** code, FbleNameV args, size_t statics, FbleBlockId block, Scope* parent)
 {
   FbleVectorInit(scope->statics);
   for (size_t i = 0; i < statics; ++i) {
@@ -293,15 +303,34 @@ static void InitScope(Scope* scope, FbleCode** code, size_t args, size_t statics
     FbleVectorAppend(scope->statics, local);
   }
 
+  FbleVectorInit(scope->args);
+  for (size_t i = 0; i < args.size; ++i) {
+    Local* local = FbleAlloc(Local);
+    local->var.tag = FBLE_ARG_VAR;
+    local->var.index = i;
+    local->refcount = 1;
+    FbleVectorAppend(scope->args, local);
+  }
+
   FbleVectorInit(scope->vars);
   FbleVectorInit(scope->locals);
 
-  scope->code = FbleNewCode(args, statics, 0, block);
+  scope->code = FbleNewCode(args.size, statics, 0, block);
   scope->pending_debug_info = NULL;
   scope->pending_profile_ops = NULL;
   scope->parent = parent;
 
   *code = scope->code;
+
+  for (size_t i = 0; i < args.size; ++i) {
+    FbleVarDebugInfo* info = FbleAlloc(FbleVarDebugInfo);
+    info->_base.tag = FBLE_VAR_DEBUG_INFO;
+    info->_base.next = NULL;
+    info->name = FbleCopyName(args.xs[i]);
+    info->var.tag = FBLE_ARG_VAR;
+    info->var.index = i;;
+    AppendDebugInfo(scope, &info->_base);
+  }
 }
 
 // FreeScope --
@@ -318,6 +347,11 @@ static void FreeScope(Scope* scope)
     FbleFree(scope->statics.xs[i]);
   }
   FbleVectorFree(scope->statics);
+
+  for (size_t i = 0; i < scope->args.size; ++i) {
+    FbleFree(scope->args.xs[i]);
+  }
+  FbleVectorFree(scope->args);
 
   while (scope->vars.size > 0) {
     PopVar(scope, true);
@@ -822,8 +856,6 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
     case FBLE_FUNC_VALUE_TC: {
       FbleFuncValueTc* func_tc = (FbleFuncValueTc*)v;
-      size_t argc = func_tc->args.size;
-
       FbleFuncValueInstr* instr = FbleAllocInstr(FbleFuncValueInstr, FBLE_FUNC_VALUE_INSTR);
 
       FbleVectorInit(instr->scope);
@@ -834,12 +866,7 @@ static Local* CompileExpr(Blocks* blocks, bool stmt, bool exit, Scope* scope, Fb
 
       Scope func_scope;
       FbleBlockId scope_block = PushBodyBlock(blocks, func_tc->body_loc);
-      InitScope(&func_scope, &instr->code, argc, func_tc->scope.size, scope_block, scope);
-
-      for (size_t i = 0; i < argc; ++i) {
-        Local* local = NewLocal(&func_scope);
-        PushVar(&func_scope, func_tc->args.xs[i], local);
-      }
+      InitScope(&func_scope, &instr->code, func_tc->args, func_tc->scope.size, scope_block, scope);
 
       Local* func_result = CompileExpr(blocks, true, true, &func_scope, func_tc->body);
       ExitBlock(blocks, &func_scope, true);
@@ -973,12 +1000,7 @@ static FbleCode* Compile(FbleNameV args, FbleTc* tc, FbleName name, FbleNameV* p
   FbleCode* code;
   Scope scope;
   FbleBlockId scope_block = PushBlock(&blocks, name, name.loc);
-  InitScope(&scope, &code, args.size, 0, scope_block, NULL);
-
-  for (size_t i = 0; i < args.size; ++i) {
-    Local* local = NewLocal(&scope);
-    PushVar(&scope, args.xs[i], local);
-  }
+  InitScope(&scope, &code, args, 0, scope_block, NULL);
 
   CompileExpr(&blocks, true, true, &scope, tc);
   ExitBlock(&blocks, &scope, true);

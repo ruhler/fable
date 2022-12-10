@@ -77,9 +77,12 @@ typedef struct {
 // * Used to represent variables refering to function arguments or local
 //   variables. 
 //
-// For local variables, index starts at 0 for the first argument to a
-// function. The index increases by one for each new variable introduced,
-// going from left to right, outer most to inner most binding.
+// For args, index starts at 0 and increases by one for each argument going
+// from left to right.
+//
+// For local variables, index starts at 0 and increases by one for each new
+// variable introduced, going from left to right, outer most to inner most
+// binding.
 typedef struct {
   FbleTc _base;
   FbleVar var;

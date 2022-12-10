@@ -237,7 +237,6 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .magic = FBLE_EXECUTABLE_MAGIC,\n");
   fprintf(fout, "  .num_args = %zi, \n", module->code->_base.num_args);
   fprintf(fout, "  .num_statics = %zi,\n", module->code->_base.num_statics);
-  fprintf(fout, "  .num_locals = %zi,\n", module->code->_base.num_locals);
   fprintf(fout, "  .profile_block_id = %zi,\n", module->code->_base.profile_block_id);
 
   FbleName function_block = module->profile_blocks.xs[module->code->_base.profile_block_id];
@@ -279,7 +278,7 @@ static void ReturnAbort(FILE* fout, void* code, const char* function_label, size
 {
   fprintf(fout, "{\n");
   fprintf(fout, "    ReportAbort(%s, %d, %d);\n", lmsg, loc.line, loc.col);
-  fprintf(fout, "    return _Abort_%p_%s(heap, thread, locals, %zi);\n",
+  fprintf(fout, "    return _Abort_%p_%s(heap, thread, l, %zi);\n",
       code, function_label, pc);
   fprintf(fout, "  }\n");
 }
@@ -301,11 +300,12 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   SanitizeString(block.name->str, label);
   fprintf(fout, "static FbleExecStatus _Run_%p_%s("
       "FbleValueHeap* heap, FbleThread* thread, "
-      "FbleExecutable* executable, FbleValue** locals, "
+      "FbleExecutable* executable, FbleValue** args, "
       "FbleValue** statics, FbleBlockId profile_block_offset)\n",
       (void*)code, label);
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleValue** l = locals;\n");
+  fprintf(fout, "  FbleValue** a = args;\n");
+  fprintf(fout, "  FbleValue* l[%zi];\n", code->num_locals);
   fprintf(fout, "  FbleValue** s = statics;\n");
 
   // x0 is a temporary variable individual instructions can use however they
@@ -349,7 +349,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
     }
 
     // Instruction logic.
-    static const char* var_tag[] = { "s", "l" };
+    static const char* var_tag[] = { "s", "a", "l" };
     switch (instr->tag) {
       case FBLE_DATA_TYPE_INSTR: {
         FbleDataTypeInstr* dt_instr = (FbleDataTypeInstr*)instr;
@@ -464,7 +464,6 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         fprintf(fout, "    .magic = FBLE_EXECUTABLE_MAGIC,\n");
         fprintf(fout, "    .num_args = %zi,\n", func_instr->code->_base.num_args);
         fprintf(fout, "    .num_statics = %zi,\n", func_instr->code->_base.num_statics);
-        fprintf(fout, "    .num_locals = %zi,\n", func_instr->code->_base.num_locals);
         fprintf(fout, "    .profile_block_id = %zi,\n", func_instr->code->_base.profile_block_id);
         fprintf(fout, "    .run = &_Run_%p_%s,\n", (void*)func_instr->code, function_label);
         fprintf(fout, "    .on_free = NULL\n");
@@ -569,7 +568,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
         FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
 
         switch (return_instr->result.tag) {
-          case FBLE_STATIC_VAR: {
+          case FBLE_STATIC_VAR:
+          case FBLE_ARG_VAR: {
             fprintf(fout, "  FbleRetainValue(heap, %s[%zi]);\n",
                 var_tag[return_instr->result.tag],
                 return_instr->result.index);
@@ -732,6 +732,7 @@ static void EmitInstrForAbort(FILE* fout, size_t pc, FbleInstr* instr)
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
       switch (return_instr->result.tag) {
         case FBLE_STATIC_VAR: break;
+        case FBLE_ARG_VAR: break;
         case FBLE_LOCAL_VAR: {
           fprintf(fout, "  FbleReleaseValue(heap, l[%zi]);\n", return_instr->result.index);
           break;
@@ -784,9 +785,8 @@ static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* cod
   FbleName block = profile_blocks.xs[code->_base.profile_block_id];
   char label[SizeofSanitizedString(block.name->str)];
   SanitizeString(block.name->str, label);
-  fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** locals, size_t pc)\n", (void*)code, label);
+  fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** l, size_t pc)\n", (void*)code, label);
   fprintf(fout, "{\n");
-  fprintf(fout, "  FbleValue** l = locals;\n");
   fprintf(fout, "  switch (pc)\n");
   fprintf(fout, "  {\n");
   for (size_t i = 0; i < code->instrs.size; ++i) {

@@ -27,6 +27,18 @@ typedef struct {
   FbleModulePath* module;
 } VarName;
 
+/** Info about an argument. */
+typedef struct {
+  VarName name;
+  FbleType* type;
+} Arg;
+
+/** Vector of Args. */
+typedef struct {
+  size_t size;
+  Arg* xs;
+} ArgV;
+
 // Var --
 //   Information about a variable visible during type checking.
 //
@@ -60,10 +72,12 @@ typedef struct {
 //
 // Fields:
 //   statics - variables captured from the parent scope.
-//     Takes ownership of the Vars.
-//   vars - stack of local variables in scope order.
+//     Scope owns the Vars.
+//   args - list of args to the current scope.
+//     Scope owns the Vars.
+//   locals - stack of local variables in scope order.
 //     Variables may be NULL to indicate they are anonymous.
-//     Takes ownership of the Vars.
+//     Scope owns the Vars.
 //   captured - Collects the source of variables captured from the parent
 //              scope. May be NULL to indicate that operations on this scope
 //              should not have any side effects on the parent scope.
@@ -71,18 +85,19 @@ typedef struct {
 //   parent - the parent of this scope. May be NULL.
 typedef struct Scope {
   VarV statics;
-  VarV vars;
+  VarV args;
+  VarV locals;
   FbleVarV* captured;
   FbleModulePath* module;
   struct Scope* parent;
 } Scope;
 
 static bool VarNamesEqual(VarName a, VarName b);
-static Var* PushVar(Scope* scope, VarName name, FbleType* type);
-static void PopVar(FbleTypeHeap* heap, Scope* scope);
+static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type);
+static void PopLocalVar(FbleTypeHeap* heap, Scope* scope);
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom);
 
-static void InitScope(Scope* scope, FbleVarV* captured, FbleModulePath* module, Scope* parent);
+static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePath* module, Scope* parent);
 static void FreeScope(FbleTypeHeap* heap, Scope* scope);
 
 static void ReportError(FbleLoc loc, const char* fmt, ...);
@@ -163,8 +178,8 @@ static bool VarNamesEqual(VarName a, VarName b)
   return false;
 }
 
-// PushVar --
-//   Push a variable onto the current scope.
+// PushLocalVar --
+//   Push a local variable onto the current scope.
 //
 // Inputs:
 //   scope - the scope to push the variable on to.
@@ -173,15 +188,16 @@ static bool VarNamesEqual(VarName a, VarName b)
 //
 // Results:
 //   A pointer to the newly pushed variable. The pointer is owned by the
-//   scope. It remains valid until a corresponding PopVar or FreeScope
+//   scope. It remains valid until a corresponding PopLocalVar or FreeScope
 //   occurs.
 //
 // Side effects:
-//   Pushes a new variable with given name and type onto the scope. Takes
-//   ownership of the given type, which will be released when the variable is
-//   freed. Does not take ownership of name. It is the callers responsibility
+// * Pushes a new variable with given name and type onto the scope.
+// * Takes ownership of the given type, which will be released when the
+//   variable is freed.
+// * Does not take ownership of name. It is the callers responsibility
 //   to ensure that 'name' outlives the returned Var.
-static Var* PushVar(Scope* scope, VarName name, FbleType* type)
+static Var* PushLocalVar(Scope* scope, VarName name, FbleType* type)
 {
   Var* var = FbleAlloc(Var);
   var->name = name;
@@ -189,13 +205,13 @@ static Var* PushVar(Scope* scope, VarName name, FbleType* type)
   var->used = false;
   var->accessed = false;
   var->var.tag = FBLE_LOCAL_VAR;
-  var->var.index = scope->vars.size;
-  FbleVectorAppend(scope->vars, var);
+  var->var.index = scope->locals.size;
+  FbleVectorAppend(scope->locals, var);
   return var;
 }
 
-// PopVar --
-//   Pops a var off the given scope.
+// PopLocalVar --
+//   Pops a local var off the given scope.
 //
 // Inputs:
 //   heap - heap to use for allocations.
@@ -206,11 +222,11 @@ static Var* PushVar(Scope* scope, VarName name, FbleType* type)
 //
 // Side effects:
 //   Pops the top var off the scope. Invalidates the pointer to the variable
-//   originally returned in PushVar.
-static void PopVar(FbleTypeHeap* heap, Scope* scope)
+//   originally returned in PushLocalVar.
+static void PopLocalVar(FbleTypeHeap* heap, Scope* scope)
 {
-  scope->vars.size--;
-  Var* var = scope->vars.xs[scope->vars.size];
+  scope->locals.size--;
+  Var* var = scope->locals.xs[scope->locals.size];
   if (var != NULL) {
     FbleReleaseType(heap, var->type);
     FbleFree(var);
@@ -228,16 +244,27 @@ static void PopVar(FbleTypeHeap* heap, Scope* scope)
 //
 // Result:
 //   The variable from the scope, or NULL if no such variable was found. The
-//   variable is owned by the scope and remains valid until either PopVar is
-//   called or the scope is finished.
+//   variable is owned by the scope and remains valid until either PopLocalVar
+//   is called or the scope is finished.
 //
 // Side effects:
 //   Marks variable as used and for capture if necessary and not phantom.
 static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
 {
-  for (size_t i = 0; i < scope->vars.size; ++i) {
-    size_t j = scope->vars.size - i - 1;
-    Var* var = scope->vars.xs[j];
+  for (size_t i = 0; i < scope->locals.size; ++i) {
+    size_t j = scope->locals.size - i - 1;
+    Var* var = scope->locals.xs[j];
+    if (var != NULL && VarNamesEqual(name, var->name)) {
+      var->accessed = true;
+      if (!phantom) {
+        var->used = true;
+      }
+      return var;
+    }
+  }
+
+  for (size_t i = 0; i < scope->args.size; ++i) {
+    Var* var = scope->args.xs[i];
     if (var != NULL && VarNamesEqual(name, var->name)) {
       var->accessed = true;
       if (!phantom) {
@@ -293,23 +320,37 @@ static Var* GetVar(FbleTypeHeap* heap, Scope* scope, VarName name, bool phantom)
 //   captured - Collects the source of variables captured from the parent
 //              scope. May be NULL to indicate that operations on this scope
 //              should not have any side effects on the parent scope.
+//   args - args to the scope.
 //   module - the current module. Borrowed.
 //   parent - the parent of the scope to initialize. May be NULL.
 //
-// Results:
-//   None.
-//
 // Side effects:
-//   Initializes scope based on parent. FreeScope should be
-//   called to free the allocations for scope. The lifetime of the parent
-//   scope must exceed the lifetime of this scope.
-static void InitScope(Scope* scope, FbleVarV* captured, FbleModulePath* module, Scope* parent)
+// * Initializes scope based on parent.
+// * FreeScope should be called to free the allocations for scope.
+// * The lifetime of the parent scope must exceed the lifetime of this scope.
+// * Takes ownership of the args types, which will be released when the
+//   scope is freed.
+// * Does not take ownership of arg names. It is the callers responsibility to
+//   ensure that arg names outlive the scope.
+static void InitScope(Scope* scope, FbleVarV* captured, ArgV args, FbleModulePath* module, Scope* parent)
 {
   FbleVectorInit(scope->statics);
-  FbleVectorInit(scope->vars);
+  FbleVectorInit(scope->args);
+  FbleVectorInit(scope->locals);
   scope->captured = captured;
   scope->module = FbleCopyModulePath(module);
   scope->parent = parent;
+
+  for (size_t i = 0; i < args.size; ++i) {
+    Var* var = FbleAlloc(Var);
+    var->name = args.xs[i].name;
+    var->type = args.xs[i].type;
+    var->used = false;
+    var->accessed = false;
+    var->var.tag = FBLE_ARG_VAR;
+    var->var.index = scope->args.size;
+    FbleVectorAppend(scope->args, var);
+  }
 }
 
 // FreeScope --
@@ -332,10 +373,16 @@ static void FreeScope(FbleTypeHeap* heap, Scope* scope)
   }
   FbleVectorFree(scope->statics);
 
-  while (scope->vars.size > 0) {
-    PopVar(heap, scope);
+  for (size_t i = 0; i < scope->args.size; ++i) {
+    FbleReleaseType(heap, scope->args.xs[i]->type);
+    FbleFree(scope->args.xs[i]);
   }
-  FbleVectorFree(scope->vars);
+  FbleVectorFree(scope->args);
+
+  while (scope->locals.size > 0) {
+    PopLocalVar(heap, scope);
+  }
+  FbleVectorFree(scope->locals);
   FbleFreeModulePath(scope->module);
 }
 
@@ -932,7 +979,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       Var* vars[let_expr->bindings.size];
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
         VarName name = { .normal = let_expr->bindings.xs[i].name, .module = NULL };
-        vars[i] = PushVar(scope, name, types[i]);
+        vars[i] = PushLocalVar(scope, name, types[i]);
       }
 
       // Compile the values of the variables.
@@ -1024,7 +1071,7 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       }
 
       for (size_t i = 0; i < let_expr->bindings.size; ++i) {
-        PopVar(th, scope);
+        PopLocalVar(th, scope);
       }
 
       if (error) {
@@ -1326,13 +1373,17 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 
       FbleVarV captured;
       FbleVectorInit(captured);
-      Scope func_scope;
-      InitScope(&func_scope, &captured, scope->module, scope);
 
+      Arg args_xs[argc];
       for (size_t i = 0; i < argc; ++i) {
-        VarName name = { .normal = func_value_expr->args.xs[i].name, .module = NULL };
-        PushVar(&func_scope, name, arg_types.xs[i]);
+        args_xs[i].name.normal = func_value_expr->args.xs[i].name;
+        args_xs[i].name.module = NULL;
+        args_xs[i].type = arg_types.xs[i];
       }
+      ArgV args = { .size = argc, .xs = args_xs };
+
+      Scope func_scope;
+      InitScope(&func_scope, &captured, args, scope->module, scope);
 
       Tc func_result = TypeCheckExpr(th, &func_scope, func_value_expr->body);
       if (func_result.type == NULL) {
@@ -1388,10 +1439,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
       assert(arg != NULL);
 
       VarName name = { .normal = poly->arg.name, .module = NULL };
-      PushVar(scope, name, arg_type);
+      PushLocalVar(scope, name, arg_type);
       Tc body = TypeCheckExpr(th, scope, poly->body);
       CleanTc(cleaner, body);
-      PopVar(th, scope);
+      PopLocalVar(th, scope);
 
       if (body.type == NULL) {
         return TC_FAILED;
@@ -1884,8 +1935,10 @@ static Tc TypeCheckExprWithCleaner(FbleTypeHeap* th, Scope* scope, FbleExpr* exp
 //   no longer needed.
 static FbleType* TypeCheckExprForType(FbleTypeHeap* th, Scope* scope, FbleExpr* expr)
 {
+  ArgV args = { .size = 0, .xs = NULL };
+
   Scope nscope;
-  InitScope(&nscope, NULL, scope->module, scope);
+  InitScope(&nscope, NULL, args, scope->module, scope);
 
   Tc result = TypeCheckExpr(th, &nscope, expr);
   FreeScope(th, &nscope);
@@ -2071,13 +2124,15 @@ static FbleType* TypeCheckTypeWithCleaner(FbleTypeHeap* th, Scope* scope, FbleTy
 //   needed.
 static Tc TypeCheckModule(FbleTypeHeap* th, FbleLoadedModule* module, FbleType** deps)
 {
-  Scope scope;
-  InitScope(&scope, NULL, module->path, NULL);
-
+  Arg args_xs[module->deps.size];
   for (size_t i = 0; i < module->deps.size; ++i) {
-    VarName name = { .module = module->deps.xs[i] };
-    PushVar(&scope, name, FbleRetainType(th, deps[i]));
+    args_xs[i].name.module = module->deps.xs[i];
+    args_xs[i].type = FbleRetainType(th, deps[i]);
   }
+  ArgV args = { .size = module->deps.size, .xs = args_xs };
+
+  Scope scope;
+  InitScope(&scope, NULL, args, module->path, NULL);
 
   assert(module->type || module->value);
 

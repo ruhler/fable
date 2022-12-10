@@ -157,3 +157,130 @@ Where should that live? tc.h is fine I think. Cool. Let's start with this CL,
 which should be a straight forward naming change.
 
 Umm... but don't introduce ARG_VAR yet, right?
+
+---
+
+Notes while I work on the implementation:
+* Remember to update GET and GET_STRICT macros. DONE.
+* Need to update compile.c for args versus locals. DONE.
+* Need to update typecheck.c to generate arg vars. DONE.
+* FbleNewCode has new meaning for num_locals now. DONE.
+ - It doesn't include args anymore.
+* Need to update execute.c for args versus locals. DONE.
+* I'll keep regular call args on the stack for now. We can remove that later. DONE.
+* Need to allocate space for locals in generate-c. DONE.
+* Need to allocate space for locals in generate-aarch64. DONE.
+* Very clearly document how FbleThreadCall, FbleThreadTailCall, and
+  FbleThreadReturn are intended to be used, because I'm making some pretty
+  strong assumptions about it in the implementation.
+  DONE. I hope it's clear enough.
+* Would be good to have consistent order for args versus statics.
+ - FbleVarTag puts statics, then args, then locals
+ - RunFunction puts args then statics
+ - FbleExecutable puts num_args then num_statics
+ - FbleNewCode puts args, then statics, then locals.
+ - FbleDisassemble puts args, then statics, then locals.
+ - compile.c Scope puts statics, then args, then locals.
+ - generate-c var_tag matches order of FbleVarTag.
+ - RunStackFrame in generate-aarch64 is locals, args, statics.
+* Would be nice to rename Local to Var in compile.c?
+
+Notes in compile.c:
+* Don't PopVar args to the function. DONE.
+
+Notes in execute.c:
+* Need to decide whether Stack owns args or not. DONE.
+ - Let's say yes for now. We can remove that redundancy later.
+ - But I don't need to do this anymore right? I can clean it all up here? Only
+   use the Stack for tail calls?
+ - No. Hold off until we update the interface to FbleRunFunction. Keep stack
+   so we can hold func, result, etc.
+* Make sure to FbleReleaseValue on args on the stack when popping the stack.
+  DONE.
+
+Notes in generate-aarch64.c
+* Check var_tags for debug info. I think it's
+  statics, args, locals
+  R_STATICS, R_ARGS, R_LOCALS,
+  x23, x22, x21
+  0x86, 0x85, 0x84
+  
+  
+
+FbleTailCall pops the caller stack. That means FbleTailCall has to release any
+args on the stack, otherwise we loose a handle to those args to free them.
+
+But FbleTailCall doesn't know if whatever is on the stack was for a normal
+call or a tail call. We can fix that later. For now, let's always retain all
+args on the stack so that FbleTailCall can clean up properly.
+
+---
+
+Draft of the change is done. Time to try compiling and running.
+
+I forgot about updating all the other run functions. That's easily enough
+fixed.
+
+Lots of runtime failures:
+* ReleaseLocal: Assertion `local->var.tag == FBLE_LOCAL_VAR' failed
+ ./test/fble-test.cov --profile /dev/null -I ../spec -m /'SpecTests'/'5.2-FuncValue'/'Basic'/'SingleArg'%
+* Bus Error
+ ./spec/SpecTests/Unit/SpecTests-Unit.fble.aarch64 --profile /dev/null
+
+Those look like two pretty simple repro cases to look into. Let's start with
+the compiler issue.
+  
+It's from compiling a function value.
+* Maybe ReleaseLocal should be a no-op if trying to release an arg?
+  No. It should be the same as a static variable. Right?
+  Oh. This is because I changed the order of asserts.
+
+Next:
+* GetVar: Assertion `var.index < scope->vars.size && "invalid local var index"' failed.
+ ./test/fble-test.cov --profile /dev/null -I ../spec -m /'SpecTests'/'8.2-Path'/'Basic'/'Absolute'%
+  Looks related to module variables. Those should be args, not locals in
+  typecheck.c.
+* Bus Error
+ ./spec/SpecTests/Unit/SpecTests-Unit.fble.aarch64 --profile /dev/null
+* Memory leak detected:
+ ./test/fble-test.cov --profile /dev/null -I ../spec -m /'SpecTests'/'5.2-FuncValue'/'Basic'/'Recursive'%
+
+GetVar:
+* Looks like a bug in tc. I think module references are being treated as
+  local variables from the point of view of indexing, when they ought to be
+  considered as args, which shouldn't effect the local variable index.
+
+Probably I need to special case args in typecheck.c, rather than lump them
+together with locals. Otherwise the indexes will be off.
+
+Next:
+* Memory leak detected:
+ ./test/fble-test.cov --profile /dev/null -I ../spec -m /'SpecTests'/'5.2-FuncValue'/'Basic'/'Recursive'%
+* Bus Error
+ ./spec/SpecTests/Unit/SpecTests-Unit.fble.aarch64 --profile /dev/null
+
+Bus Error:
+* 400d50
+
+0000000000400d48 <_Run.0x55a0458728._2f_SpecTests_2f_Unit_25_>:
+  400d48: a9b8fbfd  stp x29, x30, [sp, #-120]!
+  400d4c: 910003fd  mov x29, sp
+  400d50: f9000bf3  str x19, [sp, #16]
+
+The 120 is wrong here. It needs to be a multiple of 16. What happened? Messed
+up the padding.
+
+Next:
+* Memory leak detected:
+  Looks like it's from tail calls.
+ ./test/fble-test.cov --profile /dev/null -I ../spec -m /'SpecTests'/'5.2-FuncValue'/'Basic'/'Recursive'%
+* Error: immediate offset out of range -512 to 504 at operand 3 -- `stp FP,LR,[SP,#-896]!'
+  Looks like we'll want to separate allocation of locals when entering the
+  stack.
+
+Memory leak was taking extra references to func and args in tail call.
+Solution is to have PopStackFrame consume.
+
+To fix the stp issue, advance the stack pointer for locals before calling stp.
+Hopefully that doesn't violate any expectations as to where things are stored
+on the stack. It should be fine I think.

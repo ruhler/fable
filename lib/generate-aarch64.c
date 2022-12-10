@@ -32,17 +32,21 @@ typedef struct {
 
 // RunStackFrame --
 //   A type representing the stack frame layout we'll use for _Run_ functions.
+//
+// Note: The size of this struct must be a multiple of 16 bytes to avoid bus
+// errors.
 typedef struct {
   void* FP;
   void* LR;
   void* r_heap_save;
   void* r_thread_save;
   void* r_locals_save;
+  void* r_args_save;
   void* r_statics_save;
   void* r_profile_block_offset_save;
   void* r_scratch_0_save;
   void* r_scratch_1_save;
-  void* padding;
+  void* locals[];
 } RunStackFrame;
 
 static void AddLoc(const char* source, LocV* locs);
@@ -312,7 +316,6 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
   fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
   fprintf(fout, "  .xword %zi\n", module->code->_base.num_args);
   fprintf(fout, "  .xword %zi\n", module->code->_base.num_statics);
-  fprintf(fout, "  .xword %zi\n", module->code->_base.num_locals);
   fprintf(fout, "  .xword %zi\n", module->code->_base.profile_block_id);
 
   FbleName function_block = module->profile_blocks.xs[module->code->_base.profile_block_id];
@@ -350,7 +353,7 @@ static LabelId StaticExecutableModule(FILE* fout, LabelId* label_id, FbleCompile
 // * Writes to the output stream.
 static void GetFrameVar(FILE* fout, const char* rdst, FbleVar var)
 {
-  static const char* regs[] = { "R_STATICS", "R_LOCALS" };
+  static const char* regs[] = { "R_STATICS", "R_ARGS", "R_LOCALS" };
   fprintf(fout, "  ldr %s, [%s, #%zi]\n", rdst, regs[var.tag], sizeof(FbleValue*) * var.index);
 }
 
@@ -646,7 +649,6 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       fprintf(fout, "  .xword %i\n", FBLE_EXECUTABLE_MAGIC);  // .magic
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_args);
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_statics);
-      fprintf(fout, "  .xword %zi\n", func_instr->code->_base.num_locals);
       fprintf(fout, "  .xword %zi\n", func_instr->code->_base.profile_block_id);
 
       FbleName function_block = profile_blocks.xs[func_instr->code->_base.profile_block_id];
@@ -796,7 +798,8 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
       GetFrameVar(fout, "R_SCRATCH_0", return_instr->result);
 
       switch (return_instr->result.tag) {
-        case FBLE_STATIC_VAR: {
+        case FBLE_STATIC_VAR:
+        case FBLE_ARG_VAR: {
           fprintf(fout, "  mov x0, R_HEAP\n");
           fprintf(fout, "  mov x1, R_SCRATCH_0\n");
           fprintf(fout, "  bl FbleRetainValue\n");
@@ -906,6 +909,8 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  .loc 1 %i %i\n", function_block.loc.line, function_block.loc.col);
 
   // Set up stack and frame pointer.
+  size_t sp_offset = StackBytesForCount(code->num_locals);
+  fprintf(fout, "  sub SP, SP, %zi\n", sp_offset);
   fprintf(fout, "  stp FP, LR, [SP, #-%zi]!\n", sizeof(RunStackFrame));
   fprintf(fout, "  mov FP, SP\n");
 
@@ -913,6 +918,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  str R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  str R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_thread_save));
   fprintf(fout, "  str R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
+  fprintf(fout, "  str R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
   fprintf(fout, "  str R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
   fprintf(fout, "  str R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  str R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
@@ -921,9 +927,10 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   // Set up common registers.
   fprintf(fout, "  mov R_HEAP, x0\n");
   fprintf(fout, "  mov R_THREAD, x1\n");
-  fprintf(fout, "  mov R_LOCALS, x3\n");
+  fprintf(fout, "  mov R_ARGS, x3\n");
   fprintf(fout, "  mov R_STATICS, x4\n");
   fprintf(fout, "  mov R_PROFILE_BASE_ID, x5\n");
+  fprintf(fout, "  add R_LOCALS, SP, #%zi\n", offsetof(RunStackFrame, locals));
 
   // Emit code for each fble instruction
   for (size_t i = 0; i < code->instrs.size; ++i) {
@@ -942,11 +949,13 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   fprintf(fout, "  ldr R_HEAP, [SP, #%zi]\n", offsetof(RunStackFrame, r_heap_save));
   fprintf(fout, "  ldr R_THREAD, [SP, #%zi]\n", offsetof(RunStackFrame, r_thread_save));
   fprintf(fout, "  ldr R_LOCALS, [SP, #%zi]\n", offsetof(RunStackFrame, r_locals_save));
+  fprintf(fout, "  ldr R_ARGS, [SP, #%zi]\n", offsetof(RunStackFrame, r_args_save));
   fprintf(fout, "  ldr R_STATICS, [SP, #%zi]\n", offsetof(RunStackFrame, r_statics_save));
   fprintf(fout, "  ldr R_PROFILE_BASE_ID, [SP, #%zi]\n", offsetof(RunStackFrame, r_profile_block_offset_save));
   fprintf(fout, "  ldr R_SCRATCH_0, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_0_save));
   fprintf(fout, "  ldr R_SCRATCH_1, [SP, #%zi]\n", offsetof(RunStackFrame, r_scratch_1_save));
   fprintf(fout, "  ldp FP, LR, [SP], #%zi\n", sizeof(RunStackFrame));
+  fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
   fprintf(fout, "  ret\n");
 
   fprintf(fout, ".L.%p.%s.high_pc:\n", (void*)code, function_label);
@@ -1065,6 +1074,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
       FbleReturnInstr* return_instr = (FbleReturnInstr*)instr;
       switch (return_instr->result.tag) {
         case FBLE_STATIC_VAR: break;
+        case FBLE_ARG_VAR: break;
         case FBLE_LOCAL_VAR: {
           fprintf(fout, "  mov x0, R_HEAP\n");
           GetFrameVar(fout, "x1", return_instr->result);
@@ -1232,10 +1242,11 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
   fprintf(fout, "  R_HEAP .req x19\n");
   fprintf(fout, "  R_THREAD .req x20\n");
   fprintf(fout, "  R_LOCALS .req x21\n");
-  fprintf(fout, "  R_STATICS .req x22\n");
-  fprintf(fout, "  R_PROFILE_BASE_ID .req x23\n");
-  fprintf(fout, "  R_SCRATCH_0 .req x24\n");
-  fprintf(fout, "  R_SCRATCH_1 .req x25\n");
+  fprintf(fout, "  R_ARGS .req x22\n");
+  fprintf(fout, "  R_STATICS .req x23\n");
+  fprintf(fout, "  R_PROFILE_BASE_ID .req x24\n");
+  fprintf(fout, "  R_SCRATCH_0 .req x25\n");
+  fprintf(fout, "  R_SCRATCH_1 .req x26\n");
 
   // Error messages.
   fprintf(fout, "  .section .data\n");
@@ -1367,7 +1378,7 @@ void FbleGenerateAArch64(FILE* fout, FbleCompiledModule* module)
           fprintf(fout, "\"\n");
 
           // location.
-          static const char* var_tags[] = { "0x85", "0x84"};
+          static const char* var_tags[] = { "0x86", "0x85", "0x84"};
           fprintf(fout, "  .byte 1f - 0f\n");   // length of block.
           fprintf(fout, "0:\n");
           fprintf(fout, "  .byte %s\n", var_tags[var->var.tag]);

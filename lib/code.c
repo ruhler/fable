@@ -165,10 +165,10 @@ FbleCode* FbleNewCode(size_t num_args, size_t num_statics, size_t num_locals, Fb
   code->_base.magic = FBLE_EXECUTABLE_MAGIC;
   code->_base.num_args = num_args;
   code->_base.num_statics = num_statics;
-  code->_base.num_locals = num_locals;
   code->_base.profile_block_id = profile_block_id;
   code->_base.run = &FbleInterpreterRunFunction;
   code->_base.on_free = &OnFree;
+  code->num_locals = num_locals;
   FbleVectorInit(code->instrs);
   return code;
 }
@@ -208,7 +208,7 @@ void FbleDisassemble(FILE* fout, FbleCompiledModule* module)
     FbleName block_name = profile_blocks.xs[block->_base.profile_block_id];
     fprintf(fout, "%s[%04zx] args[%zi] statics[%zi] locals[%zi]: // %s:%d:%d\n",
         block_name.name->str, block->_base.profile_block_id,
-        block->_base.num_args, block->_base.num_statics, block->_base.num_locals,
+        block->_base.num_args, block->_base.num_statics, block->num_locals,
         block_name.loc.source->str, block_name.loc.line, block_name.loc.col);
     for (size_t i = 0; i < block->instrs.size; ++i) {
       FbleInstr* instr = block->instrs.xs[i];

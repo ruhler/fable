@@ -40,12 +40,12 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 static FbleExecStatus EventImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
-    FbleValue** locals, FbleValue** statics,
+    FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset);
 static FbleExecStatus EffectImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
-    FbleValue** locals, FbleValue** statics,
+    FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset);
 
 static Uint32 OnTimer(Uint32 interval, void* param);
@@ -348,14 +348,14 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 static FbleExecStatus EventImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
-    FbleValue** locals, FbleValue** statics,
+    FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
   (void)executable;
   (void)statics;
   (void)profile_block_offset;
 
-  FbleValue* world = locals[0];
+  FbleValue* world = args[0];
   FbleValue* value = NULL;
   while (value == NULL) {
     SDL_Event event;
@@ -452,8 +452,6 @@ static FbleExecStatus EventImpl(
 
   FbleValue* result = FbleNewStructValue_(heap, 2, world, value);
   FbleReleaseValue(heap, value);
-
-  FbleReleaseValue(heap, locals[0]);
   return FbleThreadReturn(heap, thread, result);
 }
 
@@ -462,15 +460,15 @@ static FbleExecStatus EventImpl(
 static FbleExecStatus EffectImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
-    FbleValue** locals, FbleValue** statics,
+    FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
   (void)executable;
   (void)statics;
   (void)profile_block_offset;
 
-  FbleValue* effect = locals[0];
-  FbleValue* world = locals[1];
+  FbleValue* effect = args[0];
+  FbleValue* world = args[1];
 
   switch (FbleUnionValueTag(effect)) {
     case 0: {
@@ -513,9 +511,6 @@ static FbleExecStatus EffectImpl(
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
-
-  FbleReleaseValue(heap, locals[0]);
-  FbleReleaseValue(heap, locals[1]);
   return FbleThreadReturn(heap, thread, result);
 }
 
@@ -679,7 +674,6 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   event_exe->magic = FBLE_EXECUTABLE_MAGIC;
   event_exe->num_args = 1;
   event_exe->num_statics = 0;
-  event_exe->num_locals = 1;
   event_exe->profile_block_id = block_id;
   event_exe->run = &EventImpl;
   event_exe->on_free = &FbleExecutableNothingOnFree;
@@ -690,7 +684,6 @@ int FbleAppMain(int argc, const char* argv[], FbleCompiledModuleFunction* module
   effect_exe->magic = FBLE_EXECUTABLE_MAGIC;
   effect_exe->num_args = 2;
   effect_exe->num_statics = 0;
-  effect_exe->num_locals = 2;
   effect_exe->profile_block_id = block_id + 1;
   effect_exe->run = &EffectImpl;
   effect_exe->on_free = &FbleExecutableNothingOnFree;

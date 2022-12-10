@@ -21,10 +21,8 @@ typedef enum {
 
   /**
    * For arguments passed to a function.
-   *
-   * TODO
    */
-  // FBLE_ARG_VAR,
+  FBLE_ARG_VAR,
 
   /**
    * For local variables.

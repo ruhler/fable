@@ -39,16 +39,14 @@ typedef enum {
  *
  * A C function to run the fble function on the top of the thread stack.
  *
- * The FbleRunFunction should clean up and pop the stack frame before
- * returning, regardless of whether the function completes, aborts, or needs a
- * continuation. In case of continuation, a continuation stack frame is pushed
- * after popping the current stack frame.
+ * The FbleRunFunction must finish with a call to either FbleThreadReturn or
+ * FbleThreadTailCall.
  *
  * @param heap        The value heap.
  * @param thread      The thread to run.
  * @param executable  The FbleExecutable associated with the function.
- * @param locals      Space for the function's local variables.
- * @param statics     The function's static variables.
+ * @param args        Arguments to the function. Borrowed.
+ * @param statics     The function's static variables. Borrowed.
  * @param profile_block_offset  The function profile block offset.
  *
  * @returns
@@ -57,12 +55,14 @@ typedef enum {
  * @sideeffects
  * * The fble function on the top of the thread stack is executed.
  * * The stack frame is cleaned up and popped from the stack.
+ * * In case of tail call, a new frame is pushed to sthe stack with the 
+ *   function and arguments to tail call.
  */
 typedef FbleExecStatus FbleRunFunction(
     FbleValueHeap* heap,
     FbleThread* thread,
     FbleExecutable* executable,
-    FbleValue** locals,
+    FbleValue** args,
     FbleValue** statics,
     FbleBlockId profile_block_offset);
 
@@ -90,14 +90,6 @@ struct FbleExecutable {
 
   /** Number of static values used by the function. */
   size_t num_statics;
-
-  /**
-   * Number of local values used by the function.
-   *
-   * This count should include the number of arguments to the function and any
-   * additional space required for local variables.
-   */ 
-  size_t num_locals;
 
   /**
    * Profiling block associated with this executable. Relative to the
@@ -291,6 +283,13 @@ FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValu
  *   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
  *   doing an FbleReleaseValue call for func and args.
  * * Replaces the profiling block for the function being called.
+ *
+ * This function should only be called from an FbleRunFunction invoked by
+ * FbleThreadCall.
+ *
+ * The run function should directly return the result of FbleThreadTailCall.
+ * It should not execute any other thread API functions after calling
+ * FbleThreadTailCall.
  */
 FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
 
@@ -314,6 +313,13 @@ FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleV
  *   FbleThreadTailCall, so that calling FbleThreadTailCall has the effect of
  *   doing an FbleReleaseValue call for func and args.
  * * Replaces the profiling block for the function being called.
+ *
+ * This function should only be called from an FbleRunFunction invoked by
+ * FbleThreadCall.
+ *
+ * The run function should directly return the result of FbleThreadTailCall_.
+ * It should not execute any other thread API functions after calling
+ * FbleThreadTailCall_.
  */
 FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
 
@@ -332,10 +338,16 @@ FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, Fble
  * @sideeffects
  * * Sets the return result for the current stack frame and pops the frame off
  *   the stack. 
- * * Exits the current profiling block.
  * * Takes over ownership of result. FbleThreadReturn will call
  *   FbleReleaseValue on the result on behalf of the caller when the result is
  *   no longer needed.
+ *
+ * This function should only be called from an FbleRunFunction invoked by
+ * FbleThreadCall.
+ *
+ * The run function should directly return the result of FbleThreadReturn. It
+ * should not execute any other thread API functions after calling
+ * FbleThreadReturn.
  */
 FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result);
 

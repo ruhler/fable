@@ -32,7 +32,7 @@ static void OnFree(FbleExecutable* this);
 static FbleExecStatus GetImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
-    FbleValue** locals, FbleValue** statics,
+    FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset);
 
 static void PrintUsage(FILE* stream, FbleCompiledModuleFunction* module);
@@ -104,19 +104,17 @@ static void OnFree(FbleExecutable* this)
 static FbleExecStatus GetImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
-    FbleValue** locals, FbleValue** statics,
+    FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
   (void)statics;
   (void)profile_block_offset;
 
   Executable* exe = (Executable*)executable;
-  FbleValue* world = locals[0];
+  FbleValue* world = args[0];
   FbleValue* byte = GetByte(heap, exe->fin);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, byte);
   FbleReleaseValue(heap, byte);
-
-  FbleReleaseValue(heap, locals[0]);
   return FbleThreadReturn(heap, thread, result);
 }
 
@@ -297,7 +295,6 @@ int FbleMd5Main(int argc, const char** argv, FbleCompiledModuleFunction* module)
   exec->_base.magic = FBLE_EXECUTABLE_MAGIC;
   exec->_base.num_args = 1;
   exec->_base.num_statics = 0;
-  exec->_base.num_locals = 1;
   exec->_base.profile_block_id = block_id;
   exec->_base.run = &GetImpl;
   exec->_base.on_free = &OnFree;
