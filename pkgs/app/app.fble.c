@@ -37,12 +37,12 @@ static FbleValue* MakeInt(FbleValueHeap* heap, int x);
 static FbleValue* MakeKey(FbleValueHeap* heap, SDL_Scancode scancode);
 static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button);
 
-static FbleExecStatus EventImpl(
+static FbleValue* EventImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset);
-static FbleExecStatus EffectImpl(
+static FbleValue* EffectImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
@@ -345,12 +345,13 @@ static FbleValue* MakeButton(FbleValueHeap* heap, Uint8 button)
 
 // Event -- Implementation of event function.
 //   IO@<Event@>
-static FbleExecStatus EventImpl(
+static FbleValue* EventImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
+  (void)thread;
   (void)executable;
   (void)statics;
   (void)profile_block_offset;
@@ -452,17 +453,18 @@ static FbleExecStatus EventImpl(
 
   FbleValue* result = FbleNewStructValue_(heap, 2, world, value);
   FbleReleaseValue(heap, value);
-  return FbleThreadReturn(heap, thread, result);
+  return result;
 }
 
 // Effect -- Implementation of effect function.
 //   (Effect@, World@) { R@<Unit@>; }
-static FbleExecStatus EffectImpl(
+static FbleValue* EffectImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
+  (void)thread;
   (void)executable;
   (void)statics;
   (void)profile_block_offset;
@@ -511,7 +513,7 @@ static FbleExecStatus EffectImpl(
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
-  return FbleThreadReturn(heap, thread, result);
+  return result;
 }
 
 // OnTimer --

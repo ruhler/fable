@@ -11,7 +11,7 @@
 //   instructions in its instruction block.
 //
 // See documentation of FbleRunFunction in execute.h.
-FbleExecStatus FbleInterpreterRunFunction(
+FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
     FbleThread* thread,
     FbleExecutable* executable,

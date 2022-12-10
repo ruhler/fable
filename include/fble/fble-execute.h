@@ -20,27 +20,9 @@
 typedef struct FbleThread FbleThread;
 
 /**
- * Status result of running a function.
- *
- * FBLE_EXEC_CONTINUED is used in the case when a function needs to perform a
- * tail call. In this case, the function pushes the tail call on the managed
- * stack and returns FBLE_EXEC_CONTINUED. It is the callers responsibility to
- * execute the function on top of the managed stack to completion before
- * continuing itself.
- */
-typedef enum {
-  FBLE_EXEC_CONTINUED, /**< The function requires a continuation to be run. */
-  FBLE_EXEC_FINISHED,  /**< The function has finished running. */
-  FBLE_EXEC_ABORTED,   /**< The function has aborted. */
-} FbleExecStatus;
-
-/**
  * Implementation of fble function logic.
  *
  * A C function to run the fble function on the top of the thread stack.
- *
- * The FbleRunFunction must finish with a call to either FbleThreadReturn or
- * FbleThreadTailCall.
  *
  * @param heap        The value heap.
  * @param thread      The thread to run.
@@ -50,15 +32,15 @@ typedef enum {
  * @param profile_block_offset  The function profile block offset.
  *
  * @returns
- *   The status result of running the function.
+ * * The result of executing the function.
+ * * NULL if the function aborts.
+ * * A special sentinal value to indicate a tail call is required.
  *
  * @sideeffects
- * * The fble function on the top of the thread stack is executed.
- * * The stack frame is cleaned up and popped from the stack.
- * * In case of tail call, a new frame is pushed to sthe stack with the 
- *   function and arguments to tail call.
+ * * May call FbleThreadTailCall to indicate tail call required.
+ * * Executes the fble function, with whatever side effects that may have.
  */
-typedef FbleExecStatus FbleRunFunction(
+typedef FbleValue* FbleRunFunction(
     FbleValueHeap* heap,
     FbleThread* thread,
     FbleExecutable* executable,
@@ -225,42 +207,38 @@ void FbleFreeExecutableProgram(FbleExecutableProgram* program);
  *
  * @param heap    The value heap.
  * @param thread  The thread whose stack to push the frame on to.
- * @param result  Where to store a strong reference to the result of executing
- *                the function.
  * @param func    The function to execute. Borrowed.
  * @param args    Arguments to pass to the function. length == func->argc.
  *                Borrowed.
  *
  * @returns
- *   The status of the execution. FBLE_EXEC_CONTINUED will never be returned.
+ *   The result of the function call, or NULL in case of abort.
  *
  * @sideeffects
  * * Updates the threads stack.
  * * Enters a profiling block for the function being called.
  * * Executes the called function to completion, returning the result.
  */
-FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, FbleValue** args);
+FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
 
 /**
  * Calls an fble function using varags.
  *
  * @param heap     The value heap.
  * @param thread   The thread whose stack to push the frame on to.
- * @param result   Where to store a strong reference to the result of executing the
- *                 function.
  * @param func     The function to execute. Borrowed.
  * @param ...      func->argc number of arguments to pass to the function.
  *                 Borrowed.
  *
  * @returns
- *   The status of the execution. FBLE_EXEC_CONTINUED will never be returned.
+ *   The result of the function call, or NULL in case of abort.
  *
  * @sideeffects
  * * Updates the threads stack.
  * * Enters a profiling block for the function being called.
  * * Executes the called function to completion, returning the result.
  */
-FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, ...);
+FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
 
 /**
  * Tail calls an fble function.
@@ -274,7 +252,7 @@ FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValu
  *                Array borrowed, elements consumed.
  *
  * @returns
- *   FBLE_EXEC_CONTINUED.
+ *   An special sentinal value to indicate tail call is required.
  *
  * @sideeffects
  * * Exits the current frame, which potentially frees any instructions
@@ -291,7 +269,7 @@ FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValu
  * It should not execute any other thread API functions after calling
  * FbleThreadTailCall.
  */
-FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
+FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args);
 
 /**
  * Tail aclls an fble function using varargs.
@@ -304,7 +282,7 @@ FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleV
  * @param ...     func->args number of args to the function. Args consumed.
  *
  * @returns
- *   FBLE_EXEC_CONTINUED.
+ *   An special sentinal value to indicate tail call is required.
  *
  * @sideeffects
  * * Exits the current frame, which potentially frees any instructions
@@ -321,35 +299,7 @@ FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleV
  * It should not execute any other thread API functions after calling
  * FbleThreadTailCall_.
  */
-FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
-
-/**
- * Returns from an fble function.
- *
- * @param heap     The value heap.
- * @param thread   The thread to do the return on.
- * @param result   The result to return. Consumed. May be NULL if aborting
- *                 from the function.
- *
- * @returns
- *   FBLE_EXEC_FINISHED or FBLE_EXEC_ABORTED depending on whether the argument
- *   is NULL.
- *
- * @sideeffects
- * * Sets the return result for the current stack frame and pops the frame off
- *   the stack. 
- * * Takes over ownership of result. FbleThreadReturn will call
- *   FbleReleaseValue on the result on behalf of the caller when the result is
- *   no longer needed.
- *
- * This function should only be called from an FbleRunFunction invoked by
- * FbleThreadCall.
- *
- * The run function should directly return the result of FbleThreadReturn. It
- * should not execute any other thread API functions after calling
- * FbleThreadReturn.
- */
-FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result);
+FbleValue* FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...);
 
 /**
  * Takes a profiling sample on the thread.

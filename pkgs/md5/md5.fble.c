@@ -29,7 +29,7 @@ static FbleValue* MkBitN(FbleValueHeap* heap, size_t n, uint64_t data);
 static FbleValue* GetByte(FbleValueHeap*, FILE* fin);
 
 static void OnFree(FbleExecutable* this);
-static FbleExecStatus GetImpl(
+static FbleValue* GetImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
@@ -101,12 +101,13 @@ static void OnFree(FbleExecutable* this)
  *
  * See FbleRunFunction documentation for more info.
  */
-static FbleExecStatus GetImpl(
+static FbleValue* GetImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
+  (void)thread;
   (void)statics;
   (void)profile_block_offset;
 
@@ -115,7 +116,7 @@ static FbleExecStatus GetImpl(
   FbleValue* byte = GetByte(heap, exe->fin);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, byte);
   FbleReleaseValue(heap, byte);
-  return FbleThreadReturn(heap, thread, result);
+  return result;
 }
 
 // PrintUsage --

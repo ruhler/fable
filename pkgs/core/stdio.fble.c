@@ -29,17 +29,17 @@
 
 static void Output(FILE* stream, FbleValue* str);
 
-static FbleExecStatus StdinImpl(
+static FbleValue* StdinImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset);
-static FbleExecStatus StdoutImpl(
+static FbleValue* StdoutImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset);
-static FbleExecStatus StderrImpl(
+static FbleValue* StderrImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
@@ -66,12 +66,13 @@ static void Output(FILE* stream, FbleValue* str)
 
 // Stdin -- Implementation of stdin function.
 //   IO@<Maybe@<String@>>
-static FbleExecStatus StdinImpl(
+static FbleValue* StdinImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
+  (void)thread;
   (void)executable;
   (void)statics;
   (void)profile_block_offset;
@@ -94,18 +95,18 @@ static FbleExecStatus StdinImpl(
 
   FbleValue* result = FbleNewStructValue_(heap, 2, world, ms);
   FbleReleaseValue(heap, ms);
-
-  return FbleThreadReturn(heap, thread, result);
+  return result;
 }
 
 // Stdout -- Implementation of stdout function.
 //   (String@, World@) { R@<Unit@>; }
-static FbleExecStatus StdoutImpl(
+static FbleValue* StdoutImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
+  (void)thread;
   (void)executable;
   (void)statics;
   (void)profile_block_offset;
@@ -118,17 +119,18 @@ static FbleExecStatus StdoutImpl(
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
-  return FbleThreadReturn(heap, thread, result);
+  return result;
 }
 
 // Stderr -- Implementation of stderr function.
 //   (String@, World@) { R@<Unit@>; }
-static FbleExecStatus StderrImpl(
+static FbleValue* StderrImpl(
     FbleValueHeap* heap, FbleThread* thread,
     FbleExecutable* executable,
     FbleValue** args, FbleValue** statics,
     FbleBlockId profile_block_offset)
 {
+  (void)thread;
   (void)executable;
   (void)statics;
   (void)profile_block_offset;
@@ -141,7 +143,7 @@ static FbleExecStatus StderrImpl(
   FbleValue* unit = FbleNewStructValue_(heap, 0);
   FbleValue* result = FbleNewStructValue_(heap, 2, world, unit);
   FbleReleaseValue(heap, unit);
-  return FbleThreadReturn(heap, thread, result);
+  return result;
 }
 
 // PrintUsage --

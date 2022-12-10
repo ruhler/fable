@@ -294,4 +294,24 @@ PopStackFrame from there, put it with FbleThreadCall.
 
 That works fine.
 
+Next step is to move the Pop and Push from FbleThreadTailCall. It just returns
+FBLE_EXEC_CONTINUED. Nope. Won't work. It needs to save the args. That means
+it needs to pop the previous args. That means it needs to know if the previous
+args need to be popped or not.
+
+Let's change the API first to return FbleValue*. Continue to allocate space
+for normal call args on the managed stack for the time being.
+
+Things to do:
+* update generate-c
+* update generate-aarch64
+
+Awesome. That looks nice.
+
+Next step is to try and avoid a managed stack frame for normal function calls.
+The trick is knowing when to free pop the stack and when not to. We can hide
+that all in PushStackFrame and PopStackFrame. Always call those, but have a
+way to distinguish between tail call push and normal call push. For normal
+call push, increment a counter rather than do an allocation. For
+PopStackFrame, decrement the counter rather than pop the stack frame. Easy.
 

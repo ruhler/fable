@@ -401,7 +401,6 @@ static void DoAbort(FILE* fout, void* code, size_t pc, const char* lmsg, FbleLoc
   fprintf(fout, "  bl fprintf\n");
 
   // Go to abort cleanup code.
-  fprintf(fout, "  mov x0, #%i\n", FBLE_EXEC_ABORTED);
   fprintf(fout, "  b .L._Abort_%p.pc.%zi\n", code, pc);
 }
 
@@ -743,15 +742,14 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
 
       fprintf(fout, "  mov x0, R_HEAP\n");
       fprintf(fout, "  mov x1, R_THREAD\n");
-      fprintf(fout, "  add x2, R_LOCALS, #%zi\n", sizeof(FbleValue*)*call_instr->dest);
-      fprintf(fout, "  mov x3, R_SCRATCH_0\n");   // func
-      fprintf(fout, "  mov x4, SP\n");
+      fprintf(fout, "  mov x2, R_SCRATCH_0\n");   // func
+      fprintf(fout, "  mov x3, SP\n");
       fprintf(fout, "  bl FbleThreadCall\n");
+      SetFrameVar(fout, "x0", call_instr->dest);
       fprintf(fout, "  add SP, SP, #%zi\n", sp_offset);
 
       // If the called function finished, continue to the next instruction.
-      fprintf(fout, "  cmp x0, %i\n", FBLE_EXEC_FINISHED);
-      fprintf(fout, "  b.eq .L._Run_%p.pc.%zi\n", code, pc + 1);
+      fprintf(fout, "  cbnz x0, .L._Run_%p.pc.%zi\n", code, pc + 1);
 
       // The called function must have aborted.
       DoAbort(fout, code, pc, ".L.CalleeAborted", call_instr->loc);
@@ -809,11 +807,7 @@ static void EmitInstr(FILE* fout, FbleNameV profile_blocks, void* code, size_t p
         case FBLE_LOCAL_VAR: break;
       }
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_THREAD\n");
-      fprintf(fout, "  mov x2, R_SCRATCH_0\n");
-      fprintf(fout, "  bl FbleThreadReturn\n");
-
+      fprintf(fout, "  mov x0, R_SCRATCH_0\n");
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }
@@ -1042,11 +1036,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
           }
         }
 
-        fprintf(fout, "  mov x0, R_HEAP\n");
-        fprintf(fout, "  mov x1, R_THREAD\n");
-        fprintf(fout, "  mov x2, XZR\n");
-        fprintf(fout, "  bl FbleThreadReturn\n");
-
+        fprintf(fout, "  mov x0, XZR\n");
         fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       }
 
@@ -1083,11 +1073,7 @@ static void EmitInstrForAbort(FILE* fout, void* code, size_t pc, FbleInstr* inst
         }
       }
 
-      fprintf(fout, "  mov x0, R_HEAP\n");
-      fprintf(fout, "  mov x1, R_THREAD\n");
-      fprintf(fout, "  mov x2, XZR\n");
-      fprintf(fout, "  bl FbleThreadReturn\n");
-
+      fprintf(fout, "  mov x0, XZR\n");
       fprintf(fout, "  b .L._Run_.%p.exit\n", code);
       return;
     }

@@ -14,7 +14,7 @@
 
 #define UNREACHABLE(x) assert(false && x)
 
-static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, FbleValue** locals, size_t pc);
+static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** locals, size_t pc);
 
 
 /**
@@ -33,12 +33,12 @@ static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode
  * @param locals  The function's local variables.
  * @param pc  The pc to start aborting from.
  *
- * @return FBLE_EXEC_ABORTED for convenience.
+ * @return NULL for convenience.
  *
  * @sideeffects
- * Cleans up all resources associated with the function call.
+ * Cleans up the function's local variables.
  */
-static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode* code, FbleValue** locals, size_t pc)
+static FbleValue* RunAbort(FbleValueHeap* heap, FbleCode* code, FbleValue** locals, size_t pc)
 {
   while (true) {
     assert(pc < code->instrs.size && "Missing return instruction?");
@@ -123,8 +123,7 @@ static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode
             }
           }
 
-          FbleThreadReturn(heap, thread, NULL);
-          return FBLE_EXEC_ABORTED;
+          return NULL;
         }
 
         locals[call_instr->dest] = NULL;
@@ -162,8 +161,7 @@ static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode
           }
         }
 
-        FbleThreadReturn(heap, thread, NULL);
-        return FBLE_EXEC_ABORTED;
+        return NULL;
       }
 
       case FBLE_TYPE_INSTR: {
@@ -197,11 +195,11 @@ static FbleExecStatus RunAbort(FbleValueHeap* heap, FbleThread* thread, FbleCode
   }
 
   UNREACHABLE("Should never get here");
-  return FBLE_EXEC_ABORTED;
+  return NULL;
 }
 
 // See documentation in interpret.h
-FbleExecStatus FbleInterpreterRunFunction(
+FbleValue* FbleInterpreterRunFunction(
     FbleValueHeap* heap,
     FbleThread* thread,
     FbleExecutable* executable,
@@ -284,7 +282,7 @@ FbleExecStatus FbleInterpreterRunFunction(
         FbleValue* sv = GET_STRICT(access_instr->obj);
         if (sv == NULL) {
           FbleReportError("undefined struct value access\n", access_instr->loc);
-          return RunAbort(heap, thread, code, locals, pc);
+          return RunAbort(heap, code, locals, pc);
         }
 
         FbleValue* v = FbleStructValueAccess(sv, access_instr->tag);
@@ -300,12 +298,12 @@ FbleExecStatus FbleInterpreterRunFunction(
         FbleValue* uv = GET_STRICT(access_instr->obj);
         if (uv == NULL) {
           FbleReportError("undefined union value access\n", access_instr->loc);
-          return RunAbort(heap, thread, code, locals, pc);
+          return RunAbort(heap, code, locals, pc);
         }
 
         if (FbleUnionValueTag(uv) != access_instr->tag) {
           FbleReportError("union field access undefined: wrong tag\n", access_instr->loc);
-          return RunAbort(heap, thread, code, locals, pc);
+          return RunAbort(heap, code, locals, pc);
         }
 
         FbleValue* v = FbleUnionValueAccess(uv);
@@ -320,7 +318,7 @@ FbleExecStatus FbleInterpreterRunFunction(
         FbleValue* uv = GET_STRICT(select_instr->condition);
         if (uv == NULL) {
           FbleReportError("undefined union value select\n", select_instr->loc);
-          return RunAbort(heap, thread, code, locals, pc);
+          return RunAbort(heap, code, locals, pc);
         }
         pc += 1 + select_instr->jumps.xs[FbleUnionValueTag(uv)];
         break;
@@ -349,7 +347,7 @@ FbleExecStatus FbleInterpreterRunFunction(
         FbleValue* func = GET_STRICT(call_instr->func);
         if (func == NULL) {
           FbleReportError("called undefined function\n", call_instr->loc);
-          return RunAbort(heap, thread, code, locals, pc);
+          return RunAbort(heap, code, locals, pc);
         };
 
         FbleExecutable* func_exe = FbleFuncValueInfo(func).executable;
@@ -380,8 +378,9 @@ FbleExecStatus FbleInterpreterRunFunction(
         }
 
         pc++;
-        if (FbleThreadCall(heap, thread, locals + call_instr->dest, func, call_args) == FBLE_EXEC_ABORTED) {
-          return RunAbort(heap, thread, code, locals, pc);
+        locals[call_instr->dest] = FbleThreadCall(heap, thread, func, call_args);
+        if (locals[call_instr->dest] == NULL) {
+          return RunAbort(heap, code, locals, pc);
         }
         break;
       }
@@ -408,7 +407,7 @@ FbleExecStatus FbleInterpreterRunFunction(
         FbleValue* value = GET(ref_def_instr->value);
         if (!FbleAssignRefValue(heap, ref, value)) {
           FbleReportError("vacuous value\n", ref_def_instr->loc);
-          return RunAbort(heap, thread, code, locals, pc);
+          return RunAbort(heap, code, locals, pc);
         }
 
         pc++;
@@ -437,7 +436,7 @@ FbleExecStatus FbleInterpreterRunFunction(
           }
         }
 
-        return FbleThreadReturn(heap, thread, result);
+        return result;
       }
 
       case FBLE_TYPE_INSTR: {

@@ -298,7 +298,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
   FbleName block = profile_blocks.xs[code->_base.profile_block_id];
   char label[SizeofSanitizedString(block.name->str)];
   SanitizeString(block.name->str, label);
-  fprintf(fout, "static FbleExecStatus _Run_%p_%s("
+  fprintf(fout, "static FbleValue* _Run_%p_%s("
       "FbleValueHeap* heap, FbleThread* thread, "
       "FbleExecutable* executable, FbleValue** args, "
       "FbleValue** statics, FbleBlockId profile_block_offset)\n",
@@ -526,13 +526,14 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
           break;
         }
 
-        fprintf(fout, "  if (FbleThreadCall_(heap, thread, l+%zi, x0", call_instr->dest);
+        fprintf(fout, "  l[%zi] = FbleThreadCall_(heap, thread, x0", call_instr->dest);
         for (size_t i = 0; i < call_instr->args.size; ++i) {
           fprintf(fout, ", %s[%zi]",
               var_tag[call_instr->args.xs[i].tag],
               call_instr->args.xs[i].index);
         }
-        fprintf(fout, ") == FBLE_EXEC_ABORTED) ");
+        fprintf(fout, ");\n");
+        fprintf(fout, "  if (l[%zi] == NULL) ", call_instr->dest);
         ReturnAbort(fout, code, label, pc, "CalleeAborted", call_instr->loc);
         break;
       }
@@ -579,7 +580,7 @@ static void EmitCode(FILE* fout, FbleNameV profile_blocks, FbleCode* code)
           case FBLE_LOCAL_VAR: break;
         }
 
-        fprintf(fout, "  return FbleThreadReturn(heap, thread, %s[%zi]);\n",
+        fprintf(fout, "  return %s[%zi];\n",
             var_tag[return_instr->result.tag],
             return_instr->result.index);
         break;
@@ -705,7 +706,7 @@ static void EmitInstrForAbort(FILE* fout, size_t pc, FbleInstr* instr)
           }
         }
 
-        fprintf(fout, "  return FbleThreadReturn(heap, thread, NULL);\n");
+        fprintf(fout, "  return NULL;\n");
       }
 
       fprintf(fout, "  l[%zi] = NULL;\n", call_instr->dest);
@@ -739,7 +740,7 @@ static void EmitInstrForAbort(FILE* fout, size_t pc, FbleInstr* instr)
         }
       }
 
-      fprintf(fout, "  return FbleThreadReturn(heap, thread, NULL);\n");
+      fprintf(fout, "  return NULL;\n");
       return;
     }
 
@@ -785,7 +786,7 @@ static void EmitCodeForAbort(FILE* fout, FbleNameV profile_blocks, FbleCode* cod
   FbleName block = profile_blocks.xs[code->_base.profile_block_id];
   char label[SizeofSanitizedString(block.name->str)];
   SanitizeString(block.name->str, label);
-  fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** l, size_t pc)\n", (void*)code, label);
+  fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** l, size_t pc)\n", (void*)code, label);
   fprintf(fout, "{\n");
   fprintf(fout, "  switch (pc)\n");
   fprintf(fout, "  {\n");
@@ -909,7 +910,7 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
 
   CollectBlocks(&blocks, module->code);
 
-  fprintf(fout, "#include <fble/fble-execute.h>\n");  // for FbleExecStatus
+  fprintf(fout, "#include <fble/fble-execute.h>\n");  // for FbleThreadCall_
   fprintf(fout, "#include <fble/fble-link.h>\n");     // for FbleCompiledModuleFunction
   fprintf(fout, "#include <fble/fble-value.h>\n");    // for FbleValue
 
@@ -935,12 +936,12 @@ void FbleGenerateC(FILE* fout, FbleCompiledModule* module)
     FbleName function_block = profile_blocks.xs[code->_base.profile_block_id];
     char function_label[SizeofSanitizedString(function_block.name->str)];
     SanitizeString(function_block.name->str, function_label);
-    fprintf(fout, "static FbleExecStatus _Run_%p_%s("
+    fprintf(fout, "static FbleValue* _Run_%p_%s("
       "FbleValueHeap* heap, FbleThread* thread, "
       "FbleExecutable* executable, FbleValue** locals, "
       "FbleValue** statics, FbleBlockId profile_block_offset);\n",
         (void*)code, function_label);
-    fprintf(fout, "static FbleExecStatus _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** locals, size_t pc);\n",
+    fprintf(fout, "static FbleValue* _Abort_%p_%s(FbleValueHeap* heap, FbleThread* thread, FbleValue** locals, size_t pc);\n",
         (void*)code, function_label);
   }
 

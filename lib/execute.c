@@ -24,15 +24,10 @@
  *   Each thread owns its stack. The stack owns its tail.
  *
  *   The stack holds a strong reference to func and args.
- *   'result' is a pointer to something that is initially NULL and expects to
- *   receive a strong reference to the return value.
  */
 typedef struct Stack {
   /** the function being executed at this frame of the stack. */
   FbleValue* func;
-
-  /** where to store the result of executing the current frame. */
-  FbleValue** result;
 
   /** the next frame down in the stack. */
   struct Stack* tail;
@@ -62,10 +57,15 @@ struct FbleThread {
   FbleProfileThread* profile;
 };
 
+/**
+ * Returned from FbleThreadTailCall to indicate tail call required.
+ */
+static FbleValue* sTailCallSentinelValue = (FbleValue*)"TAIL CALL SENTINEL VALUE";
 
-static void PushStackFrame(FbleValue* func, FbleValue** result, FbleValue** args, FbleThread* thread);
+static void PushStackFrame(FbleValue* func, FbleValue** args, FbleThread* thread);
 static void PopStackFrame(FbleValueHeap* heap, FbleThread* thread);
 static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile);
+
 
 // PushStackFrame --
 //   Push a frame on top of the thread's stack.
@@ -73,7 +73,6 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 // Inputs:
 //   heap - the value heap
 //   func - the function to push on the stack. Consumed.
-//   result - where to store the result of executing the function.
 //   args - arguments to the function. Consumed.
 //   thread - the thread whose stack to push to.
 //
@@ -81,14 +80,13 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
 // * Pushes a frame on top of the stack. Local variables are not initialized.
 // * Allocates memory that should be freed with a corresponding call to
 //   PopStackFrame.
-static void PushStackFrame(FbleValue* func, FbleValue** result, FbleValue** args, FbleThread* thread)
+static void PushStackFrame(FbleValue* func, FbleValue** args, FbleThread* thread)
 {
   FbleFuncInfo info = FbleFuncValueInfo(func);
   FbleExecutable* executable = info.executable;
 
   Stack* stack = FbleStackAllocExtra(thread->allocator, Stack, executable->num_args * sizeof(FbleValue*));
   stack->func = func;
-  stack->result = result;
   stack->tail = thread->stack;
 
   for (size_t i = 0; i < executable->num_args; ++i) {
@@ -148,33 +146,15 @@ static FbleValue* Eval(FbleValueHeap* heap, FbleValue* func, FbleValue** args, F
   thread.allocator = FbleNewStackAllocator();
   thread.profile = profile == NULL ? NULL : FbleNewProfileThread(profile);
 
-  FbleValue* result = NULL;
-  FbleExecStatus status = FbleThreadCall(heap, &thread, &result, func, args);
-  switch (status) {
-    case FBLE_EXEC_CONTINUED: {
-      UNREACHABLE("unexpected status");
-      break;
-    }
-
-    case FBLE_EXEC_FINISHED: {
-      assert(thread.stack == NULL);
-      break;
-    }
-
-    case FBLE_EXEC_ABORTED: {
-      assert(thread.stack == NULL);
-      assert(result == NULL);
-      break;
-    }
-  }
-
+  FbleValue* result = FbleThreadCall(heap, &thread, func, args);
+  assert(thread.stack == NULL);
   FbleFreeStackAllocator(thread.allocator);
   FbleFreeProfileThread(thread.profile);
   return result;
 }
 
 // FbleThreadCall -- see documentation in execute.h
-FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, FbleValue** args)
+FbleValue* FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
   FbleFuncInfo info = FbleFuncValueInfo(func);
   FbleExecutable* executable = info.executable;
@@ -183,16 +163,16 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
   for (size_t i = 0; i < executable->num_args; ++i) {
     FbleRetainValue(heap, args[i]);
   }
-  PushStackFrame(func, result, args, thread);
+  PushStackFrame(func, args, thread);
 
   if (thread->profile != NULL) {
     FbleProfileEnterBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
   }
 
-  FbleExecStatus status = executable->run(
+  FbleValue* result = executable->run(
         heap, thread, executable, thread->stack->args,
         info.statics, info.profile_block_offset);
-  while (status == FBLE_EXEC_CONTINUED) {
+  while (result == sTailCallSentinelValue) {
     func = thread->stack->func;
     info = FbleFuncValueInfo(func);
     executable = info.executable;
@@ -201,7 +181,7 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
       FbleProfileReplaceBlock(thread->profile, info.profile_block_offset + executable->profile_block_id);
     }
 
-    status = executable->run(
+    result = executable->run(
         heap, thread, executable, thread->stack->args,
         info.statics, info.profile_block_offset);
   }
@@ -211,11 +191,11 @@ FbleExecStatus FbleThreadCall(FbleValueHeap* heap, FbleThread* thread, FbleValue
   }
 
   PopStackFrame(heap, thread);
-  return status;
+  return result;
 }
 
 // FbleThreadCall_ -- see documentation in execute.h
-FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue** result, FbleValue* func, ...)
+FbleValue* FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...)
 {
   FbleExecutable* executable = FbleFuncValueInfo(func).executable;
   size_t argc = executable->num_args;
@@ -226,20 +206,19 @@ FbleExecStatus FbleThreadCall_(FbleValueHeap* heap, FbleThread* thread, FbleValu
     args[i] = va_arg(ap, FbleValue*);
   }
   va_end(ap);
-  return FbleThreadCall(heap, thread, result, func, args);
+  return FbleThreadCall(heap, thread, func, args);
 }
 
 // FbleThreadTailCall -- see documentation in execute.h
-FbleExecStatus FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
+FbleValue* FbleThreadTailCall(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, FbleValue** args)
 {
-  FbleValue** result = thread->stack->result;
   PopStackFrame(heap, thread);
-  PushStackFrame(func, result, args, thread);
-  return FBLE_EXEC_CONTINUED;
+  PushStackFrame(func, args, thread);
+  return sTailCallSentinelValue;
 }
 
 // FbleThreadTailCall_ -- see documentation in execute.h
-FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...)
+FbleValue* FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, FbleValue* func, ...)
 {
   FbleExecutable* executable = FbleFuncValueInfo(func).executable;
   size_t argc = executable->num_args;
@@ -253,14 +232,6 @@ FbleExecStatus FbleThreadTailCall_(FbleValueHeap* heap, FbleThread* thread, Fble
   return FbleThreadTailCall(heap, thread, func, args);
 }
 
-// FbleThreadReturn -- see documentation in fble-execute.h
-FbleExecStatus FbleThreadReturn(FbleValueHeap* heap, FbleThread* thread, FbleValue* result)
-{
-  (void)heap;
-  *(thread->stack->result) = result;
-  return result == NULL ? FBLE_EXEC_ABORTED : FBLE_EXEC_FINISHED;
-}
-
 // FbleEval -- see documentation in fble-value.h
 FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profile)
 {
@@ -270,8 +241,7 @@ FbleValue* FbleEval(FbleValueHeap* heap, FbleValue* program, FbleProfile* profil
 // FbleApply -- see documentation in fble.h
 FbleValue* FbleApply(FbleValueHeap* heap, FbleValue* func, FbleValue** args, FbleProfile* profile)
 {
-  FbleValue* result = Eval(heap, func, args, profile);
-  return result;
+  return Eval(heap, func, args, profile);
 }
 
 // FbleFreeExecutable -- see documentation in execute.h
